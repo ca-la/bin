@@ -20,6 +20,32 @@ test('UsersDAO.create fails when required data is missing', (t) => {
     });
 });
 
+test('UsersDAO.create fails if user already exists', (t) => {
+  t.plan(2);
+
+  return UsersDAO.create(USER_DATA)
+    .then(() => UsersDAO.create(USER_DATA))
+    .catch((err) => {
+      t.ok(err instanceof InvalidDataError);
+      t.equal(err.message, 'Email is already taken');
+    });
+});
+
+test('UsersDAO.create fails if email is invalid', (t) => {
+  t.plan(2);
+
+  return UsersDAO.create({
+    name: 'Q User',
+    email: 'user at example.com',
+    zip: '94117',
+    password: 'hunter2'
+  })
+    .catch((err) => {
+      t.ok(err instanceof InvalidDataError);
+      t.equal(err.message, 'Invalid email');
+    });
+});
+
 test('UsersDAO.create returns a new user', (t) => {
   return UsersDAO.create(USER_DATA)
     .then((user) => {

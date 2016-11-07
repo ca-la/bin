@@ -1,8 +1,11 @@
 'use strict';
 
+const Promise = require('bluebird');
+
 const UsersDAO = require('../../dao/users');
-const { test } = require('../../test-helpers/fresh');
+const { test, sandbox } = require('../../test-helpers/fresh');
 const { post } = require('../../test-helpers/http');
+const InvalidDataError = require('../../errors/invalid-data');
 
 const USER_DATA = Object.freeze({
   name: 'Q User',
@@ -11,32 +14,16 @@ const USER_DATA = Object.freeze({
   password: 'hunter2'
 });
 
-test('POST /users returns a 400 if required data is missing', (t) => {
-  return post('/users', { body: {} })
-    .then(([response]) => {
-      t.equal(response.status, 400, 'status=400');
-    });
-});
+test('POST /users returns a 400 if user creation fails', (t) => {
+  sandbox().stub(UsersDAO,
+    'create',
+    () => Promise.reject(new InvalidDataError('Bad email'))
+  );
 
-test('POST /users returns a 400 if user already exists', (t) => {
-  return UsersDAO.create(USER_DATA)
-    .then(() => post('/users', { body: USER_DATA }))
-    .then(([response]) => {
+  return post('/users', { body: USER_DATA })
+    .then(([response, body]) => {
       t.equal(response.status, 400, 'status=400');
-    });
-});
-
-test('POST /users returns a 400 if email is invalid', (t) => {
-  return post('/users', {
-    body: {
-      name: 'Q User',
-      email: 'user at example.com',
-      zip: '94117',
-      password: 'hunter2'
-    }
-  })
-    .then(([response]) => {
-      t.equal(response.status, 400, 'status=400');
+      t.equal(body.message, 'Bad email');
     });
 });
 
