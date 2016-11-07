@@ -41,7 +41,7 @@ $ make lint
 ### Run a single test file
 
 ```bash
-$ bin/tt services/points/spec.js
+$ bin/tt routes/users/spec.js
 ```
 
 ### Migrations

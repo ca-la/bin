@@ -6,7 +6,8 @@ const sinon = require('sinon');
 const db = require('../services/db');
 
 const TABLES = [
-  'points'
+  'users',
+  'sessions'
 ];
 
 

@@ -13,7 +13,7 @@ test('UsersDAO.create returns a new user', (t) => {
     password: 'hunter2'
   })
     .then((user) => {
-      t.equal(user.title, 'Q User');
+      t.equal(user.name, 'Q User');
       t.equal(user.zip, '94117');
       t.equal(user.id.length, 36);
       t.notEqual(user.passwordHash, 'hunter2');
@@ -21,7 +21,7 @@ test('UsersDAO.create returns a new user', (t) => {
 });
 
 test('UsersDAO.create fails when required data is missing', (t) => {
-  return UsersDAO.create({ name: 'Q User' })
+  return UsersDAO.create({ name: 'Q User', password: 'hunter2' })
     .catch((err) => {
       t.ok(err instanceof NotNullViolation);
     });

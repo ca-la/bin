@@ -10,7 +10,7 @@ const jsonBody = require('./middleware/json-body');
 const logger = require('./middleware/logger');
 const poweredBy = require('./middleware/powered-by');
 
-const pointsRoutes = require('./routes/points');
+const usersRoutes = require('./routes/users');
 
 // General middleware
 app.use(logger);
@@ -20,7 +20,7 @@ app.use(headers);
 app.use(poweredBy);
 
 // Route-specific middleware
-app.use(pointsRoutes);
+app.use(usersRoutes);
 
 if (!module.parent) {
   const port = process.env.PORT || 5100;
