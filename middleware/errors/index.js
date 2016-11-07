@@ -14,8 +14,12 @@ function* errors(next) {
     }
 
     if (this.status >= 500) {
+      // eslint-disable-next-line no-console
+      console.error('SERVER ERROR:', err.stack);
       this.body = { error: 'Something went wrong!' };
     } else {
+      // eslint-disable-next-line no-console
+      console.error('CLIENT ERROR:', err.stack);
       this.body = { message: err.message };
     }
   }
