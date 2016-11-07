@@ -10,24 +10,26 @@ const InvalidDataError = require('../../errors/invalid-data');
 const User = require('../../domain-objects/user');
 const { hash } = require('../../services/hash');
 
-const instantiate = data => new User(data);
+const instantiate = data => (data && new User(data)) || null;
 
 function create(data) {
-  if (!data.name || !data.zip || !data.email || !data.password) {
+  const { name, zip, email, password } = data;
+
+  if (!name || !zip || !email || !password) {
     return Promise.reject(new InvalidDataError('Missing required information'));
   }
 
-  if (!data.email.match(/.+@.+/)) {
+  if (!email.match(/.+@.+/)) {
     return Promise.reject(new InvalidDataError('Invalid email'));
   }
 
-  return hash(data.password)
+  return hash(password)
     .then(passwordHash =>
       db('users').insert({
         id: uuid.v4(),
-        name: data.name,
-        zip: data.zip,
-        email: data.email,
+        name,
+        zip,
+        email,
         password_hash: passwordHash
       }, '*')
     )
@@ -42,6 +44,13 @@ function create(data) {
     .then(instantiate);
 }
 
+function findByEmail(email) {
+  return db('users').where({ email })
+    .then(first)
+    .then(instantiate);
+}
+
 module.exports = {
-  create
+  create,
+  findByEmail
 };

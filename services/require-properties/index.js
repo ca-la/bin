@@ -9,6 +9,10 @@ const hasProp = (obj, prop) => Object.prototype.hasOwnProperty.call(obj, prop);
  *   - will throw 'Missing required properties: baz, qux'
  */
 function requireProperties(obj, ...props) {
+  if (!obj) {
+    throw new Error('No data provided');
+  }
+
   const missingProps = [];
 
   props.forEach((prop) => {

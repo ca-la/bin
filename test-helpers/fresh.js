@@ -38,7 +38,6 @@ function freshTest(description, fn) {
   tape(description, (t) => {
     const end = t.end;
 
-    t.plan = null; // eslint-disable-line no-param-reassign
     t.end = null; // eslint-disable-line no-param-reassign
 
     beforeEach();
@@ -61,6 +60,7 @@ function freshTest(description, fn) {
       .then(() => end())
       .catch((err) => {
         t.fail(err);
+        console.log(err.stack); // eslint-disable-line no-console
         end();
       });
   });
