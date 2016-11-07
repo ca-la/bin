@@ -1,0 +1,11 @@
+#!/bin/bash
+set -e
+
+echo "Are you sure you want to migrate the PRODUCTION db? Type YES if so:"
+read RES
+
+if [ "$RES" != "YES" ]; then
+  exit 1
+fi
+
+DATABASE_URL=$(heroku config:get DATABASE_URL --app cala-api-prod)?ssl=true $(npm bin)/knex migrate:latest
