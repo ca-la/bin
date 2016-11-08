@@ -8,7 +8,6 @@ const errors = require('./middleware/errors');
 const headers = require('./middleware/headers');
 const jsonBody = require('./middleware/json-body');
 const logger = require('./middleware/logger');
-const poweredBy = require('./middleware/powered-by');
 const options = require('./middleware/options');
 
 // General middleware
@@ -17,7 +16,6 @@ app.use(errors);
 app.use(jsonBody);
 app.use(headers);
 app.use(options);
-app.use(poweredBy);
 
 // Route-specific middleware
 app.use(require('./routes/users'));
