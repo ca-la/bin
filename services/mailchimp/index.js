@@ -10,6 +10,10 @@ const {
 const MAILCHIMP_API_BASE = 'https://us13.api.mailchimp.com/3.0';
 const MAILCHIMP_AUTH = new Buffer(`cala:${MAILCHIMP_API_KEY}`).toString('base64');
 
+const ERROR_GLOSSARY = {
+  'Member Exists': "You're already signed up for this list!"
+};
+
 function subscribe({ email, name, zip }) {
   const requestBody = {
     email_address: email,
@@ -40,7 +44,9 @@ function subscribe({ email, name, zip }) {
       console.log('Mailchimp response: ', body);
 
       if (response.status !== 200) {
-        throw new Error(body.detail);
+        const message = ERROR_GLOSSARY[body.title] || body.detail;
+
+        throw new Error(message);
       }
 
       return body;
