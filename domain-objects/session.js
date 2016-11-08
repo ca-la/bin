@@ -10,6 +10,10 @@ class Session {
     this.userId = row.user_id;
     this.createdAt = new Date(row.created_at);
   }
+
+  setUser(user) {
+    this.user = user;
+  }
 }
 
 module.exports = Session;

@@ -41,7 +41,11 @@ function create(data) {
       }, '*');
     })
     .then(first)
-    .then(instantiate);
+    .then(instantiate)
+    .then((session) => {
+      session.setUser(user);
+      return session;
+    });
 }
 
 module.exports = {

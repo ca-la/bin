@@ -37,7 +37,7 @@ test('SessionsDAO.create fails when password is incorrect', (t) => {
     });
 });
 
-test('Sessions.create returns a new session', (t) => {
+test('Sessions.create returns a new session with user attached', (t) => {
   let user;
   return UsersDAO.create(USER_DATA)
     .then((_user) => {
@@ -50,5 +50,6 @@ test('Sessions.create returns a new session', (t) => {
     .then((session) => {
       t.equal(session.userId, user.id);
       t.equal(session.id.length, 36);
+      t.equal(session.user.name, 'Q User');
     });
 });

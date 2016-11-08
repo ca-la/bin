@@ -21,6 +21,7 @@ class User {
       'id',
       'name',
       'email',
+      'session',
       'zip',
       'createdAt'
     );
