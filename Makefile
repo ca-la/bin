@@ -5,9 +5,11 @@ SHELL := /bin/bash
 install: preflight
 	npm install
 
-# Run a local development server
 serve: preflight
 	node index.js
+
+serve-dev:
+	env $$(cat .env | xargs) make serve
 
 # Run the test suite
 test: preflight

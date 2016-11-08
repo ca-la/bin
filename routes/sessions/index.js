@@ -7,7 +7,7 @@ const router = require('koa-router')({
 const InvalidDataError = require('../../errors/invalid-data');
 const SessionsDAO = require('../../dao/sessions');
 
-router.post('/', function* createSession() {
+function* createSession() {
   const { email, password } = this.state.body;
 
   const session = yield SessionsDAO.create({ email, password })
@@ -15,6 +15,8 @@ router.post('/', function* createSession() {
 
   this.status = 201;
   this.body = session;
-});
+}
+
+router.post('/', createSession);
 
 module.exports = router.routes();
