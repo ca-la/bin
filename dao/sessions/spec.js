@@ -2,8 +2,9 @@
 
 const InvalidDataError = require('../../errors/invalid-data');
 const SessionsDAO = require('./index');
+const Shopify = require('../../services/shopify');
 const UsersDAO = require('../users');
-const { test } = require('../../test-helpers/fresh');
+const { test, sandbox } = require('../../test-helpers/fresh');
 
 const USER_DATA = {
   name: 'Q User',
@@ -21,10 +22,22 @@ test('SessionsDAO.create fails when required data is missing', (t) => {
 });
 
 test('SessionsDAO.create fails when email does not match a user', (t) => {
+  sandbox().stub(Shopify, 'login', () => Promise.reject(new Error('nope')));
+
   return SessionsDAO.create({ email: 'user@example.com', password: 'hunter2' })
     .catch((err) => {
       t.ok(err instanceof InvalidDataError);
       t.equal(err.message, 'No matching user found');
+    });
+});
+
+test('SessionsDAO.create succeeds when email and password match a shopify user', (t) => {
+  sandbox().stub(Shopify, 'login', () => Promise.resolve());
+
+  return SessionsDAO.create({ email: 'user@example.com', password: 'hunter2' })
+    .then((session) => {
+      t.equal(session.id.length, 36);
+      t.equal(session.user.name, 'user@example.com');
     });
 });
 
