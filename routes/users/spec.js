@@ -2,10 +2,11 @@
 
 const Promise = require('bluebird');
 
-const UsersDAO = require('../../dao/users');
-const { test, sandbox } = require('../../test-helpers/fresh');
-const { post } = require('../../test-helpers/http');
 const InvalidDataError = require('../../errors/invalid-data');
+const SessionsDAO = require('../../dao/sessions');
+const UsersDAO = require('../../dao/users');
+const { post, put } = require('../../test-helpers/http');
+const { test, sandbox } = require('../../test-helpers/fresh');
 
 const USER_DATA = Object.freeze({
   name: 'Q User',
@@ -35,5 +36,61 @@ test('POST /users returns new user data', (t) => {
       t.equal(body.email, 'user@example.com');
       t.equal(body.password, undefined);
       t.equal(body.passwordHash, undefined);
+    });
+});
+
+test('PUT /users/:id/password returns a 401 if unauthenticated', (t) => {
+  return put('/users/123/password', { body: {} })
+    .then(([response, body]) => {
+      t.equal(response.status, 401);
+      t.equal(body.message, 'Authorization is required to access this resource');
+    });
+});
+
+test('PUT /users/:id/password returns a 403 if not the current user', (t) => {
+  return UsersDAO.create(USER_DATA)
+    .then(() => {
+      return SessionsDAO.create({
+        email: USER_DATA.email,
+        password: USER_DATA.password
+      });
+    })
+    .then((session) => {
+      return put('/users/123/password', {
+        body: {},
+        headers: {
+          Authorization: `Token ${session.id}`
+        }
+      });
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 403);
+      t.equal(body.message, 'You can only update your own user');
+    });
+});
+
+test('PUT /users/:id/password updates the current user', (t) => {
+  let userId;
+
+  return UsersDAO.create(USER_DATA)
+    .then((user) => {
+      userId = user.id;
+      return SessionsDAO.create({
+        email: USER_DATA.email,
+        password: USER_DATA.password
+      });
+    })
+    .then((session) => {
+      return put(`/users/${userId}/password`, {
+        body: {
+          password: 'hunter2'
+        },
+        headers: {
+          Authorization: `Token ${session.id}`
+        }
+      });
+    })
+    .then(([response]) => {
+      t.equal(response.status, 200);
     });
 });

@@ -1,0 +1,41 @@
+'use strict';
+
+const router = require('koa-router')({
+  prefix: '/password-resets'
+});
+
+const passwordReset = require('../../emails/password-reset');
+const SessionsDAO = require('../../dao/sessions');
+const UsersDAO = require('../../dao/users');
+const { send } = require('../../services/email');
+
+/**
+ * POST /password-resets
+ * @param {String} email
+ */
+function* sendReset() {
+  const { email } = this.state.body;
+
+  if (!email) {
+    this.throw(400, 'Missing required information');
+  }
+
+  const user = yield UsersDAO.findByEmail(email);
+  this.assert(user, 400, 'User not found');
+
+  const session = yield SessionsDAO.createForUser(user);
+
+  const emailTemplate = passwordReset({
+    sessionId: session.id,
+    name: user.name
+  });
+
+  yield send(user.email, 'CALA Password Reset', emailTemplate);
+
+  this.status = 201;
+  this.body = { success: true };
+}
+
+router.post('/', sendReset);
+
+module.exports = router.routes();

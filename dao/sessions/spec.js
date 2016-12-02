@@ -66,3 +66,26 @@ test('Sessions.create returns a new session with user attached', (t) => {
       t.equal(session.user.name, 'Q User');
     });
 });
+
+test('SessionsDAO.findById returns null if a session does not exist', (t) => {
+  return SessionsDAO.findById('1234').then((session) => {
+    t.equal(session, null);
+  });
+});
+
+test('SessionsDAO.findById returns a session', (t) => {
+  let user;
+  return UsersDAO.create(USER_DATA)
+    .then((_user) => {
+      user = _user;
+      return SessionsDAO.create({
+        email: 'user@example.com',
+        password: 'hunter2'
+      });
+    })
+    .then(session => SessionsDAO.findById(session.id))
+    .then((session) => {
+      t.equal(session.userId, user.id);
+    });
+});
+

@@ -5,6 +5,8 @@ const router = require('koa-router')({
 });
 
 const InvalidDataError = require('../../errors/invalid-data');
+const requireAuth = require('../../middleware/require-auth');
+const SessionsDAO = require('../../dao/sessions');
 const UsersDAO = require('../../dao/users');
 
 function* createUser() {
@@ -17,6 +19,20 @@ function* createUser() {
   this.body = user;
 }
 
+function* updatePassword() {
+  this.assert(this.params.userId === this.state.userId, 403, 'You can only update your own user');
+
+  const { password } = this.state.body;
+  this.assert(password, 400, 'A new password must be provided');
+
+  yield UsersDAO.updatePassword(this.state.userId, password);
+  yield SessionsDAO.deleteByUserId(this.state.userId);
+
+  this.status = 200;
+  this.body = { ok: true };
+}
+
 router.post('/', createUser);
+router.put('/:userId/password', requireAuth, updatePassword);
 
 module.exports = router.routes();
