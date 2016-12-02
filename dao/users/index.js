@@ -50,7 +50,19 @@ function findByEmail(email) {
     .then(instantiate);
 }
 
+function updatePassword(userId, password) {
+  return hash(password)
+    .then(passwordHash =>
+      db('users')
+        .where({ id: userId })
+        .update({ password_hash: passwordHash }, '*')
+    )
+    .then(first)
+    .then(instantiate);
+}
+
 module.exports = {
   create,
-  findByEmail
+  findByEmail,
+  updatePassword
 };

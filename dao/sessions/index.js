@@ -1,7 +1,8 @@
 'use strict';
 
-const uuid = require('node-uuid');
 const Promise = require('bluebird');
+const rethrow = require('pg-rethrow');
+const uuid = require('node-uuid');
 
 const db = require('../../services/db');
 const first = require('../../services/first');
@@ -11,7 +12,7 @@ const Shopify = require('../../services/shopify');
 const UsersDAO = require('../users');
 const { compare } = require('../../services/hash');
 
-const instantiate = data => new Session(data);
+const instantiate = data => (data && new Session(data)) || null;
 
 function createUserFromShopify(email, password) {
   return Shopify.login(email, password)
@@ -30,6 +31,22 @@ function createUserFromShopify(email, password) {
     });
 }
 
+/**
+ * @param {Object} user A User instance
+ */
+function createForUser(user) {
+  return db('sessions').insert({
+    id: uuid.v4(),
+    user_id: user.id
+  }, '*')
+    .then(first)
+    .then(instantiate)
+    .then((session) => {
+      session.setUser(user);
+      return session;
+    });
+}
+
 function create(data) {
   const { email, password } = data;
 
@@ -42,6 +59,10 @@ function create(data) {
   return UsersDAO.findByEmail(email)
     .then((_user) => {
       if (!_user) {
+        // If a CALA user doesn't exist, we attempt to fall back to legacy
+        // Shopify user authentication. If these credentials worked for a
+        // Shopify account, we create a new CALA account with the same details
+        // and sign them in.
         return createUserFromShopify(email, password);
       }
 
@@ -60,19 +81,31 @@ function create(data) {
         throw new InvalidDataError('Incorrect password');
       }
 
-      return db('sessions').insert({
-        id: uuid.v4(),
-        user_id: user.id
-      }, '*');
-    })
-    .then(first)
-    .then(instantiate)
-    .then((session) => {
-      session.setUser(user);
-      return session;
+      return createForUser(user);
     });
 }
 
+function findById(id) {
+  return db('sessions').where({ id })
+    .then(first)
+    .then(instantiate)
+    .catch(rethrow)
+    .catch(rethrow.ERRORS.InvalidTextRepresentation, () => {
+      // If an invalid UUID is passed in, Postgres will complain. Treat this as
+      // any other not-found case.
+      return null;
+    });
+}
+
+function deleteByUserId(userId) {
+  return db('sessions')
+    .where({ user_id: userId })
+    .del();
+}
+
 module.exports = {
-  create
+  create,
+  createForUser,
+  deleteByUserId,
+  findById
 };
