@@ -6,6 +6,10 @@
 function* errors(next) {
   try {
     yield next;
+
+    if (this.status === 404) {
+      this.throw(404, 'Not Found');
+    }
   } catch (err) {
     this.status = err.status || 500;
 
@@ -16,7 +20,7 @@ function* errors(next) {
     if (this.status >= 500) {
       // eslint-disable-next-line no-console
       console.error('SERVER ERROR:', err.stack);
-      this.body = { error: 'Something went wrong!' };
+      this.body = { message: 'Something went wrong!' };
     } else {
       // eslint-disable-next-line no-console
       console.error('CLIENT ERROR:', err.stack);
