@@ -44,6 +44,12 @@ function create(data) {
     .then(instantiate);
 }
 
+function findById(id) {
+  return db('users').where({ id })
+    .then(first)
+    .then(instantiate);
+}
+
 function findByEmail(email) {
   return db('users').where({ email })
     .then(first)
@@ -64,5 +70,6 @@ function updatePassword(userId, password) {
 module.exports = {
   create,
   findByEmail,
+  findById,
   updatePassword
 };

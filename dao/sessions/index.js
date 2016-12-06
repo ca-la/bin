@@ -85,10 +85,25 @@ function create(data) {
     });
 }
 
-function findById(id) {
+/**
+ * @param {String} id The session ID
+ * @param {Boolean} shouldAttachUser Whether to find the corresponding User
+ * resource and attach it to the Session domain object.
+ */
+function findById(id, shouldAttachUser = false) {
   return db('sessions').where({ id })
     .then(first)
     .then(instantiate)
+    .then((session) => {
+      if (session && shouldAttachUser) {
+        return UsersDAO.findById(session.userId).then((user) => {
+          session.setUser(user);
+          return session;
+        });
+      }
+
+      return session;
+    })
     .catch(rethrow)
     .catch(rethrow.ERRORS.InvalidTextRepresentation, () => {
       // If an invalid UUID is passed in, Postgres will complain. Treat this as
