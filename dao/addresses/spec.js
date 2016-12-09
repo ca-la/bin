@@ -32,9 +32,8 @@ test('AddressesDAO.create creates a new address', (t) => {
     });
 
     return AddressesDAO.create(expectedAddress);
-  })
-    .then((address) => {
-      const actualAddress = pick(address, Object.keys(expectedAddress));
-      t.deepEqual(actualAddress, expectedAddress);
-    });
+  }).then((address) => {
+    const actualAddress = pick(address, Object.keys(expectedAddress));
+    t.deepEqual(actualAddress, expectedAddress);
+  });
 });

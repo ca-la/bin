@@ -23,8 +23,13 @@ class User {
       'email',
       'session',
       'zip',
-      'createdAt'
+      'createdAt',
+      'addresses'
     );
+  }
+
+  setAddresses(addresses) {
+    this.addresses = addresses;
   }
 }
 
