@@ -56,13 +56,13 @@ function freshTest(description, fn) {
       t.fail(err);
     }
 
-    result.then(afterEach)
-      .then(() => end())
+    result
       .catch((err) => {
         t.fail(err);
         console.log(err.stack); // eslint-disable-line no-console
-        end();
-      });
+      })
+      .then(afterEach)
+      .then(() => end());
   });
 }
 
