@@ -15,6 +15,16 @@ const USER_DATA = Object.freeze({
   password: 'hunter2'
 });
 
+const ADDRESS_DATA = Object.freeze({
+  companyName: 'CALA',
+  addressLine1: '1025 Oak St',
+  addressLine2: 'Apt B',
+  city: 'San Francisco',
+  region: 'CA',
+  postCode: '94117',
+  country: 'USA'
+});
+
 test('POST /users returns a 400 if user creation fails', (t) => {
   sandbox().stub(UsersDAO,
     'create',
@@ -36,6 +46,19 @@ test('POST /users returns new user data', (t) => {
       t.equal(body.email, 'user@example.com');
       t.equal(body.password, undefined);
       t.equal(body.passwordHash, undefined);
+    });
+});
+
+test('POST /users allows creating an address', (t) => {
+  const withAddress = Object.assign({}, USER_DATA, {
+    address: ADDRESS_DATA
+  });
+
+  return post('/users', { body: withAddress })
+    .then(([response, body]) => {
+      t.equal(response.status, 201);
+      t.equal(body.addresses.length, 1);
+      t.equal(body.addresses[0].companyName, 'CALA');
     });
 });
 
