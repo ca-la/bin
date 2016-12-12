@@ -4,10 +4,12 @@ const router = require('koa-router')({
   prefix: '/users'
 });
 
+const AddressesDAO = require('../../dao/addresses');
 const InvalidDataError = require('../../errors/invalid-data');
+const MailChimp = require('../../services/mailchimp');
 const requireAuth = require('../../middleware/require-auth');
 const UsersDAO = require('../../dao/users');
-const AddressesDAO = require('../../dao/addresses');
+const { MAILCHIMP_LIST_ID_USERS } = require('../../services/config');
 
 /**
  * POST /users
@@ -36,6 +38,13 @@ function* createUser() {
 
     user.setAddresses([addressInstance]);
   }
+
+  yield MailChimp.subscribe({
+    email,
+    name,
+    zip,
+    listId: MAILCHIMP_LIST_ID_USERS
+  });
 
   this.status = 201;
   this.body = user;

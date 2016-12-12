@@ -2,10 +2,8 @@
 
 const fetch = require('node-fetch');
 
-const {
-  MAILCHIMP_LIST_ID,
-  MAILCHIMP_API_KEY
-} = require('../config');
+const { MAILCHIMP_API_KEY } = require('../config');
+const requireProperties = require('../require-properties');
 
 const MAILCHIMP_API_BASE = 'https://us13.api.mailchimp.com/3.0';
 const MAILCHIMP_AUTH = new Buffer(`cala:${MAILCHIMP_API_KEY}`).toString('base64');
@@ -14,7 +12,17 @@ const ERROR_GLOSSARY = {
   'Member Exists': "You're already signed up for this list!"
 };
 
-function subscribe({ email, name, zip }) {
+function subscribe(data) {
+  requireProperties(
+    data,
+    'email',
+    'name',
+    'zip',
+    'listId'
+  );
+
+  const { email, name, zip, listId } = data;
+
   const requestBody = {
     email_address: email,
     status: 'subscribed',
@@ -26,7 +34,7 @@ function subscribe({ email, name, zip }) {
 
   let response;
 
-  const url = `${MAILCHIMP_API_BASE}/lists/${MAILCHIMP_LIST_ID}/members`;
+  const url = `${MAILCHIMP_API_BASE}/lists/${listId}/members`;
 
   return fetch(url, {
     method: 'post',

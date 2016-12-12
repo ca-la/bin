@@ -4,6 +4,7 @@ const router = require('koa-router')({
   prefix: '/subscriptions'
 });
 
+const { MAILCHIMP_LIST_ID_SUBSCRIPTIONS } = require('../../services/config');
 const MailChimp = require('../../services/mailchimp');
 
 /**
@@ -20,7 +21,12 @@ function* createSubscription() {
   }
 
   try {
-    yield MailChimp.subscribe({ email, name, zip });
+    yield MailChimp.subscribe({
+      email,
+      name,
+      zip,
+      listId: MAILCHIMP_LIST_ID_SUBSCRIPTIONS
+    });
   } catch (error) {
     this.throw(400, error.message);
   }
