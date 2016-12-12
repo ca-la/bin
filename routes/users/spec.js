@@ -2,12 +2,12 @@
 
 const Promise = require('bluebird');
 
+const createUser = require('../../test-helpers/create-user');
 const InvalidDataError = require('../../errors/invalid-data');
-const SessionsDAO = require('../../dao/sessions');
-const UsersDAO = require('../../dao/users');
-const { post, put } = require('../../test-helpers/http');
-const { test, sandbox } = require('../../test-helpers/fresh');
 const MailChimp = require('../../services/mailchimp');
+const UsersDAO = require('../../dao/users');
+const { post, put, authHeader } = require('../../test-helpers/http');
+const { test, sandbox } = require('../../test-helpers/fresh');
 
 const USER_DATA = Object.freeze({
   name: 'Q User',
@@ -76,19 +76,11 @@ test('PUT /users/:id/password returns a 401 if unauthenticated', (t) => {
 });
 
 test('PUT /users/:id/password returns a 403 if not the current user', (t) => {
-  return UsersDAO.create(USER_DATA)
-    .then(() => {
-      return SessionsDAO.create({
-        email: USER_DATA.email,
-        password: USER_DATA.password
-      });
-    })
-    .then((session) => {
+  return createUser()
+    .then(({ session }) => {
       return put('/users/123/password', {
         body: {},
-        headers: {
-          Authorization: `Token ${session.id}`
-        }
+        headers: authHeader(session.id)
       });
     })
     .then(([response, body]) => {
@@ -98,24 +90,15 @@ test('PUT /users/:id/password returns a 403 if not the current user', (t) => {
 });
 
 test('PUT /users/:id/password updates the current user', (t) => {
-  let userId;
+  t.plan(1);
 
-  return UsersDAO.create(USER_DATA)
-    .then((user) => {
-      userId = user.id;
-      return SessionsDAO.create({
-        email: USER_DATA.email,
-        password: USER_DATA.password
-      });
-    })
-    .then((session) => {
-      return put(`/users/${userId}/password`, {
+  return createUser()
+    .then(({ user, session }) => {
+      return put(`/users/${user.id}/password`, {
         body: {
           password: 'hunter2'
         },
-        headers: {
-          Authorization: `Token ${session.id}`
-        }
+        headers: authHeader(session.id)
       });
     })
     .then(([response]) => {

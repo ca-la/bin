@@ -26,6 +26,13 @@ function create(data) {
     .then(instantiate);
 }
 
+function findByUserId(userId) {
+  return db('addresses').where({ user_id: userId })
+    .catch(rethrow)
+    .then(addresses => addresses.map(instantiate));
+}
+
 module.exports = {
-  create
+  create,
+  findByUserId
 };
