@@ -7,6 +7,7 @@ const SessionsDAO = require('../../dao/sessions');
 const UsersDAO = require('../../dao/users');
 const { post, put } = require('../../test-helpers/http');
 const { test, sandbox } = require('../../test-helpers/fresh');
+const MailChimp = require('../../services/mailchimp');
 
 const USER_DATA = Object.freeze({
   name: 'Q User',
@@ -39,6 +40,8 @@ test('POST /users returns a 400 if user creation fails', (t) => {
 });
 
 test('POST /users returns new user data', (t) => {
+  sandbox().stub(MailChimp, 'subscribe', () => Promise.resolve());
+
   return post('/users', { body: USER_DATA })
     .then(([response, body]) => {
       t.equal(response.status, 201, 'status=201');
@@ -50,6 +53,8 @@ test('POST /users returns new user data', (t) => {
 });
 
 test('POST /users allows creating an address', (t) => {
+  sandbox().stub(MailChimp, 'subscribe', () => Promise.resolve());
+
   const withAddress = Object.assign({}, USER_DATA, {
     address: ADDRESS_DATA
   });

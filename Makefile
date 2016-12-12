@@ -13,7 +13,7 @@ serve-dev:
 
 # Run the test suite
 test: preflight
-	NODE_ENV=test $$(npm bin)/tape **/*/spec.js | $$(npm bin)/tap-spec
+	NODE_ENV=test env $$(cat .env | xargs) $$(npm bin)/tape **/*/spec.js | $$(npm bin)/tap-spec
 
 # Static analysis
 lint: preflight
