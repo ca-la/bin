@@ -15,80 +15,92 @@ function parseResponse(res) {
   });
 }
 
-module.exports = {
-  get(url, opts = {}) {
-    const fullUrl = baseUrl + url;
+function authHeader(sessionId) {
+  return {
+    Authorization: `Token ${sessionId}`
+  };
+}
 
-    const headers = Object.assign({
-      Accept: 'application/json'
-    }, opts.headers);
+function get(url, opts = {}) {
+  const fullUrl = baseUrl + url;
 
-    const options = Object.assign({}, opts, {
-      method: 'get',
-      headers
-    });
+  const headers = Object.assign({
+    Accept: 'application/json'
+  }, opts.headers);
 
-    return fetch(fullUrl, options).then(parseResponse);
-  },
+  const options = Object.assign({}, opts, {
+    method: 'get',
+    headers
+  });
 
-  post(url, opts = {}) {
-    const fullUrl = baseUrl + url;
+  return fetch(fullUrl, options).then(parseResponse);
+}
 
-    const headers = Object.assign({
-      Accept: 'application/json',
-      'Content-Type': 'application/json'
-    }, opts.headers);
+function post(url, opts = {}) {
+  const fullUrl = baseUrl + url;
 
-    let body = null;
+  const headers = Object.assign({
+    Accept: 'application/json',
+    'Content-Type': 'application/json'
+  }, opts.headers);
 
-    if (opts.body) {
-      body = JSON.stringify(opts.body);
-    }
+  let body = null;
 
-    const options = Object.assign({}, opts, {
-      method: 'post',
-      headers,
-      body
-    });
-
-    return fetch(fullUrl, options).then(parseResponse);
-  },
-
-  put(url, opts = {}) {
-    const fullUrl = baseUrl + url;
-
-    const headers = Object.assign({
-      Accept: 'application/json',
-      'Content-Type': 'application/json'
-    }, opts.headers);
-
-    let body = null;
-
-    if (opts.body) {
-      body = JSON.stringify(opts.body);
-    }
-
-    const options = Object.assign({}, opts, {
-      method: 'put',
-      headers,
-      body
-    });
-
-    return fetch(fullUrl, options).then(parseResponse);
-  },
-
-  del(url, opts = {}) {
-    const fullUrl = baseUrl + url;
-
-    const headers = Object.assign({
-      Accept: 'application/json'
-    }, opts.headers);
-
-    const options = Object.assign({}, opts, {
-      method: 'delete',
-      headers
-    });
-
-    return fetch(fullUrl, options).then(parseResponse);
+  if (opts.body) {
+    body = JSON.stringify(opts.body);
   }
+
+  const options = Object.assign({}, opts, {
+    method: 'post',
+    headers,
+    body
+  });
+
+  return fetch(fullUrl, options).then(parseResponse);
+}
+
+function put(url, opts = {}) {
+  const fullUrl = baseUrl + url;
+
+  const headers = Object.assign({
+    Accept: 'application/json',
+    'Content-Type': 'application/json'
+  }, opts.headers);
+
+  let body = null;
+
+  if (opts.body) {
+    body = JSON.stringify(opts.body);
+  }
+
+  const options = Object.assign({}, opts, {
+    method: 'put',
+    headers,
+    body
+  });
+
+  return fetch(fullUrl, options).then(parseResponse);
+}
+
+function del(url, opts = {}) {
+  const fullUrl = baseUrl + url;
+
+  const headers = Object.assign({
+    Accept: 'application/json'
+  }, opts.headers);
+
+  const options = Object.assign({}, opts, {
+    method: 'delete',
+    headers
+  });
+
+  return fetch(fullUrl, options).then(parseResponse);
+}
+
+module.exports = {
+  authHeader,
+  get,
+  post,
+  put,
+  del
 };
