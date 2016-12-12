@@ -5,6 +5,7 @@ const router = require('koa-router')({
 });
 
 const AddressesDAO = require('../../dao/addresses');
+const requireAuth = require('../../middleware/require-auth');
 
 /**
  * GET /addresses?userId=ABC123
@@ -18,6 +19,6 @@ function* getList() {
   this.status = 200;
 }
 
-router.get('/', getList);
+router.get('/', requireAuth, getList);
 
 module.exports = router.routes();
