@@ -73,7 +73,8 @@ function getOrder(id) {
       }
 
       return response.json();
-    });
+    })
+    .then(body => body.order);
 }
 
 module.exports = {
