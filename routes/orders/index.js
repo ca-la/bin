@@ -1,14 +1,14 @@
 'use strict';
 
 const router = require('koa-router')({
-  prefix: '/shopify-orders'
+  prefix: '/orders'
 });
 
 const ShopifyNotFoundError = require('../../errors/shopify-not-found');
 const { getOrder } = require('../../services/shopify');
 
 /**
- * GET /shopify-orders/:orderId
+ * GET /orders/:orderId
  *
  * TODO: Though order IDs are ~ fairly ~ unique / unguessable, we should
  * probably increase security here at some point. Some options would be:
