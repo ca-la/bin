@@ -9,6 +9,11 @@ const { getOrder } = require('../../services/shopify');
 
 /**
  * GET /shopify-orders/:orderId
+ *
+ * TODO: Though order IDs are ~ fairly ~ unique / unguessable, we should
+ * probably increase security here at some point. Some options would be:
+ *   - Have this endpoint based around 'order token' or something similar
+ *   - Enforce that the email on the order matches logged-in account email
  */
 function* getOrderById() {
   const order = yield getOrder(this.params.orderId)
