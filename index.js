@@ -23,7 +23,7 @@ app.use(attachSession);
 app.use(require('./routes/addresses'));
 app.use(require('./routes/password-resets'));
 app.use(require('./routes/sessions'));
-app.use(require('./routes/shopify-orders'));
+app.use(require('./routes/orders'));
 app.use(require('./routes/subscriptions'));
 app.use(require('./routes/users'));
 app.use(require('./routes/zips'));
