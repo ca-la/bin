@@ -25,6 +25,7 @@ app.use(require('./routes/password-resets'));
 app.use(require('./routes/sessions'));
 app.use(require('./routes/subscriptions'));
 app.use(require('./routes/users'));
+app.use(require('./routes/zips'));
 
 if (!module.parent) {
   const port = process.env.PORT || 5100;

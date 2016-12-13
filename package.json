@@ -17,7 +17,8 @@
     "node-fetch": "1.6.3",
     "node-uuid": "1.4.7",
     "pg": "6.1.0",
-    "pg-rethrow": "1.0.1"
+    "pg-rethrow": "1.0.1",
+    "zipcodes": "2.1.0"
   },
   "devDependencies": {
     "eslint": "3.9.1",
