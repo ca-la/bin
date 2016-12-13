@@ -13,7 +13,7 @@ function send(to, subject, emailBody) {
   data.append('from', FROM);
   data.append('to', to);
   data.append('subject', subject);
-  data.append('text', emailBody);
+  data.append('html', emailBody);
 
   const url = `${MAILGUN_API_BASE}/messages`;
 

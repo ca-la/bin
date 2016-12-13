@@ -1,5 +1,9 @@
 'use strict';
 
+const fs = require('fs');
+const path = require('path');
+const template = require('lodash/template');
+
 const requireProperties = require('../../services/require-properties');
 
 module.exports = function passwordReset(data) {
@@ -8,11 +12,9 @@ module.exports = function passwordReset(data) {
     'name'
   );
 
-  return `Hi ${data.name},
+  const resetLink = `https://ca.la/password-reset?sessionId=${data.sessionId}`;
 
-We've received a request to reset your password on CALA.
+  const emailHtml = fs.readFileSync(path.join(__dirname, 'template.html'), 'utf8');
 
-To choose a new password, click this link: https://ca.la/password-reset?sessionId=${data.sessionId}
-
-If you didn't request this, please let us know.`;
+  return template(emailHtml)({ resetLink });
 };
