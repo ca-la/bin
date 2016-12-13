@@ -8,7 +8,7 @@ function* errors(next) {
     yield next;
 
     if (this.status === 404) {
-      this.throw(404, 'Not Found');
+      this.throw(404, 'Route not found');
     }
   } catch (err) {
     this.status = err.status || 500;
