@@ -18,7 +18,13 @@ const config = {
   MAILCHIMP_LIST_ID_USERS: process.env.MAILCHIMP_LIST_ID_USERS,
 
   MAILGUN_API_BASE: process.env.MAILGUN_API_BASE,
-  MAILGUN_API_KEY: process.env.MAILGUN_API_KEY
+  MAILGUN_API_KEY: process.env.MAILGUN_API_KEY,
+
+  // e.g. 'https://ecom-31.myshopify.com'
+  SHOPIFY_STORE_BASE: process.env.SHOPIFY_STORE_BASE,
+
+  // API key and password separated by a colon, e.g. 'tok12345:password12345'
+  SHOPIFY_STORE_AUTH: process.env.SHOPIFY_STORE_AUTH
 };
 
 Object.keys(config).forEach((key) => {
