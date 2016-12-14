@@ -44,6 +44,38 @@ function create(data) {
     .then(instantiate);
 }
 
+/**
+ * This should only be used internally - we can create users without passwords
+ * when they use a legacy authentication scheme (shopify).
+ */
+function createWithoutPassword(data) {
+  const { name, zip, email } = data;
+
+  if (!name || !zip || !email) {
+    return Promise.reject(new InvalidDataError('Missing required information'));
+  }
+
+  if (!email.match(/.+@.+/)) {
+    return Promise.reject(new InvalidDataError('Invalid email'));
+  }
+
+  return db('users').insert({
+    id: uuid.v4(),
+    name,
+    zip,
+    email
+  })
+    .catch(rethrow)
+    .catch(rethrow.ERRORS.UniqueViolation, (err) => {
+      if (err.constraint === 'users_unique_email') {
+        throw new InvalidDataError('Email is already taken');
+      }
+      throw err;
+    })
+    .then(first)
+    .then(instantiate);
+}
+
 function findById(id) {
   return db('users').where({ id })
     .then(first)
@@ -69,6 +101,7 @@ function updatePassword(userId, password) {
 
 module.exports = {
   create,
+  createWithoutPassword,
   findByEmail,
   findById,
   updatePassword
