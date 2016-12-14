@@ -14,20 +14,18 @@ const { compare } = require('../../services/hash');
 
 const instantiate = data => (data && new Session(data)) || null;
 
-function createUserFromShopify(email, password) {
-  return Shopify.login(email, password)
-    .then(() => {
-      return UsersDAO.create({
-        email,
-        name: email,
-        password,
-        zip: '00000'
-      });
-    })
+/**
+ * Sign in a user to Shopify, and update their local password if we succeed
+ * @resolves {Boolean} Whether their password was correct
+ */
+function updatePasswordFromShopify(user, password) {
+  return Shopify.login(user.email, password)
+    .then(() => UsersDAO.updatePassword(user.id, password))
+    .then(() => true)
     .catch((err) => {
       // eslint-disable-next-line no-console
       console.log('Shopify login error:', err.stack);
-      return null;
+      return false;
     });
 }
 
@@ -58,22 +56,16 @@ function create(data) {
 
   return UsersDAO.findByEmail(email)
     .then((_user) => {
-      if (!_user) {
-        // If a CALA user doesn't exist, we attempt to fall back to legacy
-        // Shopify user authentication. If these credentials worked for a
-        // Shopify account, we create a new CALA account with the same details
-        // and sign them in.
-        return createUserFromShopify(email, password);
-      }
-
-      return _user;
-    })
-    .then((_user) => {
       user = _user;
 
       if (!user) {
         throw new InvalidDataError('No matching user found');
       }
+
+      if (!user.passwordHash) {
+        return updatePasswordFromShopify(user, password);
+      }
+
       return compare(password, user.passwordHash);
     })
     .then((match) => {

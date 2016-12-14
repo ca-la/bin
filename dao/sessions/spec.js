@@ -22,8 +22,6 @@ test('SessionsDAO.create fails when required data is missing', (t) => {
 });
 
 test('SessionsDAO.create fails when email does not match a user', (t) => {
-  sandbox().stub(Shopify, 'login', () => Promise.reject(new Error('nope')));
-
   return SessionsDAO.create({ email: 'user@example.com', password: 'hunter2' })
     .catch((err) => {
       t.ok(err instanceof InvalidDataError);
@@ -31,13 +29,29 @@ test('SessionsDAO.create fails when email does not match a user', (t) => {
     });
 });
 
-test('SessionsDAO.create succeeds when email and password match a shopify user', (t) => {
+test('SessionsDAO.create fails when we match a password-less user, but fail to login on shopify', (t) => {
+  sandbox().stub(Shopify, 'login', () => Promise.resolve(new Error('nope')));
+
+  return UsersDAO.createWithoutPassword(USER_DATA)
+    .then(() => SessionsDAO.create({ email: 'user@example.com', password: 'hunter2' }))
+    .catch((err) => {
+      t.ok(err instanceof InvalidDataError);
+      t.equal(err.message, 'Incorrect password');
+    });
+});
+
+test('SessionsDAO.create succeeds & updates password when we match a password-less user, and successfully login on shopify', (t) => {
   sandbox().stub(Shopify, 'login', () => Promise.resolve());
 
-  return SessionsDAO.create({ email: 'user@example.com', password: 'hunter2' })
+  return UsersDAO.createWithoutPassword(USER_DATA)
+    .then(() => SessionsDAO.create({ email: 'user@example.com', password: 'hunter2' }))
     .then((session) => {
       t.equal(session.id.length, 36);
-      t.equal(session.user.name, 'user@example.com');
+      t.equal(session.user.name, 'Q User');
+      return UsersDAO.findById(session.user.id);
+    })
+    .then((user) => {
+      t.notEqual(user.passwordHash, null);
     });
 });
 
@@ -50,7 +64,7 @@ test('SessionsDAO.create fails when password is incorrect', (t) => {
     });
 });
 
-test('Sessions.create returns a new session with user attached', (t) => {
+test('Sessions.create succeeds and returns a new session with user attached', (t) => {
   let user;
   return UsersDAO.create(USER_DATA)
     .then((_user) => {
