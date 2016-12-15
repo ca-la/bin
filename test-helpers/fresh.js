@@ -7,7 +7,9 @@ const db = require('../services/db');
 
 const TABLES = [
   'users',
-  'sessions'
+  'sessions',
+  'addresses',
+  'unassigned_referral_codes'
 ];
 
 
