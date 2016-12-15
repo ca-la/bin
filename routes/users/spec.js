@@ -5,6 +5,7 @@ const Promise = require('bluebird');
 const createUser = require('../../test-helpers/create-user');
 const InvalidDataError = require('../../errors/invalid-data');
 const MailChimp = require('../../services/mailchimp');
+const UnassignedReferralCodesDAO = require('../../dao/unassigned-referral-codes');
 const UsersDAO = require('../../dao/users');
 const { post, put, authHeader } = require('../../test-helpers/http');
 const { test, sandbox } = require('../../test-helpers/fresh');
@@ -13,8 +14,7 @@ const USER_DATA = Object.freeze({
   name: 'Q User',
   email: 'user@example.com',
   zip: '94117',
-  password: 'hunter2',
-  referralCode: 'freebie'
+  password: 'hunter2'
 });
 
 const ADDRESS_DATA = Object.freeze({
@@ -33,6 +33,8 @@ test('POST /users returns a 400 if user creation fails', (t) => {
     () => Promise.reject(new InvalidDataError('Bad email'))
   );
 
+  sandbox().stub(UnassignedReferralCodesDAO, 'get', () => Promise.resolve('ABC123'));
+
   return post('/users', { body: USER_DATA })
     .then(([response, body]) => {
       t.equal(response.status, 400, 'status=400');
@@ -42,6 +44,7 @@ test('POST /users returns a 400 if user creation fails', (t) => {
 
 test('POST /users returns new user data', (t) => {
   sandbox().stub(MailChimp, 'subscribe', () => Promise.resolve());
+  sandbox().stub(UnassignedReferralCodesDAO, 'get', () => Promise.resolve('ABC123'));
 
   return post('/users', { body: USER_DATA })
     .then(([response, body]) => {
@@ -55,6 +58,7 @@ test('POST /users returns new user data', (t) => {
 
 test('POST /users allows creating an address', (t) => {
   sandbox().stub(MailChimp, 'subscribe', () => Promise.resolve());
+  sandbox().stub(UnassignedReferralCodesDAO, 'get', () => Promise.resolve('ABC123'));
 
   const withAddress = Object.assign({}, USER_DATA, {
     address: ADDRESS_DATA

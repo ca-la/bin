@@ -20,11 +20,10 @@ function* createUser() {
     zip,
     email,
     password,
-    referralCode,
     address
   } = this.state.body;
 
-  const user = yield UsersDAO.create({ name, zip, email, password, referralCode })
+  const user = yield UsersDAO.create({ name, zip, email, password })
     .catch(InvalidDataError, err => this.throw(400, err));
 
   // This is super naive and doesn't use transactions; if the address creation
