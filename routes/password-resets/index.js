@@ -11,6 +11,9 @@ const { send } = require('../../services/email');
 
 /**
  * POST /password-resets
+ *
+ * "Create" a password reset, i.e. create a new session and send a user an email
+ * to reset their password.
  * @param {String} email
  */
 function* sendReset() {
