@@ -42,6 +42,7 @@ function* createUser() {
   yield MailChimp.subscribe({
     email,
     name,
+    referralCode: user.referralCode,
     zip,
     listId: MAILCHIMP_LIST_ID_USERS
   });

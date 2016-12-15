@@ -21,14 +21,15 @@ function subscribe(data) {
     'listId'
   );
 
-  const { email, name, zip, listId } = data;
+  const { email, name, zip, referralCode, listId } = data;
 
   const requestBody = {
     email_address: email,
     status: 'subscribed',
     merge_fields: {
       FULL_NAME: name,
-      ZIP_CODE: zip
+      ZIP_CODE: zip,
+      REF_CODE: referralCode
     }
   };
 
