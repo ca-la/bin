@@ -11,7 +11,7 @@ test('UnassignedReferralCodesDAO.get throws an error if no entropy remains', (t)
     });
 });
 
-test('UnassignedReferralCodesDAO.get returns codes', (t) => {
+test('UnassignedReferralCodesDAO.get returns unique codes in series', (t) => {
   let code1;
 
   return db('unassigned_referral_codes')
@@ -29,5 +29,26 @@ test('UnassignedReferralCodesDAO.get returns codes', (t) => {
     })
     .then((code) => {
       t.notEqual(code, code1);
+    });
+});
+
+test('UnassignedReferralCodesDAO.get returns unique codes in parallel', (t) => {
+  return db('unassigned_referral_codes')
+    .insert([
+      { code: 'ABC1' },
+      { code: 'ABC2' },
+      { code: 'ABC3' },
+      { code: 'ABC4' }
+    ])
+    .then(() => {
+      return Promise.all([
+        UnassignedReferralCodesDAO.get(),
+        UnassignedReferralCodesDAO.get(),
+        UnassignedReferralCodesDAO.get(),
+        UnassignedReferralCodesDAO.get()
+      ]);
+    })
+    .then((codes) => {
+      t.deepEqual(codes.sort(), ['ABC1', 'ABC2', 'ABC3', 'ABC4']);
     });
 });

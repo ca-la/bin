@@ -14,6 +14,7 @@ function get() {
   // This is arguably better than having both queries return the same referral
   // code, but still needs improvement...
   return db.raw(`
+lock table unassigned_referral_codes in exclusive mode;
 delete from unassigned_referral_codes
   where code in (select code from unassigned_referral_codes limit 1)
   returning *;
