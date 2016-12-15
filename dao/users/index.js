@@ -7,6 +7,7 @@ const Promise = require('bluebird');
 const db = require('../../services/db');
 const first = require('../../services/first');
 const InvalidDataError = require('../../errors/invalid-data');
+const UnassignedReferralCodesDAO = require('../unassigned-referral-codes');
 const User = require('../../domain-objects/user');
 const { hash } = require('../../services/hash');
 
@@ -23,14 +24,18 @@ function create(data) {
     return Promise.reject(new InvalidDataError('Invalid email'));
   }
 
-  return hash(password)
-    .then(passwordHash =>
+  return Promise.all([
+    data.referralCode || UnassignedReferralCodesDAO.get(),
+    hash(password)
+  ])
+    .then(([referralCode, passwordHash]) =>
       db('users').insert({
         id: uuid.v4(),
         name,
         zip,
         email,
-        password_hash: passwordHash
+        password_hash: passwordHash,
+        referral_code: referralCode
       }, '*')
     )
     .catch(rethrow)
@@ -59,12 +64,20 @@ function createWithoutPassword(data) {
     return Promise.reject(new InvalidDataError('Invalid email'));
   }
 
-  return db('users').insert({
-    id: uuid.v4(),
-    name,
-    zip,
-    email
-  })
+  const gettingReferralCode = data.referralCode ?
+    Promise.resolve(data.referralCode) :
+    UnassignedReferralCodesDAO.get();
+
+  return gettingReferralCode
+    .then((referralCode) => {
+      return db('users').insert({
+        id: uuid.v4(),
+        name,
+        zip,
+        email,
+        referral_code: referralCode
+      });
+    })
     .catch(rethrow)
     .catch(rethrow.ERRORS.UniqueViolation, (err) => {
       if (err.constraint === 'users_unique_email') {

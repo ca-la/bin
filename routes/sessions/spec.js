@@ -12,7 +12,8 @@ const USER_DATA = Object.freeze({
   name: 'Q User',
   email: 'user@example.com',
   zip: '94117',
-  password: 'hunter2'
+  password: 'hunter2',
+  referralCode: 'freebie'
 });
 
 test('POST /sessions returns a 400 if user creation fails', (t) => {
