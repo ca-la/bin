@@ -77,7 +77,44 @@ function getOrder(id) {
     .then(body => body.order);
 }
 
+/**
+ * Get the number of orders that used a given discount code.
+ */
+function getRedemptionCount(discountCode) {
+  // TODO allow calculation for more than 250
+  // https://trello.com/c/FaTW4F4R/80-allow-referral-code-calculation-for-more-than-250-previous-orders
+  const url = `${SHOPIFY_STORE_BASE}/admin/orders.json?limit=250`;
+
+  return Promise.resolve()
+    .then(() =>
+      fetch(url, {
+        method: 'get',
+        headers: {
+          Authorization: `Basic ${shopifyAuthHeader}`
+        }
+      })
+    )
+    .then(response => response.json())
+    .then((body) => {
+      if (!body.orders) {
+        throw new Error('Could not retrieve Shopify orders');
+      }
+
+      return body.orders.reduce((memo, order) => {
+        for (let i = 0; i < order.discount_codes.length; i += 1) {
+          const code = order.discount_codes[i].code;
+
+          if (code === discountCode) {
+            return memo + 1;
+          }
+        }
+        return memo;
+      }, 0);
+    });
+}
+
 module.exports = {
   getOrder,
+  getRedemptionCount,
   login
 };
