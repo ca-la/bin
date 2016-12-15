@@ -90,8 +90,6 @@ test('PUT /users/:id/password returns a 403 if not the current user', (t) => {
 });
 
 test('PUT /users/:id/password updates the current user', (t) => {
-  t.plan(1);
-
   return createUser()
     .then(({ user, session }) => {
       return put(`/users/${user.id}/password`, {

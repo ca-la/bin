@@ -40,7 +40,12 @@ function freshTest(description, fn) {
   tape(description, (t) => {
     const end = t.end;
 
+    // Tests should not be able to end themselves early. Using `plan` has the
+    // nasty side effect that the rest of the test will continue running even
+    // though the test runner moves onto the next test as soon as the plan is
+    // hit.
     t.end = null; // eslint-disable-line no-param-reassign
+    t.plan = null; // eslint-disable-line no-param-reassign
 
     beforeEach();
 
