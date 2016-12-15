@@ -13,6 +13,7 @@ class User {
     this.email = row.email;
     this.zip = row.zip;
     this.passwordHash = row.password_hash;
+    this.referralCode = row.referral_code;
     this.createdAt = new Date(row.created_at);
   }
 
@@ -24,7 +25,8 @@ class User {
       'session',
       'zip',
       'createdAt',
-      'addresses'
+      'addresses',
+      'referralCode'
     );
   }
 

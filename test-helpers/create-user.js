@@ -10,7 +10,8 @@ const USER_DATA = Object.freeze({
   name: 'Q User',
   email: 'user@example.com',
   zip: '94117',
-  password: 'hunter2'
+  password: 'hunter2',
+  referralCode: 'freebie'
 });
 
 const ADDRESS_DATA = Object.freeze({
