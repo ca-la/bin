@@ -8,6 +8,7 @@ const AddressesDAO = require('../../dao/addresses');
 const InvalidDataError = require('../../errors/invalid-data');
 const MailChimp = require('../../services/mailchimp');
 const requireAuth = require('../../middleware/require-auth');
+const Shopify = require('../../services/shopify');
 const UsersDAO = require('../../dao/users');
 const { MAILCHIMP_LIST_ID_USERS } = require('../../services/config');
 
@@ -67,7 +68,22 @@ function* updatePassword() {
   this.body = { ok: true };
 }
 
+/**
+ * GET /users/:userId/referral-count
+ *
+ * Find out how many other users I've referred.
+ */
+function* getReferralCount() {
+  this.assert(this.params.userId === this.state.userId, 403, 'You can only get referral count for your own user');
+
+  const user = yield UsersDAO.findById(this.params.userId);
+  const count = yield Shopify.getRedemptionCount(user.referralCode);
+  this.status = 200;
+  this.body = { count };
+}
+
 router.post('/', createUser);
 router.put('/:userId/password', requireAuth, updatePassword);
+router.get('/:userId/referral-count', requireAuth, getReferralCount);
 
 module.exports = router.routes();

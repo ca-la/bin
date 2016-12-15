@@ -5,9 +5,10 @@ const Promise = require('bluebird');
 const createUser = require('../../test-helpers/create-user');
 const InvalidDataError = require('../../errors/invalid-data');
 const MailChimp = require('../../services/mailchimp');
+const Shopify = require('../../services/shopify');
 const UnassignedReferralCodesDAO = require('../../dao/unassigned-referral-codes');
 const UsersDAO = require('../../dao/users');
-const { post, put, authHeader } = require('../../test-helpers/http');
+const { get, post, put, authHeader } = require('../../test-helpers/http');
 const { test, sandbox } = require('../../test-helpers/fresh');
 
 const USER_DATA = Object.freeze({
@@ -106,5 +107,35 @@ test('PUT /users/:id/password updates the current user', (t) => {
     })
     .then(([response]) => {
       t.equal(response.status, 200);
+    });
+});
+
+test('GET /users/:id/referral-count returns a 403 if not the current user', (t) => {
+  return createUser()
+    .then(({ session }) => {
+      return get('/users/123/referral-count', {
+        headers: authHeader(session.id)
+      });
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 403);
+      t.equal(body.message, 'You can only get referral count for your own user');
+    });
+});
+
+test('GET /users/:id/referral-count determines the current referral count', (t) => {
+  sandbox().stub(Shopify, 'getRedemptionCount', () => Promise.resolve(10));
+
+  return createUser()
+    .then(({ user, session }) => {
+      return get(`/users/${user.id}/referral-count`, {
+        headers: authHeader(session.id)
+      });
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 200);
+      t.deepEqual(body, { count: 10 });
+      t.equal(Shopify.getRedemptionCount.callCount, 1);
+      t.equal(Shopify.getRedemptionCount.lastCall.args[0], 'freebie');
     });
 });
