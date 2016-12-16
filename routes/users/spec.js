@@ -139,3 +139,33 @@ test('GET /users/:id/referral-count determines the current referral count', (t) 
       t.equal(Shopify.getRedemptionCount.lastCall.args[0], 'freebie');
     });
 });
+
+test('GET /users returns 400 if no referral code is provided', (t) => {
+  return get('/users')
+    .then(([response, body]) => {
+      t.equal(response.status, 400);
+      t.equal(body.message, 'A referral code must be provided to filter on');
+    });
+});
+
+test('GET /users returns an empty array if referral code does not match a user', (t) => {
+  return get('/users?referralCode=FOZO')
+    .then(([response, body]) => {
+      t.equal(response.status, 200);
+      t.deepEqual(body, []);
+    });
+});
+
+test('GET /users returns a user by referral code, case insensitive', (t) => {
+  let userId;
+  return createUser()
+    .then(({ user }) => {
+      userId = user.id;
+      return get('/users?referralCode=FrEEbie');
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 200);
+      t.equal(body.length, 1);
+      t.equal(body[0].id, userId);
+    });
+});

@@ -101,6 +101,13 @@ function findByEmail(email) {
     .then(instantiate);
 }
 
+function findByReferralCode(referralCode) {
+  return db('users')
+    .whereRaw('lower(referral_code) = ?', referralCode.toLowerCase())
+    .then(first)
+    .then(instantiate);
+}
+
 function updatePassword(userId, password) {
   return hash(password)
     .then(passwordHash =>
@@ -117,5 +124,6 @@ module.exports = {
   createWithoutPassword,
   findByEmail,
   findById,
+  findByReferralCode,
   updatePassword
 };

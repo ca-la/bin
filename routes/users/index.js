@@ -82,8 +82,22 @@ function* getReferralCount() {
   this.body = { count };
 }
 
+/**
+ * GET /users?referralCode=12312
+ *
+ * Returns an array to future-proof in case we want to list multiple users in
+ * future.
+ */
+function* getByReferralCode() {
+  this.assert(this.query.referralCode, 400, 'A referral code must be provided to filter on');
+  const user = yield UsersDAO.findByReferralCode(this.query.referralCode);
+  this.body = [user].filter(Boolean);
+  this.status = 200;
+}
+
+router.get('/', getByReferralCode);
+router.get('/:userId/referral-count', requireAuth, getReferralCount);
 router.post('/', createUser);
 router.put('/:userId/password', requireAuth, updatePassword);
-router.get('/:userId/referral-count', requireAuth, getReferralCount);
 
 module.exports = router.routes();
