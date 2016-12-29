@@ -4,8 +4,9 @@ const router = require('koa-router')({
   prefix: '/subscriptions'
 });
 
-const { MAILCHIMP_LIST_ID_SUBSCRIPTIONS } = require('../../services/config');
 const MailChimp = require('../../services/mailchimp');
+const shouldAllowAppointment = require('../../services/should-allow-appointment');
+const { MAILCHIMP_LIST_ID_SUBSCRIPTIONS } = require('../../services/config');
 
 /**
  * POST /subscriptions
@@ -32,7 +33,10 @@ function* createSubscription() {
   }
 
   this.status = 201;
-  this.body = { success: true };
+  this.body = {
+    success: true,
+    shouldAllowAppointment: shouldAllowAppointment(zip)
+  };
 }
 
 router.post('/', createSubscription);
