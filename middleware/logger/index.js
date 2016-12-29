@@ -5,7 +5,13 @@ const qs = require('querystring');
 // Log timing and status for each incoming request
 
 function stringify(obj) {
-  return qs.stringify(obj, ', ', '=', {
+  const escaped = {};
+
+  Object.keys(obj).forEach((key) => {
+    escaped[key] = JSON.stringify(obj[key]);
+  });
+
+  return qs.stringify(escaped, ', ', '=', {
     encodeURIComponent: val => val
   });
 }
@@ -20,7 +26,10 @@ function* logger(next) {
     method: this.method,
     url: this.url,
     status: this.status,
-    responseTime: ms
+    responseTime: ms,
+    requestIp: this.request.ip,
+    connectingIp: this.request.headers['cf-connecting-ip'],
+    userAgent: this.request.headers['user-agent']
   }));
 }
 
