@@ -34,6 +34,8 @@ test('shouldAllowAppointment returns false for customers out of range', (t) => {
 
   t.equal(shouldAllowAppointment('01950'), false); // Newburyport, MA
   t.equal(shouldAllowAppointment('90064'), false); // Los Angeles, CA
+  t.equal(shouldAllowAppointment('foobar'), false);
+  t.equal(shouldAllowAppointment('00000'), false);
 
   afterEach();
   return ok;

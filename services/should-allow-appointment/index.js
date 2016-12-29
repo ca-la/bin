@@ -16,7 +16,7 @@ const APPOINTMENT_THRESHOLD_MILES = 50;
 function shouldAllowAppointment(customerZipCode) {
   const distance = zipcodes.distance(config.PRIVATE_APPOINTMENT_ZIP, customerZipCode);
 
-  return (distance <= APPOINTMENT_THRESHOLD_MILES);
+  return (distance !== null) && (distance <= APPOINTMENT_THRESHOLD_MILES);
 }
 
 module.exports = shouldAllowAppointment;
