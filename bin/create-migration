@@ -1,0 +1,15 @@
+#!/bin/bash
+set -e
+
+echo -n "Enter migration name (e.g. 'add-user-table'): "
+read RES
+
+if [ "$RES" == "" ]; then
+  exit 1
+fi
+
+DATE=$(date "+%Y%m%d%H%M%S")
+
+FILENAME=migrations/$DATE'_'$RES.js
+cp migrations/_template $FILENAME
+echo 'Created '$FILENAME
