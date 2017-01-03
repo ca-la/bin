@@ -11,7 +11,10 @@ const Scan = require('../../domain-objects/scan');
 const instantiate = data => new Scan(data);
 
 const SCAN_TYPES = {
+  // Photo(s) uploaded by a customer
   photo: 'PHOTO',
+
+  // A Human Solutions 3D body scan
   humanSolutions: 'HUMANSOLUTIONS'
 };
 
