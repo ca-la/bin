@@ -12,7 +12,8 @@ const Shopify = require('../../services/shopify');
 const UsersDAO = require('../users');
 const { compare } = require('../../services/hash');
 
-const instantiate = data => (data && new Session(data)) || null;
+const instantiate = data => new Session(data);
+const maybeInstantiate = data => (data && new Session(data)) || null;
 
 /**
  * Sign in a user to Shopify, and update their local password if we succeed
@@ -85,7 +86,7 @@ function create(data) {
 function findById(id, shouldAttachUser = false) {
   return db('sessions').where({ id })
     .then(first)
-    .then(instantiate)
+    .then(maybeInstantiate)
     .then((session) => {
       if (session && shouldAttachUser) {
         return UsersDAO.findById(session.userId).then((user) => {

@@ -7,7 +7,7 @@ const Address = require('../../domain-objects/address');
 const db = require('../../services/db');
 const first = require('../../services/first');
 
-const instantiate = data => (data && new Address(data)) || null;
+const instantiate = data => new Address(data);
 
 function create(data) {
   return db('addresses').insert({
