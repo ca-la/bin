@@ -11,7 +11,8 @@ const UnassignedReferralCodesDAO = require('../unassigned-referral-codes');
 const User = require('../../domain-objects/user');
 const { hash } = require('../../services/hash');
 
-const instantiate = data => (data && new User(data)) || null;
+const instantiate = data => new User(data);
+const maybeInstantiate = data => (data && new User(data)) || null;
 
 function create(data) {
   const { name, zip, email, password } = data;
@@ -76,7 +77,7 @@ function createWithoutPassword(data) {
         zip,
         email,
         referral_code: referralCode
-      });
+      }, '*');
     })
     .catch(rethrow)
     .catch(rethrow.ERRORS.UniqueViolation, (err) => {
@@ -92,20 +93,20 @@ function createWithoutPassword(data) {
 function findById(id) {
   return db('users').where({ id })
     .then(first)
-    .then(instantiate);
+    .then(maybeInstantiate);
 }
 
 function findByEmail(email) {
   return db('users').where({ email })
     .then(first)
-    .then(instantiate);
+    .then(maybeInstantiate);
 }
 
 function findByReferralCode(referralCode) {
   return db('users')
     .whereRaw('lower(referral_code) = ?', referralCode.toLowerCase())
     .then(first)
-    .then(instantiate);
+    .then(maybeInstantiate);
 }
 
 function updatePassword(userId, password) {

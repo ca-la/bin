@@ -4,15 +4,12 @@ const db = require('../../services/db');
 
 /**
  * Retrieve an unassigned referral code, then delete it so that nobody else can
- * retrieve it too.
+ * retrieve it too. Locks the table while in progress to avoid race conditions
+ * regarding pulling the top referral code off the stack.
+ *
  * @resolves {String}
  */
 function get() {
-  // This is subject to a race condition, but not as dangerous as doing a
-  // `select` and `delete` in two different queries. If two calls are made to
-  // this at the same moment, one will fail since it's unable to delete the row.
-  // This is arguably better than having both queries return the same referral
-  // code, but still needs improvement...
   return db.raw(`
 lock table unassigned_referral_codes in exclusive mode;
 delete from unassigned_referral_codes
