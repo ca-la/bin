@@ -77,7 +77,7 @@ function createWithoutPassword(data) {
         zip,
         email,
         referral_code: referralCode
-      });
+      }, '*');
     })
     .catch(rethrow)
     .catch(rethrow.ERRORS.UniqueViolation, (err) => {
