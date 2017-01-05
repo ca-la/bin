@@ -14,7 +14,7 @@ const attachSession = require('./middleware/attach-session');
 // General middleware
 app.use(logger);
 app.use(errors);
-app.use(body());
+app.use(body({ multipart: true }));
 app.use(headers);
 app.use(options);
 app.use(attachSession);

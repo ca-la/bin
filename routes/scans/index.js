@@ -3,7 +3,6 @@
 const router = require('koa-router')({
   prefix: '/scans'
 });
-const parse = require('co-body');
 
 const InvalidDataError = require('../../errors/invalid-data');
 const requireAuth = require('../../middleware/require-auth');
@@ -30,7 +29,11 @@ function* createScanPhoto() {
   this.assert(scan, 404, 'Scan not found');
   this.assert(scan.userId === this.state.userId, 403, 'You can only upload photos for your own scan');
 
-  const body = yield parse.form(this, { limit: '10mb' });
+  const data = this.request.body.files && this.request.body.files.data;
+  this.assert(data, 400, 'Image must be uploaded as `data`');
+  this.assert(data.type === 'image/jpeg', 400, 'Only photos can be uploaded');
+
+  const localPath = data.path;
 
   // This is bad and inefficient; the entire request body has to be loaded into
   // memory before sending to S3. TODO figure out streaming, offload this to
@@ -40,8 +43,9 @@ function* createScanPhoto() {
   });
 
   const fileName = `${photo.id}.jpg`;
-  yield uploadFile(AWS_SCANPHOTO_BUCKET_NAME, fileName, this.body);
+  const url = yield uploadFile(AWS_SCANPHOTO_BUCKET_NAME, fileName, localPath);
 
+  photo.setUrl(url);
   this.status = 201;
   this.body = photo;
 }

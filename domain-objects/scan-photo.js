@@ -9,6 +9,10 @@ class ScanPhoto {
     this.id = row.id;
     this.scanId = row.scan_id;
   }
+
+  setUrl(url) {
+    this.url = url;
+  }
 }
 
 module.exports = ScanPhoto;

@@ -1,7 +1,8 @@
 'use strict';
 
-const Promise = require('bluebird');
 const AWS = require('aws-sdk');
+const fs = require('fs');
+const Promise = require('bluebird');
 
 const {
   AWS_ACCESS_KEY,
@@ -15,18 +16,28 @@ AWS.config.update({
 
 /**
   * @param {String} bucketName
-  * @param {String} fileName
-  * @param {String|Buffer} body
+  * @param {String} remoteFileName
+  * @param {String} localFileName
+  * @resolves {String} The remote URL
   */
-function uploadFile(bucketName, fileName, body) {
+function uploadFile(bucketName, remoteFileName, localFileName) {
   const s3 = new AWS.S3();
-  const put = Promise.promisify(s3.putObject, s3);
+  const put = Promise.promisify(s3.putObject, { context: s3 });
 
-  return put({
-    Bucket: bucketName,
-    key: fileName,
-    Body: body
-  });
+  const read = Promise.promisify(fs.readFile);
+
+  return read(localFileName)
+    .then((buffer) => {
+      return put({
+        ACL: 'public-read',
+        Bucket: bucketName,
+        Key: remoteFileName,
+        Body: buffer
+      });
+    })
+    .then(() => {
+      return `https://${bucketName}.s3.amazonaws.com/${remoteFileName}`;
+    });
 }
 
 module.exports = {
