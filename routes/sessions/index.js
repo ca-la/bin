@@ -8,7 +8,7 @@ const InvalidDataError = require('../../errors/invalid-data');
 const SessionsDAO = require('../../dao/sessions');
 
 function* createSession() {
-  const { email, password } = this.state.body;
+  const { email, password } = this.request.body;
 
   const session = yield SessionsDAO.create({ email, password })
     .catch(InvalidDataError, err => this.throw(400, err));

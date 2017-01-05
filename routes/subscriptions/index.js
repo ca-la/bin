@@ -15,7 +15,7 @@ const { MAILCHIMP_LIST_ID_SUBSCRIPTIONS } = require('../../services/config');
  * @param {String} zip
  */
 function* createSubscription() {
-  const { email, name, zip } = this.state.body;
+  const { email, name, zip } = this.request.body;
 
   if (!email || !name || !zip) {
     this.throw(400, 'Missing required information');

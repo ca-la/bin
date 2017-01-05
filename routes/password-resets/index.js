@@ -17,7 +17,7 @@ const { send } = require('../../services/email');
  * @param {String} email
  */
 function* sendReset() {
-  const { email } = this.state.body;
+  const { email } = this.request.body;
 
   if (!email) {
     this.throw(400, 'Missing required information');

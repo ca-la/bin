@@ -7,9 +7,10 @@ class Scan {
     requireProperties(row, 'id');
 
     this.id = row.id;
-    this.userId = row.user_id;
-    this.type = row.type;
+    this.isComplete = row.is_complete;
     this.measurements = row.measurements;
+    this.type = row.type;
+    this.userId = row.user_id;
   }
 }
 

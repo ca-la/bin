@@ -8,6 +8,12 @@
  * For live deployments, use `heroku config:set FOO=123 --app cala-api-prod`.
  */
 const config = {
+  // S3 bucket to store scan photos in
+  AWS_SCANPHOTO_BUCKET_NAME: process.env.AWS_SCANPHOTO_BUCKET_NAME,
+
+  AWS_ACCESS_KEY: process.env.AWS_ACCESS_KEY,
+  AWS_SECRET_KEY: process.env.AWS_SECRET_KEY,
+
   MAILCHIMP_API_KEY: process.env.MAILCHIMP_API_KEY,
 
   // The Mailchimp list ID for users who subscribe to the mailing list but do
@@ -17,6 +23,7 @@ const config = {
   // The Mailchimp list ID for users who have an account (i.e. are scanned)
   MAILCHIMP_LIST_ID_USERS: process.env.MAILCHIMP_LIST_ID_USERS,
 
+  // e.g 'https://api.mailgun.net/v3/mailgun.ca.la'
   MAILGUN_API_BASE: process.env.MAILGUN_API_BASE,
   MAILGUN_API_KEY: process.env.MAILGUN_API_KEY,
 

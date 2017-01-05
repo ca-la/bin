@@ -1,7 +1,8 @@
 'use strict';
 
 const createUser = require('../../test-helpers/create-user');
-const { post, authHeader } = require('../../test-helpers/http');
+const ScansDAO = require('../../dao/scans');
+const { get, post, authHeader } = require('../../test-helpers/http');
 const { test } = require('../../test-helpers/fresh');
 
 test('POST /scans returns a 401 if not signed in', (t) => {
@@ -40,5 +41,54 @@ test('POST /scans returns a 201 on success', (t) => {
     .then(([response, body]) => {
       t.equal(response.status, 201);
       t.equal(body.userId, userId);
+    });
+});
+
+test('GET /scans returns a 401 when called without a user ID', (t) => {
+  return get('/scans')
+    .then(([response, body]) => {
+      t.equal(response.status, 401);
+      t.equal(body.message, 'Authorization is required to access this resource');
+    });
+});
+
+test('GET /scans returns a 403 when called with someone elses user ID', (t) => {
+  return createUser()
+    .then(({ session }) => {
+      return get('/scans?userId=123', {
+        headers: authHeader(session.id)
+      });
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 403);
+      t.equal(body.message, 'You can only request scans for your own user');
+    });
+});
+
+test('GET /scans returns a list of scans', (t) => {
+  let userId;
+  let sessionId;
+  let scanId;
+
+  return createUser(true)
+    .then(({ user, session }) => {
+      userId = user.id;
+      sessionId = session.id;
+
+      return ScansDAO.create({
+        type: ScansDAO.SCAN_TYPES.photo,
+        userId: user.id
+      });
+    })
+    .then((scan) => {
+      scanId = scan.id;
+      return get(`/scans?userId=${userId}`, {
+        headers: authHeader(sessionId)
+      });
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 200);
+      t.equal(body.length, 1);
+      t.equal(body[0].id, scanId);
     });
 });
