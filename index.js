@@ -1,12 +1,12 @@
 'use strict';
 
 const koa = require('koa');
+const body = require('koa-body');
 
 const app = koa();
 
 const errors = require('./middleware/errors');
 const headers = require('./middleware/headers');
-const jsonBody = require('./middleware/json-body');
 const logger = require('./middleware/logger');
 const options = require('./middleware/options');
 const attachSession = require('./middleware/attach-session');
@@ -14,7 +14,7 @@ const attachSession = require('./middleware/attach-session');
 // General middleware
 app.use(logger);
 app.use(errors);
-app.use(jsonBody);
+app.use(body());
 app.use(headers);
 app.use(options);
 app.use(attachSession);

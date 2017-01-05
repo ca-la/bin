@@ -22,7 +22,7 @@ function* createUser() {
     email,
     password,
     address
-  } = this.state.body;
+  } = this.request.body;
 
   const user = yield UsersDAO.create({ name, zip, email, password })
     .catch(InvalidDataError, err => this.throw(400, err));
@@ -59,7 +59,7 @@ function* createUser() {
 function* updatePassword() {
   this.assert(this.params.userId === this.state.userId, 403, 'You can only update your own user');
 
-  const { password } = this.state.body;
+  const { password } = this.request.body;
   this.assert(password, 400, 'A new password must be provided');
 
   yield UsersDAO.updatePassword(this.params.userId, password);

@@ -9,7 +9,7 @@
  */
 const config = {
   // S3 bucket to store scan photos in
-  AWS_SCANPHOTO_BUCKET_NAME: process.env.AWS_BUCKET_NAME,
+  AWS_SCANPHOTO_BUCKET_NAME: process.env.AWS_SCANPHOTO_BUCKET_NAME,
 
   AWS_ACCESS_KEY: process.env.AWS_ACCESS_KEY,
   AWS_SECRET_KEY: process.env.AWS_SECRET_KEY,
