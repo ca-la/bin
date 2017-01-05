@@ -22,6 +22,7 @@ const SCAN_TYPES = {
 function create(data) {
   return db('scans').insert({
     id: uuid.v4(),
+    is_complete: false,
     user_id: data.userId,
     type: data.type,
     measurements: data.measurements
@@ -59,9 +60,20 @@ function findByUserId(userId) {
     .then(scans => scans.map(instantiate));
 }
 
+function updateOneById(id, data) {
+  return db('scans')
+    .where({ id })
+    .update({
+      is_complete: data.isComplete
+    }, '*')
+    .then(first)
+    .then(instantiate);
+}
+
 module.exports = {
   SCAN_TYPES,
   create,
   findById,
-  findByUserId
+  findByUserId,
+  updateOneById
 };

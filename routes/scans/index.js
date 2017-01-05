@@ -50,6 +50,17 @@ function* createScanPhoto() {
   this.body = photo;
 }
 
+function* updateScan() {
+  const scan = yield ScansDAO.findById(this.params.scanId);
+  this.assert(scan, 404, 'Scan not found');
+  this.assert(scan.userId === this.state.userId, 403, 'You can only upload photos for your own scan');
+  this.assert(this.request.body, 400, 'New data must be provided');
+
+  const updated = yield ScansDAO.updateOneById(this.params.scanId, this.request.body);
+  this.status = 200;
+  this.body = updated;
+}
+
 /**
  * GET /scans?userId=ABC123
  */
@@ -64,6 +75,7 @@ function* getList() {
 
 router.post('/', requireAuth, createScan);
 router.post('/:scanId/photos', requireAuth, createScanPhoto);
+router.put('/:scanId', requireAuth, updateScan);
 router.get('/', requireAuth, getList);
 
 module.exports = router.routes();
