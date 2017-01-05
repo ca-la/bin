@@ -22,7 +22,7 @@ const SCAN_TYPES = {
 function create(data) {
   return db('scans').insert({
     id: uuid.v4(),
-    is_complete: false,
+    is_complete: data.isComplete,
     user_id: data.userId,
     type: data.type,
     measurements: data.measurements

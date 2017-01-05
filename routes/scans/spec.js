@@ -41,6 +41,7 @@ test('POST /scans returns a 201 on success', (t) => {
     .then(([response, body]) => {
       t.equal(response.status, 201);
       t.equal(body.userId, userId);
+      t.equal(body.isComplete, false);
     });
 });
 
