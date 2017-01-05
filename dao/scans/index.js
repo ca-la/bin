@@ -9,6 +9,7 @@ const InvalidDataError = require('../../errors/invalid-data');
 const Scan = require('../../domain-objects/scan');
 
 const instantiate = data => new Scan(data);
+const maybeInstantiate = data => (data && new Scan(data)) || null;
 
 const SCAN_TYPES = {
   // Photo(s) uploaded by a customer
@@ -37,7 +38,30 @@ function create(data) {
     .then(instantiate);
 }
 
+/**
+  * @returns {Promise}
+  * @resolves {Object|null}
+  */
+function findById(id) {
+  return db('scans').where({ id })
+    .catch(rethrow)
+    .then(first)
+    .then(maybeInstantiate);
+}
+
+/**
+  * @returns {Promise}
+  * @resolves {Array}
+  */
+function findByUserId(userId) {
+  return db('scans').where({ user_id: userId })
+    .catch(rethrow)
+    .then(scans => scans.map(instantiate));
+}
+
 module.exports = {
   SCAN_TYPES,
-  create
+  create,
+  findById,
+  findByUserId
 };
