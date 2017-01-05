@@ -1,6 +1,7 @@
 'use strict';
 
 const createUser = require('../../test-helpers/create-user');
+const ScansDAO = require('../../dao/scans');
 const { get, post, authHeader } = require('../../test-helpers/http');
 const { test } = require('../../test-helpers/fresh');
 
@@ -65,14 +66,29 @@ test('GET /scans returns a 403 when called with someone elses user ID', (t) => {
 });
 
 test('GET /scans returns a list of scans', (t) => {
+  let userId;
+  let sessionId;
+  let scanId;
+
   return createUser(true)
     .then(({ user, session }) => {
-      return get(`/scans?userId=${user.id}`, {
-        headers: authHeader(session.id)
+      userId = user.id;
+      sessionId = session.id;
+
+      return ScansDAO.create({
+        type: ScansDAO.SCAN_TYPES.photo,
+        userId: user.id
+      });
+    })
+    .then((scan) => {
+      scanId = scan.id;
+      return get(`/scans?userId=${userId}`, {
+        headers: authHeader(sessionId)
       });
     })
     .then(([response, body]) => {
       t.equal(response.status, 200);
       t.equal(body.length, 1);
+      t.equal(body[0].id, scanId);
     });
 });
