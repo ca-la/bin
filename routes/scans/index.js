@@ -29,9 +29,10 @@ function* createScanPhoto() {
   this.assert(scan, 404, 'Scan not found');
   this.assert(scan.userId === this.state.userId, 403, 'You can only upload photos for your own scan');
 
-  const data = this.request.body.files && this.request.body.files.data;
+  const data = this.req.files && this.req.files.data;
   this.assert(data, 400, 'Image must be uploaded as `data`');
-  this.assert(data.type === 'image/jpeg', 400, 'Only photos can be uploaded');
+  console.log(data);
+  this.assert(data.mimetype === 'image/jpeg', 400, 'Only photos can be uploaded');
 
   const localPath = data.path;
 
