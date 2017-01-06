@@ -16,8 +16,6 @@ const { MAILCHIMP_LIST_ID_USERS } = require('../../services/config');
  * POST /users
  */
 function* createUser() {
-  console.log(this.request.body);
-
   const {
     name,
     zip,

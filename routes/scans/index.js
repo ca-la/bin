@@ -31,7 +31,6 @@ function* createScanPhoto() {
 
   const data = this.req.files && this.req.files.data;
   this.assert(data, 400, 'Image must be uploaded as `data`');
-  console.log(data);
   this.assert(data.mimetype === 'image/jpeg', 400, 'Only photos can be uploaded');
 
   const localPath = data.path;
