@@ -1,7 +1,6 @@
 'use strict';
 
 const koa = require('koa');
-const multer = require('koa-multer');
 
 const app = koa();
 
@@ -15,7 +14,6 @@ const attachSession = require('./middleware/attach-session');
 // General middleware
 app.use(logger);
 app.use(errors);
-app.use(multer());
 app.use(jsonBody);
 app.use(headers);
 app.use(options);

@@ -3,6 +3,7 @@
 const router = require('koa-router')({
   prefix: '/scans'
 });
+const multer = require('koa-multer');
 
 const InvalidDataError = require('../../errors/invalid-data');
 const requireAuth = require('../../middleware/require-auth');
@@ -29,8 +30,10 @@ function* createScanPhoto() {
   this.assert(scan, 404, 'Scan not found');
   this.assert(scan.userId === this.state.userId, 403, 'You can only upload photos for your own scan');
 
-  const data = this.req.files && this.req.files.data;
-  this.assert(data, 400, 'Image must be uploaded as `data`');
+  console.log('got files', this.req.files);
+
+  const data = this.req.files.image;
+  this.assert(data, 400, 'Image must be uploaded as `image`');
   this.assert(data.mimetype === 'image/jpeg', 400, 'Only photos can be uploaded');
 
   const localPath = data.path;
@@ -74,7 +77,7 @@ function* getList() {
 }
 
 router.post('/', requireAuth, createScan);
-router.post('/:scanId/photos', requireAuth, createScanPhoto);
+router.post('/:scanId/photos', requireAuth, multer(), createScanPhoto);
 router.put('/:scanId', requireAuth, updateScan);
 router.get('/', requireAuth, getList);
 
