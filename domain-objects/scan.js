@@ -11,6 +11,7 @@ class Scan {
     this.measurements = row.measurements;
     this.type = row.type;
     this.userId = row.user_id;
+    this.createdAt = new Date(row.created_at);
   }
 }
 
