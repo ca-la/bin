@@ -21,6 +21,7 @@ app.use(attachSession);
 
 // Route-specific middleware
 app.use(require('./routes/addresses'));
+app.use(require('./routes/collections'));
 app.use(require('./routes/orders'));
 app.use(require('./routes/password-resets'));
 app.use(require('./routes/root'));

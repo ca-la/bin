@@ -53,6 +53,48 @@ function login(email, password) {
 }
 
 /**
+ * Retrieve a list of collections
+ */
+function getCollections() {
+  const url = `${SHOPIFY_STORE_BASE}/admin/custom_collections.json`;
+
+  return Promise.resolve()
+    .then(() =>
+      fetch(url, {
+        method: 'get',
+        headers: {
+          Authorization: `Basic ${shopifyAuthHeader}`
+        }
+      })
+    )
+    .then((response) => {
+      return response.json();
+    })
+    .then(body => body.custom_collections);
+}
+
+/**
+ * Retrieve a set of products in a certain collection
+ */
+function getProductsByCollectionId(collectionId) {
+  const url = `${SHOPIFY_STORE_BASE}/admin/products.json?collection_id=${collectionId}`;
+
+  return Promise.resolve()
+    .then(() =>
+      fetch(url, {
+        method: 'get',
+        headers: {
+          Authorization: `Basic ${shopifyAuthHeader}`
+        }
+      })
+    )
+    .then((response) => {
+      return response.json();
+    })
+    .then(body => body.products);
+}
+
+/**
  * Retrieve a single order by ID
  */
 function getOrder(id) {
@@ -115,6 +157,8 @@ function getRedemptionCount(discountCode) {
 
 module.exports = {
   getOrder,
+  getCollections,
+  getProductsByCollectionId,
   getRedemptionCount,
   login
 };
