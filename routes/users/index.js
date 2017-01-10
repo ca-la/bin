@@ -29,6 +29,10 @@ function* createUser() {
 
   // This is super naive and doesn't use transactions; if the address creation
   // fails, the user will still be created. TODO clean up.
+  // (note: the 'create user and address at the same time' flow is only used
+  // from our internal signup tool, which has it's own client-side validation,
+  // so this isn't as bad as it looks. Public signups via the mobile app will do
+  // this in two steps.)
   if (address) {
     const addressData = Object.assign({}, address, {
       userId: user.id
