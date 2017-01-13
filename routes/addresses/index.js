@@ -5,6 +5,7 @@ const router = require('koa-router')({
 });
 
 const AddressesDAO = require('../../dao/addresses');
+const InvalidDataError = require('../../errors/invalid-data');
 const requireAuth = require('../../middleware/require-auth');
 
 /**
@@ -19,6 +20,22 @@ function* getList() {
   this.status = 200;
 }
 
+/**
+ * POST /addresses
+ */
+function* createAddress() {
+  const addressData = Object.assign({}, this.request.body, {
+    userId: this.state.userId
+  });
+
+  const address = yield AddressesDAO.create(addressData)
+    .catch(InvalidDataError, err => this.throw(400, err));
+
+  this.status = 201;
+  this.body = address;
+}
+
 router.get('/', requireAuth, getList);
+router.post('/', requireAuth, createAddress);
 
 module.exports = router.routes();

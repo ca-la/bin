@@ -2,10 +2,10 @@
 
 const createUser = require('../../test-helpers/create-user');
 
-const { get, authHeader } = require('../../test-helpers/http');
+const { get, post, authHeader } = require('../../test-helpers/http');
 const { test } = require('../../test-helpers/fresh');
 
-test('GET /addresses returns a 401 when called without a user ID', (t) => {
+test('GET /addresses returns a 401 when called without auth', (t) => {
   return get('/addresses')
     .then(([response, body]) => {
       t.equal(response.status, 401);
@@ -41,5 +41,39 @@ test('GET /addresses returns a list of addresses', (t) => {
       t.equal(response.status, 200);
       t.equal(body.length, 1);
       t.equal(body[0].id, addressId);
+    });
+});
+
+test('POST /addresses returns a 401 when called without auth', (t) => {
+  return post('/addresses')
+    .then(([response, body]) => {
+      t.equal(response.status, 401);
+      t.equal(body.message, 'Authorization is required to access this resource');
+    });
+});
+
+test('POST /addresses creates and returns an address', (t) => {
+  let userId;
+
+  return createUser(true)
+    .then(({ user, session }) => {
+      userId = user.id;
+
+      return post('/addresses', {
+        headers: authHeader(session.id),
+        body: {
+          companyName: 'CALA',
+          addressLine1: '42 Wallaby Way',
+          city: 'Sydney',
+          region: 'NSW',
+          country: 'Australia',
+          postCode: 'RG41 2PE'
+        }
+      });
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 201);
+      t.equal(body.companyName, 'CALA');
+      t.equal(body.userId, userId);
     });
 });
