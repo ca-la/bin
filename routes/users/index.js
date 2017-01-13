@@ -8,6 +8,7 @@ const AddressesDAO = require('../../dao/addresses');
 const InvalidDataError = require('../../errors/invalid-data');
 const MailChimp = require('../../services/mailchimp');
 const requireAuth = require('../../middleware/require-auth');
+const SessionsDAO = require('../../dao/sessions');
 const Shopify = require('../../services/shopify');
 const UsersDAO = require('../../dao/users');
 const { MAILCHIMP_LIST_ID_USERS } = require('../../services/config');
@@ -53,7 +54,17 @@ function* createUser() {
   });
 
   this.status = 201;
-  this.body = user;
+
+  // Allow `?returnValue=session` on the end of the URL to return a session (with
+  // attached user) rather than just a user.
+  // Not the most RESTful thing in the world... but much nicer from a client
+  // perspective.
+  if (this.query.returnValue === 'session') {
+    const session = yield SessionsDAO.createForUser(user);
+    this.body = session;
+  } else {
+    this.body = user;
+  }
 }
 
 /**
