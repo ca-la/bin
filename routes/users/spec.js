@@ -73,6 +73,18 @@ test('POST /users allows creating an address', (t) => {
     });
 });
 
+test('POST /users returns a session instead if requested', (t) => {
+  sandbox().stub(MailChimp, 'subscribe', () => Promise.resolve());
+  sandbox().stub(UnassignedReferralCodesDAO, 'get', () => Promise.resolve('ABC123'));
+
+  return post('/users?returnValue=session', { body: USER_DATA })
+    .then(([response, body]) => {
+      t.equal(response.status, 201, 'status=201');
+      t.equal(body.userId.length, 36);
+      t.equal(body.user.name, 'Q User');
+    });
+});
+
 test('PUT /users/:id/password returns a 401 if unauthenticated', (t) => {
   return put('/users/123/password', { body: {} })
     .then(([response, body]) => {
