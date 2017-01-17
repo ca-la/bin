@@ -64,7 +64,8 @@ function updateOneById(id, data) {
   return db('scans')
     .where({ id })
     .update({
-      is_complete: data.isComplete
+      is_complete: data.isComplete,
+      measurements: data.measurements
     }, '*')
     .then(first)
     .then(instantiate);
