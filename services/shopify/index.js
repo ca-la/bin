@@ -126,6 +126,31 @@ function getOrder(id) {
 }
 
 /**
+ * Get a single product
+ */
+function getProductById(id) {
+  const url = `${SHOPIFY_STORE_BASE}/admin/products/${id}.json`;
+
+  return Promise.resolve()
+    .then(() =>
+      fetch(url, {
+        method: 'get',
+        headers: {
+          Authorization: `Basic ${shopifyAuthHeader}`
+        }
+      })
+    )
+    .then((response) => {
+      if (response.status === 404) {
+        throw new ShopifyNotFoundError('Product not found');
+      }
+
+      return response.json();
+    })
+    .then(body => body.product);
+}
+
+/**
  * Get the number of orders that used a given discount code.
  */
 function getRedemptionCount(discountCode) {
@@ -164,6 +189,7 @@ function getRedemptionCount(discountCode) {
 module.exports = {
   getOrder,
   getCollections,
+  getProductById,
   getProductsByCollectionId,
   getRedemptionCount,
   login
