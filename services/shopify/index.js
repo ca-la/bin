@@ -70,7 +70,13 @@ function getCollections() {
     .then((response) => {
       return response.json();
     })
-    .then(body => body.custom_collections);
+    .then((body) => {
+      const collections = body.custom_collections;
+
+      return collections.sort((a, b) => {
+        return new Date(b.published_at) - new Date(a.published_at);
+      });
+    });
 }
 
 /**
