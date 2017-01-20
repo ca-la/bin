@@ -8,6 +8,16 @@ const ShopifyNotFoundError = require('../../errors/shopify-not-found');
 const Shopify = require('../../services/shopify');
 
 /**
+ * GET /products
+ */
+function* getList() {
+  const products = yield Shopify.getAllProducts();
+
+  this.body = products;
+  this.status = 200;
+}
+
+/**
  * GET /products/:productId
  */
 function* getById() {
@@ -19,5 +29,6 @@ function* getById() {
 }
 
 router.get('/:productId', getById);
+router.get('/', getList);
 
 module.exports = router.routes();
