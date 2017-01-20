@@ -150,6 +150,24 @@ function getProductById(id) {
     .then(body => body.product);
 }
 
+function getAllProducts() {
+  const url = `${SHOPIFY_STORE_BASE}/admin/products.json`;
+
+  return Promise.resolve()
+    .then(() =>
+      fetch(url, {
+        method: 'get',
+        headers: {
+          Authorization: `Basic ${shopifyAuthHeader}`
+        }
+      })
+    )
+    .then((response) => {
+      return response.json();
+    })
+    .then(body => body.products);
+}
+
 /**
  * Get the number of orders that used a given discount code.
  */
@@ -190,6 +208,7 @@ module.exports = {
   getOrder,
   getCollections,
   getProductById,
+  getAllProducts,
   getProductsByCollectionId,
   getRedemptionCount,
   login
