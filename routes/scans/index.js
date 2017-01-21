@@ -103,7 +103,7 @@ function* claimScan() {
 router.get('/', requireAuth, getList);
 router.post('/', createScan);
 router.post('/:scanId/claim', requireAuth, claimScan);
-router.post('/:scanId/photos', requireAuth, multer(), createScanPhoto);
-router.put('/:scanId', requireAuth, updateScan);
+router.post('/:scanId/photos', multer(), createScanPhoto);
+router.put('/:scanId', updateScan);
 
 module.exports = router.routes();
