@@ -65,7 +65,8 @@ function updateOneById(id, data) {
     .where({ id })
     .update({
       is_complete: data.isComplete,
-      measurements: data.measurements
+      measurements: data.measurements,
+      user_id: data.userId
     }, '*')
     .then(first)
     .then(instantiate);

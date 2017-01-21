@@ -28,7 +28,10 @@ function* createScan() {
 function* createScanPhoto() {
   const scan = yield ScansDAO.findById(this.params.scanId);
   this.assert(scan, 404, 'Scan not found');
-  this.assert(scan.userId === this.state.userId, 403, 'You can only upload photos for your own scan');
+
+  if (scan.userId) {
+    this.assert(scan.userId === this.state.userId, 403, 'You can only upload photos for your own scan');
+  }
 
   const data = this.req.files.image;
   this.assert(data, 400, 'Image must be uploaded as `image`');
@@ -54,7 +57,10 @@ function* createScanPhoto() {
 function* updateScan() {
   const scan = yield ScansDAO.findById(this.params.scanId);
   this.assert(scan, 404, 'Scan not found');
-  this.assert(scan.userId === this.state.userId, 403, 'You can only upload photos for your own scan');
+
+  if (scan.userId) {
+    this.assert(scan.userId === this.state.userId, 403, 'You can only upload photos for your own scan');
+  }
   this.assert(this.request.body, 400, 'New data must be provided');
 
   const updated = yield ScansDAO.updateOneById(this.params.scanId, this.request.body);
@@ -74,9 +80,30 @@ function* getList() {
   this.status = 200;
 }
 
-router.post('/', requireAuth, createScan);
+/**
+ * POST /scans/:scanId/claim
+ *
+ * If a user created an anonymous scan prior to signing up, they can use this
+ * endpoint to claim it afterwards.
+ */
+function* claimScan() {
+  const scan = yield ScansDAO.findById(this.params.scanId);
+  this.assert(scan, 404, 'Scan not found');
+
+  this.assert(!scan.userId, 400, 'This scan has already been claimed');
+
+  const updated = yield ScansDAO.updateOneById(this.params.scanId, {
+    userId: this.state.userId
+  });
+
+  this.body = updated;
+  this.status = 200;
+}
+
+router.get('/', requireAuth, getList);
+router.post('/', createScan);
+router.post('/:scanId/claim', requireAuth, claimScan);
 router.post('/:scanId/photos', requireAuth, multer(), createScanPhoto);
 router.put('/:scanId', requireAuth, updateScan);
-router.get('/', requireAuth, getList);
 
 module.exports = router.routes();
