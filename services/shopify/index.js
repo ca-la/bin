@@ -168,8 +168,13 @@ function getAllProducts() {
     .then((body) => {
       const products = body.products;
 
-      // Exclude VIP products - e.g. mens bomber - from public list
-      return products.filter((product) => product.product_type !== 'VIP');
+      // Exclude 'special' products - e.g. mens bomber - from public list
+      return products.filter((product) => {
+        return (
+          product.product_type !== 'VIP' &&
+          product.product_type !== 'Designer'
+        );
+      });
     });
 }
 
