@@ -165,7 +165,17 @@ function getAllProducts() {
     .then((response) => {
       return response.json();
     })
-    .then(body => body.products);
+    .then((body) => {
+      const products = body.products;
+
+      // Exclude 'special' products - e.g. mens bomber - from public list
+      return products.filter((product) => {
+        return (
+          product.product_type !== 'VIP' &&
+          product.product_type !== 'Designer'
+        );
+      });
+    });
 }
 
 /**
