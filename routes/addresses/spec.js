@@ -53,12 +53,8 @@ test('POST /addresses returns a 401 when called without auth', (t) => {
 });
 
 test('POST /addresses returns a 400 when called with missing data', (t) => {
-  let userId;
-
   return createUser(true)
-    .then(({ user, session }) => {
-      userId = user.id;
-
+    .then(({ session }) => {
       return post('/addresses', {
         headers: authHeader(session.id),
         body: {
