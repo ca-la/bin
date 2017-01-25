@@ -52,6 +52,27 @@ test('POST /addresses returns a 401 when called without auth', (t) => {
     });
 });
 
+test('POST /addresses returns a 400 when called with missing data', (t) => {
+  return createUser(true)
+    .then(({ session }) => {
+      return post('/addresses', {
+        headers: authHeader(session.id),
+        body: {
+          companyName: '',
+          addressLine1: '',
+          city: '',
+          region: '',
+          country: '',
+          postCode: ''
+        }
+      });
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 400);
+      t.equal(body.message, 'Missing required information: Address Line 1');
+    });
+});
+
 test('POST /addresses creates and returns an address', (t) => {
   let userId;
 
