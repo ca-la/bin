@@ -1,5 +1,26 @@
 'use strict';
 
+const isProduction = (process.env.NODE_ENV === 'production');
+
+const featuredProductsDev = [
+  '8564586765',
+  '8564595021',
+  '8564584909',
+  '8564587597'
+];
+
+const featuredProductsProd = [
+  '8645330115',
+  '8645323203',
+  '7413370755',
+  '7413088067',
+  '8645286275'
+];
+
+const FEATURED_PRODUCT_IDS = isProduction ?
+  featuredProductsProd :
+  featuredProductsDev;
+
 /**
  * All environment variables are required for API functionality, unless stated
  * otherwise.
@@ -37,12 +58,14 @@ const config = {
   // this is set, and a customer is within a reasonable radius of this zip when
   // they subscribe to the newsletter, we'll offer them the ability to schedule
   // an appointment directly with us.
-  PRIVATE_APPOINTMENT_ZIP: process.env.PRIVATE_APPOINTMENT_ZIP
+  PRIVATE_APPOINTMENT_ZIP: process.env.PRIVATE_APPOINTMENT_ZIP,
+
+  FEATURED_PRODUCT_IDS
 };
 
 Object.keys(config).forEach((key) => {
   if (!config[key]) {
-    throw new Error(`Missing environment variable: ${key}`);
+    throw new Error(`Missing config value: ${key}`);
   }
 });
 
