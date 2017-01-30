@@ -3,18 +3,18 @@
 const isProduction = (process.env.NODE_ENV === 'production');
 
 const featuredProductsDev = [
-  '8564586765',
-  '8564595021',
-  '8564584909',
-  '8564587597'
+  8564586765,
+  8564595021,
+  8564584909,
+  8564587597
 ];
 
 const featuredProductsProd = [
-  '8645330115',
-  '8645323203',
-  '7413370755',
-  '7413088067',
-  '8645286275'
+  8645330115,
+  8645323203,
+  7413370755,
+  7413088067,
+  8645286275
 ];
 
 const FEATURED_PRODUCT_IDS = isProduction ?
