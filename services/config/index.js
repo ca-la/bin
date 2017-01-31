@@ -10,11 +10,12 @@ const featuredProductsDev = [
 ];
 
 const featuredProductsProd = [
-  8645330115,
-  8645323203,
-  7413370755,
-  7413088067,
-  8645286275
+  7413370755, // Pierce Bomber
+  8645330115, // Wanda Leather Jacket
+  8645370051, // Pitch Mens Jacket
+  8645323203, // Veda Dress
+  7413088067, // Morgan Blouse (blue)
+  8645286275 // Kat Cami
 ];
 
 const FEATURED_PRODUCT_IDS = isProduction ?
