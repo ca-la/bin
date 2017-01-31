@@ -4,6 +4,11 @@ const pick = require('lodash/pick');
 
 const requireProperties = require('../services/require-properties');
 
+const ROLES = {
+  user: 'USER',
+  admin: 'ADMIN'
+};
+
 class User {
   constructor(row) {
     requireProperties(row, 'id');
@@ -14,6 +19,7 @@ class User {
     this.zip = row.zip;
     this.passwordHash = row.password_hash;
     this.referralCode = row.referral_code;
+    this.role = row.role;
     this.createdAt = new Date(row.created_at);
   }
 
@@ -25,7 +31,8 @@ class User {
       'zip',
       'createdAt',
       'addresses',
-      'referralCode'
+      'referralCode',
+      'role'
     );
   }
 
@@ -33,5 +40,7 @@ class User {
     this.addresses = addresses;
   }
 }
+
+User.ROLES = ROLES;
 
 module.exports = User;
