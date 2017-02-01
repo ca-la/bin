@@ -15,7 +15,7 @@ const instantiate = data => new User(data);
 const maybeInstantiate = data => (data && new User(data)) || null;
 
 function create(data) {
-  const { name, zip, email, password } = data;
+  const { name, zip, email, password, role } = data;
 
   if (!name || !zip || !email || !password) {
     return Promise.reject(new InvalidDataError('Missing required information'));
@@ -35,6 +35,7 @@ function create(data) {
         name,
         zip,
         email,
+        role,
         password_hash: passwordHash,
         referral_code: referralCode
       }, '*')
@@ -96,6 +97,15 @@ function findById(id) {
     .then(maybeInstantiate);
 }
 
+function findAll({ limit, offset }) {
+  if (typeof limit !== 'number' || typeof offset !== 'number') {
+    throw new Error('Limit and offset must be provided to find all users');
+  }
+
+  return db('users').select('*')
+    .then(users => users.map(instantiate));
+}
+
 function findByEmail(email) {
   return db('users').where({ email })
     .then(first)
@@ -123,6 +133,7 @@ function updatePassword(userId, password) {
 module.exports = {
   create,
   createWithoutPassword,
+  findAll,
   findByEmail,
   findById,
   findByReferralCode,

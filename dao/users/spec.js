@@ -69,3 +69,11 @@ test('UsersDAO.findByEmail returns a user', (t) => {
     });
 });
 
+test('UsersDAO.findAll returns users', (t) => {
+  return UsersDAO.create(USER_DATA)
+    .then(() => UsersDAO.findAll({ limit: 1, offset: 0 }))
+    .then((users) => {
+      t.equal(users.length, 1);
+      t.equal(users[0].name, 'Q User');
+    });
+});

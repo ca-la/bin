@@ -29,7 +29,7 @@ test('GET /addresses returns a 403 when called with someone elses user ID', (t) 
 test('GET /addresses returns a list of addresses', (t) => {
   let addressId;
 
-  return createUser(true, true)
+  return createUser({ withAddress: true })
     .then(({ user, session, address }) => {
       addressId = address.id;
 
@@ -53,7 +53,7 @@ test('POST /addresses returns a 401 when called without auth', (t) => {
 });
 
 test('POST /addresses returns a 400 when called with missing data', (t) => {
-  return createUser(true)
+  return createUser()
     .then(({ session }) => {
       return post('/addresses', {
         headers: authHeader(session.id),
@@ -76,7 +76,7 @@ test('POST /addresses returns a 400 when called with missing data', (t) => {
 test('POST /addresses creates and returns an address', (t) => {
   let userId;
 
-  return createUser(true)
+  return createUser()
     .then(({ user, session }) => {
       userId = user.id;
 

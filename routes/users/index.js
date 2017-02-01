@@ -5,11 +5,13 @@ const router = require('koa-router')({
 });
 
 const AddressesDAO = require('../../dao/addresses');
+const attachRole = require('../../middleware/attach-role');
 const InvalidDataError = require('../../errors/invalid-data');
 const MailChimp = require('../../services/mailchimp');
 const requireAuth = require('../../middleware/require-auth');
 const SessionsDAO = require('../../dao/sessions');
 const Shopify = require('../../services/shopify');
+const User = require('../../domain-objects/user');
 const UsersDAO = require('../../dao/users');
 const { MAILCHIMP_LIST_ID_USERS } = require('../../services/config');
 
@@ -97,12 +99,6 @@ function* getReferralCount() {
   this.body = { count };
 }
 
-/**
- * GET /users?referralCode=12312
- *
- * Returns an array to future-proof in case we want to list multiple users in
- * future.
- */
 function* getByReferralCode() {
   this.assert(this.query.referralCode, 400, 'A referral code must be provided to filter on');
   const user = yield UsersDAO.findByReferralCode(this.query.referralCode);
@@ -110,7 +106,33 @@ function* getByReferralCode() {
   this.status = 200;
 }
 
-router.get('/', getByReferralCode);
+function* getAllUsers() {
+  this.assert(this.state.role === User.ROLES.admin, 403);
+
+  const users = yield UsersDAO.findAll({
+    limit: this.query.limit || 10,
+    offset: this.query.offset || 0
+  });
+
+  this.body = users;
+  this.status = 200;
+}
+
+/**
+ * GET /users?referralCode=12312
+ *
+ * Returns an array to future-proof in case we want to list multiple users in
+ * future.
+ */
+function* getList() {
+  if (this.query.referralCode) {
+    yield getByReferralCode;
+  } else {
+    yield getAllUsers;
+  }
+}
+
+router.get('/', attachRole, getList);
 router.get('/:userId/referral-count', requireAuth, getReferralCount);
 router.post('/', createUser);
 router.put('/:userId/password', requireAuth, updatePassword);
