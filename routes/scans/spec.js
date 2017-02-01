@@ -69,12 +69,12 @@ test('GET /scans returns a 403 when called with someone elses user ID', (t) => {
     });
 });
 
-test('GET /scans returns a list of scans', (t) => {
+test('GET /scans returns a list of your own scans', (t) => {
   let userId;
   let sessionId;
   let scanId;
 
-  return createUser(true)
+  return createUser()
     .then(({ user, session }) => {
       userId = user.id;
       sessionId = session.id;
@@ -94,6 +94,26 @@ test('GET /scans returns a list of scans', (t) => {
       t.equal(response.status, 200);
       t.equal(body.length, 1);
       t.equal(body[0].id, scanId);
+    });
+});
+
+test('GET /scans returns a list of scans when admin', (t) => {
+  let otherUserId;
+  return Promise.all([
+    createUser(),
+    createUser({ role: 'ADMIN' })
+  ])
+    .then((users) => {
+      const { session } = users[1];
+      otherUserId = users[0].user.id;
+
+      return get(`/scans?userId=${otherUserId}`, {
+        headers: authHeader(session.id)
+      });
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 200);
+      t.deepEqual(body, []);
     });
 });
 

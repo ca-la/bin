@@ -5,12 +5,14 @@ const router = require('koa-router')({
 });
 const multer = require('koa-multer');
 
+const attachRole = require('../../middleware/attach-role');
 const InvalidDataError = require('../../errors/invalid-data');
 const requireAuth = require('../../middleware/require-auth');
-const ScansDAO = require('../../dao/scans');
 const ScanPhotosDAO = require('../../dao/scan-photos');
-const { uploadFile } = require('../../services/aws');
+const ScansDAO = require('../../dao/scans');
+const User = require('../../domain-objects/user');
 const { AWS_SCANPHOTO_BUCKET_NAME } = require('../../services/config');
+const { uploadFile } = require('../../services/aws');
 
 function* createScan() {
   const { type } = this.request.body;
@@ -72,7 +74,12 @@ function* updateScan() {
  * GET /scans?userId=ABC123
  */
 function* getList() {
-  this.assert(this.query.userId === this.state.userId, 403, 'You can only request scans for your own user');
+  const isAuthorized = (
+    this.query.userId === this.state.userId ||
+    this.state.role === User.ROLES.admin
+  );
+
+  this.assert(isAuthorized, 403, 'You can only request scans for your own user');
 
   const scans = yield ScansDAO.findByUserId(this.query.userId);
 
@@ -100,7 +107,7 @@ function* claimScan() {
   this.status = 200;
 }
 
-router.get('/', requireAuth, getList);
+router.get('/', requireAuth, attachRole, getList);
 router.post('/', createScan);
 router.post('/:scanId/claim', requireAuth, claimScan);
 router.post('/:scanId/photos', multer(), createScanPhoto);

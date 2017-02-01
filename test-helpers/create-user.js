@@ -8,7 +8,6 @@ const AddressesDAO = require('../dao/addresses');
 
 const USER_DATA = Object.freeze({
   name: 'Q User',
-  email: 'user@example.com',
   zip: '94117',
   password: 'hunter2',
   referralCode: 'freebie'
@@ -26,8 +25,8 @@ const ADDRESS_DATA = Object.freeze({
 
 /**
  * Create a user, and optionally some associated resources
- * @param {Boolean} withSession whether to create a session
- * @param {Boolean} withAddress whether to create an address
+ * @param {Boolean} options.withSession whether to create a session
+ * @param {Boolean} options.withAddress whether to create an address
  * @resolves with an object in the format:
  * {
  *   user: {...}
@@ -35,9 +34,19 @@ const ADDRESS_DATA = Object.freeze({
  *   address: {...}
  * }
  */
-function createUser(withSession = true, withAddress = false) {
+function createUser({
+  withSession = true,
+  withAddress = false,
+  role
+} = {}) {
   let user;
-  return UsersDAO.create(USER_DATA)
+
+  const data = Object.assign({}, USER_DATA, {
+    role,
+    email: `${Math.random()}@example.com`
+  });
+
+  return UsersDAO.create(data)
     .then((_user) => {
       user = _user;
 

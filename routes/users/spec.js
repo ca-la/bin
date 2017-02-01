@@ -152,14 +152,6 @@ test('GET /users/:id/referral-count determines the current referral count', (t) 
     });
 });
 
-test('GET /users returns 400 if no referral code is provided', (t) => {
-  return get('/users')
-    .then(([response, body]) => {
-      t.equal(response.status, 400);
-      t.equal(body.message, 'A referral code must be provided to filter on');
-    });
-});
-
 test('GET /users returns an empty array if referral code does not match a user', (t) => {
   return get('/users?referralCode=FOZO')
     .then(([response, body]) => {
@@ -181,3 +173,43 @@ test('GET /users returns a user by referral code, case insensitive', (t) => {
       t.equal(body[0].id, userId);
     });
 });
+
+test('GET /users list returns 403 if not authorized', (t) => {
+  return get('/users')
+    .then(([response, body]) => {
+      t.equal(response.status, 403);
+      t.equal(body.message, 'Forbidden');
+    });
+});
+
+test('GET /users list returns 403 if logged in but not admin', (t) => {
+  return createUser()
+    .then(({ session }) => {
+      return get('/users', {
+        headers: authHeader(session.id)
+      });
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 403);
+      t.equal(body.message, 'Forbidden');
+    });
+});
+
+
+test('GET /users list returns a list of users if authorized', (t) => {
+  let userId;
+
+  return createUser({ role: 'ADMIN' })
+    .then(({ user, session }) => {
+      userId = user.id;
+      return get('/users', {
+        headers: authHeader(session.id)
+      });
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 200);
+      t.equal(body.length, 1);
+      t.equal(body[0].id, userId);
+    });
+});
+

@@ -6,7 +6,7 @@ const createUser = require('../../test-helpers/create-user');
 const InvalidDataError = require('../../errors/invalid-data');
 
 test('ScansDAO.create creates a new scan', (t) => {
-  return createUser(false)
+  return createUser({ withSession: false })
     .then(({ user }) => {
       return create({
         userId: user.id,
@@ -25,7 +25,7 @@ test('ScansDAO.create creates a new scan', (t) => {
 });
 
 test('ScansDAO.create fails without a type', (t) => {
-  return createUser(false)
+  return createUser({ withSession: false })
     .then(({ user }) => {
       return create({
         userId: user.id
@@ -39,7 +39,7 @@ test('ScansDAO.create fails without a type', (t) => {
 });
 
 test('ScansDAO.updateOneById updates a scan', (t) => {
-  return createUser(false)
+  return createUser({ withSession: false })
     .then(({ user }) => {
       return create({
         userId: user.id,
