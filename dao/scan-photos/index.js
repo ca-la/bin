@@ -19,6 +19,15 @@ function create(data) {
     .then(instantiate);
 }
 
+function findByScanId(scanId) {
+  return db('scanphotos').where({
+    scan_id: scanId
+  }, '*')
+    .catch(rethrow)
+    .then(photos => photos.map(instantiate));
+}
+
 module.exports = {
-  create
+  create,
+  findByScanId
 };

@@ -51,7 +51,6 @@ function* createScanPhoto() {
   const fileName = `${photo.id}.jpg`;
   const url = yield uploadFile(AWS_SCANPHOTO_BUCKET_NAME, fileName, localPath);
 
-  photo.setUrl(url);
   this.status = 201;
   this.body = photo;
 }
@@ -107,7 +106,20 @@ function* claimScan() {
   this.status = 200;
 }
 
+/**
+ * GET /scans/:scanId/photos
+ */
+function* getScanPhotos() {
+  this.assert(this.state.role === User.ROLES.admin, 403);
+
+  const photos = yield ScanPhotosDAO.findByScanId(this.params.scanId);
+
+  this.body = photos;
+  this.status = 200;
+}
+
 router.get('/', requireAuth, attachRole, getList);
+router.get('/:scanId/photos', requireAuth, attachRole, getScanPhotos);
 router.post('/', createScan);
 router.post('/:scanId/claim', requireAuth, claimScan);
 router.post('/:scanId/photos', multer(), createScanPhoto);
