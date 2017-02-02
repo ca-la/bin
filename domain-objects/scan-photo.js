@@ -17,7 +17,7 @@ class ScanPhoto {
       id: this.id,
       scanId: this.scanId,
       createdAt: this.createdAt,
-      url: `https://s3.amazonaws.com/${AWS_SCANPHOTO_BUCKET_NAME}/${this.id}.jpg`
+      url: `https://${AWS_SCANPHOTO_BUCKET_NAME}.s3.amazonaws.com/${this.id}.jpg`
     };
   }
 }

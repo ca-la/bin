@@ -110,8 +110,8 @@ function* getAllUsers() {
   this.assert(this.state.role === User.ROLES.admin, 403);
 
   const users = yield UsersDAO.findAll({
-    limit: this.query.limit || 10,
-    offset: this.query.offset || 0
+    limit: Number(this.query.limit) || 10,
+    offset: Number(this.query.offset) || 0
   });
 
   this.body = users;
