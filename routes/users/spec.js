@@ -213,3 +213,15 @@ test('GET /users list returns a list of users if authorized', (t) => {
     });
 });
 
+test('GET /users/:id returns a user', (t) => {
+  return createUser({ role: 'ADMIN' })
+    .then(({ user, session }) => {
+      return get(`/users/${user.id}`, {
+        headers: authHeader(session.id)
+      });
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 200);
+      t.equal(body.name, 'Q User');
+    });
+});

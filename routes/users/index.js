@@ -132,7 +132,20 @@ function* getList() {
   }
 }
 
+/**
+ * GET /users/:id
+ */
+function* getUser() {
+  this.assert(this.state.role === User.ROLES.admin, 403);
+
+  const user = yield UsersDAO.findById(this.params.userId);
+  this.assert(user, 404, 'User not found');
+  this.body = user;
+  this.status = 200;
+}
+
 router.get('/', attachRole, getList);
+router.get('/:userId', requireAuth, attachRole, getUser);
 router.get('/:userId/referral-count', requireAuth, getReferralCount);
 router.post('/', createUser);
 router.put('/:userId/password', requireAuth, updatePassword);
