@@ -209,3 +209,26 @@ test('GET /scans/:id/photos returns 403 if not admin', (t) => {
       t.equal(body.message, 'Forbidden');
     });
 });
+
+test('GET /scans/:id returns a scan', (t) => {
+  let sessionId;
+
+  return createUser({ role: 'ADMIN' })
+    .then(({ user, session }) => {
+      sessionId = session.id;
+
+      return ScansDAO.create({
+        type: ScansDAO.SCAN_TYPES.photo,
+        userId: user.id
+      });
+    })
+    .then((scan) => {
+      return get(`/scans/${scan.id}`, {
+        headers: authHeader(sessionId)
+      });
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 200);
+      t.equal(body.type, 'PHOTO');
+    });
+});

@@ -118,7 +118,18 @@ function* getScanPhotos() {
   this.status = 200;
 }
 
+function* getScan() {
+  this.assert(this.state.role === User.ROLES.admin, 403);
+
+  const scan = yield ScansDAO.findById(this.params.scanId);
+  this.assert(scan, 404, 'Scan not found');
+
+  this.body = scan;
+  this.status = 200;
+}
+
 router.get('/', requireAuth, attachRole, getList);
+router.get('/:scanId', requireAuth, attachRole, getScan);
 router.get('/:scanId/photos', requireAuth, attachRole, getScanPhotos);
 router.post('/', createScan);
 router.post('/:scanId/claim', requireAuth, claimScan);
