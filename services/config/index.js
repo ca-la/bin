@@ -61,7 +61,9 @@ const config = {
   // an appointment directly with us.
   PRIVATE_APPOINTMENT_ZIP: process.env.PRIVATE_APPOINTMENT_ZIP,
 
-  FEATURED_PRODUCT_IDS
+  FEATURED_PRODUCT_IDS,
+
+  REFERRAL_VALUE_DOLLARS: 50
 };
 
 Object.keys(config).forEach((key) => {
