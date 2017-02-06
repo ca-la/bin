@@ -146,7 +146,7 @@ test('GET /users/:id/referral-count determines the current referral count', (t) 
     })
     .then(([response, body]) => {
       t.equal(response.status, 200);
-      t.deepEqual(body, { count: 10 });
+      t.deepEqual(body, { count: 10, referralValueDollars: 50 });
       t.equal(Shopify.getRedemptionCount.callCount, 1);
       t.equal(Shopify.getRedemptionCount.lastCall.args[0], 'freebie');
     });

@@ -13,7 +13,10 @@ const SessionsDAO = require('../../dao/sessions');
 const Shopify = require('../../services/shopify');
 const User = require('../../domain-objects/user');
 const UsersDAO = require('../../dao/users');
-const { MAILCHIMP_LIST_ID_USERS } = require('../../services/config');
+const {
+  MAILCHIMP_LIST_ID_USERS,
+  REFERRAL_VALUE_DOLLARS
+} = require('../../services/config');
 
 /**
  * POST /users
@@ -95,8 +98,13 @@ function* getReferralCount() {
 
   const user = yield UsersDAO.findById(this.params.userId);
   const count = yield Shopify.getRedemptionCount(user.referralCode);
+
   this.status = 200;
-  this.body = { count };
+
+  this.body = {
+    count,
+    referralValueDollars: REFERRAL_VALUE_DOLLARS
+  };
 }
 
 function* getByReferralCode() {
