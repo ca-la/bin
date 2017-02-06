@@ -15,11 +15,12 @@ const { AWS_SCANPHOTO_BUCKET_NAME } = require('../../services/config');
 const { uploadFile } = require('../../services/aws');
 
 function* createScan() {
-  const { type } = this.request.body;
+  const { type, isComplete } = this.request.body;
 
   const scan = yield ScansDAO.create({
     type,
-    userId: this.state.userId
+    userId: this.state.userId,
+    isComplete
   })
     .catch(InvalidDataError, err => this.throw(400, err));
 
