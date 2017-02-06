@@ -38,6 +38,27 @@ test('POST /scans returns a 201 on success', (t) => {
     });
 });
 
+test('POST /scans allows specifying isComplete', (t) => {
+  let userId;
+  return createUser()
+    .then(({ user, session }) => {
+      userId = user.id;
+
+      return post('/scans', {
+        body: {
+          type: 'PHOTO',
+          isComplete: true
+        },
+        headers: authHeader(session.id)
+      });
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 201);
+      t.equal(body.userId, userId);
+      t.equal(body.isComplete, true);
+    });
+});
+
 test('POST /scans can create an anonymous scan', (t) => {
   return post('/scans', {
     body: { type: 'PHOTO' }
