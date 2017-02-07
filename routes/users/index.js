@@ -9,6 +9,7 @@ const attachRole = require('../../middleware/attach-role');
 const InvalidDataError = require('../../errors/invalid-data');
 const MailChimp = require('../../services/mailchimp');
 const requireAuth = require('../../middleware/require-auth');
+const ScansDAO = require('../../dao/scans');
 const SessionsDAO = require('../../dao/sessions');
 const Shopify = require('../../services/shopify');
 const User = require('../../domain-objects/user');
@@ -27,7 +28,8 @@ function* createUser() {
     zip,
     email,
     password,
-    address
+    address,
+    scan
   } = this.request.body;
 
   const user = yield UsersDAO.create({ name, zip, email, password })
@@ -35,10 +37,10 @@ function* createUser() {
 
   // This is super naive and doesn't use transactions; if the address creation
   // fails, the user will still be created. TODO clean up.
-  // (note: the 'create user and address at the same time' flow is only used
-  // from our internal signup tool, which has it's own client-side validation,
-  // so this isn't as bad as it looks. Public signups via the mobile app will do
-  // this in two steps.)
+  //
+  // NOTE: This is only used as part of the /complete-your-profile internal
+  // tool, which we may deprecate at some point.
+  // https://github.com/ca-la/site/issues/63
   if (address) {
     const addressData = Object.assign({}, address, {
       userId: user.id
@@ -48,6 +50,17 @@ function* createUser() {
       .catch(InvalidDataError, err => this.throw(400, err));
 
     user.setAddresses([addressInstance]);
+  }
+
+  // NOTE: This is only used as part of the /complete-your-profile internal
+  // tool, which we may deprecate at some point.
+  // https://github.com/ca-la/site/issues/63
+  if (scan) {
+    yield ScansDAO.create({
+      userId: user.id,
+      type: scan.type,
+      isComplete: scan.isComplete
+    });
   }
 
   yield MailChimp.subscribe({
