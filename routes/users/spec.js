@@ -5,6 +5,7 @@ const Promise = require('bluebird');
 const createUser = require('../../test-helpers/create-user');
 const InvalidDataError = require('../../errors/invalid-data');
 const MailChimp = require('../../services/mailchimp');
+const ScansDAO = require('../../dao/scans');
 const Shopify = require('../../services/shopify');
 const UnassignedReferralCodesDAO = require('../../dao/unassigned-referral-codes');
 const UsersDAO = require('../../dao/users');
@@ -84,6 +85,34 @@ test('POST /users returns a session instead if requested', (t) => {
       t.equal(body.user.name, 'Q User');
     });
 });
+
+test('POST /users allows creating a scan', (t) => {
+  sandbox().stub(MailChimp, 'subscribe', () => Promise.resolve());
+  sandbox().stub(UnassignedReferralCodesDAO, 'get', () => Promise.resolve('ABC123'));
+
+  const withScan = Object.assign({}, USER_DATA, {
+    scan: {
+      type: 'HUMANSOLUTIONS',
+      isComplete: true
+    }
+  });
+
+  let userId;
+
+  return post('/users', { body: withScan })
+    .then(([response, body]) => {
+      userId = body.id;
+      t.equal(response.status, 201);
+      return ScansDAO.findByUserId(userId);
+    })
+    .then((scans) => {
+      t.equal(scans.length, 1);
+      t.equal(scans[0].userId, userId);
+      t.equal(scans[0].isComplete, true);
+      t.equal(scans[0].type, 'HUMANSOLUTIONS');
+    });
+});
+
 
 test('PUT /users/:id/password returns a 401 if unauthenticated', (t) => {
   return put('/users/123/password', { body: {} })
