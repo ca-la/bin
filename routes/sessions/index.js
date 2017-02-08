@@ -1,11 +1,11 @@
 'use strict';
 
-const router = require('koa-router')({
-  prefix: '/sessions'
-});
+const Router = require('koa-router');
 
 const InvalidDataError = require('../../errors/invalid-data');
 const SessionsDAO = require('../../dao/sessions');
+
+const router = new Router();
 
 function* createSession() {
   const { email, password } = this.request.body;

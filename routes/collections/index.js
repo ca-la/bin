@@ -1,10 +1,10 @@
 'use strict';
 
-const router = require('koa-router')({
-  prefix: '/collections'
-});
+const Router = require('koa-router');
 
 const Shopify = require('../../services/shopify');
+
+const router = new Router();
 
 /**
  * GET /collections

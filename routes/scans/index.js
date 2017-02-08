@@ -1,8 +1,6 @@
 'use strict';
 
-const router = require('koa-router')({
-  prefix: '/scans'
-});
+const Router = require('koa-router');
 const multer = require('koa-multer');
 
 const attachRole = require('../../middleware/attach-role');
@@ -13,6 +11,8 @@ const ScansDAO = require('../../dao/scans');
 const User = require('../../domain-objects/user');
 const { AWS_SCANPHOTO_BUCKET_NAME } = require('../../services/config');
 const { uploadFile } = require('../../services/aws');
+
+const router = new Router();
 
 function* createScan() {
   const { type, isComplete } = this.request.body;

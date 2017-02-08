@@ -1,12 +1,12 @@
 'use strict';
 
-const router = require('koa-router')({
-  prefix: '/addresses'
-});
+const Router = require('koa-router');
 
 const AddressesDAO = require('../../dao/addresses');
 const InvalidDataError = require('../../errors/invalid-data');
 const requireAuth = require('../../middleware/require-auth');
+
+const router = new Router();
 
 /**
  * GET /addresses?userId=ABC123
