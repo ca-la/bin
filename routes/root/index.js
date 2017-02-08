@@ -1,7 +1,10 @@
 'use strict';
 
-const router = require('koa-router')();
+const Router = require('koa-router');
+
 const pkg = require('../../package.json');
+
+const router = new Router();
 
 // eslint-disable-next-line require-yield
 function* getRoot() {

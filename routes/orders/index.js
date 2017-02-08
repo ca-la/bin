@@ -1,11 +1,11 @@
 'use strict';
 
-const router = require('koa-router')({
-  prefix: '/orders'
-});
+const Router = require('koa-router');
 
 const ShopifyNotFoundError = require('../../errors/shopify-not-found');
 const { getOrder } = require('../../services/shopify');
+
+const router = new Router();
 
 /**
  * GET /orders/:orderId

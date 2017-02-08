@@ -1,8 +1,6 @@
 'use strict';
 
-const router = require('koa-router')({
-  prefix: '/users'
-});
+const Router = require('koa-router');
 
 const AddressesDAO = require('../../dao/addresses');
 const attachRole = require('../../middleware/attach-role');
@@ -18,6 +16,8 @@ const {
   MAILCHIMP_LIST_ID_USERS,
   REFERRAL_VALUE_DOLLARS
 } = require('../../services/config');
+
+const router = new Router();
 
 /**
  * POST /users

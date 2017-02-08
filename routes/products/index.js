@@ -1,12 +1,12 @@
 'use strict';
 
-const router = require('koa-router')({
-  prefix: '/products'
-});
+const Router = require('koa-router');
 
 const { FEATURED_PRODUCT_IDS } = require('../../services/config');
 const ShopifyNotFoundError = require('../../errors/shopify-not-found');
 const Shopify = require('../../services/shopify');
+
+const router = new Router();
 
 /**
  * GET /products
@@ -20,6 +20,10 @@ function* getList() {
 
 /**
  * GET /products/featured-ids
+ *
+ * TODO: This will no longer used in the app as of ~Feb 7, 2017. Safe to delete
+ * once we're a few weeks past this point, since it was never in an App Store
+ * release.
  */
 // eslint-disable-next-line require-yield
 function* getFeaturedIds() {

@@ -1,6 +1,7 @@
 'use strict';
 
 const koa = require('koa');
+const Router = require('koa-router');
 
 const app = koa();
 
@@ -19,18 +20,25 @@ app.use(headers);
 app.use(options);
 app.use(attachSession);
 
+const router = new Router({
+  prefix: '/:version(v1)?'
+});
+
 // Route-specific middleware
-app.use(require('./routes/addresses'));
-app.use(require('./routes/collections'));
-app.use(require('./routes/orders'));
-app.use(require('./routes/password-resets'));
-app.use(require('./routes/products'));
-app.use(require('./routes/root'));
-app.use(require('./routes/scans'));
-app.use(require('./routes/sessions'));
-app.use(require('./routes/subscriptions'));
-app.use(require('./routes/users'));
-app.use(require('./routes/zips'));
+router.use(require('./routes/root'));
+router.use('/addresses', require('./routes/addresses'));
+router.use('/collections', require('./routes/collections'));
+router.use('/featured', require('./routes/featured'));
+router.use('/orders', require('./routes/orders'));
+router.use('/password-resets', require('./routes/password-resets'));
+router.use('/products', require('./routes/products'));
+router.use('/scans', require('./routes/scans'));
+router.use('/sessions', require('./routes/sessions'));
+router.use('/subscriptions', require('./routes/subscriptions'));
+router.use('/users', require('./routes/users'));
+router.use('/zips', require('./routes/zips'));
+
+app.use(router.routes());
 
 if (!module.parent) {
   const port = process.env.PORT || 5100;

@@ -1,9 +1,9 @@
 'use strict';
 
-const router = require('koa-router')({
-  prefix: '/zips'
-});
+const Router = require('koa-router');
 const zipcodes = require('zipcodes');
+
+const router = new Router();
 
 /**
  * GET /zips/:zip

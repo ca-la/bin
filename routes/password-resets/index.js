@@ -1,13 +1,13 @@
 'use strict';
 
-const router = require('koa-router')({
-  prefix: '/password-resets'
-});
+const Router = require('koa-router');
 
 const passwordReset = require('../../emails/password-reset');
 const SessionsDAO = require('../../dao/sessions');
 const UsersDAO = require('../../dao/users');
 const { send } = require('../../services/email');
+
+const router = new Router();
 
 /**
  * POST /password-resets

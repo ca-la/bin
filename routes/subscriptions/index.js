@@ -1,12 +1,12 @@
 'use strict';
 
-const router = require('koa-router')({
-  prefix: '/subscriptions'
-});
+const Router = require('koa-router');
 
 const MailChimp = require('../../services/mailchimp');
 const shouldAllowAppointment = require('../../services/should-allow-appointment');
 const { MAILCHIMP_LIST_ID_SUBSCRIPTIONS } = require('../../services/config');
+
+const router = new Router();
 
 /**
  * POST /subscriptions
