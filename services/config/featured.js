@@ -21,7 +21,7 @@ const FEATURED_PRODUCT_IDS_PROD = [
 
 const FEATURED_COLLECTION_LISTS_DEV = [
   {
-    sectionTitle: 'Coming Soon',
+    sectionTitle: 'Featured Collections',
     collections: [
       {
         id: 411296525,
@@ -36,7 +36,7 @@ const FEATURED_COLLECTION_LISTS_DEV = [
     ]
   },
   {
-    sectionTitle: 'Featured Collections',
+    sectionTitle: 'Browse Collections',
     collections: [
       {
         id: 273845633,
@@ -52,25 +52,28 @@ const FEATURED_COLLECTION_LISTS_DEV = [
 
 const FEATURED_COLLECTION_LISTS_PROD = [
   {
-    sectionTitle: 'Coming Soon',
-    collections: [
-      {
-        id: 294394947,
-        title: 'Cucculelli Shaheen',
-        description: 'Stay tuned...'
-      }
-    ]
-  },
-  {
     sectionTitle: 'Featured Collections',
     collections: [
       {
         id: 294394947,
-        title: 'Odyssey'
+        title: 'Odyssey Collection'
       },
       {
         id: 259658627,
         title: 'Collection 01'
+      }
+    ]
+  },
+  {
+    sectionTitle: 'Browse Collections',
+    collections: [
+      {
+        id: 259658627,
+        title: 'Collection 01'
+      },
+      {
+        id: 294394947,
+        title: 'Odyssey Collection'
       }
     ]
   }
