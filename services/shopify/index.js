@@ -2,7 +2,9 @@
 
 const Promise = require('bluebird');
 const fetch = require('node-fetch');
+
 const ShopifyNotFoundError = require('../../errors/shopify-not-found');
+const Logger = require('../logger');
 
 const {
   SHOPIFY_STORE_BASE,
@@ -141,13 +143,23 @@ function getProductById(id) {
       })
     )
     .then((response) => {
-      if (response.status === 404) {
+      if (
+        response.status === 404 ||
+        response.status === 400 // Invalid ID format
+      ) {
         throw new ShopifyNotFoundError('Product not found');
       }
 
       return response.json();
     })
-    .then(body => body.product);
+    .then((body) => {
+      if (!body.product) {
+        Logger.log('Shopify response: ', body);
+        throw new Error('Shopify response did not contain product');
+      }
+
+      return body.product;
+    });
 }
 
 function getAllProducts() {
@@ -198,6 +210,7 @@ function getRedemptionCount(discountCode) {
     .then(response => response.json())
     .then((body) => {
       if (!body.orders) {
+        Logger.log('Shopify response: ', body);
         throw new Error('Could not retrieve Shopify orders');
       }
 
