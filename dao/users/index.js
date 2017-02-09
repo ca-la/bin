@@ -103,6 +103,7 @@ function findAll({ limit, offset }) {
   }
 
   return db('users').select('*')
+    .orderBy('created_at', 'desc')
     .limit(limit)
     .offset(offset)
     .then(users => users.map(instantiate));
