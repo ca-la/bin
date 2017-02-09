@@ -9,6 +9,7 @@ const requireAuth = require('../../middleware/require-auth');
 const ScanPhotosDAO = require('../../dao/scan-photos');
 const ScansDAO = require('../../dao/scans');
 const User = require('../../domain-objects/user');
+const validateMeasurements = require('../../services/validate-measurements');
 const { AWS_SCANPHOTO_BUCKET_NAME } = require('../../services/config');
 const { uploadFile } = require('../../services/aws');
 
@@ -63,9 +64,18 @@ function* updateScan() {
   if (scan.userId) {
     this.assert(scan.userId === this.state.userId, 403, 'You can only upload photos for your own scan');
   }
+
   this.assert(this.request.body, 400, 'New data must be provided');
 
-  const updated = yield ScansDAO.updateOneById(this.params.scanId, this.request.body);
+  const { isComplete, measurements } = this.request.body;
+
+  validateMeasurements(measurements);
+
+  const updated = yield ScansDAO.updateOneById(
+    this.params.scanId,
+    { isComplete, measurements }
+  );
+
   this.status = 200;
   this.body = updated;
 }
