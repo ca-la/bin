@@ -3,7 +3,7 @@
 const createUser = require('../../test-helpers/create-user');
 const ScansDAO = require('../../dao/scans');
 const ScanPhotosDAO = require('../../dao/scan-photos');
-const { get, post, authHeader } = require('../../test-helpers/http');
+const { get, post, put, authHeader } = require('../../test-helpers/http');
 const { test } = require('../../test-helpers/fresh');
 
 test('POST /scans returns a 400 if missing data', (t) => {
@@ -251,5 +251,56 @@ test('GET /scans/:id returns a scan', (t) => {
     .then(([response, body]) => {
       t.equal(response.status, 200);
       t.equal(body.type, 'PHOTO');
+    });
+});
+
+test('PUT /scans/:id allows a scan to be updated', (t) => {
+  let sessionId;
+  return createUser()
+    .then(({ session }) => {
+      sessionId = session.id;
+      return ScansDAO.create({
+        type: ScansDAO.SCAN_TYPES.photo,
+        isComplete: false,
+        measurements: null
+      });
+    })
+    .then((scan) => {
+      return put(`/scans/${scan.id}`, {
+        body: {
+          isComplete: true,
+          measurements: { length: 10 }
+        },
+        headers: authHeader(sessionId)
+      });
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 200);
+      t.equal(body.isComplete, true);
+      t.equal(body.measurements.length, 10);
+    });
+});
+
+test('PUT /scans/:id disallows invalid measurements', (t) => {
+  let sessionId;
+  return createUser()
+    .then(({ session }) => {
+      sessionId = session.id;
+      return ScansDAO.create({
+        type: ScansDAO.SCAN_TYPES.photo
+      });
+    })
+    .then((scan) => {
+      return put(`/scans/${scan.id}`, {
+        body: {
+          isComplete: true,
+          measurements: { weightLbs: 9999 }
+        },
+        headers: authHeader(sessionId)
+      });
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 400);
+      t.equal(body.message, 'Invalid weight value');
     });
 });
