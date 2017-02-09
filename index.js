@@ -28,6 +28,7 @@ const router = new Router({
 router.use(require('./routes/root'));
 router.use('/addresses', require('./routes/addresses'));
 router.use('/collections', require('./routes/collections'));
+router.use('/download-links', require('./routes/download-links'));
 router.use('/featured', require('./routes/featured'));
 router.use('/orders', require('./routes/orders'));
 router.use('/password-resets', require('./routes/password-resets'));

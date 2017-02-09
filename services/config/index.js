@@ -60,7 +60,13 @@ const config = {
 
   FEATURED_COLLECTION_LISTS,
 
-  REFERRAL_VALUE_DOLLARS: 50
+  REFERRAL_VALUE_DOLLARS: 50,
+
+  TWILIO_SID: process.env.TWILIO_SID,
+
+  TWILIO_TOKEN: process.env.TWILIO_TOKEN,
+
+  TWILIO_OUTBOUND_NUMBER: process.env.TWILIO_OUTBOUND_NUMBER
 };
 
 Object.keys(config).forEach((key) => {

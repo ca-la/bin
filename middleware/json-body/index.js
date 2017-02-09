@@ -7,6 +7,7 @@ const parse = require('co-body');
 
 function* jsonBody(next) {
   if (!this.request.is('json')) {
+    this.request.body = {};
     return yield next;
   }
 

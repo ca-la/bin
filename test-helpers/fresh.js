@@ -73,7 +73,10 @@ function freshTest(description, fn) {
   });
 }
 
+function skip() { /* noop */ }
+
 module.exports = {
   sandbox() { return currentSandbox; },
-  test: freshTest
+  test: freshTest,
+  skip
 };
