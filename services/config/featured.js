@@ -24,6 +24,19 @@ const FEATURED_COLLECTION_LISTS_DEV = [
     sectionTitle: 'Featured Collections',
     collections: [
       {
+        id: 273845633,
+        title: 'Collection 01'
+      },
+      {
+        id: 291239617,
+        title: 'Odyssey'
+      }
+    ]
+  },
+  {
+    sectionTitle: 'More Collections',
+    collections: [
+      {
         id: 411296525,
         title: 'Preorders',
         description: 'Coming soon'
@@ -32,19 +45,6 @@ const FEATURED_COLLECTION_LISTS_DEV = [
         id: 411296781,
         title: 'Not-yet-orders',
         description: 'Coming a little later'
-      }
-    ]
-  },
-  {
-    sectionTitle: 'Browse Collections',
-    collections: [
-      {
-        id: 273845633,
-        title: 'First'
-      },
-      {
-        id: 291239617,
-        title: 'Odyssey'
       }
     ]
   }
@@ -61,19 +61,6 @@ const FEATURED_COLLECTION_LISTS_PROD = [
       {
         id: 259658627,
         title: 'Collection 01'
-      }
-    ]
-  },
-  {
-    sectionTitle: 'Browse Collections',
-    collections: [
-      {
-        id: 259658627,
-        title: 'Collection 01'
-      },
-      {
-        id: 294394947,
-        title: 'Odyssey Collection'
       }
     ]
   }
