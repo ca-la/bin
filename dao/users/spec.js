@@ -71,7 +71,31 @@ test('UsersDAO.findByEmail returns a user', (t) => {
 
 test('UsersDAO.findAll returns users', (t) => {
   return UsersDAO.create(USER_DATA)
+    .then(() => UsersDAO.findAll({ limit: 1, offset: 0 }))
+    .then((users) => {
+      t.equal(users.length, 1);
+    });
+});
+
+test('UsersDAO.findAll respects offset', (t) => {
+  return UsersDAO.create(USER_DATA)
     .then(() => UsersDAO.findAll({ limit: 1, offset: 1 }))
+    .then((users) => {
+      t.equal(users.length, 0);
+    });
+});
+
+test('UsersDAO.findAll finds based on matching search terms', (t) => {
+  return UsersDAO.create(USER_DATA)
+    .then(() => UsersDAO.findAll({ limit: 1, offset: 0, search: 'q user' }))
+    .then((users) => {
+      t.equal(users.length, 1);
+    });
+});
+
+test('UsersDAO.findAll returns nothing if no search matches', (t) => {
+  return UsersDAO.create(USER_DATA)
+    .then(() => UsersDAO.findAll({ limit: 1, offset: 0, search: 'flexbox' }))
     .then((users) => {
       t.equal(users.length, 0);
     });

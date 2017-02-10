@@ -132,7 +132,8 @@ function* getAllUsers() {
 
   const users = yield UsersDAO.findAll({
     limit: Number(this.query.limit) || 10,
-    offset: Number(this.query.offset) || 0
+    offset: Number(this.query.offset) || 0,
+    search: this.query.search
   });
 
   this.body = users;

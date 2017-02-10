@@ -97,13 +97,18 @@ function findById(id) {
     .then(maybeInstantiate);
 }
 
-function findAll({ limit, offset }) {
+function findAll({ limit, offset, search }) {
   if (typeof limit !== 'number' || typeof offset !== 'number') {
     throw new Error('Limit and offset must be provided to find all users');
   }
 
   return db('users').select('*')
     .orderBy('created_at', 'desc')
+    .modify((query) => {
+      if (search) {
+        query.where(db.raw('name ~* :search or email ~* :search', { search }));
+      }
+    })
     .limit(limit)
     .offset(offset)
     .then(users => users.map(instantiate));
