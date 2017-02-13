@@ -55,7 +55,9 @@ function findById(id) {
   * @resolves {Array}
   */
 function findByUserId(userId) {
-  return db('scans').where({ user_id: userId })
+  return db('scans')
+    .where({ user_id: userId })
+    .orderBy('created_at', 'desc')
     .catch(rethrow)
     .then(scans => scans.map(instantiate));
 }
