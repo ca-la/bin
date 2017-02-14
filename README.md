@@ -75,3 +75,23 @@ $ bin/migrate-prod      # Migrate production DB. This should be performed after
 
 For advanced usage, see [knexjs.org](http://knexjs.org/#Migrations)
 
+## Gotchas / Future Considerations
+
+Most things should "just work" indefinitely without much human maintenance.
+Exceptions include:
+
+- The system will run out of "unassigned" referral codes at some point. To
+  create new referral codes, we need to first generate a list of codes (can be
+  any random string), then use the Shopify "bulk discount" app to create them on
+  the Shopify store, and lastly populate the `unassigned_referral_codes` table
+  in the database. I'm not aware of a way to automate this, as the Shopify
+  referral code API requires a Plus account. As of 2017-02-14 we have ~2800
+  unassigned codes remaining.
+- Once we have more than 250 orders in place, customers will not receive
+  referral credits for orders older than the most recent 250. See
+  `ShopifyService.getRedemptionCount`.
+- The process of "cashing out" a referral credit is currently manual (for the
+  same reason as point #1 above). If a customer has e.g. $50 in credit, they
+  will be prompted to email `hi@ca.la` to redeem it, at which point we should
+  create a unique one-time promo code for them and send it directly to them to
+  use.
