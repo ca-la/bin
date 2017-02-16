@@ -23,6 +23,18 @@ class User {
     this.createdAt = new Date(row.created_at);
   }
 
+  /**
+   * Get a lighter-weight user representation that can be used in places where
+   * another customer's user data is potentially part of a response.
+   */
+  toPublicJSON() {
+    return pick(this,
+      'id',
+      'name',
+      'referralCode'
+    );
+  }
+
   toJSON() {
     return pick(this,
       'id',

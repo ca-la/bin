@@ -123,7 +123,9 @@ function* getReferralCount() {
 function* getByReferralCode() {
   this.assert(this.query.referralCode, 400, 'A referral code must be provided to filter on');
   const user = yield UsersDAO.findByReferralCode(this.query.referralCode);
-  this.body = [user].filter(Boolean);
+
+  const response = user && user.toPublicJSON();
+  this.body = [response].filter(Boolean);
   this.status = 200;
 }
 
