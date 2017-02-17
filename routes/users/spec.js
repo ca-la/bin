@@ -254,3 +254,22 @@ test('GET /users/:id returns a user', (t) => {
       t.equal(body.name, 'Q User');
     });
 });
+
+test('GET /users/email-availability/:email returns false when unavailable', (t) => {
+  return createUser()
+    .then(({ user }) => {
+      return get(`/users/email-availability/${user.email}`);
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 200);
+      t.deepEqual(body, { available: false });
+    });
+});
+
+test('GET /users/email-availability/:email returns true when available', (t) => {
+  return get('/users/email-availability/fuz@buz.qux')
+    .then(([response, body]) => {
+      t.equal(response.status, 200);
+      t.deepEqual(body, { available: true });
+    });
+});

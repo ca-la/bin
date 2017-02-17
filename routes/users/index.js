@@ -123,7 +123,9 @@ function* getReferralCount() {
 function* getByReferralCode() {
   this.assert(this.query.referralCode, 400, 'A referral code must be provided to filter on');
   const user = yield UsersDAO.findByReferralCode(this.query.referralCode);
-  this.body = [user].filter(Boolean);
+
+  const response = user && user.toPublicJSON();
+  this.body = [response].filter(Boolean);
   this.status = 200;
 }
 
@@ -166,10 +168,24 @@ function* getUser() {
   this.status = 200;
 }
 
+/**
+ * GET /users/email-availability/:email
+ *
+ * Not RESTful. No regrets.
+ */
+function* getEmailAvailability() {
+  const user = yield UsersDAO.findByEmail(this.params.email);
+
+  this.body = { available: !user };
+
+  this.status = 200;
+}
+
 router.get('/', attachRole, getList);
 router.get('/:userId', requireAuth, attachRole, getUser);
 router.get('/:userId/referral-count', requireAuth, getReferralCount);
 router.post('/', createUser);
 router.put('/:userId/password', requireAuth, updatePassword);
+router.get('/email-availability/:email', getEmailAvailability);
 
 module.exports = router.routes();
