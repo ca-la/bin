@@ -20,7 +20,10 @@ function* errors(next) {
     if (this.status >= 500) {
       // eslint-disable-next-line no-console
       console.error('SERVER ERROR:', err.stack);
-      this.body = { message: 'Something went wrong!' };
+
+      this.body = {
+        message: 'Something went wrong! Please try again, or email hi@ca.la if this message persists.'
+      };
     } else {
       // eslint-disable-next-line no-console
       console.error('CLIENT ERROR:', err.stack);
