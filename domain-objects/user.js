@@ -2,7 +2,7 @@
 
 const pick = require('lodash/pick');
 
-const requireProperties = require('../services/require-properties');
+const { requireProperties } = require('../services/require-properties');
 
 const ROLES = {
   user: 'USER',
