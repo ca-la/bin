@@ -168,10 +168,24 @@ function* getUser() {
   this.status = 200;
 }
 
+/**
+ * GET /users/email-availability/:email
+ *
+ * Not RESTful. No regrets.
+ */
+function* getEmailAvailability() {
+  const user = yield UsersDAO.findByEmail(this.params.email);
+
+  this.body = { available: !user };
+
+  this.status = 200;
+}
+
 router.get('/', attachRole, getList);
 router.get('/:userId', requireAuth, attachRole, getUser);
 router.get('/:userId/referral-count', requireAuth, getReferralCount);
 router.post('/', createUser);
 router.put('/:userId/password', requireAuth, updatePassword);
+router.get('/email-availability/:email', getEmailAvailability);
 
 module.exports = router.routes();
