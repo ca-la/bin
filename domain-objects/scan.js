@@ -1,6 +1,6 @@
 'use strict';
 
-const requireProperties = require('../services/require-properties');
+const { requireProperties } = require('../services/require-properties');
 
 class Scan {
   constructor(row) {

@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const template = require('lodash/template');
 
-const requireProperties = require('../../services/require-properties');
+const { requireProperties } = require('../../services/require-properties');
 
 module.exports = function passwordReset(data) {
   requireProperties(data,

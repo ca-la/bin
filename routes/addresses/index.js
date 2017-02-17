@@ -28,18 +28,6 @@ function* createAddress() {
     userId: this.state.userId
   });
 
-  const requiredMessages = {
-    addressLine1: 'Address Line 1',
-    city: 'City',
-    region: 'Region',
-    postCode: 'Post Code',
-    country: 'Country'
-  };
-
-  Object.keys(requiredMessages).forEach((key) => {
-    this.assert(addressData[key], 400, `Missing required information: ${requiredMessages[key]}`);
-  });
-
   const address = yield AddressesDAO.create(addressData)
     .catch(InvalidDataError, err => this.throw(400, err));
 

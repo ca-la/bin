@@ -32,22 +32,26 @@ function* createUser() {
     scan
   } = this.request.body;
 
+  // Validate address data prior to user creation. TODO maybe transaction
+  // here instead?
+  if (address) {
+    try {
+      AddressesDAO.validate(address);
+    } catch (err) {
+      if (err instanceof InvalidDataError) { this.throw(400, err); }
+      throw err;
+    }
+  }
+
   const user = yield UsersDAO.create({ name, zip, email, password })
     .catch(InvalidDataError, err => this.throw(400, err));
 
-  // This is super naive and doesn't use transactions; if the address creation
-  // fails, the user will still be created. TODO clean up.
-  //
-  // NOTE: This is only used as part of the /complete-your-profile internal
-  // tool, which we may deprecate at some point.
-  // https://github.com/ca-la/site/issues/63
   if (address) {
     const addressData = Object.assign({}, address, {
       userId: user.id
     });
 
-    const addressInstance = yield AddressesDAO.create(addressData)
-      .catch(InvalidDataError, err => this.throw(400, err));
+    const addressInstance = yield AddressesDAO.create(addressData);
 
     user.setAddresses([addressInstance]);
   }

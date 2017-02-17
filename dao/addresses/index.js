@@ -6,10 +6,25 @@ const rethrow = require('pg-rethrow');
 const Address = require('../../domain-objects/address');
 const db = require('../../services/db');
 const first = require('../../services/first');
+const { requirePropertiesFormatted } = require('../../services/require-properties');
 
 const instantiate = data => new Address(data);
 
+function validate(data) {
+  const requiredMessages = {
+    addressLine1: 'Address Line 1',
+    city: 'City',
+    region: 'Region',
+    postCode: 'Post Code',
+    country: 'Country'
+  };
+
+  requirePropertiesFormatted(data, requiredMessages);
+}
+
 function create(data) {
+  validate(data);
+
   return db('addresses').insert({
     id: uuid.v4(),
     company_name: data.companyName,
@@ -34,5 +49,6 @@ function findByUserId(userId) {
 
 module.exports = {
   create,
+  validate,
   findByUserId
 };

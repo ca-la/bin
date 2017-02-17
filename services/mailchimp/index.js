@@ -3,7 +3,7 @@
 const fetch = require('node-fetch');
 
 const { MAILCHIMP_API_KEY } = require('../config');
-const requireProperties = require('../require-properties');
+const { requireProperties } = require('../require-properties');
 
 const MAILCHIMP_API_BASE = 'https://us13.api.mailchimp.com/3.0';
 const MAILCHIMP_AUTH = new Buffer(`cala:${MAILCHIMP_API_KEY}`).toString('base64');
