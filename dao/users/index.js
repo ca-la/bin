@@ -15,9 +15,9 @@ const instantiate = data => new User(data);
 const maybeInstantiate = data => (data && new User(data)) || null;
 
 function create(data) {
-  const { name, zip, email, password, role } = data;
+  const { name, email, password, role } = data;
 
-  if (!name || !zip || !email || !password) {
+  if (!name || !email || !password) {
     return Promise.reject(new InvalidDataError('Missing required information'));
   }
 
@@ -33,7 +33,6 @@ function create(data) {
       db('users').insert({
         id: uuid.v4(),
         name,
-        zip,
         email,
         role,
         password_hash: passwordHash,
@@ -56,9 +55,9 @@ function create(data) {
  * when they use a legacy authentication scheme (shopify).
  */
 function createWithoutPassword(data) {
-  const { name, zip, email } = data;
+  const { name, email } = data;
 
-  if (!name || !zip || !email) {
+  if (!name || !email) {
     return Promise.reject(new InvalidDataError('Missing required information'));
   }
 
@@ -75,7 +74,6 @@ function createWithoutPassword(data) {
       return db('users').insert({
         id: uuid.v4(),
         name,
-        zip,
         email,
         referral_code: referralCode
       }, '*');

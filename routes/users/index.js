@@ -25,7 +25,6 @@ const router = new Router();
 function* createUser() {
   const {
     name,
-    zip,
     email,
     password,
     address,
@@ -43,7 +42,7 @@ function* createUser() {
     }
   }
 
-  const user = yield UsersDAO.create({ name, zip, email, password })
+  const user = yield UsersDAO.create({ name, email, password })
     .catch(InvalidDataError, err => this.throw(400, err));
 
   if (address) {
@@ -71,7 +70,6 @@ function* createUser() {
     email,
     name,
     referralCode: user.referralCode,
-    zip,
     listId: MAILCHIMP_LIST_ID_USERS
   });
 

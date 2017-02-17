@@ -16,7 +16,6 @@ class User {
     this.id = row.id;
     this.name = row.name;
     this.email = row.email;
-    this.zip = row.zip;
     this.passwordHash = row.password_hash;
     this.referralCode = row.referral_code;
     this.role = row.role;
@@ -40,7 +39,6 @@ class User {
       'id',
       'name',
       'email',
-      'zip',
       'createdAt',
       'addresses',
       'referralCode',
