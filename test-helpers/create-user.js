@@ -8,7 +8,6 @@ const AddressesDAO = require('../dao/addresses');
 
 const USER_DATA = Object.freeze({
   name: 'Q User',
-  zip: '94117',
   password: 'hunter2',
   referralCode: 'freebie'
 });
