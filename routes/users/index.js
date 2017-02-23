@@ -104,6 +104,19 @@ function* updatePassword() {
 }
 
 /**
+ * PUT /users/:userId
+ */
+function* updateUser() {
+  this.assert(this.params.userId === this.state.userId, 403, 'You can only update your own user');
+
+  const { birthday, name, email } = this.request.body;
+  const updated = yield UsersDAO.update(this.params.userId, { birthday, name, email });
+
+  this.status = 200;
+  this.body = updated;
+}
+
+/**
  * GET /users/:userId/referral-count
  *
  * Find out how many other users I've referred.
@@ -186,8 +199,9 @@ function* getEmailAvailability() {
 router.get('/', attachRole, getList);
 router.get('/:userId', requireAuth, attachRole, getUser);
 router.get('/:userId/referral-count', requireAuth, getReferralCount);
-router.post('/', createUser);
-router.put('/:userId/password', requireAuth, updatePassword);
 router.get('/email-availability/:email', getEmailAvailability);
+router.post('/', createUser);
+router.put('/:userId', requireAuth, updateUser);
+router.put('/:userId/password', requireAuth, updatePassword);
 
 module.exports = router.routes();

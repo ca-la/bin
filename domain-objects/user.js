@@ -9,17 +9,34 @@ const ROLES = {
   admin: 'ADMIN'
 };
 
+/**
+ * @returns {String} yyyy-mm-dd
+ */
+function formatDateString(date) {
+  const paddedYear = `0000${date.getUTCFullYear()}`.slice(-4);
+  const paddedMonth = `00${date.getUTCMonth() + 1}`.slice(-2);
+  const paddedDay = `00${date.getUTCDate()}`.slice(-2);
+
+  return [paddedYear, paddedMonth, paddedDay].join('-');
+}
+
 class User {
   constructor(row) {
     requireProperties(row, 'id');
 
+    this.email = row.email;
     this.id = row.id;
     this.name = row.name;
-    this.email = row.email;
     this.passwordHash = row.password_hash;
     this.referralCode = row.referral_code;
     this.role = row.role;
     this.createdAt = new Date(row.created_at);
+
+    if (row.birthday instanceof Date) {
+      this.birthday = formatDateString(row.birthday);
+    } else {
+      this.birthday = row.birthday;
+    }
   }
 
   /**
@@ -37,6 +54,7 @@ class User {
   toJSON() {
     return pick(this,
       'id',
+      'birthday',
       'name',
       'email',
       'createdAt',

@@ -273,3 +273,41 @@ test('GET /users/email-availability/:email returns true when available', (t) => 
       t.deepEqual(body, { available: true });
     });
 });
+
+test('PUT /users/:id returns a 401 if unauthenticated', (t) => {
+  return put('/users/123', { body: {} })
+    .then(([response, body]) => {
+      t.equal(response.status, 401);
+      t.equal(body.message, 'Authorization is required to access this resource');
+    });
+});
+
+test('PUT /users/:id returns a 403 if not the current user', (t) => {
+  return createUser()
+    .then(({ session }) => {
+      return put('/users/123', {
+        body: {},
+        headers: authHeader(session.id)
+      });
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 403);
+      t.equal(body.message, 'You can only update your own user');
+    });
+});
+
+test('PUT /users/:id updates the current user', (t) => {
+  return createUser()
+    .then(({ user, session }) => {
+      return put(`/users/${user.id}`, {
+        body: {
+          birthday: '2017-01-01'
+        },
+        headers: authHeader(session.id)
+      });
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 200);
+      t.equal(body.birthday, '2017-01-01');
+    });
+});

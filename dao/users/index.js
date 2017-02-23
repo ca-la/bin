@@ -5,6 +5,7 @@ const rethrow = require('pg-rethrow');
 const Promise = require('bluebird');
 
 const db = require('../../services/db');
+const compact = require('../../services/compact');
 const first = require('../../services/first');
 const InvalidDataError = require('../../errors/invalid-data');
 const UnassignedReferralCodesDAO = require('../unassigned-referral-codes');
@@ -136,6 +137,19 @@ function updatePassword(userId, password) {
     .then(instantiate);
 }
 
+function update(userId, data) {
+  return db('users')
+    .where({ id: userId })
+    .update(compact({
+      name: data.name,
+      email: data.email,
+      birthday: data.birthday
+    }), '*')
+    .then(first)
+    .then(instantiate);
+}
+
+
 module.exports = {
   create,
   createWithoutPassword,
@@ -143,5 +157,6 @@ module.exports = {
   findByEmail,
   findById,
   findByReferralCode,
+  update,
   updatePassword
 };

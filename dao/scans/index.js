@@ -5,6 +5,7 @@ const rethrow = require('pg-rethrow');
 
 const db = require('../../services/db');
 const first = require('../../services/first');
+const compact = require('../../services/compact');
 const InvalidDataError = require('../../errors/invalid-data');
 const Scan = require('../../domain-objects/scan');
 
@@ -77,11 +78,11 @@ function updateOneById(id, data) {
       id,
       deleted_at: null
     })
-    .update({
+    .update(compact({
       is_complete: data.isComplete,
       measurements: data.measurements,
       user_id: data.userId
-    }, '*')
+    }), '*')
     .then(first)
     .then(instantiate);
 }

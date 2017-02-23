@@ -112,6 +112,7 @@ function* getList() {
   );
 
   this.assert(isAuthorized, 403, 'You can only request scans for your own user');
+  this.assert(this.query.userId, 400, 'User ID must be provided');
 
   const scans = yield ScansDAO.findByUserId(this.query.userId);
 
@@ -161,7 +162,7 @@ function* getScan() {
   this.status = 200;
 }
 
-router.del('/:scanId', deleteScan);
+router.del('/:scanId', requireAuth, deleteScan);
 router.get('/', requireAuth, attachRole, getList);
 router.get('/:scanId', requireAuth, attachRole, getScan);
 router.get('/:scanId/photos', requireAuth, attachRole, getScanPhotos);
