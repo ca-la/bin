@@ -1,4 +1,6 @@
-const omitBy = require('lodash/omitby');
+'use strict';
+
+const omitBy = require('lodash/omitBy');
 
 function compact(obj) {
   return omitBy(obj, val => val === undefined);
