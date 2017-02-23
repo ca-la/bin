@@ -42,7 +42,9 @@ function create(data) {
 }
 
 function findByUserId(userId) {
-  return db('addresses').where({ user_id: userId })
+  return db('addresses')
+    .where({ user_id: userId })
+    .orderBy('created_at', 'desc')
     .catch(rethrow)
     .then(addresses => addresses.map(instantiate));
 }
