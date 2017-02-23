@@ -10,6 +10,7 @@ class ScanPhoto {
     this.id = row.id;
     this.scanId = row.scan_id;
     this.createdAt = new Date(row.created_at);
+    this.deletedAt = row.deleted_at && new Date(row.deleted_at);
   }
 
   toJSON() {

@@ -11,7 +11,7 @@ const ScansDAO = require('../../dao/scans');
 const User = require('../../domain-objects/user');
 const validateMeasurements = require('../../services/validate-measurements');
 const { AWS_SCANPHOTO_BUCKET_NAME } = require('../../services/config');
-const { uploadFile } = require('../../services/aws');
+const { uploadFile, deleteFile } = require('../../services/aws');
 
 const router = new Router();
 
@@ -27,6 +27,28 @@ function* createScan() {
 
   this.status = 201;
   this.body = scan;
+}
+
+function* deleteScan() {
+  const scan = yield ScansDAO.findById(this.params.scanId);
+
+  this.assert(scan, 404, 'Scan not found');
+
+  this.assert(
+    scan.userId && scan.userId === this.state.userId,
+    403,
+    'You can only delete a scan that you own'
+  );
+
+  yield ScansDAO.deleteById(this.params.scanId);
+  const deletedPhotos = yield ScanPhotosDAO.deleteByScanId(this.params.scanId);
+
+  yield Promise.all(deletedPhotos.map((photo) => {
+    return deleteFile(AWS_SCANPHOTO_BUCKET_NAME, `${photo.id}.jpg`);
+  }));
+
+  this.body = { success: true };
+  this.status = 200;
 }
 
 function* createScanPhoto() {
@@ -139,6 +161,7 @@ function* getScan() {
   this.status = 200;
 }
 
+router.del('/:scanId', deleteScan);
 router.get('/', requireAuth, attachRole, getList);
 router.get('/:scanId', requireAuth, attachRole, getScan);
 router.get('/:scanId/photos', requireAuth, attachRole, getScanPhotos);

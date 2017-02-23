@@ -20,13 +20,15 @@ const SCAN_TYPES = {
 };
 
 function create(data) {
-  return db('scans').insert({
-    id: uuid.v4(),
-    is_complete: data.isComplete,
-    user_id: data.userId,
-    type: data.type,
-    measurements: data.measurements
-  }, '*')
+  return db('scans')
+    .insert({
+      id: uuid.v4(),
+      is_complete: data.isComplete,
+      deleted_at: data.deletedAt,
+      user_id: data.userId,
+      type: data.type,
+      measurements: data.measurements
+    }, '*')
     .catch(rethrow)
     .catch(rethrow.ERRORS.NotNullViolation, (err) => {
       if (err.column === 'type') {
@@ -44,7 +46,11 @@ function create(data) {
   * @resolves {Object|null}
   */
 function findById(id) {
-  return db('scans').where({ id })
+  return db('scans')
+    .where({
+      id,
+      deleted_at: null
+    })
     .catch(rethrow)
     .then(first)
     .then(maybeInstantiate);
@@ -56,7 +62,10 @@ function findById(id) {
   */
 function findByUserId(userId) {
   return db('scans')
-    .where({ user_id: userId })
+    .where({
+      user_id: userId,
+      deleted_at: null
+    })
     .orderBy('created_at', 'desc')
     .catch(rethrow)
     .then(scans => scans.map(instantiate));
@@ -64,7 +73,10 @@ function findByUserId(userId) {
 
 function updateOneById(id, data) {
   return db('scans')
-    .where({ id })
+    .where({
+      id,
+      deleted_at: null
+    })
     .update({
       is_complete: data.isComplete,
       measurements: data.measurements,
@@ -74,9 +86,25 @@ function updateOneById(id, data) {
     .then(instantiate);
 }
 
+function deleteById(id) {
+  return db('scans')
+    .where({ id })
+    .update({
+      deleted_at: new Date()
+    }, '*')
+    .then(first)
+    .then((scan) => {
+      if (!scan) {
+        throw new Error(`Could not find scan ${id} to delete`);
+      }
+      return scan;
+    });
+}
+
 module.exports = {
   SCAN_TYPES,
   create,
+  deleteById,
   findById,
   findByUserId,
   updateOneById

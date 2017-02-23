@@ -40,6 +40,21 @@ function uploadFile(bucketName, remoteFileName, localFileName) {
     });
 }
 
+/**
+ * @returns {Promise}
+ */
+function deleteFile(bucketName, remoteFileName) {
+  const s3 = new AWS.S3();
+
+  const del = Promise.promisify(s3.deleteObject, { context: s3 });
+
+  return del({
+    Bucket: bucketName,
+    Key: remoteFileName
+  });
+}
+
 module.exports = {
-  uploadFile
+  uploadFile,
+  deleteFile
 };

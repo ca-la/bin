@@ -1,6 +1,11 @@
 'use strict';
 
-const { create, updateOneById, SCAN_TYPES } = require('./index');
+const {
+  create,
+  updateOneById,
+  findByUserId,
+  SCAN_TYPES
+} = require('./index');
 const { test } = require('../../test-helpers/fresh');
 const createUser = require('../../test-helpers/create-user');
 const InvalidDataError = require('../../errors/invalid-data');
@@ -53,5 +58,32 @@ test('ScansDAO.updateOneById updates a scan', (t) => {
     })
     .then((updated) => {
       t.equal(updated.measurements.heightCm, 200);
+    });
+});
+
+test('ScansDAO.findByUserId does not find deleted scans', (t) => {
+  let userId;
+  return createUser({ withSession: false })
+    .then(({ user }) => {
+      userId = user.id;
+
+      return Promise.all([
+        create({
+          userId: user.id,
+          type: SCAN_TYPES.photo
+        }),
+        create({
+          deletedAt: new Date(),
+          userId: user.id,
+          type: SCAN_TYPES.photo
+        })
+      ]);
+    })
+    .then(() => {
+      return findByUserId(userId);
+    })
+    .then((scans) => {
+      t.equal(scans.length, 1);
+      t.equal(scans[0].deletedAt, null);
     });
 });

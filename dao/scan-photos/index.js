@@ -10,24 +10,41 @@ const ScanPhoto = require('../../domain-objects/scan-photo');
 const instantiate = data => new ScanPhoto(data);
 
 function create(data) {
-  return db('scanphotos').insert({
-    id: uuid.v4(),
-    scan_id: data.scanId
-  }, '*')
+  return db('scanphotos')
+    .insert({
+      id: uuid.v4(),
+      scan_id: data.scanId
+    }, '*')
     .catch(rethrow)
     .then(first)
     .then(instantiate);
 }
 
 function findByScanId(scanId) {
-  return db('scanphotos').where({
-    scan_id: scanId
-  }, '*')
+  return db('scanphotos')
+    .where({
+      scan_id: scanId,
+      deleted_at: null
+    }, '*')
+    .catch(rethrow)
+    .then(photos => photos.map(instantiate));
+}
+
+function deleteByScanId(scanId) {
+  return db('scanphotos')
+    .where({
+      scan_id: scanId,
+      deleted_at: null
+    })
+    .update({
+      deleted_at: new Date()
+    }, '*')
     .catch(rethrow)
     .then(photos => photos.map(instantiate));
 }
 
 module.exports = {
   create,
-  findByScanId
+  findByScanId,
+  deleteByScanId
 };
