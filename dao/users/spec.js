@@ -96,3 +96,16 @@ test('UsersDAO.findAll returns nothing if no search matches', (t) => {
       t.equal(users.length, 0);
     });
 });
+
+test('UsersDAO.update updates a user', (t) => {
+  return UsersDAO.create(USER_DATA)
+    .then((user) => {
+      return UsersDAO.update(user.id, {
+        birthday: '2017-01-01'
+      });
+    })
+    .then((user) => {
+      t.equal(user.name, 'Q User');
+      t.equal(user.birthday, '2017-01-01');
+    });
+});

@@ -73,6 +73,10 @@ $ bin/migrate-prod      # Migrate production DB. This should be performed after
                         # run to avoid downtime.
 ```
 
+A good sanity-check for testing migrations locally is to migrate, rollback, and
+migrate again; this verifies that the rollback leaves things in a compatible
+state.
+
 For advanced usage, see [knexjs.org](http://knexjs.org/#Migrations)
 
 ## Gotchas / Future Considerations
