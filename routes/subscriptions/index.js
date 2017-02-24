@@ -17,7 +17,7 @@ const router = new Router();
 function* createSubscription() {
   const { email, name, zip } = this.request.body;
 
-  if (!email || !name || !zip) {
+  if (!email || !name) {
     this.throw(400, 'Missing required information');
   }
 
@@ -35,7 +35,7 @@ function* createSubscription() {
   this.status = 201;
   this.body = {
     success: true,
-    shouldAllowAppointment: shouldAllowAppointment(zip)
+    shouldAllowAppointment: zip && shouldAllowAppointment(zip)
   };
 }
 
