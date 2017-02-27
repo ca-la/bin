@@ -54,6 +54,38 @@ function login(email, password) {
     });
 }
 
+function getCollectionMetafields(collectionId) {
+  const url = `${SHOPIFY_STORE_BASE}/admin/custom_collections/${collectionId}/metafields.json`;
+
+  return Promise.resolve()
+    .then(() =>
+      fetch(url, {
+        method: 'get',
+        headers: {
+          Authorization: `Basic ${shopifyAuthHeader}`
+        }
+      })
+    )
+    .then((response) => {
+      return response.json();
+    })
+    .then((body) => {
+      const fields = {};
+
+      body.metafields.forEach((field) => {
+        fields[`${field.namespace}.${field.key}`] = field.value;
+      });
+
+      return fields;
+    });
+}
+
+function attachMetafields(collection) {
+  return getCollectionMetafields(collection.id).then((metafields) => {
+    return Object.assign({}, collection, { metafields });
+  });
+}
+
 /**
  * Retrieve a list of collections
  */
@@ -75,9 +107,40 @@ function getCollections() {
     .then((body) => {
       const collections = body.custom_collections;
 
-      return collections.sort((a, b) => {
+      const sorted = collections.sort((a, b) => {
         return new Date(b.published_at) - new Date(a.published_at);
       });
+
+      return Promise.all(sorted.map(attachMetafields));
+    });
+}
+
+/**
+ * Retrieve a single collection by handle
+ */
+function getCollectionByHandle(handle) {
+  const url = `${SHOPIFY_STORE_BASE}/admin/custom_collections.json?handle=${handle}`;
+
+  return Promise.resolve()
+    .then(() =>
+      fetch(url, {
+        method: 'get',
+        headers: {
+          Authorization: `Basic ${shopifyAuthHeader}`
+        }
+      })
+    )
+    .then((response) => {
+      return response.json();
+    })
+    .then((body) => {
+      const collection = body.custom_collections[0];
+
+      if (collection) {
+        return attachMetafields(collection);
+      }
+
+      return null;
     });
 }
 
@@ -189,7 +252,6 @@ function getAllProducts() {
       });
     });
 }
-
 /**
  * Get the number of orders that used a given discount code.
  */
@@ -230,6 +292,7 @@ function getRedemptionCount(discountCode) {
 module.exports = {
   getOrder,
   getCollections,
+  getCollectionByHandle,
   getProductById,
   getAllProducts,
   getProductsByCollectionId,
