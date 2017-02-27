@@ -17,6 +17,18 @@ function* getList() {
 }
 
 /**
+ * GET /collections/:handle
+ */
+function* getCollection() {
+  const collection = yield Shopify.getCollectionByHandle(this.params.handle);
+
+  this.assert(collection, 404, 'Collection not found');
+
+  this.body = collection;
+  this.status = 200;
+}
+
+/**
  * GET /collections/:collectionId/products
  */
 function* getProducts() {
@@ -28,5 +40,6 @@ function* getProducts() {
 
 router.get('/', getList);
 router.get('/:collectionId/products', getProducts);
+router.get('/:handle', getCollection);
 
 module.exports = router.routes();
