@@ -1,7 +1,8 @@
 'use strict';
 
-const Promise = require('bluebird');
 const fetch = require('node-fetch');
+const Promise = require('bluebird');
+const querystring = require('querystring');
 
 const ShopifyNotFoundError = require('../../errors/shopify-not-found');
 const Logger = require('../logger');
@@ -89,8 +90,9 @@ function attachMetafields(collection) {
 /**
  * Retrieve a list of collections
  */
-function getCollections() {
-  const url = `${SHOPIFY_STORE_BASE}/admin/custom_collections.json`;
+function getCollections(filters) {
+  const query = querystring.stringify(filters);
+  const url = `${SHOPIFY_STORE_BASE}/admin/custom_collections.json?${query}`;
 
   return Promise.resolve()
     .then(() =>
@@ -112,35 +114,6 @@ function getCollections() {
       });
 
       return Promise.all(sorted.map(attachMetafields));
-    });
-}
-
-/**
- * Retrieve a single collection by handle
- */
-function getCollectionByHandle(handle) {
-  const url = `${SHOPIFY_STORE_BASE}/admin/custom_collections.json?handle=${handle}`;
-
-  return Promise.resolve()
-    .then(() =>
-      fetch(url, {
-        method: 'get',
-        headers: {
-          Authorization: `Basic ${shopifyAuthHeader}`
-        }
-      })
-    )
-    .then((response) => {
-      return response.json();
-    })
-    .then((body) => {
-      const collection = body.custom_collections[0];
-
-      if (collection) {
-        return attachMetafields(collection);
-      }
-
-      return null;
     });
 }
 
@@ -292,7 +265,6 @@ function getRedemptionCount(discountCode) {
 module.exports = {
   getOrder,
   getCollections,
-  getCollectionByHandle,
   getProductById,
   getAllProducts,
   getProductsByCollectionId,
