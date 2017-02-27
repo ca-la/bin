@@ -74,7 +74,11 @@ function getCollectionMetafields(collectionId) {
       const fields = {};
 
       body.metafields.forEach((field) => {
-        fields[`${field.namespace}.${field.key}`] = field.value;
+        if (!fields[field.namespace]) {
+          fields[field.namespace] = {};
+        }
+
+        fields[field.namespace][field.key] = field.value;
       });
 
       return fields;
