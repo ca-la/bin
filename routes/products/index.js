@@ -1,6 +1,7 @@
 'use strict';
 
 const Router = require('koa-router');
+const pick = require('lodash/pick');
 
 const { FEATURED_PRODUCT_IDS } = require('../../services/config');
 const ShopifyNotFoundError = require('../../errors/shopify-not-found');
@@ -12,7 +13,9 @@ const router = new Router();
  * GET /products
  */
 function* getList() {
-  const products = yield Shopify.getAllProducts();
+  const filters = pick(this.query, 'handle');
+
+  const products = yield Shopify.getAllProducts(filters);
 
   this.body = products;
   this.status = 200;

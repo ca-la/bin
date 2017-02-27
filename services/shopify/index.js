@@ -198,8 +198,10 @@ function getProductById(id) {
     });
 }
 
-function getAllProducts() {
-  const url = `${SHOPIFY_STORE_BASE}/admin/products.json`;
+function getAllProducts(filters) {
+  const query = querystring.stringify(filters);
+
+  const url = `${SHOPIFY_STORE_BASE}/admin/products.json?${query}`;
 
   return Promise.resolve()
     .then(() =>
