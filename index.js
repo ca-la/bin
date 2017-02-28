@@ -30,6 +30,7 @@ router.use('/addresses', require('./routes/addresses'));
 router.use('/collections', require('./routes/collections'));
 router.use('/download-links', require('./routes/download-links'));
 router.use('/featured', require('./routes/featured'));
+router.use('/instagram-feed', require('./routes/instagram-feed'));
 router.use('/orders', require('./routes/orders'));
 router.use('/password-resets', require('./routes/password-resets'));
 router.use('/products', require('./routes/products'));
