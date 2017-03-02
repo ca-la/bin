@@ -274,6 +274,14 @@ test('GET /users/email-availability/:email returns true when available', (t) => 
     });
 });
 
+test('GET /users/email-availability/:email returns false when invalid', (t) => {
+  return get('/users/email-availability/fizzbuzz')
+    .then(([response, body]) => {
+      t.equal(response.status, 200);
+      t.deepEqual(body, { available: false });
+    });
+});
+
 test('PUT /users/:id returns a 401 if unauthenticated', (t) => {
   return put('/users/123', { body: {} })
     .then(([response, body]) => {

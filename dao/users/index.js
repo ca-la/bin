@@ -15,6 +15,10 @@ const { hash } = require('../../services/hash');
 const instantiate = data => new User(data);
 const maybeInstantiate = data => (data && new User(data)) || null;
 
+function isValidEmail(email) {
+  return Boolean(email.match(/.+@.+/));
+}
+
 function create(data) {
   const { name, email, password, role } = data;
 
@@ -22,7 +26,7 @@ function create(data) {
     return Promise.reject(new InvalidDataError('Missing required information'));
   }
 
-  if (!email.match(/.+@.+/)) {
+  if (!isValidEmail(email)) {
     return Promise.reject(new InvalidDataError('Invalid email'));
   }
 
@@ -138,6 +142,10 @@ function updatePassword(userId, password) {
 }
 
 function update(userId, data) {
+  if (data.email && !isValidEmail(data.email)) {
+    return Promise.reject(new InvalidDataError('Invalid email'));
+  }
+
   return db('users')
     .where({ id: userId })
     .update(compact({
@@ -153,6 +161,7 @@ function update(userId, data) {
 module.exports = {
   create,
   createWithoutPassword,
+  isValidEmail,
   findAll,
   findByEmail,
   findById,
