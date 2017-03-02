@@ -110,7 +110,8 @@ function* updateUser() {
   this.assert(this.params.userId === this.state.userId, 403, 'You can only update your own user');
 
   const { birthday, name, email } = this.request.body;
-  const updated = yield UsersDAO.update(this.params.userId, { birthday, name, email });
+  const updated = yield UsersDAO.update(this.params.userId, { birthday, name, email })
+    .catch(InvalidDataError, err => this.throw(400, err));
 
   this.status = 200;
   this.body = updated;
@@ -189,9 +190,13 @@ function* getUser() {
  * Not RESTful. No regrets.
  */
 function* getEmailAvailability() {
-  const user = yield UsersDAO.findByEmail(this.params.email);
+  const { email } = this.params;
 
-  this.body = { available: !user };
+  const user = yield UsersDAO.findByEmail(email);
+
+  this.body = {
+    available: UsersDAO.isValidEmail(email) && !user
+  };
 
   this.status = 200;
 }
