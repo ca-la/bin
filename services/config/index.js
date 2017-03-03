@@ -66,7 +66,9 @@ const config = {
 
   TWILIO_TOKEN: process.env.TWILIO_TOKEN,
 
-  TWILIO_OUTBOUND_NUMBER: process.env.TWILIO_OUTBOUND_NUMBER
+  TWILIO_OUTBOUND_NUMBER: process.env.TWILIO_OUTBOUND_NUMBER,
+
+  MINIMUM_SCAN_PITCH_RADIANS: 1.3
 };
 
 Object.keys(config).forEach((key) => {

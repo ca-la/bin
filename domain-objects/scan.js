@@ -1,5 +1,6 @@
 'use strict';
 
+const { MINIMUM_SCAN_PITCH_RADIANS } = require('../services/config');
 const { requireProperties } = require('../services/require-properties');
 
 class Scan {
@@ -14,6 +15,8 @@ class Scan {
     this.createdAt = new Date(row.created_at);
 
     this.deletedAt = row.deleted_at && new Date(row.deleted_at);
+
+    this.minimumPitchRadians = MINIMUM_SCAN_PITCH_RADIANS;
   }
 }
 
