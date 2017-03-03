@@ -30,6 +30,8 @@ const ADDRESS_DATA = Object.freeze({
 });
 
 test('POST /users returns a 400 if user creation fails', (t) => {
+  sandbox().stub(MailChimp, 'subscribeToUsers', () => Promise.resolve());
+
   sandbox().stub(UsersDAO,
     'create',
     () => Promise.reject(new InvalidDataError('Bad email'))
