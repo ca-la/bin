@@ -45,7 +45,7 @@ test('POST /users returns a 400 if user creation fails', (t) => {
 });
 
 test('POST /users returns new user data', (t) => {
-  sandbox().stub(MailChimp, 'subscribe', () => Promise.resolve());
+  sandbox().stub(MailChimp, 'subscribeToUsers', () => Promise.resolve());
   sandbox().stub(UnassignedReferralCodesDAO, 'get', () => Promise.resolve('ABC123'));
 
   return post('/users', { body: USER_DATA })
@@ -59,7 +59,7 @@ test('POST /users returns new user data', (t) => {
 });
 
 test('POST /users allows creating an address', (t) => {
-  sandbox().stub(MailChimp, 'subscribe', () => Promise.resolve());
+  sandbox().stub(MailChimp, 'subscribeToUsers', () => Promise.resolve());
   sandbox().stub(UnassignedReferralCodesDAO, 'get', () => Promise.resolve('ABC123'));
 
   const withAddress = Object.assign({}, USER_DATA, {
@@ -75,7 +75,7 @@ test('POST /users allows creating an address', (t) => {
 });
 
 test('POST /users returns a session instead if requested', (t) => {
-  sandbox().stub(MailChimp, 'subscribe', () => Promise.resolve());
+  sandbox().stub(MailChimp, 'subscribeToUsers', () => Promise.resolve());
   sandbox().stub(UnassignedReferralCodesDAO, 'get', () => Promise.resolve('ABC123'));
 
   return post('/users?returnValue=session', { body: USER_DATA })
@@ -87,7 +87,7 @@ test('POST /users returns a session instead if requested', (t) => {
 });
 
 test('POST /users allows creating a scan', (t) => {
-  sandbox().stub(MailChimp, 'subscribe', () => Promise.resolve());
+  sandbox().stub(MailChimp, 'subscribeToUsers', () => Promise.resolve());
   sandbox().stub(UnassignedReferralCodesDAO, 'get', () => Promise.resolve('ABC123'));
 
   const withScan = Object.assign({}, USER_DATA, {
