@@ -93,9 +93,13 @@ Exceptions include:
   unassigned codes remaining.
 - Once we have more than 250 orders in place, customers will not receive
   referral credits for orders older than the most recent 250. See
-  `ShopifyService.getRedemptionCount`.
+  `ShopifyService.getRedemptionCount`. The solution here probably involves
+  pagination.
 - The process of "cashing out" a referral credit is currently manual (for the
   same reason as point #1 above). If a customer has e.g. $50 in credit, they
   will be prompted to email `hi@ca.la` to redeem it, at which point we should
   create a unique one-time promo code for them and send it directly to them to
   use.
+- Image processing and email dispatching both go through the main API thread.
+  These are great candidates to break off into a worker queue and/or a separate
+  service once we hit scaling limitations.
