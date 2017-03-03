@@ -2,8 +2,12 @@
 
 const fetch = require('node-fetch');
 
-const { MAILCHIMP_API_KEY } = require('../config');
-const { requireProperties } = require('../require-properties');
+const {
+  MAILCHIMP_API_KEY,
+  MAILCHIMP_LIST_ID_SUBSCRIPTIONS,
+  MAILCHIMP_LIST_ID_PARTNERS,
+  MAILCHIMP_LIST_ID_USERS
+} = require('../config');
 
 const MAILCHIMP_API_BASE = 'https://us13.api.mailchimp.com/3.0';
 const MAILCHIMP_AUTH = new Buffer(`cala:${MAILCHIMP_API_KEY}`).toString('base64');
@@ -12,23 +16,11 @@ const ERROR_GLOSSARY = {
   'Member Exists': "You're already signed up for this list!"
 };
 
-function subscribe(data) {
-  requireProperties(
-    data,
-    'email',
-    'name',
-    'listId'
-  );
-
-  const { email, name, referralCode, listId } = data;
-
+function subscribe(listId, email, mergeFields) {
   const requestBody = {
     email_address: email,
     status: 'subscribed',
-    merge_fields: {
-      FULL_NAME: name,
-      REF_CODE: referralCode
-    }
+    merge_fields: mergeFields
   };
 
   let response;
@@ -60,6 +52,32 @@ function subscribe(data) {
     });
 }
 
+function subscribeToSubscriptions({ email, name, zip }) {
+  return subscribe(MAILCHIMP_LIST_ID_SUBSCRIPTIONS, email, {
+    FULL_NAME: name,
+    ZIP_CODE: zip
+  });
+}
+
+function subscribeToPartners({ email, name, companyName, comments, source }) {
+  return subscribe(MAILCHIMP_LIST_ID_PARTNERS, email, {
+    NAME: name,
+    ORGNAME: companyName,
+    COMMENTS: comments,
+    SOURCE: source
+  });
+}
+
+function subscribeToUsers({ email, name, referralCode }) {
+  return subscribe(MAILCHIMP_LIST_ID_USERS, email, {
+    FULL_NAME: name,
+    REF_CODE: referralCode
+  });
+}
+
 module.exports = {
-  subscribe
+  subscribe,
+  subscribeToPartners,
+  subscribeToSubscriptions,
+  subscribeToUsers
 };

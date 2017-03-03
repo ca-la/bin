@@ -37,6 +37,9 @@ const config = {
   // not have an account yet.
   MAILCHIMP_LIST_ID_SUBSCRIPTIONS: process.env.MAILCHIMP_LIST_ID_SUBSCRIPTIONS,
 
+  // The Mailchimp list ID for interested designer/brand partners
+  MAILCHIMP_LIST_ID_PARTNERS: process.env.MAILCHIMP_LIST_ID_PARTNERS,
+
   // The Mailchimp list ID for users who have an account (i.e. are scanned)
   MAILCHIMP_LIST_ID_USERS: process.env.MAILCHIMP_LIST_ID_USERS,
 

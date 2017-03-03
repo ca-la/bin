@@ -13,7 +13,6 @@ const Shopify = require('../../services/shopify');
 const User = require('../../domain-objects/user');
 const UsersDAO = require('../../dao/users');
 const {
-  MAILCHIMP_LIST_ID_USERS,
   REFERRAL_VALUE_DOLLARS
 } = require('../../services/config');
 
@@ -66,11 +65,10 @@ function* createUser() {
     });
   }
 
-  yield MailChimp.subscribe({
+  yield MailChimp.subscribeToUsers({
     email,
     name,
-    referralCode: user.referralCode,
-    listId: MAILCHIMP_LIST_ID_USERS
+    referralCode: user.referralCode
   });
 
   this.status = 201;
