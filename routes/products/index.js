@@ -45,8 +45,20 @@ function* getById() {
   this.status = 200;
 }
 
+/**
+ * GET /products/:productId/collections
+ */
+function* getCollections() {
+  const collections = yield Shopify.getCollections({ product_id: this.params.productId })
+    .catch(ShopifyNotFoundError, err => this.throw(404, err.message));
+
+  this.body = collections;
+  this.status = 200;
+}
+
 router.get('/', getList);
 router.get('/:productId', getById);
+router.get('/:productId/collections', getCollections);
 router.get('/featured-ids', getFeaturedIds);
 
 module.exports = router.routes();
