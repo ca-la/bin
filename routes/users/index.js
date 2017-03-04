@@ -3,6 +3,7 @@
 const Router = require('koa-router');
 
 const AddressesDAO = require('../../dao/addresses');
+const UnassignedReferralCodesDAO = require('../../dao/unassigned-referral-codes');
 const attachRole = require('../../middleware/attach-role');
 const InvalidDataError = require('../../errors/invalid-data');
 const MailChimp = require('../../services/mailchimp');
@@ -41,7 +42,24 @@ function* createUser() {
     }
   }
 
-  const user = yield UsersDAO.create({ name, email, password })
+  const referralCode = yield UnassignedReferralCodesDAO.get();
+
+  try {
+    yield MailChimp.subscribeToUsers({
+      email,
+      name,
+      referralCode
+    });
+  } catch (error) {
+    this.throw(400, error.message);
+  }
+
+  const user = yield UsersDAO.create({
+    name,
+    email,
+    password,
+    referralCode
+  })
     .catch(InvalidDataError, err => this.throw(400, err));
 
   if (address) {
@@ -64,12 +82,6 @@ function* createUser() {
       isComplete: scan.isComplete
     });
   }
-
-  yield MailChimp.subscribeToUsers({
-    email,
-    name,
-    referralCode: user.referralCode
-  });
 
   this.status = 201;
 
