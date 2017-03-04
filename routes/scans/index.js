@@ -144,7 +144,16 @@ function* claimScan() {
  * GET /scans/:scanId/photos
  */
 function* getScanPhotos() {
-  this.assert(this.state.role === User.ROLES.admin, 403);
+  const scan = yield ScansDAO.findById(this.params.scanId);
+
+  this.assert(scan, 404, 'Scan not found');
+
+  const isAuthorized = (
+    scan.userId === this.state.userId ||
+    this.state.role === User.ROLES.admin
+  );
+
+  this.assert(isAuthorized, 403);
 
   const photos = yield ScanPhotosDAO.findByScanId(this.params.scanId);
 

@@ -184,7 +184,7 @@ test('POST /scans/:id/claim claims and returns a scan', (t) => {
     });
 });
 
-test('GET /scans/:id/photos returns a list of photos', (t) => {
+test('GET /scans/:id/photos returns a list of photos to an admin', (t) => {
   let sessionId;
   let scanId;
   let photoId;
@@ -218,11 +218,70 @@ test('GET /scans/:id/photos returns a list of photos', (t) => {
     });
 });
 
-test('GET /scans/:id/photos returns 403 if not admin', (t) => {
+test('GET /scans/:id/photos returns a list of photos to the scan owner', (t) => {
+  let sessionId;
+  let scanId;
+  let photoId;
+
+  return createUser()
+    .then(({ user, session }) => {
+      sessionId = session.id;
+
+      return ScansDAO.create({
+        type: ScansDAO.SCAN_TYPES.photo,
+        userId: user.id
+      });
+    })
+    .then((scan) => {
+      scanId = scan.id;
+      return ScanPhotosDAO.create({
+        scanId
+      });
+    })
+    .then((photo) => {
+      photoId = photo.id;
+
+      return get(`/scans/${scanId}/photos`, {
+        headers: authHeader(sessionId)
+      });
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 200);
+      t.equal(body.length, 1);
+      t.equal(body[0].id, photoId);
+    });
+});
+
+test('GET /scans/:id/photos returns 404 if scan not found', (t) => {
   return createUser()
     .then(({ session }) => {
       return get('/scans/5f8deaa3-f35f-4759-ac00-a54c8ece1f67/photos', {
         headers: authHeader(session.id)
+      });
+    })
+    .then(([response]) => {
+      t.equal(response.status, 404);
+    });
+});
+
+test('GET /scans/:id/photos returns 403 if unauthorized', (t) => {
+  let otherSessionId;
+
+  return Promise.all([
+    createUser(),
+    createUser()
+  ])
+    .then(([owner, otherUser]) => {
+      otherSessionId = otherUser.session.id;
+
+      return ScansDAO.create({
+        type: ScansDAO.SCAN_TYPES.photo,
+        userId: owner.user.id
+      });
+    })
+    .then((scan) => {
+      return get(`/scans/${scan.id}/photos`, {
+        headers: authHeader(otherSessionId)
       });
     })
     .then(([response, body]) => {
