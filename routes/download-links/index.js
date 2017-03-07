@@ -6,7 +6,7 @@ const { sendSMS } = require('../../services/twilio');
 
 const router = new Router();
 
-const DOWNLOAD_MESSAGE = 'Welcome to CALA. To download our iPhone app, click here: https://ca.la/app';
+const DOWNLOAD_MESSAGE = 'Welcome to CALA. To download our iPhone app, click here: https://ca.la/ios';
 
 function* sendDownloadLink() {
   const { to } = this.request.body;
