@@ -10,10 +10,14 @@ const ScanPhotosDAO = require('../../dao/scan-photos');
 const ScansDAO = require('../../dao/scans');
 const User = require('../../domain-objects/user');
 const validateMeasurements = require('../../services/validate-measurements');
-const { AWS_SCANPHOTO_BUCKET_NAME } = require('../../services/config');
+const { API_HOST, AWS_SCANPHOTO_BUCKET_NAME } = require('../../services/config');
 const { uploadFile, deleteFile } = require('../../services/aws');
 
 const router = new Router();
+
+function getPhotoUrl(context, photoId) {
+  return `${API_HOST}/scan-photos/${photoId}/raw?token=${context.state.token}`;
+}
 
 function* createScan() {
   const { type, isComplete } = this.request.body;
@@ -74,6 +78,8 @@ function* createScanPhoto() {
 
   const fileName = `${photo.id}.jpg`;
   yield uploadFile(AWS_SCANPHOTO_BUCKET_NAME, fileName, localPath);
+
+  photo.setUrl(getPhotoUrl(this, photo.id));
 
   this.status = 201;
   this.body = photo;
@@ -156,6 +162,8 @@ function* getScanPhotos() {
   this.assert(isAuthorized, 403);
 
   const photos = yield ScanPhotosDAO.findByScanId(this.params.scanId);
+
+  photos.forEach(photo => photo.setUrl(getPhotoUrl(this, photo.id)));
 
   this.body = photos;
   this.status = 200;

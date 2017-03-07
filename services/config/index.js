@@ -7,13 +7,13 @@ const {
   FEATURED_COLLECTION_LISTS_PROD
 } = require('./featured');
 
-const isProduction = (process.env.NODE_ENV === 'production');
+const IS_PRODUCTION = (process.env.NODE_ENV === 'production');
 
-const FEATURED_PRODUCT_IDS = isProduction ?
+const FEATURED_PRODUCT_IDS = IS_PRODUCTION ?
   FEATURED_PRODUCT_IDS_PROD :
   FEATURED_PRODUCT_IDS_DEV;
 
-const FEATURED_COLLECTION_LISTS = isProduction ?
+const FEATURED_COLLECTION_LISTS = IS_PRODUCTION ?
   FEATURED_COLLECTION_LISTS_PROD :
   FEATURED_COLLECTION_LISTS_DEV;
 
@@ -71,7 +71,9 @@ const config = {
 
   TWILIO_OUTBOUND_NUMBER: process.env.TWILIO_OUTBOUND_NUMBER,
 
-  MINIMUM_SCAN_PITCH_RADIANS: 1.3
+  MINIMUM_SCAN_PITCH_RADIANS: 1.3,
+
+  API_HOST: process.env.API_HOST
 };
 
 Object.keys(config).forEach((key) => {

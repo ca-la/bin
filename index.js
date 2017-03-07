@@ -35,6 +35,7 @@ router.use('/orders', require('./routes/orders'));
 router.use('/password-resets', require('./routes/password-resets'));
 router.use('/products', require('./routes/products'));
 router.use('/scans', require('./routes/scans'));
+router.use('/scan-photos', require('./routes/scan-photos'));
 router.use('/sessions', require('./routes/sessions'));
 router.use('/subscriptions', require('./routes/subscriptions'));
 router.use('/users', require('./routes/users'));
