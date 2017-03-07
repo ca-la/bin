@@ -30,6 +30,14 @@ function findByScanId(scanId) {
     .then(photos => photos.map(instantiate));
 }
 
+function findById(id) {
+  return db('scanphotos')
+    .where({ id }, '*')
+    .catch(rethrow)
+    .then(first)
+    .then(instantiate);
+}
+
 function deleteByScanId(scanId) {
   return db('scanphotos')
     .where({
@@ -46,5 +54,6 @@ function deleteByScanId(scanId) {
 module.exports = {
   create,
   findByScanId,
+  findById,
   deleteByScanId
 };

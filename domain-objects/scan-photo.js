@@ -1,7 +1,6 @@
 'use strict';
 
 const { requireProperties } = require('../services/require-properties');
-const { AWS_SCANPHOTO_BUCKET_NAME } = require('../services/config');
 
 class ScanPhoto {
   constructor(row) {
@@ -13,12 +12,16 @@ class ScanPhoto {
     this.deletedAt = row.deleted_at && new Date(row.deleted_at);
   }
 
+  setUrl(url) {
+    this.url = url;
+  }
+
   toJSON() {
     return {
       id: this.id,
       scanId: this.scanId,
       createdAt: this.createdAt,
-      url: `https://${AWS_SCANPHOTO_BUCKET_NAME}.s3.amazonaws.com/${this.id}.jpg`
+      url: this.url
     };
   }
 }

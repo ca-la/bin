@@ -29,7 +29,7 @@ function uploadFile(bucketName, remoteFileName, localFileName) {
   return read(localFileName)
     .then((buffer) => {
       return put({
-        ACL: 'public-read',
+        ACL: 'authenticated-read',
         Bucket: bucketName,
         Key: remoteFileName,
         Body: buffer
@@ -54,7 +54,22 @@ function deleteFile(bucketName, remoteFileName) {
   });
 }
 
+/**
+ * @returns {Promise}
+ */
+function getFile(bucketName, remoteFileName) {
+  const s3 = new AWS.S3();
+
+  const get = Promise.promisify(s3.getObject, { context: s3 });
+
+  return get({
+    Bucket: bucketName,
+    Key: remoteFileName
+  });
+}
+
 module.exports = {
   uploadFile,
-  deleteFile
+  deleteFile,
+  getFile
 };

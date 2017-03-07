@@ -10,13 +10,19 @@ const SessionsDAO = require('../../dao/sessions');
 function* attachSession(next) {
   const headerMatches = (/^Token (.+)$/).exec(this.headers.authorization);
 
+  const token = (
+    (headerMatches && headerMatches[1]) ||
+    this.query.token
+  );
+
   let session;
 
-  if (headerMatches) {
-    session = yield SessionsDAO.findById(headerMatches[1]);
+  if (token) {
+    session = yield SessionsDAO.findById(token);
   }
 
   Object.assign(this.state, {
+    token,
     userId: session && session.userId
   });
 
