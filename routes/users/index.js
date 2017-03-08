@@ -204,8 +204,13 @@ function* getEmailAvailability() {
 
   const user = yield UsersDAO.findByEmail(email);
 
+  const isValid = UsersDAO.isValidEmail(email);
+  const isTaken = Boolean(user);
+
   this.body = {
-    available: UsersDAO.isValidEmail(email) && !user
+    isValid,
+    isTaken,
+    available: isValid && !isTaken
   };
 
   this.status = 200;

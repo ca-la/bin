@@ -264,7 +264,7 @@ test('GET /users/email-availability/:email returns false when unavailable', (t) 
     })
     .then(([response, body]) => {
       t.equal(response.status, 200);
-      t.deepEqual(body, { available: false });
+      t.deepEqual(body, { available: false, isTaken: true, isValid: true });
     });
 });
 
@@ -272,7 +272,7 @@ test('GET /users/email-availability/:email returns true when available', (t) => 
   return get('/users/email-availability/fuz@buz.qux')
     .then(([response, body]) => {
       t.equal(response.status, 200);
-      t.deepEqual(body, { available: true });
+      t.deepEqual(body, { available: true, isTaken: false, isValid: true });
     });
 });
 
@@ -280,7 +280,7 @@ test('GET /users/email-availability/:email returns false when invalid', (t) => {
   return get('/users/email-availability/fizzbuzz')
     .then(([response, body]) => {
       t.equal(response.status, 200);
-      t.deepEqual(body, { available: false });
+      t.deepEqual(body, { available: false, isTaken: false, isValid: false });
     });
 });
 
