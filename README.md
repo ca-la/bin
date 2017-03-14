@@ -103,6 +103,8 @@ Exceptions include:
 - Image processing and email dispatching both go through the main API thread.
   These are great candidates to break off into a worker queue and/or a separate
   service once we hit scaling limitations.
+    - update 2017/3 - experimenting with a new Go service -
+      [scanner](https://github.com/ca-la/scanner)
 - We're on a small Heroku database at the moment, with a 10k row limit. We'll
   need to upgrade this once we get close to that limit. They'll notify us when
   that time comes. Probably easiest to stick with Heroku Postgres, but we could
