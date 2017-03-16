@@ -9,7 +9,11 @@ test:
     - $(npm bin)/knex migrate:latest
 
 deployment:
-  production:
+  staging:
     branch: master
+    heroku:
+      appname: cala-api-stg
+  production:
+    branch: production
     heroku:
       appname: cala-api-prod
