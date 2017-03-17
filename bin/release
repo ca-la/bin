@@ -1,0 +1,37 @@
+#!/bin/bash
+
+set -euo pipefail
+
+TYPE=${1:-other}
+
+if [[ $TYPE != "major" ]] &&
+  [[ $TYPE != "minor" ]] &&
+  [[ $TYPE != "patch" ]]
+then
+  echo "Usage: release [major|minor|patch]"
+  exit 1
+fi
+
+if [[ $(git rev-parse --abbrev-ref HEAD) != "master" ]] ; then
+  echo 'Cannot release from a branch other than master'
+  exit 1
+fi
+
+if [[ $(git status --porcelain) != "" ]] ; then
+  echo 'Cannot release with uncommitted changes'
+  exit 1
+fi
+
+git fetch origin
+git pull --rebase origin master
+
+npm version $TYPE
+
+git push origin master --follow-tags
+
+git checkout -B production
+git pull --rebase origin production
+git merge --ff master
+git push origin production
+
+git checkout master

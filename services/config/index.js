@@ -7,15 +7,26 @@ const {
   FEATURED_COLLECTION_LISTS_PROD
 } = require('./featured');
 
-const IS_PRODUCTION = (process.env.NODE_ENV === 'production');
 
-const FEATURED_PRODUCT_IDS = IS_PRODUCTION ?
-  FEATURED_PRODUCT_IDS_PROD :
-  FEATURED_PRODUCT_IDS_DEV;
+const envs = Object.freeze({
+  LOCAL: Symbol('local'),
+  PROD: Symbol('prod'),
+  STG: Symbol('stg')
+});
 
-const FEATURED_COLLECTION_LISTS = IS_PRODUCTION ?
-  FEATURED_COLLECTION_LISTS_PROD :
-  FEATURED_COLLECTION_LISTS_DEV;
+const ENV = envs[process.env.DEPLOYMENT_NAME] || envs.LOCAL;
+
+const FEATURED_PRODUCT_IDS = {
+  [envs.LOCAL]: FEATURED_PRODUCT_IDS_DEV,
+  [envs.PROD]: FEATURED_PRODUCT_IDS_PROD,
+  [envs.STG]: FEATURED_PRODUCT_IDS_DEV
+}[ENV];
+
+const FEATURED_COLLECTION_LISTS = {
+  [envs.LOCAL]: FEATURED_COLLECTION_LISTS_DEV,
+  [envs.PROD]: FEATURED_COLLECTION_LISTS_PROD,
+  [envs.STG]: FEATURED_COLLECTION_LISTS_DEV
+}[ENV];
 
 /**
  * All environment variables are required for API functionality, unless stated
