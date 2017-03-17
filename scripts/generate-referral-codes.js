@@ -1,12 +1,12 @@
 'use strict';
 
-const uuid = require('node-uuid').v4;
-const sample = require('lodash/samplesize');
+const sample = require('lodash/sampleSize');
 
-const alphabet = 'QWERTYUPASDFGHJKLZXCVBNM23456789'.split('')
+const alphabet = 'QWERTYUPASDFGHJKLZXCVBNM23456789'.split('');
 
 const prefix = 'X';
 
-for (var i = 0; i < 10000; i++) {
+for (let i = 0; i < 10000; i += 1) {
+  // eslint-disable-next-line no-console
   console.log(prefix + sample(alphabet, 5).join(''));
 }
