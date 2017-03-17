@@ -29,7 +29,7 @@ easiest way to set these is probably to dump them from Heroku — the developmen
 server will read them from a `.env` file if present.
 
 ```bash
-$ heroku config -s --app cala-api-prod > .env
+$ heroku config -s --app cala-api-stg > .env
 ```
 
 ## Usage
