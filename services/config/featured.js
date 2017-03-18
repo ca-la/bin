@@ -24,6 +24,10 @@ const FEATURED_COLLECTION_LISTS_DEV = [
     sectionTitle: 'Featured Collections',
     collections: [
       {
+        id: 419709965,
+        title: 'VU-DO'
+      },
+      {
         id: 273845633,
         title: 'Collection 01'
       },
