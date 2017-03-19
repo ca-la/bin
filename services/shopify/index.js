@@ -73,6 +73,10 @@ function getCollectionMetafields(collectionId) {
     .then((body) => {
       const fields = {};
 
+      if (!body.metafields) {
+        return {};
+      }
+
       body.metafields.forEach((field) => {
         if (!fields[field.namespace]) {
           fields[field.namespace] = {};
@@ -111,7 +115,7 @@ function getCollections(filters) {
       return response.json();
     })
     .then((body) => {
-      const collections = body.custom_collections;
+      const collections = body.custom_collections || [];
 
       const sorted = collections.sort((a, b) => {
         return new Date(b.published_at) - new Date(a.published_at);
