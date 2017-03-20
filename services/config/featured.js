@@ -59,6 +59,10 @@ const FEATURED_COLLECTION_LISTS_PROD = [
     sectionTitle: 'Featured Collections',
     collections: [
       {
+        id: 374045635,
+        title: 'Peter Vu'
+      },
+      {
         id: 294394947,
         title: 'Odyssey Collection'
       },
