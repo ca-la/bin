@@ -104,3 +104,34 @@ test('SessionsDAO.findById returns a session', (t) => {
     });
 });
 
+test('SessionsDAO.findById returns a session that has not expired', (t) => {
+  let user;
+  return UsersDAO.create(USER_DATA)
+    .then((_user) => {
+      user = _user;
+      return SessionsDAO.create({
+        email: 'user@example.com',
+        expiresAt: new Date('2099-01-01'),
+        password: 'hunter2'
+      });
+    })
+    .then(session => SessionsDAO.findById(session.id))
+    .then((session) => {
+      t.equal(session.userId, user.id);
+    });
+});
+
+test('SessionsDAO.findById returns null if a session has expired', (t) => {
+  return UsersDAO.create(USER_DATA)
+    .then(() => {
+      return SessionsDAO.create({
+        email: 'user@example.com',
+        expiresAt: new Date('2005-01-01'),
+        password: 'hunter2'
+      });
+    })
+    .then(session => SessionsDAO.findById(session.id))
+    .then((session) => {
+      t.equal(session, null);
+    });
+});

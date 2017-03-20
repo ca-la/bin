@@ -33,10 +33,11 @@ function updatePasswordFromShopify(user, password) {
 /**
  * @param {Object} user A User instance
  */
-function createForUser(user) {
+function createForUser(user, expiresAt = null) {
   return db('sessions').insert({
     id: uuid.v4(),
-    user_id: user.id
+    user_id: user.id,
+    expires_at: expiresAt
   }, '*')
     .then(first)
     .then(instantiate)
@@ -74,7 +75,7 @@ function create(data) {
         throw new InvalidDataError('Incorrect password');
       }
 
-      return createForUser(user);
+      return createForUser(user, data.expiresAt);
     });
 }
 
@@ -84,7 +85,11 @@ function create(data) {
  * resource and attach it to the Session domain object.
  */
 function findById(id, shouldAttachUser = false) {
-  return db('sessions').where({ id })
+  return db('sessions')
+    .whereRaw(
+      'id = ? and (expires_at is null or expires_at > now())',
+      [id]
+    )
     .then(first)
     .then(maybeInstantiate)
     .then((session) => {
