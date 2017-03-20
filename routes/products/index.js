@@ -25,8 +25,8 @@ function* getList() {
  * GET /products/featured-ids
  *
  * TODO: This will no longer used in the app as of ~Feb 7, 2017. Safe to delete
- * once we're a few weeks past this point, since it was never in an App Store
- * release.
+ * once we're 60 days past this point, since it was never in an App Store
+ * release and testflight builds will have expired.
  */
 // eslint-disable-next-line require-yield
 function* getFeaturedIds() {
