@@ -8,9 +8,27 @@ const SessionsDAO = require('../../dao/sessions');
 const router = new Router();
 
 function* createSession() {
-  const { email, password } = this.request.body;
+  const {
+    email,
+    password,
+    expireAfterSeconds
+  } = this.request.body;
 
-  const session = yield SessionsDAO.create({ email, password })
+  let expiresAt = null;
+
+  if (expireAfterSeconds) {
+    // This relies on the server and DB time being in sync, which is a bit
+    // risky. TODO figured out a solution that does not, and avoid short
+    // expirations until then.
+    const now = (new Date()).getTime();
+    expiresAt = new Date(now + (expireAfterSeconds * 1000));
+  }
+
+  const session = yield SessionsDAO.create({
+    email,
+    password,
+    expiresAt
+  })
     .catch(InvalidDataError, err => this.throw(400, err));
 
   this.status = 201;

@@ -40,6 +40,34 @@ test('POST /sessions returns new session data', (t) => {
       t.equal(response.status, 201, 'status=201');
       t.equal(body.userId, user.id);
       t.equal(body.user.passwordHash, undefined);
+      t.equal(body.expiresAt, null);
+    });
+});
+
+test('POST /sessions allows specifying expiry', (t) => {
+  let user;
+  return UsersDAO.create(USER_DATA)
+    .then((_user) => {
+      user = _user;
+      return post('/sessions', {
+        body: {
+          email: 'user@example.com',
+          password: 'hunter2',
+          expireAfterSeconds: 30
+        }
+      });
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 201, 'status=201');
+      t.equal(body.userId, user.id);
+      t.equal(body.user.passwordHash, undefined);
+
+      const now = (new Date()).getTime();
+      const expiry = (new Date(body.expiresAt)).getTime();
+      const differenceSeconds = (expiry - now) / 1000;
+
+      t.equal(differenceSeconds > 20, true);
+      t.equal(differenceSeconds < 40, true);
     });
 });
 
