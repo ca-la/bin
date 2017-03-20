@@ -226,13 +226,18 @@ function getAllProducts(filters) {
     .then((body) => {
       const products = body.products;
 
-      // Exclude 'special' products - e.g. mens bomber - from public list
-      return products.filter((product) => {
-        return (
-          product.product_type !== 'VIP' &&
-          product.product_type !== 'Designer'
-        );
-      });
+      return products
+        .filter((product) => {
+          // Exclude 'special' products from public list
+          return (
+            product.product_type !== 'VIP' &&
+            product.product_type !== 'Designer'
+          );
+        })
+        .sort((a, b) => {
+          // Sort by published_at desc
+          return (new Date(b.published_at)) - (new Date(a.published_at));
+        });
     });
 }
 /**
