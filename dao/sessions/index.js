@@ -116,9 +116,16 @@ function deleteByUserId(userId) {
     .del();
 }
 
+function deleteById(id) {
+  return db('sessions')
+    .where({ id })
+    .del();
+}
+
 module.exports = {
   create,
   createForUser,
   deleteByUserId,
+  deleteById,
   findById
 };

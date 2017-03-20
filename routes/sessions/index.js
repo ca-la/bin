@@ -44,7 +44,17 @@ function* getSession() {
   this.body = session;
 }
 
+function* deleteSession() {
+  const numberDeleted = yield SessionsDAO.deleteById(this.params.sessionId);
+
+  this.assert(numberDeleted === 1, 404, 'Session not found');
+
+  this.status = 204;
+  this.body = null;
+}
+
 router.post('/', createSession);
+router.del('/:sessionId', deleteSession);
 router.get('/:sessionId', getSession);
 
 module.exports = router.routes();
