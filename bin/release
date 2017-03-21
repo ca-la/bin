@@ -23,7 +23,7 @@ if [[ $(git status --porcelain) != "" ]] ; then
 fi
 
 git fetch origin
-git pull --rebase origin master
+git pull origin master
 
 npm version $TYPE
 
