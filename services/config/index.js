@@ -64,12 +64,6 @@ const config = {
   // API key and password separated by a colon, e.g. 'tok12345:password12345'
   SHOPIFY_STORE_AUTH: process.env.SHOPIFY_STORE_AUTH,
 
-  // The US zip code that we're currently accepting private appointments in. If
-  // this is set, and a customer is within a reasonable radius of this zip when
-  // they subscribe to the newsletter, we'll offer them the ability to schedule
-  // an appointment directly with us.
-  PRIVATE_APPOINTMENT_ZIP: process.env.PRIVATE_APPOINTMENT_ZIP,
-
   FEATURED_PRODUCT_IDS,
 
   FEATURED_COLLECTION_LISTS,

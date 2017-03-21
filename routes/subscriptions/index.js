@@ -3,7 +3,6 @@
 const Router = require('koa-router');
 
 const MailChimp = require('../../services/mailchimp');
-const shouldAllowAppointment = require('../../services/should-allow-appointment');
 
 const router = new Router();
 
@@ -32,8 +31,7 @@ function* createSubscription() {
 
   this.status = 201;
   this.body = {
-    success: true,
-    shouldAllowAppointment: zip && shouldAllowAppointment(zip)
+    success: true
   };
 }
 
