@@ -61,7 +61,7 @@ test('SessionsDAO.create fails when password is incorrect', (t) => {
     .then(() => SessionsDAO.create({ email: 'user@example.com', password: 'hunter3' }))
     .catch((err) => {
       t.ok(err instanceof InvalidDataError);
-      t.equal(err.message, 'Incorrect password');
+      t.equal(err.message, 'Incorrect password for user@example.com');
     });
 });
 

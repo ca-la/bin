@@ -1,15 +1,20 @@
 #!/bin/bash
-set -e
 
-echo -n "Enter migration name (e.g. 'add-user-table'): "
-read RES
+set -euo pipefail
 
-if [ "$RES" == "" ]; then
-  exit 1
-fi
+main() {
+  echo -n "Enter migration name (e.g. 'add-user-table'): "
+  read RES
 
-DATE=$(date "+%Y%m%d%H%M%S")
+  if [ "$RES" == "" ]; then
+    exit 1
+  fi
 
-FILENAME=migrations/$DATE'_'$RES.js
-cp migrations/_template $FILENAME
-echo 'Created '$FILENAME
+  DATE=$(date "+%Y%m%d%H%M%S")
+
+  FILENAME=migrations/$DATE'_'$RES.js
+  cp migrations/_template $FILENAME
+  echo 'Created '$FILENAME
+}
+
+main "$@"
