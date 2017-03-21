@@ -30,6 +30,17 @@ test('POST /sessions returns a 400 if user creation fails', (t) => {
     });
 });
 
+test('POST /sessions returns 400 for bad password', (t) => {
+  return UsersDAO.create(USER_DATA)
+    .then(() => {
+      return post('/sessions', { body: { email: 'user@example.com', password: 'nope' } });
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 400);
+      t.equal(body.message, 'Incorrect password for user@example.com');
+    });
+});
+
 test('POST /sessions returns new session data', (t) => {
   let user;
   return UsersDAO.create(USER_DATA)
