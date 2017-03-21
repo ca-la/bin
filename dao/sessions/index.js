@@ -74,7 +74,7 @@ function create(data) {
     })
     .then((match) => {
       if (!match) {
-        throw new InvalidDataError('Incorrect password');
+        throw new InvalidDataError(`Incorrect password for ${email}`);
       }
 
       if (
