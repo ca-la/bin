@@ -11,7 +11,8 @@ function* createSession() {
   const {
     email,
     password,
-    expireAfterSeconds
+    expireAfterSeconds,
+    role
   } = this.request.body;
 
   let expiresAt = null;
@@ -27,7 +28,8 @@ function* createSession() {
   const session = yield SessionsDAO.create({
     email,
     password,
-    expiresAt
+    expiresAt,
+    role
   })
     .catch(InvalidDataError, err => this.throw(400, err));
 

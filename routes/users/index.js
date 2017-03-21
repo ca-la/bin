@@ -4,7 +4,6 @@ const Router = require('koa-router');
 
 const AddressesDAO = require('../../dao/addresses');
 const UnassignedReferralCodesDAO = require('../../dao/unassigned-referral-codes');
-const attachRole = require('../../middleware/attach-role');
 const InvalidDataError = require('../../errors/invalid-data');
 const MailChimp = require('../../services/mailchimp');
 const requireAuth = require('../../middleware/require-auth');
@@ -216,8 +215,8 @@ function* getEmailAvailability() {
   this.status = 200;
 }
 
-router.get('/', attachRole, getList);
-router.get('/:userId', requireAuth, attachRole, getUser);
+router.get('/', getList);
+router.get('/:userId', requireAuth, getUser);
 router.get('/:userId/referral-count', requireAuth, getReferralCount);
 router.get('/email-availability/:email', getEmailAvailability);
 router.post('/', createUser);

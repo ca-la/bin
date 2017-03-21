@@ -54,7 +54,7 @@ function createUser({
       });
 
       return Promise.all([
-        withSession && SessionsDAO.createForUser(user),
+        withSession && SessionsDAO.createForUser(user, { role }),
         withAddress && AddressesDAO.create(addressData)
       ]);
     })

@@ -9,6 +9,7 @@ class Session {
     this.id = row.id;
     this.userId = row.user_id;
     this.createdAt = new Date(row.created_at);
+    this.role = row.role;
     this.expiresAt = row.expires_at && new Date(row.expires_at);
   }
 
