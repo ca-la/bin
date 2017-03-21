@@ -169,7 +169,6 @@ function* getScanPhotos() {
 }
 
 function* getScan() {
-  console.log(this.state.role);
   this.assert(this.state.role === User.ROLES.admin, 403);
 
   const scan = yield ScansDAO.findById(this.params.scanId);
