@@ -205,11 +205,11 @@ test('GET /users returns a user by referral code, case insensitive', (t) => {
     });
 });
 
-test('GET /users list returns 403 if not authorized', (t) => {
+test('GET /users list returns 401 if not authorized', (t) => {
   return get('/users')
     .then(([response, body]) => {
-      t.equal(response.status, 403);
-      t.equal(body.message, 'Forbidden');
+      t.equal(response.status, 401);
+      t.equal(body.message, 'Unauthorized');
     });
 });
 
