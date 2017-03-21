@@ -31,7 +31,7 @@ git push origin master --follow-tags
 
 git checkout -B production
 git pull --rebase origin production
-git merge --ff master
+git merge --ff-only master
 git push origin production
 
 git checkout master
