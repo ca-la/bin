@@ -28,6 +28,12 @@ const FEATURED_COLLECTION_LISTS = {
   [envs.STG]: FEATURED_COLLECTION_LISTS_DEV
 }[ENV];
 
+const MINIMUM_SCAN_PITCH_RADIANS = {
+  [envs.LOCAL]: 1.3,
+  [envs.PROD]: 1.3,
+  [envs.STG]: 1
+}[ENV];
+
 /**
  * All environment variables are required for API functionality, unless stated
  * otherwise.
@@ -82,7 +88,7 @@ const config = {
 
   TWILIO_OUTBOUND_NUMBER: process.env.TWILIO_OUTBOUND_NUMBER,
 
-  MINIMUM_SCAN_PITCH_RADIANS: 1.3,
+  MINIMUM_SCAN_PITCH_RADIANS,
 
   API_HOST: process.env.API_HOST
 };
