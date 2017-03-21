@@ -80,15 +80,26 @@ $ bin/tt routes/users/spec.js
 
 ### Migrations
 
+Staging and production database migrations should be performed after a pull
+request is reviewed, and before it's merged - there's a handy checklist in the
+PR template to help.
+
+All migrations **must** be able to work both with the currently-deployed
+application code, and with the code that will deployed in the associated pull
+request. This avoids any downtime in between the two, particularly if there are
+issues with the application code deployment.
+
+This means that some types of migrations - e.g. adding a new `not null` column
+that the application code needs to populate - should be done in a two step
+deploy; first add the column, then deploy the application code, then add the
+`not null` constraint.
+
 ```bash
 $ bin/create-migration  # Create a new migration
 $ bin/migrate-local     # Migrate local DBs to latest schema
-$ bin/rollback-lock     # Roll back latest local migration
-$ bin/migrate-prod      # Migrate production DB. This should be performed after
-                        # a pull request is approved, and before it's merged.
-                        # Any code in a pull request must be able to function
-                        # both before and after its corresponding migration is
-                        # run to avoid downtime.
+$ bin/rollback-local    # Roll back latest local migration
+$ bin/migrate-stg       # Migrate staging DB
+$ bin/migrate-prod      # Migrate production DB
 ```
 
 A good sanity-check for testing migrations locally is to migrate, rollback, and
