@@ -11,6 +11,7 @@ const Session = require('../../domain-objects/session');
 const Shopify = require('../../services/shopify');
 const UsersDAO = require('../users');
 const { compare } = require('../../services/hash');
+const { ROLES } = require('../../domain-objects/user');
 
 const instantiate = data => new Session(data);
 const maybeInstantiate = data => (data && new Session(data)) || null;
@@ -33,11 +34,12 @@ function updatePasswordFromShopify(user, password) {
 /**
  * @param {Object} user A User instance
  */
-function createForUser(user, expiresAt = null) {
+function createForUser(user, additionalData = {}) {
   return db('sessions').insert({
     id: uuid.v4(),
     user_id: user.id,
-    expires_at: expiresAt
+    expires_at: additionalData.expiresAt,
+    role: additionalData.role
   }, '*')
     .then(first)
     .then(instantiate)
@@ -48,7 +50,7 @@ function createForUser(user, expiresAt = null) {
 }
 
 function create(data) {
-  const { email, password } = data;
+  const { email, password, role } = data;
 
   if (!email || !password) {
     return Promise.reject(new InvalidDataError('Missing required information'));
@@ -75,7 +77,17 @@ function create(data) {
         throw new InvalidDataError('Incorrect password');
       }
 
-      return createForUser(user, data.expiresAt);
+      if (
+        role === ROLES.admin &&
+        user.role !== ROLES.admin
+      ) {
+        throw new InvalidDataError('User may not assume this role');
+      }
+
+      return createForUser(user, {
+        expiresAt: data.expiresAt,
+        role
+      });
     });
 }
 

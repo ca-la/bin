@@ -23,6 +23,7 @@ function* attachSession(next) {
 
   Object.assign(this.state, {
     token,
+    role: session && session.role,
     userId: session && session.userId
   });
 

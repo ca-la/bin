@@ -3,7 +3,6 @@
 const Router = require('koa-router');
 const multer = require('koa-multer');
 
-const attachRole = require('../../middleware/attach-role');
 const InvalidDataError = require('../../errors/invalid-data');
 const requireAuth = require('../../middleware/require-auth');
 const ScanPhotosDAO = require('../../dao/scan-photos');
@@ -180,9 +179,9 @@ function* getScan() {
 }
 
 router.del('/:scanId', requireAuth, deleteScan);
-router.get('/', requireAuth, attachRole, getList);
-router.get('/:scanId', requireAuth, attachRole, getScan);
-router.get('/:scanId/photos', requireAuth, attachRole, getScanPhotos);
+router.get('/', requireAuth, getList);
+router.get('/:scanId', requireAuth, getScan);
+router.get('/:scanId/photos', requireAuth, getScanPhotos);
 router.post('/', createScan);
 router.post('/:scanId/claim', requireAuth, claimScan);
 router.post('/:scanId/photos', multer(), createScanPhoto);

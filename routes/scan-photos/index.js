@@ -2,7 +2,6 @@
 
 const Router = require('koa-router');
 
-const attachRole = require('../../middleware/attach-role');
 const requireAuth = require('../../middleware/require-auth');
 const ScanPhotosDAO = require('../../dao/scan-photos');
 const ScansDAO = require('../../dao/scans');
@@ -39,6 +38,6 @@ function* getRawPhoto() {
 }
 
 
-router.get('/:id/raw', requireAuth, attachRole, getRawPhoto);
+router.get('/:id/raw', requireAuth, getRawPhoto);
 
 module.exports = router.routes();

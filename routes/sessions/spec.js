@@ -13,7 +13,8 @@ const USER_DATA = Object.freeze({
   email: 'user@example.com',
   zip: '94117',
   password: 'hunter2',
-  referralCode: 'freebie'
+  referralCode: 'freebie',
+  role: 'ADMIN'
 });
 
 test('POST /sessions returns a 400 if user creation fails', (t) => {
@@ -39,8 +40,45 @@ test('POST /sessions returns new session data', (t) => {
     .then(([response, body]) => {
       t.equal(response.status, 201, 'status=201');
       t.equal(body.userId, user.id);
+      t.equal(body.role, 'USER');
       t.equal(body.user.passwordHash, undefined);
       t.equal(body.expiresAt, null);
+    });
+});
+
+test('POST /sessions can create elevated role permissions', (t) => {
+  return UsersDAO.create(USER_DATA)
+    .then(() => {
+      return post('/sessions', {
+        body: {
+          email: 'user@example.com',
+          password: 'hunter2',
+          role: 'ADMIN'
+        }
+      });
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 201, 'status=201');
+      t.equal(body.role, 'ADMIN');
+    });
+});
+
+test('POST /sessions cannot create elevated role permissions if user is unqualified', (t) => {
+  const nonAdmin = Object.assign({}, USER_DATA, { role: 'USER' });
+
+  return UsersDAO.create(nonAdmin)
+    .then(() => {
+      return post('/sessions', {
+        body: {
+          email: 'user@example.com',
+          password: 'hunter2',
+          role: 'ADMIN'
+        }
+      });
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 400);
+      t.equal(body.message, 'User may not assume this role');
     });
 });
 
