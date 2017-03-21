@@ -155,6 +155,7 @@ function* getByReferralCode() {
 }
 
 function* getAllUsers() {
+  this.assert(this.state.userId, 401);
   this.assert(this.state.role === User.ROLES.admin, 403);
 
   const users = yield UsersDAO.findAll({
