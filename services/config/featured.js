@@ -11,6 +11,8 @@ const FEATURED_PRODUCT_IDS_DEV = [
 ];
 
 const FEATURED_PRODUCT_IDS_PROD = [
+  9707319235, // Flow Tee
+  9707321923, // Flow Boyfriend Tee
   7413370755, // Pierce Bomber
   8645286275, // Kat Cami Burnt Rose
   8645370051, // Pitch Mens Jacket
