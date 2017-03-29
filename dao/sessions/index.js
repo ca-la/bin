@@ -8,28 +8,12 @@ const db = require('../../services/db');
 const first = require('../../services/first');
 const InvalidDataError = require('../../errors/invalid-data');
 const Session = require('../../domain-objects/session');
-const Shopify = require('../../services/shopify');
 const UsersDAO = require('../users');
 const { compare } = require('../../services/hash');
 const { ROLES } = require('../../domain-objects/user');
 
 const instantiate = data => new Session(data);
 const maybeInstantiate = data => (data && new Session(data)) || null;
-
-/**
- * Sign in a user to Shopify, and update their local password if we succeed
- * @resolves {Boolean} Whether their password was correct
- */
-function updatePasswordFromShopify(user, password) {
-  return Shopify.login(user.email, password)
-    .then(() => UsersDAO.updatePassword(user.id, password))
-    .then(() => true)
-    .catch((err) => {
-      // eslint-disable-next-line no-console
-      console.log('Shopify login error:', err.stack);
-      return false;
-    });
-}
 
 /**
  * @param {Object} user A User instance
@@ -67,7 +51,7 @@ function create(data) {
       }
 
       if (!user.passwordHash) {
-        return updatePasswordFromShopify(user, password);
+        throw new InvalidDataError('It looks like you donʼt have a password yet. To create one, use the Forgot Password link.');
       }
 
       return compare(password, user.passwordHash);

@@ -2,7 +2,6 @@
 
 const InvalidDataError = require('../../errors/invalid-data');
 const SessionsDAO = require('./index');
-const Shopify = require('../../services/shopify');
 const UsersDAO = require('../users');
 const { test, sandbox } = require('../../test-helpers/fresh');
 
@@ -30,29 +29,12 @@ test('SessionsDAO.create fails when email does not match a user', (t) => {
     });
 });
 
-test('SessionsDAO.create fails when we match a password-less user, but fail to login on shopify', (t) => {
-  sandbox().stub(Shopify, 'login', () => Promise.resolve(new Error('nope')));
-
+test('SessionsDAO.create fails when we match a password-less user', (t) => {
   return UsersDAO.createWithoutPassword(USER_DATA)
     .then(() => SessionsDAO.create({ email: 'user@example.com', password: 'hunter2' }))
     .catch((err) => {
       t.ok(err instanceof InvalidDataError);
-      t.equal(err.message, 'Incorrect password for user@example.com');
-    });
-});
-
-test('SessionsDAO.create succeeds & updates password when we match a password-less user, and successfully login on shopify', (t) => {
-  sandbox().stub(Shopify, 'login', () => Promise.resolve());
-
-  return UsersDAO.createWithoutPassword(USER_DATA)
-    .then(() => SessionsDAO.create({ email: 'user@example.com', password: 'hunter2' }))
-    .then((session) => {
-      t.equal(session.id.length, 36);
-      t.equal(session.user.name, 'Q User');
-      return UsersDAO.findById(session.user.id);
-    })
-    .then((user) => {
-      t.notEqual(user.passwordHash, null);
+      t.equal(err.message, 'It looks like you donʼt have a password yet. To create one, use the Forgot Password link.');
     });
 });
 
