@@ -3,7 +3,7 @@
 const InvalidDataError = require('../../errors/invalid-data');
 const SessionsDAO = require('./index');
 const UsersDAO = require('../users');
-const { test, sandbox } = require('../../test-helpers/fresh');
+const { test } = require('../../test-helpers/fresh');
 
 const USER_DATA = {
   name: 'Q User',
