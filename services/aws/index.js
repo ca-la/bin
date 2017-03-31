@@ -30,6 +30,7 @@ function uploadFile(bucketName, remoteFileName, localFileName) {
     .then((buffer) => {
       return put({
         ACL: 'authenticated-read',
+        ServerSideEncryption: 'AES256',
         Bucket: bucketName,
         Key: remoteFileName,
         Body: buffer
