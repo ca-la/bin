@@ -12,56 +12,15 @@ const {
   SHOPIFY_STORE_AUTH
 } = require('../config');
 
-const LOGIN_URL = 'https://shop.ca.la/account/login';
-const LOGIN_SUCCESS_URL = 'https://shop.ca.la/account';
-const LOGIN_FAILURE_URL = LOGIN_URL;
-
 const shopifyAuthHeader = new Buffer(SHOPIFY_STORE_AUTH).toString('base64');
 
-/**
- * Try to log a customer into the Shopify store, via the (non-public) endpoint
- * used on the site.
- * Parses the response redirect URL to determine whether we succeeded or failed.
- */
-function login(email, password) {
-  const requestBody = {
-    customer: {
-      email,
-      password
-    }
-  };
-
-  return Promise.resolve()
-    .then(() =>
-      fetch(LOGIN_URL, {
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        method: 'post',
-        redirect: 'manual',
-        body: JSON.stringify(requestBody)
-      })
-    )
-    .then((response) => {
-      const location = response.headers.get('location');
-
-      if (location === LOGIN_SUCCESS_URL) {
-        return true;
-      } else if (location === LOGIN_FAILURE_URL) {
-        throw new Error('Login failure');
-      }
-
-      throw new Error(`Unknown redirect URL: ${location}`);
-    });
-}
-
-function getCollectionMetafields(collectionId) {
-  const url = `${SHOPIFY_STORE_BASE}/admin/custom_collections/${collectionId}/metafields.json`;
+function makeRequest(method, path) {
+  const url = `${SHOPIFY_STORE_BASE}/admin${path}`;
 
   return Promise.resolve()
     .then(() =>
       fetch(url, {
-        method: 'get',
+        method,
         headers: {
           Authorization: `Basic ${shopifyAuthHeader}`
         }
@@ -69,7 +28,13 @@ function getCollectionMetafields(collectionId) {
     )
     .then((response) => {
       return response.json();
-    })
+    });
+}
+
+function getCollectionMetafields(collectionId) {
+  const path = `/custom_collections/${collectionId}/metafields.json`;
+
+  return makeRequest('get', path)
     .then((body) => {
       const fields = {};
 
@@ -100,20 +65,9 @@ function attachMetafields(collection) {
  */
 function getCollections(filters) {
   const query = querystring.stringify(filters);
-  const url = `${SHOPIFY_STORE_BASE}/admin/custom_collections.json?${query}`;
+  const path = `/custom_collections.json?${query}`;
 
-  return Promise.resolve()
-    .then(() =>
-      fetch(url, {
-        method: 'get',
-        headers: {
-          Authorization: `Basic ${shopifyAuthHeader}`
-        }
-      })
-    )
-    .then((response) => {
-      return response.json();
-    })
+  return makeRequest('get', path)
     .then((body) => {
       const collections = body.custom_collections || [];
 
@@ -129,20 +83,9 @@ function getCollections(filters) {
  * Retrieve a set of products in a certain collection
  */
 function getProductsByCollectionId(collectionId) {
-  const url = `${SHOPIFY_STORE_BASE}/admin/products.json?collection_id=${collectionId}`;
+  const path = `/products.json?collection_id=${collectionId}`;
 
-  return Promise.resolve()
-    .then(() =>
-      fetch(url, {
-        method: 'get',
-        headers: {
-          Authorization: `Basic ${shopifyAuthHeader}`
-        }
-      })
-    )
-    .then((response) => {
-      return response.json();
-    })
+  return makeRequest('get', path)
     .then(body => body.products);
 }
 
@@ -209,20 +152,9 @@ function getProductById(id) {
 function getAllProducts(filters) {
   const query = querystring.stringify(filters);
 
-  const url = `${SHOPIFY_STORE_BASE}/admin/products.json?${query}`;
+  const path = `/products.json?${query}`;
 
-  return Promise.resolve()
-    .then(() =>
-      fetch(url, {
-        method: 'get',
-        headers: {
-          Authorization: `Basic ${shopifyAuthHeader}`
-        }
-      })
-    )
-    .then((response) => {
-      return response.json();
-    })
+  return makeRequest('get', path)
     .then((body) => {
       const products = body.products;
 
@@ -246,18 +178,9 @@ function getAllProducts(filters) {
 function getRedemptionCount(discountCode) {
   // TODO allow calculation for more than 250
   // https://trello.com/c/FaTW4F4R/80-allow-referral-code-calculation-for-more-than-250-previous-orders
-  const url = `${SHOPIFY_STORE_BASE}/admin/orders.json?limit=250`;
+  const path = `/orders.json?limit=250`;
 
-  return Promise.resolve()
-    .then(() =>
-      fetch(url, {
-        method: 'get',
-        headers: {
-          Authorization: `Basic ${shopifyAuthHeader}`
-        }
-      })
-    )
-    .then(response => response.json())
+  return makeRequest('get', path)
     .then((body) => {
       if (!body.orders) {
         Logger.log('Shopify response: ', body);
@@ -283,6 +206,5 @@ module.exports = {
   getProductById,
   getAllProducts,
   getProductsByCollectionId,
-  getRedemptionCount,
-  login
+  getRedemptionCount
 };
