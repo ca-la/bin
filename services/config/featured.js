@@ -12,10 +12,9 @@ const FEATURED_PRODUCT_IDS_DEV = [
 
 const FEATURED_PRODUCT_IDS_PROD = [
   9707319235, // Flow Tee
-  9707321923, // Flow Boyfriend Tee
+  9735618435, // Flow V-Neck
   7413370755, // Pierce Bomber
-  8645286275, // Kat Cami Burnt Rose
-  8645370051, // Pitch Mens Jacket
+  8645296067, // Kat Cami Sunrise
   8645323203, // Veda Dress
   7413088067, // Morgan Blouse (blue)
   8645330115 // Wanda Leather Jacket
