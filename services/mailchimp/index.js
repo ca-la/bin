@@ -36,7 +36,11 @@ function subscribe(listId, email, mergeFields) {
   })
     .then((_response) => {
       response = _response;
-      return response.json();
+
+      const contentType = response.headers.get('content-type');
+      const isJson = (contentType && contentType.indexOf('application/json') > -1);
+
+      return isJson ? response.json() : response.text();
     })
     .then((body) => {
       // eslint-disable-next-line no-console
