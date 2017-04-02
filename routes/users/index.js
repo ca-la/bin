@@ -3,15 +3,16 @@
 const Router = require('koa-router');
 
 const AddressesDAO = require('../../dao/addresses');
-const UnassignedReferralCodesDAO = require('../../dao/unassigned-referral-codes');
 const InvalidDataError = require('../../errors/invalid-data');
 const MailChimp = require('../../services/mailchimp');
 const requireAuth = require('../../middleware/require-auth');
 const ScansDAO = require('../../dao/scans');
 const SessionsDAO = require('../../dao/sessions');
 const Shopify = require('../../services/shopify');
+const UnassignedReferralCodesDAO = require('../../dao/unassigned-referral-codes');
 const User = require('../../domain-objects/user');
 const UsersDAO = require('../../dao/users');
+const { logServerError } = require('../../services/logger');
 const {
   REFERRAL_VALUE_DOLLARS
 } = require('../../services/config');
@@ -49,8 +50,12 @@ function* createUser() {
       name,
       referralCode
     });
-  } catch (error) {
-    this.throw(400, error.message);
+  } catch (err) {
+    if (err instanceof InvalidDataError) { this.throw(400, err); }
+
+    // Not rethrowing since this shouldn't be fatal... but if we ever see this
+    // log line we need to investigate ASAP (and manually subscribe the user)
+    logServerError(`Failed to sign up user to Mailchimp: ${email}`);
   }
 
   const user = yield UsersDAO.create({

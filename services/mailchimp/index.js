@@ -2,6 +2,8 @@
 
 const fetch = require('node-fetch');
 
+const InvalidDataError = require('../../errors/invalid-data');
+
 const {
   MAILCHIMP_API_KEY,
   MAILCHIMP_LIST_ID_SUBSCRIPTIONS,
@@ -57,7 +59,7 @@ function subscribe(listId, email, mergeFields) {
       if (response.status !== 200) {
         const message = ERROR_GLOSSARY[body.title] || body.detail;
 
-        throw new Error(message);
+        throw new InvalidDataError(message);
       }
 
       return body;
