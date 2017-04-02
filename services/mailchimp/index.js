@@ -38,13 +38,21 @@ function subscribe(listId, email, mergeFields) {
       response = _response;
 
       const contentType = response.headers.get('content-type');
-      const isJson = (contentType && contentType.indexOf('application/json') > -1);
+      const isJson = /application\/.*json/.test(contentType);
 
-      return isJson ? response.json() : response.text();
+      if (!isJson) {
+        return response.text().then((text) => {
+          // eslint-disable-next-line no-console
+          console.log('Mailchimp response: ', response.status, text);
+          throw new Error(`Unexpected Mailchimp response type: ${contentType}`);
+        });
+      }
+
+      return response.json();
     })
     .then((body) => {
       // eslint-disable-next-line no-console
-      console.log('Mailchimp response: ', body);
+      console.log('Mailchimp response: ', response.status, body);
 
       if (response.status !== 200) {
         const message = ERROR_GLOSSARY[body.title] || body.detail;
