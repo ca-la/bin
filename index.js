@@ -33,6 +33,7 @@ router.use('/featured', require('./routes/featured'));
 router.use('/instagram-feed', require('./routes/instagram-feed'));
 router.use('/orders', require('./routes/orders'));
 router.use('/password-resets', require('./routes/password-resets'));
+router.use('/product-videos', require('./routes/product-videos'));
 router.use('/products', require('./routes/products'));
 router.use('/push-tokens', require('./routes/push-tokens'));
 router.use('/scan-photos', require('./routes/scan-photos'));
