@@ -6,12 +6,15 @@ const sinon = require('sinon');
 const db = require('../services/db');
 
 const TABLES = [
-  'users',
-  'sessions',
   'addresses',
-  'unassigned_referral_codes'
+  'productvideos',
+  'pushtokens',
+  'scanphotos',
+  'scans',
+  'sessions',
+  'unassigned_referral_codes',
+  'users'
 ];
-
 
 let currentSandbox;
 
