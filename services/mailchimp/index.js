@@ -1,7 +1,9 @@
 'use strict';
 
 const fetch = require('node-fetch');
+const crypto = require('crypto');
 
+const compact = require('../compact');
 const InvalidDataError = require('../../errors/invalid-data');
 
 const {
@@ -18,19 +20,20 @@ const ERROR_GLOSSARY = {
   'Member Exists': "You're already signed up for this list!"
 };
 
-function subscribe(listId, email, mergeFields) {
-  const requestBody = {
-    email_address: email,
-    status: 'subscribed',
-    merge_fields: mergeFields
-  };
+function md5(string) {
+  return crypto
+    .createHash('md5')
+    .update(string)
+    .digest('hex');
+}
 
+function makeRequest(method, path, requestBody) {
   let response;
 
-  const url = `${MAILCHIMP_API_BASE}/lists/${listId}/members`;
+  const url = `${MAILCHIMP_API_BASE}${path}`;
 
   return fetch(url, {
-    method: 'post',
+    method,
     headers: {
       Authorization: `Basic ${MAILCHIMP_AUTH}`
     },
@@ -66,6 +69,30 @@ function subscribe(listId, email, mergeFields) {
     });
 }
 
+function subscribe(listId, email, mergeFields) {
+  const requestBody = {
+    email_address: email,
+    status: 'subscribed',
+    merge_fields: mergeFields
+  };
+
+  const path = `/lists/${listId}/members`;
+
+  return makeRequest('post', path, requestBody);
+}
+
+function update(listId, email, mergeFields) {
+  const hash = md5(email);
+
+  const requestBody = {
+    merge_fields: mergeFields
+  };
+
+  const path = `/lists/${listId}/members/${hash}`;
+
+  return makeRequest('patch', path, requestBody);
+}
+
 function subscribeToSubscriptions({ email, name, zip }) {
   return subscribe(MAILCHIMP_LIST_ID_SUBSCRIPTIONS, email, {
     FULL_NAME: name,
@@ -85,13 +112,25 @@ function subscribeToPartners({ email, name, companyName, comments, source }) {
 function subscribeToUsers({ email, name, referralCode }) {
   return subscribe(MAILCHIMP_LIST_ID_USERS, email, {
     FULL_NAME: name,
-    REF_CODE: referralCode
+    REF_CODE: referralCode,
+    HAS_BOUGHT: 'false',
+    HAS_SCAN: 'false'
   });
+}
+
+function updateUser({ email, hasScan, hasBought }) {
+  const data = compact({
+    HAS_BOUGHT: (hasBought !== undefined) && String(hasBought),
+    HAS_SCAN: (hasScan !== undefined) && String(hasScan)
+  });
+
+  return update(MAILCHIMP_LIST_ID_USERS, email, data);
 }
 
 module.exports = {
   subscribe,
   subscribeToPartners,
   subscribeToSubscriptions,
-  subscribeToUsers
+  subscribeToUsers,
+  updateUser
 };
