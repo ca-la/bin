@@ -60,6 +60,10 @@ const FEATURED_COLLECTION_LISTS_PROD = [
     sectionTitle: 'Featured Collections',
     collections: [
       {
+        id: 373114435,
+        title: 'Lyn Paolo'
+      },
+      {
         id: 374045635,
         title: 'Peter Vu'
       },
