@@ -1,7 +1,10 @@
 'use strict';
 
 const Router = require('koa-router');
+
 const ProductVideosDAO = require('../../dao/product-videos');
+const requireAuth = require('../../middleware/require-auth');
+const User = require('../../domain-objects/user');
 
 const router = new Router();
 
@@ -17,6 +20,17 @@ function* getVideos() {
   this.status = 200;
 }
 
+function* createVideo() {
+  this.assert(this.state.role === User.ROLES.admin, 403);
+
+  const { productId, videoUrl } = this.request.body;
+  const video = yield ProductVideosDAO.create({ productId, videoUrl });
+
+  this.body = video;
+  this.status = 201;
+}
+
 router.get('/', getVideos);
+router.post('/', requireAuth, createVideo);
 
 module.exports = router.routes();
