@@ -14,10 +14,10 @@ const FEATURED_PRODUCT_IDS_PROD = [
   9707319235, // Flow Tee
   9735618435, // Flow V-Neck
   7413370755, // Pierce Bomber
+  8645330115, // Wanda Leather Jacket
   8645296067, // Kat Cami Sunrise
   8645323203, // Veda Dress
-  7413088067, // Morgan Blouse (blue)
-  8645330115 // Wanda Leather Jacket
+  7413088067 // Morgan Blouse (blue)
 ];
 
 const FEATURED_COLLECTION_LISTS_DEV = [
