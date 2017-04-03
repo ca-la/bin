@@ -4,6 +4,8 @@ const fetch = require('node-fetch');
 const crypto = require('crypto');
 
 const compact = require('../compact');
+const InvalidDataError = require('../../errors/invalid-data');
+
 const {
   MAILCHIMP_API_KEY,
   MAILCHIMP_LIST_ID_SUBSCRIPTIONS,
@@ -39,16 +41,28 @@ function makeRequest(method, path, requestBody) {
   })
     .then((_response) => {
       response = _response;
+
+      const contentType = response.headers.get('content-type');
+      const isJson = /application\/.*json/.test(contentType);
+
+      if (!isJson) {
+        return response.text().then((text) => {
+          // eslint-disable-next-line no-console
+          console.log('Mailchimp response: ', response.status, text);
+          throw new Error(`Unexpected Mailchimp response type: ${contentType}`);
+        });
+      }
+
       return response.json();
     })
     .then((body) => {
       // eslint-disable-next-line no-console
-      console.log('Mailchimp response: ', body);
+      console.log('Mailchimp response: ', response.status, body);
 
       if (response.status !== 200) {
         const message = ERROR_GLOSSARY[body.title] || body.detail;
 
-        throw new Error(message);
+        throw new InvalidDataError(message);
       }
 
       return body;

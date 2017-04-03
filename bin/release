@@ -22,16 +22,12 @@ if [[ $(git status --porcelain) != "" ]] ; then
   exit 1
 fi
 
-which circle || echo '\e[31mThis tool is nicer with the CircleCI CLI from https://github.com/Shyp/go-circle\e[0m'
-
 git fetch origin
 git pull --rebase origin master
 
 npm version $TYPE
 
 git push origin master --follow-tags
-
-circle wait || true
 
 git checkout -B production
 git pull --rebase origin production
