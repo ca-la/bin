@@ -178,7 +178,7 @@ function getAllProducts(filters) {
 function getRedemptionCount(discountCode) {
   // TODO allow calculation for more than 250
   // https://trello.com/c/FaTW4F4R/80-allow-referral-code-calculation-for-more-than-250-previous-orders
-  const path = `/orders.json?limit=250`;
+  const path = '/orders.json?limit=250';
 
   return makeRequest('get', path)
     .then((body) => {
