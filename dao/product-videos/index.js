@@ -14,7 +14,8 @@ function create(data) {
     .insert({
       id: uuid.v4(),
       product_id: data.productId,
-      video_url: data.videoUrl
+      video_url: data.videoUrl,
+      poster_image_url: data.posterImageUrl
     }, '*')
     .catch(rethrow)
     .then(first)
