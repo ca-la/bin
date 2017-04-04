@@ -11,7 +11,7 @@ const router = new Router();
 function* getVideos() {
   const idString = this.query.productIds;
 
-  this.assert(idString, 400, 'Must provide ?productIds query');
+  this.assert(idString, 400, 'Must provide a list of product IDs');
   const productIds = idString.split(',');
 
   const videos = yield ProductVideosDAO.findByProductIds(productIds);
