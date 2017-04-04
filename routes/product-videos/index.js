@@ -23,8 +23,12 @@ function* getVideos() {
 function* createVideo() {
   this.assert(this.state.role === User.ROLES.admin, 403);
 
-  const { productId, videoUrl } = this.request.body;
-  const video = yield ProductVideosDAO.create({ productId, videoUrl });
+  const { productId, videoUrl, posterImageUrl } = this.request.body;
+  const video = yield ProductVideosDAO.create({
+    productId,
+    videoUrl,
+    posterImageUrl
+  });
 
   this.body = video;
   this.status = 201;
