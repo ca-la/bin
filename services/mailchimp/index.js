@@ -3,7 +3,6 @@
 const fetch = require('node-fetch');
 const crypto = require('crypto');
 
-const compact = require('../compact');
 const InvalidDataError = require('../../errors/invalid-data');
 
 const {
@@ -119,10 +118,15 @@ function subscribeToUsers({ email, name, referralCode }) {
 }
 
 function updateUser({ email, hasScan, hasBought }) {
-  const data = compact({
-    HAS_BOUGHT: (hasBought !== undefined) && String(hasBought),
-    HAS_SCAN: (hasScan !== undefined) && String(hasScan)
-  });
+  const data = {};
+
+  if (hasScan !== undefined) {
+    Object.assign(data, { HAS_SCAN: String(hasScan) });
+  }
+
+  if (hasBought !== undefined) {
+    Object.assign(data, { HAS_BOUGHT: String(hasBought) });
+  }
 
   return update(MAILCHIMP_LIST_ID_USERS, email, data);
 }
