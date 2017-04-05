@@ -39,6 +39,7 @@ router.use('/push-tokens', require('./routes/push-tokens'));
 router.use('/scan-photos', require('./routes/scan-photos'));
 router.use('/scans', require('./routes/scans'));
 router.use('/sessions', require('./routes/sessions'));
+router.use('/shopify-webhooks', require('./routes/shopify-webhooks'));
 router.use('/subscriptions', require('./routes/subscriptions'));
 router.use('/users', require('./routes/users'));
 router.use('/zips', require('./routes/zips'));

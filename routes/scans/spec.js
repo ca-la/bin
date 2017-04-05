@@ -1,10 +1,21 @@
 'use strict';
 
 const createUser = require('../../test-helpers/create-user');
-const ScansDAO = require('../../dao/scans');
 const ScanPhotosDAO = require('../../dao/scan-photos');
+const ScansDAO = require('../../dao/scans');
+const UserAttributesService = require('../../services/user-attributes');
 const { get, post, put, authHeader } = require('../../test-helpers/http');
-const { test } = require('../../test-helpers/fresh');
+const { group, sandbox } = require('../../test-helpers/fresh');
+
+function beforeEach() {
+  sandbox().stub(
+    UserAttributesService,
+    'recordScan',
+    () => Promise.resolve()
+  );
+}
+
+const test = group(beforeEach);
 
 test('POST /scans returns a 400 if missing data', (t) => {
   return createUser()

@@ -10,6 +10,7 @@ const ScansDAO = require('../../dao/scans');
 const User = require('../../domain-objects/user');
 const validateMeasurements = require('../../services/validate-measurements');
 const { API_HOST, AWS_SCANPHOTO_BUCKET_NAME } = require('../../services/config');
+const UserAttributesService = require('../../services/user-attributes');
 const { uploadFile, deleteFile } = require('../../services/aws');
 
 const router = new Router();
@@ -27,6 +28,10 @@ function* createScan() {
     isComplete
   })
     .catch(InvalidDataError, err => this.throw(400, err));
+
+  if (this.state.userId) {
+    yield UserAttributesService.recordScan(this.state.userId);
+  }
 
   this.status = 201;
   this.body = scan;
@@ -140,6 +145,8 @@ function* claimScan() {
   const updated = yield ScansDAO.updateOneById(this.params.scanId, {
     userId: this.state.userId
   });
+
+  yield UserAttributesService.recordScan(this.state.userId);
 
   this.body = updated;
   this.status = 200;

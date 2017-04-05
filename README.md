@@ -32,6 +32,16 @@ server will read them from a `.env` file if present.
 $ heroku config -s --app cala-api-stg > .env
 ```
 
+If you're setting up a new Shopify site to correspond with an API instance,
+you'll need to create the required webhooks as a one-time operation:
+
+```bash
+curl -iX POST 'https://ecom-31.myshopify.com/admin/webhooks.json' -H 'Content-Type: application/json' -u 'your auth goes here' -d '{"webhook":{ "topic":"orders/create", "address":"https://api-stg.ca.la/shopify-webhooks/orders-create", "format":"json"}}'
+```
+
+Future TODO: The app should check this itself and create the webhook if it's
+missing, on a regular basis (maybe every deploy?). Let's improve this.
+
 ## Deployment
 
 The `master` and `production` branches are automatically deployed by CircleCI:
