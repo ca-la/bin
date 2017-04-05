@@ -21,7 +21,7 @@ function* postOrdersCreate() {
 
   this.assert(userId, 400, 'Missing user ID');
 
-  const result = yield UserAttributesService.recordPurchase(userId);
+  yield UserAttributesService.recordPurchase(userId);
 
   this.status = 200;
   this.body = {
