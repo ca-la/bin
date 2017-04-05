@@ -39,7 +39,12 @@ tape.onFinish(() => {
 });
 
 // Run a test in a 'fresh' environment; clear DB and any stubs
-function freshTest(description, fn) {
+function freshTest(
+  description,
+  fn,
+  setup = () => {},
+  teardown = () => {}
+) {
   tape(description, (t) => {
     const end = t.end;
 
@@ -51,6 +56,8 @@ function freshTest(description, fn) {
     t.plan = null; // eslint-disable-line no-param-reassign
 
     beforeEach();
+
+    setup();
 
     // For now, all tests must return promises. Can reevaluate this, but it
     // provides a nice safety net for async code.
@@ -71,6 +78,7 @@ function freshTest(description, fn) {
         t.fail(err);
         console.log(err.stack); // eslint-disable-line no-console
       })
+      .then(teardown)
       .then(afterEach)
       .then(() => end());
   });
@@ -78,7 +86,17 @@ function freshTest(description, fn) {
 
 function skip() { /* noop */ }
 
+/**
+ * Create a new test block which runs a given setup/teardown for each test
+ */
+function group(setup, teardown) {
+  return (description, fn) => {
+    return freshTest(description, fn, setup, teardown);
+  };
+}
+
 module.exports = {
+  group,
   sandbox() { return currentSandbox; },
   test: freshTest,
   skip
