@@ -8,9 +8,10 @@ const requireAuth = require('../../middleware/require-auth');
 const ScanPhotosDAO = require('../../dao/scan-photos');
 const ScansDAO = require('../../dao/scans');
 const User = require('../../domain-objects/user');
+const UserAttributesService = require('../../services/user-attributes');
 const validateMeasurements = require('../../services/validate-measurements');
 const { API_HOST, AWS_SCANPHOTO_BUCKET_NAME } = require('../../services/config');
-const UserAttributesService = require('../../services/user-attributes');
+const { logServerError } = require('../../services/logger');
 const { uploadFile, deleteFile } = require('../../services/aws');
 
 const router = new Router();
@@ -30,7 +31,12 @@ function* createScan() {
     .catch(InvalidDataError, err => this.throw(400, err));
 
   if (this.state.userId) {
-    yield UserAttributesService.recordScan(this.state.userId);
+    try {
+      yield UserAttributesService.recordScan(this.state.userId);
+    } catch (err) {
+      logServerError('Could not save scan status in Mailchimp for user', this.state.userId);
+      logServerError(err);
+    }
   }
 
   this.status = 201;
@@ -146,7 +152,12 @@ function* claimScan() {
     userId: this.state.userId
   });
 
-  yield UserAttributesService.recordScan(this.state.userId);
+  try {
+    yield UserAttributesService.recordScan(this.state.userId);
+  } catch (err) {
+    logServerError('Could not save scan status in Mailchimp for user', this.state.userId);
+    logServerError(err);
+  }
 
   this.body = updated;
   this.status = 200;
