@@ -4,6 +4,7 @@ const fetch = require('node-fetch');
 const crypto = require('crypto');
 
 const InvalidDataError = require('../../errors/invalid-data');
+const { logServerError } = require('../logger');
 
 const {
   MAILCHIMP_API_KEY,
@@ -46,8 +47,8 @@ function makeRequest(method, path, requestBody) {
 
       if (!isJson) {
         return response.text().then((text) => {
-          // eslint-disable-next-line no-console
-          console.log('Mailchimp response: ', response.status, text);
+          logServerError('Mailchimp request: ', method, url, requestBody);
+          logServerError('Mailchimp response: ', response.status, text);
           throw new Error(`Unexpected Mailchimp response type: ${contentType}`);
         });
       }
