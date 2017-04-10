@@ -27,6 +27,17 @@ function makeRequest(method, path) {
       })
     )
     .then((response) => {
+      const contentType = response.headers.get('content-type');
+      const isJson = /application\/.*json/.test(contentType);
+
+      if (!isJson) {
+        return response.text().then((text) => {
+          Logger.logServerError('Shopify request: ', method, url);
+          Logger.logServerError('Shopify response: ', response.status, text);
+          throw new Error(`Unexpected Shopify response type: ${contentType}`);
+        });
+      }
+
       return response.json();
     });
 }
