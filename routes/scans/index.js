@@ -30,7 +30,7 @@ function* createScan() {
   })
     .catch(InvalidDataError, err => this.throw(400, err));
 
-  if (this.state.userId) {
+  if (this.state.userId && isComplete) {
     try {
       yield UserAttributesService.recordScan(this.state.userId);
     } catch (err) {
@@ -108,6 +108,15 @@ function* updateScan() {
   const { isComplete, measurements } = this.request.body;
 
   validateMeasurements(measurements);
+
+  if (this.state.userId && isComplete) {
+    try {
+      yield UserAttributesService.recordScan(this.state.userId);
+    } catch (err) {
+      logServerError('Could not save scan status in Mailchimp for user', this.state.userId);
+      logServerError(err);
+    }
+  }
 
   const updated = yield ScansDAO.updateOneById(
     this.params.scanId,
