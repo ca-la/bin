@@ -15,7 +15,7 @@ const router = new Router();
 function* createSubscription() {
   const { email, name, zip } = this.request.body;
 
-  if (!email || !name) {
+  if (!email) {
     this.throw(400, 'Missing required information');
   }
 
