@@ -25,7 +25,7 @@ test('SessionsDAO.create fails when email does not match a user', (t) => {
   return SessionsDAO.create({ email: 'user@example.com', password: 'hunter2' })
     .catch((err) => {
       t.ok(err instanceof InvalidDataError);
-      t.equal(err.message, 'No matching user found');
+      t.equal(err.message, 'No user found with this email address');
     });
 });
 

@@ -47,7 +47,7 @@ function create(data) {
       user = _user;
 
       if (!user) {
-        throw new InvalidDataError('No matching user found');
+        throw new InvalidDataError('No user found with this email address');
       }
 
       if (!user.passwordHash) {
