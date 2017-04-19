@@ -44,9 +44,12 @@ test('ProductVideosDAO.findByProductIds returns videos given a set of ids', (t) 
     })
     .then((videos) => {
       t.equal(videos.length, 3);
-      t.equal(videos[0].videoUrl, 'https://example.com/product1-video1.mp4');
-      t.equal(videos[1].videoUrl, 'https://example.com/product1-video2.mp4');
-      t.equal(videos[2].videoUrl, 'https://example.com/product3-video1.mp4');
+
+      const urls = videos.map(video => video.videoUrl).sort();
+
+      t.equal(urls[0], 'https://example.com/product1-video1.mp4');
+      t.equal(urls[1], 'https://example.com/product1-video2.mp4');
+      t.equal(urls[2], 'https://example.com/product3-video1.mp4');
     });
 });
 
