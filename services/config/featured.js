@@ -64,19 +64,24 @@ const FEATURED_COLLECTION_LISTS_PROD = [
     collections: [
       {
         id: 373114435,
-        title: 'Lyn Paolo'
+        title: 'Lyn Paolo',
+        url: 'https://cala.app.link/lyncollection'
       },
       {
         id: 374045635,
-        title: 'Peter Vu'
+        title: 'Peter Vu',
+        url: 'https://cala.app.link/vucollection'
+
       },
       {
         id: 294394947,
-        title: 'Odyssey Collection'
+        title: 'Odyssey Collection',
+        url: 'https://cala.app.link/odysseycollection'
       },
       {
         id: 259658627,
-        title: 'Collection 01'
+        title: 'Collection 01',
+        url: 'https://cala.app.link/c1collection'
       }
     ]
   }
