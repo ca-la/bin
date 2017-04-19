@@ -11,6 +11,9 @@ const FEATURED_PRODUCT_IDS_DEV = [
 ];
 
 const FEATURED_PRODUCT_IDS_PROD = [
+  9726862339, // Gemma coat
+  9726876995, // Linda white
+  9726887555, // Linda Black
   9707319235, // Flow Tee
   9735618435, // Flow V-Neck
   7413370755, // Pierce Bomber
