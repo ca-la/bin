@@ -94,7 +94,7 @@ function getCollections(filters) {
  * Retrieve a set of products in a certain collection
  */
 function getProductsByCollectionId(collectionId) {
-  const path = `/products.json?collection_id=${collectionId}`;
+  const path = `/products.json?collection_id=${collectionId}&order=created_at+desc`;
 
   return makeRequest('get', path)
     .then(body => body.products);
