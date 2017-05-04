@@ -4,7 +4,8 @@ const fetch = require('node-fetch');
 const { baseUrl } = require('./boot');
 
 function parseResponse(res) {
-  if (res.headers.get('Content-Type').indexOf('application/json') === 0) {
+  const contentType = res.headers.get('Content-Type');
+  if (contentType && contentType.indexOf('application/json') === 0) {
     return res.json().then((body) => {
       return [res, body];
     });
