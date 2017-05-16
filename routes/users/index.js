@@ -43,6 +43,9 @@ function* createUser() {
     }
   }
 
+  this.assert(name, 400, 'Name must be provided');
+  this.assert(email, 400, 'Email must be provided');
+
   const referralCode = yield UnassignedReferralCodesDAO.get();
 
   try {

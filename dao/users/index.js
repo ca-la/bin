@@ -17,7 +17,7 @@ const instantiate = data => new User(data);
 const maybeInstantiate = data => (data && new User(data)) || null;
 
 function isValidEmail(email) {
-  return Boolean(email.match(/.+@.+/));
+  return Boolean(email && email.match(/.+@.+/));
 }
 
 function create(data) {
@@ -154,7 +154,7 @@ function updatePassword(userId, password) {
 }
 
 function update(userId, data) {
-  if (data.email && !isValidEmail(data.email)) {
+  if (data.email !== undefined && !isValidEmail(data.email)) {
     return Promise.reject(new InvalidDataError('Invalid email'));
   }
 
