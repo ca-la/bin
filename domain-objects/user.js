@@ -28,6 +28,7 @@ class User {
     this.id = row.id;
     this.name = row.name;
     this.passwordHash = row.password_hash;
+    this.phone = row.phone;
     this.referralCode = row.referral_code;
     this.role = row.role;
     this.createdAt = new Date(row.created_at);
@@ -53,12 +54,13 @@ class User {
 
   toJSON() {
     return pick(this,
-      'id',
-      'birthday',
-      'name',
-      'email',
-      'createdAt',
       'addresses',
+      'birthday',
+      'createdAt',
+      'email',
+      'id',
+      'name',
+      'phone',
       'referralCode',
       'role'
     );
