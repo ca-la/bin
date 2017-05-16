@@ -24,13 +24,23 @@ test('UsersDAO.create fails when required data is missing', (t) => {
     });
 });
 
-test('UsersDAO.create fails if user already exists', (t) => {
+test('UsersDAO.create fails if email already exists', (t) => {
   return UsersDAO.create(USER_DATA)
     .then(() => UsersDAO.create(USER_DATA))
     .then(() => { throw new Error("Shouldn't get here"); })
     .catch((err) => {
       t.ok(err instanceof InvalidDataError);
       t.equal(err.message, 'Email is already taken');
+    });
+});
+
+test('UsersDAO.create fails if phone already exists', (t) => {
+  return UsersDAO.create(USER_DATA_WITH_PHONE)
+    .then(() => UsersDAO.create(USER_DATA_WITH_PHONE))
+    .then(() => { throw new Error("Shouldn't get here"); })
+    .catch((err) => {
+      t.ok(err instanceof InvalidDataError);
+      t.equal(err.message, 'Phone number is already taken');
     });
 });
 

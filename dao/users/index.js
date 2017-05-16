@@ -62,10 +62,14 @@ function create(data) {
     )
     .catch(rethrow)
     .catch(rethrow.ERRORS.UniqueViolation, (err) => {
-      if (err.constraint === 'users_unique_email') {
-        throw new InvalidDataError('Email is already taken');
+      switch (err.constraint) {
+        case 'users_unique_email':
+          throw new InvalidDataError('Email is already taken');
+        case 'users_unique_phone':
+          throw new InvalidDataError('Phone number is already taken');
+        default:
+          throw err;
       }
-      throw err;
     })
     .then(first)
     .then(instantiate);
