@@ -26,6 +26,7 @@ function* createUser() {
   const {
     name,
     email,
+    phone,
     password,
     address,
     scan
@@ -41,6 +42,9 @@ function* createUser() {
       throw err;
     }
   }
+
+  this.assert(name, 400, 'Name must be provided');
+  this.assert(email, 400, 'Email must be provided');
 
   const referralCode = yield UnassignedReferralCodesDAO.get();
 
@@ -62,6 +66,7 @@ function* createUser() {
     name,
     email,
     password,
+    phone,
     referralCode
   })
     .catch(InvalidDataError, err => this.throw(400, err));

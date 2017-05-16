@@ -15,6 +15,7 @@ const { test, sandbox } = require('../../test-helpers/fresh');
 const USER_DATA = Object.freeze({
   name: 'Q User',
   email: 'user@example.com',
+  phone: '415 580 9925',
   zip: '94117',
   password: 'hunter2'
 });
@@ -55,6 +56,7 @@ test('POST /users returns new user data', (t) => {
       t.equal(response.status, 201, 'status=201');
       t.equal(body.name, 'Q User');
       t.equal(body.email, 'user@example.com');
+      t.equal(body.phone, '+14155809925');
       t.equal(body.password, undefined);
       t.equal(body.passwordHash, undefined);
     });

@@ -11,6 +11,11 @@ const USER_DATA = {
   referralCode: 'freebie'
 };
 
+const USER_DATA_WITH_PHONE = Object.assign({}, USER_DATA, {
+  email: null,
+  phone: '415 580 9925'
+});
+
 test('UsersDAO.create fails when required data is missing', (t) => {
   return UsersDAO.create({ name: 'Q User', password: 'hunter2' })
     .then(() => { throw new Error("Shouldn't get here"); })
@@ -42,12 +47,39 @@ test('UsersDAO.create fails if email is invalid', (t) => {
     });
 });
 
-test('UsersDAO.create returns a new user', (t) => {
+test('UsersDAO.create fails if phone is invalid', (t) => {
+  return UsersDAO.create({
+    name: 'Q User',
+    email: 'user@example.com',
+    phone: '911',
+    password: 'hunter2'
+  })
+    .then(() => { throw new Error("Shouldn't get here"); })
+    .catch((err) => {
+      t.ok(err instanceof InvalidDataError);
+      t.equal(err.message, 'Invalid country calling code');
+    });
+});
+
+test('UsersDAO.create returns a new user with email but no phone', (t) => {
   return UsersDAO.create(USER_DATA)
+    .then((user) => {
+      t.equal(user.name, 'Q User');
+      t.equal(user.email, 'user@example.com');
+      t.equal(user.id.length, 36);
+      t.notEqual(user.passwordHash, 'hunter2');
+      t.equal(user.phone, null);
+    });
+});
+
+test('UsersDAO.create returns a new user with phone but no email', (t) => {
+  return UsersDAO.create(USER_DATA_WITH_PHONE)
     .then((user) => {
       t.equal(user.name, 'Q User');
       t.equal(user.id.length, 36);
       t.notEqual(user.passwordHash, 'hunter2');
+      t.equal(user.phone, '+14155809925');
+      t.equal(user.email, null);
     });
 });
 

@@ -4,30 +4,45 @@ const uuid = require('node-uuid');
 const rethrow = require('pg-rethrow');
 const Promise = require('bluebird');
 
-const db = require('../../services/db');
 const compact = require('../../services/compact');
+const db = require('../../services/db');
 const first = require('../../services/first');
 const InvalidDataError = require('../../errors/invalid-data');
 const UnassignedReferralCodesDAO = require('../unassigned-referral-codes');
 const User = require('../../domain-objects/user');
 const { hash } = require('../../services/hash');
+const { validateAndFormatPhoneNumber } = require('../../services/validation');
 
 const instantiate = data => new User(data);
 const maybeInstantiate = data => (data && new User(data)) || null;
 
 function isValidEmail(email) {
-  return Boolean(email.match(/.+@.+/));
+  return Boolean(email && email.match(/.+@.+/));
 }
 
 function create(data) {
-  const { name, email, password, role } = data;
+  const { name, email, phone, password, role } = data;
 
-  if (!name || !email || !password) {
+  if (!name || !password) {
     return Promise.reject(new InvalidDataError('Missing required information'));
   }
 
-  if (!isValidEmail(email)) {
+  if (!email && !phone) {
+    return Promise.reject(new InvalidDataError('Either phone or email must be provided'));
+  }
+
+  if (email && !isValidEmail(email)) {
     return Promise.reject(new InvalidDataError('Invalid email'));
+  }
+
+  let validatedPhone;
+
+  if (phone) {
+    try {
+      validatedPhone = validateAndFormatPhoneNumber(data.phone);
+    } catch (err) {
+      return Promise.reject(err);
+    }
   }
 
   return Promise.all([
@@ -39,6 +54,7 @@ function create(data) {
         id: uuid.v4(),
         name,
         email,
+        phone: validatedPhone,
         role,
         password_hash: passwordHash,
         referral_code: referralCode
@@ -142,7 +158,7 @@ function updatePassword(userId, password) {
 }
 
 function update(userId, data) {
-  if (data.email && !isValidEmail(data.email)) {
+  if (data.email !== undefined && !isValidEmail(data.email)) {
     return Promise.reject(new InvalidDataError('Invalid email'));
   }
 
