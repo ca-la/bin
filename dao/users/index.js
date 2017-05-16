@@ -23,11 +23,15 @@ function isValidEmail(email) {
 function create(data) {
   const { name, email, phone, password, role } = data;
 
-  if (!name || !email || !password) {
+  if (!name || !password) {
     return Promise.reject(new InvalidDataError('Missing required information'));
   }
 
-  if (!isValidEmail(email)) {
+  if (!email && !phone) {
+    return Promise.reject(new InvalidDataError('Either phone or email must be provided'));
+  }
+
+  if (email && !isValidEmail(email)) {
     return Promise.reject(new InvalidDataError('Invalid email'));
   }
 
