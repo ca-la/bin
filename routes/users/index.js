@@ -26,6 +26,7 @@ function* createUser() {
   const {
     name,
     email,
+    phone,
     password,
     address,
     scan
@@ -62,6 +63,7 @@ function* createUser() {
     name,
     email,
     password,
+    phone,
     referralCode
   })
     .catch(InvalidDataError, err => this.throw(400, err));

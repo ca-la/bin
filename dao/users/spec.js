@@ -8,6 +8,7 @@ const USER_DATA = {
   name: 'Q User',
   email: 'user@example.com',
   password: 'hunter2',
+  phone: '415 580 9925',
   referralCode: 'freebie'
 };
 
@@ -42,12 +43,27 @@ test('UsersDAO.create fails if email is invalid', (t) => {
     });
 });
 
+test('UsersDAO.create fails if phone is invalid', (t) => {
+  return UsersDAO.create({
+    name: 'Q User',
+    email: 'user@example.com',
+    phone: '911',
+    password: 'hunter2'
+  })
+    .then(() => { throw new Error("Shouldn't get here"); })
+    .catch((err) => {
+      t.ok(err instanceof InvalidDataError);
+      t.equal(err.message, 'Invalid country calling code');
+    });
+});
+
 test('UsersDAO.create returns a new user', (t) => {
   return UsersDAO.create(USER_DATA)
     .then((user) => {
       t.equal(user.name, 'Q User');
       t.equal(user.id.length, 36);
       t.notEqual(user.passwordHash, 'hunter2');
+      t.equal(user.phone, '+14155809925');
     });
 });
 
