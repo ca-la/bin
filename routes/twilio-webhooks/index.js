@@ -2,6 +2,8 @@
 
 const Router = require('koa-router');
 
+const UsersDAO = require('../../dao/users');
+
 const router = new Router();
 
 /**
