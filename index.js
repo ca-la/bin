@@ -42,6 +42,7 @@ router.use('/scans', require('./routes/scans'));
 router.use('/sessions', require('./routes/sessions'));
 router.use('/shopify-webhooks', require('./routes/shopify-webhooks'));
 router.use('/subscriptions', require('./routes/subscriptions'));
+router.use('/twilio-webhooks', require('./routes/twilio-webhooks'));
 router.use('/users', require('./routes/users'));
 router.use('/zips', require('./routes/zips'));
 
