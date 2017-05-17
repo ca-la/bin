@@ -29,14 +29,10 @@ function* postIncomingPreRegistration() {
   let user;
 
   try {
-    user = yield UsersDAO.create(
-      {
-        phone: fromNumber,
-        name: messageBody,
-        isSmsPreregistration: true
-      },
-      { requirePassword: false }
-    );
+    user = yield UsersDAO.createSmsPreregistration({
+      phone: fromNumber,
+      name: messageBody
+    });
   } catch (err) {
     if (err instanceof InvalidDataError) {
       Logger.logClientError(err);

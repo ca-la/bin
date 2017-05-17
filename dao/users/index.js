@@ -160,10 +160,44 @@ function update(userId, data) {
     .then(instantiate);
 }
 
+function completeSmsPreregistration(userId, data) {
+  const { name, email, phone, password } = data;
+
+  if (!name || !email || !phone || !password) {
+    return Promise.reject(new InvalidDataError('Missing required information'));
+  }
+
+  if (!isValidEmail(email)) {
+    return Promise.reject(new InvalidDataError('Invalid email'));
+  }
+
+  let validatedPhone;
+
+  try {
+    validatedPhone = validateAndFormatPhoneNumber(phone);
+  } catch (err) {
+    return Promise.reject(err);
+  }
+
+  return hash(password)
+    .then((passwordHash) => {
+      return db('users')
+        .where({ id: userId })
+        .update(compact({
+          password_hash: passwordHash,
+          name,
+          email,
+          phone: validatedPhone
+        }), '*');
+    })
+    .then(first)
+    .then(instantiate);
+}
 
 module.exports = {
   create,
   createSmsPreregistration,
+  completeSmsPreregistration,
   isValidEmail,
   findAll,
   findByEmail,
