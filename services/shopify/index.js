@@ -5,6 +5,7 @@ const Promise = require('bluebird');
 const querystring = require('querystring');
 
 const ShopifyNotFoundError = require('../../errors/shopify-not-found');
+const InvalidDataError = require('../../errors/invalid-data');
 const Logger = require('../logger');
 
 const {
@@ -14,18 +15,46 @@ const {
 
 const shopifyAuthHeader = new Buffer(SHOPIFY_STORE_AUTH).toString('base64');
 
-function makeRequest(method, path) {
+/**
+ * @param {String|Object} error A Shopify `error` key
+ */
+function parseError(error) {
+  switch (typeof error) {
+    case 'string':
+      return error;
+    case 'object':
+      return Object.keys(error)
+        .map((key) => {
+          const messages = error[key];
+          return [].concat(messages)
+            .map(message => `${key} ${message}`)
+            .join(', ');
+        })
+        .join(', ');
+    default:
+      return error;
+  }
+}
+
+function makeRequest(method, path, data) {
   const url = `${SHOPIFY_STORE_BASE}/admin${path}`;
 
   return Promise.resolve()
-    .then(() =>
-      fetch(url, {
+    .then(() => {
+      const options = {
         method,
         headers: {
           Authorization: `Basic ${shopifyAuthHeader}`
         }
-      })
-    )
+      };
+
+      if (data) {
+        options.headers['Content-Type'] = 'application/json';
+        options.body = JSON.stringify(data);
+      }
+
+      return fetch(url, options);
+    })
     .then((response) => {
       const contentType = response.headers.get('content-type');
       const isJson = /application\/.*json/.test(contentType);
@@ -211,7 +240,36 @@ function getRedemptionCount(discountCode) {
     });
 }
 
+function createCustomer(data) {
+  const { name, phone } = data;
+
+  const [first, last] = name.split(' ');
+
+  return makeRequest('post', '/customers.json', {
+    customer: {
+      first_name: first,
+      last_name: last,
+      phone
+    }
+  })
+    .then((body) => {
+      if (body.errors) {
+        const errorMessage = parseError(body.errors);
+        throw new InvalidDataError(errorMessage);
+      }
+
+      if (!body.customer) {
+        Logger.log('Shopify response: ', body);
+        throw new Error('Could not create Shopify customer');
+      }
+
+      return body.customer;
+    });
+}
+
 module.exports = {
+  createCustomer,
+  parseError,
   getOrder,
   getCollections,
   getProductById,
