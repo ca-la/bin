@@ -24,14 +24,15 @@ class User {
   constructor(row) {
     requireProperties(row, 'id');
 
+    this.createdAt = new Date(row.created_at);
     this.email = row.email;
     this.id = row.id;
     this.name = row.name;
     this.passwordHash = row.password_hash;
+    this.isSmsPreregistration = row.is_sms_preregistration;
     this.phone = row.phone;
     this.referralCode = row.referral_code;
     this.role = row.role;
-    this.createdAt = new Date(row.created_at);
 
     if (row.birthday instanceof Date) {
       this.birthday = formatDateString(row.birthday);

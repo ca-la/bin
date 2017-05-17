@@ -88,11 +88,12 @@ test('UsersDAO.create returns a new user with email but no phone', (t) => {
       t.equal(user.id.length, 36);
       t.notEqual(user.passwordHash, 'hunter2');
       t.equal(user.phone, null);
+      t.equal(user.isSmsPreregistration, false);
     });
 });
 
 test('UsersDAO.create returns a new user with phone but no email', (t) => {
-  return UsersDAO.create(USER_DATA_WITH_PHONE)
+  return UsersDAO.createSmsPreregistration(USER_DATA_WITH_PHONE)
     .then((user) => {
       t.equal(user.name, 'Q User');
       t.equal(user.id.length, 36);
@@ -102,16 +103,17 @@ test('UsersDAO.create returns a new user with phone but no email', (t) => {
     });
 });
 
-test('UsersDAO.create allows bypassing password check', (t) => {
+test('UsersDAO.create allows creating SMS preregistration without password', (t) => {
   const sansPassword = Object.assign({}, USER_DATA_WITH_PHONE, { password: null });
 
-  return UsersDAO.create(sansPassword, { requirePassword: false })
+  return UsersDAO.createSmsPreregistration(sansPassword)
     .then((user) => {
       t.equal(user.name, 'Q User');
       t.equal(user.id.length, 36);
       t.equal(user.passwordHash, null);
       t.equal(user.phone, '+14155809925');
       t.equal(user.email, null);
+      t.equal(user.isSmsPreregistration, true);
     });
 });
 

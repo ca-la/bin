@@ -32,7 +32,8 @@ function* postIncomingPreRegistration() {
     user = yield UsersDAO.create(
       {
         phone: fromNumber,
-        name: messageBody
+        name: messageBody,
+        isSmsPreregistration: true
       },
       { requirePassword: false }
     );

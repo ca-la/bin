@@ -21,7 +21,14 @@ function isValidEmail(email) {
 }
 
 function create(data, options = {}) {
-  const { name, email, phone, password, role } = data;
+  const {
+    name,
+    email,
+    phone,
+    password,
+    role,
+    isSmsPreregistration
+  } = data;
 
   // Allow passing `options.requirePassword = false` to disable the password
   // requirement. This is a very rare case, so intentionally a bit clumsy.
@@ -56,12 +63,13 @@ function create(data, options = {}) {
     .then(([referralCode, passwordHash]) =>
       db('users').insert({
         id: uuid.v4(),
-        name,
         email,
-        phone: validatedPhone,
-        role,
+        is_sms_preregistration: isSmsPreregistration,
+        name,
         password_hash: passwordHash,
-        referral_code: referralCode
+        phone: validatedPhone,
+        referral_code: referralCode,
+        role
       }, '*')
     )
     .catch(rethrow)
@@ -77,6 +85,16 @@ function create(data, options = {}) {
     })
     .then(first)
     .then(instantiate);
+}
+
+function createSmsPreregistration(data) {
+  const userData = Object.assign({}, data, {
+    isSmsPreregistration: true
+  });
+
+  return create(userData, {
+    requirePassword: false
+  });
 }
 
 function findById(id) {
@@ -145,6 +163,7 @@ function update(userId, data) {
 
 module.exports = {
   create,
+  createSmsPreregistration,
   isValidEmail,
   findAll,
   findByEmail,
