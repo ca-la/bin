@@ -2,7 +2,11 @@
 
 const Router = require('koa-router');
 
+const formDataBody = require('../../middleware/form-data-body');
+const InvalidDataError = require('../../errors/invalid-data');
 const UsersDAO = require('../../dao/users');
+const Logger = require('../../services/logger');
+const { buildSMSResponseMarkup } = require('../../services/twilio');
 
 const router = new Router();
 
@@ -16,14 +20,37 @@ const router = new Router();
  * asynchronously afterwards.
  */
 function* postIncomingPreRegistration() {
-  yield Promise.resolve();
+  const fromNumber = this.request.formDataBody.From;
+  const messageBody = this.request.formDataBody.Body;
 
   this.status = 200;
-  this.body = {
-    success: true
-  };
+  this.set('content-type', 'text/xml');
+
+  let user;
+
+  try {
+    user = yield UsersDAO.create(
+      {
+        phone: fromNumber,
+        name: messageBody
+      },
+      { requirePassword: false }
+    );
+  } catch (err) {
+    if (err instanceof InvalidDataError) {
+      Logger.logClientError(err);
+      this.body = buildSMSResponseMarkup(`Error signing up: ${err.message}`);
+    } else {
+      Logger.logServerError(err);
+      this.body = buildSMSResponseMarkup('Error signing up. Please email us at hi@ca.la for assistance');
+    }
+
+    return;
+  }
+
+  this.body = buildSMSResponseMarkup(`Welcome to CALA, ${user.name}. Your account is ready to use!`);
 }
 
-router.post('/incoming-preregistration-sms', postIncomingPreRegistration);
+router.post('/incoming-preregistration-sms', formDataBody, postIncomingPreRegistration);
 
 module.exports = router.routes();

@@ -4,23 +4,32 @@ const InvalidDataError = require('../../errors/invalid-data');
 const UsersDAO = require('./index');
 const { test } = require('../../test-helpers/fresh');
 
-const USER_DATA = {
+const USER_DATA = Object.freeze({
   name: 'Q User',
   email: 'user@example.com',
   password: 'hunter2',
   referralCode: 'freebie'
-};
+});
 
 const USER_DATA_WITH_PHONE = Object.assign({}, USER_DATA, {
   email: null,
   phone: '415 580 9925'
 });
 
-test('UsersDAO.create fails when required data is missing', (t) => {
+test('UsersDAO.create fails when email or phone is missing', (t) => {
   return UsersDAO.create({ name: 'Q User', password: 'hunter2' })
     .then(() => { throw new Error("Shouldn't get here"); })
     .catch((err) => {
       t.ok(err instanceof InvalidDataError);
+    });
+});
+
+test('UsersDAO.create fails when password is missing', (t) => {
+  return UsersDAO.create({ name: 'Q User', email: 'fooz@example.com' })
+    .then(() => { throw new Error("Shouldn't get here"); })
+    .catch((err) => {
+      t.ok(err instanceof InvalidDataError);
+      t.equal(err.message, 'Missing required information');
     });
 });
 
@@ -88,6 +97,19 @@ test('UsersDAO.create returns a new user with phone but no email', (t) => {
       t.equal(user.name, 'Q User');
       t.equal(user.id.length, 36);
       t.notEqual(user.passwordHash, 'hunter2');
+      t.equal(user.phone, '+14155809925');
+      t.equal(user.email, null);
+    });
+});
+
+test('UsersDAO.create allows bypassing password check', (t) => {
+  const sansPassword = Object.assign({}, USER_DATA_WITH_PHONE, { password: null });
+
+  return UsersDAO.create(sansPassword, { requirePassword: false })
+    .then((user) => {
+      t.equal(user.name, 'Q User');
+      t.equal(user.id.length, 36);
+      t.equal(user.passwordHash, null);
       t.equal(user.phone, '+14155809925');
       t.equal(user.email, null);
     });
