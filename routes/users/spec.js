@@ -340,12 +340,14 @@ test('POST /users/:id/complete-sms-preregistration returns a 403 if not the curr
 });
 
 test('POST /users/:id/complete-sms-preregistration returns a 400 if user is already registered', (t) => {
+  const withAddress = Object.assign({}, USER_DATA, {
+    address: ADDRESS_DATA
+  });
+
   return createUser()
     .then(({ user, session }) => {
       return post(`/users/${user.id}/complete-sms-preregistration`, {
-        body: {
-          name: 'Q user'
-        },
+        body: withAddress,
         headers: authHeader(session.id)
       });
     })
@@ -361,6 +363,8 @@ test('POST /users/:id/complete-sms-preregistration completes a user', (t) => {
   });
 
   let user;
+
+  sandbox().stub(Shopify, 'updateCustomerByPhone', () => Promise.resolve());
 
   return UsersDAO.createSmsPreregistration({
     name: 'D Money',

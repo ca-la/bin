@@ -150,6 +150,12 @@ function* completeSmsPreregistration() {
     address
   } = this.request.body;
 
+  this.assert(
+    name && email && phone && password && address,
+    400,
+    'Missing required information'
+  );
+
   try {
     AddressesDAO.validate(address);
   } catch (err) {
@@ -168,7 +174,7 @@ function* completeSmsPreregistration() {
 
   const [firstName, lastName] = name.split(' ');
 
-  yield Shopify.updateUserByPhone(phone, {
+  yield Shopify.updateCustomerByPhone(phone, {
     last_name: lastName,
     first_name: firstName,
     phone,

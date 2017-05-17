@@ -49,6 +49,10 @@ function requireProperties(obj, ...props) {
  *   });
  */
 function requirePropertiesFormatted(data, messages) {
+  if (!data) {
+    throw new InvalidDataError('Missing required information');
+  }
+
   Object.keys(messages).forEach((key) => {
     if (!exists(data[key])) {
       throw new InvalidDataError(`Missing required information: ${messages[key]}`);
