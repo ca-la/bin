@@ -190,6 +190,7 @@ test('UsersDAO.completeSmsPreregistration completes a user', (t) => {
     })
     .then((user) => {
       t.equal(user.name, 'okie dokie');
+      t.equal(user.isSmsPreregistration, false);
       t.notEqual(user.passwordHash, 'hunter2');
       t.notEqual(user.passwordHash, null);
       t.equal(user.phone, '+14155551234');

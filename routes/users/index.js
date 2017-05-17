@@ -150,13 +150,11 @@ function* completeSmsPreregistration() {
     address
   } = this.request.body;
 
-  if (address) {
-    try {
-      AddressesDAO.validate(address);
-    } catch (err) {
-      if (err instanceof InvalidDataError) { this.throw(400, err); }
-      throw err;
-    }
+  try {
+    AddressesDAO.validate(address);
+  } catch (err) {
+    if (err instanceof InvalidDataError) { this.throw(400, err); }
+    throw err;
   }
 
   const user = yield UsersDAO.findById(this.params.userId);
@@ -167,6 +165,30 @@ function* completeSmsPreregistration() {
     { name, email, phone, password }
   )
     .catch(InvalidDataError, err => this.throw(400, err));
+
+  const [firstName, lastName] = name.split(' ');
+
+  yield Shopify.updateUserByPhone(phone, {
+    last_name: lastName,
+    first_name: firstName,
+    phone,
+    email,
+    addresses: [
+      {
+        default: true,
+        address1: address.addressLine1,
+        address2: address.addressLine2,
+        company: address.companyName,
+        city: address.city,
+        province: address.region,
+        phone,
+        zip: address.postCode,
+        last_name: lastName,
+        first_name: firstName,
+        country: address.country
+      }
+    ]
+  });
 
   if (address) {
     const addressData = Object.assign({}, address, {

@@ -84,7 +84,10 @@ const config = {
 
   MINIMUM_SCAN_PITCH_RADIANS,
 
-  API_HOST: process.env.API_HOST
+  API_HOST: process.env.API_HOST,
+
+  // e.g. 'https://ca.la'
+  SITE_HOST: process.env.SITE_HOST
 };
 
 Object.keys(config).forEach((key) => {

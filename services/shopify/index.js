@@ -240,6 +240,11 @@ function getRedemptionCount(discountCode) {
     });
 }
 
+/**
+ * @param {String} data.name Customer's full name
+ * @param {String} data.phone Customer's phone number
+ * @returns {Object} customer data
+ */
 function createCustomer(data) {
   const { name, phone } = data;
 
@@ -267,13 +272,55 @@ function createCustomer(data) {
     });
 }
 
+function getCustomerByPhone(phone) {
+  return makeRequest('get', `/customers/search.json?query=${phone}`)
+    .then((body) => {
+      if (!body.customers) {
+        Logger.log('Shopify response: ', body);
+        throw new Error('Could not list Shopify customers');
+      }
+
+      const customer = body.customers.find(c => c.phone === phone);
+
+      if (!customer) {
+        throw new ShopifyNotFoundError('No matching customer found');
+      }
+
+      return customer;
+    });
+}
+
+function updateCustomer(customerId, data) {
+  return makeRequest('put', `/customers/${customerId}.json`, {
+    customer: data
+  })
+    .then((body) => {
+      if (!body.customer) {
+        Logger.log('Shopify response: ', body);
+        throw new Error('Could not update Shopify customer');
+      }
+
+      return body.customer;
+    });
+}
+
+function updateCustomerByPhone(phone, data) {
+  return getCustomerByPhone(phone)
+    .then((customer) => {
+      return updateCustomer(customer.id, data);
+    });
+}
+
 module.exports = {
   createCustomer,
-  parseError,
-  getOrder,
-  getCollections,
-  getProductById,
+  updateCustomer,
   getAllProducts,
+  getCollections,
+  getCustomerByPhone,
+  getOrder,
+  getProductById,
   getProductsByCollectionId,
-  getRedemptionCount
+  getRedemptionCount,
+  parseError,
+  updateCustomerByPhone
 };

@@ -184,6 +184,7 @@ function completeSmsPreregistration(userId, data) {
       return db('users')
         .where({ id: userId })
         .update(compact({
+          is_sms_preregistration: false,
           password_hash: passwordHash,
           name,
           email,
