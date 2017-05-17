@@ -137,6 +137,80 @@ function* updateUser() {
 }
 
 /**
+ * POST /users/:userId/complete-sms-preregistration
+ */
+function* completeSmsPreregistration() {
+  this.assert(this.params.userId === this.state.userId, 403, 'You can only update your own user');
+
+  const {
+    name,
+    email,
+    phone,
+    password,
+    address
+  } = this.request.body;
+
+  this.assert(
+    name && email && phone && password && address,
+    400,
+    'Missing required information'
+  );
+
+  try {
+    AddressesDAO.validate(address);
+  } catch (err) {
+    if (err instanceof InvalidDataError) { this.throw(400, err); }
+    throw err;
+  }
+
+  const user = yield UsersDAO.findById(this.params.userId);
+  this.assert(user.isSmsPreregistration === true, 400, "You've already completed your registration");
+
+  const updated = yield UsersDAO.completeSmsPreregistration(
+    this.params.userId,
+    { name, email, phone, password }
+  )
+    .catch(InvalidDataError, err => this.throw(400, err));
+
+  const [firstName, lastName] = name.split(' ');
+
+  yield Shopify.updateCustomerByPhone(phone, {
+    last_name: lastName,
+    first_name: firstName,
+    phone,
+    email,
+    addresses: [
+      {
+        default: true,
+        address1: address.addressLine1,
+        address2: address.addressLine2,
+        company: address.companyName,
+        city: address.city,
+        province: address.region,
+        phone,
+        zip: address.postCode,
+        last_name: lastName,
+        first_name: firstName,
+        country: address.country
+      }
+    ]
+  });
+
+  if (address) {
+    const addressData = Object.assign({}, address, {
+      userId: user.id
+    });
+
+    const addressInstance = yield AddressesDAO.create(addressData);
+
+    updated.setAddresses([addressInstance]);
+  }
+
+  this.status = 200;
+  this.body = updated;
+}
+
+/**
  * GET /users/:userId/referral-count
  *
  * Find out how many other users I've referred.
@@ -231,6 +305,7 @@ router.get('/:userId', requireAuth, getUser);
 router.get('/:userId/referral-count', requireAuth, getReferralCount);
 router.get('/email-availability/:email', getEmailAvailability);
 router.post('/', createUser);
+router.post('/:userId/complete-sms-preregistration', completeSmsPreregistration);
 router.put('/:userId', requireAuth, updateUser);
 router.put('/:userId/password', requireAuth, updatePassword);
 

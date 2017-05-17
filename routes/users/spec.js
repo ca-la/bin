@@ -9,6 +9,7 @@ const ScansDAO = require('../../dao/scans');
 const Shopify = require('../../services/shopify');
 const UnassignedReferralCodesDAO = require('../../dao/unassigned-referral-codes');
 const UsersDAO = require('../../dao/users');
+const SessionsDAO = require('../../dao/sessions');
 const { get, post, put, authHeader } = require('../../test-helpers/http');
 const { test, sandbox } = require('../../test-helpers/fresh');
 
@@ -321,5 +322,69 @@ test('PUT /users/:id updates the current user', (t) => {
     .then(([response, body]) => {
       t.equal(response.status, 200);
       t.equal(body.birthday, '2017-01-01');
+    });
+});
+
+test('POST /users/:id/complete-sms-preregistration returns a 403 if not the current user', (t) => {
+  return createUser()
+    .then(({ session }) => {
+      return post('/users/123/complete-sms-preregistration', {
+        body: {},
+        headers: authHeader(session.id)
+      });
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 403);
+      t.equal(body.message, 'You can only update your own user');
+    });
+});
+
+test('POST /users/:id/complete-sms-preregistration returns a 400 if user is already registered', (t) => {
+  const withAddress = Object.assign({}, USER_DATA, {
+    address: ADDRESS_DATA
+  });
+
+  return createUser()
+    .then(({ user, session }) => {
+      return post(`/users/${user.id}/complete-sms-preregistration`, {
+        body: withAddress,
+        headers: authHeader(session.id)
+      });
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 400);
+      t.equal(body.message, "You've already completed your registration");
+    });
+});
+
+test('POST /users/:id/complete-sms-preregistration completes a user', (t) => {
+  const withAddress = Object.assign({}, USER_DATA, {
+    address: ADDRESS_DATA
+  });
+
+  let user;
+
+  sandbox().stub(Shopify, 'updateCustomerByPhone', () => Promise.resolve());
+
+  return UsersDAO.createSmsPreregistration({
+    name: 'D Money',
+    phone: '415 580 9925',
+    referralCode: '123123'
+  })
+    .then((_user) => {
+      user = _user;
+      return SessionsDAO.createForUser(user);
+    })
+    .then((session) => {
+      return post(`/users/${user.id}/complete-sms-preregistration`, {
+        body: withAddress,
+        headers: authHeader(session.id)
+      });
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 200);
+      t.equal(body.addresses[0].addressLine1, '1025 Oak St');
+      t.equal(body.name, 'Q User');
+      t.equal(body.email, 'user@example.com');
     });
 });

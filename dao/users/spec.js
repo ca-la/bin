@@ -88,6 +88,7 @@ test('UsersDAO.create returns a new user with email but no phone', (t) => {
       t.equal(user.id.length, 36);
       t.notEqual(user.passwordHash, 'hunter2');
       t.equal(user.phone, null);
+      t.equal(user.isSmsPreregistration, false);
     });
 });
 
@@ -102,16 +103,17 @@ test('UsersDAO.create returns a new user with phone but no email', (t) => {
     });
 });
 
-test('UsersDAO.create allows bypassing password check', (t) => {
+test('UsersDAO.createSmsPreregistration allows creating SMS preregistration without password', (t) => {
   const sansPassword = Object.assign({}, USER_DATA_WITH_PHONE, { password: null });
 
-  return UsersDAO.create(sansPassword, { requirePassword: false })
+  return UsersDAO.createSmsPreregistration(sansPassword)
     .then((user) => {
       t.equal(user.name, 'Q User');
       t.equal(user.id.length, 36);
       t.equal(user.passwordHash, null);
       t.equal(user.phone, '+14155809925');
       t.equal(user.email, null);
+      t.equal(user.isSmsPreregistration, true);
     });
 });
 
@@ -171,5 +173,27 @@ test('UsersDAO.update updates a user', (t) => {
     .then((user) => {
       t.equal(user.name, 'Q User');
       t.equal(user.birthday, '2017-01-01');
+    });
+});
+
+test('UsersDAO.completeSmsPreregistration completes a user', (t) => {
+  const sansPassword = Object.assign({}, USER_DATA_WITH_PHONE, { password: null });
+
+  return UsersDAO.createSmsPreregistration(sansPassword)
+    .then((user) => {
+      return UsersDAO.completeSmsPreregistration(user.id, {
+        name: 'okie dokie',
+        email: 'okie@example.com',
+        phone: '415 555 1234',
+        password: 'hunter2'
+      });
+    })
+    .then((user) => {
+      t.equal(user.name, 'okie dokie');
+      t.equal(user.isSmsPreregistration, false);
+      t.notEqual(user.passwordHash, 'hunter2');
+      t.notEqual(user.passwordHash, null);
+      t.equal(user.phone, '+14155551234');
+      t.equal(user.email, 'okie@example.com');
     });
 });

@@ -21,7 +21,14 @@ function isValidEmail(email) {
 }
 
 function create(data, options = {}) {
-  const { name, email, phone, password, role } = data;
+  const {
+    name,
+    email,
+    phone,
+    password,
+    role,
+    isSmsPreregistration
+  } = data;
 
   // Allow passing `options.requirePassword = false` to disable the password
   // requirement. This is a very rare case, so intentionally a bit clumsy.
@@ -56,12 +63,13 @@ function create(data, options = {}) {
     .then(([referralCode, passwordHash]) =>
       db('users').insert({
         id: uuid.v4(),
-        name,
         email,
-        phone: validatedPhone,
-        role,
+        is_sms_preregistration: isSmsPreregistration,
+        name,
         password_hash: passwordHash,
-        referral_code: referralCode
+        phone: validatedPhone,
+        referral_code: referralCode,
+        role
       }, '*')
     )
     .catch(rethrow)
@@ -77,6 +85,16 @@ function create(data, options = {}) {
     })
     .then(first)
     .then(instantiate);
+}
+
+function createSmsPreregistration(data) {
+  const userData = Object.assign({}, data, {
+    isSmsPreregistration: true
+  });
+
+  return create(userData, {
+    requirePassword: false
+  });
 }
 
 function findById(id) {
@@ -142,9 +160,45 @@ function update(userId, data) {
     .then(instantiate);
 }
 
+function completeSmsPreregistration(userId, data) {
+  const { name, email, phone, password } = data;
+
+  if (!name || !email || !phone || !password) {
+    return Promise.reject(new InvalidDataError('Missing required information'));
+  }
+
+  if (!isValidEmail(email)) {
+    return Promise.reject(new InvalidDataError('Invalid email'));
+  }
+
+  let validatedPhone;
+
+  try {
+    validatedPhone = validateAndFormatPhoneNumber(phone);
+  } catch (err) {
+    return Promise.reject(err);
+  }
+
+  return hash(password)
+    .then((passwordHash) => {
+      return db('users')
+        .where({ id: userId })
+        .update(compact({
+          is_sms_preregistration: false,
+          password_hash: passwordHash,
+          name,
+          email,
+          phone: validatedPhone
+        }), '*');
+    })
+    .then(first)
+    .then(instantiate);
+}
 
 module.exports = {
   create,
+  createSmsPreregistration,
+  completeSmsPreregistration,
   isValidEmail,
   findAll,
   findByEmail,
