@@ -3,6 +3,7 @@
 const fetch = require('node-fetch');
 const FormData = require('form-data');
 
+const sanitizeHtml = require('../sanitize-html');
 const { validateAndFormatPhoneNumber } = require('../validation');
 const {
   TWILIO_SID,
@@ -28,6 +29,18 @@ function sendSMS(to, message) {
   }).then(response => response.json());
 }
 
+/**
+ * @param {String} message SMS message copy
+ * @returns {String} TwilioML (XML) to send the given message
+ */
+function buildSMSResponseMarkup(message) {
+  return `
+<?xml version="1.0" encoding="UTF-8"?>
+<Response><Sms>${sanitizeHtml(message)}</Sms></Response>
+  `;
+}
+
 module.exports = {
-  sendSMS
+  sendSMS,
+  buildSMSResponseMarkup
 };

@@ -30,7 +30,7 @@ test('SessionsDAO.create fails when email does not match a user', (t) => {
 });
 
 test('SessionsDAO.create fails when we match a password-less user', (t) => {
-  return UsersDAO.createWithoutPassword(USER_DATA)
+  return UsersDAO.create(USER_DATA, { requirePassword: false })
     .then(() => SessionsDAO.create({ email: 'user@example.com', password: 'hunter2' }))
     .catch((err) => {
       t.ok(err instanceof InvalidDataError);

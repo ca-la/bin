@@ -20,10 +20,14 @@ function isValidEmail(email) {
   return Boolean(email && email.match(/.+@.+/));
 }
 
-function create(data) {
+function create(data, options = {}) {
   const { name, email, phone, password, role } = data;
 
-  if (!name || !password) {
+  // Allow passing `options.requirePassword = false` to disable the password
+  // requirement. This is a very rare case, so intentionally a bit clumsy.
+  const requirePassword = options.requirePassword !== false;
+
+  if (!name || (requirePassword && !password)) {
     return Promise.reject(new InvalidDataError('Missing required information'));
   }
 
@@ -47,7 +51,7 @@ function create(data) {
 
   return Promise.all([
     data.referralCode || UnassignedReferralCodesDAO.get(),
-    hash(password)
+    password && hash(password)
   ])
     .then(([referralCode, passwordHash]) =>
       db('users').insert({
@@ -70,45 +74,6 @@ function create(data) {
         default:
           throw err;
       }
-    })
-    .then(first)
-    .then(instantiate);
-}
-
-/**
- * This should only be used internally - we can create users without passwords
- * when they use a legacy authentication scheme (shopify).
- */
-function createWithoutPassword(data) {
-  const { name, email } = data;
-
-  if (!name || !email) {
-    return Promise.reject(new InvalidDataError('Missing required information'));
-  }
-
-  if (!email.match(/.+@.+/)) {
-    return Promise.reject(new InvalidDataError('Invalid email'));
-  }
-
-  const gettingReferralCode = data.referralCode ?
-    Promise.resolve(data.referralCode) :
-    UnassignedReferralCodesDAO.get();
-
-  return gettingReferralCode
-    .then((referralCode) => {
-      return db('users').insert({
-        id: uuid.v4(),
-        name,
-        email,
-        referral_code: referralCode
-      }, '*');
-    })
-    .catch(rethrow)
-    .catch(rethrow.ERRORS.UniqueViolation, (err) => {
-      if (err.constraint === 'users_unique_email') {
-        throw new InvalidDataError('Email is already taken');
-      }
-      throw err;
     })
     .then(first)
     .then(instantiate);
@@ -180,7 +145,6 @@ function update(userId, data) {
 
 module.exports = {
   create,
-  createWithoutPassword,
   isValidEmail,
   findAll,
   findByEmail,
