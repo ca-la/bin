@@ -192,7 +192,18 @@ function completeSmsPreregistration(userId, data) {
         }), '*');
     })
     .then(first)
-    .then(instantiate);
+    .then(instantiate)
+    .catch(rethrow)
+    .catch(rethrow.ERRORS.UniqueViolation, (err) => {
+      switch (err.constraint) {
+        case 'users_unique_email':
+          throw new InvalidDataError('Email is already taken');
+        case 'users_unique_phone':
+          throw new InvalidDataError('Phone number is already taken');
+        default:
+          throw err;
+      }
+    });
 }
 
 module.exports = {
