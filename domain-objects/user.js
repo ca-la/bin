@@ -60,6 +60,7 @@ class User {
       'createdAt',
       'email',
       'id',
+      'isSmsPreregistration',
       'name',
       'phone',
       'referralCode',
