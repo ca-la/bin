@@ -16,6 +16,11 @@ const { validateAndFormatPhoneNumber } = require('../../services/validation');
 const instantiate = data => new User(data);
 const maybeInstantiate = data => (data && new User(data)) || null;
 
+const ERROR_CODES = {
+  emailTaken: Symbol('Email taken'),
+  phoneTaken: Symbol('Phone taken')
+};
+
 function isValidEmail(email) {
   return Boolean(email && email.match(/.+@.+/));
 }
@@ -76,9 +81,15 @@ function create(data, options = {}) {
     .catch(rethrow.ERRORS.UniqueViolation, (err) => {
       switch (err.constraint) {
         case 'users_unique_email':
-          throw new InvalidDataError('Email is already taken');
+          throw new InvalidDataError(
+            'Email is already taken',
+            ERROR_CODES.emailTaken
+          );
         case 'users_unique_phone':
-          throw new InvalidDataError('Phone number is already taken');
+          throw new InvalidDataError(
+            'Phone number is already taken',
+            ERROR_CODES.phoneTaken
+          );
         default:
           throw err;
       }
@@ -197,9 +208,15 @@ function completeSmsPreregistration(userId, data) {
     .catch(rethrow.ERRORS.UniqueViolation, (err) => {
       switch (err.constraint) {
         case 'users_unique_email':
-          throw new InvalidDataError('Email is already taken');
+          throw new InvalidDataError(
+            'Email is already taken',
+            ERROR_CODES.emailTaken
+          );
         case 'users_unique_phone':
-          throw new InvalidDataError('Phone number is already taken');
+          throw new InvalidDataError(
+            'Phone number is already taken',
+            ERROR_CODES.phoneTaken
+          );
         default:
           throw err;
       }
@@ -207,6 +224,7 @@ function completeSmsPreregistration(userId, data) {
 }
 
 module.exports = {
+  ERROR_CODES,
   create,
   createSmsPreregistration,
   completeSmsPreregistration,
