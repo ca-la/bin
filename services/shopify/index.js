@@ -189,7 +189,7 @@ function getProductById(id) {
     });
 }
 
-function getAllProducts(filters) {
+function getAllProducts(filters, { includeDesigners = false }) {
   const query = querystring.stringify(filters);
 
   const path = `/products.json?${query}`;
@@ -201,10 +201,17 @@ function getAllProducts(filters) {
       return products
         .filter((product) => {
           // Exclude 'special' products from public list
-          return (
-            product.product_type !== 'VIP' &&
-            product.product_type !== 'Designer'
-          );
+          if (
+            product.product_type === 'VIP' ||
+            product.product_type === 'Hidden'
+          ) return false;
+
+          if (
+            !includeDesigners &&
+            product.product_type === 'Designer'
+          ) return false;
+
+          return true;
         })
         .sort((a, b) => {
           // Sort by published_at desc

@@ -14,7 +14,11 @@ const router = new Router();
 function* getList() {
   const filters = pick(this.query, 'handle');
 
-  const products = yield Shopify.getAllProducts(filters);
+  const options = {
+    includeDesigners: this.query.includeDesigners === 'true'
+  };
+
+  const products = yield Shopify.getAllProducts(filters, options);
 
   this.body = products;
   this.status = 200;
