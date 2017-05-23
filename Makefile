@@ -15,6 +15,10 @@ serve-dev:
 test: preflight
 	NODE_ENV=test env $$(cat .env | xargs) $$(npm bin)/tape **/*/spec.js | $$(npm bin)/tap-spec
 
+# Interactive console (i.e. to require & explore modules)
+console: preflight
+	NODE_ENV=test env $$(cat .env | xargs) node
+
 # Static analysis
 lint: preflight
 	$$(npm bin)/eslint . --ignore-path .gitignore
