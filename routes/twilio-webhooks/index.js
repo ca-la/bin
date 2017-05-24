@@ -80,7 +80,7 @@ function* postIncomingPreRegistration() {
 
   const URL = `${SITE_HOST}/sms-signup/${session.id}`;
 
-  this.body = buildSMSResponseMarkup(`Welcome to CALA. To complete your profile, click the following link. ${URL}`);
+  this.body = buildSMSResponseMarkup(`Hi ${nameParts[0]}, Welcome to CALA. Click the following link to complete your profile. ${URL}`);
 }
 
 router.post('/incoming-preregistration-sms', formDataBody, postIncomingPreRegistration);
