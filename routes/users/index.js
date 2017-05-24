@@ -9,6 +9,7 @@ const requireAuth = require('../../middleware/require-auth');
 const ScansDAO = require('../../dao/scans');
 const SessionsDAO = require('../../dao/sessions');
 const Shopify = require('../../services/shopify');
+const Twilio = require('../../services/twilio');
 const UnassignedReferralCodesDAO = require('../../dao/unassigned-referral-codes');
 const User = require('../../domain-objects/user');
 const UsersDAO = require('../../dao/users');
@@ -205,6 +206,8 @@ function* completeSmsPreregistration() {
 
     updated.setAddresses([addressInstance]);
   }
+
+  yield Twilio.sendSMS(phone, 'Thanks for signing up! Your profile is now complete');
 
   this.status = 200;
   this.body = updated;
