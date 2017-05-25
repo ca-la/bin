@@ -120,6 +120,20 @@ function getCollections(filters) {
 }
 
 /**
+ * Retrieve a list of "collects" - Shopify's join table between products and
+ * collections
+ */
+function getCollects(filters) {
+  const query = querystring.stringify(filters);
+  const path = `/collects.json?${query}`;
+
+  return makeRequest('get', path)
+    .then((body) => {
+      return body.collects || [];
+    });
+}
+
+/**
  * Retrieve a set of products in a certain collection
  */
 function getProductsByCollectionId(collectionId) {
@@ -322,6 +336,7 @@ module.exports = {
   createCustomer,
   updateCustomer,
   getAllProducts,
+  getCollects,
   getCollections,
   getCustomerByPhone,
   getOrder,

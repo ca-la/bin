@@ -50,6 +50,13 @@ skip('updateCustomerByPhone', (t) => {
     });
 });
 
+skip('getCollects', (t) => {
+  return Shopify.getCollects()
+    .then((collects) => {
+      t.equal(typeof collects[0].product_id, 'number');
+    });
+});
+
 test('parseError parses string errors', (t) => {
   const errorMessage = Shopify.parseError('wowza');
   t.equal(errorMessage, 'wowza');
