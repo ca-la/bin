@@ -12,7 +12,7 @@ const router = new Router();
  * GET /products
  */
 function* getList() {
-  const filters = pick(this.query, 'handle', 'product_type');
+  const filters = pick(this.query, 'handle');
 
   const options = {
     includeDesigners: this.query.includeDesigners === 'true'

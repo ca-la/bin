@@ -6,6 +6,7 @@ class Address {
   constructor(row) {
     requireProperties(row, 'id');
 
+    this.id = row.id;
     this.companyName = row.company_name;
     this.addressLine1 = row.address_line_1;
     this.addressLine2 = row.address_line_2;

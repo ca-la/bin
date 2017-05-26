@@ -8,6 +8,8 @@ const db = require('../services/db');
 const TABLES = [
   'addresses',
   'collectionphotos',
+  'designerphotos',
+  'designers',
   'productvideos',
   'pushtokens',
   'scanphotos',
