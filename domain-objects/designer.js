@@ -8,9 +8,14 @@ class Designer {
 
     this.id = row.id;
     this.name = row.name;
-    this.bioHtml = row.bioHtml;
-    this.twitterHandle = row.twitterHandle;
-    this.instagramHandle = row.instagramHandle;
+    this.bioHtml = row.bio_html;
+    this.twitterHandle = row.twitter_handle;
+    this.instagramHandle = row.instagram_handle;
+    this.position = row.position;
+  }
+
+  setPhotos(photos) {
+    this.photos = photos;
   }
 }
 

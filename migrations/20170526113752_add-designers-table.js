@@ -7,23 +7,29 @@ create table designers (
   name text not null,
   bio_html text,
   twitter_handle text,
-  instagram_handle text
+  instagram_handle text,
+  position smallint not null,
+  created_at timestamp with time zone default now()
 );
 
 create table designerphotos (
   id uuid primary key,
-  is_featured boolean default false,
   designer_id uuid not null references designers(id),
-  photo_url text not null
+  photo_url text not null,
+  position smallint not null,
+  created_at timestamp with time zone default now()
 );
 
-create unique index designerphotos_one_featured on designerphotos (designer_id, is_featured);
+create unique index designer_position on designers (position);
+create unique index designer_photo_position on designerphotos (designer_id, position);
   `);
 };
 
 exports.down = function down(knex) {
   return knex.raw(`
-drop index designerphotos_one_featured;
+drop index designer_position;
+drop index designer_photo_position;
+
 drop table designerphotos;
 drop table designers;
   `);
