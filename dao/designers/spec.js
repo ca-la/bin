@@ -1,8 +1,9 @@
 'use strict';
 
 const DesignersDAO = require('./index');
-const { test } = require('../../test-helpers/fresh');
+const InvalidDataError = require('../../errors/invalid-data');
 const { createDesigners } = require('../../test-helpers/factories/designer');
+const { test } = require('../../test-helpers/fresh');
 
 test('DesignersDAO.getList returns many designers and their photos', (t) => {
   return createDesigners()
@@ -43,5 +44,15 @@ test('DesignersDAO.getById returns a single designer and their photos', (t) => {
       t.equal(photos[0].photoUrl, 'http://designer-1-photo-1.jpg');
       t.equal(photos[1].photoUrl, 'http://designer-1-photo-2.jpg');
       t.equal(photos[2].photoUrl, 'http://designer-1-photo-3.jpg');
+    });
+});
+
+test('DesignersDAO.getById throws InvalidDataError on invalid ID format', (t) => {
+  return DesignersDAO.getById('123')
+    .then(() => {
+      throw new Error("Shouldn't get here");
+    })
+    .catch(InvalidDataError, (err) => {
+      t.equal(err.message, 'Invalid designer ID format');
     });
 });
