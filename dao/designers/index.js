@@ -1,6 +1,7 @@
 'use strict';
 
 const rethrow = require('pg-rethrow');
+const Promise = require('bluebird');
 
 const db = require('../../services/db');
 const InvalidDataError = require('../../errors/invalid-data');
@@ -20,15 +21,18 @@ function instantiateWithPhotos(row) {
 }
 
 function getList() {
-  return db.raw(`
-select
-  row_to_json(designers.*) as designer,
-  json_agg(row_to_json(designerphotos.*)) as photos
-from designers
-left join designerphotos
-  on designerphotos.designer_id = designers.id
-group by designers.id;
-    `)
+  return Promise.resolve()
+    .then(() => {
+      return db.raw(`
+    select
+      row_to_json(designers.*) as designer,
+      json_agg(row_to_json(designerphotos.*)) as photos
+    from designers
+    left join designerphotos
+      on designerphotos.designer_id = designers.id
+    group by designers.id;
+      `);
+    })
     .then((res) => {
       const results = res.rows;
 
@@ -40,16 +44,19 @@ group by designers.id;
 }
 
 function getById(designerId) {
-  return db.raw(`
-select
-  row_to_json(designers.*) as designer,
-  json_agg(row_to_json(designerphotos.*)) as photos
-from designers
-left join designerphotos
-  on designerphotos.designer_id = designers.id
-where designers.id = ?
-group by designers.id;
-    `, [designerId])
+  return Promise.resolve()
+    .then(() => {
+      return db.raw(`
+    select
+      row_to_json(designers.*) as designer,
+      json_agg(row_to_json(designerphotos.*)) as photos
+    from designers
+    left join designerphotos
+      on designerphotos.designer_id = designers.id
+    where designers.id = ?
+    group by designers.id;
+      `, [designerId]);
+    })
     .then((res) => {
       const result = res.rows[0];
 

@@ -29,6 +29,7 @@ router.use(require('./routes/root'));
 router.use('/addresses', require('./routes/addresses'));
 router.use('/collection-photos', require('./routes/collection-photos'));
 router.use('/collections', require('./routes/collections'));
+router.use('/designers', require('./routes/designers'));
 router.use('/download-links', require('./routes/download-links'));
 router.use('/featured', require('./routes/featured'));
 router.use('/instagram-feed', require('./routes/instagram-feed'));
