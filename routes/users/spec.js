@@ -6,10 +6,11 @@ const createUser = require('../../test-helpers/create-user');
 const InvalidDataError = require('../../errors/invalid-data');
 const MailChimp = require('../../services/mailchimp');
 const ScansDAO = require('../../dao/scans');
+const SessionsDAO = require('../../dao/sessions');
 const Shopify = require('../../services/shopify');
+const Twilio = require('../../services/twilio');
 const UnassignedReferralCodesDAO = require('../../dao/unassigned-referral-codes');
 const UsersDAO = require('../../dao/users');
-const SessionsDAO = require('../../dao/sessions');
 const { get, post, put, authHeader } = require('../../test-helpers/http');
 const { test, sandbox } = require('../../test-helpers/fresh');
 
@@ -365,6 +366,7 @@ test('POST /users/:id/complete-sms-preregistration completes a user', (t) => {
   let user;
 
   sandbox().stub(Shopify, 'updateCustomerByPhone', () => Promise.resolve());
+  sandbox().stub(Twilio, 'sendSMS', () => Promise.resolve());
 
   return UsersDAO.createSmsPreregistration({
     name: 'D Money',
