@@ -70,7 +70,6 @@ function getById(designerId) {
     .catch(rethrow.ERRORS.InvalidTextRepresentation, () => {
       throw new InvalidDataError('Invalid designer ID format');
     });
-
 }
 
 module.exports = {
