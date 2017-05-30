@@ -9,6 +9,7 @@ class DesignerPhoto {
     this.id = row.id;
     this.designerId = row.designer_id;
     this.photoUrl = row.photo_url;
+    this.position = row.position;
   }
 }
 

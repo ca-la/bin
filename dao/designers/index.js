@@ -2,11 +2,15 @@
 
 const rethrow = require('pg-rethrow');
 const Promise = require('bluebird');
+const uuid = require('node-uuid');
 
 const db = require('../../services/db');
+const first = require('../../services/first');
 const InvalidDataError = require('../../errors/invalid-data');
 const Designer = require('../../domain-objects/designer');
 const DesignerPhoto = require('../../domain-objects/designer-photo');
+
+const instantiate = row => new Designer(row);
 
 function instantiateWithPhotos(row) {
   const designer = new Designer(row.designer);
@@ -69,7 +73,23 @@ function getById(designerId) {
     .catch(rethrow);
 }
 
+function create(data) {
+  return db('designers')
+    .insert({
+      id: uuid.v4(),
+      name: data.name,
+      bio_html: data.bioHtml,
+      twitter_handle: data.twitterHandle,
+      instagram_handle: data.instagramHandle,
+      position: data.position
+    }, '*')
+    .catch(rethrow)
+    .then(first)
+    .then(instantiate);
+}
+
 module.exports = {
   getList,
-  getById
+  getById,
+  create
 };
