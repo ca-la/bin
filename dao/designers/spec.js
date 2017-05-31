@@ -47,6 +47,23 @@ test('DesignersDAO.getById returns a single designer and their photos', (t) => {
     });
 });
 
+test('DesignersDAO.create creates designers', (t) => {
+  return DesignersDAO.create({
+    name: 'J Designer',
+    twitterHandle: 'desiigner',
+    instagramHandle: 'desiigner',
+    position: 1,
+    bioHtml: '<h1>the real deal</h1>'
+  })
+    .then((designer) => {
+      t.equal(designer.name, 'J Designer');
+      t.equal(designer.twitterHandle, 'desiigner');
+      t.equal(designer.instagramHandle, 'desiigner');
+      t.equal(designer.position, 1);
+      t.equal(designer.bioHtml, '<h1>the real deal</h1>');
+    });
+});
+
 test('DesignersDAO.getById throws InvalidDataError on invalid ID format', (t) => {
   return DesignersDAO.getById('123')
     .then(() => {
