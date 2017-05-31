@@ -41,7 +41,7 @@ function getList() {
       const results = res.rows;
 
       return results
-        .sort((a, b) => a.position - b.position)
+        .sort((a, b) => a.designer.position - b.designer.position)
         .map(instantiateWithPhotos);
     })
     .catch(rethrow);
