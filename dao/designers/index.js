@@ -70,7 +70,10 @@ function getById(designerId) {
 
       return instantiateWithPhotos(result);
     })
-    .catch(rethrow);
+    .catch(rethrow)
+    .catch(rethrow.ERRORS.InvalidTextRepresentation, () => {
+      throw new InvalidDataError('Invalid designer ID format');
+    });
 }
 
 function create(data) {
