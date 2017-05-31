@@ -33,7 +33,7 @@
     "tape": "4.6.2"
   },
   "engines": {
-    "node": "6.*",
+    "node": "8.*",
     "npm": "3.*"
   },
   "scripts": {
