@@ -81,10 +81,12 @@ function create(data) {
  * resource and attach it to the Session domain object.
  */
 function findById(id, shouldAttachUser = false) {
+  const now = (new Date).toISOString();
+
   return db('sessions')
     .whereRaw(
-      'id = ? and (expires_at is null or expires_at > now())',
-      [id]
+      'id = ? and (expires_at is null or expires_at > ?)',
+      [id, now]
     )
     .then(first)
     .then(maybeInstantiate)
