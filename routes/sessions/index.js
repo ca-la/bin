@@ -18,9 +18,6 @@ function* createSession() {
   let expiresAt = null;
 
   if (expireAfterSeconds) {
-    // This relies on the server and DB time being in sync, which is a bit
-    // risky. TODO figured out a solution that does not, and avoid short
-    // expirations until then.
     const now = (new Date()).getTime();
     expiresAt = new Date(now + (expireAfterSeconds * 1000));
   }
