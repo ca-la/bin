@@ -215,9 +215,14 @@ function getAllProducts(filters, { includeDesigners = false }) {
       return products
         .filter((product) => {
           // Exclude 'special' products from public list
+          // ... unless you're filtering by handle specifically
+          // probably want to reevaluate this and add a `getByHandle` endpoint
+          // b/c this is weird
           if (
-            product.product_type === 'VIP' ||
-            product.product_type === 'Hidden'
+            !filters.handle && (
+              product.product_type === 'VIP' ||
+              product.product_type === 'Hidden'
+            )
           ) return false;
 
           if (
