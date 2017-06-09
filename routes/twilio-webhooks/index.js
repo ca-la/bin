@@ -29,7 +29,9 @@ function* postIncomingPreRegistration() {
   const fromNumber = this.request.formDataBody.From;
   const messageBody = this.request.formDataBody.Body;
 
-  const nameParts = messageBody.split(' ');
+  const nameParts = messageBody
+    .trim()
+    .split(' ');
 
   if (nameParts.length !== 2) {
     this.body = buildSMSResponseMarkup('To sign up for CALA, reply to this message with your first and last name.');
