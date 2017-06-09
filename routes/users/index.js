@@ -15,6 +15,7 @@ const User = require('../../domain-objects/user');
 const UsersDAO = require('../../dao/users');
 const { logServerError } = require('../../services/logger');
 const {
+  TWILIO_PREREGISTRATION_OUTBOUND_NUMBER,
   REFERRAL_VALUE_DOLLARS
 } = require('../../services/config');
 
@@ -207,7 +208,13 @@ function* completeSmsPreregistration() {
     updated.setAddresses([addressInstance]);
   }
 
-  yield Twilio.sendSMS(phone, 'Thanks for signing up! Your profile is now complete');
+  yield Twilio.sendSMS(
+    phone,
+    'Thanks for signing up! Your profile is now complete',
+    {
+      from: TWILIO_PREREGISTRATION_OUTBOUND_NUMBER
+    }
+  );
 
   this.status = 200;
   this.body = updated;

@@ -13,12 +13,14 @@ const {
 
 const API_BASE = `https://${TWILIO_SID}:${TWILIO_TOKEN}@api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}`;
 
-function sendSMS(to, message, mediaUrl) {
+function sendSMS(to, message, options = {}) {
+  const { from, mediaUrl } = options;
+
   const formatted = validateAndFormatPhoneNumber(to);
 
   const data = new FormData();
   data.append('To', formatted);
-  data.append('From', TWILIO_OUTBOUND_NUMBER);
+  data.append('From', from || TWILIO_OUTBOUND_NUMBER);
   data.append('Body', message);
 
   if (mediaUrl) {
