@@ -4,6 +4,7 @@ const Router = require('koa-router');
 const find = require('lodash/find');
 
 const UserAttributesService = require('../../services/user-attributes');
+const Logger = require('../../services/logger');
 
 const router = new Router();
 
@@ -19,9 +20,11 @@ function* postOrdersCreate() {
   const userIdAttr = find(attributes, { name: 'userId' });
   const userId = userIdAttr && userIdAttr.value;
 
-  this.assert(userId, 400, 'Missing user ID');
-
-  yield UserAttributesService.recordPurchase(userId);
+  if (!userId) {
+    Logger.logWarning('Shopify webhook missing user ID. Maybe an order was created without a CALA account?');
+  } else {
+    yield UserAttributesService.recordPurchase(userId);
+  }
 
   this.status = 200;
   this.body = {

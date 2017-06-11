@@ -15,8 +15,14 @@ function logClientError(...args) {
   console.log('CLIENT ERROR:', ...args);
 }
 
+function logWarning(...args) {
+  // eslint-disable-next-line no-console
+  console.log('WARNING:', ...args);
+}
+
 module.exports = {
   log,
   logServerError,
+  logWarning,
   logClientError
 };
