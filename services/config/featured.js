@@ -63,6 +63,11 @@ const FEATURED_COLLECTION_LISTS_PROD = [
     sectionTitle: 'Featured Collections',
     collections: [
       {
+        id: 389467843,
+        title: 'Wiz Khalifa × 424 + Pleasures',
+        url: 'https://wiz.ca.la'
+      },
+      {
         id: 373114435,
         title: 'Lyn Paolo',
         url: 'https://cala.app.link/lyncollection'
