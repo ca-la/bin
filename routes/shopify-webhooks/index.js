@@ -15,6 +15,9 @@ const router = new Router();
  * aka when an order is created.
  */
 function* postOrdersCreate() {
+  this.status = 200;
+  this.body = { success: true };
+
   const attributes = this.request.body.note_attributes || [];
 
   const userIdAttr = find(attributes, { name: 'userId' });
@@ -22,14 +25,15 @@ function* postOrdersCreate() {
 
   if (!userId) {
     Logger.logWarning('Shopify webhook missing user ID. Maybe an order was created without a CALA account?');
-  } else {
-    yield UserAttributesService.recordPurchase(userId);
+    return;
   }
 
-  this.status = 200;
-  this.body = {
-    success: true
-  };
+  try {
+    yield UserAttributesService.recordPurchase(userId);
+  } catch (err) {
+    Logger.logServerError(err);
+    return;
+  }
 }
 
 router.post('/orders-create', postOrdersCreate);
