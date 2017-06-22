@@ -32,7 +32,6 @@ function* postOrdersCreate() {
     yield UserAttributesService.recordPurchase(userId);
   } catch (err) {
     Logger.logServerError(err);
-    return;
   }
 }
 
