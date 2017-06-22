@@ -32,6 +32,11 @@ test('ScanPhotosDAO.findByScanId orders by creation time', (t) => {
     })
     .then((scanPhoto) => {
       secondId = scanPhoto.id;
+      return updateOneById(firstId, {
+        calibrationData: {}
+      });
+    })
+    .then(() => {
       return findByScanId(scanId);
     })
     .then((photos) => {
