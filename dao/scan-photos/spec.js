@@ -1,6 +1,8 @@
+'use strict';
+
 const {
   create,
-  updateOneById,
+  updateOneById
 } = require('./index');
 
 const ScansDAO = require('../scans');
@@ -12,17 +14,26 @@ test('ScanPhotosDAO.updateOneById updates a photo', (t) => {
     .then(({ user }) => {
       return ScansDAO.create({
         userId: user.id,
-        type: SCAN_TYPES.photo
+        type: ScansDAO.SCAN_TYPES.photo
       });
     })
     .then((scan) => {
       return create({
         scanId: scan.id
-      })
-        measurements: { heightCm: 200 }
+      });
+    })
+    .then((scanPhoto) => {
+      return updateOneById(scanPhoto.id, {
+        controlPoints: {
+          ok: { x: 1, y: 2 }
+        },
+        calibrationData: {
+          tilt: 100
+        }
       });
     })
     .then((updated) => {
-      t.equal(updated.measurements.heightCm, 200);
+      t.deepEqual(updated.controlPoints, { ok: { x: 1, y: 2 } });
+      t.deepEqual(updated.calibrationData, { tilt: 100 });
     });
 });

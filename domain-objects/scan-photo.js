@@ -1,5 +1,7 @@
 'use strict';
 
+const pick = require('lodash/pick');
+
 const { requireProperties } = require('../services/require-properties');
 
 class ScanPhoto {
@@ -19,12 +21,14 @@ class ScanPhoto {
   }
 
   toJSON() {
-    return {
-      id: this.id,
-      scanId: this.scanId,
-      createdAt: this.createdAt,
-      url: this.url
-    };
+    return pick(this,
+      'id',
+      'scanId',
+      'createdAt',
+      'calibrationData',
+      'url',
+      'controlPoints'
+    );
   }
 }
 
