@@ -5,6 +5,7 @@ const rethrow = require('pg-rethrow');
 
 const db = require('../../services/db');
 const first = require('../../services/first');
+const compact = require('../../services/compact');
 const ScanPhoto = require('../../domain-objects/scan-photo');
 
 const instantiate = data => new ScanPhoto(data);
@@ -51,9 +52,24 @@ function deleteByScanId(scanId) {
     .then(photos => photos.map(instantiate));
 }
 
+function updateOneById(id, data) {
+  return db('scanphotos')
+    .where({
+      id,
+      deleted_at: null
+    })
+    .update(compact({
+      calibration_data: data.calibrationData,
+      control_points: data.controlPoints
+    }), '*')
+    .then(first)
+    .then(instantiate);
+}
+
 module.exports = {
   create,
   findByScanId,
   findById,
-  deleteByScanId
+  deleteByScanId,
+  updateOneById
 };

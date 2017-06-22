@@ -60,6 +60,29 @@ function post(url, opts = {}) {
   return fetch(fullUrl, options).then(parseResponse);
 }
 
+function patch(url, opts = {}) {
+  const fullUrl = baseUrl + url;
+
+  const headers = Object.assign({
+    Accept: 'application/json',
+    'Content-Type': 'application/json'
+  }, opts.headers);
+
+  let body = null;
+
+  if (opts.body) {
+    body = JSON.stringify(opts.body);
+  }
+
+  const options = Object.assign({}, opts, {
+    method: 'patch',
+    headers,
+    body
+  });
+
+  return fetch(fullUrl, options).then(parseResponse);
+}
+
 function put(url, opts = {}) {
   const fullUrl = baseUrl + url;
 
@@ -102,6 +125,7 @@ module.exports = {
   authHeader,
   get,
   post,
+  patch,
   put,
   del
 };
