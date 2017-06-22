@@ -27,6 +27,7 @@ function findByScanId(scanId) {
       scan_id: scanId,
       deleted_at: null
     }, '*')
+    .orderBy('created_at', 'asc')
     .catch(rethrow)
     .then(photos => photos.map(instantiate));
 }
