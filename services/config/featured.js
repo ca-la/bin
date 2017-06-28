@@ -82,11 +82,6 @@ const FEATURED_COLLECTION_LISTS_PROD = [
         id: 294394947,
         title: 'Odyssey Collection',
         url: 'https://cala.app.link/odysseycollection'
-      },
-      {
-        id: 259658627,
-        title: 'Collection 01',
-        url: 'https://cala.app.link/c1collection'
       }
     ]
   }
