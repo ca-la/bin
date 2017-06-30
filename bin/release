@@ -17,6 +17,11 @@ if [[ $(git rev-parse --abbrev-ref HEAD) != "master" ]] ; then
   exit 1
 fi
 
+if [[ $(git describe --exact-match --tags HEAD 2> /dev/null) ]] ; then
+  echo 'Current commit is already a tag commit; not releasing it again'
+  exit 1
+fi
+
 if [[ $(git status --porcelain) != "" ]] ; then
   echo 'Cannot release with uncommitted changes'
   exit 1
