@@ -64,24 +64,20 @@ const FEATURED_COLLECTION_LISTS_PROD = [
     collections: [
       {
         id: 389467843,
-        title: 'Wiz Khalifa × 424 + Pleasures',
-        url: 'https://wiz.ca.la'
+        title: 'Wiz Khalifa × 424 + Pleasures'
       },
       {
         id: 373114435,
-        title: 'Lyn Paolo',
-        url: 'https://cala.app.link/lyncollection'
+        title: 'Lyn Paolo'
       },
       {
         id: 374045635,
-        title: 'Peter Vu',
-        url: 'https://cala.app.link/vucollection'
+        title: 'Peter Vu'
 
       },
       {
         id: 294394947,
-        title: 'Odyssey Collection',
-        url: 'https://cala.app.link/odysseycollection'
+        title: 'Odyssey Collection'
       }
     ]
   }
