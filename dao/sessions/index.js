@@ -10,7 +10,7 @@ const InvalidDataError = require('../../errors/invalid-data');
 const Session = require('../../domain-objects/session');
 const UsersDAO = require('../users');
 const { compare } = require('../../services/hash');
-const { ROLES } = require('../../domain-objects/user');
+const { ALLOWED_SESSION_ROLES } = require('../../domain-objects/user');
 
 const instantiate = data => new Session(data);
 const maybeInstantiate = data => (data && new Session(data)) || null;
@@ -61,10 +61,9 @@ function create(data) {
         throw new InvalidDataError(`Incorrect password for ${email}`);
       }
 
-      if (
-        role === ROLES.admin &&
-        user.role !== ROLES.admin
-      ) {
+      const allowedRoles = ALLOWED_SESSION_ROLES[user.role];
+
+      if (role && allowedRoles.indexOf(role) < 0) {
         throw new InvalidDataError('User may not assume this role');
       }
 
