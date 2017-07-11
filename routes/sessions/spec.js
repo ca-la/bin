@@ -74,8 +74,27 @@ test('POST /sessions can create elevated role permissions', (t) => {
     });
 });
 
-test('POST /sessions cannot create elevated role permissions if user is unqualified', (t) => {
+test('POST /sessions cannot create elevated role permissions if user is role USER', (t) => {
   const nonAdmin = Object.assign({}, USER_DATA, { role: 'USER' });
+
+  return UsersDAO.create(nonAdmin)
+    .then(() => {
+      return post('/sessions', {
+        body: {
+          email: 'user@example.com',
+          password: 'hunter2',
+          role: 'ADMIN'
+        }
+      });
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 400);
+      t.equal(body.message, 'User may not assume this role');
+    });
+});
+
+test('POST /sessions cannot create elevated role permissions if user is role DESIGNER', (t) => {
+  const nonAdmin = Object.assign({}, USER_DATA, { role: 'DESIGNER' });
 
   return UsersDAO.create(nonAdmin)
     .then(() => {

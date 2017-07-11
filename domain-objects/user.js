@@ -6,7 +6,14 @@ const { requireProperties } = require('../services/require-properties');
 
 const ROLES = {
   user: 'USER',
-  admin: 'ADMIN'
+  admin: 'ADMIN',
+  designer: 'DESIGNER'
+};
+
+const ALLOWED_SESSION_ROLES = {
+  [ROLES.admin]: [ROLES.user, ROLES.admin, ROLES.designer],
+  [ROLES.user]: [ROLES.user],
+  [ROLES.designer]: [ROLES.designer, ROLES.user]
 };
 
 /**
@@ -74,5 +81,6 @@ class User {
 }
 
 User.ROLES = ROLES;
+User.ALLOWED_SESSION_ROLES = ALLOWED_SESSION_ROLES;
 
 module.exports = User;
