@@ -26,7 +26,7 @@ orders.forEach((order) => {
 
   const details = {
     order_id: order.id,
-    products: products.join('\n'),
+    products: products.join('\n')
   };
 
   Object.assign(details, order.shipping_address);
