@@ -11,6 +11,8 @@ serve: preflight
 serve-dev:
 	env $$(cat .env | xargs) make serve
 
+dev: serve-dev
+
 # Run the test suite
 test: preflight
 	NODE_ENV=test env $$(cat .env | xargs) $$(npm bin)/tape **/*/spec.js | $$(npm bin)/tap-spec
