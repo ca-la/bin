@@ -63,11 +63,6 @@ const FEATURED_COLLECTION_LISTS_PROD = [
     sectionTitle: 'Featured Collections',
     collections: [
       {
-        id: 425320835,
-        title: 'HEAVVY',
-        url: 'https://heavvy.ca.la'
-      },
-      {
         id: 389467843,
         title: 'Wiz Khalifa × 424 + Pleasures',
         url: 'https://wiz.ca.la'
