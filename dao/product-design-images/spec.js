@@ -7,7 +7,7 @@ const {
 } = require('./index');
 
 const ProductDesignsDAO = require('../product-designs');
-const { createUser } = require('../../test-helpers/create-user');
+const createUser = require('../../test-helpers/create-user');
 const { test } = require('../../test-helpers/fresh');
 
 test('ProductDesignImagesDAO.findByDesignId returns images', (t) => {
@@ -17,6 +17,8 @@ test('ProductDesignImagesDAO.findByDesignId returns images', (t) => {
   return createUser({ withSession: false })
     .then(({ user }) => {
       return ProductDesignsDAO.create({
+        productType: 'TSHIRT',
+        title: 'That New New',
         userId: user.id
       });
     })
@@ -37,6 +39,8 @@ test('ProductDesignImagesDAO.deleteById deletes', (t) => {
   return createUser({ withSession: false })
     .then(({ user }) => {
       return ProductDesignsDAO.create({
+        productType: 'TSHIRT',
+        title: 'That New New',
         userId: user.id
       });
     })
