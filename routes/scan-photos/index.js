@@ -7,7 +7,7 @@ const requireAuth = require('../../middleware/require-auth');
 const ScanPhotosDAO = require('../../dao/scan-photos');
 const ScansDAO = require('../../dao/scans');
 const User = require('../../domain-objects/user');
-const { AWS_SCANPHOTO_BUCKET_NAME } = require('../../services/config');
+const { AWS_SCANPHOTO_BUCKET_NAME } = require('../../config');
 const { getFile } = require('../../services/aws');
 
 const router = new Router();

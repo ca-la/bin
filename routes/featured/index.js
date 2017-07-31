@@ -5,7 +5,7 @@ const Router = require('koa-router');
 const {
   FEATURED_PRODUCT_IDS,
   FEATURED_COLLECTION_LISTS
-} = require('../../services/config');
+} = require('../../config');
 
 const router = new Router();
 
