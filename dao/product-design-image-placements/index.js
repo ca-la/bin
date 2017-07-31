@@ -9,12 +9,19 @@ const ProductDesignImagePlacement = require('../../domain-objects/product-design
 
 const instantiate = data => new ProductDesignImagePlacement(data);
 
-function createForDesign(designId, placements) {
+function deleteForDesign(dbConnection, designId) {
 }
 
-function deleteForDesign(designId) {
+function createForDesign(dbConnection, designId, placements) {
 }
 
 function replaceForDesign(designId, placements) {
-  return deleteForDesign(design)
+  return db.transaction((trx) => {
+    deleteForDesign(trx, designId)
+      .then(() => {
+        return createForDesign(trx, designId, placements);
+      })
+      .then(trx.commit)
+      .catch(trx.rollback);
+  });
 }
