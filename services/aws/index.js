@@ -7,7 +7,7 @@ const Promise = require('bluebird');
 const {
   AWS_ACCESS_KEY,
   AWS_SECRET_KEY
-} = require('../config');
+} = require('../../config');
 
 AWS.config.update({
   accessKeyId: AWS_ACCESS_KEY,

@@ -10,7 +10,7 @@ const Shopify = require('../../services/shopify');
 const ShopifyNotFoundError = require('../../errors/shopify-not-found');
 const UsersDAO = require('../../dao/users');
 const { buildSMSResponseMarkup } = require('../../services/twilio');
-const { SITE_HOST } = require('../../services/config');
+const { SITE_HOST } = require('../../config');
 
 const router = new Router();
 

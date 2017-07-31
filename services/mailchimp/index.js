@@ -11,7 +11,7 @@ const {
   MAILCHIMP_LIST_ID_SUBSCRIPTIONS,
   MAILCHIMP_LIST_ID_PARTNERS,
   MAILCHIMP_LIST_ID_USERS
-} = require('../config');
+} = require('../../config');
 
 const MAILCHIMP_API_BASE = 'https://us13.api.mailchimp.com/3.0';
 const MAILCHIMP_AUTH = new Buffer(`cala:${MAILCHIMP_API_KEY}`).toString('base64');

@@ -3,7 +3,7 @@
 const fetch = require('node-fetch');
 const FormData = require('form-data');
 
-const { MAILGUN_API_KEY, MAILGUN_API_BASE } = require('../config');
+const { MAILGUN_API_KEY, MAILGUN_API_BASE } = require('../../config');
 
 const MAILGUN_AUTH = new Buffer(`api:${MAILGUN_API_KEY}`).toString('base64');
 const FROM = 'CALA <hi@ca.la>';
