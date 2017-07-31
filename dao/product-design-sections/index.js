@@ -11,7 +11,7 @@ const ProductDesignSection = require('../../domain-objects/product-design-sectio
 const instantiate = data => new ProductDesignSection(data);
 
 function create(data) {
-  return db('product_design_desctions')
+  return db('product_design_sections')
     .insert({
       template_name: data.templateName,
       design_id: data.designId,
