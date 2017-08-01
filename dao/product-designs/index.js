@@ -24,9 +24,19 @@ function create(data) {
     .then(instantiate);
 }
 
+function deleteById(productDesignId) {
+  return db('product_designs')
+    .where({ id: productDesignId, deleted_at: null })
+    .update({
+      deleted_at: new Date()
+    }, '*')
+    .then(first)
+    .then(instantiate);
+}
+
 function update(productDesignId, data) {
   return db('product_designs')
-    .where({ id: productDesignId })
+    .where({ id: productDesignId, deleted_at: null })
     .update(compact({
       title: data.title,
       product_options: data.productOptions
@@ -46,8 +56,22 @@ function findByUserId(userId) {
     .then(designs => designs.map(instantiate));
 }
 
+function findById(id) {
+  return db('product_designs')
+    .where({
+      id,
+      deleted_at: null
+    })
+    .orderBy('created_at', 'desc')
+    .catch(rethrow)
+    .then(first)
+    .then(instantiate);
+}
+
 module.exports = {
   create,
+  deleteById,
   update,
+  findById,
   findByUserId
 };

@@ -25,12 +25,21 @@ function create(data) {
 
 function update(sectionId, data) {
   return db('product_design_sections')
-    .where({ id: sectionId })
+    .where({ id: sectionId, deleted_at: null })
     .update(compact({
       template_name: data.templateName,
-      design_id: data.designId,
       custom_image_id: data.customImageId
     }), '*')
+    .then(first)
+    .then(instantiate);
+}
+
+function deleteById(id) {
+  return db('product_design_sections')
+    .where({ id, deleted_at: null })
+    .update({
+      deleted_at: new Date()
+    }, '*')
     .then(first)
     .then(instantiate);
 }
@@ -48,6 +57,7 @@ function findByDesignId(designId) {
 
 module.exports = {
   create,
+  deleteById,
   update,
   findByDesignId
 };
