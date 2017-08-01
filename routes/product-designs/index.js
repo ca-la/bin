@@ -31,12 +31,19 @@ function* canAccessSection(next) {
   yield next;
 }
 
-
 function* getDesigns() {
   this.assert(this.query.userId === this.state.userId, 403);
   const designs = yield ProductDesignsDAO.findByUserId(this.query.userId);
 
   this.body = designs;
+  this.status = 200;
+}
+
+function* getDesign() {
+  const design = yield ProductDesignsDAO.findById(this.query.designId)
+    .catch(InvalidDataError, err => this.throw(404, err));
+
+  this.body = design;
   this.status = 200;
 }
 
@@ -149,8 +156,9 @@ function* replaceSectionImagePlacements() {
 }
 
 router.post('/', requireAuth, createDesign);
+router.get('/', requireAuth, getDesigns);
 router.patch('/:designId', requireAuth, canAccessDesign, updateDesign);
-router.get('/:designId', requireAuth, canAccessDesign, getDesigns);
+router.get('/:designId', requireAuth, canAccessDesign, getDesign);
 router.del('/:designId', requireAuth, canAccessDesign, deleteDesign);
 router.get('/:designId/sections', requireAuth, canAccessDesign, getSections);
 router.post('/:designId/sections', requireAuth, canAccessDesign, createSection);
