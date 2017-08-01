@@ -35,7 +35,19 @@ function update(sectionId, data) {
     .then(instantiate);
 }
 
+function findByDesignId(designId) {
+  return db('product_design_sections')
+    .where({
+      design_id: designId,
+      deleted_at: null
+    })
+    .orderBy('created_at', 'desc')
+    .catch(rethrow)
+    .then(sections => sections.map(instantiate));
+}
+
 module.exports = {
   create,
-  update
+  update,
+  findByDesignId
 };

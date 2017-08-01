@@ -6,7 +6,7 @@ const createUser = require('../../test-helpers/create-user');
 
 test('ProductDesignsDAO.create creates a design', (t) => {
   let userId;
-  return createUser()
+  return createUser({ withSession: false })
     .then(({ user }) => {
       userId = user.id;
       return ProductDesignsDAO.create({
@@ -28,7 +28,7 @@ test('ProductDesignsDAO.create creates a design', (t) => {
 });
 
 test('ProductDesignsDAO.update updates a design', (t) => {
-  return createUser()
+  return createUser({ withSession: false })
     .then(({ user }) => {
       return ProductDesignsDAO.create({
         title: 'Plain White Tee',

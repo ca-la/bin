@@ -35,7 +35,19 @@ function update(productDesignId, data) {
     .then(instantiate);
 }
 
+function findByUserId(userId) {
+  return db('product_designs')
+    .where({
+      user_id: userId,
+      deleted_at: null
+    })
+    .orderBy('created_at', 'desc')
+    .catch(rethrow)
+    .then(designs => designs.map(instantiate));
+}
+
 module.exports = {
   create,
-  update
+  update,
+  findByUserId
 };
