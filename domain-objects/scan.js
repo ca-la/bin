@@ -1,6 +1,6 @@
 'use strict';
 
-const { MINIMUM_SCAN_PITCH_RADIANS } = require('../services/config');
+const { MINIMUM_SCAN_PITCH_RADIANS } = require('../config');
 const { requireProperties } = require('../services/require-properties');
 
 class Scan {

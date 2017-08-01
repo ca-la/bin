@@ -11,7 +11,7 @@ const Logger = require('../logger');
 const {
   SHOPIFY_STORE_BASE,
   SHOPIFY_STORE_AUTH
-} = require('../config');
+} = require('../../config');
 
 const shopifyAuthHeader = new Buffer(SHOPIFY_STORE_AUTH).toString('base64');
 

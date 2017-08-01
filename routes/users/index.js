@@ -17,7 +17,7 @@ const { logServerError } = require('../../services/logger');
 const {
   TWILIO_PREREGISTRATION_OUTBOUND_NUMBER,
   REFERRAL_VALUE_DOLLARS
-} = require('../../services/config');
+} = require('../../config');
 
 const router = new Router();
 

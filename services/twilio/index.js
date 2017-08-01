@@ -9,7 +9,7 @@ const {
   TWILIO_SID,
   TWILIO_TOKEN,
   TWILIO_OUTBOUND_NUMBER
-} = require('../config');
+} = require('../../config');
 
 const API_BASE = `https://${TWILIO_SID}:${TWILIO_TOKEN}@api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}`;
 
