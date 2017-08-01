@@ -40,7 +40,7 @@ function* getDesigns() {
 }
 
 function* getDesign() {
-  const design = yield ProductDesignsDAO.findById(this.query.designId)
+  const design = yield ProductDesignsDAO.findById(this.params.designId)
     .catch(InvalidDataError, err => this.throw(404, err));
 
   this.body = design;

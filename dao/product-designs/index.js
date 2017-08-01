@@ -7,10 +7,18 @@ const db = require('../../services/db');
 const compact = require('../../services/compact');
 const first = require('../../services/first');
 const ProductDesign = require('../../domain-objects/product-design');
+const { requirePropertiesFormatted } = require('../../services/require-properties');
 
 const instantiate = data => new ProductDesign(data);
 
 function create(data) {
+  const requiredMessages = {
+    productType: 'Product Type',
+    title: 'Title'
+  };
+
+  requirePropertiesFormatted(data, requiredMessages);
+
   return db('product_designs')
     .insert({
       product_type: data.productType,
@@ -62,7 +70,6 @@ function findById(id) {
       id,
       deleted_at: null
     })
-    .orderBy('created_at', 'desc')
     .catch(rethrow)
     .then(first)
     .then(instantiate);

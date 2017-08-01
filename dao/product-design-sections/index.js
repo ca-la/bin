@@ -3,14 +3,19 @@
 const uuid = require('node-uuid');
 const rethrow = require('pg-rethrow');
 
-const db = require('../../services/db');
 const compact = require('../../services/compact');
+const db = require('../../services/db');
 const first = require('../../services/first');
+const InvalidDataError = require('../../errors/invalid-data');
 const ProductDesignSection = require('../../domain-objects/product-design-section');
 
 const instantiate = data => new ProductDesignSection(data);
 
 function create(data) {
+  if (!data.templateName && !data.customImageId) {
+    throw new InvalidDataError('Template name or custom image ID required');
+  }
+
   return db('product_design_sections')
     .insert({
       template_name: data.templateName,
