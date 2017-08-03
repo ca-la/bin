@@ -30,23 +30,24 @@ test('ProductDesignSectionsDAO.update updates a section', (t) => {
   let imageId;
   return createUser({ withSession: false })
     .then(({ user }) => {
-      return ProductDesignsDAO.create({
-        title: 'Plain White Tee',
-        productType: 'TEESHIRT',
-        userId: user.id
-      });
-    })
-    .then((design) => {
       return Promise.all([
-        ProductDesignImagesDAO.create({ designId: design.id }),
-        ProductDesignSectionsDAO.create({
-          designId: design.id,
-          templateName: 'okok'
+        ProductDesignImagesDAO.create({ userId: user.id }),
+        ProductDesignsDAO.create({
+          title: 'Plain White Tee',
+          productType: 'TEESHIRT',
+          userId: user.id
         })
       ]);
     })
-    .then(([image, section]) => {
+    .then(([image, design]) => {
       imageId = image.id;
+
+      return ProductDesignSectionsDAO.create({
+        designId: design.id,
+        templateName: 'okok'
+      });
+    })
+    .then((section) => {
       return ProductDesignSectionsDAO.update(section.id, {
         templateName: null,
         customImageId: imageId

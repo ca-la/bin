@@ -8,7 +8,7 @@ class ProductDesignImage {
 
     this.id = row.id;
     this.createdAt = new Date(row.created_at);
-    this.designId = row.design_id;
+    this.userId = row.user_id;
   }
 }
 
