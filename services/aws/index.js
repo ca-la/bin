@@ -20,7 +20,7 @@ AWS.config.update({
   * @param {String} localFileName
   * @resolves {String} The remote URL
   */
-function uploadFile(bucketName, remoteFileName, localFileName) {
+function uploadFile(bucketName, remoteFileName, localFileName, ACL = 'authenticated-read') {
   const s3 = new AWS.S3();
   const put = Promise.promisify(s3.putObject, { context: s3 });
 
@@ -29,7 +29,7 @@ function uploadFile(bucketName, remoteFileName, localFileName) {
   return read(localFileName)
     .then((buffer) => {
       return put({
-        ACL: 'authenticated-read',
+        ACL,
         ServerSideEncryption: 'AES256',
         Bucket: bucketName,
         Key: remoteFileName,

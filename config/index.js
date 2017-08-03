@@ -42,8 +42,8 @@ const MINIMUM_SCAN_PITCH_RADIANS = {
  * For live deployments, use `heroku config:set FOO=123 --app cala-api-prod`.
  */
 const config = {
-  // S3 bucket to store scan photos in
   AWS_SCANPHOTO_BUCKET_NAME: process.env.AWS_SCANPHOTO_BUCKET_NAME,
+  AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME: process.env.AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME,
 
   AWS_ACCESS_KEY: process.env.AWS_ACCESS_KEY,
   AWS_SECRET_KEY: process.env.AWS_SECRET_KEY,
