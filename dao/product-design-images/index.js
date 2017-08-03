@@ -13,17 +13,17 @@ function create(data) {
   return db('product_design_images')
     .insert({
       id: uuid.v4(),
-      design_id: data.designId
+      user_id: data.userId
     }, '*')
     .catch(rethrow)
     .then(first)
     .then(instantiate);
 }
 
-function findByDesignId(designId) {
+function findByUserId(userId) {
   return db('product_design_images')
     .where({
-      design_id: designId,
+      user_id: userId,
       deleted_at: null
     }, '*')
     .orderBy('created_at', 'asc')
@@ -52,7 +52,7 @@ function deleteById(id) {
 
 module.exports = {
   create,
-  findByDesignId,
+  findByUserId,
   findById,
   deleteById
 };
