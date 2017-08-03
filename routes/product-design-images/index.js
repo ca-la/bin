@@ -11,10 +11,18 @@ const { uploadFile } = require('../../services/aws');
 
 const router = new Router();
 
+const ALLOWED_MIMETYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/gif'
+];
+
 function* createImage() {
   const data = this.req.files.image;
   this.assert(data, 400, 'Image must be uploaded as `image`');
-  this.assert(data.mimetype === 'image/jpeg', 400, 'Only JPEG can be uploaded for now?');
+
+  const isAllowed = ALLOWED_MIMETYPES.indexOf(data.mimetype) > -1;
+  this.assert(isAllowed, 400, `Unsupported format. Allowed formats: ${ALLOWED_MIMETYPES.join(', ')}`);
 
   const localPath = data.path;
 
@@ -25,8 +33,12 @@ function* createImage() {
     userId: this.state.userId
   });
 
-  const fileName = `${image.id}.jpg`;
-  yield uploadFile(AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME, fileName, localPath);
+  yield uploadFile(
+    AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME,
+    image.id,
+    localPath,
+    'public-read'
+  );
 
   this.status = 201;
   this.body = image;
@@ -49,3 +61,5 @@ function* getList() {
 
 router.post('/', requireAuth, multer(), createImage);
 router.get('/', requireAuth, getList);
+
+module.exports = router.routes();
