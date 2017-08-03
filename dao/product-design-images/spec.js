@@ -3,32 +3,24 @@
 const {
   create,
   deleteById,
-  findByDesignId
+  findByUserId
 } = require('./index');
 
-const ProductDesignsDAO = require('../product-designs');
 const createUser = require('../../test-helpers/create-user');
 const { test } = require('../../test-helpers/fresh');
 
-test('ProductDesignImagesDAO.findByDesignId returns images', (t) => {
-  let designId;
+test('ProductDesignImagesDAO.findByUserId returns images', (t) => {
+  let userId;
   let imageId;
 
   return createUser({ withSession: false })
     .then(({ user }) => {
-      return ProductDesignsDAO.create({
-        productType: 'TSHIRT',
-        title: 'That New New',
-        userId: user.id
-      });
-    })
-    .then((design) => {
-      designId = design.id;
-      return create({ designId });
+      userId = user.id;
+      return create({ userId });
     })
     .then((image) => {
       imageId = image.id;
-      return findByDesignId(designId);
+      return findByUserId(userId);
     })
     .then((images) => {
       t.equal(images[0].id, imageId);
@@ -38,15 +30,8 @@ test('ProductDesignImagesDAO.findByDesignId returns images', (t) => {
 test('ProductDesignImagesDAO.deleteById deletes', (t) => {
   return createUser({ withSession: false })
     .then(({ user }) => {
-      return ProductDesignsDAO.create({
-        productType: 'TSHIRT',
-        title: 'That New New',
-        userId: user.id
-      });
-    })
-    .then((design) => {
       return create({
-        designId: design.id
+        userId: user.id
       });
     })
     .then((image) => {
