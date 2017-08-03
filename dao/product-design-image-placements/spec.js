@@ -38,26 +38,26 @@ test('ProductDesignImagePlacementsDAO.replaceForSection creates and updates plac
   let secondPlacementData;
   return createUser({ withSession: false })
     .then(({ user }) => {
-      return ProductDesignsDAO.create({
-        title: 'Plain White Tee',
-        productType: 'TEESHIRT',
-        userId: user.id
-      });
-    })
-    .then((design) => {
       return Promise.all([
-        ProductDesignImagesDAO.create({ designId: design.id }),
-        ProductDesignSectionsDAO.create({
-          designId: design.id,
-          templateName: 'okok'
+        ProductDesignImagesDAO.create({ userId: user.id }),
+        ProductDesignsDAO.create({
+          title: 'Plain White Tee',
+          productType: 'TEESHIRT',
+          userId: user.id
         })
       ]);
     })
-    .then(([image, section]) => {
+    .then(([image, design]) => {
       imageId = image.id;
-      sectionId = section.id;
       firstPlacementData = getPlacementData(imageId);
       secondPlacementData = getPlacementData(imageId, 100);
+      return ProductDesignSectionsDAO.create({
+        designId: design.id,
+        templateName: 'okok'
+      });
+    })
+    .then((section) => {
+      sectionId = section.id;
       return ProductDesignImagePlacementsDAO.replaceForSection(sectionId, firstPlacementData);
     })
     .then(() => {
