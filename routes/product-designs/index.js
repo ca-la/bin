@@ -165,7 +165,7 @@ router.get('/:designId', requireAuth, canAccessDesign, getDesign);
 router.del('/:designId', requireAuth, canAccessDesign, deleteDesign);
 router.get('/:designId/sections', requireAuth, canAccessDesign, getSections);
 router.post('/:designId/sections', requireAuth, canAccessDesign, createSection);
-router.del('/:designId/sections', requireAuth, canAccessDesign, deleteSection);
+router.del('/:designId/sections/:sectionId', requireAuth, canAccessDesign, deleteSection);
 router.patch('/:designId/sections/:sectionId', requireAuth, canAccessSection, updateSection);
 router.get('/:designId/sections/:sectionId/image-placements', requireAuth, canAccessSection, getSectionImagePlacements);
 router.put('/:designId/sections/:sectionId/image-placements', requireAuth, canAccessSection, replaceSectionImagePlacements);
