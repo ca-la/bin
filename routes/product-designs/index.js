@@ -148,7 +148,10 @@ function* getSectionImagePlacements() {
 }
 
 function* replaceSectionImagePlacements() {
-  const updated = yield ProductDesignImagePlacementsDAO.replaceForSection(this.params.sectionId)
+  const updated = yield ProductDesignImagePlacementsDAO.replaceForSection(
+    this.params.sectionId,
+    this.request.body
+  )
     .catch(InvalidDataError, err => this.throw(400, err));
 
   this.body = updated;
