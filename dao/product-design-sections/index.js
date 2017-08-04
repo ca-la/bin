@@ -60,9 +60,18 @@ function findByDesignId(designId) {
     .then(sections => sections.map(instantiate));
 }
 
+function findById(id) {
+  return db('product_design_sections')
+    .where({ id })
+    .catch(rethrow)
+    .then(first)
+    .then(instantiate);
+}
+
 module.exports = {
   create,
   deleteById,
+  findById,
   update,
   findByDesignId
 };
