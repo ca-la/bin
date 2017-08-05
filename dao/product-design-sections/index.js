@@ -55,7 +55,7 @@ function findByDesignId(designId) {
       design_id: designId,
       deleted_at: null
     })
-    .orderBy('created_at', 'desc')
+    .orderBy('created_at', 'asc')
     .catch(rethrow)
     .then(sections => sections.map(instantiate));
 }
