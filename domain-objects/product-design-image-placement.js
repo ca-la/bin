@@ -16,6 +16,7 @@ class ProductDesignImagePlacement {
     this.height = row.height;
     this.width = row.width;
     this.rotation = row.rotation;
+    this.type = row.type;
   }
 }
 
