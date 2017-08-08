@@ -42,7 +42,11 @@ function replaceForSection(sectionId, placements) {
   return db.transaction((trx) => {
     deleteForSection(trx, sectionId)
       .then(() => {
-        return createForSection(trx, sectionId, placements);
+        if (placements.length > 0) {
+          return createForSection(trx, sectionId, placements);
+        } else {
+          return [];
+        }
       })
       .then(trx.commit)
       .catch(trx.rollback);
