@@ -26,7 +26,8 @@ function createForSection(trx, sectionId, placements) {
       y: placement.y,
       rotation: placement.rotation,
       width: placement.width,
-      height: placement.height
+      height: placement.height,
+      type: placement.type
     };
   });
 
@@ -44,9 +45,9 @@ function replaceForSection(sectionId, placements) {
       .then(() => {
         if (placements.length > 0) {
           return createForSection(trx, sectionId, placements);
-        } else {
-          return [];
         }
+
+        return [];
       })
       .then(trx.commit)
       .catch(trx.rollback);
