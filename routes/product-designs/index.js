@@ -6,6 +6,7 @@ const InvalidDataError = require('../../errors/invalid-data');
 const ProductDesignsDAO = require('../../dao/product-designs');
 const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
 const ProductDesignImagePlacementsDAO = require('../../dao/product-design-image-placements');
+const ProductDesignSectionAnnotationsDAO = require('../../dao/product-design-section-annotations');
 const requireAuth = require('../../middleware/require-auth');
 
 const router = new Router();
@@ -158,6 +159,26 @@ function* replaceSectionImagePlacements() {
   this.status = 200;
 }
 
+function* getSectionAnnotations() {
+  const annotations = yield ProductDesignSectionAnnotationsDAO.findBySectionId(
+    this.params.sectionId
+  );
+
+  this.body = annotations;
+  this.status = 200;
+}
+
+function* replaceSectionAnnotations() {
+  const updated = yield ProductDesignSectionAnnotationsDAO.replaceForSection(
+    this.params.sectionId,
+    this.request.body
+  )
+    .catch(InvalidDataError, err => this.throw(400, err));
+
+  this.body = updated;
+  this.status = 200;
+}
+
 router.post('/', requireAuth, createDesign);
 router.get('/', requireAuth, getDesigns);
 router.patch('/:designId', requireAuth, canAccessDesign, updateDesign);
@@ -169,5 +190,7 @@ router.del('/:designId/sections/:sectionId', requireAuth, canAccessDesign, delet
 router.patch('/:designId/sections/:sectionId', requireAuth, canAccessSection, updateSection);
 router.get('/:designId/sections/:sectionId/image-placements', requireAuth, canAccessSection, getSectionImagePlacements);
 router.put('/:designId/sections/:sectionId/image-placements', requireAuth, canAccessSection, replaceSectionImagePlacements);
+router.get('/:designId/sections/:sectionId/annotations', requireAuth, canAccessSection, getSectionAnnotations);
+router.put('/:designId/sections/:sectionId/annotations', requireAuth, canAccessSection, replaceSectionAnnotations);
 
 module.exports = router.routes();
