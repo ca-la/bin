@@ -5,8 +5,9 @@
 //
 // Requires a file named `order-array.json` to be present in the script directory.
 //
-// To create one:
-//   curl 'https://cala-usa.myshopify.com/admin/orders.json?limit=1000' -u 'user:pass' | jq .orders > order-array.json
+// Usage:
+//   $ curl 'https://cala-usa.myshopify.com/admin/orders.json?limit=250' -u 'USER:PASS' | jq .orders > order-array.json
+//   $ node find-shipping-addresses.js | json2csv
 //
 // (you might need to request multipe pages and concat them if you have more
 // than 250... todo bake that into this script)

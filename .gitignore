@@ -4,3 +4,4 @@ npm-debug.log
 *.swp
 *.swo
 .env
+scripts/order-array.json
