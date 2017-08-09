@@ -1,7 +1,7 @@
 'use strict';
 
 // Parse a Shopify orders.json response and list shipping information for each
-// order, grouped by the type of item
+// unfulfilled order, grouped by the type of item
 //
 // Requires a file named `order-array.json` to be present in the script directory.
 //
@@ -13,7 +13,12 @@
 //
 // eslint-disable-next-line import/no-unresolved
 const orders = require('./order-array.json')
-  .filter(o => o.financial_status !== 'refunded');
+  .filter((order) => {
+    return (
+      order.financial_status !== 'refunded' &&
+      order.fulfillment_status !== 'fulfilled'
+    );
+  });
 
 const sales = [];
 
