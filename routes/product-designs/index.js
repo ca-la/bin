@@ -15,6 +15,8 @@ function* canAccessDesign(next) {
   const design = yield ProductDesignsDAO.findById(this.params.designId)
     .catch(InvalidDataError, err => this.throw(404, err));
 
+  this.assert(design, 404);
+
   this.assert(this.state.userId === design.userId, 403);
 
   yield next;
@@ -23,10 +25,12 @@ function* canAccessDesign(next) {
 function* canAccessSection(next) {
   const design = yield ProductDesignsDAO.findById(this.params.designId)
     .catch(InvalidDataError, err => this.throw(404, err));
+  this.assert(design, 404);
   this.assert(this.state.userId === design.userId, 403);
 
   const section = yield ProductDesignSectionsDAO.findById(this.params.sectionId)
     .catch(InvalidDataError, err => this.throw(404, err));
+  this.assert(section, 404);
   this.assert(section.designId === design.id, 404);
 
   yield next;
@@ -41,8 +45,7 @@ function* getDesigns() {
 }
 
 function* getDesign() {
-  const design = yield ProductDesignsDAO.findById(this.params.designId)
-    .catch(InvalidDataError, err => this.throw(404, err));
+  const design = yield ProductDesignsDAO.findById(this.params.designId);
 
   this.body = design;
   this.status = 200;

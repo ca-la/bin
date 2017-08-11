@@ -10,6 +10,7 @@ const ProductDesign = require('../../domain-objects/product-design');
 const { requirePropertiesFormatted } = require('../../services/require-properties');
 
 const instantiate = data => new ProductDesign(data);
+const maybeInstantiate = data => (data && new ProductDesign(data)) || null;
 
 function create(data) {
   const requiredMessages = {
@@ -72,7 +73,8 @@ function findById(id) {
     })
     .catch(rethrow)
     .then(first)
-    .then(instantiate);
+    .then(maybeInstantiate)
+    .catch(rethrow.ERRORS.InvalidTextRepresentation, () => null);
 }
 
 module.exports = {
