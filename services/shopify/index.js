@@ -212,6 +212,11 @@ function getAllProducts(filters, { includeDesigners = false }) {
     .then((body) => {
       const products = body.products;
 
+      if (!products) {
+        Logger.log('Shopify response: ', body);
+        throw new Error('Shopify response did not contain products');
+      }
+
       return products
         .filter((product) => {
           // Exclude 'special' products from public list
