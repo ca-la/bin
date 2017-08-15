@@ -2,7 +2,7 @@
 
 const pick = require('lodash/pick');
 const createUser = require('../../test-helpers/create-user');
-const ProductDesignImagePlacementsDAO = require('./index');
+const ProductDesignFeaturePlacementsDAO = require('./index');
 const ProductDesignImagesDAO = require('../product-design-images');
 const ProductDesignsDAO = require('../product-designs');
 const ProductDesignSectionsDAO = require('../product-design-sections');
@@ -32,7 +32,7 @@ function getPlacementData(imageId, iteration = 0) {
 }
 
 
-test('ProductDesignImagePlacementsDAO.replaceForSection creates and updates placements', (t) => {
+test('ProductDesignFeaturePlacementsDAO.replaceForSection creates and updates placements', (t) => {
   let imageId;
   let sectionId;
 
@@ -60,10 +60,10 @@ test('ProductDesignImagePlacementsDAO.replaceForSection creates and updates plac
     })
     .then((section) => {
       sectionId = section.id;
-      return ProductDesignImagePlacementsDAO.replaceForSection(sectionId, firstPlacementData);
+      return ProductDesignFeaturePlacementsDAO.replaceForSection(sectionId, firstPlacementData);
     })
     .then(() => {
-      return ProductDesignImagePlacementsDAO.findBySectionId(sectionId);
+      return ProductDesignFeaturePlacementsDAO.findBySectionId(sectionId);
     })
     .then((placements) => {
       t.equal(placements.length, 2);
@@ -78,10 +78,10 @@ test('ProductDesignImagePlacementsDAO.replaceForSection creates and updates plac
         firstPlacementData[1]
       );
 
-      return ProductDesignImagePlacementsDAO.replaceForSection(sectionId, secondPlacementData);
+      return ProductDesignFeaturePlacementsDAO.replaceForSection(sectionId, secondPlacementData);
     })
     .then(() => {
-      return ProductDesignImagePlacementsDAO.findBySectionId(sectionId);
+      return ProductDesignFeaturePlacementsDAO.findBySectionId(sectionId);
     })
     .then((placements) => {
       t.equal(placements.length, 2);

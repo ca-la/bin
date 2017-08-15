@@ -2,7 +2,7 @@
 
 const { requireProperties } = require('../services/require-properties');
 
-class ProductDesignImagePlacement {
+class ProductDesignFeaturePlacement {
   constructor(row) {
     requireProperties(row, 'id');
 
@@ -20,4 +20,4 @@ class ProductDesignImagePlacement {
   }
 }
 
-module.exports = ProductDesignImagePlacement;
+module.exports = ProductDesignFeaturePlacement;

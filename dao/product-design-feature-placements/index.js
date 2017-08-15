@@ -4,12 +4,12 @@ const uuid = require('node-uuid');
 const rethrow = require('pg-rethrow');
 
 const db = require('../../services/db');
-const ProductDesignImagePlacement = require('../../domain-objects/product-design-image-placement');
+const ProductDesignFeaturePlacement = require('../../domain-objects/product-design-feature-placement');
 
-const instantiate = data => new ProductDesignImagePlacement(data);
+const instantiate = data => new ProductDesignFeaturePlacement(data);
 
 function deleteForSection(trx, sectionId) {
-  return db('product_design_image_placements')
+  return db('product_design_feature_placements')
     .transacting(trx)
     .where({ section_id: sectionId })
     .del();
@@ -31,7 +31,7 @@ function createForSection(trx, sectionId, placements) {
     };
   });
 
-  return db('product_design_image_placements')
+  return db('product_design_feature_placements')
     .transacting(trx)
     .insert(placementData)
     .returning('*')
@@ -55,7 +55,7 @@ function replaceForSection(sectionId, placements) {
 }
 
 function findBySectionId(sectionId) {
-  return db('product_design_image_placements')
+  return db('product_design_feature_placements')
     .where({
       section_id: sectionId
     })

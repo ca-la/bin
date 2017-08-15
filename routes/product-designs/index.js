@@ -5,7 +5,7 @@ const Router = require('koa-router');
 const InvalidDataError = require('../../errors/invalid-data');
 const ProductDesignsDAO = require('../../dao/product-designs');
 const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
-const ProductDesignImagePlacementsDAO = require('../../dao/product-design-image-placements');
+const ProductDesignFeaturePlacementsDAO = require('../../dao/product-design-feature-placements');
 const ProductDesignSectionAnnotationsDAO = require('../../dao/product-design-section-annotations');
 const requireAuth = require('../../middleware/require-auth');
 
@@ -144,15 +144,15 @@ function* updateSection() {
   this.status = 200;
 }
 
-function* getSectionImagePlacements() {
-  const placements = yield ProductDesignImagePlacementsDAO.findBySectionId(this.params.sectionId);
+function* getSectionFeaturePlacements() {
+  const placements = yield ProductDesignFeaturePlacementsDAO.findBySectionId(this.params.sectionId);
 
   this.body = placements;
   this.status = 200;
 }
 
-function* replaceSectionImagePlacements() {
-  const updated = yield ProductDesignImagePlacementsDAO.replaceForSection(
+function* replaceSectionFeaturePlacements() {
+  const updated = yield ProductDesignFeaturePlacementsDAO.replaceForSection(
     this.params.sectionId,
     this.request.body
   )
@@ -191,8 +191,8 @@ router.get('/:designId/sections', requireAuth, canAccessDesign, getSections);
 router.post('/:designId/sections', requireAuth, canAccessDesign, createSection);
 router.del('/:designId/sections/:sectionId', requireAuth, canAccessDesign, deleteSection);
 router.patch('/:designId/sections/:sectionId', requireAuth, canAccessSection, updateSection);
-router.get('/:designId/sections/:sectionId/image-placements', requireAuth, canAccessSection, getSectionImagePlacements);
-router.put('/:designId/sections/:sectionId/image-placements', requireAuth, canAccessSection, replaceSectionImagePlacements);
+router.get('/:designId/sections/:sectionId/feature-placements', requireAuth, canAccessSection, getSectionFeaturePlacements);
+router.put('/:designId/sections/:sectionId/feature-placements', requireAuth, canAccessSection, replaceSectionFeaturePlacements);
 router.get('/:designId/sections/:sectionId/annotations', requireAuth, canAccessSection, getSectionAnnotations);
 router.put('/:designId/sections/:sectionId/annotations', requireAuth, canAccessSection, replaceSectionAnnotations);
 
