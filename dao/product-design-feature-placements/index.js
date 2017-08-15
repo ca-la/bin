@@ -27,7 +27,8 @@ function createForSection(trx, sectionId, placements) {
       rotation: placement.rotation,
       width: placement.width,
       height: placement.height,
-      type: placement.type
+      type: placement.type,
+      svg_data: placement.svgData
     };
   });
 
