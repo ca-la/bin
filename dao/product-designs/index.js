@@ -22,6 +22,7 @@ function create(data) {
 
   return db('product_designs')
     .insert({
+      description: data.description,
       product_type: data.productType,
       product_options: data.productOptions,
       title: data.title,
