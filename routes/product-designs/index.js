@@ -53,14 +53,16 @@ function* getDesign() {
 
 function* createDesign() {
   const {
-    productType,
+    description,
     productOptions,
+    productType,
     title
   } = this.request.body;
 
   const design = yield ProductDesignsDAO.create({
-    productType,
+    description,
     productOptions,
+    productType,
     title,
     userId: this.state.userId
   })
@@ -72,14 +74,18 @@ function* createDesign() {
 
 function* updateDesign() {
   const {
+    description,
     productOptions,
+    productType,
     title
   } = this.request.body;
 
   const updated = yield ProductDesignsDAO.update(
     this.params.designId,
     {
+      description,
       productOptions,
+      productType,
       title
     }
   )
