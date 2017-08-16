@@ -31,6 +31,48 @@ function getPlacementData(imageId, iteration = 0) {
   }];
 }
 
+test('ProductDesignFeaturePlacementsDAO.replaceForSection creates pathData placements', (t) => {
+  let sectionId;
+
+  const pathPlacement = {
+    x: 12,
+    y: 13,
+    pathData: {
+      points: [
+        { x: 1, y: 2 },
+        { x: 1000, y: 1200 }
+      ]
+    },
+    zIndex: 14,
+    rotation: 15,
+    height: 16,
+    width: 17,
+    type: 'PATH'
+  };
+
+  return createUser({ withSession: false })
+    .then(({ user }) => {
+      return ProductDesignsDAO.create({
+        title: 'Plain White Tee',
+        productType: 'TEESHIRT',
+        userId: user.id
+      });
+    })
+    .then((design) => {
+      return ProductDesignSectionsDAO.create({
+        designId: design.id,
+        templateName: 'okok'
+      });
+    })
+    .then((section) => {
+      sectionId = section.id;
+      return ProductDesignFeaturePlacementsDAO.replaceForSection(sectionId, [pathPlacement]);
+    })
+    .then((placements) => {
+      console.log(placements)
+      t.deepEqual(placements[0].pathData, pathPlacement.pathData);
+    });
+});
 
 test('ProductDesignFeaturePlacementsDAO.replaceForSection creates and updates placements', (t) => {
   let imageId;
