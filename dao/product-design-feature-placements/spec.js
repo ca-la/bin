@@ -69,7 +69,6 @@ test('ProductDesignFeaturePlacementsDAO.replaceForSection creates pathData place
       return ProductDesignFeaturePlacementsDAO.replaceForSection(sectionId, [pathPlacement]);
     })
     .then((placements) => {
-      console.log(placements)
       t.deepEqual(placements[0].pathData, pathPlacement.pathData);
     });
 });

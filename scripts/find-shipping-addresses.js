@@ -1,6 +1,6 @@
 'use strict';
 
-// eslint-disable-next-line import/no-extraneous-dependencies,import/no-unresolved
+// eslint-disable-next-line
 const json2csv = require('/Users/dylan/n/lib/node_modules/json2csv');
 
 // Parse a Shopify orders.json response and list shipping information for each
