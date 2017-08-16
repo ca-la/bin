@@ -28,7 +28,7 @@ function createForSection(trx, sectionId, placements) {
       width: placement.width,
       height: placement.height,
       type: placement.type,
-      svg_data: placement.svgData
+      path_data: placement.pathData
     };
   });
 

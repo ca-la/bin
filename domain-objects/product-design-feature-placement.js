@@ -10,7 +10,7 @@ class ProductDesignFeaturePlacement {
     this.createdAt = new Date(row.created_at);
     this.sectionId = row.section_id;
     this.imageId = row.image_id;
-    this.svgData = row.svg_data;
+    this.pathData = row.path_data;
     this.zIndex = row.z_index;
     this.x = row.x;
     this.y = row.y;
