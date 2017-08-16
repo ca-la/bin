@@ -1,5 +1,8 @@
 'use strict';
 
+// eslint-disable-next-line import/no-extraneous-dependencies,import/no-unresolved
+const json2csv = require('/Users/dylan/n/lib/node_modules/json2csv');
+
 // Parse a Shopify orders.json response and list shipping information for each
 // unfulfilled order, grouped by the type of item
 //
@@ -7,7 +10,7 @@
 //
 // Usage:
 //   $ curl 'https://cala-usa.myshopify.com/admin/orders.json?limit=250' -u 'USER:PASS' | jq .orders > order-array.json
-//   $ node find-shipping-addresses.js | json2csv
+//   $ node find-shipping-addresses.js
 //
 // (you might need to request multipe pages and concat them if you have more
 // than 250... todo bake that into this script)
@@ -40,4 +43,7 @@ orders.forEach((order) => {
 });
 
 // eslint-disable-next-line no-console
-console.log(JSON.stringify(sales, null, 2));
+console.log(json2csv({
+  data: sales,
+  preserveNewLinesInValues: true
+}));
