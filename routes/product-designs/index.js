@@ -19,19 +19,37 @@ function* canAccessDesign(next) {
 
   this.assert(this.state.userId === design.userId, 403);
 
+  this.state.design = design;
+
   yield next;
 }
 
 function* canAccessSection(next) {
-  const design = yield ProductDesignsDAO.findById(this.params.designId)
-    .catch(InvalidDataError, err => this.throw(404, err));
-  this.assert(design, 404);
-  this.assert(this.state.userId === design.userId, 403);
+  if (!this.state.design) {
+    throw new Error('Must confirm canAccessDesign first');
+  }
 
   const section = yield ProductDesignSectionsDAO.findById(this.params.sectionId)
     .catch(InvalidDataError, err => this.throw(404, err));
   this.assert(section, 404);
-  this.assert(section.designId === design.id, 404);
+  this.assert(section.designId === this.state.design.id, 404);
+
+  this.state.section = section;
+
+  yield next;
+}
+
+function* canAccessAnnotation(next) {
+  if (!this.state.section) {
+    throw new Error('Must confirm canAccessSection first');
+  }
+
+  const annotation = yield ProductDesignSectionAnnotationsDAO.findById(this.params.annotationId)
+    .catch(InvalidDataError, err => this.throw(404, err));
+
+  this.assert(annotation, 404);
+  this.assert(annotation.sectionId === this.state.section.id, 404);
+  this.assert(annotation.userId === this.state.userId, 403);
 
   yield next;
 }
@@ -177,9 +195,20 @@ function* getSectionAnnotations() {
   this.status = 200;
 }
 
-function* replaceSectionAnnotations() {
-  const updated = yield ProductDesignSectionAnnotationsDAO.replaceForSection(
+function* createSectionAnnotation() {
+  const updated = yield ProductDesignSectionAnnotationsDAO.createForSection(
     this.params.sectionId,
+    this.request.body
+  )
+    .catch(InvalidDataError, err => this.throw(400, err));
+
+  this.body = updated;
+  this.status = 200;
+}
+
+function* deleteSectionAnnotation() {
+  const updated = yield ProductDesignSectionAnnotationsDAO.deleteById(
+    this.params.annotationId,
     this.request.body
   )
     .catch(InvalidDataError, err => this.throw(400, err));
@@ -196,10 +225,11 @@ router.del('/:designId', requireAuth, canAccessDesign, deleteDesign);
 router.get('/:designId/sections', requireAuth, canAccessDesign, getSections);
 router.post('/:designId/sections', requireAuth, canAccessDesign, createSection);
 router.del('/:designId/sections/:sectionId', requireAuth, canAccessDesign, deleteSection);
-router.patch('/:designId/sections/:sectionId', requireAuth, canAccessSection, updateSection);
-router.get('/:designId/sections/:sectionId/feature-placements', requireAuth, canAccessSection, getSectionFeaturePlacements);
-router.put('/:designId/sections/:sectionId/feature-placements', requireAuth, canAccessSection, replaceSectionFeaturePlacements);
-router.get('/:designId/sections/:sectionId/annotations', requireAuth, canAccessSection, getSectionAnnotations);
-router.put('/:designId/sections/:sectionId/annotations', requireAuth, canAccessSection, replaceSectionAnnotations);
+router.patch('/:designId/sections/:sectionId', requireAuth, canAccessDesign, canAccessSection, updateSection);
+router.get('/:designId/sections/:sectionId/feature-placements', requireAuth, canAccessDesign, canAccessSection, getSectionFeaturePlacements);
+router.put('/:designId/sections/:sectionId/feature-placements', requireAuth, canAccessDesign, canAccessSection, replaceSectionFeaturePlacements);
+router.get('/:designId/sections/:sectionId/annotations', requireAuth, canAccessDesign, canAccessSection, getSectionAnnotations);
+router.post('/:designId/sections/:sectionId/annotations', requireAuth, canAccessDesign, canAccessSection, createSectionAnnotation);
+router.del('/:designId/sections/:sectionId/annotations/:annotationId', requireAuth, canAccessDesign, canAccessSection, canAccessAnnotation, deleteSectionAnnotation);
 
 module.exports = router.routes();
