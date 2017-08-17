@@ -12,6 +12,9 @@ class ProductDesignSectionAnnotation {
     this.x = row.x;
     this.y = row.y;
     this.text = row.text;
+    this.deletedAt = row.deleted_at && new Date(row.deleted_at);
+    this.inReplyToId = row.in_reply_to_id;
+    this.userId = row.user_id;
   }
 }
 
