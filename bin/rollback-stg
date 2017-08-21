@@ -1,0 +1,12 @@
+#!/bin/bash
+set -e
+
+echo "Are you sure you want to ROLL BACK the STAGING db? This is high risk and there are very few good reasons to ever need to do this. Type ROLLBACK if so:"
+read RES
+
+if [ "$RES" != "ROLLBACK" ]; then
+  echo "Not rolling back."
+  exit 1
+fi
+
+DATABASE_URL=$(heroku config:get DATABASE_URL --app cala-api-stg)?ssl=true $(npm bin)/knex migrate:rollback
