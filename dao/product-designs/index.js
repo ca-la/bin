@@ -14,7 +14,6 @@ const maybeInstantiate = data => (data && new ProductDesign(data)) || null;
 
 function create(data) {
   const requiredMessages = {
-    productType: 'Product Type',
     title: 'Title'
   };
 
