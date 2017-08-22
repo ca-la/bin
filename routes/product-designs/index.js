@@ -176,6 +176,7 @@ function* getSectionFeaturePlacements() {
 }
 
 function* replaceSectionFeaturePlacements() {
+  // TODO pick safe attrs
   const updated = yield ProductDesignFeaturePlacementsDAO.replaceForSection(
     this.params.sectionId,
     this.request.body
@@ -196,9 +197,22 @@ function* getSectionAnnotations() {
 }
 
 function* createSectionAnnotation() {
+  const {
+    x,
+    y,
+    text,
+    inReplyToId
+  } = this.request.body;
+
   const updated = yield ProductDesignSectionAnnotationsDAO.createForSection(
     this.params.sectionId,
-    this.request.body
+    {
+      x,
+      y,
+      text,
+      inReplyToId,
+      userId: this.state.userId
+    }
   )
     .catch(InvalidDataError, err => this.throw(400, err));
 
@@ -208,8 +222,7 @@ function* createSectionAnnotation() {
 
 function* deleteSectionAnnotation() {
   const updated = yield ProductDesignSectionAnnotationsDAO.deleteById(
-    this.params.annotationId,
-    this.request.body
+    this.params.annotationId
   )
     .catch(InvalidDataError, err => this.throw(400, err));
 
