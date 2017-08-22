@@ -21,6 +21,7 @@ function create(data) {
       template_name: data.templateName,
       design_id: data.designId,
       custom_image_id: data.customImageId,
+      panel_data: data.panelData,
       id: uuid.v4()
     }, '*')
     .catch(rethrow)
@@ -33,7 +34,8 @@ function update(sectionId, data) {
     .where({ id: sectionId, deleted_at: null })
     .update(compact({
       template_name: data.templateName,
-      custom_image_id: data.customImageId
+      custom_image_id: data.customImageId,
+      panel_data: data.panelData
     }), '*')
     .then(first)
     .then(instantiate);

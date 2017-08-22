@@ -3,16 +3,16 @@
 set -euo pipefail
 
 main() {
-  echo -n "Enter migration name (e.g. 'add-user-table'): "
-  read RES
+  NAME=${1:-""}
 
-  if [ "$RES" == "" ]; then
+  if [ "$NAME" == "" ]; then
+    echo "Usage: create-migration [migration-name]"
     exit 1
   fi
 
   DATE=$(date "+%Y%m%d%H%M%S")
 
-  FILENAME=migrations/$DATE'_'$RES.js
+  FILENAME=migrations/$DATE'_'$NAME.js
   cp migrations/_template $FILENAME
   echo 'Created '$FILENAME
 }

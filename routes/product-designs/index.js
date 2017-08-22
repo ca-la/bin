@@ -129,13 +129,15 @@ function* getSections() {
 function* createSection() {
   const {
     templateName,
-    customImageId
+    customImageId,
+    panelData
   } = this.request.body;
 
   const section = yield ProductDesignSectionsDAO.create({
     designId: this.params.designId,
     templateName,
-    customImageId
+    customImageId,
+    panelData
   })
     .catch(InvalidDataError, err => this.throw(400, err));
 
@@ -152,14 +154,16 @@ function* deleteSection() {
 function* updateSection() {
   const {
     templateName,
-    customImageId
+    customImageId,
+    panelData
   } = this.request.body;
 
   const updated = yield ProductDesignSectionsDAO.update(
     this.params.designId,
     {
       templateName,
-      customImageId
+      customImageId,
+      panelData
     }
   )
     .catch(InvalidDataError, err => this.throw(400, err));
