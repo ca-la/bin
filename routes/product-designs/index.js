@@ -208,8 +208,7 @@ function* createSectionAnnotation() {
 
 function* deleteSectionAnnotation() {
   const updated = yield ProductDesignSectionAnnotationsDAO.deleteById(
-    this.params.annotationId,
-    this.request.body
+    this.params.annotationId
   )
     .catch(InvalidDataError, err => this.throw(400, err));
 

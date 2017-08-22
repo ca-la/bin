@@ -62,7 +62,7 @@ function findByDesignId(designId) {
 
 function findById(id) {
   return db('product_design_sections')
-    .where({ id })
+    .where({ id, deleted_at: null })
     .catch(rethrow)
     .then(first)
     .then(instantiate);
