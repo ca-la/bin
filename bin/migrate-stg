@@ -1,10 +1,11 @@
 #!/bin/bash
 set -e
 
-echo "Are you sure you want to migrate the STAGING db? Type YES if so:"
+echo "Are you sure you want to migrate the STAGING db? Has your migration-only pull request been merged? Type MIGRATE if you're sure:"
 read RES
 
-if [ "$RES" != "YES" ]; then
+if [ "$RES" != "MIGRATE" ]; then
+  echo "OK, not migrating"
   exit 1
 fi
 

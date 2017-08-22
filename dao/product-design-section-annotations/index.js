@@ -8,45 +8,13 @@ const ProductDesignSectionAnnotation = require('../../domain-objects/product-des
 
 const instantiate = data => new ProductDesignSectionAnnotation(data);
 
-function deleteForSection(trx, sectionId) {
-  return db('product_design_section_annotations')
-    .transacting(trx)
-    .where({ section_id: sectionId })
-    .del();
+function deleteById(annotationId) {
 }
 
-function createForSection(trx, sectionId, annotations) {
-  const annotationData = annotations.map((annotation) => {
-    return {
-      id: uuid.v4(),
-      section_id: sectionId,
-      text: annotation.text,
-      x: annotation.x,
-      y: annotation.y
-    };
-  });
-
-  return db('product_design_section_annotations')
-    .transacting(trx)
-    .insert(annotationData)
-    .returning('*')
-    .catch(rethrow)
-    .then(inserted => inserted.map(instantiate));
+function createForSection(sectionId, data) {
 }
 
-function replaceForSection(sectionId, annotations) {
-  return db.transaction((trx) => {
-    deleteForSection(trx, sectionId)
-      .then(() => {
-        if (annotations.length > 0) {
-          return createForSection(trx, sectionId, annotations);
-        }
-
-        return [];
-      })
-      .then(trx.commit)
-      .catch(trx.rollback);
-  });
+function findById(annotationId) {
 }
 
 function findBySectionId(sectionId) {
@@ -60,6 +28,8 @@ function findBySectionId(sectionId) {
 }
 
 module.exports = {
-  replaceForSection,
+  deleteById,
+  findById,
+  createForSection,
   findBySectionId
 };
