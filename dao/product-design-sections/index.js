@@ -20,6 +20,7 @@ function create(data) {
     .insert({
       template_name: data.templateName,
       design_id: data.designId,
+      title: data.title,
       custom_image_id: data.customImageId,
       panel_data: data.panelData,
       id: uuid.v4()
@@ -34,6 +35,7 @@ function update(sectionId, data) {
     .where({ id: sectionId, deleted_at: null })
     .update(compact({
       template_name: data.templateName,
+      title: data.title,
       custom_image_id: data.customImageId,
       panel_data: data.panelData
     }), '*')

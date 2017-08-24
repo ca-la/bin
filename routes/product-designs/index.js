@@ -129,12 +129,14 @@ function* getSections() {
 function* createSection() {
   const {
     templateName,
+    title,
     customImageId,
     panelData
   } = this.request.body;
 
   const section = yield ProductDesignSectionsDAO.create({
     designId: this.params.designId,
+    title,
     templateName,
     customImageId,
     panelData
@@ -154,6 +156,7 @@ function* deleteSection() {
 function* updateSection() {
   const {
     templateName,
+    title,
     customImageId,
     panelData
   } = this.request.body;
@@ -162,6 +165,7 @@ function* updateSection() {
     this.params.designId,
     {
       templateName,
+      title,
       customImageId,
       panelData
     }
