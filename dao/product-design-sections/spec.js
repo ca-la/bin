@@ -18,6 +18,7 @@ test('ProductDesignSectionsDAO.create creates a section', (t) => {
     .then((design) => {
       return ProductDesignSectionsDAO.create({
         designId: design.id,
+        title: 'Front',
         templateName: 'okok',
         panelData: {
           panels: [
@@ -32,6 +33,7 @@ test('ProductDesignSectionsDAO.create creates a section', (t) => {
     .then((section) => {
       t.equal(section.templateName, 'okok');
       t.equal(section.panelData.panels[0].id, 'left-sleeve');
+      t.equal(section.title, 'Front');
     });
 });
 
@@ -60,6 +62,7 @@ test('ProductDesignSectionsDAO.update updates a section', (t) => {
       return ProductDesignSectionsDAO.update(section.id, {
         templateName: null,
         customImageId: imageId,
+        title: 'Front',
         panelData: {
           panels: [
             {
@@ -73,5 +76,6 @@ test('ProductDesignSectionsDAO.update updates a section', (t) => {
     .then((section) => {
       t.equal(section.customImageId, imageId);
       t.equal(section.panelData.panels[0].id, 'left-sleeve');
+      t.equal(section.title, 'Front');
     });
 });
