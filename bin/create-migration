@@ -16,7 +16,7 @@ main() {
   cp migrations/_template $FILENAME
   echo 'Created '$FILENAME
 
-  echo -n 'Open in $EDITOR?'
+  echo -n 'Open in $EDITOR? '
   read -n 1 EDIT
 
   if [ "$EDIT" == "y" ]; then
