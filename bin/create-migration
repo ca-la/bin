@@ -15,6 +15,13 @@ main() {
   FILENAME=migrations/$DATE'_'$NAME.js
   cp migrations/_template $FILENAME
   echo 'Created '$FILENAME
+
+  echo -n 'Open in $EDITOR?'
+  read -n 1 EDIT
+
+  if [ "$EDIT" == "y" ]; then
+    $EDITOR $FILENAME
+  fi
 }
 
 main "$@"
