@@ -24,6 +24,7 @@ function create(data) {
       description: data.description,
       product_type: data.productType,
       product_options: data.productOptions,
+      preview_image_data: data.previewImageData,
       title: data.title,
       user_id: data.userId,
       id: uuid.v4()
@@ -48,7 +49,8 @@ function update(productDesignId, data) {
     .where({ id: productDesignId, deleted_at: null })
     .update(compact({
       title: data.title,
-      product_options: data.productOptions
+      product_options: data.productOptions,
+      preview_image_data: data.previewImageData
     }), '*')
     .then(first)
     .then(instantiate);

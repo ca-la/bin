@@ -13,6 +13,10 @@ class ProductDesign {
     this.productType = row.product_type;
     this.productOptions = row.product_options;
     this.userId = row.user_id;
+
+    // SVG representation of a preview of the design. Managed by the client for
+    // now.
+    this.previewImageData = row.preview_image_data;
   }
 }
 
