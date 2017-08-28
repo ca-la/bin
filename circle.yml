@@ -6,7 +6,7 @@ machine:
 
 test:
   pre:
-    - $(npm bin)/knex migrate:latest
+    - bin/migrate-local && bin/rollback-local && bin/migrate-local
 
 deployment:
   staging:
