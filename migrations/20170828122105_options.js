@@ -4,6 +4,7 @@ exports.up = function up(knex) {
   return knex.raw(`
 create table product_design_options (
   id uuid primary key,
+  type text,
   user_id uuid references users(id),
   is_builtin_option boolean default false,
   unit_cost_cents integer,
