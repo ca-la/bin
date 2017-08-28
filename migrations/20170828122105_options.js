@@ -24,6 +24,7 @@ create table product_design_selected_options (
   created_at timestamp with time zone default now(),
   deleted_at timestamp with time zone,
   design_id uuid not null references product_designs(id),
+  panel_id text,
   option_id uuid not null references product_design_options(id),
   units_required_per_garment real not null
 );
