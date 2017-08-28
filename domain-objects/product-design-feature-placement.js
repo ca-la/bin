@@ -17,7 +17,12 @@ class ProductDesignFeaturePlacement {
     this.height = row.height;
     this.width = row.width;
     this.rotation = row.rotation;
+
+    // 'IMAGE' or 'PATH' right now
     this.type = row.type;
+
+    // e.g. 'Embroidery' or 'Screen print'
+    this.processName = row.process_name;
   }
 }
 

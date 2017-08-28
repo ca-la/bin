@@ -18,17 +18,18 @@ function deleteForSection(trx, sectionId) {
 function createForSection(trx, sectionId, placements) {
   const placementData = placements.map((placement) => {
     return {
+      height: placement.height,
       id: uuid.v4(),
-      section_id: sectionId,
       image_id: placement.imageId,
-      z_index: placement.zIndex,
+      path_data: placement.pathData,
+      process_name: placement.processName,
+      rotation: placement.rotation,
+      section_id: sectionId,
+      type: placement.type,
+      width: placement.width,
       x: placement.x,
       y: placement.y,
-      rotation: placement.rotation,
-      width: placement.width,
-      height: placement.height,
-      type: placement.type,
-      path_data: placement.pathData
+      z_index: placement.zIndex
     };
   });
 
