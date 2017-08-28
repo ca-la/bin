@@ -13,7 +13,7 @@ test('ProductDesignsDAO.create creates a design', (t) => {
         title: 'Plain White Tee',
         productType: 'TEESHIRT',
         userId: user.id,
-        productOptions: {
+        metadata: {
           'dipped drawstrings': 'yes please'
         }
       });
@@ -21,7 +21,7 @@ test('ProductDesignsDAO.create creates a design', (t) => {
     .then((design) => {
       t.equal(design.userId, userId);
       t.equal(design.productType, 'TEESHIRT');
-      t.deepEqual(design.productOptions, {
+      t.deepEqual(design.metadata, {
         'dipped drawstrings': 'yes please'
       });
     });

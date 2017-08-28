@@ -23,7 +23,7 @@ function create(data) {
     .insert({
       description: data.description,
       product_type: data.productType,
-      product_options: data.productOptions,
+      metadata: data.metadata,
       preview_image_data: data.previewImageData,
       title: data.title,
       user_id: data.userId,
@@ -49,7 +49,7 @@ function update(productDesignId, data) {
     .where({ id: productDesignId, deleted_at: null })
     .update(compact({
       title: data.title,
-      product_options: data.productOptions,
+      metadata: data.metadata,
       preview_image_data: data.previewImageData
     }), '*')
     .then(first)

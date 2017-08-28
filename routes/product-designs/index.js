@@ -73,7 +73,7 @@ function* createDesign() {
   const {
     description,
     previewImageData,
-    productOptions,
+    metadata,
     productType,
     title
   } = this.request.body;
@@ -81,7 +81,7 @@ function* createDesign() {
   const design = yield ProductDesignsDAO.create({
     description,
     previewImageData,
-    productOptions,
+    metadata,
     productType,
     title,
     userId: this.state.userId
@@ -96,7 +96,7 @@ function* updateDesign() {
   const {
     description,
     previewImageData,
-    productOptions,
+    metadata,
     productType,
     title
   } = this.request.body;
@@ -106,7 +106,7 @@ function* updateDesign() {
     {
       description,
       previewImageData,
-      productOptions,
+      metadata,
       productType,
       title
     }
