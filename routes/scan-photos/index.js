@@ -66,6 +66,7 @@ function* updatePhoto() {
 }
 
 router.get('/:photoId/raw', requireAuth, getRawPhoto);
-router.put('/:photoId', requireAuth, updatePhoto);
+router.patch('/:photoId', requireAuth, updatePhoto);
+router.put('/:photoId', requireAuth, updatePhoto); // TODO: deprecate
 
 module.exports = router.routes();

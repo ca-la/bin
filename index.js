@@ -12,7 +12,6 @@ const logger = require('./middleware/logger');
 const options = require('./middleware/options');
 const attachSession = require('./middleware/attach-session');
 
-// General middleware
 app.use(logger);
 app.use(errors);
 app.use(jsonBody);
@@ -24,7 +23,6 @@ const router = new Router({
   prefix: '/:version(v1)?'
 });
 
-// Route-specific middleware
 router.use(require('./routes/root'));
 router.use('/addresses', require('./routes/addresses'));
 router.use('/collection-photos', require('./routes/collection-photos'));
@@ -38,6 +36,7 @@ router.use('/password-resets', require('./routes/password-resets'));
 router.use('/product-videos', require('./routes/product-videos'));
 router.use('/product-designs', require('./routes/product-designs'));
 router.use('/product-design-images', require('./routes/product-design-images'));
+router.use('/product-design-options', require('./routes/product-design-options'));
 router.use('/products', require('./routes/products'));
 router.use('/push-tokens', require('./routes/push-tokens'));
 router.use('/scan-photos', require('./routes/scan-photos'));

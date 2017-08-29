@@ -8,51 +8,11 @@ const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
 const ProductDesignFeaturePlacementsDAO = require('../../dao/product-design-feature-placements');
 const ProductDesignSectionAnnotationsDAO = require('../../dao/product-design-section-annotations');
 const requireAuth = require('../../middleware/require-auth');
+const canAccessDesign = require('../../middleware/can-access-design');
+const canAccessSection = require('../../middleware/can-access-section');
+const canAccessAnnotation = require('../../middleware/can-access-annotation');
 
 const router = new Router();
-
-function* canAccessDesign(next) {
-  const design = yield ProductDesignsDAO.findById(this.params.designId)
-    .catch(InvalidDataError, err => this.throw(404, err));
-
-  this.assert(design, 404);
-
-  this.assert(this.state.userId === design.userId, 403);
-
-  this.state.design = design;
-
-  yield next;
-}
-
-function* canAccessSection(next) {
-  if (!this.state.design) {
-    throw new Error('Must confirm canAccessDesign first');
-  }
-
-  const section = yield ProductDesignSectionsDAO.findById(this.params.sectionId)
-    .catch(InvalidDataError, err => this.throw(404, err));
-  this.assert(section, 404);
-  this.assert(section.designId === this.state.design.id, 404);
-
-  this.state.section = section;
-
-  yield next;
-}
-
-function* canAccessAnnotation(next) {
-  if (!this.state.section) {
-    throw new Error('Must confirm canAccessSection first');
-  }
-
-  const annotation = yield ProductDesignSectionAnnotationsDAO.findById(this.params.annotationId)
-    .catch(InvalidDataError, err => this.throw(404, err));
-
-  this.assert(annotation, 404);
-  this.assert(annotation.sectionId === this.state.section.id, 404);
-  this.assert(annotation.userId === this.state.userId, 403);
-
-  yield next;
-}
 
 function* getDesigns() {
   this.assert(this.query.userId === this.state.userId, 403);

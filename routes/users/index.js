@@ -316,7 +316,8 @@ router.get('/:userId/referral-count', requireAuth, getReferralCount);
 router.get('/email-availability/:email', getEmailAvailability);
 router.post('/', createUser);
 router.post('/:userId/complete-sms-preregistration', completeSmsPreregistration);
-router.put('/:userId', requireAuth, updateUser);
+router.put('/:userId', requireAuth, updateUser); // TODO: deprecate
+router.patch('/:userId', requireAuth, updateUser);
 router.put('/:userId/password', requireAuth, updatePassword);
 
 module.exports = router.routes();
