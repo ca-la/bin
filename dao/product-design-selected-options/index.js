@@ -9,21 +9,13 @@ const first = require('../../services/first');
 const ProductDesignOption = require('../../domain-objects/product-design-option');
 
 const instantiate = data => new ProductDesignOption(data);
-const maybeInstantiate = data => (data && new ProductDesignOption(data)) || null;
 
 function userDataToRowData(data) {
   return {
-    type: data.type,
-    user_id: data.userId,
-    unit_cost_cents: data.unitCostCents,
-    preferred_cost_unit: data.preferredCostUnit,
-    weight_gsm: data.weightGsm,
-    preferred_weight_unit: data.preferredWeightUnit,
-    title: data.title,
-    sku: data.sku,
-    preview_image_id: data.previewImageId,
-    pattern_image_id: data.patternImageId,
-    vendor_name: data.vendorName
+    design_id: data.designId,
+    panel_id: data.panelId,
+    option_id: data.optionId,
+    units_required_per_garment: data.unitsRequiredPerGarment
   };
 }
 
@@ -32,7 +24,7 @@ function create(data) {
     id: uuid.v4()
   });
 
-  return db('product_design_options')
+  return db('product_design_selected_options')
     .insert(rowData, '*')
     .catch(rethrow)
     .then(first)
@@ -42,30 +34,18 @@ function create(data) {
 function update(optionId, data) {
   const rowData = compact(userDataToRowData(data));
 
-  return db('product_design_options')
+  return db('product_design_selected_options')
     .where({ id: optionId })
     .update(rowData, '*')
     .then(first)
     .then(instantiate);
 }
 
-function findById(optionId) {
-  return db('product_design_options')
-    .where({ id: optionId })
-    .then(first)
-    .then(maybeInstantiate)
-    .catch(rethrow.ERRORS.InvalidTextRepresentation, () => null);
-}
-
-function findForUser(userId) {
-  return db('product_design_options')
+function findByDesignId(designId) {
+  return db('product_design_selected_options')
     .where({
       deleted_at: null,
-      user_id: userId
-    })
-    .orWhere({
-      deleted_at: null,
-      is_builtin_option: true
+      design_id: designId
     })
     .orderBy('created_at', 'desc')
     .catch(rethrow)
@@ -73,7 +53,7 @@ function findForUser(userId) {
 }
 
 function deleteById(id) {
-  return db('product_design_options')
+  return db('product_design_selected_options')
     .where({
       id,
       deleted_at: null
@@ -88,7 +68,6 @@ function deleteById(id) {
 module.exports = {
   create,
   update,
-  findForUser,
-  findById,
+  findByDesignId,
   deleteById
 };
