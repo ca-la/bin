@@ -209,6 +209,7 @@ router.get('/:scanId/photos', requireAuth, getScanPhotos);
 router.post('/', createScan);
 router.post('/:scanId/claim', requireAuth, claimScan);
 router.post('/:scanId/photos', multer(), createScanPhoto);
-router.put('/:scanId', updateScan);
+router.put('/:scanId', updateScan); // TODO: deprecate
+router.patch('/:scanId', updateScan);
 
 module.exports = router.routes();
