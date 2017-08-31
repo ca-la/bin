@@ -13,7 +13,9 @@ function create(data) {
   return db('product_design_images')
     .insert({
       id: uuid.v4(),
-      user_id: data.userId
+      user_id: data.userId,
+      original_height_px: data.originalHeightPx,
+      original_width_px: data.originalWidthPx
     }, '*')
     .catch(rethrow)
     .then(first)

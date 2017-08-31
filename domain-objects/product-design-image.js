@@ -10,6 +10,8 @@ class ProductDesignImage {
     this.id = row.id;
     this.createdAt = new Date(row.created_at);
     this.userId = row.user_id;
+    this.originalHeightPx = row.original_height_px;
+    this.originalWidthPx = row.original_width_px;
   }
 
   getUrl() {
@@ -17,12 +19,9 @@ class ProductDesignImage {
   }
 
   toJSON() {
-    return {
-      id: this.id,
-      createdAt: this.createdAt,
-      userId: this.userId,
+    return Object.assign({}, this, {
       url: this.getUrl()
-    };
+    });
   }
 }
 
