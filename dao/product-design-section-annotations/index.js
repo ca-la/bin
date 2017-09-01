@@ -46,7 +46,7 @@ function findById(id) {
 function findBySectionId(sectionId) {
   return db('product_design_section_annotations')
     .where({ section_id: sectionId, deleted_at: null })
-    .orderBy('created_at', 'desc')
+    .orderBy('created_at', 'asc')
     .catch(rethrow)
     .then(annotations => annotations.map(instantiate));
 }
