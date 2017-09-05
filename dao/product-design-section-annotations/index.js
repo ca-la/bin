@@ -51,9 +51,20 @@ function findBySectionId(sectionId) {
     .then(annotations => annotations.map(instantiate));
 }
 
+function update(id, data) {
+  return db('product_design_section_annotations')
+    .where({ id, deleted_at: null })
+    .update({
+      text: data.text
+    }, '*')
+    .then(first)
+    .then(instantiate);
+}
+
 module.exports = {
   deleteById,
   findById,
   createForSection,
-  findBySectionId
+  findBySectionId,
+  update
 };

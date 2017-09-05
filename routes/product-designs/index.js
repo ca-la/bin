@@ -193,8 +193,20 @@ function* createSectionAnnotation() {
 }
 
 function* deleteSectionAnnotation() {
-  const updated = yield ProductDesignSectionAnnotationsDAO.deleteById(
+  yield ProductDesignSectionAnnotationsDAO.deleteById(
     this.params.annotationId
+  )
+    .catch(InvalidDataError, err => this.throw(400, err));
+
+  this.status = 204;
+}
+
+function* updateSectionAnnotation() {
+  const updated = yield ProductDesignSectionAnnotationsDAO.update(
+    this.params.annotationId,
+    {
+      text: this.body.text
+    }
   )
     .catch(InvalidDataError, err => this.throw(400, err));
 
@@ -216,5 +228,6 @@ router.put('/:designId/sections/:sectionId/feature-placements', requireAuth, can
 router.get('/:designId/sections/:sectionId/annotations', requireAuth, canAccessDesign, canAccessSection, getSectionAnnotations);
 router.post('/:designId/sections/:sectionId/annotations', requireAuth, canAccessDesign, canAccessSection, createSectionAnnotation);
 router.del('/:designId/sections/:sectionId/annotations/:annotationId', requireAuth, canAccessDesign, canAccessSection, canAccessAnnotation, deleteSectionAnnotation);
+router.patch('/:designId/sections/:sectionId/annotations/:annotationId', requireAuth, canAccessDesign, canAccessSection, canAccessAnnotation, updateSectionAnnotation);
 
 module.exports = router.routes();
