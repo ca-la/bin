@@ -6,9 +6,9 @@ const compact = require('../../services/compact');
 
 const db = require('../../services/db');
 const first = require('../../services/first');
-const ProductDesignOption = require('../../domain-objects/product-design-option');
+const ProductDesignSelectedOption = require('../../domain-objects/product-design-selected-option');
 
-const instantiate = data => new ProductDesignOption(data);
+const instantiate = data => new ProductDesignSelectedOption(data);
 
 function userDataToRowData(data) {
   return {
