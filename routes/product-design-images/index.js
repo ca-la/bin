@@ -26,10 +26,21 @@ function* createImage() {
 
   const localPath = data.path;
 
+  const {
+    originalWidthPx,
+    originalHeightPx,
+    title,
+    description
+  } = this.req.body;
+
   // This is bad and inefficient; the entire request body has to be loaded into
   // memory before sending to S3. TODO figure out streaming, offload this to
   // Lambda or something, or let clients upload direct to S3.
   const image = yield ProductDesignImagesDAO.create({
+    description,
+    originalHeightPx,
+    originalWidthPx,
+    title,
     userId: this.state.userId
   });
 

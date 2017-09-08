@@ -12,6 +12,8 @@ class ProductDesignImage {
     this.userId = row.user_id;
     this.originalHeightPx = row.original_height_px;
     this.originalWidthPx = row.original_width_px;
+    this.title = row.title;
+    this.description = row.description;
   }
 
   getUrl() {

@@ -15,7 +15,9 @@ function create(data) {
       id: uuid.v4(),
       user_id: data.userId,
       original_height_px: data.originalHeightPx,
-      original_width_px: data.originalWidthPx
+      original_width_px: data.originalWidthPx,
+      title: data.title,
+      description: data.description
     }, '*')
     .catch(rethrow)
     .then(first)
