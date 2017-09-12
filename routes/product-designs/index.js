@@ -126,7 +126,7 @@ function* updateSection() {
   } = this.request.body;
 
   const updated = yield ProductDesignSectionsDAO.update(
-    this.params.designId,
+    this.params.sectionId,
     {
       templateName,
       title,
