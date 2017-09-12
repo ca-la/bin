@@ -7,25 +7,18 @@ const db = require('../../services/db');
 const compact = require('../../services/compact');
 const first = require('../../services/first');
 const ProductDesign = require('../../domain-objects/product-design');
-const { requirePropertiesFormatted } = require('../../services/require-properties');
 
 const instantiate = data => new ProductDesign(data);
 const maybeInstantiate = data => (data && new ProductDesign(data)) || null;
 
 function create(data) {
-  const requiredMessages = {
-    title: 'Title'
-  };
-
-  requirePropertiesFormatted(data, requiredMessages);
-
   return db('product_designs')
     .insert({
       description: data.description,
       product_type: data.productType,
       metadata: data.metadata,
       preview_image_data: data.previewImageData,
-      title: data.title,
+      title: data.title || '',
       user_id: data.userId,
       id: uuid.v4()
     }, '*')
