@@ -14,7 +14,8 @@ const router = new Router();
 const ALLOWED_MIMETYPES = [
   'image/jpeg',
   'image/png',
-  'image/gif'
+  'image/gif',
+  'image/svg+xml'
 ];
 
 function* createImage() {
