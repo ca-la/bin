@@ -30,7 +30,7 @@ function findByUserId(userId) {
       user_id: userId,
       deleted_at: null
     }, '*')
-    .orderBy('created_at', 'asc')
+    .orderBy('created_at', 'desc')
     .catch(rethrow)
     .then(images => images.map(instantiate));
 }
