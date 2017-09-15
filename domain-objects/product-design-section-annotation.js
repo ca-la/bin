@@ -16,6 +16,10 @@ class ProductDesignSectionAnnotation {
     this.inReplyToId = row.in_reply_to_id;
     this.userId = row.user_id;
   }
+
+  setUser(user) {
+    this.user = user;
+  }
 }
 
 module.exports = ProductDesignSectionAnnotation;

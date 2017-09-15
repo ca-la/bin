@@ -2,15 +2,16 @@
 
 const Router = require('koa-router');
 
-const InvalidDataError = require('../../errors/invalid-data');
-const ProductDesignsDAO = require('../../dao/product-designs');
-const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
-const ProductDesignFeaturePlacementsDAO = require('../../dao/product-design-feature-placements');
-const ProductDesignSectionAnnotationsDAO = require('../../dao/product-design-section-annotations');
-const requireAuth = require('../../middleware/require-auth');
+const canAccessAnnotation = require('../../middleware/can-access-annotation');
 const canAccessDesign = require('../../middleware/can-access-design');
 const canAccessSection = require('../../middleware/can-access-section');
-const canAccessAnnotation = require('../../middleware/can-access-annotation');
+const InvalidDataError = require('../../errors/invalid-data');
+const ProductDesignFeaturePlacementsDAO = require('../../dao/product-design-feature-placements');
+const ProductDesignsDAO = require('../../dao/product-designs');
+const ProductDesignSectionAnnotationsDAO = require('../../dao/product-design-section-annotations');
+const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
+const requireAuth = require('../../middleware/require-auth');
+const UsersDAO = require('../../dao/users');
 
 const router = new Router();
 
@@ -159,12 +160,21 @@ function* replaceSectionFeaturePlacements() {
   this.status = 200;
 }
 
+function attachUser(annotation) {
+  return UsersDAO.findById(annotation.userId).then((user) => {
+    annotation.setUser(user);
+    return annotation;
+  });
+}
+
 function* getSectionAnnotations() {
   const annotations = yield ProductDesignSectionAnnotationsDAO.findBySectionId(
     this.params.sectionId
   );
 
-  this.body = annotations;
+  const annotationsWithUser = yield Promise.all(annotations.map(attachUser));
+
+  this.body = annotationsWithUser;
   this.status = 200;
 }
 
@@ -176,7 +186,7 @@ function* createSectionAnnotation() {
     inReplyToId
   } = this.request.body;
 
-  const updated = yield ProductDesignSectionAnnotationsDAO.createForSection(
+  const created = yield ProductDesignSectionAnnotationsDAO.createForSection(
     this.params.sectionId,
     {
       x,
@@ -188,7 +198,8 @@ function* createSectionAnnotation() {
   )
     .catch(InvalidDataError, err => this.throw(400, err));
 
-  this.body = updated;
+  const withUser = yield attachUser(created);
+  this.body = withUser;
   this.status = 200;
 }
 
@@ -210,7 +221,8 @@ function* updateSectionAnnotation() {
   )
     .catch(InvalidDataError, err => this.throw(400, err));
 
-  this.body = updated;
+  const withUser = yield attachUser(updated);
+  this.body = withUser;
   this.status = 200;
 }
 
