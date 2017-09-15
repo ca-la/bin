@@ -1,7 +1,8 @@
 'use strict';
 
-const ProductDesignsDAO = require('../../dao/product-designs');
 const InvalidDataError = require('../../errors/invalid-data');
+const ProductDesignsDAO = require('../../dao/product-designs');
+const User = require('../../domain-objects/user');
 
 function* canAccessDesign(next) {
   const design = yield ProductDesignsDAO.findById(this.params.designId)
@@ -9,7 +10,12 @@ function* canAccessDesign(next) {
 
   this.assert(design, 404);
 
-  this.assert(this.state.userId === design.userId, 403);
+  const hasAccess = (
+    this.state.userId === design.userId ||
+    this.state.role === User.ROLES.admin
+  );
+
+  this.assert(hasAccess, 403);
 
   this.state.design = design;
 

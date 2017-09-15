@@ -13,7 +13,6 @@ function* canAccessAnnotation(next) {
 
   this.assert(annotation, 404);
   this.assert(annotation.sectionId === this.state.section.id, 404);
-  this.assert(annotation.userId === this.state.userId, 403);
 
   yield next;
 }
