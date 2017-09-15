@@ -5,9 +5,10 @@ const Router = require('koa-router');
 const pick = require('lodash/pick');
 
 const InvalidDataError = require('../../errors/invalid-data');
-const ProductDesignSelectedOptionsDAO = require('../../dao/product-design-selected-options');
 const ProductDesignsDAO = require('../../dao/product-designs');
+const ProductDesignSelectedOptionsDAO = require('../../dao/product-design-selected-options');
 const requireAuth = require('../../middleware/require-auth');
+const User = require('../../domain-objects/user');
 
 const router = new Router();
 
@@ -19,7 +20,10 @@ function* canAccessSelectedOption(next) {
 
   const design = yield ProductDesignsDAO.findById(selectedOption.designId);
   this.assert(design, 500);
-  this.assert(this.state.userId === design.userId, 403);
+  this.assert(
+    this.state.userId === design.userId ||
+    this.state.role === User.ROLES.admin
+  , 403);
 
   this.state.selectedOption = selectedOption;
 

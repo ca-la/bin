@@ -71,7 +71,23 @@ function* getList() {
   this.status = 200;
 }
 
+function* getById() {
+  const image = yield ProductDesignImagesDAO.findById(this.params.imageId);
+  this.assert(image, 404);
+
+  const isAuthorized = (
+    image.userId === this.state.userId ||
+    this.state.role === User.ROLES.admin
+  );
+
+  this.assert(isAuthorized, 403);
+
+  this.body = image;
+  this.status = 200;
+}
+
 router.post('/', requireAuth, multer(), createImage);
 router.get('/', requireAuth, getList);
+router.get('/:imageId', requireAuth, getById);
 
 module.exports = router.routes();
