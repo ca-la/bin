@@ -49,6 +49,7 @@ function* createImage() {
     AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME,
     image.id,
     localPath,
+    data.mimetype,
     'public-read'
   );
 

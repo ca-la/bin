@@ -84,7 +84,13 @@ function* createScanPhoto() {
   });
 
   const fileName = `${photo.id}.jpg`;
-  yield uploadFile(AWS_SCANPHOTO_BUCKET_NAME, fileName, localPath);
+  yield uploadFile(
+    AWS_SCANPHOTO_BUCKET_NAME,
+    fileName,
+    localPath,
+    data.mimetype,
+    'authenticated-read'
+  );
 
   photo.setUrl(getScanPhotoUrl(this, photo.id));
 
