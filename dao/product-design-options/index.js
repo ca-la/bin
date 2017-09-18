@@ -11,24 +11,10 @@ const ProductDesignOption = require('../../domain-objects/product-design-option'
 const instantiate = data => new ProductDesignOption(data);
 const maybeInstantiate = data => (data && new ProductDesignOption(data)) || null;
 
-function userDataToRowData(data) {
-  return {
-    type: data.type,
-    user_id: data.userId,
-    unit_cost_cents: data.unitCostCents,
-    preferred_cost_unit: data.preferredCostUnit,
-    weight_gsm: data.weightGsm,
-    preferred_weight_unit: data.preferredWeightUnit,
-    title: data.title,
-    sku: data.sku,
-    preview_image_id: data.previewImageId,
-    pattern_image_id: data.patternImageId,
-    vendor_name: data.vendorName
-  };
-}
+const { dataMapper } = ProductDesignOption;
 
 function create(data) {
-  const rowData = Object.assign({}, userDataToRowData(data), {
+  const rowData = Object.assign({}, dataMapper.userDataToRowData(data), {
     id: uuid.v4()
   });
 
@@ -40,7 +26,7 @@ function create(data) {
 }
 
 function update(optionId, data) {
-  const rowData = compact(userDataToRowData(data));
+  const rowData = compact(dataMapper.userDataToRowData(data));
 
   return db('product_design_options')
     .where({ id: optionId })

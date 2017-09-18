@@ -1,6 +1,54 @@
 'use strict';
 
 const { requireProperties } = require('../services/require-properties');
+const DataMapper = require('../services/data-mapper');
+
+const keyNamesByColumnName = {
+  id: 'id',
+
+  // true if this is a fabric/trim we're offering ourselves, false if
+  // user-created. if false then user_id must be present
+  is_builtin_option: 'isBuiltinOption',
+  created_at: 'createdAt',
+  deleted_at: 'deletedAt',
+  type: 'type',
+  user_id: 'userId',
+
+  // for trims only - cost per unit. use per_meter_cost_cents for fabric
+  unit_cost_cents: 'unitCostCents',
+  preferred_length_unit: 'preferredLengthUnit',
+
+  // grams per square meter
+  weight_gsm: 'weightGsm',
+  preferred_weight_unit: 'preferredWeightUnit',
+  title: 'title',
+  sku: 'sku',
+  preview_image_id: 'previewImageId',
+  pattern_image_id: 'patternImageId',
+  vendor_name: 'vendorName',
+  per_meter_cost_cents: 'perMeterCostCents',
+  composition: 'composition',
+  roll_width_cm: 'rollWidthCm',
+  preferred_width_unit: 'preferredWidthUnit',
+  weave_type: 'weaveType',
+
+  // suggested types of garments
+  end_use: 'endUse',
+  origin_country: 'originCountry',
+  care_instructions: 'careInstructions',
+  ships_from_city: 'shipsFromCity',
+  ships_from_country: 'shipsFromCountry',
+  tests_and_certifications: 'testsAndCertifications',
+  description: 'description',
+
+  // "prepared for dyeing"
+  is_pfd: 'isPfd',
+  color: 'color',
+  lead_time_hours: 'leadTimeHours',
+  vendor_web_url: 'vendorWebUrl'
+};
+
+const dataMapper = new DataMapper(keyNamesByColumnName);
 
 // A ProductDesignOption is either a fabric or a trim in a user's "option
 // library". When chosen for a specific garment, a record is created in the
@@ -9,32 +57,15 @@ class ProductDesignOption {
   constructor(row) {
     requireProperties(row, 'id');
 
-    this.id = row.id;
-    this.type = row.type;
-    this.createdAt = new Date(row.created_at);
-    this.deletedAt = row.deleted_at && new Date(row.deleted_at);
+    const data = dataMapper.rowDataToUserData(row);
 
-    // rows should have userId if customer-created, or isBuiltinOption=true if
-    // CALA-created. not both
-    this.userId = row.user_id;
-    this.isBuiltinOption = row.is_builtin_option;
-
-    this.unitCostCents = row.unit_cost_cents;
-
-    // e.g. 'yard', 'meter', etc
-    this.preferredCostUnit = row.preferred_cost_unit;
-
-    // weight of a fabric in grams/square meter
-    this.weightGsm = row.weight_gsm;
-
-    // e.g. gsm, oz/sqft, etc
-    this.preferredWeightUnit = row.preferred_weight_unit;
-    this.title = row.title;
-    this.sku = row.sku;
-    this.previewImageId = row.preview_image_id;
-    this.patternImageId = row.pattern_image_id;
-    this.vendorName = row.vendor_name;
+    Object.assign(this, data, {
+      createdAt: new Date(row.created_at),
+      deletedAt: row.deleted_at && new Date(row.deleted_at)
+    });
   }
 }
+
+ProductDesignOption.dataMapper = dataMapper;
 
 module.exports = ProductDesignOption;
