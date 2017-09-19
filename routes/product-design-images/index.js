@@ -77,7 +77,10 @@ function* getById() {
   this.assert(image, 404);
 
   const isAuthorized = (
-    image.userId === this.state.userId ||
+    (
+      image.userId &&
+      image.userId === this.state.userId
+    ) ||
     this.state.role === User.ROLES.admin
   );
 
