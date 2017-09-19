@@ -64,6 +64,14 @@ class ProductDesignOption {
       deletedAt: row.deleted_at && new Date(row.deleted_at)
     });
   }
+
+  setPatternImage(patternImage) {
+    this.patternImage = patternImage;
+  }
+
+  setPreviewImage(previewImage) {
+    this.previewImage = previewImage;
+  }
 }
 
 ProductDesignOption.dataMapper = dataMapper;

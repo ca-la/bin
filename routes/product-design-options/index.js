@@ -4,10 +4,29 @@ const Router = require('koa-router');
 const pick = require('lodash/pick');
 
 const InvalidDataError = require('../../errors/invalid-data');
+const ProductDesignImagesDAO = require('../../dao/product-design-images');
 const ProductDesignOptionsDAO = require('../../dao/product-design-options');
 const requireAuth = require('../../middleware/require-auth');
 
 const router = new Router();
+
+function attachImages(option) {
+  let attaching = Promise.resolve();
+
+  if (option.previewImageId) {
+    attaching = attaching
+      .then(() => ProductDesignImagesDAO.findById(option.previewImageId))
+      .then(previewImage => option.setPreviewImage(previewImage));
+  }
+
+  if (option.patternImageId) {
+    attaching = attaching
+      .then(() => ProductDesignImagesDAO.findById(option.patternImageId))
+      .then(patternImage => option.setPatternImage(patternImage));
+  }
+
+  return attaching.then(() => option);
+}
 
 function* canModifyOption(next) {
   const option = yield ProductDesignOptionsDAO.findById(this.params.optionId)
@@ -43,13 +62,15 @@ function* create() {
   const option = yield ProductDesignOptionsDAO.create(attrs)
     .catch(InvalidDataError, err => this.throw(404, err));
 
-  this.body = option;
+  this.body = yield attachImages(option);
   this.status = 201;
 }
 
 function* getList() {
   const options = yield ProductDesignOptionsDAO.findForUser(this.state.userId);
-  this.body = options;
+  const optionsWithImages = yield Promise.all(options.map(attachImages));
+
+  this.body = optionsWithImages;
   this.status = 200;
 }
 
@@ -77,7 +98,7 @@ function* update() {
     allowedAttrs
   );
 
-  this.body = updated;
+  this.body = yield attachImages(updated);
   this.status = 200;
 }
 
