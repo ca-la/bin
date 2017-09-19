@@ -11,6 +11,7 @@ if (process.env.NODE_ENV === 'test') {
 }
 
 module.exports = {
+  ssl: true,
   client: 'pg',
   connection: process.env.DATABASE_URL || defaultDB
 };
