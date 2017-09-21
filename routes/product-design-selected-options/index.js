@@ -14,7 +14,7 @@ const router = new Router();
 
 function* canAccessSelectedOption(next) {
   const selectedOption = yield ProductDesignSelectedOptionsDAO.findById(
-    this.params.selectedOptionId
+    this.params.optionId
   );
   this.assert(selectedOption, 404);
 

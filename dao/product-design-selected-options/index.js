@@ -9,6 +9,7 @@ const first = require('../../services/first');
 const ProductDesignSelectedOption = require('../../domain-objects/product-design-selected-option');
 
 const instantiate = data => new ProductDesignSelectedOption(data);
+const maybeInstantiate = data => (data && new ProductDesignSelectedOption(data)) || null;
 
 function userDataToRowData(data) {
   return {
@@ -52,6 +53,18 @@ function findByDesignId(designId) {
     .then(options => options.map(instantiate));
 }
 
+function findById(id) {
+  return db('product_design_selected_options')
+    .where({
+      id,
+      deleted_at: null
+    })
+    .catch(rethrow)
+    .then(first)
+    .then(maybeInstantiate)
+    .catch(rethrow.ERRORS.InvalidTextRepresentation, () => null);
+}
+
 function deleteById(id) {
   return db('product_design_selected_options')
     .where({
@@ -67,7 +80,8 @@ function deleteById(id) {
 
 module.exports = {
   create,
-  update,
+  deleteById,
   findByDesignId,
-  deleteById
+  findById,
+  update
 };
