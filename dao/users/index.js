@@ -132,7 +132,7 @@ function findAll({ limit, offset, search }) {
 }
 
 function findByEmail(email) {
-  return db('users').where({ email })
+  return db('users').whereRaw('lower(users.email) = lower(?)', [email])
     .then(first)
     .then(maybeInstantiate);
 }

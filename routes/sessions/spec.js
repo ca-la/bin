@@ -10,7 +10,7 @@ const { test, sandbox } = require('../../test-helpers/fresh');
 
 const USER_DATA = Object.freeze({
   name: 'Q User',
-  email: 'user@example.com',
+  email: 'UsEr@example.com',
   zip: '94117',
   password: 'hunter2',
   referralCode: 'freebie',
@@ -47,6 +47,22 @@ test('POST /sessions returns new session data', (t) => {
     .then((_user) => {
       user = _user;
       return post('/sessions', { body: { email: 'user@example.com', password: 'hunter2' } });
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 201, 'status=201');
+      t.equal(body.userId, user.id);
+      t.equal(body.role, 'USER');
+      t.equal(body.user.passwordHash, undefined);
+      t.equal(body.expiresAt, null);
+    });
+});
+
+test('POST /sessions allows emails with different formatting', (t) => {
+  let user;
+  return UsersDAO.create(USER_DATA)
+    .then((_user) => {
+      user = _user;
+      return post('/sessions', { body: { email: 'USER@EXAMPLE.com', password: 'hunter2' } });
     })
     .then(([response, body]) => {
       t.equal(response.status, 201, 'status=201');

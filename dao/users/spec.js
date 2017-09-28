@@ -6,7 +6,7 @@ const { test } = require('../../test-helpers/fresh');
 
 const USER_DATA = Object.freeze({
   name: 'Q User',
-  email: 'user@example.com',
+  email: 'USER@example.com',
   password: 'hunter2',
   referralCode: 'freebie'
 });
@@ -84,7 +84,7 @@ test('UsersDAO.create returns a new user with email but no phone', (t) => {
   return UsersDAO.create(USER_DATA)
     .then((user) => {
       t.equal(user.name, 'Q User');
-      t.equal(user.email, 'user@example.com');
+      t.equal(user.email, 'USER@example.com');
       t.equal(user.id.length, 36);
       t.notEqual(user.passwordHash, 'hunter2');
       t.equal(user.phone, null);
@@ -123,9 +123,9 @@ test('UsersDAO.findByEmail returns null if a user does not exist', (t) => {
   });
 });
 
-test('UsersDAO.findByEmail returns a user', (t) => {
+test('UsersDAO.findByEmail returns a user, case insensitive', (t) => {
   return UsersDAO.create(USER_DATA)
-    .then(() => UsersDAO.findByEmail('user@example.com'))
+    .then(() => UsersDAO.findByEmail('UsEr@ExAmPle.com'))
     .then((user) => {
       t.equal(user.name, 'Q User');
     });
