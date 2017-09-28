@@ -57,8 +57,6 @@ function* createUser() {
       referralCode
     });
   } catch (err) {
-    if (err instanceof InvalidDataError) { this.throw(400, err); }
-
     // Not rethrowing since this shouldn't be fatal... but if we ever see this
     // log line we need to investigate ASAP (and manually subscribe the user)
     logServerError(`Failed to sign up user to Mailchimp: ${email}`);
