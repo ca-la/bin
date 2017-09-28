@@ -13,6 +13,9 @@ test('ProductDesignsDAO.create creates a design', (t) => {
         title: 'Plain White Tee',
         productType: 'TEESHIRT',
         userId: user.id,
+        previewImageUrls: [
+          'abcd', 'efgh'
+        ],
         metadata: {
           'dipped drawstrings': 'yes please'
         }
@@ -24,6 +27,9 @@ test('ProductDesignsDAO.create creates a design', (t) => {
       t.deepEqual(design.metadata, {
         'dipped drawstrings': 'yes please'
       });
+      t.deepEqual(design.previewImageUrls, [
+        'abcd', 'efgh'
+      ]);
     });
 });
 

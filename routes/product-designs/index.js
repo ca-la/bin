@@ -33,7 +33,7 @@ function* getDesign() {
 function* createDesign() {
   const {
     description,
-    previewImageData,
+    previewImageUrls,
     metadata,
     productType,
     title
@@ -41,7 +41,7 @@ function* createDesign() {
 
   const design = yield ProductDesignsDAO.create({
     description,
-    previewImageData,
+    previewImageUrls,
     metadata,
     productType,
     title,
@@ -56,7 +56,7 @@ function* createDesign() {
 function* updateDesign() {
   const {
     description,
-    previewImageData,
+    previewImageUrls,
     metadata,
     productType,
     title
@@ -66,7 +66,7 @@ function* updateDesign() {
     this.params.designId,
     {
       description,
-      previewImageData,
+      previewImageUrls,
       metadata,
       productType,
       title

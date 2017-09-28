@@ -14,9 +14,8 @@ class ProductDesign {
     this.metadata = row.metadata;
     this.userId = row.user_id;
 
-    // SVG representation of a preview of the design. Managed by the client for
-    // now.
-    this.previewImageData = row.preview_image_data;
+    // An array of URLs
+    this.previewImageUrls = row.preview_image_urls;
   }
 }
 

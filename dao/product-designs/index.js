@@ -17,7 +17,7 @@ function create(data) {
       description: data.description,
       product_type: data.productType,
       metadata: data.metadata,
-      preview_image_data: data.previewImageData,
+      preview_image_urls: JSON.stringify(data.previewImageUrls),
       title: data.title || '',
       user_id: data.userId,
       id: uuid.v4()
@@ -43,7 +43,7 @@ function update(productDesignId, data) {
     .update(compact({
       title: data.title,
       metadata: data.metadata,
-      preview_image_data: data.previewImageData
+      preview_image_urls: JSON.stringify(data.previewImageUrls)
     }), '*')
     .then(first)
     .then(instantiate);
