@@ -31,6 +31,7 @@ const keyNamesByColumnName = {
   roll_width_cm: 'rollWidthCm',
   preferred_width_unit: 'preferredWidthUnit',
   weave_type: 'weaveType',
+  setup_cost_cents: 'setupCostCents',
 
   // suggested types of garments
   end_use: 'endUse',
