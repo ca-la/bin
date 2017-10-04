@@ -1,22 +1,41 @@
 'use strict';
 
 const { requireProperties } = require('../services/require-properties');
+const DataMapper = require('../services/data-mapper');
+
+const keyNamesByColumnName = {
+  id: 'id',
+  created_at: 'createdAt',
+  deleted_at: 'deletedAt',
+  design_id: 'designId',
+
+  // As of 2017-10-03, panel IDs are still created client-side and stored in
+  // freeform JSON, so there's not yet DB-level enforcement of foreign keys.
+  panel_id: 'panelId',
+  option_id: 'optionId',
+  units_required_per_garment: 'unitsRequiredPerGarment',
+  fabric_dye_process_name: 'fabricDyeProcessName',
+  fabric_dye_process_color: 'fabricDyeProcessColor',
+  fabric_wash_process_name: 'fabricWashProcessName',
+  fabric_custom_process_names: 'fabricCustomProcessNames',
+  garment_component_name: 'garmentComponentName'
+};
+
+const dataMapper = new DataMapper(keyNamesByColumnName);
 
 class ProductDesignSelectedOption {
   constructor(row) {
     requireProperties(row, 'id');
 
-    this.id = row.id;
-    this.createdAt = new Date(row.created_at);
-    this.deletedAt = row.deleted_at && new Date(row.deleted_at);
-    this.designId = row.design_id;
+    const data = dataMapper.rowDataToUserData(row);
 
-    // As of 2017-08-28, panel IDs are created client-side and stored in
-    // freeform JSON, so there's no DB-level enforcement of foreign keys.
-    this.panelId = row.panel_id;
-    this.optionId = row.option_id;
-    this.unitsRequiredPerGarment = row.units_required_per_garment;
+    Object.assign(this, data, {
+      createdAt: new Date(row.created_at),
+      deletedAt: row.deleted_at && new Date(row.deleted_at)
+    });
   }
 }
+
+ProductDesignSelectedOption.dataMapper = dataMapper;
 
 module.exports = ProductDesignSelectedOption;

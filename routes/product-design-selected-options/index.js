@@ -12,6 +12,18 @@ const User = require('../../domain-objects/user');
 
 const router = new Router();
 
+const ALLOWED_ATTRS = [
+  'designId',
+  'panelId',
+  'optionId',
+  'unitsRequiredPerGarment',
+  'fabricDyeProcessName',
+  'fabricDyeProcessColor',
+  'fabricWashProcessName',
+  'fabricCustomProcessNames',
+  'garmentComponentName'
+];
+
 function* canAccessSelectedOption(next) {
   const selectedOption = yield ProductDesignSelectedOptionsDAO.findById(
     this.params.optionId
@@ -31,12 +43,7 @@ function* canAccessSelectedOption(next) {
 }
 
 function* create() {
-  const allowedAttrs = pick(this.request.body,
-    'designId',
-    'panelId',
-    'optionId',
-    'unitsRequiredPerGarment'
-  );
+  const allowedAttrs = pick(this.request.body, ALLOWED_ATTRS);
 
   const attrs = Object.assign({}, allowedAttrs, {
     userId: this.state.userId
@@ -68,11 +75,7 @@ function* deleteSelectedOption() {
 }
 
 function* update() {
-  const allowedAttrs = pick(this.request.body,
-    'panelId',
-    'optionId',
-    'unitsRequiredPerGarment'
-  );
+  const allowedAttrs = pick(this.request.body, ALLOWED_ATTRS);
 
   const updated = yield ProductDesignSelectedOptionsDAO.update(
     this.params.optionId,
