@@ -45,11 +45,7 @@ function* canAccessSelectedOption(next) {
 function* create() {
   const allowedAttrs = pick(this.request.body, ALLOWED_ATTRS);
 
-  const attrs = Object.assign({}, allowedAttrs, {
-    userId: this.state.userId
-  });
-
-  const option = yield ProductDesignSelectedOptionsDAO.create(attrs)
+  const option = yield ProductDesignSelectedOptionsDAO.create(allowedAttrs)
     .catch(InvalidDataError, err => this.throw(404, err));
 
   this.body = option;
