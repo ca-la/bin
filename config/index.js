@@ -7,7 +7,6 @@ const {
   FEATURED_COLLECTION_LISTS_PROD
 } = require('./featured');
 
-
 const envs = Object.freeze({
   LOCAL: Symbol('local'),
   PROD: Symbol('prod'),

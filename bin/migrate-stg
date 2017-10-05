@@ -6,13 +6,15 @@ if [[ $(git rev-parse --abbrev-ref HEAD) != "master" ]] ; then
   exit 1
 fi
 
-echo "Are you sure you want to migrate the STAGING db? Has your migration-only pull request been merged?"
-echo -n "Type MIGRATE if you're sure: "
-read RES
+if [[ "$1" != "--force" ]]; then
+  echo "Are you sure you want to migrate the STAGING db? Has your migration-only pull request been merged?"
+  echo -n "Type MIGRATE if you're sure: "
+  read RES
 
-if [ "$RES" != "MIGRATE" ]; then
-  echo "OK, not migrating"
-  exit 1
+  if [ "$RES" != "MIGRATE" ]; then
+    echo "OK, not migrating"
+    exit 1
+  fi
 fi
 
 DATABASE_URL=$(heroku config:get DATABASE_URL --app cala-api-stg)?ssl=true $(npm bin)/knex migrate:latest
