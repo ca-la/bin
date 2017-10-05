@@ -5,21 +5,31 @@ const ProductDesignFeaturePlacementsDAO = require('../../dao/product-design-feat
 const ProductDesignOptionsDAO = require('../../dao/product-design-options');
 const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
 
-class Row {
-  constructor({ quantity, unitPriceCents }) {
-    this.quantity = quantity;
-    this.unitPriceCents = unitPriceCents;
-    this.totalPriceCents = quantity * unitPriceCents;
+class LineItem {
+  constructor(data) {
+    this.id = data.id;
+    this.quantity = data.quantity;
+    this.unitPriceCents = data.unitPriceCents;
+    this.totalPriceCents = data.quantity * data.unitPriceCents;
   }
 }
 
 class Group {
-  constructor({ rows }) {
-    this.rows = rows;
+  constructor(data) {
+    this.lineItems = data.lineItems;
   }
 }
 
-async function calculatePricingTable(design) {
+class Summary {
+  constructor(data) {
+    this.upfrontCostcents = data.upfrontCostCents;
+    this.preprodutionCostCents = data.preproductionCostCents;
+    this.uponCompletionCostCents = data.uponCompletionCostCents;
+    this.totalProfitCents = data.totalProfitCents;
+  }
+}
+
+async function makeComputedPricingTable(design) {
   const selectedOptions = await ProductDesignSelectedOptionsDAO.findByDesignId(design.id);
   const sections = await ProductDesignSectionsDAO.findByDesignId(design.id);
   const featurePlacements = await Promise.all(
@@ -34,7 +44,8 @@ async function calculatePricingTable(design) {
   );
 }
 
-function calculatePricingTableWithOverrides(design, overrides) {
+function getFinalPricingTable(design) {
+  const computed  
 }
 
 module.exports = {

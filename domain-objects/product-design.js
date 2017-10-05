@@ -1,22 +1,45 @@
 'use strict';
 
+const DataMapper = require('../services/data-mapper');
 const { requireProperties } = require('../services/require-properties');
+
+const keyNamesByColumnName = {
+  id: 'id',
+  created_at: 'createdAt',
+  deleted_at: 'deletedAt',
+  title: 'title',
+  description: 'description',
+  product_type: 'productType',
+  metadata: 'metadata',
+  user_id: 'userId',
+
+  // string[] - urls of each section preview
+  preview_image_urls: 'previewImageUrls',
+  override_pricing_table: 'overridePricingTable',
+  computed_pricing_table: 'computedPricingTable',
+  retail_price_cents: 'retailPriceCents',
+  units_to_produce: 'unitsToProduce'
+};
+
+const dataMapper = new DataMapper(keyNamesByColumnName);
 
 class ProductDesign {
   constructor(row) {
     requireProperties(row, 'id');
 
-    this.id = row.id;
-    this.createdAt = new Date(row.created_at);
-    this.description = row.description;
-    this.title = row.title;
-    this.productType = row.product_type;
-    this.metadata = row.metadata;
-    this.userId = row.user_id;
+    const data = dataMapper.rowDataToUserData(row);
 
-    // An array of URLs
-    this.previewImageUrls = row.preview_image_urls;
+    Object.assign(this, data, {
+      createdAt: new Date(row.created_at),
+      deletedAt: row.deleted_at && new Date(row.deleted_at)
+    });
+  }
+
+  setFinalPricingTable(table) {
+    this.finalPricingTable = table;
   }
 }
+
+ProductDesign.dataMapper = dataMapper;
 
 module.exports = ProductDesign;

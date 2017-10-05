@@ -4,24 +4,22 @@ const uuid = require('node-uuid');
 const rethrow = require('pg-rethrow');
 
 const db = require('../../services/db');
-const compact = require('../../services/compact');
 const first = require('../../services/first');
 const ProductDesign = require('../../domain-objects/product-design');
 
 const instantiate = data => new ProductDesign(data);
 const maybeInstantiate = data => (data && new ProductDesign(data)) || null;
 
+const { dataMapper } = ProductDesign;
+
 function create(data) {
+  const rowData = Object.assign({}, dataMapper.userDataToRowData(data), {
+    id: uuid.v4(),
+    preview_image_urls: JSON.stringify(data.previewImageUrls)
+  });
+
   return db('product_designs')
-    .insert({
-      description: data.description,
-      product_type: data.productType,
-      metadata: data.metadata,
-      preview_image_urls: JSON.stringify(data.previewImageUrls),
-      title: data.title || '',
-      user_id: data.userId,
-      id: uuid.v4()
-    }, '*')
+    .insert(rowData, '*')
     .catch(rethrow)
     .then(first)
     .then(instantiate);
@@ -38,13 +36,13 @@ function deleteById(productDesignId) {
 }
 
 function update(productDesignId, data) {
+  const rowData = Object.assign({}, dataMapper.userDataToRowData(data), {
+    preview_image_urls: JSON.stringify(data.previewImageUrls)
+  });
+
   return db('product_designs')
     .where({ id: productDesignId, deleted_at: null })
-    .update(compact({
-      title: data.title,
-      metadata: data.metadata,
-      preview_image_urls: JSON.stringify(data.previewImageUrls)
-    }), '*')
+    .update(rowData, '*')
     .then(first)
     .then(instantiate);
 }
