@@ -12,6 +12,7 @@ const ProductDesignSectionAnnotationsDAO = require('../../dao/product-design-sec
 const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
 const requireAuth = require('../../middleware/require-auth');
 const UsersDAO = require('../../dao/users');
+const { getFinalPricingTable } = require('../../services/pricing-table');
 
 const router = new Router();
 
@@ -27,6 +28,14 @@ function* getDesign() {
   const design = yield ProductDesignsDAO.findById(this.params.designId);
 
   this.body = design;
+  this.status = 200;
+}
+
+function* getDesignPricing() {
+  const design = yield ProductDesignsDAO.findById(this.params.designId);
+
+  const pricingTable = yield getFinalPricingTable(design);
+  this.body = pricingTable;
   this.status = 200;
 }
 
@@ -230,6 +239,7 @@ router.post('/', requireAuth, createDesign);
 router.get('/', requireAuth, getDesigns);
 router.patch('/:designId', requireAuth, canAccessDesign, updateDesign);
 router.get('/:designId', requireAuth, canAccessDesign, getDesign);
+router.get('/:designId/pricing', requireAuth, canAccessDesign, getDesignPricing);
 router.del('/:designId', requireAuth, canAccessDesign, deleteDesign);
 router.get('/:designId/sections', requireAuth, canAccessDesign, getSections);
 router.post('/:designId/sections', requireAuth, canAccessDesign, createSection);

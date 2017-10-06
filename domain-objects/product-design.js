@@ -34,10 +34,6 @@ class ProductDesign {
       deletedAt: row.deleted_at && new Date(row.deleted_at)
     });
   }
-
-  setFinalPricingTable(table) {
-    this.finalPricingTable = table;
-  }
 }
 
 ProductDesign.dataMapper = dataMapper;
