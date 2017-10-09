@@ -39,7 +39,7 @@ const pricing = {
   },
 
   // Based on the number of units they're doing AND the complexity
-  CUT_AND_SEW_COST_CENTS: [
+  PRODUCTION_CUT_AND_SEW_COST_CENTS: [
     { minUnits: 0, complexity: 0, cost: 60 * 100 },
     { minUnits: 25, complexity: 0, cost: 35 * 100 },
     { minUnits: 50, complexity: 0, cost: 21 * 100 },

@@ -63,6 +63,7 @@ class Table {
 }
 
 function mergePricingTables(computed, override) {
+  return 
 }
 
 // The total cost of all "options" (fabrics + trims) required to make one
@@ -83,6 +84,9 @@ function getTotalPatternMakingCostCents(data) {
 function getSelectedOptionDyeCostCents(data) {
   requireProperties(data, 'selectedOption');
   const { selectedOption } = data;
+
+  if () {
+  }
 }
 
 // Get the cost to do a feature placement (image print / embroidery) on each
@@ -99,7 +103,7 @@ function getFeaturePlacementSetupCostCents({ featurePlacement }) {
 }
 
 async function getComputedPricingTable(design) {
-  const { unitsToProduce } = design;
+  const { unitsToProduce, retailPriceCents } = design;
 
   const selectedOptions = await ProductDesignSelectedOptionsDAO.findByDesignId(design.id);
   const sections = await ProductDesignSectionsDAO.findByDesignId(design.id);
@@ -113,8 +117,8 @@ async function getComputedPricingTable(design) {
   const patternMakingCostCents = getTotalPatternMakingCostCents({ sections });
 
   const summary = new Summary({
-    retailPriceCents: design.retailPriceCents,
-    unitsToProduce: unitsToProduce,
+    retailPriceCents,
+    unitsToProduce,
     total
   });
 
@@ -164,6 +168,7 @@ async function getComputedPricingTable(design) {
     ]
   });
 
+  const productionSetupCosts = 
   const productionGroup = new Group({
     title: 'Production per garment',
 
