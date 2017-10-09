@@ -4,7 +4,7 @@ const ProductDesignSelectedOptionsDAO = require('../../dao/product-design-select
 const ProductDesignFeaturePlacementsDAO = require('../../dao/product-design-feature-placements');
 const ProductDesignOptionsDAO = require('../../dao/product-design-options');
 const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
-
+const requireProperties = require('../../services/require-properties');
 const pricing = require('../../config/pricing');
 
 class LineItem {
@@ -18,7 +18,7 @@ class LineItem {
   }
 
   getTotalCostCents() {
-    return data.quantity * data.unitPriceCents;
+    return this.quantity * this.unitPriceCents;
   }
 }
 
@@ -85,8 +85,22 @@ function getSelectedOptionDyeCostCents(data) {
   requireProperties(data, 'selectedOption');
   const { selectedOption } = data;
 
-  if () {
+  const hasDye = Boolean(selectedOption.fabricDyeProcessName);
+
+  if (hasDye) {
+    const dyeCost = pricing.DYE_PER_YARD_COST_CENTS * selectedOption.unitsRequiredPerGarment;
+    return dyeCost;
   }
+
+  return 0;
+}
+
+function getSelectedOptionDyeSetupCostCents(data) {
+  requireProperties(data, 'selectedOption');
+  const { selectedOption } = data;
+
+  const hasDye = Boolean(selectedOption.fabricDyeProcessName);
+  return hasDye ? pricing.DYE_SETUP_COST_CENTS : 0;
 }
 
 // Get the cost to do a feature placement (image print / embroidery) on each
@@ -168,7 +182,11 @@ async function getComputedPricingTable(design) {
     ]
   });
 
-  const productionSetupCosts = 
+  const productionSetupCosts = [
+
+  
+  ];
+
   const productionGroup = new Group({
     title: 'Production per garment',
 
