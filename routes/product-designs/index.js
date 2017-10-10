@@ -3,7 +3,6 @@
 const Router = require('koa-router');
 
 const canAccessAnnotation = require('../../middleware/can-access-annotation');
-const canAccessDesign = require('../../middleware/can-access-design');
 const canAccessSection = require('../../middleware/can-access-section');
 const InvalidDataError = require('../../errors/invalid-data');
 const ProductDesignFeaturePlacementsDAO = require('../../dao/product-design-feature-placements');
@@ -12,6 +11,7 @@ const ProductDesignSectionAnnotationsDAO = require('../../dao/product-design-sec
 const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
 const requireAuth = require('../../middleware/require-auth');
 const UsersDAO = require('../../dao/users');
+const { canAccessDesignInParam } = require('../../middleware/can-access-design');
 
 const router = new Router();
 
@@ -228,18 +228,18 @@ function* updateSectionAnnotation() {
 
 router.post('/', requireAuth, createDesign);
 router.get('/', requireAuth, getDesigns);
-router.patch('/:designId', requireAuth, canAccessDesign, updateDesign);
-router.get('/:designId', requireAuth, canAccessDesign, getDesign);
-router.del('/:designId', requireAuth, canAccessDesign, deleteDesign);
-router.get('/:designId/sections', requireAuth, canAccessDesign, getSections);
-router.post('/:designId/sections', requireAuth, canAccessDesign, createSection);
-router.del('/:designId/sections/:sectionId', requireAuth, canAccessDesign, deleteSection);
-router.patch('/:designId/sections/:sectionId', requireAuth, canAccessDesign, canAccessSection, updateSection);
-router.get('/:designId/sections/:sectionId/feature-placements', requireAuth, canAccessDesign, canAccessSection, getSectionFeaturePlacements);
-router.put('/:designId/sections/:sectionId/feature-placements', requireAuth, canAccessDesign, canAccessSection, replaceSectionFeaturePlacements);
-router.get('/:designId/sections/:sectionId/annotations', requireAuth, canAccessDesign, canAccessSection, getSectionAnnotations);
-router.post('/:designId/sections/:sectionId/annotations', requireAuth, canAccessDesign, canAccessSection, createSectionAnnotation);
-router.del('/:designId/sections/:sectionId/annotations/:annotationId', requireAuth, canAccessDesign, canAccessSection, canAccessAnnotation, deleteSectionAnnotation);
-router.patch('/:designId/sections/:sectionId/annotations/:annotationId', requireAuth, canAccessDesign, canAccessSection, canAccessAnnotation, updateSectionAnnotation);
+router.patch('/:designId', requireAuth, canAccessDesignInParam, updateDesign);
+router.get('/:designId', requireAuth, canAccessDesignInParam, getDesign);
+router.del('/:designId', requireAuth, canAccessDesignInParam, deleteDesign);
+router.get('/:designId/sections', requireAuth, canAccessDesignInParam, getSections);
+router.post('/:designId/sections', requireAuth, canAccessDesignInParam, createSection);
+router.del('/:designId/sections/:sectionId', requireAuth, canAccessDesignInParam, deleteSection);
+router.patch('/:designId/sections/:sectionId', requireAuth, canAccessDesignInParam, canAccessSection, updateSection);
+router.get('/:designId/sections/:sectionId/feature-placements', requireAuth, canAccessDesignInParam, canAccessSection, getSectionFeaturePlacements);
+router.put('/:designId/sections/:sectionId/feature-placements', requireAuth, canAccessDesignInParam, canAccessSection, replaceSectionFeaturePlacements);
+router.get('/:designId/sections/:sectionId/annotations', requireAuth, canAccessDesignInParam, canAccessSection, getSectionAnnotations);
+router.post('/:designId/sections/:sectionId/annotations', requireAuth, canAccessDesignInParam, canAccessSection, createSectionAnnotation);
+router.del('/:designId/sections/:sectionId/annotations/:annotationId', requireAuth, canAccessDesignInParam, canAccessSection, canAccessAnnotation, deleteSectionAnnotation);
+router.patch('/:designId/sections/:sectionId/annotations/:annotationId', requireAuth, canAccessDesignInParam, canAccessSection, canAccessAnnotation, updateSectionAnnotation);
 
 module.exports = router.routes();

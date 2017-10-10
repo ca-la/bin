@@ -24,6 +24,10 @@ class ProductDesignCollaborator {
       deletedAt: row.deleted_at && new Date(row.deleted_at)
     });
   }
+
+  setUser(user) {
+    this.user = user;
+  }
 }
 
 ProductDesignCollaborator.dataMapper = dataMapper;

@@ -20,16 +20,14 @@ async function addDesignCollaborator(designId, email, role) {
   const user = await UsersDAO.findByEmail(email);
 
   if (user) {
-    await ProductDesignCollaboratorsDAO.create({
+    return await ProductDesignCollaboratorsDAO.create({
       designId,
       role,
       userId: user.id
     });
-
-    return;
   }
 
-  await ProductDesignCollaboratorsDAO.create({
+  const collaborator = await ProductDesignCollaboratorsDAO.create({
     designId,
     role,
     userEmail: email
@@ -41,6 +39,8 @@ async function addDesignCollaborator(designId, email, role) {
     `Someone has invited you to collaborate on a garment using CALA.<br />
     To accept this invitation, follow this link: https://studio.ca.la`
   );
+
+  return collaborator;
 }
 
 module.exports = addDesignCollaborator;

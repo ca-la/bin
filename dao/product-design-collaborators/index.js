@@ -7,6 +7,7 @@ const compact = require('../../services/compact');
 const db = require('../../services/db');
 const first = require('../../services/first');
 const ProductDesignCollaborator = require('../../domain-objects/product-design-collaborator');
+const UsersDAO = require('../users');
 
 const instantiate = data => new ProductDesignCollaborator(data);
 
@@ -41,7 +42,20 @@ function findByDesign(designId) {
       design_id: designId
     })
     .catch(rethrow)
-    .then(collaborators => collaborators.map(instantiate));
+    .then(collaborators => collaborators.map(instantiate))
+    .then(collaborators =>
+      Promise.all(collaborators.map((collaborator) => {
+        if (collaborator.userId) {
+          return UsersDAO.findById(collaborator.userId)
+            .then((user) => {
+              collaborator.setUser(user);
+              return collaborator;
+            });
+        }
+
+        return collaborator;
+      }))
+    );
 }
 
 function findByUserId(userId) {

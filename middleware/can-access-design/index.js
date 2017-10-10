@@ -5,8 +5,8 @@ const ProductDesignsDAO = require('../../dao/product-designs');
 const ProductDesignCollaboratorsDAO = require('../../dao/product-design-collaborators');
 const User = require('../../domain-objects/user');
 
-function* canAccessDesign(next) {
-  const design = yield ProductDesignsDAO.findById(this.params.designId)
+function* canAccessDesignId(designId) {
+  const design = yield ProductDesignsDAO.findById(designId)
     .catch(InvalidDataError, err => this.throw(404, err));
 
   this.assert(design, 404);
@@ -24,8 +24,22 @@ function* canAccessDesign(next) {
   }
 
   this.state.design = design;
+}
+
+function* canAccessDesignInParam(next) {
+  yield canAccessDesignId(this.params.designId);
 
   yield next;
 }
 
-module.exports = canAccessDesign;
+function* canAccessDesignInQuery(next) {
+  yield canAccessDesignId(this.query.designId);
+
+  yield next;
+}
+
+module.exports = {
+  canAccessDesignId,
+  canAccessDesignInParam,
+  canAccessDesignInQuery
+};
