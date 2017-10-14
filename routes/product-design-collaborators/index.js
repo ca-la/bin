@@ -15,7 +15,8 @@ function* create() {
   const created = yield addDesignCollaborator(
     this.body.designId,
     this.body.userEmail,
-    this.body.role
+    this.body.role,
+    this.body.invitationMessage
   );
 
   this.status = 201;

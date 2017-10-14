@@ -7,6 +7,7 @@ create table product_design_collaborators (
   design_id uuid not null references product_designs(id),
   user_id uuid references users(id),
   user_email text,
+  invitation_message text,
   role text,
   created_at timestamp with time zone default now(),
   deleted_at timestamp with time zone

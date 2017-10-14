@@ -8,6 +8,7 @@ const keyNamesByColumnName = {
   design_id: 'designId',
   user_id: 'userId',
   user_email: 'userEmail',
+  invitation_message: 'invitationMessage',
   role: 'role'
 };
 

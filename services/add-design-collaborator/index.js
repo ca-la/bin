@@ -1,5 +1,7 @@
 'use strict';
 
+const escape = require('lodash/escape');
+
 const ProductDesignCollaboratorsDAO = require('../../dao/product-design-collaborators');
 const UsersDAO = require('../../dao/users');
 const { send } = require('../email');
@@ -16,7 +18,12 @@ const { send } = require('../email');
  * @param {String} email
  * @param {String} role
  */
-async function addDesignCollaborator(designId, email, role) {
+async function addDesignCollaborator(
+  designId,
+  email,
+  role,
+  invitationMessage
+) {
   const user = await UsersDAO.findByEmail(email);
 
   if (user) {
@@ -27,16 +34,22 @@ async function addDesignCollaborator(designId, email, role) {
     });
   }
 
+  const escapedMessage = escape(invitationMessage);
+
   const collaborator = await ProductDesignCollaboratorsDAO.create({
     designId,
     role,
-    userEmail: email
+    userEmail: email,
+    invitationMessage: escapedMessage
   });
+
+  const message = escapedMessage || 'Check out CALA!';
 
   await send(
     email,
     "You've been invited to collaborate on a garment",
-    `Someone has invited you to collaborate on a garment using CALA.<br />
+    `Someone has invited you to collaborate on a garment using CALA.<br /><br />
+    They said: ${message}<br /><br />
     To accept this invitation, follow this link: https://studio.ca.la`
   );
 
