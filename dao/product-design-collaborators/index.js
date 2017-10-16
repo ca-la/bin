@@ -14,6 +14,15 @@ const instantiate = data => new ProductDesignCollaborator(data);
 
 const { dataMapper } = ProductDesignCollaborator;
 
+async function attachUser(collaborator) {
+  if (collaborator.userId) {
+    const user = await UsersDAO.findById(collaborator.userId);
+    collaborator.setUser(user);
+  }
+
+  return collaborator;
+}
+
 function create(data) {
   const rowData = Object.assign({}, dataMapper.userDataToRowData(data), {
     id: uuid.v4()
@@ -23,6 +32,7 @@ function create(data) {
     .insert(rowData, '*')
     .then(first)
     .then(instantiate)
+    .then(attachUser)
     .catch(rethrow)
     .catch(rethrow.ERRORS.UniqueViolation, () => {
       throw new InvalidDataError('User has already been invited to this design');
@@ -36,7 +46,8 @@ function update(collaboratorId, data) {
     .where({ id: collaboratorId, deleted_at: null })
     .update(rowData, '*')
     .then(first)
-    .then(instantiate);
+    .then(instantiate)
+    .then(attachUser);
 }
 
 function findById(collaboratorId) {
@@ -54,19 +65,7 @@ function findByDesign(designId) {
     })
     .catch(rethrow)
     .then(collaborators => collaborators.map(instantiate))
-    .then(collaborators =>
-      Promise.all(collaborators.map((collaborator) => {
-        if (collaborator.userId) {
-          return UsersDAO.findById(collaborator.userId)
-            .then((user) => {
-              collaborator.setUser(user);
-              return collaborator;
-            });
-        }
-
-        return collaborator;
-      }))
-    );
+    .then(collaborators => Promise.all(collaborators.map(attachUser)));
 }
 
 function findByUserId(userId) {
@@ -76,7 +75,8 @@ function findByUserId(userId) {
       user_id: userId
     })
     .catch(rethrow)
-    .then(collaborators => collaborators.map(instantiate));
+    .then(collaborators => collaborators.map(instantiate))
+    .then(collaborators => Promise.all(collaborators.map(attachUser)));
 }
 
 function findUnclaimedByEmail(email) {
