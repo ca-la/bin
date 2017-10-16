@@ -24,7 +24,7 @@ function create(data) {
     .then(first)
     .then(instantiate)
     .catch(rethrow)
-    .catch(rethrow.ERRORS.UniqueViolation, (err) => {
+    .catch(rethrow.ERRORS.UniqueViolation, () => {
       throw new InvalidDataError('User has already been invited to this design');
     });
 }
