@@ -3,6 +3,7 @@
 const Router = require('koa-router');
 
 const addDesignCollaborator = require('../../services/add-design-collaborator');
+const InvalidDataError = require('../../errors/invalid-data');
 const ProductDesignCollaboratorsDAO = require('../../dao/product-design-collaborators');
 const requireAuth = require('../../middleware/require-auth');
 const { canAccessDesignId, canAccessDesignInQuery } = require('../../middleware/can-access-design');
@@ -12,14 +13,19 @@ const router = new Router();
 function* create() {
   const { designId, userEmail, role, invitationMessage } = this.request.body;
 
-  yield canAccessDesignId(designId);
+  yield canAccessDesignId.call(this, designId);
 
-  const created = yield addDesignCollaborator(
-    designId,
-    userEmail,
-    role,
-    invitationMessage
-  );
+  let created;
+  try {
+    created = yield addDesignCollaborator(
+      designId,
+      userEmail,
+      role,
+      invitationMessage
+    );
+  } catch (err) {
+    if (err instanceof InvalidDataError) this.throw(400, err);
+  }
 
   this.status = 201;
   this.body = created;
@@ -27,7 +33,7 @@ function* create() {
 
 function* update() {
   const collaborator = yield ProductDesignCollaboratorsDAO.findById(this.params.collaboratorId);
-  yield canAccessDesignId(collaborator.designId);
+  yield canAccessDesignId.call(this, collaborator.designId);
 
   const updated = yield ProductDesignCollaboratorsDAO.update(
     this.params.collaboratorId,
@@ -49,7 +55,7 @@ function* findByDesign() {
 
 function* deleteCollaborator() {
   const collaborator = yield ProductDesignCollaboratorsDAO.findById(this.params.collaboratorId);
-  yield canAccessDesignId(collaborator.designId);
+  yield canAccessDesignId.call(this, collaborator.designId);
 
   yield ProductDesignCollaboratorsDAO.deleteById(this.params.collaboratorId);
 

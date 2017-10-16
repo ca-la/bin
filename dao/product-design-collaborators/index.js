@@ -6,6 +6,7 @@ const compact = require('../../services/compact');
 
 const db = require('../../services/db');
 const first = require('../../services/first');
+const InvalidDataError = require('../../errors/invalid-data');
 const ProductDesignCollaborator = require('../../domain-objects/product-design-collaborator');
 const UsersDAO = require('../users');
 
@@ -20,9 +21,12 @@ function create(data) {
 
   return db('product_design_collaborators')
     .insert(rowData, '*')
-    .catch(rethrow)
     .then(first)
-    .then(instantiate);
+    .then(instantiate)
+    .catch(rethrow)
+    .catch(rethrow.ERRORS.UniqueViolation, (err) => {
+      throw new InvalidDataError('User has already been invited to this design');
+    });
 }
 
 function update(collaboratorId, data) {

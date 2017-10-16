@@ -9,7 +9,9 @@ const keyNamesByColumnName = {
   user_id: 'userId',
   user_email: 'userEmail',
   invitation_message: 'invitationMessage',
-  role: 'role'
+  role: 'role',
+  created_at: 'createdAt',
+  deleted_at: 'deletedAt'
 };
 
 const dataMapper = new DataMapper(keyNamesByColumnName);

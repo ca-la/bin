@@ -27,13 +27,13 @@ function* canAccessDesignId(designId) {
 }
 
 function* canAccessDesignInParam(next) {
-  yield canAccessDesignId.bind(this)(this.params.designId);
+  yield canAccessDesignId.call(this, this.params.designId);
 
   yield next;
 }
 
 function* canAccessDesignInQuery(next) {
-  yield canAccessDesignId.bind(this)(this.query.designId);
+  yield canAccessDesignId.call(this, this.query.designId);
 
   yield next;
 }

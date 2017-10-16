@@ -5,6 +5,7 @@ const Router = require('koa-router');
 const canAccessAnnotation = require('../../middleware/can-access-annotation');
 const canAccessSection = require('../../middleware/can-access-section');
 const InvalidDataError = require('../../errors/invalid-data');
+const ProductDesignCollaboratorsDAO = require('../../dao/product-design-collaborators');
 const ProductDesignFeaturePlacementsDAO = require('../../dao/product-design-feature-placements');
 const ProductDesignsDAO = require('../../dao/product-designs');
 const ProductDesignSectionAnnotationsDAO = require('../../dao/product-design-section-annotations');
@@ -17,9 +18,15 @@ const router = new Router();
 
 function* getDesigns() {
   this.assert(this.query.userId === this.state.userId, 403);
-  const designs = yield ProductDesignsDAO.findByUserId(this.query.userId);
 
-  this.body = designs;
+  const ownDesigns = yield ProductDesignsDAO.findByUserId(this.query.userId);
+
+  const collaborations = yield ProductDesignCollaboratorsDAO.findByUserId(this.query.userId);
+  const invitedDesigns = yield Promise.all(collaborations.map((collaboration) => {
+    return ProductDesignsDAO.findById(collaboration.designId);
+  }));
+
+  this.body = [...ownDesigns, ...invitedDesigns];
   this.status = 200;
 }
 
