@@ -17,6 +17,10 @@ class ProductDesign {
     // An array of URLs
     this.previewImageUrls = row.preview_image_urls;
   }
+
+  setOwner(owner) {
+    this.owner = owner;
+  }
 }
 
 module.exports = ProductDesign;

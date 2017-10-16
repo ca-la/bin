@@ -32,6 +32,8 @@ function* getDesigns() {
 
 function* getDesign() {
   const design = yield ProductDesignsDAO.findById(this.params.designId);
+  const owner = yield UsersDAO.findById(design.userId);
+  design.setOwner(owner);
 
   this.body = design;
   this.status = 200;
