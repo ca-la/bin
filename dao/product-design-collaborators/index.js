@@ -39,6 +39,13 @@ function update(collaboratorId, data) {
     .then(instantiate);
 }
 
+function findById(collaboratorId) {
+  return db('product_design_collaborators')
+    .where({ id: collaboratorId, deleted_at: null })
+    .then(first)
+    .then(instantiate);
+}
+
 function findByDesign(designId) {
   return db('product_design_collaborators')
     .where({
@@ -94,9 +101,10 @@ function deleteById(id) {
 
 module.exports = {
   create,
-  update,
+  deleteById,
   findByDesign,
+  findById,
   findByUserId,
   findUnclaimedByEmail,
-  deleteById
+  update
 };
