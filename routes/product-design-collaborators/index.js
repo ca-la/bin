@@ -10,13 +10,15 @@ const { canAccessDesignId, canAccessDesignInQuery } = require('../../middleware/
 const router = new Router();
 
 function* create() {
-  yield canAccessDesignId(this.body.designId);
+  const { designId, userEmail, role, invitationMessage } = this.request.body;
+
+  yield canAccessDesignId(designId);
 
   const created = yield addDesignCollaborator(
-    this.body.designId,
-    this.body.userEmail,
-    this.body.role,
-    this.body.invitationMessage
+    designId,
+    userEmail,
+    role,
+    invitationMessage
   );
 
   this.status = 201;
@@ -30,7 +32,7 @@ function* update() {
   const updated = yield ProductDesignCollaboratorsDAO.update(
     this.params.collaboratorId,
     {
-      role: this.body.role
+      role: this.request.body.role
     }
   );
 

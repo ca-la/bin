@@ -216,7 +216,7 @@ function* updateSectionAnnotation() {
   const updated = yield ProductDesignSectionAnnotationsDAO.update(
     this.params.annotationId,
     {
-      text: this.body.text
+      text: this.request.body.text
     }
   )
     .catch(InvalidDataError, err => this.throw(400, err));
