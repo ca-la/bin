@@ -3,6 +3,8 @@ machine:
     DATABASE_URL: postgres://ubuntu:@127.0.0.1:5432/circle_test
   node:
     version: 8.2.1
+  pre:
+    npm install -g npm
 
 test:
   pre:
