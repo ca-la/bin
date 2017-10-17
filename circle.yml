@@ -4,6 +4,10 @@ machine:
   node:
     version: 8.2.1
 
+dependencies:
+  pre:
+    npm install -g npm
+
 test:
   pre:
     - bin/migrate-local && bin/rollback-local && bin/migrate-local
