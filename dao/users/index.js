@@ -25,6 +25,7 @@ function isValidEmail(email) {
   return Boolean(email && email.match(/.+@.+/));
 }
 
+// TODO move this out into a new service
 function create(data, options = {}) {
   const {
     name,

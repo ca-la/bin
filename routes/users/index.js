@@ -3,6 +3,7 @@
 const Router = require('koa-router');
 
 const AddressesDAO = require('../../dao/addresses');
+const claimDesignInvitations = require('../../services/claim-design-invitations');
 const InvalidDataError = require('../../errors/invalid-data');
 const MailChimp = require('../../services/mailchimp');
 const requireAuth = require('../../middleware/require-auth');
@@ -91,6 +92,11 @@ function* createUser() {
       isComplete: scan.isComplete
     });
   }
+
+  yield claimDesignInvitations(
+    user.email,
+    user.id
+  );
 
   this.status = 201;
 

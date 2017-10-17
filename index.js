@@ -33,6 +33,7 @@ router.use('/featured', require('./routes/featured'));
 router.use('/instagram-feed', require('./routes/instagram-feed'));
 router.use('/orders', require('./routes/orders'));
 router.use('/password-resets', require('./routes/password-resets'));
+router.use('/product-design-collaborators', require('./routes/product-design-collaborators'));
 router.use('/product-design-images', require('./routes/product-design-images'));
 router.use('/product-design-options', require('./routes/product-design-options'));
 router.use('/product-design-selected-options', require('./routes/product-design-selected-options'));
