@@ -16,6 +16,12 @@ const { canAccessDesignInParam } = require('../../middleware/can-access-design')
 
 const router = new Router();
 
+async function attachDesignOwner(design) {
+  const owner = await UsersDAO.findById(design.userId);
+  design.setOwner(owner);
+  return design;
+}
+
 function* getDesigns() {
   this.assert(this.query.userId === this.state.userId, 403);
 
@@ -31,9 +37,8 @@ function* getDesigns() {
 }
 
 function* getDesign() {
-  const design = yield ProductDesignsDAO.findById(this.params.designId);
-  const owner = yield UsersDAO.findById(design.userId);
-  design.setOwner(owner);
+  let design = yield ProductDesignsDAO.findById(this.params.designId);
+  design = yield attachDesignOwner(design);
 
   this.body = design;
   this.status = 200;
@@ -48,7 +53,7 @@ function* createDesign() {
     title
   } = this.request.body;
 
-  const design = yield ProductDesignsDAO.create({
+  let design = yield ProductDesignsDAO.create({
     description,
     previewImageUrls,
     metadata,
@@ -57,6 +62,8 @@ function* createDesign() {
     userId: this.state.userId
   })
     .catch(InvalidDataError, err => this.throw(400, err));
+
+  design = yield attachDesignOwner(design);
 
   this.body = design;
   this.status = 201;
@@ -71,7 +78,7 @@ function* updateDesign() {
     title
   } = this.request.body;
 
-  const updated = yield ProductDesignsDAO.update(
+  let updated = yield ProductDesignsDAO.update(
     this.params.designId,
     {
       description,
@@ -82,6 +89,8 @@ function* updateDesign() {
     }
   )
     .catch(InvalidDataError, err => this.throw(400, err));
+
+  updated = yield attachDesignOwner(updated);
 
   this.body = updated;
   this.status = 200;
@@ -169,7 +178,7 @@ function* replaceSectionFeaturePlacements() {
   this.status = 200;
 }
 
-function attachUser(annotation) {
+function attachAnnotationUser(annotation) {
   return UsersDAO.findById(annotation.userId).then((user) => {
     annotation.setUser(user);
     return annotation;
@@ -181,7 +190,7 @@ function* getSectionAnnotations() {
     this.params.sectionId
   );
 
-  const annotationsWithUser = yield Promise.all(annotations.map(attachUser));
+  const annotationsWithUser = yield Promise.all(annotations.map(attachAnnotationUser));
 
   this.body = annotationsWithUser;
   this.status = 200;
@@ -207,7 +216,7 @@ function* createSectionAnnotation() {
   )
     .catch(InvalidDataError, err => this.throw(400, err));
 
-  const withUser = yield attachUser(created);
+  const withUser = yield attachAnnotationUser(created);
   this.body = withUser;
   this.status = 200;
 }
@@ -230,7 +239,7 @@ function* updateSectionAnnotation() {
   )
     .catch(InvalidDataError, err => this.throw(400, err));
 
-  const withUser = yield attachUser(updated);
+  const withUser = yield attachAnnotationUser(updated);
   this.body = withUser;
   this.status = 200;
 }
