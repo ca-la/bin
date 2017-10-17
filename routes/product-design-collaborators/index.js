@@ -25,6 +25,7 @@ function* create() {
     );
   } catch (err) {
     if (err instanceof InvalidDataError) this.throw(400, err);
+    throw err;
   }
 
   this.status = 201;

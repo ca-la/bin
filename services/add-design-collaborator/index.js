@@ -2,9 +2,21 @@
 
 const escape = require('lodash/escape');
 
+const ProductDesignsDAO = require('../../dao/product-designs');
 const ProductDesignCollaboratorsDAO = require('../../dao/product-design-collaborators');
+const sharingEmail = require('../../emails/sharing');
 const UsersDAO = require('../../dao/users');
 const { send } = require('../email');
+const { STUDIO_HOST } = require('../../config');
+
+function getRoleDescription(role) {
+  switch (role) {
+    case 'EDIT': return 'edit';
+    case 'COMMENT': return 'comment on';
+    case 'VIEW': return 'view';
+    default: return 'collaborate on';
+  }
+}
 
 /**
  * Add a collaborator to a design. If a user exists with this email, adds them
@@ -17,14 +29,18 @@ const { send } = require('../email');
  * @param {uuid} designId
  * @param {String} email
  * @param {String} role
+ * @param {String} unsaveInvitationMessage
  */
 async function addDesignCollaborator(
   designId,
   email,
   role,
-  invitationMessage
+  unsafeInvitationMessage
 ) {
   const user = await UsersDAO.findByEmail(email);
+
+  const design = await ProductDesignsDAO.findById(designId);
+  const inviter = await UsersDAO.findById(design.userId);
 
   if (user) {
     return await ProductDesignCollaboratorsDAO.create({
@@ -34,23 +50,31 @@ async function addDesignCollaborator(
     });
   }
 
-  const escapedMessage = escape(invitationMessage);
+  const escapedMessage = escape(unsafeInvitationMessage);
+  const invitationMessage = escapedMessage || 'Check out CALA!';
 
   const collaborator = await ProductDesignCollaboratorsDAO.create({
     designId,
     role,
     userEmail: email,
-    invitationMessage: escapedMessage
+    invitationMessage
   });
 
-  const message = escapedMessage || 'Check out CALA!';
+  const imageUrl = (design.previewImageUrls && design.previewImageUrls[0]) || '';
+
+  const senderName = inviter.name;
 
   await send(
     email,
-    "You've been invited to collaborate on a garment",
-    `Someone has invited you to collaborate on a garment using CALA.<br /><br />
-    They said: ${message}<br /><br />
-    To accept this invitation, follow this link: https://studio.ca.la`
+    `${senderName} invited you to collaborate on a garment`,
+    sharingEmail({
+      senderName: inviter.name,
+      roleDescription: getRoleDescription(role),
+      designTitle: design.title,
+      designUrl: `${STUDIO_HOST}/designs/${design.id}`,
+      invitationMessage,
+      previewImageUrl: imageUrl
+    })
   );
 
   return collaborator;
