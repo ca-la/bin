@@ -32,9 +32,11 @@ function* getDesigns() {
     return ProductDesignsDAO.findById(collaboration.designId);
   }));
 
-  // TODO THIS FILTER IS A HACK
-  // FIX ME SOON
-  this.body = [...ownDesigns, ...invitedDesigns].filter(Boolean);
+  // Deleted designs become holes in the array right now - TODO maybe clean this
+  // up via a reduce or something
+  const availableInvitedDesigns = invitedDesigns.filter(Boolean);
+
+  this.body = [...ownDesigns, ...availableInvitedDesigns];
   this.status = 200;
 }
 
