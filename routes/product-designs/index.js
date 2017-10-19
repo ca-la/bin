@@ -32,7 +32,9 @@ function* getDesigns() {
     return ProductDesignsDAO.findById(collaboration.designId);
   }));
 
-  this.body = [...ownDesigns, ...invitedDesigns];
+  // TODO THIS FILTER IS A HACK
+  // FIX ME SOON
+  this.body = [...ownDesigns, ...invitedDesigns].filter(Boolean);
   this.status = 200;
 }
 
