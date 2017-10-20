@@ -11,6 +11,7 @@ const ProductDesignCollaborator = require('../../domain-objects/product-design-c
 const UsersDAO = require('../users');
 
 const instantiate = data => new ProductDesignCollaborator(data);
+const maybeInstantiate = data => (data && new ProductDesignCollaborator(data)) || null;
 
 const { dataMapper } = ProductDesignCollaborator;
 
@@ -46,7 +47,7 @@ function update(collaboratorId, data) {
     .where({ id: collaboratorId, deleted_at: null })
     .update(rowData, '*')
     .then(first)
-    .then(instantiate)
+    .then(maybeInstantiate)
     .then(attachUser);
 }
 
@@ -54,7 +55,7 @@ function findById(collaboratorId) {
   return db('product_design_collaborators')
     .where({ id: collaboratorId, deleted_at: null })
     .then(first)
-    .then(instantiate);
+    .then(maybeInstantiate);
 }
 
 function findByDesign(designId) {
@@ -74,16 +75,16 @@ function findByUserId(userId) {
       deleted_at: null,
       user_id: userId
     })
-    .catch(rethrow)
     .then(collaborators => collaborators.map(instantiate))
-    .then(collaborators => Promise.all(collaborators.map(attachUser)));
+    .then(collaborators => Promise.all(collaborators.map(attachUser)))
+    .catch(rethrow);
 }
 
 function findUnclaimedByEmail(email) {
   return db('product_design_collaborators')
     .whereRaw('lower(product_design_collaborators.user_email) = lower(?)', [email])
-    .catch(rethrow)
-    .then(collaborators => collaborators.map(instantiate));
+    .then(collaborators => collaborators.map(instantiate))
+    .catch(rethrow);
 }
 
 function deleteById(id) {
@@ -96,7 +97,7 @@ function deleteById(id) {
       deleted_at: new Date()
     }, '*')
     .then(first)
-    .then(instantiate);
+    .then(maybeInstantiate);
 }
 
 module.exports = {
