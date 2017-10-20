@@ -660,11 +660,9 @@
                 <tbody><tr>
                     <td class="mcnCaptionRightImageContent" align="center" valign="top">
 
-
-
-                      <img alt="" src="<%= previewImageUrl %>" width="150" style="max-width:150px; box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.24), 0px 0px 4px rgba(0, 0, 0, 0.12);" class="mcnSketch">
-
-
+                      <% if (previewImageUrl) { %>
+                        <img alt="" src="<%= previewImageUrl %>" width="150" style="max-width:150px; box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.24), 0px 0px 4px rgba(0, 0, 0, 0.12);" class="mcnSketch">
+                      <% } %>
 
                     </td>
                 </tr>

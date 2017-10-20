@@ -12,8 +12,7 @@ module.exports = function sharing(data) {
     'roleDescription',
     'designTitle',
     'designUrl',
-    'invitationMessage',
-    'previewImageUrl'
+    'invitationMessage'
   );
 
   const emailHtml = fs.readFileSync(path.join(__dirname, 'template.html'), 'utf8');
