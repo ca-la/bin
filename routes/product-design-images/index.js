@@ -76,16 +76,6 @@ function* getById() {
   const image = yield ProductDesignImagesDAO.findById(this.params.imageId);
   this.assert(image, 404);
 
-  const isAuthorized = (
-    (
-      image.userId &&
-      image.userId === this.state.userId
-    ) ||
-    this.state.role === User.ROLES.admin
-  );
-
-  this.assert(isAuthorized, 403);
-
   this.body = image;
   this.status = 200;
 }

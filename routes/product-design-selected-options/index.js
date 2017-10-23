@@ -5,10 +5,9 @@ const Router = require('koa-router');
 const pick = require('lodash/pick');
 
 const InvalidDataError = require('../../errors/invalid-data');
-const ProductDesignsDAO = require('../../dao/product-designs');
 const ProductDesignSelectedOptionsDAO = require('../../dao/product-design-selected-options');
 const requireAuth = require('../../middleware/require-auth');
-const User = require('../../domain-objects/user');
+const { canAccessDesignId } = require('../../middleware/can-access-design');
 
 const router = new Router();
 
@@ -30,12 +29,7 @@ function* canAccessSelectedOption(next) {
   );
   this.assert(selectedOption, 404);
 
-  const design = yield ProductDesignsDAO.findById(selectedOption.designId);
-  this.assert(design, 500);
-  this.assert(
-    this.state.userId === design.userId ||
-    this.state.role === User.ROLES.admin
-  , 403);
+  yield canAccessDesignId.call(this, selectedOption.designId);
 
   this.state.selectedOption = selectedOption;
 
@@ -56,9 +50,7 @@ function* getByDesign() {
   const { designId } = this.query;
   this.assert(designId, 403, 'Design ID required');
 
-  const design = yield ProductDesignsDAO.findById(designId);
-  this.assert(design, 400, 'Invalid design ID');
-  this.assert(this.state.userId === design.userId, 403);
+  yield canAccessDesignId.call(this, designId);
 
   const options = yield ProductDesignSelectedOptionsDAO.findByDesignId(designId);
   this.body = options;
