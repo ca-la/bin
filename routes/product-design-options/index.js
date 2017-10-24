@@ -77,7 +77,7 @@ function* getList() {
 function* getById() {
   const option = yield ProductDesignOptionsDAO.findById(this.params.optionId);
   this.assert(option, 404);
-  this.body = option;
+  this.body = yield attachImages(option);
   this.status = 200;
 }
 
