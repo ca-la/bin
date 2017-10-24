@@ -88,7 +88,10 @@ const config = {
   API_HOST: process.env.API_HOST,
 
   // e.g. 'https://ca.la'
-  SITE_HOST: process.env.SITE_HOST
+  SITE_HOST: process.env.SITE_HOST,
+
+  // e.g. 'https://studio.ca.la'
+  STUDIO_HOST: process.env.STUDIO_HOST
 };
 
 Object.keys(config).forEach((key) => {

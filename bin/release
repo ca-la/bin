@@ -28,16 +28,15 @@ main() {
     exit 1
   fi
 
-  git fetch origin
-  git pull --rebase origin master
+  git pull --ff-only origin master
 
   npm version $release_type
 
   git push origin master --follow-tags
 
   git checkout -B production
-  git pull --rebase origin production
-  git rebase master
+  git pull --ff-only origin production
+  git merge --ff-only master
   git push origin production
 
   git checkout master

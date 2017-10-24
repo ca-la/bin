@@ -74,6 +74,13 @@ function* getList() {
   this.status = 200;
 }
 
+function* getById() {
+  const option = yield ProductDesignOptionsDAO.findById(this.params.optionId);
+  this.assert(option, 404);
+  this.body = yield attachImages(option);
+  this.status = 200;
+}
+
 function* deleteOption() {
   yield ProductDesignOptionsDAO.deleteById(this.params.optionId);
   this.status = 204;
@@ -104,6 +111,7 @@ function* update() {
 
 router.post('/', requireAuth, create);
 router.get('/', requireAuth, getList);
+router.get('/:optionId', requireAuth, getById);
 router.del('/:optionId', requireAuth, canModifyOption, deleteOption);
 router.patch('/:optionId', requireAuth, canModifyOption, update);
 

@@ -34,6 +34,10 @@ class ProductDesign {
       deletedAt: row.deleted_at && new Date(row.deleted_at)
     });
   }
+
+  setOwner(owner) {
+    this.owner = owner;
+  }
 }
 
 ProductDesign.dataMapper = dataMapper;

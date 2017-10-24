@@ -1,36 +1,17 @@
 'use strict';
 
-const qs = require('querystring');
-
 // Log timing and status for each incoming request
-
-function stringify(obj) {
-  const escaped = {};
-
-  Object.keys(obj).forEach((key) => {
-    escaped[key] = JSON.stringify(obj[key]);
-  });
-
-  return qs.stringify(escaped, ', ', '=', {
-    encodeURIComponent: val => val
-  });
-}
 
 function* logger(next) {
   const start = Date.now();
   yield next;
   const ms = Date.now() - start;
 
+  const ip = this.request.headers['cf-connecting-ip'] || this.request.ip;
+  const ua = this.request.headers['user-agent'];
+
   // eslint-disable-next-line no-console
-  console.log(stringify({
-    method: this.method,
-    url: this.url,
-    status: this.status,
-    responseTime: ms,
-    requestIp: this.request.ip,
-    connectingIp: this.request.headers['cf-connecting-ip'],
-    userAgent: this.request.headers['user-agent']
-  }));
+  console.log(`${this.status} ${this.method} "${this.url}" ms:${ms} ip:${ip} ua:${ua}`);
 }
 
 module.exports = logger;
