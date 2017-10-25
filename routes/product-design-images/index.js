@@ -80,8 +80,25 @@ function* getById() {
   this.status = 200;
 }
 
+function* deleteById() {
+  const image = yield ProductDesignImagesDAO.findById(this.params.imageId);
+  this.assert(image, 404);
+
+  const isAuthorized = (
+    (image.userId && (image.userId === this.state.userId)) ||
+    this.state.role === User.ROLES.admin
+  );
+
+  this.assert(isAuthorized, 403);
+
+  yield ProductDesignImagesDAO.deleteById(this.params.imageId);
+  this.body = null;
+  this.status = 200;
+}
+
 router.post('/', requireAuth, multer(), createImage);
 router.get('/', requireAuth, getList);
 router.get('/:imageId', requireAuth, getById);
+router.del('/:imageId', requireAuth, deleteById);
 
 module.exports = router.routes();
