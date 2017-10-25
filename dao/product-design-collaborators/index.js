@@ -80,6 +80,18 @@ function findByUserId(userId) {
     .catch(rethrow);
 }
 
+function findByDesignAndUser(designId, userId) {
+  return db('product_design_collaborators')
+    .where({
+      deleted_at: null,
+      user_id: userId,
+      design_id: designId
+    })
+    .then(collaborators => collaborators.map(instantiate))
+    .then(collaborators => Promise.all(collaborators.map(attachUser)))
+    .catch(rethrow);
+}
+
 function findUnclaimedByEmail(email) {
   return db('product_design_collaborators')
     .whereRaw('lower(product_design_collaborators.user_email) = lower(?)', [email])
@@ -104,6 +116,7 @@ module.exports = {
   create,
   deleteById,
   findByDesign,
+  findByDesignAndUser,
   findById,
   findByUserId,
   findUnclaimedByEmail,

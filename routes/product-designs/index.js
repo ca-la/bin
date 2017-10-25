@@ -12,7 +12,7 @@ const ProductDesignSectionAnnotationsDAO = require('../../dao/product-design-sec
 const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
 const requireAuth = require('../../middleware/require-auth');
 const UsersDAO = require('../../dao/users');
-const { getFinalPricingTable } = require('../../services/pricing-table');
+const { getComputedPricingTable, getFinalPricingTable } = require('../../services/pricing-table');
 const { canAccessDesignInParam } = require('../../middleware/can-access-design');
 
 const router = new Router();
@@ -52,7 +52,10 @@ function* getDesign() {
 function* getDesignPricing() {
   const design = yield ProductDesignsDAO.findById(this.params.designId);
 
-  const pricingTable = yield getFinalPricingTable(design);
+  const computedPricingTable = yield getComputedPricingTable(design);
+  const finalPricingTable = yield getFinalPricingTable(design, computedPricingTable);
+  const overridePricingTable = design.overridePricingTable;
+
   this.body = pricingTable;
   this.status = 200;
 }

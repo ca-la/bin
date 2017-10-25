@@ -60,7 +60,14 @@ function requirePropertiesFormatted(data, messages) {
   });
 }
 
+function assert(value, message) {
+  if (!value) {
+    throw new Error(message);
+  }
+}
+
 module.exports = {
+  assert,
   requireProperties,
   requirePropertiesFormatted
 };

@@ -1,10 +1,10 @@
 'use strict';
 
-const ProductDesignSelectedOptionsDAO = require('../../dao/product-design-selected-options');
-const ProductDesignFeaturePlacementsDAO = require('../../dao/product-design-feature-placements');
-const ProductDesignOptionsDAO = require('../../dao/product-design-options');
-const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
-const requireProperties = require('../../services/require-properties');
+// const ProductDesignSelectedOptionsDAO = require('../../dao/product-design-selected-options');
+// const ProductDesignFeaturePlacementsDAO = require('../../dao/product-design-feature-placements');
+// const ProductDesignOptionsDAO = require('../../dao/product-design-options');
+// const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
+const { requireProperties, assert } = require('../../services/require-properties');
 const pricing = require('../../config/pricing');
 
 class LineItem {
@@ -40,7 +40,7 @@ class Group {
   getTotalCostCents() {
     return this.lineItems.reduce((memo, item) =>
       memo + item.getTotalCostCents()
-    , 0);
+      , 0);
   }
 }
 
@@ -63,86 +63,88 @@ class Table {
 }
 
 function mergePricingTables(computed, override) {
-  return 
+  return override;
 }
 
 // The total cost of all "options" (fabrics + trims) required to make one
 // garment
 function getTotalPerUnitOptionCostCents(data) {
   requireProperties(data, 'selectedOptions', 'options');
-  const { selectedOptions, options } = data;
-
+  return 0;
 }
 
 // The total cost of all pattern-making in the garment. The sum of the
 // patternmaking cost of each section.
-function getTotalPatternMakingCostCents(data) {
-  requireProperties(data, 'sections');
-  const { sections } = data;
-}
+// function getTotalPatternMakingCostCents(data) {
+//   requireProperties(data, 'sections');
+// }
 
-function getSelectedOptionDyeCostCents(data) {
-  requireProperties(data, 'selectedOption');
-  const { selectedOption } = data;
+// function getSelectedOptionDyeCostCents(data) {
+//   requireProperties(data, 'selectedOption');
+//   const { selectedOption } = data;
+//
+//   const hasDye = Boolean(selectedOption.fabricDyeProcessName);
+//
+//   if (hasDye) {
+//     const dyeCost = pricing.DYE_PER_YARD_COST_CENTS * selectedOption.unitsRequiredPerGarment;
+//     return dyeCost;
+//   }
+//
+//   return 0;
+// }
 
-  const hasDye = Boolean(selectedOption.fabricDyeProcessName);
-
-  if (hasDye) {
-    const dyeCost = pricing.DYE_PER_YARD_COST_CENTS * selectedOption.unitsRequiredPerGarment;
-    return dyeCost;
-  }
-
-  return 0;
-}
-
-function getSelectedOptionDyeSetupCostCents(data) {
-  requireProperties(data, 'selectedOption');
-  const { selectedOption } = data;
-
-  const hasDye = Boolean(selectedOption.fabricDyeProcessName);
-  return hasDye ? pricing.DYE_SETUP_COST_CENTS : 0;
-}
-
-// Get the cost to do a feature placement (image print / embroidery) on each
-// garment. Either a fixed cost (stuff like screenprinting) or a per-yard cost
-// multiplied by the number of yards required (stuff like roll prints).
-function getFeaturePlacementPerUnitCostCents(data) {
-  requireProperties(data, 'featurePlacement');
-  const { featurePlacement } = data;
-}
-
-function getFeaturePlacementSetupCostCents({ featurePlacement }) {
-  requireProperties(data, 'featurePlacement');
-  const { featurePlacement } = data;
-}
+// function getSelectedOptionDyeSetupCostCents(data) {
+//   requireProperties(data, 'selectedOption');
+//   const { selectedOption } = data;
+//
+//   const hasDye = Boolean(selectedOption.fabricDyeProcessName);
+//   return hasDye ? pricing.DYE_SETUP_COST_CENTS : 0;
+// }
+//
+// // Get the cost to do a feature placement (image print / embroidery) on each
+// // garment. Either a fixed cost (stuff like screenprinting) or a per-yard cost
+// // multiplied by the number of yards required (stuff like roll prints).
+// function getFeaturePlacementPerUnitCostCents(data) {
+//   requireProperties(data, 'featurePlacement');
+//   const { featurePlacement } = data;
+//   return 0;
+// }
+//
+// function getFeaturePlacementSetupCostCents({ featurePlacement }) {
+//   requireProperties(data, 'featurePlacement');
+//   return 0;
+// }
 
 async function getComputedPricingTable(design) {
   const { unitsToProduce, retailPriceCents } = design;
 
-  const selectedOptions = await ProductDesignSelectedOptionsDAO.findByDesignId(design.id);
-  const sections = await ProductDesignSectionsDAO.findByDesignId(design.id);
+  // const selectedOptions = await ProductDesignSelectedOptionsDAO.findByDesignId(design.id);
+  // const sections = await ProductDesignSectionsDAO.findByDesignId(design.id);
 
-  const featurePlacements = await flatten(Promise.all(
-    sections.map(section =>
-      ProductDesignFeaturePlacementsDAO.findBySectionId(section.id)
-    )
-  ));
+  // const featurePlacements = await flatten(Promise.all(
+  //   sections.map(section =>
+  //     ProductDesignFeaturePlacementsDAO.findBySectionId(section.id)
+  //   )
+  // ));
 
-  const patternMakingCostCents = getTotalPatternMakingCostCents({ sections });
+  // const patternMakingCostCents = getTotalPatternMakingCostCents({ sections });
 
   const summary = new Summary({
     retailPriceCents,
     unitsToProduce,
-    total
+    upfrontCostCents: 0,
+    preProductionCostCents: 0,
+    uponCompletionCostCents: 0,
+    totalProfitCents: 0
   });
 
-  const options = await Promise.all(
-    selectedOptions.map(selectedOption =>
-      ProductDesignOptionsDAO.findById(selectedOption.optionId)
-    )
-  );
+  // const options = await Promise.all(
+  //   selectedOptions.map(selectedOption =>
+  //     ProductDesignOptionsDAO.findById(selectedOption.optionId)
+  //   )
+  // );
 
-  const perUnitOptionCostCents = getPerUnitOptionCostCents({ options, selectedOptions });
+  // const perUnitOptionCostCents = getPerUnitOptionCostCents({ options, selectedOptions });
 
   const developmentGroup = new Group({
     title: 'Development',
@@ -170,8 +172,8 @@ async function getComputedPricingTable(design) {
         title: 'First Sample Cut & Sew',
         id: 'development-sample-cut-sew-1',
         quantity: 1,
-        unitPriceCents: getSampleCutSewCostCents(patternComplexity)
-      }),
+        unitPriceCents: 0
+      })
     ]
   });
 
@@ -182,11 +184,6 @@ async function getComputedPricingTable(design) {
     ]
   });
 
-  const productionSetupCosts = [
-
-  
-  ];
-
   const productionGroup = new Group({
     title: 'Production per garment',
 
@@ -195,14 +192,14 @@ async function getComputedPricingTable(design) {
         title: 'Cut, Sew, Trim',
         id: 'production-cut-sew',
         quantity: unitsToProduce,
-        unitPriceCents: getProductionCutSewCostCents(unitsToProduce, patternComplexity)
+        unitPriceCents: 0 // getProductionCutSewCostCents(unitsToProduce, patternComplexity)
       }),
       new LineItem({
         title: 'Materials',
         id: 'production-materials',
         quantity: unitsToProduce,
         unitPriceCents: getTotalPerUnitOptionCostCents()
-      }),
+      })
       // SETUP FEES HERE
     ]
   });
@@ -271,11 +268,12 @@ async function getComputedPricingTable(design) {
   });
 }
 
-async function getFinalPricingTable(design) {
-  const computed = await getComputedPricingTable(design);
-  const override = design.overridePricingTable;
+async function getFinalPricingTable(design, computedPricingTable) {
+  assert(design, 'Missing design');
+  assert(computedPricingTable, 'Missing computed pricing table');
 
-  const merged = mergePricingTables(computed, override);
+  const override = design.overridePricingTable;
+  const merged = mergePricingTables(computedPricingTable, override);
 
   return merged;
 }

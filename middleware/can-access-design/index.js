@@ -16,14 +16,25 @@ function* canAccessDesignId(designId) {
     this.state.role === User.ROLES.admin
   );
 
-  if (!isOwnerOrAdmin) {
+  let designRole;
+
+  if (isOwnerOrAdmin) {
+    designRole = 'OWNER';
+  } else {
     this.assert(this.state.userId, 401);
 
-    const collaborators = yield ProductDesignCollaboratorsDAO.findByUserId(this.state.userId);
+    const collaborators = yield ProductDesignCollaboratorsDAO.findByDesignAndUser(
+      designId,
+      this.state.userId
+    );
+
+    designRole = collaborators[0].role;
+
     this.assert(collaborators.length >= 1, 403);
   }
 
   this.state.design = design;
+  this.state.designRole = designRole;
 }
 
 function* canAccessDesignInParam(next) {
