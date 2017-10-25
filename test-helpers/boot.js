@@ -4,7 +4,7 @@ const test = require('tape');
 
 const app = require('../index');
 
-const port = process.env.TEST_PORT || 5109;
+const port = process.env.TEST_PORT || 9001;
 
 const server = app.listen(port);
 
