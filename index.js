@@ -53,7 +53,7 @@ router.use('/zips', require('./routes/zips'));
 app.use(router.routes());
 
 if (!module.parent) {
-  const port = process.env.PORT || 5100;
+  const port = process.env.PORT || 8001;
   app.listen(port);
   // eslint-disable-next-line no-console
   console.log(`Running on :${port}`);
