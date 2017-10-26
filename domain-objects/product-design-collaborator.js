@@ -14,6 +14,14 @@ const keyNamesByColumnName = {
   deleted_at: 'deletedAt'
 };
 
+const ROLES = {
+  owner: 'OWNER',
+  edit: 'EDIT',
+  view: 'VIEW',
+  comment: 'COMMENT',
+  productionPartner: 'PRODUCTION_PARTNER'
+};
+
 const dataMapper = new DataMapper(keyNamesByColumnName);
 
 class ProductDesignCollaborator {
@@ -34,5 +42,6 @@ class ProductDesignCollaborator {
 }
 
 ProductDesignCollaborator.dataMapper = dataMapper;
+ProductDesignCollaborator.ROLES = ROLES;
 
 module.exports = ProductDesignCollaborator;

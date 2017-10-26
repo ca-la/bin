@@ -56,7 +56,14 @@ function* getDesignPricing() {
   const finalPricingTable = yield getFinalPricingTable(design, computedPricingTable);
   const overridePricingTable = design.overridePricingTable;
 
-  this.body = pricingTable;
+  const { canManagePricing } = this.state.designPermissions;
+
+  this.body = {
+    computedPricingTable: canManagePricing ? computedPricingTable : null,
+    overridePricingTable: canManagePricing ? overridePricingTable : null,
+    finalPricingTable
+  };
+
   this.status = 200;
 }
 
