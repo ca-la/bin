@@ -2,11 +2,18 @@
 
 const InvalidDataError = require('../../errors/invalid-data');
 
+function isEmptyString(val) {
+  return (
+    typeof val === 'string' &&
+    val.trim() === ''
+  );
+}
+
 function exists(val) {
   return (
     val !== null &&
     val !== undefined &&
-    String.prototype.trim.call(val) !== ''
+    !isEmptyString(val)
   );
 }
 

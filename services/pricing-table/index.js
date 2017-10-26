@@ -1,11 +1,11 @@
 'use strict';
 
-// const ProductDesignSelectedOptionsDAO = require('../../dao/product-design-selected-options');
 // const ProductDesignFeaturePlacementsDAO = require('../../dao/product-design-feature-placements');
-// const ProductDesignOptionsDAO = require('../../dao/product-design-options');
 // const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
-const { requireProperties, assert } = require('../../services/require-properties');
 const pricing = require('../../config/pricing');
+const ProductDesignOptionsDAO = require('../../dao/product-design-options');
+const ProductDesignSelectedOptionsDAO = require('../../dao/product-design-selected-options');
+const { requireProperties, assert } = require('../../services/require-properties');
 
 class LineItem {
   constructor(data) {
@@ -62,8 +62,8 @@ class Table {
   }
 }
 
-function mergePricingTables(computed, override) {
-  return override;
+function mergePricingTables(computed) {
+  return computed;
 }
 
 // The total cost of all "options" (fabrics + trims) required to make one
@@ -118,7 +118,7 @@ function getTotalPerUnitOptionCostCents(data) {
 async function getComputedPricingTable(design) {
   const { unitsToProduce, retailPriceCents } = design;
 
-  // const selectedOptions = await ProductDesignSelectedOptionsDAO.findByDesignId(design.id);
+  const selectedOptions = await ProductDesignSelectedOptionsDAO.findByDesignId(design.id);
   // const sections = await ProductDesignSectionsDAO.findByDesignId(design.id);
 
   // const featurePlacements = await flatten(Promise.all(
@@ -138,11 +138,11 @@ async function getComputedPricingTable(design) {
     totalProfitCents: 0
   });
 
-  // const options = await Promise.all(
-  //   selectedOptions.map(selectedOption =>
-  //     ProductDesignOptionsDAO.findById(selectedOption.optionId)
-  //   )
-  // );
+  const options = await Promise.all(
+    selectedOptions.map(selectedOption =>
+      ProductDesignOptionsDAO.findById(selectedOption.optionId)
+    )
+  );
 
   // const perUnitOptionCostCents = getPerUnitOptionCostCents({ options, selectedOptions });
 
@@ -198,7 +198,7 @@ async function getComputedPricingTable(design) {
         title: 'Materials',
         id: 'production-materials',
         quantity: unitsToProduce,
-        unitPriceCents: getTotalPerUnitOptionCostCents()
+        unitPriceCents: getTotalPerUnitOptionCostCents({ selectedOptions, options })
       })
       // SETUP FEES HERE
     ]
