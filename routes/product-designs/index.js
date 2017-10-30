@@ -69,7 +69,7 @@ function* getDesignPricing() {
 }
 
 function* createDesign() {
-  const data = pick(this.request.body,
+  const userData = pick(this.request.body,
     'description',
     'previewImageUrls',
     'metadata',
@@ -79,10 +79,11 @@ function* createDesign() {
     'retailPriceCents'
   );
 
-  let design = yield ProductDesignsDAO.create({
-    ...data,
+  const data = Object.assign({}, userData, {
     userId: this.state.userId
-  })
+  });
+
+  let design = yield ProductDesignsDAO.create(data)
     .catch(InvalidDataError, err => this.throw(400, err));
 
   design = yield attachDesignOwner(design);
