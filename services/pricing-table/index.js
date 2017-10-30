@@ -22,19 +22,11 @@ class LineItem {
   }
 }
 
-class ProfitLineItem {
-  constructor(data) {
-    this.id = data.id;
-    this.title = data.title;
-    this.quantity = data.quantity;
-    this.totalCents = data.totalCents;
-    this.percentOfRevenue = data.percentOfRevenue;
-  }
-}
-
 class Group {
   constructor(data) {
     this.lineItems = data.lineItems;
+    this.title = data.title;
+    this.totalCostCents = this.getTotalCostCents();
   }
 
   getTotalCostCents() {
@@ -44,21 +36,30 @@ class Group {
   }
 }
 
+class ProfitGroup {
+  constructor(data) {
+    this.lineItems = data.lineItems;
+    this.title = data.title;
+    this.totalProfitCents = data.totalProfitCents;
+    this.unitProfitCents = data.unitProfitCents;
+  }
+}
+
 class Summary {
   constructor(data) {
     this.upfrontCostCents = data.upfrontCostCents;
     this.preproductionCostCents = data.preproductionCostCents;
     this.uponCompletionCostCents = data.uponCompletionCostCents;
-    this.totalProfitCents = data.totalProfitCents;
     this.unitsToProduce = data.unitsToProduce;
   }
 }
 
 class Table {
   constructor(data) {
-    requireProperties(data, 'summary', 'groups');
+    requireProperties(data, 'summary', 'groups', 'profit');
     this.summary = data.summary;
     this.groups = data.groups;
+    this.profit = data.profit;
   }
 }
 
@@ -134,8 +135,7 @@ async function getComputedPricingTable(design) {
     unitsToProduce,
     upfrontCostCents: 0,
     preProductionCostCents: 0,
-    uponCompletionCostCents: 0,
-    totalProfitCents: 0
+    uponCompletionCostCents: 0
   });
 
   const options = await Promise.all(
@@ -223,33 +223,35 @@ async function getComputedPricingTable(design) {
     ]
   });
 
-  const profitGroup = new Group({
+  const profitGroup = new ProfitGroup({
     title: 'Gross Profit per garment',
+    unitProfitCents: 0,
+    totalProfitCents: 0,
 
     lineItems: [
-      new ProfitLineItem({
+      new LineItem({
         title: 'Revenue',
         id: 'profit-revenue',
         quantity: unitsToProduce,
-        totalCents: design.retailPriceCents
+        unitPriceCents: design.retailPriceCents
       }),
-      new ProfitLineItem({
+      new LineItem({
         title: 'Development',
         quantity: 1,
         id: 'profit-development',
-        totalCents: developmentGroup.getTotalCostCents()
+        unitPriceCents: developmentGroup.getTotalCostCents()
       }),
-      new ProfitLineItem({
+      new LineItem({
         title: 'Development',
         quantity: unitsToProduce,
         id: 'profit-production',
-        totalCents: productionGroup.getTotalCostCents()
+        unitPriceCents: productionGroup.getTotalCostCents()
       }),
-      new ProfitLineItem({
+      new LineItem({
         title: 'Fulfillment',
         quantity: unitsToProduce,
         id: 'profit-fulfillment',
-        totalCents: fulfillmentGroup.getTotalCostCents()
+        unitPriceCents: fulfillmentGroup.getTotalCostCents()
       })
     ]
   });
@@ -258,13 +260,13 @@ async function getComputedPricingTable(design) {
     developmentGroup,
     materialsGroup,
     productionGroup,
-    fulfillmentGroup,
-    profitGroup
+    fulfillmentGroup
   ];
 
   return new Table({
     summary,
-    groups
+    groups,
+    profit: profitGroup
   });
 }
 
