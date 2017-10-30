@@ -1,5 +1,6 @@
 'use strict';
 
+const pick = require('lodash/pick');
 const Router = require('koa-router');
 
 const canAccessAnnotation = require('../../middleware/can-access-annotation');
@@ -68,20 +69,18 @@ function* getDesignPricing() {
 }
 
 function* createDesign() {
-  const {
-    description,
-    previewImageUrls,
-    metadata,
-    productType,
-    title
-  } = this.request.body;
+  const data = pick(this.request.body,
+    'description',
+    'previewImageUrls',
+    'metadata',
+    'productType',
+    'title',
+    'unitsToProduce',
+    'retailPriceCents'
+  );
 
   let design = yield ProductDesignsDAO.create({
-    description,
-    previewImageUrls,
-    metadata,
-    productType,
-    title,
+    ...data,
     userId: this.state.userId
   })
     .catch(InvalidDataError, err => this.throw(400, err));
@@ -93,23 +92,19 @@ function* createDesign() {
 }
 
 function* updateDesign() {
-  const {
-    description,
-    previewImageUrls,
-    metadata,
-    productType,
-    title
-  } = this.request.body;
+  const data = pick(this.request.body,
+    'description',
+    'previewImageUrls',
+    'metadata',
+    'productType',
+    'title',
+    'unitsToProduce',
+    'retailPriceCents'
+  );
 
   let updated = yield ProductDesignsDAO.update(
     this.params.designId,
-    {
-      description,
-      previewImageUrls,
-      metadata,
-      productType,
-      title
-    }
+    data
   )
     .catch(InvalidDataError, err => this.throw(400, err));
 

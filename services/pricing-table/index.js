@@ -2,6 +2,7 @@
 
 // const ProductDesignFeaturePlacementsDAO = require('../../dao/product-design-feature-placements');
 // const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
+const MissingPrerequisitesError = require('../../errors/missing-prerequisites');
 const pricing = require('../../config/pricing');
 const ProductDesignOptionsDAO = require('../../dao/product-design-options');
 const ProductDesignSelectedOptionsDAO = require('../../dao/product-design-selected-options');
@@ -14,10 +15,10 @@ class LineItem {
     this.quantity = data.quantity;
     this.unitPriceCents = data.unitPriceCents;
 
-    this.totalCostCents = this.getTotalCostCents();
+    this.totalPriceCents = this.getTotalPriceCents();
   }
 
-  getTotalCostCents() {
+  getTotalPriceCents() {
     return this.quantity * this.unitPriceCents;
   }
 }
@@ -26,12 +27,12 @@ class Group {
   constructor(data) {
     this.lineItems = data.lineItems;
     this.title = data.title;
-    this.totalCostCents = this.getTotalCostCents();
+    this.totalPriceCents = this.getTotalPriceCents();
   }
 
-  getTotalCostCents() {
+  getTotalPriceCents() {
     return this.lineItems.reduce((memo, item) =>
-      memo + item.getTotalCostCents()
+      memo + item.getTotalPriceCents()
       , 0);
   }
 }
@@ -119,6 +120,14 @@ function getTotalPerUnitOptionCostCents(data) {
 async function getComputedPricingTable(design) {
   const { unitsToProduce, retailPriceCents } = design;
 
+  if (!unitsToProduce) {
+    throw new MissingPrerequisitesError('Design must specify number of units to produce');
+  }
+
+  if (!retailPriceCents) {
+    throw new MissingPrerequisitesError('Design must specify retail price');
+  }
+
   const selectedOptions = await ProductDesignSelectedOptionsDAO.findByDesignId(design.id);
   // const sections = await ProductDesignSectionsDAO.findByDesignId(design.id);
 
@@ -148,6 +157,13 @@ async function getComputedPricingTable(design) {
 
   const developmentGroup = new Group({
     title: 'Development',
+
+    columnTitles: {
+      title: 'Process',
+      quantity: 'Quantity',
+      unitPriceCents: 'Price',
+      totalPriceCents: 'Total'
+    },
 
     lineItems: [
       new LineItem({
@@ -180,12 +196,26 @@ async function getComputedPricingTable(design) {
   const materialsGroup = new Group({
     title: 'Materials & processes per garment',
 
+    columnTitles: {
+      title: 'Material/Process',
+      quantity: 'Quantity',
+      unitPriceCents: 'Price per',
+      totalPriceCents: 'Total'
+    },
+
     lineItems: [
     ]
   });
 
   const productionGroup = new Group({
     title: 'Production per garment',
+
+    columnTitles: {
+      title: 'Name',
+      quantity: 'Quantity',
+      unitPriceCents: 'Price per',
+      totalPriceCents: 'Total'
+    },
 
     lineItems: [
       new LineItem({
@@ -206,6 +236,13 @@ async function getComputedPricingTable(design) {
 
   const fulfillmentGroup = new Group({
     title: 'Fulfillment per garment',
+
+    columnTitles: {
+      title: 'Name',
+      quantity: 'Quantity',
+      unitPriceCents: 'Price',
+      totalPriceCents: 'Total'
+    },
 
     lineItems: [
       new LineItem({
@@ -239,19 +276,19 @@ async function getComputedPricingTable(design) {
         title: 'Development',
         quantity: 1,
         id: 'profit-development',
-        unitPriceCents: developmentGroup.getTotalCostCents()
+        unitPriceCents: developmentGroup.getTotalPriceCents()
       }),
       new LineItem({
         title: 'Development',
         quantity: unitsToProduce,
         id: 'profit-production',
-        unitPriceCents: productionGroup.getTotalCostCents()
+        unitPriceCents: productionGroup.getTotalPriceCents()
       }),
       new LineItem({
         title: 'Fulfillment',
         quantity: unitsToProduce,
         id: 'profit-fulfillment',
-        unitPriceCents: fulfillmentGroup.getTotalCostCents()
+        unitPriceCents: fulfillmentGroup.getTotalPriceCents()
       })
     ]
   });
