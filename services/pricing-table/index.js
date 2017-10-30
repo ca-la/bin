@@ -49,9 +49,8 @@ class ProfitGroup {
 class Summary {
   constructor(data) {
     this.upfrontCostCents = data.upfrontCostCents;
-    this.preproductionCostCents = data.preproductionCostCents;
+    this.preProductionCostCents = data.preProductionCostCents;
     this.uponCompletionCostCents = data.uponCompletionCostCents;
-    this.unitsToProduce = data.unitsToProduce;
   }
 }
 
@@ -141,7 +140,6 @@ async function getComputedPricingTable(design) {
 
   const summary = new Summary({
     retailPriceCents,
-    unitsToProduce,
     upfrontCostCents: 0,
     preProductionCostCents: 0,
     uponCompletionCostCents: 0
