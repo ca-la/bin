@@ -28,6 +28,9 @@ class Group {
     this.lineItems = data.lineItems;
     this.title = data.title;
     this.totalPriceCents = this.getTotalPriceCents();
+    this.totalLabel = data.totalLabel;
+    this.groupPriceCents = data.groupPriceCents;
+    this.columnTitles = data.columnTitles;
   }
 
   getTotalPriceCents() {
@@ -155,6 +158,8 @@ async function getComputedPricingTable(design) {
 
   const developmentGroup = new Group({
     title: 'Development',
+    totalLabel: 'Total Development',
+    groupPriceCents: 0,
 
     columnTitles: {
       title: 'Process',
@@ -193,6 +198,8 @@ async function getComputedPricingTable(design) {
 
   const materialsGroup = new Group({
     title: 'Materials & processes per garment',
+    totalLabel: 'Total Materials per Garment',
+    groupPriceCents: 0,
 
     columnTitles: {
       title: 'Material/Process',
@@ -207,6 +214,8 @@ async function getComputedPricingTable(design) {
 
   const productionGroup = new Group({
     title: 'Production per garment',
+    totalLabel: 'Total Production',
+    groupPriceCents: 0,
 
     columnTitles: {
       title: 'Name',
@@ -234,6 +243,8 @@ async function getComputedPricingTable(design) {
 
   const fulfillmentGroup = new Group({
     title: 'Fulfillment per garment',
+    totalLabel: 'Total Fulfillment',
+    groupPriceCents: 0,
 
     columnTitles: {
       title: 'Name',

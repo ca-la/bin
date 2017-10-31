@@ -18,7 +18,9 @@ const keyNamesByColumnName = {
   override_pricing_table: 'overridePricingTable',
   computed_pricing_table: 'computedPricingTable',
   retail_price_cents: 'retailPriceCents',
-  units_to_produce: 'unitsToProduce'
+  units_to_produce: 'unitsToProduce',
+  sourcing_complexity: 'sourcingComplexity',
+  pattern_complexity: 'patternComplexity'
 };
 
 const dataMapper = new DataMapper(keyNamesByColumnName);

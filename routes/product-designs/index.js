@@ -76,7 +76,9 @@ function* createDesign() {
     'productType',
     'title',
     'unitsToProduce',
-    'retailPriceCents'
+    'retailPriceCents',
+    'sourcingComplexity',
+    'patternComplexity'
   );
 
   const data = Object.assign({}, userData, {
@@ -100,7 +102,9 @@ function* updateDesign() {
     'productType',
     'title',
     'unitsToProduce',
-    'retailPriceCents'
+    'retailPriceCents',
+    'sourcingComplexity',
+    'patternComplexity'
   );
 
   let updated = yield ProductDesignsDAO.update(
