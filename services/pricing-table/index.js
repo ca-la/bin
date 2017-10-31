@@ -150,13 +150,6 @@ async function getComputedPricingTable(design) {
 
   // const patternMakingCostCents = getTotalPatternMakingCostCents({ sections });
 
-  const summary = new Summary({
-    retailPriceCents,
-    upfrontCostCents: 0,
-    preProductionCostCents: 0,
-    uponCompletionCostCents: 0
-  });
-
   const options = await Promise.all(
     selectedOptions.map(selectedOption =>
       ProductDesignOptionsDAO.findById(selectedOption.optionId)
@@ -314,6 +307,14 @@ async function getComputedPricingTable(design) {
         unitPriceCents: fulfillmentGroup.getTotalPriceCents()
       })
     ]
+  });
+
+  const portionCost = Math.round(productionGroup.getTotalPriceCents() / 2);
+
+  const summary = new Summary({
+    upfrontCostCents: developmentGroup.getTotalPriceCents(),
+    preProductionCostCents: portionCost,
+    uponCompletionCostCents: portionCost
   });
 
   const groups = [
