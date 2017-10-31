@@ -3,8 +3,10 @@
 const uuid = require('node-uuid');
 const rethrow = require('pg-rethrow');
 
+const compact = require('../../services/compact');
 const db = require('../../services/db');
 const first = require('../../services/first');
+const InvalidDataError = require('../../errors/invalid-data');
 const ProductDesign = require('../../domain-objects/product-design');
 
 const instantiate = data => new ProductDesign(data);
@@ -40,9 +42,15 @@ function update(productDesignId, data) {
     preview_image_urls: JSON.stringify(data.previewImageUrls)
   });
 
+  const compacted = compact(rowData);
+
+  if (Object.keys(compacted).length < 1) {
+    throw new InvalidDataError('No data provided');
+  }
+
   return db('product_designs')
     .where({ id: productDesignId, deleted_at: null })
-    .update(rowData, '*')
+    .update(compacted, '*')
     .then(first)
     .then(instantiate);
 }

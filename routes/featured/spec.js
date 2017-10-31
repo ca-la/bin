@@ -3,7 +3,7 @@
 const { get } = require('../../test-helpers/http');
 const { test } = require('../../test-helpers/fresh');
 
-test('GET /featured/app-banner returns 204 when not eligible for a bnner', (t) => {
+test('GET /featured/app-banner returns 204 when not eligible for a banner', (t) => {
   return get('/featured/app-banner?appOpenCount=8&appInstalledForSeconds=50')
     .then(([response, body]) => {
       t.equal(response.status, 204);
