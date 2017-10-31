@@ -1,9 +1,9 @@
 'use strict';
 
 const pricing = {
-  // Per complexity bucket, the cost to do custom pattern-making
-  // i.e. from a user-uploaded sketch not a CALA template
-  CUSTOM_PATTERN_MAKING_COSTS_CENTS: {
+  // Per patternComplexity bucket, the cost to do custom pattern-making
+  // Complexity 0 represents the cost to modify a pre-made CALA pattern
+  PATTERN_MAKING_COST_CENTS: {
     0: 130 * 100,
     1: 260 * 100,
     2: 520 * 100,
@@ -11,15 +11,13 @@ const pricing = {
     4: 975 * 100
   },
 
-  // The cost to modify our template patterns
-  TEMPLATE_PATTERN_MAKING_COSTS_CENTS: 0,
-
   BUILTIN_FABRIC_SOURCING_COST_CENTS: 0,
 
   // The cost to source custom materials
   // Based on the Sourcing Complexity of the garment
-  CUSTOM_SOURCING_COSTS_CENTS: {
-    0: 0,
+  // Complexity 0 represents the cost for a pre-made CALA pattern
+  SOURCING_COST_CENTS: {
+    0: 1,
     1: 110 * 100,
     2: 275 * 100,
     3: 550 * 100,
@@ -82,7 +80,7 @@ const pricing = {
   ROTARY_PRINT_PER_YARD_COST_CENTS: 125,
 
   EMBROIDERY_SETUP_COST_CENTS: 50,
-  EMBROIDERY_COSTS_CENTS: {
+  EMBROIDERY_COST_CENTS: {
     15000: 11 * 100, // 15000 stitches
     30000: 21 * 100,
     60000: 42 * 100

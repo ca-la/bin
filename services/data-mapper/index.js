@@ -2,6 +2,7 @@
 
 const invert = require('lodash/invert');
 const mapKeys = require('lodash/mapKeys');
+const { logServerError } = require('../logger');
 
 /**
  * Useful helpers for converting back and forth between userland data formats
@@ -30,7 +31,14 @@ class DataMapper {
   rowDataToUserData(data) {
     return mapKeys(data, (value, key) => {
       const keyName = this.keyNamesByColumnName[key];
-      if (!keyName) throw new Error(`Undefined key name: ${key}`);
+
+      if (!keyName) {
+        // Not "breaking" since we basically just got back some extra data from
+        // the DB, but still not intended.
+        logServerError(`Undefined key name: ${key}`);
+        return key;
+      }
+
       return keyName;
     });
   }

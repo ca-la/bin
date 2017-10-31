@@ -38,6 +38,10 @@ class Group {
       memo + item.getTotalPriceCents()
       , 0);
   }
+
+  setGroupPriceCents(cents) {
+    this.groupPriceCents = cents;
+  }
 }
 
 class ProfitGroup {
@@ -120,7 +124,12 @@ function getTotalPerUnitOptionCostCents(data) {
 // }
 
 async function getComputedPricingTable(design) {
-  const { unitsToProduce, retailPriceCents } = design;
+  const {
+    unitsToProduce,
+    retailPriceCents,
+    sourcingComplexity,
+    patternComplexity
+  } = design;
 
   if (!unitsToProduce) {
     throw new MissingPrerequisitesError('Design must specify number of units to produce');
@@ -159,7 +168,6 @@ async function getComputedPricingTable(design) {
   const developmentGroup = new Group({
     title: 'Development',
     totalLabel: 'Total Development',
-    groupPriceCents: 0,
 
     columnTitles: {
       title: 'Process',
@@ -173,13 +181,13 @@ async function getComputedPricingTable(design) {
         title: 'Pattern Making',
         id: 'development-patternmaking',
         quantity: 1,
-        unitPriceCents: 0
+        unitPriceCents: pricing.PATTERN_MAKING_COST_CENTS[patternComplexity]
       }),
       new LineItem({
         title: 'Sourcing/Testing',
         id: 'development-sourcing',
         quantity: 1,
-        unitPriceCents: 0
+        unitPriceCents: pricing.SOURCING_COST_CENTS[sourcingComplexity]
       }),
       new LineItem({
         title: 'Sample Yardage & Trims',
@@ -191,15 +199,16 @@ async function getComputedPricingTable(design) {
         title: 'First Sample Cut & Sew',
         id: 'development-sample-cut-sew-1',
         quantity: 1,
-        unitPriceCents: 0
+        unitPriceCents: pricing.SAMPLE_CUT_AND_SEW_COST_CENTS[patternComplexity]
       })
     ]
   });
 
+  developmentGroup.setGroupPriceCents(developmentGroup.getTotalPriceCents());
+
   const materialsGroup = new Group({
     title: 'Materials & processes per garment',
     totalLabel: 'Total Materials per Garment',
-    groupPriceCents: 0,
 
     columnTitles: {
       title: 'Material/Process',
@@ -212,10 +221,11 @@ async function getComputedPricingTable(design) {
     ]
   });
 
+  materialsGroup.setGroupPriceCents(materialsGroup.getTotalPriceCents());
+
   const productionGroup = new Group({
     title: 'Production per garment',
     totalLabel: 'Total Production',
-    groupPriceCents: 0,
 
     columnTitles: {
       title: 'Name',
@@ -240,6 +250,8 @@ async function getComputedPricingTable(design) {
       // SETUP FEES HERE
     ]
   });
+
+  productionGroup.setGroupPriceCents(productionGroup.getTotalPriceCents());
 
   const fulfillmentGroup = new Group({
     title: 'Fulfillment per garment',
@@ -268,6 +280,8 @@ async function getComputedPricingTable(design) {
       })
     ]
   });
+
+  fulfillmentGroup.setGroupPriceCents(fulfillmentGroup.getTotalPriceCents());
 
   const profitGroup = new ProfitGroup({
     title: 'Gross Profit per garment',
