@@ -2,10 +2,12 @@
 
 const escape = require('lodash/escape');
 
-const ProductDesignsDAO = require('../../dao/product-designs');
+const InvalidDataError = require('../../errors/invalid-data');
 const ProductDesignCollaboratorsDAO = require('../../dao/product-design-collaborators');
+const ProductDesignsDAO = require('../../dao/product-designs');
 const sharingEmail = require('../../emails/sharing');
 const UsersDAO = require('../../dao/users');
+const { isValidEmail } = require('../../services/validation');
 const { send } = require('../email');
 const { STUDIO_HOST } = require('../../config');
 
@@ -37,6 +39,10 @@ async function addDesignCollaborator(
   role,
   unsafeInvitationMessage
 ) {
+  if (!isValidEmail(email)) {
+    throw new InvalidDataError('Invalid email address');
+  }
+
   const user = await UsersDAO.findByEmail(email);
 
   const design = await ProductDesignsDAO.findById(designId);

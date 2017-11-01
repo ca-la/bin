@@ -58,8 +58,16 @@ function validateAndFormatPhoneNumber(number) {
   return util.format(parsedNumber, PhoneNumberFormat.E164);
 }
 
+
+const EMAIL_PATTERN = /^[^@]+@[^@]+\.[^@]+$/;
+
+function isValidEmail(email) {
+  return EMAIL_PATTERN.test(email);
+}
+
 module.exports = {
-  validateAndFormatPhoneNumber,
+  assertRangeIfExists,
   assertTypeIfExists,
-  assertRangeIfExists
+  isValidEmail,
+  validateAndFormatPhoneNumber
 };

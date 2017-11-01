@@ -11,7 +11,7 @@ const InvalidDataError = require('../../errors/invalid-data');
 const UnassignedReferralCodesDAO = require('../unassigned-referral-codes');
 const User = require('../../domain-objects/user');
 const { hash } = require('../../services/hash');
-const { validateAndFormatPhoneNumber } = require('../../services/validation');
+const { isValidEmail, validateAndFormatPhoneNumber } = require('../../services/validation');
 
 const instantiate = data => new User(data);
 const maybeInstantiate = data => (data && new User(data)) || null;
@@ -20,10 +20,6 @@ const ERROR_CODES = {
   emailTaken: Symbol('Email taken'),
   phoneTaken: Symbol('Phone taken')
 };
-
-function isValidEmail(email) {
-  return Boolean(email && email.match(/.+@.+/));
-}
 
 // TODO move this out into a new service
 function create(data, options = {}) {

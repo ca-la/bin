@@ -1,7 +1,7 @@
 'use strict';
 
 const InvalidDataError = require('../../errors/invalid-data');
-const { validateAndFormatPhoneNumber } = require('./index');
+const { isValidEmail, validateAndFormatPhoneNumber } = require('./index');
 const { test } = require('../../test-helpers/fresh');
 
 const ok = Promise.resolve();
@@ -46,5 +46,12 @@ test('validateAndFormatPhoneNumber disallows invalid numbers', (t) => {
     InvalidDataError
   );
 
+  return ok;
+});
+
+test('isValidEmail naively validates emails', (t) => {
+  t.equal(isValidEmail('d@ca.la'), true);
+  t.equal(isValidEmail('someone.special+alot@example.com'), true);
+  t.equal(isValidEmail('dylan@cala'), false);
   return ok;
 });
