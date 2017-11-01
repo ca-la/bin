@@ -1,7 +1,9 @@
 'use strict';
 
-// const ProductDesignFeaturePlacementsDAO = require('../../dao/product-design-feature-placements');
-// const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
+const flatten = require('lodash/flatten');
+
+const ProductDesignFeaturePlacementsDAO = require('../../dao/product-design-feature-placements');
+const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
 const MissingPrerequisitesError = require('../../errors/missing-prerequisites');
 const getCutAndSewCost = require('../../services/get-cut-and-sew-cost');
 const pricing = require('../../config/pricing');
@@ -48,6 +50,11 @@ class Group {
 
   setGroupPriceCents(cents) {
     this.groupPriceCents = cents;
+  }
+
+  addLineItem(lineItem) {
+    const lineItems = (this.lineItems || []).concat(lineItem);
+    this.lineItems = lineItems;
   }
 }
 
@@ -102,27 +109,27 @@ function getTotalPerUnitOptionCostCents(data) {
 //   return 0;
 // }
 
-// function getSelectedOptionDyeSetupCostCents(data) {
-//   requireProperties(data, 'selectedOption');
-//   const { selectedOption } = data;
-//
-//   const hasDye = Boolean(selectedOption.fabricDyeProcessName);
-//   return hasDye ? pricing.DYE_SETUP_COST_CENTS : 0;
-// }
-//
-// // Get the cost to do a feature placement (image print / embroidery) on each
-// // garment. Either a fixed cost (stuff like screenprinting) or a per-yard cost
-// // multiplied by the number of yards required (stuff like roll prints).
+function getSelectedOptionDyeSetupCostCents(data) {
+  requireProperties(data, 'selectedOption');
+  const { selectedOption } = data;
+
+  const hasDye = Boolean(selectedOption.fabricDyeProcessName);
+  return hasDye ? pricing.DYE_SETUP_COST_CENTS : 0;
+}
+
+// Get the cost to do a feature placement (image print / embroidery) on each
+// garment. Either a fixed cost (stuff like screenprinting) or a per-yard cost
+// multiplied by the number of yards required (stuff like roll prints).
 // function getFeaturePlacementPerUnitCostCents(data) {
 //   requireProperties(data, 'featurePlacement');
 //   const { featurePlacement } = data;
 //   return 0;
 // }
-//
-// function getFeaturePlacementSetupCostCents({ featurePlacement }) {
-//   requireProperties(data, 'featurePlacement');
-//   return 0;
-// }
+
+function getFeaturePlacementSetupCostCents(data) {
+  requireProperties(data, 'featurePlacement');
+  return 0;
+}
 
 async function getComputedPricingTable(design) {
   const {
@@ -141,21 +148,19 @@ async function getComputedPricingTable(design) {
   }
 
   const selectedOptions = await ProductDesignSelectedOptionsDAO.findByDesignId(design.id);
-  // const sections = await ProductDesignSectionsDAO.findByDesignId(design.id);
+  const sections = await ProductDesignSectionsDAO.findByDesignId(design.id);
 
-  // const featurePlacements = await flatten(Promise.all(
-  //   sections.map(section =>
-  //     ProductDesignFeaturePlacementsDAO.findBySectionId(section.id)
-  //   )
-  // ));
+  const featurePlacements = await flatten(Promise.all(
+    sections.map(section =>
+      ProductDesignFeaturePlacementsDAO.findBySectionId(section.id)
+    )
+  ));
 
   const options = await Promise.all(
     selectedOptions.map(selectedOption =>
       ProductDesignOptionsDAO.findById(selectedOption.optionId)
     )
   );
-
-  // const perUnitOptionCostCents = getPerUnitOptionCostCents({ options, selectedOptions });
 
   const developmentGroup = new Group({
     title: 'Development',
@@ -241,6 +246,30 @@ async function getComputedPricingTable(design) {
       })
       // SETUP FEES HERE
     ]
+  });
+
+  selectedOptions.forEach((selectedOption) => {
+    const cost = getSelectedOptionDyeSetupCostCents({ selectedOption });
+
+    if (cost > 0) {
+      productionGroup.addLineItem(new LineItem({
+        title: `${selectedOption.fabricDyeProcessName} — Setup`,
+        id: `${selectedOption.id}-setup`,
+        quantity: 1,
+        unitPriceCents: cost
+      }));
+    }
+  });
+
+  featurePlacements.forEach((featurePlacement) => {
+    const cost = getFeaturePlacementSetupCostCents({ featurePlacement });
+
+    productionGroup.addLineItem(new LineItem({
+      title: 'Feature - Setup',
+      id: `${featurePlacement.id}-setup`,
+      quantity: 1,
+      unitPriceCents: cost
+    }));
   });
 
   productionGroup.setGroupPriceCents(productionGroup.getUnitPriceCents());
