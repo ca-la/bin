@@ -67,6 +67,7 @@ class Summary {
     this.upfrontCostCents = data.upfrontCostCents;
     this.preProductionCostCents = data.preProductionCostCents;
     this.uponCompletionCostCents = data.uponCompletionCostCents;
+    this.fulfillmentCostCents = data.fulfillmentCostCents;
   }
 }
 
@@ -83,47 +84,73 @@ function mergePricingTables(computed) {
   return computed;
 }
 
-// The total cost of all "options" (fabrics + trims) required to make one
-// garment
-function getTotalPerUnitOptionCostCents(data) {
-  requireProperties(data, 'selectedOptions', 'options');
-  return 0;
+function hasDye(selectedOption) {
+  return Boolean(selectedOption.fabricDyeProcessName);
 }
 
-// function getSelectedOptionDyeCostCents(data) {
-//   requireProperties(data, 'selectedOption');
-//   const { selectedOption } = data;
-//
-//   const hasDye = Boolean(selectedOption.fabricDyeProcessName);
-//
-//   if (hasDye) {
-//     const dyeCost = pricing.DYE_PER_YARD_COST_CENTS * selectedOption.unitsRequiredPerGarment;
-//     return dyeCost;
-//   }
-//
-//   return 0;
-// }
+function hasWash(selectedOption) {
+  return Boolean(selectedOption.fabricWashProcessName);
+}
 
-function getSelectedOptionDyeSetupCostCents(data) {
+function getOptionSetupCostCents(data) {
+  requireProperties(data, 'selectedOption', 'option');
+  const { option } = data;
+
+  return option.setupCostCents || 0;
+}
+
+function getOptionPerUnitCostCents(data) {
+  requireProperties(data, 'selectedOption', 'option');
+  const { option } = data;
+
+  return option.perMeterCostCents || option.unitCostCents || 0;
+}
+
+function getDyeCostCents(data) {
   requireProperties(data, 'selectedOption');
   const { selectedOption } = data;
 
-  const hasDye = Boolean(selectedOption.fabricDyeProcessName);
-  return hasDye ? pricing.DYE_SETUP_COST_CENTS : 0;
+  if (!hasDye(selectedOption)) { return 0; }
+  return pricing.DYE_PER_YARD_COST_CENTS * selectedOption.unitsRequiredPerGarment;
+}
+
+function getWashCostCents(data) {
+  requireProperties(data, 'selectedOption');
+  const { selectedOption } = data;
+
+  if (!hasDye(selectedOption)) { return 0; }
+  return pricing.DYE_PER_YARD_COST_CENTS * selectedOption.unitsRequiredPerGarment;
+}
+
+function getDyeSetupCostCents(data) {
+  requireProperties(data, 'selectedOption');
+  const { selectedOption } = data;
+
+  return hasDye(selectedOption) ? pricing.DYE_SETUP_COST_CENTS : 0;
+}
+
+function getWashSetupCostCents(data) {
+  requireProperties(data, 'selectedOption');
+  const { selectedOption } = data;
+
+  return hasWash(selectedOption) ? pricing.WASH_SETUP_COST_CENTS : 0;
 }
 
 // Get the cost to do a feature placement (image print / embroidery) on each
 // garment. Either a fixed cost (stuff like screenprinting) or a per-yard cost
 // multiplied by the number of yards required (stuff like roll prints).
-// function getFeaturePlacementPerUnitCostCents(data) {
-//   requireProperties(data, 'featurePlacement');
-//   const { featurePlacement } = data;
-//   return 0;
-// }
+function getFeaturePlacementCostCents(data) {
+  requireProperties(data, 'featurePlacement');
+
+  // TODO fix
+  return pricing.SCREEN_PRINT_PER_GARMENT_COST_CENTS;
+}
 
 function getFeaturePlacementSetupCostCents(data) {
   requireProperties(data, 'featurePlacement');
-  return 0;
+
+  // TODO fix
+  return pricing.SCREEN_PRINT_SETUP_COST_CENTS;
 }
 
 async function getComputedPricingTable(design) {
@@ -142,7 +169,18 @@ async function getComputedPricingTable(design) {
     throw new MissingPrerequisitesError('Design must specify retail price');
   }
 
-  const selectedOptions = await ProductDesignSelectedOptionsDAO.findByDesignId(design.id);
+
+  function attachOption(selectedOption) {
+    return ProductDesignOptionsDAO.findById(selectedOption.optionId)
+      .then((option) => {
+        selectedOption.setOption(option);
+        return selectedOption;
+      });
+  }
+
+  const selectedBare = await ProductDesignSelectedOptionsDAO.findByDesignId(design.id);
+  const selectedOptions = await Promise.all(selectedBare.map(attachOption));
+
   const sections = await ProductDesignSectionsDAO.findByDesignId(design.id);
 
   const featurePlacements = await flatten(Promise.all(
@@ -150,12 +188,6 @@ async function getComputedPricingTable(design) {
       ProductDesignFeaturePlacementsDAO.findBySectionId(section.id)
     )
   ));
-
-  const options = await Promise.all(
-    selectedOptions.map(selectedOption =>
-      ProductDesignOptionsDAO.findById(selectedOption.optionId)
-    )
-  );
 
   const developmentGroup = new Group({
     title: 'Development',
@@ -196,11 +228,49 @@ async function getComputedPricingTable(design) {
     ]
   });
 
+  selectedOptions.forEach((selectedOption) => {
+    if (hasDye(selectedOption)) {
+      const dyeSetupCost = getDyeSetupCostCents({ selectedOption });
+      const dyeCost = getDyeCostCents({ selectedOption });
+
+      developmentGroup.addLineItem(new LineItem({
+        title: `${selectedOption.fabricDyeProcessName} — Dye sample`,
+        id: `${selectedOption.id}-dye-sample`,
+        quantity: 1,
+        unitPriceCents: dyeSetupCost + dyeCost
+      }));
+    }
+
+    if (hasWash(selectedOption)) {
+      const washSetupCost = getWashSetupCostCents({ selectedOption });
+      const washCost = getWashCostCents({ selectedOption });
+
+      developmentGroup.addLineItem(new LineItem({
+        title: `${selectedOption.fabricWashProcessName} — Wash sample`,
+        id: `${selectedOption.id}-wash-sample`,
+        quantity: 1,
+        unitPriceCents: washSetupCost + washCost
+      }));
+    }
+  });
+
+  featurePlacements.forEach((featurePlacement) => {
+    const setupCost = getFeaturePlacementSetupCostCents({ featurePlacement });
+    const cost = getFeaturePlacementCostCents({ featurePlacement });
+
+    developmentGroup.addLineItem(new LineItem({
+      title: 'Print - Sample',
+      id: `${featurePlacement.id}-sample`,
+      quantity: 1,
+      unitPriceCents: setupCost + cost
+    }));
+  });
+
   developmentGroup.setGroupPriceCents(developmentGroup.getTotalPriceCents());
 
   const materialsGroup = new Group({
     title: 'Materials & processes per garment',
-    totalLabel: 'Total Materials per Garment',
+    totalLabel: 'Total Materials & Processes per garment',
 
     columnTitles: {
       title: 'Material/Process',
@@ -213,8 +283,51 @@ async function getComputedPricingTable(design) {
     ]
   });
 
-  const materialsPerUnit = Math.round(materialsGroup.getTotalPriceCents() / unitsToProduce);
-  materialsGroup.setGroupPriceCents(materialsPerUnit);
+  selectedOptions.forEach((selectedOption) => {
+    const { option } = selectedOption;
+
+    materialsGroup.addLineItem(new LineItem({
+      title: option.title,
+      id: `${selectedOption.id}-fabric-or-trim`,
+      quantity: selectedOption.unitsRequiredPerGarment,
+      unitPriceCents: getOptionPerUnitCostCents({ option, selectedOption })
+    }));
+
+    if (hasDye(selectedOption)) {
+      const dyeCost = getDyeCostCents({ selectedOption });
+
+      materialsGroup.addLineItem(new LineItem({
+        title: `${selectedOption.fabricDyeProcessName} — Dye`,
+        id: `${selectedOption.id}-dye-sample`,
+        quantity: 1,
+        unitPriceCents: dyeCost
+      }));
+    }
+
+    if (hasWash(selectedOption)) {
+      const washCost = getWashCostCents({ selectedOption });
+
+      materialsGroup.addLineItem(new LineItem({
+        title: `${selectedOption.fabricWashProcessName} — Wash`,
+        id: `${selectedOption.id}-wash-sample`,
+        quantity: 1,
+        unitPriceCents: washCost
+      }));
+    }
+  });
+
+  featurePlacements.forEach((featurePlacement) => {
+    const cost = getFeaturePlacementCostCents({ featurePlacement });
+
+    materialsGroup.addLineItem(new LineItem({
+      title: 'Print',
+      id: `${featurePlacement.id}-print`,
+      quantity: 1,
+      unitPriceCents: cost
+    }));
+  });
+
+  materialsGroup.setGroupPriceCents(materialsGroup.getTotalPriceCents());
 
   const productionGroup = new Group({
     title: 'Production per garment',
@@ -238,21 +351,40 @@ async function getComputedPricingTable(design) {
         title: 'Materials',
         id: 'production-materials',
         quantity: unitsToProduce,
-        unitPriceCents: getTotalPerUnitOptionCostCents({ selectedOptions, options })
+        unitPriceCents: materialsGroup.getTotalPriceCents()
       })
-      // SETUP FEES HERE
     ]
   });
 
   selectedOptions.forEach((selectedOption) => {
-    const cost = getSelectedOptionDyeSetupCostCents({ selectedOption });
+    const { option } = selectedOption;
 
-    if (cost > 0) {
+    productionGroup.addLineItem(new LineItem({
+      title: `${option.title} — Setup`,
+      id: `${selectedOption.id}-setup`,
+      quantity: 1,
+      unitPriceCents: getOptionSetupCostCents({ option, selectedOption })
+    }));
+
+    if (hasDye(selectedOption)) {
+      const dyeSetupCost = getDyeSetupCostCents({ selectedOption });
+
       productionGroup.addLineItem(new LineItem({
         title: `${selectedOption.fabricDyeProcessName} — Setup`,
-        id: `${selectedOption.id}-setup`,
+        id: `${selectedOption.id}-dye-setup`,
         quantity: 1,
-        unitPriceCents: cost
+        unitPriceCents: dyeSetupCost
+      }));
+    }
+
+    if (hasWash(selectedOption)) {
+      const washSetupCost = getWashSetupCostCents({ selectedOption });
+
+      productionGroup.addLineItem(new LineItem({
+        title: `${selectedOption.fabricWashProcessName} — Setup`,
+        id: `${selectedOption.id}-wash-setup`,
+        quantity: 1,
+        unitPriceCents: washSetupCost
       }));
     }
   });
@@ -261,7 +393,7 @@ async function getComputedPricingTable(design) {
     const cost = getFeaturePlacementSetupCostCents({ featurePlacement });
 
     productionGroup.addLineItem(new LineItem({
-      title: 'Feature - Setup',
+      title: 'Print - Setup',
       id: `${featurePlacement.id}-setup`,
       quantity: 1,
       unitPriceCents: cost
@@ -340,7 +472,8 @@ async function getComputedPricingTable(design) {
   const summary = new Summary({
     upfrontCostCents: developmentGroup.getTotalPriceCents(),
     preProductionCostCents: portionCost,
-    uponCompletionCostCents: portionCost
+    uponCompletionCostCents: portionCost,
+    fulfillmentCostCents: fulfillmentGroup.getTotalPriceCents()
   });
 
   const groups = [

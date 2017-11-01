@@ -34,6 +34,10 @@ class ProductDesignSelectedOption {
       deletedAt: row.deleted_at && new Date(row.deleted_at)
     });
   }
+
+  setOption(option) {
+    this.option = option;
+  }
 }
 
 ProductDesignSelectedOption.dataMapper = dataMapper;
