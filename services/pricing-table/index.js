@@ -42,12 +42,6 @@ class Group {
       , 0);
   }
 
-  getUnitPriceCents() {
-    return this.lineItems.reduce((memo, item) =>
-      memo + item.unitPriceCents
-      , 0);
-  }
-
   setGroupPriceCents(cents) {
     this.groupPriceCents = cents;
   }
@@ -218,7 +212,8 @@ async function getComputedPricingTable(design) {
     ]
   });
 
-  materialsGroup.setGroupPriceCents(materialsGroup.getUnitPriceCents());
+  const materialsPerUnit = Math.round(materialsGroup.getTotalPriceCents() / unitsToProduce);
+  materialsGroup.setGroupPriceCents(materialsPerUnit);
 
   const productionGroup = new Group({
     title: 'Production per garment',
@@ -272,7 +267,8 @@ async function getComputedPricingTable(design) {
     }));
   });
 
-  productionGroup.setGroupPriceCents(productionGroup.getUnitPriceCents());
+  const productionPerUnit = Math.round(productionGroup.getTotalPriceCents() / unitsToProduce);
+  productionGroup.setGroupPriceCents(productionPerUnit);
 
   const fulfillmentGroup = new Group({
     title: 'Fulfillment per garment',
@@ -302,7 +298,8 @@ async function getComputedPricingTable(design) {
     ]
   });
 
-  fulfillmentGroup.setGroupPriceCents(fulfillmentGroup.getUnitPriceCents());
+  const fulfillmentPerUnit = Math.round(fulfillmentGroup.getTotalPriceCents() / unitsToProduce);
+  fulfillmentGroup.setGroupPriceCents(fulfillmentPerUnit);
 
   const profitGroup = new ProfitGroup({
     title: 'Gross Profit per garment',
