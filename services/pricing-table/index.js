@@ -49,6 +49,7 @@ class Group {
   addLineItem(lineItem) {
     const lineItems = (this.lineItems || []).concat(lineItem);
     this.lineItems = lineItems;
+    this.totalPriceCents = this.getTotalPriceCents();
   }
 }
 
