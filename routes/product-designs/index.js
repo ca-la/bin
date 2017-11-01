@@ -2,10 +2,12 @@
 
 const pick = require('lodash/pick');
 const Router = require('koa-router');
+const Bluebird = require('bluebird');
 
 const canAccessAnnotation = require('../../middleware/can-access-annotation');
 const canAccessSection = require('../../middleware/can-access-section');
 const InvalidDataError = require('../../errors/invalid-data');
+const MissingPrerequisitesError = require('../../errors/missing-prerequisites');
 const ProductDesignCollaboratorsDAO = require('../../dao/product-design-collaborators');
 const ProductDesignFeaturePlacementsDAO = require('../../dao/product-design-feature-placements');
 const ProductDesignsDAO = require('../../dao/product-designs');
@@ -53,7 +55,9 @@ function* getDesign() {
 function* getDesignPricing() {
   const design = yield ProductDesignsDAO.findById(this.params.designId);
 
-  const computedPricingTable = yield getComputedPricingTable(design);
+  const computedPricingTable = yield Bluebird.resolve(getComputedPricingTable(design))
+    .catch(MissingPrerequisitesError, err => this.throw(400, err));
+
   const finalPricingTable = yield getFinalPricingTable(design, computedPricingTable);
   const overridePricingTable = design.overridePricingTable;
 

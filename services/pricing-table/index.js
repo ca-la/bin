@@ -183,6 +183,13 @@ async function getComputedPricingTable(design) {
 
   const sections = await ProductDesignSectionsDAO.findByDesignId(design.id);
 
+  // TODO: Gate this based on the garment status - i.e. reviewed or not
+  sections.forEach((section) => {
+    if (!section.templateName) {
+      throw new MissingPrerequisitesError('Custom sketches need to be reviewed for complexity');
+    }
+  });
+
   const featurePlacements = await flatten(Promise.all(
     sections.map(section =>
       ProductDesignFeaturePlacementsDAO.findBySectionId(section.id)
