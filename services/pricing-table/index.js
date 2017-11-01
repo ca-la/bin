@@ -3,6 +3,7 @@
 // const ProductDesignFeaturePlacementsDAO = require('../../dao/product-design-feature-placements');
 // const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
 const MissingPrerequisitesError = require('../../errors/missing-prerequisites');
+const getCutAndSewCost = require('../../services/get-cut-and-sew-cost');
 const pricing = require('../../config/pricing');
 const ProductDesignOptionsDAO = require('../../dao/product-design-options');
 const ProductDesignSelectedOptionsDAO = require('../../dao/product-design-selected-options');
@@ -36,6 +37,12 @@ class Group {
   getTotalPriceCents() {
     return this.lineItems.reduce((memo, item) =>
       memo + item.getTotalPriceCents()
+      , 0);
+  }
+
+  getUnitPriceCents() {
+    return this.lineItems.reduce((memo, item) =>
+      memo + item.unitPriceCents
       , 0);
   }
 
@@ -80,12 +87,6 @@ function getTotalPerUnitOptionCostCents(data) {
   requireProperties(data, 'selectedOptions', 'options');
   return 0;
 }
-
-// The total cost of all pattern-making in the garment. The sum of the
-// patternmaking cost of each section.
-// function getTotalPatternMakingCostCents(data) {
-//   requireProperties(data, 'sections');
-// }
 
 // function getSelectedOptionDyeCostCents(data) {
 //   requireProperties(data, 'selectedOption');
@@ -147,8 +148,6 @@ async function getComputedPricingTable(design) {
   //     ProductDesignFeaturePlacementsDAO.findBySectionId(section.id)
   //   )
   // ));
-
-  // const patternMakingCostCents = getTotalPatternMakingCostCents({ sections });
 
   const options = await Promise.all(
     selectedOptions.map(selectedOption =>
@@ -214,7 +213,7 @@ async function getComputedPricingTable(design) {
     ]
   });
 
-  materialsGroup.setGroupPriceCents(materialsGroup.getTotalPriceCents());
+  materialsGroup.setGroupPriceCents(materialsGroup.getUnitPriceCents());
 
   const productionGroup = new Group({
     title: 'Production per garment',
@@ -232,7 +231,7 @@ async function getComputedPricingTable(design) {
         title: 'Cut, Sew, Trim',
         id: 'production-cut-sew',
         quantity: unitsToProduce,
-        unitPriceCents: 0 // getProductionCutSewCostCents(unitsToProduce, patternComplexity)
+        unitPriceCents: getCutAndSewCost(unitsToProduce, patternComplexity)
       }),
       new LineItem({
         title: 'Materials',
@@ -244,7 +243,7 @@ async function getComputedPricingTable(design) {
     ]
   });
 
-  productionGroup.setGroupPriceCents(productionGroup.getTotalPriceCents());
+  productionGroup.setGroupPriceCents(productionGroup.getUnitPriceCents());
 
   const fulfillmentGroup = new Group({
     title: 'Fulfillment per garment',
@@ -274,7 +273,7 @@ async function getComputedPricingTable(design) {
     ]
   });
 
-  fulfillmentGroup.setGroupPriceCents(fulfillmentGroup.getTotalPriceCents());
+  fulfillmentGroup.setGroupPriceCents(fulfillmentGroup.getUnitPriceCents());
 
   const profitGroup = new ProfitGroup({
     title: 'Gross Profit per garment',

@@ -36,7 +36,7 @@ const pricing = {
     4: 650 * 100
   },
 
-  // Based on the number of units they're doing AND the complexity
+  // Based on the number of units they're doing AND the patternComplexity
   PRODUCTION_CUT_AND_SEW_COST_CENTS: [
     { minUnits: 0, complexity: 0, cost: 60 * 100 },
     { minUnits: 25, complexity: 0, cost: 35 * 100 },
@@ -52,10 +52,12 @@ const pricing = {
     { minUnits: 50, complexity: 2, cost: 53 * 100 },
     { minUnits: 100, complexity: 2, cost: 46 * 100 },
 
+    { minUnits: 0, complexity: 3, cost: 91.5 * 100 },
     { minUnits: 25, complexity: 3, cost: 91.5 * 100 },
     { minUnits: 50, complexity: 3, cost: 83.5 * 100 },
     { minUnits: 100, complexity: 3, cost: 74 * 100 },
 
+    { minUnits: 0, complexity: 4, cost: 165 * 100 },
     { minUnits: 25, complexity: 4, cost: 165 * 100 }
   ],
 
