@@ -5,10 +5,14 @@ const { create } = require('./index');
 
 const createDesign = require('../product-designs').create;
 const createOption = require('../product-design-options').create;
+const createSection = require('../product-design-sections').create;
 const createUser = require('../../test-helpers/create-user');
 const { test } = require('../../test-helpers/fresh');
 
 function createPrerequisites() {
+  let option;
+  let design;
+
   return createUser({ withSession: false })
     .then(({ user }) => {
       return Promise.all([
@@ -24,18 +28,27 @@ function createPrerequisites() {
         })
       ]);
     })
-    .then(([option, design]) => {
-      return { option, design };
+    .then(([_option, _design]) => {
+      option = _option;
+      design = _design;
+      return createSection({
+        templateName: 'gfoobar',
+        designId: design.id
+      });
+    })
+    .then((section) => {
+      return { option, design, section };
     });
 }
 test('ProductDesignSelectedOptionsDAO.create creates and returns a selected option', (t) => {
   let data;
 
   return createPrerequisites()
-    .then(({ option, design }) => {
+    .then(({ option, design, section }) => {
       data = {
         designId: design.id,
         optionId: option.id,
+        sectionId: section.id,
         panelId: 'panel123',
         unitsRequiredPerGarment: 123,
         fabricDyeProcessName: 'dipdye',
