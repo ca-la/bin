@@ -14,6 +14,7 @@ const router = new Router();
 const ALLOWED_ATTRS = [
   'designId',
   'panelId',
+  'sectionId',
   'optionId',
   'unitsRequiredPerGarment',
   'fabricDyeProcessName',

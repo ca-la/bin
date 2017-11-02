@@ -12,6 +12,7 @@ const keyNamesByColumnName = {
   // As of 2017-10-03, panel IDs are still created client-side and stored in
   // freeform JSON, so there's not yet DB-level enforcement of foreign keys.
   panel_id: 'panelId',
+  section_id: 'sectionId',
   option_id: 'optionId',
   units_required_per_garment: 'unitsRequiredPerGarment',
   fabric_dye_process_name: 'fabricDyeProcessName',
