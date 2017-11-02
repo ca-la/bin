@@ -27,13 +27,13 @@ function* canAccessDesignId(designId) {
       this.state.userId
     );
 
+    this.assert(collaborators.length >= 1, 403);
+
     const { role } = collaborators[0];
 
     if (role === ROLES.productionPartner) {
       designPermissions.canManagePricing = true;
     }
-
-    this.assert(collaborators.length >= 1, 403);
   }
 
   this.state.design = design;
