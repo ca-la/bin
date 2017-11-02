@@ -141,16 +141,48 @@ function getWashSetupCostCents(data) {
 // multiplied by the number of yards required (stuff like roll prints).
 function getFeaturePlacementCostCents(data) {
   requireProperties(data, 'featurePlacement');
+  const { featurePlacement } = data;
 
-  // TODO fix
-  return pricing.SCREEN_PRINT_PER_GARMENT_COST_CENTS;
+  switch (featurePlacement.processName) {
+    case 'EMBROIDERY': {
+      const largestDimension = Math.max(featurePlacement.width, featurePlacement.height);
+
+      if (largestDimension > 220) { return pricing.EMBROIDERY_COST_CENTS[2]; }
+      if (largestDimension > 130) { return pricing.EMBROIDERY_COST_CENTS[1]; }
+
+      return pricing.EMBROIDERY_COST_CENTS[0];
+    }
+
+    case 'SCREEN_PRINT':
+      return pricing.SCREEN_PRINT_PER_GARMENT_COST_CENTS;
+
+    default: {
+      // TODO determine somehow? Based on panel? Doesn't really make sense w/
+      // the current way that we model feature placements
+      const yardsRequiredPerGarment = 1;
+      const pricePerYard = pricing.FEATURE_PER_YARD_COST_CENTS[featurePlacement.processName] || 0;
+      return yardsRequiredPerGarment * pricePerYard;
+    }
+  }
 }
 
 function getFeaturePlacementSetupCostCents(data) {
   requireProperties(data, 'featurePlacement');
+  const { featurePlacement } = data;
 
-  // TODO fix
-  return pricing.SCREEN_PRINT_SETUP_COST_CENTS;
+  return pricing.FEATURE_SETUP_COST_CENTS[featurePlacement.processName] || 0;
+}
+
+function getFeatureFriendlyProcessName(featurePlacement) {
+  switch (featurePlacement.processName) {
+    case 'DTG_ROLL': return 'DTG Roll Print';
+    case 'DTG_ENGINEERED': return 'DTG Engineered Pattern';
+    case 'DIGITAL_SUBLIMATION': return 'Digital Sublimation';
+    case 'ROTARY_PRINT': return 'Rotary Print';
+    case 'SCREEN_PRINT': return 'Screen Print';
+    case 'EMBROIDERY': return 'Embroidery';
+    default: return 'Print';
+  }
 }
 
 async function getComputedPricingTable(design) {
@@ -190,11 +222,12 @@ async function getComputedPricingTable(design) {
     }
   });
 
-  const featurePlacements = await flatten(Promise.all(
+  const featurePlacementsPerSection = await Promise.all(
     sections.map(section =>
       ProductDesignFeaturePlacementsDAO.findBySectionId(section.id)
     )
-  ));
+  );
+  const featurePlacements = flatten(featurePlacementsPerSection);
 
   const developmentGroup = new Group({
     title: 'Development',
@@ -265,8 +298,10 @@ async function getComputedPricingTable(design) {
     const setupCost = getFeaturePlacementSetupCostCents({ featurePlacement });
     const cost = getFeaturePlacementCostCents({ featurePlacement });
 
+    const process = getFeatureFriendlyProcessName(featurePlacement);
+
     developmentGroup.addLineItem(new LineItem({
-      title: 'Print - Sample',
+      title: `${process} (Sample)`,
       id: `${featurePlacement.id}-sample`,
       quantity: 1,
       unitPriceCents: setupCost + cost
@@ -326,8 +361,10 @@ async function getComputedPricingTable(design) {
   featurePlacements.forEach((featurePlacement) => {
     const cost = getFeaturePlacementCostCents({ featurePlacement });
 
+    const process = getFeatureFriendlyProcessName(featurePlacement);
+
     materialsGroup.addLineItem(new LineItem({
-      title: 'Print',
+      title: process,
       id: `${featurePlacement.id}-print`,
       quantity: 1,
       unitPriceCents: cost
@@ -399,8 +436,10 @@ async function getComputedPricingTable(design) {
   featurePlacements.forEach((featurePlacement) => {
     const cost = getFeaturePlacementSetupCostCents({ featurePlacement });
 
+    const process = getFeatureFriendlyProcessName(featurePlacement);
+
     productionGroup.addLineItem(new LineItem({
-      title: 'Print - Setup',
+      title: `${process} — Setup`,
       id: `${featurePlacement.id}-setup`,
       quantity: 1,
       unitPriceCents: cost
