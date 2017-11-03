@@ -4,12 +4,11 @@ const pricing = {
   // Per patternComplexity bucket, the cost to do custom pattern-making
   // Complexity 0 represents the cost to modify a pre-made CALA pattern
   PATTERN_MAKING_COST_CENTS: {
-    0: 75 * 100,
-    1: 130 * 100,
-    2: 260 * 100,
-    3: 520 * 100,
-    4: 650 * 100,
-    5: 975 * 100
+    0: 130 * 100,
+    1: 260 * 100,
+    2: 520 * 100,
+    3: 650 * 100,
+    4: 975 * 100
   },
 
   BUILTIN_FABRIC_SOURCING_COST_CENTS: 0,
