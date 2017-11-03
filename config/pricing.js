@@ -9,7 +9,7 @@ const pricing = {
     2: 260 * 100,
     3: 520 * 100,
     4: 650 * 100,
-    4: 975 * 100
+    5: 975 * 100
   },
 
   BUILTIN_FABRIC_SOURCING_COST_CENTS: 0,
