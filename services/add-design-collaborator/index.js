@@ -48,35 +48,39 @@ async function addDesignCollaborator(
   const design = await ProductDesignsDAO.findById(designId);
   const inviter = await UsersDAO.findById(design.userId);
 
+  const escapedMessage = escape(unsafeInvitationMessage);
+  const invitationMessage = escapedMessage || 'Check out CALA!';
+
+  let collaborator;
+
   if (user) {
-    return await ProductDesignCollaboratorsDAO.create({
+    collaborator = await ProductDesignCollaboratorsDAO.create({
       designId,
       role,
       userId: user.id
     });
+  } else {
+    collaborator = await ProductDesignCollaboratorsDAO.create({
+      designId,
+      role,
+      userEmail: email,
+      invitationMessage
+    });
   }
-
-  const escapedMessage = escape(unsafeInvitationMessage);
-  const invitationMessage = escapedMessage || 'Check out CALA!';
-
-  const collaborator = await ProductDesignCollaboratorsDAO.create({
-    designId,
-    role,
-    userEmail: email,
-    invitationMessage
-  });
 
   const imageUrl = (design.previewImageUrls && design.previewImageUrls[0]) || '';
 
   const senderName = inviter.name;
 
+  const title = design.title || 'Untitled Garment';
+
   await send(
     email,
-    `${senderName} invited you to collaborate on a garment`,
+    `${senderName} invited you to collaborate on ${title}`,
     sharingEmail({
       senderName: inviter.name,
       roleDescription: getRoleDescription(role),
-      designTitle: design.title,
+      designTitle: title,
       designUrl: `${STUDIO_HOST}/designs/${design.id}`,
       invitationMessage,
       previewImageUrl: imageUrl
