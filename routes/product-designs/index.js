@@ -72,18 +72,20 @@ function* getDesignPricing() {
   this.status = 200;
 }
 
+const ALLOWED_DESIGN_PARAMS = [
+  'description',
+  'previewImageUrls',
+  'metadata',
+  'productType',
+  'title',
+  'unitsToProduce',
+  'retailPriceCents',
+  'sourcingComplexity',
+  'patternComplexity'
+];
+
 function* createDesign() {
-  const userData = pick(this.request.body,
-    'description',
-    'previewImageUrls',
-    'metadata',
-    'productType',
-    'title',
-    'unitsToProduce',
-    'retailPriceCents',
-    'sourcingComplexity',
-    'patternComplexity'
-  );
+  const userData = pick(this.request.body, ALLOWED_DESIGN_PARAMS);
 
   const data = Object.assign({}, userData, {
     userId: this.state.userId
@@ -99,17 +101,7 @@ function* createDesign() {
 }
 
 function* updateDesign() {
-  const data = pick(this.request.body,
-    'description',
-    'previewImageUrls',
-    'metadata',
-    'productType',
-    'title',
-    'unitsToProduce',
-    'retailPriceCents',
-    'sourcingComplexity',
-    'patternComplexity'
-  );
+  const data = pick(this.request.body, ALLOWED_DESIGN_PARAMS);
 
   let updated = yield ProductDesignsDAO.update(
     this.params.designId,

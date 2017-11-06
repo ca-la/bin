@@ -20,7 +20,8 @@ const keyNamesByColumnName = {
   retail_price_cents: 'retailPriceCents',
   units_to_produce: 'unitsToProduce',
   sourcing_complexity: 'sourcingComplexity',
-  pattern_complexity: 'patternComplexity'
+  pattern_complexity: 'patternComplexity',
+  status: 'status'
 };
 
 const dataMapper = new DataMapper(keyNamesByColumnName);
