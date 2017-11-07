@@ -49,6 +49,11 @@ function* getDesign() {
   let design = yield ProductDesignsDAO.findById(this.params.designId);
   design = yield attachDesignOwner(design);
 
+  const status = yield ProductStatusesDAO.findById(design.status);
+
+  if (status.nextStatus) {
+  }
+
   this.body = design;
   this.status = 200;
 }
@@ -281,20 +286,28 @@ function* setStatus() {
 
 router.post('/', requireAuth, createDesign);
 router.get('/', requireAuth, getDesigns);
+
 router.del('/:designId', requireAuth, canAccessDesignInParam, deleteDesign);
-router.del('/:designId/sections/:sectionId', requireAuth, canAccessDesignInParam, deleteSection);
-router.del('/:designId/sections/:sectionId/annotations/:annotationId', requireAuth, canAccessDesignInParam, canAccessSection, canAccessAnnotation, deleteSectionAnnotation);
 router.get('/:designId', requireAuth, canAccessDesignInParam, getDesign);
-router.get('/:designId/pricing', requireAuth, canAccessDesignInParam, getDesignPricing);
-router.get('/:designId/sections', requireAuth, canAccessDesignInParam, getSections);
-router.get('/:designId/sections/:sectionId/annotations', requireAuth, canAccessDesignInParam, canAccessSection, getSectionAnnotations);
-router.get('/:designId/sections/:sectionId/feature-placements', requireAuth, canAccessDesignInParam, canAccessSection, getSectionFeaturePlacements);
 router.patch('/:designId', requireAuth, canAccessDesignInParam, updateDesign);
-router.patch('/:designId/sections/:sectionId', requireAuth, canAccessDesignInParam, canAccessSection, updateSection);
-router.patch('/:designId/sections/:sectionId/annotations/:annotationId', requireAuth, canAccessDesignInParam, canAccessSection, canAccessAnnotation, updateSectionAnnotation);
-router.post('/:designId/sections', requireAuth, canAccessDesignInParam, createSection);
-router.post('/:designId/sections/:sectionId/annotations', requireAuth, canAccessDesignInParam, canAccessSection, createSectionAnnotation);
-router.put('/:designId/sections/:sectionId/feature-placements', requireAuth, canAccessDesignInParam, canAccessSection, replaceSectionFeaturePlacements);
+
+router.get('/:designId/pricing', requireAuth, canAccessDesignInParam, getDesignPricing);
+
 router.put('/:designId/status', requireAuth, canAccessDesignInParam, setStatus);
+
+router.get('/:designId/sections', requireAuth, canAccessDesignInParam, getSections);
+router.post('/:designId/sections', requireAuth, canAccessDesignInParam, createSection);
+
+router.del('/:designId/sections/:sectionId', requireAuth, canAccessDesignInParam, deleteSection);
+router.patch('/:designId/sections/:sectionId', requireAuth, canAccessDesignInParam, canAccessSection, updateSection);
+
+router.get('/:designId/sections/:sectionId/annotations', requireAuth, canAccessDesignInParam, canAccessSection, getSectionAnnotations);
+router.post('/:designId/sections/:sectionId/annotations', requireAuth, canAccessDesignInParam, canAccessSection, createSectionAnnotation);
+
+router.get('/:designId/sections/:sectionId/feature-placements', requireAuth, canAccessDesignInParam, canAccessSection, getSectionFeaturePlacements);
+router.put('/:designId/sections/:sectionId/feature-placements', requireAuth, canAccessDesignInParam, canAccessSection, replaceSectionFeaturePlacements);
+
+router.del('/:designId/sections/:sectionId/annotations/:annotationId', requireAuth, canAccessDesignInParam, canAccessSection, canAccessAnnotation, deleteSectionAnnotation);
+router.patch('/:designId/sections/:sectionId/annotations/:annotationId', requireAuth, canAccessDesignInParam, canAccessSection, canAccessAnnotation, updateSectionAnnotation);
 
 module.exports = router.routes();

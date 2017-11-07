@@ -21,7 +21,7 @@ const keyNamesByColumnName = {
   units_to_produce: 'unitsToProduce',
   sourcing_complexity: 'sourcingComplexity',
   pattern_complexity: 'patternComplexity',
-  status: 'status'
+  status_id: 'statusId'
 };
 
 const dataMapper = new DataMapper(keyNamesByColumnName);
