@@ -15,7 +15,15 @@ const router = new Router();
 function* getFeed() {
   const response = yield fetch(`https://www.instagram.com/${this.params.handle}/media/`);
 
-  this.assert(response.status === 200, 404, 'User not found');
+  if (response.status !== 200) {
+    // Instagram appears to have removed this API as of 2017-11-07
+    // We could rebuild it with the supported API and access tokens/rotation,
+    // but for now, fake an empty response.
+    this.body = { items: [] };
+    this.status = 200;
+    return;
+  }
+
   const json = yield response.json();
 
   this.status = 200;
