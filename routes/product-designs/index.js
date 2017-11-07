@@ -13,6 +13,7 @@ const ProductDesignFeaturePlacementsDAO = require('../../dao/product-design-feat
 const ProductDesignsDAO = require('../../dao/product-designs');
 const ProductDesignSectionAnnotationsDAO = require('../../dao/product-design-section-annotations');
 const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
+const ProductDesignStatusesDAO = require('../../dao/product-design-statuses');
 const requireAuth = require('../../middleware/require-auth');
 const updateDesignStatus = require('../../services/update-design-status');
 const UsersDAO = require('../../dao/users');
@@ -49,9 +50,12 @@ function* getDesign() {
   let design = yield ProductDesignsDAO.findById(this.params.designId);
   design = yield attachDesignOwner(design);
 
-  const status = yield ProductStatusesDAO.findById(design.status);
+  const status = yield ProductDesignStatusesDAO.findById(design.status);
+  design.setCurrentStatus(status);
 
   if (status.nextStatus) {
+    const nextStatus = yield ProductDesignStatusesDAO.findById(status.nextStatus);
+    design.setNextStatus(nextStatus);
   }
 
   this.body = design;

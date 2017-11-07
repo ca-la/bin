@@ -41,6 +41,14 @@ class ProductDesign {
   setOwner(owner) {
     this.owner = owner;
   }
+
+  setCurrentStatus(status) {
+    this.currentStatus = status;
+  }
+
+  setNextStatus(status) {
+    this.nextStatus = status;
+  }
 }
 
 ProductDesign.dataMapper = dataMapper;
