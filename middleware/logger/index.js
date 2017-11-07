@@ -11,7 +11,7 @@ function* logger(next) {
   const ua = this.request.headers['user-agent'];
 
   // eslint-disable-next-line no-console
-  console.log(`${this.status} ${this.method} "${this.url}" ms:${ms} ip:${ip} ua:${ua}`);
+  console.log(`${this.status} ${this.method} "${this.url}" ms:${ms} ip:${ip} ua:"${ua}" user:${this.state.userId || ''}`);
 }
 
 module.exports = logger;
