@@ -7,10 +7,10 @@ if [[ $(git rev-parse --abbrev-ref HEAD) != "master" ]] ; then
 fi
 
 echo "Are you sure you want to migrate the PRODUCTION db? Has your migration-only pull request been merged?"
-echo -n "Type MIGRATE if you're sure: "
+echo -n "Type PRODUCTION if you're sure: "
 read RES
 
-if [ "$RES" != "MIGRATE" ]; then
+if [ "$RES" != "PRODUCTION" ]; then
   echo "OK, not migrating"
   exit 1
 fi

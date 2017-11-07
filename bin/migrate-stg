@@ -8,10 +8,10 @@ fi
 
 if [[ "$1" != "--force" ]]; then
   echo "Are you sure you want to migrate the STAGING db? Has your migration-only pull request been merged?"
-  echo -n "Type MIGRATE if you're sure: "
+  echo -n "Type STAGING if you're sure: "
   read RES
 
-  if [ "$RES" != "MIGRATE" ]; then
+  if [ "$RES" != "STAGING" ]; then
     echo "OK, not migrating"
     exit 1
   fi
