@@ -29,8 +29,8 @@ function getList() {
     .then(() => {
       return db.raw(`
     select
-      row_to_json(designers.*) as designer,
-      json_agg(row_to_json(designerphotos.*)) as photos
+      to_json(designers.*) as designer,
+      json_agg(to_json(designerphotos.*)) as photos
     from designers
     left join designerphotos
       on designerphotos.designer_id = designers.id
@@ -52,8 +52,8 @@ function getById(designerId) {
     .then(() => {
       return db.raw(`
     select
-      row_to_json(designers.*) as designer,
-      json_agg(row_to_json(designerphotos.*)) as photos
+      to_json(designers.*) as designer,
+      json_agg(to_json(designerphotos.*)) as photos
     from designers
     left join designerphotos
       on designerphotos.designer_id = designers.id
