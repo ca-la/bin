@@ -14,9 +14,10 @@ const ProductDesignsDAO = require('../../dao/product-designs');
 const ProductDesignSectionAnnotationsDAO = require('../../dao/product-design-section-annotations');
 const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
 const requireAuth = require('../../middleware/require-auth');
+const updateDesignStatus = require('../../services/update-design-status');
 const UsersDAO = require('../../dao/users');
-const { getComputedPricingTable, getFinalPricingTable } = require('../../services/pricing-table');
 const { canAccessDesignInParam } = require('../../middleware/can-access-design');
+const { getComputedPricingTable, getFinalPricingTable } = require('../../services/pricing-table');
 
 const router = new Router();
 
@@ -263,6 +264,21 @@ function* updateSectionAnnotation() {
   this.status = 200;
 }
 
+function* setStatus() {
+  const { newStatus } = this.request.body;
+  this.assert(newStatus, 400, 'New status must be provided');
+
+  const updated = yield Bluebird.resolve(updateDesignStatus(
+    this.params.designId,
+    newStatus,
+    this.state.userId
+  ))
+    .catch(InvalidDataError, err => this.throw(400, err));
+
+  this.body = { status: updated };
+  this.status = 200;
+}
+
 router.post('/', requireAuth, createDesign);
 router.get('/', requireAuth, getDesigns);
 router.del('/:designId', requireAuth, canAccessDesignInParam, deleteDesign);
@@ -279,5 +295,6 @@ router.patch('/:designId/sections/:sectionId/annotations/:annotationId', require
 router.post('/:designId/sections', requireAuth, canAccessDesignInParam, createSection);
 router.post('/:designId/sections/:sectionId/annotations', requireAuth, canAccessDesignInParam, canAccessSection, createSectionAnnotation);
 router.put('/:designId/sections/:sectionId/feature-placements', requireAuth, canAccessDesignInParam, canAccessSection, replaceSectionFeaturePlacements);
+router.put('/:designId/status', requireAuth, canAccessDesignInParam, setStatus);
 
 module.exports = router.routes();

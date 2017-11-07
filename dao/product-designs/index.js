@@ -52,7 +52,14 @@ function update(productDesignId, data) {
     .where({ id: productDesignId, deleted_at: null })
     .update(compacted, '*')
     .then(first)
-    .then(instantiate);
+    .then(instantiate)
+    .catch(rethrow)
+    .catch(rethrow.ERRORS.ForeignKeyViolation, (err) => {
+      if (err.constraint === 'product_designs_status_fkey') {
+        throw new InvalidDataError('Invalid product design status');
+      }
+      throw err;
+    });
 }
 
 function findByUserId(userId) {
