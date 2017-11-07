@@ -23,7 +23,6 @@ const router = new Router({
   prefix: '/:version(v1)?'
 });
 
-router.use(require('./routes/root'));
 router.use('/addresses', require('./routes/addresses'));
 router.use('/collection-photos', require('./routes/collection-photos'));
 router.use('/collections', require('./routes/collections'));
@@ -37,6 +36,7 @@ router.use('/product-design-collaborators', require('./routes/product-design-col
 router.use('/product-design-images', require('./routes/product-design-images'));
 router.use('/product-design-options', require('./routes/product-design-options'));
 router.use('/product-design-selected-options', require('./routes/product-design-selected-options'));
+router.use('/product-design-status-updates', require('./routes/product-design-status-updates'));
 router.use('/product-designs', require('./routes/product-designs'));
 router.use('/product-videos', require('./routes/product-videos'));
 router.use('/products', require('./routes/products'));
@@ -49,6 +49,7 @@ router.use('/subscriptions', require('./routes/subscriptions'));
 router.use('/twilio-webhooks', require('./routes/twilio-webhooks'));
 router.use('/users', require('./routes/users'));
 router.use('/zips', require('./routes/zips'));
+router.use(require('./routes/root'));
 
 app.use(router.routes());
 

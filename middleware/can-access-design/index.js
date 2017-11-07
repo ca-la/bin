@@ -10,7 +10,7 @@ function* canAccessDesignId(designId) {
   const design = yield ProductDesignsDAO.findById(designId)
     .catch(InvalidDataError, err => this.throw(404, err));
 
-  this.assert(design, 404);
+  this.assert(design, 404, 'Design not found');
 
   const isAdmin = (this.state.role === User.ROLES.admin);
   const isOwnerOrAdmin = isAdmin || (this.state.userId === design.userId);
