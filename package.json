@@ -1,6 +1,6 @@
 {
   "name": "cala-api",
-  "version": "1.95.0",
+  "version": "1.95.1",
   "description": "REST",
   "main": "index.js",
   "author": "CALA <devops@ca.la>",
