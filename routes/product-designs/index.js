@@ -28,6 +28,18 @@ async function attachDesignOwner(design) {
   return design;
 }
 
+async function attachStatuses(design) {
+  const status = await ProductDesignStatusesDAO.findById(design.status);
+  design.setCurrentStatus(status);
+
+  if (status.nextStatus) {
+    const nextStatus = await ProductDesignStatusesDAO.findById(status.nextStatus);
+    design.setNextStatus(nextStatus);
+  }
+
+  return design;
+}
+
 function* getDesigns() {
   this.assert(this.query.userId === this.state.userId, 403);
 
@@ -49,14 +61,7 @@ function* getDesigns() {
 function* getDesign() {
   let design = yield ProductDesignsDAO.findById(this.params.designId);
   design = yield attachDesignOwner(design);
-
-  const status = yield ProductDesignStatusesDAO.findById(design.status);
-  design.setCurrentStatus(status);
-
-  if (status.nextStatus) {
-    const nextStatus = yield ProductDesignStatusesDAO.findById(status.nextStatus);
-    design.setNextStatus(nextStatus);
-  }
+  design = yield attachStatuses(design);
 
   this.body = design;
   this.status = 200;
@@ -105,6 +110,7 @@ function* createDesign() {
     .catch(InvalidDataError, err => this.throw(400, err));
 
   design = yield attachDesignOwner(design);
+  design = yield attachStatuses(design);
 
   this.body = design;
   this.status = 201;
@@ -120,6 +126,7 @@ function* updateDesign() {
     .catch(InvalidDataError, err => this.throw(400, err));
 
   updated = yield attachDesignOwner(updated);
+  updated = yield attachStatuses(updated);
 
   this.body = updated;
   this.status = 200;
