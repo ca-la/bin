@@ -6,7 +6,8 @@ const DataMapper = require('../services/data-mapper');
 const keyNamesByColumnName = {
   id: 'id',
   sla_description: 'slaDescription',
-  next_status: 'nextStatus'
+  next_status: 'nextStatus',
+  label: 'label'
 };
 
 const dataMapper = new DataMapper(keyNamesByColumnName);
