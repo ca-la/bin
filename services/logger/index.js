@@ -1,23 +1,25 @@
 'use strict';
 
+const COLORS = require('../colors');
+
 function log(...args) {
   // eslint-disable-next-line no-console
-  console.log('[LOG]', ...args);
+  console.log(COLORS.yellow, '[LOG]', ...args, COLORS.reset);
 }
 
 function logServerError(...args) {
   // eslint-disable-next-line no-console
-  console.log('SERVER ERROR:', ...args);
+  console.log(COLORS.red, 'SERVER ERROR:', ...args, COLORS.reset);
 }
 
 function logClientError(...args) {
   // eslint-disable-next-line no-console
-  console.log('CLIENT ERROR:', ...args);
+  console.log(COLORS.red, 'CLIENT ERROR:', ...args, COLORS.reset);
 }
 
 function logWarning(...args) {
   // eslint-disable-next-line no-console
-  console.log('WARNING:', ...args);
+  console.log(COLORS.yellow, 'WARNING:', ...args, COLORS.reset);
 }
 
 module.exports = {

@@ -1,5 +1,7 @@
 'use strict';
 
+const COLORS = require('../../services/colors');
+
 // Log timing and status for each incoming request
 
 function* logger(next) {
@@ -10,8 +12,9 @@ function* logger(next) {
   const ip = this.request.headers['cf-connecting-ip'] || this.request.ip;
   const ua = this.request.headers['user-agent'];
 
+  const statusColor = (this.status < 400) ? COLORS.green : COLORS.red;
   // eslint-disable-next-line no-console
-  console.log(`${this.status} ${this.method} "${this.url}" ms:${ms} ip:${ip} ua:"${ua}" user:${this.state.userId || ''}`);
+  console.log(`${statusColor}${this.status}${COLORS.reset} ${this.method} ${COLORS.blue}${this.url}${COLORS.reset} ms:${ms} ip:${ip} ua:"${ua}" user:${this.state.userId || ''}`);
 }
 
 module.exports = logger;
