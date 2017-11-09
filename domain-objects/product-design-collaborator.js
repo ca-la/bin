@@ -15,7 +15,6 @@ const keyNamesByColumnName = {
 };
 
 const ROLES = {
-  owner: 'OWNER',
   edit: 'EDIT',
   view: 'VIEW',
   comment: 'COMMENT',
