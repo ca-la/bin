@@ -190,7 +190,8 @@ async function getComputedPricingTable(design) {
     unitsToProduce,
     retailPriceCents,
     sourcingComplexity,
-    patternComplexity
+    patternComplexity,
+    status
   } = design;
 
   if (!unitsToProduce) {
@@ -200,7 +201,6 @@ async function getComputedPricingTable(design) {
   if (!retailPriceCents) {
     throw new MissingPrerequisitesError('Design must specify retail price');
   }
-
 
   function attachOption(selectedOption) {
     return ProductDesignOptionsDAO.findById(selectedOption.optionId)
@@ -215,12 +215,22 @@ async function getComputedPricingTable(design) {
 
   const sections = await ProductDesignSectionsDAO.findByDesignId(design.id);
 
-  // TODO: Gate this based on the garment status - i.e. reviewed or not
-  sections.forEach((section) => {
+  const isAllTemplates = sections.reduce((memo, section) => {
     if (!section.templateName) {
-      throw new MissingPrerequisitesError('Custom sketches need to be reviewed for complexity');
+      return false;
     }
-  });
+
+    return memo;
+  }, true);
+
+  const isPricingReviewed = (
+    status !== 'DRAFT' &&
+    status !== 'IN_REVIEW'
+  );
+
+  if (!isAllTemplates && !isPricingReviewed) {
+    throw new MissingPrerequisitesError('Custom sketches need to be reviewed for complexity');
+  }
 
   const featurePlacementsPerSection = await Promise.all(
     sections.map(section =>
