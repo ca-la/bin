@@ -7,7 +7,8 @@ const keyNamesByColumnName = {
   id: 'id',
   sla_description: 'slaDescription',
   next_status: 'nextStatus',
-  label: 'label'
+  label: 'label',
+  action_name: 'actionName'
 };
 
 const dataMapper = new DataMapper(keyNamesByColumnName);
