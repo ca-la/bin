@@ -34,7 +34,8 @@ class ProductDesign {
 
     Object.assign(this, data, {
       createdAt: new Date(row.created_at),
-      deletedAt: row.deleted_at && new Date(row.deleted_at)
+      deletedAt: row.deleted_at && new Date(row.deleted_at),
+      canCompleteStatus: false
     });
   }
 
@@ -48,6 +49,10 @@ class ProductDesign {
 
   setNextStatus(status) {
     this.nextStatus = status;
+  }
+
+  setPermissions(permissions) {
+    this.permissions = permissions;
   }
 }
 

@@ -1,5 +1,6 @@
 'use strict';
 
+const canCompleteStatus = require('../../services/can-complete-status');
 const InvalidDataError = require('../../errors/invalid-data');
 const ProductDesignCollaboratorsDAO = require('../../dao/product-design-collaborators');
 const ProductDesignsDAO = require('../../dao/product-designs');
@@ -14,10 +15,7 @@ function* canAccessDesignId(designId) {
 
   const isAdmin = (this.state.role === User.ROLES.admin);
   const isOwnerOrAdmin = isAdmin || (this.state.userId === design.userId);
-
-  const designPermissions = {
-    canManagePricing: isAdmin
-  };
+  let isProductionPartnerOrAdmin = isAdmin;
 
   if (!isOwnerOrAdmin) {
     this.assert(this.state.userId, 401);
@@ -32,9 +30,14 @@ function* canAccessDesignId(designId) {
     const { role } = collaborators[0];
 
     if (role === ROLES.productionPartner) {
-      designPermissions.canManagePricing = true;
+      isProductionPartnerOrAdmin = true;
     }
   }
+
+  const designPermissions = {
+    canManagePricing: isProductionPartnerOrAdmin,
+    canCompleteStatus: canCompleteStatus(design.status, isProductionPartnerOrAdmin)
+  };
 
   this.state.design = design;
   this.state.designPermissions = designPermissions;

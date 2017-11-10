@@ -67,6 +67,16 @@ function requirePropertiesFormatted(data, messages) {
   });
 }
 
+/**
+ * @param {Object} data
+ *   Keys will be used as error messages for missing values
+ *   e.g.
+ *    requireValues({ a: undefined, b: 2 }) // throws 'Missing a'
+ */
+function requireValues(data) {
+  return requireProperties(data, ...Object.keys(data));
+}
+
 function assert(value, message) {
   if (!value) {
     throw new Error(message);
@@ -76,5 +86,6 @@ function assert(value, message) {
 module.exports = {
   assert,
   requireProperties,
-  requirePropertiesFormatted
+  requirePropertiesFormatted,
+  requireValues
 };

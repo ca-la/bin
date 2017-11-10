@@ -19,6 +19,7 @@ const updateDesignStatus = require('../../services/update-design-status');
 const UsersDAO = require('../../dao/users');
 const { canAccessDesignInParam } = require('../../middleware/can-access-design');
 const { getComputedPricingTable, getFinalPricingTable } = require('../../services/pricing-table');
+const { requireValues } = require('../../services/require-properties');
 
 const router = new Router();
 
@@ -40,6 +41,17 @@ async function attachStatuses(design) {
   return design;
 }
 
+async function attachResources(design, permissions) {
+  requireValues({ design, permissions });
+
+  let attached = design;
+  attached = await attachDesignOwner(attached);
+  attached = await attachStatuses(attached);
+  attached.setPermissions(permissions);
+  return attached;
+}
+
+
 function* getDesigns() {
   this.assert(this.query.userId === this.state.userId, 403);
 
@@ -59,9 +71,7 @@ function* getDesigns() {
 }
 
 function* getDesign() {
-  let design = yield ProductDesignsDAO.findById(this.params.designId);
-  design = yield attachDesignOwner(design);
-  design = yield attachStatuses(design);
+  const design = yield attachResources(this.state.design, this.state.designPermissions);
 
   this.body = design;
   this.status = 200;
@@ -109,8 +119,7 @@ function* createDesign() {
   let design = yield ProductDesignsDAO.create(data)
     .catch(InvalidDataError, err => this.throw(400, err));
 
-  design = yield attachDesignOwner(design);
-  design = yield attachStatuses(design);
+  design = yield attachResources(design, this.state.designPermissions);
 
   this.body = design;
   this.status = 201;
@@ -125,8 +134,7 @@ function* updateDesign() {
   )
     .catch(InvalidDataError, err => this.throw(400, err));
 
-  updated = yield attachDesignOwner(updated);
-  updated = yield attachStatuses(updated);
+  updated = yield attachResources(updated, this.state.designPermissions);
 
   this.body = updated;
   this.status = 200;
