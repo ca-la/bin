@@ -6,6 +6,7 @@ const Bluebird = require('bluebird');
 
 const canAccessAnnotation = require('../../middleware/can-access-annotation');
 const canAccessSection = require('../../middleware/can-access-section');
+const getDesignPermissions = require('../../services/get-design-permissions');
 const InvalidDataError = require('../../errors/invalid-data');
 const MissingPrerequisitesError = require('../../errors/missing-prerequisites');
 const ProductDesignCollaboratorsDAO = require('../../dao/product-design-collaborators');
@@ -119,7 +120,13 @@ function* createDesign() {
   let design = yield ProductDesignsDAO.create(data)
     .catch(InvalidDataError, err => this.throw(400, err));
 
-  design = yield attachResources(design, this.state.designPermissions);
+  const designPermissions = yield getDesignPermissions(
+    design,
+    this.state.userId,
+    this.state.role
+  );
+
+  design = yield attachResources(design, designPermissions);
 
   this.body = design;
   this.status = 201;
