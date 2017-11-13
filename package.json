@@ -7,6 +7,9 @@
     "type": "git",
     "url": "git+https://github.com/ca-la/bin.git"
   },
+  "bin": {
+    "cala-release": "release"
+  },
   "author": "CALA <devops@ca.la>",
   "license": "MIT",
   "bugs": {
