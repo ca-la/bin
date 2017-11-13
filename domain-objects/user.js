@@ -2,30 +2,22 @@
 
 const pick = require('lodash/pick');
 
+const formatDateString = require('../services/format-date-string');
 const { requireProperties } = require('../services/require-properties');
 
 const ROLES = {
   user: 'USER',
   admin: 'ADMIN',
-  designer: 'DESIGNER'
+  designer: 'DESIGNER',
+  partner: 'PARTNER'
 };
 
 const ALLOWED_SESSION_ROLES = {
-  [ROLES.admin]: [ROLES.user, ROLES.admin, ROLES.designer],
+  [ROLES.admin]: [ROLES.partner, ROLES.user, ROLES.admin, ROLES.designer],
   [ROLES.user]: [ROLES.user],
-  [ROLES.designer]: [ROLES.designer, ROLES.user]
+  [ROLES.designer]: [ROLES.designer, ROLES.user],
+  [ROLES.partner]: [ROLES.partner, ROLES.designer, ROLES.user]
 };
-
-/**
- * @returns {String} yyyy-mm-dd
- */
-function formatDateString(date) {
-  const paddedYear = `0000${date.getUTCFullYear()}`.slice(-4);
-  const paddedMonth = `00${date.getUTCMonth() + 1}`.slice(-2);
-  const paddedDay = `00${date.getUTCDate()}`.slice(-2);
-
-  return [paddedYear, paddedMonth, paddedDay].join('-');
-}
 
 class User {
   constructor(row) {
