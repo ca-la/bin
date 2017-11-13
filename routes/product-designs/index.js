@@ -9,7 +9,6 @@ const canAccessSection = require('../../middleware/can-access-section');
 const getDesignPermissions = require('../../services/get-design-permissions');
 const InvalidDataError = require('../../errors/invalid-data');
 const MissingPrerequisitesError = require('../../errors/missing-prerequisites');
-const ProductDesignCollaboratorsDAO = require('../../dao/product-design-collaborators');
 const ProductDesignFeaturePlacementsDAO = require('../../dao/product-design-feature-placements');
 const ProductDesignsDAO = require('../../dao/product-designs');
 const ProductDesignSectionAnnotationsDAO = require('../../dao/product-design-section-annotations');
@@ -56,18 +55,7 @@ async function attachResources(design, permissions) {
 function* getDesigns() {
   this.assert(this.query.userId === this.state.userId, 403);
 
-  const ownDesigns = yield ProductDesignsDAO.findByUserId(this.query.userId);
-
-  const collaborations = yield ProductDesignCollaboratorsDAO.findByUserId(this.query.userId);
-  const invitedDesigns = yield Promise.all(collaborations.map((collaboration) => {
-    return ProductDesignsDAO.findById(collaboration.designId);
-  }));
-
-  // Deleted designs become holes in the array right now - TODO maybe clean this
-  // up via a reduce or something
-  const availableInvitedDesigns = invitedDesigns.filter(Boolean);
-
-  this.body = [...ownDesigns, ...availableInvitedDesigns];
+  this.body = yield ProductDesignsDAO.findAccessibleToUser(this.query.userId);
   this.status = 200;
 }
 

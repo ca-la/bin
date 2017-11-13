@@ -8,6 +8,7 @@ const db = require('../../services/db');
 const first = require('../../services/first');
 const InvalidDataError = require('../../errors/invalid-data');
 const ProductDesign = require('../../domain-objects/product-design');
+const ProductDesignCollaboratorsDAO = require('../../dao/product-design-collaborators');
 
 const instantiate = data => new ProductDesign(data);
 const maybeInstantiate = data => (data && new ProductDesign(data)) || null;
@@ -85,9 +86,29 @@ function findById(id) {
     .catch(rethrow.ERRORS.InvalidTextRepresentation, () => null);
 }
 
+/**
+ * Find all designs that either the user owns, or is a collaborator with access
+ * @param {String} userId
+ */
+async function findAccessibleToUser(userId) {
+  const ownDesigns = await findByUserId(userId);
+
+  const collaborations = await ProductDesignCollaboratorsDAO.findByUserId(userId);
+  const invitedDesigns = await Promise.all(collaborations.map((collaboration) => {
+    return findById(collaboration.designId);
+  }));
+
+  // Deleted designs become holes in the array right now - TODO maybe clean this
+  // up via a reduce or something
+  const availableInvitedDesigns = invitedDesigns.filter(Boolean);
+
+  return [...ownDesigns, ...availableInvitedDesigns];
+}
+
 module.exports = {
   create,
   deleteById,
+  findAccessibleToUser,
   update,
   findById,
   findByUserId
