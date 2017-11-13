@@ -6,6 +6,7 @@ const Bluebird = require('bluebird');
 
 const canAccessAnnotation = require('../../middleware/can-access-annotation');
 const canAccessSection = require('../../middleware/can-access-section');
+const compact = require('../../services/compact');
 const getDesignPermissions = require('../../services/get-design-permissions');
 const InvalidDataError = require('../../errors/invalid-data');
 const MissingPrerequisitesError = require('../../errors/missing-prerequisites');
@@ -55,7 +56,9 @@ async function attachResources(design, permissions) {
 function* getDesigns() {
   this.assert(this.query.userId === this.state.userId, 403);
 
-  this.body = yield ProductDesignsDAO.findAccessibleToUser(this.query.userId);
+  const filters = compact({ status: this.query.status });
+  this.body = yield ProductDesignsDAO.findAccessibleToUser(this.query.userId, filters);
+
   this.status = 200;
 }
 
