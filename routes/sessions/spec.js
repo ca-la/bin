@@ -90,6 +90,23 @@ test('POST /sessions can create elevated role permissions', (t) => {
     });
 });
 
+test('POST /sessions can create other available roles', (t) => {
+  return UsersDAO.create(USER_DATA)
+    .then(() => {
+      return post('/sessions', {
+        body: {
+          email: 'user@example.com',
+          password: 'hunter2',
+          role: 'PARTNER'
+        }
+      });
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 201, 'status=201');
+      t.equal(body.role, 'PARTNER');
+    });
+});
+
 test('POST /sessions cannot create elevated role permissions if user is role USER', (t) => {
   const nonAdmin = Object.assign({}, USER_DATA, { role: 'USER' });
 
