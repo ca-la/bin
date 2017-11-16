@@ -16,6 +16,7 @@ const ProductDesignSectionAnnotationsDAO = require('../../dao/product-design-sec
 const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
 const ProductDesignStatusesDAO = require('../../dao/product-design-statuses');
 const requireAuth = require('../../middleware/require-auth');
+const sendAnnotationNotifications = require('../../services/send-annotation-notifications');
 const updateDesignStatus = require('../../services/update-design-status');
 const UsersDAO = require('../../dao/users');
 const { canAccessDesignInParam } = require('../../middleware/can-access-design');
@@ -259,6 +260,13 @@ function* createSectionAnnotation() {
     .catch(InvalidDataError, err => this.throw(400, err));
 
   const withUser = yield attachAnnotationUser(created);
+
+  yield sendAnnotationNotifications({
+    design: this.state.design,
+    user: withUser.user,
+    text
+  });
+
   this.body = withUser;
   this.status = 200;
 }

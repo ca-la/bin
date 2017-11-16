@@ -2,8 +2,9 @@
 
 const createUser = require('../../test-helpers/create-user');
 const ProductDesignsDAO = require('../../dao/product-designs');
+const EmailService = require('../../services/email');
 const { authHeader, patch, put } = require('../../test-helpers/http');
-const { test } = require('../../test-helpers/fresh');
+const { test, sandbox } = require('../../test-helpers/fresh');
 
 test('PATCH /product-designs/:id rejects empty data', (t) => {
   let designId;
@@ -32,6 +33,7 @@ test('PATCH /product-designs/:id rejects empty data', (t) => {
 });
 
 test('PUT /product-designs/:id/status updates a status', (t) => {
+  sandbox().stub(EmailService, 'enqueueSend', () => Promise.resolve());
   let designId;
   let sessionId;
 
