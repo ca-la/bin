@@ -567,7 +567,7 @@
     <body>
 		<!--*|IF:MC_PREVIEW_TEXT|*-->
 		<!--[if !gte mso 9]><!----><span class="mcnPreviewText" style="display:none; font-size:0px; line-height:0px; max-height:0px; max-width:0px; opacity:0; overflow:hidden; visibility:hidden; mso-hide:all;">
-      <%= senderName %> has invited you to <%= roleDescription %> their design
+      <%- senderName %> has invited you to <%- roleDescription %> their design
     </span><!--<![endif]-->
 		<!--*|END:IF|*-->
         <center>
@@ -623,11 +623,11 @@
                             <div style="text-align: center; padding-bottom: 40px;">
                               <span style="font-family:helvetica neue,helvetica,arial,verdana,sans-serif">
                                 <span style="font-size:14px">
-                                  <strong><%= senderName %></strong>
+                                  <strong><%- senderName %></strong>
                                   has invited you to
-                                  <%= roleDescription %>
+                                  <%- roleDescription %>
                                   their design
-                                  <strong><%= designTitle %></strong>
+                                  <strong><%- designTitle %></strong>
                                 </span>
                               </span>
                             </div>
@@ -661,7 +661,7 @@
                     <td class="mcnCaptionRightImageContent" align="center" valign="top">
 
                       <% if (previewImageUrl) { %>
-                        <img alt="" src="<%= previewImageUrl %>" width="150" style="max-width:150px; box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.24), 0px 0px 4px rgba(0, 0, 0, 0.12);" class="mcnSketch">
+                        <img alt="" src="<%- previewImageUrl %>" width="150" style="max-width:150px; box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.24), 0px 0px 4px rgba(0, 0, 0, 0.12);" class="mcnSketch">
                       <% } %>
 
                     </td>
@@ -671,9 +671,9 @@
                 <tbody><tr>
                     <td valign="top" class="mcnTextContent" style="padding: 20px 20px 0 0;">
                         <span style="font-family:roboto,helvetica neue,helvetica,arial,sans-serif">
-                          <strong><%= invitationMessage %></strong>
+                          <strong><%- invitationMessage %></strong>
                           <br><br>
-                          <a href='<%= designUrl %>'>
+                          <a href='<%- designUrl %>'>
                             <img data-file-id="2063057" height="42" src="https://gallery.mailchimp.com/a7f72ade53bf76a55050c6c34/images/afaa9b67-8595-40d0-8130-24023d60caed.png" style="border: 0px  ; width: 98px; height: 42px; margin: 0px;" width="98">
                           </a>
                         </span>
