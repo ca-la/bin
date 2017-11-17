@@ -14,7 +14,7 @@ async function getDesignPermissions(design, userId, sessionRole) {
 
   if (!isOwnerOrAdmin) {
     if (!userId) {
-      throw new UnauthorizedError();
+      throw new UnauthorizedError('Sign in to access this design');
     }
 
     const collaborators = await ProductDesignCollaboratorsDAO.findByDesignAndUser(
@@ -23,7 +23,7 @@ async function getDesignPermissions(design, userId, sessionRole) {
     );
 
     if (collaborators.length < 1) {
-      throw new ForbiddenError();
+      throw new ForbiddenError('You do not have access to this design');
     }
 
     const { role } = collaborators[0];
