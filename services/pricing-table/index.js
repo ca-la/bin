@@ -213,7 +213,8 @@ async function getComputedPricingTable(design) {
   const selectedBare = await ProductDesignSelectedOptionsDAO.findByDesignId(design.id);
   const selectedOptions = await Promise.all(selectedBare.map(attachOption));
 
-  const sections = await ProductDesignSectionsDAO.findByDesignId(design.id);
+  const allSections = await ProductDesignSectionsDAO.findByDesignId(design.id);
+  const sections = allSections.filter(section => section.type === 'FLAT_SKETCH');
 
   const isAllTemplates = sections.reduce((memo, section) => {
     if (!section.templateName) {
