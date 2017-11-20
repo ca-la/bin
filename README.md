@@ -32,6 +32,14 @@ server will read them from a `.env` file if present.
 $ heroku config -s --app cala-api-stg > .env
 ```
 
+You'll also need to populate the unnassigned referral codes table. In a
+production deployment, these codes must also be created in Shopify so that
+they're actually usable.
+
+```bash
+$ node scripts/generate-referral-codes.js > codes.txt && node scripts/insert-referral-codes.js && rm codes.txt
+```
+
 If you're setting up a new Shopify site to correspond with an API instance,
 you'll need to create the required webhooks as a one-time operation:
 
