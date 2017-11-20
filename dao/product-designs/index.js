@@ -8,6 +8,7 @@ const db = require('../../services/db');
 const first = require('../../services/first');
 const InvalidDataError = require('../../errors/invalid-data');
 const ProductDesign = require('../../domain-objects/product-design');
+const ProductDesignCollaboratorsDAO = require('../../dao/product-design-collaborators');
 
 const instantiate = data => new ProductDesign(data);
 const maybeInstantiate = data => (data && new ProductDesign(data)) || null;
@@ -62,32 +63,56 @@ function update(productDesignId, data) {
     });
 }
 
-function findByUserId(userId) {
+function findByUserId(userId, filters) {
+  const query = Object.assign({}, {
+    user_id: userId,
+    deleted_at: null
+  }, filters);
+
   return db('product_designs')
-    .where({
-      user_id: userId,
-      deleted_at: null
-    })
+    .where(query)
     .orderBy('created_at', 'desc')
     .catch(rethrow)
     .then(designs => designs.map(instantiate));
 }
 
-function findById(id) {
+function findById(id, filters) {
+  const query = Object.assign({}, {
+    id,
+    deleted_at: null
+  }, filters);
+
   return db('product_designs')
-    .where({
-      id,
-      deleted_at: null
-    })
+    .where(query)
     .catch(rethrow)
     .then(first)
     .then(maybeInstantiate)
     .catch(rethrow.ERRORS.InvalidTextRepresentation, () => null);
 }
 
+/**
+ * Find all designs that either the user owns, or is a collaborator with access
+ * @param {String} userId
+ */
+async function findAccessibleToUser(userId, filters) {
+  const ownDesigns = await findByUserId(userId, filters);
+
+  const collaborations = await ProductDesignCollaboratorsDAO.findByUserId(userId);
+  const invitedDesigns = await Promise.all(collaborations.map((collaboration) => {
+    return findById(collaboration.designId, filters);
+  }));
+
+  // Deleted designs become holes in the array right now - TODO maybe clean this
+  // up via a reduce or something
+  const availableInvitedDesigns = invitedDesigns.filter(Boolean);
+
+  return [...ownDesigns, ...availableInvitedDesigns];
+}
+
 module.exports = {
   create,
   deleteById,
+  findAccessibleToUser,
   update,
   findById,
   findByUserId

@@ -47,6 +47,9 @@ const config = {
   AWS_ACCESS_KEY: process.env.AWS_ACCESS_KEY,
   AWS_SECRET_KEY: process.env.AWS_SECRET_KEY,
 
+  AWS_NOTIFICATION_SQS_URL: process.env.AWS_NOTIFICATION_SQS_URL,
+  AWS_NOTIFICATION_SQS_REGION: process.env.AWS_NOTIFICATION_SQS_REGION,
+
   MAILCHIMP_API_KEY: process.env.MAILCHIMP_API_KEY,
 
   // The Mailchimp list ID for users who subscribe to the mailing list but do

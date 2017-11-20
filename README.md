@@ -54,9 +54,9 @@ Branch | Heroku App | URL | Build Status
 To tag off and release a new version to production, run the release script:
 
 ```bash
-$ bin/release patch    # 0.0.x - bug fixes
-$ bin/release minor    # 0.x.0 - new features or changes
-$ bin/release major    # x.0.0 - large, backwards-incompatible changes
+$ make release type=patch    # 0.0.x - bug fixes
+$ make release type=minor    # 0.x.0 - new features or changes
+$ make release type=major    # x.0.0 - large, backwards-incompatible changes
 ```
 
 

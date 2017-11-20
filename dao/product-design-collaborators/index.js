@@ -76,7 +76,6 @@ function findByUserId(userId) {
       user_id: userId
     })
     .then(collaborators => collaborators.map(instantiate))
-    .then(collaborators => Promise.all(collaborators.map(attachUser)))
     .catch(rethrow);
 }
 

@@ -6,19 +6,22 @@ const Bluebird = require('bluebird');
 
 const canAccessAnnotation = require('../../middleware/can-access-annotation');
 const canAccessSection = require('../../middleware/can-access-section');
+const compact = require('../../services/compact');
+const getDesignPermissions = require('../../services/get-design-permissions');
 const InvalidDataError = require('../../errors/invalid-data');
 const MissingPrerequisitesError = require('../../errors/missing-prerequisites');
-const ProductDesignCollaboratorsDAO = require('../../dao/product-design-collaborators');
 const ProductDesignFeaturePlacementsDAO = require('../../dao/product-design-feature-placements');
 const ProductDesignsDAO = require('../../dao/product-designs');
 const ProductDesignSectionAnnotationsDAO = require('../../dao/product-design-section-annotations');
 const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
 const ProductDesignStatusesDAO = require('../../dao/product-design-statuses');
 const requireAuth = require('../../middleware/require-auth');
+const sendAnnotationNotifications = require('../../services/send-annotation-notifications');
 const updateDesignStatus = require('../../services/update-design-status');
 const UsersDAO = require('../../dao/users');
 const { canAccessDesignInParam } = require('../../middleware/can-access-design');
 const { getComputedPricingTable, getFinalPricingTable } = require('../../services/pricing-table');
+const { requireValues } = require('../../services/require-properties');
 
 const router = new Router();
 
@@ -40,28 +43,28 @@ async function attachStatuses(design) {
   return design;
 }
 
+async function attachResources(design, permissions) {
+  requireValues({ design, permissions });
+
+  let attached = design;
+  attached = await attachDesignOwner(attached);
+  attached = await attachStatuses(attached);
+  attached.setPermissions(permissions);
+  return attached;
+}
+
+
 function* getDesigns() {
   this.assert(this.query.userId === this.state.userId, 403);
 
-  const ownDesigns = yield ProductDesignsDAO.findByUserId(this.query.userId);
+  const filters = compact({ status: this.query.status });
+  this.body = yield ProductDesignsDAO.findAccessibleToUser(this.query.userId, filters);
 
-  const collaborations = yield ProductDesignCollaboratorsDAO.findByUserId(this.query.userId);
-  const invitedDesigns = yield Promise.all(collaborations.map((collaboration) => {
-    return ProductDesignsDAO.findById(collaboration.designId);
-  }));
-
-  // Deleted designs become holes in the array right now - TODO maybe clean this
-  // up via a reduce or something
-  const availableInvitedDesigns = invitedDesigns.filter(Boolean);
-
-  this.body = [...ownDesigns, ...availableInvitedDesigns];
   this.status = 200;
 }
 
 function* getDesign() {
-  let design = yield ProductDesignsDAO.findById(this.params.designId);
-  design = yield attachDesignOwner(design);
-  design = yield attachStatuses(design);
+  const design = yield attachResources(this.state.design, this.state.designPermissions);
 
   this.body = design;
   this.status = 200;
@@ -109,8 +112,13 @@ function* createDesign() {
   let design = yield ProductDesignsDAO.create(data)
     .catch(InvalidDataError, err => this.throw(400, err));
 
-  design = yield attachDesignOwner(design);
-  design = yield attachStatuses(design);
+  const designPermissions = yield getDesignPermissions(
+    design,
+    this.state.userId,
+    this.state.role
+  );
+
+  design = yield attachResources(design, designPermissions);
 
   this.body = design;
   this.status = 201;
@@ -125,8 +133,7 @@ function* updateDesign() {
   )
     .catch(InvalidDataError, err => this.throw(400, err));
 
-  updated = yield attachDesignOwner(updated);
-  updated = yield attachStatuses(updated);
+  updated = yield attachResources(updated, this.state.designPermissions);
 
   this.body = updated;
   this.status = 200;
@@ -253,6 +260,13 @@ function* createSectionAnnotation() {
     .catch(InvalidDataError, err => this.throw(400, err));
 
   const withUser = yield attachAnnotationUser(created);
+
+  yield sendAnnotationNotifications({
+    design: this.state.design,
+    user: withUser.user,
+    text
+  });
+
   this.body = withUser;
   this.status = 200;
 }

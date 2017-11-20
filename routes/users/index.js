@@ -132,10 +132,19 @@ function* updatePassword() {
  * PUT /users/:userId
  */
 function* updateUser() {
-  this.assert(this.params.userId === this.state.userId, 403, 'You can only update your own user');
+  const isAdmin = (this.state.role === User.ROLES.admin);
+  const isCurrentUser = (this.params.userId === this.state.userId);
+
+  this.assert(isAdmin || isCurrentUser, 403, 'You can only update your own user');
 
   const { birthday, name, email } = this.request.body;
-  const updated = yield UsersDAO.update(this.params.userId, { birthday, name, email })
+  const data = { birthday, name, email };
+
+  if (isAdmin) {
+    data.role = this.request.body.role;
+  }
+
+  const updated = yield UsersDAO.update(this.params.userId, data)
     .catch(InvalidDataError, err => this.throw(400, err));
 
   this.status = 200;

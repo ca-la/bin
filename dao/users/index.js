@@ -162,7 +162,8 @@ function update(userId, data) {
     .update(compact({
       name: data.name,
       email: data.email,
-      birthday: data.birthday
+      birthday: data.birthday,
+      role: data.role
     }), '*')
     .then(first)
     .then(instantiate);
