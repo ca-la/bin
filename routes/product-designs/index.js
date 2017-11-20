@@ -106,7 +106,8 @@ const ALLOWED_SECTION_PARAMS = [
   'templateName',
   'title',
   'customImageId',
-  'panelData'
+  'panelData',
+  'type'
 ];
 
 function* createDesign() {

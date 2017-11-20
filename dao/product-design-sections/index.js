@@ -23,7 +23,8 @@ function create(data) {
       title: data.title,
       custom_image_id: data.customImageId,
       panel_data: data.panelData,
-      id: uuid.v4()
+      id: uuid.v4(),
+      type: data.type
     }, '*')
     .catch(rethrow)
     .then(first)
@@ -37,7 +38,8 @@ function update(sectionId, data) {
       template_name: data.templateName,
       title: data.title,
       custom_image_id: data.customImageId,
-      panel_data: data.panelData
+      panel_data: data.panelData,
+      type: data.type
     }), '*')
     .then(first)
     .then(instantiate);
