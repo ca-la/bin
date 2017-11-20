@@ -7,6 +7,7 @@ class ProductDesignSection {
     requireProperties(row, 'id');
 
     this.id = row.id;
+    this.type = row.type;
     this.createdAt = new Date(row.created_at);
     this.panelData = row.panel_data;
     this.title = row.title;

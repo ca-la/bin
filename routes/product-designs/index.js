@@ -102,6 +102,13 @@ const ALLOWED_DESIGN_PARAMS = [
   'patternComplexity'
 ];
 
+const ALLOWED_SECTION_PARAMS = [
+  'templateName',
+  'title',
+  'customImageId',
+  'panelData'
+];
+
 function* createDesign() {
   const userData = pick(this.request.body, ALLOWED_DESIGN_PARAMS);
 
@@ -153,20 +160,11 @@ function* getSections() {
 }
 
 function* createSection() {
-  const {
-    templateName,
-    title,
-    customImageId,
-    panelData
-  } = this.request.body;
+  const data = pick(this.request.body, ALLOWED_SECTION_PARAMS);
 
-  const section = yield ProductDesignSectionsDAO.create({
-    designId: this.params.designId,
-    title,
-    templateName,
-    customImageId,
-    panelData
-  })
+  const section = yield ProductDesignSectionsDAO.create(Object.assign({}, data, {
+    designId: this.params.designId
+  }))
     .catch(InvalidDataError, err => this.throw(400, err));
 
   this.body = section;
@@ -180,21 +178,9 @@ function* deleteSection() {
 }
 
 function* updateSection() {
-  const {
-    templateName,
-    title,
-    customImageId,
-    panelData
-  } = this.request.body;
-
   const updated = yield ProductDesignSectionsDAO.update(
     this.params.sectionId,
-    {
-      templateName,
-      title,
-      customImageId,
-      panelData
-    }
+    pick(this.request.body, ALLOWED_SECTION_PARAMS)
   )
     .catch(InvalidDataError, err => this.throw(400, err));
 
