@@ -23,6 +23,7 @@ function create(data) {
       title: data.title,
       custom_image_id: data.customImageId,
       panel_data: data.panelData,
+      custom_data: data.customData,
       id: uuid.v4(),
       type: data.type
     }, '*')
@@ -38,6 +39,7 @@ function update(sectionId, data) {
       template_name: data.templateName,
       title: data.title,
       custom_image_id: data.customImageId,
+      custom_data: data.customData,
       panel_data: data.panelData,
       type: data.type
     }), '*')

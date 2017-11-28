@@ -9,6 +9,7 @@ class ProductDesignSection {
     this.id = row.id;
     this.type = row.type;
     this.createdAt = new Date(row.created_at);
+    this.customData = row.custom_data;
     this.panelData = row.panel_data;
     this.title = row.title;
     this.customImageId = row.custom_image_id;
