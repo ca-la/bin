@@ -12,7 +12,10 @@ const ProductDesignSection = require('../../domain-objects/product-design-sectio
 const instantiate = data => new ProductDesignSection(data);
 
 function create(data) {
-  if (!data.templateName && !data.customImageId) {
+  if (
+    data.type === 'FLAT_SKETCH' &&
+    (!data.templateName && !data.customImageId)
+  ) {
     throw new InvalidDataError('Template name or custom image ID required');
   }
 
