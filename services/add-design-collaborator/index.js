@@ -3,6 +3,7 @@
 const escape = require('lodash/escape');
 
 const InvalidDataError = require('../../errors/invalid-data');
+const normalizeEmail = require('../normalize-email');
 const ProductDesignCollaboratorsDAO = require('../../dao/product-design-collaborators');
 const ProductDesignsDAO = require('../../dao/product-designs');
 const sharingEmail = require('../../emails/sharing');
@@ -43,7 +44,9 @@ async function addDesignCollaborator(
     throw new InvalidDataError('Invalid email address');
   }
 
-  const user = await UsersDAO.findByEmail(email);
+  const normalizedEmail = normalizeEmail(email);
+
+  const user = await UsersDAO.findByEmail(normalizedEmail);
 
   const design = await ProductDesignsDAO.findById(designId);
   const inviter = await UsersDAO.findById(design.userId);
@@ -63,7 +66,7 @@ async function addDesignCollaborator(
     collaborator = await ProductDesignCollaboratorsDAO.create({
       designId,
       role,
-      userEmail: email,
+      userEmail: normalizedEmail,
       invitationMessage
     });
   }

@@ -8,6 +8,7 @@ const compact = require('../../services/compact');
 const db = require('../../services/db');
 const first = require('../../services/first');
 const InvalidDataError = require('../../errors/invalid-data');
+const normalizeEmail = require('../../services/normalize-email');
 const UnassignedReferralCodesDAO = require('../unassigned-referral-codes');
 const User = require('../../domain-objects/user');
 const { hash } = require('../../services/hash');
@@ -24,12 +25,12 @@ const ERROR_CODES = {
 // TODO move this out into a new service
 function create(data, options = {}) {
   const {
-    name,
     email,
-    phone,
+    isSmsPreregistration,
+    name,
     password,
-    role,
-    isSmsPreregistration
+    phone,
+    role
   } = data;
 
   // Allow passing `options.requirePassword = false` to disable the password
@@ -65,7 +66,7 @@ function create(data, options = {}) {
     .then(([referralCode, passwordHash]) =>
       db('users').insert({
         id: uuid.v4(),
-        email,
+        email: email ? normalizeEmail(email) : null,
         is_sms_preregistration: isSmsPreregistration,
         name,
         password_hash: passwordHash,
@@ -129,7 +130,9 @@ function findAll({ limit, offset, search }) {
 }
 
 function findByEmail(email) {
-  return db('users').whereRaw('lower(users.email) = lower(?)', [email])
+  const normalized = normalizeEmail(email);
+
+  return db('users').whereRaw('lower(users.email) = lower(?)', [normalized])
     .then(first)
     .then(maybeInstantiate);
 }
