@@ -84,7 +84,7 @@ test('UsersDAO.create returns a new user with email but no phone', (t) => {
   return UsersDAO.create(USER_DATA)
     .then((user) => {
       t.equal(user.name, 'Q User');
-      t.equal(user.email, 'USER@example.com');
+      t.equal(user.email, 'user@example.com');
       t.equal(user.id.length, 36);
       t.notEqual(user.passwordHash, 'hunter2');
       t.equal(user.phone, null);
