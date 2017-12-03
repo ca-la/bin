@@ -2,9 +2,9 @@
 
 const { PRODUCTION_CUT_AND_SEW_COST_CENTS } = require('../../config/pricing');
 
-function getCutAndSewCost(unitsToProduce, productionComplexity) {
+function getCutAndSewCost(unitsToProduce, patternComplexity) {
   const eligibleBuckets = PRODUCTION_CUT_AND_SEW_COST_CENTS
-    .filter(bucket => bucket.complexity === productionComplexity);
+    .filter(bucket => bucket.complexity === patternComplexity);
 
   const reversedBuckets = eligibleBuckets.sort(
     (a, b) => b.minUnits - a.minUnits
@@ -18,7 +18,7 @@ function getCutAndSewCost(unitsToProduce, productionComplexity) {
     }
   }
 
-  throw new Error(`No eligible bucket found for (units: ${unitsToProduce}, complexity: ${productionComplexity})`);
+  throw new Error(`No eligible bucket found for (units: ${unitsToProduce}, complexity: ${patternComplexity})`);
 }
 
 module.exports = getCutAndSewCost;

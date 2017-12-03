@@ -99,9 +99,7 @@ const ALLOWED_DESIGN_PARAMS = [
   'unitsToProduce',
   'retailPriceCents',
   'sourcingComplexity',
-  'patternComplexity',
-  'productionComplexity',
-  'sampleComplexity'
+  'patternComplexity'
 ];
 
 const ALLOWED_SECTION_PARAMS = [

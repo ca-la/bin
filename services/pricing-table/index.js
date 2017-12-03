@@ -191,8 +191,6 @@ async function getComputedPricingTable(design) {
     retailPriceCents,
     sourcingComplexity,
     patternComplexity,
-    productionComplexity,
-    sampleComplexity,
     status
   } = design;
 
@@ -276,7 +274,7 @@ async function getComputedPricingTable(design) {
         title: 'First Sample Cut & Sew',
         id: 'development-sample-cut-sew-1',
         quantity: 1,
-        unitPriceCents: pricing.SAMPLE_CUT_AND_SEW_COST_CENTS[sampleComplexity]
+        unitPriceCents: pricing.SAMPLE_CUT_AND_SEW_COST_CENTS[patternComplexity]
       })
     ]
   });
@@ -402,7 +400,7 @@ async function getComputedPricingTable(design) {
         title: 'Cut, Sew, Trim',
         id: 'production-cut-sew',
         quantity: unitsToProduce,
-        unitPriceCents: getCutAndSewCost(unitsToProduce, productionComplexity)
+        unitPriceCents: getCutAndSewCost(unitsToProduce, patternComplexity)
       }),
       new LineItem({
         title: 'Materials',
