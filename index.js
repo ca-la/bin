@@ -36,6 +36,7 @@ router.use('/product-design-collaborators', require('./routes/product-design-col
 router.use('/product-design-images', require('./routes/product-design-images'));
 router.use('/product-design-options', require('./routes/product-design-options'));
 router.use('/product-design-selected-options', require('./routes/product-design-selected-options'));
+router.use('/product-design-services', require('./routes/product-design-services'));
 router.use('/product-design-status-updates', require('./routes/product-design-status-updates'));
 router.use('/product-designs', require('./routes/product-designs'));
 router.use('/product-videos', require('./routes/product-videos'));
