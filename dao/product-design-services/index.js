@@ -4,6 +4,7 @@ const uuid = require('node-uuid');
 const rethrow = require('pg-rethrow');
 
 const db = require('../../services/db');
+const InvalidDataError = require('../../errors/invalid-data');
 const ProductDesignService = require('../../domain-objects/product-design-service');
 
 const { dataMapper } = ProductDesignService;
@@ -29,8 +30,8 @@ function createForDesign(trx, designId, services) {
     .transacting(trx)
     .insert(rowData)
     .returning('*')
+    .then(inserted => inserted.map(instantiate))
     .catch(rethrow)
-    .then(inserted => inserted.map(instantiate));
 }
 
 function replaceForDesign(designId, services) {
