@@ -32,6 +32,17 @@ function createForDesign(trx, designId, services) {
     .returning('*')
     .then(inserted => inserted.map(instantiate))
     .catch(rethrow)
+    .catch(rethrow.ERRORS.NotNullViolation, (err) => {
+      if (err.column === 'service_id') {
+        throw new InvalidDataError('Service ID must be provided');
+      }
+    })
+    .catch(rethrow.ERRORS.ForeignKeyViolation, (err) => {
+      if (err.constraint === 'product_design_services_service_id_fkey') {
+        throw new InvalidDataError('Invalid service ID');
+      }
+      throw err;
+    });
 }
 
 function replaceForDesign(designId, services) {
