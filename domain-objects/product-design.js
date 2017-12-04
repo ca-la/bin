@@ -21,6 +21,8 @@ const keyNamesByColumnName = {
   units_to_produce: 'unitsToProduce',
   sourcing_complexity: 'sourcingComplexity',
   pattern_complexity: 'patternComplexity',
+  production_complexity: 'productionComplexity',
+  sample_complexity: 'sampleComplexity',
   status: 'status'
 };
 
