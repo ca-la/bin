@@ -7,6 +7,7 @@ const compact = require('../../services/compact');
 const db = require('../../services/db');
 const first = require('../../services/first');
 const InvalidDataError = require('../../errors/invalid-data');
+const normalizeEmail = require('../../services/normalize-email');
 const ProductDesignCollaborator = require('../../domain-objects/product-design-collaborator');
 const UsersDAO = require('../users');
 
@@ -92,8 +93,10 @@ function findByDesignAndUser(designId, userId) {
 }
 
 function findUnclaimedByEmail(email) {
+  const normalized = normalizeEmail(email);
+
   return db('product_design_collaborators')
-    .whereRaw('lower(product_design_collaborators.user_email) = lower(?)', [email])
+    .whereRaw('lower(product_design_collaborators.user_email) = lower(?)', [normalized])
     .then(collaborators => collaborators.map(instantiate))
     .catch(rethrow);
 }
