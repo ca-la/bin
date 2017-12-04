@@ -20,7 +20,8 @@ function deleteForDesign(trx, designId) {
 function createForDesign(trx, designId, services) {
   const rowData = services.map((data) => {
     return Object.assign({}, dataMapper.userDataToRowData(data), {
-      id: uuid.v4()
+      id: uuid.v4(),
+      design_id: designId
     });
   });
 

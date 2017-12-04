@@ -1,4 +1,5 @@
 SHELL := /bin/bash
+.DEFAULT_GOAL := serve-dev
 
 npm_bin = ./node_modules/.bin
 

@@ -25,6 +25,7 @@ function* canAccessDesignInParam(next) {
 }
 
 function* canAccessDesignInQuery(next) {
+  this.assert(this.query.designId, 400, 'Must provide design ID');
   yield canAccessDesignId.call(this, this.query.designId);
 
   yield next;

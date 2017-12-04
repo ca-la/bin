@@ -6,7 +6,8 @@ const DataMapper = require('../services/data-mapper');
 const keyNamesByColumnName = {
   id: 'id',
   design_id: 'designId',
-  vendor_user_id: 'vendorUserId'
+  vendor_user_id: 'vendorUserId',
+  created_at: 'createdAt'
 };
 
 const dataMapper = new DataMapper(keyNamesByColumnName);
@@ -17,7 +18,9 @@ class ProductDesignService {
 
     const data = dataMapper.rowDataToUserData(row);
 
-    Object.assign(this, data);
+    Object.assign(this, data, {
+      createdAt: new Date(row.created_at)
+    });
   }
 }
 
