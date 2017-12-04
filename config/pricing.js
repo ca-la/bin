@@ -50,7 +50,7 @@ const pricing = {
     10: 1750 * 100
   },
 
-  // Based on the number of units they're doing AND the patternComplexity
+  // Based on the number of units they're doing AND the productionComplexity
   PRODUCTION_CUT_AND_SEW_COST_CENTS: [
     { minUnits: 0, complexity: 0, cost: 0 * 100 },
     { minUnits: 5, complexity: 0, cost: 0 * 100 },
