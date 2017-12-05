@@ -32,6 +32,8 @@ const pricing = {
     6: 560 * 100
   },
 
+  TECHNICAL_DESIGN_COST_CENTS: 150 * 100,
+
   // Fixed price for the sample materials
   SAMPLE_YARDAGE_AND_TRIMS_COST_CENTS: 0,
 

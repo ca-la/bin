@@ -9,6 +9,7 @@ const getCutAndSewCost = require('../../services/get-cut-and-sew-cost');
 const pricing = require('../../config/pricing');
 const ProductDesignOptionsDAO = require('../../dao/product-design-options');
 const ProductDesignSelectedOptionsDAO = require('../../dao/product-design-selected-options');
+const ProductDesignServicesDAO = require('../../dao/product-design-services');
 const { requireProperties, assert } = require('../../services/require-properties');
 
 class LineItem {
@@ -218,6 +219,18 @@ async function getComputedPricingTable(design) {
   const allSections = await ProductDesignSectionsDAO.findByDesignId(design.id);
   const sections = allSections.filter(section => section.type === 'FLAT_SKETCH');
 
+  const services = await ProductDesignServicesDAO.findByDesignId(design.id);
+  const enabledServices = {};
+  services.forEach((service) => { enabledServices[service.serviceId] = true; });
+
+  const needsDesign = enabledServices.DESIGN;
+  const needsSourcing = enabledServices.SOURCING;
+  const needsTechnicalDesign = enabledServices.TECHNICAL_DESIGN;
+  const needsPatternMaking = enabledServices.PATTERN_MAKING;
+  const needsSampling = enabledServices.SAMPLING;
+  const needsProduction = enabledServices.PRODUCTION;
+  const needsFulfillment = enabledServices.FULFILLMENT;
+
   const isAllTemplates = sections.reduce((memo, section) => {
     if (!section.templateName) {
       return false;
@@ -231,7 +244,9 @@ async function getComputedPricingTable(design) {
     status !== 'IN_REVIEW'
   );
 
-  if (!isAllTemplates && !isPricingReviewed) {
+  const needsReview = !isAllTemplates || needsDesign;
+
+  if (needsReview && !isPricingReviewed) {
     throw new MissingPrerequisitesError('Custom sketches need to be reviewed for complexity');
   }
 
@@ -254,34 +269,42 @@ async function getComputedPricingTable(design) {
     },
 
     lineItems: [
-      new LineItem({
+      needsPatternMaking && new LineItem({
         title: 'Pattern Making',
         id: 'development-patternmaking',
         quantity: 1,
         unitPriceCents: pricing.PATTERN_MAKING_COST_CENTS[patternComplexity]
       }),
-      new LineItem({
+      needsSourcing && new LineItem({
         title: 'Sourcing/Testing',
         id: 'development-sourcing',
         quantity: 1,
         unitPriceCents: pricing.SOURCING_COST_CENTS[sourcingComplexity]
       }),
-      new LineItem({
+      needsTechnicalDesign && new LineItem({
+        title: 'Technical Design',
+        id: 'development-technical-design',
+        quantity: 1,
+        unitPriceCents: pricing.TECHNICAL_DESIGN_COST_CENTS
+      }),
+      needsSampling && new LineItem({
         title: 'Sample Yardage & Trims',
         id: 'development-sample-yardage-trims',
         quantity: 1,
         unitPriceCents: pricing.SAMPLE_YARDAGE_AND_TRIMS_COST_CENTS
       }),
-      new LineItem({
+      needsSampling && new LineItem({
         title: 'First Sample Cut & Sew',
         id: 'development-sample-cut-sew-1',
         quantity: 1,
         unitPriceCents: pricing.SAMPLE_CUT_AND_SEW_COST_CENTS[sampleComplexity]
       })
-    ]
+    ].filter(Boolean)
   });
 
   selectedOptions.forEach((selectedOption) => {
+    if (!needsSampling) { return; }
+
     if (hasDye(selectedOption)) {
       const dyeSetupCost = getDyeSetupCostCents({ selectedOption });
       const dyeCost = getDyeCostCents({ selectedOption });
@@ -308,6 +331,8 @@ async function getComputedPricingTable(design) {
   });
 
   featurePlacements.forEach((featurePlacement) => {
+    if (!needsSampling) { return; }
+
     const setupCost = getFeaturePlacementSetupCostCents({ featurePlacement });
     const cost = getFeaturePlacementCostCents({ featurePlacement });
 
@@ -334,8 +359,7 @@ async function getComputedPricingTable(design) {
       totalPriceCents: 'Total'
     },
 
-    lineItems: [
-    ]
+    lineItems: []
   });
 
   selectedOptions.forEach((selectedOption) => {
@@ -398,22 +422,24 @@ async function getComputedPricingTable(design) {
     },
 
     lineItems: [
-      new LineItem({
+      needsProduction && new LineItem({
         title: 'Cut, Sew, Trim',
         id: 'production-cut-sew',
         quantity: unitsToProduce,
         unitPriceCents: getCutAndSewCost(unitsToProduce, productionComplexity)
       }),
-      new LineItem({
+      needsProduction && new LineItem({
         title: 'Materials',
         id: 'production-materials',
         quantity: unitsToProduce,
         unitPriceCents: materialsGroup.getTotalPriceCents()
       })
-    ]
+    ].filter(Boolean)
   });
 
   selectedOptions.forEach((selectedOption) => {
+    if (!needsProduction) { return; }
+
     const { option } = selectedOption;
 
     productionGroup.addLineItem(new LineItem({
@@ -447,6 +473,8 @@ async function getComputedPricingTable(design) {
   });
 
   featurePlacements.forEach((featurePlacement) => {
+    if (!needsProduction) { return; }
+
     const cost = getFeaturePlacementSetupCostCents({ featurePlacement });
 
     const process = getFeatureFriendlyProcessName(featurePlacement);
@@ -465,7 +493,6 @@ async function getComputedPricingTable(design) {
   const fulfillmentGroup = new Group({
     title: 'Fulfillment per garment',
     totalLabel: 'Total Fulfillment',
-    groupPriceCents: 0,
 
     columnTitles: {
       title: 'Name',
@@ -475,19 +502,19 @@ async function getComputedPricingTable(design) {
     },
 
     lineItems: [
-      new LineItem({
+      needsFulfillment && new LineItem({
         title: 'Packaging - labor',
         id: 'fulfillment-packing',
         quantity: unitsToProduce,
         unitPriceCents: pricing.PACKAGING_PER_GARMENT_COST_CENTS
       }),
-      new LineItem({
+      needsFulfillment && new LineItem({
         title: 'Shipping label',
         id: 'fulfillment-shipping',
         quantity: unitsToProduce,
         unitPriceCents: pricing.PACKAGING_PER_GARMENT_COST_CENTS
       })
-    ]
+    ].filter(Boolean)
   });
 
   const fulfillmentPerUnit = Math.round(fulfillmentGroup.getTotalPriceCents() / unitsToProduce);

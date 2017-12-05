@@ -126,12 +126,12 @@ function* createDesign() {
 
   // Create a default set of services
   yield ProductDesignServicesDAO.replaceForDesign(design.id, [
-    { serviceId: 'DESIGN' },
     { serviceId: 'SOURCING' },
     { serviceId: 'TECHNICAL_DESIGN' },
     { serviceId: 'PATTERN_MAKING' },
     { serviceId: 'SAMPLING' },
-    { serviceId: 'PRODUCTION' }
+    { serviceId: 'PRODUCTION' },
+    { serviceId: 'FULFILLMENT' }
   ]);
 
   const designPermissions = yield getDesignPermissions(
