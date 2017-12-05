@@ -14,6 +14,7 @@ const ProductDesignFeaturePlacementsDAO = require('../../dao/product-design-feat
 const ProductDesignsDAO = require('../../dao/product-designs');
 const ProductDesignSectionAnnotationsDAO = require('../../dao/product-design-section-annotations');
 const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
+const ProductDesignServicesDAO = require('../../dao/product-design-services');
 const ProductDesignStatusesDAO = require('../../dao/product-design-statuses');
 const requireAuth = require('../../middleware/require-auth');
 const sendAnnotationNotifications = require('../../services/send-annotation-notifications');
@@ -122,6 +123,16 @@ function* createDesign() {
 
   let design = yield ProductDesignsDAO.create(data)
     .catch(InvalidDataError, err => this.throw(400, err));
+
+  // Create a default set of services
+  yield ProductDesignServicesDAO.replaceForDesign(design.id, [
+    { serviceId: 'DESIGN' },
+    { serviceId: 'SOURCING' },
+    { serviceId: 'TECHNICAL_DESIGN' },
+    { serviceId: 'PATTERN_MAKING' },
+    { serviceId: 'SAMPLING' },
+    { serviceId: 'PRODUCTION' }
+  ]);
 
   const designPermissions = yield getDesignPermissions(
     design,
