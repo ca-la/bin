@@ -53,7 +53,7 @@ function findForUser(userId) {
       deleted_at: null,
       is_builtin_option: true
     })
-    .orderByRaw('preview_image_id desc nulls last, created_at desc')
+    .orderByRaw('user_id is not null desc, preview_image_id is not null desc, created_at desc')
     .catch(rethrow)
     .then(options => options.map(instantiate));
 }
