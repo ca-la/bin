@@ -1,6 +1,7 @@
 'use strict';
 
 const flatten = require('lodash/flatten');
+const pick = require('lodash/pick');
 
 const ProductDesignFeaturePlacementsDAO = require('../../dao/product-design-feature-placements');
 const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
@@ -56,10 +57,16 @@ class Group {
 
 class ProfitGroup {
   constructor(data) {
-    this.lineItems = data.lineItems;
-    this.title = data.title;
-    this.totalProfitCents = data.totalProfitCents;
-    this.unitProfitCents = data.unitProfitCents;
+    const keys = [
+      'lineItems',
+      'title',
+      'totalProfitCents',
+      'unitProfitCents',
+      'marginPercentage'
+    ];
+
+    requireProperties(data, ...keys);
+    Object.assign(this, pick(data, keys));
   }
 }
 
@@ -520,10 +527,23 @@ async function getComputedPricingTable(design) {
   const fulfillmentPerUnit = Math.round(fulfillmentGroup.getTotalPriceCents() / unitsToProduce);
   fulfillmentGroup.setGroupPriceCents(fulfillmentPerUnit);
 
+  const totalCost = developmentGroup.getTotalPriceCents() +
+    productionGroup.getTotalPriceCents() +
+    fulfillmentGroup.getTotalPriceCents();
+
+  const totalRevenue = design.retailPriceCents * unitsToProduce;
+  const totalProfitCents = totalRevenue - totalCost;
+  const unitProfitCents = Math.round(totalProfitCents / unitsToProduce);
+
+  const marginPercentage = Math.round(
+    (1 - (totalCost / totalRevenue)) * 100
+  );
+
   const profitGroup = new ProfitGroup({
     title: 'Gross Profit per garment',
-    unitProfitCents: 0,
-    totalProfitCents: 0,
+    unitProfitCents,
+    totalProfitCents,
+    marginPercentage,
 
     lineItems: [
       new LineItem({
