@@ -102,7 +102,9 @@ const ALLOWED_DESIGN_PARAMS = [
   'sourcingComplexity',
   'patternComplexity',
   'productionComplexity',
-  'sampleComplexity'
+  'sampleComplexity',
+  'dueDate',
+  'expectedCostCents'
 ];
 
 const ALLOWED_SECTION_PARAMS = [

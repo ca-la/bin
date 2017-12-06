@@ -1,6 +1,7 @@
 'use strict';
 
 const DataMapper = require('../services/data-mapper');
+const formatDateString = require('../services/format-date-string');
 const { requireProperties } = require('../services/require-properties');
 
 const keyNamesByColumnName = {
@@ -23,7 +24,9 @@ const keyNamesByColumnName = {
   pattern_complexity: 'patternComplexity',
   production_complexity: 'productionComplexity',
   sample_complexity: 'sampleComplexity',
-  status: 'status'
+  status: 'status',
+  due_date: 'dueDate',
+  expected_cost_cents: 'expectedCostCents'
 };
 
 const dataMapper = new DataMapper(keyNamesByColumnName);
@@ -39,6 +42,12 @@ class ProductDesign {
       deletedAt: row.deleted_at && new Date(row.deleted_at),
       canCompleteStatus: false
     });
+
+    if (row.due_date instanceof Date) {
+      this.dueDate = formatDateString(row.due_date);
+    } else {
+      this.dueDate = row.due_date;
+    }
   }
 
   setOwner(owner) {
