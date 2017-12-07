@@ -10,6 +10,20 @@ const requireAuth = require('../../middleware/require-auth');
 
 const router = new Router();
 
+const ALLOWED_ATTRS = [
+  'patternImageId',
+  'perMeterCostCents',
+  'preferredLengthUnit',
+  'preferredWeightUnit',
+  'previewImageId',
+  'sku',
+  'title',
+  'type',
+  'unitCostCents',
+  'vendorName',
+  'weightGsm'
+];
+
 function attachImages(option) {
   let attaching = Promise.resolve();
 
@@ -42,18 +56,7 @@ function* canModifyOption(next) {
 }
 
 function* create() {
-  const allowedAttrs = pick(this.request.body,
-    'type',
-    'unitCostCents',
-    'preferredLengthUnit',
-    'weightGsm',
-    'preferredWeightUnit',
-    'title',
-    'sku',
-    'previewImageId',
-    'patternImageId',
-    'vendorName'
-  );
+  const allowedAttrs = pick(this.request.body, ALLOWED_ATTRS);
 
   const attrs = Object.assign({}, allowedAttrs, {
     userId: this.state.userId
@@ -87,18 +90,7 @@ function* deleteOption() {
 }
 
 function* update() {
-  const allowedAttrs = pick(this.request.body,
-    'type',
-    'unitCostCents',
-    'preferredLengthUnit',
-    'weightGsm',
-    'preferredWeightUnit',
-    'title',
-    'sku',
-    'previewImageId',
-    'patternImageId',
-    'vendorName'
-  );
+  const allowedAttrs = pick(this.request.body, ALLOWED_ATTRS);
 
   const updated = yield ProductDesignOptionsDAO.update(
     this.params.optionId,
