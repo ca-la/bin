@@ -4,6 +4,7 @@ const uuid = require('node-uuid');
 const rethrow = require('pg-rethrow');
 
 const db = require('../../services/db');
+const InvalidDataError = require('../../errors/invalid-data');
 const ProductDesignVariant = require('../../domain-objects/product-design-variant');
 
 const { dataMapper } = ProductDesignVariant;
@@ -19,6 +20,10 @@ function deleteForDesign(trx, designId) {
 
 function createForDesign(trx, designId, variants) {
   const rowData = variants.map((data) => {
+    if (!data.colorName && !data.sizeName) {
+      throw new InvalidDataError('Color name or size name must be provided');
+    }
+
     return Object.assign({}, dataMapper.userDataToRowData(data), {
       id: uuid.v4(),
       design_id: designId
