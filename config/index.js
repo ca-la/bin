@@ -94,11 +94,14 @@ const config = {
   SITE_HOST: process.env.SITE_HOST,
 
   // e.g. 'https://studio.ca.la'
-  STUDIO_HOST: process.env.STUDIO_HOST
+  STUDIO_HOST: process.env.STUDIO_HOST,
+
+  LOG_ALL_QUERIES: (process.env.LOG_ALL_QUERIES === 'true')
 };
 
 Object.keys(config).forEach((key) => {
-  if (!config[key]) {
+  const value = config[key];
+  if (value === undefined || value === '') {
     throw new Error(`Missing config value: ${key}`);
   }
 });

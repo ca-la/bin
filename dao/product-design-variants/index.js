@@ -35,6 +35,7 @@ function createForDesign(trx, designId, variants) {
     .insert(rowData)
     .returning('*')
     .then(inserted => inserted.map(instantiate))
+    .then(instances => instances.sort((a, b) => a.position - b.position))
     .catch(rethrow)
     .catch(rethrow.ERRORS.UniqueViolation, (err) => {
       if (err.constraint === 'product_design_variant_position') {
@@ -64,7 +65,7 @@ function findByDesignId(designId) {
     .where({
       design_id: designId
     })
-    .orderBy('created_at', 'desc')
+    .orderBy('position', 'asc')
     .catch(rethrow)
     .then(variants => variants.map(instantiate));
 }
