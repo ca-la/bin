@@ -35,7 +35,13 @@ function createForDesign(trx, designId, variants) {
     .insert(rowData)
     .returning('*')
     .then(inserted => inserted.map(instantiate))
-    .catch(rethrow);
+    .catch(rethrow)
+    .catch(rethrow.ERRORS.UniqueViolation, (err) => {
+      if (err.constraint === 'product_design_variant_position') {
+        throw new InvalidDataError('Cannot create two variants with the same position');
+      }
+      throw err;
+    });
 }
 
 function replaceForDesign(designId, variants) {

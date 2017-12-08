@@ -10,7 +10,8 @@ const keyNamesByColumnName = {
   created_at: 'createdAt',
   color_name: 'colorName',
   size_name: 'sizeName',
-  units_to_produce: 'unitsToProduce'
+  units_to_produce: 'unitsToProduce',
+  position: 'position'
 };
 
 const dataMapper = new DataMapper(keyNamesByColumnName);
