@@ -77,7 +77,8 @@ async function getTotalUnitsToProduce(designId) {
       where design_id = ?;
   `, [designId]);
 
-  return response.rows[0].sum;
+  const sum = response.rows[0].sum;
+  return Number(sum || 0);
 }
 
 module.exports = {

@@ -3,14 +3,15 @@
 const flatten = require('lodash/flatten');
 const pick = require('lodash/pick');
 
-const ProductDesignFeaturePlacementsDAO = require('../../dao/product-design-feature-placements');
-const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
-const MissingPrerequisitesError = require('../../errors/missing-prerequisites');
 const getCutAndSewCost = require('../../services/get-cut-and-sew-cost');
+const MissingPrerequisitesError = require('../../errors/missing-prerequisites');
 const pricing = require('../../config/pricing');
+const ProductDesignFeaturePlacementsDAO = require('../../dao/product-design-feature-placements');
 const ProductDesignOptionsDAO = require('../../dao/product-design-options');
+const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
 const ProductDesignSelectedOptionsDAO = require('../../dao/product-design-selected-options');
 const ProductDesignServicesDAO = require('../../dao/product-design-services');
+const ProductDesignVariantsDAO = require('../../dao/product-design-variants');
 const { requireProperties, assert } = require('../../services/require-properties');
 
 class LineItem {
@@ -195,7 +196,6 @@ function getFeatureFriendlyProcessName(featurePlacement) {
 
 async function getComputedPricingTable(design) {
   const {
-    unitsToProduce,
     retailPriceCents,
     sourcingComplexity,
     patternComplexity,
@@ -203,6 +203,8 @@ async function getComputedPricingTable(design) {
     sampleComplexity,
     status
   } = design;
+
+  const unitsToProduce = await ProductDesignVariantsDAO.getTotalUnitsToProduce(design.id);
 
   if (!unitsToProduce) {
     throw new MissingPrerequisitesError('Design must specify number of units to produce');

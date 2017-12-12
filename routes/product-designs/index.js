@@ -97,7 +97,6 @@ const ALLOWED_DESIGN_PARAMS = [
   'metadata',
   'productType',
   'title',
-  'unitsToProduce',
   'retailPriceCents',
   'sourcingComplexity',
   'patternComplexity',
