@@ -17,8 +17,7 @@ const keyNamesByColumnName = {
 const ROLES = {
   edit: 'EDIT',
   view: 'VIEW',
-  comment: 'COMMENT',
-  productionPartner: 'PRODUCTION_PARTNER'
+  comment: 'COMMENT'
 };
 
 const dataMapper = new DataMapper(keyNamesByColumnName);

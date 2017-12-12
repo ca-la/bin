@@ -5,12 +5,12 @@ const ForbiddenError = require('../../errors/forbidden');
 const ProductDesignCollaboratorsDAO = require('../../dao/product-design-collaborators');
 const UnauthorizedError = require('../../errors/unauthorized');
 const User = require('../../domain-objects/user');
-const { ROLES } = require('../../domain-objects/product-design-collaborator');
 
 async function getDesignPermissions(design, userId, sessionRole) {
   const isAdmin = (sessionRole === User.ROLES.admin);
+  const isPartner = (sessionRole === User.ROLES.partner);
   const isOwnerOrAdmin = isAdmin || (userId === design.userId);
-  let isProductionPartnerOrAdmin = isAdmin;
+  const isPartnerOrAdmin = isAdmin || isPartner;
 
   if (!isOwnerOrAdmin) {
     if (!userId) {
@@ -25,18 +25,12 @@ async function getDesignPermissions(design, userId, sessionRole) {
     if (collaborators.length < 1) {
       throw new ForbiddenError('You do not have access to this design');
     }
-
-    const { role } = collaborators[0];
-
-    if (role === ROLES.productionPartner) {
-      isProductionPartnerOrAdmin = true;
-    }
   }
 
   const designPermissions = {
-    canManagePricing: isProductionPartnerOrAdmin,
-    canAddPartners: isProductionPartnerOrAdmin,
-    canCompleteStatus: canCompleteStatus(design.status, isProductionPartnerOrAdmin)
+    canManagePricing: isPartnerOrAdmin,
+    canAddPartners: isPartnerOrAdmin,
+    canCompleteStatus: canCompleteStatus(design.status, isPartnerOrAdmin)
   };
 
   return designPermissions;

@@ -14,16 +14,16 @@ const productionStatuses = [
 
 function canCompleteStatus(
   status,
-  isProductionPartner
+  isPartnerOrAdmin
 ) {
-  requireValues({ status, isProductionPartner });
+  requireValues({ status, isPartnerOrAdmin });
 
   if (status === 'COMPLETE') {
     return false;
   }
 
   if (productionStatuses.indexOf(status) > -1) {
-    return isProductionPartner;
+    return isPartnerOrAdmin;
   }
 
   return true;

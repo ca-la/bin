@@ -17,6 +17,8 @@ const USER_DATA = Object.freeze({
   role: 'ADMIN'
 });
 
+const UNAUTHORIZED_ERROR_MSG = "You can't log in to this type of account on this page. Contact hi@ca.la if you're unable to locate the correct login page.";
+
 test('POST /sessions returns a 400 if user creation fails', (t) => {
   sandbox().stub(SessionsDAO,
     'create',
@@ -122,7 +124,7 @@ test('POST /sessions cannot create elevated role permissions if user is role USE
     })
     .then(([response, body]) => {
       t.equal(response.status, 400);
-      t.equal(body.message, 'User may not assume this role');
+      t.equal(body.message, UNAUTHORIZED_ERROR_MSG);
     });
 });
 
@@ -141,7 +143,25 @@ test('POST /sessions cannot create elevated role permissions if user is role DES
     })
     .then(([response, body]) => {
       t.equal(response.status, 400);
-      t.equal(body.message, 'User may not assume this role');
+      t.equal(body.message, UNAUTHORIZED_ERROR_MSG);
+    });
+});
+
+test('POST /sessions cannot create USER sessions by omission, if a partner', (t) => {
+  const nonAdmin = Object.assign({}, USER_DATA, { role: 'PARTNER' });
+
+  return UsersDAO.create(nonAdmin)
+    .then(() => {
+      return post('/sessions', {
+        body: {
+          email: 'user@example.com',
+          password: 'hunter2'
+        }
+      });
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 400);
+      t.equal(body.message, UNAUTHORIZED_ERROR_MSG);
     });
 });
 

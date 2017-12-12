@@ -7,6 +7,7 @@ const uuid = require('node-uuid');
 const db = require('../../services/db');
 const first = require('../../services/first');
 const InvalidDataError = require('../../errors/invalid-data');
+const UnauthorizedRoleError = require('../../errors/unauthorized-role');
 const Session = require('../../domain-objects/session');
 const UsersDAO = require('../users');
 const { compare } = require('../../services/hash');
@@ -34,13 +35,15 @@ function createForUser(user, additionalData = {}) {
 }
 
 function create(data) {
-  const { email, password, role } = data;
+  const { email, password } = data;
 
   if (!email || !password) {
     return Promise.reject(new InvalidDataError('Missing required information'));
   }
 
   let user;
+
+  const role = data.role || 'USER';
 
   return UsersDAO.findByEmail(email)
     .then((_user) => {
@@ -63,8 +66,8 @@ function create(data) {
 
       const allowedRoles = ALLOWED_SESSION_ROLES[user.role];
 
-      if (role && allowedRoles.indexOf(role) < 0) {
-        throw new InvalidDataError('User may not assume this role');
+      if (allowedRoles.indexOf(role) < 0) {
+        throw new UnauthorizedRoleError(`User may not assume the role '${role}'`);
       }
 
       return createForUser(user, {

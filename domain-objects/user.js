@@ -16,7 +16,8 @@ const ALLOWED_SESSION_ROLES = {
   [ROLES.admin]: [ROLES.partner, ROLES.user, ROLES.admin, ROLES.designer],
   [ROLES.user]: [ROLES.user],
   [ROLES.designer]: [ROLES.designer, ROLES.user],
-  [ROLES.partner]: [ROLES.partner, ROLES.designer, ROLES.user]
+  // Important: Partners cannot log in as a regular user!
+  [ROLES.partner]: [ROLES.partner]
 };
 
 class User {

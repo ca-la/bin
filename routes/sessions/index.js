@@ -3,6 +3,7 @@
 const Router = require('koa-router');
 
 const InvalidDataError = require('../../errors/invalid-data');
+const UnauthorizedRoleError = require('../../errors/unauthorized-role');
 const SessionsDAO = require('../../dao/sessions');
 
 const router = new Router();
@@ -28,7 +29,10 @@ function* createSession() {
     expiresAt,
     role
   })
-    .catch(InvalidDataError, err => this.throw(400, err));
+    .catch(InvalidDataError, err => this.throw(400, err))
+    .catch(UnauthorizedRoleError, () =>
+      this.throw(400, "You can't log in to this type of account on this page. Contact hi@ca.la if you're unable to locate the correct login page.")
+    );
 
   this.status = 201;
   this.body = session;
