@@ -27,7 +27,7 @@ test: preflight
 # Interactive console (i.e. to require & explore modules)
 .PHONY: console
 console: preflight
-	NODE_ENV=test env $$(cat .env | xargs) node
+	env $$(cat .env | xargs) node
 
 .PHONY: release
 release:

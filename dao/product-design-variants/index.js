@@ -70,7 +70,18 @@ function findByDesignId(designId) {
     .then(variants => variants.map(instantiate));
 }
 
+async function getTotalUnitsToProduce(designId) {
+  const response = await db.raw(`
+    select sum(units_to_produce)
+      from product_design_variants
+      where design_id = ?;
+  `, [designId]);
+
+  return response.rows[0].sum;
+}
+
 module.exports = {
   replaceForDesign,
-  findByDesignId
+  findByDesignId,
+  getTotalUnitsToProduce
 };
