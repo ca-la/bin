@@ -205,6 +205,8 @@ async function getComputedPricingTable(design) {
   } = design;
 
   const unitsToProduce = await ProductDesignVariantsDAO.getTotalUnitsToProduce(design.id);
+  const sizes = await ProductDesignVariantsDAO.getSizes(design.id);
+  const numberOfSizes = Math.max(sizes.length, 1);
 
   if (!unitsToProduce) {
     throw new MissingPrerequisitesError('Design must specify number of units to produce');
@@ -283,6 +285,12 @@ async function getComputedPricingTable(design) {
         id: 'development-patternmaking',
         quantity: 1,
         unitPriceCents: pricing.PATTERN_MAKING_COST_CENTS[patternComplexity]
+      }),
+      needsPatternMaking && new LineItem({
+        title: 'Marking & Grading',
+        id: 'development-grading',
+        quantity: numberOfSizes,
+        unitPriceCents: pricing.GRADING_COST_PER_SIZE_CENTS
       }),
       needsSourcing && new LineItem({
         title: 'Sourcing/Testing',

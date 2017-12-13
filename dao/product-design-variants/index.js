@@ -81,8 +81,19 @@ async function getTotalUnitsToProduce(designId) {
   return Number(sum || 0);
 }
 
+async function getSizes(designId) {
+  const response = await db.raw(`
+    select distinct size_name
+      from product_design_variants
+      where design_id = ?;
+  `, [designId]);
+
+  return response.rows.map(row => row.size_name);
+}
+
 module.exports = {
   replaceForDesign,
   findByDesignId,
-  getTotalUnitsToProduce
+  getTotalUnitsToProduce,
+  getSizes
 };
