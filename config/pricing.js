@@ -1,10 +1,13 @@
 'use strict';
 
+// All prices here include CALA's margin unless otherwise specified
+// If we're adding new pricing from a vendor, make sure we add our own margin.
+
 const pricing = {
   // Per patternComplexity bucket, the cost to do custom pattern-making
   // Complexity 0 represents the cost to modify a pre-made CALA pattern
   PATTERN_MAKING_COST_CENTS: {
-    0: 0 * 100,
+    0: 0,
     1: 30 * 100,
     2: 60 * 100,
     3: 110 * 100,
@@ -39,9 +42,9 @@ const pricing = {
   // Fixed price for the sample materials
   SAMPLE_YARDAGE_AND_TRIMS_COST_CENTS: 0,
 
-  // Based on the Pattern Complexity of the garment
+  // Based on the Sample Complexity of the garment
   SAMPLE_CUT_AND_SEW_COST_CENTS: {
-    0: 0 * 100,
+    0: 0,
     1: 36 * 100,
     2: 72 * 100,
     3: 108 * 100,
@@ -56,18 +59,7 @@ const pricing = {
 
   // Based on the number of units they're doing AND the productionComplexity
   PRODUCTION_CUT_AND_SEW_COST_CENTS: [
-    { minUnits: 0, complexity: 0, cost: 0 * 100 },
-    { minUnits: 5, complexity: 0, cost: 0 * 100 },
-    { minUnits: 15, complexity: 0, cost: 0 * 100 },
-    { minUnits: 25, complexity: 0, cost: 0 * 100 },
-    { minUnits: 50, complexity: 0, cost: 0 * 100 },
-    { minUnits: 75, complexity: 0, cost: 0 * 100 },
-    { minUnits: 100, complexity: 0, cost: 0 * 100 },
-    { minUnits: 150, complexity: 0, cost: 0 * 100 },
-    { minUnits: 200, complexity: 0, cost: 0 * 100 },
-    { minUnits: 250, complexity: 0, cost: 0 * 100 },
-    { minUnits: 300, complexity: 0, cost: 0 * 100 },
-    { minUnits: 500, complexity: 0, cost: 0 * 100 },
+    { minUnits: 0, complexity: 0, cost: 0 },
 
     { minUnits: 0, complexity: 1, cost: 23 * 100 },
     { minUnits: 5, complexity: 1, cost: 21 * 100 },
