@@ -28,7 +28,8 @@ async function getDesignPermissions(design, userId, sessionRole) {
   }
 
   const designPermissions = {
-    canManagePricing: isPartnerOrAdmin,
+    canManagePricing: isAdmin,
+    canViewPricing: !isPartner,
     canCompleteStatus: canCompleteStatus(design.status, isPartnerOrAdmin)
   };
 

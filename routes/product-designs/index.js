@@ -72,6 +72,12 @@ function* getDesign() {
 }
 
 function* getDesignPricing() {
+  const { canViewPricing, canManagePricing } = this.state.designPermissions;
+
+  if (!canViewPricing) {
+    this.throw(403, "You're not able to view pricing for this garment");
+  }
+
   const design = yield ProductDesignsDAO.findById(this.params.designId);
 
   const computedPricingTable = yield Bluebird.resolve(getComputedPricingTable(design))
@@ -79,8 +85,6 @@ function* getDesignPricing() {
 
   const finalPricingTable = yield getFinalPricingTable(design, computedPricingTable);
   const overridePricingTable = design.overridePricingTable;
-
-  const { canManagePricing } = this.state.designPermissions;
 
   this.body = {
     computedPricingTable: canManagePricing ? computedPricingTable : null,
