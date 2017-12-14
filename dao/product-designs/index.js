@@ -2,6 +2,7 @@
 
 const uuid = require('node-uuid');
 const rethrow = require('pg-rethrow');
+const uniq = require('lodash/uniq');
 
 const compact = require('../../services/compact');
 const db = require('../../services/db');
@@ -9,6 +10,7 @@ const first = require('../../services/first');
 const InvalidDataError = require('../../errors/invalid-data');
 const ProductDesign = require('../../domain-objects/product-design');
 const ProductDesignCollaboratorsDAO = require('../../dao/product-design-collaborators');
+const ProductDesignServicesDAO = require('../../dao/product-design-services');
 
 const instantiate = data => new ProductDesign(data);
 const maybeInstantiate = data => (data && new ProductDesign(data)) || null;
@@ -106,7 +108,16 @@ async function findAccessibleToUser(userId, filters) {
   // up via a reduce or something
   const availableInvitedDesigns = invitedDesigns.filter(Boolean);
 
-  return [...ownDesigns, ...availableInvitedDesigns];
+  const services = await ProductDesignServicesDAO.findByUserId(userId);
+  const designIds = uniq(services.map(service => service.designId));
+
+  const serviceDesigns = await Promise.all(designIds.map((designId) => {
+    return findById(designId, filters);
+  }));
+
+  const availableServiceDesigns = serviceDesigns.filter(Boolean);
+
+  return [...ownDesigns, ...availableInvitedDesigns, ...availableServiceDesigns];
 }
 
 module.exports = {

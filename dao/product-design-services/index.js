@@ -70,7 +70,29 @@ function findByDesignId(designId) {
     .then(services => services.map(instantiate));
 }
 
+function findByUserId(userId) {
+  return db('product_design_services')
+    .where({
+      vendor_user_id: userId
+    })
+    .orderBy('created_at', 'desc')
+    .catch(rethrow)
+    .then(services => services.map(instantiate));
+}
+
+function findByDesignAndUser(designId, userId) {
+  return db('product_design_services')
+    .where({
+      vendor_user_id: userId,
+      design_id: designId
+    })
+    .then(services => services.map(instantiate))
+    .catch(rethrow);
+}
+
 module.exports = {
-  replaceForDesign,
-  findByDesignId
+  findByDesignAndUser,
+  findByDesignId,
+  findByUserId,
+  replaceForDesign
 };

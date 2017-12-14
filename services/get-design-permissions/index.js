@@ -3,6 +3,7 @@
 const canCompleteStatus = require('../../services/can-complete-status');
 const ForbiddenError = require('../../errors/forbidden');
 const ProductDesignCollaboratorsDAO = require('../../dao/product-design-collaborators');
+const ProductDesignServicesDAO = require('../../dao/product-design-services');
 const UnauthorizedError = require('../../errors/unauthorized');
 const User = require('../../domain-objects/user');
 
@@ -11,6 +12,8 @@ async function getDesignPermissions(design, userId, sessionRole) {
   const isPartner = (sessionRole === User.ROLES.partner);
   const isOwnerOrAdmin = isAdmin || (userId === design.userId);
   const isPartnerOrAdmin = isAdmin || isPartner;
+
+  let collaboratorRole;
 
   if (!isOwnerOrAdmin) {
     if (!userId) {
@@ -23,11 +26,23 @@ async function getDesignPermissions(design, userId, sessionRole) {
     );
 
     if (collaborators.length < 1) {
-      throw new ForbiddenError('You do not have access to this design');
+      const services = await ProductDesignServicesDAO.findByDesignAndUser(
+        design.id,
+        userId
+      );
+
+      if (services.length < 1) {
+        throw new ForbiddenError('You do not have access to this design');
+      }
     }
+
+    collaboratorRole = collaborators[0] && collaborators[0].role;
   }
 
   const designPermissions = {
+    canView: true,
+    canEdit: !collaboratorRole || (collaboratorRole === 'EDIT'),
+    canComment: !collaboratorRole || (collaboratorRole === 'EDIT') || (collaboratorRole === 'COMMENT'),
     canManagePricing: isAdmin,
     canViewPricing: !isPartner,
     canCompleteStatus: canCompleteStatus(design.status, isPartnerOrAdmin)
