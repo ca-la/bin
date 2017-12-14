@@ -20,7 +20,7 @@ const requireAuth = require('../../middleware/require-auth');
 const sendAnnotationNotifications = require('../../services/send-annotation-notifications');
 const updateDesignStatus = require('../../services/update-design-status');
 const UsersDAO = require('../../dao/users');
-const { canAccessDesignInParam } = require('../../middleware/can-access-design');
+const { canAccessDesignInParam, canCommentOnDesign } = require('../../middleware/can-access-design');
 const { getComputedPricingTable, getFinalPricingTable } = require('../../services/pricing-table');
 const { requireValues } = require('../../services/require-properties');
 
@@ -246,12 +246,6 @@ function* getSectionAnnotations() {
 }
 
 function* createSectionAnnotation() {
-  this.assert(
-    this.state.designPermissions.canComment,
-    403,
-    "You don't have permissions to comment on this design"
-  );
-
   const {
     x,
     y,
@@ -339,7 +333,7 @@ router.del('/:designId/sections/:sectionId', requireAuth, canAccessDesignInParam
 router.patch('/:designId/sections/:sectionId', requireAuth, canAccessDesignInParam, canAccessSection, updateSection);
 
 router.get('/:designId/sections/:sectionId/annotations', requireAuth, canAccessDesignInParam, canAccessSection, getSectionAnnotations);
-router.post('/:designId/sections/:sectionId/annotations', requireAuth, canAccessDesignInParam, canAccessSection, createSectionAnnotation);
+router.post('/:designId/sections/:sectionId/annotations', requireAuth, canAccessDesignInParam, canCommentOnDesign, canAccessSection, createSectionAnnotation);
 
 router.get('/:designId/sections/:sectionId/feature-placements', requireAuth, canAccessDesignInParam, canAccessSection, getSectionFeaturePlacements);
 router.put('/:designId/sections/:sectionId/feature-placements', requireAuth, canAccessDesignInParam, canAccessSection, replaceSectionFeaturePlacements);

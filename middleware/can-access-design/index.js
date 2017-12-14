@@ -31,8 +31,38 @@ function* canAccessDesignInQuery(next) {
   yield next;
 }
 
+function* canCommentOnDesign(next) {
+  if (!this.state.designPermissions) {
+    throw new Error('canCommentOnDesign must be chained from canAccessDesign');
+  }
+
+  this.assert(
+    this.state.designPermissions.canComment,
+    403,
+    "You don't have permission to comment on this design"
+  );
+
+  yield next;
+}
+
+function* canEditDesign(next) {
+  if (!this.state.designPermissions) {
+    throw new Error('canEditDesign must be chained from canAccessDesign');
+  }
+
+  this.assert(
+    this.state.designPermissions.canEdit,
+    403,
+    "You don't have permission to edit this design"
+  );
+
+  yield next;
+}
+
 module.exports = {
   canAccessDesignId,
   canAccessDesignInParam,
-  canAccessDesignInQuery
+  canAccessDesignInQuery,
+  canCommentOnDesign,
+  canEditDesign
 };
