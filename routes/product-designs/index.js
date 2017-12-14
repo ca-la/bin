@@ -246,6 +246,12 @@ function* getSectionAnnotations() {
 }
 
 function* createSectionAnnotation() {
+  this.assert(
+    this.state.designPermissions.canComment,
+    403,
+    "You don't have permissions to comment on this design"
+  );
+
   const {
     x,
     y,
