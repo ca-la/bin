@@ -41,6 +41,7 @@ router.use('/product-design-status-updates', require('./routes/product-design-st
 router.use('/product-design-variants', require('./routes/product-design-variants'));
 router.use('/product-designs', require('./routes/product-designs'));
 router.use('/product-videos', require('./routes/product-videos'));
+router.use('/production-prices', require('./routes/production-prices'));
 router.use('/products', require('./routes/products'));
 router.use('/push-tokens', require('./routes/push-tokens'));
 router.use('/scan-photos', require('./routes/scan-photos'));
