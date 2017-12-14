@@ -4,6 +4,7 @@ const uuid = require('node-uuid');
 const rethrow = require('pg-rethrow');
 
 const db = require('../../services/db');
+const InvalidDataError = require('../../errors/invalid-data');
 const ProductionPrice = require('../../domain-objects/production-price');
 
 const { dataMapper } = ProductionPrice;
@@ -34,7 +35,25 @@ function createForVendorAndService(trx, vendorUserId, serviceId, prices) {
     .insert(rowData)
     .returning('*')
     .then(inserted => inserted.map(instantiate))
-    .catch(rethrow);
+    .catch(rethrow)
+    .catch(rethrow.ERRORS.NotNullViolation, (err) => {
+      switch (err.column) {
+        case 'minimum_units':
+          throw new InvalidDataError('Minimum units must be provided');
+        case 'complexity_level':
+          throw new InvalidDataError('Complexity level must be provided');
+        case 'price_cents':
+          throw new InvalidDataError('Price must be provided');
+        default:
+          throw err;
+      }
+    })
+    .catch(rethrow.ERRORS.ForeignKeyViolation, (err) => {
+      if (err.constraint === 'production_prices_service_id_fkey') {
+        throw new InvalidDataError('Invalid service ID');
+      }
+      throw err;
+    });
 }
 
 function replaceForVendorAndService(vendorUserId, serviceId, prices) {
