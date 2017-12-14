@@ -155,6 +155,28 @@ test('UsersDAO.findAll finds based on matching search terms', (t) => {
     });
 });
 
+test('UsersDAO.findAll finds based on matching search terms and role', async (t) => {
+  const ADMIN_1 = Object.assign({}, USER_DATA, {
+    role: 'ADMIN',
+    email: 'user3@example.com'
+  });
+
+  const ADMIN_2 = Object.assign({}, USER_DATA, {
+    role: 'ADMIN',
+    name: 'D User',
+    email: 'user4@example.com'
+  });
+
+  await Promise.all([
+    UsersDAO.create(ADMIN_1),
+    UsersDAO.create(ADMIN_2),
+    UsersDAO.create(USER_DATA)
+  ]);
+
+  const users = await UsersDAO.findAll({ role: 'ADMIN', search: 'q user', limit: 100, offset: 0 });
+  t.equal(users.length, 1);
+});
+
 test('UsersDAO.findAll returns nothing if no search matches', (t) => {
   return UsersDAO.create(USER_DATA)
     .then(() => UsersDAO.findAll({ limit: 1, offset: 0, search: 'flexbox' }))

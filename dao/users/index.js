@@ -112,7 +112,7 @@ function findById(id) {
     .then(maybeInstantiate);
 }
 
-function findAll({ limit, offset, search }) {
+function findAll({ limit, offset, search, role }) {
   if (typeof limit !== 'number' || typeof offset !== 'number') {
     throw new Error('Limit and offset must be provided to find all users');
   }
@@ -121,7 +121,11 @@ function findAll({ limit, offset, search }) {
     .orderBy('created_at', 'desc')
     .modify((query) => {
       if (search) {
-        query.where(db.raw('name ~* :search or email ~* :search', { search }));
+        query.andWhere(db.raw('(name ~* :search or email ~* :search)', { search }));
+      }
+
+      if (role) {
+        query.andWhere({ role });
       }
     })
     .limit(limit)
