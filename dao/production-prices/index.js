@@ -6,13 +6,18 @@ const rethrow = require('pg-rethrow');
 const db = require('../../services/db');
 const InvalidDataError = require('../../errors/invalid-data');
 const ProductionPrice = require('../../domain-objects/production-price');
+const { requireValues } = require('../../services/require-properties');
 
 const { dataMapper } = ProductionPrice;
 
 const instantiate = data => new ProductionPrice(data);
 
+const TABLE_NAME = 'production_prices';
+
 function deleteForVendorAndService(trx, vendorUserId, serviceId) {
-  return db('product_design_services')
+  requireValues({ trx, vendorUserId, serviceId });
+
+  return db(TABLE_NAME)
     .transacting(trx)
     .where({
       service_id: serviceId,
@@ -22,6 +27,8 @@ function deleteForVendorAndService(trx, vendorUserId, serviceId) {
 }
 
 function createForVendorAndService(trx, vendorUserId, serviceId, prices) {
+  requireValues({ trx, vendorUserId, serviceId, prices });
+
   const rowData = prices.map((data) => {
     return Object.assign({}, dataMapper.userDataToRowData(data), {
       id: uuid.v4(),
@@ -30,7 +37,7 @@ function createForVendorAndService(trx, vendorUserId, serviceId, prices) {
     });
   });
 
-  return db('production_prices')
+  return db(TABLE_NAME)
     .transacting(trx)
     .insert(rowData)
     .returning('*')
@@ -57,6 +64,8 @@ function createForVendorAndService(trx, vendorUserId, serviceId, prices) {
 }
 
 function replaceForVendorAndService(vendorUserId, serviceId, prices) {
+  requireValues({ vendorUserId, serviceId, prices });
+
   return db.transaction((trx) => {
     deleteForVendorAndService(trx, vendorUserId, serviceId)
       .then(() => {
@@ -72,7 +81,7 @@ function replaceForVendorAndService(vendorUserId, serviceId, prices) {
 }
 
 function findByVendor(vendorUserId) {
-  return db('production_prices')
+  return db(TABLE_NAME)
     .where({
       vendor_user_id: vendorUserId
     })
