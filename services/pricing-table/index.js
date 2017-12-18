@@ -255,10 +255,14 @@ async function getComputedPricingTable(design) {
     status !== 'IN_REVIEW'
   );
 
-  const needsReview = !isAllTemplates || needsDesign;
+  if (!isPricingReviewed) {
+    if (!isAllTemplates) {
+      throw new MissingPrerequisitesError('Custom sketches need to be reviewed before we can give a price quote');
+    }
 
-  if (needsReview && !isPricingReviewed) {
-    throw new MissingPrerequisitesError('Custom sketches need to be reviewed for complexity');
+    if (needsDesign) {
+      throw new MissingPrerequisitesError('The design phase needs to be complete before we can give a price quote');
+    }
   }
 
   const featurePlacementsPerSection = await Promise.all(
