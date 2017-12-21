@@ -5,7 +5,7 @@ const UsersDAO = require('../../dao/users');
 const { requireValues } = require('../require-properties');
 const { enqueueSend } = require('../email');
 
-async function sendAnnotationNotifications({ design, user, text }) {
+async function sendAnnotationNotifications({ annotation, design, user, text }) {
   requireValues({ design, user, text });
 
   const collaborators = await ProductDesignCollaboratorsDAO.findByDesign(design.id);
@@ -26,6 +26,7 @@ async function sendAnnotationNotifications({ design, user, text }) {
       recipients[i],
       'add_section_annotation',
       {
+        annotation,
         user,
         design,
         text

@@ -268,6 +268,7 @@ function* createSectionAnnotation() {
   const withUser = yield attachAnnotationUser(created);
 
   yield sendAnnotationNotifications({
+    annotation: created,
     design: this.state.design,
     user: withUser.user,
     text
