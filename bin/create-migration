@@ -3,24 +3,24 @@
 set -euo pipefail
 
 main() {
-  NAME=${1:-""}
+  name=${1:-""}
 
-  if [ "$NAME" == "" ]; then
+  if [ "$name" == "" ]; then
     echo "Usage: create-migration [migration-name]"
     exit 1
   fi
 
-  DATE=$(date "+%Y%m%d%H%M%S")
+  date_stamp=$(date "+%Y%m%d%H%M%S")
 
-  FILENAME=migrations/$DATE'_'$NAME.js
-  cp migrations/_template $FILENAME
-  echo 'Created '$FILENAME
+  filename=migrations/$date_stamp'_'$name.js
+  cp migrations/_template $filename
+  echo 'Created '$filename
 
   echo -n 'Open in '$EDITOR'? [y/n] '
-  read -n 1 EDIT
+  read -n 1 should_edit
 
-  if [ "$EDIT" == "y" ]; then
-    $EDITOR $FILENAME
+  if [ "$should_edit" == "y" ]; then
+    $EDITOR $filename
   fi
 }
 
