@@ -1,0 +1,29 @@
+#!/bin/bash
+
+set -euo pipefail
+
+before_dump=$TMPDIR/cala-db-before.txt
+after_dump=$TMPDIR/cala-db-after.txt
+
+main() {
+  echo -n 'Dumping initial schema... '
+  pg_dump -sOx cala > $before_dump
+  echo 'Done'
+
+  echo -n 'Migrating... '
+  migrate-local > /dev/null
+  echo 'Done'
+
+  echo -n 'Rolling back... '
+  rollback-local > /dev/null
+  echo 'Done'
+
+  echo -n 'Dumping final schema... '
+  pg_dump -sOx cala > $after_dump
+  echo 'Done'
+
+  echo 'Schema difference after applying and rolling back (should be ~zero):'
+  diff $before_dump $after_dump
+}
+
+main "$@"
