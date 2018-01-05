@@ -8,7 +8,8 @@
     "url": "git+https://github.com/ca-la/bin.git"
   },
   "bin": {
-    "cala-release": "release"
+    "cala-release": "release",
+    "cala-lint-commented-code": "lint-commented-code"
   },
   "author": "CALA <devops@ca.la>",
   "license": "MIT",
