@@ -5,7 +5,7 @@ A selection of useful scripts to include in new projects.
 ## License
 
 ```
-Copyright (c) 2017 CALA
+Copyright (c) 2018 CALA
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

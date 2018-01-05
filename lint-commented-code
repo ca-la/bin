@@ -1,0 +1,15 @@
+#!/bin/bash
+
+set -euo pipefail
+
+main() {
+  commented_code=$(git grep -IEn '^\s*\/\/.+;\s*$' || true)
+
+  if [[ $commented_code ]] ; then
+    echo 'Error: Found some commented-out code!'
+    echo $commented_code
+    exit 1
+  fi
+}
+
+main "$@"
