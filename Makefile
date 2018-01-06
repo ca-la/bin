@@ -37,6 +37,7 @@ release:
 .PHONY: lint
 lint: preflight
 	$(npm_bin)/eslint . --ignore-path .gitignore
+	$(npm_bin)/cala-lint-commented-code
 
 .PHONY: preflight
 preflight:
