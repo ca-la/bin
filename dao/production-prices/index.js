@@ -41,7 +41,11 @@ function createForVendorAndService(trx, vendorUserId, serviceId, prices) {
     .transacting(trx)
     .insert(rowData)
     .returning('*')
-    .then(inserted => inserted.map(instantiate))
+    .then((inserted) => {
+      return inserted
+        .map(instantiate)
+        .sort((a, b) => a.minimumUnits - b.minimumUnits);
+    })
     .catch(rethrow)
     .catch(rethrow.ERRORS.NotNullViolation, (err) => {
       switch (err.column) {
@@ -85,7 +89,7 @@ function findByVendor(vendorUserId) {
     .where({
       vendor_user_id: vendorUserId
     })
-    .orderBy('created_at', 'desc')
+    .orderBy('minimum_units', 'asc')
     .catch(rethrow)
     .then(prices => prices.map(instantiate));
 }
