@@ -7,7 +7,7 @@ const ProductDesignImagesDAO = require('../../dao/product-design-images');
 const requireAuth = require('../../middleware/require-auth');
 const User = require('../../domain-objects/user');
 const { AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME } = require('../../config');
-const { uploadFile } = require('../../services/aws');
+const { getDownloadUrl, uploadFile } = require('../../services/aws');
 
 const router = new Router();
 
@@ -80,6 +80,18 @@ function* getById() {
   this.status = 200;
 }
 
+function* downloadById() {
+  const image = yield ProductDesignImagesDAO.findById(this.params.imageId);
+  this.assert(image, 404);
+
+  const url = yield getDownloadUrl(
+    AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME,
+    image.id
+  );
+
+  this.redirect(url, 302);
+}
+
 function* deleteById() {
   const image = yield ProductDesignImagesDAO.findById(this.params.imageId);
   this.assert(image, 404);
@@ -99,6 +111,7 @@ function* deleteById() {
 router.post('/', requireAuth, multer(), createImage);
 router.get('/', requireAuth, getList);
 router.get('/:imageId', requireAuth, getById);
+router.get('/:imageId/download', downloadById);
 router.del('/:imageId', requireAuth, deleteById);
 
 module.exports = router.routes();

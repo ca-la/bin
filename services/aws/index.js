@@ -1,5 +1,6 @@
 'use strict';
 
+const mime = require('mime-types');
 const AWS = require('aws-sdk');
 const fs = require('fs');
 const Promise = require('bluebird');
@@ -22,7 +23,7 @@ AWS.config.update({
   * @param {String} localFileName
   * @resolves {String} The remote URL
   */
-function uploadFile(
+async function uploadFile(
   bucketName,
   remoteFileName,
   localFileName,
@@ -54,7 +55,7 @@ function uploadFile(
 /**
  * @returns {Promise}
  */
-function deleteFile(bucketName, remoteFileName) {
+async function deleteFile(bucketName, remoteFileName) {
   requireValues({ bucketName, remoteFileName });
   const s3 = new AWS.S3();
 
@@ -69,7 +70,7 @@ function deleteFile(bucketName, remoteFileName) {
 /**
  * @returns {Promise}
  */
-function getFile(bucketName, remoteFileName) {
+async function getFile(bucketName, remoteFileName) {
   requireValues({ bucketName, remoteFileName });
   const s3 = new AWS.S3();
 
@@ -81,7 +82,26 @@ function getFile(bucketName, remoteFileName) {
   });
 }
 
-function enqueueMessage(
+/**
+ * @returns {Promise}
+ */
+async function getDownloadUrl(bucketName, remoteFileName) {
+  requireValues({ bucketName, remoteFileName });
+  const s3 = new AWS.S3();
+
+  const file = await getFile(bucketName, remoteFileName);
+  const extension = mime.extension(file.ContentType);
+
+  const getSignedUrl = Promise.promisify(s3.getSignedUrl, { context: s3 });
+
+  return getSignedUrl('getObject', {
+    ResponseContentDisposition: `attachment; filename="${remoteFileName}.${extension}"`,
+    Bucket: bucketName,
+    Key: remoteFileName
+  });
+}
+
+async function enqueueMessage(
   queueUrl,
   queueRegion,
   messageType,
@@ -107,6 +127,7 @@ function enqueueMessage(
 }
 
 module.exports = {
+  getDownloadUrl,
   uploadFile,
   deleteFile,
   getFile,
