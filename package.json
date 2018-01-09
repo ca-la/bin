@@ -13,6 +13,7 @@
     "co-body": "4.2.0",
     "form-data": "2.1.2",
     "google-libphonenumber": "2.0.9",
+    "image-size": "0.6.2",
     "knex": "0.14.2",
     "koa": "1.2.4",
     "koa-multer": "0.0.2",
