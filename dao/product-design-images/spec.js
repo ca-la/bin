@@ -38,7 +38,9 @@ test('ProductDesignImagesDAO.deleteById deletes', (t) => {
   return createUser({ withSession: false })
     .then(({ user }) => {
       return create({
-        userId: user.id
+        userId: user.id,
+        originalWidthPx: 1024,
+        originalHeightPx: 768
       });
     })
     .then((image) => {

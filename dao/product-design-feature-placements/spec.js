@@ -84,7 +84,11 @@ test('ProductDesignFeaturePlacementsDAO.replaceForSection creates and updates pl
   return createUser({ withSession: false })
     .then(({ user }) => {
       return Promise.all([
-        ProductDesignImagesDAO.create({ userId: user.id }),
+        ProductDesignImagesDAO.create({
+          userId: user.id,
+          originalWidthPx: 1024,
+          originalHeightPx: 768
+        }),
         ProductDesignsDAO.create({
           title: 'Plain White Tee',
           productType: 'TEESHIRT',

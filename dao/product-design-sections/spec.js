@@ -42,7 +42,11 @@ test('ProductDesignSectionsDAO.update updates a section', (t) => {
   return createUser({ withSession: false })
     .then(({ user }) => {
       return Promise.all([
-        ProductDesignImagesDAO.create({ userId: user.id }),
+        ProductDesignImagesDAO.create({
+          originalHeightPx: 1024,
+          originalWidthPx: 1024,
+          userId: user.id
+        }),
         ProductDesignsDAO.create({
           title: 'Plain White Tee',
           productType: 'TEESHIRT',

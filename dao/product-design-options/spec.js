@@ -16,7 +16,11 @@ test('ProductDesignOptionsDAO.findForUser returns user fabrics first, then built
   return createUser({ withSession: false })
     .then(({ user }) => {
       userId = user.id;
-      return createImage({ userId });
+      return createImage({
+        userId,
+        originalWidthPx: 1024,
+        originalHeightPx: 1024
+      });
     })
     .then((image) => {
       return Promise.all([
