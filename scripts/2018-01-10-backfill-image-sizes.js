@@ -9,7 +9,7 @@ const db = require('../services/db');
 const Logger = require('../services/logger');
 const COLORS = require('../services/colors');
 
-const { green, yellow } = COLORS.fmt;
+const { green, yellow, red } = COLORS.fmt;
 
 async function backfill() {
   const rows = await db
@@ -22,9 +22,17 @@ async function backfill() {
   for (let i = 0; i < rows.length; i += 1) {
     Logger.log(yellow(`Processing ${rows[i].id}`));
     const image = new ProductDesignImage(rows[i]);
-    const res = await fetch(image.getUrl());
-    const buffer = await res.buffer();
-    const size = sizeOf(buffer);
+
+    let size;
+    try {
+      const res = await fetch(image.getUrl());
+      const buffer = await res.buffer();
+      size = sizeOf(buffer);
+    } catch (err) {
+      Logger.log(red(err.message));
+      size = { width: 0, height: 0 };
+    }
+
     Logger.log(yellow(`Found dimensions ${size.width} x ${size.height}. Updating...`));
     const updated = await update(image.id, {
       originalHeightPx: size.height,
