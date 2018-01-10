@@ -7,7 +7,10 @@ const COLORS = require('../services/colors');
 const ProductDesignVariantsDAO = require('../dao/product-design-variants');
 
 async function backfill() {
-  const rows = await db.select('*').from('product_designs').whereNotNull('units_to_produce');
+  const rows = await db
+    .select('*')
+    .from('product_designs')
+    .whereNotNull('units_to_produce');
 
   Logger.log(`${COLORS.yellow}Found ${rows.length} applicable designs${COLORS.reset}`);
 

@@ -3,6 +3,7 @@
 const uuid = require('node-uuid');
 const rethrow = require('pg-rethrow');
 
+const compact = require('../../services/compact');
 const db = require('../../services/db');
 const first = require('../../services/first');
 const ProductDesignImage = require('../../domain-objects/product-design-image');
@@ -54,9 +55,24 @@ function deleteById(id) {
     .then(instantiate);
 }
 
+function update(id, data) {
+  return db('product_design_images')
+    .where({ id })
+    .update(compact({
+      original_height_px: data.originalHeightPx,
+      original_width_px: data.originalWidthPx,
+      title: data.title,
+      description: data.description
+    }), '*')
+    .catch(rethrow)
+    .then(first)
+    .then(instantiate);
+}
+
 module.exports = {
   create,
-  findByUserId,
+  deleteById,
   findById,
-  deleteById
+  findByUserId,
+  update
 };
