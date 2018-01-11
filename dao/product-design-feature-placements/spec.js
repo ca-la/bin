@@ -16,6 +16,8 @@ function getPlacementData(imageId, iteration = 0) {
     zIndex: iteration + 103,
     rotation: iteration + 104,
     height: iteration + 105,
+    productionHeightCm: 10,
+    productionWidthCm: 10,
     width: iteration + 106,
     type: 'IMAGE',
     processName: 'Embroidery'
@@ -28,6 +30,8 @@ function getPlacementData(imageId, iteration = 0) {
     rotation: iteration + 204,
     height: iteration + 205,
     width: iteration + 206,
+    productionHeightCm: 10,
+    productionWidthCm: 10,
     type: 'IMAGE',
     processName: 'Embroidery'
   }];

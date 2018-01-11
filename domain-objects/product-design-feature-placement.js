@@ -17,6 +17,8 @@ class ProductDesignFeaturePlacement {
     this.height = row.height;
     this.width = row.width;
     this.rotation = row.rotation;
+    this.productionHeightCm = row.production_height_cm;
+    this.productionWidthCm = row.production_width_cm;
 
     // 'IMAGE' or 'PATH' right now
     this.type = row.type;

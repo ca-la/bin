@@ -23,6 +23,8 @@ function createForSection(trx, sectionId, placements) {
       image_id: placement.imageId,
       path_data: placement.pathData,
       process_name: placement.processName,
+      production_height_cm: placement.productionHeightCm,
+      production_width_cm: placement.productionWidthCm,
       rotation: placement.rotation,
       section_id: sectionId,
       type: placement.type,
