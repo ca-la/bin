@@ -137,11 +137,12 @@ function* updateUser() {
 
   this.assert(isAdmin || isCurrentUser, 403, 'You can only update your own user');
 
-  const { birthday, name, email } = this.request.body;
+  const { birthday, name, email, role } = this.request.body;
   const data = { birthday, name, email };
 
-  if (isAdmin) {
-    data.role = this.request.body.role;
+  if (isAdmin && role) {
+    data.role = role;
+    yield SessionsDAO.deleteByUserId(this.params.userId);
   }
 
   const updated = yield UsersDAO.update(this.params.userId, data)
