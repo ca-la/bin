@@ -20,7 +20,7 @@ class ProductDesignFeaturePlacement {
     this.productionHeightCm = row.production_height_cm;
     this.productionWidthCm = row.production_width_cm;
 
-    // 'IMAGE' or 'PATH' right now
+    // 'IMAGE' || 'PATH' || 'TEXT'
     this.type = row.type;
 
     // e.g. 'Embroidery' or 'Screen print'
