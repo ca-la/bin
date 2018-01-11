@@ -6,6 +6,7 @@ const rethrow = require('pg-rethrow');
 const db = require('../../services/db');
 const ProductDesignFeaturePlacement = require('../../domain-objects/product-design-feature-placement');
 
+const { dataMapper } = ProductDesignFeaturePlacement;
 const instantiate = data => new ProductDesignFeaturePlacement(data);
 
 function deleteForSection(trx, sectionId) {
@@ -16,28 +17,16 @@ function deleteForSection(trx, sectionId) {
 }
 
 function createForSection(trx, sectionId, placements) {
-  const placementData = placements.map((placement) => {
-    return {
-      height: placement.height,
+  const rows = placements.map((placementData) => {
+    return Object.assign({}, dataMapper.userDataToRowData(placementData), {
       id: uuid.v4(),
-      image_id: placement.imageId,
-      path_data: placement.pathData,
-      process_name: placement.processName,
-      production_height_cm: placement.productionHeightCm,
-      production_width_cm: placement.productionWidthCm,
-      rotation: placement.rotation,
-      section_id: sectionId,
-      type: placement.type,
-      width: placement.width,
-      x: placement.x,
-      y: placement.y,
-      z_index: placement.zIndex
-    };
+      section_id: sectionId
+    });
   });
 
   return db('product_design_feature_placements')
     .transacting(trx)
-    .insert(placementData)
+    .insert(rows)
     .returning('*')
     .catch(rethrow)
     .then(inserted => inserted.map(instantiate));
