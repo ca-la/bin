@@ -9,6 +9,7 @@ const first = require('../../services/first');
 const ProductDesignImage = require('../../domain-objects/product-design-image');
 
 const instantiate = data => new ProductDesignImage(data);
+const maybeInstantiate = data => data && new ProductDesignImage(data);
 
 function create(data) {
   return db('product_design_images')
@@ -41,7 +42,7 @@ function findById(id) {
     .where({ deleted_at: null, id }, '*')
     .catch(rethrow)
     .then(first)
-    .then(instantiate);
+    .then(maybeInstantiate);
 }
 
 function deleteById(id) {
