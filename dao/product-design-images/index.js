@@ -38,7 +38,7 @@ function findByUserId(userId) {
 
 function findById(id) {
   return db('product_design_images')
-    .where({ id }, '*')
+    .where({ deleted_at: null, id }, '*')
     .catch(rethrow)
     .then(first)
     .then(instantiate);
