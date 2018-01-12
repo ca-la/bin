@@ -227,12 +227,6 @@ function* replaceSectionFeaturePlacements() {
   this.status = 200;
 }
 
-function* deleteFeaturePlacement() {
-  yield ProductDesignFeaturePlacementsDAO.deleteById(this.params.featureId);
-
-  this.status = 204;
-}
-
 function attachAnnotationUser(annotation) {
   return UsersDAO.findById(annotation.userId).then((user) => {
     annotation.setUser(user);
@@ -344,7 +338,6 @@ router.post('/:designId/sections/:sectionId/annotations', requireAuth, canAccess
 
 router.get('/:designId/sections/:sectionId/feature-placements', requireAuth, canAccessDesignInParam, canAccessSection, getSectionFeaturePlacements);
 router.put('/:designId/sections/:sectionId/feature-placements', requireAuth, canAccessDesignInParam, canAccessSection, replaceSectionFeaturePlacements);
-router.del('/:designId/sections/:sectionId/feature-placements/:featureId', requireAuth, canAccessDesignInParam, canAccessSection, deleteFeaturePlacement);
 
 router.del('/:designId/sections/:sectionId/annotations/:annotationId', requireAuth, canAccessDesignInParam, canAccessSection, canAccessAnnotation, deleteSectionAnnotation);
 router.patch('/:designId/sections/:sectionId/annotations/:annotationId', requireAuth, canAccessDesignInParam, canAccessSection, canAccessAnnotation, updateSectionAnnotation);
