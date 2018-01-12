@@ -3,16 +3,25 @@
 const uuid = require('node-uuid');
 const rethrow = require('pg-rethrow');
 
+const first = require('../../services/first');
 const db = require('../../services/db');
 const ProductDesignFeaturePlacement = require('../../domain-objects/product-design-feature-placement');
 
 const { dataMapper } = ProductDesignFeaturePlacement;
 const instantiate = data => new ProductDesignFeaturePlacement(data);
 
+const TABLE_NAME = 'product_design_feature_placements';
+
 function deleteForSection(trx, sectionId) {
-  return db('product_design_feature_placements')
+  return db(TABLE_NAME)
     .transacting(trx)
     .where({ section_id: sectionId })
+    .del();
+}
+
+function deleteById(id) {
+  return db(TABLE_NAME)
+    .where({ id })
     .del();
 }
 
@@ -24,7 +33,7 @@ function createForSection(trx, sectionId, placements) {
     });
   });
 
-  return db('product_design_feature_placements')
+  return db(TABLE_NAME)
     .transacting(trx)
     .insert(rows)
     .returning('*')
@@ -48,7 +57,7 @@ function replaceForSection(sectionId, placements) {
 }
 
 function findBySectionId(sectionId) {
-  return db('product_design_feature_placements')
+  return db(TABLE_NAME)
     .where({
       section_id: sectionId
     })
@@ -57,7 +66,17 @@ function findBySectionId(sectionId) {
     .then(placements => placements.map(instantiate));
 }
 
+function findById(id) {
+  return db(TABLE_NAME)
+    .where({ id })
+    .catch(rethrow)
+    .then(first)
+    .then(instantiate);
+}
+
 module.exports = {
-  replaceForSection,
-  findBySectionId
+  deleteById,
+  findById,
+  findBySectionId,
+  replaceForSection
 };
