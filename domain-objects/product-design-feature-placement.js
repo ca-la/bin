@@ -19,6 +19,7 @@ const keyNamesByColumnName = {
   text_content: 'textContent',
   text_color: 'textColor',
   text_font: 'textFont',
+  text_size: 'textSize',
   width: 'width',
   x: 'x',
   y: 'y',
