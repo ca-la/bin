@@ -16,6 +16,12 @@ function deleteForSection(trx, sectionId) {
     .del();
 }
 
+function deleteById(id) {
+  return db('product_design_feature_placements')
+    .where({ id, deleted_at: null })
+    .update({ deleted_at: new Date() }, '*');
+}
+
 function createForSection(trx, sectionId, placements) {
   const rows = placements.map((placementData) => {
     return Object.assign({}, dataMapper.userDataToRowData(placementData), {
@@ -59,5 +65,6 @@ function findBySectionId(sectionId) {
 
 module.exports = {
   replaceForSection,
-  findBySectionId
+  findBySectionId,
+  deleteById
 };
