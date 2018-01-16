@@ -45,6 +45,7 @@ test('ProductDesignSectionsDAO.update updates a section', (t) => {
         ProductDesignImagesDAO.create({
           originalHeightPx: 1024,
           originalWidthPx: 1024,
+          mimeType: 'image/jpeg',
           userId: user.id
         }),
         ProductDesignsDAO.create({

@@ -18,8 +18,9 @@ test('ProductDesignOptionsDAO.findForUser returns user fabrics first, then built
       userId = user.id;
       return createImage({
         userId,
-        originalWidthPx: 1024,
-        originalHeightPx: 1024
+        mimeType: 'image/jpeg',
+        originalHeightPx: 1024,
+        originalWidthPx: 1024
       });
     })
     .then((image) => {

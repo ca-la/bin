@@ -91,7 +91,8 @@ test('ProductDesignFeaturePlacementsDAO.replaceForSection creates and updates pl
         ProductDesignImagesDAO.create({
           userId: user.id,
           originalWidthPx: 1024,
-          originalHeightPx: 768
+          originalHeightPx: 768,
+          mimeType: 'image/jpeg'
         }),
         ProductDesignsDAO.create({
           title: 'Plain White Tee',

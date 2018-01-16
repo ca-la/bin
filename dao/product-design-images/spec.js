@@ -41,6 +41,7 @@ test('ProductDesignImagesDAO.deleteById deletes', (t) => {
     .then(({ user }) => {
       return create({
         userId: user.id,
+        mimeType: 'image/jpeg',
         originalWidthPx: 1024,
         originalHeightPx: 768
       });
