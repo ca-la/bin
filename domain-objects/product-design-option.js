@@ -45,6 +45,7 @@ const keyNamesByColumnName = {
   // "prepared for dyeing"
   is_pfd: 'isPfd',
   color: 'color',
+  hex_color_code: 'hexColorCode',
   lead_time_hours: 'leadTimeHours',
   vendor_web_url: 'vendorWebUrl'
 };
