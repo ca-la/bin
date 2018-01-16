@@ -2,16 +2,21 @@
 
 set -euo pipefail
 
-before_dump=$TMPDIR/cala-db-before.txt
-after_dump=$TMPDIR/cala-db-after.txt
+before_migration_path=$TMPDIR/cala-db-before-migration.txt
+after_migration_path=$TMPDIR/cala-db-after-migration.txt
+after_rollback_path=$TMPDIR/cala-db-after-rollback.txt
 
 main() {
   echo -n 'Dumping initial schema... '
-  pg_dump -sOx cala > $before_dump
+  pg_dump -sOx cala > $before_migration_path
   echo 'Done'
 
   echo -n 'Migrating... '
   migrate-local > /dev/null
+  echo 'Done'
+
+  echo -n 'Dumping migrated schema... '
+  pg_dump -sOx cala > $after_migration_path
   echo 'Done'
 
   echo -n 'Rolling back... '
@@ -19,11 +24,14 @@ main() {
   echo 'Done'
 
   echo -n 'Dumping final schema... '
-  pg_dump -sOx cala > $after_dump
+  pg_dump -sOx cala > $after_rollback_path
   echo 'Done'
 
-  echo 'Schema difference after applying and rolling back (should be ~zero):'
-  diff $before_dump $after_dump
+  echo 'Schema difference after migration (should be non-zero):'
+  diff $before_migration_path $after_migration_path || true
+
+  echo 'Schema difference after applying and rolling back (should be zero):'
+  diff $before_migration_path $after_rollback_path
 }
 
 main "$@"
