@@ -18,6 +18,7 @@ function create(data) {
       user_id: data.userId,
       original_height_px: data.originalHeightPx,
       original_width_px: data.originalWidthPx,
+      mime_type: data.mimeType,
       title: data.title,
       description: data.description
     }, '*')
@@ -60,10 +61,11 @@ function update(id, data) {
   return db('product_design_images')
     .where({ id })
     .update(compact({
+      description: data.description,
+      mime_type: data.mimeType,
       original_height_px: data.originalHeightPx,
       original_width_px: data.originalWidthPx,
-      title: data.title,
-      description: data.description
+      title: data.title
     }), '*')
     .catch(rethrow)
     .then(first)

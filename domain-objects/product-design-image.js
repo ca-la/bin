@@ -14,6 +14,7 @@ class ProductDesignImage {
     this.originalWidthPx = row.original_width_px;
     this.title = row.title;
     this.description = row.description;
+    this.mimeType = row.mime_type;
   }
 
   getUrl() {

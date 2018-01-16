@@ -20,7 +20,8 @@ test('ProductDesignImagesDAO.findByUserId returns images', (t) => {
       return create({
         userId,
         originalWidthPx: 1024,
-        originalHeightPx: 768
+        originalHeightPx: 768,
+        mimeType: 'image/jpeg'
       });
     })
     .then((image) => {
@@ -31,6 +32,7 @@ test('ProductDesignImagesDAO.findByUserId returns images', (t) => {
       t.equal(images[0].id, imageId);
       t.equal(images[0].originalWidthPx, 1024);
       t.equal(images[0].originalHeightPx, 768);
+      t.equal(images[0].mimeType, 'image/jpeg');
     });
 });
 

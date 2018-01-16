@@ -42,6 +42,7 @@ function* createImage() {
     description,
     originalHeightPx: size.height,
     originalWidthPx: size.width,
+    mimeType: data.mimetype,
     title,
     userId: this.state.userId
   });
