@@ -40,6 +40,7 @@ function findById(optionId) {
     .where({ id: optionId })
     .then(first)
     .then(maybeInstantiate)
+    .catch(rethrow)
     .catch(rethrow.ERRORS.InvalidTextRepresentation, () => null);
 }
 

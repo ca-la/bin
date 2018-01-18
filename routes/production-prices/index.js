@@ -2,6 +2,7 @@
 
 const Router = require('koa-router');
 
+const InvalidDataError = require('../../errors/invalid-data');
 const ProductionPricesDAO = require('../../dao/production-prices');
 const requireAuth = require('../../middleware/require-auth');
 const User = require('../../domain-objects/user');
@@ -30,7 +31,8 @@ function* replacePrices() {
 function* getPrices() {
   const { vendorUserId } = this.query;
   this.assert(vendorUserId, 400, 'Vendor ID must be provided');
-  this.body = yield ProductionPricesDAO.findByVendor(vendorUserId);
+  this.body = yield ProductionPricesDAO.findByVendor(vendorUserId)
+    .catch(InvalidDataError, err => this.throw(400, err));
   this.status = 200;
 }
 

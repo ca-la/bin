@@ -90,8 +90,11 @@ function findByVendor(vendorUserId) {
       vendor_user_id: vendorUserId
     })
     .orderBy('minimum_units', 'asc')
+    .then(prices => prices.map(instantiate))
     .catch(rethrow)
-    .then(prices => prices.map(instantiate));
+    .catch(rethrow.ERRORS.InvalidTextRepresentation, () => {
+      throw new InvalidDataError('Invalid User ID');
+    });
 }
 
 module.exports = {
