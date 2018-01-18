@@ -68,7 +68,7 @@ main() {
   pg_dump -sOx $db_url > $after_rollback_path
   post
 
-  pre 'Restoring intial data... '
+  pre 'Restoring initial data... '
   restore_data
   post
 
