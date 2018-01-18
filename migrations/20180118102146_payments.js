@@ -7,22 +7,29 @@ exports.up = function up(knex) {
 create table payment_methods (
   id uuid primary key,
   created_at timestamp with time zone default now(),
+  deleted_at timestamp with time zone,
   user_id uuid not null references users(id),
-  stripe_customer_id text not null
+  stripe_customer_id text not null,
+  stripe_source_id text not null
 );
 
 create table invoices (
   id uuid primary key,
   created_at timestamp with time zone default now(),
+  deleted_at timestamp with time zone,
   user_id uuid not null references users(id),
   total_cents integer not null,
-  paid_at timestamp with time zone,
-  payment_method_id uuid references payment_methods(id),
-  stripe_charge_id text,
+  title text,
+  description text,
+
   -- Optional; invoices can be for non-design-related things
   design_id uuid references product_designs(id),
-  title text,
-  description text
+  design_status_id text references product_design_statuses(id),
+
+  -- Only present when the charge is completed
+  paid_at timestamp with time zone,
+  payment_method_id uuid references payment_methods(id),
+  stripe_charge_id text
 );
 
 create table invoice_breakdowns (
