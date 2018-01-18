@@ -12,7 +12,7 @@ before_migration_path=$TMPDIR/cala-db-before-migration.txt
 after_migration_path=$TMPDIR/cala-db-after-migration.txt
 after_rollback_path=$TMPDIR/cala-db-after-rollback.txt
 
-db_url='cala-test'
+db_url='postgres://localhost/cala-test'
 
 pre() {
   echo -n "$@"
