@@ -37,7 +37,8 @@ create table invoice_breakdowns (
   invoice_id uuid references invoices(id),
   total_revenue_cents integer not null,
   total_cost_cents integer not null,
-  total_profit_cents integer not null
+  total_profit_cents integer not null,
+  stripe_fee_cents integer not null
 );
   `);
 };
