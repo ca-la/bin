@@ -96,6 +96,8 @@ const config = {
   // e.g. 'https://studio.ca.la'
   STUDIO_HOST: process.env.STUDIO_HOST,
 
+  STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+
   LOG_ALL_QUERIES: (process.env.LOG_ALL_QUERIES === 'true')
 };
 
