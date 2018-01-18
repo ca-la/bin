@@ -19,12 +19,18 @@ const ALLOWED_MIMETYPES = [
   'image/svg+xml'
 ];
 
+const HUMAN_READABLE_NAMES = ALLOWED_MIMETYPES.map((type) => {
+  const afterSlash = type.split('/')[1];
+  const ext = afterSlash.split('+')[0];
+  return ext;
+}).join(', ');
+
 function* createImage() {
   const data = this.req.files.image;
   this.assert(data, 400, 'Image must be uploaded as `image`');
 
   const isAllowed = ALLOWED_MIMETYPES.indexOf(data.mimetype) > -1;
-  this.assert(isAllowed, 400, `Unsupported format. Allowed formats: ${ALLOWED_MIMETYPES.join(', ')}`);
+  this.assert(isAllowed, 400, `We don't support "${data.mimetype}" files yet. Please choose a file with one of these formats: ${HUMAN_READABLE_NAMES}`);
 
   const localPath = data.path;
 
