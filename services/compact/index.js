@@ -1,9 +1,7 @@
 'use strict';
 
 const omitBy = require('lodash/omitBy');
+const isUndefined = require('lodash/isUndefined');
+const partialRight = require('lodash/partialRight');
 
-function compact(obj) {
-  return omitBy(obj, val => val === undefined);
-}
-
-module.exports = compact;
+module.exports = partialRight(omitBy, isUndefined);
