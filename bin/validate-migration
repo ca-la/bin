@@ -11,6 +11,8 @@ before_migration_path=$TMPDIR/cala-db-before-migration.txt
 after_migration_path=$TMPDIR/cala-db-after-migration.txt
 after_rollback_path=$TMPDIR/cala-db-after-rollback.txt
 
+db_url='cala-test'
+
 pre() {
   echo -n "$@"
 }
@@ -19,25 +21,40 @@ post() {
   echo $c_green Done$c_reset
 }
 
+restore_schema() {
+  psql $db_url < $before_migration_path > /dev/null
+}
+
+fail_elegantly() {
+  echo -n $c_red"Unable to complete migration. Restoring initial schema..."$c_reset
+  restore_schema
+  post
+  exit 1
+}
+
 main() {
   pre 'Dumping initial schema... '
-  pg_dump -sOx cala > $before_migration_path
+  pg_dump -csOx $db_url > $before_migration_path
   post
 
   pre 'Migrating... '
-  migrate-local > /dev/null
+  DATABASE_URL=$db_url $(npm bin)/knex migrate:latest > /dev/null || fail_elegantly
   post
 
   pre 'Dumping migrated schema... '
-  pg_dump -sOx cala > $after_migration_path
+  pg_dump -csOx $db_url > $after_migration_path
   post
 
   pre 'Rolling back... '
-  rollback-local > /dev/null
+  DATABASE_URL=$db_url $(npm bin)/knex migrate:rollback > /dev/null || fail_elegantly
   post
 
   pre 'Dumping final schema... '
-  pg_dump -sOx cala > $after_rollback_path
+  pg_dump -csOx $db_url > $after_rollback_path
+  post
+
+  pre 'Restoring intial schema... '
+  restore_schema
   post
 
   echo $c_yellow'Schema difference after migration (should be non-zero):'$c_reset
