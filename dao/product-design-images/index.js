@@ -11,8 +11,10 @@ const ProductDesignImage = require('../../domain-objects/product-design-image');
 const instantiate = data => new ProductDesignImage(data);
 const maybeInstantiate = data => data && new ProductDesignImage(data);
 
+const TABLE_NAME = 'product_design_images';
+
 function create(data) {
-  return db('product_design_images')
+  return db(TABLE_NAME)
     .insert({
       id: uuid.v4(),
       user_id: data.userId,
@@ -28,7 +30,7 @@ function create(data) {
 }
 
 function findByUserId(userId) {
-  return db('product_design_images')
+  return db(TABLE_NAME)
     .where({
       user_id: userId,
       deleted_at: null
@@ -39,7 +41,7 @@ function findByUserId(userId) {
 }
 
 function findById(id) {
-  return db('product_design_images')
+  return db(TABLE_NAME)
     .where({ deleted_at: null, id }, '*')
     .catch(rethrow)
     .then(first)
@@ -47,7 +49,7 @@ function findById(id) {
 }
 
 function deleteById(id) {
-  return db('product_design_images')
+  return db(TABLE_NAME)
     .where({ id })
     .update({
       deleted_at: new Date()
@@ -58,7 +60,7 @@ function deleteById(id) {
 }
 
 function update(id, data) {
-  return db('product_design_images')
+  return db(TABLE_NAME)
     .where({ id })
     .update(compact({
       description: data.description,

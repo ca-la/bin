@@ -16,6 +16,8 @@ const maybeInstantiate = data => (data && new ProductDesignCollaborator(data)) |
 
 const { dataMapper } = ProductDesignCollaborator;
 
+const TABLE_NAME = 'product_design_collaborators';
+
 async function attachUser(collaborator) {
   if (collaborator.userId) {
     const user = await UsersDAO.findById(collaborator.userId);
@@ -30,7 +32,7 @@ function create(data) {
     id: uuid.v4()
   });
 
-  return db('product_design_collaborators')
+  return db(TABLE_NAME)
     .insert(rowData, '*')
     .then(first)
     .then(instantiate)
@@ -44,7 +46,7 @@ function create(data) {
 function update(collaboratorId, data) {
   const rowData = compact(dataMapper.userDataToRowData(data));
 
-  return db('product_design_collaborators')
+  return db(TABLE_NAME)
     .where({ id: collaboratorId, deleted_at: null })
     .update(rowData, '*')
     .then(first)
@@ -53,14 +55,14 @@ function update(collaboratorId, data) {
 }
 
 function findById(collaboratorId) {
-  return db('product_design_collaborators')
+  return db(TABLE_NAME)
     .where({ id: collaboratorId, deleted_at: null })
     .then(first)
     .then(maybeInstantiate);
 }
 
 function findByDesign(designId) {
-  return db('product_design_collaborators')
+  return db(TABLE_NAME)
     .where({
       deleted_at: null,
       design_id: designId
@@ -71,7 +73,7 @@ function findByDesign(designId) {
 }
 
 function findByUserId(userId) {
-  return db('product_design_collaborators')
+  return db(TABLE_NAME)
     .where({
       deleted_at: null,
       user_id: userId
@@ -81,7 +83,7 @@ function findByUserId(userId) {
 }
 
 function findByDesignAndUser(designId, userId) {
-  return db('product_design_collaborators')
+  return db(TABLE_NAME)
     .where({
       deleted_at: null,
       user_id: userId,
@@ -95,14 +97,14 @@ function findByDesignAndUser(designId, userId) {
 function findUnclaimedByEmail(email) {
   const normalized = normalizeEmail(email);
 
-  return db('product_design_collaborators')
+  return db(TABLE_NAME)
     .whereRaw('lower(product_design_collaborators.user_email) = lower(?)', [normalized])
     .then(collaborators => collaborators.map(instantiate))
     .catch(rethrow);
 }
 
 function deleteById(id) {
-  return db('product_design_collaborators')
+  return db(TABLE_NAME)
     .where({
       id,
       deleted_at: null
