@@ -3,6 +3,7 @@
 const uuid = require('node-uuid');
 const rethrow = require('pg-rethrow');
 const uniq = require('lodash/uniq');
+const sortedUniqBy = require('lodash/sortedUniqBy');
 
 const compact = require('../../services/compact');
 const db = require('../../services/db');
@@ -108,6 +109,8 @@ async function findAccessibleToUser(userId, filters) {
   // up via a reduce or something
   const availableInvitedDesigns = invitedDesigns.filter(Boolean);
 
+  // Partners may be shared on a design via the "services" card - when we select
+  // them as the provider for that service, they can see that design.
   const services = await ProductDesignServicesDAO.findByUserId(userId);
   const designIds = uniq(services.map(service => service.designId));
 
@@ -117,7 +120,11 @@ async function findAccessibleToUser(userId, filters) {
 
   const availableServiceDesigns = serviceDesigns.filter(Boolean);
 
-  return [...ownDesigns, ...availableInvitedDesigns, ...availableServiceDesigns];
+  const allDesigns = [...ownDesigns, ...availableInvitedDesigns, ...availableServiceDesigns];
+  const sorted = allDesigns.sort((a, b) => b.createdAt - a.createdAt);
+
+  // It's possible that someone is shared on one design in multiple ways
+  return sortedUniqBy(sorted, design => design.id);
 }
 
 module.exports = {
