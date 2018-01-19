@@ -1,10 +1,11 @@
 'use strict';
 
-const ProductDesignsDAO = require('../../dao/product-designs');
-const UsersDAO = require('../../dao/users');
-const ProductDesignStatusUpdatesDAO = require('../../dao/product-design-status-updates');
-const { assert, requireValues } = require('../require-properties');
 const EmailService = require('../email');
+const ProductDesignsDAO = require('../../dao/product-designs');
+const ProductDesignStatusUpdatesDAO = require('../../dao/product-design-status-updates');
+const UsersDAO = require('../../dao/users');
+const { assert, requireValues } = require('../require-properties');
+const { DESIGN_UPDATED_EMAIL } = require('../../config');
 
 async function updateDesignStatus(designId, newStatus, userId) {
   requireValues({ designId, newStatus, userId });
@@ -24,7 +25,7 @@ async function updateDesignStatus(designId, newStatus, userId) {
   const user = await UsersDAO.findById(userId);
 
   await EmailService.enqueueSend(
-    'hi@ca.la',
+    DESIGN_UPDATED_EMAIL,
     'update_design_status',
     {
       user,

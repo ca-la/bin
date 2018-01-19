@@ -33,6 +33,12 @@ const MINIMUM_SCAN_PITCH_RADIANS = {
   [envs.STG]: 1
 }[ENV];
 
+const DESIGN_UPDATED_EMAIL = {
+  [envs.LOCAL]: 'd@ca.la',
+  [envs.PROD]: 'hi@ca.la',
+  [envs.STG]: 'hi@ca.la'
+}[ENV];
+
 /**
  * All environment variables are required for API functionality, unless stated
  * otherwise.
@@ -98,7 +104,9 @@ const config = {
 
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
 
-  LOG_ALL_QUERIES: (process.env.LOG_ALL_QUERIES === 'true')
+  LOG_ALL_QUERIES: (process.env.LOG_ALL_QUERIES === 'true'),
+
+  DESIGN_UPDATED_EMAIL
 };
 
 Object.keys(config).forEach((key) => {
