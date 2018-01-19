@@ -1,5 +1,13 @@
 'use strict';
 
+const fetch = require('node-fetch');
+
+const InvalidPaymentError = require('../../errors/invalid-payment');
+const Logger = require('../../services/logger');
+const StripeError = require('../../errors/stripe');
+const { requireValues } = require('../../services/require-properties');
+const { STRIPE_SECRET_KEY } = require('../../config');
+
 const STRIPE_API_BASE = 'https://api.stripe.com/v1';
 
 async function makeRequest(method, path, data) {
@@ -8,7 +16,7 @@ async function makeRequest(method, path, data) {
   const options = {
     method,
     headers: {
-      Authorization: `Basic ${apiKey}`
+      Authorization: `Basic ${STRIPE_SECRET_KEY}`
     }
   };
 
@@ -29,9 +37,26 @@ async function makeRequest(method, path, data) {
   }
 
   const json = await response.json();
-  return json;
+
+  switch (response.status) {
+    case 200: return json;
+    case 201: throw new InvalidPaymentError('Your payment method was declined');
+    default: throw new StripeError(json);
+  }
 }
 
-async function charge() {
+async function charge({ customerId, sourceToken, amountCents, description }) {
+  requireValues({ customerId, sourceToken, amountCents, description });
 
+  return makeRequest('post', '/charges', {
+    amount: amountCents,
+    currency: 'usd',
+    source: sourceToken,
+    description,
+    customer: customerId
+  });
 }
+
+module.exports = {
+  charge
+};
