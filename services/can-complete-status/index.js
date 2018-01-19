@@ -3,7 +3,7 @@
 const { requireValues } = require('../require-properties');
 
 // Statuses controlled by CALA & partners, not the designer
-const productionStatuses = [
+const PRODUCTION_STATUSES = [
   'IN_REVIEW',
   'DEVELOPMENT',
   'SAMPLE_PRODUCTION',
@@ -12,18 +12,31 @@ const productionStatuses = [
   'FULFILLMENT'
 ];
 
+// Nobody can complete a payment status except admins - they become complete as
+// a side-effect of the outstanding invoice being paid
+const PAYMENT_STATUSES = [
+  'NEEDS_DEVELOPMENT_PAYMENT',
+  'NEEDS_PRODUCTION_PAYMENT',
+  'NEEDS_FULFILLMENT_PAYMENT'
+];
+
 function canCompleteStatus(
   status,
-  isPartnerOrAdmin
+  isPartner,
+  isAdmin
 ) {
-  requireValues({ status, isPartnerOrAdmin });
+  requireValues({ status, isPartner, isAdmin });
 
   if (status === 'COMPLETE') {
     return false;
   }
 
-  if (productionStatuses.indexOf(status) > -1) {
-    return isPartnerOrAdmin;
+  if (PRODUCTION_STATUSES.indexOf(status) > -1) {
+    return isPartner || isAdmin;
+  }
+
+  if (PAYMENT_STATUSES.indexOf(status) > -1) {
+    return isAdmin;
   }
 
   return true;

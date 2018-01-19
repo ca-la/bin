@@ -11,7 +11,6 @@ async function getDesignPermissions(design, userId, sessionRole) {
   const isAdmin = (sessionRole === User.ROLES.admin);
   const isPartner = (sessionRole === User.ROLES.partner);
   const isOwnerOrAdmin = isAdmin || (userId === design.userId);
-  const isPartnerOrAdmin = isAdmin || isPartner;
 
   let collaboratorRole;
 
@@ -45,7 +44,7 @@ async function getDesignPermissions(design, userId, sessionRole) {
     canComment: !collaboratorRole || (collaboratorRole === 'EDIT') || (collaboratorRole === 'COMMENT'),
     canManagePricing: isAdmin,
     canViewPricing: !isPartner,
-    canCompleteStatus: canCompleteStatus(design.status, isPartnerOrAdmin)
+    canCompleteStatus: canCompleteStatus(design.status, isPartner, isAdmin)
   };
 
   return designPermissions;
