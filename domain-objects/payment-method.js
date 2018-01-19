@@ -11,7 +11,8 @@ const keyNamesByColumnName = {
   deleted_at: 'deletedAt',
   user_id: 'userId',
   stripe_customer_id: 'stripeCustomerId',
-  stripe_source_id: 'stripeSourceId'
+  stripe_source_id: 'stripeSourceId',
+  last_four_digits: 'lastFourDigits'
 };
 
 const dataMapper = new DataMapper(keyNamesByColumnName);

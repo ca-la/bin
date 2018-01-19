@@ -10,7 +10,8 @@ create table payment_methods (
   deleted_at timestamp with time zone,
   user_id uuid not null references users(id),
   stripe_customer_id text not null,
-  stripe_source_id text not null
+  stripe_source_id text not null,
+  last_four_digits text not null
 );
 
 create table invoices (
