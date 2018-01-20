@@ -57,6 +57,23 @@ async function charge({ customerId, sourceToken, amountCents, description }) {
   });
 }
 
+async function createCustomer({ email, name }) {
+  requireValues({ email, name });
+
+  return makeRequest('post', '/customers', {
+    email,
+    description: name
+  });
+}
+
+async function attachSource({ customerId, sourceToken }) {
+  requireValues({ customerId, sourceToken });
+
+  return makeRequest('post', `/customers/${customerId}/sources`, {
+    source: sourceToken
+  });
+}
+
 module.exports = {
   charge
 };
