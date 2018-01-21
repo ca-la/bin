@@ -21,7 +21,7 @@ const sendAnnotationNotifications = require('../../services/send-annotation-noti
 const updateDesignStatus = require('../../services/update-design-status');
 const UsersDAO = require('../../dao/users');
 const { canAccessDesignInParam, canCommentOnDesign } = require('../../middleware/can-access-design');
-const { getComputedPricingTable, getFinalPricingTable } = require('../../services/pricing-table');
+const { getAllPricingTables } = require('../../services/pricing-table');
 const { requireValues } = require('../../services/require-properties');
 
 const router = new Router();
@@ -80,11 +80,12 @@ function* getDesignPricing() {
 
   const design = yield ProductDesignsDAO.findById(this.params.designId);
 
-  const computedPricingTable = yield Bluebird.resolve(getComputedPricingTable(design))
+  const {
+    computedPricingTable,
+    overridePricingTable,
+    finalPricingTable
+  } = yield Bluebird.resolve(getAllPricingTables(design))
     .catch(MissingPrerequisitesError, err => this.throw(400, err));
-
-  const finalPricingTable = yield getFinalPricingTable(design, computedPricingTable);
-  const overridePricingTable = design.overridePricingTable;
 
   this.body = {
     computedPricingTable: canManagePricing ? computedPricingTable : null,

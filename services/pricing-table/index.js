@@ -620,7 +620,21 @@ async function getFinalPricingTable(design, computedPricingTable) {
   return merged;
 }
 
+async function getAllPricingTables(design) {
+  const computedPricingTable = await getComputedPricingTable(design);
+
+  const finalPricingTable = await getFinalPricingTable(design, computedPricingTable);
+  const overridePricingTable = design.overridePricingTable;
+
+  return {
+    computedPricingTable,
+    finalPricingTable,
+    overridePricingTable
+  };
+}
+
 module.exports = {
   getComputedPricingTable,
-  getFinalPricingTable
+  getFinalPricingTable,
+  getAllPricingTables
 };
