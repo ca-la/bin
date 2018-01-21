@@ -9,7 +9,8 @@
   },
   "bin": {
     "cala-release": "release",
-    "cala-lint-commented-code": "lint-commented-code"
+    "cala-lint-commented-code": "lint-commented-code",
+    "cala-validate-migration": "validate-migration"
   },
   "author": "CALA <devops@ca.la>",
   "license": "MIT",
