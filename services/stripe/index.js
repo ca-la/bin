@@ -42,11 +42,14 @@ async function makeRequest(method, path, data) {
   }
 
   const json = await response.json();
-  console.log(json);
+  console.log(response.status);
 
   switch (response.status) {
     case 200: return json;
-    case 201: throw new InvalidPaymentError('Your payment method was declined');
+    case 402: throw new InvalidPaymentError(
+      (json.error && json.error.message) ||
+      'Your payment method was declined'
+    );
     default: throw new StripeError(json.error);
   }
 }
