@@ -33,6 +33,10 @@ console: preflight
 release:
 	$(npm_bin)/cala-release $(type)
 
+.PHONY: validate-migration
+validate-migration:
+	$(npm_bin)/cala-validate-migration
+
 # Static analysis
 .PHONY: lint
 lint: preflight
