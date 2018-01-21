@@ -47,13 +47,13 @@ async function makeRequest(method, path, data) {
   }
 }
 
-async function charge({ customerId, sourceToken, amountCents, description }) {
-  requireValues({ customerId, sourceToken, amountCents, description });
+async function charge({ customerId, sourceId, amountCents, description }) {
+  requireValues({ customerId, sourceId, amountCents, description });
 
   return makeRequest('post', '/charges', {
     amount: amountCents,
     currency: 'usd',
-    source: sourceToken,
+    source: sourceId,
     description,
     customer: customerId
   });
@@ -68,11 +68,11 @@ async function createCustomer({ email, name }) {
   });
 }
 
-async function attachSource({ customerId, sourceToken }) {
-  requireValues({ customerId, sourceToken });
+async function attachSource({ customerId, sourceId }) {
+  requireValues({ customerId, sourceId });
 
   return makeRequest('post', `/customers/${customerId}/sources`, {
-    source: sourceToken
+    source: sourceId
   });
 }
 
