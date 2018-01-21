@@ -2,9 +2,10 @@
 
 const Router = require('koa-router');
 
-const PaymentMethods = require('../../dao/payment-methods');
 const canAccessUserResource = require('../../middleware/can-access-user-resource');
+const PaymentMethods = require('../../dao/payment-methods');
 const requireAuth = require('../../middleware/require-auth');
+const Stripe = require('../../services/stripe');
 
 const router = new Router();
 
@@ -19,12 +20,15 @@ function* getPaymentMethods() {
 }
 
 function* addPaymentMethod() {
-  const { stripeCustomerId, stripeSourceId } = this.request.body;
+  const { stripeSourceId } = this.request.body;
+  const { userId } = this.state;
+
+  const stripeCustomerId = Stripe.findOrCreateCustomerId(userId);
 
   const method = yield PaymentMethods.create({
     stripeCustomerId,
     stripeSourceId,
-    userId: this.state.userId
+    userId
   });
 
   this.body = method;

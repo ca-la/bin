@@ -4,7 +4,9 @@ const fetch = require('node-fetch');
 
 const InvalidPaymentError = require('../../errors/invalid-payment');
 const Logger = require('../../services/logger');
+const PaymentMethodsDAO = require('../../dao/payment-methods');
 const StripeError = require('../../errors/stripe');
+const UsersDAO = require('../../dao/users');
 const { requireValues } = require('../../services/require-properties');
 const { STRIPE_SECRET_KEY } = require('../../config');
 
@@ -74,6 +76,20 @@ async function attachSource({ customerId, sourceToken }) {
   });
 }
 
+async function findOrCreateCustomerId(userId) {
+  const existingPaymentMethods = await PaymentMethodsDAO.findByUserId(userId);
+  if (existingPaymentMethods.length > 0) {
+    return existingPaymentMethods[0].stripeCustomerId;
+  }
+
+  const user = UsersDAO.findById(userId);
+  const customer = await createCustomer({ name: user.name, email: user.email });
+  return customer.id;
+}
+
 module.exports = {
-  charge
+  charge,
+  createCustomer,
+  attachSource,
+  findOrCreateCustomerId
 };
