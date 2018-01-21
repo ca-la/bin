@@ -4,7 +4,7 @@ const COLORS = require('../colors');
 
 function log(...args) {
   // eslint-disable-next-line no-console
-  console.log(COLORS.yellow, '[LOG]', ...args, COLORS.reset);
+  console.log(COLORS.blue, '[LOG]', ...args, COLORS.reset);
 }
 
 function logServerError(...args) {

@@ -1,6 +1,7 @@
 'use strict';
 
 const fetch = require('node-fetch');
+const qs = require('querystring');
 
 const InvalidPaymentError = require('../../errors/invalid-payment');
 const Logger = require('../../services/logger');
@@ -12,19 +13,21 @@ const { STRIPE_SECRET_KEY } = require('../../config');
 
 const STRIPE_API_BASE = 'https://api.stripe.com/v1';
 
+const CREDENTIALS = new Buffer(`${STRIPE_SECRET_KEY}:`).toString('base64');
+
 async function makeRequest(method, path, data) {
-  const url = `${STRIPE_API_BASE}/${path}`;
+  const url = `${STRIPE_API_BASE}${path}`;
 
   const options = {
     method,
     headers: {
-      Authorization: `Basic ${STRIPE_SECRET_KEY}`
+      Authorization: `Basic ${CREDENTIALS}`
     }
   };
 
   if (data) {
-    options.headers['Content-Type'] = 'application/json';
-    options.body = JSON.stringify(data);
+    options.headers['Content-Type'] = 'application/x-www-form-urlencoded';
+    options.body = qs.stringify(data);
   }
 
   const response = await fetch(url, options);
@@ -39,11 +42,12 @@ async function makeRequest(method, path, data) {
   }
 
   const json = await response.json();
+  console.log(json);
 
   switch (response.status) {
     case 200: return json;
     case 201: throw new InvalidPaymentError('Your payment method was declined');
-    default: throw new StripeError(json);
+    default: throw new StripeError(json.error);
   }
 }
 
@@ -82,7 +86,7 @@ async function findOrCreateCustomerId(userId) {
     return existingPaymentMethods[0].stripeCustomerId;
   }
 
-  const user = UsersDAO.findById(userId);
+  const user = await UsersDAO.findById(userId);
   const customer = await createCustomer({ name: user.name, email: user.email });
   return customer.id;
 }

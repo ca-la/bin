@@ -23,13 +23,18 @@ function* addPaymentMethod() {
   const { stripeSourceId } = this.request.body;
   const { userId } = this.state;
 
-  const stripeCustomerId = await Stripe.findOrCreateCustomerId(userId);
-  await Stripe.attachSource({ customerId: stripeCustomerId, sourceId: stripeSourceId });
+  const stripeCustomerId = yield Stripe.findOrCreateCustomerId(userId);
+
+  const source = yield Stripe.attachSource({
+    customerId: stripeCustomerId,
+    sourceId: stripeSourceId
+  });
 
   const method = yield PaymentMethods.create({
     stripeCustomerId,
     stripeSourceId,
-    userId
+    userId,
+    lastFourDigits: source.last4
   });
 
   this.body = method;

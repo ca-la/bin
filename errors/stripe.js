@@ -1,7 +1,11 @@
 'use strict';
 
+const defaultResponse = {
+  message: 'An unknown error occurred'
+};
+
 class StripeError extends Error {
-  constructor(response) {
+  constructor(response = defaultResponse) {
     super(response.message);
     this.message = response.message;
     this.code = response.code;
