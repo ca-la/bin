@@ -44,7 +44,8 @@ async function getDesignPermissions(design, userId, sessionRole) {
     canComment: !collaboratorRole || (collaboratorRole === 'EDIT') || (collaboratorRole === 'COMMENT'),
     canManagePricing: isAdmin,
     canViewPricing: !isPartner,
-    canCompleteStatus: canCompleteStatus(design.status, isPartner, isAdmin)
+    canCompleteStatus: canCompleteStatus(design.status, isPartner, isAdmin),
+    canManuallySetStatus: isAdmin
   };
 
   return designPermissions;

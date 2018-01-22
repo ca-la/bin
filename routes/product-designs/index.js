@@ -306,8 +306,13 @@ function* setStatus() {
   const { newStatus } = this.request.body;
   this.assert(newStatus, 400, 'New status must be provided');
 
-  const { canCompleteStatus } = this.state.designPermissions;
-  this.assert(canCompleteStatus, 403, "You don't have permission to modify this design status");
+  const { canCompleteStatus, canManuallySetStatus } = this.state.designPermissions;
+
+  this.assert(
+    canCompleteStatus || canManuallySetStatus,
+    403,
+    "You don't have permission to modify this design status"
+  );
 
   const updated = yield Bluebird.resolve(updateDesignStatus(
     this.params.designId,
