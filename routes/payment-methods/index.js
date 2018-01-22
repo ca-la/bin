@@ -20,19 +20,21 @@ function* getPaymentMethods() {
 }
 
 function* addPaymentMethod() {
-  const { stripeSourceId } = this.request.body;
+  const { stripeCardToken } = this.request.body;
   const { userId } = this.state;
 
   const stripeCustomerId = yield Stripe.findOrCreateCustomerId(userId);
 
+  // Users send us a stripe card token, but it doesn't become a Source that we
+  // can repeatedly charge until we attach it to the customer in Stripe
   const source = yield Stripe.attachSource({
     customerId: stripeCustomerId,
-    sourceId: stripeSourceId
+    cardToken: stripeCardToken
   });
 
   const method = yield PaymentMethods.create({
     stripeCustomerId,
-    stripeSourceId,
+    stripeSourceId: source.id,
     userId,
     lastFourDigits: source.last4
   });

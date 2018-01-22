@@ -60,13 +60,20 @@ async function makeRequest(method, path, data, idempotencyKey) {
 async function charge({ customerId, sourceId, amountCents, description, invoiceId }) {
   requireValues({ customerId, sourceId, amountCents, description, invoiceId });
 
+  // Using a combination of invoiceId + sourceId ensures that:
+  // - We can't charge the same card for the same invoice twice in rapid succesion
+  // - Switching sources lets you try again
+  //
+  // TBD if we need a better solution here but this seems ~fine for now.
+  const idempotencyKey = `${invoiceId}/${sourceId}`;
+
   return makeRequest('post', '/charges', {
     amount: amountCents,
     currency: 'usd',
     source: sourceId,
     description,
     customer: customerId
-  }, invoiceId);
+  }, idempotencyKey);
 }
 
 async function createCustomer({ email, name }) {
@@ -78,11 +85,11 @@ async function createCustomer({ email, name }) {
   });
 }
 
-async function attachSource({ customerId, sourceId }) {
-  requireValues({ customerId, sourceId });
+async function attachSource({ customerId, cardToken }) {
+  requireValues({ customerId, cardToken });
 
   return makeRequest('post', `/customers/${customerId}/sources`, {
-    source: sourceId
+    source: cardToken
   });
 }
 

@@ -21,7 +21,7 @@ async function findByDesignAndStatus(designId, statusId) {
       deleted_at: null,
       paid_at: null,
       design_id: designId,
-      status_id: statusId
+      design_status_id: statusId
     })
     .then(invoices => invoices.map(instantiate))
     .catch(rethrow);

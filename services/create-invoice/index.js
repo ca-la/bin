@@ -35,7 +35,9 @@ async function createInvoice(design, newStatusId) {
 
   await InvoicesDAO.create({
     totalCents: invoiceAmount,
-    title: `${design.title} — ${status.label}`
+    title: `${design.title} — ${status.label}`,
+    designId: design.id,
+    designStatusId: newStatusId
   });
 }
 

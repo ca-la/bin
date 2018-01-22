@@ -24,7 +24,12 @@ function* postPayInvoice() {
 
   const { invoiceId } = this.params;
 
-  const invoice = yield payInvoice(invoiceId, paymentMethodId);
+  const invoice = yield payInvoice(
+    invoiceId,
+    paymentMethodId,
+    this.state.userId
+  );
+
   this.body = invoice;
   this.status = 200;
 }
