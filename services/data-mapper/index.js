@@ -42,6 +42,10 @@ class DataMapper {
       return keyName;
     });
   }
+
+  getKeyName(columnName) {
+    return this.keyNamesByColumnName[columnName];
+  }
 }
 
 module.exports = DataMapper;
