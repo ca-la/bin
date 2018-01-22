@@ -1,9 +1,8 @@
 'use strict';
 
+const createInvoice = require('../../services/create-invoice');
 const EmailService = require('../email');
-const InvoicesDAO = require('../../dao/invoices');
 const ProductDesignsDAO = require('../../dao/product-designs');
-const ProductDesignStatusesDAO = require('../../dao/product-design-statuses');
 const ProductDesignStatusUpdatesDAO = require('../../dao/product-design-status-updates');
 const UsersDAO = require('../../dao/users');
 const { assert, requireValues } = require('../require-properties');
@@ -26,12 +25,7 @@ async function updateDesignStatus(designId, newStatus, userId) {
   });
 
   if (PAYMENT_STATUSES.indexOf(newStatus) > -1) {
-    const status = await ProductDesignStatusesDAO.findById(newStatus);
-
-    await InvoicesDAO.create({
-      totalCents: SOMEHOW,
-      title: `${design.title} — ${status.label}`
-    });
+    await createInvoice(design, newStatus);
   }
 
   const user = await UsersDAO.findById(userId);

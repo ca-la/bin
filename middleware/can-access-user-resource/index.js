@@ -8,9 +8,9 @@ const User = require('../../domain-objects/user');
 // Sample usage:
 //
 // function* getPaymentMethods() {
-//   const { userId } = this.query;
-//   this.assert(userId, 400, 'User ID must be provided');
-//   canAccessUserResource.call(this, userId);
+//   const { userId } = this.query; //
+//   this.assert(userId, 400, 'User ID must be provided'); //
+//   canAccessUserResource.call(this, userId); //
 // }
 function canAccessUserResource(ownerUserId) {
   if (!ownerUserId) {

@@ -12,7 +12,7 @@ const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
 const ProductDesignSelectedOptionsDAO = require('../../dao/product-design-selected-options');
 const ProductDesignServicesDAO = require('../../dao/product-design-services');
 const ProductDesignVariantsDAO = require('../../dao/product-design-variants');
-const { requireProperties, assert } = require('../../services/require-properties');
+const { requireProperties, requireValues } = require('../../services/require-properties');
 
 class LineItem {
   constructor(data) {
@@ -73,6 +73,13 @@ class ProfitGroup {
 
 class Summary {
   constructor(data) {
+    requireProperties(data,
+      'upfrontCostCents',
+      'preProductionCostCents',
+      'uponCompletionCostCents',
+      'fulfillmentCostCents'
+    );
+
     this.upfrontCostCents = data.upfrontCostCents;
     this.preProductionCostCents = data.preProductionCostCents;
     this.uponCompletionCostCents = data.uponCompletionCostCents;
@@ -611,8 +618,7 @@ async function getComputedPricingTable(design) {
 }
 
 async function getFinalPricingTable(design, computedPricingTable) {
-  assert(design, 'Missing design');
-  assert(computedPricingTable, 'Missing computed pricing table');
+  requireValues({ design, computedPricingTable });
 
   const override = design.overridePricingTable;
   const merged = mergePricingTables(computedPricingTable, override);

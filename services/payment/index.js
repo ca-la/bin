@@ -7,13 +7,23 @@ const Stripe = require('../stripe');
 async function payInvoice(invoiceId, paymentMethodId) {
   const paymentMethod = await PaymentMethods.findById(paymentMethodId);
 
-  const charge = await Stripe.charge(paymentMethod.stripeCustomerId, paymentMethod.stripeSourceId);
+  const invoice = await Invoices.findById(invoiceId);
+
+  const charge = await Stripe.charge({
+    customerId: paymentMethod.stripeCustomerId,
+    sourceId: paymentMethod.stripeSourceId,
+    amountCents: invoice.totalCents,
+    description: invoice.title,
+    invoiceId
+  });
 
   const updated = await Invoices.update(invoiceId, {
     paidAt: new Date(),
     paymentMethodId,
-    stripeChargeId
+    stripeChargeId: charge.id
   });
+
+  return updated;
 }
 
 module.exports = {

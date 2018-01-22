@@ -19,11 +19,12 @@ async function findByDesignAndStatus(designId, statusId) {
   return db(TABLE_NAME)
     .where({
       deleted_at: null,
+      paid_at: null,
       design_id: designId,
       status_id: statusId
     })
-    .catch(rethrow)
-    .then(invoices => invoices.map(instantiate));
+    .then(invoices => invoices.map(instantiate))
+    .catch(rethrow);
 }
 
 async function create(data) {
@@ -45,11 +46,21 @@ async function update(id, data) {
     .where({ id, deleted_at: null })
     .update(rowData, '*')
     .then(first)
-    .then(maybeInstantiate);
+    .then(maybeInstantiate)
+    .catch(rethrow);
+}
+
+async function findById(id) {
+  return db(TABLE_NAME)
+    .where({ id, deleted_at: null })
+    .then(first)
+    .then(maybeInstantiate)
+    .catch(rethrow);
 }
 
 module.exports = {
   findByDesignAndStatus,
+  findById,
   create,
   update
 };

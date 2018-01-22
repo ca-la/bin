@@ -15,7 +15,7 @@ const STRIPE_API_BASE = 'https://api.stripe.com/v1';
 
 const CREDENTIALS = new Buffer(`${STRIPE_SECRET_KEY}:`).toString('base64');
 
-async function makeRequest(method, path, data) {
+async function makeRequest(method, path, data, idempotencyKey) {
   const url = `${STRIPE_API_BASE}${path}`;
 
   const options = {
@@ -30,6 +30,10 @@ async function makeRequest(method, path, data) {
     options.body = qs.stringify(data);
   }
 
+  if (idempotencyKey) {
+    options.headers['Idempotency-Key'] = idempotencyKey;
+  }
+
   const response = await fetch(url, options);
   const contentType = response.headers.get('content-type');
   const isJson = /application\/.*json/.test(contentType);
@@ -42,7 +46,6 @@ async function makeRequest(method, path, data) {
   }
 
   const json = await response.json();
-  console.log(response.status);
 
   switch (response.status) {
     case 200: return json;
@@ -54,8 +57,8 @@ async function makeRequest(method, path, data) {
   }
 }
 
-async function charge({ customerId, sourceId, amountCents, description }) {
-  requireValues({ customerId, sourceId, amountCents, description });
+async function charge({ customerId, sourceId, amountCents, description, invoiceId }) {
+  requireValues({ customerId, sourceId, amountCents, description, invoiceId });
 
   return makeRequest('post', '/charges', {
     amount: amountCents,
@@ -63,7 +66,7 @@ async function charge({ customerId, sourceId, amountCents, description }) {
     source: sourceId,
     description,
     customer: customerId
-  });
+  }, invoiceId);
 }
 
 async function createCustomer({ email, name }) {

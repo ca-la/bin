@@ -10,6 +10,8 @@ const router = new Router();
 
 function* getInvoices() {
   const { designId, designStatusId } = this.query;
+  this.assert(designId, 400, 'Missing design ID');
+  this.assert(designStatusId, 400, 'Missing design status ID');
 
   const invoices = yield Invoices.findByDesignAndStatus(designId, designStatusId);
   this.body = invoices;
