@@ -7,6 +7,7 @@ const compact = require('../../services/compact');
 const db = require('../../services/db');
 const first = require('../../services/first');
 const InvoiceBreakdown = require('../../domain-objects/invoice-breakdown');
+const { requireValues } = require('../../services/require-properties');
 
 const instantiate = row => new InvoiceBreakdown(row);
 const maybeInstantiate = data => (data && new InvoiceBreakdown(data)) || null;
@@ -15,12 +16,17 @@ const { dataMapper } = InvoiceBreakdown;
 
 const TABLE_NAME = 'invoice_breakdowns';
 
-async function create(data) {
+// Create must happen in a transaction that also creates an Invoice.
+// see services/create-invoice
+async function create(data, trx) {
+  requireValues({ data, trx });
+
   const rowData = Object.assign({}, dataMapper.userDataToRowData(data), {
     id: uuid.v4()
   });
 
   return db(TABLE_NAME)
+    .transacting(trx)
     .insert(rowData, '*')
     .then(first)
     .then(instantiate)

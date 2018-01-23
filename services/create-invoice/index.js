@@ -1,11 +1,18 @@
 'use strict';
 
+const db = require('../../services/db');
+const InvoiceBreakdownsDAO = require('../../dao/invoice-breakdowns');
 const InvoicesDAO = require('../../dao/invoices');
 const ProductDesignStatusesDAO = require('../../dao/product-design-statuses');
 const { getAllPricingTables } = require('../../services/pricing-table');
 const { requireValues } = require('../../services/require-properties');
 
-function getInvoiceAmount(finalPricingTable, newStatusId) {
+// Will obvs have to update this if we ever switch to an enterprise plan
+function calculateStripeFee(totalCents) {
+  return Math.round((0.029 * totalCents) + 30);
+}
+
+function getInvoiceAmountCents(finalPricingTable, newStatusId) {
   requireValues({ finalPricingTable, newStatusId });
 
   const { summary } = finalPricingTable;
@@ -31,13 +38,37 @@ async function createInvoice(design, newStatusId) {
 
   const { finalPricingTable } = await getAllPricingTables(design);
 
-  const invoiceAmount = getInvoiceAmount(finalPricingTable, newStatusId);
+  const invoiceAmountCents = getInvoiceAmountCents(finalPricingTable, newStatusId);
 
-  await InvoicesDAO.create({
-    totalCents: invoiceAmount,
-    title: `${design.title} — ${status.label}`,
-    designId: design.id,
-    designStatusId: newStatusId
+  return db.transaction(async (trx) => {
+    try {
+      const invoice = await InvoicesDAO.create({
+        totalCents: invoiceAmountCents,
+        title: `${design.title} — ${status.label}`,
+        designId: design.id,
+        designStatusId: newStatusId
+      }, trx);
+
+      const totalCostCents = 0;
+
+      const stripeFeeCents = calculateStripeFee(invoiceAmountCents);
+      const totalRevenueCents = invoiceAmountCents - stripeFeeCents;
+      const totalProfitCents = totalRevenueCents - totalCostCents;
+
+      await InvoiceBreakdownsDAO.create({
+        invoiceId: invoice.id,
+        invoiceAmountCents,
+        totalRevenueCents,
+        totalCostCents,
+        totalProfitCents,
+        stripeFeeCents
+      }, trx);
+
+      await trx.commit();
+    } catch (err) {
+      await trx.rollback();
+      throw err;
+    }
   });
 }
 

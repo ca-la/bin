@@ -6,6 +6,7 @@ const DataMapper = require('../services/data-mapper');
 const keyNamesByColumnName = {
   id: 'id',
   invoice_id: 'invoiceId',
+  invoice_amount_cents: 'invoiceAmountCents',
   total_revenue_cents: 'totalRevenueCents',
   total_cost_cents: 'totalCostCents',
   total_profit_cents: 'totalProfitCents',
