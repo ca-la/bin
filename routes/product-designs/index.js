@@ -16,6 +16,7 @@ const ProductDesignSectionAnnotationsDAO = require('../../dao/product-design-sec
 const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
 const ProductDesignServicesDAO = require('../../dao/product-design-services');
 const ProductDesignStatusesDAO = require('../../dao/product-design-statuses');
+const ProductDesignStatusSlasDAO = require('../../dao/product-design-status-slas');
 const requireAuth = require('../../middleware/require-auth');
 const sendAnnotationNotifications = require('../../services/send-annotation-notifications');
 const updateDesignStatus = require('../../services/update-design-status');
@@ -34,6 +35,13 @@ async function attachDesignOwner(design) {
 
 async function attachStatuses(design) {
   const status = await ProductDesignStatusesDAO.findById(design.status);
+
+  const sla = await ProductDesignStatusSlasDAO.findByDesignAndStatus(design.id, design.status);
+
+  if (sla) {
+    status.setSla(sla);
+  }
+
   design.setCurrentStatus(status);
 
   if (status.nextStatus) {

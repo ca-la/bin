@@ -4,12 +4,14 @@ const uuid = require('node-uuid');
 const rethrow = require('pg-rethrow');
 
 const db = require('../../services/db');
+const first = require('../../services/first');
 const InvalidDataError = require('../../errors/invalid-data');
 const ProductDesignStatusSla = require('../../domain-objects/product-design-status-sla');
 
 const { dataMapper } = ProductDesignStatusSla;
 
 const instantiate = data => new ProductDesignStatusSla(data);
+const maybeInstantiate = data => (data && new ProductDesignStatusSla(data)) || null;
 
 const TABLE_NAME = 'product_design_status_slas';
 
@@ -67,11 +69,23 @@ function findByDesignId(designId) {
       design_id: designId
     })
     .orderBy('created_at', 'desc')
-    .catch(rethrow)
-    .then(slas => slas.map(instantiate));
+    .then(slas => slas.map(instantiate))
+    .catch(rethrow);
+}
+
+function findByDesignAndStatus(designId, statusId) {
+  return db(TABLE_NAME)
+    .where({
+      design_id: designId,
+      status_id: statusId
+    })
+    .then(first)
+    .then(maybeInstantiate)
+    .catch(rethrow);
 }
 
 module.exports = {
+  findByDesignAndStatus,
   findByDesignId,
   replaceForDesign
 };

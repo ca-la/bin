@@ -20,6 +20,10 @@ class ProductDesignStatus {
     const data = dataMapper.rowDataToUserData(row);
     Object.assign(this, data);
   }
+
+  setSla(sla) {
+    this.sla = sla;
+  }
 }
 
 ProductDesignStatus.dataMapper = dataMapper;
