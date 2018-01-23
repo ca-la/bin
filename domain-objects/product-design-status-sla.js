@@ -10,7 +10,7 @@ const keyNamesByColumnName = {
 
 const dataMapper = new DataMapper(keyNamesByColumnName);
 
-class DesignStatusSla {
+class ProductDesignStatusSla {
   constructor(row) {
     requireProperties(row, 'id');
 
@@ -22,6 +22,6 @@ class DesignStatusSla {
   }
 }
 
-DesignStatusSla.dataMapper = dataMapper;
+ProductDesignStatusSla.dataMapper = dataMapper;
 
-module.exports = DesignStatusSla;
+module.exports = ProductDesignStatusSla;

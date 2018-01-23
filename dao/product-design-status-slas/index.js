@@ -5,13 +5,13 @@ const rethrow = require('pg-rethrow');
 
 const db = require('../../services/db');
 const InvalidDataError = require('../../errors/invalid-data');
-const DesignStatusSla = require('../../domain-objects/design-status-sla');
+const ProductDesignStatusSla = require('../../domain-objects/product-design-status-sla');
 
-const { dataMapper } = DesignStatusSla;
+const { dataMapper } = ProductDesignStatusSla;
 
-const instantiate = data => new DesignStatusSla(data);
+const instantiate = data => new ProductDesignStatusSla(data);
 
-const TABLE_NAME = 'design_status_slas';
+const TABLE_NAME = 'product_design_status_slas';
 
 function deleteForDesign(trx, designId) {
   return db(TABLE_NAME)

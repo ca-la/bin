@@ -2,7 +2,7 @@
 
 exports.up = function up(knex) {
   return knex.raw(`
-create table design_status_slas (
+create table product_design_status_slas (
   id uuid primary key,
   created_at timestamp with time zone default now(),
   design_id uuid not null references product_designs(id),
@@ -14,6 +14,6 @@ create table design_status_slas (
 
 exports.down = function down(knex) {
   return knex.raw(`
-drop table design_status_slas;
+drop table product_design_status_slas;
   `);
 };
