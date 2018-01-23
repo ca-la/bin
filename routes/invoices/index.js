@@ -3,7 +3,7 @@
 const Router = require('koa-router');
 
 const Invoices = require('../../dao/invoices');
-const { payInvoice } = require('../../services/payment');
+const payInvoice = require('../../services/pay-invoice');
 const { canAccessDesignInQuery } = require('../../middleware/can-access-design');
 
 const router = new Router();

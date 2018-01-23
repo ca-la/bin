@@ -49,6 +49,4 @@ async function payInvoice(invoiceId, paymentMethodId, userId) {
   return updated;
 }
 
-module.exports = {
-  payInvoice
-};
+module.exports = payInvoice;
