@@ -38,8 +38,7 @@ class ProductDesign {
 
     Object.assign(this, data, {
       createdAt: new Date(row.created_at),
-      deletedAt: row.deleted_at && new Date(row.deleted_at),
-      canCompleteStatus: false
+      deletedAt: row.deleted_at && new Date(row.deleted_at)
     });
 
     if (row.due_date instanceof Date) {

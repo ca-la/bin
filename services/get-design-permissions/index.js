@@ -1,11 +1,59 @@
 'use strict';
 
-const canCompleteStatus = require('../../services/can-complete-status');
 const ForbiddenError = require('../../errors/forbidden');
 const ProductDesignCollaboratorsDAO = require('../../dao/product-design-collaborators');
 const ProductDesignServicesDAO = require('../../dao/product-design-services');
 const UnauthorizedError = require('../../errors/unauthorized');
 const User = require('../../domain-objects/user');
+const { PRODUCTION_STATUSES, PAYMENT_STATUSES } = require('../../config/design-statuses');
+const { requireValues } = require('../require-properties');
+
+// Whether a user can hit the 'complete' button in Studio.
+// Whether they can make a PUT request to actually update the status is
+// controlled by `canPutStatus`
+function canInitiateStatusCompletion(
+  currentStatus,
+  isPartner,
+  isAdmin
+) {
+  requireValues({ currentStatus, isPartner, isAdmin });
+
+  const isDesigner = !isAdmin && !isPartner;
+
+  if (currentStatus === 'COMPLETE') {
+    return false;
+  }
+
+  if (PRODUCTION_STATUSES.indexOf(currentStatus) > -1) {
+    return isPartner || isAdmin;
+  }
+
+  if (PAYMENT_STATUSES.indexOf(currentStatus) > -1) {
+    return isDesigner;
+  }
+
+  return true;
+}
+
+function canPutStatus(
+  currentStatus,
+  isPartner,
+  isAdmin
+) {
+  if (currentStatus === 'COMPLETE') {
+    return isAdmin;
+  }
+
+  if (PRODUCTION_STATUSES.indexOf(currentStatus) > -1) {
+    return isPartner || isAdmin;
+  }
+
+  if (PAYMENT_STATUSES.indexOf(currentStatus) > -1) {
+    return isAdmin;
+  }
+
+  return true;
+}
 
 async function getDesignPermissions(design, userId, sessionRole) {
   const isAdmin = (sessionRole === User.ROLES.admin);
@@ -44,8 +92,8 @@ async function getDesignPermissions(design, userId, sessionRole) {
     canComment: !collaboratorRole || (collaboratorRole === 'EDIT') || (collaboratorRole === 'COMMENT'),
     canManagePricing: isAdmin,
     canViewPricing: !isPartner,
-    canCompleteStatus: canCompleteStatus(design.status, isPartner, isAdmin),
-    canManuallySetStatus: isAdmin,
+    canInitiateStatusCompletion: canInitiateStatusCompletion(design.status, isPartner, isAdmin),
+    canPutStatus: canPutStatus(design.status, isPartner, isAdmin),
     canSetStatusEstimates: isPartner || isAdmin
   };
 

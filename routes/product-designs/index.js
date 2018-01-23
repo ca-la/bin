@@ -314,10 +314,10 @@ function* setStatus() {
   const { newStatus } = this.request.body;
   this.assert(newStatus, 400, 'New status must be provided');
 
-  const { canCompleteStatus, canManuallySetStatus } = this.state.designPermissions;
+  const { canPutStatus } = this.state.designPermissions;
 
   this.assert(
-    canCompleteStatus || canManuallySetStatus,
+    canPutStatus,
     403,
     "You don't have permission to modify this design status"
   );
