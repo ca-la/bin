@@ -29,7 +29,7 @@ function canInitiateStatusCompletion(
   }
 
   if (PAYMENT_STATUSES.indexOf(currentStatus) > -1) {
-    return isDesigner;
+    return isDesigner || isAdmin;
   }
 
   return true;
