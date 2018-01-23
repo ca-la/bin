@@ -36,14 +36,26 @@ function createForDesign(trx, designId, slas) {
     .returning('*')
     .then(inserted => inserted.map(instantiate))
     .catch(rethrow)
-    .catch(rethrow.ERRORS.NotNullViolation, (err) => {
-      const keyName = dataMapper.getKeyName(err.column) || 'All data';
-      throw new InvalidDataError(`${keyName} must be provided`);
-    })
-    .catch(rethrow.ERRORS.ForeignKeyViolation, (err) => {
-      if (err.constraint === 'design_status_slas_status_id_fkey') {
+    .catch((err) => {
+      if (err instanceof rethrow.ERRORS.NotNullViolation) {
+        const keyName = dataMapper.getKeyName(err.column) || 'All data';
+        throw new InvalidDataError(`${keyName} must be provided`);
+      }
+
+      if (
+        err instanceof rethrow.ERRORS.ForeignKeyViolation &&
+        err.constraint === 'design_status_slas_status_id_fkey'
+      ) {
         throw new InvalidDataError('Invalid service ID');
       }
+
+      if (
+        err instanceof rethrow.ERRORS.DatetimeFieldOverflow ||
+        err instanceof rethrow.ERRORS.InvalidDatetimeFormat
+      ) {
+        throw new InvalidDataError('Invalid date format. Please use MM/DD/YY');
+      }
+
       throw err;
     });
 }
