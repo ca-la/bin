@@ -2,7 +2,9 @@
 
 const invert = require('lodash/invert');
 const mapKeys = require('lodash/mapKeys');
+
 const { logServerError } = require('../logger');
+const InvalidDataError = require('../../errors/invalid-data');
 
 /**
  * Useful helpers for converting back and forth between userland data formats
@@ -23,7 +25,7 @@ class DataMapper {
   userDataToRowData(data) {
     return mapKeys(data, (value, key) => {
       const columnName = this.columnNamesByKeyName[key];
-      if (!columnName) throw new Error(`Undefined column name: ${key}`);
+      if (!columnName) throw new InvalidDataError(`Unknown key: ${key}`);
       return columnName;
     });
   }

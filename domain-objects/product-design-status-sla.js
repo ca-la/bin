@@ -1,11 +1,15 @@
 'use strict';
 
-const { requireProperties } = require('../services/require-properties');
 const DataMapper = require('../services/data-mapper');
+const formatDateString = require('../services/format-date-string');
+const { requireProperties } = require('../services/require-properties');
 
 const keyNamesByColumnName = {
   id: 'id',
-  created_at: 'createdAt'
+  created_at: 'createdAt',
+  design_id: 'designId',
+  status_id: 'statusId',
+  estimated_completion_date: 'estimatedCompletionDate'
 };
 
 const dataMapper = new DataMapper(keyNamesByColumnName);
@@ -17,7 +21,8 @@ class ProductDesignStatusSla {
     const data = dataMapper.rowDataToUserData(row);
 
     Object.assign(this, data, {
-      createdAt: new Date(row.created_at)
+      createdAt: new Date(row.created_at),
+      estimatedCompletionDate: formatDateString(row.estimated_completion_date)
     });
   }
 }

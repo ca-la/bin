@@ -45,7 +45,8 @@ async function getDesignPermissions(design, userId, sessionRole) {
     canManagePricing: isAdmin,
     canViewPricing: !isPartner,
     canCompleteStatus: canCompleteStatus(design.status, isPartner, isAdmin),
-    canManuallySetStatus: isAdmin
+    canManuallySetStatus: isAdmin,
+    canSetStatusEstimates: isPartner || isAdmin
   };
 
   return designPermissions;
