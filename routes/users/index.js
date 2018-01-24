@@ -11,7 +11,6 @@ const ScansDAO = require('../../dao/scans');
 const SessionsDAO = require('../../dao/sessions');
 const Shopify = require('../../services/shopify');
 const Twilio = require('../../services/twilio');
-const UnassignedReferralCodesDAO = require('../../dao/unassigned-referral-codes');
 const User = require('../../domain-objects/user');
 const UsersDAO = require('../../dao/users');
 const { logServerError } = require('../../services/logger');
@@ -49,7 +48,7 @@ function* createUser() {
   this.assert(name, 400, 'Name must be provided');
   this.assert(email, 400, 'Email must be provided');
 
-  const referralCode = yield UnassignedReferralCodesDAO.get();
+  const referralCode = 'n/a';
 
   try {
     yield MailChimp.subscribeToUsers({
