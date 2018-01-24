@@ -3,10 +3,10 @@
 exports.up = function up(knex) {
   return knex.raw(`
 alter table product_design_sections
-  add column position integer;
+  add column position numeric;
 
 update product_design_sections
-  set position = cast(extract(epoch from created_at) as integer);
+  set position = cast(extract(epoch from created_at) as numeric);
 
 alter table product_design_sections
   alter column position
