@@ -120,6 +120,7 @@ const ALLOWED_DESIGN_PARAMS = [
 ];
 
 const ALLOWED_SECTION_PARAMS = [
+  'position',
   'templateName',
   'customData',
   'title',

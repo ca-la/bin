@@ -15,6 +15,7 @@ class ProductDesignSection {
     this.customImageId = row.custom_image_id;
     this.designId = row.design_id;
     this.templateName = row.template_name;
+    this.position = row.position;
   }
 }
 
