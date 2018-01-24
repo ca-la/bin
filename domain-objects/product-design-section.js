@@ -15,7 +15,10 @@ class ProductDesignSection {
     this.customImageId = row.custom_image_id;
     this.designId = row.design_id;
     this.templateName = row.template_name;
-    this.position = row.position;
+
+    // Technically losing precision here, but the client is JavaScript too so
+    // `Number` is as good as it's gonna get. See knex/issues/927
+    this.position = Number(row.position);
   }
 }
 
