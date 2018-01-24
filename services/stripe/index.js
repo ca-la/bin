@@ -12,11 +12,15 @@ const { requireValues } = require('../../services/require-properties');
 const { STRIPE_SECRET_KEY } = require('../../config');
 
 const STRIPE_API_BASE = 'https://api.stripe.com/v1';
+const STRIPE_CONNECT_API_BASE = 'https://connect.stripe.com';
 
 const CREDENTIALS = new Buffer(`${STRIPE_SECRET_KEY}:`).toString('base64');
 
-async function makeRequest(method, path, data, idempotencyKey) {
-  const url = `${STRIPE_API_BASE}${path}`;
+async function makeRequest({ method, path, apiBase, data, idempotencyKey }) {
+  requireValues({ method, path });
+
+  const base = apiBase || STRIPE_API_BASE;
+  const url = `${base}${path}`;
 
   const options = {
     method,
@@ -67,29 +71,42 @@ async function charge({ customerId, sourceId, amountCents, description, invoiceI
   // TBD if we need a better solution here but this seems ~fine for now.
   const idempotencyKey = `${invoiceId}/${sourceId}`;
 
-  return makeRequest('post', '/charges', {
-    amount: amountCents,
-    currency: 'usd',
-    source: sourceId,
-    description,
-    customer: customerId
-  }, idempotencyKey);
+  return makeRequest({
+    method: 'post',
+    path: '/charges',
+    data: {
+      amount: amountCents,
+      currency: 'usd',
+      source: sourceId,
+      description,
+      customer: customerId
+    },
+    idempotencyKey
+  });
 }
 
 async function createCustomer({ email, name }) {
   requireValues({ email, name });
 
-  return makeRequest('post', '/customers', {
-    email,
-    description: name
+  return makeRequest({
+    method: 'post',
+    path: '/customers',
+    data: {
+      email,
+      description: name
+    }
   });
 }
 
 async function attachSource({ customerId, cardToken }) {
   requireValues({ customerId, cardToken });
 
-  return makeRequest('post', `/customers/${customerId}/sources`, {
-    source: cardToken
+  return makeRequest({
+    method: 'post',
+    path: `/customers/${customerId}/sources`,
+    data: {
+      source: cardToken
+    }
   });
 }
 
@@ -104,9 +121,26 @@ async function findOrCreateCustomerId(userId) {
   return customer.id;
 }
 
+// https://stripe.com/docs/connect/express-accounts#token-request
+async function createConnectAccount(authorizationCode) {
+  requireValues({ authorizationCode });
+
+  return makeRequest({
+    apiBase: STRIPE_CONNECT_API_BASE,
+    method: 'post',
+    path: '/oauth/token',
+    data: {
+      client_secret: STRIPE_SECRET_KEY,
+      grant_type: 'authorization_code',
+      code: authorizationCode
+    }
+  });
+}
+
 module.exports = {
-  charge,
-  createCustomer,
   attachSource,
+  charge,
+  createConnectAccount,
+  createCustomer,
   findOrCreateCustomerId
 };
