@@ -12,7 +12,7 @@ const maybeInstantiate = data => (data && new PartnerPayoutAccount(data)) || nul
 
 const { dataMapper } = PartnerPayoutAccount;
 
-const TABLE_NAME = 'payment_methods';
+const TABLE_NAME = 'partner_payout_accounts';
 
 async function findById(id) {
   return db(TABLE_NAME)
