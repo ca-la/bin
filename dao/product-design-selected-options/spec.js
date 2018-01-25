@@ -33,7 +33,8 @@ function createPrerequisites() {
       design = _design;
       return createSection({
         templateName: 'gfoobar',
-        designId: design.id
+        designId: design.id,
+        position: 0
       });
     })
     .then((section) => {

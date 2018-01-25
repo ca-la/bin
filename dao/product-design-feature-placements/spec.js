@@ -67,7 +67,8 @@ test('ProductDesignFeaturePlacementsDAO.replaceForSection creates pathData place
     .then((design) => {
       return ProductDesignSectionsDAO.create({
         designId: design.id,
-        templateName: 'okok'
+        templateName: 'okok',
+        position: 0
       });
     })
     .then((section) => {
@@ -107,7 +108,8 @@ test('ProductDesignFeaturePlacementsDAO.replaceForSection creates and updates pl
       secondPlacementData = getPlacementData(imageId, 100);
       return ProductDesignSectionsDAO.create({
         designId: design.id,
-        templateName: 'okok'
+        templateName: 'okok',
+        position: 0
       });
     })
     .then((section) => {

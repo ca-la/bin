@@ -26,6 +26,7 @@ function create(data) {
       title: data.title,
       custom_image_id: data.customImageId,
       panel_data: data.panelData,
+      position: data.position,
       custom_data: data.customData,
       id: uuid.v4(),
       type: data.type
@@ -44,6 +45,7 @@ function update(sectionId, data) {
       custom_image_id: data.customImageId,
       custom_data: data.customData,
       panel_data: data.panelData,
+      position: data.position,
       type: data.type
     }), '*')
     .then(first)
@@ -66,7 +68,7 @@ function findByDesignId(designId) {
       design_id: designId,
       deleted_at: null
     })
-    .orderBy('created_at', 'asc')
+    .orderBy('position', 'asc')
     .catch(rethrow)
     .then(sections => sections.map(instantiate));
 }

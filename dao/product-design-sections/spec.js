@@ -27,7 +27,8 @@ test('ProductDesignSectionsDAO.create creates a section', (t) => {
               points: [1, 2, 3]
             }
           ]
-        }
+        },
+        position: 0
       });
     })
     .then((section) => {
@@ -60,7 +61,8 @@ test('ProductDesignSectionsDAO.update updates a section', (t) => {
 
       return ProductDesignSectionsDAO.create({
         designId: design.id,
-        templateName: 'okok'
+        templateName: 'okok',
+        position: 0
       });
     })
     .then((section) => {
