@@ -21,7 +21,7 @@ function* getAccounts() {
 }
 
 function* createAccount() {
-  const { stripeAuthorizationCode } = this.requst.body;
+  const { stripeAuthorizationCode } = this.request.body;
   this.assert(stripeAuthorizationCode, 400, 'Missing Stripe authorization code');
 
   const connectAccount = yield Stripe.createConnectAccount(stripeAuthorizationCode);
