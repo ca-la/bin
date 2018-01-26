@@ -12,6 +12,10 @@
     "cala-lint-commented-code": "lint-commented-code",
     "cala-validate-migration": "validate-migration"
   },
+  "scripts": {
+    "release-minor": "npm version minor && git push origin master --tags && npm publish",
+    "release-patch": "npm version patch && git push origin master --tags && npm publish"
+  },
   "author": "CALA <devops@ca.la>",
   "license": "MIT",
   "bugs": {
