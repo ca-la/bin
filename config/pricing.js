@@ -1,7 +1,8 @@
 'use strict';
 
-// All prices here include CALA's margin unless otherwise specified
-// If we're adding new pricing from a vendor, make sure we add our own margin.
+// These are old "fallback" pricing values. Over time we should deprecate these
+// and use the pricing tables themselves, with the special-case CALA user
+// account owning the "base" pricing if no other partner is assigned.
 
 const pricing = {
   // Per patternComplexity bucket, the cost to do custom pattern-making
