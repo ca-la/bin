@@ -15,7 +15,12 @@ alter table production_prices
 insert into product_design_service_ids (id) values
   ('SCREEN_PRINT'),
   ('EMBROIDERY'),
-  ('WASH');
+  ('WASH'),
+  ('DYE'),
+  ('DTG_ROLL_PRINT'),
+  ('DTG_ENGINEERED_PRINT'),
+  ('DIGITAL_SUBLIMATION_PRINT'),
+  ('ROTARY_PRINT');
   `);
 };
 
@@ -25,9 +30,14 @@ alter table production_prices
   drop column setup_cost_cents;
 
 delete from product_design_service_ids where id in (
-  'SCREEN_PRINTING',
+  'SCREEN_PRINT',
   'EMBROIDERY',
-  'WASH'
+  'WASH',
+  'DYE',
+  'DTG_ROLL_PRINT',
+  'DTG_ENGINEERED_PRINT',
+  'DIGITAL_SUBLIMATION_PRINT',
+  'ROTARY_PRINT'
 );
   `);
 };
