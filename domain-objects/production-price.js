@@ -10,7 +10,8 @@ const keyNamesByColumnName = {
   service_id: 'serviceId',
   minimum_units: 'minimumUnits',
   complexity_level: 'complexityLevel',
-  price_cents: 'priceCents'
+  price_cents: 'priceCents',
+  setup_cost_cents: 'setupCostCents'
 };
 
 const dataMapper = new DataMapper(keyNamesByColumnName);
