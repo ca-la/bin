@@ -10,8 +10,8 @@ const router = new Router();
 async function getUserCount(startDate, endDate) {
   const result = await db.raw(`
     select count(*) from users
-      where created_at >= ?
-      and created_at <= ?
+      where created_at::date >= ?
+      and created_at::date <= ?
   `, [startDate, endDate]);
 
   return parseInt(result.rows[0].count, 10);
@@ -20,8 +20,8 @@ async function getUserCount(startDate, endDate) {
 async function getDesignCount(startDate, endDate) {
   const result = await db.raw(`
     select count(*) from product_designs
-      where created_at >= ?
-      and created_at <= ?
+      where created_at::date >= ?
+      and created_at::date <= ?
   `, [startDate, endDate]);
 
   return parseInt(result.rows[0].count, 10);
@@ -30,8 +30,8 @@ async function getDesignCount(startDate, endDate) {
 async function getSubmittedDesignCount(startDate, endDate) {
   const result = await db.raw(`
     select count(*) from product_designs
-      where created_at >= ?
-      and created_at <= ?
+      where created_at::date >= ?
+      and created_at::date <= ?
       and status != 'DRAFT'
   `, [startDate, endDate]);
 
@@ -41,8 +41,8 @@ async function getSubmittedDesignCount(startDate, endDate) {
 async function getApprovedDesignCount(startDate, endDate) {
   const result = await db.raw(`
     select count(*) from product_designs
-      where created_at >= ?
-      and created_at <= ?
+      where created_at::date >= ?
+      and created_at::date <= ?
       and status != 'DRAFT'
       and status != 'IN_REVIEW'
   `, [startDate, endDate]);
@@ -53,8 +53,8 @@ async function getApprovedDesignCount(startDate, endDate) {
 async function getPaidInvoiceAmountCents(startDate, endDate) {
   const result = await db.raw(`
     select sum(total_cents) from invoices
-      where paid_at >= ?
-      and paid_at <= ?
+      where paid_at::date >= ?
+      and paid_at::date <= ?
   `, [startDate, endDate]);
 
   return parseInt(result.rows[0].sum, 10);
