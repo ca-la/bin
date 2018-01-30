@@ -30,15 +30,7 @@ insert into product_design_service_ids (id) values
   `);
 };
 
-exports.down = function down(knex) {
-  return knex.raw(`
-alter table production_prices
-  drop column setup_cost_cents,
-  drop column price_unit;
-
-drop type production_price_unit;
-
-delete from product_design_service_ids where id in (
+const serviceList = `(
   'SCREEN_PRINT',
   'EMBROIDERY',
   'WASH',
@@ -47,6 +39,20 @@ delete from product_design_service_ids where id in (
   'DTG_ENGINEERED_PRINT',
   'DIGITAL_SUBLIMATION_PRINT',
   'ROTARY_PRINT'
-);
+)`;
+
+exports.down = function down(knex) {
+  return knex.raw(`
+alter table production_prices
+  drop column setup_cost_cents,
+  drop column price_unit;
+
+drop type production_price_unit;
+
+delete from product_design_services where service_id in ${serviceList};
+
+delete from production_prices where service_id in ${serviceList};
+
+delete from product_design_service_ids where id in ${serviceList};
   `);
 };
