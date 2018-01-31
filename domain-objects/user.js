@@ -8,14 +8,12 @@ const { requireProperties } = require('../services/require-properties');
 const ROLES = {
   user: 'USER',
   admin: 'ADMIN',
-  designer: 'DESIGNER',
   partner: 'PARTNER'
 };
 
 const ALLOWED_SESSION_ROLES = {
-  [ROLES.admin]: [ROLES.partner, ROLES.user, ROLES.admin, ROLES.designer],
+  [ROLES.admin]: [ROLES.partner, ROLES.user, ROLES.admin],
   [ROLES.user]: [ROLES.user],
-  [ROLES.designer]: [ROLES.designer, ROLES.user],
   // Important: Partners cannot log in as a regular user!
   [ROLES.partner]: [ROLES.partner]
 };
