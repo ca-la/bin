@@ -50,6 +50,19 @@ function* createUser() {
 
   const referralCode = 'n/a';
 
+  const user = yield UsersDAO.create({
+    name,
+    email,
+    password,
+    phone,
+    referralCode
+  })
+    .catch(InvalidDataError, err => this.throw(400, err));
+
+  // Previously we had this *before* the user creation in the DB, effectively
+  // using it as a more powerful email validator. That has proven to be noisy as
+  // we attempt to subscribe lots of invalid and duplicate emails whenever
+  // someone makes a mistake signing up.
   try {
     yield MailChimp.subscribeToUsers({
       email,
@@ -61,15 +74,6 @@ function* createUser() {
     // log line we need to investigate ASAP (and manually subscribe the user)
     logServerError(`Failed to sign up user to Mailchimp: ${email}`);
   }
-
-  const user = yield UsersDAO.create({
-    name,
-    email,
-    password,
-    phone,
-    referralCode
-  })
-    .catch(InvalidDataError, err => this.throw(400, err));
 
   if (address) {
     const addressData = Object.assign({}, address, {
