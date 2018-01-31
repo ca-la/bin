@@ -128,25 +128,6 @@ test('POST /sessions cannot create elevated role permissions if user is role USE
     });
 });
 
-test('POST /sessions cannot create elevated role permissions if user is role DESIGNER', (t) => {
-  const nonAdmin = Object.assign({}, USER_DATA, { role: 'DESIGNER' });
-
-  return UsersDAO.create(nonAdmin)
-    .then(() => {
-      return post('/sessions', {
-        body: {
-          email: 'user@example.com',
-          password: 'hunter2',
-          role: 'ADMIN'
-        }
-      });
-    })
-    .then(([response, body]) => {
-      t.equal(response.status, 400);
-      t.equal(body.message, UNAUTHORIZED_ERROR_MSG);
-    });
-});
-
 test('POST /sessions cannot create USER sessions by omission, if a partner', (t) => {
   const nonAdmin = Object.assign({}, USER_DATA, { role: 'PARTNER' });
 
