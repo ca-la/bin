@@ -30,7 +30,7 @@ const pricing = {
     0: 0,
     1: 60 * 100,
     2: 110 * 100,
-    3: 170 * 100,
+    3: 150 * 100,
     4: 220 * 100,
     5: 280 * 100,
     6: 560 * 100
@@ -51,7 +51,7 @@ const pricing = {
     3: 108 * 100,
     4: 181 * 100,
     5: 289 * 100,
-    6: 361 * 100,
+    6: 333 * 100,
     7: 433 * 100,
     8: 578 * 100,
     9: 722 * 100,
@@ -123,8 +123,8 @@ const pricing = {
     { minUnits: 100, complexity: 5, cost: 73 * 100 },
     { minUnits: 150, complexity: 5, cost: 62 * 100 },
     { minUnits: 200, complexity: 5, cost: 55 * 100 },
-    { minUnits: 250, complexity: 5, cost: 52 * 100 },
-    { minUnits: 300, complexity: 5, cost: 49 * 100 },
+    { minUnits: 250, complexity: 5, cost: 61 * 100 },
+    { minUnits: 300, complexity: 5, cost: 59 * 100 },
     { minUnits: 500, complexity: 5, cost: 26 * 100 },
 
     { minUnits: 0, complexity: 6, cost: 178 * 100 },
