@@ -29,10 +29,10 @@ async function getDesignCount(startDate, endDate) {
 
 async function getSubmittedDesignCount(startDate, endDate) {
   const result = await db.raw(`
-    select count(*) from product_design_status_updates
+    select count(distinct(design_id)) from product_design_status_updates
       where created_at::date >= ?
       and created_at::date <= ?
-      and new_status != 'DRAFT'
+      and new_status = 'IN_REVIEW'
   `, [startDate, endDate]);
 
   return parseInt(result.rows[0].count, 10);
@@ -40,11 +40,13 @@ async function getSubmittedDesignCount(startDate, endDate) {
 
 async function getApprovedDesignCount(startDate, endDate) {
   const result = await db.raw(`
-    select count(*) from product_design_status_updates
+    select count(distinct(design_id)) from product_design_status_updates
       where created_at::date >= ?
       and created_at::date <= ?
-      and new_status != 'DRAFT'
-      and new_status != 'IN_REVIEW'
+      and (
+        new_status = 'IN_REVIEW'
+        or new_status = 'NEEDS_DEVELOPMENT_PAYMENT'
+      )
   `, [startDate, endDate]);
 
   return parseInt(result.rows[0].count, 10);
