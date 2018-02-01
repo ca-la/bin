@@ -29,10 +29,20 @@ function* replacePrices() {
 }
 
 function* getPrices() {
-  const { vendorUserId } = this.query;
+  const { vendorUserId, serviceId } = this.query;
+
   this.assert(vendorUserId, 400, 'Vendor ID must be provided');
-  this.body = yield ProductionPricesDAO.findByVendor(vendorUserId)
-    .catch(InvalidDataError, err => this.throw(400, err));
+
+  if (vendorUserId && serviceId) {
+    // Both filters are provided, find a list by vendor *and* service
+    this.body = yield ProductionPricesDAO.findByVendorAndService(vendorUserId, serviceId)
+      .catch(InvalidDataError, err => this.throw(400, err));
+  } else {
+    // Only vendor was provided, find all services
+    this.body = yield ProductionPricesDAO.findByVendor(vendorUserId)
+      .catch(InvalidDataError, err => this.throw(400, err));
+  }
+
   this.status = 200;
 }
 

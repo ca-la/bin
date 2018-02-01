@@ -97,7 +97,22 @@ function findByVendor(vendorUserId) {
     });
 }
 
+function findByVendorAndService(vendorUserId, serviceId) {
+  return db(TABLE_NAME)
+    .where({
+      vendor_user_id: vendorUserId,
+      service_id: serviceId
+    })
+    .orderBy('minimum_units', 'asc')
+    .then(prices => prices.map(instantiate))
+    .catch(rethrow)
+    .catch(rethrow.ERRORS.InvalidTextRepresentation, () => {
+      throw new InvalidDataError('Invalid ID');
+    });
+}
+
 module.exports = {
-  replaceForVendorAndService,
-  findByVendor
+  findByVendor,
+  findByVendorAndService,
+  replaceForVendorAndService
 };
