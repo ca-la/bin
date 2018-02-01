@@ -3,16 +3,21 @@
 const uuid = require('node-uuid');
 const rethrow = require('pg-rethrow');
 
+const compact = require('../../services/compact');
 const db = require('../../services/db');
+const first = require('../../services/first');
 const InvalidDataError = require('../../errors/invalid-data');
 const ProductDesignService = require('../../domain-objects/product-design-service');
 
 const { dataMapper } = ProductDesignService;
 
+const TABLE_NAME = 'product_design_services';
+
 const instantiate = data => new ProductDesignService(data);
+const maybeInstantiate = data => (data && new ProductDesignService(data)) || null;
 
 function deleteForDesign(trx, designId) {
-  return db('product_design_services')
+  return db(TABLE_NAME)
     .transacting(trx)
     .where({ design_id: designId })
     .del();
@@ -26,7 +31,7 @@ function createForDesign(trx, designId, services) {
     });
   });
 
-  return db('product_design_services')
+  return db(TABLE_NAME)
     .transacting(trx)
     .insert(rowData)
     .returning('*')
@@ -61,7 +66,7 @@ function replaceForDesign(designId, services) {
 }
 
 function findByDesignId(designId) {
-  return db('product_design_services')
+  return db(TABLE_NAME)
     .where({
       design_id: designId
     })
@@ -71,7 +76,7 @@ function findByDesignId(designId) {
 }
 
 function findByUserId(userId) {
-  return db('product_design_services')
+  return db(TABLE_NAME)
     .where({
       vendor_user_id: userId
     })
@@ -81,7 +86,7 @@ function findByUserId(userId) {
 }
 
 function findByDesignAndUser(designId, userId) {
-  return db('product_design_services')
+  return db(TABLE_NAME)
     .where({
       vendor_user_id: userId,
       design_id: designId
@@ -90,9 +95,21 @@ function findByDesignAndUser(designId, userId) {
     .catch(rethrow);
 }
 
+function update(id, data) {
+  const rowData = compact(dataMapper.userDataToRowData(data));
+
+  return db(TABLE_NAME)
+    .where({ id })
+    .update(rowData, '*')
+    .then(first)
+    .then(maybeInstantiate)
+    .catch(rethrow);
+}
+
 module.exports = {
   findByDesignAndUser,
   findByDesignId,
   findByUserId,
-  replaceForDesign
+  replaceForDesign,
+  update
 };
