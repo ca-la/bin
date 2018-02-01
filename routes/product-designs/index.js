@@ -177,6 +177,10 @@ function* updateDesign() {
 }
 
 function* deleteDesign() {
+  if (!this.state.designPermissions.canDelete) {
+    this.throw(403, 'Only the owner can delete this design');
+  }
+
   yield ProductDesignsDAO.deleteById(this.params.designId);
 
   this.status = 204;
