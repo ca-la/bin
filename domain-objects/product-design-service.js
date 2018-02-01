@@ -8,7 +8,8 @@ const keyNamesByColumnName = {
   design_id: 'designId',
   vendor_user_id: 'vendorUserId',
   created_at: 'createdAt',
-  service_id: 'serviceId'
+  service_id: 'serviceId',
+  complexity_level: 'complexityLevel'
 };
 
 const dataMapper = new DataMapper(keyNamesByColumnName);
