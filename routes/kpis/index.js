@@ -43,14 +43,26 @@ async function getApprovedDesignCount(startDate, endDate) {
     select count(distinct(design_id)) from product_design_status_updates
       where created_at::date >= ?
       and created_at::date <= ?
-      and (
-        new_status = 'IN_REVIEW'
-        or new_status = 'NEEDS_DEVELOPMENT_PAYMENT'
-      )
+      and new_status = 'NEEDS_DEVELOPMENT_PAYMENT';
   `, [startDate, endDate]);
 
   return parseInt(result.rows[0].count, 10);
 }
+
+async function getOtherStatusDesignCount(startDate, endDate) {
+  const result = await db.raw(`
+    select count(distinct(design_id)) from product_design_status_updates
+      where created_at::date >= ?
+      and created_at::date <= ?
+      and (
+        new_status != 'IN_REVIEW' and
+        new_status != 'NEEDS_DEVELOPMENT_PAYMENT'
+      );
+  `, [startDate, endDate]);
+
+  return parseInt(result.rows[0].count, 10);
+}
+
 
 async function getPaidInvoiceAmountCents(startDate, endDate) {
   const result = await db.raw(`
@@ -71,6 +83,7 @@ function* getMetrics() {
     designCount: yield getDesignCount(startDate, endDate),
     submittedDesignCount: yield getSubmittedDesignCount(startDate, endDate),
     approvedDesignCount: yield getApprovedDesignCount(startDate, endDate),
+    otherStatusDesignCount: yield getOtherStatusDesignCount(startDate, endDate),
     paidInvoiceAmountCents: yield getPaidInvoiceAmountCents(startDate, endDate)
   };
 
