@@ -55,6 +55,14 @@ function canPutStatus(
   return true;
 }
 
+function canModifyServices(
+  currentStatus,
+  isAdmin
+) {
+  const isUnsubmitted = (currentStatus === 'DRAFT');
+  return isUnsubmitted || isAdmin;
+}
+
 async function getDesignPermissions(design, userId, sessionRole) {
   const isAdmin = (sessionRole === User.ROLES.admin);
   const isPartner = (sessionRole === User.ROLES.partner);
@@ -97,6 +105,7 @@ async function getDesignPermissions(design, userId, sessionRole) {
     canInitiateStatusCompletion: canInitiateStatusCompletion(design.status, isPartner, isAdmin),
     canPutStatus: canPutStatus(design.status, isPartner, isAdmin),
     canSetStatusEstimates: isPartnerOrAdmin,
+    canModifyServices: canModifyServices(design.status, isAdmin),
     canSetComplexityLevels: isPartnerOrAdmin
   };
 
