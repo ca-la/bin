@@ -6,7 +6,17 @@ if [[ $(git rev-parse --abbrev-ref HEAD) != "master" ]] ; then
   exit 1
 fi
 
-echo "Are you sure you want to migrate the PRODUCTION db? Has your migration-only pull request been merged?"
+if [[ $(git status --porcelain) != '' ]] ; then
+  echo 'Cannot migrate with uncommitted changes'
+  exit 1
+fi
+
+if [[ $(git cherry -v origin/master) != "" ]]; then
+  echo 'Cannot migrate with unpushed commits'
+  exit 1
+fi
+
+echo "Are you sure you want to migrate the PRODUCTION db?"
 echo -n "Type PRODUCTION if you're sure: "
 read RES
 
