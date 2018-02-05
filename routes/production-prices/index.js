@@ -6,12 +6,22 @@ const InvalidDataError = require('../../errors/invalid-data');
 const ProductionPricesDAO = require('../../dao/production-prices');
 const requireAuth = require('../../middleware/require-auth');
 const User = require('../../domain-objects/user');
+const UsersDAO = require('../../dao/users');
 
 const router = new Router();
+
+async function verifyEligibility(vendorUserId) {
+  const user = await UsersDAO.findById(vendorUserId);
+  const name = (user && user.name) || 'This user';
+  this.assert(user && user.role === 'PARTNER', 400, `${name} is not a production partner. Only production partners can specify pricing tables.`);
+}
 
 function* replacePrices() {
   const { vendorUserId, serviceId } = this.query;
   this.assert(serviceId, 400, 'Service ID must be provided');
+
+  this.assert(vendorUserId, 400, 'Vendor ID must be provided');
+  yield verifyEligibility.call(this, vendorUserId);
 
   const isAdmin = (this.state.role === User.ROLES.admin);
   const isCurrentUser = (vendorUserId === this.state.userId);
@@ -32,6 +42,7 @@ function* getPrices() {
   const { vendorUserId, serviceId } = this.query;
 
   this.assert(vendorUserId, 400, 'Vendor ID must be provided');
+  yield verifyEligibility.call(this, vendorUserId);
 
   if (vendorUserId && serviceId) {
     // Both filters are provided, find a list by vendor *and* service

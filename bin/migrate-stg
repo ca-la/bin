@@ -6,8 +6,18 @@ if [[ $(git rev-parse --abbrev-ref HEAD) != "master" ]] ; then
   exit 1
 fi
 
+if [[ $(git status --porcelain) != '' ]] ; then
+  echo 'Cannot migrate with uncommitted changes'
+  exit 1
+fi
+
+if [[ $(git cherry -v origin/master) != "" ]]; then
+  echo 'Cannot migrate with unpushed commits'
+  exit 1
+fi
+
 if [[ "$1" != "--force" ]]; then
-  echo "Are you sure you want to migrate the STAGING db? Has your migration-only pull request been merged?"
+  echo "Are you sure you want to migrate the STAGING db?"
   echo -n "Type STAGING if you're sure: "
   read RES
 
