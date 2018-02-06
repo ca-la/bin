@@ -664,10 +664,10 @@ class PricingCalculator {
 
       lineItems: [
         enabledServices.FULFILLMENT && new LineItem({
-          title: 'Packaging - labor',
-          id: 'fulfillment-packing',
+          title: 'Fulfillment',
+          id: 'fulfillment',
           quantity: this.unitsToProduce,
-          unitPriceCents: this.getServicePerDesignCostCents('FULFILLMENT')
+          unitPriceCents: this.getServicePerGarmentCostCents('FULFILLMENT')
         })
       ].filter(Boolean)
     });
