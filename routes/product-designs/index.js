@@ -10,6 +10,7 @@ const compact = require('../../services/compact');
 const getDesignPermissions = require('../../services/get-design-permissions');
 const InvalidDataError = require('../../errors/invalid-data');
 const MissingPrerequisitesError = require('../../errors/missing-prerequisites');
+const PricingCalculator = require('../../services/pricing-table');
 const ProductDesignFeaturePlacementsDAO = require('../../dao/product-design-feature-placements');
 const ProductDesignsDAO = require('../../dao/product-designs');
 const ProductDesignSectionAnnotationsDAO = require('../../dao/product-design-section-annotations');
@@ -22,7 +23,6 @@ const sendAnnotationNotifications = require('../../services/send-annotation-noti
 const updateDesignStatus = require('../../services/update-design-status');
 const UsersDAO = require('../../dao/users');
 const { canAccessDesignInParam, canCommentOnDesign } = require('../../middleware/can-access-design');
-const { getAllPricingTables } = require('../../services/pricing-table');
 const { requireValues } = require('../../services/require-properties');
 
 const router = new Router();
@@ -88,11 +88,13 @@ function* getDesignPricing() {
 
   const design = yield ProductDesignsDAO.findById(this.params.designId);
 
+  const calculator = new PricingCalculator(design);
+
   const {
     computedPricingTable,
     overridePricingTable,
     finalPricingTable
-  } = yield Bluebird.resolve(getAllPricingTables(design))
+  } = yield Bluebird.resolve(calculator.getAllPricingTables())
     .catch(MissingPrerequisitesError, err => this.throw(400, err));
 
   this.body = {

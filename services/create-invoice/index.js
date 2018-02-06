@@ -3,8 +3,8 @@
 const db = require('../../services/db');
 const InvoiceBreakdownsDAO = require('../../dao/invoice-breakdowns');
 const InvoicesDAO = require('../../dao/invoices');
+const PricingCalculator = require('../../services/pricing-table');
 const ProductDesignStatusesDAO = require('../../dao/product-design-statuses');
-const { getAllPricingTables } = require('../../services/pricing-table');
 const { requireValues } = require('../../services/require-properties');
 
 // Will obvs have to update this if we ever switch to an enterprise plan
@@ -36,7 +36,8 @@ function getInvoiceAmountCents(finalPricingTable, newStatusId) {
 async function createInvoice(design, newStatusId) {
   const status = await ProductDesignStatusesDAO.findById(newStatusId);
 
-  const { finalPricingTable } = await getAllPricingTables(design);
+  const calculator = new PricingCalculator(design);
+  const { finalPricingTable } = await calculator.getAllPricingTables();
 
   const invoiceAmountCents = getInvoiceAmountCents(finalPricingTable, newStatusId);
 
