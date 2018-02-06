@@ -2,6 +2,14 @@
 
 const { requireValues } = require('../require-properties');
 
+class NoBucketError extends Error {
+  constructor(message) {
+    super(message);
+    this.message = message;
+    this.name = 'NoBucketError';
+  }
+}
+
 function getServicePrice({
   productionPrices,
   serviceId,
@@ -30,4 +38,7 @@ function getServicePrice({
   throw new Error(`No eligible bucket found for ${unitsToProduce}/${complexityLevel}`);
 }
 
-module.exports = getServicePrice;
+module.exports = {
+  getServicePrice,
+  NoBucketError
+};

@@ -3,7 +3,6 @@
 const flatten = require('lodash/flatten');
 const pick = require('lodash/pick');
 
-const getServicePrice = require('../get-service-price');
 const MissingPrerequisitesError = require('../../errors/missing-prerequisites');
 const ProductDesignFeaturePlacementsDAO = require('../../dao/product-design-feature-placements');
 const ProductDesignOptionsDAO = require('../../dao/product-design-options');
@@ -12,6 +11,7 @@ const ProductDesignSelectedOptionsDAO = require('../../dao/product-design-select
 const ProductDesignServicesDAO = require('../../dao/product-design-services');
 const ProductDesignVariantsDAO = require('../../dao/product-design-variants');
 const ProductionPricesDAO = require('../../dao/production-prices');
+const { getServicePrice, NoBucketError } = require('../get-service-price');
 const { requireProperties, requireValues } = require('../require-properties');
 
 // Should be kept in sync with the enum of `product_design_service_ids` in the
@@ -24,6 +24,7 @@ const SERVICE_IDS = Object.freeze({
   DYE: 'Dye',
   EMBROIDERY: 'Embroidery',
   FULFILLMENT: 'Fulfillment',
+  GRADING: 'Grading',
   PATTERN_MAKING: 'Pattern Making',
   PRODUCTION: 'Production',
   ROTARY_PRINT: 'Rotary Print',
@@ -164,6 +165,7 @@ class PricingCalculator {
   // design: ProductDesign
   // unitsToProduce: number
   // pricesByService: { [serviceId: ServiceId]: ProductionPrice[] }
+  // complexityByService: { [serviceId: ServiceId]: number }
 
   constructor(design) {
     this.design = design;
@@ -251,24 +253,87 @@ class PricingCalculator {
     }
   }
 
+  getServicePriceBucket(serviceId, expectedUnit) {
+    const allowedServiceIds = Object.keys(SERVICE_IDS);
+
+    if (allowedServiceIds.indexOf(serviceId) < 0) {
+      throw new Error(`Price bucket requested for unknown service: ${serviceId}`);
+    }
+
+    const prices = this.pricesByService[serviceId];
+
+    if (!prices) {
+      throw new Error(`No prices were retreived for service ${serviceId}`);
+    }
+
+    if (prices.length === 0) {
+      throw new MissingPrerequisitesError(`Partner has not set up pricing for ${serviceId}`);
+    }
+
+    const complexity = this.complexityByService[serviceId];
+
+    if (complexity === undefined) {
+      throw new Error(`No complexity was retreived for service ${serviceId}`);
+    }
+
+    let bucket;
+
+    try {
+      bucket = getServicePrice({
+        productionPrices: prices,
+        serviceId,
+        unitsToProduce: this.unitsToProduce,
+        complexityLevel: complexity
+      });
+    } catch (err) {
+      if (err instanceof NoBucketError) {
+        throw new MissingPrerequisitesError(`Pricing for the ${serviceId} service doesn't match any tier in the pricing table`);
+      }
+
+      throw err;
+    }
+
+    if (expectedUnit && bucket.priceUnit !== expectedUnit) {
+      throw new MissingPrerequisitesError(
+        `${serviceId} service has pricing, but in the wrong units. ` +
+        `Expected prices per ${expectedUnit}, got prices per ${bucket.priceUnit}.`
+      );
+    }
+
+    return bucket;
+  }
+
+  // All these helpers are slightly foolproof guards around the same action -
+  // get the price list and find the one that matches
   getServicePerMeterCostCents(serviceId) {
+    return this.getServicePriceBucket(serviceId, 'METER').priceCents;
   }
 
   getServicePerDesignCostCents(serviceId) {
+    return this.getServicePriceBucket(serviceId, 'DESIGN').priceCents;
   }
 
   getServicePerGarmentCostCents(serviceId) {
+    return this.getServicePriceBucket(serviceId, 'GARMENT').priceCents;
+  }
+
+  getServicePerSizeCostCents(serviceId) {
+    return this.getServicePriceBucket(serviceId, 'SIZE').priceCents;
   }
 
   getServiceSetupCostCents(serviceId) {
+    return this.getServicePriceBucket(serviceId).setupCostCents;
   }
 
   async fetchServicesAndPricing() {
     const services = await ProductDesignServicesDAO.findByDesignId(this.design.id);
 
     this.pricesByService = {};
+    this.complexityByService = {};
 
     for (const service of services) {
+      this.complexityByService[service.serviceId] = service.complexityLevel;
+
       if (!service.vendorUserId) {
         throw new MissingPrerequisitesError(`Service ${service.serviceId} is not assigned to any partner`);
       }
@@ -281,10 +346,6 @@ class PricingCalculator {
         service.vendorUserId,
         service.serviceId
       );
-
-      if (prices.length === 0) {
-        throw new MissingPrerequisitesError(`Assigned partner does not have a pricing table for ${service.serviceId}`);
-      }
 
       this.pricesByService[service.serviceId] = prices;
     }
@@ -324,14 +385,6 @@ class PricingCalculator {
     const enabledServices = {};
     services.forEach((service) => { enabledServices[service.serviceId] = true; });
 
-    const needsDesign = enabledServices.DESIGN;
-    const needsSourcing = enabledServices.SOURCING;
-    const needsTechnicalDesign = enabledServices.TECHNICAL_DESIGN;
-    const needsPatternMaking = enabledServices.PATTERN_MAKING;
-    const needsSampling = enabledServices.SAMPLING;
-    const needsProduction = enabledServices.PRODUCTION;
-    const needsFulfillment = enabledServices.FULFILLMENT;
-
     const isAllTemplates = sections.reduce((memo, section) => {
       if (!section.templateName) {
         return false;
@@ -350,7 +403,7 @@ class PricingCalculator {
         throw new MissingPrerequisitesError('Custom sketches need to be reviewed before we can give a price quote');
       }
 
-      if (needsDesign) {
+      if (enabledServices.DESIGN) {
         throw new MissingPrerequisitesError('The design phase needs to be complete before we can give a price quote');
       }
     }
@@ -374,31 +427,31 @@ class PricingCalculator {
       },
 
       lineItems: [
-        needsPatternMaking && new LineItem({
+        enabledServices.PATTERN_MAKING && new LineItem({
           title: 'Pattern Making',
           id: 'development-patternmaking',
           quantity: 1,
           unitPriceCents: this.getServicePerDesignCostCents('PATTERN_MAKING')
         }),
-        needsPatternMaking && new LineItem({
+        enabledServices.GRADING && new LineItem({
           title: 'Marking & Grading',
           id: 'development-grading',
           quantity: numberOfSizes,
-          unitPriceCents: XXX
+          unitPriceCents: this.getServicePerSizeCostCents('GRADING')
         }),
-        needsSourcing && new LineItem({
+        enabledServices.SOURCING && new LineItem({
           title: 'Sourcing/Testing',
           id: 'development-sourcing',
           quantity: 1,
           unitPriceCents: this.getServicePerDesignCostCents('SOURCING')
         }),
-        needsTechnicalDesign && new LineItem({
+        enabledServices.TECHNICAL_DESIGN && new LineItem({
           title: 'Technical Design',
           id: 'development-technical-design',
           quantity: 1,
           unitPriceCents: this.getServicePerDesignCostCents('TECHNICAL_DESIGN')
         }),
-        needsSampling && new LineItem({
+        enabledServices.SAMPLING && new LineItem({
           title: 'Sampling',
           id: 'development-sampling',
           quantity: 1,
@@ -408,7 +461,7 @@ class PricingCalculator {
     });
 
     selectedOptions.forEach((selectedOption) => {
-      if (!needsSampling) { return; }
+      if (!enabledServices.SAMPLING) { return; }
 
       if (hasDye(selectedOption)) {
         const dyeSetupCost = this.getDyeSetupCostCents({ selectedOption });
@@ -436,7 +489,7 @@ class PricingCalculator {
     });
 
     featurePlacements.forEach((featurePlacement) => {
-      if (!needsSampling) { return; }
+      if (!enabledServices.SAMPLING) { return; }
 
       const setupCost = this.getFeaturePlacementSetupCostCents({ featurePlacement });
       const cost = this.getFeaturePlacementCostCents({ featurePlacement });
@@ -527,13 +580,13 @@ class PricingCalculator {
       },
 
       lineItems: [
-        needsProduction && new LineItem({
+        enabledServices.PRODUCTION && new LineItem({
           title: 'Cut, Sew, Trim',
           id: 'production-cut-sew',
           quantity: this.unitsToProduce,
           unitPriceCents: this.getServicePerGarmentCostCents('PRODUCTION')
         }),
-        needsProduction && new LineItem({
+        enabledServices.PRODUCTION && new LineItem({
           title: 'Materials',
           id: 'production-materials',
           quantity: this.unitsToProduce,
@@ -543,7 +596,7 @@ class PricingCalculator {
     });
 
     selectedOptions.forEach((selectedOption) => {
-      if (!needsProduction) { return; }
+      if (!enabledServices.PRODUCTION) { return; }
 
       const { option } = selectedOption;
 
@@ -578,7 +631,7 @@ class PricingCalculator {
     });
 
     featurePlacements.forEach((featurePlacement) => {
-      if (!needsProduction) { return; }
+      if (!enabledServices.PRODUCTION) { return; }
 
       const cost = this.getFeaturePlacementSetupCostCents({ featurePlacement });
 
@@ -610,7 +663,7 @@ class PricingCalculator {
       },
 
       lineItems: [
-        needsFulfillment && new LineItem({
+        enabledServices.FULFILLMENT && new LineItem({
           title: 'Packaging - labor',
           id: 'fulfillment-packing',
           quantity: this.unitsToProduce,
