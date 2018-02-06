@@ -1,19 +1,23 @@
-function getServicePrice(
+'use strict';
+
+const { requireValues } = require('../require-properties');
+
+function getServicePrice({
   productionPrices,
   serviceId,
   unitsToProduce,
   complexityLevel
-) {
+}) {
   requireValues({ productionPrices, serviceId, unitsToProduce, complexityLevel });
 
   // The list of buckets sorted high -> low by the minimum units, so the first
   // bucket we hit that's *lower* than the units to produce is the one we want
   const buckets = productionPrices
-    .filter((price: ProductionPrice) =>
+    .filter(price =>
       price.serviceId === serviceId &&
       price.complexityLevel === complexityLevel
     )
-    .sort((a: ProductionPrice, b: ProductionPrice) =>
+    .sort((a, b) =>
       b.minimumUnits - a.minimumUnits
     );
 
@@ -26,4 +30,4 @@ function getServicePrice(
   throw new Error(`No eligible bucket found for ${unitsToProduce}/${complexityLevel}`);
 }
 
-export default getServicePrice;
+module.exports = getServicePrice;

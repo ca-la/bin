@@ -3,7 +3,7 @@
 const flatten = require('lodash/flatten');
 const pick = require('lodash/pick');
 
-const getCutAndSewCost = require('../../services/get-cut-and-sew-cost');
+const getServicePrice = require('../get-service-price');
 const MissingPrerequisitesError = require('../../errors/missing-prerequisites');
 const ProductDesignFeaturePlacementsDAO = require('../../dao/product-design-feature-placements');
 const ProductDesignOptionsDAO = require('../../dao/product-design-options');
@@ -12,7 +12,27 @@ const ProductDesignSelectedOptionsDAO = require('../../dao/product-design-select
 const ProductDesignServicesDAO = require('../../dao/product-design-services');
 const ProductDesignVariantsDAO = require('../../dao/product-design-variants');
 const ProductionPricesDAO = require('../../dao/production-prices');
-const { requireProperties, requireValues } = require('../../services/require-properties');
+const { requireProperties, requireValues } = require('../require-properties');
+
+// Should be kept in sync with the enum of `product_design_service_ids` in the
+// database.
+const SERVICE_IDS = Object.freeze({
+  DESIGN: 'Design Consulting',
+  DIGITAL_SUBLIMATION_PRINT: 'Digital Sublimation Print',
+  DTG_ENGINEERED_PRINT: 'DTG Engineered Print',
+  DTG_ROLL_PRINT: 'DTG Roll Print',
+  DYE: 'Dye',
+  EMBROIDERY: 'Embroidery',
+  FULFILLMENT: 'Fulfillment',
+  PATTERN_MAKING: 'Pattern Making',
+  PRODUCTION: 'Production',
+  ROTARY_PRINT: 'Rotary Print',
+  SAMPLING: 'Sampling',
+  SCREEN_PRINT: 'Screen Print',
+  SOURCING: 'Sourcing',
+  TECHNICAL_DESIGN: 'Technical Design',
+  WASH: 'Wash'
+});
 
 class LineItem {
   constructor(data) {
@@ -121,6 +141,18 @@ function getFeatureFriendlyProcessName(featurePlacement) {
   }
 }
 
+function getOptionSetupCostCents({ selectedOption, option }) {
+  requireValues({ selectedOption, option });
+
+  return option.setupCostCents || 0;
+}
+
+function getOptionPerUnitCostCents({ selectedOption, option }) {
+  requireValues({ selectedOption, option });
+
+  return option.perMeterCostCents || option.unitCostCents || 0;
+}
+
 async function attachOption(selectedOption) {
   const option = await ProductDesignOptionsDAO.findById(selectedOption.optionId);
   selectedOption.setOption(option);
@@ -128,68 +160,64 @@ async function attachOption(selectedOption) {
 }
 
 class PricingCalculator {
+  // Instance values:
+  // design: ProductDesign
+  // unitsToProduce: number
+  // pricesByService: { [serviceId: ServiceId]: ProductionPrice[] }
+
   constructor(design) {
     this.design = design;
   }
 
-  getOptionSetupCostCents({ selectedOption, option }) {
-    requireValues({ selectedOption, option });
-
-    return option.setupCostCents || 0;
-  }
-
-  getOptionPerUnitCostCents({ selectedOption, option }) {
-    requireValues({ selectedOption, option });
-
-    return option.perMeterCostCents || option.unitCostCents || 0;
-  }
-
-  getDyeCostCents(data) {
-    requireProperties(data, 'selectedOption');
-    const { selectedOption } = data;
+  getDyeCostCents({ selectedOption }) {
+    requireValues({ selectedOption });
 
     if (!hasDye(selectedOption)) { return 0; }
-    return pricing.DYE_PER_YARD_COST_CENTS * selectedOption.unitsRequiredPerGarment;
+    return this.getServicePerMeterCostCents('DYE') * selectedOption.unitsRequiredPerGarment;
   }
 
-  getWashCostCents(data) {
-    requireProperties(data, 'selectedOption');
-    const { selectedOption } = data;
+  getWashCostCents({ selectedOption }) {
+    requireValues({ selectedOption });
 
     if (!hasDye(selectedOption)) { return 0; }
-    return pricing.DYE_PER_YARD_COST_CENTS * selectedOption.unitsRequiredPerGarment;
+    return this.getServicePerMeterCostCents('WASH') * selectedOption.unitsRequiredPerGarment;
   }
 
-  getDyeSetupCostCents(data) {
-    requireProperties(data, 'selectedOption');
-    const { selectedOption } = data;
+  getDyeSetupCostCents({ selectedOption }) {
+    requireValues({ selectedOption });
 
-    return hasDye(selectedOption) ? pricing.DYE_SETUP_COST_CENTS : 0;
+    return hasDye(selectedOption) ? this.getServiceSetupCostCents('DYE') : 0;
   }
 
-  getWashSetupCostCents(data) {
-    requireProperties(data, 'selectedOption');
-    const { selectedOption } = data;
+  getWashSetupCostCents({ selectedOption }) {
+    requireValues({ selectedOption });
 
-    return hasWash(selectedOption) ? pricing.WASH_SETUP_COST_CENTS : 0;
+    return hasWash(selectedOption) ? this.getServiceSetupCostCents('WASH') : 0;
   }
 
   // Get the cost to do a feature placement (image print / embroidery) on each
   // garment. Either a fixed cost (stuff like screenprinting) or a per-yard cost
   // multiplied by the number of yards required (stuff like roll prints).
-  getFeaturePlacementCostCents(data) {
-    requireProperties(data, 'featurePlacement');
-    const { featurePlacement } = data;
+  getFeaturePlacementCostCents({ featurePlacement }) {
+    requireValues({ featurePlacement });
+
+    if (!featurePlacement.processName) {
+      throw new MissingPrerequisitesError('Artwork is missing application type');
+    }
 
     switch (featurePlacement.processName) {
       case 'DTG_ROLL':
+        return this.getServicePerGarmentCostCents('DTG_ROLL_PRINT');
       case 'DTG_ENGINEERED':
+        return this.getServicePerGarmentCostCents('DTG_ENGINEERED_PRINT');
       case 'DIGITAL_SUBLIMATION':
+        return this.getServicePerGarmentCostCents('DIGITAL_SUBLIMATION_PRINT');
       case 'ROTARY_PRINT':
+        return this.getServicePerGarmentCostCents('ROTARY_PRINT');
       case 'SCREEN_PRINT':
-        return pricing.SCREEN_PRINT_PER_GARMENT_COST_CENTS;
+        return this.getServicePerGarmentCostCents('SCREEN_PRINT');
       case 'EMBROIDERY':
-        return pricing.EMBROIDERY_COST_CENTS;
+        return this.getServicePerGarmentCostCents('EMBROIDERY');
 
       default:
         throw new Error(`Unknown process name: ${featurePlacement.processName}`);
@@ -200,7 +228,68 @@ class PricingCalculator {
     requireProperties(data, 'featurePlacement');
     const { featurePlacement } = data;
 
-    return pricing.FEATURE_SETUP_COST_CENTS[featurePlacement.processName] || 0;
+    if (!featurePlacement.processName) {
+      throw new MissingPrerequisitesError('Artwork is missing application type');
+    }
+
+    switch (featurePlacement.processName) {
+      case 'DTG_ROLL':
+        return this.getServiceSetupCostCents('DTG_ROLL_PRINT');
+      case 'DTG_ENGINEERED':
+        return this.getServiceSetupCostCents('DTG_ENGINEERED_PRINT');
+      case 'DIGITAL_SUBLIMATION':
+        return this.getServiceSetupCostCents('DIGITAL_SUBLIMATION_PRINT');
+      case 'ROTARY_PRINT':
+        return this.getServiceSetupCostCents('ROTARY_PRINT');
+      case 'SCREEN_PRINT':
+        return this.getServiceSetupCostCents('SCREEN_PRINT');
+      case 'EMBROIDERY':
+        return this.getServiceSetupCostCents('EMBROIDERY');
+
+      default:
+        throw new Error(`Unknown process name: ${featurePlacement.processName}`);
+    }
+  }
+
+  getServicePerMeterCostCents(serviceId) {
+  }
+
+  getServicePerDesignCostCents(serviceId) {
+  }
+
+  getServicePerGarmentCostCents(serviceId) {
+  }
+
+  getServiceSetupCostCents(serviceId) {
+  }
+
+  async fetchServicesAndPricing() {
+    const services = await ProductDesignServicesDAO.findByDesignId(this.design.id);
+
+    this.pricesByService = {};
+
+    for (const service of services) {
+      if (!service.vendorUserId) {
+        throw new MissingPrerequisitesError(`Service ${service.serviceId} is not assigned to any partner`);
+      }
+
+      if (service.complexityLevel === null) {
+        throw new MissingPrerequisitesError(`Service ${service.serviceId} has no specified complexity level`);
+      }
+
+      const prices = await ProductionPricesDAO.findByVendorAndService(
+        service.vendorUserId,
+        service.serviceId
+      );
+
+      if (prices.length === 0) {
+        throw new MissingPrerequisitesError(`Assigned partner does not have a pricing table for ${service.serviceId}`);
+      }
+
+      this.pricesByService[service.serviceId] = prices;
+    }
+
+    return services;
   }
 
   async getComputedPricingTable() {
@@ -208,18 +297,15 @@ class PricingCalculator {
 
     const {
       retailPriceCents,
-      sourcingComplexity,
-      patternComplexity,
-      productionComplexity,
-      sampleComplexity,
       status
     } = design;
 
-    const unitsToProduce = await ProductDesignVariantsDAO.getTotalUnitsToProduce(design.id);
+    this.unitsToProduce = await ProductDesignVariantsDAO.getTotalUnitsToProduce(design.id);
+
     const sizes = await ProductDesignVariantsDAO.getSizes(design.id);
     const numberOfSizes = Math.max(sizes.length, 1);
 
-    if (!unitsToProduce) {
+    if (this.unitsToProduce === 0) {
       throw new MissingPrerequisitesError('Design must specify number of units to produce');
     }
 
@@ -233,7 +319,7 @@ class PricingCalculator {
     const allSections = await ProductDesignSectionsDAO.findByDesignId(design.id);
     const sections = allSections.filter(section => section.type === 'FLAT_SKETCH');
 
-    const services = await ProductDesignServicesDAO.findByDesignId(design.id);
+    const services = await this.fetchServicesAndPricing();
 
     const enabledServices = {};
     services.forEach((service) => { enabledServices[service.serviceId] = true; });
@@ -292,37 +378,31 @@ class PricingCalculator {
           title: 'Pattern Making',
           id: 'development-patternmaking',
           quantity: 1,
-          unitPriceCents: pricing.PATTERN_MAKING_COST_CENTS[patternComplexity]
+          unitPriceCents: this.getServicePerDesignCostCents('PATTERN_MAKING')
         }),
         needsPatternMaking && new LineItem({
           title: 'Marking & Grading',
           id: 'development-grading',
           quantity: numberOfSizes,
-          unitPriceCents: pricing.GRADING_COST_PER_SIZE_CENTS
+          unitPriceCents: XXX
         }),
         needsSourcing && new LineItem({
           title: 'Sourcing/Testing',
           id: 'development-sourcing',
           quantity: 1,
-          unitPriceCents: pricing.SOURCING_COST_CENTS[sourcingComplexity]
+          unitPriceCents: this.getServicePerDesignCostCents('SOURCING')
         }),
         needsTechnicalDesign && new LineItem({
           title: 'Technical Design',
           id: 'development-technical-design',
           quantity: 1,
-          unitPriceCents: pricing.TECHNICAL_DESIGN_COST_CENTS
+          unitPriceCents: this.getServicePerDesignCostCents('TECHNICAL_DESIGN')
         }),
         needsSampling && new LineItem({
-          title: 'Sample Yardage & Trims',
-          id: 'development-sample-yardage-trims',
+          title: 'Sampling',
+          id: 'development-sampling',
           quantity: 1,
-          unitPriceCents: pricing.SAMPLE_YARDAGE_AND_TRIMS_COST_CENTS
-        }),
-        needsSampling && new LineItem({
-          title: 'First Sample Cut & Sew',
-          id: 'development-sample-cut-sew-1',
-          quantity: 1,
-          unitPriceCents: pricing.SAMPLE_CUT_AND_SEW_COST_CENTS[sampleComplexity]
+          unitPriceCents: this.getServicePerDesignCostCents('SAMPLING')
         })
       ].filter(Boolean)
     });
@@ -394,7 +474,7 @@ class PricingCalculator {
         title: option.title,
         id: `${selectedOption.id}-fabric-or-trim`,
         quantity: selectedOption.unitsRequiredPerGarment,
-        unitPriceCents: this.getOptionPerUnitCostCents({ option, selectedOption })
+        unitPriceCents: getOptionPerUnitCostCents({ option, selectedOption })
       }));
 
       if (hasDye(selectedOption)) {
@@ -450,13 +530,13 @@ class PricingCalculator {
         needsProduction && new LineItem({
           title: 'Cut, Sew, Trim',
           id: 'production-cut-sew',
-          quantity: unitsToProduce,
-          unitPriceCents: getCutAndSewCost(unitsToProduce, productionComplexity)
+          quantity: this.unitsToProduce,
+          unitPriceCents: this.getServicePerGarmentCostCents('PRODUCTION')
         }),
         needsProduction && new LineItem({
           title: 'Materials',
           id: 'production-materials',
-          quantity: unitsToProduce,
+          quantity: this.unitsToProduce,
           unitPriceCents: materialsGroup.getTotalPriceCents()
         })
       ].filter(Boolean)
@@ -471,7 +551,7 @@ class PricingCalculator {
         title: `${option.title} — Setup`,
         id: `${selectedOption.id}-setup`,
         quantity: 1,
-        unitPriceCents: this.getOptionSetupCostCents({ option, selectedOption })
+        unitPriceCents: getOptionSetupCostCents({ option, selectedOption })
       }));
 
       if (hasDye(selectedOption)) {
@@ -512,7 +592,10 @@ class PricingCalculator {
       }));
     });
 
-    const productionPerUnit = Math.round(productionGroup.getTotalPriceCents() / unitsToProduce);
+    const productionPerUnit = Math.round(
+      productionGroup.getTotalPriceCents() / this.unitsToProduce
+    );
+
     productionGroup.setGroupPriceCents(productionPerUnit);
 
     const fulfillmentGroup = new Group({
@@ -530,28 +613,24 @@ class PricingCalculator {
         needsFulfillment && new LineItem({
           title: 'Packaging - labor',
           id: 'fulfillment-packing',
-          quantity: unitsToProduce,
-          unitPriceCents: pricing.PACKAGING_PER_GARMENT_COST_CENTS
-        }),
-        needsFulfillment && new LineItem({
-          title: 'Shipping label',
-          id: 'fulfillment-shipping',
-          quantity: unitsToProduce,
-          unitPriceCents: pricing.PACKAGING_PER_GARMENT_COST_CENTS
+          quantity: this.unitsToProduce,
+          unitPriceCents: this.getServicePerDesignCostCents('FULFILLMENT')
         })
       ].filter(Boolean)
     });
 
-    const fulfillmentPerUnit = Math.round(fulfillmentGroup.getTotalPriceCents() / unitsToProduce);
+    const fulfillmentPerUnit = Math.round(
+      fulfillmentGroup.getTotalPriceCents() / this.unitsToProduce
+    );
     fulfillmentGroup.setGroupPriceCents(fulfillmentPerUnit);
 
     const totalCost = developmentGroup.getTotalPriceCents() +
       productionGroup.getTotalPriceCents() +
       fulfillmentGroup.getTotalPriceCents();
 
-    const totalRevenue = design.retailPriceCents * unitsToProduce;
+    const totalRevenue = design.retailPriceCents * this.unitsToProduce;
     const totalProfitCents = totalRevenue - totalCost;
-    const unitProfitCents = Math.round(totalProfitCents / unitsToProduce);
+    const unitProfitCents = Math.round(totalProfitCents / this.unitsToProduce);
 
     const marginPercentage = Math.round(
       (1 - (totalCost / totalRevenue)) * 100
@@ -567,7 +646,7 @@ class PricingCalculator {
         new LineItem({
           title: 'Revenue',
           id: 'profit-revenue',
-          quantity: unitsToProduce,
+          quantity: this.unitsToProduce,
           unitPriceCents: design.retailPriceCents
         }),
         new LineItem({
@@ -578,13 +657,13 @@ class PricingCalculator {
         }),
         new LineItem({
           title: 'Development',
-          quantity: unitsToProduce,
+          quantity: this.unitsToProduce,
           id: 'profit-production',
           unitPriceCents: productionGroup.getTotalPriceCents()
         }),
         new LineItem({
           title: 'Fulfillment',
-          quantity: unitsToProduce,
+          quantity: this.unitsToProduce,
           id: 'profit-fulfillment',
           unitPriceCents: fulfillmentGroup.getTotalPriceCents()
         })
