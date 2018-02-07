@@ -446,10 +446,7 @@ class PricingCalculator {
   async getComputedPricingTable() {
     const { design } = this;
 
-    const {
-      retailPriceCents,
-      status
-    } = design;
+    const { retailPriceCents } = design;
 
     this.unitsToProduce = await ProductDesignVariantsDAO.getTotalUnitsToProduce(design.id);
 
@@ -476,29 +473,6 @@ class PricingCalculator {
     this.enabledServices = enabledServices;
 
     services.forEach((service) => { enabledServices[service.serviceId] = true; });
-
-    const isAllTemplates = sections.reduce((memo, section) => {
-      if (!section.templateName) {
-        return false;
-      }
-
-      return memo;
-    }, true);
-
-    const isPricingReviewed = (
-      status !== 'DRAFT' &&
-      status !== 'IN_REVIEW'
-    );
-
-    if (!isPricingReviewed) {
-      if (!isAllTemplates) {
-        throw new MissingPrerequisitesError('Custom sketches need to be reviewed before we can give a price quote');
-      }
-
-      if (enabledServices.DESIGN) {
-        throw new MissingPrerequisitesError('The design phase needs to be complete before we can give a price quote');
-      }
-    }
 
     const featurePlacementsPerSection = await Promise.all(
       sections.map(section =>
