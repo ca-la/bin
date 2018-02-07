@@ -19,7 +19,7 @@ async function updateDesignStatus(designId, newStatus, userId) {
     await createInvoice(design, newStatus);
   }
 
-  const updated = await ProductDesignsDAO.update(designId, {
+  const updatedDesign = await ProductDesignsDAO.update(designId, {
     status: newStatus
   });
 
@@ -36,7 +36,7 @@ async function updateDesignStatus(designId, newStatus, userId) {
     'update_design_status',
     {
       user,
-      updated,
+      design: updatedDesign,
       newStatus
     }
   );
