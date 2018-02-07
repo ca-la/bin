@@ -113,10 +113,6 @@ const ALLOWED_DESIGN_PARAMS = [
   'productType',
   'title',
   'retailPriceCents',
-  'sourcingComplexity',
-  'patternComplexity',
-  'productionComplexity',
-  'sampleComplexity',
   'dueDate',
   'expectedCostCents'
 ];
