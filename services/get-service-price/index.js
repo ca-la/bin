@@ -38,7 +38,7 @@ function getServiceBasePrice({
     }
   }
 
-  throw new Error(`No eligible bucket found for ${unitsToProduce}/${complexityLevel}`);
+  throw new NoBucketError(`No eligible bucket found for ${unitsToProduce}/${complexityLevel}`);
 }
 
 module.exports = {

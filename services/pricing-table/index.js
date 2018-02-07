@@ -377,7 +377,7 @@ class PricingCalculator {
       });
     } catch (err) {
       if (err instanceof NoBucketError) {
-        throw new MissingPrerequisitesError(`Pricing for the ${serviceId} service doesn't match any tier in the pricing table`);
+        throw new MissingPrerequisitesError(`The partner's pricing table for ${serviceId} doesn't have any tier that matches the units/complexity of this design`);
       }
 
       throw err;
