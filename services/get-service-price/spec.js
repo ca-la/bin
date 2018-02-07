@@ -1,7 +1,7 @@
 'use strict';
 
 const { test } = require('../../test-helpers/fresh');
-const { getServicePrice } = require('./index');
+const { getServiceBasePrice } = require('./index');
 
 const ok = Promise.resolve();
 
@@ -38,8 +38,8 @@ const prices = [
   }
 ];
 
-test('getServicePrice returns the first eligible bucket', (t) => {
-  const price = getServicePrice({
+test('getServiceBasePrice returns the first eligible bucket', (t) => {
+  const price = getServiceBasePrice({
     productionPrices: prices,
     serviceId: 'WASH',
     unitsToProduce: 75,
@@ -50,9 +50,9 @@ test('getServicePrice returns the first eligible bucket', (t) => {
   return ok;
 });
 
-test('getServicePrice throws if no matching complexity is found', (t) => {
+test('getServiceBasePrice throws if no matching complexity is found', (t) => {
   t.throws(() =>
-    getServicePrice({
+    getServiceBasePrice({
       productionPrices: prices,
       serviceId: 'WASH',
       unitsToProduce: 75,
@@ -62,9 +62,9 @@ test('getServicePrice throws if no matching complexity is found', (t) => {
   return ok;
 });
 
-test('getServicePrice throws if no matching service is found', (t) => {
+test('getServiceBasePrice throws if no matching service is found', (t) => {
   t.throws(() =>
-    getServicePrice({
+    getServiceBasePrice({
       productionPrices: prices,
       serviceId: 'DYE',
       unitsToProduce: 75,
