@@ -252,12 +252,17 @@ class PricingCalculator {
   // unitsToProduce: number
   // pricesByService: { [serviceId: ServiceId]: ProductionPrice[] }
   // complexityByService: { [serviceId: ServiceId]: number }
+  // enabledServices: { [serviceId: ServiceId]: boolean }
 
   constructor(design) {
     this.design = design;
   }
 
   getDyePrice({ selectedOption }) {
+    if (!this.enabledServices.DYE) {
+      throw new MissingPrerequisitesError('Dye is selected for a fabric, but the Dye service is not assigned to any partner');
+    }
+
     requireValues({ selectedOption });
 
     if (!hasDye(selectedOption)) { return ZERO_SERVICE_PRICE; }
@@ -274,6 +279,10 @@ class PricingCalculator {
   }
 
   getWashPrice({ selectedOption }) {
+    if (!this.enabledServices.WASH) {
+      throw new MissingPrerequisitesError('Wash is selected for a fabric, but the Wash service is not assigned to any partner');
+    }
+
     requireValues({ selectedOption });
 
     if (!hasWash(selectedOption)) { return ZERO_SERVICE_PRICE; }
@@ -468,6 +477,8 @@ class PricingCalculator {
     const services = await this.fetchServicesAndPricing();
 
     const enabledServices = {};
+    this.enabledServices = enabledServices;
+
     services.forEach((service) => { enabledServices[service.serviceId] = true; });
 
     const isAllTemplates = sections.reduce((memo, section) => {
