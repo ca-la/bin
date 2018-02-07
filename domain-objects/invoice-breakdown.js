@@ -7,10 +7,11 @@ const keyNamesByColumnName = {
   id: 'id',
   invoice_id: 'invoiceId',
   invoice_amount_cents: 'invoiceAmountCents',
-  total_revenue_cents: 'totalRevenueCents',
-  total_cost_cents: 'totalCostCents',
+  invoice_margin_cents: 'invoiceMarginCents',
+  stripe_fee_cents: 'stripeFeeCents',
+  cost_of_services_cents: 'costOfServicesCents',
   total_profit_cents: 'totalProfitCents',
-  stripe_fee_cents: 'stripeFeeCents'
+  pricing_table_data: 'pricingTableData'
 };
 
 const dataMapper = new DataMapper(keyNamesByColumnName);

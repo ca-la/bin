@@ -12,18 +12,27 @@ function calculateStripeFee(totalCents) {
   return Math.round((0.029 * totalCents) + 30);
 }
 
-function getInvoiceAmountCents(finalPricingTable, newStatusId) {
+function getInvoiceAmount(finalPricingTable, newStatusId) {
   requireValues({ finalPricingTable, newStatusId });
 
   const { summary } = finalPricingTable;
 
   switch (newStatusId) {
     case 'NEEDS_DEVELOPMENT_PAYMENT':
-      return summary.upfrontCostCents;
+      return {
+        invoiceAmountCents: summary.upfrontCostCents,
+        invoiceMarginCents: summary.upfrontMarginCents
+      };
     case 'NEEDS_PRODUCTION_PAYMENT':
-      return summary.preProductionCostCents;
+      return {
+        invoiceAmountCents: summary.preProductionCostCents,
+        invoiceMarginCents: summary.preProductionMarginCents
+      };
     case 'NEEDS_FULFILLMENT_PAYMENT':
-      return summary.uponCompletionCostCents;
+      return {
+        invoiceAmountCents: summary.uponCompletionCostCents,
+        invoiceMarginCents: summary.uponCompletionMarginCents
+      };
     default:
       throw new Error(`Cannot calculate invoice amount for status ${newStatusId}`);
   }
@@ -39,7 +48,24 @@ async function createInvoice(design, newStatusId) {
   const calculator = new PricingCalculator(design);
   const { finalPricingTable } = await calculator.getAllPricingTables();
 
-  const invoiceAmountCents = getInvoiceAmountCents(finalPricingTable, newStatusId);
+  const pricingTableLineItems = [];
+
+  finalPricingTable.groups.forEach((group) => {
+    group.lineItems.forEach((lineItem) => {
+      pricingTableLineItems.push({
+        groupTitle: group.title,
+        lineItemTitle: lineItem.title,
+        quantity: lineItem.quantity,
+        unitPriceCents: lineItem.unitPriceCents,
+        unitMarginCents: lineItem.unitMarginCents
+      });
+    });
+  });
+
+  const {
+    invoiceAmountCents,
+    invoiceMarginCents
+  } = getInvoiceAmount(finalPricingTable, newStatusId);
 
   return db.transaction(async (trx) => {
     try {
@@ -50,19 +76,18 @@ async function createInvoice(design, newStatusId) {
         designStatusId: newStatusId
       }, trx);
 
-      const totalCostCents = 0;
-
       const stripeFeeCents = calculateStripeFee(invoiceAmountCents);
-      const totalRevenueCents = invoiceAmountCents - stripeFeeCents;
-      const totalProfitCents = totalRevenueCents - totalCostCents;
 
       await InvoiceBreakdownsDAO.create({
         invoiceId: invoice.id,
+
         invoiceAmountCents,
-        totalRevenueCents,
-        totalCostCents,
-        totalProfitCents,
-        stripeFeeCents
+        invoiceMarginCents,
+        stripeFeeCents,
+
+        costOfServicesCents: invoiceAmountCents - invoiceMarginCents,
+        totalProfitCents: invoiceMarginCents - stripeFeeCents,
+        pricingTableData: { pricingTableLineItems }
       }, trx);
 
       await trx.commit();

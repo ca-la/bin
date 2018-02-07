@@ -13,7 +13,7 @@ class NoBucketError extends Error {
 // Get the price of a given service, given the list of tiers
 // IMPORTANT: This returns the price *without* CALA's margin. We should not show
 // this value to the customer.
-function getServicePrice({
+function getServiceBasePrice({
   productionPrices,
   serviceId,
   unitsToProduce,
@@ -42,6 +42,6 @@ function getServicePrice({
 }
 
 module.exports = {
-  getServicePrice,
+  getServiceBasePrice,
   NoBucketError
 };
