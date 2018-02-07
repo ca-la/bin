@@ -259,10 +259,6 @@ class PricingCalculator {
   }
 
   getDyePrice({ selectedOption }) {
-    if (!this.enabledServices.DYE) {
-      throw new MissingPrerequisitesError('Dye is selected for a fabric, but the Dye service is not assigned to any partner');
-    }
-
     requireValues({ selectedOption });
 
     if (!hasDye(selectedOption)) { return ZERO_SERVICE_PRICE; }
@@ -279,10 +275,6 @@ class PricingCalculator {
   }
 
   getWashPrice({ selectedOption }) {
-    if (!this.enabledServices.WASH) {
-      throw new MissingPrerequisitesError('Wash is selected for a fabric, but the Wash service is not assigned to any partner');
-    }
-
     requireValues({ selectedOption });
 
     if (!hasWash(selectedOption)) { return ZERO_SERVICE_PRICE; }
@@ -360,6 +352,10 @@ class PricingCalculator {
     }
 
     const prices = this.pricesByService[serviceId];
+
+    if (!this.enabledServices[serviceId]) {
+      throw new MissingPrerequisitesError(`This garment requires a ${serviceId} service, but this service is not enabled or assigned to a partner`);
+    }
 
     if (!prices) {
       throw new Error(`No prices were retreived for service ${serviceId}`);
