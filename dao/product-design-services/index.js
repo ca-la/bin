@@ -23,17 +23,31 @@ function deleteForDesign(trx, designId) {
     .del();
 }
 
-function createForDesign(trx, designId, services) {
-  const rowData = services.map((data) => {
-    return Object.assign({}, dataMapper.userDataToRowData(data), {
+function createForDesign(trx, designId, services, oldServices) {
+  const rowsData = services.map((data) => {
+    const userData = Object.assign({}, data, {
       id: uuid.v4(),
-      design_id: designId
+      designId
     });
+
+    // `oldServices` is the list of previous services, if any.
+    // If we had a service in the previous list, and the vendor is the same, we
+    // should reuse the same complexity bucket
+    const previousService = oldServices.find(service =>
+      service.serviceId === data.serviceId &&
+      service.vendorUserId === data.vendorUserId
+    );
+
+    if (previousService) {
+      userData.complexityLevel = previousService.complexityLevel;
+    }
+
+    return dataMapper.userDataToRowData(userData);
   });
 
   return db(TABLE_NAME)
     .transacting(trx)
-    .insert(rowData)
+    .insert(rowsData)
     .returning('*')
     .then(inserted => inserted.map(instantiate))
     .catch(rethrow)
@@ -50,21 +64,6 @@ function createForDesign(trx, designId, services) {
     });
 }
 
-function replaceForDesign(designId, services) {
-  return db.transaction((trx) => {
-    deleteForDesign(trx, designId)
-      .then(() => {
-        if (services.length > 0) {
-          return createForDesign(trx, designId, services);
-        }
-
-        return [];
-      })
-      .then(trx.commit)
-      .catch(trx.rollback);
-  });
-}
-
 function findByDesignId(designId) {
   return db(TABLE_NAME)
     .where({
@@ -73,6 +72,23 @@ function findByDesignId(designId) {
     .orderBy('created_at', 'desc')
     .catch(rethrow)
     .then(services => services.map(instantiate));
+}
+
+async function replaceForDesign(designId, services) {
+  const oldServices = await findByDesignId(designId);
+
+  return db.transaction((trx) => {
+    deleteForDesign(trx, designId)
+      .then(() => {
+        if (services.length > 0) {
+          return createForDesign(trx, designId, services, oldServices);
+        }
+
+        return [];
+      })
+      .then(trx.commit)
+      .catch(trx.rollback);
+  });
 }
 
 function findByUserId(userId) {
