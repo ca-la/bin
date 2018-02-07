@@ -20,14 +20,6 @@ const keyNamesByColumnName = {
   computed_pricing_table: 'computedPricingTable',
   retail_price_cents: 'retailPriceCents',
 
-  // DEPRECATED as of 2018-01 in favor of the `complexity_level` column in the
-  // services table. Should be safe to remove once pricing-table is revamped.
-  sourcing_complexity: 'sourcingComplexity',
-  pattern_complexity: 'patternComplexity',
-  production_complexity: 'productionComplexity',
-  sample_complexity: 'sampleComplexity',
-  // End deprecation
-
   status: 'status',
   due_date: 'dueDate',
   expected_cost_cents: 'expectedCostCents'
