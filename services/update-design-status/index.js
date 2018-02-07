@@ -12,21 +12,22 @@ const { PAYMENT_STATUSES } = require('../../config/design-statuses');
 async function updateDesignStatus(designId, newStatus, userId) {
   requireValues({ designId, newStatus, userId });
 
-  const design = await ProductDesignsDAO.update(designId, {
+  const design = await ProductDesignsDAO.findById(designId);
+  assert(design, 'Design not found');
+
+  if (PAYMENT_STATUSES.indexOf(newStatus) > -1) {
+    await createInvoice(design, newStatus);
+  }
+
+  const updated = await ProductDesignsDAO.update(designId, {
     status: newStatus
   });
-
-  assert(design, 'Design not found');
 
   await ProductDesignStatusUpdatesDAO.create({
     designId,
     newStatus,
     userId
   });
-
-  if (PAYMENT_STATUSES.indexOf(newStatus) > -1) {
-    await createInvoice(design, newStatus);
-  }
 
   const user = await UsersDAO.findById(userId);
 
@@ -35,7 +36,7 @@ async function updateDesignStatus(designId, newStatus, userId) {
     'update_design_status',
     {
       user,
-      design,
+      updated,
       newStatus
     }
   );
