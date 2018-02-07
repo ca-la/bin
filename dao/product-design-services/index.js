@@ -31,15 +31,24 @@ function createForDesign(trx, designId, services, oldServices) {
     });
 
     // `oldServices` is the list of previous services, if any.
-    // If we had a service in the previous list, and the vendor is the same, we
-    // should reuse the same complexity bucket
-    const previousService = oldServices.find(service =>
-      service.serviceId === data.serviceId &&
-      service.vendorUserId === data.vendorUserId
-    );
+    // If we had a service in the previous list, which had data that's now
+    // missing, fill it in.
+    const previousService = oldServices.find(service => service.serviceId === data.serviceId);
 
     if (previousService) {
-      userData.complexityLevel = previousService.complexityLevel;
+      if (
+        (previousService.complexityLevel !== null) &&
+        (userData.complexityLevel === undefined)
+      ) {
+        userData.complexityLevel = previousService.complexityLevel;
+      }
+
+      if (
+        (previousService.vendorUserId !== null) &&
+        (userData.vendorUserId === undefined)
+      ) {
+        userData.vendorUserId = previousService.vendorUserId;
+      }
     }
 
     return dataMapper.userDataToRowData(userData);
