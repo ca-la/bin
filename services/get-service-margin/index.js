@@ -53,8 +53,17 @@ function getMargin({ serviceId, partnerPriceCents, unitsToProduce, tiers }) {
 
   for (const unitTier of unitTierValues) {
     if (unitTier <= unitsToProduce) {
-      const multiplier = margins[unitTier];
-      return Math.round(partnerPriceCents * multiplier);
+      // IMPORTANT: Our cut is a percent of the total billed amount, not an
+      // additional number on top of what the partners bill.
+      // For example, if the partner's cost is $100, and our desired margin is
+      // 20%, the total is 100 / (1 - 0.2) = $125, not $120.
+      //
+      // Therefore, our cut is 20% of $125, = $25
+      const marginPercentage = margins[unitTier];
+
+      return Math.round(
+        (partnerPriceCents / (1 - marginPercentage)) - partnerPriceCents
+      );
     }
   }
 
