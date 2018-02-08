@@ -199,12 +199,24 @@ function* createSection() {
   }))
     .catch(InvalidDataError, err => this.throw(400, err));
 
+  yield sendSectionCreateNotifications({
+    sectionId: this.params.sectionId,
+    designId: this.params.designId,
+    userId: this.state.userId
+  });
+
   this.body = section;
   this.status = 201;
 }
 
 function* deleteSection() {
   yield ProductDesignSectionsDAO.deleteById(this.params.sectionId);
+
+  yield sendSectionDeleteNotifications({
+    sectionId: this.params.sectionId,
+    designId: this.params.designId,
+    userId: this.state.userId
+  });
 
   this.status = 204;
 }
@@ -215,6 +227,13 @@ function* updateSection() {
     pick(this.request.body, ALLOWED_SECTION_PARAMS)
   )
     .catch(InvalidDataError, err => this.throw(400, err));
+
+  yield sendSectionUpdateNotifications({
+    sectionId: this.params.sectionId,
+    designId: this.params.designId,
+    userId: this.state.userId,
+    description: 'edited the section'
+  });
 
   this.body = updated;
   this.status = 200;
@@ -234,6 +253,12 @@ function* replaceSectionFeaturePlacements() {
     this.request.body
   )
     .catch(InvalidDataError, err => this.throw(400, err));
+
+  yield sendFeaturePlacementUpdateNotifications({
+    sectionId: this.params.sectionId,
+    designId: this.params.designId,
+    userId: this.state.userId
+  });
 
   this.body = updated;
   this.status = 200;

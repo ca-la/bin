@@ -42,6 +42,12 @@ function* create() {
   const option = yield ProductDesignSelectedOptionsDAO.create(allowedAttrs)
     .catch(InvalidDataError, err => this.throw(404, err));
 
+  yield sendSelectedOptionCreateNotifications({
+    sectionId: option.sectionId,
+    designId: option.designId,
+    userId: this.state.userId
+  });
+
   this.body = option;
   this.status = 201;
 }
@@ -58,7 +64,14 @@ function* getByDesign() {
 }
 
 function* deleteSelectedOption() {
-  yield ProductDesignSelectedOptionsDAO.deleteById(this.params.optionId);
+  const deleted = yield ProductDesignSelectedOptionsDAO.deleteById(this.params.optionId);
+
+  yield sendSelectedOptionDeleteNotifications({
+    sectionId: deleted.sectionId,
+    designId: deleted.designId,
+    userId: this.state.userId
+  });
+
   this.status = 204;
 }
 
@@ -69,6 +82,12 @@ function* update() {
     this.params.optionId,
     allowedAttrs
   );
+
+  yield sendSelectedOptionUpdateNotifications({
+    sectionId: updated.sectionId,
+    designId: updated.designId,
+    userId: this.state.userId
+  });
 
   this.body = updated;
   this.status = 200;
