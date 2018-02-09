@@ -3,6 +3,7 @@
 const Router = require('koa-router');
 
 const AddressesDAO = require('../../dao/addresses');
+const canAccessUserResource = require('../../middleware/can-access-user-resource');
 const claimDesignInvitations = require('../../services/claim-design-invitations');
 const InvalidDataError = require('../../errors/invalid-data');
 const MailChimp = require('../../services/mailchimp');
@@ -129,6 +130,40 @@ function* updatePassword() {
 
   this.status = 200;
   this.body = { ok: true };
+}
+
+function* acceptDesignerTerms() {
+  canAccessUserResource.call(this, this.params.userId);
+
+  const updated = yield UsersDAO.update(this.params.userId, {
+    lastAcceptedDesignerTermsAt: new Date()
+  });
+
+  if (this.query.returnValue === 'session') {
+    const session = yield SessionsDAO.createForUser(updated);
+    this.body = session;
+  } else {
+    this.body = { ok: true };
+  }
+
+  this.status = 200;
+}
+
+function* acceptPartnerTerms() {
+  canAccessUserResource.call(this, this.params.userId);
+
+  const updated = yield UsersDAO.update(this.params.userId, {
+    lastAcceptedPartnerTermsAt: new Date()
+  });
+
+  if (this.query.returnValue === 'session') {
+    const session = yield SessionsDAO.createForUser(updated);
+    this.body = session;
+  } else {
+    this.body = { ok: true };
+  }
+
+  this.status = 200;
 }
 
 /**
@@ -334,6 +369,8 @@ router.get('/:userId/referral-count', requireAuth, getReferralCount);
 router.get('/email-availability/:email', getEmailAvailability);
 router.post('/', createUser);
 router.post('/:userId/complete-sms-preregistration', completeSmsPreregistration);
+router.post('/:userId/accept-designer-terms', acceptDesignerTerms);
+router.post('/:userId/accept-partner-terms', acceptPartnerTerms);
 router.put('/:userId', requireAuth, updateUser); // TODO: deprecate
 router.patch('/:userId', requireAuth, updateUser);
 router.put('/:userId/password', requireAuth, updatePassword);

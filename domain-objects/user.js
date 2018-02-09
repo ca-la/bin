@@ -37,6 +37,11 @@ class User {
     } else {
       this.birthday = row.birthday;
     }
+
+    this.lastAcceptedDesignerTermsAt = row.last_accepted_designer_terms_at &&
+      new Date(row.last_accepted_designer_terms_at);
+    this.lastAcceptedPartnerTermsAt = row.last_accepted_partner_terms_at &&
+      new Date(row.last_accepted_partner_terms_at);
   }
 
   /**
@@ -59,6 +64,8 @@ class User {
       'email',
       'id',
       'isSmsPreregistration',
+      'lastAcceptedDesignerTermsAt',
+      'lastAcceptedPartnerTermsAt',
       'name',
       'phone',
       'referralCode',

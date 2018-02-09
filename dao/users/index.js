@@ -167,9 +167,11 @@ function update(userId, data) {
   return db('users')
     .where({ id: userId })
     .update(compact({
-      name: data.name,
-      email: data.email,
       birthday: data.birthday,
+      email: data.email,
+      last_accepted_designer_terms_at: data.lastAcceptedDesignerTermsAt,
+      last_accepted_partner_terms_at: data.lastAcceptedPartnerTermsAt,
+      name: data.name,
       role: data.role
     }), '*')
     .then(first)
