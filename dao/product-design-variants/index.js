@@ -85,7 +85,8 @@ async function getSizes(designId) {
   const response = await db.raw(`
     select distinct size_name
       from product_design_variants
-      where design_id = ?;
+      where design_id = ?
+      and units_to_produce > 0
   `, [designId]);
 
   return response.rows.map(row => row.size_name);
