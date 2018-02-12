@@ -330,7 +330,8 @@ function* setStatus() {
     newStatus,
     this.state.userId
   ))
-    .catch(InvalidDataError, err => this.throw(400, err));
+    .catch(InvalidDataError, err => this.throw(400, err))
+    .catch(MissingPrerequisitesError, err => this.throw(400, err));
 
   this.body = { status: updated };
   this.status = 200;
