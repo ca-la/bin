@@ -140,7 +140,7 @@ function* acceptDesignerTerms() {
   });
 
   if (this.query.returnValue === 'session') {
-    const session = yield SessionsDAO.createForUser(updated);
+    const session = yield SessionsDAO.createForUser(updated, { role: this.state.role });
     this.body = session;
   } else {
     this.body = { ok: true };
@@ -157,7 +157,7 @@ function* acceptPartnerTerms() {
   });
 
   if (this.query.returnValue === 'session') {
-    const session = yield SessionsDAO.createForUser(updated);
+    const session = yield SessionsDAO.createForUser(updated, { role: this.state.role });
     this.body = session;
   } else {
     this.body = { ok: true };
@@ -369,8 +369,8 @@ router.get('/:userId/referral-count', requireAuth, getReferralCount);
 router.get('/email-availability/:email', getEmailAvailability);
 router.post('/', createUser);
 router.post('/:userId/complete-sms-preregistration', completeSmsPreregistration);
-router.post('/:userId/accept-designer-terms', acceptDesignerTerms);
-router.post('/:userId/accept-partner-terms', acceptPartnerTerms);
+router.post('/:userId/accept-designer-terms', requireAuth, acceptDesignerTerms);
+router.post('/:userId/accept-partner-terms', requireAuth, acceptPartnerTerms);
 router.put('/:userId', requireAuth, updateUser); // TODO: deprecate
 router.patch('/:userId', requireAuth, updateUser);
 router.put('/:userId/password', requireAuth, updatePassword);
