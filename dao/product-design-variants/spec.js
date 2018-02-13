@@ -33,6 +33,12 @@ async function createPrerequisites() {
       sizeName: 'M',
       colorName: 'Red',
       position: 2
+    },
+    {
+      unitsToProduce: 0,
+      sizeName: 'XL but not actually making any?',
+      colorName: 'Red',
+      position: 3
     }
   ]);
 

@@ -137,10 +137,20 @@ async function createConnectAccount(authorizationCode) {
   });
 }
 
+async function createLoginLink({ accountId }) {
+  requireValues({ accountId });
+
+  return makeRequest({
+    method: 'post',
+    path: `/accounts/${accountId}/login_links`
+  });
+}
+
 module.exports = {
   attachSource,
   charge,
   createConnectAccount,
   createCustomer,
+  createLoginLink,
   findOrCreateCustomerId
 };

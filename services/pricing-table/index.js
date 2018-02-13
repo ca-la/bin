@@ -511,7 +511,9 @@ class PricingCalculator {
       developmentGroup.addLineItem(new LineItem({
         title: 'Marking & Grading',
         id: 'development-grading',
-        quantity: numberOfSizes,
+        // We charge grading for (number of sizes - 1), since the sample size
+        // doesn't need additional grading
+        quantity: Math.max(numberOfSizes - 1, 0),
         unitPriceCents: gradingPrice.serviceCostCents,
         unitMarginCents: gradingPrice.serviceMarginCents
       }));

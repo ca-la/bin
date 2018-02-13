@@ -12,7 +12,7 @@ test('getServiceMarginCents returns appropriate margins', (t) => {
       partnerPriceCents: 100,
       unitsToProduce: 100
     }),
-    10
+    11
   );
 
   t.equal(
@@ -21,7 +21,7 @@ test('getServiceMarginCents returns appropriate margins', (t) => {
       partnerPriceCents: 100,
       unitsToProduce: 0
     }),
-    10
+    11
   );
 
   t.equal(
@@ -30,7 +30,7 @@ test('getServiceMarginCents returns appropriate margins', (t) => {
       partnerPriceCents: 12345,
       unitsToProduce: 0
     }),
-    4938
+    8230
   );
 
   t.equal(
@@ -39,7 +39,7 @@ test('getServiceMarginCents returns appropriate margins', (t) => {
       partnerPriceCents: 12345,
       unitsToProduce: 99
     }),
-    4938
+    8230
   );
 
   t.equal(
@@ -48,7 +48,7 @@ test('getServiceMarginCents returns appropriate margins', (t) => {
       partnerPriceCents: 12345,
       unitsToProduce: 100
     }),
-    4691
+    7566
   );
 
   t.equal(
@@ -57,7 +57,7 @@ test('getServiceMarginCents returns appropriate margins', (t) => {
       partnerPriceCents: 12345,
       unitsToProduce: 101
     }),
-    4691
+    7566
   );
 
   return ok;
