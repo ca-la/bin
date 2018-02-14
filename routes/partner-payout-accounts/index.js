@@ -25,6 +25,7 @@ function* createLoginLink() {
   const { accountId } = this.params;
   const account = yield PartnerPayoutAccounts.findById(accountId);
   this.assert(account, 404, 'Partner account not found');
+  canAccessUserResource.call(this, account.userId);
 
   const link = yield Stripe.createLoginLink({ accountId: account.stripeUserId });
 
