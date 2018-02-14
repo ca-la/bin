@@ -7,6 +7,11 @@ const InvalidDataError = require('../../errors/invalid-data');
 const ProductDesignSelectedOptionsDAO = require('../../dao/product-design-selected-options');
 const requireAuth = require('../../middleware/require-auth');
 const { canAccessDesignId } = require('../../middleware/can-access-design');
+const {
+  sendSelectedOptionCreateNotifications,
+  sendSelectedOptionDeleteNotifications,
+  sendSelectedOptionUpdateNotifications
+} = require('../../services/send-design-notifications');
 
 const router = new Router();
 
