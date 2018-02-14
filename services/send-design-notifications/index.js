@@ -1,5 +1,6 @@
 'use strict';
 
+const compact = require('../compact');
 const findDesignUsers = require('../../services/find-design-users');
 const NotificationsDAO = require('../../dao/notifications');
 const SectionsDAO = require('../../dao/product-design-sections');
@@ -18,12 +19,12 @@ async function replaceNotifications({
 }) {
   requireValues({ designId, actorUserId, actionDescription, type });
 
-  await NotificationsDAO.deleteRecent({
+  await NotificationsDAO.deleteRecent(compact({
     sectionId,
     designId,
     actorUserId,
     type
-  });
+  }));
 
   const recipients = (await findDesignUsers(designId))
     .filter(user => user.id !== actorUserId);
@@ -46,15 +47,18 @@ async function getSection(sectionId) {
   return section;
 }
 
+function getSectionTitle(section) {
+  return section.title || 'Untitled';
+}
 
 async function sendSectionCreateNotifications({ sectionId, designId, userId }) {
   requireValues({ sectionId, designId, userId });
 
   await replaceNotifications({
-    userId,
+    actorUserId: userId,
     sectionId,
     designId,
-    description: 'created a new section',
+    actionDescription: 'created a new section',
     type: 'create-section'
   });
 }
@@ -63,9 +67,9 @@ async function sendSectionDeleteNotifications({ sectionTitle, designId, userId }
   requireValues({ sectionTitle, designId, userId });
 
   await replaceNotifications({
-    userId,
+    actorUserId: userId,
     designId,
-    description: `deleted the "${sectionTitle}" section`,
+    actionDescription: `deleted the "${sectionTitle}" section`,
     type: 'delete-section'
   });
 }
@@ -74,9 +78,9 @@ async function sendDesignUpdateNotifications({ designId, userId }) {
   requireValues({ designId, userId });
 
   await replaceNotifications({
-    userId,
+    actorUserId: userId,
     designId,
-    description: 'updated the design information',
+    actionDescription: 'updated the design information',
     type: 'update-design'
   });
 }
@@ -86,10 +90,10 @@ async function sendSectionUpdateNotifications({ sectionId, designId, userId }) {
   const section = await getSection(sectionId);
 
   await replaceNotifications({
-    userId,
+    actorUserId: userId,
     sectionId,
     designId,
-    description: `updated the "${section.title}" section`,
+    actionDescription: `updated the "${getSectionTitle(section)}" section`,
     type: 'update-section'
   });
 }
@@ -99,10 +103,10 @@ async function sendFeaturePlacementUpdateNotifications({ sectionId, designId, us
   const section = await getSection(sectionId);
 
   await replaceNotifications({
-    userId,
+    actorUserId: userId,
     sectionId,
     designId,
-    description: `updated the artwork on the "${section.title}" section`,
+    actionDescription: `updated the artwork on the "${getSectionTitle(section)}" section`,
     type: 'update-feature-placement'
   });
 }
@@ -112,10 +116,10 @@ async function sendSelectedOptionCreateNotifications({ sectionId, designId, user
   const section = await getSection(sectionId);
 
   await replaceNotifications({
-    userId,
+    actorUserId: userId,
     sectionId,
     designId,
-    description: `added a material to the "${section.title}" section`,
+    actionDescription: `added a material to the "${getSectionTitle(section)}" section`,
     type: 'create-selected-option'
   });
 }
@@ -125,10 +129,10 @@ async function sendSelectedOptionDeleteNotifications({ sectionId, designId, user
   const section = await getSection(sectionId);
 
   await replaceNotifications({
-    userId,
+    actorUserId: userId,
     sectionId,
     designId,
-    description: `removed a material from the "${section.title}" section`,
+    actionDescription: `removed a material from the "${getSectionTitle(section)}" section`,
     type: 'delete-selected-option'
   });
 }
@@ -138,10 +142,10 @@ async function sendSelectedOptionUpdateNotifications({ sectionId, designId, user
   const section = await getSection(sectionId);
 
   await replaceNotifications({
-    userId,
+    actorUserId: userId,
     sectionId,
     designId,
-    description: `updated a material on the "${section.title}" section`,
+    actionDescription: `updated a material on the "${getSectionTitle(section)}" section`,
     type: 'update-selected-option'
   });
 }

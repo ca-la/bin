@@ -5,7 +5,7 @@ exports.up = function up(knex) {
 create table notifications (
   id uuid primary key,
   created_at timestamp with time zone not null default now(),
-  sent_email_at timestamp with time zone default now(),
+  sent_email_at timestamp with time zone,
   design_id uuid not null references product_designs(id),
   section_id uuid references product_design_sections(id),
   actor_user_id uuid references users(id) not null,

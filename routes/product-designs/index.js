@@ -213,7 +213,7 @@ function* createSection() {
     .catch(InvalidDataError, err => this.throw(400, err));
 
   yield sendSectionCreateNotifications({
-    sectionId: this.params.sectionId,
+    sectionId: section.id,
     designId: this.params.designId,
     userId: this.state.userId
   });
@@ -226,7 +226,7 @@ function* deleteSection() {
   const deleted = yield ProductDesignSectionsDAO.deleteById(this.params.sectionId);
 
   yield sendSectionDeleteNotifications({
-    sectionTitle: deleted.title,
+    sectionTitle: deleted.title || 'Untitled',
     designId: this.params.designId,
     userId: this.state.userId
   });
