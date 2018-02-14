@@ -7,6 +7,11 @@ const InvalidDataError = require('../../errors/invalid-data');
 const ProductDesignSelectedOptionsDAO = require('../../dao/product-design-selected-options');
 const requireAuth = require('../../middleware/require-auth');
 const { canAccessDesignId } = require('../../middleware/can-access-design');
+const {
+  sendSelectedOptionCreateNotifications,
+  sendSelectedOptionDeleteNotifications,
+  sendSelectedOptionUpdateNotifications
+} = require('../../services/send-design-notifications');
 
 const router = new Router();
 
@@ -42,6 +47,12 @@ function* create() {
   const option = yield ProductDesignSelectedOptionsDAO.create(allowedAttrs)
     .catch(InvalidDataError, err => this.throw(404, err));
 
+  yield sendSelectedOptionCreateNotifications({
+    sectionId: option.sectionId,
+    designId: option.designId,
+    userId: this.state.userId
+  });
+
   this.body = option;
   this.status = 201;
 }
@@ -58,7 +69,14 @@ function* getByDesign() {
 }
 
 function* deleteSelectedOption() {
-  yield ProductDesignSelectedOptionsDAO.deleteById(this.params.optionId);
+  const deleted = yield ProductDesignSelectedOptionsDAO.deleteById(this.params.optionId);
+
+  yield sendSelectedOptionDeleteNotifications({
+    sectionId: deleted.sectionId,
+    designId: deleted.designId,
+    userId: this.state.userId
+  });
+
   this.status = 204;
 }
 
@@ -69,6 +87,12 @@ function* update() {
     this.params.optionId,
     allowedAttrs
   );
+
+  yield sendSelectedOptionUpdateNotifications({
+    sectionId: updated.sectionId,
+    designId: updated.designId,
+    userId: this.state.userId
+  });
 
   this.body = updated;
   this.status = 200;

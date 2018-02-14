@@ -7,6 +7,7 @@ const Bluebird = require('bluebird');
 const canAccessAnnotation = require('../../middleware/can-access-annotation');
 const canAccessSection = require('../../middleware/can-access-section');
 const compact = require('../../services/compact');
+const findUserDesigns = require('../../services/find-user-designs');
 const getDesignPermissions = require('../../services/get-design-permissions');
 const InvalidDataError = require('../../errors/invalid-data');
 const MissingPrerequisitesError = require('../../errors/missing-prerequisites');
@@ -24,6 +25,13 @@ const updateDesignStatus = require('../../services/update-design-status');
 const UsersDAO = require('../../dao/users');
 const { canAccessDesignInParam, canCommentOnDesign } = require('../../middleware/can-access-design');
 const { requireValues } = require('../../services/require-properties');
+const {
+  sendDesignUpdateNotifications,
+  sendSectionCreateNotifications,
+  sendSectionDeleteNotifications,
+  sendSectionUpdateNotifications,
+  sendFeaturePlacementUpdateNotifications
+} = require('../../services/send-design-notifications');
 
 const router = new Router();
 
@@ -67,7 +75,7 @@ function* getDesigns() {
   this.assert(this.query.userId === this.state.userId, 403);
 
   const filters = compact({ status: this.query.status });
-  this.body = yield ProductDesignsDAO.findAccessibleToUser(this.query.userId, filters);
+  this.body = yield findUserDesigns(this.query.userId, filters);
 
   this.status = 200;
 }
@@ -170,6 +178,11 @@ function* updateDesign() {
 
   updated = yield attachResources(updated, this.state.designPermissions);
 
+  yield sendDesignUpdateNotifications({
+    designId: this.params.designId,
+    userId: this.state.userId
+  });
+
   this.body = updated;
   this.status = 200;
 }
@@ -199,12 +212,24 @@ function* createSection() {
   }))
     .catch(InvalidDataError, err => this.throw(400, err));
 
+  yield sendSectionCreateNotifications({
+    sectionId: section.id,
+    designId: this.params.designId,
+    userId: this.state.userId
+  });
+
   this.body = section;
   this.status = 201;
 }
 
 function* deleteSection() {
-  yield ProductDesignSectionsDAO.deleteById(this.params.sectionId);
+  const deleted = yield ProductDesignSectionsDAO.deleteById(this.params.sectionId);
+
+  yield sendSectionDeleteNotifications({
+    sectionTitle: deleted.title || 'Untitled',
+    designId: this.params.designId,
+    userId: this.state.userId
+  });
 
   this.status = 204;
 }
@@ -215,6 +240,12 @@ function* updateSection() {
     pick(this.request.body, ALLOWED_SECTION_PARAMS)
   )
     .catch(InvalidDataError, err => this.throw(400, err));
+
+  yield sendSectionUpdateNotifications({
+    sectionId: this.params.sectionId,
+    designId: this.params.designId,
+    userId: this.state.userId
+  });
 
   this.body = updated;
   this.status = 200;
@@ -234,6 +265,12 @@ function* replaceSectionFeaturePlacements() {
     this.request.body
   )
     .catch(InvalidDataError, err => this.throw(400, err));
+
+  yield sendFeaturePlacementUpdateNotifications({
+    sectionId: this.params.sectionId,
+    designId: this.params.designId,
+    userId: this.state.userId
+  });
 
   this.body = updated;
   this.status = 200;
