@@ -7,8 +7,8 @@ const uuid = require('node-uuid');
 const db = require('../../services/db');
 const first = require('../../services/first');
 const InvalidDataError = require('../../errors/invalid-data');
-const UnauthorizedRoleError = require('../../errors/unauthorized-role');
 const Session = require('../../domain-objects/session');
+const UnauthorizedRoleError = require('../../errors/unauthorized-role');
 const UsersDAO = require('../users');
 const { compare } = require('../../services/hash');
 const { ALLOWED_SESSION_ROLES } = require('../../domain-objects/user');
@@ -16,15 +16,28 @@ const { ALLOWED_SESSION_ROLES } = require('../../domain-objects/user');
 const instantiate = data => new Session(data);
 const maybeInstantiate = data => (data && new Session(data)) || null;
 
+function ensureCanAssumeRole(user, role) {
+  const allowedRoles = ALLOWED_SESSION_ROLES[user.role];
+
+  if (allowedRoles.indexOf(role) < 0) {
+    throw new UnauthorizedRoleError(`User may not assume the role '${role}'`);
+  }
+}
+
 /**
  * @param {Object} user A User instance
  */
 function createForUser(user, additionalData = {}) {
+  const defaultRole = ALLOWED_SESSION_ROLES[user.role][0];
+  const role = additionalData.role || defaultRole;
+
+  ensureCanAssumeRole(user, role);
+
   return db('sessions').insert({
     id: uuid.v4(),
     user_id: user.id,
     expires_at: additionalData.expiresAt,
-    role: additionalData.role
+    role
   }, '*')
     .then(first)
     .then(instantiate)
@@ -64,11 +77,7 @@ function create(data) {
         throw new InvalidDataError(`Incorrect password for ${email}`);
       }
 
-      const allowedRoles = ALLOWED_SESSION_ROLES[user.role];
-
-      if (allowedRoles.indexOf(role) < 0) {
-        throw new UnauthorizedRoleError(`User may not assume the role '${role}'`);
-      }
+      ensureCanAssumeRole(user, role);
 
       return createForUser(user, {
         expiresAt: data.expiresAt,

@@ -117,3 +117,12 @@ test('SessionsDAO.findById returns null if a session has expired', (t) => {
       t.equal(session, null);
     });
 });
+
+test('SessionsDAO.createForUser uses default user role', async (t) => {
+  const data = Object.assign({}, USER_DATA, { role: 'PARTNER' });
+  const user = await UsersDAO.create(data);
+  t.equal(user.role, 'PARTNER');
+
+  const session = await SessionsDAO.createForUser(user);
+  t.equal(session.role, 'PARTNER');
+});

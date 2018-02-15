@@ -11,8 +11,10 @@ const ROLES = {
   partner: 'PARTNER'
 };
 
+// The first element in each list is the default role in cases when it's not
+// specified
 const ALLOWED_SESSION_ROLES = {
-  [ROLES.admin]: [ROLES.partner, ROLES.user, ROLES.admin],
+  [ROLES.admin]: [ROLES.user, ROLES.partner, ROLES.admin],
   [ROLES.user]: [ROLES.user],
   // Important: Partners cannot log in as a regular user!
   [ROLES.partner]: [ROLES.partner]
