@@ -28,6 +28,10 @@ class Notification {
       sentEmailAt: row.sent_email_at && new Date(row.sent_email_at)
     });
   }
+
+  setActorUser(user) {
+    this.actorUser = user;
+  }
 }
 
 Notification.dataMapper = dataMapper;

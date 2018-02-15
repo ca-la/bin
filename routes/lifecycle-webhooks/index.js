@@ -2,6 +2,8 @@
 
 const Router = require('koa-router');
 
+const sendBatchNotificationEmails = require('../../services/send-batch-notification-emails');
+
 const router = new Router();
 
 /**
@@ -12,8 +14,8 @@ const router = new Router();
  * email them to the appropriate recipients.
  */
 
-// eslint-disable-next-line require-yield
 function* postPurgeNotifications() {
+  yield sendBatchNotificationEmails();
   this.status = 200;
   this.body = { success: true };
 }

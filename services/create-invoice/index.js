@@ -92,7 +92,7 @@ async function createInvoice(design, newStatusId) {
 
       await trx.commit();
     } catch (err) {
-      await trx.rollback();
+      await trx.rollback(err);
       throw err;
     }
   });

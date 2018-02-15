@@ -22,6 +22,15 @@ async function findOutstandingTrx(trx) {
     .catch(rethrow);
 }
 
+async function markSentTrx(ids, trx) {
+  return db(TABLE_NAME)
+    .transacting(trx)
+    .whereIn('id', ids)
+    .update({ sent_email_at: (new Date()).toISOString() }, '*')
+    .then(notifications => notifications.map(instantiate))
+    .catch(rethrow);
+}
+
 async function create(data) {
   const rowData = Object.assign({}, dataMapper.userDataToRowData(data), {
     id: uuid.v4()
@@ -50,5 +59,6 @@ function deleteRecent(userData) {
 module.exports = {
   create,
   deleteRecent,
-  findOutstandingTrx
+  findOutstandingTrx,
+  markSentTrx
 };
