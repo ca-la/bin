@@ -23,12 +23,18 @@ async function findDesignUsers(designId) {
     }
   });
 
-  const services = await ProductDesignServicesDAO.findByDesignId(designId);
+  // We only consider service providers "design users" if the design is submitted.
+  // May re-evaluate this or make the filter optional if we have a use case;
+  // importantly, this behavior is not shared in `findUserDesigns` as of the
+  // time of writing.
+  if (design.status !== 'DRAFT') {
+    const services = await ProductDesignServicesDAO.findByDesignId(designId);
 
-  for (const service of services) {
-    if (service.vendorUserId) {
-      const user = await UsersDAO.findById(service.vendorUserId);
-      users.push(user);
+    for (const service of services) {
+      if (service.vendorUserId) {
+        const user = await UsersDAO.findById(service.vendorUserId);
+        users.push(user);
+      }
     }
   }
 
