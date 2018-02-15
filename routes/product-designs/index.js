@@ -1,8 +1,9 @@
 'use strict';
 
+const Bluebird = require('bluebird');
+const intersection = require('lodash/intersection');
 const pick = require('lodash/pick');
 const Router = require('koa-router');
-const Bluebird = require('bluebird');
 
 const canAccessAnnotation = require('../../middleware/can-access-annotation');
 const canAccessSection = require('../../middleware/can-access-section');
@@ -178,10 +179,23 @@ function* updateDesign() {
 
   updated = yield attachResources(updated, this.state.designPermissions);
 
-  yield sendDesignUpdateNotifications({
-    designId: this.params.designId,
-    userId: this.state.userId
-  });
+  const keys = Object.keys(data);
+
+  const keysToNotifyOn = [
+    'description',
+    'metadata',
+    'title',
+    'retailPriceCents',
+    'dueDate',
+    'expectedCostCents'
+  ];
+
+  if (intersection(keys, keysToNotifyOn).length > 0) {
+    yield sendDesignUpdateNotifications({
+      designId: this.params.designId,
+      userId: this.state.userId
+    });
+  }
 
   this.body = updated;
   this.status = 200;
