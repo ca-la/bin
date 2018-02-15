@@ -30,7 +30,7 @@ console: preflight
 	env $$(cat .env | xargs) node
 
 .PHONY: release
-release:
+release: lint test
 	$(npm_bin)/cala-release $(type)
 
 .PHONY: validate-migration
