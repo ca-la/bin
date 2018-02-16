@@ -82,7 +82,8 @@ function findAll({ limit, offset, search }) {
     throw new Error('Limit and offset must be provided to find all users');
   }
 
-  return db(TABLE_NAME).select('*')
+  return db(TABLE_NAME)
+    .where({ deleted_at: null })
     .orderBy('created_at', 'desc')
     .modify((query) => {
       if (search) {
