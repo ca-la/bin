@@ -7,6 +7,7 @@ const Router = require('koa-router');
 
 const canAccessAnnotation = require('../../middleware/can-access-annotation');
 const canAccessSection = require('../../middleware/can-access-section');
+const canAccessUserResource = require('../../middleware/can-access-user-resource');
 const compact = require('../../services/compact');
 const findUserDesigns = require('../../services/find-user-designs');
 const getDesignPermissions = require('../../services/get-design-permissions');
@@ -23,6 +24,7 @@ const ProductDesignStatusSlasDAO = require('../../dao/product-design-status-slas
 const requireAuth = require('../../middleware/require-auth');
 const sendAnnotationNotifications = require('../../services/send-annotation-notifications');
 const updateDesignStatus = require('../../services/update-design-status');
+const User = require('../../domain-objects/user');
 const UsersDAO = require('../../dao/users');
 const { canAccessDesignInParam, canCommentOnDesign } = require('../../middleware/can-access-design');
 const { requireValues } = require('../../services/require-properties');
@@ -71,14 +73,34 @@ async function attachResources(design, permissions) {
   return attached;
 }
 
-
-function* getDesigns() {
-  this.assert(this.query.userId === this.state.userId, 403);
+function* getDesignsByUser() {
+  canAccessUserResource.call(this, this.query.userId);
 
   const filters = compact({ status: this.query.status });
   this.body = yield findUserDesigns(this.query.userId, filters);
 
   this.status = 200;
+}
+
+function* getAllDesigns() {
+  this.assert(this.state.role === User.ROLES.admin, 403);
+
+  const designs = yield ProductDesignsDAO.findAll({
+    limit: Number(this.query.limit) || 10,
+    offset: Number(this.query.offset) || 0,
+    search: this.query.search
+  });
+
+  this.body = designs;
+  this.status = 200;
+}
+
+function* getDesigns() {
+  if (this.query.userId) {
+    yield getDesignsByUser;
+  } else {
+    yield getAllDesigns;
+  }
 }
 
 function* getDesign() {

@@ -14,13 +14,15 @@ const maybeInstantiate = data => (data && new ProductDesign(data)) || null;
 
 const { dataMapper } = ProductDesign;
 
+const TABLE_NAME = 'product_designs';
+
 function create(data) {
   const rowData = Object.assign({}, dataMapper.userDataToRowData(data), {
     id: uuid.v4(),
     preview_image_urls: JSON.stringify(data.previewImageUrls)
   });
 
-  return db('product_designs')
+  return db(TABLE_NAME)
     .insert(rowData, '*')
     .catch(rethrow)
     .then(first)
@@ -28,7 +30,7 @@ function create(data) {
 }
 
 function deleteById(productDesignId) {
-  return db('product_designs')
+  return db(TABLE_NAME)
     .where({ id: productDesignId, deleted_at: null })
     .update({
       deleted_at: new Date()
@@ -48,7 +50,7 @@ function update(productDesignId, data) {
     throw new InvalidDataError('No data provided');
   }
 
-  return db('product_designs')
+  return db(TABLE_NAME)
     .where({ id: productDesignId, deleted_at: null })
     .update(compacted, '*')
     .then(first)
@@ -68,10 +70,27 @@ function findByUserId(userId, filters) {
     deleted_at: null
   }, filters);
 
-  return db('product_designs')
+  return db(TABLE_NAME)
     .where(query)
     .orderBy('created_at', 'desc')
     .catch(rethrow)
+    .then(designs => designs.map(instantiate));
+}
+
+function findAll({ limit, offset, search }) {
+  if (typeof limit !== 'number' || typeof offset !== 'number') {
+    throw new Error('Limit and offset must be provided to find all users');
+  }
+
+  return db(TABLE_NAME).select('*')
+    .orderBy('created_at', 'desc')
+    .modify((query) => {
+      if (search) {
+        query.andWhere(db.raw('(title ~* :search)', { search }));
+      }
+    })
+    .limit(limit)
+    .offset(offset)
     .then(designs => designs.map(instantiate));
 }
 
@@ -81,7 +100,7 @@ function findById(id, filters) {
     deleted_at: null
   }, filters);
 
-  return db('product_designs')
+  return db(TABLE_NAME)
     .where(query)
     .catch(rethrow)
     .then(first)
@@ -93,6 +112,7 @@ module.exports = {
   create,
   deleteById,
   update,
+  findAll,
   findById,
   findByUserId
 };

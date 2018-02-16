@@ -3,7 +3,7 @@
 const createUser = require('../../test-helpers/create-user');
 const ProductDesignsDAO = require('../../dao/product-designs');
 const EmailService = require('../../services/email');
-const { authHeader, patch, put } = require('../../test-helpers/http');
+const { authHeader, get, patch, put } = require('../../test-helpers/http');
 const { test, sandbox } = require('../../test-helpers/fresh');
 
 test('PATCH /product-designs/:id rejects empty data', (t) => {
@@ -86,4 +86,37 @@ test('PUT /product-designs/:id/status does not update to an invalid status', (t)
     .then(([response]) => {
       t.equal(response.status, 400);
     });
+});
+
+test('GET /product-designs allows searching', async (t) => {
+  sandbox().stub(EmailService, 'enqueueSend', () => Promise.resolve());
+
+  const { user, session } = await createUser({ role: 'ADMIN' });
+
+  const first = await ProductDesignsDAO.create({
+    userId: user.id,
+    title: 'Thing One'
+  });
+
+  await ProductDesignsDAO.create({
+    userId: user.id,
+    title: 'Bzzt Two'
+  });
+
+  const third = await ProductDesignsDAO.create({
+    userId: user.id,
+    title: 'Thing Three'
+  });
+
+  const [response, body] = await get('/product-designs?search=thing', {
+    headers: authHeader(session.id)
+  });
+
+  t.equal(response.status, 200);
+  t.equal(body.length, 2);
+
+  t.deepEqual(
+    [body[0].id, body[1].id].sort(),
+    [first.id, third.id].sort()
+  );
 });
