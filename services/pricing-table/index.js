@@ -199,6 +199,12 @@ class Table {
     requireProperties(data, ...keys);
     Object.assign(this, pick(data, keys));
   }
+
+  serializeWithoutBreakdown() {
+    return Object.assign({}, this, {
+      groups: []
+    });
+  }
 }
 
 function mergePricingTables(computed, override) {

@@ -132,10 +132,16 @@ function* getDesignPricing() {
   } = yield Bluebird.resolve(calculator.getAllPricingTables())
     .catch(MissingPrerequisitesError, err => this.throw(400, err));
 
+  let finalTable = finalPricingTable;
+
+  if (!canManagePricing && !design.showPricingBreakdown) {
+    finalTable = finalPricingTable.serializeWithoutBreakdown();
+  }
+
   this.body = {
     computedPricingTable: canManagePricing ? computedPricingTable : null,
     overridePricingTable: canManagePricing ? overridePricingTable : null,
-    finalPricingTable
+    finalPricingTable: finalTable
   };
 
   this.status = 200;
