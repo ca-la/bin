@@ -3,7 +3,6 @@
 const Router = require('koa-router');
 
 const canAccessUserResource = require('../../middleware/can-access-user-resource');
-const Logger = require('../../services/logger');
 const PartnerPayoutAccounts = require('../../dao/partner-payout-accounts');
 const requireAuth = require('../../middleware/require-auth');
 const Stripe = require('../../services/stripe');
@@ -27,14 +26,9 @@ function* createLoginLink() {
   this.assert(account, 404, 'Partner account not found');
   canAccessUserResource.call(this, account.userId);
 
-  const link = yield Stripe.createLoginLink({ accountId: account.stripeUserId });
+  const url = yield Stripe.createLoginLink({ accountId: account.stripeUserId });
 
-  if (!link || !link.url) {
-    Logger.logServerError(link);
-    throw new Error('Could not parse login link');
-  }
-
-  this.body = { url: link.url };
+  this.body = { url };
   this.status = 201;
 }
 

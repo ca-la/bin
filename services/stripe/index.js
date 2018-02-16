@@ -140,10 +140,25 @@ async function createConnectAccount(authorizationCode) {
 async function createLoginLink({ accountId }) {
   requireValues({ accountId });
 
-  return makeRequest({
-    method: 'post',
-    path: `/accounts/${accountId}/login_links`
-  });
+  try {
+    const response = await makeRequest({
+      method: 'post',
+      path: `/accounts/${accountId}/login_links`
+    });
+
+    if (!response || !response.url) {
+      Logger.log(response);
+      throw new Error('Could not parse Stripe login URL from response');
+    }
+
+    return response.url;
+  } catch (err) {
+    if (err.message.indexOf('not an Express account') > -1) {
+      return 'https://dashboard.stripe.com/';
+    }
+
+    throw err;
+  }
 }
 
 module.exports = {
