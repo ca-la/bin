@@ -10,7 +10,11 @@ const ProductDesignsDAO = require('../../dao/product-designs');
 /**
  * Find all designs that either the user owns, or is a collaborator with access.
  *
- * The opposite of `findDesignUsers`
+ * The opposite of `findDesignUsers`.
+ *
+ * NB: the criteria for "who can access a design" needs to be kept in sync with
+ * `getDesignPermissions` and `findDesignUsers` until we find a nice way to
+ * combine them.
  *
  * @returns {Promise<Design[]>}
  */
@@ -35,7 +39,17 @@ async function findUserDesigns(userId, filters) {
     return ProductDesignsDAO.findById(designId, filters);
   }));
 
-  const availableServiceDesigns = serviceDesigns.filter(Boolean);
+  const availableServiceDesigns = serviceDesigns.filter((design) => {
+    // Deleted designs become holes in the array currently.
+    if (!design) { return false; }
+
+    // Partners don't see designs that are in draft
+    if (design.status === 'DRAFT') {
+      return false;
+    }
+
+    return true;
+  });
 
   const allDesigns = [...ownDesigns, ...availableInvitedDesigns, ...availableServiceDesigns];
   const sorted = allDesigns.sort((a, b) => b.createdAt - a.createdAt);

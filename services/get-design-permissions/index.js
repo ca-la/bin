@@ -64,6 +64,10 @@ function canModifyServices(
 }
 
 async function getDesignPermissions(design, userId, sessionRole) {
+  if (!userId) {
+    throw new UnauthorizedError('Sign in to access this design');
+  }
+
   const isAdmin = (sessionRole === User.ROLES.admin);
   const isPartner = (sessionRole === User.ROLES.partner);
   const isOwnerOrAdmin = isAdmin || (userId === design.userId);
@@ -71,11 +75,12 @@ async function getDesignPermissions(design, userId, sessionRole) {
 
   let collaboratorRole;
 
-  if (!isOwnerOrAdmin) {
-    if (!userId) {
-      throw new UnauthorizedError('Sign in to access this design');
-    }
+  // TODO - this nested set of checks is pretty sloppy. Need to figure out a way
+  // to short-circuit as soon as we know you have access and keep this
+  // flat/extensible. Ideally somehow use `findUserDesigns` to keep the criteria
+  // in sync re: who can access what.
 
+  if (!isOwnerOrAdmin) {
     const collaborators = await ProductDesignCollaboratorsDAO.findByDesignAndUser(
       design.id,
       userId
@@ -87,7 +92,7 @@ async function getDesignPermissions(design, userId, sessionRole) {
         userId
       );
 
-      if (services.length < 1) {
+      if (design.status === 'DRAFT' || services.length < 1) {
         throw new ForbiddenError('You do not have access to this design');
       }
     }
