@@ -91,6 +91,10 @@ function* getAllDesigns() {
     search: this.query.search
   });
 
+  for (const design of designs) {
+    yield attachDesignOwner(design);
+  }
+
   this.body = designs;
   this.status = 200;
 }
