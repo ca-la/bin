@@ -9,6 +9,7 @@ const canAccessAnnotation = require('../../middleware/can-access-annotation');
 const canAccessSection = require('../../middleware/can-access-section');
 const canAccessUserResource = require('../../middleware/can-access-user-resource');
 const compact = require('../../services/compact');
+const deleteSection = require('../../services/delete-section');
 const findUserDesigns = require('../../services/find-user-designs');
 const getDesignPermissions = require('../../services/get-design-permissions');
 const InvalidDataError = require('../../errors/invalid-data');
@@ -31,7 +32,6 @@ const { requireValues } = require('../../services/require-properties');
 const {
   sendDesignUpdateNotifications,
   sendSectionCreateNotifications,
-  sendSectionDeleteNotifications,
   sendSectionUpdateNotifications,
   sendFeaturePlacementUpdateNotifications
 } = require('../../services/send-design-notifications');
@@ -268,13 +268,11 @@ function* createSection() {
   this.status = 201;
 }
 
-function* deleteSection() {
-  const deleted = yield ProductDesignSectionsDAO.deleteById(this.params.sectionId);
-
-  yield sendSectionDeleteNotifications({
-    sectionTitle: deleted.title || 'Untitled',
+function* deleteSectionId() {
+  yield deleteSection({
+    sectionId: this.params.sectionId,
     designId: this.params.designId,
-    userId: this.state.userId
+    actorUserId: this.state.userId
   });
 
   this.status = 204;
@@ -434,7 +432,7 @@ router.put('/:designId/status', requireAuth, canAccessDesignInParam, setStatus);
 router.get('/:designId/sections', requireAuth, canAccessDesignInParam, getSections);
 router.post('/:designId/sections', requireAuth, canAccessDesignInParam, createSection);
 
-router.del('/:designId/sections/:sectionId', requireAuth, canAccessDesignInParam, deleteSection);
+router.del('/:designId/sections/:sectionId', requireAuth, canAccessDesignInParam, deleteSectionId);
 router.patch('/:designId/sections/:sectionId', requireAuth, canAccessDesignInParam, canAccessSection, updateSection);
 
 router.get('/:designId/sections/:sectionId/annotations', requireAuth, canAccessDesignInParam, canAccessSection, getSectionAnnotations);

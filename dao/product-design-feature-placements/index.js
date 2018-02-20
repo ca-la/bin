@@ -12,7 +12,7 @@ const instantiate = data => new ProductDesignFeaturePlacement(data);
 
 const TABLE_NAME = 'product_design_feature_placements';
 
-function deleteForSection(trx, sectionId) {
+function deleteForSectionTrx(trx, sectionId) {
   return db(TABLE_NAME)
     .transacting(trx)
     .where({ section_id: sectionId })
@@ -25,7 +25,7 @@ function deleteById(id) {
     .del();
 }
 
-function createForSection(trx, sectionId, placements) {
+function createForSectionTrx(trx, sectionId, placements) {
   const rows = placements.map((placementData) => {
     return Object.assign({}, dataMapper.userDataToRowData(placementData), {
       id: uuid.v4(),
@@ -43,10 +43,10 @@ function createForSection(trx, sectionId, placements) {
 
 function replaceForSection(sectionId, placements) {
   return db.transaction((trx) => {
-    deleteForSection(trx, sectionId)
+    deleteForSectionTrx(trx, sectionId)
       .then(() => {
         if (placements.length > 0) {
-          return createForSection(trx, sectionId, placements);
+          return createForSectionTrx(trx, sectionId, placements);
         }
 
         return [];
@@ -75,6 +75,7 @@ function findById(id) {
 }
 
 module.exports = {
+  deleteForSectionTrx,
   deleteById,
   findById,
   findBySectionId,

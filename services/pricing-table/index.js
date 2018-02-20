@@ -501,6 +501,18 @@ class PricingCalculator {
       lineItems: []
     });
 
+    if (enabledServices.DESIGN) {
+      const designPrice = this.getFinalServicePrice('DESIGN', 'DESIGN');
+
+      developmentGroup.addLineItem(new LineItem({
+        title: 'Design Consulting',
+        id: 'development-design-consulting',
+        quantity: 1,
+        unitPriceCents: designPrice.serviceCostCents,
+        unitMarginCents: designPrice.serviceMarginCents
+      }));
+    }
+
     if (enabledServices.PATTERN_MAKING) {
       const patternMakingPrice = this.getFinalServicePrice('PATTERN_MAKING', 'DESIGN');
       developmentGroup.addLineItem(new LineItem({

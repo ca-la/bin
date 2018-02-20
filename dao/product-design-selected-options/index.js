@@ -71,9 +71,23 @@ function deleteById(id) {
     .then(instantiate);
 }
 
+function deleteForSectionTrx(trx, sectionId) {
+  return db('product_design_selected_options')
+    .transacting(trx)
+    .where({
+      section_id: sectionId,
+      deleted_at: null
+    })
+    .update({
+      deleted_at: new Date()
+    }, '*')
+    .then(options => options.map(instantiate));
+}
+
 module.exports = {
   create,
   deleteById,
+  deleteForSectionTrx,
   findByDesignId,
   findById,
   update
