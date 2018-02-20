@@ -3,8 +3,10 @@
 const Router = require('koa-router');
 
 const InvalidDataError = require('../../errors/invalid-data');
-const UnauthorizedRoleError = require('../../errors/unauthorized-role');
+const requireAdmin = require('../../middleware/require-admin');
 const SessionsDAO = require('../../dao/sessions');
+const UsersDAO = require('../../dao/users');
+const UnauthorizedRoleError = require('../../errors/unauthorized-role');
 
 const router = new Router();
 
@@ -38,6 +40,19 @@ function* createSession() {
   this.body = session;
 }
 
+function* createSessionForUser() {
+  const { userId } = this.request.body;
+  this.assert(userId, 400, 'Missing userId');
+
+  const user = yield UsersDAO.findById(userId);
+  this.assert(user, 400, 'User not found');
+
+  const session = yield SessionsDAO.createForUser(user);
+
+  this.status = 201;
+  this.body = session;
+}
+
 function* getSession() {
   const session = yield SessionsDAO.findById(this.params.sessionId, true);
 
@@ -57,6 +72,7 @@ function* deleteSession() {
 }
 
 router.post('/', createSession);
+router.post('/create-for-user', requireAdmin, createSessionForUser);
 router.del('/:sessionId', deleteSession);
 router.get('/:sessionId', getSession);
 
