@@ -52,8 +52,9 @@ function update(sectionId, data) {
     .then(instantiate);
 }
 
-function deleteById(id) {
+function deleteByIdTrx(trx, id) {
   return db('product_design_sections')
+    .transacting(trx)
     .where({ id, deleted_at: null })
     .update({
       deleted_at: new Date()
@@ -83,7 +84,7 @@ function findById(id) {
 
 module.exports = {
   create,
-  deleteById,
+  deleteByIdTrx,
   findById,
   update,
   findByDesignId
