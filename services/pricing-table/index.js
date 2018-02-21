@@ -42,7 +42,9 @@ class ServicePrice {
       'serviceCostCents',
       'setupCostCents',
       'serviceMarginCents',
-      'setupMarginCents'
+      'setupMarginCents',
+      'basePriceCents',
+      'baseSetupCostCents'
     ];
 
     requireProperties(data, ...keys);
@@ -57,7 +59,24 @@ class ServicePrice {
   }
 }
 
+// Given a ServicePrice (setup cost + per-unit service cost), multiply values by # of
+// units to get a ServicePrice that represents (setup cost + total service cost)
+function multiplyServicePriceByUnits(initialPrice, units) {
+  requireValues({ initialPrice, units });
+
+  return new ServicePrice({
+    serviceCostCents: initialPrice.serviceCostCents * units,
+    serviceMarginCents: initialPrice.serviceMarginCents * units,
+    basePriceCents: initialPrice.basePriceCents * units,
+    baseSetupCostCents: initialPrice.baseSetupCostCents,
+    setupCostCents: initialPrice.setupCostCents,
+    setupMarginCents: initialPrice.setupMarginCents
+  });
+}
+
 const ZERO_SERVICE_PRICE = Object.freeze(new ServicePrice({
+  basePriceCents: 0,
+  baseSetupCostCents: 0,
   serviceCostCents: 0,
   setupCostCents: 0,
   serviceMarginCents: 0,
@@ -272,12 +291,7 @@ class PricingCalculator {
     const { unitsRequiredPerGarment } = selectedOption;
     const price = this.getFinalServicePrice('DYE', 'METER');
 
-    return new ServicePrice({
-      serviceCostCents: price.serviceCostCents * unitsRequiredPerGarment,
-      serviceMarginCents: price.serviceMarginCents * unitsRequiredPerGarment,
-      setupCostCents: price.setupCostCents,
-      setupMarginCents: price.setupMarginCents
-    });
+    return multiplyServicePriceByUnits(price, unitsRequiredPerGarment);
   }
 
   getWashPrice({ selectedOption }) {
@@ -288,12 +302,7 @@ class PricingCalculator {
     const { unitsRequiredPerGarment } = selectedOption;
     const price = this.getFinalServicePrice('WASH', 'METER');
 
-    return new ServicePrice({
-      serviceCostCents: price.serviceCostCents * unitsRequiredPerGarment,
-      serviceMarginCents: price.serviceMarginCents * unitsRequiredPerGarment,
-      setupCostCents: price.setupCostCents,
-      setupMarginCents: price.setupMarginCents
-    });
+    return multiplyServicePriceByUnits(price, unitsRequiredPerGarment);
   }
 
   // Get the cost to do a feature placement (image print / embroidery) on each
@@ -314,12 +323,7 @@ class PricingCalculator {
       case 'DTG_ROLL': {
         const price = this.getFinalServicePrice('DTG_ROLL_PRINT');
 
-        return new ServicePrice({
-          serviceCostCents: price.serviceCostCents * METERS_PER_GARMENT,
-          setupCostCents: price.setupCostCents,
-          serviceMarginCents: price.serviceMarginCents * METERS_PER_GARMENT,
-          setupMarginCents: price.setupMarginCents
-        });
+        return multiplyServicePriceByUnits(price, METERS_PER_GARMENT);
       }
       case 'DTG_ENGINEERED':
         return this.getFinalServicePrice('DTG_ENGINEERED_PRINT', 'GARMENT');
@@ -328,12 +332,7 @@ class PricingCalculator {
       case 'ROTARY_PRINT': {
         const price = this.getFinalServicePrice('ROTARY_PRINT');
 
-        return new ServicePrice({
-          serviceCostCents: price.serviceCostCents * METERS_PER_GARMENT,
-          setupCostCents: price.setupCostCents,
-          serviceMarginCents: price.serviceMarginCents * METERS_PER_GARMENT,
-          setupMarginCents: price.setupMarginCents
-        });
+        return multiplyServicePriceByUnits(price, METERS_PER_GARMENT);
       }
       case 'SCREEN_PRINT':
         return this.getFinalServicePrice('SCREEN_PRINT', 'GARMENT');
@@ -416,6 +415,8 @@ class PricingCalculator {
     return new ServicePrice({
       serviceCostCents: basePriceBucket.priceCents + serviceMarginCents,
       setupCostCents: basePriceBucket.setupCostCents + setupMarginCents,
+      basePriceCents: basePriceBucket.priceCents,
+      baseSetupCostCents: basePriceBucket.setupCostCents,
       serviceMarginCents,
       setupMarginCents
     });

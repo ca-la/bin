@@ -13,7 +13,7 @@ function* getInvoices() {
   this.assert(designId, 400, 'Missing design ID');
   this.assert(designStatusId, 400, 'Missing design status ID');
 
-  const invoices = yield Invoices.findByDesignAndStatus(designId, designStatusId);
+  const invoices = yield Invoices.findUnpaidByDesignAndStatus(designId, designStatusId);
   this.body = invoices;
   this.status = 200;
 }

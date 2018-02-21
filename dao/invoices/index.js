@@ -16,13 +16,23 @@ const { dataMapper } = Invoice;
 
 const TABLE_NAME = 'invoices';
 
-async function findByDesignAndStatus(designId, statusId) {
+async function findUnpaidByDesignAndStatus(designId, statusId) {
   return db(TABLE_NAME)
     .where({
       deleted_at: null,
       paid_at: null,
       design_id: designId,
       design_status_id: statusId
+    })
+    .then(invoices => invoices.map(instantiate))
+    .catch(rethrow);
+}
+
+async function findByDesign(designId) {
+  return db(TABLE_NAME)
+    .where({
+      deleted_at: null,
+      design_id: designId
     })
     .then(invoices => invoices.map(instantiate))
     .catch(rethrow);
@@ -65,7 +75,8 @@ async function findById(id) {
 }
 
 module.exports = {
-  findByDesignAndStatus,
+  findUnpaidByDesignAndStatus,
+  findByDesign,
   findById,
   create,
   update
