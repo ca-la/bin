@@ -24,6 +24,7 @@ async function findUnpaidByDesignAndStatus(designId, statusId) {
       design_id: designId,
       design_status_id: statusId
     })
+    .orderBy('created_at', 'desc')
     .then(invoices => invoices.map(instantiate))
     .catch(rethrow);
 }
@@ -34,6 +35,7 @@ async function findByDesign(designId) {
       deleted_at: null,
       design_id: designId
     })
+    .orderBy('created_at', 'desc')
     .then(invoices => invoices.map(instantiate))
     .catch(rethrow);
 }
