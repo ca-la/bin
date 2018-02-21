@@ -42,7 +42,9 @@ class ServicePrice {
       'serviceCostCents',
       'setupCostCents',
       'serviceMarginCents',
-      'setupMarginCents'
+      'setupMarginCents',
+      'basePriceCents',
+      'baseSetupCostCents'
     ];
 
     requireProperties(data, ...keys);
@@ -57,7 +59,24 @@ class ServicePrice {
   }
 }
 
+// Given a ServicePrice (setup cost + per-unit service cost), multiply values by # of
+// units to get a ServicePrice that represents (setup cost + total service cost)
+function multiplyServicePriceByUnits(initialPrice, units) {
+  requireValues({ initialPrice, units });
+
+  return new ServicePrice({
+    serviceCostCents: initialPrice.serviceCostCents * units,
+    serviceMarginCents: initialPrice.serviceMarginCents * units,
+    basePriceCents: initialPrice.basePriceCents * units,
+    baseSetupCostCents: initialPrice.baseSetupCostCents,
+    setupCostCents: initialPrice.setupCostCents,
+    setupMarginCents: initialPrice.setupMarginCents
+  });
+}
+
 const ZERO_SERVICE_PRICE = Object.freeze(new ServicePrice({
+  basePriceCents: 0,
+  baseSetupCostCents: 0,
   serviceCostCents: 0,
   setupCostCents: 0,
   serviceMarginCents: 0,
@@ -264,42 +283,32 @@ class PricingCalculator {
     this.design = design;
   }
 
-  getDyePrice({ selectedOption }) {
+  _getDyePrice({ selectedOption }) {
     requireValues({ selectedOption });
 
     if (!hasDye(selectedOption)) { return ZERO_SERVICE_PRICE; }
 
     const { unitsRequiredPerGarment } = selectedOption;
-    const price = this.getFinalServicePrice('DYE', 'METER');
+    const price = this._getFinalServicePrice('DYE', 'METER');
 
-    return new ServicePrice({
-      serviceCostCents: price.serviceCostCents * unitsRequiredPerGarment,
-      serviceMarginCents: price.serviceMarginCents * unitsRequiredPerGarment,
-      setupCostCents: price.setupCostCents,
-      setupMarginCents: price.setupMarginCents
-    });
+    return multiplyServicePriceByUnits(price, unitsRequiredPerGarment);
   }
 
-  getWashPrice({ selectedOption }) {
+  _getWashPrice({ selectedOption }) {
     requireValues({ selectedOption });
 
     if (!hasWash(selectedOption)) { return ZERO_SERVICE_PRICE; }
 
     const { unitsRequiredPerGarment } = selectedOption;
-    const price = this.getFinalServicePrice('WASH', 'METER');
+    const price = this._getFinalServicePrice('WASH', 'METER');
 
-    return new ServicePrice({
-      serviceCostCents: price.serviceCostCents * unitsRequiredPerGarment,
-      serviceMarginCents: price.serviceMarginCents * unitsRequiredPerGarment,
-      setupCostCents: price.setupCostCents,
-      setupMarginCents: price.setupMarginCents
-    });
+    return multiplyServicePriceByUnits(price, unitsRequiredPerGarment);
   }
 
   // Get the cost to do a feature placement (image print / embroidery) on each
   // garment. Either a fixed cost (stuff like screenprinting) or a per-yard cost
   // multiplied by the number of yards required (stuff like roll prints).
-  getFeaturePlacementPrice({ featurePlacement }) {
+  _getFeaturePlacementPrice({ featurePlacement }) {
     requireValues({ featurePlacement });
 
     if (!featurePlacement.processName) {
@@ -312,33 +321,23 @@ class PricingCalculator {
 
     switch (featurePlacement.processName) {
       case 'DTG_ROLL': {
-        const price = this.getFinalServicePrice('DTG_ROLL_PRINT');
+        const price = this._getFinalServicePrice('DTG_ROLL_PRINT');
 
-        return new ServicePrice({
-          serviceCostCents: price.serviceCostCents * METERS_PER_GARMENT,
-          setupCostCents: price.setupCostCents,
-          serviceMarginCents: price.serviceMarginCents * METERS_PER_GARMENT,
-          setupMarginCents: price.setupMarginCents
-        });
+        return multiplyServicePriceByUnits(price, METERS_PER_GARMENT);
       }
       case 'DTG_ENGINEERED':
-        return this.getFinalServicePrice('DTG_ENGINEERED_PRINT', 'GARMENT');
+        return this._getFinalServicePrice('DTG_ENGINEERED_PRINT', 'GARMENT');
       case 'DIGITAL_SUBLIMATION':
-        return this.getFinalServicePrice('DIGITAL_SUBLIMATION_PRINT', 'GARMENT');
+        return this._getFinalServicePrice('DIGITAL_SUBLIMATION_PRINT', 'GARMENT');
       case 'ROTARY_PRINT': {
-        const price = this.getFinalServicePrice('ROTARY_PRINT');
+        const price = this._getFinalServicePrice('ROTARY_PRINT');
 
-        return new ServicePrice({
-          serviceCostCents: price.serviceCostCents * METERS_PER_GARMENT,
-          setupCostCents: price.setupCostCents,
-          serviceMarginCents: price.serviceMarginCents * METERS_PER_GARMENT,
-          setupMarginCents: price.setupMarginCents
-        });
+        return multiplyServicePriceByUnits(price, METERS_PER_GARMENT);
       }
       case 'SCREEN_PRINT':
-        return this.getFinalServicePrice('SCREEN_PRINT', 'GARMENT');
+        return this._getFinalServicePrice('SCREEN_PRINT', 'GARMENT');
       case 'EMBROIDERY':
-        return this.getFinalServicePrice('EMBROIDERY', 'GARMENT');
+        return this._getFinalServicePrice('EMBROIDERY', 'GARMENT');
 
       default:
         throw new Error(`Unknown process name: ${featurePlacement.processName}`);
@@ -350,7 +349,7 @@ class PricingCalculator {
    * @param {ProductionPriceUnit} expectedUnit Will be validated against the
    * `priceUnit` of the matched bucket
    */
-  getFinalServicePrice(serviceId, expectedUnit) {
+  _getFinalServicePrice(serviceId, expectedUnit) {
     const allowedServiceIds = Object.keys(SERVICE_IDS);
 
     if (allowedServiceIds.indexOf(serviceId) < 0) {
@@ -416,12 +415,14 @@ class PricingCalculator {
     return new ServicePrice({
       serviceCostCents: basePriceBucket.priceCents + serviceMarginCents,
       setupCostCents: basePriceBucket.setupCostCents + setupMarginCents,
+      basePriceCents: basePriceBucket.priceCents,
+      baseSetupCostCents: basePriceBucket.setupCostCents,
       serviceMarginCents,
       setupMarginCents
     });
   }
 
-  async fetchServicesAndPricing() {
+  async _fetchServicesAndPricing() {
     const services = await ProductDesignServicesDAO.findByDesignId(this.design.id);
 
     this.pricesByService = {};
@@ -449,7 +450,7 @@ class PricingCalculator {
     return services;
   }
 
-  async getComputedPricingTable() {
+  async _getComputedPricingTable() {
     const { design } = this;
 
     const { retailPriceCents } = design;
@@ -473,7 +474,7 @@ class PricingCalculator {
     const allSections = await ProductDesignSectionsDAO.findByDesignId(design.id);
     const sections = allSections.filter(section => section.type === 'FLAT_SKETCH');
 
-    const services = await this.fetchServicesAndPricing();
+    const services = await this._fetchServicesAndPricing();
 
     const enabledServices = {};
     this.enabledServices = enabledServices;
@@ -502,7 +503,7 @@ class PricingCalculator {
     });
 
     if (enabledServices.DESIGN) {
-      const designPrice = this.getFinalServicePrice('DESIGN', 'DESIGN');
+      const designPrice = this._getFinalServicePrice('DESIGN', 'DESIGN');
 
       developmentGroup.addLineItem(new LineItem({
         title: 'Design Consulting',
@@ -514,7 +515,7 @@ class PricingCalculator {
     }
 
     if (enabledServices.PATTERN_MAKING) {
-      const patternMakingPrice = this.getFinalServicePrice('PATTERN_MAKING', 'DESIGN');
+      const patternMakingPrice = this._getFinalServicePrice('PATTERN_MAKING', 'DESIGN');
       developmentGroup.addLineItem(new LineItem({
         title: 'Pattern Making',
         id: 'development-patternmaking',
@@ -525,7 +526,7 @@ class PricingCalculator {
     }
 
     if (enabledServices.GRADING) {
-      const gradingPrice = this.getFinalServicePrice('GRADING', 'SIZE');
+      const gradingPrice = this._getFinalServicePrice('GRADING', 'SIZE');
       developmentGroup.addLineItem(new LineItem({
         title: 'Marking & Grading',
         id: 'development-grading',
@@ -538,7 +539,7 @@ class PricingCalculator {
     }
 
     if (enabledServices.SOURCING) {
-      const sourcingPrice = this.getFinalServicePrice('SOURCING', 'DESIGN');
+      const sourcingPrice = this._getFinalServicePrice('SOURCING', 'DESIGN');
       developmentGroup.addLineItem(new LineItem({
         title: 'Sourcing/Testing',
         id: 'development-sourcing',
@@ -549,7 +550,7 @@ class PricingCalculator {
     }
 
     if (enabledServices.TECHNICAL_DESIGN) {
-      const technicalDesignPrice = this.getFinalServicePrice('TECHNICAL_DESIGN', 'DESIGN');
+      const technicalDesignPrice = this._getFinalServicePrice('TECHNICAL_DESIGN', 'DESIGN');
       developmentGroup.addLineItem(new LineItem({
         title: 'Technical Design',
         id: 'development-technical-design',
@@ -560,7 +561,7 @@ class PricingCalculator {
     }
 
     if (enabledServices.SAMPLING) {
-      const samplingPrice = this.getFinalServicePrice('SAMPLING', 'DESIGN');
+      const samplingPrice = this._getFinalServicePrice('SAMPLING', 'DESIGN');
       developmentGroup.addLineItem(new LineItem({
         title: 'Sampling',
         id: 'development-sampling',
@@ -574,7 +575,7 @@ class PricingCalculator {
       if (!enabledServices.SAMPLING) { return; }
 
       if (hasDye(selectedOption)) {
-        const dyePrice = this.getDyePrice({ selectedOption });
+        const dyePrice = this._getDyePrice({ selectedOption });
 
         developmentGroup.addLineItem(new LineItem({
           title: `${selectedOption.fabricDyeProcessName} — Dye sample`,
@@ -586,7 +587,7 @@ class PricingCalculator {
       }
 
       if (hasWash(selectedOption)) {
-        const washPrice = this.getWashPrice({ selectedOption });
+        const washPrice = this._getWashPrice({ selectedOption });
 
         developmentGroup.addLineItem(new LineItem({
           title: `${selectedOption.fabricWashProcessName} — Wash sample`,
@@ -601,7 +602,7 @@ class PricingCalculator {
     featurePlacements.forEach((featurePlacement) => {
       if (!enabledServices.SAMPLING) { return; }
 
-      const featurePrice = this.getFeaturePlacementPrice({ featurePlacement });
+      const featurePrice = this._getFeaturePlacementPrice({ featurePlacement });
 
       const process = getFeatureFriendlyProcessName(featurePlacement);
 
@@ -642,7 +643,7 @@ class PricingCalculator {
       }));
 
       if (hasDye(selectedOption)) {
-        const dyePrice = this.getDyePrice({ selectedOption });
+        const dyePrice = this._getDyePrice({ selectedOption });
 
         materialsGroup.addLineItem(new LineItem({
           title: `${selectedOption.fabricDyeProcessName} — Dye`,
@@ -654,7 +655,7 @@ class PricingCalculator {
       }
 
       if (hasWash(selectedOption)) {
-        const washPrice = this.getWashPrice({ selectedOption });
+        const washPrice = this._getWashPrice({ selectedOption });
 
         materialsGroup.addLineItem(new LineItem({
           title: `${selectedOption.fabricWashProcessName} — Wash`,
@@ -667,7 +668,7 @@ class PricingCalculator {
     });
 
     featurePlacements.forEach((featurePlacement) => {
-      const featurePrice = this.getFeaturePlacementPrice({ featurePlacement });
+      const featurePrice = this._getFeaturePlacementPrice({ featurePlacement });
 
       const process = getFeatureFriendlyProcessName(featurePlacement);
 
@@ -697,7 +698,7 @@ class PricingCalculator {
     });
 
     if (enabledServices.PRODUCTION) {
-      const productionPrice = this.getFinalServicePrice('PRODUCTION', 'GARMENT');
+      const productionPrice = this._getFinalServicePrice('PRODUCTION', 'GARMENT');
 
       productionGroup.addLineItem(new LineItem({
         title: 'Cut, Sew, Trim',
@@ -730,7 +731,7 @@ class PricingCalculator {
       }));
 
       if (hasDye(selectedOption)) {
-        const dyePrice = this.getWashPrice({ selectedOption });
+        const dyePrice = this._getDyePrice({ selectedOption });
 
         productionGroup.addLineItem(new LineItem({
           title: `${selectedOption.fabricDyeProcessName} — Setup`,
@@ -742,7 +743,7 @@ class PricingCalculator {
       }
 
       if (hasWash(selectedOption)) {
-        const washPrice = this.getWashPrice({ selectedOption });
+        const washPrice = this._getWashPrice({ selectedOption });
 
         productionGroup.addLineItem(new LineItem({
           title: `${selectedOption.fabricWashProcessName} — Setup`,
@@ -757,7 +758,7 @@ class PricingCalculator {
     featurePlacements.forEach((featurePlacement) => {
       if (!enabledServices.PRODUCTION) { return; }
 
-      const featurePrice = this.getFeaturePlacementPrice({ featurePlacement });
+      const featurePrice = this._getFeaturePlacementPrice({ featurePlacement });
 
       const process = getFeatureFriendlyProcessName(featurePlacement);
 
@@ -791,7 +792,7 @@ class PricingCalculator {
     });
 
     if (enabledServices.FULFILLMENT) {
-      const fulfillmentPrice = this.getFinalServicePrice('FULFILLMENT', 'GARMENT');
+      const fulfillmentPrice = this._getFinalServicePrice('FULFILLMENT', 'GARMENT');
 
       fulfillmentGroup.addLineItem(new LineItem({
         title: 'Fulfillment',
@@ -855,7 +856,7 @@ class PricingCalculator {
     });
   }
 
-  getFinalPricingTable(computedPricingTable) {
+  _getFinalPricingTable(computedPricingTable) {
     const override = this.design.overridePricingTable;
     const merged = mergePricingTables(computedPricingTable, override);
 
@@ -863,8 +864,8 @@ class PricingCalculator {
   }
 
   async getAllPricingTables() {
-    const computedPricingTable = await this.getComputedPricingTable();
-    const finalPricingTable = this.getFinalPricingTable(computedPricingTable);
+    const computedPricingTable = await this._getComputedPricingTable();
+    const finalPricingTable = this._getFinalPricingTable(computedPricingTable);
     const overridePricingTable = this.design.overridePricingTable;
 
     return {

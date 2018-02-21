@@ -69,16 +69,16 @@ async function createInvoice(design, newStatusId) {
 
   return db.transaction(async (trx) => {
     try {
-      const invoice = await InvoicesDAO.create({
+      const invoice = await InvoicesDAO.createTrx(trx, {
         totalCents: invoiceAmountCents,
         title: `${design.title} — ${status.label}`,
         designId: design.id,
         designStatusId: newStatusId
-      }, trx);
+      });
 
       const stripeFeeCents = calculateStripeFee(invoiceAmountCents);
 
-      await InvoiceBreakdownsDAO.create({
+      await InvoiceBreakdownsDAO.createTrx(trx, {
         invoiceId: invoice.id,
 
         invoiceAmountCents,
@@ -88,7 +88,7 @@ async function createInvoice(design, newStatusId) {
         costOfServicesCents: invoiceAmountCents - invoiceMarginCents,
         totalProfitCents: invoiceMarginCents - stripeFeeCents,
         pricingTableData: { pricingTableLineItems }
-      }, trx);
+      });
 
       await trx.commit();
     } catch (err) {

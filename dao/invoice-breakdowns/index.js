@@ -18,7 +18,7 @@ const TABLE_NAME = 'invoice_breakdowns';
 
 // Create must happen in a transaction that also creates an Invoice.
 // see services/create-invoice
-async function create(data, trx) {
+async function createTrx(trx, data) {
   requireValues({ data, trx });
 
   const rowData = Object.assign({}, dataMapper.userDataToRowData(data), {
@@ -44,6 +44,6 @@ async function update(id, data) {
 }
 
 module.exports = {
-  create,
+  createTrx,
   update
 };

@@ -6,6 +6,7 @@
   "rules": {
     "import/no-extraneous-dependencies": [2, {"devDependencies": true}],
     "arrow-body-style": 0,
+    "no-underscore-dangle": 0,
     "comma-dangle": [2, "never"],
     "no-console": 2,
     "no-restricted-syntax": [

@@ -16,7 +16,7 @@ const { dataMapper } = Invoice;
 
 const TABLE_NAME = 'invoices';
 
-async function findByDesignAndStatus(designId, statusId) {
+async function findUnpaidByDesignAndStatus(designId, statusId) {
   return db(TABLE_NAME)
     .where({
       deleted_at: null,
@@ -28,9 +28,19 @@ async function findByDesignAndStatus(designId, statusId) {
     .catch(rethrow);
 }
 
+async function findByDesign(designId) {
+  return db(TABLE_NAME)
+    .where({
+      deleted_at: null,
+      design_id: designId
+    })
+    .then(invoices => invoices.map(instantiate))
+    .catch(rethrow);
+}
+
 // Create must happen in a transaction that also creates an InvoiceBreakdown.
 // see services/create-invoice
-async function create(data, trx) {
+async function createTrx(trx, data) {
   requireValues({ data, trx });
 
   const rowData = Object.assign({}, dataMapper.userDataToRowData(data), {
@@ -65,8 +75,9 @@ async function findById(id) {
 }
 
 module.exports = {
-  findByDesignAndStatus,
+  findUnpaidByDesignAndStatus,
+  findByDesign,
   findById,
-  create,
+  createTrx,
   update
 };
