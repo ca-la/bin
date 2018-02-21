@@ -158,6 +158,11 @@ const ALLOWED_DESIGN_PARAMS = [
   'expectedCostCents'
 ];
 
+const ADMIN_ALLOWED_DESIGN_PARAMS = [
+  ...ALLOWED_DESIGN_PARAMS,
+  'showPricingBreakdown'
+];
+
 const ALLOWED_SECTION_PARAMS = [
   'position',
   'templateName',
@@ -201,7 +206,10 @@ function* createDesign() {
 }
 
 function* updateDesign() {
-  const data = pick(this.request.body, ALLOWED_DESIGN_PARAMS);
+  const isAdmin = (this.state.role === User.ROLES.admin);
+  const allowedParams = isAdmin ? ADMIN_ALLOWED_DESIGN_PARAMS : ALLOWED_DESIGN_PARAMS;
+
+  const data = pick(this.request.body, allowedParams);
 
   let updated = yield ProductDesignsDAO.update(
     this.params.designId,
