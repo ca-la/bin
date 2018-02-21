@@ -66,7 +66,7 @@ test('PATCH /product-designs/:id allows admins to update a wider range of keys',
   let designId;
   let sessionId;
 
-  return createUser(true, false, 'ADMIN')
+  return createUser({ role: 'ADMIN' })
     .then(({ user, session }) => {
       sessionId = session.id;
 
