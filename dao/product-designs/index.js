@@ -87,7 +87,9 @@ function findAll({ limit, offset, search }) {
     .orderBy('created_at', 'desc')
     .modify((query) => {
       if (search) {
-        query.andWhere(db.raw('(title ~* :search)', { search }));
+        // Lazy person's search - allow fuzzy matching for design title, or
+        // exact matching for design owner ID / status
+        query.andWhere(db.raw('(title ~* :search or user_id::text = :search or status::text = :search)', { search }));
       }
     })
     .limit(limit)
