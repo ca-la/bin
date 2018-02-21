@@ -22,7 +22,8 @@ const keyNamesByColumnName = {
 
   status: 'status',
   due_date: 'dueDate',
-  expected_cost_cents: 'expectedCostCents'
+  expected_cost_cents: 'expectedCostCents',
+  show_pricing_breakdown: 'showPricingBreakdown'
 };
 
 const dataMapper = new DataMapper(keyNamesByColumnName);

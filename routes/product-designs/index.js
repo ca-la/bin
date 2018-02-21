@@ -132,10 +132,16 @@ function* getDesignPricing() {
   } = yield Bluebird.resolve(calculator.getAllPricingTables())
     .catch(MissingPrerequisitesError, err => this.throw(400, err));
 
+  let finalTable = finalPricingTable;
+
+  if (!canManagePricing && !design.showPricingBreakdown) {
+    finalTable = finalPricingTable.serializeWithoutBreakdown();
+  }
+
   this.body = {
     computedPricingTable: canManagePricing ? computedPricingTable : null,
     overridePricingTable: canManagePricing ? overridePricingTable : null,
-    finalPricingTable
+    finalPricingTable: finalTable
   };
 
   this.status = 200;
@@ -150,6 +156,11 @@ const ALLOWED_DESIGN_PARAMS = [
   'retailPriceCents',
   'dueDate',
   'expectedCostCents'
+];
+
+const ADMIN_ALLOWED_DESIGN_PARAMS = [
+  ...ALLOWED_DESIGN_PARAMS,
+  'showPricingBreakdown'
 ];
 
 const ALLOWED_SECTION_PARAMS = [
@@ -195,7 +206,10 @@ function* createDesign() {
 }
 
 function* updateDesign() {
-  const data = pick(this.request.body, ALLOWED_DESIGN_PARAMS);
+  const isAdmin = (this.state.role === User.ROLES.admin);
+  const allowedParams = isAdmin ? ADMIN_ALLOWED_DESIGN_PARAMS : ALLOWED_DESIGN_PARAMS;
+
+  const data = pick(this.request.body, allowedParams);
 
   let updated = yield ProductDesignsDAO.update(
     this.params.designId,

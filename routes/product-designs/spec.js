@@ -32,6 +32,66 @@ test('PATCH /product-designs/:id rejects empty data', (t) => {
     });
 });
 
+test('PATCH /product-designs/:id allows certain params, rejects others', (t) => {
+  let designId;
+  let sessionId;
+
+  return createUser()
+    .then(({ user, session }) => {
+      sessionId = session.id;
+
+      return ProductDesignsDAO.create({
+        userId: user.id
+      });
+    })
+    .then((design) => {
+      designId = design.id;
+
+      return patch(`/product-designs/${designId}`, {
+        headers: authHeader(sessionId),
+        body: {
+          title: 'Fizz Buzz',
+          showPricingBreakdown: true
+        }
+      });
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 200);
+      t.equal(body.title, 'Fizz Buzz');
+      t.equal(body.showPricingBreakdown, false);
+    });
+});
+
+test('PATCH /product-designs/:id allows admins to update a wider range of keys', (t) => {
+  let designId;
+  let sessionId;
+
+  return createUser({ role: 'ADMIN' })
+    .then(({ user, session }) => {
+      sessionId = session.id;
+
+      return ProductDesignsDAO.create({
+        userId: user.id
+      });
+    })
+    .then((design) => {
+      designId = design.id;
+
+      return patch(`/product-designs/${designId}`, {
+        headers: authHeader(sessionId),
+        body: {
+          title: 'Fizz Buzz',
+          showPricingBreakdown: true
+        }
+      });
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 200);
+      t.equal(body.title, 'Fizz Buzz');
+      t.equal(body.showPricingBreakdown, true);
+    });
+});
+
 test('PUT /product-designs/:id/status updates a status', (t) => {
   sandbox().stub(EmailService, 'enqueueSend', () => Promise.resolve());
   let designId;
