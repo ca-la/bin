@@ -1,8 +1,15 @@
-<!-- If this pull request includes a migration, DO NOT RUN IT until the pull
-request is approved and merged -->
+<!-- PR Checklist. All boxes should be checked before opening! -->
 
-<!-- If the pull request includes code that depends on a migration, these must
-be broken out into two separate pull requests. The migration must be run first
-and must function with or without the corresponding code changes — since there's
-no way to ensure that the code change and migration deployments happen at
-exactly the same time. -->
+<!-- ----------- REMOVE THIS LINE IF THIS PR INCLUDES A MIGRATION -------------
+- [ ] This pull request includes a migration. Here is the output of `make validate-migration`:
+
+```
+
+```
+
+- [ ] I have not included any code here that depends on the migration (so that
+  we can deploy DB changes prior to code rollout)
+---------------- REMOVE THIS LINE IF THIS PR INCLUDES A MIGRATION --------- -->
+
+- [ ] This change includes test coverage (or a valid reason why not)
+- [ ] This change relates to a Pivotal story: <!-- [YOUR LINK HERE] -->
