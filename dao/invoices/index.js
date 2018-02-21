@@ -40,7 +40,7 @@ async function findByDesign(designId) {
 
 // Create must happen in a transaction that also creates an InvoiceBreakdown.
 // see services/create-invoice
-async function create(data, trx) {
+async function createTrx(trx, data) {
   requireValues({ data, trx });
 
   const rowData = Object.assign({}, dataMapper.userDataToRowData(data), {
@@ -78,6 +78,6 @@ module.exports = {
   findUnpaidByDesignAndStatus,
   findByDesign,
   findById,
-  create,
+  createTrx,
   update
 };
