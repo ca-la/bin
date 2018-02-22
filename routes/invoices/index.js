@@ -4,6 +4,8 @@ const Router = require('koa-router');
 
 const Invoices = require('../../dao/invoices');
 const payInvoice = require('../../services/pay-invoice');
+const payOutPartner = require('../../services/pay-out-partner');
+const requireAdmin = require('../../middleware/require-admin');
 const User = require('../../domain-objects/user');
 const { canAccessDesignInQuery } = require('../../middleware/can-access-design');
 
@@ -46,7 +48,22 @@ function* postPayInvoice() {
   this.status = 200;
 }
 
+function* postPayOut() {
+  const { invoiceId } = this.params;
+  const { message, payoutAccountId, payoutAmountCents } = this.request.body;
+
+  yield payOutPartner({
+    invoiceId,
+    payoutAccountId,
+    payoutAmountCents,
+    message
+  });
+
+  this.status = 204;
+}
+
 router.get('/', getInvoices);
 router.post('/:invoiceId/pay', postPayInvoice);
+router.post('/:invoiceId/pay-out-to-partner', requireAdmin, postPayOut);
 
 module.exports = router.routes();
