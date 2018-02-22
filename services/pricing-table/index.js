@@ -24,6 +24,7 @@ const SERVICE_IDS = Object.freeze({
   DTG_ROLL_PRINT: 'DTG Roll Print',
   DYE: 'Dye',
   EMBROIDERY: 'Embroidery',
+  OTHER_ARTWORK: 'Artwork Application (Other)',
   FULFILLMENT: 'Fulfillment',
   GRADING: 'Grading',
   PATTERN_MAKING: 'Pattern Making',
@@ -249,6 +250,7 @@ function getFeatureFriendlyProcessName(featurePlacement) {
     case 'ROTARY_PRINT': return 'Rotary Print';
     case 'SCREEN_PRINT': return 'Screen Print';
     case 'EMBROIDERY': return 'Embroidery';
+    case 'OTHER_ARTWORK': return 'Other';
     default: return 'Print';
   }
 }
@@ -338,6 +340,8 @@ class PricingCalculator {
         return this._getFinalServicePrice('SCREEN_PRINT', 'GARMENT');
       case 'EMBROIDERY':
         return this._getFinalServicePrice('EMBROIDERY', 'GARMENT');
+      case 'OTHER_ARTWORK':
+        return this._getFinalServicePrice('OTHER_ARTWORK', 'GARMENT');
 
       default:
         throw new Error(`Unknown process name: ${featurePlacement.processName}`);
