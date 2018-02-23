@@ -62,7 +62,7 @@ async function payOutPartner({
 
   await enqueueSend({
     to: vendorUser.email,
-    bcc: ADMIN_EMAIL,
+    cc: ADMIN_EMAIL,
     templateName: 'partner_payout',
     params: {
       design,
