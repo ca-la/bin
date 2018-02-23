@@ -47,14 +47,14 @@ async function sendBatchNotificationEmails() {
         if (!design) { throw new Error(`Could not find design ${designId}`); }
 
         Logger.log(`Enqueuing an email with ${designNotifications.length} notifications for User ${recipientUserId} & Design ${designId}`);
-        await EmailService.enqueueSend(
-          recipient.email,
-          'design_notifications',
-          {
+        await EmailService.enqueueSend({
+          to: recipient.email,
+          templateName: 'design_notifications',
+          params: {
             design,
             notificationsWithActors: designNotifications
           }
-        );
+        });
       }
     }
 

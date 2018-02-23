@@ -33,7 +33,7 @@ const MINIMUM_SCAN_PITCH_RADIANS = {
   [envs.STG]: 1
 }[ENV];
 
-const DESIGN_UPDATED_EMAIL = {
+const ADMIN_EMAIL = {
   [envs.LOCAL]: 'd@ca.la',
   [envs.PROD]: 'hi@ca.la',
   [envs.STG]: 'hi@ca.la'
@@ -106,7 +106,7 @@ const config = {
 
   LOG_ALL_QUERIES: (process.env.LOG_ALL_QUERIES === 'true'),
 
-  DESIGN_UPDATED_EMAIL
+  ADMIN_EMAIL
 };
 
 Object.keys(config).forEach((key) => {

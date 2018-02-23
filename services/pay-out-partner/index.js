@@ -9,6 +9,7 @@ const PartnerPayoutLogsDAO = require('../../dao/partner-payout-logs');
 const { enqueueSend } = require('../email');
 const { requireValues } = require('../require-properties');
 const { sendTransfer } = require('../stripe');
+const { ADMIN_EMAIL } = require('../../config');
 
 function assert(val, message) {
   if (!val) {
@@ -59,15 +60,16 @@ async function payOutPartner({
     payoutAmountCents
   });
 
-  await enqueueSend(
-    vendorUser.email,
-    'partner_payout',
-    {
+  await enqueueSend({
+    to: vendorUser.email,
+    bcc: ADMIN_EMAIL,
+    templateName: 'partner_payout',
+    params: {
       design,
       payoutAmountCents,
       message
     }
-  );
+  });
 
   await sendTransfer({
     destination: payoutAccount.stripeUserId,

@@ -12,16 +12,16 @@ async function sendAnnotationNotifications({ annotation, design, user, text }) {
     .map(collaborator => collaborator.email);
 
   for (let i = 0; i < recipients.length; i += 1) {
-    await enqueueSend(
-      recipients[i],
-      'add_section_annotation',
-      {
+    await enqueueSend({
+      to: recipients[i],
+      templateName: 'add_section_annotation',
+      params: {
         annotation,
         user,
         design,
         text
       }
-    );
+    });
   }
 }
 

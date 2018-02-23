@@ -4,7 +4,7 @@ const fetch = require('node-fetch');
 const FormData = require('form-data');
 
 const { enqueueMessage } = require('../aws');
-const { requireValues } = require('../require-properties');
+const { requireProperties } = require('../require-properties');
 const {
   AWS_NOTIFICATION_SQS_URL,
   AWS_NOTIFICATION_SQS_REGION,
@@ -35,13 +35,8 @@ function send(to, subject, emailBody) {
   }).then(response => response.json());
 }
 
-function enqueueSend(
-  to,
-  templateName,
-  params
-) {
-  const data = { to, templateName, params };
-  requireValues(data);
+function enqueueSend(data) {
+  requireProperties(data, 'to', 'templateName', 'params');
 
   return enqueueMessage(
     AWS_NOTIFICATION_SQS_URL,

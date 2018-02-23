@@ -6,7 +6,7 @@ const ProductDesignsDAO = require('../../dao/product-designs');
 const ProductDesignStatusUpdatesDAO = require('../../dao/product-design-status-updates');
 const UsersDAO = require('../../dao/users');
 const { assert, requireValues } = require('../require-properties');
-const { DESIGN_UPDATED_EMAIL } = require('../../config');
+const { ADMIN_EMAIL } = require('../../config');
 const { PAYMENT_STATUSES } = require('../../config/design-statuses');
 
 async function updateDesignStatus(designId, newStatus, userId) {
@@ -31,15 +31,15 @@ async function updateDesignStatus(designId, newStatus, userId) {
 
   const user = await UsersDAO.findById(userId);
 
-  await EmailService.enqueueSend(
-    DESIGN_UPDATED_EMAIL,
-    'update_design_status',
-    {
+  await EmailService.enqueueSend({
+    to: ADMIN_EMAIL,
+    templateName: 'update_design_status',
+    params: {
       user,
       design: updatedDesign,
       newStatus
     }
-  );
+  });
 
   return newStatus;
 }
