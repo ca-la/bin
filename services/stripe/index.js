@@ -3,8 +3,9 @@
 const fetch = require('node-fetch');
 const qs = require('querystring');
 
+const insecureHash = require('../insecure-hash');
 const InvalidPaymentError = require('../../errors/invalid-payment');
-const Logger = require('../../services/logger');
+const Logger = require('../logger');
 const PaymentMethodsDAO = require('../../dao/payment-methods');
 const StripeError = require('../../errors/stripe');
 const UsersDAO = require('../../dao/users');
@@ -69,7 +70,7 @@ async function charge({ customerId, sourceId, amountCents, description, invoiceI
   // - Switching sources lets you try again
   //
   // TBD if we need a better solution here but this seems ~fine for now.
-  const idempotencyKey = `${invoiceId}/${sourceId}`;
+  const idempotencyKey = insecureHash(`${invoiceId}/${sourceId}/${amountCents}`);
 
   return makeRequest({
     method: 'post',
@@ -79,7 +80,27 @@ async function charge({ customerId, sourceId, amountCents, description, invoiceI
       currency: 'usd',
       source: sourceId,
       description,
-      customer: customerId
+      customer: customerId,
+      transfer_group: invoiceId
+    },
+    idempotencyKey
+  });
+}
+
+async function sendTransfer({ destination, amountCents, description, invoiceId }) {
+  requireValues({ destination, amountCents, description, invoiceId });
+
+  const idempotencyKey = insecureHash(`${invoiceId}/${destination}/${description}`);
+
+  return makeRequest({
+    method: 'post',
+    path: '/transfers',
+    data: {
+      amount: amountCents,
+      currency: 'usd',
+      destination,
+      description,
+      transfer_group: invoiceId
     },
     idempotencyKey
   });
@@ -167,5 +188,6 @@ module.exports = {
   createConnectAccount,
   createCustomer,
   createLoginLink,
-  findOrCreateCustomerId
+  findOrCreateCustomerId,
+  sendTransfer
 };
