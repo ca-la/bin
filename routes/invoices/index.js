@@ -51,6 +51,9 @@ function* postPayInvoice() {
 function* postPayOut() {
   const { invoiceId } = this.params;
   const { message, payoutAccountId, payoutAmountCents } = this.request.body;
+  this.assert(message, 400, 'Missing message');
+  this.assert(payoutAccountId, 400, 'Missing payout account ID');
+  this.assert(payoutAmountCents, 400, 'Missing payout amount');
 
   yield payOutPartner({
     initiatorUserId: this.state.userId,

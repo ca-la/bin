@@ -8,7 +8,7 @@ const keyNamesByColumnName = {
   created_at: 'createdAt',
   invoice_id: 'invoiceId',
   payout_account_id: 'payoutAccountId',
-  payout_acount_cents: 'payoutAmountCents',
+  payout_amount_cents: 'payoutAmountCents',
   message: 'message',
   initiator_user_id: 'initiatorUserId'
 };
