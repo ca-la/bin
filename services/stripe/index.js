@@ -90,7 +90,7 @@ async function charge({ customerId, sourceId, amountCents, description, invoiceI
 async function sendTransfer({ destination, amountCents, description, invoiceId }) {
   requireValues({ destination, amountCents, description, invoiceId });
 
-  const idempotencyKey = insecureHash(`${invoiceId}/${destination}/${description}`);
+  const idempotencyKey = insecureHash(`${description}-${invoiceId}-${destination}`);
 
   return makeRequest({
     method: 'post',
