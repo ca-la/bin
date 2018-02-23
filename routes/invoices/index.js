@@ -53,6 +53,7 @@ function* postPayOut() {
   const { message, payoutAccountId, payoutAmountCents } = this.request.body;
 
   yield payOutPartner({
+    initiatorUserId: this.state.userId,
     invoiceId,
     payoutAccountId,
     payoutAmountCents,

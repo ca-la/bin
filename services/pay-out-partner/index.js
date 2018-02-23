@@ -6,6 +6,7 @@ const InvoicesDAO = require('../../dao/invoices');
 const PartnerPayoutAccountsDAO = require('../../dao/partner-payout-accounts');
 const PartnerPayoutLogsDAO = require('../../dao/partner-payout-logs');
 const { requireValues } = require('../require-properties');
+const { sendTransfer } = require('../stripe');
 
 function assert(val, message) {
   if (!val) {
@@ -21,10 +22,11 @@ function assert(val, message) {
 //  - We make sure this partner is someone shared on this design
 //  - We make sure the payout amount is <= the invoice amount
 async function payOutPartner({
+  initiatorUserId,
   invoiceId,
+  message,
   payoutAccountId,
-  payoutAmountCents,
-  message
+  payoutAmountCents
 }) {
   requireValues({ invoiceId, payoutAccountId, payoutAmountCents, message });
 
@@ -45,6 +47,23 @@ async function payOutPartner({
   );
 
   assert(vendorUser, "This vendor doesn't appear to be shared on this design");
+
+  await PartnerPayoutLogsDAO.create({
+    initiatorUserId,
+    invoiceId,
+    message,
+    payoutAccountId,
+    payoutAmountCents
+  });
+
+  TODO - send email
+
+  await sendTransfer({
+    destination: payoutAccount.stripeUserId,
+    amountCents: payoutAmountCents,
+    description: invoice.title,
+    invoiceId
+  });
 }
 
 module.exports = payOutPartner;
