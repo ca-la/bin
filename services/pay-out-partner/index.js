@@ -1,10 +1,12 @@
 'use strict';
 
+const DesignsDAO = require('../../dao/product-designs');
 const findDesignUsers = require('../find-design-users');
 const InvalidDataError = require('../../errors/invalid-data');
 const InvoicesDAO = require('../../dao/invoices');
 const PartnerPayoutAccountsDAO = require('../../dao/partner-payout-accounts');
 const PartnerPayoutLogsDAO = require('../../dao/partner-payout-logs');
+const { enqueueSend } = require('../email');
 const { requireValues } = require('../require-properties');
 const { sendTransfer } = require('../stripe');
 
@@ -31,16 +33,17 @@ async function payOutPartner({
   requireValues({ invoiceId, payoutAccountId, payoutAmountCents, message });
 
   const invoice = await InvoicesDAO.findById(invoiceId);
-
-  if (!invoice) { throw new InvalidDataError(`No invoice with ID ${invoiceId}`); }
+  assert(invoice, `No invoice with ID ${invoiceId}`);
 
   const payoutAccount = await PartnerPayoutAccountsDAO.findById(payoutAccountId);
-
   assert(payoutAccount, `No payout account with ID ${payoutAccountId}`);
 
   assert(payoutAmountCents <= invoice.totalCents, 'Payout amount cannot be larger than invoice amount');
 
   const designUsers = await findDesignUsers(invoice.designId);
+
+  const design = await DesignsDAO.findById(invoice.designId);
+  assert(design, `No design with ID ${invoice.designId}`);
 
   const vendorUser = designUsers.find(user =>
     user.id === payoutAccount.userId
@@ -56,7 +59,15 @@ async function payOutPartner({
     payoutAmountCents
   });
 
-  TODO - send email
+  await enqueueSend(
+    vendorUser.email,
+    'partner_payout',
+    {
+      design,
+      payoutAmountCents,
+      message
+    }
+  );
 
   await sendTransfer({
     destination: payoutAccount.stripeUserId,

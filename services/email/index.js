@@ -15,6 +15,10 @@ const {
 const MAILGUN_AUTH = new Buffer(`api:${MAILGUN_API_KEY}`).toString('base64');
 const FROM = 'CALA <hi@ca.la>';
 
+// XXX: DEPRECATED
+// ALL NEW EMAILS SHOULD GO THROUGH THE EMAIL SERVICE
+//
+// See https://github.com/ca-la/notifications and `enqueueSend` below
 function send(to, subject, emailBody) {
   const data = new FormData();
   data.append('from', FROM);
