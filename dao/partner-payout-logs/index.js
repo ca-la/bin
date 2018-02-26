@@ -25,6 +25,16 @@ async function create(data) {
     .catch(rethrow);
 }
 
+async function findByPayoutAccountId(payoutAccountId) {
+  return db(TABLE_NAME)
+    .where({
+      payout_account_id: payoutAccountId
+    })
+    .then(logs => logs.map(instantiate))
+    .catch(rethrow);
+}
+
 module.exports = {
-  create
+  create,
+  findByPayoutAccountId
 };
