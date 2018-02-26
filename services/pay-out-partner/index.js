@@ -52,6 +52,14 @@ async function payOutPartner({
 
   assert(vendorUser, "This vendor doesn't appear to be shared on this design");
 
+  // Send the transfer first; if it fails we don't send emails or create logs
+  await sendTransfer({
+    destination: payoutAccount.stripeUserId,
+    amountCents: payoutAmountCents,
+    description: invoice.title,
+    invoiceId
+  });
+
   await PartnerPayoutLogsDAO.create({
     initiatorUserId,
     invoiceId,
@@ -69,13 +77,6 @@ async function payOutPartner({
       payoutAmountCents,
       message
     }
-  });
-
-  await sendTransfer({
-    destination: payoutAccount.stripeUserId,
-    amountCents: payoutAmountCents,
-    description: invoice.title,
-    invoiceId
   });
 }
 
