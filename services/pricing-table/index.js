@@ -507,71 +507,83 @@ class PricingCalculator {
     });
 
     if (enabledServices.DESIGN) {
-      const designPrice = this._getFinalServicePrice('DESIGN', 'DESIGN');
+      const price = this._getFinalServicePrice('DESIGN', 'DESIGN');
 
       developmentGroup.addLineItem(new LineItem({
         title: 'Design Consulting',
         id: 'development-design-consulting',
         quantity: 1,
-        unitPriceCents: designPrice.serviceCostCents,
-        unitMarginCents: designPrice.serviceMarginCents
+        unitPriceCents: price.setupCostCents + price.serviceCostCents,
+        unitMarginCents: price.setupMarginCents + price.serviceMarginCents
       }));
     }
 
     if (enabledServices.PATTERN_MAKING) {
-      const patternMakingPrice = this._getFinalServicePrice('PATTERN_MAKING', 'DESIGN');
+      const price = this._getFinalServicePrice('PATTERN_MAKING', 'DESIGN');
+
       developmentGroup.addLineItem(new LineItem({
         title: 'Pattern Making',
         id: 'development-patternmaking',
         quantity: 1,
-        unitPriceCents: patternMakingPrice.serviceCostCents,
-        unitMarginCents: patternMakingPrice.serviceMarginCents
+        unitPriceCents: price.setupCostCents + price.serviceCostCents,
+        unitMarginCents: price.setupMarginCents + price.serviceMarginCents
       }));
     }
 
     if (enabledServices.GRADING) {
-      const gradingPrice = this._getFinalServicePrice('GRADING', 'SIZE');
+      const price = this._getFinalServicePrice('GRADING', 'SIZE');
+
+      if (price.setupCostCents > 0) {
+        developmentGroup.addLineItem(new LineItem({
+          title: 'Marking & Grading - Setup',
+          id: 'development-grading-setup',
+          quantity: 1,
+          unitPriceCents: price.setupCostCents,
+          unitMarginCents: price.setupMarginCents
+        }));
+      }
+
       developmentGroup.addLineItem(new LineItem({
         title: 'Marking & Grading',
         id: 'development-grading',
         // We charge grading for (number of sizes - 1), since the sample size
         // doesn't need additional grading
         quantity: Math.max(numberOfSizes - 1, 0),
-        unitPriceCents: gradingPrice.serviceCostCents,
-        unitMarginCents: gradingPrice.serviceMarginCents
+        unitPriceCents: price.serviceCostCents,
+        unitMarginCents: price.serviceMarginCents
       }));
     }
 
     if (enabledServices.SOURCING) {
-      const sourcingPrice = this._getFinalServicePrice('SOURCING', 'DESIGN');
+      const price = this._getFinalServicePrice('SOURCING', 'DESIGN');
       developmentGroup.addLineItem(new LineItem({
         title: 'Sourcing/Testing',
         id: 'development-sourcing',
         quantity: 1,
-        unitPriceCents: sourcingPrice.serviceCostCents,
-        unitMarginCents: sourcingPrice.serviceMarginCents
+        unitPriceCents: price.setupCostCents + price.serviceCostCents,
+        unitMarginCents: price.setupMarginCents + price.serviceMarginCents
       }));
     }
 
     if (enabledServices.TECHNICAL_DESIGN) {
-      const technicalDesignPrice = this._getFinalServicePrice('TECHNICAL_DESIGN', 'DESIGN');
+      const price = this._getFinalServicePrice('TECHNICAL_DESIGN', 'DESIGN');
       developmentGroup.addLineItem(new LineItem({
         title: 'Technical Design',
         id: 'development-technical-design',
         quantity: 1,
-        unitPriceCents: technicalDesignPrice.serviceCostCents,
-        unitMarginCents: technicalDesignPrice.serviceMarginCents
+        unitPriceCents: price.setupCostCents + price.serviceCostCents,
+        unitMarginCents: price.setupMarginCents + price.serviceMarginCents
       }));
     }
 
     if (enabledServices.SAMPLING) {
-      const samplingPrice = this._getFinalServicePrice('SAMPLING', 'DESIGN');
+      const price = this._getFinalServicePrice('SAMPLING', 'DESIGN');
       developmentGroup.addLineItem(new LineItem({
         title: 'Sampling',
         id: 'development-sampling',
         quantity: 1,
-        unitPriceCents: samplingPrice.serviceCostCents,
-        unitMarginCents: samplingPrice.serviceMarginCents
+        unitPriceCents: price.setupCostCents + price.serviceCostCents,
+        unitMarginCents: price.setupMarginCents + price.serviceMarginCents
       }));
     }
 
