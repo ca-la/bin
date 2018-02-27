@@ -112,6 +112,8 @@ function* createManualInvoice() {
   const design = yield ProductDesignsDAO.findById(designId);
   this.assert(design, 400, 'Design not found');
 
+  this.assert(totalCents > 0, 400, 'Invoice amount must be positive');
+
   const ALLOWED_STATUSES = [
     'NEEDS_DEVELOPMENT_PAYMENT',
     'NEEDS_PRODUCTION_PAYMENT',
