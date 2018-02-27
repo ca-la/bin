@@ -2,7 +2,7 @@
 
 const Router = require('koa-router');
 
-const Invoices = require('../../dao/invoices');
+const InvoicesDAO = require('../../dao/invoices');
 const payInvoice = require('../../services/pay-invoice');
 const payOutPartner = require('../../services/pay-out-partner');
 const requireAdmin = require('../../middleware/require-admin');
@@ -20,15 +20,26 @@ function* getInvoices(next) {
 
   if (designStatusId) {
     yield canAccessDesignInQuery.call(this, next);
-    invoices = yield Invoices.findUnpaidByDesignAndStatus(designId, designStatusId);
+    invoices = yield InvoicesDAO.findUnpaidByDesignAndStatus(designId, designStatusId);
   } else {
     const isAdmin = (this.state.role === User.ROLES.admin);
     this.assert(isAdmin, 403);
 
-    invoices = yield Invoices.findByDesign(designId);
+    invoices = yield InvoicesDAO.findByDesign(designId);
   }
 
   this.body = invoices;
+  this.status = 200;
+}
+
+function* getInvoice() {
+  const { invoiceId } = this.params;
+
+  const invoice = yield InvoicesDAO.findById(invoiceId);
+  this.assert(invoice, 404);
+
+  this.body = invoice;
+
   this.status = 200;
 }
 
@@ -67,6 +78,7 @@ function* postPayOut() {
 }
 
 router.get('/', getInvoices);
+router.get('/:invoiceId', requireAdmin, getInvoice);
 router.post('/:invoiceId/pay', postPayInvoice);
 router.post('/:invoiceId/pay-out-to-partner', requireAdmin, postPayOut);
 
