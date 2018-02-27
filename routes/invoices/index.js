@@ -2,12 +2,17 @@
 
 const Router = require('koa-router');
 
+const db = require('../../services/db');
+const InvalidDataError = require('../../errors/invalid-data');
+const InvoiceBreakdownsDAO = require('../../dao/invoice-breakdowns');
 const InvoicesDAO = require('../../dao/invoices');
 const payInvoice = require('../../services/pay-invoice');
+const ProductDesignsDAO = require('../../dao/product-designs');
 const payOutPartner = require('../../services/pay-out-partner');
 const requireAdmin = require('../../middleware/require-admin');
 const User = require('../../domain-objects/user');
 const { canAccessDesignInQuery } = require('../../middleware/can-access-design');
+const { requirePropertiesFormatted } = require('../../services/require-properties');
 
 const router = new Router();
 
@@ -85,7 +90,81 @@ function* postPayOut() {
   this.status = 204;
 }
 
+function* createManualInvoice() {
+  let invoice;
+
+  const {
+    totalCents,
+    title,
+    description,
+    designId,
+    breakdown
+  } = this.request.body;
+
+  requirePropertiesFormatted(this.request.body, {
+    totalCents: 'Total',
+    title: 'Title',
+    description: 'Description',
+    designId: 'Design ID',
+    breakdown: 'Breakdown'
+  });
+
+  const design = yield ProductDesignsDAO.findById(designId);
+  this.assert(design, 400, 'Design not found');
+
+  const ALLOWED_STATUSES = [
+    'NEEDS_DEVELOPMENT_PAYMENT',
+    'NEEDS_PRODUCTION_PAYMENT',
+    'NEEDS_FULFILLMENT_PAYMENT'
+  ];
+
+  if (ALLOWED_STATUSES.indexOf(design.status) < 0) {
+    throw new InvalidDataError('Design must be in a NEEDS_PAYMENT status before you can create a new invoice');
+  }
+
+  const {
+    invoiceAmountCents,
+    invoiceMarginCents,
+    stripeFeeCents,
+    costOfServicesCents,
+    totalProfitCents
+  } = breakdown;
+
+  requirePropertiesFormatted(breakdown, {
+    invoiceAmountCents: 'Breakdown Total',
+    invoiceMarginCents: 'Breakdown Margin',
+    stripeFeeCents: 'Breakdown Stripe Fee',
+    costOfServicesCents: 'Breakdown Cost of Services',
+    totalProfitCents: 'Breakdown Total Profit'
+  });
+
+  yield db.transaction(async (trx) => {
+    invoice = await InvoicesDAO.createTrx(trx, {
+      totalCents,
+      title,
+      description,
+      designId,
+      designStatusId: design.status
+    });
+
+    await InvoiceBreakdownsDAO.createTrx(trx, {
+      invoiceId: invoice.id,
+
+      invoiceAmountCents,
+      invoiceMarginCents,
+      stripeFeeCents,
+
+      costOfServicesCents,
+      totalProfitCents
+    });
+  });
+
+  this.body = invoice;
+  this.status = 200;
+}
+
 router.get('/', getInvoices);
+router.post('/', requireAdmin, createManualInvoice);
 router.get('/:invoiceId', requireAdmin, getInvoice);
 router.del('/:invoiceId', requireAdmin, deleteInvoice);
 router.post('/:invoiceId/pay', postPayInvoice);

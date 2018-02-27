@@ -68,33 +68,26 @@ async function createInvoice(design, newStatusId) {
   } = getInvoiceAmount(finalPricingTable, newStatusId);
 
   return db.transaction(async (trx) => {
-    try {
-      const invoice = await InvoicesDAO.createTrx(trx, {
-        totalCents: invoiceAmountCents,
-        title: `${design.title} — ${status.label}`,
-        designId: design.id,
-        designStatusId: newStatusId
-      });
+    const invoice = await InvoicesDAO.createTrx(trx, {
+      totalCents: invoiceAmountCents,
+      title: `${design.title} — ${status.label}`,
+      designId: design.id,
+      designStatusId: newStatusId
+    });
 
-      const stripeFeeCents = calculateStripeFee(invoiceAmountCents);
+    const stripeFeeCents = calculateStripeFee(invoiceAmountCents);
 
-      await InvoiceBreakdownsDAO.createTrx(trx, {
-        invoiceId: invoice.id,
+    await InvoiceBreakdownsDAO.createTrx(trx, {
+      invoiceId: invoice.id,
 
-        invoiceAmountCents,
-        invoiceMarginCents,
-        stripeFeeCents,
+      invoiceAmountCents,
+      invoiceMarginCents,
+      stripeFeeCents,
 
-        costOfServicesCents: invoiceAmountCents - invoiceMarginCents,
-        totalProfitCents: invoiceMarginCents - stripeFeeCents,
-        pricingTableData: { pricingTableLineItems }
-      });
-
-      await trx.commit();
-    } catch (err) {
-      await trx.rollback(err);
-      throw err;
-    }
+      costOfServicesCents: invoiceAmountCents - invoiceMarginCents,
+      totalProfitCents: invoiceMarginCents - stripeFeeCents,
+      pricingTableData: { pricingTableLineItems }
+    });
   });
 }
 
