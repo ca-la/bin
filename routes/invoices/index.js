@@ -43,6 +43,14 @@ function* getInvoice() {
   this.status = 200;
 }
 
+function* deleteInvoice() {
+  const { invoiceId } = this.params;
+
+  yield InvoicesDAO.deleteById(invoiceId);
+
+  this.status = 204;
+}
+
 function* postPayInvoice() {
   const { paymentMethodId } = this.request.body;
   this.assert(paymentMethodId, 400, 'Missing payment method ID');
@@ -79,6 +87,7 @@ function* postPayOut() {
 
 router.get('/', getInvoices);
 router.get('/:invoiceId', requireAdmin, getInvoice);
+router.del('/:invoiceId', requireAdmin, deleteInvoice);
 router.post('/:invoiceId/pay', postPayInvoice);
 router.post('/:invoiceId/pay-out-to-partner', requireAdmin, postPayOut);
 

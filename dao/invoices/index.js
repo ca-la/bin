@@ -76,7 +76,19 @@ async function findById(id) {
     .catch(rethrow);
 }
 
+async function deleteById(id) {
+  return db(TABLE_NAME)
+    .where({ id, deleted_at: null })
+    .update({
+      deleted_at: (new Date()).toISOString()
+    }, '*')
+    .then(first)
+    .then(maybeInstantiate)
+    .catch(rethrow);
+}
+
 module.exports = {
+  deleteById,
   findUnpaidByDesignAndStatus,
   findByDesign,
   findById,
