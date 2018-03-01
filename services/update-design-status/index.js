@@ -2,11 +2,13 @@
 
 const createInvoice = require('../../services/create-invoice');
 const EmailService = require('../email');
+const Logger = require('../logger');
+const MissingPrerequisitesError = require('../../errors/missing-prerequisites');
 const ProductDesignsDAO = require('../../dao/product-designs');
 const ProductDesignStatusUpdatesDAO = require('../../dao/product-design-status-updates');
 const UsersDAO = require('../../dao/users');
-const { assert, requireValues } = require('../require-properties');
 const { ADMIN_EMAIL } = require('../../config');
+const { assert, requireValues } = require('../require-properties');
 const { PAYMENT_STATUSES } = require('../../config/design-statuses');
 
 async function updateDesignStatus(designId, newStatus, userId) {
@@ -16,7 +18,15 @@ async function updateDesignStatus(designId, newStatus, userId) {
   assert(design, 'Design not found');
 
   if (PAYMENT_STATUSES.indexOf(newStatus) > -1) {
-    await createInvoice(design, newStatus);
+    try {
+      await createInvoice(design, newStatus);
+    } catch (err) {
+      if (err instanceof MissingPrerequisitesError) {
+        Logger.logServerError(`Forced design ${designId} into the ${newStatus} phase, but unable to generate an invoice`);
+      } else {
+        throw err;
+      }
+    }
   }
 
   const updatedDesign = await ProductDesignsDAO.update(designId, {
