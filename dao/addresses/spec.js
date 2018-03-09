@@ -24,17 +24,26 @@ const ADDRESS_DATA = Object.freeze({
   country: 'USA'
 });
 
-test('AddressesDAO.create creates a new address', (t) => {
-  let expectedAddress;
+test('AddressesDAO.create creates a new address', async (t) => {
+  const user = await UsersDAO.create(USER_DATA);
 
-  return UsersDAO.create(USER_DATA).then((user) => {
-    expectedAddress = Object.assign({}, ADDRESS_DATA, {
-      userId: user.id
-    });
-
-    return AddressesDAO.create(expectedAddress);
-  }).then((address) => {
-    const actualAddress = pick(address, Object.keys(expectedAddress));
-    t.deepEqual(actualAddress, expectedAddress);
+  const expectedAddress = Object.assign({}, ADDRESS_DATA, {
+    userId: user.id
   });
+
+  const address = await AddressesDAO.create(expectedAddress);
+  const actualAddress = pick(address, Object.keys(expectedAddress));
+
+  t.deepEqual(actualAddress, expectedAddress);
+});
+
+test('AddressesDAO.deleteById deletes an address', async (t) => {
+  const user = await UsersDAO.create(USER_DATA);
+
+  const data = Object.assign({}, ADDRESS_DATA, { userId: user.ido});
+
+  const address = await AddressesDAO.create(data);
+  const deleted = await AddressesDAO.deleteById(address.id);
+
+  t.notEqual(deleted.deletedAt, null);
 });

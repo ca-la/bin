@@ -3,6 +3,7 @@
 const Router = require('koa-router');
 
 const AddressesDAO = require('../../dao/addresses');
+const canAccessUserResource = require('../../middleware/can-access-user-resource');
 const InvalidDataError = require('../../errors/invalid-data');
 const requireAuth = require('../../middleware/require-auth');
 
@@ -35,7 +36,22 @@ function* createAddress() {
   this.body = address;
 }
 
+/**
+ * DELETE /addresses/:id
+ */
+function* deleteAddress() {
+  const { addressId } = this.params;
+
+  const address = yield AddressesDAO.findById(addressId);
+  this.assert(address, 404);
+
+  canAccessUserResource.call(this, address.userId);
+  yield AddressesDAO.deleteById(addressId);
+  this.status = 204;
+}
+
 router.get('/', requireAuth, getList);
 router.post('/', requireAuth, createAddress);
+router.del('/:addressId', requireAuth, deleteAddress);
 
 module.exports = router.routes();

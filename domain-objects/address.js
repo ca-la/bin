@@ -16,6 +16,7 @@ class Address {
     this.country = row.country;
     this.userId = row.user_id;
     this.createdAt = new Date(row.created_at);
+    this.deletedAt = row.deleted_at && new Date(row.deleted_at);
   }
 }
 

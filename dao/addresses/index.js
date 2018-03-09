@@ -9,6 +9,9 @@ const first = require('../../services/first');
 const { requirePropertiesFormatted } = require('../../services/require-properties');
 
 const instantiate = data => new Address(data);
+const maybeInstantiate = data => (data && new Address(data)) || null;
+
+const TABLE_NAME = 'addresses';
 
 function validate(data) {
   const requiredMessages = {
@@ -25,7 +28,7 @@ function validate(data) {
 function create(data) {
   validate(data);
 
-  return db('addresses').insert({
+  return db(TABLE_NAME).insert({
     id: uuid.v4(),
     company_name: data.companyName,
     address_line_1: data.addressLine1,
@@ -42,15 +45,46 @@ function create(data) {
 }
 
 function findByUserId(userId) {
-  return db('addresses')
-    .where({ user_id: userId })
+  return db(TABLE_NAME)
+    .where({
+      user_id: userId,
+      deleted_at: null
+    })
     .orderBy('created_at', 'desc')
     .catch(rethrow)
     .then(addresses => addresses.map(instantiate));
 }
 
+function findById(id) {
+  return db(TABLE_NAME)
+    .where({
+      id,
+      deleted_at: null
+    })
+    .then(first)
+    .then(maybeInstantiate)
+    .catch(rethrow);
+}
+
+
+function deleteById(id) {
+  return db(TABLE_NAME)
+    .where({
+      id,
+      deleted_at: null
+    })
+    .update({
+      deleted_at: new Date()
+    }, '*')
+    .then(first)
+    .then(maybeInstantiate)
+    .catch(rethrow);
+}
+
 module.exports = {
   create,
+  deleteById,
+  findById,
   validate,
   findByUserId
 };
