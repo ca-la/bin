@@ -9,7 +9,8 @@ create table product_design_comments (
   section_id uuid not null references product_design_sections(id),
   text text not null,
   parent_comment_id uuid references product_design_comments(id),
-  user_id uuid not null references users(id)
+  user_id uuid not null references users(id),
+  is_pinned boolean not null default false
 );
   `);
 };
