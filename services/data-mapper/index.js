@@ -25,7 +25,11 @@ class DataMapper {
   userDataToRowData(data) {
     return mapKeys(data, (value, key) => {
       const columnName = this.columnNamesByKeyName[key];
-      if (!columnName) throw new InvalidDataError(`Unknown key: ${key}`);
+      if (!columnName) {
+        logServerError('Column names by key name:');
+        logServerError(JSON.stringify(this.columnNamesByKeyName, null, 2));
+        throw new InvalidDataError(`Unknown key: ${key}`);
+      }
       return columnName;
     });
   }

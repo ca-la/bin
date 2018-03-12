@@ -6,7 +6,7 @@ const uuid = require('node-uuid');
 const compact = require('../../services/compact');
 const db = require('../../services/db');
 const first = require('../../services/first');
-const ProductDesignComment = require('../../domain-objects/product-design');
+const ProductDesignComment = require('../../domain-objects/product-design-comment');
 
 const instantiate = row => new ProductDesignComment(row);
 const maybeInstantiate = data => (data && new ProductDesignComment(data)) || null;
@@ -16,12 +16,11 @@ const { dataMapper } = ProductDesignComment;
 const TABLE_NAME = 'product_design_comments';
 
 async function findByDesign(designId) {
-  const result = await db(TABLE_NAME)
-    .raw(`
-select product_design_section_comments.*
-  from product_design_section_comments
+  const result = await db.raw(`
+select product_design_comments.*
+  from product_design_comments
     left join product_design_sections
-      on product_design_sections.id = product_design_section_comments.section_id
+      on product_design_sections.id = product_design_comments.section_id
     where product_design_sections.design_id = ?;
     `, [designId])
     .catch(rethrow);
