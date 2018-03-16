@@ -43,7 +43,22 @@ function* update() {
   this.status = 200;
 }
 
+function* create() {
+  const { parentCommentId, sectionId, text } = this.request.body;
+
+  const created = yield ProductDesignCommentsDAO.create({
+    parentCommentId,
+    sectionId,
+    text,
+    userId: this.state.userId
+  });
+
+  this.body = created;
+  this.status = 201;
+}
+
 router.get('/', requireAuth, getByDesign);
+router.post('/', requireAuth, create);
 router.del('/:commentId', requireAuth, deleteComment);
 router.patch('/:commentId', requireAuth, update);
 
