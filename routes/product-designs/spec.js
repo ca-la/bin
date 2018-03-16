@@ -58,7 +58,7 @@ test('PATCH /product-designs/:id allows certain params, rejects others', (t) => 
     .then(([response, body]) => {
       t.equal(response.status, 200);
       t.equal(body.title, 'Fizz Buzz');
-      t.equal(body.showPricingBreakdown, false);
+      t.equal(body.showPricingBreakdown, true);
     });
 });
 
