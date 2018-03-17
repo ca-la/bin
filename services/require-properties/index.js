@@ -1,5 +1,6 @@
 'use strict';
 
+const Logger = require('../../services/logger');
 const InvalidDataError = require('../../errors/invalid-data');
 
 function isEmptyString(val) {
@@ -28,7 +29,8 @@ function exists(val) {
  */
 function requireProperties(obj, ...props) {
   if (!obj) {
-    throw new Error('No data provided');
+    Logger.logServerError('Object: ', obj);
+    throw new Error('requireProperties was called on a falsy object');
   }
 
   const missingProps = [];
