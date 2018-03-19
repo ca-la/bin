@@ -5,9 +5,16 @@ const Router = require('koa-router');
 const canAccessUserResource = require('../../middleware/can-access-user-resource');
 const ProductDesignCommentsDAO = require('../../dao/product-design-comments');
 const requireAuth = require('../../middleware/require-auth');
+const UsersDAO = require('../../dao/users');
 const { canAccessDesignId } = require('../../middleware/can-access-design');
 
 const router = new Router();
+
+async function attachUser(comment) {
+  const user = await UsersDAO.findById(comment.userId);
+  comment.setUser(user);
+  return comment;
+}
 
 function* getByDesign() {
   const { designId } = this.query;
@@ -16,7 +23,9 @@ function* getByDesign() {
   yield canAccessDesignId.call(this, designId);
 
   const comments = yield ProductDesignCommentsDAO.findByDesign(designId);
-  this.body = comments;
+  const commentsWithUsers = yield Promise.all(comments.map(attachUser));
+
+  this.body = commentsWithUsers;
   this.status = 200;
 }
 
@@ -38,8 +47,9 @@ function* update() {
   yield canAccessUserResource.call(this, comment.userId);
 
   const updated = yield ProductDesignCommentsDAO.update(commentId, this.request.body);
+  const withUser = yield attachUser(updated);
 
-  this.body = updated;
+  this.body = withUser;
   this.status = 200;
 }
 
@@ -53,7 +63,9 @@ function* create() {
     userId: this.state.userId
   });
 
-  this.body = created;
+  const withUser = yield attachUser(created);
+
+  this.body = withUser;
   this.status = 201;
 }
 
