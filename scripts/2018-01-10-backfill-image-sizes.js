@@ -1,5 +1,10 @@
 'use strict';
 
+// NOTE: We've removed image-size in favor of probe-image-size as it had trouble
+// with some image types. The API is slightly different, so we'll have to rework
+// this script if we ever need to reuse any parts of it.
+
+// eslint-disable-next-line
 const sizeOf = require('image-size');
 const fetch = require('node-fetch');
 

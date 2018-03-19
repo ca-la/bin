@@ -63,7 +63,7 @@ function findBySectionId(sectionId) {
     })
     .orderBy('created_at', 'desc')
     .then(placements => placements.map(instantiate))
-    .catch(rethrow)
+    .catch(rethrow);
 }
 
 function findById(id) {
