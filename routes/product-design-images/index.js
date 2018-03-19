@@ -1,8 +1,9 @@
 'use strict';
 
+const fs = require('fs');
 const multer = require('koa-multer');
 const Router = require('koa-router');
-const sizeOf = require('image-size');
+const probeSize = require('probe-image-size');
 
 const ProductDesignImagesDAO = require('../../dao/product-design-images');
 const requireAuth = require('../../middleware/require-auth');
@@ -39,15 +40,20 @@ function* createImage() {
     description
   } = this.req.body;
 
-  const size = sizeOf(localPath);
+  const localStream = fs.createReadStream(localPath);
+  const size = yield probeSize(localStream);
+
+  const { width, height } = size;
+
+  localStream.destroy();
 
   // This is bad and inefficient; the entire request body has to be loaded into
   // memory before sending to S3. TODO figure out streaming, offload this to
   // Lambda or something, or let clients upload direct to S3.
   const image = yield ProductDesignImagesDAO.create({
     description,
-    originalHeightPx: size.height,
-    originalWidthPx: size.width,
+    originalHeightPx: height,
+    originalWidthPx: width,
     mimeType: data.mimetype,
     title,
     userId: this.state.userId

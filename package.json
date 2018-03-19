@@ -13,7 +13,6 @@
     "co-body": "4.2.0",
     "form-data": "2.1.2",
     "google-libphonenumber": "2.0.9",
-    "image-size": "0.6.2",
     "knex": "0.14.2",
     "koa": "1.2.4",
     "koa-multer": "0.0.2",
@@ -24,6 +23,7 @@
     "node-uuid": "1.4.7",
     "pg": "6.1.0",
     "pg-rethrow": "1.0.1",
+    "probe-image-size": "4.0.0",
     "zipcodes": "2.1.0"
   },
   "devDependencies": {
