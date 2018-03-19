@@ -33,7 +33,7 @@ function* deleteComment() {
   const { commentId } = this.params;
   const comment = yield ProductDesignCommentsDAO.findById(commentId);
   this.assert(comment, 404);
-  yield canAccessUserResource.call(this, comment.userId);
+  canAccessUserResource.call(this, comment.userId);
 
   yield ProductDesignCommentsDAO.deleteById(commentId);
 
@@ -44,7 +44,7 @@ function* update() {
   const { commentId } = this.params;
   const comment = yield ProductDesignCommentsDAO.findById(commentId);
   this.assert(comment, 404);
-  yield canAccessUserResource.call(this, comment.userId);
+  canAccessUserResource.call(this, comment.userId);
 
   const updated = yield ProductDesignCommentsDAO.update(commentId, this.request.body);
   const withUser = yield attachUser(updated);
@@ -55,6 +55,8 @@ function* update() {
 
 function* create() {
   const { parentCommentId, sectionId, text } = this.request.body;
+
+  this.assert(text, 400, 'Comment text cannot be empty');
 
   const created = yield ProductDesignCommentsDAO.create({
     parentCommentId,
