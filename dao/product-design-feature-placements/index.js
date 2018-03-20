@@ -34,25 +34,22 @@ function createForSectionTrx(trx, sectionId, placements) {
   });
 
   return db(TABLE_NAME)
+    .returning('*')
     .transacting(trx)
     .insert(rows)
-    .returning('*')
     .catch(rethrow)
     .then(inserted => inserted.map(instantiate));
 }
 
 function replaceForSection(sectionId, placements) {
-  return db.transaction((trx) => {
-    deleteForSectionTrx(trx, sectionId)
-      .then(() => {
-        if (placements.length > 0) {
-          return createForSectionTrx(trx, sectionId, placements);
-        }
+  return db.transaction(async (trx) => {
+    await deleteForSectionTrx(trx, sectionId)
 
-        return [];
-      })
-      .then(trx.commit)
-      .catch(trx.rollback);
+    if (placements.length > 0) {
+      return createForSectionTrx(trx, sectionId, placements);
+    }
+
+    return [];
   });
 }
 
