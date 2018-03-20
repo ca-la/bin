@@ -43,7 +43,7 @@ function createForSectionTrx(trx, sectionId, placements) {
 
 function replaceForSection(sectionId, placements) {
   return db.transaction(async (trx) => {
-    await deleteForSectionTrx(trx, sectionId)
+    await deleteForSectionTrx(trx, sectionId);
 
     if (placements.length > 0) {
       return createForSectionTrx(trx, sectionId, placements);
