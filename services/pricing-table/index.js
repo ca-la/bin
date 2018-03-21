@@ -25,6 +25,7 @@ const SERVICE_IDS = Object.freeze({
   DYE: 'Dye',
   EMBROIDERY: 'Embroidery',
   OTHER_ARTWORK: 'Artwork Application (Other)',
+  BLANK_PRODUCTS: 'Blank Products',
   FULFILLMENT: 'Fulfillment',
   GRADING: 'Grading',
   PATTERN_MAKING: 'Pattern Making',
@@ -554,6 +555,20 @@ class PricingCalculator {
       }));
     }
 
+    if (enabledServices.BLANK_PRODUCTS) {
+      const price = this._getFinalServicePrice('BLANK_PRODUCTS', 'GARMENT');
+
+      if (price.setupCostCents > 0) {
+        developmentGroup.addLineItem(new LineItem({
+          title: 'Blank Products (Setup)',
+          id: 'development-blank-setup',
+          quantity: 1,
+          unitPriceCents: price.setupCostCents,
+          unitMarginCents: price.setupMarginCents
+        }));
+      }
+    }
+
     if (enabledServices.SOURCING) {
       const price = this._getFinalServicePrice('SOURCING', 'DESIGN');
       developmentGroup.addLineItem(new LineItem({
@@ -696,6 +711,18 @@ class PricingCalculator {
         unitMarginCents: featurePrice.serviceMarginCents
       }));
     });
+
+    if (enabledServices.BLANK_PRODUCTS) {
+      const price = this._getFinalServicePrice('BLANK_PRODUCTS', 'GARMENT');
+
+      materialsGroup.addLineItem(new LineItem({
+        title: 'Blank Products',
+        id: 'production-blanks',
+        quantity: 1,
+        unitPriceCents: price.serviceCostCents,
+        unitMarginCents: price.serviceMarginCents
+      }));
+    }
 
     materialsGroup.setGroupPriceCents(materialsGroup.getTotalPriceCents());
 
