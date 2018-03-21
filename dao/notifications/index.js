@@ -43,6 +43,16 @@ async function create(data) {
     .catch(rethrow);
 }
 
+/**
+ * Delete recent identical notifications, i.e. to batch up groups of many
+ * "someone edited this text" actions into one single message.
+ *
+ * Note that the interval here does *not* have to be kept in sync with the
+ * `purge-notification` stuff. It only represents the length of time during
+ * which related notifications are considered to be the same action. In fact, we
+ * might even want to experiment with lowering it to make sure we're getting
+ * granular enough changes.
+ */
 function deleteRecent(userData) {
   const rowData = dataMapper.userDataToRowData(userData);
 

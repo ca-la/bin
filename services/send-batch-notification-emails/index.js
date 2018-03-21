@@ -15,6 +15,7 @@ async function attachActor(notification) {
 
   return notification;
 }
+
 async function sendBatchNotificationEmails() {
   return db.transaction(async (trx) => {
     const notifications = await NotificationsDAO.findOutstandingTrx(trx);
