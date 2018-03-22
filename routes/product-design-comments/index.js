@@ -4,7 +4,9 @@ const Router = require('koa-router');
 
 const canAccessUserResource = require('../../middleware/can-access-user-resource');
 const ProductDesignCommentsDAO = require('../../dao/product-design-comments');
+const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
 const requireAuth = require('../../middleware/require-auth');
+const sendCommentNotifications = require('../../services/send-comment-notifications');
 const UsersDAO = require('../../dao/users');
 const { canAccessDesignId } = require('../../middleware/can-access-design');
 
@@ -58,6 +60,11 @@ function* create() {
 
   this.assert(text, 400, 'Comment text cannot be empty');
 
+  const section = yield ProductDesignSectionsDAO.findById(sectionId);
+  this.assert(section, 400, 'Invalid section ID');
+
+  yield canAccessDesignId.call(this, section.designId);
+
   const created = yield ProductDesignCommentsDAO.create({
     parentCommentId,
     sectionId,
@@ -66,6 +73,14 @@ function* create() {
   });
 
   const withUser = yield attachUser(created);
+
+  yield sendCommentNotifications({
+    comment: created,
+    design: this.state.design,
+    section,
+    text,
+    user: withUser.user
+  });
 
   this.body = withUser;
   this.status = 201;
