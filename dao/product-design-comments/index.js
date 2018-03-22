@@ -17,11 +17,13 @@ const TABLE_NAME = 'product_design_comments';
 
 async function findByDesign(designId) {
   const result = await db.raw(`
-select product_design_comments.*
-  from product_design_comments
-    left join product_design_sections
-      on product_design_sections.id = product_design_comments.section_id
-    where product_design_sections.design_id = ?;
+select c.*
+  from product_design_comments as c
+    left join product_design_sections as s
+      on s.id = c.section_id
+  where s.design_id = ?
+  and c.deleted_at is null
+  and s.deleted_at is null;
     `, [designId])
     .catch(rethrow);
 
