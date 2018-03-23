@@ -2,13 +2,14 @@
 
 const Router = require('koa-router');
 
+const canAccessUserResource = require('../../middleware/can-access-user-resource');
 const db = require('../../services/db');
 const InvalidDataError = require('../../errors/invalid-data');
 const InvoiceBreakdownsDAO = require('../../dao/invoice-breakdowns');
 const InvoicesDAO = require('../../dao/invoices');
 const payInvoice = require('../../services/pay-invoice');
-const ProductDesignsDAO = require('../../dao/product-designs');
 const payOutPartner = require('../../services/pay-out-partner');
+const ProductDesignsDAO = require('../../dao/product-designs');
 const requireAdmin = require('../../middleware/require-admin');
 const User = require('../../domain-objects/user');
 const { canAccessDesignInQuery } = require('../../middleware/can-access-design');
@@ -17,13 +18,16 @@ const { requirePropertiesFormatted } = require('../../services/require-propertie
 const router = new Router();
 
 function* getInvoices(next) {
-  const { designId, designStatusId } = this.query;
+  const { designId, designStatusId, userId } = this.query;
 
-  this.assert(designId, 400, 'Missing design ID');
+  this.assert(designId || userId, 400, 'Design ID or user ID must be provided');
 
   let invoices;
 
-  if (designStatusId) {
+  if (userId) {
+    canAccessUserResource.call(this, userId);
+    invoices = yield InvoicesDAO.findByUser(userId);
+  } else if (designStatusId) {
     yield canAccessDesignInQuery.call(this, next);
     invoices = yield InvoicesDAO.findUnpaidByDesignAndStatus(designId, designStatusId);
   } else {

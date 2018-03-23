@@ -40,6 +40,25 @@ async function findByDesign(designId) {
     .catch(rethrow);
 }
 
+async function findByUser(userId) {
+  const result = await db.raw(`
+select i.*
+  from invoices as i
+    left join product_designs as d
+      on d.id = i.design_id
+    left join users as u
+      on u.id = d.user_id
+  where u.id = ?
+  and d.deleted_at is null
+  and i.deleted_at is null
+  order by i.created_at desc;
+    `, [userId])
+    .catch(rethrow);
+
+  const { rows } = result;
+  return rows.map(instantiate);
+}
+
 // Create must happen in a transaction that also creates an InvoiceBreakdown.
 // see services/create-invoice
 async function createTrx(trx, data) {
@@ -91,6 +110,7 @@ module.exports = {
   deleteById,
   findUnpaidByDesignAndStatus,
   findByDesign,
+  findByUser,
   findById,
   createTrx,
   update
