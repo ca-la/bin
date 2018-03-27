@@ -8,33 +8,28 @@ const InvalidPaymentError = require('../../errors/invalid-payment');
 const Logger = require('../logger');
 const PaymentMethodsDAO = require('../../dao/payment-methods');
 const { requireValues } = require('../../services/require-properties');
-const { STRIPE_SECRET_KEY } = require('../../config');
+const { RUMBLESHIP_API_KEY } = require('../../config');
 
-const STRIPE_API_BASE = 'https://api.stripe.com/v1';
-const STRIPE_CONNECT_API_BASE = 'https://connect.stripe.com';
+const RUMBLESHIP_API_BASE = 'https://api.stripe.com/v1';
 
 const CREDENTIALS = new Buffer(`${STRIPE_SECRET_KEY}:`).toString('base64');
 
-async function makeRequest({ method, path, apiBase, data, idempotencyKey }) {
+async function makeRequest({ method, path, jwt, data }) {
   requireValues({ method, path });
 
-  const base = apiBase || STRIPE_API_BASE;
   const url = `${base}${path}`;
 
-  const options = {
-    method,
-    headers: {
-      Authorization: `Basic ${CREDENTIALS}`
-    }
-  };
+  const options = { method };
 
-  if (data) {
-    options.headers['Content-Type'] = 'application/x-www-form-urlencoded';
-    options.body = qs.stringify(data);
+  if (jwt) {
+    options.headers = {
+      Authorization: jwt
+    };
   }
 
-  if (idempotencyKey) {
-    options.headers['Idempotency-Key'] = idempotencyKey;
+  if (data) {
+    options.headers['Content-Type'] = 'application/json';
+    options.body = JSON.stringify(data, null, 2);
   }
 
   const response = await fetch(url, options);
@@ -43,20 +38,16 @@ async function makeRequest({ method, path, apiBase, data, idempotencyKey }) {
 
   if (!isJson) {
     const text = await response.text();
-    Logger.logServerError('Stripe request: ', method, url);
-    Logger.logServerError('Stripe response: ', response.status, text);
-    throw new Error(`Unexpected Stripe response type: ${contentType}`);
+    Logger.logServerError('Rumbleship request: ', method, url);
+    Logger.logServerError('Rumbleship response: ', response.status, text);
+    throw new Error(`Unexpected Rumbleship response type: ${contentType}`);
   }
 
   const json = await response.json();
 
   switch (response.status) {
     case 200: return json;
-    case 402: throw new InvalidPaymentError(
-      (json.error && json.error.message) ||
-      'Your payment method was declined'
-    );
-    default: throw new StripeError(json.error);
+    default: throw new RumbleshipError(json.error);
   }
 }
 

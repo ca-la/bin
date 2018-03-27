@@ -4,8 +4,10 @@ const Router = require('koa-router');
 
 const canAccessUserResource = require('../../middleware/can-access-user-resource');
 const PaymentMethods = require('../../dao/payment-methods');
+const UsersDAO = require('../../dao/users');
 const requireAuth = require('../../middleware/require-auth');
 const Stripe = require('../../services/stripe');
+const Rumbleship = require('../../services/rumbleship');
 
 const router = new Router();
 
@@ -43,7 +45,27 @@ function* addPaymentMethod() {
   this.status = 201;
 }
 
+function* getTermsEligibility() {
+  // Find out whether a designer is eligible to pay using a deferred plan using
+  // a financing partner (as of 2018-03, only Rumbleship).
+  const { designStatus } = this.request.body;
+  this.assert(designStatus, 400, 'Missing design status');
+
+  if (designStatus === 'NEEDS_DEVELOPMENT_PAYMENT') {
+    this.status = 200;
+    this.body = { isEligible: false };
+    return;
+  }
+
+  const user = yield UsersDAO.findById(this.state.userId);
+  const isEligible = yield Rumbleship.getTermsEligibility(user.email);
+
+  this.status = 200;
+  this.body = { isEligible };
+}
+
 router.get('/', requireAuth, getPaymentMethods);
+router.get('/terms-eligibility', requireAuth, getTermsEligibility);
 router.post('/', requireAuth, addPaymentMethod);
 
 module.exports = router.routes();

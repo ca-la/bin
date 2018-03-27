@@ -104,6 +104,8 @@ const config = {
 
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
 
+  RUMBLESHIP_API_KEY: process.env.RUMBLESHIP_API_KEY,
+
   LOG_ALL_QUERIES: (process.env.LOG_ALL_QUERIES === 'true'),
 
   ADMIN_EMAIL
