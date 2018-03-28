@@ -8,11 +8,7 @@ const InvalidPaymentError = require('../../errors/invalid-payment');
 const Logger = require('../logger');
 const PaymentMethodsDAO = require('../../dao/payment-methods');
 const { requireValues } = require('../../services/require-properties');
-const { RUMBLESHIP_API_KEY } = require('../../config');
-
-const RUMBLESHIP_API_BASE = 'https://api.stripe.com/v1';
-
-const CREDENTIALS = new Buffer(`${STRIPE_SECRET_KEY}:`).toString('base64');
+const { RUMBLESHIP_API_BASE, RUMBLESHIP_API_KEY } = require('../../config');
 
 async function makeRequest({ method, path, jwt, data }) {
   requireValues({ method, path });
@@ -45,33 +41,43 @@ async function makeRequest({ method, path, jwt, data }) {
 
   const json = await response.json();
 
-  switch (response.status) {
-    case 200: return json;
-    default: throw new RumbleshipError(json.error);
+  if (response.status < 200 || response.status > 299) {
+    throw new RumbleshipError(json.error);
   }
+
+  return json;
 }
 
-async function charge({ customerId, sourceId, amountCents, description, invoiceId }) {
-  requireValues({ customerId, sourceId, amountCents, description, invoiceId });
-
-  // Using a combination of invoiceId + sourceId ensures that:
-  // - We can't charge the same card for the same invoice twice in rapid succesion
-  // - Switching sources lets you try again
-  //
-  // TBD if we need a better solution here but this seems ~fine for now.
-  const idempotencyKey = insecureHash(`${invoiceId}/${sourceId}/${amountCents}`);
+/**
+ * Get the initial authorization to discover if a customer is eligible to use a
+ * deferred payment plan. If they are, returns a JWT that should be used for
+ * the next request.
+ *
+ * Unfortunately this means that the clients have to have some knowledge of
+ * the rumbleship JWT in order to execute later requsts. A bit clunky but seems
+ * probably preferable to storing it in our DB?
+ */
+async function getAuthorization({ email }) {
+  requireValues({ email });
 
   return makeRequest({
     method: 'post',
-    path: '/charges',
+    path: '/gateway/login',
     data: {
-      amount: amountCents,
-      currency: 'usd',
-      source: sourceId,
-      description,
-      customer: customerId,
-      transfer_group: invoiceId
-    },
-    idempotencyKey
+      id_token: RUMBLESHIP_API_KEY,
+      email
+    }
   });
+}
+
+async function createPurchaseOrder() {
+
+}
+
+async function confirmOrder() {
+
+}
+
+async function confirmShipment() {
+
 }

@@ -58,10 +58,10 @@ function* getTermsEligibility() {
   }
 
   const user = yield UsersDAO.findById(this.state.userId);
-  const isEligible = yield Rumbleship.getTermsEligibility(user.email);
+  const { isEligible, jwt } = yield Rumbleship.getAuthorization(user.email);
 
   this.status = 200;
-  this.body = { isEligible };
+  this.body = { isEligible, jwt };
 }
 
 router.get('/', requireAuth, getPaymentMethods);
