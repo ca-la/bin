@@ -1,7 +1,6 @@
 'use strict';
 
 const fetch = require('node-fetch');
-const qs = require('querystring');
 
 const JWT = require('../../services/jwt');
 const Logger = require('../logger');
@@ -67,7 +66,7 @@ const { RUMBLESHIP_API_BASE, RUMBLESHIP_API_KEY } = require('../../config');
 async function makeRequest({ method, path, jwt, data }) {
   requireValues({ method, path });
 
-  const url = `${base}${path}`;
+  const url = `${RUMBLESHIP_API_BASE}${path}`;
 
   const options = { method };
 
@@ -96,7 +95,8 @@ async function makeRequest({ method, path, jwt, data }) {
   const json = await response.json();
 
   if (response.status < 200 || response.status > 299) {
-    throw new RumbleshipError(json.error);
+    Logger.logServerError('Rumbleship error:', json);
+    throw new Error(`Rumbleship returned ${response.status} status (see logs)`);
   }
 
   return { body: json, response };
@@ -106,7 +106,7 @@ function getToken(response) {
   const jwt = response.headers.get('authorization');
 
   if (!jwt) {
-    Logger.logServerError('Rumbleship response: ', response, body);
+    Logger.logServerError('Rumbleship response: ', response);
     throw new Error('Rumbleship API call did not return a JWT');
   }
 
@@ -118,19 +118,13 @@ function getToken(response) {
  * Get the initial authorization to discover if a customer is eligible to use a
  * deferred payment plan.
  *
- * Regardless of whether the customer is authorized, returns a JWT that can be
- * used for the next request. If the customer is authorized, this is a { b, s }
- * unprivileged token. If not, returns an { s } privileged token.
- *
- * As a result, note that `customerEmail` is not required if we only need
- * "supplier" authorization.
- *
- * NOTE: {s} TOKENS ARE NOT SAFE TO SEND TO THE CLIENT. All tokens must be
- * inspected before being passed around. Is this common in the JWT world? Seems
- * very odd.
+ * If the customer is authorized, returns a { b, s } JWT that can be used for
+ * the next request.
  */
-async function getAuthorization({ customerEmail }) {
-  const { body, response } = await makeRequest({
+async function getBuyerAuthorization(options = {}) {
+  const { customerEmail } = options;
+
+  const { response } = await makeRequest({
     method: 'post',
     path: '/gateway/login',
     data: {
@@ -152,6 +146,31 @@ async function getAuthorization({ customerEmail }) {
 
   return {
     isBuyerAuthorized: false,
+    supplierHash: decoded.s
+  };
+}
+
+/**
+ * Get a { s } auth token that allows us to make privileged supplier API calls.
+ *
+ * NOTE: {s} TOKENS ARE NOT SAFE TO SEND TO THE CLIENT. All tokens must be
+ * inspected before being passed around. Is this common in the JWT world? Seems
+ * very odd.
+ */
+async function getSupplierAuthorization() {
+  const { body, response } = await makeRequest({
+    method: 'post',
+    path: '/gateway/login',
+    data: {
+      id_token: RUMBLESHIP_API_KEY
+    }
+  });
+
+  Logger.log('Rumbleship: Get supplier authorization response:', body);
+
+  const { jwt, decoded } = getToken(response);
+
+  return {
     sToken: jwt,
     supplierHash: decoded.s
   };
@@ -183,6 +202,8 @@ async function createPurchaseOrder({ buyerHash, supplierHash, invoice, bsToken }
     jwt: bsToken
   });
 
+  Logger.log('Rumbleship: Create purchase order response:', body);
+
   const { jwt, decoded } = getToken(response);
 
   return {
@@ -196,21 +217,21 @@ async function createPurchaseOrder({ buyerHash, supplierHash, invoice, bsToken }
  * completed the Rumbleship checkout flow using the poToken received from
  * createPurchaseOrder above.
  */
-async function confirmPreShipment({ purchaseHash, poToken, invoice }) {
+async function createPreShipment({ purchaseHash, poToken, invoice }) {
   requireValues({ purchaseHash, poToken, invoice });
 
-  const { body, response } = await makeRequest({
+  const { body } = await makeRequest({
     method: 'post',
     path: `/purchase-orders/${purchaseHash}/confirmshipment`,
     data: {
       total_cents: invoice.totalCents,
       subtotal_cents: invoice.totalCents,
-      shipping_total_cents: 0,
+      shipping_total_cents: 0
     },
     jwt: poToken
   });
 
-  const { jwt, decoded } = getToken(response);
+  Logger.log('Rumbleship: Create preshipment response:', body);
 
   return { confirmed: true };
 }
@@ -218,23 +239,40 @@ async function confirmPreShipment({ purchaseHash, poToken, invoice }) {
 /**
  * Mark an order as shipped, and start the countdown for a customer to pay
  * Rumbleship. Note that we don't use "shipped" literally; in practice, we're
- * going to call this immediately after `confirmPreShipment` as not all of our
+ * going to call this immediately after `createPreShipment` as not all of our
  * orders correspond to an actual shipment.
  *
- * Note: requires an `sToken` received from calling `getAuthorization` without
- * an email address.
+ * Note: requires an `sToken` received from calling `getSupplierAuthorization`.
  */
-async function confirmShipment({ purchaseHash, sToken }) {
+async function createShipment({ purchaseHash, sToken }) {
   requireValues({ purchaseHash, sToken });
 
-  const { body, response } = await makeRequest({
+  const { body } = await makeRequest({
     method: 'post',
     path: `/purchase-orders/${purchaseHash}/shipments`,
     data: {},
     jwt: sToken
   });
 
-  const { jwt, decoded } = getToken(response);
+  Logger.log('Rumbleship: Create shipment response:', body);
 
   return { confirmed: true };
 }
+
+/**
+  * "confirm a shipment" and then "create a shipment", i.e. everything we have
+  * to do to confirm the transaction after a customer checks out with
+  * Rumbleship.
+  */
+async function confirmFullOrder({ purchaseHash, poToken, invoice }) {
+  await createPreShipment({ purchaseHash, poToken, invoice });
+
+  const { sToken } = await getSupplierAuthorization();
+  await createShipment({ purchaseHash, sToken });
+}
+
+module.exports = {
+  getBuyerAuthorization,
+  createPurchaseOrder,
+  confirmFullOrder
+};
