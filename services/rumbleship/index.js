@@ -8,6 +8,10 @@ const { requireValues } = require('../../services/require-properties');
 const { RUMBLESHIP_API_BASE, RUMBLESHIP_API_KEY } = require('../../config');
 
 /**
+ * Methods for interacting with Rumbleship, our flexible payment provider.
+ * These endpoints and more are documented in the private document "RFI
+ * Integration Guide" that they have provided.
+ *
  * Glossary:
  * - "Supplier": Us, a provider of items.
  * - "Buyer": THe designers who purchase items & services from us.
