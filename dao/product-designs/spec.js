@@ -49,3 +49,29 @@ test('ProductDesignsDAO.update updates a design', (t) => {
       t.equal(updatedDesign.title, 'Blue Tee');
     });
 });
+
+test("ProductDesignsDAO.findById doesn't include deleted designs", async (t) => {
+  const { user } = await createUser({ withSession: false });
+  const { id } = await ProductDesignsDAO.create({
+    title: 'Plain White Tee',
+    productType: 'TEESHIRT',
+    userId: user.id
+  });
+
+  await ProductDesignsDAO.deleteById(id);
+  const design = await ProductDesignsDAO.findById(id);
+  t.equal(design, null);
+});
+
+test('ProductDesignsDAO.findById includes deleted designs when specified', async (t) => {
+  const { user } = await createUser({ withSession: false });
+  const { id } = await ProductDesignsDAO.create({
+    title: 'Plain White Tee',
+    productType: 'TEESHIRT',
+    userId: user.id
+  });
+
+  await ProductDesignsDAO.deleteById(id);
+  const design = await ProductDesignsDAO.findById(id, null, { includeDeleted: true });
+  t.equal(design.id, id);
+});

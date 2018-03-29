@@ -44,8 +44,15 @@ async function sendBatchNotificationEmails() {
       for (const designId of Object.keys(notificationsByDesign)) {
         const designNotifications = notificationsByDesign[designId];
 
-        const design = await ProductDesignsDAO.findById(designId);
+        const design = await ProductDesignsDAO.findById(designId, null, { includeDeleted: true });
         if (!design) { throw new Error(`Could not find design ${designId}`); }
+
+        if (design.deletedAt) {
+          // No need to send notifications for deleted designs
+          Logger.log(`Skipping notifications for deleted design ${design.id}`);
+          // eslint-disable-next-line no-continue
+          continue;
+        }
 
         Logger.log(`Enqueuing an email with ${designNotifications.length} notifications for User ${recipientUserId} & Design ${designId}`);
         await EmailService.enqueueSend({

@@ -97,17 +97,20 @@ function findAll({ limit, offset, search }) {
     .then(designs => designs.map(instantiate));
 }
 
-function findById(id, filters) {
+function findById(id, filters, options = {}) {
   const query = Object.assign({}, {
-    id,
-    deleted_at: null
+    id
   }, filters);
+
+  if (options.includeDeleted !== true) {
+    query.deleted_at = null;
+  }
 
   return db(TABLE_NAME)
     .where(query)
-    .catch(rethrow)
     .then(first)
     .then(maybeInstantiate)
+    .catch(rethrow)
     .catch(rethrow.ERRORS.InvalidTextRepresentation, () => null);
 }
 
