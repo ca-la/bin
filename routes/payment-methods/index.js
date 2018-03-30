@@ -82,7 +82,7 @@ function* getDeferredEligibility() {
   };
 }
 
-function* createDeferredPreflight() {
+function* beginDeferredCheckout() {
   const { rumbleshipPayload, invoiceId } = this.request.body;
   this.assert(rumbleshipPayload, 400, 'Missing rumbleship payload');
   this.assert(invoiceId, 400, 'Missing invoice ID');
@@ -103,7 +103,7 @@ function* createDeferredPreflight() {
     bsToken
   });
 
-  this.status = 201;
+  this.status = 200;
 
   this.body = {
     rumbleshipPayload: { purchaseHash, poToken }
@@ -123,7 +123,7 @@ router.get('/', requireAuth, getPaymentMethods);
 router.post('/', requireAuth, addPaymentMethod);
 
 router.get('/deferred-eligibility', requireAuth, getDeferredEligibility);
-router.post('/deferred-preflight', requireAuth, createDeferredPreflight);
+router.post('/begin-deferred-checkout', requireAuth, beginDeferredCheckout);
 router.post('/complete-deferred-checkout', requireAuth, completeDeferredCheckout);
 
 module.exports = router.routes();

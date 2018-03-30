@@ -83,8 +83,6 @@ async function makeRequest({ method, path, jwt, data }) {
     options.body = JSON.stringify(data, null, 2);
   }
 
-  console.log(url, options);
-
   const response = await fetch(url, options);
   const contentType = response.headers.get('content-type');
   const isJson = /application\/.*json/.test(contentType);
@@ -105,7 +103,8 @@ async function makeRequest({ method, path, jwt, data }) {
   }
 
   if (response.status < 200 || response.status > 299) {
-    Logger.logServerError('Rumbleship error:', body);
+    Logger.logServerError('Rumbleship request: ', method, url);
+    Logger.logServerError('Rumbleship response:', body);
     throw new Error(`Rumbleship returned ${response.status} status (see logs)`);
   }
 
@@ -147,6 +146,11 @@ async function getBuyerAuthorization(options = {}) {
 
   const { jwt, decoded } = getToken(response);
 
+  if (!decoded.s) {
+    Logger.logServerError('Decoded token:', decoded);
+    throw new Error('Rumbleship token did not include `s` claim');
+  }
+
   if (decoded.b) {
     return {
       isBuyerAuthorized: true,
@@ -182,6 +186,11 @@ async function getSupplierAuthorization() {
 
   const { jwt, decoded } = getToken(response);
 
+  if (!decoded.s) {
+    Logger.logServerError('Decoded token:', decoded);
+    throw new Error('Rumbleship token did not include `s` claim');
+  }
+
   return {
     sToken: jwt,
     supplierHash: decoded.s
@@ -206,7 +215,12 @@ async function createPurchaseOrder({ buyerHash, supplierHash, invoice, bsToken }
       total_cents: invoice.totalCents,
       subtotal_cents: invoice.totalCents,
       shipping_total_cents: 0,
-      line_items: [],
+      line_items: [{
+        name: `CALA Invoice: ${invoice.title}`,
+        cost_cents: invoice.totalCents,
+        quantity: 1,
+        total_cents: invoice.totalCents
+      }],
       misc: {
         x_oid: invoice.id
       }
@@ -217,6 +231,12 @@ async function createPurchaseOrder({ buyerHash, supplierHash, invoice, bsToken }
   Logger.log('Rumbleship: Create purchase order response:', body);
 
   const { jwt, decoded } = getToken(response);
+
+  if (!decoded.po) {
+    Logger.logServerError('Encoded token:', jwt);
+    Logger.logServerError('Decoded token:', decoded);
+    throw new Error('Rumbleship token did not include `po` claim');
+  }
 
   return {
     purchaseHash: decoded.po,
@@ -234,7 +254,7 @@ async function createPreShipment({ purchaseHash, poToken, invoice }) {
 
   const { body } = await makeRequest({
     method: 'post',
-    path: `/purchase-orders/${purchaseHash}/confirmshipment`,
+    path: `/purchase-orders/${purchaseHash}/confirm-for-shipment`,
     data: {
       total_cents: invoice.totalCents,
       subtotal_cents: invoice.totalCents,
@@ -261,7 +281,7 @@ async function createShipment({ purchaseHash, sToken }) {
 
   const { body } = await makeRequest({
     method: 'post',
-    path: `/purchase-orders/${purchaseHash}/shipments`,
+    path: `/purchase-orders/${purchaseHash}/shipments/`,
     data: {},
     jwt: sToken
   });
