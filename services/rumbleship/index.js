@@ -72,12 +72,10 @@ async function makeRequest({ method, path, jwt, data }) {
 
   const url = `${RUMBLESHIP_API_BASE}${path}`;
 
-  const options = { method };
+  const options = { method, headers: {} };
 
   if (jwt) {
-    options.headers = {
-      Authorization: jwt
-    };
+    options.headers.Authorization = jwt;
   }
 
   if (data) {
@@ -85,25 +83,33 @@ async function makeRequest({ method, path, jwt, data }) {
     options.body = JSON.stringify(data, null, 2);
   }
 
+  console.log(url, options);
+
   const response = await fetch(url, options);
   const contentType = response.headers.get('content-type');
   const isJson = /application\/.*json/.test(contentType);
 
-  if (!isJson) {
-    const text = await response.text();
-    Logger.logServerError('Rumbleship request: ', method, url);
-    Logger.logServerError('Rumbleship response: ', response.status, text);
-    throw new Error(`Unexpected Rumbleship response type: ${contentType}`);
+  let body;
+
+  if (isJson) {
+    body = await response.json();
+  } else {
+    body = await response.text();
+
+    if (body !== '') {
+      // Rumbleship API returns empty response bodies for some 200s
+      Logger.logServerError('Rumbleship request: ', method, url);
+      Logger.logServerError('Rumbleship response: ', response.status, response.headers, body);
+      throw new Error(`Unexpected Rumbleship response type: ${contentType}`);
+    }
   }
 
-  const json = await response.json();
-
   if (response.status < 200 || response.status > 299) {
-    Logger.logServerError('Rumbleship error:', json);
+    Logger.logServerError('Rumbleship error:', body);
     throw new Error(`Rumbleship returned ${response.status} status (see logs)`);
   }
 
-  return { body: json, response };
+  return { body, response };
 }
 
 function getToken(response) {
@@ -128,7 +134,7 @@ function getToken(response) {
 async function getBuyerAuthorization(options = {}) {
   const { customerEmail } = options;
 
-  const { response } = await makeRequest({
+  const { body, response } = await makeRequest({
     method: 'post',
     path: '/gateway/login',
     data: {
@@ -136,6 +142,8 @@ async function getBuyerAuthorization(options = {}) {
       email: customerEmail
     }
   });
+
+  Logger.log('Rumbleship: Get buyer authorization response:', body);
 
   const { jwt, decoded } = getToken(response);
 

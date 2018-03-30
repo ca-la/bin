@@ -5,6 +5,7 @@ const Router = require('koa-router');
 const canAccessUserResource = require('../../middleware/can-access-user-resource');
 const InvoicesDAO = require('../../dao/invoices');
 const PaymentMethods = require('../../dao/payment-methods');
+const ProductDesignsDAO = require('../../dao/product-designs');
 const requireAuth = require('../../middleware/require-auth');
 const Rumbleship = require('../../services/rumbleship');
 const Stripe = require('../../services/stripe');
@@ -49,10 +50,14 @@ function* addPaymentMethod() {
 function* getDeferredEligibility() {
   // Find out whether a designer is eligible to pay using a deferred plan using
   // a financing partner (as of 2018-03, only Rumbleship).
-  const { designStatus } = this.request.body;
-  this.assert(designStatus, 400, 'Missing design status');
+  const { designId } = this.query;
+  this.assert(designId, 400, 'Missing design ID');
 
-  if (designStatus === 'NEEDS_DEVELOPMENT_PAYMENT') {
+  const design = yield ProductDesignsDAO.findById(designId);
+
+  this.assert(design, 400, 'Invalid design ID');
+
+  if (design.status === 'NEEDS_DEVELOPMENT_PAYMENT') {
     this.status = 200;
     this.body = { isEligible: false };
     return;
@@ -79,7 +84,14 @@ function* getDeferredEligibility() {
 
 function* createDeferredPreflight() {
   const { rumbleshipPayload, invoiceId } = this.request.body;
+  this.assert(rumbleshipPayload, 400, 'Missing rumbleship payload');
+  this.assert(invoiceId, 400, 'Missing invoice ID');
+
   const { bsToken, buyerHash, supplierHash } = rumbleshipPayload;
+  this.assert(bsToken, 400, 'Missing rumbleshipPayload.bsToken');
+  this.assert(buyerHash, 400, 'Missing rumbleshipPayload.buyerHash');
+  this.assert(supplierHash, 400, 'Missing rumbleshipPayload.supplierHash');
+
   const invoice = yield InvoicesDAO.findById(invoiceId);
 
   this.assert(invoice, 400, 'Invoice not found');
