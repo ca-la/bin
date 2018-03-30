@@ -215,7 +215,7 @@ class Rumbleship {
   async createPurchaseOrder({ buyerHash, supplierHash, invoice, bsToken }) {
     requireValues({ buyerHash, supplierHash, invoice, bsToken });
 
-    const { body, response } = await this.makeRequest({
+    const { body } = await this.makeRequest({
       method: 'post',
       path: `/buyers/${buyerHash}/suppliers/${supplierHash}/purchase-orders`,
       data: {
@@ -238,24 +238,19 @@ class Rumbleship {
 
     Logger.log('Rumbleship: Create purchase order response:', body);
 
-    const { jwt, decoded } = getToken(response);
-
-    if (!decoded.po) {
-      Logger.logServerError('Encoded token:', jwt);
-      Logger.logServerError('Decoded token:', decoded);
-      throw new Error('Rumbleship token did not include `po` claim');
+    if (!body.hashid) {
+      throw new Error('Rumbleship response did not include `po` hashid');
     }
 
     return {
-      purchaseHash: decoded.po,
-      poToken: jwt
+      purchaseHash: body.hashid
     };
   }
 
   /**
   * Confirm that we've received an order from a user. To be used *after* they've
-  * completed the Rumbleship checkout flow using the poToken received from
-  * createPurchaseOrder above.
+  * completed the Rumbleship checkout flow using the poToken received from the
+  * post-checkout redirect callback.
   */
   async createPreShipment({ purchaseHash, poToken, invoice }) {
     requireValues({ purchaseHash, poToken, invoice });
@@ -266,7 +261,9 @@ class Rumbleship {
       data: {
         total_cents: invoice.totalCents,
         subtotal_cents: invoice.totalCents,
-        shipping_total_cents: 0
+        shipping_total_cents: 0,
+        billing_address: {},
+        shipping_address: {}
       },
       jwt: poToken
     });
@@ -289,8 +286,10 @@ class Rumbleship {
 
     const { body } = await this.makeRequest({
       method: 'post',
-      path: `/purchase-orders/${purchaseHash}/shipments/`,
-      data: {},
+      path: `/purchase-orders/${purchaseHash}/shipments`,
+      data: {
+        shipping_cents: 0
+      },
       jwt: sToken
     });
 
