@@ -5,7 +5,7 @@ const fetch = require('node-fetch');
 const JWT = require('../../services/jwt');
 const Logger = require('../logger');
 const { requireValues } = require('../../services/require-properties');
-const { RUMBLESHIP_API_BASE, RUMBLESHIP_API_KEY } = require('../../config');
+const { RUMBLESHIP_API_BASE, STUDIO_HOST } = require('../../config');
 
 /**
  * Methods for interacting with Rumbleship, our flexible payment provider.
@@ -45,13 +45,13 @@ const { RUMBLESHIP_API_BASE, RUMBLESHIP_API_KEY } = require('../../config');
  * shows the Rumbleship checkout button. When clicked, this sends the { b, s }
  * token back to our API, along with the invoice ID.
  *
- * (4) [Backend] Using the { b, s } JWT, we create a "purchase order". This
- * returns a { b, s, subt, po } token. We decode this and send it back to the
- * client.
+ * (4) [Backend] Using the { b, s } JWT, we create a "purchase order", and
+ * return the purchase ID to the client.
  *
  * (5) [Frontend] The app redirects the user to Rumbleship, using the
- * { b, s, subt, po } token in the URL. The client saves the token for later
- * use. Once complete, the user is redirected back to a new page inside our app.
+ * { b, s } token and purchase ID in the URL. Once complete, the user is
+ * redirected back to a new page inside our app, with a new { b, s, subt, po }
+ * token in a query parameter.
  *
  * (6) [Frontend] The app calls our API with the { b, s, subt, po } token upon
  * completion, to indicate that checkout was complete.
@@ -67,50 +67,6 @@ const { RUMBLESHIP_API_BASE, RUMBLESHIP_API_KEY } = require('../../config');
  * for many of our services.
  */
 
-async function makeRequest({ method, path, jwt, data }) {
-  requireValues({ method, path });
-
-  const url = `${RUMBLESHIP_API_BASE}${path}`;
-
-  const options = { method, headers: {} };
-
-  if (jwt) {
-    options.headers.Authorization = jwt;
-  }
-
-  if (data) {
-    options.headers['Content-Type'] = 'application/json';
-    options.body = JSON.stringify(data, null, 2);
-  }
-
-  const response = await fetch(url, options);
-  const contentType = response.headers.get('content-type');
-  const isJson = /application\/.*json/.test(contentType);
-
-  let body;
-
-  if (isJson) {
-    body = await response.json();
-  } else {
-    body = await response.text();
-
-    if (body !== '') {
-      // Rumbleship API returns empty response bodies for some 200s
-      Logger.logServerError('Rumbleship request: ', method, url);
-      Logger.logServerError('Rumbleship response: ', response.status, response.headers, body);
-      throw new Error(`Unexpected Rumbleship response type: ${contentType}`);
-    }
-  }
-
-  if (response.status < 200 || response.status > 299) {
-    Logger.logServerError('Rumbleship request: ', method, url);
-    Logger.logServerError('Rumbleship response:', body);
-    throw new Error(`Rumbleship returned ${response.status} status (see logs)`);
-  }
-
-  return { body, response };
-}
-
 function getToken(response) {
   const jwt = response.headers.get('authorization');
 
@@ -123,188 +79,237 @@ function getToken(response) {
   return { jwt, decoded };
 }
 
-/**
- * Get the initial authorization to discover if a customer is eligible to use a
- * deferred payment plan.
- *
- * If the customer is authorized, returns a { b, s } JWT that can be used for
- * the next request.
- */
-async function getBuyerAuthorization(options = {}) {
-  const { customerEmail } = options;
-
-  const { body, response } = await makeRequest({
-    method: 'post',
-    path: '/gateway/login',
-    data: {
-      id_token: RUMBLESHIP_API_KEY,
-      email: customerEmail
-    }
-  });
-
-  Logger.log('Rumbleship: Get buyer authorization response:', body);
-
-  const { jwt, decoded } = getToken(response);
-
-  if (!decoded.s) {
-    Logger.logServerError('Decoded token:', decoded);
-    throw new Error('Rumbleship token did not include `s` claim');
+class Rumbleship {
+  constructor({ apiKey, apiBase }) {
+    requireValues({ apiKey });
+    this._apiKey = apiKey;
+    this._apiBase = apiBase || RUMBLESHIP_API_BASE;
   }
 
-  if (decoded.b) {
+  async makeRequest({ method, path, jwt, data }) {
+    requireValues({ method, path });
+
+    const url = `${this._apiBase}${path}`;
+
+    const options = { method, headers: {} };
+
+    if (jwt) {
+      options.headers.Authorization = jwt;
+    }
+
+    if (data) {
+      options.headers['Content-Type'] = 'application/json';
+      options.body = JSON.stringify(data, null, 2);
+    }
+
+    const response = await fetch(url, options);
+    const contentType = response.headers.get('content-type');
+    const isJson = /application\/.*json/.test(contentType);
+
+    let body;
+
+    if (isJson) {
+      body = await response.json();
+    } else {
+      body = await response.text();
+
+      if (body !== '') {
+        // Rumbleship API returns empty response bodies for some 200s
+        Logger.logServerError('Rumbleship request: ', method, url);
+        Logger.logServerError('Rumbleship response: ', response.status, response.headers, body);
+        throw new Error(`Unexpected Rumbleship response type: ${contentType}`);
+      }
+    }
+
+    if (response.status < 200 || response.status > 299) {
+      Logger.logServerError('Rumbleship request: ', method, url);
+      Logger.logServerError('Rumbleship response:', body);
+      throw new Error(`Rumbleship returned ${response.status} status (see logs)`);
+    }
+
+    return { body, response };
+  }
+
+  /**
+  * Get the initial authorization to discover if a customer is eligible to use a
+  * deferred payment plan.
+  *
+  * If the customer is authorized, returns a { b, s } JWT that can be used for
+  * the next request.
+  */
+  async getBuyerAuthorization(options = {}) {
+    const { customerEmail } = options;
+
+    const { body, response } = await this.makeRequest({
+      method: 'post',
+      path: '/gateway/login',
+      data: {
+        id_token: this._apiKey,
+        email: customerEmail
+      }
+    });
+
+    Logger.log('Rumbleship: Get buyer authorization response:', body);
+
+    const { jwt, decoded } = getToken(response);
+
+    if (!decoded.s) {
+      Logger.logServerError('Decoded token:', decoded);
+      throw new Error('Rumbleship token did not include `s` claim');
+    }
+
+    if (decoded.b) {
+      return {
+        isBuyerAuthorized: true,
+        buyerHash: decoded.b,
+        supplierHash: decoded.s,
+        bsToken: jwt
+      };
+    }
+
     return {
-      isBuyerAuthorized: true,
-      buyerHash: decoded.b,
-      supplierHash: decoded.s,
-      bsToken: jwt
+      isBuyerAuthorized: false,
+      supplierHash: decoded.s
     };
   }
 
-  return {
-    isBuyerAuthorized: false,
-    supplierHash: decoded.s
-  };
-}
-
-/**
- * Get a { s } auth token that allows us to make privileged supplier API calls.
- *
- * NOTE: {s} TOKENS ARE NOT SAFE TO SEND TO THE CLIENT. All tokens must be
- * inspected before being passed around. Is this common in the JWT world? Seems
- * very odd.
- */
-async function getSupplierAuthorization() {
-  const { body, response } = await makeRequest({
-    method: 'post',
-    path: '/gateway/login',
-    data: {
-      id_token: RUMBLESHIP_API_KEY
-    }
-  });
-
-  Logger.log('Rumbleship: Get supplier authorization response:', body);
-
-  const { jwt, decoded } = getToken(response);
-
-  if (!decoded.s) {
-    Logger.logServerError('Decoded token:', decoded);
-    throw new Error('Rumbleship token did not include `s` claim');
-  }
-
-  return {
-    sToken: jwt,
-    supplierHash: decoded.s
-  };
-}
-
-/**
- * Create a "purchase order" to indicate intent to go through with the purchase.
- * The `purchaseHash` this returns is used to construct the URL to send people
- * to the Rumbleship payment form, so we need to call this at some point before
- * we can send them there.
- *
- * @param {String} bsToken A buyer + supplier { b, s } token
- */
-async function createPurchaseOrder({ buyerHash, supplierHash, invoice, bsToken }) {
-  requireValues({ buyerHash, supplierHash, invoice, bsToken });
-
-  const { body, response } = await makeRequest({
-    method: 'post',
-    path: `/buyers/${buyerHash}/suppliers/${supplierHash}/purchase-orders`,
-    data: {
-      total_cents: invoice.totalCents,
-      subtotal_cents: invoice.totalCents,
-      shipping_total_cents: 0,
-      line_items: [{
-        name: `CALA Invoice: ${invoice.title}`,
-        cost_cents: invoice.totalCents,
-        quantity: 1,
-        total_cents: invoice.totalCents
-      }],
-      misc: {
-        x_oid: invoice.id
-      }
-    },
-    jwt: bsToken
-  });
-
-  Logger.log('Rumbleship: Create purchase order response:', body);
-
-  const { jwt, decoded } = getToken(response);
-
-  if (!decoded.po) {
-    Logger.logServerError('Encoded token:', jwt);
-    Logger.logServerError('Decoded token:', decoded);
-    throw new Error('Rumbleship token did not include `po` claim');
-  }
-
-  return {
-    purchaseHash: decoded.po,
-    poToken: jwt
-  };
-}
-
-/**
- * Confirm that we've received an order from a user. To be used *after* they've
- * completed the Rumbleship checkout flow using the poToken received from
- * createPurchaseOrder above.
- */
-async function createPreShipment({ purchaseHash, poToken, invoice }) {
-  requireValues({ purchaseHash, poToken, invoice });
-
-  const { body } = await makeRequest({
-    method: 'post',
-    path: `/purchase-orders/${purchaseHash}/confirm-for-shipment`,
-    data: {
-      total_cents: invoice.totalCents,
-      subtotal_cents: invoice.totalCents,
-      shipping_total_cents: 0
-    },
-    jwt: poToken
-  });
-
-  Logger.log('Rumbleship: Create preshipment response:', body);
-
-  return { confirmed: true };
-}
-
-/**
- * Mark an order as shipped, and start the countdown for a customer to pay
- * Rumbleship. Note that we don't use "shipped" literally; in practice, we're
- * going to call this immediately after `createPreShipment` as not all of our
- * orders correspond to an actual shipment.
- *
- * Note: requires an `sToken` received from calling `getSupplierAuthorization`.
- */
-async function createShipment({ purchaseHash, sToken }) {
-  requireValues({ purchaseHash, sToken });
-
-  const { body } = await makeRequest({
-    method: 'post',
-    path: `/purchase-orders/${purchaseHash}/shipments/`,
-    data: {},
-    jwt: sToken
-  });
-
-  Logger.log('Rumbleship: Create shipment response:', body);
-
-  return { confirmed: true };
-}
-
-/**
-  * "confirm a shipment" and then "create a shipment", i.e. everything we have
-  * to do to confirm the transaction after a customer checks out with
-  * Rumbleship.
+  /**
+  * Get a { s } auth token that allows us to make privileged supplier API calls.
+  *
+  * NOTE: {s} TOKENS ARE NOT SAFE TO SEND TO THE CLIENT. All tokens must be
+  * inspected before being passed around. Is this common in the JWT world? Seems
+  * very odd.
   */
-async function confirmFullOrder({ purchaseHash, poToken, invoice }) {
-  await createPreShipment({ purchaseHash, poToken, invoice });
+  async getSupplierAuthorization() {
+    const { body, response } = await this.makeRequest({
+      method: 'post',
+      path: '/gateway/login',
+      data: {
+        id_token: this._apiKey
+      }
+    });
 
-  const { sToken } = await getSupplierAuthorization();
-  await createShipment({ purchaseHash, sToken });
+    Logger.log('Rumbleship: Get supplier authorization response:', body);
+
+    const { jwt, decoded } = getToken(response);
+
+    if (!decoded.s) {
+      Logger.logServerError('Decoded token:', decoded);
+      throw new Error('Rumbleship token did not include `s` claim');
+    }
+
+    return {
+      sToken: jwt,
+      supplierHash: decoded.s
+    };
+  }
+
+  /**
+  * Create a "purchase order" to indicate intent to go through with the purchase.
+  * The `purchaseHash` this returns is used to construct the URL to send people
+  * to the Rumbleship payment form, so we need to call this at some point before
+  * we can send them there.
+  *
+  * @param {String} bsToken A buyer + supplier { b, s } token
+  */
+  async createPurchaseOrder({ buyerHash, supplierHash, invoice, bsToken }) {
+    requireValues({ buyerHash, supplierHash, invoice, bsToken });
+
+    const { body, response } = await this.makeRequest({
+      method: 'post',
+      path: `/buyers/${buyerHash}/suppliers/${supplierHash}/purchase-orders`,
+      data: {
+        total_cents: invoice.totalCents,
+        subtotal_cents: invoice.totalCents,
+        shipping_total_cents: 0,
+        line_items: [{
+          name: `CALA Invoice: ${invoice.title}`,
+          cost_cents: invoice.totalCents,
+          quantity: 1,
+          total_cents: invoice.totalCents
+        }],
+        misc: {
+          x_rurl: `${STUDIO_HOST}/complete-partner-checkout?designId=${invoice.designId}`,
+          x_oid: invoice.id
+        }
+      },
+      jwt: bsToken
+    });
+
+    Logger.log('Rumbleship: Create purchase order response:', body);
+
+    const { jwt, decoded } = getToken(response);
+
+    if (!decoded.po) {
+      Logger.logServerError('Encoded token:', jwt);
+      Logger.logServerError('Decoded token:', decoded);
+      throw new Error('Rumbleship token did not include `po` claim');
+    }
+
+    return {
+      purchaseHash: decoded.po,
+      poToken: jwt
+    };
+  }
+
+  /**
+  * Confirm that we've received an order from a user. To be used *after* they've
+  * completed the Rumbleship checkout flow using the poToken received from
+  * createPurchaseOrder above.
+  */
+  async createPreShipment({ purchaseHash, poToken, invoice }) {
+    requireValues({ purchaseHash, poToken, invoice });
+
+    const { body } = await this.makeRequest({
+      method: 'post',
+      path: `/purchase-orders/${purchaseHash}/confirm-for-shipment`,
+      data: {
+        total_cents: invoice.totalCents,
+        subtotal_cents: invoice.totalCents,
+        shipping_total_cents: 0
+      },
+      jwt: poToken
+    });
+
+    Logger.log('Rumbleship: Create preshipment response:', body);
+
+    return { confirmed: true };
+  }
+
+  /**
+  * Mark an order as shipped, and start the countdown for a customer to pay
+  * Rumbleship. Note that we don't use "shipped" literally; in practice, we're
+  * going to call this immediately after `createPreShipment` as not all of our
+  * orders correspond to an actual shipment.
+  *
+  * Note: requires an `sToken` received from calling `getSupplierAuthorization`.
+  */
+  async createShipment({ purchaseHash, sToken }) {
+    requireValues({ purchaseHash, sToken });
+
+    const { body } = await this.makeRequest({
+      method: 'post',
+      path: `/purchase-orders/${purchaseHash}/shipments/`,
+      data: {},
+      jwt: sToken
+    });
+
+    Logger.log('Rumbleship: Create shipment response:', body);
+
+    return { confirmed: true };
+  }
+
+  /**
+    * "confirm a shipment" and then "create a shipment", i.e. everything we have
+    * to do to confirm the transaction after a customer checks out with
+    * Rumbleship.
+    */
+  async confirmFullOrder({ purchaseHash, poToken, invoice }) {
+    await this.createPreShipment({ purchaseHash, poToken, invoice });
+
+    const { sToken } = await this.getSupplierAuthorization();
+    await this.createShipment({ purchaseHash, sToken });
+  }
 }
 
-module.exports = {
-  getBuyerAuthorization,
-  createPurchaseOrder,
-  confirmFullOrder
-};
+module.exports = Rumbleship;

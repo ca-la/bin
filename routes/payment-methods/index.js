@@ -10,6 +10,7 @@ const requireAuth = require('../../middleware/require-auth');
 const Rumbleship = require('../../services/rumbleship');
 const Stripe = require('../../services/stripe');
 const UsersDAO = require('../../dao/users');
+const { RUMBLESHIP_API_KEY } = require('../../config');
 
 const router = new Router();
 
@@ -47,7 +48,7 @@ function* addPaymentMethod() {
   this.status = 201;
 }
 
-function* getDeferredEligibility() {
+function* getPartnerEligibility() {
   // Find out whether a designer is eligible to pay using a deferred plan using
   // a financing partner (as of 2018-03, only Rumbleship).
   const { designId } = this.query;
@@ -64,12 +65,15 @@ function* getDeferredEligibility() {
   }
 
   const user = yield UsersDAO.findById(this.state.userId);
+
+  const rs = new Rumbleship({ apiKey: RUMBLESHIP_API_KEY });
+
   const {
     bsToken,
     buyerHash,
     isBuyerAuthorized,
     supplierHash
-  } = yield Rumbleship.getBuyerAuthorization({ customerEmail: user.email });
+  } = yield rs.getBuyerAuthorization({ customerEmail: user.email });
 
   this.status = 200;
   this.body = {
@@ -82,7 +86,7 @@ function* getDeferredEligibility() {
   };
 }
 
-function* beginDeferredCheckout() {
+function* beginPartnerCheckout() {
   const { rumbleshipPayload, invoiceId } = this.request.body;
   this.assert(rumbleshipPayload, 400, 'Missing rumbleship payload');
   this.assert(invoiceId, 400, 'Missing invoice ID');
@@ -96,7 +100,9 @@ function* beginDeferredCheckout() {
 
   this.assert(invoice, 400, 'Invoice not found');
 
-  const { purchaseHash, poToken } = yield Rumbleship.createPurchaseOrder({
+  const rs = new Rumbleship({ apiKey: RUMBLESHIP_API_KEY });
+
+  const { purchaseHash, poToken } = yield rs.createPurchaseOrder({
     buyerHash,
     supplierHash,
     invoice,
@@ -110,20 +116,22 @@ function* beginDeferredCheckout() {
   };
 }
 
-function* completeDeferredCheckout() {
+function* completePartnerCheckout() {
   const { rumbleshipPayload, invoiceId } = this.request.body;
   const { purchaseHash, poToken } = rumbleshipPayload;
 
   const invoice = yield InvoicesDAO.findById(invoiceId);
-  yield Rumbleship.confirmFullOrder({ purchaseHash, poToken, invoice });
+
+  const rs = new Rumbleship({ apiKey: RUMBLESHIP_API_KEY });
+  yield rs.confirmFullOrder({ purchaseHash, poToken, invoice });
   this.status = 204;
 }
 
 router.get('/', requireAuth, getPaymentMethods);
 router.post('/', requireAuth, addPaymentMethod);
 
-router.get('/deferred-eligibility', requireAuth, getDeferredEligibility);
-router.post('/begin-deferred-checkout', requireAuth, beginDeferredCheckout);
-router.post('/complete-deferred-checkout', requireAuth, completeDeferredCheckout);
+router.get('/partner-eligibility', requireAuth, getPartnerEligibility);
+router.post('/begin-partner-checkout', requireAuth, beginPartnerCheckout);
+router.post('/complete-partner-checkout', requireAuth, completePartnerCheckout);
 
 module.exports = router.routes();
