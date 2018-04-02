@@ -5,7 +5,11 @@ const fetch = require('node-fetch');
 const JWT = require('../../services/jwt');
 const Logger = require('../logger');
 const { requireValues } = require('../../services/require-properties');
-const { RUMBLESHIP_API_BASE, STUDIO_HOST } = require('../../config');
+const {
+  RUMBLESHIP_API_BASE,
+  RUMBLESHIP_PAY_BASE,
+  STUDIO_HOST
+} = require('../../config');
 
 /**
  * Methods for interacting with Rumbleship, our flexible payment provider.
@@ -77,6 +81,10 @@ function getToken(response) {
 
   const decoded = JWT.decode(jwt);
   return { jwt, decoded };
+}
+
+function getCheckoutUrl({ purchaseHash, bsToken }) {
+  return `${RUMBLESHIP_PAY_BASE}/purchase-orders/${purchaseHash}?token=${bsToken}`;
 }
 
 class Rumbleship {
@@ -310,5 +318,7 @@ class Rumbleship {
     await this.createShipment({ purchaseHash, sToken });
   }
 }
+
+Rumbleship.getCheckoutUrl = getCheckoutUrl;
 
 module.exports = Rumbleship;

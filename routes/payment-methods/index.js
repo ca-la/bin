@@ -60,7 +60,7 @@ function* getPartnerCheckoutEligibility() {
 
   if (design.status === 'NEEDS_DEVELOPMENT_PAYMENT') {
     this.status = 200;
-    this.body = { isEligible: false };
+    this.body = { isBuyerAuthorized: false };
     return;
   }
 
@@ -102,7 +102,7 @@ function* beginPartnerCheckout() {
 
   const rs = new Rumbleship({ apiKey: RUMBLESHIP_API_KEY });
 
-  const { purchaseHash, poToken } = yield rs.createPurchaseOrder({
+  const { purchaseHash } = yield rs.createPurchaseOrder({
     buyerHash,
     supplierHash,
     invoice,
@@ -112,7 +112,8 @@ function* beginPartnerCheckout() {
   this.status = 200;
 
   this.body = {
-    rumbleshipPayload: { purchaseHash, poToken }
+    rumbleshipPayload: { purchaseHash },
+    checkoutUrl: Rumbleship.getCheckoutUrl({ purchaseHash, bsToken })
   };
 }
 

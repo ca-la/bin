@@ -108,6 +108,8 @@ const config = {
 
   RUMBLESHIP_API_BASE: process.env.RUMBLESHIP_API_BASE,
 
+  RUMBLESHIP_PAY_BASE: process.env.RUMBLESHIP_PAY_BASE,
+
   LOG_ALL_QUERIES: (process.env.LOG_ALL_QUERIES === 'true'),
 
   ADMIN_EMAIL
