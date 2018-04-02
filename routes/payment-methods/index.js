@@ -48,7 +48,7 @@ function* addPaymentMethod() {
   this.status = 201;
 }
 
-function* getPartnerEligibility() {
+function* getPartnerCheckoutEligibility() {
   // Find out whether a designer is eligible to pay using a deferred plan using
   // a financing partner (as of 2018-03, only Rumbleship).
   const { designId } = this.query;
@@ -130,7 +130,7 @@ function* completePartnerCheckout() {
 router.get('/', requireAuth, getPaymentMethods);
 router.post('/', requireAuth, addPaymentMethod);
 
-router.get('/partner-eligibility', requireAuth, getPartnerEligibility);
+router.get('/partner-checkout-eligibility', requireAuth, getPartnerCheckoutEligibility);
 router.post('/begin-partner-checkout', requireAuth, beginPartnerCheckout);
 router.post('/complete-partner-checkout', requireAuth, completePartnerCheckout);
 
