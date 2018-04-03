@@ -176,8 +176,7 @@ class Rumbleship {
     }
 
     return {
-      isBuyerAuthorized: false,
-      supplierHash: decoded.s
+      isBuyerAuthorized: false
     };
   }
 

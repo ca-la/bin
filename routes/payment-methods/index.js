@@ -82,11 +82,11 @@ function* getPartnerCheckoutEligibility() {
 
     response[partnerId] = {
       isAuthorized: result.isBuyerAuthorized,
-      rumbleshipPayload: {
+      rumbleshipPayload: result.isBuyerAuthorized ? {
         bsToken: result.bsToken,
         buyerHash: result.buyerHash,
         supplierHash: result.supplierHash
-      }
+      } : null
     };
   }
 
