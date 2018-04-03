@@ -10,7 +10,15 @@ const requireAuth = require('../../middleware/require-auth');
 const Rumbleship = require('../../services/rumbleship');
 const Stripe = require('../../services/stripe');
 const UsersDAO = require('../../dao/users');
-const { RUMBLESHIP_API_KEY } = require('../../config');
+const {
+  RUMBLESHIP_API_KEY_ACH,
+  RUMBLESHIP_API_KEY_FINANCING
+} = require('../../config');
+
+const PARTNER_KEYS = {
+  RUMBLESHIP_ACH: RUMBLESHIP_API_KEY_ACH,
+  RUMBLESHIP_FINANCING: RUMBLESHIP_API_KEY_FINANCING
+};
 
 const router = new Router();
 
@@ -66,30 +74,31 @@ function* getPartnerCheckoutEligibility() {
 
   const user = yield UsersDAO.findById(this.state.userId);
 
-  const rs = new Rumbleship({ apiKey: RUMBLESHIP_API_KEY });
+  const response = {};
 
-  const {
-    bsToken,
-    buyerHash,
-    isBuyerAuthorized,
-    supplierHash
-  } = yield rs.getBuyerAuthorization({ customerEmail: user.email });
+  for (const partnerId of Object.keys(PARTNER_KEYS)) {
+    const rs = new Rumbleship({ apiKey: PARTNER_KEYS[partnerId] });
+    const result = yield rs.getBuyerAuthorization({ customerEmail: user.email });
 
+    response[partnerId] = {
+      isAuthorized: result.isBuyerAuthorized,
+      rumbleshipPayload: {
+        bsToken: result.bsToken,
+        buyerHash: result.buyerHash,
+        supplierHash: result.supplierHash
+      }
+    };
+  }
+
+  this.body = response;
   this.status = 200;
-  this.body = {
-    isBuyerAuthorized,
-    rumbleshipPayload: {
-      bsToken,
-      buyerHash,
-      supplierHash
-    }
-  };
 }
 
 function* beginPartnerCheckout() {
-  const { rumbleshipPayload, invoiceId } = this.request.body;
+  const { rumbleshipPayload, invoiceId, partnerId } = this.request.body;
   this.assert(rumbleshipPayload, 400, 'Missing rumbleship payload');
   this.assert(invoiceId, 400, 'Missing invoice ID');
+  this.assert(PARTNER_KEYS[partnerId], 400, 'Invalid partner ID');
 
   const { bsToken, buyerHash, supplierHash } = rumbleshipPayload;
   this.assert(bsToken, 400, 'Missing rumbleshipPayload.bsToken');
@@ -100,7 +109,7 @@ function* beginPartnerCheckout() {
 
   this.assert(invoice, 400, 'Invoice not found');
 
-  const rs = new Rumbleship({ apiKey: RUMBLESHIP_API_KEY });
+  const rs = new Rumbleship({ apiKey: PARTNER_KEYS[partnerId] });
 
   const { purchaseHash } = yield rs.createPurchaseOrder({
     buyerHash,
@@ -118,12 +127,14 @@ function* beginPartnerCheckout() {
 }
 
 function* completePartnerCheckout() {
-  const { rumbleshipPayload, invoiceId } = this.request.body;
+  const { rumbleshipPayload, invoiceId, partnerId } = this.request.body;
   const { purchaseHash, poToken } = rumbleshipPayload;
+
+  this.assert(PARTNER_KEYS[partnerId], 400, 'Invalid partner ID');
 
   const invoice = yield InvoicesDAO.findById(invoiceId);
 
-  const rs = new Rumbleship({ apiKey: RUMBLESHIP_API_KEY });
+  const rs = new Rumbleship({ apiKey: PARTNER_KEYS[partnerId] });
   yield rs.confirmFullOrder({ purchaseHash, poToken, invoice });
   this.status = 204;
 }
