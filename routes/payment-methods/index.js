@@ -66,17 +66,17 @@ function* getPartnerCheckoutEligibility() {
 
   this.assert(design, 400, 'Invalid design ID');
 
-  if (design.status === 'NEEDS_DEVELOPMENT_PAYMENT') {
-    this.status = 200;
-    this.body = { isBuyerAuthorized: false };
-    return;
-  }
-
   const user = yield UsersDAO.findById(this.state.userId);
 
   const response = {};
 
   for (const partnerId of Object.keys(PARTNER_KEYS)) {
+    if (design.status === 'NEEDS_DEVELOPMENT_PAYMENT') {
+      response[partnerId] = { isAuthorized: false };
+      // eslint-disable-next-line no-continue
+      continue;
+    }
+
     const rs = new Rumbleship({ apiKey: PARTNER_KEYS[partnerId] });
     const result = yield rs.getBuyerAuthorization({ customerEmail: user.email });
 
@@ -115,6 +115,7 @@ function* beginPartnerCheckout() {
     buyerHash,
     supplierHash,
     invoice,
+    partnerId,
     bsToken
   });
 

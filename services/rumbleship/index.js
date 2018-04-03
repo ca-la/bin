@@ -219,7 +219,7 @@ class Rumbleship {
   *
   * @param {String} bsToken A buyer + supplier { b, s } token
   */
-  async createPurchaseOrder({ buyerHash, supplierHash, invoice, bsToken }) {
+  async createPurchaseOrder({ buyerHash, supplierHash, invoice, bsToken, partnerId }) {
     requireValues({ buyerHash, supplierHash, invoice, bsToken });
 
     const { body } = await this.makeRequest({
@@ -236,7 +236,7 @@ class Rumbleship {
           total_cents: invoice.totalCents
         }],
         misc: {
-          x_rurl: `${STUDIO_HOST}/complete-partner-checkout?designId=${invoice.designId}`,
+          x_rurl: `${STUDIO_HOST}/complete-partner-checkout?designId=${invoice.designId}&invoiceId=${invoice.id}&partnerId=${partnerId}`,
           x_oid: invoice.id
         }
       },
