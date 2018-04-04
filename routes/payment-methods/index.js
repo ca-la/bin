@@ -136,7 +136,13 @@ function* completePartnerCheckout() {
   const invoice = yield InvoicesDAO.findById(invoiceId);
 
   const rs = new Rumbleship({ apiKey: PARTNER_KEYS[partnerId] });
-  yield rs.confirmFullOrder({ purchaseHash, poToken, invoice });
+  yield rs.confirmFullOrder({
+    invoice,
+    poToken,
+    purchaseHash,
+    userId: this.state.userId
+  });
+
   this.status = 204;
 }
 

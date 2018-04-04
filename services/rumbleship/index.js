@@ -2,9 +2,13 @@
 
 const fetch = require('node-fetch');
 
+const InvoicesDAO = require('../../dao/invoices');
 const JWT = require('../../services/jwt');
 const Logger = require('../logger');
+const ProductDesignsDAO = require('../../dao/product-designs');
+const ProductDesignStatusesDAO = require('../../dao/product-design-statuses');
 const { requireValues } = require('../../services/require-properties');
+const updateDesignStatus = require('../update-design-status');
 const {
   RUMBLESHIP_API_BASE,
   RUMBLESHIP_PAY_BASE,
@@ -310,11 +314,29 @@ class Rumbleship {
     * to do to confirm the transaction after a customer checks out with
     * Rumbleship.
     */
-  async confirmFullOrder({ purchaseHash, poToken, invoice }) {
+  async confirmFullOrder({ purchaseHash, poToken, invoice, userId }) {
     await this.createPreShipment({ purchaseHash, poToken, invoice });
 
     const { sToken } = await this.getSupplierAuthorization();
     await this.createShipment({ purchaseHash, sToken });
+
+    await InvoicesDAO.update(invoice.id, {
+      paidAt: new Date(),
+      rumbleshipPurchaseHash: purchaseHash
+    });
+
+    const design = await ProductDesignsDAO.findById(invoice.designId);
+    const status = await ProductDesignStatusesDAO.findById(design.status);
+
+    requireValues({ design, status });
+
+    if (status.nextStatus) {
+      await updateDesignStatus(
+        invoice.designId,
+        status.nextStatus,
+        userId
+      );
+    }
   }
 }
 
