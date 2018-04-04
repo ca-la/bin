@@ -15,7 +15,8 @@ const keyNamesByColumnName = {
   design_status_id: 'designStatusId',
   paid_at: 'paidAt',
   payment_method_id: 'paymentMethodId',
-  stripe_charge_id: 'stripeChargeId'
+  stripe_charge_id: 'stripeChargeId',
+  rumbleship_purchase_hash: 'rumbleshipPurchaseHash'
 };
 
 const dataMapper = new DataMapper(keyNamesByColumnName);
