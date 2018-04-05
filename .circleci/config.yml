@@ -1,0 +1,37 @@
+version: 2
+jobs:
+  build:
+    environment:
+      DATABASE_URL: postgres://ubuntu:@127.0.0.1:5432/circle_test
+
+    docker:
+      - image: circleci/node:8.2.1
+
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "package.json" }}
+          - v1-dependencies-
+
+      - run: npm install
+
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "package.json" }}
+
+      - run: make lint
+      - run: bin/migrate-local && bin/rollback-local && bin/migrate-local
+      - run: make test
+      - deploy:
+          name: Deploy to Heroku
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              git push https://heroku:$HEROKU_API_KEY@git.heroku.com/cala-api-api-stg.git HEAD:refs/heads/master
+            elif [ "${CIRCLE_BRANCH}" == "production" ]; then
+              git push https://heroku:$HEROKU_API_KEY@git.heroku.com/cala-api-api-prod.git HEAD:refs/heads/master
+            fi
