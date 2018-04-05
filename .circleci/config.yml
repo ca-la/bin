@@ -35,7 +35,7 @@ jobs:
           name: Deploy to Heroku
           command: |
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
-              git push https://heroku:$HEROKU_API_KEY@git.heroku.com/cala-api-api-stg.git HEAD:refs/heads/master
+              git push https://heroku:$HEROKU_API_KEY@git.heroku.com/cala-api-stg.git HEAD:refs/heads/master
             elif [ "${CIRCLE_BRANCH}" == "production" ]; then
-              git push https://heroku:$HEROKU_API_KEY@git.heroku.com/cala-api-api-prod.git HEAD:refs/heads/master
+              git push https://heroku:$HEROKU_API_KEY@git.heroku.com/cala-api-prod.git HEAD:refs/heads/master
             fi
