@@ -104,6 +104,16 @@ const config = {
 
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
 
+  // The API key for our Rumbleship account offering 30/60 day financing
+  RUMBLESHIP_API_KEY_FINANCING: process.env.RUMBLESHIP_API_KEY_FINANCING,
+
+  // The API key for our Rumbleship account offering immediate ACH payments
+  RUMBLESHIP_API_KEY_ACH: process.env.RUMBLESHIP_API_KEY_ACH,
+
+  RUMBLESHIP_API_BASE: process.env.RUMBLESHIP_API_BASE,
+
+  RUMBLESHIP_PAY_BASE: process.env.RUMBLESHIP_PAY_BASE,
+
   LOG_ALL_QUERIES: (process.env.LOG_ALL_QUERIES === 'true'),
 
   ADMIN_EMAIL

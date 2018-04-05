@@ -1,7 +1,7 @@
 'use strict';
 
 const InvalidDataError = require('../../errors/invalid-data');
-const Invoices = require('../../dao/invoices');
+const InvoicesDAO = require('../../dao/invoices');
 const PaymentMethods = require('../../dao/payment-methods');
 const ProductDesignsDAO = require('../../dao/product-designs');
 const ProductDesignStatusesDAO = require('../../dao/product-design-statuses');
@@ -13,7 +13,7 @@ async function payInvoice(invoiceId, paymentMethodId, userId) {
   requireValues({ invoiceId, paymentMethodId, userId });
   const paymentMethod = await PaymentMethods.findById(paymentMethodId);
 
-  const invoice = await Invoices.findById(invoiceId);
+  const invoice = await InvoicesDAO.findById(invoiceId);
 
   if (invoice.paidAt) {
     throw new InvalidDataError('This invoice is already paid');
@@ -27,7 +27,7 @@ async function payInvoice(invoiceId, paymentMethodId, userId) {
     invoiceId
   });
 
-  const updated = await Invoices.update(invoiceId, {
+  const updated = await InvoicesDAO.update(invoiceId, {
     paidAt: new Date(),
     paymentMethodId,
     stripeChargeId: charge.id
