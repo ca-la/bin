@@ -6,6 +6,10 @@ jobs:
 
     docker:
       - image: circleci/node:8.2.1
+      - image: postgres:9.6
+        environment:
+          POSTGRES_USER: ubuntu
+          POSTGRES_DB: circle_test
 
     working_directory: ~/repo
 
