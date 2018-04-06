@@ -23,7 +23,8 @@ select c.*
       on s.id = c.section_id
   where s.design_id = ?
   and c.deleted_at is null
-  and s.deleted_at is null;
+  and s.deleted_at is null
+  order by c.created_at asc;
     `, [designId])
     .catch(rethrow);
 
