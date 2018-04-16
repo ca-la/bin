@@ -223,22 +223,43 @@ class Rumbleship {
   *
   * @param {String} bsToken A buyer + supplier { b, s } token
   */
-  async createPurchaseOrder({ buyerHash, supplierHash, invoice, bsToken, partnerId }) {
+  async createPurchaseOrder({
+    bsToken,
+    buyerHash,
+    feePercentage,
+    invoice,
+    partnerId,
+    supplierHash
+  }) {
     requireValues({ buyerHash, supplierHash, invoice, bsToken });
+
+    const invoiceAmountCents = invoice.totalCents;
+
+    const feeCents = Math.round(invoiceAmountCents / (1 - feePercentage)) - invoiceAmountCents;
+
+    const totalBilledCents = invoiceAmountCents + feeCents;
 
     const { body } = await this.makeRequest({
       method: 'post',
       path: `/buyers/${buyerHash}/suppliers/${supplierHash}/purchase-orders`,
       data: {
-        total_cents: invoice.totalCents,
-        subtotal_cents: invoice.totalCents,
+        total_cents: totalBilledCents,
+        subtotal_cents: totalBilledCents,
         shipping_total_cents: 0,
-        line_items: [{
-          name: `CALA Invoice: ${invoice.title}`,
-          cost_cents: invoice.totalCents,
-          quantity: 1,
-          total_cents: invoice.totalCents
-        }],
+        line_items: [
+          {
+            name: `CALA Invoice: ${invoice.title}`,
+            cost_cents: invoiceAmountCents,
+            quantity: 1,
+            total_cents: invoiceAmountCents
+          },
+          {
+            name: 'Payment Processing Fee',
+            cost_cents: feeCents,
+            quantity: 1,
+            total_cents: feeCents
+          }
+        ],
         misc: {
           x_rurl: `${STUDIO_HOST}/complete-partner-checkout?designId=${invoice.designId}&invoiceId=${invoice.id}&partnerId=${partnerId}`,
           x_oid: invoice.id

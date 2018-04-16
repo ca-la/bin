@@ -20,6 +20,13 @@ const PARTNER_KEYS = {
   RUMBLESHIP_FINANCING: RUMBLESHIP_API_KEY_FINANCING
 };
 
+// The fee that we add to invoices before sending to our partners. They'll then
+// subtract "discounts" from that.
+const FEE_PERCENTAGE = {
+  RUMBLESHIP_ACH: 0.015,
+  RUMBLESHIP_FINANCING: 0.13
+};
+
 const router = new Router();
 
 function* getPaymentMethods() {
@@ -111,12 +118,15 @@ function* beginPartnerCheckout() {
 
   const rs = new Rumbleship({ apiKey: PARTNER_KEYS[partnerId] });
 
+  const feePercentage = FEE_PERCENTAGE[partnerId] || 0;
+
   const { purchaseHash } = yield rs.createPurchaseOrder({
+    bsToken,
     buyerHash,
-    supplierHash,
+    feePercentage,
     invoice,
     partnerId,
-    bsToken
+    supplierHash
   });
 
   this.status = 200;
