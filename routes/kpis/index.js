@@ -22,6 +22,7 @@ async function getDesignCount(startDate, endDate) {
     select count(*) from product_designs
       where created_at::date >= ?
       and created_at::date <= ?
+      and deleted_at IS NULL
   `, [startDate, endDate]);
 
   return parseInt(result.rows[0].count, 10);
@@ -128,6 +129,54 @@ async function getProductionParnerCount(startDate, endDate) {
   return parseInt(result.rows[0].count, 10);
 }
 
+async function getInDevelopmentDesignCount(startDate, endDate) {
+  const result = await db.raw(`
+    select count(distinct(design_id)) from product_design_status_updates
+      where created_at::date >= ?
+      and created_at::date <= ?
+      and (new_status = 'DEVELOPMENT'
+        OR new_status = 'SAMPLE_PRODUCTION'
+        OR new_status = 'SAMPLE_REVIEW')
+  `, [startDate, endDate]);
+
+  return parseInt(result.rows[0].count, 10);
+}
+
+async function getInProductionDesignCount(startDate, endDate) {
+  const result = await db.raw(`
+    select count(distinct(design_id)) from product_design_status_updates
+      where created_at::date >= ?
+      and created_at::date <= ?
+      and (new_status = 'PRE-PRODUCTION'
+        OR new_status = 'PRODUCTION'
+        OR new_status = 'NEEDS_FULFILLMENT_PAYMENT')
+  `, [startDate, endDate]);
+
+  return parseInt(result.rows[0].count, 10);
+}
+
+async function getPaidDevelopmentAmountCents(startDate, endDate) {
+  const result = await db.raw(`
+    select sum(total_cents) from invoices
+      where paid_at::date >= ?
+      and paid_at::date <= ?
+      and design_status_id = 'NEEDS_DEVELOPMENT_PAYMENT'
+  `, [startDate, endDate]);
+
+  return parseInt(result.rows[0].sum, 10);
+}
+
+async function getPaidProductionAmountCents(startDate, endDate) {
+  const result = await db.raw(`
+    select sum(total_cents) from invoices
+      where paid_at::date >= ?
+      and paid_at::date <= ?
+      and design_status_id = 'NEEDS_PRODUCTION_PAYMENT'
+  `, [startDate, endDate]);
+
+  return parseInt(result.rows[0].sum, 10);
+}
+
 function* getMetrics() {
   const { startDate, endDate } = this.query;
   this.assert(startDate && endDate, 400, 'Must provide start & end date');
@@ -141,8 +190,12 @@ function* getMetrics() {
     paidDesignerCount: yield getPaidDesignerCount(startDate, endDate),
     submittedDesignCount: yield getSubmittedDesignCount(startDate, endDate),
     approvedDesignCount: yield getApprovedDesignCount(startDate, endDate),
+    inDevelopmentDesignCount: yield getInDevelopmentDesignCount(startDate, endDate),
+    inProductionDesignCount: yield getInProductionDesignCount(startDate, endDate),
     otherStatusDesignCount: yield getOtherStatusDesignCount(startDate, endDate),
-    paidInvoiceAmountCents: yield getPaidInvoiceAmountCents(startDate, endDate)
+    paidInvoiceAmountCents: yield getPaidInvoiceAmountCents(startDate, endDate),
+    paidDevelopmentAmountCents: yield getPaidDevelopmentAmountCents(startDate, endDate),
+    paidProductionAmountCents: yield getPaidProductionAmountCents(startDate, endDate)
   };
 
   this.status = 200;
