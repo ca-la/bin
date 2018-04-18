@@ -752,7 +752,7 @@ class PricingCalculator {
       }));
 
       productionGroup.addLineItem(new LineItem({
-        title: 'Materials',
+        title: 'Materials & Processes',
         id: 'production-materials',
         quantity: this.unitsToProduce,
         unitPriceCents: materialsGroup.getTotalPriceCents(),
@@ -761,8 +761,6 @@ class PricingCalculator {
     }
 
     selectedOptions.forEach((selectedOption) => {
-      if (!enabledServices.PRODUCTION) { return; }
-
       const { option } = selectedOption;
 
       productionGroup.addLineItem(new LineItem({
@@ -799,8 +797,6 @@ class PricingCalculator {
     });
 
     featurePlacements.forEach((featurePlacement) => {
-      if (!enabledServices.PRODUCTION) { return; }
-
       const featurePrice = this._getFeaturePlacementPrice({ featurePlacement });
 
       const process = getFeatureFriendlyProcessName(featurePlacement);
