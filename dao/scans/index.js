@@ -52,9 +52,10 @@ function findById(id) {
       id,
       deleted_at: null
     })
-    .catch(rethrow)
     .then(first)
-    .then(maybeInstantiate);
+    .then(maybeInstantiate)
+    .catch(rethrow)
+    .catch(rethrow.ERRORS.InvalidTextRepresentation, () => null);
 }
 
 /**

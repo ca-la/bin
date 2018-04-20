@@ -3,16 +3,17 @@
 const Router = require('koa-router');
 const multer = require('koa-multer');
 
+const canAccessUserResource = require('../../middleware/can-access-user-resource');
+const getScanPhotoUrl = require('../../services/get-scan-photo-url');
 const InvalidDataError = require('../../errors/invalid-data');
 const requireAuth = require('../../middleware/require-auth');
 const ScanPhotosDAO = require('../../dao/scan-photos');
 const ScansDAO = require('../../dao/scans');
-const User = require('../../domain-objects/user');
 const UserAttributesService = require('../../services/user-attributes');
 const validateMeasurements = require('../../services/validate-measurements');
 const { AWS_SCANPHOTO_BUCKET_NAME } = require('../../config');
+const { canAccessScanInParam } = require('../../middleware/can-access-scan');
 const { logServerError } = require('../../services/logger');
-const getScanPhotoUrl = require('../../services/get-scan-photo-url');
 const { uploadFile, deleteFile } = require('../../services/aws');
 
 const router = new Router();
@@ -41,16 +42,6 @@ function* createScan() {
 }
 
 function* deleteScan() {
-  const scan = yield ScansDAO.findById(this.params.scanId);
-
-  this.assert(scan, 404, 'Scan not found');
-
-  this.assert(
-    scan.userId && scan.userId === this.state.userId,
-    403,
-    'You can only delete a scan that you own'
-  );
-
   yield ScansDAO.deleteById(this.params.scanId);
   const deletedPhotos = yield ScanPhotosDAO.deleteByScanId(this.params.scanId);
 
@@ -63,13 +54,6 @@ function* deleteScan() {
 }
 
 function* createScanPhoto() {
-  const scan = yield ScansDAO.findById(this.params.scanId);
-  this.assert(scan, 404, 'Scan not found');
-
-  if (scan.userId) {
-    this.assert(scan.userId === this.state.userId, 403, 'You can only upload photos for your own scan');
-  }
-
   const data = this.req.files.image;
   this.assert(data, 400, 'Image must be uploaded as `image`');
   this.assert(data.mimetype === 'image/jpeg', 400, 'Only photos can be uploaded');
@@ -99,13 +83,6 @@ function* createScanPhoto() {
 }
 
 function* updateScan() {
-  const scan = yield ScansDAO.findById(this.params.scanId);
-  this.assert(scan, 404, 'Scan not found');
-
-  if (scan.userId) {
-    this.assert(scan.userId === this.state.userId, 403, 'You can only upload photos for your own scan');
-  }
-
   this.assert(this.request.body, 400, 'New data must be provided');
 
   const { isComplete, measurements } = this.request.body;
@@ -134,13 +111,8 @@ function* updateScan() {
  * GET /scans?userId=ABC123
  */
 function* getList() {
-  const isAuthorized = (
-    this.query.userId === this.state.userId ||
-    this.state.role === User.ROLES.admin
-  );
-
-  this.assert(isAuthorized, 403, 'You can only request scans for your own user');
   this.assert(this.query.userId, 400, 'User ID must be provided');
+  canAccessUserResource.call(this, this.query.userId);
 
   const scans = yield ScansDAO.findByUserId(this.query.userId);
 
@@ -155,10 +127,7 @@ function* getList() {
  * endpoint to claim it afterwards.
  */
 function* claimScan() {
-  const scan = yield ScansDAO.findById(this.params.scanId);
-  this.assert(scan, 404, 'Scan not found');
-
-  this.assert(!scan.userId, 400, 'This scan has already been claimed');
+  this.assert(!this.state.scan.userId, 400, 'This scan has already been claimed');
 
   const updated = yield ScansDAO.updateOneById(this.params.scanId, {
     userId: this.state.userId
@@ -179,17 +148,6 @@ function* claimScan() {
  * GET /scans/:scanId/photos
  */
 function* getScanPhotos() {
-  const scan = yield ScansDAO.findById(this.params.scanId);
-
-  this.assert(scan, 404, 'Scan not found');
-
-  const isAuthorized = (
-    scan.userId === this.state.userId ||
-    this.state.role === User.ROLES.admin
-  );
-
-  this.assert(isAuthorized, 403);
-
   const photos = yield ScanPhotosDAO.findByScanId(this.params.scanId);
 
   photos.forEach(photo => photo.setUrl(getScanPhotoUrl(this, photo.id)));
@@ -198,24 +156,20 @@ function* getScanPhotos() {
   this.status = 200;
 }
 
+// eslint-disable-next-line require-yield
 function* getScan() {
-  this.assert(this.state.role === User.ROLES.admin, 403);
-
-  const scan = yield ScansDAO.findById(this.params.scanId);
-  this.assert(scan, 404, 'Scan not found');
-
-  this.body = scan;
+  this.body = this.state.scan;
   this.status = 200;
 }
 
-router.del('/:scanId', requireAuth, deleteScan);
+router.del('/:scanId', canAccessScanInParam, deleteScan);
 router.get('/', requireAuth, getList);
-router.get('/:scanId', requireAuth, getScan);
-router.get('/:scanId/photos', requireAuth, getScanPhotos);
+router.get('/:scanId', canAccessScanInParam, getScan);
+router.get('/:scanId/photos', canAccessScanInParam, getScanPhotos);
 router.post('/', createScan);
-router.post('/:scanId/claim', requireAuth, claimScan);
-router.post('/:scanId/photos', multer(), createScanPhoto);
-router.put('/:scanId', updateScan); // TODO: deprecate
-router.patch('/:scanId', updateScan);
+router.post('/:scanId/claim', canAccessScanInParam, claimScan);
+router.post('/:scanId/photos', canAccessScanInParam, multer(), createScanPhoto);
+router.put('/:scanId', canAccessScanInParam, updateScan); // TODO: deprecate
+router.patch('/:scanId', canAccessScanInParam, updateScan);
 
 module.exports = router.routes();
