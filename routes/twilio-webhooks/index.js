@@ -6,13 +6,14 @@ const formDataBody = require('../../middleware/form-data-body');
 const InvalidDataError = require('../../errors/invalid-data');
 const Logger = require('../../services/logger');
 const SessionsDAO = require('../../dao/sessions');
-const Shopify = require('../../services/shopify');
+const ShopifyClient = require('../../services/shopify');
 const ShopifyNotFoundError = require('../../errors/shopify-not-found');
 const UsersDAO = require('../../dao/users');
 const { buildSMSResponseMarkup } = require('../../services/twilio');
 const { SITE_HOST } = require('../../config');
 
 const router = new Router();
+const shopify = new ShopifyClient(ShopifyClient.CALA_STORE_CREDENTIALS);
 
 const existingAccountMsg = buildSMSResponseMarkup('Looks like you already have an account. Follow the link in the previous message to complete your registration.');
 
@@ -41,7 +42,7 @@ function* postIncomingPreRegistration() {
   this.status = 200;
   this.set('content-type', 'text/xml');
 
-  const shopifyCustomer = yield Shopify.getCustomerByPhone(fromNumber)
+  const shopifyCustomer = yield shopify.getCustomerByPhone(fromNumber)
     .catch(ShopifyNotFoundError, () => {});
 
   if (shopifyCustomer) {
@@ -56,7 +57,7 @@ function* postIncomingPreRegistration() {
       name: messageBody
     });
 
-    yield Shopify.createCustomer({
+    yield shopify.createCustomer({
       name: messageBody,
       phone: fromNumber
     });

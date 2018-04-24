@@ -3,7 +3,9 @@
 const Router = require('koa-router');
 
 const ShopifyNotFoundError = require('../../errors/shopify-not-found');
-const { getOrder } = require('../../services/shopify');
+const ShopifyClient = require('../../services/shopify');
+
+const shopify = new ShopifyClient(ShopifyClient.CALA_STORE_CREDENTIALS);
 
 const router = new Router();
 
@@ -16,7 +18,7 @@ const router = new Router();
  *   - Enforce that the email on the order matches logged-in account email
  */
 function* getOrderById() {
-  const order = yield getOrder(this.params.orderId)
+  const order = yield shopify.getOrder(this.params.orderId)
     .catch(ShopifyNotFoundError, err => this.throw(404, err.message));
 
   this.status = 200;

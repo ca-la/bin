@@ -4,7 +4,9 @@ const Router = require('koa-router');
 const pick = require('lodash/pick');
 
 const ShopifyNotFoundError = require('../../errors/shopify-not-found');
-const Shopify = require('../../services/shopify');
+const ShopifyClient = require('../../services/shopify');
+
+const shopify = new ShopifyClient(ShopifyClient.CALA_STORE_CREDENTIALS);
 
 const router = new Router();
 
@@ -18,7 +20,7 @@ function* getList() {
     includeDesigners: this.query.includeDesigners === 'true'
   };
 
-  const products = yield Shopify.getAllProducts(filters, options);
+  const products = yield shopify.getAllProducts(filters, options);
 
   this.body = products;
   this.status = 200;
@@ -28,7 +30,7 @@ function* getList() {
  * GET /products/:productId
  */
 function* getById() {
-  const product = yield Shopify.getProductById(this.params.productId)
+  const product = yield shopify.getProductById(this.params.productId)
     .catch(ShopifyNotFoundError, err => this.throw(404, err.message));
 
   this.body = product;
@@ -39,7 +41,7 @@ function* getById() {
  * GET /products/:productId/collections
  */
 function* getCollections() {
-  const collections = yield Shopify.getCollections({ product_id: this.params.productId })
+  const collections = yield shopify.getCollections({ product_id: this.params.productId })
     .catch(ShopifyNotFoundError, err => this.throw(404, err.message));
 
   this.body = collections;

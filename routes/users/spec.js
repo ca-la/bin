@@ -7,7 +7,7 @@ const InvalidDataError = require('../../errors/invalid-data');
 const MailChimp = require('../../services/mailchimp');
 const ScansDAO = require('../../dao/scans');
 const SessionsDAO = require('../../dao/sessions');
-const Shopify = require('../../services/shopify');
+const ShopifyClient = require('../../services/shopify');
 const Twilio = require('../../services/twilio');
 const UnassignedReferralCodesDAO = require('../../dao/unassigned-referral-codes');
 const UsersDAO = require('../../dao/users');
@@ -171,7 +171,7 @@ test('GET /users/:id/referral-count returns a 403 if not the current user', (t) 
 });
 
 test('GET /users/:id/referral-count determines the current referral count', (t) => {
-  sandbox().stub(Shopify, 'getRedemptionCount', () => Promise.resolve(10));
+  sandbox().stub(ShopifyClient.prototype, 'getRedemptionCount', () => Promise.resolve(10));
 
   return createUser()
     .then(({ user, session }) => {
@@ -182,8 +182,8 @@ test('GET /users/:id/referral-count determines the current referral count', (t) 
     .then(([response, body]) => {
       t.equal(response.status, 200);
       t.deepEqual(body, { count: 10, referralValueDollars: 50 });
-      t.equal(Shopify.getRedemptionCount.callCount, 1);
-      t.equal(Shopify.getRedemptionCount.lastCall.args[0], 'freebie');
+      t.equal(ShopifyClient.prototype.getRedemptionCount.callCount, 1);
+      t.equal(ShopifyClient.prototype.getRedemptionCount.lastCall.args[0], 'freebie');
     });
 });
 
@@ -365,7 +365,7 @@ test('POST /users/:id/complete-sms-preregistration completes a user', (t) => {
 
   let user;
 
-  sandbox().stub(Shopify, 'updateCustomerByPhone', () => Promise.resolve());
+  sandbox().stub(ShopifyClient.prototype, 'updateCustomerByPhone', () => Promise.resolve());
   sandbox().stub(Twilio, 'sendSMS', () => Promise.resolve());
 
   return UsersDAO.createSmsPreregistration({

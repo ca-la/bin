@@ -10,7 +10,7 @@ const MailChimp = require('../../services/mailchimp');
 const requireAuth = require('../../middleware/require-auth');
 const ScansDAO = require('../../dao/scans');
 const SessionsDAO = require('../../dao/sessions');
-const Shopify = require('../../services/shopify');
+const ShopifyClient = require('../../services/shopify');
 const Twilio = require('../../services/twilio');
 const User = require('../../domain-objects/user');
 const UsersDAO = require('../../dao/users');
@@ -20,6 +20,7 @@ const {
   REFERRAL_VALUE_DOLLARS
 } = require('../../config');
 
+const shopify = new ShopifyClient(ShopifyClient.CALA_STORE_CREDENTIALS);
 const router = new Router();
 
 /**
@@ -228,7 +229,7 @@ function* completeSmsPreregistration() {
 
   const [firstName, lastName] = name.split(' ');
 
-  yield Shopify.updateCustomerByPhone(phone, {
+  yield shopify.updateCustomerByPhone(phone, {
     last_name: lastName,
     first_name: firstName,
     phone,
@@ -281,7 +282,7 @@ function* getReferralCount() {
   this.assert(this.params.userId === this.state.userId, 403, 'You can only get referral count for your own user');
 
   const user = yield UsersDAO.findById(this.params.userId);
-  const count = yield Shopify.getRedemptionCount(user.referralCode);
+  const count = yield shopify.getRedemptionCount(user.referralCode);
 
   this.status = 200;
 
