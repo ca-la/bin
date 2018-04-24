@@ -2,6 +2,7 @@
 
 const Router = require('koa-router');
 
+const canAccessUserResource = require('../../middleware/can-access-user-resource');
 const getScanPhotoUrl = require('../../services/get-scan-photo-url');
 const requireAuth = require('../../middleware/require-auth');
 const ScanPhotosDAO = require('../../dao/scan-photos');
@@ -19,13 +20,9 @@ function* getRawPhoto() {
 
   const scan = yield ScansDAO.findById(photo.scanId);
 
-  this.assert(
-    (
-      scan.userId === this.state.userId ||
-      this.state.role === User.ROLES.admin
-    ),
-    403
-  );
+  if (scan.userId) {
+    canAccessUserResource.call(this, scan.userId);
+  }
 
   const data = yield getFile(
     AWS_SCANPHOTO_BUCKET_NAME,
@@ -44,13 +41,9 @@ function* updatePhoto() {
 
   const scan = yield ScansDAO.findById(photo.scanId);
 
-  this.assert(
-    (
-      scan.userId === this.state.userId ||
-      this.state.role === User.ROLES.admin
-    ),
-    403
-  );
+  if (scan.userId) {
+    canAccessUserResource.call(this, scan.userId);
+  }
 
   const { calibrationData, controlPoints } = this.request.body;
 
@@ -65,8 +58,8 @@ function* updatePhoto() {
   this.body = updated;
 }
 
-router.get('/:photoId/raw', requireAuth, getRawPhoto);
-router.patch('/:photoId', requireAuth, updatePhoto);
-router.put('/:photoId', requireAuth, updatePhoto); // TODO: deprecate
+router.get('/:photoId/raw', getRawPhoto);
+router.patch('/:photoId', updatePhoto);
+router.put('/:photoId', updatePhoto); // TODO: deprecate
 
 module.exports = router.routes();
