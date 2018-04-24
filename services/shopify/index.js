@@ -333,4 +333,6 @@ ShopifyClient.CALA_STORE_CREDENTIALS = {
   appPassword: calaCredentials[1]
 };
 
+ShopifyClient.parseError = parseError;
+
 module.exports = ShopifyClient;

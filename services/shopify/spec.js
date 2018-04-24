@@ -1,30 +1,43 @@
 'use strict';
 
-const { test, skip } = require('../../test-helpers/fresh');
-const Shopify = require('./index');
+const random = require('lodash/random');
 
-// s/skip/test to test functionality
-skip('getRedemptionCount', (t) => {
-  return Shopify.getRedemptionCount('CHEAPO')
+const { test, skip } = require('../../test-helpers/fresh');
+const ShopifyClient = require('./index');
+
+// Run these tests with RUN_SHOPIFY_TESTS=true to run the integration tests
+// against a real Shopify store.
+const testRunner = (process.env.RUN_SHOPIFY_TESTS === 'true') ? test : skip;
+const calaClient = new ShopifyClient(ShopifyClient.CALA_STORE_CREDENTIALS);
+
+function getPhone() {
+  let memo = '+1415580';
+  for (let i = 0; i < 4; i++) {
+    memo += random(0, 9);
+  }
+  return memo;
+}
+
+const phone1 = getPhone();
+
+testRunner('getRedemptionCount', (t) => {
+  return calaClient.getRedemptionCount('CHEAPO')
     .then(count => t.equal(count, 1));
 });
 
-// s/skip/test to test functionality
-skip('createCustomer', (t) => {
-  return Shopify.createCustomer({
-    name: 'Dylan Pyle',
-    phone: '+14155809922'
-  })
-    .then((customer) => {
-      t.equal(customer.first_name, 'Dylan');
-      t.equal(customer.last_name, 'Pyle');
-      t.equal(customer.phone, '+14155809922');
-    });
+testRunner('createCustomer', async (t) => {
+  const customer = await calaClient.createCustomer({
+    name: 'Customer Name',
+    phone: phone1
+  });
+
+  t.equal(customer.first_name, 'Customer');
+  t.equal(customer.last_name, 'Name');
+  t.equal(customer.phone, phone1);
 });
 
-// s/skip/test to test functionality
-skip('updateCustomerByPhone', (t) => {
-  return Shopify.updateCustomerByPhone('+14155809925', {
+testRunner('updateCustomerByPhone', (t) => {
+  return calaClient.updateCustomerByPhone(phone1, {
     last_name: 'Something',
     first_name: 'Someone',
     email: 'someone@example.com',
@@ -36,7 +49,7 @@ skip('updateCustomerByPhone', (t) => {
         company: 'CALA',
         city: 'San Francisco',
         province: 'California',
-        phone: '+14155809925',
+        phone: phone1,
         zip: '94117',
         last_name: 'Something',
         first_name: 'Someone'
@@ -50,21 +63,21 @@ skip('updateCustomerByPhone', (t) => {
     });
 });
 
-skip('getCollects', (t) => {
-  return Shopify.getCollects()
+testRunner('getCollects', (t) => {
+  return calaClient.getCollects()
     .then((collects) => {
       t.equal(typeof collects[0].product_id, 'number');
     });
 });
 
 test('parseError parses string errors', (t) => {
-  const errorMessage = Shopify.parseError('wowza');
+  const errorMessage = ShopifyClient.parseError('wowza');
   t.equal(errorMessage, 'wowza');
   return Promise.resolve();
 });
 
 test('parseError parses object errors', (t) => {
-  const errorMessage = Shopify.parseError({
+  const errorMessage = ShopifyClient.parseError({
     phone: [
       'is invalid',
       'is very bad'
@@ -80,7 +93,7 @@ test('parseError parses object errors', (t) => {
 });
 
 test('parseError parses object errors', (t) => {
-  const errorMessage = Shopify.parseError({
+  const errorMessage = ShopifyClient.parseError({
     phone: 'no bueno'
   });
 
