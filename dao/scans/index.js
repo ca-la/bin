@@ -12,6 +12,8 @@ const Scan = require('../../domain-objects/scan');
 const instantiate = data => new Scan(data);
 const maybeInstantiate = data => (data && new Scan(data)) || null;
 
+const { dataMapper } = Scan;
+
 const SCAN_TYPES = {
   // Photo(s) uploaded by a customer
   photo: 'PHOTO',
@@ -21,15 +23,14 @@ const SCAN_TYPES = {
 };
 
 function create(data) {
+  const rowData = Object.assign(
+    {},
+    compact(dataMapper.userDataToRowData(data)),
+    { id: uuid.v4() }
+  );
+
   return db('scans')
-    .insert({
-      id: uuid.v4(),
-      is_complete: data.isComplete,
-      deleted_at: data.deletedAt,
-      user_id: data.userId,
-      type: data.type,
-      measurements: data.measurements
-    }, '*')
+    .insert(rowData, '*')
     .catch(rethrow)
     .catch(rethrow.ERRORS.NotNullViolation, (err) => {
       if (err.column === 'type') {
@@ -48,10 +49,7 @@ function create(data) {
   */
 function findById(id) {
   return db('scans')
-    .where({
-      id,
-      deleted_at: null
-    })
+    .where({ id, deleted_at: null })
     .then(first)
     .then(maybeInstantiate)
     .catch(rethrow)
@@ -64,10 +62,7 @@ function findById(id) {
   */
 function findByUserId(userId) {
   return db('scans')
-    .where({
-      user_id: userId,
-      deleted_at: null
-    })
+    .where({ user_id: userId, deleted_at: null })
     .orderBy('created_at', 'desc')
     .catch(rethrow)
     .then(scans => scans.map(instantiate));
