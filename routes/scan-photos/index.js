@@ -4,10 +4,8 @@ const Router = require('koa-router');
 
 const canAccessUserResource = require('../../middleware/can-access-user-resource');
 const getScanPhotoUrl = require('../../services/get-scan-photo-url');
-const requireAuth = require('../../middleware/require-auth');
 const ScanPhotosDAO = require('../../dao/scan-photos');
 const ScansDAO = require('../../dao/scans');
-const User = require('../../domain-objects/user');
 const { AWS_SCANPHOTO_BUCKET_NAME } = require('../../config');
 const { getFile } = require('../../services/aws');
 
