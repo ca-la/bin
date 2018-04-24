@@ -96,9 +96,8 @@ test('GET /scans returns a 403 when called with someone elses user ID', (t) => {
         headers: authHeader(session.id)
       });
     })
-    .then(([response, body]) => {
+    .then(([response]) => {
       t.equal(response.status, 403);
-      t.equal(body.message, 'You can only request scans for your own user');
     });
 });
 
