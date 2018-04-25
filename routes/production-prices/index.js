@@ -2,6 +2,7 @@
 
 const Router = require('koa-router');
 
+const filterError = require('../../services/filter-error');
 const InvalidDataError = require('../../errors/invalid-data');
 const ProductionPricesDAO = require('../../dao/production-prices');
 const requireAuth = require('../../middleware/require-auth');
@@ -47,11 +48,11 @@ function* getPrices() {
   if (vendorUserId && serviceId) {
     // Both filters are provided, find a list by vendor *and* service
     this.body = yield ProductionPricesDAO.findByVendorAndService(vendorUserId, serviceId)
-      .catch(InvalidDataError, err => this.throw(400, err));
+      .catch(filterError(InvalidDataError, err => this.throw(400, err)));
   } else {
     // Only vendor was provided, find all services
     this.body = yield ProductionPricesDAO.findByVendor(vendorUserId)
-      .catch(InvalidDataError, err => this.throw(400, err));
+      .catch(filterError(InvalidDataError, err => this.throw(400, err)));
   }
 
   this.status = 200;

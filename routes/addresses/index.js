@@ -4,6 +4,7 @@ const Router = require('koa-router');
 
 const AddressesDAO = require('../../dao/addresses');
 const canAccessUserResource = require('../../middleware/can-access-user-resource');
+const filterError = require('../../services/filter-error');
 const InvalidDataError = require('../../errors/invalid-data');
 const requireAuth = require('../../middleware/require-auth');
 
@@ -30,7 +31,7 @@ function* createAddress() {
   });
 
   const address = yield AddressesDAO.create(addressData)
-    .catch(InvalidDataError, err => this.throw(400, err));
+    .catch(filterError(InvalidDataError, err => this.throw(400, err)));
 
   this.status = 201;
   this.body = address;

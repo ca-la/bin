@@ -1,12 +1,13 @@
 'use strict';
 
+const filterError = require('../../services/filter-error');
 const getDesignPermissions = require('../../services/get-design-permissions');
 const InvalidDataError = require('../../errors/invalid-data');
 const ProductDesignsDAO = require('../../dao/product-designs');
 
 function* canAccessDesignId(designId) {
   const design = yield ProductDesignsDAO.findById(designId)
-    .catch(InvalidDataError, err => this.throw(404, err));
+    .catch(filterError(InvalidDataError, err => this.throw(404, err)));
 
   this.assert(design, 404, 'Design not found');
 

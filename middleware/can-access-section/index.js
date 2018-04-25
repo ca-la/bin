@@ -1,7 +1,8 @@
 'use strict';
 
-const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
+const filterError = require('../../services/filter-error');
 const InvalidDataError = require('../../errors/invalid-data');
+const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
 
 function* canAccessSection(next) {
   if (!this.state.design) {
@@ -9,7 +10,7 @@ function* canAccessSection(next) {
   }
 
   const section = yield ProductDesignSectionsDAO.findById(this.params.sectionId)
-    .catch(InvalidDataError, err => this.throw(404, err));
+    .catch(filterError(InvalidDataError, err => this.throw(404, err)));
   this.assert(section, 404);
   this.assert(section.designId === this.state.design.id, 404);
 

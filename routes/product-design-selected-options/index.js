@@ -3,6 +3,7 @@
 const Router = require('koa-router');
 const pick = require('lodash/pick');
 
+const filterError = require('../../services/filter-error');
 const InvalidDataError = require('../../errors/invalid-data');
 const ProductDesignSelectedOptionsDAO = require('../../dao/product-design-selected-options');
 const requireAuth = require('../../middleware/require-auth');
@@ -45,7 +46,7 @@ function* create() {
   const allowedAttrs = pick(this.request.body, ALLOWED_ATTRS);
 
   const option = yield ProductDesignSelectedOptionsDAO.create(allowedAttrs)
-    .catch(InvalidDataError, err => this.throw(404, err));
+    .catch(filterError(InvalidDataError, err => this.throw(404, err)));
 
   yield sendSelectedOptionCreateNotifications({
     sectionId: option.sectionId,

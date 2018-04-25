@@ -4,6 +4,7 @@ const Router = require('koa-router');
 const multer = require('koa-multer');
 
 const canAccessUserResource = require('../../middleware/can-access-user-resource');
+const filterError = require('../../services/filter-error');
 const getScanPhotoUrl = require('../../services/get-scan-photo-url');
 const InvalidDataError = require('../../errors/invalid-data');
 const requireAuth = require('../../middleware/require-auth');
@@ -26,7 +27,7 @@ function* createScan() {
     userId: this.state.userId,
     isComplete
   })
-    .catch(InvalidDataError, err => this.throw(400, err));
+    .catch(filterError(InvalidDataError, err => this.throw(400, err)));
 
   if (this.state.userId && isComplete) {
     try {

@@ -1,6 +1,5 @@
 'use strict';
 
-const Bluebird = require('bluebird');
 const intersection = require('lodash/intersection');
 const pick = require('lodash/pick');
 const Router = require('koa-router');
@@ -10,6 +9,7 @@ const canAccessSection = require('../../middleware/can-access-section');
 const canAccessUserResource = require('../../middleware/can-access-user-resource');
 const compact = require('../../services/compact');
 const deleteSection = require('../../services/delete-section');
+const filterError = require('../../services/filter-error');
 const findUserDesigns = require('../../services/find-user-designs');
 const getDesignPermissions = require('../../services/get-design-permissions');
 const InvalidDataError = require('../../errors/invalid-data');
@@ -129,8 +129,8 @@ function* getDesignPricing() {
     computedPricingTable,
     overridePricingTable,
     finalPricingTable
-  } = yield Bluebird.resolve(calculator.getAllPricingTables())
-    .catch(MissingPrerequisitesError, err => this.throw(400, err));
+  } = yield calculator.getAllPricingTables()
+    .catch(filterError(MissingPrerequisitesError, err => this.throw(400, err)));
 
   let finalTable = finalPricingTable;
 
@@ -181,7 +181,7 @@ function* createDesign() {
   });
 
   let design = yield ProductDesignsDAO.create(data)
-    .catch(InvalidDataError, err => this.throw(400, err));
+    .catch(filterError(InvalidDataError, err => this.throw(400, err)));
 
   // Create a default set of services
   yield ProductDesignServicesDAO.replaceForDesign(design.id, [
@@ -215,7 +215,7 @@ function* updateDesign() {
     this.params.designId,
     data
   )
-    .catch(InvalidDataError, err => this.throw(400, err));
+    .catch(filterError(InvalidDataError, err => this.throw(400, err)));
 
   updated = yield attachResources(updated, this.state.designPermissions);
 
@@ -264,7 +264,7 @@ function* createSection() {
   const section = yield ProductDesignSectionsDAO.create(Object.assign({}, data, {
     designId: this.params.designId
   }))
-    .catch(InvalidDataError, err => this.throw(400, err));
+    .catch(filterError(InvalidDataError, err => this.throw(400, err)));
 
   yield sendSectionCreateNotifications({
     sectionId: section.id,
@@ -291,7 +291,7 @@ function* updateSection() {
     this.params.sectionId,
     pick(this.request.body, ALLOWED_SECTION_PARAMS)
   )
-    .catch(InvalidDataError, err => this.throw(400, err));
+    .catch(filterError(InvalidDataError, err => this.throw(400, err)));
 
   yield sendSectionUpdateNotifications({
     sectionId: this.params.sectionId,
@@ -316,7 +316,7 @@ function* replaceSectionFeaturePlacements() {
     this.params.sectionId,
     this.request.body
   )
-    .catch(InvalidDataError, err => this.throw(400, err));
+    .catch(filterError(InvalidDataError, err => this.throw(400, err)));
 
   yield sendFeaturePlacementUpdateNotifications({
     sectionId: this.params.sectionId,
@@ -364,7 +364,7 @@ function* createSectionAnnotation() {
       userId: this.state.userId
     }
   )
-    .catch(InvalidDataError, err => this.throw(400, err));
+    .catch(filterError(InvalidDataError, err => this.throw(400, err)));
 
   const withUser = yield attachAnnotationUser(created);
 
@@ -383,7 +383,7 @@ function* deleteSectionAnnotation() {
   yield ProductDesignSectionAnnotationsDAO.deleteById(
     this.params.annotationId
   )
-    .catch(InvalidDataError, err => this.throw(400, err));
+    .catch(filterError(InvalidDataError, err => this.throw(400, err)));
 
   this.status = 204;
 }
@@ -395,7 +395,7 @@ function* updateSectionAnnotation() {
       text: this.request.body.text
     }
   )
-    .catch(InvalidDataError, err => this.throw(400, err));
+    .catch(filterError(InvalidDataError, err => this.throw(400, err)));
 
   const withUser = yield attachAnnotationUser(updated);
   this.body = withUser;
@@ -414,13 +414,13 @@ function* setStatus() {
     "You don't have permission to modify this design status"
   );
 
-  const updated = yield Bluebird.resolve(updateDesignStatus(
+  const updated = yield updateDesignStatus(
     this.params.designId,
     newStatus,
     this.state.userId
-  ))
-    .catch(InvalidDataError, err => this.throw(400, err))
-    .catch(MissingPrerequisitesError, err => this.throw(400, err));
+  )
+    .catch(filterError(InvalidDataError, err => this.throw(400, err)))
+    .catch(filterError(MissingPrerequisitesError, err => this.throw(400, err)));
 
   this.body = { status: updated };
   this.status = 200;

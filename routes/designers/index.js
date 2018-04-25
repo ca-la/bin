@@ -2,6 +2,7 @@
 
 const Router = require('koa-router');
 
+const filterError = require('../../services/filter-error');
 const DesignersDAO = require('../../dao/designers');
 const InvalidDataError = require('../../errors/invalid-data');
 
@@ -20,7 +21,7 @@ function* getList() {
  */
 function* getById() {
   const designer = yield DesignersDAO.getById(this.params.designerId)
-    .catch(InvalidDataError, err => this.throw(404, err.message));
+    .catch(filterError(InvalidDataError, err => this.throw(404, err.message)));
 
   this.body = designer;
   this.status = 200;

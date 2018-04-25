@@ -5,6 +5,7 @@ const rethrow = require('pg-rethrow');
 const compact = require('../../services/compact');
 
 const db = require('../../services/db');
+const filterError = require('../../services/filter-error');
 const first = require('../../services/first');
 const InvalidDataError = require('../../errors/invalid-data');
 const normalizeEmail = require('../../services/normalize-email');
@@ -38,9 +39,9 @@ function create(data) {
     .then(instantiate)
     .then(attachUser)
     .catch(rethrow)
-    .catch(rethrow.ERRORS.UniqueViolation, () => {
+    .catch(filterError(rethrow.ERRORS.UniqueViolation, () => {
       throw new InvalidDataError('User has already been invited to this design');
-    });
+    }));
 }
 
 function update(collaboratorId, data) {

@@ -1,5 +1,6 @@
 'use strict';
 
+const filterError = require('../../services/filter-error');
 const InvalidDataError = require('../../errors/invalid-data');
 const ProductDesignSectionAnnotationsDAO = require('../../dao/product-design-section-annotations');
 
@@ -9,7 +10,7 @@ function* canAccessAnnotation(next) {
   }
 
   const annotation = yield ProductDesignSectionAnnotationsDAO.findById(this.params.annotationId)
-    .catch(InvalidDataError, err => this.throw(404, err));
+    .catch(filterError(InvalidDataError, err => this.throw(404, err)));
 
   this.assert(annotation, 404);
   this.assert(annotation.sectionId === this.state.section.id, 404);

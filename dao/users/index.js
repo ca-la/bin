@@ -2,10 +2,10 @@
 
 const uuid = require('node-uuid');
 const rethrow = require('pg-rethrow');
-const Promise = require('bluebird');
 
 const compact = require('../../services/compact');
 const db = require('../../services/db');
+const filterError = require('../../services/filter-error');
 const first = require('../../services/first');
 const InvalidDataError = require('../../errors/invalid-data');
 const normalizeEmail = require('../../services/normalize-email');
@@ -76,7 +76,7 @@ function create(data, options = {}) {
       }, '*')
     )
     .catch(rethrow)
-    .catch(rethrow.ERRORS.UniqueViolation, (err) => {
+    .catch(filterError(rethrow.ERRORS.UniqueViolation, (err) => {
       switch (err.constraint) {
         case 'users_unique_email':
           throw new InvalidDataError(
@@ -91,7 +91,7 @@ function create(data, options = {}) {
         default:
           throw err;
       }
-    })
+    }))
     .then(first)
     .then(instantiate);
 }
@@ -212,7 +212,7 @@ function completeSmsPreregistration(userId, data) {
     .then(first)
     .then(instantiate)
     .catch(rethrow)
-    .catch(rethrow.ERRORS.UniqueViolation, (err) => {
+    .catch(filterError(rethrow.ERRORS.UniqueViolation, (err) => {
       switch (err.constraint) {
         case 'users_unique_email':
           throw new InvalidDataError(
@@ -227,7 +227,7 @@ function completeSmsPreregistration(userId, data) {
         default:
           throw err;
       }
-    });
+    }));
 }
 
 module.exports = {

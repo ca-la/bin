@@ -4,6 +4,7 @@ const uuid = require('node-uuid');
 const rethrow = require('pg-rethrow');
 
 const db = require('../../services/db');
+const filterError = require('../../services/filter-error');
 const InvalidDataError = require('../../errors/invalid-data');
 const ProductDesignVariant = require('../../domain-objects/product-design-variant');
 
@@ -37,12 +38,12 @@ function createForDesign(trx, designId, variants) {
     .then(inserted => inserted.map(instantiate))
     .then(instances => instances.sort((a, b) => a.position - b.position))
     .catch(rethrow)
-    .catch(rethrow.ERRORS.UniqueViolation, (err) => {
+    .catch(filterError(rethrow.ERRORS.UniqueViolation, (err) => {
       if (err.constraint === 'product_design_variant_position') {
         throw new InvalidDataError('Cannot create two variants with the same position');
       }
       throw err;
-    });
+    }));
 }
 
 function replaceForDesign(designId, variants) {

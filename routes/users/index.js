@@ -5,12 +5,13 @@ const Router = require('koa-router');
 const AddressesDAO = require('../../dao/addresses');
 const canAccessUserResource = require('../../middleware/can-access-user-resource');
 const claimDesignInvitations = require('../../services/claim-design-invitations');
+const filterError = require('../../services/filter-error');
 const InvalidDataError = require('../../errors/invalid-data');
 const MailChimp = require('../../services/mailchimp');
 const requireAuth = require('../../middleware/require-auth');
 const ScansDAO = require('../../dao/scans');
 const SessionsDAO = require('../../dao/sessions');
-const Shopify = require('../../services/shopify');
+const ShopifyClient = require('../../services/shopify');
 const Twilio = require('../../services/twilio');
 const User = require('../../domain-objects/user');
 const UsersDAO = require('../../dao/users');
@@ -20,6 +21,7 @@ const {
   REFERRAL_VALUE_DOLLARS
 } = require('../../config');
 
+const shopify = new ShopifyClient(ShopifyClient.CALA_STORE_CREDENTIALS);
 const router = new Router();
 
 /**
@@ -58,7 +60,7 @@ function* createUser() {
     phone,
     referralCode
   })
-    .catch(InvalidDataError, err => this.throw(400, err));
+    .catch(filterError(InvalidDataError, err => this.throw(400, err)));
 
   // Previously we had this *before* the user creation in the DB, effectively
   // using it as a more powerful email validator. That has proven to be noisy as
@@ -184,7 +186,7 @@ function* updateUser() {
   }
 
   const updated = yield UsersDAO.update(this.params.userId, data)
-    .catch(InvalidDataError, err => this.throw(400, err));
+    .catch(filterError(InvalidDataError, err => this.throw(400, err)));
 
   this.status = 200;
   this.body = updated;
@@ -224,11 +226,11 @@ function* completeSmsPreregistration() {
     this.params.userId,
     { name, email, phone, password }
   )
-    .catch(InvalidDataError, err => this.throw(400, err));
+    .catch(filterError(InvalidDataError, err => this.throw(400, err)));
 
   const [firstName, lastName] = name.split(' ');
 
-  yield Shopify.updateCustomerByPhone(phone, {
+  yield shopify.updateCustomerByPhone(phone, {
     last_name: lastName,
     first_name: firstName,
     phone,
@@ -281,7 +283,7 @@ function* getReferralCount() {
   this.assert(this.params.userId === this.state.userId, 403, 'You can only get referral count for your own user');
 
   const user = yield UsersDAO.findById(this.params.userId);
-  const count = yield Shopify.getRedemptionCount(user.referralCode);
+  const count = yield shopify.getRedemptionCount(user.referralCode);
 
   this.status = 200;
 

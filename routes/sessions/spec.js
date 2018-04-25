@@ -1,7 +1,5 @@
 'use strict';
 
-const Promise = require('bluebird');
-
 const InvalidDataError = require('../../errors/invalid-data');
 const SessionsDAO = require('../../dao/sessions');
 const UsersDAO = require('../../dao/users');

@@ -1,7 +1,5 @@
 'use strict';
 
-const Promise = require('bluebird');
-
 const SessionsDAO = require('../dao/sessions');
 const UsersDAO = require('../dao/users');
 const AddressesDAO = require('../dao/addresses');

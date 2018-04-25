@@ -1,7 +1,5 @@
 'use strict';
 
-const Promise = require('bluebird');
-
 const Designer = require('../../domain-objects/designer');
 const DesignersDAO = require('../../dao/designers');
 const InvalidDataError = require('../../errors/invalid-data');

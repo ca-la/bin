@@ -3,6 +3,7 @@
 const Router = require('koa-router');
 const pick = require('lodash/pick');
 
+const filterError = require('../../services/filter-error');
 const InvalidDataError = require('../../errors/invalid-data');
 const ProductDesignImagesDAO = require('../../dao/product-design-images');
 const ProductDesignOptionsDAO = require('../../dao/product-design-options');
@@ -44,7 +45,7 @@ function attachImages(option) {
 
 function* canModifyOption(next) {
   const option = yield ProductDesignOptionsDAO.findById(this.params.optionId)
-    .catch(InvalidDataError, err => this.throw(404, err));
+    .catch(filterError(InvalidDataError, err => this.throw(404, err)));
 
   this.assert(option, 404);
 
@@ -63,7 +64,7 @@ function* create() {
   });
 
   const option = yield ProductDesignOptionsDAO.create(attrs)
-    .catch(InvalidDataError, err => this.throw(404, err));
+    .catch(filterError(InvalidDataError, err => this.throw(404, err)));
 
   this.body = yield attachImages(option);
   this.status = 201;

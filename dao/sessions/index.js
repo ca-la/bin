@@ -1,10 +1,10 @@
 'use strict';
 
-const Promise = require('bluebird');
 const rethrow = require('pg-rethrow');
 const uuid = require('node-uuid');
 
 const db = require('../../services/db');
+const filterError = require('../../services/filter-error');
 const first = require('../../services/first');
 const InvalidDataError = require('../../errors/invalid-data');
 const Session = require('../../domain-objects/session');
@@ -14,7 +14,7 @@ const { compare } = require('../../services/hash');
 const { ALLOWED_SESSION_ROLES } = require('../../domain-objects/user');
 
 const instantiate = data => new Session(data);
-const maybeInstantiate = data => (data && new Session(data)) || null;
+const maybeInstantiate = data => (data ? instantiate(data) : null);
 
 function ensureCanAssumeRole(user, role) {
   const allowedRoles = ALLOWED_SESSION_ROLES[user.role];
@@ -112,11 +112,11 @@ function findById(id, shouldAttachUser = false) {
       return session;
     })
     .catch(rethrow)
-    .catch(rethrow.ERRORS.InvalidTextRepresentation, () => {
+    .catch(filterError(rethrow.ERRORS.InvalidTextRepresentation, () => {
       // If an invalid UUID is passed in, Postgres will complain. Treat this as
       // any other not-found case.
       return null;
-    });
+    }));
 }
 
 function deleteByUserId(userId) {

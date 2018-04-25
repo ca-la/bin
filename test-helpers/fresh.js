@@ -70,8 +70,7 @@ function freshTest(
       const err = Error(`
         All tests must return promises.
 
-        Try \`const ok = Promise.resolve()\` at the top of your test suite,
-        and returning \`ok\` at the end of each synchronous test.
+        Try writing your test using async/await; it'll probably be clearer too!
       `);
       t.fail(err);
     }

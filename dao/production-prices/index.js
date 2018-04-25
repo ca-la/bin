@@ -4,6 +4,7 @@ const uuid = require('node-uuid');
 const rethrow = require('pg-rethrow');
 
 const db = require('../../services/db');
+const filterError = require('../../services/filter-error');
 const InvalidDataError = require('../../errors/invalid-data');
 const ProductionPrice = require('../../domain-objects/production-price');
 const { requireValues } = require('../../services/require-properties');
@@ -47,7 +48,7 @@ function createForVendorAndService(trx, vendorUserId, serviceId, prices) {
         .sort((a, b) => a.minimumUnits - b.minimumUnits);
     })
     .catch(rethrow)
-    .catch(rethrow.ERRORS.NotNullViolation, (err) => {
+    .catch(filterError(rethrow.ERRORS.NotNullViolation, (err) => {
       switch (err.column) {
         case 'minimum_units':
           throw new InvalidDataError('Minimum units must be provided');
@@ -58,13 +59,13 @@ function createForVendorAndService(trx, vendorUserId, serviceId, prices) {
         default:
           throw err;
       }
-    })
-    .catch(rethrow.ERRORS.ForeignKeyViolation, (err) => {
+    }))
+    .catch(filterError(rethrow.ERRORS.ForeignKeyViolation, (err) => {
       if (err.constraint === 'production_prices_service_id_fkey') {
         throw new InvalidDataError('Invalid service ID');
       }
       throw err;
-    });
+    }));
 }
 
 function replaceForVendorAndService(vendorUserId, serviceId, prices) {
@@ -92,9 +93,9 @@ function findByVendor(vendorUserId) {
     .orderBy('minimum_units', 'asc')
     .then(prices => prices.map(instantiate))
     .catch(rethrow)
-    .catch(rethrow.ERRORS.InvalidTextRepresentation, () => {
+    .catch(filterError(rethrow.ERRORS.InvalidTextRepresentation, () => {
       throw new InvalidDataError('Invalid User ID');
-    });
+    }));
 }
 
 function findByVendorAndService(vendorUserId, serviceId) {
@@ -106,9 +107,9 @@ function findByVendorAndService(vendorUserId, serviceId) {
     .orderBy('minimum_units', 'asc')
     .then(prices => prices.map(instantiate))
     .catch(rethrow)
-    .catch(rethrow.ERRORS.InvalidTextRepresentation, () => {
+    .catch(filterError(rethrow.ERRORS.InvalidTextRepresentation, () => {
       throw new InvalidDataError('Invalid ID');
-    });
+    }));
 }
 
 module.exports = {
