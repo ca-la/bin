@@ -1,10 +1,5 @@
 #!/bin/bash
 
-# Note: This is a one-time copy of the active version in cala-api, released here
-# as a starting point for other projects.
-
-# ---
-
 # Ensure that the latest deployed database migration is the same as the latest
 # local migration. Prevents deploying code before the corresponding migration.
 #
@@ -14,6 +9,9 @@
 #   requests to the API, with the key "lastMigrationHash"
 # - The `migrations` directory contains all migrations, alphabetically by date,
 #   with the exception of the `_template` file.
+#
+# Note: This incarnation of the script was built for cala-api specifically. If
+# we want to reuse this elsewhere, it'll need some modification.
 
 set -euo pipefail
 
