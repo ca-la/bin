@@ -15,7 +15,7 @@ const { STRIPE_SECRET_KEY } = require('../../config');
 const STRIPE_API_BASE = 'https://api.stripe.com/v1';
 const STRIPE_CONNECT_API_BASE = 'https://connect.stripe.com';
 
-const CREDENTIALS = new Buffer(`${STRIPE_SECRET_KEY}:`).toString('base64');
+const CREDENTIALS = Buffer.from(`${STRIPE_SECRET_KEY}:`).toString('base64');
 
 async function makeRequest({ method, path, apiBase, data, idempotencyKey }) {
   requireValues({ method, path });

@@ -13,7 +13,7 @@ const {
 } = require('../../config');
 
 const MAILCHIMP_API_BASE = 'https://us13.api.mailchimp.com/3.0';
-const MAILCHIMP_AUTH = new Buffer(`cala:${MAILCHIMP_API_KEY}`).toString('base64');
+const MAILCHIMP_AUTH = Buffer.from(`cala:${MAILCHIMP_API_KEY}`).toString('base64');
 
 const ERROR_GLOSSARY = {
   'Member Exists': "You're already signed up for this list!"

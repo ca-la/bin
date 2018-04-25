@@ -51,7 +51,7 @@ class ShopifyClient {
     const url = `${this.storeBase}/admin${path}`;
 
     const auth = `${this.appApiKey}:${this.appPassword}`;
-    const shopifyAuthHeader = new Buffer(auth).toString('base64');
+    const shopifyAuthHeader = Buffer.from(auth).toString('base64');
 
     const options = {
       method,
