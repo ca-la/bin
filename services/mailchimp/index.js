@@ -9,7 +9,6 @@ const { logServerError } = require('../logger');
 const {
   MAILCHIMP_API_KEY,
   MAILCHIMP_LIST_ID_SUBSCRIPTIONS,
-  MAILCHIMP_LIST_ID_PARTNERS,
   MAILCHIMP_LIST_ID_USERS
 } = require('../../config');
 
@@ -100,15 +99,6 @@ function subscribeToSubscriptions({ email, name, zip }) {
   });
 }
 
-function subscribeToPartners({ email, name, companyName, comments, source }) {
-  return subscribe(MAILCHIMP_LIST_ID_PARTNERS, email, {
-    NAME: name,
-    ORGNAME: companyName,
-    COMMENTS: comments,
-    SOURCE: source
-  });
-}
-
 function subscribeToUsers({ email, name, referralCode }) {
   return subscribe(MAILCHIMP_LIST_ID_USERS, email, {
     FULL_NAME: name,
@@ -134,7 +124,6 @@ function updateUser({ email, hasScan, hasBought }) {
 
 module.exports = {
   subscribe,
-  subscribeToPartners,
   subscribeToSubscriptions,
   subscribeToUsers,
   updateUser
