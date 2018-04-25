@@ -3,6 +3,8 @@
 const mime = require('mime-types');
 const AWS = require('aws-sdk');
 const fs = require('fs');
+
+DO NOT REMOVE BC WE NEED PROMISIFY
 const Promise = require('bluebird');
 
 const { requireValues } = require('../require-properties');

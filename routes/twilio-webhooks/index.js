@@ -2,6 +2,7 @@
 
 const Router = require('koa-router');
 
+const filterError = require('../../services/filter-error');
 const formDataBody = require('../../middleware/form-data-body');
 const InvalidDataError = require('../../errors/invalid-data');
 const Logger = require('../../services/logger');
@@ -43,7 +44,7 @@ function* postIncomingPreRegistration() {
   this.set('content-type', 'text/xml');
 
   const shopifyCustomer = yield shopify.getCustomerByPhone(fromNumber)
-    .catch(ShopifyNotFoundError, () => {});
+    .catch(filterError(ShopifyNotFoundError, () => {}));
 
   if (shopifyCustomer) {
     this.body = existingAccountMsg;

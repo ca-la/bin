@@ -1,11 +1,11 @@
 'use strict';
 
 const rethrow = require('pg-rethrow');
-const Promise = require('bluebird');
 const uuid = require('node-uuid');
 
 const db = require('../../services/db');
 const first = require('../../services/first');
+const filterError = require('../../services/filter-error');
 const InvalidDataError = require('../../errors/invalid-data');
 const Designer = require('../../domain-objects/designer');
 const DesignerPhoto = require('../../domain-objects/designer-photo');
@@ -71,9 +71,9 @@ function getById(designerId) {
       return instantiateWithPhotos(result);
     })
     .catch(rethrow)
-    .catch(rethrow.ERRORS.InvalidTextRepresentation, () => {
+    .catch(filterError(rethrow.ERRORS.InvalidTextRepresentation, () => {
       throw new InvalidDataError('Invalid designer ID format');
-    });
+    }));
 }
 
 function create(data) {

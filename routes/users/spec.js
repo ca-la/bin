@@ -1,7 +1,5 @@
 'use strict';
 
-const Promise = require('bluebird');
-
 const createUser = require('../../test-helpers/create-user');
 const InvalidDataError = require('../../errors/invalid-data');
 const MailChimp = require('../../services/mailchimp');

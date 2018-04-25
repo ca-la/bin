@@ -1,7 +1,6 @@
 'use strict';
 
 const rethrow = require('pg-rethrow');
-const Promise = require('bluebird');
 const uuid = require('node-uuid');
 
 const db = require('../../services/db');

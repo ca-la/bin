@@ -5,6 +5,7 @@ const rethrow = require('pg-rethrow');
 const compact = require('../../services/compact');
 
 const db = require('../../services/db');
+const filterError = require('../../services/filter-error');
 const first = require('../../services/first');
 const ProductDesignOption = require('../../domain-objects/product-design-option');
 
@@ -41,7 +42,7 @@ function findById(optionId) {
     .then(first)
     .then(maybeInstantiate)
     .catch(rethrow)
-    .catch(rethrow.ERRORS.InvalidTextRepresentation, () => null);
+    .catch(filterError(rethrow.ERRORS.InvalidTextRepresentation, () => null));
 }
 
 function findForUser(userId) {

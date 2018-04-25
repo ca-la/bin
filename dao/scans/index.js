@@ -4,6 +4,7 @@ const uuid = require('node-uuid');
 const rethrow = require('pg-rethrow');
 
 const db = require('../../services/db');
+const filterError = require('../../services/filter-error');
 const first = require('../../services/first');
 const compact = require('../../services/compact');
 const InvalidDataError = require('../../errors/invalid-data');
@@ -32,13 +33,13 @@ function create(data) {
   return db('scans')
     .insert(rowData, '*')
     .catch(rethrow)
-    .catch(rethrow.ERRORS.NotNullViolation, (err) => {
+    .catch(filterError(rethrow.ERRORS.NotNullViolation, (err) => {
       if (err.column === 'type') {
         throw new InvalidDataError('Scan type must be provided');
       }
 
       throw err;
-    })
+    }))
     .then(first)
     .then(instantiate);
 }
@@ -53,7 +54,7 @@ function findById(id) {
     .then(first)
     .then(maybeInstantiate)
     .catch(rethrow)
-    .catch(rethrow.ERRORS.InvalidTextRepresentation, () => null);
+    .catch(filterError(rethrow.ERRORS.InvalidTextRepresentation, () => null));
 }
 
 /**

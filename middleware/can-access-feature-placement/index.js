@@ -1,5 +1,6 @@
 'use strict';
 
+const filterError = require('../../services/filter-error');
 const InvalidDataError = require('../../errors/invalid-data');
 const ProductDesignFeaturePlacementsDAO = require('../../dao/product-design-feature-placements');
 const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
@@ -11,7 +12,7 @@ function* canAccessFeaturePlacement(next) {
   }
 
   const feature = yield ProductDesignFeaturePlacementsDAO.findById(this.params.featureId)
-    .catch(InvalidDataError, err => this.throw(404, err));
+    .catch(filterError(InvalidDataError, err => this.throw(404, err)));
 
   this.assert(feature, 404);
 

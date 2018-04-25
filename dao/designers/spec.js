@@ -69,7 +69,8 @@ test('DesignersDAO.getById throws InvalidDataError on invalid ID format', (t) =>
     .then(() => {
       throw new Error("Shouldn't get here");
     })
-    .catch(InvalidDataError, (err) => {
+    .catch((err) => {
+      t.equal(err instanceof InvalidDataError, true);
       t.equal(err.message, 'Invalid designer ID format');
     });
 });

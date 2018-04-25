@@ -5,6 +5,7 @@ const rethrow = require('pg-rethrow');
 
 const compact = require('../../services/compact');
 const db = require('../../services/db');
+const filterError = require('../../services/filter-error');
 const first = require('../../services/first');
 const InvalidDataError = require('../../errors/invalid-data');
 const ProductDesignService = require('../../domain-objects/product-design-service');
@@ -60,17 +61,17 @@ function createForDesign(trx, designId, services, oldServices) {
     .returning('*')
     .then(inserted => inserted.map(instantiate))
     .catch(rethrow)
-    .catch(rethrow.ERRORS.NotNullViolation, (err) => {
+    .catch(filterError(rethrow.ERRORS.NotNullViolation, (err) => {
       if (err.column === 'service_id') {
         throw new InvalidDataError('Service ID must be provided');
       }
-    })
-    .catch(rethrow.ERRORS.ForeignKeyViolation, (err) => {
+    }))
+    .catch(filterError(rethrow.ERRORS.ForeignKeyViolation, (err) => {
       if (err.constraint === 'product_design_services_service_id_fkey') {
         throw new InvalidDataError('Invalid service ID');
       }
       throw err;
-    });
+    }));
 }
 
 function findByDesignId(designId) {

@@ -5,6 +5,7 @@ const rethrow = require('pg-rethrow');
 
 const compact = require('../../services/compact');
 const db = require('../../services/db');
+const filterError = require('../../services/filter-error');
 const first = require('../../services/first');
 const InvalidDataError = require('../../errors/invalid-data');
 const ProductDesign = require('../../domain-objects/product-design');
@@ -56,12 +57,12 @@ function update(productDesignId, data) {
     .then(first)
     .then(instantiate)
     .catch(rethrow)
-    .catch(rethrow.ERRORS.ForeignKeyViolation, (err) => {
+    .catch(filterError(rethrow.ERRORS.ForeignKeyViolation, (err) => {
       if (err.constraint === 'product_designs_status_fkey') {
         throw new InvalidDataError('Invalid product design status');
       }
       throw err;
-    });
+    }));
 }
 
 function findByUserId(userId, filters) {
@@ -111,7 +112,7 @@ function findById(id, filters, options = {}) {
     .then(first)
     .then(maybeInstantiate)
     .catch(rethrow)
-    .catch(rethrow.ERRORS.InvalidTextRepresentation, () => null);
+    .catch(filterError(rethrow.ERRORS.InvalidTextRepresentation, () => null));
 }
 
 module.exports = {

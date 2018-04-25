@@ -5,6 +5,7 @@ const Router = require('koa-router');
 const AddressesDAO = require('../../dao/addresses');
 const canAccessUserResource = require('../../middleware/can-access-user-resource');
 const claimDesignInvitations = require('../../services/claim-design-invitations');
+const filterError = require('../../services/filter-error');
 const InvalidDataError = require('../../errors/invalid-data');
 const MailChimp = require('../../services/mailchimp');
 const requireAuth = require('../../middleware/require-auth');
@@ -59,7 +60,7 @@ function* createUser() {
     phone,
     referralCode
   })
-    .catch(InvalidDataError, err => this.throw(400, err));
+    .catch(filterError(InvalidDataError, err => this.throw(400, err)));
 
   // Previously we had this *before* the user creation in the DB, effectively
   // using it as a more powerful email validator. That has proven to be noisy as
@@ -185,7 +186,7 @@ function* updateUser() {
   }
 
   const updated = yield UsersDAO.update(this.params.userId, data)
-    .catch(InvalidDataError, err => this.throw(400, err));
+    .catch(filterError(InvalidDataError, err => this.throw(400, err)));
 
   this.status = 200;
   this.body = updated;
@@ -225,7 +226,7 @@ function* completeSmsPreregistration() {
     this.params.userId,
     { name, email, phone, password }
   )
-    .catch(InvalidDataError, err => this.throw(400, err));
+    .catch(filterError(InvalidDataError, err => this.throw(400, err)));
 
   const [firstName, lastName] = name.split(' ');
 

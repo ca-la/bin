@@ -1,7 +1,5 @@
 'use strict';
 
-const Promise = require('bluebird');
-
 const { post } = require('../../test-helpers/http');
 const { test, sandbox } = require('../../test-helpers/fresh');
 const UserAttributesService = require('../../services/user-attributes');
