@@ -30,6 +30,7 @@ async function findByPayoutAccountId(payoutAccountId) {
     .where({
       payout_account_id: payoutAccountId
     })
+    .orderBy('created_at', 'desc')
     .then(logs => logs.map(instantiate))
     .catch(rethrow);
 }
