@@ -24,10 +24,8 @@ function instantiateWithPhotos(row) {
   return designer;
 }
 
-function getList() {
-  return Promise.resolve()
-    .then(() => {
-      return db.raw(`
+async function getList() {
+  const res = await db.raw(`
     select
       to_json(designers.*) as designer,
       json_agg(to_json(designerphotos.*)) as photos
@@ -35,22 +33,17 @@ function getList() {
     left join designerphotos
       on designerphotos.designer_id = designers.id
     group by designers.id;
-      `);
-    })
-    .then((res) => {
-      const results = res.rows;
+  `).catch(rethrow);
 
-      return results
-        .sort((a, b) => a.designer.position - b.designer.position)
-        .map(instantiateWithPhotos);
-    })
-    .catch(rethrow);
+  const results = res.rows;
+
+  return results
+    .sort((a, b) => a.designer.position - b.designer.position)
+    .map(instantiateWithPhotos);
 }
 
-function getById(designerId) {
-  return Promise.resolve()
-    .then(() => {
-      return db.raw(`
+async function getById(designerId) {
+  const res = await db.raw(`
     select
       to_json(designers.*) as designer,
       json_agg(to_json(designerphotos.*)) as photos
@@ -59,21 +52,19 @@ function getById(designerId) {
       on designerphotos.designer_id = designers.id
     where designers.id = ?
     group by designers.id;
-      `, [designerId]);
-    })
-    .then((res) => {
-      const result = res.rows[0];
-
-      if (!result) {
-        throw new InvalidDataError('Designer not found');
-      }
-
-      return instantiateWithPhotos(result);
-    })
+  `, [designerId])
     .catch(rethrow)
     .catch(filterError(rethrow.ERRORS.InvalidTextRepresentation, () => {
       throw new InvalidDataError('Invalid designer ID format');
     }));
+
+  const result = res.rows[0];
+
+  if (!result) {
+    throw new InvalidDataError('Designer not found');
+  }
+
+  return instantiateWithPhotos(result);
 }
 
 function create(data) {

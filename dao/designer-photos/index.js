@@ -10,19 +10,16 @@ const DesignerPhoto = require('../../domain-objects/designer-photo');
 const instantiate = row => new DesignerPhoto(row);
 
 function create(data) {
-  return Promise.resolve()
-    .then(() => {
-      return db('designerphotos')
-        .insert({
-          id: uuid.v4(),
-          photo_url: data.photoUrl,
-          designer_id: data.designerId,
-          position: data.position
-        }, '*');
-    })
-    .catch(rethrow)
+  return db('designerphotos')
+    .insert({
+      id: uuid.v4(),
+      photo_url: data.photoUrl,
+      designer_id: data.designerId,
+      position: data.position
+    }, '*')
     .then(first)
-    .then(instantiate);
+    .then(instantiate)
+    .catch(rethrow);
 }
 
 module.exports = {

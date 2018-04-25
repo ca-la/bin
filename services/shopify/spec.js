@@ -12,7 +12,7 @@ const calaClient = new ShopifyClient(ShopifyClient.CALA_STORE_CREDENTIALS);
 
 function getPhone() {
   let memo = '+1415580';
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 4; i += 1) {
     memo += random(0, 9);
   }
   return memo;
@@ -70,13 +70,12 @@ testRunner('getCollects', (t) => {
     });
 });
 
-test('parseError parses string errors', (t) => {
+test('parseError parses string errors', async (t) => {
   const errorMessage = ShopifyClient.parseError('wowza');
   t.equal(errorMessage, 'wowza');
-  return Promise.resolve();
 });
 
-test('parseError parses object errors', (t) => {
+test('parseError parses object errors', async (t) => {
   const errorMessage = ShopifyClient.parseError({
     phone: [
       'is invalid',
@@ -89,14 +88,12 @@ test('parseError parses object errors', (t) => {
   });
 
   t.equal(errorMessage, 'phone is invalid, phone is very bad, name also bad, name not good');
-  return Promise.resolve();
 });
 
-test('parseError parses object errors', (t) => {
+test('parseError parses object errors', async (t) => {
   const errorMessage = ShopifyClient.parseError({
     phone: 'no bueno'
   });
 
   t.equal(errorMessage, 'phone no bueno');
-  return Promise.resolve();
 });
