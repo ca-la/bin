@@ -4,6 +4,7 @@ const Router = require('koa-router');
 
 const ShopifyNotFoundError = require('../../errors/shopify-not-found');
 const ShopifyClient = require('../../services/shopify');
+const filterError = require('../../services/filter-error');
 
 const shopify = new ShopifyClient(ShopifyClient.CALA_STORE_CREDENTIALS);
 
@@ -19,7 +20,7 @@ const router = new Router();
  */
 function* getOrderById() {
   const order = yield shopify.getOrder(this.params.orderId)
-    .catch(ShopifyNotFoundError, err => this.throw(404, err.message));
+    .catch(filterError(ShopifyNotFoundError, err => this.throw(404, err.message)));
 
   this.status = 200;
   this.body = order;

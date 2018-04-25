@@ -4,9 +4,8 @@ const Router = require('koa-router');
 
 const router = new Router();
 
+// eslint-disable-next-line no-empty-function
 function* sendFitLink() {
-  const { partnerId, shopifyUserId } = this.request.body;
-  this.status = 200;
 }
 
 router.post('/send-fit-link', sendFitLink);
