@@ -2,6 +2,7 @@
 
 const fetch = require('node-fetch');
 const querystring = require('querystring');
+const bindAll = require('lodash/bindAll');
 
 const InvalidDataError = require('../../errors/invalid-data');
 const Logger = require('../logger');
@@ -40,6 +41,10 @@ class ShopifyClient {
     this.storeBase = storeBase;
     this.appApiKey = appApiKey;
     this.appPassword = appPassword;
+
+    bindAll(this,
+      '_attachMetafields'
+    );
   }
 
   async makeRequest(method, path, data) {
@@ -96,7 +101,7 @@ class ShopifyClient {
     return fields;
   }
 
-  async attachMetafields(collection) {
+  async _attachMetafields(collection) {
     const metafields = await this.getCollectionMetafields(collection.id);
     return Object.assign({}, collection, { metafields });
   }
@@ -115,7 +120,7 @@ class ShopifyClient {
       return new Date(b.published_at) - new Date(a.published_at);
     });
 
-    return Promise.all(sorted.map(this.attachMetafields));
+    return Promise.all(sorted.map(this._attachMetafields));
   }
 
   /**
