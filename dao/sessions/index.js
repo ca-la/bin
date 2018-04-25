@@ -14,7 +14,7 @@ const { compare } = require('../../services/hash');
 const { ALLOWED_SESSION_ROLES } = require('../../domain-objects/user');
 
 const instantiate = data => new Session(data);
-const maybeInstantiate = data => (data && new Session(data)) || null;
+const maybeInstantiate = data => (data ? instantiate(data) : null);
 
 function ensureCanAssumeRole(user, role) {
   const allowedRoles = ALLOWED_SESSION_ROLES[user.role];

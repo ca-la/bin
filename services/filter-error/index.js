@@ -16,10 +16,10 @@ function filterError(errorType, handler) {
 
   return (err) => {
     if (err instanceof errorType) {
-      handler(err);
-    } else {
-      throw err;
+      return handler(err);
     }
+
+    throw err;
   };
 }
 
