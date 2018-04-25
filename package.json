@@ -10,7 +10,8 @@
   "bin": {
     "cala-release": "release",
     "cala-lint-commented-code": "lint-commented-code",
-    "cala-validate-migration": "validate-migration"
+    "cala-validate-migration": "validate-migration",
+    "cala-validate-deployment-readiness": "validate-deployment-readiness"
   },
   "scripts": {
     "release-minor": "npm version minor && git push origin master --tags && npm publish",
