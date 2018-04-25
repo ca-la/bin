@@ -39,7 +39,7 @@ main() {
   esac
 
   deployed_hash=$(
-    curl -s $status_url |\
+    curl -sA 'validate-deployment-readiness script' $status_url |\
       egrep -o '"lastMigrationHash":"[^"]*"' |\
       cut -d '"' -f 4
   )
