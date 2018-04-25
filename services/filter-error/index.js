@@ -8,9 +8,9 @@ const { requireValues } = require('../require-properties');
 //
 // Shopify.doSomething()
 //   .catch(filterError(ShopifyNotFoundError, (err) => {
-//      console.log('Huh, not found...');
-//      throw err;
-//   }));
+//      console.log('Huh, not found...')
+//      throw err
+//   }))
 function filterError(errorType, handler) {
   requireValues({ errorType, handler });
 
