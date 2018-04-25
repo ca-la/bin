@@ -1,7 +1,7 @@
 'use strict';
 
+const { promisify } = require('util');
 const bcrypt = require('bcrypt');
-const Promise = require('bluebird');
 
 const BCRYPT_ROUNDS = 10;
 
@@ -11,8 +11,8 @@ const BCRYPT_ROUNDS = 10;
   * @returns {Promise} Resolves with the hashed string
   */
 function hash(plaintext) {
-  const genSalt = Promise.promisify(bcrypt.genSalt, bcrypt);
-  const hashFn = Promise.promisify(bcrypt.hash, bcrypt);
+  const genSalt = promisify(bcrypt.genSalt.bind(bcrypt));
+  const hashFn = promisify(bcrypt.hash.bind(bcrypt));
 
   return genSalt(BCRYPT_ROUNDS)
     .then(salt => hashFn(plaintext, salt));
@@ -25,7 +25,7 @@ function hash(plaintext) {
   * @returns {Promise} Resolves with a Boolean indicating a match
   */
 function compare(plaintext, bcryptHash) {
-  const compareFn = Promise.promisify(bcrypt.compare, bcrypt);
+  const compareFn = promisify(bcrypt.compare.bind(bcrypt));
   return compareFn(plaintext, bcryptHash);
 }
 
