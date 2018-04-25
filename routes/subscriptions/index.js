@@ -3,6 +3,7 @@
 const Router = require('koa-router');
 
 const MailChimp = require('../../services/mailchimp');
+const { MAILCHIMP_LIST_ID_PARTNERS } = require('../../config');
 
 const router = new Router();
 
@@ -38,25 +39,29 @@ function* createSubscription() {
 /**
  * POST /subscriptions/partners
  * @param {String} email
- * @param {String} name
- * @param {String} companyName
- * @param {String} comments
- * @param {String} source
+ * @param {String} firstName
+ * @param {String} lastName
+ * @param {String} brandInstagram
  */
 function* createPartnerSubscription() {
-  const { email, name, companyName, comments, source } = this.request.body;
+  const {
+    email,
+    firstName,
+    lastName,
+    brandInstagram,
+    source
+  } = this.request.body;
 
-  if (!email || !name) {
+  if (!email || !firstName) {
     this.throw(400, 'Missing required information');
   }
 
   try {
-    yield MailChimp.subscribeToPartners({
-      email,
-      name,
-      companyName,
-      comments,
-      source
+    yield MailChimp.subscribe(MAILCHIMP_LIST_ID_PARTNERS, email, {
+      FNAME: firstName,
+      LNAME: lastName,
+      INSTA: brandInstagram,
+      SOURCE: source
     });
   } catch (error) {
     this.throw(400, error.message);
