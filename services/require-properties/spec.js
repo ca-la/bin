@@ -6,39 +6,31 @@ const {
 } = require('./index');
 const { test } = require('../../test-helpers/fresh');
 
-const ok = Promise.resolve();
-
-test('requireProperties throws an error if properties are missing', (t) => {
+test('requireProperties throws an error if properties are missing', async (t) => {
   t.throws(
     () => requireProperties(
       { foo: 'bar', buz: false },
       'foo', 'buz', 'bar', 'baz'
     )
   , /Missing required properties: bar, baz/);
-
-  return ok;
 });
 
-test('requireProperties does not throw if all properties are present', (t) => {
+test('requireProperties does not throw if all properties are present', async (t) => {
   t.doesNotThrow(() => {
     requireProperties({ foo: 'bar', buz: false }, 'foo', 'buz');
   });
-
-  return ok;
 });
 
-test('requireProperties supports objects that do not inherit from Object.prototype', (t) => {
+test('requireProperties supports objects that do not inherit from Object.prototype', async (t) => {
   t.doesNotThrow(() => {
     const obj = Object.create(null);
     obj.foo = 'bar';
 
     requireProperties(obj, 'foo');
   });
-
-  return ok;
 });
 
-test('requirePropertiesFormatted throws an error if properties are missing', (t) => {
+test('requirePropertiesFormatted throws an error if properties are missing', async (t) => {
   t.throws(
     () => requirePropertiesFormatted(
       { foo: 'bar', buz: false },
@@ -48,6 +40,4 @@ test('requirePropertiesFormatted throws an error if properties are missing', (t)
       }
     )
   , /Missing required information: The Bar One/);
-
-  return ok;
 });

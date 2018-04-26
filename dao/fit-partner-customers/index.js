@@ -52,14 +52,14 @@ function createTrx(trx, data) {
     .catch(rethrow);
 }
 
-function findOrCreate({ partnerId, shopifyCustomerId }) {
-  requireValues({ partnerId, shopifyCustomerId });
+function findOrCreate({ partnerId, shopifyUserId }) {
+  requireValues({ partnerId, shopifyUserId });
 
   return db.transaction(async (trx) => {
-    const found = await findComplexTrx(trx, { partnerId, shopifyCustomerId });
+    const found = await findComplexTrx(trx, { partnerId, shopifyUserId });
     if (found) { return found; }
 
-    const created = await createTrx(trx, { partnerId, shopifyCustomerId });
+    const created = await createTrx(trx, { partnerId, shopifyUserId });
     return created;
   });
 }

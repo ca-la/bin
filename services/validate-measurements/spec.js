@@ -4,9 +4,7 @@ const { test } = require('../../test-helpers/fresh');
 const validateMeasurements = require('./index');
 const InvalidDataError = require('../../errors/invalid-data');
 
-const ok = Promise.resolve();
-
-test('validateMeasurements allows valid values', () => {
+test('validateMeasurements allows valid values', async () => {
   const values = [
     null,
     {},
@@ -15,11 +13,9 @@ test('validateMeasurements allows valid values', () => {
   ];
 
   values.map(validateMeasurements);
-
-  return ok;
 });
 
-test('validateMeasurements disallows invalid values', (t) => {
+test('validateMeasurements disallows invalid values', async (t) => {
   t.throws(() => {
     validateMeasurements({
       heightInches: 'very'
@@ -31,6 +27,4 @@ test('validateMeasurements disallows invalid values', (t) => {
       weightLbs: 9999
     });
   }, InvalidDataError);
-
-  return ok;
 });
