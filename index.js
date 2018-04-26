@@ -1,19 +1,22 @@
 'use strict';
 
+const beginTime = Date.now();
+const Logger = require('./services/logger');
+Logger.log('Starting CALA API...');
+
 const fs = require('fs');
 const koa = require('koa');
 const path = require('path');
 const Router = require('koa-router');
 
-const app = koa();
-
-const errors = require('./middleware/errors');
-const jsonBody = require('./middleware/json-body');
-const headers = require('./middleware/headers');
-const loggerMiddleware = require('./middleware/logger');
-const Logger = require('./services/logger');
-const options = require('./middleware/options');
 const attachSession = require('./middleware/attach-session');
+const errors = require('./middleware/errors');
+const headers = require('./middleware/headers');
+const jsonBody = require('./middleware/json-body');
+const loggerMiddleware = require('./middleware/logger');
+const options = require('./middleware/options');
+
+const app = koa();
 
 app.use(loggerMiddleware);
 app.use(errors);
@@ -38,14 +41,17 @@ routeDirectories.forEach((directoryName) => {
   router.use(`/${directoryName}`, require(path.join(routesDir, directoryName)));
 });
 
-Logger.log(`Loaded ${routeDirectories.length} route prefixes`);
+const loadTime = Date.now() - beginTime;
+Logger.log(`Loaded ${routeDirectories.length} route prefixes in ${loadTime}ms`);
 
 app.use(router.routes());
 
 if (!module.parent) {
   const port = process.env.PORT || 8001;
   app.listen(port);
-  Logger.log(`Running on :${port}`);
+
+  const bootTime = Date.now() - beginTime;
+  Logger.log(`Started and running on :${port} in ${bootTime}ms`);
 }
 
 module.exports = app;
