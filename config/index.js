@@ -40,7 +40,7 @@ const ADMIN_EMAIL = {
 }[ENV];
 
 const REQUIRE_CALA_EMAIL = {
-  [envs.LOCAL]: true,
+  [envs.LOCAL]: false,
   [envs.PROD]: false,
   [envs.STG]: true
 }[ENV];
