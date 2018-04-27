@@ -9,14 +9,38 @@ function constructMetafields(object) {
 
   Object.keys(object).forEach((key) => {
     fields.push({
-      key: `cala-${key}`,
+      key,
       value: String(object[key]),
       value_type: 'string',
-      namespace: 'global'
+      namespace: 'cala-fit'
     });
   });
 
   return fields;
+}
+
+async function updateMetafields(shopify, customerId, data) {
+  const currentFields = await shopify.getCustomerMetafields(customerId);
+
+  const newFields = constructMetafields(data);
+
+  for (const newField of newFields) {
+    // If there's an existing metafield with the same key, we have to delete it
+    // before setting the new value.
+    const supersededField = currentFields.find(currentField =>
+      newField.key === currentField.key &&
+      newField.namespace === currentField.namespace
+    );
+
+    if (supersededField) {
+      await shopify.deleteMetafield(supersededField.id);
+    }
+  }
+
+  await shopify.updateCustomer(
+    customerId,
+    { metafields: constructMetafields(data) }
+  );
 }
 
 async function markComplete(scan) {
@@ -29,10 +53,7 @@ async function markComplete(scan) {
     appPassword: partner.shopifyAppPassword
   });
 
-  await shopify.updateCustomer(
-    customer.shopifyUserId,
-    { metafields: constructMetafields({ scanComplete: true }) }
-  );
+  await updateMetafields(shopify, customer.shopifyUserId, { 'scan-complete': true });
 }
 
 async function saveCalculatedValues(scan) {
@@ -45,10 +66,7 @@ async function saveCalculatedValues(scan) {
     appPassword: partner.shopifyAppPassword
   });
 
-  await shopify.updateCustomer(
-    customer.shopifyUserId,
-    { metafields: constructMetafields(scan.measurements.calculatedValues) }
-  );
+  await updateMetafields(shopify, customer.shopifyUserId, scan.measurements.calculatedValues);
 }
 
 module.exports = {

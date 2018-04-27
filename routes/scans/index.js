@@ -113,7 +113,7 @@ function* updateScan() {
       yield FitPartnerScanService.markComplete(updated);
     }
 
-    if (measurements.calculatedValues) {
+    if (measurements && measurements.calculatedValues) {
       yield FitPartnerScanService.saveCalculatedValues(updated);
     }
   }
