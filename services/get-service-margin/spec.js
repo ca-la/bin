@@ -3,9 +3,7 @@
 const { test } = require('../../test-helpers/fresh');
 const { getServiceMarginCents } = require('./index');
 
-const ok = Promise.resolve();
-
-test('getServiceMarginCents returns appropriate margins', (t) => {
+test('getServiceMarginCents returns appropriate margins', async (t) => {
   t.equal(
     getServiceMarginCents({
       serviceId: 'WASH',
@@ -59,6 +57,4 @@ test('getServiceMarginCents returns appropriate margins', (t) => {
     }),
     7566
   );
-
-  return ok;
 });

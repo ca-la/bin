@@ -102,6 +102,9 @@ const config = {
   // e.g. 'https://studio.ca.la'
   STUDIO_HOST: process.env.STUDIO_HOST,
 
+  // e.g. 'https://fit-client.ca.la'
+  FIT_CLIENT_HOST: process.env.FIT_CLIENT_HOST,
+
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
 
   // The API key for our Rumbleship account offering 30/60 day financing
