@@ -49,6 +49,7 @@ class ShopifyClient {
 
   async makeRequest(method, path, data) {
     const url = `${this.storeBase}/admin${path}`;
+    Logger.log(`Making Shopify request: ${method} ${url}`);
 
     const auth = `${this.appApiKey}:${this.appPassword}`;
     const shopifyAuthHeader = Buffer.from(auth).toString('base64');
@@ -99,6 +100,20 @@ class ShopifyClient {
     });
 
     return fields;
+  }
+
+  async getCustomerMetafields(customerId) {
+    const path = `/customers/${customerId}/metafields.json`;
+
+    const [body] = await this.makeRequest('get', path);
+
+    return body.metafields || [];
+  }
+
+  async deleteMetafield(metafieldId) {
+    const path = `/metafields/${metafieldId}.json`;
+
+    await this.makeRequest('delete', path);
   }
 
   async _attachMetafields(collection) {
