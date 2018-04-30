@@ -34,7 +34,7 @@ const MINIMUM_SCAN_PITCH_RADIANS = {
 }[ENV];
 
 const ADMIN_EMAIL = {
-  [envs.LOCAL]: 'me@dylanpyle.com',
+  [envs.LOCAL]: 'devops@ca.la',
   [envs.PROD]: 'hi@ca.la',
   [envs.STG]: 'hi@ca.la'
 }[ENV];
