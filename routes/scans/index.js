@@ -5,6 +5,7 @@ const multer = require('koa-multer');
 
 const canAccessUserResource = require('../../middleware/can-access-user-resource');
 const filterError = require('../../services/filter-error');
+const FitPartnerScanService = require('../../services/fit-partner-scan');
 const getScanPhotoUrl = require('../../services/get-scan-photo-url');
 const InvalidDataError = require('../../errors/invalid-data');
 const requireAuth = require('../../middleware/require-auth');
@@ -103,6 +104,19 @@ function* updateScan() {
     this.params.scanId,
     { isComplete, measurements }
   );
+
+
+  // Scan is owned by a 3rd party CALA fit customer, potentially update details
+  // in their Shopify site
+  if (updated.fitPartnerCustomerId) {
+    if (isComplete) {
+      yield FitPartnerScanService.markComplete(updated);
+    }
+
+    if (measurements && measurements.calculatedValues) {
+      yield FitPartnerScanService.saveCalculatedValues(updated);
+    }
+  }
 
   this.status = 200;
   this.body = updated;

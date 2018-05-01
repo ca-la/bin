@@ -66,7 +66,6 @@ function findById(id) {
     .catch(rethrow);
 }
 
-
 function deleteById(id) {
   return db(TABLE_NAME)
     .where({

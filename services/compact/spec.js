@@ -3,9 +3,7 @@
 const { test } = require('../../test-helpers/fresh');
 const compact = require('./index');
 
-const ok = Promise.resolve();
-
-test('compact compacts objects', (t) => {
+test('compact compacts objects', async (t) => {
   const input = {
     a: 123,
     b: 'something',
@@ -25,6 +23,4 @@ test('compact compacts objects', (t) => {
     f: 0,
     g: []
   });
-
-  return ok;
 });

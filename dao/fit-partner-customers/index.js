@@ -31,7 +31,8 @@ function findComplexTrx(trx, criteria) {
   return db(TABLE_NAME)
     .transacting(trx)
     .where(rowData, '*')
-    .then(customers => customers.map(instantiate))
+    .then(first)
+    .then(maybeInstantiate)
     .catch(rethrow);
 }
 
@@ -52,14 +53,14 @@ function createTrx(trx, data) {
     .catch(rethrow);
 }
 
-function findOrCreate({ partnerId, shopifyCustomerId }) {
-  requireValues({ partnerId, shopifyCustomerId });
+async function findOrCreate({ partnerId, shopifyUserId }) {
+  requireValues({ partnerId, shopifyUserId });
 
   return db.transaction(async (trx) => {
-    const found = await findComplexTrx(trx, { partnerId, shopifyCustomerId });
+    const found = await findComplexTrx(trx, { partnerId, shopifyUserId });
     if (found) { return found; }
 
-    const created = await createTrx(trx, { partnerId, shopifyCustomerId });
+    const created = await createTrx(trx, { partnerId, shopifyUserId });
     return created;
   });
 }

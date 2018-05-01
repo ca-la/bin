@@ -17,8 +17,9 @@ const User = require('../../domain-objects/user');
 const UsersDAO = require('../../dao/users');
 const { logServerError } = require('../../services/logger');
 const {
-  TWILIO_PREREGISTRATION_OUTBOUND_NUMBER,
-  REFERRAL_VALUE_DOLLARS
+  REFERRAL_VALUE_DOLLARS,
+  REQUIRE_CALA_EMAIL,
+  TWILIO_PREREGISTRATION_OUTBOUND_NUMBER
 } = require('../../config');
 
 const shopify = new ShopifyClient(ShopifyClient.CALA_STORE_CREDENTIALS);
@@ -50,6 +51,10 @@ function* createUser() {
 
   this.assert(name, 400, 'Name must be provided');
   this.assert(email, 400, 'Email must be provided');
+
+  if (REQUIRE_CALA_EMAIL && !email.match(/@ca\.la$/)) {
+    this.throw(400, 'Only @ca.la emails can sign up on this server. Please visit https://studio.ca.la to access the live version of Studio');
+  }
 
   const referralCode = 'n/a';
 

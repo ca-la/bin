@@ -3,8 +3,6 @@
 const { test } = require('../../test-helpers/fresh');
 const { getServiceBasePrice } = require('./index');
 
-const ok = Promise.resolve();
-
 const prices = [
   {
     complexityLevel: 1,
@@ -38,7 +36,7 @@ const prices = [
   }
 ];
 
-test('getServiceBasePrice returns the first eligible bucket', (t) => {
+test('getServiceBasePrice returns the first eligible bucket', async (t) => {
   const price = getServiceBasePrice({
     productionPrices: prices,
     serviceId: 'WASH',
@@ -47,10 +45,9 @@ test('getServiceBasePrice returns the first eligible bucket', (t) => {
   });
 
   t.equal(price.id, '789');
-  return ok;
 });
 
-test('getServiceBasePrice throws if no matching complexity is found', (t) => {
+test('getServiceBasePrice throws if no matching complexity is found', async (t) => {
   t.throws(() =>
     getServiceBasePrice({
       productionPrices: prices,
@@ -59,10 +56,9 @@ test('getServiceBasePrice throws if no matching complexity is found', (t) => {
       complexityLevel: 0
     })
   );
-  return ok;
 });
 
-test('getServiceBasePrice throws if no matching service is found', (t) => {
+test('getServiceBasePrice throws if no matching service is found', async (t) => {
   t.throws(() =>
     getServiceBasePrice({
       productionPrices: prices,
@@ -71,6 +67,4 @@ test('getServiceBasePrice throws if no matching service is found', (t) => {
       complexityLevel: 1
     })
   );
-
-  return ok;
 });

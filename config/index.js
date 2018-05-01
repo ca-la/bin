@@ -39,6 +39,12 @@ const ADMIN_EMAIL = {
   [envs.STG]: 'hi@ca.la'
 }[ENV];
 
+const REQUIRE_CALA_EMAIL = {
+  [envs.LOCAL]: false,
+  [envs.PROD]: false,
+  [envs.STG]: true
+}[ENV];
+
 /**
  * All environment variables are required for API functionality, unless stated
  * otherwise.
@@ -47,6 +53,8 @@ const ADMIN_EMAIL = {
  * For live deployments, use `heroku config:set FOO=123 --app cala-api-prod`.
  */
 const config = {
+  REQUIRE_CALA_EMAIL,
+
   AWS_SCANPHOTO_BUCKET_NAME: process.env.AWS_SCANPHOTO_BUCKET_NAME,
   AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME: process.env.AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME,
 
@@ -101,6 +109,9 @@ const config = {
 
   // e.g. 'https://studio.ca.la'
   STUDIO_HOST: process.env.STUDIO_HOST,
+
+  // e.g. 'https://fit-client.ca.la'
+  FIT_CLIENT_HOST: process.env.FIT_CLIENT_HOST,
 
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
 

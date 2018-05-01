@@ -9,7 +9,7 @@ const keyNamesByColumnName = {
   shopify_hostname: 'shopifyHostname',
   shopify_app_api_key: 'shopifyAppApiKey',
   shopify_app_password: 'shopifyAppPassword',
-  custom_domain: 'customDomain',
+  custom_fit_domain: 'customFitDomain',
   sms_copy: 'smsCopy',
   admin_user_id: 'adminUserId'
 };
