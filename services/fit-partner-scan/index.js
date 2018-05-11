@@ -53,7 +53,10 @@ async function markComplete(scan) {
     appPassword: partner.shopifyAppPassword
   });
 
-  await updateMetafields(shopify, customer.shopifyUserId, { 'scan-complete': true });
+  await updateMetafields(shopify, customer.shopifyUserId, {
+    'scan-complete': true,
+    'scan-id': scan.id
+  });
 }
 
 async function saveCalculatedValues(scan) {

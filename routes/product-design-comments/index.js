@@ -43,10 +43,19 @@ function* deleteComment() {
 }
 
 function* update() {
+  const { body } = this.request;
   const { commentId } = this.params;
+
   const comment = yield ProductDesignCommentsDAO.findById(commentId);
   this.assert(comment, 404);
-  canAccessUserResource.call(this, comment.userId);
+
+  const keysToUpdate = Object.keys(body);
+
+  if (keysToUpdate.length === 1 && keysToUpdate[0] === 'isPinned') {
+    // Only trying to pin/unpin a comment, no need for auth check.
+  } else {
+    canAccessUserResource.call(this, comment.userId);
+  }
 
   const updated = yield ProductDesignCommentsDAO.update(commentId, this.request.body);
   const withUser = yield attachUser(updated);
