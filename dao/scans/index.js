@@ -14,6 +14,7 @@ const instantiate = data => new Scan(data);
 const maybeInstantiate = data => (data && new Scan(data)) || null;
 
 const { dataMapper } = Scan;
+const TABLE_NAME = 'scans';
 
 const SCAN_TYPES = {
   // Photo(s) uploaded by a customer
@@ -30,7 +31,7 @@ function create(data) {
     { id: uuid.v4() }
   );
 
-  return db('scans')
+  return db(TABLE_NAME)
     .insert(rowData, '*')
     .catch(rethrow)
     .catch(filterError(rethrow.ERRORS.NotNullViolation, (err) => {
@@ -49,7 +50,7 @@ function create(data) {
   * @resolves {Object|null}
   */
 function findById(id) {
-  return db('scans')
+  return db(TABLE_NAME)
     .where({ id, deleted_at: null })
     .then(first)
     .then(maybeInstantiate)
@@ -62,15 +63,27 @@ function findById(id) {
   * @resolves {Array}
   */
 function findByUserId(userId) {
-  return db('scans')
+  return db(TABLE_NAME)
     .where({ user_id: userId, deleted_at: null })
     .orderBy('created_at', 'desc')
     .catch(rethrow)
     .then(scans => scans.map(instantiate));
 }
 
+function findAll({ limit, offset }) {
+  if (typeof limit !== 'number' || typeof offset !== 'number') {
+    throw new Error('Limit and offset must be provided to find all scans');
+  }
+
+  return db(TABLE_NAME).select('*')
+    .orderBy('created_at', 'desc')
+    .limit(limit)
+    .offset(offset)
+    .then(users => users.map(instantiate));
+}
+
 function updateOneById(id, data) {
-  return db('scans')
+  return db(TABLE_NAME)
     .where({
       id,
       deleted_at: null
@@ -85,7 +98,7 @@ function updateOneById(id, data) {
 }
 
 function deleteById(id) {
-  return db('scans')
+  return db(TABLE_NAME)
     .where({ id })
     .update({
       deleted_at: new Date()
@@ -103,6 +116,7 @@ module.exports = {
   SCAN_TYPES,
   create,
   deleteById,
+  findAll,
   findById,
   findByUserId,
   updateOneById

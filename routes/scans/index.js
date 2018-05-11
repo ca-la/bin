@@ -11,6 +11,7 @@ const InvalidDataError = require('../../errors/invalid-data');
 const requireAuth = require('../../middleware/require-auth');
 const ScanPhotosDAO = require('../../dao/scan-photos');
 const ScansDAO = require('../../dao/scans');
+const User = require('../../domain-objects/user');
 const UserAttributesService = require('../../services/user-attributes');
 const validateMeasurements = require('../../services/validate-measurements');
 const { AWS_SCANPHOTO_BUCKET_NAME } = require('../../config');
@@ -125,14 +126,34 @@ function* updateScan() {
 /**
  * GET /scans?userId=ABC123
  */
-function* getList() {
-  this.assert(this.query.userId, 400, 'User ID must be provided');
+function* getByUserId() {
   canAccessUserResource.call(this, this.query.userId);
 
   const scans = yield ScansDAO.findByUserId(this.query.userId);
 
   this.body = scans;
   this.status = 200;
+}
+
+function* getAllScans() {
+  this.assert(this.state.userId, 401);
+  this.assert(this.state.role === User.ROLES.admin, 403);
+
+  const scans = yield ScansDAO.findAll({
+    limit: Number(this.query.limit) || 10,
+    offset: Number(this.query.offset) || 0
+  });
+
+  this.body = scans;
+  this.status = 200;
+}
+
+function* getList() {
+  if (this.query.userId) {
+    yield getByUserId;
+  } else {
+    yield getAllScans;
+  }
 }
 
 /**

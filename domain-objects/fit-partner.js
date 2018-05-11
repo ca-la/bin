@@ -10,7 +10,8 @@ const keyNamesByColumnName = {
   shopify_app_api_key: 'shopifyAppApiKey',
   shopify_app_password: 'shopifyAppPassword',
   custom_fit_domain: 'customFitDomain',
-  sms_copy: 'smsCopy'
+  sms_copy: 'smsCopy',
+  admin_user_id: 'adminUserId'
 };
 
 const dataMapper = new DataMapper(keyNamesByColumnName);
