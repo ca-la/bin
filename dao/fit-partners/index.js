@@ -19,6 +19,15 @@ function findById(id) {
     .catch(rethrow);
 }
 
+function findByAdminUserId(adminUserId) {
+  return db(TABLE_NAME)
+    .where({ admin_user_id: adminUserId })
+    .then(first)
+    .then(maybeInstantiate)
+    .catch(rethrow);
+}
+
 module.exports = {
-  findById
+  findById,
+  findByAdminUserId
 };

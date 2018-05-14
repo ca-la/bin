@@ -137,12 +137,23 @@ function* getByUserId() {
 
 function* getAllScans() {
   this.assert(this.state.userId, 401);
-  this.assert(this.state.role === User.ROLES.admin, 403);
 
-  const scans = yield ScansDAO.findAll({
-    limit: Number(this.query.limit) || 10,
-    offset: Number(this.query.offset) || 0
-  });
+  let scans;
+
+  if (this.state.role === User.ROLES.admin) {
+    scans = yield ScansDAO.findAll({
+      limit: Number(this.query.limit) || 10,
+      offset: Number(this.query.offset) || 0
+    });
+  } else if (this.state.role === User.ROLES.fitPartner) {
+    scans = yield ScansDAO.findByFitPartner(this.state.userId, {
+      limit: Number(this.query.limit) || 10,
+      offset: Number(this.query.offset) || 0
+    });
+  } else {
+    this.throw(403);
+  }
+
 
   this.body = scans;
   this.status = 200;

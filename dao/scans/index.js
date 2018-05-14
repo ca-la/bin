@@ -79,7 +79,19 @@ function findAll({ limit, offset }) {
     .orderBy('created_at', 'desc')
     .limit(limit)
     .offset(offset)
-    .then(users => users.map(instantiate));
+    .then(scans => scans.map(instantiate));
+}
+
+function findByFitPartner(userId, { limit, offset }) {
+  if (typeof limit !== 'number' || typeof offset !== 'number') {
+    throw new Error('Limit and offset must be provided to find all scans');
+  }
+
+  return db(TABLE_NAME).select('*')
+    .orderBy('created_at', 'desc')
+    .limit(limit)
+    .offset(offset)
+    .then(scans => scans.map(instantiate));
 }
 
 function updateOneById(id, data) {
@@ -113,11 +125,12 @@ function deleteById(id) {
 }
 
 module.exports = {
-  SCAN_TYPES,
   create,
   deleteById,
   findAll,
+  findByFitPartner,
   findById,
   findByUserId,
+  SCAN_TYPES,
   updateOneById
 };
