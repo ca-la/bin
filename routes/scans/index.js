@@ -106,7 +106,6 @@ function* updateScan() {
     { isComplete, measurements }
   );
 
-
   // Scan is owned by a 3rd party CALA fit customer, potentially update details
   // in their Shopify site
   if (updated.fitPartnerCustomerId) {
@@ -153,7 +152,6 @@ function* getAllScans() {
   } else {
     this.throw(403);
   }
-
 
   this.body = scans;
   this.status = 200;
@@ -213,10 +211,10 @@ router.del('/:scanId', canAccessScanInParam, deleteScan);
 router.get('/', requireAuth, getList);
 router.get('/:scanId', canAccessScanInParam, getScan);
 router.get('/:scanId/photos', canAccessScanInParam, getScanPhotos);
+router.patch('/:scanId', canAccessScanInParam, updateScan);
 router.post('/', createScan);
 router.post('/:scanId/claim', canAccessScanInParam, claimScan);
 router.post('/:scanId/photos', canAccessScanInParam, multer(), createScanPhoto);
 router.put('/:scanId', canAccessScanInParam, updateScan); // TODO: deprecate
-router.patch('/:scanId', canAccessScanInParam, updateScan);
 
 module.exports = router.routes();

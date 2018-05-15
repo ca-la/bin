@@ -82,16 +82,29 @@ function findAll({ limit, offset }) {
     .then(scans => scans.map(instantiate));
 }
 
-function findByFitPartner(userId, { limit, offset }) {
+async function findByFitPartner(userId, { limit, offset }) {
   if (typeof limit !== 'number' || typeof offset !== 'number') {
     throw new Error('Limit and offset must be provided to find all scans');
   }
 
-  return db(TABLE_NAME).select('*')
-    .orderBy('created_at', 'desc')
-    .limit(limit)
-    .offset(offset)
-    .then(scans => scans.map(instantiate));
+  const result = await db.raw(`
+select s.*
+  from scans as s
+    inner join fit_partner_customers as customers
+      on customers.id = s.fit_partner_customer_id
+    inner join fit_partners as fp
+      on fp.id = customers.partner_id
+    inner join users as u
+      on u.id = fp.admin_user_id
+  where u.id = ?
+  order by s.created_at desc
+  limit ?
+  offset ?;
+    `, [userId, limit, offset])
+    .catch(rethrow);
+
+  const { rows } = result;
+  return rows.map(instantiate);
 }
 
 function updateOneById(id, data) {
