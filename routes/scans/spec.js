@@ -1,6 +1,7 @@
 'use strict';
 
 const createUser = require('../../test-helpers/create-user');
+const Scan = require('../../domain-objects/scan');
 const ScanPhotosDAO = require('../../dao/scan-photos');
 const ScansDAO = require('../../dao/scans');
 const UserAttributesService = require('../../services/user-attributes');
@@ -129,24 +130,40 @@ test('GET /scans returns a list of your own scans', (t) => {
     });
 });
 
-test('GET /scans returns a list of scans when admin', (t) => {
-  let otherUserId;
-  return Promise.all([
-    createUser(),
-    createUser({ role: 'ADMIN' })
-  ])
-    .then((users) => {
-      const { session } = users[1];
-      otherUserId = users[0].user.id;
+test('GET /scans returns a list of all scans when admin', async (t) => {
+  sandbox().stub(
+    ScansDAO,
+    'findAll',
+    async () => [new Scan({ id: '1234' })]
+  );
 
-      return get(`/scans?userId=${otherUserId}`, {
-        headers: authHeader(session.id)
-      });
-    })
-    .then(([response, body]) => {
-      t.equal(response.status, 200);
-      t.deepEqual(body, []);
-    });
+  const { session } = await createUser({ role: 'ADMIN' });
+
+  const [response, body] = await get('/scans', {
+    headers: authHeader(session.id)
+  });
+
+  t.equal(response.status, 200);
+  t.equal(body.length, 1);
+  t.equal(body[0].id, '1234');
+});
+
+test('GET /scans returns a list of fit partner scans when signed in as a fit partner', async (t) => {
+  sandbox().stub(
+    ScansDAO,
+    'findByFitPartner',
+    async () => [new Scan({ id: '5678' })]
+  );
+
+  const { session } = await createUser({ role: 'FIT_PARTNER' });
+
+  const [response, body] = await get('/scans', {
+    headers: authHeader(session.id)
+  });
+
+  t.equal(response.status, 200);
+  t.equal(body.length, 1);
+  t.equal(body[0].id, '5678');
 });
 
 test('POST /scans/:id/claim returns a 400 if the scan is claimed', (t) => {
