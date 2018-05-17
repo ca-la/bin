@@ -88,9 +88,17 @@ async function getPartnerCount(startDate, endDate) {
 
 async function getPaidDesignCount(startDate, endDate) {
   const result = await db.raw(`
-    select count(distinct(design_id)) from invoices
-      where created_at::date >= ?
-      and created_at::date <= ?
+    select
+      distinct i.design_id
+    from invoices as i
+    where (
+      select count(i2.id) from invoices as i2
+      where i2.design_id = i.design_id
+      and i2.paid_at is not null
+      and i2.id != i.id
+    ) = 0
+    and i.paid_at::date >= ?
+    and i.paid_at::date <= ?;
   `, [startDate, endDate]);
 
   return parseInt(result.rows[0].count, 10);
