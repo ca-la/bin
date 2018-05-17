@@ -231,7 +231,11 @@ class Table {
 function mergePricingTables(computed, override) {
   // TODO - partially merge them together? Right now override has to be an
   // entire copy of the table.
-  return override || computed;
+  if (override) {
+    return new Table(override);
+  }
+
+  return computed;
 }
 
 function hasDye(selectedOption) {
