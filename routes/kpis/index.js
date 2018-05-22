@@ -67,7 +67,7 @@ async function getOtherStatusDesignCount(startDate, endDate) {
 
 async function getPaidInvoiceAmountCents(startDate, endDate) {
   const result = await db.raw(`
-    select sum(total_cents) from invoices
+    select coalesce(sum(total_cents), 0) as sum from invoices
       where paid_at::date >= ?
       and paid_at::date <= ?
   `, [startDate, endDate]);
@@ -89,7 +89,7 @@ async function getPartnerCount(startDate, endDate) {
 async function getPaidDesignCount(startDate, endDate) {
   const result = await db.raw(`
     select
-      distinct i.design_id
+      count(distinct i.design_id)
     from invoices as i
     where (
       select count(i2.id) from invoices as i2
@@ -165,7 +165,7 @@ async function getInProductionDesignCount(startDate, endDate) {
 
 async function getPaidDevelopmentAmountCents(startDate, endDate) {
   const result = await db.raw(`
-    select sum(total_cents) from invoices
+    select coalesce(sum(total_cents), 0) as sum from invoices
       where paid_at::date >= ?
       and paid_at::date <= ?
       and design_status_id = 'NEEDS_DEVELOPMENT_PAYMENT'
@@ -176,7 +176,7 @@ async function getPaidDevelopmentAmountCents(startDate, endDate) {
 
 async function getPaidProductionAmountCents(startDate, endDate) {
   const result = await db.raw(`
-    select sum(total_cents) from invoices
+    select coalesce(sum(total_cents), 0) as sum from invoices
       where paid_at::date >= ?
       and paid_at::date <= ?
       and design_status_id = 'NEEDS_PRODUCTION_PAYMENT'
