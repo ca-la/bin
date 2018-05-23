@@ -6,9 +6,6 @@
 ```
 
 ```
-
-- [ ] I have not included any code here that depends on the migration (so that
-  we can deploy DB changes prior to code rollout)
 ---------------- REMOVE THIS LINE IF THIS PR INCLUDES A MIGRATION --------- -->
 
 - [ ] This change includes test coverage (or a valid reason why not)
