@@ -160,6 +160,7 @@ const ALLOWED_DESIGN_PARAMS = [
 
 const ADMIN_ALLOWED_DESIGN_PARAMS = [
   ...ALLOWED_DESIGN_PARAMS,
+  'overridePricingTable',
   'showPricingBreakdown'
 ];
 

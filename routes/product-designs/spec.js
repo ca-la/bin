@@ -81,7 +81,12 @@ test('PATCH /product-designs/:id allows admins to update a wider range of keys',
         headers: authHeader(sessionId),
         body: {
           title: 'Fizz Buzz',
-          showPricingBreakdown: true
+          showPricingBreakdown: true,
+          overridePricingTable: {
+            profit: {
+              unitProfitCents: 1234
+            }
+          }
         }
       });
     })
@@ -89,6 +94,7 @@ test('PATCH /product-designs/:id allows admins to update a wider range of keys',
       t.equal(response.status, 200);
       t.equal(body.title, 'Fizz Buzz');
       t.equal(body.showPricingBreakdown, true);
+      t.equal(body.overridePricingTable.profit.unitProfitCents, 1234);
     });
 });
 
