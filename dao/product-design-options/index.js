@@ -45,7 +45,16 @@ function findById(optionId) {
     .catch(filterError(rethrow.ERRORS.InvalidTextRepresentation, () => null));
 }
 
-function findForUser(userId) {
+function findForUser(userId, queryOptions) {
+  const defaultOptions = { limit: null, offset: null };
+  const { limit, offset } = Object.assign(
+    defaultOptions,
+    queryOptions
+  );
+  if ((limit !== null && typeof limit !== 'number') || (offset !== null && typeof offset !== 'number')) {
+    throw new Error('Limit and offset must be numbers if provided');
+  }
+
   return db('product_design_options')
     .where({
       deleted_at: null,
@@ -56,6 +65,14 @@ function findForUser(userId) {
       is_builtin_option: true
     })
     .orderByRaw('user_id is not null desc, preview_image_id is not null desc, created_at desc')
+    .modify((query) => {
+      if (limit !== null) {
+        query.limit(limit);
+      }
+      if (offset !== null) {
+        query.offset(offset);
+      }
+    })
     .catch(rethrow)
     .then(options => options.map(instantiate));
 }

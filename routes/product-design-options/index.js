@@ -4,6 +4,7 @@ const Router = require('koa-router');
 const pick = require('lodash/pick');
 
 const filterError = require('../../services/filter-error');
+const deserializeQuery = require('../../services/deserialize-query');
 const InvalidDataError = require('../../errors/invalid-data');
 const ProductDesignImagesDAO = require('../../dao/product-design-images');
 const ProductDesignOptionsDAO = require('../../dao/product-design-options');
@@ -71,7 +72,21 @@ function* create() {
 }
 
 function* getList() {
-  const options = yield ProductDesignOptionsDAO.findForUser(this.state.userId);
+  const options = yield ProductDesignOptionsDAO.findForUser(
+    this.state.userId,
+    deserializeQuery(
+      { limit: null, offset: null },
+      { limit: Number, offset: Number },
+      {
+        limit: n => !Number.isNaN(n),
+        offset: n => !Number.isNaN(n)
+      },
+      {
+        limit: this.query.limit,
+        offset: this.query.offset
+      }
+    )
+  );
   const optionsWithImages = yield Promise.all(options.map(attachImages));
 
   this.body = optionsWithImages;
