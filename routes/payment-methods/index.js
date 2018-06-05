@@ -27,6 +27,10 @@ const FEE_PERCENTAGE = {
   RUMBLESHIP_FINANCING: 0.13
 };
 
+function getFeePercentage(partnerId) {
+  return FEE_PERCENTAGE[partnerId] || 0;
+}
+
 const router = new Router();
 
 function* getPaymentMethods() {
@@ -118,7 +122,7 @@ function* beginPartnerCheckout() {
 
   const rs = new Rumbleship({ apiKey: PARTNER_KEYS[partnerId] });
 
-  const feePercentage = FEE_PERCENTAGE[partnerId] || 0;
+  const feePercentage = getFeePercentage(partnerId);
 
   const { purchaseHash } = yield rs.createPurchaseOrder({
     bsToken,
@@ -146,7 +150,11 @@ function* completePartnerCheckout() {
   const invoice = yield InvoicesDAO.findById(invoiceId);
 
   const rs = new Rumbleship({ apiKey: PARTNER_KEYS[partnerId] });
+
+  const feePercentage = getFeePercentage(partnerId);
+
   yield rs.confirmFullOrder({
+    feePercentage,
     invoice,
     poToken,
     purchaseHash,

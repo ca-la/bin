@@ -91,6 +91,10 @@ function getCheckoutUrl({ purchaseHash, bsToken }) {
   return `${RUMBLESHIP_PAY_BASE}/purchase-orders/${purchaseHash}?token=${bsToken}`;
 }
 
+function getFeeCents(invoiceAmountCents, feePercentage) {
+  return Math.round(invoiceAmountCents / (1 - feePercentage)) - invoiceAmountCents;
+}
+
 class Rumbleship {
   constructor({ apiKey, apiBase }) {
     requireValues({ apiKey });
@@ -234,9 +238,7 @@ class Rumbleship {
     requireValues({ buyerHash, supplierHash, invoice, bsToken });
 
     const invoiceAmountCents = invoice.totalCents;
-
-    const feeCents = Math.round(invoiceAmountCents / (1 - feePercentage)) - invoiceAmountCents;
-
+    const feeCents = getFeeCents(invoiceAmountCents, feePercentage);
     const totalBilledCents = invoiceAmountCents + feeCents;
 
     const { body } = await this.makeRequest({
@@ -284,15 +286,19 @@ class Rumbleship {
   * completed the Rumbleship checkout flow using the poToken received from the
   * post-checkout redirect callback.
   */
-  async createPreShipment({ purchaseHash, poToken, invoice }) {
-    requireValues({ purchaseHash, poToken, invoice });
+  async createPreShipment({
+    purchaseHash,
+    poToken,
+    totalBilledCents
+  }) {
+    requireValues({ purchaseHash, poToken, totalBilledCents });
 
     const { body } = await this.makeRequest({
       method: 'post',
       path: `/purchase-orders/${purchaseHash}/confirm-for-shipment`,
       data: {
-        total_cents: invoice.totalCents,
-        subtotal_cents: invoice.totalCents,
+        total_cents: totalBilledCents,
+        subtotal_cents: totalBilledCents,
         shipping_total_cents: 0,
         billing_address: {},
         shipping_address: {}
@@ -335,8 +341,18 @@ class Rumbleship {
     * to do to confirm the transaction after a customer checks out with
     * Rumbleship.
     */
-  async confirmFullOrder({ purchaseHash, poToken, invoice, userId }) {
-    await this.createPreShipment({ purchaseHash, poToken, invoice });
+  async confirmFullOrder({
+    feePercentage,
+    invoice,
+    poToken,
+    purchaseHash,
+    userId
+  }) {
+    const invoiceAmountCents = invoice.totalCents;
+    const feeCents = getFeeCents(invoiceAmountCents, feePercentage);
+    const totalBilledCents = invoiceAmountCents + feeCents;
+
+    await this.createPreShipment({ purchaseHash, poToken, totalBilledCents });
 
     const { sToken } = await this.getSupplierAuthorization();
     await this.createShipment({ purchaseHash, sToken });
