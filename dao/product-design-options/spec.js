@@ -184,3 +184,32 @@ test('ProductDesignOptionsDAO.findForUser throws for non-number limit and offset
       t.ok(error instanceof Error);
     });
 });
+
+test('ProductDesignOptionsDAO.findForUser finds based on matching search terms', (t) => {
+  let userId;
+
+  return createUser({ withSession: false })
+    .then(({ user }) => {
+      userId = user.id;
+
+      return Promise.all([
+        create({
+          userId,
+          title: 'User - No Image, Silk',
+          type: 'FABRIC'
+        }),
+        create({
+          isBuiltinOption: true,
+          title: 'Builtin - No Image',
+          type: 'FABRIC'
+        })
+      ]);
+    })
+    .then(() => {
+      return findForUser(userId, { search: 'silk' });
+    })
+    .then((options) => {
+      t.equal(options[0].title, 'User - No Image, Silk');
+      t.equal(options.length, 1);
+    });
+});

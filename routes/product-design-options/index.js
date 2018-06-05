@@ -75,7 +75,7 @@ function* getList() {
   const options = yield ProductDesignOptionsDAO.findForUser(
     this.state.userId,
     deserializeQuery(
-      { limit: null, offset: null },
+      { limit: null, offset: null, search: null },
       { limit: Number, offset: Number },
       {
         limit: n => !Number.isNaN(n),
@@ -83,7 +83,8 @@ function* getList() {
       },
       {
         limit: this.query.limit,
-        offset: this.query.offset
+        offset: this.query.offset,
+        search: this.query.search
       }
     )
   );

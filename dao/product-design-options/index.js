@@ -46,8 +46,8 @@ function findById(optionId) {
 }
 
 function findForUser(userId, queryOptions) {
-  const defaultOptions = { limit: null, offset: null };
-  const { limit, offset } = Object.assign(
+  const defaultOptions = { limit: null, offset: null, search: null };
+  const { limit, offset, search } = Object.assign(
     defaultOptions,
     queryOptions
   );
@@ -57,12 +57,20 @@ function findForUser(userId, queryOptions) {
 
   return db('product_design_options')
     .where({
-      deleted_at: null,
-      user_id: userId
+      deleted_at: null
     })
-    .orWhere({
-      deleted_at: null,
-      is_builtin_option: true
+    .where((builder) => {
+      builder
+        .andWhere({
+          user_id: userId
+        })
+        .orWhere({
+          is_builtin_option: true
+        });
+
+      if (search) {
+        builder.andWhere(db.raw('title ~* :search', { search }));
+      }
     })
     .orderByRaw('user_id is not null desc, preview_image_id is not null desc, created_at desc')
     .modify((query) => {
