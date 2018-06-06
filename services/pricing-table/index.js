@@ -295,10 +295,7 @@ class PricingCalculator {
 
     if (!hasDye(selectedOption)) { return ZERO_SERVICE_PRICE; }
 
-    const { unitsRequiredPerGarment } = selectedOption;
-    const price = this._getFinalServicePrice('DYE', 'METER');
-
-    return multiplyServicePriceByUnits(price, unitsRequiredPerGarment);
+    return this._getFinalServicePrice('DYE', 'GARMENT');
   }
 
   _getWashPrice({ selectedOption }) {
@@ -306,10 +303,7 @@ class PricingCalculator {
 
     if (!hasWash(selectedOption)) { return ZERO_SERVICE_PRICE; }
 
-    const { unitsRequiredPerGarment } = selectedOption;
-    const price = this._getFinalServicePrice('WASH', 'METER');
-
-    return multiplyServicePriceByUnits(price, unitsRequiredPerGarment);
+    return this._getFinalServicePrice('WASH', 'GARMENT');
   }
 
   // Get the cost to do a feature placement (image print / embroidery) on each

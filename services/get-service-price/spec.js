@@ -9,7 +9,7 @@ const prices = [
     id: '123',
     minimumUnits: 0,
     priceCents: 123,
-    priceUnit: 'METER',
+    priceUnit: 'GARMENT',
     serviceId: 'WASH',
     setupCostCents: 0,
     vendorUserId: '123'
@@ -19,7 +19,7 @@ const prices = [
     id: '456',
     minimumUnits: 100,
     priceCents: 456,
-    priceUnit: 'METER',
+    priceUnit: 'GARMENT',
     serviceId: 'WASH',
     setupCostCents: 0,
     vendorUserId: '123'
@@ -29,7 +29,7 @@ const prices = [
     id: '789',
     minimumUnits: 50,
     priceCents: 789,
-    priceUnit: 'METER',
+    priceUnit: 'GARMENT',
     serviceId: 'WASH',
     setupCostCents: 0,
     vendorUserId: '123'
