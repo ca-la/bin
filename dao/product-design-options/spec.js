@@ -213,3 +213,41 @@ test('ProductDesignOptionsDAO.findForUser finds based on matching search terms',
       t.equal(options.length, 1);
     });
 });
+
+test('ProductDesignOptionsDAO.findForUser with records with identical creation dates, paginates without duplicates', (t) => {
+  const now = new Date();
+
+  // Doesn't hit the weird duplicates case unless you have many more rows than your page size
+  const DUPLICATE_MULTIPLIER = 4.5;
+  let userId;
+
+  function createOptions(count, createdAt) {
+    const promises = [];
+    for (let i = 0; i < count; i += 1) {
+      promises.push(create({ userId, title: 'Title', type: 'FABRIC', createdAt }));
+    }
+    return Promise.all(promises);
+  }
+
+  return createUser({ withSession: false })
+    .then(({ user }) => {
+      userId = user.id;
+
+      return createOptions(10 * DUPLICATE_MULTIPLIER, now);
+    })
+    .then(() => {
+      return Promise.all([
+        findForUser(userId, { limit: 10, offset: 0 }),
+        findForUser(userId, { limit: 10, offset: 10 })
+      ]);
+    })
+    .then((optionsPages) => {
+      const pages = optionsPages.map(p => p.map(o => o.id));
+      const hasDuplicates = pages[0].some(o => pages[1].includes(o));
+
+      t.deepEqual(optionsPages[0][0].createdAt, now, 'created time should be now');
+      t.equal(pages.length, 2, 'should have two pages');
+      t.equal(pages[0].length, 10, 'each page should have 10 options');
+      t.equal(hasDuplicates, false, 'there should be no duplicates across pages');
+    });
+});
