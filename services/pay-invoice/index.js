@@ -2,6 +2,7 @@
 
 const InvalidDataError = require('../../errors/invalid-data');
 const InvoicesDAO = require('../../dao/invoices');
+const InvoicePaymentsDAO = require('../../dao/invoice-payments');
 const PaymentMethods = require('../../dao/payment-methods');
 const ProductDesignsDAO = require('../../dao/product-designs');
 const ProductDesignStatusesDAO = require('../../dao/product-design-statuses');
@@ -13,9 +14,9 @@ async function payInvoice(invoiceId, paymentMethodId, userId) {
   requireValues({ invoiceId, paymentMethodId, userId });
   const paymentMethod = await PaymentMethods.findById(paymentMethodId);
 
-  const invoice = await InvoicesDAO.findById(invoiceId);
+  let invoice = await InvoicesDAO.findById(invoiceId);
 
-  if (invoice.paidAt) {
+  if (invoice.isPaid) {
     throw new InvalidDataError('This invoice is already paid');
   }
 
@@ -26,12 +27,14 @@ async function payInvoice(invoiceId, paymentMethodId, userId) {
     description: invoice.title,
     invoiceId
   });
-
-  const updated = await InvoicesDAO.update(invoiceId, {
-    paidAt: new Date(),
+  await InvoicePaymentsDAO.create({
+    invoiceId,
     paymentMethodId,
-    stripeChargeId: charge.id
+    stripeChargeId: charge.id,
+    totalCents: invoice.totalCents
   });
+
+  invoice = await InvoicesDAO.findById(invoiceId);
 
   const design = await ProductDesignsDAO.findById(invoice.designId);
   const status = await ProductDesignStatusesDAO.findById(design.status);
@@ -46,7 +49,7 @@ async function payInvoice(invoiceId, paymentMethodId, userId) {
     );
   }
 
-  return updated;
+  return invoice;
 }
 
 module.exports = payInvoice;

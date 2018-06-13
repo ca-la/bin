@@ -10,6 +10,9 @@ const TABLES = [
   'collectionphotos',
   'designerphotos',
   'designers',
+  'invoices',
+  'invoice_payments',
+  'product_designs',
   'productvideos',
   'pushtokens',
   'scanphotos',
@@ -48,7 +51,7 @@ function freshTest(
   setup = () => {},
   teardown = () => {}
 ) {
-  tape(description, (t) => {
+  tape(description, async (t) => {
     const end = t.end;
 
     // Tests should not be able to end themselves early. Using `plan` has the
@@ -60,29 +63,33 @@ function freshTest(
 
     beforeEach();
 
-    setup();
+    let context = null;
 
-    // For now, all tests must return promises. Can reevaluate this, but it
-    // provides a nice safety net for async code.
-    const result = fn(t);
+    try {
+      context = await setup();
+      // For now, all tests must return promises. Can reevaluate this, but it
+      // provides a nice safety net for async code.
+      const testPromise = fn(t, context);
 
-    if (!result || !result.then) {
-      const err = Error(`
+      if (!testPromise || !testPromise.then) {
+        const err = Error(`
         All tests must return promises.
 
         Try writing your test using async/await; it'll probably be clearer too!
       `);
+        t.fail(err);
+      }
+
+      await testPromise;
+    } catch (err) {
       t.fail(err);
+      console.log(err.stack); // eslint-disable-line no-console
     }
 
-    result
-      .catch((err) => {
-        t.fail(err);
-        console.log(err.stack); // eslint-disable-line no-console
-      })
-      .then(teardown)
-      .then(afterEach)
-      .then(() => end());
+    await teardown(context);
+    await afterEach();
+
+    end();
   });
 }
 

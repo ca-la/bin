@@ -15,14 +15,27 @@ const maybeInstantiate = data => (data && new Invoice(data)) || null;
 const { dataMapper } = Invoice;
 
 const TABLE_NAME = 'invoices';
+const VIEW_NAME = 'invoice_with_payments';
 
 async function findUnpaidByDesignAndStatus(designId, statusId) {
-  return db(TABLE_NAME)
+  return db(VIEW_NAME)
     .where({
-      deleted_at: null,
-      paid_at: null,
       design_id: designId,
-      design_status_id: statusId
+      design_status_id: statusId,
+      deleted_at: null,
+      is_paid: false
+    })
+    .orderBy('created_at', 'desc')
+    .then(invoices => invoices.map(instantiate))
+    .catch(rethrow);
+}
+
+async function findByDesignAndStatus(designId, statusId) {
+  return db(VIEW_NAME)
+    .where({
+      design_id: designId,
+      design_status_id: statusId,
+      deleted_at: null
     })
     .orderBy('created_at', 'desc')
     .then(invoices => invoices.map(instantiate))
@@ -30,10 +43,10 @@ async function findUnpaidByDesignAndStatus(designId, statusId) {
 }
 
 async function findByDesign(designId) {
-  return db(TABLE_NAME)
+  return db(VIEW_NAME)
     .where({
-      deleted_at: null,
-      design_id: designId
+      design_id: designId,
+      deleted_at: null
     })
     .orderBy('created_at', 'desc')
     .then(invoices => invoices.map(instantiate))
@@ -41,22 +54,27 @@ async function findByDesign(designId) {
 }
 
 async function findByUser(userId) {
-  const result = await db.raw(`
-select i.*
-  from invoices as i
-    left join product_designs as d
-      on d.id = i.design_id
-    left join users as u
-      on u.id = d.user_id
-  where u.id = ?
-  and d.deleted_at is null
-  and i.deleted_at is null
-  order by i.created_at desc;
-    `, [userId])
+  return db
+    .select('invoice_with_payments.*')
+    .from(VIEW_NAME)
+    .leftJoin('product_designs', 'product_designs.id', 'invoice_with_payments.design_id')
+    .leftJoin('users', 'users.id', 'product_designs.user_id')
+    .where({
+      'users.id': userId,
+      'product_designs.deleted_at': null,
+      'invoice_with_payments.deleted_at': null
+    })
+    .orderBy('invoice_with_payments.created_at', 'desc')
+    .then(invoices => invoices.map(instantiate))
     .catch(rethrow);
+}
 
-  const { rows } = result;
-  return rows.map(instantiate);
+async function findById(id) {
+  return db(VIEW_NAME)
+    .where({ id, deleted_at: null })
+    .then(first)
+    .then(maybeInstantiate)
+    .catch(rethrow);
 }
 
 // Create must happen in a transaction that also creates an InvoiceBreakdown.
@@ -82,25 +100,21 @@ async function update(id, data) {
   return db(TABLE_NAME)
     .where({ id, deleted_at: null })
     .update(rowData, '*')
-    .then(first)
-    .then(maybeInstantiate)
-    .catch(rethrow);
-}
-
-async function findById(id) {
-  return db(TABLE_NAME)
-    .where({ id, deleted_at: null })
-    .then(first)
-    .then(maybeInstantiate)
+    .then(() => findById(id))
     .catch(rethrow);
 }
 
 async function deleteById(id) {
-  return db(TABLE_NAME)
+  await db(TABLE_NAME)
     .where({ id, deleted_at: null })
     .update({
       deleted_at: (new Date()).toISOString()
     }, '*')
+    .then(first);
+
+  return db(VIEW_NAME)
+    .select('*')
+    .where({ id })
     .then(first)
     .then(maybeInstantiate)
     .catch(rethrow);
@@ -109,6 +123,7 @@ async function deleteById(id) {
 module.exports = {
   deleteById,
   findUnpaidByDesignAndStatus,
+  findByDesignAndStatus,
   findByDesign,
   findByUser,
   findById,

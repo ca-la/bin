@@ -1,6 +1,7 @@
 'use strict';
 
 const ForbiddenError = require('../../errors/forbidden');
+const InvoicesDAO = require('../../dao/invoices');
 const ProductDesignCollaboratorsDAO = require('../../dao/product-design-collaborators');
 const ProductDesignServicesDAO = require('../../dao/product-design-services');
 const UnauthorizedError = require('../../errors/unauthorized');
@@ -35,21 +36,27 @@ function canInitiateStatusCompletion(
   return true;
 }
 
-function canPutStatus(
-  currentStatus,
+async function canPutStatus(
+  design,
+  isOwner,
   isPartner,
   isAdmin
 ) {
-  if (currentStatus === 'COMPLETE') {
+  if (design.status === 'COMPLETE') {
     return isAdmin;
   }
 
-  if (PRODUCTION_STATUSES.indexOf(currentStatus) > -1) {
+  if (PRODUCTION_STATUSES.indexOf(design.status) > -1) {
     return isPartner || isAdmin;
   }
 
-  if (PAYMENT_STATUSES.indexOf(currentStatus) > -1) {
-    return isAdmin;
+  if (PAYMENT_STATUSES.indexOf(design.status) > -1) {
+    const unpaidInvoices = await InvoicesDAO.findUnpaidByDesignAndStatus(
+      design.id,
+      design.status
+    );
+
+    return (isOwner && unpaidInvoices.length === 0) || isAdmin;
   }
 
   return true;
@@ -68,9 +75,10 @@ async function getDesignPermissions(design, userId, sessionRole) {
     throw new UnauthorizedError('Sign in to access this design');
   }
 
+  const isOwner = (userId === design.userId);
   const isAdmin = (sessionRole === User.ROLES.admin);
   const isPartner = (sessionRole === User.ROLES.partner);
-  const isOwnerOrAdmin = isAdmin || (userId === design.userId);
+  const isOwnerOrAdmin = isAdmin || isOwner;
   const isPartnerOrAdmin = isPartner || isAdmin;
 
   let collaboratorRole;
@@ -108,7 +116,7 @@ async function getDesignPermissions(design, userId, sessionRole) {
     canManagePricing: isAdmin,
     canViewPricing: !isPartner,
     canInitiateStatusCompletion: canInitiateStatusCompletion(design.status, isPartner, isAdmin),
-    canPutStatus: canPutStatus(design.status, isPartner, isAdmin),
+    canPutStatus: await canPutStatus(design, isOwner, isPartner, isAdmin),
     canSetStatusEstimates: isPartnerOrAdmin,
     canModifyServices: canModifyServices(design.status, isAdmin),
     canSetComplexityLevels: isPartnerOrAdmin

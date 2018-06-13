@@ -29,7 +29,7 @@ function* getInvoices(next) {
     invoices = yield InvoicesDAO.findByUser(userId);
   } else if (designStatusId) {
     yield canAccessDesignInQuery.call(this, next);
-    invoices = yield InvoicesDAO.findUnpaidByDesignAndStatus(designId, designStatusId);
+    invoices = yield InvoicesDAO.findByDesignAndStatus(designId, designStatusId);
   } else {
     const isAdmin = (this.state.role === User.ROLES.admin);
     this.assert(isAdmin, 403);
