@@ -1,8 +1,9 @@
 'use strict';
 
 const uuid = require('node-uuid');
+const process = require('process');
 
-const { green, yellow, red } = require('../services/colors').fmt;
+const { yellow, red } = require('../services/colors').fmt;
 const db = require('../services/db');
 const Logger = require('../services/logger');
 
@@ -11,6 +12,12 @@ async function moveInvoicePayments() {
     .select('paid_at', 'id', 'total_cents', 'payment_method_id', 'stripe_charge_id', 'rumbleship_purchase_hash')
     .whereNotNull('paid_at')
     .from('invoices');
+
+  if (rows.length === 0) {
+    Logger.log('There were no paid invoices found in the source invoice table');
+    return Promise.resolve();
+  }
+
   const invoicePayments = rows
     .map(row => ({
       id: uuid.v4(),
@@ -28,17 +35,22 @@ async function moveInvoicePayments() {
     .returning('invoice_id')
     .insert(invoicePayments)
     .then((insertedIds) => {
-      if (insertedIds.length === invoicePayments.length) {
-        Logger.log(green('Successfully inserted all invoice payments.'));
-      } else {
+      Logger.log(yellow(`Inserted ${insertedIds.length} payments.`));
+      if (insertedIds.length !== invoicePayments.length) {
         const missingInvoiceIds = invoicePayments
           .filter(payment => !invoicePayments.includes(payment.invoice_id));
 
         Logger.log(red('Some records not inserted.'));
         Logger.log(red(`Missing ${missingInvoiceIds.length} invoices:`));
         missingInvoiceIds.forEach(missing => Logger.log(` - ${missing}`));
+
+        return Promise.reject();
       }
+
+      return Promise.resolve();
     });
 }
 
-moveInvoicePayments();
+moveInvoicePayments()
+  .then(() => process.exit())
+  .catch(() => process.exit(1));
