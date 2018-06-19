@@ -67,7 +67,7 @@ async function getOtherStatusDesignCount(startDate, endDate) {
 
 async function getPaidInvoiceAmountCents(startDate, endDate) {
   const result = await db.raw(`
-    select coalesce(sum(total_cents), 0) as sum from invoices
+    select coalesce(sum(total_cents), 0) as sum from invoice_with_payments
       where paid_at::date >= ?
       and paid_at::date <= ?
   `, [startDate, endDate]);
@@ -90,9 +90,9 @@ async function getPaidDesignCount(startDate, endDate) {
   const result = await db.raw(`
     select
       count(distinct i.design_id)
-    from invoices as i
+    from invoice_with_payments as i
     where (
-      select count(i2.id) from invoices as i2
+      select count(i2.id) from invoice_with_payments as i2
       where i2.design_id = i.design_id
       and i2.paid_at is not null
       and i2.id != i.id
@@ -108,11 +108,11 @@ async function getPaidDesignerCount(startDate, endDate) {
   const result = await db.raw(`
     select
       count(distinct d.user_id)
-    from invoices as i
+    from invoice_with_payments as i
     left join product_designs as d
       on d.id = i.design_id
     where (
-      select count(i2.id) from invoices as i2
+      select count(i2.id) from invoice_with_payments as i2
       left join product_designs as d2
         on d2.id = i2.design_id
       where d2.user_id = d.user_id
@@ -165,7 +165,7 @@ async function getInProductionDesignCount(startDate, endDate) {
 
 async function getPaidDevelopmentAmountCents(startDate, endDate) {
   const result = await db.raw(`
-    select coalesce(sum(total_cents), 0) as sum from invoices
+    select coalesce(sum(total_cents), 0) as sum from invoice_with_payments
       where paid_at::date >= ?
       and paid_at::date <= ?
       and design_status_id = 'NEEDS_DEVELOPMENT_PAYMENT'
@@ -176,7 +176,7 @@ async function getPaidDevelopmentAmountCents(startDate, endDate) {
 
 async function getPaidProductionAmountCents(startDate, endDate) {
   const result = await db.raw(`
-    select coalesce(sum(total_cents), 0) as sum from invoices
+    select coalesce(sum(total_cents), 0) as sum from invoice_with_payments
       where paid_at::date >= ?
       and paid_at::date <= ?
       and design_status_id = 'NEEDS_PRODUCTION_PAYMENT'

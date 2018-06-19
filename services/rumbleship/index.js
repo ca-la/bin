@@ -2,7 +2,7 @@
 
 const fetch = require('node-fetch');
 
-const InvoicesDAO = require('../../dao/invoices');
+const InvoicePaymentsDAO = require('../../dao/invoice-payments');
 const JWT = require('../../services/jwt');
 const Logger = require('../logger');
 const ProductDesignsDAO = require('../../dao/product-designs');
@@ -357,8 +357,9 @@ class Rumbleship {
     const { sToken } = await this.getSupplierAuthorization();
     await this.createShipment({ purchaseHash, sToken });
 
-    await InvoicesDAO.update(invoice.id, {
-      paidAt: new Date(),
+    await InvoicePaymentsDAO.create({
+      invoiceId: invoice.id,
+      totalCents: invoice.totalCents,
       rumbleshipPurchaseHash: purchaseHash
     });
 

@@ -7,12 +7,45 @@ const { test } = require('../../test-helpers/fresh');
 
 test(
   'InvoicesDAO.findById',
-  async (t, { createdInvoices }) => {
-    const invoice = await InvoicesDAO.findById(createdInvoices[0].id);
-    t.equal(
-      invoice.id,
-      createdInvoices[0].id,
-      'returns existing invoices'
+  async (t, { createdInvoices, createdPayments }) => {
+    const paidInvoice = await InvoicesDAO.findById(createdInvoices[0].id);
+    t.deepEqual(
+      paidInvoice,
+      {
+        id: createdInvoices[0].id,
+        createdAt: createdInvoices[0].createdAt,
+        deletedAt: null,
+        description: null,
+        designId: createdInvoices[0].designId,
+        designStatusId: 'NEEDS_DEVELOPMENT_PAYMENT',
+        totalCents: 1234,
+        totalPaid: 1234,
+        isPaid: true,
+        paidAt: createdPayments[0].createdAt,
+        userId: null,
+        title: 'My Development Invoice'
+      },
+      'returns an existing invoice'
+    );
+
+    const unpaidInvoice = await InvoicesDAO.findById(createdInvoices[2].id);
+    t.deepEqual(
+      unpaidInvoice,
+      {
+        id: createdInvoices[2].id,
+        createdAt: createdInvoices[2].createdAt,
+        deletedAt: null,
+        description: null,
+        designId: createdInvoices[2].designId,
+        designStatusId: 'NEEDS_DEVELOPMENT_PAYMENT',
+        totalCents: 3214,
+        totalPaid: 0,
+        isPaid: false,
+        paidAt: null,
+        userId: null,
+        title: 'My Development Invoice'
+      },
+      'returns an existing invoice'
     );
 
     const nonValidIdInvoice = await InvoicesDAO.findById(uuid.v4());
@@ -125,26 +158,6 @@ test(
       notFoundInvoices,
       [],
       'returns an empty array when no invoices match'
-    );
-  },
-  createInvoicesWithPayments
-);
-
-test(
-  'InvoicesDAO.findById',
-  async (t, { createdInvoices }) => {
-    const invoice = await InvoicesDAO.findById(createdInvoices[0].id);
-    t.equal(
-      invoice.id,
-      createdInvoices[0].id,
-      'with an existent invoice, it returns the invoice object'
-    );
-
-    const notFoundInvoice = await InvoicesDAO.findById(uuid.v4());
-    t.equal(
-      notFoundInvoice,
-      null,
-      'with a non-existent invoice, it returns null'
     );
   },
   createInvoicesWithPayments

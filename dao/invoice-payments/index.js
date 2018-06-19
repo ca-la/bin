@@ -16,8 +16,7 @@ const TABLE_NAME = 'invoice_payments';
 function validate(data) {
   const requiredMessages = {
     invoiceId: 'Invoice ID',
-    totalCents: 'Total Payment Amount',
-    paymentMethodId: 'Payment Method'
+    totalCents: 'Total Payment Amount'
   };
 
   requirePropertiesFormatted(data, requiredMessages);
