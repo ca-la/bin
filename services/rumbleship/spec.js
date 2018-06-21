@@ -1,8 +1,9 @@
 'use strict';
 
 const createUser = require('../../test-helpers/create-user');
-const db = require('../../services/db');
-const EmailService = require('../../services/email');
+const db = require('../db');
+const EmailService = require('../email');
+const SlackService = require('../slack');
 const InvoicesDAO = require('../../dao/invoices');
 const ProductDesignsDAO = require('../../dao/product-designs');
 const Rumbleship = require('./index');
@@ -13,6 +14,7 @@ const SAMPLE_JWT = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJDQUxBIiwiaWF
 
 test('Rumbleship#confirmFullOrder calls Rumbleship with the correct total', async (t) => {
   sandbox().stub(EmailService, 'enqueueSend', () => Promise.resolve());
+  sandbox().stub(SlackService, 'enqueueSend', () => Promise.resolve());
 
   const rs = new Rumbleship({
     apiKey: 'api_12345',

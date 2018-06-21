@@ -3,8 +3,10 @@
 const fetch = require('node-fetch');
 
 const InvoicePaymentsDAO = require('../../dao/invoice-payments');
-const JWT = require('../../services/jwt');
+const UsersDAO = require('../../dao/users');
+const JWT = require('../jwt');
 const Logger = require('../logger');
+const SlackService = require('../slack');
 const ProductDesignsDAO = require('../../dao/product-designs');
 const ProductDesignStatusesDAO = require('../../dao/product-design-statuses');
 const { requireValues } = require('../../services/require-properties');
@@ -374,6 +376,20 @@ class Rumbleship {
         status.nextStatus,
         userId
       );
+    }
+
+    try {
+      await SlackService.enqueueSend({
+        channel: 'designers',
+        templateName: 'designer_payment',
+        params: {
+          design,
+          designer: await UsersDAO.findById(design.userId),
+          paymentAmountCents: totalBilledCents
+        }
+      });
+    } catch (e) {
+      Logger.logWarning('There was a problem sending the payment notification to Slack', e);
     }
   }
 }

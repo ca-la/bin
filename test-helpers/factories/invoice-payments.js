@@ -66,6 +66,7 @@ async function createInvoicesWithPayments() {
   return {
     users: [user, user2],
     designs: [design, design2],
+    paymentMethod,
     createdInvoices,
     createdPayments
   };

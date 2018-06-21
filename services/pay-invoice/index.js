@@ -1,11 +1,16 @@
 'use strict';
 
 const InvalidDataError = require('../../errors/invalid-data');
+
 const InvoicesDAO = require('../../dao/invoices');
 const InvoicePaymentsDAO = require('../../dao/invoice-payments');
 const PaymentMethods = require('../../dao/payment-methods');
 const ProductDesignsDAO = require('../../dao/product-designs');
 const ProductDesignStatusesDAO = require('../../dao/product-design-statuses');
+const UsersDAO = require('../../dao/users');
+
+const Logger = require('../logger');
+const SlackService = require('../slack');
 const Stripe = require('../stripe');
 const updateDesignStatus = require('../update-design-status');
 const { requireValues } = require('../require-properties');
@@ -47,6 +52,21 @@ async function payInvoice(invoiceId, paymentMethodId, userId) {
       status.nextStatus,
       userId
     );
+  }
+
+  try {
+    const paymentNotification = {
+      channel: 'designers',
+      templateName: 'designer_payment',
+      params: {
+        design,
+        designer: await UsersDAO.findById(userId),
+        paymentAmountCents: invoice.totalCents
+      }
+    };
+    await SlackService.enqueueSend(paymentNotification);
+  } catch (e) {
+    Logger.logWarning('There was a problem sending the payment notification to Slack', e);
   }
 
   return invoice;
