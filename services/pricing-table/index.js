@@ -188,11 +188,11 @@ class Summary {
       'upfrontCostCents',
       'preProductionCostCents',
       'uponCompletionCostCents',
-      'fulfillmentCostCents',
       'upfrontMarginCents',
       'preProductionMarginCents',
       'uponCompletionMarginCents',
-      'fulfillmentMarginCents'
+      'totalCostCents',
+      'totalMarginCents'
     ];
 
     requireProperties(data, ...keys);
@@ -204,7 +204,7 @@ class Summary {
       'upfrontCostCents',
       'preProductionCostCents',
       'uponCompletionCostCents',
-      'fulfillmentCostCents'
+      'totalCostCents'
     );
   }
 }
@@ -838,23 +838,26 @@ class PricingCalculator {
         unitPriceCents: fulfillmentPrice.serviceCostCents,
         unitMarginCents: fulfillmentPrice.serviceMarginCents
       }));
+
+      const fulfillmentPerUnit = Math.round(
+        fulfillmentGroup.getTotalPriceCents() / this.unitsToProduce
+      );
+
+      fulfillmentGroup.setGroupPriceCents(fulfillmentPerUnit);
     }
 
-    const fulfillmentPerUnit = Math.round(
-      fulfillmentGroup.getTotalPriceCents() / this.unitsToProduce
-    );
-    fulfillmentGroup.setGroupPriceCents(fulfillmentPerUnit);
+    const totalCostCents = developmentGroup.getTotalPriceCents() +
+      productionGroup.getTotalPriceCents();
 
-    const totalCost = developmentGroup.getTotalPriceCents() +
-      productionGroup.getTotalPriceCents() +
-      fulfillmentGroup.getTotalPriceCents();
+    const totalMarginCents = developmentGroup.getTotalMarginCents() +
+      productionGroup.getTotalMarginCents();
 
     const totalRevenue = design.retailPriceCents * this.unitsToProduce;
-    const totalProfitCents = totalRevenue - totalCost;
+    const totalProfitCents = totalRevenue - totalCostCents;
     const unitProfitCents = Math.round(totalProfitCents / this.unitsToProduce);
 
     const marginPercentage = Math.round(
-      (1 - (totalCost / totalRevenue)) * 100
+      (1 - (totalCostCents / totalRevenue)) * 100
     );
 
     const designerProfitGroup = new DesignerProfitGroup({
@@ -871,20 +874,24 @@ class PricingCalculator {
       upfrontCostCents: developmentGroup.getTotalPriceCents(),
       preProductionCostCents: portionCost,
       uponCompletionCostCents: portionCost,
-      fulfillmentCostCents: fulfillmentGroup.getTotalPriceCents(),
 
       upfrontMarginCents: developmentGroup.getTotalMarginCents(),
       preProductionMarginCents: portionMargin,
       uponCompletionMarginCents: portionMargin,
-      fulfillmentMarginCents: fulfillmentGroup.getTotalMarginCents()
+
+      totalCostCents,
+      totalMarginCents
     });
 
     const groups = [
       developmentGroup,
       materialsGroup,
-      productionGroup,
-      fulfillmentGroup
+      productionGroup
     ];
+
+    if (enabledServices.FULFILLMENT) {
+      groups.push(fulfillmentGroup);
+    }
 
     return new Table({
       groups,

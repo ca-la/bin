@@ -33,6 +33,8 @@ test('PricingCalculator constructs pricing tables', async (t) => {
   t.equal(finalPricingTable.summary.upfrontCostCents, 0);
   t.equal(finalPricingTable.summary.preProductionCostCents, 0);
   t.equal(finalPricingTable.summary.uponCompletionCostCents, 0);
+  t.equal(finalPricingTable.summary.totalCostCents, 0);
+  t.equal(finalPricingTable.summary.totalMarginCents, 0);
 
   t.equal(finalPricingTable.profit.totalProfitCents, 1518435);
   t.equal(finalPricingTable.profit.unitProfitCents, 12345);
@@ -56,7 +58,6 @@ test('PricingCalculator supports overriding pricing tables, and returns class in
       },
       summary: {
         upfrontCostCents: 123456,
-        fulfillmentCostCents: 0,
         preProductionCostCents: 120339,
         uponCompletionCostCents: 1
       }
