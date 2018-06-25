@@ -47,14 +47,6 @@ routeDirectories.forEach((directoryName) => {
   router.use(`/${directoryName}`, cloneDeep(require(path.join(routesDir, directoryName))));
 });
 
-
-// TODO: Deprecate the following 3 routes once rollout of
-// https://www.pivotaltracker.com/story/show/158603529 is complete
-router.use('/products', cloneDeep(require('./routes/shopify-products')));
-router.use('/collections', cloneDeep(require('./routes/shopify-collections')));
-router.use('/orders', cloneDeep(require('./routes/shopify-orders')));
-
-
 const loadTime = Date.now() - beginTime;
 Logger.log(`Loaded ${routeDirectories.length} route prefixes in ${loadTime}ms`);
 
