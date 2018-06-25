@@ -9,6 +9,7 @@ const fs = require('fs');
 const koa = require('koa');
 const path = require('path');
 const Router = require('koa-router');
+const cloneDeep = require('lodash/cloneDeep');
 
 const attachSession = require('./middleware/attach-session');
 const errors = require('./middleware/errors');
@@ -37,10 +38,22 @@ const routeDirectories = fs.readdirSync(routesDir);
 
 routeDirectories.forEach((directoryName) => {
   // One of the few legit use cases for dynamic requires. May need to remove
-  // this if we ever add a build system..
+  // this once we add a build system.
+  //
+  // We use `cloneDeep` to avoid a Koa issue preventing mounting the same routes
+  // in mutliple places: https://github.com/alexmingoia/koa-router/issues/244
+  //
   // eslint-disable-next-line global-require,import/no-dynamic-require
-  router.use(`/${directoryName}`, require(path.join(routesDir, directoryName)));
+  router.use(`/${directoryName}`, cloneDeep(require(path.join(routesDir, directoryName))));
 });
+
+
+// TODO: Deprecate the following 3 routes once rollout of
+// https://www.pivotaltracker.com/story/show/158603529 is complete
+router.use('/products', cloneDeep(require('./routes/shopify-products')));
+router.use('/collections', cloneDeep(require('./routes/shopify-collections')));
+router.use('/orders', cloneDeep(require('./routes/shopify-orders')));
+
 
 const loadTime = Date.now() - beginTime;
 Logger.log(`Loaded ${routeDirectories.length} route prefixes in ${loadTime}ms`);

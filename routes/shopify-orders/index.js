@@ -11,7 +11,7 @@ const shopify = new ShopifyClient(ShopifyClient.CALA_STORE_CREDENTIALS);
 const router = new Router();
 
 /**
- * GET /orders/:orderId
+ * GET /shopify-orders/:orderId
  *
  * TODO: Though order IDs are ~ fairly ~ unique / unguessable, we should
  * probably increase security here at some point. Some options would be:

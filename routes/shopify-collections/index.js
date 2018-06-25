@@ -9,7 +9,7 @@ const shopify = new ShopifyClient(ShopifyClient.CALA_STORE_CREDENTIALS);
 const router = new Router();
 
 /**
- * GET /collections
+ * GET /shopify-collections
  */
 function* getList() {
   const filters = pick(this.query, 'handle');
@@ -21,7 +21,7 @@ function* getList() {
 }
 
 /**
- * GET /collections/:collectionId/products
+ * GET /shopify-collections/:collectionId/products
  */
 function* getProducts() {
   const products = yield shopify.getProductsByCollectionId(this.params.collectionId);
