@@ -183,7 +183,7 @@ test('CollectionsDAO#findAll returns all', async (t) => {
   });
   await CollectionsDAO.create({
     title: 'Beyond the limit',
-    description: '',
+    description: 'Amaze',
     createdBy: user2.id,
     createdAt: testDate
   });
@@ -239,7 +239,7 @@ test('CollectionsDAO#findAll returns search results', async (t) => {
   });
   await CollectionsDAO.create({
     title: 'Beyond the limit',
-    description: '',
+    description: 'Wow',
     createdBy: user2.id,
     createdAt: testDate
   });

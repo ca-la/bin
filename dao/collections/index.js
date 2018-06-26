@@ -3,6 +3,7 @@
 const uuid = require('node-uuid');
 const rethrow = require('pg-rethrow');
 
+const { requireProperties } = require('../../services/require-properties');
 const compact = require('../../services/compact');
 const db = require('../../services/db');
 const filterError = require('../../services/filter-error');
@@ -18,6 +19,12 @@ const { dataMapper } = Collection;
 const TABLE_NAME = 'collections';
 
 function create(data) {
+  try {
+    requireProperties(data, 'createdBy', 'title', 'description');
+  } catch (e) {
+    return Promise.reject(new InvalidDataError(e.message));
+  }
+
   const rowData = Object.assign(dataMapper.userDataToRowData(data), {
     id: uuid.v4()
   });
