@@ -41,7 +41,7 @@ test('POST /collections with missing data', async (t) => {
   t.equal(postResponse.status, 400, 'POST returns "400 Bad Request" status');
 });
 
-test('GET /collections?userId=id', async (t) => {
+test('GET /collections', async (t) => {
   const { user, session } = await createUser();
   const { session: session2 } = await createUser();
   const mine = {
@@ -65,9 +65,18 @@ test('GET /collections?userId=id', async (t) => {
     `/collections?userId=${user.id}`,
     { headers: authHeader(session.id) }
   );
+  const [forbiddenResponse] = await get(
+    '/collections',
+    { headers: authHeader(session.id) }
+  );
 
   t.equal(postResponse.status, 201, 'POST returns "201 Created" status');
   t.equal(getResponse.status, 200, 'GET returns "200 OK" status');
+  t.equal(
+    forbiddenResponse.status,
+    403,
+    'GET without user ID returns "403 Forbidden" status'
+  );
   t.deepEqual(
     collections,
     [myCollection],

@@ -35,6 +35,8 @@ function* getCollection() {
 
 function* getCollections() {
   const { userId } = this.query;
+
+  this.assert(userId, 403);
   canAccessUserResource.call(this, userId);
 
   this.body = yield CollectionsDAO.findByUserId(userId);
