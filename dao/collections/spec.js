@@ -3,6 +3,7 @@
 const { range } = require('lodash');
 const uuid = require('node-uuid');
 const CollectionsDAO = require('./index');
+const ProductDesignsDAO = require('../product-designs');
 const { test, sandbox } = require('../../test-helpers/fresh');
 const createUser = require('../../test-helpers/create-user');
 
@@ -257,4 +258,80 @@ test('CollectionsDAO#findAll returns search results', async (t) => {
     createdBy: user1.id,
     createdAt: testDate
   }], 'finds collection that loosely matches search term');
+});
+
+test('CollectionsDAO#addDesign adds a design to a collection', async (t) => {
+  const { user } = await createUser({ withSession: false });
+  const createdCollection = await CollectionsDAO.create({
+    title: 'Drop 001/The Early Years',
+    description: 'Initial commit',
+    createdBy: user.id,
+    createdAt: testDate
+  });
+  const createdDesigns = await Promise.all([
+    ProductDesignsDAO.create({
+      title: 'Vader Mask',
+      description: 'Black, bold, beautiful',
+      userId: user.id
+    }),
+    ProductDesignsDAO.create({
+      title: 'Stormtrooper Helmet',
+      description: 'White, shiny.',
+      userId: user.id
+    }),
+    ProductDesignsDAO.create({
+      title: 'Cat T-shirt',
+      description: 'So. Cute.',
+      userId: user.id
+    })
+  ]);
+  await CollectionsDAO
+    .addDesign(createdCollection.id, createdDesigns[0].id);
+  const collectionDesigns = await CollectionsDAO
+    .addDesign(createdCollection.id, createdDesigns[1].id);
+
+  t.deepEqual(
+    collectionDesigns
+      .map(d => d.id)
+      .sort(),
+    createdDesigns
+      .slice(0, 2)
+      .map(d => d.id)
+      .sort(),
+    'returns only designs added to this collection'
+  );
+});
+
+test('CollectionsDAO#removeDesign removes a design from a collection', async (t) => {
+  const { user } = await createUser({ withSession: false });
+  const createdCollection = await CollectionsDAO.create({
+    title: 'Drop 001/The Early Years',
+    description: 'Initial commit',
+    createdBy: user.id,
+    createdAt: testDate
+  });
+  const createdDesign = await ProductDesignsDAO.create({
+    title: 'Vader Mask',
+    description: 'Black, bold, beautiful',
+    userId: user.id
+  });
+  const collectionDesigns = await CollectionsDAO.addDesign(
+    createdCollection.id,
+    createdDesign.id
+  );
+  const afterRemoveCollectionDesigns = await CollectionsDAO.removeDesign(
+    createdCollection.id,
+    createdDesign.id
+  );
+
+  t.deepEqual(
+    collectionDesigns,
+    [createdDesign],
+    '#add successfully adds the design'
+  );
+  t.deepEqual(
+    afterRemoveCollectionDesigns,
+    [],
+    '#remove successfully removes the design'
+  );
 });

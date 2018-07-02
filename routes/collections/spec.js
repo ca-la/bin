@@ -1,7 +1,7 @@
 'use strict';
 
 const createUser = require('../../test-helpers/create-user');
-const { authHeader, del, post, get } = require('../../test-helpers/http');
+const { authHeader, del, post, get, put } = require('../../test-helpers/http');
 const { test } = require('../../test-helpers/fresh');
 
 test('GET /collections/:id returns a created collection', async (t) => {
@@ -108,4 +108,78 @@ test('DELETE /collections/:id', async (t) => {
 
   t.equal(otherResponse.status, 201, 'POST returns "201 Created" status');
   t.equal(failureResponse.status, 403, 'DELETE on unowned collection returns "403 Forbidden" status');
+});
+
+test('PUT /collections/:id/designs/:id', async (t) => {
+  const { user, session } = await createUser();
+  const collection = await post(
+    '/collections',
+    {
+      headers: authHeader(session.id),
+      body: {
+        title: 'Drop 001/The Early Years',
+        description: 'Initial commit'
+      }
+    }
+  );
+  const design = await post(
+    '/product-designs',
+    {
+      headers: authHeader(session.id),
+      body: {
+        title: 'Vader Mask',
+        description: 'Black, bold, beautiful',
+        userId: user.id
+      }
+    }
+  );
+  const collectionDesigns = await put(
+    `/collections/${collection[1].id}/designs/${design[1].id}`,
+    { headers: authHeader(session.id) }
+  );
+
+  t.equal(
+    collectionDesigns[1][0].id,
+    design[1].id,
+    'adds design to collection and returns all designs for collection'
+  );
+});
+
+test('DELETE /collections/:id/designs/:id', async (t) => {
+  const { user, session } = await createUser();
+  const collection = await post(
+    '/collections',
+    {
+      headers: authHeader(session.id),
+      body: {
+        title: 'Drop 001/The Early Years',
+        description: 'Initial commit'
+      }
+    }
+  );
+  const design = await post(
+    '/product-designs',
+    {
+      headers: authHeader(session.id),
+      body: {
+        title: 'Vader Mask',
+        description: 'Black, bold, beautiful',
+        userId: user.id
+      }
+    }
+  );
+  await put(
+    `/collections/${collection[1].id}/designs/${design[1].id}`,
+    { headers: authHeader(session.id) }
+  );
+  const collectionDesigns = await del(
+    `/collections/${collection[1].id}/designs/${design[1].id}`,
+    { headers: authHeader(session.id) }
+  );
+
+  t.deepEqual(
+    collectionDesigns[1],
+    [],
+    'removes design from collection'
+  );
 });

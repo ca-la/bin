@@ -10,6 +10,7 @@ const filterError = require('../../services/filter-error');
 const first = require('../../services/first');
 const InvalidDataError = require('../../errors/invalid-data');
 const Collection = require('../../domain-objects/collection');
+const ProductDesignsDAO = require('../product-designs');
 
 const instantiate = data => new Collection(data);
 const maybeInstantiate = data => (data && new Collection(data)) || null;
@@ -71,7 +72,7 @@ function findByUserId(userId, filters) {
     .where(query)
     .orderBy('created_at', 'desc')
     .catch(rethrow)
-    .then(designs => designs.map(instantiate));
+    .then(collections => collections.map(instantiate));
 }
 
 function findAll({ limit, offset, search }) {
@@ -107,11 +108,42 @@ function findById(id, filters, options = {}) {
     .catch(filterError(rethrow.ERRORS.InvalidTextRepresentation, () => null));
 }
 
+function addDesign(collectionId, designId) {
+  if (!collectionId || !designId) {
+    return Promise.reject(new InvalidDataError('You must pass both a collection and design ID to add a design to a collection'));
+  }
+
+  return db('collection_designs')
+    .insert({
+      collection_id: collectionId,
+      design_id: designId
+    }, '*')
+    .then(() => ProductDesignsDAO.findByCollectionId(collectionId))
+    .catch(rethrow);
+}
+
+function removeDesign(collectionId, designId) {
+  if (!collectionId || !designId) {
+    return Promise.reject(new InvalidDataError('You must pass both a collection and design ID to add a design to a collection'));
+  }
+
+  return db('collection_designs')
+    .where({
+      collection_id: collectionId,
+      design_id: designId
+    })
+    .del()
+    .then(() => ProductDesignsDAO.findByCollectionId(collectionId))
+    .catch(rethrow);
+}
+
 module.exports = {
   create,
   deleteById,
   update,
   findAll,
   findById,
-  findByUserId
+  findByUserId,
+  addDesign,
+  removeDesign
 };
