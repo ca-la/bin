@@ -28,19 +28,6 @@ test('GET /collections/:id returns a created collection', async (t) => {
   );
 });
 
-test('POST /collections with missing data', async (t) => {
-  const { session } = await createUser();
-  const body = {
-    title: 'Drop 001/The Early Years'
-  };
-  const [postResponse] = await post(
-    '/collections',
-    { headers: authHeader(session.id), body }
-  );
-
-  t.equal(postResponse.status, 400, 'POST returns "400 Bad Request" status');
-});
-
 test('GET /collections', async (t) => {
   const { user, session } = await createUser();
   const { session: session2 } = await createUser();

@@ -21,7 +21,7 @@ const TABLE_NAME = 'collections';
 
 function create(data) {
   try {
-    requireProperties(data, 'createdBy', 'title', 'description');
+    requireProperties(data, 'createdBy');
   } catch (e) {
     return Promise.reject(new InvalidDataError(e.message));
   }
