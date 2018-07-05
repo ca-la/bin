@@ -7,7 +7,7 @@
     "import/no-extraneous-dependencies": [2, {"devDependencies": true}],
     "arrow-body-style": 0,
     "no-underscore-dangle": 0,
-    "no-unused-vars": [2, { "args": "after-used" }],
+    "no-unused-vars": [2, { "varsIgnorePattern": "^_.+$" }],
     "no-await-in-loop": 0,
     "comma-dangle": [2, "never"],
     "operator-linebreak": [2, "after"],

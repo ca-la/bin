@@ -79,13 +79,24 @@ function* deleteDesign() {
   this.status = 200;
 }
 
+function* getCollectionDesigns() {
+  const { collectionId } = this.params;
+
+  const targetCollection = yield CollectionsDAO.findById(collectionId);
+  canAccessUserResource.call(this, targetCollection.createdBy);
+
+  this.body = yield ProductDesignsDAO.findByCollectionId(collectionId);
+  this.status = 200;
+}
+
 router.post('/', requireAuth, createCollection);
 router.get('/', requireAuth, getCollections);
 
 router.del('/:collectionId', requireAuth, deleteCollection);
 router.get('/:collectionId', requireAuth, getCollection);
 
-router.put('/:collectionId/designs/:designId', requireAuth, putDesign);
+router.get('/:collectionId/designs', requireAuth, getCollectionDesigns);
 router.del('/:collectionId/designs/:designId', requireAuth, deleteDesign);
+router.put('/:collectionId/designs/:designId', requireAuth, putDesign);
 
 module.exports = router.routes();

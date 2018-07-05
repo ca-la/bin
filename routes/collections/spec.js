@@ -1,6 +1,8 @@
 'use strict';
 
+const CollectionsDAO = require('../../dao/collections');
 const createUser = require('../../test-helpers/create-user');
+const ProductDesignsDAO = require('../../dao/product-designs');
 const {
   authHeader, del, post, get, put
 } = require('../../test-helpers/http');
@@ -179,5 +181,39 @@ test('DELETE /collections/:id/designs/:id', async (t) => {
     collectionDesigns[1],
     [],
     'removes design from collection'
+  );
+});
+
+test('GET /collections/:id/designs', async (t) => {
+  const { user, session } = await createUser();
+
+  const collection = await CollectionsDAO.create({
+    createdBy: user.id,
+    title: 'Drop 001/The Early Years',
+    description: 'Initial commit'
+  });
+
+  const design = await ProductDesignsDAO.create({
+    title: 'Vader Mask',
+    description: 'Black, bold, beautiful',
+    userId: user.id
+  });
+
+  await put(
+    `/collections/${collection.id}/designs/${design.id}`,
+    { headers: authHeader(session.id) }
+  );
+
+  const [_res, designs] = await get(
+    `/collections/${collection.id}/designs`,
+    { headers: authHeader(session.id) }
+  );
+
+  t.equal(designs.length, 1);
+
+  t.deepEqual(
+    designs[0],
+    JSON.parse(JSON.stringify(design)),
+    'returns a list of contained designs'
   );
 });
