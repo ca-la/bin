@@ -52,7 +52,7 @@ function freshTest(
   teardown = () => {}
 ) {
   tape(description, async (t) => {
-    const end = t.end;
+    const { end } = t;
 
     // Tests should not be able to end themselves early. Using `plan` has the
     // nasty side effect that the rest of the test will continue running even

@@ -11,8 +11,9 @@ test('requireProperties throws an error if properties are missing', async (t) =>
     () => requireProperties(
       { foo: 'bar', buz: false },
       'foo', 'buz', 'bar', 'baz'
-    )
-  , /Missing required properties: bar, baz/);
+    ),
+    /Missing required properties: bar, baz/
+  );
 });
 
 test('requireProperties does not throw if all properties are present', async (t) => {
@@ -38,6 +39,7 @@ test('requirePropertiesFormatted throws an error if properties are missing', asy
         foo: 'The Foo One',
         bar: 'The Bar One'
       }
-    )
-  , /Missing required information: The Bar One/);
+    ),
+    /Missing required information: The Bar One/
+  );
 });

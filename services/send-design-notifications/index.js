@@ -17,7 +17,9 @@ async function replaceNotifications({
   // for many similar actions (e.g. when editing a section)
   type
 }) {
-  requireValues({ designId, actorUserId, actionDescription, type });
+  requireValues({
+    designId, actorUserId, actionDescription, type
+  });
 
   await NotificationsDAO.deleteRecent(compact({
     sectionId,

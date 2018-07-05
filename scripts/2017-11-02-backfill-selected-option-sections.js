@@ -57,8 +57,7 @@ async function attachSection(selectedOption) {
       const panelData = section.panel_data;
 
       const ownerPanel = panelData.panels.find(panel =>
-        panel.id === selectedOption.panel_id
-      );
+        panel.id === selectedOption.panel_id);
       return Boolean(ownerPanel);
     }
   );
@@ -86,8 +85,7 @@ return db('product_design_selected_options').where({ section_id: null })
 
     selectedOptions.forEach((option) => {
       attaching = attaching.then(() =>
-        attachSection(option)
-      );
+        attachSection(option));
     });
 
     return attaching;

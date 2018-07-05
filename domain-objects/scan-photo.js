@@ -27,8 +27,7 @@ class ScanPhoto {
       'createdAt',
       'calibrationData',
       'url',
-      'controlPoints'
-    );
+      'controlPoints');
   }
 }
 

@@ -5,7 +5,9 @@ const Scan = require('../../domain-objects/scan');
 const ScanPhotosDAO = require('../../dao/scan-photos');
 const ScansDAO = require('../../dao/scans');
 const UserAttributesService = require('../../services/user-attributes');
-const { get, post, put, authHeader } = require('../../test-helpers/http');
+const {
+  get, post, put, authHeader
+} = require('../../test-helpers/http');
 const { group, sandbox } = require('../../test-helpers/fresh');
 
 function beforeEach() {

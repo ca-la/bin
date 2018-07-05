@@ -52,4 +52,3 @@ test('ProductVideosDAO.findByProductIds returns videos given a set of ids', (t) 
       t.equal(urls[2], 'https://example.com/product3-video1.mp4');
     });
 });
-

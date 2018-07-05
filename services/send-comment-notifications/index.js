@@ -4,8 +4,12 @@ const findDesignUsers = require('../../services/find-design-users');
 const { requireValues } = require('../require-properties');
 const { enqueueSend } = require('../email');
 
-async function sendCommentNotifications({ comment, design, section, user, text }) {
-  requireValues({ comment, design, section, user, text });
+async function sendCommentNotifications({
+  comment, design, section, user, text
+}) {
+  requireValues({
+    comment, design, section, user, text
+  });
 
   const recipients = (await findDesignUsers(design.id))
     .filter(collaborator => collaborator.id !== user.id)

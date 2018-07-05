@@ -1,6 +1,6 @@
 'use strict';
 
-const reduce = require('lodash').reduce;
+const { reduce } = require('lodash');
 
 /**
  * Query string parameter values are always parsed as strings. This function

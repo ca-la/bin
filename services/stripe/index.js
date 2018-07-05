@@ -17,7 +17,9 @@ const STRIPE_CONNECT_API_BASE = 'https://connect.stripe.com';
 
 const CREDENTIALS = Buffer.from(`${STRIPE_SECRET_KEY}:`).toString('base64');
 
-async function makeRequest({ method, path, apiBase, data, idempotencyKey }) {
+async function makeRequest({
+  method, path, apiBase, data, idempotencyKey
+}) {
   requireValues({ method, path });
 
   const base = apiBase || STRIPE_API_BASE;
@@ -62,8 +64,12 @@ async function makeRequest({ method, path, apiBase, data, idempotencyKey }) {
   }
 }
 
-async function charge({ customerId, sourceId, amountCents, description, invoiceId }) {
-  requireValues({ customerId, sourceId, amountCents, description, invoiceId });
+async function charge({
+  customerId, sourceId, amountCents, description, invoiceId
+}) {
+  requireValues({
+    customerId, sourceId, amountCents, description, invoiceId
+  });
 
   // Using a combination of invoiceId + sourceId ensures that:
   // - We can't charge the same card for the same invoice twice in rapid succesion
@@ -87,8 +93,12 @@ async function charge({ customerId, sourceId, amountCents, description, invoiceI
   });
 }
 
-async function sendTransfer({ destination, amountCents, description, invoiceId }) {
-  requireValues({ destination, amountCents, description, invoiceId });
+async function sendTransfer({
+  destination, amountCents, description, invoiceId
+}) {
+  requireValues({
+    destination, amountCents, description, invoiceId
+  });
 
   const idempotencyKey = insecureHash(`${description}-${invoiceId}-${destination}`);
 

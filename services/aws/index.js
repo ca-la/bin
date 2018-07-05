@@ -107,7 +107,9 @@ async function enqueueMessage(
   messageType,
   payload
 ) {
-  requireValues({ queueUrl, queueRegion, messageType, payload });
+  requireValues({
+    queueUrl, queueRegion, messageType, payload
+  });
   const sqs = new AWS.SQS({ region: queueRegion });
 
   const params = {

@@ -34,8 +34,7 @@ function* createSession() {
   })
     .catch(filterError(InvalidDataError, err => this.throw(400, err)))
     .catch(filterError(UnauthorizedRoleError, () =>
-      this.throw(400, "You can't log in to this type of account on this page. Contact hi@ca.la if you're unable to locate the correct login page.")
-    ));
+      this.throw(400, "You can't log in to this type of account on this page. Contact hi@ca.la if you're unable to locate the correct login page.")));
 
   this.status = 201;
   this.body = session;

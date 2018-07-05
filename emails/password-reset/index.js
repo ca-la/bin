@@ -9,8 +9,7 @@ const { requireProperties } = require('../../services/require-properties');
 module.exports = function passwordReset(data) {
   requireProperties(data,
     'sessionId',
-    'name'
-  );
+    'name');
 
   const resetLink = `https://ca.la/password-reset?sessionId=${data.sessionId}`;
 

@@ -9,7 +9,7 @@ const User = require('../../domain-objects/user');
 const router = new Router();
 
 function* getPhotos() {
-  const collectionId = this.query.collectionId;
+  const { collectionId } = this.query;
 
   this.assert(collectionId, 400, 'Must provide a collection ID');
 

@@ -55,4 +55,3 @@ class DataMapper {
 }
 
 module.exports = DataMapper;
-

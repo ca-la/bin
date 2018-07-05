@@ -76,4 +76,3 @@ test('GET /invoices prevents strangers from accessing others designs', async (t)
 
   t.equal(response.status, 403);
 });
-

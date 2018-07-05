@@ -10,8 +10,7 @@ const examplePayload = require('../../test-helpers/fixtures/shopify-order-create
 test('POST /shopify-webhooks/orders-create calls the correct method', (t) => {
   sandbox().stub(UserAttributesService,
     'recordPurchase',
-    () => Promise.resolve()
-  );
+    () => Promise.resolve());
 
   return post('/shopify-webhooks/orders-create', { body: examplePayload })
     .then(([response]) => {

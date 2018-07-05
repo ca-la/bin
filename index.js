@@ -1,8 +1,9 @@
 'use strict';
 
 const beginTime = Date.now();
-const Logger = require('./services/logger');
 
+/* eslint-disable-next-line */
+const Logger = require('./services/logger');
 Logger.log('Starting CALA API...');
 
 const fs = require('fs');

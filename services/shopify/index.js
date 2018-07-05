@@ -43,8 +43,7 @@ class ShopifyClient {
     this.appPassword = appPassword;
 
     bindAll(this,
-      '_attachMetafields'
-    );
+      '_attachMetafields');
   }
 
   async makeRequest(method, path, data) {
@@ -206,7 +205,7 @@ class ShopifyClient {
     const path = `/products.json?${query}`;
 
     const [body] = await this.makeRequest('get', path);
-    const products = body.products;
+    const { products } = body;
 
     if (!products) {
       Logger.log('Shopify response: ', body);
@@ -256,7 +255,7 @@ class ShopifyClient {
 
     return body.orders.reduce((memo, order) => {
       for (let i = 0; i < order.discount_codes.length; i += 1) {
-        const code = order.discount_codes[i].code;
+        const { code } = order.discount_codes[i];
 
         if (code === discountCode) {
           return memo + 1;

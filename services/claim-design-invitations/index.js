@@ -16,8 +16,7 @@ async function claimDesignInvitations(userEmail, userId) {
       ProductDesignCollaboratorsDAO.update(invitation.id, {
         userEmail: null,
         userId
-      })
-    )
+      }))
   );
 }
 

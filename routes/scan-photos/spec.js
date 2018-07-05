@@ -54,4 +54,3 @@ test('PUT /scan-photos/:photoId updates a photo', (t) => {
       ]);
     });
 });
-

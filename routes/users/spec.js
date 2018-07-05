@@ -9,7 +9,9 @@ const ShopifyClient = require('../../services/shopify');
 const Twilio = require('../../services/twilio');
 const UnassignedReferralCodesDAO = require('../../dao/unassigned-referral-codes');
 const UsersDAO = require('../../dao/users');
-const { get, post, put, authHeader } = require('../../test-helpers/http');
+const {
+  get, post, put, authHeader
+} = require('../../test-helpers/http');
 const { test, sandbox } = require('../../test-helpers/fresh');
 
 const USER_DATA = Object.freeze({
@@ -35,8 +37,7 @@ test('POST /users returns a 400 if user creation fails', (t) => {
 
   sandbox().stub(UsersDAO,
     'create',
-    () => Promise.reject(new InvalidDataError('Bad email'))
-  );
+    () => Promise.reject(new InvalidDataError('Bad email')));
 
   sandbox().stub(UnassignedReferralCodesDAO, 'get', () => Promise.resolve('ABC123'));
 

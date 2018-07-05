@@ -173,7 +173,9 @@ test('UsersDAO.findAll finds based on matching search terms and role', async (t)
     UsersDAO.create(USER_DATA)
   ]);
 
-  const users = await UsersDAO.findAll({ role: 'ADMIN', search: 'q user', limit: 100, offset: 0 });
+  const users = await UsersDAO.findAll({
+    role: 'ADMIN', search: 'q user', limit: 100, offset: 0
+  });
   t.equal(users.length, 1);
 });
 

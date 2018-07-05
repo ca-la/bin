@@ -104,13 +104,13 @@ test('CollectionsDAO#findByUserId only includes referenced user collections', as
   const ids = range(4).map(() => uuid.v4());
   sandbox().stub(uuid, 'v4')
     .onCall(0)
-      .returns(ids[0])
+    .returns(ids[0])
     .onCall(1)
-      .returns(ids[1])
+    .returns(ids[1])
     .onCall(2)
-      .returns(ids[2])
+    .returns(ids[2])
     .onCall(3)
-      .returns(ids[3]);
+    .returns(ids[3]);
 
   const { user: user1 } = await createUser({ withSession: false });
   const { user: user2 } = await createUser({ withSession: false });
@@ -158,15 +158,15 @@ test('CollectionsDAO#findAll returns all', async (t) => {
   const ids = range(5).map(() => uuid.v4());
   sandbox().stub(uuid, 'v4')
     .onCall(0)
-      .returns(ids[0])
+    .returns(ids[0])
     .onCall(1)
-      .returns(ids[1])
+    .returns(ids[1])
     .onCall(2)
     .returns(ids[2])
     .onCall(3)
-      .returns(ids[3])
+    .returns(ids[3])
     .onCall(4)
-      .returns(ids[4]);
+    .returns(ids[4]);
 
   const { user: user1 } = await createUser({ withSession: false });
   const { user: user2 } = await createUser({ withSession: false });
@@ -214,15 +214,15 @@ test('CollectionsDAO#findAll returns search results', async (t) => {
   const ids = range(5).map(() => uuid.v4());
   sandbox().stub(uuid, 'v4')
     .onCall(0)
-      .returns(ids[0])
+    .returns(ids[0])
     .onCall(1)
-      .returns(ids[1])
+    .returns(ids[1])
     .onCall(2)
     .returns(ids[2])
     .onCall(3)
-      .returns(ids[3])
+    .returns(ids[3])
     .onCall(4)
-      .returns(ids[4]);
+    .returns(ids[4]);
 
   const { user: user1 } = await createUser({ withSession: false });
   const { user: user2 } = await createUser({ withSession: false });

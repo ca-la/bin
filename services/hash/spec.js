@@ -6,8 +6,7 @@ const { hash, compare } = require('./index');
 test('`hash` hashes a value', (t) => {
   return hash('hunter2')
     .then(val =>
-      t.equal(val.slice(0, 4), '$2b$')
-    );
+      t.equal(val.slice(0, 4), '$2b$'));
 });
 
 test('`hash` returns different hashes when called multiple times', (t) => {

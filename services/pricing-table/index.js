@@ -56,8 +56,7 @@ class ServicePrice {
   toJSON() {
     return pick(this,
       'serviceCostCents',
-      'setupCostCents'
-    );
+      'setupCostCents');
   }
 }
 
@@ -114,8 +113,7 @@ class LineItem {
       'id',
       'title',
       'quantity',
-      'unitPriceCents'
-    );
+      'unitPriceCents');
 
     return Object.assign(props, {
       totalPriceCents: this.getTotalPriceCents()
@@ -134,14 +132,14 @@ class Group {
 
   getTotalPriceCents() {
     return this.lineItems.reduce((memo, item) =>
-      memo + item.getTotalPriceCents()
-      , 0);
+      memo + item.getTotalPriceCents(),
+    0);
   }
 
   getTotalMarginCents() {
     return this.lineItems.reduce((memo, item) =>
-      memo + item.getTotalMarginCents()
-      , 0);
+      memo + item.getTotalMarginCents(),
+    0);
   }
 
   setGroupPriceCents(cents) {
@@ -159,8 +157,7 @@ class Group {
       'title',
       'totalLabel',
       'groupPriceCents',
-      'columnTitles'
-    );
+      'columnTitles');
 
     return Object.assign(props, {
       totalPriceCents: this.getTotalPriceCents()
@@ -204,8 +201,7 @@ class Summary {
       'upfrontCostCents',
       'preProductionCostCents',
       'uponCompletionCostCents',
-      'totalCostCents'
-    );
+      'totalCostCents');
   }
 }
 
@@ -486,8 +482,7 @@ class PricingCalculator {
 
     const featurePlacementsPerSection = await Promise.all(
       sections.map(section =>
-        ProductDesignFeaturePlacementsDAO.findBySectionId(section.id)
-      )
+        ProductDesignFeaturePlacementsDAO.findBySectionId(section.id))
     );
     const featurePlacements = flatten(featurePlacementsPerSection);
 
@@ -910,7 +905,7 @@ class PricingCalculator {
   async getAllPricingTables() {
     const computedPricingTable = await this._getComputedPricingTable();
     const finalPricingTable = this._getFinalPricingTable(computedPricingTable);
-    const overridePricingTable = this.design.overridePricingTable;
+    const { overridePricingTable } = this.design;
 
     return {
       computedPricingTable,

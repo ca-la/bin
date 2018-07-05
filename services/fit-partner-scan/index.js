@@ -29,8 +29,7 @@ async function updateMetafields(shopify, customerId, data) {
     // before setting the new value.
     const supersededField = currentFields.find(currentField =>
       newField.key === currentField.key &&
-      newField.namespace === currentField.namespace
-    );
+      newField.namespace === currentField.namespace);
 
     if (supersededField) {
       await shopify.deleteMetafield(supersededField.id);

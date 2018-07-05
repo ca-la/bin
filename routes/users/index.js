@@ -182,7 +182,9 @@ function* updateUser() {
 
   this.assert(isAdmin || isCurrentUser, 403, 'You can only update your own user');
 
-  const { birthday, name, email, role } = this.request.body;
+  const {
+    birthday, name, email, role
+  } = this.request.body;
   const data = { birthday, name, email };
 
   if (isAdmin && role) {
@@ -229,7 +231,9 @@ function* completeSmsPreregistration() {
 
   const updated = yield UsersDAO.completeSmsPreregistration(
     this.params.userId,
-    { name, email, phone, password }
+    {
+      name, email, phone, password
+    }
   )
     .catch(filterError(InvalidDataError, err => this.throw(400, err)));
 

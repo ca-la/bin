@@ -17,8 +17,7 @@ test('GET /designers lists designers', (t) => {
         id: '456456',
         name: 'Another Designer'
       })
-    ])
-  );
+    ]));
 
   return get('/designers')
     .then(([response, body]) => {
@@ -36,8 +35,7 @@ test('GET /designers/:id returns a designer', (t) => {
         id: '123123',
         name: 'A Designer'
       })
-    )
-  );
+    ));
 
   return get('/designers/123123')
     .then(([response, body]) => {

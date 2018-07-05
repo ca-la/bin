@@ -43,7 +43,9 @@ const SERVICE_MARGIN_TIERS = {
 const SETUP_MARGIN_TIERS = SERVICE_MARGIN_TIERS;
 
 // Helper used by both calculation functions
-function getMargin({ serviceId, partnerPriceCents, unitsToProduce, tiers }) {
+function getMargin({
+  serviceId, partnerPriceCents, unitsToProduce, tiers
+}) {
   const margins = tiers[serviceId];
 
   if (!margins) {
@@ -77,12 +79,16 @@ function getMargin({ serviceId, partnerPriceCents, unitsToProduce, tiers }) {
 // cents). Adding these two will give you the final cost to charge the customer.
 function getServiceMarginCents({ serviceId, partnerPriceCents, unitsToProduce }) {
   requireValues({ serviceId, partnerPriceCents, unitsToProduce });
-  return getMargin({ serviceId, partnerPriceCents, unitsToProduce, tiers: SERVICE_MARGIN_TIERS });
+  return getMargin({
+    serviceId, partnerPriceCents, unitsToProduce, tiers: SERVICE_MARGIN_TIERS
+  });
 }
 
 function getServiceSetupMarginCents({ serviceId, partnerPriceCents, unitsToProduce }) {
   requireValues({ serviceId, partnerPriceCents, unitsToProduce });
-  return getMargin({ serviceId, partnerPriceCents, unitsToProduce, tiers: SETUP_MARGIN_TIERS });
+  return getMargin({
+    serviceId, partnerPriceCents, unitsToProduce, tiers: SETUP_MARGIN_TIERS
+  });
 }
 
 module.exports = {

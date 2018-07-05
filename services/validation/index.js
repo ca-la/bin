@@ -1,10 +1,8 @@
 'use strict';
 
+const { PhoneNumberUtil, PhoneNumberFormat } = require('google-libphonenumber');
+
 const InvalidDataError = require('../../errors/invalid-data');
-const {
-  PhoneNumberUtil,
-  PhoneNumberFormat
-} = require('google-libphonenumber');
 
 function assertTypeIfExists(val, type, message) {
   if (val === undefined || val === null) {

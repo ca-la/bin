@@ -28,7 +28,9 @@ function deleteForVendorAndService(trx, vendorUserId, serviceId) {
 }
 
 function createForVendorAndService(trx, vendorUserId, serviceId, prices) {
-  requireValues({ trx, vendorUserId, serviceId, prices });
+  requireValues({
+    trx, vendorUserId, serviceId, prices
+  });
 
   const rowData = prices.map((data) => {
     return Object.assign({}, dataMapper.userDataToRowData(data), {

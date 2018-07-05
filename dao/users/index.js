@@ -73,8 +73,7 @@ function create(data, options = {}) {
         phone: validatedPhone,
         referral_code: referralCode,
         role
-      }, '*')
-    )
+      }, '*'))
     .catch(rethrow)
     .catch(filterError(rethrow.ERRORS.UniqueViolation, (err) => {
       switch (err.constraint) {
@@ -112,7 +111,9 @@ function findById(id) {
     .then(maybeInstantiate);
 }
 
-function findAll({ limit, offset, search, role }) {
+function findAll({
+  limit, offset, search, role
+}) {
   if (typeof limit !== 'number' || typeof offset !== 'number') {
     throw new Error('Limit and offset must be provided to find all users');
   }
@@ -153,8 +154,7 @@ function updatePassword(userId, password) {
     .then(passwordHash =>
       db('users')
         .where({ id: userId })
-        .update({ password_hash: passwordHash }, '*')
-    )
+        .update({ password_hash: passwordHash }, '*'))
     .then(first)
     .then(instantiate);
 }
@@ -179,7 +179,9 @@ function update(userId, data) {
 }
 
 function completeSmsPreregistration(userId, data) {
-  const { name, email, phone, password } = data;
+  const {
+    name, email, phone, password
+  } = data;
 
   if (!name || !email || !phone || !password) {
     return Promise.reject(new InvalidDataError('Missing required information'));

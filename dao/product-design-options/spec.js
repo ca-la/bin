@@ -224,7 +224,9 @@ test('ProductDesignOptionsDAO.findForUser with records with identical creation d
   function createOptions(count, createdAt) {
     const promises = [];
     for (let i = 0; i < count; i += 1) {
-      promises.push(create({ userId, title: 'Title', type: 'FABRIC', createdAt }));
+      promises.push(create({
+        userId, title: 'Title', type: 'FABRIC', createdAt
+      }));
     }
     return Promise.all(promises);
   }

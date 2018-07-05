@@ -54,8 +54,7 @@ test('getServiceBasePrice throws if no matching complexity is found', async (t) 
       serviceId: 'WASH',
       unitsToProduce: 75,
       complexityLevel: 0
-    })
-  );
+    }));
 });
 
 test('getServiceBasePrice throws if no matching service is found', async (t) => {
@@ -65,6 +64,5 @@ test('getServiceBasePrice throws if no matching service is found', async (t) => 
       serviceId: 'DYE',
       unitsToProduce: 75,
       complexityLevel: 1
-    })
-  );
+    }));
 });

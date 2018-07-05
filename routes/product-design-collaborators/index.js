@@ -11,7 +11,9 @@ const { canAccessDesignId, canAccessDesignInQuery } = require('../../middleware/
 const router = new Router();
 
 function* create() {
-  const { designId, userEmail, role, invitationMessage } = this.request.body;
+  const {
+    designId, userEmail, role, invitationMessage
+  } = this.request.body;
 
   yield canAccessDesignId.call(this, designId);
 

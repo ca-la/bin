@@ -20,8 +20,7 @@ const UNAUTHORIZED_ERROR_MSG = "You can't log in to this type of account on this
 test('POST /sessions returns a 400 if user creation fails', (t) => {
   sandbox().stub(SessionsDAO,
     'create',
-    () => Promise.reject(new InvalidDataError('Bad email'))
-  );
+    () => Promise.reject(new InvalidDataError('Bad email')));
 
   return post('/sessions', { body: { email: 'user@example.com', password: 'hunter2' } })
     .then(([response, body]) => {

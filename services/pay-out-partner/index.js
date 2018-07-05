@@ -31,7 +31,9 @@ async function payOutPartner({
   payoutAccountId,
   payoutAmountCents
 }) {
-  requireValues({ invoiceId, payoutAccountId, payoutAmountCents, message });
+  requireValues({
+    invoiceId, payoutAccountId, payoutAmountCents, message
+  });
 
   const invoice = await InvoicesDAO.findById(invoiceId);
   assert(invoice, `No invoice with ID ${invoiceId}`);
@@ -47,8 +49,7 @@ async function payOutPartner({
   assert(design, `No design with ID ${invoice.designId}`);
 
   const vendorUser = designUsers.find(user =>
-    user.id === payoutAccount.userId
-  );
+    user.id === payoutAccount.userId);
 
   assert(vendorUser, "This vendor doesn't appear to be shared on this design");
 

@@ -1,7 +1,9 @@
 'use strict';
 
 const createUser = require('../../test-helpers/create-user');
-const { authHeader, del, post, get, put } = require('../../test-helpers/http');
+const {
+  authHeader, del, post, get, put
+} = require('../../test-helpers/http');
 const { test } = require('../../test-helpers/fresh');
 
 test('GET /collections/:id returns a created collection', async (t) => {

@@ -19,18 +19,18 @@ function getServiceBasePrice({
   unitsToProduce,
   complexityLevel
 }) {
-  requireValues({ productionPrices, serviceId, unitsToProduce, complexityLevel });
+  requireValues({
+    productionPrices, serviceId, unitsToProduce, complexityLevel
+  });
 
   // The list of buckets sorted high -> low by the minimum units, so the first
   // bucket we hit that's *lower* than the units to produce is the one we want
   const buckets = productionPrices
     .filter(price =>
       price.serviceId === serviceId &&
-      price.complexityLevel === complexityLevel
-    )
+      price.complexityLevel === complexityLevel)
     .sort((a, b) =>
-      b.minimumUnits - a.minimumUnits
-    );
+      b.minimumUnits - a.minimumUnits);
 
   for (const bucket of buckets) {
     if (bucket.minimumUnits <= unitsToProduce) {

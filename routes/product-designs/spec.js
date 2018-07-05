@@ -3,7 +3,9 @@
 const createUser = require('../../test-helpers/create-user');
 const ProductDesignsDAO = require('../../dao/product-designs');
 const EmailService = require('../../services/email');
-const { authHeader, get, patch, put } = require('../../test-helpers/http');
+const {
+  authHeader, get, patch, put
+} = require('../../test-helpers/http');
 const { test, sandbox } = require('../../test-helpers/fresh');
 
 test('PATCH /product-designs/:id rejects empty data', (t) => {

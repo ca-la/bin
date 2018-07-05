@@ -104,7 +104,9 @@ class Rumbleship {
     this._apiBase = apiBase || RUMBLESHIP_API_BASE;
   }
 
-  async makeRequest({ method, path, jwt, data }) {
+  async makeRequest({
+    method, path, jwt, data
+  }) {
     requireValues({ method, path });
 
     const url = `${this._apiBase}${path}`;
@@ -237,7 +239,9 @@ class Rumbleship {
     partnerId,
     supplierHash
   }) {
-    requireValues({ buyerHash, supplierHash, invoice, bsToken });
+    requireValues({
+      buyerHash, supplierHash, invoice, bsToken
+    });
 
     const invoiceAmountCents = invoice.totalCents;
     const feeCents = getFeeCents(invoiceAmountCents, feePercentage);

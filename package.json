@@ -27,9 +27,9 @@
   },
   "devDependencies": {
     "@cala/bin": "1.3.3",
-    "eslint": "3.9.1",
-    "eslint-config-airbnb-base": "10.0.1",
-    "eslint-plugin-import": "2.2.0",
+    "eslint": "^5.0.1",
+    "eslint-config-airbnb-base": "^13.0.0",
+    "eslint-plugin-import": "^2.13.0",
     "sinon": "1.17.6",
     "tap-spec": "4.1.1",
     "tape": "4.6.2"

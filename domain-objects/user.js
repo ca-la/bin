@@ -56,8 +56,7 @@ class User {
     return pick(this,
       'id',
       'name',
-      'referralCode'
-    );
+      'referralCode');
   }
 
   toJSON() {
@@ -73,8 +72,7 @@ class User {
       'name',
       'phone',
       'referralCode',
-      'role'
-    );
+      'role');
   }
 
   setAddresses(addresses) {
