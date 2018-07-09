@@ -2,6 +2,14 @@
 
 set -euo pipefail
 
+# If you have a PGP key set up for commit signing, do a one-off signing of an
+# empty string to make sure gpg-agent has the key in memory
+preauth_pgp_signature() {
+  if [[ $(git config --get user.signingkey 2> /dev/null) != '' ]] ; then
+    echo '' | gpg --sign > /dev/null
+  fi
+}
+
 main() {
   release_type=${1:-other}
 
@@ -27,6 +35,8 @@ main() {
     echo 'Cannot release with uncommitted changes'
     exit 1
   fi
+
+  preauth_gpg_signature
 
   git pull --ff-only origin master
 
