@@ -9,21 +9,22 @@ const { requireValues } = require('../require-properties');
 // }
 const SERVICE_MARGIN_TIERS = {
   PRODUCTION: {
-    0: 0.4,
-    50: 0.4,
-    100: 0.38,
-    150: 0.37,
-    200: 0.36,
-    250: 0.34,
-    300: 0.33,
-    400: 0.31,
-    500: 0.30
+    0: 0.15,
+    50: 0.14,
+    100: 0.12,
+    200: 0.11,
+    300: 0.10,
+    500: 0.09,
+    750: 0.08,
+    1750: 0.07,
+    3000: 0.06,
+    4500: 0.05
   },
   SAMPLING: { 0: 0.1 },
   DESIGN: { 0: 0.1 },
   TECHNICAL_DESIGN: { 0: 0.1 },
   PATTERN_MAKING: { 0: 0.1 },
-  SOURCING: { 0: 0.2 },
+  SOURCING: { 0: 0.1 },
   WASH: { 0: 0.1 },
   DYE: { 0: 0.1 },
   SCREEN_PRINT: { 0: 0.1 },
@@ -35,7 +36,7 @@ const SERVICE_MARGIN_TIERS = {
   DIGITAL_SUBLIMATION_PRINT: { 0: 0.1 },
   ROTARY_PRINT: { 0: 0.1 },
   GRADING: { 0: 0.1 },
-  FULFILLMENT: { 0: 0.5 }
+  FULFILLMENT: { 0: 0.1 }
 };
 
 // We can always define a new table in future if we want to. For now, reusing

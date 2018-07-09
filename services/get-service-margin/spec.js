@@ -28,33 +28,33 @@ test('getServiceMarginCents returns appropriate margins', async (t) => {
       partnerPriceCents: 12345,
       unitsToProduce: 0
     }),
-    8230
+    2179
   );
 
   t.equal(
     getServiceMarginCents({
       serviceId: 'PRODUCTION',
       partnerPriceCents: 12345,
-      unitsToProduce: 99
+      unitsToProduce: 49
     }),
-    8230
+    2179
   );
 
   t.equal(
     getServiceMarginCents({
       serviceId: 'PRODUCTION',
       partnerPriceCents: 12345,
-      unitsToProduce: 100
+      unitsToProduce: 50
     }),
-    7566
+    2010
   );
 
   t.equal(
     getServiceMarginCents({
       serviceId: 'PRODUCTION',
       partnerPriceCents: 12345,
-      unitsToProduce: 101
+      unitsToProduce: 51
     }),
-    7566
+    2010
   );
 });
