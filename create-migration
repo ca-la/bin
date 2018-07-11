@@ -1,0 +1,27 @@
+#!/bin/bash
+
+set -euo pipefail
+
+main() {
+  name=${1:-""}
+
+  if [ "$name" == "" ]; then
+    echo "Usage: create-migration [migration-name]"
+    exit 1
+  fi
+
+  date_stamp=$(date "+%Y%m%d%H%M%S")
+
+  filename=migrations/$date_stamp'_'$name.js
+  cp migrations/_template $filename
+  echo 'Created '$filename
+
+  echo -n 'Open in '$EDITOR'? [y/n] '
+  read -n 1 should_edit
+
+  if [ "$should_edit" == "y" ]; then
+    $EDITOR $filename
+  fi
+}
+
+main "$@"
