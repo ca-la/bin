@@ -2,11 +2,13 @@
   "name": "cala-api",
   "version": "1.170.0",
   "description": "REST",
-  "main": "index.js",
+  "main": "dist/index.js",
   "author": "CALA <devops@ca.la>",
   "license": "UNLICENSED",
   "private": true,
   "dependencies": {
+    "@types/lodash": "^4.14.112",
+    "@types/node": "10.3.1",
     "aws-sdk": "2.7.21",
     "bcrypt": "2.0.1",
     "co-body": "4.2.0",
@@ -23,6 +25,9 @@
     "pg": "6.1.0",
     "pg-rethrow": "1.0.1",
     "probe-image-size": "4.0.0",
+    "tslint": "^5.10.0",
+    "tslint-config-airbnb": "^5.9.2",
+    "typescript": "2.9.1",
     "zipcodes": "2.1.0"
   },
   "devDependencies": {
@@ -32,7 +37,8 @@
     "eslint-plugin-import": "^2.13.0",
     "sinon": "1.17.6",
     "tap-spec": "4.1.1",
-    "tape": "4.6.2"
+    "tape": "4.6.2",
+    "ts-node": "^7.0.0"
   },
   "engines": {
     "node": "8.*",

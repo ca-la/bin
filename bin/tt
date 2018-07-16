@@ -2,4 +2,4 @@
 
 # Run a single test
 # Usage: `bin/tt routes/users/spec.js`
-NODE_ENV=test env $(cat .env | xargs) node $1 | $(npm bin)/tap-spec
+NODE_ENV=test env $(cat .env | xargs) $(npm bin)/ts-node $1 | $(npm bin)/tap-spec

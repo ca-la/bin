@@ -2,7 +2,7 @@
 set -e
 
 echo 'Migrating local DB'
-$(npm bin)/knex migrate:latest
+$(npm bin)/knex migrate:latest --knexfile dist/knexfile.js
 
 echo 'Migrating local test DB'
-NODE_ENV=test $(npm bin)/knex migrate:latest
+NODE_ENV=test $(npm bin)/knex migrate:latest --knexfile dist/knexfile.js

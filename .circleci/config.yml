@@ -29,8 +29,9 @@ jobs:
           key: v1-dependencies-{{ checksum "package.json" }}
 
       - run: make lint
+      - run: make build
       - run: bin/migrate-local && bin/rollback-local && bin/migrate-local
-      - run: make test
+      - run: make test-ci
       - deploy:
           name: Deploy to Heroku
           command: |
