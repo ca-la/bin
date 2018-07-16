@@ -22,6 +22,7 @@ c_reset=$'\033[0m'
 
 main() {
   deployment_target=${1:-other}
+  migrations=${2:-migrations}
 
   case "$deployment_target" in
     'staging')
@@ -31,7 +32,7 @@ main() {
       status_url='https://api.ca.la'
       ;;
     *)
-      echo 'Usage: validate-deployment-readiness [staging|production]'
+      echo 'Usage: validate-deployment-readiness [staging|production] [path_to_migrations]'
       exit 1
       ;;
   esac
@@ -45,7 +46,7 @@ main() {
   echo $c_yellow'Deployed hash: '$c_reset$deployed_hash
 
   latest_local_migration=$(
-    ls -Ar migrations |\
+    ls -Ar $migrations |\
       grep -v _template |\
       head -n 1 |\
       tr -d '\n'
