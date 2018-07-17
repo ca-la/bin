@@ -1,15 +1,17 @@
+'use strict';
+
 const beginTime = Date.now();
 
-import * as Logger from './services/logger';
-import * as Router from 'koa-router';
-import { cloneDeep } from 'lodash';
-
+/* eslint-disable-next-line */
+const Logger = require('./services/logger');
 Logger.log('Starting CALA API...');
 
-import * as fs from 'fs';
-import * as path from 'path';
+const fs = require('fs');
+const koa = require('koa');
+const path = require('path');
+const Router = require('koa-router');
+const cloneDeep = require('lodash/cloneDeep');
 
-/* tslint:disable:no-var-requires */
 const attachSession = require('./middleware/attach-session');
 const errors = require('./middleware/errors');
 const headers = require('./middleware/headers');
@@ -17,7 +19,6 @@ const jsonBody = require('./middleware/json-body');
 const loggerMiddleware = require('./middleware/logger');
 const options = require('./middleware/options');
 
-import koa = require('koa');
 const app = koa();
 
 app.use(loggerMiddleware);
@@ -32,17 +33,18 @@ const router = new Router({
 });
 
 router.use('/', require('./middleware/root-route'));
-/* tslint:enable */
 
 const routesDir = path.join(__dirname, 'routes');
 const routeDirectories = fs.readdirSync(routesDir);
 
-routeDirectories.forEach((directoryName: string): void => {
+routeDirectories.forEach((directoryName) => {
   // One of the few legit use cases for dynamic requires. May need to remove
   // this once we add a build system.
   //
   // We use `cloneDeep` to avoid a Koa issue preventing mounting the same routes
   // in mutliple places: https://github.com/alexmingoia/koa-router/issues/244
+  //
+  // eslint-disable-next-line global-require,import/no-dynamic-require
   router.use(`/${directoryName}`, cloneDeep(require(path.join(routesDir, directoryName))));
 });
 
@@ -59,4 +61,4 @@ if (!module.parent) {
   Logger.log(`Started and running on :${port} in ${bootTime}ms`);
 }
 
-export default app;
+module.exports = app;

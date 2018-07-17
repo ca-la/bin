@@ -8,17 +8,9 @@ npm_bin = ./node_modules/.bin
 install: preflight
 	npm install
 
-.PHONY: clean
-clean:
-	-rm -r dist
-
-.PHONY: build
-build: clean
-	$(npm_bin)/tsc
-
 .PHONY: serve
-serve: preflight build
-	node dist
+serve: preflight
+	node index.js
 
 .PHONY: serve-dev
 serve-dev:
@@ -29,11 +21,8 @@ dev: serve-dev
 
 # Run the test suite
 .PHONY: test
-test: preflight build test-ci
-
-.PHONY: test-ci
-test-ci: preflight
-	NODE_ENV=test env $$(cat .env | xargs) $(npm_bin)/tape dist/**/*/spec.js | $(npm_bin)/tap-spec
+test: preflight
+	NODE_ENV=test env $$(cat .env | xargs) $(npm_bin)/tape **/*/spec.js | $(npm_bin)/tap-spec
 
 # Interactive console (i.e. to require & explore modules)
 .PHONY: console
@@ -51,8 +40,7 @@ validate-migration:
 # Static analysis
 .PHONY: lint
 lint: preflight
-	$(npm_bin)/eslint src --ignore-path .gitignore
-	$(npm_bin)/tslint -p . 'src/**/*.ts' -t stylish
+	$(npm_bin)/eslint . --ignore-path .gitignore
 	$(npm_bin)/cala-lint-commented-code
 
 .PHONY: preflight

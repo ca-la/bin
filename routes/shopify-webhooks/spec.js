@@ -5,7 +5,7 @@ const { test, sandbox } = require('../../test-helpers/fresh');
 const UserAttributesService = require('../../services/user-attributes');
 const Logger = require('../../services/logger');
 
-const examplePayload = require('../../test-helpers/fixtures/shopify-order-create-payload');
+const examplePayload = require('../../test-helpers/fixtures/shopify-order-create-payload.json');
 
 test('POST /shopify-webhooks/orders-create calls the correct method', (t) => {
   sandbox().stub(UserAttributesService,

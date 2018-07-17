@@ -2,8 +2,7 @@
 
 const test = require('tape');
 
-// eslint-disable-next-line import/no-unresolved
-const app = require('../index').default;
+const app = require('../index');
 
 const port = process.env.TEST_PORT || 9001;
 
