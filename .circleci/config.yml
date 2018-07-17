@@ -36,9 +36,9 @@ jobs:
           name: Deploy to Heroku
           command: |
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
-              $(npm bin)/cala-validate-deployment-readiness staging
+              $(npm bin)/cala-validate-deployment-readiness staging src/migrations
               git push https://heroku:$HEROKU_API_KEY@git.heroku.com/cala-api-stg.git HEAD:refs/heads/master
             elif [ "${CIRCLE_BRANCH}" == "production" ]; then
-              $(npm bin)/cala-validate-deployment-readiness production
+              $(npm bin)/cala-validate-deployment-readiness production src/migrations
               git push https://heroku:$HEROKU_API_KEY@git.heroku.com/cala-api-prod.git HEAD:refs/heads/master
             fi

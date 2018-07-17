@@ -31,7 +31,7 @@
     "zipcodes": "2.1.0"
   },
   "devDependencies": {
-    "@cala/bin": "1.3.3",
+    "@cala/bin": "^1.4.2",
     "eslint": "^5.0.1",
     "eslint-config-airbnb-base": "^13.0.0",
     "eslint-plugin-import": "^2.13.0",
