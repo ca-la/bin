@@ -2,7 +2,7 @@
 
 const Router = require('koa-router');
 
-const pkg = require('../../package.json');
+const pkg = require('../../../package.json');
 const db = require('../../services/db');
 const sha256 = require('../../services/insecure-hash');
 

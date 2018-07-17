@@ -2,7 +2,7 @@
 set -e
 
 echo 'Rolling back local DB'
-$(npm bin)/knex migrate:rollback
+$(npm bin)/knex migrate:rollback --knexfile dist/knexfile.js
 
 echo 'Rolling back local test DB'
-NODE_ENV=test $(npm bin)/knex migrate:rollback
+NODE_ENV=test $(npm bin)/knex migrate:rollback --knexfile dist/knexfile.js

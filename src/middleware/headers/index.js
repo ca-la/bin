@@ -1,6 +1,6 @@
 'use strict';
 
-const pkg = require('../../package.json');
+const pkg = require('../../../package.json');
 
 function* headers(next) {
   this.set('Access-Control-Allow-Origin', '*');

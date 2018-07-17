@@ -12,8 +12,8 @@ main() {
 
   date_stamp=$(date "+%Y%m%d%H%M%S")
 
-  filename=migrations/$date_stamp'_'$name.js
-  cp migrations/_template $filename
+  filename=src/migrations/$date_stamp'_'$name.ts
+  cp src/migrations/_template $filename
   echo 'Created '$filename
 
   echo -n 'Open in '$EDITOR'? [y/n] '

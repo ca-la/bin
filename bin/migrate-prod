@@ -25,4 +25,4 @@ if [ "$RES" != "PRODUCTION" ]; then
   exit 1
 fi
 
-DATABASE_URL=$(heroku config:get DATABASE_URL --app cala-api-prod)?ssl=true $(npm bin)/knex migrate:latest
+DATABASE_URL=$(heroku config:get DATABASE_URL --app cala-api-prod)?ssl=true $(npm bin)/knex migrate:latest --knexfile dist/knexfile.js
