@@ -22,7 +22,7 @@ async function updateDesignStatus(designId, newStatus, userId) {
       await createInvoice(design, newStatus);
     } catch (err) {
       if (err instanceof MissingPrerequisitesError) {
-        Logger.logServerError(`Forced design ${designId} into the ${newStatus} phase, but unable to generate an invoice`);
+        Logger.logWarning(`Forced design ${designId} into the ${newStatus} phase, but unable to generate an invoice`);
       } else {
         throw err;
       }
