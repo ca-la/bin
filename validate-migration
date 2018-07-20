@@ -16,12 +16,12 @@ db_url='postgres://localhost/cala-test'
 
 migrate() {
   # Swap this out for your own implementation if you're not using knex
-  DATABASE_URL=$db_url $(npm bin)/knex migrate:latest
+  DATABASE_URL=$db_url $(npm bin)/ts-node $(npm bin)/knex migrate:latest --knexfile src/knexfile.js
 }
 
 rollback() {
   # Swap this out for your own implementation if you're not using knex
-  DATABASE_URL=$db_url $(npm bin)/knex migrate:rollback
+  DATABASE_URL=$db_url $(npm bin)/ts-node $(npm bin)/knex migrate:rollback --knexfile src/knexfile.js
 }
 
 pre() {
