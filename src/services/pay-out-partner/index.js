@@ -53,11 +53,17 @@ async function payOutPartner({
 
   assert(vendorUser, "This vendor doesn't appear to be shared on this design");
 
+  // Construct the Stripe transaction description to (a) make it clear what
+  // they're being paid for, and (b) let use use the description as part of the
+  // idempotency key, so that we can send different transfers with different
+  // descriptions.
+  const description = `${invoice.title}: ${message}`;
+
   // Send the transfer first; if it fails we don't send emails or create logs
   await sendTransfer({
     destination: payoutAccount.stripeUserId,
     amountCents: payoutAmountCents,
-    description: invoice.title,
+    description,
     invoiceId
   });
 
