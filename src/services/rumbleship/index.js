@@ -2,13 +2,16 @@
 
 const fetch = require('node-fetch');
 
+const db = require('../db');
+const InvalidDataError = require('../../errors/invalid-data');
 const InvoicePaymentsDAO = require('../../dao/invoice-payments');
-const UsersDAO = require('../../dao/users');
+const InvoicesDAO = require('../../dao/invoices');
 const JWT = require('../jwt');
 const Logger = require('../logger');
-const SlackService = require('../slack');
-const ProductDesignsDAO = require('../../dao/product-designs');
 const ProductDesignStatusesDAO = require('../../dao/product-design-statuses');
+const ProductDesignsDAO = require('../../dao/product-designs');
+const SlackService = require('../slack');
+const UsersDAO = require('../../dao/users');
 const { requireValues } = require('../../services/require-properties');
 const updateDesignStatus = require('../update-design-status');
 const {
@@ -349,52 +352,65 @@ class Rumbleship {
     */
   async confirmFullOrder({
     feePercentage,
-    invoice,
+    invoiceId,
     poToken,
     purchaseHash,
     userId
   }) {
-    const invoiceAmountCents = invoice.totalCents;
-    const feeCents = getFeeCents(invoiceAmountCents, feePercentage);
-    const totalBilledCents = invoiceAmountCents + feeCents;
+    return db.transaction(async (trx) => {
+      // We acquire an update lock on the relevant invoice row to make sure we can
+      // only be in the process of paying for one invoice at a given time.
+      await db.raw('select * from invoices where id = ? for update', [invoiceId])
+        .transacting(trx);
 
-    await this.createPreShipment({ purchaseHash, poToken, totalBilledCents });
+      const invoice = await InvoicesDAO.findByIdTrx(trx, invoiceId);
 
-    const { sToken } = await this.getSupplierAuthorization();
-    await this.createShipment({ purchaseHash, sToken });
+      if (invoice.isPaid) {
+        throw new InvalidDataError('This invoice is already paid');
+      }
 
-    await InvoicePaymentsDAO.create({
-      invoiceId: invoice.id,
-      totalCents: invoice.totalCents,
-      rumbleshipPurchaseHash: purchaseHash
-    });
+      const invoiceAmountCents = invoice.totalCents;
+      const feeCents = getFeeCents(invoiceAmountCents, feePercentage);
+      const totalBilledCents = invoiceAmountCents + feeCents;
 
-    const design = await ProductDesignsDAO.findById(invoice.designId);
-    const status = await ProductDesignStatusesDAO.findById(design.status);
+      await this.createPreShipment({ purchaseHash, poToken, totalBilledCents });
 
-    requireValues({ design, status });
+      const { sToken } = await this.getSupplierAuthorization();
+      await this.createShipment({ purchaseHash, sToken });
 
-    if (status.nextStatus) {
-      await updateDesignStatus(
-        invoice.designId,
-        status.nextStatus,
-        userId
-      );
-    }
-
-    try {
-      await SlackService.enqueueSend({
-        channel: 'designers',
-        templateName: 'designer_payment',
-        params: {
-          design,
-          designer: await UsersDAO.findById(design.userId),
-          paymentAmountCents: totalBilledCents
-        }
+      await InvoicePaymentsDAO.createTrx(trx, {
+        invoiceId: invoice.id,
+        totalCents: invoice.totalCents,
+        rumbleshipPurchaseHash: purchaseHash
       });
-    } catch (e) {
-      Logger.logWarning('There was a problem sending the payment notification to Slack', e);
-    }
+
+      const design = await ProductDesignsDAO.findById(invoice.designId);
+      const status = await ProductDesignStatusesDAO.findById(design.status);
+
+      requireValues({ design, status });
+
+      if (status.nextStatus) {
+        await updateDesignStatus(
+          invoice.designId,
+          status.nextStatus,
+          userId
+        );
+      }
+
+      try {
+        await SlackService.enqueueSend({
+          channel: 'designers',
+          templateName: 'designer_payment',
+          params: {
+            design,
+            designer: await UsersDAO.findById(design.userId),
+            paymentAmountCents: totalBilledCents
+          }
+        });
+      } catch (e) {
+        Logger.logWarning('There was a problem sending the payment notification to Slack', e);
+      }
+    });
   }
 }
 

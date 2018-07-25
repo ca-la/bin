@@ -77,6 +77,15 @@ async function findById(id) {
     .catch(rethrow);
 }
 
+async function findByIdTrx(trx, id) {
+  return db(VIEW_NAME)
+    .transacting(trx)
+    .where({ id, deleted_at: null })
+    .then(first)
+    .then(maybeInstantiate)
+    .catch(rethrow);
+}
+
 // Create must happen in a transaction that also creates an InvoiceBreakdown.
 // see services/create-invoice
 async function createTrx(trx, data) {
@@ -127,6 +136,7 @@ module.exports = {
   findByDesign,
   findByUser,
   findById,
+  findByIdTrx,
   createTrx,
   update
 };

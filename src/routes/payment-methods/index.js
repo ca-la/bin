@@ -155,7 +155,7 @@ function* completePartnerCheckout() {
 
   yield rs.confirmFullOrder({
     feePercentage,
-    invoice,
+    invoiceId: invoice.id,
     poToken,
     purchaseHash,
     userId: this.state.userId

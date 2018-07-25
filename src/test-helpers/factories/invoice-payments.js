@@ -20,8 +20,11 @@ async function createInvoicesWithPayments() {
   const { user: user2 } = await createUser();
   const design2 = await ProductDesignsDAO.create({ userId: user2.id });
 
-  const createdInvoices = await db.transaction(async (trx) => {
-    return Promise.all([
+  let createdInvoices;
+  let createdPayments;
+
+  await db.transaction(async (trx) => {
+    createdInvoices = await Promise.all([
       InvoicesDAO.createTrx(trx, {
         designId: design.id,
         totalCents: 1234,
@@ -47,21 +50,22 @@ async function createInvoicesWithPayments() {
         designStatusId: 'NEEDS_DEVELOPMENT_PAYMENT'
       })
     ]);
+
+    createdPayments = await Promise.all([
+      InvoicePaymentsDAO.createTrx(trx, {
+        invoiceId: createdInvoices[0].id,
+        totalCents: createdInvoices[0].totalCents,
+        paymentMethodId: paymentMethod.id,
+        stripeChargeId: 'test-stripe-charge'
+      }),
+      InvoicePaymentsDAO.createTrx(trx, {
+        invoiceId: createdInvoices[1].id,
+        totalCents: 100,
+        paymentMethodId: paymentMethod.id,
+        stripeChargeId: 'test-stripe-charge-2'
+      })
+    ]);
   });
-  const createdPayments = await Promise.all([
-    InvoicePaymentsDAO.create({
-      invoiceId: createdInvoices[0].id,
-      totalCents: createdInvoices[0].totalCents,
-      paymentMethodId: paymentMethod.id,
-      stripeChargeId: 'test-stripe-charge'
-    }),
-    InvoicePaymentsDAO.create({
-      invoiceId: createdInvoices[1].id,
-      totalCents: 100,
-      paymentMethodId: paymentMethod.id,
-      stripeChargeId: 'test-stripe-charge-2'
-    })
-  ]);
 
   return {
     users: [user, user2],

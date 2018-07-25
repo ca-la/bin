@@ -32,10 +32,11 @@ async function findById(id) {
     .catch(rethrow);
 }
 
-function create(data) {
+function createTrx(trx, data) {
   validate(data);
 
   return db(TABLE_NAME)
+    .transacting(trx)
     .insert({
       id: uuid.v4(),
       invoice_id: data.invoiceId,
@@ -51,5 +52,5 @@ function create(data) {
 
 module.exports = {
   findById,
-  create
+  createTrx
 };
