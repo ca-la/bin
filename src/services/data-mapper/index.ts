@@ -1,10 +1,7 @@
-'use strict';
+import { invert, mapKeys } from 'lodash';
 
-const invert = require('lodash/invert');
-const mapKeys = require('lodash/mapKeys');
-
-const { logServerError } = require('../logger');
-const InvalidDataError = require('../../errors/invalid-data');
+import { logServerError } from '../logger';
+import InvalidDataError = require('../../errors/invalid-data');
 
 /**
  * Useful helpers for converting back and forth between userland data formats
@@ -16,14 +13,24 @@ const InvalidDataError = require('../../errors/invalid-data');
  *   db_column_name: 'niceAndFriendlyName'
  * }
  */
-class DataMapper {
-  constructor(keyNamesByColumnName) {
+export interface ColumnObjectPropMap {
+  [dbKey: string]: string;
+}
+export interface ObjectPropColumnMap {
+  [objectProp: string]: string;
+}
+
+class DataMapper<UserData extends object, RowData extends object> {
+  public keyNamesByColumnName: ColumnObjectPropMap;
+  public columnNamesByKeyName: ObjectPropColumnMap;
+
+  constructor(keyNamesByColumnName: ColumnObjectPropMap) {
     this.keyNamesByColumnName = keyNamesByColumnName;
     this.columnNamesByKeyName = invert(keyNamesByColumnName);
   }
 
-  userDataToRowData(data) {
-    return mapKeys(data, (value, key) => {
+  public userDataToRowData(data: UserData): RowData {
+    return mapKeys(data, (_: any, key: string) => {
       const columnName = this.columnNamesByKeyName[key];
       if (!columnName) {
         logServerError('Column names by key name:');
@@ -31,11 +38,11 @@ class DataMapper {
         throw new InvalidDataError(`Unknown key: ${key}`);
       }
       return columnName;
-    });
+    }) as RowData;
   }
 
-  rowDataToUserData(data) {
-    return mapKeys(data, (value, key) => {
+  public rowDataToUserData(data: RowData): UserData {
+    return mapKeys(data, (_: any, key: string) => {
       const keyName = this.keyNamesByColumnName[key];
 
       if (!keyName) {
@@ -46,12 +53,12 @@ class DataMapper {
       }
 
       return keyName;
-    });
+    }) as UserData;
   }
 
-  getKeyName(columnName) {
+  public getKeyName(columnName: string): string {
     return this.keyNamesByColumnName[columnName];
   }
 }
 
-module.exports = DataMapper;
+export default DataMapper;

@@ -1,6 +1,6 @@
 'use strict';
 
-const DataMapper = require('../services/data-mapper');
+const { default: DataMapper } = require('../services/data-mapper');
 const { MINIMUM_SCAN_PITCH_RADIANS } = require('../config');
 const { requireProperties } = require('../services/require-properties');
 

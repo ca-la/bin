@@ -33,7 +33,7 @@ test: preflight build test-ci
 
 .PHONY: test-ci
 test-ci: preflight
-	NODE_ENV=test env $$(cat .env | xargs) $(npm_bin)/tape dist/**/*/spec.js | $(npm_bin)/tap-spec
+	NODE_ENV=test env $$(cat .env | xargs) $(npm_bin)/tape "dist/**/*spec.js" | $(npm_bin)/tap-spec
 
 # Interactive console (i.e. to require & explore modules)
 .PHONY: console

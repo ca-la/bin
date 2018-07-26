@@ -3,6 +3,12 @@
   "parserOptions": {
     "sourceType": "script"
   },
+  "settings": {
+    "import/resolver": {
+      "node": true,
+      "eslint-import-resolver-typescript": true
+    }
+  },
   "rules": {
     "import/no-extraneous-dependencies": [2, {"devDependencies": true}],
     "arrow-body-style": 0,

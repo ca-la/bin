@@ -85,9 +85,23 @@ function assert(value, message) {
   }
 }
 
+/**
+ * A predicate function to check to see if a object has a set of properties.
+ *
+ * @example
+ *   hasProperties({ foo: 'bar' }, 'foo', 'baz', 'qux')
+ *   - will return false
+ *   hasProperties({ foo: 'bar' }, 'foo')
+ *   - will return true
+ */
+function hasProperties(data, ...props) {
+  return props.every(prop => data[prop] !== undefined);
+}
+
 module.exports = {
   assert,
   requireProperties,
   requirePropertiesFormatted,
-  requireValues
+  requireValues,
+  hasProperties
 };

@@ -1,9 +1,11 @@
-export function up(knex) {
+import * as Knex from 'knex';
+
+export function up(knex: Knex): Knex.Raw {
   return knex.raw(`
   `);
 };
 
-export function down(knex) {
+export function down(knex: Knex): Knex.Raw {
   return knex.raw(`
   `);
 };

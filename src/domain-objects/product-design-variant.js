@@ -2,7 +2,7 @@
 'use strict';
 
 const { requireProperties } = require('../services/require-properties');
-const DataMapper = require('../services/data-mapper');
+const { default: DataMapper } = require('../services/data-mapper');
 
 const keyNamesByColumnName = {
   id: 'id',

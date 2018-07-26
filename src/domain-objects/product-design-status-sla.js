@@ -1,6 +1,6 @@
 'use strict';
 
-const DataMapper = require('../services/data-mapper');
+const { default: DataMapper } = require('../services/data-mapper');
 const formatDateString = require('../services/format-date-string');
 const { requireProperties } = require('../services/require-properties');
 
