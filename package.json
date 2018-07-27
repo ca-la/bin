@@ -1,6 +1,6 @@
 {
   "name": "@cala/bin",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "description": "A selection of useful scripts to include in new projects.",
   "main": "index.js",
   "repository": {
