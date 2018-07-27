@@ -46,8 +46,7 @@ main() {
   echo $c_yellow'Deployed hash: '$c_reset$deployed_hash
 
   latest_local_migration=$(
-    ls -Ar $migrations |\
-      grep -v _template |\
+    ls -Ar $migrations/*.js |\
       head -n 1 |\
       tr -d '\n'
   )
