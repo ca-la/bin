@@ -10,6 +10,7 @@
     "@types/knex": "^0.14.17",
     "@types/lodash": "^4.14.112",
     "@types/node": "10.3.1",
+    "@types/node-uuid": "0.0.28",
     "aws-sdk": "2.7.21",
     "bcrypt": "2.0.1",
     "co-body": "4.2.0",

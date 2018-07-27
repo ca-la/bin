@@ -1,45 +1,34 @@
 import * as Tape from 'tape';
 import { test } from '../test-helpers/fresh';
 
-import PricingProductType, {
+import PricingCareLabel, {
   dataAdapter,
-  isPricingProductTypeRow,
-  PricingProductTypeRow
-} from './pricing-product-type';
+  isPricingCareLabelRow,
+  PricingCareLabelRow
+} from './pricing-care-label';
 
 const now = new Date();
-const validRowData: PricingProductTypeRow = {
-  complexity: 'string',
-  contrast: 0,
+const validRowData: PricingCareLabelRow = {
   created_at: now,
   id: 'string',
   minimum_units: 0,
-  name: 'string',
-  pattern_minimum_cents: 0,
   unit_cents: 0,
-  version: 0,
-  yield: 0
+  version: 0
 };
 const invalidRowData = {
-  complexity: 'string',
+  created_at: now,
   unit_cents: 0,
-  version: 0,
-  yield: 0
+  version: 0
 };
-const equivalentUserData: PricingProductType = {
-  complexity: 'string',
-  contrast: 0,
+const equivalentUserData: PricingCareLabel = {
   createdAt: now,
   id: 'string',
   minimumUnits: 0,
-  name: 'string',
-  patternMinimumCents: 0,
   unitCents: 0,
-  version: 0,
-  yield: 0
+  version: 0
 };
 
-test('PricingProductType', async (t: Tape.Test): Promise<void> => {
+test('PricingCareLabel', async (t: Tape.Test): Promise<void> => {
   t.deepEqual(
     validRowData,
     dataAdapter.toDb(equivalentUserData),
@@ -51,11 +40,11 @@ test('PricingProductType', async (t: Tape.Test): Promise<void> => {
     'has mapped values'
   );
   t.notOk(
-    isPricingProductTypeRow(invalidRowData),
+    isPricingCareLabelRow(invalidRowData),
     'type guard rejects invalid data'
   );
   t.ok(
-    isPricingProductTypeRow(validRowData),
+    isPricingCareLabelRow(validRowData),
     'type guard passes with valid data'
   );
 });

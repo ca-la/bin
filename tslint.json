@@ -31,6 +31,7 @@
     "no-unused-variable": true,
     "no-use-before-declare": true,
     "strict-type-predicates": true,
-    "deprecation": true
+    "deprecation": true,
+    "await-promise": [true, "Bluebird"]
   }
 }

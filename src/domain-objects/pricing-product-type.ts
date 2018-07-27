@@ -9,6 +9,7 @@ import { hasProperties } from '../services/require-properties';
  * @property {number} version Version number for this set of margins
  * @property {number} minimumUnits Minimum number of units in this range
  * @property {string} name Name of the process
+ * @property {number} patternMinimumCents Minimum cost for pattern
  * @property {string} complexity Product complexity
  * @property {number} unitCents Cost per unit
  * @property {number} yield How much material does this product type use?
@@ -21,6 +22,7 @@ export default interface PricingProductType {
   version: number;
   minimumUnits: number;
   name: string;
+  patternMinimumCents: number;
   complexity: string;
   unitCents: number;
   yield: number;
@@ -33,11 +35,12 @@ export interface PricingProductTypeRow {
   version: number;
   minimum_units: number;
   name: string;
+  pattern_minimum_cents: number;
   complexity: string;
   unit_cents: number;
   yield: number;
   contrast: number;
-  created_at: Date | string;
+  created_at: Date;
 }
 
 export const dataAdapter = new DataAdapter<PricingProductTypeRow, PricingProductType>();
@@ -49,6 +52,7 @@ export function isPricingProductTypeRow(row: object): row is PricingProductTypeR
     'version',
     'minimum_units',
     'name',
+    'pattern_minimum_cents',
     'complexity',
     'unit_cents',
     'yield',

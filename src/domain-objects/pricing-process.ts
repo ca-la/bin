@@ -32,7 +32,7 @@ export interface PricingProcessRow {
   complexity: string;
   setup_cents: number;
   unit_cents: number;
-  created_at: Date | string;
+  created_at: Date;
 }
 
 export const dataAdapter = new DataAdapter<PricingProcessRow, PricingProcess>();

@@ -24,7 +24,7 @@ export interface PricingMarginRow {
   version: number;
   minimum_units: number;
   margin: number;
-  created_at: Date | string;
+  created_at: Date;
 }
 
 export const dataAdapter = new DataAdapter<PricingMarginRow, PricingMargin>();

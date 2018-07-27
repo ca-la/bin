@@ -13,7 +13,6 @@ const validRowData: PricingProductMaterialRow = {
   created_at: now,
   id: 'string',
   minimum_units: 0,
-  name: 'string',
   unit_cents: 0,
   version: 0
 };
@@ -27,7 +26,6 @@ const equivalentUserData: PricingProductMaterial = {
   createdAt: now,
   id: 'string',
   minimumUnits: 0,
-  name: 'string',
   unitCents: 0,
   version: 0
 };
