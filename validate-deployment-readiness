@@ -37,8 +37,18 @@ main() {
       ;;
   esac
 
+  # The HTTP response body, followed by the response code on a new line
+  response_and_status=$(curl -s -w "\n%{http_code}" -o - -A 'validate-deployment-readiness script' $status_url)
+  status=$(echo "$response_and_status" | tail -n 1)
+
+  if [[ $status != '200' ]] ; then
+    # Assume that the server has crashed, so the best option is to _allow_ deployment
+    echo $c_yellow'Warning: Bad response status ('$status')!'$c_reset
+    exit 0
+  fi
+
   deployed_hash=$(
-    curl -sA 'validate-deployment-readiness script' $status_url |
+    echo $response_and_status |
       egrep -o '"lastMigrationHash":"[^"]*"' |
       cut -d '"' -f 4
   )
