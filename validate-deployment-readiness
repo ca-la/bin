@@ -38,17 +38,19 @@ main() {
   esac
 
   deployed_hash=$(
-    curl -sA 'validate-deployment-readiness script' $status_url |\
-      egrep -o '"lastMigrationHash":"[^"]*"' |\
+    curl -sA 'validate-deployment-readiness script' $status_url |
+      egrep -o '"lastMigrationHash":"[^"]*"' |
       cut -d '"' -f 4
   )
 
   echo $c_yellow'Deployed hash: '$c_reset$deployed_hash
 
   latest_local_migration=$(
-    ls -Ar $migrations/*.js |\
-      head -n 1 |\
-      tr -d '\n'
+    ls -Ar $migrations/*.js | # List all migrations, descending order by name
+      head -n 1 |  # Take the first one
+      tr -d '\n' | # Remove trailing newline
+      awk -F / '{print $NF}' # Filter down to the last field after a '/' character,
+                             # e.g. foo/bar/x.js becomes x.js
   )
 
   local_hash=$(echo -n $latest_local_migration | shasum -a 256 | cut -d ' ' -f 1)
