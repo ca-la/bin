@@ -11,6 +11,7 @@
     "@types/lodash": "^4.14.112",
     "@types/node": "10.3.1",
     "@types/node-uuid": "0.0.28",
+    "@types/tape": "^4.2.32",
     "aws-sdk": "2.7.21",
     "bcrypt": "2.0.1",
     "co-body": "4.2.0",
@@ -34,7 +35,6 @@
   },
   "devDependencies": {
     "@cala/bin": "^1.4.6",
-    "@types/tape": "^4.2.32",
     "eslint": "^5.0.1",
     "eslint-config-airbnb-base": "^13.0.0",
     "eslint-import-resolver-typescript": "^1.0.2",
@@ -46,7 +46,7 @@
   },
   "engines": {
     "node": "8.*",
-    "npm": "3.*"
+    "npm": "5.7.*"
   },
   "scripts": {
     "start": "make serve",
