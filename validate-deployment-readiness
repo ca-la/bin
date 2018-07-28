@@ -48,6 +48,7 @@ main() {
   latest_local_migration=$(
     ls -Ar $migrations/*.js |\
       head -n 1 |\
+      xargs -n 1 basename |\
       tr -d '\n'
   )
 
