@@ -63,8 +63,16 @@ function* putDesign() {
   canAccessUserResource.call(this, targetCollection.createdBy);
   canAccessUserResource.call(this, targetDesign.userId);
 
-  this.body = yield CollectionsDAO.addDesign(collectionId, designId);
-  this.status = 200;
+  try {
+    this.body = yield CollectionsDAO.addDesign(collectionId, designId);
+    this.status = 200;
+  } catch (error) {
+    if (/UniqueViolation/.test(error.toString())) {
+      this.throw(409, 'A design can only be associated with a single collection');
+    } else {
+      throw error;
+    }
+  }
 }
 
 function* deleteDesign() {

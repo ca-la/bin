@@ -122,6 +122,16 @@ test('PUT /collections/:id/designs/:id', async (t) => {
       }
     }
   );
+  const otherCollection = await post(
+    '/collections',
+    {
+      headers: authHeader(session.id),
+      body: {
+        title: 'Drop 002/Empire Strikes Back',
+        description: 'Ewoks'
+      }
+    }
+  );
   const design = await post(
     '/product-designs',
     {
@@ -142,6 +152,16 @@ test('PUT /collections/:id/designs/:id', async (t) => {
     collectionDesigns[1][0].id,
     design[1].id,
     'adds design to collection and returns all designs for collection'
+  );
+
+  const designInOtherCollection = await put(
+    `/collections/${otherCollection[1].id}/designs/${design[1].id}`,
+    { headers: authHeader(session.id) }
+  );
+  t.equal(
+    designInOtherCollection[0].status,
+    409,
+    'adding a design to a second collection returns a conflict status'
   );
 });
 

@@ -7,7 +7,7 @@
   "license": "UNLICENSED",
   "private": true,
   "dependencies": {
-    "@types/knex": "^0.14.17",
+    "@types/knex": "^0.14.18",
     "@types/lodash": "^4.14.112",
     "@types/node": "10.3.1",
     "@types/node-uuid": "0.0.28",
