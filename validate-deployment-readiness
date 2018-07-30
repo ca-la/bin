@@ -69,7 +69,7 @@ function getDeployedHash(target) {
           if (responseJson.status === 'ok') {
             resolve(responseJson.lastMigrationHash);
           } else {
-            reject(reponseJson);
+            reject(responseJson);
           }
         })
       }
