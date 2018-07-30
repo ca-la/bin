@@ -48,8 +48,7 @@ async function main() {
       console.error(error);
       process.exit(0);
     } else {
-      console.error(error);
-      process.exit(1);
+      throw error;
     }
   }
   console.log(`${yellow}Deployed hash: ${reset}${deployedHash}`);
