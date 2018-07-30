@@ -31,8 +31,13 @@ async function main() {
   try {
     deployedHash = await getDeployedHash(target);
   } catch (error) {
-    console.log(`${yellow}Warning: Bad response status:${reset}\n${JSON.stringify(error, null, 2)}`);
-    process.exit(0);
+    if (error === 'HTTP_ERROR') {
+      console.log(`${yellow}Warning: Bad response status:${reset}\n${JSON.stringify(error, null, 2)}`);
+      process.exit(0);
+    } else {
+      console.error(error);
+      process.exit(1);
+    }
   }
   console.log(`${yellow}Deployed hash: ${reset}${deployedHash}`);
 
@@ -62,6 +67,12 @@ function getDeployedHash(target) {
         method: 'GET'
       },
       res => {
+        const isSuccessCode = res.statusCode === 200;
+
+        if (!isSuccessCode) {
+          reject('HTTP_ERROR');
+        }
+
         res.on('data', d => response = response.concat(d));
         res.on('end', () => {
           const responseJson = JSON.parse(response.join(''));
@@ -69,13 +80,13 @@ function getDeployedHash(target) {
           if (responseJson.status === 'ok') {
             resolve(responseJson.lastMigrationHash);
           } else {
-            reject(responseJson);
+            reject('SERVER_NOT_OK');
           }
-        })
+        });
       }
-    )
+    );
 
-    req.on('error', reject);
+    req.on('error', (error) => reject('REQUEST_ERROR'));
     req.end();
   });
 }
