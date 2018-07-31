@@ -119,8 +119,10 @@ function findByCollectionId(collectionId) {
   return db(TABLE_NAME)
     .select('product_designs.*')
     .whereNull('product_designs.deleted_at')
-    .joinRaw('join collection_designs on collection_designs.design_id = product_designs.id')
-    .joinRaw('join collections on collections.id = ?', [collectionId])
+    .joinRaw(`
+join collection_designs on
+  (collection_designs.design_id = product_designs.id and
+  collection_designs.collection_id = ?)`, [collectionId])
     .orderBy('collection_designs.created_at', 'desc')
     .catch(rethrow)
     .then(designs => designs.map(instantiate));
