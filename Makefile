@@ -45,7 +45,7 @@ release: lint test
 	$(npm_bin)/cala-release $(type)
 
 .PHONY: validate-migration
-validate-migration:
+validate-migration: build
 	$(npm_bin)/cala-validate-migration
 
 # Static analysis
