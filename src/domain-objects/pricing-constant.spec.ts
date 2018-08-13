@@ -1,5 +1,4 @@
-import * as Tape from 'tape';
-import { test } from '../test-helpers/fresh';
+import { test, Test } from '../test-helpers/fresh';
 
 import PricingConstant, {
   dataAdapter,
@@ -43,7 +42,7 @@ const equivalentUserData: PricingConstant = {
   workingSessionCents: 0
 };
 
-test('PricingConstant', async (t: Tape.Test): Promise<void> => {
+test('PricingConstant', async (t: Test): Promise<void> => {
   t.deepEqual(
     validRowData,
     dataAdapter.toDb(equivalentUserData),

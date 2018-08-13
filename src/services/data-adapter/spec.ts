@@ -1,4 +1,4 @@
-import * as tape from 'tape';
+import { test, Test } from '../../test-helpers/fresh';
 import DataAdapter from '.';
 
 interface Person {
@@ -27,9 +27,8 @@ const personFromDb: PersonSnake = {
   name: 'John Doe'
 };
 
-tape('DataAdapter class', (t: tape.Test) => {
+test('DataAdapter class', async (t: Test) => {
   const adapter = new DataAdapter<PersonSnake, Person>();
-  t.plan(4);
   t.deepEqual(
     adapter.parse(personFromDb),
     person,
@@ -52,7 +51,7 @@ tape('DataAdapter class', (t: tape.Test) => {
   );
 });
 
-tape('with custom key transformer', (t: tape.Test) => {
+test('with custom key transformer', async (t: Test) => {
   const alEspañol = (key: string): string => {
     const mapping = {
       address: 'dirección',
@@ -63,7 +62,6 @@ tape('with custom key transformer', (t: tape.Test) => {
   };
   const adapter = new DataAdapter<PersonSnake, {}>(alEspañol);
 
-  t.plan(1);
   t.deepEqual(
     adapter.parse(personFromDb),
     {

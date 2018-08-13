@@ -1,5 +1,4 @@
-import * as Tape from 'tape';
-import { test } from '../test-helpers/fresh';
+import { test, Test } from '../test-helpers/fresh';
 
 import PricingMargin, {
   dataAdapter,
@@ -29,7 +28,7 @@ const equivalentUserData: PricingMargin = {
   version: 0
 };
 
-test('PricingMargin', async (t: Tape.Test): Promise<void> => {
+test('PricingMargin', async (t: Test): Promise<void> => {
   t.deepEqual(
     validRowData,
     dataAdapter.toDb(equivalentUserData),

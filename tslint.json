@@ -21,17 +21,17 @@
     ],
     "max-line-length": [true, 100],
     "object-shorthand-properties-first": [false],
-    "indent": [2, "spaces"],
+    "indent": [true, "spaces", 2],
     "no-empty-interface": [false],
     "array-type": [true, "array"],
     "no-duplicate-imports": true,
-    "await-promise": true,
     "no-for-in-array": true,
     "no-unbound-method": true,
     "no-unused-variable": true,
     "no-use-before-declare": true,
     "strict-type-predicates": true,
     "deprecation": true,
-    "await-promise": [true, "Bluebird"]
+    "await-promise": [true, "Bluebird"],
+    "no-namespace": [true, "allow-declarations"]
   }
 }

@@ -6,3 +6,5 @@ interface WithCreatedDate {
 }
 
 type Uninserted<T extends WithCreatedDate> = Omit<T, 'created_at' | 'createdAt'>;
+
+type Unsaved<T extends { createdAt?: Date, id?: string }> = Omit<T, 'createdAt' | 'id'>;

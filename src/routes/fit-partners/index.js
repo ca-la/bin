@@ -8,6 +8,7 @@ const ScansDAO = require('../../dao/scans');
 const Twilio = require('../../services/twilio');
 const { FIT_CLIENT_HOST } = require('../../config');
 const { requirePropertiesFormatted } = require('../../services/require-properties');
+const { saveFittingUrl } = require('../../services/fit-partner-scan');
 
 const router = new Router();
 
@@ -43,6 +44,8 @@ function* sendFitLink() {
     (partner.smsCopy || 'To complete your fitting, open this link on your mobile device: {{link}}'),
     link
   );
+
+  yield saveFittingUrl(customer.id, link);
 
   yield Twilio.sendSMS(phoneNumber, fitCopy);
 
