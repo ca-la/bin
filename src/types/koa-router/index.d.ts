@@ -18,6 +18,8 @@ declare module 'koa-router' {
      */
     constructor(opt?: Router.RouterOptions);
 
+    public post(path: string | RegExp, ...middleware: Router.Middleware[]): Router;
+    public get(path: string | RegExp, ...middleware: Router.Middleware[]): Router;
     public use(
       path: string | string[] | RegExp, ...middleware: Router.Middleware[]
     ): Router;

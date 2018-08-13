@@ -32,7 +32,7 @@ export default function generateProductTypes(
     ): Uninserted<PricingProductTypeRow>[] =>
       acc.concat([
         {
-          complexity: 'simple',
+          complexity: 'SIMPLE',
           contrast: contrast[0],
           id: uuid.v4(),
           minimum_units: units,
@@ -43,7 +43,7 @@ export default function generateProductTypes(
           yield: typeYield
         },
         {
-          complexity: 'medium',
+          complexity: 'MEDIUM',
           contrast: contrast[1],
           id: uuid.v4(),
           minimum_units: units,
@@ -54,7 +54,7 @@ export default function generateProductTypes(
           yield: typeYield
         },
         {
-          complexity: 'complex',
+          complexity: 'COMPLEX',
           contrast: contrast[2],
           id: uuid.v4(),
           minimum_units: units,

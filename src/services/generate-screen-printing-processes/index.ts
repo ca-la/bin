@@ -26,10 +26,10 @@ export default function generateScreenPrintingProcess(
               colorCount: number
             ): UninsertedPricingProcessRow[] => {
               return rowsForUnits.concat({
-                complexity: '' + colorCount,
+                complexity: '' + colorCount + '_COLOR' + (colorCount > 1 ? 'S' : ''),
                 id: uuid.v4(),
                 minimum_units: units,
-                name: 'Screen printing',
+                name: 'SCREEN_PRINTING',
                 setup_cents: colorCount * setup(units),
                 unit_cents: base + (colorCount * perHit),
                 version

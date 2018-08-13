@@ -15,10 +15,14 @@ export default class DataAdapter<RowData extends object, UserData> {
   public toDb(userData: UserData): RowData {
     return transformKeys(this.decodeTransformer, userData) as RowData;
   }
+
+  public forInsertion(userData: Uninserted<UserData>): Uninserted<RowData> {
+    return transformKeys(this.decodeTransformer, userData) as Uninserted<RowData>;
+  }
 }
 
 function transformKeys(keyTransformer: KeyTransformer, source: any): any {
-  if (_.isArray(source) || _.isPlainObject(source)) {
+  if (_.isArray(source) || _.isObject(source)) {
     return _.reduce(
       source,
       (acc: any, value: any, key: any): any => {
@@ -27,10 +31,11 @@ function transformKeys(keyTransformer: KeyTransformer, source: any): any {
           val = transformKeys(keyTransformer, value);
         }
 
+        const transformed = keyTransformer(key);
         return Object.assign(
           {},
           acc,
-          { [keyTransformer(key)]: val }
+          { [transformed]: val }
         );
       },
       undefined

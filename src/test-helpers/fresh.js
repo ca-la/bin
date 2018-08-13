@@ -19,7 +19,15 @@ const TABLES = [
   'scans',
   'sessions',
   'unassigned_referral_codes',
-  'users'
+  'users',
+  'pricing_processes',
+  'pricing_constants',
+  'pricing_care_labels',
+  'pricing_margins',
+  'pricing_product_materials',
+  'pricing_product_types',
+  'pricing_quotes',
+  'pricing_inputs'
 ];
 
 let currentSandbox;
