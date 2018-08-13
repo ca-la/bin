@@ -101,7 +101,8 @@ test('PATCH /product-designs/:id allows admins to update a wider range of keys',
 });
 
 test('PUT /product-designs/:id/status updates a status', (t) => {
-  sandbox().stub(EmailService, 'enqueueSend', () => Promise.resolve());
+  sandbox().stub(EmailService, 'enqueueSend').returns(Promise.resolve());
+
   let designId;
   let sessionId;
 
@@ -157,7 +158,7 @@ test('PUT /product-designs/:id/status does not update to an invalid status', (t)
 });
 
 test('GET /product-designs allows searching', async (t) => {
-  sandbox().stub(EmailService, 'enqueueSend', () => Promise.resolve());
+  sandbox().stub(EmailService, 'enqueueSend').returns(Promise.resolve());
 
   const { user, session } = await createUser({ role: 'ADMIN' });
 

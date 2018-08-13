@@ -26,9 +26,9 @@ test('PUT /scan-photos/:photoId updates a photo', (t) => {
         scan_id: 'scan-123'
       });
 
-      sb.stub(ScansDAO, 'findById', () => Promise.resolve(scan));
-      sb.stub(ScanPhotosDAO, 'findById', () => Promise.resolve(photo));
-      sb.stub(ScanPhotosDAO, 'updateOneById', () => Promise.resolve(photo));
+      sb.stub(ScansDAO, 'findById').returns(Promise.resolve(scan));
+      sb.stub(ScanPhotosDAO, 'findById').returns(Promise.resolve(photo));
+      sb.stub(ScanPhotosDAO, 'updateOneById').returns(Promise.resolve(photo));
 
       return put('/scan-photos/photo-123', {
         body: {

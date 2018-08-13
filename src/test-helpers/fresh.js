@@ -33,7 +33,7 @@ const TABLES = [
 let currentSandbox;
 
 function beforeEach() {
-  currentSandbox = sinon.sandbox.create();
+  currentSandbox = sinon.createSandbox();
 }
 
 function afterEach() {

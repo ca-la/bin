@@ -9,9 +9,9 @@ const { createInvoicesWithPayments } = require('../../test-helpers/factories/inv
 const { test, sandbox } = require('../../test-helpers/fresh');
 
 test('payInvoice', async (t) => {
-  sandbox().stub(Stripe, 'charge', () => Promise.resolve({ id: 'chargeId' }));
-  sandbox().stub(EmailService, 'enqueueSend', () => Promise.resolve());
-  sandbox().stub(SlackService, 'enqueueSend', () => Promise.resolve());
+  sandbox().stub(Stripe, 'charge').returns(Promise.resolve({ id: 'chargeId' }));
+  sandbox().stub(EmailService, 'enqueueSend').returns(Promise.resolve());
+  sandbox().stub(SlackService, 'enqueueSend').returns(Promise.resolve());
 
   const {
     designs,
@@ -64,9 +64,9 @@ test('payInvoice', async (t) => {
 });
 
 test('payInvoice cannot pay the same invoice twice in parallel', async (t) => {
-  sandbox().stub(Stripe, 'charge', () => Promise.resolve({ id: 'chargeId' }));
-  sandbox().stub(EmailService, 'enqueueSend', () => Promise.resolve());
-  sandbox().stub(SlackService, 'enqueueSend', () => Promise.resolve());
+  sandbox().stub(Stripe, 'charge').returns(Promise.resolve({ id: 'chargeId' }));
+  sandbox().stub(EmailService, 'enqueueSend').returns(Promise.resolve());
+  sandbox().stub(SlackService, 'enqueueSend').returns(Promise.resolve());
 
   const {
     users,

@@ -33,15 +33,15 @@ async function createInvoice() {
 }
 
 test('Rumbleship#confirmFullOrder calls Rumbleship with the correct total', async (t) => {
-  sandbox().stub(EmailService, 'enqueueSend', () => Promise.resolve());
-  sandbox().stub(SlackService, 'enqueueSend', () => Promise.resolve());
+  sandbox().stub(EmailService, 'enqueueSend').returns(Promise.resolve());
+  sandbox().stub(SlackService, 'enqueueSend').returns(Promise.resolve());
 
   const rs = new Rumbleship({
     apiKey: 'api_12345',
     apiBase: 'https://rumbleship.example.com'
   });
 
-  sandbox().stub(rs, 'makeRequest', () => Promise.resolve({
+  sandbox().stub(rs, 'makeRequest').returns(Promise.resolve({
     body: {},
     response: {
       headers: new Map([['authorization', SAMPLE_JWT]])
@@ -66,15 +66,15 @@ test('Rumbleship#confirmFullOrder calls Rumbleship with the correct total', asyn
 });
 
 test('Rumbleship#confirmFullOrder does not attempt to confirm twice when called twice in rapid succession', async (t) => {
-  sandbox().stub(EmailService, 'enqueueSend', () => Promise.resolve());
-  sandbox().stub(SlackService, 'enqueueSend', () => Promise.resolve());
+  sandbox().stub(EmailService, 'enqueueSend').returns(Promise.resolve());
+  sandbox().stub(SlackService, 'enqueueSend').returns(Promise.resolve());
 
   const rs = new Rumbleship({
     apiKey: 'api_12345',
     apiBase: 'https://rumbleship.example.com'
   });
 
-  sandbox().stub(rs, 'makeRequest', () => Promise.resolve({
+  sandbox().stub(rs, 'makeRequest').returns(Promise.resolve({
     body: {},
     response: {
       headers: new Map([['authorization', SAMPLE_JWT]])

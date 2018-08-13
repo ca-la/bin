@@ -7,11 +7,8 @@ const { group, sandbox } = require('../../test-helpers/fresh');
 const getDesignPermissions = require('.');
 
 let test = group(() => {
-  sandbox().stub(
-    InvoicesDAO,
-    'findUnpaidByDesignAndStatus',
-    () => Promise.resolve([])
-  );
+  sandbox().stub(InvoicesDAO, 'findUnpaidByDesignAndStatus')
+    .returns(Promise.resolve([]));
 });
 
 test('getDesignPermissions when owner and when all status invoices are paid', async (t) => {
@@ -40,11 +37,8 @@ test('getDesignPermissions when owner and when all status invoices are paid', as
 });
 
 test = group(() => {
-  sandbox().stub(
-    InvoicesDAO,
-    'findUnpaidByDesignAndStatus',
-    () => Promise.resolve([{}])
-  );
+  sandbox().stub(InvoicesDAO, 'findUnpaidByDesignAndStatus')
+    .returns(Promise.resolve([{}]));
 });
 
 test('getDesignPermissions when owner and when all status invoices are not paid', async (t) => {

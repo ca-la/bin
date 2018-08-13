@@ -7,7 +7,7 @@ const { get } = require('../../test-helpers/http');
 const { test, sandbox } = require('../../test-helpers/fresh');
 
 test('GET /designers lists designers', (t) => {
-  sandbox().stub(DesignersDAO, 'getList', () =>
+  sandbox().stub(DesignersDAO, 'getList').returns(
     Promise.resolve([
       new Designer({
         id: '123123',
@@ -17,7 +17,8 @@ test('GET /designers lists designers', (t) => {
         id: '456456',
         name: 'Another Designer'
       })
-    ]));
+    ])
+  );
 
   return get('/designers')
     .then(([response, body]) => {
@@ -29,13 +30,14 @@ test('GET /designers lists designers', (t) => {
 });
 
 test('GET /designers/:id returns a designer', (t) => {
-  sandbox().stub(DesignersDAO, 'getById', () =>
+  sandbox().stub(DesignersDAO, 'getById').returns(
     Promise.resolve(
       new Designer({
         id: '123123',
         name: 'A Designer'
       })
-    ));
+    )
+  );
 
   return get('/designers/123123')
     .then(([response, body]) => {
@@ -46,7 +48,7 @@ test('GET /designers/:id returns a designer', (t) => {
 });
 
 test('GET /designers/:id returns 404 when not found', (t) => {
-  sandbox().stub(DesignersDAO, 'getById', () => {
+  sandbox().stub(DesignersDAO, 'getById').callsFake(() => {
     const err = new InvalidDataError('Designer not found');
     return Promise.reject(err);
   });

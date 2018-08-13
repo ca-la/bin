@@ -32,14 +32,15 @@ const ADDRESS_DATA = Object.freeze({
   country: 'USA'
 });
 
+function stubUserDependencies() {
+  sandbox().stub(MailChimp, 'subscribeToUsers').returns(Promise.resolve());
+  sandbox().stub(UnassignedReferralCodesDAO, 'get').returns(Promise.resolve('ABC123'));
+}
+
 test('POST /users returns a 400 if user creation fails', (t) => {
-  sandbox().stub(MailChimp, 'subscribeToUsers', () => Promise.resolve());
+  stubUserDependencies();
 
-  sandbox().stub(UsersDAO,
-    'create',
-    () => Promise.reject(new InvalidDataError('Bad email')));
-
-  sandbox().stub(UnassignedReferralCodesDAO, 'get', () => Promise.resolve('ABC123'));
+  sandbox().stub(UsersDAO, 'create').returns(Promise.reject(new InvalidDataError('Bad email')));
 
   return post('/users', { body: USER_DATA })
     .then(([response, body]) => {
@@ -49,8 +50,7 @@ test('POST /users returns a 400 if user creation fails', (t) => {
 });
 
 test('POST /users returns new user data', (t) => {
-  sandbox().stub(MailChimp, 'subscribeToUsers', () => Promise.resolve());
-  sandbox().stub(UnassignedReferralCodesDAO, 'get', () => Promise.resolve('ABC123'));
+  stubUserDependencies();
 
   return post('/users', { body: USER_DATA })
     .then(([response, body]) => {
@@ -64,8 +64,7 @@ test('POST /users returns new user data', (t) => {
 });
 
 test('POST /users allows creating an address', (t) => {
-  sandbox().stub(MailChimp, 'subscribeToUsers', () => Promise.resolve());
-  sandbox().stub(UnassignedReferralCodesDAO, 'get', () => Promise.resolve('ABC123'));
+  stubUserDependencies();
 
   const withAddress = Object.assign({}, USER_DATA, {
     address: ADDRESS_DATA
@@ -80,8 +79,7 @@ test('POST /users allows creating an address', (t) => {
 });
 
 test('POST /users returns a session instead if requested', (t) => {
-  sandbox().stub(MailChimp, 'subscribeToUsers', () => Promise.resolve());
-  sandbox().stub(UnassignedReferralCodesDAO, 'get', () => Promise.resolve('ABC123'));
+  stubUserDependencies();
 
   return post('/users?returnValue=session', { body: USER_DATA })
     .then(([response, body]) => {
@@ -92,8 +90,7 @@ test('POST /users returns a session instead if requested', (t) => {
 });
 
 test('POST /users allows creating a scan', (t) => {
-  sandbox().stub(MailChimp, 'subscribeToUsers', () => Promise.resolve());
-  sandbox().stub(UnassignedReferralCodesDAO, 'get', () => Promise.resolve('ABC123'));
+  stubUserDependencies();
 
   const withScan = Object.assign({}, USER_DATA, {
     scan: {
@@ -170,7 +167,7 @@ test('GET /users/:id/referral-count returns a 403 if not the current user', (t) 
 });
 
 test('GET /users/:id/referral-count determines the current referral count', (t) => {
-  sandbox().stub(ShopifyClient.prototype, 'getRedemptionCount', () => Promise.resolve(10));
+  sandbox().stub(ShopifyClient.prototype, 'getRedemptionCount').returns(Promise.resolve(10));
 
   return createUser()
     .then(({ user, session }) => {
@@ -364,8 +361,8 @@ test('POST /users/:id/complete-sms-preregistration completes a user', (t) => {
 
   let user;
 
-  sandbox().stub(ShopifyClient.prototype, 'updateCustomerByPhone', () => Promise.resolve());
-  sandbox().stub(Twilio, 'sendSMS', () => Promise.resolve());
+  sandbox().stub(ShopifyClient.prototype, 'updateCustomerByPhone').returns(Promise.resolve());
+  sandbox().stub(Twilio, 'sendSMS').returns(Promise.resolve());
 
   return UsersDAO.createSmsPreregistration({
     name: 'D Money',

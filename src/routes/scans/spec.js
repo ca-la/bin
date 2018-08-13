@@ -11,11 +11,8 @@ const {
 const { group, sandbox } = require('../../test-helpers/fresh');
 
 function beforeEach() {
-  sandbox().stub(
-    UserAttributesService,
-    'recordScan',
-    () => Promise.resolve()
-  );
+  sandbox().stub(UserAttributesService, 'recordScan')
+    .returns(Promise.resolve());
 }
 
 const test = group(beforeEach);
@@ -133,11 +130,8 @@ test('GET /scans returns a list of your own scans', (t) => {
 });
 
 test('GET /scans returns a list of all scans when admin', async (t) => {
-  sandbox().stub(
-    ScansDAO,
-    'findAll',
-    async () => [new Scan({ id: '1234' })]
-  );
+  sandbox().stub(ScansDAO, 'findAll')
+    .returns(Promise.resolve([new Scan({ id: '1234' })]));
 
   const { session } = await createUser({ role: 'ADMIN' });
 
@@ -151,11 +145,8 @@ test('GET /scans returns a list of all scans when admin', async (t) => {
 });
 
 test('GET /scans returns a list of fit partner scans when signed in as a fit partner', async (t) => {
-  sandbox().stub(
-    ScansDAO,
-    'findByFitPartner',
-    async () => [new Scan({ id: '5678' })]
-  );
+  sandbox().stub(ScansDAO, 'findByFitPartner')
+    .returns(Promise.resolve([new Scan({ id: '5678' })]));
 
   const { session } = await createUser({ role: 'FIT_PARTNER' });
 
