@@ -25,13 +25,13 @@ $ createdb cala
 $ createdb cala-test
 ```
 
-You'll need several environment variables set to correctly run the API. The
-easiest way to set these is probably to dump them from Heroku — the development
-server will read them from a `.env` file if present.
+After you create the tables you will need to migrate them. This can be done with
+the `bin/migrate-local` command outlined in the Migrations section.
 
-```bash
-$ heroku config -s --app cala-api-stg > .env
-```
+You'll need several environment variables set to correctly run the API. These
+are available as a note named `CALA API .env file (development)` in the engineering
+group in 1Password — the development server will read them from a `.env` file if
+present.
 
 ## Deployment
 
@@ -87,7 +87,7 @@ Staging and production database migrations should be performed after a pull
 request is reviewed, and before it's merged.
 
 All migrations **must** be able to work both with the currently-deployed
-application code, and with the code that will deployed in the associated pull
+application code, and with the code that will be deployed in the associated pull
 request. This avoids any downtime in between the two, particularly if there are
 issues with the application code deployment.
 
