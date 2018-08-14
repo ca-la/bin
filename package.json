@@ -3,6 +3,12 @@
   "version": "1.5.3",
   "description": "A selection of useful scripts to include in new projects.",
   "main": "index.js",
+  "files": [
+    "./release",
+    "./lint-commented-code",
+    "./validate-migration",
+    "./validate-deployment-readiness"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ca-la/bin.git"
@@ -14,13 +20,19 @@
     "cala-validate-deployment-readiness": "validate-deployment-readiness"
   },
   "scripts": {
-    "release-minor": "npm version minor && git push origin master --tags && npm publish",
-    "release-patch": "npm version patch && git push origin master --tags && npm publish"
+    "lint": "eslint -c ./.eslintrc ./validate-deployment-readiness",
+    "release-minor": "npm run lint && npm version minor && git push origin master --tags && npm publish",
+    "release-patch": "npm run lint && npm version patch && git push origin master --tags && npm publish"
   },
   "author": "CALA <devops@ca.la>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/ca-la/bin/issues"
   },
-  "homepage": "https://github.com/ca-la/bin#readme"
+  "homepage": "https://github.com/ca-la/bin#readme",
+  "devDependencies": {
+    "eslint": "^5.3.0",
+    "eslint-config-airbnb": "^17.1.0",
+    "eslint-plugin-import": "^2.14.0"
+  }
 }
