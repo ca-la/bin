@@ -29,11 +29,13 @@ dev: serve-dev
 
 # Run the test suite
 .PHONY: test
-test: preflight build test-ci
+test: preflight build
+	NODE_ENV=test env $$(cat .env | xargs) $(npm_bin)/tape "dist/**/*spec.js" | $(npm_bin)/tap-difflet --pessimistic
 
 .PHONY: test-ci
 test-ci: preflight
-	NODE_ENV=test env $$(cat .env | xargs) $(npm_bin)/tape "dist/**/*spec.js" | $(npm_bin)/tap-spec
+	mkdir -p ./reports
+	NODE_ENV=test env $$(cat .env | xargs) $(npm_bin)/tape "dist/**/*spec.js" | $(npm_bin)/tap-xunit > ./reports/tape.xml
 
 # Interactive console (i.e. to require & explore modules)
 .PHONY: console
@@ -53,6 +55,13 @@ validate-migration: build
 lint: preflight
 	$(npm_bin)/eslint src --ignore-path .gitignore
 	$(npm_bin)/tslint -p . 'src/**/*.ts' -t stylish
+	$(npm_bin)/cala-lint-commented-code
+
+.PHONY: lint-ci
+lint-ci: preflight
+	mkdir -p ./reports
+	$(npm_bin)/eslint src --ignore-path .gitignore --format junit --output-file ./reports/eslint.xml
+	$(npm_bin)/tslint -p . 'src/**/*.ts' -t junit > ./reports/tslint.xml
 	$(npm_bin)/cala-lint-commented-code
 
 .PHONY: preflight

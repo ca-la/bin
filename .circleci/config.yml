@@ -28,10 +28,16 @@ jobs:
             - node_modules
           key: v1-dependencies-{{ checksum "package.json" }}
 
-      - run: make lint
+      - run: make lint-ci
       - run: make build
       - run: bin/migrate-local && bin/rollback-local && bin/migrate-local
-      - run: make test-ci
+      - run:
+          command: make test-ci
+          when: always
+      - store_test_results:
+          path: ~/repo/reports
+      - store_artifacts:
+          path: ~/repo/reports
       - deploy:
           name: Deploy to Heroku
           command: |
