@@ -88,8 +88,9 @@ function getDeployedHash(target) {
         res.on('data', d => response = response.concat(d));
         res.on('end', () => {
           const responseString = response.join('');
+          let responseJson;
           try {
-            const responseJson = JSON.parse(responseString);
+            responseJson = JSON.parse(responseString);
           } catch (e) {
             reject(new HttpError(`Server returned invalid JSON. Response: \n${responseString}`));
           }
