@@ -9,4 +9,8 @@ if [ "$RES" != "ROLLBACK" ]; then
   exit 1
 fi
 
+echo "Rolling back PROD"
 DATABASE_URL=$(heroku config:get DATABASE_URL --app cala-api-prod)?ssl=true $(npm bin)/knex migrate:rollback --knexfile dist/knexfile.js
+
+echo "Rolling back DEMO"
+DATABASE_URL=$(heroku config:get DATABASE_URL --app cala-api-demo)?ssl=true $(npm bin)/knex migrate:rollback --knexfile dist/knexfile.js
