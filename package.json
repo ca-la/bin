@@ -4,10 +4,10 @@
   "description": "A selection of useful scripts to include in new projects.",
   "main": "index.js",
   "files": [
-    "./release",
-    "./lint-commented-code",
-    "./validate-migration",
-    "./validate-deployment-readiness"
+    "release",
+    "lint-commented-code",
+    "validate-migration",
+    "validate-deployment-readiness"
   ],
   "repository": {
     "type": "git",
