@@ -790,6 +790,9 @@ class PricingCalculator {
     });
 
     featurePlacements.forEach((featurePlacement) => {
+      // If Sampling is enabled, we already charged feature setup during the
+      // development phase.
+      if (enabledServices.SAMPLING) { return; }
       const featurePrice = this._getFeaturePlacementPrice({ featurePlacement });
 
       const process = getFeatureFriendlyProcessName(featurePlacement);
