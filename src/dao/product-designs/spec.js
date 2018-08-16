@@ -30,6 +30,7 @@ test('ProductDesignsDAO.create creates a design', (t) => {
       t.deepEqual(design.previewImageUrls, [
         'abcd', 'efgh'
       ]);
+      t.deepEqual(design.collectionIds, [], 'Collection IDs is empty');
     });
 });
 
@@ -74,4 +75,17 @@ test('ProductDesignsDAO.findById includes deleted designs when specified', async
   await ProductDesignsDAO.deleteById(id);
   const design = await ProductDesignsDAO.findById(id, null, { includeDeleted: true });
   t.equal(design.id, id);
+});
+
+test('ProductDesignsDAO.findByUserId', async (t) => {
+  const { user } = await createUser({ withSession: false });
+  const design = await ProductDesignsDAO.create({
+    title: 'Plain White Tee',
+    productType: 'TEESHIRT',
+    userId: user.id
+  });
+  const userDesigns = await ProductDesignsDAO.findByUserId(user.id);
+
+  t.deepEqual(userDesigns, [design]);
+  t.ok(Object.keys(userDesigns[0]).includes('collectionIds'));
 });

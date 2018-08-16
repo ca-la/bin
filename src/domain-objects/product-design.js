@@ -16,6 +16,7 @@ const keyNamesByColumnName = {
 
   // string[] - urls of each section preview
   preview_image_urls: 'previewImageUrls',
+  collection_id: 'collectionIds',
   override_pricing_table: 'overridePricingTable',
   computed_pricing_table: 'computedPricingTable',
   retail_price_cents: 'retailPriceCents',
@@ -33,8 +34,11 @@ class ProductDesign {
     requireProperties(row, 'id');
 
     const data = dataMapper.rowDataToUserData(row);
+    const collectionIds = !row.collection_id ? [] : [row.collection_id];
 
     Object.assign(this, data, {
+      // Wrap single collection ID
+      collectionIds,
       createdAt: new Date(row.created_at),
       deletedAt: row.deleted_at && new Date(row.deleted_at)
     });

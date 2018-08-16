@@ -8,6 +8,10 @@ const {
 } = require('../../test-helpers/http');
 const { test } = require('../../test-helpers/fresh');
 
+function simulateAPISerialization(object) {
+  return JSON.parse(JSON.stringify(object));
+}
+
 test('GET /collections/:id returns a created collection', async (t) => {
   const { session } = await createUser();
   const body = {
@@ -233,7 +237,11 @@ test('GET /collections/:id/designs', async (t) => {
 
   t.deepEqual(
     designs[0],
-    JSON.parse(JSON.stringify(design)),
+    Object.assign(
+      {},
+      simulateAPISerialization(design),
+      { collectionIds: [collection.id] }
+    ),
     'returns a list of contained designs'
   );
 });

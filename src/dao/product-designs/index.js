@@ -72,7 +72,13 @@ function findByUserId(userId, filters) {
   }, filters);
 
   return db(TABLE_NAME)
+    .select('product_designs.*', 'collection_designs.collection_id')
     .where(query)
+    .leftJoin(
+      'collection_designs',
+      'product_designs.id',
+      'collection_designs.design_id'
+    )
     .orderBy('created_at', 'desc')
     .catch(rethrow)
     .then(designs => designs.map(instantiate));
@@ -84,7 +90,13 @@ function findAll({ limit, offset, search }) {
   }
 
   return db(TABLE_NAME)
+    .select('product_designs.*', 'collection_designs.collection_id')
     .where({ deleted_at: null })
+    .leftJoin(
+      'collection_designs',
+      'product_designs.id',
+      'collection_designs.design_id'
+    )
     .orderBy('created_at', 'desc')
     .modify((query) => {
       if (search) {
@@ -108,7 +120,13 @@ function findById(id, filters, options = {}) {
   }
 
   return db(TABLE_NAME)
+    .select('product_designs.*', 'collection_designs.collection_id')
     .where(query)
+    .leftJoin(
+      'collection_designs',
+      'product_designs.id',
+      'collection_designs.design_id'
+    )
     .then(first)
     .then(maybeInstantiate)
     .catch(rethrow)
@@ -117,7 +135,7 @@ function findById(id, filters, options = {}) {
 
 function findByCollectionId(collectionId) {
   return db(TABLE_NAME)
-    .select('product_designs.*')
+    .select('product_designs.*', 'collection_designs.collection_id')
     .whereNull('product_designs.deleted_at')
     .joinRaw(`
 join collection_designs on
