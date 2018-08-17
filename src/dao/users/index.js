@@ -172,6 +172,7 @@ function update(userId, data) {
       last_accepted_designer_terms_at: data.lastAcceptedDesignerTermsAt,
       last_accepted_partner_terms_at: data.lastAcceptedPartnerTermsAt,
       name: data.name,
+      phone: data.phone,
       role: data.role
     }), '*')
     .then(first)

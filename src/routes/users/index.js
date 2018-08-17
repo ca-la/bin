@@ -183,9 +183,11 @@ function* updateUser() {
   this.assert(isAdmin || isCurrentUser, 403, 'You can only update your own user');
 
   const {
-    birthday, name, email, role
+    birthday, name, email, role, phone
   } = this.request.body;
-  const data = { birthday, name, email };
+  const data = {
+    birthday, name, email, phone
+  };
 
   if (isAdmin && role) {
     data.role = role;
