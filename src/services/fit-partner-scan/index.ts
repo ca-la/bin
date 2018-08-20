@@ -1,9 +1,7 @@
-'use strict';
-
 import ShopifyClient = require('../shopify');
 import FitPartnersDAO = require('../../dao/fit-partners');
 import FitPartnerCustomersDAO = require('../../dao/fit-partner-customers');
-import Scan from '../../domain-objects/scan';
+import Scan = require('../../domain-objects/scan');
 import FitPartnerCustomer from '../../domain-objects/fit-partner-customer';
 
 type ShopifyMetafieldDefinition = ShopifyClient.ShopifyMetafieldDefinition;
@@ -17,8 +15,11 @@ function constructMetafields(data: Data): UnsavedMetafield[] {
   const fields: UnsavedMetafield[] = [];
 
   Object.keys(data).forEach((key: string) => {
+    // Shopify limits key names to a max of 30 characters
+    const truncatedKey = key.slice(0, 30);
+
     fields.push({
-      key,
+      key: truncatedKey,
       namespace: 'cala-fit',
       value: String(data[key]),
       value_type: 'string'

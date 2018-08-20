@@ -4,13 +4,17 @@ interface Measurements {
   };
 }
 
-export default interface Scan {
-  id: string;
-  createdAt: Date;
-  deletedAt?: Date;
-  isComplete: boolean;
-  measurements?: Measurements;
-  type: 'PHOTO' | 'HUMANSOLUTIONS';
-  userId?: string;
-  fitPartnerCustomerId?: string;
+declare class Scan {
+  public id: string;
+  public createdAt: Date;
+  public deletedAt?: Date;
+  public isComplete: boolean;
+  public measurements?: Measurements;
+  public type: 'PHOTO' | 'HUMANSOLUTIONS';
+  public userId?: string;
+  public fitPartnerCustomerId?: string;
+
+  constructor(data: any);
 }
+
+export = Scan;
