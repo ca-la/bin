@@ -36,6 +36,7 @@ function* create() {
 
 function* update() {
   const collaborator = yield ProductDesignCollaboratorsDAO.findById(this.params.collaboratorId);
+  this.assert(collaborator, 404, 'Collaborator not found');
   yield canAccessDesignId.call(this, collaborator.designId);
 
   const updated = yield ProductDesignCollaboratorsDAO.update(
@@ -58,6 +59,7 @@ function* findByDesign() {
 
 function* deleteCollaborator() {
   const collaborator = yield ProductDesignCollaboratorsDAO.findById(this.params.collaboratorId);
+  this.assert(collaborator, 404, 'Collaborator not found');
   yield canAccessDesignId.call(this, collaborator.designId);
 
   yield ProductDesignCollaboratorsDAO.deleteById(this.params.collaboratorId);
