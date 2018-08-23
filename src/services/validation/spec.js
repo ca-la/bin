@@ -24,6 +24,11 @@ test('validateAndFormatPhoneNumber allows valid numbers, returns E164', async (t
     validateAndFormatPhoneNumber('415 580 9925'),
     '+14155809925'
   );
+
+  t.equal(
+    validateAndFormatPhoneNumber('14155809925'),
+    '+14155809925'
+  );
 });
 
 test('validateAndFormatPhoneNumber disallows invalid numbers', async (t) => {
@@ -39,6 +44,11 @@ test('validateAndFormatPhoneNumber disallows invalid numbers', async (t) => {
 
   t.throws(
     () => validateAndFormatPhoneNumber('415 580 9925 2'),
+    InvalidDataError
+  );
+
+  t.throws(
+    () => validateAndFormatPhoneNumber('415 some other stuff 580 and some more'),
     InvalidDataError
   );
 });

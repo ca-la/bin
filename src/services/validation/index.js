@@ -29,14 +29,24 @@ function assertRangeIfExists(val, min, max, message) {
   * @returns {String} An e164-formatted number, if validation passed
   */
 function validateAndFormatPhoneNumber(number) {
-  let adjustedNumber = number;
+  const trimmedNumber = number.replace(/[^\d+]/g, '');
+  let adjustedNumber = trimmedNumber;
 
   if (
-    number.indexOf('+') === -1 &&
-    number.replace(/[^\d]/g, '').length === 10
+    trimmedNumber.indexOf('+') === -1 &&
+    trimmedNumber.length === 10
   ) {
     // Assume domestic without +1 prefix
-    adjustedNumber = `+1 ${number}`;
+    adjustedNumber = `+1${trimmedNumber}`;
+  }
+
+
+  if (
+    trimmedNumber.indexOf('1') === 0 &&
+    trimmedNumber.length === 11
+  ) {
+    // Assume domestic 1-XXX-XXX-XXXX format
+    adjustedNumber = `+${trimmedNumber}`;
   }
 
   const util = PhoneNumberUtil.getInstance();
