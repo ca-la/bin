@@ -41,11 +41,11 @@ jobs:
       - deploy:
           name: Deploy to Heroku
           command: |
+            git config --global user.email "devops@ca.la"
+            git config --global user.name "CALA Machine User"
+
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
-              $(npm bin)/cala-validate-deployment-readiness staging dist/migrations
-              git push https://heroku:$HEROKU_API_KEY@git.heroku.com/cala-api-stg.git HEAD:refs/heads/master
+              make publish-stg
             elif [ "${CIRCLE_BRANCH}" == "production" ]; then
-              $(npm bin)/cala-validate-deployment-readiness production dist/migrations
-              git push https://heroku:$HEROKU_API_KEY@git.heroku.com/cala-api-prod.git HEAD:refs/heads/master
-              git push https://heroku:$HEROKU_API_KEY@git.heroku.com/cala-api-demo.git HEAD:refs/heads/master
+              make publish-prod
             fi

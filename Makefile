@@ -16,13 +16,14 @@ clean:
 build: clean
 	$(npm_bin)/tsc
 
-.PHONY: serve
-serve: preflight build
+.PHONY: serve-built
+serve-built: preflight
+	@if [ ! -d dist ]; then echo 'Missing built code'; exit 1; fi
 	node dist
 
 .PHONY: serve-dev
-serve-dev:
-	env $$(cat .env | xargs) make serve
+serve-dev: preflight build
+	env $$(cat .env | xargs) make serve-built
 
 .PHONY: dev
 dev: serve-dev
@@ -68,3 +69,25 @@ lint-ci: preflight
 preflight:
 	@(which npm > /dev/null) || (echo 'missing dependency: npm'; exit 1)
 	@(which node > /dev/null) || (echo 'missing dependency: node'; exit 1)
+
+.PHONY: publish-preflight
+publish-preflight:
+	@if [ ! -d dist ]; then echo 'Missing built code'; exit 1; fi
+	[[ ! -s \"$$(git rev-parse --git-dir)/shallow\" ]] || git fetch --unshallow
+	git branch -D deploy-branch || true
+	git checkout --orphan deploy-branch
+	git add -f dist
+	git commit -m '[ci skip] add built code'
+
+.PHONY: publish-stg
+publish-stg: publish-preflight
+	$(npm_bin)/cala-validate-deployment-readiness staging dist/migrations
+	git push https://heroku:$$HEROKU_API_KEY@git.heroku.com/cala-api-stg.git deploy-branch:master -f
+	git checkout master
+
+.PHONY: publish-prod
+publish-prod: publish-preflight
+	$(npm bin)/cala-validate-deployment-readiness production dist/migrations
+	git push https://heroku:$$HEROKU_API_KEY@git.heroku.com/cala-api-prod.git deploy-branch:master -f
+	git push https://heroku:$$HEROKU_API_KEY@git.heroku.com/cala-api-demo.git deploy-branch:master -f
+	git checkout master
