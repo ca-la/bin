@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 .DEFAULT_GOAL := serve-dev
 
-npm_bin = ./node_modules/.bin
+NPM_BIN = ./node_modules/.bin
 
 # Install dependencies
 .PHONY: install
@@ -14,7 +14,7 @@ clean:
 
 .PHONY: build
 build: clean
-	$(npm_bin)/tsc
+	$(NPM_BIN)/tsc
 
 .PHONY: serve-built
 serve-built: preflight
@@ -31,12 +31,12 @@ dev: serve-dev
 # Run the test suite
 .PHONY: test
 test: preflight build
-	NODE_ENV=test env $$(cat .env | xargs) $(npm_bin)/tape "dist/**/*spec.js" | $(npm_bin)/tap-difflet --pessimistic
+	NODE_ENV=test env $$(cat .env | xargs) $(NPM_BIN)/tape "dist/**/*spec.js" | $(NPM_BIN)/tap-difflet --pessimistic
 
 .PHONY: test-ci
 test-ci: preflight
 	mkdir -p ./reports
-	NODE_ENV=test env $$(cat .env | xargs) $(npm_bin)/tape "dist/**/*spec.js" | $(npm_bin)/tap-xunit > ./reports/tape.xml
+	NODE_ENV=test env $$(cat .env | xargs) $(NPM_BIN)/tape "dist/**/*spec.js" | $(NPM_BIN)/tap-xunit > ./reports/tape.xml
 
 # Interactive console (i.e. to require & explore modules)
 .PHONY: console
@@ -45,25 +45,25 @@ console: preflight
 
 .PHONY: release
 release: lint test
-	$(npm_bin)/cala-release $(type)
+	$(NPM_BIN)/cala-release $(type)
 
 .PHONY: validate-migration
 validate-migration: build
-	$(npm_bin)/cala-validate-migration
+	$(NPM_BIN)/cala-validate-migration
 
 # Static analysis
 .PHONY: lint
 lint: preflight
-	$(npm_bin)/eslint src --ignore-path .gitignore
-	$(npm_bin)/tslint -p . 'src/**/*.ts' -t stylish
-	$(npm_bin)/cala-lint-commented-code
+	$(NPM_BIN)/eslint src --ignore-path .gitignore
+	$(NPM_BIN)/tslint -p . 'src/**/*.ts' -t stylish
+	$(NPM_BIN)/cala-lint-commented-code
 
 .PHONY: lint-ci
 lint-ci: preflight
 	mkdir -p ./reports
-	$(npm_bin)/eslint src --ignore-path .gitignore --format junit --output-file ./reports/eslint.xml
-	$(npm_bin)/tslint -p . 'src/**/*.ts' -t junit > ./reports/tslint.xml
-	$(npm_bin)/cala-lint-commented-code
+	$(NPM_BIN)/eslint src --ignore-path .gitignore --format junit --output-file ./reports/eslint.xml
+	$(NPM_BIN)/tslint -p . 'src/**/*.ts' -t junit > ./reports/tslint.xml
+	$(NPM_BIN)/cala-lint-commented-code
 
 .PHONY: preflight
 preflight:
@@ -81,13 +81,13 @@ publish-preflight:
 
 .PHONY: publish-stg
 publish-stg: publish-preflight
-	$(npm_bin)/cala-validate-deployment-readiness staging dist/migrations
+	$(NPM_BIN)/cala-validate-deployment-readiness staging dist/migrations
 	git push https://heroku:$$HEROKU_API_KEY@git.heroku.com/cala-api-stg.git deploy-branch:master -f
 	git checkout master
 
 .PHONY: publish-prod
 publish-prod: publish-preflight
-	$(npm bin)/cala-validate-deployment-readiness production dist/migrations
+	$(NPM_BIN)/cala-validate-deployment-readiness production dist/migrations
 	git push https://heroku:$$HEROKU_API_KEY@git.heroku.com/cala-api-prod.git deploy-branch:master -f
 	git push https://heroku:$$HEROKU_API_KEY@git.heroku.com/cala-api-demo.git deploy-branch:master -f
 	git checkout master
