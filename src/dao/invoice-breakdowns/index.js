@@ -5,7 +5,7 @@ const uuid = require('node-uuid');
 
 const compact = require('../../services/compact');
 const db = require('../../services/db');
-const first = require('../../services/first');
+const first = require('../../services/first').default;
 const InvoiceBreakdown = require('../../domain-objects/invoice-breakdown');
 const { requireValues } = require('../../services/require-properties');
 

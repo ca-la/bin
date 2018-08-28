@@ -4,7 +4,7 @@ const rethrow = require('pg-rethrow');
 const uuid = require('node-uuid');
 
 const db = require('../../services/db');
-const first = require('../../services/first');
+const first = require('../../services/first').default;
 const Notification = require('../../domain-objects/notification');
 
 const instantiate = row => new Notification(row);

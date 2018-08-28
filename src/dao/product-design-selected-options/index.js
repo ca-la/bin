@@ -6,7 +6,7 @@ const compact = require('../../services/compact');
 
 const db = require('../../services/db');
 const filterError = require('../../services/filter-error');
-const first = require('../../services/first');
+const first = require('../../services/first').default;
 const ProductDesignSelectedOption = require('../../domain-objects/product-design-selected-option');
 
 const instantiate = data => new ProductDesignSelectedOption(data);

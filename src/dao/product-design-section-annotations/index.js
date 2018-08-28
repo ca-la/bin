@@ -4,7 +4,7 @@ const uuid = require('node-uuid');
 const rethrow = require('pg-rethrow');
 
 const db = require('../../services/db');
-const first = require('../../services/first');
+const first = require('../../services/first').default;
 const ProductDesignSectionAnnotation = require('../../domain-objects/product-design-section-annotation');
 
 const instantiate = data => new ProductDesignSectionAnnotation(data);

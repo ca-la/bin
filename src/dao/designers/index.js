@@ -4,7 +4,7 @@ const rethrow = require('pg-rethrow');
 const uuid = require('node-uuid');
 
 const db = require('../../services/db');
-const first = require('../../services/first');
+const first = require('../../services/first').default;
 const filterError = require('../../services/filter-error');
 const InvalidDataError = require('../../errors/invalid-data');
 const Designer = require('../../domain-objects/designer');

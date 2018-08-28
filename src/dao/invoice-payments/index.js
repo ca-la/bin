@@ -4,7 +4,7 @@ const rethrow = require('pg-rethrow');
 const uuid = require('node-uuid');
 
 const db = require('../../services/db');
-const first = require('../../services/first');
+const first = require('../../services/first').default;
 const InvoicePayment = require('../../domain-objects/invoice-payment');
 const { requirePropertiesFormatted } = require('../../services/require-properties');
 

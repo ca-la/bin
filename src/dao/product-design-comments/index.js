@@ -5,7 +5,7 @@ const uuid = require('node-uuid');
 
 const compact = require('../../services/compact');
 const db = require('../../services/db');
-const first = require('../../services/first');
+const first = require('../../services/first').default;
 const ProductDesignComment = require('../../domain-objects/product-design-comment');
 
 const instantiate = row => new ProductDesignComment(row);

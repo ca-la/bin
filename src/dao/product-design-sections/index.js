@@ -5,7 +5,7 @@ const rethrow = require('pg-rethrow');
 
 const compact = require('../../services/compact');
 const db = require('../../services/db');
-const first = require('../../services/first');
+const first = require('../../services/first').default;
 const InvalidDataError = require('../../errors/invalid-data');
 const ProductDesignSection = require('../../domain-objects/product-design-section');
 

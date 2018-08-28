@@ -4,7 +4,7 @@ const rethrow = require('pg-rethrow');
 const uuid = require('node-uuid');
 
 const db = require('../../services/db');
-const first = require('../../services/first');
+const first = require('../../services/first').default;
 const DesignerPhoto = require('../../domain-objects/designer-photo');
 
 const instantiate = row => new DesignerPhoto(row);

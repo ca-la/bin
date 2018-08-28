@@ -5,7 +5,7 @@ const rethrow = require('pg-rethrow');
 
 const db = require('../../services/db');
 const filterError = require('../../services/filter-error');
-const first = require('../../services/first');
+const first = require('../../services/first').default;
 const compact = require('../../services/compact');
 const InvalidDataError = require('../../errors/invalid-data');
 const Scan = require('../../domain-objects/scan');

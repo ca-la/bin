@@ -5,7 +5,7 @@ const rethrow = require('pg-rethrow');
 
 const Address = require('../../domain-objects/address');
 const db = require('../../services/db');
-const first = require('../../services/first');
+const first = require('../../services/first').default;
 const { requirePropertiesFormatted } = require('../../services/require-properties');
 
 const instantiate = data => new Address(data);

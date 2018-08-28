@@ -3,7 +3,7 @@
 const uuid = require('node-uuid');
 const rethrow = require('pg-rethrow');
 
-const first = require('../../services/first');
+const first = require('../../services/first').default;
 const db = require('../../services/db');
 const ProductDesignFeaturePlacement = require('../../domain-objects/product-design-feature-placement');
 

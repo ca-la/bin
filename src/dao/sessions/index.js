@@ -5,7 +5,7 @@ const uuid = require('node-uuid');
 
 const db = require('../../services/db');
 const filterError = require('../../services/filter-error');
-const first = require('../../services/first');
+const first = require('../../services/first').default;
 const InvalidDataError = require('../../errors/invalid-data');
 const Session = require('../../domain-objects/session');
 const UnauthorizedRoleError = require('../../errors/unauthorized-role');

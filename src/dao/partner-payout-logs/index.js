@@ -4,7 +4,7 @@ const rethrow = require('pg-rethrow');
 const uuid = require('node-uuid');
 
 const db = require('../../services/db');
-const first = require('../../services/first');
+const first = require('../../services/first').default;
 const PartnerPayoutLog = require('../../domain-objects/partner-payout-log');
 
 const instantiate = row => new PartnerPayoutLog(row);

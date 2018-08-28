@@ -3,7 +3,7 @@
 const rethrow = require('pg-rethrow');
 
 const db = require('../../services/db');
-const first = require('../../services/first');
+const first = require('../../services/first').default;
 const ProductDesignStatus = require('../../domain-objects/product-design-status');
 
 const instantiate = data => new ProductDesignStatus(data);
