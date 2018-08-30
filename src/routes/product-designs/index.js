@@ -3,7 +3,9 @@
 const intersection = require('lodash/intersection');
 const pick = require('lodash/pick');
 const Router = require('koa-router');
+const uuid = require('node-uuid');
 
+const { AWS_S3_THUMBNAIL_BUCKET_NAME } = require('../../config');
 const canAccessAnnotation = require('../../middleware/can-access-annotation');
 const canAccessSection = require('../../middleware/can-access-section');
 const canAccessUserResource = require('../../middleware/can-access-user-resource');
@@ -35,6 +37,7 @@ const {
   sendSectionUpdateNotifications,
   sendFeaturePlacementUpdateNotifications
 } = require('../../services/send-design-notifications');
+const AWSService = require('../../services/aws');
 
 const router = new Router();
 
@@ -111,6 +114,22 @@ function* getDesign() {
   const design = yield attachResources(this.state.design, this.state.designPermissions);
 
   this.body = design;
+  this.status = 200;
+}
+
+function* getDesignUploadPolicy() {
+  const remoteFileName = this.params.sectionId || uuid.v4();
+  const { url, fields } = yield AWSService.getThumbnailUploadPolicy(
+    AWS_S3_THUMBNAIL_BUCKET_NAME,
+    remoteFileName
+  );
+
+  this.body = {
+    downloadUrl: `https://${AWS_S3_THUMBNAIL_BUCKET_NAME}.s3.amazonaws.com/${remoteFileName}`,
+    formData: fields,
+    remoteFileName,
+    uploadUrl: url
+  };
   this.status = 200;
 }
 
@@ -433,6 +452,8 @@ router.get('/', requireAuth, getDesigns);
 router.del('/:designId', requireAuth, canAccessDesignInParam, deleteDesign);
 router.get('/:designId', requireAuth, canAccessDesignInParam, getDesign);
 router.patch('/:designId', requireAuth, canAccessDesignInParam, updateDesign);
+
+router.get('/:designId/upload-policy/:sectionId', requireAuth, canAccessDesignInParam, getDesignUploadPolicy);
 
 router.get('/:designId/pricing', requireAuth, canAccessDesignInParam, getDesignPricing);
 

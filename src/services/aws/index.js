@@ -8,6 +8,9 @@ const { promisify } = require('util');
 const { requireValues } = require('../require-properties');
 
 const {
+  AWS_S3_THUMBNAIL_ACCESS_KEY,
+  AWS_S3_THUMBNAIL_SECRET_KEY,
+  AWS_S3_THUMBNAIL_BUCKET_REGION,
   AWS_ACCESS_KEY,
   AWS_SECRET_KEY
 } = require('../../config');
@@ -101,6 +104,40 @@ async function getDownloadUrl(bucketName, remoteFileName) {
   });
 }
 
+/**
+ * Get POST upload policy document for Thumbnail S3 bucket
+ * URL expires after 60 seconds, and thumbnail must be smaller than 10 MB
+ *
+ * See: https://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-HTTPPOSTConstructPolicy.html
+ *
+ * @param {string} bucketName Bucket to upload thumbnail to
+ * @param {string} remoteFileName S3 object key for thumbnail
+ * @returns {object} Upload/download urls, and form fields to use in POST
+ */
+async function getThumbnailUploadPolicy(bucketName, remoteFileName) {
+  requireValues({ bucketName, remoteFileName });
+  const s3 = new AWS.S3({
+    credentials: new AWS.Credentials({
+      accessKeyId: AWS_S3_THUMBNAIL_ACCESS_KEY,
+      secretAccessKey: AWS_S3_THUMBNAIL_SECRET_KEY
+    }),
+    region: AWS_S3_THUMBNAIL_BUCKET_REGION
+  });
+  const TEN_MB = 10 * (1024 ** 2);
+
+  const createPresignedPost = promisify(s3.createPresignedPost.bind(s3));
+
+  return createPresignedPost({
+    Bucket: bucketName,
+    Expires: 60,
+    Conditions: [
+      { acl: 'public-read' },
+      { key: remoteFileName },
+      ['content-length-range', 0, TEN_MB]
+    ]
+  });
+}
+
 async function enqueueMessage(
   queueUrl,
   queueRegion,
@@ -130,6 +167,7 @@ async function enqueueMessage(
 
 module.exports = {
   getDownloadUrl,
+  getThumbnailUploadPolicy,
   uploadFile,
   deleteFile,
   getFile,

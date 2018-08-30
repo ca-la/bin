@@ -1,5 +1,7 @@
 'use strict';
 
+const uuid = require('node-uuid');
+
 const createUser = require('../../test-helpers/create-user');
 const ProductDesignsDAO = require('../../dao/product-designs');
 const EmailService = require('../../services/email');
@@ -7,6 +9,7 @@ const {
   authHeader, get, patch, put
 } = require('../../test-helpers/http');
 const { test, sandbox } = require('../../test-helpers/fresh');
+const AWSService = require('../../services/aws');
 
 test('PATCH /product-designs/:id rejects empty data', (t) => {
   let designId;
@@ -188,4 +191,36 @@ test('GET /product-designs allows searching', async (t) => {
     [body[0].id, body[1].id].sort(),
     [first.id, third.id].sort()
   );
+});
+
+test('GET /product-designs/:designId/upload-policy/:sectionId', async (t) => {
+  const { user, session } = await createUser({ role: 'ADMIN' });
+
+  const design = await ProductDesignsDAO.create({
+    userId: user.id,
+    title: 'Design'
+  });
+  const sectionId = uuid.v4();
+
+  sandbox().stub(AWSService, 'getThumbnailUploadPolicy').returns(Promise.resolve({
+    url: 'stub url',
+    fields: {
+      'x-aws-foo': 'bar'
+    }
+  }));
+
+  const [response, body] = await get(
+    `/product-designs/${design.id}/upload-policy/${sectionId}`,
+    { headers: authHeader(session.id) }
+  );
+
+  t.equal(response.status, 200);
+  t.deepEqual(body, {
+    remoteFileName: sectionId,
+    uploadUrl: 'stub url',
+    downloadUrl: `https://svgthumb-uploads-dev.s3.amazonaws.com/${sectionId}`,
+    formData: {
+      'x-aws-foo': 'bar'
+    }
+  });
 });
