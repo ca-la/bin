@@ -18,6 +18,7 @@ const TABLES = [
   'scanphotos',
   'scans',
   'sessions',
+  'templates',
   'unassigned_referral_codes',
   'users',
   'pricing_processes',
