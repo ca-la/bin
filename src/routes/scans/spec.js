@@ -1,5 +1,8 @@
 'use strict';
 
+const FitPartnerCustomersDAO = require('../../dao/fit-partner-customers');
+const FitPartnersDAO = require('../../dao/fit-partners');
+const FitPartnerScanService = require('../../services/fit-partner-scan');
 const createUser = require('../../test-helpers/create-user');
 const Scan = require('../../domain-objects/scan');
 const ScanPhotosDAO = require('../../dao/scan-photos');
@@ -358,6 +361,43 @@ test('PUT /scans/:id allows a scan to be updated', (t) => {
       t.equal(body.isComplete, true);
       t.equal(body.measurements.length, 10);
     });
+});
+
+test('PUT /scans/:id saves to Shopify if measurements were updateed', async (t) => {
+  const saveStub = sandbox().stub(FitPartnerScanService, 'saveCalculatedValues').returns(Promise.resolve());
+  const partner = await FitPartnersDAO.create({
+    shopifyAppApiKey: '123',
+    shopifyAppPassword: '123',
+    shopifyHostname: 'example.com'
+  });
+
+  const customer = await FitPartnerCustomersDAO.findOrCreate({
+    partnerId: partner.id,
+    shopifyUserId: 'shopify-user-123'
+  });
+
+  const { session } = await createUser();
+
+  const scan = await ScansDAO.create({
+    type: ScansDAO.SCAN_TYPES.photo,
+    isComplete: false,
+    measurements: null,
+    fitPartnerCustomerId: customer.id
+  });
+
+  await put(`/scans/${scan.id}`, {
+    body: {
+      measurements: {
+        calculatedValues: {
+          length: 10
+        }
+      }
+    },
+    headers: authHeader(session.id)
+  });
+
+  t.equal(saveStub.callCount, 1);
+  t.equal(saveStub.firstCall.args[0].id, scan.id);
 });
 
 test('PUT /scans/:id disallows invalid measurements', (t) => {

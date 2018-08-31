@@ -318,6 +318,9 @@ class ShopifyClient {
       customer: data
     });
 
+    Logger.log(`Updated Shopify customer ${customerId} on store ${this.storeBase} with data:`, data);
+    Logger.log('Response:', body);
+
     if (!body.customer) {
       Logger.log('Shopify response: ', body);
       throw new Error('Could not update Shopify customer');
