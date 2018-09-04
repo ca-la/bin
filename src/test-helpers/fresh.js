@@ -11,7 +11,15 @@ const TABLES = [
   'designerphotos',
   'designers',
   'invoices',
+  'pricing_care_labels',
+  'pricing_constants',
+  'pricing_inputs',
+  'pricing_margins',
   'invoice_payments',
+  'pricing_processes',
+  'pricing_product_materials',
+  'pricing_product_types',
+  'pricing_quotes',
   'product_designs',
   'productvideos',
   'pushtokens',
@@ -20,15 +28,7 @@ const TABLES = [
   'sessions',
   'templates',
   'unassigned_referral_codes',
-  'users',
-  'pricing_processes',
-  'pricing_constants',
-  'pricing_care_labels',
-  'pricing_margins',
-  'pricing_product_materials',
-  'pricing_product_types',
-  'pricing_quotes',
-  'pricing_inputs'
+  'users'
 ];
 
 let currentSandbox;

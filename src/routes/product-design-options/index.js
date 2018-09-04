@@ -102,7 +102,8 @@ function* getById() {
 }
 
 function* deleteOption() {
-  yield ProductDesignOptionsDAO.deleteById(this.params.optionId);
+  const option = yield ProductDesignOptionsDAO.deleteById(this.params.optionId);
+  this.assert(option, 404);
   this.status = 204;
 }
 

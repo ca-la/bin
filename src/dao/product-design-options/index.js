@@ -95,7 +95,7 @@ function deleteById(id) {
       deleted_at: new Date()
     }, '*')
     .then(first)
-    .then(instantiate);
+    .then(maybeInstantiate);
 }
 
 module.exports = {
