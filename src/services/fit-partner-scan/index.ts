@@ -1,3 +1,5 @@
+import { chunk } from 'lodash';
+
 import ShopifyClient = require('../shopify');
 import FitPartnersDAO = require('../../dao/fit-partners');
 import FitPartnerCustomersDAO = require('../../dao/fit-partner-customers');
@@ -29,6 +31,13 @@ function constructMetafields(data: Data): UnsavedMetafield[] {
   return fields;
 }
 
+// Shopify has an undocumented limit on the number of metafields you can save at
+// one time. We've seen numbers as high as 70+ work successfully, but other
+// amounts in the 50-80 range silently failing. This is a bug on their end that
+// they're unwilling to address; in the interim, we divide the new fields into
+// several requests.
+const METAFIELDS_PER_REQUEST = 30;
+
 async function updateMetafields(
   shopify: ShopifyClient,
   customerId: string,
@@ -50,10 +59,15 @@ async function updateMetafields(
     }
   }
 
-  await shopify.updateCustomer(
-    customerId,
-    { metafields: constructMetafields(data) }
-  );
+  const metafields = constructMetafields(data);
+  const fieldChunks = chunk(metafields, METAFIELDS_PER_REQUEST);
+
+  for (const fieldSubset of fieldChunks) {
+    await shopify.updateCustomer(
+      customerId,
+      { metafields: fieldSubset }
+    );
+  }
 }
 
 async function getShopifyClient(scan: Scan): Promise<{
