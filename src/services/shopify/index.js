@@ -102,7 +102,7 @@ class ShopifyClient {
   }
 
   async getCustomerMetafields(customerId) {
-    const path = `/customers/${customerId}/metafields.json`;
+    const path = `/customers/${customerId}/metafields.json?limit=250`;
 
     const [body] = await this.makeRequest('get', path);
 

@@ -2,13 +2,13 @@
 
 const random = require('lodash/random');
 
-const { test, skip } = require('../../test-helpers/fresh');
+const { test, sandbox, skip } = require('../../test-helpers/fresh');
 const ShopifyClient = require('./index');
 
 // Run these tests with RUN_SHOPIFY_TESTS=true to run the integration tests
 // against a real Shopify store.
-const testRunner = (process.env.RUN_SHOPIFY_TESTS === 'true') ? test : skip;
-const calaClient = new ShopifyClient(ShopifyClient.CALA_STORE_CREDENTIALS);
+const testLive = (process.env.RUN_SHOPIFY_TESTS === 'true') ? test : skip;
+const liveClient = new ShopifyClient(ShopifyClient.CALA_STORE_CREDENTIALS);
 
 function getPhone() {
   let memo = '+1415580';
@@ -20,13 +20,13 @@ function getPhone() {
 
 const phone1 = getPhone();
 
-testRunner('getRedemptionCount', (t) => {
-  return calaClient.getRedemptionCount('CHEAPO')
+testLive('getRedemptionCount', (t) => {
+  return liveClient.getRedemptionCount('CHEAPO')
     .then(count => t.equal(count, 1));
 });
 
-testRunner('createCustomer', async (t) => {
-  const customer = await calaClient.createCustomer({
+testLive('createCustomer', async (t) => {
+  const customer = await liveClient.createCustomer({
     name: 'Customer Name',
     phone: phone1
   });
@@ -36,8 +36,8 @@ testRunner('createCustomer', async (t) => {
   t.equal(customer.phone, phone1);
 });
 
-testRunner('updateCustomerByPhone', (t) => {
-  return calaClient.updateCustomerByPhone(phone1, {
+testLive('updateCustomerByPhone', (t) => {
+  return liveClient.updateCustomerByPhone(phone1, {
     last_name: 'Something',
     first_name: 'Someone',
     email: 'someone@example.com',
@@ -63,8 +63,8 @@ testRunner('updateCustomerByPhone', (t) => {
     });
 });
 
-testRunner('getCollects', (t) => {
-  return calaClient.getCollects()
+testLive('getCollects', (t) => {
+  return liveClient.getCollects()
     .then((collects) => {
       t.equal(typeof collects[0].product_id, 'number');
     });
@@ -96,4 +96,17 @@ test('parseError parses object errors', async (t) => {
   });
 
   t.equal(errorMessage, 'phone no bueno');
+});
+
+test('getCustomerMetafields includes high limit in URL', async (t) => {
+  const requestStub = sandbox().stub(ShopifyClient.prototype, 'makeRequest').returns(Promise.resolve([{}, {}]));
+
+  const client = new ShopifyClient(ShopifyClient.CALA_STORE_CREDENTIALS);
+
+  await client.getCustomerMetafields('customer123');
+  t.equal(requestStub.callCount, 1);
+  t.deepEqual(requestStub.firstCall.args, [
+    'get',
+    '/customers/customer123/metafields.json?limit=250'
+  ]);
 });
