@@ -4,8 +4,13 @@ import Scan = require('../../domain-objects/scan');
 import ShopifyClient = require('../shopify');
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import { saveCalculatedValues, saveFittingUrl } from './index';
+import FitPartner from '../../domain-objects/fit-partner';
+import FitPartnerCustomer from '../../domain-objects/fit-partner-customer';
 
-test('saveFittingUrl saves correct URL to Shopify customer data', async (t: Test) => {
+async function createPartnerAndCustomer(): Promise<{
+  partner: FitPartner,
+  customer: FitPartnerCustomer
+}> {
   const partner = await FitPartnersDAO.create({
     shopifyAppApiKey: '123',
     shopifyAppPassword: '123',
@@ -16,6 +21,12 @@ test('saveFittingUrl saves correct URL to Shopify customer data', async (t: Test
     partnerId: partner.id,
     shopifyUserId: 'shopify-user-123'
   });
+
+  return { customer, partner };
+}
+
+test('saveFittingUrl saves correct URL to Shopify customer data', async (t: Test) => {
+  const { customer } = await createPartnerAndCustomer();
 
   sandbox().stub(ShopifyClient.prototype, 'getCustomerMetafields')
     .returns(Promise.resolve([]));
@@ -42,16 +53,7 @@ test('saveFittingUrl saves correct URL to Shopify customer data', async (t: Test
 });
 
 test('saveCalculatedValues truncates key names to 30 characters', async (t: Test) => {
-  const partner = await FitPartnersDAO.create({
-    shopifyAppApiKey: '123',
-    shopifyAppPassword: '123',
-    shopifyHostname: 'example.com'
-  });
-
-  const customer = await FitPartnerCustomersDAO.findOrCreate({
-    partnerId: partner.id,
-    shopifyUserId: 'shopify-user-123'
-  });
+  const { customer } = await createPartnerAndCustomer();
 
   sandbox().stub(ShopifyClient.prototype, 'getCustomerMetafields')
     .returns(Promise.resolve([]));
@@ -94,16 +96,7 @@ test('saveCalculatedValues truncates key names to 30 characters', async (t: Test
 });
 
 test('saveCalculatedValues batches keys into groups', async (t: Test) => {
-  const partner = await FitPartnersDAO.create({
-    shopifyAppApiKey: '123',
-    shopifyAppPassword: '123',
-    shopifyHostname: 'example.com'
-  });
-
-  const customer = await FitPartnerCustomersDAO.findOrCreate({
-    partnerId: partner.id,
-    shopifyUserId: 'shopify-user-123'
-  });
+  const { customer } = await createPartnerAndCustomer();
 
   sandbox().stub(ShopifyClient.prototype, 'getCustomerMetafields')
     .returns(Promise.resolve([]));
@@ -128,3 +121,44 @@ test('saveCalculatedValues batches keys into groups', async (t: Test) => {
   t.equal(updateStub.args[2][1].metafields.length, 30);
   t.equal(updateStub.args[3][1].metafields.length, 10);
 });
+
+test(
+  'saveCalculatedValues does not run multiple requests for the same customer in parallel',
+  async (t: Test) => {
+    const { customer } = await createPartnerAndCustomer();
+
+    sandbox().stub(ShopifyClient.prototype, 'getCustomerMetafields')
+      .returns(Promise.resolve([]));
+
+    const updateStub = sandbox().stub(ShopifyClient.prototype, 'updateCustomer')
+      .returns(Promise.resolve());
+
+    const scanStub = new Scan({ id: '123' });
+    scanStub.measurements = { calculatedValues: {} };
+
+    for (let i = 1; i <= 31; i += 1) {
+      scanStub.measurements.calculatedValues![`measurement-${i}`] = 1234;
+    }
+
+    scanStub.fitPartnerCustomerId = customer.id;
+
+    await Promise.all([
+      saveCalculatedValues(scanStub),
+      saveCalculatedValues(scanStub),
+      saveCalculatedValues(scanStub)
+    ]);
+
+    t.equal(updateStub.callCount, 6);
+
+    // Since these 3 requests happened in serial, we saved the metafields
+    // group-by-group; 31, then 31, then 31. If this had happened in parallel
+    // we would see (30, 30, 30, 1, 1, 1) here, which is what we're trying to
+    // avoid.
+    t.equal(updateStub.args[0][1].metafields.length, 30);
+    t.equal(updateStub.args[1][1].metafields.length, 1);
+    t.equal(updateStub.args[2][1].metafields.length, 30);
+    t.equal(updateStub.args[3][1].metafields.length, 1);
+    t.equal(updateStub.args[4][1].metafields.length, 30);
+    t.equal(updateStub.args[5][1].metafields.length, 1);
+  }
+);

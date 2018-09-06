@@ -1,10 +1,12 @@
 import { chunk } from 'lodash';
+import { Transaction } from 'knex';
 
-import ShopifyClient = require('../shopify');
-import FitPartnersDAO = require('../../dao/fit-partners');
-import FitPartnerCustomersDAO = require('../../dao/fit-partner-customers');
-import Scan = require('../../domain-objects/scan');
 import FitPartnerCustomer from '../../domain-objects/fit-partner-customer';
+import FitPartnerCustomersDAO = require('../../dao/fit-partner-customers');
+import FitPartnersDAO = require('../../dao/fit-partners');
+import Scan = require('../../domain-objects/scan');
+import ShopifyClient = require('../shopify');
+import db = require('../../services/db');
 
 type ShopifyMetafieldDefinition = ShopifyClient.ShopifyMetafieldDefinition;
 
@@ -43,31 +45,45 @@ async function updateMetafields(
   customerId: string,
   data: Data
 ): Promise<void> {
-  const currentFields = await shopify.getCustomerMetafields(customerId);
+  return db.transaction(async (trx: Transaction) => {
+    // We acquire an update lock on the relevant fit_partner_customer to ensure
+    // that we're not tripping over each other and deleting old values at the
+    // same time we're saving new ones.
 
-  const newFields = constructMetafields(data);
+    // Using `as any` coercion to avoid
+    // https://github.com/DefinitelyTyped/DefinitelyTyped/issues/28679 — TODO
+    // remove when fixed
+    await (db.raw(
+      'select * from fit_partner_customers where shopify_user_id = ? for update',
+      [customerId]
+    ) as any).transacting(trx);
 
-  for (const newField of newFields) {
-    // If there's an existing metafield with the same key, we have to delete it
-    // before setting the new value.
-    const supersededField = currentFields.find((currentField: ShopifyMetafieldDefinition) =>
-      newField.key === currentField.key &&
-      newField.namespace === currentField.namespace);
+    const currentFields = await shopify.getCustomerMetafields(customerId);
 
-    if (supersededField) {
-      await shopify.deleteMetafield(supersededField.id);
+    const newFields = constructMetafields(data);
+
+    for (const newField of newFields) {
+      // If there's an existing metafield with the same key, we have to delete it
+      // before setting the new value.
+      const supersededField = currentFields.find((currentField: ShopifyMetafieldDefinition) =>
+        newField.key === currentField.key &&
+        newField.namespace === currentField.namespace);
+
+      if (supersededField) {
+        await shopify.deleteMetafield(supersededField.id);
+      }
     }
-  }
 
-  const metafields = constructMetafields(data);
-  const fieldChunks = chunk(metafields, METAFIELDS_PER_REQUEST);
+    const metafields = constructMetafields(data);
+    const fieldChunks = chunk(metafields, METAFIELDS_PER_REQUEST);
 
-  for (const fieldSubset of fieldChunks) {
-    await shopify.updateCustomer(
-      customerId,
-      { metafields: fieldSubset }
-    );
-  }
+    for (const fieldSubset of fieldChunks) {
+      await shopify.updateCustomer(
+        customerId,
+        { metafields: fieldSubset }
+      );
+    }
+  });
 }
 
 async function getShopifyClient(scan: Scan): Promise<{

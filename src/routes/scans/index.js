@@ -114,7 +114,9 @@ function* updateScan() {
     }
 
     if (measurements && measurements.calculatedValues) {
-      yield FitPartnerScanService.saveCalculatedValues(updated);
+      // This is a fire-and-forget; it's a heavy request and we're *NOT* waiting
+      // for it to finish before giving a 200.
+      FitPartnerScanService.saveCalculatedValues(updated);
     }
   }
 
