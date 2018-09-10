@@ -1,7 +1,6 @@
 'use strict';
 
 const Logger = require('../../services/logger');
-const InvalidDataError = require('../../errors/invalid-data');
 
 function isEmptyString(val) {
   return (
@@ -59,12 +58,12 @@ function requireProperties(obj, ...props) {
  */
 function requirePropertiesFormatted(data, messages) {
   if (!data) {
-    throw new InvalidDataError('Missing required information');
+    throw new Error('Missing required information');
   }
 
   Object.keys(messages).forEach((key) => {
     if (!exists(data[key])) {
-      throw new InvalidDataError(`Missing required information: ${messages[key]}`);
+      throw new Error(`Missing required information: ${messages[key]}`);
     }
   });
 }

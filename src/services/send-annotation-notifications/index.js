@@ -1,13 +1,13 @@
 'use strict';
 
 const findDesignUsers = require('../../services/find-design-users');
-const { requireValues } = require('../require-properties');
+const { validateValues } = require('../validate');
 const { enqueueSend } = require('../email');
 
 async function sendAnnotationNotifications({
   annotation, design, user, text
 }) {
-  requireValues({ design, user, text });
+  validateValues({ design, user, text });
 
   const recipients = (await findDesignUsers(design.id))
     .filter(collaborator => collaborator.id !== user.id)

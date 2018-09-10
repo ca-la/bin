@@ -6,7 +6,7 @@ const uuid = require('node-uuid');
 const db = require('../../services/db');
 const first = require('../../services/first').default;
 const InvoicePayment = require('../../domain-objects/invoice-payment');
-const { requirePropertiesFormatted } = require('../../services/require-properties');
+const { validatePropertiesFormatted } = require('../../services/validate');
 
 const instantiate = row => new InvoicePayment(row);
 const maybeInstantiate = data => (data && new InvoicePayment(data)) || null;
@@ -19,7 +19,7 @@ function validate(data) {
     totalCents: 'Total Payment Amount'
   };
 
-  requirePropertiesFormatted(data, requiredMessages);
+  validatePropertiesFormatted(data, requiredMessages);
 }
 
 async function findById(id) {

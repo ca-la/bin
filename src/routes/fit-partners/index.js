@@ -7,7 +7,7 @@ const FitPartnersDAO = require('../../dao/fit-partners');
 const ScansDAO = require('../../dao/scans');
 const Twilio = require('../../services/twilio');
 const { FIT_CLIENT_HOST } = require('../../config');
-const { requirePropertiesFormatted } = require('../../services/require-properties');
+const { validatePropertiesFormatted } = require('../../services/validate');
 const { saveFittingUrl } = require('../../services/fit-partner-scan');
 
 const router = new Router();
@@ -18,7 +18,7 @@ function substituteLink(message, link) {
 
 // eslint-disable-next-line no-empty-function
 function* sendFitLink() {
-  requirePropertiesFormatted(this.request.body, {
+  validatePropertiesFormatted(this.request.body, {
     partnerId: 'Partner ID',
     phoneNumber: 'Phone number',
     shopifyUserId: 'Shopify User ID'

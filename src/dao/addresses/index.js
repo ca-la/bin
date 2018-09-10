@@ -6,7 +6,7 @@ const rethrow = require('pg-rethrow');
 const Address = require('../../domain-objects/address');
 const db = require('../../services/db');
 const first = require('../../services/first').default;
-const { requirePropertiesFormatted } = require('../../services/require-properties');
+const { validatePropertiesFormatted } = require('../../services/validate');
 
 const instantiate = data => new Address(data);
 const maybeInstantiate = data => (data && new Address(data)) || null;
@@ -22,7 +22,7 @@ function validate(data) {
     country: 'Country'
   };
 
-  requirePropertiesFormatted(data, requiredMessages);
+  validatePropertiesFormatted(data, requiredMessages);
 }
 
 function create(data) {

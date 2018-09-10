@@ -393,7 +393,8 @@ function* createSectionAnnotation() {
     design: this.state.design,
     user: withUser.user,
     text
-  });
+  })
+    .catch(filterError(InvalidDataError, err => this.throw(400, err)));
 
   this.body = withUser;
   this.status = 200;

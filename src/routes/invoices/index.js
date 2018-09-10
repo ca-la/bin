@@ -13,7 +13,7 @@ const ProductDesignsDAO = require('../../dao/product-designs');
 const requireAdmin = require('../../middleware/require-admin');
 const User = require('../../domain-objects/user');
 const { canAccessDesignInQuery } = require('../../middleware/can-access-design');
-const { requirePropertiesFormatted } = require('../../services/require-properties');
+const { validatePropertiesFormatted } = require('../../services/validate');
 
 const router = new Router();
 
@@ -105,7 +105,7 @@ function* createManualInvoice() {
     breakdown
   } = this.request.body;
 
-  requirePropertiesFormatted(this.request.body, {
+  validatePropertiesFormatted(this.request.body, {
     totalCents: 'Total',
     title: 'Title',
     description: 'Description',
@@ -136,7 +136,7 @@ function* createManualInvoice() {
     totalProfitCents
   } = breakdown;
 
-  requirePropertiesFormatted(breakdown, {
+  validatePropertiesFormatted(breakdown, {
     invoiceAmountCents: 'Breakdown Total',
     invoiceMarginCents: 'Breakdown Margin',
     stripeFeeCents: 'Breakdown Stripe Fee',

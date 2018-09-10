@@ -4,9 +4,10 @@ const uuid = require('node-uuid');
 
 const createUser = require('../../test-helpers/create-user');
 const ProductDesignsDAO = require('../../dao/product-designs');
+const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
 const EmailService = require('../../services/email');
 const {
-  authHeader, get, patch, put
+  authHeader, get, patch, post, put
 } = require('../../test-helpers/http');
 const { test, sandbox } = require('../../test-helpers/fresh');
 const AWSService = require('../../services/aws');
@@ -223,4 +224,61 @@ test('GET /product-designs/:designId/upload-policy/:sectionId', async (t) => {
       'x-aws-foo': 'bar'
     }
   });
+});
+
+test('POST /product-designs/:designId/sections/:sectionId/annotations creates annotation with valid data', async (t) => {
+  const { user, session } = await createUser();
+
+  const design = await ProductDesignsDAO.create({
+    userId: user.id,
+    title: 'Design'
+  });
+  const section = await ProductDesignSectionsDAO.create({
+    templateName: 'Template Name',
+    type: 'FLAT_SKETCH',
+    designId: design.id,
+    position: 0
+  });
+
+  const [validResponse] = await post(
+    `/product-designs/${design.id}/sections/${section.id}/annotations`,
+    {
+      headers: authHeader(session.id),
+      body: {
+        x: 0,
+        y: 0,
+        text: 'Annotation Text'
+      }
+    }
+  );
+
+  t.equal(validResponse.status, 200);
+});
+
+test('POST /product-designs/:designId/sections/:sectionId/annotations returns 400 with invalid input', async (t) => {
+  const { user, session } = await createUser();
+
+  const design = await ProductDesignsDAO.create({
+    userId: user.id,
+    title: 'Design'
+  });
+  const section = await ProductDesignSectionsDAO.create({
+    templateName: 'Template Name',
+    type: 'FLAT_SKETCH',
+    designId: design.id,
+    position: 0
+  });
+
+  const [invalidResponse] = await post(
+    `/product-designs/${design.id}/sections/${section.id}/annotations`,
+    {
+      headers: authHeader(session.id),
+      body: {
+        x: 0,
+        y: 0
+      }
+    }
+  );
+
+  t.equal(invalidResponse.status, 400);
 });
