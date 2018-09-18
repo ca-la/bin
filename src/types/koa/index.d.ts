@@ -7,6 +7,10 @@ declare module 'koa' {
 
   export = Koa;
 
+  interface RequestState {
+    userId: string;
+  }
+
   namespace Koa {
     class Application extends EventEmitter {
       public use(middleware: any): this;
@@ -52,6 +56,7 @@ declare module 'koa' {
         response: Response;
         req: IncomingMessage;
         res: ServerResponse;
+        state: RequestState;
 
         assert: typeof httpAssert;
         throw(message: string, code?: number, properties?: object): never;

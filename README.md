@@ -109,6 +109,8 @@ For advanced usage, see [knexjs.org](http://knexjs.org/#Migrations).
 A good sanity-check for testing migrations locally is the `make
 validate-migration` script, which gives a summary of the effects of the
 migration and any unexpected side-effects after rolling it back.
+Note that this should be run before migrating locally. You can roll
+back the migration to get an accurate result.
 
 Migration rollbacks are an imperfect tool, and are almost never used in
 production. They make it easy to move back and forth in the local migration
