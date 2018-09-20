@@ -18,8 +18,7 @@ const USER_DATA = Object.freeze({
 const UNAUTHORIZED_ERROR_MSG = "You can't log in to this type of account on this page. Contact hi@ca.la if you're unable to locate the correct login page.";
 
 test('POST /sessions returns a 400 if user creation fails', (t) => {
-  sandbox().stub(SessionsDAO, 'create')
-    .returns(Promise.reject(new InvalidDataError('Bad email')));
+  sandbox().stub(SessionsDAO, 'create').rejects(new InvalidDataError('Bad email'));
 
   return post('/sessions', { body: { email: 'user@example.com', password: 'hunter2' } })
     .then(([response, body]) => {

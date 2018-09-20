@@ -16,8 +16,9 @@ delete from unassigned_referral_codes
   where code in (select code from unassigned_referral_codes limit 1)
   returning *;
 `)
-    .then((response) => {
-      const { rows } = response;
+    .then((responses) => {
+      const { rows } = responses[1];
+      if (!rows) { throw new Error('No response received from delete query'); }
 
       if (rows.length < 1) {
         throw new Error('No more unused referral codes found! Create more in Shopify then add them to the database!');

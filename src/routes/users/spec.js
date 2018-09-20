@@ -40,7 +40,7 @@ function stubUserDependencies() {
 test('POST /users returns a 400 if user creation fails', (t) => {
   stubUserDependencies();
 
-  sandbox().stub(UsersDAO, 'create').returns(Promise.reject(new InvalidDataError('Bad email')));
+  sandbox().stub(UsersDAO, 'create').rejects(new InvalidDataError('Bad email'));
 
   return post('/users', { body: USER_DATA })
     .then(([response, body]) => {
