@@ -14,8 +14,8 @@ Stack:
 ## Prerequisites
 
 - node.js (version 8.x)
-- npm (version 3.x)
-- postgresql
+- npm (version 5.7.x)
+- postgresql (version 9.6)
 
 The default configuration uses 2 local databases - one for running tests
 against, one for serving persistent data. To create these locally:
@@ -25,8 +25,9 @@ $ createdb cala
 $ createdb cala-test
 ```
 
-After you create the tables you will need to migrate them. This can be done with
-the `bin/migrate-local` command outlined in the Migrations section.
+After you create the tables you will need to migrate them. When running the
+migration for the first time, `make build` should be run. To run the migration,
+execute the `bin/migrate-local` command outlined in the Migrations section.
 
 You'll need several environment variables set to correctly run the API. These
 are available as a note named `CALA API .env file (development)` in the engineering
@@ -57,6 +58,8 @@ Many common actions have corresponding Make targets; dig into the Makefile for
 more examples.
 
 ### Local development server
+
+Ensure that you are running postgres before serving the application.
 
 ```bash
 $ make serve-dev
