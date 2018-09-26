@@ -19,7 +19,11 @@ declare module 'koa' {
 
     namespace Application {
       interface Request {
-        body?: object; // from koa-router
+        body: object; // from middleware/json-body
+      }
+
+      interface Query {
+        [key: string]: string | undefined;
       }
 
       interface ContextDelegatedResponse {
@@ -54,6 +58,7 @@ declare module 'koa' {
         params: any; // from koa-router
         request: Request;
         response: Response;
+        query: Query;
         req: IncomingMessage;
         res: ServerResponse;
         state: RequestState;
