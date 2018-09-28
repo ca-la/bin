@@ -46,14 +46,26 @@ function* del(this: Koa.Application.Context): AsyncIterableIterator<ProductDesig
 function* getById(this: Koa.Application.Context): AsyncIterableIterator<ProductDesignCanvas> {
   const canvas = yield ProductDesignCanvasesDAO.findById(this.params.canvasId);
 
+  this.assert(canvas, 404);
+
   this.status = 200;
   this.body = canvas;
 }
 
-function* getAllByDesignId(
+interface GetListQuery {
+  designId?: string;
+}
+
+function* getList(
   this: Koa.Application.Context
 ): AsyncIterableIterator<ProductDesignCanvas[]> {
-  const canvas = yield ProductDesignCanvasesDAO.findAllByDesignId(this.params.designId);
+  const query: GetListQuery = this.query;
+
+  if (!query.designId) {
+    return this.throw(400, 'Missing designId');
+  }
+
+  const canvas = yield ProductDesignCanvasesDAO.findAllByDesignId(query.designId);
 
   this.status = 200;
   this.body = canvas;
@@ -63,7 +75,7 @@ router.post('/', requireAuth, create);
 router.put('/:canvasId', requireAuth, update);
 router.del('/:canvasId', requireAuth, del);
 
+router.get('/', requireAuth, getList);
 router.get('/:canvasId', requireAuth, getById);
-router.get('/design/:designId', requireAuth, getAllByDesignId);
 
 export = router.routes();

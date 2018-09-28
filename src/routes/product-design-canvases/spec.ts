@@ -30,7 +30,7 @@ test('GET /:canvasId returns Canvas', async (t: tape.Test) => {
   t.deepEqual(body, data);
 });
 
-test('GET /design/:designId returns a list of Canvases', async (t: tape.Test) => {
+test('GET /?designId=:designId returns a list of Canvases', async (t: tape.Test) => {
   const { session } = await createUser();
 
   const id = uuid.v4();
@@ -48,7 +48,7 @@ test('GET /design/:designId returns a list of Canvases', async (t: tape.Test) =>
 
   sandbox().stub(ProductDesignCanvasesDAO, 'findAllByDesignId').returns(Promise.resolve(data));
 
-  const [response, body] = await get(`/product-design-canvases/design/${id}`, {
+  const [response, body] = await get(`/product-design-canvases?designId=${id}`, {
     headers: authHeader(session.id)
   });
   t.equal(response.status, 200);
