@@ -5,4 +5,6 @@ export default interface FitPartner {
   shopifyAppApiKey: string;
   shopifyHostname: string;
   shopifyAppPassword: string;
+  adminUserId?: string;
+  smsCopy?: string;
 }
