@@ -1,7 +1,7 @@
 import * as tape from 'tape';
 import { test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
-import { authHeader, get } from '../../test-helpers/http';
+import { authHeader, get, options } from '../../test-helpers/http';
 
 test('validatePagination middleware', async (t: tape.Test) => {
   const { session } = await createUser();
@@ -19,4 +19,9 @@ test('validatePagination middleware', async (t: tape.Test) => {
     headers: authHeader(session.id)
   });
   t.equal(negativeRange.status, 400, 'disallows negative limit value');
+
+  const [negativeOptions] = await options('/product-design-options?limit=-10&offset=-20', {
+    headers: authHeader(session.id)
+  });
+  t.equal(negativeOptions.status, 204, 'allows negative values in OPTIONS request');
 });

@@ -20,6 +20,7 @@ declare module 'koa' {
     namespace Application {
       interface Request {
         body: object; // from middleware/json-body
+        method: string;
       }
 
       interface Query {

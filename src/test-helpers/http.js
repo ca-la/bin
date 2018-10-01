@@ -22,6 +22,21 @@ function authHeader(sessionId) {
   };
 }
 
+function options(url, opts = {}) {
+  const fullUrl = baseUrl + url;
+
+  const headers = Object.assign({
+    Accept: 'application/json'
+  }, opts.headers);
+
+  return fetch(
+    fullUrl,
+    {
+      ...opts, method: 'options', headers
+    }
+  ).then(parseResponse);
+}
+
 function get(url, opts = {}) {
   const fullUrl = baseUrl + url;
 
@@ -29,12 +44,12 @@ function get(url, opts = {}) {
     Accept: 'application/json'
   }, opts.headers);
 
-  const options = Object.assign({}, opts, {
-    method: 'get',
-    headers
-  });
-
-  return fetch(fullUrl, options).then(parseResponse);
+  return fetch(
+    fullUrl,
+    {
+      ...opts, method: 'get', headers
+    }
+  ).then(parseResponse);
 }
 
 function post(url, opts = {}) {
@@ -51,13 +66,12 @@ function post(url, opts = {}) {
     body = JSON.stringify(opts.body);
   }
 
-  const options = Object.assign({}, opts, {
-    method: 'post',
-    headers,
-    body
-  });
-
-  return fetch(fullUrl, options).then(parseResponse);
+  return fetch(
+    fullUrl,
+    {
+      ...opts, method: 'post', body, headers
+    }
+  ).then(parseResponse);
 }
 
 function patch(url, opts = {}) {
@@ -74,13 +88,12 @@ function patch(url, opts = {}) {
     body = JSON.stringify(opts.body);
   }
 
-  const options = Object.assign({}, opts, {
-    method: 'patch',
-    headers,
-    body
-  });
-
-  return fetch(fullUrl, options).then(parseResponse);
+  return fetch(
+    fullUrl,
+    {
+      ...opts, method: 'patch', body, headers
+    }
+  ).then(parseResponse);
 }
 
 function put(url, opts = {}) {
@@ -97,13 +110,12 @@ function put(url, opts = {}) {
     body = JSON.stringify(opts.body);
   }
 
-  const options = Object.assign({}, opts, {
-    method: 'put',
-    headers,
-    body
-  });
-
-  return fetch(fullUrl, options).then(parseResponse);
+  return fetch(
+    fullUrl,
+    {
+      ...opts, method: 'put', body, headers
+    }
+  ).then(parseResponse);
 }
 
 function del(url, opts = {}) {
@@ -120,17 +132,17 @@ function del(url, opts = {}) {
     body = JSON.stringify(opts.body);
   }
 
-  const options = Object.assign({}, opts, {
-    method: 'delete',
-    headers,
-    body
-  });
-
-  return fetch(fullUrl, options).then(parseResponse);
+  return fetch(
+    fullUrl,
+    {
+      ...opts, method: 'delete', body, headers
+    }
+  ).then(parseResponse);
 }
 
 module.exports = {
   authHeader,
+  options,
   get,
   post,
   patch,
