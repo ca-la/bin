@@ -16,6 +16,7 @@ const headers = require('./middleware/headers');
 const jsonBody = require('./middleware/json-body');
 const loggerMiddleware = require('./middleware/logger');
 const options = require('./middleware/options');
+const { default: validatePagination } = require('./middleware/validate-pagination');
 
 import koa = require('koa');
 const app = koa();
@@ -26,6 +27,7 @@ app.use(jsonBody);
 app.use(headers);
 app.use(options);
 app.use(attachSession);
+app.use(validatePagination);
 
 const router = new Router({
   prefix: '/:version(v1)?'
