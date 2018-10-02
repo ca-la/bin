@@ -1,6 +1,6 @@
 import * as taskEventsDAO from '../../dao/task-events';
 import * as tasksDAO from '../../dao/tasks';
-import * as collectionStageTasksDAO from '../../dao/collection-stage-tasks';
+import * as productDesignStageTasksDAO from '../../dao/product-design-stage-tasks';
 import * as tape from 'tape';
 import * as uuid from 'node-uuid';
 import createUser = require('../../test-helpers/create-user');
@@ -31,7 +31,7 @@ test('GET /tasks/:taskId returns Task', async (t: tape.Test) => {
   t.equal(body.taskId, taskId);
 });
 
-test('GET /tasks/collection/:collectionId returns tasks on collection', async (t: tape.Test) => {
+test('GET /tasks?collectionId=:collectionId returns tasks on collection', async (t: tape.Test) => {
   const { session, user } = await createUser();
 
   const collectionId = uuid.v4();
@@ -49,14 +49,14 @@ test('GET /tasks/collection/:collectionId returns tasks on collection', async (t
     }
   ]));
 
-  const [response, body] = await get(`/tasks/collection/${collectionId}`, {
+  const [response, body] = await get(`/tasks?collectionId=${collectionId}`, {
     headers: authHeader(session.id)
   });
   t.equal(response.status, 200);
   t.equal(body[0].taskId, taskId);
 });
 
-test('GET /tasks/stage/:stageId returns tasks on collection stage', async (t: tape.Test) => {
+test('GET /tasks?stageId=:stageId returns tasks on design stage', async (t: tape.Test) => {
   const { session, user } = await createUser();
 
   const stageId = uuid.v4();
@@ -74,7 +74,7 @@ test('GET /tasks/stage/:stageId returns tasks on collection stage', async (t: ta
     }
   ]));
 
-  const [response, body] = await get(`/tasks/stage/${stageId}`, {
+  const [response, body] = await get(`/tasks?stageId=${stageId}`, {
     headers: authHeader(session.id)
   });
   t.equal(response.status, 200);
@@ -153,7 +153,7 @@ test('POST /tasks/stage/:stageId creates Task and TaskEvent successfully', async
     }
   ));
 
-  sandbox().stub(collectionStageTasksDAO, 'create').returns(Promise.resolve(
+  sandbox().stub(productDesignStageTasksDAO, 'create').returns(Promise.resolve(
     {
       id: taskId
     }

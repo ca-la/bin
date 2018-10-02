@@ -32,18 +32,52 @@ export async function create(data: Unsaved<TaskEvent>): Promise<TaskEvent> {
   );
 }
 
-export async function findById(taskId: string): Promise<TaskEvent> {
-  const taskEvent: TaskEventRow[] = await db(TABLE_NAME)
+export async function findById(taskId: string): Promise<TaskEvent | null> {
+  const taskEvents: TaskEventRow[] = await db(TABLE_NAME)
     .select('*')
     .where({ task_id: taskId })
     .orderBy('created_at', 'desc')
     .limit(1);
 
+  const taskEvent = taskEvents[0];
+  if (!taskEvent) { return null; }
+
   return validate<TaskEventRow, TaskEvent>(
     TABLE_NAME,
     isTaskEventRow,
     dataAdapter,
-    taskEvent[0]
+    taskEvent
+  );
+}
+
+export async function findByDesignId(designId: string): Promise<TaskEvent[]> {
+  const taskEvents: TaskEventRow[] = await db(TABLE_NAME)
+    .select('task_events.*')
+    .from(TABLE_NAME)
+    .leftJoin(
+      'product_design_stage_tasks',
+      'product_design_stage_tasks.task_id',
+      'task_events.task_id'
+    )
+    .leftJoin(
+      'product_design_stages',
+      'product_design_stages.id',
+      'product_design_stage_tasks.design_stage_id'
+    )
+    .where({ 'product_design_stages.design_id': designId })
+    .whereNotExists(
+      db(TABLE_NAME)
+        .select('*')
+        .from('task_events as t')
+        .whereRaw('task_events.task_id = t.task_id')
+        .whereRaw('t.created_at > task_events.created_at')
+    );
+
+  return validateEvery<TaskEventRow, TaskEvent>(
+    TABLE_NAME,
+    isTaskEventRow,
+    dataAdapter,
+    taskEvents
   );
 }
 
@@ -51,13 +85,22 @@ export async function findByCollectionId(collectionId: string): Promise<TaskEven
   const taskEvents: TaskEventRow[] = await db(TABLE_NAME)
     .select('task_events.*')
     .from(TABLE_NAME)
-    .leftJoin('collection_stage_tasks', 'collection_stage_tasks.task_id', 'task_events.task_id')
     .leftJoin(
-      'collection_stages',
-      'collection_stages.id',
-      'collection_stage_tasks.collection_stage_id'
+      'product_design_stage_tasks',
+      'product_design_stage_tasks.task_id',
+      'task_events.task_id'
     )
-    .where({ 'collection_stages.collection_id': collectionId })
+    .leftJoin(
+      'product_design_stages',
+      'product_design_stages.id',
+      'product_design_stage_tasks.design_stage_id'
+    )
+    .leftJoin(
+      'collection_designs',
+      'collection_designs.design_id',
+      'product_design_stages.design_id'
+    )
+    .where({ 'collection_designs.collection_id': collectionId })
     .whereNotExists(
       db(TABLE_NAME)
         .select('*')
@@ -78,8 +121,12 @@ export async function findByStageId(stageId: string): Promise<TaskEvent[]> {
   const taskEvents: TaskEventRow[] = await db(TABLE_NAME)
     .select('task_events.*')
     .from(TABLE_NAME)
-    .leftJoin('collection_stage_tasks', 'collection_stage_tasks.task_id', 'task_events.task_id')
-    .where({ 'collection_stage_tasks.collection_stage_id': stageId })
+    .leftJoin(
+      'product_design_stage_tasks',
+      'product_design_stage_tasks.task_id',
+      'task_events.task_id'
+    )
+    .where({ 'product_design_stage_tasks.design_stage_id': stageId })
     .whereNotExists(
       db(TABLE_NAME)
         .select('*')

@@ -3,7 +3,7 @@ import * as Koa from 'koa';
 import * as uuid from 'node-uuid';
 
 import * as TaskEventsDAO from '../../dao/task-events';
-import * as CollectionStageTasksDAO from '../../dao/collection-stage-tasks';
+import * as ProductDesignStageTasksDAO from '../../dao/product-design-stage-tasks';
 import * as TasksDAO from '../../dao/tasks';
 import TaskEvent, {
   isTaskEventRequest,
@@ -11,7 +11,7 @@ import TaskEvent, {
   TaskStatus
 } from '../../domain-objects/task-event';
 import Task from '../../domain-objects/task';
-import CollectionStageTask from '../../domain-objects/collection-stage-task';
+import ProductDesignStageTask from '../../domain-objects/product-design-stage-task';
 import requireAuth = require('../../middleware/require-auth');
 
 const router = new Router();
@@ -69,10 +69,10 @@ function* createTaskWithEventOnStage(
       .then((task: Task): Promise<TaskEvent> => {
         return TaskEventsDAO
           .create(taskEventFromRequest(body, task.id, this.state.userId));
-      }).then((newTaskEvent: TaskEvent): Promise<CollectionStageTask> => {
+      }).then((newTaskEvent: TaskEvent): Promise<ProductDesignStageTask> => {
         taskEv = newTaskEvent;
-        return CollectionStageTasksDAO.create({
-          collectionStageId: stageId,
+        return ProductDesignStageTasksDAO.create({
+          designStageId: stageId,
           taskId: newTaskEvent.taskId
         });
       }).then((): Promise<TaskEvent> => {
@@ -93,17 +93,23 @@ function* getTaskEvent(this: Koa.Application.Context): AsyncIterableIterator<Tas
   this.body = tasks;
 }
 
-function* getTasksForCollection(this: Koa.Application.Context): AsyncIterableIterator<TaskEvent> {
-  const tasks = yield TaskEventsDAO.findByCollectionId(this.params.collectionId);
-
-  this.status = 200;
-  this.body = tasks;
+interface GetListQuery {
+  collectionId?: string;
+  stageId?: string;
 }
 
-function* getTasksForCollectionStage(
-  this: Koa.Application.Context
-): AsyncIterableIterator<TaskEvent> {
-  const tasks = yield TaskEventsDAO.findByStageId(this.params.stageId);
+function* getList(this: Koa.Application.Context): AsyncIterableIterator<TaskEvent> {
+  const query: GetListQuery = this.query;
+  if (!query.collectionId && !query.stageId) {
+    return this.throw('Missing collectionId or stageId');
+  }
+
+  let tasks;
+  if (query.collectionId) {
+    tasks = yield TaskEventsDAO.findByCollectionId(query.collectionId);
+  } else if (query.stageId) {
+    tasks = yield TaskEventsDAO.findByStageId(query.stageId);
+  }
 
   this.status = 200;
   this.body = tasks;
@@ -113,8 +119,7 @@ router.post('/', requireAuth, createTaskWithEvent);
 router.post('/:taskId', requireAuth, createTaskEvent);
 router.post('/stage/:stageId', requireAuth, createTaskWithEventOnStage);
 
+router.get('/', requireAuth, getList);
 router.get('/:taskId', requireAuth, getTaskEvent);
-router.get('/collection/:collectionId', requireAuth, getTasksForCollection);
-router.get('/stage/:stageId', requireAuth, getTasksForCollectionStage);
 
 export = router.routes();

@@ -29,16 +29,20 @@ export async function create(): Promise<Task> {
   );
 }
 
-export async function findById(id: string): Promise<Task> {
-  const task: TaskRow[] = await db(TABLE_NAME)
+export async function findById(id: string): Promise<Task | null> {
+  const tasks: TaskRow[] = await db(TABLE_NAME)
     .select('*')
     .where({ id })
     .limit(1);
+
+  const task = tasks[0];
+
+  if (!task) { return null; }
 
   return validate<TaskRow, Task>(
     TABLE_NAME,
     isTaskRow,
     dataAdapter,
-    task[0]
+    task
   );
 }
