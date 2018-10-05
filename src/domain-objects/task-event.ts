@@ -26,6 +26,10 @@ export default interface TaskEvent extends TaskEventRequest {
   id: string;
 }
 
+export interface TaskResponse extends TaskEvent {
+  designStageId: string | null;
+}
+
 export enum TaskStatus {
   NOT_STARTED = 'NOT_STARTED',
   IN_PROGRESS = 'IN_PROGRESS',
@@ -43,7 +47,19 @@ export interface TaskEventRow {
   due_date: Date | null;
 }
 
+export interface TaskResponseRow {
+  id: string;
+  task_id: string;
+  created_at: Date;
+  created_by: string;
+  title: string;
+  status: TaskStatus;
+  due_date: Date | null;
+  design_stage_id: string | null;
+}
+
 export const dataAdapter = new DataAdapter<TaskEventRow, TaskEvent>();
+export const responseDataAdapter = new DataAdapter<TaskResponseRow, TaskResponse>();
 
 export function isTaskEventRequest(candidate: object): candidate is TaskEventRequest {
   return hasProperties(
@@ -64,5 +80,19 @@ export function isTaskEventRow(row: object): row is TaskEventRow {
     'title',
     'status',
     'due_date'
+  );
+}
+
+export function isTaskResponseRow(row: object): row is TaskResponseRow {
+  return hasProperties(
+    row,
+    'id',
+    'task_id',
+    'created_at',
+    'created_by',
+    'title',
+    'status',
+    'due_date',
+    'design_stage_id'
   );
 }

@@ -4,7 +4,11 @@ import * as db from '../../services/db';
 import TaskEvent, {
   dataAdapter,
   isTaskEventRow,
+  isTaskResponseRow,
+  responseDataAdapter,
   TaskEventRow,
+  TaskResponse,
+  TaskResponseRow,
   TaskStatus
 } from '../../domain-objects/task-event';
 import first from '../../services/first';
@@ -32,27 +36,33 @@ export async function create(data: Unsaved<TaskEvent>): Promise<TaskEvent> {
   );
 }
 
-export async function findById(taskId: string): Promise<TaskEvent | null> {
-  const taskEvents: TaskEventRow[] = await db(TABLE_NAME)
-    .select('*')
-    .where({ task_id: taskId })
+export async function findById(taskId: string): Promise<TaskResponse | null> {
+  const taskEvents: TaskResponseRow[] = await db(TABLE_NAME)
+    .select('task_events.*', 'product_design_stage_tasks.design_stage_id')
+    .from(TABLE_NAME)
+    .leftJoin(
+      'product_design_stage_tasks',
+      'task_events.task_id',
+      'product_design_stage_tasks.task_id'
+    )
+    .where({ 'task_events.task_id': taskId })
     .orderBy('created_at', 'desc')
     .limit(1);
 
-  const taskEvent = taskEvents[0];
-  if (!taskEvent) { return null; }
+  const taskResponse = taskEvents[0];
+  if (!taskResponse) { return null; }
 
-  return validate<TaskEventRow, TaskEvent>(
+  return validate<TaskResponseRow, TaskResponse>(
     TABLE_NAME,
-    isTaskEventRow,
-    dataAdapter,
-    taskEvent
+    isTaskResponseRow,
+    responseDataAdapter,
+    taskResponse
   );
 }
 
-export async function findByDesignId(designId: string): Promise<TaskEvent[]> {
-  const taskEvents: TaskEventRow[] = await db(TABLE_NAME)
-    .select('task_events.*')
+export async function findByDesignId(designId: string): Promise<TaskResponse[]> {
+  const taskResponses: TaskResponseRow[] = await db(TABLE_NAME)
+    .select('task_events.*', 'product_design_stage_tasks.design_stage_id')
     .from(TABLE_NAME)
     .leftJoin(
       'product_design_stage_tasks',
@@ -73,17 +83,17 @@ export async function findByDesignId(designId: string): Promise<TaskEvent[]> {
         .whereRaw('t.created_at > task_events.created_at')
     );
 
-  return validateEvery<TaskEventRow, TaskEvent>(
+  return validateEvery<TaskResponseRow, TaskResponse>(
     TABLE_NAME,
-    isTaskEventRow,
-    dataAdapter,
-    taskEvents
+    isTaskResponseRow,
+    responseDataAdapter,
+    taskResponses
   );
 }
 
-export async function findByCollectionId(collectionId: string): Promise<TaskEvent[]> {
-  const taskEvents: TaskEventRow[] = await db(TABLE_NAME)
-    .select('task_events.*')
+export async function findByCollectionId(collectionId: string): Promise<TaskResponse[]> {
+  const taskResponses: TaskResponseRow[] = await db(TABLE_NAME)
+    .select('task_events.*', 'product_design_stage_tasks.design_stage_id')
     .from(TABLE_NAME)
     .leftJoin(
       'product_design_stage_tasks',
@@ -109,17 +119,17 @@ export async function findByCollectionId(collectionId: string): Promise<TaskEven
         .whereRaw('t.created_at > task_events.created_at')
     );
 
-  return validateEvery<TaskEventRow, TaskEvent>(
+  return validateEvery<TaskResponseRow, TaskResponse>(
     TABLE_NAME,
-    isTaskEventRow,
-    dataAdapter,
-    taskEvents
+    isTaskResponseRow,
+    responseDataAdapter,
+    taskResponses
   );
 }
 
-export async function findByStageId(stageId: string): Promise<TaskEvent[]> {
-  const taskEvents: TaskEventRow[] = await db(TABLE_NAME)
-    .select('task_events.*')
+export async function findByStageId(stageId: string): Promise<TaskResponse[]> {
+  const taskResponses: TaskResponseRow[] = await db(TABLE_NAME)
+    .select('task_events.*', 'product_design_stage_tasks.design_stage_id')
     .from(TABLE_NAME)
     .leftJoin(
       'product_design_stage_tasks',
@@ -135,10 +145,10 @@ export async function findByStageId(stageId: string): Promise<TaskEvent[]> {
         .whereRaw('t.created_at > task_events.created_at')
     );
 
-  return validateEvery<TaskEventRow, TaskEvent>(
+  return validateEvery<TaskResponseRow, TaskResponse>(
     TABLE_NAME,
-    isTaskEventRow,
-    dataAdapter,
-    taskEvents
+    isTaskResponseRow,
+    responseDataAdapter,
+    taskResponses
   );
 }

@@ -28,7 +28,11 @@ test('Task Events DAO supports creation/retrieval', async (t: tape.Test) => {
 
   const result = await findById(inserted.taskId);
   if (!result) { throw Error('No Result'); }
-  t.deepEqual(result, inserted, 'Returned inserted task');
+  const insertedWithStage = {
+    ...inserted,
+    designStageId: result.designStageId
+  };
+  t.deepEqual(result, insertedWithStage, 'Returned inserted task');
 });
 
 test('Task Events DAO supports retrieval by designId', async (t: tape.Test) => {
@@ -47,7 +51,11 @@ test('Task Events DAO supports retrieval by designId', async (t: tape.Test) => {
   await createDesignStageTask({ designStageId: stage.id, taskId: task.id });
 
   const result = await findByDesignId(design.id);
-  t.deepEqual(result[0], inserted, 'Returned inserted task');
+  const insertedWithStage = {
+    ...inserted,
+    designStageId: result[0].designStageId
+  };
+  t.deepEqual(result[0], insertedWithStage, 'Returned inserted task');
 });
 
 test('Task Events DAO supports retrieval by collectionId', async (t: tape.Test) => {
@@ -69,7 +77,11 @@ test('Task Events DAO supports retrieval by collectionId', async (t: tape.Test) 
   await addDesign(collection.id, design.id);
 
   const result = await findByCollectionId(collection.id);
-  t.deepEqual(result[0], inserted, 'Returned inserted task');
+  const insertedWithStage = {
+    ...inserted,
+    designStageId: result[0].designStageId
+  };
+  t.deepEqual(result[0], insertedWithStage, 'Returned inserted task');
 });
 
 test('Task Events DAO supports retrieval by stageId', async (t: tape.Test) => {
@@ -88,5 +100,9 @@ test('Task Events DAO supports retrieval by stageId', async (t: tape.Test) => {
   await createDesignStageTask({ designStageId: stage.id, taskId: task.id });
 
   const result = await findByStageId(stage.id);
-  t.deepEqual(result[0], inserted, 'Returned inserted task');
+  const insertedWithStage = {
+    ...inserted,
+    designStageId: result[0].designStageId
+  };
+  t.deepEqual(result[0], insertedWithStage, 'Returned inserted task');
 });

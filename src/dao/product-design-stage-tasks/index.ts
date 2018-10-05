@@ -50,6 +50,24 @@ export async function findById(id: string): Promise<ProductDesignStageTask | nul
   );
 }
 
+export async function findByTaskId(taskId: string): Promise<ProductDesignStageTask | null> {
+  const stageTasks: ProductDesignStageTaskRow[] = await db(TABLE_NAME)
+    .select('*')
+    .where({ task_id: taskId })
+    .limit(1);
+
+  const stageTask = stageTasks[0];
+
+  if (!stageTask) { return null; }
+
+  return validate<ProductDesignStageTaskRow, ProductDesignStageTask>(
+    TABLE_NAME,
+    isDesignStageTaskRow,
+    dataAdapter,
+    stageTask
+  );
+}
+
 export async function findAllByDesignId(
   designId: string
 ): Promise<ProductDesignStageTask[]> {

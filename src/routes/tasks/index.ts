@@ -8,6 +8,7 @@ import * as TasksDAO from '../../dao/tasks';
 import TaskEvent, {
   isTaskEventRequest,
   TaskEventRequest,
+  TaskResponse,
   TaskStatus
 } from '../../domain-objects/task-event';
 import Task from '../../domain-objects/task';
@@ -30,7 +31,7 @@ const taskEventFromRequest = (
   });
 };
 
-function* createTaskWithEvent(this: Koa.Application.Context): AsyncIterableIterator<TaskEvent> {
+function* createTaskWithEvent(this: Koa.Application.Context): AsyncIterableIterator<TaskResponse> {
   if (this.request.body && isTaskEventRequest(this.request.body)) {
     const body = this.request.body;
     const taskEvent: TaskEvent = yield TasksDAO.create().then((task: Task): Promise<TaskEvent> => {
@@ -38,20 +39,28 @@ function* createTaskWithEvent(this: Koa.Application.Context): AsyncIterableItera
         .create(taskEventFromRequest(body, task.id, this.state.userId));
     });
 
-    this.body = taskEvent;
+    const taskResponse: TaskResponse = { ...taskEvent, designStageId: null };
+
+    this.body = taskResponse;
     this.status = 201;
   } else {
     this.throw(400, 'Request does not match TaskEvent model');
   }
 }
 
-function* createTaskEvent(this: Koa.Application.Context): AsyncIterableIterator<TaskEvent> {
+function* createTaskEvent(this: Koa.Application.Context): AsyncIterableIterator<TaskResponse> {
   if (this.request.body && isTaskEventRequest(this.request.body)) {
     const body = this.request.body;
     const taskEvent: TaskEvent = yield TaskEventsDAO
       .create(taskEventFromRequest(body, this.params.taskId, this.state.userId));
 
-    this.body = taskEvent;
+    const stageTask: ProductDesignStageTask = yield ProductDesignStageTasksDAO
+      .findByTaskId(taskEvent.taskId);
+
+    const designStageId = stageTask ? stageTask.designStageId : null;
+
+    const taskResponse: TaskResponse = { ...taskEvent, designStageId };
+    this.body = taskResponse;
     this.status = 201;
   } else {
     this.throw(400, 'Request does not match TaskEvent model');
@@ -60,12 +69,12 @@ function* createTaskEvent(this: Koa.Application.Context): AsyncIterableIterator<
 
 function* createTaskWithEventOnStage(
   this: Koa.Application.Context
-): AsyncIterableIterator<TaskEvent> {
+): AsyncIterableIterator<TaskResponse> {
   if (this.request.body && isTaskEventRequest(this.request.body)) {
     const body = this.request.body;
     const stageId = this.params.stageId;
     let taskEv: TaskEvent;
-    const taskEvent: TaskEvent = yield TasksDAO.create()
+    const taskResponse: TaskResponse = yield TasksDAO.create()
       .then((task: Task): Promise<TaskEvent> => {
         return TaskEventsDAO
           .create(taskEventFromRequest(body, task.id, this.state.userId));
@@ -75,11 +84,11 @@ function* createTaskWithEventOnStage(
           designStageId: stageId,
           taskId: newTaskEvent.taskId
         });
-      }).then((): Promise<TaskEvent> => {
-        return Promise.resolve(taskEv);
+      }).then((stageTask: ProductDesignStageTask): Promise<TaskResponse> => {
+        return Promise.resolve({ ...taskEv, designStageId: stageTask.designStageId });
       });
 
-    this.body = taskEvent;
+    this.body = taskResponse;
     this.status = 201;
   } else {
     this.throw(400, 'Request does not match TaskEvent model');
