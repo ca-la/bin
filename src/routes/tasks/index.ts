@@ -125,7 +125,7 @@ function* getList(this: Koa.Application.Context): AsyncIterableIterator<TaskEven
 }
 
 router.post('/', requireAuth, createTaskWithEvent);
-router.post('/:taskId', requireAuth, createTaskEvent);
+router.put('/:taskId', requireAuth, createTaskEvent);
 router.post('/stage/:stageId', requireAuth, createTaskWithEventOnStage);
 
 router.get('/', requireAuth, getList);

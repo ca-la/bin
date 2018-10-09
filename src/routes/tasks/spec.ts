@@ -4,7 +4,7 @@ import * as productDesignStageTasksDAO from '../../dao/product-design-stage-task
 import * as tape from 'tape';
 import * as uuid from 'node-uuid';
 import createUser = require('../../test-helpers/create-user');
-import { authHeader, get, post } from '../../test-helpers/http';
+import { authHeader, get, post, put } from '../../test-helpers/http';
 import { sandbox, test } from '../../test-helpers/fresh';
 
 test('GET /tasks/:taskId returns Task', async (t: tape.Test) => {
@@ -111,10 +111,11 @@ test('POST /tasks creates Task and TaskEvent successfully', async (t: tape.Test)
   t.equal(response.status, 201);
 });
 
-test('POST /tasks/:taskId creates TaskEvent successfully', async (t: tape.Test) => {
+test('PUT /tasks/:taskId creates TaskEvent successfully', async (t: tape.Test) => {
   const { session, user } = await createUser();
 
   const taskId = uuid.v4();
+  const eventId = uuid.v4();
 
   sandbox().stub(tasksDAO, 'create').returns(Promise.resolve(
     {
@@ -127,14 +128,14 @@ test('POST /tasks/:taskId creates TaskEvent successfully', async (t: tape.Test) 
       createdAt: '',
       createdBy: user.id,
       dueDate: '',
-      id: taskId,
+      id: eventId,
       status: '',
       taskId,
       title: ''
     }
   ));
 
-  const [response, body] = await post(`/tasks/${taskId}`, {
+  const [response, body] = await put(`/tasks/${taskId}`, {
     body: { status: null, title: '', dueDate: null },
     headers: authHeader(session.id)
   });
@@ -146,6 +147,8 @@ test('POST /tasks/stage/:stageId creates Task and TaskEvent successfully', async
   const { session, user } = await createUser();
 
   const taskId = uuid.v4();
+  const stageId = uuid.v4();
+  const stageTaskId = uuid.v4();
 
   sandbox().stub(tasksDAO, 'create').returns(Promise.resolve(
     {
@@ -155,7 +158,8 @@ test('POST /tasks/stage/:stageId creates Task and TaskEvent successfully', async
 
   sandbox().stub(productDesignStageTasksDAO, 'create').returns(Promise.resolve(
     {
-      id: taskId
+      designStageId: stageId,
+      id: stageTaskId
     }
   ));
 
@@ -171,10 +175,11 @@ test('POST /tasks/stage/:stageId creates Task and TaskEvent successfully', async
     }
   ));
 
-  const [response, body] = await post(`/tasks/${taskId}`, {
+  const [response, body] = await post(`/tasks/stage/${stageId}`, {
     body: { status: null, title: '', dueDate: null },
     headers: authHeader(session.id)
   });
   t.equal(response.status, 201);
   t.equal(body.taskId, taskId);
+  t.equal(body.designStageId, stageId);
 });
