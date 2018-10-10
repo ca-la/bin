@@ -17,6 +17,7 @@ export interface TaskEventRequest {
   dueDate: Date | null;
   status: TaskStatus | null;
   title: string;
+  description: string;
 }
 
 export default interface TaskEvent extends TaskEventRequest {
@@ -43,6 +44,7 @@ export interface TaskEventRow {
   created_at: Date;
   created_by: string;
   title: string;
+  description: string;
   status: TaskStatus;
   due_date: Date | null;
 }
@@ -53,6 +55,7 @@ export interface TaskResponseRow {
   created_at: Date;
   created_by: string;
   title: string;
+  description: string;
   status: TaskStatus;
   due_date: Date | null;
   design_stage_id: string | null;

@@ -20,6 +20,7 @@ test('Task Events DAO supports creation/retrieval', async (t: tape.Test) => {
   const task = await createTask();
   const inserted = await create({
     createdBy: user.id,
+    description: 'A description',
     dueDate: null,
     status: TaskStatus.NOT_STARTED,
     taskId: task.id,
@@ -41,6 +42,7 @@ test('Task Events DAO supports retrieval by designId', async (t: tape.Test) => {
   const task = await createTask();
   const inserted = await create({
     createdBy: user.id,
+    description: '',
     dueDate: null,
     status: TaskStatus.NOT_STARTED,
     taskId: task.id,
@@ -64,6 +66,7 @@ test('Task Events DAO supports retrieval by collectionId', async (t: tape.Test) 
   const task = await createTask();
   const inserted = await create({
     createdBy: user.id,
+    description: '',
     dueDate: null,
     status: TaskStatus.NOT_STARTED,
     taskId: task.id,
@@ -90,6 +93,7 @@ test('Task Events DAO supports retrieval by stageId', async (t: tape.Test) => {
   const task = await createTask();
   const inserted = await create({
     createdBy: user.id,
+    description: '',
     dueDate: null,
     status: TaskStatus.NOT_STARTED,
     taskId: task.id,
