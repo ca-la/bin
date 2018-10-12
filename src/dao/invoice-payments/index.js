@@ -39,6 +39,7 @@ function createTrx(trx, data) {
     .transacting(trx)
     .insert({
       id: uuid.v4(),
+      created_at: data.createdAt,
       invoice_id: data.invoiceId,
       total_cents: data.totalCents,
       payment_method_id: data.paymentMethodId,

@@ -1,10 +1,9 @@
-import * as tape from 'tape';
 import { get, post } from '../../test-helpers/http';
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
 import { PricingQuoteRequest } from '../../domain-objects/pricing-quote';
-import { test } from '../../test-helpers/fresh';
+import { test, Test } from '../../test-helpers/fresh';
 
-test('/pricing-quotes POST -> GET quote', async (t: tape.Test) => {
+test('/pricing-quotes POST -> GET quote', async (t: Test) => {
   await generatePricingValues();
   const quote: PricingQuoteRequest = {
     materialBudgetCents: 1200,
