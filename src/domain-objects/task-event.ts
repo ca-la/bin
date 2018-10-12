@@ -1,5 +1,5 @@
 import DataAdapter from '../services/data-adapter';
-import { hasProperties } from '../services/require-properties';
+import { hasOnlyProperties } from '../services/require-properties';
 
 /**
  * @typedef {object} TaskEvent A unit of work to be completed in the developement of a garment
@@ -12,22 +12,15 @@ import { hasProperties } from '../services/require-properties';
  * @property {TaskEventState} status The current status of the task
  * @property {Date} dueDate The current status of the task
  */
-
-export interface TaskEventRequest {
+export default interface TaskEvent {
   dueDate: Date | null;
   status: TaskStatus | null;
   title: string;
   description: string;
-}
-
-export default interface TaskEvent extends TaskEventRequest {
   createdBy: string;
   taskId: string;
   createdAt: Date;
   id: string;
-}
-
-export interface TaskResponse extends TaskEvent {
   designStageId: string | null;
 }
 
@@ -49,45 +42,25 @@ export interface TaskEventRow {
   due_date: Date | null;
 }
 
-export interface TaskResponseRow {
-  id: string;
-  task_id: string;
-  created_at: Date;
-  created_by: string;
-  title: string;
-  description: string;
-  status: TaskStatus;
-  due_date: Date | null;
-  design_stage_id: string | null;
-}
-
 export const dataAdapter = new DataAdapter<TaskEventRow, TaskEvent>();
-export const responseDataAdapter = new DataAdapter<TaskResponseRow, TaskResponse>();
 
-export function isTaskEventRequest(candidate: object): candidate is TaskEventRequest {
-  return hasProperties(
+export function isTaskEvent(candidate: object): candidate is TaskEvent {
+  return hasOnlyProperties(
     candidate,
-    'dueDate',
+    'id',
+    'taskId',
+    'createdAt',
+    'createdBy',
+    'title',
     'status',
-    'title'
+    'dueDate',
+    'description',
+    'designStageId'
   );
 }
 
 export function isTaskEventRow(row: object): row is TaskEventRow {
-  return hasProperties(
-    row,
-    'id',
-    'task_id',
-    'created_at',
-    'created_by',
-    'title',
-    'status',
-    'due_date'
-  );
-}
-
-export function isTaskResponseRow(row: object): row is TaskResponseRow {
-  return hasProperties(
+  return hasOnlyProperties(
     row,
     'id',
     'task_id',
@@ -96,6 +69,27 @@ export function isTaskResponseRow(row: object): row is TaskResponseRow {
     'title',
     'status',
     'due_date',
+    'description'
+  );
+}
+
+export interface TaskEventRowWithStage extends TaskEventRow {
+  design_stage_id: string | null;
+}
+
+export function isTaskEventWithStage(candidate: object): candidate is TaskEventRowWithStage {
+  return hasOnlyProperties(
+    candidate,
+    'id',
+    'task_id',
+    'created_at',
+    'created_by',
+    'title',
+    'status',
+    'due_date',
+    'description',
     'design_stage_id'
   );
 }
+
+export const withStageAdapter = new DataAdapter<TaskEventRowWithStage, TaskEvent>();

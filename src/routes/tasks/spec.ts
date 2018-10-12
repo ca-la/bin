@@ -28,7 +28,7 @@ test('GET /tasks/:taskId returns Task', async (t: tape.Test) => {
     headers: authHeader(session.id)
   });
   t.equal(response.status, 200);
-  t.equal(body.taskId, taskId);
+  t.equal(body.id, taskId);
 });
 
 test('GET /tasks?collectionId=:collectionId returns tasks on collection', async (t: tape.Test) => {
@@ -53,7 +53,7 @@ test('GET /tasks?collectionId=:collectionId returns tasks on collection', async 
     headers: authHeader(session.id)
   });
   t.equal(response.status, 200);
-  t.equal(body[0].taskId, taskId);
+  t.equal(body[0].id, taskId);
 });
 
 test('GET /tasks?stageId=:stageId returns tasks on design stage', async (t: tape.Test) => {
@@ -78,7 +78,7 @@ test('GET /tasks?stageId=:stageId returns tasks on design stage', async (t: tape
     headers: authHeader(session.id)
   });
   t.equal(response.status, 200);
-  t.equal(body[0].taskId, taskId);
+  t.equal(body[0].id, taskId);
 });
 
 test('POST /tasks creates Task and TaskEvent successfully', async (t: tape.Test) => {
@@ -105,7 +105,16 @@ test('POST /tasks creates Task and TaskEvent successfully', async (t: tape.Test)
   ));
 
   const [response] = await post('/tasks', {
-    body: { status: null, title: '', dueDate: null },
+    body: {
+      createdAt: new Date().toISOString(),
+      createdBy: user.id,
+      description: 'Description',
+      designStageId: null,
+      dueDate: null,
+      id: taskId,
+      status: null,
+      title: 'Title'
+    },
     headers: authHeader(session.id)
   });
   t.equal(response.status, 201);
@@ -136,14 +145,23 @@ test('PUT /tasks/:taskId creates TaskEvent successfully', async (t: tape.Test) =
   ));
 
   const [response, body] = await put(`/tasks/${taskId}`, {
-    body: { status: null, title: '', dueDate: null },
+    body: {
+      createdAt: new Date().toISOString(),
+      createdBy: user.id,
+      description: 'Description',
+      designStageId: null,
+      dueDate: null,
+      id: taskId,
+      status: null,
+      title: 'Title'
+    },
     headers: authHeader(session.id)
   });
   t.equal(response.status, 201);
-  t.equal(body.taskId, taskId);
+  t.equal(body.id, taskId);
 });
 
-test('POST /tasks/stage/:stageId creates Task and TaskEvent successfully', async (t: tape.Test) => {
+test('POST /tasks/stage/:stageId creates Task on Stage successfully', async (t: tape.Test) => {
   const { session, user } = await createUser();
 
   const taskId = uuid.v4();
@@ -176,10 +194,19 @@ test('POST /tasks/stage/:stageId creates Task and TaskEvent successfully', async
   ));
 
   const [response, body] = await post(`/tasks/stage/${stageId}`, {
-    body: { status: null, title: '', dueDate: null },
+    body: {
+      createdAt: new Date().toISOString(),
+      createdBy: user.id,
+      description: 'Description',
+      designStageId: stageId,
+      dueDate: null,
+      id: taskId,
+      status: null,
+      title: 'Title'
+    },
     headers: authHeader(session.id)
   });
   t.equal(response.status, 201);
-  t.equal(body.taskId, taskId);
+  t.equal(body.id, taskId);
   t.equal(body.designStageId, stageId);
 });

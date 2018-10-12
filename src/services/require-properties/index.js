@@ -85,16 +85,36 @@ function assert(value, message) {
 }
 
 /**
- * A predicate function to check to see if a object has a set of properties.
+ * A predicate function to check if a object's key-set is a superset of the
+ * passed set of properties
  *
  * @example
  *   hasProperties({ foo: 'bar' }, 'foo', 'baz', 'qux')
  *   - will return false
  *   hasProperties({ foo: 'bar' }, 'foo')
  *   - will return true
+ *   hasProperties({ foo: 'bar', baz: 'qux' }, 'foo')
+ *   - will return true
  */
 function hasProperties(data, ...props) {
   return props.every(prop => data[prop] !== undefined);
+}
+
+/**
+ * A predicate function to check if a object's key-set is an equal set of the
+ * passed set of properties
+ *
+ * @example
+ *   hasOnlyProperties({ foo: 'bar' }, 'foo', 'baz', 'qux')
+ *   - will return false
+ *   hasOnlyProperties({ foo: 'bar' }, 'foo')
+ *   - will return true
+ *   hasOnlyProperties({ foo: 'bar', baz: 'qux' }, 'foo')
+ *   - will return false
+ */
+function hasOnlyProperties(data, ...props) {
+  return Object.keys(data).length === props.length &&
+    hasProperties(data, ...props);
 }
 
 module.exports = {
@@ -102,5 +122,6 @@ module.exports = {
   requireProperties,
   requirePropertiesFormatted,
   requireValues,
-  hasProperties
+  hasProperties,
+  hasOnlyProperties
 };

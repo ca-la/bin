@@ -1,4 +1,5 @@
 import * as tape from 'tape';
+import * as uuid from 'node-uuid';
 import { test } from '../../test-helpers/fresh';
 import {
   create,
@@ -17,10 +18,11 @@ import { TaskStatus } from '../../domain-objects/task-event';
 
 test('Task Events DAO supports creation/retrieval', async (t: tape.Test) => {
   const { user } = await createUser();
-  const task = await createTask();
+  const task = await createTask(uuid.v4());
   const inserted = await create({
     createdBy: user.id,
     description: 'A description',
+    designStageId: null,
     dueDate: null,
     status: TaskStatus.NOT_STARTED,
     taskId: task.id,
@@ -39,10 +41,11 @@ test('Task Events DAO supports creation/retrieval', async (t: tape.Test) => {
 test('Task Events DAO supports retrieval by designId', async (t: tape.Test) => {
   const { user } = await createUser();
 
-  const task = await createTask();
+  const task = await createTask(uuid.v4());
   const inserted = await create({
     createdBy: user.id,
     description: '',
+    designStageId: null,
     dueDate: null,
     status: TaskStatus.NOT_STARTED,
     taskId: task.id,
@@ -63,10 +66,11 @@ test('Task Events DAO supports retrieval by designId', async (t: tape.Test) => {
 test('Task Events DAO supports retrieval by collectionId', async (t: tape.Test) => {
   const { user } = await createUser();
 
-  const task = await createTask();
+  const task = await createTask(uuid.v4());
   const inserted = await create({
     createdBy: user.id,
     description: '',
+    designStageId: null,
     dueDate: null,
     status: TaskStatus.NOT_STARTED,
     taskId: task.id,
@@ -90,10 +94,11 @@ test('Task Events DAO supports retrieval by collectionId', async (t: tape.Test) 
 test('Task Events DAO supports retrieval by stageId', async (t: tape.Test) => {
   const { user } = await createUser();
 
-  const task = await createTask();
+  const task = await createTask(uuid.v4());
   const inserted = await create({
     createdBy: user.id,
     description: '',
+    designStageId: null,
     dueDate: null,
     status: TaskStatus.NOT_STARTED,
     taskId: task.id,

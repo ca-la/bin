@@ -1,5 +1,3 @@
-import * as uuid from 'node-uuid';
-
 import * as db from '../../services/db';
 import Task, {
   dataAdapter,
@@ -11,10 +9,8 @@ import { validate } from '../../services/validate-from-db';
 
 const TABLE_NAME = 'tasks';
 
-export async function create(): Promise<Task> {
-  const rowData = dataAdapter.forInsertion({
-    id: uuid.v4()
-  });
+export async function create(id: string): Promise<Task> {
+  const rowData = dataAdapter.forInsertion({ id });
   const created = await db(TABLE_NAME)
     .insert(rowData, '*')
     .then((rows: TaskRow[]) => first<TaskRow>(rows));

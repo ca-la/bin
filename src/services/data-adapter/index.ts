@@ -45,10 +45,10 @@ function transformKeys(keyTransformer: KeyTransformer, source: any): any {
   return source;
 }
 
-function camelize(snakeCase: string): string {
+export function camelize(snakeCase: string): string {
   return snakeCase.replace(/(_\w)/g, (m: string) => m[1].toUpperCase());
 }
 
-function snakify(camelCase: string): string {
+export function snakify(camelCase: string): string {
   return camelCase.replace(/([a-z0-9][A-Z0-9])/g, (m: string) => m[0] + '_' + m[1].toLowerCase());
 }

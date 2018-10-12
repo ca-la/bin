@@ -25,8 +25,10 @@ export function validateEvery<RowData extends object, UserData>(
     return data.map((d: RowData) => adapter.parse(d));
   }
 
+  const keySets = (data as object[]).map((d: object) => Object.keys(d));
+
   throw new TypeError(
-    `Schema mismatch: ${table}. Columns: ${Object.keys(data)}`
+    `Schema mismatch: ${table}. Columns: ${keySets}`
   );
 }
 
