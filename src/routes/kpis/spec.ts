@@ -19,6 +19,7 @@ test('GET /kpis returns realistic values for each number', async (t: Test) => {
 
   t.equal(response.status, 200);
   t.equal(body.approvedDesignCount, 0);
+  t.equal(body.completedDesignCount, 0);
   t.equal(body.designCount, 0);
   t.equal(body.firstTimeRepeatDesignerCount, 0);
   t.equal(body.inDevelopmentDesignCount, 0);
@@ -197,4 +198,36 @@ test('GET /kpis returns accurate `firstTimeRepeatDesignerCount`', async (t: Test
     headers: authHeader(adminSession.id)
   }))[1];
   t.equal(body3.firstTimeRepeatDesignerCount, 0);
+});
+
+test('GET /kpis returns accurate `completedDesignCount`', async (t: Test) => {
+  const { session: adminSession, user } = await createUser({ role: 'ADMIN' });
+
+  const design = await ProductDesignsDAO.create({
+    productType: 'TEESHIRT',
+    title: 'Plain White Tee',
+    userId: user.id
+  });
+
+  await ProductDesignsStatusUpdatesDAO.create({
+    createdAt: '2018-03-01',
+    designId: design.id,
+    newStatus: 'COMPLETE',
+    userId: user.id
+  });
+
+  const body1 = (await get('/kpis?startDate=1970-01-01&endDate=2018-01-01', {
+    headers: authHeader(adminSession.id)
+  }))[1];
+  t.equal(body1.completedDesignCount, 0);
+
+  const body2 = (await get('/kpis?startDate=2018-02-01&endDate=2018-04-01', {
+    headers: authHeader(adminSession.id)
+  }))[1];
+  t.equal(body2.completedDesignCount, 1);
+
+  const body3 = (await get('/kpis?startDate=2018-04-01&endDate=2050-02-01', {
+    headers: authHeader(adminSession.id)
+  }))[1];
+  t.equal(body3.completedDesignCount, 0);
 });

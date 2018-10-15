@@ -42,6 +42,18 @@ async function getSubmittedDesignCount(startDate, endDate) {
   return parseInt(result.rows[0].count, 10);
 }
 
+// The number of designs that were completed during this time
+async function getCompletedDesignCount(startDate, endDate) {
+  const result = await db.raw(`
+    select count(distinct(design_id)) from product_design_status_updates
+      where created_at::date >= ?
+      and created_at::date <= ?
+      and new_status = 'COMPLETE'
+  `, [startDate, endDate]);
+
+  return parseInt(result.rows[0].count, 10);
+}
+
 // The number of designs that were approved by CALA to start development during this time
 async function getApprovedDesignCount(startDate, endDate) {
   const result = await db.raw(`
@@ -269,6 +281,7 @@ function* getMetrics() {
 
   this.body = {
     approvedDesignCount: yield getApprovedDesignCount(startDate, endDate),
+    completedDesignCount: yield getCompletedDesignCount(startDate, endDate),
     designCount: yield getDesignCount(startDate, endDate),
     firstTimeRepeatDesignerCount: yield getFirstTimeRepeatDesignerCount(startDate, endDate),
     inDevelopmentDesignCount: yield getInDevelopmentDesignCount(startDate, endDate),
