@@ -2,7 +2,7 @@
 
 const uniqBy = require('lodash/uniqBy');
 
-const ProductDesignCollaboratorsDAO = require('../../dao/product-design-collaborators');
+const CollaboratorsDAO = require('../../dao/collaborators');
 const ProductDesignServicesDAO = require('../../dao/product-design-services');
 const ProductDesignsDAO = require('../../dao/product-designs');
 const UsersDAO = require('../../dao/users');
@@ -22,7 +22,7 @@ async function findDesignUsers(designId) {
 
   const users = [owner];
 
-  const collaborators = await ProductDesignCollaboratorsDAO.findByDesign(designId);
+  const collaborators = await CollaboratorsDAO.findByDesign(designId);
 
   collaborators.forEach((collaborator) => {
     if (collaborator.user) {

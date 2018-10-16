@@ -3,7 +3,7 @@
 const uniq = require('lodash/uniq');
 const sortedUniqBy = require('lodash/sortedUniqBy');
 
-const ProductDesignCollaboratorsDAO = require('../../dao/product-design-collaborators');
+const CollaboratorsDAO = require('../../dao/collaborators');
 const ProductDesignServicesDAO = require('../../dao/product-design-services');
 const ProductDesignsDAO = require('../../dao/product-designs');
 
@@ -21,7 +21,7 @@ const ProductDesignsDAO = require('../../dao/product-designs');
 async function findUserDesigns(userId, filters) {
   const ownDesigns = await ProductDesignsDAO.findByUserId(userId, filters);
 
-  const collaborations = await ProductDesignCollaboratorsDAO.findByUserId(userId);
+  const collaborations = await CollaboratorsDAO.findByUserId(userId);
   const invitedDesigns = await Promise.all(collaborations.map((collaboration) => {
     return ProductDesignsDAO.findById(collaboration.designId, filters);
   }));

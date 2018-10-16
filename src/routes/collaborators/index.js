@@ -2,9 +2,9 @@
 
 const Router = require('koa-router');
 
-const addDesignCollaborator = require('../../services/add-design-collaborator');
+const addCollaborator = require('../../services/add-collaborator');
 const InvalidDataError = require('../../errors/invalid-data');
-const ProductDesignCollaboratorsDAO = require('../../dao/product-design-collaborators');
+const CollaboratorsDAO = require('../../dao/collaborators');
 const requireAuth = require('../../middleware/require-auth');
 const { canAccessDesignId, canAccessDesignInQuery } = require('../../middleware/can-access-design');
 
@@ -19,7 +19,7 @@ function* create() {
 
   let created;
   try {
-    created = yield addDesignCollaborator(
+    created = yield addCollaborator(
       designId,
       userEmail,
       role,
@@ -35,11 +35,11 @@ function* create() {
 }
 
 function* update() {
-  const collaborator = yield ProductDesignCollaboratorsDAO.findById(this.params.collaboratorId);
+  const collaborator = yield CollaboratorsDAO.findById(this.params.collaboratorId);
   this.assert(collaborator, 404, 'Collaborator not found');
   yield canAccessDesignId.call(this, collaborator.designId);
 
-  const updated = yield ProductDesignCollaboratorsDAO.update(
+  const updated = yield CollaboratorsDAO.update(
     this.params.collaboratorId,
     {
       role: this.request.body.role
@@ -51,18 +51,18 @@ function* update() {
 }
 
 function* findByDesign() {
-  const collaborators = yield ProductDesignCollaboratorsDAO.findByDesign(this.query.designId);
+  const collaborators = yield CollaboratorsDAO.findByDesign(this.query.designId);
 
   this.status = 200;
   this.body = collaborators;
 }
 
 function* deleteCollaborator() {
-  const collaborator = yield ProductDesignCollaboratorsDAO.findById(this.params.collaboratorId);
+  const collaborator = yield CollaboratorsDAO.findById(this.params.collaboratorId);
   this.assert(collaborator, 404, 'Collaborator not found');
   yield canAccessDesignId.call(this, collaborator.designId);
 
-  yield ProductDesignCollaboratorsDAO.deleteById(this.params.collaboratorId);
+  yield CollaboratorsDAO.deleteById(this.params.collaboratorId);
 
   this.status = 204;
 }

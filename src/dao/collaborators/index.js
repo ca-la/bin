@@ -9,13 +9,13 @@ const filterError = require('../../services/filter-error');
 const first = require('../../services/first').default;
 const InvalidDataError = require('../../errors/invalid-data');
 const normalizeEmail = require('../../services/normalize-email');
-const ProductDesignCollaborator = require('../../domain-objects/product-design-collaborator');
+const Collaborator = require('../../domain-objects/collaborator');
 const UsersDAO = require('../users');
 
-const instantiate = data => new ProductDesignCollaborator(data);
-const maybeInstantiate = data => (data && new ProductDesignCollaborator(data)) || null;
+const instantiate = data => new Collaborator(data);
+const maybeInstantiate = data => (data && new Collaborator(data)) || null;
 
-const { dataMapper } = ProductDesignCollaborator;
+const { dataMapper } = Collaborator;
 
 const TABLE_NAME = 'product_design_collaborators';
 

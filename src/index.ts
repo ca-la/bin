@@ -34,7 +34,8 @@ const router = new Router({
 });
 
 router.use('/', require('./middleware/root-route'));
-/* tslint:enable */
+router.use('/product-design-collaborators', cloneDeep(require('./routes/collaborators')));
+/* tslint:enable:no-var-requires */
 
 const routesDir = path.join(__dirname, 'routes');
 const routeDirectories = fs.readdirSync(routesDir);

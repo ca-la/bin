@@ -4,7 +4,7 @@ const escape = require('lodash/escape');
 
 const InvalidDataError = require('../../errors/invalid-data');
 const normalizeEmail = require('../normalize-email');
-const ProductDesignCollaboratorsDAO = require('../../dao/product-design-collaborators');
+const CollaboratorsDAO = require('../../dao/collaborators');
 const ProductDesignsDAO = require('../../dao/product-designs');
 const sharingEmail = require('../../emails/sharing');
 const UsersDAO = require('../../dao/users');
@@ -34,7 +34,7 @@ function getRoleDescription(role) {
  * @param {String} role
  * @param {String} unsaveInvitationMessage
  */
-async function addDesignCollaborator(
+async function addCollaborator(
   designId,
   email,
   role,
@@ -57,13 +57,13 @@ async function addDesignCollaborator(
   let collaborator;
 
   if (user) {
-    collaborator = await ProductDesignCollaboratorsDAO.create({
+    collaborator = await CollaboratorsDAO.create({
       designId,
       role,
       userId: user.id
     });
   } else {
-    collaborator = await ProductDesignCollaboratorsDAO.create({
+    collaborator = await CollaboratorsDAO.create({
       designId,
       role,
       userEmail: normalizedEmail,
@@ -93,4 +93,4 @@ async function addDesignCollaborator(
   return collaborator;
 }
 
-module.exports = addDesignCollaborator;
+module.exports = addCollaborator;

@@ -22,7 +22,7 @@ const ROLES = {
 
 const dataMapper = new DataMapper(keyNamesByColumnName);
 
-class ProductDesignCollaborator {
+class Collaborator {
   constructor(row) {
     requireProperties(row, 'id');
 
@@ -39,7 +39,7 @@ class ProductDesignCollaborator {
   }
 }
 
-ProductDesignCollaborator.dataMapper = dataMapper;
-ProductDesignCollaborator.ROLES = ROLES;
+Collaborator.dataMapper = dataMapper;
+Collaborator.ROLES = ROLES;
 
-module.exports = ProductDesignCollaborator;
+module.exports = Collaborator;

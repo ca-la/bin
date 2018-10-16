@@ -2,7 +2,7 @@
 
 const ForbiddenError = require('../../errors/forbidden');
 const InvoicesDAO = require('../../dao/invoices');
-const ProductDesignCollaboratorsDAO = require('../../dao/product-design-collaborators');
+const CollaboratorsDAO = require('../../dao/collaborators');
 const ProductDesignServicesDAO = require('../../dao/product-design-services');
 const UnauthorizedError = require('../../errors/unauthorized');
 const User = require('../../domain-objects/user');
@@ -89,7 +89,7 @@ async function getDesignPermissions(design, userId, sessionRole) {
   // in sync re: who can access what.
 
   if (!isOwnerOrAdmin) {
-    const collaborators = await ProductDesignCollaboratorsDAO.findByDesignAndUser(
+    const collaborators = await CollaboratorsDAO.findByDesignAndUser(
       design.id,
       userId
     );
