@@ -25,8 +25,8 @@ async function main(): Promise<Error | {}> {
       console.log(designs);
       console.log('='.repeat(20));
 
-      console.log('\nUpdating: product_design_collaborators');
-      const collaborators = await db('product_design_collaborators')
+      console.log('\nUpdating: collaborators');
+      const collaborators = await db('collaborators')
         .delete()
         .where({ design_id: designId, user_id: userId })
         .returning('*')

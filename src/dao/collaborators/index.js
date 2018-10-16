@@ -17,7 +17,7 @@ const maybeInstantiate = data => (data && new Collaborator(data)) || null;
 
 const { dataMapper } = Collaborator;
 
-const TABLE_NAME = 'product_design_collaborators';
+const TABLE_NAME = 'collaborators';
 
 async function attachUser(collaborator) {
   if (collaborator.userId) {
@@ -99,7 +99,7 @@ function findUnclaimedByEmail(email) {
   const normalized = normalizeEmail(email);
 
   return db(TABLE_NAME)
-    .whereRaw('lower(product_design_collaborators.user_email) = lower(?)', [normalized])
+    .whereRaw('lower(collaborators.user_email) = lower(?)', [normalized])
     .then(collaborators => collaborators.map(instantiate))
     .catch(rethrow);
 }
