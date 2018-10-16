@@ -5,6 +5,7 @@ const { default: DataMapper } = require('../services/data-mapper');
 
 const keyNamesByColumnName = {
   id: 'id',
+  collection_id: 'collectionId',
   design_id: 'designId',
   user_id: 'userId',
   user_email: 'userEmail',
