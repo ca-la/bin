@@ -2,14 +2,8 @@
 
 The CALA API. Powers the website (https://ca.la) and mobile app.
 
-Stack:
-
-- node
-- postgres
-- koa
-- knex
-- tape
-- eslint
+Newer code is written in TypeScript, running on node.js and PostgreSQL. Older
+code is written in vanilla JavaScript.
 
 ## Prerequisites
 
@@ -86,8 +80,15 @@ $ bin/tt routes/users/spec.js
 
 ### Migrations
 
-Staging and production database migrations should be performed after a pull
-request is reviewed, and before it's merged.
+To run staging/production migrations, you'll need the [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli).
+
+Staging database migrations should be performed immediately after a pull request
+is merged. Please paste the output of `bin/migrate-stg` into the #eng channel in
+Slack.
+
+When a production deployment is approved, please run production migrations
+(`bin/migrate-prod`) immediately prior to running the release script. Again,
+paste the output into Slack for visibility.
 
 All migrations **must** be able to work both with the currently-deployed
 application code, and with the code that will be deployed in the associated pull
@@ -115,7 +116,7 @@ migration and any unexpected side-effects after rolling it back.
 Note that this should be run before migrating locally. You can roll
 back the migration to get an accurate result.
 
-Migration rollbacks are an imperfect tool, and are almost never used in
+Migration rollbacks are an imperfect tool, and are never used in
 production. They make it easy to move back and forth in the local migration
 history the same way we can for code commits, but it's not reasonable to expect
 them to preserve important data when rolled back and forward again. See
