@@ -163,9 +163,9 @@ test('PUT /collections/:id/designs/:id', async (t) => {
     { headers: authHeader(session.id) }
   );
   t.equal(
-    designInOtherCollection[0].status,
-    409,
-    'adding a design to a second collection returns a conflict status'
+    designInOtherCollection[1][0].id,
+    design[1].id,
+    'adding a design to a second collection moves it there'
   );
 });
 

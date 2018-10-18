@@ -64,14 +64,10 @@ function* putDesign() {
   canAccessUserResource.call(this, targetDesign.userId);
 
   try {
-    this.body = yield CollectionsDAO.addDesign(collectionId, designId);
+    this.body = yield CollectionsDAO.moveDesign(collectionId, designId);
     this.status = 200;
   } catch (error) {
-    if (/UniqueViolation/.test(error.toString())) {
-      this.throw(409, 'A design can only be associated with a single collection');
-    } else {
-      throw error;
-    }
+    throw error;
   }
 }
 

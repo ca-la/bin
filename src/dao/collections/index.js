@@ -122,6 +122,18 @@ function addDesign(collectionId, designId) {
     .catch(rethrow);
 }
 
+function moveDesign(collectionId, designId) {
+  if (!collectionId || !designId) {
+    return Promise.reject(new InvalidDataError('You must pass both a collection and design ID to add a design to a collection'));
+  }
+
+  return db('collection_designs')
+    .where({ design_id: designId })
+    .del()
+    .then(() => addDesign(collectionId, designId))
+    .catch(rethrow);
+}
+
 function removeDesign(collectionId, designId) {
   if (!collectionId || !designId) {
     return Promise.reject(new InvalidDataError('You must pass both a collection and design ID to add a design to a collection'));
@@ -145,5 +157,6 @@ module.exports = {
   findById,
   findByUserId,
   addDesign,
+  moveDesign,
   removeDesign
 };

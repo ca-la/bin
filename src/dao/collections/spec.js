@@ -302,6 +302,45 @@ test('CollectionsDAO#addDesign adds a design to a collection', async (t) => {
   );
 });
 
+test('CollectionsDAO#moveDesign can move a design to different collections', async (t) => {
+  const { user } = await createUser({ withSession: false });
+  const createdCollectionOne = await CollectionsDAO.create({
+    title: 'Raf Raf Raf',
+    description: 'So Cool',
+    createdBy: user.id,
+    createdAt: testDate
+  });
+  const createdCollectionTwo = await CollectionsDAO.create({
+    title: 'Hypebeast',
+    description: '2CoolForSkool',
+    createdBy: user.id,
+    createdAt: testDate
+  });
+  const createdDesign = await ProductDesignsDAO.create({
+    title: 'Raf Simons Replicant Parka',
+    description: 'Blade Runner x Raf',
+    userId: user.id
+  });
+
+  const collectionDesigns = await CollectionsDAO
+    .moveDesign(createdCollectionOne.id, createdDesign.id);
+
+  t.deepEqual(
+    collectionDesigns.map(d => d.id).sort(),
+    [createdDesign.id],
+    'ensure that the design was added to the collection'
+  );
+
+  const collectionDesignsTwo = await CollectionsDAO
+    .moveDesign(createdCollectionTwo.id, createdDesign.id);
+
+  t.deepEqual(
+    collectionDesignsTwo.map(d => d.id).sort(),
+    [createdDesign.id],
+    'ensure that the design was moved to a new collection'
+  );
+});
+
 test('CollectionsDAO#removeDesign removes a design from a collection', async (t) => {
   const { user } = await createUser({ withSession: false });
   const createdCollection = await CollectionsDAO.create({
