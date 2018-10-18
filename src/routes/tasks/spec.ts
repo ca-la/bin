@@ -81,6 +81,29 @@ test('GET /tasks?stageId=:stageId returns tasks on design stage', async (t: tape
   t.equal(body[0].id, taskId);
 });
 
+test('GET /tasks?userId=:userId returns all tasks for a user', async (t: tape.Test) => {
+  const { session, user } = await createUser();
+  const taskId = uuid.v4();
+
+  sandbox().stub(taskEventsDAO, 'findByUserId').returns(Promise.resolve([
+    {
+      createdAt: '',
+      createdBy: user.id,
+      dueDate: '',
+      id: taskId,
+      status: '',
+      taskId,
+      title: ''
+    }
+  ]));
+
+  const [response, body] = await get(`/tasks?userId=${user.id}`, {
+    headers: authHeader(session.id)
+  });
+  t.equal(response.status, 200);
+  t.equal(body[0].id, taskId);
+});
+
 test('POST /tasks creates Task and TaskEvent successfully', async (t: tape.Test) => {
   const { session, user } = await createUser();
 
@@ -159,6 +182,18 @@ test('PUT /tasks/:taskId creates TaskEvent successfully', async (t: tape.Test) =
   });
   t.equal(response.status, 201);
   t.equal(body.id, taskId);
+});
+
+test('PUT /tasks/:taskId/assignees adds Users to Tasks successfully', async (t: tape.Test) => {
+  const { session, user } = await createUser();
+  const task = await tasksDAO.create(uuid.v4());
+
+  const [response, body] = await put(`/tasks/${task.id}/assignees`, {
+    body: { userIds: [user.id] },
+    headers: authHeader(session.id)
+  });
+  t.equal(response.status, 200);
+  t.equal(body.length, 1);
 });
 
 test('POST /tasks/stage/:stageId creates Task on Stage successfully', async (t: tape.Test) => {

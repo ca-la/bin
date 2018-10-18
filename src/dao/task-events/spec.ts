@@ -6,9 +6,11 @@ import {
   findByCollectionId,
   findByDesignId,
   findById,
-  findByStageId
+  findByStageId,
+  findByUserId
 } from './index';
 import { create as createTask } from '../tasks';
+import { create as createUserTask } from '../user-tasks';
 import { create as createDesignStageTask } from '../product-design-stage-tasks';
 import { create as createDesignStage } from '../product-design-stages';
 import { create as createDesign } from '../product-designs';
@@ -89,6 +91,24 @@ test('Task Events DAO supports retrieval by collectionId', async (t: tape.Test) 
     designStageId: result[0].designStageId
   };
   t.deepEqual(result[0], insertedWithStage, 'Returned inserted task');
+});
+
+test('Task Events DAO supports retrieval by userId', async (t: tape.Test) => {
+  const { user } = await createUser();
+  const task = await createTask(uuid.v4());
+  const taskEvent = await create({
+    createdBy: user.id,
+    description: 'A description',
+    designStageId: null,
+    dueDate: null,
+    status: TaskStatus.NOT_STARTED,
+    taskId: task.id,
+    title: 'My New Task'
+  });
+  await createUserTask({ userId: user.id, taskId: task.id });
+
+  const result = await findByUserId(user.id);
+  t.deepEqual(result[0].id, taskEvent.id, 'Returned inserted task');
 });
 
 test('Task Events DAO supports retrieval by stageId', async (t: tape.Test) => {

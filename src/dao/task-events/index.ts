@@ -4,6 +4,7 @@ import { omit } from 'lodash';
 import * as db from '../../services/db';
 import TaskEvent, {
   dataAdapter,
+  isTaskEventRow,
   isTaskEventWithStage,
   TaskEventRow,
   TaskEventRowWithStage,
@@ -136,6 +137,24 @@ export async function findByCollectionId(collectionId: string): Promise<TaskEven
     TABLE_NAME,
     isTaskEventWithStage,
     withStageAdapter,
+    taskResponses
+  );
+}
+
+export async function findByUserId(userId: string): Promise<TaskEvent[]> {
+  const taskResponses: TaskEventRow[] = await db(TABLE_NAME)
+    .select('task_events.*')
+    .innerJoin(
+      'user_tasks',
+      'task_events.task_id',
+      'user_tasks.task_id'
+    )
+    .where({ 'user_tasks.user_id': userId });
+
+  return validateEvery<TaskEventRow, TaskEvent>(
+    TABLE_NAME,
+    isTaskEventRow,
+    dataAdapter,
     taskResponses
   );
 }

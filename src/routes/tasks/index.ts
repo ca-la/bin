@@ -5,6 +5,8 @@ import * as uuid from 'node-uuid';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as ProductDesignStageTasksDAO from '../../dao/product-design-stage-tasks';
 import * as TasksDAO from '../../dao/tasks';
+import * as UserTasksDAO from '../../dao/user-tasks';
+import UserTask from '../../domain-objects/user-task';
 import TaskEvent, { TaskStatus } from '../../domain-objects/task-event';
 import { hasOnlyProperties } from '../../services/require-properties';
 import requireAuth = require('../../middleware/require-auth');
@@ -12,6 +14,9 @@ import requireAuth = require('../../middleware/require-auth');
 const router = new Router();
 
 type IOTask = Omit<TaskEvent, 'taskId'>;
+interface UserTaskRequest {
+  userIds: string[];
+}
 
 function isIOTask(candidate: object): candidate is IOTask {
   return hasOnlyProperties(
@@ -24,6 +29,13 @@ function isIOTask(candidate: object): candidate is IOTask {
     'createdAt',
     'id',
     'designStageId'
+  );
+}
+
+function isUserTaskRequest(candidate: object): candidate is UserTaskRequest {
+  return hasOnlyProperties(
+    candidate,
+    'userIds'
   );
 }
 
@@ -111,15 +123,43 @@ function* getTaskEvent(this: Koa.Application.Context): AsyncIterableIterator<Tas
   this.body = ioFromTaskEvent(task);
 }
 
+function* updateTaskAssignment(this: Koa.Application.Context): AsyncIterableIterator<TaskEvent> {
+  const { taskId } = this.params;
+  const body = this.request.body;
+  if (body && isUserTaskRequest(body)) {
+    const { userIds } = body;
+    const existingRelationships = yield UserTasksDAO.findAllByTaskId(taskId);
+    const existingUserIds: string[] = existingRelationships.map((userTask: UserTask) => {
+      return userTask.userId;
+    });
+    const newIds = userIds.filter((userId: string) => {
+      return !existingUserIds.find((existingId: string) => userId === existingId);
+    });
+    const existingIdsToDelete = existingUserIds.filter((existingId: string) => {
+      return !userIds.find((userId: string) => userId === existingId);
+    });
+
+    yield UserTasksDAO.deleteAllByUserIdsAndTaskId(existingIdsToDelete, taskId);
+    const newUserTasks: UserTask[] = yield UserTasksDAO
+      .createAllByUserIdsAndTaskId(newIds, taskId);
+
+    this.status = 200;
+    this.body = newUserTasks;
+  } else {
+    this.throw(400, `Request does not match model: ${Object.keys(body)}`);
+  }
+}
+
 interface GetListQuery {
   collectionId?: string;
   stageId?: string;
+  userId?: string;
 }
 
 function* getList(this: Koa.Application.Context): AsyncIterableIterator<TaskEvent> {
   const query: GetListQuery = this.query;
-  if (!query.collectionId && !query.stageId) {
-    return this.throw('Missing collectionId or stageId');
+  if (!query.collectionId && !query.stageId && !query.userId) {
+    return this.throw('Missing collectionId, stageId, or userId');
   }
 
   let tasks: TaskEvent[] = [];
@@ -127,6 +167,8 @@ function* getList(this: Koa.Application.Context): AsyncIterableIterator<TaskEven
     tasks = yield TaskEventsDAO.findByCollectionId(query.collectionId);
   } else if (query.stageId) {
     tasks = yield TaskEventsDAO.findByStageId(query.stageId);
+  }  else if (query.userId) {
+    tasks = yield TaskEventsDAO.findByUserId(query.userId);
   }
 
   this.status = 200;
@@ -135,6 +177,7 @@ function* getList(this: Koa.Application.Context): AsyncIterableIterator<TaskEven
 
 router.post('/', requireAuth, createTaskWithEvent);
 router.put('/:taskId', requireAuth, createTaskEvent);
+router.put('/:taskId/assignees', requireAuth, updateTaskAssignment);
 router.post('/stage/:stageId', requireAuth, createTaskWithEventOnStage);
 
 router.get('/', requireAuth, getList);
