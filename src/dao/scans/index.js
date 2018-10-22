@@ -115,6 +115,7 @@ function updateOneById(id, data) {
     })
     .update(compact({
       is_complete: data.isComplete,
+      is_started: data.isStarted,
       measurements: data.measurements,
       user_id: data.userId
     }), '*')

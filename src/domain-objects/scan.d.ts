@@ -9,6 +9,7 @@ declare class Scan {
   public createdAt: Date;
   public deletedAt?: Date;
   public isComplete: boolean;
+  public isStarted: boolean;
   public measurements?: Measurements;
   public type: 'PHOTO' | 'HUMANSOLUTIONS';
   public userId?: string;

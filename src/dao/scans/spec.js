@@ -64,6 +64,19 @@ test('ScansDAO.updateOneById updates a scan', (t) => {
     });
 });
 
+test('ScansDAO.updateOneById allows marking as started', async (t) => {
+  const { user } = await createUser({ withSession: false });
+  const scan = await create({
+    userId: user.id,
+    type: SCAN_TYPES.photo
+  });
+
+  const updated = await updateOneById(scan.id, {
+    isStarted: true
+  });
+  t.equal(updated.isStarted, true);
+});
+
 test('ScansDAO.findByUserId does not find deleted scans', (t) => {
   let userId;
   return createUser({ withSession: false })

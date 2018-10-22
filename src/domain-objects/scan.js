@@ -9,6 +9,7 @@ const keyNamesByColumnName = {
   created_at: 'createdAt',
   deleted_at: 'deletedAt',
   is_complete: 'isComplete',
+  is_started: 'isStarted',
   measurements: 'measurements',
   type: 'type',
   user_id: 'userId',

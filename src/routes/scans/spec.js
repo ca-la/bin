@@ -336,7 +336,23 @@ test('GET /scans/:id returns a scan', (t) => {
     });
 });
 
-test('PUT /scans/:id allows a scan to be updated', (t) => {
+test('PUT /scans/:id allows a scan to be started', async (t) => {
+  const { session } = await createUser();
+  const scan = await ScansDAO.create({
+    type: ScansDAO.SCAN_TYPES.photo,
+    isComplete: false,
+    measurements: null
+  });
+
+  const [response, body] = await put(`/scans/${scan.id}`, {
+    body: { isStarted: true },
+    headers: authHeader(session.id)
+  });
+  t.equal(response.status, 200);
+  t.equal(body.isStarted, true);
+});
+
+test('PUT /scans/:id allows a scan to be completed', (t) => {
   let sessionId;
   return createUser()
     .then(({ session }) => {

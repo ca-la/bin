@@ -88,7 +88,7 @@ function* createScanPhoto() {
 function* updateScan() {
   this.assert(this.request.body, 400, 'New data must be provided');
 
-  const { isComplete, measurements } = this.request.body;
+  const { isComplete, isStarted, measurements } = this.request.body;
 
   validateMeasurements(measurements);
 
@@ -103,7 +103,7 @@ function* updateScan() {
 
   const updated = yield ScansDAO.updateOneById(
     this.params.scanId,
-    { isComplete, measurements }
+    { isComplete, isStarted, measurements }
   );
 
   // Scan is owned by a 3rd party CALA fit customer, potentially update details
