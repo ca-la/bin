@@ -1,19 +1,21 @@
 import * as Router from 'koa-router';
 import * as Koa from 'koa';
 import * as uuid from 'node-uuid';
+import { omit } from 'lodash';
 
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as ProductDesignStageTasksDAO from '../../dao/product-design-stage-tasks';
 import * as TasksDAO from '../../dao/tasks';
 import * as UserTasksDAO from '../../dao/user-tasks';
 import UserTask from '../../domain-objects/user-task';
+import PublicUser from '../../domain-objects/public-user';
 import TaskEvent, { TaskStatus } from '../../domain-objects/task-event';
 import { hasOnlyProperties } from '../../services/require-properties';
 import requireAuth = require('../../middleware/require-auth');
 
 const router = new Router();
 
-type IOTask = Omit<TaskEvent, 'taskId'>;
+type IOTask = Omit<TaskEvent, 'taskId'> & { assignees: PublicUser[] };
 interface UserTaskRequest {
   userIds: string[];
 }
@@ -28,7 +30,8 @@ function isIOTask(candidate: object): candidate is IOTask {
     'createdBy',
     'createdAt',
     'id',
-    'designStageId'
+    'designStageId',
+    'assignees'
   );
 }
 
@@ -43,7 +46,8 @@ const taskEventFromIO = (
   request: IOTask,
   userId: string
 ): TaskEvent => {
-  return Object.assign({}, request, {
+  const filteredRequest = omit(request, ['assignees']);
+  return Object.assign({}, filteredRequest, {
     createdAt: new Date(),
     createdBy: userId,
     id: uuid.v4(),
@@ -52,8 +56,9 @@ const taskEventFromIO = (
   });
 };
 
-const ioFromTaskEvent = (taskEvent: TaskEvent): IOTask => {
+const ioFromTaskEvent = (taskEvent: TaskEvent, assignees: PublicUser[] = []): IOTask => {
   return {
+    assignees,
     createdAt: taskEvent.createdAt,
     createdBy: taskEvent.createdBy,
     description: taskEvent.description,
@@ -118,9 +123,10 @@ function* createTaskWithEventOnStage(
 
 function* getTaskEvent(this: Koa.Application.Context): AsyncIterableIterator<TaskEvent> {
   const task = yield TaskEventsDAO.findById(this.params.taskId);
+  const assignees = yield UserTasksDAO.findAllUsersByTaskId(this.params.taskId);
 
   this.status = 200;
-  this.body = ioFromTaskEvent(task);
+  this.body = ioFromTaskEvent(task, assignees);
 }
 
 function* updateTaskAssignment(this: Koa.Application.Context): AsyncIterableIterator<TaskEvent> {
@@ -171,8 +177,13 @@ function* getList(this: Koa.Application.Context): AsyncIterableIterator<TaskEven
     tasks = yield TaskEventsDAO.findByUserId(query.userId);
   }
 
+  const ioAndAssigneesFromTaskEvent = async (task: TaskEvent): Promise<object> => {
+    const assignees = await UserTasksDAO.findAllUsersByTaskId(task.id);
+    return ioFromTaskEvent(task, assignees);
+  };
+
   this.status = 200;
-  this.body = tasks.map(ioFromTaskEvent);
+  this.body = yield tasks.map(ioAndAssigneesFromTaskEvent);
 }
 
 router.post('/', requireAuth, createTaskWithEvent);

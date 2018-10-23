@@ -6,10 +6,16 @@ import UserTask, {
   isUserTaskRow,
   UserTaskRow
 } from '../../domain-objects/user-task';
+import PublicUser, {
+  dataAdapter as publicUserDataAdapter,
+  isPublicUserRow,
+  PublicUserRow
+} from '../../domain-objects/public-user';
 import first from '../../services/first';
 import { validate, validateEvery } from '../../services/validate-from-db';
 
 const TABLE_NAME = 'user_tasks';
+const USERS_TABLE = 'users';
 
 export async function create(
   data: Unsaved<UserTask>
@@ -81,6 +87,25 @@ export async function findAllByTaskId(taskId: string): Promise<UserTask[]> {
     isUserTaskRow,
     dataAdapter,
     userTasks
+  );
+}
+
+export async function findAllUsersByTaskId(taskId: string): Promise<PublicUser[]> {
+  const users: PublicUserRow[] = await db(USERS_TABLE)
+    .select('users.id', 'users.name', 'users.referral_code')
+    .innerJoin(
+      'user_tasks',
+      'user_tasks.user_id',
+      'users.id'
+    )
+    .where({ 'user_tasks.task_id': taskId })
+    .orderBy('user_tasks.created_at', 'desc');
+
+  return validateEvery<PublicUserRow, PublicUser>(
+    TABLE_NAME,
+    isPublicUserRow,
+    publicUserDataAdapter,
+    users
   );
 }
 

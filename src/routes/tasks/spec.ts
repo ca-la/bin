@@ -1,5 +1,6 @@
 import * as taskEventsDAO from '../../dao/task-events';
 import * as tasksDAO from '../../dao/tasks';
+import * as userTasksDAO from '../../dao/user-tasks';
 import * as productDesignStageTasksDAO from '../../dao/product-design-stage-tasks';
 import * as tape from 'tape';
 import * as uuid from 'node-uuid';
@@ -23,12 +24,14 @@ test('GET /tasks/:taskId returns Task', async (t: tape.Test) => {
       title: ''
     }
   ));
+  sandbox().stub(userTasksDAO, 'findAllUsersByTaskId').resolves([]);
 
   const [response, body] = await get(`/tasks/${taskId}`, {
     headers: authHeader(session.id)
   });
   t.equal(response.status, 200);
   t.equal(body.id, taskId);
+  t.equal(body.assignees.length, 0);
 });
 
 test('GET /tasks?collectionId=:collectionId returns tasks on collection', async (t: tape.Test) => {
@@ -73,19 +76,21 @@ test('GET /tasks?stageId=:stageId returns tasks on design stage', async (t: tape
       title: ''
     }
   ]));
+  sandbox().stub(userTasksDAO, 'findAllUsersByTaskId').resolves([]);
 
   const [response, body] = await get(`/tasks?stageId=${stageId}`, {
     headers: authHeader(session.id)
   });
   t.equal(response.status, 200);
   t.equal(body[0].id, taskId);
+  t.equal(body[0].assignees.length, 0);
 });
 
 test('GET /tasks?userId=:userId returns all tasks for a user', async (t: tape.Test) => {
   const { session, user } = await createUser();
   const taskId = uuid.v4();
 
-  sandbox().stub(taskEventsDAO, 'findByUserId').returns(Promise.resolve([
+  sandbox().stub(taskEventsDAO, 'findByUserId').resolves([
     {
       createdAt: '',
       createdBy: user.id,
@@ -95,13 +100,17 @@ test('GET /tasks?userId=:userId returns all tasks for a user', async (t: tape.Te
       taskId,
       title: ''
     }
-  ]));
+  ]);
+  sandbox().stub(userTasksDAO, 'findAllUsersByTaskId').resolves([
+    { id: user.id, name: user.name }
+  ]);
 
   const [response, body] = await get(`/tasks?userId=${user.id}`, {
     headers: authHeader(session.id)
   });
   t.equal(response.status, 200);
   t.equal(body[0].id, taskId);
+  t.equal(body[0].assignees.length, 1);
 });
 
 test('POST /tasks creates Task and TaskEvent successfully', async (t: tape.Test) => {
@@ -129,6 +138,7 @@ test('POST /tasks creates Task and TaskEvent successfully', async (t: tape.Test)
 
   const [response] = await post('/tasks', {
     body: {
+      assignees: [],
       createdAt: new Date().toISOString(),
       createdBy: user.id,
       description: 'Description',
@@ -169,6 +179,7 @@ test('PUT /tasks/:taskId creates TaskEvent successfully', async (t: tape.Test) =
 
   const [response, body] = await put(`/tasks/${taskId}`, {
     body: {
+      assignees: [],
       createdAt: new Date().toISOString(),
       createdBy: user.id,
       description: 'Description',
@@ -230,6 +241,7 @@ test('POST /tasks/stage/:stageId creates Task on Stage successfully', async (t: 
 
   const [response, body] = await post(`/tasks/stage/${stageId}`, {
     body: {
+      assignees: [],
       createdAt: new Date().toISOString(),
       createdBy: user.id,
       description: 'Description',

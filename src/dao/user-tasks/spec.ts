@@ -6,6 +6,7 @@ import {
   createAllByUserIdsAndTaskId,
   deleteAllByUserIdsAndTaskId,
   findAllByTaskId,
+  findAllUsersByTaskId,
   findById
 } from './index';
 import { create as createTask } from '../tasks';
@@ -15,6 +16,7 @@ test('UserTask DAO supports creation/retrieval', async (t: tape.Test) => {
   const userOne = await createUser();
   const userTwo = await createUser();
   const taskOne = await createTask(uuid.v4());
+  const taskTwo = await createTask(uuid.v4());
 
   const userOneTaskOne = await create({
     taskId: taskOne.id,
@@ -25,14 +27,33 @@ test('UserTask DAO supports creation/retrieval', async (t: tape.Test) => {
     userId: userTwo.user.id
   });
 
-  const result = await findById(userOneTaskOne.id);
-  t.deepEqual(result, userOneTaskOne, 'Returned an inserted user task');
-
-  const secondResult = await findAllByTaskId(taskOne.id);
   t.deepEqual(
-    secondResult,
+    await findById(userOneTaskOne.id),
+    userOneTaskOne,
+    'Returned an inserted user task'
+  );
+  t.deepEqual(
+    await findAllByTaskId(taskOne.id),
     [userTwoTaskOne, userOneTaskOne],
     'Returned both user task associations for the given task'
+  );
+  t.deepEqual(
+    await findAllUsersByTaskId(taskOne.id),
+    [{
+      id: userTwo.user.id,
+      name: userTwo.user.name,
+      referralCode: userTwo.user.referralCode
+    }, {
+      id: userOne.user.id,
+      name: userOne.user.name,
+      referralCode: userOne.user.referralCode
+    }],
+    'Returned both users for the given task'
+  );
+  t.deepEqual(
+    await findAllUsersByTaskId(taskTwo.id),
+    [],
+    'Returned an empty list of public users'
   );
 });
 
