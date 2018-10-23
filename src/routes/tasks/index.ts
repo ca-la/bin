@@ -6,10 +6,13 @@ import { omit } from 'lodash';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as ProductDesignStageTasksDAO from '../../dao/product-design-stage-tasks';
 import * as TasksDAO from '../../dao/tasks';
+import * as CommentDAO from '../../dao/comments';
+import * as TaskCommentDAO from '../../dao/task-comments';
 import * as UserTasksDAO from '../../dao/user-tasks';
 import UserTask from '../../domain-objects/user-task';
 import PublicUser from '../../domain-objects/public-user';
 import TaskEvent, { TaskStatus } from '../../domain-objects/task-event';
+import Comment, { isComment } from '../../domain-objects/comment';
 import { hasOnlyProperties } from '../../services/require-properties';
 import requireAuth = require('../../middleware/require-auth');
 
@@ -186,6 +189,45 @@ function* getList(this: Koa.Application.Context): AsyncIterableIterator<TaskEven
   this.body = yield tasks.map(ioAndAssigneesFromTaskEvent);
 }
 
+function* createTaskComment(this: Koa.Application.Context): AsyncIterableIterator<Comment> {
+  const userId = this.state.userId;
+  const body = this.request.body;
+  if (body && isComment(body) && this.params.taskId) {
+    const comment = yield CommentDAO.create({
+      ...body,
+      userId
+    });
+    yield TaskCommentDAO.create({
+      commentId: comment.id,
+      taskId: this.params.taskId
+    });
+    this.status = 201;
+    this.body = comment;
+  } else {
+    this.throw(400, `Request does not match model: ${Object.keys(body)}`);
+  }
+}
+
+function* getTaskComments(this: Koa.Application.Context): AsyncIterableIterator<Comment[]> {
+  const comments = yield TaskCommentDAO.findByTaskId(this.params.taskId);
+  if (comments) {
+    this.status = 200;
+    this.body = comments;
+  } else {
+    this.throw(404);
+  }
+}
+
+function* deleteTaskComment(this: Koa.Application.Context): AsyncIterableIterator<void> {
+  const { commentId } = this.params;
+  const comment = yield CommentDAO.findById(commentId);
+
+  this.assert(comment, 404);
+
+  yield CommentDAO.deleteById(commentId);
+  this.status = 204;
+}
+
 router.post('/', requireAuth, createTaskWithEvent);
 router.put('/:taskId', requireAuth, createTaskEvent);
 router.put('/:taskId/assignees', requireAuth, updateTaskAssignment);
@@ -193,5 +235,9 @@ router.post('/stage/:stageId', requireAuth, createTaskWithEventOnStage);
 
 router.get('/', requireAuth, getList);
 router.get('/:taskId', requireAuth, getTaskEvent);
+
+router.put('/:taskId/comments/:commentId', requireAuth, createTaskComment);
+router.get('/:taskId/comments', requireAuth, getTaskComments);
+router.del('/:taskId/comments/:commentId', requireAuth, deleteTaskComment);
 
 export = router.routes();
