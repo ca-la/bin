@@ -3,6 +3,7 @@
 const {
   requireProperties,
   requirePropertiesFormatted,
+  hasSomeProperties,
   hasProperties,
   hasOnlyProperties
 } = require('./index');
@@ -44,6 +45,26 @@ test('requirePropertiesFormatted throws an error if properties are missing', asy
     ),
     /Missing required information: The Bar One/
   );
+});
+
+test('hasSomeProperties with a matching subset', async (t) => {
+  t.true(hasSomeProperties({}, 'foo'));
+});
+
+test('hasSomeProperties with a matching keyset', async (t) => {
+  t.true(hasSomeProperties({ foo: 0 }, 'foo'));
+});
+
+test('hasSomeProperties with a matching subset of keys', async (t) => {
+  t.true(hasSomeProperties({ bar: 0 }, 'foo', 'bar', 'baz'));
+});
+
+test('hasSomeProperties with a keyset that is a superset', async (t) => {
+  t.false(hasSomeProperties({ foo: 0, bar: 1 }, 'foo'));
+});
+
+test('hasSomeProperties with a non-matching keyset', async (t) => {
+  t.false(hasSomeProperties({ bar: 1, baz: 2 }, 'foo'));
 });
 
 test('hasProperties with a matching keyset', async (t) => {

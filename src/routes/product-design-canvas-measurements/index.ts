@@ -1,0 +1,108 @@
+import * as Router from 'koa-router';
+import * as Koa from 'koa';
+
+import Measurement from '../../domain-objects/product-design-canvas-measurement';
+import {
+  create,
+  deleteById,
+  findAllByCanvasId,
+  update
+} from '../../dao/product-design-canvas-measurements';
+import { hasOnlyProperties, hasSomeProperties } from '../../services/require-properties';
+
+import requireAuth = require('../../middleware/require-auth');
+
+const router = new Router();
+
+interface GetListQuery {
+  canvasId?: string;
+}
+
+function isMeasurement(candidate: object): candidate is Measurement {
+  return hasOnlyProperties(
+    candidate,
+    'id',
+    'createdAt',
+    'canvasId',
+    'createdBy',
+    'deletedAt',
+    'measurement',
+    'label',
+    'startingX',
+    'startingY',
+    'endingX',
+    'endingY'
+  );
+}
+
+function isUnsavedMeasurement(candidate: object): candidate is Unsaved<Measurement> {
+  return hasSomeProperties(
+    candidate,
+    'canvasId',
+    'createdBy',
+    'measurement',
+    'label',
+    'startingX',
+    'startingY',
+    'endingX',
+    'endingY'
+  );
+}
+
+const measurementFromIO = (
+  request: Measurement,
+  userId: string
+): Measurement => {
+  return {
+    ...request,
+    createdBy: userId
+  };
+};
+
+function* createMeasurement(this: Koa.Application.Context): AsyncIterableIterator<Measurement> {
+  const body = this.request.body;
+  if (body && isMeasurement(body)) {
+    const measurement = yield create(measurementFromIO(body, this.state.userId));
+    this.status = 201;
+    this.body = measurement;
+  } else {
+    this.throw(400, 'Request does not match ProductDesignCanvas');
+  }
+}
+
+function* updateMeasurement(this: Koa.Application.Context): AsyncIterableIterator<Measurement> {
+  const body = this.request.body;
+  if (body && isUnsavedMeasurement(body)) {
+    const measurement = yield update(this.params.measurementId, body);
+    this.status = 200;
+    this.body = measurement;
+  } else {
+    this.throw(400, 'Request does not match ProductDesignCanvas');
+  }
+}
+
+function* deleteMeasurement(this: Koa.Application.Context): AsyncIterableIterator<Measurement> {
+  const measurement = yield deleteById(this.params.measurementId);
+
+  if (!measurement) { this.throw(400, 'Failed to delete the measurement'); }
+
+  this.status = 204;
+}
+
+function* getList(this: Koa.Application.Context): AsyncIterableIterator<Measurement> {
+  const query: GetListQuery = this.query;
+  if (!query.canvasId) {
+    return this.throw('Missing canvasId');
+  }
+
+  const measurements = yield findAllByCanvasId(query.canvasId);
+  this.status = 200;
+  this.body = measurements;
+}
+
+router.get('/', requireAuth, getList);
+router.put('/:measurementId', requireAuth, createMeasurement);
+router.patch('/:measurementId', requireAuth, updateMeasurement);
+router.del('/:measurementId', requireAuth, deleteMeasurement);
+
+export = router.routes();

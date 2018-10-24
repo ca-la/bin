@@ -85,6 +85,22 @@ function assert(value, message) {
 }
 
 /**
+ * A predicate function to check if an object's key-set is a subset of the
+ * passed set of properties
+ *
+ * @example
+ *   hasSomeProperties({ foo: 'bar' }, 'foo', 'baz', 'qux')
+ *   - will return true
+ *   hasProperties({ foo: 'bar' }, 'foo')
+ *   - will return true
+ *   hasProperties({ foo: 'bar', baz: 'qux' }, 'foo')
+ *   - will return false
+ */
+function hasSomeProperties(data, ...props) {
+  return Object.keys(data).every(key => props.includes(key));
+}
+
+/**
  * A predicate function to check if a object's key-set is a superset of the
  * passed set of properties
  *
@@ -122,6 +138,7 @@ module.exports = {
   requireProperties,
   requirePropertiesFormatted,
   requireValues,
+  hasSomeProperties,
   hasProperties,
   hasOnlyProperties
 };
