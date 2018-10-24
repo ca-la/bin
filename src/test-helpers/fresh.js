@@ -7,6 +7,7 @@ const db = require('../services/db');
 
 const TABLES = [
   'addresses',
+  'collaborators',
   'collectionphotos',
   'designerphotos',
   'designers',

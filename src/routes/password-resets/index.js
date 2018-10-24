@@ -2,10 +2,10 @@
 
 const Router = require('koa-router');
 
-const passwordReset = require('../../emails/password-reset');
 const SessionsDAO = require('../../dao/sessions');
 const UsersDAO = require('../../dao/users');
-const { send } = require('../../services/email');
+const passwordReset = require('../../emails/password-reset');
+const { sendSynchronouslyDeprecated } = require('../../services/email');
 
 const router = new Router();
 
@@ -33,7 +33,7 @@ function* sendReset() {
     name: user.name
   });
 
-  yield send(user.email, 'CALA Password Reset', emailTemplate);
+  yield sendSynchronouslyDeprecated(user.email, 'CALA Password Reset', emailTemplate);
 
   this.status = 201;
   this.body = { success: true };

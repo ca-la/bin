@@ -5,6 +5,7 @@ declare class ProductDesign {
   public productType: string;
   public title: string;
   public userId: string;
+  public previewImageUrls?: string[];
 
   constructor(data: any);
 }

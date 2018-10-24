@@ -62,16 +62,17 @@ async function payInvoice(invoiceId, paymentMethodId, userId) {
       );
     }
 
+    const paymentNotification = {
+      channel: 'designers',
+      templateName: 'designer_payment',
+      params: {
+        design,
+        designer: await UsersDAO.findById(userId),
+        paymentAmountCents: invoice.totalCents
+      }
+    };
+
     try {
-      const paymentNotification = {
-        channel: 'designers',
-        templateName: 'designer_payment',
-        params: {
-          design,
-          designer: await UsersDAO.findById(userId),
-          paymentAmountCents: invoice.totalCents
-        }
-      };
       await SlackService.enqueueSend(paymentNotification);
     } catch (e) {
       Logger.logWarning('There was a problem sending the payment notification to Slack', e);

@@ -3,14 +3,14 @@
 const uuid = require('node-uuid');
 const rethrow = require('pg-rethrow');
 
-const { requireProperties } = require('../../services/require-properties');
+const Collection = require('../../domain-objects/collection');
+const InvalidDataError = require('../../errors/invalid-data');
+const ProductDesignsDAO = require('../product-designs');
 const compact = require('../../services/compact');
 const db = require('../../services/db');
 const filterError = require('../../services/filter-error');
 const first = require('../../services/first').default;
-const InvalidDataError = require('../../errors/invalid-data');
-const Collection = require('../../domain-objects/collection');
-const ProductDesignsDAO = require('../product-designs');
+const { requireProperties } = require('../../services/require-properties');
 
 const instantiate = data => new Collection(data);
 const maybeInstantiate = data => (data && new Collection(data)) || null;

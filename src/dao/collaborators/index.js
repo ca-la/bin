@@ -40,7 +40,7 @@ function create(data) {
     .then(attachUser)
     .catch(rethrow)
     .catch(filterError(rethrow.ERRORS.UniqueViolation, () => {
-      throw new InvalidDataError('User has already been invited to this design');
+      throw new InvalidDataError('User has already been invited');
     }));
 }
 
@@ -73,6 +73,17 @@ function findByDesign(designId) {
     .then(collaborators => Promise.all(collaborators.map(attachUser)));
 }
 
+function findByCollection(collectionId) {
+  return db(TABLE_NAME)
+    .where({
+      deleted_at: null,
+      collection_id: collectionId
+    })
+    .catch(rethrow)
+    .then(collaborators => collaborators.map(instantiate))
+    .then(collaborators => Promise.all(collaborators.map(attachUser)));
+}
+
 function findByUserId(userId) {
   return db(TABLE_NAME)
     .where({
@@ -89,6 +100,18 @@ function findByDesignAndUser(designId, userId) {
       deleted_at: null,
       user_id: userId,
       design_id: designId
+    })
+    .then(collaborators => collaborators.map(instantiate))
+    .then(collaborators => Promise.all(collaborators.map(attachUser)))
+    .catch(rethrow);
+}
+
+function findByCollectionAndUser(collectionId, userId) {
+  return db(TABLE_NAME)
+    .where({
+      collection_id: collectionId,
+      deleted_at: null,
+      user_id: userId
     })
     .then(collaborators => collaborators.map(instantiate))
     .then(collaborators => Promise.all(collaborators.map(attachUser)))
@@ -120,6 +143,8 @@ function deleteById(id) {
 module.exports = {
   create,
   deleteById,
+  findByCollection,
+  findByCollectionAndUser,
   findByDesign,
   findByDesignAndUser,
   findById,

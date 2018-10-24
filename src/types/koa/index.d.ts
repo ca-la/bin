@@ -9,6 +9,7 @@ declare module 'koa' {
 
   interface RequestState {
     userId: string;
+    collection?: import ('../../domain-objects/collection');
   }
 
   namespace Koa {

@@ -106,6 +106,8 @@ function createSmsPreregistration(data) {
 }
 
 function findById(id) {
+  if (!id) { throw new Error('Missing user ID'); }
+
   return db('users').where({ id })
     .then(first)
     .then(maybeInstantiate);
