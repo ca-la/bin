@@ -218,16 +218,6 @@ function* getTaskComments(this: Koa.Application.Context): AsyncIterableIterator<
   }
 }
 
-function* deleteTaskComment(this: Koa.Application.Context): AsyncIterableIterator<void> {
-  const { commentId } = this.params;
-  const comment = yield CommentDAO.findById(commentId);
-
-  this.assert(comment, 404);
-
-  yield CommentDAO.deleteById(commentId);
-  this.status = 204;
-}
-
 router.post('/', requireAuth, createTaskWithEvent);
 router.put('/:taskId', requireAuth, createTaskEvent);
 router.put('/:taskId/assignees', requireAuth, updateTaskAssignment);
@@ -238,6 +228,5 @@ router.get('/:taskId', requireAuth, getTaskEvent);
 
 router.put('/:taskId/comments/:commentId', requireAuth, createTaskComment);
 router.get('/:taskId/comments', requireAuth, getTaskComments);
-router.del('/:taskId/comments/:commentId', requireAuth, deleteTaskComment);
 
 export = router.routes();
