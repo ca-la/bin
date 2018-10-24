@@ -1,0 +1,102 @@
+#!/bin/bash
+
+set -euo pipefail
+
+confirm() {
+  echo -n "Are you sure? Type \"$@\" to continue: "
+  read response
+
+  if [ "$response" != "$@" ]; then
+    echo "Response does not match, exiting"
+    exit 1
+  fi
+}
+
+migrate() {
+  $(npm bin)/knex migrate:latest --knexfile dist/knexfile.js
+}
+
+rollback() {
+  $(npm bin)/knex migrate:rollback --knexfile dist/knexfile.js
+}
+
+usage_fail() {
+  echo "Usage: migrate <local|staging|production> [rollback]"
+  exit 1
+}
+
+live_migration_preflight() {
+  if [[ $(git rev-parse --abbrev-ref HEAD) != "master" ]] ; then
+    echo 'Cannot migrate from a branch other than master'
+    exit 1
+  fi
+
+  if [[ $(git status --porcelain) != '' ]] ; then
+    echo 'Cannot migrate with uncommitted changes'
+    exit 1
+  fi
+
+  if [[ $(git cherry -v origin/master) != "" ]]; then
+    echo 'Cannot migrate with unpushed commits'
+    exit 1
+  fi
+
+}
+
+main() {
+  host=${1:-""}
+  rollback_flag=${2:-""}
+
+  if [ "$host" != "local" ]; then
+    live_migration_preflight
+  fi
+
+  make build
+
+  take_action() {
+    if [ "$rollback_flag" == "" ]; then
+      echo 'Migrating...'
+      migrate
+    elif [ "$rollback_flag" == "rollback" ]; then
+      echo 'Rolling back migration...'
+      rollback
+    else
+      usage_fail
+    fi
+  }
+
+  case "$host" in
+    local)
+      echo -n 'Local DB: '
+      take_action
+      echo -n 'Local Test DB: '
+      NODE_ENV=test take_action
+      ;;
+    staging)
+      if [ "$rollback_flag" == "rollback" ]; then
+        confirm 'DANGEROUS_STAGING_ROLLBACK'
+      else
+        confirm 'STAGING'
+      fi
+
+      echo -n 'Staging DB: '
+      DATABASE_URL=$(heroku config:get DATABASE_URL --app cala-api-stg)?ssl=true take_action
+      ;;
+    production)
+      if [ "$rollback_flag" == "rollback" ]; then
+        confirm 'DANGEROUS_PRODUCTION_ROLLBACK'
+      else
+        confirm 'PRODUCTION'
+      fi
+
+      echo -n 'Production DB: '
+      DATABASE_URL=$(heroku config:get DATABASE_URL --app cala-api-prod)?ssl=true take_action
+      echo -n 'Demo DB: '
+      DATABASE_URL=$(heroku config:get DATABASE_URL --app cala-api-demo)?ssl=true take_action
+      ;;
+    *)
+      usage_fail
+  esac
+}
+
+main "$@"

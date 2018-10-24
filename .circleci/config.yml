@@ -30,7 +30,7 @@ jobs:
 
       - run: make lint-ci
       - run: make build
-      - run: bin/migrate-local && bin/rollback-local && bin/migrate-local
+      - run: bin/migrate local && bin/migrate local rollback && bin/migrate local
       - run:
           command: make test-ci
           when: always

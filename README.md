@@ -21,7 +21,7 @@ $ createdb cala-test
 
 After you create the tables you will need to migrate them. When running the
 migration for the first time, `make build` should be run. To run the migration,
-execute the `bin/migrate-local` command outlined in the Migrations section.
+execute the `bin/migrate local` command outlined in the Migrations section.
 
 You'll need several environment variables set to correctly run the API. These
 are available as a note named `CALA API .env file (development)` in the engineering
@@ -83,12 +83,12 @@ $ bin/tt routes/users/spec.js
 To run staging/production migrations, you'll need the [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli).
 
 Staging database migrations should be performed immediately after a pull request
-is merged. Please paste the output of `bin/migrate-stg` into the #eng channel in
-Slack.
+is merged. Please paste the output of `bin/migrate staging` into the #eng
+channel in Slack.
 
 When a production deployment is approved, please run production migrations
-(`bin/migrate-prod`) immediately prior to running the release script. Again,
-paste the output into Slack for visibility.
+(`bin/migrate production`) immediately prior to running the release script.
+Again, paste the output into Slack for visibility.
 
 All migrations **must** be able to work both with the currently-deployed
 application code, and with the code that will be deployed in the associated pull
@@ -101,11 +101,11 @@ deploy; first add the column, then deploy the application code, then add the
 `not null` constraint.
 
 ```bash
-$ bin/create-migration  # Create a new migration
-$ bin/migrate-local     # Migrate local DBs to latest schema
-$ bin/rollback-local    # Roll back latest local migration
-$ bin/migrate-stg       # Migrate staging DB
-$ bin/migrate-prod      # Migrate production DB
+$ bin/create-migration        # Create a new migration
+$ bin/migrate local           # Migrate local DBs to latest schema
+$ bin/migrate local rollback  # Roll back latest local migration
+$ bin/migrate staging         # Migrate staging DB
+$ bin/migrate production      # Migrate production DB
 ```
 
 For advanced usage, see [knexjs.org](http://knexjs.org/#Migrations).
