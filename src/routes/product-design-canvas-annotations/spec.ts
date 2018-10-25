@@ -126,6 +126,7 @@ test(
       userId: user.id
     });
     const designCanvas = await createDesignCanvas({
+      componentId: null,
       createdBy: user.id,
       designId: design.id,
       height: 200,

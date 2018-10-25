@@ -14,6 +14,7 @@ test('ProductDesignCanvasAnnotation DAO supports creation/retrieval', async (t: 
     userId: user.id
   });
   const designCanvas = await createDesignCanvas({
+    componentId: null,
     createdBy: user.id,
     designId: design.id,
     height: 200,
@@ -43,6 +44,7 @@ test('ProductDesignCanvasAnnotation DAO supports updating', async (t: tape.Test)
     userId: user.id
   });
   const designCanvas = await createDesignCanvas({
+    componentId: null,
     createdBy: user.id,
     designId: design.id,
     height: 200,
@@ -84,6 +86,7 @@ test('ProductDesignCanvasAnnotation DAO supports deletion', async (t: tape.Test)
     userId: user.id
   });
   const designCanvas = await createDesignCanvas({
+    componentId: null,
     createdBy: user.id,
     designId: design.id,
     height: 200,
