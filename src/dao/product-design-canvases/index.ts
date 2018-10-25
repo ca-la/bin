@@ -12,12 +12,12 @@ import { validate, validateEvery } from '../../services/validate-from-db';
 const TABLE_NAME = 'product_design_canvases';
 
 export async function create(
-  data: Unsaved<ProductDesignCanvas>
+  data: MaybeUnsaved<ProductDesignCanvas>
 ): Promise<ProductDesignCanvas> {
   const rowData = dataAdapter.forInsertion({
+    id: uuid.v4(),
     ...data,
-    deletedAt: null,
-    id: uuid.v4()
+    deletedAt: null
   });
   const created = await db(TABLE_NAME)
     .insert(rowData, '*')
@@ -42,18 +42,18 @@ export async function update(
     deletedAt: null,
     id
   });
-  const created = await db(TABLE_NAME)
+  const updated = await db(TABLE_NAME)
     .where({ id, deleted_at: null })
     .update(rowData, '*')
     .then((rows: ProductDesignCanvasRow[]) => first<ProductDesignCanvasRow>(rows));
 
-  if (!created) { throw new Error('Failed to create rows'); }
+  if (!updated) { throw new Error('Failed to update rows'); }
 
   return validate<ProductDesignCanvasRow, ProductDesignCanvas>(
     TABLE_NAME,
     isProductDesignCanvasRow,
     dataAdapter,
-    created
+    updated
   );
 }
 
@@ -73,22 +73,25 @@ export async function del(id: string): Promise<ProductDesignCanvas> {
   );
 }
 
-export async function findById(id: string): Promise<ProductDesignCanvas> {
-  const task: ProductDesignCanvasRow[] = await db(TABLE_NAME)
+export async function findById(id: string): Promise<ProductDesignCanvas | null> {
+  const canvas = await db(TABLE_NAME)
     .select('*')
     .where({ id, deleted_at: null })
-    .limit(1);
+    .limit(1)
+    .then((rows: ProductDesignCanvasRow[]) => first<ProductDesignCanvasRow>(rows));
+
+  if (!canvas) { return null; }
 
   return validate<ProductDesignCanvasRow, ProductDesignCanvas>(
     TABLE_NAME,
     isProductDesignCanvasRow,
     dataAdapter,
-    task[0]
+    canvas
   );
 }
 
 export async function findAllByDesignId(id: string): Promise<ProductDesignCanvas[]> {
-  const task: ProductDesignCanvasRow[] = await db(TABLE_NAME)
+  const canvases: ProductDesignCanvasRow[] = await db(TABLE_NAME)
     .select('*')
     .where({ design_id: id, deleted_at: null });
 
@@ -96,6 +99,6 @@ export async function findAllByDesignId(id: string): Promise<ProductDesignCanvas
     TABLE_NAME,
     isProductDesignCanvasRow,
     dataAdapter,
-    task
+    canvases
   );
 }

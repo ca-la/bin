@@ -9,3 +9,6 @@ type Uninserted<T extends WithCreatedDate> = Omit<T, 'created_at' | 'createdAt'>
 
 type Unsaved<T extends { createdAt?: Date, id?: string, deletedAt?: Date | null }> =
   Omit<T, 'createdAt' | 'id' | 'deletedAt'>;
+
+type MaybeUnsaved<T extends { createdAt?: Date, id?: string, deletedAt?: Date | null }> =
+  Omit<T, 'createdAt' | 'id' | 'deletedAt'> & { id?: string };

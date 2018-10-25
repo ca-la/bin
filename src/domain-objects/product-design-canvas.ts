@@ -21,6 +21,7 @@ export default interface ProductDesignCanvas {
   designId: string;
   createdAt: Date;
   createdBy: string;
+  componentId: string | null;
   title: string;
   width: number;
   height: number;
@@ -34,6 +35,7 @@ export interface ProductDesignCanvasRow {
   design_id: string;
   created_at: Date;
   created_by: Date;
+  component_id: string | null;
   title: string;
   width: number;
   height: number;
@@ -49,6 +51,7 @@ export function isUnsavedProductDesignCanvas(obj: object): obj is Unsaved<Produc
     obj,
     'createdBy',
     'designId',
+    'componentId',
     'title',
     'width',
     'height',
@@ -64,6 +67,7 @@ export function isProductDesignCanvasRow(row: object): row is ProductDesignCanva
     'design_id',
     'created_at',
     'created_by',
+    'component_id',
     'title',
     'width',
     'height',

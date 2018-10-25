@@ -5,7 +5,10 @@ const pick = require('lodash/pick');
 const Router = require('koa-router');
 const uuid = require('node-uuid');
 
-const { AWS_S3_THUMBNAIL_BUCKET_NAME } = require('../../config');
+const {
+  AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME,
+  AWS_S3_THUMBNAIL_BUCKET_NAME
+} = require('../../config');
 const canAccessAnnotation = require('../../middleware/can-access-annotation');
 const canAccessSection = require('../../middleware/can-access-section');
 const canAccessUserResource = require('../../middleware/can-access-user-resource');
@@ -118,6 +121,22 @@ function* getDesign() {
 }
 
 function* getDesignUploadPolicy() {
+  const remoteFileName = this.params.id || uuid.v4();
+  const { url, fields } = yield AWSService.getUploadPolicy(
+    AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME,
+    remoteFileName
+  );
+
+  this.body = {
+    downloadUrl: `https://${AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME}.s3.amazonaws.com/${remoteFileName}`,
+    formData: fields,
+    remoteFileName,
+    uploadUrl: url
+  };
+  this.status = 200;
+}
+
+function* getThumbnailUploadPolicy() {
   const remoteFileName = this.params.sectionId || uuid.v4();
   const { url, fields } = yield AWSService.getThumbnailUploadPolicy(
     AWS_S3_THUMBNAIL_BUCKET_NAME,
@@ -454,7 +473,8 @@ router.del('/:designId', requireAuth, canAccessDesignInParam, deleteDesign);
 router.get('/:designId', requireAuth, canAccessDesignInParam, getDesign);
 router.patch('/:designId', requireAuth, canAccessDesignInParam, updateDesign);
 
-router.get('/:designId/upload-policy/:sectionId', requireAuth, canAccessDesignInParam, getDesignUploadPolicy);
+router.get('/:designId/upload-policy/:sectionId', requireAuth, canAccessDesignInParam, getThumbnailUploadPolicy);
+router.get('/upload-policy/:id', requireAuth, getDesignUploadPolicy);
 
 router.get('/:designId/pricing', requireAuth, canAccessDesignInParam, getDesignPricing);
 

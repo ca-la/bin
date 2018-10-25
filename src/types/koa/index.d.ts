@@ -9,6 +9,7 @@ declare module 'koa' {
 
   interface RequestState {
     userId: string;
+    role: string;
     collection?: import ('../../domain-objects/collection');
   }
 
@@ -40,7 +41,7 @@ declare module 'koa' {
         writable: boolean;
 
         attachment(filename: string): void;
-        redirect(url: string, alt?: string): void;
+        redirect(url: string, alt?: string | number): void;
         remove(field: string): void;
         vary(field: string): void;
         set(field: { [key: string]: string }): void;

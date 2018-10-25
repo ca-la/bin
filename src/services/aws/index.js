@@ -105,6 +105,40 @@ async function getDownloadUrl(bucketName, remoteFileName) {
 }
 
 /**
+ * Get POST upload policy document for product-design-images S3 bucket
+ * URL expires after 60 seconds, and file must be smaller than 50 MB
+ *
+ * See: https://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-HTTPPOSTConstructPolicy.html
+ *
+ * @param {string} bucketName Bucket to upload image to
+ * @param {string} remoteFileName S3 object key for image
+ * @returns {object} Upload/download urls, and form fields to use in POST
+ */
+async function getUploadPolicy(bucketName, remoteFileName) {
+  requireValues({ bucketName, remoteFileName });
+  const s3 = new AWS.S3({
+    credentials: new AWS.Credentials({
+      accessKeyId: AWS_ACCESS_KEY,
+      secretAccessKey: AWS_SECRET_KEY
+    }),
+    region: 'us-east-2'
+  });
+  const FILE_LIMIT = 500 * (1024 ** 2);
+
+  const createPresignedPost = promisify(s3.createPresignedPost.bind(s3));
+
+  return createPresignedPost({
+    Bucket: bucketName,
+    Expires: 60,
+    Conditions: [
+      { acl: 'public-read' },
+      { key: remoteFileName },
+      ['content-length-range', 0, FILE_LIMIT]
+    ]
+  });
+}
+
+/**
  * Get POST upload policy document for Thumbnail S3 bucket
  * URL expires after 60 seconds, and thumbnail must be smaller than 10 MB
  *
@@ -168,6 +202,7 @@ async function enqueueMessage(
 module.exports = {
   getDownloadUrl,
   getThumbnailUploadPolicy,
+  getUploadPolicy,
   uploadFile,
   deleteFile,
   getFile,

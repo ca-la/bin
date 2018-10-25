@@ -16,7 +16,7 @@ const TABLE_NAME = 'product_design_images';
 function create(data) {
   return db(TABLE_NAME)
     .insert({
-      id: uuid.v4(),
+      id: data.id || uuid.v4(),
       user_id: data.userId,
       original_height_px: data.originalHeightPx,
       original_width_px: data.originalWidthPx,

@@ -71,6 +71,29 @@ function* createImage() {
   this.body = image;
 }
 
+function* create() {
+  const {
+    title,
+    description,
+    originalHeightPx,
+    originalWidthPx,
+    mimeType
+  } = this.request.body;
+
+  const image = yield ProductDesignImagesDAO.create({
+    id: this.params.imageId,
+    title,
+    description,
+    originalHeightPx,
+    originalWidthPx,
+    mimeType,
+    userId: this.state.userId
+  });
+
+  this.status = 201;
+  this.body = image;
+}
+
 function* getList() {
   const isAuthorized = (
     this.query.userId === this.state.userId ||
@@ -123,6 +146,7 @@ function* deleteById() {
 }
 
 router.post('/', requireAuth, multer(), createImage);
+router.put('/:imageId', requireAuth, create);
 router.get('/', requireAuth, getList);
 router.get('/:imageId', requireAuth, getById);
 router.get('/:imageId/download', downloadById);
