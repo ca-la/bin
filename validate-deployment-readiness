@@ -73,7 +73,7 @@ function getDeployedHash(target) {
           }
 
           if (responseJson.status === 'ok') {
-            return resolve(responseJson.lastMigrationHash);
+            return resolve(responseJson.migrationListHash);
           }
 
           return reject(new ServerNotOkError(`The server indicated that there was something wrong:
