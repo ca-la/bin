@@ -11,17 +11,17 @@ const router = new Router();
 // eslint-disable-next-line require-yield
 function* getRoot() {
   const result = yield db.raw(`
-    select name from knex_migrations order by migration_time desc limit 1;
+    select name from knex_migrations order by name desc;
   `);
 
-  const lastMigrationName = result.rows[0].name;
-  const lastMigrationHash = sha256(lastMigrationName);
+  const names = result.rows.map(row => row.name).join('\n');
+  const migrationListHash = sha256(names);
 
   this.status = 200;
   this.body = {
     name: pkg.name,
     version: pkg.version,
-    lastMigrationHash,
+    migrationListHash,
     status: 'ok'
   };
 }
