@@ -26,27 +26,19 @@ class ServerNotOkError extends Error {
   }
 }
 
-function getLocalMigration(migrationPath) {
+function getLocalList(migrationPath) {
   return new Promise((resolve, reject) => {
     fs.readdir(migrationPath, (err, files) => {
       if (err) {
         return reject(err);
       }
 
-      const lastMigration = files
+      const migrationFiles = files
         .sort()
         .reverse()
-        .reduce(
-          (acc, file) => {
-            if (!acc && file.substring(file.length - 3) === '.js') {
-              return file;
-            }
+        .filter(file => file.substring(file.length - 3) === '.js');
 
-            return acc;
-          },
-          null
-        );
-      return resolve(lastMigration);
+      return resolve(migrationFiles);
     });
   });
 }
@@ -81,7 +73,7 @@ function getDeployedHash(target) {
           }
 
           if (responseJson.status === 'ok') {
-            return resolve(responseJson.lastMigrationHash);
+            return resolve(responseJson.migrationListHash);
           }
 
           return reject(new ServerNotOkError(`The server indicated that there was something wrong:
@@ -117,9 +109,9 @@ async function main() {
   }
   console.log(`${yellow}Deployed hash: ${reset}${deployedHash}`);
 
-  const latestLocalMigration = await getLocalMigration(migrationPath);
-  const localHash = hash.update(latestLocalMigration).digest('hex');
-  console.log(`${yellow}Local hash:    ${reset}${localHash} (from file: ${latestLocalMigration})`);
+  const localList = await getLocalList(migrationPath);
+  const localHash = hash.update(localList.join('\n')).digest('hex');
+  console.log(`${yellow}Local hash:    ${reset}${localHash} (latest file: ${localList[0]})`);
 
   if (deployedHash === localHash) {
     console.log(`${green}Migration hashes match. Ready to roll.${reset}`);
