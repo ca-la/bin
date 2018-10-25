@@ -1,19 +1,21 @@
 import { omit } from 'lodash';
 import * as db from '../../services/db';
+import * as Knex from 'knex';
 import Comment, { CommentRow, dataAdapter, isCommentRow } from '../../domain-objects/comment';
 import { validate } from '../../services/validate-from-db';
 
 const TABLE_NAME = 'comments';
 
 export async function create(
-  data: Comment
+  data: Comment,
+  trx?: Knex.Transaction
 ): Promise<Comment> {
   const rowData = dataAdapter.forInsertion(data);
-  const comments: CommentRow[] = await db(TABLE_NAME)
-    .insert(rowData)
-    .returning('*');
-
+  const comments: CommentRow[] = trx
+    ? await db(TABLE_NAME).transacting(trx).insert(rowData).returning('*')
+    : await db(TABLE_NAME).insert(rowData).returning('*');
   const comment = comments[0];
+
   if (!data) {
     throw new Error('There was a problem saving the comment');
   }
