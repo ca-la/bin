@@ -7,6 +7,7 @@ const uuid = require('node-uuid');
 
 const {
   AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME,
+  AWS_PRODUCT_DESIGN_IMAGE_BUCKET_REGION,
   AWS_S3_THUMBNAIL_BUCKET_NAME
 } = require('../../config');
 const canAccessAnnotation = require('../../middleware/can-access-annotation');
@@ -124,6 +125,7 @@ function* getDesignUploadPolicy() {
   const remoteFileName = this.params.id || uuid.v4();
   const { url, fields } = yield AWSService.getUploadPolicy(
     AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME,
+    AWS_PRODUCT_DESIGN_IMAGE_BUCKET_REGION,
     remoteFileName
   );
 

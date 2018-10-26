@@ -114,14 +114,14 @@ async function getDownloadUrl(bucketName, remoteFileName) {
  * @param {string} remoteFileName S3 object key for image
  * @returns {object} Upload/download urls, and form fields to use in POST
  */
-async function getUploadPolicy(bucketName, remoteFileName) {
+async function getUploadPolicy(bucketName, region, remoteFileName) {
   requireValues({ bucketName, remoteFileName });
   const s3 = new AWS.S3({
     credentials: new AWS.Credentials({
       accessKeyId: AWS_ACCESS_KEY,
       secretAccessKey: AWS_SECRET_KEY
     }),
-    region: 'us-east-2'
+    region
   });
   const FILE_LIMIT = 500 * (1024 ** 2);
 
