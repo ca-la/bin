@@ -1,11 +1,13 @@
 'use strict';
 
 const Router = require('koa-router');
+const pick = require('lodash/pick');
 
 const filterError = require('../../services/filter-error');
 const InvalidDataError = require('../../errors/invalid-data');
 const canAccessUserResource = require('../../middleware/can-access-user-resource');
 const CollectionsDAO = require('../../dao/collections');
+const { UPDATABLE_PARAMS } = require('../../domain-objects/collection');
 const ProductDesignsDAO = require('../../dao/product-designs');
 const requireAuth = require('../../middleware/require-auth');
 
@@ -29,6 +31,16 @@ function* getCollection() {
   const collection = yield CollectionsDAO.findById(collectionId);
   canAccessUserResource.call(this, collection.createdBy);
 
+  this.body = collection;
+  this.status = 200;
+}
+
+function* updateCollection() {
+  const { collectionId } = this.params;
+  const data = pick(this.request.body, UPDATABLE_PARAMS);
+  const collection = yield CollectionsDAO
+    .update(collectionId, data)
+    .catch(filterError(InvalidDataError, err => this.throw(400, err)));
   this.body = collection;
   this.status = 200;
 }
@@ -98,6 +110,7 @@ router.get('/', requireAuth, getCollections);
 
 router.del('/:collectionId', requireAuth, deleteCollection);
 router.get('/:collectionId', requireAuth, getCollection);
+router.patch('/:collectionId', requireAuth, updateCollection);
 
 router.get('/:collectionId/designs', requireAuth, getCollectionDesigns);
 router.del('/:collectionId/designs/:designId', requireAuth, deleteDesign);

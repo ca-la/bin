@@ -12,6 +12,11 @@ const keyNamesByColumnName = {
   description: 'description'
 };
 
+const UPDATABLE_PARAMS = [
+  'title',
+  'description'
+];
+
 const dataMapper = new DataMapper(keyNamesByColumnName);
 
 class Collection {
@@ -30,3 +35,4 @@ class Collection {
 Collection.dataMapper = dataMapper;
 
 module.exports = Collection;
+module.exports.UPDATABLE_PARAMS = UPDATABLE_PARAMS;

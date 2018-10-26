@@ -4,7 +4,7 @@ const CollectionsDAO = require('../../dao/collections');
 const createUser = require('../../test-helpers/create-user');
 const ProductDesignsDAO = require('../../dao/product-designs');
 const {
-  authHeader, del, post, get, put
+  authHeader, del, post, get, patch, put
 } = require('../../test-helpers/http');
 const { test } = require('../../test-helpers/fresh');
 
@@ -33,6 +33,29 @@ test('GET /collections/:id returns a created collection', async (t) => {
     postCollection,
     getCollection,
     'return from POST is identical to GET'
+  );
+});
+
+test('PATCH /collections/:collectionId allows updates to a collection', async (t) => {
+  const { session } = await createUser();
+  const body = {
+    title: 'Drop 001/The Early Years',
+    description: 'Initial commit'
+  };
+  const postResponse = await post(
+    '/collections',
+    { headers: authHeader(session.id), body }
+  );
+
+  const updateBody = { title: 'Droppin bombs' };
+  const updateResponse = await patch(
+    `/collections/${postResponse[1].id}`,
+    { body: updateBody, headers: authHeader(session.id) }
+  );
+  t.deepEqual(
+    updateResponse[1],
+    { ...postResponse[1], title: updateBody.title },
+    'PATCH updates the record'
   );
 });
 
