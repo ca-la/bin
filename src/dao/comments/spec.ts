@@ -19,7 +19,9 @@ test('Comment DAO supports creation/retrieval', async (t: tape.Test) => {
     isPinned: false,
     parentCommentId: null,
     text: 'A comment',
-    userId: user.id
+    userEmail: user.email,
+    userId: user.id,
+    userName: user.name
   });
 
   const result = await findById(comment.id);
@@ -36,7 +38,9 @@ test('Comment DAO supports update', async (t: tape.Test) => {
     isPinned: false,
     parentCommentId: null,
     text: 'A comment',
-    userId: user.id
+    userEmail: user.email,
+    userId: user.id,
+    userName: user.name
   });
   const updated = await update({
     ...comment,
@@ -61,7 +65,9 @@ test('Comment DAO supports delete', async (t: tape.Test) => {
     isPinned: false,
     parentCommentId: null,
     text: 'A comment',
-    userId: user.id
+    userEmail: user.email,
+    userId: user.id,
+    userName: user.name
   });
   await deleteById(comment.id);
 

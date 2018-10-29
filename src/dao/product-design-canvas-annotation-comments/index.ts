@@ -38,13 +38,14 @@ export async function create(
 
 export async function findByAnnotationId(annotationId: string): Promise<Comment[] | null> {
   const comments: CommentRow[] = await db
-    .select('comments.*')
+    .select(['comments.*', { user_name: 'users.name' }, { user_email: 'users.email' }])
     .from('comments')
     .join(
       'product_design_canvas_annotation_comments',
       'product_design_canvas_annotation_comments.comment_id',
       'comments.id'
     )
+    .join('users', 'users.id', 'comments.user_id')
     .where({
       'comments.deleted_at': null,
       'product_design_canvas_annotation_comments.annotation_id': annotationId

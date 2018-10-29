@@ -10,7 +10,9 @@ import { hasOnlyProperties } from '../services/require-properties';
  * @property {string} text The comment body text
  * @property {string|null} parent_comment_id ID of the comment that is the parent of
  *   this comment
- * @property {string} user_id ID of the author of this comment
+ * @property {string} user_id Comment author ID
+ * @property {string|null} user_name Comment author name
+ * @property {string} user_email Comment author email
  * @property {boolean} is_pinned Is this comment a pinned comment?
  */
 export default interface Comment {
@@ -20,6 +22,8 @@ export default interface Comment {
   text: string;
   parentCommentId: string | null;
   userId: string;
+  userName: string | null;
+  userEmail: string | null;
   isPinned: boolean;
 }
 
@@ -30,6 +34,8 @@ export interface CommentRow {
   text: string;
   parent_comment_id: string | null;
   user_id: string;
+  user_name: string | null;
+  user_email: string | null;
   is_pinned: boolean;
 }
 
@@ -43,6 +49,8 @@ export function isCommentRow(row: object): row is CommentRow {
     'deleted_at',
     'text',
     'parent_comment_id',
+    'user_name',
+    'user_email',
     'user_id',
     'is_pinned'
   );
@@ -57,6 +65,22 @@ export function isComment(candidate: object): candidate is Comment {
     'isPinned',
     'parentCommentId',
     'text',
-    'userId'
+    'userId',
+    'userName',
+    'userEmail'
   );
 }
+
+export const UPDATABLE_COLUMNS = [
+  'is_pinned',
+  'text'
+];
+
+export const INSERTABLE_COLUMNS = [
+  'id',
+  'created_at',
+  'is_pinned',
+  'parent_comment_id',
+  'text',
+  'user_id'
+];

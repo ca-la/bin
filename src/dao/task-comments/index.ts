@@ -38,9 +38,10 @@ export async function findByTaskId(
   taskId: string
 ): Promise<Comment[] | null> {
   const comments: CommentRow[] = await db
-    .select('comments.*')
+    .select(['comments.*', { user_name: 'users.name' }, { user_email: 'users.email' }])
     .from('comments')
     .join('task_comments', 'task_comments.comment_id', 'comments.id')
+    .join('users', 'users.id', 'comments.user_id')
     .where({
       'comments.deleted_at': null,
       'task_comments.task_id': taskId

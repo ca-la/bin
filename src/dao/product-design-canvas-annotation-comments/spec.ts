@@ -43,7 +43,9 @@ test(
       isPinned: false,
       parentCommentId: null,
       text: 'A comment',
-      userId: user.id
+      userEmail: user.email,
+      userId: user.id,
+      userName: user.name
     });
     await create({
       annotationId: annotation.id,

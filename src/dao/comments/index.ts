@@ -1,8 +1,15 @@
-import { omit } from 'lodash';
+import { pick } from 'lodash';
 import * as db from '../../services/db';
 import * as Knex from 'knex';
-import Comment, { CommentRow, dataAdapter, isCommentRow } from '../../domain-objects/comment';
+import Comment, {
+  CommentRow,
+  dataAdapter,
+  INSERTABLE_COLUMNS,
+  isCommentRow,
+  UPDATABLE_COLUMNS
+} from '../../domain-objects/comment';
 import { validate } from '../../services/validate-from-db';
+import first from '../../services/first';
 
 const TABLE_NAME = 'comments';
 
@@ -10,13 +17,26 @@ export async function create(
   data: Comment,
   trx?: Knex.Transaction
 ): Promise<Comment> {
-  const rowData = dataAdapter.forInsertion(data);
-  const comments: CommentRow[] = trx
-    ? await db(TABLE_NAME).transacting(trx).insert(rowData).returning('*')
-    : await db(TABLE_NAME).insert(rowData).returning('*');
-  const comment = comments[0];
+  const rowDataForInsertion = pick(
+    dataAdapter.forInsertion(data),
+    INSERTABLE_COLUMNS
+  );
+  await db(TABLE_NAME)
+    .insert(rowDataForInsertion);
+  const comment: CommentRow | undefined = await db(TABLE_NAME)
+    .select(['comments.*', { user_name: 'users.name' }, { user_email: 'users.email' }])
+    .join('users', 'users.id', 'comments.user_id')
+    .where({ 'comments.id': data.id, 'comments.deleted_at': null })
+    .orderBy('created_at', 'asc')
+    .limit(1)
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
+    .then((comments: CommentRow[]) => first(comments));
 
-  if (!data) {
+  if (!comment) {
     throw new Error('There was a problem saving the comment');
   }
 
@@ -31,13 +51,14 @@ export async function create(
 export async function findById(
   id: string
 ): Promise<Comment | null> {
-  const comments: CommentRow[] = await db(TABLE_NAME)
-    .select('*')
-    .where({ id, deleted_at: null })
+  const comment: CommentRow | undefined = await db(TABLE_NAME)
+    .select(['comments.*', { user_name: 'users.name' }, { user_email: 'users.email' }])
+    .join('users', 'users.id', 'comments.user_id')
+    .where({ 'comments.id': id, 'comments.deleted_at': null })
     .orderBy('created_at', 'asc')
-    .limit(1);
+    .limit(1)
+    .then((comments: CommentRow[]) => first(comments));
 
-  const comment = comments[0];
   if (!comment) { return null; }
 
   return validate<CommentRow, Comment>(
@@ -51,14 +72,23 @@ export async function findById(
 export async function update(
   data: Comment
 ): Promise<Comment> {
-  const rowData = dataAdapter.forInsertion(data);
-  const comments: CommentRow[] = await db(TABLE_NAME)
+  const rowDataForUpdate = pick(
+    dataAdapter.forInsertion(data),
+    UPDATABLE_COLUMNS
+  );
+  await db(TABLE_NAME)
     .where({ id: data.id, deleted_at: null })
-    .update(omit(rowData, ['id']))
-    .returning('*');
+    .update(rowDataForUpdate);
 
-  const comment = comments[0];
-  if (!data) {
+  const comment: CommentRow | undefined = await db(TABLE_NAME)
+    .select(['comments.*', { user_name: 'users.name' }, { user_email: 'users.email' }])
+    .join('users', 'users.id', 'comments.user_id')
+    .where({ 'comments.id': data.id, 'comments.deleted_at': null })
+    .orderBy('created_at', 'asc')
+    .limit(1)
+    .then((comments: CommentRow[]) => first(comments));
+
+  if (!comment) {
     throw new Error('There was a problem saving the comment');
   }
 

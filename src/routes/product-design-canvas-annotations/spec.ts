@@ -184,7 +184,9 @@ test(
       isPinned: false,
       parentCommentId: null,
       text: 'A comment',
-      userId: 'purposefully incorrect'
+      userEmail: 'cool@me.me',
+      userId: 'purposefully incorrect',
+      userName: 'Somebody cool'
     };
 
     const annotationResponse = await put(`${API_PATH}/${annotationId}`, {
@@ -209,7 +211,9 @@ test(
       annotationCommentResponse[1],
       [{
         ...commentBody,
-        userId: user.id
+        userEmail: user.email,
+        userId: user.id,
+        userName: user.name
       }],
       'Comment retrieval returns the created comment in an array'
     );

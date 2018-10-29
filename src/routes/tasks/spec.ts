@@ -282,7 +282,9 @@ test('PUT /tasks/:taskId/comment/:id creates a task comment', async (t: tape.Tes
     isPinned: false,
     parentCommentId: null,
     text: 'A comment',
-    userId: 'purposefully incorrect'
+    userEmail: 'cool@me.me',
+    userId: 'purposefully incorrect',
+    userName: 'Somebody Cool'
   };
   const comment = await put(
     `/tasks/${task[1].id}/comments/${uuid.v4()}`,
@@ -302,7 +304,9 @@ test('PUT /tasks/:taskId/comment/:id creates a task comment', async (t: tape.Tes
     taskComment[1],
     [{
       ...commentBody,
-      userId: user.id
+      userEmail: user.email,
+      userId: user.id,
+      userName: user.name
     }],
     'Comment retrieval returns the created comment in an array'
   );
