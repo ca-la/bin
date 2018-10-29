@@ -2,13 +2,15 @@ import { escape } from 'lodash';
 
 import CollaboratorsDAO = require('../../dao/collaborators');
 import CollectionsDAO = require('../../dao/collections');
+import config = require('../../config');
 import EmailService = require('../email');
 import InvalidDataError = require('../../errors/invalid-data');
+import Logger = require('../logger');
+import normalizeEmail = require('../normalize-email');
 import ProductDesignsDAO = require('../../dao/product-designs');
 import UsersDAO = require('../../dao/users');
 import Validation = require('../../services/validation');
-import config = require('../../config');
-import normalizeEmail = require('../normalize-email');
+
 const { STUDIO_HOST } = config;
 
 type Role = 'EDIT' | 'COMMENT' | 'VIEW';
@@ -18,6 +20,9 @@ function getRoleDescription(role: Role): string {
     case 'EDIT': return 'edit';
     case 'COMMENT': return 'comment on';
     case 'VIEW': return 'view';
+    default:
+      Logger.logServerError(`Missing or unknown sharing role: ${role}`);
+      return 'collaborate on';
   }
 }
 

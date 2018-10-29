@@ -74,6 +74,29 @@ test('POST /collaborators allows adding collaborators on a collection', async (t
   t.equal(body.designId, null);
 });
 
+test('POST /collaborators throws 400 with unknown role', async (t: Test) => {
+  sandbox().stub(EmailService, 'enqueueSend').resolves();
+
+  const { session, user } = await createUser();
+  const collection = await CollectionsDAO.create({
+    createdBy: user.id,
+    title: 'AW19'
+  });
+
+  const [response, body] = await post('/collaborators', {
+    body: {
+      collectionId: collection.id,
+      invitationMessage: "TAke a look, y'all",
+      role: 'FRIEND',
+      userEmail: 'you@example.com'
+    },
+    headers: authHeader(session.id)
+  });
+
+  t.equal(response.status, 400);
+  t.equal(body.message, 'Unknown role: FRIEND');
+});
+
 test('GET /collaborators allows querying by collection ID', async (t: Test) => {
   sandbox().stub(EmailService, 'enqueueSend').resolves();
   const { session, user } = await createUser();

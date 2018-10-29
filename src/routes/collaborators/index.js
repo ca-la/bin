@@ -5,6 +5,7 @@ const Router = require('koa-router');
 const addCollaborator = require('../../services/add-collaborator');
 const InvalidDataError = require('../../errors/invalid-data');
 const CollaboratorsDAO = require('../../dao/collaborators');
+const Collaborator = require('../../domain-objects/collaborator');
 const requireAuth = require('../../middleware/require-auth');
 const { canAccessDesignId } = require('../../middleware/can-access-design');
 const { canAccessCollectionId } = require('../../middleware/can-access-collection');
@@ -27,6 +28,9 @@ function* create() {
   if (collectionId) {
     yield canAccessCollectionId.call(this, collectionId);
   }
+
+  const roles = Object.values(Collaborator.ROLES);
+  this.assert(roles.includes(role), 400, `Unknown role: ${role}`);
 
   const created = yield addCollaborator({
     inviterUserId: this.state.userId,
