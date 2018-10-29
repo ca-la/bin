@@ -138,6 +138,7 @@ function* updateTaskAssignment(this: Koa.Application.Context): AsyncIterableIter
   if (body && isUserTaskRequest(body)) {
     const { userIds } = body;
     const existingRelationships = yield UserTasksDAO.findAllByTaskId(taskId);
+
     const existingUserIds: string[] = existingRelationships.map((userTask: UserTask) => {
       return userTask.userId;
     });
@@ -149,11 +150,13 @@ function* updateTaskAssignment(this: Koa.Application.Context): AsyncIterableIter
     });
 
     yield UserTasksDAO.deleteAllByUserIdsAndTaskId(existingIdsToDelete, taskId);
-    const newUserTasks: UserTask[] = yield UserTasksDAO
-      .createAllByUserIdsAndTaskId(newIds, taskId);
+
+    if (newIds.length > 0) {
+      yield UserTasksDAO.createAllByUserIdsAndTaskId(newIds, taskId);
+    }
 
     this.status = 200;
-    this.body = newUserTasks;
+    this.body = yield UserTasksDAO.findAllByTaskId(taskId);
   } else {
     this.throw(400, `Request does not match model: ${Object.keys(body)}`);
   }

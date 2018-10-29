@@ -85,8 +85,18 @@ test('UserTask DAO supports multiple simultaneous creations', async (t: tape.Tes
     [userOne.user.id, userTwo.user.id],
     taskOne.id
   );
-
   t.equal(results.length, 2, 'Created two new records');
+});
+
+test('UserTask DAO prevents task assignment on no users', async (t: tape.Test) => {
+  const task = await createTask(uuid.v4());
+
+  try {
+    await createAllByUserIdsAndTaskId([], task.id);
+    t.fail('Should not allow empty assignment');
+  } catch {
+    t.pass('Does not allow empty assignment');
+  }
 });
 
 test('UserTask DAO supports multiple simultaneous deletions', async (t: tape.Test) => {
@@ -107,15 +117,15 @@ test('UserTask DAO supports multiple simultaneous deletions', async (t: tape.Tes
     userId: userThree.user.id
   });
 
+  const emptyDeletionResults = await deleteAllByUserIdsAndTaskId([], taskOne.id);
+  t.equal(emptyDeletionResults, 0, 'Specifying no users does not delete anything');
+
   const deletionResults = await deleteAllByUserIdsAndTaskId(
     [userOne.user.id, userThree.user.id],
     taskOne.id
   );
   t.deepEqual(deletionResults, 2, 'Deleted the user task associations');
-  const firstResult = await findById(userTaskOne.id);
-  t.deepEqual(firstResult, null, 'Record is no longer persisted');
-  const secondResult = await findById(userTaskTwo.id);
-  t.deepEqual(secondResult, userTaskTwo, 'Record is still there.');
-  const thirdResult = await findById(userTaskThree.id);
-  t.deepEqual(thirdResult, null, 'Record is no longer persisted');
+  t.deepEqual(await findById(userTaskOne.id), null, 'Record is no longer persisted');
+  t.deepEqual(await findById(userTaskTwo.id), userTaskTwo, 'Record is still there.');
+  t.deepEqual(await findById(userTaskThree.id), null, 'Record is no longer persisted');
 });

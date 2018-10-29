@@ -197,14 +197,37 @@ test('PUT /tasks/:taskId creates TaskEvent successfully', async (t: tape.Test) =
 
 test('PUT /tasks/:taskId/assignees adds Users to Tasks successfully', async (t: tape.Test) => {
   const { session, user } = await createUser();
+  const secondUser = await createUser();
   const task = await tasksDAO.create(uuid.v4());
 
-  const [response, body] = await put(`/tasks/${task.id}/assignees`, {
+  const [responseOne, bodyOne] = await put(`/tasks/${task.id}/assignees`, {
     body: { userIds: [user.id] },
     headers: authHeader(session.id)
   });
-  t.equal(response.status, 200);
-  t.equal(body.length, 1);
+  t.equal(responseOne.status, 200);
+  t.equal(bodyOne[0].userId, user.id);
+
+  const [responseTwo, bodyTwo] = await put(`/tasks/${task.id}/assignees`, {
+    body: { userIds: [user.id, secondUser.user.id] },
+    headers: authHeader(session.id)
+  });
+  t.equal(responseTwo.status, 200);
+  t.equal(bodyTwo[0].userId, secondUser.user.id);
+  t.equal(bodyTwo[1].userId, user.id);
+
+  const [responseThree, bodyThree] = await put(`/tasks/${task.id}/assignees`, {
+    body: { userIds: [secondUser.user.id] },
+    headers: authHeader(session.id)
+  });
+  t.equal(responseThree.status, 200);
+  t.equal(bodyThree[0].userId, secondUser.user.id);
+
+  const [responseFour, bodyFour] = await put(`/tasks/${task.id}/assignees`, {
+    body: { userIds: [] },
+    headers: authHeader(session.id)
+  });
+  t.equal(responseFour.status, 200);
+  t.equal(bodyFour.length, 0);
 });
 
 test('POST /tasks/stage/:stageId creates Task on Stage successfully', async (t: tape.Test) => {

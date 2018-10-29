@@ -42,6 +42,10 @@ export async function createAllByUserIdsAndTaskId(
   userIds: string[],
   taskId: string
 ): Promise<UserTask[]> {
+  if (userIds.length === 0) {
+    throw new Error('At least one user is needed for task assignment');
+  }
+
   const dataRows = userIds.map((userId: string) => {
     return dataAdapter.forInsertion({
       id: uuid.v4(),
