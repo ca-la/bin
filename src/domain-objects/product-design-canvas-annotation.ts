@@ -21,6 +21,12 @@ export interface ProductDesignCanvasAnnotationRow {
   y: number;
 }
 
+export const UPDATABLE_PROPERTIES = [
+  'canvas_id',
+  'x',
+  'y'
+];
+
 export const dataAdapter = new DataAdapter<
   ProductDesignCanvasAnnotationRow,
   ProductDesignCanvasAnnotation

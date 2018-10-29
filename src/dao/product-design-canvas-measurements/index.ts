@@ -1,8 +1,10 @@
 import * as db from '../../services/db';
+import { pick } from 'lodash';
 import Measurement, {
   dataAdapter,
   isProductDesignCanvasMeasurementRow as isMeasurementRow,
-  ProductDesignCanvasMeasurementRow as MeasurementRow
+  ProductDesignCanvasMeasurementRow as MeasurementRow,
+  UPDATABLE_PROPERTIES
 } from '../../domain-objects/product-design-canvas-measurement';
 import first from '../../services/first';
 import { validate, validateEvery } from '../../services/validate-from-db';
@@ -47,12 +49,8 @@ export async function findById(id: string): Promise<Measurement | null> {
   );
 }
 
-export async function update(id: string, data: Unsaved<Measurement>): Promise<Measurement> {
-  const rowData = dataAdapter.forInsertion({
-    ...data,
-    deletedAt: null,
-    id
-  });
+export async function update(id: string, data: Measurement): Promise<Measurement> {
+  const rowData = pick(dataAdapter.forInsertion(data), UPDATABLE_PROPERTIES);
   const updated = await db(TABLE_NAME)
     .where({ id, deleted_at: null })
     .update(rowData, '*')

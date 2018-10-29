@@ -1,6 +1,5 @@
 import * as Router from 'koa-router';
 import * as Koa from 'koa';
-
 import Measurement from '../../domain-objects/product-design-canvas-measurement';
 import {
   create,
@@ -8,7 +7,7 @@ import {
   findAllByCanvasId,
   update
 } from '../../dao/product-design-canvas-measurements';
-import { hasOnlyProperties, hasSomeProperties } from '../../services/require-properties';
+import { hasOnlyProperties } from '../../services/require-properties';
 
 import requireAuth = require('../../middleware/require-auth');
 
@@ -26,20 +25,6 @@ function isMeasurement(candidate: object): candidate is Measurement {
     'canvasId',
     'createdBy',
     'deletedAt',
-    'measurement',
-    'label',
-    'startingX',
-    'startingY',
-    'endingX',
-    'endingY'
-  );
-}
-
-function isUnsavedMeasurement(candidate: object): candidate is Unsaved<Measurement> {
-  return hasSomeProperties(
-    candidate,
-    'canvasId',
-    'createdBy',
     'measurement',
     'label',
     'startingX',
@@ -72,7 +57,7 @@ function* createMeasurement(this: Koa.Application.Context): AsyncIterableIterato
 
 function* updateMeasurement(this: Koa.Application.Context): AsyncIterableIterator<Measurement> {
   const body = this.request.body;
-  if (body && isUnsavedMeasurement(body)) {
+  if (body && isMeasurement(body)) {
     const measurement = yield update(this.params.measurementId, body);
     this.status = 200;
     this.body = measurement;

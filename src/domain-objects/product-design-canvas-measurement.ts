@@ -29,6 +29,16 @@ export interface ProductDesignCanvasMeasurementRow {
   ending_y: number;
 }
 
+export const UPDATABLE_PROPERTIES = [
+  'canvas_id',
+  'ending_x',
+  'ending_y',
+  'label',
+  'measurement',
+  'starting_x',
+  'starting_y'
+];
+
 export const dataAdapter = new DataAdapter<
   ProductDesignCanvasMeasurementRow,
   ProductDesignCanvasMeasurement

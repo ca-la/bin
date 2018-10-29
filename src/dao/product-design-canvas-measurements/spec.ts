@@ -90,6 +90,7 @@ test('ProductDesignCanvasMeasurement DAO supports updating', async (t: tape.Test
   });
   const data = {
     canvasId: designCanvas.id,
+    createdAt: designCanvasMeasurement.createdAt,
     createdBy: user.id,
     deletedAt: null,
     endingX: 220,

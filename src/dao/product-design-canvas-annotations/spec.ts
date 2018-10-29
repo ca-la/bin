@@ -63,7 +63,10 @@ test('ProductDesignCanvasAnnotation DAO supports updating', async (t: tape.Test)
   });
   const data = {
     canvasId: designCanvas.id,
+    createdAt: designCanvasAnnotation.createdAt,
     createdBy: user.id,
+    deletedAt: null,
+    id: designCanvasAnnotation.id,
     x: 55,
     y: 22
   };

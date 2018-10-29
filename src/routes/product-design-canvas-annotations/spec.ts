@@ -13,27 +13,34 @@ test(`PUT ${API_PATH}/:annotationId creates an Annotation`, async (t: tape.Test)
   const { session, user } = await createUser();
 
   const annotationId = uuid.v4();
-  const canvasId = uuid.v4();
-  const data = {
-    canvasId,
-    createdAt: '',
+
+  const design = await createDesign({
+    productType: 'TEESHIRT',
+    title: 'Green Tee',
+    userId: user.id
+  });
+  const designCanvas = await createDesignCanvas({
+    componentId: null,
     createdBy: user.id,
+    designId: design.id,
+    height: 200,
+    title: 'My Green Tee',
+    width: 200,
+    x: 0,
+    y: 0
+  });
+  const data = {
+    canvasId: designCanvas.id,
+    createdAt: new Date().toISOString(),
+    createdBy: user.id,
+    deletedAt: null,
     id: annotationId,
     x: 1,
     y: 1
   };
-  sandbox().stub(AnnotationDAO, 'create').resolves(data);
 
   const [response, body] = await put(`${API_PATH}/${annotationId}`, {
-    body: {
-      canvasId,
-      createdAt: new Date(),
-      createdBy: 'me',
-      deletedAt: null,
-      id: annotationId,
-      x: 1,
-      y: 1
-    },
+    body: data,
     headers: authHeader(session.id)
   });
   t.equal(response.status, 201);
@@ -43,26 +50,51 @@ test(`PUT ${API_PATH}/:annotationId creates an Annotation`, async (t: tape.Test)
 test(`PATCH ${API_PATH}/:annotationId updates an Annotation`, async (t: tape.Test) => {
   const { session, user } = await createUser();
   const annotationId = uuid.v4();
-  const canvasId = uuid.v4();
-  const data = {
-    canvasId,
-    createdAt: '',
+
+  const design = await createDesign({
+    productType: 'TEESHIRT',
+    title: 'Green Tee',
+    userId: user.id
+  });
+  const designCanvas = await createDesignCanvas({
+    componentId: null,
     createdBy: user.id,
+    designId: design.id,
+    height: 200,
+    title: 'My Green Tee',
+    width: 200,
+    x: 0,
+    y: 0
+  });
+  const annotation = await AnnotationDAO.create({
+    canvasId: designCanvas.id,
+    createdBy: user.id,
+    deletedAt: null,
     id: annotationId,
     x: 1,
     y: 1
+  });
+  const data = {
+    canvasId: designCanvas.id,
+    createdAt: 'something completely invalid',
+    createdBy: 'not a user id.',
+    deletedAt: 'also really invalid',
+    id: annotation.id,
+    x: 33,
+    y: 10
   };
-  sandbox().stub(AnnotationDAO, 'update').resolves(data);
+
   const [response, body] = await patch(`${API_PATH}/${annotationId}`, {
-    body: {
-      canvasId,
-      x: 1,
-      y: 1
-    },
+    body: data,
     headers: authHeader(session.id)
   });
   t.equal(response.status, 200);
-  t.deepEqual(body, data);
+  t.deepEqual(body, {
+    ...data,
+    createdAt: annotation.createdAt.toISOString(),
+    createdBy: annotation.createdBy,
+    deletedAt: annotation.deletedAt
+  });
 });
 
 test(`DELETE ${API_PATH}/:annotationId deletes an Annotation`, async (t: tape.Test) => {

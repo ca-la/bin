@@ -10,7 +10,7 @@ import {
   findAllByCanvasId,
   update
 } from '../../dao/product-design-canvas-annotations';
-import { hasOnlyProperties, hasSomeProperties } from '../../services/require-properties';
+import { hasOnlyProperties } from '../../services/require-properties';
 import Comment, { isComment } from '../../domain-objects/comment';
 import * as CommentDAO from '../../dao/comments';
 import * as AnnotationCommentDAO from '../../dao/product-design-canvas-annotation-comments';
@@ -31,16 +31,6 @@ function isAnnotation(candidate: object): candidate is Annotation {
     'createdBy',
     'deletedAt',
     'id',
-    'x',
-    'y'
-  );
-}
-
-function isUnsavedAnnotation(candidate: object): candidate is Unsaved<Annotation> {
-  return hasSomeProperties(
-    candidate,
-    'canvasId',
-    'createdBy',
     'x',
     'y'
   );
@@ -69,7 +59,7 @@ function* createAnnotation(this: Koa.Application.Context): AsyncIterableIterator
 
 function* updateAnnotation(this: Koa.Application.Context): AsyncIterableIterator<Annotation> {
   const body = this.request.body;
-  if (body && isUnsavedAnnotation(body)) {
+  if (body && isAnnotation(body)) {
     const annotation = yield update(this.params.annotationId, body);
     this.status = 200;
     this.body = annotation;
