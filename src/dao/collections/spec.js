@@ -11,8 +11,6 @@ const id = uuid.v4();
 const testDate = new Date(1996, 11, 25);
 
 test('CollectionsDAO#create creates a collection', async (t) => {
-  sandbox().stub(uuid, 'v4').returns(id);
-
   const { user } = await createUser({ withSession: false });
   const createdCollection = await CollectionsDAO.create({
     title: 'Drop 001/The Early Years',
@@ -20,15 +18,31 @@ test('CollectionsDAO#create creates a collection', async (t) => {
     createdBy: user.id,
     createdAt: testDate
   });
+  const createdWithId = await CollectionsDAO.create({
+    id,
+    title: 'Drop 001/The Early Years',
+    description: 'Initial commit',
+    createdBy: user.id,
+    createdAt: testDate
+  });
 
   t.deepEqual(createdCollection, {
+    id: createdCollection.id,
+    title: 'Drop 001/The Early Years',
+    description: 'Initial commit',
+    deletedAt: null,
+    createdBy: user.id,
+    createdAt: testDate
+  }, 'returned collection adds default values');
+
+  t.deepEqual(createdWithId, {
     id,
     title: 'Drop 001/The Early Years',
     description: 'Initial commit',
     deletedAt: null,
     createdBy: user.id,
     createdAt: testDate
-  }, 'created collection equals retrieved collection');
+  }, 'created collection has specified id');
 });
 
 test('CollectionsDAO#update updates a collection', async (t) => {

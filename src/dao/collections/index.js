@@ -26,9 +26,10 @@ function create(data) {
     return Promise.reject(new InvalidDataError(e.message));
   }
 
-  const rowData = Object.assign(dataMapper.userDataToRowData(data), {
-    id: uuid.v4()
-  });
+  const rowData = {
+    id: uuid.v4(),
+    ...dataMapper.userDataToRowData(data)
+  };
 
   return db(TABLE_NAME)
     .insert(rowData, '*')
