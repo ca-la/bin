@@ -162,6 +162,28 @@ function* updateTaskAssignment(this: Koa.Application.Context): AsyncIterableIter
   }
 }
 
+function getCurrentIOTasks(tasks: TaskEvent[]): IOTask[] {
+  const ioTasksById: { [id: string]: IOTask } = tasks.reduce(
+    (memo: { [id: string]: IOTask | undefined }, task: TaskEvent) => {
+      const existing = memo[task.taskId];
+      const shouldReplace = !existing
+        || (existing && (existing.createdAt < task.createdAt));
+
+      if (shouldReplace) {
+        return {
+          ...memo,
+          [task.taskId]: ioFromTaskEvent(task)
+        };
+      }
+
+      return memo;
+    },
+    {}
+  );
+
+  return Object.values(ioTasksById);
+}
+
 interface GetListQuery {
   collectionId?: string;
   stageId?: string;
@@ -183,13 +205,15 @@ function* getList(this: Koa.Application.Context): AsyncIterableIterator<TaskEven
     tasks = yield TaskEventsDAO.findByUserId(query.userId);
   }
 
-  const ioAndAssigneesFromTaskEvent = async (task: TaskEvent): Promise<object> => {
-    const assignees = await UserTasksDAO.findAllUsersByTaskId(task.id);
-    return ioFromTaskEvent(task, assignees);
+  const ioTasks = getCurrentIOTasks(tasks);
+
+  const addAssignees = async (ioTask: IOTask): Promise<object> => {
+    const assignees = await UserTasksDAO.findAllUsersByTaskId(ioTask.id);
+    return { ...ioTask, assignees };
   };
 
   this.status = 200;
-  this.body = yield tasks.map(ioAndAssigneesFromTaskEvent);
+  this.body = yield ioTasks.map(addAssignees);
 }
 
 function* createTaskComment(this: Koa.Application.Context): AsyncIterableIterator<Comment> {
