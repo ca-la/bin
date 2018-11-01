@@ -84,6 +84,22 @@ function findByCollection(collectionId) {
     .then(collaborators => Promise.all(collaborators.map(attachUser)));
 }
 
+function findByTask(taskId) {
+  return db(TABLE_NAME)
+    .select('collaborators.*')
+    .from(TABLE_NAME)
+    .join('collaborator_tasks', 'collaborators.id', 'collaborator_tasks.collaborator_id')
+    .where({
+      deleted_at: null,
+      'collaborator_tasks.task_id': taskId
+    })
+    .catch(rethrow)
+    .then((collaborators) => {
+      return collaborators.map(instantiate);
+    })
+    .then(collaborators => Promise.all(collaborators.map(attachUser)));
+}
+
 function findByUserId(userId) {
   return db(TABLE_NAME)
     .where({
@@ -147,6 +163,7 @@ module.exports = {
   findByCollectionAndUser,
   findByDesign,
   findByDesignAndUser,
+  findByTask,
   findById,
   findByUserId,
   findUnclaimedByEmail,

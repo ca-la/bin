@@ -144,12 +144,24 @@ export async function findByCollectionId(collectionId: string): Promise<TaskEven
 export async function findByUserId(userId: string): Promise<TaskEvent[]> {
   const taskResponses: TaskEventRow[] = await db(TABLE_NAME)
     .select('task_events.*')
-    .innerJoin(
-      'user_tasks',
+    .join(
+      'collaborator_tasks',
       'task_events.task_id',
-      'user_tasks.task_id'
+      'collaborator_tasks.task_id'
     )
-    .where({ 'user_tasks.user_id': userId });
+    .join(
+      'collaborators',
+      'collaborator_tasks.collaborator_id',
+      'collaborators.id'
+    )
+    .where({ 'collaborators.user_id': userId })
+    .whereNotExists(
+      db(TABLE_NAME)
+        .select('*')
+        .from('task_events as t')
+        .whereRaw('task_events.task_id = t.task_id')
+        .whereRaw('t.created_at > task_events.created_at')
+    );
 
   return validateEvery<TaskEventRow, TaskEvent>(
     TABLE_NAME,

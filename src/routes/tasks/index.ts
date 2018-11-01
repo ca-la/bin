@@ -8,19 +8,20 @@ import * as ProductDesignStageTasksDAO from '../../dao/product-design-stage-task
 import * as TasksDAO from '../../dao/tasks';
 import * as CommentDAO from '../../dao/comments';
 import * as TaskCommentDAO from '../../dao/task-comments';
-import * as UserTasksDAO from '../../dao/user-tasks';
-import UserTask from '../../domain-objects/user-task';
-import PublicUser from '../../domain-objects/public-user';
+import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
+import * as CollaboratorsDAO from '../../dao/collaborators';
+import CollaboratorTask from '../../domain-objects/collaborator-task';
 import TaskEvent, { TaskStatus } from '../../domain-objects/task-event';
 import Comment, { isComment } from '../../domain-objects/comment';
 import { hasOnlyProperties } from '../../services/require-properties';
 import requireAuth = require('../../middleware/require-auth');
+import { Collaborator } from '../../domain-objects/collaborator';
 
 const router = new Router();
 
-type IOTask = Omit<TaskEvent, 'taskId'> & { assignees: PublicUser[] };
-interface UserTaskRequest {
-  userIds: string[];
+type IOTask = Omit<TaskEvent, 'taskId'> & { assignees: Collaborator[] };
+interface CollaboratorTaskRequest {
+  collaboratorIds: string[];
 }
 
 function isIOTask(candidate: object): candidate is IOTask {
@@ -38,10 +39,10 @@ function isIOTask(candidate: object): candidate is IOTask {
   );
 }
 
-function isUserTaskRequest(candidate: object): candidate is UserTaskRequest {
+function isCollaboratorTaskRequest(candidate: object): candidate is CollaboratorTaskRequest {
   return hasOnlyProperties(
     candidate,
-    'userIds'
+    'collaboratorIds'
   );
 }
 
@@ -59,7 +60,7 @@ const taskEventFromIO = (
   });
 };
 
-const ioFromTaskEvent = (taskEvent: TaskEvent, assignees: PublicUser[] = []): IOTask => {
+const ioFromTaskEvent = (taskEvent: TaskEvent, assignees: Collaborator[] = []): IOTask => {
   return {
     assignees,
     createdAt: taskEvent.createdAt,
@@ -126,7 +127,7 @@ function* createTaskWithEventOnStage(
 
 function* getTaskEvent(this: Koa.Application.Context): AsyncIterableIterator<TaskEvent> {
   const task = yield TaskEventsDAO.findById(this.params.taskId);
-  const assignees = yield UserTasksDAO.findAllUsersByTaskId(this.params.taskId);
+  const assignees = yield CollaboratorsDAO.findByTask(this.params.taskId);
 
   this.status = 200;
   this.body = ioFromTaskEvent(task, assignees);
@@ -135,53 +136,32 @@ function* getTaskEvent(this: Koa.Application.Context): AsyncIterableIterator<Tas
 function* updateTaskAssignment(this: Koa.Application.Context): AsyncIterableIterator<TaskEvent> {
   const { taskId } = this.params;
   const body = this.request.body;
-  if (body && isUserTaskRequest(body)) {
-    const { userIds } = body;
-    const existingRelationships = yield UserTasksDAO.findAllByTaskId(taskId);
+  if (body && isCollaboratorTaskRequest(body)) {
+    const { collaboratorIds } = body;
+    const existingRelationships = yield CollaboratorTasksDAO.findAllByTaskId(taskId);
 
-    const existingUserIds: string[] = existingRelationships.map((userTask: UserTask) => {
-      return userTask.userId;
+    const existingCollaboratorIds: string[] = existingRelationships
+      .map((collaboratorTask: CollaboratorTask) => {
+        return collaboratorTask.collaboratorId;
+      });
+    const newIds = collaboratorIds.filter((collaboratorId: string) => {
+      return !existingCollaboratorIds.find((existingId: string) => collaboratorId === existingId);
     });
-    const newIds = userIds.filter((userId: string) => {
-      return !existingUserIds.find((existingId: string) => userId === existingId);
-    });
-    const existingIdsToDelete = existingUserIds.filter((existingId: string) => {
-      return !userIds.find((userId: string) => userId === existingId);
+    const existingIdsToDelete = existingCollaboratorIds.filter((existingId: string) => {
+      return !collaboratorIds.find((collaboratorId: string) => collaboratorId === existingId);
     });
 
-    yield UserTasksDAO.deleteAllByUserIdsAndTaskId(existingIdsToDelete, taskId);
+    yield CollaboratorTasksDAO.deleteAllByCollaboratorIdsAndTaskId(existingIdsToDelete, taskId);
 
     if (newIds.length > 0) {
-      yield UserTasksDAO.createAllByUserIdsAndTaskId(newIds, taskId);
+      yield CollaboratorTasksDAO.createAllByCollaboratorIdsAndTaskId(newIds, taskId);
     }
 
     this.status = 200;
-    this.body = yield UserTasksDAO.findAllByTaskId(taskId);
+    this.body = yield CollaboratorTasksDAO.findAllByTaskId(taskId);
   } else {
     this.throw(400, `Request does not match model: ${Object.keys(body)}`);
   }
-}
-
-function getCurrentIOTasks(tasks: TaskEvent[]): IOTask[] {
-  const ioTasksById: { [id: string]: IOTask } = tasks.reduce(
-    (memo: { [id: string]: IOTask | undefined }, task: TaskEvent) => {
-      const existing = memo[task.taskId];
-      const shouldReplace = !existing
-        || (existing && (existing.createdAt < task.createdAt));
-
-      if (shouldReplace) {
-        return {
-          ...memo,
-          [task.taskId]: ioFromTaskEvent(task)
-        };
-      }
-
-      return memo;
-    },
-    {}
-  );
-
-  return Object.values(ioTasksById);
 }
 
 interface GetListQuery {
@@ -205,15 +185,13 @@ function* getList(this: Koa.Application.Context): AsyncIterableIterator<TaskEven
     tasks = yield TaskEventsDAO.findByUserId(query.userId);
   }
 
-  const ioTasks = getCurrentIOTasks(tasks);
-
-  const addAssignees = async (ioTask: IOTask): Promise<object> => {
-    const assignees = await UserTasksDAO.findAllUsersByTaskId(ioTask.id);
-    return { ...ioTask, assignees };
+  const ioAndAssigneesFromTaskEvent = async (task: TaskEvent): Promise<object> => {
+    const assignees = await CollaboratorsDAO.findByTask(task.taskId);
+    return ioFromTaskEvent(task, assignees);
   };
 
   this.status = 200;
-  this.body = yield ioTasks.map(addAssignees);
+  this.body = yield tasks.map(ioAndAssigneesFromTaskEvent);
 }
 
 function* createTaskComment(this: Koa.Application.Context): AsyncIterableIterator<Comment> {

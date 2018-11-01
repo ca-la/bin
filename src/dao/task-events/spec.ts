@@ -10,10 +10,11 @@ import {
   findByUserId
 } from './index';
 import { create as createTask } from '../tasks';
-import { create as createUserTask } from '../user-tasks';
+import { create as createCollaboratorTask } from '../collaborator-tasks';
 import { create as createDesignStageTask } from '../product-design-stage-tasks';
 import { create as createDesignStage } from '../product-design-stages';
 import { create as createDesign } from '../product-designs';
+import { create as createCollaborator } from '../collaborators';
 import { addDesign, create as createCollection } from '../collections';
 import createUser = require('../../test-helpers/create-user');
 import { TaskStatus } from '../../domain-objects/task-event';
@@ -96,6 +97,16 @@ test('Task Events DAO supports retrieval by collectionId', async (t: tape.Test) 
 test('Task Events DAO supports retrieval by userId', async (t: tape.Test) => {
   const { user } = await createUser();
   const task = await createTask(uuid.v4());
+  const collection = await createCollection({
+    createdBy: user.id,
+    title: 'FW19'
+  });
+
+  const collaborator = await createCollaborator({
+    collectionId: collection.id,
+    role: 'EDIT',
+    userId: user.id
+  });
   const taskEvent = await create({
     createdBy: user.id,
     description: 'A description',
@@ -105,9 +116,10 @@ test('Task Events DAO supports retrieval by userId', async (t: tape.Test) => {
     taskId: task.id,
     title: 'My New Task'
   });
-  await createUserTask({ userId: user.id, taskId: task.id });
+  await createCollaboratorTask({ collaboratorId: collaborator.id, taskId: task.id });
 
   const result = await findByUserId(user.id);
+  if (result.length === 0) { return t.fail('No tasks returned'); }
   t.deepEqual(result[0].id, taskEvent.id, 'Returned inserted task');
 });
 

@@ -1,16 +1,17 @@
-import { omit } from 'lodash';
-
 import User from '../../domain-objects/user';
-import TaskEvent from '../../domain-objects/task-event';
+import TaskEvent, { TaskStatus } from '../../domain-objects/task-event';
 import * as taskEventsDAO from '../../dao/task-events';
 import * as tasksDAO from '../../dao/tasks';
-import * as userTasksDAO from '../../dao/user-tasks';
+import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
+import * as CollaboratorsDAO from '../../dao/collaborators';
+import * as CollectionsDAO from '../../dao/collections';
 import * as productDesignStageTasksDAO from '../../dao/product-design-stage-tasks';
 import * as tape from 'tape';
 import * as uuid from 'node-uuid';
 import createUser = require('../../test-helpers/create-user');
 import { authHeader, get, post, put } from '../../test-helpers/http';
 import { sandbox, test } from '../../test-helpers/fresh';
+import omit = require('lodash/omit');
 
 function createTaskEvents(user: User): TaskEvent[] {
   const taskEventId = uuid.v4();
@@ -46,19 +47,26 @@ test('GET /tasks/:taskId returns Task', async (t: tape.Test) => {
   const { session, user } = await createUser();
   const taskEvents = createTaskEvents(user);
 
-  sandbox().stub(taskEventsDAO, 'findById').resolves(taskEvents[0]);
-  sandbox().stub(userTasksDAO, 'findAllUsersByTaskId').resolves([]);
+  const taskId = uuid.v4();
+  const taskEvent = {
+    assignees: [],
+    createdAt: '',
+    createdBy: user.id,
+    dueDate: '',
+    id: taskId,
+    status: '',
+    taskId,
+    title: ''
+  };
+
+  sandbox().stub(taskEventsDAO, 'findById').returns(Promise.resolve(taskEvent));
+  sandbox().stub(CollaboratorTasksDAO, 'findAllCollaboratorsByTaskId').resolves([]);
 
   const [response, body] = await get(`/tasks/${taskEvents[0].taskId}`, {
     headers: authHeader(session.id)
   });
   t.equal(response.status, 200);
-  t.deepEqual(body, {
-    ...omit(taskEvents[0], ['taskId']),
-    assignees: [],
-    createdAt: taskEvents[0].createdAt.toISOString(),
-    id: taskEvents[0].taskId
-  });
+  t.deepEqual(body, omit(taskEvent, 'taskId'));
 });
 
 test('GET /tasks?collectionId=:collectionId returns tasks on collection', async (t: tape.Test) => {
@@ -73,12 +81,20 @@ test('GET /tasks?collectionId=:collectionId returns tasks on collection', async 
     headers: authHeader(session.id)
   });
   t.equal(response.status, 200);
-  t.deepEqual(body, [{
-    ...omit(taskEvents[0], ['taskId']),
-    assignees: [],
-    createdAt: taskEvents[0].createdAt.toISOString(),
-    id: taskEvents[0].taskId
-  }]);
+  t.deepEqual(body, [
+    {
+      ...omit(taskEvents[0], 'taskId'),
+      assignees: [],
+      createdAt: taskEvents[0].createdAt.toISOString(),
+      id: taskEvents[0].taskId
+    },
+    {
+      ...omit(taskEvents[1], 'taskId'),
+      assignees: [],
+      createdAt: taskEvents[1].createdAt.toISOString(),
+      id: taskEvents[1].taskId
+    }
+  ]);
 });
 
 test('GET /tasks?stageId=:stageId returns tasks on design stage', async (t: tape.Test) => {
@@ -88,39 +104,61 @@ test('GET /tasks?stageId=:stageId returns tasks on design stage', async (t: tape
   const taskEvents = createTaskEvents(user);
 
   sandbox().stub(taskEventsDAO, 'findByStageId').resolves(taskEvents);
-  sandbox().stub(userTasksDAO, 'findAllUsersByTaskId').resolves([]);
+  sandbox().stub(CollaboratorTasksDAO, 'findAllCollaboratorsByTaskId').resolves([]);
 
   const [response, body] = await get(`/tasks?stageId=${stageId}`, {
     headers: authHeader(session.id)
   });
   t.equal(response.status, 200);
-  t.deepEqual(body, [{
-    ...omit(taskEvents[0], ['taskId']),
-    assignees: [],
-    createdAt: taskEvents[0].createdAt.toISOString(),
-    id: taskEvents[0].taskId
-  }]);
+  t.deepEqual(body, [
+    {
+      ...omit(taskEvents[0], 'taskId'),
+      assignees: [],
+      createdAt: taskEvents[0].createdAt.toISOString(),
+      id: taskEvents[0].taskId
+    },
+    {
+      ...omit(taskEvents[1], 'taskId'),
+      assignees: [],
+      createdAt: taskEvents[1].createdAt.toISOString(),
+      id: taskEvents[1].taskId
+    }
+  ]);
 });
 
 test('GET /tasks?userId=:userId returns all tasks for a user', async (t: tape.Test) => {
   const { session, user } = await createUser();
-  const taskEvents = createTaskEvents(user);
+  const task = await tasksDAO.create(uuid.v4());
+  const collection = await CollectionsDAO.create({
+    createdBy: user.id,
+    title: 'FW19'
+  });
 
-  sandbox().stub(taskEventsDAO, 'findByUserId').resolves(taskEvents);
-  sandbox().stub(userTasksDAO, 'findAllUsersByTaskId').resolves([
-    { id: user.id, name: user.name }
-  ]);
+  const collaborator = await CollaboratorsDAO.create({
+    collectionId: collection.id,
+    role: 'EDIT',
+    userId: user.id
+  });
+  await taskEventsDAO.create({
+    createdBy: user.id,
+    description: 'A description',
+    designStageId: null,
+    dueDate: null,
+    status: TaskStatus.NOT_STARTED,
+    taskId: task.id,
+    title: 'My New Task'
+  });
+  await CollaboratorTasksDAO
+    .create({ collaboratorId: collaborator.id, taskId: task.id });
 
   const [response, body] = await get(`/tasks?userId=${user.id}`, {
     headers: authHeader(session.id)
   });
+
+  if (body.length === 0) { return t.fail('no content'); }
   t.equal(response.status, 200);
-  t.deepEqual(body, [{
-    ...omit(taskEvents[0], ['taskId']),
-    assignees: [{ id: user.id, name: user.name }],
-    createdAt: taskEvents[0].createdAt.toISOString(),
-    id: taskEvents[0].taskId
-  }]);
+  t.equal(body[0].id, task.id);
+  t.equal(body[0].assignees.length, 1);
 });
 
 test('POST /tasks creates Task and TaskEvent successfully', async (t: tape.Test) => {
@@ -206,35 +244,51 @@ test('PUT /tasks/:taskId creates TaskEvent successfully', async (t: tape.Test) =
   t.equal(body.id, taskId);
 });
 
-test('PUT /tasks/:taskId/assignees adds Users to Tasks successfully', async (t: tape.Test) => {
+test('PUT /tasks/:taskId/assignees adds Collaborators to Tasks successfully',
+async (t: tape.Test) => {
   const { session, user } = await createUser();
   const secondUser = await createUser();
   const task = await tasksDAO.create(uuid.v4());
+  const collection = await CollectionsDAO.create({
+    createdBy: user.id,
+    title: 'FW19'
+  });
+
+  const collaborator = await CollaboratorsDAO.create({
+    collectionId: collection.id,
+    role: 'EDIT',
+    userId: user.id
+  });
+  const secondCollaborator = await CollaboratorsDAO.create({
+    collectionId: collection.id,
+    role: 'EDIT',
+    userId: secondUser.user.id
+  });
 
   const [responseOne, bodyOne] = await put(`/tasks/${task.id}/assignees`, {
-    body: { userIds: [user.id] },
+    body: { collaboratorIds: [collaborator.id] },
     headers: authHeader(session.id)
   });
   t.equal(responseOne.status, 200);
-  t.equal(bodyOne[0].userId, user.id);
+  t.equal(bodyOne[0].collaboratorId, collaborator.id);
 
   const [responseTwo, bodyTwo] = await put(`/tasks/${task.id}/assignees`, {
-    body: { userIds: [user.id, secondUser.user.id] },
+    body: { collaboratorIds: [collaborator.id, secondCollaborator.id] },
     headers: authHeader(session.id)
   });
   t.equal(responseTwo.status, 200);
-  t.equal(bodyTwo[0].userId, secondUser.user.id);
-  t.equal(bodyTwo[1].userId, user.id);
+  t.equal(bodyTwo[0].collaboratorId, secondCollaborator.id);
+  t.equal(bodyTwo[1].collaboratorId, collaborator.id);
 
   const [responseThree, bodyThree] = await put(`/tasks/${task.id}/assignees`, {
-    body: { userIds: [secondUser.user.id] },
+    body: { collaboratorIds: [secondCollaborator.id] },
     headers: authHeader(session.id)
   });
   t.equal(responseThree.status, 200);
-  t.equal(bodyThree[0].userId, secondUser.user.id);
+  t.equal(bodyThree[0].collaboratorId, secondCollaborator.id);
 
   const [responseFour, bodyFour] = await put(`/tasks/${task.id}/assignees`, {
-    body: { userIds: [] },
+    body: { collaboratorIds: [] },
     headers: authHeader(session.id)
   });
   t.equal(responseFour.status, 200);
