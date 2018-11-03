@@ -3,12 +3,15 @@
 const Router = require('koa-router');
 
 const FitPartnerCustomersDAO = require('../../dao/fit-partner-customers');
+const FitPartnerScanService = require('../../services/fit-partner-scan');
 const FitPartnersDAO = require('../../dao/fit-partners');
+const InvalidDataError = require('../../errors/invalid-data');
+const Logger = require('../../services/logger');
 const ScansDAO = require('../../dao/scans');
 const Twilio = require('../../services/twilio');
 const { FIT_CLIENT_HOST } = require('../../config');
+const { requireValues } = require('../../services/require-properties');
 const { validatePropertiesFormatted } = require('../../services/validate');
-const { saveFittingUrl } = require('../../services/fit-partner-scan');
 
 const router = new Router();
 
@@ -18,23 +21,19 @@ function substituteLink(message, link) {
 
 const DEFAULT_SMS_COPY = 'To complete your fitting, open this link on your mobile device: {{link}}';
 
-// eslint-disable-next-line no-empty-function
-function* sendFitLink() {
-  validatePropertiesFormatted(this.request.body, {
-    partnerId: 'Partner ID',
-    phoneNumber: 'Phone number',
-    shopifyUserId: 'Shopify User ID'
-  });
+async function createAndSendScanLink({
+  partnerId,
+  phoneNumber,
+  shopifyUserId
+}) {
+  requireValues({ partnerId, phoneNumber, shopifyUserId });
 
-  const { partnerId, phoneNumber, shopifyUserId } = this.request.body;
+  const partner = await FitPartnersDAO.findById(partnerId);
+  if (!partner) { throw new InvalidDataError(`Unknown partner ID: ${partnerId}`); }
 
-  const partner = yield FitPartnersDAO.findById(partnerId);
+  const customer = await FitPartnerCustomersDAO.findOrCreate({ partnerId, shopifyUserId });
 
-  this.assert(partner, 400, 'Invalid partner ID');
-
-  const customer = yield FitPartnerCustomersDAO.findOrCreate({ partnerId, shopifyUserId });
-
-  const scan = yield ScansDAO.create({
+  const scan = await ScansDAO.create({
     fitPartnerCustomerId: customer.id,
     type: 'PHOTO'
   });
@@ -44,13 +43,59 @@ function* sendFitLink() {
 
   const fitCopy = substituteLink(partner.smsCopy || DEFAULT_SMS_COPY, link);
 
-  yield saveFittingUrl(customer.id, link);
+  await FitPartnerScanService.saveFittingUrl(customer.id, link);
 
-  yield Twilio.sendSMS(phoneNumber, fitCopy);
+  await Twilio.sendSMS(phoneNumber, fitCopy);
+}
 
-  this.status = 201;
+function* sendFitLink() {
+  validatePropertiesFormatted(this.request.body, {
+    partnerId: 'Partner ID',
+    phoneNumber: 'Phone number',
+    shopifyUserId: 'Shopify User ID'
+  });
+
+  const { partnerId, phoneNumber, shopifyUserId } = this.request.body;
+
+  yield createAndSendScanLink({
+    partnerId,
+    phoneNumber,
+    shopifyUserId
+  });
+
+  this.status = 204;
   this.body = null;
 }
+
+function* shopifyOrderCreated() {
+  const assert = (truthy, message) => {
+    if (truthy) return;
+    Logger.logServerError(message);
+    this.throw(400, message);
+  };
+
+  const { partnerId } = this.params;
+  const { shipping_address: shippingAddress, customer } = this.request.body;
+
+  assert(shippingAddress, 'Missing shipping address payload');
+  const phoneNumber = shippingAddress.phone;
+  assert(phoneNumber, 'Missing shipping address phone number');
+
+  assert(customer, 'Missing customer payload');
+  const shopifyUserId = customer.id;
+  assert(shopifyUserId, 'Missing customer Id');
+
+  yield createAndSendScanLink({
+    partnerId,
+    phoneNumber,
+    shopifyUserId
+  });
+
+  // Shopify specifically requires a 200 response
+  this.status = 200;
+  this.body = { success: true };
+}
+
 
 function* resendFitLink() {
   validatePropertiesFormatted(this.request.body, {
@@ -81,6 +126,7 @@ function* resendFitLink() {
 }
 
 router.post('/send-fit-link', sendFitLink);
+router.post('/:partnerId/shopify-order-created', shopifyOrderCreated);
 router.post('/resend-fit-link', resendFitLink);
 
 module.exports = router.routes();

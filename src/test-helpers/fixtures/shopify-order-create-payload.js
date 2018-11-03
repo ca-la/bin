@@ -164,7 +164,7 @@ module.exports = {
   shipping_address: {
     first_name: 'Dylan',
     address1: '1025 Oak Street',
-    phone: '',
+    phone: '+14155551234',
     city: 'San Francisco',
     zip: '94117',
     province: 'California',
