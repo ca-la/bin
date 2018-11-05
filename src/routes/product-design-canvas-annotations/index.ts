@@ -77,7 +77,7 @@ function* deleteAnnotation(this: Koa.Application.Context): AsyncIterableIterator
 function* getList(this: Koa.Application.Context): AsyncIterableIterator<Annotation> {
   const query: GetListQuery = this.query;
   if (!query.canvasId) {
-    return this.throw('Missing canvasId');
+    return this.throw(400, 'Missing canvasId');
   }
 
   const annotations = yield findAllByCanvasId(query.canvasId);

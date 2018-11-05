@@ -144,6 +144,15 @@ test(`GET ${API_PATH}/?canvasId=:canvasId returns Annotations`, async (t: tape.T
   t.deepEqual(body, data);
 });
 
+test(`GET ${API_PATH}/ without a canvasId fails`, async (t: tape.Test) => {
+  const { session } = await createUser();
+  const [response] = await get(`${API_PATH}/`, {
+    headers: authHeader(session.id)
+  });
+
+  t.equal(response.status, 400);
+});
+
 test(
   `PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`,
   async (t: tape.Test) => {
