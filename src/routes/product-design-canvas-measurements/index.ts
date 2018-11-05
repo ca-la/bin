@@ -25,8 +25,9 @@ function isMeasurement(candidate: object): candidate is Measurement {
     'canvasId',
     'createdBy',
     'deletedAt',
-    'measurement',
     'label',
+    'measurement',
+    'name',
     'startingX',
     'startingY',
     'endingX',
@@ -51,7 +52,7 @@ function* createMeasurement(this: Koa.Application.Context): AsyncIterableIterato
     this.status = 201;
     this.body = measurement;
   } else {
-    this.throw(400, 'Request does not match ProductDesignCanvas');
+    this.throw(400, 'Request does not match ProductDesignCanvasMeasurement');
   }
 }
 
@@ -62,7 +63,7 @@ function* updateMeasurement(this: Koa.Application.Context): AsyncIterableIterato
     this.status = 200;
     this.body = measurement;
   } else {
-    this.throw(400, 'Request does not match ProductDesignCanvas');
+    this.throw(400, 'Request does not match ProductDesignCanvasMeasurement');
   }
 }
 

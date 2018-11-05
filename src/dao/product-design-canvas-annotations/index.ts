@@ -3,6 +3,8 @@ import * as db from '../../services/db';
 import Annotation, {
   dataAdapter,
   isProductDesignCanvasAnnotationRow as isAnnotationRow,
+  parseNumerics,
+  parseNumericsList,
   ProductDesignCanvasAnnotationRow as AnnotationRow,
   UPDATABLE_PROPERTIES
 } from '../../domain-objects/product-design-canvas-annotation';
@@ -23,12 +25,12 @@ export async function create(data: Uninserted<Annotation>): Promise<Annotation> 
 
   if (!created) { throw new Error('Failed to create a annotation'); }
 
-  return validate<AnnotationRow, Annotation>(
+  return parseNumerics(validate<AnnotationRow, Annotation>(
     TABLE_NAME,
     isAnnotationRow,
     dataAdapter,
     created
-  );
+  ));
 }
 
 export async function findById(id: string): Promise<Annotation | null> {
@@ -41,12 +43,12 @@ export async function findById(id: string): Promise<Annotation | null> {
 
   if (!annotation) { return null; }
 
-  return validate<AnnotationRow, Annotation>(
+  return parseNumerics(validate<AnnotationRow, Annotation>(
     TABLE_NAME,
     isAnnotationRow,
     dataAdapter,
     annotation
-  );
+  ));
 }
 
 export async function update(id: string, data: Annotation): Promise<Annotation> {
@@ -58,12 +60,12 @@ export async function update(id: string, data: Annotation): Promise<Annotation> 
 
   if (!updated) { throw new Error('Failed to update row'); }
 
-  return validate<AnnotationRow, Annotation>(
+  return parseNumerics(validate<AnnotationRow, Annotation>(
     TABLE_NAME,
     isAnnotationRow,
     dataAdapter,
     updated
-  );
+  ));
 }
 
 export async function deleteById(id: string): Promise<Annotation> {
@@ -74,22 +76,22 @@ export async function deleteById(id: string): Promise<Annotation> {
 
   if (!deleted) { throw new Error('Failed to delete row'); }
 
-  return validate<AnnotationRow, Annotation>(
+  return parseNumerics(validate<AnnotationRow, Annotation>(
     TABLE_NAME,
     isAnnotationRow,
     dataAdapter,
     deleted
-  );
+  ));
 }
 
 export async function findAllByCanvasId(canvasId: string): Promise<Annotation[]> {
   const annotations: AnnotationRow[] = await db(TABLE_NAME)
     .select('*')
     .where({ canvas_id: canvasId, deleted_at: null });
-  return validateEvery<AnnotationRow, Annotation>(
+  return parseNumericsList(validateEvery<AnnotationRow, Annotation>(
     TABLE_NAME,
     isAnnotationRow,
     dataAdapter,
     annotations
-  );
+  ));
 }

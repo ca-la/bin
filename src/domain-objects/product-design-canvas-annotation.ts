@@ -27,6 +27,22 @@ export const UPDATABLE_PROPERTIES = [
   'y'
 ];
 
+export function parseNumerics(
+  annotation: ProductDesignCanvasAnnotation
+): ProductDesignCanvasAnnotation {
+  return {
+    ...annotation,
+    x: Number(annotation.x),
+    y: Number(annotation.y)
+  };
+}
+
+export function parseNumericsList(
+  annotations: ProductDesignCanvasAnnotation[]
+): ProductDesignCanvasAnnotation[] {
+  return annotations.map(parseNumerics);
+}
+
 export const dataAdapter = new DataAdapter<
   ProductDesignCanvasAnnotationRow,
   ProductDesignCanvasAnnotation

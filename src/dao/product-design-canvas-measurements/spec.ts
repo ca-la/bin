@@ -30,8 +30,9 @@ test('ProductDesignCanvasMeasurement DAO supports creation/retrieval', async (t:
     endingX: 20,
     endingY: 10,
     id: uuid.v4(),
-    label: 'sleeve length',
+    label: 'A',
     measurement: '16 inches',
+    name: null,
     startingX: 5,
     startingY: 2
   });
@@ -42,8 +43,9 @@ test('ProductDesignCanvasMeasurement DAO supports creation/retrieval', async (t:
     endingX: 2,
     endingY: 10,
     id: uuid.v4(),
-    label: 'sleeve width',
+    label: 'B',
     measurement: '6 inches',
+    name: 'sleeve length',
     startingX: 1,
     startingY: 1
   });
@@ -53,7 +55,7 @@ test('ProductDesignCanvasMeasurement DAO supports creation/retrieval', async (t:
 
   const results = await findAllByCanvasId(designCanvas.id);
   t.deepEqual(
-    [designCanvasMeasurement, designCanvasMeasurementTwo],
+    [designCanvasMeasurementTwo, designCanvasMeasurement],
     results,
     'Returned all inserted measurements for the canvas'
   );
@@ -83,8 +85,9 @@ test('ProductDesignCanvasMeasurement DAO supports updating', async (t: tape.Test
     endingX: 20,
     endingY: 10,
     id: uuid.v4(),
-    label: 'sleeve length',
+    label: 'A',
     measurement: '16 inches',
+    name: '',
     startingX: 5,
     startingY: 2
   });
@@ -96,8 +99,9 @@ test('ProductDesignCanvasMeasurement DAO supports updating', async (t: tape.Test
     endingX: 220,
     endingY: 120,
     id: designCanvasMeasurement.id,
-    label: 'sleeve length',
+    label: 'A',
     measurement: '22 inches',
+    name: 'sleeve length',
     startingX: 52,
     startingY: 22
   };
@@ -138,8 +142,9 @@ test('ProductDesignCanvasMeasurement DAO supports deletion', async (t: tape.Test
     endingX: 20,
     endingY: 10,
     id: uuid.v4(),
-    label: 'sleeve length',
+    label: 'A',
     measurement: '16 inches',
+    name: 'sleeve length',
     startingX: 5,
     startingY: 2
   });

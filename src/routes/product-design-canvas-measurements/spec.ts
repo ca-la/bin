@@ -34,8 +34,9 @@ test('PUT /:measurementId creates a Measurement', async (t: tape.Test) => {
     endingX: 20,
     endingY: 20,
     id: measurementId,
-    label: null,
+    label: 'A',
     measurement: '20 inches',
+    name: null,
     startingX: 1,
     startingY: 1
   };
@@ -74,8 +75,9 @@ test('PATCH /:taskId updates a Measurement', async (t: tape.Test) => {
     endingX: 20,
     endingY: 20,
     id: measurementId,
-    label: null,
+    label: 'A',
     measurement: '20 inches',
+    name: null,
     startingX: 1,
     startingY: 1
   });
@@ -88,8 +90,9 @@ test('PATCH /:taskId updates a Measurement', async (t: tape.Test) => {
     endingX: 23,
     endingY: 23,
     id: measurementId,
-    label: null,
+    label: 'B',
     measurement: '22 inches',
+    name: null,
     startingX: 1,
     startingY: 1
   };
@@ -113,8 +116,9 @@ test('DELETE /:taskId deletes a Measurement', async (t: tape.Test) => {
     endingX: 20,
     endingY: 20,
     id: measurementId,
-    label: null,
+    label: 'A',
     measurement: '20 inches',
+    name: null,
     startingX: 1,
     startingY: 1
   };
@@ -135,8 +139,9 @@ test('GET /?canvasId=:canvasId returns Measurements', async (t: tape.Test) => {
     endingX: 20,
     endingY: 10,
     id: uuid.v4(),
-    label: 'sleeve length',
+    label: 'A',
     measurement: '16 inches',
+    name: 'sleeve length',
     startingX: 5,
     startingY: 2
 
@@ -146,8 +151,9 @@ test('GET /?canvasId=:canvasId returns Measurements', async (t: tape.Test) => {
     endingX: 2,
     endingY: 10,
     id: uuid.v4(),
-    label: 'sleeve width',
+    label: 'B',
     measurement: '6 inches',
+    name: 'sleeve width',
     startingX: 1,
     startingY: 1
   }];
