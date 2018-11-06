@@ -27,6 +27,7 @@ export default interface DesignEvent {
   actorId: string;
   targetId: string | null;
   designId: string;
+  bidId: string | null;
   type: DesignEventTypes;
 }
 
@@ -36,6 +37,7 @@ export interface DesignEventRow {
   actor_id: string;
   target_id: string | null;
   design_id: string;
+  bid_id: string | null;
   type: DesignEventTypes;
 }
 
@@ -49,6 +51,7 @@ export function isDesignEventRow(row: object): row is DesignEventRow {
     'actor_id',
     'target_id',
     'design_id',
+    'bid_id',
     'type'
   );
 }
@@ -61,6 +64,7 @@ export function isDesignEvent(row: object): row is DesignEventRow {
     'actorId',
     'targetId',
     'designId',
+    'bidId',
     'type'
   );
 }

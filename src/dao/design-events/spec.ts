@@ -1,5 +1,6 @@
 import * as uuid from 'node-uuid';
 import { test, Test } from '../../test-helpers/fresh';
+import generateBid from '../../test-helpers/factories/bid';
 import createUser = require('../../test-helpers/create-user');
 
 import DesignEvent from '../../domain-objects/design-event';
@@ -12,6 +13,7 @@ import {
 } from './index';
 
 test('Design Events DAO supports creation', async (t: Test) => {
+  const { bid } = await generateBid();
   const { user: designer } = await createUser();
   const { user: cala } = await createUser();
   const { user: partner } = await createUser();
@@ -23,6 +25,7 @@ test('Design Events DAO supports creation', async (t: Test) => {
   });
   const inputEvent: DesignEvent = {
     actorId: cala.id,
+    bidId: bid.id,
     createdAt: new Date(),
     designId: design.id,
     id: uuid.v4(),
@@ -35,6 +38,7 @@ test('Design Events DAO supports creation', async (t: Test) => {
 });
 
 test('Design Events DAO supports creating multiple events at once', async (t: Test) => {
+  const { bid } = await generateBid();
   const { user: designer } = await createUser();
   const { user: cala } = await createUser();
   const { user: partner } = await createUser();
@@ -46,6 +50,7 @@ test('Design Events DAO supports creating multiple events at once', async (t: Te
   });
   const submitEvent: DesignEvent = {
     actorId: designer.id,
+    bidId: null,
     createdAt: new Date(2012, 11, 23),
     designId: design.id,
     id: uuid.v4(),
@@ -54,6 +59,7 @@ test('Design Events DAO supports creating multiple events at once', async (t: Te
   };
   const bidEvent: DesignEvent = {
     actorId: cala.id,
+    bidId: bid.id,
     createdAt: new Date(2012, 11, 24),
     designId: design.id,
     id: uuid.v4(),
@@ -62,6 +68,7 @@ test('Design Events DAO supports creating multiple events at once', async (t: Te
   };
   const acceptBidEvent: DesignEvent = {
     actorId: partner.id,
+    bidId: bidEvent.bidId,
     createdAt: new Date(2012, 11, 25),
     designId: design.id,
     id: uuid.v4(),
@@ -74,6 +81,7 @@ test('Design Events DAO supports creating multiple events at once', async (t: Te
 });
 
 test('Design Events DAO supports retrieval by design ID', async (t: Test) => {
+  const { bid } = await generateBid();
   const { user: designer } = await createUser();
   const { user: cala } = await createUser();
   const { user: partner } = await createUser();
@@ -85,6 +93,7 @@ test('Design Events DAO supports retrieval by design ID', async (t: Test) => {
   });
   const inputEvent: DesignEvent = {
     actorId: cala.id,
+    bidId: bid.id,
     createdAt: new Date(),
     designId: design.id,
     id: uuid.v4(),
@@ -100,6 +109,7 @@ test('Design Events DAO supports retrieval by design ID', async (t: Test) => {
 });
 
 test('Design Events DAO supports retrieval by target ID', async (t: Test) => {
+  const { bid } = await generateBid();
   const { user: designer } = await createUser();
   const { user: cala } = await createUser();
   const { user: partner } = await createUser();
@@ -111,6 +121,7 @@ test('Design Events DAO supports retrieval by target ID', async (t: Test) => {
   });
   const submitEvent: DesignEvent = {
     actorId: designer.id,
+    bidId: null,
     createdAt: new Date(2012, 11, 23),
     designId: design.id,
     id: uuid.v4(),
@@ -119,6 +130,7 @@ test('Design Events DAO supports retrieval by target ID', async (t: Test) => {
   };
   const bidEvent: DesignEvent = {
     actorId: cala.id,
+    bidId: bid.id,
     createdAt: new Date(2012, 11, 24),
     designId: design.id,
     id: uuid.v4(),
@@ -127,6 +139,7 @@ test('Design Events DAO supports retrieval by target ID', async (t: Test) => {
   };
   const acceptBidEvent: DesignEvent = {
     actorId: partner.id,
+    bidId: bidEvent.bidId,
     createdAt: new Date(2012, 11, 25),
     designId: design.id,
     id: uuid.v4(),

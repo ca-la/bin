@@ -293,6 +293,7 @@ test('POST /product-designs/:designId/events with multiple events creates them',
   const inputEvents = [
     {
       actorId: user.id,
+      bidId: null,
       createdAt: new Date(2012, 12, 24),
       designId: design.id,
       id: uuid.v4(),
@@ -301,6 +302,7 @@ test('POST /product-designs/:designId/events with multiple events creates them',
     },
     {
       actorId: user.id,
+      bidId: null,
       createdAt: new Date(2012, 12, 23),
       designId: design.id,
       id: uuid.v4(),
@@ -340,6 +342,7 @@ test('POST /product-designs/:designId/events with multiple events with some forb
   const inputEvents = [
     {
       actorId: user.id,
+      bidId: null,
       createdAt: new Date(2012, 12, 24),
       designId: design.id,
       id: uuid.v4(),
@@ -348,6 +351,7 @@ test('POST /product-designs/:designId/events with multiple events with some forb
     },
     {
       actorId: user.id,
+      bidId: null,
       createdAt: new Date(2012, 12, 23),
       designId: design.id,
       id: uuid.v4(),
@@ -356,6 +360,7 @@ test('POST /product-designs/:designId/events with multiple events with some forb
     },
     {
       actorId: user.id,
+      bidId: null,
       createdAt: new Date(2012, 12, 21),
       designId: design.id,
       id: uuid.v4(),
@@ -384,6 +389,7 @@ test('PUT /product-designs/:designId/events/:eventId with an event creates it', 
   });
   const inputEvent = {
     actorId: user.id,
+    bidId: null,
     createdAt: new Date(2012, 12, 24),
     designId: design.id,
     id: uuid.v4(),
@@ -415,6 +421,7 @@ test('PUT /product-designs/:designId/events/:eventId a forbidden type returns 40
   });
   const inputEvent = {
     actorId: user.id,
+    bidId: null,
     createdAt: new Date(2012, 12, 23),
     designId: design.id,
     id: uuid.v4(),
@@ -442,6 +449,7 @@ test('PUT /product-designs/:designId/events/:eventId with wrong ID in body', asy
   });
   const inputEvent = {
     actorId: user.id,
+    bidId: null,
     createdAt: new Date(2012, 12, 24),
     designId: design.id,
     id: uuid.v4(),
@@ -468,6 +476,7 @@ test('GET /product-designs/:designId/events', async (t) => {
   });
   const submitEvent = {
     actorId: user.id,
+    bidId: null,
     createdAt: new Date(2012, 12, 21),
     designId: design.id,
     id: uuid.v4(),
@@ -476,6 +485,7 @@ test('GET /product-designs/:designId/events', async (t) => {
   };
   const bidEvent = {
     actorId: user.id,
+    bidId: null,
     createdAt: new Date(2012, 12, 23),
     designId: design.id,
     id: uuid.v4(),
@@ -484,6 +494,7 @@ test('GET /product-designs/:designId/events', async (t) => {
   };
   const acceptBidEvent = {
     actorId: user.id,
+    bidId: null,
     createdAt: new Date(2012, 12, 24),
     designId: design.id,
     id: uuid.v4(),
