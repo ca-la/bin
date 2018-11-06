@@ -14,22 +14,21 @@ const router = new Router();
 function* createSession() {
   const {
     email,
-    password,
     expireAfterSeconds,
+    password,
     role
   } = this.request.body;
 
   let expiresAt = null;
-
   if (expireAfterSeconds) {
-    const now = (new Date()).getTime();
+    const now = new Date().getTime();
     expiresAt = new Date(now + (expireAfterSeconds * 1000));
   }
 
   const session = yield SessionsDAO.create({
     email,
-    password,
     expiresAt,
+    password,
     role
   })
     .catch(filterError(InvalidDataError, err => this.throw(400, err)))

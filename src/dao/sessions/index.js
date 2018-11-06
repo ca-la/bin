@@ -24,6 +24,16 @@ function ensureCanAssumeRole(user, role) {
   }
 }
 
+function getSessionExpirationByRole(role) {
+  let expiresAt = null;
+
+  if (role === 'ADMIN') {
+    const now = (new Date()).getTime();
+    expiresAt = new Date(now + (3 * 24 * 60 * 60 * 1000));
+  }
+  return expiresAt;
+}
+
 /**
  * @param {Object} user A User instance
  */
@@ -48,15 +58,15 @@ function createForUser(user, additionalData = {}) {
 }
 
 function create(data) {
-  const { email, password } = data;
+  const {
+    email, password, role, expiresAt
+  } = data;
 
   if (!email || !password) {
     return Promise.reject(new InvalidDataError('Missing required information'));
   }
 
   let user;
-
-  const role = data.role || 'USER';
 
   return UsersDAO.findByEmail(email)
     .then((_user) => {
@@ -77,11 +87,17 @@ function create(data) {
         throw new InvalidDataError(`Incorrect password for ${email}`);
       }
 
-      ensureCanAssumeRole(user, role);
+      if (role) {
+        ensureCanAssumeRole(user, role);
+      }
+      let expiresOrComputed = expiresAt;
+      if (expiresAt !== null && !expiresAt) {
+        expiresOrComputed = getSessionExpirationByRole(role);
+      }
 
       return createForUser(user, {
-        expiresAt: data.expiresAt,
-        role
+        expiresAt: expiresOrComputed,
+        role: role || user.role
       });
     });
 }

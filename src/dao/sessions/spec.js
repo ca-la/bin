@@ -104,7 +104,7 @@ test('SessionsDAO.findById returns a session that has not expired', (t) => {
 });
 
 test('SessionsDAO.findById returns null if a session has expired', (t) => {
-  return UsersDAO.create(USER_DATA)
+  return UsersDAO.create({ ...USER_DATA, role: 'ADMIN' })
     .then(() => {
       return SessionsDAO.create({
         email: 'user@example.com',

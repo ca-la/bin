@@ -48,9 +48,8 @@ test('POST /sessions returns new session data', (t) => {
     .then(([response, body]) => {
       t.equal(response.status, 201, 'status=201');
       t.equal(body.userId, user.id);
-      t.equal(body.role, 'USER');
+      t.equal(body.role, 'ADMIN');
       t.equal(body.user.passwordHash, undefined);
-      t.equal(body.expiresAt, null);
     });
 });
 
@@ -64,9 +63,8 @@ test('POST /sessions allows emails with different formatting', (t) => {
     .then(([response, body]) => {
       t.equal(response.status, 201, 'status=201');
       t.equal(body.userId, user.id);
-      t.equal(body.role, 'USER');
+      t.equal(body.role, 'ADMIN');
       t.equal(body.user.passwordHash, undefined);
-      t.equal(body.expiresAt, null);
     });
 });
 
@@ -84,6 +82,69 @@ test('POST /sessions can create elevated role permissions', (t) => {
     .then(([response, body]) => {
       t.equal(response.status, 201, 'status=201');
       t.equal(body.role, 'ADMIN');
+    });
+});
+
+test('POST /sessions can create other available roles', (t) => {
+  return UsersDAO.create(USER_DATA)
+    .then(() => {
+      return post('/sessions', {
+        body: {
+          email: 'user@example.com',
+          password: 'hunter2',
+          role: 'PARTNER'
+        }
+      });
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 201, 'status=201');
+      t.equal(body.role, 'PARTNER');
+    });
+});
+
+test('POST /sessions cannot create elevated role permissions if user is role USER', (t) => {
+  const nonAdmin = { ...USER_DATA, role: 'USER' };
+
+  return UsersDAO.create(nonAdmin)
+    .then(() => {
+      return post('/sessions', {
+        body: {
+          email: 'user@example.com',
+          password: 'hunter2',
+          role: 'ADMIN'
+        }
+      });
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 400);
+      t.equal(body.message, UNAUTHORIZED_ERROR_MSG);
+    });
+});
+
+test('POST /sessions allows specifying expiry', (t) => {
+  let user;
+  return UsersDAO.create(USER_DATA)
+    .then((_user) => {
+      user = _user;
+      return post('/sessions', {
+        body: {
+          email: 'user@example.com',
+          password: 'hunter2',
+          expireAfterSeconds: 30
+        }
+      });
+    })
+    .then(([response, body]) => {
+      t.equal(response.status, 201, 'status=201');
+      t.equal(body.userId, user.id);
+      t.equal(body.user.passwordHash, undefined);
+
+      const now = (new Date()).getTime();
+      const expiry = (new Date(body.expiresAt)).getTime();
+      const differenceSeconds = (expiry - now) / 1000;
+
+      t.equal(differenceSeconds > 20, true);
+      t.equal(differenceSeconds < 40, true);
     });
 });
 
@@ -131,40 +192,14 @@ test('POST /sessions cannot create USER sessions by omission, if a partner', (t)
       return post('/sessions', {
         body: {
           email: 'user@example.com',
-          password: 'hunter2'
+          password: 'hunter2',
+          role: 'USER'
         }
       });
     })
     .then(([response, body]) => {
       t.equal(response.status, 400);
       t.equal(body.message, UNAUTHORIZED_ERROR_MSG);
-    });
-});
-
-test('POST /sessions allows specifying expiry', (t) => {
-  let user;
-  return UsersDAO.create(USER_DATA)
-    .then((_user) => {
-      user = _user;
-      return post('/sessions', {
-        body: {
-          email: 'user@example.com',
-          password: 'hunter2',
-          expireAfterSeconds: 30
-        }
-      });
-    })
-    .then(([response, body]) => {
-      t.equal(response.status, 201, 'status=201');
-      t.equal(body.userId, user.id);
-      t.equal(body.user.passwordHash, undefined);
-
-      const now = (new Date()).getTime();
-      const expiry = (new Date(body.expiresAt)).getTime();
-      const differenceSeconds = (expiry - now) / 1000;
-
-      t.equal(differenceSeconds > 20, true);
-      t.equal(differenceSeconds < 40, true);
     });
 });
 
