@@ -282,3 +282,228 @@ test('POST /product-designs/:designId/sections/:sectionId/annotations returns 40
 
   t.equal(invalidResponse.status, 400);
 });
+
+test('POST /product-designs/:designId/events with multiple events creates them', async (t) => {
+  const { user, session } = await createUser();
+
+  const design = await ProductDesignsDAO.create({
+    userId: user.id,
+    title: 'Design'
+  });
+  const inputEvents = [
+    {
+      actorId: user.id,
+      createdAt: new Date(2012, 12, 24),
+      designId: design.id,
+      id: uuid.v4(),
+      targetId: null,
+      type: 'SUBMIT_DESIGN'
+    },
+    {
+      actorId: user.id,
+      createdAt: new Date(2012, 12, 23),
+      designId: design.id,
+      id: uuid.v4(),
+      targetId: null,
+      type: 'SUBMIT_DESIGN'
+    }
+  ];
+
+  const [response, events] = await post(
+    `/product-designs/${design.id}/events`,
+    {
+      headers: authHeader(session.id),
+      body: inputEvents
+    }
+  );
+
+  t.equal(response.status, 200);
+  t.deepEqual(events, [
+    {
+      ...inputEvents[1],
+      createdAt: new Date(2012, 12, 23).toISOString()
+    },
+    {
+      ...inputEvents[0],
+      createdAt: new Date(2012, 12, 24).toISOString()
+    }
+  ]);
+});
+
+test('POST /product-designs/:designId/events with multiple events with some forbidden types returns 403', async (t) => {
+  const { user, session } = await createUser();
+
+  const design = await ProductDesignsDAO.create({
+    userId: user.id,
+    title: 'Design'
+  });
+  const inputEvents = [
+    {
+      actorId: user.id,
+      createdAt: new Date(2012, 12, 24),
+      designId: design.id,
+      id: uuid.v4(),
+      targetId: null,
+      type: 'SUBMIT_DESIGN'
+    },
+    {
+      actorId: user.id,
+      createdAt: new Date(2012, 12, 23),
+      designId: design.id,
+      id: uuid.v4(),
+      targetId: null,
+      type: 'BID_DESIGN'
+    },
+    {
+      actorId: user.id,
+      createdAt: new Date(2012, 12, 21),
+      designId: design.id,
+      id: uuid.v4(),
+      targetId: null,
+      type: 'ACCEPT_SERVICE_BID'
+    }
+  ];
+
+  const [response] = await post(
+    `/product-designs/${design.id}/events`,
+    {
+      headers: authHeader(session.id),
+      body: inputEvents
+    }
+  );
+
+  t.equal(response.status, 403);
+});
+
+test('PUT /product-designs/:designId/events/:eventId with an event creates it', async (t) => {
+  const { user, session } = await createUser();
+
+  const design = await ProductDesignsDAO.create({
+    userId: user.id,
+    title: 'Design'
+  });
+  const inputEvent = {
+    actorId: user.id,
+    createdAt: new Date(2012, 12, 24),
+    designId: design.id,
+    id: uuid.v4(),
+    targetId: null,
+    type: 'SUBMIT_DESIGN'
+  };
+
+  const [response, event] = await put(
+    `/product-designs/${design.id}/events/${inputEvent.id}`,
+    {
+      headers: authHeader(session.id),
+      body: inputEvent
+    }
+  );
+
+  t.equal(response.status, 200);
+  t.deepEqual(event, {
+    ...inputEvent,
+    createdAt: new Date(2012, 12, 24).toISOString()
+  });
+});
+
+test('PUT /product-designs/:designId/events/:eventId a forbidden type returns 403', async (t) => {
+  const { user, session } = await createUser();
+
+  const design = await ProductDesignsDAO.create({
+    userId: user.id,
+    title: 'Design'
+  });
+  const inputEvent = {
+    actorId: user.id,
+    createdAt: new Date(2012, 12, 23),
+    designId: design.id,
+    id: uuid.v4(),
+    targetId: null,
+    type: 'BID_DESIGN'
+  };
+
+  const [response] = await put(
+    `/product-designs/${design.id}/events/${inputEvent.id}`,
+    {
+      headers: authHeader(session.id),
+      body: inputEvent
+    }
+  );
+
+  t.equal(response.status, 403);
+});
+
+test('PUT /product-designs/:designId/events/:eventId with wrong ID in body', async (t) => {
+  const { user, session } = await createUser();
+
+  const design = await ProductDesignsDAO.create({
+    userId: user.id,
+    title: 'Design'
+  });
+  const inputEvent = {
+    actorId: user.id,
+    createdAt: new Date(2012, 12, 24),
+    designId: design.id,
+    id: uuid.v4(),
+    targetId: null,
+    type: 'SUBMIT_DESIGN'
+  };
+
+  const [response] = await put(
+    `/product-designs/${design.id}/events/some-other-id`,
+    {
+      headers: authHeader(session.id),
+      body: inputEvent
+    }
+  );
+
+  t.equal(response.status, 400);
+});
+
+test('GET /product-designs/:designId/events', async (t) => {
+  const { user, session } = await createUser({ role: 'ADMIN' });
+  const design = await ProductDesignsDAO.create({
+    userId: user.id,
+    title: 'Design'
+  });
+  const submitEvent = {
+    actorId: user.id,
+    createdAt: new Date(2012, 12, 21),
+    designId: design.id,
+    id: uuid.v4(),
+    targetId: null,
+    type: 'SUBMIT_DESIGN'
+  };
+  const bidEvent = {
+    actorId: user.id,
+    createdAt: new Date(2012, 12, 23),
+    designId: design.id,
+    id: uuid.v4(),
+    targetId: null,
+    type: 'BID_DESIGN'
+  };
+  const acceptBidEvent = {
+    actorId: user.id,
+    createdAt: new Date(2012, 12, 24),
+    designId: design.id,
+    id: uuid.v4(),
+    targetId: null,
+    type: 'ACCEPT_SERVICE_BID'
+  };
+
+  const [_postResponse, createdEvents] = await post(
+    `/product-designs/${design.id}/events`,
+    {
+      headers: authHeader(session.id),
+      body: [acceptBidEvent, submitEvent, bidEvent]
+    }
+  );
+
+  const [response, designEvents] = await get(
+    `/product-designs/${design.id}/events`,
+    { headers: authHeader(session.id) }
+  );
+
+  t.equal(response.status, 200);
+  t.deepEqual(designEvents, createdEvents);
+});

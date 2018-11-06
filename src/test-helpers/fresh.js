@@ -11,6 +11,7 @@ const TABLES = [
   'collectionphotos',
   'designerphotos',
   'designers',
+  'design_events',
   'invoices',
   'pricing_care_labels',
   'pricing_constants',

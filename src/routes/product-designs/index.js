@@ -28,6 +28,7 @@ const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
 const ProductDesignServicesDAO = require('../../dao/product-design-services');
 const ProductDesignStatusesDAO = require('../../dao/product-design-statuses');
 const ProductDesignStatusSlasDAO = require('../../dao/product-design-status-slas');
+const DesignEventsDAO = require('../../dao/design-events');
 const requireAuth = require('../../middleware/require-auth');
 const sendAnnotationNotifications = require('../../services/send-annotation-notifications');
 const updateDesignStatus = require('../../services/update-design-status');
@@ -468,6 +469,77 @@ function* setStatus() {
   this.status = 200;
 }
 
+function isAllowedEventType(role, event) {
+  if (!event || (event && !event.type)) {
+    return false;
+  }
+
+  const DESIGNER_ALLOWED_EVENT_TYPES = [
+    'SUBMIT_DESIGN'
+  ];
+  const PARTNER_ALLOWED_EVENT_TYPES = [
+    'ACCEPT_SERVICE_BID',
+    'REJECT_SERVICE_BID'
+  ];
+  const ADMIN_ALLOWED_EVENT_TYPES = [
+    ...DESIGNER_ALLOWED_EVENT_TYPES,
+    ...PARTNER_ALLOWED_EVENT_TYPES,
+    'BID_DESIGN',
+    'REJECT_DESIGN',
+    'QUOTE_DESIGN',
+    'REMOVE_PARTNER'
+  ];
+
+  const isAdmin = role === User.ROLES.admin;
+  const isPartner = role === User.ROLES.partner;
+  let allowedTypes = DESIGNER_ALLOWED_EVENT_TYPES;
+
+  if (isPartner) {
+    allowedTypes = PARTNER_ALLOWED_EVENT_TYPES;
+  }
+
+  if (isAdmin) {
+    allowedTypes = ADMIN_ALLOWED_EVENT_TYPES;
+  }
+
+  return allowedTypes.includes(event.type);
+}
+
+function* addDesignEvent() {
+  const { body: designEvent } = this.request;
+  this.assert(isAllowedEventType(this.state.role, designEvent), 403);
+  this.assert(
+    designEvent.id === this.params.eventId,
+    400,
+    'ID in route does not match ID in request body'
+  );
+
+  const added = yield DesignEventsDAO.create(designEvent);
+
+  this.body = added;
+  this.status = 200;
+}
+
+function* addDesignEvents() {
+  const { body: designEvents } = this.request;
+  this.assert(
+    designEvents.every(isAllowedEventType.bind(null, this.state.role)),
+    403
+  );
+
+  const added = yield DesignEventsDAO.createAll(designEvents);
+
+  this.body = added;
+  this.status = 200;
+}
+
+function* getDesignEvents() {
+  const events = yield DesignEventsDAO.findByDesignId(this.params.designId);
+
+  this.body = events;
+  this.status = 200;
+}
+
 router.post('/', requireAuth, createDesign);
 router.get('/', requireAuth, getDesigns);
 
@@ -477,6 +549,10 @@ router.patch('/:designId', requireAuth, canAccessDesignInParam, updateDesign);
 
 router.get('/:designId/upload-policy/:sectionId', requireAuth, canAccessDesignInParam, getThumbnailUploadPolicy);
 router.get('/upload-policy/:id', requireAuth, getDesignUploadPolicy);
+
+router.get('/:designId/events', requireAuth, canAccessDesignInParam, getDesignEvents);
+router.post('/:designId/events', requireAuth, canAccessDesignInParam, addDesignEvents);
+router.put('/:designId/events/:eventId', requireAuth, canAccessDesignInParam, addDesignEvent);
 
 router.get('/:designId/pricing', requireAuth, canAccessDesignInParam, getDesignPricing);
 
