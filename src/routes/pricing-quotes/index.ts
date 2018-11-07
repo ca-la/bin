@@ -1,12 +1,15 @@
 import * as Router from 'koa-router';
 import * as Koa from 'koa';
 import { findById } from '../../dao/pricing-quotes';
+import { create as createBid } from '../../dao/bids';
 import {
   isPricingQuoteRequest,
   PricingQuote,
   PricingQuoteRequest
 } from '../../domain-objects/pricing-quote';
+import requireAdmin = require('../../middleware/require-admin');
 import generatePricingQuote from '../../services/generate-pricing-quote';
+import Bid, { isBid } from '../../domain-objects/bid';
 
 const router = new Router();
 
@@ -32,7 +35,34 @@ function* getQuote(this: Koa.Application.Context): AsyncIterableIterator<Pricing
   this.status = 200;
 }
 
+function* createBidForQuote(this: Koa.Application.Context): AsyncIterableIterator<any> {
+  const { quoteId, bidId } = this.params;
+  const { body } = this.request;
+  const quote = yield findById(quoteId);
+  this.assert(quote, 404);
+
+  if (body && isBid(body)) {
+    const bidRequest: Bid = body;
+    this.assert(
+      bidRequest.id === bidId,
+      400,
+      `Bid ID in path does not match request body ID:
+in path: ${bidId}
+in request: ${bidRequest.id}`
+    );
+
+    const bid = yield createBid(bidRequest);
+
+    this.body = bid;
+    this.status = 201;
+  } else {
+    this.throw(400, `Request does not match model: ${Object.keys(body)}`);
+  }
+}
+
 router.post('/', createQuote);
 router.get('/:quoteId', getQuote);
+
+router.put('/:quoteId/bid/:bidId', requireAdmin, createBidForQuote);
 
 export = router.routes();

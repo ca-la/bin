@@ -25,7 +25,7 @@ export interface BidRow {
 
 export const dataAdapter = new DataAdapter<BidRow, Bid>();
 
-export function isBid(row: object): row is BidRow {
+export function isBid(row: object): row is Bid {
   return hasProperties(
     row,
     'id',
