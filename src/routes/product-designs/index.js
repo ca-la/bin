@@ -43,6 +43,7 @@ const {
   sendFeaturePlacementUpdateNotifications
 } = require('../../services/send-design-notifications');
 const AWSService = require('../../services/aws');
+const { generateFilename } = require('../../services/generate-filename');
 
 const router = new Router();
 
@@ -124,13 +125,17 @@ function* getDesign() {
 
 function* getDesignUploadPolicy() {
   const remoteFileName = this.params.id || uuid.v4();
+  const filenameWithExtension = generateFilename(remoteFileName, this.query.mimeType);
+  const contentDisposition = `attachment; filename="${filenameWithExtension}"`;
   const { url, fields } = yield AWSService.getUploadPolicy(
     AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME,
     AWS_PRODUCT_DESIGN_IMAGE_BUCKET_REGION,
-    remoteFileName
+    remoteFileName,
+    contentDisposition
   );
 
   this.body = {
+    contentDisposition,
     downloadUrl: `https://${AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME}.s3.amazonaws.com/${remoteFileName}`,
     formData: fields,
     remoteFileName,

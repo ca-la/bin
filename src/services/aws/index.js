@@ -114,7 +114,7 @@ async function getDownloadUrl(bucketName, remoteFileName) {
  * @param {string} remoteFileName S3 object key for image
  * @returns {object} Upload/download urls, and form fields to use in POST
  */
-async function getUploadPolicy(bucketName, region, remoteFileName) {
+async function getUploadPolicy(bucketName, region, remoteFileName, contentDisposition) {
   requireValues({ bucketName, remoteFileName });
   const s3 = new AWS.S3({
     credentials: new AWS.Credentials({
@@ -133,6 +133,7 @@ async function getUploadPolicy(bucketName, region, remoteFileName) {
     Conditions: [
       { acl: 'public-read' },
       { key: remoteFileName },
+      ['eq', '$content-disposition', contentDisposition],
       ['content-length-range', 0, FILE_LIMIT]
     ]
   });
