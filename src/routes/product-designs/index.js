@@ -97,7 +97,8 @@ function* getAllDesigns() {
   const designs = yield ProductDesignsDAO.findAll({
     limit: Number(this.query.limit) || 10,
     offset: Number(this.query.offset) || 0,
-    search: this.query.search
+    search: this.query.search,
+    needsQuote: Boolean(this.query.needsQuote)
   });
 
   for (const design of designs) {

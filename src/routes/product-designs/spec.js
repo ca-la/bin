@@ -1,9 +1,11 @@
 'use strict';
 
 const uuid = require('node-uuid');
+const { omit } = require('lodash');
 
 const createUser = require('../../test-helpers/create-user');
 const ProductDesignsDAO = require('../../dao/product-designs');
+const DesignEventsDAO = require('../../dao/design-events');
 const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
 const EmailService = require('../../services/email');
 const {
@@ -192,6 +194,63 @@ test('GET /product-designs allows searching', async (t) => {
     [body[0].id, body[1].id].sort(),
     [first.id, third.id].sort()
   );
+});
+
+test('GET /product-designs allows fetching designs await quotes', async (t) => {
+  const { user, session } = await createUser({ role: 'ADMIN' });
+  const first = await ProductDesignsDAO.create({
+    userId: user.id,
+    title: 'Thing One'
+  });
+  const second = await ProductDesignsDAO.create({
+    userId: user.id,
+    title: 'Bzzt Two'
+  });
+  const events = [
+    {
+      actorId: user.id,
+      bidId: null,
+      createdAt: new Date(2012, 11, 23),
+      designId: first.id,
+      id: uuid.v4(),
+      targetId: null,
+      type: 'SUBMIT_DESIGN'
+    },
+    {
+      actorId: user.id,
+      bidId: null,
+      createdAt: new Date(2012, 11, 23),
+      designId: second.id,
+      id: uuid.v4(),
+      targetId: null,
+      type: 'SUBMIT_DESIGN'
+    },
+    {
+      actorId: user.id,
+      bidId: null,
+      createdAt: new Date(2012, 11, 25),
+      designId: second.id,
+      id: uuid.v4(),
+      targetId: user.id,
+      type: 'BID_DESIGN'
+    }
+  ];
+  await DesignEventsDAO.createAll(events);
+
+  const [response, needsQuote] = await get(
+    '/product-designs?limit=20&offset=0&needsQuote=true',
+    { headers: authHeader(session.id) }
+  );
+
+  t.equal(response.status, 200);
+  t.deepEqual(needsQuote, [{
+    ...first,
+    owner: {
+      ...omit(user, ['passwordHash']),
+      createdAt: new Date(user.createdAt).toISOString()
+    },
+    createdAt: new Date(first.createdAt).toISOString()
+  }]);
 });
 
 test('GET /product-designs/:designId/upload-policy/:sectionId', async (t) => {

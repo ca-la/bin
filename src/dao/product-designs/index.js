@@ -84,7 +84,9 @@ function findByUserId(userId, filters) {
     .then(designs => designs.map(instantiate));
 }
 
-function findAll({ limit, offset, search }) {
+function findAll({
+  limit, offset, search, needsQuote
+}) {
   if (typeof limit !== 'number' || typeof offset !== 'number') {
     throw new Error('Limit and offset must be provided to find all users');
   }
@@ -103,6 +105,23 @@ function findAll({ limit, offset, search }) {
         // Lazy person's search - allow fuzzy matching for design title, or
         // exact matching for design owner ID / status
         query.andWhere(db.raw('(title ~* :search or user_id::text = :search or status::text = :search)', { search }));
+      }
+      if (needsQuote) {
+        query
+          .whereIn(
+            'product_designs.id',
+            subquery => subquery
+              .select('design_id')
+              .from('design_events')
+              .whereIn('type', ['SUBMIT_DESIGN'])
+          )
+          .whereNotIn(
+            'product_designs.id',
+            subquery => subquery
+              .select('design_id')
+              .from('design_events')
+              .whereIn('type', ['BID_DESIGN'])
+          );
       }
     })
     .limit(limit)

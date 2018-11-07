@@ -1,6 +1,9 @@
 'use strict';
 
+const uuid = require('node-uuid');
+
 const ProductDesignsDAO = require('./index');
+const DesignEventsDAO = require('../design-events');
 const { test } = require('../../test-helpers/fresh');
 const createUser = require('../../test-helpers/create-user');
 
@@ -88,4 +91,49 @@ test('ProductDesignsDAO.findByUserId', async (t) => {
 
   t.deepEqual(userDesigns, [design]);
   t.ok(Object.keys(userDesigns[0]).includes('collectionIds'));
+});
+
+
+test('ProductDesignsDAO.findAll with needsQuote query', async (t) => {
+  const { user } = await createUser({ withSession: false });
+  const design = await ProductDesignsDAO.create({
+    title: 'Plain White Tee',
+    productType: 'TEESHIRT',
+    userId: user.id
+  });
+  const submitEvent = {
+    actorId: user.id,
+    bidId: null,
+    createdAt: new Date(2012, 11, 23),
+    designId: design.id,
+    id: uuid.v4(),
+    targetId: null,
+    type: 'SUBMIT_DESIGN'
+  };
+  await DesignEventsDAO.create(submitEvent);
+
+  const designsNeedQuote = await ProductDesignsDAO.findAll({
+    limit: 10,
+    offset: 0,
+    needsQuote: true
+  });
+  t.deepEqual(designsNeedQuote, [design]);
+
+  const bidEvent = {
+    actorId: user.id,
+    bidId: null,
+    createdAt: new Date(2012, 11, 25),
+    designId: design.id,
+    id: uuid.v4(),
+    targetId: user.id,
+    type: 'BID_DESIGN'
+  };
+  await DesignEventsDAO.create(bidEvent);
+
+  const needsQuote = await ProductDesignsDAO.findAll({
+    limit: 10,
+    offset: 0,
+    needsQuote: true
+  });
+  t.deepEqual(needsQuote, []);
 });
