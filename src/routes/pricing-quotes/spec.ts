@@ -10,6 +10,7 @@ import Bid from '../../domain-objects/bid';
 test('/pricing-quotes POST -> GET quote', async (t: Test) => {
   await generatePricingValues();
   const quote: PricingQuoteRequest = {
+    designId: null,
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
     processes: [{
@@ -42,6 +43,7 @@ test('PUT /pricing-quotes/:quoteId/bid/:bidId creates bid', async (t: Test) => {
   await generatePricingValues();
   const { user, session } = await createUser({ role: 'ADMIN' });
   const quote: PricingQuoteRequest = {
+    designId: null,
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
     processes: [{

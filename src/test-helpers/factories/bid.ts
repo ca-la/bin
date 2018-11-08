@@ -15,11 +15,17 @@ interface BidInterface {
   bid: Bid;
 }
 
-export default async function generateBid(): Promise<BidInterface> {
+export default async function generateBid(
+  designId: string | null = null,
+  userId: string | null = null
+): Promise<BidInterface> {
   await generatePricingValues();
   const { user } = await createUser();
 
+  const createdBy = userId || user.id;
+
   const quote = await generatePricingQuote({
+    designId,
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
     processes: [{
@@ -36,7 +42,7 @@ export default async function generateBid(): Promise<BidInterface> {
   const bid = await createBid({
     bidPriceCents: 100000,
     createdAt: new Date(2012, 12, 22),
-    createdBy: user.id,
+    createdBy,
     description: 'Full Service',
     id: uuid.v4(),
     quoteId: quote.id

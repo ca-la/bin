@@ -3,6 +3,8 @@
 const uuid = require('node-uuid');
 
 const ProductDesignsDAO = require('./index');
+const { default: generatePricingQuote } = require('../../services/generate-pricing-quote');
+const { default: generatePricingValues } = require('../../test-helpers/factories/pricing-values');
 const CollectionsDAO = require('../collections');
 const DesignEventsDAO = require('../design-events');
 const { test } = require('../../test-helpers/fresh');
@@ -164,4 +166,31 @@ test('ProductDesignsDAO.findAll with needsQuote query', async (t) => {
     needsQuote: true
   });
   t.deepEqual(needsQuote, []);
+});
+
+test('ProductDesignsDAO.findByQuoteId', async (t) => {
+  const { user } = await createUser({ withSession: false });
+  const design = await ProductDesignsDAO.create({
+    title: 'Plain White Tee',
+    productType: 'TEESHIRT',
+    userId: user.id
+  });
+  await generatePricingValues();
+  const quote = await generatePricingQuote({
+    designId: design.id,
+    materialBudgetCents: 1200,
+    materialCategory: 'BASIC',
+    processes: [{
+      complexity: '1_COLOR',
+      name: 'SCREEN_PRINTING'
+    }, {
+      complexity: '1_COLOR',
+      name: 'SCREEN_PRINTING'
+    }],
+    productComplexity: 'SIMPLE',
+    productType: 'TEESHIRT',
+    units: 200
+  });
+  const retrieved = await ProductDesignsDAO.findByQuoteId(quote.id);
+  t.deepEqual(retrieved, design);
 });

@@ -30,6 +30,24 @@ export async function create(bid: Bid): Promise<Bid> {
   );
 }
 
+export async function findById(id: string): Promise<Bid | null> {
+  const bid: BidRow | undefined = await db(TABLE_NAME)
+    .select('*')
+    .where({ id })
+    .then((bids: BidRow[]) => first(bids));
+
+  if (!bid) {
+    return null;
+  }
+
+  return validate<BidRow, Bid>(
+    TABLE_NAME,
+    isBidRow,
+    dataAdapter,
+    bid
+  );
+}
+
 export async function findOpenByTargetId(targetId: string): Promise<Bid[]> {
   const targetRows = await db('design_events')
     .select('pricing_bids.*')

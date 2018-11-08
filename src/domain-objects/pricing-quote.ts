@@ -19,6 +19,7 @@ interface BasePricingQuoteRequest {
   materialCategory: MaterialCategory;
   materialBudgetCents?: number;
   units: number;
+  designId: string | null;
 }
 
 export interface PricingQuoteRequest extends BasePricingQuoteRequest {
@@ -52,6 +53,7 @@ export interface PricingQuoteRow {
   material_cost_cents: number;
   process_cost_cents: number;
   unit_cost_cents: number;
+  design_id: string | null;
 }
 
 export interface PricingProcessQuoteRow {
@@ -91,7 +93,8 @@ export function isPricingQuoteRequest(candidate: object): candidate is PricingQu
     'materialCategory',
     'materialBudgetCents',
     'processes',
-    'units'
+    'units',
+    'designId'
   );
 }
 
@@ -110,7 +113,8 @@ export function isPricingQuote(candidate: object): candidate is PricingQuote {
     'baseCostCents',
     'materialCostCents',
     'processCostCents',
-    'unitCostCents'
+    'unitCostCents',
+    'designId'
   );
 }
 
@@ -128,6 +132,7 @@ export function isPricingQuoteRow(candidate: object): candidate is PricingQuoteR
     'base_cost_cents',
     'material_cost_cents',
     'process_cost_cents',
-    'unit_cost_cents'
+    'unit_cost_cents',
+    'design_id'
   );
 }

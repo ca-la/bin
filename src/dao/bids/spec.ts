@@ -10,16 +10,18 @@ import Bid from '../../domain-objects/bid';
 import {
   create,
   findAcceptedByTargetId,
+  findById,
   findByQuoteId,
   findOpenByTargetId,
   findRejectedByTargetId
 } from './index';
 import DesignEvent from '../../domain-objects/design-event';
 
-test('Bids DAO supports creation', async (t: Test) => {
+test('Bids DAO supports creation and retrieval', async (t: Test) => {
   await generatePricingValues();
   const { user } = await createUser();
   const quote = await generatePricingQuote({
+    designId: null,
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
     processes: [{
@@ -42,14 +44,23 @@ test('Bids DAO supports creation', async (t: Test) => {
     quoteId: quote.id
   };
   const bid = await create(inputBid);
+  const retrieved = await findById(inputBid.id);
 
   t.deepEqual(inputBid, bid);
+  t.deepEqual(bid, retrieved);
+});
+
+test('Bids DAO findById returns null with a lookup-miss', async (t: Test) => {
+  const missed = await findById(uuid.v4());
+
+  t.equal(missed, null);
 });
 
 test('Bids DAO supports retrieval by quote ID', async (t: Test) => {
   await generatePricingValues();
   const { user } = await createUser();
   const quote = await generatePricingQuote({
+    designId: null,
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
     processes: [{
@@ -85,6 +96,7 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
   const { user: otherPartner } = await createUser();
 
   const quote = await generatePricingQuote({
+    designId: null,
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
     processes: [{

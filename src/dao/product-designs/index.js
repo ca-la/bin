@@ -165,6 +165,30 @@ join collection_designs on
     .then(designs => designs.map(instantiate));
 }
 
+function findByQuoteId(quoteId) {
+  return db
+    .select('product_designs.*', 'collection_designs.collection_id')
+    .from('pricing_quotes')
+    .leftJoin(
+      'product_designs',
+      'product_designs.id',
+      'pricing_quotes.design_id'
+    )
+    .leftJoin(
+      'collection_designs',
+      'product_designs.id',
+      'collection_designs.design_id'
+    )
+    .where({
+      'pricing_quotes.id': quoteId,
+      'product_designs.deleted_at': null
+    })
+    .then(first)
+    .then(maybeInstantiate)
+    .catch(rethrow)
+    .catch(filterError(rethrow.ERRORS.InvalidTextRepresentation, () => null));
+}
+
 module.exports = {
   create,
   deleteById,
@@ -172,5 +196,6 @@ module.exports = {
   findAll,
   findById,
   findByUserId,
-  findByCollectionId
+  findByCollectionId,
+  findByQuoteId
 };
