@@ -3,6 +3,7 @@ import * as Koa from 'koa';
 
 import * as ProductDesignCanvasesDAO from '../../dao/product-design-canvases';
 import * as ComponentsDAO from '../../dao/components';
+import * as ProductDesignsDAO from '../../dao/product-designs';
 import ProductDesignCanvas, {
   isUnsavedProductDesignCanvas
 } from '../../domain-objects/product-design-canvas';
@@ -41,6 +42,13 @@ function* addComponent(this: Koa.Application.Context): AsyncIterableIterator<Pro
 
   const component = yield ComponentsDAO.create(body);
   const canvas = yield ProductDesignCanvasesDAO.findById(this.params.canvasId);
+
+  const design = yield ProductDesignsDAO.findById(canvas.designId);
+  const previewImageUrls = design.previewImageUrls
+    ? [assetLink, ...design.previewImageUrls]
+    : [assetLink];
+  yield ProductDesignsDAO.update(canvas.designId, { previewImageUrls });
+
   const updatedCanvas = yield ProductDesignCanvasesDAO
     .update(this.params.canvasId, { ...canvas, componentId: component.id });
   const components = yield ComponentsDAO.findAllByCanvasId(canvas.id);

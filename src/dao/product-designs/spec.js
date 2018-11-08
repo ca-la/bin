@@ -3,6 +3,7 @@
 const uuid = require('node-uuid');
 
 const ProductDesignsDAO = require('./index');
+const CollectionsDAO = require('../collections');
 const DesignEventsDAO = require('../design-events');
 const { test } = require('../../test-helpers/fresh');
 const createUser = require('../../test-helpers/create-user');
@@ -93,6 +94,33 @@ test('ProductDesignsDAO.findByUserId', async (t) => {
   t.ok(Object.keys(userDesigns[0]).includes('collectionIds'));
 });
 
+test('ProductDesignsDAO.findByCollectionId', async (t) => {
+  const { user } = await createUser({ withSession: false });
+  const collection = await CollectionsDAO.create({
+    createdBy: user.id,
+    title: 'AW19'
+  });
+  const design = await ProductDesignsDAO.create({
+    title: 'Plain White Tee',
+    productType: 'TEESHIRT',
+    userId: user.id,
+    previewImageUrls: ['yo.jpg', 'dope.png']
+  });
+  await CollectionsDAO.moveDesign(collection.id, design.id);
+
+  const collectionDesigns = await ProductDesignsDAO.findByCollectionId(collection.id);
+
+  t.deepEqual(
+    collectionDesigns,
+    [{ ...design, collectionIds: [collection.id] }],
+    'Passes through the design associated with the collection'
+  );
+  t.deepEqual(
+    collectionDesigns[0].previewImageUrls,
+    ['yo.jpg', 'dope.png'],
+    'Passes through the preview image urls for each design'
+  );
+});
 
 test('ProductDesignsDAO.findAll with needsQuote query', async (t) => {
   const { user } = await createUser({ withSession: false });
