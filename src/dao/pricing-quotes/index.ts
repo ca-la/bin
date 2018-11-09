@@ -106,8 +106,8 @@ export async function findLatestValuesForRequest(
     await findLatestConstants(),
     await findLatestCareLabel(units),
     await findLatestProductMaterial(request.materialCategory, units),
-    await findLatestProductType(request.productType, units),
-    await findLatestProductType(request.productType, 1),
+    await findLatestProductType(request.productType, request.productComplexity, units),
+    await findLatestProductType(request.productType, request.productComplexity, 1),
     await findLatestProcesses(request.processes, units),
     await findLatestMargin(request.units)
   ]);
@@ -226,12 +226,13 @@ async function findLatestProductMaterial(
 }
 
 async function findLatestProductType(
-  type: string,
+  name: string,
+  complexity: string,
   units: number
 ): Promise<PricingProductType> {
   const TABLE_NAME = 'pricing_product_types';
   const typeRow = await findLatest(TABLE_NAME, units)
-    .where({ name: type });
+    .where({ name, complexity });
 
   return validate(
     TABLE_NAME,

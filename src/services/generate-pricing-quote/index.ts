@@ -59,7 +59,7 @@ function calculateQuoteAndProcesses(
   const adapter = new DataAdapter<PricingQuoteRow, Omit<PricingQuote, 'processes'>>();
   const baseCost = {
     baseCostCents: calculateBaseUnitCost(units, values),
-    materialCostCents: calculateMaterialCents(values),
+    materialCostCents: Math.max(calculateMaterialCents(values), request.materialBudgetCents || 0),
     processCostCents: calculateProcessCents(units, values)
   };
   const amortizedServicesCents = calculateAmortizedServices(
