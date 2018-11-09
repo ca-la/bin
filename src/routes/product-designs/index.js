@@ -25,13 +25,13 @@ const ProductDesignFeaturePlacementsDAO = require('../../dao/product-design-feat
 const ProductDesignsDAO = require('../../dao/product-designs');
 const ProductDesignSectionAnnotationsDAO = require('../../dao/product-design-section-annotations');
 const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
-const ProductDesignServicesDAO = require('../../dao/product-design-services');
 const ProductDesignStatusesDAO = require('../../dao/product-design-statuses');
 const ProductDesignStatusSlasDAO = require('../../dao/product-design-status-slas');
 const DesignEventsDAO = require('../../dao/design-events');
 const requireAuth = require('../../middleware/require-auth');
 const sendAnnotationNotifications = require('../../services/send-annotation-notifications');
 const updateDesignStatus = require('../../services/update-design-status');
+const createDesign = require('../../services/create-design').default;
 const User = require('../../domain-objects/user');
 const UsersDAO = require('../../dao/users');
 const { canAccessDesignInParam, canCommentOnDesign } = require('../../middleware/can-access-design');
@@ -221,25 +221,15 @@ const ALLOWED_SECTION_PARAMS = [
   'type'
 ];
 
-function* createDesign() {
+function* create() {
   const userData = pick(this.request.body, ALLOWED_DESIGN_PARAMS);
 
   const data = Object.assign({}, userData, {
     userId: this.state.userId
   });
 
-  let design = yield ProductDesignsDAO.create(data)
+  let design = yield createDesign(data)
     .catch(filterError(InvalidDataError, err => this.throw(400, err)));
-
-  // Create a default set of services
-  yield ProductDesignServicesDAO.replaceForDesign(design.id, [
-    { serviceId: 'SOURCING' },
-    { serviceId: 'TECHNICAL_DESIGN' },
-    { serviceId: 'PATTERN_MAKING' },
-    { serviceId: 'SAMPLING' },
-    { serviceId: 'PRODUCTION' },
-    { serviceId: 'FULFILLMENT' }
-  ]);
 
   const designPermissions = yield getDesignPermissions(
     design,
@@ -546,7 +536,7 @@ function* getDesignEvents() {
   this.status = 200;
 }
 
-router.post('/', requireAuth, createDesign);
+router.post('/', requireAuth, create);
 router.get('/', requireAuth, getDesigns);
 
 router.del('/:designId', requireAuth, canAccessDesignInParam, deleteDesign);

@@ -13,7 +13,8 @@ import { hasProperties } from '../services/require-properties';
 export interface ProductDesignStageRequest {
   designId: string;
   title: string;
-  description: string;
+  description: string | null;
+  stageTemplateId?: string | null;
 }
 
 export default interface ProductDesignStage extends ProductDesignStageRequest {
@@ -25,6 +26,7 @@ export interface ProductDesignStageRow {
   id: string;
   design_id: string;
   created_at: Date;
+  stage_template_id: string | null;
   title: string;
 }
 

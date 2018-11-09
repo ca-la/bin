@@ -8,9 +8,9 @@ const keyNamesByColumnName = {
   id: 'id',
   created_at: 'createdAt',
   deleted_at: 'deletedAt',
+  product_type: 'productType',
   title: 'title',
   description: 'description',
-  product_type: 'productType',
   metadata: 'metadata',
   user_id: 'userId',
 

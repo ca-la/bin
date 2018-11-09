@@ -132,7 +132,9 @@ const config = {
 
   LOG_ALL_QUERIES: (process.env.LOG_ALL_QUERIES === 'true'),
 
-  ADMIN_EMAIL
+  ADMIN_EMAIL,
+
+  CALA_ADMIN_USER_ID: process.env.CALA_ADMIN_USER_ID
 };
 
 Object.keys(config).forEach((key) => {

@@ -2,7 +2,7 @@ import DataAdapter from '../services/data-adapter';
 import { hasProperties } from '../services/require-properties';
 
 /**
- * @typedef {object} TaskEvent A unit of work to be completed in the developement of a garment
+ * @typedef {object} Task A unit of work to be completed in the developement of a garment
  *
  * @property {string} id The primary id
  * @property {Date} createdAt The date the row was created

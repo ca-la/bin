@@ -95,6 +95,7 @@ function findAll({ limit, offset, search }) {
 }
 
 function findById(id, filters, options = {}) {
+  if (!id) { throw new Error('Missing collection ID'); }
   const query = Object.assign({ id }, filters);
 
   if (options.includeDeleted !== true) {
@@ -135,6 +136,19 @@ function moveDesign(collectionId, designId) {
     .catch(rethrow);
 }
 
+async function findByDesign(designId) {
+  if (!designId) { throw new InvalidDataError('Missing design ID'); }
+
+  const collectionDesigns = await db('collection_designs')
+    .where({ design_id: designId });
+
+  const collections = await Promise.all(
+    collectionDesigns.map(collectionDesign => findById(collectionDesign.collection_id))
+  );
+
+  return collections;
+}
+
 function removeDesign(collectionId, designId) {
   if (!collectionId || !designId) {
     return Promise.reject(new InvalidDataError('You must pass both a collection and design ID to add a design to a collection'));
@@ -155,6 +169,7 @@ module.exports = {
   deleteById,
   update,
   findAll,
+  findByDesign,
   findById,
   findByUserId,
   addDesign,

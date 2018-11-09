@@ -17,7 +17,7 @@ export default interface TaskEvent {
   status: TaskStatus | null;
   title: string;
   description: string;
-  createdBy: string;
+  createdBy: string | null;
   taskId: string;
   createdAt: Date;
   id: string;
