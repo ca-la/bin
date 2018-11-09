@@ -1,12 +1,14 @@
 'use strict';
 
+const uuid = require('node-uuid');
 const CollectionsDAO = require('../../dao/collections');
+const CollaboratorsDAO = require('../../dao/collaborators');
 const createUser = require('../../test-helpers/create-user');
 const ProductDesignsDAO = require('../../dao/product-designs');
 const {
   authHeader, del, post, get, patch, put
 } = require('../../test-helpers/http');
-const { test } = require('../../test-helpers/fresh');
+const { sandbox, test } = require('../../test-helpers/fresh');
 
 function simulateAPISerialization(object) {
   return JSON.parse(JSON.stringify(object));
@@ -18,6 +20,15 @@ test('GET /collections/:id returns a created collection', async (t) => {
     title: 'Drop 001/The Early Years',
     description: 'Initial commit'
   };
+  sandbox()
+    .stub(CollaboratorsDAO, 'create')
+    .resolves({
+      id: uuid.v4(),
+      userId: uuid.v4(),
+      collectionId: uuid.v4(),
+      role: 'EDIT'
+    });
+
   const [postResponse, postCollection] = await post(
     '/collections',
     { headers: authHeader(session.id), body }
@@ -42,6 +53,15 @@ test('PATCH /collections/:collectionId allows updates to a collection', async (t
     title: 'Drop 001/The Early Years',
     description: 'Initial commit'
   };
+  sandbox()
+    .stub(CollaboratorsDAO, 'create')
+    .resolves({
+      id: uuid.v4(),
+      userId: uuid.v4(),
+      collectionId: uuid.v4(),
+      role: 'EDIT'
+    });
+
   const postResponse = await post(
     '/collections',
     { headers: authHeader(session.id), body }
@@ -70,6 +90,15 @@ test('GET /collections', async (t) => {
     title: 'Nacho collection',
     description: 'Cheesy'
   };
+  sandbox()
+    .stub(CollaboratorsDAO, 'create')
+    .resolves({
+      id: uuid.v4(),
+      userId: uuid.v4(),
+      collectionId: uuid.v4(),
+      role: 'EDIT'
+    });
+
   const [postResponse, myCollection] = await post(
     '/collections',
     { headers: authHeader(session.id), body: mine }
@@ -113,6 +142,15 @@ test('DELETE /collections/:id', async (t) => {
     title: 'Nacho collection',
     description: 'Cheesy'
   };
+  sandbox()
+    .stub(CollaboratorsDAO, 'create')
+    .resolves({
+      id: uuid.v4(),
+      userId: uuid.v4(),
+      collectionId: uuid.v4(),
+      role: 'EDIT'
+    });
+
   const [postResponse, postCollection] = await post(
     '/collections',
     { headers: authHeader(session.id), body: mine }
@@ -139,6 +177,15 @@ test('DELETE /collections/:id', async (t) => {
 
 test('PUT /collections/:id/designs/:id', async (t) => {
   const { user, session } = await createUser();
+  sandbox()
+    .stub(CollaboratorsDAO, 'create')
+    .resolves({
+      id: uuid.v4(),
+      userId: uuid.v4(),
+      collectionId: uuid.v4(),
+      role: 'EDIT'
+    });
+
   const collection = await post(
     '/collections',
     {
@@ -194,6 +241,15 @@ test('PUT /collections/:id/designs/:id', async (t) => {
 
 test('DELETE /collections/:id/designs/:id', async (t) => {
   const { user, session } = await createUser();
+  sandbox()
+    .stub(CollaboratorsDAO, 'create')
+    .resolves({
+      id: uuid.v4(),
+      userId: uuid.v4(),
+      collectionId: uuid.v4(),
+      role: 'EDIT'
+    });
+
   const collection = await post(
     '/collections',
     {
@@ -233,6 +289,15 @@ test('DELETE /collections/:id/designs/:id', async (t) => {
 
 test('GET /collections/:id/designs', async (t) => {
   const { user, session } = await createUser();
+  sandbox()
+    .stub(CollaboratorsDAO, 'create')
+    .resolves({
+      id: uuid.v4(),
+      userId: uuid.v4(),
+      collectionId: uuid.v4(),
+      role: 'EDIT'
+    });
+
 
   const collection = await CollectionsDAO.create({
     createdBy: user.id,

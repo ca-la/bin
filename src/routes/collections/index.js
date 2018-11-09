@@ -7,9 +7,11 @@ const filterError = require('../../services/filter-error');
 const InvalidDataError = require('../../errors/invalid-data');
 const canAccessUserResource = require('../../middleware/can-access-user-resource');
 const CollectionsDAO = require('../../dao/collections');
+const CollaboratorsDAO = require('../../dao/collaborators');
 const { UPDATABLE_PARAMS } = require('../../domain-objects/collection');
 const ProductDesignsDAO = require('../../dao/product-designs');
 const requireAuth = require('../../middleware/require-auth');
+const { CALA_ADMIN_USER_ID } = require('../../config');
 
 const router = new Router();
 
@@ -20,6 +22,18 @@ function* createCollection() {
   const collection = yield CollectionsDAO
     .create(data)
     .catch(filterError(InvalidDataError, err => this.throw(400, err)));
+
+  yield CollaboratorsDAO.create({
+    collectionId: collection.id,
+    role: 'EDIT',
+    userId: this.state.userId
+  });
+
+  yield CollaboratorsDAO.create({
+    collectionId: collection.id,
+    role: 'EDIT',
+    userId: CALA_ADMIN_USER_ID
+  });
 
   this.body = collection;
   this.status = 201;
