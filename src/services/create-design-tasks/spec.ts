@@ -103,8 +103,8 @@ test('createDesignTasks creates POST_CREATION tasks', async (t: Test) => {
 
   const stages = await ProductDesignStagesDAO.findAllByDesignId(design.id);
   t.equal(stages.length, 2);
-  t.equal(stages[1].title, 'Stage 1');
-  t.equal(stages[0].title, 'Stage 2');
+  t.equal(stages[0].title, 'Stage 1');
+  t.equal(stages[1].title, 'Stage 2');
 });
 
 test('createDesignTasks creates POST_APPROVAL tasks', async (t: Test) => {
@@ -134,6 +134,6 @@ test('createDesignTasks creates POST_APPROVAL tasks', async (t: Test) => {
 
   const stages = await ProductDesignStagesDAO.findAllByDesignId(design.id);
   t.equal(stages.length, 2);
-  t.equal(stages[1].title, 'Stage 1');
-  t.equal(stages[0].title, 'Stage 2');
+  t.equal(stages[0].title, 'Stage 1');
+  t.equal(stages[1].title, 'Stage 2');
 });

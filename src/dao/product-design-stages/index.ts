@@ -54,7 +54,7 @@ export async function findAllByDesignId(
   const stages: ProductDesignStageRow[] = await db(TABLE_NAME)
     .select('*')
     .where({ design_id: designId })
-    .orderBy('created_at', 'desc');
+    .orderBy('created_at', 'asc');
 
   return validateEvery<ProductDesignStageRow, ProductDesignStage>(
     TABLE_NAME,

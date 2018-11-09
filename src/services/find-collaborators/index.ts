@@ -23,7 +23,7 @@ export default async function findCollaboratorsByRole(
   const collections = await CollectionsDAO.findByDesign(design.id);
 
   if (!collections[0]) {
-    throw new Error(`Design ${designId} is not in any collections`);
+    return [];
   }
 
   const collection = collections[0];
