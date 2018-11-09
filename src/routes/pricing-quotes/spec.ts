@@ -6,6 +6,7 @@ import { PricingQuoteRequest } from '../../domain-objects/pricing-quote';
 import { test, Test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
 import Bid from '../../domain-objects/bid';
+import { create as createDesign } from '../../dao/product-designs';
 
 test('/pricing-quotes POST -> GET quote', async (t: Test) => {
   await generatePricingValues();
@@ -36,6 +37,61 @@ test('/pricing-quotes POST -> GET quote', async (t: Test) => {
     createdQuote,
     retrievedQuote,
     'retrieved quote is identical to saved quote'
+  );
+});
+
+test('/pricing-quotes?designId retrieves the set of quotes for a design', async (t: Test) => {
+  const { user, session } = await createUser({ role: 'ADMIN' });
+  const design = await createDesign({
+    productType: 'A product type',
+    title: 'A design',
+    userId: user.id
+  });
+  await generatePricingValues();
+  const one: PricingQuoteRequest = {
+    designId: null,
+    materialBudgetCents: 1200,
+    materialCategory: 'BASIC',
+    processes: [{
+      complexity: '1_COLOR',
+      name: 'SCREEN_PRINTING'
+    }, {
+      complexity: '1_COLOR',
+      name: 'SCREEN_PRINTING'
+    }],
+    productComplexity: 'SIMPLE',
+    productType: 'TEESHIRT',
+    units: 200
+  };
+  const two: PricingQuoteRequest = {
+    designId: design.id,
+    materialBudgetCents: 1200,
+    materialCategory: 'BASIC',
+    processes: [{
+      complexity: '1_COLOR',
+      name: 'SCREEN_PRINTING'
+    }, {
+      complexity: '1_COLOR',
+      name: 'SCREEN_PRINTING'
+    }],
+    productComplexity: 'SIMPLE',
+    productType: 'TEESHIRT',
+    units: 200
+  };
+
+  await post('/pricing-quotes', { body: one });
+  const createdTwo = await post('/pricing-quotes', { body: two });
+
+  const [getResponse, designQuotes] = await get(
+    `/pricing-quotes?designId=${design.id}`,
+    { headers: authHeader(session.id) }
+  );
+
+  t.equal(getResponse.status, 200);
+  t.deepEquals(
+    designQuotes,
+    [createdTwo[1]],
+    'Retrieves only the quote associated with this design'
   );
 });
 

@@ -1,6 +1,6 @@
 import * as Router from 'koa-router';
 import * as Koa from 'koa';
-import { findById } from '../../dao/pricing-quotes';
+import { findByDesignId, findById } from '../../dao/pricing-quotes';
 import { create as createBid } from '../../dao/bids';
 import {
   isPricingQuoteRequest,
@@ -35,6 +35,19 @@ function* getQuote(this: Koa.Application.Context): AsyncIterableIterator<Pricing
   this.status = 200;
 }
 
+function* getQuotes(this: Koa.Application.Context): AsyncIterableIterator<any> {
+  const { designId } = this.query;
+
+  if (!designId) {
+    this.throw(400, 'You must pass a design ID');
+  } else {
+    const quotes = yield findByDesignId(designId);
+
+    this.body = quotes;
+    this.status = 200;
+  }
+}
+
 function* createBidForQuote(this: Koa.Application.Context): AsyncIterableIterator<any> {
   const { quoteId, bidId } = this.params;
   const { body } = this.request;
@@ -61,6 +74,7 @@ in request: ${bidRequest.id}`
 }
 
 router.post('/', createQuote);
+router.get('/', requireAdmin, getQuotes);
 router.get('/:quoteId', getQuote);
 
 router.put('/:quoteId/bid/:bidId', requireAdmin, createBidForQuote);

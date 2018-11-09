@@ -138,9 +138,27 @@ export async function createPricingProcesses(
   );
 }
 
-export async function findById(
-  id: string
-): Promise<PricingQuote | null> {
+async function attachProcesses(quoteRow: PricingQuoteRow): Promise<PricingQuote> {
+  const processes: object[] = await db('pricing_quote_processes')
+    .select('pricing_processes.*')
+    .leftJoin(
+      'pricing_processes',
+      'pricing_quote_processes.pricing_process_id',
+      'pricing_processes.id'
+    )
+    .where({ 'pricing_quote_processes.pricing_quote_id': quoteRow.id });
+
+  return Object.assign(
+    {
+      processes: isEvery(isPricingProcessRow, processes)
+        ? processes.map((p: PricingProcessRow) => processDataAdapter.parse(p))
+        : []
+    },
+    normalizedPricingQuoteAdapter.parse(quoteRow)
+  );
+}
+
+export async function findById(id: string): Promise<PricingQuote | null> {
   const TABLE_NAME = 'pricing_quotes';
   const quote: object | null = await db(TABLE_NAME)
     .first()
@@ -150,26 +168,19 @@ export async function findById(
     return null;
   }
 
-  const processes: object[] | null = await db('pricing_quote_processes')
-    .select('pricing_processes.*')
-    .leftJoin(
-      'pricing_processes',
-      'pricing_quote_processes.pricing_process_id',
-      'pricing_processes.id'
-    );
+  return attachProcesses(quote);
+}
 
-  if (!processes || !isEvery(isPricingProcessRow, processes)) {
+export async function findByDesignId(designId: string): Promise<PricingQuote[] | null> {
+  const TABLE_NAME = 'pricing_quotes';
+  const quotes: object[] = await db(TABLE_NAME)
+    .where({ design_id: designId });
+
+  if (!quotes.every(isPricingQuoteRow)) {
     return null;
   }
 
-  return Object.assign(
-    {
-      processes: processes.map(
-        (p: PricingProcessRow) => processDataAdapter.parse(p)
-      )
-    },
-    normalizedPricingQuoteAdapter.parse(quote)
-  );
+  return Promise.all((quotes as PricingQuoteRow[]).map(attachProcesses));
 }
 
 async function findLatestCareLabel(units: number): Promise<PricingCareLabel> {
