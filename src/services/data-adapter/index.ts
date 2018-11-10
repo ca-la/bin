@@ -22,7 +22,19 @@ export default class DataAdapter<RowData extends object, UserData> {
 }
 
 function transformKeys(keyTransformer: KeyTransformer, source: any): any {
-  if (_.isArray(source) || _.isObject(source)) {
+  if (_.isArray(source)) {
+    return source.map(
+      (value: any): any => {
+        if (_.isArray(value) || _.isObject(value)) {
+          return transformKeys(keyTransformer, value);
+        }
+
+        return value;
+      }
+    );
+  }
+
+  if (_.isObject(source)) {
     return _.reduce(
       source,
       (acc: any, value: any, key: any): any => {

@@ -6,24 +6,28 @@ interface Person {
   address: {
     firstLine: string;
   };
+  email: { address: string; validated: boolean }[];
 }
 interface PersonSnake {
   name: string;
   address: {
     first_line: string;
   };
+  email: { address: string; validated: boolean }[];
 }
 
 const person: Person = {
   address: {
     firstLine: '123 Main St'
   },
+  email: [{ address: 'john@doe.corp', validated: false }],
   name: 'John Doe'
 };
 const personFromDb: PersonSnake = {
   address: {
     first_line: '123 Main St'
   },
+  email: [{ address: 'john@doe.corp', validated: false }],
   name: 'John Doe'
 };
 
@@ -55,6 +59,7 @@ test('with custom key transformer', async (t: Test) => {
   const alEspañol = (key: string): string => {
     const mapping = {
       address: 'dirección',
+      email: 'correoElectrónico',
       first_line: 'primeraLinea',
       name: 'nombre'
     };
@@ -65,6 +70,7 @@ test('with custom key transformer', async (t: Test) => {
   t.deepEqual(
     adapter.parse(personFromDb),
     {
+      correoElectrónico: [{ dirección: 'john@doe.corp', validated: false }],
       dirección: {
         primeraLinea: '123 Main St'
       },

@@ -16,6 +16,8 @@ const TABLES = [
   'invoices',
   'pricing_care_labels',
   'pricing_constants',
+  'pricing_cost_inputs',
+  'pricing_cost_input_processes',
   'pricing_inputs',
   'pricing_margins',
   'pricing_processes',
