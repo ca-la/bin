@@ -1,3 +1,5 @@
+import { hasProperties } from '../services/require-properties';
+
 export type Complexity = 'SIMPLE' | 'MEDIUM' | 'COMPLEX';
 
 export type MaterialCategory = 'BASIC' | 'STANDARD' | 'LUXE' | 'ULTRA_LUXE';
@@ -35,6 +37,14 @@ export type Process =
     name: 'EMBELLISH',
     complexity: Complexity
   };
+
+export function isProcess(candidate: object): candidate is Process {
+  return hasProperties(
+    candidate,
+    'name',
+    'complexity'
+  );
+}
 
 export type ProductType = 'BATHROBE' |
   'BLAZER' |
