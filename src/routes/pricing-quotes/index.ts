@@ -1,13 +1,17 @@
 import { omit } from 'lodash';
 import * as Router from 'koa-router';
 import * as Koa from 'koa';
+import * as uuid from 'node-uuid';
 
 import { findByDesignId, findById } from '../../dao/pricing-quotes';
+import {
+  create as createBid,
+  findByQuoteId as findBidsByQuoteId
+} from '../../dao/bids';
 import {
   findByDesignId as findCostInputsByDesignId
 } from '../../dao/pricing-cost-inputs';
 import PricingCostInputs from '../../domain-objects/pricing-cost-input';
-import { create as createBid } from '../../dao/bids';
 import {
   isPricingQuoteRequest,
   PricingQuote,
@@ -15,12 +19,24 @@ import {
 } from '../../domain-objects/pricing-quote';
 import requireAdmin = require('../../middleware/require-admin');
 import requireAuth = require('../../middleware/require-auth');
+import { hasProperties } from '../../services/require-properties';
 import generatePricingQuote, {
   generateUnsavedQuote
 } from '../../services/generate-pricing-quote';
-import Bid, { isBid } from '../../domain-objects/bid';
+import Bid from '../../domain-objects/bid';
 
 const router = new Router();
+
+type BidRequest = Unsaved<Bid> | Bid;
+
+function isBidRequest(candidate: object): candidate is BidRequest {
+  return hasProperties(
+    candidate,
+    'quoteId',
+    'bidPriceCents',
+    'description'
+  );
+}
 
 function* createQuote(this: Koa.Application.Context): AsyncIterableIterator<PricingQuote> {
   if (this.request.body && isPricingQuoteRequest(this.request.body)) {
@@ -79,22 +95,19 @@ function* getQuotes(this: Koa.Application.Context): AsyncIterableIterator<any> {
 }
 
 function* createBidForQuote(this: Koa.Application.Context): AsyncIterableIterator<any> {
-  const { quoteId, bidId } = this.params;
+  const { quoteId } = this.params;
   const { body } = this.request;
   const quote = yield findById(quoteId);
-  this.assert(quote, 404);
+  this.assert(quote, 404, 'No quote found for ID');
 
-  if (body && isBid(body)) {
-    const bidRequest: Bid = body;
-    this.assert(
-      bidRequest.id === bidId,
-      400,
-      `Bid ID in path does not match request body ID:
-in path: ${bidId}
-in request: ${bidRequest.id}`
-    );
-
-    const bid = yield createBid(bidRequest);
+  if (body && isBidRequest(body)) {
+    const bidRequest: BidRequest = body;
+    const bid = yield createBid({
+      createdAt: new Date(),
+      id: uuid.v4(),
+      ...bidRequest,
+      createdBy: this.state.userId
+    });
 
     this.body = bid;
     this.status = 201;
@@ -103,10 +116,23 @@ in request: ${bidRequest.id}`
   }
 }
 
+function* getBidsForQuote(this: Koa.Application.Context): AsyncIterableIterator<any> {
+  const { quoteId } = this.params;
+  const quote = yield findById(quoteId);
+  this.assert(quote, 404);
+
+  const bids = yield findBidsByQuoteId(quoteId);
+
+  this.body = bids;
+  this.status = 200;
+}
+
 router.post('/', createQuote);
 router.get('/', requireAuth, getQuotes);
 router.get('/:quoteId', getQuote);
 
-router.put('/:quoteId/bid/:bidId', requireAdmin, createBidForQuote);
+router.post('/:quoteId/bids', requireAdmin, createBidForQuote);
+router.put('/:quoteId/bids/:bidId', requireAdmin, createBidForQuote);
+router.get('/:quoteId/bids', requireAdmin, getBidsForQuote);
 
 export = router.routes();
