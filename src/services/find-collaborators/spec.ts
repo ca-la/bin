@@ -38,9 +38,9 @@ async function createResources(): Promise<{
 }
 
 test('findCollaboratorsByRole finds the designer', async (t: Test) => {
-  const { collection, design, user } = await createResources();
+  const { design, user } = await createResources();
   const ownerCollaborator = await CollaboratorsDAO.create({
-    collectionId: collection.id,
+    designId: design.id,
     userId: user.id
   });
 

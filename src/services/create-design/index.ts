@@ -1,7 +1,8 @@
+import CollaboratorsDAO = require('../../dao/collaborators');
+import createDesignTasks from '../create-design-tasks';
 import ProductDesign = require('../../domain-objects/product-design');
 import ProductDesignsDAO = require('../../dao/product-designs');
 import ProductDesignServicesDAO = require('../../dao/product-design-services');
-import createDesignTasks from '../create-design-tasks';
 
 async function createDesign(data: Unsaved<ProductDesign>): Promise<ProductDesign> {
   const design = await ProductDesignsDAO.create(data);
@@ -15,6 +16,12 @@ async function createDesign(data: Unsaved<ProductDesign>): Promise<ProductDesign
     { serviceId: 'PRODUCTION' },
     { serviceId: 'FULFILLMENT' }
   ]);
+
+  await CollaboratorsDAO.create({
+    designId: design.id,
+    role: 'EDIT',
+    userId: design.userId
+  });
 
   await createDesignTasks({
     designId: design.id,

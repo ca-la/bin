@@ -20,17 +20,9 @@ export default async function findCollaboratorsByRole(
   const design = await ProductDesignsDAO.findById(designId);
   if (!design) { throw new Error(`No design found with ID ${designId}`); }
 
-  const collections = await CollectionsDAO.findByDesign(design.id);
-
-  if (!collections[0]) {
-    return [];
-  }
-
-  const collection = collections[0];
-
   switch (role) {
     case 'DESIGNER':
-      return CollaboratorsDAO.findByCollectionAndUser(collection.id, design.userId);
+      return CollaboratorsDAO.findByDesignAndUser(designId, design.userId);
 
     case 'PARTNER': {
       const collaborators = [];
@@ -46,7 +38,16 @@ export default async function findCollaboratorsByRole(
       return collaborators;
     }
 
-    case 'CALA':
+    case 'CALA': {
+      const collections = await CollectionsDAO.findByDesign(design.id);
+
+      if (!collections[0]) {
+        return [];
+      }
+
+      const collection = collections[0];
+
       return CollaboratorsDAO.findByCollectionAndUser(collection.id, CALA_ADMIN_USER_ID);
+    }
   }
 }
