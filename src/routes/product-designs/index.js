@@ -13,6 +13,7 @@ const {
 const canAccessAnnotation = require('../../middleware/can-access-annotation');
 const canAccessSection = require('../../middleware/can-access-section');
 const canAccessUserResource = require('../../middleware/can-access-user-resource');
+const CollectionsDAO = require('../../dao/collections');
 const compact = require('../../services/compact');
 const deleteSection = require('../../services/delete-section');
 const filterError = require('../../services/filter-error');
@@ -191,6 +192,12 @@ function* getDesignPricing() {
     finalPricingTable: finalTable
   };
 
+  this.status = 200;
+}
+
+function* getDesignCollections() {
+  const collections = yield CollectionsDAO.findByDesign(this.params.designId);
+  this.body = collections;
   this.status = 200;
 }
 
@@ -482,7 +489,7 @@ function isAllowedEventType(role, event) {
     ...PARTNER_ALLOWED_EVENT_TYPES,
     'BID_DESIGN',
     'REJECT_DESIGN',
-    'QUOTE_DESIGN',
+    'COMMIT_COST_INPUTS',
     'REMOVE_PARTNER'
   ];
 
@@ -551,6 +558,8 @@ router.post('/:designId/events', requireAuth, canAccessDesignInParam, addDesignE
 router.put('/:designId/events/:eventId', requireAuth, canAccessDesignInParam, addDesignEvent);
 
 router.get('/:designId/pricing', requireAuth, canAccessDesignInParam, getDesignPricing);
+
+router.get('/:designId/collections', requireAuth, canAccessDesignInParam, getDesignCollections);
 
 router.put('/:designId/status', requireAuth, canAccessDesignInParam, setStatus);
 

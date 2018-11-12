@@ -11,12 +11,20 @@ export type DesignEventTypes =
   | PartnerEvents;
 
 type DesignerEvents =
-  | 'SUBMIT_DESIGN';
+  // Send the design to CALA initially for review
+  'SUBMIT_DESIGN';
+
 type CALAEvents =
+  // Send a design to a partner for them to accept/reject
   | 'BID_DESIGN'
+  // Indicate that we're unable to support producing this design
   | 'REJECT_DESIGN'
-  | 'QUOTE_DESIGN'
+  // Indicate that we've set up the cost inputs for this design, so a designer
+  // may now review them.
+  | 'COMMIT_COST_INPUTS'
+  // The opposite of BID_DESIGN; remove a partner
   | 'REMOVE_PARTNER';
+
 type PartnerEvents =
   | 'ACCEPT_SERVICE_BID'
   | 'REJECT_SERVICE_BID';

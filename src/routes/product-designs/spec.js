@@ -3,9 +3,10 @@
 const uuid = require('node-uuid');
 const { omit } = require('lodash');
 
+const CollectionsDAO = require('../../dao/collections');
 const createUser = require('../../test-helpers/create-user');
-const ProductDesignsDAO = require('../../dao/product-designs');
 const DesignEventsDAO = require('../../dao/design-events');
+const ProductDesignsDAO = require('../../dao/product-designs');
 const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
 const EmailService = require('../../services/email');
 const {
@@ -576,4 +577,24 @@ test('GET /product-designs/:designId/events', async (t) => {
 
   t.equal(response.status, 200);
   t.deepEqual(designEvents, createdEvents);
+});
+
+test('GET /product-designs/:designId/collections returns collections', async (t) => {
+  const { user, session } = await createUser({ role: 'ADMIN' });
+
+  const collectionFixture = { id: 'my-new-collection' };
+  sandbox().stub(CollectionsDAO, 'findByDesign').resolves([collectionFixture]);
+
+  const design = await ProductDesignsDAO.create({
+    userId: user.id,
+    title: 'Design'
+  });
+
+  const [response, body] = await get(
+    `/product-designs/${design.id}/collections`,
+    { headers: authHeader(session.id) }
+  );
+
+  t.equal(response.status, 200);
+  t.deepEqual(body, [collectionFixture]);
 });
