@@ -235,6 +235,29 @@ function completeSmsPreregistration(userId, data) {
     }));
 }
 
+function findByBidId(bidId) {
+  return db('design_events')
+    .select('users.*')
+    .join('pricing_bids', (join) => {
+      join
+        .on('design_events.bid_id', '=', 'pricing_bids.id')
+        .andOnIn('design_events.type', ['BID_DESIGN']);
+    })
+    .whereNotIn(
+      'design_events.target_id',
+      db
+        .select('design_events.target_id')
+        .from('design_events')
+        .where({ 'design_events.bid_id': bidId })
+        .whereIn('design_events.type', ['REMOVE_PARTNER'])
+    )
+    .join('users', 'users.id', 'design_events.target_id')
+    .where({ 'pricing_bids.id': bidId })
+    .groupBy(['users.id', 'users.created_at'])
+    .orderBy('users.created_at')
+    .then(users => users.map(instantiate));
+}
+
 module.exports = {
   ERROR_CODES,
   create,
@@ -242,6 +265,7 @@ module.exports = {
   completeSmsPreregistration,
   isValidEmail,
   findAll,
+  findByBidId,
   findByEmail,
   findById,
   findByReferralCode,

@@ -1,7 +1,8 @@
 import * as uuid from 'node-uuid';
+import { omit } from 'lodash';
 
 import { test, Test } from '../../test-helpers/fresh';
-import { authHeader, put } from '../../test-helpers/http';
+import { authHeader, del, get, put } from '../../test-helpers/http';
 import createUser = require('../../test-helpers/create-user');
 import generateBid from '../../test-helpers/factories/bid';
 import { create as createDesign } from '../../dao/product-designs';
@@ -33,4 +34,60 @@ test('PUT /bids/:bidId/assignees/:userId', async (t: Test) => {
     { headers: authHeader(session.id) }
   );
   t.equal(notFoundBid.status, 404);
+});
+
+test('GET /bids/:bidId/assignees', async (t: Test) => {
+  const { user, session } = await createUser({ role: 'ADMIN' });
+  const { user: partner } = await createUser({ role: 'PARTNER' });
+  const design = await createDesign({
+    productType: 'TEESHIRT',
+    title: 'Plain White Tee',
+    userId: user.id
+  });
+
+  const { bid } = await generateBid(design.id, user.id);
+
+  await put(
+    `/bids/${bid.id}/assignees/${partner.id}`,
+    { headers: authHeader(session.id) }
+  );
+
+  const [response, assignees] = await get(
+    `/bids/${bid.id}/assignees`,
+    { headers: authHeader(session.id) }
+  );
+
+  t.equal(response.status, 200);
+  t.deepEqual(assignees, [{
+    ...omit(partner, ['passwordHash']),
+    createdAt: partner.createdAt.toISOString()
+  }]);
+});
+
+test('DELETE /bids/:bidId/assignees/:userId', async (t: Test) => {
+  const { user, session } = await createUser({ role: 'ADMIN' });
+  const { user: partner } = await createUser({ role: 'PARTNER' });
+  const design = await createDesign({
+    productType: 'TEESHIRT',
+    title: 'Plain White Tee',
+    userId: user.id
+  });
+
+  const { bid } = await generateBid(design.id, user.id);
+
+  await put(
+    `/bids/${bid.id}/assignees/${partner.id}`,
+    { headers: authHeader(session.id) }
+  );
+  const [response] = await del(
+    `/bids/${bid.id}/assignees/${partner.id}`,
+    { headers: authHeader(session.id) }
+  );
+  t.equal(response.status, 204);
+
+  const assignees = await get(
+    `/bids/${bid.id}/assignees`,
+    { headers: authHeader(session.id) }
+  );
+  t.deepEqual(assignees[1], []);
 });

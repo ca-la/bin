@@ -1,8 +1,14 @@
 'use strict';
 
+const uuid = require('node-uuid');
+
 const InvalidDataError = require('../../errors/invalid-data');
 const UsersDAO = require('./index');
+const DesignEventsDAO = require('../design-events');
 const { test } = require('../../test-helpers/fresh');
+const createUser = require('../../test-helpers/create-user');
+const createBid = require('../../test-helpers/factories/bid').default;
+const { create: createDesign } = require('../../dao/product-designs');
 
 const USER_DATA = Object.freeze({
   name: 'Q User',
@@ -220,4 +226,39 @@ test('UsersDAO.completeSmsPreregistration completes a user', (t) => {
       t.equal(user.phone, '+14155551234');
       t.equal(user.email, 'okie@example.com');
     });
+});
+
+test('UsersDAO.findByBidId returns all users on a pricing bid', async (t) => {
+  const { user: one } = await createUser();
+  const { user: two } = await createUser();
+  const { user: designer } = await createUser();
+  const design = await createDesign({
+    productType: 'TEESHIRT',
+    title: 'Plain White Tee',
+    userId: designer.id
+  });
+  const { bid, user: admin } = await createBid();
+
+  await DesignEventsDAO.create({
+    actorId: admin.id,
+    bidId: bid.id,
+    createdAt: new Date(),
+    designId: design.id,
+    id: uuid.v4(),
+    targetId: one.id,
+    type: 'BID_DESIGN'
+  });
+  await DesignEventsDAO.create({
+    actorId: admin.id,
+    bidId: bid.id,
+    createdAt: new Date(),
+    designId: design.id,
+    id: uuid.v4(),
+    targetId: two.id,
+    type: 'BID_DESIGN'
+  });
+
+  const assignees = await UsersDAO.findByBidId(bid.id);
+
+  t.deepEqual(assignees, [one, two]);
 });
