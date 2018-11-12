@@ -17,6 +17,18 @@ import {
 import PricingProcess from '../../domain-objects/pricing-process';
 import DataAdapter from '../../services/data-adapter';
 
+export type UnsavedQuote = Omit<
+  PricingQuote,
+  'id' | 'createdAt' | 'pricingQuoteInputId' | 'processes'
+>;
+
+export async function generateUnsavedQuote(
+  request: PricingQuoteRequest
+): Promise<UnsavedQuote> {
+  const quoteValues = await findLatestValuesForRequest(request);
+  return calculateQuote(request, quoteValues);
+}
+
 export default async function generatePricingQuote(
   request: PricingQuoteRequest
 ): Promise<PricingQuote> {
@@ -50,13 +62,11 @@ async function getQuoteInput(values: PricingQuoteValues): Promise<string> {
   return pricingQuoteInputRow.id;
 }
 
-function calculateQuoteAndProcesses(
+function calculateQuote(
   request: PricingQuoteRequest,
-  values: PricingQuoteValues,
-  pricingQuoteInputId: string
-): { quote: Uninserted<PricingQuoteRow>, processes: Uninserted<PricingProcessQuoteRow>[] } {
+  values: PricingQuoteValues
+): UnsavedQuote {
   const { units } = request;
-  const adapter = new DataAdapter<PricingQuoteRow, Omit<PricingQuote, 'processes'>>();
   const baseCost = {
     baseCostCents: calculateBaseUnitCost(units, values),
     materialCostCents: Math.max(calculateMaterialCents(values), request.materialBudgetCents || 0),
@@ -75,17 +85,25 @@ function calculateQuoteAndProcesses(
       ])
   );
   const margin = 1 - values.margin.margin / 100;
+  return {
+    ...omit(request, ['processes']),
+    ...baseCost,
+    unitCostCents: Math.ceil(beforeMargin / margin)
+  };
+}
+function calculateQuoteAndProcesses(
+  request: PricingQuoteRequest,
+  values: PricingQuoteValues,
+  pricingQuoteInputId: string
+): { quote: Uninserted<PricingQuoteRow>, processes: Uninserted<PricingProcessQuoteRow>[] } {
+  const adapter = new DataAdapter<PricingQuoteRow, Omit<PricingQuote, 'processes'>>();
   const quote: Uninserted<PricingQuoteRow> = adapter
     .forInsertion(Object.assign(
       {
         id: uuid.v4(),
         pricingQuoteInputId
       },
-      omit(request, ['processes']),
-      baseCost,
-      {
-        unitCostCents: Math.ceil(beforeMargin / margin)
-      }
+      calculateQuote(request, values)
     ));
   const processes: Uninserted<PricingProcessQuoteRow>[] = values.processes.map(
       toPricingProcessQuoteRow.bind(null, quote)

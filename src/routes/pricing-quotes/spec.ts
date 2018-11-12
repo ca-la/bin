@@ -7,6 +7,7 @@ import { test, Test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
 import Bid from '../../domain-objects/bid';
 import { create as createDesign } from '../../dao/product-designs';
+import { create as createCostInputs } from '../../dao/pricing-cost-inputs';
 
 test('/pricing-quotes POST -> GET quote', async (t: Test) => {
   await generatePricingValues();
@@ -93,6 +94,52 @@ test('/pricing-quotes?designId retrieves the set of quotes for a design', async 
     [createdTwo[1]],
     'Retrieves only the quote associated with this design'
   );
+});
+
+test('GET /pricing-quotes?designId&quantity returns unsaved quote', async (t: Test) => {
+  await generatePricingValues();
+  const { user, session } = await createUser();
+  const design = await createDesign({
+    productType: 'A product type',
+    title: 'A design',
+    userId: user.id
+  });
+  await createCostInputs({
+    createdAt: new Date(),
+    deletedAt: null,
+    designId: design.id,
+    id: uuid.v4(),
+    materialBudgetCents: 1200,
+    materialCategory: 'BASIC',
+    processes: [{
+      complexity: '1_COLOR',
+      name: 'SCREEN_PRINTING'
+    }, {
+      complexity: '1_COLOR',
+      name: 'SCREEN_PRINTING'
+    }],
+    productComplexity: 'SIMPLE',
+    productType: 'TEESHIRT'
+  });
+
+  const [response, unsavedQuote] = await get(
+    `/pricing-quotes?designId=${design.id}&units=100`,
+    { headers: authHeader(session.id) }
+  );
+
+  t.equal(response.status, 200);
+  t.deepEqual(unsavedQuote, {
+    baseCostCents: 2288,
+    designId: design.id,
+    materialBudgetCents: 1200,
+    materialCategory: 'BASIC',
+    materialCostCents: 1200,
+    processCostCents: 280,
+    productComplexity: 'SIMPLE',
+    productType: 'TEESHIRT',
+    unitCostCents: 4891,
+    units: 100
+  });
 });
 
 test('PUT /pricing-quotes/:quoteId/bid/:bidId creates bid', async (t: Test) => {
