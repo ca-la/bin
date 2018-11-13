@@ -517,7 +517,13 @@ function* addDesignEvent() {
     'ID in route does not match ID in request body'
   );
 
-  const added = yield DesignEventsDAO.create(designEvent);
+  const eventData = {
+    ...designEvent,
+    actorId: this.state.userId,
+    designId: this.params.designId
+  };
+
+  const added = yield DesignEventsDAO.create(eventData);
 
   this.body = added;
   this.status = 200;
@@ -530,7 +536,13 @@ function* addDesignEvents() {
     403
   );
 
-  const added = yield DesignEventsDAO.createAll(designEvents);
+  const eventData = designEvents.map(event => ({
+    ...event,
+    actorId: this.state.userId,
+    designId: this.params.designId
+  }));
+
+  const added = yield DesignEventsDAO.createAll(eventData);
 
   this.body = added;
   this.status = 200;

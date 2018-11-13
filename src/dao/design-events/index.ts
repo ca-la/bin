@@ -1,3 +1,5 @@
+import * as uuid from 'node-uuid';
+
 import * as db from '../../services/db';
 import DesignEvent, {
   dataAdapter,
@@ -29,23 +31,27 @@ export async function create(event: DesignEvent): Promise<DesignEvent> {
   );
 }
 
-export async function createAll(events: DesignEvent[]): Promise<DesignEvent[]> {
-  const rowData = events.map(dataAdapter.forInsertion.bind(dataAdapter));
-  const ids = events.map((event: DesignEvent) => event.id);
+export async function createAll(events: MaybeUnsaved<DesignEvent>[]): Promise<DesignEvent[]> {
+  const rowData = events.map((event: MaybeUnsaved<DesignEvent>) => {
+    return dataAdapter.forInsertion({
+      id: uuid.v4(),
+      ...event
+    });
+  });
 
-  await db(TABLE_NAME)
+  const created = await db(TABLE_NAME)
     .insert(rowData)
     .returning('*');
-  const created = await db(TABLE_NAME)
-    .select('*')
-    .whereIn('id', ids)
-    .orderBy('created_at', 'asc');
+
+  const sorted = created.sort((a: DesignEventRow, b: DesignEventRow) =>
+    a.created_at.getTime() - b.created_at.getTime()
+  );
 
   return validateEvery<DesignEventRow, DesignEvent>(
     TABLE_NAME,
     isDesignEventRow,
     dataAdapter,
-    created
+    sorted
   );
 }
 

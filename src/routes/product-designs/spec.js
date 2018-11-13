@@ -352,7 +352,6 @@ test('POST /product-designs/:designId/events with multiple events creates them',
   });
   const inputEvents = [
     {
-      actorId: user.id,
       bidId: null,
       createdAt: new Date(2012, 12, 24),
       designId: design.id,
@@ -361,7 +360,6 @@ test('POST /product-designs/:designId/events with multiple events creates them',
       type: 'SUBMIT_DESIGN'
     },
     {
-      actorId: user.id,
       bidId: null,
       createdAt: new Date(2012, 12, 23),
       designId: design.id,
@@ -383,10 +381,12 @@ test('POST /product-designs/:designId/events with multiple events creates them',
   t.deepEqual(events, [
     {
       ...inputEvents[1],
+      actorId: user.id,
       createdAt: new Date(2012, 12, 23).toISOString()
     },
     {
       ...inputEvents[0],
+      actorId: user.id,
       createdAt: new Date(2012, 12, 24).toISOString()
     }
   ]);
@@ -448,10 +448,8 @@ test('PUT /product-designs/:designId/events/:eventId with an event creates it', 
     title: 'Design'
   });
   const inputEvent = {
-    actorId: user.id,
     bidId: null,
     createdAt: new Date(2012, 12, 24),
-    designId: design.id,
     id: uuid.v4(),
     targetId: null,
     type: 'SUBMIT_DESIGN'
@@ -468,7 +466,9 @@ test('PUT /product-designs/:designId/events/:eventId with an event creates it', 
   t.equal(response.status, 200);
   t.deepEqual(event, {
     ...inputEvent,
-    createdAt: new Date(2012, 12, 24).toISOString()
+    actorId: user.id,
+    createdAt: new Date(2012, 12, 24).toISOString(),
+    designId: design.id
   });
 });
 
