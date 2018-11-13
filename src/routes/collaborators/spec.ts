@@ -3,7 +3,7 @@ import CollectionsDAO = require('../../dao/collections');
 import createUser = require('../../test-helpers/create-user');
 import EmailService = require('../../services/email');
 import ProductDesignsDAO = require('../../dao/product-designs');
-import { authHeader, del, get, post } from '../../test-helpers/http';
+import { authHeader, del, get, patch, post } from '../../test-helpers/http';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 
 test(
@@ -72,6 +72,71 @@ test('POST /collaborators allows adding collaborators on a collection', async (t
   t.equal(response.status, 201);
   t.equal(body.collectionId, collection.id);
   t.equal(body.designId, null);
+});
+
+test('PATCH /collaborators allows updating collaborators on a collection', async (t: Test) => {
+  sandbox().stub(EmailService, 'enqueueSend').resolves();
+
+  const { session, user } = await createUser();
+  const collection = await CollectionsDAO.create({
+    createdBy: user.id,
+    title: 'AW19'
+  });
+
+  const responseList = await post('/collaborators', {
+    body: {
+      collectionId: collection.id,
+      invitationMessage: "TAke a look, y'all",
+      role: 'EDIT',
+      userEmail: 'you@example.com'
+    },
+    headers: authHeader(session.id)
+  });
+
+  const [response, body] = await patch(`/collaborators/${responseList[1].id}`, {
+    body: {
+      role: 'VIEW'
+    },
+    headers: authHeader(session.id)
+  });
+
+  t.equal(response.status, 200);
+  t.equal(body.collectionId, collection.id);
+  t.equal(body.role, 'VIEW');
+  t.equal(body.designId, null);
+});
+
+test('PATCH /collaborators allows updating collaborators on a design', async (t: Test) => {
+  sandbox().stub(EmailService, 'enqueueSend').resolves();
+
+  const { session, user } = await createUser();
+  const design = await ProductDesignsDAO.create({
+    productType: 'fdafd',
+    title: 'AW19',
+    userId: user.id
+  });
+
+  const responseList = await post('/collaborators', {
+    body: {
+      designId: design.id,
+      invitationMessage: "TAke a look, y'all",
+      role: 'EDIT',
+      userEmail: 'you@example.com'
+    },
+    headers: authHeader(session.id)
+  });
+
+  const [response, body] = await patch(`/collaborators/${responseList[1].id}`, {
+    body: {
+      role: 'VIEW'
+    },
+    headers: authHeader(session.id)
+  });
+
+  t.equal(response.status, 200);
+  t.equal(body.designId, design.id);
+  t.equal(body.role, 'VIEW');
+  t.equal(body.collectionId, null);
 });
 
 test('POST /collaborators throws 400 with unknown role', async (t: Test) => {

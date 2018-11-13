@@ -55,7 +55,24 @@ function* create() {
 function* update() {
   const collaborator = yield CollaboratorsDAO.findById(this.params.collaboratorId);
   this.assert(collaborator, 404, 'Collaborator not found');
-  yield canAccessDesignId.call(this, collaborator.designId);
+  let canAccessDesign = false;
+  let canAccessCollection = false;
+  try {
+    yield canAccessDesignId.call(this, collaborator.designId);
+    canAccessDesign = true;
+  } catch (e) {
+    canAccessDesign = false;
+  }
+  try {
+    yield canAccessCollectionId.call(this, collaborator.collectionId);
+    canAccessCollection = true;
+  } catch (e) {
+    canAccessCollection = false;
+  }
+
+  if (!canAccessCollection && !canAccessDesign) {
+    this.throw(404, 'Design or Collection not found');
+  }
 
   const updated = yield CollaboratorsDAO.update(
     this.params.collaboratorId,
