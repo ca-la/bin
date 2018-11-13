@@ -43,7 +43,11 @@ test('GET /bids', async (t: Test) => {
   t.equal(response.status, 200);
   t.deepEqual(bids, [{
     ...bid,
-    createdAt: bid.createdAt.toISOString()
+    createdAt: bid.createdAt.toISOString(),
+    design: {
+      ...design,
+      createdAt: design.createdAt.toISOString()
+    }
   }], 'returns only bids assigned to requested user');
 });
 

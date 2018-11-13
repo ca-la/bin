@@ -2,14 +2,55 @@ import * as Router from 'koa-router';
 import * as Koa from 'koa';
 import * as uuid from 'node-uuid';
 
+import Bid from '../../domain-objects/bid';
+import ProductDesign = require('../../domain-objects/product-design');
 import * as UsersDAO from '../../dao/users';
 import * as BidsDAO from '../../dao/bids';
 import * as ProductDesignsDAO from '../../dao/product-designs';
 import * as DesignEventsDAO from '../../dao/design-events';
 import requireAdmin = require('../../middleware/require-admin');
 import requireAuth = require('../../middleware/require-auth');
+import { hasOnlyProperties } from '../../services/require-properties';
 
 const router = new Router();
+
+type IOBid = Bid & { design: ProductDesign };
+
+function isIOBid(candidate: object | null): candidate is IOBid {
+  return Boolean(candidate) && hasOnlyProperties(
+    candidate,
+    'id',
+    'createdAt',
+    'createdBy',
+    'quoteId',
+    'bidPriceCents',
+    'description',
+    'design'
+  );
+}
+
+async function attachDesignsToBids(bids: Bid[]): Promise<IOBid[]> {
+  const designs = await Promise.all(
+    bids.map(async (bid: Bid) => ({
+      bid,
+      design: await ProductDesignsDAO.findByQuoteId(bid.quoteId)
+    }))
+  );
+  const removeBidsWithDeletedDesigns = isIOBid;
+
+  return designs
+    .map(({ design, bid }: { design: ProductDesign | null, bid: Bid }) => {
+      if (!design) {
+        return null;
+      }
+
+      return {
+        ...bid,
+        design
+      };
+    })
+    .filter(removeBidsWithDeletedDesigns);
+}
 
 function* listBidsByAssignee(this: Koa.Application.Context): AsyncIterableIterator<any> {
   const { userId } = this.query;
@@ -25,9 +66,10 @@ function* listBidsByAssignee(this: Koa.Application.Context): AsyncIterableIterat
     return;
   }
 
-  const openBids = yield BidsDAO.findOpenByTargetId(userId);
+  const openBids: Bid[] = yield BidsDAO.findOpenByTargetId(userId);
+  const ioBids: IOBid[] = yield attachDesignsToBids(openBids);
 
-  this.body = openBids;
+  this.body = ioBids;
   this.status = 200;
 }
 
