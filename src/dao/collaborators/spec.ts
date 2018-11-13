@@ -1,5 +1,6 @@
 import CollaboratorsDAO = require('.');
 import CollectionsDAO = require('../../dao/collections');
+import ProductDesignsDAO = require('../../dao/product-designs');
 
 import createUser = require('../../test-helpers/create-user');
 import { test, Test } from '../../test-helpers/fresh';
@@ -44,4 +45,32 @@ test('CollaboratorsDAO.findByCollectionAndUser returns colllaborators', async (t
 
   t.equal(list.length, 1);
   t.equal(list[0].id, collaborator.id);
+});
+
+test('CollaboratorsDAO.deleteByDesignIdAndUserId deletes collaborator', async (t: Test) => {
+  const { user } = await createUser({ withSession: false });
+
+  const design = await ProductDesignsDAO.create({
+    productType: 'TEESHIRT',
+    title: 'A product design',
+    userId: user.id
+  });
+
+  await CollaboratorsDAO.create({
+    designId: design.id,
+    role: 'EDIT',
+    userId: user.id
+  });
+
+  await CollaboratorsDAO.deleteByDesignAndUser(
+    design.id,
+    user.id
+  );
+
+  const list = await CollaboratorsDAO.findByDesignAndUser(
+    design.id,
+    user.id
+  );
+
+  t.deepEqual(list, []);
 });

@@ -1,6 +1,7 @@
 'use strict';
 
 const InvoicesDAO = require('../../dao/invoices');
+const CollaboratorsDAO = require('../../dao/collaborators');
 
 const { group, sandbox } = require('../../test-helpers/fresh');
 
@@ -62,6 +63,34 @@ test('getDesignPermissions when owner and when all status invoices are not paid'
       canSetComplexityLevels: false,
       canView: true,
       canViewPricing: true
+    }
+  );
+});
+
+test('getDesignPermissions when partner', async (t) => {
+  const userId = 'userId';
+  const partnerId = 'partnerId';
+  const design = {
+    status: 'NEEDS_DEVELOPMENT_PAYMENT',
+    userId
+  };
+
+  sandbox().stub(CollaboratorsDAO, 'findByDesignAndUser')
+    .resolves([{ userId: partnerId, role: 'PREVIEW' }]);
+  t.deepEqual(
+    await getDesignPermissions(design, partnerId, 'PARTNER'),
+    {
+      canComment: false,
+      canDelete: false,
+      canEdit: false,
+      canInitiateStatusCompletion: false,
+      canManagePricing: false,
+      canModifyServices: false,
+      canPutStatus: false,
+      canSetStatusEstimates: true,
+      canSetComplexityLevels: true,
+      canView: true,
+      canViewPricing: false
     }
   );
 });

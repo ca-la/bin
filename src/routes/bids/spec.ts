@@ -67,6 +67,13 @@ test('PUT /bids/:bidId/assignees/:userId', async (t: Test) => {
   );
   t.equal(response.status, 204);
 
+  const [collaboratorResponse, collaborators] = await get(
+    `/collaborators?designId=${design.id}`,
+    { headers: authHeader(session.id) }
+  );
+  t.equal(collaboratorResponse.status, 200);
+  t.equal(collaborators[0].userId, user.id);
+
   const [notFoundUser] = await put(
     `/bids/${bid.id}/assignees/${uuid.v4()}`,
     { headers: authHeader(session.id) }
@@ -134,4 +141,11 @@ test('DELETE /bids/:bidId/assignees/:userId', async (t: Test) => {
     { headers: authHeader(session.id) }
   );
   t.deepEqual(assignees[1], []);
+
+  const [collaboratorResponse, collaborators] = await get(
+    `/collaborators?designId=${design.id}`,
+    { headers: authHeader(session.id) }
+  );
+  t.equal(collaboratorResponse.status, 200);
+  t.deepEqual(collaborators, []);
 });

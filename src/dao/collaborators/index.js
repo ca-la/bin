@@ -156,8 +156,23 @@ function deleteById(id) {
     .then(maybeInstantiate);
 }
 
+function deleteByDesignAndUser(designId, userId) {
+  return db(TABLE_NAME)
+    .where({
+      design_id: designId,
+      user_id: userId,
+      deleted_at: null
+    })
+    .update({
+      deleted_at: new Date()
+    }, '*')
+    .then(first)
+    .then(maybeInstantiate);
+}
+
 module.exports = {
   create,
+  deleteByDesignAndUser,
   deleteById,
   findByCollection,
   findByCollectionAndUser,

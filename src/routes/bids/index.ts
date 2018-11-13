@@ -8,6 +8,7 @@ import * as UsersDAO from '../../dao/users';
 import * as BidsDAO from '../../dao/bids';
 import * as ProductDesignsDAO from '../../dao/product-designs';
 import * as DesignEventsDAO from '../../dao/design-events';
+import * as CollaboratorsDAO from '../../dao/collaborators';
 import requireAdmin = require('../../middleware/require-admin');
 import requireAuth = require('../../middleware/require-auth');
 import { hasOnlyProperties } from '../../services/require-properties';
@@ -104,6 +105,13 @@ function* assignBidToPartner(this: Koa.Application.Context): AsyncIterableIterat
     type: 'BID_DESIGN'
   });
 
+  yield CollaboratorsDAO.create({
+    collectionId: null,
+    designId: design.id,
+    role: 'PREVIEW',
+    userId: target.id
+  });
+
   this.status = 204;
 }
 
@@ -145,6 +153,8 @@ function* removeBidFromPartner(this: Koa.Application.Context): AsyncIterableIter
     targetId: target.id,
     type: 'REMOVE_PARTNER'
   });
+
+  yield CollaboratorsDAO.deleteByDesignAndUser(design.id, target.id);
 
   this.status = 204;
 }
