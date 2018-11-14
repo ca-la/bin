@@ -1,3 +1,5 @@
+import { omit } from 'lodash';
+
 import createUser = require('../../test-helpers/create-user');
 import FitPartnerCustomersDAO = require('../../dao/fit-partner-customers');
 import FitPartnerScanService = require('../../services/fit-partner-scan');
@@ -68,6 +70,36 @@ test(
 
     const scan = (await ScansDAO.findAll({ limit: 1, offset: 0 }))[0];
     t.equal(twilioStub.firstCall.args[1].includes(scan.id), true);
+  }
+);
+
+test(
+  'POST /fit-partners/:partnerId/shopify-order-created missing shipping address warns and skips',
+  async (t: Test) => {
+    sandbox().stub(FitPartnerScanService, 'saveFittingUrl').resolves();
+
+    const { session, user } = await createUser();
+
+    const partner = await FitPartnersDAO.create({
+      adminUserId: user.id,
+      shopifyAppApiKey: '123',
+      shopifyAppPassword: '123',
+      shopifyHostname: 'example.com',
+      smsCopy: 'Click here: {{link}}'
+    });
+
+    const twilioStub = sandbox().stub(Twilio, 'sendSMS').resolves();
+
+    const [response] = await post(`/fit-partners/${partner.id}/shopify-order-created`, {
+      body: omit(orderCreatePayload, ['shipping_address']),
+      headers: authHeader(session.id)
+    });
+
+    t.equal(response.status, 200);
+    t.equal(twilioStub.callCount, 0);
+
+    const scans = await ScansDAO.findAll({ limit: 1, offset: 0 });
+    t.deepEqual(scans, []);
   }
 );
 

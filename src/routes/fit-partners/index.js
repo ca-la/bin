@@ -77,9 +77,20 @@ function* shopifyOrderCreated() {
   const { partnerId } = this.params;
   const { shipping_address: shippingAddress, customer } = this.request.body;
 
-  assert(shippingAddress, 'Missing shipping address payload');
+  if (!shippingAddress) {
+    Logger.logServerError('Missing shipping address payload');
+    this.status = 200;
+    this.body = { success: true };
+    return;
+  }
+
   const phoneNumber = shippingAddress.phone;
-  assert(phoneNumber, 'Missing shipping address phone number');
+  if (!phoneNumber) {
+    Logger.logServerError('Missing shipping address phone number');
+    this.status = 200;
+    this.body = { success: true };
+    return;
+  }
 
   assert(customer, 'Missing customer payload');
   const shopifyUserId = customer.id;
