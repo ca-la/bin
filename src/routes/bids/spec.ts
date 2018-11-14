@@ -51,6 +51,155 @@ test('GET /bids', async (t: Test) => {
   }], 'returns only bids assigned to requested user');
 });
 
+test('GET /bids?userId&state=OPEN', async (t: Test) => {
+  const admin = await createUser({ role: 'ADMIN' });
+  const partner = await createUser({ role: 'PARTNER' });
+  const other = await createUser({ role: 'PARTNER' });
+  const design = await createDesign({
+    productType: 'TEESHIRT',
+    title: 'Plain White Tee',
+    userId: admin.user.id
+  });
+
+  const { bid, quote } = await generateBid(design.id, admin.user.id);
+  const otherBid = await createBid({
+    bidPriceCents: 100000,
+    createdAt: new Date(2012, 12, 22),
+    createdBy: admin.user.id,
+    description: 'Full Service',
+    id: uuid.v4(),
+    quoteId: quote.id
+  });
+  const expiredBid = await createBid({
+    bidPriceCents: 100000,
+    createdAt: new Date(2012, 12, 22),
+    createdBy: admin.user.id,
+    description: 'Full Service',
+    id: uuid.v4(),
+    quoteId: quote.id
+  });
+
+  await put(
+    `/bids/${bid.id}/assignees/${partner.user.id}`,
+    { headers: authHeader(admin.session.id) }
+  );
+  await put(
+    `/bids/${expiredBid.id}/assignees/${partner.user.id}`,
+    { headers: authHeader(admin.session.id) }
+  );
+  await put(
+    `/bids/${otherBid.id}/assignees/${other.user.id}`,
+    { headers: authHeader(admin.session.id) }
+  );
+  const [response, bids] = await get(
+    `/bids?userId=${partner.user.id}&state=OPEN`,
+    { headers: authHeader(partner.session.id) }
+  );
+  t.equal(response.status, 200);
+  t.deepEqual(bids, [{
+    ...bid,
+    createdAt: bid.createdAt.toISOString(),
+    design: {
+      ...design,
+      createdAt: design.createdAt.toISOString()
+    }
+  }], 'returns only bids assigned to requested user');
+});
+
+test('GET /bids?userId&state=EXPIRED', async (t: Test) => {
+  const twoDaysAgo = new Date();
+  twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+
+  const admin = await createUser({ role: 'ADMIN' });
+  const partner = await createUser({ role: 'PARTNER' });
+  const other = await createUser({ role: 'PARTNER' });
+  const design = await createDesign({
+    productType: 'TEESHIRT',
+    title: 'Plain White Tee',
+    userId: admin.user.id
+  });
+
+  const { bid, quote } = await generateBid(design.id, admin.user.id);
+  const otherBid = await createBid({
+    bidPriceCents: 100000,
+    createdAt: new Date(2012, 12, 22),
+    createdBy: admin.user.id,
+    description: 'Full Service',
+    id: uuid.v4(),
+    quoteId: quote.id
+  });
+  const expiredBid = await createBid({
+    bidPriceCents: 100000,
+    createdAt: twoDaysAgo,
+    createdBy: admin.user.id,
+    description: 'Full Service',
+    id: uuid.v4(),
+    quoteId: quote.id
+  });
+
+  await put(
+    `/bids/${bid.id}/assignees/${partner.user.id}`,
+    { headers: authHeader(admin.session.id) }
+  );
+  await put(
+    `/bids/${expiredBid.id}/assignees/${partner.user.id}`,
+    { headers: authHeader(admin.session.id) }
+  );
+  await put(
+    `/bids/${otherBid.id}/assignees/${other.user.id}`,
+    { headers: authHeader(admin.session.id) }
+  );
+  const [response, bids] = await get(
+    `/bids?userId=${partner.user.id}&state=EXPIRED`,
+    { headers: authHeader(partner.session.id) }
+  );
+  t.equal(response.status, 200);
+  t.deepEqual(bids, [{
+    ...expiredBid,
+    createdAt: expiredBid.createdAt.toISOString(),
+    design: {
+      ...design,
+      createdAt: design.createdAt.toISOString()
+    }
+  }], 'returns only expired bid assigned to the user');
+});
+
+test('GET /bids?userId&state=ACCEPTED', async (t: Test) => {
+  const admin = await createUser({ role: 'ADMIN' });
+  const partner = await createUser({ role: 'PARTNER' });
+  const other = await createUser({ role: 'PARTNER' });
+  const design = await createDesign({
+    productType: 'TEESHIRT',
+    title: 'Plain White Tee',
+    userId: admin.user.id
+  });
+
+  const { bid, quote } = await generateBid(design.id, admin.user.id);
+  const otherBid = await createBid({
+    bidPriceCents: 100000,
+    createdAt: new Date(2012, 12, 22),
+    createdBy: admin.user.id,
+    description: 'Full Service',
+    id: uuid.v4(),
+    quoteId: quote.id
+  });
+
+  await put(
+    `/bids/${bid.id}/assignees/${partner.user.id}`,
+    { headers: authHeader(admin.session.id) }
+  );
+  await put(
+    `/bids/${otherBid.id}/assignees/${other.user.id}`,
+    { headers: authHeader(admin.session.id) }
+  );
+  const [response, bids] = await get(
+    `/bids?userId=${partner.user.id}&state=ACCEPTED`,
+    { headers: authHeader(partner.session.id) }
+  );
+  t.equal(response.status, 200);
+  t.deepEqual(bids, [], 'returns empty bids list');
+});
+
 test('PUT /bids/:bidId/assignees/:userId', async (t: Test) => {
   const { user, session } = await createUser({ role: 'ADMIN' });
   const design = await createDesign({

@@ -53,8 +53,19 @@ async function attachDesignsToBids(bids: Bid[]): Promise<IOBid[]> {
     .filter(removeBidsWithDeletedDesigns);
 }
 
+function isExpired(bid: Bid): boolean {
+  const dayAfterCreation = new Date(bid.createdAt);
+  dayAfterCreation.setDate(dayAfterCreation.getDate() + 1);
+
+  return new Date().getTime() > dayAfterCreation.getTime();
+}
+
+function not(predicateFunction: (a: any) => boolean): (a: any) => boolean {
+  return (a: any): boolean => !predicateFunction(a);
+}
+
 function* listBidsByAssignee(this: Koa.Application.Context): AsyncIterableIterator<any> {
-  const { userId } = this.query;
+  const { state, userId } = this.query;
   const isAdmin = this.state.role === 'ADMIN';
 
   if (!userId) {
@@ -67,8 +78,27 @@ function* listBidsByAssignee(this: Koa.Application.Context): AsyncIterableIterat
     return;
   }
 
-  const openBids: Bid[] = yield BidsDAO.findOpenByTargetId(userId);
-  const ioBids: IOBid[] = yield attachDesignsToBids(openBids);
+  let bids: Bid[] = [];
+  switch (state) {
+    case 'ACCEPTED':
+      bids = yield BidsDAO.findAcceptedByTargetId(userId);
+      break;
+
+    case 'EXPIRED':
+      bids = yield BidsDAO.findOpenByTargetId(userId)
+        .then((openBids: Bid[]): Bid[] => openBids.filter(isExpired));
+      break;
+
+    case 'OPEN':
+    case undefined:
+      bids = yield BidsDAO.findOpenByTargetId(userId)
+        .then((openBids: Bid[]): Bid[] => openBids.filter(not(isExpired)));
+      break;
+
+    default:
+      this.throw(400, 'Invalid status query');
+  }
+  const ioBids: IOBid[] = yield attachDesignsToBids(bids);
 
   this.body = ioBids;
   this.status = 200;

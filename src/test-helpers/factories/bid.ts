@@ -41,7 +41,7 @@ export default async function generateBid(
   });
   const bid = await createBid({
     bidPriceCents: 100000,
-    createdAt: new Date(2012, 12, 22),
+    createdAt: new Date(),
     createdBy,
     description: 'Full Service',
     id: uuid.v4(),
