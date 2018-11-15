@@ -22,9 +22,11 @@ async function findUserDesigns(userId, filters) {
   const ownDesigns = await ProductDesignsDAO.findByUserId(userId, filters);
 
   const collaborations = await CollaboratorsDAO.findByUserId(userId);
-  const invitedDesigns = await Promise.all(collaborations.map((collaboration) => {
-    return ProductDesignsDAO.findById(collaboration.designId, filters);
-  }));
+  const invitedDesigns = await Promise.all(
+    collaborations
+      .filter(collaboration => collaboration.role !== 'PREVIEW')
+      .map(collaboration => ProductDesignsDAO.findById(collaboration.designId, filters))
+  );
 
   // Deleted designs become holes in the array right now - TODO maybe clean this
   // up via a reduce or something
