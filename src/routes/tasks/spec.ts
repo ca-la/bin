@@ -12,6 +12,7 @@ import createUser = require('../../test-helpers/create-user');
 import { authHeader, get, post, put } from '../../test-helpers/http';
 import { sandbox, test } from '../../test-helpers/fresh';
 import omit = require('lodash/omit');
+import * as CreateNotifications from '../../services/create-notifications';
 
 function createTaskEvents(user: User): TaskEvent[] {
   const taskEventId = uuid.v4();
@@ -185,6 +186,8 @@ test('POST /tasks creates Task and TaskEvent successfully', async (t: tape.Test)
     }
   ));
 
+  sandbox().stub(CreateNotifications, 'sendTaskCommentCreateNotification').resolves();
+
   const [response] = await post('/tasks', {
     body: {
       assignees: [],
@@ -348,6 +351,8 @@ test('POST /tasks/stage/:stageId creates Task on Stage successfully', async (t: 
 
 test('PUT /tasks/:taskId/comment/:id creates a task comment', async (t: tape.Test) => {
   const { session, user } = await createUser();
+
+  sandbox().stub(CreateNotifications, 'sendTaskCommentCreateNotification').resolves();
 
   const task = await post('/tasks', {
     body: {

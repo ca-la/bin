@@ -12,6 +12,10 @@ export declare class Collaborator {
   constructor(data: any);
 }
 
+export interface CollaboratorWithUserId extends Collaborator {
+  userId: string;
+}
+
 export interface CollaboratorRow {
   id: string;
   collection_id: string;

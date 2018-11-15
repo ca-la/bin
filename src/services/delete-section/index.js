@@ -5,7 +5,7 @@ const ProductDesignFeaturePlacementsDAO = require('../../dao/product-design-feat
 const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
 const ProductDesignSelectedOptionsDAO = require('../../dao/product-design-selected-options');
 const { requireValues } = require('../require-properties');
-const { sendSectionDeleteNotifications } = require('../send-design-notifications');
+const { sendSectionDeleteNotifications } = require('../create-notifications');
 
 async function deleteSection({ sectionId, designId, actorUserId }) {
   requireValues({ sectionId, designId, actorUserId });
@@ -16,11 +16,11 @@ async function deleteSection({ sectionId, designId, actorUserId }) {
     await ProductDesignFeaturePlacementsDAO.deleteForSectionTrx(trx, sectionId);
     await ProductDesignSelectedOptionsDAO.deleteForSectionTrx(trx, sectionId);
 
-    await sendSectionDeleteNotifications({
-      sectionTitle: deleted.title || 'Untitled',
+    await sendSectionDeleteNotifications(
+      deleted.title || 'Untitled',
       designId,
-      userId: actorUserId
-    });
+      actorUserId
+    );
   });
 }
 

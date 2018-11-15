@@ -40,9 +40,8 @@ const { requireValues } = require('../../services/require-properties');
 const {
   sendDesignUpdateNotifications,
   sendSectionCreateNotifications,
-  sendSectionUpdateNotifications,
-  sendFeaturePlacementUpdateNotifications
-} = require('../../services/send-design-notifications');
+  sendSectionUpdateNotifications
+} = require('../../services/create-notifications');
 const AWSService = require('../../services/aws');
 const { generateFilename } = require('../../services/generate-filename');
 
@@ -276,10 +275,10 @@ function* updateDesign() {
   ];
 
   if (intersection(keys, keysToNotifyOn).length > 0) {
-    yield sendDesignUpdateNotifications({
-      designId: this.params.designId,
-      userId: this.state.userId
-    });
+    yield sendDesignUpdateNotifications(
+      this.params.designId,
+      this.state.userId
+    );
   }
 
   this.body = updated;
@@ -311,11 +310,11 @@ function* createSection() {
   }))
     .catch(filterError(InvalidDataError, err => this.throw(400, err)));
 
-  yield sendSectionCreateNotifications({
-    sectionId: section.id,
-    designId: this.params.designId,
-    userId: this.state.userId
-  });
+  yield sendSectionCreateNotifications(
+    section.id,
+    this.params.designId,
+    this.state.userId
+  );
 
   this.body = section;
   this.status = 201;
@@ -338,11 +337,11 @@ function* updateSection() {
   )
     .catch(filterError(InvalidDataError, err => this.throw(400, err)));
 
-  yield sendSectionUpdateNotifications({
-    sectionId: this.params.sectionId,
-    designId: this.params.designId,
-    userId: this.state.userId
-  });
+  yield sendSectionUpdateNotifications(
+    this.params.sectionId,
+    this.params.designId,
+    this.state.userId
+  );
 
   this.body = updated;
   this.status = 200;
@@ -362,12 +361,6 @@ function* replaceSectionFeaturePlacements() {
     this.request.body
   )
     .catch(filterError(InvalidDataError, err => this.throw(400, err)));
-
-  yield sendFeaturePlacementUpdateNotifications({
-    sectionId: this.params.sectionId,
-    designId: this.params.designId,
-    userId: this.state.userId
-  });
 
   this.body = updated;
   this.status = 200;

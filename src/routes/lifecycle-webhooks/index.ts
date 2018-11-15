@@ -1,8 +1,6 @@
-'use strict';
-
-const Router = require('koa-router');
-
-const sendBatchNotificationEmails = require('../../services/send-batch-notification-emails');
+import * as Router from 'koa-router';
+import * as Koa from 'koa';
+import { sendNotificationEmails } from '../../services/send-notification-emails';
 
 const router = new Router();
 
@@ -13,13 +11,12 @@ const router = new Router();
  * this is our opportunity to find recent notifications, batch them up, and
  * email them to the appropriate recipients.
  */
-
-function* postPurgeNotifications() {
-  yield sendBatchNotificationEmails();
+function* postPurgeNotifications(this: Koa.Application.Context): AsyncIterableIterator<any> {
+  yield sendNotificationEmails();
   this.status = 200;
   this.body = { success: true };
 }
 
 router.post('/purge-notifications', postPurgeNotifications);
 
-module.exports = router.routes();
+export = router.routes();

@@ -2,10 +2,13 @@ import * as tape from 'tape';
 import * as uuid from 'node-uuid';
 import createUser = require('../../test-helpers/create-user');
 import { authHeader, del, get, post, put } from '../../test-helpers/http';
-import { test } from '../../test-helpers/fresh';
+import { sandbox, test } from '../../test-helpers/fresh';
+import * as CreateNotifications from '../../services/create-notifications';
 
 test('DELETE /comment/:id deletes a task comment', async (t: tape.Test) => {
   const { session, user } = await createUser();
+
+  sandbox().stub(CreateNotifications, 'sendTaskCommentCreateNotification').resolves();
 
   const task = await post('/tasks', {
     body: {

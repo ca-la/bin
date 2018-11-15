@@ -16,6 +16,7 @@ import Comment, { isComment } from '../../domain-objects/comment';
 import { hasOnlyProperties } from '../../services/require-properties';
 import requireAuth = require('../../middleware/require-auth');
 import { Collaborator } from '../../domain-objects/collaborator';
+import { sendTaskCommentCreateNotification } from '../../services/create-notifications';
 
 const router = new Router();
 
@@ -206,6 +207,8 @@ function* createTaskComment(this: Koa.Application.Context): AsyncIterableIterato
       commentId: comment.id,
       taskId: this.params.taskId
     });
+    yield sendTaskCommentCreateNotification(this.params.taskId, comment.id, userId);
+
     this.status = 201;
     this.body = comment;
   } else {

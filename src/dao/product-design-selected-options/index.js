@@ -3,7 +3,6 @@
 const uuid = require('node-uuid');
 const rethrow = require('pg-rethrow');
 const compact = require('../../services/compact');
-
 const db = require('../../services/db');
 const filterError = require('../../services/filter-error');
 const first = require('../../services/first').default;
