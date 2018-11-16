@@ -1,14 +1,17 @@
 'use strict';
 
 const uuid = require('node-uuid');
+const sinon = require('sinon');
 const CollectionsDAO = require('../../dao/collections');
 const CollaboratorsDAO = require('../../dao/collaborators');
 const createUser = require('../../test-helpers/create-user');
 const ProductDesignsDAO = require('../../dao/product-designs');
+const DesignEventsDAO = require('../../dao/design-events');
 const {
   authHeader, del, post, get, patch, put
 } = require('../../test-helpers/http');
 const { sandbox, test } = require('../../test-helpers/fresh');
+const CreateNotifications = require('../../services/create-notifications');
 
 function simulateAPISerialization(object) {
   return JSON.parse(JSON.stringify(object));
@@ -332,4 +335,59 @@ test('GET /collections/:id/designs', async (t) => {
     ),
     'returns a list of contained designs'
   );
+});
+
+test('POST /collections/:id/submissions', async (t) => {
+  const { user, session } = await createUser();
+
+  const collection = await CollectionsDAO.create({
+    createdBy: user.id,
+    description: 'Initial commit',
+    title: 'Drop 001/The Early Years'
+  });
+  const designOne = await ProductDesignsDAO.create({
+    title: 'T-Shirt One',
+    description: 'Generic Shirt',
+    userId: user.id
+  });
+  const designTwo = await ProductDesignsDAO.create({
+    title: 'T-Shirt Two',
+    description: 'Generic Shirt',
+    userId: user.id
+  });
+  await CollectionsDAO.moveDesign(collection.id, designOne.id);
+  await CollectionsDAO.moveDesign(collection.id, designTwo.id);
+
+  const notificationStub = sandbox()
+    .stub(CreateNotifications, 'sendDesignerSubmitCollection')
+    .resolves();
+
+  const serviceId = uuid.v4();
+  const [response, body] = await post(
+    `/collections/${collection.id}/submissions`,
+    {
+      headers: authHeader(session.id),
+      body: {
+        collectionId: collection.id,
+        createdAt: new Date(),
+        createdBy: user.id,
+        deletedAt: null,
+        id: serviceId,
+        needsDesignConsulting: true,
+        needsFulfillment: true,
+        needsPackaging: true
+      }
+    }
+  );
+
+  const designEventOne = await DesignEventsDAO.findByDesignId(designOne.id);
+  const designEventTwo = await DesignEventsDAO.findByDesignId(designTwo.id);
+
+  sinon.assert.callCount(notificationStub, 1);
+
+  t.deepEqual(response.status, 201, 'Successfully posts');
+  t.deepEqual(body.collectionId, collection.id, 'Successfully returns the collection service');
+  t.deepEqual(body.id, serviceId, 'Successfully returns the collection service');
+  t.deepEqual(designEventOne[0].type, 'SUBMIT_DESIGN', 'Submitted the design to CALA');
+  t.deepEqual(designEventTwo[0].type, 'SUBMIT_DESIGN', 'Submitted the design to CALA');
 });

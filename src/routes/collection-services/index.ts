@@ -1,14 +1,13 @@
 import * as Router from 'koa-router';
 import * as Koa from 'koa';
 
-import CollectionService from '../../domain-objects/collection-service';
+import CollectionService, { isCollectionService } from '../../domain-objects/collection-service';
 import {
   create,
   deleteById,
   findAllByCollectionId,
   update
 } from '../../dao/collection-services';
-import { hasOnlyProperties } from '../../services/require-properties';
 
 import requireAuth = require('../../middleware/require-auth');
 
@@ -16,20 +15,6 @@ const router = new Router();
 
 interface GetListQuery {
   collectionId?: string;
-}
-
-function isCollectionService(candidate: object): candidate is CollectionService {
-  return hasOnlyProperties(
-    candidate,
-    'collectionId',
-    'createdAt',
-    'createdBy',
-    'deletedAt',
-    'id',
-    'needsDesignConsulting',
-    'needsFulfillment',
-    'needsPackaging'
-  );
 }
 
 const collectionServiceFromIO = (

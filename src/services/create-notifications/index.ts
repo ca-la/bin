@@ -228,3 +228,25 @@ export async function sendPartnerRejectServiceBidNotification(
     type: NotificationType.PARTNER_REJECT_SERVICE_BID
   });
 }
+
+export async function sendDesignerSubmitCollection(
+  collectionId: string,
+  actorId: string
+): Promise<Notification> {
+  if (!CALA_OPS_USER_ID) { throw new Error('CALA Ops account not set!'); }
+
+  return replaceNotifications({
+    actionDescription: null,
+    actorUserId: actorId,
+    collectionId,
+    commentId: null,
+    designId: null,
+    id: uuid.v4(),
+    recipientUserId: CALA_OPS_USER_ID,
+    sectionId: null,
+    sentEmailAt: null,
+    stageId: null,
+    taskId: null,
+    type: NotificationType.COLLECTION_SUBMIT
+  });
+}

@@ -1,5 +1,5 @@
 import DataAdapter from '../services/data-adapter';
-import { hasProperties } from '../services/require-properties';
+import { hasOnlyProperties, hasProperties } from '../services/require-properties';
 
 export default interface CollectionService {
   collectionId: string;
@@ -31,6 +31,20 @@ export const UPDATABLE_PROPERTIES = [
 ];
 
 export const dataAdapter = new DataAdapter<CollectionServiceRow, CollectionService>();
+
+export function isCollectionService(candidate: object): candidate is CollectionService {
+  return hasOnlyProperties(
+    candidate,
+    'collectionId',
+    'createdAt',
+    'createdBy',
+    'deletedAt',
+    'id',
+    'needsDesignConsulting',
+    'needsFulfillment',
+    'needsPackaging'
+  );
+}
 
 export function isCollectionServiceRow(row: object): row is CollectionServiceRow {
   return hasProperties(

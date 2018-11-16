@@ -2,16 +2,21 @@
 
 const Router = require('koa-router');
 const pick = require('lodash/pick');
+const uuid = require('node-uuid');
 
 const filterError = require('../../services/filter-error');
 const InvalidDataError = require('../../errors/invalid-data');
 const canAccessUserResource = require('../../middleware/can-access-user-resource');
 const CollectionsDAO = require('../../dao/collections');
 const CollaboratorsDAO = require('../../dao/collaborators');
-const { UPDATABLE_PARAMS } = require('../../domain-objects/collection');
+const CollectionServicesDAO = require('../../dao/collection-services');
 const ProductDesignsDAO = require('../../dao/product-designs');
+const DesignEventsDAO = require('../../dao/design-events');
+const CollectionServiceObject = require('../../domain-objects/collection-service');
+const { UPDATABLE_PARAMS } = require('../../domain-objects/collection');
 const requireAuth = require('../../middleware/require-auth');
 const { CALA_ADMIN_USER_ID } = require('../../config');
+const CreateNotifications = require('../../services/create-notifications');
 
 const router = new Router();
 
@@ -119,12 +124,44 @@ function* getCollectionDesigns() {
   this.status = 200;
 }
 
+function* createSubmission() {
+  const { collectionId } = this.params;
+  const { userId } = this.state;
+
+  if (CollectionServiceObject.isCollectionService(this.request.body)) {
+    const collectionService = yield CollectionServicesDAO.create({
+      ...this.request.body,
+      createdBy: userId
+    });
+    const designs = yield ProductDesignsDAO.findByCollectionId(collectionId);
+    yield Promise.all(designs.map((design) => {
+      return DesignEventsDAO.create({
+        actorId: userId,
+        bidId: null,
+        createdAt: new Date(),
+        designId: design.id,
+        id: uuid.v4(),
+        targetId: null,
+        type: 'SUBMIT_DESIGN'
+      });
+    }));
+
+    CreateNotifications.sendDesignerSubmitCollection(collectionId, userId);
+
+    this.status = 201;
+    this.body = collectionService;
+  } else {
+    this.throw(400, 'Request does not match collection service');
+  }
+}
+
 router.post('/', requireAuth, createCollection);
 router.get('/', requireAuth, getCollections);
 
 router.del('/:collectionId', requireAuth, deleteCollection);
 router.get('/:collectionId', requireAuth, getCollection);
 router.patch('/:collectionId', requireAuth, updateCollection);
+router.post('/:collectionId/submissions', requireAuth, createSubmission);
 
 router.get('/:collectionId/designs', requireAuth, getCollectionDesigns);
 router.del('/:collectionId/designs/:designId', requireAuth, deleteDesign);
