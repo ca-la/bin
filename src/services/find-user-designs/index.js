@@ -19,13 +19,27 @@ const ProductDesignsDAO = require('../../dao/product-designs');
  * @returns {Promise<Design[]>}
  */
 async function findUserDesigns(userId, filters) {
-  const ownDesigns = await ProductDesignsDAO.findByUserId(userId, filters);
+  const ownDesigns = await ProductDesignsDAO
+    .findByUserId(userId, filters)
+    .then(yourDesigns => yourDesigns.map(
+      design => ({ ...design, role: 'EDIT' })
+    ));
 
   const collaborations = await CollaboratorsDAO.findByUserId(userId);
   const invitedDesigns = await Promise.all(
     collaborations
       .filter(collaboration => collaboration.role !== 'PREVIEW')
-      .map(collaboration => ProductDesignsDAO.findById(collaboration.designId, filters))
+      .map(
+        collaboration =>
+          ProductDesignsDAO
+            .findById(collaboration.designId, filters)
+            .then((design) => {
+              if (design) {
+                return { ...design, role: collaboration.role };
+              }
+              return design;
+            })
+      )
   );
 
   // Deleted designs become holes in the array right now - TODO maybe clean this
@@ -41,17 +55,13 @@ async function findUserDesigns(userId, filters) {
     return ProductDesignsDAO.findById(designId, filters);
   }));
 
-  const availableServiceDesigns = serviceDesigns.filter((design) => {
-    // Deleted designs become holes in the array currently.
-    if (!design) { return false; }
-
-    // Partners don't see designs that are in draft
-    if (design.status === 'DRAFT') {
-      return false;
-    }
-
-    return true;
-  });
+  const availableServiceDesigns = serviceDesigns
+    .filter((design) => {
+      // Deleted designs become holes in the array currently.
+      // Partners don't see designs that are in draft
+      return Boolean(design) && design.status !== 'DRAFT';
+    })
+    .map(design => ({ ...design, role: 'PARTNER' }));
 
   const allDesigns = [...ownDesigns, ...availableInvitedDesigns, ...availableServiceDesigns];
   const sorted = allDesigns.sort((a, b) => b.createdAt - a.createdAt);
