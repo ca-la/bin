@@ -250,3 +250,24 @@ export async function sendDesignerSubmitCollection(
     type: NotificationType.COLLECTION_SUBMIT
   });
 }
+
+export async function sendPartnerDesignBid(
+  designId: string,
+  actorId: string,
+  targetId: string
+): Promise<Notification> {
+  return replaceNotifications({
+    actionDescription: null,
+    actorUserId: actorId,
+    collectionId: null,
+    commentId: null,
+    designId,
+    id: uuid.v4(),
+    recipientUserId: targetId,
+    sectionId: null,
+    sentEmailAt: null,
+    stageId: null,
+    taskId: null,
+    type: NotificationType.PARTNER_DESIGN_BID
+  });
+}
