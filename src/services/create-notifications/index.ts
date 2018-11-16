@@ -10,6 +10,7 @@ import Notification, { NotificationType } from '../../domain-objects/notificatio
 import { Collaborator, CollaboratorWithUserId } from '../../domain-objects/collaborator';
 import findDesignUsers = require('../../services/find-design-users');
 import User from '../../domain-objects/user';
+import { CALA_OPS_USER_ID } from '../../config';
 
 /**
  * Deletes pre-existing similar notifications and adds in a new one.
@@ -182,4 +183,48 @@ export async function sendTaskCommentCreateNotification(
       type: NotificationType.TASK_COMMENT_CREATE
     });
   }));
+}
+
+export async function sendPartnerAcceptServiceBidNotification(
+  designId: string,
+  actorId: string
+): Promise<Notification> {
+  if (!CALA_OPS_USER_ID) { throw new Error('CALA Ops account not set!'); }
+
+  return replaceNotifications({
+    actionDescription: null,
+    actorUserId: actorId,
+    collectionId: null,
+    commentId: null,
+    designId,
+    id: uuid.v4(),
+    recipientUserId: CALA_OPS_USER_ID,
+    sectionId: null,
+    sentEmailAt: null,
+    stageId: null,
+    taskId: null,
+    type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
+  });
+}
+
+export async function sendPartnerRejectServiceBidNotification(
+  designId: string,
+  actorId: string
+): Promise<Notification> {
+  if (!CALA_OPS_USER_ID) { throw new Error('CALA Ops account not set!'); }
+
+  return replaceNotifications({
+    actionDescription: null,
+    actorUserId: actorId,
+    collectionId: null,
+    commentId: null,
+    designId,
+    id: uuid.v4(),
+    recipientUserId: CALA_OPS_USER_ID,
+    sectionId: null,
+    sentEmailAt: null,
+    stageId: null,
+    taskId: null,
+    type: NotificationType.PARTNER_REJECT_SERVICE_BID
+  });
 }

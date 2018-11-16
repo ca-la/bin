@@ -44,6 +44,10 @@ const {
 } = require('../../services/create-notifications');
 const AWSService = require('../../services/aws');
 const { generateFilename } = require('../../services/generate-filename');
+const {
+  sendPartnerAcceptServiceBidNotification,
+  sendPartnerRejectServiceBidNotification
+} = require('../../services/create-notifications');
 
 const router = new Router();
 
@@ -517,6 +521,12 @@ function* addDesignEvent() {
   };
 
   const added = yield DesignEventsDAO.create(eventData);
+
+  if (added.type === 'ACCEPT_SERVICE_BID') {
+    sendPartnerAcceptServiceBidNotification(this.params.designId, this.state.userId);
+  } else if (added.type === 'REJECT_SERVICE_BID') {
+    sendPartnerRejectServiceBidNotification(this.params.designId, this.state.userId);
+  }
 
   this.body = added;
   this.status = 200;
