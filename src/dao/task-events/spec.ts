@@ -18,6 +18,7 @@ import { create as createCollaborator } from '../collaborators';
 import { addDesign, create as createCollection } from '../collections';
 import createUser = require('../../test-helpers/create-user');
 import { TaskStatus } from '../../domain-objects/task-event';
+import omit = require('lodash/omit');
 
 test('Task Events DAO supports creation/retrieval', async (t: tape.Test) => {
   const { user } = await createUser();
@@ -38,7 +39,10 @@ test('Task Events DAO supports creation/retrieval', async (t: tape.Test) => {
     ...inserted,
     designStageId: result.designStageId
   };
-  t.deepEqual(result, insertedWithStage, 'Returned inserted task');
+  t.deepEqual(
+    omit(result, 'createdAt'),
+    omit(insertedWithStage, 'createdAt'),
+    'Returned inserted task');
 });
 
 test('Task Events DAO supports retrieval by designId', async (t: tape.Test) => {
@@ -63,7 +67,10 @@ test('Task Events DAO supports retrieval by designId', async (t: tape.Test) => {
     ...inserted,
     designStageId: result[0].designStageId
   };
-  t.deepEqual(result[0], insertedWithStage, 'Returned inserted task');
+  t.deepEqual(
+    omit(result[0], 'createdAt'),
+    omit(insertedWithStage, 'createdAt'),
+    'Returned inserted task');
 });
 
 test('Task Events DAO supports retrieval by collectionId', async (t: tape.Test) => {
@@ -91,7 +98,10 @@ test('Task Events DAO supports retrieval by collectionId', async (t: tape.Test) 
     ...inserted,
     designStageId: result[0].designStageId
   };
-  t.deepEqual(result[0], insertedWithStage, 'Returned inserted task');
+  t.deepEqual(
+    omit(result[0], 'createdAt'),
+    omit(insertedWithStage, 'createdAt'),
+    'Returned inserted task');
 });
 
 test('Task Events DAO supports retrieval by userId', async (t: tape.Test) => {
@@ -120,7 +130,14 @@ test('Task Events DAO supports retrieval by userId', async (t: tape.Test) => {
 
   const result = await findByUserId(user.id);
   if (result.length === 0) { return t.fail('No tasks returned'); }
-  t.deepEqual(result[0].id, taskEvent.id, 'Returned inserted task');
+  const insertedWithStage = {
+    ...taskEvent,
+    designStageId: result[0].designStageId
+  };
+  t.deepEqual(
+    omit(result[0], 'createdAt'),
+    omit(insertedWithStage, 'createdAt'),
+    'Returned inserted task');
 });
 
 test('Task Events DAO supports retrieval by stageId', async (t: tape.Test) => {
@@ -145,5 +162,8 @@ test('Task Events DAO supports retrieval by stageId', async (t: tape.Test) => {
     ...inserted,
     designStageId: result[0].designStageId
   };
-  t.deepEqual(result[0], insertedWithStage, 'Returned inserted task');
+  t.deepEqual(
+    omit(result[0], 'createdAt'),
+    omit(insertedWithStage, 'createdAt'),
+    'Returned inserted task');
 });
