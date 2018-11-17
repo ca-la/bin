@@ -101,10 +101,7 @@ function* getDesignsByUser() {
   canAccessUserResource.call(this, this.query.userId);
 
   const filters = compact({ status: this.query.status });
-  this.body = yield findUserDesigns(this.query.userId, filters)
-    .then(designs => designs.map(
-      design => attachRole(this.state.userId, design)
-    ));
+  this.body = yield findUserDesigns(this.query.userId, filters);
 
   this.status = 200;
 }
