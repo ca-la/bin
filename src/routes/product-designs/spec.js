@@ -48,15 +48,18 @@ test('PATCH /product-designs/:id allows certain params, rejects others', (t) => 
   let sessionId;
 
   return createUser()
-    .then(({ user, session }) => {
+    .then(({ session }) => {
       sessionId = session.id;
 
-      return ProductDesignsDAO.create({
-        userId: user.id
+      return post('/product-designs', {
+        headers: authHeader(sessionId),
+        body: {
+          productType: 'TEESHIRT'
+        }
       });
     })
-    .then((design) => {
-      designId = design.id;
+    .then((response) => {
+      designId = response[1].id;
 
       return patch(`/product-designs/${designId}`, {
         headers: authHeader(sessionId),
@@ -68,8 +71,10 @@ test('PATCH /product-designs/:id allows certain params, rejects others', (t) => 
     })
     .then(([response, body]) => {
       t.equal(response.status, 200);
+      t.equal(body.productType, 'TEESHIRT');
       t.equal(body.title, 'Fizz Buzz');
       t.equal(body.showPricingBreakdown, true);
+      t.equal(body.role, 'EDIT');
     });
 });
 

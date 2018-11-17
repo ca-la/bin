@@ -65,6 +65,10 @@ class ProductDesign {
   setPermissions(permissions) {
     this.permissions = permissions;
   }
+
+  setRole(role) {
+    this.role = role;
+  }
 }
 
 ProductDesign.dataMapper = dataMapper;

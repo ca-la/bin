@@ -13,6 +13,7 @@ const {
 const canAccessAnnotation = require('../../middleware/can-access-annotation');
 const canAccessSection = require('../../middleware/can-access-section');
 const canAccessUserResource = require('../../middleware/can-access-user-resource');
+const CollaboratorsDAO = require('../../dao/collaborators');
 const CollectionsDAO = require('../../dao/collections');
 const compact = require('../../services/compact');
 const deleteSection = require('../../services/delete-section');
@@ -73,12 +74,25 @@ async function attachStatuses(design) {
   return design;
 }
 
-async function attachResources(design, permissions) {
+async function attachRole(requestorId, design) {
+  const requestorAsCollaborator = await CollaboratorsDAO
+    .findByDesignAndUser(design.id, requestorId);
+
+  if (!requestorAsCollaborator || requestorAsCollaborator.length === 0) {
+    return design;
+  }
+
+  design.setRole(requestorAsCollaborator[0].role);
+  return design;
+}
+
+async function attachResources(design, requestorId, permissions) {
   requireValues({ design, permissions });
 
   let attached = design;
   attached = await attachDesignOwner(attached);
   attached = await attachStatuses(attached);
+  attached = await attachRole(requestorId, attached);
   attached.setPermissions(permissions);
   return attached;
 }
@@ -87,7 +101,10 @@ function* getDesignsByUser() {
   canAccessUserResource.call(this, this.query.userId);
 
   const filters = compact({ status: this.query.status });
-  this.body = yield findUserDesigns(this.query.userId, filters);
+  this.body = yield findUserDesigns(this.query.userId, filters)
+    .then(designs => designs.map(
+      design => attachRole(this.state.userId, design)
+    ));
 
   this.status = 200;
 }
@@ -119,7 +136,11 @@ function* getDesigns() {
 }
 
 function* getDesign() {
-  const design = yield attachResources(this.state.design, this.state.designPermissions);
+  const design = yield attachResources(
+    this.state.design,
+    this.state.userId,
+    this.state.designPermissions
+  );
 
   this.body = design;
   this.status = 200;
@@ -244,7 +265,7 @@ function* create() {
     this.state.role
   );
 
-  design = yield attachResources(design, designPermissions);
+  design = yield attachResources(design, this.state.userId, designPermissions);
 
   this.body = design;
   this.status = 201;
@@ -262,7 +283,7 @@ function* updateDesign() {
   )
     .catch(filterError(InvalidDataError, err => this.throw(400, err)));
 
-  updated = yield attachResources(updated, this.state.designPermissions);
+  updated = yield attachResources(updated, this.state.userId, this.state.designPermissions);
 
   const keys = Object.keys(data);
 

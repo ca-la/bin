@@ -20,6 +20,18 @@ const CreateNotifications = require('../../services/create-notifications');
 
 const router = new Router();
 
+async function attachRole(requestorId, design) {
+  const requestorAsCollaborator = await CollaboratorsDAO
+    .findByDesignAndUser(design.id, requestorId);
+
+  if (!requestorAsCollaborator || requestorAsCollaborator.length === 0) {
+    return design;
+  }
+
+  design.setRole(requestorAsCollaborator[0].role);
+  return design;
+}
+
 function* createCollection() {
   const data = Object.assign({}, this.request.body, {
     createdBy: this.state.userId
@@ -120,7 +132,13 @@ function* getCollectionDesigns() {
   const targetCollection = yield CollectionsDAO.findById(collectionId);
   canAccessUserResource.call(this, targetCollection.createdBy);
 
-  this.body = yield ProductDesignsDAO.findByCollectionId(collectionId);
+  const collectionDesigns = yield ProductDesignsDAO
+    .findByCollectionId(collectionId);
+  const withRoles = yield Promise.all(
+    collectionDesigns.map(design => attachRole(this.state.userId, design))
+  );
+
+  this.body = withRoles;
   this.status = 200;
 }
 
