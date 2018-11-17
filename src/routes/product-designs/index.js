@@ -30,7 +30,6 @@ const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
 const ProductDesignStatusesDAO = require('../../dao/product-design-statuses');
 const ProductDesignStatusSlasDAO = require('../../dao/product-design-status-slas');
 const DesignEventsDAO = require('../../dao/design-events');
-const CollaboratorsDAO = require('../../dao/collaborators');
 const TaskEventsDAO = require('../../dao/task-events');
 const ProductDesignStagesDAO = require('../../dao/product-design-stages');
 const requireAuth = require('../../middleware/require-auth');
