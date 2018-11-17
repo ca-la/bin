@@ -30,6 +30,9 @@ const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
 const ProductDesignStatusesDAO = require('../../dao/product-design-statuses');
 const ProductDesignStatusSlasDAO = require('../../dao/product-design-status-slas');
 const DesignEventsDAO = require('../../dao/design-events');
+const CollaboratorsDAO = require('../../dao/collaborators');
+const TaskEventsDAO = require('../../dao/task-events');
+const ProductDesignStagesDAO = require('../../dao/product-design-stages');
 const requireAuth = require('../../middleware/require-auth');
 const sendAnnotationNotifications = require('../../services/send-annotation-notifications');
 const updateDesignStatus = require('../../services/update-design-status');
@@ -106,6 +109,61 @@ function* getDesignsByUser() {
   this.status = 200;
 }
 
+function* attachAssignees(task) {
+  const ioFromTaskEvent = (taskEvent, assignees) => {
+    return {
+      assignees,
+      createdAt: taskEvent.createdAt,
+      createdBy: taskEvent.createdBy,
+      description: taskEvent.description,
+      designStageId: taskEvent.designStageId,
+      dueDate: taskEvent.dueDate,
+      id: taskEvent.taskId,
+      status: taskEvent.status,
+      title: taskEvent.title
+    };
+  };
+  const assignees = yield CollaboratorsDAO.findByTask(task.taskId);
+  return ioFromTaskEvent(task, assignees);
+}
+
+function* attachTasks(stage) {
+  const tasks = yield TaskEventsDAO.findByStageId(stage.id);
+  const tasksAndAssignees = yield tasks.map(attachAssignees);
+  return {
+    ...stage,
+    tasks: tasksAndAssignees
+  };
+}
+
+function* attachStages(design) {
+  const stages = yield ProductDesignStagesDAO.findAllByDesignId(design.id);
+  const stagesAndTasks = yield stages.map(attachTasks);
+  return {
+    ...design,
+    stages: stagesAndTasks
+  };
+}
+
+function* attachTasksToDesigns(designs) {
+  const attached = yield designs.map(attachStages);
+  return attached;
+}
+
+function* getDesignsAndTasksByUser() {
+  canAccessUserResource.call(this, this.query.userId);
+
+  const filters = compact({ status: this.query.status });
+  const designs = yield findUserDesigns(this.query.userId, filters);
+
+  // TODO: this could end up making 100s of queries to the db, this could be improved by using
+  //       one large JOIN
+  const designsAndTasks = yield attachTasksToDesigns(designs);
+
+  this.body = designsAndTasks;
+  this.status = 200;
+}
+
 function* getAllDesigns() {
   this.assert(this.state.role === User.ROLES.admin, 403);
 
@@ -126,7 +184,11 @@ function* getAllDesigns() {
 
 function* getDesigns() {
   if (this.query.userId) {
-    yield getDesignsByUser;
+    if (this.query.tasks) {
+      yield getDesignsAndTasksByUser;
+    } else {
+      yield getDesignsByUser;
+    }
   } else {
     yield getAllDesigns;
   }

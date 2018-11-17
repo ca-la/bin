@@ -8,6 +8,9 @@ const CollectionsDAO = require('../../dao/collections');
 const createUser = require('../../test-helpers/create-user');
 const DesignEventsDAO = require('../../dao/design-events');
 const ProductDesignsDAO = require('../../dao/product-designs');
+const ProductDesignStagesDAO = require('../../dao/product-design-stages');
+const TaskEventsDAO = require('../../dao/task-events');
+const CollaboratorsDAO = require('../../dao/collaborators');
 const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
 const EmailService = require('../../services/email');
 const {
@@ -638,4 +641,33 @@ test('GET /product-designs/:designId/collections returns collections', async (t)
 
   t.equal(response.status, 200);
   t.deepEqual(body, [collectionFixture]);
+});
+
+test('GET /product-designs allows getting tasks', async (t) => {
+  const { user, session } = await createUser({ role: 'ADMIN' });
+  sandbox().stub(EmailService, 'enqueueSend').returns(Promise.resolve());
+  sandbox().stub(TaskEventsDAO, 'findByStageId').returns(Promise.resolve(
+    [{ taskId: 'task1234' }]
+  ));
+  sandbox().stub(CollaboratorsDAO, 'findByTask').returns(Promise.resolve(
+    [{ id: 'collaborator1234' }]
+  ));
+  sandbox().stub(ProductDesignStagesDAO, 'findAllByDesignId').returns(Promise.resolve(
+    [{ id: 'stage1234', title: 'stage title' }]
+  ));
+
+  const design = await ProductDesignsDAO.create({
+    userId: user.id,
+    title: 'Design'
+  });
+
+  const [response, body] = await get(`/product-designs?userId=${user.id}&tasks=true`, {
+    headers: authHeader(session.id)
+  });
+
+  t.equal(response.status, 200);
+  t.equal(body[0].id, design.id);
+  t.equal(body[0].stages[0].id, 'stage1234');
+  t.equal(body[0].stages[0].tasks[0].id, 'task1234');
+  t.equal(body[0].stages[0].tasks[0].assignees[0].id, 'collaborator1234');
 });
