@@ -3,9 +3,14 @@
 const Router = require('koa-router');
 const pick = require('lodash/pick');
 const uuid = require('node-uuid');
+const _ = require('lodash');
 
 const filterError = require('../../services/filter-error');
 const InvalidDataError = require('../../errors/invalid-data');
+const {
+  canAccessCollectionId,
+  canModifyCollectionId
+} = require('../../middleware/can-access-collection');
 const canAccessUserResource = require('../../middleware/can-access-user-resource');
 const CollectionsDAO = require('../../dao/collections');
 const CollaboratorsDAO = require('../../dao/collaborators');
@@ -59,8 +64,8 @@ function* createCollection() {
 function* getCollection() {
   const { collectionId } = this.params;
 
+  canAccessCollectionId(this, collectionId);
   const collection = yield CollectionsDAO.findById(collectionId);
-  canAccessUserResource.call(this, collection.createdBy);
 
   this.body = collection;
   this.status = 200;
@@ -69,6 +74,9 @@ function* getCollection() {
 function* updateCollection() {
   const { collectionId } = this.params;
   const data = pick(this.request.body, UPDATABLE_PARAMS);
+  this.assert(this.state.userId, 403);
+  canModifyCollectionId(this, collectionId);
+
   const collection = yield CollectionsDAO
     .update(collectionId, data)
     .catch(filterError(InvalidDataError, err => this.throw(400, err)));
@@ -80,9 +88,19 @@ function* getCollections() {
   const { userId } = this.query;
 
   this.assert(userId, 403);
-  canAccessUserResource.call(this, userId);
 
-  this.body = yield CollectionsDAO.findByUserId(userId);
+  const ownCollections = yield CollectionsDAO.findByUserId(userId);
+  const sharedCollections = yield CollectionsDAO.findByCollaboratorUserId(userId);
+  const collections = [...ownCollections, ...sharedCollections];
+
+  this.body = _.uniqBy(collections, 'id')
+    .sort((collectionA, collectionB) => {
+      const dateA = new Date(collectionA.createdAt);
+      const dateB = new Date(collectionB.createdAt);
+      if (dateA < dateB) { return 1; }
+      if (dateA > dateB) { return -1; }
+      return 0;
+    });
 
   this.status = 200;
 }
@@ -101,9 +119,8 @@ function* deleteCollection() {
 function* putDesign() {
   const { collectionId, designId } = this.params;
 
-  const targetCollection = yield CollectionsDAO.findById(collectionId);
+  canModifyCollectionId(this, collectionId);
   const targetDesign = yield ProductDesignsDAO.findById(designId);
-  canAccessUserResource.call(this, targetCollection.createdBy);
   canAccessUserResource.call(this, targetDesign.userId);
 
   try {
@@ -117,9 +134,8 @@ function* putDesign() {
 function* deleteDesign() {
   const { collectionId, designId } = this.params;
 
-  const targetCollection = yield CollectionsDAO.findById(collectionId);
+  canModifyCollectionId(this, collectionId);
   const targetDesign = yield ProductDesignsDAO.findById(designId);
-  canAccessUserResource.call(this, targetCollection.createdBy);
   canAccessUserResource.call(this, targetDesign.userId);
 
   this.body = yield CollectionsDAO.removeDesign(collectionId, designId);
@@ -129,8 +145,7 @@ function* deleteDesign() {
 function* getCollectionDesigns() {
   const { collectionId } = this.params;
 
-  const targetCollection = yield CollectionsDAO.findById(collectionId);
-  canAccessUserResource.call(this, targetCollection.createdBy);
+  canAccessCollectionId(this, collectionId);
 
   const collectionDesigns = yield ProductDesignsDAO
     .findByCollectionId(collectionId);

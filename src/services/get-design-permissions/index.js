@@ -89,10 +89,20 @@ async function getDesignPermissions(design, userId, sessionRole) {
   // in sync re: who can access what.
 
   if (!isOwnerOrAdmin) {
-    const collaborators = await CollaboratorsDAO.findByDesignAndUser(
+    const designCollaborators = await CollaboratorsDAO.findByDesignAndUser(
       design.id,
       userId
     );
+    let collectionCollaborators = [];
+    if (design.collectionIds && design.collectionIds.length > 0) {
+      collectionCollaborators = await Promise.all(design.collectionIds.map(collectionId =>
+        CollaboratorsDAO.findByCollectionAndUser(
+          collectionId,
+          userId
+        )));
+    }
+
+    const collaborators = [...designCollaborators, ...collectionCollaborators];
 
     if (collaborators.length < 1) {
       const services = await ProductDesignServicesDAO.findByDesignAndUser(

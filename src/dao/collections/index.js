@@ -76,6 +76,17 @@ function findByUserId(userId, filters) {
     .then(collections => collections.map(instantiate));
 }
 
+function findByCollaboratorUserId(userId) {
+  return db(TABLE_NAME)
+    .select('collections.*')
+    .from(TABLE_NAME)
+    .join('collaborators', 'collaborators.collection_id', 'collections.id')
+    .where({ 'collaborators.user_id': userId, 'collections.deleted_at': null })
+    .orderBy('collections.created_at', 'desc')
+    .catch(rethrow)
+    .then(collections => collections.map(instantiate));
+}
+
 function findAll({ limit, offset, search }) {
   if (typeof limit !== 'number' || typeof offset !== 'number') {
     return Promise.reject(new Error('Limit and offset must be provided to find all collections'));
@@ -172,6 +183,7 @@ module.exports = {
   findByDesign,
   findById,
   findByUserId,
+  findByCollaboratorUserId,
   addDesign,
   moveDesign,
   removeDesign
