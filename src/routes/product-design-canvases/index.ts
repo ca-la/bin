@@ -45,7 +45,7 @@ function* addComponent(this: Koa.Application.Context): AsyncIterableIterator<Pro
 
   const design = yield ProductDesignsDAO.findById(canvas.designId);
   const previewImageUrls = design.previewImageUrls
-    ? [assetLink, ...design.previewImageUrls]
+    ? [...design.previewImageUrls, assetLink]
     : [assetLink];
   yield ProductDesignsDAO.update(canvas.designId, { previewImageUrls });
 

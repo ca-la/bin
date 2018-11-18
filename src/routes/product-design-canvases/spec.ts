@@ -268,7 +268,7 @@ pre-existing preview image`,
     const updatedDesign = await findDesignById(design.id);
     t.deepEqual(
       updatedDesign && updatedDesign.previewImageUrls,
-      [data.assetLink, 'another-image.png'],
+      ['another-image.png', data.assetLink],
       'Adds in the asset as the preview image'
     );
     t.deepEqual(body.components[0], omit(data, 'assetLink'), 'Creates a component');
