@@ -93,7 +93,8 @@ export async function findById(id: string): Promise<ProductDesignCanvas | null> 
 export async function findAllByDesignId(id: string): Promise<ProductDesignCanvas[]> {
   const canvases: ProductDesignCanvasRow[] = await db(TABLE_NAME)
     .select('*')
-    .where({ design_id: id, deleted_at: null });
+    .where({ design_id: id, deleted_at: null })
+    .orderBy('created_at', 'asc');
 
   return validateEvery<ProductDesignCanvasRow, ProductDesignCanvas>(
     TABLE_NAME,
