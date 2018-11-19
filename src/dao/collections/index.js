@@ -4,6 +4,9 @@ const uuid = require('node-uuid');
 const rethrow = require('pg-rethrow');
 
 const Collection = require('../../domain-objects/collection');
+const {
+  dataAdapter: collectionSubmissionStatusAdapter
+} = require('../../domain-objects/collection-submission-status');
 const InvalidDataError = require('../../errors/invalid-data');
 const ProductDesignsDAO = require('../product-designs');
 const compact = require('../../services/compact');
@@ -175,6 +178,33 @@ function removeDesign(collectionId, designId) {
     .catch(rethrow);
 }
 
+function getStatusById(collectionId) {
+  if (!collectionId) {
+    return Promise.reject(new InvalidDataError('You must pass a collection ID to retrieve status'));
+  }
+
+  return db.raw(`
+SELECT
+    c.id AS collection_id,
+    (count(de.id) = count(d.id)) AS is_submitted,
+    (count(de2.id) = count(d.id)) AS is_costed,
+    (count(de3.id) = count(d.id)) AS is_paired
+  FROM collections AS c
+
+  LEFT JOIN collection_designs AS cd ON cd.collection_id = c.id
+  LEFT JOIN product_designs AS d ON cd.design_id = d.id
+  LEFT JOIN design_events AS de ON cd.design_id = de.design_id AND de.type = 'SUBMIT_DESIGN'
+  LEFT JOIN design_events AS de2 ON cd.design_id = de2.design_id AND de2.type = 'COMMIT_COST_INPUTS'
+  LEFT JOIN design_events AS de3 ON cd.design_id = de3.design_id AND de2.type = 'COMMIT_PARTNER_PAIRING'
+
+ WHERE c.id = ? AND c.deleted_at IS NULL
+ GROUP BY c.id;
+`, [collectionId])
+    .then(rawResult => rawResult.rows)
+    .then(first)
+    .then(status => collectionSubmissionStatusAdapter.parse(status));
+}
+
 module.exports = {
   create,
   deleteById,
@@ -184,6 +214,7 @@ module.exports = {
   findById,
   findByUserId,
   findByCollaboratorUserId,
+  getStatusById,
   addDesign,
   moveDesign,
   removeDesign

@@ -159,10 +159,19 @@ function* getCollectionDesigns() {
 
 function* createSubmission() {
   const { collectionId } = this.params;
-  const { userId } = this.state;
+  const { role, userId } = this.state;
+  const isAdmin = role === 'ADMIN';
+
+  const collection = yield CollectionsDAO.findById(collectionId);
+
+  // TODO: Get submission permissions figured out
+  if (!isAdmin && collection.createdBy !== userId) {
+    this.throw(403, 'Only the collection owner can submit a collection');
+    return;
+  }
 
   if (CollectionServiceObject.isCollectionService(this.request.body)) {
-    const collectionService = yield CollectionServicesDAO.create({
+    yield CollectionServicesDAO.create({
       ...this.request.body,
       createdBy: userId
     });
@@ -181,11 +190,32 @@ function* createSubmission() {
 
     CreateNotifications.sendDesignerSubmitCollection(collectionId, userId);
 
+    const submissionStatus = yield CollectionsDAO.getStatusById(collectionId);
+
     this.status = 201;
-    this.body = collectionService;
+    this.body = submissionStatus;
   } else {
     this.throw(400, 'Request does not match collection service');
   }
+}
+
+function* getSubmissionStatus() {
+  const { collectionId } = this.params;
+  const { role, userId } = this.state;
+  const isAdmin = role === 'ADMIN';
+
+  const collection = yield CollectionsDAO.findById(collectionId);
+
+  // TODO: Get submission permissions figured out
+  if (!isAdmin && collection.createdBy !== userId) {
+    this.throw(403, 'Only the collection owner can submit a collection');
+    return;
+  }
+
+  const submissionStatus = yield CollectionsDAO.getStatusById(collectionId);
+
+  this.status = 200;
+  this.body = submissionStatus;
 }
 
 router.post('/', requireAuth, createCollection);
@@ -194,7 +224,9 @@ router.get('/', requireAuth, getCollections);
 router.del('/:collectionId', requireAuth, deleteCollection);
 router.get('/:collectionId', requireAuth, getCollection);
 router.patch('/:collectionId', requireAuth, updateCollection);
+
 router.post('/:collectionId/submissions', requireAuth, createSubmission);
+router.get('/:collectionId/submissions', requireAuth, getSubmissionStatus);
 
 router.get('/:collectionId/designs', requireAuth, getCollectionDesigns);
 router.del('/:collectionId/designs/:designId', requireAuth, deleteDesign);

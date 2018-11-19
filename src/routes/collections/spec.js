@@ -386,8 +386,115 @@ test('POST /collections/:id/submissions', async (t) => {
   sinon.assert.callCount(notificationStub, 1);
 
   t.deepEqual(response.status, 201, 'Successfully posts');
-  t.deepEqual(body.collectionId, collection.id, 'Successfully returns the collection service');
-  t.deepEqual(body.id, serviceId, 'Successfully returns the collection service');
+  t.deepEqual(body, {
+    collectionId: collection.id,
+    isSubmitted: true,
+    isCosted: false,
+    isPaired: false
+  }, 'Returns current submission status');
   t.deepEqual(designEventOne[0].type, 'SUBMIT_DESIGN', 'Submitted the design to CALA');
   t.deepEqual(designEventTwo[0].type, 'SUBMIT_DESIGN', 'Submitted the design to CALA');
+});
+
+test('GET /collections/:collectionId/submissions', async (t) => {
+  sandbox()
+    .stub(CreateNotifications, 'sendDesignerSubmitCollection')
+    .resolves();
+
+  const designer = await createUser();
+  const admin = await createUser({ role: 'ADMIN' });
+  const collection = await CollectionsDAO.create({
+    createdBy: designer.user.id,
+    description: 'Initial commit',
+    title: 'Drop 001/The Early Years'
+  });
+  const designOne = await ProductDesignsDAO.create({
+    title: 'T-Shirt One',
+    description: 'Generic Shirt',
+    userId: designer.user.id
+  });
+  const designTwo = await ProductDesignsDAO.create({
+    title: 'T-Shirt Two',
+    description: 'Generic Shirt',
+    userId: designer.user.id
+  });
+  await CollectionsDAO.moveDesign(collection.id, designOne.id);
+  await CollectionsDAO.moveDesign(collection.id, designTwo.id);
+
+  const statusOne = await get(
+    `/collections/${collection.id}/submissions`,
+    { headers: authHeader(designer.session.id) }
+  );
+
+  t.equal(statusOne[0].status, 200);
+  t.deepEqual(statusOne[1], {
+    collectionId: collection.id,
+    isSubmitted: false,
+    isCosted: false,
+    isPaired: false
+  });
+
+  await post(
+    `/collections/${collection.id}/submissions`,
+    {
+      headers: authHeader(designer.session.id),
+      body: {
+        collectionId: collection.id,
+        createdAt: new Date(),
+        createdBy: designer.user.id,
+        deletedAt: null,
+        id: uuid.v4(),
+        needsDesignConsulting: true,
+        needsFulfillment: true,
+        needsPackaging: true
+      }
+    }
+  );
+
+  const statusTwo = await get(
+    `/collections/${collection.id}/submissions`,
+    { headers: authHeader(designer.session.id) }
+  );
+
+  t.equal(statusTwo[0].status, 200);
+  t.deepEqual(statusTwo[1], {
+    collectionId: collection.id,
+    isSubmitted: true,
+    isCosted: false,
+    isPaired: false
+  });
+
+  const commitEvent = {
+    actorId: admin.user.id,
+    targetId: designer.user.id,
+    type: 'COMMIT_COST_INPUTS'
+  };
+
+  await post(
+    `/product-designs/${designOne.id}/events`,
+    {
+      headers: authHeader(admin.session.id),
+      body: [commitEvent]
+    }
+  );
+  await post(
+    `/product-designs/${designTwo.id}/events`,
+    {
+      headers: authHeader(admin.session.id),
+      body: [commitEvent]
+    }
+  );
+
+  const statusThree = await get(
+    `/collections/${collection.id}/submissions`,
+    { headers: authHeader(designer.session.id) }
+  );
+
+  t.equal(statusThree[0].status, 200);
+  t.deepEqual(statusThree[1], {
+    collectionId: collection.id,
+    isSubmitted: true,
+    isCosted: true,
+    isPaired: false
+  });
 });
