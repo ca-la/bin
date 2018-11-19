@@ -28,6 +28,7 @@ test('Task Events DAO supports creation/retrieval', async (t: tape.Test) => {
     description: 'A description',
     designStageId: null,
     dueDate: null,
+    ordering: 0,
     status: TaskStatus.NOT_STARTED,
     taskId: task.id,
     title: 'My First Task'
@@ -54,12 +55,18 @@ test('Task Events DAO supports retrieval by designId', async (t: tape.Test) => {
     description: '',
     designStageId: null,
     dueDate: null,
+    ordering: 0,
     status: TaskStatus.NOT_STARTED,
     taskId: task.id,
     title: 'My First Task'
   });
   const design = await createDesign({ userId: user.id, productType: 'test', title: 'test' });
-  const stage = await createDesignStage({ description: '', designId: design.id, title: 'test' });
+  const stage = await createDesignStage({
+    description: '',
+    designId: design.id,
+    ordering: 0,
+    title: 'test'
+  });
   await createDesignStageTask({ designStageId: stage.id, taskId: task.id });
 
   const result = await findByDesignId(design.id);
@@ -82,12 +89,18 @@ test('Task Events DAO supports retrieval by collectionId', async (t: tape.Test) 
     description: '',
     designStageId: null,
     dueDate: null,
+    ordering: 0,
     status: TaskStatus.NOT_STARTED,
     taskId: task.id,
     title: 'My First Task'
   });
   const design = await createDesign({ userId: user.id, productType: 'test', title: 'test' });
-  const stage = await createDesignStage({ description: '', designId: design.id, title: 'test' });
+  const stage = await createDesignStage({
+    description: '',
+    designId: design.id,
+    ordering: 0,
+    title: 'test'
+  });
   await createDesignStageTask({ designStageId: stage.id, taskId: task.id });
 
   const collection = await createCollection({ createdBy: user.id });
@@ -122,6 +135,7 @@ test('Task Events DAO supports retrieval by userId', async (t: tape.Test) => {
     description: 'A description',
     designStageId: null,
     dueDate: null,
+    ordering: 0,
     status: TaskStatus.NOT_STARTED,
     taskId: task.id,
     title: 'My New Task'
@@ -149,12 +163,18 @@ test('Task Events DAO supports retrieval by stageId', async (t: tape.Test) => {
     description: '',
     designStageId: null,
     dueDate: null,
+    ordering: 0,
     status: TaskStatus.NOT_STARTED,
     taskId: task.id,
     title: 'My First Task'
   });
   const design = await createDesign({ userId: user.id, productType: 'test', title: 'test' });
-  const stage = await createDesignStage({ description: '', designId: design.id, title: 'test' });
+  const stage = await createDesignStage({
+    description: '',
+    designId: design.id,
+    ordering: 0,
+    title: 'test'
+  });
   await createDesignStageTask({ designStageId: stage.id, taskId: task.id });
 
   const result = await findByStageId(stage.id);

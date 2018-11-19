@@ -4,6 +4,7 @@ import { create, findAll } from './index';
 test('StageTemplatesDAO supports creation/retrieval', async (t: Test) => {
   await create({
     description: 'It begins',
+    ordering: 0,
     title: 'Stage 1'
   });
 

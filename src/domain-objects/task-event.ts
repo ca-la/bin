@@ -22,6 +22,7 @@ export default interface TaskEvent {
   createdAt: Date;
   id: string;
   designStageId: string | null;
+  ordering: number;
 }
 
 export enum TaskStatus {
@@ -40,6 +41,7 @@ export interface TaskEventRow {
   description: string;
   status: TaskStatus;
   due_date: Date | null;
+  ordering: number;
 }
 
 export const dataAdapter = new DataAdapter<TaskEventRow, TaskEvent>();
@@ -55,7 +57,8 @@ export function isTaskEvent(candidate: object): candidate is TaskEvent {
     'status',
     'dueDate',
     'description',
-    'designStageId'
+    'designStageId',
+    'ordering'
   );
 }
 
@@ -69,7 +72,8 @@ export function isTaskEventRow(row: object): row is TaskEventRow {
     'title',
     'status',
     'due_date',
-    'description'
+    'description',
+    'ordering'
   );
 }
 
@@ -88,7 +92,8 @@ export function isTaskEventWithStage(candidate: object): candidate is TaskEventR
     'status',
     'due_date',
     'description',
-    'design_stage_id'
+    'design_stage_id',
+    'ordering'
   );
 }
 

@@ -17,12 +17,13 @@ test('POST /product-design-stages creates a new stage', async (t: tape.Test) => 
       designId,
       dueDate: '',
       id: productDesignStageId,
+      ordering: 0,
       title: 'title'
     }
   ));
 
   const [response, body] = await post('/product-design-stages', {
-    body: { designId, title: 'title' },
+    body: { designId, ordering: 0, title: 'title' },
     headers: authHeader(session.id)
   });
   t.equal(response.status, 201);
@@ -43,6 +44,7 @@ test('GET /product-design-stages returns all stages for a collection', async (t:
         designId,
         dueDate: '',
         id: designStageId,
+        ordering: 0,
         title: 'title'
       }
     ]));

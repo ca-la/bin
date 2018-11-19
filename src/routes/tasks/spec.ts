@@ -28,6 +28,7 @@ function createTaskEvents(user: User): TaskEvent[] {
     designStageId: null,
     dueDate: null,
     id: taskEventId,
+    ordering: 0,
     status: null,
     taskId,
     title: ''
@@ -38,6 +39,7 @@ function createTaskEvents(user: User): TaskEvent[] {
     designStageId: null,
     dueDate: null,
     id: taskEventId,
+    ordering: 0,
     status: null,
     taskId,
     title: ''
@@ -145,6 +147,7 @@ test('GET /tasks?userId=:userId returns all tasks for a user', async (t: tape.Te
     description: 'A description',
     designStageId: null,
     dueDate: null,
+    ordering: 0,
     status: TaskStatus.NOT_STARTED,
     taskId: task.id,
     title: 'My New Task'
@@ -180,6 +183,7 @@ test('POST /tasks creates Task and TaskEvent successfully', async (t: tape.Test)
       createdBy: user.id,
       dueDate: '',
       id: taskEventId,
+      ordering: 0,
       status: '',
       taskId,
       title: ''
@@ -197,6 +201,7 @@ test('POST /tasks creates Task and TaskEvent successfully', async (t: tape.Test)
       designStageId: null,
       dueDate: null,
       id: taskId,
+      ordering: 0,
       status: null,
       title: 'Title'
     },
@@ -223,6 +228,7 @@ test('PUT /tasks/:taskId creates TaskEvent successfully', async (t: tape.Test) =
       createdBy: user.id,
       dueDate: '',
       id: taskEventId,
+      ordering: 0,
       status: '',
       taskId,
       title: ''
@@ -238,6 +244,7 @@ test('PUT /tasks/:taskId creates TaskEvent successfully', async (t: tape.Test) =
       designStageId: null,
       dueDate: null,
       id: taskId,
+      ordering: 0,
       status: null,
       title: 'Title'
     },
@@ -324,6 +331,7 @@ test('POST /tasks/stage/:stageId creates Task on Stage successfully', async (t: 
       createdBy: user.id,
       dueDate: '',
       id: taskId,
+      ordering: 0,
       status: '',
       taskId,
       title: ''
@@ -339,6 +347,7 @@ test('POST /tasks/stage/:stageId creates Task on Stage successfully', async (t: 
       designStageId: stageId,
       dueDate: null,
       id: taskId,
+      ordering: 0,
       status: null,
       title: 'Title'
     },
@@ -363,6 +372,7 @@ test('PUT /tasks/:taskId/comment/:id creates a task comment', async (t: tape.Tes
       designStageId: null,
       dueDate: null,
       id: uuid.v4(),
+      ordering: 0,
       status: null,
       title: 'Title'
     },

@@ -21,6 +21,7 @@ const taskEventColumns = [
   'task_events.created_by',
   'task_events.title',
   'task_events.description',
+  'task_events.ordering',
   'task_events.status',
   'task_events.due_date'
 ];

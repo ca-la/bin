@@ -64,6 +64,7 @@ test('Notifications DAO supports finding outstanding notifications', async (t: t
   const designStage = await DesignStagesDAO.create({
     description: '',
     designId: design.id,
+    ordering: 0,
     title: 'test'
   });
 
@@ -84,6 +85,7 @@ test('Notifications DAO supports finding outstanding notifications', async (t: t
     description: '',
     designStageId: designStage.id,
     dueDate: null,
+    ordering: 0,
     status: null,
     taskId: taskOne.id,
     title: 'My First Task'

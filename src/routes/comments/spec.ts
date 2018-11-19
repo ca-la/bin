@@ -19,6 +19,7 @@ test('DELETE /comment/:id deletes a task comment', async (t: tape.Test) => {
       designStageId: null,
       dueDate: null,
       id: uuid.v4(),
+      ordering: 0,
       status: null,
       title: 'Title'
     },

@@ -15,6 +15,7 @@ export interface ProductDesignStageRequest {
   title: string;
   description: string | null;
   stageTemplateId?: string | null;
+  ordering: number;
 }
 
 export default interface ProductDesignStage extends ProductDesignStageRequest {
@@ -28,6 +29,7 @@ export interface ProductDesignStageRow {
   created_at: Date;
   stage_template_id: string | null;
   title: string;
+  ordering: number;
 }
 
 export const dataAdapter = new DataAdapter<ProductDesignStageRow, ProductDesignStage>();
@@ -38,7 +40,8 @@ export function isDesignStageRequest(
   return hasProperties(
     candidate,
     'designId',
-    'title'
+    'title',
+    'ordering'
   );
 }
 
@@ -48,6 +51,7 @@ export function isDesignStageRow(row: object): row is ProductDesignStageRow {
     'id',
     'design_id',
     'created_at',
-    'title'
+    'title',
+    'ordering'
   );
 }

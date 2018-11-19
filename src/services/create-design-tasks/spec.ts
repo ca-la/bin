@@ -22,11 +22,13 @@ async function createTemplates(): Promise<{
 }> {
   const stage1 = await StageTemplatesDAO.create({
     description: 'Designey Stuff',
+    ordering: 0,
     title: 'Stage 1'
   });
 
   const stage2 = await StageTemplatesDAO.create({
     description: 'Producey stuff',
+    ordering: 0,
     title: 'Stage 2'
   });
 
@@ -35,6 +37,7 @@ async function createTemplates(): Promise<{
       assigneeRole: 'CALA',
       description: 'Do the design',
       designPhase: 'POST_CREATION',
+      ordering: 0,
       stageTemplateId: stage1.id,
       title: 'Task 1'
     }),
@@ -42,6 +45,7 @@ async function createTemplates(): Promise<{
       assigneeRole: 'CALA',
       description: 'Make the stuff',
       designPhase: 'POST_APPROVAL',
+      ordering: 0,
       stageTemplateId: stage2.id,
       title: 'Task 2'
     })

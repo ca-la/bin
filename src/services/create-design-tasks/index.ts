@@ -11,6 +11,7 @@ import ProductDesignStage from '../../domain-objects/product-design-stage';
 import TaskEvent, { TaskStatus } from '../../domain-objects/task-event';
 import TaskTemplate, { DesignPhase } from '../../domain-objects/task-template';
 import { Collaborator } from '../../domain-objects/collaborator';
+import StageTemplate from '../../domain-objects/stage-template';
 
 interface Options {
   designId: string;
@@ -72,6 +73,7 @@ async function createTasks(
       description: taskTemplate.description || '',
       designStageId: taskStage.id,
       dueDate: null,
+      ordering: taskTemplate.ordering,
       status: TaskStatus.NOT_STARTED,
       taskId: task.id,
       title: taskTemplate.title
@@ -109,19 +111,16 @@ async function createPostCreationTasks(options: Options): Promise<TaskEvent[]> {
   const stageTemplates = await StageTemplatesDAO.findAll();
   const { designId, designPhase } = options;
 
-  const stages: ProductDesignStage[] = [];
-
-  for (const stageTemplate of stageTemplates) {
-    const stage = await ProductDesignStagesDAO.create({
-      description: stageTemplate.description,
-      designId,
-      stageTemplateId: stageTemplate.id,
-      title: stageTemplate.title
-    });
-
-    stages.push(stage);
-  }
-
+  const stages: ProductDesignStage[] = await Promise.all(stageTemplates.map(
+    (template: StageTemplate): Promise<ProductDesignStage> => {
+      return ProductDesignStagesDAO.create({
+        description: template.description,
+        designId,
+        ordering: template.ordering,
+        stageTemplateId: template.id,
+        title: template.title
+      });
+    }));
   const taskTemplates = await TaskTemplatesDAO.findByPhase(designPhase);
 
   return await createTasks(designId, taskTemplates, stages);

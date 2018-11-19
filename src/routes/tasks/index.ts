@@ -25,6 +25,10 @@ interface CollaboratorTaskRequest {
   collaboratorIds: string[];
 }
 
+function addDefaultOrdering(task: object): object {
+  return { ...task, ordering: Object(task).ordering || 0 };
+}
+
 function isIOTask(candidate: object): candidate is IOTask {
   return hasOnlyProperties(
     candidate,
@@ -36,7 +40,8 @@ function isIOTask(candidate: object): candidate is IOTask {
     'createdAt',
     'id',
     'designStageId',
-    'assignees'
+    'assignees',
+    'ordering'
   );
 }
 
@@ -70,13 +75,14 @@ const ioFromTaskEvent = (taskEvent: TaskEvent, assignees: Collaborator[] = []): 
     designStageId: taskEvent.designStageId,
     dueDate: taskEvent.dueDate,
     id: taskEvent.taskId,
+    ordering: taskEvent.ordering,
     status: taskEvent.status,
     title: taskEvent.title
   };
 };
 
 function* createTaskWithEvent(this: Koa.Application.Context): AsyncIterableIterator<TaskEvent> {
-  const body = this.request.body;
+  const body = addDefaultOrdering(this.request.body);
   if (body && isIOTask(body)) {
     yield TasksDAO.create(body.id);
     const taskEvent: TaskEvent = yield TaskEventsDAO
@@ -90,7 +96,7 @@ function* createTaskWithEvent(this: Koa.Application.Context): AsyncIterableItera
 }
 
 function* createTaskEvent(this: Koa.Application.Context): AsyncIterableIterator<TaskEvent> {
-  const body = this.request.body;
+  const body = addDefaultOrdering(this.request.body);
   if (body && isIOTask(body)) {
     const taskEvent: TaskEvent = yield TaskEventsDAO
       .create(taskEventFromIO(body, this.state.userId));
@@ -105,7 +111,7 @@ function* createTaskEvent(this: Koa.Application.Context): AsyncIterableIterator<
 function* createTaskWithEventOnStage(
   this: Koa.Application.Context
 ): AsyncIterableIterator<TaskEvent> {
-  const body = this.request.body;
+  const body = addDefaultOrdering(this.request.body);
   if (body && isIOTask(body)) {
     const stageId = this.params.stageId;
     yield TasksDAO.create(body.id);

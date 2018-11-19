@@ -5,6 +5,7 @@ import * as StageTemplatesDAO from '../stage-templates';
 test('TaskTemplatesDAO supports creation/retrieval', async (t: Test) => {
   const stageTemplate = await StageTemplatesDAO.create({
     description: 'It begins',
+    ordering: 0,
     title: 'Stage 1'
   });
 
@@ -12,6 +13,7 @@ test('TaskTemplatesDAO supports creation/retrieval', async (t: Test) => {
     assigneeRole: 'CALA',
     description: 'Do the thing',
     designPhase: 'POST_CREATION',
+    ordering: 0,
     stageTemplateId: stageTemplate.id,
     title: 'Task 1'
   });
@@ -20,4 +22,5 @@ test('TaskTemplatesDAO supports creation/retrieval', async (t: Test) => {
   t.deepEqual(templates.length, 1);
   t.equal(templates[0].title, 'Task 1');
   t.equal(templates[0].description, 'Do the thing');
+  t.equal(templates[0].ordering, 0);
 });

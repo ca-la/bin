@@ -12,7 +12,12 @@ test('ProductDesign Stage Task DAO supports creation/retrieval', async (t: tape.
 
   const task = await createTask(uuid.v4());
   const design = await createDesign({ productType: 'test', title: 'test', userId: user.id });
-  const stage = await createDesignStage({ designId: design.id, title: 'test', description: '' });
+  const stage = await createDesignStage({
+    description: '',
+    designId: design.id,
+    ordering: 0,
+    title: 'test'
+  });
   const stageTask = await create({ designStageId: stage.id, taskId: task.id });
 
   const result = await findById(stageTask.id);
@@ -24,7 +29,12 @@ test('ProductDesign Stage Task DAO supports retrieval by designId', async (t: ta
 
   const task = await createTask(uuid.v4());
   const design = await createDesign({ productType: 'test', title: 'test', userId: user.id });
-  const stage = await createDesignStage({ description: '', designId: design.id, title: 'test' });
+  const stage = await createDesignStage({
+    description: '',
+    designId: design.id,
+    ordering: 0,
+    title: 'test'
+  });
   const stageTask = await create({ designStageId: stage.id, taskId: task.id });
 
   const result = await findAllByDesignId(design.id);

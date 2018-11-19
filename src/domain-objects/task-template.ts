@@ -17,6 +17,7 @@ export default interface TaskTemplate {
   designPhase: DesignPhase;
   title: string;
   description: string | null;
+  ordering: number;
 }
 
 export interface TaskTemplateRow {
@@ -26,6 +27,7 @@ export interface TaskTemplateRow {
   design_phase: DesignPhase;
   title: string;
   description: string;
+  ordering: number;
 }
 
 export const dataAdapter = new DataAdapter<TaskTemplateRow, TaskTemplate>();
@@ -38,6 +40,7 @@ export function isTaskTemplateRow(row: object): row is TaskTemplateRow {
     'assignee_role',
     'design_phase',
     'title',
-    'description'
+    'description',
+    'ordering'
   );
 }
