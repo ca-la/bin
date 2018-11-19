@@ -127,7 +127,7 @@ export async function findByDesignId(designId: string): Promise<TaskEvent[]> {
       'product_design_stage_tasks.design_stage_id'
     )
     .where({ 'product_design_stages.design_id': designId })
-    .orderBy('tasks.created_at', 'asc')
+    .orderBy('task_events.ordering', 'asc')
     .whereNotExists(
       db(TABLE_NAME)
         .select('*')
@@ -173,7 +173,7 @@ export async function findByCollectionId(collectionId: string): Promise<TaskEven
       'product_design_stages.design_id'
     )
     .where({ 'collection_designs.collection_id': collectionId })
-    .orderBy('tasks.created_at', 'asc')
+    .orderBy('task_events.ordering', 'asc')
     .whereNotExists(
       db(TABLE_NAME)
         .select('*')
@@ -219,7 +219,7 @@ export async function findByUserId(userId: string): Promise<TaskEvent[]> {
       'collaborators.id'
     )
     .where({ 'collaborators.user_id': userId })
-    .orderBy('tasks.created_at', 'asc')
+    .orderBy('task_events.ordering', 'asc')
     .whereNotExists(
       db(TABLE_NAME)
         .select('*')
@@ -255,7 +255,7 @@ export async function findByStageId(stageId: string): Promise<TaskEvent[]> {
       'task_events.task_id'
     )
     .where({ 'product_design_stage_tasks.design_stage_id': stageId })
-    .orderBy('tasks.created_at', 'asc')
+    .orderBy('task_events.ordering', 'asc')
     .whereNotExists(
       db(TABLE_NAME)
         .select('*')

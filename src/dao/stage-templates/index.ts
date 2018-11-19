@@ -33,7 +33,7 @@ export async function create(data: Unsaved<StageTemplate>): Promise<StageTemplat
 }
 
 export async function findAll(): Promise<StageTemplate[]> {
-  const templates = await db(TABLE_NAME).select('*');
+  const templates = await db(TABLE_NAME).select('*').orderBy('ordering', 'asc');
 
   return validateEvery<StageTemplateRow, StageTemplate>(
     TABLE_NAME,

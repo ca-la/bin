@@ -35,7 +35,8 @@ export async function create(data: Unsaved<TaskTemplate>): Promise<TaskTemplate>
 
 export async function findByPhase(phase: DesignPhase): Promise<TaskTemplate[]> {
   const templates = await db(TABLE_NAME)
-    .where({ design_phase: phase });
+    .where({ design_phase: phase })
+    .orderBy('ordering', 'asc');
 
   return validateEvery<TaskTemplateRow, TaskTemplate>(
     TABLE_NAME,

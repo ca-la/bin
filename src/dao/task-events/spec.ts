@@ -50,6 +50,8 @@ test('Task Events DAO supports retrieval by designId', async (t: tape.Test) => {
   const { user } = await createUser();
 
   const task = await createTask(uuid.v4());
+  const taskTwo = await createTask(uuid.v4());
+  const taskThree = await createTask(uuid.v4());
   const inserted = await create({
     createdBy: user.id,
     description: '',
@@ -60,6 +62,26 @@ test('Task Events DAO supports retrieval by designId', async (t: tape.Test) => {
     taskId: task.id,
     title: 'My First Task'
   });
+  const insertedTwo = await create({
+    createdBy: user.id,
+    description: '',
+    designStageId: null,
+    dueDate: null,
+    ordering: 1,
+    status: TaskStatus.NOT_STARTED,
+    taskId: taskTwo.id,
+    title: 'My First Task'
+  });
+  const insertedThree = await create({
+    createdBy: user.id,
+    description: '',
+    designStageId: null,
+    dueDate: null,
+    ordering: 1,
+    status: TaskStatus.NOT_STARTED,
+    taskId: taskThree.id,
+    title: 'My First Task'
+  });
   const design = await createDesign({ userId: user.id, productType: 'test', title: 'test' });
   const stage = await createDesignStage({
     description: '',
@@ -68,16 +90,38 @@ test('Task Events DAO supports retrieval by designId', async (t: tape.Test) => {
     title: 'test'
   });
   await createDesignStageTask({ designStageId: stage.id, taskId: task.id });
+  await createDesignStageTask({ designStageId: stage.id, taskId: taskTwo.id });
+  await createDesignStageTask({ designStageId: stage.id, taskId: taskThree.id });
 
   const result = await findByDesignId(design.id);
   const insertedWithStage = {
     ...inserted,
     designStageId: result[0].designStageId
   };
+  const secondInsertion = {
+    ...insertedTwo,
+    designStageId: result[1].designStageId
+  };
+  const thirdInsertion = {
+    ...insertedThree,
+    designStageId: result[2].designStageId
+  };
+
   t.deepEqual(
     omit(result[0], 'createdAt'),
     omit(insertedWithStage, 'createdAt'),
-    'Returned inserted task');
+    'Returned first inserted task'
+  );
+  t.deepEqual(
+    omit(result[1], 'createdAt'),
+    omit(secondInsertion, 'createdAt'),
+    'Returned second inserted task'
+  );
+  t.deepEqual(
+    omit(result[2], 'createdAt'),
+    omit(thirdInsertion, 'createdAt'),
+    'Returned third inserted task'
+  );
 });
 
 test('Task Events DAO supports retrieval by collectionId', async (t: tape.Test) => {

@@ -29,7 +29,21 @@ test('ProductDesign Stage DAO supports retrieval by designId', async (t: tape.Te
     ordering: 0,
     title: 'test'
   });
+  const stageTwo = await create({
+    description: '',
+    designId: design.id,
+    ordering: 0,
+    title: 'test 2'
+  });
+  const stageThree = await create({
+    description: '',
+    designId: design.id,
+    ordering: 1,
+    title: 'test 3'
+  });
 
   const result = await findAllByDesignId(stage.designId);
-  t.deepEqual(result[0], stage, 'Returned inserted task');
+  t.deepEqual(result[0], stage, 'Returned inserted design stage');
+  t.deepEqual(result[1], stageTwo, 'Returned inserted design stage');
+  t.deepEqual(result[2], stageThree, 'Returned inserted design stage');
 });
