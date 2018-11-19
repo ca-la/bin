@@ -153,6 +153,7 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
     createdAt: new Date(2012, 11, 23),
     designId: design.id,
     id: uuid.v4(),
+    quoteId: null,
     targetId: null,
     type: 'SUBMIT_DESIGN'
   };
@@ -163,6 +164,7 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
     createdAt: new Date(2012, 11, 24),
     designId: design.id,
     id: uuid.v4(),
+    quoteId: null,
     targetId: partner.id,
     type: 'BID_DESIGN'
   };
@@ -172,6 +174,7 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
     createdAt: new Date(2012, 11, 24),
     designId: design.id,
     id: uuid.v4(),
+    quoteId: null,
     targetId: otherPartner.id,
     type: 'BID_DESIGN'
   };
@@ -181,6 +184,7 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
     createdAt: new Date(2012, 11, 24),
     designId: rejectedDesign.id,
     id: uuid.v4(),
+    quoteId: null,
     targetId: partner.id,
     type: 'BID_DESIGN'
   };
@@ -190,6 +194,7 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
     createdAt: new Date(2012, 11, 24),
     designId: design.id,
     id: uuid.v4(),
+    quoteId: null,
     targetId: partner.id,
     type: 'BID_DESIGN'
   };
@@ -200,6 +205,7 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
     createdAt: new Date(2012, 11, 25),
     designId: rejectedDesign.id,
     id: uuid.v4(),
+    quoteId: null,
     targetId: null,
     type: 'REJECT_SERVICE_BID'
   };
@@ -209,6 +215,7 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
     createdAt: new Date(2012, 11, 27),
     designId: design.id,
     id: uuid.v4(),
+    quoteId: null,
     targetId: null,
     type: 'ACCEPT_SERVICE_BID'
   };
@@ -218,6 +225,7 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
     createdAt: new Date(2012, 11, 23),
     designId: design.id,
     id: uuid.v4(),
+    quoteId: null,
     targetId: null,
     type: 'REJECT_SERVICE_BID'
   };

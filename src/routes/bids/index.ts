@@ -131,6 +131,7 @@ function* assignBidToPartner(this: Koa.Application.Context): AsyncIterableIterat
     createdAt: new Date(),
     designId: design.id,
     id: uuid.v4(),
+    quoteId: null,
     targetId: target.id,
     type: 'BID_DESIGN'
   });
@@ -180,6 +181,7 @@ function* removeBidFromPartner(this: Koa.Application.Context): AsyncIterableIter
     createdAt: new Date(),
     designId: design.id,
     id: uuid.v4(),
+    quoteId: null,
     targetId: target.id,
     type: 'REMOVE_PARTNER'
   });

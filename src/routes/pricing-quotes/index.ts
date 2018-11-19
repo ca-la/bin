@@ -8,12 +8,9 @@ import {
   create as createBid,
   findByQuoteId as findBidsByQuoteId
 } from '../../dao/bids';
-import {
-  findByDesignId as findCostInputsByDesignId
-} from '../../dao/pricing-cost-inputs';
+import * as PricingCostInputsDAO from '../../dao/pricing-cost-inputs';
 import PricingCostInputs from '../../domain-objects/pricing-cost-input';
 import {
-  isPricingQuoteRequest,
   PricingQuote,
   PricingQuoteRequest
 } from '../../domain-objects/pricing-quote';
@@ -39,11 +36,24 @@ function isBidRequest(candidate: object): candidate is BidRequest {
 }
 
 function* createQuote(this: Koa.Application.Context): AsyncIterableIterator<PricingQuote> {
-  if (this.request.body && isPricingQuoteRequest(this.request.body)) {
-    const quoteRequest: PricingQuoteRequest = this.request.body;
-    const quote: PricingQuote = yield generatePricingQuote(quoteRequest);
+  const { designId, units } = this.query;
+  const unitsNumber = Number(units);
 
-    this.body = quote;
+  if (designId && unitsNumber) {
+    const costInputs: PricingCostInputs[] = yield PricingCostInputsDAO.findByDesignId(designId);
+
+    if (costInputs.length === 0) {
+      this.throw(404, 'No costing inputs associated with design ID');
+      return;
+    }
+
+    const quoteRequest: PricingQuoteRequest = {
+      ...omit(costInputs[0], ['id', 'createdAt', 'deletedAt']),
+      units: unitsNumber
+    };
+    const unsavedQuote = yield generatePricingQuote(quoteRequest);
+
+    this.body = unsavedQuote;
     this.status = 201;
   } else {
     this.throw(400);
@@ -67,7 +77,7 @@ function* getQuotes(this: Koa.Application.Context): AsyncIterableIterator<any> {
   if (!designId) {
     this.throw(400, 'You must pass a design ID');
   } else if (unitsNumber) {
-    const costInputs: PricingCostInputs[] = yield findCostInputsByDesignId(designId);
+    const costInputs: PricingCostInputs[] = yield PricingCostInputsDAO.findByDesignId(designId);
 
     if (costInputs.length === 0) {
       this.throw(404, 'No costing inputs associated with design ID');
@@ -127,7 +137,7 @@ function* getBidsForQuote(this: Koa.Application.Context): AsyncIterableIterator<
   this.status = 200;
 }
 
-router.post('/', createQuote);
+router.post('/', requireAuth, createQuote);
 router.get('/', requireAuth, getQuotes);
 router.get('/:quoteId', getQuote);
 

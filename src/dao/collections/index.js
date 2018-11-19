@@ -186,16 +186,30 @@ function getStatusById(collectionId) {
   return db.raw(`
 SELECT
     c.id AS collection_id,
-    (count(de.id) = count(d.id)) AS is_submitted,
-    (count(de2.id) = count(d.id)) AS is_costed,
-    (count(de3.id) = count(d.id)) AS is_paired
+    (count(de_submitted.id) = count(d.id)) AS is_submitted,
+    (count(de_costed.id) = count(d.id)) AS is_costed,
+    (count(de_quoted.id) = count(d.id)) AS is_quoted,
+    (count(de_paired.id) = count(d.id)) AS is_paired
   FROM collections AS c
 
   LEFT JOIN collection_designs AS cd ON cd.collection_id = c.id
   LEFT JOIN product_designs AS d ON cd.design_id = d.id
-  LEFT JOIN design_events AS de ON cd.design_id = de.design_id AND de.type = 'SUBMIT_DESIGN'
-  LEFT JOIN design_events AS de2 ON cd.design_id = de2.design_id AND de2.type = 'COMMIT_COST_INPUTS'
-  LEFT JOIN design_events AS de3 ON cd.design_id = de3.design_id AND de2.type = 'COMMIT_PARTNER_PAIRING'
+
+  LEFT JOIN design_events AS de_submitted
+    ON cd.design_id = de_submitted.design_id
+   AND de_submitted.type = 'SUBMIT_DESIGN'
+
+  LEFT JOIN design_events AS de_costed
+    ON cd.design_id = de_costed.design_id
+   AND de_costed.type = 'COMMIT_COST_INPUTS'
+
+  LEFT JOIN design_events AS de_quoted
+    ON cd.design_id = de_quoted.design_id
+   AND de_quoted.type = 'COMMIT_QUOTE'
+
+  LEFT JOIN design_events AS de_paired
+    ON cd.design_id = de_paired.design_id
+   AND de_paired.type = 'COMMIT_PARTNER_PAIRING'
 
  WHERE c.id = ? AND c.deleted_at IS NULL
  GROUP BY c.id;

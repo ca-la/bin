@@ -29,6 +29,7 @@ test('Design Events DAO supports creation', async (t: Test) => {
     createdAt: new Date(),
     designId: design.id,
     id: uuid.v4(),
+    quoteId: null,
     targetId: partner.id,
     type: 'BID_DESIGN'
   };
@@ -54,6 +55,7 @@ test('Design Events DAO supports creating multiple events at once', async (t: Te
     createdAt: new Date(2012, 11, 23),
     designId: design.id,
     id: uuid.v4(),
+    quoteId: null,
     targetId: cala.id,
     type: 'SUBMIT_DESIGN'
   };
@@ -63,6 +65,7 @@ test('Design Events DAO supports creating multiple events at once', async (t: Te
     createdAt: new Date(2012, 11, 24),
     designId: design.id,
     id: uuid.v4(),
+    quoteId: null,
     targetId: partner.id,
     type: 'BID_DESIGN'
   };
@@ -72,6 +75,7 @@ test('Design Events DAO supports creating multiple events at once', async (t: Te
     createdAt: new Date(2012, 11, 25),
     designId: design.id,
     id: uuid.v4(),
+    quoteId: null,
     targetId: cala.id,
     type: 'ACCEPT_SERVICE_BID'
   };
@@ -97,6 +101,7 @@ test('Design Events DAO supports retrieval by design ID', async (t: Test) => {
     createdAt: new Date(),
     designId: design.id,
     id: uuid.v4(),
+    quoteId: null,
     targetId: partner.id,
     type: 'BID_DESIGN'
   };
@@ -125,6 +130,7 @@ test('Design Events DAO supports retrieval by target ID', async (t: Test) => {
     createdAt: new Date(2012, 11, 23),
     designId: design.id,
     id: uuid.v4(),
+    quoteId: null,
     targetId: cala.id,
     type: 'SUBMIT_DESIGN'
   };
@@ -134,6 +140,7 @@ test('Design Events DAO supports retrieval by target ID', async (t: Test) => {
     createdAt: new Date(2012, 11, 24),
     designId: design.id,
     id: uuid.v4(),
+    quoteId: null,
     targetId: partner.id,
     type: 'BID_DESIGN'
   };
@@ -143,6 +150,7 @@ test('Design Events DAO supports retrieval by target ID', async (t: Test) => {
     createdAt: new Date(2012, 11, 25),
     designId: design.id,
     id: uuid.v4(),
+    quoteId: null,
     targetId: cala.id,
     type: 'ACCEPT_SERVICE_BID'
   };

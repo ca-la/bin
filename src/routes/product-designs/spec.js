@@ -366,6 +366,7 @@ test('POST /product-designs/:designId/events with multiple events creates them',
       createdAt: new Date(2012, 12, 24),
       designId: design.id,
       id: uuid.v4(),
+      quoteId: null,
       targetId: null,
       type: 'SUBMIT_DESIGN'
     },
@@ -374,6 +375,7 @@ test('POST /product-designs/:designId/events with multiple events creates them',
       createdAt: new Date(2012, 12, 23),
       designId: design.id,
       id: uuid.v4(),
+      quoteId: null,
       targetId: null,
       type: 'SUBMIT_DESIGN'
     }
@@ -461,6 +463,7 @@ test('PUT /product-designs/:designId/events/:eventId with an event creates it', 
     bidId: null,
     createdAt: new Date(2012, 12, 24),
     id: uuid.v4(),
+    quoteId: null,
     targetId: null,
     type: 'SUBMIT_DESIGN'
   };

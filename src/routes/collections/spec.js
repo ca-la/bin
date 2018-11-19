@@ -390,6 +390,7 @@ test('POST /collections/:id/submissions', async (t) => {
     collectionId: collection.id,
     isSubmitted: true,
     isCosted: false,
+    isQuoted: false,
     isPaired: false
   }, 'Returns current submission status');
   t.deepEqual(designEventOne[0].type, 'SUBMIT_DESIGN', 'Submitted the design to CALA');
@@ -431,6 +432,7 @@ test('GET /collections/:collectionId/submissions', async (t) => {
     collectionId: collection.id,
     isSubmitted: false,
     isCosted: false,
+    isQuoted: false,
     isPaired: false
   });
 
@@ -461,6 +463,7 @@ test('GET /collections/:collectionId/submissions', async (t) => {
     collectionId: collection.id,
     isSubmitted: true,
     isCosted: false,
+    isQuoted: false,
     isPaired: false
   });
 
@@ -495,6 +498,42 @@ test('GET /collections/:collectionId/submissions', async (t) => {
     collectionId: collection.id,
     isSubmitted: true,
     isCosted: true,
+    isQuoted: false,
+    isPaired: false
+  });
+
+  const commitQuoteEvent = {
+    actorId: designer.user.id,
+    targetId: null,
+    type: 'COMMIT_QUOTE'
+  };
+
+  await post(
+    `/product-designs/${designOne.id}/events`,
+    {
+      headers: authHeader(designer.session.id),
+      body: [commitQuoteEvent]
+    }
+  );
+  await post(
+    `/product-designs/${designTwo.id}/events`,
+    {
+      headers: authHeader(designer.session.id),
+      body: [commitQuoteEvent]
+    }
+  );
+
+  const statusFour = await get(
+    `/collections/${collection.id}/submissions`,
+    { headers: authHeader(designer.session.id) }
+  );
+
+  t.equal(statusFour[0].status, 200);
+  t.deepEqual(statusFour[1], {
+    collectionId: collection.id,
+    isSubmitted: true,
+    isCosted: true,
+    isQuoted: true,
     isPaired: false
   });
 });

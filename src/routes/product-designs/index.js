@@ -551,7 +551,8 @@ function isAllowedEventType(role, event) {
   }
 
   const DESIGNER_ALLOWED_EVENT_TYPES = [
-    'SUBMIT_DESIGN'
+    'SUBMIT_DESIGN',
+    'COMMIT_QUOTE'
   ];
   const PARTNER_ALLOWED_EVENT_TYPES = [
     'ACCEPT_SERVICE_BID',
