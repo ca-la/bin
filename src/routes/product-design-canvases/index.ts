@@ -76,7 +76,7 @@ function* getById(this: Koa.Application.Context): AsyncIterableIterator<any> {
   const canvas = yield ProductDesignCanvasesDAO.findById(this.params.canvasId);
   this.assert(canvas, 404);
   const components = yield ComponentsDAO.findAllByCanvasId(canvas.id);
-  const enrichedComponents = components.map(addAssetLink);
+  const enrichedComponents = yield Promise.all(components.map(addAssetLink));
   const enrichedCanvas = { ...canvas, components: enrichedComponents };
 
   this.status = 200;
@@ -99,7 +99,7 @@ function* getList(
   const canvases = yield ProductDesignCanvasesDAO.findAllByDesignId(query.designId);
   const enrichedCanvases = yield canvases.map(async (canvas: ProductDesignCanvas) => {
     const components = await ComponentsDAO.findAllByCanvasId(canvas.id);
-    const enrichedComponents = components.map(addAssetLink);
+    const enrichedComponents = await Promise.all(components.map(addAssetLink));
     return { ...canvas, components: enrichedComponents };
   });
 

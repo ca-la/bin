@@ -16,7 +16,7 @@ const { dataMapper } = ProductDesignOption;
 
 function create(data) {
   const rowData = Object.assign({}, dataMapper.userDataToRowData(data), {
-    id: uuid.v4()
+    id: data.id || uuid.v4()
   });
 
   return db('product_design_options')

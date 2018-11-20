@@ -52,7 +52,7 @@ function* getById(this: Koa.Application.Context): AsyncIterableIterator<Componen
   this.assert(component, 404, `Component with id ${this.params.componentId} not found`);
 
   this.status = 200;
-  this.body = addAssetLink(component);
+  this.body = yield addAssetLink(component);
 }
 
 interface GetListQuery {
@@ -71,7 +71,7 @@ function* getList(
   const components = yield ComponentsDAO.findAllByCanvasId(query.canvas);
 
   this.status = 200;
-  this.body = components.map(addAssetLink);
+  this.body = yield Promise.all(components.map(addAssetLink));
 }
 
 router.post('/', requireAuth, create);

@@ -1,6 +1,7 @@
 import * as tape from 'tape';
 import { AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME } from '../../config';
-import { test } from '../../test-helpers/fresh';
+import { sandbox, test } from '../../test-helpers/fresh';
+import * as OptionsDAO from '../../dao/product-design-options';
 import addAssetLink from './index';
 import * as uuid from 'node-uuid';
 import Component, { ComponentType } from '../../domain-objects/component';
@@ -19,7 +20,7 @@ test('attachAssetsLink returns aws link when component is of type sketch', async
     sketchId,
     type: ComponentType.Sketch
   };
-  const enrichedComponent = addAssetLink(component);
+  const enrichedComponent = await addAssetLink(component);
   const expectedLink =
     `https://${AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME}.s3.amazonaws.com/${sketchId}`;
   t.equal(enrichedComponent.assetLink, expectedLink, 'link matches sketchid');
@@ -39,15 +40,17 @@ test('attachAssetsLink returns link when component is of type artwork', async (t
     sketchId: null,
     type: ComponentType.Artwork
   };
-  const enrichedComponent = addAssetLink(component);
+  const enrichedComponent = await addAssetLink(component);
   const expectedLink =
     `https://${AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME}.s3.amazonaws.com/${artworkId}`;
   t.equal(enrichedComponent.assetLink, expectedLink, 'link matches sketchid');
 });
 
-test('attachAssetsLink returns blank when component is of type material', async (t: tape.Test) => {
+test('attachAssetsLink returns link when component is of type material', async (t: tape.Test) => {
   const id = uuid.v4();
   const materialId = uuid.v4();
+  const imgId = uuid.v4();
+  sandbox().stub(OptionsDAO, 'findById').resolves({ previewImageId: imgId });
   const component: Component = {
     artworkId: null,
     createdAt: new Date(),
@@ -59,7 +62,8 @@ test('attachAssetsLink returns blank when component is of type material', async 
     sketchId: null,
     type: ComponentType.Material
   };
-  const enrichedComponent = addAssetLink(component);
-  const expectedLink = '';
+  const enrichedComponent = await addAssetLink(component);
+  const expectedLink =
+    `https://${AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME}.s3.amazonaws.com/${imgId}`;
   t.equal(enrichedComponent.assetLink, expectedLink, 'link matches sketchid');
 });

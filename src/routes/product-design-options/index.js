@@ -58,7 +58,7 @@ function* canModifyOption(next) {
 }
 
 function* create() {
-  const allowedAttrs = pick(this.request.body, ALLOWED_ATTRS);
+  const allowedAttrs = pick(this.request.body, ALLOWED_ATTRS, 'id');
 
   const attrs = Object.assign({}, allowedAttrs, {
     userId: this.state.userId
