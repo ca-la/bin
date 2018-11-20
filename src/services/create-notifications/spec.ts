@@ -1,9 +1,15 @@
 import * as tape from 'tape';
 import * as uuid from 'node-uuid';
-import { test } from '../../test-helpers/fresh';
+import * as sinon from 'sinon';
+
+import { sandbox, test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
 import Notification, { NotificationType } from '../../domain-objects/notification';
-import { sendDesignUpdateNotifications, sendTaskCommentCreateNotification } from './index';
+import {
+  immediatelySendInviteCollaborator,
+  sendDesignUpdateNotifications,
+  sendTaskCommentCreateNotification
+} from './index';
 import * as CollaboratorsDAO from '../../dao/collaborators';
 import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
 import * as TasksDAO from '../../dao/tasks';
@@ -14,6 +20,7 @@ import * as CommentsDAO from '../../dao/comments';
 import * as TaskCommentsDAO from '../../dao/task-comments';
 import * as CollectionsDAO from '../../dao/collections';
 import * as DesignsDAO from '../../dao/product-designs';
+import * as EmailService from '../../services/email';
 
 test('Notifications DAO supports finding outstanding notifications', async (t: tape.Test) => {
   const userOne = await createUser();
@@ -132,4 +139,29 @@ test('Notifications DAO supports finding outstanding notifications', async (t: t
     [NotificationType.TASK_COMMENT_CREATE, NotificationType.TASK_COMMENT_CREATE],
     'Creates two notifications with the same notification type'
   );
+});
+
+test('Notifications DAO supports sending an invite notification', async (t: tape.Test) => {
+  const userOne = await createUser();
+  const collection = await CollectionsDAO.create({
+    createdBy: userOne.user.id,
+    title: 'AW19'
+  });
+  const collaboratorOne = await CollaboratorsDAO.create({
+    collectionId: collection.id,
+    userEmail: 'test@ca.la'
+  });
+
+  const emailStub = sandbox().stub(EmailService, 'enqueueSend').returns(Promise.resolve());
+
+  const notification = await immediatelySendInviteCollaborator({
+    actorId: userOne.user.id,
+    collectionId: null,
+    designId: null,
+    targetCollaboratorId: collaboratorOne.id,
+    targetUserId: null
+  });
+
+  sinon.assert.callCount(emailStub, 1);
+  t.not(notification.sentEmailAt, null, 'Notification is marked as sent');
 });

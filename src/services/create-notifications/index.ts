@@ -1,15 +1,22 @@
 import * as uuid from 'node-uuid';
+
 import * as NotificationsDAO from '../../dao/notifications';
 import * as SectionsDAO from '../../dao/product-design-sections';
 import * as CollaboratorsDAO from '../../dao/collaborators';
 import * as StageTasksDAO from '../../dao/product-design-stage-tasks';
 import * as StagesDAO from '../../dao/product-design-stages';
 import * as DesignsDAO from '../../dao/product-designs';
+import * as CollectionsDAO from '../../dao/collections';
 import * as TaskEventsDAO from '../../dao/task-events';
+import * as UsersDAO from '../../dao/users';
+
 import Notification, { NotificationType } from '../../domain-objects/notification';
 import { Collaborator, CollaboratorWithUserId } from '../../domain-objects/collaborator';
-import findDesignUsers = require('../../services/find-design-users');
 import User from '../../domain-objects/user';
+
+import findDesignUsers = require('../../services/find-design-users');
+import * as EmailService from '../../services/email';
+
 import { CALA_OPS_USER_ID } from '../../config';
 
 /**
@@ -34,6 +41,7 @@ export async function sendSectionCreateNotifications(
     return replaceNotifications({
       actionDescription: 'created a new section',
       actorUserId: userId,
+      collaboratorId: null,
       collectionId: null,
       commentId: null,
       designId,
@@ -62,6 +70,7 @@ export async function sendSectionDeleteNotifications(
     return replaceNotifications({
       actionDescription: `deleted the "${sectionTitle}" section`,
       actorUserId: userId,
+      collaboratorId: null,
       collectionId: null,
       commentId: null,
       designId,
@@ -92,6 +101,7 @@ export async function sendSectionUpdateNotifications(
     return replaceNotifications({
       actionDescription: `updated the "${section.title || 'Untitled'}" section`,
       actorUserId: userId,
+      collaboratorId: null,
       collectionId: null,
       commentId: null,
       designId,
@@ -119,6 +129,7 @@ export async function sendDesignUpdateNotifications(
     return replaceNotifications({
       actionDescription: 'updated the design information',
       actorUserId: userId,
+      collaboratorId: null,
       collectionId: null,
       commentId: null,
       designId,
@@ -171,6 +182,7 @@ export async function sendTaskCommentCreateNotification(
     return replaceNotifications({
       actionDescription: null,
       actorUserId: actorId,
+      collaboratorId: null,
       collectionId: design.collectionIds[0] || null,
       commentId,
       designId: design.id,
@@ -185,6 +197,9 @@ export async function sendTaskCommentCreateNotification(
   }));
 }
 
+/**
+ * Creates notifications to CALA Ops for a partner accepting a bid.
+ */
 export async function sendPartnerAcceptServiceBidNotification(
   designId: string,
   actorId: string
@@ -194,6 +209,7 @@ export async function sendPartnerAcceptServiceBidNotification(
   return replaceNotifications({
     actionDescription: null,
     actorUserId: actorId,
+    collaboratorId: null,
     collectionId: null,
     commentId: null,
     designId,
@@ -207,6 +223,9 @@ export async function sendPartnerAcceptServiceBidNotification(
   });
 }
 
+/**
+ * Creates notifications to CALA Ops for a partner rejecting a bid.
+ */
 export async function sendPartnerRejectServiceBidNotification(
   designId: string,
   actorId: string
@@ -216,6 +235,7 @@ export async function sendPartnerRejectServiceBidNotification(
   return replaceNotifications({
     actionDescription: null,
     actorUserId: actorId,
+    collaboratorId: null,
     collectionId: null,
     commentId: null,
     designId,
@@ -229,6 +249,9 @@ export async function sendPartnerRejectServiceBidNotification(
   });
 }
 
+/**
+ * Creates notifications to CALA Ops for a designer submitting a collection.
+ */
 export async function sendDesignerSubmitCollection(
   collectionId: string,
   actorId: string
@@ -238,6 +261,7 @@ export async function sendDesignerSubmitCollection(
   return replaceNotifications({
     actionDescription: null,
     actorUserId: actorId,
+    collaboratorId: null,
     collectionId,
     commentId: null,
     designId: null,
@@ -251,6 +275,9 @@ export async function sendDesignerSubmitCollection(
   });
 }
 
+/**
+ * Creates notifications to a partner for CALA Ops submitting a bid to them.
+ */
 export async function sendPartnerDesignBid(
   designId: string,
   actorId: string,
@@ -259,6 +286,7 @@ export async function sendPartnerDesignBid(
   return replaceNotifications({
     actionDescription: null,
     actorUserId: actorId,
+    collaboratorId: null,
     collectionId: null,
     commentId: null,
     designId,
@@ -270,4 +298,67 @@ export async function sendPartnerDesignBid(
     taskId: null,
     type: NotificationType.PARTNER_DESIGN_BID
   });
+}
+
+interface CollaboratorInviteArguments {
+  actorId: string;
+  collectionId: string | null;
+  designId: string | null;
+  targetCollaboratorId: string;
+  targetUserId: string | null;
+}
+
+/**
+ * Creates a collaborator invite notification and immediately sends it to SQS.
+ */
+export async function immediatelySendInviteCollaborator(
+  invitation: CollaboratorInviteArguments
+): Promise<Notification> {
+  const notification = await NotificationsDAO.create({
+    actionDescription: null,
+    actorUserId: invitation.actorId,
+    collaboratorId: invitation.targetCollaboratorId,
+    collectionId: invitation.collectionId,
+    commentId: null,
+    designId: invitation.designId,
+    id: uuid.v4(),
+    recipientUserId: invitation.targetUserId,
+    sectionId: null,
+    sentEmailAt: new Date(),
+    stageId: null,
+    taskId: null,
+    type: NotificationType.INVITE_COLLABORATOR
+  });
+
+  const collection = invitation.collectionId
+    ? await CollectionsDAO.findById(invitation.collectionId)
+    : null;
+  const design = invitation.designId
+    ? await DesignsDAO.findById(invitation.designId)
+    : null;
+  const actor = await UsersDAO.findById(invitation.actorId) as (User | null);
+  const target = invitation.targetUserId
+    ? await UsersDAO.findById(invitation.targetUserId) as (User | null)
+    : null;
+  const collaborator = await CollaboratorsDAO.findById(
+    invitation.targetCollaboratorId
+  ) as (Collaborator | null);
+
+  const emailAddress = target
+    ? target.email
+    : collaborator
+      ? collaborator.userEmail
+      : new Error('No one is specified to send an email to!');
+
+  await EmailService.enqueueSend({
+    params: {
+      collection,
+      design,
+      notification: { ...notification, actor }
+    },
+    templateName: 'single_notification',
+    to: emailAddress
+  });
+
+  return notification;
 }

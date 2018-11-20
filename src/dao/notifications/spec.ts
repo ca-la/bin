@@ -15,6 +15,7 @@ test('Notifications DAO supports creation', async (t: tape.Test) => {
   const data = {
     actionDescription: null,
     actorUserId: userOne.user.id,
+    collaboratorId: null,
     collectionId: null,
     commentId: null,
     createdAt: new Date(),
@@ -40,6 +41,7 @@ test('Notifications DAO supports finding outstanding notifications', async (t: t
   const notificationOne = await create({
     actionDescription: null,
     actorUserId: userOne.user.id,
+    collaboratorId: null,
     collectionId: null,
     commentId: null,
     designId: null,
@@ -54,6 +56,7 @@ test('Notifications DAO supports finding outstanding notifications', async (t: t
   const notificationTwo = await create({
     actionDescription: null,
     actorUserId: userOne.user.id,
+    collaboratorId: null,
     collectionId: null,
     commentId: null,
     designId: null,
@@ -68,6 +71,7 @@ test('Notifications DAO supports finding outstanding notifications', async (t: t
   await create({
     actionDescription: null,
     actorUserId: userOne.user.id,
+    collaboratorId: null,
     collectionId: null,
     commentId: null,
     designId: null,
@@ -93,6 +97,7 @@ test('Notifications DAO supports marking notifications as sent', async (t: tape.
   const notificationOne = await create({
     actionDescription: null,
     actorUserId: userOne.user.id,
+    collaboratorId: null,
     collectionId: null,
     commentId: null,
     designId: null,
@@ -107,6 +112,7 @@ test('Notifications DAO supports marking notifications as sent', async (t: tape.
   const notificationTwo = await create({
     actionDescription: null,
     actorUserId: userOne.user.id,
+    collaboratorId: null,
     collectionId: null,
     commentId: null,
     designId: null,
@@ -142,6 +148,7 @@ test('Notifications DAO supports deleting similar notifications', async (t: tape
   await create({
     actionDescription: null,
     actorUserId: userTwo.user.id,
+    collaboratorId: null,
     collectionId: null,
     commentId: null,
     designId: design.id,
@@ -156,6 +163,7 @@ test('Notifications DAO supports deleting similar notifications', async (t: tape
   await create({
     actionDescription: null,
     actorUserId: userOne.user.id,
+    collaboratorId: null,
     collectionId: null,
     commentId: null,
     designId: design.id,
@@ -170,6 +178,7 @@ test('Notifications DAO supports deleting similar notifications', async (t: tape
   await create({
     actionDescription: null,
     actorUserId: userOne.user.id,
+    collaboratorId: null,
     collectionId: null,
     commentId: null,
     designId: design.id,
@@ -184,6 +193,7 @@ test('Notifications DAO supports deleting similar notifications', async (t: tape
   const unsentNotification = {
     actionDescription: null,
     actorUserId: userOne.user.id,
+    collaboratorId: null,
     collectionId: null,
     commentId: null,
     designId: design.id,

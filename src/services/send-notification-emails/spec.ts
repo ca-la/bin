@@ -1,12 +1,13 @@
 import * as tape from 'tape';
 import * as uuid from 'node-uuid';
+import * as sinon from 'sinon';
+
 import { sandbox, test } from '../../test-helpers/fresh';
 import * as NotificationsDAO from '../../dao/notifications';
 import createUser = require('../../test-helpers/create-user');
 import { NotificationType } from '../../domain-objects/notification';
 import { sendNotificationEmails } from './index';
 import * as EmailService from '../email';
-import * as sinon from 'sinon';
 
 test('Notifications DAO supports finding outstanding notifications', async (t: tape.Test) => {
   const userOne = await createUser();
@@ -15,6 +16,7 @@ test('Notifications DAO supports finding outstanding notifications', async (t: t
   const notificationOne = await NotificationsDAO.create({
     actionDescription: null,
     actorUserId: userOne.user.id,
+    collaboratorId: null,
     collectionId: null,
     commentId: null,
     designId: null,
@@ -29,6 +31,7 @@ test('Notifications DAO supports finding outstanding notifications', async (t: t
   const notificationTwo = await NotificationsDAO.create({
     actionDescription: null,
     actorUserId: userTwo.user.id,
+    collaboratorId: null,
     collectionId: null,
     commentId: null,
     designId: null,
@@ -43,6 +46,7 @@ test('Notifications DAO supports finding outstanding notifications', async (t: t
   await NotificationsDAO.create({
     actionDescription: null,
     actorUserId: userOne.user.id,
+    collaboratorId: null,
     collectionId: null,
     commentId: null,
     designId: null,

@@ -10,19 +10,21 @@ export enum NotificationType {
   PARTNER_ACCEPT_SERVICE_BID = 'PARTNER_ACCEPT_SERVICE_BID',
   PARTNER_REJECT_SERVICE_BID = 'PARTNER_REJECT_SERVICE_BID',
   COLLECTION_SUBMIT = 'COLLECTION_SUBMIT',
-  PARTNER_DESIGN_BID = 'PARTNER_DESIGN_BID'
+  PARTNER_DESIGN_BID = 'PARTNER_DESIGN_BID',
+  INVITE_COLLABORATOR = 'INVITE_COLLABORATOR'
 }
 
 export default interface Notification {
   // DEPRECATED
   actionDescription: string | null;
   actorUserId: string;
+  collaboratorId: string | null;
   collectionId: string | null;
   commentId: string | null;
   createdAt: Date;
   designId: string | null;
   id: string;
-  recipientUserId: string;
+  recipientUserId: string | null;
   // DEPRECATED
   sectionId: string | null;
   sentEmailAt: Date | null;
@@ -35,12 +37,13 @@ export interface NotificationRow {
   // DEPRECATED
   action_description: string | null;
   actor_user_id: string;
+  collaborator_id: string | null;
   collection_id: string | null;
   comment_id: string | null;
   created_at: Date;
   design_id: string | null;
   id: string;
-  recipient_user_id: string;
+  recipient_user_id: string | null;
   // DEPRECATED
   section_id: string | null;
   sent_email_at: Date | null;
@@ -60,6 +63,7 @@ export function isNotificationRow(row: object):
     row,
     'action_description',
     'actor_user_id',
+    'collaborator_id',
     'collection_id',
     'comment_id',
     'created_at',
