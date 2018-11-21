@@ -13,7 +13,7 @@
     "module": "commonjs",
     "target": "es6",
     "typeRoots": ["./node_modules/@types", "./src/types"],
-    "types": ["node", "utils", "koa", "koa-router"]
+    "types": ["node", "utils", "koa", "koa-router", "pg-rethrow"]
   },
   "include": [
     "./src/**/*"

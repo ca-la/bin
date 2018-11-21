@@ -1,4 +1,8 @@
+import rethrow = require('pg-rethrow');
+
 import * as db from '../../services/db';
+import filterError = require('../../services/filter-error');
+import InvalidDataError = require('../../errors/invalid-data');
 import { pick } from 'lodash';
 import Measurement, {
   dataAdapter,
@@ -13,6 +17,17 @@ import { validate, validateEvery } from '../../services/validate-from-db';
 
 const TABLE_NAME = 'product_design_canvas_measurements';
 
+function handleForeignKeyViolation(
+  canvasId: string,
+  err: typeof rethrow.ERRORS.ForeignKeyViolation
+): never {
+  if (err.constraint === 'product_design_canvas_measurements_canvas_id_fkey') {
+    throw new InvalidDataError(`Invalid canvas ID: ${canvasId}`);
+  }
+
+  throw err;
+}
+
 export async function create(data: Uninserted<Measurement>): Promise<Measurement> {
   const rowData = dataAdapter.forInsertion({
     ...data,
@@ -22,7 +37,12 @@ export async function create(data: Uninserted<Measurement>): Promise<Measurement
     .insert(rowData, '*')
     .then((rows: MeasurementRow[]) =>
       first<MeasurementRow>(rows)
-    );
+    )
+    .catch(rethrow)
+    .catch(filterError(
+      rethrow.ERRORS.ForeignKeyViolation,
+      handleForeignKeyViolation.bind(null, data.canvasId)
+    ));
 
   if (!created) { throw new Error('Failed to create a measurement'); }
 
@@ -53,10 +73,16 @@ export async function findById(id: string): Promise<Measurement | null> {
 
 export async function update(id: string, data: Measurement): Promise<Measurement> {
   const rowData = pick(dataAdapter.forInsertion(data), UPDATABLE_PROPERTIES);
+
   const updated = await db(TABLE_NAME)
     .where({ id, deleted_at: null })
     .update(rowData, '*')
-    .then((rows: MeasurementRow[]) => first<MeasurementRow>(rows));
+    .then((rows: MeasurementRow[]) => first<MeasurementRow>(rows))
+    .catch(rethrow)
+    .catch(filterError(
+      rethrow.ERRORS.ForeignKeyViolation,
+      handleForeignKeyViolation.bind(null, data.canvasId)
+    ));
 
   if (!updated) { throw new Error('Failed to update row'); }
 

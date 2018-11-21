@@ -9,6 +9,8 @@ import {
 } from '../../dao/product-design-canvas-measurements';
 import { hasOnlyProperties } from '../../services/require-properties';
 
+import filterError = require('../../services/filter-error');
+import InvalidDataError = require('../../errors/invalid-data');
 import requireAuth = require('../../middleware/require-auth');
 
 const router = new Router();
@@ -59,7 +61,9 @@ function* createMeasurement(this: Koa.Application.Context): AsyncIterableIterato
 function* updateMeasurement(this: Koa.Application.Context): AsyncIterableIterator<Measurement> {
   const body = this.request.body;
   if (body && isMeasurement(body)) {
-    const measurement = yield update(this.params.measurementId, body);
+    const measurement = yield update(this.params.measurementId, body)
+      .catch(filterError(InvalidDataError, (err: InvalidDataError) => this.throw(400, err)));
+
     this.status = 200;
     this.body = measurement;
   } else {

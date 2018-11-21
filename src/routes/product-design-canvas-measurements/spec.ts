@@ -49,6 +49,33 @@ test('PUT /:measurementId creates a Measurement', async (t: tape.Test) => {
   t.deepEqual(body, data);
 });
 
+test('PUT /:measurementId returns 400 if canvasId is invalid', async (t: tape.Test) => {
+  const { session, user } = await createUser();
+  const measurementId = uuid.v4();
+
+  const data = {
+    canvasId: '60c63643-592c-4280-9d3f-55b934917ca9',
+    createdAt: new Date().toISOString(),
+    createdBy: user.id,
+    deletedAt: null,
+    endingX: 20,
+    endingY: 20,
+    id: measurementId,
+    label: 'A',
+    measurement: '20 inches',
+    name: null,
+    startingX: 1,
+    startingY: 1
+  };
+
+  const [response, body] = await put(`/product-design-canvas-measurements/${measurementId}`, {
+    body: data,
+    headers: authHeader(session.id)
+  });
+  t.equal(response.status, 400);
+  t.deepEqual(body.message, 'Invalid canvas ID: 60c63643-592c-4280-9d3f-55b934917ca9');
+});
+
 test('PATCH /:taskId updates a Measurement', async (t: tape.Test) => {
   const { session, user } = await createUser();
   const measurementId = uuid.v4();
@@ -102,6 +129,61 @@ test('PATCH /:taskId updates a Measurement', async (t: tape.Test) => {
   });
   t.equal(response.status, 200);
   t.deepEqual(body, data);
+});
+
+test('PATCH /:taskId returns 400 if canvasid is invalid', async (t: tape.Test) => {
+  const { session, user } = await createUser();
+  const measurementId = uuid.v4();
+
+  const design = await createDesign({
+    productType: 'TEESHIRT',
+    title: 'Green Tee',
+    userId: user.id
+  });
+  const designCanvas = await createDesignCanvas({
+    componentId: null,
+    createdBy: user.id,
+    designId: design.id,
+    height: 200,
+    title: 'My Green Tee',
+    width: 200,
+    x: 0,
+    y: 0
+  });
+  const measurement = await MeasurementDAO.create({
+    canvasId: designCanvas.id,
+    createdBy: user.id,
+    deletedAt: null,
+    endingX: 20,
+    endingY: 20,
+    id: measurementId,
+    label: 'A',
+    measurement: '20 inches',
+    name: null,
+    startingX: 1,
+    startingY: 1
+  });
+
+  const data = {
+    canvasId: '60c63643-592c-4280-9d3f-55b934917ca9',
+    createdAt: measurement.createdAt.toISOString(),
+    createdBy: user.id,
+    deletedAt: null,
+    endingX: 23,
+    endingY: 23,
+    id: measurementId,
+    label: 'B',
+    measurement: '22 inches',
+    name: null,
+    startingX: 1,
+    startingY: 1
+  };
+  const [response, body] = await patch(`/product-design-canvas-measurements/${measurementId}`, {
+    body: data,
+    headers: authHeader(session.id)
+  });
+  t.equal(response.status, 400);
+  t.deepEqual(body.message, 'Invalid canvas ID: 60c63643-592c-4280-9d3f-55b934917ca9');
 });
 
 test('DELETE /:taskId deletes a Measurement', async (t: tape.Test) => {
