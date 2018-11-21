@@ -23,7 +23,7 @@
     "koa-multer": "0.0.2",
     "koa-router": "5.4.0",
     "lodash": "^4.17.11",
-    "mime-types": "2.1.17",
+    "mime-types": "2.1.21",
     "node-fetch": "1.6.3",
     "node-uuid": "1.4.7",
     "pg": "^7.4.3",

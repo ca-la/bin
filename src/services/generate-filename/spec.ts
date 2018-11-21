@@ -37,6 +37,11 @@ test('generateFilename can generate filenames with extensions', async (t: tape.T
     `${someId}.pdf`,
     'Returned a pdf filename.'
   );
+  t.equal(
+    generateFilename(someId, 'image/heic'),
+    `${someId}.heic`,
+    'Returned a heic filename.'
+  );
 });
 
 test('generateFilename will generate a filename if the extension fails', async (t: tape.Test) => {
