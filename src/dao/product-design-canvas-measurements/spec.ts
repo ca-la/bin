@@ -1,7 +1,7 @@
 import * as tape from 'tape';
 import * as uuid from 'node-uuid';
 import { test } from '../../test-helpers/fresh';
-import { create, deleteById, findAllByCanvasId, findById, update } from './index';
+import { create, deleteById, findAllByCanvasId, findById, getLabel, update } from './index';
 import createUser = require('../../test-helpers/create-user');
 import { create as createDesign } from '../product-designs';
 import { create as createDesignCanvas } from '../product-design-canvases';
@@ -234,4 +234,72 @@ test('ProductDesignCanvasMeasurement DAO supports deletion', async (t: tape.Test
   const result = await deleteById(designCanvasMeasurement.id);
   t.notEqual(result.deletedAt, null, 'Successfully deleted one row');
   t.equal(await findById(designCanvasMeasurement.id), null, 'Succesfully removed from database');
+});
+
+test('ProductDesignCanvasMeasurement DAO supports getting latest label', async (t: tape.Test) => {
+  const { user } = await createUser();
+  const design = await createDesign({
+    productType: 'TEESHIRT',
+    title: 'Green Tee',
+    userId: user.id
+  });
+  const designCanvas = await createDesignCanvas({
+    componentId: null,
+    createdBy: user.id,
+    designId: design.id,
+    height: 200,
+    title: 'My Green Tee',
+    width: 200,
+    x: 0,
+    y: 0
+  });
+  t.equal(await getLabel(designCanvas.id), 'A', 'returns first label');
+
+  const designCanvasMeasurement = await create({
+    canvasId: designCanvas.id,
+    createdBy: user.id,
+    deletedAt: null,
+    endingX: 20,
+    endingY: 10,
+    id: uuid.v4(),
+    label: 'A',
+    measurement: '16 inches',
+    name: 'sleeve length',
+    startingX: 5,
+    startingY: 2
+  });
+  t.equal(await getLabel(designCanvas.id), 'B', 'returns second label');
+
+  await create({
+    canvasId: designCanvas.id,
+    createdBy: user.id,
+    deletedAt: null,
+    endingX: 20,
+    endingY: 10,
+    id: uuid.v4(),
+    label: 'A',
+    measurement: '9 inches',
+    name: 'sleeve width',
+    startingX: 5,
+    startingY: 2
+  });
+  t.equal(await getLabel(designCanvas.id), 'C', 'returns third label');
+
+  await deleteById(designCanvasMeasurement.id);
+  t.equal(await getLabel(designCanvas.id), 'C', 'returns third label even after deletion');
+
+  await create({
+    canvasId: designCanvas.id,
+    createdBy: user.id,
+    deletedAt: null,
+    endingX: 20,
+    endingY: 10,
+    id: uuid.v4(),
+    label: 'A',
+    measurement: '4 inches',
+    name: 'neck line',
+    startingX: 5,
+    startingY: 2
+  });
+  t.equal(await getLabel(designCanvas.id), 'D', 'continues increment and returns fourth label');
 });

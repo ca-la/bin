@@ -14,8 +14,13 @@ import Measurement, {
 } from '../../domain-objects/product-design-canvas-measurement';
 import first from '../../services/first';
 import { validate, validateEvery } from '../../services/validate-from-db';
+import generateLabel from '../../services/generate-label';
 
 const TABLE_NAME = 'product_design_canvas_measurements';
+
+interface CountRow {
+  count: number;
+}
 
 function handleForeignKeyViolation(
   canvasId: string,
@@ -121,4 +126,15 @@ export async function findAllByCanvasId(canvasId: string): Promise<Measurement[]
     dataAdapter,
     measurements
   ));
+}
+
+export async function getLabel(canvasId: string): Promise<string> {
+  const measurementCount = await db(TABLE_NAME)
+    .count('*')
+    .where({ canvas_id: canvasId })
+    .then((rows: CountRow[]) => first<CountRow>(rows));
+  if (!measurementCount) {
+    throw new Error(`Failed to count rows for canvasId ${canvasId}`);
+  }
+  return generateLabel(measurementCount.count);
 }

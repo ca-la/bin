@@ -248,3 +248,56 @@ test('GET /?canvasId=:canvasId returns Measurements', async (t: tape.Test) => {
   t.equal(response.status, 200);
   t.deepEqual(body, data);
 });
+
+test('GET /label?canvasId= gets the next label to use', async (t: tape.Test) => {
+  const { session, user } = await createUser();
+
+  const design = await createDesign({
+    productType: 'TEESHIRT',
+    title: 'Green Tee',
+    userId: user.id
+  });
+  const designCanvas = await createDesignCanvas({
+    componentId: null,
+    createdBy: user.id,
+    designId: design.id,
+    height: 200,
+    title: 'My Green Tee',
+    width: 200,
+    x: 0,
+    y: 0
+  });
+  await MeasurementDAO.create({
+    canvasId: designCanvas.id,
+    createdBy: user.id,
+    deletedAt: null,
+    endingX: 20,
+    endingY: 20,
+    id: uuid.v4(),
+    label: 'A',
+    measurement: '20 inches',
+    name: null,
+    startingX: 1,
+    startingY: 1
+  });
+  await MeasurementDAO.create({
+    canvasId: designCanvas.id,
+    createdBy: user.id,
+    deletedAt: null,
+    endingX: 21,
+    endingY: 23,
+    id: uuid.v4(),
+    label: 'A',
+    measurement: '5 inches',
+    name: null,
+    startingX: 11,
+    startingY: 11
+  });
+
+  const [response, body] = await get(
+    `/product-design-canvas-measurements/label?canvasId=${designCanvas.id}`,
+    { headers: authHeader(session.id) }
+  );
+  t.equal(response.status, 200);
+  t.equal(body, 'C', 'Should return the third label');
+});
