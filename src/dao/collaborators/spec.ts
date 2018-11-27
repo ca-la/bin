@@ -1,3 +1,4 @@
+import * as uuid from 'node-uuid';
 import CollaboratorsDAO = require('.');
 import CollectionsDAO = require('../../dao/collections');
 import ProductDesignsDAO = require('../../dao/product-designs');
@@ -9,8 +10,12 @@ test('CollaboratorsDAO.findByCollection returns colllaborators', async (t: Test)
   const { user } = await createUser({ withSession: false });
 
   const collection = await CollectionsDAO.create({
+    createdAt: new Date(),
     createdBy: user.id,
-    title: 'AW19'
+    deletedAt: null,
+    description: 'Initial commit',
+    id: uuid.v4(),
+    title: 'Drop 001/The Early Years'
   });
 
   const collaborator = await CollaboratorsDAO.create({
@@ -28,8 +33,12 @@ test('CollaboratorsDAO.findByCollectionAndUser returns colllaborators', async (t
   const { user } = await createUser({ withSession: false });
 
   const collection = await CollectionsDAO.create({
+    createdAt: new Date(),
     createdBy: user.id,
-    title: 'AW19'
+    deletedAt: null,
+    description: 'Initial commit',
+    id: uuid.v4(),
+    title: 'Drop 001/The Early Years'
   });
 
   const collaborator = await CollaboratorsDAO.create({

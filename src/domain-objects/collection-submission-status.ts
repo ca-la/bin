@@ -1,7 +1,7 @@
 import DataAdapter from '../services/data-adapter';
 import { hasProperties } from '../services/require-properties';
 
-interface CollectionSubmissionStatus {
+export default interface CollectionSubmissionStatus {
   collectionId: string;
   isSubmitted: boolean;
   isCosted: boolean;
@@ -9,7 +9,7 @@ interface CollectionSubmissionStatus {
   isPaired: boolean;
 }
 
-interface CollectionSubmissionStatusRow {
+export interface CollectionSubmissionStatusRow {
   collection_id: string;
   is_submitted: boolean;
   is_costed: boolean;

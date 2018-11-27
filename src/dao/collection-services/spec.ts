@@ -8,7 +8,11 @@ import { create as createCollection } from '../collections';
 test('CollectionService DAO supports creation/retrieval', async (t: tape.Test) => {
   const { user } = await createUser();
   const collection = await createCollection({
+    createdAt: new Date(),
     createdBy: user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
     title: 'FW19'
   });
   const collectionService = await create({
@@ -28,7 +32,11 @@ test('CollectionService DAO supports creation/retrieval', async (t: tape.Test) =
 test('CollectionService DAO supports updating', async (t: tape.Test) => {
   const { user } = await createUser();
   const collection = await createCollection({
+    createdAt: new Date(),
     createdBy: user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
     title: 'FW19'
   });
   const collectionService = await create({
@@ -64,7 +72,11 @@ test('CollectionService DAO supports updating', async (t: tape.Test) => {
 test('CollectionService DAO supports deletion', async (t: tape.Test) => {
   const { user } = await createUser();
   const collection = await createCollection({
+    createdAt: new Date(),
     createdBy: user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
     title: 'FW19'
   });
   const collectionService = await create({

@@ -58,7 +58,11 @@ test('Notifications DAO supports finding outstanding notifications', async (t: t
   const userTwo = await createUser();
 
   const collection = await CollectionsDAO.create({
+    createdAt: new Date(),
     createdBy: userOne.user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
     title: 'AW19'
   });
   const design = await DesignsDAO.create({
@@ -144,7 +148,11 @@ test('Notifications DAO supports finding outstanding notifications', async (t: t
 test('Notifications DAO supports sending an invite notification', async (t: tape.Test) => {
   const userOne = await createUser();
   const collection = await CollectionsDAO.create({
+    createdAt: new Date(),
     createdBy: userOne.user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
     title: 'AW19'
   });
   const collaboratorOne = await CollaboratorsDAO.create({

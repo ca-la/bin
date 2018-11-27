@@ -1,3 +1,4 @@
+import * as uuid from 'node-uuid';
 import CollaboratorsDAO = require('../../dao/collaborators');
 import CollectionsDAO = require('../../dao/collections');
 import createUser = require('../../test-helpers/create-user');
@@ -55,7 +56,11 @@ test('POST /collaborators allows adding collaborators on a collection', async (t
 
   const { session, user } = await createUser();
   const collection = await CollectionsDAO.create({
+    createdAt: new Date(),
     createdBy: user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
     title: 'AW19'
   });
 
@@ -79,7 +84,11 @@ test('PATCH /collaborators allows updating collaborators on a collection', async
 
   const { session, user } = await createUser();
   const collection = await CollectionsDAO.create({
+    createdAt: new Date(),
     createdBy: user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
     title: 'AW19'
   });
 
@@ -144,7 +153,11 @@ test('POST /collaborators throws 400 with unknown role', async (t: Test) => {
 
   const { session, user } = await createUser();
   const collection = await CollectionsDAO.create({
+    createdAt: new Date(),
     createdBy: user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
     title: 'AW19'
   });
 
@@ -167,7 +180,11 @@ test('GET /collaborators allows querying by collection ID', async (t: Test) => {
   const { session, user } = await createUser();
 
   const collection = await CollectionsDAO.create({
+    createdAt: new Date(),
     createdBy: user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
     title: 'AW19'
   });
 

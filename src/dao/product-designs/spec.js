@@ -99,7 +99,11 @@ test('ProductDesignsDAO.findByUserId', async (t) => {
 test('ProductDesignsDAO.findByCollectionId', async (t) => {
   const { user } = await createUser({ withSession: false });
   const collection = await CollectionsDAO.create({
+    createdAt: new Date(),
     createdBy: user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
     title: 'AW19'
   });
   const design = await ProductDesignsDAO.create({

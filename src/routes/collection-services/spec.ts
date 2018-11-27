@@ -14,7 +14,11 @@ test(`PUT ${API_PATH}/:collectionServiceId creates a CollectionService`, async (
 
   const collectionServiceId = uuid.v4();
   const collection = await createCollection({
+    createdAt: new Date(),
     createdBy: user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
     title: 'FW19'
   });
   const data = {
@@ -41,7 +45,11 @@ test(`PATCH ${API_PATH}/:collectionServiceId updates a CollectionService`, async
   const collectionServiceId = uuid.v4();
 
   const collection = await createCollection({
+    createdAt: new Date(),
     createdBy: user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
     title: 'FW19'
   });
   const collectionService = await CollectionServiceDAO.create({
@@ -83,7 +91,11 @@ test(
     const { session, user } = await createUser();
     const collectionServiceId = uuid.v4();
     const collection = await createCollection({
+      createdAt: new Date(),
       createdBy: user.id,
+      deletedAt: null,
+      description: null,
+      id: uuid.v4(),
       title: 'FW19'
     });
 
@@ -112,7 +124,11 @@ test(
     const collectionServiceIdTwo = uuid.v4();
 
     const collection = await createCollection({
+      createdAt: new Date(),
       createdBy: user.id,
+      deletedAt: null,
+      description: null,
+      id: uuid.v4(),
       title: 'FW19'
     });
 

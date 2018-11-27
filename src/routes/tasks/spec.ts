@@ -133,7 +133,11 @@ test('GET /tasks?userId=:userId returns all tasks for a user', async (t: tape.Te
   const { session, user } = await createUser();
   const task = await tasksDAO.create(uuid.v4());
   const collection = await CollectionsDAO.create({
+    createdAt: new Date(),
     createdBy: user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
     title: 'FW19'
   });
 
@@ -260,7 +264,11 @@ async (t: tape.Test) => {
   const secondUser = await createUser();
   const task = await tasksDAO.create(uuid.v4());
   const collection = await CollectionsDAO.create({
+    createdAt: new Date(),
     createdBy: user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
     title: 'FW19'
   });
 

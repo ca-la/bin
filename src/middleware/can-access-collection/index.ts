@@ -4,7 +4,7 @@ import CollectionsDAO = require('../../dao/collections');
 import CollaboratorsDAO = require('../../dao/collaborators');
 import { Collaborator } from '../../domain-objects/collaborator';
 
-export default function* canAccessCollectionId(
+export function* canAccessCollectionId(
   this: Koa.Application.Context,
   collectionId: string
 ): IterableIterator<any> {

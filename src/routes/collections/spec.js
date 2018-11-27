@@ -18,10 +18,49 @@ function simulateAPISerialization(object) {
 }
 
 test('GET /collections/:id returns a created collection', async (t) => {
+  const { session, user } = await createUser();
+  const body = {
+    createdAt: new Date(),
+    createdBy: user.id,
+    deletedAt: null,
+    description: 'Initial commit',
+    id: uuid.v4(),
+    title: 'Drop 001/The Early Years'
+  };
+  sandbox()
+    .stub(CollaboratorsDAO, 'create')
+    .resolves({
+      id: uuid.v4(),
+      userId: uuid.v4(),
+      collectionId: uuid.v4(),
+      role: 'EDIT'
+    });
+
+  const [postResponse, postCollection] = await post(
+    '/collections',
+    { headers: authHeader(session.id), body }
+  );
+  const [getResponse, getCollection] = await get(
+    `/collections/${postCollection.id}`,
+    { headers: authHeader(session.id) }
+  );
+
+  t.equal(postResponse.status, 201, 'POST returns "201 Created" status');
+  t.equal(getResponse.status, 200, 'GET returns "200 OK" status');
+  t.deepEqual(
+    postCollection,
+    getCollection,
+    'return from POST is identical to GET'
+  );
+});
+
+test('POST /collections/ without a full object can create a collection', async (t) => {
   const { session } = await createUser();
   const body = {
-    title: 'Drop 001/The Early Years',
-    description: 'Initial commit'
+    createdAt: new Date(),
+    description: 'Initial commit',
+    id: uuid.v4(),
+    title: 'Drop 001/The Early Years'
   };
   sandbox()
     .stub(CollaboratorsDAO, 'create')
@@ -51,10 +90,14 @@ test('GET /collections/:id returns a created collection', async (t) => {
 });
 
 test('PATCH /collections/:collectionId allows updates to a collection', async (t) => {
-  const { session } = await createUser();
+  const { session, user } = await createUser();
   const body = {
-    title: 'Drop 001/The Early Years',
-    description: 'Initial commit'
+    createdAt: new Date(),
+    createdBy: user.id,
+    deletedAt: null,
+    description: 'Initial commit',
+    id: uuid.v4(),
+    title: 'Drop 001/The Early Years'
   };
   sandbox()
     .stub(CollaboratorsDAO, 'create')
@@ -70,7 +113,14 @@ test('PATCH /collections/:collectionId allows updates to a collection', async (t
     { headers: authHeader(session.id), body }
   );
 
-  const updateBody = { title: 'Droppin bombs' };
+  const updateBody = {
+    createdAt: postResponse[1].createdAt,
+    createdBy: user.id,
+    deletedAt: null,
+    description: 'Initial commit',
+    id: postResponse[1].id,
+    title: 'Droppin bombs'
+  };
   const updateResponse = await patch(
     `/collections/${postResponse[1].id}`,
     { body: updateBody, headers: authHeader(session.id) }
@@ -82,16 +132,64 @@ test('PATCH /collections/:collectionId allows updates to a collection', async (t
   );
 });
 
+test('PATCH /collections/:collectionId supports partial updates to a collection', async (t) => {
+  const { session, user } = await createUser();
+  const body = {
+    createdAt: new Date(),
+    createdBy: user.id,
+    deletedAt: null,
+    description: 'Initial commit',
+    id: uuid.v4(),
+    title: 'Drop 001/The Early Years'
+  };
+  sandbox()
+    .stub(CollaboratorsDAO, 'create')
+    .resolves({
+      id: uuid.v4(),
+      userId: uuid.v4(),
+      collectionId: uuid.v4(),
+      role: 'EDIT'
+    });
+
+  const postResponse = await post(
+    '/collections',
+    { headers: authHeader(session.id), body }
+  );
+
+  const updateBody = {
+    description: 'Updated Description',
+    title: 'Updated Title'
+  };
+  const updateResponse = await patch(
+    `/collections/${postResponse[1].id}`,
+    { body: updateBody, headers: authHeader(session.id) }
+  );
+  t.deepEqual(
+    updateResponse[1],
+    { ...postResponse[1], description: updateBody.description, title: updateBody.title },
+    'PATCH updates the record'
+  );
+});
+
+
 test('GET /collections', async (t) => {
   const { user, session } = await createUser();
-  const { session: session2 } = await createUser();
+  const { session: session2, user: user2 } = await createUser();
   const mine = {
-    title: 'Drop 001/The Early Years',
-    description: 'Initial commit'
+    createdAt: new Date(),
+    createdBy: user.id,
+    deletedAt: null,
+    description: 'Initial commit',
+    id: uuid.v4(),
+    title: 'Drop 001/The Early Years'
   };
   const theirs = {
-    title: 'Nacho collection',
-    description: 'Cheesy'
+    createdAt: new Date(),
+    createdBy: user2.id,
+    deletedAt: null,
+    description: 'Cheesy',
+    id: uuid.v4(),
+    title: 'Nacho collection'
   };
   sandbox()
     .stub(CollaboratorsDAO, 'create')
@@ -135,15 +233,23 @@ test('GET /collections', async (t) => {
 });
 
 test('DELETE /collections/:id', async (t) => {
-  const { session } = await createUser();
-  const { session: session2 } = await createUser();
+  const { session, user } = await createUser();
+  const { session: session2, user: user2 } = await createUser();
   const mine = {
-    title: 'Drop 001/The Early Years',
-    description: 'Initial commit'
+    createdAt: new Date(),
+    createdBy: user.id,
+    deletedAt: null,
+    description: 'Initial commit',
+    id: uuid.v4(),
+    title: 'Drop 001/The Early Years'
   };
   const theirs = {
-    title: 'Nacho collection',
-    description: 'Cheesy'
+    createdAt: new Date(),
+    createdBy: user2.id,
+    deletedAt: null,
+    description: 'Cheesy',
+    id: uuid.v4(),
+    title: 'Nacho collection'
   };
   sandbox()
     .stub(CollaboratorsDAO, 'create')
@@ -172,10 +278,14 @@ test('DELETE /collections/:id', async (t) => {
   );
 
   t.equal(postResponse.status, 201, 'POST returns "201 Created" status');
-  t.equal(deleteResponse.status, 200, 'DELETE returns "200 OK" status');
+  t.equal(deleteResponse.status, 204, 'DELETE returns "204 No Content" status');
 
   t.equal(otherResponse.status, 201, 'POST returns "201 Created" status');
-  t.equal(failureResponse.status, 403, 'DELETE on unowned collection returns "403 Forbidden" status');
+  t.equal(
+    failureResponse.status,
+    403,
+    'DELETE on unowned collection returns "403 Forbidden" status'
+  );
 });
 
 test('PUT /collections/:id/designs/:id', async (t) => {
@@ -194,8 +304,12 @@ test('PUT /collections/:id/designs/:id', async (t) => {
     {
       headers: authHeader(session.id),
       body: {
-        title: 'Drop 001/The Early Years',
-        description: 'Initial commit'
+        createdAt: new Date(),
+        createdBy: user.id,
+        deletedAt: null,
+        description: 'Initial commit',
+        id: uuid.v4(),
+        title: 'Drop 001/The Early Years'
       }
     }
   );
@@ -204,8 +318,12 @@ test('PUT /collections/:id/designs/:id', async (t) => {
     {
       headers: authHeader(session.id),
       body: {
-        title: 'Drop 002/Empire Strikes Back',
-        description: 'Ewoks'
+        createdAt: new Date(),
+        createdBy: user.id,
+        deletedAt: null,
+        description: 'Ewoks',
+        id: uuid.v4(),
+        title: 'Drop 002/Empire Strikes Back'
       }
     }
   );
@@ -258,8 +376,12 @@ test('DELETE /collections/:id/designs/:id', async (t) => {
     {
       headers: authHeader(session.id),
       body: {
-        title: 'Drop 001/The Early Years',
-        description: 'Initial commit'
+        createdAt: new Date(),
+        createdBy: user.id,
+        deletedAt: null,
+        description: 'Initial commit',
+        id: uuid.v4(),
+        title: 'Drop 001/The Early Years'
       }
     }
   );
@@ -303,9 +425,12 @@ test('GET /collections/:id/designs', async (t) => {
 
 
   const collection = await CollectionsDAO.create({
+    createdAt: new Date(),
     createdBy: user.id,
-    title: 'Drop 001/The Early Years',
-    description: 'Initial commit'
+    deletedAt: null,
+    description: 'Initial commit',
+    id: uuid.v4(),
+    title: 'Drop 001/The Early Years'
   });
 
   const design = await ProductDesignsDAO.create({
@@ -341,8 +466,11 @@ test('POST /collections/:id/submissions', async (t) => {
   const { user, session } = await createUser();
 
   const collection = await CollectionsDAO.create({
+    createdAt: new Date(),
     createdBy: user.id,
+    deletedAt: null,
     description: 'Initial commit',
+    id: uuid.v4(),
     title: 'Drop 001/The Early Years'
   });
   const designOne = await ProductDesignsDAO.create({
@@ -405,8 +533,11 @@ test('GET /collections/:collectionId/submissions', async (t) => {
   const designer = await createUser();
   const admin = await createUser({ role: 'ADMIN' });
   const collection = await CollectionsDAO.create({
+    createdAt: new Date(),
     createdBy: designer.user.id,
+    deletedAt: null,
     description: 'Initial commit',
+    id: uuid.v4(),
     title: 'Drop 001/The Early Years'
   });
   const designOne = await ProductDesignsDAO.create({

@@ -2,7 +2,6 @@ declare module 'koa' {
   import { IncomingMessage, Server, ServerResponse } from 'http';
   import { EventEmitter } from 'events';
   import httpAssert = require('http-assert');
-
   function Koa(): Koa.Application;
 
   export = Koa;
@@ -10,7 +9,7 @@ declare module 'koa' {
   interface RequestState {
     userId: string;
     role: string;
-    collection?: import ('../../domain-objects/collection');
+    collection?: import ('../../domain-objects/collection').default;
   }
 
   namespace Koa {

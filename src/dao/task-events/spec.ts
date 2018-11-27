@@ -147,7 +147,14 @@ test('Task Events DAO supports retrieval by collectionId', async (t: tape.Test) 
   });
   await createDesignStageTask({ designStageId: stage.id, taskId: task.id });
 
-  const collection = await createCollection({ createdBy: user.id });
+  const collection = await createCollection({
+    createdAt: new Date(),
+    createdBy: user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
+    title: null
+  });
   await addDesign(collection.id, design.id);
 
   const result = await findByCollectionId(collection.id);
@@ -165,7 +172,11 @@ test('Task Events DAO supports retrieval by userId', async (t: tape.Test) => {
   const { user } = await createUser();
   const task = await createTask(uuid.v4());
   const collection = await createCollection({
+    createdAt: new Date(),
     createdBy: user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
     title: 'FW19'
   });
 

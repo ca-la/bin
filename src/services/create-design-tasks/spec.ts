@@ -1,10 +1,11 @@
+import * as uuid from 'node-uuid';
 import * as ProductDesignStagesDAO from '../../dao/product-design-stages';
 import * as StageTemplatesDAO from '../../dao/stage-templates';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as TaskTemplatesDAO from '../../dao/task-templates';
 import CollaboratorsDAO = require('../../dao/collaborators');
-import Collection = require('../../domain-objects/collection');
-import CollectionsDAO = require('../../dao/collections');
+import Collection from '../../domain-objects/collection';
+import * as CollectionsDAO from '../../dao/collections';
 import createDesignTasks from './index';
 import createUser = require('../../test-helpers/create-user');
 import ProductDesign = require('../../domain-objects/product-design');
@@ -65,8 +66,11 @@ async function createResources(): Promise<{
 }> {
   const { user } = await createUser({ withSession: false });
   const collection = await CollectionsDAO.create({
+    createdAt: new Date(),
     createdBy: user.id,
+    deletedAt: null,
     description: 'We out here',
+    id: uuid.v4(),
     title: 'Season 1'
   });
 

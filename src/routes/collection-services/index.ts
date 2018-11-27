@@ -10,6 +10,7 @@ import {
 } from '../../dao/collection-services';
 
 import requireAuth = require('../../middleware/require-auth');
+import attachDefaults from '../../services/attach-defaults';
 
 const router = new Router();
 
@@ -17,20 +18,10 @@ interface GetListQuery {
   collectionId?: string;
 }
 
-const collectionServiceFromIO = (
-  request: CollectionService,
-  userId: string
-): CollectionService => {
-  return {
-    ...request,
-    createdBy: userId
-  };
-};
-
 function* createService(this: Koa.Application.Context): AsyncIterableIterator<CollectionService> {
   const body = this.request.body;
   if (body && isCollectionService(body)) {
-    const collectionService = yield create(collectionServiceFromIO(body, this.state.userId));
+    const collectionService = yield create(attachDefaults(body, this.state.userId));
     this.status = 201;
     this.body = collectionService;
   } else {

@@ -17,7 +17,11 @@ test('CollaboratorTask DAO supports creation/retrieval', async (t: tape.Test) =>
   const userOne = await createUser();
   const userTwo = await createUser();
   const collection = await createCollection({
+    createdAt: new Date(),
     createdBy: userOne.user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
     title: 'FW19'
   });
 
@@ -59,7 +63,11 @@ test('CollaboratorTask DAO does not allow non-unique creation', async (t: tape.T
   const { user } = await createUser();
   const task = await createTask(uuid.v4());
   const collection = await createCollection({
+    createdAt: new Date(),
     createdBy: user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
     title: 'FW19'
   });
 
@@ -89,7 +97,11 @@ test('CollaboratorTask DAO supports multiple simultaneous creations', async (t: 
   const userTwo = await createUser();
   const taskOne = await createTask(uuid.v4());
   const collection = await createCollection({
+    createdAt: new Date(),
     createdBy: userOne.user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
     title: 'FW19'
   });
 
@@ -128,7 +140,11 @@ test('CollaboratorTask DAO supports multiple simultaneous deletions', async (t: 
   const userThree = await createUser();
   const taskOne = await createTask(uuid.v4());
   const collection = await createCollection({
+    createdAt: new Date(),
     createdBy: userOne.user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
     title: 'FW19'
   });
 
