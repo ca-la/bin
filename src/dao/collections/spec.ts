@@ -2,6 +2,7 @@ import * as uuid from 'node-uuid';
 import * as tape from 'tape';
 import * as CollectionsDAO from './index';
 import * as ProductDesignsDAO from '../product-designs';
+import * as CollaboratorsDAO from '../collaborators';
 import { test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
 import ProductDesign = require('../../domain-objects/product-design');
@@ -84,6 +85,45 @@ test('CollectionsDAO#findByUserId includes referenced user collections', async (
   const retrievedCollection = await CollectionsDAO.findByUserId(user1.id);
 
   t.deepEqual(retrievedCollection[0].id, id1, 'only my collection is returned');
+});
+
+test('CollectionsDAO#findByCollaboratorAndUserId finds all collections', async (t: tape.Test) => {
+  const { user: user1 } = await createUser({ withSession: false });
+  const { user: user2 } = await createUser({ withSession: false });
+
+  const id1 = uuid.v4();
+  const id2 = uuid.v4();
+
+  const collection1 = await CollectionsDAO.create({
+    createdAt: new Date(),
+    createdBy: user1.id,
+    deletedAt: null,
+    description: 'Initial commit',
+    id: id1,
+    title: 'Drop 001/The Early Years'
+  });
+  const collection2 = await CollectionsDAO.create({
+    createdAt: new Date(),
+    createdBy: user2.id,
+    deletedAt: null,
+    description: 'Another collection',
+    id: id2,
+    title: 'Drop 002'
+  });
+  await CollaboratorsDAO.create({
+    collectionId: collection1.id,
+    role: 'EDIT',
+    userId: user1.id
+  });
+  await CollaboratorsDAO.create({
+    collectionId: collection2.id,
+    role: 'VIEW',
+    userId: user1.id
+  });
+
+  const collections = await CollectionsDAO.findByCollaboratorAndUserId(user1.id);
+
+  t.deepEqual(collections, [collection2, collection1], 'all collections I can access are returned');
 });
 
 test('CollectionsDAO#addDesign adds a design to a collection', async (t: tape.Test) => {

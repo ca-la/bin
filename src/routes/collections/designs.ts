@@ -7,29 +7,8 @@ import {
 import canAccessUserResource = require('../../middleware/can-access-user-resource');
 import * as ProductDesignsDAO from '../../dao/product-designs';
 import * as CollectionsDAO from '../../dao/collections';
-import * as CollaboratorsDAO from '../../dao/collaborators';
-import { Collaborator } from '../../domain-objects/collaborator';
 import ProductDesign = require('../../domain-objects/product-design');
-
-interface ProductDesignWithRole extends ProductDesign {
-  role: string;
-}
-
-async function attachRole(
-  requestorId: string,
-  design: ProductDesign
-): Promise<ProductDesign | ProductDesignWithRole> {
-  const requestorAsCollaborator: Collaborator[] = await CollaboratorsDAO.findByDesignAndUser(
-    design.id,
-    requestorId
-  );
-
-  if (requestorAsCollaborator.length > 0) {
-    return { ...design, role: requestorAsCollaborator[0].role };
-  }
-
-  return design;
-}
+import { attachRoleOnDesign } from '../../services/get-permissions';
 
 export function* putDesign(this: Koa.Application.Context): AsyncIterableIterator<void> {
   const { collectionId, designId } = this.params;
@@ -59,12 +38,13 @@ export function* deleteDesign(this: Koa.Application.Context): AsyncIterableItera
 
 export function* getCollectionDesigns(this: Koa.Application.Context): AsyncIterableIterator<void> {
   const { collectionId } = this.params;
+  const { userId } = this.state;
 
   canAccessCollectionId.call(this, collectionId);
 
   const collectionDesigns = yield ProductDesignsDAO.findByCollectionId(collectionId);
   const withRoles = yield Promise.all(
-    collectionDesigns.map((design: ProductDesign) => attachRole(this.state.userId, design))
+    collectionDesigns.map((design: ProductDesign) => attachRoleOnDesign(userId, design))
   );
 
   this.body = withRoles;

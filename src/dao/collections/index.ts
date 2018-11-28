@@ -89,12 +89,20 @@ export async function findByUserId(userId: string): Promise<Collection[]> {
   );
 }
 
-export async function findByCollaboratorUserId(userId: string): Promise<Collection[]> {
+export async function findByCollaboratorAndUserId(userId: string): Promise<Collection[]> {
   const collections: CollectionRow[] = await db(TABLE_NAME)
     .select('collections.*')
+    .distinct('collections.id')
     .from(TABLE_NAME)
     .join('collaborators', 'collaborators.collection_id', 'collections.id')
-    .where({ 'collaborators.user_id': userId, 'collections.deleted_at': null })
+    .where({
+      'collaborators.user_id': userId,
+      'collections.deleted_at': null
+    })
+    .orWhere({
+      'collections.created_by': userId,
+      'collections.deleted_at': null
+    })
     .orderBy('collections.created_at', 'desc')
     .catch(rethrow);
 
