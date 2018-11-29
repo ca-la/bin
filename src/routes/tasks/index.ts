@@ -202,18 +202,14 @@ function* getList(this: Koa.Application.Context): AsyncIterableIterator<TaskEven
 }
 
 function* createTaskComment(this: Koa.Application.Context): AsyncIterableIterator<Comment> {
-  const userId = this.state.userId;
-  const body = this.request.body;
-  if (body && isComment(body) && this.params.taskId) {
-    const comment = yield CommentDAO.create({
-      ...body,
-      userId
-    });
-    yield TaskCommentDAO.create({
-      commentId: comment.id,
-      taskId: this.params.taskId
-    });
-    yield sendTaskCommentCreateNotification(this.params.taskId, comment.id, userId);
+  const { userId } = this.state;
+  const { body } = this.request;
+  const { taskId } = this.params;
+
+  if (body && isComment(body) && taskId) {
+    const comment = yield CommentDAO.create({ ...body, userId });
+    yield TaskCommentDAO.create({ commentId: comment.id, taskId });
+    yield sendTaskCommentCreateNotification(taskId, comment.id, userId);
 
     this.status = 201;
     this.body = comment;

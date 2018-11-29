@@ -160,14 +160,17 @@ export async function sendTaskCommentCreateNotification(
   const taskEvent = await TaskEventsDAO.findById(taskId);
   if (!taskEvent) { throw new Error(`Could not find a task event with task id: ${taskId}`); }
 
-  const collaboratorIds: string[] = recipients.map(
+  const collaboratorUserIds: string[] = recipients.map(
     (collaborator: CollaboratorWithUserId): string => {
       return collaborator.userId;
     }
   );
   const recipientIds: string[] = taskEvent.createdBy
-    ? [...collaboratorIds, taskEvent.createdBy]
-    : collaboratorIds ;
+    ? [...collaboratorUserIds, taskEvent.createdBy]
+    : collaboratorUserIds ;
+  const filteredRecipientIds = recipientIds.filter((recipientId: string): boolean => {
+    return recipientId !== actorId;
+  });
 
   const stageTask = await StageTasksDAO.findByTaskId(taskId);
   if (!stageTask) { throw new Error(`Could not find a stage task with task id: ${taskId}`); }
@@ -178,7 +181,7 @@ export async function sendTaskCommentCreateNotification(
   const design = await DesignsDAO.findById(stage.designId);
   if (!design) { throw new Error(`Could not find a design with id: ${stage.designId}`); }
 
-  return Promise.all(recipientIds.map((recipientId: string): Promise<Notification> => {
+  return Promise.all(filteredRecipientIds.map((recipientId: string): Promise<Notification> => {
     return replaceNotifications({
       actionDescription: null,
       actorUserId: actorId,

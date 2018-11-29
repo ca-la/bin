@@ -135,13 +135,18 @@ test('Notifications DAO supports finding outstanding notifications', async (t: t
 
   t.equal(
     notifications.length,
-    2,
-    'Creates a task comment notification for each assignee and the owner'
+    1,
+    'Creates a task comment notification just for the assignee'
   );
   t.deepEqual(
-    notifications.map((n: Notification): NotificationType | null => n.type),
-    [NotificationType.TASK_COMMENT_CREATE, NotificationType.TASK_COMMENT_CREATE],
-    'Creates two notifications with the same notification type'
+    notifications[0].recipientUserId,
+    userTwo.user.id,
+    'Creates a notification for the assignee'
+  );
+  t.deepEqual(
+    notifications[0].type,
+    NotificationType.TASK_COMMENT_CREATE,
+    'Creates the correct notification type'
   );
 });
 

@@ -1,3 +1,8 @@
+import * as tape from 'tape';
+import * as uuid from 'node-uuid';
+import * as sinon from 'sinon';
+import { omit } from 'lodash';
+
 import User from '../../domain-objects/user';
 import TaskEvent, { TaskStatus } from '../../domain-objects/task-event';
 import * as taskEventsDAO from '../../dao/task-events';
@@ -6,12 +11,9 @@ import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
 import * as CollaboratorsDAO from '../../dao/collaborators';
 import * as CollectionsDAO from '../../dao/collections';
 import * as productDesignStageTasksDAO from '../../dao/product-design-stage-tasks';
-import * as tape from 'tape';
-import * as uuid from 'node-uuid';
 import createUser = require('../../test-helpers/create-user');
 import { authHeader, get, post, put } from '../../test-helpers/http';
 import { sandbox, test } from '../../test-helpers/fresh';
-import omit = require('lodash/omit');
 import * as CreateNotifications from '../../services/create-notifications';
 
 function createTaskEvents(user: User): TaskEvent[] {
@@ -369,7 +371,9 @@ test('POST /tasks/stage/:stageId creates Task on Stage successfully', async (t: 
 test('PUT /tasks/:taskId/comment/:id creates a task comment', async (t: tape.Test) => {
   const { session, user } = await createUser();
 
-  sandbox().stub(CreateNotifications, 'sendTaskCommentCreateNotification').resolves();
+  const notificationStub = sandbox()
+    .stub(CreateNotifications, 'sendTaskCommentCreateNotification')
+    .resolves();
 
   const task = await post('/tasks', {
     body: {
@@ -421,4 +425,7 @@ test('PUT /tasks/:taskId/comment/:id creates a task comment', async (t: tape.Tes
     }],
     'Comment retrieval returns the created comment in an array'
   );
+
+  // A notification is sent when comments are made
+  sinon.assert.callCount(notificationStub, 1);
 });
