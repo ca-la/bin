@@ -130,6 +130,8 @@ const config = {
 
   RUMBLESHIP_PAY_BASE: process.env.RUMBLESHIP_PAY_BASE,
 
+  FINANCING_MARGIN: 0.06,
+
   LOG_ALL_QUERIES: (process.env.LOG_ALL_QUERIES === 'true'),
 
   ADMIN_EMAIL,

@@ -85,10 +85,12 @@ function calculateQuote(
       ])
   );
   const margin = 1 - values.margin.margin / 100;
+  const unitCostCents = Math.ceil(beforeMargin / margin);
+
   return {
     ...omit(request, ['processes']),
     ...baseCost,
-    unitCostCents: Math.ceil(beforeMargin / margin)
+    unitCostCents
   };
 }
 function calculateQuoteAndProcesses(

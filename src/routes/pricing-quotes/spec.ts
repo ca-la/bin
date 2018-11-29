@@ -206,15 +206,9 @@ test('GET /pricing-quotes?designId&quantity returns unsaved quote', async (t: Te
 
   t.equal(response.status, 200);
   t.deepEqual(unsavedQuote, {
-    baseCostCents: 2288,
     designId: design.id,
-    materialBudgetCents: 1200,
-    materialCategory: 'BASIC',
-    materialCostCents: 1200,
-    processCostCents: 280,
-    productComplexity: 'SIMPLE',
-    productType: 'TEESHIRT',
-    unitCostCents: 4891,
+    payLaterTotalCents: 520320,
+    payNowTotalCents: 489100,
     units: 100
   });
 });

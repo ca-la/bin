@@ -3,6 +3,7 @@ import * as Router from 'koa-router';
 import * as Koa from 'koa';
 import * as uuid from 'node-uuid';
 
+import { FINANCING_MARGIN } from '../../config';
 import * as DesignEventsDAO from '../../dao/design-events';
 import { findByDesignId, findById } from '../../dao/pricing-quotes';
 import {
@@ -19,7 +20,8 @@ import requireAdmin = require('../../middleware/require-admin');
 import requireAuth = require('../../middleware/require-auth');
 import { hasProperties } from '../../services/require-properties';
 import generatePricingQuote, {
-  generateUnsavedQuote
+  generateUnsavedQuote,
+  UnsavedQuote
 } from '../../services/generate-pricing-quote';
 import Bid from '../../domain-objects/bid';
 
@@ -127,9 +129,17 @@ function* getQuotes(this: Koa.Application.Context): AsyncIterableIterator<any> {
       ...omit(costInputs[0], ['id', 'createdAt', 'deletedAt']),
       units: unitsNumber
     };
-    const unsavedQuote = yield generateUnsavedQuote(quoteRequest);
+    const unsavedQuote: UnsavedQuote = yield generateUnsavedQuote(quoteRequest);
+    const financingMargin = 1 - FINANCING_MARGIN;
+    const payNowTotalCents = unsavedQuote.units * unsavedQuote.unitCostCents;
+    const payLaterTotalCents = Math.ceil(payNowTotalCents / financingMargin);
 
-    this.body = unsavedQuote;
+    this.body = {
+      designId,
+      payLaterTotalCents,
+      payNowTotalCents,
+      units: unsavedQuote.units
+    };
     this.status = 200;
   } else {
     if (this.state.role !== 'ADMIN') {
