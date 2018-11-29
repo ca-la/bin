@@ -35,21 +35,21 @@ test('/pricing-quotes POST -> GET quote', async (t: Test) => {
     productType: 'TEESHIRT'
   });
 
-  const [postResponse, createdQuote] = await post('/pricing-quotes', {
-    body: {
+  const [postResponse, createdQuotes] = await post('/pricing-quotes', {
+    body: [{
       designId: design.id,
       units: 300
-    },
+    }],
     headers: authHeader(session.id)
   });
 
   t.equal(postResponse.status, 201, 'successfully creates the quote');
 
-  const [getResponse, retrievedQuote] = await get(`/pricing-quotes/${createdQuote.id}`);
+  const [getResponse, retrievedQuote] = await get(`/pricing-quotes/${createdQuotes[0].id}`);
 
   t.equal(getResponse.status, 200, 'successfully retrieves saved quote');
   t.deepEquals(
-    createdQuote,
+    createdQuotes[0],
     retrievedQuote,
     'retrieved quote is identical to saved quote'
   );
@@ -84,10 +84,10 @@ test('POST /pricing-quotes creates commit event', async (t: Test) => {
   });
 
   await post('/pricing-quotes', {
-    body: {
+    body: [{
       designId: design.id,
       units: 300
-    },
+    }],
     headers: authHeader(session.id)
   });
 
@@ -144,19 +144,19 @@ test('/pricing-quotes?designId retrieves the set of quotes for a design', async 
     productType: 'TEESHIRT'
   });
 
-  const created = await post('/pricing-quotes', {
-    body: {
+  const created = (await post('/pricing-quotes', {
+    body: [{
       designId: design.id,
       units: 300
-    },
+    }],
     headers: authHeader(session.id)
-  });
+  }))[1];
 
   await post('/pricing-quotes', {
-    body: {
+    body: [{
       designId: otherDesign.id,
       units: 300
-    },
+    }],
     headers: authHeader(session.id)
   });
 
@@ -168,7 +168,7 @@ test('/pricing-quotes?designId retrieves the set of quotes for a design', async 
   t.equal(getResponse.status, 200);
   t.deepEquals(
     designQuotes,
-    [created[1]],
+    [created[0]],
     'Retrieves only the quote associated with this design'
   );
 });
@@ -245,13 +245,13 @@ test('PUT /pricing-quotes/:quoteId/bid/:bidId creates bid', async (t: Test) => {
     productType: 'TEESHIRT'
   });
 
-  const createdQuote = await post('/pricing-quotes', {
-    body: {
+  const createdQuotes = (await post('/pricing-quotes', {
+    body: [{
       designId: design.id,
       units: 200
-    },
+    }],
     headers: authHeader(session.id)
-  });
+  }))[1];
 
   const inputBid: Bid = {
     bidPriceCents: 100000,
@@ -259,7 +259,7 @@ test('PUT /pricing-quotes/:quoteId/bid/:bidId creates bid', async (t: Test) => {
     createdBy: user.id,
     description: 'Full Service',
     id: uuid.v4(),
-    quoteId: createdQuote[1].id
+    quoteId: createdQuotes[0].id
   };
 
   const [putResponse, createdBid] = await put(
@@ -303,19 +303,19 @@ test('POST /pricing-quotes/:quoteId/bids creates bid', async (t: Test) => {
     productType: 'TEESHIRT'
   });
 
-  const createdQuote = await post('/pricing-quotes', {
-    body: {
+  const createdQuotes = (await post('/pricing-quotes', {
+    body: [{
       designId: design.id,
       units: 200
-    },
+    }],
     headers: authHeader(session.id)
-  });
+  }))[1];
 
   const inputBid: Unsaved<Bid> = {
     bidPriceCents: 100000,
     createdBy: user.id,
     description: 'Full Service',
-    quoteId: createdQuote[1].id
+    quoteId: createdQuotes[0].id
   };
 
   const [postResponse, createdBid] = await post(
@@ -360,13 +360,13 @@ test('GET /pricing-quotes/:quoteId/bids returns list of bids for quote', async (
     productType: 'TEESHIRT'
   });
 
-  const createdQuote = await post('/pricing-quotes', {
-    body: {
+  const createdQuotes = (await post('/pricing-quotes', {
+    body: [{
       designId: design.id,
       units: 200
-    },
+    }],
     headers: authHeader(session.id)
-  });
+  }))[1];
 
   const inputBid: Bid = {
     bidPriceCents: 100000,
@@ -374,7 +374,7 @@ test('GET /pricing-quotes/:quoteId/bids returns list of bids for quote', async (
     createdBy: user.id,
     description: 'Full Service',
     id: uuid.v4(),
-    quoteId: createdQuote[1].id
+    quoteId: createdQuotes[0].id
   };
 
   await put(

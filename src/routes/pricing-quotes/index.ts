@@ -36,53 +36,66 @@ function isBidRequest(candidate: object): candidate is BidRequest {
   );
 }
 
-interface CreateRequest {
+interface CreateQuotePayload {
   designId: string;
   units: number;
 }
 
+type CreateRequest = CreateQuotePayload[];
+
 function isCreateRequest(body: any): body is CreateRequest {
   return (
-    typeof body.designId === 'string' &&
-    typeof body.units === 'number'
+    body instanceof Array &&
+    body.every((payload: any) =>
+      typeof payload.designId === 'string' &&
+      typeof payload.units === 'number'
+    )
   );
 }
 
 function* createQuote(this: Koa.Application.Context): AsyncIterableIterator<PricingQuote> {
-  if (!this.request.body || !isCreateRequest(this.request.body)) {
+  const { body } = this.request;
+
+  if (!body || !isCreateRequest(body)) {
     this.throw(400, 'Invalid request');
     return;
   }
 
-  const { designId, units } = this.request.body;
-  const unitsNumber = Number(units);
+  const quotes: PricingQuote[] = [];
 
-  const costInputs: PricingCostInputs[] = yield PricingCostInputsDAO.findByDesignId(designId);
+  for (const payload of body) {
+    const { designId, units } = payload;
 
-  if (costInputs.length === 0) {
-    this.throw(404, 'No costing inputs associated with design ID');
-    return;
+    const unitsNumber = Number(units);
+
+    const costInputs: PricingCostInputs[] = yield PricingCostInputsDAO.findByDesignId(designId);
+
+    if (costInputs.length === 0) {
+      this.throw(404, 'No costing inputs associated with design ID');
+      return;
+    }
+
+    const quoteRequest: PricingQuoteRequest = {
+      ...omit(costInputs[0], ['id', 'createdAt', 'deletedAt']),
+      units: unitsNumber
+    };
+
+    const quote = yield generatePricingQuote(quoteRequest);
+    quotes.push(quote);
+
+    yield DesignEventsDAO.create({
+      actorId: this.state.userId,
+      bidId: null,
+      createdAt: new Date(),
+      designId,
+      id: uuid.v4(),
+      quoteId: quote.id,
+      targetId: null,
+      type: 'COMMIT_QUOTE'
+    });
   }
 
-  const quoteRequest: PricingQuoteRequest = {
-    ...omit(costInputs[0], ['id', 'createdAt', 'deletedAt']),
-    units: unitsNumber
-  };
-
-  const quote = yield generatePricingQuote(quoteRequest);
-
-  yield DesignEventsDAO.create({
-    actorId: this.state.userId,
-    bidId: null,
-    createdAt: new Date(),
-    designId,
-    id: uuid.v4(),
-    quoteId: quote.id,
-    targetId: null,
-    type: 'COMMIT_QUOTE'
-  });
-
-  this.body = quote;
+  this.body = quotes;
   this.status = 201;
 }
 
