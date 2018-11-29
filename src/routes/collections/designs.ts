@@ -8,7 +8,9 @@ import canAccessUserResource = require('../../middleware/can-access-user-resourc
 import * as ProductDesignsDAO from '../../dao/product-designs';
 import * as CollectionsDAO from '../../dao/collections';
 import ProductDesign = require('../../domain-objects/product-design');
-import { attachRoleOnDesign } from '../../services/get-permissions';
+import { getDesignPermissionsAndRole, PermissionsAndRole } from '../../services/get-permissions';
+
+type DesignWithPermissions = ProductDesign & PermissionsAndRole;
 
 export function* putDesign(this: Koa.Application.Context): AsyncIterableIterator<void> {
   const { collectionId, designId } = this.params;
@@ -36,15 +38,21 @@ export function* deleteDesign(this: Koa.Application.Context): AsyncIterableItera
   this.status = 200;
 }
 
-export function* getCollectionDesigns(this: Koa.Application.Context): AsyncIterableIterator<void> {
+export function* getCollectionDesigns(
+  this: Koa.Application.Context
+): AsyncIterableIterator<DesignWithPermissions[]> {
   const { collectionId } = this.params;
-  const { userId } = this.state;
+  const { role, userId } = this.state;
 
   canAccessCollectionId.call(this, collectionId);
 
   const collectionDesigns = yield ProductDesignsDAO.findByCollectionId(collectionId);
   const withRoles = yield Promise.all(
-    collectionDesigns.map((design: ProductDesign) => attachRoleOnDesign(userId, design))
+    collectionDesigns.map(async (design: ProductDesign): Promise<DesignWithPermissions> => {
+      // TODO: switch to `getDesignPermissions` once studio consumes the `permissions` object.
+      const permissions = await getDesignPermissionsAndRole(design, role, userId);
+      return { ...design, ...permissions };
+    })
   );
 
   this.body = withRoles;

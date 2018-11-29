@@ -1,3 +1,7 @@
+// ---------------------------------
+// DEPRECATED AS OF 28 NOVEMBER 2018
+// ---------------------------------
+
 'use strict';
 
 const ForbiddenError = require('../../errors/forbidden');

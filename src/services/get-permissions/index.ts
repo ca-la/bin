@@ -1,37 +1,104 @@
 import * as CollaboratorsDAO from '../../dao/collaborators';
+import * as CollectionsDAO from '../../dao/collections';
 import { Collaborator } from '../../domain-objects/collaborator';
 import ProductDesign = require('../../domain-objects/product-design');
 import Collection from '../../domain-objects/collection';
-
-interface ProductDesignWithRole extends ProductDesign {
-  role: string;
-}
 
 export interface Permissions {
   canComment: boolean;
   canDelete: boolean;
   canEdit: boolean;
-  canManagePricing: boolean;
-  canModifyServices: boolean;
   canSubmit: boolean;
   canView: boolean;
-  canViewPricing: boolean;
 }
 
-export async function attachRoleOnDesign(
-  requestorId: string,
-  design: ProductDesign
-): Promise<ProductDesign | ProductDesignWithRole> {
-  const requestorAsCollaborator: Collaborator[] = await CollaboratorsDAO.findByDesignAndUser(
+export interface PermissionsAndRole {
+  permissions: Permissions;
+  role?: string;
+}
+
+interface LocalRoles {
+  isAdmin: boolean;
+  isCommenter: boolean;
+  isEditor: boolean;
+  isOwner: boolean;
+  isPartner: boolean;
+  isPreviewer: boolean;
+  isViewer: boolean;
+}
+
+const ROLE_ORDERING = ['EDIT', 'PARTNER', 'COMMENT', 'VIEW', 'PREVIEW'];
+
+// TODO: This is deprecated and should be removed once Studio only consumes the `permissions`
+//       object.
+export async function getDesignPermissionsAndRole(
+  design: ProductDesign,
+  sessionRole: string,
+  sessionUserId: string
+): Promise<PermissionsAndRole> {
+  const isAdmin = sessionRole === 'ADMIN';
+  const isDesignOwner = sessionUserId === design.userId;
+  const collections = await CollectionsDAO.findByDesign(design.id);
+  const userCreatedCollection = collections.find((collection: Collection): boolean => {
+    return collection.createdBy === sessionUserId;
+  });
+  const isOwner = isDesignOwner || Boolean(userCreatedCollection);
+
+  const designCollaborators: Collaborator[] = await CollaboratorsDAO.findByDesignAndUser(
     design.id,
-    requestorId
+    sessionUserId
   );
+  const collaboratorsForEachCollection: Collaborator[][] = await Promise.all(
+    collections.map(async (collection: Collection): Promise<Collaborator[]> => {
+      return CollaboratorsDAO.findByCollectionAndUser(
+        collection.id,
+        sessionUserId
+      );
+    })
+  );
+  const collectionCollaborators: Collaborator[] = collaboratorsForEachCollection.reduce(
+    (acc: Collaborator[], collaborators: Collaborator[]): Collaborator[] => {
+      return [...collaborators, ...acc];
+    }, []
+  );
+  const roles = [...designCollaborators, ...collectionCollaborators].map(
+    (collaborator: Collaborator): string => {
+      return collaborator.role;
+    }
+  );
+  const role = findMostPermissiveRole(roles);
 
-  if (requestorAsCollaborator.length > 0) {
-    return { ...design, role: requestorAsCollaborator[0].role };
-  }
+  const isEditor = role === 'EDIT';
+  const isCommenter = role === 'COMMENT';
+  const isPartner = role === 'PARTNER';
+  const isPreviewer = role === 'PREVIEW';
+  const isViewer = role === 'VIEW';
 
-  return design;
+  return {
+    permissions: getPermissionsFromRole({
+      isAdmin,
+      isCommenter,
+      isEditor,
+      isOwner,
+      isPartner,
+      isPreviewer,
+      isViewer
+    }),
+    role
+  };
+}
+
+export async function getDesignPermissions(
+  design: ProductDesign,
+  sessionRole: string,
+  sessionUserId: string
+): Promise<Permissions> {
+  const designPermissionsAndRole = await getDesignPermissionsAndRole(
+    design,
+    sessionRole,
+    sessionUserId
+  );
+  return { ...designPermissionsAndRole.permissions };
 }
 
 export async function getCollectionPermissions(
@@ -43,64 +110,87 @@ export async function getCollectionPermissions(
     collection.id,
     sessionUserId
   );
-  const collaborator = collaborators[0] || {};
+  const role = findMostPermissiveRole(collaborators.map((collaborator: Collaborator): string => {
+    return collaborator.role;
+  }));
 
   const isOwner = sessionUserId === collection.createdBy;
   const isAdmin = sessionRole === 'ADMIN';
+  const isEditor = role === 'EDIT';
+  const isCommenter = role === 'COMMENT';
+  const isPartner = role === 'PARTNER';
+  const isPreviewer = role === 'PREVIEW';
+  const isViewer = role === 'VIEW';
 
-  const isEditor = collaborator.role === 'EDIT';
-  const isCommenter = collaborator.role === 'COMMENT';
-  const isViewer = collaborator.role === 'VIEW';
+  return getPermissionsFromRole({
+    isAdmin,
+    isCommenter,
+    isEditor,
+    isOwner,
+    isPartner,
+    isPreviewer,
+    isViewer
+  });
+}
 
-  if (isOwner || isAdmin) {
+function getPermissionsFromRole(roles: LocalRoles): Permissions {
+  if (roles.isOwner || roles.isAdmin) {
     return {
       canComment: true,
       canDelete: true,
       canEdit: true,
-      canManagePricing: true,
-      canModifyServices: true,
       canSubmit: true,
-      canView: true,
-      canViewPricing: true
+      canView: true
     };
   }
 
-  if (isEditor) {
+  if (roles.isEditor) {
     return {
       canComment: true,
       canDelete: false,
       canEdit: true,
-      canManagePricing: false,
-      canModifyServices: false,
       canSubmit: false,
-      canView: true,
-      canViewPricing: false
+      canView: true
     };
   }
 
-  if (isCommenter) {
+  if (roles.isCommenter) {
     return {
       canComment: true,
       canDelete: false,
       canEdit: false,
-      canManagePricing: false,
-      canModifyServices: false,
       canSubmit: false,
-      canView: true,
-      canViewPricing: false
+      canView: true
     };
   }
 
-  if (isViewer) {
+  if (roles.isPartner) {
+    return {
+      canComment: true,
+      canDelete: false,
+      canEdit: false,
+      canSubmit: false,
+      canView: true
+    };
+  }
+
+  if (roles.isPreviewer) {
     return {
       canComment: false,
       canDelete: false,
       canEdit: false,
-      canManagePricing: false,
-      canModifyServices: false,
       canSubmit: false,
-      canView: true,
-      canViewPricing: false
+      canView: true
+    };
+  }
+
+  if (roles.isViewer) {
+    return {
+      canComment: false,
+      canDelete: false,
+      canEdit: false,
+      canSubmit: false,
+      canView: true
     };
   }
 
@@ -108,10 +198,18 @@ export async function getCollectionPermissions(
     canComment: false,
     canDelete: false,
     canEdit: false,
-    canManagePricing: false,
-    canModifyServices: false,
     canSubmit: false,
-    canView: false,
-    canViewPricing: false
+    canView: false
   };
+}
+
+// TODO use collaborators role when that gets added.
+export function findMostPermissiveRole(roles: string[]): string | undefined {
+  const roleIndex = roles.reduce((acc: number, role: string): number => {
+    const index = ROLE_ORDERING.findIndex((roleOrdering: string): boolean => roleOrdering === role);
+    if (acc >= 0 && index >= 0) { return acc < index ? acc : index; }
+    return index;
+  }, -1);
+
+  return ROLE_ORDERING[roleIndex];
 }

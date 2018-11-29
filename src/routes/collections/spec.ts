@@ -224,11 +224,8 @@ test('GET /collections', async (t: tape.Test) => {
           canComment: false,
           canDelete: false,
           canEdit: false,
-          canManagePricing: false,
-          canModifyServices: false,
           canSubmit: false,
-          canView: true,
-          canViewPricing: false
+          canView: true
         }
       },
       {
@@ -238,11 +235,8 @@ test('GET /collections', async (t: tape.Test) => {
           canComment: true,
           canDelete: true,
           canEdit: true,
-          canManagePricing: true,
-          canModifyServices: true,
           canSubmit: true,
-          canView: true,
-          canViewPricing: true
+          canView: true
         }
       }
     ],
@@ -432,14 +426,6 @@ test('DELETE /collections/:id/designs/:id', async (t: tape.Test) => {
 
 test('GET /collections/:id/designs', async (t: tape.Test) => {
   const { user, session } = await createUser();
-  sandbox()
-    .stub(CollaboratorsDAO, 'create')
-    .resolves({
-      collectionId: uuid.v4(),
-      id: uuid.v4(),
-      role: 'EDIT',
-      userId: uuid.v4()
-    });
 
   const createdAt = new Date();
   const collection = await CollectionsDAO.create({
@@ -450,11 +436,15 @@ test('GET /collections/:id/designs', async (t: tape.Test) => {
     id: uuid.v4(),
     title: 'Drop 001/The Early Years'
   });
-
   const design = await ProductDesignsDAO.create({
     description: 'Black, bold, beautiful',
     productType: 'HELMET',
     title: 'Vader Mask',
+    userId: user.id
+  });
+  await CollaboratorsDAO.create({
+    designId: design.id,
+    role: 'EDIT',
     userId: user.id
   });
 
@@ -474,7 +464,15 @@ test('GET /collections/:id/designs', async (t: tape.Test) => {
     {
       ...design,
       collectionIds: [collection.id],
-      createdAt: design.createdAt.toISOString()
+      createdAt: design.createdAt.toISOString(),
+      permissions: {
+        canComment: true,
+        canDelete: true,
+        canEdit: true,
+        canSubmit: true,
+        canView: true
+      },
+      role: 'EDIT'
     },
     'returns a list of contained designs'
   );
