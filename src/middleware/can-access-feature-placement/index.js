@@ -4,7 +4,7 @@ const filterError = require('../../services/filter-error');
 const InvalidDataError = require('../../errors/invalid-data');
 const ProductDesignFeaturePlacementsDAO = require('../../dao/product-design-feature-placements');
 const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
-const { canAccessDesignId } = require('../can-access-design');
+const { attachDesignPermissions } = require('../can-access-design');
 
 function* canAccessFeaturePlacement(next) {
   if (!this.params.featureId) {
@@ -17,7 +17,7 @@ function* canAccessFeaturePlacement(next) {
   this.assert(feature, 404);
 
   const section = yield ProductDesignSectionsDAO.findById(feature.sectionId);
-  yield canAccessDesignId.call(this, section.designId);
+  yield attachDesignPermissions.call(this, section.designId);
 
   yield next;
 }

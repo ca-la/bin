@@ -5,14 +5,14 @@ const CollaboratorsDAO = require('../../dao/collaborators');
 
 const { group, sandbox } = require('../../test-helpers/fresh');
 
-const getDesignPermissions = require('.');
+const getDesignPermissionsDeprecated = require('.');
 
 let test = group(() => {
   sandbox().stub(InvoicesDAO, 'findUnpaidByDesignAndStatus')
     .returns(Promise.resolve([]));
 });
 
-test('getDesignPermissions when owner and when all status invoices are paid', async (t) => {
+test('getDesignPermissionsDeprecated when owner and when all status invoices are paid', async (t) => {
   const userId = 'userId';
   const design = {
     status: 'NEEDS_DEVELOPMENT_PAYMENT',
@@ -20,7 +20,7 @@ test('getDesignPermissions when owner and when all status invoices are paid', as
   };
 
   t.deepEqual(
-    await getDesignPermissions(design, userId, 'USER'),
+    await getDesignPermissionsDeprecated(design, userId, 'USER'),
     {
       canComment: true,
       canDelete: true,
@@ -42,7 +42,7 @@ test = group(() => {
     .returns(Promise.resolve([{}]));
 });
 
-test('getDesignPermissions when owner and when all status invoices are not paid', async (t) => {
+test('getDesignPermissionsDeprecated when owner and when all status invoices are not paid', async (t) => {
   const userId = 'userId';
   const design = {
     status: 'NEEDS_DEVELOPMENT_PAYMENT',
@@ -50,7 +50,7 @@ test('getDesignPermissions when owner and when all status invoices are not paid'
   };
 
   t.deepEqual(
-    await getDesignPermissions(design, userId, 'USER'),
+    await getDesignPermissionsDeprecated(design, userId, 'USER'),
     {
       canComment: true,
       canDelete: true,
@@ -67,7 +67,7 @@ test('getDesignPermissions when owner and when all status invoices are not paid'
   );
 });
 
-test('getDesignPermissions when partner', async (t) => {
+test('getDesignPermissionsDeprecated when partner', async (t) => {
   const userId = 'userId';
   const partnerId = 'partnerId';
   const design = {
@@ -78,7 +78,7 @@ test('getDesignPermissions when partner', async (t) => {
   sandbox().stub(CollaboratorsDAO, 'findByDesignAndUser')
     .resolves([{ userId: partnerId, role: 'PREVIEW' }]);
   t.deepEqual(
-    await getDesignPermissions(design, partnerId, 'PARTNER'),
+    await getDesignPermissionsDeprecated(design, partnerId, 'PARTNER'),
     {
       canComment: false,
       canDelete: false,

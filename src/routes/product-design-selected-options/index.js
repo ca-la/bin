@@ -7,7 +7,7 @@ const filterError = require('../../services/filter-error');
 const InvalidDataError = require('../../errors/invalid-data');
 const ProductDesignSelectedOptionsDAO = require('../../dao/product-design-selected-options');
 const requireAuth = require('../../middleware/require-auth');
-const { canAccessDesignId } = require('../../middleware/can-access-design');
+const { attachDesignPermissions } = require('../../middleware/can-access-design');
 
 const router = new Router();
 
@@ -30,7 +30,7 @@ function* canAccessSelectedOption(next) {
   );
   this.assert(selectedOption, 404);
 
-  yield canAccessDesignId.call(this, selectedOption.designId);
+  yield attachDesignPermissions.call(this, selectedOption.designId);
 
   this.state.selectedOption = selectedOption;
 
@@ -51,7 +51,7 @@ function* getByDesign() {
   const { designId } = this.query;
   this.assert(designId, 403, 'Design ID required');
 
-  yield canAccessDesignId.call(this, designId);
+  yield attachDesignPermissions.call(this, designId);
 
   const options = yield ProductDesignSelectedOptionsDAO.findByDesignId(designId);
   this.body = options;

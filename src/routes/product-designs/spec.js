@@ -260,7 +260,28 @@ test('GET /product-designs allows fetching designs await quotes', async (t) => {
       ...omit(user, ['passwordHash']),
       createdAt: new Date(user.createdAt).toISOString()
     },
-    createdAt: new Date(first.createdAt).toISOString()
+    createdAt: new Date(first.createdAt).toISOString(),
+    currentStatus: {
+      actionName: 'Submit',
+      id: 'DRAFT',
+      label: 'Draft',
+      nextStatus: 'IN_REVIEW',
+      slaDescription: ''
+    },
+    nextStatus: {
+      actionName: 'Approve',
+      id: 'IN_REVIEW',
+      label: 'In Review',
+      nextStatus: 'NEEDS_DEVELOPMENT_PAYMENT',
+      slaDescription: ''
+    },
+    permissions: {
+      canComment: true,
+      canDelete: true,
+      canEdit: true,
+      canSubmit: true,
+      canView: true
+    }
   }]);
 });
 
@@ -629,13 +650,19 @@ test('GET /product-designs/:designId/events', async (t) => {
 test('GET /product-designs/:designId/collections returns collections', async (t) => {
   const { user, session } = await createUser({ role: 'ADMIN' });
 
-  const collectionFixture = { id: 'my-new-collection' };
-  sandbox().stub(CollectionsDAO, 'findByDesign').resolves([collectionFixture]);
-
+  const collection = await CollectionsDAO.create({
+    createdAt: new Date(),
+    createdBy: user.id,
+    deletedAt: null,
+    description: 'Cool Collection',
+    id: uuid.v4(),
+    title: 'Virgil Drop'
+  });
   const design = await ProductDesignsDAO.create({
     userId: user.id,
     title: 'Design'
   });
+  await CollectionsDAO.addDesign(collection.id, design.id);
 
   const [response, body] = await get(
     `/product-designs/${design.id}/collections`,
@@ -643,7 +670,9 @@ test('GET /product-designs/:designId/collections returns collections', async (t)
   );
 
   t.equal(response.status, 200);
-  t.deepEqual(body, [collectionFixture]);
+  t.equal(body.length, 1, 'Returns the collection');
+  const responseCollection = body[0];
+  t.deepEqual(responseCollection.id, collection.id, 'Returns the same collection');
 });
 
 test('GET /product-designs allows getting tasks', async (t) => {

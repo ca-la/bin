@@ -10,7 +10,7 @@ import Collaborator,
   Roles
 } from '../../domain-objects/collaborator';
 import requireAuth = require('../../middleware/require-auth');
-import { canAccessDesignId } from '../../middleware/can-access-design';
+import { attachDesignPermissions } from '../../middleware/can-access-design';
 import {
   canAccessCollectionId
 } from '../../middleware/can-access-collection';
@@ -50,7 +50,7 @@ function* create(this: Koa.Application.Context): AsyncIterableIterator<Collabora
   }
 
   if (designId) {
-    yield canAccessDesignId.call(this, designId);
+    yield attachDesignPermissions.call(this, designId);
   }
 
   if (collectionId) {
@@ -96,7 +96,7 @@ function* update(this: Koa.Application.Context): AsyncIterableIterator<Collabora
   let canAccessDesign = false;
   let canAccessCollection = false;
   try {
-    yield canAccessDesignId.call(this, collaborator.designId);
+    yield attachDesignPermissions.call(this, collaborator.designId);
     canAccessDesign = true;
   } catch (e) {
     canAccessDesign = false;
@@ -129,7 +129,7 @@ function* find(this: Koa.Application.Context): AsyncIterableIterator<Collaborato
   let collaborators;
 
   if (designId) {
-    yield canAccessDesignId.call(this, designId);
+    yield attachDesignPermissions.call(this, designId);
     collaborators = yield CollaboratorsDAO.findByDesign(designId);
   } else if (collectionId) {
     yield canAccessCollectionId.call(this, collectionId);
@@ -147,7 +147,7 @@ function* deleteCollaborator(this: Koa.Application.Context): AsyncIterableIterat
   this.assert(collaborator, 404, 'Collaborator not found');
 
   if (collaborator.designId) {
-    yield canAccessDesignId.call(this, collaborator.designId);
+    yield attachDesignPermissions.call(this, collaborator.designId);
   }
 
   if (collaborator.collectionId) {

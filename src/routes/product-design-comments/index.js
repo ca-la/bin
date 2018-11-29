@@ -8,7 +8,7 @@ const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
 const requireAuth = require('../../middleware/require-auth');
 const sendCommentNotifications = require('../../services/send-comment-notifications');
 const UsersDAO = require('../../dao/users');
-const { canAccessDesignId } = require('../../middleware/can-access-design');
+const { attachDesignPermissions } = require('../../middleware/can-access-design');
 
 const router = new Router();
 
@@ -22,7 +22,7 @@ function* getByDesign() {
   const { designId } = this.query;
   this.assert(designId, 403, 'Design ID required');
 
-  yield canAccessDesignId.call(this, designId);
+  yield attachDesignPermissions.call(this, designId);
 
   const comments = yield ProductDesignCommentsDAO.findByDesign(designId);
   const commentsWithUsers = yield Promise.all(comments.map(attachUser));
@@ -72,7 +72,7 @@ function* create() {
   const section = yield ProductDesignSectionsDAO.findById(sectionId);
   this.assert(section, 400, 'Invalid section ID');
 
-  yield canAccessDesignId.call(this, section.designId);
+  yield attachDesignPermissions.call(this, section.designId);
 
   const created = yield ProductDesignCommentsDAO.create({
     parentCommentId,

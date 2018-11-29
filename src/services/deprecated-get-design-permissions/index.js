@@ -74,7 +74,7 @@ function canModifyServices(
   return isUnsubmitted || isAdmin;
 }
 
-async function getDesignPermissions(design, userId, sessionRole) {
+async function getDesignPermissionsDeprecated(design, userId, sessionRole) {
   if (!userId) {
     throw new UnauthorizedError('Sign in to access this design');
   }
@@ -139,4 +139,4 @@ async function getDesignPermissions(design, userId, sessionRole) {
   return designPermissions;
 }
 
-module.exports = getDesignPermissions;
+module.exports = getDesignPermissionsDeprecated;

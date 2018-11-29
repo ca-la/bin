@@ -10,6 +10,8 @@ declare module 'koa' {
     userId: string;
     role: string;
     collection?: import ('../../domain-objects/collection').default;
+    design?: import ('../../domain-objects/product-design');
+    permissions?: import ('../../services/get-permissions').Permissions;
   }
 
   namespace Koa {

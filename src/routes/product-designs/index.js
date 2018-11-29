@@ -12,7 +12,6 @@ const CollectionsDAO = require('../../dao/collections');
 const compact = require('../../services/compact');
 const filterError = require('../../services/filter-error');
 const findUserDesigns = require('../../services/find-user-designs');
-const getDesignPermissions = require('../../services/get-design-permissions');
 const InvalidDataError = require('../../errors/invalid-data');
 const MissingPrerequisitesError = require('../../errors/missing-prerequisites');
 const PricingCalculator = require('../../services/pricing-table');
@@ -26,9 +25,12 @@ const updateDesignStatus = require('../../services/update-design-status');
 const createDesign = require('../../services/create-design').default;
 const User = require('../../domain-objects/user');
 const UsersDAO = require('../../dao/users');
-const { canAccessDesignInParam, canCommentOnDesign } = require('../../middleware/can-access-design');
+const { canAccessDesignInParam, canCommentOnDesign, canDeleteDesign } = require('../../middleware/can-access-design');
 const { requireValues } = require('../../services/require-properties');
 const { sendDesignUpdateNotifications } = require('../../services/create-notifications');
+
+const getDesignPermissionsDeprecated = require('../../services/deprecated-get-design-permissions');
+const { getDesignPermissions } = require('../../services/get-permissions');
 
 const { getDesignUploadPolicy, getThumbnailUploadPolicy } = require('./upload-policy');
 const { addDesignEvent, addDesignEvents, getDesignEvents } = require('./events');
@@ -46,6 +48,22 @@ const {
 } = require('./sections');
 
 const router = new Router();
+
+const ALLOWED_DESIGN_PARAMS = [
+  'description',
+  'previewImageUrls',
+  'metadata',
+  'productType',
+  'title',
+  'retailPriceCents',
+  'dueDate',
+  'expectedCostCents'
+];
+const ADMIN_ALLOWED_DESIGN_PARAMS = [
+  ...ALLOWED_DESIGN_PARAMS,
+  'overridePricingTable',
+  'showPricingBreakdown'
+];
 
 async function attachDesignOwner(design) {
   const owner = await UsersDAO.findById(design.userId);
@@ -96,11 +114,17 @@ async function attachResources(design, requestorId, permissions) {
 }
 
 function* getDesignsByUser() {
+  const { role, userId } = this.state;
   canAccessUserResource.call(this, this.query.userId);
 
   const filters = compact({ status: this.query.status });
-  this.body = yield findUserDesigns(this.query.userId, filters);
+  const designs = yield findUserDesigns(this.query.userId, filters);
+  const designsWithPermissions = yield Promise.all(designs.map(async (design) => {
+    const designPermissions = await getDesignPermissions(design, role, userId);
+    return { ...design, permissions: designPermissions };
+  }));
 
+  this.body = designsWithPermissions;
   this.status = 200;
 }
 
@@ -146,6 +170,7 @@ function* attachTasksToDesigns(designs) {
 }
 
 function* getDesignsAndTasksByUser() {
+  const { role, userId } = this.state;
   canAccessUserResource.call(this, this.query.userId);
 
   const filters = compact({ status: this.query.status });
@@ -154,12 +179,17 @@ function* getDesignsAndTasksByUser() {
   // TODO: this could end up making 100s of queries to the db, this could be improved by using
   //       one large JOIN
   const designsAndTasks = yield attachTasksToDesigns(designs);
+  const designsWithPermissions = yield Promise.all(designsAndTasks.map(async (design) => {
+    const permissions = await getDesignPermissions(design, role, userId);
+    return { ...design, permissions };
+  }));
 
-  this.body = designsAndTasks;
+  this.body = designsWithPermissions;
   this.status = 200;
 }
 
 function* getAllDesigns() {
+  const { role, userId } = this.state;
   this.assert(this.state.role === User.ROLES.admin, 403);
 
   const designs = yield ProductDesignsDAO.findAll({
@@ -169,11 +199,12 @@ function* getAllDesigns() {
     needsQuote: Boolean(this.query.needsQuote)
   });
 
-  for (const design of designs) {
-    yield attachDesignOwner(design);
-  }
+  const designsWithPermissions = yield Promise.all(designs.map(async (design) => {
+    const permissions = await getDesignPermissions(design, role, userId);
+    return attachResources(design, userId, permissions);
+  }));
 
-  this.body = designs;
+  this.body = designsWithPermissions;
   this.status = 200;
 }
 
@@ -190,34 +221,28 @@ function* getDesigns() {
 }
 
 function* getDesign() {
-  const design = yield attachResources(
-    this.state.design,
-    this.state.userId,
-    this.state.designPermissions
-  );
-
-  this.body = design;
+  const { design, permissions, userId } = this.state;
+  const hydratedDesign = yield attachResources(design, userId, permissions);
+  this.body = hydratedDesign;
   this.status = 200;
 }
 
+// DEPRECATED: V1 Endpoint.
 function* getDesignPricing() {
-  const { canViewPricing, canManagePricing } = this.state.designPermissions;
+  const { canViewPricing, canManagePricing } = this.state.permissions;
 
   if (!canViewPricing) {
     this.throw(403, "You're not able to view pricing for this garment");
   }
 
   const design = yield ProductDesignsDAO.findById(this.params.designId);
-
   const calculator = new PricingCalculator(design);
-
   const {
     computedPricingTable,
     overridePricingTable,
     finalPricingTable
   } = yield calculator.getAllPricingTables()
     .catch(filterError(MissingPrerequisitesError, err => this.throw(400, err)));
-
   let finalTable = finalPricingTable;
 
   if (!canManagePricing && !design.showPricingBreakdown) {
@@ -239,61 +264,41 @@ function* getDesignCollections() {
   this.status = 200;
 }
 
-const ALLOWED_DESIGN_PARAMS = [
-  'description',
-  'previewImageUrls',
-  'metadata',
-  'productType',
-  'title',
-  'retailPriceCents',
-  'dueDate',
-  'expectedCostCents'
-];
-
-const ADMIN_ALLOWED_DESIGN_PARAMS = [
-  ...ALLOWED_DESIGN_PARAMS,
-  'overridePricingTable',
-  'showPricingBreakdown'
-];
-
 function* create() {
+  const { role, userId } = this.state;
   const userData = pick(this.request.body, ALLOWED_DESIGN_PARAMS);
+  const data = { ...userData, userId };
 
-  const data = Object.assign({}, userData, {
-    userId: this.state.userId
-  });
-
-  let design = yield createDesign(data)
-    .catch(filterError(InvalidDataError, err => this.throw(400, err)));
-
-  const designPermissions = yield getDesignPermissions(
-    design,
-    this.state.userId,
-    this.state.role
+  let design = yield createDesign(data).catch(
+    filterError(InvalidDataError, err => this.throw(400, err))
   );
+  const designPermissionsDeprecated = yield getDesignPermissionsDeprecated(design, userId, role);
+  const designPermissions = yield getDesignPermissions(design, role, userId);
 
-  design = yield attachResources(design, this.state.userId, designPermissions);
+  design = yield attachResources(
+    design,
+    userId,
+    { ...designPermissionsDeprecated, ...designPermissions }
+  );
 
   this.body = design;
   this.status = 201;
 }
 
 function* updateDesign() {
-  const isAdmin = (this.state.role === User.ROLES.admin);
-  const allowedParams = isAdmin ? ADMIN_ALLOWED_DESIGN_PARAMS : ALLOWED_DESIGN_PARAMS;
+  const { permissions, role, userId } = this.state;
+  const { designId } = this.params;
 
+  const isAdmin = role === User.ROLES.admin;
+  const allowedParams = isAdmin ? ADMIN_ALLOWED_DESIGN_PARAMS : ALLOWED_DESIGN_PARAMS;
   const data = pick(this.request.body, allowedParams);
 
-  let updated = yield ProductDesignsDAO.update(
-    this.params.designId,
-    data
-  )
-    .catch(filterError(InvalidDataError, err => this.throw(400, err)));
-
-  updated = yield attachResources(updated, this.state.userId, this.state.designPermissions);
+  let updated = yield ProductDesignsDAO.update(designId, data).catch(
+    filterError(InvalidDataError, err => this.throw(400, err))
+  );
+  updated = yield attachResources(updated, userId, permissions);
 
   const keys = Object.keys(data);
-
   const keysToNotifyOn = [
     'description',
     'metadata',
@@ -304,10 +309,7 @@ function* updateDesign() {
   ];
 
   if (intersection(keys, keysToNotifyOn).length > 0) {
-    yield sendDesignUpdateNotifications(
-      this.params.designId,
-      this.state.userId
-    );
+    yield sendDesignUpdateNotifications(designId, userId);
   }
 
   this.body = updated;
@@ -315,12 +317,7 @@ function* updateDesign() {
 }
 
 function* deleteDesign() {
-  if (!this.state.designPermissions.canDelete) {
-    this.throw(403, 'Only the owner can delete this design');
-  }
-
   yield ProductDesignsDAO.deleteById(this.params.designId);
-
   this.status = 204;
 }
 
@@ -328,7 +325,7 @@ function* setStatus() {
   const { newStatus } = this.request.body;
   this.assert(newStatus, 400, 'New status must be provided');
 
-  const { canPutStatus } = this.state.designPermissions;
+  const { canPutStatus } = this.state.permissions;
 
   this.assert(
     canPutStatus,
@@ -350,7 +347,13 @@ function* setStatus() {
 
 router.post('/', requireAuth, create);
 router.get('/', requireAuth, getDesigns);
-router.del('/:designId', requireAuth, canAccessDesignInParam, deleteDesign);
+router.del(
+  '/:designId',
+  requireAuth,
+  canAccessDesignInParam,
+  canDeleteDesign,
+  deleteDesign
+);
 router.get('/:designId', requireAuth, canAccessDesignInParam, getDesign);
 router.patch('/:designId', requireAuth, canAccessDesignInParam, updateDesign);
 router.get('/:designId/pricing', requireAuth, canAccessDesignInParam, getDesignPricing);
