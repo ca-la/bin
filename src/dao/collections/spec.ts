@@ -1,6 +1,7 @@
 import * as uuid from 'node-uuid';
 import * as tape from 'tape';
 import * as CollectionsDAO from './index';
+import * as DesignEventsDAO from '../design-events';
 import * as ProductDesignsDAO from '../product-designs';
 import * as CollaboratorsDAO from '../collaborators';
 import { test } from '../../test-helpers/fresh';
@@ -249,4 +250,98 @@ test('CollectionsDAO#removeDesign removes a design from a collection', async (t:
     [],
     '#remove successfully removes the design'
   );
+});
+
+test('CollectionsDAO.getStatusById', async (t: tape.Test) => {
+  const { user: designer } = await createUser({ withSession: false });
+  const { user: admin } = await createUser({ withSession: false });
+
+  const createdCollection = await CollectionsDAO.create({
+    createdAt: new Date(),
+    createdBy: designer.id,
+    deletedAt: null,
+    description: 'Initial commit',
+    id: uuid.v4(),
+    title: 'Drop 001/The Early Years'
+  });
+  const createdDesigns = await Promise.all([
+    ProductDesignsDAO.create({
+      productType: 'HELMET',
+      title: 'Vader Mask',
+      userId: designer.id
+    }),
+    ProductDesignsDAO.create({
+      productType: 'HELMET',
+      title: 'Stormtrooper Helmet',
+      userId: designer.id
+    })
+  ]);
+  await CollectionsDAO
+    .addDesign(createdCollection.id, createdDesigns[0].id);
+  await CollectionsDAO
+    .addDesign(createdCollection.id, createdDesigns[1].id);
+  await ProductDesignsDAO.deleteById(createdDesigns[1].id);
+
+  await DesignEventsDAO.create({
+    actorId: designer.id,
+    bidId: null,
+    createdAt: new Date(2012, 11, 23),
+    designId: createdDesigns[0].id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: null,
+    type: 'SUBMIT_DESIGN'
+  });
+
+  const submittedStatus = await CollectionsDAO.getStatusById(createdCollection.id);
+
+  t.deepEqual(submittedStatus, {
+    collectionId: createdCollection.id,
+    isCosted: false,
+    isPaired: false,
+    isQuoted: false,
+    isSubmitted: true
+  });
+
+  await DesignEventsDAO.create({
+    actorId: admin.id,
+    bidId: null,
+    createdAt: new Date(2012, 11, 23),
+    designId: createdDesigns[0].id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: designer.id,
+    type: 'COMMIT_COST_INPUTS'
+  });
+
+  const costedStatus = await CollectionsDAO.getStatusById(createdCollection.id);
+
+  t.deepEqual(costedStatus, {
+    collectionId: createdCollection.id,
+    isCosted: true,
+    isPaired: false,
+    isQuoted: false,
+    isSubmitted: true
+  });
+
+  await DesignEventsDAO.create({
+    actorId: designer.id,
+    bidId: null,
+    createdAt: new Date(2012, 11, 23),
+    designId: createdDesigns[0].id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: null,
+    type: 'COMMIT_QUOTE'
+  });
+
+  const quotedStatus = await CollectionsDAO.getStatusById(createdCollection.id);
+
+  t.deepEqual(quotedStatus, {
+    collectionId: createdCollection.id,
+    isCosted: true,
+    isPaired: false,
+    isQuoted: true,
+    isSubmitted: true
+  });
 });

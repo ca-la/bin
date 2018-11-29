@@ -17,6 +17,7 @@ declare namespace ProductDesignsDAO {
   function findByCollectionId(collectionId: string): Promise<ProductDesign[]>;
   function findByQuoteId(id: string): Promise<ProductDesign | null>;
   function update(id: string, data: Partial<ProductDesign>): Promise<ProductDesign>;
+  function deleteById(id: string): Promise<ProductDesign>;
 }
 
 export = ProductDesignsDAO;

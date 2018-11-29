@@ -204,7 +204,7 @@ SELECT
     ON cd.design_id = de_paired.design_id
    AND de_paired.type = 'COMMIT_PARTNER_PAIRING'
 
- WHERE c.id = ? AND c.deleted_at IS NULL
+ WHERE c.id = ? AND c.deleted_at IS NULL AND d.deleted_at IS NULL
  GROUP BY c.id;
 `, [collectionId])
     .then((rawResult: any): CollectionSubmissionStatusRow[] => rawResult.rows)
