@@ -3,7 +3,7 @@ import CollectionsDAO = require('../../dao/collections');
 import ProductDesignsDAO = require('../../dao/product-designs');
 import UsersDAO = require('../../dao/users');
 import { CALA_ADMIN_USER_ID } from '../../config';
-import { Collaborator } from '../../domain-objects/collaborator';
+import Collaborator from '../../domain-objects/collaborator';
 
 export const COLLABORATOR_ROLES = {
   CALA: 'CALA',
@@ -46,6 +46,8 @@ export default async function findCollaboratorsByRole(
       }
 
       const collection = collections[0];
+
+      if (!CALA_ADMIN_USER_ID) { throw new Error('No CALA Admin userId'); }
 
       return CollaboratorsDAO.findByCollectionAndUser(collection.id, CALA_ADMIN_USER_ID);
     }

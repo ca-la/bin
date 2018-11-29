@@ -29,7 +29,7 @@ async function createTemplates(): Promise<{
 
   const stage2 = await StageTemplatesDAO.create({
     description: 'Producey stuff',
-    ordering: 0,
+    ordering: 1,
     title: 'Stage 2'
   });
 

@@ -2,7 +2,7 @@ import * as Koa from 'koa';
 
 import CollectionsDAO = require('../../dao/collections');
 import CollaboratorsDAO = require('../../dao/collaborators');
-import { Collaborator } from '../../domain-objects/collaborator';
+import Collaborator from '../../domain-objects/collaborator';
 
 export function* canAccessCollectionId(
   this: Koa.Application.Context,

@@ -182,7 +182,10 @@ test('Task Events DAO supports retrieval by userId', async (t: tape.Test) => {
 
   const collaborator = await createCollaborator({
     collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
     role: 'EDIT',
+    userEmail: null,
     userId: user.id
   });
   const taskEvent = await create({

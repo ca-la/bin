@@ -7,8 +7,7 @@ import UsersDAO = require('../../dao/users');
 import Validation = require('../../services/validation');
 import * as NotificationsService from '../../services/create-notifications';
 import User from '../../domain-objects/user';
-
-type Role = 'EDIT' | 'COMMENT' | 'VIEW';
+import { CollaboratorWithUser, Roles } from '../../domain-objects/collaborator';
 
 /**
  * Add a collaborator to a design. If a user exists with this email, adds them
@@ -20,22 +19,16 @@ type Role = 'EDIT' | 'COMMENT' | 'VIEW';
  */
 interface BaseOptions {
   email: string;
-  role: Role;
-  unsafeInvitationMessage: string;
+  role: Roles;
+  unsafeInvitationMessage?: string;
   inviterUserId: string;
+  designId: string | null | undefined;
+  collectionId: string | null | undefined;
 }
 
-interface DesignOptions extends BaseOptions {
-  designId: string;
-  collectionId: null;
-}
-
-interface CollectionOptions extends BaseOptions {
-  collectionId: string;
-  designId: null;
-}
-
-async function addCollaborator(options: DesignOptions | CollectionOptions): Promise<void> {
+export default async function addCollaborator(
+  options: BaseOptions
+): Promise<CollaboratorWithUser> {
   const {
     email,
     inviterUserId,
@@ -55,27 +48,28 @@ async function addCollaborator(options: DesignOptions | CollectionOptions): Prom
   const invitationMessage = escapedMessage || 'Check out CALA!';
 
   const collaborator = user ? await CollaboratorsDAO.create({
-    collectionId: options.collectionId,
-    designId: options.designId,
+    collectionId: options.collectionId || null,
+    designId: options.designId || null,
+    invitationMessage: '',
     role,
+    userEmail: null,
     userId: user.id
   }) : await CollaboratorsDAO.create({
-    collectionId: options.collectionId,
-    designId: options.designId,
+    collectionId: options.collectionId || null,
+    designId: options.designId || null,
     invitationMessage,
     role,
-    userEmail: normalizedEmail
+    userEmail: normalizedEmail,
+    userId: null
   });
 
   NotificationsService.immediatelySendInviteCollaborator({
     actorId: inviter.id,
-    collectionId: options.collectionId,
-    designId: options.designId,
+    collectionId: options.collectionId || null,
+    designId: options.designId || null,
     targetCollaboratorId: collaborator.id,
-    targetUserId: collaborator.userId
+    targetUserId: collaborator.userId || null
   });
 
   return collaborator;
 }
-
-module.exports = addCollaborator;

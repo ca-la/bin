@@ -1,18 +1,43 @@
-'use strict';
+import * as Router from 'koa-router';
+import * as Koa from 'koa';
 
-const Router = require('koa-router');
-
-const addCollaborator = require('../../services/add-collaborator');
-const InvalidDataError = require('../../errors/invalid-data');
-const CollaboratorsDAO = require('../../dao/collaborators');
-const Collaborator = require('../../domain-objects/collaborator');
-const requireAuth = require('../../middleware/require-auth');
-const { canAccessDesignId } = require('../../middleware/can-access-design');
-const { canAccessCollectionId } = require('../../middleware/can-access-collection');
+import addCollaborator from '../../services/add-collaborator';
+import InvalidDataError = require('../../errors/invalid-data');
+import * as CollaboratorsDAO from '../../dao/collaborators';
+import Collaborator,
+{
+  isRole,
+  Roles
+} from '../../domain-objects/collaborator';
+import requireAuth = require('../../middleware/require-auth');
+import { canAccessDesignId } from '../../middleware/can-access-design';
+import {
+  canAccessCollectionId
+} from '../../middleware/can-access-collection';
+import { hasProperties } from '../../services/require-properties';
 
 const router = new Router();
 
-function* create() {
+type CollaboratorRequest =
+  Pick<Collaborator, 'role' | 'userEmail' | 'invitationMessage'>
+    & { collectionId?: string, designId?: string };
+
+export function isCollaboratorRequest(data: object): data is CollaboratorRequest {
+  const keys = Object.keys(data);
+  if (!keys.includes('collectionId') && !keys.includes('designId')) {
+    return false;
+  }
+  return hasProperties(
+    data,
+    'role',
+    'userEmail'
+  );
+}
+
+function* create(this: Koa.Application.Context): AsyncIterableIterator<Collaborator> {
+  if (!this.request.body || !isCollaboratorRequest(this.request.body)) {
+    return this.throw(400, 'Request does not match Collaborator');
+  }
   const {
     collectionId,
     designId,
@@ -20,6 +45,9 @@ function* create() {
     role,
     userEmail
   } = this.request.body;
+  if (!userEmail) {
+    return this.throw(400, 'Request does not include email');
+  }
 
   if (designId) {
     yield canAccessDesignId.call(this, designId);
@@ -29,18 +57,17 @@ function* create() {
     yield canAccessCollectionId.call(this, collectionId);
   }
 
-  const roles = Object.values(Collaborator.ROLES);
-  this.assert(roles.includes(role), 400, `Unknown role: ${role}`);
+  this.assert(isRole(role), 400, `Unknown role: ${role}`);
 
   const created = yield addCollaborator({
-    inviterUserId: this.state.userId,
     collectionId,
     designId,
     email: userEmail,
-    invitationMessage,
-    role
+    inviterUserId: this.state.userId,
+    role,
+    unsafeInvitationMessage: invitationMessage
   })
-    .catch((err) => {
+    .catch((err: Error) => {
       if (err instanceof InvalidDataError) {
         this.throw(400, err);
       }
@@ -52,8 +79,19 @@ function* create() {
   this.body = created;
 }
 
-function* update() {
+interface CollaboratorUpdate {
+  role: Roles;
+}
+
+const isCollaboratorUpdate = (data: object): data is CollaboratorUpdate => {
+  return hasProperties(data, 'role');
+};
+
+function* update(this: Koa.Application.Context): AsyncIterableIterator<Collaborator> {
   const collaborator = yield CollaboratorsDAO.findById(this.params.collaboratorId);
+  if (!isCollaboratorUpdate(this.request.body)) {
+    return this.throw(400, 'Request does not have a role');
+  }
   this.assert(collaborator, 404, 'Collaborator not found');
   let canAccessDesign = false;
   let canAccessCollection = false;
@@ -85,15 +123,15 @@ function* update() {
   this.body = updated;
 }
 
-function* find() {
+function* find(this: Koa.Application.Context): AsyncIterableIterator<Collaborator> {
   const { designId, collectionId } = this.query;
 
   let collaborators;
 
-  if (this.query.designId) {
+  if (designId) {
     yield canAccessDesignId.call(this, designId);
     collaborators = yield CollaboratorsDAO.findByDesign(designId);
-  } else if (this.query.collectionId) {
+  } else if (collectionId) {
     yield canAccessCollectionId.call(this, collectionId);
     collaborators = yield CollaboratorsDAO.findByCollection(collectionId);
   } else {
@@ -104,7 +142,7 @@ function* find() {
   this.body = collaborators;
 }
 
-function* deleteCollaborator() {
+function* deleteCollaborator(this: Koa.Application.Context): AsyncIterableIterator<Collaborator> {
   const collaborator = yield CollaboratorsDAO.findById(this.params.collaboratorId);
   this.assert(collaborator, 404, 'Collaborator not found');
 

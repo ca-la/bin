@@ -11,7 +11,7 @@ import * as TaskEventsDAO from '../../dao/task-events';
 import * as UsersDAO from '../../dao/users';
 
 import Notification, { NotificationType } from '../../domain-objects/notification';
-import { Collaborator, CollaboratorWithUserId } from '../../domain-objects/collaborator';
+import Collaborator from '../../domain-objects/collaborator';
 import User from '../../domain-objects/user';
 
 import findDesignUsers = require('../../services/find-design-users');
@@ -155,16 +155,15 @@ export async function sendTaskCommentCreateNotification(
   const collaborators = await CollaboratorsDAO.findByTask(taskId) as Collaborator[];
   const recipients = collaborators.filter((collaborator: Collaborator): boolean => {
     return Boolean(collaborator.userId);
-  }) as CollaboratorWithUserId[];
+  }) as Collaborator[];
 
   const taskEvent = await TaskEventsDAO.findById(taskId);
   if (!taskEvent) { throw new Error(`Could not find a task event with task id: ${taskId}`); }
 
-  const collaboratorUserIds: string[] = recipients.map(
-    (collaborator: CollaboratorWithUserId): string => {
-      return collaborator.userId;
-    }
-  );
+  const collaboratorUserIds: string[] = recipients
+    .filter((collaborator: Collaborator) => Boolean(collaborator.userId))
+    .map((collaborator: Collaborator): string => collaborator.userId || '');
+
   const recipientIds: string[] = taskEvent.createdBy
     ? [...collaboratorUserIds, taskEvent.createdBy]
     : collaboratorUserIds ;

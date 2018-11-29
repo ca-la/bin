@@ -145,7 +145,10 @@ test('GET /tasks?userId=:userId returns all tasks for a user', async (t: tape.Te
 
   const collaborator = await CollaboratorsDAO.create({
     collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
     role: 'EDIT',
+    userEmail: null,
     userId: user.id
   });
   await taskEventsDAO.create({
@@ -276,12 +279,18 @@ async (t: tape.Test) => {
 
   const collaborator = await CollaboratorsDAO.create({
     collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
     role: 'EDIT',
+    userEmail: null,
     userId: user.id
   });
   const secondCollaborator = await CollaboratorsDAO.create({
     collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
     role: 'EDIT',
+    userEmail: null,
     userId: secondUser.user.id
   });
 

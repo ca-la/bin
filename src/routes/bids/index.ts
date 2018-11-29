@@ -139,7 +139,9 @@ function* assignBidToPartner(this: Koa.Application.Context): AsyncIterableIterat
   yield CollaboratorsDAO.create({
     collectionId: null,
     designId: design.id,
+    invitationMessage: '',
     role: 'PREVIEW',
+    userEmail: null,
     userId: target.id
   });
 

@@ -190,12 +190,18 @@ test('GET /collections', async (t: tape.Test) => {
   });
   await CollaboratorsDAO.create({
     collectionId: collection1.id,
+    designId: null,
+    invitationMessage: '',
     role: 'EDIT',
+    userEmail: null,
     userId: user.id
   });
   await CollaboratorsDAO.create({
     collectionId: collection2.id,
+    designId: null,
+    invitationMessage: '',
     role: 'VIEW',
+    userEmail: null,
     userId: user.id
   });
 
@@ -443,8 +449,11 @@ test('GET /collections/:id/designs', async (t: tape.Test) => {
     userId: user.id
   });
   await CollaboratorsDAO.create({
+    collectionId: null,
     designId: design.id,
+    invitationMessage: '',
     role: 'EDIT',
+    userEmail: null,
     userId: user.id
   });
 

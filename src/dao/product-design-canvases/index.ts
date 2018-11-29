@@ -58,18 +58,18 @@ export async function update(
 }
 
 export async function del(id: string): Promise<ProductDesignCanvas> {
-  const created = await db(TABLE_NAME)
+  const deleted = await db(TABLE_NAME)
     .where({ id, deleted_at: null })
     .update({ deleted_at: new Date() }, '*')
     .then((rows: ProductDesignCanvasRow[]) => first<ProductDesignCanvasRow>(rows));
 
-  if (!created) { throw new Error('Failed to create rows'); }
+  if (!deleted) { throw new Error('Failed to delete rows'); }
 
   return validate<ProductDesignCanvasRow, ProductDesignCanvas>(
     TABLE_NAME,
     isProductDesignCanvasRow,
     dataAdapter,
-    created
+    deleted
   );
 }
 

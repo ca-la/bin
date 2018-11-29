@@ -18,8 +18,11 @@ async function createDesign(data: Unsaved<ProductDesign>): Promise<ProductDesign
   ]);
 
   await CollaboratorsDAO.create({
+    collectionId: null,
     designId: design.id,
+    invitationMessage: '',
     role: 'EDIT',
+    userEmail: null,
     userId: design.userId
   });
 

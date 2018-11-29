@@ -38,14 +38,23 @@ function* createCollection(
     const collection = yield CollectionsDAO
       .create(data)
       .catch(filterError(InvalidDataError, (err: InvalidDataError) => this.throw(400, err)));
+
+    if (!CALA_ADMIN_USER_ID) { throw new Error('Cala Admin user not set'); }
+
     yield CollaboratorsDAO.create({
       collectionId: collection.id,
+      designId: null,
+      invitationMessage: '',
       role: 'EDIT',
+      userEmail: null,
       userId
     });
     yield CollaboratorsDAO.create({
       collectionId: collection.id,
+      designId: null,
+      invitationMessage: '',
       role: 'EDIT',
+      userEmail: null,
       userId: CALA_ADMIN_USER_ID
     });
     const permissions = yield getCollectionPermissions(collection, role, userId);

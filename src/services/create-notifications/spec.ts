@@ -33,13 +33,19 @@ test('Notifications DAO supports finding outstanding notifications', async (t: t
   });
 
   await CollaboratorsDAO.create({
+    collectionId: null,
     designId: design.id,
+    invitationMessage: '',
     role: 'EDIT',
+    userEmail: null,
     userId: userOne.user.id
   });
   await CollaboratorsDAO.create({
+    collectionId: null,
     designId: design.id,
+    invitationMessage: '',
     role: 'EDIT',
+    userEmail: null,
     userId: userTwo.user.id
   });
 
@@ -80,13 +86,19 @@ test('Notifications DAO supports finding outstanding notifications', async (t: t
   });
 
   await CollaboratorsDAO.create({
-    designId: design.id,
+    collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
     role: 'EDIT',
+    userEmail: null,
     userId: userOne.user.id
   });
   const collaboratorTwo = await CollaboratorsDAO.create({
-    designId: design.id,
+    collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
     role: 'EDIT',
+    userEmail: null,
     userId: userTwo.user.id
   });
 
@@ -162,7 +174,11 @@ test('Notifications DAO supports sending an invite notification', async (t: tape
   });
   const collaboratorOne = await CollaboratorsDAO.create({
     collectionId: collection.id,
-    userEmail: 'test@ca.la'
+    designId: null,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: 'test@ca.la',
+    userId: null
   });
 
   const emailStub = sandbox().stub(EmailService, 'enqueueSend').returns(Promise.resolve());

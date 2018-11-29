@@ -44,7 +44,11 @@ async function createResources(): Promise<{
 test('findCollaboratorsByRole finds the designer', async (t: Test) => {
   const { design, user } = await createResources();
   const ownerCollaborator = await CollaboratorsDAO.create({
+    collectionId: null,
     designId: design.id,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
     userId: user.id
   });
 
@@ -60,7 +64,11 @@ test('findCollaboratorsByRole finds partners', async (t: Test) => {
   const { user: partnerUser } = await createUser({ withSession: false, role: 'PARTNER' });
 
   const partnerCollaborator = await CollaboratorsDAO.create({
+    collectionId: null,
     designId: design.id,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
     userId: partnerUser.id
   });
 
@@ -77,6 +85,10 @@ test('findCollaboratorsByRole finds the CALA admin user', async (t: Test) => {
 
   const calaCollaborator = await CollaboratorsDAO.create({
     collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
     userId: calaUser.id
   });
 

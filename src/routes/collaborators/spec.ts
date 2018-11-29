@@ -18,8 +18,12 @@ test(
     });
 
     const collaborator = await CollaboratorsDAO.create({
+      collectionId: null,
       designId: design.id,
-      userEmail: 'person@example.com'
+      invitationMessage: '',
+      role: 'EDIT',
+      userEmail: 'person@example.com',
+      userId: null
     });
 
     const [firstResponse] = await del(`/collaborators/${collaborator.id}`, {

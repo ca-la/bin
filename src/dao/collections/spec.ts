@@ -113,12 +113,18 @@ test('CollectionsDAO#findByCollaboratorAndUserId finds all collections', async (
   });
   await CollaboratorsDAO.create({
     collectionId: collection1.id,
+    designId: null,
+    invitationMessage: '',
     role: 'EDIT',
+    userEmail: null,
     userId: user1.id
   });
   await CollaboratorsDAO.create({
     collectionId: collection2.id,
-    role: 'VIEW',
+    designId: null,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
     userId: user1.id
   });
 

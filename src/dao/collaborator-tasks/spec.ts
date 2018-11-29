@@ -27,12 +27,18 @@ test('CollaboratorTask DAO supports creation/retrieval', async (t: tape.Test) =>
 
   const collaboratorOne = await createCollaborator({
     collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
     role: 'EDIT',
+    userEmail: null,
     userId: userOne.user.id
   });
   const collaboratorTwo = await createCollaborator({
     collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
     role: 'EDIT',
+    userEmail: null,
     userId: userTwo.user.id
   });
   const taskOne = await createTask(uuid.v4());
@@ -73,7 +79,10 @@ test('CollaboratorTask DAO does not allow non-unique creation', async (t: tape.T
 
   const collaborator = await createCollaborator({
     collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
     role: 'EDIT',
+    userEmail: null,
     userId: user.id
   });
   await create({
@@ -107,12 +116,18 @@ test('CollaboratorTask DAO supports multiple simultaneous creations', async (t: 
 
   const collaboratorOne = await createCollaborator({
     collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
     role: 'EDIT',
+    userEmail: null,
     userId: userOne.user.id
   });
   const collaboratorTwo = await createCollaborator({
     collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
     role: 'EDIT',
+    userEmail: null,
     userId: userTwo.user.id
   });
 
@@ -150,17 +165,26 @@ test('CollaboratorTask DAO supports multiple simultaneous deletions', async (t: 
 
   const collaboratorOne = await createCollaborator({
     collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
     role: 'EDIT',
+    userEmail: null,
     userId: userOne.user.id
   });
   const collaboratorTwo = await createCollaborator({
     collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
     role: 'EDIT',
+    userEmail: null,
     userId: userTwo.user.id
   });
   const collaboratorThree = await createCollaborator({
     collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
     role: 'EDIT',
+    userEmail: null,
     userId: userThree.user.id
   });
   await create({

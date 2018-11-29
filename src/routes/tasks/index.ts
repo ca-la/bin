@@ -15,7 +15,7 @@ import TaskEvent, { TaskStatus } from '../../domain-objects/task-event';
 import Comment, { isComment } from '../../domain-objects/comment';
 import { hasOnlyProperties } from '../../services/require-properties';
 import requireAuth = require('../../middleware/require-auth');
-import { Collaborator } from '../../domain-objects/collaborator';
+import Collaborator from '../../domain-objects/collaborator';
 import { sendTaskCommentCreateNotification } from '../../services/create-notifications';
 
 const router = new Router();
