@@ -3,6 +3,7 @@ import * as Router from 'koa-router';
 import * as Koa from 'koa';
 import * as uuid from 'node-uuid';
 
+import * as DesignEventsDAO from '../../dao/design-events';
 import { findByDesignId, findById } from '../../dao/pricing-quotes';
 import {
   create as createBid,
@@ -35,29 +36,54 @@ function isBidRequest(candidate: object): candidate is BidRequest {
   );
 }
 
+interface CreateRequest {
+  designId: string;
+  units: number;
+}
+
+function isCreateRequest(body: any): body is CreateRequest {
+  return (
+    typeof body.designId === 'string' &&
+    typeof body.units === 'number'
+  );
+}
+
 function* createQuote(this: Koa.Application.Context): AsyncIterableIterator<PricingQuote> {
-  const { designId, units } = this.query;
+  if (!this.request.body || !isCreateRequest(this.request.body)) {
+    this.throw(400, 'Invalid request');
+    return;
+  }
+
+  const { designId, units } = this.request.body;
   const unitsNumber = Number(units);
 
-  if (designId && unitsNumber) {
-    const costInputs: PricingCostInputs[] = yield PricingCostInputsDAO.findByDesignId(designId);
+  const costInputs: PricingCostInputs[] = yield PricingCostInputsDAO.findByDesignId(designId);
 
-    if (costInputs.length === 0) {
-      this.throw(404, 'No costing inputs associated with design ID');
-      return;
-    }
-
-    const quoteRequest: PricingQuoteRequest = {
-      ...omit(costInputs[0], ['id', 'createdAt', 'deletedAt']),
-      units: unitsNumber
-    };
-    const unsavedQuote = yield generatePricingQuote(quoteRequest);
-
-    this.body = unsavedQuote;
-    this.status = 201;
-  } else {
-    this.throw(400);
+  if (costInputs.length === 0) {
+    this.throw(404, 'No costing inputs associated with design ID');
+    return;
   }
+
+  const quoteRequest: PricingQuoteRequest = {
+    ...omit(costInputs[0], ['id', 'createdAt', 'deletedAt']),
+    units: unitsNumber
+  };
+
+  const quote = yield generatePricingQuote(quoteRequest);
+
+  yield DesignEventsDAO.create({
+    actorId: this.state.userId,
+    bidId: null,
+    createdAt: new Date(),
+    designId,
+    id: uuid.v4(),
+    quoteId: quote.id,
+    targetId: null,
+    type: 'COMMIT_QUOTE'
+  });
+
+  this.body = quote;
+  this.status = 201;
 }
 
 function* getQuote(this: Koa.Application.Context): AsyncIterableIterator<PricingQuote> {

@@ -1,12 +1,13 @@
 import * as uuid from 'node-uuid';
 
-import { authHeader, get, post, put } from '../../test-helpers/http';
-import generatePricingValues from '../../test-helpers/factories/pricing-values';
-import { test, Test } from '../../test-helpers/fresh';
-import createUser = require('../../test-helpers/create-user');
-import Bid from '../../domain-objects/bid';
-import { create as createDesign } from '../../dao/product-designs';
+import * as DesignEventsDAO from '../../dao/design-events';
 import * as PricingCostInputsDAO from '../../dao/pricing-cost-inputs';
+import Bid from '../../domain-objects/bid';
+import createUser = require('../../test-helpers/create-user');
+import generatePricingValues from '../../test-helpers/factories/pricing-values';
+import { authHeader, get, post, put } from '../../test-helpers/http';
+import { create as createDesign } from '../../dao/product-designs';
+import { test, Test } from '../../test-helpers/fresh';
 
 test('/pricing-quotes POST -> GET quote', async (t: Test) => {
   const { user, session } = await createUser();
@@ -34,10 +35,13 @@ test('/pricing-quotes POST -> GET quote', async (t: Test) => {
     productType: 'TEESHIRT'
   });
 
-  const [postResponse, createdQuote] = await post(
-    `/pricing-quotes?designId=${design.id}&units=300`,
-    { headers: authHeader(session.id) }
-  );
+  const [postResponse, createdQuote] = await post('/pricing-quotes', {
+    body: {
+      designId: design.id,
+      units: 300
+    },
+    headers: authHeader(session.id)
+  });
 
   t.equal(postResponse.status, 201, 'successfully creates the quote');
 
@@ -49,6 +53,47 @@ test('/pricing-quotes POST -> GET quote', async (t: Test) => {
     retrievedQuote,
     'retrieved quote is identical to saved quote'
   );
+});
+
+test('POST /pricing-quotes creates commit event', async (t: Test) => {
+  const { user, session } = await createUser();
+  await generatePricingValues();
+
+  const design = await createDesign({
+    productType: 'A product type',
+    title: 'A design',
+    userId: user.id
+  });
+
+  await PricingCostInputsDAO.create({
+    createdAt: new Date(),
+    deletedAt: null,
+    designId: design.id,
+    id: uuid.v4(),
+    materialBudgetCents: 1200,
+    materialCategory: 'BASIC',
+    processes: [{
+      complexity: '1_COLOR',
+      name: 'SCREEN_PRINTING'
+    }, {
+      complexity: '1_COLOR',
+      name: 'SCREEN_PRINTING'
+    }],
+    productComplexity: 'SIMPLE',
+    productType: 'TEESHIRT'
+  });
+
+  await post('/pricing-quotes', {
+    body: {
+      designId: design.id,
+      units: 300
+    },
+    headers: authHeader(session.id)
+  });
+
+  const events = await DesignEventsDAO.findByDesignId(design.id);
+  t.equal(events.length, 1);
+  t.equal(events[0].type, 'COMMIT_QUOTE');
 });
 
 test('/pricing-quotes?designId retrieves the set of quotes for a design', async (t: Test) => {
@@ -99,14 +144,21 @@ test('/pricing-quotes?designId retrieves the set of quotes for a design', async 
     productType: 'TEESHIRT'
   });
 
-  const created = await post(
-    `/pricing-quotes?designId=${design.id}&units=300`,
-    { headers: authHeader(session.id) }
-  );
-  await post(
-    `/pricing-quotes?designId=${otherDesign.id}&units=300`,
-    { headers: authHeader(session.id) }
-  );
+  const created = await post('/pricing-quotes', {
+    body: {
+      designId: design.id,
+      units: 300
+    },
+    headers: authHeader(session.id)
+  });
+
+  await post('/pricing-quotes', {
+    body: {
+      designId: otherDesign.id,
+      units: 300
+    },
+    headers: authHeader(session.id)
+  });
 
   const [getResponse, designQuotes] = await get(
     `/pricing-quotes?designId=${design.id}`,
@@ -192,10 +244,14 @@ test('PUT /pricing-quotes/:quoteId/bid/:bidId creates bid', async (t: Test) => {
     productComplexity: 'SIMPLE',
     productType: 'TEESHIRT'
   });
-  const createdQuote = await post(
-    `/pricing-quotes?designId=${design.id}&units=200`,
-    { headers: authHeader(session.id) }
-  );
+
+  const createdQuote = await post('/pricing-quotes', {
+    body: {
+      designId: design.id,
+      units: 200
+    },
+    headers: authHeader(session.id)
+  });
 
   const inputBid: Bid = {
     bidPriceCents: 100000,
@@ -246,10 +302,14 @@ test('POST /pricing-quotes/:quoteId/bids creates bid', async (t: Test) => {
     productComplexity: 'SIMPLE',
     productType: 'TEESHIRT'
   });
-  const createdQuote = await post(
-    `/pricing-quotes?designId=${design.id}&units=200`,
-    { headers: authHeader(session.id) }
-  );
+
+  const createdQuote = await post('/pricing-quotes', {
+    body: {
+      designId: design.id,
+      units: 200
+    },
+    headers: authHeader(session.id)
+  });
 
   const inputBid: Unsaved<Bid> = {
     bidPriceCents: 100000,
@@ -299,10 +359,14 @@ test('GET /pricing-quotes/:quoteId/bids returns list of bids for quote', async (
     productComplexity: 'SIMPLE',
     productType: 'TEESHIRT'
   });
-  const createdQuote = await post(
-    `/pricing-quotes?designId=${design.id}&units=200`,
-    { headers: authHeader(session.id) }
-  );
+
+  const createdQuote = await post('/pricing-quotes', {
+    body: {
+      designId: design.id,
+      units: 200
+    },
+    headers: authHeader(session.id)
+  });
 
   const inputBid: Bid = {
     bidPriceCents: 100000,
