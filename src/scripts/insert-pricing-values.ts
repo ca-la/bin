@@ -17,7 +17,7 @@ import { PricingProcessRow } from '../domain-objects/pricing-process';
 import { PricingProductTypeRow } from '../domain-objects/pricing-product-type';
 
 // BUMP THIS BETWEEN EVERY RUN
-const version = 1;
+const version = 2;
 
 intialPricingValues()
   .then(() => {
@@ -43,7 +43,7 @@ async function intialPricingValues(): Promise<void> {
         [1500, 40],
         [2000, 25]
       ],
-      0
+      version
     );
   const pricingProcessesEmbroidery: Uninserted<PricingProcessRow>[] = [
     {
@@ -550,196 +550,196 @@ async function intialPricingValues(): Promise<void> {
       Dollars(45),
       1,
       contrasts,
-      0
+      version
     ),
     generateProductTypes(
       'TOPCOAT',
       Dollars(75),
       1,
       contrasts,
-      0
+      version
     ),
     generateProductTypes(
       'SUNGLASSES',
       Dollars(15),
       1,
       contrasts,
-      0
+      version
     ),
     generateProductTypes(
       'TEESHIRT',
       Dollars(12),
       1,
       contrasts,
-      0
+      version
     ),
     generateProductTypes(
       'BLOUSE',
       Dollars(15),
       1,
       contrasts,
-      0
+      version
     ),
     generateProductTypes(
       'BLAZER',
       Dollars(56),
       1,
       contrasts,
-      0
+      version
     ),
     generateProductTypes(
       'DRESS',
       Dollars(24),
       1,
       contrasts,
-      0
+      version
     ),
     generateProductTypes(
       'SHORTS',
       Dollars(25),
       1,
       contrasts,
-      0
+      version
     ),
     generateProductTypes(
       'PANTS',
       Dollars(29.5),
       1,
       contrasts,
-      0
+      version
     ),
     generateProductTypes(
       'SKIRT',
       Dollars(19.5),
       1,
       contrasts,
-      0
+      version
     ),
     generateProductTypes(
       'LONG SKIRT',
       Dollars(40),
       1,
       contrasts,
-      0
+      version
     ),
     generateProductTypes(
       'COAT',
       Dollars(65),
       1,
       contrasts,
-      0
+      version
     ),
     generateProductTypes(
       'LONGSLEEVE TEESHIRT',
       Dollars(12),
       1,
       contrasts,
-      0
+      version
     ),
     generateProductTypes(
       'DRESS SHIRT',
       Dollars(20),
       1,
       contrasts,
-      0
+      version
     ),
     generateProductTypes(
       'SHORTSLEEVE DRESS SHIRT',
       Dollars(15),
       1,
       contrasts,
-      0
+      version
     ),
     generateProductTypes(
       'SWEATSHIRT',
       Dollars(15),
       1,
       contrasts,
-      0
+      version
     ),
     generateProductTypes(
       'HOODED SWEATSHIRT',
       Dollars(25),
       1,
       contrasts,
-      0
+      version
     ),
     generateProductTypes(
       'UNDERWEAR',
       Dollars(10),
       1,
       contrasts,
-      0
+      version
     ),
     generateProductTypes(
       'JACKET',
       Dollars(45),
       1,
       contrasts,
-      0
+      version
     ),
     generateProductTypes(
       'SWEATER',
       Dollars(38),
       1,
       contrasts,
-      0
+      version
     ),
     generateProductTypes(
       'SPORT COAT',
       Dollars(75),
       1,
       contrasts,
-      0
+      version
     ),
     generateProductTypes(
       'BATHROBE',
       Dollars(35),
       1,
       contrasts,
-      0
+      version
     ),
     generateProductTypes(
       'TIE',
       Dollars(25),
       1,
       contrasts,
-      0
+      version
     ),
     generateProductTypes(
       'PURSE',
       Dollars(20),
       1,
       contrasts,
-      0
+      version
     ),
     generateProductTypes(
       'WALLET',
       Dollars(30),
       1,
       contrasts,
-      0
+      version
     ),
     generateProductTypes(
       'SMALL BAG',
       Dollars(30),
       1,
       contrasts,
-      0
+      version
     ),
     generateProductTypes(
       'LARGE BAG',
       Dollars(73),
       1,
       contrasts,
-      0
+      version
     ),
     generateProductTypes(
       'TANK TOP',
       Dollars(5),
       1,
       contrasts,
-      0
+      version
     )
   ]);
   const createCareLabel = (units: number, cents: number): Uninserted<PricingCareLabelRow> => ({
