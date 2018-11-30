@@ -1,0 +1,33 @@
+import * as Router from 'koa-router';
+import * as Koa from 'koa';
+
+import Notification from '../../domain-objects/notification';
+import * as NotificationsDAO from '../../dao/notifications';
+import requireAuth = require('../../middleware/require-auth');
+
+const router = new Router();
+
+interface GetListQuery {
+  limit?: number;
+  offset?: number;
+}
+
+function* getList(this: Koa.Application.Context): AsyncIterableIterator<Notification[]> {
+  const { userId } = this.state;
+  const { limit, offset }: GetListQuery = this.query;
+
+  if ((limit && limit < 0) || (offset && offset < 0)) {
+    return this.throw(400, 'Offset / Limit cannot be negative!');
+  }
+
+  const notifications = yield NotificationsDAO.findByUserId(
+    userId,
+    { limit: limit || 20, offset: offset || 0 }
+  );
+  this.status = 200;
+  this.body = notifications;
+}
+
+router.get('/', requireAuth, getList);
+
+export = router.routes();

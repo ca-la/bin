@@ -1,4 +1,6 @@
 import * as Knex from 'knex';
+import { omit } from 'lodash';
+
 import * as db from '../../services/db';
 import first from '../../services/first';
 import Notification, {
@@ -6,8 +8,14 @@ import Notification, {
   isNotificationRow,
   NotificationRow
 } from '../../domain-objects/notification';
+import * as CollaboratorsDAO from '../collaborators';
+import Collaborator from '../../domain-objects/collaborator';
 import { validate, validateEvery } from '../../services/validate-from-db';
-import { omit } from 'lodash';
+
+interface SearchInterface {
+  limit: number;
+  offset: number;
+}
 
 const TABLE_NAME = 'notifications';
 
@@ -69,6 +77,32 @@ export async function findById(id: string): Promise<Notification | null> {
     isNotificationRow,
     dataAdapter,
     notification
+  );
+}
+
+export async function findByUserId(
+  userId: string,
+  options: SearchInterface
+): Promise<Notification[]> {
+  const collaborators = await CollaboratorsDAO.findByUserId(userId);
+  const notifications: NotificationRow[] = await db(TABLE_NAME)
+    .select('*')
+    .where({ recipient_user_id: userId })
+    .orWhereIn(
+      'collaborator_id',
+      collaborators.map((collaborator: Collaborator): string => {
+        return collaborator.id;
+      })
+    )
+    .orderBy('created_at', 'desc')
+    .limit(options.limit)
+    .offset(options.offset);
+
+  return validateEvery<NotificationRow, Notification>(
+    TABLE_NAME,
+    isNotificationRow,
+    dataAdapter,
+    notifications
   );
 }
 
