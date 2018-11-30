@@ -1,61 +1,88 @@
 import * as Koa from 'koa';
-
 import CollectionsDAO = require('../../dao/collections');
-import CollaboratorsDAO = require('../../dao/collaborators');
-import Collaborator from '../../domain-objects/collaborator';
+import { getCollectionPermissions } from '../../services/get-permissions';
 
-export function* canAccessCollectionId(
+export function* attachCollectionAndPermissions(
   this: Koa.Application.Context,
   collectionId: string
-): IterableIterator<any> {
-  if (!collectionId) {
-    throw new Error('Must pass collectionId to canAccessCollectionId');
-  }
+): any {
+  const { role, userId } = this.state;
 
   const collection = yield CollectionsDAO.findById(collectionId);
   this.assert(collection, 404, 'Collection not found');
+  const permissions = yield getCollectionPermissions(collection, role, userId);
 
   this.state.collection = collection;
-
-  if (this.state.userId === collection.createdBy) {
-    return;
-  }
-
-  const collaborators = yield CollaboratorsDAO.findByCollectionAndUser(
-    collectionId,
-    this.state.userId
-  );
-
-  this.assert(collaborators.length > 0, 403);
+  this.state.permissions = permissions;
 }
 
-export function* canModifyCollectionId(
+export function* canAccessCollectionInParam(
   this: Koa.Application.Context,
-  collectionId: string
+  next: () => Promise<any>
 ): IterableIterator<any> {
-  if (!collectionId) {
-    throw new Error('Must pass collectionId to canAccessCollectionId');
-  }
+  const { collectionId } = this.params;
+  yield attachCollectionAndPermissions.call(this, collectionId);
 
-  const collection = yield CollectionsDAO.findById(collectionId);
-  this.assert(collection, 404, 'Collection not found');
-
-  this.state.collection = collection;
-
-  if (this.state.userId === collection.createdBy) {
-    return;
-  }
-
-  const collaborators: Collaborator[] = yield CollaboratorsDAO.findByCollectionAndUser(
-    collectionId,
-    this.state.userId
+  const { permissions } = this.state;
+  this.assert(
+    permissions && permissions.canView,
+    403,
+    "You don't have permission to view this collection"
   );
 
-  this.assert(collaborators.length > 0, 403);
-  this.assert(collaborators[0].role === 'EDIT', 403);
+  yield next;
 }
 
-module.exports = {
-  canAccessCollectionId,
-  canModifyCollectionId
-};
+export function* canDeleteCollection(
+  this: Koa.Application.Context,
+  next: () => Promise<any>
+): any {
+  const { permissions } = this.state;
+  if (!permissions) {
+    throw new Error('canDeleteCollection must be chained with canAccessCollectionInParam');
+  }
+
+  this.assert(
+    permissions.canDelete,
+    403,
+    "You don't have permission to delete this collection"
+  );
+
+  yield next;
+}
+
+export function* canEditCollection(
+  this: Koa.Application.Context,
+  next: () => Promise<any>
+): any {
+  const { permissions } = this.state;
+  if (!permissions) {
+    throw new Error('canEditCollection must be chained with canAccessCollectionInParam');
+  }
+
+  this.assert(
+    permissions.canEdit,
+    403,
+    "You don't have permission to edit this collection"
+  );
+
+  yield next;
+}
+
+export function* canSubmitCollection(
+  this: Koa.Application.Context,
+  next: () => Promise<any>
+): any {
+  const { permissions } = this.state;
+  if (!permissions) {
+    throw new Error('canSubmitCollection must be chained with canAccessCollectionInParam');
+  }
+
+  this.assert(
+    permissions.canSubmit,
+    403,
+    "You don't have permission to submit this collection"
+  );
+
+  yield next;
+}

@@ -380,6 +380,8 @@ test('PUT /collections/:id/designs/:id', async (t: tape.Test) => {
 
 test('DELETE /collections/:id/designs/:id', async (t: tape.Test) => {
   const { user, session } = await createUser();
+  const { session: session2 } = await createUser();
+
   sandbox()
     .stub(CollaboratorsDAO, 'create')
     .resolves({
@@ -418,6 +420,13 @@ test('DELETE /collections/:id/designs/:id', async (t: tape.Test) => {
     `/collections/${collection[1].id}/designs/${design[1].id}`,
     { headers: API.authHeader(session.id) }
   );
+
+  const failedResponse = await API.del(
+    `/collections/${collection[1].id}/designs/${design[1].id}`,
+    { headers: API.authHeader(session2.id) }
+  );
+  t.equal(failedResponse[0].status, 403, 'Only the owner can delete a design');
+
   const collectionDesigns = await API.del(
     `/collections/${collection[1].id}/designs/${design[1].id}`,
     { headers: API.authHeader(session.id) }

@@ -8,8 +8,10 @@ import filterError = require('../../services/filter-error');
 import InvalidDataError = require('../../errors/invalid-data');
 
 import {
-  canAccessCollectionId,
-  canModifyCollectionId
+  canAccessCollectionInParam,
+  canDeleteCollection,
+  canEditCollection,
+  canSubmitCollection
 } from '../../middleware/can-access-collection';
 import canAccessUserResource = require('../../middleware/can-access-user-resource');
 import requireAuth = require('../../middleware/require-auth');
@@ -109,7 +111,6 @@ function* getCollection(
   const { role, userId } = this.state;
 
   if (collectionId) {
-    canAccessCollectionId.call(this, collectionId);
     const collection = yield CollectionsDAO.findById(collectionId);
     const permissions = yield getCollectionPermissions(collection, role, userId);
     this.body = { ...collection, permissions };
@@ -123,9 +124,6 @@ function* updateCollection(this: Koa.Application.Context): AsyncIterableIterator
   const { collectionId } = this.params;
   const { body } = this.request;
   const { role, userId } = this.state;
-
-  this.assert(userId, 403);
-  canModifyCollectionId.call(this, collectionId);
 
   if (body && isPartialCollection(body)) {
     const collection = yield CollectionsDAO
@@ -143,15 +141,60 @@ function* updateCollection(this: Koa.Application.Context): AsyncIterableIterator
 router.post('/', requireAuth, createCollection);
 router.get('/', requireAuth, getList);
 
-router.del('/:collectionId', requireAuth, deleteCollection);
-router.get('/:collectionId', requireAuth, getCollection);
-router.patch('/:collectionId', requireAuth, updateCollection);
+router.del(
+  '/:collectionId',
+  requireAuth,
+  canAccessCollectionInParam,
+  canDeleteCollection,
+  deleteCollection
+);
+router.get(
+  '/:collectionId',
+  requireAuth,
+  canAccessCollectionInParam,
+  getCollection
+);
+router.patch(
+  '/:collectionId',
+  requireAuth,
+  canAccessCollectionInParam,
+  canEditCollection,
+  updateCollection
+);
 
-router.post('/:collectionId/submissions', requireAuth, createSubmission);
-router.get('/:collectionId/submissions', requireAuth, getSubmissionStatus);
+router.post(
+  '/:collectionId/submissions',
+  requireAuth,
+  canAccessCollectionInParam,
+  canSubmitCollection,
+  createSubmission
+);
+router.get(
+  '/:collectionId/submissions',
+  requireAuth,
+  canAccessCollectionInParam,
+  getSubmissionStatus
+);
 
-router.get('/:collectionId/designs', requireAuth, getCollectionDesigns);
-router.del('/:collectionId/designs/:designId', requireAuth, deleteDesign);
-router.put('/:collectionId/designs/:designId', requireAuth, putDesign);
+router.get(
+  '/:collectionId/designs',
+  requireAuth,
+  canAccessCollectionInParam,
+  getCollectionDesigns
+);
+router.del(
+  '/:collectionId/designs/:designId',
+  requireAuth,
+  canAccessCollectionInParam,
+  canEditCollection,
+  deleteDesign
+);
+router.put(
+  '/:collectionId/designs/:designId',
+  requireAuth,
+  canAccessCollectionInParam,
+  canEditCollection,
+  putDesign
+);
 
 export = router.routes();
