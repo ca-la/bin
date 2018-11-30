@@ -1,5 +1,5 @@
 import * as uuid from 'node-uuid';
-import { Dollars } from '../../services/dollars';
+import { Cents, Dollars } from '../../services/dollars';
 import { PricingProductTypeRow } from '../../domain-objects/pricing-product-type';
 
 const currentUnitsAndMultiplier: [number, number][] = [
@@ -20,9 +20,9 @@ const currentUnitsAndMultiplier: [number, number][] = [
 ];
 export default function generateProductTypes(
   typeName: string,
-  typeMediumCents: Dollars,
+  typeMediumCents: Cents,
   typeYield: number,
-  contrast: [number, number, number],
+  contrast: [number, number, number, number],
   version: number
 ): Uninserted<PricingProductTypeRow>[] {
   return currentUnitsAndMultiplier.reduce(
@@ -60,6 +60,17 @@ export default function generateProductTypes(
           minimum_units: units,
           name: typeName,
           pattern_minimum_cents: Dollars(400),
+          unit_cents: Math.ceil(typeMediumCents * 1.75 * unitMultiplier),
+          version,
+          yield: typeYield
+        },
+        {
+          complexity: 'BLANK',
+          contrast: contrast[3],
+          id: uuid.v4(),
+          minimum_units: units,
+          name: typeName,
+          pattern_minimum_cents: 0,
           unit_cents: Math.ceil(typeMediumCents * 1.75 * unitMultiplier),
           version,
           yield: typeYield

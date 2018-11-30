@@ -22,7 +22,7 @@ export default async function generatePricingValues(): Promise<any> {
     'TEESHIRT',
     Dollars(20),
     1.5,
-    [0.15, 0.5, 1],
+    [0.15, 0.5, 1, 0],
     0
   );
   const createCareLabel = (units: number, cents: number): Uninserted<PricingCareLabelRow> => ({

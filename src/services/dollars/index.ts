@@ -1,5 +1,5 @@
-export type Dollars = number;
+export type Cents = number;
 
-export function Dollars(cents: number): Dollars {
-  return cents * 100;
+export function Dollars(dollars: number): Cents {
+  return dollars * 100;
 }

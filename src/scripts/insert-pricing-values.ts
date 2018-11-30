@@ -5,7 +5,7 @@ import { flatten, map } from 'lodash';
 import { PricingConstantRow } from '../domain-objects/pricing-constant';
 import sum from '../services/sum';
 import * as db from '../services/db';
-import { Dollars } from '../services/dollars';
+import { Cents, Dollars } from '../services/dollars';
 import { log } from '../services/logger';
 import { green, red, reset, yellow } from '../services/colors';
 import generateScreenPrintingProcess from '../services/generate-screen-printing-processes';
@@ -15,6 +15,9 @@ import { PricingMarginRow } from '../domain-objects/pricing-margin';
 import { PricingCareLabelRow } from '../domain-objects/pricing-care-label';
 import { PricingProcessRow } from '../domain-objects/pricing-process';
 import { PricingProductTypeRow } from '../domain-objects/pricing-product-type';
+
+// BUMP THIS BETWEEN EVERY RUN
+const version = 1;
 
 intialPricingValues()
   .then(() => {
@@ -29,7 +32,7 @@ intialPricingValues()
 async function intialPricingValues(): Promise<void> {
   const pricingProcessesScreenPrinting: Uninserted<PricingProcessRow>[] =
     generateScreenPrintingProcess(
-      (units: number): Dollars => Dollars(units >= 500 ? 30 : 60),
+      (units: number): Cents => Dollars(units >= 500 ? 30 : 60),
       Dollars(0.25),
       [
         [1, 100],
@@ -50,7 +53,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'EMBROIDERY',
       setup_cents: Dollars(200),
       unit_cents: Dollars(5),
-      version: 0
+      version
     },
     {
       complexity: 'MEDIUM',
@@ -59,7 +62,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'EMBROIDERY',
       setup_cents: Dollars(200),
       unit_cents: Dollars(10),
-      version: 0
+      version
     },
     {
       complexity: 'LARGE',
@@ -68,7 +71,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'EMBROIDERY',
       setup_cents: Dollars(200),
       unit_cents: Dollars(20),
-      version: 0
+      version
     },
     {
       complexity: 'SMALL',
@@ -77,7 +80,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'EMBROIDERY',
       setup_cents: Dollars(50),
       unit_cents: Dollars(5),
-      version: 0
+      version
     },
     {
       complexity: 'MEDIUM',
@@ -86,7 +89,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'EMBROIDERY',
       setup_cents: Dollars(50),
       unit_cents: Dollars(10),
-      version: 0
+      version
     },
     {
       complexity: 'LARGE',
@@ -95,7 +98,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'EMBROIDERY',
       setup_cents: Dollars(50),
       unit_cents: Dollars(15),
-      version: 0
+      version
     },
     {
       complexity: 'SMALL',
@@ -104,7 +107,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'EMBROIDERY',
       setup_cents: Dollars(50),
       unit_cents: Dollars(5),
-      version: 0
+      version
     },
     {
       complexity: 'MEDIUM',
@@ -113,7 +116,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'EMBROIDERY',
       setup_cents: Dollars(50),
       unit_cents: Dollars(9),
-      version: 0
+      version
     },
     {
       complexity: 'LARGE',
@@ -122,7 +125,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'EMBROIDERY',
       setup_cents: Dollars(50),
       unit_cents: Dollars(14),
-      version: 0
+      version
     },
     {
       complexity: 'SMALL',
@@ -131,7 +134,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'EMBROIDERY',
       setup_cents: Dollars(50),
       unit_cents: Dollars(5),
-      version: 0
+      version
     },
     {
       complexity: 'MEDIUM',
@@ -140,7 +143,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'EMBROIDERY',
       setup_cents: Dollars(50),
       unit_cents: Dollars(8),
-      version: 0
+      version
     },
     {
       complexity: 'LARGE',
@@ -149,7 +152,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'EMBROIDERY',
       setup_cents: Dollars(50),
       unit_cents: Dollars(13),
-      version: 0
+      version
     },
     {
       complexity: 'SMALL',
@@ -158,7 +161,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'EMBROIDERY',
       setup_cents: Dollars(35),
       unit_cents: Dollars(1),
-      version: 0
+      version
     },
     {
       complexity: 'MEDIUM',
@@ -167,7 +170,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'EMBROIDERY',
       setup_cents: Dollars(35),
       unit_cents: Dollars(3),
-      version: 0
+      version
     },
     {
       complexity: 'LARGE',
@@ -176,7 +179,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'EMBROIDERY',
       setup_cents: Dollars(70),
       unit_cents: Dollars(5),
-      version: 0
+      version
     },
     {
       complexity: 'SMALL',
@@ -185,7 +188,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'EMBROIDERY',
       setup_cents: Dollars(35),
       unit_cents: Dollars(1),
-      version: 0
+      version
     },
     {
       complexity: 'MEDIUM',
@@ -194,7 +197,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'EMBROIDERY',
       setup_cents: Dollars(35),
       unit_cents: Dollars(3),
-      version: 0
+      version
     },
     {
       complexity: 'LARGE',
@@ -203,7 +206,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'EMBROIDERY',
       setup_cents: Dollars(70),
       unit_cents: Dollars(3.5),
-      version: 0
+      version
     }
   ];
   const pricingProcessesWash: Uninserted<PricingProcessRow>[] = [
@@ -214,7 +217,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'WASH',
       setup_cents: Dollars(35),
       unit_cents: Dollars(2),
-      version: 0
+      version
     },
     {
       complexity: 'MEDIUM',
@@ -223,7 +226,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'WASH',
       setup_cents: Dollars(35),
       unit_cents: Dollars(7),
-      version: 0
+      version
     },
     {
       complexity: 'COMPLEX',
@@ -232,7 +235,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'WASH',
       setup_cents: Dollars(35),
       unit_cents: Dollars(13),
-      version: 0
+      version
     },
     {
       complexity: 'SIMPLE',
@@ -241,7 +244,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'WASH',
       setup_cents: Dollars(35),
       unit_cents: Dollars(1.5),
-      version: 0
+      version
     },
     {
       complexity: 'MEDIUM',
@@ -250,7 +253,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'WASH',
       setup_cents: Dollars(35),
       unit_cents: Dollars(6),
-      version: 0
+      version
     },
     {
       complexity: 'COMPLEX',
@@ -259,7 +262,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'WASH',
       setup_cents: Dollars(35),
       unit_cents: Dollars(11),
-      version: 0
+      version
     },
     {
       complexity: 'SIMPLE',
@@ -268,7 +271,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'WASH',
       setup_cents: 0,
       unit_cents: Dollars(1.5),
-      version: 0
+      version
     },
     {
       complexity: 'MEDIUM',
@@ -277,7 +280,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'WASH',
       setup_cents: 0,
       unit_cents: Dollars(6),
-      version: 0
+      version
     },
     {
       complexity: 'COMPLEX',
@@ -286,7 +289,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'WASH',
       setup_cents: 0,
       unit_cents: Dollars(11),
-      version: 0
+      version
     }
   ];
   const pricingProcessesDye: Uninserted<PricingProcessRow>[] = [
@@ -297,7 +300,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'DYE',
       setup_cents: Dollars(35),
       unit_cents: Dollars(0.5),
-      version: 0
+      version
     },
     {
       complexity: 'MEDIUM',
@@ -306,7 +309,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'DYE',
       setup_cents: Dollars(35),
       unit_cents: Dollars(2.25),
-      version: 0
+      version
     },
     {
       complexity: 'COMPLEX',
@@ -315,7 +318,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'DYE',
       setup_cents: Dollars(35),
       unit_cents: Dollars(4),
-      version: 0
+      version
     },
     {
       complexity: 'SIMPLE',
@@ -324,7 +327,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'DYE',
       setup_cents: 0,
       unit_cents: Dollars(0.5),
-      version: 0
+      version
     },
     {
       complexity: 'MEDIUM',
@@ -333,7 +336,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'DYE',
       setup_cents: 0,
       unit_cents: Dollars(2.25),
-      version: 0
+      version
     },
     {
       complexity: 'COMPLEX',
@@ -342,7 +345,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'DYE',
       setup_cents: 0,
       unit_cents: Dollars(4),
-      version: 0
+      version
     },
     {
       complexity: 'SIMPLE',
@@ -351,7 +354,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'DYE',
       setup_cents: 0,
       unit_cents: Dollars(0.25),
-      version: 0
+      version
     },
     {
       complexity: 'MEDIUM',
@@ -360,7 +363,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'DYE',
       setup_cents: 0,
       unit_cents: Dollars(1.5),
-      version: 0
+      version
     },
     {
       complexity: 'COMPLEX',
@@ -369,7 +372,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'DYE',
       setup_cents: 0,
       unit_cents: Dollars(2),
-      version: 0
+      version
     }
   ];
   const pricingProcessesDistress: Uninserted<PricingProcessRow>[] = [
@@ -380,7 +383,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'DISTRESS',
       setup_cents: Dollars(35),
       unit_cents: Dollars(1.5),
-      version: 0
+      version
     },
     {
       complexity: 'MEDIUM',
@@ -389,7 +392,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'DISTRESS',
       setup_cents: Dollars(35),
       unit_cents: Dollars(6),
-      version: 0
+      version
     },
     {
       complexity: 'COMPLEX',
@@ -398,7 +401,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'DISTRESS',
       setup_cents: Dollars(35),
       unit_cents: Dollars(11),
-      version: 0
+      version
     },
     {
       complexity: 'SIMPLE',
@@ -407,7 +410,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'DISTRESS',
       setup_cents: 0,
       unit_cents: Dollars(1.5),
-      version: 0
+      version
     },
     {
       complexity: 'MEDIUM',
@@ -416,7 +419,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'DISTRESS',
       setup_cents: 0,
       unit_cents: Dollars(6),
-      version: 0
+      version
     },
     {
       complexity: 'COMPLEX',
@@ -425,7 +428,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'DISTRESS',
       setup_cents: 0,
       unit_cents: Dollars(11),
-      version: 0
+      version
     },
     {
       complexity: 'SIMPLE',
@@ -434,7 +437,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'DISTRESS',
       setup_cents: 0,
       unit_cents: Dollars(0.75),
-      version: 0
+      version
     },
     {
       complexity: 'MEDIUM',
@@ -443,7 +446,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'DISTRESS',
       setup_cents: 0,
       unit_cents: Dollars(3),
-      version: 0
+      version
     },
     {
       complexity: 'COMPLEX',
@@ -452,7 +455,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'DISTRESS',
       setup_cents: 0,
       unit_cents: Dollars(5.5),
-      version: 0
+      version
     }
   ];
   const pricingProcessesEmbellish: Uninserted<PricingProcessRow>[] = [
@@ -463,7 +466,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'EMBELLISH',
       setup_cents: Dollars(35),
       unit_cents: Dollars(1.5),
-      version: 0
+      version
     },
     {
       complexity: 'MEDIUM',
@@ -472,7 +475,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'EMBELLISH',
       setup_cents: Dollars(35),
       unit_cents: Dollars(6),
-      version: 0
+      version
     },
     {
       complexity: 'COMPLEX',
@@ -481,7 +484,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'EMBELLISH',
       setup_cents: Dollars(35),
       unit_cents: Dollars(11),
-      version: 0
+      version
     },
     {
       complexity: 'SIMPLE',
@@ -490,7 +493,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'EMBELLISH',
       setup_cents: 0,
       unit_cents: Dollars(1.5),
-      version: 0
+      version
     },
     {
       complexity: 'MEDIUM',
@@ -499,7 +502,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'EMBELLISH',
       setup_cents: 0,
       unit_cents: Dollars(6),
-      version: 0
+      version
     },
     {
       complexity: 'COMPLEX',
@@ -508,7 +511,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'EMBELLISH',
       setup_cents: 0,
       unit_cents: Dollars(11),
-      version: 0
+      version
     },
     {
       complexity: 'SIMPLE',
@@ -517,7 +520,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'EMBELLISH',
       setup_cents: 0,
       unit_cents: Dollars(0.75),
-      version: 0
+      version
     },
     {
       complexity: 'MEDIUM',
@@ -526,7 +529,7 @@ async function intialPricingValues(): Promise<void> {
       name: 'EMBELLISH',
       setup_cents: 0,
       unit_cents: Dollars(3),
-      version: 0
+      version
     },
     {
       complexity: 'COMPLEX',
@@ -535,183 +538,207 @@ async function intialPricingValues(): Promise<void> {
       name: 'EMBELLISH',
       setup_cents: 0,
       unit_cents: Dollars(5.5),
-      version: 0
+      version
     }
   ];
+
+  const contrasts: [number, number, number, number] = [0.15, 0.5, 1, 0];
+
   const pricingProductTypes: Uninserted<PricingProductTypeRow>[] = flatten([
     generateProductTypes(
+      'BACKPACK',
+      Dollars(45),
+      1,
+      contrasts,
+      0
+    ),
+    generateProductTypes(
+      'TOPCOAT',
+      Dollars(75),
+      1,
+      contrasts,
+      0
+    ),
+    generateProductTypes(
+      'SUNGLASSES',
+      Dollars(15),
+      1,
+      contrasts,
+      0
+    ),
+    generateProductTypes(
       'TEESHIRT',
-      Dollars(20),
-      1.5,
-      [0.15, 0.5, 1],
+      Dollars(12),
+      1,
+      contrasts,
       0
     ),
     generateProductTypes(
       'BLOUSE',
-      Dollars(25),
-      1.5,
-      [0.15, 0.5, 1],
+      Dollars(15),
+      1,
+      contrasts,
       0
     ),
     generateProductTypes(
       'BLAZER',
       Dollars(56),
-      2.5,
-      [0.15, 0.5, 1],
+      1,
+      contrasts,
       0
     ),
     generateProductTypes(
       'DRESS',
-      Dollars(36),
-      3,
-      [0.15, 0.5, 1],
+      Dollars(24),
+      1,
+      contrasts,
       0
     ),
     generateProductTypes(
       'SHORTS',
-      Dollars(42),
-      1.5,
-      [0.15, 0.5, 1],
+      Dollars(25),
+      1,
+      contrasts,
       0
     ),
     generateProductTypes(
       'PANTS',
-      Dollars(65),
-      1.5,
-      [0.15, 0.5, 1],
+      Dollars(29.5),
+      1,
+      contrasts,
       0
     ),
     generateProductTypes(
       'SKIRT',
-      Dollars(35),
-      1.25,
-      [0.15, 0.5, 1],
+      Dollars(19.5),
+      1,
+      contrasts,
       0
     ),
     generateProductTypes(
       'LONG SKIRT',
       Dollars(40),
-      2,
-      [0.15, 0.5, 1],
+      1,
+      contrasts,
       0
     ),
     generateProductTypes(
       'COAT',
-      Dollars(95),
-      3,
-      [0.15, 0.5, 1],
+      Dollars(65),
+      1,
+      contrasts,
       0
     ),
     generateProductTypes(
       'LONGSLEEVE TEESHIRT',
-      Dollars(25),
-      2.25,
-      [0.15, 0.5, 1],
+      Dollars(12),
+      1,
+      contrasts,
       0
     ),
     generateProductTypes(
       'DRESS SHIRT',
-      Dollars(35),
-      2.25,
-      [0.15, 0.5, 1],
+      Dollars(20),
+      1,
+      contrasts,
       0
     ),
     generateProductTypes(
       'SHORTSLEEVE DRESS SHIRT',
-      Dollars(30),
-      1.5,
-      [0.15, 0.5, 1],
+      Dollars(15),
+      1,
+      contrasts,
       0
     ),
     generateProductTypes(
       'SWEATSHIRT',
-      Dollars(35),
-      2,
-      [0.15, 0.5, 1],
+      Dollars(15),
+      1,
+      contrasts,
       0
     ),
     generateProductTypes(
       'HOODED SWEATSHIRT',
-      Dollars(40),
-      2,
-      [0.15, 0.5, 1],
+      Dollars(25),
+      1,
+      contrasts,
       0
     ),
     generateProductTypes(
       'UNDERWEAR',
       Dollars(10),
       1,
-      [0.15, 0.5, 1],
+      contrasts,
       0
     ),
     generateProductTypes(
       'JACKET',
       Dollars(45),
-      2.5,
-      [0.15, 0.5, 1],
+      1,
+      contrasts,
       0
     ),
     generateProductTypes(
       'SWEATER',
       Dollars(38),
-      2,
-      [0.15, 0.5, 1],
+      1,
+      contrasts,
       0
     ),
     generateProductTypes(
       'SPORT COAT',
       Dollars(75),
-      2.5,
-      [0.15, 0.5, 1],
+      1,
+      contrasts,
       0
     ),
     generateProductTypes(
       'BATHROBE',
       Dollars(35),
-      3,
-      [0.15, 0.5, 1],
+      1,
+      contrasts,
       0
     ),
     generateProductTypes(
       'TIE',
       Dollars(25),
       1,
-      [0.15, 0.5, 1],
+      contrasts,
       0
     ),
     generateProductTypes(
       'PURSE',
       Dollars(20),
-      2,
-      [0.15, 0.5, 1],
+      1,
+      contrasts,
       0
     ),
     generateProductTypes(
       'WALLET',
       Dollars(30),
-      0.5,
-      [0.15, 0.5, 1],
+      1,
+      contrasts,
       0
     ),
     generateProductTypes(
       'SMALL BAG',
       Dollars(30),
-      2,
-      [0.15, 0.5, 1],
+      1,
+      contrasts,
       0
     ),
     generateProductTypes(
       'LARGE BAG',
       Dollars(73),
-      4,
-      [0.15, 0.5, 1],
+      1,
+      contrasts,
       0
     ),
     generateProductTypes(
       'TANK TOP',
-      Dollars(12),
+      Dollars(5),
       1,
-      [0.15, 0.5, 1],
+      contrasts,
       0
     )
   ]);
@@ -719,7 +746,7 @@ async function intialPricingValues(): Promise<void> {
     id: uuid.v4(),
     minimum_units: units,
     unit_cents: cents,
-    version: 0
+    version
   });
   const pricingCareLabels: Uninserted<PricingCareLabelRow>[] = [
     createCareLabel(1, 36),
@@ -740,67 +767,67 @@ async function intialPricingValues(): Promise<void> {
       id: uuid.v4(),
       margin: 15,
       minimum_units: 1,
-      version: 0
+      version
     },
     {
       id: uuid.v4(),
       margin: 14,
       minimum_units: 50,
-      version: 0
+      version
     },
     {
       id: uuid.v4(),
       margin: 13,
       minimum_units: 100,
-      version: 0
+      version
     },
     {
       id: uuid.v4(),
       margin: 12,
       minimum_units: 150,
-      version: 0
+      version
     },
     {
       id: uuid.v4(),
       margin: 11,
       minimum_units: 200,
-      version: 0
+      version
     },
     {
       id: uuid.v4(),
       margin: 10,
       minimum_units: 300,
-      version: 0
+      version
     },
     {
       id: uuid.v4(),
       margin: 9,
       minimum_units: 500,
-      version: 0
+      version
     },
     {
       id: uuid.v4(),
       margin: 8,
       minimum_units: 1000,
-      version: 0
+      version
     },
     {
       id: uuid.v4(),
       margin: 7,
       minimum_units: 1750,
-      version: 0
+      version
     },
     {
       id: uuid.v4(),
       margin: 6,
       minimum_units: 3000,
-      version: 0
+      version
     },
     {
       id: uuid.v4(),
       margin: 5,
       minimum_units: 4500,
-      version: 0
+      version
     }
   ];
   const pricingConstants: Uninserted<PricingConstantRow>[] = [
@@ -822,57 +849,64 @@ async function intialPricingValues(): Promise<void> {
       category: 'BASIC',
       id: uuid.v4(),
       minimum_units: 1,
-      unit_cents: Dollars(5),
-      version: 0
+      unit_cents: Dollars(3),
+      version
     },
     {
       category: 'STANDARD',
       id: uuid.v4(),
       minimum_units: 1,
-      unit_cents: Dollars(10),
-      version: 0
+      unit_cents: Dollars(8),
+      version
     },
     {
       category: 'LUXE',
       id: uuid.v4(),
       minimum_units: 1,
-      unit_cents: Dollars(15),
-      version: 0
+      unit_cents: Dollars(13),
+      version
     },
     {
       category: 'ULTRA_LUXE',
       id: uuid.v4(),
       minimum_units: 1,
-      unit_cents: Dollars(25),
-      version: 0
+      unit_cents: Dollars(20),
+      version
+    },
+    {
+      category: 'SPECIFY',
+      id: uuid.v4(),
+      minimum_units: 1,
+      unit_cents: Dollars(0),
+      version
     },
     {
       category: 'BASIC',
       id: uuid.v4(),
       minimum_units: 500,
-      unit_cents: Dollars(4),
-      version: 0
+      unit_cents: Dollars(2),
+      version
     },
     {
       category: 'STANDARD',
       id: uuid.v4(),
       minimum_units: 500,
-      unit_cents: Dollars(8),
-      version: 0
+      unit_cents: Dollars(6),
+      version
     },
     {
       category: 'LUXE',
       id: uuid.v4(),
       minimum_units: 500,
-      unit_cents: Dollars(11),
-      version: 0
+      unit_cents: Dollars(10),
+      version
     },
     {
       category: 'ULTRA_LUXE',
       id: uuid.v4(),
       minimum_units: 500,
-      unit_cents: Dollars(19),
-      version: 0
+      unit_cents: Dollars(15),
+      version
     }
   ];
   const expectedCount = sum([

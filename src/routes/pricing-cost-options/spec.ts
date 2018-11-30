@@ -15,6 +15,7 @@ test('GET /pricing-cost-options', async (t: Test) => {
   t.equal(response.status, 200);
   t.deepEqual(options, {
     complexities: [
+      'BLANK',
       'COMPLEX',
       'MEDIUM',
       'SIMPLE'

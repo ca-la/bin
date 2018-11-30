@@ -1,6 +1,6 @@
 import { range } from 'lodash';
 import * as uuid from 'node-uuid';
-import { Dollars } from '../dollars';
+import { Cents } from '../dollars';
 import { PricingProcessRow } from '../../domain-objects/pricing-process';
 
 type UninsertedPricingProcessRow = Uninserted<PricingProcessRow>;
@@ -9,7 +9,7 @@ type UninsertedPricingProcessRow = Uninserted<PricingProcessRow>;
  */
 export default function generateScreenPrintingProcess(
   setup: (units: number) => number,
-  perHit: Dollars,
+  perHit: Cents,
   minimumUnitsAndUnitCost: [number, number][],
   version: number
 ): UninsertedPricingProcessRow[] {
