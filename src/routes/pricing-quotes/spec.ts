@@ -173,7 +173,7 @@ test('/pricing-quotes?designId retrieves the set of quotes for a design', async 
   );
 });
 
-test('GET /pricing-quotes?designId&quantity returns unsaved quote', async (t: Test) => {
+test('GET /pricing-quotes?designId&units returns unsaved quote', async (t: Test) => {
   await generatePricingValues();
   const { user, session } = await createUser();
   const design = await createDesign({
@@ -211,6 +211,41 @@ test('GET /pricing-quotes?designId&quantity returns unsaved quote', async (t: Te
     payNowTotalCents: 489100,
     units: 100
   });
+});
+
+test('GET /pricing-quotes?designId&units with very large quantity', async (t: Test) => {
+  await generatePricingValues();
+  const { user, session } = await createUser();
+  const design = await createDesign({
+    productType: 'A product type',
+    title: 'A design',
+    userId: user.id
+  });
+  await PricingCostInputsDAO.create({
+    createdAt: new Date(),
+    deletedAt: null,
+    designId: design.id,
+    id: uuid.v4(),
+    materialBudgetCents: 1200,
+    materialCategory: 'BASIC',
+    processes: [{
+      complexity: '1_COLOR',
+      name: 'SCREEN_PRINTING'
+    }, {
+      complexity: '1_COLOR',
+      name: 'SCREEN_PRINTING'
+    }],
+    productComplexity: 'SIMPLE',
+    productType: 'TEESHIRT'
+  });
+
+  const [response, unsavedQuote] = await get(
+    `/pricing-quotes?designId=${design.id}&units=100000`,
+    { headers: authHeader(session.id) }
+  );
+
+  t.equal(response.status, 200);
+  t.equal(unsavedQuote.payLaterTotalCents > 0, true);
 });
 
 test('PUT /pricing-quotes/:quoteId/bid/:bidId creates bid', async (t: Test) => {

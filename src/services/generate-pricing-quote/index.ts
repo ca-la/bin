@@ -130,7 +130,7 @@ function calculateBaseUnitCost(
   values: PricingQuoteValues
 ): number {
   const brandedLabelAdditionalCents = units > values.brandedLabelsMinimumUnits
-    ? (values.brandedLabelsMinimumUnits - units) * values.brandedLabelsAdditionalCents
+    ? (units - values.brandedLabelsMinimumUnits) * values.brandedLabelsAdditionalCents
     : 0;
 
   return Math.ceil(sum([
