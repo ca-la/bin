@@ -497,27 +497,36 @@ test('GET /collections/:id/designs', async (t: tape.Test) => {
 });
 
 test('POST /collections/:id/submissions', async (t: tape.Test) => {
-  const { user, session } = await createUser();
+  const owner = await createUser();
+  const collaborator = await createUser();
 
   const collection = await CollectionsDAO.create({
     createdAt: new Date(),
-    createdBy: user.id,
+    createdBy: owner.user.id,
     deletedAt: null,
     description: 'Initial commit',
     id: uuid.v4(),
     title: 'Drop 001/The Early Years'
   });
+  await CollaboratorsDAO.create({
+    collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
+    userId: collaborator.user.id
+  });
   const designOne = await ProductDesignsDAO.create({
     description: 'Generic Shirt',
     productType: 'TEESHIRT',
     title: 'T-Shirt One',
-    userId: user.id
+    userId: owner.user.id
   });
   const designTwo = await ProductDesignsDAO.create({
     description: 'Generic Shirt',
     productType: 'TEESHIRT',
     title: 'T-Shirt Two',
-    userId: user.id
+    userId: owner.user.id
   });
   await CollectionsDAO.moveDesign(collection.id, designOne.id);
   await CollectionsDAO.moveDesign(collection.id, designTwo.id);
@@ -533,14 +542,14 @@ test('POST /collections/:id/submissions', async (t: tape.Test) => {
       body: {
         collectionId: collection.id,
         createdAt: new Date(),
-        createdBy: user.id,
+        createdBy: owner.user.id,
         deletedAt: null,
         id: serviceId,
         needsDesignConsulting: true,
         needsFulfillment: true,
         needsPackaging: true
       },
-      headers: API.authHeader(session.id)
+      headers: API.authHeader(owner.session.id)
     }
   );
 
@@ -559,6 +568,25 @@ test('POST /collections/:id/submissions', async (t: tape.Test) => {
   }, 'Returns current submission status');
   t.deepEqual(designEventOne[0].type, 'SUBMIT_DESIGN', 'Submitted the design to CALA');
   t.deepEqual(designEventTwo[0].type, 'SUBMIT_DESIGN', 'Submitted the design to CALA');
+
+  const collaboratorPost = await API.post(
+    `/collections/${collection.id}/submissions`,
+    {
+      body: {
+        collectionId: collection.id,
+        createdAt: new Date(),
+        createdBy: collaborator.user.id,
+        deletedAt: null,
+        id: serviceId,
+        needsDesignConsulting: true,
+        needsFulfillment: true,
+        needsPackaging: true
+      },
+      headers: API.authHeader(collaborator.session.id)
+    }
+  );
+
+  t.equal(collaboratorPost[0].status, 403, 'Collaborators cannot submit collections');
 });
 
 test('GET /collections/:collectionId/submissions', async (t: tape.Test) => {
@@ -568,6 +596,7 @@ test('GET /collections/:collectionId/submissions', async (t: tape.Test) => {
 
   const designer = await createUser();
   const admin = await createUser({ role: 'ADMIN' });
+  const collaborator = await createUser();
   const collection = await CollectionsDAO.create({
     createdAt: new Date(),
     createdBy: designer.user.id,
@@ -575,6 +604,14 @@ test('GET /collections/:collectionId/submissions', async (t: tape.Test) => {
     description: 'Initial commit',
     id: uuid.v4(),
     title: 'Drop 001/The Early Years'
+  });
+  await CollaboratorsDAO.create({
+    collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
+    userId: collaborator.user.id
   });
   const designOne = await ProductDesignsDAO.create({
     description: 'Generic Shirt',
@@ -699,6 +736,20 @@ test('GET /collections/:collectionId/submissions', async (t: tape.Test) => {
 
   t.equal(statusFour[0].status, 200);
   t.deepEqual(statusFour[1], {
+    collectionId: collection.id,
+    isCosted: true,
+    isPaired: false,
+    isQuoted: true,
+    isSubmitted: true
+  });
+
+  const collaboratorGet = await API.get(
+    `/collections/${collection.id}/submissions`,
+    { headers: API.authHeader(collaborator.session.id) }
+  );
+
+  t.equal(collaboratorGet[0].status, 200);
+  t.deepEqual(collaboratorGet[1], {
     collectionId: collection.id,
     isCosted: true,
     isPaired: false,

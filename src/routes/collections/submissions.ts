@@ -14,17 +14,8 @@ export function* createSubmission(
   this: Koa.Application.Context
 ): AsyncIterableIterator<CollectionSubmissionStatus> {
   const { collectionId } = this.params;
-  const { role, userId } = this.state;
+  const { userId } = this.state;
   const { body } = this.request;
-  const isAdmin = role === 'ADMIN';
-
-  const collection = yield CollectionsDAO.findById(collectionId);
-
-  // TODO: Get submission permissions figured out
-  if (!isAdmin && collection.createdBy !== userId) {
-    this.throw(403, 'Only the collection owner can submit a collection');
-    return;
-  }
 
   if (isCollectionService(body)) {
     yield CollectionServicesDAO.create(attachDefaults(body, userId));
@@ -54,17 +45,6 @@ export function* getSubmissionStatus(
   this: Koa.Application.Context
 ): AsyncIterableIterator<CollectionSubmissionStatus> {
   const { collectionId } = this.params;
-  const { role, userId } = this.state;
-  const isAdmin = role === 'ADMIN';
-
-  const collection = yield CollectionsDAO.findById(collectionId);
-
-  // TODO: Get submission permissions figured out
-  if (!isAdmin && collection.createdBy !== userId) {
-    this.throw(403, 'Only the collection owner can submit a collection');
-    return;
-  }
-
   const submissionStatus = yield CollectionsDAO.getStatusById(collectionId);
 
   this.status = 200;
