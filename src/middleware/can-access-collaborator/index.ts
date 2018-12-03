@@ -1,8 +1,11 @@
 import * as Koa from 'koa';
-import Collaborator from '../../domain-objects/collaborator';
+
 import * as CollaboratorsDAO from '../../dao/collaborators';
 import * as CollectionsDAO from '../../dao/collections';
 import * as DesignsDAO from '../../dao/product-designs';
+import Collaborator from '../../domain-objects/collaborator';
+import filterError = require('../../services/filter-error');
+import ResourceNotFoundError from '../../errors/resource-not-found';
 import {
   getCollectionPermissions,
   getDesignPermissions,
@@ -32,14 +35,21 @@ async function findPermissionsFromCollectionOrDesign(
   collectionId: string | undefined,
   designId: string | undefined
 ): Promise<Permissions | null> {
+  if (collectionId && designId) { throw new Error('Must pass collectionId or designId, not both'); }
+
   if (collectionId) {
     const collection = await CollectionsDAO.findById(collectionId);
-    if (!collection) { throw new Error(`Could not find collection ${collectionId}`); }
+    if (!collection) {
+      throw new ResourceNotFoundError(`Could not find collection ${collectionId}`);
+    }
     return getCollectionPermissions(collection, role, userId);
   }
   if (designId) {
     const design = await DesignsDAO.findById(designId);
-    if (!design) { throw new Error(`Could not find collection ${designId}`); }
+    if (!design) {
+      throw new ResourceNotFoundError(`Could not find design ${designId}`);
+    }
+
     return getDesignPermissions(design, role, userId);
   }
   return null;
@@ -69,13 +79,20 @@ export function* canAccessViaDesignOrCollectionInQuery(
   next: () => Promise<any>
 ): IterableIterator<any> {
   const { collectionId, designId } = this.query;
+
+  if (collectionId && designId) {
+    this.throw(400, 'Must pass exactly one of collection ID / design ID');
+  }
+
   const { role, userId } = this.state;
   const permissions = yield findPermissionsFromCollectionOrDesign(
     role,
     userId,
     collectionId,
     designId
-  );
+  ).catch(filterError(ResourceNotFoundError, (err: ResourceNotFoundError) =>
+    this.throw(400, err)
+  ));
 
   this.state.permissions = permissions;
   this.assert(
@@ -94,13 +111,19 @@ export function* canAccessViaDesignOrCollectionInRequestBody(
     return this.throw(400, 'A design or collection id must be specified in the request!');
   }
   const { collectionId, designId } = this.request.body;
+  if (collectionId && designId) {
+    this.throw(400, 'Must pass exactly one of collection ID / design ID');
+  }
+
   const { role, userId } = this.state;
   const permissions = yield findPermissionsFromCollectionOrDesign(
     role,
     userId,
     collectionId,
     designId
-  );
+  ).catch(filterError(ResourceNotFoundError, (err: ResourceNotFoundError) =>
+    this.throw(400, err)
+  ));
 
   this.state.permissions = permissions;
   this.assert(

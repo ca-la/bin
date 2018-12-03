@@ -211,3 +211,63 @@ test('GET /collaborators allows querying by collection ID', async (t: Test) => {
   t.equal(body[0].collectionId, collection.id);
   t.equal(body[0].designId, null);
 });
+
+test('GET /collaborators returns a 400 for an invalid collection or design ID', async (t: Test) => {
+  const { session } = await createUser();
+
+  const [collectionResponse, collectionBody] = await get(
+    '/collaborators?collectionId=d7567ce0-2fe3-404d-b1a4-393b661d5683',
+    { headers: authHeader(session.id) }
+  );
+
+  t.equal(collectionResponse.status, 400);
+  t.equal(collectionBody.message, 'Could not find collection d7567ce0-2fe3-404d-b1a4-393b661d5683');
+
+  const [designResponse, designBody] = await get(
+    '/collaborators?designId=d7567ce0-2fe3-404d-b1a4-393b661d5683',
+    { headers: authHeader(session.id) }
+  );
+
+  t.equal(designResponse.status, 400);
+  t.equal(designBody.message, 'Could not find design d7567ce0-2fe3-404d-b1a4-393b661d5683');
+});
+
+test('GET /collaborators requires access to the resource you want to access', async (t: Test) => {
+  sandbox().stub(EmailService, 'enqueueSend').resolves();
+  const { session: maliciousSession, user: maliciousUser } = await createUser();
+  const { session: targetSession, user: targetUser } = await createUser();
+
+  const design = await ProductDesignsDAO.create({
+    productType: 'TEESHIRT',
+    title: 'Plain White Tee',
+    userId: targetUser.id
+  });
+
+  await post('/collaborators', {
+    body: {
+      designId: design.id,
+      invitationMessage: "TAke a look, y'all",
+      role: 'EDIT',
+      userEmail: 'my-private-contact@example.com'
+    },
+    headers: authHeader(targetSession.id)
+  });
+
+  const collection = await CollectionsDAO.create({
+    createdAt: new Date(),
+    createdBy: maliciousUser.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
+    title: 'AW19'
+  });
+
+  const [response, body] = await get(
+    `/collaborators?collectionId=${collection.id}&designId=${design.id}`, {
+      headers: authHeader(maliciousSession.id)
+    }
+  );
+
+  t.equal(response.status, 400);
+  t.equal(body.message, 'Must pass exactly one of collection ID / design ID');
+});
