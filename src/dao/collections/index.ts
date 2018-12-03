@@ -179,14 +179,14 @@ export async function getStatusById(collectionId: string): Promise<CollectionSub
   const submissionStatus = await db.raw(`
 SELECT
     c.id AS collection_id,
-    (count(de_submitted.id) = count(d.id)) AS is_submitted,
-    (count(de_costed.id) = count(d.id)) AS is_costed,
-    (count(de_quoted.id) = count(d.id)) AS is_quoted,
-    (count(de_paired.id) = count(d.id)) AS is_paired
+    (count(d.id) > 0 AND count(de_submitted.id) = count(d.id)) AS is_submitted,
+    (count(d.id) > 0 AND count(de_costed.id) = count(d.id)) AS is_costed,
+    (count(d.id) > 0 AND count(de_quoted.id) = count(d.id)) AS is_quoted,
+    (count(d.id) > 0 AND count(de_paired.id) = count(d.id)) AS is_paired
   FROM collections AS c
 
   LEFT JOIN collection_designs AS cd ON cd.collection_id = c.id
-  LEFT JOIN product_designs AS d ON cd.design_id = d.id
+  LEFT JOIN product_designs AS d ON cd.design_id = d.id AND d.deleted_at IS NULL
 
   LEFT JOIN design_events AS de_submitted
     ON cd.design_id = de_submitted.design_id
@@ -204,7 +204,7 @@ SELECT
     ON cd.design_id = de_paired.design_id
    AND de_paired.type = 'COMMIT_PARTNER_PAIRING'
 
- WHERE c.id = ? AND c.deleted_at IS NULL AND d.deleted_at IS NULL
+ WHERE c.id = ? AND c.deleted_at IS NULL
  GROUP BY c.id;
 `, [collectionId])
     .then((rawResult: any): CollectionSubmissionStatusRow[] => rawResult.rows)

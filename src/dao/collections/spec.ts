@@ -270,6 +270,16 @@ test('CollectionsDAO.getStatusById', async (t: tape.Test) => {
     id: uuid.v4(),
     title: 'Drop 001/The Early Years'
   });
+
+  const initialStatus = await CollectionsDAO.getStatusById(createdCollection.id);
+  t.deepEqual(initialStatus, {
+    collectionId: createdCollection.id,
+    isCosted: false,
+    isPaired: false,
+    isQuoted: false,
+    isSubmitted: false
+  }, 'Empty collection is in a fully-false state');
+
   const createdDesigns = await Promise.all([
     ProductDesignsDAO.create({
       productType: 'HELMET',
