@@ -44,6 +44,9 @@ test('PricingCostInputsDAO supports creation and retrieval', async (t: Test) => 
 });
 
 test('PricingCostInputsDAO supports retrieval by designID', async (t: Test) => {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+
   const { user } = await createUser();
   const design = await ProductDesignsDAO.create({
     productType: 'DRESS',
@@ -51,7 +54,7 @@ test('PricingCostInputsDAO supports retrieval by designID', async (t: Test) => {
     userId: user.id
   });
   const input: PricingCostInput = {
-    createdAt: new Date(),
+    createdAt: yesterday,
     deletedAt: null,
     designId: design.id,
     id: uuid.v4(),
@@ -70,8 +73,29 @@ test('PricingCostInputsDAO supports retrieval by designID', async (t: Test) => {
     productComplexity: 'MEDIUM',
     productType: 'DRESS'
   };
+  const anotherInput: PricingCostInput = {
+    createdAt: new Date(),
+    deletedAt: null,
+    designId: design.id,
+    id: uuid.v4(),
+    materialBudgetCents: 12500,
+    materialCategory: 'SPECIFY',
+    processes: [
+      {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      },
+      {
+        complexity: 'SMALL',
+        name: 'EMBROIDERY'
+      }
+    ],
+    productComplexity: 'MEDIUM',
+    productType: 'DRESS'
+  };
   await PricingCostInputsDAO.create(input);
+  await PricingCostInputsDAO.create(anotherInput);
   const designInputs = await PricingCostInputsDAO.findByDesignId(design.id);
 
-  t.deepEqual(designInputs, [input]);
+  t.deepEqual(designInputs, [anotherInput, input]);
 });

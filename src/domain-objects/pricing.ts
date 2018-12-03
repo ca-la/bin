@@ -1,8 +1,8 @@
 import { hasProperties } from '../services/require-properties';
 
-export type Complexity = 'SIMPLE' | 'MEDIUM' | 'COMPLEX';
+export type Complexity = 'BLANK' | 'SIMPLE' | 'MEDIUM' | 'COMPLEX';
 
-export type MaterialCategory = 'BASIC' | 'STANDARD' | 'LUXE' | 'ULTRA_LUXE';
+export type MaterialCategory = 'SPECIFY' | 'BASIC' | 'STANDARD' | 'LUXE' | 'ULTRA_LUXE';
 
 export type Process =
   {

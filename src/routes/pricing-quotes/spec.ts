@@ -98,6 +98,9 @@ test('POST /pricing-quotes creates commit event', async (t: Test) => {
 
 test('/pricing-quotes?designId retrieves the set of quotes for a design', async (t: Test) => {
   const { user, session } = await createUser({ role: 'ADMIN' });
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+
   const design = await createDesign({
     productType: 'A product type',
     title: 'A design',
@@ -110,16 +113,13 @@ test('/pricing-quotes?designId retrieves the set of quotes for a design', async 
   });
   await generatePricingValues();
   await PricingCostInputsDAO.create({
-    createdAt: new Date(),
+    createdAt: yesterday,
     deletedAt: null,
     designId: design.id,
     id: uuid.v4(),
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
     processes: [{
-      complexity: '1_COLOR',
-      name: 'SCREEN_PRINTING'
-    }, {
       complexity: '1_COLOR',
       name: 'SCREEN_PRINTING'
     }],

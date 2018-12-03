@@ -92,7 +92,7 @@ export async function findByDesignId(designId: string): Promise<PricingCostInput
   const withoutProcesses: WithoutProcesses[] = await db(TABLE_NAME)
     .select('*')
     .where({ design_id: designId, deleted_at: null })
-    .orderBy('created_at');
+    .orderBy('created_at', 'DESC');
 
   const inputs = await Promise.all(withoutProcesses.map(attachProcesses));
 
