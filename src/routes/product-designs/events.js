@@ -68,12 +68,6 @@ function* addDesignEvent() {
       this.params.designId,
       this.state.userId
     );
-  } else if (added.type === 'BID_DESIGN') {
-    NotificationsService.sendPartnerDesignBid(
-      this.params.designId,
-      this.state.userId,
-      added.targetId
-    );
   }
 
   this.body = added;

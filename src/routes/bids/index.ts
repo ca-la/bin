@@ -12,6 +12,7 @@ import * as CollaboratorsDAO from '../../dao/collaborators';
 import requireAdmin = require('../../middleware/require-admin');
 import requireAuth = require('../../middleware/require-auth');
 import { hasOnlyProperties } from '../../services/require-properties';
+import * as NotificationsService from '../../services/create-notifications';
 
 const router = new Router();
 
@@ -144,6 +145,8 @@ function* assignBidToPartner(this: Koa.Application.Context): AsyncIterableIterat
     userEmail: null,
     userId: target.id
   });
+
+  NotificationsService.sendPartnerDesignBid(design.id, this.state.userId, target.id);
 
   this.status = 204;
 }

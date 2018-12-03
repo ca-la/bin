@@ -1,12 +1,14 @@
 import * as uuid from 'node-uuid';
 import { omit } from 'lodash';
+import * as sinon from 'sinon';
 
-import { test, Test } from '../../test-helpers/fresh';
+import { sandbox, test, Test } from '../../test-helpers/fresh';
 import { authHeader, del, get, put } from '../../test-helpers/http';
 import createUser = require('../../test-helpers/create-user');
 import generateBid from '../../test-helpers/factories/bid';
 import { create as createDesign } from '../../dao/product-designs';
 import { create as createBid } from '../../dao/bids';
+import * as NotificationsService from '../../services/create-notifications';
 
 test('GET /bids', async (t: Test) => {
   const admin = await createUser({ role: 'ADMIN' });
@@ -210,11 +212,16 @@ test('PUT /bids/:bidId/assignees/:userId', async (t: Test) => {
 
   const { bid } = await generateBid(design.id, user.id);
 
+  const notificationStub = sandbox()
+    .stub(NotificationsService, 'sendPartnerDesignBid')
+    .resolves();
+
   const [response] = await put(
     `/bids/${bid.id}/assignees/${user.id}`,
     { headers: authHeader(session.id) }
   );
   t.equal(response.status, 204);
+  sinon.assert.callCount(notificationStub, 1);
 
   const [collaboratorResponse, collaborators] = await get(
     `/collaborators?designId=${design.id}`,

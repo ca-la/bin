@@ -2,7 +2,6 @@
 
 const uuid = require('node-uuid');
 const { omit } = require('lodash');
-const sinon = require('sinon');
 
 const CollectionsDAO = require('../../dao/collections');
 const createUser = require('../../test-helpers/create-user');
@@ -18,7 +17,6 @@ const {
 } = require('../../test-helpers/http');
 const { test, sandbox } = require('../../test-helpers/fresh');
 const AWSService = require('../../services/aws');
-const NotificationsService = require('../../services/create-notifications');
 
 test('PATCH /product-designs/:id rejects empty data', (t) => {
   let designId;
@@ -505,40 +503,6 @@ test('PUT /product-designs/:designId/events/:eventId with an event creates it', 
     designId: design.id
   });
 });
-
-test(
-  'PUT /product-designs/:designId/events/:eventId creates an event and dispatches a notification',
-  async (t) => {
-    const { user: admin, session: adminSession } = await createUser({ role: 'ADMIN' });
-    const { user: partner } = await createUser();
-    const design = await ProductDesignsDAO.create({
-      userId: admin.id,
-      title: 'Design'
-    });
-    const inputEvent = {
-      bidId: null,
-      createdAt: new Date(2012, 12, 24),
-      id: uuid.v4(),
-      targetId: partner.id,
-      type: 'BID_DESIGN'
-    };
-
-    const notificationStub = sandbox()
-      .stub(NotificationsService, 'sendPartnerDesignBid')
-      .resolves();
-
-    const [response] = await put(
-      `/product-designs/${design.id}/events/${inputEvent.id}`,
-      {
-        headers: authHeader(adminSession.id),
-        body: inputEvent
-      }
-    );
-
-    t.equal(response.status, 200);
-    sinon.assert.callCount(notificationStub, 1);
-  }
-);
 
 test('PUT /product-designs/:designId/events/:eventId a forbidden type returns 403', async (t) => {
   const { user, session } = await createUser();
