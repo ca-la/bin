@@ -7,6 +7,41 @@ import createUser = require('../../test-helpers/create-user');
 import { test, Test } from '../../test-helpers/fresh';
 import createDesign from '../../services/create-design';
 
+test('Collaborators DAO can find all collaborators with a list of ids', async (t: Test) => {
+  const { user } = await createUser({ withSession: false });
+  const { user: user2 } = await createUser({ withSession: false });
+
+  const design = await createDesign({
+    productType: 'BOMBER',
+    title: 'RAF RAF RAF PARKA',
+    userId: user.id
+  });
+
+  const c1 = await CollaboratorsDAO.create({
+    collectionId: null,
+    designId: design.id,
+    invitationMessage: 'Come see my cool bomber',
+    role: 'EDIT',
+    userEmail: null,
+    userId: user2.id
+  });
+  const c2 = await CollaboratorsDAO.create({
+    collectionId: null,
+    designId: design.id,
+    invitationMessage: 'Come see my cool bomber',
+    role: 'EDIT',
+    userEmail: 'rick@rickowens.eu',
+    userId: null
+  });
+  await CollaboratorsDAO.deleteById(c2.id);
+
+  t.deepEqual(
+    await CollaboratorsDAO.findAllByIds([c1.id, c2.id]),
+    [c1],
+    'Returns all non-deleted collaborators'
+  );
+});
+
 test('CollaboratorsDAO.findByDesign returns collaborators', async (t: Test) => {
   const { user } = await createUser({ withSession: false });
   const data = await createUser({ withSession: false });

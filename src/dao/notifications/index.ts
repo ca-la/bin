@@ -23,6 +23,7 @@ export async function findOutstandingTrx(trx: Knex.Transaction): Promise<Notific
   const outstandingNotifications: NotificationRow[] = await db(TABLE_NAME)
     .transacting(trx)
     .where({ sent_email_at: null })
+    .whereNot({ recipient_user_id: null })
     .orderBy('created_at', 'desc');
 
   return validateEvery<NotificationRow, Notification>(

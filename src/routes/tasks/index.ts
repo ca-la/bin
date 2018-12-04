@@ -16,7 +16,7 @@ import Comment, { isComment } from '../../domain-objects/comment';
 import { hasOnlyProperties } from '../../services/require-properties';
 import requireAuth = require('../../middleware/require-auth');
 import Collaborator from '../../domain-objects/collaborator';
-import { sendTaskCommentCreateNotification } from '../../services/create-notifications';
+import * as NotificationsService from '../../services/create-notifications';
 
 const router = new Router();
 
@@ -142,7 +142,9 @@ function* getTaskEvent(this: Koa.Application.Context): AsyncIterableIterator<Tas
 
 function* updateTaskAssignment(this: Koa.Application.Context): AsyncIterableIterator<TaskEvent> {
   const { taskId } = this.params;
-  const body = this.request.body;
+  const { body } = this.request;
+  const { userId: sessionUserId } = this.state;
+
   if (body && isCollaboratorTaskRequest(body)) {
     const { collaboratorIds } = body;
     const existingRelationships = yield CollaboratorTasksDAO.findAllByTaskId(taskId);
@@ -162,6 +164,7 @@ function* updateTaskAssignment(this: Koa.Application.Context): AsyncIterableIter
 
     if (newIds.length > 0) {
       yield CollaboratorTasksDAO.createAllByCollaboratorIdsAndTaskId(newIds, taskId);
+      NotificationsService.sendTaskAssignmentNotification(taskId, sessionUserId, newIds);
     }
 
     this.status = 200;
@@ -209,7 +212,7 @@ function* createTaskComment(this: Koa.Application.Context): AsyncIterableIterato
   if (body && isComment(body) && taskId) {
     const comment = yield CommentDAO.create({ ...body, userId });
     yield TaskCommentDAO.create({ commentId: comment.id, taskId });
-    yield sendTaskCommentCreateNotification(taskId, comment.id, userId);
+    yield NotificationsService.sendTaskCommentCreateNotification(taskId, comment.id, userId);
 
     this.status = 201;
     this.body = comment;

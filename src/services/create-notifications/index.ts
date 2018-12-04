@@ -11,7 +11,7 @@ import * as TaskEventsDAO from '../../dao/task-events';
 import * as UsersDAO from '../../dao/users';
 
 import Notification, { NotificationType } from '../../domain-objects/notification';
-import Collaborator from '../../domain-objects/collaborator';
+import Collaborator, { CollaboratorWithUser } from '../../domain-objects/collaborator';
 import User from '../../domain-objects/user';
 
 import findDesignUsers = require('../../services/find-design-users');
@@ -197,6 +197,43 @@ export async function sendTaskCommentCreateNotification(
       type: NotificationType.TASK_COMMENT_CREATE
     });
   }));
+}
+
+export async function sendTaskAssignmentNotification(
+  taskId: string,
+  actorId: string,
+  collaboratorIds: string[]
+): Promise<Notification[]> {
+  const collaborators = await CollaboratorsDAO.findAllByIds(collaboratorIds);
+
+  const stageTask = await StageTasksDAO.findByTaskId(taskId);
+  if (!stageTask) { throw new Error(`Could not find a stage task with task id: ${taskId}`); }
+
+  const stage = await StagesDAO.findById(stageTask.designStageId);
+  if (!stage) { throw new Error(`Could not find a stage with id: ${stageTask.designStageId}`); }
+
+  const design = await DesignsDAO.findById(stage.designId);
+  if (!design) { throw new Error(`Could not find a design with id: ${stage.designId}`); }
+
+  return Promise.all(
+    collaborators.map((collaborator: CollaboratorWithUser): Promise<Notification> => {
+      return replaceNotifications({
+        actionDescription: null,
+        actorUserId: actorId,
+        collaboratorId: collaborator.id,
+        collectionId: design.collectionIds[0] || null,
+        commentId: null,
+        designId: design.id,
+        id: uuid.v4(),
+        recipientUserId: collaborator.user ? collaborator.user.id : null,
+        sectionId: null,
+        sentEmailAt: null,
+        stageId: stage.id,
+        taskId,
+        type: NotificationType.TASK_ASSIGNMENT
+      });
+    })
+  );
 }
 
 /**

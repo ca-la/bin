@@ -122,6 +122,24 @@ export async function findById(collaboratorId: string): Promise<Collaborator | n
   return attachUser(collaborator);
 }
 
+export async function findAllByIds(collaboratorIds: string[]): Promise<CollaboratorWithUser[]> {
+  const collaboratorRows = await db(TABLE_NAME)
+    .whereIn('id', collaboratorIds)
+    .andWhere({ deleted_at: null })
+    .orderBy('created_at', 'desc');
+
+  const collaborators = validateEvery<CollaboratorRow, Collaborator>(
+    TABLE_NAME,
+    isCollaboratorRow,
+    dataAdapter,
+    collaboratorRows
+  );
+
+  return await Promise.all(collaborators.map(
+    async (collaborator: Collaborator): Promise<CollaboratorWithUser> => attachUser(collaborator)
+  ));
+}
+
 export async function findByDesign(designId: string): Promise<CollaboratorWithUser[]> {
   const design = await ProductDesignsDAO.findById(designId);
   if (!design) { return []; }

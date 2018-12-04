@@ -178,10 +178,28 @@ test('Notifications DAO supports finding outstanding notifications', async (t: t
     taskId: null,
     type: NotificationType.TASK_COMMENT_CREATE
   });
+  await NotificationsDAO.create({
+    actionDescription: null,
+    actorUserId: userOne.user.id,
+    collaboratorId: null,
+    collectionId: null,
+    commentId: null,
+    designId: null,
+    id: uuid.v4(),
+    recipientUserId: null,
+    sectionId: null,
+    sentEmailAt: null,
+    stageId: null,
+    taskId: null,
+    type: NotificationType.TASK_COMMENT_CREATE
+  });
 
   await db.transaction(async (trx: Knex.Transaction) => {
-    const notifications = await NotificationsDAO.findOutstandingTrx(trx);
-    t.deepEqual(notifications, [notificationTwo, notificationOne], 'Returns unsent notifications');
+    t.deepEqual(
+      await NotificationsDAO.findOutstandingTrx(trx),
+      [notificationTwo, notificationOne],
+      'Returns unsent notifications with recipients'
+    );
   });
 });
 

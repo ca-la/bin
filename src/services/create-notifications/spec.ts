@@ -5,11 +5,7 @@ import * as sinon from 'sinon';
 import { sandbox, test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
 import Notification, { NotificationType } from '../../domain-objects/notification';
-import {
-  immediatelySendInviteCollaborator,
-  sendDesignUpdateNotifications,
-  sendTaskCommentCreateNotification
-} from './index';
+import * as NotificationsService from './index';
 import * as CollaboratorsDAO from '../../dao/collaborators';
 import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
 import * as TasksDAO from '../../dao/tasks';
@@ -22,7 +18,7 @@ import * as CollectionsDAO from '../../dao/collections';
 import * as DesignsDAO from '../../dao/product-designs';
 import * as EmailService from '../../services/email';
 
-test('Notifications DAO supports finding outstanding notifications', async (t: tape.Test) => {
+test('sendDesignUpdateNotification', async (t: tape.Test) => {
   const userOne = await createUser();
   const userTwo = await createUser();
 
@@ -49,7 +45,8 @@ test('Notifications DAO supports finding outstanding notifications', async (t: t
     userId: userTwo.user.id
   });
 
-  const notifications = await sendDesignUpdateNotifications(design.id, userOne.user.id);
+  const notifications = await NotificationsService
+    .sendDesignUpdateNotifications(design.id, userOne.user.id);
 
   t.equal(notifications.length, 2, 'Creates a design update notification for each collaborator');
   t.deepEqual(
@@ -59,7 +56,7 @@ test('Notifications DAO supports finding outstanding notifications', async (t: t
   );
 });
 
-test('Notifications DAO supports finding outstanding notifications', async (t: tape.Test) => {
+test('sendTaskCommentCreateNotification', async (t: tape.Test) => {
   const userOne = await createUser();
   const userTwo = await createUser();
 
@@ -139,11 +136,8 @@ test('Notifications DAO supports finding outstanding notifications', async (t: t
     taskId: taskOne.id
   });
 
-  const notifications = await sendTaskCommentCreateNotification(
-    taskOne.id,
-    comment.id,
-    userOne.user.id
-  );
+  const notifications = await NotificationsService
+    .sendTaskCommentCreateNotification(taskOne.id, comment.id, userOne.user.id);
 
   t.equal(
     notifications.length,
@@ -162,7 +156,87 @@ test('Notifications DAO supports finding outstanding notifications', async (t: t
   );
 });
 
-test('Notifications DAO supports sending an invite notification', async (t: tape.Test) => {
+test('sendTaskAssignmentNotification', async (t: tape.Test) => {
+  const userOne = await createUser();
+  const userTwo = await createUser();
+
+  const collection = await CollectionsDAO.create({
+    createdAt: new Date(),
+    createdBy: userOne.user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
+    title: 'AW19'
+  });
+  const design = await DesignsDAO.create({
+    productType: 'A product type',
+    title: 'A design',
+    userId: userOne.user.id
+  });
+  await CollectionsDAO.addDesign(collection.id, design.id);
+  const designStage = await DesignStagesDAO.create({
+    description: '',
+    designId: design.id,
+    ordering: 0,
+    title: 'test'
+  });
+  await CollaboratorsDAO.create({
+    collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
+    userId: userOne.user.id
+  });
+  const collaboratorTwo = await CollaboratorsDAO.create({
+    collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
+    userId: userTwo.user.id
+  });
+  const taskOne = await TasksDAO.create(uuid.v4());
+  await TaskEventsDAO.create({
+    createdBy: userOne.user.id,
+    description: '',
+    designStageId: designStage.id,
+    dueDate: null,
+    ordering: 0,
+    status: null,
+    taskId: taskOne.id,
+    title: 'My First Task'
+  });
+  await DesignStageTasksDAO.create({
+    designStageId: designStage.id,
+    taskId: taskOne.id
+  });
+  await CollaboratorTasksDAO.create({
+    collaboratorId: collaboratorTwo.id,
+    taskId: taskOne.id
+  });
+
+  const notifications = await NotificationsService
+    .sendTaskAssignmentNotification(taskOne.id, userOne.user.id, [collaboratorTwo.id]);
+
+  t.equal(
+    notifications.length,
+    1,
+    'Creates a task assignment notification just for the assignee'
+  );
+  t.deepEqual(
+    notifications[0].recipientUserId,
+    userTwo.user.id,
+    'Creates a notification for the assignee'
+  );
+  t.deepEqual(
+    notifications[0].type,
+    NotificationType.TASK_ASSIGNMENT,
+    'Creates the correct notification type'
+  );
+});
+
+test('immediatelySendInviteCollaborator', async (t: tape.Test) => {
   const userOne = await createUser();
   const collection = await CollectionsDAO.create({
     createdAt: new Date(),
@@ -183,7 +257,7 @@ test('Notifications DAO supports sending an invite notification', async (t: tape
 
   const emailStub = sandbox().stub(EmailService, 'enqueueSend').returns(Promise.resolve());
 
-  const notification = await immediatelySendInviteCollaborator({
+  const notification = await NotificationsService.immediatelySendInviteCollaborator({
     actorId: userOne.user.id,
     collectionId: null,
     designId: null,
