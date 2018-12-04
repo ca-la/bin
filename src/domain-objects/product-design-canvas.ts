@@ -60,6 +60,23 @@ export function isUnsavedProductDesignCanvas(obj: object): obj is Unsaved<Produc
   );
 }
 
+export function isProductDesignCanvas(obj: object): obj is ProductDesignCanvas {
+  return hasProperties(
+    obj,
+    'id',
+    'createdAt',
+    'createdBy',
+    'designId',
+    'componentId',
+    'title',
+    'width',
+    'height',
+    'x',
+    'y',
+    'deletedAt'
+  );
+}
+
 export function isProductDesignCanvasRow(row: object): row is ProductDesignCanvasRow {
   return hasProperties(
     row,

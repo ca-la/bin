@@ -2,14 +2,20 @@ import * as Router from 'koa-router';
 import * as Koa from 'koa';
 
 import * as ProductDesignCanvasesDAO from '../../dao/product-design-canvases';
-import * as ComponentsDAO from '../../dao/components';
-import * as ProductDesignsDAO from '../../dao/product-designs';
-import ProductDesignCanvas, {
-  isUnsavedProductDesignCanvas
-} from '../../domain-objects/product-design-canvas';
 import requireAuth = require('../../middleware/require-auth');
-import { isUnsavedComponent } from '../../domain-objects/component';
+import * as ComponentsDAO from '../../dao/components';
+import * as ProductDesignOptionsDAO from '../../dao/product-design-options';
+import * as ProductDesignsDAO from '../../dao/product-designs';
+import * as ProductDesignImagesDAO from '../../dao/product-design-images';
+import ProductDesignCanvas, {
+  isProductDesignCanvas, isUnsavedProductDesignCanvas
+} from '../../domain-objects/product-design-canvas';
+import Component, { ComponentType, isUnsavedComponent } from '../../domain-objects/component';
 import addAssetLink from '../../services/component-attach-asset-link';
+import ProductDesignImage = require('../../domain-objects/product-design-image');
+import ProductDesignOption = require('../../domain-objects/product-design-option');
+import { hasProperties } from '../../services/require-properties';
+import { omit } from 'lodash';
 
 const router = new Router();
 
@@ -24,6 +30,14 @@ const attachUser = (
 };
 
 function* create(this: Koa.Application.Context): AsyncIterableIterator<ProductDesignCanvas> {
+  if (Array.isArray(this.request.body)) {
+    yield createWithComponents;
+  } else {
+    yield createCanvas;
+  }
+}
+
+function* createCanvas(this: Koa.Application.Context): AsyncIterableIterator<ProductDesignCanvas> {
   const body = attachUser(this.request.body, this.state.userId);
   if (!this.request.body || !isUnsavedProductDesignCanvas(body)) {
     return this.throw(400, 'Request does not match ProductDesignCanvas');
@@ -32,6 +46,84 @@ function* create(this: Koa.Application.Context): AsyncIterableIterator<ProductDe
   const canvas = yield ProductDesignCanvasesDAO.create(body);
   this.status = 201;
   this.body = canvas;
+}
+
+type ComponentWithImageAndOption =
+  Component & { assetLink: string, image: ProductDesignImage, option?: ProductDesignOption };
+
+type CanvasWithComponent = ProductDesignCanvas & { components: ComponentWithImageAndOption[]};
+
+function isCanvasWithComponent(data: any): data is CanvasWithComponent {
+  const isCanvas = isProductDesignCanvas(omit(data, 'components'));
+  const isComponents = data.components.every((component: any) => isUnsavedComponent(component));
+  const isImages = data.components.every((component: any) =>
+    hasProperties(component.image, 'userId', 'mimeType', 'id'));
+
+  return isCanvas && isComponents && isImages;
+}
+
+function* createWithComponents(
+  this: Koa.Application.Context
+): AsyncIterableIterator<ProductDesignCanvas> {
+  const body: any = this.request.body;
+  const response: CanvasWithComponent[] = yield Promise.all(body.map(async (data: any) =>
+    createCanvasAndComponents(this.state.userId, data)));
+
+  const assetLinks: string[] = response
+    .reduce(
+      (list: string[], canvas: CanvasWithComponent): string[] =>
+        list.concat(canvas.components
+          .map((component: ComponentWithImageAndOption) => component.assetLink)),
+        []);
+
+  yield updateDesignPreview(response[0].designId, assetLinks);
+  this.status = 201;
+  this.body = response;
+}
+
+async function createCanvasAndComponents(
+  userId: string, data: any
+): Promise<ProductDesignCanvas & { components: Component[]}> {
+  if (!data || !isCanvasWithComponent(data)) {
+    throw new Error('Request does not match Schema');
+  }
+  const { components } = data;
+
+  for (const component of components) {
+    await createComponent(component, userId);
+  }
+
+  const canvasWithUser = attachUser(omit(data, 'components'), userId);
+  await ProductDesignCanvasesDAO.create({ ...canvasWithUser, deletedAt: null });
+
+  return Object.assign(canvasWithUser, { components });
+}
+
+async function createComponent(
+  component: ComponentWithImageAndOption,
+  userId: string
+): Promise<void> {
+  const image = component.image;
+
+  await ProductDesignImagesDAO.create(
+    { ...image, userId, deletedAt: null });
+
+  if (component.type === ComponentType.Material) {
+    await ProductDesignOptionsDAO.create({ ...component.option, deletedAt: null });
+  }
+  const { assetLink, ...componentWithUser } = attachUser(component, userId);
+  await ComponentsDAO.create(omit(componentWithUser, 'option', 'image'));
+}
+
+async function updateDesignPreview(designId: string, assetLinks: string[]): Promise<void> {
+  const design = await ProductDesignsDAO.findById(designId);
+  if (!design) {
+    throw new Error(`No design for id: ${designId}`);
+  }
+  const previewImageUrls = design.previewImageUrls
+    ? design.previewImageUrls.concat(assetLinks)
+    : assetLinks;
+  await ProductDesignsDAO.update(designId, { previewImageUrls });
 }
 
 function* addComponent(this: Koa.Application.Context): AsyncIterableIterator<ProductDesignCanvas> {
