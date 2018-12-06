@@ -207,8 +207,8 @@ test('GET /pricing-quotes?designId&units returns unsaved quote', async (t: Test)
   t.equal(response.status, 200);
   t.deepEqual(unsavedQuote, {
     designId: design.id,
-    payLaterTotalCents: 520320,
-    payNowTotalCents: 489100,
+    payLaterTotalCents: 527660,
+    payNowTotalCents: 496000,
     units: 100
   });
 });
@@ -246,6 +246,7 @@ test('GET /pricing-quotes?designId&units with very large quantity', async (t: Te
 
   t.equal(response.status, 200);
   t.equal(unsavedQuote.payLaterTotalCents > 0, true);
+  t.equal(unsavedQuote.payNowTotalCents, 177700000);
 });
 
 test('PUT /pricing-quotes/:quoteId/bid/:bidId creates bid', async (t: Test) => {

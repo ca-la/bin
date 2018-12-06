@@ -136,7 +136,7 @@ function calculateBaseUnitCost(
   return Math.ceil(sum([
     values.type.unitCents,
     values.brandedLabelsMinimumCents / units,
-    brandedLabelAdditionalCents,
+    brandedLabelAdditionalCents / units,
     values.careLabel.unitCents
   ]));
 }

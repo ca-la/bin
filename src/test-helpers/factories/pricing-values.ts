@@ -13,9 +13,17 @@ import { PricingCareLabelRow } from '../../domain-objects/pricing-care-label';
 
 export default async function generatePricingValues(): Promise<any> {
   const pricingProcessScreenPrinting = generateScreenPrintingProcess(
-    (): number => 3000,
+    (units: number) => units >= 500 ? 3000 : 6000,
     25,
-    [[1, 100], [100, 85]],
+    [
+      [1, 100],
+      [100, 85],
+      [250, 85],
+      [500, 70],
+      [1000, 55],
+      [1500, 40],
+      [2000, 25]
+    ],
     0
   );
   const pricingProductTypeTee = generateProductTypes(
@@ -35,7 +43,15 @@ export default async function generatePricingValues(): Promise<any> {
     createCareLabel(1, 36),
     createCareLabel(50, 26),
     createCareLabel(75, 25),
-    createCareLabel(100, 22)
+    createCareLabel(100, 22),
+    createCareLabel(200, 18),
+    createCareLabel(300, 15),
+    createCareLabel(500, 13),
+    createCareLabel(1000, 12),
+    createCareLabel(1500, 11),
+    createCareLabel(2000, 9),
+    createCareLabel(3000, 7),
+    createCareLabel(4000, 5)
   ];
   const pricingMargins: Uninserted<PricingMarginRow>[] = [
     {
@@ -66,6 +82,42 @@ export default async function generatePricingValues(): Promise<any> {
       id: uuid.v4(),
       margin: 11,
       minimum_units: 200,
+      version: 0
+    },
+    {
+      id: uuid.v4(),
+      margin: 10,
+      minimum_units: 300,
+      version: 0
+    },
+    {
+      id: uuid.v4(),
+      margin: 9,
+      minimum_units: 500,
+      version: 0
+    },
+    {
+      id: uuid.v4(),
+      margin: 8,
+      minimum_units: 1000,
+      version: 0
+    },
+    {
+      id: uuid.v4(),
+      margin: 7,
+      minimum_units: 1750,
+      version: 0
+    },
+    {
+      id: uuid.v4(),
+      margin: 6,
+      minimum_units: 3000,
+      version: 0
+    },
+    {
+      id: uuid.v4(),
+      margin: 5,
+      minimum_units: 4500,
       version: 0
     }
   ];
