@@ -25,7 +25,9 @@ type CALAEvents =
   // may now review them.
   | 'COMMIT_COST_INPUTS'
   // The opposite of BID_DESIGN; remove a partner
-  | 'REMOVE_PARTNER';
+  | 'REMOVE_PARTNER'
+  // Indicate if CALA has finalized pairing of a partner(s) to a design.
+  | 'COMMIT_PARTNER_PAIRING';
 
 type PartnerEvents =
   | 'ACCEPT_SERVICE_BID'

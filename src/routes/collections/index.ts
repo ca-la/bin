@@ -1,5 +1,6 @@
 import * as Router from 'koa-router';
 import * as Koa from 'koa';
+import * as uuid from 'node-uuid';
 
 import { CALA_ADMIN_USER_ID } from '../../config';
 
@@ -15,13 +16,18 @@ import {
 } from '../../middleware/can-access-collection';
 import canAccessUserResource = require('../../middleware/can-access-user-resource');
 import requireAuth = require('../../middleware/require-auth');
+import requireAdmin = require('../../middleware/require-admin');
 
 import * as CollectionsDAO from '../../dao/collections';
 import * as CollaboratorsDAO from '../../dao/collaborators';
+import * as DesignsDAO from '../../dao/product-designs';
+import * as DesignEventsDAO from '../../dao/design-events';
 import Collection, { isCollection, isPartialCollection } from '../../domain-objects/collection';
+import ProductDesign = require('../../domain-objects/product-design');
 import { createSubmission, getSubmissionStatus } from './submissions';
 import { deleteDesign, getCollectionDesigns, putDesign } from './designs';
 import { getCollectionPermissions, Permissions } from '../../services/get-permissions';
+import * as DesignTasksService from '../../services/create-design-tasks';
 
 const router = new Router();
 
@@ -138,6 +144,32 @@ function* updateCollection(this: Koa.Application.Context): AsyncIterableIterator
   }
 }
 
+function* createPartnerPairing(this: Koa.Application.Context): AsyncIterableIterator<any> {
+  const { collectionId } = this.params;
+  const { userId } = this.state;
+
+  const designs = yield DesignsDAO.findByCollectionId(collectionId);
+
+  yield Promise.all(designs.map(async (design: ProductDesign): Promise<void> => {
+    await DesignEventsDAO.create({
+      actorId: userId,
+      bidId: null,
+      createdAt: new Date(),
+      designId: design.id,
+      id: uuid.v4(),
+      quoteId: null,
+      targetId: null,
+      type: 'COMMIT_PARTNER_PAIRING'
+    });
+    await DesignTasksService.createDesignTasks({
+      designId: design.id,
+      designPhase: 'POST_APPROVAL'
+    });
+  }));
+
+  this.status = 204;
+}
+
 router.post('/', requireAuth, createCollection);
 router.get('/', requireAuth, getList);
 
@@ -195,6 +227,13 @@ router.put(
   canAccessCollectionInParam,
   canEditCollection,
   putDesign
+);
+
+router.post(
+  '/:collectionId/partner-pairings',
+  requireAdmin,
+  canAccessCollectionInParam,
+  createPartnerPairing
 );
 
 export = router.routes();

@@ -10,6 +10,7 @@ import * as DesignEventsDAO from '../../dao/design-events';
 import * as API from '../../test-helpers/http';
 import { sandbox, test } from '../../test-helpers/fresh';
 import * as CreateNotifications from '../../services/create-notifications';
+import * as DesignTasksService from '../../services/create-design-tasks';
 
 test('GET /collections/:id returns a created collection', async (t: tape.Test) => {
   const { session, user } = await createUser();
@@ -756,4 +757,55 @@ test('GET /collections/:collectionId/submissions', async (t: tape.Test) => {
     isQuoted: true,
     isSubmitted: true
   });
+});
+
+test('POST /collections/:collectionId/partner-pairings', async (t: tape.Test) => {
+  const designer = await createUser();
+  const admin = await createUser({ role: 'ADMIN' });
+
+  const createDesignTasksSpy = sandbox().spy(DesignTasksService, 'createDesignTasks');
+
+  const collectionOne = await CollectionsDAO.create({
+    createdAt: new Date(),
+    createdBy: designer.user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
+    title: 'Yohji Yamamoto SS19'
+  });
+  const designOne = await ProductDesignsDAO.create({
+    description: 'Oversize Placket Shirt',
+    productType: 'SHIRT',
+    title: 'Cozy Shirt',
+    userId: designer.user.id
+  });
+  const designTwo = await ProductDesignsDAO.create({
+    description: 'Gabardine Wool Pant',
+    productType: 'PANT',
+    title: 'Balloon Pants',
+    userId: designer.user.id
+  });
+  await CollectionsDAO.moveDesign(collectionOne.id, designOne.id);
+  await CollectionsDAO.moveDesign(collectionOne.id, designTwo.id);
+
+  const failedPartnerPairing = await API.post(
+    `/collections/${collectionOne.id}/partner-pairings`,
+    { headers: API.authHeader(designer.session.id) }
+  );
+  t.equal(failedPartnerPairing[0].status, 403);
+
+  const partnerPairing = await API.post(
+    `/collections/${collectionOne.id}/partner-pairings`,
+    { headers: API.authHeader(admin.session.id) }
+  );
+  t.equal(partnerPairing[0].status, 204);
+
+  const designOneEvents = await DesignEventsDAO.findByDesignId(designOne.id);
+  t.equal(designOneEvents.length, 1, 'Creates one design event for the design');
+  t.equal(designOneEvents[0].type, 'COMMIT_PARTNER_PAIRING', 'Creates a partner pairing event');
+  const designTwoEvents = await DesignEventsDAO.findByDesignId(designTwo.id);
+  t.equal(designTwoEvents.length, 1, 'Creates one design event for the design');
+  t.equal(designTwoEvents[0].type, 'COMMIT_PARTNER_PAIRING', 'Creates a partner pairing event');
+
+  t.assert(createDesignTasksSpy.calledTwice, 'Design tasks are generated for each design');
 });

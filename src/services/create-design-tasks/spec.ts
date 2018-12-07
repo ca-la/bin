@@ -6,7 +6,7 @@ import * as TaskTemplatesDAO from '../../dao/task-templates';
 import CollaboratorsDAO = require('../../dao/collaborators');
 import Collection from '../../domain-objects/collection';
 import * as CollectionsDAO from '../../dao/collections';
-import createDesignTasks from './index';
+import { createDesignTasks } from './index';
 import createUser = require('../../test-helpers/create-user');
 import ProductDesign = require('../../domain-objects/product-design');
 import ProductDesignsDAO = require('../../dao/product-designs');

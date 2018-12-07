@@ -1,5 +1,5 @@
 import CollaboratorsDAO = require('../../dao/collaborators');
-import createDesignTasks from '../create-design-tasks';
+import { createDesignTasks } from '../create-design-tasks';
 import ProductDesign = require('../../domain-objects/product-design');
 import ProductDesignsDAO = require('../../dao/product-designs');
 import ProductDesignServicesDAO = require('../../dao/product-design-services');

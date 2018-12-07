@@ -18,7 +18,7 @@ interface Options {
   designPhase: DesignPhase;
 }
 
-export default async function createDesignTasks(options: Options): Promise<TaskEvent[]> {
+export async function createDesignTasks(options: Options): Promise<TaskEvent[]> {
   switch (options.designPhase) {
     case 'POST_CREATION':
       return createPostCreationTasks(options);
