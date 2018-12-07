@@ -107,9 +107,10 @@ async function getDesignPermissionsDeprecated(design, userId, sessionRole) {
     }
 
     const collaborators = [...designCollaborators, ...collectionCollaborators];
+    let services = [];
 
     if (collaborators.length < 1) {
-      const services = await ProductDesignServicesDAO.findByDesignAndUser(
+      services = await ProductDesignServicesDAO.findByDesignAndUser(
         design.id,
         userId
       );
@@ -119,7 +120,12 @@ async function getDesignPermissionsDeprecated(design, userId, sessionRole) {
       }
     }
 
-    collaboratorRole = collaborators[0] && collaborators[0].role;
+    if (collaborators.length > 0) {
+      collaboratorRole = collaborators[0] && collaborators[0].role;
+    } else if (services.length > 0) {
+      // Role for V1 partners on V1 designs
+      collaboratorRole = 'PARTNER';
+    }
   }
 
   const designPermissions = {

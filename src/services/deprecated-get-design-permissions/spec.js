@@ -1,7 +1,10 @@
 'use strict';
 
+const uuid = require('node-uuid');
+
 const InvoicesDAO = require('../../dao/invoices');
 const CollaboratorsDAO = require('../../dao/collaborators');
+const ProductDesignServicesDAO = require('../../dao/product-design-services');
 
 const { group, sandbox } = require('../../test-helpers/fresh');
 
@@ -71,12 +74,19 @@ test('getDesignPermissionsDeprecated when partner', async (t) => {
   const userId = 'userId';
   const partnerId = 'partnerId';
   const design = {
+    id: uuid.v4(),
     status: 'NEEDS_DEVELOPMENT_PAYMENT',
     userId
   };
 
   sandbox().stub(CollaboratorsDAO, 'findByDesignAndUser')
-    .resolves([{ userId: partnerId, role: 'PREVIEW' }]);
+    .resolves([]);
+  sandbox().stub(ProductDesignServicesDAO, 'findByDesignAndUser')
+    .resolves([{
+      id: uuid.v4(),
+      designId: design.id,
+      vendorUserId: partnerId
+    }]);
   t.deepEqual(
     await getDesignPermissionsDeprecated(design, partnerId, 'PARTNER'),
     {
