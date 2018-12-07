@@ -324,6 +324,71 @@ async (t: tape.Test) => {
   t.equal(bodyFour.length, 0);
 });
 
+test('PUT /tasks/:taskId when changing status to Completed',
+async (t: tape.Test) => {
+  const { session, user } = await createUser();
+  const secondUser = await createUser();
+  const task = await tasksDAO.create(uuid.v4());
+  const collection = await CollectionsDAO.create({
+    createdAt: new Date(),
+    createdBy: user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
+    title: 'FW19'
+  });
+
+  const collaborator = await CollaboratorsDAO.create({
+    collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
+    userId: user.id
+  });
+  await CollaboratorsDAO.create({
+    collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
+    userId: secondUser.user.id
+  });
+  const event = {
+    assignees: [collaborator],
+    createdAt: new Date(),
+    createdBy: user.id,
+    description: 'A description',
+    designStageId: null,
+    dueDate: null,
+    id: task.id,
+    ordering: 0,
+    status: null,
+    title: 'A task'
+  };
+  await put(`/tasks/${task.id}`, {
+    body: event,
+    headers: authHeader(session.id)
+  });
+  await put(`/tasks/${task.id}/assignees`, {
+    body: { collaboratorIds: [collaborator.id] },
+    headers: authHeader(session.id)
+  });
+
+  const notificationStub = sandbox()
+    .stub(CreateNotifications, 'sendTaskCompletionNotification')
+    .resolves();
+  await put(`/tasks/${task.id}`, {
+    body: {
+      ...event,
+      status: TaskStatus.COMPLETED
+    },
+    headers: authHeader(session.id)
+  });
+
+  t.equal(notificationStub.callCount, 1);
+});
+
 test('POST /tasks/stage/:stageId creates Task on Stage successfully', async (t: tape.Test) => {
   const { session, user } = await createUser();
 

@@ -236,6 +236,48 @@ export async function sendTaskAssignmentNotification(
   );
 }
 
+export async function sendTaskCompletionNotification(
+  taskId: string,
+  actorId: string
+): Promise<Notification[]> {
+  const stageTask = await StageTasksDAO.findByTaskId(taskId);
+  if (!stageTask) { throw new Error(`Could not find a stage task with task id: ${taskId}`); }
+
+  const stage = await StagesDAO.findById(stageTask.designStageId);
+  if (!stage) { throw new Error(`Could not find a stage with id: ${stageTask.designStageId}`); }
+
+  const design = await DesignsDAO.findById(stage.designId);
+  if (!design) { throw new Error(`Could not find a design with id: ${stage.designId}`); }
+
+  const collaborators: CollaboratorWithUser[] =
+    await CollaboratorsDAO.findByDesign(design.id);
+
+  const recipients: CollaboratorWithUser[] = collaborators
+    .filter((collaborator: CollaboratorWithUser) => {
+      return collaborator.userId !== actorId;
+    });
+
+  return Promise.all(
+    recipients.map((collaborator: CollaboratorWithUser): Promise<Notification> => {
+      return replaceNotifications({
+        actionDescription: null,
+        actorUserId: actorId,
+        collaboratorId: collaborator.id,
+        collectionId: design.collectionIds[0] || null,
+        commentId: null,
+        designId: design.id,
+        id: uuid.v4(),
+        recipientUserId: collaborator.user ? collaborator.user.id : null,
+        sectionId: null,
+        sentEmailAt: null,
+        stageId: stage.id,
+        taskId,
+        type: NotificationType.TASK_COMPLETION
+      });
+    })
+  );
+}
+
 /**
  * Creates notifications to CALA Ops for a partner accepting a bid.
  */

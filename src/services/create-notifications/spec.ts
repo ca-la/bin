@@ -236,6 +236,86 @@ test('sendTaskAssignmentNotification', async (t: tape.Test) => {
   );
 });
 
+test('sendTaskCompletionNotification', async (t: tape.Test) => {
+  const userOne = await createUser();
+  const userTwo = await createUser();
+
+  const collection = await CollectionsDAO.create({
+    createdAt: new Date(),
+    createdBy: userOne.user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
+    title: 'AW19'
+  });
+  const design = await DesignsDAO.create({
+    productType: 'A product type',
+    title: 'A design',
+    userId: userOne.user.id
+  });
+  await CollectionsDAO.addDesign(collection.id, design.id);
+  const designStage = await DesignStagesDAO.create({
+    description: '',
+    designId: design.id,
+    ordering: 0,
+    title: 'test'
+  });
+  await CollaboratorsDAO.create({
+    collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
+    userId: userOne.user.id
+  });
+  const collaboratorTwo = await CollaboratorsDAO.create({
+    collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
+    userId: userTwo.user.id
+  });
+  const taskOne = await TasksDAO.create(uuid.v4());
+  await TaskEventsDAO.create({
+    createdBy: userOne.user.id,
+    description: '',
+    designStageId: designStage.id,
+    dueDate: null,
+    ordering: 0,
+    status: null,
+    taskId: taskOne.id,
+    title: 'My First Task'
+  });
+  await DesignStageTasksDAO.create({
+    designStageId: designStage.id,
+    taskId: taskOne.id
+  });
+  await CollaboratorTasksDAO.create({
+    collaboratorId: collaboratorTwo.id,
+    taskId: taskOne.id
+  });
+
+  const notifications = await NotificationsService
+    .sendTaskCompletionNotification(taskOne.id, userTwo.user.id);
+
+  t.equal(
+    notifications.length,
+    1,
+    'Creates a task completion notification just for the other collaborators'
+  );
+  t.deepEqual(
+    notifications[0].recipientUserId,
+    userOne.user.id,
+    'Creates a notification for the non-actor collaborators'
+  );
+  t.deepEqual(
+    notifications[0].type,
+    NotificationType.TASK_COMPLETION,
+    'Creates the correct notification type'
+  );
+});
+
 test('immediatelySendInviteCollaborator', async (t: tape.Test) => {
   const userOne = await createUser();
   const collection = await CollectionsDAO.create({

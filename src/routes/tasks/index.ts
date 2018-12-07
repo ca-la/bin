@@ -96,10 +96,24 @@ function* createTaskWithEvent(this: Koa.Application.Context): AsyncIterableItera
 }
 
 function* createTaskEvent(this: Koa.Application.Context): AsyncIterableIterator<TaskEvent> {
+  const { userId: sessionUserId } = this.state;
   const body = addDefaultOrdering(this.request.body);
   if (body && isIOTask(body)) {
+    const taskId = body.id;
+    const previousState: TaskEvent = yield TaskEventsDAO
+      .findById(taskId);
     const taskEvent: TaskEvent = yield TaskEventsDAO
       .create(taskEventFromIO(body, this.state.userId));
+    const updateDidCompleteTask = (
+      taskEvent.status === TaskStatus.COMPLETED &&
+      previousState.status !== TaskStatus.COMPLETED
+    );
+    if (updateDidCompleteTask) {
+      NotificationsService.sendTaskCompletionNotification(
+        taskId,
+        sessionUserId
+      );
+    }
 
     this.body = ioFromTaskEvent(taskEvent);
     this.status = 201;
