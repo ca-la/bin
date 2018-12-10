@@ -16,6 +16,8 @@ const STRIPE_API_BASE = 'https://api.stripe.com/v1';
 const STRIPE_CONNECT_API_BASE = 'https://connect.stripe.com';
 
 const CREDENTIALS = Buffer.from(`${STRIPE_SECRET_KEY}:`).toString('base64');
+const STRIPE_FEE_PERCENT = 0.029;
+const STRIPE_FEE_BASE_CENTS = 30;
 
 async function makeRequest({
   method, path, apiBase, data, idempotencyKey
@@ -192,8 +194,14 @@ async function createLoginLink({ accountId }) {
   }
 }
 
+// Will have to update this if we ever switch to an enterprise plan
+function calculateStripeFee(totalCents) {
+  return Math.round((STRIPE_FEE_PERCENT * totalCents) + STRIPE_FEE_BASE_CENTS);
+}
+
 module.exports = {
   attachSource,
+  calculateStripeFee,
   charge,
   createConnectAccount,
   createCustomer,

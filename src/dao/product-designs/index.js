@@ -152,6 +152,19 @@ function findById(id, filters, options = {}) {
     .catch(filterError(rethrow.ERRORS.InvalidTextRepresentation, () => null));
 }
 
+function findByIds(ids) {
+  return db(TABLE_NAME)
+    .select('product_designs.*', 'collection_designs.collection_id')
+    .whereIn('id', ids)
+    .leftJoin(
+      'collection_designs',
+      'product_designs.id',
+      'collection_designs.design_id'
+    )
+    .catch(rethrow)
+    .then(designs => designs.map(instantiate));
+}
+
 function findByCollectionId(collectionId) {
   return db(TABLE_NAME)
     .select('product_designs.*', 'collection_designs.collection_id')
@@ -195,6 +208,7 @@ module.exports = {
   update,
   findAll,
   findById,
+  findByIds,
   findByUserId,
   findByCollectionId,
   findByQuoteId

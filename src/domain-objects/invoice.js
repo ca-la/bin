@@ -12,6 +12,7 @@ const keyNamesByColumnName = {
   title: 'title',
   description: 'description',
   design_id: 'designId',
+  collection_id: 'collectionId',
   design_status_id: 'designStatusId',
   is_paid: 'isPaid',
   total_paid: 'totalPaid',

@@ -13,6 +13,7 @@ test(
       paidInvoice,
       {
         id: createdInvoices[0].id,
+        collectionId: null,
         createdAt: createdInvoices[0].createdAt,
         deletedAt: null,
         description: null,
@@ -33,6 +34,7 @@ test(
       unpaidInvoice,
       {
         id: createdInvoices[2].id,
+        collectionId: null,
         createdAt: createdInvoices[2].createdAt,
         deletedAt: null,
         description: null,

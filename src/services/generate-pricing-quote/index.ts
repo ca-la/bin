@@ -1,4 +1,5 @@
 import * as uuid from 'node-uuid';
+import * as Knex from 'knex';
 import { map, omit } from 'lodash';
 import sum from '../sum';
 import {
@@ -15,6 +16,9 @@ import {
   PricingQuoteValues
 } from '../../domain-objects/pricing-quote';
 import PricingProcess from '../../domain-objects/pricing-process';
+import * as PricingCostInputsDAO from '../../dao/pricing-cost-inputs';
+import * as DesignEventsDAO from '../../dao/design-events';
+import PricingCostInputs from '../../domain-objects/pricing-cost-input';
 import DataAdapter from '../../services/data-adapter';
 
 export type UnsavedQuote = Omit<
@@ -30,7 +34,8 @@ export async function generateUnsavedQuote(
 }
 
 export default async function generatePricingQuote(
-  request: PricingQuoteRequest
+  request: PricingQuoteRequest,
+  trx?: Knex.Transaction
 ): Promise<PricingQuote> {
   const quoteValues = await findLatestValuesForRequest(request);
   const pricingQuoteInputId = await getQuoteInput(quoteValues);
@@ -38,9 +43,9 @@ export default async function generatePricingQuote(
     quote,
     processes
   } = calculateQuoteAndProcesses(request, quoteValues, pricingQuoteInputId);
-  const createdQuote = await create(quote);
+  const createdQuote = await create(quote, trx);
 
-  await createPricingProcesses(processes);
+  await createPricingProcesses(processes, trx);
 
   return Object.assign(
     createdQuote,
@@ -183,4 +188,50 @@ function calculateAmortizedServices(
   ]);
 
   return Math.ceil(developmentCents / units);
+}
+
+export interface CreateQuotePayload {
+  designId: string;
+  units: number;
+}
+
+export async function generateFromPayloadAndUser(
+  quotePayloads: CreateQuotePayload[],
+  userId: string,
+  trx: Knex.Transaction
+): Promise<PricingQuote[]> {
+  const quotes = [];
+  for (const payload of quotePayloads) {
+    const { designId, units } = payload;
+
+    const unitsNumber = Number(units);
+
+    const costInputs: PricingCostInputs[] = await PricingCostInputsDAO
+      .findByDesignId(designId, trx);
+
+    if (costInputs.length === 0) {
+      throw new Error('No costing inputs associated with design ID');
+    }
+
+    const quoteRequest: PricingQuoteRequest = {
+      ...omit(costInputs[0], ['id', 'createdAt', 'deletedAt']),
+      units: unitsNumber
+    };
+
+    const quote = await generatePricingQuote(quoteRequest, trx);
+    quotes.push(quote);
+
+    await DesignEventsDAO.create({
+      actorId: userId,
+      bidId: null,
+      createdAt: new Date(),
+      designId,
+      id: uuid.v4(),
+      quoteId: quote.id,
+      targetId: null,
+      type: 'COMMIT_QUOTE'
+    }, trx);
+  }
+
+  return quotes;
 }

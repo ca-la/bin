@@ -1,4 +1,5 @@
 import * as uuid from 'node-uuid';
+import * as Knex from 'knex';
 import { omit } from 'lodash';
 
 import * as db from '../../services/db';
@@ -88,11 +89,19 @@ export async function findById(id: string): Promise<PricingCostInput | null> {
   );
 }
 
-export async function findByDesignId(designId: string): Promise<PricingCostInput[]> {
+export async function findByDesignId(
+  designId: string,
+  trx?: Knex.Transaction
+): Promise<PricingCostInput[]> {
   const withoutProcesses: WithoutProcesses[] = await db(TABLE_NAME)
     .select('*')
     .where({ design_id: designId, deleted_at: null })
-    .orderBy('created_at', 'DESC');
+    .orderBy('created_at', 'DESC')
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    });
 
   const inputs = await Promise.all(withoutProcesses.map(attachProcesses));
 

@@ -14,6 +14,9 @@ declare namespace ProductDesignsDAO {
     filters?: object | null,
     options?: object | null
   ): Promise<ProductDesignWithCollectionId | null>;
+  function findByIds(
+    ids: string[]
+  ): Promise<ProductDesignWithCollectionId[]>;
   function findByCollectionId(collectionId: string): Promise<ProductDesign[]>;
   function findByQuoteId(id: string): Promise<ProductDesign | null>;
   function update(id: string, data: Partial<ProductDesign>): Promise<ProductDesign>;

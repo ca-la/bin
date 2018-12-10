@@ -83,6 +83,23 @@ test('ProductDesignsDAO.findById includes deleted designs when specified', async
   t.equal(design.id, id);
 });
 
+test('ProductDesignsDAO.findByIds includes several designs', async (t) => {
+  const { user } = await createUser({ withSession: false });
+  const design = await ProductDesignsDAO.create({
+    title: 'Plain White Tee',
+    productType: 'TEESHIRT',
+    userId: user.id
+  });
+  const design2 = await ProductDesignsDAO.create({
+    title: 'Plain White Tee',
+    productType: 'TEESHIRT',
+    userId: user.id
+  });
+
+  const result = await ProductDesignsDAO.findByIds([design.id, design2.id]);
+  t.deepEqual(result, [design, design2]);
+});
+
 test('ProductDesignsDAO.findByUserId', async (t) => {
   const { user } = await createUser({ withSession: false });
   const design = await ProductDesignsDAO.create({

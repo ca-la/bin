@@ -22,8 +22,8 @@ declare module 'koa' {
     }
 
     namespace Application {
-      interface Request {
-        body: object; // from middleware/json-body
+      interface Request<T> {
+        body: object & T; // from middleware/json-body
         method: string;
       }
 
@@ -59,9 +59,9 @@ declare module 'koa' {
         toJSON(): object;
       }
 
-      interface Context extends ContextDelegatedResponse {
+      interface Context<T = object> extends ContextDelegatedResponse {
         params: any; // from koa-router
-        request: Request;
+        request: Request<T>;
         response: Response;
         query: Query;
         req: IncomingMessage;

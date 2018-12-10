@@ -24,6 +24,7 @@ import generatePricingQuote, {
   UnsavedQuote
 } from '../../services/generate-pricing-quote';
 import Bid from '../../domain-objects/bid';
+import { isCreateRequest } from '../../services/payment';
 
 const router = new Router();
 
@@ -35,23 +36,6 @@ function isBidRequest(candidate: object): candidate is BidRequest {
     'quoteId',
     'bidPriceCents',
     'description'
-  );
-}
-
-interface CreateQuotePayload {
-  designId: string;
-  units: number;
-}
-
-type CreateRequest = CreateQuotePayload[];
-
-function isCreateRequest(body: any): body is CreateRequest {
-  return (
-    body instanceof Array &&
-    body.every((payload: any) =>
-      typeof payload.designId === 'string' &&
-      typeof payload.units === 'number'
-    )
   );
 }
 

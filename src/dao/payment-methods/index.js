@@ -14,9 +14,14 @@ const { dataMapper } = PaymentMethod;
 
 const TABLE_NAME = 'payment_methods';
 
-async function findById(id) {
+async function findById(id, trx) {
   return db(TABLE_NAME)
     .where({ id, deleted_at: null })
+    .modify((query) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .then(first)
     .then(maybeInstantiate);
 }
@@ -31,13 +36,18 @@ async function findByUserId(userId) {
     .catch(rethrow);
 }
 
-async function create(data) {
+async function create(data, trx) {
   const rowData = Object.assign({}, dataMapper.userDataToRowData(data), {
     id: uuid.v4()
   });
 
   return db(TABLE_NAME)
     .insert(rowData, '*')
+    .modify((query) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .then(first)
     .then(instantiate)
     .catch(rethrow);

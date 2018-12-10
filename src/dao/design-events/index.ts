@@ -1,4 +1,5 @@
 import * as uuid from 'node-uuid';
+import * as Knex from 'knex';
 
 import * as db from '../../services/db';
 import DesignEvent, {
@@ -11,12 +12,17 @@ import { validate, validateEvery } from '../../services/validate-from-db';
 
 const TABLE_NAME = 'design_events';
 
-export async function create(event: DesignEvent): Promise<DesignEvent> {
+export async function create(event: DesignEvent, trx?: Knex.Transaction): Promise<DesignEvent> {
   const rowData = dataAdapter.forInsertion(event);
 
   const created = await db(TABLE_NAME)
     .insert(rowData)
     .returning('*')
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .then((rows: DesignEventRow[]) => first(rows));
 
   if (!created) {
