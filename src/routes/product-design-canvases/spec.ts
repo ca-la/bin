@@ -66,7 +66,7 @@ async (t: tape.Test) => {
   t.deepEqual(body, data);
 });
 
-test('POST /product-design-canvases/ returns a Canvas', async (t: tape.Test) => {
+test('POST /product-design-canvases returns a Canvas', async (t: tape.Test) => {
   const { session } = await createUser();
 
   const id = uuid.v4();
@@ -91,6 +91,17 @@ test('POST /product-design-canvases/ returns a Canvas', async (t: tape.Test) => 
   });
   t.equal(response.status, 201);
   t.deepEqual(body, data);
+});
+
+test('POST /product-design-canvases throws 400 when given empty array', async (t: tape.Test) => {
+  const { session } = await createUser();
+
+  const [response, body] = await post('/product-design-canvases', {
+    body: [],
+    headers: authHeader(session.id)
+  });
+  t.equal(response.status, 400);
+  t.deepEqual(body.message, 'At least one canvas must be provided');
 });
 
 test('PUT /product-design-canvases/:id returns a Canvas', async (t: tape.Test) => {

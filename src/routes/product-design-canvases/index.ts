@@ -65,24 +65,33 @@ function isCanvasWithComponent(data: any): data is CanvasWithComponent {
 function* createWithComponents(
   this: Koa.Application.Context
 ): AsyncIterableIterator<ProductDesignCanvas> {
-  const body: any = this.request.body;
-  const response: CanvasWithComponent[] = yield Promise.all(body.map(async (data: any) =>
-    createCanvasAndComponents(this.state.userId, data)));
+  const body: Unsaved<CanvasWithComponent>[] = (this.request.body as any);
 
-  const assetLinks: string[] = response
+  this.assert(body.length >= 1, 400, 'At least one canvas must be provided');
+
+  const canvases: CanvasWithComponent[] = yield Promise.all(
+    body.map(async (data: Unsaved<CanvasWithComponent>) =>
+      createCanvasAndComponents(this.state.userId, data))
+  );
+
+  if (canvases.length < 1) {
+    throw new Error('No canvases were succesfully created');
+  }
+
+  const assetLinks: string[] = canvases
     .reduce(
       (list: string[], canvas: CanvasWithComponent): string[] =>
         list.concat(canvas.components
           .map((component: ComponentWithImageAndOption) => component.assetLink)),
         []);
 
-  yield updateDesignPreview(response[0].designId, assetLinks);
+  yield updateDesignPreview(canvases[0].designId, assetLinks);
   this.status = 201;
-  this.body = response;
+  this.body = canvases;
 }
 
 async function createCanvasAndComponents(
-  userId: string, data: any
+  userId: string, data: Unsaved<CanvasWithComponent>
 ): Promise<ProductDesignCanvas & { components: Component[]}> {
   if (!data || !isCanvasWithComponent(data)) {
     throw new Error('Request does not match Schema');
