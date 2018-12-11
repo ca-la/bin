@@ -43,13 +43,15 @@ function* createSubscription() {
  * @param {String} firstName
  * @param {String} lastName
  * @param {String} brandInstagram
+ * @param {String} language
  */
 function* createDesignerSubscription() {
   const {
+    brandInstagram,
     email,
     firstName,
+    language,
     lastName,
-    brandInstagram,
     source
   } = this.request.body;
 
@@ -60,8 +62,9 @@ function* createDesignerSubscription() {
   try {
     yield MailChimp.subscribe(MAILCHIMP_LIST_ID_DESIGNERS, email, {
       FNAME: firstName,
-      LNAME: lastName,
       INSTA: brandInstagram,
+      LANGUAGE: language,
+      LNAME: lastName,
       SOURCE: source
     });
   } catch (error) {
@@ -78,13 +81,15 @@ function* createDesignerSubscription() {
  * @param {String} name
  * @param {String} website
  * @param {String} source
+ * @param {String} language
  */
 function* createPartnerSubscription() {
   const {
     email,
+    language,
     name,
-    website,
-    source
+    source,
+    website
   } = this.request.body;
 
   if (!email || !name) {
@@ -93,9 +98,10 @@ function* createPartnerSubscription() {
 
   try {
     yield MailChimp.subscribe(MAILCHIMP_LIST_ID_PRODUCTION_PARTNERS, email, {
+      LANGUAGE: language,
       NAME: name,
-      WEB: website,
-      SOURCE: source
+      SOURCE: source,
+      WEB: website
     });
   } catch (error) {
     this.throw(400, error.message);
