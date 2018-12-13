@@ -759,6 +759,59 @@ test('GET /collections/:collectionId/submissions', async (t: tape.Test) => {
   });
 });
 
+test('POST /collections/:collectionId/cost-inputs', async (t: tape.Test) => {
+  const designer = await createUser();
+  const admin = await createUser({ role: 'ADMIN' });
+
+  const collectionOne = await CollectionsDAO.create({
+    createdAt: new Date(),
+    createdBy: designer.user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
+    title: 'Yohji Yamamoto SS19'
+  });
+  const designOne = await ProductDesignsDAO.create({
+    description: 'Oversize Placket Shirt',
+    productType: 'SHIRT',
+    title: 'Cozy Shirt',
+    userId: designer.user.id
+  });
+  const designTwo = await ProductDesignsDAO.create({
+    description: 'Gabardine Wool Pant',
+    productType: 'PANT',
+    title: 'Balloon Pants',
+    userId: designer.user.id
+  });
+  await CollectionsDAO.moveDesign(collectionOne.id, designOne.id);
+  await CollectionsDAO.moveDesign(collectionOne.id, designTwo.id);
+
+  const notificationStub = sandbox()
+    .stub(CreateNotifications, 'immediatelySendFullyCostedCollection')
+    .resolves();
+
+  const failedPartnerPairing = await API.post(
+    `/collections/${collectionOne.id}/cost-inputs`,
+    { headers: API.authHeader(designer.session.id) }
+  );
+  t.equal(failedPartnerPairing[0].status, 403);
+
+  const partnerPairing = await API.post(
+    `/collections/${collectionOne.id}/cost-inputs`,
+    { headers: API.authHeader(admin.session.id) }
+  );
+  t.equal(partnerPairing[0].status, 204);
+
+  sinon.assert.called(notificationStub);
+
+  const designOneEvents = await DesignEventsDAO.findByDesignId(designOne.id);
+  t.equal(designOneEvents.length, 1, 'Creates one design event for the design');
+  t.equal(designOneEvents[0].type, 'COMMIT_COST_INPUTS', 'Creates a cost input event');
+  const designTwoEvents = await DesignEventsDAO.findByDesignId(designTwo.id);
+  t.equal(designTwoEvents.length, 1, 'Creates one design event for the design');
+  t.equal(designTwoEvents[0].type, 'COMMIT_COST_INPUTS', 'Creates a second cost input event');
+});
+
 test('POST /collections/:collectionId/partner-pairings', async (t: tape.Test) => {
   const designer = await createUser();
   const admin = await createUser({ role: 'ADMIN' });

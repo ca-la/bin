@@ -316,6 +316,64 @@ test('sendTaskCompletionNotification', async (t: tape.Test) => {
   );
 });
 
+test('immediatelySendFullyCostedCollection', async (t: tape.Test) => {
+  const admin = await createUser({ withSession: false, role: 'ADMIN' });
+  const userOne = await createUser({ withSession: false });
+  const userTwo = await createUser({ withSession: false });
+
+  const collection = await CollectionsDAO.create({
+    createdAt: new Date(),
+    createdBy: userOne.user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
+    title: 'AW19'
+  });
+  await CollaboratorsDAO.create({
+    collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
+    userId: userOne.user.id
+  });
+  await CollaboratorsDAO.create({
+    collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
+    userId: userTwo.user.id
+  });
+  await CollaboratorsDAO.create({
+    collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: 'test@ca.la',
+    userId: null
+  });
+
+  const emailStub = sandbox().stub(EmailService, 'enqueueSend').returns(Promise.resolve());
+
+  const notifications = await NotificationsService.immediatelySendFullyCostedCollection(
+    collection.id,
+    admin.user.id
+  );
+
+  // A notification is sent for every collaborator.
+  sinon.assert.callCount(emailStub, 2);
+  t.equal(notifications.length, 2, 'Two notifications are created');
+  t.equal(notifications[0].type, NotificationType.COMMIT_COST_INPUTS);
+  t.equal(notifications[1].type, NotificationType.COMMIT_COST_INPUTS);
+  t.not(notifications[0].sentEmailAt, null, 'Notification is marked as sent');
+  t.not(notifications[1].sentEmailAt, null, 'Notification is marked as sent');
+  t.equal(notifications[0].actorUserId, admin.user.id);
+  t.equal(notifications[1].actorUserId, admin.user.id);
+  t.equal(notifications[0].recipientUserId, userOne.user.id);
+  t.equal(notifications[1].recipientUserId, userTwo.user.id);
+});
+
 test('immediatelySendInviteCollaborator', async (t: tape.Test) => {
   const userOne = await createUser();
   const collection = await CollectionsDAO.create({

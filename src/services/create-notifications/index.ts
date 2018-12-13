@@ -357,6 +357,60 @@ export async function sendDesignerSubmitCollection(
 }
 
 /**
+ * Creates a notification that a collection has been fully costed and immediately sends it to SQS.
+ * Recipients are the edit collaborators (who have accounts) of the collection.
+ * Assumption: The collection creator is an edit collaborator.
+ */
+export async function immediatelySendFullyCostedCollection(
+  collectionId: string,
+  actorId: string
+): Promise<Notification[]> {
+  const actor = await UsersDAO.findById(actorId);
+  if (!actor) { throw new Error(`User ${actorId} does not exist!`); }
+
+  const collection = await CollectionsDAO.findById(collectionId);
+  if (!collection) { throw new Error(`Collection ${collectionId} does not exist!`); }
+
+  const collaborators = await CollaboratorsDAO.findByCollection(collectionId);
+  const recipients = collaborators.filter((collaborator: Collaborator): boolean => {
+    return collaborator.role === 'EDIT' && Boolean(collaborator.userId);
+  });
+
+  return Promise.all(recipients.map(
+    async (recipient: Collaborator): Promise<Notification> => {
+      const user = await UsersDAO.findById(recipient.userId);
+      if (!user) { throw new Error(`User ${recipient.userId} not found!`); }
+
+      const notification = await NotificationsDAO.create({
+        actionDescription: null,
+        actorUserId: actor.id,
+        collaboratorId: null,
+        collectionId,
+        commentId: null,
+        designId: null,
+        id: uuid.v4(),
+        recipientUserId: user.id,
+        sectionId: null,
+        sentEmailAt: new Date(),
+        stageId: null,
+        taskId: null,
+        type: NotificationType.COMMIT_COST_INPUTS
+      });
+      await EmailService.enqueueSend({
+        params: {
+          collection,
+          notification: { ...notification, actor, collection }
+        },
+        templateName: 'single_notification',
+        to: user.email
+      });
+
+      return notification;
+    }
+  ));
+}
+
+/**
  * Creates notifications to a partner for CALA Ops submitting a bid to them.
  */
 export async function sendPartnerDesignBid(
