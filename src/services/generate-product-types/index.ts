@@ -71,7 +71,7 @@ export default function generateProductTypes(
           minimum_units: units,
           name: typeName,
           pattern_minimum_cents: 0,
-          unit_cents: Math.ceil(typeMediumCents * 1.75 * unitMultiplier),
+          unit_cents: 0,
           version,
           yield: typeYield
         }

@@ -77,16 +77,18 @@ function calculateQuote(
     materialCostCents: Math.max(calculateMaterialCents(values), request.materialBudgetCents || 0),
     processCostCents: calculateProcessCents(units, values)
   };
-  const amortizedServicesCents = calculateAmortizedServices(
-    units,
-    values,
-    baseCost.materialCostCents
-  );
+  const developmentCostCents = request.productComplexity !== 'BLANK'
+    ? calculateDevelopmentCosts(
+      units,
+      values,
+      baseCost.materialCostCents
+    )
+    : 0;
   const beforeMargin = sum(
     Object
       .values(baseCost)
       .concat([
-        amortizedServicesCents
+        developmentCostCents
       ])
   );
   const margin = 1 - values.margin.margin / 100;
@@ -98,6 +100,7 @@ function calculateQuote(
     unitCostCents
   };
 }
+
 function calculateQuoteAndProcesses(
   request: PricingQuoteRequest,
   values: PricingQuoteValues,
@@ -167,7 +170,7 @@ function calculateProcessCents(
   ]));
 }
 
-function calculateAmortizedServices(
+function calculateDevelopmentCosts(
   units: number,
   values: PricingQuoteValues,
   materialCostCents: number

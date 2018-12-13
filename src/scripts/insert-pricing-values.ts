@@ -17,7 +17,7 @@ import { PricingProcessRow } from '../domain-objects/pricing-process';
 import { PricingProductTypeRow } from '../domain-objects/pricing-product-type';
 
 // BUMP THIS BETWEEN EVERY RUN
-const version = 2;
+const version = 3;
 
 intialPricingValues()
   .then(() => {
@@ -777,7 +777,7 @@ async function intialPricingValues(): Promise<void> {
     },
     {
       id: uuid.v4(),
-      margin: 13,
+      margin: 12.6,
       minimum_units: 100,
       version
     },
@@ -789,44 +789,104 @@ async function intialPricingValues(): Promise<void> {
     },
     {
       id: uuid.v4(),
-      margin: 11,
+      margin: 11.4,
       minimum_units: 200,
       version
     },
     {
       id: uuid.v4(),
-      margin: 10,
+      margin: 10.8,
+      minimum_units: 250,
+      version
+    },
+    {
+      id: uuid.v4(),
+      margin: 10.3,
       minimum_units: 300,
       version
     },
     {
       id: uuid.v4(),
-      margin: 9,
+      margin: 9.8,
+      minimum_units: 400,
+      version
+    },
+    {
+      id: uuid.v4(),
+      margin: 9.3,
       minimum_units: 500,
       version
     },
     {
       id: uuid.v4(),
-      margin: 8,
+      margin: 8.8,
+      minimum_units: 750,
+      version
+    },
+    {
+      id: uuid.v4(),
+      margin: 8.4,
       minimum_units: 1000,
       version
     },
     {
       id: uuid.v4(),
-      margin: 7,
+      margin: 8,
+      minimum_units: 1250,
+      version
+    },
+    {
+      id: uuid.v4(),
+      margin: 7.6,
+      minimum_units: 1500,
+      version
+    },
+    {
+      id: uuid.v4(),
+      margin: 7.2,
       minimum_units: 1750,
       version
     },
     {
       id: uuid.v4(),
-      margin: 6,
+      margin: 6.8,
+      minimum_units: 2000,
+      version
+    },
+    {
+      id: uuid.v4(),
+      margin: 6.5,
+      minimum_units: 2500,
+      version
+    },
+    {
+      id: uuid.v4(),
+      margin: 6.2,
       minimum_units: 3000,
       version
     },
     {
       id: uuid.v4(),
-      margin: 5,
+      margin: 5.9,
+      minimum_units: 3500,
+      version
+    },
+    {
+      id: uuid.v4(),
+      margin: 5.6,
+      minimum_units: 4000,
+      version
+    },
+    {
+      id: uuid.v4(),
+      margin: 5.3,
       minimum_units: 4500,
+      version
+    },
+    {
+      id: uuid.v4(),
+      margin: 5,
+      minimum_units: 5000,
       version
     }
   ];
