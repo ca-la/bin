@@ -21,8 +21,10 @@ export default async function findCollaboratorsByRole(
   if (!design) { throw new Error(`No design found with ID ${designId}`); }
 
   switch (role) {
-    case 'DESIGNER':
-      return CollaboratorsDAO.findByDesignAndUser(designId, design.userId);
+    case 'DESIGNER': {
+      const collaborator = await CollaboratorsDAO.findByDesignAndUser(designId, design.userId);
+      return collaborator ? [collaborator] : [];
+    }
 
     case 'PARTNER': {
       const collaborators = [];

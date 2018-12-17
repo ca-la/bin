@@ -94,11 +94,11 @@ async function attachRole(requestorId, design) {
   const requestorAsCollaborator = await CollaboratorsDAO
     .findByDesignAndUser(design.id, requestorId);
 
-  if (!requestorAsCollaborator || requestorAsCollaborator.length === 0) {
+  if (!requestorAsCollaborator) {
     return design;
   }
 
-  design.setRole(requestorAsCollaborator[0].role);
+  design.setRole(requestorAsCollaborator.role);
   return design;
 }
 

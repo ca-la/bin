@@ -93,7 +93,7 @@ async function getDesignPermissionsDeprecated(design, userId, sessionRole) {
   // in sync re: who can access what.
 
   if (!isOwnerOrAdmin) {
-    const designCollaborators = await CollaboratorsDAO.findByDesignAndUser(
+    const designCollaborator = await CollaboratorsDAO.findByDesignAndUser(
       design.id,
       userId
     );
@@ -106,7 +106,9 @@ async function getDesignPermissionsDeprecated(design, userId, sessionRole) {
         )));
     }
 
-    const collaborators = [...designCollaborators, ...collectionCollaborators];
+    const collaborators = designCollaborator ?
+      [designCollaborator, ...collectionCollaborators] :
+      collectionCollaborators;
     let services = [];
 
     if (collaborators.length < 1) {

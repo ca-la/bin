@@ -3,25 +3,28 @@ import { omit } from 'lodash';
 import * as sinon from 'sinon';
 
 import { sandbox, test, Test } from '../../test-helpers/fresh';
-import { authHeader, del, get, put } from '../../test-helpers/http';
+import { authHeader, del, get, post, put } from '../../test-helpers/http';
 import createUser = require('../../test-helpers/create-user');
 import generateBid from '../../test-helpers/factories/bid';
-import { create as createDesign } from '../../dao/product-designs';
-import { create as createBid } from '../../dao/bids';
+import * as BidsDAO from '../../dao/bids';
+import * as CollaboratorsDAO from '../../dao/collaborators';
+import * as DesignEventsDAO from '../../dao/design-events';
+import * as PricingQuotesDAO from '../../dao/pricing-quotes';
+import * as ProductDesignsDAO from '../../dao/product-designs';
 import * as NotificationsService from '../../services/create-notifications';
 
 test('GET /bids', async (t: Test) => {
   const admin = await createUser({ role: 'ADMIN' });
   const partner = await createUser({ role: 'PARTNER' });
   const other = await createUser({ role: 'PARTNER' });
-  const design = await createDesign({
+  const design = await ProductDesignsDAO.create({
     productType: 'TEESHIRT',
     title: 'Plain White Tee',
     userId: admin.user.id
   });
 
   const { bid, quote } = await generateBid(design.id, admin.user.id);
-  const otherBid = await createBid({
+  const otherBid = await BidsDAO.create({
     bidPriceCents: 100000,
     createdAt: new Date(2012, 12, 22),
     createdBy: admin.user.id,
@@ -57,14 +60,14 @@ test('GET /bids?userId&state=OPEN', async (t: Test) => {
   const admin = await createUser({ role: 'ADMIN' });
   const partner = await createUser({ role: 'PARTNER' });
   const other = await createUser({ role: 'PARTNER' });
-  const design = await createDesign({
+  const design = await ProductDesignsDAO.create({
     productType: 'TEESHIRT',
     title: 'Plain White Tee',
     userId: admin.user.id
   });
 
   const { bid, quote } = await generateBid(design.id, admin.user.id);
-  const otherBid = await createBid({
+  const otherBid = await BidsDAO.create({
     bidPriceCents: 100000,
     createdAt: new Date(2012, 12, 22),
     createdBy: admin.user.id,
@@ -72,7 +75,7 @@ test('GET /bids?userId&state=OPEN', async (t: Test) => {
     id: uuid.v4(),
     quoteId: quote.id
   });
-  const expiredBid = await createBid({
+  const expiredBid = await BidsDAO.create({
     bidPriceCents: 100000,
     createdAt: new Date(2012, 12, 22),
     createdBy: admin.user.id,
@@ -115,14 +118,14 @@ test('GET /bids?userId&state=EXPIRED', async (t: Test) => {
   const admin = await createUser({ role: 'ADMIN' });
   const partner = await createUser({ role: 'PARTNER' });
   const other = await createUser({ role: 'PARTNER' });
-  const design = await createDesign({
+  const design = await ProductDesignsDAO.create({
     productType: 'TEESHIRT',
     title: 'Plain White Tee',
     userId: admin.user.id
   });
 
   const { bid, quote } = await generateBid(design.id, admin.user.id);
-  const otherBid = await createBid({
+  const otherBid = await BidsDAO.create({
     bidPriceCents: 100000,
     createdAt: new Date(2012, 12, 22),
     createdBy: admin.user.id,
@@ -130,7 +133,7 @@ test('GET /bids?userId&state=EXPIRED', async (t: Test) => {
     id: uuid.v4(),
     quoteId: quote.id
   });
-  const expiredBid = await createBid({
+  const expiredBid = await BidsDAO.create({
     bidPriceCents: 100000,
     createdAt: twoDaysAgo,
     createdBy: admin.user.id,
@@ -170,14 +173,14 @@ test('GET /bids?userId&state=ACCEPTED', async (t: Test) => {
   const admin = await createUser({ role: 'ADMIN' });
   const partner = await createUser({ role: 'PARTNER' });
   const other = await createUser({ role: 'PARTNER' });
-  const design = await createDesign({
+  const design = await ProductDesignsDAO.create({
     productType: 'TEESHIRT',
     title: 'Plain White Tee',
     userId: admin.user.id
   });
 
   const { bid, quote } = await generateBid(design.id, admin.user.id);
-  const otherBid = await createBid({
+  const otherBid = await BidsDAO.create({
     bidPriceCents: 100000,
     createdAt: new Date(2012, 12, 22),
     createdBy: admin.user.id,
@@ -204,7 +207,7 @@ test('GET /bids?userId&state=ACCEPTED', async (t: Test) => {
 
 test('PUT /bids/:bidId/assignees/:userId', async (t: Test) => {
   const { user, session } = await createUser({ role: 'ADMIN' });
-  const design = await createDesign({
+  const design = await ProductDesignsDAO.create({
     productType: 'TEESHIRT',
     title: 'Plain White Tee',
     userId: user.id
@@ -246,7 +249,7 @@ test('PUT /bids/:bidId/assignees/:userId', async (t: Test) => {
 test('GET /bids/:bidId/assignees', async (t: Test) => {
   const { user, session } = await createUser({ role: 'ADMIN' });
   const { user: partner } = await createUser({ role: 'PARTNER' });
-  const design = await createDesign({
+  const design = await ProductDesignsDAO.create({
     productType: 'TEESHIRT',
     title: 'Plain White Tee',
     userId: user.id
@@ -274,7 +277,7 @@ test('GET /bids/:bidId/assignees', async (t: Test) => {
 test('DELETE /bids/:bidId/assignees/:userId', async (t: Test) => {
   const { user, session } = await createUser({ role: 'ADMIN' });
   const { user: partner } = await createUser({ role: 'PARTNER' });
-  const design = await createDesign({
+  const design = await ProductDesignsDAO.create({
     productType: 'TEESHIRT',
     title: 'Plain White Tee',
     userId: user.id
@@ -304,4 +307,46 @@ test('DELETE /bids/:bidId/assignees/:userId', async (t: Test) => {
   );
   t.equal(collaboratorResponse.status, 200);
   t.deepEqual(collaborators, []);
+});
+
+test('POST /bids/:bidId/accept', async (t: Test) => {
+  const designer = await createUser({ withSession: false });
+  const partner = await createUser({ role: 'PARTNER' });
+  const design = await ProductDesignsDAO.create({
+    productType: 'TEESHIRT',
+    title: 'Plain White Tee',
+    userId: designer.user.id
+  });
+  const bidId = uuid.v4();
+
+  sandbox().stub(BidsDAO, 'findById').resolves({
+    id: bidId,
+    quoteId: 'quoteId'
+  });
+  sandbox().stub(PricingQuotesDAO, 'findById').resolves({
+    designId: design.id,
+    id: 'quoteId'
+  });
+  sandbox().stub(CollaboratorsDAO, 'findByDesignAndUser').resolves({
+    designId: design.id,
+    id: 'collaboratorId',
+    role: 'PREVIEW',
+    userId: partner.user.id
+  });
+  const mockCreateDesignEvent = sandbox().stub(DesignEventsDAO, 'create').resolves();
+  const mockCollaboratorUpdate = sandbox().stub(CollaboratorsDAO, 'update').resolves();
+
+  const [response] = await post(
+    `/bids/${bidId}/accept`,
+    { headers: authHeader(partner.session.id) }
+  );
+
+  t.equal(response.status, 204);
+  t.equal(mockCreateDesignEvent.callCount, 1);
+  t.equal(mockCreateDesignEvent.getCall(0).args[0].actorId, partner.user.id);
+  t.equal(mockCreateDesignEvent.getCall(0).args[0].bidId, bidId);
+  t.equal(mockCreateDesignEvent.getCall(0).args[0].designId, design.id);
+  t.equal(mockCollaboratorUpdate.callCount, 1);
+  t.equal(mockCollaboratorUpdate.getCall(0).args[0], 'collaboratorId');
+  t.deepEqual(mockCollaboratorUpdate.getCall(0).args[1], { role: 'PARTNER' });
 });

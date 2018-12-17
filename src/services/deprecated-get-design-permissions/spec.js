@@ -80,7 +80,7 @@ test('getDesignPermissionsDeprecated when partner', async (t) => {
   };
 
   sandbox().stub(CollaboratorsDAO, 'findByDesignAndUser')
-    .resolves([]);
+    .resolves(null);
   sandbox().stub(ProductDesignServicesDAO, 'findByDesignAndUser')
     .resolves([{
       id: uuid.v4(),

@@ -44,7 +44,7 @@ export async function getDesignPermissionsAndRole(
   });
   const isOwner = isDesignOwner || Boolean(userCreatedCollection);
 
-  const designCollaborators: Collaborator[] = await CollaboratorsDAO.findByDesignAndUser(
+  const designCollaborator = await CollaboratorsDAO.findByDesignAndUser(
     design.id,
     sessionUserId
   );
@@ -61,7 +61,10 @@ export async function getDesignPermissionsAndRole(
       return [...collaborators, ...acc];
     }, []
   );
-  const roles = [...designCollaborators, ...collectionCollaborators].map(
+  const combinedCollaborators: Collaborator[] = designCollaborator
+    ? [designCollaborator, ...collectionCollaborators]
+    : collectionCollaborators;
+  const roles = combinedCollaborators.map(
     (collaborator: Collaborator): string => {
       return collaborator.role;
     }

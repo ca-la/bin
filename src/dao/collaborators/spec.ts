@@ -229,10 +229,10 @@ test('CollaboratorsDAO.deleteByDesignIdAndUserId deletes collaborator', async (t
     user.id
   );
 
-  const list = await CollaboratorsDAO.findByDesignAndUser(
+  const collaborator = await CollaboratorsDAO.findByDesignAndUser(
     design.id,
     user.id
   );
 
-  t.deepEqual(list, []);
+  t.deepEqual(collaborator, null);
 });

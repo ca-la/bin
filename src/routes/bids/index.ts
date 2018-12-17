@@ -3,9 +3,12 @@ import * as Koa from 'koa';
 import * as uuid from 'node-uuid';
 
 import Bid from '../../domain-objects/bid';
+import Collaborator from '../../domain-objects/collaborator';
 import ProductDesign = require('../../domain-objects/product-design');
+import { PricingQuote } from '../../domain-objects/pricing-quote';
 import * as UsersDAO from '../../dao/users';
 import * as BidsDAO from '../../dao/bids';
+import * as PricingQuotesDAO from '../../dao/pricing-quotes';
 import * as ProductDesignsDAO from '../../dao/product-designs';
 import * as DesignEventsDAO from '../../dao/design-events';
 import * as CollaboratorsDAO from '../../dao/collaborators';
@@ -196,9 +199,50 @@ function* removeBidFromPartner(this: Koa.Application.Context): AsyncIterableIter
   this.status = 204;
 }
 
+interface AcceptDesignBidContext extends Koa.Application.Context {
+  params: {
+    bidId: string;
+  };
+}
+
+export function* acceptDesignBid(this: AcceptDesignBidContext): AsyncIterableIterator<void> {
+  const { bidId } = this.params;
+  const { userId } = this.state;
+
+  const bid: Bid = yield BidsDAO.findById(bidId);
+  this.assert(bid, 404, `Bid not found with ID ${bidId}`);
+  const quote: PricingQuote = yield PricingQuotesDAO.findById(bid.quoteId);
+  this.assert(quote, 404, `Quote not found with ID ${bid.quoteId}`);
+  this.assert(quote.designId, 400, 'Quote does not have a design');
+  const collaborator: Collaborator = yield CollaboratorsDAO.findByDesignAndUser(
+    quote.designId!,
+    userId
+  );
+  this.assert(collaborator, 400, 'User is not a collaborator on this design');
+
+  yield DesignEventsDAO.create({
+    actorId: userId,
+    bidId: bid.id,
+    createdAt: new Date(),
+    designId: quote.designId!,
+    id: uuid.v4(),
+    quoteId: bid.quoteId,
+    targetId: null,
+    type: 'ACCEPT_SERVICE_BID'
+  });
+  yield CollaboratorsDAO.update(collaborator.id, {
+    role: 'PARTNER'
+  });
+
+  this.status = 204;
+}
+
 router.get('/', requireAuth, listBidsByAssignee);
+
 router.put('/:bidId/assignees/:userId', requireAdmin, assignBidToPartner);
 router.get('/:bidId/assignees', requireAdmin, listBidAssignees);
 router.del('/:bidId/assignees/:userId', requireAdmin, removeBidFromPartner);
+
+router.post('/:bidId/accept', requireAuth, acceptDesignBid);
 
 module.exports = router.routes();

@@ -227,21 +227,24 @@ export async function findByUserId(userId: string): Promise<CollaboratorWithUser
 
 export async function findByDesignAndUser(
   designId: string, userId: string
-): Promise<CollaboratorWithUser[]> {
-  const collaboratorRows = await db(TABLE_NAME)
+): Promise<CollaboratorWithUser | null> {
+  const collaboratorRow = await db(TABLE_NAME)
     .where({
       deleted_at: null,
       design_id: designId,
       user_id: userId
-    });
+    })
+    .then((rows: CollaboratorRow[]) => first<CollaboratorRow>(rows));
 
-  const collaborators =  validateEvery<CollaboratorRow, Collaborator>(
+  if (!collaboratorRow) { return null; }
+
+  const collaborator = validate<CollaboratorRow, Collaborator>(
     TABLE_NAME,
     isCollaboratorRow,
     dataAdapter,
-    collaboratorRows
+    collaboratorRow
   );
-  return Promise.all(collaborators.map(attachUser));
+  return attachUser(collaborator);
 }
 
 export async function findByCollectionAndUser(
