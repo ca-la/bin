@@ -1,4 +1,5 @@
 import * as Knex from 'knex';
+import * as uuid from 'node-uuid';
 
 import InvoicePaymentsDAO = require('../../dao/invoice-payments');
 import InvoicesDAO = require('../../dao/invoices');
@@ -95,8 +96,10 @@ test('GET /kpis returns accurate `paidUnitsCount`', async (t: Test) => {
 
   await ProductDesignVariantsDAO.replaceForDesign(design.id, [{
     colorName: 'white',
+    designId: design.id,
+    id: uuid.v4(),
     position: 1,
-    sizeName: 'big',
+    sizeName: 'L',
     unitsToProduce: 9928
   }]);
 

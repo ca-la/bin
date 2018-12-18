@@ -1,6 +1,9 @@
 declare module 'pg-rethrow' {
-  class ForeignKeyViolation {
-    public constraint: string;
+  interface ForeignKeyViolation {
+    constraint: string;
+  }
+  interface UniqueViolation {
+    constraint: string;
   }
 
   function Rethrow(err: object | Error): never;
@@ -8,6 +11,7 @@ declare module 'pg-rethrow' {
   namespace Rethrow {
     export interface Errors {
       ForeignKeyViolation: ForeignKeyViolation;
+      UniqueViolation: UniqueViolation;
     }
 
     export const ERRORS: Errors;
