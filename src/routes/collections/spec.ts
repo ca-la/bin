@@ -588,6 +588,31 @@ test('POST /collections/:id/submissions', async (t: tape.Test) => {
   );
 
   t.equal(collaboratorPost[0].status, 403, 'Collaborators cannot submit collections');
+
+  const secondSubmission = await API.post(
+    `/collections/${collection.id}/submissions`,
+    {
+      body: {
+        collectionId: collection.id,
+        createdAt: new Date(),
+        createdBy: owner.user.id,
+        deletedAt: null,
+        id: serviceId,
+        needsDesignConsulting: true,
+        needsFulfillment: true,
+        needsPackaging: true
+      },
+      headers: API.authHeader(owner.session.id)
+    }
+  );
+  t.deepEqual(secondSubmission[0].status, 201, 'Successfully posts');
+  t.deepEqual(secondSubmission[1], {
+    collectionId: collection.id,
+    isCosted: false,
+    isPaired: false,
+    isQuoted: false,
+    isSubmitted: true
+  }, 'Returns current submission status');
 });
 
 test('GET /collections/:collectionId/submissions', async (t: tape.Test) => {

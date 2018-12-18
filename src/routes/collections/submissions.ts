@@ -1,7 +1,7 @@
 import * as Koa from 'koa';
 import * as uuid from 'node-uuid';
 import CollectionSubmissionStatus from '../../domain-objects/collection-submission-status';
-import { isCollectionService } from '../../domain-objects/collection-service';
+import CollectionService, { isCollectionService } from '../../domain-objects/collection-service';
 import * as CollectionsDAO from '../../dao/collections';
 import * as CollectionServicesDAO from '../../dao/collection-services';
 import * as ProductDesignsDAO from '../../dao/product-designs';
@@ -18,7 +18,16 @@ export function* createSubmission(
   const { body } = this.request;
 
   if (isCollectionService(body)) {
-    yield CollectionServicesDAO.create(attachDefaults(body, userId));
+    const services: CollectionService = attachDefaults(body, userId);
+    const existingServices: CollectionService = yield CollectionServicesDAO
+      .findById(services.id);
+
+    if (existingServices) {
+      yield CollectionServicesDAO.update(existingServices.id, services);
+    } else {
+      yield CollectionServicesDAO.create(services);
+    }
+
     const designs = yield ProductDesignsDAO.findByCollectionId(collectionId);
     yield Promise.all(designs.map((design: ProductDesign) => {
       return DesignEventsDAO.create({

@@ -1,7 +1,7 @@
 import * as uuid from 'node-uuid';
 import * as tape from 'tape';
 import { test } from '../../test-helpers/fresh';
-import { create, deleteById, findById, update } from './index';
+import * as CollectionServicesDAO from './index';
 import createUser = require('../../test-helpers/create-user');
 import { create as createCollection } from '../collections';
 
@@ -15,7 +15,7 @@ test('CollectionService DAO supports creation/retrieval', async (t: tape.Test) =
     id: uuid.v4(),
     title: 'FW19'
   });
-  const collectionService = await create({
+  const collectionService = await CollectionServicesDAO.create({
     collectionId: collection.id,
     createdBy: user.id,
     deletedAt: null,
@@ -25,8 +25,43 @@ test('CollectionService DAO supports creation/retrieval', async (t: tape.Test) =
     needsPackaging: true
   });
 
-  const result = await findById(collectionService.id);
+  const result = await CollectionServicesDAO.findById(collectionService.id);
   t.deepEqual(collectionService, result, 'Returned the inserted collection');
+});
+
+test('CollectionService DAO supports creation/retrieval of all', async (t: tape.Test) => {
+  const { user } = await createUser();
+  const collection = await createCollection({
+    createdAt: new Date(),
+    createdBy: user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
+    title: 'FW19'
+  });
+  const services1 = await CollectionServicesDAO.create({
+    collectionId: collection.id,
+    createdBy: user.id,
+    deletedAt: null,
+    id: uuid.v4(),
+    needsDesignConsulting: true,
+    needsFulfillment: true,
+    needsPackaging: true
+  });
+  const services2 = await CollectionServicesDAO.create({
+    collectionId: collection.id,
+    createdBy: user.id,
+    deletedAt: null,
+    id: uuid.v4(),
+    needsDesignConsulting: true,
+    needsFulfillment: true,
+    needsPackaging: true
+  });
+
+  const services = await CollectionServicesDAO
+    .findAllByCollectionId(collection.id);
+
+  t.deepEqual(services, [services1, services2], 'Returns services, newest first');
 });
 
 test('CollectionService DAO supports updating', async (t: tape.Test) => {
@@ -39,7 +74,7 @@ test('CollectionService DAO supports updating', async (t: tape.Test) => {
     id: uuid.v4(),
     title: 'FW19'
   });
-  const collectionService = await create({
+  const collectionService = await CollectionServicesDAO.create({
     collectionId: collection.id,
     createdBy: user.id,
     deletedAt: null,
@@ -58,7 +93,7 @@ test('CollectionService DAO supports updating', async (t: tape.Test) => {
     needsFulfillment: false,
     needsPackaging: false
   };
-  const updated = await update(collectionService.id, data);
+  const updated = await CollectionServicesDAO.update(collectionService.id, data);
   t.deepEqual(
     updated,
     {
@@ -79,7 +114,7 @@ test('CollectionService DAO supports deletion', async (t: tape.Test) => {
     id: uuid.v4(),
     title: 'FW19'
   });
-  const collectionService = await create({
+  const collectionService = await CollectionServicesDAO.create({
     collectionId: collection.id,
     createdBy: user.id,
     deletedAt: null,
@@ -88,7 +123,10 @@ test('CollectionService DAO supports deletion', async (t: tape.Test) => {
     needsFulfillment: true,
     needsPackaging: true
   });
-  const result = await deleteById(collectionService.id);
+
+  const result = await CollectionServicesDAO.deleteById(collectionService.id);
   t.notEqual(result.deletedAt, null, 'Successfully deleted one row');
-  t.equal(await findById(collectionService.id), null, 'Succesfully removed from database');
+
+  const gone = await CollectionServicesDAO.findById(collectionService.id);
+  t.equal(gone, null, 'Succesfully removed from database');
 });

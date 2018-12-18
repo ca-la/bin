@@ -85,7 +85,8 @@ export async function deleteById(id: string): Promise<CollectionService> {
 export async function findAllByCollectionId(collectionId: string): Promise<CollectionService[]> {
   const collectionServices: CollectionServiceRow[] = await db(TABLE_NAME)
     .select('*')
-    .where({ collection_id: collectionId, deleted_at: null });
+    .where({ collection_id: collectionId, deleted_at: null })
+    .orderBy('created_at', 'ASC');
   return validateEvery<CollectionServiceRow, CollectionService>(
     TABLE_NAME,
     isCollectionServiceRow,
