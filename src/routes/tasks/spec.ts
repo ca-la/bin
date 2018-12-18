@@ -265,6 +265,10 @@ test('PUT /tasks/:taskId creates TaskEvent successfully', async (t: tape.Test) =
 
 test('PUT /tasks/:taskId/assignees adds Collaborators to Tasks successfully',
 async (t: tape.Test) => {
+  const stubNotification = sandbox()
+    .stub(CreateNotifications, 'sendTaskAssignmentNotification')
+    .resolves();
+
   const { session, user } = await createUser();
   const secondUser = await createUser();
   const task = await tasksDAO.create(uuid.v4());
@@ -300,6 +304,12 @@ async (t: tape.Test) => {
   });
   t.equal(responseOne.status, 200);
   t.equal(bodyOne[0].collaboratorId, collaborator.id);
+  t.deepEqual(
+    stubNotification.getCall(0).args,
+    [task.id, user.id, [collaborator.id]],
+    'It sends a notification to collaborators'
+  );
+  stubNotification.resetHistory();
 
   const [responseTwo, bodyTwo] = await put(`/tasks/${task.id}/assignees`, {
     body: { collaboratorIds: [collaborator.id, secondCollaborator.id] },
@@ -308,6 +318,12 @@ async (t: tape.Test) => {
   t.equal(responseTwo.status, 200);
   t.equal(bodyTwo[0].collaboratorId, secondCollaborator.id);
   t.equal(bodyTwo[1].collaboratorId, collaborator.id);
+  t.deepEqual(
+    stubNotification.getCall(0).args,
+    [task.id, user.id, [secondCollaborator.id]],
+    'It sends a notification to new collaborators'
+  );
+  stubNotification.resetHistory();
 
   const [responseThree, bodyThree] = await put(`/tasks/${task.id}/assignees`, {
     body: { collaboratorIds: [secondCollaborator.id] },
@@ -315,6 +331,12 @@ async (t: tape.Test) => {
   });
   t.equal(responseThree.status, 200);
   t.equal(bodyThree[0].collaboratorId, secondCollaborator.id);
+  t.equal(
+    stubNotification.callCount,
+    0,
+    'It does not send a notification if no new collaborators were added'
+  );
+  stubNotification.resetHistory();
 
   const [responseFour, bodyFour] = await put(`/tasks/${task.id}/assignees`, {
     body: { collaboratorIds: [] },
@@ -322,6 +344,12 @@ async (t: tape.Test) => {
   });
   t.equal(responseFour.status, 200);
   t.equal(bodyFour.length, 0);
+  t.equal(
+    stubNotification.callCount,
+    0,
+    'It does not send a notification when unassigning all'
+  );
+  stubNotification.resetHistory();
 });
 
 test('PUT /tasks/:taskId when changing status to Completed',
@@ -370,12 +398,16 @@ async (t: tape.Test) => {
     body: event,
     headers: authHeader(session.id)
   });
+
+  const assignmentNotificationStub = sandbox()
+    .stub(CreateNotifications, 'sendTaskAssignmentNotification')
+    .resolves();
   await put(`/tasks/${task.id}/assignees`, {
     body: { collaboratorIds: [collaborator.id] },
     headers: authHeader(session.id)
   });
 
-  const notificationStub = sandbox()
+  const completionNotificationStub = sandbox()
     .stub(CreateNotifications, 'sendTaskCompletionNotification')
     .resolves();
   await put(`/tasks/${task.id}`, {
@@ -386,7 +418,16 @@ async (t: tape.Test) => {
     headers: authHeader(session.id)
   });
 
-  t.equal(notificationStub.callCount, 1);
+  t.deepEqual(
+    completionNotificationStub.getCall(0).args,
+    [task.id, user.id],
+    'It sends a completion notification'
+  );
+  t.deepEqual(
+    assignmentNotificationStub.getCall(0).args,
+    [task.id, user.id, [collaborator.id]],
+    'It sends a completion notification'
+  );
 });
 
 test('POST /tasks/stage/:stageId creates Task on Stage successfully', async (t: tape.Test) => {
