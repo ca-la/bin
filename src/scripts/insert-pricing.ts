@@ -12,6 +12,7 @@ import { hasOnlyProperties } from '../services/require-properties';
 import { PricingConstantRow } from '../domain-objects/pricing-constant';
 import { PricingProductTypeRow } from '../domain-objects/pricing-product-type';
 import { PricingCareLabelRow } from '../domain-objects/pricing-care-label';
+import { PricingMarginRow } from '../domain-objects/pricing-margin';
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -25,7 +26,12 @@ type Stringly<T extends { id: any, created_at: any, version: any }> = {
 type RawConstants = Stringly<PricingConstantRow>;
 type RawType = Stringly<PricingProductTypeRow>;
 type RawLabel = Stringly<PricingCareLabelRow>;
-type DomainObject = PricingConstantRow | PricingProductTypeRow | PricingCareLabelRow;
+type RawMargin = Stringly<PricingMarginRow>;
+type DomainObject =
+  | PricingConstantRow
+  | PricingProductTypeRow
+  | PricingCareLabelRow
+  | PricingMarginRow;
 
 const HELP_TEXT = `
   Insert pricing values into pricing tables
@@ -34,7 +40,7 @@ const HELP_TEXT = `
     $ insert-pricing [input csv file]
 
   Options
-  --table, -t      REQUIRED One of: types, constants, processes, or labels
+  --table, -t      REQUIRED One of: types, constants, margins, or labels
   --quiet, -q      Suppress output
   --force, -f      Do not ask for user confirmation
   --dry-run        Only print the query, do not execute
@@ -66,13 +72,13 @@ const cli = meow(HELP_TEXT, {
 interface TableMap {
   constants: string;
   labels: string;
-  processes: string;
+  margins: string;
   types: string;
 }
 const tableMap: TableMap = {
   constants: 'pricing_constants',
   labels: 'pricing_care_labels',
-  processes: 'pricing_processes',
+  margins: 'pricing_margins',
   types: 'pricing_product_types'
 };
 
@@ -173,6 +179,10 @@ function castFromRaw(
     return raw.map(toLabel.bind(null, latestVersion));
   }
 
+  if (tableName === 'pricing_margins' && everyRawMargin(raw)) {
+    return raw.map(toMargin.bind(null, latestVersion));
+  }
+
   return null;
 }
 
@@ -221,6 +231,17 @@ function everyRawLabel(candidate: object[]): candidate is RawLabel[] {
   return candidate.every(isRawLabel);
 }
 
+function isRawMargin(candidate: object): candidate is RawMargin {
+  return hasOnlyProperties(
+    candidate,
+    'minimum_units',
+    'margin'
+  );
+}
+function everyRawMargin(candidate: object[]): candidate is RawMargin[] {
+  return candidate.every(isRawMargin);
+}
+
 function toConstants(latestVersion: number, raw: RawConstants): PricingConstantRow {
   return {
     branded_labels_additional_cents: parseInt(raw.branded_labels_additional_cents, 10),
@@ -259,6 +280,16 @@ function toLabel(latestVersion: number, raw: RawLabel): PricingCareLabelRow {
     id: uuid.v4(),
     minimum_units: parseInt(raw.minimum_units, 10),
     unit_cents: parseInt(raw.unit_cents, 10),
+    version: latestVersion + 1
+  };
+}
+
+function toMargin(latestVersion: number, raw: RawMargin): PricingMarginRow {
+  return {
+    created_at: new Date(),
+    id: uuid.v4(),
+    margin: Number(raw.margin),
+    minimum_units: parseInt(raw.minimum_units, 10),
     version: latestVersion + 1
   };
 }
