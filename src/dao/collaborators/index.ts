@@ -80,17 +80,9 @@ export async function create(
 }
 
 export async function update(
-  collaboratorId: string,
-  data: Partial<Collaborator>
+  collaboratorId: string, data: Partial<Collaborator>
 ): Promise<Collaborator> {
   const rowData = pick(partialDataAdapter.forInsertion(data), UPDATABLE_PROPERTIES);
-
-  if (Object.keys(rowData).length === 0) {
-    throw new InvalidDataError(`
-Attempting to update readonly properties of a Collaborator.
-Updatable Properties: ${UPDATABLE_PROPERTIES.join(', ')}`.trim())
-  }
-
   const updated = await db(TABLE_NAME)
     .where({ id: collaboratorId, deleted_at: null })
     .update(rowData, '*')
