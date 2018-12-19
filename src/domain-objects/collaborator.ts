@@ -3,6 +3,8 @@ import { hasProperties } from '../services/require-properties';
 import User from './user';
 
 export const UPDATABLE_PROPERTIES = [
+  'user_email',
+  'user_id',
   'role'
 ];
 

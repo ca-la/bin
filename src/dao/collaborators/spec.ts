@@ -236,3 +236,42 @@ test('CollaboratorsDAO.deleteByDesignIdAndUserId deletes collaborator', async (t
 
   t.deepEqual(collaborator, null);
 });
+
+test('CollaboratorsDAO.update', async (t: Test) => {
+  const { user: designer } = await createUser({ withSession: false });
+  const { user: friend } = await createUser({ withSession: false });
+
+  const design = await ProductDesignsDAO.create({
+    productType: 'TEESHIRT',
+    title: 'A product design',
+    userId: designer.id
+  });
+  const collaborator = await CollaboratorsDAO.create({
+    collectionId: null,
+    designId: design.id,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: friend.email,
+    userId: null
+  });
+
+  const validUpdate = await CollaboratorsDAO.update(collaborator.id, {
+    role: 'VIEW',
+    userEmail: null,
+    userId: friend.id
+  });
+  t.deepEqual(validUpdate, {
+    ...collaborator,
+    role: 'VIEW',
+    user: friend,
+    userEmail: null,
+    userId: friend.id
+  });
+  CollaboratorsDAO.update(collaborator.id, {
+    collectionId: 'foo',
+    designId: 'bar',
+    invitationMessage: 'baz'
+  })
+    .then(() => t.fail('Invalid update succeeded'))
+    .catch(() => t.pass('Correctly rejected invalid update'));
+});
