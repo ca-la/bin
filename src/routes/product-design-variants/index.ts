@@ -4,7 +4,7 @@ import * as Koa from 'koa';
 import * as ProductDesignVariantsDAO from '../../dao/product-design-variants';
 import ProductDesignVariant from '../../domain-objects/product-design-variant';
 import requireAuth = require('../../middleware/require-auth');
-import { canAccessDesignInQuery } from '../../middleware/can-access-design';
+import { canAccessDesignInQuery, canEditDesign } from '../../middleware/can-access-design';
 import { hasProperties } from '../../services/require-properties';
 
 const router = new Router();
@@ -73,7 +73,18 @@ function* getVariants(
   this.status = 200;
 }
 
-router.put('/', requireAuth, canAccessDesignInQuery, replaceVariants);
-router.get('/', requireAuth, canAccessDesignInQuery, getVariants);
+router.put(
+  '/',
+  requireAuth,
+  canAccessDesignInQuery,
+  canEditDesign,
+  replaceVariants
+);
+router.get(
+  '/',
+  requireAuth,
+  canAccessDesignInQuery,
+  getVariants
+);
 
 module.exports = router.routes();

@@ -5,18 +5,28 @@ import { create as createDesign } from '../../dao/product-designs';
 import * as API from '../../test-helpers/http';
 import { test } from '../../test-helpers/fresh';
 import * as ProductDesignVariantsDAO from '../../dao/product-design-variants';
+import * as CollaboratorsDAO from '../../dao/collaborators';
 import ProductDesignVariant from '../../domain-objects/product-design-variant';
 
 const API_PATH = '/product-design-variants';
 
 test(`GET ${API_PATH}?designId fetches all variants for a design`, async (t: tape.Test) => {
   const { session, user } = await createUser();
+  const { session: sessionTwo, user: userTwo } = await createUser();
   const { session: randomSession } = await createUser();
 
   const design = await createDesign({
     productType: 'TEESHIRT',
     title: 'Plain White Tee',
     userId: user.id
+  });
+  await CollaboratorsDAO.create({
+    collectionId: null,
+    designId: design.id,
+    invitationMessage: 'Come see my cool shirt',
+    role: 'VIEW',
+    userEmail: null,
+    userId: userTwo.id
   });
   const variantOne = await ProductDesignVariantsDAO.create({
     colorName: 'Green',
@@ -48,16 +58,35 @@ test(`GET ${API_PATH}?designId fetches all variants for a design`, async (t: tap
     body.map((variant: ProductDesignVariant): string => variant.id),
     [variantOne.id, variantTwo.id]
   );
+
+  // A collaborator should have access to the variants.
+  const [responseTwo, bodyTwo] = await API.get(`${API_PATH}/?designId=${design.id}`, {
+    headers: API.authHeader(sessionTwo.id)
+  });
+  t.equal(responseTwo.status, 200);
+  t.deepEqual(
+    bodyTwo.map((variant: ProductDesignVariant): string => variant.id),
+    [variantOne.id, variantTwo.id]
+  );
 });
 
 test(`PUT ${API_PATH}?designId replaces all variants for a design`, async (t: tape.Test) => {
   const { session, user } = await createUser();
+  const { session: sessionTwo, user: userTwo } = await createUser();
   const { session: randomSession } = await createUser();
 
   const design = await createDesign({
     productType: 'TEESHIRT',
     title: 'Plain White Tee',
     userId: user.id
+  });
+  await CollaboratorsDAO.create({
+    collectionId: null,
+    designId: design.id,
+    invitationMessage: 'Come see my cool shirt',
+    role: 'VIEW',
+    userEmail: null,
+    userId: userTwo.id
   });
   await ProductDesignVariantsDAO.create({
     colorName: 'Green',
@@ -116,4 +145,11 @@ test(`PUT ${API_PATH}?designId replaces all variants for a design`, async (t: ta
   });
   t.equal(responseTwo.status, 200);
   t.deepEqual(bodyTwo, [], 'Returns an empty list');
+
+  // A view collaborator should not have permissions to edit the variants.
+  const [responseThree] = await API.put(`${API_PATH}/?designId=${design.id}`, {
+    body: variants,
+    headers: API.authHeader(sessionTwo.id)
+  });
+  t.equal(responseThree.status, 403);
 });
