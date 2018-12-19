@@ -214,12 +214,7 @@ function isRawLabel(candidate: object): candidate is RawLabel {
   return hasOnlyProperties(
     candidate,
     'minimum_units',
-    'name',
-    'pattern_minimum_cents',
-    'complexity',
-    'unit_cents',
-    'yield',
-    'contrast'
+    'unit_cents'
   );
 }
 function everyRawLabel(candidate: object[]): candidate is RawLabel[] {
