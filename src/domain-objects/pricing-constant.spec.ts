@@ -18,6 +18,7 @@ const validRowData: PricingConstantRow = {
   pattern_revision_cents: 0,
   sample_minimum_cents: 0,
   technical_design_cents: 0,
+  version: 0,
   working_session_cents: 0
 };
 const invalidRowData = {
@@ -39,6 +40,7 @@ const equivalentUserData: PricingConstant = {
   patternRevisionCents: 0,
   sampleMinimumCents: 0,
   technicalDesignCents: 0,
+  version: 0,
   workingSessionCents: 0
 };
 

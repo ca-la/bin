@@ -128,7 +128,7 @@ export async function findLatestValuesForRequest(
       sample,
       type
     },
-    pricingValues
+    omit(pricingValues, 'version')
   );
 }
 

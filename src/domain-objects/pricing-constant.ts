@@ -27,6 +27,7 @@ export default interface PricingConstant {
   brandedLabelsMinimumUnits: number;
   brandedLabelsAdditionalCents: number;
   createdAt: Date;
+  version: number;
 }
 
 export interface PricingConstantRow {
@@ -41,6 +42,7 @@ export interface PricingConstantRow {
   branded_labels_minimum_units: number;
   branded_labels_additional_cents: number;
   created_at: Date;
+  version: number;
 }
 
 export const dataAdapter = new DataAdapter<PricingConstantRow, PricingConstant>();

@@ -73,7 +73,7 @@ export interface PricingQuoteInputRow {
   created_at: Date;
 }
 
-export interface PricingQuoteValues extends Omit<PricingConstant, 'id' | 'createdAt'> {
+export interface PricingQuoteValues extends Omit<PricingConstant, 'id' | 'createdAt' | 'version'> {
   constantId: string;
   material: PricingProductMaterial;
   type: PricingProductType;

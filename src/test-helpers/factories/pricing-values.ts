@@ -132,6 +132,7 @@ export default async function generatePricingValues(): Promise<any> {
       pattern_revision_cents: Dollars(50),
       sample_minimum_cents: Dollars(75),
       technical_design_cents: Dollars(50),
+      version: 0,
       working_session_cents: Dollars(25)
     }
   ];
