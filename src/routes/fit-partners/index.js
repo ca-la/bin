@@ -78,7 +78,6 @@ function* shopifyOrderCreated() {
   const { shipping_address: shippingAddress, customer } = this.request.body;
 
   if (!shippingAddress) {
-    Logger.logServerError('Missing shipping address payload');
     this.status = 200;
     this.body = { success: true };
     return;
@@ -86,7 +85,6 @@ function* shopifyOrderCreated() {
 
   const phoneNumber = shippingAddress.phone;
   if (!phoneNumber) {
-    Logger.logServerError('Missing shipping address phone number');
     this.status = 200;
     this.body = { success: true };
     return;
