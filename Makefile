@@ -55,14 +55,14 @@ validate-migration: build
 .PHONY: lint
 lint: preflight
 	$(NPM_BIN)/eslint src --ignore-path .gitignore
-	$(NPM_BIN)/tslint -p . 'src/**/*.ts' -t stylish
+	$(NPM_BIN)/tslint -p tsconfig-tslint.json 'src/**/*.ts' -t stylish
 	$(NPM_BIN)/cala-lint-commented-code
 
 .PHONY: lint-ci
 lint-ci: preflight
 	mkdir -p ./reports
 	$(NPM_BIN)/eslint src --ignore-path .gitignore --format junit --output-file ./reports/eslint.xml
-	$(NPM_BIN)/tslint -p . 'src/**/*.ts' -t junit > ./reports/tslint.xml
+	$(NPM_BIN)/tslint -p tsconfig-tslint.json 'src/**/*.ts' -t junit > ./reports/tslint.xml
 	$(NPM_BIN)/cala-lint-commented-code
 
 .PHONY: preflight
