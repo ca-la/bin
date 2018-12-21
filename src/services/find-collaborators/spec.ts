@@ -67,9 +67,20 @@ test('findCollaboratorsByRole finds partners', async (t: Test) => {
     collectionId: null,
     designId: design.id,
     invitationMessage: '',
-    role: 'EDIT',
+    role: 'PARTNER',
     userEmail: null,
     userId: partnerUser.id
+  });
+
+  // Add a 3rd-party collaborator; we had a previous failure case where we
+  // weren't handling filtering out collaborators without users
+  await CollaboratorsDAO.create({
+    collectionId: null,
+    designId: design.id,
+    invitationMessage: 'Cmon check it out',
+    role: 'EDIT',
+    userEmail: 'friend@ca.la',
+    userId: null
   });
 
   const collaborators = await findCollaboratorsByRole(design.id, 'PARTNER');

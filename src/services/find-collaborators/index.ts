@@ -1,7 +1,6 @@
 import CollaboratorsDAO = require('../../dao/collaborators');
 import CollectionsDAO = require('../../dao/collections');
 import ProductDesignsDAO = require('../../dao/product-designs');
-import UsersDAO = require('../../dao/users');
 import { CALA_ADMIN_USER_ID } from '../../config';
 import Collaborator from '../../domain-objects/collaborator';
 
@@ -30,12 +29,8 @@ export default async function findCollaboratorsByRole(
       const collaborators = [];
       const designCollaborators = await CollaboratorsDAO.findByDesign(designId);
 
-      for (const collaborator of designCollaborators) {
-        const user = await UsersDAO.findById(collaborator.userId);
-        if (user.role === 'PARTNER') {
-          collaborators.push(collaborator);
-        }
-      }
+      return designCollaborators
+        .filter((collaborator: Collaborator) => collaborator.role === 'PARTNER');
 
       return collaborators;
     }
