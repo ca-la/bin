@@ -23,6 +23,7 @@ test(
       createdBy: user.id,
       designId: design.id,
       height: 200,
+      ordering: 0,
       title: 'My Green Tee',
       width: 200,
       x: 0,

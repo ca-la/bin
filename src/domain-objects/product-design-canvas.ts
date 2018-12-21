@@ -14,6 +14,7 @@ import { hasProperties } from '../services/require-properties';
  * @property {number} x The x position of the canvas in the design space
  * @property {number} y The y position of the canvas in the design space
  * @property {Date | null} deletedAt The date the row was deleted or null
+ * @property {number} ordering The order of the canvas in the design space
  */
 
 export default interface ProductDesignCanvas {
@@ -28,6 +29,7 @@ export default interface ProductDesignCanvas {
   x: number;
   y: number;
   deletedAt: Date | null;
+  ordering?: number;
 }
 
 export interface ProductDesignCanvasRow {
@@ -42,9 +44,12 @@ export interface ProductDesignCanvasRow {
   x: number;
   y: number;
   deleted_at: Date | null;
+  ordering?: number;
 }
 
 export const dataAdapter = new DataAdapter<ProductDesignCanvasRow, ProductDesignCanvas>();
+export const partialDataAdapter = new
+  DataAdapter<Partial<ProductDesignCanvasRow>, Partial<ProductDesignCanvas>>();
 
 export function isUnsavedProductDesignCanvas(obj: object): obj is Unsaved<ProductDesignCanvas> {
   return hasProperties(
@@ -55,6 +60,7 @@ export function isUnsavedProductDesignCanvas(obj: object): obj is Unsaved<Produc
     'title',
     'width',
     'height',
+    'ordering',
     'x',
     'y'
   );

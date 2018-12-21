@@ -16,6 +16,7 @@ import ProductDesignImage = require('../../domain-objects/product-design-image')
 import ProductDesignOption = require('../../domain-objects/product-design-option');
 import { hasProperties } from '../../services/require-properties';
 import { omit } from 'lodash';
+import { typeGuard } from '../../middleware/type-guard';
 
 const router = new Router();
 
@@ -168,6 +169,20 @@ function* update(this: Koa.Application.Context): AsyncIterableIterator<ProductDe
   this.body = canvas;
 }
 
+type ReorderRequest = ProductDesignCanvasesDAO.ReorderRequest;
+
+function isReorderRequest(data: any[]): data is ReorderRequest[] {
+  return data.every((value: any) => hasProperties(value, 'id', 'ordering'));
+}
+
+function* reorder(
+  this: Koa.Application.Context<ReorderRequest[]>
+): AsyncIterableIterator<ProductDesignCanvas> {
+  const canvases = yield ProductDesignCanvasesDAO.reorder(this.request.body);
+  this.status = 200;
+  this.body = canvases;
+}
+
 function* del(this: Koa.Application.Context): AsyncIterableIterator<ProductDesignCanvas> {
   yield ProductDesignCanvasesDAO.del(this.params.canvasId);
   this.status = 204;
@@ -211,6 +226,8 @@ function* getList(
 router.post('/', requireAuth, create);
 router.put('/:canvasId', requireAuth, create);
 router.patch('/:canvasId', requireAuth, update);
+router.patch('/reorder', requireAuth, typeGuard<ReorderRequest[]>(isReorderRequest), reorder);
+
 router.put('/:canvasId/component/:componentId', requireAuth, addComponent);
 router.del('/:canvasId', requireAuth, del);
 

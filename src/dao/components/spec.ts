@@ -119,6 +119,7 @@ test('Components DAO supports retrieval by canvasId', async (t: tape.Test) => {
     createdBy: userId,
     designId: design.id,
     height: 2,
+    ordering: 0,
     title: 'test',
     width: 2,
     x: 1,

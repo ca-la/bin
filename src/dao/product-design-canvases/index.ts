@@ -1,9 +1,11 @@
 import * as uuid from 'node-uuid';
+import * as Knex from 'knex';
 
 import * as db from '../../services/db';
 import ProductDesignCanvas, {
   dataAdapter,
   isProductDesignCanvasRow,
+  partialDataAdapter,
   ProductDesignCanvasRow
 } from '../../domain-objects/product-design-canvas';
 import first from '../../services/first';
@@ -57,6 +59,41 @@ export async function update(
   );
 }
 
+export interface ReorderRequest {
+  id: string;
+  ordering: number;
+}
+
+export async function reorder(
+  data: ReorderRequest[]
+): Promise<ProductDesignCanvas[]> {
+  let updated: ProductDesignCanvasRow[] = [];
+  await db.transaction(async (trx: Knex.Transaction) => {
+    updated = await Promise.all(data.map(async (reorderReq: ReorderRequest) => {
+      const { id, ordering } = reorderReq;
+      const rowData = partialDataAdapter.forInsertion({
+        ordering
+      });
+      const row = await db(TABLE_NAME)
+        .update(rowData, '*')
+        .where({ id })
+        .transacting(trx)
+        .then((rows: ProductDesignCanvasRow[]) => first<ProductDesignCanvasRow>(rows));
+      if (!row) {
+        throw new Error('Row could not be updated');
+      }
+      return row;
+    }));
+  });
+
+  return validateEvery<ProductDesignCanvasRow, ProductDesignCanvas>(
+    TABLE_NAME,
+    isProductDesignCanvasRow,
+    dataAdapter,
+    updated
+  );
+}
+
 export async function del(id: string): Promise<ProductDesignCanvas> {
   const deleted = await db(TABLE_NAME)
     .where({ id, deleted_at: null })
@@ -94,7 +131,7 @@ export async function findAllByDesignId(id: string): Promise<ProductDesignCanvas
   const canvases: ProductDesignCanvasRow[] = await db(TABLE_NAME)
     .select('*')
     .where({ design_id: id, deleted_at: null })
-    .orderBy('created_at', 'asc');
+    .orderBy('ordering');
 
   return validateEvery<ProductDesignCanvasRow, ProductDesignCanvas>(
     TABLE_NAME,
