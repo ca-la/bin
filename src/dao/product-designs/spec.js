@@ -10,51 +10,49 @@ const DesignEventsDAO = require('../design-events');
 const { test } = require('../../test-helpers/fresh');
 const createUser = require('../../test-helpers/create-user');
 
-test('ProductDesignsDAO.create creates a design', (t) => {
-  let userId;
-  return createUser({ withSession: false })
-    .then(({ user }) => {
-      userId = user.id;
-      return ProductDesignsDAO.create({
-        title: 'Plain White Tee',
-        productType: 'TEESHIRT',
-        userId: user.id,
-        previewImageUrls: [
-          'abcd', 'efgh'
-        ],
-        metadata: {
-          'dipped drawstrings': 'yes please'
-        }
-      });
-    })
-    .then((design) => {
-      t.equal(design.userId, userId);
-      t.equal(design.productType, 'TEESHIRT');
-      t.deepEqual(design.metadata, {
-        'dipped drawstrings': 'yes please'
-      });
-      t.deepEqual(design.previewImageUrls, [
-        'abcd', 'efgh'
-      ]);
-      t.deepEqual(design.collectionIds, [], 'Collection IDs is empty');
-    });
+test('ProductDesignsDAO.create creates a design', async (t) => {
+  const { user } = await createUser({ withSession: false });
+  const forCreation = {
+    title: 'Plain White Tee',
+    productType: 'TEESHIRT',
+    userId: user.id,
+    previewImageUrls: [
+      'abcd', 'efgh'
+    ],
+    metadata: {
+      'dipped drawstrings': 'yes please'
+    }
+  };
+  const design = await ProductDesignsDAO.create(forCreation);
+
+  t.deepEqual(design, {
+    ...forCreation,
+    id: design.id,
+    computedPricingTable: null,
+    createdAt: design.createdAt,
+    deletedAt: null,
+    description: null,
+    dueDate: null,
+    expectedCostCents: null,
+    overridePricingTable: null,
+    retailPriceCents: null,
+    showPricingBreakdown: true,
+    status: 'DRAFT',
+    collectionIds: [],
+    collections: []
+  }, 'adds the collections and default/nullable values');
 });
 
-test('ProductDesignsDAO.update updates a design', (t) => {
-  return createUser({ withSession: false })
-    .then(({ user }) => {
-      return ProductDesignsDAO.create({
-        title: 'Plain White Tee',
-        productType: 'TEESHIRT',
-        userId: user.id
-      });
-    })
-    .then((design) => {
-      return ProductDesignsDAO.update(design.id, { title: 'Blue Tee' });
-    })
-    .then((updatedDesign) => {
-      t.equal(updatedDesign.title, 'Blue Tee');
-    });
+test('ProductDesignsDAO.update updates a design', async (t) => {
+  const { user } = await createUser({ withSession: false });
+  const design = await ProductDesignsDAO.create({
+    title: 'Plain White Tee',
+    productType: 'TEESHIRT',
+    userId: user.id
+  });
+  const updated = await ProductDesignsDAO.update(design.id, { title: 'Blue Tee' });
+
+  t.deepEqual(updated, { ...design, title: 'Blue Tee' });
 });
 
 test("ProductDesignsDAO.findById doesn't include deleted designs", async (t) => {
@@ -97,7 +95,7 @@ test('ProductDesignsDAO.findByIds includes several designs', async (t) => {
   });
 
   const result = await ProductDesignsDAO.findByIds([design.id, design2.id]);
-  t.deepEqual(result, [design, design2]);
+  t.deepEqual(result, [design2, design]);
 });
 
 test('ProductDesignsDAO.findByUserId', async (t) => {
@@ -110,7 +108,6 @@ test('ProductDesignsDAO.findByUserId', async (t) => {
   const userDesigns = await ProductDesignsDAO.findByUserId(user.id);
 
   t.deepEqual(userDesigns, [design]);
-  t.ok(Object.keys(userDesigns[0]).includes('collectionIds'));
 });
 
 test('ProductDesignsDAO.findByCollectionId', async (t) => {
@@ -135,7 +132,11 @@ test('ProductDesignsDAO.findByCollectionId', async (t) => {
 
   t.deepEqual(
     collectionDesigns,
-    [{ ...design, collectionIds: [collection.id] }],
+    [{
+      ...design,
+      collectionIds: [collection.id],
+      collections: [{ id: collection.id, title: collection.title }]
+    }],
     'Passes through the design associated with the collection'
   );
   t.deepEqual(

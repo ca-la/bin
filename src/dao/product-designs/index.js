@@ -17,6 +17,22 @@ const { dataMapper } = ProductDesign;
 
 const TABLE_NAME = 'product_designs';
 
+function queryWithCollectionMeta(dbInstance) {
+  return dbInstance(TABLE_NAME)
+    .select(db.raw(`
+product_designs.*,
+array_to_json(array_remove(
+    array[case when collection_designs.collection_id is not null
+        then jsonb_build_object('id', collection_designs.collection_id, 'title', collections.title)
+    end],
+    null
+)) as collections`))
+    .leftJoin('collection_designs', 'product_designs.id', 'collection_designs.design_id')
+    .leftJoin('collections', 'collections.id', 'collection_designs.collection_id')
+    .groupBy(['product_designs.id', 'collection_designs.collection_id', 'collections.title'])
+    .orderBy('product_designs.created_at', 'desc');
+}
+
 function create(data) {
   const rowData = Object.assign({}, dataMapper.userDataToRowData(data), {
     id: uuid.v4(),
@@ -24,7 +40,11 @@ function create(data) {
   });
 
   return db(TABLE_NAME)
-    .insert(rowData, '*')
+    .insert(rowData, 'id')
+    .catch(rethrow)
+    .then(
+      ids => queryWithCollectionMeta(db).where({ 'product_designs.id': ids[0] })
+    )
     .catch(rethrow)
     .then(first)
     .then(instantiate);
@@ -35,7 +55,11 @@ function deleteById(productDesignId) {
     .where({ id: productDesignId, deleted_at: null })
     .update({
       deleted_at: new Date()
-    }, '*')
+    }, 'id')
+    .then(
+      ids => queryWithCollectionMeta(db).where({ 'product_designs.id': ids[0] })
+    )
+    .catch(rethrow)
     .then(first)
     .then(instantiate);
 }
@@ -53,33 +77,29 @@ function update(productDesignId, data) {
 
   return db(TABLE_NAME)
     .where({ id: productDesignId, deleted_at: null })
-    .update(compacted, '*')
-    .then(first)
-    .then(instantiate)
+    .update(compacted, 'id')
+    .then(
+      ids => queryWithCollectionMeta(db).where({ 'product_designs.id': ids[0] })
+    )
     .catch(rethrow)
     .catch(filterError(rethrow.ERRORS.ForeignKeyViolation, (err) => {
       if (err.constraint === 'product_designs_status_fkey') {
         throw new InvalidDataError('Invalid product design status');
       }
       throw err;
-    }));
+    }))
+    .then(first)
+    .then(instantiate);
 }
 
 function findByUserId(userId, filters) {
   const query = Object.assign({}, {
-    user_id: userId,
-    deleted_at: null
+    'product_designs.user_id': userId,
+    'product_designs.deleted_at': null
   }, filters);
 
-  return db(TABLE_NAME)
-    .select('product_designs.*', 'collection_designs.collection_id')
+  return queryWithCollectionMeta(db)
     .where(query)
-    .leftJoin(
-      'collection_designs',
-      'product_designs.id',
-      'collection_designs.design_id'
-    )
-    .orderBy('created_at', 'desc')
     .catch(rethrow)
     .then(designs => designs.map(instantiate));
 }
@@ -91,20 +111,13 @@ function findAll({
     throw new Error('Limit and offset must be provided to find all users');
   }
 
-  return db(TABLE_NAME)
-    .select('product_designs.*', 'collection_designs.collection_id')
-    .where({ deleted_at: null })
-    .leftJoin(
-      'collection_designs',
-      'product_designs.id',
-      'collection_designs.design_id'
-    )
-    .orderBy('created_at', 'desc')
+  return queryWithCollectionMeta(db)
+    .where({ 'product_designs.deleted_at': null })
     .modify((query) => {
       if (search) {
         // Lazy person's search - allow fuzzy matching for design title, or
         // exact matching for design owner ID / status
-        query.andWhere(db.raw('(title ~* :search or user_id::text = :search or status::text = :search)', { search }));
+        query.andWhere(db.raw('(product_designs.title ~* :search or product_designs.user_id::text = :search or product_designs.status::text = :search)', { search }));
       }
       if (needsQuote) {
         query
@@ -131,21 +144,15 @@ function findAll({
 
 function findById(id, filters, options = {}) {
   const query = Object.assign({}, {
-    id
+    'product_designs.id': id
   }, filters);
 
   if (options.includeDeleted !== true) {
-    query.deleted_at = null;
+    query['product_designs.deleted_at'] = null;
   }
 
-  return db(TABLE_NAME)
-    .select('product_designs.*', 'collection_designs.collection_id')
+  return queryWithCollectionMeta(db)
     .where(query)
-    .leftJoin(
-      'collection_designs',
-      'product_designs.id',
-      'collection_designs.design_id'
-    )
     .then(first)
     .then(maybeInstantiate)
     .catch(rethrow)
@@ -153,44 +160,28 @@ function findById(id, filters, options = {}) {
 }
 
 function findByIds(ids) {
-  return db(TABLE_NAME)
-    .select('product_designs.*', 'collection_designs.collection_id')
-    .whereIn('id', ids)
-    .leftJoin(
-      'collection_designs',
-      'product_designs.id',
-      'collection_designs.design_id'
-    )
+  return queryWithCollectionMeta(db)
+    .whereIn('product_designs.id', ids)
     .catch(rethrow)
     .then(designs => designs.map(instantiate));
 }
 
 function findByCollectionId(collectionId) {
-  return db(TABLE_NAME)
-    .select('product_designs.*', 'collection_designs.collection_id')
-    .whereNull('product_designs.deleted_at')
-    .joinRaw(`
-join collection_designs on
-  (collection_designs.design_id = product_designs.id and
-  collection_designs.collection_id = ?)`, [collectionId])
-    .orderBy('collection_designs.created_at', 'desc')
+  return queryWithCollectionMeta(db)
+    .where({
+      'collection_designs.collection_id': collectionId,
+      'product_designs.deleted_at': null
+    })
     .catch(rethrow)
     .then(designs => designs.map(instantiate));
 }
 
 function findByQuoteId(quoteId) {
-  return db
-    .select('product_designs.*', 'collection_designs.collection_id')
-    .from('pricing_quotes')
-    .leftJoin(
-      'product_designs',
-      'product_designs.id',
-      'pricing_quotes.design_id'
-    )
-    .leftJoin(
-      'collection_designs',
-      'product_designs.id',
-      'collection_designs.design_id'
+  return queryWithCollectionMeta(db)
+    .join(
+      'pricing_quotes',
+      'pricing_quotes.design_id',
+      'product_designs.id'
     )
     .where({
       'pricing_quotes.id': quoteId,
