@@ -16,6 +16,7 @@
     "aws-sdk": "^2.302.0",
     "bcrypt": "2.0.1",
     "co-body": "4.2.0",
+    "dd-trace": "^0.7.2",
     "form-data": "2.1.2",
     "google-libphonenumber": "2.0.9",
     "knex": "^0.15.2",

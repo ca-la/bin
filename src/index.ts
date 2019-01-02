@@ -1,5 +1,8 @@
 const beginTime = Date.now();
 
+/* tslint:disable:no-var-requires */
+require('dd-trace').init();
+
 import * as Logger from './services/logger';
 import * as Router from 'koa-router';
 import { cloneDeep } from 'lodash';
