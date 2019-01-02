@@ -483,7 +483,6 @@ test('GET /collections/:id/designs', async (t: tape.Test) => {
     {
       ...design,
       collectionIds: [collection.id],
-      collections: [{ id: collection.id, title: collection.title }],
       createdAt: design.createdAt.toISOString(),
       permissions: {
         canComment: true,
