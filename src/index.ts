@@ -21,6 +21,9 @@ const loggerMiddleware = require('./middleware/logger');
 const options = require('./middleware/options');
 const { default: validatePagination } = require('./middleware/validate-pagination');
 
+/* application routes */
+import componentRelationshipRoutes from './components/component-relationships/routes';
+
 import koa = require('koa');
 const app = koa();
 
@@ -51,6 +54,9 @@ routeDirectories.forEach((directoryName: string): void => {
   // in mutliple places: https://github.com/alexmingoia/koa-router/issues/244
   router.use(`/${directoryName}`, cloneDeep(require(path.join(routesDir, directoryName))));
 });
+
+/* component-based routing */
+router.use('/component-relationships', componentRelationshipRoutes);
 
 const loadTime = Date.now() - beginTime;
 Logger.log(`Loaded ${routeDirectories.length} route prefixes in ${loadTime}ms`);
