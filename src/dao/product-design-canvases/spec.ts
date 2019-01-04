@@ -1,8 +1,17 @@
 import * as tape from 'tape';
 import { test } from '../../test-helpers/fresh';
-import { create, del, findAllByDesignId, findById, reorder, update } from './index';
+import {
+  create,
+  del,
+  findAllByDesignId,
+  findByComponentId,
+  findById,
+  reorder,
+  update
+} from './index';
 import createUser = require('../../test-helpers/create-user');
 import { create as createDesign } from '../product-designs';
+import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 
 test('ProductDesignCanvases DAO supports creation/retrieval', async (t: tape.Test) => {
   const userData = await createUser();
@@ -178,4 +187,10 @@ test('ProductDesignCanvases DAO supports retrieval by designId', async (t: tape.
 
   const result = await findAllByDesignId(design.id);
   t.deepEqual(result[0], inserted, 'Returned inserted task');
+});
+
+test('ProductDesignCanvases DAO supports retrieval by componentId', async (t: tape.Test) => {
+  const { canvas, component } = await generateCanvas({});
+  const foundCanvas = await findByComponentId(component.id);
+  t.deepEqual(canvas, foundCanvas, 'Returns the canvas associated with the given component');
 });

@@ -33,6 +33,40 @@ export async function create(
   );
 }
 
+export async function update(
+  id: string,
+  data: MaybeUnsaved<ComponentRelationship>
+): Promise<ComponentRelationship> {
+  const rowData = dataAdapter.forInsertion({
+    ...data,
+    deletedAt: null,
+    id
+  });
+  const updated = await db(TABLE_NAME)
+    .where({ id, deleted_at: null })
+    .update(rowData, '*')
+    .then((rows: ComponentRelationshipRow[]) => first<ComponentRelationshipRow>(rows));
+
+  if (!updated) { throw new Error(`Failed to update component relationship ${id}!`); }
+
+  return validate<ComponentRelationshipRow, ComponentRelationship>(
+    TABLE_NAME,
+    isComponentRelationshipRow,
+    dataAdapter,
+    updated
+  );
+}
+
+export async function del(id: string): Promise<number> {
+  const deleted = await db(TABLE_NAME)
+    .where({ id, deleted_at: null })
+    .update({ deleted_at: new Date() });
+
+  if (deleted !== 1) { throw new Error(`Failed to delete ComponentRelationship ${id}!`); }
+
+  return deleted;
+}
+
 export async function findById(id: string): Promise<ComponentRelationship | null> {
   const componentRelationship = await db(TABLE_NAME)
     .select('*')

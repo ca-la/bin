@@ -1,7 +1,11 @@
 import * as tape from 'tape';
+import * as uuid from 'node-uuid';
 
 import { test } from '../../test-helpers/fresh';
 import generateComponentRelationship from '../../test-helpers/factories/component-relationship';
+import generateComponent from '../../test-helpers/factories/component';
+import generateProcess from '../../test-helpers/factories/process';
+import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 import createUser = require('../../test-helpers/create-user');
 import * as API from '../../test-helpers/http';
 
@@ -22,5 +26,127 @@ test(
       {  ...relationship, createdAt: null },
       'Successfully fetches the relationshp object'
     );
+  }
+);
+
+test(
+  'PUT /component-relationships/:relationshipId creates a relationship',
+  async (t: tape.Test) => {
+    const { session, user } = await createUser();
+    const { session: sessionTwo } = await createUser();
+    const { component } = await generateComponent({ createdBy: user.id });
+    const { process } = await generateProcess({});
+    await generateCanvas({
+      componentId: component.id,
+      createdBy: user.id
+    });
+
+    const body = {
+      createdAt: new Date(),
+      createdBy: user.id,
+      deletedAt: null,
+      id: uuid.v4(),
+      processId: process.id,
+      relativeX: 0,
+      relativeY: 0,
+      sourceComponentId: component.id,
+      targetComponentId: component.id
+    };
+
+    const [putResponse, putBody] = await API.put(
+      `/component-relationships/${body.id}`,
+      {
+        body,
+        headers: API.authHeader(session.id)
+      }
+    );
+    t.equal(putResponse.status, 200, 'PUT returns a 200 status');
+    t.deepEqual(
+      { ...putBody, createdAt: null },
+      {  ...body, createdAt: null },
+      'Successfully returns the relationship which was inserted'
+    );
+
+    const [putResponseTwo] = await API.put(
+      `/component-relationships/${body.id}`,
+      {
+        body,
+        headers: API.authHeader(sessionTwo.id)
+      }
+    );
+    t.equal(putResponseTwo.status, 403);
+  }
+);
+
+test(
+  'PATCH /component-relationships/:relationshipId updates a relationship',
+  async (t: tape.Test) => {
+    const { session, user } = await createUser();
+    const { session: sessionTwo } = await createUser();
+    const { component } = await generateComponent({ createdBy: user.id });
+    const { componentRelationship } = await generateComponentRelationship({
+      createdBy: user.id,
+      sourceComponentId: component.id,
+      targetComponentId: component.id
+    });
+    const { process } = await generateProcess({});
+    await generateCanvas({
+      componentId: component.id,
+      createdBy: user.id
+    });
+
+    const body = {
+      ...componentRelationship,
+      processId: process.id
+    };
+
+    const [patchResponse, patchBody] = await API.patch(
+      `/component-relationships/${body.id}`,
+      {
+        body,
+        headers: API.authHeader(session.id)
+      }
+    );
+    t.equal(patchResponse.status, 200, 'PUT returns a 200 status');
+    t.deepEqual(
+      { ...patchBody, createdAt: null },
+      {  ...body, createdAt: null },
+      'Successfully returns the relationship which was updated'
+    );
+
+    const [patchResponseTwo] = await API.patch(
+      `/component-relationships/${body.id}`,
+      {
+        body,
+        headers: API.authHeader(sessionTwo.id)
+      }
+    );
+    t.equal(patchResponseTwo.status, 403);
+  }
+);
+
+test(
+  'DEL /component-relationships/:relationshipId deletes a relationship',
+  async (t: tape.Test) => {
+    const { session, user } = await createUser();
+    const { session: sessionTwo } = await createUser();
+    const { component } = await generateCanvas({ createdBy: user.id });
+    const { componentRelationship } = await generateComponentRelationship({
+      createdBy: user.id,
+      sourceComponentId: component.id,
+      targetComponentId: component.id
+    });
+
+    const [delResponseTwo] = await API.del(
+      `/component-relationships/${componentRelationship.id}`,
+      { headers: API.authHeader(sessionTwo.id) }
+    );
+    t.equal(delResponseTwo.status, 403);
+
+    const [delResponse] = await API.del(
+      `/component-relationships/${componentRelationship.id}`,
+      { headers: API.authHeader(session.id) }
+    );
+    t.equal(delResponse.status, 204, 'DEL returns a 204 status');
   }
 );

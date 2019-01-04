@@ -9,6 +9,8 @@ import * as ProcessesDAO from '../processes/dao';
 import { ComponentType } from '../../domain-objects/component';
 import createUser = require('../../test-helpers/create-user');
 import { test } from '../../test-helpers/fresh';
+import generateComponentRelationship from '../../test-helpers/factories/component-relationship';
+import generateProcess from '../../test-helpers/factories/process';
 
 test('ComponentRelationships DAO support creation/retrieval', async (t: tape.Test) => {
   const userData = await createUser();
@@ -59,4 +61,29 @@ test('ComponentRelationships DAO support creation/retrieval', async (t: tape.Tes
     foundComponentRelationship,
     'Creating and finding returns the same instance.'
   );
+});
+
+test('ComponentRelationships DAO supports updating', async (t: tape.Test) => {
+  const id = uuid.v4();
+  const { componentRelationship } = await generateComponentRelationship({ id });
+  const { process } = await generateProcess({});
+
+  const data = {
+    ...componentRelationship,
+    processId: process.id
+  };
+
+  const updatedRelationship = await ComponentRelationshipsDAO.update(id, data);
+  t.equal(updatedRelationship.processId, process.id, 'Updates the process id');
+  t.equal(updatedRelationship.id, id, 'Returns the same identifier');
+});
+
+test('ComponentRelationships DAO supports deleting', async (t: tape.Test) => {
+  const id = uuid.v4();
+  await generateComponentRelationship({ id });
+
+  const deletedRelationships = await ComponentRelationshipsDAO.del(id);
+  const removedRelationship = await ComponentRelationshipsDAO.findById(id);
+  t.equal(deletedRelationships, 1, 'Deletes the relationship');
+  t.equal(removedRelationship, null, 'Relationship cannot be found via DAO');
 });

@@ -140,3 +140,20 @@ export async function findAllByDesignId(id: string): Promise<ProductDesignCanvas
     canvases
   );
 }
+
+export async function findByComponentId(componentId: string): Promise<ProductDesignCanvas | null> {
+  const canvas = await db(TABLE_NAME)
+    .select('*')
+    .where({ component_id: componentId, deleted_at: null })
+    .limit(1)
+    .then((rows: ProductDesignCanvasRow[]) => first<ProductDesignCanvasRow>(rows));
+
+  if (!canvas) { return null; }
+
+  return validate<ProductDesignCanvasRow, ProductDesignCanvas>(
+    TABLE_NAME,
+    isProductDesignCanvasRow,
+    dataAdapter,
+    canvas
+  );
+}

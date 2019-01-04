@@ -104,3 +104,32 @@ export async function findAllByCanvasId(id: string): Promise<Component[]> {
     components
   );
 }
+
+/*
+ * Returns the root component for the given component.
+ */
+export async function findRoot(id: string): Promise<Component> {
+  const rootComponent = await db
+    .raw(`
+WITH RECURSIVE parent_components AS (
+	SELECT *
+  FROM components
+  WHERE id = ?
+  UNION ALL
+  	SELECT c.*
+  	FROM components c
+  	INNER JOIN parent_components p ON p.parent_id = c.id
+) SELECT * FROM parent_components WHERE parent_id is null;
+`, [id])
+    .then((rawResult: any): ComponentRow[] => rawResult.rows)
+    .then((rows: ComponentRow[]) => first<ComponentRow>(rows));
+
+  if (!rootComponent) { throw new Error(`Cannot find root component for component ${id}`); }
+
+  return validate<ComponentRow, Component>(
+    TABLE_NAME,
+    isComponentRow,
+    dataAdapter,
+    rootComponent
+  );
+}

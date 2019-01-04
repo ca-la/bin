@@ -1,12 +1,13 @@
 import * as tape from 'tape';
 import { test } from '../../test-helpers/fresh';
-import { create, del, findAllByCanvasId, findById, update } from './index';
+import { create, del, findAllByCanvasId, findById, findRoot, update } from './index';
 import { create as createSketch } from '../product-design-images';
 import { create as createCanvas } from '../product-design-canvases';
 import { ComponentType } from '../../domain-objects/component';
 import { create as createDesign } from '../product-designs';
 import createUser = require('../../test-helpers/create-user');
 import * as uuid from 'node-uuid';
+import generateComponent from '../../test-helpers/factories/component';
 
 test('Components DAO supports creation/retrieval', async (t: tape.Test) => {
   const userData = await createUser();
@@ -142,4 +143,18 @@ test('Components DAO supports retrieval by canvasId', async (t: tape.Test) => {
 
   const result = await findAllByCanvasId(canvas.id);
   t.deepEqual(result[0], inserted, 'Returned inserted component');
+});
+
+test('Components DAO can get the root component', async (t: tape.Test) => {
+  const { component } = await generateComponent({});
+  const root = await findRoot(component.id);
+  t.deepEqual(component, root, 'Returns itself if it is the root.');
+
+  const { component: childComponentOne } = await generateComponent({ parentId: component.id });
+  const { component: childComponentTwo } = await generateComponent({
+    parentId: childComponentOne.id
+  });
+
+  const rootTwo = await findRoot(childComponentTwo.id);
+  t.deepEqual(component, rootTwo, 'Returns the true root for the child');
 });
