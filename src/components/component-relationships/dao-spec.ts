@@ -4,13 +4,12 @@ import * as uuid from 'node-uuid';
 import { create as createSketch } from '../../dao/product-design-images';
 import * as ComponentsDAO from '../../dao/components';
 import * as ComponentRelationshipsDAO from './dao';
-import * as ProcessesDAO from '../processes/dao';
 
 import { ComponentType } from '../../domain-objects/component';
 import createUser = require('../../test-helpers/create-user');
 import { test } from '../../test-helpers/fresh';
-import generateComponentRelationship from '../../test-helpers/factories/component-relationship';
 import generateProcess from '../../test-helpers/factories/process';
+import generateComponentRelationship from '../../test-helpers/factories/component-relationship';
 
 test('ComponentRelationships DAO support creation/retrieval', async (t: tape.Test) => {
   const userData = await createUser();
@@ -34,11 +33,7 @@ test('ComponentRelationships DAO support creation/retrieval', async (t: tape.Tes
     sketchId: sketch.id,
     type: ComponentType.Sketch
   });
-  const process = await ProcessesDAO.create({
-    createdBy: userData.user.id,
-    id: uuid.v4(),
-    name: 'Wash'
-  });
+  const { process } = await generateProcess({ createdBy: userData.user.id });
   const componentRelationshipId = uuid.v4();
   const createdComponentRelationship = await ComponentRelationshipsDAO.create({
     createdBy: userId,

@@ -7,7 +7,8 @@ import Process, {
   ProcessRow
 } from './domain-object';
 import first from '../../services/first';
-import { validate } from '../../services/validate-from-db';
+import { validate, validateEvery } from '../../services/validate-from-db';
+import { ComponentType } from '../../domain-objects/component';
 
 const TABLE_NAME = 'processes';
 
@@ -47,5 +48,40 @@ export async function findById(id: string): Promise<Process | null> {
     isProcessRow,
     dataAdapter,
     process
+  );
+}
+
+/**
+ * Returns every non-deleted process, ordered by its ordering and component type.
+ */
+export async function findAll(): Promise<Process[]> {
+  const processes = await db(TABLE_NAME)
+    .select('*')
+    .where({ deleted_at: null })
+    .orderBy('component_type', 'asc')
+    .orderBy('ordering', 'asc');
+
+  return validateEvery<ProcessRow, Process>(
+    TABLE_NAME,
+    isProcessRow,
+    dataAdapter,
+    processes
+  );
+}
+
+/**
+ * Returns every non-deleted process for a given component type, ordered by its ordering.
+ */
+export async function findAllByComponentType(type: ComponentType): Promise<Process[]> {
+  const processes = await db(TABLE_NAME)
+    .select('*')
+    .where({ component_type: type, deleted_at: null })
+    .orderBy('ordering', 'asc');
+
+  return validateEvery<ProcessRow, Process>(
+    TABLE_NAME,
+    isProcessRow,
+    dataAdapter,
+    processes
   );
 }

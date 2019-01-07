@@ -23,6 +23,7 @@ const { default: validatePagination } = require('./middleware/validate-paginatio
 
 /* application routes */
 import componentRelationshipRoutes from './components/component-relationships/routes';
+import processRoutes from './components/processes/routes';
 
 import koa = require('koa');
 const app = koa();
@@ -57,6 +58,7 @@ routeDirectories.forEach((directoryName: string): void => {
 
 /* component-based routing */
 router.use('/component-relationships', componentRelationshipRoutes);
+router.use('/processes', processRoutes);
 
 const loadTime = Date.now() - beginTime;
 Logger.log(`Loaded ${routeDirectories.length} route prefixes in ${loadTime}ms`);
