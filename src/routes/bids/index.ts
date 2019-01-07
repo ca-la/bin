@@ -140,14 +140,18 @@ function* assignBidToPartner(this: Koa.Application.Context): AsyncIterableIterat
     type: 'BID_DESIGN'
   });
 
-  yield CollaboratorsDAO.create({
-    collectionId: null,
-    designId: design.id,
-    invitationMessage: '',
-    role: 'PREVIEW',
-    userEmail: null,
-    userId: target.id
-  });
+  const maybeCollaborator = yield CollaboratorsDAO.findByDesignAndUser(design.id, userId);
+
+  if (!maybeCollaborator) {
+    yield CollaboratorsDAO.create({
+      collectionId: null,
+      designId: design.id,
+      invitationMessage: '',
+      role: 'PREVIEW',
+      userEmail: null,
+      userId: target.id
+    });
+  }
 
   NotificationsService.sendPartnerDesignBid(design.id, this.state.userId, target.id);
 

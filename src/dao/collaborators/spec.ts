@@ -64,7 +64,7 @@ test('CollaboratorsDAO.findByDesign returns collaborators', async (t: Test) => {
 
   const list = await CollaboratorsDAO.findByDesign(design.id);
   t.equal(list.length, 2);
-  t.equal(list[0].id, collaborator.id);
+  t.equal(list[1].id, collaborator.id);
 });
 
 test('CollaboratorsDAO.create throws invalid data error', async (t: Test) => {

@@ -1,3 +1,4 @@
+import * as Knex from 'knex';
 import uuid = require('node-uuid');
 import rethrow = require('pg-rethrow');
 
@@ -151,20 +152,20 @@ export async function findAllByIds(collaboratorIds: string[]): Promise<Collabora
 export async function findByDesign(designId: string): Promise<CollaboratorWithUser[]> {
   const design = await ProductDesignsDAO.findById(designId);
   if (!design) { return []; }
-  const collaboratorRows = design.collectionIds.length > 0
-    ? await db(TABLE_NAME)
-        .where({
+  const collaboratorRows = await db(TABLE_NAME)
+    .where({
+      deleted_at: null,
+      design_id: designId
+    })
+    .modify((query: Knex.QueryBuilder) => {
+      if (design.collectionIds.length > 0) {
+        query.orWhere({
           collection_id: design.collectionIds[0],
           deleted_at: null
-        }).orWhere({
-          deleted_at: null,
-          design_id: designId
-        })
-    : await db(TABLE_NAME)
-        .where({
-          deleted_at: null,
-          design_id: designId
         });
+      }
+    })
+    .orderBy('created_at', 'ASC');
 
   const collaborators = validateEvery<CollaboratorRow, CollaboratorWithUser>(
     TABLE_NAME,

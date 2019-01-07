@@ -207,10 +207,19 @@ test('GET /bids?userId&state=ACCEPTED', async (t: Test) => {
 
 test('PUT /bids/:bidId/assignees/:userId', async (t: Test) => {
   const { user, session } = await createUser({ role: 'ADMIN' });
+  const collaborator = await createUser({ role: 'PARTNER' });
   const design = await ProductDesignsDAO.create({
     productType: 'TEESHIRT',
     title: 'Plain White Tee',
     userId: user.id
+  });
+  await CollaboratorsDAO.create({
+    collectionId: null,
+    designId: design.id,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
+    userId: collaborator.user.id
   });
 
   const { bid } = await generateBid(design.id, user.id);
@@ -223,15 +232,24 @@ test('PUT /bids/:bidId/assignees/:userId', async (t: Test) => {
     `/bids/${bid.id}/assignees/${user.id}`,
     { headers: authHeader(session.id) }
   );
-  t.equal(response.status, 204);
+  t.equal(response.status, 204, 'Successfully assigns first partner');
   sinon.assert.callCount(notificationStub, 1);
+
+  const collaboratorAssignment = await put(
+    `/bids/${bid.id}/assignees/${collaborator.user.id}`,
+    { headers: authHeader(session.id) }
+  );
+  t.equal(collaboratorAssignment[0].status, 204, 'Successfully assigns second partner');
+  sinon.assert.callCount(notificationStub, 2);
 
   const [collaboratorResponse, collaborators] = await get(
     `/collaborators?designId=${design.id}`,
     { headers: authHeader(session.id) }
   );
   t.equal(collaboratorResponse.status, 200);
-  t.equal(collaborators[0].userId, user.id);
+  t.equal(collaborators[0].userId, collaborator.user.id);
+  t.equal(collaborators[0].role, 'EDIT', 'Keeps existing role');
+  t.equal(collaborators[1].userId, user.id);
 
   const [notFoundUser] = await put(
     `/bids/${bid.id}/assignees/${uuid.v4()}`,
