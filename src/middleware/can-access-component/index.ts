@@ -27,6 +27,31 @@ async function getCanvases(
   return { sourceCanvas, targetCanvas };
 }
 
+export function* canViewComponentInQueryParam(
+  this: Koa.Application.Context,
+  next: () => Promise<any>
+): any {
+  const { componentId } = this.query;
+  this.assert(componentId, 400, 'Must provide a componentId in the query parameters!');
+
+  const componentRoot = yield findRoot.call(this, componentId);
+  const rootCanvas = yield findByComponentId(componentRoot.id);
+
+  if (!rootCanvas) { throw new Error(`Component ${componentId} has no canvas!`); }
+
+  yield attachDesignPermissions.call(this, rootCanvas.designId);
+  const { permissions } = this.state;
+
+  this.assert(
+    permissions
+    && permissions.canView,
+    403,
+    `You don't have permission to view component ${componentId}`
+  );
+
+  yield next;
+}
+
 export function* canEditComponentsInBody(
   this: Koa.Application.Context<ComponentRelationship>,
   next: () => Promise<any>

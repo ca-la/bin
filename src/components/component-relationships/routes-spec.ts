@@ -10,6 +10,48 @@ import createUser = require('../../test-helpers/create-user');
 import * as API from '../../test-helpers/http';
 
 test(
+  'GET /component-relationships/?componentId returns a list of relationships',
+  async (t: tape.Test) => {
+    const { session, user } = await createUser();
+    const { session: sessionTwo } = await createUser();
+    const {
+      componentRelationship: relationshipOne,
+      sourceComponent: component
+    } = await generateComponentRelationship({ createdBy: user.id });
+    const { componentRelationship: relationshipTwo } = await generateComponentRelationship({
+      createdBy: user.id,
+      targetComponentId: component.id
+    });
+    await generateCanvas({ componentId: component.id, createdBy: user.id });
+
+    const [getResponse, getBody] = await API.get(
+      `/component-relationships/?componentId=${component.id}`,
+      { headers: API.authHeader(session.id) }
+    );
+
+    t.equal(getResponse.status, 200, 'GET returns a 200 status');
+    t.deepEqual(
+      getBody,
+      [
+        { ...relationshipOne, createdAt: relationshipOne.createdAt.toISOString() },
+        { ...relationshipTwo, createdAt: relationshipTwo.createdAt.toISOString() }
+      ],
+      'Successfully fetches the relationship objects for the given component'
+    );
+
+    const [failedResponse] = await API.get(
+      `/component-relationships/?componentId=${component.id}`,
+      { headers: API.authHeader(sessionTwo.id) }
+    );
+    t.equal(
+      failedResponse.status,
+      403,
+      'GET returns a 403 status when a random user attempts to fetch the list'
+    );
+  }
+);
+
+test(
   'GET /component-relationships/:relationshipId returns a relationship',
   async (t: tape.Test) => {
     const { session } = await createUser();
@@ -24,7 +66,7 @@ test(
     t.deepEqual(
       { ...getBody, createdAt: null },
       {  ...relationship, createdAt: null },
-      'Successfully fetches the relationshp object'
+      'Successfully fetches the relationship object'
     );
   }
 );

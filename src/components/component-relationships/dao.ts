@@ -7,7 +7,7 @@ import ComponentRelationship, {
   isComponentRelationshipRow
 } from './domain-object';
 import first from '../../services/first';
-import { validate } from '../../services/validate-from-db';
+import { validate, validateEvery } from '../../services/validate-from-db';
 
 const TABLE_NAME = 'component_relationships';
 
@@ -65,6 +65,24 @@ export async function del(id: string): Promise<number> {
   if (deleted !== 1) { throw new Error(`Failed to delete ComponentRelationship ${id}!`); }
 
   return deleted;
+}
+
+/**
+ * Returns all relationships where the given id is either the source or target.
+ */
+export async function findAllByComponent(componentId: string): Promise<ComponentRelationship[]> {
+  const relationships = await db(TABLE_NAME)
+    .where({ source_component_id: componentId })
+    .orWhere({ target_component_id: componentId })
+    .andWhere({ deleted_at: null })
+    .orderBy('created_at', 'asc');
+
+  return validateEvery<ComponentRelationshipRow, ComponentRelationship>(
+    TABLE_NAME,
+    isComponentRelationshipRow,
+    dataAdapter,
+    relationships
+  );
 }
 
 export async function findById(id: string): Promise<ComponentRelationship | null> {

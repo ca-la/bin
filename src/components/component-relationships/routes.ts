@@ -9,7 +9,8 @@ import * as ComponentRelationshipsDAO from './dao';
 import { typeGuard } from '../../middleware/type-guard';
 import {
   canEditComponentsInBody,
-  canEditComponentsInRelationshipParam
+  canEditComponentsInRelationshipParam,
+  canViewComponentInQueryParam
 } from '../../middleware/can-access-component';
 
 const router = new Router();
@@ -27,6 +28,18 @@ function isComponentRelationship(data: object): data is ComponentRelationship {
     'sourceComponentId',
     'targetComponentId'
   );
+}
+
+function* getList(this: Koa.Application.Context): AsyncIterableIterator<ComponentRelationship[]> {
+  const { componentId } = this.query;
+
+  if (componentId) {
+    const relationships = yield ComponentRelationshipsDAO.findAllByComponent(componentId);
+    this.status = 200;
+    this.body = relationships;
+  } else {
+    this.throw(400, 'A componentId must be passed into the query parameters!');
+  }
 }
 
 function* getById(this: Koa.Application.Context): AsyncIterableIterator<ComponentRelationship> {
@@ -62,6 +75,12 @@ function* del(this: Koa.Application.Context): AsyncIterableIterator<any> {
   this.status = 204;
 }
 
+router.get(
+  '/',
+  requireAuth,
+  canViewComponentInQueryParam,
+  getList
+);
 router.get(
   '/:relationshipId',
   requireAuth,

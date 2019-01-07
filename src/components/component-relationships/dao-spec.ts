@@ -10,6 +10,7 @@ import createUser = require('../../test-helpers/create-user');
 import { test } from '../../test-helpers/fresh';
 import generateProcess from '../../test-helpers/factories/process';
 import generateComponentRelationship from '../../test-helpers/factories/component-relationship';
+import generateComponent from '../../test-helpers/factories/component';
 
 test('ComponentRelationships DAO support creation/retrieval', async (t: tape.Test) => {
   const userData = await createUser();
@@ -81,4 +82,30 @@ test('ComponentRelationships DAO supports deleting', async (t: tape.Test) => {
   const removedRelationship = await ComponentRelationshipsDAO.findById(id);
   t.equal(deletedRelationships, 1, 'Deletes the relationship');
   t.equal(removedRelationship, null, 'Relationship cannot be found via DAO');
+});
+
+test('ComponentRelationships DAO supports finding by a component', async (t: tape.Test) => {
+  const { component } = await generateComponent({});
+  const { component: componentTwo } = await generateComponent({});
+  const { componentRelationship: relationshipOne } = await generateComponentRelationship({
+    sourceComponentId: component.id,
+    targetComponentId: component.id
+  });
+  const { componentRelationship: relationshipTwo } = await generateComponentRelationship({
+    sourceComponentId: component.id
+  });
+  const { componentRelationship: relationshipThree } = await generateComponentRelationship({
+    targetComponentId: component.id
+  });
+  await generateComponentRelationship({});
+
+  const relationships = await ComponentRelationshipsDAO.findAllByComponent(component.id);
+  t.deepEqual(
+    relationships,
+    [relationshipOne, relationshipTwo, relationshipThree],
+    'Returns only the relationships the supplied component is a part of.'
+  );
+
+  const emptyRelationships = await ComponentRelationshipsDAO.findAllByComponent(componentTwo.id);
+  t.deepEqual(emptyRelationships, [], 'Returns no relationships if they do not exist.');
 });
