@@ -72,8 +72,11 @@ export async function del(id: string): Promise<number> {
  */
 export async function findAllByComponent(componentId: string): Promise<ComponentRelationship[]> {
   const relationships = await db(TABLE_NAME)
-    .where({ source_component_id: componentId })
-    .orWhere({ target_component_id: componentId })
+    .where(function(): void {
+      this
+        .where({ source_component_id: componentId })
+        .orWhere({ target_component_id: componentId });
+    })
     .andWhere({ deleted_at: null })
     .orderBy('created_at', 'asc');
 

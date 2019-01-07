@@ -98,6 +98,11 @@ test('ComponentRelationships DAO supports finding by a component', async (t: tap
     targetComponentId: component.id
   });
   await generateComponentRelationship({});
+  const {
+    componentRelationship: relationshipFour
+  } = await generateComponentRelationship({ sourceComponentId: component.id });
+
+  await ComponentRelationshipsDAO.del(relationshipFour.id);
 
   const relationships = await ComponentRelationshipsDAO.findAllByComponent(component.id);
   t.deepEqual(
