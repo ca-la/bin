@@ -248,7 +248,11 @@ test('CollectionsDAO#removeDesign removes a design from a collection', async (t:
 
   t.deepEqual(
     collectionDesigns,
-    [{ ...createdDesign, collectionIds: [createdCollection.id] }],
+    [{
+      ...createdDesign,
+      collectionIds: [createdCollection.id],
+      collections: [{ id: createdCollection.id, title: createdCollection.title }]
+    }],
     '#add successfully adds the design'
   );
   t.deepEqual(
