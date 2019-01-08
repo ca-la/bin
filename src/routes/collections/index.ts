@@ -1,7 +1,7 @@
 import * as Router from 'koa-router';
 import * as Koa from 'koa';
 
-import { CALA_ADMIN_USER_ID } from '../../config';
+import { CALA_OPS_USER_ID } from '../../config';
 import filterError = require('../../services/filter-error');
 import InvalidDataError = require('../../errors/invalid-data');
 
@@ -41,7 +41,7 @@ function* createCollection(
       .create(data)
       .catch(filterError(InvalidDataError, (err: InvalidDataError) => this.throw(400, err)));
 
-    if (!CALA_ADMIN_USER_ID) { throw new Error('Cala Admin user not set'); }
+    if (!CALA_OPS_USER_ID) { throw new Error('Cala Ops user not set!'); }
 
     yield CollaboratorsDAO.create({
       collectionId: collection.id,
@@ -57,7 +57,7 @@ function* createCollection(
       invitationMessage: '',
       role: 'EDIT',
       userEmail: null,
-      userId: CALA_ADMIN_USER_ID
+      userId: CALA_OPS_USER_ID
     });
     const permissions = yield getCollectionPermissions(collection, role, userId);
 

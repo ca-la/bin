@@ -7,7 +7,7 @@ import findCollaboratorsByRole from './index';
 import ProductDesign = require('../../domain-objects/product-design');
 import ProductDesignsDAO = require('../../dao/product-designs');
 import User from '../../domain-objects/user';
-import { CALA_ADMIN_USER_ID } from '../../config';
+import { CALA_OPS_USER_ID } from '../../config';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 
 async function createResources(): Promise<{
@@ -105,7 +105,7 @@ test('findCollaboratorsByRole finds the CALA admin user', async (t: Test) => {
 
   sandbox()
     .stub(CollaboratorsDAO, 'findByCollectionAndUser')
-    .withArgs(collection.id, CALA_ADMIN_USER_ID)
+    .withArgs(collection.id, CALA_OPS_USER_ID)
     .resolves([calaCollaborator]);
 
   const collaborators = await findCollaboratorsByRole(design.id, 'CALA');

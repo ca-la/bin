@@ -13,7 +13,7 @@ import ProductDesignsDAO = require('../../dao/product-designs');
 import StageTemplate from '../../domain-objects/stage-template';
 import TaskTemplate from '../../domain-objects/task-template';
 import User from '../../domain-objects/user';
-import { CALA_ADMIN_USER_ID } from '../../config';
+import { CALA_OPS_USER_ID } from '../../config';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 
 async function createTemplates(): Promise<{
@@ -95,7 +95,7 @@ test('createDesignTasks creates POST_CREATION tasks', async (t: Test) => {
 
   sandbox()
     .stub(CollaboratorsDAO, 'findByCollectionAndUser')
-    .withArgs(collection.id, CALA_ADMIN_USER_ID)
+    .withArgs(collection.id, CALA_OPS_USER_ID)
     .resolves([]);
 
   await createTemplates();
@@ -120,7 +120,7 @@ test('createDesignTasks creates POST_APPROVAL tasks', async (t: Test) => {
 
   sandbox()
     .stub(CollaboratorsDAO, 'findByCollectionAndUser')
-    .withArgs(collection.id, CALA_ADMIN_USER_ID)
+    .withArgs(collection.id, CALA_OPS_USER_ID)
     .resolves([]);
 
   await createTemplates();

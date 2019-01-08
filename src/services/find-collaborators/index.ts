@@ -1,7 +1,7 @@
 import CollaboratorsDAO = require('../../dao/collaborators');
 import CollectionsDAO = require('../../dao/collections');
 import ProductDesignsDAO = require('../../dao/product-designs');
-import { CALA_ADMIN_USER_ID } from '../../config';
+import { CALA_OPS_USER_ID } from '../../config';
 import Collaborator from '../../domain-objects/collaborator';
 
 export const COLLABORATOR_ROLES = {
@@ -26,13 +26,9 @@ export default async function findCollaboratorsByRole(
     }
 
     case 'PARTNER': {
-      const collaborators = [];
       const designCollaborators = await CollaboratorsDAO.findByDesign(designId);
-
       return designCollaborators
         .filter((collaborator: Collaborator) => collaborator.role === 'PARTNER');
-
-      return collaborators;
     }
 
     case 'CALA': {
@@ -44,9 +40,9 @@ export default async function findCollaboratorsByRole(
 
       const collection = collections[0];
 
-      if (!CALA_ADMIN_USER_ID) { throw new Error('No CALA Admin userId'); }
+      if (!CALA_OPS_USER_ID) { throw new Error('No CALA Ops user!'); }
 
-      return CollaboratorsDAO.findByCollectionAndUser(collection.id, CALA_ADMIN_USER_ID);
+      return CollaboratorsDAO.findByCollectionAndUser(collection.id, CALA_OPS_USER_ID);
     }
   }
 }

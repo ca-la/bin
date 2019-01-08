@@ -56,5 +56,4 @@ export const LOG_ALL_QUERIES: boolean;
 
 export const ADMIN_EMAIL: string;
 
-export const CALA_ADMIN_USER_ID: string;
 export const CALA_OPS_USER_ID: string;

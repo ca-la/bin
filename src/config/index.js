@@ -137,8 +137,6 @@ const config = {
 
   ADMIN_EMAIL,
 
-  CALA_ADMIN_USER_ID: process.env.CALA_ADMIN_USER_ID,
-
   CALA_OPS_USER_ID: process.env.CALA_OPS_USER_ID
 };
 
