@@ -24,6 +24,8 @@ services:
     environment:
       - "POSTGRES_USER=postgres"
       - "PGUSER=postgres"
+    ports:
+      - "5432:5432"
     volumes:
       - "database:/var/lib/postgresql/data"
 
