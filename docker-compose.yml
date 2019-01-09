@@ -1,0 +1,32 @@
+version: "3"
+services:
+  api:
+    build: .
+    command: "npx nodemon --delay 2 -w ./dist dist"
+    ports:
+      - "8001:8001"
+    env_file: .env
+    links:
+      - data
+    volumes:
+      - ".:/app"
+      - "dependencies:/app/node_modules"
+  typescript:
+    build: .
+    command: "npx tsc -w -p ."
+    volumes:
+      - ".:/app"
+      - "dependencies:/app/node_modules"
+  data:
+    build:
+      context: .
+      dockerfile: db.dockerfile
+    environment:
+      - "POSTGRES_USER=postgres"
+      - "PGUSER=postgres"
+    volumes:
+      - "database:/var/lib/postgresql/data"
+
+volumes:
+  dependencies:
+  database:

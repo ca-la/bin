@@ -5,28 +5,43 @@ The CALA API. Powers the website (https://ca.la) and mobile app.
 Newer code is written in TypeScript, running on node.js and PostgreSQL. Older
 code is written in vanilla JavaScript.
 
-## Prerequisites
+## Development
 
-- node.js (version 8.x)
-- npm (version 5.7.x)
-- postgresql (version 9.6)
-
-The default configuration uses 2 local databases - one for running tests
-against, one for serving persistent data. To create these locally:
+Local development is facilitated by Docker/Docker Compose. To run the
+transpiler, server, and database:
 
 ```bash
-$ createdb cala
-$ createdb cala-test
+$ docker-compose up
 ```
 
-After you create the tables you will need to migrate them. When running the
-migration for the first time, `make build` should be run. To run the migration,
-execute the `bin/migrate local` command outlined in the Migrations section.
+### Initial Setup
+
+
+#### Initial Migrations
+
+After initial setup, you will need to migrate the newly created databases:
+
+```bash
+$ docker-compose run api bin/migrate local
+```
+
+For more details about Migrations, see the section titled
+[Migrations](#Migrations)
+
+#### Seeding databases
+
+There are also a number of scripts that provide seed data in the `src/scripts`
+directory. You can run them by using the `bin/run` helper:
+
+```bash
+$ docker-compose run api bin/run src/scripts/<TARGET SCRIPT FILENAME>
+```
+
+#### Environment variables
 
 You'll need several environment variables set to correctly run the API. These
 are available as a note named `CALA API .env file (development)` in the engineering
-group in 1Password — the development server will read them from a `.env` file if
-present.
+group in 1Password — Docker make them available from a `.env` file if present.
 
 ## Deployment
 
@@ -45,25 +60,10 @@ $ make release type=minor    # 0.x.0 - new features or changes
 $ make release type=major    # x.0.0 - large, backwards-incompatible changes
 ```
 
-
 ## Usage
 
 Many common actions have corresponding Make targets; dig into the Makefile for
 more examples.
-
-### Local development server
-
-Ensure that you are running postgres before serving the application.
-
-```bash
-$ make serve-dev
-```
-
-### Production server
-
-```bash
-$ make serve
-```
 
 ### Testing / Linting
 

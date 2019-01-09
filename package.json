@@ -48,6 +48,7 @@
     "eslint-import-resolver-typescript": "^1.0.2",
     "eslint-plugin-import": "^2.13.0",
     "meow": "^5.0.0",
+    "nodemon": "^1.18.9",
     "sinon": "^6.1.5",
     "tap-difflet": "^0.7.1",
     "tap-xunit": "^2.3.0",

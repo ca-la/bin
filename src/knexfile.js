@@ -5,9 +5,9 @@
 let defaultDB;
 
 if (process.env.NODE_ENV === 'test') {
-  defaultDB = 'postgres://localhost/cala-test';
+  defaultDB = 'postgres://postgres@data/cala-test';
 } else {
-  defaultDB = 'postgres://localhost/cala';
+  defaultDB = 'postgres://postgres@data/cala';
 }
 
 const url = process.env.DATABASE_URL || defaultDB;
