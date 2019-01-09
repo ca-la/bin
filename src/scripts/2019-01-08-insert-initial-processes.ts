@@ -35,7 +35,7 @@ const processes: Process[] = [
     createdBy: config.CALA_OPS_USER_ID,
     deletedAt: null,
     id: uuid.v4(),
-    name: 'Over-dye',
+    name: 'Over-Dye',
     ordering: 2
   },
   {
@@ -44,7 +44,7 @@ const processes: Process[] = [
     createdBy: config.CALA_OPS_USER_ID,
     deletedAt: null,
     id: uuid.v4(),
-    name: 'Placed print',
+    name: 'Placed Print',
     ordering: 0
   },
   {
