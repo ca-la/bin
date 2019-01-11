@@ -131,11 +131,18 @@ function* getDesignsByUser() {
 function* attachAssignees(task) {
   const ioFromTaskEvent = (taskEvent, assignees) => {
     return {
-      ...taskEvent,
-      assignees
+      assignees,
+      createdAt: taskEvent.createdAt,
+      createdBy: taskEvent.createdBy,
+      description: taskEvent.description,
+      designStageId: taskEvent.designStageId,
+      dueDate: taskEvent.dueDate,
+      id: taskEvent.taskId,
+      status: taskEvent.status,
+      title: taskEvent.title
     };
   };
-  const assignees = yield CollaboratorsDAO.findByTask(task.id);
+  const assignees = yield CollaboratorsDAO.findByTask(task.taskId);
   return ioFromTaskEvent(task, assignees);
 }
 

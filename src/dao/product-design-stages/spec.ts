@@ -32,13 +32,13 @@ test('ProductDesign Stage DAO supports retrieval by designId', async (t: tape.Te
   const stageTwo = await create({
     description: '',
     designId: design.id,
-    ordering: 1,
+    ordering: 0,
     title: 'test 2'
   });
   const stageThree = await create({
     description: '',
     designId: design.id,
-    ordering: 2,
+    ordering: 1,
     title: 'test 3'
   });
 

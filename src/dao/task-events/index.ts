@@ -3,23 +3,30 @@ import { omit } from 'lodash';
 
 import * as db from '../../services/db';
 import TaskEvent, {
-  createDetailsTask,
   dataAdapter,
-  detailsAdapter,
-  DetailsTask,
-  DetailsTaskAdaptedRow,
-  DetailTaskEventRow,
-  isDetailTaskRow,
+  isTaskEventWithStage,
   TaskEventRow,
-  TaskStatus
+  TaskEventRowWithStage,
+  TaskStatus,
+  withStageAdapter
 } from '../../domain-objects/task-event';
 import first from '../../services/first';
 import { validate, validateEvery } from '../../services/validate-from-db';
 
 const TABLE_NAME = 'task_events';
-const DETAILS_VIEW_NAME = 'detail_tasks';
 
-export async function create(data: Unsaved<TaskEvent>): Promise<DetailsTask> {
+const taskEventColumns = [
+  'task_events.id',
+  'task_events.task_id',
+  'task_events.created_by',
+  'task_events.title',
+  'task_events.description',
+  'task_events.ordering',
+  'task_events.status',
+  'task_events.due_date'
+];
+
+export async function create(data: Unsaved<TaskEvent>): Promise<TaskEvent> {
   const rowData = dataAdapter.forInsertion({
     ...data,
     id: uuid.v4(),
@@ -31,76 +38,179 @@ export async function create(data: Unsaved<TaskEvent>): Promise<DetailsTask> {
 
   if (!created) { throw new Error('Failed to create rows'); }
 
-  const taskEvent = await db(TABLE_NAME)
-    .select('*')
-    .from(DETAILS_VIEW_NAME)
-    .where({ id: created.task_id })
-    .then((rows: DetailTaskEventRow[]) => first<DetailTaskEventRow>(rows));
+  const withStage = await db(TABLE_NAME)
+    .select(
+      'tasks.created_at',
+      ...taskEventColumns,
+      'product_design_stage_tasks.design_stage_id'
+      )
+    .from(TABLE_NAME)
+    .leftJoin(
+      'tasks',
+      'tasks.id',
+      'task_events.task_id'
+    )
+    .leftJoin(
+      'product_design_stage_tasks',
+      'task_events.task_id',
+      'product_design_stage_tasks.task_id'
+    )
+    .where({ 'task_events.id': created.id })
+    .orderBy('tasks.created_at', 'asc')
+    .limit(1)
+    .then((rows: TaskEventRowWithStage[]) => first<TaskEventRowWithStage>(rows));
 
-  if (!taskEvent) { throw new Error('Failed to get with stage ID'); }
+  if (!withStage) { throw new Error('Failed to get with stage ID'); }
 
-  return createDetailsTask(validate<DetailTaskEventRow, DetailsTaskAdaptedRow>(
+  return validate<TaskEventRowWithStage, TaskEvent>(
     TABLE_NAME,
-    isDetailTaskRow,
-    detailsAdapter,
-    taskEvent
-  ));
+    isTaskEventWithStage,
+    withStageAdapter,
+    withStage
+  );
 }
 
-export async function findById(id: string): Promise<DetailsTask | null> {
-  const taskEvent: DetailTaskEventRow | undefined = await db(DETAILS_VIEW_NAME)
-    .select('*')
-    .from(DETAILS_VIEW_NAME)
-    .where({ id })
-    .then((rows: DetailTaskEventRow[]) => first<DetailTaskEventRow>(rows));
+export async function findById(taskId: string): Promise<TaskEvent | null> {
+  const taskEvents: TaskEventRowWithStage[] = await db(TABLE_NAME)
+    .select(
+      'tasks.created_at',
+      ...taskEventColumns,
+      'product_design_stage_tasks.design_stage_id'
+      )
+    .from(TABLE_NAME)
+    .leftJoin(
+      'tasks',
+      'tasks.id',
+      'task_events.task_id'
+    )
+    .leftJoin(
+      'product_design_stage_tasks',
+      'task_events.task_id',
+      'product_design_stage_tasks.task_id'
+    )
+    .where({ 'task_events.task_id': taskId })
+    .orderBy('tasks.created_at', 'asc')
+    .limit(1);
 
-  if (!taskEvent) { return null; }
+  const taskResponse = taskEvents[0];
+  if (!taskResponse) { return null; }
 
-  return createDetailsTask(validate<DetailTaskEventRow, DetailsTaskAdaptedRow>(
+  return validate<TaskEventRowWithStage, TaskEvent>(
     TABLE_NAME,
-    isDetailTaskRow,
-    detailsAdapter,
-    taskEvent
-  ));
+    isTaskEventWithStage,
+    withStageAdapter,
+    taskResponse
+  );
 }
 
-export async function findByDesignId(designId: string): Promise<DetailsTask[]> {
-  const taskEvents: DetailTaskEventRow[] = await db(TABLE_NAME)
-    .select('*')
-    .from(DETAILS_VIEW_NAME)
-    .where({ design_id: designId })
-    .orderBy('ordering', 'asc');
+export async function findByDesignId(designId: string): Promise<TaskEvent[]> {
+  const taskResponses: TaskEventRowWithStage[] = await db(TABLE_NAME)
+    .select(
+      'tasks.created_at',
+      ...taskEventColumns,
+      'product_design_stage_tasks.design_stage_id'
+      )
+    .from(TABLE_NAME)
+    .leftJoin(
+      'tasks',
+      'tasks.id',
+      'task_events.task_id'
+    )
+    .leftJoin(
+      'product_design_stage_tasks',
+      'product_design_stage_tasks.task_id',
+      'task_events.task_id'
+    )
+    .leftJoin(
+      'product_design_stages',
+      'product_design_stages.id',
+      'product_design_stage_tasks.design_stage_id'
+    )
+    .where({ 'product_design_stages.design_id': designId })
+    .orderBy('task_events.ordering', 'asc')
+    .whereNotExists(
+      db(TABLE_NAME)
+        .select('*')
+        .from('task_events as t')
+        .whereRaw('task_events.task_id = t.task_id')
+        .whereRaw('t.created_at > task_events.created_at')
+    );
 
-  return validateEvery<DetailTaskEventRow, DetailsTaskAdaptedRow>(
+  return validateEvery<TaskEventRowWithStage, TaskEvent>(
     TABLE_NAME,
-    isDetailTaskRow,
-    detailsAdapter,
-    taskEvents
-  ).map(createDetailsTask);
-}
-
-export async function findByCollectionId(collectionId: string): Promise<DetailsTask[]> {
-  const taskResponses: DetailTaskEventRow[] = await db(TABLE_NAME)
-    .select('*')
-    .from(DETAILS_VIEW_NAME)
-    .where({ collection_id: collectionId })
-    .orderBy('ordering', 'asc');
-
-  return validateEvery<DetailTaskEventRow, DetailsTaskAdaptedRow>(
-    TABLE_NAME,
-    isDetailTaskRow,
-    detailsAdapter,
+    isTaskEventWithStage,
+    withStageAdapter,
     taskResponses
-  ).map(createDetailsTask);
+  );
 }
 
-export async function findByUserId(userId: string): Promise<DetailsTask[]> {
-  const taskEvents: DetailTaskEventRow[] = await db(TABLE_NAME)
-    .select('detail_tasks.*')
-    .from(DETAILS_VIEW_NAME)
+export async function findByCollectionId(collectionId: string): Promise<TaskEvent[]> {
+  const taskResponses: TaskEventRowWithStage[] = await db(TABLE_NAME)
+    .select(
+      'tasks.created_at',
+      ...taskEventColumns,
+      'product_design_stage_tasks.design_stage_id'
+      )
+    .from(TABLE_NAME)
+    .leftJoin(
+      'tasks',
+      'tasks.id',
+      'task_events.task_id'
+    )
+    .leftJoin(
+      'product_design_stage_tasks',
+      'product_design_stage_tasks.task_id',
+      'task_events.task_id'
+    )
+    .leftJoin(
+      'product_design_stages',
+      'product_design_stages.id',
+      'product_design_stage_tasks.design_stage_id'
+    )
+    .leftJoin(
+      'collection_designs',
+      'collection_designs.design_id',
+      'product_design_stages.design_id'
+    )
+    .where({ 'collection_designs.collection_id': collectionId })
+    .orderBy('task_events.ordering', 'asc')
+    .whereNotExists(
+      db(TABLE_NAME)
+        .select('*')
+        .from('task_events as t')
+        .whereRaw('task_events.task_id = t.task_id')
+        .whereRaw('t.created_at > task_events.created_at')
+    );
+
+  return validateEvery<TaskEventRowWithStage, TaskEvent>(
+    TABLE_NAME,
+    isTaskEventWithStage,
+    withStageAdapter,
+    taskResponses
+  );
+}
+
+export async function findByUserId(userId: string): Promise<TaskEvent[]> {
+  const taskResponses: TaskEventRow[] = await db(TABLE_NAME)
+    .select(
+      'tasks.created_at',
+      ...taskEventColumns,
+      'product_design_stage_tasks.design_stage_id'
+      )
+    .from(TABLE_NAME)
+    .leftJoin(
+      'tasks',
+      'tasks.id',
+      'task_events.task_id'
+    )
+    .leftJoin(
+      'product_design_stage_tasks',
+      'product_design_stage_tasks.task_id',
+      'task_events.task_id'
+    )
     .join(
       'collaborator_tasks',
-      'detail_tasks.id',
+      'task_events.task_id',
       'collaborator_tasks.task_id'
     )
     .join(
@@ -109,27 +219,55 @@ export async function findByUserId(userId: string): Promise<DetailsTask[]> {
       'collaborators.id'
     )
     .where({ 'collaborators.user_id': userId })
-    .orderBy('detail_tasks.ordering', 'asc');
+    .orderBy('task_events.ordering', 'asc')
+    .whereNotExists(
+      db(TABLE_NAME)
+        .select('*')
+        .from('task_events as t')
+        .whereRaw('task_events.task_id = t.task_id')
+        .whereRaw('t.created_at > task_events.created_at')
+    );
 
-  return validateEvery<DetailTaskEventRow, DetailsTaskAdaptedRow>(
+  return validateEvery<TaskEventRow, TaskEvent>(
     TABLE_NAME,
-    isDetailTaskRow,
-    detailsAdapter,
-    taskEvents
-  ).map(createDetailsTask);
+    isTaskEventWithStage,
+    dataAdapter,
+    taskResponses
+  );
 }
 
-export async function findByStageId(stageId: string): Promise<DetailsTask[]> {
-  const taskEvents: DetailTaskEventRow[] = await db(TABLE_NAME)
-    .select('*')
-    .from(DETAILS_VIEW_NAME)
-    .where({ design_stage_id: stageId })
-    .orderBy('ordering', 'asc');
+export async function findByStageId(stageId: string): Promise<TaskEvent[]> {
+  const taskResponses: TaskEventRowWithStage[] = await db(TABLE_NAME)
+    .select(
+      'tasks.created_at',
+      ...taskEventColumns,
+      'product_design_stage_tasks.design_stage_id'
+      )
+    .from(TABLE_NAME)
+    .leftJoin(
+      'tasks',
+      'tasks.id',
+      'task_events.task_id'
+    )
+    .leftJoin(
+      'product_design_stage_tasks',
+      'product_design_stage_tasks.task_id',
+      'task_events.task_id'
+    )
+    .where({ 'product_design_stage_tasks.design_stage_id': stageId })
+    .orderBy('task_events.ordering', 'asc')
+    .whereNotExists(
+      db(TABLE_NAME)
+        .select('*')
+        .from('task_events as t')
+        .whereRaw('task_events.task_id = t.task_id')
+        .whereRaw('t.created_at > task_events.created_at')
+    );
 
-  return validateEvery<DetailTaskEventRow, DetailsTaskAdaptedRow>(
+  return validateEvery<TaskEventRowWithStage, TaskEvent>(
     TABLE_NAME,
-    isDetailTaskRow,
-    detailsAdapter,
-    taskEvents
-  ).map(createDetailsTask);
+    isTaskEventWithStage,
+    withStageAdapter,
+    taskResponses
+  );
 }

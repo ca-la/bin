@@ -1,6 +1,7 @@
 import * as tape from 'tape';
 import * as uuid from 'node-uuid';
 import * as sinon from 'sinon';
+import { omit } from 'lodash';
 
 import User from '../../domain-objects/user';
 import TaskEvent, { TaskStatus } from '../../domain-objects/task-event';
@@ -69,8 +70,8 @@ test('GET /tasks/:taskId returns Task', async (t: tape.Test) => {
   const [response, body] = await get(`/tasks/${taskEvents[0].taskId}`, {
     headers: authHeader(session.id)
   });
-  t.equal(response.status, 200, 'should respond with 200');
-  t.deepEqual(body, taskEvent, 'should match body');
+  t.equal(response.status, 200);
+  t.deepEqual(body, omit(taskEvent, 'taskId'));
 });
 
 test('GET /tasks?collectionId=:collectionId returns tasks on collection', async (t: tape.Test) => {
@@ -84,21 +85,21 @@ test('GET /tasks?collectionId=:collectionId returns tasks on collection', async 
   const [response, body] = await get(`/tasks?collectionId=${collectionId}`, {
     headers: authHeader(session.id)
   });
-  t.equal(response.status, 200, 'should respond with 200');
+  t.equal(response.status, 200);
   t.deepEqual(body, [
     {
-      ...taskEvents[0],
+      ...omit(taskEvents[0], 'taskId'),
       assignees: [],
       createdAt: taskEvents[0].createdAt.toISOString(),
-      id: taskEvents[0].id
+      id: taskEvents[0].taskId
     },
     {
-      ...taskEvents[1],
+      ...omit(taskEvents[1], 'taskId'),
       assignees: [],
       createdAt: taskEvents[1].createdAt.toISOString(),
-      id: taskEvents[1].id
+      id: taskEvents[1].taskId
     }
-  ], 'should match body');
+  ]);
 });
 
 test('GET /tasks?stageId=:stageId returns tasks on design stage', async (t: tape.Test) => {
@@ -113,21 +114,21 @@ test('GET /tasks?stageId=:stageId returns tasks on design stage', async (t: tape
   const [response, body] = await get(`/tasks?stageId=${stageId}`, {
     headers: authHeader(session.id)
   });
-  t.equal(response.status, 200, 'should respond with 200');
+  t.equal(response.status, 200);
   t.deepEqual(body, [
     {
-      ...taskEvents[0],
+      ...omit(taskEvents[0], 'taskId'),
       assignees: [],
       createdAt: taskEvents[0].createdAt.toISOString(),
-      id: taskEvents[0].id
+      id: taskEvents[0].taskId
     },
     {
-      ...taskEvents[1],
+      ...omit(taskEvents[1], 'taskId'),
       assignees: [],
       createdAt: taskEvents[1].createdAt.toISOString(),
-      id: taskEvents[1].id
+      id: taskEvents[1].taskId
     }
-  ], 'should match body');
+  ]);
 });
 
 test('GET /tasks?userId=:userId returns all tasks for a user', async (t: tape.Test) => {
@@ -222,6 +223,7 @@ test('PUT /tasks/:taskId creates TaskEvent successfully', async (t: tape.Test) =
   const { session, user } = await createUser();
 
   const taskId = uuid.v4();
+  const taskEventId = uuid.v4();
 
   sandbox().stub(tasksDAO, 'create').returns(Promise.resolve(
     {
@@ -234,9 +236,10 @@ test('PUT /tasks/:taskId creates TaskEvent successfully', async (t: tape.Test) =
       createdAt: new Date().toISOString(),
       createdBy: user.id,
       dueDate: '',
-      id: taskId,
+      id: taskEventId,
       ordering: 0,
       status: '',
+      taskId,
       title: ''
     }
   ));
@@ -254,7 +257,8 @@ test('PUT /tasks/:taskId creates TaskEvent successfully', async (t: tape.Test) =
       status: null,
       title: 'Title'
     },
-    headers: authHeader(session.id)  });
+    headers: authHeader(session.id)
+  });
   t.equal(response.status, 201);
   t.equal(body.id, taskId);
 });
@@ -454,18 +458,7 @@ test('POST /tasks/stage/:stageId creates Task on Stage successfully', async (t: 
       id: taskId,
       ordering: 0,
       status: '',
-      title: ''
-    }
-  ));
-  sandbox().stub(taskEventsDAO, 'findById').returns(Promise.resolve(
-    {
-      createdAt: new Date().toISOString(),
-      createdBy: user.id,
-      designStageId: stageId,
-      dueDate: '',
-      id: taskId,
-      ordering: 0,
-      status: '',
+      taskId,
       title: ''
     }
   ));

@@ -643,7 +643,7 @@ test('GET /product-designs allows getting tasks', async (t) => {
   const { user, session } = await createUser({ role: 'ADMIN' });
   sandbox().stub(EmailService, 'enqueueSend').returns(Promise.resolve());
   sandbox().stub(TaskEventsDAO, 'findByStageId').returns(Promise.resolve(
-    [{ id: 'task1234' }]
+    [{ taskId: 'task1234' }]
   ));
   sandbox().stub(CollaboratorsDAO, 'findByTask').returns(Promise.resolve(
     [{ id: 'collaborator1234' }]
