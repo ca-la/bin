@@ -11,7 +11,7 @@ Local development is facilitated by Docker/Docker Compose. To run the
 transpiler, server, and database:
 
 ```bash
-$ npm run start
+$ docker-compose up --build
 ```
 
 ### Initial Setup

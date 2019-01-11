@@ -64,7 +64,7 @@
     "rollback-local": "docker-compose -f docker-compose.yml -f docker-compose.test.yml run --rm test bin/migrate local rollback && docker-compose run --rm api bin/migrate local rollback",
     "prerelease": "npm run lint && npm run test",
     "release": "cala-release",
-    "start": "docker-compose up --build",
+    "start": "make serve-built",
     "tt": "bin/tt",
     "test": "docker-compose -f docker-compose.yml -f docker-compose.test.yml run --rm test bin/test"
   }
