@@ -11,7 +11,7 @@ Local development is facilitated by Docker/Docker Compose. To run the
 transpiler, server, and database:
 
 ```bash
-$ docker-compose up
+$ npm run start
 ```
 
 ### Initial Setup
@@ -22,7 +22,7 @@ $ docker-compose up
 After initial setup, you will need to migrate the newly created databases:
 
 ```bash
-$ docker-compose run api bin/migrate local
+$ npm run migrate-local
 ```
 
 For more details about Migrations, see the section titled
@@ -55,9 +55,9 @@ Branch | Heroku App | URL | Build Status
 To tag off and release a new version to production, run the release script:
 
 ```bash
-$ make release type=patch    # 0.0.x - bug fixes
-$ make release type=minor    # 0.x.0 - new features or changes
-$ make release type=major    # x.0.0 - large, backwards-incompatible changes
+$ npm run release -- patch    # 0.0.x - bug fixes
+$ npm run release -- minor    # 0.x.0 - new features or changes
+$ npm run release -- major    # x.0.0 - large, backwards-incompatible changes
 ```
 
 ## Usage
@@ -68,14 +68,14 @@ more examples.
 ### Testing / Linting
 
 ```bash
-$ make test
-$ make lint
+$ npm run lint
+$ npm run test
 ```
 
 ### Run a single test file
 
 ```bash
-$ bin/tt routes/users/spec.js
+$ npm run tt -- routes/users/spec.js
 ```
 
 ### Migrations
@@ -102,8 +102,8 @@ deploy; first add the column, then deploy the application code, then add the
 
 ```bash
 $ bin/create-migration        # Create a new migration
-$ bin/migrate local           # Migrate local DBs to latest schema
-$ bin/migrate local rollback  # Roll back latest local migration
+$ npm run migrate-local       # Migrate local DBs to latest schema
+$ npm run rollback-local      # Roll back latest local migration
 $ bin/migrate staging         # Migrate staging DB
 $ bin/migrate production      # Migrate production DB
 ```

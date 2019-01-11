@@ -2,18 +2,14 @@
 
 // Knex configuration. Used by services/db as well as the Knex CLI
 
-let defaultDB;
+const connection = process.env.DATABASE_URL;
 
-if (process.env.NODE_ENV === 'test') {
-  defaultDB = 'postgres://postgres@data/cala-test';
-} else {
-  defaultDB = 'postgres://postgres@data/cala';
+if (!connection) {
+  throw new Error('Missing DATABASE_URL config value');
 }
-
-const url = process.env.DATABASE_URL || defaultDB;
 
 module.exports = {
   ssl: true,
   client: 'pg',
-  connection: url
+  connection
 };

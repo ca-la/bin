@@ -1,0 +1,6 @@
+#!/bin/bash
+set -e
+
+npx eslint src --ignore-path .gitignore
+npx tslint -p tsconfig-tslint.json "src/**/*.ts" -t stylish
+npx cala-lint-commented-code

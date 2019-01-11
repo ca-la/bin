@@ -1,0 +1,6 @@
+#!/bin/bash
+set -e
+
+rm -rf dist
+npx tsc -p .
+npx tape "dist/**/*spec.js" | npx tap-difflet --pessimistic

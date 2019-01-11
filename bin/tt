@@ -2,4 +2,8 @@
 
 # Run a single test
 # Usage: `bin/tt routes/users/spec.js`
-NODE_ENV=test env $(cat .env | xargs) $(npm bin)/ts-node $1 | $(npm bin)/tap-difflet
+docker-compose \
+    -f docker-compose.yml \
+    -f docker-compose.test.yml \
+    run --rm test \
+    bash -c "npx ts-node $1 | npx tap-difflet"

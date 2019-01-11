@@ -4,10 +4,10 @@ services:
     build: .
     command: "npx nodemon --delay 2 -w ./dist dist"
     ports:
-      - "8001:8001"
+      - "127.0.0.1:8001:8001"
     env_file: .env
     links:
-      - data
+      - "postgres:data"
     volumes:
       - ".:/app"
       - "dependencies:/app/node_modules"
@@ -17,13 +17,11 @@ services:
     volumes:
       - ".:/app"
       - "dependencies:/app/node_modules"
-  data:
-    build:
-      context: .
-      dockerfile: db.dockerfile
+  postgres:
+    image: postgres:10.6-alpine
     environment:
       - "POSTGRES_USER=postgres"
-      - "PGUSER=postgres"
+      - "POSTGRES_DB=cala"
     ports:
       - "5432:5432"
     volumes:

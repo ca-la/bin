@@ -69,8 +69,6 @@ main() {
     local)
       echo -n 'Local DB: '
       take_action
-      echo -n 'Local Test DB: '
-      NODE_ENV=test take_action
       ;;
     staging)
       if [ "$rollback_flag" == "rollback" ]; then
