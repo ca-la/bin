@@ -117,11 +117,11 @@ function* createTaskWithEventOnStage(
   const body = addDefaultOrdering(this.request.body);
   const stageId = this.params.stageId;
   yield TasksDAO.create(body.id);
-  const newTaskEvent: TaskEvent = yield TaskEventsDAO
+  const newTaskEvent: DetailsTask = yield TaskEventsDAO
     .create(taskEventFromIO(body, this.state.userId));
   yield ProductDesignStageTasksDAO.create({
     designStageId: stageId,
-    taskId: newTaskEvent.taskId
+    taskId: newTaskEvent.id
   });
   const taskEvent: DetailsTask = yield TaskEventsDAO.findById(body.id);
   this.body = ioFromTaskEvent(taskEvent);

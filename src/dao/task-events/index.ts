@@ -34,6 +34,7 @@ export async function create(data: Unsaved<TaskEvent>): Promise<DetailsTask> {
   const taskEvent = await db(TABLE_NAME)
     .select('*')
     .from(DETAILS_VIEW_NAME)
+    .where({ id: created.task_id })
     .then((rows: DetailTaskEventRow[]) => first<DetailTaskEventRow>(rows));
 
   if (!taskEvent) { throw new Error('Failed to get with stage ID'); }
