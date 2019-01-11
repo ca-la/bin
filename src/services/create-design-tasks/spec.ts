@@ -46,7 +46,7 @@ async function createTemplates(): Promise<{
       assigneeRole: 'CALA',
       description: 'Make the stuff',
       designPhase: 'POST_APPROVAL',
-      ordering: 0,
+      ordering: 1,
       stageTemplateId: stage2.id,
       title: 'Task 2'
     })
