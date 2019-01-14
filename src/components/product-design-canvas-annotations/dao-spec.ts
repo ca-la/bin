@@ -1,10 +1,10 @@
 import * as uuid from 'node-uuid';
 import * as tape from 'tape';
 import { test } from '../../test-helpers/fresh';
-import { create, deleteById, findById, update } from './index';
+import { create, deleteById, findById, update } from './dao';
 import createUser = require('../../test-helpers/create-user');
-import { create as createDesign } from '../product-designs';
-import { create as createDesignCanvas } from '../product-design-canvases';
+import { create as createDesign } from '../../dao/product-designs';
+import { create as createDesignCanvas } from '../../dao/product-design-canvases';
 
 test('ProductDesignCanvasAnnotation DAO supports creation/retrieval', async (t: tape.Test) => {
   const { user } = await createUser();

@@ -2,13 +2,14 @@ import * as Knex from 'knex';
 import * as tape from 'tape';
 import * as uuid from 'node-uuid';
 import { test } from '../../test-helpers/fresh';
-import * as NotificationsDAO from './index';
-import * as CollaboratorsDAO from '../collaborators';
-import * as DesignsDAO from '../product-designs';
+import * as NotificationsDAO from './dao';
+import * as CollaboratorsDAO from '../../dao/collaborators';
+import * as DesignsDAO from '../../dao/product-designs';
 import createUser = require('../../test-helpers/create-user');
 import db = require('../../services/db');
-import Notification, { NotificationType } from '../../domain-objects/notification';
-import { create as createDesign } from '../../dao/product-designs';
+import Notification, { NotificationType } from './domain-object';
+import generateNotification from '../../test-helpers/factories/notification';
+import generateAnnotation from '../../test-helpers/factories/product-design-canvas-annotation';
 
 test('Notifications DAO supports creation', async (t: tape.Test) => {
   const userOne = await createUser();
@@ -17,6 +18,8 @@ test('Notifications DAO supports creation', async (t: tape.Test) => {
   const data = {
     actionDescription: null,
     actorUserId: userOne.user.id,
+    annotationId: null,
+    canvasId: null,
     collaboratorId: null,
     collectionId: null,
     commentId: null,
@@ -61,50 +64,17 @@ test('Notifications DAO supports finding by user id', async (t: tape.Test) => {
     userEmail: 'raf@rafsimons.com',
     userId: null
   });
-  const n1 = await NotificationsDAO.create({
-    actionDescription: null,
+  const { notification: n1 } = await generateNotification({
     actorUserId: userOne.user.id,
-    collaboratorId: null,
-    collectionId: null,
-    commentId: null,
-    designId: null,
-    id: uuid.v4(),
-    recipientUserId: userTwo.user.id,
-    sectionId: null,
-    sentEmailAt: null,
-    stageId: null,
-    taskId: null,
-    type: null
+    recipientUserId: userTwo.user.id
   });
-  const n2 = await NotificationsDAO.create({
-    actionDescription: null,
+  const { notification: n2 } = await generateNotification({
     actorUserId: userOne.user.id,
-    collaboratorId: c1.id,
-    collectionId: null,
-    commentId: null,
-    designId: null,
-    id: uuid.v4(),
-    recipientUserId: null,
-    sectionId: null,
-    sentEmailAt: null,
-    stageId: null,
-    taskId: null,
-    type: null
+    collaboratorId: c1.id
   });
-  await NotificationsDAO.create({
-    actionDescription: null,
+  await generateNotification({
     actorUserId: userOne.user.id,
-    collaboratorId: c2.id,
-    collectionId: null,
-    commentId: null,
-    designId: null,
-    id: uuid.v4(),
-    recipientUserId: null,
-    sectionId: null,
-    sentEmailAt: null,
-    stageId: null,
-    taskId: null,
-    type: null
+    collaboratorId: c2.id
   });
 
   t.deepEqual(
@@ -130,74 +100,78 @@ test('Notifications DAO supports finding by user id', async (t: tape.Test) => {
 });
 
 test('Notifications DAO supports finding outstanding notifications', async (t: tape.Test) => {
-  const userOne = await createUser();
-  const userTwo = await createUser();
+  const { user: userOne } = await createUser({ withSession: false });
+  const { user: userTwo } = await createUser({ withSession: false });
 
-  const notificationOne = await NotificationsDAO.create({
-    actionDescription: null,
-    actorUserId: userOne.user.id,
-    collaboratorId: null,
-    collectionId: null,
-    commentId: null,
-    designId: null,
-    id: uuid.v4(),
-    recipientUserId: userTwo.user.id,
-    sectionId: null,
-    sentEmailAt: null,
-    stageId: null,
-    taskId: null,
-    type: null
+  const { annotation } = await generateAnnotation({ createdBy: userTwo.id });
+
+  const { notification: notificationOne } = await generateNotification({
+    actorUserId: userOne.id,
+    annotationId: annotation.id,
+    recipientUserId: userTwo.id
   });
-  const notificationTwo = await NotificationsDAO.create({
-    actionDescription: null,
-    actorUserId: userOne.user.id,
-    collaboratorId: null,
-    collectionId: null,
-    commentId: null,
-    designId: null,
-    id: uuid.v4(),
-    recipientUserId: userTwo.user.id,
-    sectionId: null,
-    sentEmailAt: null,
-    stageId: null,
-    taskId: null,
-    type: null
+  const { notification: notificationTwo } = await generateNotification({
+    actorUserId: userOne.id,
+    recipientUserId: userTwo.id
   });
-  await NotificationsDAO.create({
-    actionDescription: null,
-    actorUserId: userOne.user.id,
-    collaboratorId: null,
-    collectionId: null,
-    commentId: null,
-    designId: null,
-    id: uuid.v4(),
-    recipientUserId: userTwo.user.id,
-    sectionId: null,
+  await generateNotification({
+    actorUserId: userOne.id,
+    recipientUserId: userTwo.id,
     sentEmailAt: new Date(),
-    stageId: null,
-    taskId: null,
     type: NotificationType.TASK_COMMENT_CREATE
   });
-  await NotificationsDAO.create({
-    actionDescription: null,
-    actorUserId: userOne.user.id,
-    collaboratorId: null,
-    collectionId: null,
-    commentId: null,
-    designId: null,
-    id: uuid.v4(),
-    recipientUserId: null,
-    sectionId: null,
-    sentEmailAt: null,
-    stageId: null,
-    taskId: null,
+  await generateNotification({
+    actorUserId: userOne.id,
+    sentEmailAt: new Date(),
     type: NotificationType.TASK_COMMENT_CREATE
   });
 
   await db.transaction(async (trx: Knex.Transaction) => {
+    const results: any = await NotificationsDAO.findOutstandingTrx(trx);
+    const formattedResults = [
+      {
+        ...results[0],
+        actor: {
+          ...results[0].actor,
+          createdAt: new Date(results[0].actor.createdAt)
+        }
+      },
+      {
+        ...results[1],
+        actor: {
+          ...results[1].actor,
+          createdAt: new Date(results[1].actor.createdAt)
+        },
+        annotation: {
+          ...results[1].annotation,
+          createdAt: new Date(results[1].annotation.createdAt)
+        }
+      }
+    ];
+
     t.deepEqual(
-      await NotificationsDAO.findOutstandingTrx(trx),
-      [notificationTwo, notificationOne],
+      formattedResults,
+      [{
+        ...notificationTwo,
+        actor: userOne,
+        annotation: null,
+        canvas: null,
+        collection: null,
+        comment: null,
+        design: null,
+        stage: null,
+        task: null
+      }, {
+        ...notificationOne,
+        actor: userOne,
+        annotation,
+        canvas: null,
+        collection: null,
+        comment: null,
+        design: null,
+        stage: null,
+        task: null
+      }],
       'Returns unsent notifications with recipients'
     );
   });
@@ -207,34 +181,14 @@ test('Notifications DAO supports marking notifications as sent', async (t: tape.
   const userOne = await createUser();
   const userTwo = await createUser();
 
-  const notificationOne = await NotificationsDAO.create({
-    actionDescription: null,
+  const { notification: notificationOne } = await generateNotification({
     actorUserId: userOne.user.id,
-    collaboratorId: null,
-    collectionId: null,
-    commentId: null,
-    designId: null,
-    id: uuid.v4(),
     recipientUserId: userTwo.user.id,
-    sectionId: null,
-    sentEmailAt: null,
-    stageId: null,
-    taskId: null,
     type: NotificationType.TASK_COMMENT_CREATE
   });
-  const notificationTwo = await NotificationsDAO.create({
-    actionDescription: null,
+  const { notification: notificationTwo } = await generateNotification({
     actorUserId: userOne.user.id,
-    collaboratorId: null,
-    collectionId: null,
-    commentId: null,
-    designId: null,
-    id: uuid.v4(),
     recipientUserId: userTwo.user.id,
-    sectionId: null,
-    sentEmailAt: null,
-    stageId: null,
-    taskId: null,
     type: NotificationType.TASK_COMMENT_CREATE
   });
 
@@ -255,60 +209,36 @@ test('Notifications DAO supports deleting similar notifications', async (t: tape
   const userOne = await createUser();
   const userTwo = await createUser();
 
-  const design = await createDesign({
+  const design = await DesignsDAO.create({
     productType: 'TEESHIRT',
     title: 'Green Tee',
     userId: userTwo.user.id
   });
 
-  await NotificationsDAO.create({
-    actionDescription: null,
+  await generateNotification({
     actorUserId: userTwo.user.id,
-    collaboratorId: null,
-    collectionId: null,
-    commentId: null,
     designId: design.id,
-    id: uuid.v4(),
     recipientUserId: userOne.user.id,
-    sectionId: null,
-    sentEmailAt: null,
-    stageId: null,
-    taskId: null,
     type: NotificationType.TASK_COMMENT_CREATE
   });
-  await NotificationsDAO.create({
-    actionDescription: null,
+  await generateNotification({
     actorUserId: userOne.user.id,
-    collaboratorId: null,
-    collectionId: null,
-    commentId: null,
     designId: design.id,
-    id: uuid.v4(),
     recipientUserId: userTwo.user.id,
-    sectionId: null,
-    sentEmailAt: null,
-    stageId: null,
-    taskId: null,
     type: NotificationType.SECTION_UPDATE
   });
-  await NotificationsDAO.create({
-    actionDescription: null,
+  await generateNotification({
     actorUserId: userOne.user.id,
-    collaboratorId: null,
-    collectionId: null,
-    commentId: null,
     designId: design.id,
     id: uuid.v4(),
     recipientUserId: userTwo.user.id,
-    sectionId: null,
-    sentEmailAt: null,
-    stageId: null,
-    taskId: null,
     type: NotificationType.SECTION_UPDATE
   });
   const unsentNotification = {
     actionDescription: null,
     actorUserId: userOne.user.id,
+    annotationId: null,
+    canvasId: null,
     collaboratorId: null,
     collectionId: null,
     commentId: null,

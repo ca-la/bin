@@ -7,7 +7,7 @@ import Annotation, {
   parseNumericsList,
   ProductDesignCanvasAnnotationRow as AnnotationRow,
   UPDATABLE_PROPERTIES
-} from '../../domain-objects/product-design-canvas-annotation';
+} from './domain-object';
 import first from '../../services/first';
 import { validate, validateEvery } from '../../services/validate-from-db';
 

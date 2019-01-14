@@ -4,7 +4,7 @@ import * as sinon from 'sinon';
 
 import { sandbox, test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
-import Notification, { NotificationType } from '../../domain-objects/notification';
+import Notification, { NotificationType } from '../../components/notifications/domain-object';
 import * as NotificationsService from './index';
 import * as CollaboratorsDAO from '../../dao/collaborators';
 import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
@@ -17,6 +17,8 @@ import * as TaskCommentsDAO from '../../dao/task-comments';
 import * as CollectionsDAO from '../../dao/collections';
 import * as DesignsDAO from '../../dao/product-designs';
 import * as EmailService from '../../services/email';
+import generateCanvas from '../../test-helpers/factories/product-design-canvas';
+import generateAnnotation from '../../test-helpers/factories/product-design-canvas-annotation';
 
 test('sendDesignUpdateNotification', async (t: tape.Test) => {
   const userOne = await createUser();
@@ -54,6 +56,60 @@ test('sendDesignUpdateNotification', async (t: tape.Test) => {
     [NotificationType.DESIGN_UPDATE, NotificationType.DESIGN_UPDATE],
     'Creates two notifications with the same notification type'
   );
+});
+
+test('sendDesignOwnerAnnotationCreateNotification', async (t: tape.Test) => {
+  const { user: user } = await createUser({ withSession: false });
+  const { user: owner } = await createUser({ withSession: false });
+
+  const collection = await CollectionsDAO.create({
+    createdAt: new Date(),
+    createdBy: owner.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
+    title: 'AW19'
+  });
+  const design = await DesignsDAO.create({
+    productType: 'A product type',
+    title: 'A design',
+    userId: owner.id
+  });
+  await CollectionsDAO.addDesign(collection.id, design.id);
+
+  const { canvas } = await generateCanvas({
+    createdBy: owner.id,
+    designId: design.id
+  });
+  const { annotation } = await generateAnnotation({ canvasId: canvas.id });
+
+  const nullNotification = await NotificationsService.sendDesignOwnerAnnotationCreateNotification(
+    annotation.id,
+    canvas.id,
+    owner.id
+  );
+  t.equal(nullNotification, null, 'A notification will not be made if the actor is the recipient');
+
+  const notification = await NotificationsService.sendDesignOwnerAnnotationCreateNotification(
+    annotation.id,
+    canvas.id,
+    user.id
+  );
+  if (!notification) { throw new Error('Expected a notification!'); }
+  const {
+    actorUserId,
+    canvasId,
+    collectionId,
+    designId,
+    recipientUserId,
+    type
+  } = notification;
+  t.equal(actorUserId, user.id);
+  t.equal(canvasId, canvas.id);
+  t.equal(collectionId, collection.id);
+  t.equal(designId, design.id);
+  t.equal(recipientUserId, owner.id);
+  t.equal(type, NotificationType.ANNOTATION_CREATE);
 });
 
 test('sendTaskCommentCreateNotification', async (t: tape.Test) => {

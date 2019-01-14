@@ -1,11 +1,14 @@
 import * as tape from 'tape';
 import * as uuid from 'node-uuid';
+import * as sinon from 'sinon';
+
 import createUser = require('../../test-helpers/create-user');
 import { authHeader, del, get, patch, put } from '../../test-helpers/http';
 import { sandbox, test } from '../../test-helpers/fresh';
-import * as AnnotationDAO from '../../dao/product-design-canvas-annotations';
+import * as AnnotationDAO from './dao';
 import { create as createDesign } from '../../dao/product-designs';
 import { create as createDesignCanvas } from '../../dao/product-design-canvases';
+import * as CreateNotifications from '../../services/create-notifications';
 
 const API_PATH = '/product-design-canvas-annotations';
 
@@ -40,12 +43,18 @@ test(`PUT ${API_PATH}/:annotationId creates an Annotation`, async (t: tape.Test)
     y: 1
   };
 
+  const notificationStub = sandbox()
+    .stub(CreateNotifications, 'sendDesignOwnerAnnotationCreateNotification')
+    .resolves();
+
   const [response, body] = await put(`${API_PATH}/${annotationId}`, {
     body: data,
     headers: authHeader(session.id)
   });
   t.equal(response.status, 201);
   t.deepEqual(body, data);
+
+  sinon.assert.callCount(notificationStub, 1);
 });
 
 test(`PATCH ${API_PATH}/:annotationId updates an Annotation`, async (t: tape.Test) => {

@@ -1,61 +1,30 @@
 import * as tape from 'tape';
-import * as uuid from 'node-uuid';
 import * as sinon from 'sinon';
 
 import { sandbox, test } from '../../test-helpers/fresh';
-import * as NotificationsDAO from '../../dao/notifications';
+import * as NotificationsDAO from '../../components/notifications/dao';
 import createUser = require('../../test-helpers/create-user');
-import { NotificationType } from '../../domain-objects/notification';
-import { sendNotificationEmails } from './index';
+import { NotificationType } from '../../components/notifications/domain-object';
 import * as EmailService from '../email';
+import { sendNotificationEmails } from './index';
+import generateNotification from '../../test-helpers/factories/notification';
 
-test('Notifications DAO supports finding outstanding notifications', async (t: tape.Test) => {
+test('sendNotificationEmails supports finding outstanding notifications', async (t: tape.Test) => {
   const userOne = await createUser();
   const userTwo = await createUser();
 
-  const notificationOne = await NotificationsDAO.create({
-    actionDescription: null,
+  const { notification: notificationOne } = await generateNotification({
     actorUserId: userOne.user.id,
-    collaboratorId: null,
-    collectionId: null,
-    commentId: null,
-    designId: null,
-    id: uuid.v4(),
-    recipientUserId: userTwo.user.id,
-    sectionId: null,
-    sentEmailAt: null,
-    stageId: null,
-    taskId: null,
-    type: null
+    recipientUserId: userTwo.user.id
   });
-  const notificationTwo = await NotificationsDAO.create({
-    actionDescription: null,
+  const { notification: notificationTwo } = await generateNotification({
     actorUserId: userTwo.user.id,
-    collaboratorId: null,
-    collectionId: null,
-    commentId: null,
-    designId: null,
-    id: uuid.v4(),
-    recipientUserId: userOne.user.id,
-    sectionId: null,
-    sentEmailAt: null,
-    stageId: null,
-    taskId: null,
-    type: null
+    recipientUserId: userOne.user.id
   });
-  await NotificationsDAO.create({
-    actionDescription: null,
+  await generateNotification({
     actorUserId: userOne.user.id,
-    collaboratorId: null,
-    collectionId: null,
-    commentId: null,
-    designId: null,
-    id: uuid.v4(),
     recipientUserId: userTwo.user.id,
-    sectionId: null,
     sentEmailAt: new Date(),
-    stageId: null,
-    taskId: null,
     type: NotificationType.TASK_COMMENT_CREATE
   });
 

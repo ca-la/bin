@@ -1,14 +1,13 @@
 import * as tape from 'tape';
-import * as uuid from 'node-uuid';
 
 import { test } from '../../test-helpers/fresh';
 import * as API from '../../test-helpers/http';
 import createUser = require('../../test-helpers/create-user');
 
-import * as NotificationsDAO from '../../dao/notifications';
 import * as CollaboratorsDAO from '../../dao/collaborators';
 import * as DesignsDAO from '../../dao/product-designs';
-import Notification from '../../domain-objects/notification';
+import Notification from './domain-object';
+import generateNotification from '../../test-helpers/factories/notification';
 
 const API_PATH = '/notifications';
 
@@ -37,50 +36,19 @@ test(`GET ${API_PATH} returns a list of notifications for the user`, async (t: t
     userEmail: 'raf@rafsimons.com',
     userId: null
   });
-  const n1 = await NotificationsDAO.create({
-    actionDescription: null,
+  const { notification: n1 } = await generateNotification({
     actorUserId: userOne.user.id,
-    collaboratorId: null,
-    collectionId: null,
-    commentId: null,
-    designId: null,
-    id: uuid.v4(),
-    recipientUserId: userTwo.user.id,
-    sectionId: null,
-    sentEmailAt: null,
-    stageId: null,
-    taskId: null,
-    type: null
+    recipientUserId: userTwo.user.id
   });
-  const n2 = await NotificationsDAO.create({
-    actionDescription: null,
+  const { notification: n2 } = await generateNotification({
     actorUserId: userOne.user.id,
     collaboratorId: c1.id,
-    collectionId: null,
-    commentId: null,
-    designId: null,
-    id: uuid.v4(),
-    recipientUserId: null,
-    sectionId: null,
-    sentEmailAt: null,
-    stageId: null,
-    taskId: null,
-    type: null
+    recipientUserId: null
   });
-  await NotificationsDAO.create({
-    actionDescription: null,
+  await generateNotification({
     actorUserId: userOne.user.id,
     collaboratorId: c2.id,
-    collectionId: null,
-    commentId: null,
-    designId: null,
-    id: uuid.v4(),
-    recipientUserId: null,
-    sectionId: null,
-    sentEmailAt: null,
-    stageId: null,
-    taskId: null,
-    type: null
+    recipientUserId: null
   });
 
   const [response1, body1] = await API.get(API_PATH, {

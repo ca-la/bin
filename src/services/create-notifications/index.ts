@@ -1,7 +1,8 @@
 import * as uuid from 'node-uuid';
 
-import * as NotificationsDAO from '../../dao/notifications';
+import * as NotificationsDAO from '../../components/notifications/dao';
 import * as SectionsDAO from '../../dao/product-design-sections';
+import * as CanvasesDAO from '../../dao/product-design-canvases';
 import * as CollaboratorsDAO from '../../dao/collaborators';
 import * as StageTasksDAO from '../../dao/product-design-stage-tasks';
 import * as StagesDAO from '../../dao/product-design-stages';
@@ -10,7 +11,7 @@ import * as CollectionsDAO from '../../dao/collections';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as UsersDAO from '../../dao/users';
 
-import Notification, { NotificationType } from '../../domain-objects/notification';
+import Notification, { NotificationType } from '../../components/notifications/domain-object';
 import Collaborator, { CollaboratorWithUser } from '../../domain-objects/collaborator';
 import User from '../../domain-objects/user';
 
@@ -19,10 +20,40 @@ import * as EmailService from '../../services/email';
 
 import { CALA_OPS_USER_ID } from '../../config';
 
+type MinimumNotification = Partial<Uninserted<Notification>> & {
+  actorUserId: string;
+  type: NotificationType;
+};
+
+/**
+ * Create an uninserted notification.
+ */
+function createUninsertedNotification(notification: MinimumNotification): Uninserted<Notification> {
+  return {
+    actionDescription: null,
+    annotationId: null,
+    canvasId: null,
+    collaboratorId: null,
+    collectionId: null,
+    commentId: null,
+    designId: null,
+    id: uuid.v4(),
+    recipientUserId: null,
+    sectionId: null,
+    sentEmailAt: null,
+    stageId: null,
+    taskId: null,
+    ...notification
+  };
+}
+
 /**
  * Deletes pre-existing similar notifications and adds in a new one.
  */
-async function replaceNotifications(notification: Uninserted<Notification>): Promise<Notification> {
+async function replaceNotifications(
+  minimumNotification: MinimumNotification
+): Promise<Notification> {
+  const notification = createUninsertedNotification(minimumNotification);
   await NotificationsDAO.deleteRecent(notification);
   return await NotificationsDAO.create(notification);
 }
@@ -41,16 +72,9 @@ export async function sendSectionCreateNotifications(
     return replaceNotifications({
       actionDescription: 'created a new section',
       actorUserId: userId,
-      collaboratorId: null,
-      collectionId: null,
-      commentId: null,
       designId,
-      id: uuid.v4(),
       recipientUserId: recipient.id,
       sectionId,
-      sentEmailAt: null,
-      stageId: null,
-      taskId: null,
       type: NotificationType.SECTION_CREATE
     });
   }));
@@ -70,16 +94,8 @@ export async function sendSectionDeleteNotifications(
     return replaceNotifications({
       actionDescription: `deleted the "${sectionTitle}" section`,
       actorUserId: userId,
-      collaboratorId: null,
-      collectionId: null,
-      commentId: null,
       designId,
-      id: uuid.v4(),
       recipientUserId: recipient.id,
-      sectionId: null,
-      sentEmailAt: null,
-      stageId: null,
-      taskId: null,
       type: NotificationType.SECTION_DELETE
     });
   }));
@@ -101,16 +117,9 @@ export async function sendSectionUpdateNotifications(
     return replaceNotifications({
       actionDescription: `updated the "${section.title || 'Untitled'}" section`,
       actorUserId: userId,
-      collaboratorId: null,
-      collectionId: null,
-      commentId: null,
       designId,
-      id: uuid.v4(),
       recipientUserId: recipient.id,
       sectionId,
-      sentEmailAt: null,
-      stageId: null,
-      taskId: null,
       type: NotificationType.SECTION_UPDATE
     });
   }));
@@ -129,19 +138,40 @@ export async function sendDesignUpdateNotifications(
     return replaceNotifications({
       actionDescription: 'updated the design information',
       actorUserId: userId,
-      collaboratorId: null,
-      collectionId: null,
-      commentId: null,
       designId,
-      id: uuid.v4(),
       recipientUserId: recipient.id,
-      sectionId: null,
-      sentEmailAt: null,
-      stageId: null,
-      taskId: null,
       type: NotificationType.DESIGN_UPDATE
     });
   }));
+}
+
+/**
+ * Creates a notification for the owner of the design that an annotation has been created.
+ * Note: this will only create a notification if the actor is not the owner.
+ */
+export async function sendDesignOwnerAnnotationCreateNotification(
+  annotationId: string,
+  canvasId: string,
+  actorId: string
+): Promise<Notification | null> {
+  const canvas = await CanvasesDAO.findById(canvasId);
+  if (!canvas) { throw new Error(`Canvas ${canvasId} does not exist!`); }
+  const design = await DesignsDAO.findById(canvas.designId);
+  if (!design) { throw new Error(`Design ${canvas.designId} does not exist!`); }
+  const targetId = design.userId;
+  const collectionId = design.collectionIds[0] || null;
+
+  if (actorId === targetId) { return null; }
+
+  return replaceNotifications({
+    actorUserId: actorId,
+    annotationId,
+    canvasId: canvas.id,
+    collectionId,
+    designId: design.id,
+    recipientUserId: targetId,
+    type: NotificationType.ANNOTATION_CREATE
+  });
 }
 
 /**
@@ -182,16 +212,11 @@ export async function sendTaskCommentCreateNotification(
 
   return Promise.all(filteredRecipientIds.map((recipientId: string): Promise<Notification> => {
     return replaceNotifications({
-      actionDescription: null,
       actorUserId: actorId,
-      collaboratorId: null,
       collectionId: design.collectionIds[0] || null,
       commentId,
       designId: design.id,
-      id: uuid.v4(),
       recipientUserId: recipientId,
-      sectionId: null,
-      sentEmailAt: null,
       stageId: stage.id,
       taskId,
       type: NotificationType.TASK_COMMENT_CREATE
@@ -218,16 +243,12 @@ export async function sendTaskAssignmentNotification(
   return Promise.all(
     collaborators.map((collaborator: CollaboratorWithUser): Promise<Notification> => {
       return replaceNotifications({
-        actionDescription: null,
         actorUserId: actorId,
         collaboratorId: collaborator.id,
         collectionId: design.collectionIds[0] || null,
-        commentId: null,
         designId: design.id,
         id: uuid.v4(),
         recipientUserId: collaborator.user ? collaborator.user.id : null,
-        sectionId: null,
-        sentEmailAt: null,
         stageId: stage.id,
         taskId,
         type: NotificationType.TASK_ASSIGNMENT
@@ -260,16 +281,11 @@ export async function sendTaskCompletionNotification(
   return Promise.all(
     recipients.map((collaborator: CollaboratorWithUser): Promise<Notification> => {
       return replaceNotifications({
-        actionDescription: null,
         actorUserId: actorId,
         collaboratorId: collaborator.id,
         collectionId: design.collectionIds[0] || null,
-        commentId: null,
         designId: design.id,
-        id: uuid.v4(),
         recipientUserId: collaborator.user ? collaborator.user.id : null,
-        sectionId: null,
-        sentEmailAt: null,
         stageId: stage.id,
         taskId,
         type: NotificationType.TASK_COMPLETION
@@ -288,18 +304,9 @@ export async function sendPartnerAcceptServiceBidNotification(
   if (!CALA_OPS_USER_ID) { throw new Error('CALA Ops account not set!'); }
 
   return replaceNotifications({
-    actionDescription: null,
     actorUserId: actorId,
-    collaboratorId: null,
-    collectionId: null,
-    commentId: null,
     designId,
-    id: uuid.v4(),
     recipientUserId: CALA_OPS_USER_ID,
-    sectionId: null,
-    sentEmailAt: null,
-    stageId: null,
-    taskId: null,
     type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });
 }
@@ -314,18 +321,9 @@ export async function sendPartnerRejectServiceBidNotification(
   if (!CALA_OPS_USER_ID) { throw new Error('CALA Ops account not set!'); }
 
   return replaceNotifications({
-    actionDescription: null,
     actorUserId: actorId,
-    collaboratorId: null,
-    collectionId: null,
-    commentId: null,
     designId,
-    id: uuid.v4(),
     recipientUserId: CALA_OPS_USER_ID,
-    sectionId: null,
-    sentEmailAt: null,
-    stageId: null,
-    taskId: null,
     type: NotificationType.PARTNER_REJECT_SERVICE_BID
   });
 }
@@ -340,18 +338,9 @@ export async function sendDesignerSubmitCollection(
   if (!CALA_OPS_USER_ID) { throw new Error('CALA Ops account not set!'); }
 
   return replaceNotifications({
-    actionDescription: null,
     actorUserId: actorId,
-    collaboratorId: null,
     collectionId,
-    commentId: null,
-    designId: null,
-    id: uuid.v4(),
     recipientUserId: CALA_OPS_USER_ID,
-    sectionId: null,
-    sentEmailAt: null,
-    stageId: null,
-    taskId: null,
     type: NotificationType.COLLECTION_SUBMIT
   });
 }
@@ -384,6 +373,8 @@ export async function immediatelySendFullyCostedCollection(
       const notification = await NotificationsDAO.create({
         actionDescription: null,
         actorUserId: actor.id,
+        annotationId: null,
+        canvasId: null,
         collaboratorId: null,
         collectionId,
         commentId: null,
@@ -452,6 +443,8 @@ export async function immediatelySendInviteCollaborator(
   const notification = await NotificationsDAO.create({
     actionDescription: null,
     actorUserId: invitation.actorId,
+    annotationId: null,
+    canvasId: null,
     collaboratorId: invitation.targetCollaboratorId,
     collectionId: invitation.collectionId,
     commentId: null,

@@ -1,7 +1,23 @@
-import DataAdapter from '../services/data-adapter';
-import { hasProperties } from '../services/require-properties';
+import DataAdapter from '../../services/data-adapter';
+import { hasProperties } from '../../services/require-properties';
+
+import Annotation, {
+  ProductDesignCanvasAnnotationRow as AnnotationRow
+} from '../../components/product-design-canvas-annotations/domain-object';
+import Canvas, {
+  ProductDesignCanvasRow as CanvasRow
+} from '../../domain-objects/product-design-canvas';
+import Collection, { CollectionRow } from '../../domain-objects/collection';
+import Comment, { CommentRow } from '../../domain-objects/comment';
+import Stage, {
+  ProductDesignStageRow as StageRow
+} from '../../domain-objects/product-design-stage';
+import TaskEvent, { TaskEventRow } from '../../domain-objects/task-event';
+import User from '../../domain-objects/user';
+import ProductDesign = require('../../domain-objects/product-design');
 
 export enum NotificationType {
+  ANNOTATION_CREATE = 'ANNOTATION_CREATE',
   DESIGN_UPDATE = 'DESIGN_UPDATE',
   SECTION_DELETE = 'SECTION_DELETE',
   SECTION_CREATE = 'SECTION_CREATE',
@@ -21,6 +37,8 @@ export default interface Notification {
   // DEPRECATED
   actionDescription: string | null;
   actorUserId: string;
+  annotationId: string | null;
+  canvasId: string | null;
   collaboratorId: string | null;
   collectionId: string | null;
   commentId: string | null;
@@ -40,6 +58,8 @@ export interface NotificationRow {
   // DEPRECATED
   action_description: string | null;
   actor_user_id: string;
+  annotation_id: string | null;
+  canvas_id: string | null;
   collaborator_id: string | null;
   collection_id: string | null;
   comment_id: string | null;
@@ -55,9 +75,36 @@ export interface NotificationRow {
   type: NotificationType | null;
 }
 
+export interface HydratedNotification extends Notification {
+  actor: User;
+  annotation: Annotation | null;
+  canvas: Canvas | null;
+  collection: Collection | null;
+  comment: Comment | null;
+  design: ProductDesign | null;
+  stage: Stage | null;
+  task: TaskEvent | null;
+}
+
+export interface HydratedNotificationRow extends NotificationRow {
+  actor: User;
+  annotation: AnnotationRow | null;
+  canvas: CanvasRow | null;
+  collection: CollectionRow | null;
+  comment: CommentRow | null;
+  design: ProductDesign | null;
+  stage: StageRow | null;
+  task: TaskEventRow | null;
+}
+
 export const dataAdapter = new DataAdapter<
   NotificationRow,
   Notification
+>();
+
+export const hydratedDataAdapter = new DataAdapter<
+  HydratedNotificationRow,
+  HydratedNotification
 >();
 
 export function isNotificationRow(row: object):
@@ -66,6 +113,8 @@ export function isNotificationRow(row: object):
     row,
     'action_description',
     'actor_user_id',
+    'annotation_id',
+    'canvas_id',
     'collaborator_id',
     'collection_id',
     'comment_id',
@@ -78,5 +127,19 @@ export function isNotificationRow(row: object):
     'stage_id',
     'task_id',
     'type'
+  );
+}
+
+export function isHydratedNotificationRow(row: object): row is HydratedNotificationRow {
+  return isNotificationRow(row) && hasProperties(
+    row,
+    'actor',
+    'annotation',
+    'canvas',
+    'collection',
+    'comment',
+    'design',
+    'stage',
+    'task'
   );
 }

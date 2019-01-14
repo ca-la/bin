@@ -22,8 +22,10 @@ const options = require('./middleware/options');
 const { default: validatePagination } = require('./middleware/validate-pagination');
 
 /* application routes */
+import annotationRoutes from './components/product-design-canvas-annotations/routes';
 import componentRelationshipRoutes from './components/component-relationships/routes';
 import processRoutes from './components/processes/routes';
+import notificationRoutes from './components/notifications/routes';
 
 import koa = require('koa');
 const app = koa();
@@ -58,7 +60,9 @@ routeDirectories.forEach((directoryName: string): void => {
 
 /* component-based routing */
 router.use('/component-relationships', componentRelationshipRoutes);
+router.use('/notifications', notificationRoutes);
 router.use('/processes', processRoutes);
+router.use('/product-design-canvas-annotations', annotationRoutes);
 
 const loadTime = Date.now() - beginTime;
 Logger.log(`Loaded ${routeDirectories.length} route prefixes in ${loadTime}ms`);

@@ -3,17 +3,18 @@ import * as Koa from 'koa';
 import * as Knex from 'knex';
 
 import * as db from '../../services/db';
-import Annotation from '../../domain-objects/product-design-canvas-annotation';
+import Annotation from './domain-object';
 import {
   create,
   deleteById,
   findAllByCanvasId,
   update
-} from '../../dao/product-design-canvas-annotations';
+} from './dao';
 import { hasOnlyProperties } from '../../services/require-properties';
 import Comment, { isComment } from '../../domain-objects/comment';
 import * as CommentDAO from '../../dao/comments';
 import * as AnnotationCommentDAO from '../../dao/product-design-canvas-annotation-comments';
+import * as NotificationsService from '../../services/create-notifications';
 
 import requireAuth = require('../../middleware/require-auth');
 
@@ -50,6 +51,11 @@ function* createAnnotation(this: Koa.Application.Context): AsyncIterableIterator
   const body = this.request.body;
   if (body && isAnnotation(body)) {
     const annotation = yield create(annotationFromIO(body, this.state.userId));
+    NotificationsService.sendDesignOwnerAnnotationCreateNotification(
+      body.id,
+      body.canvasId,
+      this.state.userId
+    );
     this.status = 201;
     this.body = annotation;
   } else {
@@ -126,4 +132,4 @@ router.del('/:annotationId', requireAuth, deleteAnnotation);
 router.put('/:annotationId/comments/:commentId', requireAuth, createAnnotationComment);
 router.get('/:annotationId/comments', requireAuth, getAnnotationComments);
 
-export = router.routes();
+export default router.routes();

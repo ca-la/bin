@@ -1,8 +1,8 @@
 import * as Router from 'koa-router';
 import * as Koa from 'koa';
 
-import Notification from '../../domain-objects/notification';
-import * as NotificationsDAO from '../../dao/notifications';
+import Notification from './domain-object';
+import * as NotificationsDAO from './dao';
 import requireAuth = require('../../middleware/require-auth');
 
 const router = new Router();
@@ -30,4 +30,4 @@ function* getList(this: Koa.Application.Context): AsyncIterableIterator<Notifica
 
 router.get('/', requireAuth, getList);
 
-export = router.routes();
+export default router.routes();
