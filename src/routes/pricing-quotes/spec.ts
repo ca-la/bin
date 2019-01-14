@@ -1,4 +1,5 @@
 import * as uuid from 'node-uuid';
+import * as sinon from 'sinon';
 
 import * as DesignEventsDAO from '../../dao/design-events';
 import * as PricingCostInputsDAO from '../../dao/pricing-cost-inputs';
@@ -7,7 +8,10 @@ import createUser = require('../../test-helpers/create-user');
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
 import { authHeader, get, post, put } from '../../test-helpers/http';
 import { create as createDesign } from '../../dao/product-designs';
-import { test, Test } from '../../test-helpers/fresh';
+import { sandbox, test, Test } from '../../test-helpers/fresh';
+import generateCollection from '../../test-helpers/factories/collection';
+import * as CollectionsDAO from '../../dao/collections';
+import * as SlackService from '../../services/slack';
 
 test('/pricing-quotes POST -> GET quote', async (t: Test) => {
   const { user, session } = await createUser();
@@ -59,11 +63,13 @@ test('POST /pricing-quotes creates commit event', async (t: Test) => {
   const { user, session } = await createUser();
   await generatePricingValues();
 
+  const { collection } = await generateCollection({ createdBy: user.id });
   const design = await createDesign({
     productType: 'A product type',
     title: 'A design',
     userId: user.id
   });
+  await CollectionsDAO.moveDesign(collection.id, design.id);
 
   await PricingCostInputsDAO.create({
     createdAt: new Date(),
@@ -83,6 +89,8 @@ test('POST /pricing-quotes creates commit event', async (t: Test) => {
     productType: 'TEESHIRT'
   });
 
+  const slackStub = sandbox().stub(SlackService, 'enqueueSend').resolves();
+
   await post('/pricing-quotes', {
     body: [{
       designId: design.id,
@@ -94,6 +102,9 @@ test('POST /pricing-quotes creates commit event', async (t: Test) => {
   const events = await DesignEventsDAO.findByDesignId(design.id);
   t.equal(events.length, 1);
   t.equal(events[0].type, 'COMMIT_QUOTE');
+
+  // Sends a slack notification
+  sinon.assert.callCount(slackStub, 1);
 });
 
 test('/pricing-quotes?designId retrieves the set of quotes for a design', async (t: Test) => {

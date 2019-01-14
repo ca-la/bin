@@ -19,6 +19,9 @@ import * as DesignsDAO from '../../dao/product-designs';
 import * as EmailService from '../../services/email';
 import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 import generateAnnotation from '../../test-helpers/factories/product-design-canvas-annotation';
+import generateCollection from '../../test-helpers/factories/collection';
+import * as SlackService from '../../services/slack';
+import * as Config from '../../config';
 
 test('sendDesignUpdateNotification', async (t: tape.Test) => {
   const userOne = await createUser();
@@ -370,6 +373,27 @@ test('sendTaskCompletionNotification', async (t: tape.Test) => {
     NotificationType.TASK_COMPLETION,
     'Creates the correct notification type'
   );
+});
+
+test('sendDesignerSubmitCollection', async (t: tape.Test) => {
+  const { user } = await createUser({ withSession: false });
+  const { user: calaOps } = await createUser({ withSession: false });
+  const { collection } = await generateCollection({ createdBy: user.id });
+
+  const slackStub = sandbox().stub(SlackService, 'enqueueSend').returns(Promise.resolve());
+  sandbox().stub(Config, 'CALA_OPS_USER_ID').value(calaOps.id);
+
+  const notification = await NotificationsService.sendDesignerSubmitCollection(
+    collection.id,
+    user.id
+  );
+
+  t.deepEqual(notification.collectionId, collection.id);
+  t.deepEqual(notification.actorUserId, user.id);
+  t.deepEqual(notification.recipientUserId, calaOps.id);
+
+  // Sends a slack notification.
+  sinon.assert.callCount(slackStub, 1);
 });
 
 test('immediatelySendFullyCostedCollection', async (t: tape.Test) => {

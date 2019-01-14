@@ -17,8 +17,9 @@ import User from '../../domain-objects/user';
 
 import findDesignUsers = require('../../services/find-design-users');
 import * as EmailService from '../../services/email';
+import * as SlackService from '../../services/slack';
 
-import { CALA_OPS_USER_ID } from '../../config';
+import * as Config from '../../config';
 
 type MinimumNotification = Partial<Uninserted<Notification>> & {
   actorUserId: string;
@@ -301,12 +302,10 @@ export async function sendPartnerAcceptServiceBidNotification(
   designId: string,
   actorId: string
 ): Promise<Notification> {
-  if (!CALA_OPS_USER_ID) { throw new Error('CALA Ops account not set!'); }
-
   return replaceNotifications({
     actorUserId: actorId,
     designId,
-    recipientUserId: CALA_OPS_USER_ID,
+    recipientUserId: Config.CALA_OPS_USER_ID,
     type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });
 }
@@ -318,29 +317,35 @@ export async function sendPartnerRejectServiceBidNotification(
   designId: string,
   actorId: string
 ): Promise<Notification> {
-  if (!CALA_OPS_USER_ID) { throw new Error('CALA Ops account not set!'); }
-
   return replaceNotifications({
     actorUserId: actorId,
     designId,
-    recipientUserId: CALA_OPS_USER_ID,
+    recipientUserId: Config.CALA_OPS_USER_ID,
     type: NotificationType.PARTNER_REJECT_SERVICE_BID
   });
 }
 
 /**
  * Creates notifications to CALA Ops for a designer submitting a collection.
+ * Also sends off a slack notification of the submission event.
  */
 export async function sendDesignerSubmitCollection(
   collectionId: string,
   actorId: string
 ): Promise<Notification> {
-  if (!CALA_OPS_USER_ID) { throw new Error('CALA Ops account not set!'); }
+  SlackService.enqueueSend({
+    channel: 'designers',
+    params: {
+      collection: await CollectionsDAO.findById(collectionId),
+      designer: await UsersDAO.findById(actorId)
+    },
+    templateName: 'collection_submission'
+  });
 
   return replaceNotifications({
     actorUserId: actorId,
     collectionId,
-    recipientUserId: CALA_OPS_USER_ID,
+    recipientUserId: Config.CALA_OPS_USER_ID,
     type: NotificationType.COLLECTION_SUBMIT
   });
 }

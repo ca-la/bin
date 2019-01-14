@@ -25,6 +25,9 @@ import generatePricingQuote, {
 } from '../../services/generate-pricing-quote';
 import Bid from '../../domain-objects/bid';
 import { isCreateRequest } from '../../services/payment';
+import * as SlackService from '../../services/slack';
+import * as CollectionsDAO from '../../dao/collections';
+import * as UsersDAO from '../../dao/users';
 
 const router = new Router();
 
@@ -37,6 +40,15 @@ function isBidRequest(candidate: object): candidate is BidRequest {
     'bidPriceCents',
     'description'
   );
+}
+
+function calculateAmounts(
+  quote: UnsavedQuote
+): { payNowTotalCents: number; payLaterTotalCents: number } {
+  const financingMargin = 1 - FINANCING_MARGIN;
+  const payNowTotalCents = quote.units * quote.unitCostCents;
+  const payLaterTotalCents = Math.ceil(payNowTotalCents / financingMargin);
+  return { payNowTotalCents, payLaterTotalCents };
 }
 
 function* createQuote(this: Koa.Application.Context): AsyncIterableIterator<PricingQuote> {
@@ -81,6 +93,21 @@ function* createQuote(this: Koa.Application.Context): AsyncIterableIterator<Pric
     });
   }
 
+  const collections = yield CollectionsDAO.findByDesign(body[0].designId);
+  const user = yield UsersDAO.findById(this.state.userId);
+  const payLaterTotalCents = quotes.reduce((acc: number, quote: PricingQuote): number => {
+    return acc + calculateAmounts(quote).payLaterTotalCents;
+  }, 0);
+  SlackService.enqueueSend({
+    channel: 'designers',
+    params: {
+      collection: collections[0],
+      designer: user,
+      payLaterTotalCents
+    },
+    templateName: 'designer_pay_later'
+  });
+
   this.body = quotes;
   this.status = 201;
 }
@@ -114,9 +141,7 @@ function* getQuotes(this: Koa.Application.Context): AsyncIterableIterator<any> {
       units: unitsNumber
     };
     const unsavedQuote: UnsavedQuote = yield generateUnsavedQuote(quoteRequest);
-    const financingMargin = 1 - FINANCING_MARGIN;
-    const payNowTotalCents = unsavedQuote.units * unsavedQuote.unitCostCents;
-    const payLaterTotalCents = Math.ceil(payNowTotalCents / financingMargin);
+    const { payLaterTotalCents, payNowTotalCents } = calculateAmounts(unsavedQuote);
 
     this.body = {
       designId,
