@@ -901,6 +901,7 @@ async function intialPricingValues(): Promise<void> {
       pattern_revision_cents: Dollars(50),
       sample_minimum_cents: Dollars(75),
       technical_design_cents: Dollars(50),
+      version,
       working_session_cents: Dollars(25)
     }
   ];
