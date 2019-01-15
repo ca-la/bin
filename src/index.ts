@@ -6,6 +6,7 @@ require('dd-trace').init();
 import * as Logger from './services/logger';
 import * as Router from 'koa-router';
 import { cloneDeep } from 'lodash';
+import compress = require('koa-compress');
 
 Logger.log('Starting CALA API...');
 
@@ -30,6 +31,7 @@ import notificationRoutes from './components/notifications/routes';
 import koa = require('koa');
 const app = koa();
 
+app.use(compress());
 app.use(loggerMiddleware);
 app.use(errors);
 app.use(jsonBody);

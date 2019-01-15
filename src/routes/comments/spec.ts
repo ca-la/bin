@@ -13,9 +13,21 @@ test('DELETE /comment/:id deletes a task comment', async (t: tape.Test) => {
   const task = await post('/tasks', {
     body: {
       assignees: [],
+      collection: {
+        id: uuid.v4(),
+        title: 'test'
+      },
       createdAt: new Date().toISOString(),
       createdBy: 'purposefully incorrect',
       description: 'Description',
+      design: {
+        id: uuid.v4(),
+        title: 'test'
+      },
+      designStage: {
+        id: uuid.v4(),
+        title: 'test'
+      },
       designStageId: null,
       dueDate: null,
       id: uuid.v4(),

@@ -8,7 +8,7 @@ import * as TaskTemplatesDAO from '../../dao/task-templates';
 import findCollaborators, { CollaboratorRole } from '../find-collaborators';
 import Logger = require('../logger');
 import ProductDesignStage from '../../domain-objects/product-design-stage';
-import TaskEvent, { TaskStatus } from '../../domain-objects/task-event';
+import { DetailsTask, TaskStatus } from '../../domain-objects/task-event';
 import TaskTemplate, { DesignPhase } from '../../domain-objects/task-template';
 import Collaborator from '../../domain-objects/collaborator';
 import StageTemplate from '../../domain-objects/stage-template';
@@ -18,7 +18,7 @@ interface Options {
   designPhase: DesignPhase;
 }
 
-export async function createDesignTasks(options: Options): Promise<TaskEvent[]> {
+export async function createDesignTasks(options: Options): Promise<DetailsTask[]> {
   switch (options.designPhase) {
     case 'POST_CREATION':
       return createPostCreationTasks(options);
@@ -34,8 +34,8 @@ async function createTasks(
   designId: string,
   taskTemplates: TaskTemplate[],
   stages: ProductDesignStage[]
-): Promise<TaskEvent[]> {
-  const tasks: TaskEvent[] = [];
+): Promise<DetailsTask[]> {
+  const tasks: DetailsTask[] = [];
 
   // To avoid making the same "get collaborators by role" query for many tasks
   // in a row, cache old results as we iterate through the task template list
@@ -107,7 +107,7 @@ async function createTasks(
   return tasks;
 }
 
-async function createPostCreationTasks(options: Options): Promise<TaskEvent[]> {
+async function createPostCreationTasks(options: Options): Promise<DetailsTask[]> {
   const stageTemplates = await StageTemplatesDAO.findAll();
   const { designId, designPhase } = options;
 
@@ -126,7 +126,7 @@ async function createPostCreationTasks(options: Options): Promise<TaskEvent[]> {
   return await createTasks(designId, taskTemplates, stages);
 }
 
-async function createPostApprovalTasks(options: Options): Promise<TaskEvent[]> {
+async function createPostApprovalTasks(options: Options): Promise<DetailsTask[]> {
   const { designId, designPhase } = options;
   const taskTemplates = await TaskTemplatesDAO.findByPhase(designPhase);
 

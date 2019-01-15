@@ -21,6 +21,8 @@ declare module 'koa' {
       public listen(port: string | number): Server;
     }
 
+    type Middleware = (ctx: Koa.Application.Context, next: () => void) => void;
+
     namespace Application {
       interface Request<T> {
         body: object & T; // from middleware/json-body

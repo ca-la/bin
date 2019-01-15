@@ -25,6 +25,60 @@ export default interface TaskEvent {
   ordering: number;
 }
 
+export interface RelatedResourceMeta {
+  id: string | null;
+  title: string | null;
+}
+
+export interface DesignResourceMeta extends RelatedResourceMeta {
+  previewImageUrls: string[] | null;
+}
+
+export interface DetailsTaskAdaptedRow extends Omit<TaskEvent, 'taskId'> {
+  designStageTitle: string | null;
+  designId: string | null;
+  designTitle: string | null;
+  designPreviewImageUrls: string[] | null;
+  collectionId: string | null;
+  collectionTitle: string | null;
+}
+
+export const createDetailsTask = (data: DetailsTaskAdaptedRow): DetailsTask => {
+  const {
+    designId,
+    designTitle,
+    designPreviewImageUrls,
+    designStageId,
+    designStageTitle,
+    collectionId,
+    collectionTitle,
+    ...task
+  } = data;
+  return {
+    ...task,
+    collection: {
+      id: collectionId,
+      title: collectionTitle
+    },
+    design: {
+      id: designId,
+      previewImageUrls: designPreviewImageUrls,
+      title: designTitle
+    },
+    designStage: {
+      id: designStageId,
+      title: designStageTitle
+    },
+    designStageId
+  };
+};
+
+export interface DetailsTask extends Omit<TaskEvent, 'taskId'> {
+  designStage: RelatedResourceMeta;
+  design: DesignResourceMeta;
+  collection: RelatedResourceMeta;
+}
+
 export enum TaskStatus {
   NOT_STARTED = 'NOT_STARTED',
   IN_PROGRESS = 'IN_PROGRESS',
@@ -77,15 +131,21 @@ export function isTaskEventRow(row: object): row is TaskEventRow {
   );
 }
 
-export interface TaskEventRowWithStage extends TaskEventRow {
+export interface DetailTaskEventRow extends TaskEventRow {
   design_stage_id: string | null;
+  design_stage_title: string | null;
+  design_id: string | null;
+  design_title: string | null;
+  collection_id: string | null;
+  collection_title: string | null;
 }
 
-export function isTaskEventWithStage(candidate: object): candidate is TaskEventRowWithStage {
+export function isDetailTaskRow(
+  candidate: object
+): candidate is DetailTaskEventRow {
   return hasOnlyProperties(
     candidate,
     'id',
-    'task_id',
     'created_at',
     'created_by',
     'title',
@@ -93,8 +153,14 @@ export function isTaskEventWithStage(candidate: object): candidate is TaskEventR
     'due_date',
     'description',
     'design_stage_id',
+    'design_stage_title',
+    'design_id',
+    'design_title',
+    'design_preview_image_urls',
+    'collection_id',
+    'collection_title',
     'ordering'
   );
 }
 
-export const withStageAdapter = new DataAdapter<TaskEventRowWithStage, TaskEvent>();
+export const detailsAdapter = new DataAdapter<DetailTaskEventRow, DetailsTaskAdaptedRow>();
