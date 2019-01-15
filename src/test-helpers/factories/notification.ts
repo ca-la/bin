@@ -26,6 +26,7 @@ export default async function generateNotification(
     commentId: options.commentId || null,
     designId: options.designId || null,
     id: options.id || uuid.v4(),
+    measurementId: options.measurementId || null,
     recipientUserId: options.recipientUserId || null,
     sectionId: options.sectionId || null,
     sentEmailAt: options.sentEmailAt || null,

@@ -45,6 +45,7 @@ export default interface Notification {
   createdAt: Date;
   designId: string | null;
   id: string;
+  measurementId: string | null;
   recipientUserId: string | null;
   // DEPRECATED
   sectionId: string | null;
@@ -66,6 +67,7 @@ export interface NotificationRow {
   created_at: Date;
   design_id: string | null;
   id: string;
+  measurement_id: string | null;
   recipient_user_id: string | null;
   // DEPRECATED
   section_id: string | null;
@@ -121,6 +123,7 @@ export function isNotificationRow(row: object):
     'created_at',
     'design_id',
     'id',
+    'measurement_id',
     'recipient_user_id',
     'section_id',
     'sent_email_at',
