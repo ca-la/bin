@@ -46,12 +46,15 @@ live_migration_preflight() {
 main() {
   host=${1:-""}
   rollback_flag=${2:-""}
+  skip_build=${SKIP_BUILD:-"false"}
 
   if [ "$host" != "local" ]; then
     live_migration_preflight
   fi
 
-  make build
+  if [ "$skip_build" != "true" ]; then
+    make build
+  fi
 
   take_action() {
     if [ "$rollback_flag" == "" ]; then

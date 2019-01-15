@@ -59,13 +59,15 @@
     "npm": "5.7.*"
   },
   "scripts": {
-    "lint": "docker-compose run --rm typescript bin/lint",
-    "migrate-local": "docker-compose -f docker-compose.yml -f docker-compose.test.yml run --rm test bin/migrate local && docker-compose run --rm api bin/migrate local",
-    "rollback-local": "docker-compose -f docker-compose.yml -f docker-compose.test.yml run --rm test bin/migrate local rollback && docker-compose run --rm api bin/migrate local rollback",
+    "lint": "docker-compose run typescript bin/lint",
+    "migrate-local": "npm run migrate-test && docker-compose run api bin/migrate local",
+    "migrate-test": "docker-compose -f docker-compose.yml -f docker-compose.test.yml run -e SKIP_BUILD test bin/migrate local",
+    "rollback-local": "npm run rollback-test && docker-compose run api bin/migrate local rollback",
+    "rollback-test": "docker-compose -f docker-compose.yml -f docker-compose.test.yml run -e SKIP_BUILD test bin/migrate local rollback",
     "prerelease": "npm run lint && npm run test",
     "release": "cala-release",
     "start": "make serve-built",
     "tt": "bin/tt",
-    "test": "docker-compose -f docker-compose.yml -f docker-compose.test.yml run --rm test bin/test"
+    "test": "docker-compose -f docker-compose.yml -f docker-compose.test.yml run test bin/test"
   }
 }
