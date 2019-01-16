@@ -7,6 +7,7 @@ import { hasOnlyProperties } from '../../services/require-properties';
 import filterError = require('../../services/filter-error');
 import InvalidDataError = require('../../errors/invalid-data');
 import requireAuth = require('../../middleware/require-auth');
+import * as NotificationsService from '../../services/create-notifications';
 
 const router = new Router();
 
@@ -46,6 +47,11 @@ function* createMeasurement(this: Koa.Application.Context): AsyncIterableIterato
   const body = this.request.body;
   if (body && isMeasurement(body)) {
     const measurement = yield MeasurementsDAO.create(measurementFromIO(body, this.state.userId));
+    NotificationsService.sendDesignOwnerMeasurementCreateNotification(
+      body.id,
+      body.canvasId,
+      this.state.userId
+    );
     this.status = 201;
     this.body = measurement;
   } else {

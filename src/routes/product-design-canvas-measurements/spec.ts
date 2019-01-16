@@ -1,11 +1,14 @@
 import * as tape from 'tape';
 import * as uuid from 'node-uuid';
+import * as sinon from 'sinon';
+
 import createUser = require('../../test-helpers/create-user');
 import { authHeader, del, get, patch, put } from '../../test-helpers/http';
 import { sandbox, test } from '../../test-helpers/fresh';
 import * as MeasurementDAO from '../../dao/product-design-canvas-measurements';
 import { create as createDesign } from '../../dao/product-designs';
 import { create as createDesignCanvas } from '../../dao/product-design-canvases';
+import * as CreateNotifications from '../../services/create-notifications';
 
 test('PUT /:measurementId creates a Measurement', async (t: tape.Test) => {
   const { session, user } = await createUser();
@@ -42,12 +45,18 @@ test('PUT /:measurementId creates a Measurement', async (t: tape.Test) => {
     startingY: 1
   };
 
+  const notificationStub = sandbox()
+    .stub(CreateNotifications, 'sendDesignOwnerMeasurementCreateNotification')
+    .resolves();
+
   const [response, body] = await put(`/product-design-canvas-measurements/${measurementId}`, {
     body: data,
     headers: authHeader(session.id)
   });
   t.equal(response.status, 201);
   t.deepEqual(body, data);
+
+  sinon.assert.callCount(notificationStub, 1);
 });
 
 test('PUT /:measurementId returns 400 if canvasId is invalid', async (t: tape.Test) => {

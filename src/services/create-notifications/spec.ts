@@ -4,7 +4,7 @@ import * as sinon from 'sinon';
 
 import { sandbox, test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
-import Notification, { NotificationType } from '../../components/notifications/domain-object';
+import { Notification, NotificationType } from '../../components/notifications/domain-object';
 import * as NotificationsService from './index';
 import * as CollaboratorsDAO from '../../dao/collaborators';
 import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
@@ -22,6 +22,7 @@ import generateAnnotation from '../../test-helpers/factories/product-design-canv
 import generateCollection from '../../test-helpers/factories/collection';
 import * as SlackService from '../../services/slack';
 import * as Config from '../../config';
+import generateMeasurement from '../../test-helpers/factories/product-design-canvas-measurement';
 
 test('sendDesignUpdateNotification', async (t: tape.Test) => {
   const userOne = await createUser();
@@ -113,6 +114,55 @@ test('sendDesignOwnerAnnotationCreateNotification', async (t: tape.Test) => {
   t.equal(designId, design.id);
   t.equal(recipientUserId, owner.id);
   t.equal(type, NotificationType.ANNOTATION_CREATE);
+});
+
+test('sendDesignOwnerMeasurementCreateNotification', async (t: tape.Test) => {
+  const { user: user } = await createUser({ withSession: false });
+  const { user: owner } = await createUser({ withSession: false });
+
+  const { collection } = await generateCollection({ createdBy: owner.id });
+  const design = await DesignsDAO.create({
+    productType: 'A product type',
+    title: 'A design',
+    userId: owner.id
+  });
+  await CollectionsDAO.addDesign(collection.id, design.id);
+
+  const { canvas } = await generateCanvas({
+    createdBy: owner.id,
+    designId: design.id
+  });
+  const { measurement } = await generateMeasurement({ canvasId: canvas.id });
+
+  const nullNotification = await NotificationsService.sendDesignOwnerMeasurementCreateNotification(
+    measurement.id,
+    canvas.id,
+    owner.id
+  );
+  t.equal(nullNotification, null, 'A notification will not be made if the actor is the recipient');
+
+  const notification = await NotificationsService.sendDesignOwnerMeasurementCreateNotification(
+    measurement.id,
+    canvas.id,
+    user.id
+  );
+  if (!notification) { throw new Error('Expected a notification!'); }
+  const {
+    actorUserId,
+    canvasId,
+    collectionId,
+    designId,
+    measurementId,
+    recipientUserId,
+    type
+  } = notification;
+  t.equal(actorUserId, user.id);
+  t.equal(canvasId, canvas.id);
+  t.equal(collectionId, collection.id);
+  t.equal(designId, design.id);
+  t.equal(measurementId, measurement.id);
+  t.equal(recipientUserId, owner.id);
+  t.equal(type, NotificationType.MEASUREMENT_CREATE);
 });
 
 test('sendTaskCommentCreateNotification', async (t: tape.Test) => {

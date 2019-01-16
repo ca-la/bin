@@ -6,8 +6,11 @@ import createUser = require('../../test-helpers/create-user');
 
 import * as CollaboratorsDAO from '../../dao/collaborators';
 import * as DesignsDAO from '../../dao/product-designs';
-import Notification from './domain-object';
-import generateNotification from '../../test-helpers/factories/notification';
+import { Notification } from './domain-object';
+import {
+  generateDesignUpdateNotification,
+  generateInviteNotification
+} from '../../test-helpers/factories/notification';
 
 const API_PATH = '/notifications';
 
@@ -36,16 +39,16 @@ test(`GET ${API_PATH} returns a list of notifications for the user`, async (t: t
     userEmail: 'raf@rafsimons.com',
     userId: null
   });
-  const { notification: n1 } = await generateNotification({
+  const { notification: n1 } = await generateDesignUpdateNotification({
     actorUserId: userOne.user.id,
     recipientUserId: userTwo.user.id
   });
-  const { notification: n2 } = await generateNotification({
+  const { notification: n2 } = await generateInviteNotification({
     actorUserId: userOne.user.id,
     collaboratorId: c1.id,
     recipientUserId: null
   });
-  await generateNotification({
+  await generateInviteNotification({
     actorUserId: userOne.user.id,
     collaboratorId: c2.id,
     recipientUserId: null

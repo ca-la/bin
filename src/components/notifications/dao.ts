@@ -3,13 +3,14 @@ import { omit } from 'lodash';
 
 import * as db from '../../services/db';
 import first from '../../services/first';
-import Notification, {
+import {
   dataAdapter,
   hydratedDataAdapter,
   HydratedNotification,
   HydratedNotificationRow,
   isHydratedNotificationRow,
   isNotificationRow,
+  Notification,
   NotificationRow
 } from './domain-object';
 import * as CollaboratorsDAO from '../../dao/collaborators';
@@ -79,23 +80,23 @@ export async function markSentTrx(ids: string[], trx: Knex.Transaction): Promise
   return validateEvery<NotificationRow, Notification>(
     TABLE_NAME,
     isNotificationRow,
-    dataAdapter,
+    dataAdapter<Notification>(),
     updatedNotifications
   );
 }
 
-export async function create(data: Uninserted<Notification>): Promise<Notification> {
-  const rowData = dataAdapter.forInsertion(data);
+export async function create<T extends Notification>(data: Uninserted<T>): Promise<T> {
+  const rowData = dataAdapter<T>().forInsertion(data);
   const created = await db(TABLE_NAME)
     .insert(rowData, '*')
     .then((rows: NotificationRow[]) => first<NotificationRow>(rows));
 
   if (!created) { throw new Error('Failed to create a notification!'); }
 
-  return validate<NotificationRow, Notification>(
+  return validate<NotificationRow, T>(
     TABLE_NAME,
     isNotificationRow,
-    dataAdapter,
+    dataAdapter<T>(),
     created
   );
 }
@@ -112,7 +113,7 @@ export async function findById(id: string): Promise<Notification | null> {
   return validate<NotificationRow, Notification>(
     TABLE_NAME,
     isNotificationRow,
-    dataAdapter,
+    dataAdapter<Notification>(),
     notification
   );
 }
@@ -138,7 +139,7 @@ export async function findByUserId(
   return validateEvery<NotificationRow, Notification>(
     TABLE_NAME,
     isNotificationRow,
-    dataAdapter,
+    dataAdapter<Notification>(),
     notifications
   );
 }
@@ -154,7 +155,7 @@ export async function findByUserId(
  * granular enough changes.
  */
 export async function deleteRecent(data: Uninserted<Notification>): Promise<number> {
-  const rowData = omit(dataAdapter.forInsertion(data), 'id', 'created_at');
+  const rowData = omit(dataAdapter<Notification>().forInsertion(data), 'id', 'created_at');
 
   const now = Date.now();
   // 5 minutes ago

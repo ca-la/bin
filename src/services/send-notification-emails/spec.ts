@@ -4,29 +4,26 @@ import * as sinon from 'sinon';
 import { sandbox, test } from '../../test-helpers/fresh';
 import * as NotificationsDAO from '../../components/notifications/dao';
 import createUser = require('../../test-helpers/create-user');
-import { NotificationType } from '../../components/notifications/domain-object';
 import * as EmailService from '../email';
 import { sendNotificationEmails } from './index';
-import generateNotification from '../../test-helpers/factories/notification';
+import {
+  generateDesignUpdateNotification,
+  generateInviteNotification
+} from '../../test-helpers/factories/notification';
 
 test('sendNotificationEmails supports finding outstanding notifications', async (t: tape.Test) => {
   const userOne = await createUser();
   const userTwo = await createUser();
 
-  const { notification: notificationOne } = await generateNotification({
+  const { notification: notificationOne } = await generateDesignUpdateNotification({
     actorUserId: userOne.user.id,
     recipientUserId: userTwo.user.id
   });
-  const { notification: notificationTwo } = await generateNotification({
+  const { notification: notificationTwo } = await generateDesignUpdateNotification({
     actorUserId: userTwo.user.id,
     recipientUserId: userOne.user.id
   });
-  await generateNotification({
-    actorUserId: userOne.user.id,
-    recipientUserId: userTwo.user.id,
-    sentEmailAt: new Date(),
-    type: NotificationType.TASK_COMMENT_CREATE
-  });
+  await generateInviteNotification();
 
   const emailStub = sandbox().stub(EmailService, 'enqueueSend').returns(Promise.resolve());
 

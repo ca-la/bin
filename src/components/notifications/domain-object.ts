@@ -19,6 +19,7 @@ import ProductDesign = require('../../domain-objects/product-design');
 export enum NotificationType {
   ANNOTATION_CREATE = 'ANNOTATION_CREATE',
   DESIGN_UPDATE = 'DESIGN_UPDATE',
+  MEASUREMENT_CREATE = 'MEASUREMENT_CREATE',
   SECTION_DELETE = 'SECTION_DELETE',
   SECTION_CREATE = 'SECTION_CREATE',
   SECTION_UPDATE = 'SECTION_UPDATE',
@@ -33,27 +34,152 @@ export enum NotificationType {
   INVITE_COLLABORATOR = 'INVITE_COLLABORATOR'
 }
 
-export default interface Notification {
-  // DEPRECATED
-  actionDescription: string | null;
+export interface BaseNotification {
   actorUserId: string;
-  annotationId: string | null;
-  canvasId: string | null;
-  collaboratorId: string | null;
-  collectionId: string | null;
-  commentId: string | null;
   createdAt: Date;
-  designId: string | null;
   id: string;
-  measurementId: string | null;
-  recipientUserId: string | null;
-  // DEPRECATED
-  sectionId: string | null;
   sentEmailAt: Date | null;
-  stageId: string | null;
-  taskId: string | null;
-  type: NotificationType | null;
 }
+
+export interface AnnotationNotification extends BaseNotification {
+  annotationId: string;
+  canvasId: string;
+  collectionId: string;
+  designId: string;
+  recipientUserId: string;
+  type: NotificationType.ANNOTATION_CREATE;
+}
+
+export interface CollectionSubmitNotification extends BaseNotification {
+  collectionId: string;
+  recipientUserId: string;
+  type: NotificationType.COLLECTION_SUBMIT;
+}
+
+export interface DesignUpdateNotification extends BaseNotification {
+  actionDescription: string;
+  designId: string;
+  recipientUserId: string;
+  type: NotificationType.DESIGN_UPDATE;
+}
+
+export interface ImmediateCostedCollectionNotification extends BaseNotification {
+  collectionId: string;
+  recipientUserId: string;
+  sentEmailAt: Date;
+  type: NotificationType.COMMIT_COST_INPUTS;
+}
+
+export interface ImmediateInviteNotification extends BaseNotification {
+  actorUserId: string;
+  collaboratorId: string;
+  collectionId: string | null;
+  designId: string | null;
+  recipientUserId: string | null;
+  sentEmailAt: Date;
+  type: NotificationType.INVITE_COLLABORATOR;
+}
+
+export interface MeasurementNotification extends BaseNotification {
+  canvasId: string;
+  collectionId: string;
+  designId: string;
+  measurementId: string;
+  recipientUserId: string;
+  type: NotificationType.MEASUREMENT_CREATE;
+}
+
+export interface PartnerAcceptBidNotification extends BaseNotification {
+  designId: string;
+  recipientUserId: string;
+  type: NotificationType.PARTNER_ACCEPT_SERVICE_BID;
+}
+
+export interface PartnerDesignBidNotification extends BaseNotification {
+  designId: string;
+  recipientUserId: string;
+  type: NotificationType.PARTNER_DESIGN_BID;
+}
+
+export interface PartnerRejectBidNotification extends BaseNotification {
+  designId: string;
+  recipientUserId: string;
+  type: NotificationType.PARTNER_REJECT_SERVICE_BID;
+}
+
+// Deprecated (v1 notification)
+export interface SectionCreateNotification extends BaseNotification {
+  actionDescription: string;
+  actorUserId: string;
+  designId: string;
+  recipientUserId: string;
+  sectionId: string;
+  type: NotificationType.SECTION_CREATE;
+}
+
+// Deprecated (v1 notification)
+export interface SectionDeleteNotification extends BaseNotification {
+  actionDescription: string;
+  designId: string;
+  recipientUserId: string;
+  type: NotificationType.SECTION_DELETE;
+}
+
+// Deprecated (v1 notification)
+export interface SectionUpdateNotification extends BaseNotification {
+  actionDescription: string;
+  designId: string;
+  recipientUserId: string;
+  sectionId: string;
+  type: NotificationType.SECTION_UPDATE;
+}
+
+export interface TaskAssignmentNotification extends BaseNotification {
+  collaboratorId: string;
+  collectionId: string | null;
+  designId: string;
+  recipientUserId: string | null;
+  stageId: string;
+  taskId: string;
+  type: NotificationType.TASK_ASSIGNMENT;
+}
+
+export interface TaskCommentCreateNotification extends BaseNotification {
+  collectionId: string | null;
+  commentId: string;
+  designId: string;
+  recipientUserId: string;
+  stageId: string;
+  taskId: string;
+  type: NotificationType.TASK_COMMENT_CREATE;
+}
+
+export interface TaskCompleteNotification extends BaseNotification {
+  collaboratorId: string;
+  collectionId: string | null;
+  designId: string;
+  recipientUserId: string | null;
+  stageId: string;
+  taskId: string;
+  type: NotificationType.TASK_COMPLETION;
+}
+
+export type Notification =
+  AnnotationNotification |
+  CollectionSubmitNotification |
+  DesignUpdateNotification |
+  ImmediateCostedCollectionNotification |
+  ImmediateInviteNotification |
+  MeasurementNotification |
+  PartnerAcceptBidNotification |
+  PartnerDesignBidNotification |
+  PartnerRejectBidNotification |
+  SectionCreateNotification  |
+  SectionDeleteNotification |
+  SectionUpdateNotification |
+  TaskAssignmentNotification |
+  TaskCommentCreateNotification |
+  TaskCompleteNotification;
 
 export interface NotificationRow {
   // DEPRECATED
@@ -77,7 +203,7 @@ export interface NotificationRow {
   type: NotificationType | null;
 }
 
-export interface HydratedNotification extends Notification {
+export type HydratedNotification = Notification & {
   actor: User;
   annotation: Annotation | null;
   canvas: Canvas | null;
@@ -86,7 +212,7 @@ export interface HydratedNotification extends Notification {
   design: ProductDesign | null;
   stage: Stage | null;
   task: TaskEvent | null;
-}
+};
 
 export interface HydratedNotificationRow extends NotificationRow {
   actor: User;
@@ -99,10 +225,9 @@ export interface HydratedNotificationRow extends NotificationRow {
   task: TaskEventRow | null;
 }
 
-export const dataAdapter = new DataAdapter<
-  NotificationRow,
-  Notification
->();
+export function dataAdapter<T extends Notification>(): DataAdapter<NotificationRow, T> {
+  return new DataAdapter<NotificationRow, T>();
+}
 
 export const hydratedDataAdapter = new DataAdapter<
   HydratedNotificationRow,

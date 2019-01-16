@@ -1,7 +1,7 @@
 import * as Router from 'koa-router';
 import * as Koa from 'koa';
 
-import Notification from './domain-object';
+import { Notification } from './domain-object';
 import * as NotificationsDAO from './dao';
 import requireAuth = require('../../middleware/require-auth');
 
