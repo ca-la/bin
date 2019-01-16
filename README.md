@@ -87,7 +87,7 @@ is merged. Please paste the output of `bin/migrate staging` into the #eng
 channel in Slack.
 
 When a production deployment is approved, please run production migrations
-(`bin/migrate production`) immediately prior to running the release script.
+(`npm run migrate -- production`) immediately prior to running the release script.
 Again, paste the output into Slack for visibility.
 
 All migrations **must** be able to work both with the currently-deployed
@@ -101,11 +101,11 @@ deploy; first add the column, then deploy the application code, then add the
 `not null` constraint.
 
 ```bash
-$ bin/create-migration        # Create a new migration
-$ npm run migrate-local       # Migrate local DBs to latest schema
-$ npm run rollback-local      # Roll back latest local migration
-$ bin/migrate staging         # Migrate staging DB
-$ bin/migrate production      # Migrate production DB
+$ bin/create-migration            # Create a new migration
+$ npm run migrate-local           # Migrate local DBs to latest schema
+$ npm run rollback-local          # Roll back latest local migration
+$ npm run migrate -- staging      # Migrate staging DB
+$ npm run migrate -- production   # Migrate production DB
 ```
 
 For advanced usage, see [knexjs.org](http://knexjs.org/#Migrations).
