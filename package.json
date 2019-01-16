@@ -63,7 +63,6 @@
   "scripts": {
     "lint": "docker-compose run typescript bin/lint",
     "migrate-local": "npm run migrate-test && docker-compose run api bin/migrate local",
-    "migrate": "docker-compose run api bin/migrate",
     "migrate-test": "docker-compose -f docker-compose.yml -f docker-compose.test.yml run -e SKIP_BUILD test bin/migrate local",
     "rollback-local": "npm run rollback-test && docker-compose run api bin/migrate local rollback",
     "rollback-test": "docker-compose -f docker-compose.yml -f docker-compose.test.yml run -e SKIP_BUILD test bin/migrate local rollback",
