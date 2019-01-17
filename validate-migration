@@ -12,16 +12,14 @@ initial_schema_path=$TMPDIR/cala-db-before-migration.txt
 after_migration_schema_path=$TMPDIR/cala-db-after-migration.txt
 after_rollback_schema_path=$TMPDIR/cala-db-after-rollback.txt
 
-db_url='postgres://localhost/cala-test'
-
 migrate() {
   # Swap this out for your own implementation if you're not using knex
-  DATABASE_URL=$db_url $(npm bin)/knex migrate:latest --knexfile dist/knexfile.js
+  $(npm bin)/knex migrate:latest --knexfile dist/knexfile.js
 }
 
 rollback() {
   # Swap this out for your own implementation if you're not using knex
-  DATABASE_URL=$db_url $(npm bin)/knex migrate:rollback --knexfile dist/knexfile.js
+  $(npm bin)/knex migrate:rollback --knexfile dist/knexfile.js
 }
 
 pre() {
@@ -34,11 +32,11 @@ post() {
 
 restore_data() {
   pre 'Restoring initial schema... '
-  psql $db_url < $initial_schema_path > /dev/null
+  psql $DATABASE_URL < $initial_schema_path > /dev/null
   post
 
   pre 'Restoring initial data... '
-  psql $db_url < $initial_data_path > /dev/null
+  psql $DATABASE_URL < $initial_data_path > /dev/null
   post
 }
 
@@ -50,11 +48,11 @@ fail_elegantly() {
 
 main() {
   pre 'Dumping initial data... '
-  pg_dump -c $db_url > $initial_data_path
+  pg_dump -c $DATABASE_URL > $initial_data_path
   post
 
   pre 'Dumping initial schema... '
-  pg_dump -csOx $db_url > $initial_schema_path
+  pg_dump -csOx $DATABASE_URL > $initial_schema_path
   post
 
   pre 'Migrating... '
@@ -62,7 +60,7 @@ main() {
   post
 
   pre 'Dumping migrated schema... '
-  pg_dump -csOx $db_url > $after_migration_schema_path
+  pg_dump -csOx $DATABASE_URL > $after_migration_schema_path
   post
 
   pre 'Rolling back... '
@@ -70,7 +68,7 @@ main() {
   post
 
   pre 'Dumping final schema... '
-  pg_dump -csOx $db_url > $after_rollback_schema_path
+  pg_dump -csOx $DATABASE_URL > $after_rollback_schema_path
   post
 
   restore_data
