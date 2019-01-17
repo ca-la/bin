@@ -71,7 +71,7 @@
     "prerelease": "npm-run-all clean lint test",
     "release": "cala-release",
     "script": "bin/run",
-    "prestart": "[[ -d dist ]]",
+    "prestart": "stat dist > /dev/null",
     "start": "env $(cat .env | xargs -d '\\n') node dist",
     "migration:validate": "cala-validate-migration",
     "migration:create": "bin/create-migration",
