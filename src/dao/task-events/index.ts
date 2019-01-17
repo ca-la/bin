@@ -1,6 +1,8 @@
 import * as uuid from 'node-uuid';
 import { omit } from 'lodash';
 
+import findUserDesigns = require('../../services/find-user-designs');
+import ProductDesign = require('../../domain-objects/product-design');
 import * as db from '../../services/db';
 import TaskEvent, {
   createDetailsTask,
@@ -95,20 +97,12 @@ export async function findByCollectionId(collectionId: string): Promise<DetailsT
 }
 
 export async function findByUserId(userId: string): Promise<DetailsTask[]> {
+  const designs = await findUserDesigns(userId);
+  const designIds = designs.map((design: ProductDesign): string => design.id);
   const taskEvents: DetailTaskEventRow[] = await db(TABLE_NAME)
     .select('detail_tasks.*')
     .from(DETAILS_VIEW_NAME)
-    .join(
-      'collaborator_tasks',
-      'detail_tasks.id',
-      'collaborator_tasks.task_id'
-    )
-    .join(
-      'collaborators',
-      'collaborator_tasks.collaborator_id',
-      'collaborators.id'
-    )
-    .where({ 'collaborators.user_id': userId })
+    .whereIn('design_id', designIds)
     .orderBy('detail_tasks.ordering', 'asc');
 
   return validateEvery<DetailTaskEventRow, DetailsTaskAdaptedRow>(

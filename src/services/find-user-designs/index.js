@@ -1,6 +1,7 @@
 'use strict';
 
 const uniq = require('lodash/uniq');
+const flatten = require('lodash/flatten');
 const sortedUniqBy = require('lodash/sortedUniqBy');
 
 const CollaboratorsDAO = require('../../dao/collaborators');
@@ -26,25 +27,33 @@ async function findUserDesigns(userId, filters) {
     ));
 
   const collaborations = await CollaboratorsDAO.findByUserId(userId);
-  const invitedDesigns = await Promise.all(
-    collaborations
-      .filter(collaboration => collaboration.role !== 'PREVIEW')
-      .map(
-        collaboration =>
-          ProductDesignsDAO
-            .findById(collaboration.designId, filters)
-            .then((design) => {
-              if (design) {
-                return { ...design, role: collaboration.role };
-              }
-              return design;
-            })
-      )
-  );
+  const invitedDesigns = await Promise.all(collaborations
+    .reduce((acc, collaboration) => {
+      if (collaboration.designId) {
+        const collaborationDesign = ProductDesignsDAO
+          .findById(collaboration.designId, filters)
+          .then((design) => {
+            if (design) {
+              return { ...design, role: collaboration.role };
+            }
+            return design;
+          });
+        return [...acc, collaborationDesign];
+      }
+      if (collaboration.collectionId) {
+        const collaborationDesigns = ProductDesignsDAO
+          .findByCollectionId(collaboration.collectionId)
+          .then((designs) => {
+            return designs.map(design => ({ ...design, role: collaboration.role }));
+          });
+        return [...acc, collaborationDesigns];
+      }
+      return acc;
+    }, []));
 
   // Deleted designs become holes in the array right now - TODO maybe clean this
   // up via a reduce or something
-  const availableInvitedDesigns = invitedDesigns.filter(Boolean);
+  const availableInvitedDesigns = flatten(invitedDesigns).filter(Boolean);
 
   // Partners may be shared on a design via the "services" card - when we select
   // them as the provider for that service, they can see that design.

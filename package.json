@@ -70,6 +70,7 @@
     "release": "cala-release",
     "start": "make serve-built",
     "tt": "bin/tt",
-    "test": "docker-compose -f docker-compose.yml -f docker-compose.test.yml run test bin/test"
+    "test": "docker-compose -f docker-compose.yml -f docker-compose.test.yml run test bin/test",
+    "psql": "docker-compose run postgres psql postgres://postgres@postgres:5432/cala"
   }
 }

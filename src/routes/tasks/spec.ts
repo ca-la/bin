@@ -15,6 +15,9 @@ import { authHeader, get, post, put } from '../../test-helpers/http';
 import { sandbox, test } from '../../test-helpers/fresh';
 import * as CreateNotifications from '../../services/create-notifications';
 import Collaborator from '../../domain-objects/collaborator';
+import generateTask from '../../test-helpers/factories/task';
+import createDesign from '../../services/create-design';
+import generateProductDesignStage from '../../test-helpers/factories/product-design-stage';
 
 const BASE_TASK_EVENT: DetailsTask & { assignees: Collaborator[] } = {
   assignees: [],
@@ -141,7 +144,6 @@ test('GET /tasks?stageId=:stageId returns tasks on design stage', async (t: tape
 
 test('GET /tasks?userId=:userId returns all tasks for a user', async (t: tape.Test) => {
   const { session, user } = await createUser();
-  const task = await TasksDAO.create(uuid.v4());
   const collection = await CollectionsDAO.create({
     createdAt: new Date(),
     createdBy: user.id,
@@ -150,6 +152,13 @@ test('GET /tasks?userId=:userId returns all tasks for a user', async (t: tape.Te
     id: uuid.v4(),
     title: 'FW19'
   });
+  const design = await createDesign({
+    productType: 'test',
+    title: 'design',
+    userId: user.id
+  });
+  await CollectionsDAO.addDesign(collection.id, design.id);
+  const { stage } = await generateProductDesignStage({ designId: design.id }, user.id);
 
   const collaborator = await CollaboratorsDAO.create({
     collectionId: collection.id,
@@ -159,16 +168,16 @@ test('GET /tasks?userId=:userId returns all tasks for a user', async (t: tape.Te
     userEmail: null,
     userId: user.id
   });
-  await TaskEventsDAO.create({
-    createdBy: user.id,
-    description: 'A description',
-    designStageId: null,
-    dueDate: null,
-    ordering: 0,
-    status: TaskStatus.NOT_STARTED,
-    taskId: task.id,
-    title: 'My New Task'
+  const { task } = await generateTask({ designStageId: stage.id });
+
+  const design2 = await createDesign({
+    productType: 'test',
+    title: 'design',
+    userId: user.id
   });
+  const { stage: stage2 } = await generateProductDesignStage({ designId: design2.id }, user.id);
+
+  const { task: task2 } = await generateTask({ createdBy: user.id, designStageId: stage2.id });
   await CollaboratorTasksDAO
     .create({ collaboratorId: collaborator.id, taskId: task.id });
 
@@ -177,9 +186,11 @@ test('GET /tasks?userId=:userId returns all tasks for a user', async (t: tape.Te
   });
 
   if (body.length === 0) { return t.fail('no content'); }
-  t.equal(response.status, 200);
-  t.equal(body[0].id, task.id);
-  t.equal(body[0].assignees.length, 1);
+  t.equal(response.status, 200, 'it should respond with 200');
+  t.equal(body.length, 2, 'it should have 2 tasks');
+  t.equal(body[0].id, task.id, 'task[0] should match ids');
+  t.equal(body[0].assignees.length, 1, 'task[0] should have 1 assignee');
+  t.equal(body[1].id, task2.id, 'task[1] should match ids');
 });
 
 test('POST /tasks creates Task and TaskEvent successfully', async (t: tape.Test) => {

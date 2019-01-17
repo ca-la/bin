@@ -10,7 +10,6 @@ import {
   findByUserId
 } from './index';
 import { create as createTask } from '../tasks';
-import { create as createCollaboratorTask } from '../collaborator-tasks';
 import { create as createDesignStageTask } from '../product-design-stage-tasks';
 import { create as createDesignStage } from '../product-design-stages';
 import { create as createDesign, deleteById as deleteDesign } from '../product-designs';
@@ -19,6 +18,7 @@ import { addDesign, create as createCollection } from '../collections';
 import createUser = require('../../test-helpers/create-user');
 import { DetailsTask, TaskStatus } from '../../domain-objects/task-event';
 import generateTask from '../../test-helpers/factories/task';
+import generateProductDesignStage from '../../test-helpers/factories/product-design-stage';
 
 const getInsertedWithDetails = (
   inserted: DetailsTask, result: DetailsTask
@@ -152,18 +152,47 @@ test('Task Events DAO supports retrieval by collectionId', async (t: tape.Test) 
     'Returned inserted task');
 });
 
-test('Task Events DAO supports retrieval by userId', async (t: tape.Test) => {
+test('Task Events DAO supports retrieval by userId on own design', async (t: tape.Test) => {
   const { user } = await createUser();
+
+  const design = await createDesign({
+    productType: 'test',
+    title: 'design',
+    userId: user.id
+  });
+  const { stage } = await generateProductDesignStage({ designId: design.id }, user.id);
+  const { task } = await generateTask({ createdBy: user.id, designStageId: stage.id });
+
+  const result = await findByUserId(user.id);
+  if (result.length === 0) { return t.fail('No tasks returned'); }
+  const insertedWithDetails = getInsertedWithDetails(task, result[0]);
+  t.deepEqual(
+    { ...result[0], createdAt: new Date(result[0].createdAt) },
+    insertedWithDetails,
+    'Returned inserted task');
+});
+
+test('Task Events DAO supports retrieval by userId on shared collection', async (t: tape.Test) => {
+  const { user } = await createUser();
+  const { user: user2 } = await createUser();
   const collection = await createCollection({
     createdAt: new Date(),
-    createdBy: user.id,
+    createdBy: user2.id,
     deletedAt: null,
     description: null,
     id: uuid.v4(),
     title: 'FW19'
   });
 
-  const collaborator = await createCollaborator({
+  const design = await createDesign({
+    productType: 'test',
+    title: 'design',
+    userId: user2.id
+  });
+  await addDesign(collection.id, design.id);
+  const { stage } = await generateProductDesignStage({ designId: design.id }, user.id);
+  const { task: taskEvent } = await generateTask({ createdBy: user.id, designStageId: stage.id });
+  await createCollaborator({
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',
@@ -171,8 +200,34 @@ test('Task Events DAO supports retrieval by userId', async (t: tape.Test) => {
     userEmail: null,
     userId: user.id
   });
-  const { task: taskEvent } = await generateTask({ createdBy: user.id });
-  await createCollaboratorTask({ collaboratorId: collaborator.id, taskId: taskEvent.id });
+
+  const result = await findByUserId(user.id);
+  if (result.length === 0) { return t.fail('No tasks returned'); }
+  const insertedWithDetails = getInsertedWithDetails(taskEvent, result[0]);
+  t.deepEqual(
+    { ...result[0], createdAt: new Date(result[0].createdAt) },
+    insertedWithDetails,
+    'Returned inserted task');
+});
+
+test('Task Events DAO supports retrieval by userId on shared design', async (t: tape.Test) => {
+  const { user } = await createUser();
+  const { user: user2 } = await createUser();
+  const design = await createDesign({
+    productType: 'test',
+    title: 'design',
+    userId: user2.id
+  });
+  const { stage } = await generateProductDesignStage({ designId: design.id }, user.id);
+  const { task: taskEvent } = await generateTask({ createdBy: user.id, designStageId: stage.id });
+  await createCollaborator({
+    collectionId: null,
+    designId: design.id,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
+    userId: user.id
+  });
 
   const result = await findByUserId(user.id);
   if (result.length === 0) { return t.fail('No tasks returned'); }
