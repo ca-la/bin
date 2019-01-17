@@ -18,14 +18,14 @@ jobs:
 
       - restore_cache:
           keys:
-          - v1-dependencies-{{ checksum "package-lock.json" }}
+          - v3-dependencies-{{ checksum "package-lock.json" }}
 
       - run: npm ci
 
       - save_cache:
           paths:
-            - "$HOME/.npm"
-          key: v1-dependencies-{{ checksum "package-lock.json" }}
+            - "~/.npm"
+          key: v3-dependencies-{{ checksum "package-lock.json" }}
       - store_test_results:
           path: ~/repo/reports
       - store_artifacts:
