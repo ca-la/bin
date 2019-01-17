@@ -1,0 +1,52 @@
+#!/bin/bash
+
+set -euo pipefail
+
+usage_fail() {
+  echo "Usage: publish <staging|production>"
+  exit 1
+}
+
+live_publish_preflight() {
+  if [ ! -d dist ];
+  then
+    echo 'Missing built code';
+  exit 1;
+  fi
+
+  [[ ! -s \"$(git rev-parse --git-dir)/shallow\" ]] || git fetch --unshallow
+  git branch -D deploy-branch || true
+  git checkout --orphan deploy-branch
+  git add -f dist
+  git commit -m '[ci skip] add built code'
+}
+
+main() {
+  host=${1:-""}
+
+  take_action() {
+    echo 'Checking deployment readiness...'
+    npx cala-validate-deployment-readiness $host dist/migrations
+    git push https://heroku:$HEROKU_API_KEY@git.heroku.com/$HEROKU_DEPLOY_REPO.git deploy-branch:master -f
+    git checkout master
+  }
+
+  case "$host" in
+    staging)
+      echo -n 'Deploying to Staging: '
+      live_publish_preflight
+      HEROKU_DEPLOY_REPO="cala-api-stg" DATABASE_URL=$(heroku config:get DATABASE_URL --app $HEROKU_DEPLOY_REPO)?ssl=true take_action
+      ;;
+    production)
+      live_publish_preflight
+      echo -n 'Deploying to Production: '
+      HEROKU_DEPLOY_REPO="cala-api-prod" DATABASE_URL=$(heroku config:get DATABASE_URL --app $HEROKU_DEPLOY_REPO)?ssl=true take_action
+      echo -n 'Deploying to Demo: '
+      HEROKU_DEPLOY_REPO="cala-api-demo" DATABASE_URL=$(heroku config:get DATABASE_URL --app $HEROKU_DEPLOY_REPO)?ssl=true take_action
+      ;;
+    *)
+      usage_fail
+  esac
+}
+
+main "$@"

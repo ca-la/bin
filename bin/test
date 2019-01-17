@@ -1,6 +1,10 @@
 #!/bin/bash
 set -e
 
-rm -rf dist
-npx tsc -p .
-npx tape "dist/**/*spec.js" | npx tap-difflet --pessimistic
+if [ "$CI" == "true" ]
+then
+  mkdir -p ./reports
+  env $(cat .env .test.env | xargs -d '\n') npx tape "dist/**/*spec.js" | npx tap-xunit > ./reports/tape.xml
+else
+  env $(cat .env .test.env | xargs -d '\n') npx tape "dist/**/*spec.js" | npx tap-difflet --pessimistic
+fi

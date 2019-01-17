@@ -7,22 +7,30 @@ code is written in vanilla JavaScript.
 
 ## Development
 
-Local development is facilitated by Docker/Docker Compose. To run the
-transpiler, server, and database:
+**Prerequisites**
+- Node 10.15.0
+- npm 6.4.1
+- Postgres 10.6
+- heroku-cli 7.19.4
+- findutils 4.6.0
+  - If you install these using homebrew, make sure you add the homebrew executables to your `$PATH`
+- You'll need several environment variables set to correctly run the API. These
+are available as a note named `CALA API .env file (development)` in the engineering
+group in 1Password. `CALA API .test.env file (development)`.
 
 ```bash
-$ docker-compose up --build
+$ npm install
+$ npm run dev
 ```
 
 ### Initial Setup
-
 
 #### Initial Migrations
 
 After initial setup, you will need to migrate the newly created databases:
 
 ```bash
-$ npm run migrate-local
+$ npm run migration:run:local && npm run migration:run:test
 ```
 
 For more details about Migrations, see the section titled
@@ -31,17 +39,11 @@ For more details about Migrations, see the section titled
 #### Seeding databases
 
 There are also a number of scripts that provide seed data in the `src/scripts`
-directory. You can run them by using the `bin/run` helper:
+directory.
 
 ```bash
-$ docker-compose run api bin/run src/scripts/<TARGET SCRIPT FILENAME>
+$ npm run scripts -- src/scripts/<TARGET SCRIPT FILENAME>
 ```
-
-#### Environment variables
-
-You'll need several environment variables set to correctly run the API. These
-are available as a note named `CALA API .env file (development)` in the engineering
-group in 1Password — Docker make them available from a `.env` file if present.
 
 ## Deployment
 
@@ -62,20 +64,20 @@ $ npm run release -- major    # x.0.0 - large, backwards-incompatible changes
 
 ## Usage
 
-Many common actions have corresponding Make targets; dig into the Makefile for
-more examples.
+Many common actions have corresponding npm run scripts. Check out the `scripts` key
+in `package.json`.
 
 ### Testing / Linting
 
 ```bash
 $ npm run lint
-$ npm run test
+$ npm run test # Will build and lint the app, no need to npm run lint && npm run test
 ```
 
 ### Run a single test file
 
 ```bash
-$ npm run tt -- routes/users/spec.js
+$ npm run tt -- src/routes/users/spec.ts
 ```
 
 ### Migrations
@@ -83,11 +85,11 @@ $ npm run tt -- routes/users/spec.js
 To run staging/production migrations, you'll need the [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli).
 
 Staging database migrations should be performed immediately after a pull request
-is merged. Please paste the output of `bin/migrate staging` into the #eng
+is merged. Please paste the output of `npm run migration:run:staging` into the #eng
 channel in Slack.
 
 When a production deployment is approved, please run production migrations
-(`bin/migrate production`) immediately prior to running the release script.
+(`npm run migration:run:production`) immediately prior to running the release script.
 Again, paste the output into Slack for visibility.
 
 All migrations **must** be able to work both with the currently-deployed
@@ -101,20 +103,21 @@ deploy; first add the column, then deploy the application code, then add the
 `not null` constraint.
 
 ```bash
-$ bin/create-migration        # Create a new migration
-$ npm run migrate-local       # Migrate local DBs to latest schema
-$ npm run rollback-local      # Roll back latest local migration
-$ bin/migrate staging         # Migrate staging DB
-$ bin/migrate production      # Migrate production DB
+$ npm run migration:create -- some-descriptive-name  # Create a new migration
+$ npm run migration:run:local                        # Migrate local DB to latest schema
+$ npm run migration:run:test                         # Migrate test DB to latest schema
+$ npm run migration:run:local -- rollback            # Roll back latest migration on local DB
+$ npm run migration:run:local -- rollback            # Roll back latest migration on test DB
+$ npm run migration:run:staging                      # Migrate staging DB
+$ npm run migration:run:production                   # Migrate production DB
 ```
 
 For advanced usage, see [knexjs.org](http://knexjs.org/#Migrations).
 
-A good sanity-check for testing migrations locally is the `make
-validate-migration` script, which gives a summary of the effects of the
-migration and any unexpected side-effects after rolling it back.
-Note that this should be run before migrating locally. You can roll
-back the migration to get an accurate result.
+A good sanity-check for testing migrations locally is the `npm run migration:validate`
+script, which gives a summary of the effects of the migration and any unexpected
+side-effects after rolling it back. Note that this should be run before migrating
+locally. You can roll back the migration to get an accurate result.
 
 Migration rollbacks are an imperfect tool, and are never used in
 production. They make it easy to move back and forth in the local migration

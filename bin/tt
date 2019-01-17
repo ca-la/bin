@@ -2,8 +2,4 @@
 
 # Run a single test
 # Usage: `bin/tt routes/users/spec.js`
-docker-compose \
-    -f docker-compose.yml \
-    -f docker-compose.test.yml \
-    run --rm test \
-    bash -c "npx ts-node $1 | npx tap-difflet"
+env $(cat .env .test.env | xargs -d '\n') npx ts-node $1 | npx tap-difflet

@@ -51,26 +51,39 @@
     "eslint-plugin-import": "^2.13.0",
     "meow": "^5.0.0",
     "nodemon": "^1.18.9",
+    "npm-run-all": "^4.1.5",
     "sinon": "^6.1.5",
     "tap-difflet": "^0.7.1",
     "tap-xunit": "^2.3.0",
     "tape": "4.6.2"
   },
   "engines": {
-    "node": "8.*",
-    "npm": "5.7.*"
+    "node": "10.15.0",
+    "npm": "6.4.1"
   },
   "scripts": {
-    "lint": "docker-compose run typescript bin/lint",
-    "migrate-local": "npm run migrate-test && docker-compose run api bin/migrate local",
-    "migrate-test": "docker-compose -f docker-compose.yml -f docker-compose.test.yml run -e SKIP_BUILD test bin/migrate local",
-    "rollback-local": "npm run rollback-test && docker-compose run api bin/migrate local rollback",
-    "rollback-test": "docker-compose -f docker-compose.yml -f docker-compose.test.yml run -e SKIP_BUILD test bin/migrate local rollback",
-    "prerelease": "npm run lint && npm run test",
+    "clean": "rm -rf ./dist && mkdir -p ./dist",
+    "build": "tsc",
+    "watch:typescript": "tsc -w -p .",
+    "watch:server": "nodemon --delay 2 -w ./dist dist",
+    "dev": "env $(cat .env | xargs -d '\\n') npm-run-all clean build --parallel watch:*",
+    "console": "env $(cat .env | xargs -d '\\n') node",
+    "prerelease": "npm-run-all clean lint test",
     "release": "cala-release",
-    "start": "make serve-built",
+    "script": "bin/run",
+    "prestart": "[[ -d dist ]]",
+    "start": "env $(cat .env | xargs -d '\\n') node dist",
+    "migration:validate": "cala-validate-migration",
+    "migration:create": "bin/create-migration",
+    "premigration:run:local": "npm-run-all clean build",
+    "migration:run:local": "env $(cat .env | xargs -d '\\n') bin/migrate local",
+    "premigration:run:test": "npm-run-all clean build",
+    "migration:run:test": "env $(cat .env .test.env | xargs -d '\\n') bin/migrate local",
+    "migration:run:staging": "bin/migrate staging",
+    "migration:run:production": "bin/migrate production",
+    "lint": "bin/lint",
     "tt": "bin/tt",
-    "test": "docker-compose -f docker-compose.yml -f docker-compose.test.yml run test bin/test",
-    "psql": "docker-compose run postgres psql postgres://postgres@postgres:5432/cala"
+    "pretest": "npm-run-all clean build lint",
+    "test": "bin/test"
   }
 }

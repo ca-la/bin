@@ -1,6 +1,14 @@
 #!/bin/bash
 set -e
 
-npx eslint src --ignore-path .gitignore
-npx tslint -p tsconfig-tslint.json "src/**/*.ts" -t stylish
+if [ "$CI" == "true" ]
+then
+  mkdir -p ./reports
+  npx eslint src --ignore-path .gitignore --format junit --output-file ./reports/eslint.xml
+  npx tslint -p tsconfig-tslint.json "src/**/*.ts" -t junit > ./reports/tslint.xml
+else
+  npx eslint src --ignore-path .gitignore
+  npx tslint -p tsconfig-tslint.json "src/**/*.ts" -t stylish
+fi
+
 npx cala-lint-commented-code

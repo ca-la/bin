@@ -5,8 +5,8 @@ jobs:
       DATABASE_URL: postgres://ubuntu:@127.0.0.1:5432/circle_test
 
     docker:
-      - image: circleci/node:8.2.1
-      - image: postgres:9.6
+      - image: circleci/node:10.15.0
+      - image: postgres:10.6
         environment:
           POSTGRES_USER: ubuntu
           POSTGRES_DB: circle_test
@@ -26,17 +26,13 @@ jobs:
           paths:
             - node_modules
           key: v1-dependencies-{{ checksum "package.json" }}
-
-      - run: make lint-ci
-      - run: make build
-      - run: bin/migrate local && bin/migrate local rollback && bin/migrate local
-      - run:
-          command: make test-ci
-          when: always
       - store_test_results:
           path: ~/repo/reports
       - store_artifacts:
           path: ~/repo/reports
+
+      - run: bin/ci-check
+
       - deploy:
           name: Deploy to Heroku
           command: |
@@ -44,7 +40,7 @@ jobs:
             git config --global user.name "CALA Machine User"
 
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
-              make publish-stg
+              bin/publish staging
             elif [ "${CIRCLE_BRANCH}" == "production" ]; then
-              make publish-prod
+              bin/publish production
             fi
