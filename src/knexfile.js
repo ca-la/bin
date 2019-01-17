@@ -21,6 +21,8 @@ module.exports = {
     // As of 2019-01-15 we're on the standard-0 plan (120 connections) and have
     // 2 API hosts, so the safe cap is ~30. Subtracting a few more to account
     // for one-off script runs and connections.
-    max: 25
+
+    // [Hotfix] moved this to 10 because staging has a max pool size of 10
+    max: 10
   }
 };
