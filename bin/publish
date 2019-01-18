@@ -7,12 +7,15 @@ usage_fail() {
   exit 1
 }
 
-live_publish_preflight() {
+preflight() {
   if [ ! -d dist ];
   then
     echo 'Missing built code';
   exit 1;
   fi
+
+  echo 'Checking deployment readiness...'
+  npx cala-validate-deployment-readiness $host dist/migrations
 
   [[ ! -s \"$(git rev-parse --git-dir)/shallow\" ]] || git fetch --unshallow
   git branch -D deploy-branch || true
@@ -21,32 +24,34 @@ live_publish_preflight() {
   git commit -m '[ci skip] add built code'
 }
 
+postflight() {
+  git checkout master
+}
+
 main() {
   host=${1:-""}
+  if [ "$host" != "staging" || "$host" != "production" ]; then
+    usage_fail
+  fi
 
-  take_action() {
-    echo 'Checking deployment readiness...'
-    npx cala-validate-deployment-readiness $host dist/migrations
-    git push https://heroku:$HEROKU_API_KEY@git.heroku.com/$HEROKU_DEPLOY_REPO.git deploy-branch:master -f
-    git checkout master
-  }
+  preflight
 
   case "$host" in
     staging)
-      echo -n 'Deploying to Staging: '
-      live_publish_preflight
-      HEROKU_DEPLOY_REPO="cala-api-stg" take_action
+      echo 'Deploying to Staging:'
+      git push https://heroku:$HEROKU_API_KEY@git.heroku.com/cala-api-stg.git deploy-branch:master -f
       ;;
     production)
-      live_publish_preflight
-      echo -n 'Deploying to Production: '
-      HEROKU_DEPLOY_REPO="cala-api-prod" take_action
-      echo -n 'Deploying to Demo: '
-      HEROKU_DEPLOY_REPO="cala-api-demo" take_action
+      echo 'Deploying to Production:'
+      git push https://heroku:$HEROKU_API_KEY@git.heroku.com/cala-api-prod.git deploy-branch:master -f
+      echo 'Deploying to Demo:'
+      git push https://heroku:$HEROKU_API_KEY@git.heroku.com/cala-api-demo.git deploy-branch:master -f
       ;;
     *)
       usage_fail
   esac
+
+  postflight
 }
 
 main "$@"
