@@ -35,14 +35,14 @@ main() {
     staging)
       echo -n 'Deploying to Staging: '
       live_publish_preflight
-      HEROKU_DEPLOY_REPO="cala-api-stg" DATABASE_URL=$(heroku config:get DATABASE_URL --app $HEROKU_DEPLOY_REPO)?ssl=true take_action
+      HEROKU_DEPLOY_REPO="cala-api-stg" take_action
       ;;
     production)
       live_publish_preflight
       echo -n 'Deploying to Production: '
-      HEROKU_DEPLOY_REPO="cala-api-prod" DATABASE_URL=$(heroku config:get DATABASE_URL --app $HEROKU_DEPLOY_REPO)?ssl=true take_action
+      HEROKU_DEPLOY_REPO="cala-api-prod" take_action
       echo -n 'Deploying to Demo: '
-      HEROKU_DEPLOY_REPO="cala-api-demo" DATABASE_URL=$(heroku config:get DATABASE_URL --app $HEROKU_DEPLOY_REPO)?ssl=true take_action
+      HEROKU_DEPLOY_REPO="cala-api-demo" take_action
       ;;
     *)
       usage_fail
