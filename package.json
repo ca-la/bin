@@ -16,6 +16,7 @@
     "@types/node-uuid": "0.0.28",
     "aws-sdk": "^2.302.0",
     "bcrypt": "2.0.1",
+    "cloudinary": "^1.13.2",
     "co-body": "4.2.0",
     "dd-trace": "^0.7.2",
     "form-data": "2.1.2",
