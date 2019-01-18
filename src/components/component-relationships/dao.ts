@@ -1,4 +1,5 @@
 import * as uuid from 'node-uuid';
+import * as Knex from 'knex';
 
 import * as db from '../../services/db';
 import ComponentRelationship, {
@@ -72,8 +73,8 @@ export async function del(id: string): Promise<number> {
  */
 export async function findAllByComponent(componentId: string): Promise<ComponentRelationship[]> {
   const relationships = await db(TABLE_NAME)
-    .where(function(): void {
-      this
+    .where((builder: Knex.QueryBuilder): void => {
+      builder
         .where({ source_component_id: componentId })
         .orWhere({ target_component_id: componentId });
     })

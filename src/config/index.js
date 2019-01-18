@@ -137,7 +137,12 @@ const config = {
 
   ADMIN_EMAIL,
 
-  CALA_OPS_USER_ID: process.env.CALA_OPS_USER_ID
+  CALA_OPS_USER_ID: process.env.CALA_OPS_USER_ID,
+
+  MAX_DB_CONNECTION_POOL_SIZE: process.env.MAX_DB_CONNECTION_POOL_SIZE &&
+    parseInt(process.env.MAX_DB_CONNECTION_POOL_SIZE, 10),
+
+  DATABASE_URL: process.env.DATABASE_URL
 };
 
 Object.keys(config).forEach((key) => {

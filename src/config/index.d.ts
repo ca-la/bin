@@ -57,3 +57,6 @@ export const LOG_ALL_QUERIES: boolean;
 export const ADMIN_EMAIL: string;
 
 export const CALA_OPS_USER_ID: string;
+
+export const DATABASE_URL: string;
+export const MAX_DB_CONNECTION_POOL_SIZE: string;
