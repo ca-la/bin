@@ -66,9 +66,9 @@ test('Task Events DAO supports creation/retrieval', async (t: tape.Test) => {
 });
 
 test('Task Events DAO supports retrieval by designId', async (t: tape.Test) => {
-  const { task: inserted, createdBy: user } = await generateTask({});
-  const { task: insertedTwo } = await generateTask({ createdBy: user.id });
-  const { task: insertedThree } = await generateTask({ createdBy: user.id });
+  const { task: inserted, createdBy: user } = await generateTask({ ordering: 0 });
+  const { task: insertedTwo } = await generateTask({ createdBy: user.id, ordering: 1 });
+  const { task: insertedThree } = await generateTask({ createdBy: user.id, ordering: 2 });
   const design = await createDesign({ userId: user.id, productType: 'test', title: 'test' });
   const stage = await createDesignStage({
     description: '',
