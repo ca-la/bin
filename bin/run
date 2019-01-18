@@ -1,4 +1,4 @@
 #!/bin/bash
 set -e
 
-env $(cat .env | xargs) $(npm bin)/ts-node "$@"
+$(npm bin)/ts-node "$@"

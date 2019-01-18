@@ -4,7 +4,7 @@ set -e
 if [ "$CI" == "true" ]
 then
   mkdir -p ./reports
-  env $(cat .env .test.env | xargs -d '\n') npx tape "dist/**/*spec.js" | npx tap-xunit > ./reports/tape.xml
+  npx tape "dist/**/*spec.js" | npx tap-xunit > ./reports/tape.xml
 else
-  env $(cat .env .test.env | xargs -d '\n') npx tape "dist/**/*spec.js" | npx tap-difflet --pessimistic
+  npx tape "dist/**/*spec.js" | npx tap-difflet --pessimistic
 fi
