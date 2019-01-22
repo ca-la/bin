@@ -41,6 +41,7 @@ export interface DetailsTaskAdaptedRow extends Omit<TaskEvent, 'taskId'> {
   designPreviewImageUrls: string[] | null;
   collectionId: string | null;
   collectionTitle: string | null;
+  commentCount: number;
 }
 
 export const createDetailsTask = (data: DetailsTaskAdaptedRow): DetailsTask => {
@@ -52,6 +53,7 @@ export const createDetailsTask = (data: DetailsTaskAdaptedRow): DetailsTask => {
     designStageTitle,
     collectionId,
     collectionTitle,
+    commentCount,
     ...task
   } = data;
   return {
@@ -60,6 +62,7 @@ export const createDetailsTask = (data: DetailsTaskAdaptedRow): DetailsTask => {
       id: collectionId,
       title: collectionTitle
     },
+    commentCount: parseInt(commentCount.toString(), 10),
     design: {
       id: designId,
       previewImageUrls: designPreviewImageUrls,
@@ -77,6 +80,7 @@ export interface DetailsTask extends Omit<TaskEvent, 'taskId'> {
   designStage: RelatedResourceMeta;
   design: DesignResourceMeta;
   collection: RelatedResourceMeta;
+  commentCount: number;
 }
 
 export enum TaskStatus {
@@ -138,6 +142,7 @@ export interface DetailTaskEventRow extends TaskEventRow {
   design_title: string | null;
   collection_id: string | null;
   collection_title: string | null;
+  comment_count: number;
 }
 
 export function isDetailTaskRow(
@@ -159,6 +164,7 @@ export function isDetailTaskRow(
     'design_preview_image_urls',
     'collection_id',
     'collection_title',
+    'comment_count',
     'ordering'
   );
 }

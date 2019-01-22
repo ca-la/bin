@@ -25,6 +25,7 @@ const BASE_TASK_EVENT: DetailsTask & { assignees: Collaborator[] } = {
     id: uuid.v4(),
     title: 'test'
   },
+  commentCount: 0,
   createdAt: new Date(),
   createdBy: uuid.v4(),
   description: 'test',

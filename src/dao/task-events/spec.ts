@@ -14,11 +14,13 @@ import { create as createDesignStageTask } from '../product-design-stage-tasks';
 import { create as createDesignStage } from '../product-design-stages';
 import { create as createDesign, deleteById as deleteDesign } from '../product-designs';
 import { create as createCollaborator } from '../collaborators';
+import { create as createTaskComment } from '../task-comments';
 import { addDesign, create as createCollection } from '../collections';
 import createUser = require('../../test-helpers/create-user');
 import { DetailsTask, TaskStatus } from '../../domain-objects/task-event';
 import generateTask from '../../test-helpers/factories/task';
 import generateProductDesignStage from '../../test-helpers/factories/product-design-stage';
+import generateComment from '../../test-helpers/factories/comment';
 
 const getInsertedWithDetails = (
   inserted: DetailsTask, result: DetailsTask
@@ -29,6 +31,7 @@ const getInsertedWithDetails = (
       id: result.collection.id,
       title: result.collection.title
     },
+    commentCount: result.commentCount,
     design: {
       id: result.design.id,
       previewImageUrls: result.design.previewImageUrls,
@@ -59,6 +62,26 @@ test('Task Events DAO supports creation/retrieval', async (t: tape.Test) => {
   const result = await findById(inserted.id);
   if (!result) { throw Error('No Result'); }
   const insertedWithDetails = getInsertedWithDetails(inserted, result);
+  t.deepEqual(
+    { ...result, createdAt: new Date(result.createdAt) },
+    insertedWithDetails,
+    'Returned inserted task');
+});
+
+test('Task Events DAO returns correct number of comments', async (t: tape.Test) => {
+  const { task: inserted } = await generateTask();
+
+  const { comment } = await generateComment();
+  const { comment: comment2 } = await generateComment();
+
+  await createTaskComment({ commentId: comment.id, taskId: inserted.id });
+  await createTaskComment({ commentId: comment2.id, taskId: inserted.id });
+
+  const result = await findById(inserted.id);
+  if (!result) { throw Error('No Result'); }
+  const insertedWithDetails = getInsertedWithDetails(inserted, result);
+
+  t.equal(result.commentCount, 2, 'task has two comments');
   t.deepEqual(
     { ...result, createdAt: new Date(result.createdAt) },
     insertedWithDetails,

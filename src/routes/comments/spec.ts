@@ -17,6 +17,7 @@ test('DELETE /comment/:id deletes a task comment', async (t: tape.Test) => {
         id: uuid.v4(),
         title: 'test'
       },
+      commentCount: 0,
       createdAt: new Date().toISOString(),
       createdBy: 'purposefully incorrect',
       description: 'Description',

@@ -45,7 +45,8 @@ function isIOTask(candidate: object): candidate is IOTask {
     'ordering',
     'design',
     'designStage',
-    'collection'
+    'collection',
+    'commentCount'
   ) // TODO: Remove this check once studio is using new model for tasks and passes
   || hasOnlyProperties(
     candidate,
@@ -73,7 +74,14 @@ const taskEventFromIO = (
   request: IOTask,
   userId: string
 ): TaskEvent => {
-  const filteredRequest = omit(request, 'assignees', 'design', 'designStage', 'collection');
+  const filteredRequest = omit(
+    request,
+    'assignees',
+    'design',
+    'designStage',
+    'collection',
+    'commentCount'
+  );
   return Object.assign({}, filteredRequest, {
     createdAt: new Date(),
     createdBy: userId,
