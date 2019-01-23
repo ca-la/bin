@@ -150,7 +150,9 @@ const config = {
 
   CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
 
-  CLOUDINARY_UPLOAD_FOLDER: process.env.CLOUDINARY_UPLOAD_FOLDER
+  CLOUDINARY_UPLOAD_FOLDER: process.env.CLOUDINARY_UPLOAD_FOLDER,
+
+  IMGIX_DOMAIN: process.env.IMGIX_DOMAIN
 };
 
 Object.keys(config).forEach((key) => {
