@@ -4,7 +4,7 @@ import * as sinon from 'sinon';
 
 import { sandbox, test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
-import { Notification, NotificationType } from '../../components/notifications/domain-object';
+import { NotificationType } from '../../components/notifications/domain-object';
 import * as NotificationsService from './index';
 import * as CollaboratorsDAO from '../../dao/collaborators';
 import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
@@ -54,10 +54,14 @@ test('sendDesignUpdateNotification', async (t: tape.Test) => {
   const notifications = await NotificationsService
     .sendDesignUpdateNotifications(design.id, userOne.user.id);
 
-  t.equal(notifications.length, 2, 'Creates a design update notification for each collaborator');
+  t.equal(
+    notifications.length,
+    1,
+    'Creates a design update notification for non-self collaborator'
+  );
   t.deepEqual(
-    notifications.map((n: Notification): NotificationType | null => n.type),
-    [NotificationType.DESIGN_UPDATE, NotificationType.DESIGN_UPDATE],
+    notifications[0].type,
+    NotificationType.DESIGN_UPDATE,
     'Creates two notifications with the same notification type'
   );
 });
@@ -342,6 +346,68 @@ test('sendTaskAssignmentNotification', async (t: tape.Test) => {
     notifications[0].type,
     NotificationType.TASK_ASSIGNMENT,
     'Creates the correct notification type'
+  );
+});
+
+test('sendTaskAssignmentNotification does not send if assigned to self', async (t: tape.Test) => {
+  const { user } = await createUser();
+
+  const collection = await CollectionsDAO.create({
+    createdAt: new Date(),
+    createdBy: user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
+    title: 'AW19'
+  });
+  const design = await DesignsDAO.create({
+    productType: 'A product type',
+    title: 'A design',
+    userId: user.id
+  });
+  await CollectionsDAO.addDesign(collection.id, design.id);
+  const designStage = await DesignStagesDAO.create({
+    description: '',
+    designId: design.id,
+    ordering: 0,
+    title: 'test'
+  });
+  const collaborator = await CollaboratorsDAO.create({
+    collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
+    userId: user.id
+  });
+
+  const taskOne = await TasksDAO.create(uuid.v4());
+  await TaskEventsDAO.create({
+    createdBy: user.id,
+    description: '',
+    designStageId: designStage.id,
+    dueDate: null,
+    ordering: 0,
+    status: null,
+    taskId: taskOne.id,
+    title: 'My First Task'
+  });
+  await DesignStageTasksDAO.create({
+    designStageId: designStage.id,
+    taskId: taskOne.id
+  });
+  await CollaboratorTasksDAO.create({
+    collaboratorId: collaborator.id,
+    taskId: taskOne.id
+  });
+
+  const notifications = await NotificationsService
+    .sendTaskAssignmentNotification(taskOne.id, user.id, [collaborator.id]);
+
+  t.equal(
+    notifications.length,
+    0,
+    'Does not create a task assignment notification'
   );
 });
 

@@ -133,18 +133,20 @@ export async function sendDesignUpdateNotifications(
   userId: string
 ): Promise<DesignUpdateNotification[]> {
   const recipients = await findDesignUsers(designId) as User[];
+  const filteredRecipients = recipients.filter((recipient: User) => recipient.id !== userId);
 
-  return Promise.all(recipients.map((recipient: User): Promise<DesignUpdateNotification> => {
-    return replaceNotifications({
-      actionDescription: 'updated the design information',
-      actorUserId: userId,
-      designId,
-      id: uuid.v4(),
-      recipientUserId: recipient.id,
-      sentEmailAt: null,
-      type: NotificationType.DESIGN_UPDATE
-    });
-  }));
+  return Promise.all(filteredRecipients
+    .map((recipient: User): Promise<DesignUpdateNotification> => {
+      return replaceNotifications({
+        actionDescription: 'updated the design information',
+        actorUserId: userId,
+        designId,
+        id: uuid.v4(),
+        recipientUserId: recipient.id,
+        sentEmailAt: null,
+        type: NotificationType.DESIGN_UPDATE
+      });
+    }));
 }
 
 /**
@@ -286,7 +288,9 @@ export async function sendTaskAssignmentNotification(
   if (!design) { throw new Error(`Could not find a design with id: ${stage.designId}`); }
 
   return Promise.all(
-    collaborators.map((collaborator: CollaboratorWithUser): Promise<TaskAssignmentNotification> => {
+    collaborators
+    .filter((collaborator: CollaboratorWithUser) => collaborator.userId !== actorId)
+    .map((collaborator: CollaboratorWithUser): Promise<TaskAssignmentNotification> => {
       return replaceNotifications({
         actorUserId: actorId,
         collaboratorId: collaborator.id,
