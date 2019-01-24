@@ -1,7 +1,4 @@
-import {
-  AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME,
-  IMGIX_DOMAIN
-} from '../../config';
+import { AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME } from '../../config';
 import Component, { ComponentType } from '../../domain-objects/component';
 import { findById as findOptionById } from '../../dao/product-design-options';
 
@@ -10,25 +7,27 @@ interface AssetLinks {
   downloadLink: string;
 }
 
+/**
+ * Adds in image links based off the given component.
+ */
 async function getLink(component: Component): Promise<AssetLinks> {
-  const imgixBaseUrl = `https://${IMGIX_DOMAIN}.imgix.net/`;
   const awsBaseUrl = `https://${AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME}.s3.amazonaws.com/`;
 
   switch (component.type) {
     case ComponentType.Artwork:
       return {
-        assetLink: `${imgixBaseUrl}${component.artworkId}`,
+        assetLink: `${awsBaseUrl}${component.artworkId}`,
         downloadLink: `${awsBaseUrl}${component.artworkId}`
       };
     case ComponentType.Sketch:
       return {
-        assetLink: `${imgixBaseUrl}${component.sketchId}`,
+        assetLink: `${awsBaseUrl}${component.sketchId}`,
         downloadLink: `${awsBaseUrl}${component.sketchId}`
       };
     case ComponentType.Material:
       const option = await findOptionById(component.materialId);
       return {
-        assetLink: `${imgixBaseUrl}${option.previewImageId}`,
+        assetLink: `${awsBaseUrl}${option.previewImageId}`,
         downloadLink: `${awsBaseUrl}${option.previewImageId}`
       };
   }

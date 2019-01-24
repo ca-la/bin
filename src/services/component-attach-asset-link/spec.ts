@@ -1,8 +1,5 @@
 import * as tape from 'tape';
-import {
-  AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME as AWS_BUCKET_NAME,
-  IMGIX_DOMAIN
-} from '../../config';
+import { AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME as AWS_BUCKET_NAME } from '../../config';
 import { sandbox, test } from '../../test-helpers/fresh';
 import * as OptionsDAO from '../../dao/product-design-options';
 import { addAssetLink } from './index';
@@ -25,7 +22,7 @@ test('attachAssetsLink returns aws link when component is of type sketch', async
   };
   const enrichedComponent = await addAssetLink(component);
   const expectedLink = `https://${AWS_BUCKET_NAME}.s3.amazonaws.com/${sketchId}`;
-  const expectedAssetLink = `https://${IMGIX_DOMAIN}.imgix.net/${sketchId}`;
+  const expectedAssetLink = `https://${AWS_BUCKET_NAME}.s3.amazonaws.com/${sketchId}`;
   t.equal(enrichedComponent.downloadLink, expectedLink, 'download link matches sketch id.');
   t.equal(enrichedComponent.assetLink, expectedAssetLink, 'asset link matches sketch id.');
 });
@@ -46,7 +43,7 @@ test('attachAssetsLink returns link when component is of type artwork', async (t
   };
   const enrichedComponent = await addAssetLink(component);
   const expectedLink = `https://${AWS_BUCKET_NAME}.s3.amazonaws.com/${artworkId}`;
-  const expectedAssetLink = `https://${IMGIX_DOMAIN}.imgix.net/${artworkId}`;
+  const expectedAssetLink = `https://${AWS_BUCKET_NAME}.s3.amazonaws.com/${artworkId}`;
   t.equal(enrichedComponent.downloadLink, expectedLink, 'download link matches artwork id.');
   t.equal(enrichedComponent.assetLink, expectedAssetLink, 'asset link matches artwork id.');
 });
@@ -69,7 +66,7 @@ test('attachAssetsLink returns link when component is of type material', async (
   };
   const enrichedComponent = await addAssetLink(component);
   const expectedLink = `https://${AWS_BUCKET_NAME}.s3.amazonaws.com/${imgId}`;
-  const expectedAssetLink = `https://${IMGIX_DOMAIN}.imgix.net/${imgId}`;
+  const expectedAssetLink = `https://${AWS_BUCKET_NAME}.s3.amazonaws.com/${imgId}`;
   t.equal(enrichedComponent.downloadLink, expectedLink, 'download link matches preview image id.');
   t.equal(enrichedComponent.assetLink, expectedAssetLink, 'asset link matches preview image id.');
 });
