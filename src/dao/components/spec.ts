@@ -1,4 +1,7 @@
+import * as uuid from 'node-uuid';
 import * as tape from 'tape';
+import { omit } from 'lodash';
+
 import { test } from '../../test-helpers/fresh';
 import { create, del, findAllByCanvasId, findById, findRoot, update } from './index';
 import { create as createSketch } from '../product-design-images';
@@ -6,7 +9,6 @@ import { create as createCanvas } from '../product-design-canvases';
 import { ComponentType } from '../../domain-objects/component';
 import { create as createDesign } from '../product-designs';
 import createUser = require('../../test-helpers/create-user');
-import * as uuid from 'node-uuid';
 import generateComponent from '../../test-helpers/factories/component';
 
 test('Components DAO supports creation/retrieval', async (t: tape.Test) => {
@@ -39,6 +41,27 @@ test('Components DAO supports creation/retrieval', async (t: tape.Test) => {
 
   const result = await findById(id);
   t.deepEqual(result, inserted, 'Returned inserted component');
+
+  const secondComponent = {
+    artworkId: null,
+    assetLink: 'https://abc.xyz/example.jpg',
+    createdAt: new Date(),
+    createdBy: userId,
+    deletedAt: null,
+    downloadLink: 'https://xyz.foo/bar.png',
+    foo: 'bar',
+    id: uuid.v4(),
+    materialId: null,
+    parentId: null,
+    sketchId,
+    type: ComponentType.Sketch
+  };
+  const secondInsert = await create(secondComponent);
+  t.deepEqual(
+    secondInsert,
+    omit(secondComponent, 'assetLink', 'downloadLink', 'foo'),
+    'Inserts only the properties supported by the database'
+  );
 });
 
 test('Components DAO supports update', async (t: tape.Test) => {
@@ -73,6 +96,18 @@ test('Components DAO supports update', async (t: tape.Test) => {
   const result = await findById(componentId);
   t.deepEqual(result, inserted, 'Returned inserted component');
   t.equal(result && result.type, ComponentType.Artwork, 'Title was updated');
+
+  const updatedComponent = {
+    ...inserted,
+    downloadLink: 'https://xyz.fm/foo.jpg',
+    foo: 'bar'
+  };
+  const secondUpdate = await update(componentId, updatedComponent);
+  t.deepEqual(
+    secondUpdate,
+    inserted,
+    'Updates only the properties supported by the database'
+  );
 });
 
 test('Components DAO supports delete', async (t: tape.Test) => {

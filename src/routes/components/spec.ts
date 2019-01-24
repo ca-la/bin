@@ -44,7 +44,7 @@ test('GET /components/:componentId returns Component', async (t: tape.Test) => {
     headers: authHeader(session.id)
   });
   t.equal(response.status, 200);
-  t.deepEqual(omit(body, 'assetLink'), data);
+  t.deepEqual(omit(body, 'assetLink', 'downloadLink'), data);
 });
 
 test('POST /components/ returns a Component', async (t: tape.Test) => {
@@ -84,7 +84,7 @@ test('POST /components/ returns a Component', async (t: tape.Test) => {
     headers: authHeader(session.id)
   });
   t.equal(response.status, 201);
-  t.deepEqual(omit(body, 'assetLink'), data);
+  t.deepEqual(omit(body, 'assetLink', 'downloadLink'), data);
 });
 
 test('PUT /components/:id returns a Component', async (t: tape.Test) => {
@@ -124,7 +124,7 @@ test('PUT /components/:id returns a Component', async (t: tape.Test) => {
     headers: authHeader(session.id)
   });
   t.equal(response.status, 201);
-  t.deepEqual(omit(body, 'assetLink'), data);
+  t.deepEqual(omit(body, 'assetLink', 'downloadLink'), data);
 });
 
 test('PATCH /components/:componentId returns a Component', async (t: tape.Test) => {
@@ -164,7 +164,7 @@ test('PATCH /components/:componentId returns a Component', async (t: tape.Test) 
     headers: authHeader(session.id)
   });
   t.equal(response.status, 200);
-  t.deepEqual(omit(body, 'assetLink'), data);
+  t.deepEqual(omit(body, 'assetLink', 'downloadLink'), data);
 });
 
 test('DELETE /components/:componentId deletes a Component', async (t: tape.Test) => {

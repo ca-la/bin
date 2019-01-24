@@ -1,15 +1,20 @@
+import * as tape from 'tape';
+import * as uuid from 'node-uuid';
+import { omit } from 'lodash';
+
 import * as ProductDesignCanvasesDAO from '../../dao/product-design-canvases';
 import * as ProductDesignImagesDAO from '../../dao/product-design-images';
 import * as ProductDesignOptionsDAO from '../../dao/product-design-options';
 import * as ProductDesignsDAO from '../../dao/product-designs';
 import * as ComponentsDAO from '../../dao/components';
-import { ComponentType } from '../../domain-objects/component';
-import * as tape from 'tape';
-import * as uuid from 'node-uuid';
-import { omit } from 'lodash';
+import Component, { ComponentType } from '../../domain-objects/component';
+
 import createUser = require('../../test-helpers/create-user');
 import { authHeader, del, get, patch, post, put } from '../../test-helpers/http';
 import { sandbox, test } from '../../test-helpers/fresh';
+import createDesign from '../../services/create-design';
+import * as EnrichmentService from '../../services/component-attach-asset-link';
+import ProductDesignImage = require('../../domain-objects/product-design-image');
 
 test('GET /product-design-canvases/:canvasId returns Canvas', async (t: tape.Test) => {
   const { session } = await createUser();
@@ -94,6 +99,99 @@ test('POST /product-design-canvases returns a Canvas', async (t: tape.Test) => {
   });
   t.equal(response.status, 201);
   t.deepEqual(body, data);
+});
+
+test('POST /product-design-canvases returns a Canvas with Components', async (t: tape.Test) => {
+  const { user, session } = await createUser();
+
+  sandbox().stub(EnrichmentService, 'addAssetLink').callsFake(
+    async (c: Component): Promise<EnrichmentService.EnrichedComponent> => {
+      return {
+        ...c,
+        assetLink: 'https://foo.bar/test.png',
+        downloadLink: ''
+      };
+    }
+  );
+  sandbox().stub(ProductDesignImage.prototype, 'getUrl').callsFake(
+    (): string => 'https://foo.bar/test.png'
+  );
+
+  const design = await createDesign({
+    productType: 'TEESHIRT',
+    title: 'Plain White Tee',
+    userId: user.id
+  });
+  const sketch = await ProductDesignImagesDAO.create({
+    description: '',
+    id: uuid.v4(),
+    mimeType: 'image/png',
+    originalHeightPx: 0,
+    originalWidthPx: 0,
+    title: '',
+    userId: user.id
+  });
+  const componentId = uuid.v4();
+
+  const image = {
+    id: uuid.v4(),
+    mimeType: 'image%2Fpng',
+    originalHeightPx: 192,
+    originalWidthPx: 192,
+    title: 'Michele Lamy',
+    url: 'https://foo.bar/test.png',
+    userId: user.id
+  };
+  const component = {
+    artworkId: null,
+    assetLink: 'https://foo.bar/test.png',
+    createdAt: new Date().toISOString(),
+    createdBy: user.id,
+    deletedAt: null,
+    downloadLink: '',
+    id: componentId,
+    image,
+    materialId: null,
+    parentId: null,
+    sketchId: sketch.id,
+    type: 'Sketch'
+  };
+
+  const data = [{
+    componentId,
+    components: [component],
+    createdAt: new Date().toISOString(),
+    createdBy: user.id,
+    deletedAt: null,
+    designId: design.id,
+    height: 0,
+    id: uuid.v4(),
+    ordering: 0,
+    title: 'Michele Lamy',
+    width: 0,
+    x: 0,
+    y: 0
+  }];
+
+  const [response, body] = await post('/product-design-canvases/', {
+    body: data,
+    headers: authHeader(session.id)
+  });
+  t.equal(response.status, 201);
+  t.deepEqual(omit(body[0], 'components'), omit(data[0], 'components'));
+  t.deepEqual(omit(body[0].components[0], 'image'), omit(component, 'image'));
+  t.deepEqual(
+    omit(
+      body[0].components[0].image,
+      'createdAt',
+      'description'
+    ),
+    omit(
+      image,
+      'createdAt',
+      'description'
+    )
+  );
 });
 
 test('POST /product-design-canvases throws 400 when given empty array', async (t: tape.Test) => {
@@ -185,6 +283,11 @@ async (t: tape.Test) => {
   sandbox().stub(ProductDesignImagesDAO, 'create').resolves(data[0].components[0].image);
   sandbox().stub(ProductDesignsDAO, 'findById').resolves({ previewImageUrls: [] });
   sandbox().stub(ProductDesignsDAO, 'update').resolves({ previewImageUrls: [] });
+  sandbox().stub(EnrichmentService, 'addAssetLink').callsFake(
+    async (component: Component): Promise<any> => {
+      return component;
+    }
+  );
 
   const [response, body] = await put(`/product-design-canvases/${id}`, {
     body: data,
@@ -253,6 +356,11 @@ async (t: tape.Test) => {
   sandbox().stub(ProductDesignImagesDAO, 'create').resolves(data[0].components[0].image);
   sandbox().stub(ProductDesignsDAO, 'findById').resolves({ previewImageUrls: [] });
   sandbox().stub(ProductDesignsDAO, 'update').resolves({ previewImageUrls: [] });
+  sandbox().stub(EnrichmentService, 'addAssetLink').callsFake(
+    async (component: Component): Promise<any> => {
+      return component;
+    }
+  );
 
   const [response, body] = await put(`/product-design-canvases/${id}`, {
     body: data,

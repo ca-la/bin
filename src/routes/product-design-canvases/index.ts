@@ -11,7 +11,7 @@ import ProductDesignCanvas, {
   isProductDesignCanvas, isUnsavedProductDesignCanvas
 } from '../../domain-objects/product-design-canvas';
 import Component, { ComponentType, isUnsavedComponent } from '../../domain-objects/component';
-import addAssetLink from '../../services/component-attach-asset-link';
+import * as EnrichmentService from '../../services/component-attach-asset-link';
 import ProductDesignImage = require('../../domain-objects/product-design-image');
 import ProductDesignOption = require('../../domain-objects/product-design-option');
 import { hasProperties } from '../../services/require-properties';
@@ -49,8 +49,12 @@ function* createCanvas(this: Koa.Application.Context): AsyncIterableIterator<Pro
   this.body = canvas;
 }
 
-type ComponentWithImageAndOption =
-  Component & { assetLink: string, image: ProductDesignImage, option?: ProductDesignOption };
+type ComponentWithImageAndOption = Component & {
+  assetLink: string,
+  downloadLink?: string,
+  image: ProductDesignImage,
+  option?: ProductDesignOption
+};
 
 type CanvasWithComponent = ProductDesignCanvas & { components: ComponentWithImageAndOption[]};
 
@@ -93,36 +97,39 @@ function* createWithComponents(
 
 async function createCanvasAndComponents(
   userId: string, data: Unsaved<CanvasWithComponent>
-): Promise<ProductDesignCanvas & { components: Component[]}> {
-  if (!data || !isCanvasWithComponent(data)) {
-    throw new Error('Request does not match Schema');
-  }
-  const { components } = data;
+): Promise<ProductDesignCanvas & { components: ComponentWithImageAndOption[]}> {
+  if (!data || !isCanvasWithComponent(data)) { throw new Error('Request does not match Schema'); }
 
-  for (const component of components) {
-    await createComponent(component, userId);
-  }
-
+  const enrichedComponents = await Promise.all(data.components.map(
+    async (component: ComponentWithImageAndOption): Promise<ComponentWithImageAndOption> => {
+      return createComponent(component, userId);
+    })
+  );
   const canvasWithUser = attachUser(omit(data, 'components'), userId);
   await ProductDesignCanvasesDAO.create({ ...canvasWithUser, deletedAt: null });
 
-  return Object.assign(canvasWithUser, { components });
+  return { ...canvasWithUser, components: enrichedComponents };
 }
 
 async function createComponent(
   component: ComponentWithImageAndOption,
   userId: string
-): Promise<void> {
+): Promise<ComponentWithImageAndOption> {
   const image = component.image;
-
-  await ProductDesignImagesDAO.create(
-    { ...image, userId, deletedAt: null });
+  const createdImage = await ProductDesignImagesDAO.create({ ...image, userId, deletedAt: null });
+  let option;
 
   if (component.type === ComponentType.Material) {
-    await ProductDesignOptionsDAO.create({ ...component.option, deletedAt: null });
+    option = await ProductDesignOptionsDAO.create({ ...component.option, deletedAt: null });
   }
-  const { assetLink, ...componentWithUser } = attachUser(component, userId);
-  await ComponentsDAO.create(omit(componentWithUser, 'option', 'image'));
+
+  const created = await ComponentsDAO.create(attachUser(component, userId));
+  const enrichedComponent = await EnrichmentService.addAssetLink(created);
+  return {
+    ...enrichedComponent,
+    image: createdImage,
+    option
+  };
 }
 
 async function updateDesignPreview(designId: string, assetLinks: string[]): Promise<void> {
@@ -192,7 +199,7 @@ function* getById(this: Koa.Application.Context): AsyncIterableIterator<any> {
   const canvas = yield ProductDesignCanvasesDAO.findById(this.params.canvasId);
   this.assert(canvas, 404);
   const components = yield ComponentsDAO.findAllByCanvasId(canvas.id);
-  const enrichedComponents = yield Promise.all(components.map(addAssetLink));
+  const enrichedComponents = yield Promise.all(components.map(EnrichmentService.addAssetLink));
   const enrichedCanvas = { ...canvas, components: enrichedComponents };
 
   this.status = 200;
@@ -215,7 +222,7 @@ function* getList(
   const canvases = yield ProductDesignCanvasesDAO.findAllByDesignId(query.designId);
   const enrichedCanvases = yield canvases.map(async (canvas: ProductDesignCanvas) => {
     const components = await ComponentsDAO.findAllByCanvasId(canvas.id);
-    const enrichedComponents = await Promise.all(components.map(addAssetLink));
+    const enrichedComponents = await Promise.all(components.map(EnrichmentService.addAssetLink));
     return { ...canvas, components: enrichedComponents };
   });
 

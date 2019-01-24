@@ -1,4 +1,5 @@
 import * as uuid from 'node-uuid';
+import { pick } from 'lodash';
 
 import * as db from '../../services/db';
 import Component, {
@@ -11,14 +12,30 @@ import { validate, validateEvery } from '../../services/validate-from-db';
 
 const TABLE_NAME = 'components';
 
+const INSERTABLE_PROPERTIES = [
+  'id',
+  'parent_id',
+  'created_at',
+  'created_by',
+  'deleted_at',
+  'type',
+  'material_id',
+  'artwork_id',
+  'sketch_id'
+];
+
 export async function create(
   data: MaybeUnsaved<Component>
 ): Promise<Component> {
-  const rowData = dataAdapter.forInsertion({
-    id: uuid.v4(),
-    ...data,
-    deletedAt: null
-  });
+  const rowData = pick(
+    dataAdapter.forInsertion({
+      id: uuid.v4(),
+      ...data,
+      deletedAt: null
+    }),
+    INSERTABLE_PROPERTIES
+  );
+
   const created = await db(TABLE_NAME)
     .insert(rowData, '*')
     .then((rows: ComponentRow[]) => first<ComponentRow>(rows));
@@ -37,11 +54,14 @@ export async function update(
   id: string,
   data: Unsaved<Component>
 ): Promise<Component> {
-  const rowData = dataAdapter.forInsertion({
-    ...data,
-    deletedAt: null,
-    id
-  });
+  const rowData = pick(
+    dataAdapter.forInsertion({
+      ...data,
+      deletedAt: null,
+      id
+    }),
+    INSERTABLE_PROPERTIES
+  );
   const updated = await db(TABLE_NAME)
     .where({ id, deleted_at: null })
     .update(rowData, '*')
