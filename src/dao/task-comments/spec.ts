@@ -8,9 +8,23 @@ import createUser = require('../../test-helpers/create-user');
 
 test('TaskComment DAO supports creation/retrieval', async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
+  const now = new Date();
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
 
-  const comment = await createComment({
-    createdAt: new Date(),
+  const comment1 = await createComment({
+    createdAt: now,
+    deletedAt: null,
+    id: uuid.v4(),
+    isPinned: false,
+    parentCommentId: null,
+    text: 'A comment',
+    userEmail: user.email,
+    userId: user.id,
+    userName: user.name
+  });
+  const comment2 = await createComment({
+    createdAt: yesterday,
     deletedAt: null,
     id: uuid.v4(),
     isPinned: false,
@@ -22,10 +36,14 @@ test('TaskComment DAO supports creation/retrieval', async (t: tape.Test) => {
   });
   const task = await createTask(uuid.v4());
   await create({
-    commentId: comment.id,
+    commentId: comment1.id,
+    taskId: task.id
+  });
+  await create({
+    commentId: comment2.id,
     taskId: task.id
   });
 
   const result = await findByTaskId(task.id);
-  t.deepEqual(result, [comment], 'Finds comments by task');
+  t.deepEqual(result, [comment2, comment1], 'Finds comments by task');
 });

@@ -12,6 +12,9 @@ test(
   'ProductDesignCanvasAnnotationComment DAO supports creation/retrieval',
   async (t: tape.Test) => {
     const { user } = await createUser({ withSession: false });
+    const now = new Date();
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
 
     const design = await createDesign({
       productType: 'TEESHIRT',
@@ -37,8 +40,19 @@ test(
       x: 20,
       y: 10
     });
-    const comment = await createComment({
-      createdAt: new Date(),
+    const comment1 = await createComment({
+      createdAt: now,
+      deletedAt: null,
+      id: uuid.v4(),
+      isPinned: false,
+      parentCommentId: null,
+      text: 'A comment',
+      userEmail: user.email,
+      userId: user.id,
+      userName: user.name
+    });
+    const comment2 = await createComment({
+      createdAt: yesterday,
       deletedAt: null,
       id: uuid.v4(),
       isPinned: false,
@@ -50,10 +64,14 @@ test(
     });
     await create({
       annotationId: annotation.id,
-      commentId: comment.id
+      commentId: comment1.id
+    });
+    await create({
+      annotationId: annotation.id,
+      commentId: comment2.id
     });
 
     const result = await findByAnnotationId(annotation.id);
-    t.deepEqual(result, [comment], 'Finds comments by annotation');
+    t.deepEqual(result, [comment2, comment1], 'Finds comments by annotation');
   }
 );

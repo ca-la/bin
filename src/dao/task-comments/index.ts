@@ -45,7 +45,8 @@ export async function findByTaskId(
     .where({
       'comments.deleted_at': null,
       'task_comments.task_id': taskId
-    });
+    })
+    .orderBy('comments.created_at', 'asc');
 
   return validateEvery<CommentRow, Comment>(
     TABLE_NAME,

@@ -49,7 +49,8 @@ export async function findByAnnotationId(annotationId: string): Promise<Comment[
     .where({
       'comments.deleted_at': null,
       'product_design_canvas_annotation_comments.annotation_id': annotationId
-    });
+    })
+    .orderBy('comments.created_at', 'asc');
 
   return validateEvery<CommentRow, Comment>(
     TABLE_NAME,
