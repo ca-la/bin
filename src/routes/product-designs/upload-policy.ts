@@ -8,7 +8,6 @@ import {
 } from '../../config';
 import * as AWSService from '../../services/aws';
 import { generateFilename } from '../../services/generate-filename';
-import * as CloudinaryService from '../../services/cloudinary';
 
 function* getDesignUploadPolicy(this: Koa.Application.Context): AsyncIterableIterator<any> {
   const { mimeType } = this.query;
@@ -29,12 +28,7 @@ function* getDesignUploadPolicy(this: Koa.Application.Context): AsyncIterableIte
     contentType
   );
 
-  const cloudinaryPolicy = yield CloudinaryService.generateSignedUploadPolicy({
-    public_id: this.params.id
-  });
-
   this.body = {
-    cloudinaryPolicy,
     contentDisposition,
     contentType,
     downloadUrl: `https://${BUCKET_NAME}.s3.amazonaws.com/${remoteFileName}`,
