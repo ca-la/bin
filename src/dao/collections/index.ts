@@ -176,39 +176,53 @@ export async function removeDesign(
 }
 
 export async function getStatusById(collectionId: string): Promise<CollectionSubmissionStatus> {
-  const submissionStatus = await db.raw(`
+  const submissionStatus = await db
+    .raw(
+      `
 SELECT
     c.id AS collection_id,
-    (count(d.id) > 0 AND count(de_submitted.id) = count(d.id)) AS is_submitted,
-    (count(d.id) > 0 AND count(de_costed.id) = count(d.id)) AS is_costed,
-    (count(d.id) > 0 AND count(de_quoted.id) = count(d.id)) AS is_quoted,
-    (count(d.id) > 0 AND count(de_paired.id) = count(d.id)) AS is_paired
+    count(d.id) > 0 AND (SELECT COUNT(DISTINCT cd.design_id)
+       FROM collection_designs as cd
+       JOIN design_events AS de
+         ON cd.design_id = de.design_id
+        AND de.type = 'SUBMIT_DESIGN'
+      WHERE cd.collection_id = c.id) = count(d.id) AS is_submitted,
+
+    count(d.id) > 0 AND (SELECT COUNT(DISTINCT cd.design_id)
+       FROM collection_designs as cd
+       JOIN design_events AS de
+         ON cd.design_id = de.design_id
+        AND de.type = 'COMMIT_COST_INPUTS'
+      WHERE cd.collection_id = c.id) = count(d.id) AS is_costed,
+
+    count(d.id) > 0 AND (SELECT COUNT(DISTINCT cd.design_id)
+       FROM collection_designs as cd
+       JOIN design_events AS de
+         ON cd.design_id = de.design_id
+        AND de.type = 'COMMIT_QUOTE'
+      WHERE cd.collection_id = c.id) = count(d.id) AS is_quoted,
+
+    count(d.id) > 0 AND (SELECT COUNT(DISTINCT cd.design_id)
+       FROM collection_designs as cd
+       JOIN design_events AS de
+         ON cd.design_id = de.design_id
+        AND de.type = 'COMMIT_PARTNER_PAIRING'
+      WHERE cd.collection_id = c.id) = count(d.id) AS is_paired
+
   FROM collections AS c
 
   LEFT JOIN collection_designs AS cd ON cd.collection_id = c.id
   LEFT JOIN product_designs AS d ON cd.design_id = d.id AND d.deleted_at IS NULL
 
-  LEFT JOIN design_events AS de_submitted
-    ON cd.design_id = de_submitted.design_id
-   AND de_submitted.type = 'SUBMIT_DESIGN'
-
-  LEFT JOIN design_events AS de_costed
-    ON cd.design_id = de_costed.design_id
-   AND de_costed.type = 'COMMIT_COST_INPUTS'
-
-  LEFT JOIN design_events AS de_quoted
-    ON cd.design_id = de_quoted.design_id
-   AND de_quoted.type = 'COMMIT_QUOTE'
-
-  LEFT JOIN design_events AS de_paired
-    ON cd.design_id = de_paired.design_id
-   AND de_paired.type = 'COMMIT_PARTNER_PAIRING'
-
  WHERE c.id = ? AND c.deleted_at IS NULL
  GROUP BY c.id;
-`, [collectionId])
+`,
+      [collectionId]
+    )
     .then((rawResult: any): CollectionSubmissionStatusRow[] => rawResult.rows)
-    .then((rows: CollectionSubmissionStatusRow[]) => first<CollectionSubmissionStatusRow>(rows));
+    .then((rows: CollectionSubmissionStatusRow[]) =>
+      first<CollectionSubmissionStatusRow>(rows)
+    );
 
   if (!submissionStatus) { throw new Error(`Cannot find status of collection ${collectionId}`); }
 

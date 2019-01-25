@@ -590,6 +590,14 @@ test('POST /collections/:id/submissions', async (t: tape.Test) => {
 
   t.equal(collaboratorPost[0].status, 403, 'Collaborators cannot submit collections');
 
+  const designThree = await ProductDesignsDAO.create({
+    description: 'Generic Shirt',
+    productType: 'TEESHIRT',
+    title: 'T-Shirt Two',
+    userId: owner.user.id
+  });
+  await CollectionsDAO.moveDesign(collection.id, designThree.id);
+
   const secondSubmission = await API.post(
     `/collections/${collection.id}/submissions`,
     {
