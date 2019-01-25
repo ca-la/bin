@@ -10,6 +10,7 @@ const requireAuth = require('../../middleware/require-auth');
 const User = require('../../domain-objects/user');
 const { AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME } = require('../../config');
 const { getDownloadUrl, uploadFile } = require('../../services/aws');
+const uploadStatus = require('./upload-status');
 
 const router = new Router();
 
@@ -147,6 +148,7 @@ function* deleteById() {
 
 router.post('/', requireAuth, multer(), createImage);
 router.put('/:imageId', requireAuth, create);
+router.put('/:imageId/upload_status', requireAuth, uploadStatus);
 router.get('/', requireAuth, getList);
 router.get('/:imageId', requireAuth, getById);
 router.get('/:imageId/download', downloadById);

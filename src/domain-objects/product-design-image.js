@@ -15,6 +15,7 @@ class ProductDesignImage {
     this.title = row.title;
     this.description = row.description;
     this.mimeType = row.mime_type;
+    this.uploadCompletedAt = row.upload_completed_at;
   }
 
   getUrl() {

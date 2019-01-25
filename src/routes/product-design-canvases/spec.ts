@@ -184,12 +184,14 @@ test('POST /product-design-canvases returns a Canvas with Components', async (t:
     omit(
       body[0].components[0].image,
       'createdAt',
-      'description'
+      'description',
+      'uploadCompletedAt'
     ),
     omit(
       image,
       'createdAt',
-      'description'
+      'description',
+      'uploadCompletedAt'
     )
   );
 });

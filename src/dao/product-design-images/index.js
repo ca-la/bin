@@ -22,7 +22,8 @@ function create(data) {
       original_width_px: data.originalWidthPx,
       mime_type: data.mimeType,
       title: data.title,
-      description: data.description
+      description: data.description,
+      upload_completed_at: data.uploadCompletedAt || null
     }, '*')
     .catch(rethrow)
     .then(first)
@@ -67,7 +68,8 @@ function update(id, data) {
       mime_type: data.mimeType,
       original_height_px: data.originalHeightPx,
       original_width_px: data.originalWidthPx,
-      title: data.title
+      title: data.title,
+      upload_completed_at: data.uploadCompletedAt
     }), '*')
     .catch(rethrow)
     .then(first)
