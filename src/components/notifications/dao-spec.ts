@@ -149,7 +149,8 @@ test('Notifications DAO supports finding outstanding notifications', async (t: t
           ...results[0].design,
           collectionIds: [],
           collections: [],
-          createdAt: new Date(results[0].design.createdAt)
+          createdAt: new Date(results[0].design.createdAt),
+          imageIds: []
         }
       },
       {
@@ -162,7 +163,8 @@ test('Notifications DAO supports finding outstanding notifications', async (t: t
           ...results[1].design,
           collectionIds: [],
           collections: [],
-          createdAt: new Date(results[1].design.createdAt)
+          createdAt: new Date(results[1].design.createdAt),
+          imageIds: []
         }
       }
     ];

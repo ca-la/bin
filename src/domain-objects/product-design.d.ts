@@ -9,6 +9,7 @@ declare class ProductDesign {
   public previewImageUrls?: string[];
   public collections?: { id: string; title: string; }[];
   public collectionIds?: string[];
+  public imageIds?: string[];
 
   constructor(data: any);
 }

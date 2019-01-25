@@ -14,6 +14,8 @@ const keyNamesByColumnName = {
   metadata: 'metadata',
   user_id: 'userId',
 
+  image_ids: 'imageIds',
+
   // string[] - urls of each section preview
   preview_image_urls: 'previewImageUrls',
   collections: 'collections',

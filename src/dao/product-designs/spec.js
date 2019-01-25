@@ -34,6 +34,7 @@ test('ProductDesignsDAO.create creates a design', async (t) => {
     description: null,
     dueDate: null,
     expectedCostCents: null,
+    imageIds: [],
     overridePricingTable: null,
     retailPriceCents: null,
     showPricingBreakdown: true,

@@ -26,9 +26,23 @@ array_to_json(array_remove(
         then jsonb_build_object('id', collection_designs.collection_id, 'title', collections.title)
     end],
     null
-)) as collections`))
+)) as collections,
+array_remove(array_agg(pdi.id), null) AS image_ids
+    `))
     .leftJoin('collection_designs', 'product_designs.id', 'collection_designs.design_id')
     .leftJoin('collections', 'collections.id', 'collection_designs.collection_id')
+    .joinRaw(`
+LEFT JOIN (SELECT * FROM product_design_canvases AS c WHERE c.deleted_at IS null) AS c
+ON c.design_id = product_designs.id
+    `)
+    .joinRaw(`
+LEFT JOIN (SELECT * FROM components AS co WHERE co.deleted_at IS null) AS co
+ON co.id = c.component_id
+    `)
+    .joinRaw(`
+LEFT JOIN (SELECT * FROM product_design_images AS pdi WHERE pdi.deleted_at IS null) AS pdi
+ON pdi.id = co.sketch_id
+    `)
     .groupBy(['product_designs.id', 'collection_designs.collection_id', 'collections.title'])
     .orderBy('product_designs.created_at', 'desc');
 }
