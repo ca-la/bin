@@ -3,6 +3,7 @@
 const { default: DataMapper } = require('../services/data-mapper');
 const formatDateString = require('../services/format-date-string');
 const { requireProperties } = require('../services/require-properties');
+const { generatePreviewLinks } = require('../services/attach-asset-links');
 
 const keyNamesByColumnName = {
   id: 'id',
@@ -40,7 +41,8 @@ class ProductDesign {
     Object.assign(this, data, {
       collectionIds: data.collections.map(collection => collection.id),
       createdAt: new Date(row.created_at),
-      deletedAt: row.deleted_at && new Date(row.deleted_at)
+      deletedAt: row.deleted_at && new Date(row.deleted_at),
+      imageLinks: generatePreviewLinks(data.imageIds)
     });
 
     if (row.due_date instanceof Date) {

@@ -1,3 +1,5 @@
+import { ThumbnailAndPreviewLinks } from '../services/attach-asset-links';
+
 declare class ProductDesign {
   public id: string;
   public createdAt: Date;
@@ -10,6 +12,7 @@ declare class ProductDesign {
   public collections?: { id: string; title: string; }[];
   public collectionIds?: string[];
   public imageIds?: string[];
+  public imageLinks?: ThumbnailAndPreviewLinks[];
 
   constructor(data: any);
 }

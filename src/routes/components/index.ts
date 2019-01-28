@@ -4,7 +4,7 @@ import * as Koa from 'koa';
 import * as ComponentsDAO from '../../dao/components';
 import Component, { isUnsavedComponent } from '../../domain-objects/component';
 import requireAuth = require('../../middleware/require-auth');
-import { addAssetLink } from '../../services/component-attach-asset-link';
+import { addAssetLink } from '../../services/attach-asset-links';
 
 const router = new Router();
 

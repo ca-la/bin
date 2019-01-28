@@ -11,7 +11,7 @@ import ProductDesignCanvas, {
   isProductDesignCanvas, isUnsavedProductDesignCanvas
 } from '../../domain-objects/product-design-canvas';
 import Component, { ComponentType, isUnsavedComponent } from '../../domain-objects/component';
-import * as EnrichmentService from '../../services/component-attach-asset-link';
+import * as EnrichmentService from '../../services/attach-asset-links';
 import ProductDesignImage = require('../../domain-objects/product-design-image');
 import ProductDesignOption = require('../../domain-objects/product-design-option');
 import { hasProperties } from '../../services/require-properties';
@@ -86,9 +86,12 @@ function* createWithComponents(
   const assetLinks: string[] = canvases
     .reduce(
       (list: string[], canvas: CanvasWithComponent): string[] =>
-        list.concat(canvas.components
-          .map((component: ComponentWithImageAndOption) => component.assetLink)),
-        []);
+        list.concat(canvas.components.map((component: ComponentWithImageAndOption) =>
+          component.assetLink
+        )
+      ),
+      []
+    );
 
   yield updateDesignPreview(canvases[0].designId, assetLinks);
   this.status = 201;

@@ -13,7 +13,7 @@ import createUser = require('../../test-helpers/create-user');
 import { authHeader, del, get, patch, post, put } from '../../test-helpers/http';
 import { sandbox, test } from '../../test-helpers/fresh';
 import createDesign from '../../services/create-design';
-import * as EnrichmentService from '../../services/component-attach-asset-link';
+import * as EnrichmentService from '../../services/attach-asset-links';
 import ProductDesignImage = require('../../domain-objects/product-design-image');
 
 test('GET /product-design-canvases/:canvasId returns Canvas', async (t: tape.Test) => {
