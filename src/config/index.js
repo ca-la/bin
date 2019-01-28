@@ -28,9 +28,9 @@ const FEATURED_COLLECTION_LISTS = {
 }[ENV];
 
 const MINIMUM_SCAN_PITCH_RADIANS = {
-  [envs.LOCAL]: 1.3,
-  [envs.PROD]: 1.3,
-  [envs.STG]: 1
+  [envs.LOCAL]: 1.35,
+  [envs.PROD]: 1.35,
+  [envs.STG]: 1.35
 }[ENV];
 
 const ADMIN_EMAIL = {
