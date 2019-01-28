@@ -37,12 +37,17 @@ class ProductDesign {
     requireProperties(row, 'id');
 
     const data = dataMapper.rowDataToUserData(row);
+    const imageLinks = generatePreviewLinks(data.imageIds);
+    const previewImageUrls = imageLinks.map((imageLink) => {
+      return imageLink.previewLink;
+    });
 
     Object.assign(this, data, {
       collectionIds: data.collections.map(collection => collection.id),
       createdAt: new Date(row.created_at),
       deletedAt: row.deleted_at && new Date(row.deleted_at),
-      imageLinks: generatePreviewLinks(data.imageIds)
+      imageLinks,
+      previewImageUrls
     });
 
     if (row.due_date instanceof Date) {

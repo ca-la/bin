@@ -31,6 +31,10 @@ test(
     const result = await findById(design.id);
     if (!result) { throw new Error('Design should have been created!'); }
     t.deepEqual(result.imageIds, [sketch.id], 'Returns the associated image ids for the design');
+    t.ok(
+      result.previewImageUrls && result.previewImageUrls[0].includes(sketch.id),
+      'The preview image urls are the same as the image links'
+    );
 
     if (!result.imageLinks) { throw new Error('Design should have image links!'); }
     const { previewLink, thumbnailLink } = result.imageLinks[0];

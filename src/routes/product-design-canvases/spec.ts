@@ -468,12 +468,6 @@ test('PUT /product-design-canvases/:canvasId/component/:componentId adds a compo
     );
 
     t.equal(response.status, 200);
-    const updatedDesign = await ProductDesignsDAO.findById(design.id);
-    t.deepEqual(
-      updatedDesign && updatedDesign.previewImageUrls,
-      [data.assetLink],
-      'Adds in the asset as the preview image'
-    );
     t.deepEqual(body.components[0], omit(data, 'assetLink'), 'Creates a component');
   }
 );
@@ -521,12 +515,6 @@ pre-existing preview image`,
     );
 
     t.equal(response.status, 200);
-    const updatedDesign = await ProductDesignsDAO.findById(design.id);
-    t.deepEqual(
-      updatedDesign && updatedDesign.previewImageUrls,
-      ['another-image.png', data.assetLink],
-      'Adds in the asset as the preview image'
-    );
     t.deepEqual(body.components[0], omit(data, 'assetLink'), 'Creates a component');
   }
 );

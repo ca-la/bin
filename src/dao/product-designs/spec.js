@@ -36,6 +36,7 @@ test('ProductDesignsDAO.create creates a design', async (t) => {
     expectedCostCents: null,
     imageIds: [],
     imageLinks: [],
+    previewImageUrls: [],
     overridePricingTable: null,
     retailPriceCents: null,
     showPricingBreakdown: true,
@@ -125,8 +126,7 @@ test('ProductDesignsDAO.findByCollectionId', async (t) => {
   const design = await ProductDesignsDAO.create({
     title: 'Plain White Tee',
     productType: 'TEESHIRT',
-    userId: user.id,
-    previewImageUrls: ['yo.jpg', 'dope.png']
+    userId: user.id
   });
   await CollectionsDAO.moveDesign(collection.id, design.id);
 
@@ -143,7 +143,7 @@ test('ProductDesignsDAO.findByCollectionId', async (t) => {
   );
   t.deepEqual(
     collectionDesigns[0].previewImageUrls,
-    ['yo.jpg', 'dope.png'],
+    [],
     'Passes through the preview image urls for each design'
   );
 });

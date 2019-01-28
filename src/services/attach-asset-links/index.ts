@@ -11,6 +11,10 @@ interface AssetLinks {
 export const AWS_BASE_URL = `https://${AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME}.s3.amazonaws.com/`;
 export const IMGIX_BASE_URL = `https://${IMGIX_DOMAIN}.imgix.net/`;
 
+const DESIGN_PREVIEW_TOOL_FORMAT = '?fm=png&max-w=2288';
+const PREVIEW_CARD_FORMAT = '?fm=png&w=560';
+const THUMBNAIL_FORMAT = '?fm=png&w=48';
+
 /**
  * Adds in image links based off the given component.
  */
@@ -22,7 +26,7 @@ async function getLink(component: Component): Promise<AssetLinks> {
       if (!artworkImage.uploadCompletedAt) { break; }
 
       return {
-        assetLink: `${IMGIX_BASE_URL}${component.artworkId}?fm=png&max-w=2000`,
+        assetLink: `${IMGIX_BASE_URL}${component.artworkId}${DESIGN_PREVIEW_TOOL_FORMAT}`,
         downloadLink: `${AWS_BASE_URL}${component.artworkId}`
       };
     case ComponentType.Sketch:
@@ -30,7 +34,7 @@ async function getLink(component: Component): Promise<AssetLinks> {
       if (!sketchImage.uploadCompletedAt) { break; }
 
       return {
-        assetLink: `${IMGIX_BASE_URL}${component.sketchId}?fm=png&max-w=2000`,
+        assetLink: `${IMGIX_BASE_URL}${component.sketchId}${DESIGN_PREVIEW_TOOL_FORMAT}`,
         downloadLink: `${AWS_BASE_URL}${component.sketchId}`
       };
     case ComponentType.Material:
@@ -38,7 +42,7 @@ async function getLink(component: Component): Promise<AssetLinks> {
       const materialImage = await ImagesDAO.findById(option.previewImageId);
       if (!materialImage.uploadCompletedAt) { break; }
       return {
-        assetLink: `${IMGIX_BASE_URL}${option.previewImageId}?fm=png&max-w=2000`,
+        assetLink: `${IMGIX_BASE_URL}${option.previewImageId}${DESIGN_PREVIEW_TOOL_FORMAT}`,
         downloadLink: `${AWS_BASE_URL}${option.previewImageId}`
       };
   }
@@ -82,8 +86,8 @@ export function generatePreviewLinks(
 ): ThumbnailAndPreviewLinks[] {
   return imageIds.map((imageId: string): ThumbnailAndPreviewLinks => {
     return {
-      previewLink: `${IMGIX_BASE_URL}${imageId}?fm=png&w=560`,
-      thumbnailLink: `${IMGIX_BASE_URL}${imageId}?fm=png&w=48`
+      previewLink: `${IMGIX_BASE_URL}${imageId}${PREVIEW_CARD_FORMAT}`,
+      thumbnailLink: `${IMGIX_BASE_URL}${imageId}${THUMBNAIL_FORMAT}`
     };
   });
 }
