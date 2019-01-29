@@ -11,9 +11,9 @@ interface AssetLinks {
 export const AWS_BASE_URL = `https://${AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME}.s3.amazonaws.com/`;
 export const IMGIX_BASE_URL = `https://${IMGIX_DOMAIN}.imgix.net/`;
 
-const DESIGN_PREVIEW_TOOL_FORMAT = '?fm=png&max-w=2288';
-const PREVIEW_CARD_FORMAT = '?fm=png&w=560';
-const THUMBNAIL_FORMAT = '?fm=png&w=48';
+const DESIGN_PREVIEW_TOOL_FORMAT = '?fm=jpg&max-w=2288';
+const PREVIEW_CARD_FORMAT = '?fm=jpg&w=560';
+const THUMBNAIL_FORMAT = '?fm=jpg&w=48';
 
 /**
  * Adds in image links based off the given component.
