@@ -36,6 +36,7 @@ const BASE_TASK_EVENT: DetailsTask & { assignees: Collaborator[] } = {
   },
   designStage: {
     id: uuid.v4(),
+    ordering: 0,
     title: 'test'
   },
   designStageId: uuid.v4(),

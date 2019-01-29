@@ -39,6 +39,7 @@ const getInsertedWithDetails = (
     },
     designStage: {
       id: result.designStage.id,
+      ordering: result.designStage.ordering,
       title: result.designStage.title
     },
     designStageId: result.designStage.id
@@ -193,6 +194,65 @@ test('Task Events DAO supports retrieval by userId on own design', async (t: tap
     { ...result[0], createdAt: new Date(result[0].createdAt) },
     insertedWithDetails,
     'Returned inserted task');
+});
+
+test('Task Events DAO supports retrieval by userId in the stage ordering', async (t: tape.Test) => {
+  const { user } = await createUser();
+
+  const design = await createDesign({
+    productType: 'test',
+    title: 'design',
+    userId: user.id
+  });
+  const { stage: stageOne } = await generateProductDesignStage(
+    { designId: design.id, ordering: 1 },
+    user.id
+  );
+  const { stage: stageTwo } = await generateProductDesignStage(
+    { designId: design.id, ordering: 0 },
+    user.id
+  );
+  const { stage: stageThree } = await generateProductDesignStage(
+    { designId: design.id, ordering: 2 },
+    user.id
+  );
+
+  const { task } = await generateTask({
+    createdBy: user.id,
+    designStageId: stageThree.id,
+    ordering: 0
+  });
+  const { task: taskTwo } = await generateTask({
+    createdBy: user.id,
+    designStageId: stageTwo.id,
+    ordering: 0
+  });
+  const { task: taskThree } = await generateTask({
+    createdBy: user.id,
+    designStageId: stageOne.id,
+    ordering: 0
+  });
+  const { task: taskFour } = await generateTask({
+    createdBy: user.id,
+    designStageId: stageTwo.id,
+    ordering: 1
+  });
+
+  const result = await findByUserId(user.id);
+  if (result.length === 0) { return t.fail('No tasks returned'); }
+
+  t.equal(result.length, 4);
+  // stageTwo tasks should appear first.
+  t.equal(result[0].id, taskTwo.id);
+  t.equal(result[0].designStage.id, stageTwo.id);
+  t.equal(result[1].id, taskFour.id);
+  t.equal(result[1].designStage.id, stageTwo.id);
+  // stageOne tasks should appear second.
+  t.equal(result[2].id, taskThree.id);
+  t.equal(result[2].designStage.id, stageOne.id);
+  // stageThree tasks should appear last.
+  t.equal(result[3].id, task.id);
+  t.equal(result[3].designStage.id, stageThree.id);
 });
 
 test('Task Events DAO supports retrieval by userId on shared collection', async (t: tape.Test) => {

@@ -34,7 +34,12 @@ export interface DesignResourceMeta extends RelatedResourceMeta {
   previewImageUrls: string[] | null;
 }
 
+export interface OrderedResourceMeta extends RelatedResourceMeta {
+  ordering: number | null;
+}
+
 export interface DetailsTaskAdaptedRow extends Omit<TaskEvent, 'taskId'> {
+  designStageOrdering: number | null;
   designStageTitle: string | null;
   designId: string | null;
   designTitle: string | null;
@@ -50,6 +55,7 @@ export const createDetailsTask = (data: DetailsTaskAdaptedRow): DetailsTask => {
     designTitle,
     designPreviewImageUrls,
     designStageId,
+    designStageOrdering,
     designStageTitle,
     collectionId,
     collectionTitle,
@@ -70,6 +76,7 @@ export const createDetailsTask = (data: DetailsTaskAdaptedRow): DetailsTask => {
     },
     designStage: {
       id: designStageId,
+      ordering: designStageOrdering,
       title: designStageTitle
     },
     designStageId
@@ -77,7 +84,7 @@ export const createDetailsTask = (data: DetailsTaskAdaptedRow): DetailsTask => {
 };
 
 export interface DetailsTask extends Omit<TaskEvent, 'taskId'> {
-  designStage: RelatedResourceMeta;
+  designStage: OrderedResourceMeta;
   design: DesignResourceMeta;
   collection: RelatedResourceMeta;
   commentCount: number;
@@ -137,6 +144,7 @@ export function isTaskEventRow(row: object): row is TaskEventRow {
 
 export interface DetailTaskEventRow extends TaskEventRow {
   design_stage_id: string | null;
+  design_stage_ordering: number | null;
   design_stage_title: string | null;
   design_id: string | null;
   design_title: string | null;
@@ -158,6 +166,7 @@ export function isDetailTaskRow(
     'due_date',
     'description',
     'design_stage_id',
+    'design_stage_ordering',
     'design_stage_title',
     'design_id',
     'design_title',

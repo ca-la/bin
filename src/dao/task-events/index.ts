@@ -71,7 +71,7 @@ export async function findByDesignId(designId: string): Promise<DetailsTask[]> {
     .select('*')
     .from(DETAILS_VIEW_NAME)
     .where({ design_id: designId })
-    .orderBy('ordering', 'asc');
+    .orderByRaw('design_stage_ordering asc, ordering asc');
 
   return validateEvery<DetailTaskEventRow, DetailsTaskAdaptedRow>(
     TABLE_NAME,
@@ -86,7 +86,7 @@ export async function findByCollectionId(collectionId: string): Promise<DetailsT
     .select('*')
     .from(DETAILS_VIEW_NAME)
     .where({ collection_id: collectionId })
-    .orderBy('ordering', 'asc');
+    .orderByRaw('design_stage_ordering asc, ordering asc');
 
   return validateEvery<DetailTaskEventRow, DetailsTaskAdaptedRow>(
     TABLE_NAME,
@@ -103,7 +103,7 @@ export async function findByUserId(userId: string): Promise<DetailsTask[]> {
     .select('detail_tasks.*')
     .from(DETAILS_VIEW_NAME)
     .whereIn('design_id', designIds)
-    .orderBy('detail_tasks.ordering', 'asc');
+    .orderByRaw('design_stage_ordering asc, ordering asc');
 
   return validateEvery<DetailTaskEventRow, DetailsTaskAdaptedRow>(
     TABLE_NAME,
@@ -118,7 +118,7 @@ export async function findByStageId(stageId: string): Promise<DetailsTask[]> {
     .select('*')
     .from(DETAILS_VIEW_NAME)
     .where({ design_stage_id: stageId })
-    .orderBy('ordering', 'asc');
+    .orderByRaw('design_stage_ordering asc, ordering asc');
 
   return validateEvery<DetailTaskEventRow, DetailsTaskAdaptedRow>(
     TABLE_NAME,
