@@ -1,5 +1,6 @@
 import DataAdapter from '../services/data-adapter';
 import { hasOnlyProperties } from '../services/require-properties';
+import { generateThumbnailLinks } from '../services/attach-asset-links';
 
 /**
  * @typedef {object} TaskEvent A unit of work to be completed in the developement of a garment
@@ -43,23 +44,23 @@ export interface DetailsTaskAdaptedRow extends Omit<TaskEvent, 'taskId'> {
   designStageTitle: string | null;
   designId: string | null;
   designTitle: string | null;
-  designPreviewImageUrls: string[] | null;
   collectionId: string | null;
   collectionTitle: string | null;
   commentCount: number;
+  imageIds: string[] | null;
 }
 
 export const createDetailsTask = (data: DetailsTaskAdaptedRow): DetailsTask => {
   const {
     designId,
     designTitle,
-    designPreviewImageUrls,
     designStageId,
     designStageOrdering,
     designStageTitle,
     collectionId,
     collectionTitle,
     commentCount,
+    imageIds,
     ...task
   } = data;
   return {
@@ -71,7 +72,7 @@ export const createDetailsTask = (data: DetailsTaskAdaptedRow): DetailsTask => {
     commentCount: parseInt(commentCount.toString(), 10),
     design: {
       id: designId,
-      previewImageUrls: designPreviewImageUrls,
+      previewImageUrls: imageIds ? generateThumbnailLinks(imageIds) : null,
       title: designTitle
     },
     designStage: {
@@ -151,6 +152,7 @@ export interface DetailTaskEventRow extends TaskEventRow {
   collection_id: string | null;
   collection_title: string | null;
   comment_count: number;
+  image_ids: string[] | null;
 }
 
 export function isDetailTaskRow(
@@ -170,10 +172,10 @@ export function isDetailTaskRow(
     'design_stage_title',
     'design_id',
     'design_title',
-    'design_preview_image_urls',
     'collection_id',
     'collection_title',
     'comment_count',
+    'image_ids',
     'ordering'
   );
 }

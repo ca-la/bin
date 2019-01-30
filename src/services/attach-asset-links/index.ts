@@ -92,9 +92,23 @@ export function generatePreviewLinks(
   });
 }
 
+/**
+ * Generates thumbnail links based off the given image ids.
+ * Terminology:
+ * - thumbnail: a 48px wide png image (intended for dropdown menus).
+ */
+export function generateThumbnailLinks(
+  imageIds: string[]
+): string[] {
+  return imageIds.map((imageId: string): string => {
+    return `${IMGIX_BASE_URL}${imageId}${THUMBNAIL_FORMAT}`;
+  });
+}
+
 module.exports = {
   AWS_BASE_URL,
   IMGIX_BASE_URL,
   addAssetLink,
-  generatePreviewLinks
+  generatePreviewLinks,
+  generateThumbnailLinks
 };

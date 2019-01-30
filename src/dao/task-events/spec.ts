@@ -9,6 +9,7 @@ import {
   findByStageId,
   findByUserId
 } from './index';
+
 import { create as createTask } from '../tasks';
 import { create as createDesignStageTask } from '../product-design-stage-tasks';
 import { create as createDesignStage } from '../product-design-stages';
@@ -16,11 +17,15 @@ import { create as createDesign, deleteById as deleteDesign } from '../product-d
 import { create as createCollaborator } from '../collaborators';
 import { create as createTaskComment } from '../task-comments';
 import { addDesign, create as createCollection } from '../collections';
+import { create as createSketch, deleteById as deleteSketch } from '../product-design-images';
+
 import createUser = require('../../test-helpers/create-user');
 import { DetailsTask, TaskStatus } from '../../domain-objects/task-event';
 import generateTask from '../../test-helpers/factories/task';
 import generateProductDesignStage from '../../test-helpers/factories/product-design-stage';
 import generateComment from '../../test-helpers/factories/comment';
+import generateComponent from '../../test-helpers/factories/component';
+import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 
 const getInsertedWithDetails = (
   inserted: DetailsTask, result: DetailsTask
@@ -87,6 +92,50 @@ test('Task Events DAO returns correct number of comments', async (t: tape.Test) 
     { ...result, createdAt: new Date(result.createdAt) },
     insertedWithDetails,
     'Returned inserted task');
+});
+
+test('Task Events DAO returns images from the canvases on the design', async (t: tape.Test) => {
+  const { user } = await createUser({ withSession: false });
+  const sketch = await createSketch({
+    description: '',
+    id: uuid.v4(),
+    mimeType: 'image/png',
+    originalHeightPx: 0,
+    originalWidthPx: 0,
+    title: 'FooBar.png',
+    userId: user.id
+  });
+  const { component } = await generateComponent({ createdBy: user.id, sketchId: sketch.id });
+  const { design } = await generateCanvas({
+    componentId: component.id,
+    createdBy: user.id
+  });
+  const stage = await createDesignStage({
+    description: '',
+    designId: design.id,
+    ordering: 0,
+    title: 'test'
+  });
+  const { task: inserted } = await generateTask({ designStageId: stage.id });
+
+  const result = await findById(inserted.id);
+  if (!result) { throw Error('No Result'); }
+  if (!result.design.previewImageUrls) { throw Error('Task has no images!'); }
+
+  t.equal(result.design.previewImageUrls.length, 1, 'task has one preview image');
+  t.ok(result.design.previewImageUrls[0].includes(sketch.id), 'the task image is the sketch');
+
+  await deleteSketch(sketch.id);
+
+  const secondResult = await findById(inserted.id);
+  if (!secondResult) { throw Error('No Result'); }
+  t.deepEqual(secondResult.design.previewImageUrls, [], 'task has an empty list of images');
+
+  const { task: designlessTask } = await generateTask();
+
+  const thirdResult = await findById(designlessTask.id);
+  if (!thirdResult) { throw Error('No Result'); }
+  t.deepEqual(thirdResult.design.previewImageUrls, null, 'task has no images');
 });
 
 test('Task Events DAO supports retrieval by designId', async (t: tape.Test) => {
