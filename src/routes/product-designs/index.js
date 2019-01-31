@@ -21,15 +21,12 @@ const ProductDesignStatusSlasDAO = require('../../dao/product-design-status-slas
 const TaskEventsDAO = require('../../dao/task-events');
 const ProductDesignStagesDAO = require('../../dao/product-design-stages');
 const requireAuth = require('../../middleware/require-auth');
-const updateDesignStatus = require('../../services/update-design-status');
 const createDesign = require('../../services/create-design').default;
 const User = require('../../domain-objects/user');
 const UsersDAO = require('../../dao/users');
 const { canAccessDesignInParam, canCommentOnDesign, canDeleteDesign } = require('../../middleware/can-access-design');
 const { requireValues } = require('../../services/require-properties');
 const { sendDesignUpdateNotifications } = require('../../services/create-notifications');
-
-const getDesignPermissionsDeprecated = require('../../services/deprecated-get-design-permissions');
 const { getDesignPermissions } = require('../../services/get-permissions');
 
 const { getDesignUploadPolicy, getThumbnailUploadPolicy } = require('./upload-policy');
@@ -265,13 +262,12 @@ function* create() {
   let design = yield createDesign(data).catch(
     filterError(InvalidDataError, err => this.throw(400, err))
   );
-  const designPermissionsDeprecated = yield getDesignPermissionsDeprecated(design, userId, role);
   const designPermissions = yield getDesignPermissions(design, role, userId);
 
   design = yield attachResources(
     design,
     userId,
-    { ...designPermissionsDeprecated, ...designPermissions }
+    designPermissions
   );
 
   this.body = design;
@@ -314,30 +310,6 @@ function* deleteDesign() {
   this.status = 204;
 }
 
-function* setStatus() {
-  const { newStatus } = this.request.body;
-  this.assert(newStatus, 400, 'New status must be provided');
-
-  const { canPutStatus } = this.state.permissions;
-
-  this.assert(
-    canPutStatus,
-    403,
-    "You don't have permission to modify this design status"
-  );
-
-  const updated = yield updateDesignStatus(
-    this.params.designId,
-    newStatus,
-    this.state.userId
-  )
-    .catch(filterError(InvalidDataError, err => this.throw(400, err)))
-    .catch(filterError(MissingPrerequisitesError, err => this.throw(400, err)));
-
-  this.body = { status: updated };
-  this.status = 200;
-}
-
 router.post('/', requireAuth, create);
 router.get('/', requireAuth, getDesigns);
 router.del(
@@ -351,7 +323,6 @@ router.get('/:designId', requireAuth, canAccessDesignInParam, getDesign);
 router.patch('/:designId', requireAuth, canAccessDesignInParam, updateDesign);
 router.get('/:designId/pricing', requireAuth, canAccessDesignInParam, getDesignPricing);
 router.get('/:designId/collections', requireAuth, canAccessDesignInParam, getDesignCollections);
-router.put('/:designId/status', requireAuth, canAccessDesignInParam, setStatus);
 
 router.get('/:designId/upload-policy/:sectionId', requireAuth, canAccessDesignInParam, getThumbnailUploadPolicy);
 router.get('/upload-policy/:id', requireAuth, getDesignUploadPolicy);

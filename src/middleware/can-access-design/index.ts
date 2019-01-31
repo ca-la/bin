@@ -1,9 +1,7 @@
 import * as Koa from 'koa';
 
 import filterError = require('../../services/filter-error');
-import getDesignPermissionsDeprecated = require('../../services/deprecated-get-design-permissions');
-import { getDesignPermissions, Permissions } from '../../services/get-permissions';
-import { mergeWithTruthy } from '../../services/merge-with-truthy';
+import { getDesignPermissions } from '../../services/get-permissions';
 import InvalidDataError = require('../../errors/invalid-data');
 import * as ProductDesignsDAO from '../../dao/product-designs';
 
@@ -15,10 +13,7 @@ export function* attachDesignPermissions(this: Koa.Application.Context, designId
   this.assert(design, 404, 'Design not found');
 
   this.state.design = design;
-  const deprecatedPermissions = yield getDesignPermissionsDeprecated(design, userId, role);
-  const permissions = yield getDesignPermissions(design, role, userId);
-  const mergedPermissions = mergeWithTruthy<Permissions>(deprecatedPermissions, permissions);
-  this.state.permissions = mergedPermissions;
+  this.state.permissions = yield getDesignPermissions(design, role, userId);
 }
 
 export function* canAccessDesignInParam(

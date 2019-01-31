@@ -115,63 +115,6 @@ test('PATCH /product-designs/:id allows admins to update a wider range of keys',
     });
 });
 
-test('PUT /product-designs/:id/status updates a status', (t) => {
-  sandbox().stub(EmailService, 'enqueueSend').returns(Promise.resolve());
-
-  let designId;
-  let sessionId;
-
-  return createUser()
-    .then(({ user, session }) => {
-      sessionId = session.id;
-
-      return ProductDesignsDAO.create({
-        userId: user.id
-      });
-    })
-    .then((design) => {
-      designId = design.id;
-
-      return put(`/product-designs/${designId}/status`, {
-        headers: authHeader(sessionId),
-        body: {
-          newStatus: 'IN_REVIEW'
-        }
-      });
-    })
-    .then(([response, body]) => {
-      t.equal(response.status, 200);
-      t.equal(body.status, 'IN_REVIEW');
-    });
-});
-
-test('PUT /product-designs/:id/status does not update to an invalid status', (t) => {
-  let designId;
-  let sessionId;
-
-  return createUser()
-    .then(({ user, session }) => {
-      sessionId = session.id;
-
-      return ProductDesignsDAO.create({
-        userId: user.id
-      });
-    })
-    .then((design) => {
-      designId = design.id;
-
-      return put(`/product-designs/${designId}/status`, {
-        headers: authHeader(sessionId),
-        body: {
-          newStatus: 'THINKING_ABOUT_STUFF'
-        }
-      });
-    })
-    .then(([response]) => {
-      t.equal(response.status, 400);
-    });
-});
-
 test('GET /product-designs allows searching', async (t) => {
   sandbox().stub(EmailService, 'enqueueSend').returns(Promise.resolve());
 
