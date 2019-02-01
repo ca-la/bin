@@ -3,6 +3,7 @@
 const Router = require('koa-router');
 
 const canAccessUserResource = require('../../middleware/can-access-user-resource');
+const createManualPaymentRecord = require('./manual-payments').default;
 const db = require('../../services/db');
 const InvalidDataError = require('../../errors/invalid-data');
 const InvoiceBreakdownsDAO = require('../../dao/invoice-breakdowns');
@@ -18,9 +19,14 @@ const { validatePropertiesFormatted } = require('../../services/validate');
 const router = new Router();
 
 function* getInvoices(next) {
-  const { designId, designStatusId, userId } = this.query;
+  const {
+    designId,
+    collectionId,
+    designStatusId,
+    userId
+  } = this.query;
 
-  this.assert(designId || userId, 400, 'Design ID or user ID must be provided');
+  this.assert(designId || userId || collectionId, 400, 'Design ID or user ID or collection ID must be provided');
 
   let invoices;
 
@@ -33,8 +39,11 @@ function* getInvoices(next) {
   } else {
     const isAdmin = (this.state.role === User.ROLES.admin);
     this.assert(isAdmin, 403);
-
-    invoices = yield InvoicesDAO.findByDesign(designId);
+    if (designId) {
+      invoices = yield InvoicesDAO.findByDesign(designId);
+    } else if (collectionId) {
+      invoices = yield InvoicesDAO.findByCollection(collectionId);
+    }
   }
 
   this.body = invoices;
@@ -174,6 +183,7 @@ router.post('/', requireAdmin, createManualInvoice);
 router.get('/:invoiceId', requireAdmin, getInvoice);
 router.del('/:invoiceId', requireAdmin, deleteInvoice);
 router.post('/:invoiceId/pay', postPayInvoice);
+router.post('/:invoiceId/manual-payments', requireAdmin, createManualPaymentRecord);
 router.post('/:invoiceId/pay-out-to-partner', requireAdmin, postPayOut);
 
 module.exports = router.routes();

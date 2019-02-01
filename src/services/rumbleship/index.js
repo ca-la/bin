@@ -4,7 +4,7 @@ const fetch = require('node-fetch');
 
 const db = require('../db');
 const InvalidDataError = require('../../errors/invalid-data');
-const InvoicePaymentsDAO = require('../../dao/invoice-payments');
+const InvoicePaymentsDAO = require('../../components/invoice-payments/dao');
 const InvoicesDAO = require('../../dao/invoices');
 const JWT = require('../jwt');
 const Logger = require('../logger');

@@ -2,10 +2,11 @@
 
 const db = require('../../services/db');
 const createUser = require('../create-user');
+const generateCollection = require('./collection').default;
 const PaymentMethodsDAO = require('../../dao/payment-methods');
 const ProductDesignsDAO = require('../../dao/product-designs');
 const InvoicesDAO = require('../../dao/invoices');
-const InvoicePaymentsDAO = require('../../dao/invoice-payments');
+const InvoicePaymentsDAO = require('../../components/invoice-payments/dao');
 
 async function createInvoicesWithPayments() {
   const { user } = await createUser({ withSession: false });
@@ -16,6 +17,7 @@ async function createInvoicesWithPayments() {
     lastFourDigits: 1111
   });
   const design = await ProductDesignsDAO.create({ userId: user.id });
+  const { collection } = await generateCollection();
 
   const { user: user2 } = await createUser();
   const design2 = await ProductDesignsDAO.create({ userId: user2.id });
@@ -44,6 +46,11 @@ async function createInvoicesWithPayments() {
         designStatusId: 'NEEDS_DEVELOPMENT_PAYMENT'
       }),
       InvoicesDAO.createTrx(trx, {
+        collectionId: collection.id,
+        totalCents: 3214,
+        title: 'My Development Invoice'
+      }),
+      InvoicesDAO.createTrx(trx, {
         designId: design.id,
         totalCents: 1234,
         title: 'My Development Invoice',
@@ -70,6 +77,7 @@ async function createInvoicesWithPayments() {
   return {
     users: [user, user2],
     designs: [design, design2],
+    collections: [collection],
     paymentMethod,
     createdInvoices,
     createdPayments

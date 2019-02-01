@@ -33,6 +33,23 @@ export function* canAccessCollectionInParam(
   yield next;
 }
 
+export function* canAccessCollectionInRequestBody(
+  this: Koa.Application.Context<object & {collectionId: string}>,
+  next: () => Promise<any>
+): IterableIterator<any> {
+  const { collectionId } = this.request.body;
+  yield attachCollectionAndPermissions.call(this, collectionId);
+
+  const { permissions } = this.state;
+  this.assert(
+    permissions && permissions.canView,
+    403,
+    "You don't have permission to view this collection"
+  );
+
+  yield next;
+}
+
 export function* canDeleteCollection(
   this: Koa.Application.Context,
   next: () => Promise<any>

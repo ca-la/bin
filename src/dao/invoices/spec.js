@@ -144,6 +144,22 @@ test(
 );
 
 test(
+  'InvoicesDAO.findByCollection',
+  async (t, { createdInvoices, collections }) => {
+    const invoices = await InvoicesDAO.findByCollection(collections[0].id);
+    const invoicesForFirstCollection = createdInvoices
+      .filter(i => i.collectionId === collections[0].id);
+
+    t.deepEqual(
+      invoices.map(i => i.id).sort(),
+      invoicesForFirstCollection.map(i => i.id).sort(),
+      'returns all invoices associated with a collection'
+    );
+  },
+  createInvoicesWithPayments
+);
+
+test(
   'InvoicesDAO.findByUser',
   async (t, { createdInvoices, users, designs }) => {
     const invoices = await InvoicesDAO.findByUser(users[0].id);

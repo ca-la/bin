@@ -10,7 +10,7 @@ interface CollectionWithResources {
 }
 
 export default async function generateCollection(
-  options: Partial<Collection>
+  options: Partial<Collection> = {}
 ): Promise<CollectionWithResources> {
   const { user } = options.createdBy
     ? { user: await findUserById(options.createdBy) }

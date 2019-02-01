@@ -8,6 +8,7 @@ declare class Invoice {
   public designId: string | null;
   public designStatusId: string | null;
   public collectionId: string | null;
+  public isPaid: boolean | null;
 
   constructor(data: any);
 }

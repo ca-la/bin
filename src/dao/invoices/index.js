@@ -53,6 +53,17 @@ async function findByDesign(designId) {
     .catch(rethrow);
 }
 
+async function findByCollection(collectionId) {
+  return db(VIEW_NAME)
+    .where({
+      collection_id: collectionId,
+      deleted_at: null
+    })
+    .orderBy('created_at', 'desc')
+    .then(invoices => invoices.map(instantiate))
+    .catch(rethrow);
+}
+
 async function findByUser(userId) {
   return db
     .select('invoice_with_payments.*')
@@ -132,6 +143,7 @@ async function deleteById(id) {
 module.exports = {
   deleteById,
   findUnpaidByDesignAndStatus,
+  findByCollection,
   findByDesignAndStatus,
   findByDesign,
   findByUser,

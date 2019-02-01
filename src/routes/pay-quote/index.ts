@@ -7,23 +7,30 @@ import {
   canSubmitCollection
 } from '../../middleware/can-access-collection';
 import { typeGuard } from '../../middleware/type-guard';
-import payInvoiceWithNewPaymentMethod, { isCreateRequest } from '../../services/payment';
+import payInvoiceWithNewPaymentMethod, {
+  isCreateRequest
+} from '../../services/payment';
 import { CreateQuotePayload } from '../../services/generate-pricing-quote';
 import { hasProperties } from '../../services/require-properties';
 
 const router = new Router();
 
 interface PayRequest {
-  paymentMethodTokenId: string;
   createQuotes: CreateQuotePayload[];
 }
 
-const isPayRequest = (data: any): data is PayRequest => {
+interface PayWithMethodRequest extends PayRequest {
+  paymentMethodTokenId: string;
+}
+
+const isPayWithMethodRequest = (data: any): data is PayWithMethodRequest => {
   return hasProperties(data, 'paymentMethodTokenId', 'createQuotes')
     && isCreateRequest(data.createQuotes);
 };
 
-function* payQuote(this: Koa.Application.Context<PayRequest>): AsyncIterableIterator<any> {
+function* payQuoteWithMethod(
+  this: Koa.Application.Context<PayWithMethodRequest>
+): AsyncIterableIterator<any> {
   const { body } = this.request;
   const { userId, collection } = this.state;
   if (!collection) { return this.throw(403, 'Unable to access collection'); }
@@ -43,8 +50,8 @@ router.post(
   requireAuth,
   canAccessCollectionInParam,
   canSubmitCollection,
-  typeGuard<PayRequest>(isPayRequest),
-  payQuote
+  typeGuard<PayWithMethodRequest>(isPayWithMethodRequest),
+  payQuoteWithMethod
 );
 
 export = router.routes();
