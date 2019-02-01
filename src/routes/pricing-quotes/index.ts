@@ -11,7 +11,9 @@ import {
   findByQuoteId as findBidsByQuoteId
 } from '../../dao/bids';
 import * as PricingCostInputsDAO from '../../dao/pricing-cost-inputs';
-import PricingCostInputs from '../../domain-objects/pricing-cost-input';
+import PricingCostInput, {
+  isUnsavedPricingCostInput
+} from '../../domain-objects/pricing-cost-input';
 import {
   PricingQuote,
   PricingQuoteRequest
@@ -65,8 +67,7 @@ function* createQuote(this: Koa.Application.Context): AsyncIterableIterator<Pric
     const { designId, units } = payload;
 
     const unitsNumber = Number(units);
-
-    const costInputs: PricingCostInputs[] = yield PricingCostInputsDAO.findByDesignId(designId);
+    const costInputs: PricingCostInput[] = yield PricingCostInputsDAO.findByDesignId(designId);
 
     if (costInputs.length === 0) {
       this.throw(404, 'No costing inputs associated with design ID');
@@ -129,7 +130,7 @@ function* getQuotes(this: Koa.Application.Context): AsyncIterableIterator<any> {
   if (!designId) {
     this.throw(400, 'You must pass a design ID');
   } else if (unitsNumber) {
-    const costInputs: PricingCostInputs[] = yield PricingCostInputsDAO.findByDesignId(designId);
+    const costInputs: PricingCostInput[] = yield PricingCostInputsDAO.findByDesignId(designId);
 
     if (costInputs.length === 0) {
       this.throw(404, 'No costing inputs associated with design ID');
@@ -160,6 +161,48 @@ function* getQuotes(this: Koa.Application.Context): AsyncIterableIterator<any> {
     this.body = quotes;
     this.status = 200;
   }
+}
+
+interface PreviewQuoteBody {
+  units: string;
+  uncommittedCostInput: object;
+}
+
+function isPreviewQuoteBody(candidate: object): candidate is PreviewQuoteBody {
+  return hasProperties(
+    candidate,
+    'units',
+    'uncommittedCostInput'
+  );
+}
+
+function* previewQuote(this: Koa.Application.Context): AsyncIterableIterator<any> {
+  const { body } = this.request;
+
+  if (!isPreviewQuoteBody(body)) {
+    this.throw(400, 'units and uncommittedCostInput is required in the request body!');
+    return;
+  }
+
+  const units = Number(body.units);
+  if (!isUnsavedPricingCostInput(body.uncommittedCostInput) || !units) {
+    this.throw(400, 'A cost input object and units are required to generate a preview quote!');
+    return;
+  }
+
+  const quoteRequest: PricingQuoteRequest = {
+    ...omit(body.uncommittedCostInput, ['id', 'createdAt', 'deletedAt']),
+    units
+  };
+  const unsavedQuote: UnsavedQuote = yield generateUnsavedQuote(quoteRequest);
+  const { payLaterTotalCents, payNowTotalCents } = calculateAmounts(unsavedQuote);
+
+  this.body = {
+    payLaterTotalCents,
+    payLaterTotalCentsPerUnit: Math.round(payLaterTotalCents / units),
+    payNowTotalCents
+  };
+  this.status = 200;
 }
 
 function* createBidForQuote(this: Koa.Application.Context): AsyncIterableIterator<any> {
@@ -198,6 +241,8 @@ function* getBidsForQuote(this: Koa.Application.Context): AsyncIterableIterator<
 router.post('/', requireAuth, createQuote);
 router.get('/', requireAuth, getQuotes);
 router.get('/:quoteId', getQuote);
+
+router.post('/preview', requireAdmin, previewQuote);
 
 router.post('/:quoteId/bids', requireAdmin, createBidForQuote);
 router.put('/:quoteId/bids/:bidId', requireAdmin, createBidForQuote);

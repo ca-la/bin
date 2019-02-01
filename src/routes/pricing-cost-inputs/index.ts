@@ -4,23 +4,12 @@ import * as uuid from 'node-uuid';
 
 import * as ProductDesignsDAO from '../../dao/product-designs';
 import * as PricingCostInputsDAO from '../../dao/pricing-cost-inputs';
-import { hasProperties } from '../../services/require-properties';
 import requireAdmin = require('../../middleware/require-admin');
-import PricingCostInput from '../../domain-objects/pricing-cost-input';
+import PricingCostInput, {
+  isUnsavedPricingCostInput
+} from '../../domain-objects/pricing-cost-input';
 
 const router = new Router();
-
-function isUnsavedPricingCostInput(candidate: object): candidate is Unsaved<PricingCostInput> {
-  return hasProperties(
-    candidate,
-    'productType',
-    'productComplexity',
-    'materialCategory',
-    'materialBudgetCents',
-    'processes',
-    'designId'
-  );
-}
 
 function* createCostInputs(this: Koa.Application.Context): AsyncIterableIterator<any> {
   const { body: inputs } = this.request;

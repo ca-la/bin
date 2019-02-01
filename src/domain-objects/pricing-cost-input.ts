@@ -33,6 +33,20 @@ export interface PricingCostInputRow {
 
 export const dataAdapter = new DataAdapter<PricingCostInputRow, PricingCostInput>();
 
+export function isUnsavedPricingCostInput(
+  candidate: object
+): candidate is Unsaved<PricingCostInput> {
+  return hasProperties(
+    candidate,
+    'productType',
+    'productComplexity',
+    'materialCategory',
+    'materialBudgetCents',
+    'processes',
+    'designId'
+  );
+}
+
 export function isPricingCostInput(candidate: object): candidate is PricingCostInput {
   return hasProperties(
     candidate,

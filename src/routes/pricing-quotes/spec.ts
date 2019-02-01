@@ -12,6 +12,7 @@ import { sandbox, test, Test } from '../../test-helpers/fresh';
 import generateCollection from '../../test-helpers/factories/collection';
 import * as CollectionsDAO from '../../dao/collections';
 import * as SlackService from '../../services/slack';
+import PricingCostInput from '../../domain-objects/pricing-cost-input';
 
 test('/pricing-quotes POST -> GET quote', async (t: Test) => {
   const { user, session } = await createUser();
@@ -258,6 +259,93 @@ test('GET /pricing-quotes?designId&units with very large quantity', async (t: Te
   t.equal(response.status, 200);
   t.equal(unsavedQuote.payLaterTotalCents > 0, true);
   t.equal(unsavedQuote.payNowTotalCents, 177700000);
+});
+
+test(
+  'POST /pricing-quotes/preview returns an unsaved quote from an uncommitted cost',
+  async (t: Test) => {
+    await generatePricingValues();
+    const { user, session } = await createUser({ role: 'ADMIN' });
+
+    const design = await createDesign({
+      productType: 'A product type',
+      title: 'A design',
+      userId: user.id
+    });
+    const uncommittedCostInput: PricingCostInput = {
+      createdAt: new Date(),
+      deletedAt: null,
+      designId: design.id,
+      id: uuid.v4(),
+      materialBudgetCents: 1200,
+      materialCategory: 'BASIC',
+      processes: [{
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      }, {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      }],
+      productComplexity: 'SIMPLE',
+      productType: 'TEESHIRT'
+    };
+
+    const [response, unsavedQuote] = await post(
+      '/pricing-quotes/preview',
+      {
+        body: {
+          uncommittedCostInput,
+          units: 100
+        },
+        headers: authHeader(session.id)
+      }
+    );
+
+    t.equal(response.status, 200);
+    t.deepEqual(unsavedQuote, {
+      payLaterTotalCents: 527660,
+      payLaterTotalCentsPerUnit: 5277,
+      payNowTotalCents: 496000
+    });
+  }
+);
+
+test('POST /pricing-quotes/preview is an admin-only endpoint', async (t: Test) => {
+  const { session } = await createUser();
+  const [response] = await post(
+    '/pricing-quotes/preview',
+    {
+      body: {},
+      headers: authHeader(session.id)
+    }
+  );
+  t.equal(response.status, 403);
+});
+
+test('POST /pricing-quotes/preview requires units and a cost input', async (t: Test) => {
+  const { session } = await createUser({ role: 'ADMIN' });
+  const [responseOne] = await post(
+    '/pricing-quotes/preview',
+    {
+      body: { fizz: 'buzz' },
+      headers: authHeader(session.id)
+    }
+  );
+  t.equal(responseOne.status, 400);
+
+  const [responseTwo] = await post(
+    '/pricing-quotes/preview',
+    {
+      body: {
+        uncommittedCostInput: {
+          foo: 'bar'
+        },
+        units: 'blah'
+      },
+      headers: authHeader(session.id)
+    }
+  );
+  t.equal(responseTwo.status, 400);
 });
 
 test('PUT /pricing-quotes/:quoteId/bid/:bidId creates bid', async (t: Test) => {
