@@ -147,6 +147,7 @@ test('#getDesignPermissions', async (t: tape.Test) => {
 test('#getCollectionPermissions', async (t: tape.Test) => {
   const { user, session } = await createUser();
   const { user: user2, session: session2 } = await createUser();
+  const { user: partnerUser, session: partnerSession } = await createUser();
 
   const collection1 = await CollectionsDAO.create({
     createdAt: new Date(),
@@ -212,6 +213,14 @@ test('#getCollectionPermissions', async (t: tape.Test) => {
     userEmail: null,
     userId: user.id
   });
+  await CollaboratorsDAO.create({
+    collectionId: collection4.id,
+    designId: null,
+    invitationMessage: '',
+    role: 'PARTNER',
+    userEmail: null,
+    userId: partnerUser.id
+  });
 
   t.deepEqual(
     await PermissionsService.getCollectionPermissions(collection1, session, user.id),
@@ -256,6 +265,17 @@ test('#getCollectionPermissions', async (t: tape.Test) => {
       canView: true
     },
     'Returns view access permissions for the collection the user is a view collaborator on.'
+  );
+  t.deepEqual(
+    await PermissionsService.getCollectionPermissions(collection4, partnerSession, partnerUser.id),
+    {
+      canComment: true,
+      canDelete: false,
+      canEdit: true,
+      canSubmit: false,
+      canView: true
+    },
+    'Returns partner access permissions for the collection the user is a partner collaborator on.'
   );
   t.deepEqual(
     await PermissionsService.getCollectionPermissions(collection3, session, user.id),
