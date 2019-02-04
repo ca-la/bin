@@ -305,7 +305,8 @@ test(
     t.deepEqual(unsavedQuote, {
       payLaterTotalCents: 527660,
       payLaterTotalCentsPerUnit: 5277,
-      payNowTotalCents: 496000
+      payNowTotalCents: 496000,
+      payNowTotalCentsPerUnit: 4960
     });
   }
 );

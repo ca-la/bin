@@ -200,7 +200,8 @@ function* previewQuote(this: Koa.Application.Context): AsyncIterableIterator<any
   this.body = {
     payLaterTotalCents,
     payLaterTotalCentsPerUnit: Math.round(payLaterTotalCents / units),
-    payNowTotalCents
+    payNowTotalCents,
+    payNowTotalCentsPerUnit: Math.round(payNowTotalCents / units)
   };
   this.status = 200;
 }
