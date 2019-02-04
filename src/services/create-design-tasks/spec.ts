@@ -3,7 +3,7 @@ import * as ProductDesignStagesDAO from '../../dao/product-design-stages';
 import * as StageTemplatesDAO from '../../dao/stage-templates';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as TaskTemplatesDAO from '../../dao/task-templates';
-import CollaboratorsDAO = require('../../dao/collaborators');
+import CollaboratorsDAO = require('../../components/collaborators/dao');
 import Collection from '../../domain-objects/collection';
 import * as CollectionsDAO from '../../dao/collections';
 import { createDesignTasks } from './index';

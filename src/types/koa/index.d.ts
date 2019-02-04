@@ -9,7 +9,7 @@ declare module 'koa' {
   interface RequestState {
     userId: string;
     role: string;
-    collaborator?: import ('../../domain-objects/collaborator').default;
+    collaborator?: import ('../../components/collaborators/domain-object').default;
     collection?: import ('../../domain-objects/collection').default;
     design?: import ('../../domain-objects/product-design');
     permissions?: import ('../../services/get-permissions').Permissions;

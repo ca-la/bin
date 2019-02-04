@@ -1,9 +1,9 @@
 import * as Koa from 'koa';
 
-import * as CollaboratorsDAO from '../../dao/collaborators';
+import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import * as CollectionsDAO from '../../dao/collections';
 import * as DesignsDAO from '../../dao/product-designs';
-import Collaborator from '../../domain-objects/collaborator';
+import Collaborator from '../../components/collaborators/domain-object';
 import filterError = require('../../services/filter-error');
 import ResourceNotFoundError from '../../errors/resource-not-found';
 import {

@@ -8,8 +8,8 @@ import {
 } from '../../components/notifications/domain-object';
 import { findById as findUserById } from '../../dao/users';
 import createUser = require('../create-user');
-import * as CollaboratorsDAO from '../../dao/collaborators';
-import Collaborator from '../../domain-objects/collaborator';
+import * as CollaboratorsDAO from '../../components/collaborators/dao';
+import Collaborator from '../../components/collaborators/domain-object';
 import * as ProductDesignsDAO from '../../dao/product-designs';
 import generateCollection from './collection';
 import Collection from '../../domain-objects/collection';

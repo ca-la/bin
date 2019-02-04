@@ -1,5 +1,5 @@
 import findUserDesigns = require('./index');
-import CollaboratorsDAO = require('../../dao/collaborators');
+import CollaboratorsDAO = require('../../components/collaborators/dao');
 import * as CollectionsDAO from '../../dao/collections';
 import createUser = require('../../test-helpers/create-user');
 import { test, Test } from '../../test-helpers/fresh';

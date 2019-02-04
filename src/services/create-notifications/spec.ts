@@ -6,7 +6,7 @@ import { sandbox, test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
 import { NotificationType } from '../../components/notifications/domain-object';
 import * as NotificationsService from './index';
-import * as CollaboratorsDAO from '../../dao/collaborators';
+import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
 import * as TasksDAO from '../../dao/tasks';
 import * as TaskEventsDAO from '../../dao/task-events';

@@ -24,6 +24,7 @@ const { default: validatePagination } = require('./middleware/validate-paginatio
 
 /* application routes */
 import annotationRoutes from './components/product-design-canvas-annotations/routes';
+import collaboratorRoutes from './components/collaborators/routes';
 import componentRelationshipRoutes from './components/component-relationships/routes';
 import processRoutes from './components/processes/routes';
 import notificationRoutes from './components/notifications/routes';
@@ -45,7 +46,7 @@ const router = new Router({
 });
 
 router.use('/', require('./middleware/root-route'));
-router.use('/product-design-collaborators', cloneDeep(require('./routes/collaborators')));
+router.use('/product-design-collaborators', cloneDeep(collaboratorRoutes));
 /* tslint:enable:no-var-requires */
 
 const routesDir = path.join(__dirname, 'routes');
@@ -61,6 +62,7 @@ routeDirectories.forEach((directoryName: string): void => {
 });
 
 /* component-based routing */
+router.use('/collaborators', collaboratorRoutes);
 router.use('/component-relationships', componentRelationshipRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/processes', processRoutes);

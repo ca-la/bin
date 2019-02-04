@@ -1,5 +1,6 @@
 import * as uuid from 'node-uuid';
-import CollaboratorsDAO = require('../../dao/collaborators');
+
+import * as CollaboratorsDAO from './dao';
 import CollectionsDAO = require('../../dao/collections');
 import createUser = require('../../test-helpers/create-user');
 import EmailService = require('../../services/email');

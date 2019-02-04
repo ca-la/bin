@@ -1,6 +1,7 @@
 import * as uuid from 'node-uuid';
-import CollaboratorsDAO = require('.');
-import CollectionsDAO = require('../../dao/collections');
+
+import * as CollaboratorsDAO from './dao';
+import * as CollectionsDAO from '../../dao/collections';
 import ProductDesignsDAO = require('../../dao/product-designs');
 
 import createUser = require('../../test-helpers/create-user');

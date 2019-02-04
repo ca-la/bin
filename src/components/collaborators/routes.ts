@@ -3,12 +3,12 @@ import * as Koa from 'koa';
 
 import addCollaborator from '../../services/add-collaborator';
 import InvalidDataError = require('../../errors/invalid-data');
-import * as CollaboratorsDAO from '../../dao/collaborators';
+import * as CollaboratorsDAO from './dao';
 import Collaborator,
 {
   isRole,
   Roles
-} from '../../domain-objects/collaborator';
+} from './domain-object';
 import requireAuth = require('../../middleware/require-auth');
 import { hasProperties } from '../../services/require-properties';
 import * as CollaboratorsMiddleware from '../../middleware/can-access-collaborator';
@@ -124,4 +124,4 @@ router.del(
   deleteCollaborator
 );
 
-module.exports = router.routes();
+export default router.routes();

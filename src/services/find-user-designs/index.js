@@ -4,7 +4,7 @@ const uniq = require('lodash/uniq');
 const flatten = require('lodash/flatten');
 const sortedUniqBy = require('lodash/sortedUniqBy');
 
-const CollaboratorsDAO = require('../../dao/collaborators');
+const CollaboratorsDAO = require('../../components/collaborators/dao');
 const ProductDesignServicesDAO = require('../../dao/product-design-services');
 const ProductDesignsDAO = require('../../dao/product-designs');
 

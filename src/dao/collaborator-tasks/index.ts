@@ -5,7 +5,7 @@ import CollaboratorTask, {
   isCollaboratorTaskRow
 } from '../../domain-objects/collaborator-task';
 import first from '../../services/first';
-import Collaborator, { CollaboratorRow } from '../../domain-objects/collaborator';
+import Collaborator, { CollaboratorRow } from '../../components/collaborators/domain-object';
 import { validate, validateEvery } from '../../services/validate-from-db';
 import { hasProperties } from '../../services/require-properties';
 import DataAdapter from '../../services/data-adapter';

@@ -4,7 +4,7 @@ import { test } from '../../test-helpers/fresh';
 import * as API from '../../test-helpers/http';
 import createUser = require('../../test-helpers/create-user');
 
-import * as CollaboratorsDAO from '../../dao/collaborators';
+import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import * as DesignsDAO from '../../dao/product-designs';
 import { Notification } from './domain-object';
 import {

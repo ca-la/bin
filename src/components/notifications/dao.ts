@@ -13,8 +13,8 @@ import {
   Notification,
   NotificationRow
 } from './domain-object';
-import * as CollaboratorsDAO from '../../dao/collaborators';
-import Collaborator from '../../domain-objects/collaborator';
+import * as CollaboratorsDAO from '../../components/collaborators/dao';
+import Collaborator from '../../components/collaborators/domain-object';
 import { validate, validateEvery } from '../../services/validate-from-db';
 
 interface SearchInterface {

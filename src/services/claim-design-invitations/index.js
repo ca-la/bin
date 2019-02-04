@@ -1,6 +1,6 @@
 'use strict';
 
-const CollaboratorsDAO = require('../../dao/collaborators');
+const CollaboratorsDAO = require('../../components/collaborators/dao');
 
 /**
  * Find any outstanding product design collaboration invitations for a new user,

@@ -9,13 +9,13 @@ import * as TasksDAO from '../../dao/tasks';
 import * as CommentDAO from '../../dao/comments';
 import * as TaskCommentDAO from '../../dao/task-comments';
 import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
-import * as CollaboratorsDAO from '../../dao/collaborators';
+import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import CollaboratorTask from '../../domain-objects/collaborator-task';
 import TaskEvent, { DetailsTask, TaskStatus } from '../../domain-objects/task-event';
 import Comment, { isComment } from '../../domain-objects/comment';
 import { hasOnlyProperties } from '../../services/require-properties';
 import requireAuth = require('../../middleware/require-auth');
-import Collaborator from '../../domain-objects/collaborator';
+import Collaborator from '../../components/collaborators/domain-object';
 import * as NotificationsService from '../../services/create-notifications';
 import { typeGuard } from '../../middleware/type-guard';
 

@@ -3,7 +3,7 @@ import * as tape from 'tape';
 import * as CollectionsDAO from './index';
 import * as DesignEventsDAO from '../design-events';
 import * as ProductDesignsDAO from '../product-designs';
-import * as CollaboratorsDAO from '../collaborators';
+import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import { test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
 import ProductDesign = require('../../domain-objects/product-design');

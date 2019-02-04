@@ -3,7 +3,7 @@ import * as sinon from 'sinon';
 import * as tape from 'tape';
 
 import * as CollectionsDAO from '../../dao/collections';
-import * as CollaboratorsDAO from '../../dao/collaborators';
+import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import createUser = require('../../test-helpers/create-user');
 import * as ProductDesignsDAO from '../../dao/product-designs';
 import * as DesignEventsDAO from '../../dao/design-events';

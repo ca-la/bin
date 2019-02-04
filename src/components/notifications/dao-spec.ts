@@ -3,7 +3,7 @@ import * as tape from 'tape';
 import * as uuid from 'node-uuid';
 import { test } from '../../test-helpers/fresh';
 import * as NotificationsDAO from './dao';
-import * as CollaboratorsDAO from '../../dao/collaborators';
+import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import * as DesignsDAO from '../../dao/product-designs';
 import createUser = require('../../test-helpers/create-user');
 import db = require('../../services/db');

@@ -3,7 +3,7 @@ import * as uuid from 'node-uuid';
 import * as NotificationsDAO from '../../components/notifications/dao';
 import * as SectionsDAO from '../../dao/product-design-sections';
 import * as CanvasesDAO from '../../dao/product-design-canvases';
-import * as CollaboratorsDAO from '../../dao/collaborators';
+import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import * as StageTasksDAO from '../../dao/product-design-stage-tasks';
 import * as StagesDAO from '../../dao/product-design-stages';
 import * as DesignsDAO from '../../dao/product-designs';
@@ -30,7 +30,7 @@ import {
   TaskCommentCreateNotification,
   TaskCompleteNotification
 } from '../../components/notifications/domain-object';
-import Collaborator, { CollaboratorWithUser } from '../../domain-objects/collaborator';
+import Collaborator, { CollaboratorWithUser } from '../../components/collaborators/domain-object';
 import User from '../../domain-objects/user';
 
 import findDesignUsers = require('../../services/find-design-users');

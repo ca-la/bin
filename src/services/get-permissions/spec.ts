@@ -5,7 +5,7 @@ import { test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
 
 import * as CollectionsDAO from '../../dao/collections';
-import * as CollaboratorsDAO from '../../dao/collaborators';
+import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import * as DesignsDAO from '../../dao/product-designs';
 import * as PermissionsService from './index';
 

@@ -5,7 +5,7 @@ import { create as createDesign } from '../../dao/product-designs';
 import * as API from '../../test-helpers/http';
 import { test } from '../../test-helpers/fresh';
 import * as ProductDesignVariantsDAO from '../../dao/product-design-variants';
-import * as CollaboratorsDAO from '../../dao/collaborators';
+import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import ProductDesignVariant from '../../domain-objects/product-design-variant';
 
 const API_PATH = '/product-design-variants';

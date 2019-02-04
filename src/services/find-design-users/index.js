@@ -2,7 +2,7 @@
 
 const uniqBy = require('lodash/uniqBy');
 
-const CollaboratorsDAO = require('../../dao/collaborators');
+const CollaboratorsDAO = require('../../components/collaborators/dao');
 const ProductDesignServicesDAO = require('../../dao/product-design-services');
 const ProductDesignsDAO = require('../../dao/product-designs');
 const UsersDAO = require('../../dao/users');

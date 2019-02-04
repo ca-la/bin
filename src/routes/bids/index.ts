@@ -3,7 +3,7 @@ import * as Koa from 'koa';
 import * as uuid from 'node-uuid';
 
 import Bid from '../../domain-objects/bid';
-import Collaborator from '../../domain-objects/collaborator';
+import Collaborator from '../../components/collaborators/domain-object';
 import ProductDesign = require('../../domain-objects/product-design');
 import { PricingQuote } from '../../domain-objects/pricing-quote';
 import * as UsersDAO from '../../dao/users';
@@ -11,7 +11,7 @@ import * as BidsDAO from '../../dao/bids';
 import * as PricingQuotesDAO from '../../dao/pricing-quotes';
 import * as ProductDesignsDAO from '../../dao/product-designs';
 import * as DesignEventsDAO from '../../dao/design-events';
-import * as CollaboratorsDAO from '../../dao/collaborators';
+import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import requireAdmin = require('../../middleware/require-admin');
 import requireAuth = require('../../middleware/require-auth');
 import { hasOnlyProperties } from '../../services/require-properties';

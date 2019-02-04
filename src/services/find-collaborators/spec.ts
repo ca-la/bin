@@ -1,5 +1,5 @@
 import * as uuid from 'node-uuid';
-import CollaboratorsDAO = require('../../dao/collaborators');
+import CollaboratorsDAO = require('../../components/collaborators/dao');
 import Collection from '../../domain-objects/collection';
 import * as CollectionsDAO from '../../dao/collections';
 import createUser = require('../../test-helpers/create-user');

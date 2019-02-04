@@ -7,7 +7,7 @@ import filterError = require('../../services/filter-error');
 import InvalidDataError = require('../../errors/invalid-data');
 import first from '../../services/first';
 import normalizeEmail = require('../../services/normalize-email');
-import * as ProductDesignsDAO from '../product-designs';
+import * as ProductDesignsDAO from '../../dao/product-designs';
 import Collaborator,
 {
   CollaboratorRow,
@@ -16,8 +16,8 @@ import Collaborator,
   isCollaboratorRow,
   partialDataAdapter,
   UPDATABLE_PROPERTIES
-} from '../../domain-objects/collaborator';
-import UsersDAO = require('../users');
+} from './domain-object';
+import UsersDAO = require('../../dao/users');
 import { validate, validateEvery } from '../../services/validate-from-db';
 import { pick, uniqBy } from 'lodash';
 

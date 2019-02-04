@@ -9,7 +9,7 @@ import {
   findAllCollaboratorsByTaskId
 } from './index';
 import { create as createTask } from '../tasks';
-import { create as createCollaborator } from '../collaborators';
+import { create as createCollaborator } from '../../components/collaborators/dao';
 import { create as createCollection } from '../collections';
 import createUser = require('../../test-helpers/create-user');
 

@@ -16,7 +16,7 @@ import requireAuth = require('../../middleware/require-auth');
 import requireAdmin = require('../../middleware/require-admin');
 
 import * as CollectionsDAO from '../../dao/collections';
-import * as CollaboratorsDAO from '../../dao/collaborators';
+import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import Collection, { isCollection, isPartialCollection } from '../../domain-objects/collection';
 import { createSubmission, getSubmissionStatus } from './submissions';
 import { deleteDesign, getCollectionDesigns, putDesign } from './designs';

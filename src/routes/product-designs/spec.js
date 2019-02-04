@@ -9,7 +9,7 @@ const DesignEventsDAO = require('../../dao/design-events');
 const ProductDesignsDAO = require('../../dao/product-designs');
 const ProductDesignStagesDAO = require('../../dao/product-design-stages');
 const TaskEventsDAO = require('../../dao/task-events');
-const CollaboratorsDAO = require('../../dao/collaborators');
+const CollaboratorsDAO = require('../../components/collaborators/dao');
 const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
 const EmailService = require('../../services/email');
 const {

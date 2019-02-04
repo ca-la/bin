@@ -14,7 +14,7 @@ import { create as createTask } from '../tasks';
 import { create as createDesignStageTask } from '../product-design-stage-tasks';
 import { create as createDesignStage } from '../product-design-stages';
 import { create as createDesign, deleteById as deleteDesign } from '../product-designs';
-import { create as createCollaborator } from '../collaborators';
+import { create as createCollaborator } from '../../components/collaborators/dao';
 import { create as createTaskComment } from '../task-comments';
 import { addDesign, create as createCollection } from '../collections';
 import { create as createSketch, deleteById as deleteSketch } from '../product-design-images';

@@ -1,8 +1,8 @@
-import CollaboratorsDAO = require('../../dao/collaborators');
+import CollaboratorsDAO = require('../../components/collaborators/dao');
 import CollectionsDAO = require('../../dao/collections');
 import ProductDesignsDAO = require('../../dao/product-designs');
 import { CALA_OPS_USER_ID } from '../../config';
-import Collaborator from '../../domain-objects/collaborator';
+import Collaborator from '../../components/collaborators/domain-object';
 
 export const COLLABORATOR_ROLES = {
   CALA: 'CALA',

@@ -1,13 +1,13 @@
 import { escape } from 'lodash';
 
-import CollaboratorsDAO = require('../../dao/collaborators');
+import CollaboratorsDAO = require('../../components/collaborators/dao');
 import InvalidDataError = require('../../errors/invalid-data');
 import normalizeEmail = require('../normalize-email');
 import UsersDAO = require('../../dao/users');
 import Validation = require('../../services/validation');
 import * as NotificationsService from '../../services/create-notifications';
 import User from '../../domain-objects/user';
-import { CollaboratorWithUser, Roles } from '../../domain-objects/collaborator';
+import { CollaboratorWithUser, Roles } from '../../components/collaborators/domain-object';
 
 /**
  * Add a collaborator to a design. If a user exists with this email, adds them

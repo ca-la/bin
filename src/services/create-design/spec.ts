@@ -1,4 +1,4 @@
-import CollaboratorsDAO = require('../../dao/collaborators');
+import CollaboratorsDAO = require('../../components/collaborators/dao');
 import createDesign from './index';
 import createUser = require('../../test-helpers/create-user');
 import { test, Test } from '../../test-helpers/fresh';

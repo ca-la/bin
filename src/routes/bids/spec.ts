@@ -7,7 +7,7 @@ import { authHeader, del, get, post, put } from '../../test-helpers/http';
 import createUser = require('../../test-helpers/create-user');
 import generateBid from '../../test-helpers/factories/bid';
 import * as BidsDAO from '../../dao/bids';
-import * as CollaboratorsDAO from '../../dao/collaborators';
+import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import * as DesignEventsDAO from '../../dao/design-events';
 import * as PricingQuotesDAO from '../../dao/pricing-quotes';
 import * as ProductDesignsDAO from '../../dao/product-designs';
