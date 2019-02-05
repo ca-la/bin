@@ -108,9 +108,7 @@ export async function replaceForDesign(
 ): Promise<ProductDesignVariant[]> {
   return db.transaction(async (trx: Knex.Transaction): Promise<ProductDesignVariant[]> => {
     await deleteForDesign(trx, designId);
-    return createForDesign(trx, designId, variants)
-      .then((createdVariants: ProductDesignVariant[]) => trx.commit(createdVariants))
-      .catch(() => trx.rollback());
+    return createForDesign(trx, designId, variants);
   });
 }
 

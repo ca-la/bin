@@ -2,8 +2,9 @@ import * as uuid from 'node-uuid';
 
 import { create as createDesign } from '../product-designs';
 import createUser = require('../../test-helpers/create-user');
-import { test, Test } from '../../test-helpers/fresh';
+import { sandbox, test, Test } from '../../test-helpers/fresh';
 
+import { dataAdapter } from '../../domain-objects/product-design-variant';
 import { getSizes, getTotalUnitsToProduce, replaceForDesign } from './index';
 
 async function createPrerequisites(): Promise<any> {
@@ -62,6 +63,29 @@ test('ProductDesignVariantsDAO.getTotalUnitsToProduce sums units', async (t: Tes
 
 test('ProductDesignVariantsDAO.getSizes returns a list of sizes', async (t: Test) => {
   const { design } = await createPrerequisites();
+  const sizes = await getSizes(design.id);
+  t.deepEqual(sizes.sort(), ['L', 'M']);
+});
+
+test('replaceVariants does not delete old ones if creation fails', async (t: Test) => {
+  const { design } = await createPrerequisites();
+  sandbox().stub(dataAdapter, 'forInsertion').throws(new Error('A deep internal error'));
+
+  await replaceForDesign(design.id, [
+    {
+      colorName: 'Black',
+      designId: design.id,
+      id: uuid.v4(),
+      position: 0,
+      sizeName: '5XL',
+      unitsToProduce: 1
+    }
+  ])
+    .then(() => t.fail('replaceForDesign should not have succeeded'))
+    .catch((err: Error) => {
+      t.equal(err.message, 'A deep internal error');
+    });
+
   const sizes = await getSizes(design.id);
   t.deepEqual(sizes.sort(), ['L', 'M']);
 });
