@@ -2,14 +2,16 @@ import * as uuid from 'node-uuid';
 import { omit } from 'lodash';
 import * as sinon from 'sinon';
 
+import DesignEvent from '../../domain-objects/design-event';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import { authHeader, del, get, post, put } from '../../test-helpers/http';
 import createUser = require('../../test-helpers/create-user');
 import generateBid from '../../test-helpers/factories/bid';
+import generatePricingValues from '../../test-helpers/factories/pricing-values';
 import * as BidsDAO from '../../dao/bids';
+import * as PricingCostInputsDAO from '../../dao/pricing-cost-inputs';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import * as DesignEventsDAO from '../../dao/design-events';
-import * as PricingQuotesDAO from '../../dao/pricing-quotes';
 import * as ProductDesignsDAO from '../../dao/product-designs';
 import * as NotificationsService from '../../services/create-notifications';
 
@@ -327,44 +329,211 @@ test('DELETE /bids/:bidId/assignees/:userId', async (t: Test) => {
   t.deepEqual(collaborators, []);
 });
 
-test('POST /bids/:bidId/accept', async (t: Test) => {
-  const designer = await createUser({ withSession: false });
+test('Partner pairing: accept', async (t: Test) => {
+  await generatePricingValues();
+  const admin = await createUser({ role: 'ADMIN' });
+  const designer = await createUser();
   const partner = await createUser({ role: 'PARTNER' });
   const design = await ProductDesignsDAO.create({
     productType: 'TEESHIRT',
     title: 'Plain White Tee',
     userId: designer.user.id
   });
-  const bidId = uuid.v4();
+  await PricingCostInputsDAO.create({
+    createdAt: new Date(),
+    deletedAt: null,
+    designId: design.id,
+    id: uuid.v4(),
+    materialBudgetCents: 1200,
+    materialCategory: 'BASIC',
+    processes: [],
+    productComplexity: 'SIMPLE',
+    productType: 'TEESHIRT'
+  });
+  const quotesRequest = await post('/pricing-quotes', {
+    body: [{
+      designId: design.id,
+      units: 300
+    }],
+    headers: authHeader(admin.session.id)
+  });
+  const bid = await BidsDAO.create({
+    bidPriceCents: 20000,
+    createdAt: new Date(),
+    createdBy: admin.user.id,
+    description: 'Do me a favor, please.',
+    id: uuid.v4(),
+    quoteId: quotesRequest[1][0].id
+  });
+  await put(
+    `/bids/${bid.id}/assignees/${partner.user.id}`,
+    { headers: authHeader(admin.session.id) }
+  );
+  const notificationStub = sandbox().stub(
+    NotificationsService,
+    'sendPartnerAcceptServiceBidNotification'
+  );
 
-  sandbox().stub(BidsDAO, 'findById').resolves({
-    id: bidId,
-    quoteId: 'quoteId'
-  });
-  sandbox().stub(PricingQuotesDAO, 'findById').resolves({
-    designId: design.id,
-    id: 'quoteId'
-  });
-  sandbox().stub(CollaboratorsDAO, 'findByDesignAndUser').resolves({
-    designId: design.id,
-    id: 'collaboratorId',
-    role: 'PREVIEW',
-    userId: partner.user.id
-  });
-  const mockCreateDesignEvent = sandbox().stub(DesignEventsDAO, 'create').resolves();
-  const mockCollaboratorUpdate = sandbox().stub(CollaboratorsDAO, 'update').resolves();
+  const [missingBidResponse] = await post(
+    `/bids/${uuid.v4()}/accept`,
+    { headers: authHeader(partner.session.id) }
+  );
+  t.equal(missingBidResponse.status, 404, 'Unknown bid returns 404');
+
+  const [unauthorizedBidResponse] = await post(
+    `/bids/${bid.id}/accept`,
+    { headers: authHeader(designer.session.id) }
+  );
+  t.equal(unauthorizedBidResponse.status, 403, 'Non-collaborator cannot accept bid');
 
   const [response] = await post(
-    `/bids/${bidId}/accept`,
+    `/bids/${bid.id}/accept`,
     { headers: authHeader(partner.session.id) }
   );
 
+  const designEvents = await DesignEventsDAO.findByDesignId(design.id);
+
   t.equal(response.status, 204);
-  t.equal(mockCreateDesignEvent.callCount, 1);
-  t.equal(mockCreateDesignEvent.getCall(0).args[0].actorId, partner.user.id);
-  t.equal(mockCreateDesignEvent.getCall(0).args[0].bidId, bidId);
-  t.equal(mockCreateDesignEvent.getCall(0).args[0].designId, design.id);
-  t.equal(mockCollaboratorUpdate.callCount, 1);
-  t.equal(mockCollaboratorUpdate.getCall(0).args[0], 'collaboratorId');
-  t.deepEqual(mockCollaboratorUpdate.getCall(0).args[1], { role: 'PARTNER' });
+  t.deepEqual(
+    designEvents.map((event: DesignEvent): any => ({
+      actorId: event.actorId,
+      designId: event.designId,
+      type: event.type
+    })),
+    [
+      {
+        actorId: admin.user.id,
+        designId: design.id,
+        type: 'COMMIT_QUOTE'
+      },
+      {
+        actorId: admin.user.id,
+        designId: design.id,
+        type: 'BID_DESIGN'
+      },
+      {
+        actorId: partner.user.id,
+        designId: design.id,
+        type: 'ACCEPT_SERVICE_BID'
+      }
+    ],
+    'Adds an acceptance event'
+  );
+
+  const designCollaborator = await CollaboratorsDAO.findByDesignAndUser(design.id, partner.user.id);
+
+  t.equal(
+    designCollaborator!.userId,
+    partner.user.id,
+    'The partner is a design collaborator'
+  );
+  t.equal(
+    designCollaborator!.role,
+    'PARTNER',
+    'The partner has the PARTNER role'
+  );
+
+  t.equal(notificationStub.callCount, 1);
+});
+
+test('Partner pairing: reject', async (t: Test) => {
+  await generatePricingValues();
+  const admin = await createUser({ role: 'ADMIN' });
+  const designer = await createUser();
+  const partner = await createUser({ role: 'PARTNER' });
+  const design = await ProductDesignsDAO.create({
+    productType: 'TEESHIRT',
+    title: 'Plain White Tee',
+    userId: designer.user.id
+  });
+  await PricingCostInputsDAO.create({
+    createdAt: new Date(),
+    deletedAt: null,
+    designId: design.id,
+    id: uuid.v4(),
+    materialBudgetCents: 1200,
+    materialCategory: 'BASIC',
+    processes: [],
+    productComplexity: 'SIMPLE',
+    productType: 'TEESHIRT'
+  });
+  const quotesRequest = await post('/pricing-quotes', {
+    body: [{
+      designId: design.id,
+      units: 300
+    }],
+    headers: authHeader(admin.session.id)
+  });
+  const bid = await BidsDAO.create({
+    bidPriceCents: 20000,
+    createdAt: new Date(),
+    createdBy: admin.user.id,
+    description: 'Do me a favor, please.',
+    id: uuid.v4(),
+    quoteId: quotesRequest[1][0].id
+  });
+  await put(
+    `/bids/${bid.id}/assignees/${partner.user.id}`,
+    { headers: authHeader(admin.session.id) }
+  );
+  const notificationStub = sandbox().stub(
+    NotificationsService,
+    'sendPartnerRejectServiceBidNotification'
+  );
+
+  const [missingBidResponse] = await post(
+    `/bids/${uuid.v4()}/reject`,
+    { headers: authHeader(partner.session.id) }
+  );
+  t.equal(missingBidResponse.status, 404, 'Unknown bid returns 404');
+
+  const [unauthorizedBidResponse] = await post(
+    `/bids/${bid.id}/reject`,
+    { headers: authHeader(designer.session.id) }
+  );
+  t.equal(unauthorizedBidResponse.status, 403, 'Non-collaborator cannot reject bid');
+
+  const [response] = await post(
+    `/bids/${bid.id}/reject`,
+    { headers: authHeader(partner.session.id) }
+  );
+
+  const designEvents = await DesignEventsDAO.findByDesignId(design.id);
+
+  t.equal(response.status, 204);
+  t.deepEqual(
+    designEvents.map((event: DesignEvent): any => ({
+      actorId: event.actorId,
+      designId: event.designId,
+      type: event.type
+    })),
+    [
+      {
+        actorId: admin.user.id,
+        designId: design.id,
+        type: 'COMMIT_QUOTE'
+      },
+      {
+        actorId: admin.user.id,
+        designId: design.id,
+        type: 'BID_DESIGN'
+      },
+      {
+        actorId: partner.user.id,
+        designId: design.id,
+        type: 'REJECT_SERVICE_BID'
+      }
+    ],
+    'Adds a rejection event'
+  );
+
+  const designCollaborator = await CollaboratorsDAO.findByDesignAndUser(design.id, partner.user.id);
+
+  t.equal(
+    designCollaborator,
+    null,
+    'The partner not a collaborator'
+  );
+
+  t.equal(notificationStub.callCount, 1);
 });

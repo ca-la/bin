@@ -32,6 +32,8 @@ const TABLES = [
   'sessions',
   'stage_templates',
   'task_templates',
+  'tasks',
+  'task_events',
   'templates',
   'unassigned_referral_codes',
   'users'

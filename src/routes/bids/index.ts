@@ -216,13 +216,18 @@ export function* acceptDesignBid(this: AcceptDesignBidContext): AsyncIterableIte
   const bid: Bid = yield BidsDAO.findById(bidId);
   this.assert(bid, 404, `Bid not found with ID ${bidId}`);
   const quote: PricingQuote = yield PricingQuotesDAO.findById(bid.quoteId);
-  this.assert(quote, 404, `Quote not found with ID ${bid.quoteId}`);
+
+  if (!quote) {
+    this.throw(`Quote not found with ID ${bid.quoteId}`);
+    return;
+  }
+
   this.assert(quote.designId, 400, 'Quote does not have a design');
   const collaborator: Collaborator = yield CollaboratorsDAO.findByDesignAndUser(
     quote.designId!,
     userId
   );
-  this.assert(collaborator, 400, 'User is not a collaborator on this design');
+  this.assert(collaborator, 403, 'You may only accept a bid you have been assigned to');
 
   yield DesignEventsDAO.create({
     actorId: userId,
@@ -237,6 +242,49 @@ export function* acceptDesignBid(this: AcceptDesignBidContext): AsyncIterableIte
   yield CollaboratorsDAO.update(collaborator.id, {
     role: 'PARTNER'
   });
+  NotificationsService.sendPartnerAcceptServiceBidNotification(
+    quote.designId!,
+    this.state.userId
+  );
+
+  this.status = 204;
+}
+
+export function* rejectDesignBid(this: AcceptDesignBidContext): AsyncIterableIterator<void> {
+  const { bidId } = this.params;
+  const { userId } = this.state;
+
+  const bid: Bid = yield BidsDAO.findById(bidId);
+  this.assert(bid, 404, `Bid not found with ID ${bidId}`);
+  const quote: PricingQuote = yield PricingQuotesDAO.findById(bid.quoteId);
+
+  if (!quote) {
+    this.throw(`Quote not found with ID ${bid.quoteId}`);
+    return;
+  }
+
+  this.assert(quote.designId, 400, 'Quote does not have a design');
+  const collaborator: Collaborator = yield CollaboratorsDAO.findByDesignAndUser(
+    quote.designId!,
+    userId
+  );
+  this.assert(collaborator, 403, 'You may only reject a bid you have been assigned to');
+
+  yield DesignEventsDAO.create({
+    actorId: userId,
+    bidId: bid.id,
+    createdAt: new Date(),
+    designId: quote.designId!,
+    id: uuid.v4(),
+    quoteId: bid.quoteId,
+    targetId: null,
+    type: 'REJECT_SERVICE_BID'
+  });
+  yield CollaboratorsDAO.deleteById(collaborator.id);
+  NotificationsService.sendPartnerRejectServiceBidNotification(
+    quote.designId!,
+    this.state.userId
+  );
 
   this.status = 204;
 }
@@ -248,5 +296,6 @@ router.get('/:bidId/assignees', requireAdmin, listBidAssignees);
 router.del('/:bidId/assignees/:userId', requireAdmin, removeBidFromPartner);
 
 router.post('/:bidId/accept', requireAuth, acceptDesignBid);
+router.post('/:bidId/reject', requireAuth, rejectDesignBid);
 
 module.exports = router.routes();
