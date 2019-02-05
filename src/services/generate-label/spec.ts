@@ -1,5 +1,5 @@
 import * as tape from 'tape';
-import { test } from '../../test-helpers/fresh';
+import { test } from '../../test-helpers/simple';
 import generateLabel from './index';
 
 test('generateLabel creates an alphabetic label', async (t: tape.Test) => {

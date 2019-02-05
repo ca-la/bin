@@ -1,6 +1,6 @@
 'use strict';
 
-const { test } = require('../../test-helpers/fresh');
+const { test } = require('../../test-helpers/simple');
 const { hash, compare } = require('./index');
 
 test('`hash` hashes a value', (t) => {

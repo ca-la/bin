@@ -1,6 +1,6 @@
 'use strict';
 
-const { test } = require('../../test-helpers/fresh');
+const { test } = require('../../test-helpers/simple');
 const insecureHash = require('./index');
 
 test('insecureHash returns the same hash for the same input', async (t) => {

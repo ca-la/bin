@@ -2,7 +2,7 @@
 
 const InvalidDataError = require('../../errors/invalid-data');
 const { isValidEmail, validateAndFormatPhoneNumber } = require('./index');
-const { test } = require('../../test-helpers/fresh');
+const { test } = require('../../test-helpers/simple');
 
 test('validateAndFormatPhoneNumber allows valid numbers, returns E164', async (t) => {
   t.equal(

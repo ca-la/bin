@@ -1,7 +1,7 @@
 'use strict';
 
 const deserializeQuery = require('.');
-const { test } = require('../../test-helpers/fresh');
+const { test } = require('../../test-helpers/simple');
 
 test('deserializeQuery with single property', (t) => {
   return Promise

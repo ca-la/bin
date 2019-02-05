@@ -1,4 +1,4 @@
-import { test, Test } from '../../test-helpers/fresh';
+import { test, Test } from '../../test-helpers/simple';
 import { mergeWithTruthy } from './index';
 
 test('mergeWithTruthy', async (t: Test) => {

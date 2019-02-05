@@ -1,4 +1,4 @@
-import { test, Test } from '../../test-helpers/fresh';
+import { test, Test } from '../../test-helpers/simple';
 import DataAdapter from '.';
 
 interface Person {

@@ -1,6 +1,6 @@
 import * as tape from 'tape';
 import * as uuid from 'node-uuid';
-import { test } from '../../test-helpers/fresh';
+import { test } from '../../test-helpers/simple';
 
 import { generateFilename } from './index';
 

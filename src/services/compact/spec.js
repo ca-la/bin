@@ -1,6 +1,6 @@
 'use strict';
 
-const { test } = require('../../test-helpers/fresh');
+const { test } = require('../../test-helpers/simple');
 const compact = require('./index');
 
 test('compact compacts objects', async (t) => {

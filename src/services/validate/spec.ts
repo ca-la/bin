@@ -5,7 +5,7 @@ import {
   validatePropertiesFormatted,
   validateValues
 } from './index';
-import { test } from '../../test-helpers/fresh';
+import { test } from '../../test-helpers/simple';
 
 test('validateProperties throws an error if properties are missing', async (t: tape.Test) => {
   const testCase = (): void => validateProperties(

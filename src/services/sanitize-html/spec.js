@@ -1,7 +1,7 @@
 'use strict';
 
 const sanitizeHtml = require('./index');
-const { test } = require('../../test-helpers/fresh');
+const { test } = require('../../test-helpers/simple');
 
 test('sanitizeHtml sanitizes HTML', async (t) => {
   t.equal(

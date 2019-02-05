@@ -7,7 +7,7 @@ const {
   hasProperties,
   hasOnlyProperties
 } = require('./index');
-const { test } = require('../../test-helpers/fresh');
+const { test } = require('../../test-helpers/simple');
 
 test('requireProperties throws an error if properties are missing', async (t) => {
   t.throws(

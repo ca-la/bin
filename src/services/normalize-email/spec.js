@@ -1,7 +1,7 @@
 'use strict';
 
 const normalizeEmail = require('./index');
-const { test } = require('../../test-helpers/fresh');
+const { test } = require('../../test-helpers/simple');
 
 test('normalizeEmail normalizes emails', async (t) => {
   t.equal(normalizeEmail('  D@CA.LA '), 'd@ca.la');
