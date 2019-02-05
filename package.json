@@ -76,7 +76,7 @@
     "start": "env $(cat .env | xargs -d '\\n') node dist",
     "migration:validate": "env $(cat .env .test.env | xargs -d '\\n') cala-validate-migration",
     "migration:create": "bin/create-migration",
-    "migration:run:local": "env $(cat .env | xargs -d '\\n') bin/migrate local",
+    "migration:run:local": "env $(cat .env | xargs -d '\\n') bin/migrate local && SKIP_BUILD=true npm run migration:run:test",
     "migration:run:test": "env $(cat .env .test.env | xargs -d '\\n') bin/migrate local",
     "migration:run:staging": "env $(cat .env | xargs -d '\\n') bin/migrate staging",
     "migration:run:production": "env $(cat .env | xargs -d '\\n') bin/migrate production",
