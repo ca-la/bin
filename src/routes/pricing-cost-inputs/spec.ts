@@ -83,5 +83,10 @@ test('GET /pricing-cost-inputs?designId', async (t: Test) => {
   );
 
   t.equal(response.status, 200);
-  t.deepEqual(omit(costInputs[0], ['createdAt', 'id', 'deletedAt']), input);
+  t.deepEqual(
+    omit(costInputs[0], ['createdAt', 'id', 'deletedAt', 'processes']),
+    omit(input, 'processes'));
+  t.deepEqual(
+    costInputs[0].processes,
+    input.processes);
 });

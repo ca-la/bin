@@ -71,7 +71,7 @@ function* createCollection(
 function* getList(
   this: Koa.Application.Context
 ): AsyncIterableIterator<CollectionWithPermissions[]> {
-  const { userId } = this.query;
+  const { userId, isCosted, isSubmitted } = this.query;
   const { role, userId: currentUserId } = this.state;
 
   const userIdToQuery = role === 'ADMIN'
@@ -90,8 +90,11 @@ function* getList(
     ));
     this.body = collectionsWithPermissions;
     this.status = 200;
+  } else if (role === 'ADMIN' && isCosted === 'false' && isSubmitted === 'true') {
+    this.body = yield CollectionsDAO.findWithUncostedDesigns();
+    this.status = 200;
   } else {
-    this.throw(403, 'UserId is required!');
+    this.throw(403, 'Unable to match query');
   }
 }
 

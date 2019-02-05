@@ -5,6 +5,7 @@ import createUser = require('../../test-helpers/create-user');
 import * as ProductDesignsDAO from '../product-designs';
 import * as PricingCostInputsDAO from './index';
 import PricingCostInput from '../../domain-objects/pricing-cost-input';
+import { omit } from 'lodash';
 
 test('PricingCostInputsDAO supports creation and retrieval', async (t: Test) => {
   const { user } = await createUser();
@@ -36,7 +37,8 @@ test('PricingCostInputsDAO supports creation and retrieval', async (t: Test) => 
 
   const created = await PricingCostInputsDAO.create(input);
 
-  t.deepEqual(created, input);
+  t.deepEqual(omit(created, 'processes'), omit(input, 'processes'));
+  t.deepEqual(created.processes.sort(), input.processes.sort());
 
   const retrieved = await PricingCostInputsDAO.findById(input.id);
 

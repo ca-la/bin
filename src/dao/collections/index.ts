@@ -145,6 +145,38 @@ export async function findByDesign(designId: string): Promise<Collection[]> {
   return collections;
 }
 
+export async function findWithUncostedDesigns(): Promise<Collection[]> {
+  const collections: CollectionRow[] = await db(TABLE_NAME)
+    .select('collections.*')
+    .distinct('collections.id')
+    .from(TABLE_NAME)
+    .joinRaw(`
+JOIN collection_designs as cd
+  ON cd.collection_id = collections.id
+    `)
+    .joinRaw(`
+JOIN (
+  SELECT *
+  FROM design_events AS de1
+  WHERE type='SUBMIT_DESIGN'
+    AND NOT EXISTS (
+    SELECT * from design_events AS de2
+    WHERE de1.design_id = de2.design_id
+      AND de2.type = 'COMMIT_COST_INPUTS'
+      AND de2.created_at > de1.created_at)
+) AS de
+  ON de.design_id = cd.design_id
+    `)
+    .orderBy('collections.id');
+
+  return validateEvery<CollectionRow, Collection>(
+    TABLE_NAME,
+    isCollectionRow,
+    dataAdapter,
+    collections
+  );
+}
+
 export async function addDesign(collectionId: string, designId: string): Promise<ProductDesign[]> {
   await db('collection_designs')
     .insert({ collection_id: collectionId, design_id: designId }, '*')

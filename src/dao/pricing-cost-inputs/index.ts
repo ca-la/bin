@@ -60,7 +60,8 @@ export async function create(inputs: PricingCostInput): Promise<PricingCostInput
 async function attachProcesses(inputs: WithoutProcesses): Promise<any> {
   const processes: Process[] = await db('pricing_cost_input_processes')
     .select(['name', 'complexity'])
-    .where({ pricing_cost_input_id: inputs.id });
+    .where({ pricing_cost_input_id: inputs.id })
+    .orderBy('name', 'desc');
 
   return {
     ...inputs,

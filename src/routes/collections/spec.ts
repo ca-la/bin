@@ -11,6 +11,8 @@ import * as API from '../../test-helpers/http';
 import { sandbox, test } from '../../test-helpers/fresh';
 import * as CreateNotifications from '../../services/create-notifications';
 import * as DesignTasksService from '../../services/create-design-tasks';
+import { stubFindWithUncostedDesigns } from '../../test-helpers/stubs/collections-dao';
+import Collection from '../../domain-objects/collection';
 
 test('GET /collections/:id returns a created collection', async (t: tape.Test) => {
   const { session, user } = await createUser();
@@ -895,4 +897,28 @@ test('POST /collections/:collectionId/partner-pairings', async (t: tape.Test) =>
   t.equal(designTwoEvents[0].type, 'COMMIT_PARTNER_PAIRING', 'Creates a partner pairing event');
 
   t.assert(createDesignTasksSpy.calledTwice, 'Design tasks are generated for each design');
+});
+
+test('GET /collections?isSubmitted=true&isCosted=false returns collections with uncosted designs',
+async (t: tape.Test) => {
+  const { session: sessionAdmin } = await createUser({ role: 'ADMIN' });
+  const { session: sessionUser } = await createUser();
+
+  const { collections } = stubFindWithUncostedDesigns();
+  const [responseOk, bodyOk] = await API.get('/collections?isSubmitted=true&isCosted=false', {
+    headers: API.authHeader(sessionAdmin.id)
+  });
+
+  t.equal(responseOk.status, 200, 'GET returns "200 OK" status');
+  t.equal(bodyOk.length, 2, '2 collections are returned');
+  const newTimeBody = bodyOk.map((el: Collection) =>
+    ({ ...el, createdAt: new Date(el.createdAt) }));
+  t.deepEqual(newTimeBody, collections, 'collections match stub');
+
+  const [responseBad] = await
+    API.get('/collections?isSubmitted=false&isCosted=false', {
+      headers: API.authHeader(sessionUser.id)
+    });
+
+  t.equal(responseBad.status, 403, 'GET returns "403 Permission Denied" status');
 });

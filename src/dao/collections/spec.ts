@@ -7,6 +7,9 @@ import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import { test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
 import ProductDesign = require('../../domain-objects/product-design');
+import createDesign from '../../services/create-design';
+import generateCollection from '../../test-helpers/factories/collection';
+import DesignEvent from '../../domain-objects/design-event';
 
 test('CollectionsDAO#create creates a collection', async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
@@ -364,4 +367,102 @@ test('CollectionsDAO.getStatusById', async (t: tape.Test) => {
     isQuoted: true,
     isSubmitted: true
   });
+});
+
+test('CollectionsDAO#findWithUncostedDesigns finds all collections with uncosted designs',
+async (t: tape.Test) => {
+  const { user } = await createUser({ role: 'ADMIN' });
+  const { user: user2 } = await createUser();
+
+  const design1 = await createDesign({
+    productType: 'test',
+    title: 'test design uncosted',
+    userId: user2.id
+  });
+
+  const design2 = await createDesign({
+    productType: 'test2',
+    title: 'test design costed',
+    userId: user2.id
+  });
+
+  const design3 = await createDesign({
+    productType: 'test3',
+    title: 'test design costed',
+    userId: user2.id
+  });
+
+  const { collection: collection1 } = await generateCollection({ createdBy: user2.id });
+  const { collection: collection2 } = await generateCollection({ createdBy: user2.id });
+  await generateCollection({ createdBy: user2.id });
+
+  await CollectionsDAO.addDesign(collection1.id, design1.id);
+  await CollectionsDAO.addDesign(collection1.id, design2.id);
+  await CollectionsDAO.addDesign(collection2.id, design3.id);
+
+  const submitEvent: DesignEvent = {
+    actorId: user2.id,
+    bidId: null,
+    createdAt: new Date(),
+    designId: design1.id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: user.id,
+    type: 'SUBMIT_DESIGN'
+  };
+  const submitEvent2: DesignEvent = {
+    actorId: user2.id,
+    bidId: null,
+    createdAt: new Date(),
+    designId: design2.id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: user.id,
+    type: 'SUBMIT_DESIGN'
+  };
+  const submitEvent3: DesignEvent = {
+    actorId: user2.id,
+    bidId: null,
+    createdAt: new Date(2012, 1, 1),
+    designId: design3.id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: user.id,
+    type: 'SUBMIT_DESIGN'
+  };
+  const costEvent1: DesignEvent = {
+    actorId: user.id,
+    bidId: null,
+    createdAt: new Date(),
+    designId: design2.id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: user2.id,
+    type: 'COMMIT_COST_INPUTS'
+  };
+  const costEvent2: DesignEvent = {
+    actorId: user.id,
+    bidId: null,
+    createdAt: new Date(),
+    designId: design3.id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: user2.id,
+    type: 'COMMIT_COST_INPUTS'
+  };
+
+  await DesignEventsDAO.createAll([
+    submitEvent, submitEvent2, submitEvent3]);
+
+  await DesignEventsDAO.createAll([
+    costEvent1, costEvent2]);
+
+  const response = await CollectionsDAO.findWithUncostedDesigns();
+
+  t.equal(response.length, 1, 'Only one collection is returned');
+  t.deepEqual(
+    [{ ...response[0], createdAt: new Date(response[0].createdAt) }],
+    [{ ...collection1, createdAt: new Date(collection1.createdAt) }],
+    'returns Collection with uncosted designs'
+  );
 });
