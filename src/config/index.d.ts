@@ -45,11 +45,6 @@ export const FIT_CLIENT_HOST: string;
 
 export const STRIPE_SECRET_KEY: string;
 
-export const RUMBLESHIP_API_KEY_FINANCING: string;
-export const RUMBLESHIP_API_KEY_ACH: string;
-export const RUMBLESHIP_API_BASE: string;
-export const RUMBLESHIP_PAY_BASE: string;
-
 export const FINANCING_MARGIN: number;
 
 export const LOG_ALL_QUERIES: boolean;

@@ -3,33 +3,9 @@
 const Router = require('koa-router');
 
 const canAccessUserResource = require('../../middleware/can-access-user-resource');
-const InvoicesDAO = require('../../dao/invoices');
 const PaymentMethods = require('../../dao/payment-methods');
-const ProductDesignsDAO = require('../../dao/product-designs');
 const requireAuth = require('../../middleware/require-auth');
-const Rumbleship = require('../../services/rumbleship');
 const Stripe = require('../../services/stripe');
-const UsersDAO = require('../../dao/users');
-const {
-  RUMBLESHIP_API_KEY_ACH,
-  RUMBLESHIP_API_KEY_FINANCING
-} = require('../../config');
-
-const PARTNER_KEYS = {
-  RUMBLESHIP_ACH: RUMBLESHIP_API_KEY_ACH,
-  RUMBLESHIP_FINANCING: RUMBLESHIP_API_KEY_FINANCING
-};
-
-// The fee that we add to invoices before sending to our partners. They'll then
-// subtract "discounts" from that.
-const FEE_PERCENTAGE = {
-  RUMBLESHIP_ACH: 0.015,
-  RUMBLESHIP_FINANCING: 0.13
-};
-
-function getFeePercentage(partnerId) {
-  return FEE_PERCENTAGE[partnerId] || 0;
-}
 
 const router = new Router();
 
@@ -67,108 +43,7 @@ function* addPaymentMethod() {
   this.status = 201;
 }
 
-function* getPartnerCheckoutEligibility() {
-  // Find out whether a designer is eligible to pay using a deferred plan using
-  // a financing partner (as of 2018-03, only Rumbleship).
-  const { designId } = this.query;
-  this.assert(designId, 400, 'Missing design ID');
-
-  const design = yield ProductDesignsDAO.findById(designId);
-
-  this.assert(design, 400, 'Invalid design ID');
-
-  const user = yield UsersDAO.findById(this.state.userId);
-
-  const response = {};
-
-  for (const partnerId of Object.keys(PARTNER_KEYS)) {
-    if (design.status === 'NEEDS_DEVELOPMENT_PAYMENT') {
-      response[partnerId] = { isAuthorized: false };
-      // eslint-disable-next-line no-continue
-      continue;
-    }
-
-    const rs = new Rumbleship({ apiKey: PARTNER_KEYS[partnerId] });
-    const result = yield rs.getBuyerAuthorization({ customerEmail: user.email });
-
-    response[partnerId] = {
-      isAuthorized: result.isBuyerAuthorized,
-      rumbleshipPayload: result.isBuyerAuthorized ? {
-        bsToken: result.bsToken,
-        buyerHash: result.buyerHash,
-        supplierHash: result.supplierHash
-      } : null
-    };
-  }
-
-  this.body = response;
-  this.status = 200;
-}
-
-function* beginPartnerCheckout() {
-  const { rumbleshipPayload, invoiceId, partnerId } = this.request.body;
-  this.assert(rumbleshipPayload, 400, 'Missing rumbleship payload');
-  this.assert(invoiceId, 400, 'Missing invoice ID');
-  this.assert(PARTNER_KEYS[partnerId], 400, 'Invalid partner ID');
-
-  const { bsToken, buyerHash, supplierHash } = rumbleshipPayload;
-  this.assert(bsToken, 400, 'Missing rumbleshipPayload.bsToken');
-  this.assert(buyerHash, 400, 'Missing rumbleshipPayload.buyerHash');
-  this.assert(supplierHash, 400, 'Missing rumbleshipPayload.supplierHash');
-
-  const invoice = yield InvoicesDAO.findById(invoiceId);
-
-  this.assert(invoice, 400, 'Invoice not found');
-
-  const rs = new Rumbleship({ apiKey: PARTNER_KEYS[partnerId] });
-
-  const feePercentage = getFeePercentage(partnerId);
-
-  const { purchaseHash } = yield rs.createPurchaseOrder({
-    bsToken,
-    buyerHash,
-    feePercentage,
-    invoice,
-    partnerId,
-    supplierHash
-  });
-
-  this.status = 200;
-
-  this.body = {
-    rumbleshipPayload: { purchaseHash },
-    checkoutUrl: Rumbleship.getCheckoutUrl({ purchaseHash, bsToken })
-  };
-}
-
-function* completePartnerCheckout() {
-  const { rumbleshipPayload, invoiceId, partnerId } = this.request.body;
-  const { purchaseHash, poToken } = rumbleshipPayload;
-
-  this.assert(PARTNER_KEYS[partnerId], 400, 'Invalid partner ID');
-
-  const invoice = yield InvoicesDAO.findById(invoiceId);
-
-  const rs = new Rumbleship({ apiKey: PARTNER_KEYS[partnerId] });
-
-  const feePercentage = getFeePercentage(partnerId);
-
-  yield rs.confirmFullOrder({
-    feePercentage,
-    invoiceId: invoice.id,
-    poToken,
-    purchaseHash,
-    userId: this.state.userId
-  });
-
-  this.status = 204;
-}
-
 router.get('/', requireAuth, getPaymentMethods);
 router.post('/', requireAuth, addPaymentMethod);
-
-router.get('/partner-checkout-eligibility', requireAuth, getPartnerCheckoutEligibility);
-router.post('/begin-partner-checkout', requireAuth, beginPartnerCheckout);
-router.post('/complete-partner-checkout', requireAuth, completePartnerCheckout);
 
 module.exports = router.routes();
