@@ -1,24 +1,37 @@
 import * as _ from 'lodash';
 
 export type KeyTransformer = (a: string) => string;
+export type DataTransformer<A, B> = (a: A) => B;
 
 export default class DataAdapter<RowData extends object, UserData> {
   constructor(
-    private encodeTransformer: KeyTransformer = camelize,
-    private decodeTransformer: KeyTransformer = snakify
+    private encodeTransformer: DataTransformer<RowData, UserData> = defaultEncoder,
+    private decodeTransformer: DataTransformer<UserData, RowData> = defaultDecoder,
+    private insertionTransformer: DataTransformer<
+      Uninserted<UserData>,
+      Uninserted<RowData>
+    > = defaultDecoder
   ) {}
 
   public parse(rowData: RowData): UserData {
-    return transformKeys(this.encodeTransformer, rowData) as UserData;
+    return this.encodeTransformer(rowData);
   }
 
   public toDb(userData: UserData): RowData {
-    return transformKeys(this.decodeTransformer, userData) as RowData;
+    return this.decodeTransformer(userData);
   }
 
   public forInsertion(userData: Uninserted<UserData>): Uninserted<RowData> {
-    return transformKeys(this.decodeTransformer, userData) as Uninserted<RowData>;
+    return this.insertionTransformer(userData);
   }
+}
+
+function defaultEncoder<A, B>(source: A): B {
+  return transformKeys(camelize, source);
+}
+
+function defaultDecoder<A, B>(source: A): B {
+  return transformKeys(snakify, source);
 }
 
 function transformKeys(keyTransformer: KeyTransformer, source: any): any {

@@ -55,27 +55,63 @@ test('DataAdapter class', async (t: Test) => {
   );
 });
 
-test('with custom key transformer', async (t: Test) => {
-  const alEspañol = (key: string): string => {
-    const mapping = {
-      address: 'dirección',
-      email: 'correoElectrónico',
-      first_line: 'primeraLinea',
-      name: 'nombre'
+test('with custom codec', async (t: Test) => {
+  const loud = (p: PersonSnake): Person => {
+    return {
+      address: {
+        firstLine: p.address.first_line.toUpperCase()
+      },
+      email: p.email.map((e: { address: string; validated: boolean }) => ({
+        address: e.address.toUpperCase(),
+        validated: e.validated
+      })),
+      name: p.name.toUpperCase()
     };
-    return (mapping as any)[key] || key;
   };
-  const adapter = new DataAdapter<PersonSnake, {}>(alEspañol);
-
+  const quiet = (p: Person): PersonSnake => {
+    return {
+      address: {
+        first_line: p.address.firstLine.toLowerCase()
+      },
+      email: p.email.map((e: { address: string; validated: boolean }) => ({
+        address: e.address.toLowerCase(),
+        validated: e.validated
+      })),
+      name: p.name.toLowerCase()
+    };
+  };
+  const adapter = new DataAdapter<PersonSnake, Person>(loud, quiet, quiet);
   t.deepEqual(
     adapter.parse(personFromDb),
     {
-      correoElectrónico: [{ dirección: 'john@doe.corp', validated: false }],
-      dirección: {
-        primeraLinea: '123 Main St'
+      address: {
+        firstLine: '123 MAIN ST'
       },
-      nombre: 'John Doe'
+      email: [{ address: 'JOHN@DOE.CORP', validated: false }],
+      name: 'JOHN DOE'
     },
-    'applies the key transformer'
+    '#parse applies the custom encoder'
+  );
+  t.deepEqual(
+    adapter.toDb(person),
+    {
+      address: {
+        first_line: '123 main st'
+      },
+      email: [{ address: 'john@doe.corp', validated: false }],
+      name: 'john doe'
+    },
+    '#toDb applies the decoder'
+  );
+  t.deepEqual(
+    adapter.forInsertion(person),
+    {
+      address: {
+        first_line: '123 main st'
+      },
+      email: [{ address: 'john@doe.corp', validated: false }],
+      name: 'john doe'
+    },
+    '#forInsertion applies the decoder'
   );
 });

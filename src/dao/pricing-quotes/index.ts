@@ -307,7 +307,7 @@ Found processes: ${JSON.stringify(processRows, null, 4)}`);
     'pricing_processes',
     isPricingProcessRow,
     processDataAdapter,
-    processes.map((process: Process): object => {
+    processes.map((process: Process): PricingProcessRow => {
       // lodash thinks process is a function since it has a name property
       return find(processRows, process as object);
     })
