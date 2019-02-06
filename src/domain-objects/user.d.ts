@@ -1,15 +1,19 @@
 import PublicUser from './public-user';
 
-export default interface User {
-  createdAt: Date;
-  email: string;
-  id: string;
-  name: string;
-  passwordHash: string;
-  isSmsPreregistration: boolean;
-  phone: string;
-  referralCode: string;
-  role: string;
+declare class User {
+  public createdAt: Date;
+  public email: string;
+  public id: string;
+  public name: string;
+  public passwordHash: string;
+  public isSmsPreregistration: boolean;
+  public phone: string;
+  public referralCode: string;
+  public role: string;
 
-  toPublicJSON: () => PublicUser;
+  public toPublicJSON: () => PublicUser;
+
+  constructor(data: any);
 }
+
+export = User;

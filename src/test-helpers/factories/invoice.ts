@@ -10,7 +10,7 @@ import createUser = require('../create-user');
 import Invoice from '../../domain-objects/invoice';
 import ProductDesign = require('../../domain-objects/product-design');
 import generateCollection from './collection';
-import User from '../../domain-objects/user';
+import User = require('../../domain-objects/user');
 
 interface InvoiceWithResources {
   collection: Collection | null;

@@ -6,11 +6,12 @@ import * as CanvasesDAO from '../../dao/product-design-canvases';
 import Annotation from '../../components/product-design-canvas-annotations/domain-object';
 import { create } from '../../components/product-design-canvas-annotations/dao';
 import generateCanvas from './product-design-canvas';
+import User = require('../../domain-objects/user');
 
 interface AnnotationWithResources {
   annotation: Annotation;
   canvas: ProductDesignCanvas;
-  createdBy: any;
+  createdBy: User;
 }
 
 export default async function generateAnnotation(

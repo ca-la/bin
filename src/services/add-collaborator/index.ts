@@ -6,7 +6,7 @@ import normalizeEmail = require('../normalize-email');
 import UsersDAO = require('../../dao/users');
 import Validation = require('../../services/validation');
 import * as NotificationsService from '../../services/create-notifications';
-import User from '../../domain-objects/user';
+import User = require('../../domain-objects/user');
 import { CollaboratorWithUser, Roles } from '../../components/collaborators/domain-object';
 
 /**

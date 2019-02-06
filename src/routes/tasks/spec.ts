@@ -2,7 +2,7 @@ import * as tape from 'tape';
 import * as uuid from 'node-uuid';
 import * as sinon from 'sinon';
 
-import User from '../../domain-objects/user';
+import User = require('../../domain-objects/user');
 import { DetailsTask, TaskStatus } from '../../domain-objects/task-event';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as TasksDAO from '../../dao/tasks';

@@ -31,7 +31,7 @@ import {
   TaskCompleteNotification
 } from '../../components/notifications/domain-object';
 import Collaborator, { CollaboratorWithUser } from '../../components/collaborators/domain-object';
-import User from '../../domain-objects/user';
+import User = require('../../domain-objects/user');
 
 import findDesignUsers = require('../../services/find-design-users');
 import * as EmailService from '../../services/email';

@@ -12,7 +12,7 @@ import ProductDesign = require('../../domain-objects/product-design');
 import ProductDesignsDAO = require('../../dao/product-designs');
 import StageTemplate from '../../domain-objects/stage-template';
 import TaskTemplate from '../../domain-objects/task-template';
-import User from '../../domain-objects/user';
+import User = require('../../domain-objects/user');
 import { CALA_OPS_USER_ID } from '../../config';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 

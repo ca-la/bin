@@ -1,6 +1,6 @@
 import DataAdapter from '../../services/data-adapter';
 import { hasProperties } from '../../services/require-properties';
-import User from '../../domain-objects/user';
+import User = require('../../domain-objects/user');
 
 export const UPDATABLE_PROPERTIES = [
   'user_email',

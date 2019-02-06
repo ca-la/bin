@@ -13,7 +13,7 @@ import Stage, {
   ProductDesignStageRow as StageRow
 } from '../../domain-objects/product-design-stage';
 import TaskEvent, { TaskEventRow } from '../../domain-objects/task-event';
-import User from '../../domain-objects/user';
+import User = require('../../domain-objects/user');
 import ProductDesign = require('../../domain-objects/product-design');
 
 export enum NotificationType {

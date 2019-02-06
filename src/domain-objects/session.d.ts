@@ -1,4 +1,4 @@
-import User from './user';
+import User = require('./user');
 
 declare class Session {
   public id: string;

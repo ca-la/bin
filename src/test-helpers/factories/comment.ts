@@ -3,7 +3,7 @@ import * as uuid from 'node-uuid';
 import { create } from '../../dao/comments';
 import { findById as findUserById } from '../../dao/users';
 import createUser = require('../create-user');
-import User from '../../domain-objects/user';
+import User = require('../../domain-objects/user');
 import Comment from '../../domain-objects/comment';
 
 export default async function generateComment(

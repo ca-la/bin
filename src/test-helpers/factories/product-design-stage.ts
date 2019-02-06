@@ -5,15 +5,15 @@ import { findById } from '../../dao/product-designs';
 import createDesign from '../../services/create-design';
 import createUser = require('../../test-helpers/create-user');
 import { findById as findUserById } from '../../dao/users';
-import User from '../../domain-objects/user';
+import User = require('../../domain-objects/user');
 
 export default async function generateProductDesignStage(
   options: Partial<ProductDesignStage> = {},
   userId?: string
 ): Promise<{ stage: ProductDesignStage, design: ProductDesign, user: User }> {
   const user = userId
-    ? await createUser()
-    : await findUserById(userId);
+    ? await findUserById(userId)
+    : await createUser();
 
   const design = options.designId
     ? await findById(options.designId)

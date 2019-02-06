@@ -6,7 +6,7 @@ import { create as createStageTask } from '../../dao/product-design-stage-tasks'
 import { findById as findUserById } from '../../dao/users';
 import { create as createTask } from '../../dao/tasks';
 import createUser = require('../create-user');
-import User from '../../domain-objects/user';
+import User = require('../../domain-objects/user');
 
 export default async function generateTask(
   options: Partial<TaskEvent> = {}
