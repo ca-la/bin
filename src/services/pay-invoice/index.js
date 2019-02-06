@@ -6,15 +6,12 @@ const db = require('../../services/db');
 const InvoicesDAO = require('../../dao/invoices');
 const InvoicePaymentsDAO = require('../../components/invoice-payments/dao');
 const PaymentMethods = require('../../dao/payment-methods');
-const ProductDesignsDAO = require('../../dao/product-designs');
 const CollectionsDAO = require('../../dao/collections');
-const ProductDesignStatusesDAO = require('../../dao/product-design-statuses');
 const UsersDAO = require('../../dao/users');
 
 const Logger = require('../logger');
 const SlackService = require('../slack');
 const Stripe = require('../stripe');
-const updateDesignStatus = require('../update-design-status');
 const { requireValues } = require('../require-properties');
 
 async function transactInvoice(invoiceId, paymentMethodId, userId, trx) {
@@ -56,27 +53,7 @@ async function transactInvoice(invoiceId, paymentMethodId, userId, trx) {
     }
   };
 
-  if (invoice.designId) {
-    const design = await ProductDesignsDAO.findById(invoice.designId);
-    const status = await ProductDesignStatusesDAO.findById(design.status);
-    requireValues({ design, status });
-    if (status.nextStatus) {
-      await updateDesignStatus(
-        invoice.designId,
-        status.nextStatus,
-        userId
-      );
-    }
-    paymentNotification = {
-      channel: 'designers',
-      templateName: 'designer_payment',
-      params: {
-        design,
-        designer: await UsersDAO.findById(userId),
-        paymentAmountCents: invoice.totalCents
-      }
-    };
-  } else if (invoice.collectionId) {
+  if (invoice.collectionId) {
     const collection = await CollectionsDAO.findById(invoice.collectionId);
     paymentNotification = {
       channel: 'designers',

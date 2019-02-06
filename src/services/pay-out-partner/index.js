@@ -1,14 +1,13 @@
 'use strict';
 
-const DesignsDAO = require('../../dao/product-designs');
-const findDesignUsers = require('../find-design-users');
 const InvalidDataError = require('../../errors/invalid-data');
 const InvoicesDAO = require('../../dao/invoices');
 const PartnerPayoutAccountsDAO = require('../../dao/partner-payout-accounts');
 const PartnerPayoutLogsDAO = require('../../dao/partner-payout-logs');
-const { enqueueSend } = require('../email');
+const UsersDAO = require('../../dao/users');
+const EmailService = require('../email');
 const { requireValues } = require('../require-properties');
-const { sendTransfer } = require('../stripe');
+const StripeService = require('../stripe');
 const { ADMIN_EMAIL } = require('../../config');
 
 function assert(val, message) {
@@ -21,9 +20,7 @@ function assert(val, message) {
 // about it.
 //
 // Until the time when we have automatic payouts, this is a manual process with
-// a few safeguards in place:
-//  - We make sure this partner is someone shared on this design
-//  - We make sure the payout amount is <= the invoice amount
+// a safeguard in place: we make sure the payout amount is <= the invoice amount
 async function payOutPartner({
   initiatorUserId,
   invoiceId,
@@ -43,15 +40,7 @@ async function payOutPartner({
 
   assert(payoutAmountCents <= invoice.totalCents, 'Payout amount cannot be larger than invoice amount');
 
-  const designUsers = await findDesignUsers(invoice.designId);
-
-  const design = await DesignsDAO.findById(invoice.designId);
-  assert(design, `No design with ID ${invoice.designId}`);
-
-  const vendorUser = designUsers.find(user =>
-    user.id === payoutAccount.userId);
-
-  assert(vendorUser, "This vendor doesn't appear to be shared on this design");
+  const vendorUser = await UsersDAO.findById(payoutAccount.userId);
 
   // Construct the Stripe transaction description to (a) make it clear what
   // they're being paid for, and (b) let use use the description as part of the
@@ -60,7 +49,7 @@ async function payOutPartner({
   const description = `${invoice.title}: ${message}`;
 
   // Send the transfer first; if it fails we don't send emails or create logs
-  await sendTransfer({
+  await StripeService.sendTransfer({
     destination: payoutAccount.stripeUserId,
     amountCents: payoutAmountCents,
     description,
@@ -75,12 +64,11 @@ async function payOutPartner({
     payoutAmountCents
   });
 
-  await enqueueSend({
+  await EmailService.enqueueSend({
     to: vendorUser.email,
     cc: ADMIN_EMAIL,
     templateName: 'partner_payout',
     params: {
-      design,
       payoutAmountCents,
       message
     }

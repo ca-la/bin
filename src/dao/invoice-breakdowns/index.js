@@ -16,8 +16,7 @@ const { dataMapper } = InvoiceBreakdown;
 
 const TABLE_NAME = 'invoice_breakdowns';
 
-// Create must happen in a transaction that also creates an Invoice.
-// see services/create-invoice
+// Create must happen in a transaction that also creates an Invoice
 async function createTrx(trx, data) {
   requireValues({ data, trx });
 

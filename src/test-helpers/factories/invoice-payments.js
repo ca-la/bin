@@ -4,7 +4,6 @@ const db = require('../../services/db');
 const createUser = require('../create-user');
 const generateCollection = require('./collection').default;
 const PaymentMethodsDAO = require('../../dao/payment-methods');
-const ProductDesignsDAO = require('../../dao/product-designs');
 const InvoicesDAO = require('../../dao/invoices');
 const InvoicePaymentsDAO = require('../../components/invoice-payments/dao');
 
@@ -16,11 +15,10 @@ async function createInvoicesWithPayments() {
     stripeSourceId: 'stripe-test-source',
     lastFourDigits: 1111
   });
-  const design = await ProductDesignsDAO.create({ userId: user.id });
   const { collection } = await generateCollection();
+  const { collection: collection2 } = await generateCollection();
 
   const { user: user2 } = await createUser();
-  const design2 = await ProductDesignsDAO.create({ userId: user2.id });
 
   let createdInvoices;
   let createdPayments;
@@ -28,33 +26,29 @@ async function createInvoicesWithPayments() {
   await db.transaction(async (trx) => {
     createdInvoices = await Promise.all([
       InvoicesDAO.createTrx(trx, {
-        designId: design.id,
+        collectionId: collection.id,
         totalCents: 1234,
-        title: 'My Development Invoice',
-        designStatusId: 'NEEDS_DEVELOPMENT_PAYMENT'
-      }),
-      InvoicesDAO.createTrx(trx, {
-        designId: design.id,
-        totalCents: 4321,
-        title: 'My Pre-production Invoice',
-        designStatusId: 'NEEDS_PRODUCTION_PAYMENT'
-      }),
-      InvoicesDAO.createTrx(trx, {
-        designId: design2.id,
-        totalCents: 3214,
-        title: 'My Development Invoice',
-        designStatusId: 'NEEDS_DEVELOPMENT_PAYMENT'
+        title: 'My Development Invoice'
       }),
       InvoicesDAO.createTrx(trx, {
         collectionId: collection.id,
+        totalCents: 4321,
+        title: 'My Pre-production Invoice'
+      }),
+      InvoicesDAO.createTrx(trx, {
+        collectionId: collection2.id,
         totalCents: 3214,
         title: 'My Development Invoice'
       }),
       InvoicesDAO.createTrx(trx, {
-        designId: design.id,
-        totalCents: 1234,
-        title: 'My Development Invoice',
-        designStatusId: 'NEEDS_DEVELOPMENT_PAYMENT'
+        collectionId: collection2.id,
+        totalCents: 3214,
+        title: 'My Development Invoice'
+      }),
+      InvoicesDAO.createTrx(trx, {
+        collectionId: collection2.id,
+        totalCents: 3214,
+        title: 'My Development Invoice'
       })
     ]);
 
@@ -76,8 +70,7 @@ async function createInvoicesWithPayments() {
 
   return {
     users: [user, user2],
-    designs: [design, design2],
-    collections: [collection],
+    collections: [collection, collection2],
     paymentMethod,
     createdInvoices,
     createdPayments

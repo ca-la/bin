@@ -17,42 +17,6 @@ const { dataMapper } = Invoice;
 const TABLE_NAME = 'invoices';
 const VIEW_NAME = 'invoice_with_payments';
 
-async function findUnpaidByDesignAndStatus(designId, statusId) {
-  return db(VIEW_NAME)
-    .where({
-      design_id: designId,
-      design_status_id: statusId,
-      deleted_at: null,
-      is_paid: false
-    })
-    .orderBy('created_at', 'desc')
-    .then(invoices => invoices.map(instantiate))
-    .catch(rethrow);
-}
-
-async function findByDesignAndStatus(designId, statusId) {
-  return db(VIEW_NAME)
-    .where({
-      design_id: designId,
-      design_status_id: statusId,
-      deleted_at: null
-    })
-    .orderBy('created_at', 'desc')
-    .then(invoices => invoices.map(instantiate))
-    .catch(rethrow);
-}
-
-async function findByDesign(designId) {
-  return db(VIEW_NAME)
-    .where({
-      design_id: designId,
-      deleted_at: null
-    })
-    .orderBy('created_at', 'desc')
-    .then(invoices => invoices.map(instantiate))
-    .catch(rethrow);
-}
-
 async function findByCollection(collectionId) {
   return db(VIEW_NAME)
     .where({
@@ -68,14 +32,11 @@ async function findByUser(userId) {
   return db
     .select('invoice_with_payments.*')
     .from(VIEW_NAME)
-    .leftJoin('product_designs', 'product_designs.id', 'invoice_with_payments.design_id')
-    .leftJoin('users', 'users.id', 'product_designs.user_id')
     .where({
-      'users.id': userId,
-      'product_designs.deleted_at': null,
-      'invoice_with_payments.deleted_at': null
+      user_id: userId,
+      deleted_at: null
     })
-    .orderBy('invoice_with_payments.created_at', 'desc')
+    .orderBy('created_at', 'desc')
     .then(invoices => invoices.map(instantiate))
     .catch(rethrow);
 }
@@ -97,8 +58,7 @@ async function findByIdTrx(trx, id) {
     .catch(rethrow);
 }
 
-// Create must happen in a transaction that also creates an InvoiceBreakdown.
-// see services/create-invoice
+// Create must happen in a transaction that also creates an InvoiceBreakdown
 async function createTrx(trx, data) {
   requireValues({ data, trx });
 
@@ -142,10 +102,7 @@ async function deleteById(id) {
 
 module.exports = {
   deleteById,
-  findUnpaidByDesignAndStatus,
   findByCollection,
-  findByDesignAndStatus,
-  findByDesign,
   findByUser,
   findById,
   findByIdTrx,

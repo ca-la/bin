@@ -1,6 +1,5 @@
 'use strict';
 
-const EmailService = require('../email');
 const InvalidDataError = require('../../errors/invalid-data');
 const payInvoice = require('./index');
 const SlackService = require('../slack');
@@ -10,11 +9,10 @@ const { test, sandbox } = require('../../test-helpers/fresh');
 
 test('payInvoice', async (t) => {
   sandbox().stub(Stripe, 'charge').returns(Promise.resolve({ id: 'chargeId' }));
-  sandbox().stub(EmailService, 'enqueueSend').returns(Promise.resolve());
   sandbox().stub(SlackService, 'enqueueSend').returns(Promise.resolve());
 
   const {
-    designs,
+    collections,
     users,
     createdInvoices,
     paymentMethod
@@ -27,11 +25,6 @@ test('payInvoice', async (t) => {
     users[1].id
   );
 
-  t.equal(
-    EmailService.enqueueSend.firstCall.args[0].templateName,
-    'update_design_status',
-    'sends status update email'
-  );
   t.ok(
     Stripe.charge.calledWith({
       customerId: paymentMethod.stripeCustomerId,
@@ -49,7 +42,7 @@ test('payInvoice', async (t) => {
       channel: 'designers',
       templateName: 'designer_payment',
       params: {
-        design: designs[1],
+        collection: collections[1],
         designer: users[1],
         paymentAmountCents: unpaidInvoice.totalCents
       }
@@ -65,7 +58,6 @@ test('payInvoice', async (t) => {
 
 test('payInvoice cannot pay the same invoice twice in parallel', async (t) => {
   sandbox().stub(Stripe, 'charge').returns(Promise.resolve({ id: 'chargeId' }));
-  sandbox().stub(EmailService, 'enqueueSend').returns(Promise.resolve());
   sandbox().stub(SlackService, 'enqueueSend').returns(Promise.resolve());
 
   const {
