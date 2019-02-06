@@ -26,12 +26,13 @@ jobs:
           paths:
             - "~/.npm"
           key: v3-dependencies-{{ checksum "package-lock.json" }}
+
+      - run: bin/ci-check
+
       - store_test_results:
           path: ~/repo/reports
       - store_artifacts:
           path: ~/repo/reports
-
-      - run: bin/ci-check
 
       - deploy:
           name: Deploy to Heroku
