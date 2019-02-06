@@ -44,6 +44,7 @@ function* createSubscription() {
  * @param {String} lastName
  * @param {String} brandInstagram
  * @param {String} language
+ * @param {String} readyToGo
  */
 function* createDesignerSubscription() {
   const {
@@ -52,6 +53,7 @@ function* createDesignerSubscription() {
     firstName,
     language,
     lastName,
+    readyToGo,
     source
   } = this.request.body;
 
@@ -65,7 +67,8 @@ function* createDesignerSubscription() {
       INSTA: brandInstagram,
       LANGUAGE: language,
       LNAME: lastName,
-      SOURCE: source
+      SOURCE: source,
+      READYTOGO: readyToGo
     });
   } catch (error) {
     this.throw(400, error.message);
