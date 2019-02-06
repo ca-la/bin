@@ -15,7 +15,7 @@ import TaskEvent, { DetailsTask, TaskStatus } from '../../domain-objects/task-ev
 import Comment, { isComment } from '../../domain-objects/comment';
 import { hasOnlyProperties } from '../../services/require-properties';
 import requireAuth = require('../../middleware/require-auth');
-import Collaborator from '../../components/collaborators/domain-object';
+import Collaborator from '../../components/collaborators/domain-objects/collaborator';
 import * as NotificationsService from '../../services/create-notifications';
 import { typeGuard } from '../../middleware/type-guard';
 

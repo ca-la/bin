@@ -7,7 +7,10 @@ import UsersDAO = require('../../dao/users');
 import Validation = require('../../services/validation');
 import * as NotificationsService from '../../services/create-notifications';
 import User = require('../../domain-objects/user');
-import { CollaboratorWithUser, Roles } from '../../components/collaborators/domain-object';
+import {
+  CollaboratorWithUser,
+  Roles
+} from '../../components/collaborators/domain-objects/collaborator';
 
 /**
  * Add a collaborator to a design. If a user exists with this email, adds them

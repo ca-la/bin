@@ -3,7 +3,7 @@ import * as Koa from 'koa';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import * as CollectionsDAO from '../../dao/collections';
 import * as DesignsDAO from '../../dao/product-designs';
-import Collaborator from '../../components/collaborators/domain-object';
+import Collaborator from '../../components/collaborators/domain-objects/collaborator';
 import filterError = require('../../services/filter-error');
 import ResourceNotFoundError from '../../errors/resource-not-found';
 import {
@@ -74,33 +74,47 @@ export function* attachCollaboratorAndPermissions(
   this.state.permissions = permissions;
 }
 
-export function* canAccessViaDesignOrCollectionInQuery(
+export function* canAccessViaQueryParameters(
   this: Koa.Application.Context,
   next: () => Promise<any>
 ): IterableIterator<any> {
-  const { collectionId, designId } = this.query;
+  const { collectionId, designId, designIds } = this.query;
+  const { role, userId } = this.state;
+  const hasMultipleParameters = [
+    Boolean(collectionId),
+    Boolean(designId),
+    Boolean(designIds)
+  ].reduce((accumulator: number, doesExist: boolean): number => {
+    return accumulator + (doesExist ? 1 : 0);
+  }, 0);
 
-  if (collectionId && designId) {
-    this.throw(400, 'Must pass exactly one of collection ID / design ID');
+  if (hasMultipleParameters > 1) {
+    this.throw(400, 'Must pass only one query parameter at a time!');
   }
 
-  const { role, userId } = this.state;
-  const permissions = yield findPermissionsFromCollectionOrDesign(
-    role,
-    userId,
-    collectionId,
-    designId
-  ).catch(filterError(ResourceNotFoundError, (err: ResourceNotFoundError) =>
-    this.throw(400, err)
-  ));
+  if (collectionId || designId) {
+    const permissions = yield findPermissionsFromCollectionOrDesign(
+      role,
+      userId,
+      collectionId,
+      designId
+    ).catch(filterError(ResourceNotFoundError, (err: ResourceNotFoundError) =>
+      this.throw(400, err)
+    ));
 
-  this.state.permissions = permissions;
-  this.assert(
-    permissions && permissions.canView,
-    403,
-    "You don't have permission to view collaborators in this context"
-  );
-  yield next;
+    this.state.permissions = permissions;
+    this.assert(
+      permissions && permissions.canView,
+      403,
+      "You don't have permission to view collaborators in this context"
+    );
+    yield next;
+  } else if (designIds) {
+    // Explicitly skip this step so that the `next` layer is forced to implement security.
+    yield next;
+  } else {
+    this.throw(400, 'Must pass in at least one query parameter!');
+  }
 }
 
 export function* canAccessViaDesignOrCollectionInRequestBody(

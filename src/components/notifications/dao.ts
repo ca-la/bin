@@ -14,7 +14,7 @@ import {
   NotificationRow
 } from './domain-object';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
-import Collaborator from '../../components/collaborators/domain-object';
+import Collaborator from '../../components/collaborators/domain-objects/collaborator';
 import { validate, validateEvery } from '../../services/validate-from-db';
 
 interface SearchInterface {

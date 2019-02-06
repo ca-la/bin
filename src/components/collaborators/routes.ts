@@ -8,15 +8,37 @@ import Collaborator,
 {
   isRole,
   Roles
-} from './domain-object';
+} from './domain-objects/collaborator';
 import requireAuth = require('../../middleware/require-auth');
 import { hasProperties } from '../../services/require-properties';
 import * as CollaboratorsMiddleware from '../../middleware/can-access-collaborator';
+import {
+  CollaboratorWithUserMeta,
+  CollaboratorWithUserMetaByDesign
+} from './domain-objects/collaborator-by-design';
 
 const router = new Router();
 
 interface CollaboratorUpdate {
   role: Roles;
+}
+
+/**
+ * Determines whether the given user is a collaborator on all the designs in the list.
+ */
+function isCollaboratorOnAllDesigns(
+  userId: string,
+  collaboratorsByDesignList: CollaboratorWithUserMetaByDesign[]
+): boolean {
+  return collaboratorsByDesignList.reduce((
+    acc: boolean,
+    collaboratorsByDesign: CollaboratorWithUserMetaByDesign
+  ): boolean => {
+    const isCollaborator = collaboratorsByDesign.collaborators.some(
+      (collaborator: CollaboratorWithUserMeta) => collaborator.userId === userId
+    );
+    return acc && isCollaborator;
+  }, true);
 }
 
 const isCollaboratorUpdate = (data: object): data is CollaboratorUpdate => {
@@ -59,13 +81,24 @@ function* create(this: Koa.Application.Context): AsyncIterableIterator<Collabora
 }
 
 function* find(this: Koa.Application.Context): AsyncIterableIterator<Collaborator> {
-  const { designId, collectionId } = this.query;
+  const { collectionId, designId, designIds } = this.query;
+  const { userId } = this.state;
   let collaborators;
 
   if (designId) {
     collaborators = yield CollaboratorsDAO.findByDesign(designId);
   } else if (collectionId) {
     collaborators = yield CollaboratorsDAO.findByCollection(collectionId);
+  } else if (designIds) {
+    const idList = designIds.split(',');
+    const collaboratorsByDesign = yield CollaboratorsDAO.findByDesigns(idList);
+    const hasAccess = isCollaboratorOnAllDesigns(userId, collaboratorsByDesign);
+
+    if (!hasAccess) {
+      this.throw(403, 'You are not allowed to view collaborators for the given designs!');
+    }
+
+    collaborators = collaboratorsByDesign;
   } else {
     this.throw(400, 'Design or collection IDs must be specified');
   }
@@ -106,7 +139,7 @@ router.post(
 router.get(
   '/',
   requireAuth,
-  CollaboratorsMiddleware.canAccessViaDesignOrCollectionInQuery,
+  CollaboratorsMiddleware.canAccessViaQueryParameters,
   find
 );
 router.patch(

@@ -1,5 +1,5 @@
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
-import Collaborator from '../../components/collaborators/domain-object';
+import Collaborator from '../../components/collaborators/domain-objects/collaborator';
 import * as CollectionsDAO from '../../dao/collections';
 import ProductDesign = require('../../domain-objects/product-design');
 import Collection from '../../domain-objects/collection';

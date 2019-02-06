@@ -14,7 +14,7 @@ import createUser = require('../../test-helpers/create-user');
 import { authHeader, get, post, put } from '../../test-helpers/http';
 import { sandbox, test } from '../../test-helpers/fresh';
 import * as CreateNotifications from '../../services/create-notifications';
-import Collaborator from '../../components/collaborators/domain-object';
+import Collaborator from '../../components/collaborators/domain-objects/collaborator';
 import generateTask from '../../test-helpers/factories/task';
 import createDesign from '../../services/create-design';
 import generateProductDesignStage from '../../test-helpers/factories/product-design-stage';

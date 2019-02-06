@@ -16,7 +16,13 @@ import Collaborator,
   isCollaboratorRow,
   partialDataAdapter,
   UPDATABLE_PROPERTIES
-} from './domain-object';
+} from './domain-objects/collaborator';
+import {
+  CollaboratorWithUserMetaByDesign,
+  CollaboratorWithUserMetaByDesignRow,
+  dataAdapterByDesign,
+  isCollaboratorWithUserMetaByDesignRow
+} from './domain-objects/collaborator-by-design';
 import UsersDAO = require('../../dao/users');
 import { validate, validateEvery } from '../../services/validate-from-db';
 import { pick, uniqBy } from 'lodash';
@@ -181,6 +187,43 @@ export async function findByDesign(designId: string): Promise<CollaboratorWithUs
     ...uniqBy(collaboratorsWithUsers
       .filter((collaborator: CollaboratorWithUser) => collaborator.userEmail !== null), 'userEmail')
   ];
+}
+
+/**
+ * Finds all collaborators (and associated users) for the given designs, grouped by design id.
+ * Checks for collaborators included in the design's collection (if it exists).
+ */
+export async function findByDesigns(
+  designIds: string[]
+): Promise<CollaboratorWithUserMetaByDesign[]> {
+  const result = await db.raw(`
+SELECT d.id AS design_id, array_remove(array_agg(to_jsonb(c1)), null) AS collaborators
+FROM product_designs AS d
+LEFT JOIN collection_designs AS cd ON cd.design_id = d.id
+LEFT JOIN (
+	SELECT collaborators.*,
+    CASE
+      WHEN u.id IS NOT null THEN jsonb_build_object('name', u.name, 'email', u.email, 'id', u.id)
+      ELSE null
+    END AS user
+	FROM collaborators
+	LEFT JOIN users AS u ON u.id = collaborators.user_id
+  ORDER BY collaborators.created_at DESC
+) AS c1 ON c1.design_id = d.id OR c1.collection_id = cd.collection_id
+WHERE
+	d.deleted_at IS null
+  AND c1.deleted_at IS null
+  AND d.id = ANY(?)
+GROUP BY d.id
+ORDER BY d.created_at DESC;
+    `, [designIds]);
+
+  return validateEvery<CollaboratorWithUserMetaByDesignRow, CollaboratorWithUserMetaByDesign>(
+    TABLE_NAME,
+    isCollaboratorWithUserMetaByDesignRow,
+    dataAdapterByDesign,
+    result.rows
+  );
 }
 
 export async function findByCollection(collectionId: string): Promise<Collaborator[]> {

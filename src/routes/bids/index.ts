@@ -3,7 +3,7 @@ import * as Koa from 'koa';
 import * as uuid from 'node-uuid';
 
 import Bid from '../../domain-objects/bid';
-import Collaborator from '../../components/collaborators/domain-object';
+import Collaborator from '../../components/collaborators/domain-objects/collaborator';
 import ProductDesign = require('../../domain-objects/product-design');
 import { PricingQuote } from '../../domain-objects/pricing-quote';
 import * as UsersDAO from '../../dao/users';

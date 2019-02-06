@@ -30,7 +30,9 @@ import {
   TaskCommentCreateNotification,
   TaskCompleteNotification
 } from '../../components/notifications/domain-object';
-import Collaborator, { CollaboratorWithUser } from '../../components/collaborators/domain-object';
+import Collaborator, {
+  CollaboratorWithUser
+} from '../../components/collaborators/domain-objects/collaborator';
 import User = require('../../domain-objects/user');
 
 import findDesignUsers = require('../../services/find-design-users');

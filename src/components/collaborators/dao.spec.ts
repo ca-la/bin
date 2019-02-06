@@ -7,6 +7,8 @@ import ProductDesignsDAO = require('../../dao/product-designs');
 import createUser = require('../../test-helpers/create-user');
 import { test, Test } from '../../test-helpers/fresh';
 import createDesign from '../../services/create-design';
+import generateCollaborator from '../../test-helpers/factories/collaborator';
+import generateCollection from '../../test-helpers/factories/collection';
 
 test('Collaborators DAO can find all collaborators with a list of ids', async (t: Test) => {
   const { user } = await createUser({ withSession: false });
@@ -175,6 +177,98 @@ test('CollaboratorsDAO.findByCollection returns collaborators', async (t: Test) 
   const list = await CollaboratorsDAO.findByCollection(collection.id);
   t.equal(list.length, 1);
   t.equal(list[0].id, collaborator.id);
+});
+
+test('CollaboratorsDAO.findByDesigns', async (t: Test) => {
+  const { user } = await createUser({ withSession: false });
+  const { user: userTwo } = await createUser({ withSession: false });
+  const { user: userThree } = await createUser({ withSession: false });
+
+  const design = await createDesign({
+    productType: 'BOMBER',
+    title: 'AW19',
+    userId: user.id
+  });
+  const dOneCollaborators = await CollaboratorsDAO.findByDesign(design.id);
+
+  const expectedInitialCollaborator = {
+    ...dOneCollaborators[0],
+    user: { id: user.id, name: user.name, email: user.email }
+  };
+
+  const results = await CollaboratorsDAO.findByDesigns([design.id]);
+  t.deepEqual(results, [{
+    collaborators: [expectedInitialCollaborator],
+    designId: design.id
+  }], 'Returns the only collaborator for the design');
+
+  const { collaborator } = await generateCollaborator({
+    designId: design.id,
+    userEmail: 'foo@example.com'
+  });
+  const expectedSecondCollaborator = {
+    ...collaborator,
+    user: null
+  };
+
+  const resultsTwo = await CollaboratorsDAO.findByDesigns([design.id]);
+  t.deepEqual(resultsTwo, [{
+    collaborators: [expectedSecondCollaborator, expectedInitialCollaborator],
+    designId: design.id
+  }], 'Returns both collaborators for the design');
+
+  // create a collection.
+  const { collection, createdBy } = await generateCollection();
+
+  // add initial design to the new collection.
+  await CollectionsDAO.addDesign(collection.id, design.id);
+
+  // create another design by the main test user for the new collection.
+  const designTwo = await createDesign({
+    productType: 'PANTS',
+    title: 'AW19',
+    userId: user.id
+  });
+  await CollectionsDAO.addDesign(collection.id, designTwo.id);
+  const dTwoCollaborators = await CollaboratorsDAO.findByDesign(designTwo.id);
+
+  // create a third design by a secondary user for the main collection.
+  const designThree = await createDesign({
+    productType: 'BOOTS',
+    title: 'Studded Military Boots',
+    userId: userTwo.id
+  });
+  await CollectionsDAO.addDesign(collection.id, designThree.id);
+  // add in a random collaborator on the third design.
+  await generateCollaborator({ designId: designThree.id, userId: userThree.id });
+
+  // make the creator of the collection a collaborator.
+  const { collaborator: collectionCollaborator } = await generateCollaborator({
+    collectionId: collection.id,
+    userId: createdBy.id
+  });
+
+  const expectedDTwoCollaboratorOne = {
+    ...dTwoCollaborators[0],
+    user: { id: user.id, name: user.name, email: user.email }
+  };
+  const expectedDTwoCollaboratorTwo = {
+    ...collectionCollaborator,
+    user: { id: createdBy.id, name: createdBy.name, email: createdBy.email }
+  };
+
+  const resultsThree = await CollaboratorsDAO.findByDesigns([designTwo.id, design.id]);
+  t.deepEqual(resultsThree, [{
+    collaborators: [expectedDTwoCollaboratorTwo, expectedDTwoCollaboratorOne],
+    designId: designTwo.id
+  }, {
+    collaborators: [
+      expectedDTwoCollaboratorTwo,
+      expectedSecondCollaborator,
+      expectedInitialCollaborator
+    ],
+    designId: design.id
+  }], 'Returns collection and design collaborators for the designs');
 });
 
 test('CollaboratorsDAO.findByCollectionAndUser returns collaborators', async (t: Test) => {

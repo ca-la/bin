@@ -9,7 +9,7 @@ import {
 import { findById as findUserById } from '../../dao/users';
 import createUser = require('../create-user');
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
-import Collaborator from '../../components/collaborators/domain-object';
+import Collaborator from '../../components/collaborators/domain-objects/collaborator';
 import * as ProductDesignsDAO from '../../dao/product-designs';
 import generateCollection from './collection';
 import Collection from '../../domain-objects/collection';

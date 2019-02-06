@@ -7,6 +7,8 @@ import EmailService = require('../../services/email');
 import ProductDesignsDAO = require('../../dao/product-designs');
 import { authHeader, del, get, patch, post } from '../../test-helpers/http';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
+import { stubFindByDesigns } from '../../test-helpers/stubs/collaborators-dao';
+import createDesign from '../../services/create-design';
 
 test(
   'DELETE /collaborators/:id returns 404 if collaborator was already deleted',
@@ -213,6 +215,47 @@ test('GET /collaborators allows querying by collection ID', async (t: Test) => {
   t.equal(body[0].designId, null);
 });
 
+test('GET /collaborators?designIds= allows querying by design ids', async (t: Test) => {
+  const { session, user } = await createUser();
+  const { session: randomSession } = await createUser();
+  stubFindByDesigns(user.id);
+
+  const design = await createDesign({
+    productType: 'Shirt',
+    title: 'AW19',
+    userId: user.id
+  });
+  const designTwo = await createDesign({
+    productType: 'Pants',
+    title: 'AW19',
+    userId: user.id
+  });
+  const designThree = await createDesign({
+    productType: 'Socks',
+    title: 'AW19',
+    userId: user.id
+  });
+
+  const [response, body] = await get(
+    `/collaborators?designIds=${design.id},${designTwo.id},${designThree.id}`,
+    { headers: authHeader(session.id) }
+  );
+
+  t.equal(response.status, 200);
+  t.equal(body.length, 2);
+
+  const [rejectedResponse, rejectedBody] = await get(
+    `/collaborators?designIds=abc-123,${designTwo.id},${designThree.id}`,
+    { headers: authHeader(randomSession.id) }
+  );
+
+  t.equal(rejectedResponse.status, 403);
+  t.deepEqual(
+    rejectedBody.message,
+    'You are not allowed to view collaborators for the given designs!'
+  );
+});
+
 test('GET /collaborators returns a 400 for an invalid collection or design ID', async (t: Test) => {
   const { session } = await createUser();
 
@@ -270,5 +313,5 @@ test('GET /collaborators requires access to the resource you want to access', as
   );
 
   t.equal(response.status, 400);
-  t.equal(body.message, 'Must pass exactly one of collection ID / design ID');
+  t.equal(body.message, 'Must pass only one query parameter at a time!');
 });

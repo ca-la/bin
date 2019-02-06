@@ -1,24 +1,12 @@
-import DataAdapter from '../../services/data-adapter';
-import { hasProperties } from '../../services/require-properties';
-import User = require('../../domain-objects/user');
+import DataAdapter from '../../../services/data-adapter';
+import { hasProperties } from '../../../services/require-properties';
+import User = require('../../../domain-objects/user');
 
 export const UPDATABLE_PROPERTIES = [
   'user_email',
   'user_id',
   'role'
 ];
-
-export interface CollaboratorRow {
-  id: string;
-  collection_id: string;
-  design_id: string;
-  user_id: string | null;
-  user_email: string | null;
-  invitation_message: string;
-  role: string;
-  created_at: Date;
-  deleted_at: Date | null;
-}
 
 export default interface Collaborator {
   id: string;
@@ -38,14 +26,14 @@ export interface CollaboratorWithUser extends Collaborator {
 
 export interface CollaboratorRow {
   id: string;
-  collection_id: string;
-  design_id: string;
+  collection_id: string | null;
+  design_id: string | null;
   user_id: string | null;
   user_email: string | null;
   invitation_message: string;
   role: string;
-  created_at: Date;
-  deleted_at: Date | null;
+  created_at: string;
+  deleted_at: string | null;
 }
 
 export type Roles = 'EDIT' | 'VIEW' | 'COMMENT' | 'PARTNER' | 'PREVIEW';

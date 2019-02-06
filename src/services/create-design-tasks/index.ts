@@ -10,7 +10,7 @@ import Logger = require('../logger');
 import ProductDesignStage from '../../domain-objects/product-design-stage';
 import { DetailsTask, TaskStatus } from '../../domain-objects/task-event';
 import TaskTemplate, { DesignPhase } from '../../domain-objects/task-template';
-import Collaborator from '../../components/collaborators/domain-object';
+import Collaborator from '../../components/collaborators/domain-objects/collaborator';
 import StageTemplate from '../../domain-objects/stage-template';
 
 interface Options {
