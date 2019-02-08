@@ -9,9 +9,7 @@ const canAccessSection = require('../../middleware/can-access-section');
 const canAccessUserResource = require('../../middleware/can-access-user-resource');
 const CollaboratorsDAO = require('../../components/collaborators/dao');
 const CollectionsDAO = require('../../dao/collections');
-const compact = require('../../services/compact');
 const filterError = require('../../services/filter-error');
-const findUserDesigns = require('../../services/find-user-designs');
 const InvalidDataError = require('../../errors/invalid-data');
 const MissingPrerequisitesError = require('../../errors/missing-prerequisites');
 const PricingCalculator = require('../../services/pricing-table');
@@ -43,6 +41,8 @@ const {
   deleteSectionAnnotation,
   updateSectionAnnotation
 } = require('./sections');
+
+const { findAllDesignsThroughCollaborator } = require('../../dao/product-designs/dao');
 
 const router = new Router();
 
@@ -114,8 +114,7 @@ function* getDesignsByUser() {
   const { role, userId } = this.state;
   canAccessUserResource.call(this, this.query.userId);
 
-  const filters = compact({ status: this.query.status });
-  const designs = yield findUserDesigns(this.query.userId, filters);
+  const designs = yield findAllDesignsThroughCollaborator(this.query.userId);
   const designsWithPermissions = yield Promise.all(designs.map(async (design) => {
     const designPermissions = await getDesignPermissions(design, role, userId);
     return { ...design, permissions: designPermissions };
@@ -163,8 +162,7 @@ function* getDesignsAndTasksByUser() {
   const { role, userId } = this.state;
   canAccessUserResource.call(this, this.query.userId);
 
-  const filters = compact({ status: this.query.status });
-  const designs = yield findUserDesigns(this.query.userId, filters);
+  const designs = yield findAllDesignsThroughCollaborator(this.query.userId);
 
   // TODO: this could end up making 100s of queries to the db, this could be improved by using
   //       one large JOIN
