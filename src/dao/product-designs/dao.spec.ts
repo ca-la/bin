@@ -1,7 +1,7 @@
 import * as tape from 'tape';
 import * as uuid from 'node-uuid';
 
-import { findById } from './index';
+import { deleteById, findById } from './index';
 import { findAllDesignsThroughCollaborator } from './dao';
 import { create as createSketch } from '../../dao/product-design-images';
 import { del as deleteCanvas } from '../../dao/product-design-canvases';
@@ -67,7 +67,7 @@ test(
 );
 
 test(
-  'findAllDesignsThroughCollaborator finds designs the user collaborates on',
+  'findAllDesignsThroughCollaborator finds all undeleted designs that the user collaborates on',
   async (t: tape.Test) => {
     const { user } = await createUser();
     const { user: notUser } = await createUser();
@@ -105,9 +105,22 @@ test(
       userId: user.id
     });
 
+    const collectionSharedDesignDeleted = await createDesign(
+      { productType: 'test', title: 'design', userId: notUser.id }
+    );
+    await CollectionsDAO.addDesign(collection.id, collectionSharedDesignDeleted.id);
+
     const designs = await findAllDesignsThroughCollaborator(user.id);
-    t.equal(designs.length, 2, 'returns only the designs the user collaborates on');
-    t.deepEqual(designs[0].id, collectionSharedDesign.id, 'should match ids');
-    t.deepEqual(designs[1].id, designSharedDesign.id, 'should match ids');
+    t.equal(designs.length, 3, 'returns only the designs the user collaborates on');
+    t.deepEqual(designs[0].id, collectionSharedDesignDeleted.id, 'should match ids');
+    t.deepEqual(designs[1].id, collectionSharedDesign.id, 'should match ids');
+    t.deepEqual(designs[2].id, designSharedDesign.id, 'should match ids');
+
+    await deleteById(collectionSharedDesignDeleted.id);
+
+    const designsAgain = await findAllDesignsThroughCollaborator(user.id);
+    t.equal(designsAgain.length, 2, 'returns only the undeleted designs the user collaborates on');
+    t.deepEqual(designsAgain[0].id, collectionSharedDesign.id, 'should match ids');
+    t.deepEqual(designsAgain[1].id, designSharedDesign.id, 'should match ids');
   }
 );

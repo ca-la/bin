@@ -13,6 +13,7 @@ WHERE id in (
 		JOIN collaborators AS c ON c.design_id = product_designs.id
 		WHERE c.user_id = ?
       AND c.deleted_at IS NULL
+      AND product_designs.deleted_at IS NULL
 	UNION
 	SELECT product_designs.id
 		FROM collaborators AS c
@@ -21,6 +22,7 @@ WHERE id in (
 		JOIN product_designs ON product_designs.id = cd.design_id
 		WHERE c.user_id = ?
       AND c.deleted_at IS NULL
+      AND product_designs.deleted_at IS NULL
 );
     `, [userId, userId]);
 
