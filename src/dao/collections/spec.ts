@@ -392,13 +392,24 @@ async (t: tape.Test) => {
     userId: user2.id
   });
 
+  const design4 = await createDesign({
+    productType: 'test3',
+    title: 'test design costed',
+    userId: user2.id
+  });
+
   const { collection: collection1 } = await generateCollection({ createdBy: user2.id });
   const { collection: collection2 } = await generateCollection({ createdBy: user2.id });
+  const { collection: collection3 } = await generateCollection({
+    createdBy: user2.id,
+    deletedAt: new Date()
+  });
   await generateCollection({ createdBy: user2.id });
 
   await CollectionsDAO.addDesign(collection1.id, design1.id);
   await CollectionsDAO.addDesign(collection1.id, design2.id);
   await CollectionsDAO.addDesign(collection2.id, design3.id);
+  await CollectionsDAO.addDesign(collection3.id, design4.id);
 
   const submitEvent: DesignEvent = {
     actorId: user2.id,
@@ -430,6 +441,16 @@ async (t: tape.Test) => {
     targetId: user.id,
     type: 'SUBMIT_DESIGN'
   };
+  const submitEvent4: DesignEvent = {
+    actorId: user2.id,
+    bidId: null,
+    createdAt: new Date(2012, 1, 1),
+    designId: design4.id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: user.id,
+    type: 'SUBMIT_DESIGN'
+  };
   const costEvent1: DesignEvent = {
     actorId: user.id,
     bidId: null,
@@ -450,12 +471,22 @@ async (t: tape.Test) => {
     targetId: user2.id,
     type: 'COMMIT_COST_INPUTS'
   };
+  const costEvent3: DesignEvent = {
+    actorId: user.id,
+    bidId: null,
+    createdAt: new Date(),
+    designId: design4.id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: user2.id,
+    type: 'COMMIT_COST_INPUTS'
+  };
 
   await DesignEventsDAO.createAll([
-    submitEvent, submitEvent2, submitEvent3]);
+    submitEvent, submitEvent2, submitEvent3, submitEvent4]);
 
   await DesignEventsDAO.createAll([
-    costEvent1, costEvent2]);
+    costEvent1, costEvent2, costEvent3]);
 
   const response = await CollectionsDAO.findWithUncostedDesigns();
 

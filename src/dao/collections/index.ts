@@ -167,6 +167,7 @@ JOIN (
 ) AS de
   ON de.design_id = cd.design_id
     `)
+    .where({ 'collections.deleted_at': null })
     .orderBy('collections.id');
 
   return validateEvery<CollectionRow, Collection>(
