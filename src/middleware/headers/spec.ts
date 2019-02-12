@@ -13,3 +13,8 @@ test('CORS middleware allows all requested headers', async (t: Test) => {
   t.equal(response2.status, 204);
   t.equal(response2.headers.get('access-control-allow-headers'), 'Authorization');
 });
+
+test('CORS middleware returns max age', async (t: Test) => {
+  const [response] = await options('/');
+  t.equal(response.headers.get('access-control-max-age'), '86400');
+});
