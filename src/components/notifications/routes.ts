@@ -1,7 +1,7 @@
 import * as Router from 'koa-router';
 import * as Koa from 'koa';
 
-import { Notification } from './domain-object';
+import { NotificationMessage } from './domain-object';
 import * as NotificationsDAO from './dao';
 import requireAuth = require('../../middleware/require-auth');
 import { createNotificationMessage } from './notification-messages';
@@ -13,7 +13,7 @@ interface GetListQuery {
   offset?: number;
 }
 
-function* getList(this: Koa.Application.Context): AsyncIterableIterator<Notification[]> {
+function* getList(this: Koa.Application.Context): AsyncIterableIterator<NotificationMessage[]> {
   const { userId } = this.state;
   const { limit, offset }: GetListQuery = this.query;
 
@@ -25,8 +25,11 @@ function* getList(this: Koa.Application.Context): AsyncIterableIterator<Notifica
     userId,
     { limit: limit || 20, offset: offset || 0 }
   );
+  const messages: (NotificationMessage | null)[] = yield Promise.all(
+    notifications.map(createNotificationMessage));
+
   this.status = 200;
-  this.body = yield Promise.all(notifications.map(createNotificationMessage));
+  this.body = messages.filter((message: NotificationMessage | null) => message !== null);
 }
 
 router.get('/', requireAuth, getList);
