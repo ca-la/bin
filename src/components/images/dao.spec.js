@@ -2,9 +2,8 @@
 
 const {
   create,
-  deleteById,
   findByUserId
-} = require('./index');
+} = require('./dao');
 
 const createUser = require('../../test-helpers/create-user');
 const { test } = require('../../test-helpers/fresh');
@@ -33,23 +32,5 @@ test('ProductDesignImagesDAO.findByUserId returns images', (t) => {
       t.equal(images[0].originalWidthPx, 1024);
       t.equal(images[0].originalHeightPx, 768);
       t.equal(images[0].mimeType, 'image/jpeg');
-    });
-});
-
-test('ProductDesignImagesDAO.deleteById deletes', (t) => {
-  return createUser({ withSession: false })
-    .then(({ user }) => {
-      return create({
-        userId: user.id,
-        mimeType: 'image/jpeg',
-        originalWidthPx: 1024,
-        originalHeightPx: 768
-      });
-    })
-    .then((image) => {
-      return deleteById(image.id);
-    })
-    .then((deleted) => {
-      t.notEqual(deleted.deletedAt, null);
     });
 });

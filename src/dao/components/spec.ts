@@ -4,7 +4,7 @@ import { omit } from 'lodash';
 
 import { test } from '../../test-helpers/fresh';
 import { create, del, findAllByCanvasId, findById, findRoot, update } from './index';
-import { create as createSketch } from '../product-design-images';
+import { create as createImage } from '../../components/images/dao';
 import { create as createCanvas } from '../product-design-canvases';
 import { ComponentType } from '../../domain-objects/component';
 import { create as createDesign } from '../product-designs';
@@ -16,7 +16,7 @@ test('Components DAO supports creation/retrieval', async (t: tape.Test) => {
   const userId = userData.user.id;
   const id = uuid.v4();
   const sketchId = uuid.v4();
-  const sketchData = {
+  const imageData = {
     description: '',
     id: sketchId,
     mimeType: 'image/png',
@@ -36,7 +36,7 @@ test('Components DAO supports creation/retrieval', async (t: tape.Test) => {
     sketchId,
     type: ComponentType.Sketch
   };
-  await createSketch(sketchData);
+  await createImage(imageData);
   const inserted = await create(data);
 
   const result = await findById(id);
@@ -69,7 +69,7 @@ test('Components DAO supports update', async (t: tape.Test) => {
   const userId = userData.user.id;
   const componentId = uuid.v4();
   const sketchId = uuid.v4();
-  const sketchData = {
+  const imageData = {
     description: '',
     id: sketchId,
     mimeType: 'image/png',
@@ -89,7 +89,7 @@ test('Components DAO supports update', async (t: tape.Test) => {
     sketchId,
     type: ComponentType.Sketch
   };
-  await createSketch(sketchData);
+  await createImage(imageData);
   const  { id, createdAt, deletedAt, ...first } = await create(data);
   const inserted = await update(componentId, { ...first, type: ComponentType.Artwork });
 
@@ -141,7 +141,7 @@ test('Components DAO supports retrieval by canvasId', async (t: tape.Test) => {
     title: 'Plain White Tee',
     userId
   });
-  const sketchData = {
+  const imageData = {
     description: '',
     id: sketchId,
     mimeType: 'image/png',
@@ -172,7 +172,7 @@ test('Components DAO supports retrieval by canvasId', async (t: tape.Test) => {
     sketchId,
     type: ComponentType.Sketch
   };
-  await createSketch(sketchData);
+  await createImage(imageData);
   const inserted = await create(data);
   const canvas = await createCanvas(canvasData);
 

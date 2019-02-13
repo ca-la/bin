@@ -1,7 +1,7 @@
 import * as tape from 'tape';
 import * as uuid from 'node-uuid';
 
-import { create as createSketch } from '../../dao/product-design-images';
+import { create as createImage } from '../../components/images/dao';
 import * as ComponentsDAO from '../../dao/components';
 import * as ComponentRelationshipsDAO from './dao';
 
@@ -16,7 +16,7 @@ test('ComponentRelationships DAO support creation/retrieval', async (t: tape.Tes
   const userData = await createUser();
   const userId = userData.user.id;
 
-  const sketch = await createSketch({
+  const sketch = await createImage({
     description: '',
     id: uuid.v4(),
     mimeType: 'image/png',

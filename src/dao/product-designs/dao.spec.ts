@@ -3,7 +3,7 @@ import * as uuid from 'node-uuid';
 
 import { deleteById, findById } from './index';
 import { findAllDesignsThroughCollaborator } from './dao';
-import { create as createSketch } from '../../dao/product-design-images';
+import { create as createImage } from '../../components/images/dao';
 import { del as deleteCanvas } from '../../dao/product-design-canvases';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import * as CollectionsDAO from '../../dao/collections';
@@ -22,7 +22,7 @@ test(
   async (t: tape.Test) => {
     const { user } = await createUser({ withSession: false });
 
-    const sketch = await createSketch({
+    const sketch = await createImage({
       description: '',
       id: uuid.v4(),
       mimeType: 'image/png',

@@ -5,11 +5,11 @@ const multer = require('koa-multer');
 const Router = require('koa-router');
 const probeSize = require('probe-image-size');
 
-const ProductDesignImagesDAO = require('../../dao/product-design-images');
-const requireAuth = require('../../middleware/require-auth');
-const User = require('../../domain-objects/user');
-const { AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME } = require('../../config');
-const { getDownloadUrl, uploadFile } = require('../../services/aws');
+const ProductDesignImagesDAO = require('../dao');
+const requireAuth = require('../../../middleware/require-auth');
+const User = require('../../../domain-objects/user');
+const { AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME } = require('../../../config');
+const { getDownloadUrl, uploadFile } = require('../../../services/aws');
 const uploadStatus = require('./upload-status');
 
 const router = new Router();
@@ -130,28 +130,11 @@ function* downloadById() {
   this.redirect(url, 302);
 }
 
-function* deleteById() {
-  const image = yield ProductDesignImagesDAO.findById(this.params.imageId);
-  this.assert(image, 404);
-
-  const isAuthorized = (
-    (image.userId && (image.userId === this.state.userId)) ||
-    this.state.role === User.ROLES.admin
-  );
-
-  this.assert(isAuthorized, 403);
-
-  yield ProductDesignImagesDAO.deleteById(this.params.imageId);
-  this.body = null;
-  this.status = 200;
-}
-
 router.post('/', requireAuth, multer(), createImage);
 router.put('/:imageId', requireAuth, create);
 router.put('/:imageId/upload_status', requireAuth, uploadStatus);
 router.get('/', requireAuth, getList);
 router.get('/:imageId', requireAuth, getById);
 router.get('/:imageId/download', downloadById);
-router.del('/:imageId', requireAuth, deleteById);
 
 module.exports = router.routes();

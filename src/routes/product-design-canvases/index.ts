@@ -6,13 +6,13 @@ import requireAuth = require('../../middleware/require-auth');
 import * as ComponentsDAO from '../../dao/components';
 import * as ProductDesignOptionsDAO from '../../dao/product-design-options';
 import * as ProductDesignsDAO from '../../dao/product-designs';
-import * as ProductDesignImagesDAO from '../../dao/product-design-images';
+import * as ProductDesignImagesDAO from '../../components/images/dao';
 import ProductDesignCanvas, {
   isProductDesignCanvas, isUnsavedProductDesignCanvas
 } from '../../domain-objects/product-design-canvas';
 import Component, { ComponentType, isUnsavedComponent } from '../../domain-objects/component';
 import * as EnrichmentService from '../../services/attach-asset-links';
-import ProductDesignImage = require('../../domain-objects/product-design-image');
+import ProductDesignImage = require('../../components/images/domain-object');
 import ProductDesignOption = require('../../domain-objects/product-design-option');
 import { hasProperties } from '../../services/require-properties';
 import { omit } from 'lodash';

@@ -1,5 +1,5 @@
 import * as ComponentsDAO from '../../dao/components';
-import * as ProductDesignImagesDAO from '../../dao/product-design-images';
+import * as ProductDesignImagesDAO from '../../components/images/dao';
 import * as tape from 'tape';
 import * as uuid from 'node-uuid';
 import createUser = require('../../test-helpers/create-user');

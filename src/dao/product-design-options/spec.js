@@ -5,7 +5,7 @@ const {
   findForUser
 } = require('./index');
 
-const createImage = require('../product-design-images').create;
+const createImage = require('../../components/images/dao').create;
 
 const createUser = require('../../test-helpers/create-user');
 const { test } = require('../../test-helpers/fresh');

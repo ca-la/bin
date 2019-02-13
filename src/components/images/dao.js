@@ -6,12 +6,12 @@ const rethrow = require('pg-rethrow');
 const compact = require('../../services/compact');
 const db = require('../../services/db');
 const first = require('../../services/first').default;
-const ProductDesignImage = require('../../domain-objects/product-design-image');
+const ProductDesignImage = require('./domain-object');
 
 const instantiate = data => new ProductDesignImage(data);
 const maybeInstantiate = data => data && new ProductDesignImage(data);
 
-const TABLE_NAME = 'product_design_images';
+const TABLE_NAME = 'images';
 
 function create(data) {
   return db(TABLE_NAME)
@@ -49,17 +49,6 @@ function findById(id) {
     .then(maybeInstantiate);
 }
 
-function deleteById(id) {
-  return db(TABLE_NAME)
-    .where({ id })
-    .update({
-      deleted_at: new Date()
-    }, '*')
-    .catch(rethrow)
-    .then(first)
-    .then(instantiate);
-}
-
 function update(id, data) {
   return db(TABLE_NAME)
     .where({ id })
@@ -78,7 +67,6 @@ function update(id, data) {
 
 module.exports = {
   create,
-  deleteById,
   findById,
   findByUserId,
   update

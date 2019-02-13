@@ -8,8 +8,8 @@
 const sizeOf = require('image-size');
 const fetch = require('node-fetch');
 
-const ProductDesignImage = require('../domain-objects/product-design-image');
-const { update } = require('../dao/product-design-images');
+const ProductDesignImage = require('../components/images/domain-object');
+const { update } = require('../components/images/dao');
 const db = require('../services/db');
 const Logger = require('../services/logger');
 const COLORS = require('../services/colors');

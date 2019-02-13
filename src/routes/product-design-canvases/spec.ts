@@ -3,7 +3,7 @@ import * as uuid from 'node-uuid';
 import { omit } from 'lodash';
 
 import * as ProductDesignCanvasesDAO from '../../dao/product-design-canvases';
-import * as ProductDesignImagesDAO from '../../dao/product-design-images';
+import * as ProductDesignImagesDAO from '../../components/images/dao';
 import * as ProductDesignOptionsDAO from '../../dao/product-design-options';
 import * as ProductDesignsDAO from '../../dao/product-designs';
 import * as ComponentsDAO from '../../dao/components';
@@ -14,7 +14,7 @@ import { authHeader, del, get, patch, post, put } from '../../test-helpers/http'
 import { sandbox, test } from '../../test-helpers/fresh';
 import createDesign from '../../services/create-design';
 import * as EnrichmentService from '../../services/attach-asset-links';
-import ProductDesignImage = require('../../domain-objects/product-design-image');
+import ProductDesignImage = require('../../components/images/domain-object');
 
 test('GET /product-design-canvases/:canvasId returns Canvas', async (t: tape.Test) => {
   const { session } = await createUser();

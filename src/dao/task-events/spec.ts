@@ -17,7 +17,8 @@ import { deleteById as deleteDesign } from '../product-designs';
 import { create as createCollaborator } from '../../components/collaborators/dao';
 import { create as createTaskComment } from '../task-comments';
 import { addDesign, create as createCollection } from '../collections';
-import { create as createSketch, deleteById as deleteSketch } from '../product-design-images';
+import { create as createImage } from '../../components/images/dao';
+import { del as deleteComponent } from '../../dao/components';
 
 import createUser = require('../../test-helpers/create-user');
 import { DetailsTask, TaskStatus } from '../../domain-objects/task-event';
@@ -98,7 +99,7 @@ test('Task Events DAO returns correct number of comments', async (t: tape.Test) 
 
 test('Task Events DAO returns images from the canvases on the design', async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
-  const sketch = await createSketch({
+  const sketch = await createImage({
     description: '',
     id: uuid.v4(),
     mimeType: 'image/png',
@@ -127,7 +128,7 @@ test('Task Events DAO returns images from the canvases on the design', async (t:
   t.equal(result.design.previewImageUrls.length, 1, 'task has one preview image');
   t.ok(result.design.previewImageUrls[0].includes(sketch.id), 'the task image is the sketch');
 
-  await deleteSketch(sketch.id);
+  await deleteComponent(component.id);
 
   const secondResult = await findById(inserted.id);
   if (!secondResult) { throw Error('No Result'); }

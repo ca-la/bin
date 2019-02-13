@@ -6,7 +6,7 @@ import { addAssetLink, AWS_BASE_URL, generatePreviewLinks, IMGIX_BASE_URL } from
 
 import Component, { ComponentType } from '../../domain-objects/component';
 import * as OptionsDAO from '../../dao/product-design-options';
-import * as ImagesDAO from '../../dao/product-design-images';
+import * as ImagesDAO from '../../components/images/dao';
 
 test('attachAssetsLink returns aws link when component is of type sketch', async (t: tape.Test) => {
   const id = uuid.v4();

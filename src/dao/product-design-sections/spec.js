@@ -3,7 +3,7 @@
 const createUser = require('../../test-helpers/create-user');
 const ProductDesignsDAO = require('../product-designs');
 const ProductDesignSectionsDAO = require('./index');
-const ProductDesignImagesDAO = require('../product-design-images');
+const ProductDesignImagesDAO = require('../../components/images/dao');
 const { test } = require('../../test-helpers/fresh');
 
 test('ProductDesignSectionsDAO.create creates a section', (t) => {

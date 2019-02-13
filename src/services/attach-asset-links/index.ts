@@ -1,7 +1,7 @@
 import { AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME, IMGIX_DOMAIN } from '../../config';
 import Component, { ComponentType } from '../../domain-objects/component';
 import * as OptionsDAO from '../../dao/product-design-options';
-import * as ImagesDAO from '../../dao/product-design-images';
+import * as ImagesDAO from '../../components/images/dao';
 
 interface AssetLinks {
   assetLink: string;

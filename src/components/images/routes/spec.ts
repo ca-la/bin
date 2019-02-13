@@ -1,10 +1,10 @@
 import * as tape from 'tape';
 import * as uuid from 'node-uuid';
 
-import { test } from '../../test-helpers/fresh';
-import * as API from '../../test-helpers/http';
-import createUser = require('../../test-helpers/create-user');
-import { create as createSketch } from '../../dao/product-design-images';
+import { test } from '../../../test-helpers/fresh';
+import * as API from '../../../test-helpers/http';
+import createUser = require('../../../test-helpers/create-user');
+import { create as createImage } from '../dao';
 
 const API_PATH = '/product-design-images';
 
@@ -13,7 +13,7 @@ test(
   async (t: tape.Test) => {
     const userOne = await createUser();
 
-    const sketch = await createSketch({
+    const sketch = await createImage({
       description: '',
       id: uuid.v4(),
       mimeType: 'image/png',

@@ -3,7 +3,7 @@
 const pick = require('lodash/pick');
 const createUser = require('../../test-helpers/create-user');
 const ProductDesignFeaturePlacementsDAO = require('./index');
-const ProductDesignImagesDAO = require('../product-design-images');
+const ProductDesignImagesDAO = require('../../components/images/dao');
 const ProductDesignsDAO = require('../product-designs');
 const ProductDesignSectionsDAO = require('../product-design-sections');
 const { test } = require('../../test-helpers/fresh');

@@ -1,8 +1,8 @@
 import * as Koa from 'koa';
 
-import ProductDesignImage = require('../../domain-objects/product-design-image');
-import ProductDesignImagesDAO = require('../../dao/product-design-images');
-import { hasOnlyProperties } from '../../services/require-properties';
+import ProductDesignImage = require('../domain-object');
+import ProductDesignImagesDAO = require('../dao');
+import { hasOnlyProperties } from '../../../services/require-properties';
 
 interface UploadStatus {
   uploadCompletedAt: Date;

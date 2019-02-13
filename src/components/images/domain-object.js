@@ -1,7 +1,7 @@
 'use strict';
 
-const { AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME } = require('../config');
-const { requireProperties } = require('../services/require-properties');
+const { AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME } = require('../../config');
+const { requireProperties } = require('../../services/require-properties');
 
 class ProductDesignImage {
   constructor(row) {
