@@ -271,3 +271,23 @@ export function isHydratedNotificationRow(row: object): row is HydratedNotificat
     'task'
   );
 }
+
+export interface BreadCrumb {
+  text: string;
+  url: string;
+}
+
+export interface NotificationMessageAttachment {
+  text: string;
+  url: string;
+}
+
+export interface NotificationMessage {
+  id: string;
+  html: string;
+  createdAt: Date;
+  actor: User | null;
+  imageUrl: string | null;
+  location: BreadCrumb[];
+  attachments: NotificationMessageAttachment[];
+}

@@ -4,6 +4,7 @@ import * as Koa from 'koa';
 import { Notification } from './domain-object';
 import * as NotificationsDAO from './dao';
 import requireAuth = require('../../middleware/require-auth');
+import { createNotificationMessage } from './notification-messages';
 
 const router = new Router();
 
@@ -25,7 +26,7 @@ function* getList(this: Koa.Application.Context): AsyncIterableIterator<Notifica
     { limit: limit || 20, offset: offset || 0 }
   );
   this.status = 200;
-  this.body = notifications;
+  this.body = yield Promise.all(notifications.map(createNotificationMessage));
 }
 
 router.get('/', requireAuth, getList);

@@ -6,15 +6,17 @@ import createUser = require('../../test-helpers/create-user');
 
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import * as DesignsDAO from '../../dao/product-designs';
-import { Notification } from './domain-object';
+import { NotificationMessage } from './domain-object';
 import {
   generateDesignUpdateNotification,
   generateInviteNotification
 } from '../../test-helpers/factories/notification';
+import generateCollection from '../../test-helpers/factories/collection';
 
 const API_PATH = '/notifications';
 
-test(`GET ${API_PATH} returns a list of notifications for the user`, async (t: tape.Test) => {
+test(`GET ${API_PATH} returns a list of notificationMessages for the user`,
+async (t: tape.Test) => {
   const userOne = await createUser();
   const userTwo = await createUser();
 
@@ -23,6 +25,7 @@ test(`GET ${API_PATH} returns a list of notifications for the user`, async (t: t
     title: 'Raf Simons x Sterling Ruby Hoodie',
     userId: userOne.user.id
   });
+  const collection1 = await generateCollection({ createdBy: userOne.user.id });
   const c1 = await CollaboratorsDAO.create({
     collectionId: null,
     designId: d1.id,
@@ -46,11 +49,13 @@ test(`GET ${API_PATH} returns a list of notifications for the user`, async (t: t
   const { notification: n2 } = await generateInviteNotification({
     actorUserId: userOne.user.id,
     collaboratorId: c1.id,
+    collectionId: collection1.collection.id,
     recipientUserId: null
   });
   await generateInviteNotification({
     actorUserId: userOne.user.id,
     collaboratorId: c2.id,
+    collectionId: collection1.collection.id,
     recipientUserId: null
   });
 
@@ -59,7 +64,7 @@ test(`GET ${API_PATH} returns a list of notifications for the user`, async (t: t
   });
   t.equal(response1.status, 200);
   t.deepEqual(
-    body1.map((notification: Notification): string => notification.id),
+    body1.map((notification: NotificationMessage): string => notification.id),
     [n2.id, n1.id],
     'Returns the list of notifications for the user session'
   );
