@@ -1,3 +1,4 @@
+import * as Knex from 'knex';
 import ProductDesign = require('../../domain-objects/product-design');
 
 type UnsavedDesign = Unsaved<ProductDesign>;
@@ -8,7 +9,7 @@ interface ProductDesignWithCollectionId extends ProductDesign {
 }
 
 declare namespace ProductDesignsDAO {
-  function create(data: UnsavedDesign): Promise<ProductDesign>;
+  function create(data: UnsavedDesign, trx?: Knex.Transaction): Promise<ProductDesign>;
   function findById(
     id: string,
     filters?: object | null,

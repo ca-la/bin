@@ -1,10 +1,15 @@
 import * as tape from 'tape';
 import * as uuid from 'node-uuid';
+import * as Knex from 'knex';
+
+import * as db from '../../services/db';
 import { test } from '../../test-helpers/fresh';
 import { create, deleteById, findAllByCanvasId, findById, getLabel, update } from './index';
 import createUser = require('../../test-helpers/create-user');
 import { create as createDesign } from '../product-designs';
 import { create as createDesignCanvas } from '../product-design-canvases';
+import generateCanvas from '../../test-helpers/factories/product-design-canvas';
+import { omit } from 'lodash';
 
 test('ProductDesignCanvasMeasurement DAO supports creation/retrieval', async (t: tape.Test) => {
   const { user } = await createUser();
@@ -89,6 +94,40 @@ test(
       });
   }
 );
+
+test('MeasurementsDAO.create supports trx statements', async (t: tape.Test) => {
+  const { canvas, createdBy } = await generateCanvas({});
+  const measurementId = uuid.v4();
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const measurementData = {
+      canvasId: canvas.id,
+      createdBy: createdBy.id,
+      deletedAt: null,
+      endingX: 20,
+      endingY: 10,
+      id: measurementId,
+      label: 'A',
+      measurement: '16 inches',
+      name: null,
+      startingX: 5,
+      startingY: 2
+    };
+
+    const createdMeasurement = await create(measurementData, trx);
+    t.deepEqual(
+      omit(createdMeasurement, 'createdAt'),
+      measurementData,
+      'Can successfully create the measurement'
+    );
+    await trx.rollback(new Error('Explicitly roll back the creation statement.'));
+  }).catch((error: any) => {
+    t.equals(error.message, 'Explicitly roll back the creation statement.');
+  });
+
+  const foundMeasurement = await findById(measurementId);
+  t.equal(foundMeasurement, null, 'Rolling back a trx does not commit the created measurement');
+});
 
 test('ProductDesignCanvasMeasurement DAO supports updating', async (t: tape.Test) => {
   const { user } = await createUser();

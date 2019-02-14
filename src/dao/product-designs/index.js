@@ -47,7 +47,7 @@ ON pdi.id = co.sketch_id
     .orderBy('product_designs.created_at', 'desc');
 }
 
-function create(data) {
+function create(data, trx) {
   const rowData = Object.assign({}, dataMapper.userDataToRowData(data), {
     id: uuid.v4(),
     preview_image_urls: JSON.stringify(data.previewImageUrls)
@@ -55,6 +55,11 @@ function create(data) {
 
   return db(TABLE_NAME)
     .insert(rowData, 'id')
+    .modify((query) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .catch(rethrow)
     .then(
       ids => queryWithCollectionMeta(db).where({ 'product_designs.id': ids[0] })

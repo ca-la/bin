@@ -13,7 +13,7 @@ const maybeInstantiate = data => data && new ProductDesignImage(data);
 
 const TABLE_NAME = 'images';
 
-function create(data) {
+function create(data, trx) {
   return db(TABLE_NAME)
     .insert({
       id: data.id || uuid.v4(),
@@ -25,6 +25,11 @@ function create(data) {
       description: data.description,
       upload_completed_at: data.uploadCompletedAt || null
     }, '*')
+    .modify((query) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .catch(rethrow)
     .then(first)
     .then(instantiate);

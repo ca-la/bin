@@ -1,3 +1,4 @@
+import * as Knex from 'knex';
 import * as uuid from 'node-uuid';
 import { pick } from 'lodash';
 
@@ -25,7 +26,8 @@ const INSERTABLE_PROPERTIES = [
 ];
 
 export async function create(
-  data: MaybeUnsaved<Component>
+  data: MaybeUnsaved<Component>,
+  trx?: Knex.Transaction
 ): Promise<Component> {
   const rowData = pick(
     dataAdapter.forInsertion({
@@ -38,6 +40,11 @@ export async function create(
 
   const created = await db(TABLE_NAME)
     .insert(rowData, '*')
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .then((rows: ComponentRow[]) => first<ComponentRow>(rows));
 
   if (!created) { throw new Error('Failed to create rows'); }

@@ -1,4 +1,5 @@
 import rethrow = require('pg-rethrow');
+import * as Knex from 'knex';
 
 import * as db from '../../services/db';
 import filterError = require('../../services/filter-error');
@@ -33,13 +34,21 @@ function handleForeignKeyViolation(
   throw err;
 }
 
-export async function create(data: Uninserted<Measurement>): Promise<Measurement> {
+export async function create(
+  data: Uninserted<Measurement>,
+  trx?: Knex.Transaction
+): Promise<Measurement> {
   const rowData = dataAdapter.forInsertion({
     ...data,
     deletedAt: null
   });
   const created = await db(TABLE_NAME)
     .insert(rowData, '*')
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .then((rows: MeasurementRow[]) =>
       first<MeasurementRow>(rows)
     )

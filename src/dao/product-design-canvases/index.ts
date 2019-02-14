@@ -14,7 +14,8 @@ import { validate, validateEvery } from '../../services/validate-from-db';
 const TABLE_NAME = 'product_design_canvases';
 
 export async function create(
-  data: MaybeUnsaved<ProductDesignCanvas>
+  data: MaybeUnsaved<ProductDesignCanvas>,
+  trx?: Knex.Transaction
 ): Promise<ProductDesignCanvas> {
   const rowData = dataAdapter.forInsertion({
     id: uuid.v4(),
@@ -23,6 +24,11 @@ export async function create(
   });
   const created = await db(TABLE_NAME)
     .insert(rowData, '*')
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .then((rows: ProductDesignCanvasRow[]) => first<ProductDesignCanvasRow>(rows));
 
   if (!created) { throw new Error('Failed to create rows'); }

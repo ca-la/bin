@@ -14,13 +14,18 @@ const maybeInstantiate = data => (data && new ProductDesignOption(data)) || null
 
 const { dataMapper } = ProductDesignOption;
 
-function create(data) {
+function create(data, trx) {
   const rowData = Object.assign({}, dataMapper.userDataToRowData(data), {
     id: data.id || uuid.v4()
   });
 
   return db('product_design_options')
     .insert(rowData, '*')
+    .modify((query) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .catch(rethrow)
     .then(first)
     .then(instantiate);
