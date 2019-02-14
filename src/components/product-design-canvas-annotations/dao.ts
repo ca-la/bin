@@ -1,3 +1,4 @@
+import * as Knex from 'knex';
 import { pick } from 'lodash';
 import * as db from '../../services/db';
 import Annotation, {
@@ -13,7 +14,10 @@ import { validate, validateEvery } from '../../services/validate-from-db';
 
 const TABLE_NAME = 'product_design_canvas_annotations';
 
-export async function create(data: Uninserted<Annotation>): Promise<Annotation> {
+export async function create(
+  data: Uninserted<Annotation>,
+  trx?: Knex.Transaction
+): Promise<Annotation> {
   const rowData = dataAdapter.forInsertion({
     ...data,
     deletedAt: null
@@ -21,6 +25,11 @@ export async function create(data: Uninserted<Annotation>): Promise<Annotation> 
 
   const created = await db(TABLE_NAME)
     .insert(rowData, '*')
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .then((rows: AnnotationRow[]) => first<AnnotationRow>(rows));
 
   if (!created) { throw new Error('Failed to create a annotation'); }

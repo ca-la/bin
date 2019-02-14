@@ -1,3 +1,4 @@
+import * as Knex from 'knex';
 import * as uuid from 'node-uuid';
 import { omit } from 'lodash';
 
@@ -21,7 +22,10 @@ import { findAllDesignsThroughCollaborator } from '../product-designs/dao';
 const TABLE_NAME = 'task_events';
 const DETAILS_VIEW_NAME = 'detail_tasks';
 
-export async function create(data: Unsaved<TaskEvent>): Promise<DetailsTask> {
+export async function create(
+  data: Unsaved<TaskEvent>,
+  trx?: Knex.Transaction
+): Promise<DetailsTask> {
   const rowData = dataAdapter.forInsertion({
     ...data,
     id: uuid.v4(),
@@ -29,6 +33,11 @@ export async function create(data: Unsaved<TaskEvent>): Promise<DetailsTask> {
   });
   const created = await db(TABLE_NAME)
     .insert(omit(rowData, ['design_stage_id']), '*')
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .then((rows: TaskEventRow[]) => first<TaskEventRow>(rows));
 
   if (!created) { throw new Error('Failed to create rows'); }
@@ -37,6 +46,11 @@ export async function create(data: Unsaved<TaskEvent>): Promise<DetailsTask> {
     .select('*')
     .from(DETAILS_VIEW_NAME)
     .where({ id: data.taskId })
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .then((rows: DetailTaskEventRow[]) => first<DetailTaskEventRow>(rows));
 
   if (!taskEvent) { throw new Error('Failed to get with stage ID'); }

@@ -1,8 +1,6 @@
 import * as uuid from 'node-uuid';
 import * as ProductDesignStagesDAO from '../../dao/product-design-stages';
-import * as StageTemplatesDAO from '../../dao/stage-templates';
 import * as TaskEventsDAO from '../../dao/task-events';
-import * as TaskTemplatesDAO from '../../dao/task-templates';
 import CollaboratorsDAO = require('../../components/collaborators/dao');
 import Collection from '../../domain-objects/collection';
 import * as CollectionsDAO from '../../dao/collections';
@@ -10,54 +8,10 @@ import { createDesignTasks } from './index';
 import createUser = require('../../test-helpers/create-user');
 import ProductDesign = require('../../domain-objects/product-design');
 import ProductDesignsDAO = require('../../dao/product-designs');
-import StageTemplate from '../../domain-objects/stage-template';
-import TaskTemplate from '../../domain-objects/task-template';
 import User = require('../../domain-objects/user');
 import { CALA_OPS_USER_ID } from '../../config';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
-
-async function createTemplates(): Promise<{
-  stage1: StageTemplate,
-  stage2: StageTemplate,
-  tasks: TaskTemplate[]
-}> {
-  const stage1 = await StageTemplatesDAO.create({
-    description: 'Designey Stuff',
-    ordering: 0,
-    title: 'Stage 1'
-  });
-
-  const stage2 = await StageTemplatesDAO.create({
-    description: 'Producey stuff',
-    ordering: 1,
-    title: 'Stage 2'
-  });
-
-  const tasks = await Promise.all([
-    TaskTemplatesDAO.create({
-      assigneeRole: 'CALA',
-      description: 'Do the design',
-      designPhase: 'POST_CREATION',
-      ordering: 0,
-      stageTemplateId: stage1.id,
-      title: 'Task 1'
-    }),
-    TaskTemplatesDAO.create({
-      assigneeRole: 'CALA',
-      description: 'Make the stuff',
-      designPhase: 'POST_APPROVAL',
-      ordering: 1,
-      stageTemplateId: stage2.id,
-      title: 'Task 2'
-    })
-  ]);
-
-  return {
-    stage1,
-    stage2,
-    tasks
-  };
-}
+import { createTemplates } from '../../test-helpers/factories/stage-and-task-templates';
 
 async function createResources(): Promise<{
   user: User,

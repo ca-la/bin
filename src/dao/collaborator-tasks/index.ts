@@ -1,3 +1,5 @@
+import * as Knex from 'knex';
+
 import * as db from '../../services/db';
 import CollaboratorTask, {
   CollaboratorTaskRow,
@@ -37,7 +39,8 @@ export async function create(
 
 export async function createAllByCollaboratorIdsAndTaskId(
   collaboratorIds: string[],
-  taskId: string
+  taskId: string,
+  trx?: Knex.Transaction
 ): Promise<CollaboratorTask[]> {
   if (collaboratorIds.length === 0) {
     throw new Error('At least one collaborator is needed for task assignment');
@@ -49,7 +52,14 @@ export async function createAllByCollaboratorIdsAndTaskId(
       taskId
     });
   });
-  const createdRows: CollaboratorTaskRow[] = await db(TABLE_NAME).insert(dataRows, '*');
+  const createdRows: CollaboratorTaskRow[] = await db(TABLE_NAME)
+    .insert(dataRows, '*')
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    });
+
   return validateEvery<CollaboratorTaskRow, CollaboratorTask>(
     TABLE_NAME,
     isCollaboratorTaskRow,

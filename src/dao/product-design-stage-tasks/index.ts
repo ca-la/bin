@@ -1,3 +1,4 @@
+import * as Knex from 'knex';
 import * as uuid from 'node-uuid';
 
 import * as db from '../../services/db';
@@ -12,7 +13,8 @@ import { validate, validateEvery } from '../../services/validate-from-db';
 const TABLE_NAME = 'product_design_stage_tasks';
 
 export async function create(
-  data: Unsaved<ProductDesignStageTask>
+  data: Unsaved<ProductDesignStageTask>,
+  trx?: Knex.Transaction
 ): Promise<ProductDesignStageTask> {
   const rowData = dataAdapter.forInsertion({
     ...data,
@@ -20,6 +22,11 @@ export async function create(
   });
   const created = await db(TABLE_NAME)
     .insert(rowData, '*')
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .then((rows: ProductDesignStageTaskRow[]) => first<ProductDesignStageTaskRow>(rows));
 
   if (!created) { throw new Error('Failed to create rows'); }

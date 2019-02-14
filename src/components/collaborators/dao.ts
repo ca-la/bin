@@ -58,7 +58,8 @@ function handleForeignKeyViolation(
 }
 
 export async function create(
-  data: Unsaved<Collaborator>
+  data: Unsaved<Collaborator>,
+  trx?: Knex.Transaction
 ): Promise<CollaboratorWithUser> {
   const rowData = dataAdapter.forInsertion({
     id: uuid.v4(),
@@ -68,6 +69,11 @@ export async function create(
 
   const created = await db(TABLE_NAME)
     .insert(rowData, '*')
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .then((rows: CollaboratorRow[]) => first<CollaboratorRow>(rows))
     .catch(rethrow)
     .catch(filterError(
@@ -155,7 +161,10 @@ export async function findAllByIds(collaboratorIds: string[]): Promise<Collabora
   ));
 }
 
-export async function findByDesign(designId: string): Promise<CollaboratorWithUser[]> {
+export async function findByDesign(
+  designId: string,
+  trx?: Knex.Transaction
+): Promise<CollaboratorWithUser[]> {
   const design = await ProductDesignsDAO.findById(designId);
   if (!design) { return []; }
   const collaboratorRows = await db(TABLE_NAME)
@@ -169,6 +178,11 @@ export async function findByDesign(designId: string): Promise<CollaboratorWithUs
           collection_id: design.collectionIds[0],
           deleted_at: null
         });
+      }
+    })
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
       }
     })
     .orderBy('created_at', 'ASC');
@@ -278,13 +292,20 @@ export async function findByUserId(userId: string): Promise<CollaboratorWithUser
 }
 
 export async function findByDesignAndUser(
-  designId: string, userId: string
+  designId: string,
+  userId: string,
+  trx?: Knex.Transaction
 ): Promise<CollaboratorWithUser | null> {
   const collaboratorRow = await db(TABLE_NAME)
     .where({
       deleted_at: null,
       design_id: designId,
       user_id: userId
+    })
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
     })
     .then((rows: CollaboratorRow[]) => first<CollaboratorRow>(rows));
 
@@ -300,13 +321,20 @@ export async function findByDesignAndUser(
 }
 
 export async function findByCollectionAndUser(
-  collectionId: string, userId: string
+  collectionId: string,
+  userId: string,
+  trx?: Knex.Transaction
 ): Promise<CollaboratorWithUser[]> {
   const collaboratorRows = await db(TABLE_NAME)
     .where({
       collection_id: collectionId,
       deleted_at: null,
       user_id: userId
+    })
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
     });
 
   const collaborators =  validateEvery<CollaboratorRow, Collaborator>(

@@ -17,7 +17,7 @@ const { dataMapper } = ProductDesign;
 
 const TABLE_NAME = 'product_designs';
 
-function queryWithCollectionMeta(dbInstance) {
+function queryWithCollectionMeta(dbInstance, trx) {
   return dbInstance(TABLE_NAME)
     .select(db.raw(`
 product_designs.*,
@@ -44,7 +44,12 @@ LEFT JOIN (SELECT * FROM product_design_images AS pdi WHERE pdi.deleted_at IS nu
 ON pdi.id = co.sketch_id
     `)
     .groupBy(['product_designs.id', 'collection_designs.collection_id', 'collections.title'])
-    .orderBy('product_designs.created_at', 'desc');
+    .orderBy('product_designs.created_at', 'desc')
+    .modify((query) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    });
 }
 
 function create(data, trx) {
@@ -61,9 +66,7 @@ function create(data, trx) {
       }
     })
     .catch(rethrow)
-    .then(
-      ids => queryWithCollectionMeta(db).where({ 'product_designs.id': ids[0] })
-    )
+    .then(ids => queryWithCollectionMeta(db, trx).where({ 'product_designs.id': ids[0] }))
     .catch(rethrow)
     .then(first)
     .then(instantiate);
@@ -161,7 +164,7 @@ function findAll({
     .then(designs => designs.map(instantiate));
 }
 
-function findById(id, filters, options = {}) {
+function findById(id, filters, options = {}, trx) {
   const query = Object.assign({}, {
     'product_designs.id': id
   }, filters);
@@ -172,6 +175,11 @@ function findById(id, filters, options = {}) {
 
   return queryWithCollectionMeta(db)
     .where(query)
+    .modify((currentQuery) => {
+      if (trx) {
+        currentQuery.transacting(trx);
+      }
+    })
     .then(first)
     .then(maybeInstantiate)
     .catch(rethrow)

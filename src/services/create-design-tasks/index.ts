@@ -1,3 +1,4 @@
+import * as Knex from 'knex';
 import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
 import * as ProductDesignStagesDAO from '../../dao/product-design-stages';
 import * as ProductDesignStageTasksDAO from '../../dao/product-design-stage-tasks';
@@ -18,13 +19,16 @@ interface Options {
   designPhase: DesignPhase;
 }
 
-export async function createDesignTasks(options: Options): Promise<DetailsTask[]> {
+export async function createDesignTasks(
+  options: Options,
+  trx?: Knex.Transaction
+): Promise<DetailsTask[]> {
   switch (options.designPhase) {
     case 'POST_CREATION':
-      return createPostCreationTasks(options);
+      return createPostCreationTasks(options, trx);
 
     case 'POST_APPROVAL':
-      return createPostApprovalTasks(options);
+      return createPostApprovalTasks(options, trx);
   }
 }
 
@@ -33,7 +37,8 @@ type CollaboratorsByRole = { [role in CollaboratorRole]?: Collaborator[] };
 async function createTasks(
   designId: string,
   taskTemplates: TaskTemplate[],
-  stages: ProductDesignStage[]
+  stages: ProductDesignStage[],
+  trx?: Knex.Transaction
 ): Promise<DetailsTask[]> {
   const tasks: DetailsTask[] = [];
 
@@ -47,7 +52,7 @@ async function createTasks(
     if (cached && cached.length > 0) {
       collaborators = cached;
     } else {
-      collaborators = await findCollaborators(designId, role);
+      collaborators = await findCollaborators(designId, role, trx);
     }
     return collaborators;
   }
@@ -77,21 +82,22 @@ async function createTasks(
       status: TaskStatus.NOT_STARTED,
       taskId: task.id,
       title: taskTemplate.title
-    });
+    }, trx);
 
     const collaborators = await getCollaborators(taskTemplate.assigneeRole);
 
     await ProductDesignStageTasksDAO.create({
       designStageId: taskStage.id,
       taskId: task.id
-    });
+    }, trx);
 
     if (collaborators.length > 0) {
       // Using first collaborator in each role for now - can reevaluate if/when
       // we have multiple for a given role
       await CollaboratorTasksDAO.createAllByCollaboratorIdsAndTaskId(
         [collaborators[0].id],
-        task.id
+        task.id,
+        trx
       );
     } else {
       // This is a non-fatal warning, but does indicate something wrong; either
@@ -107,7 +113,10 @@ async function createTasks(
   return tasks;
 }
 
-async function createPostCreationTasks(options: Options): Promise<DetailsTask[]> {
+async function createPostCreationTasks(
+  options: Options,
+  trx?: Knex.Transaction
+): Promise<DetailsTask[]> {
   const stageTemplates = await StageTemplatesDAO.findAll();
   const { designId, designPhase } = options;
 
@@ -119,18 +128,21 @@ async function createPostCreationTasks(options: Options): Promise<DetailsTask[]>
         ordering: template.ordering,
         stageTemplateId: template.id,
         title: template.title
-      });
+      }, trx);
     }));
   const taskTemplates = await TaskTemplatesDAO.findByPhase(designPhase);
 
-  return await createTasks(designId, taskTemplates, stages);
+  return await createTasks(designId, taskTemplates, stages, trx);
 }
 
-async function createPostApprovalTasks(options: Options): Promise<DetailsTask[]> {
+async function createPostApprovalTasks(
+  options: Options,
+  trx?: Knex.Transaction
+): Promise<DetailsTask[]> {
   const { designId, designPhase } = options;
   const taskTemplates = await TaskTemplatesDAO.findByPhase(designPhase);
 
   const stages = await ProductDesignStagesDAO.findAllByDesignId(designId);
 
-  return await createTasks(designId, taskTemplates, stages);
+  return await createTasks(designId, taskTemplates, stages, trx);
 }

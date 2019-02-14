@@ -1,3 +1,4 @@
+import * as Knex from 'knex';
 import * as rethrow from 'pg-rethrow';
 import { pick } from 'lodash';
 
@@ -114,9 +115,14 @@ export async function findByCollaboratorAndUserId(userId: string): Promise<Colle
   );
 }
 
-export async function findById(id: string): Promise<Collection | null> {
+export async function findById(id: string, trx?: Knex.Transaction): Promise<Collection | null> {
   const collection = await db(TABLE_NAME)
     .where({ id, deleted_at: null })
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .then((rows: CollectionRow[]) => first<CollectionRow>(rows))
     .catch(rethrow);
 
@@ -130,12 +136,20 @@ export async function findById(id: string): Promise<Collection | null> {
   );
 }
 
-export async function findByDesign(designId: string): Promise<Collection[]> {
+export async function findByDesign(
+  designId: string,
+  trx?: Knex.Transaction
+): Promise<Collection[]> {
   const collectionDesigns: CollectionDesignRow[] = await db('collection_designs')
-    .where({ design_id: designId });
+    .where({ design_id: designId })
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    });
   const maybeCollections = await Promise.all(
     collectionDesigns.map((collectionDesign: CollectionDesignRow): Promise<Collection | null> =>
-      findById(collectionDesign.collection_id)
+      findById(collectionDesign.collection_id, trx)
     )
   );
   const collections = maybeCollections.filter((maybeCollection: Collection | null): boolean => {

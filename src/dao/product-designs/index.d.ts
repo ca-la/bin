@@ -13,7 +13,8 @@ declare namespace ProductDesignsDAO {
   function findById(
     id: string,
     filters?: object | null,
-    options?: object | null
+    options?: object | null,
+    trx?: Knex.Transaction
   ): Promise<ProductDesignWithCollectionId | null>;
   function findByIds(
     ids: string[]
