@@ -1,5 +1,3 @@
-import { escape } from 'lodash';
-
 import ProductDesign = require('../../domain-objects/product-design');
 import Collection from '../../domain-objects/collection';
 import { DetailsTask } from '../../domain-objects/task-event';
@@ -11,7 +9,7 @@ export interface LinkBase {
 }
 
 function normalizeTitle(title?: string | null): string {
-  return (title && escape(title)) || 'Untitled';
+  return title || 'Untitled';
 }
 
 export default function getTitle(

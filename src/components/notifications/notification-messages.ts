@@ -6,20 +6,31 @@ import * as ProductDesignsDAO from '../../dao/product-designs';
 import * as CollectionsDAO from '../../dao/collections';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as CommentsDAO from '../../dao/comments';
+import * as CanvasesDAO from '../../dao/product-design-canvases';
+import * as ComponentsDAO from '../../dao/components';
 import * as AnnotationCommentsDAO from '../../dao/product-design-canvas-annotation-comments';
 import getTitle, { LinkBase } from '../../services/get-title';
 import { logWarning } from '../../services/logger';
 import Comment from '../../domain-objects/comment';
+import { ComponentType } from '../../domain-objects/component';
+import ProductDesignCanvas from '../../domain-objects/product-design-canvas';
+import { STUDIO_HOST } from '../../config';
 
 function getDeepLink(
   linkBase: LinkBase,
   annotationId?: string,
-  canvasId?: string
+  canvasId?: string,
+  componentType?: ComponentType
 ): { deepLink: string, htmlLink: string } {
   const { design, collection, task } = linkBase;
-  if (annotationId && canvasId && design) {
+  if (annotationId && canvasId && design && componentType) {
+    const tab = componentType === ComponentType.Artwork
+      ? 'tab=artwork&'
+      : componentType === ComponentType.Material
+        ? 'tab=materials&'
+        : '';
     // tslint:disable-next-line:max-line-length
-    const deepLink = `/designs?previewDesignId=${design.id}&canvasId=${canvasId}&annotationId=${annotationId}`;
+    const deepLink = `${STUDIO_HOST}/designs?${tab}previewDesignId=${design.id}&canvasId=${canvasId}&annotationId=${annotationId}`;
     const title = getTitle(linkBase);
     return {
       deepLink,
@@ -28,7 +39,7 @@ function getDeepLink(
   }
   if (task && design && collection) {
     // tslint:disable-next-line:max-line-length
-    const deepLink = `/collections/${collection.id}/tasks/design/${design.id}?taskId=${task.id}&designId=${design.id}`;
+    const deepLink = `${STUDIO_HOST}/collections/${collection.id}/tasks/design/${design.id}?taskId=${task.id}&designId=${design.id}`;
     const title = getTitle(linkBase);
     return {
       deepLink,
@@ -36,7 +47,8 @@ function getDeepLink(
     };
   }
   if (design && collection) {
-    const deepLink = `/collections/${collection.id}/designs?previewDesignId=${design.id}`;
+    // tslint:disable-next-line:max-line-length
+    const deepLink = `${STUDIO_HOST}/collections/${collection.id}/designs?previewDesignId=${design.id}`;
     const title = getTitle(linkBase);
     return {
       deepLink,
@@ -44,7 +56,7 @@ function getDeepLink(
     };
   }
   if (design) {
-    const deepLink = `/designs?previewDesignId=${design.id}`;
+    const deepLink = `${STUDIO_HOST}/designs?previewDesignId=${design.id}`;
     const title = getTitle(linkBase);
     return {
       deepLink,
@@ -52,7 +64,7 @@ function getDeepLink(
     };
   }
   if (collection) {
-    const deepLink = `/collections/${collection.id}`;
+    const deepLink = `${STUDIO_HOST}/collections/${collection.id}`;
     const title = getTitle(linkBase);
     return {
       deepLink,
@@ -131,16 +143,24 @@ export const createNotificationMessage = async (
       const design = notification.designId
         ? await ProductDesignsDAO.findById(notification.designId)
         : null;
-      if (!design) { return null; }
+      const canvas: ProductDesignCanvas | null = await CanvasesDAO.findById(notification.canvasId);
+      if (!design || !canvas) { return null; }
       const comments: Comment[] | null = await AnnotationCommentsDAO
         .findByAnnotationId(notification.annotationId);
+      const component = canvas.componentId
+        ? await ComponentsDAO.findById(canvas.componentId)
+        : undefined;
+      const componentType = component
+        ? component.type
+        : undefined;
       const comment = comments ? comments[0] : null;
-      const commentText = comment ? escape(comment.text) : '';
+      const commentText = comment ? comment.text : '';
       const cleanName = escape(baseNotificationMessage.actor.name);
       const { deepLink, htmlLink } = getDeepLink(
         { design },
         notification.annotationId,
-        notification.canvasId
+        notification.canvasId,
+        componentType
       );
       return {
         ...baseNotificationMessage,
@@ -182,7 +202,7 @@ export const createNotificationMessage = async (
       const { deepLink: designLink } = getDeepLink({ design, collection });
       const { deepLink: collectionLink } = getDeepLink({ collection });
       const comment: Comment | null = await CommentsDAO.findById(notification.commentId);
-      const commentText = comment ? escape(comment.text) : '';
+      const commentText = comment ? comment.text : '';
       const cleanName = escape(baseNotificationMessage.actor.name);
       return {
         ...baseNotificationMessage,
