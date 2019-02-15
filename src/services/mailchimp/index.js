@@ -99,16 +99,32 @@ function subscribeToSubscriptions({ email, name, zip }) {
   });
 }
 
-function subscribeToUsers({ email, name, referralCode }) {
-  return subscribe(MAILCHIMP_LIST_ID_USERS, email, {
+function subscribeToUsers({
+  email,
+  name,
+  referralCode,
+  cohort
+}) {
+  const tags = {
     FULL_NAME: name,
     REF_CODE: referralCode,
     HAS_BOUGHT: 'false',
     HAS_SCAN: 'false'
-  });
+  };
+
+  if (cohort) {
+    Object.assign(tags, { COHORT: cohort });
+  }
+
+  return subscribe(MAILCHIMP_LIST_ID_USERS, email, tags);
 }
 
-function updateUser({ email, hasScan, hasBought }) {
+function updateUser({
+  email,
+  hasScan,
+  hasBought,
+  cohort
+}) {
   const data = {};
 
   if (hasScan !== undefined) {
@@ -117,6 +133,10 @@ function updateUser({ email, hasScan, hasBought }) {
 
   if (hasBought !== undefined) {
     Object.assign(data, { HAS_BOUGHT: String(hasBought) });
+  }
+
+  if (cohort) {
+    Object.assign(data, { COHORT: cohort });
   }
 
   return update(MAILCHIMP_LIST_ID_USERS, email, data);

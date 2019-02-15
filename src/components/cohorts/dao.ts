@@ -45,7 +45,7 @@ export async function findById(
   id: string,
   trx?: Knex.Transaction
 ): Promise<Cohort | null> {
-  const cohorts = await db(TABLE_NAME)
+  const cohort = await db(TABLE_NAME)
     .select('*')
     .where({ id })
     .modify((query: Knex.QueryBuilder) => {
@@ -59,6 +59,28 @@ export async function findById(
     TABLE_NAME,
     isCohortRow,
     cohortDataAdapter,
-    cohorts
+    cohort
+  );
+}
+
+export async function findBySlug(
+  slug: string,
+  trx?: Knex.Transaction
+): Promise<Cohort | null> {
+  const cohort = await db(TABLE_NAME)
+    .select('*')
+    .where({ slug })
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
+    .then((rows: object[]) => first(rows));
+
+  return validate<CohortRow, Cohort>(
+    TABLE_NAME,
+    isCohortRow,
+    cohortDataAdapter,
+    cohort
   );
 }

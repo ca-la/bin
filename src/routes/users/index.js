@@ -15,6 +15,8 @@ const ShopifyClient = require('../../services/shopify');
 const Twilio = require('../../services/twilio');
 const User = require('../../domain-objects/user');
 const UsersDAO = require('../../dao/users');
+const CohortsDAO = require('../../components/cohorts/dao');
+const CohortUsersDAO = require('../../components/cohorts/users/dao');
 const { logServerError } = require('../../services/logger');
 const {
   REFERRAL_VALUE_DOLLARS,
@@ -38,7 +40,7 @@ function* createUser() {
     address,
     scan
   } = this.request.body;
-  const { initialDesigns } = this.request.query;
+  const { cohort, initialDesigns } = this.request.query;
 
   // Validate address data prior to user creation. TODO maybe transaction
   // here instead?
@@ -68,6 +70,18 @@ function* createUser() {
     referralCode
   }).catch(filterError(InvalidDataError, err => this.throw(400, err)));
 
+  let targetCohort = null;
+  if (cohort) {
+    targetCohort = yield CohortsDAO.findBySlug(cohort);
+
+    if (targetCohort) {
+      yield CohortUsersDAO.create({
+        userId: user.id,
+        cohortId: targetCohort.id
+      });
+    }
+  }
+
   // Previously we had this *before* the user creation in the DB, effectively
   // using it as a more powerful email validator. That has proven to be noisy as
   // we attempt to subscribe lots of invalid and duplicate emails whenever
@@ -76,7 +90,8 @@ function* createUser() {
     yield MailChimp.subscribeToUsers({
       email,
       name,
-      referralCode
+      referralCode,
+      cohort: targetCohort && targetCohort.slug
     });
   } catch (err) {
     // Not rethrowing since this shouldn't be fatal... but if we ever see this

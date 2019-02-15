@@ -20,7 +20,10 @@ test('Cohorts DAO supports creation and retrieval', async (t: Test) => {
   });
 
   const found = await CohortsDAO.findById(cohortId);
+  const foundBySlug = await CohortsDAO.findBySlug('moma-demo-june-2020');
+
   t.deepEqual(created, found, 'Persists the cohort');
+  t.deepEqual(created, foundBySlug, 'Is retrievable by slug');
 });
 
 test('Cohorts DAO supports creation and retrieval in a transaction', async (t: Test) => {
@@ -37,7 +40,9 @@ test('Cohorts DAO supports creation and retrieval in a transaction', async (t: T
     }, trx);
 
     const found = await CohortsDAO.findById(cohortId, trx);
+    const foundBySlug = await CohortsDAO.findBySlug('moma-demo-june-2020', trx);
 
     t.deepEqual(created, found, 'Persists the cohort');
+    t.deepEqual(created, foundBySlug, 'Is retrievable by slug');
   });
 });

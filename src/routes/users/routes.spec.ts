@@ -2,8 +2,11 @@ import * as uuid from 'node-uuid';
 
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import { post } from '../../test-helpers/http';
+import createUser = require('../../test-helpers/create-user');
 import * as DuplicationService from '../../services/duplicate';
 import MailChimp = require('../../services/mailchimp');
+import * as CohortsDAO from '../../components/cohorts/dao';
+import * as CohortUsersDAO from '../../components/cohorts/users/dao';
 
 test('POST /users?initialDesigns= allows registration + design duplication', async (t: Test) => {
   const dOne = uuid.v4();
@@ -41,4 +44,51 @@ test('POST /users?initialDesigns= allows registration + design duplication', asy
 
   t.equal(duplicationStub.callCount, 1, 'Expect the duplication service to be called once');
   t.equal(mailchimpStub.callCount, 1, 'Expect mailchimp to be called once');
+});
+
+test('POST /users?cohort allows registration + adding a cohort user', async (t: Test) => {
+  const admin = await createUser({ role: 'ADMIN' });
+  const cohort = await CohortsDAO.create({
+    createdBy: admin.user.id,
+    description: 'A bunch of delightful designers',
+    id: uuid.v4(),
+    slug: 'moma-demo-june-2020',
+    title: 'MoMA Demo Participants'
+  });
+
+  const mailchimpStub = sandbox().stub(MailChimp, 'subscribeToUsers').returns(Promise.resolve());
+
+  const [response, newUser] = await post(
+    `/users?cohort=${cohort.slug}`,
+    {
+      body: {
+        email: 'user@example.com',
+        name: 'Rick Owens',
+        password: 'rick_owens_la_4_lyfe',
+        phone: '323 931 4960',
+        zip: '90038'
+      }
+    }
+  );
+  const cohortUser = await CohortUsersDAO.findAllByUser(newUser.id);
+
+  t.equal(response.status, 201, 'status=201');
+  t.equal(newUser.name, 'Rick Owens');
+  t.equal(newUser.email, 'user@example.com');
+  t.equal(newUser.phone, '+13239314960');
+  t.equal(newUser.password, undefined);
+  t.equal(newUser.passwordHash, undefined);
+
+  t.equal(mailchimpStub.callCount, 1, 'Expect mailchimp to be called once');
+  t.deepEqual(mailchimpStub.firstCall.args[0], {
+    cohort: 'moma-demo-june-2020',
+    email: newUser.email,
+    name: newUser.name,
+    referralCode: 'n/a'
+  }, 'Expect the correct tags for Mailchimp subscription');
+  t.deepEqual(
+    cohortUser,
+    [{ cohortId: cohort.id, userId: newUser.id }],
+    'Creates a CohortUser'
+  );
 });
