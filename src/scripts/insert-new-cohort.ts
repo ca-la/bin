@@ -4,8 +4,8 @@ import { CALA_OPS_USER_ID } from '../config';
 import { log } from '../services/logger';
 import { green, red, reset } from '../services/colors';
 
-import Cohort from '../components/cohort/domain-object';
-import * as CohortsDAO from '../components/cohort/dao';
+import Cohort from '../components/cohorts/domain-object';
+import * as CohortsDAO from '../components/cohorts/dao';
 
 insertNewCohort()
   .then(() => {
