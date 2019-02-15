@@ -113,15 +113,15 @@ SELECT c.id as id, c.title as title, c.created_by as user_id
   `).catch(rethrow);
   const collections: CollectionMeta[] = collectionsResult.rows;
   return db.transaction(async (trx: Knex.Transaction) => {
-    const createPayloads: PayloadObject[] = await Promise.all(
+    const createPayloadsAndErrors: (PayloadObject | string)[] = await Promise.all(
       collections.map(async (collection: CollectionMeta) => {
         const fullCollection = await CollectionsDAO.findById(collection.id);
         const quotes = await getQuoteRequests(collection.id, trx);
         const designs = await ProductDesignsDAO.findByCollectionId(collection.id);
         if (quotes.length !== designs.length || !areQuotesAndDesignsMatched(quotes, designs)) {
-          throw new Error('Quotes did not match designs');
+          return collection.id;
         }
-        if (!fullCollection) { throw new Error('Collection not found'); }
+        if (!fullCollection) { return collection.id; }
         log(`INFO: Retrieved ${quotes.length} commited quotes for collection ${collection.id}`);
         return {
           collection: fullCollection,
@@ -129,6 +129,14 @@ SELECT c.id as id, c.title as title, c.created_by as user_id
           userId: collection.user_id
         };
       }));
+    const errorCollectionIds = createPayloadsAndErrors
+      .filter((el: PayloadObject | string): el is string => typeof el === 'string');
+    if (errorCollectionIds.length > 0) {
+      // tslint:disable-next-line:max-line-length
+      log(`${red}ERROR: The following collections could not have an invoice automatically created due to the quotes and designs not matching: ${errorCollectionIds.join(', ')}${reset}`);
+    }
+    const createPayloads: PayloadObject[] = createPayloadsAndErrors
+      .filter((el: PayloadObject | string): el is PayloadObject => typeof el !== 'string');
 
     const invoices = await Promise.all(createPayloads.map((createPayload: PayloadObject) => {
       return createInvoiceWithoutMethod(
