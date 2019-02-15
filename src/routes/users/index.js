@@ -21,6 +21,7 @@ const {
   REQUIRE_CALA_EMAIL,
   TWILIO_PREREGISTRATION_OUTBOUND_NUMBER
 } = require('../../config');
+const DuplicationService = require('../../services/duplicate');
 
 const shopify = new ShopifyClient(ShopifyClient.CALA_STORE_CREDENTIALS);
 const router = new Router();
@@ -37,6 +38,7 @@ function* createUser() {
     address,
     scan
   } = this.request.body;
+  const { initialDesigns } = this.request.query;
 
   // Validate address data prior to user creation. TODO maybe transaction
   // here instead?
@@ -64,8 +66,7 @@ function* createUser() {
     password,
     phone,
     referralCode
-  })
-    .catch(filterError(InvalidDataError, err => this.throw(400, err)));
+  }).catch(filterError(InvalidDataError, err => this.throw(400, err)));
 
   // Previously we had this *before* the user creation in the DB, effectively
   // using it as a more powerful email validator. That has proven to be noisy as
@@ -108,6 +109,10 @@ function* createUser() {
     user.email,
     user.id
   );
+
+  if (initialDesigns && Array.isArray(initialDesigns)) {
+    yield DuplicationService.duplicateDesigns(user.id, initialDesigns);
+  }
 
   this.status = 201;
 
