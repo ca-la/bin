@@ -9,9 +9,12 @@ import Canvas from '../../domain-objects/product-design-canvas';
 import Design = require('../../domain-objects/product-design');
 import prepareForDuplication from './prepare-for-duplication';
 import { findAndDuplicateCanvas } from './canvases';
+import { findAndDuplicateVariants } from './variants';
 
 /**
  * Finds the given design and duplicates it. Does the same with all related sub-resources.
+ * Design --> Canvases
+ *        --> ProductDesignVariants
  */
 export async function findAndDuplicateDesign(
   designId: string,
@@ -35,6 +38,8 @@ export async function findAndDuplicateDesign(
   await Promise.all(canvases.map(async (canvas: Canvas): Promise<void> => {
     await findAndDuplicateCanvas(canvas.id, duplicatedDesign.id, trx);
   }));
+
+  await findAndDuplicateVariants(designId, duplicatedDesign.id, trx);
 
   return duplicatedDesign;
 }

@@ -1,5 +1,6 @@
 import * as Knex from 'knex';
 import * as tape from 'tape';
+import * as uuid from 'node-uuid';
 
 import * as db from '../../services/db';
 import { test } from '../../test-helpers/fresh';
@@ -12,14 +13,25 @@ import * as ProductDesignStagesDAO from '../../dao/product-design-stages';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as CanvasesDAO from '../../dao/product-design-canvases';
 import * as ComponentsDAO from '../../dao/components';
+import * as VariantsDAO from '../../dao/product-design-variants';
 
 import { findAndDuplicateDesign } from './designs';
 
 test('findAndDuplicateDesign', async (t: tape.Test) => {
   const { user: duplicatingUser } = await createUser({ withSession: false });
+  // generate a design with a canvas with a component.
   const { component, canvas, design } = await generateCanvas({});
-  // generate some stages + tasks.
+  // generate some stage + task templates.
   await createTemplates();
+  // generate a variant for the design.
+  const variantOne = await VariantsDAO.create({
+    colorName: 'Green',
+    designId: design.id,
+    id: uuid.v4(),
+    position: 0,
+    sizeName: 'M',
+    unitsToProduce: 123
+  });
 
   const duplicatedDesign = await db.transaction(async (trx: Knex.Transaction) => {
     return findAndDuplicateDesign(design.id, duplicatingUser.id, trx);
@@ -34,6 +46,20 @@ test('findAndDuplicateDesign', async (t: tape.Test) => {
       userId: duplicatingUser.id
     },
     'Returns the same design but with a new id and created at timestamp'
+  );
+
+  const duplicateVariants = await VariantsDAO.findByDesignId(duplicatedDesign.id);
+  t.equal(duplicateVariants.length, 1);
+  const variantDupeOne = duplicateVariants[0];
+  t.deepEqual(
+    variantDupeOne,
+    {
+      ...variantOne,
+      createdAt: variantDupeOne.createdAt,
+      designId: duplicatedDesign.id,
+      id: variantDupeOne.id
+    },
+    'A variant duplicate was generated that is based off the original design variant'
   );
 
   const duplicateCollaborators = await CollaboratorsDAO.findByDesign(duplicatedDesign.id);
