@@ -7,21 +7,19 @@ import createUser = require('../../test-helpers/create-user');
 import * as EmailService from '../email';
 import { sendNotificationEmails } from './index';
 import {
-  generateDesignUpdateNotification,
-  generateInviteNotification
+  generateInviteNotification,
+  generatePartnerAcceptBidNotification
 } from '../../test-helpers/factories/notification';
 
 test('sendNotificationEmails supports finding outstanding notifications', async (t: tape.Test) => {
   const userOne = await createUser();
   const userTwo = await createUser();
 
-  const { notification: notificationOne } = await generateDesignUpdateNotification({
-    actorUserId: userOne.user.id,
-    recipientUserId: userTwo.user.id
+  const { notification: notificationOne } = await generatePartnerAcceptBidNotification({
+    actorUserId: userOne.user.id
   });
-  const { notification: notificationTwo } = await generateDesignUpdateNotification({
-    actorUserId: userTwo.user.id,
-    recipientUserId: userOne.user.id
+  const { notification: notificationTwo } = await generatePartnerAcceptBidNotification({
+    actorUserId: userTwo.user.id
   });
   await generateInviteNotification();
 

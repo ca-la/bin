@@ -8,8 +8,8 @@ import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import * as DesignsDAO from '../../dao/product-designs';
 import { NotificationMessage } from './domain-object';
 import {
-  generateDesignUpdateNotification,
-  generateInviteNotification
+  generateInviteNotification,
+  generatePartnerAcceptBidNotification
 } from '../../test-helpers/factories/notification';
 import generateCollection from '../../test-helpers/factories/collection';
 
@@ -42,7 +42,7 @@ async (t: tape.Test) => {
     userEmail: 'raf@rafsimons.com',
     userId: null
   });
-  const { notification: n1 } = await generateDesignUpdateNotification({
+  const { notification: n1 } = await generatePartnerAcceptBidNotification({
     actorUserId: userOne.user.id,
     recipientUserId: userTwo.user.id
   });

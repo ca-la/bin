@@ -8,14 +8,14 @@ import * as DesignsDAO from '../../dao/product-designs';
 import createUser = require('../../test-helpers/create-user');
 import db = require('../../services/db');
 import {
-  DesignUpdateNotification,
   ImmediateInviteNotification,
   Notification,
-  NotificationType
+  NotificationType,
+  PartnerAcceptBidNotification
 } from './domain-object';
 import {
-  generateDesignUpdateNotification,
-  generateInviteNotification
+  generateInviteNotification,
+  generatePartnerAcceptBidNotification
 } from '../../test-helpers/factories/notification';
 import generateCollection from '../../test-helpers/factories/collection';
 
@@ -73,9 +73,8 @@ test('Notifications DAO supports finding by user id', async (t: tape.Test) => {
     userEmail: 'raf@rafsimons.com',
     userId: null
   });
-  const { notification: n1 } = await generateDesignUpdateNotification({
-    actorUserId: userOne.user.id,
-    recipientUserId: userTwo.user.id
+  await generatePartnerAcceptBidNotification({
+    actorUserId: userOne.user.id
   });
   const { notification: n2 } = await generateInviteNotification({
     actorUserId: userOne.user.id,
@@ -88,7 +87,7 @@ test('Notifications DAO supports finding by user id', async (t: tape.Test) => {
 
   t.deepEqual(
     await NotificationsDAO.findByUserId(userTwo.user.id, { offset: 0, limit: 10 }),
-    [n2, n1],
+    [n2],
     'Returns only the notifications associated with the user (collaborator + user)'
   );
   t.deepEqual(
@@ -109,30 +108,26 @@ test('Notifications DAO supports finding by user id', async (t: tape.Test) => {
 });
 
 test('Notifications DAO supports finding outstanding notifications', async (t: tape.Test) => {
-  const { user: userOne } = await createUser({ withSession: false });
-  const { user: userTwo } = await createUser({ withSession: false });
+  const { user } = await createUser({ withSession: false });
 
   const {
     design: designOne,
     notification: notificationOne
-  } = await generateDesignUpdateNotification({
-    actorUserId: userOne.id,
-    recipientUserId: userTwo.id
+  } = await generatePartnerAcceptBidNotification({
+    actorUserId: user.id
   });
   const {
     design: designTwo,
     notification: notificationTwo
-  } = await generateDesignUpdateNotification({
-    actorUserId: userOne.id,
-    recipientUserId: userTwo.id
+  } = await generatePartnerAcceptBidNotification({
+    actorUserId: user.id
   });
-  await generateDesignUpdateNotification({
-    actorUserId: userOne.id,
-    recipientUserId: userTwo.id,
+  await generatePartnerAcceptBidNotification({
+    actorUserId: user.id,
     sentEmailAt: new Date()
   });
-  await generateDesignUpdateNotification({
-    actorUserId: userOne.id,
+  await generatePartnerAcceptBidNotification({
+    actorUserId: user.id,
     sentEmailAt: new Date()
   });
 
@@ -177,7 +172,7 @@ test('Notifications DAO supports finding outstanding notifications', async (t: t
       formattedResults,
       [{
         ...notificationTwo,
-        actor: userOne,
+        actor: user,
         annotation: null,
         canvas: null,
         collection: null,
@@ -187,7 +182,7 @@ test('Notifications DAO supports finding outstanding notifications', async (t: t
         task: null
       }, {
         ...notificationOne,
-        actor: userOne,
+        actor: user,
         annotation: null,
         canvas: null,
         collection: null,
@@ -202,16 +197,13 @@ test('Notifications DAO supports finding outstanding notifications', async (t: t
 });
 
 test('Notifications DAO supports marking notifications as sent', async (t: tape.Test) => {
-  const userOne = await createUser();
-  const userTwo = await createUser();
+  const { user } = await createUser();
 
-  const { notification: notificationOne } = await generateDesignUpdateNotification({
-    actorUserId: userOne.user.id,
-    recipientUserId: userTwo.user.id
+  const { notification: notificationOne } = await generatePartnerAcceptBidNotification({
+    actorUserId: user.id
   });
-  const { notification: notificationTwo } = await generateDesignUpdateNotification({
-    actorUserId: userOne.user.id,
-    recipientUserId: userTwo.user.id
+  const { notification: notificationTwo } = await generatePartnerAcceptBidNotification({
+    actorUserId: user.id
   });
 
   await db.transaction(async (trx: Knex.Transaction) => {
@@ -247,27 +239,24 @@ test('Notifications DAO supports deleting similar notifications', async (t: tape
     sentEmailAt: null,
     type: NotificationType.COLLECTION_SUBMIT
   });
-  await generateDesignUpdateNotification({
-    actionDescription: 'doing thangs',
+  await generatePartnerAcceptBidNotification({
     actorUserId: userOne.user.id,
     designId: design.id,
-    recipientUserId: userTwo.user.id
+    recipientUserId: admin.id
   });
-  await generateDesignUpdateNotification({
-    actionDescription: 'doing thangs',
+  await generatePartnerAcceptBidNotification({
     actorUserId: userOne.user.id,
     designId: design.id,
-    recipientUserId: userTwo.user.id
+    recipientUserId: admin.id
   });
-  const unsentNotification: DesignUpdateNotification = {
-    actionDescription: 'doing thangs',
+  const unsentNotification: PartnerAcceptBidNotification = {
     actorUserId: userOne.user.id,
     createdAt: new Date(),
     designId: design.id,
     id: uuid.v4(),
-    recipientUserId: userTwo.user.id,
+    recipientUserId: admin.id,
     sentEmailAt: null,
-    type: NotificationType.DESIGN_UPDATE
+    type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   };
 
   const deletedCount = await NotificationsDAO.deleteRecent(unsentNotification);

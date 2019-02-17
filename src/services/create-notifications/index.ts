@@ -14,7 +14,6 @@ import * as UsersDAO from '../../dao/users';
 import {
   AnnotationNotification,
   CollectionSubmitNotification,
-  DesignUpdateNotification,
   ImmediateCostedCollectionNotification,
   ImmediateInviteNotification,
   MeasurementNotification,
@@ -125,30 +124,6 @@ export async function sendSectionUpdateNotifications(
       type: NotificationType.SECTION_UPDATE
     });
   }));
-}
-
-/**
- * Creates notifications for each recipient for the design update action.
- */
-export async function sendDesignUpdateNotifications(
-  designId: string,
-  userId: string
-): Promise<DesignUpdateNotification[]> {
-  const recipients = await findDesignUsers(designId) as User[];
-  const filteredRecipients = recipients.filter((recipient: User) => recipient.id !== userId);
-
-  return Promise.all(filteredRecipients
-    .map((recipient: User): Promise<DesignUpdateNotification> => {
-      return replaceNotifications({
-        actionDescription: 'updated the design information',
-        actorUserId: userId,
-        designId,
-        id: uuid.v4(),
-        recipientUserId: recipient.id,
-        sentEmailAt: null,
-        type: NotificationType.DESIGN_UPDATE
-      });
-    }));
 }
 
 /**

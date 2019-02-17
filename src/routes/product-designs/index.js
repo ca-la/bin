@@ -1,6 +1,5 @@
 'use strict';
 
-const intersection = require('lodash/intersection');
 const pick = require('lodash/pick');
 const Router = require('koa-router');
 
@@ -24,7 +23,6 @@ const User = require('../../domain-objects/user');
 const UsersDAO = require('../../dao/users');
 const { canAccessDesignInParam, canCommentOnDesign, canDeleteDesign } = require('../../middleware/can-access-design');
 const { requireValues } = require('../../services/require-properties');
-const { sendDesignUpdateNotifications } = require('../../services/create-notifications');
 const { getDesignPermissions } = require('../../services/get-permissions');
 
 const { getDesignUploadPolicy, getThumbnailUploadPolicy } = require('./upload-policy');
@@ -283,20 +281,6 @@ function* updateDesign() {
     filterError(InvalidDataError, err => this.throw(400, err))
   );
   updated = yield attachResources(updated, userId, permissions);
-
-  const keys = Object.keys(data);
-  const keysToNotifyOn = [
-    'description',
-    'metadata',
-    'title',
-    'retailPriceCents',
-    'dueDate',
-    'expectedCostCents'
-  ];
-
-  if (intersection(keys, keysToNotifyOn).length > 0) {
-    yield sendDesignUpdateNotifications(designId, userId);
-  }
 
   this.body = updated;
   this.status = 200;

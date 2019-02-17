@@ -123,22 +123,6 @@ export const createNotificationMessage = async (
       };
     }
 
-    case (NotificationType.DESIGN_UPDATE): {
-      const design = notification.designId
-        ? await ProductDesignsDAO.findById(notification.designId)
-        : null;
-      if (!design) { return null; }
-      const { deepLink, htmlLink } = getDeepLink({ design });
-      const cleanName = escape(baseNotificationMessage.actor.name);
-      return {
-        ...baseNotificationMessage,
-        attachments: [],
-        html: `${span(cleanName, 'user-name')} updated ${htmlLink}`,
-        imageUrl: design ? findImageUrl(design) : null,
-        location: [{ text: getTitle({ design }), url: deepLink }]
-      };
-    }
-
     case (NotificationType.ANNOTATION_CREATE): {
       const design = notification.designId
         ? await ProductDesignsDAO.findById(notification.designId)

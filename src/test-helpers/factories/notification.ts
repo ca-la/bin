@@ -1,10 +1,10 @@
 import * as uuid from 'node-uuid';
 import { create } from '../../components/notifications/dao';
 import {
-  DesignUpdateNotification,
   ImmediateInviteNotification,
   Notification,
-  NotificationType
+  NotificationType,
+  PartnerAcceptBidNotification
 } from '../../components/notifications/domain-object';
 import { findById as findUserById } from '../../dao/users';
 import createUser = require('../create-user');
@@ -13,27 +13,29 @@ import Collaborator from '../../components/collaborators/domain-objects/collabor
 import * as ProductDesignsDAO from '../../dao/product-designs';
 import generateCollection from './collection';
 import Collection from '../../domain-objects/collection';
+import User = require('../../domain-objects/user');
+import ProductDesign = require('../../domain-objects/product-design');
 
 interface InviteNotificationWithResources {
-  actor: any;
+  actor: User;
   collaborator: Collaborator;
   collection: Collection;
   notification: Notification;
 }
 
-interface DesignUpdateNotificationWithResources {
-  actor: any;
-  design: any;
+interface PartnerAcceptBidNotificationWithResources {
+  actor: User;
+  design: ProductDesign;
   notification: Notification;
   recipient: any;
 }
 
 /**
- * Generates a design update notification.
+ * Generates a Partner Accept Bid notification
  */
-export async function generateDesignUpdateNotification(
-  options: Partial<DesignUpdateNotification> = {}
-): Promise<DesignUpdateNotificationWithResources> {
+export async function generatePartnerAcceptBidNotification(
+  options: Partial<PartnerAcceptBidNotification> = {}
+): Promise<PartnerAcceptBidNotificationWithResources> {
   const { user: actor } = options.actorUserId
     ? { user: await findUserById(options.actorUserId) }
     : await createUser({ withSession: false });
@@ -50,15 +52,14 @@ export async function generateDesignUpdateNotification(
 
   if (!design) { throw new Error('Could not generate a design!'); }
 
-  const payload: DesignUpdateNotification = {
-    actionDescription: 'updated design information',
+  const payload: PartnerAcceptBidNotification = {
     actorUserId: actor.id,
     createdAt: new Date(),
     designId: design.id,
     id: uuid.v4(),
     recipientUserId: recipient.id,
     sentEmailAt: null,
-    type: NotificationType.DESIGN_UPDATE,
+    type: NotificationType.PARTNER_ACCEPT_SERVICE_BID,
     ...options
   };
   const notification = await create(payload);

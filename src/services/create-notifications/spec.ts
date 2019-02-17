@@ -24,48 +24,6 @@ import * as SlackService from '../../services/slack';
 import * as Config from '../../config';
 import generateMeasurement from '../../test-helpers/factories/product-design-canvas-measurement';
 
-test('sendDesignUpdateNotification', async (t: tape.Test) => {
-  const userOne = await createUser();
-  const userTwo = await createUser();
-
-  const design = await DesignsDAO.create({
-    productType: 'A product type',
-    title: 'A design',
-    userId: userOne.user.id
-  });
-
-  await CollaboratorsDAO.create({
-    collectionId: null,
-    designId: design.id,
-    invitationMessage: '',
-    role: 'EDIT',
-    userEmail: null,
-    userId: userOne.user.id
-  });
-  await CollaboratorsDAO.create({
-    collectionId: null,
-    designId: design.id,
-    invitationMessage: '',
-    role: 'EDIT',
-    userEmail: null,
-    userId: userTwo.user.id
-  });
-
-  const notifications = await NotificationsService
-    .sendDesignUpdateNotifications(design.id, userOne.user.id);
-
-  t.equal(
-    notifications.length,
-    1,
-    'Creates a design update notification for non-self collaborator'
-  );
-  t.deepEqual(
-    notifications[0].type,
-    NotificationType.DESIGN_UPDATE,
-    'Creates two notifications with the same notification type'
-  );
-});
-
 test('sendDesignOwnerAnnotationCreateNotification', async (t: tape.Test) => {
   const { user: user } = await createUser({ withSession: false });
   const { user: owner } = await createUser({ withSession: false });

@@ -56,13 +56,6 @@ export interface CollectionSubmitNotification extends BaseNotification {
   type: NotificationType.COLLECTION_SUBMIT;
 }
 
-export interface DesignUpdateNotification extends BaseNotification {
-  actionDescription: string;
-  designId: string;
-  recipientUserId: string;
-  type: NotificationType.DESIGN_UPDATE;
-}
-
 export interface ImmediateCostedCollectionNotification extends BaseNotification {
   collectionId: string;
   recipientUserId: string;
@@ -167,7 +160,6 @@ export interface TaskCompleteNotification extends BaseNotification {
 export type Notification =
   AnnotationNotification |
   CollectionSubmitNotification |
-  DesignUpdateNotification |
   ImmediateCostedCollectionNotification |
   ImmediateInviteNotification |
   MeasurementNotification |
