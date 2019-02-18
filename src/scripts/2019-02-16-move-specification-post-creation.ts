@@ -20,7 +20,7 @@ async function moveSpecificationPostCreation(): Promise<TaskTemplate[]> {
       specificationTasks.map(
         (template: TaskTemplate): Promise<TaskTemplate> =>
           TaskTemplatesDAO.update(template.id, {
-            designPhase: 'POST_APPROVAL'
+            designPhase: 'POST_CREATION'
           }, trx)
       )
     )
