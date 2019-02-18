@@ -138,13 +138,15 @@ SELECT c.id as id, c.title as title, c.created_by as user_id
     const createPayloads: PayloadObject[] = createPayloadsAndErrors
       .filter((el: PayloadObject | string): el is PayloadObject => typeof el !== 'string');
 
-    const invoices = await Promise.all(createPayloads.map((createPayload: PayloadObject) => {
-      return createInvoiceWithoutMethod(
+    const invoices = [];
+    for (const createPayload of createPayloads) {
+      const invoice = await createInvoiceWithoutMethod(
         createPayload.quotes,
         createPayload.userId,
         createPayload.collection
       );
-    }));
+      invoices.push(invoice);
+    }
     return invoices.length;
   });
 }
