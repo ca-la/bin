@@ -83,7 +83,7 @@ function areQuotesAndDesignsMatched(
 
 async function createInvoicesForPayLaterSubmits(): Promise<number> {
   const collectionsResult = await db.raw(`
-SELECT c.id as id, c.title as title, c.created_by as user_id
+SELECT DISTINCT c.id as id, c.title as title, c.created_by as user_id
   FROM collections AS c
   JOIN collection_designs AS cd
     ON cd.collection_id = c.id
