@@ -31,6 +31,10 @@ export interface TaskTemplateRow {
 }
 
 export const dataAdapter = new DataAdapter<TaskTemplateRow, TaskTemplate>();
+export const partialDataAdapter = new DataAdapter<
+  Partial<TaskTemplateRow>,
+  Partial<TaskTemplate>
+>();
 
 export function isTaskTemplateRow(row: object): row is TaskTemplateRow {
   return hasProperties(

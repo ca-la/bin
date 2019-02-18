@@ -1,12 +1,18 @@
 import { test, Test } from '../../test-helpers/fresh';
-import { create, findByPhase } from './index';
+import { create, findByPhase, findByStageTitle, update } from './index';
 import * as StageTemplatesDAO from '../stage-templates';
 
 test('TaskTemplatesDAO supports creation/retrieval', async (t: Test) => {
-  const stageTemplate = await StageTemplatesDAO.create({
+  const stageOne = await StageTemplatesDAO.create({
     description: 'It begins',
     ordering: 0,
     title: 'Stage 1'
+  });
+
+  const stageTwo = await StageTemplatesDAO.create({
+    description: 'It continues',
+    ordering: 1,
+    title: 'Stage 2'
   });
 
   await create({
@@ -14,7 +20,7 @@ test('TaskTemplatesDAO supports creation/retrieval', async (t: Test) => {
     description: 'Do the thing',
     designPhase: 'POST_CREATION',
     ordering: 0,
-    stageTemplateId: stageTemplate.id,
+    stageTemplateId: stageOne.id,
     title: 'Task 1'
   });
   await create({
@@ -22,7 +28,7 @@ test('TaskTemplatesDAO supports creation/retrieval', async (t: Test) => {
     description: 'Do another thing',
     designPhase: 'POST_CREATION',
     ordering: 2,
-    stageTemplateId: stageTemplate.id,
+    stageTemplateId: stageOne.id,
     title: 'Task 2'
   });
   await create({
@@ -30,8 +36,16 @@ test('TaskTemplatesDAO supports creation/retrieval', async (t: Test) => {
     description: 'Do yet another thing',
     designPhase: 'POST_CREATION',
     ordering: 4,
-    stageTemplateId: stageTemplate.id,
+    stageTemplateId: stageOne.id,
     title: 'Task 3'
+  });
+  const stageTwoTaskOne = await create({
+    assigneeRole: 'DESIGNER',
+    description: 'Stop doing so much',
+    designPhase: 'POST_APPROVAL',
+    ordering: 1,
+    stageTemplateId: stageTwo.id,
+    title: 'Take a deep breath'
   });
 
   const templates = await findByPhase('POST_CREATION');
@@ -47,4 +61,30 @@ test('TaskTemplatesDAO supports creation/retrieval', async (t: Test) => {
   t.equal(templates[2].title, 'Task 3');
   t.equal(templates[2].description, 'Do yet another thing');
   t.equal(templates[2].ordering, 4);
+
+  const byStageTitle = await findByStageTitle('Stage 2');
+  t.deepEqual(byStageTitle, [stageTwoTaskOne], 'Returns only tasks in the given stage');
+});
+
+test('TaskTemplatesDAO supports update', async (t: Test) => {
+  const stageOne = await StageTemplatesDAO.create({
+    description: 'It begins',
+    ordering: 0,
+    title: 'Stage 1'
+  });
+
+  const created = await create({
+    assigneeRole: 'CALA',
+    description: 'Do the thing',
+    designPhase: 'POST_CREATION',
+    ordering: 0,
+    stageTemplateId: stageOne.id,
+    title: 'Task 1'
+  });
+  const updated = await update(created.id, {
+    designPhase: 'POST_APPROVAL'
+  });
+
+  const templates = await findByPhase('POST_APPROVAL');
+  t.deepEqual(templates, [updated], 'Updates the task template');
 });
