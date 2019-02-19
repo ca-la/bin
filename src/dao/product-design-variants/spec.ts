@@ -89,3 +89,23 @@ test('replaceVariants does not delete old ones if creation fails', async (t: Tes
   const sizes = await getSizes(design.id);
   t.deepEqual(sizes.sort(), ['L', 'M']);
 });
+
+test('replaceVariants works for well formed variants', async (t: Test) => {
+  const { design } = await createPrerequisites();
+
+  const variants = await replaceForDesign(design.id, [
+    {
+      colorName: 'Gold',
+      colorNamePosition: 9,
+      designId: design.id,
+      id: uuid.v4(),
+      position: 20,
+      sizeName: '5XL',
+      unitsToProduce: 1
+    }
+  ]);
+
+  t.equal(variants.length, 1, 'Replaces all variants for the new one');
+  t.equal(variants[0].colorNamePosition, 9, 'Saves the color position correctly');
+  t.equal(variants[0].position, 20, 'Saves the position correctly');
+});

@@ -3,6 +3,7 @@ import { hasProperties } from '../services/require-properties';
 
 export default interface ProductDesignVariant {
   colorName: string | null;
+  colorNamePosition?: number;
   createdAt: Date;
   designId: string;
   id: string;
@@ -13,6 +14,7 @@ export default interface ProductDesignVariant {
 
 export interface ProductDesignVariantRow {
   color_name: string | null;
+  color_name_position?: number;
   created_at: Date;
   design_id: string;
   id: string;
@@ -27,6 +29,7 @@ export function isProductDesignVariantRow(candidate: object): candidate is Produ
   return hasProperties(
     candidate,
     'color_name',
+    'color_name_position',
     'created_at',
     'design_id',
     'id',
