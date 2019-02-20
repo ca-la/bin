@@ -36,9 +36,9 @@ export interface CollaboratorRow {
   deleted_at: string | null;
 }
 
-export type Roles = 'EDIT' | 'VIEW' | 'COMMENT' | 'PARTNER' | 'PREVIEW';
+export type Roles = 'EDIT' | 'VIEW' | 'PARTNER' | 'PREVIEW';
 export function isRole(role: string): role is Roles {
-  const roles = ['EDIT', 'VIEW', 'COMMENT', 'PARTNER', 'PREVIEW'];
+  const roles = ['EDIT', 'VIEW', 'PARTNER', 'PREVIEW'];
   if (roles.includes(role)) {
     return true;
   }

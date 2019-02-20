@@ -112,6 +112,7 @@ function* update(this: Koa.Application.Context): AsyncIterableIterator<Collabora
   const { body } = this.request;
   if (!collaborator) { return this.throw(400, 'Could not find Collaborator!'); }
   if (!isCollaboratorUpdate(body)) { return this.throw(400, 'Request does not have a role'); }
+  this.assert(isRole(body.role), 400, `Unknown role: ${body.role}`);
 
   const updated = yield CollaboratorsDAO.update(collaborator.id, { role: body.role });
   this.status = 200;

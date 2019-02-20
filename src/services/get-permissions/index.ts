@@ -19,7 +19,6 @@ export interface PermissionsAndRole {
 
 interface LocalRoles {
   isAdmin: boolean;
-  isCommenter: boolean;
   isEditor: boolean;
   isOwner: boolean;
   isPartner: boolean;
@@ -27,7 +26,7 @@ interface LocalRoles {
   isViewer: boolean;
 }
 
-const ROLE_ORDERING = ['EDIT', 'PARTNER', 'COMMENT', 'VIEW', 'PREVIEW'];
+const ROLE_ORDERING = ['EDIT', 'PARTNER', 'VIEW', 'PREVIEW'];
 
 // TODO: This is deprecated and should be removed once Studio only consumes the `permissions`
 //       object.
@@ -72,7 +71,6 @@ export async function getDesignPermissionsAndRole(
   const role = findMostPermissiveRole(roles);
 
   const isEditor = role === 'EDIT';
-  const isCommenter = role === 'COMMENT';
   const isPartner = role === 'PARTNER';
   const isPreviewer = role === 'PREVIEW';
   const isViewer = role === 'VIEW';
@@ -80,7 +78,6 @@ export async function getDesignPermissionsAndRole(
   return {
     permissions: getPermissionsFromRole({
       isAdmin,
-      isCommenter,
       isEditor,
       isOwner,
       isPartner,
@@ -120,14 +117,12 @@ export async function getCollectionPermissions(
   const isOwner = sessionUserId === collection.createdBy;
   const isAdmin = sessionRole === 'ADMIN';
   const isEditor = role === 'EDIT';
-  const isCommenter = role === 'COMMENT';
   const isPartner = role === 'PARTNER';
   const isPreviewer = role === 'PREVIEW';
   const isViewer = role === 'VIEW';
 
   return getPermissionsFromRole({
     isAdmin,
-    isCommenter,
     isEditor,
     isOwner,
     isPartner,
@@ -152,16 +147,6 @@ function getPermissionsFromRole(roles: LocalRoles): Permissions {
       canComment: true,
       canDelete: false,
       canEdit: true,
-      canSubmit: false,
-      canView: true
-    };
-  }
-
-  if (roles.isCommenter) {
-    return {
-      canComment: true,
-      canDelete: false,
-      canEdit: false,
       canSubmit: false,
       canView: true
     };

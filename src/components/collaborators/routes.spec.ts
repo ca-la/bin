@@ -9,6 +9,7 @@ import { authHeader, del, get, patch, post } from '../../test-helpers/http';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import { stubFindByDesigns } from '../../test-helpers/stubs/collaborators-dao';
 import createDesign from '../../services/create-design';
+import generateCollaborator from '../../test-helpers/factories/collaborator';
 
 test(
   'DELETE /collaborators/:id returns 404 if collaborator was already deleted',
@@ -155,6 +156,31 @@ test('PATCH /collaborators allows updating collaborators on a design', async (t:
   t.equal(body.collectionId, null);
 });
 
+test('PATCH /collaborators throws 400 with unknown role', async (t: Test) => {
+  sandbox().stub(EmailService, 'enqueueSend').resolves();
+
+  const { session, user } = await createUser();
+  const design = await ProductDesignsDAO.create({
+    productType: 'fdafd',
+    title: 'AW19',
+    userId: user.id
+  });
+  const { collaborator } = await generateCollaborator({
+    designId: design.id,
+    invitationMessage: 'Check out my sweet design m8',
+    role: 'VIEW',
+    userEmail: 'm8@example.com'
+  });
+
+  const [responseTwo, bodyTwo] = await patch(`/collaborators/${collaborator.id}`, {
+    body: { role: 'COMMENT' },
+    headers: authHeader(session.id)
+  });
+
+  t.equal(responseTwo.status, 400);
+  t.equal(bodyTwo.message, 'Unknown role: COMMENT');
+});
+
 test('POST /collaborators throws 400 with unknown role', async (t: Test) => {
   sandbox().stub(EmailService, 'enqueueSend').resolves();
 
@@ -180,6 +206,19 @@ test('POST /collaborators throws 400 with unknown role', async (t: Test) => {
 
   t.equal(response.status, 400);
   t.equal(body.message, 'Unknown role: FRIEND');
+
+  const [responseTwo, bodyTwo] = await post('/collaborators', {
+    body: {
+      collectionId: collection.id,
+      invitationMessage: 'Check it out my bruv',
+      role: 'COMMENT',
+      userEmail: 'bruv_m8@example.com'
+    },
+    headers: authHeader(session.id)
+  });
+
+  t.equal(responseTwo.status, 400);
+  t.equal(bodyTwo.message, 'Unknown role: COMMENT');
 });
 
 test('GET /collaborators allows querying by collection ID', async (t: Test) => {

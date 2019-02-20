@@ -74,7 +74,7 @@ test('#getDesignPermissions', async (t: tape.Test) => {
     collectionId: collection1.id,
     designId: null,
     invitationMessage: '',
-    role: 'COMMENT',
+    role: 'PREVIEW',
     userEmail: null,
     userId: user2.id
   });
@@ -101,13 +101,13 @@ test('#getDesignPermissions', async (t: tape.Test) => {
   t.deepEqual(
     await PermissionsService.getDesignPermissions(design1, session2, user2.id),
     {
-      canComment: true,
+      canComment: false,
       canDelete: false,
       canEdit: false,
       canSubmit: false,
       canView: true
     },
-    'Returns comment permissions for the design the user is a collection-level commenter on.'
+    'Returns preview permissions for the design the user is a collection-level preview on.'
   );
   t.deepEqual(
     await PermissionsService.getDesignPermissions(design2, session, user.id),
@@ -193,7 +193,7 @@ test('#getCollectionPermissions', async (t: tape.Test) => {
     collectionId: collection1.id,
     designId: null,
     invitationMessage: '',
-    role: 'COMMENT',
+    role: 'PARTNER',
     userEmail: null,
     userId: user2.id
   });
@@ -238,11 +238,11 @@ test('#getCollectionPermissions', async (t: tape.Test) => {
     {
       canComment: true,
       canDelete: false,
-      canEdit: false,
+      canEdit: true,
       canSubmit: false,
       canView: true
     },
-    'Returns comment permissions for the collection the user is a commenter on.'
+    'Returns partner permissions for the collection the user is a partner on.'
   );
   t.deepEqual(
     await PermissionsService.getCollectionPermissions(collection2, session, user.id),
@@ -300,9 +300,9 @@ test('#getCollectionPermissions', async (t: tape.Test) => {
   );
   t.equal(
     PermissionsService.findMostPermissiveRole(
-      ['VIEW', 'VIEW', 'VIEW', 'COMMENT', 'VIEW', 'COMMENT']
+      ['VIEW', 'VIEW', 'VIEW', 'PREVIEW', 'VIEW', 'PARTNER']
     ),
-    'COMMENT',
+    'PARTNER',
     'Finds the most permissive role in the list'
   );
   t.equal(
