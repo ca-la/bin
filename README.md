@@ -104,10 +104,8 @@ deploy; first add the column, then deploy the application code, then add the
 
 ```bash
 $ npm run migration:create -- some-descriptive-name  # Create a new migration
-$ npm run migration:run:local                        # Migrate local DB to latest schema
-$ npm run migration:run:test                         # Migrate test DB to latest schema
-$ npm run migration:run:local -- rollback            # Roll back latest migration on local DB
-$ npm run migration:run:local -- rollback            # Roll back latest migration on test DB
+$ npm run migration:run:local                        # Migrate local DBs to latest schema
+$ npm run migration:rollback:local                   # Roll back latest migration on local DBs
 $ npm run migration:run:staging                      # Migrate staging DB
 $ npm run migration:run:production                   # Migrate production DB
 ```
