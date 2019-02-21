@@ -34,7 +34,7 @@ export async function createDesignTasks(
 
 type CollaboratorsByRole = { [role in CollaboratorRole]?: Collaborator[] };
 
-async function createTasks(
+export async function createTasksFromTemplates(
   designId: string,
   taskTemplates: TaskTemplate[],
   stages: ProductDesignStage[],
@@ -132,7 +132,7 @@ async function createPostCreationTasks(
     }));
   const taskTemplates = await TaskTemplatesDAO.findByPhase(designPhase);
 
-  return await createTasks(designId, taskTemplates, stages, trx);
+  return await createTasksFromTemplates(designId, taskTemplates, stages, trx);
 }
 
 async function createPostApprovalTasks(
@@ -144,5 +144,5 @@ async function createPostApprovalTasks(
 
   const stages = await ProductDesignStagesDAO.findAllByDesignId(designId);
 
-  return await createTasks(designId, taskTemplates, stages, trx);
+  return await createTasksFromTemplates(designId, taskTemplates, stages, trx);
 }
