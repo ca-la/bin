@@ -41,6 +41,7 @@ interface RumbleshipPayment extends InvoicePaymentRequestBase {
 
 interface ResolvePayment extends InvoicePaymentRequestBase {
   resolvePaymentId: string;
+  createdAt?: Date;
 }
 
 export type InvoicePaymentRequest = StripePayment | RumbleshipPayment | ResolvePayment;

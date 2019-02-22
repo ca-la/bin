@@ -9,12 +9,13 @@ import InvalidDataError = require('../../errors/invalid-data');
 interface ManualPaymentRequest {
   userId: string;
   resolvePaymentId: string;
+  createdAt: string | null;
 }
 
 export default function* createManualPaymentRecord(
   this: Koa.Application.Context<ManualPaymentRequest>
 ): AsyncIterableIterator<any> {
-  const { userId, resolvePaymentId } = this.request.body;
+  const { userId, resolvePaymentId, createdAt } = this.request.body;
   const { invoiceId } = this.params;
 
   this.assert(userId, 400, 'Missing user ID');
@@ -31,6 +32,7 @@ export default function* createManualPaymentRecord(
       throw new InvalidDataError('This invoice is already paid');
     }
     return await InvoicePaymentsDAO.createTrx(trx, {
+      createdAt: createdAt ? new Date(createdAt) : undefined,
       invoiceId,
       resolvePaymentId,
       totalCents: invoice.totalCents

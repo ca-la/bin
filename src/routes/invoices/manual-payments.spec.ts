@@ -15,6 +15,7 @@ async (t: Test) => {
 
   const [postResponse, body] = await post(`/invoices/${invoice.id}/manual-payments`, {
     body: {
+      createdAt: null,
       resolvePaymentId: 'test-resolve-payment-id',
       userId: user.id
     },
@@ -30,4 +31,36 @@ async (t: Test) => {
   t.equal(invoicePayment.invoiceId, invoice.id, 'invoice payment is for correct invoice');
   t.equal(invoicePayment.invoiceId, body.invoiceId, 'invoice payment is returned by the endpoint');
   t.equal(invoicePayment.totalCents, invoice.totalCents, 'payment is for full invoice amount');
+});
+
+test('/invoices/:invoiceId/manual-payments POST generates invoice payment with paid at',
+async (t: Test) => {
+  const { user, session } = await createUser({ role: 'ADMIN' });
+
+  const { invoice } = await generateInvoice({ userId: user.id });
+
+  t.equal(invoice.isPaid, false, 'invoice is not paid');
+
+  const [postResponse, body] = await post(`/invoices/${invoice.id}/manual-payments`, {
+    body: {
+      createdAt: new Date(2012, 1, 1).toISOString(),
+      resolvePaymentId: 'test-resolve-payment-id',
+      userId: user.id
+    },
+    headers: authHeader(session.id)
+  });
+
+  const invoiceAfter = await InvoicesDAO.findById(invoice.id);
+  const invoicePayments = await InvoicePaymentsDAO.findByInvoiceId(invoice.id);
+  const invoicePayment = invoicePayments[0];
+
+  t.equal(postResponse.status, 201, 'successfully creates the invoice payment');
+  t.equal(invoiceAfter.isPaid, true, 'invoice is paid');
+  t.equal(invoicePayment.invoiceId, invoice.id, 'invoice payment is for correct invoice');
+  t.equal(invoicePayment.invoiceId, body.invoiceId, 'invoice payment is returned by the endpoint');
+  t.equal(invoicePayment.totalCents, invoice.totalCents, 'payment is for full invoice amount');
+  t.deepEqual(
+    new Date(invoicePayment.createdAt),
+    new Date(2012, 1, 1),
+    'payment is at the submitted created at date');
 });
