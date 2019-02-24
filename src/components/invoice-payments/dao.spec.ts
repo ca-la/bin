@@ -10,8 +10,13 @@ test('InvoicePayments DAO supports creation and retrieval', async (t: tape.Test)
   const { invoice } = await generateInvoice();
   await db.transaction((trx: Knex.Transaction) => {
     return InvoicePaymentsDAO.createTrx(trx, {
+      creditUserId: null,
+      deletedAt: null,
       invoiceId: invoice.id,
+      paymentMethodId: null,
       resolvePaymentId: 'test',
+      rumbleshipPurchaseHash: null,
+      stripeChargeId: null,
       totalCents: 111000
     });
   });

@@ -25,6 +25,7 @@ const { default: validatePagination } = require('./middleware/validate-paginatio
 /* application routes */
 import annotationRoutes from './components/product-design-canvas-annotations/routes';
 import collaboratorRoutes from './components/collaborators/routes';
+import creditRoutes from './components/credits/routes';
 import componentRelationshipRoutes from './components/component-relationships/routes';
 import imageRoutes = require('./components/images/routes');
 import processRoutes from './components/processes/routes';
@@ -69,6 +70,7 @@ router.use('/notifications', notificationRoutes);
 router.use('/processes', processRoutes);
 router.use('/product-design-canvas-annotations', annotationRoutes);
 router.use('/product-design-images', imageRoutes);
+router.use('/credits', creditRoutes);
 
 const loadTime = Date.now() - beginTime;
 Logger.log(`Loaded ${routeDirectories.length} route prefixes in ${loadTime}ms`);

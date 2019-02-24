@@ -11,9 +11,10 @@ export interface InvoicePaymentRow {
   stripe_charge_id: string | null;
   rumbleship_purchase_hash: string | null;
   resolve_payment_id: string | null;
+  credit_user_id: number | null;
 }
 
-export default interface InvoicePayment {
+interface InvoicePaymentBase {
   id: string;
   createdAt: Date;
   deletedAt: Date | null;
@@ -23,28 +24,37 @@ export default interface InvoicePayment {
   stripeChargeId: string | null;
   rumbleshipPurchaseHash: string | null;
   resolvePaymentId: string | null;
+  creditUserId: string | null;
 }
 
-interface InvoicePaymentRequestBase {
-  invoiceId: string;
-  totalCents: number;
-}
-
-interface StripePayment extends InvoicePaymentRequestBase {
+interface StripePayment extends InvoicePaymentBase {
   paymentMethodId: string;
   stripeChargeId: string;
 }
 
-interface RumbleshipPayment extends InvoicePaymentRequestBase {
+interface RumbleshipPayment extends InvoicePaymentBase {
   rumbleshipPurchaseHash: string;
 }
 
-interface ResolvePayment extends InvoicePaymentRequestBase {
+interface ResolvePayment extends InvoicePaymentBase {
   resolvePaymentId: string;
-  createdAt?: Date;
 }
 
-export type InvoicePaymentRequest = StripePayment | RumbleshipPayment | ResolvePayment;
+interface CreditPayment extends InvoicePaymentBase {
+  creditUserId: string;
+}
+
+export type InvoicePayment = StripePayment | RumbleshipPayment | ResolvePayment | CreditPayment;
+
+type MaybeSaved<T extends InvoicePaymentBase> = Omit<T, 'createdAt' | 'id'> & {
+  createdAt?: Date;
+  id?: string;
+};
+
+export type MaybeSavedInvoicePayment = MaybeSaved<StripePayment> |
+  MaybeSaved<RumbleshipPayment> |
+  MaybeSaved<ResolvePayment> |
+  MaybeSaved<CreditPayment>;
 
 export const dataAdapter = new DataAdapter<InvoicePaymentRow, InvoicePayment>();
 
@@ -59,7 +69,8 @@ export function isInvoicePaymentRow(row: object): row is InvoicePaymentRow {
     'payment_method_id',
     'stripe_charge_id',
     'rumbleship_purchase_hash',
-    'resolve_payment_id'
+    'resolve_payment_id',
+    'credit_user_id'
   );
 }
 
@@ -74,6 +85,7 @@ export function isInvoicePayment(row: object): row is InvoicePayment {
     'paymentMethodId',
     'stripeChargeId',
     'rumbleshipPurchaseHash',
-    'resolvePaymentId'
+    'resolvePaymentId',
+    'creditsUsedCents'
   );
 }

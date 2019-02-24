@@ -5,7 +5,6 @@ const Router = require('koa-router');
 const canAccessUserResource = require('../../middleware/can-access-user-resource');
 const createManualPaymentRecord = require('./manual-payments').default;
 const InvoicesDAO = require('../../dao/invoices');
-const payInvoice = require('../../services/pay-invoice');
 const payOutPartner = require('../../services/pay-out-partner');
 const requireAdmin = require('../../middleware/require-admin');
 const User = require('../../domain-objects/user');
@@ -54,22 +53,6 @@ function* deleteInvoice() {
   this.status = 204;
 }
 
-function* postPayInvoice() {
-  const { paymentMethodId } = this.request.body;
-  this.assert(paymentMethodId, 400, 'Missing payment method ID');
-
-  const { invoiceId } = this.params;
-
-  const invoice = yield payInvoice(
-    invoiceId,
-    paymentMethodId,
-    this.state.userId
-  );
-
-  this.body = invoice;
-  this.status = 200;
-}
-
 function* postPayOut() {
   const { invoiceId } = this.params;
   const { message, payoutAccountId, payoutAmountCents } = this.request.body;
@@ -91,7 +74,6 @@ function* postPayOut() {
 router.get('/', getInvoices);
 router.get('/:invoiceId', requireAdmin, getInvoice);
 router.del('/:invoiceId', requireAdmin, deleteInvoice);
-router.post('/:invoiceId/pay', postPayInvoice);
 router.post('/:invoiceId/manual-payments', requireAdmin, createManualPaymentRecord);
 router.post('/:invoiceId/pay-out-to-partner', requireAdmin, postPayOut);
 

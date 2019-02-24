@@ -7,6 +7,7 @@ import * as InvoicesDAO from '../../dao/invoices';
 import * as LineItemsDAO from '../../dao/line-items';
 import * as UsersDAO from '../../dao/users';
 import * as SlackService from '../../services/slack';
+import spendCredit from '../../components/credits/spend-credit';
 import ProductDesign = require('../../domain-objects/product-design');
 import payInvoice = require('../../services/pay-invoice');
 import { createPaymentMethod } from '../../services/payment-methods';
@@ -131,6 +132,8 @@ export async function createInvoiceWithoutMethod(
     const invoice = await createInvoice(
       designNames, collectionName, collection.id, totalCents, userId, trx);
     if (!invoice) { throw new Error('invoice could not be created'); }
+
+    await spendCredit(userId, invoice, trx);
 
     const lineItems = await Promise.all(
       quotes.map((quote: PricingQuote) => createLineItem(quote, invoice.id, trx)));

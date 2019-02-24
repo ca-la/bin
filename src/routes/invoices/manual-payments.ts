@@ -9,6 +9,7 @@ import InvalidDataError = require('../../errors/invalid-data');
 interface ManualPaymentRequest {
   userId: string;
   resolvePaymentId: string;
+  totalCents?: string;
   createdAt: string | null;
 }
 
@@ -31,11 +32,19 @@ export default function* createManualPaymentRecord(
     if (invoice.isPaid) {
       throw new InvalidDataError('This invoice is already paid');
     }
+
+    const totalCents = this.request.body.totalCents || invoice.totalCents;
+
     return await InvoicePaymentsDAO.createTrx(trx, {
       createdAt: createdAt ? new Date(createdAt) : undefined,
+      creditUserId: null,
+      deletedAt: null,
       invoiceId,
+      paymentMethodId: null,
       resolvePaymentId,
-      totalCents: invoice.totalCents
+      rumbleshipPurchaseHash: null,
+      stripeChargeId: null,
+      totalCents
     });
   });
 

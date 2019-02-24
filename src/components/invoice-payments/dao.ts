@@ -4,11 +4,12 @@ import * as Knex from 'knex';
 
 import db = require('../../services/db');
 import first from '../../services/first';
-import InvoicePayment, {
+import {
   dataAdapter,
-  InvoicePaymentRequest,
+  InvoicePayment,
   InvoicePaymentRow,
-  isInvoicePaymentRow
+  isInvoicePaymentRow,
+  MaybeSavedInvoicePayment
 } from './domain-object';
 import { validate, validateEvery } from '../../services/validate-from-db';
 
@@ -48,7 +49,7 @@ export async function findByInvoiceId(invoiceId: string): Promise<InvoicePayment
 
 export async function createTrx(
   trx: Knex.Transaction,
-  data: InvoicePaymentRequest
+  data: MaybeSavedInvoicePayment
 ): Promise<InvoicePayment> {
   const rowData = dataAdapter.toDb({
     createdAt: new Date(),

@@ -2,11 +2,12 @@
 
 const InvalidDataError = require('../../errors/invalid-data');
 
-const db = require('../../services/db');
-const InvoicesDAO = require('../../dao/invoices');
-const InvoicePaymentsDAO = require('../../components/invoice-payments/dao');
-const PaymentMethods = require('../../dao/payment-methods');
 const CollectionsDAO = require('../../dao/collections');
+const db = require('../../services/db');
+const InvoicePaymentsDAO = require('../../components/invoice-payments/dao');
+const InvoicesDAO = require('../../dao/invoices');
+const PaymentMethods = require('../../dao/payment-methods');
+const spendCredit = require('../../components/credits/spend-credit').default;
 const UsersDAO = require('../../dao/users');
 
 const Logger = require('../logger');
@@ -28,18 +29,21 @@ async function transactInvoice(invoiceId, paymentMethodId, userId, trx) {
     throw new InvalidDataError('This invoice is already paid');
   }
 
+  const { nonCreditPaymentAmount } = await spendCredit(userId, invoice, trx);
+
   const charge = await Stripe.charge({
     customerId: paymentMethod.stripeCustomerId,
     sourceId: paymentMethod.stripeSourceId,
-    amountCents: invoice.totalCents,
+    amountCents: nonCreditPaymentAmount,
     description: invoice.title,
     invoiceId
   });
+
   await InvoicePaymentsDAO.createTrx(trx, {
     invoiceId,
     paymentMethodId,
     stripeChargeId: charge.id,
-    totalCents: invoice.totalCents
+    totalCents: nonCreditPaymentAmount
   });
 
   invoice = await InvoicesDAO.findByIdTrx(trx, invoiceId);
@@ -49,7 +53,7 @@ async function transactInvoice(invoiceId, paymentMethodId, userId, trx) {
     templateName: 'designer_payment',
     params: {
       designer: await UsersDAO.findById(userId),
-      paymentAmountCents: invoice.totalCents
+      paymentAmountCents: nonCreditPaymentAmount
     }
   };
 
@@ -61,7 +65,7 @@ async function transactInvoice(invoiceId, paymentMethodId, userId, trx) {
       params: {
         collection,
         designer: await UsersDAO.findById(userId),
-        paymentAmountCents: invoice.totalCents
+        paymentAmountCents: nonCreditPaymentAmount
       }
     };
   }
