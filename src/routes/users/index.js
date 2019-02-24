@@ -3,6 +3,7 @@
 const Router = require('koa-router');
 
 const AddressesDAO = require('../../dao/addresses');
+const CreditsDAO = require('../../components/credits/dao');
 const canAccessUserResource = require('../../middleware/can-access-user-resource');
 const claimDesignInvitations = require('../../services/claim-design-invitations');
 const filterError = require('../../services/filter-error');
@@ -78,6 +79,16 @@ function* createUser() {
       yield CohortUsersDAO.create({
         userId: user.id,
         cohortId: targetCohort.id
+      });
+    }
+
+    if (cohort === 'workshop-2019-02-24') {
+      yield CreditsDAO.addCredit({
+        amountCents: 10000,
+        createdBy: user.id,
+        description: 'CALA Workshop Credit',
+        expiresAt: null,
+        givenTo: user.id
       });
     }
   }

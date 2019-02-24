@@ -1,11 +1,12 @@
 import * as uuid from 'node-uuid';
 
-import { sandbox, test, Test } from '../../test-helpers/fresh';
-import { post } from '../../test-helpers/http';
-import createUser = require('../../test-helpers/create-user');
-import * as DuplicationService from '../../services/duplicate';
-import MailChimp = require('../../services/mailchimp');
+import * as CreditsDAO from '../../components/credits/dao';
 import * as CohortsDAO from '../../components/cohorts/dao';
+import * as DuplicationService from '../../services/duplicate';
+import createUser = require('../../test-helpers/create-user');
+import MailChimp = require('../../services/mailchimp');
+import { post } from '../../test-helpers/http';
+import { sandbox, test, Test } from '../../test-helpers/fresh';
 import * as CohortUsersDAO from '../../components/cohorts/users/dao';
 
 test('POST /users?initialDesigns= allows registration + design duplication', async (t: Test) => {
@@ -91,4 +92,33 @@ test('POST /users?cohort allows registration + adding a cohort user', async (t: 
     [{ cohortId: cohort.id, userId: newUser.id }],
     'Creates a CohortUser'
   );
+});
+
+test('POST /users?cohort applies credit to certain cohorts', async (t: Test) => {
+  sandbox().stub(MailChimp, 'subscribeToUsers').returns(Promise.resolve());
+
+  const admin = await createUser({ role: 'ADMIN' });
+  await CohortsDAO.create({
+    createdBy: admin.user.id,
+    description: 'A bunch of delightful designers',
+    id: uuid.v4(),
+    slug: 'workshop-2019-02-24',
+    title: 'MoMA Demo Participants'
+  });
+
+  const [response, newUser] = await post(
+    '/users?cohort=workshop-2019-02-24',
+    {
+      body: {
+        email: 'user@example.com',
+        name: 'Rick Owens',
+        password: 'rick_owens_la_4_lyfe',
+        phone: '323 931 4960',
+        zip: '90038'
+      }
+    }
+  );
+
+  t.equal(response.status, 201, 'status=201');
+  t.equal(await CreditsDAO.getCreditAmount(newUser.id), 10000);
 });
