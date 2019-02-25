@@ -220,15 +220,6 @@ const tasks: TaskTemplate[] = [
   },
   {
     assigneeRole: 'DESIGNER',
-    description: 'This is an option immediately after clicking submit on a collection.',
-    designPhase: 'POST_CREATION',
-    id: uuid.v4(),
-    ordering: 3,
-    stageTemplateId: stages[0].id,
-    title: 'Request design consultant help'
-  },
-  {
-    assigneeRole: 'DESIGNER',
     description: 'Tell us any specific measurements and placement for details, trims, or artwork.',
     designPhase: 'POST_APPROVAL',
     id: uuid.v4(),
