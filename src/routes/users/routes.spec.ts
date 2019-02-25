@@ -1,6 +1,7 @@
 import * as uuid from 'node-uuid';
 
 import * as CreditsDAO from '../../components/credits/dao';
+import * as PromoCodesDAO from '../../components/promo-codes/dao';
 import * as CohortsDAO from '../../components/cohorts/dao';
 import * as DuplicationService from '../../services/duplicate';
 import createUser = require('../../test-helpers/create-user');
@@ -94,20 +95,21 @@ test('POST /users?cohort allows registration + adding a cohort user', async (t: 
   );
 });
 
-test('POST /users?cohort applies credit to certain cohorts', async (t: Test) => {
+test('POST /users?promoCode=X applies a code at registration', async (t: Test) => {
   sandbox().stub(MailChimp, 'subscribeToUsers').returns(Promise.resolve());
 
-  const admin = await createUser({ role: 'ADMIN' });
-  await CohortsDAO.create({
-    createdBy: admin.user.id,
-    description: 'A bunch of delightful designers',
-    id: uuid.v4(),
-    slug: 'workshop-2019-02-24',
-    title: 'MoMA Demo Participants'
+  const { user: adminUser } = await createUser({ role: 'ADMIN' });
+
+  await PromoCodesDAO.create({
+    code: 'newbie',
+    codeExpiresAt: null,
+    createdBy: adminUser.id,
+    creditAmountCents: 1239,
+    creditExpiresAt: null
   });
 
   const [response, newUser] = await post(
-    '/users?cohort=workshop-2019-02-24',
+    '/users?promoCode=newbie',
     {
       body: {
         email: 'user@example.com',
@@ -120,5 +122,5 @@ test('POST /users?cohort applies credit to certain cohorts', async (t: Test) => 
   );
 
   t.equal(response.status, 201, 'status=201');
-  t.equal(await CreditsDAO.getCreditAmount(newUser.id), 10000);
+  t.equal(await CreditsDAO.getCreditAmount(newUser.id), 1239);
 });

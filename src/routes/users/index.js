@@ -2,31 +2,22 @@
 
 const Router = require('koa-router');
 
-const AddressesDAO = require('../../dao/addresses');
-const CreditsDAO = require('../../components/credits/dao');
+const applyCode = require('../../components/promo-codes/apply-code').default;
 const canAccessUserResource = require('../../middleware/can-access-user-resource');
 const claimDesignInvitations = require('../../services/claim-design-invitations');
+const CohortsDAO = require('../../components/cohorts/dao');
+const CohortUsersDAO = require('../../components/cohorts/users/dao');
+const DuplicationService = require('../../services/duplicate');
 const filterError = require('../../services/filter-error');
 const InvalidDataError = require('../../errors/invalid-data');
 const MailChimp = require('../../services/mailchimp');
 const requireAuth = require('../../middleware/require-auth');
-const ScansDAO = require('../../dao/scans');
 const SessionsDAO = require('../../dao/sessions');
-const ShopifyClient = require('../../services/shopify');
-const Twilio = require('../../services/twilio');
 const User = require('../../domain-objects/user');
 const UsersDAO = require('../../dao/users');
-const CohortsDAO = require('../../components/cohorts/dao');
-const CohortUsersDAO = require('../../components/cohorts/users/dao');
 const { logServerError } = require('../../services/logger');
-const {
-  REFERRAL_VALUE_DOLLARS,
-  REQUIRE_CALA_EMAIL,
-  TWILIO_PREREGISTRATION_OUTBOUND_NUMBER
-} = require('../../config');
-const DuplicationService = require('../../services/duplicate');
+const { REQUIRE_CALA_EMAIL } = require('../../config');
 
-const shopify = new ShopifyClient(ShopifyClient.CALA_STORE_CREDENTIALS);
 const router = new Router();
 
 /**
@@ -37,22 +28,9 @@ function* createUser() {
     name,
     email,
     phone,
-    password,
-    address,
-    scan
+    password
   } = this.request.body;
-  const { cohort, initialDesigns } = this.request.query;
-
-  // Validate address data prior to user creation. TODO maybe transaction
-  // here instead?
-  if (address) {
-    try {
-      AddressesDAO.validate(address);
-    } catch (err) {
-      if (err instanceof InvalidDataError) { this.throw(400, err); }
-      throw err;
-    }
-  }
+  const { cohort, initialDesigns, promoCode } = this.request.query;
 
   this.assert(name, 400, 'Name must be provided');
   this.assert(email, 400, 'Email must be provided');
@@ -81,16 +59,10 @@ function* createUser() {
         cohortId: targetCohort.id
       });
     }
+  }
 
-    if (cohort === 'workshop-2019-02-24') {
-      yield CreditsDAO.addCredit({
-        amountCents: 10000,
-        createdBy: user.id,
-        description: 'CALA Workshop Credit',
-        expiresAt: null,
-        givenTo: user.id
-      });
-    }
+  if (promoCode) {
+    yield applyCode(user.id, promoCode);
   }
 
   // Previously we had this *before* the user creation in the DB, effectively
@@ -108,27 +80,6 @@ function* createUser() {
     // Not rethrowing since this shouldn't be fatal... but if we ever see this
     // log line we need to investigate ASAP (and manually subscribe the user)
     logServerError(`Failed to sign up user to Mailchimp: ${email}`);
-  }
-
-  if (address) {
-    const addressData = Object.assign({}, address, {
-      userId: user.id
-    });
-
-    const addressInstance = yield AddressesDAO.create(addressData);
-
-    user.setAddresses([addressInstance]);
-  }
-
-  // NOTE: This is only used as part of the /complete-your-profile internal
-  // tool, which we may deprecate at some point.
-  // https://github.com/ca-la/site/issues/63
-  if (scan) {
-    yield ScansDAO.create({
-      userId: user.id,
-      type: scan.type,
-      isComplete: scan.isComplete
-    });
   }
 
   yield claimDesignInvitations(
@@ -232,118 +183,6 @@ function* updateUser() {
   this.body = updated;
 }
 
-/**
- * POST /users/:userId/complete-sms-preregistration
- */
-function* completeSmsPreregistration() {
-  this.assert(this.params.userId === this.state.userId, 403, 'You can only update your own user');
-
-  const {
-    name,
-    email,
-    phone,
-    password,
-    address
-  } = this.request.body;
-
-  this.assert(
-    name && email && phone && password && address,
-    400,
-    'Missing required information'
-  );
-
-  try {
-    AddressesDAO.validate(address);
-  } catch (err) {
-    if (err instanceof InvalidDataError) { this.throw(400, err); }
-    throw err;
-  }
-
-  const user = yield UsersDAO.findById(this.params.userId);
-  this.assert(user.isSmsPreregistration === true, 400, "You've already completed your registration");
-
-  const updated = yield UsersDAO.completeSmsPreregistration(
-    this.params.userId,
-    {
-      name, email, phone, password
-    }
-  )
-    .catch(filterError(InvalidDataError, err => this.throw(400, err)));
-
-  const [firstName, lastName] = name.split(' ');
-
-  yield shopify.updateCustomerByPhone(phone, {
-    last_name: lastName,
-    first_name: firstName,
-    phone,
-    email,
-    addresses: [
-      {
-        default: true,
-        address1: address.addressLine1,
-        address2: address.addressLine2,
-        company: address.companyName,
-        city: address.city,
-        province: address.region,
-        phone,
-        zip: address.postCode,
-        last_name: lastName,
-        first_name: firstName,
-        country: address.country
-      }
-    ]
-  });
-
-  if (address) {
-    const addressData = Object.assign({}, address, {
-      userId: user.id
-    });
-
-    const addressInstance = yield AddressesDAO.create(addressData);
-
-    updated.setAddresses([addressInstance]);
-  }
-
-  yield Twilio.sendSMS(
-    phone,
-    'Thanks for signing up! Your profile is now complete',
-    {
-      from: TWILIO_PREREGISTRATION_OUTBOUND_NUMBER
-    }
-  );
-
-  this.status = 200;
-  this.body = updated;
-}
-
-/**
- * GET /users/:userId/referral-count
- *
- * Find out how many other users I've referred.
- */
-function* getReferralCount() {
-  this.assert(this.params.userId === this.state.userId, 403, 'You can only get referral count for your own user');
-
-  const user = yield UsersDAO.findById(this.params.userId);
-  const count = yield shopify.getRedemptionCount(user.referralCode);
-
-  this.status = 200;
-
-  this.body = {
-    count,
-    referralValueDollars: REFERRAL_VALUE_DOLLARS
-  };
-}
-
-function* getByReferralCode() {
-  this.assert(this.query.referralCode, 400, 'A referral code must be provided to filter on');
-  const user = yield UsersDAO.findByReferralCode(this.query.referralCode);
-
-  const response = user && user.toPublicJSON();
-  this.body = [response].filter(Boolean);
-  this.status = 200;
-}
-
 function* getAllUsers() {
   this.assert(this.state.userId, 401);
   this.assert(this.state.role === User.ROLES.admin, 403);
@@ -359,18 +198,8 @@ function* getAllUsers() {
   this.status = 200;
 }
 
-/**
- * GET /users?referralCode=12312
- *
- * Returns an array to future-proof in case we want to list multiple users in
- * future.
- */
 function* getList() {
-  if (this.query.referralCode) {
-    yield getByReferralCode;
-  } else {
-    yield getAllUsers;
-  }
+  yield getAllUsers;
 }
 
 /**
@@ -409,10 +238,8 @@ function* getEmailAvailability() {
 
 router.get('/', getList);
 router.get('/:userId', requireAuth, getUser);
-router.get('/:userId/referral-count', requireAuth, getReferralCount);
 router.get('/email-availability/:email', getEmailAvailability);
 router.post('/', createUser);
-router.post('/:userId/complete-sms-preregistration', completeSmsPreregistration);
 router.post('/:userId/accept-designer-terms', requireAuth, acceptDesignerTerms);
 router.post('/:userId/accept-partner-terms', requireAuth, acceptPartnerTerms);
 router.put('/:userId', requireAuth, updateUser); // TODO: deprecate
