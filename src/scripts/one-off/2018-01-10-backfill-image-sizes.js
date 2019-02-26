@@ -8,11 +8,11 @@
 const sizeOf = require('image-size');
 const fetch = require('node-fetch');
 
-const ProductDesignImage = require('../components/images/domain-object');
-const { update } = require('../components/images/dao');
-const db = require('../services/db');
-const Logger = require('../services/logger');
-const COLORS = require('../services/colors');
+const ProductDesignImage = require('../../components/images/domain-object');
+const { update } = require('../../components/images/dao');
+const db = require('../../services/db');
+const Logger = require('../../services/logger');
+const COLORS = require('../../services/colors');
 
 const { green, yellow, red } = COLORS.fmt;
 

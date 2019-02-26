@@ -2,18 +2,18 @@ import * as Knex from 'knex';
 import * as process from 'process';
 import * as rethrow from 'pg-rethrow';
 
-import * as db from '../services/db';
-import { log } from '../services/logger';
-import { green, red, reset } from '../services/colors';
-import { CreateQuotePayload } from '../services/generate-pricing-quote';
-import DataAdapter from '../services/data-adapter';
-import { validateEvery } from '../services/validate-from-db';
-import { hasProperties } from '../services/require-properties';
-import Collection from '../domain-objects/collection';
-import * as CollectionsDAO from '../dao/collections';
-import * as ProductDesignsDAO from '../dao/product-designs';
-import ProductDesign = require('../domain-objects/product-design');
-import { createInvoiceWithoutMethod } from '../services/payment';
+import * as db from '../../services/db';
+import { log } from '../../services/logger';
+import { green, red, reset } from '../../services/colors';
+import { CreateQuotePayload } from '../../services/generate-pricing-quote';
+import DataAdapter from '../../services/data-adapter';
+import { validateEvery } from '../../services/validate-from-db';
+import { hasProperties } from '../../services/require-properties';
+import Collection from '../../domain-objects/collection';
+import * as CollectionsDAO from '../../dao/collections';
+import * as ProductDesignsDAO from '../../dao/product-designs';
+import ProductDesign = require('../../domain-objects/product-design');
+import { createInvoiceWithoutMethod } from '../../services/payment';
 
 interface CollectionMeta {
   id: string;

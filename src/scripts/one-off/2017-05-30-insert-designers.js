@@ -1,8 +1,8 @@
 'use strict';
 
-const DesignersDAO = require('../dao/designers');
-const DesignerPhotosDAO = require('../dao/designer-photos');
-const Logger = require('../services/logger');
+const DesignersDAO = require('../../dao/designers');
+const DesignerPhotosDAO = require('../../dao/designer-photos');
+const Logger = require('../../services/logger');
 
 /* eslint-disable quotes */
 const designers = [

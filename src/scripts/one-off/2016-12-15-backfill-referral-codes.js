@@ -4,9 +4,9 @@
  * NB: This script should never need run again, as it's now enforced in the DB.
  */
 
-const UnassignedReferralCodesDAO = require('../dao/unassigned-referral-codes');
-const db = require('../services/db');
-const Logger = require('../services/logger');
+const UnassignedReferralCodesDAO = require('../../dao/unassigned-referral-codes');
+const db = require('../../services/db');
+const Logger = require('../../services/logger');
 
 function setUserCode(userId) {
   return UnassignedReferralCodesDAO.get().then((code) => {

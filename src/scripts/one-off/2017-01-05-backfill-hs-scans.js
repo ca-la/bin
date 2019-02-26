@@ -1,8 +1,8 @@
 'use strict';
 
-const ScansDAO = require('../dao/scans');
-const db = require('../services/db');
-const Logger = require('../services/logger');
+const ScansDAO = require('../../dao/scans');
+const db = require('../../services/db');
+const Logger = require('../../services/logger');
 
 function createUserScan(userId) {
   return ScansDAO.create({

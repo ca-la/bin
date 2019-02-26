@@ -2,13 +2,13 @@ import * as Knex from 'knex';
 import * as process from 'process';
 import * as uuid from 'node-uuid';
 
-import * as config from '../config';
-import * as db from '../services/db';
-import { log } from '../services/logger';
-import { green, red, reset, yellow } from '../services/colors';
+import * as config from '../../config';
+import * as db from '../../services/db';
+import { log } from '../../services/logger';
+import { green, red, reset, yellow } from '../../services/colors';
 
-import Process, { dataAdapter } from '../components/processes/domain-object';
-import { ComponentType } from '../domain-objects/component';
+import Process, { dataAdapter } from '../../components/processes/domain-object';
+import { ComponentType } from '../../domain-objects/component';
 
 const processes: Process[] = [
   {

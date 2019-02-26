@@ -3,9 +3,9 @@
 const uuid = require('node-uuid');
 const process = require('process');
 
-const { yellow, red } = require('../services/colors').fmt;
-const db = require('../services/db');
-const Logger = require('../services/logger');
+const { yellow, red } = require('../../services/colors').fmt;
+const db = require('../../services/db');
+const Logger = require('../../services/logger');
 
 async function moveInvoicePayments() {
   const rows = await db

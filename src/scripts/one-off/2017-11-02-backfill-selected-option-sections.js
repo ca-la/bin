@@ -25,8 +25,8 @@ function yellow(message) {
  * going forward
  */
 
-const db = require('../services/db');
-const Logger = require('../services/logger');
+const db = require('../../services/db');
+const Logger = require('../../services/logger');
 
 // Duplicated from DAO to make sure we catch all deleted sections etc
 function findSectionsByDesignId(designId) {
