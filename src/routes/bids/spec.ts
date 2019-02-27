@@ -171,6 +171,48 @@ test('GET /bids?userId&state=EXPIRED', async (t: Test) => {
   }], 'returns only expired bid assigned to the user');
 });
 
+test('GET /bids?userId&state=REJECTED', async (t: Test) => {
+  const admin = await createUser({ role: 'ADMIN' });
+  const partner = await createUser({ role: 'PARTNER' });
+  const design = await ProductDesignsDAO.create({
+    productType: 'TEESHIRT',
+    title: 'Plain White Tee',
+    userId: admin.user.id
+  });
+  const { quote } = await generateBid(design.id, admin.user.id);
+  const otherBid = await BidsDAO.create({
+    bidPriceCents: 100000,
+    createdAt: new Date(2012, 12, 22),
+    createdBy: admin.user.id,
+    description: 'Full Service',
+    id: uuid.v4(),
+    quoteId: quote.id
+  });
+
+  const bidsDaoStub = sandbox()
+    .stub(BidsDAO, 'findRejectedByTargetId')
+    .resolves([otherBid]);
+
+  const [response, bids] = await get(
+    `/bids?userId=${partner.user.id}&state=REJECTED`,
+    { headers: authHeader(partner.session.id) }
+  );
+  t.equal(response.status, 200);
+  t.deepEqual(
+    bids,
+    [{
+      ...otherBid,
+      createdAt: otherBid.createdAt.toISOString(),
+      design: {
+        ...design,
+        createdAt: design.createdAt.toISOString()
+      }
+    }],
+    'returns empty bids list'
+  );
+  t.equal(bidsDaoStub.callCount, 1, 'calls findRejectedByTargetId stub exactly once');
+});
+
 test('GET /bids?userId&state=ACCEPTED', async (t: Test) => {
   const admin = await createUser({ role: 'ADMIN' });
   const partner = await createUser({ role: 'PARTNER' });

@@ -93,6 +93,10 @@ function* listBidsByAssignee(this: Koa.Application.Context): AsyncIterableIterat
         .then((openBids: Bid[]): Bid[] => openBids.filter(isExpired));
       break;
 
+    case 'REJECTED':
+      bids = yield BidsDAO.findRejectedByTargetId(userId);
+      break;
+
     case 'OPEN':
     case undefined:
       bids = yield BidsDAO.findOpenByTargetId(userId)
