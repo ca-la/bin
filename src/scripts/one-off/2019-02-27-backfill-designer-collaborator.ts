@@ -6,6 +6,8 @@ import { green, reset } from '../../services/colors';
 import * as db from '../../services/db';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 
+const LAUNCH_DATE = new Date(2018, 10, 1);
+
 interface SparseDesign {
   id: string;
   title: string;
@@ -33,7 +35,8 @@ async function run(): Promise<void> {
         .on('collaborators.user_id', '=', 'product_designs.user_id')
         .andOn('collaborators.design_id', '=', 'product_designs.id');
     })
-    .where({ 'collaborators.user_id': null });
+    .where('collaborators.user_id', null)
+    .andWhere('product_designs.created_at', '>', LAUNCH_DATE);
 
   log(`${reset}Found ${designsMissingDesigner.length} designs:
 
