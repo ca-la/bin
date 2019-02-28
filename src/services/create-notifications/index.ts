@@ -330,7 +330,7 @@ export async function sendPartnerAcceptServiceBidNotification(
   designId: string,
   actorId: string
 ): Promise<PartnerAcceptBidNotification> {
-  return replaceNotifications<PartnerAcceptBidNotification>({
+  const notification = await NotificationsDAO.create<PartnerAcceptBidNotification>({
     actorUserId: actorId,
     designId,
     id: uuid.v4(),
@@ -338,6 +338,17 @@ export async function sendPartnerAcceptServiceBidNotification(
     sentEmailAt: null,
     type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });
+
+  SlackService.enqueueSend({
+    channel: 'partners',
+    params: {
+      design: await DesignsDAO.findById(designId),
+      partner: await UsersDAO.findById(actorId)
+    },
+    templateName: 'partner_accept_bid'
+  });
+
+  return notification;
 }
 
 /**
@@ -347,7 +358,7 @@ export async function sendPartnerRejectServiceBidNotification(
   designId: string,
   actorId: string
 ): Promise<PartnerRejectBidNotification> {
-  return replaceNotifications<PartnerRejectBidNotification>({
+  const notification = await NotificationsDAO.create<PartnerRejectBidNotification>({
     actorUserId: actorId,
     designId,
     id: uuid.v4(),
@@ -355,6 +366,17 @@ export async function sendPartnerRejectServiceBidNotification(
     sentEmailAt: null,
     type: NotificationType.PARTNER_REJECT_SERVICE_BID
   });
+
+  SlackService.enqueueSend({
+    channel: 'partners',
+    params: {
+      design: await DesignsDAO.findById(designId),
+      partner: await UsersDAO.findById(actorId)
+    },
+    templateName: 'partner_reject_bid'
+  });
+
+  return notification;
 }
 
 /**

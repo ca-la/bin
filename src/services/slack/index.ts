@@ -8,7 +8,11 @@ import {
   AWS_NOTIFICATION_SQS_URL
 } from '../../config';
 
-type TemplateName =  'collection_submission' | 'designer_pay_later' | 'designer_payment';
+type TemplateName = 'collection_submission'
+  | 'designer_pay_later'
+  | 'designer_payment'
+  | 'partner_accept_bid'
+  | 'partner_reject_bid';
 
 export interface SlackBody {
   channel: string;
