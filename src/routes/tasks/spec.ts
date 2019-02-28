@@ -170,7 +170,7 @@ test('GET /tasks?userId=:userId returns all tasks for a user', async (t: tape.Te
     userEmail: null,
     userId: user.id
   });
-  const { task } = await generateTask({ designStageId: stage.id });
+  const { task } = await generateTask({ designStageId: stage.id, ordering: 0 });
 
   const design2 = await createDesign({
     productType: 'test',
@@ -179,7 +179,11 @@ test('GET /tasks?userId=:userId returns all tasks for a user', async (t: tape.Te
   });
   const { stage: stage2 } = await generateProductDesignStage({ designId: design2.id }, user.id);
 
-  const { task: task2 } = await generateTask({ createdBy: user.id, designStageId: stage2.id });
+  const { task: task2 } = await generateTask({
+    createdBy: user.id,
+    designStageId: stage2.id,
+    ordering: 1
+  });
   await CollaboratorTasksDAO
     .create({ collaboratorId: collaborator.id, taskId: task.id });
 
