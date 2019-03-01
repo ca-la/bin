@@ -233,6 +233,8 @@ SELECT
        JOIN design_events AS de
          ON cd.design_id = de.design_id
         AND de.type = 'SUBMIT_DESIGN'
+       JOIN product_designs as d
+         ON cd.design_id = d.id AND d.deleted_at IS NULL
       WHERE cd.collection_id = c.id) = count(d.id) AS is_submitted,
 
     count(d.id) > 0 AND (SELECT COUNT(DISTINCT cd.design_id)
@@ -240,6 +242,8 @@ SELECT
        JOIN design_events AS de
          ON cd.design_id = de.design_id
         AND de.type = 'COMMIT_COST_INPUTS'
+       JOIN product_designs as d
+         ON cd.design_id = d.id AND d.deleted_at IS NULL
       WHERE cd.collection_id = c.id) = count(d.id) AS is_costed,
 
     count(d.id) > 0 AND (SELECT COUNT(DISTINCT cd.design_id)
@@ -247,6 +251,8 @@ SELECT
        JOIN design_events AS de
          ON cd.design_id = de.design_id
         AND de.type = 'COMMIT_QUOTE'
+       JOIN product_designs as d
+         ON cd.design_id = d.id AND d.deleted_at IS NULL
       WHERE cd.collection_id = c.id) = count(d.id) AS is_quoted,
 
     count(d.id) > 0 AND (SELECT COUNT(DISTINCT cd.design_id)
@@ -254,6 +260,8 @@ SELECT
        JOIN design_events AS de
          ON cd.design_id = de.design_id
         AND de.type = 'COMMIT_PARTNER_PAIRING'
+       JOIN product_designs as d
+         ON cd.design_id = d.id AND d.deleted_at IS NULL
       WHERE cd.collection_id = c.id) = count(d.id) AS is_paired
 
   FROM collections AS c

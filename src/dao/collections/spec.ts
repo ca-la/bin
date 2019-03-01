@@ -303,13 +303,23 @@ test('CollectionsDAO.getStatusById', async (t: tape.Test) => {
     .addDesign(createdCollection.id, createdDesigns[0].id);
   await CollectionsDAO
     .addDesign(createdCollection.id, createdDesigns[1].id);
-  await ProductDesignsDAO.deleteById(createdDesigns[1].id);
 
   await DesignEventsDAO.create({
     actorId: designer.id,
     bidId: null,
     createdAt: new Date(2012, 11, 23),
     designId: createdDesigns[0].id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: null,
+    type: 'SUBMIT_DESIGN'
+  });
+
+  await DesignEventsDAO.create({
+    actorId: designer.id,
+    bidId: null,
+    createdAt: new Date(2012, 11, 23),
+    designId: createdDesigns[1].id,
     id: uuid.v4(),
     quoteId: null,
     targetId: null,
@@ -337,6 +347,17 @@ test('CollectionsDAO.getStatusById', async (t: tape.Test) => {
     type: 'COMMIT_COST_INPUTS'
   });
 
+  await DesignEventsDAO.create({
+    actorId: admin.id,
+    bidId: null,
+    createdAt: new Date(2012, 11, 23),
+    designId: createdDesigns[1].id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: designer.id,
+    type: 'COMMIT_COST_INPUTS'
+  });
+
   const costedStatus = await CollectionsDAO.getStatusById(createdCollection.id);
 
   t.deepEqual(costedStatus, {
@@ -358,9 +379,32 @@ test('CollectionsDAO.getStatusById', async (t: tape.Test) => {
     type: 'COMMIT_QUOTE'
   });
 
+  await DesignEventsDAO.create({
+    actorId: designer.id,
+    bidId: null,
+    createdAt: new Date(2012, 11, 23),
+    designId: createdDesigns[1].id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: null,
+    type: 'COMMIT_QUOTE'
+  });
+
   const quotedStatus = await CollectionsDAO.getStatusById(createdCollection.id);
 
   t.deepEqual(quotedStatus, {
+    collectionId: createdCollection.id,
+    isCosted: true,
+    isPaired: false,
+    isQuoted: true,
+    isSubmitted: true
+  });
+
+  await ProductDesignsDAO.deleteById(createdDesigns[0].id);
+
+  const stillQuotedStatus = await CollectionsDAO.getStatusById(createdCollection.id);
+
+  t.deepEqual(stillQuotedStatus, {
     collectionId: createdCollection.id,
     isCosted: true,
     isPaired: false,
