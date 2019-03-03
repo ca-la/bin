@@ -1,6 +1,7 @@
 'use strict';
 
 const InvalidDataError = require('../../errors/invalid-data');
+const CreditsDAO = require('../../components/credits/dao');
 const payInvoice = require('./index');
 const SlackService = require('../slack');
 const Stripe = require('../stripe');
@@ -55,6 +56,38 @@ test('payInvoice', async (t) => {
   t.equal(paidInvoice.totalPaid, unpaidInvoice.totalCents, 'total paid is total invoice due');
   t.ok(paidInvoice.paidAt, 'has a last paid at date');
 });
+
+test('payInvoice does not charge a $0 amount', async (t) => {
+  sandbox().stub(Stripe, 'charge');
+  sandbox().stub(SlackService, 'enqueueSend').returns(Promise.resolve());
+
+  const {
+    users,
+    createdInvoices,
+    paymentMethod
+  } = await createInvoicesWithPayments();
+
+  const unpaidInvoice = createdInvoices[2];
+
+  await CreditsDAO.addCredit({
+    description: 'free money',
+    amountCents: 1000000,
+    createdBy: users[1].id,
+    givenTo: users[1].id,
+    expiresAt: null
+  });
+
+  const paidInvoice = await payInvoice(
+    unpaidInvoice.id,
+    paymentMethod.id,
+    users[1].id
+  );
+
+  t.equal(Stripe.charge.callCount, 0, 'Stripe is not called');
+
+  t.ok(paidInvoice.isPaid, 'paid invoice is paid');
+});
+
 
 test('payInvoice cannot pay the same invoice twice in parallel', async (t) => {
   sandbox().stub(Stripe, 'charge').returns(Promise.resolve({ id: 'chargeId' }));

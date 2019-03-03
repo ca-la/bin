@@ -31,20 +31,22 @@ async function transactInvoice(invoiceId, paymentMethodId, userId, trx) {
 
   const { nonCreditPaymentAmount } = await spendCredit(userId, invoice, trx);
 
-  const charge = await Stripe.charge({
-    customerId: paymentMethod.stripeCustomerId,
-    sourceId: paymentMethod.stripeSourceId,
-    amountCents: nonCreditPaymentAmount,
-    description: invoice.title,
-    invoiceId
-  });
+  if (nonCreditPaymentAmount > 0) {
+    const charge = await Stripe.charge({
+      customerId: paymentMethod.stripeCustomerId,
+      sourceId: paymentMethod.stripeSourceId,
+      amountCents: nonCreditPaymentAmount,
+      description: invoice.title,
+      invoiceId
+    });
 
-  await InvoicePaymentsDAO.createTrx(trx, {
-    invoiceId,
-    paymentMethodId,
-    stripeChargeId: charge.id,
-    totalCents: nonCreditPaymentAmount
-  });
+    await InvoicePaymentsDAO.createTrx(trx, {
+      invoiceId,
+      paymentMethodId,
+      stripeChargeId: charge.id,
+      totalCents: nonCreditPaymentAmount
+    });
+  }
 
   invoice = await InvoicesDAO.findByIdTrx(trx, invoiceId);
 
