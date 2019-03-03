@@ -7,9 +7,10 @@ import * as InvoicesDAO from '../../dao/invoices';
 import * as LineItemsDAO from '../../dao/line-items';
 import * as UsersDAO from '../../dao/users';
 import * as SlackService from '../../services/slack';
-import spendCredit from '../../components/credits/spend-credit';
-import ProductDesign = require('../../domain-objects/product-design');
+import InvalidDataError = require('../../errors/invalid-data');
 import payInvoice = require('../../services/pay-invoice');
+import ProductDesign = require('../../domain-objects/product-design');
+import spendCredit from '../../components/credits/spend-credit';
 import { createPaymentMethod } from '../../services/payment-methods';
 import {
   PricingQuote
@@ -42,7 +43,7 @@ function createInvoice(
   totalCents: number,
   userId: string,
   trx: Knex.Transaction
-): Promise<Invoice | undefined> {
+): Promise<Invoice> {
   return InvoicesDAO.createTrx(trx, {
     collectionId,
     description: `Payment for designs: ${designNames.join(', ')}`,
@@ -106,11 +107,9 @@ export default async function payInvoiceWithNewPaymentMethod(
 
     const invoice = await createInvoice(
       designNames, collectionName, collection.id, totalCents, userId, trx);
-    if (!invoice) { throw new Error('invoice could not be created'); }
-    const lineItems = await Promise.all(
-      quotes.map((quote: PricingQuote) => createLineItem(quote, invoice.id, trx)));
 
-    if (lineItems.length === 0) { throw new Error('Line items failed to create.'); }
+    await Promise.all(
+      quotes.map((quote: PricingQuote) => createLineItem(quote, invoice.id, trx)));
 
     return payInvoice(invoice.id, paymentMethodId, userId, trx);
   });
@@ -131,14 +130,11 @@ export async function createInvoiceWithoutMethod(
 
     const invoice = await createInvoice(
       designNames, collectionName, collection.id, totalCents, userId, trx);
-    if (!invoice) { throw new Error('invoice could not be created'); }
 
     await spendCredit(userId, invoice, trx);
 
-    const lineItems = await Promise.all(
+    await Promise.all(
       quotes.map((quote: PricingQuote) => createLineItem(quote, invoice.id, trx)));
-
-    if (!lineItems) { throw new Error('Line items failed to create.'); }
 
     const user = await UsersDAO.findById(userId);
     SlackService.enqueueSend({
@@ -150,6 +146,40 @@ export async function createInvoiceWithoutMethod(
       },
       templateName: 'designer_pay_later'
     });
+
+    return InvoicesDAO.findByIdTrx(trx, invoice.id);
+  });
+}
+
+export async function payWaivedQuote(
+  quoteRequests: CreateRequest,
+  userId: string,
+  collection: Collection
+): Promise<Invoice> {
+  return db.transaction(async (trx: Knex.Transaction) => {
+    const quotes: PricingQuote[] = await createQuotes(quoteRequests, userId, trx);
+    const designNames = await getDesignNames(quotes);
+    const collectionName = collection.title || 'Untitled';
+
+    const totalCents = getQuoteTotal(quotes);
+
+    const invoice = await createInvoice(
+      designNames,
+      collectionName,
+      collection.id,
+      totalCents,
+      userId,
+      trx
+    );
+
+    const { nonCreditPaymentAmount } = await spendCredit(userId, invoice, trx);
+
+    if (nonCreditPaymentAmount) {
+      throw new InvalidDataError('Cannot waive payment for amounts greater than $0');
+    }
+
+    Promise.all(
+      quotes.map((quote: PricingQuote) => createLineItem(quote, invoice.id, trx)));
 
     return InvoicesDAO.findByIdTrx(trx, invoice.id);
   });

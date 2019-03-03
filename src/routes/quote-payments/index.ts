@@ -9,7 +9,8 @@ import {
 import { typeGuard } from '../../middleware/type-guard';
 import payInvoiceWithNewPaymentMethod, {
   createInvoiceWithoutMethod,
-  isCreateRequest
+  isCreateRequest,
+  payWaivedQuote
 } from '../../services/payment';
 import { CreateQuotePayload } from '../../services/generate-pricing-quote';
 import { hasProperties } from '../../services/require-properties';
@@ -40,11 +41,17 @@ function* payQuote(
   this: Koa.Application.Context<PayRequest | PayWithMethodRequest>
 ): AsyncIterableIterator<any> {
   const { body } = this.request;
-  const { isFinanced } = this.query;
+  const { isFinanced, isWaived } = this.query;
   const { userId, collection } = this.state;
   if (!collection) { return this.throw(403, 'Unable to access collection'); }
 
-  if (!isFinanced && isPayWithMethodRequest(body)) {
+  if (isWaived) {
+    this.body = yield payWaivedQuote(
+      body.createQuotes,
+      userId,
+      collection
+    );
+  } else if (!isFinanced && isPayWithMethodRequest(body)) {
     this.body = yield payInvoiceWithNewPaymentMethod(
       body.createQuotes,
       body.paymentMethodTokenId,
