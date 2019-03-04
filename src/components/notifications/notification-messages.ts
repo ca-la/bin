@@ -9,10 +9,11 @@ import * as TaskEventsDAO from '../../dao/task-events';
 import * as CommentsDAO from '../../components/comments/dao';
 import * as CanvasesDAO from '../../dao/product-design-canvases';
 import { BreadCrumb, Notification, NotificationMessage, NotificationType } from './domain-object';
-import * as AnnotationCommentsDAO from '../../dao/product-design-canvas-annotation-comments';
+import * as AnnotationCommentsDAO from '../annotation-comments/dao';
 import getTitle, { LinkBase } from '../../services/get-title';
 import { logWarning } from '../../services/logger';
 import Comment from '../../components/comments/domain-object';
+import { CommentWithMeta } from '../../components/annotation-comments/domain-object';
 import { ComponentType } from '../../domain-objects/component';
 import ProductDesignCanvas from '../../domain-objects/product-design-canvas';
 import { STUDIO_HOST } from '../../config';
@@ -174,7 +175,7 @@ export const createNotificationMessage = async (
       const collection = await getCollection(collectionId);
       const canvas: ProductDesignCanvas | null = await CanvasesDAO.findById(notification.canvasId);
       if (!design || !canvas) { return null; }
-      const comments: Comment[] | null = await AnnotationCommentsDAO
+      const comments: CommentWithMeta[] | null = await AnnotationCommentsDAO
         .findByAnnotationId(notification.annotationId);
       const component = canvas.componentId
         ? await ComponentsDAO.findById(canvas.componentId)

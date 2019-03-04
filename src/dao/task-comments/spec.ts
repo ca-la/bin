@@ -19,9 +19,7 @@ test('TaskComment DAO supports creation/retrieval', async (t: tape.Test) => {
     isPinned: false,
     parentCommentId: null,
     text: 'A comment',
-    userEmail: user.email,
-    userId: user.id,
-    userName: user.name
+    userId: user.id
   });
   const comment2 = await createComment({
     createdAt: yesterday,
@@ -30,9 +28,7 @@ test('TaskComment DAO supports creation/retrieval', async (t: tape.Test) => {
     isPinned: false,
     parentCommentId: null,
     text: 'A comment',
-    userEmail: user.email,
-    userId: user.id,
-    userName: user.name
+    userId: user.id
   });
   const task = await createTask(uuid.v4());
   await create({

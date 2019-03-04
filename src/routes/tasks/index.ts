@@ -1,7 +1,7 @@
 import * as Router from 'koa-router';
 import * as Koa from 'koa';
 import * as uuid from 'node-uuid';
-import { omit } from 'lodash';
+import { omit, pick } from 'lodash';
 
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as ProductDesignStageTasksDAO from '../../dao/product-design-stage-tasks';
@@ -12,7 +12,10 @@ import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import CollaboratorTask from '../../domain-objects/collaborator-task';
 import TaskEvent, { DetailsTask, TaskStatus } from '../../domain-objects/task-event';
-import Comment, { isComment } from '../../components/comments/domain-object';
+import Comment, {
+  BASE_COMMENT_PROPERTIES,
+  isBaseComment
+} from '../../components/comments/domain-object';
 import { hasOnlyProperties } from '../../services/require-properties';
 import requireAuth = require('../../middleware/require-auth');
 import Collaborator from '../../components/collaborators/domain-objects/collaborator';
@@ -231,9 +234,10 @@ function* createTaskComment(this: Koa.Application.Context): AsyncIterableIterato
   const { userId } = this.state;
   const body = omit(this.request.body, 'mentions');
   const { taskId } = this.params;
+  const filteredBody = pick(body, BASE_COMMENT_PROPERTIES);
 
-  if (body && isComment(body) && taskId) {
-    const comment = yield CommentDAO.create({ ...body, userId });
+  if (filteredBody && isBaseComment(filteredBody) && taskId) {
+    const comment = yield CommentDAO.create({ ...filteredBody, userId });
     yield TaskCommentDAO.create({ commentId: comment.id, taskId });
     yield NotificationsService.sendTaskCommentCreateNotification(taskId, comment.id, userId);
 

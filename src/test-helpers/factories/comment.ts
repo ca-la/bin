@@ -20,9 +20,7 @@ export default async function generateComment(
     isPinned: options.isPinned || false,
     parentCommentId: options.parentCommentId || null,
     text: options.text || 'test comment',
-    userEmail: user.email,
-    userId: user.id,
-    userName: user.name
+    userId: user.id
   });
 
   return {

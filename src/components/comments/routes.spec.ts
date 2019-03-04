@@ -4,6 +4,7 @@ import createUser = require('../../test-helpers/create-user');
 import { authHeader, del, get, post, put } from '../../test-helpers/http';
 import { sandbox, test } from '../../test-helpers/fresh';
 import * as CreateNotifications from '../../services/create-notifications';
+import * as AnnotationCommentsDAO from '../../components/annotation-comments/dao';
 
 test('DELETE /comment/:id deletes a task comment', async (t: tape.Test) => {
   const { session, user } = await createUser();
@@ -89,4 +90,28 @@ test('DELETE /comment/:id deletes a task comment', async (t: tape.Test) => {
     [],
     'Comment retrieval does not include deleted comment'
   );
+});
+
+test('GET /comments/?annotationIds= returns comments by annotation', async (t: tape.Test) => {
+  const { session } = await createUser();
+
+  const idOne = uuid.v4();
+  const idTwo = uuid.v4();
+  const idThree = uuid.v4();
+
+  const daoStub = sandbox()
+    .stub(AnnotationCommentsDAO, 'findByAnnotationIds')
+    .callsFake(async (annotationIds: string[]): Promise<string[]> => {
+      return annotationIds;
+    });
+
+  const [response, body] = await get(
+    `/comments?annotationIds=${idOne}&annotationIds=${idTwo}&annotationIds=${idThree}`,
+    { headers: authHeader(session.id) }
+  );
+
+  t.equal(response.status, 200, 'Successfully returns');
+  t.equal(body.length, 3, 'Stub returns the list of annotation ids');
+  t.equal(daoStub.callCount, 1, 'Stub is called exactly once');
+  t.deepEqual(daoStub.args[0][0], [idOne, idTwo, idThree], 'Calls DAO with correct annotation IDs');
 });

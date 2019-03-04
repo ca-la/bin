@@ -233,6 +233,7 @@ test(
       annotationCommentResponse[1],
       [{
         ...commentBody,
+        annotationId: annotationResponse[1].id,
         mentions: {},
         userEmail: user.email,
         userId: user.id,

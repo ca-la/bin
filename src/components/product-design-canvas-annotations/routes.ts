@@ -1,6 +1,7 @@
 import * as Router from 'koa-router';
 import * as Koa from 'koa';
 import * as Knex from 'knex';
+import { pick } from 'lodash';
 
 import * as db from '../../services/db';
 import Annotation from './domain-object';
@@ -11,14 +12,15 @@ import {
   update
 } from './dao';
 import { hasOnlyProperties } from '../../services/require-properties';
-import Comment, { isComment } from '../../components/comments/domain-object';
+import Comment, {
+  BASE_COMMENT_PROPERTIES,
+  isBaseComment
+} from '../../components/comments/domain-object';
 import * as CommentDAO from '../../components/comments/dao';
-import * as AnnotationCommentDAO from '../../dao/product-design-canvas-annotation-comments';
+import * as AnnotationCommentDAO from '../../components/annotation-comments/dao';
 import * as NotificationsService from '../../services/create-notifications';
-
 import requireAuth = require('../../middleware/require-auth');
 import addAtMentionDetails from '../../services/add-at-mention-details';
-import { omit } from 'lodash';
 
 const router = new Router();
 
@@ -96,9 +98,9 @@ function* getList(this: Koa.Application.Context): AsyncIterableIterator<Annotati
 function* createAnnotationComment(this: Koa.Application.Context): AsyncIterableIterator<Comment> {
   let comment;
   const userId = this.state.userId;
-  const body = omit(this.request.body, 'mentions');
+  const body = pick(this.request.body, BASE_COMMENT_PROPERTIES);
 
-  if (body && isComment(body) && this.params.annotationId) {
+  if (body && isBaseComment(body) && this.params.annotationId) {
     yield db.transaction(async (trx: Knex.Transaction) => {
       comment = await CommentDAO.create({
         ...body,

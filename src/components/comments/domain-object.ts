@@ -15,31 +15,51 @@ import { hasOnlyProperties } from '../../services/require-properties';
  * @property {string} user_email Comment author email
  * @property {boolean} is_pinned Is this comment a pinned comment?
  */
-export default interface Comment {
+export interface BaseComment {
   id: string;
   createdAt: Date;
   deletedAt: Date | null;
   text: string;
   parentCommentId: string | null;
   userId: string;
-  userName: string | null;
-  userEmail: string | null;
   isPinned: boolean;
 }
 
-export interface CommentRow {
+export default interface Comment extends BaseComment {
+  userName: string | null;
+  userEmail: string | null;
+}
+
+export interface BaseCommentRow {
   id: string;
   created_at: Date;
   deleted_at: Date | null;
   text: string;
   parent_comment_id: string | null;
   user_id: string;
-  user_name: string | null;
-  user_email: string | null;
   is_pinned: boolean;
 }
 
+export interface CommentRow extends BaseCommentRow {
+  user_name: string | null;
+  user_email: string | null;
+}
+
 export const dataAdapter = new DataAdapter<CommentRow, Comment>();
+export const baseDataAdapter = new DataAdapter<BaseCommentRow, BaseComment>();
+
+export function isBaseComment(row: object): row is BaseComment {
+  return hasOnlyProperties(
+    row,
+    'createdAt',
+    'deletedAt',
+    'id',
+    'isPinned',
+    'parentCommentId',
+    'text',
+    'userId'
+  );
+}
 
 export function isCommentRow(row: object): row is CommentRow {
   return hasOnlyProperties(
@@ -83,4 +103,14 @@ export const INSERTABLE_COLUMNS = [
   'parent_comment_id',
   'text',
   'user_id'
+];
+
+export const BASE_COMMENT_PROPERTIES = [
+  'createdAt',
+  'deletedAt',
+  'id',
+  'isPinned',
+  'parentCommentId',
+  'text',
+  'userId'
 ];

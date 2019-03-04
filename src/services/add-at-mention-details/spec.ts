@@ -17,9 +17,7 @@ test('addAtMentionDetails adds null when there are no at mentions', async (t: ta
     isPinned: false,
     parentCommentId: null,
     text: 'A comment with no mentions',
-    userEmail: user.email,
-    userId: user.id,
-    userName: user.name
+    userId: user.id
   });
 
   const result = await addAtMentionDetails([comment]);
@@ -42,9 +40,7 @@ test('addAtMentionDetails adds details when there is an at mention', async (t: t
     isPinned: false,
     parentCommentId: null,
     text: `A comment @<${collaborator.id}|collaborator> with mentions`,
-    userEmail: user.email,
-    userId: user.id,
-    userName: user.name
+    userId: user.id
   });
 
   const result = await addAtMentionDetails([comment]);
@@ -78,9 +74,7 @@ test('addAtMentionDetails adds details for multiple at mentions', async (t: tape
     isPinned: false,
     parentCommentId: null,
     text: `A comment @<${collaborator.id}|collaborator> with mentions @<${c2.id}|collaborator>`,
-    userEmail: user.email,
-    userId: user.id,
-    userName: user.name
+    userId: user.id
   });
 
   const result = await addAtMentionDetails([comment]);
@@ -115,9 +109,7 @@ async (t: tape.Test) => {
     isPinned: false,
     parentCommentId: null,
     text: `A comment @<${c1.id}|collaborator> with mentions @<${c1.id}|collaborator>`,
-    userEmail: user.email,
-    userId: user.id,
-    userName: user.name
+    userId: user.id
   });
 
   const result = await addAtMentionDetails([comment]);

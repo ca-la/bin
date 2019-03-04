@@ -2,6 +2,8 @@ import { pick } from 'lodash';
 import * as db from '../../services/db';
 import * as Knex from 'knex';
 import Comment, {
+  BaseComment,
+  baseDataAdapter,
   CommentRow,
   dataAdapter,
   INSERTABLE_COLUMNS,
@@ -14,11 +16,11 @@ import first from '../../services/first';
 const TABLE_NAME = 'comments';
 
 export async function create(
-  data: Comment,
+  data: BaseComment,
   trx?: Knex.Transaction
 ): Promise<Comment> {
   const rowDataForInsertion = pick(
-    dataAdapter.forInsertion(data),
+    baseDataAdapter.forInsertion(data),
     INSERTABLE_COLUMNS
   );
   await db(TABLE_NAME)

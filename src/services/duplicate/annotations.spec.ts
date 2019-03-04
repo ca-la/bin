@@ -7,7 +7,7 @@ import generateAnnotation from '../../test-helpers/factories/product-design-canv
 import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 import generateComment from '../../test-helpers/factories/comment';
 
-import * as AnnotationCommentsDAO from '../../dao/product-design-canvas-annotation-comments';
+import * as AnnotationCommentsDAO from '../../components/annotation-comments/dao';
 import { findAndDuplicateAnnotations } from './annotations';
 
 test('findAndDuplicateAnnotations', async (t: tape.Test) => {
@@ -37,7 +37,12 @@ test('findAndDuplicateAnnotations', async (t: tape.Test) => {
   t.equal(c1.length, 1, 'The duplicated annotation has an associated comment');
   t.deepEqual(
     c1[0],
-    { ...comment, id: c1[0].id, createdAt: c1[0].createdAt },
+    {
+      ...comment,
+      annotationId: a1.id,
+      createdAt: c1[0].createdAt,
+      id: c1[0].id
+    },
     'The duplicated comment is the same minus the id and createdAt fields'
   );
 });

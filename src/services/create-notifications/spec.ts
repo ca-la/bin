@@ -198,9 +198,7 @@ test('sendTaskCommentCreateNotification', async (t: tape.Test) => {
     isPinned: false,
     parentCommentId: null,
     text: 'A comment',
-    userEmail: userOne.user.email,
-    userId: userOne.user.id,
-    userName: userOne.user.name
+    userId: userOne.user.id
   });
   await TaskCommentsDAO.create({
     commentId: comment.id,
