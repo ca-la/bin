@@ -208,7 +208,7 @@ async (t: Test) => {
 test('POST /quote-payments?isWaived=true waives payment', async (t: Test) => {
   const { user, session } = await createUser();
   sandbox().stub(EmailService, 'enqueueSend').resolves();
-  sandbox().stub(SlackService, 'enqueueSend').resolves();
+  const slackStub = sandbox().stub(SlackService, 'enqueueSend').resolves();
 
   const collection = await CollectionsDAO.create({
     createdAt: new Date(),
@@ -268,6 +268,7 @@ test('POST /quote-payments?isWaived=true waives payment', async (t: Test) => {
 
   t.equal(postResponse.status, 201, 'successfully creates the invoice');
   t.equals(body.isPaid, true, 'Invoice is paid');
+  t.equal(slackStub.callCount, 1);
 });
 
 test('POST /quote-payments?isWaived=true fails if ineligible', async (t: Test) => {

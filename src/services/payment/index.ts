@@ -137,7 +137,7 @@ export async function createInvoiceWithoutMethod(
       quotes.map((quote: PricingQuote) => createLineItem(quote, invoice.id, trx)));
 
     const user = await UsersDAO.findById(userId);
-    SlackService.enqueueSend({
+    await SlackService.enqueueSend({
       channel: 'designers',
       params: {
         collection,
@@ -180,6 +180,16 @@ export async function payWaivedQuote(
 
     Promise.all(
       quotes.map((quote: PricingQuote) => createLineItem(quote, invoice.id, trx)));
+
+    await SlackService.enqueueSend({
+      channel: 'designers',
+      params: {
+        collection,
+        designer: await UsersDAO.findById(userId),
+        paymentAmountCents: 0
+      },
+      templateName: 'designer_payment'
+    });
 
     return InvoicesDAO.findByIdTrx(trx, invoice.id);
   });
