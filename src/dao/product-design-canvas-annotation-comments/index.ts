@@ -4,7 +4,7 @@ import Comment, {
   CommentRow,
   dataAdapter as commentAdapter,
   isCommentRow
-} from '../../domain-objects/comment';
+} from '../../components/comments/domain-object';
 import AnnotationComment, {
   AnnotationCommentRow,
   dataAdapter,

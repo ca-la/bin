@@ -11,12 +11,14 @@ import {
   update
 } from './dao';
 import { hasOnlyProperties } from '../../services/require-properties';
-import Comment, { isComment } from '../../domain-objects/comment';
-import * as CommentDAO from '../../dao/comments';
+import Comment, { isComment } from '../../components/comments/domain-object';
+import * as CommentDAO from '../../components/comments/dao';
 import * as AnnotationCommentDAO from '../../dao/product-design-canvas-annotation-comments';
 import * as NotificationsService from '../../services/create-notifications';
 
 import requireAuth = require('../../middleware/require-auth');
+import addAtMentionDetails from '../../services/add-at-mention-details';
+import { omit } from 'lodash';
 
 const router = new Router();
 
@@ -94,7 +96,7 @@ function* getList(this: Koa.Application.Context): AsyncIterableIterator<Annotati
 function* createAnnotationComment(this: Koa.Application.Context): AsyncIterableIterator<Comment> {
   let comment;
   const userId = this.state.userId;
-  const body = this.request.body;
+  const body = omit(this.request.body, 'mentions');
 
   if (body && isComment(body) && this.params.annotationId) {
     yield db.transaction(async (trx: Knex.Transaction) => {
@@ -117,8 +119,9 @@ function* createAnnotationComment(this: Koa.Application.Context): AsyncIterableI
 function* getAnnotationComments(this: Koa.Application.Context): AsyncIterableIterator<Comment[]> {
   const comments = yield AnnotationCommentDAO.findByAnnotationId(this.params.annotationId);
   if (comments) {
+    const commentsWithMentions = yield addAtMentionDetails(comments);
     this.status = 200;
-    this.body = comments;
+    this.body = commentsWithMentions;
   } else {
     this.throw(404);
   }

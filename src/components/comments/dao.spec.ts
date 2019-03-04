@@ -6,7 +6,7 @@ import {
   deleteById,
   findById,
   update
-} from './index';
+} from './dao';
 import createUser = require('../../test-helpers/create-user');
 
 test('Comment DAO supports creation/retrieval', async (t: tape.Test) => {

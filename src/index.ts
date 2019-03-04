@@ -30,6 +30,7 @@ import componentRelationshipRoutes from './components/component-relationships/ro
 import imageRoutes = require('./components/images/routes');
 import processRoutes from './components/processes/routes';
 import notificationRoutes from './components/notifications/routes';
+import commentRoutes from './components/comments/routes';
 
 import koa = require('koa');
 const app = koa();
@@ -70,6 +71,7 @@ router.use('/notifications', notificationRoutes);
 router.use('/processes', processRoutes);
 router.use('/product-design-canvas-annotations', annotationRoutes);
 router.use('/product-design-images', imageRoutes);
+router.use('/comments', commentRoutes);
 router.use('/credits', creditRoutes);
 
 const loadTime = Date.now() - beginTime;

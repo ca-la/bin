@@ -203,6 +203,7 @@ test(
       deletedAt: null,
       id: commentId,
       isPinned: false,
+      mentions: {},
       parentCommentId: null,
       text: 'A comment',
       userEmail: 'cool@me.me',
@@ -232,6 +233,7 @@ test(
       annotationCommentResponse[1],
       [{
         ...commentBody,
+        mentions: {},
         userEmail: user.email,
         userId: user.id,
         userName: user.name

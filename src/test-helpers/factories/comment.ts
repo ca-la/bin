@@ -1,10 +1,10 @@
 import * as uuid from 'node-uuid';
 
-import { create } from '../../dao/comments';
+import { create } from '../../components/comments/dao';
 import { findById as findUserById } from '../../dao/users';
 import createUser = require('../create-user');
 import User = require('../../domain-objects/user');
-import Comment from '../../domain-objects/comment';
+import Comment from '../../components/comments/domain-object';
 
 export default async function generateComment(
   options: Partial<Comment> = {}

@@ -7,7 +7,7 @@ import Comment, {
   INSERTABLE_COLUMNS,
   isCommentRow,
   UPDATABLE_COLUMNS
-} from '../../domain-objects/comment';
+} from '../../components/comments/domain-object';
 import { validate } from '../../services/validate-from-db';
 import first from '../../services/first';
 

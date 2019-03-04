@@ -2,7 +2,7 @@ import * as tape from 'tape';
 import * as uuid from 'node-uuid';
 import { test } from '../../test-helpers/fresh';
 import { create as createTask } from '../tasks';
-import { create as createComment } from '../comments';
+import { create as createComment } from '../../components/comments/dao';
 import { create, findByTaskId } from './index';
 import createUser = require('../../test-helpers/create-user');
 

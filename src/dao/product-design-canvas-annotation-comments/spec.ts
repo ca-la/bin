@@ -2,7 +2,7 @@ import * as tape from 'tape';
 import * as uuid from 'node-uuid';
 import { test } from '../../test-helpers/fresh';
 import { create as createAnnotation } from '../../components/product-design-canvas-annotations/dao';
-import { create as createComment } from '../comments';
+import { create as createComment } from '../../components/comments/dao';
 import { create, findByAnnotationId } from './index';
 import { create as createDesign } from '../product-designs';
 import { create as createDesignCanvas } from '../product-design-canvases';

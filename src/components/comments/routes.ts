@@ -1,7 +1,7 @@
 import * as Router from 'koa-router';
 import * as Koa from 'koa';
 
-import * as CommentDAO from '../../dao/comments';
+import * as CommentDAO from './dao';
 import requireAuth = require('../../middleware/require-auth');
 
 const router = new Router();
@@ -18,4 +18,4 @@ function* deleteComment(this: Koa.Application.Context): AsyncIterableIterator<vo
 
 router.del('/:commentId', requireAuth, deleteComment);
 
-export = router.routes();
+export default router.routes();

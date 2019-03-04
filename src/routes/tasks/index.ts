@@ -6,18 +6,19 @@ import { omit } from 'lodash';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as ProductDesignStageTasksDAO from '../../dao/product-design-stage-tasks';
 import * as TasksDAO from '../../dao/tasks';
-import * as CommentDAO from '../../dao/comments';
+import * as CommentDAO from '../../components/comments/dao';
 import * as TaskCommentDAO from '../../dao/task-comments';
 import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import CollaboratorTask from '../../domain-objects/collaborator-task';
 import TaskEvent, { DetailsTask, TaskStatus } from '../../domain-objects/task-event';
-import Comment, { isComment } from '../../domain-objects/comment';
+import Comment, { isComment } from '../../components/comments/domain-object';
 import { hasOnlyProperties } from '../../services/require-properties';
 import requireAuth = require('../../middleware/require-auth');
 import Collaborator from '../../components/collaborators/domain-objects/collaborator';
 import * as NotificationsService from '../../services/create-notifications';
 import { typeGuard } from '../../middleware/type-guard';
+import addAtMentionDetails from '../../services/add-at-mention-details';
 
 const router = new Router();
 
@@ -228,7 +229,7 @@ function* getList(this: Koa.Application.Context): AsyncIterableIterator<DetailsT
 
 function* createTaskComment(this: Koa.Application.Context): AsyncIterableIterator<Comment> {
   const { userId } = this.state;
-  const { body } = this.request;
+  const body = omit(this.request.body, 'mentions');
   const { taskId } = this.params;
 
   if (body && isComment(body) && taskId) {
@@ -239,15 +240,16 @@ function* createTaskComment(this: Koa.Application.Context): AsyncIterableIterato
     this.status = 201;
     this.body = comment;
   } else {
-    this.throw(400, `Request does not match model: ${Object.keys(body)}`);
+    this.throw(400, `Request does not match task comment model: ${Object.keys(body || {})}`);
   }
 }
 
 function* getTaskComments(this: Koa.Application.Context): AsyncIterableIterator<Comment[]> {
   const comments = yield TaskCommentDAO.findByTaskId(this.params.taskId);
   if (comments) {
+    const commentsWithMentions = yield addAtMentionDetails(comments);
     this.status = 200;
-    this.body = comments;
+    this.body = commentsWithMentions;
   } else {
     this.throw(404);
   }

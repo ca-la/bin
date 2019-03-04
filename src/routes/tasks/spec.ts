@@ -437,6 +437,7 @@ test('PUT /tasks/:taskId/comment/:id creates a task comment', async (t: tape.Tes
     deletedAt: null,
     id: uuid.v4(),
     isPinned: false,
+    mentions: {},
     parentCommentId: null,
     text: 'A comment',
     userEmail: 'cool@me.me',
@@ -461,6 +462,7 @@ test('PUT /tasks/:taskId/comment/:id creates a task comment', async (t: tape.Tes
     taskComment[1],
     [{
       ...commentBody,
+      mentions: {},
       userEmail: user.email,
       userId: user.id,
       userName: user.name

@@ -43,6 +43,7 @@ test('DELETE /comment/:id deletes a task comment', async (t: tape.Test) => {
     deletedAt: null,
     id: uuid.v4(),
     isPinned: false,
+    mentions: {},
     parentCommentId: null,
     text: 'A comment',
     userEmail: 'cool@me.me',
@@ -65,6 +66,7 @@ test('DELETE /comment/:id deletes a task comment', async (t: tape.Test) => {
     withComment[1],
     [{
       ...commentBody,
+      mentions: {},
       userEmail: user.email,
       userId: user.id,
       userName: user.name

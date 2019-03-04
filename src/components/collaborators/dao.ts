@@ -127,7 +127,7 @@ Updatable Properties: ${UPDATABLE_PROPERTIES.join(', ')}`.trim());
   return attachUser(collaborator);
 }
 
-export async function findById(collaboratorId: string): Promise<Collaborator | null> {
+export async function findById(collaboratorId: string): Promise<CollaboratorWithUser | null> {
   const collaboratorRow = await db(TABLE_NAME)
     .where({ id: collaboratorId, deleted_at: null })
     .then((rows: CollaboratorRow[]) => first<CollaboratorRow>(rows));

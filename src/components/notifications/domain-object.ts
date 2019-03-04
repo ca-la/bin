@@ -8,7 +8,7 @@ import Canvas, {
   ProductDesignCanvasRow as CanvasRow
 } from '../../domain-objects/product-design-canvas';
 import Collection, { CollectionRow } from '../../domain-objects/collection';
-import Comment, { CommentRow } from '../../domain-objects/comment';
+import Comment, { CommentRow } from '../../components/comments/domain-object';
 import Stage, {
   ProductDesignStageRow as StageRow
 } from '../../domain-objects/product-design-stage';

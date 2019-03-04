@@ -1,5 +1,5 @@
-import DataAdapter from '../services/data-adapter';
-import { hasOnlyProperties } from '../services/require-properties';
+import DataAdapter from '../../services/data-adapter';
+import { hasOnlyProperties } from '../../services/require-properties';
 
 /**
  * @typedef {object} Comment User comment
