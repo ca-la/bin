@@ -115,3 +115,47 @@ test('GET /comments/?annotationIds= returns comments by annotation', async (t: t
   t.equal(daoStub.callCount, 1, 'Stub is called exactly once');
   t.deepEqual(daoStub.args[0][0], [idOne, idTwo, idThree], 'Calls DAO with correct annotation IDs');
 });
+
+test(
+  'GET /comments/?annotationIds= returns comments by annotation even with one id',
+  async (t: tape.Test) => {
+    const { session } = await createUser();
+    const idOne = uuid.v4();
+    const daoStub = sandbox()
+      .stub(AnnotationCommentsDAO, 'findByAnnotationIds')
+      .callsFake(async (annotationIds: string[]): Promise<string[]> => {
+        return annotationIds;
+      });
+
+    const [response, body] = await get(
+      `/comments?annotationIds=${idOne}`,
+      { headers: authHeader(session.id) }
+    );
+
+    t.equal(response.status, 200, 'Successfully returns a 200');
+    t.equal(body.length, 1, 'Stub returns the list');
+    t.equal(daoStub.callCount, 1, 'Stub is called exactly once');
+    t.deepEqual(daoStub.args[0][0], [idOne], 'Calls DAO with a one element array');
+  }
+);
+
+test(
+  'GET /comments/?annotationIds= returns comments by annotation even with one id',
+  async (t: tape.Test) => {
+    const { session } = await createUser();
+    const daoStub = sandbox()
+      .stub(AnnotationCommentsDAO, 'findByAnnotationIds')
+      .callsFake(async (annotationIds: string[]): Promise<string[]> => {
+        return annotationIds;
+      });
+
+    const [response, body] = await get(
+      '/comments',
+      { headers: authHeader(session.id) }
+    );
+
+    t.equal(response.status, 400, 'Throws an error');
+    t.equal(body.message, 'Missing annotationIds!');
+    t.equal(daoStub.callCount, 0, 'Stub is never called');
+  }
+);

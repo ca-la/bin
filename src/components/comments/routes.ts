@@ -18,7 +18,11 @@ function* getList(this: Koa.Application.Context): AsyncIterableIterator<void> {
     return this.throw(400, 'Missing annotationIds!');
   }
 
-  const commentsByAnnotation = yield AnnotationCommentsDAO.findByAnnotationIds(query.annotationIds);
+  const idList = Array.isArray(query.annotationIds)
+    ? query.annotationIds
+    : [query.annotationIds];
+
+  const commentsByAnnotation = yield AnnotationCommentsDAO.findByAnnotationIds(idList);
   this.body = commentsByAnnotation;
   this.status = 200;
 }
