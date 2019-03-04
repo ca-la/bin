@@ -17,6 +17,10 @@ code is written in vanilla JavaScript.
 - You'll need several environment variables set to correctly run the API. These
 are available as a note named `CALA API .env file (development)` in the engineering
 group in 1Password. `CALA API .test.env file (development)`.
+- You'll also need an environment variable set called `NPM_TOKEN` with an npm token to install
+private packages from our npm org. For example in your .bash_profile have a line with
+`export NPM_TOKEN=00000000-0000-0000-0000-000000000000` with your token. A new token can be
+generated with `npm token create --read-only`
 
 ```bash
 $ npm install
