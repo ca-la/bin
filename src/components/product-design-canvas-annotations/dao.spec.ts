@@ -1,10 +1,11 @@
 import * as uuid from 'node-uuid';
 import * as tape from 'tape';
 import { test } from '../../test-helpers/fresh';
-import { create, deleteById, findById, update } from './dao';
+import * as AnnotationsDAO from './dao';
 import createUser = require('../../test-helpers/create-user');
 import { create as createDesign } from '../../dao/product-designs';
 import { create as createDesignCanvas } from '../../dao/product-design-canvases';
+import ResourceNotFoundError from '../../errors/resource-not-found';
 
 test('ProductDesignCanvasAnnotation DAO supports creation/retrieval', async (t: tape.Test) => {
   const { user } = await createUser();
@@ -24,7 +25,7 @@ test('ProductDesignCanvasAnnotation DAO supports creation/retrieval', async (t: 
     x: 0,
     y: 0
   });
-  const designCanvasAnnotation = await create({
+  const designCanvasAnnotation = await AnnotationsDAO.create({
     canvasId: designCanvas.id,
     createdBy: user.id,
     deletedAt: null,
@@ -33,8 +34,11 @@ test('ProductDesignCanvasAnnotation DAO supports creation/retrieval', async (t: 
     y: 10
   });
 
-  const result = await findById(designCanvasAnnotation.id);
-  t.deepEqual(designCanvasAnnotation, result, 'Returned the inserted annotation');
+  const result = await AnnotationsDAO.findById(designCanvasAnnotation.id);
+  t.deepEqual(result, designCanvasAnnotation, 'Finds annotation by annotation ID');
+
+  const asList = await AnnotationsDAO.findAllByCanvasId(designCanvas.id);
+  t.deepEqual(asList, [designCanvasAnnotation], 'Finds annotation by canvas ID');
 });
 
 test('ProductDesignCanvasAnnotation DAO supports updating', async (t: tape.Test) => {
@@ -55,7 +59,7 @@ test('ProductDesignCanvasAnnotation DAO supports updating', async (t: tape.Test)
     x: 0,
     y: 0
   });
-  const designCanvasAnnotation = await create({
+  const designCanvasAnnotation = await AnnotationsDAO.create({
     canvasId: designCanvas.id,
     createdBy: user.id,
     deletedAt: null,
@@ -72,7 +76,10 @@ test('ProductDesignCanvasAnnotation DAO supports updating', async (t: tape.Test)
     x: 55,
     y: 22
   };
-  const updated = await update(designCanvasAnnotation.id, data);
+  const updated = await AnnotationsDAO.update(
+    designCanvasAnnotation.id,
+    data
+  );
   t.deepEqual(
     updated,
     {
@@ -101,7 +108,7 @@ test('ProductDesignCanvasAnnotation DAO supports deletion', async (t: tape.Test)
     x: 0,
     y: 0
   });
-  const designCanvasAnnotation = await create({
+  const designCanvasAnnotation = await AnnotationsDAO.create({
     canvasId: designCanvas.id,
     createdBy: user.id,
     deletedAt: null,
@@ -110,7 +117,15 @@ test('ProductDesignCanvasAnnotation DAO supports deletion', async (t: tape.Test)
     y: 10
   });
 
-  const result = await deleteById(designCanvasAnnotation.id);
+  const result = await AnnotationsDAO.deleteById(designCanvasAnnotation.id);
   t.notEqual(result.deletedAt, null, 'Successfully deleted one row');
-  t.equal(await findById(designCanvasAnnotation.id), null, 'Succesfully removed from database');
+  const removed = await AnnotationsDAO.findById(designCanvasAnnotation.id);
+  t.equal(removed, null, 'Succesfully removed from database');
+
+  await AnnotationsDAO.deleteById(designCanvasAnnotation.id)
+    .then(() => t.fail('Second delete should not succeed'))
+    .catch((err: Error) => t.ok(
+      err instanceof ResourceNotFoundError,
+      'deleting a second time rejects with ResourceNotFoundError'
+    ));
 });

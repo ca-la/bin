@@ -1,10 +1,10 @@
-import * as tape from 'tape';
 import * as uuid from 'node-uuid';
 import * as sinon from 'sinon';
 
+import ResourceNotFoundError from '../../errors/resource-not-found';
 import createUser = require('../../test-helpers/create-user');
 import { authHeader, del, get, patch, put } from '../../test-helpers/http';
-import { sandbox, test } from '../../test-helpers/fresh';
+import { sandbox, test, Test } from '../../test-helpers/fresh';
 import * as AnnotationDAO from './dao';
 import { create as createDesign } from '../../dao/product-designs';
 import { create as createDesignCanvas } from '../../dao/product-design-canvases';
@@ -12,7 +12,7 @@ import * as CreateNotifications from '../../services/create-notifications';
 
 const API_PATH = '/product-design-canvas-annotations';
 
-test(`PUT ${API_PATH}/:annotationId creates an Annotation`, async (t: tape.Test) => {
+test(`PUT ${API_PATH}/:annotationId creates an Annotation`, async (t: Test) => {
   const { session, user } = await createUser();
 
   const annotationId = uuid.v4();
@@ -57,7 +57,7 @@ test(`PUT ${API_PATH}/:annotationId creates an Annotation`, async (t: tape.Test)
   sinon.assert.callCount(notificationStub, 1);
 });
 
-test(`PATCH ${API_PATH}/:annotationId updates an Annotation`, async (t: tape.Test) => {
+test(`PATCH ${API_PATH}/:annotationId updates an Annotation`, async (t: Test) => {
   const { session, user } = await createUser();
   const annotationId = uuid.v4();
 
@@ -108,7 +108,7 @@ test(`PATCH ${API_PATH}/:annotationId updates an Annotation`, async (t: tape.Tes
   });
 });
 
-test(`DELETE ${API_PATH}/:annotationId deletes an Annotation`, async (t: tape.Test) => {
+test(`DELETE ${API_PATH}/:annotationId deletes an Annotation`, async (t: Test) => {
   const { session, user } = await createUser();
   const annotationId = uuid.v4();
   const canvasId = uuid.v4();
@@ -121,14 +121,28 @@ test(`DELETE ${API_PATH}/:annotationId deletes an Annotation`, async (t: tape.Te
     x: 1,
     y: 1
   };
-  sandbox().stub(AnnotationDAO, 'deleteById').resolves(data);
+  const deleteStub = sandbox().stub(AnnotationDAO, 'deleteById').resolves(data);
   const [response] = await del(`${API_PATH}/${annotationId}`, {
     headers: authHeader(session.id)
   });
   t.equal(response.status, 204);
+
+  deleteStub.rejects(new ResourceNotFoundError('Annotation not found'));
+
+  const [invalidResponse] = await del(`${API_PATH}/do-not-find-me`, {
+    headers: authHeader(session.id)
+  });
+  t.equal(invalidResponse.status, 404);
+
+  deleteStub.rejects(new Error('Some other error'));
+
+  const [unknownErrorResponse] = await del(`${API_PATH}/do-not-find-me`, {
+    headers: authHeader(session.id)
+  });
+  t.equal(unknownErrorResponse.status, 500);
 });
 
-test(`GET ${API_PATH}/?canvasId=:canvasId returns Annotations`, async (t: tape.Test) => {
+test(`GET ${API_PATH}/?canvasId=:canvasId returns Annotations`, async (t: Test) => {
   const { session, user } = await createUser();
   const canvasId = uuid.v4();
 
@@ -155,7 +169,7 @@ test(`GET ${API_PATH}/?canvasId=:canvasId returns Annotations`, async (t: tape.T
   t.deepEqual(body, data);
 });
 
-test(`GET ${API_PATH}/ without a canvasId fails`, async (t: tape.Test) => {
+test(`GET ${API_PATH}/ without a canvasId fails`, async (t: Test) => {
   const { session } = await createUser();
   const [response] = await get(`${API_PATH}/`, {
     headers: authHeader(session.id)
@@ -166,7 +180,7 @@ test(`GET ${API_PATH}/ without a canvasId fails`, async (t: tape.Test) => {
 
 test(
   `PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`,
-  async (t: tape.Test) => {
+  async (t: Test) => {
     const { session, user } = await createUser();
 
     const annotationId = uuid.v4();

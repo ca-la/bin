@@ -9,6 +9,7 @@ import Annotation, {
   ProductDesignCanvasAnnotationRow as AnnotationRow,
   UPDATABLE_PROPERTIES
 } from './domain-object';
+import ResourceNotFoundError from '../../errors/resource-not-found';
 import first from '../../services/first';
 import { validate, validateEvery } from '../../services/validate-from-db';
 
@@ -83,7 +84,7 @@ export async function deleteById(id: string): Promise<Annotation> {
     .update({ deleted_at: new Date() }, '*')
     .then((rows: AnnotationRow[]) => first<AnnotationRow>(rows));
 
-  if (!deleted) { throw new Error('Failed to delete row'); }
+  if (!deleted) { throw new ResourceNotFoundError('Failed to delete row'); }
 
   return parseNumerics(validate<AnnotationRow, Annotation>(
     TABLE_NAME,

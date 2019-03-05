@@ -19,7 +19,9 @@ import Comment, {
 import * as CommentDAO from '../../components/comments/dao';
 import * as AnnotationCommentDAO from '../../components/annotation-comments/dao';
 import * as NotificationsService from '../../services/create-notifications';
+import ResourceNotFoundError from '../../errors/resource-not-found';
 import requireAuth = require('../../middleware/require-auth');
+import filterError = require('../../services/filter-error');
 import addAtMentionDetails from '../../services/add-at-mention-details';
 
 const router = new Router();
@@ -79,8 +81,11 @@ function* updateAnnotation(this: Koa.Application.Context): AsyncIterableIterator
 }
 
 function* deleteAnnotation(this: Koa.Application.Context): AsyncIterableIterator<Annotation> {
-  const annotation = yield deleteById(this.params.annotationId);
-  if (!annotation) { this.throw(400, 'Failed to delete the annotation'); }
+  yield deleteById(this.params.annotationId)
+    .catch(filterError(ResourceNotFoundError, () => {
+      this.throw(404, 'Annotation not found');
+    }));
+
   this.status = 204;
 }
 
