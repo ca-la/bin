@@ -1,5 +1,6 @@
 import * as tape from 'tape';
 import * as sinon from 'sinon';
+import * as uuid from 'node-uuid';
 
 import { sandbox, test } from '../../test-helpers/fresh';
 import * as NotificationsDAO from '../../components/notifications/dao';
@@ -38,4 +39,55 @@ test('sendNotificationEmails supports finding outstanding notifications', async 
   } else {
     t.fail('Notifications improperly deleted.');
   }
+});
+
+test('sendNotificationEmails gracefully handles failures', async (t: tape.Test) => {
+  const userOne = await createUser();
+  const userTwo = await createUser();
+
+  const idOne = uuid.v4();
+  const idTwo = uuid.v4();
+  const idThree = uuid.v4();
+
+  const { notification: notificationOne } = await generatePartnerAcceptBidNotification({
+    actorUserId: userOne.user.id,
+    id: idOne
+  });
+  const { notification: notificationTwo } = await generatePartnerAcceptBidNotification({
+    actorUserId: userTwo.user.id,
+    id: idTwo
+  });
+  const { notification: notificationThree } = await generatePartnerAcceptBidNotification({
+    actorUserId: userTwo.user.id,
+    id: idThree
+  });
+
+  const emailStub = sandbox().stub(EmailService, 'enqueueSend').callsFake((queueObject: any) => {
+    if (queueObject.params.notifications[0].id === idTwo) {
+      const err = new Error('Not gonna send!!!');
+      return Promise.reject(err);
+    }
+
+    return Promise.resolve();
+  });
+
+  try {
+    await sendNotificationEmails();
+    t.fail('Should not actually go through');
+  } catch (e) {
+    t.equal(e.message, `Failed to send to SQS the following notifications: ${idTwo}`);
+  }
+
+  t.equal(emailStub.callCount, 2, 'Email service is called twice');
+
+  const nOne = await NotificationsDAO.findById(notificationOne.id);
+  const nTwo = await NotificationsDAO.findById(notificationTwo.id);
+  const nThree = await NotificationsDAO.findById(notificationThree.id);
+  if (!nOne || !nTwo || !nThree) {
+    throw new Error('Notifications were not found in the test database!');
+  }
+
+  t.equal(nOne.sentEmailAt, null, 'Notification was not marked as sent.');
+  t.equal(nTwo.sentEmailAt, null, 'Notification was not marked as sent.');
+  t.notEqual(nThree.sentEmailAt, null, 'Notification was marked as sent.');
 });

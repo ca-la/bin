@@ -132,7 +132,7 @@ test('Notifications DAO supports finding outstanding notifications', async (t: t
   });
 
   await db.transaction(async (trx: Knex.Transaction) => {
-    const results: any = await NotificationsDAO.findOutstandingTrx(trx);
+    const results: any = await NotificationsDAO.findOutstanding(trx);
     const formattedResults = [
       {
         ...results[0],
@@ -207,7 +207,7 @@ test('Notifications DAO supports marking notifications as sent', async (t: tape.
   });
 
   await db.transaction(async (trx: Knex.Transaction) => {
-    const notifications = await NotificationsDAO.markSentTrx(
+    const notifications = await NotificationsDAO.markSent(
       [notificationOne.id, notificationTwo.id],
       trx
     );

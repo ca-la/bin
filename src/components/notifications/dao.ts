@@ -27,9 +27,8 @@ const TABLE_NAME = 'notifications';
 /**
  * Returns all outstanding notifications (e.g. not sent) with associated objects attached.
  */
-export async function findOutstandingTrx(trx: Knex.Transaction): Promise<HydratedNotification[]> {
+export async function findOutstanding(trx?: Knex.Transaction): Promise<HydratedNotification[]> {
   const outstandingNotifications: HydratedNotificationRow[] = await db(TABLE_NAME)
-    .transacting(trx)
     .select(db.raw(`
 notifications.*,
 to_json(actors.*) as actor,
@@ -61,7 +60,12 @@ LEFT JOIN (SELECT * FROM task_events ORDER BY created_at ASC LIMIT 1) AS tasks
     `)
     .where({ sent_email_at: null })
     .whereNot({ recipient_user_id: null })
-    .orderBy('created_at', 'desc');
+    .orderBy('created_at', 'desc')
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    });
 
   return validateEvery<HydratedNotificationRow, HydratedNotification>(
     TABLE_NAME,
@@ -71,11 +75,15 @@ LEFT JOIN (SELECT * FROM task_events ORDER BY created_at ASC LIMIT 1) AS tasks
   );
 }
 
-export async function markSentTrx(ids: string[], trx: Knex.Transaction): Promise<Notification[]> {
+export async function markSent(ids: string[], trx?: Knex.Transaction): Promise<Notification[]> {
   const updatedNotifications: NotificationRow[] = await db(TABLE_NAME)
-    .transacting(trx)
     .whereIn('id', ids)
-    .update({ sent_email_at: (new Date()).toISOString() }, '*');
+    .update({ sent_email_at: (new Date()).toISOString() }, '*')
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    });
 
   return validateEvery<NotificationRow, Notification>(
     TABLE_NAME,
