@@ -1,4 +1,4 @@
-import { groupBy } from 'lodash';
+import { chunk, groupBy } from 'lodash';
 import * as Knex from 'knex';
 
 import * as db from '../../services/db';
@@ -9,6 +9,8 @@ import * as NotificationsDAO from '../../components/notifications/dao';
 import * as UsersDAO from '../../dao/users';
 
 import { HydratedNotification } from '../../components/notifications/domain-object';
+
+const QUEUE_LIMIT = 30;
 
 interface NotificationsByRecipient {
   [recipientId: string]: HydratedNotification[];
@@ -33,15 +35,19 @@ export async function sendNotificationEmails(): Promise<void> {
 
       if (!recipient) { throw new Error(`Could not find user ${recipientId}`); }
 
-      Logger.log(`
-Enqueuing an email with ${recipientNotifications.length} notifications for
-User ${recipient.id}.
-      `);
-      await EmailService.enqueueSend({
-        params: { notifications: recipientNotifications },
-        templateName: 'batch_notification',
-        to: recipient.email
-      });
+      const listOfNotificationList = chunk(recipientNotifications, QUEUE_LIMIT);
+      await Promise.all(listOfNotificationList.map(
+        async (notificationList: HydratedNotification[]): Promise<void> => {
+          Logger.log(`
+Enqueuing an email with ${notificationList.length} notifications for user ${recipient.id}.
+          `);
+          await EmailService.enqueueSend({
+            params: { notifications: notificationList },
+            templateName: 'batch_notification',
+            to: recipient.email
+          });
+        }
+      ));
     }));
 
     await NotificationsDAO.markSentTrx(hydratedNotifications.map(
