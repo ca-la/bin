@@ -395,3 +395,22 @@ test('Task Events DAO supports retrieval by stageId', async (t: tape.Test) => {
     insertedWithDetails,
     'Returned inserted task');
 });
+
+test('Task Events DAO supports creating a task with a long description', async (t: tape.Test) => {
+  const { user } = await createUser();
+  const task = await createTask(uuid.v4());
+
+  const inserted = await create({
+    createdBy: user.id,
+    // tslint:disable-next-line:prefer-array-literal
+    description: new Array(1000).fill('a').join(''),
+    designStageId: null,
+    dueDate: null,
+    ordering: 0,
+    status: TaskStatus.NOT_STARTED,
+    taskId: task.id,
+    title: 'My First Task'
+  });
+
+  t.equal(inserted.description.length, 1000);
+});
