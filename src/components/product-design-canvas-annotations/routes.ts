@@ -9,6 +9,7 @@ import {
   create,
   deleteById,
   findAllByCanvasId,
+  findAllWithCommentsByCanvasId,
   update
 } from './dao';
 import { hasOnlyProperties } from '../../services/require-properties';
@@ -28,6 +29,7 @@ const router = new Router();
 
 interface GetListQuery {
   canvasId?: string;
+  hasComments?: string;
 }
 
 function isAnnotation(candidate: object): candidate is Annotation {
@@ -95,7 +97,10 @@ function* getList(this: Koa.Application.Context): AsyncIterableIterator<Annotati
     return this.throw(400, 'Missing canvasId');
   }
 
-  const annotations = yield findAllByCanvasId(query.canvasId);
+  const annotations = query.hasComments !== 'true'
+    ? yield findAllByCanvasId(query.canvasId)
+    : yield findAllWithCommentsByCanvasId(query.canvasId);
+
   this.status = 200;
   this.body = annotations;
 }

@@ -94,14 +94,41 @@ export async function deleteById(id: string): Promise<Annotation> {
   ));
 }
 
-export async function findAllByCanvasId(canvasId: string): Promise<Annotation[]> {
+export async function findAllByCanvasId(
+  canvasId: string
+): Promise<Annotation[]> {
   const annotations: AnnotationRow[] = await db(TABLE_NAME)
     .select('*')
     .where({ canvas_id: canvasId, deleted_at: null });
-  return parseNumericsList(validateEvery<AnnotationRow, Annotation>(
-    TABLE_NAME,
-    isAnnotationRow,
-    dataAdapter,
-    annotations
-  ));
+
+  return parseNumericsList(
+    validateEvery<AnnotationRow, Annotation>(
+      TABLE_NAME,
+      isAnnotationRow,
+      dataAdapter,
+      annotations
+    )
+  );
+}
+
+export async function findAllWithCommentsByCanvasId(
+  canvasId: string
+): Promise<Annotation[]> {
+  const annotations: AnnotationRow[] = await db(TABLE_NAME)
+    .select('product_design_canvas_annotations.*')
+    .join(
+      'product_design_canvas_annotation_comments',
+      'product_design_canvas_annotation_comments.annotation_id',
+      'product_design_canvas_annotations.id'
+    )
+    .where({ canvas_id: canvasId, deleted_at: null });
+
+  return parseNumericsList(
+    validateEvery<AnnotationRow, Annotation>(
+      TABLE_NAME,
+      isAnnotationRow,
+      dataAdapter,
+      annotations
+    )
+  );
 }

@@ -161,12 +161,20 @@ test(`GET ${API_PATH}/?canvasId=:canvasId returns Annotations`, async (t: Test) 
   }];
 
   sandbox().stub(AnnotationDAO, 'findAllByCanvasId').resolves(data);
+  sandbox().stub(AnnotationDAO, 'findAllWithCommentsByCanvasId').resolves([data[1]]);
 
   const [response, body] = await get(`${API_PATH}/?canvasId=${canvasId}`, {
     headers: authHeader(session.id)
   });
   t.equal(response.status, 200);
   t.deepEqual(body, data);
+
+  const [withCommentsResponse, withComments] = await get(
+    `${API_PATH}?canvasId=${canvasId}&hasComments=true`,
+    { headers: authHeader(session.id) }
+  );
+  t.equal(withCommentsResponse.status, 200);
+  t.deepEqual(withComments, [data[1]]);
 });
 
 test(`GET ${API_PATH}/ without a canvasId fails`, async (t: Test) => {
