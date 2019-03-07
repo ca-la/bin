@@ -13,6 +13,7 @@ import { PricingConstantRow } from '../domain-objects/pricing-constant';
 import { PricingProductTypeRow } from '../domain-objects/pricing-product-type';
 import { PricingCareLabelRow } from '../domain-objects/pricing-care-label';
 import { PricingMarginRow } from '../domain-objects/pricing-margin';
+import { PricingProcessRow } from '../domain-objects/pricing-process';
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -27,11 +28,13 @@ type RawConstants = Stringly<PricingConstantRow>;
 type RawType = Stringly<PricingProductTypeRow>;
 type RawLabel = Stringly<PricingCareLabelRow>;
 type RawMargin = Stringly<PricingMarginRow>;
+type RawProcess = Stringly<PricingProcessRow>;
 type DomainObject =
   | PricingConstantRow
   | PricingProductTypeRow
   | PricingCareLabelRow
-  | PricingMarginRow;
+  | PricingMarginRow
+  | PricingProcessRow;
 
 const HELP_TEXT = `
   Insert pricing values into pricing tables
@@ -40,7 +43,7 @@ const HELP_TEXT = `
     $ insert-pricing [input csv file]
 
   Options
-  --table, -t      REQUIRED One of: types, constants, margins, or labels
+  --table, -t      REQUIRED One of: constants, labels, margins, processes, or types
   --quiet, -q      Suppress output
   --force, -f      Do not ask for user confirmation
   --dry-run        Only print the query, do not execute
@@ -73,12 +76,14 @@ interface TableMap {
   constants: string;
   labels: string;
   margins: string;
+  processes: string;
   types: string;
 }
 const tableMap: TableMap = {
   constants: 'pricing_constants',
   labels: 'pricing_care_labels',
   margins: 'pricing_margins',
+  processes: 'pricing_processes',
   types: 'pricing_product_types'
 };
 
@@ -183,6 +188,10 @@ function castFromRaw(
     return raw.map(toMargin.bind(null, latestVersion));
   }
 
+  if (tableName === 'pricing_processes' && everyRawProcess(raw)) {
+    return raw.map(toProcess.bind(null, latestVersion));
+  }
+
   return null;
 }
 
@@ -242,6 +251,20 @@ function everyRawMargin(candidate: object[]): candidate is RawMargin[] {
   return candidate.every(isRawMargin);
 }
 
+function isRawProcess(candidate: object): candidate is RawProcess {
+  return hasOnlyProperties(
+    candidate,
+    'name',
+    'minimum_units',
+    'complexity',
+    'setup_cents',
+    'unit_cents'
+  );
+}
+function everyRawProcess(candidate: object[]): candidate is RawProcess[] {
+  return candidate.every(isRawProcess);
+}
+
 function toConstants(latestVersion: number, raw: RawConstants): PricingConstantRow {
   return {
     branded_labels_additional_cents: parseInt(raw.branded_labels_additional_cents, 10),
@@ -290,6 +313,19 @@ function toMargin(latestVersion: number, raw: RawMargin): PricingMarginRow {
     id: uuid.v4(),
     margin: Number(raw.margin),
     minimum_units: parseInt(raw.minimum_units, 10),
+    version: latestVersion + 1
+  };
+}
+
+function toProcess(latestVersion: number, raw: RawProcess): PricingProcessRow {
+  return {
+    complexity: raw.complexity,
+    created_at: new Date(),
+    id: uuid.v4(),
+    minimum_units: Number(raw.minimum_units),
+    name: raw.name,
+    setup_cents: Number(raw.setup_cents),
+    unit_cents: Number(raw.unit_cents),
     version: latestVersion + 1
   };
 }
