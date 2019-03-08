@@ -5,6 +5,7 @@ import * as uuid from 'node-uuid';
 import * as meow from 'meow';
 import * as parse from 'csv-parse/lib/sync';
 import * as Knex from 'knex';
+import { isEqual, uniqWith } from 'lodash';
 
 import * as db from '../services/db';
 import { log } from '../services/logger';
@@ -110,9 +111,10 @@ async function main(): Promise<void> {
 
   const csvText = fs.readFileSync(cli.input[0]).toString();
   const raw = parse(csvText, { columns: true });
+  const deduplicated = uniqWith(raw, isEqual);
   const tableName = tableMap[cli.flags.table];
   const latestVersion = await getLatestVersion(tableName);
-  const casted = castFromRaw(tableName, latestVersion, raw);
+  const casted = castFromRaw(tableName, latestVersion, deduplicated);
 
   if (!casted) {
     throw new Error('Could not properly parse csv into row type');
@@ -146,6 +148,7 @@ by typing '${tableName.toUpperCase()}': `);
   const insertResult = await query;
 
   if (cli.flags.verbose) {
+    log(`${raw.length - deduplicated.length} duplicate rows removed.`);
     log(`Inserted ${JSON.stringify(insertResult.length)} rows at version ${latestVersion + 1}`);
   }
 }
