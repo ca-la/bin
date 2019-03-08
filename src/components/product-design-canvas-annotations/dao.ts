@@ -115,13 +115,24 @@ export async function findAllWithCommentsByCanvasId(
   canvasId: string
 ): Promise<Annotation[]> {
   const annotations: AnnotationRow[] = await db(TABLE_NAME)
+    .distinct('product_design_canvas_annotations.id')
     .select('product_design_canvas_annotations.*')
     .join(
       'product_design_canvas_annotation_comments',
       'product_design_canvas_annotation_comments.annotation_id',
       'product_design_canvas_annotations.id'
     )
-    .where({ canvas_id: canvasId, deleted_at: null });
+    .join(
+      'comments',
+      'comments.id',
+      'product_design_canvas_annotation_comments.comment_id'
+    )
+    .whereRaw(`
+product_design_canvas_annotations.canvas_id = ?
+AND product_design_canvas_annotations.deleted_at IS null
+AND comments.deleted_at IS null
+    `, [canvasId])
+    .orderBy('product_design_canvas_annotations.created_at', 'asc');
 
   return parseNumericsList(
     validateEvery<AnnotationRow, Annotation>(

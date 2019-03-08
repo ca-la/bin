@@ -6,8 +6,10 @@ import createUser = require('../../test-helpers/create-user');
 import { create as createDesign } from '../../dao/product-designs';
 import { create as createDesignCanvas } from '../../dao/product-design-canvases';
 import ResourceNotFoundError from '../../errors/resource-not-found';
-import * as CommentsDAO from '../comments/dao';
 import * as AnnotationCommentsDAO from '../annotation-comments/dao';
+import * as CommentsDAO from '../comments/dao';
+import generateComment from '../../test-helpers/factories/comment';
+import generateAnnotation from '../../test-helpers/factories/product-design-canvas-annotation';
 
 test('ProductDesignCanvasAnnotation DAO supports creation/retrieval', async (t: tape.Test) => {
   const { user } = await createUser();
@@ -43,8 +45,8 @@ test('ProductDesignCanvasAnnotation DAO supports creation/retrieval', async (t: 
   t.deepEqual(asList, [designCanvasAnnotation], 'Finds annotation by canvas ID');
 });
 
-test('ProductDesignCanvasAnnotationsDAO#findAllWithCommentsByCanvasId', async (t: tape.Test) => {
-  const { user } = await createUser();
+test('findAllWithCommentsByCanvasId with no comments', async (t: tape.Test) => {
+  const { user } = await createUser({ withSession: false });
   const design = await createDesign({
     productType: 'TEESHIRT',
     title: 'Green Tee',
@@ -61,36 +63,46 @@ test('ProductDesignCanvasAnnotationsDAO#findAllWithCommentsByCanvasId', async (t
     x: 0,
     y: 0
   });
-  const annotation = await AnnotationsDAO.create({
+  await generateAnnotation({
     canvasId: designCanvas.id,
-    createdBy: user.id,
-    deletedAt: null,
-    id: uuid.v4(),
-    x: 20,
-    y: 10
+    createdBy: user.id
   });
 
   const withoutComment = await AnnotationsDAO
     .findAllWithCommentsByCanvasId(designCanvas.id);
   t.deepEqual(withoutComment, [], 'Does not return an annotation without any comments');
+});
 
-  const comment = await CommentsDAO.create({
-    createdAt: new Date(),
-    deletedAt: null,
-    id: uuid.v4(),
-    isPinned: false,
-    parentCommentId: null,
-    text: 'A comment',
-    userId: user.id
-  });
-  await AnnotationCommentsDAO.create({
-    annotationId: annotation.id,
-    commentId: comment.id
-  });
+test('findAllWithCommentsByCanvasId with comments', async (t: tape.Test) => {
+  const { user } = await createUser({ withSession: false });
+  const { annotation: a1, canvas } = await generateAnnotation({ createdBy: user.id });
+  const { comment } = await generateComment({ userId: user.id });
+  const { comment: commentTwo } = await generateComment({ userId: user.id });
+  await AnnotationCommentsDAO.create({ annotationId: a1.id, commentId: comment.id });
+  await AnnotationCommentsDAO.create({ annotationId: a1.id, commentId: commentTwo.id });
 
-  const withComment = await AnnotationsDAO
-    .findAllWithCommentsByCanvasId(designCanvas.id);
-  t.deepEqual(withComment, [annotation], 'Returns annotations with comments');
+  const { annotation: a2 } = await generateAnnotation({ canvasId: canvas.id, createdBy: user.id });
+  const { comment: c3 } = await generateComment();
+  await AnnotationCommentsDAO.create({ annotationId: a2.id, commentId: c3.id });
+
+  const result = await AnnotationsDAO.findAllWithCommentsByCanvasId(canvas.id);
+  t.deepEqual(result, [a1, a2], 'Returns annotations with comments');
+});
+
+test('findAllWithCommentsByCanvasId with deletions', async (t: tape.Test) => {
+  const { user } = await createUser({ withSession: false });
+  const { annotation: a1, canvas } = await generateAnnotation({ createdBy: user.id });
+  const { comment } = await generateComment({ userId: user.id });
+  await AnnotationCommentsDAO.create({ annotationId: a1.id, commentId: comment.id });
+  await CommentsDAO.deleteById(comment.id);
+
+  const { annotation: a2 } = await generateAnnotation({ canvasId: canvas.id, createdBy: user.id });
+  const { comment: c3 } = await generateComment();
+  await AnnotationCommentsDAO.create({ annotationId: a2.id, commentId: c3.id });
+  await AnnotationsDAO.deleteById(a2.id);
+
+  const result = await AnnotationsDAO.findAllWithCommentsByCanvasId(canvas.id);
+  t.deepEqual(result, [], 'Returns non-deleted annotations with non-deleted comments');
 });
 
 test('ProductDesignCanvasAnnotation DAO supports updating', async (t: tape.Test) => {
