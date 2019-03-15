@@ -10,6 +10,10 @@ import AnnotationComment, {
   withMetaDataAdapter as commentWithMetaAdapter
 } from './domain-object';
 import { validate, validateEvery } from '../../services/validate-from-db';
+import {
+  addAtMentionDetailsForComment,
+  CommentWithMentions
+} from '../../services/add-at-mention-details';
 
 const TABLE_NAME = 'product_design_canvas_annotation_comments';
 const VIEW_NAME = 'annotation_comments_view';
@@ -51,11 +55,13 @@ export async function findByAnnotationId(annotationId: string): Promise<CommentW
   );
 }
 
-interface AnnotationToComments {
-  [annotationId: string]: CommentWithMeta[];
+interface AnnotationToCommentsWithMentions {
+  [annotationId: string]: CommentWithMentions[];
 }
 
-export async function findByAnnotationIds(annotationIds: string[]): Promise<AnnotationToComments> {
+export async function findByAnnotationIds(
+  annotationIds: string[]
+): Promise<AnnotationToCommentsWithMentions> {
   const comments: CommentWithMetaRow[] = await db(VIEW_NAME)
     .select('*')
     .from('annotation_comments_view')
@@ -67,17 +73,19 @@ export async function findByAnnotationIds(annotationIds: string[]): Promise<Anno
     commentWithMetaAdapter,
     comments
   );
-  const commentsByAnnotation: AnnotationToComments = {};
 
-  validatedComments.map((comment: CommentWithMeta): void => {
-    const annotationId = comment.annotationId;
+  const commentsByAnnotation: AnnotationToCommentsWithMentions = {};
+  for (const validatedComment of validatedComments) {
+    const { annotationId, ...baseComment } = validatedComment;
+    const baseCommentWithMentions = await addAtMentionDetailsForComment(baseComment);
+
     const values = commentsByAnnotation[annotationId];
     if (values) {
-      commentsByAnnotation[annotationId] = [...values, comment];
+      commentsByAnnotation[annotationId] = [...values, baseCommentWithMentions];
     } else {
-      commentsByAnnotation[annotationId] = [comment];
+      commentsByAnnotation[annotationId] = [baseCommentWithMentions];
     }
-  });
+  }
 
   return commentsByAnnotation;
 }

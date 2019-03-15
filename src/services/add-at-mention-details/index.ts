@@ -5,8 +5,43 @@ import parseAtMentions, {
 } from '@cala/ts-lib/dist/parsing/comment-mentions';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 
-interface CommentWithMentions extends Comment {
+export interface CommentWithMentions extends Comment {
   mentions: { [id: string]: string };
+}
+
+export async function addAtMentionDetailsForComment(
+  comment: Comment
+): Promise<CommentWithMentions> {
+  const mentionMatches = parseAtMentions(comment.text);
+  if (mentionMatches.length > 0) {
+    const mentions = await mentionMatches.reduce(
+      async (accPromise: Promise<{ [id: string]: string }>, match: MentionMeta) => {
+        const acc = await accPromise;
+        if (match.type === MentionType.collaborator) {
+          const collaborator = await CollaboratorsDAO.findById(match.id);
+          if (!collaborator) {
+            return acc;
+          }
+          return ({
+            ...acc,
+            [match.id]: collaborator.user
+            ? collaborator.user.name
+            : collaborator.userEmail || 'Unknown'
+          });
+        }
+        return acc;
+      },
+      Promise.resolve({})
+    );
+    return {
+      ...comment,
+      mentions
+    };
+  }
+  return {
+    ...comment,
+    mentions: {}
+  };
 }
 
 /**
@@ -20,36 +55,7 @@ export default async function addAtMentionDetails(
   return Promise.all(
     comments.map(
       async (comment: Comment): Promise<CommentWithMentions> => {
-        const mentionMatches = parseAtMentions(comment.text);
-        if (mentionMatches.length > 0) {
-          const mentions = await mentionMatches.reduce(
-            async (accPromise: Promise<{ [id: string]: string }>, match: MentionMeta) => {
-              const acc = await accPromise;
-              if (match.type === MentionType.collaborator) {
-                const collaborator = await CollaboratorsDAO.findById(match.id);
-                if (!collaborator) {
-                  return acc;
-                }
-                return ({
-                  ...acc,
-                  [match.id]: collaborator.user
-                  ? collaborator.user.name
-                  : collaborator.userEmail || 'Unknown'
-                });
-              }
-              return acc;
-            },
-            Promise.resolve({})
-          );
-          return {
-            ...comment,
-            mentions
-          };
-        }
-        return {
-          ...comment,
-          mentions: {}
-        };
+        return await addAtMentionDetailsForComment(comment);
       }
     )
   );

@@ -115,12 +115,12 @@ test('findByAnnotationIds', async (t: tape.Test) => {
 
   t.equal(Object.keys(result).length, 2, 'Returns only the annotations with comments');
   t.deepEqual(result[annotationOne.id], [
-    { ...c1, annotationId: annotationOne.id, userEmail: c1Creator.email, userName: c1Creator.name },
-    { ...c2, annotationId: annotationOne.id, userEmail: c2Creator.email, userName: c2Creator.name },
-    { ...c3, annotationId: annotationOne.id, userEmail: c3Creator.email, userName: c3Creator.name }
+    { ...c1, mentions: {}, userEmail: c1Creator.email, userName: c1Creator.name },
+    { ...c2, mentions: {}, userEmail: c2Creator.email, userName: c2Creator.name },
+    { ...c3, mentions: {}, userEmail: c3Creator.email, userName: c3Creator.name }
   ]);
   t.deepEqual(result[annotationTwo.id], [
-    { ...c4, annotationId: annotationTwo.id, userEmail: c4Creator.email, userName: c4Creator.name }
+    { ...c4, mentions: {}, userEmail: c4Creator.email, userName: c4Creator.name }
   ]);
 
   // deleting a comment should remove it from the list of comments.
@@ -132,7 +132,7 @@ test('findByAnnotationIds', async (t: tape.Test) => {
 
   t.equal(Object.keys(result2).length, 1, 'Returns annotations with undeleted comments');
   t.deepEqual(result2[annotationOne.id], [
-    { ...c1, annotationId: annotationOne.id, userEmail: c1Creator.email, userName: c1Creator.name },
-    { ...c3, annotationId: annotationOne.id, userEmail: c3Creator.email, userName: c3Creator.name }
+    { ...c1, mentions: {}, userEmail: c1Creator.email, userName: c1Creator.name },
+    { ...c3, mentions: {}, userEmail: c3Creator.email, userName: c3Creator.name }
   ]);
 });

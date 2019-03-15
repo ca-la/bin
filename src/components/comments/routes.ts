@@ -23,6 +23,7 @@ function* getList(this: Koa.Application.Context): AsyncIterableIterator<void> {
     : [query.annotationIds];
 
   const commentsByAnnotation = yield AnnotationCommentsDAO.findByAnnotationIds(idList);
+
   this.body = commentsByAnnotation;
   this.status = 200;
 }
