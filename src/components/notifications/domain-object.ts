@@ -1,28 +1,51 @@
+import {
+  AnnotationCreateNotification,
+  AnnotationCreateNotificationRow
+} from './models/annotation-create';
+import {
+  CollectionSubmitNotification,
+  CollectionSubmitNotificationRow
+} from './models/collection-submit';
+import {
+  CommitCostInputsNotification,
+  CommitCostInputsNotificationRow
+} from './models/commit-cost-inputs';
+import {
+  InviteCollaboratorNotification,
+  InviteCollaboratorNotificationRow
+} from './models/invite-collaborator';
+import {
+  MeasurementCreateNotification,
+  MeasurementCreateNotificationRow
+} from './models/measurement-create';
+import {
+  PartnerAcceptServiceBidNotification,
+  PartnerAcceptServiceBidNotificationRow
+} from './models/partner-accept-service-bid';
+import {
+  PartnerDesignBidNotification,
+  PartnerDesignBidNotificationRow
+} from './models/partner-design-bid';
+import {
+  PartnerRejectServiceBidNotification,
+  PartnerRejectServiceBidNotificationRow
+} from './models/partner-reject-service-bid';
+import { TaskAssigmentNotification, TaskAssigmentNotificationRow } from './models/task-assignment';
+import {
+  TaskCommentCreateNotification,
+  TaskCommentCreateNotificationRow
+} from './models/task-comment-create';
+import {
+  TaskCompletionNotification,
+  TaskCompletionNotificationRow
+} from './models/task-completion';
+import toDateOrNull, { toDateStringOrNull } from '../../services/to-date';
 import DataAdapter from '../../services/data-adapter';
 import { hasProperties } from '../../services/require-properties';
 
-import Annotation, {
-  ProductDesignCanvasAnnotationRow as AnnotationRow
-} from '../../components/product-design-canvas-annotations/domain-object';
-import Canvas, {
-  ProductDesignCanvasRow as CanvasRow
-} from '../../domain-objects/product-design-canvas';
-import Collection, { CollectionRow } from '../../domain-objects/collection';
-import Comment, { CommentRow } from '../../components/comments/domain-object';
-import Stage, {
-  ProductDesignStageRow as StageRow
-} from '../../domain-objects/product-design-stage';
-import TaskEvent, { TaskEventRow } from '../../domain-objects/task-event';
-import User = require('../../domain-objects/user');
-import ProductDesign = require('../../domain-objects/product-design');
-
 export enum NotificationType {
   ANNOTATION_CREATE = 'ANNOTATION_CREATE',
-  DESIGN_UPDATE = 'DESIGN_UPDATE',
   MEASUREMENT_CREATE = 'MEASUREMENT_CREATE',
-  SECTION_DELETE = 'SECTION_DELETE',
-  SECTION_CREATE = 'SECTION_CREATE',
-  SECTION_UPDATE = 'SECTION_UPDATE',
   TASK_ASSIGNMENT = 'TASK_ASSIGNMENT',
   TASK_COMMENT_CREATE = 'TASK_COMMENT_CREATE',
   TASK_COMPLETION = 'TASK_COMPLETION',
@@ -34,197 +57,80 @@ export enum NotificationType {
   INVITE_COLLABORATOR = 'INVITE_COLLABORATOR'
 }
 
-export interface BaseNotification {
-  actorUserId: string;
-  createdAt: Date;
-  id: string;
-  sentEmailAt: Date | null;
-}
-
-export interface AnnotationNotification extends BaseNotification {
-  annotationId: string;
-  canvasId: string;
-  collectionId: string;
-  designId: string;
-  recipientUserId: string;
-  type: NotificationType.ANNOTATION_CREATE;
-}
-
-export interface CollectionSubmitNotification extends BaseNotification {
-  collectionId: string;
-  recipientUserId: string;
-  type: NotificationType.COLLECTION_SUBMIT;
-}
-
-export interface ImmediateCostedCollectionNotification extends BaseNotification {
-  collectionId: string;
-  recipientUserId: string;
-  sentEmailAt: Date;
-  type: NotificationType.COMMIT_COST_INPUTS;
-}
-
-export interface ImmediateInviteNotification extends BaseNotification {
-  actorUserId: string;
-  collaboratorId: string;
-  collectionId: string | null;
-  designId: string | null;
-  recipientUserId: string | null;
-  sentEmailAt: Date;
-  type: NotificationType.INVITE_COLLABORATOR;
-}
-
-export interface MeasurementNotification extends BaseNotification {
-  canvasId: string;
-  collectionId: string;
-  designId: string;
-  measurementId: string;
-  recipientUserId: string;
-  type: NotificationType.MEASUREMENT_CREATE;
-}
-
-export interface PartnerAcceptBidNotification extends BaseNotification {
-  designId: string;
-  recipientUserId: string;
-  type: NotificationType.PARTNER_ACCEPT_SERVICE_BID;
-}
-
-export interface PartnerDesignBidNotification extends BaseNotification {
-  designId: string;
-  recipientUserId: string;
-  type: NotificationType.PARTNER_DESIGN_BID;
-}
-
-export interface PartnerRejectBidNotification extends BaseNotification {
-  designId: string;
-  recipientUserId: string;
-  type: NotificationType.PARTNER_REJECT_SERVICE_BID;
-}
-
-// Deprecated (v1 notification)
-export interface SectionCreateNotification extends BaseNotification {
-  actionDescription: string;
-  actorUserId: string;
-  designId: string;
-  recipientUserId: string;
-  sectionId: string;
-  type: NotificationType.SECTION_CREATE;
-}
-
-// Deprecated (v1 notification)
-export interface SectionDeleteNotification extends BaseNotification {
-  actionDescription: string;
-  designId: string;
-  recipientUserId: string;
-  type: NotificationType.SECTION_DELETE;
-}
-
-// Deprecated (v1 notification)
-export interface SectionUpdateNotification extends BaseNotification {
-  actionDescription: string;
-  designId: string;
-  recipientUserId: string;
-  sectionId: string;
-  type: NotificationType.SECTION_UPDATE;
-}
-
-export interface TaskAssignmentNotification extends BaseNotification {
-  collaboratorId: string;
-  collectionId: string | null;
-  designId: string;
-  recipientUserId: string | null;
-  stageId: string;
-  taskId: string;
-  type: NotificationType.TASK_ASSIGNMENT;
-}
-
-export interface TaskCommentCreateNotification extends BaseNotification {
-  collectionId: string | null;
-  commentId: string;
-  designId: string;
-  recipientUserId: string;
-  stageId: string;
-  taskId: string;
-  type: NotificationType.TASK_COMMENT_CREATE;
-}
-
-export interface TaskCompleteNotification extends BaseNotification {
-  collaboratorId: string;
-  collectionId: string | null;
-  designId: string;
-  recipientUserId: string | null;
-  stageId: string;
-  taskId: string;
-  type: NotificationType.TASK_COMPLETION;
-}
-
 export type Notification =
-  AnnotationNotification |
-  CollectionSubmitNotification |
-  ImmediateCostedCollectionNotification |
-  ImmediateInviteNotification |
-  MeasurementNotification |
-  PartnerAcceptBidNotification |
-  PartnerDesignBidNotification |
-  PartnerRejectBidNotification |
-  SectionCreateNotification  |
-  SectionDeleteNotification |
-  SectionUpdateNotification |
-  TaskAssignmentNotification |
-  TaskCommentCreateNotification |
-  TaskCompleteNotification;
+  | AnnotationCreateNotification
+  | CollectionSubmitNotification
+  | CommitCostInputsNotification
+  | InviteCollaboratorNotification
+  | MeasurementCreateNotification
+  | PartnerAcceptServiceBidNotification
+  | PartnerDesignBidNotification
+  | PartnerRejectServiceBidNotification
+  | TaskAssigmentNotification
+  | TaskCommentCreateNotification
+  | TaskCompletionNotification;
 
-export interface NotificationRow {
-  // DEPRECATED
-  action_description: string | null;
-  actor_user_id: string;
-  annotation_id: string | null;
-  canvas_id: string | null;
-  collaborator_id: string | null;
-  collection_id: string | null;
-  comment_id: string | null;
-  created_at: Date;
-  design_id: string | null;
-  id: string;
-  measurement_id: string | null;
-  recipient_user_id: string | null;
-  // DEPRECATED
-  section_id: string | null;
-  sent_email_at: Date | null;
-  stage_id: string | null;
-  task_id: string | null;
-  type: NotificationType | null;
-}
+export type NotificationRow =
+  | AnnotationCreateNotificationRow
+  | CollectionSubmitNotificationRow
+  | CommitCostInputsNotificationRow
+  | InviteCollaboratorNotificationRow
+  | MeasurementCreateNotificationRow
+  | PartnerAcceptServiceBidNotificationRow
+  | PartnerDesignBidNotificationRow
+  | PartnerRejectServiceBidNotificationRow
+  | TaskAssigmentNotificationRow
+  | TaskCommentCreateNotificationRow
+  | TaskCompletionNotificationRow;
 
-export type HydratedNotification = Notification & {
-  actor: User;
-  annotation: Annotation | null;
-  canvas: Canvas | null;
-  collection: Collection | null;
-  comment: Comment | null;
-  design: ProductDesign | null;
-  stage: Stage | null;
-  task: TaskEvent | null;
+type EqualKeys<T> = {
+  [P in keyof T]: any;
 };
 
-export interface HydratedNotificationRow extends NotificationRow {
-  actor: User;
-  annotation: AnnotationRow | null;
-  canvas: CanvasRow | null;
-  collection: CollectionRow | null;
-  comment: CommentRow | null;
-  design: ProductDesign | null;
-  stage: StageRow | null;
-  task: TaskEventRow | null;
+export function encode(row: EqualKeys<NotificationRow>): EqualKeys<Notification> {
+  return {
+    actionDescription: row.action_description,
+    actorUserId: row.actor_user_id,
+    annotationId: row.annotation_id,
+    canvasId: row.canvas_id,
+    collaboratorId: row.collaborator_id,
+    collectionId: row.collection_id,
+    commentId: row.comment_id,
+    createdAt: new Date(row.created_at),
+    designId: row.design_id,
+    id: row.id,
+    measurementId: row.measurement_id,
+    recipientUserId: row.recipient_user_id,
+    sectionId: row.section_id,
+    sentEmailAt: toDateOrNull(row.sent_email_at),
+    stageId: row.stage_id,
+    taskId: row.task_id,
+    type: row.type
+  };
 }
 
-export function dataAdapter<T extends Notification>(): DataAdapter<NotificationRow, T> {
-  return new DataAdapter<NotificationRow, T>();
+export function decode(data: EqualKeys<Notification>): EqualKeys<NotificationRow> {
+  return {
+    action_description: data.actionDescription,
+    actor_user_id: data.actorUserId,
+    annotation_id: data.annotationId,
+    canvas_id: data.canvasId,
+    collaborator_id: data.collaboratorId,
+    collection_id: data.collectionId,
+    comment_id: data.commentId,
+    created_at: data.createdAt.toISOString(),
+    design_id: data.designId,
+    id: data.id,
+    measurement_id: data.measurementId,
+    recipient_user_id: data.recipientUserId,
+    section_id: data.sectionId,
+    sent_email_at: toDateStringOrNull(data.sentEmailAt),
+    stage_id: data.stageId,
+    task_id: data.taskId,
+    type: data.type
+  };
 }
-
-export const hydratedDataAdapter = new DataAdapter<
-  HydratedNotificationRow,
-  HydratedNotification
->();
+export const dataAdapter = new DataAdapter<NotificationRow, Notification>();
 
 export function isNotificationRow(row: object):
   row is NotificationRow {
@@ -248,38 +154,4 @@ export function isNotificationRow(row: object):
     'task_id',
     'type'
   );
-}
-
-export function isHydratedNotificationRow(row: object): row is HydratedNotificationRow {
-  return isNotificationRow(row) && hasProperties(
-    row,
-    'actor',
-    'annotation',
-    'canvas',
-    'collection',
-    'comment',
-    'design',
-    'stage',
-    'task'
-  );
-}
-
-export interface BreadCrumb {
-  text: string;
-  url: string;
-}
-
-export interface NotificationMessageAttachment {
-  text: string;
-  url: string;
-}
-
-export interface NotificationMessage {
-  id: string;
-  html: string;
-  createdAt: Date;
-  actor: User | null;
-  imageUrl: string | null;
-  location: BreadCrumb[];
-  attachments: NotificationMessageAttachment[];
 }

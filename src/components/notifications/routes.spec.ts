@@ -6,12 +6,12 @@ import createUser = require('../../test-helpers/create-user');
 
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import * as DesignsDAO from '../../dao/product-designs';
-import { NotificationMessage } from './domain-object';
 import {
   generateInviteNotification,
   generatePartnerAcceptBidNotification
 } from '../../test-helpers/factories/notification';
 import generateCollection from '../../test-helpers/factories/collection';
+import { NotificationMessage } from '@cala/ts-lib';
 
 const API_PATH = '/notifications';
 

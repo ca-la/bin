@@ -1,5 +1,7 @@
 import { escape } from 'lodash';
+import { BreadCrumb, NotificationMessage } from '@cala/ts-lib';
 
+import InvalidDataError = require('../../errors/invalid-data');
 import * as ComponentsDAO from '../../dao/components';
 import ProductDesign = require('../../domain-objects/product-design');
 import * as UsersDAO from '../../dao/users';
@@ -8,10 +10,9 @@ import * as CollectionsDAO from '../../dao/collections';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as CommentsDAO from '../../components/comments/dao';
 import * as CanvasesDAO from '../../dao/product-design-canvases';
-import { BreadCrumb, Notification, NotificationMessage, NotificationType } from './domain-object';
+import { Notification, NotificationType } from './domain-object';
 import * as AnnotationCommentsDAO from '../annotation-comments/dao';
 import getTitle, { LinkBase } from '../../services/get-title';
-import { logWarning } from '../../services/logger';
 import Comment from '../../components/comments/domain-object';
 import { CommentWithMeta } from '../../components/annotation-comments/domain-object';
 import { ComponentType } from '../../domain-objects/component';
@@ -19,10 +20,11 @@ import ProductDesignCanvas from '../../domain-objects/product-design-canvas';
 import { STUDIO_HOST } from '../../config';
 import { DetailsTask } from '../../domain-objects/task-event';
 import Collection from '../../domain-objects/collection';
+import parseCommentText from '../../services/parse-comment-text';
 
 interface LinkOptions {
-  annotationId?: string;
-  canvasId?: string;
+  annotationId?: string | null;
+  canvasId?: string | null;
   componentType?: ComponentType;
   isCheckout?: boolean;
 }
@@ -157,7 +159,8 @@ export const createNotificationMessage = async (
         ? await ProductDesignsDAO.findById(notification.designId)
         : null;
       if (!collection && !design) { return null; }
-      const { htmlLink } = getDeepLink({ design, collection });
+      const collectionOrDesignName = getTitle({ collection, design });
+      const { htmlLink, deepLink } = getDeepLink({ design, collection });
       const cleanName = escape(baseNotificationMessage.actor.name);
       return {
         ...baseNotificationMessage,
@@ -165,7 +168,10 @@ export const createNotificationMessage = async (
         html:
         `${span(cleanName, 'user-name')} invited you to collaborate on ${htmlLink}`,
         imageUrl: design ? findImageUrl(design) : null,
-        location: getLocation({ collection, design })
+        link: deepLink,
+        location: getLocation({ collection, design }),
+        // tslint:disable-next-line:max-line-length
+        title: `${cleanName} invited you to collaborate on ${collectionOrDesignName}`
       };
     }
 
@@ -184,7 +190,7 @@ export const createNotificationMessage = async (
         ? component.type
         : undefined;
       const comment = comments ? comments[0] : null;
-      const commentText = comment ? comment.text : '';
+      const commentText = comment ? await parseCommentText(comment.text) : '';
       const cleanName = escape(baseNotificationMessage.actor.name);
       const { deepLink, htmlLink } = getDeepLink(
         { design },
@@ -199,7 +205,9 @@ export const createNotificationMessage = async (
         attachments: [{ text: commentText, url: deepLink }],
         html: `${span(cleanName, 'user-name')} commented on ${htmlLink}`,
         imageUrl: design ? findImageUrl(design) : null,
-        location: getLocation({ collection, design })
+        link: deepLink,
+        location: getLocation({ collection, design }),
+        title: `${cleanName} commented on ${getTitle({ design })}`
       };
     }
 
@@ -208,14 +216,16 @@ export const createNotificationMessage = async (
       const design = await getDesign(designId);
       const collection = await getCollection(collectionId);
       if (!design) { return null; }
-      const { htmlLink } = getDeepLink({ design });
+      const { htmlLink, deepLink } = getDeepLink({ design });
       const cleanName = escape(baseNotificationMessage.actor.name);
       return {
         ...baseNotificationMessage,
         attachments: [],
         html: `${span(cleanName, 'user-name')} added a measurement to ${htmlLink}`,
         imageUrl: design ? findImageUrl(design) : null,
-        location: getLocation({ collection, design })
+        link: deepLink,
+        location: getLocation({ collection, design }),
+        title: `${cleanName} added a measurement to ${getTitle({ design })}`
       };
     }
 
@@ -227,14 +237,16 @@ export const createNotificationMessage = async (
       if (!design || !task) { return null; }
       const { htmlLink, deepLink } = getDeepLink({ design, collection, task });
       const comment: Comment | null = await CommentsDAO.findById(notification.commentId);
-      const commentText = comment ? comment.text : '';
+      const commentText = comment ? await parseCommentText(comment.text) : '';
       const cleanName = escape(baseNotificationMessage.actor.name);
       return {
         ...baseNotificationMessage,
         attachments: [{ text: commentText, url: deepLink }],
         html: `${span(cleanName, 'user-name')} commented on your task ${htmlLink}`,
         imageUrl: design ? findImageUrl(design) : null,
-        location: getLocation({ collection, design })
+        link: deepLink,
+        location: getLocation({ collection, design }),
+        title: `${cleanName} commented on your task ${getTitle({ task })}`
       };
     }
 
@@ -243,15 +255,17 @@ export const createNotificationMessage = async (
       const design = await getDesign(designId);
       const collection = await getCollection(collectionId);
       const task = await getTask(taskId);
-      if (!design) { return null; }
-      const { htmlLink } = getDeepLink({ design, collection, task });
+      if (!design || !task) { return null; }
+      const { htmlLink, deepLink } = getDeepLink({ design, collection, task });
       const cleanName = escape(baseNotificationMessage.actor.name);
       return {
         ...baseNotificationMessage,
         attachments: [],
         html: `${span(cleanName, 'user-name')} assigned you the task ${htmlLink}`,
         imageUrl: design ? findImageUrl(design) : null,
-        location: getLocation({ collection, design })
+        link: deepLink,
+        location: getLocation({ collection, design }),
+        title: `${cleanName} assigned you the task ${getTitle({ task })}`
       };
     }
 
@@ -260,15 +274,17 @@ export const createNotificationMessage = async (
       const design = await getDesign(designId);
       const collection = await getCollection(collectionId);
       const task = await getTask(taskId);
-      if (!design) { return null; }
-      const { htmlLink } = getDeepLink({ design, collection, task });
+      if (!design || !task) { return null; }
+      const { htmlLink, deepLink } = getDeepLink({ design, collection, task });
       const cleanName = escape(baseNotificationMessage.actor.name);
       return {
         ...baseNotificationMessage,
         attachments: [],
         html: `${span(cleanName, 'user-name')} completed the task ${htmlLink}`,
         imageUrl: design ? findImageUrl(design) : null,
-        location: getLocation({ collection, design })
+        link: deepLink,
+        location: getLocation({ collection, design }),
+        title: `${cleanName} completed the task ${getTitle({ task })}`
       };
     }
 
@@ -278,14 +294,16 @@ export const createNotificationMessage = async (
       if (!design) { return null; }
       const collectionId = (design.collectionIds && design.collectionIds[0]) || null;
       const collection = await getCollection(collectionId);
-      const { htmlLink } = getDeepLink({ design });
+      const { htmlLink, deepLink } = getDeepLink({ design });
       const cleanName = escape(baseNotificationMessage.actor.name);
       return {
         ...baseNotificationMessage,
         attachments: [],
         html: `${span(cleanName, 'user-name')} accepted the service bid for ${htmlLink}`,
         imageUrl: null,
-        location: getLocation({ collection, design })
+        link: deepLink,
+        location: getLocation({ collection, design }),
+        title: `${cleanName} accepted the service bid for ${getTitle({ design })}`
       };
     }
 
@@ -301,7 +319,9 @@ export const createNotificationMessage = async (
         attachments: [],
         html: `You have a <a href="${deepLink}">new project</a> to review`,
         imageUrl: null,
-        location: getLocation({ collection, design })
+        link: deepLink,
+        location: getLocation({ collection, design }),
+        title: 'You have a new project to review'
       };
     }
 
@@ -311,14 +331,16 @@ export const createNotificationMessage = async (
       if (!design) { return null; }
       const collectionId = (design.collectionIds && design.collectionIds[0]) || null;
       const collection = await getCollection(collectionId);
-      const { htmlLink } = getDeepLink({ design });
+      const { htmlLink, deepLink } = getDeepLink({ design });
       const cleanName = escape(baseNotificationMessage.actor.name);
       return {
         ...baseNotificationMessage,
         attachments: [],
         html: `${span(cleanName, 'user-name')} rejected the service bid for ${htmlLink}`,
         imageUrl: null,
-        location: getLocation({ collection, design })
+        link: deepLink,
+        location: getLocation({ collection, design }),
+        title: `${cleanName} rejected the service bid for ${getTitle({ design })}`
       };
     }
 
@@ -326,13 +348,15 @@ export const createNotificationMessage = async (
       const { collectionId } = notification;
       const collection = await getCollection(collectionId);
       if (!collection) { return null; }
-      const { htmlLink } = getDeepLink({ collection });
+      const { htmlLink, deepLink } = getDeepLink({ collection });
       return {
         ...baseNotificationMessage,
         attachments: [],
-        html: `${htmlLink} has been submitted, and will be review by our team`,
+        html: `${htmlLink} has been submitted, and will be reviewed by our team`,
         imageUrl: null,
-        location: []
+        link: deepLink,
+        location: [],
+        title: `${getTitle({ collection })} has been submitted, and will be review by our team`
       };
     }
 
@@ -340,20 +364,21 @@ export const createNotificationMessage = async (
       const { collectionId } = notification;
       const collection = await getCollection(collectionId);
       if (!collection) { return null; }
-      const { htmlLink } = getDeepLink({ collection }, { isCheckout: true });
+      const { htmlLink, deepLink } = getDeepLink({ collection }, { isCheckout: true });
       return {
         ...baseNotificationMessage,
         attachments: [],
         html: `${htmlLink} has been reviewed and is now ready for checkout`,
         imageUrl: null,
-        location: []
+        link: deepLink,
+        location: [],
+        title: `${getTitle({ collection })} has been reviewed and is now ready for checkout`
       };
     }
 
     default: {
-      logWarning(
-        `Malformed notification found with type ${notification.type} and id ${notification.id}`);
-      return null;
+      // tslint:disable-next-line:max-line-length
+      throw new InvalidDataError(`Unknown notification type found with id ${notification!.id} and type ${notification!.type}`);
     }
   }
 };

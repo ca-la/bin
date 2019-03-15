@@ -6,7 +6,6 @@ import createUser = require('../../test-helpers/create-user');
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import * as NotificationsDAO from '../../components/notifications/dao';
 import * as DesignsDAO from '../../dao/product-designs';
-import { NotificationMessage } from './domain-object';
 import {
   generateInviteNotification,
   generatePartnerAcceptBidNotification
@@ -14,6 +13,7 @@ import {
 import generateCollection from '../../test-helpers/factories/collection';
 import { createNotificationMessage } from './notification-messages';
 import { STUDIO_HOST } from '../../config';
+import { NotificationMessage } from '@cala/ts-lib';
 
 test('notification messages returns notifacation messages to the user',
   async (t: tape.Test) => {

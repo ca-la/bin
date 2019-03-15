@@ -8,16 +8,17 @@ import * as DesignsDAO from '../../dao/product-designs';
 import createUser = require('../../test-helpers/create-user');
 import db = require('../../services/db');
 import {
-  ImmediateInviteNotification,
   Notification,
-  NotificationType,
-  PartnerAcceptBidNotification
+  NotificationType
 } from './domain-object';
 import {
   generateInviteNotification,
   generatePartnerAcceptBidNotification
 } from '../../test-helpers/factories/notification';
 import generateCollection from '../../test-helpers/factories/collection';
+import { InviteCollaboratorNotification } from './models/invite-collaborator';
+import { PartnerAcceptServiceBidNotification } from './models/partner-accept-service-bid';
+import { templateNotification } from './models/base';
 
 test('Notifications DAO supports creation', async (t: tape.Test) => {
   const { user: userOne } = await createUser({ withSession: false });
@@ -31,7 +32,8 @@ test('Notifications DAO supports creation', async (t: tape.Test) => {
     userEmail: null,
     userId: userTwo.id
   });
-  const data: ImmediateInviteNotification = {
+  const data: InviteCollaboratorNotification = {
+    ...templateNotification,
     actorUserId: userOne.id,
     collaboratorId: c1.id,
     collectionId: collection.id,
@@ -120,77 +122,26 @@ test('Notifications DAO supports finding outstanding notifications', async (t: t
     design: designTwo,
     notification: notificationTwo
   } = await generatePartnerAcceptBidNotification({
-    actorUserId: user.id
+    actorUserId: user.id,
+    designId: designOne.id
   });
   await generatePartnerAcceptBidNotification({
     actorUserId: user.id,
+    designId: designOne.id,
     sentEmailAt: new Date()
   });
   await generatePartnerAcceptBidNotification({
     actorUserId: user.id,
+    designId: designTwo.id,
     sentEmailAt: new Date()
   });
 
   await db.transaction(async (trx: Knex.Transaction) => {
     const results: any = await NotificationsDAO.findOutstanding(trx);
-    const formattedResults = [
-      {
-        ...results[0],
-        actor: {
-          ...results[0].actor,
-          createdAt: new Date(results[0].actor.createdAt)
-        },
-        design: {
-          ...results[0].design,
-          collectionIds: [],
-          collections: [],
-          createdAt: new Date(results[0].design.createdAt),
-          imageIds: [],
-          imageLinks: [],
-          previewImageUrls: []
-        }
-      },
-      {
-        ...results[1],
-        actor: {
-          ...results[1].actor,
-          createdAt: new Date(results[1].actor.createdAt)
-        },
-        design: {
-          ...results[1].design,
-          collectionIds: [],
-          collections: [],
-          createdAt: new Date(results[1].design.createdAt),
-          imageIds: [],
-          imageLinks: [],
-          previewImageUrls: []
-        }
-      }
-    ];
 
     t.deepEqual(
-      formattedResults,
-      [{
-        ...notificationTwo,
-        actor: user,
-        annotation: null,
-        canvas: null,
-        collection: null,
-        comment: null,
-        design: designTwo,
-        stage: null,
-        task: null
-      }, {
-        ...notificationOne,
-        actor: user,
-        annotation: null,
-        canvas: null,
-        collection: null,
-        comment: null,
-        design: designOne,
-        stage: null,
-        task: null
-      }],
+      results,
+      [notificationTwo , notificationOne],
       'Returns unsent notifications with recipients'
     );
   });
@@ -232,11 +183,11 @@ test('Notifications DAO supports deleting similar notifications', async (t: tape
   const { collection } = await generateCollection({ createdBy: userTwo.user.id });
 
   await NotificationsDAO.create({
+    ...templateNotification,
     actorUserId: userTwo.user.id,
     collectionId: collection.id,
     id: uuid.v4(),
     recipientUserId: admin.id,
-    sentEmailAt: null,
     type: NotificationType.COLLECTION_SUBMIT
   });
   await generatePartnerAcceptBidNotification({
@@ -249,7 +200,8 @@ test('Notifications DAO supports deleting similar notifications', async (t: tape
     designId: design.id,
     recipientUserId: admin.id
   });
-  const unsentNotification: PartnerAcceptBidNotification = {
+  const unsentNotification: PartnerAcceptServiceBidNotification = {
+    ...templateNotification,
     actorUserId: userOne.user.id,
     createdAt: new Date(),
     designId: design.id,

@@ -49,3 +49,12 @@ export function validatePropertiesFormatted(
     }
   });
 }
+
+export function validateTypeWithGuardOrThrow<T extends object>(
+  data: any, guard: (data: T) => data is T, message: string
+): T {
+  if (!guard(data)) {
+    throw new Error(message);
+  }
+  return data;
+}

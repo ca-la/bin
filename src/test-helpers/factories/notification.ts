@@ -1,10 +1,9 @@
 import * as uuid from 'node-uuid';
+
 import { create } from '../../components/notifications/dao';
 import {
-  ImmediateInviteNotification,
   Notification,
-  NotificationType,
-  PartnerAcceptBidNotification
+  NotificationType
 } from '../../components/notifications/domain-object';
 import { findById as findUserById } from '../../dao/users';
 import createUser = require('../create-user');
@@ -15,6 +14,13 @@ import generateCollection from './collection';
 import Collection from '../../domain-objects/collection';
 import User = require('../../domain-objects/user');
 import ProductDesign = require('../../domain-objects/product-design');
+import { templateNotification } from '../../components/notifications/models/base';
+import {
+  PartnerAcceptServiceBidNotification
+} from '../../components/notifications/models/partner-accept-service-bid';
+import {
+  InviteCollaboratorNotification
+} from '../../components/notifications/models/invite-collaborator';
 
 interface InviteNotificationWithResources {
   actor: User;
@@ -34,7 +40,7 @@ interface PartnerAcceptBidNotificationWithResources {
  * Generates a Partner Accept Bid notification
  */
 export async function generatePartnerAcceptBidNotification(
-  options: Partial<PartnerAcceptBidNotification> = {}
+  options: Partial<PartnerAcceptServiceBidNotification> = {}
 ): Promise<PartnerAcceptBidNotificationWithResources> {
   const { user: actor } = options.actorUserId
     ? { user: await findUserById(options.actorUserId) }
@@ -52,7 +58,8 @@ export async function generatePartnerAcceptBidNotification(
 
   if (!design) { throw new Error('Could not generate a design!'); }
 
-  const payload: PartnerAcceptBidNotification = {
+  const payload: PartnerAcceptServiceBidNotification = {
+    ...templateNotification,
     actorUserId: actor.id,
     createdAt: new Date(),
     designId: design.id,
@@ -76,7 +83,7 @@ export async function generatePartnerAcceptBidNotification(
  * Generates an invite notification.
  */
 export async function generateInviteNotification(
-  options: Partial<ImmediateInviteNotification> = {}
+  options: Partial<InviteCollaboratorNotification> = {}
 ): Promise<InviteNotificationWithResources> {
   const { user: actor } = options.actorUserId
     ? { user: await findUserById(options.actorUserId) }
@@ -94,7 +101,8 @@ export async function generateInviteNotification(
     });
   if (!collaborator) { throw new Error('Could not generate a collaborator!');  }
 
-  const payload: ImmediateInviteNotification = {
+  const payload: InviteCollaboratorNotification = {
+    ...templateNotification,
     actorUserId: actor.id,
     collaboratorId: collaborator.id,
     collectionId: null,

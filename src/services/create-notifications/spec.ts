@@ -367,6 +367,77 @@ test('sendTaskAssignmentNotification does not send if assigned to self', async (
   );
 });
 
+test('sendTaskAssignmentNotification does not send if assigned to collaborator without an account',
+async (t: tape.Test) => {
+  const { user } = await createUser();
+
+  const collection = await CollectionsDAO.create({
+    createdAt: new Date(),
+    createdBy: user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
+    title: 'AW19'
+  });
+  const design = await DesignsDAO.create({
+    productType: 'A product type',
+    title: 'A design',
+    userId: user.id
+  });
+  await CollectionsDAO.addDesign(collection.id, design.id);
+  const designStage = await DesignStagesDAO.create({
+    description: '',
+    designId: design.id,
+    ordering: 0,
+    title: 'test'
+  });
+  await CollaboratorsDAO.create({
+    collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
+    userId: user.id
+  });
+  const collaborator2 = await CollaboratorsDAO.create({
+    collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: 'test@test.test',
+    userId: null
+  });
+
+  const taskOne = await TasksDAO.create(uuid.v4());
+  await TaskEventsDAO.create({
+    createdBy: user.id,
+    description: '',
+    designStageId: designStage.id,
+    dueDate: null,
+    ordering: 0,
+    status: null,
+    taskId: taskOne.id,
+    title: 'My First Task'
+  });
+  await DesignStageTasksDAO.create({
+    designStageId: designStage.id,
+    taskId: taskOne.id
+  });
+  await CollaboratorTasksDAO.create({
+    collaboratorId: collaborator2.id,
+    taskId: taskOne.id
+  });
+
+  const notifications = await NotificationsService
+    .sendTaskAssignmentNotification(taskOne.id, user.id, [collaborator2.id]);
+
+  t.equal(
+    notifications.length,
+    0,
+    'Does not create a task assignment notification'
+  );
+});
+
 test('sendTaskCompletionNotification', async (t: tape.Test) => {
   const userOne = await createUser();
   const userTwo = await createUser();
@@ -407,6 +478,14 @@ test('sendTaskCompletionNotification', async (t: tape.Test) => {
     userEmail: null,
     userId: userTwo.user.id
   });
+  await CollaboratorsDAO.create({
+    collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: 'test@test.test',
+    userId: null
+  });
   const taskOne = await TasksDAO.create(uuid.v4());
   await TaskEventsDAO.create({
     createdBy: userOne.user.id,
@@ -433,7 +512,7 @@ test('sendTaskCompletionNotification', async (t: tape.Test) => {
   t.equal(
     notifications.length,
     1,
-    'Creates a task completion notification just for the other collaborators'
+    'Creates a task completion notification just for the other collaborators with users'
   );
   t.deepEqual(
     notifications[0].recipientUserId,
@@ -549,7 +628,7 @@ test('immediatelySendInviteCollaborator', async (t: tape.Test) => {
 
   const notification = await NotificationsService.immediatelySendInviteCollaborator({
     actorId: userOne.user.id,
-    collectionId: null,
+    collectionId: collection.id,
     designId: null,
     targetCollaboratorId: collaboratorOne.id,
     targetUserId: null

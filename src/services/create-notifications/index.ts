@@ -1,7 +1,6 @@
 import * as uuid from 'node-uuid';
 
 import * as NotificationsDAO from '../../components/notifications/dao';
-import * as SectionsDAO from '../../dao/product-design-sections';
 import * as CanvasesDAO from '../../dao/product-design-canvases';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import * as StageTasksDAO from '../../dao/product-design-stage-tasks';
@@ -12,118 +11,73 @@ import * as TaskEventsDAO from '../../dao/task-events';
 import * as UsersDAO from '../../dao/users';
 
 import {
-  AnnotationNotification,
-  CollectionSubmitNotification,
-  ImmediateCostedCollectionNotification,
-  ImmediateInviteNotification,
-  MeasurementNotification,
   Notification,
-  NotificationType,
-  PartnerAcceptBidNotification,
-  PartnerDesignBidNotification,
-  PartnerRejectBidNotification,
-  SectionCreateNotification,
-  SectionDeleteNotification,
-  SectionUpdateNotification,
-  TaskAssignmentNotification,
-  TaskCommentCreateNotification,
-  TaskCompleteNotification
+  NotificationType
 } from '../../components/notifications/domain-object';
 import Collaborator, {
   CollaboratorWithUser
 } from '../../components/collaborators/domain-objects/collaborator';
-import User = require('../../domain-objects/user');
 
-import findDesignUsers = require('../../services/find-design-users');
 import * as EmailService from '../../services/email';
 import * as SlackService from '../../services/slack';
 
+import {
+  isTaskAssigmentNotification,
+  TaskAssigmentNotification
+} from '../../components/notifications/models/task-assignment';
 import * as Config from '../../config';
+import { createNotificationMessage } from '../../components/notifications/notification-messages';
+import {
+  AnnotationCreateNotification,
+  isAnnotationCreateNotification
+} from '../../components/notifications/models/annotation-create';
+import { validateTypeWithGuardOrThrow } from '../validate';
+import {
+  isMeasurementCreateNotification,
+  MeasurementCreateNotification
+} from '../../components/notifications/models/measurement-create';
+import {
+  isTaskCommentCreateNotification,
+  TaskCommentCreateNotification
+} from '../../components/notifications/models/task-comment-create';
+import { templateNotification } from '../../components/notifications/models/base';
+import {
+  isTaskCompletionNotification,
+  TaskCompletionNotification
+} from '../../components/notifications/models/task-completion';
+import {
+  isPartnerAcceptServiceBidNotification,
+  PartnerAcceptServiceBidNotification
+} from '../../components/notifications/models/partner-accept-service-bid';
+import {
+  CollectionSubmitNotification,
+  isCollectionSubmitNotification
+} from '../../components/notifications/models/collection-submit';
+import {
+  isPartnerRejectServiceBidNotification,
+  PartnerRejectServiceBidNotification
+} from '../../components/notifications/models/partner-reject-service-bid';
+import {
+  CommitCostInputsNotification,
+  isCommitCostInputsNotification
+} from '../../components/notifications/models/commit-cost-inputs';
+import {
+  isPartnerDesignBidNotification,
+  PartnerDesignBidNotification
+} from '../../components/notifications/models/partner-design-bid';
+import {
+  InviteCollaboratorNotification,
+  isInviteCollaboratorNotification
+} from '../../components/notifications/models/invite-collaborator';
 
 /**
  * Deletes pre-existing similar notifications and adds in a new one.
  */
-async function replaceNotifications<T extends Notification>(
-  notification: Uninserted<T>
-): Promise<T> {
+async function replaceNotifications(
+  notification: Uninserted<Notification>
+): Promise<Notification> {
   await NotificationsDAO.deleteRecent(notification);
   return await NotificationsDAO.create(notification);
-}
-
-/**
- * Creates notifications for each recipient for the section create action.
- * notes: Deprecated (v1 notification).
- */
-export async function sendSectionCreateNotifications(
-  sectionId: string,
-  designId: string,
-  userId: string
-): Promise<SectionCreateNotification[]> {
-  const recipients = await findDesignUsers(designId) as User[];
-
-  return Promise.all(recipients.map((recipient: User): Promise<SectionCreateNotification> => {
-    return replaceNotifications({
-      actionDescription: 'created a new section',
-      actorUserId: userId,
-      designId,
-      id: uuid.v4(),
-      recipientUserId: recipient.id,
-      sectionId,
-      sentEmailAt: null,
-      type: NotificationType.SECTION_CREATE
-    });
-  }));
-}
-
-/**
- * Creates notifications for each recipient for the section delete action.
- * notes: Deprecated (v1 notification).
- */
-export async function sendSectionDeleteNotifications(
-  sectionTitle: string,
-  designId: string,
-  userId: string
-): Promise<SectionDeleteNotification[]> {
-  const recipients = await findDesignUsers(designId) as User[];
-
-  return Promise.all(recipients.map((recipient: User): Promise<SectionDeleteNotification> => {
-    return replaceNotifications({
-      actionDescription: `deleted the "${sectionTitle}" section`,
-      actorUserId: userId,
-      designId,
-      id: uuid.v4(),
-      recipientUserId: recipient.id,
-      sentEmailAt: null,
-      type: NotificationType.SECTION_DELETE
-    });
-  }));
-}
-
-/**
- * Creates notifications for each recipient for the section update action.
- * notes: Deprecated (v1 notification).
- */
-export async function sendSectionUpdateNotifications(
-  sectionId: string,
-  designId: string,
-  userId: string
-): Promise<SectionUpdateNotification[]> {
-  const section = await SectionsDAO.findById(sectionId);
-  if (!section) { throw new Error(`Could not find section ${section}`); }
-
-  const recipients = await findDesignUsers(designId) as User[];
-  return Promise.all(recipients.map((recipient: User): Promise<SectionUpdateNotification> => {
-    return replaceNotifications({
-      actionDescription: `updated the "${section.title || 'Untitled'}" section`,
-      actorUserId: userId,
-      designId,
-      id: uuid.v4(),
-      recipientUserId: recipient.id,
-      sectionId,
-      sentEmailAt: null,
-      type: NotificationType.SECTION_UPDATE
-    });
-  }));
 }
 
 /**
@@ -134,7 +88,7 @@ export async function sendDesignOwnerAnnotationCreateNotification(
   annotationId: string,
   canvasId: string,
   actorId: string
-): Promise<AnnotationNotification | null> {
+): Promise<AnnotationCreateNotification | null> {
   const canvas = await CanvasesDAO.findById(canvasId);
   if (!canvas) { throw new Error(`Canvas ${canvasId} does not exist!`); }
   const design = await DesignsDAO.findById(canvas.designId);
@@ -147,17 +101,24 @@ export async function sendDesignOwnerAnnotationCreateNotification(
 
   if (actorId === targetId) { return null; }
 
-  return replaceNotifications<AnnotationNotification>({
+  const id = uuid.v4();
+  const notification = await replaceNotifications({
+    ...templateNotification,
     actorUserId: actorId,
     annotationId,
     canvasId: canvas.id,
     collectionId,
     designId: design.id,
-    id: uuid.v4(),
+    id,
     recipientUserId: targetId,
     sentEmailAt: null,
     type: NotificationType.ANNOTATION_CREATE
   });
+  return validateTypeWithGuardOrThrow(
+    notification,
+    isAnnotationCreateNotification,
+    // tslint:disable-next-line:max-line-length
+    `Could not validate ${NotificationType.ANNOTATION_CREATE} notification type from database with id: ${id}`);
 }
 
 /**
@@ -168,7 +129,7 @@ export async function sendDesignOwnerMeasurementCreateNotification(
   measurementId: string,
   canvasId: string,
   actorId: string
-): Promise<MeasurementNotification | null> {
+): Promise<MeasurementCreateNotification | null> {
   const canvas = await CanvasesDAO.findById(canvasId);
   if (!canvas) { throw new Error(`Canvas ${canvasId} does not exist!`); }
   const design = await DesignsDAO.findById(canvas.designId);
@@ -181,17 +142,24 @@ export async function sendDesignOwnerMeasurementCreateNotification(
 
   if (actorId === targetId) { return null; }
 
-  return replaceNotifications<MeasurementNotification>({
+  const id = uuid.v4();
+  const notification = await replaceNotifications({
+    ...templateNotification,
     actorUserId: actorId,
     canvasId: canvas.id,
     collectionId,
     designId: design.id,
-    id: uuid.v4(),
+    id,
     measurementId,
     recipientUserId: targetId,
     sentEmailAt: null,
     type: NotificationType.MEASUREMENT_CREATE
   });
+  return validateTypeWithGuardOrThrow(
+    notification,
+    isMeasurementCreateNotification,
+    // tslint:disable-next-line:max-line-length
+    `Could not validate ${NotificationType.MEASUREMENT_CREATE} notification type from database with id: ${id}`);
 }
 
 /**
@@ -230,29 +198,37 @@ export async function sendTaskCommentCreateNotification(
   const design = await DesignsDAO.findById(stage.designId);
   if (!design) { throw new Error(`Could not find a design with id: ${stage.designId}`); }
 
-  return Promise.all(
-    filteredRecipientIds.map((recipientId: string): Promise<TaskCommentCreateNotification> => {
-      return replaceNotifications({
-        actorUserId: actorId,
-        collectionId: design.collectionIds[0] || null,
-        commentId,
-        designId: design.id,
-        id: uuid.v4(),
-        recipientUserId: recipientId,
-        sentEmailAt: null,
-        stageId: stage.id,
-        taskId,
-        type: NotificationType.TASK_COMMENT_CREATE
-      });
-    })
-  );
+  const notifications = [];
+  for (const recipientId of filteredRecipientIds) {
+    const id = uuid.v4();
+    const notification = await replaceNotifications({
+      ...templateNotification,
+      actorUserId: actorId,
+      collectionId: design.collectionIds[0] || null,
+      commentId,
+      designId: design.id,
+      id,
+      recipientUserId: recipientId,
+      sentEmailAt: null,
+      stageId: stage.id,
+      taskId,
+      type: NotificationType.TASK_COMMENT_CREATE
+    });
+    const validated = validateTypeWithGuardOrThrow(
+      notification,
+      isTaskCommentCreateNotification,
+      // tslint:disable-next-line:max-line-length
+      `Could not validate ${NotificationType.TASK_COMMENT_CREATE} notification type from database with id: ${id}`);
+    notifications.push(validated);
+  }
+  return notifications;
 }
 
 export async function sendTaskAssignmentNotification(
   taskId: string,
   actorId: string,
   collaboratorIds: string[]
-): Promise<TaskAssignmentNotification[]> {
+): Promise<TaskAssigmentNotification[]> {
   const collaborators = await CollaboratorsDAO.findAllByIds(collaboratorIds);
 
   const stageTask = await StageTasksDAO.findByTaskId(taskId);
@@ -264,30 +240,41 @@ export async function sendTaskAssignmentNotification(
   const design = await DesignsDAO.findById(stage.designId);
   if (!design) { throw new Error(`Could not find a design with id: ${stage.designId}`); }
 
-  return Promise.all(
-    collaborators
-    .filter((collaborator: CollaboratorWithUser) => collaborator.userId !== actorId)
-    .map((collaborator: CollaboratorWithUser): Promise<TaskAssignmentNotification> => {
-      return replaceNotifications({
-        actorUserId: actorId,
-        collaboratorId: collaborator.id,
-        collectionId: design.collectionIds[0] || null,
-        designId: design.id,
-        id: uuid.v4(),
-        recipientUserId: collaborator.user ? collaborator.user.id : null,
-        sentEmailAt: null,
-        stageId: stage.id,
-        taskId,
-        type: NotificationType.TASK_ASSIGNMENT
-      });
-    })
-  );
+  const notifications = [];
+
+  for (const collaborator of collaborators) {
+    if (!collaborator.user || collaborator.user.id === actorId) {
+      continue;
+    }
+    const id = uuid.v4();
+    const notification = await replaceNotifications({
+      ...templateNotification,
+      actorUserId: actorId,
+      collaboratorId: collaborator.id,
+      collectionId: design.collectionIds[0] || null,
+      designId: design.id,
+      id,
+      recipientUserId: collaborator.user.id,
+      sentEmailAt: null,
+      stageId: stage.id,
+      taskId,
+      type: NotificationType.TASK_ASSIGNMENT
+    });
+    const validated = validateTypeWithGuardOrThrow(
+      notification,
+      isTaskAssigmentNotification,
+      // tslint:disable-next-line:max-line-length
+      `Could not validate ${NotificationType.TASK_ASSIGNMENT} notification type from database with id: ${id}`);
+    notifications.push(validated);
+  }
+
+  return notifications;
 }
 
 export async function sendTaskCompletionNotification(
   taskId: string,
   actorId: string
-): Promise<TaskCompleteNotification[]> {
+): Promise<TaskCompletionNotification[]> {
   const stageTask = await StageTasksDAO.findByTaskId(taskId);
   if (!stageTask) { throw new Error(`Could not find a stage task with task id: ${taskId}`); }
 
@@ -302,25 +289,36 @@ export async function sendTaskCompletionNotification(
 
   const recipients: CollaboratorWithUser[] = collaborators
     .filter((collaborator: CollaboratorWithUser) => {
-      return collaborator.userId !== actorId;
+      return Boolean(collaborator.user) && collaborator.userId !== actorId;
     });
 
-  return Promise.all(
-    recipients.map((collaborator: CollaboratorWithUser): Promise<TaskCompleteNotification> => {
-      return replaceNotifications({
-        actorUserId: actorId,
-        collaboratorId: collaborator.id,
-        collectionId: design.collectionIds[0] || null,
-        designId: design.id,
-        id: uuid.v4(),
-        recipientUserId: collaborator.user ? collaborator.user.id : null,
-        sentEmailAt: null,
-        stageId: stage.id,
-        taskId,
-        type: NotificationType.TASK_COMPLETION
-      });
-    })
-  );
+  const notifications = [];
+  for (const collaborator of recipients) {
+    if (!collaborator.user) {
+      continue;
+    }
+    const id = uuid.v4();
+    const notification = await replaceNotifications({
+      ...templateNotification,
+      actorUserId: actorId,
+      collaboratorId: collaborator.id,
+      collectionId: design.collectionIds[0] || null,
+      designId: design.id,
+      id,
+      recipientUserId: collaborator.user.id,
+      sentEmailAt: null,
+      stageId: stage.id,
+      taskId,
+      type: NotificationType.TASK_COMPLETION
+    });
+    const validated = validateTypeWithGuardOrThrow(
+      notification,
+      isTaskCompletionNotification,
+      // tslint:disable-next-line:max-line-length
+      `Could not validate ${NotificationType.TASK_COMPLETION} notification type from database with id: ${id}`);
+    notifications.push(validated);
+  }
+  return notifications;
 }
 
 /**
@@ -329,11 +327,13 @@ export async function sendTaskCompletionNotification(
 export async function sendPartnerAcceptServiceBidNotification(
   designId: string,
   actorId: string
-): Promise<PartnerAcceptBidNotification> {
-  const notification = await NotificationsDAO.create<PartnerAcceptBidNotification>({
+): Promise<PartnerAcceptServiceBidNotification> {
+  const id = uuid.v4();
+  const notification = await NotificationsDAO.create({
+    ...templateNotification,
     actorUserId: actorId,
     designId,
-    id: uuid.v4(),
+    id,
     recipientUserId: Config.CALA_OPS_USER_ID,
     sentEmailAt: null,
     type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
@@ -348,7 +348,13 @@ export async function sendPartnerAcceptServiceBidNotification(
     templateName: 'partner_accept_bid'
   });
 
-  return notification;
+  const validated = validateTypeWithGuardOrThrow(
+    notification,
+    isPartnerAcceptServiceBidNotification,
+    // tslint:disable-next-line:max-line-length
+    `Could not validate ${NotificationType.PARTNER_ACCEPT_SERVICE_BID} notification type from database with id: ${id}`);
+
+  return validated;
 }
 
 /**
@@ -357,11 +363,13 @@ export async function sendPartnerAcceptServiceBidNotification(
 export async function sendPartnerRejectServiceBidNotification(
   designId: string,
   actorId: string
-): Promise<PartnerRejectBidNotification> {
-  const notification = await NotificationsDAO.create<PartnerRejectBidNotification>({
+): Promise<PartnerRejectServiceBidNotification> {
+  const id = uuid.v4();
+  const notification = await NotificationsDAO.create({
+    ...templateNotification,
     actorUserId: actorId,
     designId,
-    id: uuid.v4(),
+    id,
     recipientUserId: Config.CALA_OPS_USER_ID,
     sentEmailAt: null,
     type: NotificationType.PARTNER_REJECT_SERVICE_BID
@@ -376,7 +384,13 @@ export async function sendPartnerRejectServiceBidNotification(
     templateName: 'partner_reject_bid'
   });
 
-  return notification;
+  const validated = validateTypeWithGuardOrThrow(
+    notification,
+    isPartnerRejectServiceBidNotification,
+    // tslint:disable-next-line:max-line-length
+    `Could not validate ${NotificationType.PARTNER_REJECT_SERVICE_BID} notification type from database with id: ${id}`);
+
+  return validated;
 }
 
 /**
@@ -396,14 +410,21 @@ export async function sendDesignerSubmitCollection(
     templateName: 'collection_submission'
   });
 
-  return replaceNotifications<CollectionSubmitNotification>({
+  const id = uuid.v4();
+  const notification = await replaceNotifications({
+    ...templateNotification,
     actorUserId: actorId,
     collectionId,
-    id: uuid.v4(),
+    id,
     recipientUserId: Config.CALA_OPS_USER_ID,
     sentEmailAt: null,
     type: NotificationType.COLLECTION_SUBMIT
   });
+  return validateTypeWithGuardOrThrow(
+    notification,
+    isCollectionSubmitNotification,
+    // tslint:disable-next-line:max-line-length
+    `Could not validate ${NotificationType.COLLECTION_SUBMIT} notification type from database with id: ${id}`);
 }
 
 /**
@@ -414,7 +435,7 @@ export async function sendDesignerSubmitCollection(
 export async function immediatelySendFullyCostedCollection(
   collectionId: string,
   actorId: string
-): Promise<ImmediateCostedCollectionNotification[]> {
+): Promise<CommitCostInputsNotification[]> {
   const actor = await UsersDAO.findById(actorId);
   if (!actor) { throw new Error(`User ${actorId} does not exist!`); }
 
@@ -427,28 +448,39 @@ export async function immediatelySendFullyCostedCollection(
   });
 
   return Promise.all(recipients.map(
-    async (recipient: Collaborator): Promise<ImmediateCostedCollectionNotification> => {
+    async (recipient: Collaborator): Promise<CommitCostInputsNotification> => {
       const user = await UsersDAO.findById(recipient.userId);
       if (!user) { throw new Error(`User ${recipient.userId} not found!`); }
 
-      const notification = await NotificationsDAO.create<ImmediateCostedCollectionNotification>({
+      const id = uuid.v4();
+      const notification = await NotificationsDAO.create({
+        ...templateNotification,
         actorUserId: actor.id,
         collectionId,
-        id: uuid.v4(),
+        id,
         recipientUserId: user.id,
         sentEmailAt: new Date(),
         type: NotificationType.COMMIT_COST_INPUTS
       });
+      const notificationMessage = await createNotificationMessage(notification);
+      if (!notificationMessage) {
+        throw new Error('Could not create notification message');
+      }
       await EmailService.enqueueSend({
         params: {
           collection,
-          notification: { ...notification, actor, collection }
+          notification: notificationMessage
         },
         templateName: 'single_notification',
         to: user.email
       });
+      const validated = validateTypeWithGuardOrThrow(
+        notification,
+        isCommitCostInputsNotification,
+        // tslint:disable-next-line:max-line-length
+        `Could not validate ${NotificationType.COMMIT_COST_INPUTS} notification type from database with id: ${id}`);
 
-      return notification;
+      return validated;
     }
   ));
 }
@@ -461,14 +493,21 @@ export async function sendPartnerDesignBid(
   actorId: string,
   targetId: string
 ): Promise<PartnerDesignBidNotification> {
-  return replaceNotifications<PartnerDesignBidNotification>({
+  const id = uuid.v4();
+  const notification = await replaceNotifications({
+    ...templateNotification,
     actorUserId: actorId,
     designId,
-    id: uuid.v4(),
+    id,
     recipientUserId: targetId,
     sentEmailAt: null,
     type: NotificationType.PARTNER_DESIGN_BID
   });
+  return validateTypeWithGuardOrThrow(
+    notification,
+    isPartnerDesignBidNotification,
+    // tslint:disable-next-line:max-line-length
+    `Could not validate ${NotificationType.PARTNER_DESIGN_BID} notification type from database with id: ${id}`);
 }
 
 interface CollaboratorInviteArguments {
@@ -484,13 +523,15 @@ interface CollaboratorInviteArguments {
  */
 export async function immediatelySendInviteCollaborator(
   invitation: CollaboratorInviteArguments
-): Promise<ImmediateInviteNotification> {
-  const notification = await NotificationsDAO.create<ImmediateInviteNotification>({
+): Promise<InviteCollaboratorNotification> {
+  const id = uuid.v4();
+  const notification = await NotificationsDAO.create({
+    ...templateNotification,
     actorUserId: invitation.actorId,
     collaboratorId: invitation.targetCollaboratorId,
     collectionId: invitation.collectionId,
     designId: invitation.designId,
-    id: uuid.v4(),
+    id,
     recipientUserId: invitation.targetUserId,
     sentEmailAt: new Date(),
     type: NotificationType.INVITE_COLLABORATOR
@@ -502,9 +543,8 @@ export async function immediatelySendInviteCollaborator(
   const design = invitation.designId
     ? await DesignsDAO.findById(invitation.designId)
     : null;
-  const actor = await UsersDAO.findById(invitation.actorId) as (User | null);
   const target = invitation.targetUserId
-    ? await UsersDAO.findById(invitation.targetUserId) as (User | null)
+    ? await UsersDAO.findById(invitation.targetUserId)
     : null;
   const collaborator = await CollaboratorsDAO.findById(
     invitation.targetCollaboratorId
@@ -516,15 +556,25 @@ export async function immediatelySendInviteCollaborator(
       ? collaborator.userEmail
       : new Error('No one is specified to send an email to!');
 
+  const notificationMessage = await createNotificationMessage(notification);
+  if (!notificationMessage) {
+    throw new Error('Could not create notification message');
+  }
   await EmailService.enqueueSend({
     params: {
       collection,
       design,
-      notification: { ...notification, actor }
+      notification: notificationMessage
     },
     templateName: 'single_notification',
     to: emailAddress
   });
 
-  return notification;
+  const validated = validateTypeWithGuardOrThrow(
+    notification,
+    isInviteCollaboratorNotification,
+    // tslint:disable-next-line:max-line-length
+    `Could not validate ${NotificationType.INVITE_COLLABORATOR} notification type from database with id: ${id}`);
+
+  return validated;
 }

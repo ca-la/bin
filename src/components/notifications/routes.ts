@@ -1,10 +1,10 @@
 import * as Router from 'koa-router';
 import * as Koa from 'koa';
 
-import { NotificationMessage } from './domain-object';
 import * as NotificationsDAO from './dao';
 import requireAuth = require('../../middleware/require-auth');
 import { createNotificationMessage } from './notification-messages';
+import { NotificationMessage } from '@cala/ts-lib';
 
 const router = new Router();
 

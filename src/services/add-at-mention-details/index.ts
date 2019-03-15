@@ -2,7 +2,7 @@ import Comment from '../../components/comments/domain-object';
 import parseAtMentions, {
   MentionMeta,
   MentionType
-} from '@cala/ts-lib';
+} from '@cala/ts-lib/dist/parsing/comment-mentions';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 
 interface CommentWithMentions extends Comment {
