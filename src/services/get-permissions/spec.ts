@@ -123,7 +123,7 @@ test('#getDesignPermissions', async (t: tape.Test) => {
   t.deepEqual(
     await PermissionsService.getDesignPermissions(design4, session, user.id),
     {
-      canComment: false,
+      canComment: true,
       canDelete: false,
       canEdit: false,
       canSubmit: false,
@@ -201,7 +201,7 @@ test('#getCollectionPermissions', async (t: tape.Test) => {
     collectionId: collection2.id,
     designId: null,
     invitationMessage: '',
-    role: 'VIEW',
+    role: 'EDIT',
     userEmail: null,
     userId: user.id
   });
@@ -247,18 +247,18 @@ test('#getCollectionPermissions', async (t: tape.Test) => {
   t.deepEqual(
     await PermissionsService.getCollectionPermissions(collection2, session, user.id),
     {
-      canComment: false,
+      canComment: true,
       canDelete: false,
-      canEdit: false,
+      canEdit: true,
       canSubmit: false,
       canView: true
     },
-    'Returns edit access permissions for the collection the user is a edit collaborator on.'
+    'Returns edit access permissions for the collection the user is an edit collaborator on.'
   );
   t.deepEqual(
     await PermissionsService.getCollectionPermissions(collection4, session, user.id),
     {
-      canComment: false,
+      canComment: true,
       canDelete: false,
       canEdit: false,
       canSubmit: false,

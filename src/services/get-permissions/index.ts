@@ -174,7 +174,7 @@ function getPermissionsFromRole(roles: LocalRoles): Permissions {
 
   if (roles.isViewer) {
     return {
-      canComment: false,
+      canComment: true,
       canDelete: false,
       canEdit: false,
       canSubmit: false,

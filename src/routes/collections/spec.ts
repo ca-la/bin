@@ -230,7 +230,7 @@ test('GET /collections', async (t: tape.Test) => {
         ...collection2,
         createdAt: collection2.createdAt.toISOString(),
         permissions: {
-          canComment: false,
+          canComment: true,
           canDelete: false,
           canEdit: false,
           canSubmit: false,
