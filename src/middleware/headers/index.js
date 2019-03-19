@@ -7,6 +7,7 @@ function* headers(next) {
   this.set('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,HEAD,OPTIONS');
   this.set('Access-Control-Allow-Credentials', 'true');
   this.set('Access-Control-Max-Age', 86400);
+  this.set('Cache-Control', 'no-cache');
 
   const requestHeaders = this.request.headers['access-control-request-headers'];
 
