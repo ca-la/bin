@@ -4,7 +4,7 @@ import Bid, {
   BidRow,
   dataAdapter,
   isBidRow
-} from '../../domain-objects/bid';
+} from './domain-object';
 import first from '../../services/first';
 import { validate, validateEvery } from '../../services/validate-from-db';
 

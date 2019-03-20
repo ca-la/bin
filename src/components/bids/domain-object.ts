@@ -1,5 +1,5 @@
-import DataAdapter from '../services/data-adapter';
-import { hasProperties } from '../services/require-properties';
+import DataAdapter from '../../services/data-adapter';
+import { hasProperties } from '../../services/require-properties';
 
 /**
  * A pricing bid for matching partners to a set of services on a design

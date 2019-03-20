@@ -2,59 +2,48 @@ import * as Router from 'koa-router';
 import * as Koa from 'koa';
 import * as uuid from 'node-uuid';
 
-import Bid from '../../domain-objects/bid';
-import Collaborator from '../../components/collaborators/domain-objects/collaborator';
+import Bid from './domain-object';
+import Collaborator from '../collaborators/domain-objects/collaborator';
 import ProductDesign = require('../../domain-objects/product-design');
 import { PricingQuote } from '../../domain-objects/pricing-quote';
 import * as UsersDAO from '../../dao/users';
-import * as BidsDAO from '../../dao/bids';
+import * as BidsDAO from './dao';
 import * as PricingQuotesDAO from '../../dao/pricing-quotes';
 import * as ProductDesignsDAO from '../../dao/product-designs';
 import * as DesignEventsDAO from '../../dao/design-events';
-import * as CollaboratorsDAO from '../../components/collaborators/dao';
+import * as CollaboratorsDAO from '../collaborators/dao';
 import requireAdmin = require('../../middleware/require-admin');
 import requireAuth = require('../../middleware/require-auth');
-import { hasOnlyProperties } from '../../services/require-properties';
 import * as NotificationsService from '../../services/create-notifications';
 
 const router = new Router();
 
 type IOBid = Bid & { design: ProductDesign };
 
-function isIOBid(candidate: object | null): candidate is IOBid {
-  return Boolean(candidate) && hasOnlyProperties(
-    candidate,
-    'id',
-    'createdAt',
-    'createdBy',
-    'quoteId',
-    'bidPriceCents',
-    'description',
-    'design'
-  );
+async function attachDesignToBid(bid: Bid): Promise<IOBid | null> {
+  const design = await ProductDesignsDAO.findByQuoteId(bid.quoteId);
+
+  if (!design) {
+    return null;
+  }
+
+  return {
+    ...bid,
+    design
+  };
 }
 
 async function attachDesignsToBids(bids: Bid[]): Promise<IOBid[]> {
-  const designs = await Promise.all(
-    bids.map(async (bid: Bid) => ({
-      bid,
-      design: await ProductDesignsDAO.findByQuoteId(bid.quoteId)
-    }))
-  );
-  const removeBidsWithDeletedDesigns = isIOBid;
+  const ioBids: IOBid[] = [];
 
-  return designs
-    .map(({ design, bid }: { design: ProductDesign | null, bid: Bid }) => {
-      if (!design) {
-        return null;
-      }
+  for (const bid of bids) {
+    const maybeIOBid = await attachDesignToBid(bid);
+    if (maybeIOBid) {
+      ioBids.push(maybeIOBid);
+    }
+  }
 
-      return {
-        ...bid,
-        design
-      };
-    })
-    .filter(removeBidsWithDeletedDesigns);
+  return ioBids;
 }
 
 function isExpired(bid: Bid): boolean {
@@ -251,7 +240,14 @@ export function* acceptDesignBid(this: AcceptDesignBidContext): AsyncIterableIte
     this.state.userId
   );
 
-  this.status = 204;
+  const maybeIOBid = yield attachDesignToBid(bid);
+  if (!maybeIOBid) {
+    this.throw(400, `Design for bid ${bid.id} does not exist!`);
+  }
+
+  this.status = 200;
+  this.body = maybeIOBid;
+
 }
 
 export function* rejectDesignBid(this: AcceptDesignBidContext): AsyncIterableIterator<void> {
@@ -302,4 +298,4 @@ router.del('/:bidId/assignees/:userId', requireAdmin, removeBidFromPartner);
 router.post('/:bidId/accept', requireAuth, acceptDesignBid);
 router.post('/:bidId/reject', requireAuth, rejectDesignBid);
 
-module.exports = router.routes();
+export default router.routes();

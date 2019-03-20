@@ -8,9 +8,9 @@ import { authHeader, del, get, post, put } from '../../test-helpers/http';
 import createUser = require('../../test-helpers/create-user');
 import generateBid from '../../test-helpers/factories/bid';
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
-import * as BidsDAO from '../../dao/bids';
+import * as BidsDAO from './dao';
 import * as PricingCostInputsDAO from '../../dao/pricing-cost-inputs';
-import * as CollaboratorsDAO from '../../components/collaborators/dao';
+import * as CollaboratorsDAO from '../collaborators/dao';
 import * as DesignEventsDAO from '../../dao/design-events';
 import * as ProductDesignsDAO from '../../dao/product-designs';
 import * as NotificationsService from '../../services/create-notifications';
@@ -428,14 +428,22 @@ test('Partner pairing: accept', async (t: Test) => {
   );
   t.equal(unauthorizedBidResponse.status, 403, 'Non-collaborator cannot accept bid');
 
-  const [response] = await post(
+  const [response, body] = await post(
     `/bids/${bid.id}/accept`,
     { headers: authHeader(partner.session.id) }
   );
 
   const designEvents = await DesignEventsDAO.findByDesignId(design.id);
 
-  t.equal(response.status, 204);
+  t.equal(response.status, 200, 'returns a 200 when successfully accepting a bid.');
+  t.deepEqual(body, {
+    ...bid,
+    createdAt: bid.createdAt.toISOString(),
+    design: {
+      ...design,
+      createdAt: design.createdAt.toISOString()
+    }
+  }, 'responds with the accepted bid and associated design.');
   t.deepEqual(
     designEvents.map((event: DesignEvent): any => ({
       actorId: event.actorId,
@@ -476,6 +484,31 @@ test('Partner pairing: accept', async (t: Test) => {
   );
 
   t.equal(notificationStub.callCount, 1);
+});
+
+test('Partner pairing: accept on a deleted design', async (t: Test) => {
+  const admin = await createUser({ role: 'ADMIN' });
+  const designer = await createUser({ withSession: false });
+  const partner = await createUser({ role: 'PARTNER' });
+  const design = await ProductDesignsDAO.create({
+    productType: 'SOCKS',
+    title: 'Off-White Socks',
+    userId: designer.user.id
+  });
+  const { bid } = await generateBid(design.id, admin.user.id);
+  await put(
+    `/bids/${bid.id}/assignees/${partner.user.id}`,
+    { headers: authHeader(admin.session.id) }
+  );
+
+  await ProductDesignsDAO.deleteById(design.id);
+
+  const [noDesignResponse] = await post(
+    `/bids/${bid.id}/accept`,
+    { headers: authHeader(partner.session.id) }
+  );
+
+  t.equal(noDesignResponse.status, 400, 'Expect the bid assignment to fail.');
 });
 
 test('Partner pairing: reject', async (t: Test) => {

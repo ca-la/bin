@@ -3,7 +3,7 @@ import * as sinon from 'sinon';
 
 import * as DesignEventsDAO from '../../dao/design-events';
 import * as PricingCostInputsDAO from '../../dao/pricing-cost-inputs';
-import Bid from '../../domain-objects/bid';
+import Bid from '../../components/bids/domain-object';
 import createUser = require('../../test-helpers/create-user');
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
 import { authHeader, get, post, put } from '../../test-helpers/http';

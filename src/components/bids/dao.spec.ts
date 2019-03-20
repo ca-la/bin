@@ -3,10 +3,10 @@ import { test, Test } from '../../test-helpers/fresh';
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
 import generatePricingQuote from '../../services/generate-pricing-quote';
 import createUser = require('../../test-helpers/create-user');
-import { createAll as createDesignEvents } from '../design-events';
-import { create as createDesign } from '../product-designs';
+import { createAll as createDesignEvents } from '../../dao/design-events';
+import { create as createDesign } from '../../dao/product-designs';
 
-import Bid from '../../domain-objects/bid';
+import Bid from './domain-object';
 import {
   create,
   findAcceptedByTargetId,
@@ -14,7 +14,7 @@ import {
   findByQuoteId,
   findOpenByTargetId,
   findRejectedByTargetId
-} from './index';
+} from './dao';
 import DesignEvent from '../../domain-objects/design-event';
 
 test('Bids DAO supports creation and retrieval', async (t: Test) => {

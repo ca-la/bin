@@ -4,8 +4,8 @@ import generatePricingValues from './pricing-values';
 import generatePricingQuote from '../../services/generate-pricing-quote';
 
 import { PricingQuote } from '../../domain-objects/pricing-quote';
-import Bid from '../../domain-objects/bid';
-import { create as createBid } from '../../dao/bids';
+import Bid from '../../components/bids/domain-object';
+import { create as createBid } from '../../components/bids/dao';
 import createUser = require('../create-user');
 import User = require('../../domain-objects/user');
 

@@ -9,7 +9,7 @@ import { findByDesignId, findById } from '../../dao/pricing-quotes';
 import {
   create as createBid,
   findByQuoteId as findBidsByQuoteId
-} from '../../dao/bids';
+} from '../../components/bids/dao';
 import * as PricingCostInputsDAO from '../../dao/pricing-cost-inputs';
 import PricingCostInput, {
   isUnsavedPricingCostInput
@@ -25,7 +25,7 @@ import generatePricingQuote, {
   generateUnsavedQuote,
   UnsavedQuote
 } from '../../services/generate-pricing-quote';
-import Bid from '../../domain-objects/bid';
+import Bid from '../../components/bids/domain-object';
 import { isCreateRequest } from '../../services/payment';
 import * as SlackService from '../../services/slack';
 import * as CollectionsDAO from '../../dao/collections';
