@@ -23,6 +23,14 @@ interface CountRow {
   count: number;
 }
 
+export class MeasurementNotFoundError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.message = message;
+    this.name = 'MeasurementNotFoundError';
+  }
+}
+
 function handleForeignKeyViolation(
   canvasId: string,
   err: typeof rethrow.ERRORS.ForeignKeyViolation
@@ -98,7 +106,9 @@ export async function update(id: string, data: Measurement): Promise<Measurement
       handleForeignKeyViolation.bind(null, data.canvasId)
     ));
 
-  if (!updated) { throw new Error('Failed to update row'); }
+  if (!updated) {
+    throw new MeasurementNotFoundError('Measurement not found');
+  }
 
   return parseNumerics(validate<MeasurementRow, Measurement>(
     TABLE_NAME,
@@ -114,7 +124,9 @@ export async function deleteById(id: string): Promise<Measurement> {
     .update({ deleted_at: new Date() }, '*')
     .then((rows: MeasurementRow[]) => first<MeasurementRow>(rows));
 
-  if (!deleted) { throw new Error('Failed to delete row'); }
+  if (!deleted) {
+    throw new MeasurementNotFoundError('Measurement not found');
+  }
 
   return parseNumerics(validate<MeasurementRow, Measurement>(
     TABLE_NAME,

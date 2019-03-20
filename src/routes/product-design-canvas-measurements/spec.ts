@@ -86,7 +86,7 @@ test('PUT /:measurementId returns 400 if canvasId is invalid', async (t: tape.Te
   t.deepEqual(body.message, 'Invalid canvas ID: 60c63643-592c-4280-9d3f-55b934917ca9');
 });
 
-test('PATCH /:taskId updates a Measurement', async (t: tape.Test) => {
+test('PATCH /:measurementId updates a Measurement', async (t: tape.Test) => {
   const { session, user } = await createUser();
   const measurementId = uuid.v4();
 
@@ -142,7 +142,7 @@ test('PATCH /:taskId updates a Measurement', async (t: tape.Test) => {
   t.deepEqual(body, data);
 });
 
-test('PATCH /:taskId returns 400 if canvasid is invalid', async (t: tape.Test) => {
+test('PATCH /:measurementId returns 400 if canvasid is invalid', async (t: tape.Test) => {
   const { session, user } = await createUser();
   const measurementId = uuid.v4();
 
@@ -198,7 +198,33 @@ test('PATCH /:taskId returns 400 if canvasid is invalid', async (t: tape.Test) =
   t.deepEqual(body.message, 'Invalid canvas ID: 60c63643-592c-4280-9d3f-55b934917ca9');
 });
 
-test('DELETE /:taskId deletes a Measurement', async (t: tape.Test) => {
+test('PATCH /:measurementId returns 404 if not found', async (t: tape.Test) => {
+  const { session } = await createUser();
+
+  // tslint:disable-next-line:max-line-length
+  const [response, body] = await patch('/product-design-canvas-measurements/00000000-0000-0000-0000-000000000000', {
+    body: {
+      canvasId: '00000000-0000-0000-0000-000000000000',
+      createdAt: '2019-01-01',
+      createdBy: '00000000-0000-0000-0000-000000000000',
+      deletedAt: null,
+      endingX: 23,
+      endingY: 23,
+      id: '00000000-0000-0000-0000-000000000000',
+      label: 'B',
+      measurement: '22 inches',
+      name: null,
+      startingX: 1,
+      startingY: 1
+    },
+    headers: authHeader(session.id)
+  });
+
+  t.equal(response.status, 404);
+  t.deepEqual(body.message, 'Measurement not found');
+});
+
+test('DELETE /:measurementId deletes a Measurement', async (t: tape.Test) => {
   const { session, user } = await createUser();
   const measurementId = uuid.v4();
   const canvasId = uuid.v4();
@@ -221,6 +247,17 @@ test('DELETE /:taskId deletes a Measurement', async (t: tape.Test) => {
     headers: authHeader(session.id)
   });
   t.equal(response.status, 204);
+});
+
+test('DELETE /:measurementId throws a 404 if not found', async (t: tape.Test) => {
+  const { session } = await createUser();
+
+  // tslint:disable-next-line:max-line-length
+  const [response] = await del('/product-design-canvas-measurements/00000000-0000-0000-0000-000000000000', {
+    headers: authHeader(session.id)
+  });
+
+  t.equal(response.status, 404);
 });
 
 test('GET /?canvasId=:canvasId returns Measurements', async (t: tape.Test) => {

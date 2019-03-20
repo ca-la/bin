@@ -15,6 +15,9 @@ interface GetListQuery {
   canvasId?: string;
 }
 
+type MeasurementNotFoundError = MeasurementsDAO.MeasurementNotFoundError;
+const { MeasurementNotFoundError } = MeasurementsDAO;
+
 function isMeasurement(candidate: object): candidate is Measurement {
   return hasOnlyProperties(
     candidate,
@@ -63,7 +66,10 @@ function* updateMeasurement(this: Koa.Application.Context): AsyncIterableIterato
   const body = this.request.body;
   if (body && isMeasurement(body)) {
     const measurement = yield MeasurementsDAO.update(this.params.measurementId, body)
-      .catch(filterError(InvalidDataError, (err: InvalidDataError) => this.throw(400, err)));
+      .catch(filterError(InvalidDataError, (err: InvalidDataError) => this.throw(400, err)))
+      .catch(filterError(MeasurementNotFoundError, (err: MeasurementNotFoundError) =>
+        this.throw(404, err)
+      ));
 
     this.status = 200;
     this.body = measurement;
@@ -73,7 +79,10 @@ function* updateMeasurement(this: Koa.Application.Context): AsyncIterableIterato
 }
 
 function* deleteMeasurement(this: Koa.Application.Context): AsyncIterableIterator<Measurement> {
-  const measurement = yield MeasurementsDAO.deleteById(this.params.measurementId);
+  const measurement = yield MeasurementsDAO.deleteById(this.params.measurementId)
+    .catch(filterError(MeasurementNotFoundError, (err: MeasurementNotFoundError) =>
+      this.throw(404, err)
+    ));
 
   if (!measurement) { this.throw(400, 'Failed to delete the measurement'); }
 

@@ -3,13 +3,21 @@ import * as uuid from 'node-uuid';
 import * as Knex from 'knex';
 
 import * as db from '../../services/db';
-import { test } from '../../test-helpers/fresh';
-import { create, deleteById, findAllByCanvasId, findById, getLabel, update } from './index';
 import createUser = require('../../test-helpers/create-user');
+import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 import { create as createDesign } from '../product-designs';
 import { create as createDesignCanvas } from '../product-design-canvases';
-import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 import { omit } from 'lodash';
+import { test } from '../../test-helpers/fresh';
+import {
+  create,
+  deleteById,
+  findAllByCanvasId,
+  findById,
+  getLabel,
+  MeasurementNotFoundError,
+  update
+} from './index';
 
 test('ProductDesignCanvasMeasurement DAO supports creation/retrieval', async (t: tape.Test) => {
   const { user } = await createUser();
@@ -277,6 +285,41 @@ test('ProductDesignCanvasMeasurement DAO supports deletion', async (t: tape.Test
   const result = await deleteById(designCanvasMeasurement.id);
   t.notEqual(result.deletedAt, null, 'Successfully deleted one row');
   t.equal(await findById(designCanvasMeasurement.id), null, 'Succesfully removed from database');
+});
+
+// tslint:disable-next-line:max-line-length
+test('ProductDesignCanvasMeasurement DAO throws MeasurementNotFoundError when deleting a non-existent measurement', async (t: tape.Test) => {
+  try {
+    await deleteById('00000000-0000-0000-0000-000000000000');
+    t.fail("Shouldn't get here");
+  } catch (err) {
+    t.ok(err instanceof MeasurementNotFoundError);
+    t.equal(err.message, 'Measurement not found');
+  }
+});
+
+// tslint:disable-next-line:max-line-length
+test('ProductDesignCanvasMeasurement DAO throws MeasurementNotFoundError when updating a non-existent measurement', async (t: tape.Test) => {
+  try {
+    await update('00000000-0000-0000-0000-000000000000', {
+      canvasId: '00000000-0000-0000-0000-000000000000',
+      createdAt: new Date('2019-01-01'),
+      createdBy: '00000000-0000-0000-0000-000000000000',
+      deletedAt: null,
+      endingX: 20,
+      endingY: 10,
+      id: '00000000-0000-0000-0000-000000000000',
+      label: 'A',
+      measurement: '16 inches',
+      name: 'sleeve length',
+      startingX: 5,
+      startingY: 2
+    });
+    t.fail("Shouldn't get here");
+  } catch (err) {
+    t.ok(err instanceof MeasurementNotFoundError);
+    t.equal(err.message, 'Measurement not found');
+  }
 });
 
 test('ProductDesignCanvasMeasurement DAO supports getting latest label', async (t: tape.Test) => {
