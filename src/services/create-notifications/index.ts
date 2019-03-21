@@ -28,9 +28,9 @@ import {
 import * as Config from '../../config';
 import { createNotificationMessage } from '../../components/notifications/notification-messages';
 import {
-  AnnotationCommentCreateNotification,
-  isAnnotationCommentCreateNotification
-} from '../../components/notifications/models/annotation-comment-create';
+  AnnotationCreateNotification,
+  isAnnotationCreateNotification
+} from '../../components/notifications/models/annotation-create';
 import { validateTypeWithGuardOrThrow } from '../validate';
 import {
   isMeasurementCreateNotification,
@@ -81,22 +81,23 @@ async function replaceNotifications(
 }
 
 /**
- * Creates a notification for the owner of the design that comment has been created
- * on an annotation. Note: this will only create a notification if the actor is not
- * the owner.
+ * Creates a notification for the owner of the design that an annotation has been created.
+ * Note: this will only create a notification if the actor is not the owner.
  */
-export async function sendDesignOwnerAnnotationCommentCreateNotification(
+export async function sendDesignOwnerAnnotationCreateNotification(
   annotationId: string,
   canvasId: string,
-  commentId: string,
   actorId: string
-): Promise<AnnotationCommentCreateNotification | null> {
+): Promise<AnnotationCreateNotification | null> {
   const canvas = await CanvasesDAO.findById(canvasId);
   if (!canvas) { throw new Error(`Canvas ${canvasId} does not exist!`); }
   const design = await DesignsDAO.findById(canvas.designId);
   if (!design) { throw new Error(`Design ${canvas.designId} does not exist!`); }
   const targetId = design.userId;
-  const collectionId = design.collectionIds[0] || null;
+  const collectionId = design.collectionIds[0];
+  if (!collectionId) {
+    throw new Error(`Collection does not exist for design ${canvas.designId}!`);
+  }
 
   if (actorId === targetId) { return null; }
 
@@ -107,18 +108,17 @@ export async function sendDesignOwnerAnnotationCommentCreateNotification(
     annotationId,
     canvasId: canvas.id,
     collectionId,
-    commentId,
     designId: design.id,
     id,
     recipientUserId: targetId,
     sentEmailAt: null,
-    type: NotificationType.ANNOTATION_COMMENT_CREATE
+    type: NotificationType.ANNOTATION_CREATE
   });
   return validateTypeWithGuardOrThrow(
     notification,
-    isAnnotationCommentCreateNotification,
+    isAnnotationCreateNotification,
     // tslint:disable-next-line:max-line-length
-    `Could not validate ${NotificationType.ANNOTATION_COMMENT_CREATE} notification type from database with id: ${id}`);
+    `Could not validate ${NotificationType.ANNOTATION_CREATE} notification type from database with id: ${id}`);
 }
 
 /**

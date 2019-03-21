@@ -10,7 +10,6 @@ import {
   deleteById,
   findAllByCanvasId,
   findAllWithCommentsByCanvasId,
-  findById,
   update
 } from './dao';
 import { hasOnlyProperties } from '../../services/require-properties';
@@ -60,6 +59,11 @@ function* createAnnotation(this: Koa.Application.Context): AsyncIterableIterator
   const body = this.request.body;
   if (body && isAnnotation(body)) {
     const annotation = yield create(annotationFromIO(body, this.state.userId));
+    NotificationsService.sendDesignOwnerAnnotationCreateNotification(
+      body.id,
+      body.canvasId,
+      this.state.userId
+    );
     this.status = 201;
     this.body = annotation;
   } else {
@@ -102,7 +106,7 @@ function* getList(this: Koa.Application.Context): AsyncIterableIterator<Annotati
 }
 
 function* createAnnotationComment(this: Koa.Application.Context): AsyncIterableIterator<Comment> {
-  let comment: Comment | undefined;
+  let comment;
   const userId = this.state.userId;
   const body = pick(this.request.body, BASE_COMMENT_PROPERTIES);
 
@@ -116,17 +120,6 @@ function* createAnnotationComment(this: Koa.Application.Context): AsyncIterableI
         annotationId: this.params.annotationId,
         commentId: comment.id
       }, trx);
-      const annotation = await findById(this.params.annotationId);
-      if (annotation) {
-        await NotificationsService.sendDesignOwnerAnnotationCommentCreateNotification(
-          this.params.annotationId,
-          annotation.canvasId,
-          comment.id,
-          this.state.userId
-        );
-      } else {
-        throw new Error(`Could not find matching annotation for comment ${comment.id}`);
-      }
     });
     this.status = 201;
     this.body = comment;

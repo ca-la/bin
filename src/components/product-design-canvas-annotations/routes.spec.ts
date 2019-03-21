@@ -1,4 +1,5 @@
 import * as uuid from 'node-uuid';
+import * as sinon from 'sinon';
 
 import ResourceNotFoundError from '../../errors/resource-not-found';
 import createUser = require('../../test-helpers/create-user');
@@ -42,12 +43,18 @@ test(`PUT ${API_PATH}/:annotationId creates an Annotation`, async (t: Test) => {
     y: 1
   };
 
+  const notificationStub = sandbox()
+    .stub(CreateNotifications, 'sendDesignOwnerAnnotationCreateNotification')
+    .resolves();
+
   const [response, body] = await put(`${API_PATH}/${annotationId}`, {
     body: data,
     headers: authHeader(session.id)
   });
   t.equal(response.status, 201);
   t.deepEqual(body, data);
+
+  sinon.assert.callCount(notificationStub, 1);
 });
 
 test(`PATCH ${API_PATH}/:annotationId updates an Annotation`, async (t: Test) => {
@@ -226,10 +233,6 @@ test(
       userName: 'Somebody cool'
     };
 
-    const notificationStub = sandbox()
-      .stub(CreateNotifications, 'sendDesignOwnerAnnotationCommentCreateNotification')
-      .resolves();
-
     const annotationResponse = await put(`${API_PATH}/${annotationId}`, {
       body: annotationData,
       headers: authHeader(session.id)
@@ -260,53 +263,5 @@ test(
       }],
       'Comment retrieval returns the created comment in an array'
     );
-    t.deepEqual(
-      notificationStub.getCall(0).args,
-      [
-        annotationResponse[1].id,
-        annotationResponse[1].canvasId,
-        commentBody.id,
-        user.id
-      ]
-    );
-
-    notificationStub.rejects(new Error('Notification creation failure'));
-
-    const notMadeComment = { ...commentBody, id: uuid.v4() };
-    const commentNotificationFailure = await put(
-      `${API_PATH}/${annotationResponse[1].id}/comments/${commentId}`,
-      {
-        body: notMadeComment,
-        headers: authHeader(session.id)
-      }
-    );
-    t.equal(commentNotificationFailure[0].status, 500, 'Comment creation fails');
-    t.deepEqual(
-      notificationStub.getCall(1).args,
-      [
-        annotationResponse[1].id,
-        annotationResponse[1].canvasId,
-        notMadeComment.id,
-        user.id
-      ]
-    );
-
-    const noNewCommentResponse = await get(
-      `${API_PATH}/${annotationResponse[1].id}/comments`,
-      { headers: authHeader(session.id) }
-    );
-    t.deepEqual(
-      noNewCommentResponse[1],
-      [{
-        ...commentBody,
-        annotationId: annotationResponse[1].id,
-        mentions: {},
-        userEmail: user.email,
-        userId: user.id,
-        userName: user.name
-      }],
-      'Comment retrieval does not return the new comment'
-    );
-
   }
 );
