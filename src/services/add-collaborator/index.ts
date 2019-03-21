@@ -1,4 +1,4 @@
-import { escape } from 'lodash';
+import { escape as escapeHtml } from 'lodash';
 
 import CollaboratorsDAO = require('../../components/collaborators/dao');
 import InvalidDataError = require('../../errors/invalid-data');
@@ -47,7 +47,7 @@ export default async function addCollaborator(
 
   if (!inviter) { throw new Error('Inviter is not specified!'); }
 
-  const escapedMessage = escape(unsafeInvitationMessage);
+  const escapedMessage = escapeHtml(unsafeInvitationMessage);
   const invitationMessage = escapedMessage || 'Check out CALA!';
 
   const collaborator = user ? await CollaboratorsDAO.create({

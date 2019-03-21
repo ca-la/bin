@@ -1,7 +1,7 @@
 import {
-  AnnotationCreateNotification,
-  AnnotationCreateNotificationRow
-} from './models/annotation-create';
+  AnnotationCommentCreateNotification,
+  AnnotationCommentCreateNotificationRow
+} from './models/annotation-comment-create';
 import {
   CollectionSubmitNotification,
   CollectionSubmitNotificationRow
@@ -44,7 +44,7 @@ import DataAdapter from '../../services/data-adapter';
 import { hasProperties } from '../../services/require-properties';
 
 export enum NotificationType {
-  ANNOTATION_CREATE = 'ANNOTATION_CREATE',
+  ANNOTATION_COMMENT_CREATE = 'ANNOTATION_COMMENT_CREATE',
   MEASUREMENT_CREATE = 'MEASUREMENT_CREATE',
   TASK_ASSIGNMENT = 'TASK_ASSIGNMENT',
   TASK_COMMENT_CREATE = 'TASK_COMMENT_CREATE',
@@ -58,7 +58,7 @@ export enum NotificationType {
 }
 
 export type Notification =
-  | AnnotationCreateNotification
+  | AnnotationCommentCreateNotification
   | CollectionSubmitNotification
   | CommitCostInputsNotification
   | InviteCollaboratorNotification
@@ -71,7 +71,7 @@ export type Notification =
   | TaskCompletionNotification;
 
 export type NotificationRow =
-  | AnnotationCreateNotificationRow
+  | AnnotationCommentCreateNotificationRow
   | CollectionSubmitNotificationRow
   | CommitCostInputsNotificationRow
   | InviteCollaboratorNotificationRow
