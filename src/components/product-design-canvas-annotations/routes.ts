@@ -10,6 +10,7 @@ import {
   deleteById,
   findAllByCanvasId,
   findAllWithCommentsByCanvasId,
+  findById,
   update
 } from './dao';
 import { hasOnlyProperties } from '../../services/require-properties';
@@ -115,12 +116,17 @@ function* createAnnotationComment(this: Koa.Application.Context): AsyncIterableI
         annotationId: this.params.annotationId,
         commentId: comment.id
       }, trx);
-      await NotificationsService.sendDesignOwnerAnnotationCommentCreateNotification(
-        body.id,
-        this.params.annotationId,
-        this.state.userId,
-        comment.id
-      );
+      const annotation = await findById(this.params.annotationId);
+      if (annotation) {
+        await NotificationsService.sendDesignOwnerAnnotationCommentCreateNotification(
+          this.params.annotationId,
+          annotation.canvasId,
+          comment.id,
+          this.state.userId
+        );
+      } else {
+        throw new Error(`Could not find matching annotation for comment ${comment.id}`);
+      }
     });
     this.status = 201;
     this.body = comment;

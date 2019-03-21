@@ -1,5 +1,4 @@
 import * as uuid from 'node-uuid';
-import * as sinon from 'sinon';
 
 import ResourceNotFoundError from '../../errors/resource-not-found';
 import createUser = require('../../test-helpers/create-user');
@@ -261,19 +260,36 @@ test(
       }],
       'Comment retrieval returns the created comment in an array'
     );
-
-    sinon.assert.callCount(notificationStub, 1);
+    t.deepEqual(
+      notificationStub.getCall(0).args,
+      [
+        annotationResponse[1].id,
+        annotationResponse[1].canvasId,
+        commentBody.id,
+        user.id
+      ]
+    );
 
     notificationStub.rejects(new Error('Notification creation failure'));
 
+    const notMadeComment = { ...commentBody, id: uuid.v4() };
     const commentNotificationFailure = await put(
       `${API_PATH}/${annotationResponse[1].id}/comments/${commentId}`,
       {
-        body: { ...commentBody, id: uuid.v4() },
+        body: notMadeComment,
         headers: authHeader(session.id)
       }
     );
     t.equal(commentNotificationFailure[0].status, 500, 'Comment creation fails');
+    t.deepEqual(
+      notificationStub.getCall(1).args,
+      [
+        annotationResponse[1].id,
+        annotationResponse[1].canvasId,
+        notMadeComment.id,
+        user.id
+      ]
+    );
 
     const noNewCommentResponse = await get(
       `${API_PATH}/${annotationResponse[1].id}/comments`,
@@ -291,5 +307,6 @@ test(
       }],
       'Comment retrieval does not return the new comment'
     );
+
   }
 );
