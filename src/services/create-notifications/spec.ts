@@ -29,20 +29,11 @@ test('sendDesignOwnerAnnotationCommentCreateNotification', async (t: tape.Test) 
   const { user: user } = await createUser({ withSession: false });
   const { user: owner } = await createUser({ withSession: false });
 
-  const collection = await CollectionsDAO.create({
-    createdAt: new Date(),
-    createdBy: owner.id,
-    deletedAt: null,
-    description: null,
-    id: uuid.v4(),
-    title: 'AW19'
-  });
   const design = await DesignsDAO.create({
     productType: 'A product type',
     title: 'A design',
     userId: owner.id
   });
-  await CollectionsDAO.addDesign(collection.id, design.id);
 
   const { canvas } = await generateCanvas({
     createdBy: owner.id,
@@ -104,7 +95,7 @@ test('sendDesignOwnerAnnotationCommentCreateNotification', async (t: tape.Test) 
   } = notification;
   t.equal(actorUserId, user.id);
   t.equal(canvasId, canvas.id);
-  t.equal(collectionId, collection.id);
+  t.equal(collectionId, null);
   t.equal(commentId, otherComment.id);
   t.equal(designId, design.id);
   t.equal(recipientUserId, owner.id);

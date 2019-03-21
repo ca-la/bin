@@ -96,10 +96,7 @@ export async function sendDesignOwnerAnnotationCommentCreateNotification(
   const design = await DesignsDAO.findById(canvas.designId);
   if (!design) { throw new Error(`Design ${canvas.designId} does not exist!`); }
   const targetId = design.userId;
-  const collectionId = design.collectionIds[0];
-  if (!collectionId) {
-    throw new Error(`Collection does not exist for design ${canvas.designId}!`);
-  }
+  const collectionId = design.collectionIds[0] || null;
 
   if (actorId === targetId) { return null; }
 
