@@ -59,11 +59,6 @@ function* createAnnotation(this: Koa.Application.Context): AsyncIterableIterator
   const body = this.request.body;
   if (body && isAnnotation(body)) {
     const annotation = yield create(annotationFromIO(body, this.state.userId));
-    NotificationsService.sendDesignOwnerAnnotationCreateNotification(
-      body.id,
-      body.canvasId,
-      this.state.userId
-    );
     this.status = 201;
     this.body = annotation;
   } else {
@@ -106,7 +101,7 @@ function* getList(this: Koa.Application.Context): AsyncIterableIterator<Annotati
 }
 
 function* createAnnotationComment(this: Koa.Application.Context): AsyncIterableIterator<Comment> {
-  let comment;
+  let comment: Comment | undefined;
   const userId = this.state.userId;
   const body = pick(this.request.body, BASE_COMMENT_PROPERTIES);
 
@@ -120,6 +115,12 @@ function* createAnnotationComment(this: Koa.Application.Context): AsyncIterableI
         annotationId: this.params.annotationId,
         commentId: comment.id
       }, trx);
+      await NotificationsService.sendDesignOwnerAnnotationCommentCreateNotification(
+        body.id,
+        this.params.annotationId,
+        this.state.userId,
+        comment.id
+      );
     });
     this.status = 201;
     this.body = comment;

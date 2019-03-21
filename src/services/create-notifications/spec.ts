@@ -14,6 +14,7 @@ import * as DesignStagesDAO from '../../dao/product-design-stages';
 import * as DesignStageTasksDAO from '../../dao/product-design-stage-tasks';
 import * as CommentsDAO from '../../components/comments/dao';
 import * as TaskCommentsDAO from '../../dao/task-comments';
+import * as AnnotationCommentsDAO from '../../components/annotation-comments/dao';
 import * as CollectionsDAO from '../../dao/collections';
 import * as DesignsDAO from '../../dao/product-designs';
 import * as EmailService from '../../services/email';
@@ -24,7 +25,7 @@ import * as SlackService from '../../services/slack';
 import * as Config from '../../config';
 import generateMeasurement from '../../test-helpers/factories/product-design-canvas-measurement';
 
-test('sendDesignOwnerAnnotationCreateNotification', async (t: tape.Test) => {
+test('sendDesignOwnerAnnotationCommentCreateNotification', async (t: tape.Test) => {
   const { user: user } = await createUser({ withSession: false });
   const { user: owner } = await createUser({ withSession: false });
 
@@ -48,24 +49,55 @@ test('sendDesignOwnerAnnotationCreateNotification', async (t: tape.Test) => {
     designId: design.id
   });
   const { annotation } = await generateAnnotation({ canvasId: canvas.id });
+  const ownerComment = await CommentsDAO.create({
+    createdAt: new Date(),
+    deletedAt: null,
+    id: uuid.v4(),
+    isPinned: false,
+    parentCommentId: null,
+    text: 'A comment',
+    userId: owner.id
+  });
+  await AnnotationCommentsDAO.create({
+    annotationId: annotation.id,
+    commentId: ownerComment.id
+  });
+  const otherComment = await CommentsDAO.create({
+    createdAt: new Date(),
+    deletedAt: null,
+    id: uuid.v4(),
+    isPinned: false,
+    parentCommentId: null,
+    text: 'A comment',
+    userId: owner.id
+  });
+  await AnnotationCommentsDAO.create({
+    annotationId: annotation.id,
+    commentId: otherComment.id
+  });
 
-  const nullNotification = await NotificationsService.sendDesignOwnerAnnotationCreateNotification(
-    annotation.id,
-    canvas.id,
-    owner.id
-  );
+  const nullNotification = await NotificationsService
+    .sendDesignOwnerAnnotationCommentCreateNotification(
+      annotation.id,
+      canvas.id,
+      ownerComment.id,
+      owner.id
+    );
   t.equal(nullNotification, null, 'A notification will not be made if the actor is the recipient');
 
-  const notification = await NotificationsService.sendDesignOwnerAnnotationCreateNotification(
-    annotation.id,
-    canvas.id,
-    user.id
-  );
+  const notification = await NotificationsService
+    .sendDesignOwnerAnnotationCommentCreateNotification(
+      annotation.id,
+      canvas.id,
+      otherComment.id,
+      user.id
+    );
   if (!notification) { throw new Error('Expected a notification!'); }
   const {
     actorUserId,
     canvasId,
     collectionId,
+    commentId,
     designId,
     recipientUserId,
     type
@@ -73,9 +105,10 @@ test('sendDesignOwnerAnnotationCreateNotification', async (t: tape.Test) => {
   t.equal(actorUserId, user.id);
   t.equal(canvasId, canvas.id);
   t.equal(collectionId, collection.id);
+  t.equal(commentId, otherComment.id);
   t.equal(designId, design.id);
   t.equal(recipientUserId, owner.id);
-  t.equal(type, NotificationType.ANNOTATION_CREATE);
+  t.equal(type, NotificationType.ANNOTATION_COMMENT_CREATE);
 });
 
 test('sendDesignOwnerMeasurementCreateNotification', async (t: tape.Test) => {
