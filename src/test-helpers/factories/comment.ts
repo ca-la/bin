@@ -9,8 +9,8 @@ import Comment from '../../components/comments/domain-object';
 export default async function generateComment(
   options: Partial<Comment> = {}
 ): Promise<{ comment: Comment, createdBy: User }> {
-  const { user }: { user: User } = options.userName
-    ? { user: await findUserById(options.userName) }
+  const { user }: { user: User } = options.userId
+    ? { user: await findUserById(options.userId) }
     : await createUser({ withSession: false });
 
   const comment = await create({

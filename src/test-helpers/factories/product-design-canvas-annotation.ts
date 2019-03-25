@@ -15,7 +15,7 @@ interface AnnotationWithResources {
 }
 
 export default async function generateAnnotation(
-  options: Partial<Annotation>
+  options: Partial<Annotation> = {}
 ): Promise<AnnotationWithResources> {
   const { user } = options.createdBy
     ? { user: await findUserById(options.createdBy) }

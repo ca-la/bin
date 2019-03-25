@@ -11,11 +11,9 @@ import * as TaskEventsDAO from '../../dao/task-events';
 import * as CommentsDAO from '../../components/comments/dao';
 import * as CanvasesDAO from '../../dao/product-design-canvases';
 import { Notification, NotificationType } from './domain-object';
-import * as AnnotationCommentsDAO from '../annotation-comments/dao';
 import getLinks, { LinkType } from './get-links';
 import normalizeTitle from '../../services/normalize-title';
 import Comment from '../../components/comments/domain-object';
-import { CommentWithMeta } from '../../components/annotation-comments/domain-object';
 import { ComponentType } from '../../domain-objects/component';
 import ProductDesignCanvas from '../../domain-objects/product-design-canvas';
 import { DetailsTask } from '../../domain-objects/task-event';
@@ -133,21 +131,20 @@ export const createNotificationMessage = async (
     }
 
     case (NotificationType.ANNOTATION_COMMENT_CREATE): {
-      const { designId, collectionId } = notification;
+      const { designId, collectionId, commentId } = notification;
       const design = await getDesign(designId);
       const collection = await getCollection(collectionId);
       const canvas: ProductDesignCanvas | null = await CanvasesDAO.findById(notification.canvasId);
       if (!design || !canvas) { return null; }
-      const comments: CommentWithMeta[] | null = await AnnotationCommentsDAO
-        .findByAnnotationId(notification.annotationId);
       const component = canvas.componentId
         ? await ComponentsDAO.findById(canvas.componentId)
         : undefined;
       const componentType = component
         ? component.type
         : ComponentType.Sketch;
-      const comment = comments ? comments[0] : null;
-      const commentText = comment ? await parseCommentText(comment.text) : '';
+      const comment = await CommentsDAO.findById(commentId);
+      if (!comment) { return null; }
+      const commentText = await parseCommentText(comment.text);
       const cleanName = escapeHtml(baseNotificationMessage.actor.name);
       const { deepLink, htmlLink } = getLinks({
         annotationId: notification.annotationId,
@@ -164,6 +161,40 @@ export const createNotificationMessage = async (
         link: deepLink,
         location: getLocation({ collection, design }),
         title: `${cleanName} commented on ${normalizeTitle(design)}`
+      };
+    }
+
+    case (NotificationType.ANNOTATION_COMMENT_MENTION): {
+      const { designId, collectionId, commentId } = notification;
+      const design = await getDesign(designId);
+      const collection = await getCollection(collectionId);
+      const canvas: ProductDesignCanvas | null = await CanvasesDAO.findById(notification.canvasId);
+      if (!design || !canvas) { return null; }
+      const component = canvas.componentId
+        ? await ComponentsDAO.findById(canvas.componentId)
+        : undefined;
+      const componentType = component
+        ? component.type
+        : ComponentType.Sketch;
+      const comment = await CommentsDAO.findById(commentId);
+      if (!comment) { return null; }
+      const commentText = await parseCommentText(comment.text);
+      const cleanName = escapeHtml(baseNotificationMessage.actor.name);
+      const { deepLink, htmlLink } = getLinks({
+        annotationId: notification.annotationId,
+        canvasId: notification.canvasId,
+        componentType,
+        design,
+        type: LinkType.DesignAnnotation
+      });
+      return {
+        ...baseNotificationMessage,
+        attachments: [{ text: commentText, url: deepLink }],
+        html: `${span(cleanName, 'user-name')} mentioned you on ${htmlLink}`,
+        imageUrl: design ? findImageUrl(design) : null,
+        link: deepLink,
+        location: getLocation({ collection, design }),
+        title: `${cleanName} mentioned you on ${normalizeTitle(design)}`
       };
     }
 
@@ -201,7 +232,8 @@ export const createNotificationMessage = async (
         type: LinkType.CollectionDesignTask
       });
       const comment: Comment | null = await CommentsDAO.findById(notification.commentId);
-      const commentText = comment ? await parseCommentText(comment.text) : '';
+      if (!comment) { return null; }
+      const commentText = await parseCommentText(comment.text);
       const cleanName = escapeHtml(baseNotificationMessage.actor.name);
       return {
         ...baseNotificationMessage,
@@ -211,6 +243,33 @@ export const createNotificationMessage = async (
         link: deepLink,
         location: getLocation({ collection, design }),
         title: `${cleanName} commented on your task ${normalizeTitle(task)}`
+      };
+    }
+
+    case (NotificationType.TASK_COMMENT_MENTION): {
+      const { designId, collectionId, taskId } = notification;
+      const design = await getDesign(designId);
+      const collection = await getCollection(collectionId);
+      const task = await getTask(taskId);
+      if (!design || !task) { return null; }
+      const { htmlLink, deepLink } = getLinks({
+        collection,
+        design,
+        task,
+        type: LinkType.CollectionDesignTask
+      });
+      const comment: Comment | null = await CommentsDAO.findById(notification.commentId);
+      if (!comment) { return null; }
+      const commentText = await parseCommentText(comment.text);
+      const cleanName = escapeHtml(baseNotificationMessage.actor.name);
+      return {
+        ...baseNotificationMessage,
+        attachments: [{ text: commentText, url: deepLink }],
+        html: `${span(cleanName, 'user-name')} mentioned you on the task ${htmlLink}`,
+        imageUrl: design ? findImageUrl(design) : null,
+        link: deepLink,
+        location: getLocation({ collection, design }),
+        title: `${cleanName} mentioned you on the task ${normalizeTitle(task)}`
       };
     }
 

@@ -7,22 +7,22 @@ import * as NotificationsDAO from '../../components/notifications/dao';
 import createUser = require('../../test-helpers/create-user');
 import * as EmailService from '../email';
 import { sendNotificationEmails } from './index';
-import {
-  generateInviteNotification,
-  generatePartnerAcceptBidNotification
-} from '../../test-helpers/factories/notification';
+import generateNotification from '../../test-helpers/factories/notification';
+import { NotificationType } from '../../components/notifications/domain-object';
 
 test('sendNotificationEmails supports finding outstanding notifications', async (t: tape.Test) => {
   const userOne = await createUser();
   const userTwo = await createUser();
 
-  const { notification: notificationOne } = await generatePartnerAcceptBidNotification({
-    actorUserId: userOne.user.id
+  const { notification: notificationOne } = await generateNotification({
+    actorUserId: userOne.user.id,
+    type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });
-  const { notification: notificationTwo } = await generatePartnerAcceptBidNotification({
-    actorUserId: userTwo.user.id
+  const { notification: notificationTwo } = await generateNotification({
+    actorUserId: userTwo.user.id,
+    type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });
-  await generateInviteNotification();
+  await generateNotification({ type: NotificationType.INVITE_COLLABORATOR });
 
   const emailStub = sandbox().stub(EmailService, 'enqueueSend').returns(Promise.resolve());
 
@@ -49,17 +49,20 @@ test('sendNotificationEmails gracefully handles failures', async (t: tape.Test) 
   const idTwo = uuid.v4();
   const idThree = uuid.v4();
 
-  const { notification: notificationOne } = await generatePartnerAcceptBidNotification({
+  const { notification: notificationOne } = await generateNotification({
     actorUserId: userOne.user.id,
-    id: idOne
+    id: idOne,
+    type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });
-  const { notification: notificationTwo } = await generatePartnerAcceptBidNotification({
+  const { notification: notificationTwo } = await generateNotification({
     actorUserId: userTwo.user.id,
-    id: idTwo
+    id: idTwo,
+    type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });
-  const { notification: notificationThree } = await generatePartnerAcceptBidNotification({
+  const { notification: notificationThree } = await generateNotification({
     actorUserId: userTwo.user.id,
-    id: idThree
+    id: idThree,
+    type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });
 
   const emailStub = sandbox().stub(EmailService, 'enqueueSend').callsFake((queueObject: any) => {

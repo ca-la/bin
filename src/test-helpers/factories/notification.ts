@@ -7,119 +7,340 @@ import {
 } from '../../components/notifications/domain-object';
 import { findById as findUserById } from '../../dao/users';
 import createUser = require('../create-user');
-import * as CollaboratorsDAO from '../../components/collaborators/dao';
-import Collaborator from '../../components/collaborators/domain-objects/collaborator';
+import {
+  CollaboratorWithUser
+} from '../../components/collaborators/domain-objects/collaborator';
 import * as ProductDesignsDAO from '../../dao/product-designs';
+import * as CollectionsDAO from '../../dao/collections';
+import * as CollaboratorsDAO from '../../components/collaborators/dao';
+import * as AnnotationsDAO from '../../components/product-design-canvas-annotations/dao';
+import * as CanvasesDAO from '../../dao/product-design-canvases';
+import * as CommentsDAO from '../../components/comments/dao';
+import * as MeasurementsDAO from '../../dao/product-design-canvas-measurements';
+import * as StagesDAO from '../../dao/product-design-stages';
+import * as TasksDAO from '../../dao/task-events';
 import generateCollection from './collection';
 import Collection from '../../domain-objects/collection';
 import User = require('../../domain-objects/user');
 import ProductDesign = require('../../domain-objects/product-design');
 import { templateNotification } from '../../components/notifications/models/base';
-import {
-  PartnerAcceptServiceBidNotification
-} from '../../components/notifications/models/partner-accept-service-bid';
-import {
-  InviteCollaboratorNotification
-} from '../../components/notifications/models/invite-collaborator';
+// tslint:disable-next-line:max-line-length
+import ProductDesignCanvasAnnotation from '../../components/product-design-canvas-annotations/domain-object';
+import { DetailsTask } from '../../domain-objects/task-event';
+import ProductDesignCanvas from '../../domain-objects/product-design-canvas';
+import ProductDesignStage from '../../domain-objects/product-design-stage';
+import Comment from '../../components/comments/domain-object';
+import createDesign from '../../services/create-design';
+import generateAnnotation from './product-design-canvas-annotation';
+import generateComment from './comment';
+import generateCollaborator from './collaborator';
+import generateMeasurement from './product-design-canvas-measurement';
+import generateTask from './task';
+import ProductDesignCanvasMeasurement from '../../domain-objects/product-design-canvas-measurement';
+import generateCanvas from './product-design-canvas';
+import generateProductDesignStage from './product-design-stage';
 
-interface InviteNotificationWithResources {
+interface NotificationWithResources {
   actor: User;
-  collaborator: Collaborator;
-  collection: Collection;
+  recipient: User;
   notification: Notification;
-}
-
-interface PartnerAcceptBidNotificationWithResources {
-  actor: User;
   design: ProductDesign;
-  notification: Notification;
-  recipient: any;
+  collection: Collection;
+  collaborator: CollaboratorWithUser;
+  annotation: ProductDesignCanvasAnnotation;
+  measurement: ProductDesignCanvasMeasurement;
+  task: DetailsTask;
+  canvas: ProductDesignCanvas;
+  stage: ProductDesignStage;
+  comment: Comment;
 }
 
-/**
- * Generates a Partner Accept Bid notification
- */
-export async function generatePartnerAcceptBidNotification(
-  options: Partial<PartnerAcceptServiceBidNotification> = {}
-): Promise<PartnerAcceptBidNotificationWithResources> {
+export default async function generateNotification(
+  options: Partial<Notification> & { type: NotificationType }
+): Promise<NotificationWithResources> {
   const { user: actor } = options.actorUserId
     ? { user: await findUserById(options.actorUserId) }
     : await createUser({ withSession: false });
+
   const { user: recipient } = options.recipientUserId
     ? { user: await findUserById(options.recipientUserId) }
     : await createUser({ withSession: false });
+
+  const id = options.id || uuid.v4();
+
+  const { collection } = options.collectionId
+    ? { collection: await CollectionsDAO.findById(options.collectionId) }
+    : await generateCollection({ createdBy: actor.id });
+  if (!collection) { throw new Error('Could not create collection'); }
+
   const design = options.designId
     ? await ProductDesignsDAO.findById(options.designId)
-    : await ProductDesignsDAO.create({
-      productType: 'SWEATER',
-      title: 'Mohair Wool Sweater',
-      userId: recipient.id
-    });
+    : await createDesign({ productType: 'test', title: 'design', userId: actor.id });
+  if (!design) { throw new Error('Could not create design'); }
 
-  if (!design) { throw new Error('Could not generate a design!'); }
+  try {
+    await CollectionsDAO.addDesign(collection.id, design.id);
+  } catch (e) {
+    // noop
+  }
 
-  const payload: PartnerAcceptServiceBidNotification = {
-    ...templateNotification,
-    actorUserId: actor.id,
-    createdAt: new Date(),
-    designId: design.id,
-    id: uuid.v4(),
-    recipientUserId: recipient.id,
-    sentEmailAt: null,
-    type: NotificationType.PARTNER_ACCEPT_SERVICE_BID,
-    ...options
-  };
-  const notification = await create(payload);
+  const { collaborator } = options.collaboratorId
+    ? { collaborator: await CollaboratorsDAO.findById(options.collaboratorId) }
+    : await generateCollaborator({ collectionId: collection.id, userId: recipient.id });
+  if (!collaborator) { throw new Error('Could not create collaborator'); }
 
-  return {
+  const { canvas } = options.canvasId
+    ? { canvas: await CanvasesDAO.findById(options.canvasId) }
+    : await generateCanvas({ createdBy: actor.id });
+  if (!canvas) { throw new Error('Could not create canvas'); }
+
+  const { annotation } = options.annotationId
+    ? { annotation: await AnnotationsDAO.findById(options.annotationId) }
+    : await generateAnnotation({ createdBy: actor.id, canvasId: canvas.id });
+  if (!annotation) { throw new Error('Could not create annotation'); }
+
+  const { measurement } = options.measurementId
+    ? { measurement: await MeasurementsDAO.findById(options.measurementId) }
+    : await generateMeasurement({ createdBy: actor.id, canvasId: canvas.id });
+  if (!measurement) { throw new Error('Could not create measurement'); }
+
+  const { comment } = options.commentId
+    ? { comment: await CommentsDAO.findById(options.commentId) }
+    : await generateComment({ userId: actor.id });
+  if (!comment) { throw new Error('Could not create comment'); }
+
+  const { stage } = options.stageId
+    ? { stage: await StagesDAO.findById(options.stageId) }
+    : await generateProductDesignStage({ designId: design.id });
+  if (!stage) { throw new Error('Could not create stage'); }
+
+  const { task } = options.taskId
+    ? { task: await TasksDAO.findById(options.taskId) }
+    : await generateTask({ createdBy: actor.id, designStageId: stage.id });
+  if (!task) { throw new Error('Could not create task'); }
+
+  const base = {
     actor,
-    design,
-    notification,
-    recipient
-  };
-}
-
-/**
- * Generates an invite notification.
- */
-export async function generateInviteNotification(
-  options: Partial<InviteCollaboratorNotification> = {}
-): Promise<InviteNotificationWithResources> {
-  const { user: actor } = options.actorUserId
-    ? { user: await findUserById(options.actorUserId) }
-    : await createUser({ withSession: false });
-  const { collection } = await generateCollection({ createdBy: actor.id });
-  const collaborator = options.collaboratorId
-    ? await CollaboratorsDAO.findById(options.collaboratorId)
-    : await CollaboratorsDAO.create({
-      collectionId: collection.id,
-      designId: null,
-      invitationMessage: '',
-      role: 'EDIT',
-      userEmail: null,
-      userId: actor.id
-    });
-  if (!collaborator) { throw new Error('Could not generate a collaborator!');  }
-
-  const payload: InviteCollaboratorNotification = {
-    ...templateNotification,
-    actorUserId: actor.id,
-    collaboratorId: collaborator.id,
-    collectionId: null,
-    createdAt: new Date(),
-    designId: null,
-    id: uuid.v4(),
-    recipientUserId: null,
-    sentEmailAt: new Date(),
-    type: NotificationType.INVITE_COLLABORATOR,
-    ...options
-  };
-  const notification = await create(payload);
-
-  return {
-    actor,
+    annotation,
+    canvas,
     collaborator,
     collection,
-    notification
+    comment,
+    design,
+    measurement,
+    recipient,
+    stage,
+    task
   };
+
+  const baseNotification = {
+    ...templateNotification,
+    actorUserId: actor.id,
+    id: options.id || id,
+    recipientUserId: recipient.id,
+    sentEmailAt: options.sentEmailAt || null
+  };
+
+  switch (options.type) {
+    case NotificationType.ANNOTATION_COMMENT_CREATE: {
+      const notification = await create({
+        ...baseNotification,
+        annotationId: annotation.id,
+        canvasId: canvas.id,
+        collectionId: collection.id,
+        commentId: comment.id,
+        designId: design.id,
+        recipientUserId: base.recipient.id,
+        type: options.type
+      });
+
+      return {
+        ...base,
+        notification
+      };
+    }
+    case NotificationType.ANNOTATION_COMMENT_MENTION: {
+      const notification = await create({
+        ...baseNotification,
+        annotationId: annotation.id,
+        canvasId: canvas.id,
+        collectionId: collection.id,
+        commentId: comment.id,
+        designId: design.id,
+        recipientUserId: base.recipient.id,
+        type: options.type
+      });
+
+      return {
+        ...base,
+        notification
+      };
+    }
+    case NotificationType.COLLECTION_SUBMIT: {
+      const notification = await create({
+        ...baseNotification,
+        collectionId: collection.id,
+        recipientUserId: base.recipient.id,
+        type: options.type
+      });
+
+      return {
+        ...base,
+        notification
+      };
+    }
+    case NotificationType.COMMIT_COST_INPUTS: {
+      const notification = await create({
+        ...baseNotification,
+        collectionId: collection.id,
+        recipientUserId: base.recipient.id,
+        sentEmailAt: new Date(),
+        type: options.type
+      });
+
+      return {
+        ...base,
+        notification
+      };
+    }
+    case NotificationType.INVITE_COLLABORATOR: {
+      const notification = await create({
+        ...baseNotification,
+        collaboratorId: collaborator.id,
+        collectionId: collection.id,
+        designId: design.id,
+        recipientUserId: null,
+        sentEmailAt: new Date(),
+        type: options.type
+      });
+
+      return {
+        ...base,
+        notification
+      };
+    }
+    case NotificationType.MEASUREMENT_CREATE: {
+      const notification = await create({
+        ...baseNotification,
+        canvasId: canvas.id,
+        collectionId: collection.id,
+        designId: design.id,
+        measurementId: measurement.id,
+        recipientUserId: base.recipient.id,
+        type: options.type
+      });
+
+      return {
+        ...base,
+        notification
+      };
+    }
+    case NotificationType.PARTNER_ACCEPT_SERVICE_BID: {
+      const notification = await create({
+        ...baseNotification,
+        designId: design.id,
+        recipientUserId: base.recipient.id,
+        type: options.type
+      });
+
+      return {
+        ...base,
+        notification
+      };
+    }
+    case NotificationType.PARTNER_DESIGN_BID: {
+      const notification = await create({
+        ...baseNotification,
+        designId: design.id,
+        recipientUserId: base.recipient.id,
+        type: options.type
+      });
+
+      return {
+        ...base,
+        notification
+      };
+    }
+    case NotificationType.PARTNER_REJECT_SERVICE_BID: {
+      const notification = await create({
+        ...baseNotification,
+        designId: design.id,
+        recipientUserId: base.recipient.id,
+        type: options.type
+      });
+
+      return {
+        ...base,
+        notification
+      };
+    }
+    case NotificationType.TASK_ASSIGNMENT: {
+      const notification = await create({
+        ...baseNotification,
+        collaboratorId: collaborator.id,
+        collectionId: collection.id,
+        designId: design.id,
+        recipientUserId: base.recipient.id,
+        stageId: stage.id,
+        taskId: task.id,
+        type: options.type
+      });
+
+      return {
+        ...base,
+        notification
+      };
+    }
+    case NotificationType.TASK_COMMENT_CREATE: {
+      const notification = await create({
+        ...baseNotification,
+        collectionId: collection.id,
+        commentId: comment.id,
+        designId: design.id,
+        recipientUserId: base.recipient.id,
+        stageId: stage.id,
+        taskId: task.id,
+        type: options.type
+      });
+
+      return {
+        ...base,
+        notification
+      };
+    }
+    case NotificationType.TASK_COMMENT_MENTION: {
+      const notification = await create({
+        ...baseNotification,
+        collectionId: collection.id,
+        commentId: comment.id,
+        designId: design.id,
+        recipientUserId: base.recipient.id,
+        stageId: stage.id,
+        taskId: task.id,
+        type: options.type
+      });
+
+      return {
+        ...base,
+        notification
+      };
+    }
+    case NotificationType.TASK_COMPLETION: {
+      const notification = await create({
+        ...baseNotification,
+        collaboratorId: collaborator.id,
+        collectionId: collection.id,
+        designId: design.id,
+        recipientUserId: base.recipient.id,
+        stageId: stage.id,
+        taskId: task.id,
+        type: options.type
+      });
+
+      return {
+        ...base,
+        notification
+      };
+    }
+  }
 }

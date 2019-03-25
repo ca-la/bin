@@ -18,10 +18,13 @@ import Comment, {
 } from '../../components/comments/domain-object';
 import { hasOnlyProperties } from '../../services/require-properties';
 import requireAuth = require('../../middleware/require-auth');
-import Collaborator from '../../components/collaborators/domain-objects/collaborator';
+import Collaborator, {
+  CollaboratorWithUser
+} from '../../components/collaborators/domain-objects/collaborator';
 import * as NotificationsService from '../../services/create-notifications';
 import { typeGuard } from '../../middleware/type-guard';
 import addAtMentionDetails from '../../services/add-at-mention-details';
+import parseAtMentions, { MentionType } from '@cala/ts-lib/dist/parsing/comment-mentions';
 
 const router = new Router();
 
@@ -239,7 +242,22 @@ function* createTaskComment(this: Koa.Application.Context): AsyncIterableIterato
   if (filteredBody && isBaseComment(filteredBody) && taskId) {
     const comment = yield CommentDAO.create({ ...filteredBody, userId });
     yield TaskCommentDAO.create({ commentId: comment.id, taskId });
-    yield NotificationsService.sendTaskCommentCreateNotification(taskId, comment.id, userId);
+    const mentions = parseAtMentions(filteredBody.text);
+    const mentionedUserIds: string[] = [];
+    for (const mention of mentions) {
+      switch (mention.type) {
+        case (MentionType.collaborator): {
+          const collaborator: CollaboratorWithUser = yield CollaboratorsDAO.findById(mention.id);
+          if (collaborator && collaborator.user) {
+            yield NotificationsService
+              .sendTaskCommentMentionNotification(taskId, comment.id, userId, collaborator.user.id);
+            mentionedUserIds.push(collaborator.user.id);
+          }
+        }
+      }
+    }
+    yield NotificationsService
+      .sendTaskCommentCreateNotification(taskId, comment.id, userId, mentionedUserIds);
 
     this.status = 201;
     this.body = comment;

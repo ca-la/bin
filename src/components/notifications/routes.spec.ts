@@ -6,12 +6,10 @@ import createUser = require('../../test-helpers/create-user');
 
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import * as DesignsDAO from '../../dao/product-designs';
-import {
-  generateInviteNotification,
-  generatePartnerAcceptBidNotification
-} from '../../test-helpers/factories/notification';
+import generateNotification from '../../test-helpers/factories/notification';
 import generateCollection from '../../test-helpers/factories/collection';
 import { NotificationMessage } from '@cala/ts-lib';
+import { NotificationType } from './domain-object';
 
 const API_PATH = '/notifications';
 
@@ -42,21 +40,24 @@ async (t: tape.Test) => {
     userEmail: 'raf@rafsimons.com',
     userId: null
   });
-  const { notification: n1 } = await generatePartnerAcceptBidNotification({
+  const { notification: n1 } = await generateNotification({
     actorUserId: userOne.user.id,
-    recipientUserId: userTwo.user.id
+    recipientUserId: userTwo.user.id,
+    type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });
-  const { notification: n2 } = await generateInviteNotification({
+  const { notification: n2 } = await generateNotification({
     actorUserId: userOne.user.id,
     collaboratorId: c1.id,
     collectionId: collection1.collection.id,
-    recipientUserId: null
+    recipientUserId: null,
+    type: NotificationType.INVITE_COLLABORATOR
   });
-  await generateInviteNotification({
+  await generateNotification({
     actorUserId: userOne.user.id,
     collaboratorId: c2.id,
     collectionId: collection1.collection.id,
-    recipientUserId: null
+    recipientUserId: null,
+    type: NotificationType.INVITE_COLLABORATOR
   });
 
   const [response1, body1] = await API.get(API_PATH, {

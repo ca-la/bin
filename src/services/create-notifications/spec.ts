@@ -102,6 +102,65 @@ test('sendDesignOwnerAnnotationCommentCreateNotification', async (t: tape.Test) 
   t.equal(type, NotificationType.ANNOTATION_COMMENT_CREATE);
 });
 
+test('sendAnnotationCommentMentionNotification', async (t: tape.Test) => {
+  const { user: user } = await createUser({ withSession: false, role: 'ADMIN' });
+  const { user: owner } = await createUser({ withSession: false, role: 'ADMIN' });
+
+  const design = await DesignsDAO.create({
+    productType: 'A product type',
+    title: 'A design',
+    userId: owner.id
+  });
+
+  const { canvas } = await generateCanvas({
+    createdBy: owner.id,
+    designId: design.id
+  });
+  const { annotation } = await generateAnnotation({ canvasId: canvas.id });
+  const ownerComment = await CommentsDAO.create({
+    createdAt: new Date(),
+    deletedAt: null,
+    id: uuid.v4(),
+    isPinned: false,
+    parentCommentId: null,
+    text: 'A comment',
+    userId: owner.id
+  });
+  await AnnotationCommentsDAO.create({
+    annotationId: annotation.id,
+    commentId: ownerComment.id
+  });
+
+  const notification = await NotificationsService
+    .sendAnnotationCommentMentionNotification(
+      annotation.id,
+      canvas.id,
+      ownerComment.id,
+      owner.id,
+      user.id
+    );
+  if (!notification) { throw new Error('Expected a notification!'); }
+  const {
+    actorUserId,
+    canvasId,
+    collectionId,
+    commentId,
+    designId,
+    recipientUserId,
+    type
+  } = notification;
+  t.equal(actorUserId, owner.id, 'Actor should be the owner');
+  t.equal(canvasId, canvas.id, 'Canvases should match');
+  t.equal(collectionId, null, 'CollectionId should be null');
+  t.equal(commentId, ownerComment.id, 'Comment should be the owners comment');
+  t.equal(designId, design.id, 'DesignIds should match');
+  t.equal(recipientUserId, user.id, 'Recipient should be the user');
+  t.equal(
+    type,
+    NotificationType.ANNOTATION_COMMENT_MENTION,
+    'Notification type should be ANNOTATION_COMMENT_MENTION');
+});
+
 test('sendDesignOwnerMeasurementCreateNotification', async (t: tape.Test) => {
   const { user: user } = await createUser({ withSession: false });
   const { user: owner } = await createUser({ withSession: false });
@@ -230,7 +289,7 @@ test('sendTaskCommentCreateNotification', async (t: tape.Test) => {
   });
 
   const notifications = await NotificationsService
-    .sendTaskCommentCreateNotification(taskOne.id, comment.id, userOne.user.id);
+    .sendTaskCommentCreateNotification(taskOne.id, comment.id, userOne.user.id, []);
 
   t.equal(
     notifications.length,
@@ -245,6 +304,101 @@ test('sendTaskCommentCreateNotification', async (t: tape.Test) => {
   t.deepEqual(
     notifications[0].type,
     NotificationType.TASK_COMMENT_CREATE,
+    'Creates the correct notification type'
+  );
+});
+
+test('sendTaskCommentMentionNotification', async (t: tape.Test) => {
+  const userOne = await createUser({ role: 'ADMIN' });
+  const userTwo = await createUser({ role: 'ADMIN' });
+
+  const collection = await CollectionsDAO.create({
+    createdAt: new Date(),
+    createdBy: userOne.user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
+    title: 'AW19'
+  });
+  const design = await DesignsDAO.create({
+    productType: 'A product type',
+    title: 'A design',
+    userId: userOne.user.id
+  });
+  await CollectionsDAO.addDesign(collection.id, design.id);
+
+  const designStage = await DesignStagesDAO.create({
+    description: '',
+    designId: design.id,
+    ordering: 0,
+    title: 'test'
+  });
+
+  await CollaboratorsDAO.create({
+    collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
+    userId: userOne.user.id
+  });
+  const collaboratorTwo = await CollaboratorsDAO.create({
+    collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
+    userId: userTwo.user.id
+  });
+
+  const taskOne = await TasksDAO.create(uuid.v4());
+  await TaskEventsDAO.create({
+    createdBy: userOne.user.id,
+    description: '',
+    designStageId: designStage.id,
+    dueDate: null,
+    ordering: 0,
+    status: null,
+    taskId: taskOne.id,
+    title: 'My First Task'
+  });
+  await DesignStageTasksDAO.create({
+    designStageId: designStage.id,
+    taskId: taskOne.id
+  });
+
+  await CollaboratorTasksDAO.create({
+    collaboratorId: collaboratorTwo.id,
+    taskId: taskOne.id
+  });
+
+  const comment = await CommentsDAO.create({
+    createdAt: new Date(),
+    deletedAt: null,
+    id: uuid.v4(),
+    isPinned: false,
+    parentCommentId: null,
+    text: 'A comment',
+    userId: userOne.user.id
+  });
+  await TaskCommentsDAO.create({
+    commentId: comment.id,
+    taskId: taskOne.id
+  });
+
+  const notification = await NotificationsService
+    .sendTaskCommentMentionNotification(taskOne.id, comment.id, userOne.user.id, userTwo.user.id);
+
+  if (!notification) { return t.fail('Notification Failed to create'); }
+
+  t.deepEqual(
+    notification.recipientUserId,
+    userTwo.user.id,
+    'Creates a notification for the mentioned user'
+  );
+  t.deepEqual(
+    notification.type,
+    NotificationType.TASK_COMMENT_MENTION,
     'Creates the correct notification type'
   );
 });

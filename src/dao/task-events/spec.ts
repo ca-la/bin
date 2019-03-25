@@ -133,12 +133,6 @@ test('Task Events DAO returns images from the canvases on the design', async (t:
   const secondResult = await findById(inserted.id);
   if (!secondResult) { throw Error('No Result'); }
   t.deepEqual(secondResult.design.previewImageUrls, [], 'task has an empty list of images');
-
-  const { task: designlessTask } = await generateTask();
-
-  const thirdResult = await findById(designlessTask.id);
-  if (!thirdResult) { throw Error('No Result'); }
-  t.deepEqual(thirdResult.design.previewImageUrls, null, 'task has no images');
 });
 
 test('Task Events DAO supports retrieval by designId', async (t: tape.Test) => {

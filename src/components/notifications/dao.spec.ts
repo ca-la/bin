@@ -11,10 +11,7 @@ import {
   Notification,
   NotificationType
 } from './domain-object';
-import {
-  generateInviteNotification,
-  generatePartnerAcceptBidNotification
-} from '../../test-helpers/factories/notification';
+import generateNotification from '../../test-helpers/factories/notification';
 import generateCollection from '../../test-helpers/factories/collection';
 import { InviteCollaboratorNotification } from './models/invite-collaborator';
 import { PartnerAcceptServiceBidNotification } from './models/partner-accept-service-bid';
@@ -75,16 +72,19 @@ test('Notifications DAO supports finding by user id', async (t: tape.Test) => {
     userEmail: 'raf@rafsimons.com',
     userId: null
   });
-  await generatePartnerAcceptBidNotification({
-    actorUserId: userOne.user.id
-  });
-  const { notification: n2 } = await generateInviteNotification({
+  await generateNotification({
     actorUserId: userOne.user.id,
-    collaboratorId: c1.id
+    type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });
-  await generateInviteNotification({
+  const { notification: n2 } = await generateNotification({
     actorUserId: userOne.user.id,
-    collaboratorId: c2.id
+    collaboratorId: c1.id,
+    type: NotificationType.INVITE_COLLABORATOR
+  });
+  await generateNotification({
+    actorUserId: userOne.user.id,
+    collaboratorId: c2.id,
+    type: NotificationType.INVITE_COLLABORATOR
   });
 
   t.deepEqual(
@@ -113,27 +113,28 @@ test('Notifications DAO supports finding outstanding notifications', async (t: t
   const { user } = await createUser({ withSession: false });
 
   const {
-    design: designOne,
     notification: notificationOne
-  } = await generatePartnerAcceptBidNotification({
-    actorUserId: user.id
+  } = await generateNotification({
+    actorUserId: user.id,
+    type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });
   const {
     design: designTwo,
     notification: notificationTwo
-  } = await generatePartnerAcceptBidNotification({
+  } = await generateNotification({
     actorUserId: user.id,
-    designId: designOne.id
+    type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });
-  await generatePartnerAcceptBidNotification({
+  await generateNotification({
     actorUserId: user.id,
-    designId: designOne.id,
-    sentEmailAt: new Date()
+    sentEmailAt: new Date(),
+    type: NotificationType.COLLECTION_SUBMIT
   });
-  await generatePartnerAcceptBidNotification({
+  await generateNotification({
     actorUserId: user.id,
     designId: designTwo.id,
-    sentEmailAt: new Date()
+    sentEmailAt: new Date(),
+    type: NotificationType.PARTNER_DESIGN_BID
   });
 
   await db.transaction(async (trx: Knex.Transaction) => {
@@ -150,11 +151,13 @@ test('Notifications DAO supports finding outstanding notifications', async (t: t
 test('Notifications DAO supports marking notifications as sent', async (t: tape.Test) => {
   const { user } = await createUser();
 
-  const { notification: notificationOne } = await generatePartnerAcceptBidNotification({
-    actorUserId: user.id
+  const { notification: notificationOne } = await generateNotification({
+    actorUserId: user.id,
+    type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });
-  const { notification: notificationTwo } = await generatePartnerAcceptBidNotification({
-    actorUserId: user.id
+  const { notification: notificationTwo } = await generateNotification({
+    actorUserId: user.id,
+    type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });
 
   await db.transaction(async (trx: Knex.Transaction) => {
@@ -190,15 +193,17 @@ test('Notifications DAO supports deleting similar notifications', async (t: tape
     recipientUserId: admin.id,
     type: NotificationType.COLLECTION_SUBMIT
   });
-  await generatePartnerAcceptBidNotification({
+  await generateNotification({
     actorUserId: userOne.user.id,
     designId: design.id,
-    recipientUserId: admin.id
+    recipientUserId: admin.id,
+    type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });
-  await generatePartnerAcceptBidNotification({
+  await generateNotification({
     actorUserId: userOne.user.id,
     designId: design.id,
-    recipientUserId: admin.id
+    recipientUserId: admin.id,
+    type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });
   const unsentNotification: PartnerAcceptServiceBidNotification = {
     ...templateNotification,

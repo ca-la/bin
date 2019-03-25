@@ -39,15 +39,25 @@ import {
   TaskCompletionNotification,
   TaskCompletionNotificationRow
 } from './models/task-completion';
+import {
+  TaskCommentMentionNotification,
+  TaskCommentMentionNotificationRow
+} from './models/task-comment-mention';
+import {
+  AnnotationCommentMentionNotification,
+  AnnotationCommentMentionNotificationRow
+} from './models/annotation-mention';
 import toDateOrNull, { toDateStringOrNull } from '../../services/to-date';
 import DataAdapter from '../../services/data-adapter';
 import { hasProperties } from '../../services/require-properties';
 
 export enum NotificationType {
   ANNOTATION_COMMENT_CREATE = 'ANNOTATION_COMMENT_CREATE',
+  ANNOTATION_COMMENT_MENTION = 'ANNOTATION_COMMENT_MENTION',
   MEASUREMENT_CREATE = 'MEASUREMENT_CREATE',
   TASK_ASSIGNMENT = 'TASK_ASSIGNMENT',
   TASK_COMMENT_CREATE = 'TASK_COMMENT_CREATE',
+  TASK_COMMENT_MENTION = 'TASK_COMMENT_MENTION',
   TASK_COMPLETION = 'TASK_COMPLETION',
   PARTNER_ACCEPT_SERVICE_BID = 'PARTNER_ACCEPT_SERVICE_BID',
   PARTNER_REJECT_SERVICE_BID = 'PARTNER_REJECT_SERVICE_BID',
@@ -59,6 +69,7 @@ export enum NotificationType {
 
 export type Notification =
   | AnnotationCommentCreateNotification
+  | AnnotationCommentMentionNotification
   | CollectionSubmitNotification
   | CommitCostInputsNotification
   | InviteCollaboratorNotification
@@ -68,10 +79,12 @@ export type Notification =
   | PartnerRejectServiceBidNotification
   | TaskAssigmentNotification
   | TaskCommentCreateNotification
+  | TaskCommentMentionNotification
   | TaskCompletionNotification;
 
 export type NotificationRow =
   | AnnotationCommentCreateNotificationRow
+  | AnnotationCommentMentionNotificationRow
   | CollectionSubmitNotificationRow
   | CommitCostInputsNotificationRow
   | InviteCollaboratorNotificationRow
@@ -81,6 +94,7 @@ export type NotificationRow =
   | PartnerRejectServiceBidNotificationRow
   | TaskAssigmentNotificationRow
   | TaskCommentCreateNotificationRow
+  | TaskCommentMentionNotificationRow
   | TaskCompletionNotificationRow;
 
 type EqualKeys<T> = {

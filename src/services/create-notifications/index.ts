@@ -69,6 +69,24 @@ import {
   InviteCollaboratorNotification,
   isInviteCollaboratorNotification
 } from '../../components/notifications/models/invite-collaborator';
+import {
+  isTaskCommentMentionNotification,
+  TaskCommentMentionNotification
+} from '../../components/notifications/models/task-comment-mention';
+import {
+  AnnotationCommentMentionNotification,
+  isAnnotationCommentMentionNotification
+} from '../../components/notifications/models/annotation-mention';
+
+async function isAdmins(userIds: string[]): Promise<boolean> {
+  for (const userId of userIds) {
+    const user = await UsersDAO.findById(userId);
+    if (user.role !== 'ADMIN') {
+      return false;
+    }
+  }
+  return true;
+}
 
 /**
  * Deletes pre-existing similar notifications and adds in a new one.
@@ -122,6 +140,47 @@ export async function sendDesignOwnerAnnotationCommentCreateNotification(
 }
 
 /**
+ * Creates a notification for the user that was mentioned in the comment.
+ * Note: this will only create a notification if the actor is not the owner.
+ */
+export async function sendAnnotationCommentMentionNotification(
+  annotationId: string,
+  canvasId: string,
+  commentId: string,
+  actorId: string,
+  recipientUserId: string
+): Promise<AnnotationCommentMentionNotification | null> {
+  const canvas = await CanvasesDAO.findById(canvasId);
+  if (!canvas) { throw new Error(`Canvas ${canvasId} does not exist!`); }
+  const design = await DesignsDAO.findById(canvas.designId);
+  if (!design) { throw new Error(`Design ${canvas.designId} does not exist!`); }
+  const collectionId = design.collectionIds[0] || null;
+
+  const isBetweenAdmins = await isAdmins([actorId, recipientUserId]);
+  if (actorId === recipientUserId || !isBetweenAdmins) { return null; }
+
+  const id = uuid.v4();
+  const notification = await replaceNotifications({
+    ...templateNotification,
+    actorUserId: actorId,
+    annotationId,
+    canvasId: canvas.id,
+    collectionId,
+    commentId,
+    designId: design.id,
+    id,
+    recipientUserId,
+    sentEmailAt: null,
+    type: NotificationType.ANNOTATION_COMMENT_MENTION
+  });
+  return validateTypeWithGuardOrThrow(
+    notification,
+    isAnnotationCommentMentionNotification,
+    // tslint:disable-next-line:max-line-length
+    `Could not validate ${NotificationType.ANNOTATION_COMMENT_MENTION} notification type from database with id: ${id}`);
+}
+
+/**
  * Creates a notification for the owner of the design that a measurement has been created.
  * Note: this will only create a notification if the actor is not the owner.
  */
@@ -168,7 +227,8 @@ export async function sendDesignOwnerMeasurementCreateNotification(
 export async function sendTaskCommentCreateNotification(
   taskId: string,
   commentId: string,
-  actorId: string
+  actorId: string,
+  mentionedUserIds: string[]
 ): Promise<TaskCommentCreateNotification[]> {
   const collaborators = await CollaboratorsDAO.findByTask(taskId) as Collaborator[];
   const recipients = collaborators.filter((collaborator: Collaborator): boolean => {
@@ -186,7 +246,8 @@ export async function sendTaskCommentCreateNotification(
     ? [...collaboratorUserIds, taskEvent.createdBy]
     : collaboratorUserIds ;
   const filteredRecipientIds = recipientIds.filter((recipientId: string): boolean => {
-    return recipientId !== actorId;
+    return recipientId !== actorId
+      && !mentionedUserIds.some((mentionedId: string) => mentionedId === recipientId);
   });
 
   const stageTask = await StageTasksDAO.findByTaskId(taskId);
@@ -222,6 +283,54 @@ export async function sendTaskCommentCreateNotification(
     notifications.push(validated);
   }
   return notifications;
+}
+
+/**
+ * Creates notifications for the user mentioned in a task comment.
+ */
+export async function sendTaskCommentMentionNotification(
+  taskId: string,
+  commentId: string,
+  actorId: string,
+  recipientId: string
+): Promise<TaskCommentMentionNotification | null> {
+  const isBetweenAdmins = await isAdmins([recipientId, actorId]);
+  if (recipientId === actorId || !isBetweenAdmins) {
+    return null;
+  }
+
+  const taskEvent = await TaskEventsDAO.findById(taskId);
+  if (!taskEvent) { throw new Error(`Could not find a task event with task id: ${taskId}`); }
+
+  const stageTask = await StageTasksDAO.findByTaskId(taskId);
+  if (!stageTask) { throw new Error(`Could not find a stage task with task id: ${taskId}`); }
+
+  const stage = await StagesDAO.findById(stageTask.designStageId);
+  if (!stage) { throw new Error(`Could not find a stage with id: ${stageTask.designStageId}`); }
+
+  const design = await DesignsDAO.findById(stage.designId);
+  if (!design) { throw new Error(`Could not find a design with id: ${stage.designId}`); }
+
+  const id = uuid.v4();
+  const notification = await replaceNotifications({
+    ...templateNotification,
+    actorUserId: actorId,
+    collectionId: design.collectionIds[0] || null,
+    commentId,
+    designId: design.id,
+    id,
+    recipientUserId: recipientId,
+    sentEmailAt: null,
+    stageId: stage.id,
+    taskId,
+    type: NotificationType.TASK_COMMENT_MENTION
+  });
+  const validated = validateTypeWithGuardOrThrow(
+    notification,
+    isTaskCommentMentionNotification,
+    // tslint:disable-next-line:max-line-length
+    `Could not validate ${NotificationType.TASK_COMMENT_MENTION} notification type from database with id: ${id}`);
+  return validated;
 }
 
 export async function sendTaskAssignmentNotification(
