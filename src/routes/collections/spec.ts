@@ -590,7 +590,7 @@ test('POST /collections/:id/submissions', async (t: tape.Test) => {
     }
   );
 
-  t.equal(collaboratorPost[0].status, 403, 'Collaborators cannot submit collections');
+  t.equal(collaboratorPost[0].status, 201, 'Collaborators can submit collections');
 
   const designThree = await ProductDesignsDAO.create({
     description: 'Generic Shirt',

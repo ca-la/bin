@@ -147,7 +147,7 @@ function getPermissionsFromRole(roles: LocalRoles): Permissions {
       canComment: true,
       canDelete: false,
       canEdit: true,
-      canSubmit: false,
+      canSubmit: true,
       canView: true
     };
   }

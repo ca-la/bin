@@ -115,7 +115,7 @@ test('#getDesignPermissions', async (t: tape.Test) => {
       canComment: true,
       canDelete: false,
       canEdit: true,
-      canSubmit: false,
+      canSubmit: true,
       canView: true
     },
     'Returns edit access permissions for the design the user is an edit collaborator on.'
@@ -250,7 +250,7 @@ test('#getCollectionPermissions', async (t: tape.Test) => {
       canComment: true,
       canDelete: false,
       canEdit: true,
-      canSubmit: false,
+      canSubmit: true,
       canView: true
     },
     'Returns edit access permissions for the collection the user is an edit collaborator on.'
