@@ -390,7 +390,7 @@ test('PATCH /product-design-canvases/:canvasId returns a Canvas', async (t: tape
     y: 0
   };
 
-  sandbox().stub(ProductDesignCanvasesDAO, 'update').resolves(data);
+  const updateStub = sandbox().stub(ProductDesignCanvasesDAO, 'update').resolves(data);
 
   const [response, body] = await patch(`/product-design-canvases/${id}`, {
     body: data,
@@ -398,6 +398,13 @@ test('PATCH /product-design-canvases/:canvasId returns a Canvas', async (t: tape
   });
   t.equal(response.status, 200);
   t.deepEqual(body, data);
+
+  updateStub.rejects(new ProductDesignCanvasesDAO.CanvasNotFoundError('Could not find canvas'));
+  const [missingCanvasResponse] = await patch(`/product-design-canvases/${uuid.v4()}`, {
+    body: data,
+    headers: authHeader(session.id)
+  });
+  t.equal(missingCanvasResponse.status, 404);
 });
 
 test('DELETE /product-design-canvases/:canvasId deletes a Canvas', async (t: tape.Test) => {
@@ -405,26 +412,19 @@ test('DELETE /product-design-canvases/:canvasId deletes a Canvas', async (t: tap
 
   const id = uuid.v4();
 
-  const data = {
-    componentId: null,
-    createdAt: '',
-    designId: id,
-    height: 10,
-    id,
-    ordering: 0,
-    title: 'test',
-    width: 10,
-    x: 0,
-    y: 0
-  };
-
-  sandbox().stub(ProductDesignCanvasesDAO, 'del').resolves('');
+  const deleteStub = sandbox().stub(ProductDesignCanvasesDAO, 'del').resolves();
 
   const [response] = await del(`/product-design-canvases/${id}`, {
-    body: data,
     headers: authHeader(session.id)
   });
   t.equal(response.status, 204);
+
+  deleteStub.rejects(new ProductDesignCanvasesDAO.CanvasNotFoundError('Could not find canvas'));
+
+  const [duplicateDeleteCall] = await del(`/product-design-canvases/${id}`, {
+    headers: authHeader(session.id)
+  });
+  t.equal(duplicateDeleteCall.status, 404);
 });
 
 test('PUT /product-design-canvases/:canvasId/component/:componentId adds a component',

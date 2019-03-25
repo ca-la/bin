@@ -12,6 +12,7 @@ import ProductDesignCanvas, {
 } from '../../domain-objects/product-design-canvas';
 import Component, { ComponentType, isUnsavedComponent } from '../../domain-objects/component';
 import * as EnrichmentService from '../../services/attach-asset-links';
+import filterError = require('../../services/filter-error');
 import ProductDesignImage = require('../../components/images/domain-object');
 import ProductDesignOption = require('../../domain-objects/product-design-option');
 import { hasProperties } from '../../services/require-properties';
@@ -19,6 +20,9 @@ import { omit } from 'lodash';
 import { typeGuard } from '../../middleware/type-guard';
 
 const router = new Router();
+
+type CanvasNotFoundError = ProductDesignCanvasesDAO.CanvasNotFoundError;
+const { CanvasNotFoundError } = ProductDesignCanvasesDAO;
 
 const attachUser = (
   request: any,
@@ -174,7 +178,10 @@ function* update(this: Koa.Application.Context): AsyncIterableIterator<ProductDe
     return this.throw(400, 'Request does not match ProductDesignCanvas');
   }
 
-  const canvas = yield ProductDesignCanvasesDAO.update(this.params.canvasId, body);
+  const canvas = yield ProductDesignCanvasesDAO.update(this.params.canvasId, body)
+    .catch(filterError(CanvasNotFoundError, (err: CanvasNotFoundError) => {
+      this.throw(404, err);
+    }));
   this.status = 200;
   this.body = canvas;
 }
@@ -194,7 +201,10 @@ function* reorder(
 }
 
 function* del(this: Koa.Application.Context): AsyncIterableIterator<ProductDesignCanvas> {
-  yield ProductDesignCanvasesDAO.del(this.params.canvasId);
+  yield ProductDesignCanvasesDAO.del(this.params.canvasId)
+    .catch(filterError(CanvasNotFoundError, (err: CanvasNotFoundError) => {
+      this.throw(404, err);
+    }));
   this.status = 204;
 }
 

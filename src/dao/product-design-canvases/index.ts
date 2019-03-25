@@ -13,6 +13,14 @@ import { validate, validateEvery } from '../../services/validate-from-db';
 
 const TABLE_NAME = 'product_design_canvases';
 
+export class CanvasNotFoundError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.message = message;
+    this.name = 'CanvasNotFoundError';
+  }
+}
+
 export async function create(
   data: MaybeUnsaved<ProductDesignCanvas>,
   trx?: Knex.Transaction
@@ -55,7 +63,9 @@ export async function update(
     .update(rowData, '*')
     .then((rows: ProductDesignCanvasRow[]) => first<ProductDesignCanvasRow>(rows));
 
-  if (!updated) { throw new Error('Failed to update rows'); }
+  if (!updated) {
+    throw new CanvasNotFoundError("Can't update canvas; canvas not found");
+  }
 
   return validate<ProductDesignCanvasRow, ProductDesignCanvas>(
     TABLE_NAME,
@@ -106,7 +116,9 @@ export async function del(id: string): Promise<ProductDesignCanvas> {
     .update({ deleted_at: new Date() }, '*')
     .then((rows: ProductDesignCanvasRow[]) => first<ProductDesignCanvasRow>(rows));
 
-  if (!deleted) { throw new Error('Failed to delete rows'); }
+  if (!deleted) {
+    throw new CanvasNotFoundError("Can't delete canvas; canvas not found");
+  }
 
   return validate<ProductDesignCanvasRow, ProductDesignCanvas>(
     TABLE_NAME,
