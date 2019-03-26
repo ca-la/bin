@@ -130,9 +130,12 @@ function* downloadById() {
   this.redirect(url, 302);
 }
 
+// DEPRECATED. Safe to remove after ~2019-03-28
+router.put('/:imageId/upload_status', requireAuth, uploadStatus);
+
 router.post('/', requireAuth, multer(), createImage);
 router.put('/:imageId', requireAuth, create);
-router.put('/:imageId/upload_status', requireAuth, uploadStatus);
+router.put('/:imageId/upload-status', requireAuth, uploadStatus);
 router.get('/', requireAuth, getList);
 router.get('/:imageId', requireAuth, getById);
 router.get('/:imageId/download', downloadById);

@@ -9,7 +9,7 @@ import { create as createImage } from '../dao';
 const API_PATH = '/product-design-images';
 
 test(
-  `GET ${API_PATH}/upload_status returns an updated image`,
+  `PUT ${API_PATH}/upload-status returns an updated image`,
   async (t: tape.Test) => {
     const userOne = await createUser();
 
@@ -25,7 +25,7 @@ test(
     });
     const uploadCompletedAt = new Date().toISOString();
 
-    const [response, body] = await API.put(`${API_PATH}/${sketch.id}/upload_status`, {
+    const [response, body] = await API.put(`${API_PATH}/${sketch.id}/upload-status`, {
       body: { uploadCompletedAt },
       headers: API.authHeader(userOne.session.id)
     });
