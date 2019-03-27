@@ -169,3 +169,19 @@ export function isNotificationRow(row: object):
     'type'
   );
 }
+
+export const DEPRECATED_NOTIFICATION_TYPES = [
+  'ANNOTATION_CREATE',
+  'create-section',
+  'create-selected-option',
+  'DESIGN_UPDATE',
+  'delete-section',
+  'delete-selected-option',
+  'SECTION_CREATE',
+  'SECTION_DELETE',
+  'SECTION_UPDATE',
+  'update-design',
+  'update-feature-placement',
+  'update-section',
+  'update-selected-option'
+];

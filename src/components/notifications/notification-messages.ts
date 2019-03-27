@@ -10,7 +10,7 @@ import * as CollectionsDAO from '../../dao/collections';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as CommentsDAO from '../../components/comments/dao';
 import * as CanvasesDAO from '../../dao/product-design-canvases';
-import { Notification, NotificationType } from './domain-object';
+import { DEPRECATED_NOTIFICATION_TYPES, Notification, NotificationType } from './domain-object';
 import getLinks, { LinkType } from './get-links';
 import normalizeTitle from '../../services/normalize-title';
 import Comment from '../../components/comments/domain-object';
@@ -74,6 +74,10 @@ function getLocation(
 export const createNotificationMessage = async (
   notification: Notification
 ): Promise<NotificationMessage | null> => {
+  if (DEPRECATED_NOTIFICATION_TYPES.includes(notification.type)) {
+    return null;
+  }
+
   const baseNotificationMessage = {
     actor: await UsersDAO.findById(notification.actorUserId),
     createdAt: notification.createdAt,

@@ -8,7 +8,7 @@ import * as DesignsDAO from '../../dao/product-designs';
 import generateNotification from '../../test-helpers/factories/notification';
 import { createNotificationMessage } from './notification-messages';
 import { STUDIO_HOST } from '../../config';
-import { NotificationType } from './domain-object';
+import { Notification, NotificationType } from './domain-object';
 import generateCollection from '../../test-helpers/factories/collection';
 
 test('notification messages returns annotation comment create message to the user'
@@ -373,3 +373,30 @@ test('notification messages returns task completion message to the user if resou
       messageDeleted === null,
       'No message is created for a deleted subresource');
   });
+
+test('unsupported notifications', async (t: tape.Test) => {
+  const { notification } = await generateNotification({
+    type: NotificationType.TASK_ASSIGNMENT
+  });
+  const deprecatedNotification: object = {
+    ...notification,
+    type: 'ANNOTATION_CREATE'
+  };
+  const message = await createNotificationMessage(deprecatedNotification as Notification);
+  t.equal(message, null, 'A deprecated type returns null');
+  const unsupportedNotification: object = {
+    ...notification,
+    type: 'FOO'
+  };
+
+  try {
+    await createNotificationMessage(unsupportedNotification as Notification);
+    t.fail('Should not be able to create a notification message for an unsupported type.');
+  } catch (e) {
+    t.equal(
+      e.message,
+      `Unknown notification type found with id ${notification.id} and type FOO`,
+      'Throws an error for an unsupported type.'
+      );
+  }
+});
