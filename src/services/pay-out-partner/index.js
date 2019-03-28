@@ -38,8 +38,6 @@ async function payOutPartner({
   const payoutAccount = await PartnerPayoutAccountsDAO.findById(payoutAccountId);
   assert(payoutAccount, `No payout account with ID ${payoutAccountId}`);
 
-  assert(payoutAmountCents <= invoice.totalCents, 'Payout amount cannot be larger than invoice amount');
-
   const vendorUser = await UsersDAO.findById(payoutAccount.userId);
 
   // Construct the Stripe transaction description to (a) make it clear what
