@@ -26,6 +26,7 @@ import generatePricingQuote, {
   UnsavedQuote
 } from '../../services/generate-pricing-quote';
 import Bid from '../../components/bids/domain-object';
+import addMargin from '../../services/add-margin';
 import { isCreateRequest } from '../../services/payment';
 import * as SlackService from '../../services/slack';
 import * as CollectionsDAO from '../../dao/collections';
@@ -47,9 +48,8 @@ function isBidRequest(candidate: object): candidate is BidRequest {
 function calculateAmounts(
   quote: UnsavedQuote
 ): { payNowTotalCents: number; payLaterTotalCents: number } {
-  const financingMargin = 1 - FINANCING_MARGIN;
   const payNowTotalCents = quote.units * quote.unitCostCents;
-  const payLaterTotalCents = Math.ceil(payNowTotalCents / financingMargin);
+  const payLaterTotalCents = addMargin(payNowTotalCents, FINANCING_MARGIN);
   return { payNowTotalCents, payLaterTotalCents };
 }
 

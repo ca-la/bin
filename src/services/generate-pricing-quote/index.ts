@@ -19,7 +19,8 @@ import PricingProcess from '../../domain-objects/pricing-process';
 import * as PricingCostInputsDAO from '../../dao/pricing-cost-inputs';
 import * as DesignEventsDAO from '../../dao/design-events';
 import PricingCostInputs from '../../domain-objects/pricing-cost-input';
-import DataAdapter from '../../services/data-adapter';
+import DataAdapter from '../data-adapter';
+import addMargin from '../add-margin';
 
 export type UnsavedQuote = Omit<
   PricingQuote,
@@ -91,8 +92,7 @@ function calculateQuote(
         developmentCostCents
       ])
   );
-  const margin = 1 - values.margin.margin / 100;
-  const unitCostCents = Math.ceil(beforeMargin / margin);
+  const unitCostCents = addMargin(beforeMargin, values.margin.margin / 100);
 
   return {
     ...omit(request, ['processes']),

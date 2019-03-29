@@ -12,6 +12,7 @@ import payInvoice = require('../../services/pay-invoice');
 import ProductDesign = require('../../domain-objects/product-design');
 import spendCredit from '../../components/credits/spend-credit';
 import { createPaymentMethod } from '../../services/payment-methods';
+import addMargin from '../../services/add-margin';
 import {
   PricingQuote
 } from '../../domain-objects/pricing-quote';
@@ -126,7 +127,7 @@ export async function createInvoiceWithoutMethod(
     const collectionName = collection.title || 'Untitled';
 
     const totalCentsWithoutFinanceMargin = getQuoteTotal(quotes);
-    const totalCents = Math.ceil(totalCentsWithoutFinanceMargin * (1 + FINANCING_MARGIN));
+    const totalCents = addMargin(totalCentsWithoutFinanceMargin, FINANCING_MARGIN);
 
     const invoice = await createInvoice(
       designNames, collectionName, collection.id, totalCents, userId, trx);
