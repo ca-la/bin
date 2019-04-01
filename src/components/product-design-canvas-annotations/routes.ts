@@ -141,7 +141,7 @@ function* createAnnotationComment(this: Koa.Application.Context): AsyncIterableI
             }
           }
         }
-        if (!(this.state.userId in mentionedUserIds)) {
+        if (!mentionedUserIds.includes(this.state.userId)) {
           await NotificationsService.sendDesignOwnerAnnotationCommentCreateNotification(
             annotationId,
             annotation.canvasId,
