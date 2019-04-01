@@ -5,6 +5,7 @@ import createUser = require('../../test-helpers/create-user');
 
 import * as CollectionsDAO from '../../dao/collections';
 import * as DesignsDAO from '../../dao/product-designs';
+import * as MeasurementsDAO from '../../dao/product-design-canvas-measurements';
 import generateNotification from '../../test-helpers/factories/notification';
 import { createNotificationMessage } from './notification-messages';
 import { STUDIO_HOST } from '../../config';
@@ -180,9 +181,19 @@ test('notification messages returns measurement create message to the user if re
     const { notification: meaCreNotification, design, actor } = await generateNotification({
       type: NotificationType.MEASUREMENT_CREATE
     });
-    const { notification: meaCreDeleted, design: meaCreDesign } = await generateNotification({
+    const {
+      notification: meaCreDeleted,
+      measurement: meaCreMeasurement
+    } = await generateNotification({
       type: NotificationType.MEASUREMENT_CREATE
     });
+    const {
+      notification: meaCreDesDeleted,
+      design: meaCreDesign
+    } = await generateNotification({
+      type: NotificationType.MEASUREMENT_CREATE
+    });
+    await MeasurementsDAO.deleteById(meaCreMeasurement.id);
     await DesignsDAO.deleteById(meaCreDesign.id);
 
     const message = await createNotificationMessage(meaCreNotification);
@@ -195,6 +206,10 @@ test('notification messages returns measurement create message to the user if re
     t.assert(
       messageDeleted === null,
       'No message is created for a deleted subresource');
+    const messageDesDeleted = await createNotificationMessage(meaCreDesDeleted);
+    t.assert(
+      messageDesDeleted === null,
+      'No message is created for a deleted design subresource');
   });
 
 test('notification messages returns partner accept service bid message to the user'

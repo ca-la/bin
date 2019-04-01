@@ -10,6 +10,7 @@ import * as CollectionsDAO from '../../dao/collections';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as CommentsDAO from '../../components/comments/dao';
 import * as CanvasesDAO from '../../dao/product-design-canvases';
+import * as MeasurementsDAO from '../../dao/product-design-canvas-measurements';
 import { DEPRECATED_NOTIFICATION_TYPES, Notification, NotificationType } from './domain-object';
 import getLinks, { LinkType } from './get-links';
 import normalizeTitle from '../../services/normalize-title';
@@ -203,10 +204,11 @@ export const createNotificationMessage = async (
     }
 
     case (NotificationType.MEASUREMENT_CREATE): {
-      const { designId, collectionId } = notification;
+      const { designId, collectionId, measurementId } = notification;
       const design = await getDesign(designId);
       const collection = await getCollection(collectionId);
-      if (!design) { return null; }
+      const measurement = await MeasurementsDAO.findById(measurementId);
+      if (!design || !measurement) { return null; }
       const { htmlLink, deepLink } = getLinks({
         design,
         type: LinkType.Design
