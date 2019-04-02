@@ -106,7 +106,7 @@ export default async function generateNotification(
 
   const { comment } = options.commentId
     ? { comment: await CommentsDAO.findById(options.commentId) }
-    : await generateComment({ userId: actor.id });
+    : await generateComment({ userId: actor.id, text: `Hello @<${collaborator.id}|collaborator>` });
   if (!comment) { throw new Error('Could not create comment'); }
 
   const { stage } = options.stageId

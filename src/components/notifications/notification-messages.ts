@@ -19,7 +19,7 @@ import { ComponentType } from '../../domain-objects/component';
 import ProductDesignCanvas from '../../domain-objects/product-design-canvas';
 import { DetailsTask } from '../../domain-objects/task-event';
 import Collection from '../../domain-objects/collection';
-import parseCommentText from '../../services/parse-comment-text';
+import { addAtMentionDetailsForComment } from '../../services/add-at-mention-details';
 
 function span(text: string, className?: string): string {
   return `<span class='${className}'>${text}</span>`;
@@ -149,7 +149,7 @@ export const createNotificationMessage = async (
         : ComponentType.Sketch;
       const comment = await CommentsDAO.findById(commentId);
       if (!comment) { return null; }
-      const commentText = await parseCommentText(comment.text);
+      const { mentions } = await addAtMentionDetailsForComment(comment);
       const cleanName = escapeHtml(baseNotificationMessage.actor.name);
       const { deepLink, htmlLink } = getLinks({
         annotationId: notification.annotationId,
@@ -160,7 +160,7 @@ export const createNotificationMessage = async (
       });
       return {
         ...baseNotificationMessage,
-        attachments: [{ text: commentText, url: deepLink }],
+        attachments: [{ text: comment.text, url: deepLink, mentions }],
         html: `${span(cleanName, 'user-name')} commented on ${htmlLink}`,
         imageUrl: design ? findImageUrl(design) : null,
         link: deepLink,
@@ -183,7 +183,7 @@ export const createNotificationMessage = async (
         : ComponentType.Sketch;
       const comment = await CommentsDAO.findById(commentId);
       if (!comment) { return null; }
-      const commentText = await parseCommentText(comment.text);
+      const { mentions } = await addAtMentionDetailsForComment(comment);
       const cleanName = escapeHtml(baseNotificationMessage.actor.name);
       const { deepLink, htmlLink } = getLinks({
         annotationId: notification.annotationId,
@@ -194,7 +194,7 @@ export const createNotificationMessage = async (
       });
       return {
         ...baseNotificationMessage,
-        attachments: [{ text: commentText, url: deepLink }],
+        attachments: [{ text: comment.text, url: deepLink, mentions }],
         html: `${span(cleanName, 'user-name')} mentioned you on ${htmlLink}`,
         imageUrl: design ? findImageUrl(design) : null,
         link: deepLink,
@@ -239,11 +239,11 @@ export const createNotificationMessage = async (
       });
       const comment: Comment | null = await CommentsDAO.findById(notification.commentId);
       if (!comment) { return null; }
-      const commentText = await parseCommentText(comment.text);
+      const { mentions } = await addAtMentionDetailsForComment(comment);
       const cleanName = escapeHtml(baseNotificationMessage.actor.name);
       return {
         ...baseNotificationMessage,
-        attachments: [{ text: commentText, url: deepLink }],
+        attachments: [{ text: comment.text, url: deepLink, mentions }],
         html: `${span(cleanName, 'user-name')} commented on your task ${htmlLink}`,
         imageUrl: design ? findImageUrl(design) : null,
         link: deepLink,
@@ -266,11 +266,11 @@ export const createNotificationMessage = async (
       });
       const comment: Comment | null = await CommentsDAO.findById(notification.commentId);
       if (!comment) { return null; }
-      const commentText = await parseCommentText(comment.text);
+      const { mentions } = await addAtMentionDetailsForComment(comment);
       const cleanName = escapeHtml(baseNotificationMessage.actor.name);
       return {
         ...baseNotificationMessage,
-        attachments: [{ text: commentText, url: deepLink }],
+        attachments: [{ text: comment.text, url: deepLink, mentions }],
         html: `${span(cleanName, 'user-name')} mentioned you on the task ${htmlLink}`,
         imageUrl: design ? findImageUrl(design) : null,
         link: deepLink,

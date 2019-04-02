@@ -45,6 +45,9 @@ test('notification messages returns annotation comment create message to the use
       'message html contains the design title');
     t.assert(annCommCreateMessage.actor && annCommCreateMessage.actor.id === actor.id,
       'message actor is the user');
+    const { mentions } = annCommCreateMessage.attachments[0];
+    t.assert(mentions && Object.keys(mentions).length === 1,
+      'message attachments contains one mention');
     const annCommCreateDeletedMessage = await createNotificationMessage(annCommCreateDesignDeleted);
     t.assert(
       annCommCreateDeletedMessage === null,
@@ -67,6 +70,9 @@ test('notification messages returns annotation mention message to the user if re
       'message html contains the design title');
     t.assert(message.actor && message.actor.id === actor.id,
       'message.actor && message.actor.id is the user');
+    const { mentions } = message.attachments[0];
+    t.assert(mentions && Object.keys(mentions).length === 1,
+      'message attachments contains one mention');
     const messageDeleted = await createNotificationMessage(annMenDeleted);
     t.assert(
       messageDeleted === null,
@@ -331,6 +337,9 @@ test('notification messages returns task comment create message to the user if r
     if (!message) { throw new Error('Did not create message'); }
     t.assert(message.html.includes(task.title || 'test'),
       'message html contains the task title');
+    const { mentions } = message.attachments[0];
+    t.assert(mentions && Object.keys(mentions).length === 1,
+      'message attachments contains one mention');
     t.assert(message.actor && message.actor.id === actor.id,
       'message.actor && message.actor.id is the user');
     const messageDeleted = await createNotificationMessage(tasComCreDeleted);
@@ -358,6 +367,9 @@ test('notification messages returns task comment mention message to the user if 
       'message html contains the task title');
     t.assert(message.actor && message.actor.id === actor.id,
       'message.actor && message.actor.id is the user');
+    const { mentions } = message.attachments[0];
+    t.assert(mentions && Object.keys(mentions).length === 1,
+      'message attachments contains one mention');
     const messageDeleted = await createNotificationMessage(tasComMenDeleted);
     t.assert(
       messageDeleted === null,
