@@ -76,6 +76,7 @@ in `package.json`.
 ```bash
 $ npm run lint
 $ npm run test # Will build and lint the app, no need to npm run lint && npm run test
+$ npm run coverage # Will run tests and output coverage
 ```
 
 ### Run a single test file

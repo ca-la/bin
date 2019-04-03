@@ -165,11 +165,11 @@ test('Notifications DAO supports marking notifications as sent', async (t: tape.
       [notificationOne.id, notificationTwo.id],
       trx
     );
-    t.deepEqual(
-      notifications.map((notification: Notification): string => notification.id),
-      [notificationOne.id, notificationTwo.id],
-      'Returns marked notifications'
+    const notificationIds = notifications.map(
+      (notification: Notification): string => notification.id
     );
+    t.true(notificationIds.includes(notificationOne.id), 'Returns first marked notification');
+    t.true(notificationIds.includes(notificationTwo.id), 'Returns second marked notification');
   });
 });
 
