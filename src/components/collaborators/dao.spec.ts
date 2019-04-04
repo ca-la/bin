@@ -370,3 +370,36 @@ test('CollaboratorsDAO.update', async (t: Test) => {
     .then(() => t.fail('Invalid update succeeded'))
     .catch(() => t.pass('Correctly rejected invalid update'));
 });
+
+test('CollaboratorsDAO.findUnclaimedByEmail', async (t: Test) => {
+  const { user: designer } = await createUser({ withSession: false });
+
+  const design = await ProductDesignsDAO.create({
+    productType: 'TEESHIRT',
+    title: 'A product design',
+    userId: designer.id
+  });
+  const newUserEmail = 'new-user@someplace.else';
+  const collaborator = await CollaboratorsDAO.create({
+    collectionId: null,
+    designId: design.id,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: newUserEmail,
+    userId: null
+  });
+
+  t.deepEqual(
+    await CollaboratorsDAO.findUnclaimedByEmail(newUserEmail),
+    [collaborator],
+    'finds the unclaimed invitation'
+  );
+
+  await CollaboratorsDAO.deleteById(collaborator.id);
+
+  t.deepEqual(
+    await CollaboratorsDAO.findUnclaimedByEmail(newUserEmail),
+    [],
+    'does not find the deleted invitation'
+  );
+});

@@ -350,7 +350,8 @@ export async function findUnclaimedByEmail(email: string): Promise<Collaborator[
   const normalized = normalizeEmail(email);
 
   const collaboratorRows = await db(TABLE_NAME)
-    .whereRaw('lower(collaborators.user_email) = lower(?)', [normalized]);
+    .whereRaw('lower(collaborators.user_email) = lower(?)', [normalized])
+    .andWhere({ deleted_at: null });
 
   return validateEvery<CollaboratorRow, Collaborator>(
     TABLE_NAME,
