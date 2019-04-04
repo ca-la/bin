@@ -104,7 +104,7 @@ test('notification messages returns collection submit message to the user if res
     t.assert(message.actor && message.actor.id === userOne.user.id,
       'message.actor && message.actor.id is the user');
     t.assert(message.html
-      .indexOf(`<a href="${STUDIO_HOST}/collections/${collection.id}">`) !== -1,
+      .indexOf(`<a href="${STUDIO_HOST}/collections/${collection.id}/designs">`) !== -1,
       'message link goes to correct collection');
     await CollectionsDAO.deleteById(collection.id);
     const messageDeleted = await createNotificationMessage(collSubDeleted);
@@ -138,7 +138,9 @@ test('notification messages returns commit cost inputs message to the user if re
     t.assert(message.actor && message.actor.id === userOne.user.id,
       'message.actor && message.actor.id is the user');
     t.assert(message.html
-      .indexOf(`<a href="${STUDIO_HOST}/collections/${collection.id}?isCheckout=true">`) !== -1,
+      .indexOf(
+        `<a href="${STUDIO_HOST}/collections/${collection.id}/designs?isCheckout=true">`
+      ) !== -1,
       'message link goes to correct collection');
     await CollectionsDAO.deleteById(collection.id);
     const messageDeleted = await createNotificationMessage(comCosInpDeleted);
@@ -173,7 +175,7 @@ test('notification messages returns invite collaborator message to the user if r
     t.assert(message.actor && message.actor.id === userOne.user.id,
       'message.actor && message.actor.id is the user');
     t.assert(message.html
-      .indexOf(`<a href="${STUDIO_HOST}/collections/${collection.id}">`) !== -1,
+      .indexOf(`<a href="${STUDIO_HOST}/collections/${collection.id}/designs">`) !== -1,
       'message link goes to correct collection');
     await CollectionsDAO.deleteById(collection.id);
     const messageDeleted = await createNotificationMessage(invColDeleted);

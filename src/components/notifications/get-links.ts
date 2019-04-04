@@ -110,7 +110,7 @@ export default function getLinks(linkBase: LinkBase): Links {
     case LinkType.Collection: {
       const { collection, isCheckout } = linkBase;
       // tslint:disable-next-line:max-line-length
-      const deepLink = `${STUDIO_HOST}/collections/${collection.id}${isCheckout ? '?isCheckout=true' : ''}`;
+      const deepLink = `${STUDIO_HOST}/collections/${collection.id}/designs${isCheckout ? '?isCheckout=true' : ''}`;
       const title = normalizeTitle(collection);
       return {
         deepLink,
