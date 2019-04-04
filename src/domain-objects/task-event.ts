@@ -1,11 +1,6 @@
 import DataAdapter from '../services/data-adapter';
 import { hasOnlyProperties } from '../services/require-properties';
 import { generateThumbnailLinks } from '../services/attach-asset-links';
-import {
-  CollaboratorWithUser,
-  CollaboratorWithUserRow,
-  encode as encodeCollaborator
-} from '../components/collaborators/domain-objects/collaborator';
 
 /**
  * @typedef {object} TaskEvent A unit of work to be completed in the developement of a garment
@@ -34,7 +29,6 @@ export default interface TaskEvent {
 export interface RelatedResourceMeta {
   id: string | null;
   title: string | null;
-  createdAt: Date | null;
 }
 
 export interface DesignResourceMeta extends RelatedResourceMeta {
@@ -50,31 +44,21 @@ export interface DetailsTaskAdaptedRow extends Omit<TaskEvent, 'taskId'> {
   designStageTitle: string | null;
   designId: string | null;
   designTitle: string | null;
-  designCreatedAt: string | null;
   collectionId: string | null;
   collectionTitle: string | null;
-  collectionCreatedAt: string | null;
   commentCount: number;
   imageIds: string[] | null;
 }
 
-export interface DetailsTaskWithAssigneesAdaptedRow extends DetailsTaskAdaptedRow {
-  assignees: CollaboratorWithUser[];
-}
-
-export const createDetailsTask = (
-  data: DetailsTaskWithAssigneesAdaptedRow
-): DetailsTaskWithAssignees => {
+export const createDetailsTask = (data: DetailsTaskAdaptedRow): DetailsTask => {
   const {
     designId,
     designTitle,
     designStageId,
     designStageOrdering,
     designStageTitle,
-    designCreatedAt,
     collectionId,
     collectionTitle,
-    collectionCreatedAt,
     commentCount,
     imageIds,
     ...task
@@ -82,19 +66,16 @@ export const createDetailsTask = (
   return {
     ...task,
     collection: {
-      createdAt: collectionCreatedAt ? new Date(collectionCreatedAt) : null,
       id: collectionId,
       title: collectionTitle
     },
     commentCount: parseInt(commentCount.toString(), 10),
     design: {
-      createdAt: designCreatedAt ? new Date(designCreatedAt) : null,
       id: designId,
       previewImageUrls: imageIds ? generateThumbnailLinks(imageIds) : null,
       title: designTitle
     },
     designStage: {
-      createdAt: null,
       id: designStageId,
       ordering: designStageOrdering,
       title: designStageTitle
@@ -108,10 +89,6 @@ export interface DetailsTask extends Omit<TaskEvent, 'taskId'> {
   design: DesignResourceMeta;
   collection: RelatedResourceMeta;
   commentCount: number;
-}
-
-export interface DetailsTaskWithAssignees extends DetailsTask {
-  assignees: CollaboratorWithUser[];
 }
 
 export enum TaskStatus {
@@ -178,12 +155,6 @@ export interface DetailTaskEventRow extends TaskEventRow {
   image_ids: string[] | null;
 }
 
-export interface DetailTaskWithAssigneesEventRow extends DetailTaskEventRow {
-  design_created_at: string | null;
-  collection_created_at: string | null;
-  assignees: CollaboratorWithUserRow[];
-}
-
 export function isDetailTaskRow(
   candidate: object
 ): candidate is DetailTaskEventRow {
@@ -210,64 +181,3 @@ export function isDetailTaskRow(
 }
 
 export const detailsAdapter = new DataAdapter<DetailTaskEventRow, DetailsTaskAdaptedRow>();
-
-export function isDetailTaskWithAssigneeRow(
-  candidate: object
-): candidate is DetailTaskWithAssigneesEventRow {
-  return hasOnlyProperties(
-    candidate,
-    'assignees',
-    'id',
-    'created_at',
-    'created_by',
-    'title',
-    'status',
-    'due_date',
-    'description',
-    'design_stage_id',
-    'design_stage_ordering',
-    'design_stage_title',
-    'design_id',
-    'design_title',
-    'design_created_at',
-    'collection_id',
-    'collection_title',
-    'collection_created_at',
-    'comment_count',
-    'image_ids',
-    'ordering'
-  );
-}
-
-const encode = (data: DetailTaskWithAssigneesEventRow): DetailsTaskWithAssigneesAdaptedRow => {
-  let assignees: CollaboratorWithUser[] = [];
-  if (data.assignees) {
-    assignees = data.assignees.map(encodeCollaborator);
-  }
-
-  return {
-    assignees,
-    collectionCreatedAt: data.collection_created_at,
-    collectionId: data.collection_id,
-    collectionTitle: data.collection_title,
-    commentCount: data.comment_count,
-    createdAt: new Date(data.created_at),
-    createdBy: data.created_by,
-    description: data.description,
-    designCreatedAt: data.design_created_at,
-    designId: data.design_id,
-    designStageId: data.design_stage_id,
-    designStageOrdering: data.design_stage_ordering,
-    designStageTitle: data.design_stage_title,
-    designTitle: data.design_title,
-    dueDate: data.due_date,
-    id: data.id,
-    imageIds: data.image_ids,
-    ordering: data.ordering,
-    status: data.status,
-    title: data.title
-  };
-};
-
-export const detailsWithAssigneesAdapter =
-  new DataAdapter<DetailTaskWithAssigneesEventRow, DetailsTaskWithAssigneesAdaptedRow>(encode);

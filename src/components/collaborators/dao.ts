@@ -2,21 +2,18 @@ import * as Knex from 'knex';
 import uuid = require('node-uuid');
 import rethrow = require('pg-rethrow');
 
-import * as ProductDesignsDAO from '../../dao/product-designs';
 import db = require('../../services/db');
+import filterError = require('../../services/filter-error');
 import InvalidDataError = require('../../errors/invalid-data');
 import first from '../../services/first';
 import normalizeEmail = require('../../services/normalize-email');
-import filterError = require('../../services/filter-error');
+import * as ProductDesignsDAO from '../../dao/product-designs';
 import Collaborator,
 {
   CollaboratorRow,
   CollaboratorWithUser,
-  CollaboratorWithUserRow,
   dataAdapter,
-  dataWithUserAdapter,
   isCollaboratorRow,
-  isCollaboratorWithUserRow,
   partialDataAdapter,
   UPDATABLE_PROPERTIES
 } from './domain-objects/collaborator';
@@ -29,10 +26,8 @@ import {
 import UsersDAO = require('../../dao/users');
 import { validate, validateEvery } from '../../services/validate-from-db';
 import { pick, uniqBy } from 'lodash';
-import { VIEW_RAW } from './view';
 
 const TABLE_NAME = 'collaborators';
-const VIEW_ALIAS = 'collaborators_with_users';
 
 async function attachUser(collaborator: Collaborator): Promise<CollaboratorWithUser> {
   if (collaborator.userId) {
@@ -40,7 +35,7 @@ async function attachUser(collaborator: Collaborator): Promise<CollaboratorWithU
     return { ...collaborator, user };
   }
 
-  return { ...collaborator, user: null };
+  return collaborator;
 }
 
 function handleForeignKeyViolation(
@@ -134,38 +129,36 @@ Updatable Properties: ${UPDATABLE_PROPERTIES.join(', ')}`.trim());
 
 export async function findById(collaboratorId: string): Promise<CollaboratorWithUser | null> {
   const collaboratorRow = await db(TABLE_NAME)
-    .with(VIEW_ALIAS, VIEW_RAW)
-    .select('*')
-    .from(VIEW_ALIAS)
     .where({ id: collaboratorId, deleted_at: null })
-    .then((rows: CollaboratorWithUserRow[]) => first<CollaboratorWithUserRow>(rows));
+    .then((rows: CollaboratorRow[]) => first<CollaboratorRow>(rows));
 
   if (!collaboratorRow) { return null; }
 
-  const collaborator = validate<CollaboratorWithUserRow, CollaboratorWithUser>(
+  const collaborator = validate<CollaboratorRow, Collaborator>(
     TABLE_NAME,
-    isCollaboratorWithUserRow,
-    dataWithUserAdapter,
+    isCollaboratorRow,
+    dataAdapter,
     collaboratorRow
   );
-  return collaborator;
+  return attachUser(collaborator);
 }
 
 export async function findAllByIds(collaboratorIds: string[]): Promise<CollaboratorWithUser[]> {
   const collaboratorRows = await db(TABLE_NAME)
-    .with(VIEW_ALIAS, VIEW_RAW)
-    .select('*')
-    .from(VIEW_ALIAS)
     .whereIn('id', collaboratorIds)
     .andWhere({ deleted_at: null })
     .orderBy('created_at', 'desc');
 
-  return validateEvery<CollaboratorWithUserRow, CollaboratorWithUser>(
+  const collaborators = validateEvery<CollaboratorRow, Collaborator>(
     TABLE_NAME,
-    isCollaboratorWithUserRow,
-    dataWithUserAdapter,
+    isCollaboratorRow,
+    dataAdapter,
     collaboratorRows
   );
+
+  return await Promise.all(collaborators.map(
+    async (collaborator: Collaborator): Promise<CollaboratorWithUser> => attachUser(collaborator)
+  ));
 }
 
 export async function findByDesign(
@@ -175,9 +168,6 @@ export async function findByDesign(
   const design = await ProductDesignsDAO.findById(designId);
   if (!design) { return []; }
   const collaboratorRows = await db(TABLE_NAME)
-    .with(VIEW_ALIAS, VIEW_RAW)
-    .select('*')
-    .from(VIEW_ALIAS)
     .where({
       deleted_at: null,
       design_id: designId
@@ -197,13 +187,14 @@ export async function findByDesign(
     })
     .orderBy('created_at', 'ASC');
 
-  const collaboratorsWithUsers = validateEvery<CollaboratorWithUserRow, CollaboratorWithUser>(
+  const collaborators = validateEvery<CollaboratorRow, CollaboratorWithUser>(
     TABLE_NAME,
-    isCollaboratorWithUserRow,
-    dataWithUserAdapter,
+    isCollaboratorRow,
+    dataAdapter,
     collaboratorRows
   );
 
+  const collaboratorsWithUsers = await Promise.all(collaborators.map(attachUser));
   return [
     ...uniqBy(collaboratorsWithUsers
       .filter((collaborator: CollaboratorWithUser) => collaborator.userId !== null), 'userId'),
@@ -251,60 +242,53 @@ ORDER BY d.created_at DESC;
 
 export async function findByCollection(collectionId: string): Promise<Collaborator[]> {
   const collaboratorRows = await db(TABLE_NAME)
-    .with(VIEW_ALIAS, VIEW_RAW)
-    .select('*')
-    .from(VIEW_ALIAS)
     .where({
       collection_id: collectionId,
       deleted_at: null
     });
 
-  const collaborators = validateEvery<CollaboratorWithUserRow, CollaboratorWithUser>(
+  const collaborators =  validateEvery<CollaboratorRow, Collaborator>(
     TABLE_NAME,
-    isCollaboratorWithUserRow,
-    dataWithUserAdapter,
+    isCollaboratorRow,
+    dataAdapter,
     collaboratorRows
   );
-  return collaborators;
+  return Promise.all(collaborators.map(attachUser));
 }
 
 export async function findByTask(taskId: string): Promise<CollaboratorWithUser[]> {
   const collaboratorRows = await db(TABLE_NAME)
-    .with(VIEW_ALIAS, VIEW_RAW)
-    .select('*')
-    .from(VIEW_ALIAS)
-    .join('collaborator_tasks', 'collaborators_with_users.id', 'collaborator_tasks.collaborator_id')
+    .select('collaborators.*')
+    .from(TABLE_NAME)
+    .join('collaborator_tasks', 'collaborators.id', 'collaborator_tasks.collaborator_id')
     .where({
       'collaborator_tasks.task_id': taskId,
       'deleted_at': null
     });
 
-  const collaborators = validateEvery<CollaboratorWithUserRow, CollaboratorWithUser>(
+  const collaborators = validateEvery<CollaboratorRow, CollaboratorWithUser>(
     TABLE_NAME,
-    isCollaboratorWithUserRow,
-    dataWithUserAdapter,
+    isCollaboratorRow,
+    dataAdapter,
     collaboratorRows
   );
-  return collaborators;
+  return Promise.all(collaborators.map(attachUser));
 }
 
 export async function findByUserId(userId: string): Promise<CollaboratorWithUser[]> {
   const collaboratorRows = await db(TABLE_NAME)
-    .with(VIEW_ALIAS, VIEW_RAW)
-    .select('*')
-    .from(VIEW_ALIAS)
     .where({
       deleted_at: null,
       user_id: userId
     });
 
-  const collaborators =  validateEvery<CollaboratorWithUserRow, CollaboratorWithUser>(
+  const collaborators =  validateEvery<CollaboratorRow, Collaborator>(
     TABLE_NAME,
-    isCollaboratorWithUserRow,
-    dataWithUserAdapter,
+    isCollaboratorRow,
+    dataAdapter,
     collaboratorRows
   );
-  return collaborators;
+  return Promise.all(collaborators.map(attachUser));
 }
 
 export async function findByDesignAndUser(
@@ -313,9 +297,6 @@ export async function findByDesignAndUser(
   trx?: Knex.Transaction
 ): Promise<CollaboratorWithUser | null> {
   const collaboratorRow = await db(TABLE_NAME)
-    .with(VIEW_ALIAS, VIEW_RAW)
-    .select('*')
-    .from(VIEW_ALIAS)
     .where({
       deleted_at: null,
       design_id: designId,
@@ -326,17 +307,17 @@ export async function findByDesignAndUser(
         query.transacting(trx);
       }
     })
-    .then((rows: CollaboratorWithUserRow[]) => first<CollaboratorWithUserRow>(rows));
+    .then((rows: CollaboratorRow[]) => first<CollaboratorRow>(rows));
 
   if (!collaboratorRow) { return null; }
 
-  const collaborator = validate<CollaboratorWithUserRow, CollaboratorWithUser>(
+  const collaborator = validate<CollaboratorRow, Collaborator>(
     TABLE_NAME,
-    isCollaboratorWithUserRow,
-    dataWithUserAdapter,
+    isCollaboratorRow,
+    dataAdapter,
     collaboratorRow
   );
-  return collaborator;
+  return attachUser(collaborator);
 }
 
 export async function findByCollectionAndUser(
@@ -345,9 +326,6 @@ export async function findByCollectionAndUser(
   trx?: Knex.Transaction
 ): Promise<CollaboratorWithUser[]> {
   const collaboratorRows = await db(TABLE_NAME)
-    .with(VIEW_ALIAS, VIEW_RAW)
-    .select('*')
-    .from(VIEW_ALIAS)
     .where({
       collection_id: collectionId,
       deleted_at: null,
@@ -359,23 +337,20 @@ export async function findByCollectionAndUser(
       }
     });
 
-  const collaborators =  validateEvery<CollaboratorWithUserRow, CollaboratorWithUser>(
+  const collaborators =  validateEvery<CollaboratorRow, Collaborator>(
     TABLE_NAME,
-    isCollaboratorWithUserRow,
-    dataWithUserAdapter,
+    isCollaboratorRow,
+    dataAdapter,
     collaboratorRows
   );
-  return collaborators;
+  return Promise.all(collaborators.map(attachUser));
 }
 
 export async function findUnclaimedByEmail(email: string): Promise<Collaborator[]> {
   const normalized = normalizeEmail(email);
 
   const collaboratorRows = await db(TABLE_NAME)
-    .with('collaborators_with_users', VIEW_RAW)
-    .select('*')
-    .from('collaborators_with_users')
-    .whereRaw('lower(collaborators_with_users.user_email) = lower(?)', [normalized])
+    .whereRaw('lower(collaborators.user_email) = lower(?)', [normalized])
     .andWhere({ deleted_at: null });
 
   return validateEvery<CollaboratorRow, Collaborator>(
@@ -386,7 +361,7 @@ export async function findUnclaimedByEmail(email: string): Promise<Collaborator[
   );
 }
 
-export async function deleteById(id: string): Promise<Collaborator> {
+export async function deleteById(id: string): Promise<CollaboratorWithUser> {
   const deleted = await db(TABLE_NAME)
     .where({
       deleted_at: null,
@@ -409,7 +384,7 @@ export async function deleteById(id: string): Promise<Collaborator> {
 
 export async function deleteByDesignAndUser(
   designId: string, userId: string
-): Promise<Collaborator[]> {
+): Promise<CollaboratorWithUser[]> {
   const deletedRows = await db(TABLE_NAME)
     .where({
       deleted_at: null,
@@ -427,5 +402,5 @@ export async function deleteByDesignAndUser(
     deletedRows
   );
 
-  return deleted;
+  return Promise.all(deleted.map(attachUser));
 }

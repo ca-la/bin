@@ -8,15 +8,14 @@ import CollaboratorTask, {
 } from '../../domain-objects/collaborator-task';
 import first from '../../services/first';
 import Collaborator, {
-  CollaboratorWithUser,
-  CollaboratorWithUserRow,
-  dataWithUserAdapter as collaboratorDataAdapter,
-  isCollaboratorWithUserRow
+  CollaboratorRow
 } from '../../components/collaborators/domain-objects/collaborator';
 import { validate, validateEvery } from '../../services/validate-from-db';
-import { VIEW_RAW as COLLABORATORS_VIEW } from '../../components/collaborators/view';
+import { hasProperties } from '../../services/require-properties';
+import DataAdapter from '../../services/data-adapter';
 
 const TABLE_NAME = 'collaborator_tasks';
+const COLLABORATORS_TABLE = 'collaborators';
 
 export async function create(
   data: Unsaved<CollaboratorTask>
@@ -83,22 +82,37 @@ export async function findAllByTaskId(taskId: string): Promise<CollaboratorTask[
   );
 }
 
+const collaboratorDataAdapter = new DataAdapter<CollaboratorRow, Collaborator>();
+
+const isCollaboratorRow = (data: object): data is CollaboratorRow => {
+  return hasProperties(
+    data,
+    'id',
+    'collection_id',
+    'design_id',
+    'user_id',
+    'user_email',
+    'invitation_message',
+    'role',
+    'created_at',
+    'deleted_at'
+  );
+};
+
 export async function findAllCollaboratorsByTaskId(taskId: string): Promise<Collaborator[]> {
-  const collaborators: CollaboratorWithUserRow[] = await db(TABLE_NAME)
-    .with('collaborators_with_users', COLLABORATORS_VIEW)
-    .select('collaborators_with_users.*')
-    .from('collaborators_with_users')
+  const collaborators: CollaboratorRow[] = await db(COLLABORATORS_TABLE)
+    .select('collaborators.*')
     .innerJoin(
       'collaborator_tasks',
       'collaborator_tasks.collaborator_id',
-      'collaborators_with_users.id'
+      'collaborators.id'
     )
     .where({ 'collaborator_tasks.task_id': taskId })
     .orderBy('collaborator_tasks.created_at', 'desc');
 
-  return validateEvery<CollaboratorWithUserRow, CollaboratorWithUser>(
+  return validateEvery<CollaboratorRow, Collaborator>(
     TABLE_NAME,
-    isCollaboratorWithUserRow,
+    isCollaboratorRow,
     collaboratorDataAdapter,
     collaborators
   );

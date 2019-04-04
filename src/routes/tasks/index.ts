@@ -11,11 +11,7 @@ import * as TaskCommentDAO from '../../dao/task-comments';
 import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import CollaboratorTask from '../../domain-objects/collaborator-task';
-import TaskEvent, {
-  DetailsTask,
-  DetailsTaskWithAssignees,
-  TaskStatus
-} from '../../domain-objects/task-event';
+import TaskEvent, { DetailsTask, TaskStatus } from '../../domain-objects/task-event';
 import Comment, {
   BASE_COMMENT_PROPERTIES,
   isBaseComment
@@ -102,15 +98,22 @@ const taskEventFromIO = (
   });
 };
 
+const ioFromTaskEvent = (taskEvent: DetailsTask, assignees: Collaborator[] = []): IOTask => {
+  return {
+    ...taskEvent,
+    assignees
+  };
+};
+
 function* createTaskWithEvent(
   this: Koa.Application.Context<IOTask>
 ): AsyncIterableIterator<DetailsTask> {
   const body = addDefaultOrdering(this.request.body);
   yield TasksDAO.create(body.id);
-  const taskEvent: DetailsTaskWithAssignees = yield TaskEventsDAO
+  const taskEvent: DetailsTask = yield TaskEventsDAO
     .create(taskEventFromIO(body, this.state.userId));
 
-  this.body = taskEvent;
+  this.body = ioFromTaskEvent(taskEvent);
   this.status = 201;
 }
 
@@ -120,9 +123,9 @@ function* createTaskEvent(
   const { userId: sessionUserId } = this.state;
   const body = addDefaultOrdering(this.request.body);
   const taskId = body.id;
-  const previousState: DetailsTaskWithAssignees = yield TaskEventsDAO
+  const previousState: DetailsTask = yield TaskEventsDAO
     .findById(taskId);
-  const taskEvent: DetailsTaskWithAssignees = yield TaskEventsDAO
+  const taskEvent: DetailsTask = yield TaskEventsDAO
     .create(taskEventFromIO(body, this.state.userId));
   const updateDidCompleteTask = (
     taskEvent.status === TaskStatus.COMPLETED &&
@@ -135,7 +138,7 @@ function* createTaskEvent(
     );
   }
 
-  this.body = taskEvent;
+  this.body = ioFromTaskEvent(taskEvent);
   this.status = 201;
 }
 
@@ -150,21 +153,20 @@ function* createTaskWithEventOnStage(
     designStageId: stageId,
     taskId: body.id
   });
-  const taskEvent: DetailsTaskWithAssignees = yield TaskEventsDAO.findById(body.id);
-  this.body = taskEvent;
+  const taskEvent: DetailsTask = yield TaskEventsDAO.findById(body.id);
+  this.body = ioFromTaskEvent(taskEvent);
   this.status = 201;
 }
 
-function* getTaskEvent(
-  this: Koa.Application.Context
-): AsyncIterableIterator<DetailsTaskWithAssignees> {
+function* getTaskEvent(this: Koa.Application.Context): AsyncIterableIterator<DetailsTask> {
   const task = yield TaskEventsDAO.findById(this.params.taskId);
   if (!task) {
     return this.throw(400, 'Task was not found');
   }
+  const assignees = yield CollaboratorsDAO.findByTask(this.params.taskId);
 
   this.status = 200;
-  this.body = task;
+  this.body = ioFromTaskEvent(task, assignees);
 }
 
 function* updateTaskAssignment(this: Koa.Application.Context): AsyncIterableIterator<DetailsTask> {
@@ -205,28 +207,30 @@ interface GetListQuery {
   collectionId?: string;
   stageId?: string;
   userId?: string;
-  limit?: number;
-  offset?: number;
 }
 
 function* getList(this: Koa.Application.Context): AsyncIterableIterator<DetailsTask[]> {
   const query: GetListQuery = this.query;
-  const { collectionId, stageId, userId, limit, offset } = query;
-  if (!collectionId && !stageId && !userId) {
+  if (!query.collectionId && !query.stageId && !query.userId) {
     return this.throw('Missing collectionId, stageId, or userId');
   }
 
   let tasks: DetailsTask[] = [];
-  if (collectionId) {
-    tasks = yield TaskEventsDAO.findByCollectionId(collectionId, limit, offset);
-  } else if (stageId) {
-    tasks = yield TaskEventsDAO.findByStageId(stageId, limit, offset);
-  }  else if (userId) {
-    tasks = yield TaskEventsDAO.findByUserId(userId, limit, offset);
+  if (query.collectionId) {
+    tasks = yield TaskEventsDAO.findByCollectionId(query.collectionId);
+  } else if (query.stageId) {
+    tasks = yield TaskEventsDAO.findByStageId(query.stageId);
+  }  else if (query.userId) {
+    tasks = yield TaskEventsDAO.findByUserId(query.userId);
   }
 
+  const ioAndAssigneesFromTaskEvent = async (task: DetailsTask): Promise<object> => {
+    const assignees = await CollaboratorsDAO.findByTask(task.id);
+    return ioFromTaskEvent(task, assignees);
+  };
+
   this.status = 200;
-  this.body = tasks;
+  this.body = yield tasks.map(ioAndAssigneesFromTaskEvent);
 }
 
 function* createTaskComment(this: Koa.Application.Context): AsyncIterableIterator<Comment> {
