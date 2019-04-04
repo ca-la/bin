@@ -45,6 +45,14 @@ test('ProductDesignCanvasAnnotation DAO supports creation/retrieval', async (t: 
   t.deepEqual(asList, [designCanvasAnnotation], 'Finds annotation by canvas ID');
 });
 
+test('findAllByCanvasId returns in order of newest to oldest', async (t: tape.Test) => {
+  const { annotation, canvas } = await generateAnnotation();
+  const { annotation: annotationTwo } = await generateAnnotation({ canvasId: canvas.id });
+
+  const result = await AnnotationsDAO.findAllByCanvasId(canvas.id);
+  t.deepEqual(result, [annotationTwo, annotation], 'Returns in the correct order');
+});
+
 test('findAllWithCommentsByCanvasId with no comments', async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
   const design = await createDesign({
@@ -86,7 +94,7 @@ test('findAllWithCommentsByCanvasId with comments', async (t: tape.Test) => {
   await AnnotationCommentsDAO.create({ annotationId: a2.id, commentId: c3.id });
 
   const result = await AnnotationsDAO.findAllWithCommentsByCanvasId(canvas.id);
-  t.deepEqual(result, [a1, a2], 'Returns annotations with comments');
+  t.deepEqual(result, [a2, a1], 'Returns annotations with comments from newest to oldest');
 });
 
 test('findAllWithCommentsByCanvasId with deletions', async (t: tape.Test) => {

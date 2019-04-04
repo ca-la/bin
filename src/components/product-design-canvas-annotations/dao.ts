@@ -99,7 +99,8 @@ export async function findAllByCanvasId(
 ): Promise<Annotation[]> {
   const annotations: AnnotationRow[] = await db(TABLE_NAME)
     .select('*')
-    .where({ canvas_id: canvasId, deleted_at: null });
+    .where({ canvas_id: canvasId, deleted_at: null })
+    .orderBy('created_at', 'desc');
 
   return parseNumericsList(
     validateEvery<AnnotationRow, Annotation>(
@@ -132,7 +133,7 @@ product_design_canvas_annotations.canvas_id = ?
 AND product_design_canvas_annotations.deleted_at IS null
 AND comments.deleted_at IS null
     `, [canvasId])
-    .orderBy('product_design_canvas_annotations.created_at', 'asc');
+    .orderBy('product_design_canvas_annotations.created_at', 'desc');
 
   return parseNumericsList(
     validateEvery<AnnotationRow, Annotation>(
