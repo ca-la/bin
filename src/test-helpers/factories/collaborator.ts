@@ -1,8 +1,10 @@
 import { create } from '../../components/collaborators/dao';
-import Collaborator from '../../components/collaborators/domain-objects/collaborator';
+import Collaborator, {
+  CollaboratorWithUser
+} from '../../components/collaborators/domain-objects/collaborator';
 
 interface CollaboratorWithResources {
-  collaborator: Collaborator;
+  collaborator: CollaboratorWithUser;
 }
 
 export default async function generateCollaborator(

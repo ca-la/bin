@@ -21,7 +21,7 @@ import { create as createImage } from '../../components/images/dao';
 import { del as deleteComponent } from '../../dao/components';
 
 import createUser = require('../../test-helpers/create-user');
-import { DetailsTask, TaskStatus } from '../../domain-objects/task-event';
+import { DetailsTask, DetailsTaskWithAssignees, TaskStatus } from '../../domain-objects/task-event';
 import generateTask from '../../test-helpers/factories/task';
 import generateProductDesignStage from '../../test-helpers/factories/product-design-stage';
 import generateComment from '../../test-helpers/factories/comment';
@@ -31,21 +31,25 @@ import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 import createDesign from '../../services/create-design';
 
 const getInsertedWithDetails = (
-  inserted: DetailsTask, result: DetailsTask
-): DetailsTask => {
+  inserted: DetailsTask, result: DetailsTaskWithAssignees
+): DetailsTaskWithAssignees => {
   return {
     ...inserted,
+    assignees: [],
     collection: {
+      createdAt: result.collection.createdAt,
       id: result.collection.id,
       title: result.collection.title
     },
     commentCount: result.commentCount,
     design: {
+      createdAt: result.design.createdAt,
       id: result.design.id,
       previewImageUrls: result.design.previewImageUrls,
       title: result.design.title
     },
     designStage: {
+      createdAt: null,
       id: result.designStage.id,
       ordering: result.designStage.ordering,
       title: result.designStage.title
@@ -156,7 +160,7 @@ test('Task Events DAO supports retrieval by designId', async (t: tape.Test) => {
   const thirdInsertion = getInsertedWithDetails(insertedThree, result[2]);
 
   t.deepEqual(
-    { ...result[0], createdAt: new Date(result[0].createdAt) },
+    { ...result[0] },
     insertedWithDetails,
     'Returned first inserted task'
   );

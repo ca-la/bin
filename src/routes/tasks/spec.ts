@@ -3,7 +3,7 @@ import * as uuid from 'node-uuid';
 import * as sinon from 'sinon';
 
 import User = require('../../domain-objects/user');
-import { DetailsTask, TaskStatus } from '../../domain-objects/task-event';
+import { DetailsTask, DetailsTaskWithAssignees, TaskStatus } from '../../domain-objects/task-event';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as TasksDAO from '../../dao/tasks';
 import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
@@ -22,6 +22,7 @@ import generateProductDesignStage from '../../test-helpers/factories/product-des
 const BASE_TASK_EVENT: DetailsTask & { assignees: Collaborator[] } = {
   assignees: [],
   collection: {
+    createdAt: null,
     id: uuid.v4(),
     title: 'test'
   },
@@ -30,11 +31,13 @@ const BASE_TASK_EVENT: DetailsTask & { assignees: Collaborator[] } = {
   createdBy: uuid.v4(),
   description: 'test',
   design: {
+    createdAt: null,
     id: uuid.v4(),
     previewImageUrls: [],
     title: 'test'
   },
   designStage: {
+    createdAt: null,
     id: uuid.v4(),
     ordering: 0,
     title: 'test'
@@ -194,9 +197,12 @@ test('GET /tasks?userId=:userId returns all tasks for a user', async (t: tape.Te
   if (body.length === 0) { return t.fail('no content'); }
   t.equal(response.status, 200, 'it should respond with 200');
   t.equal(body.length, 2, 'it should have 2 tasks');
-  t.equal(body[0].id, task.id, 'task[0] should match ids');
-  t.equal(body[0].assignees.length, 1, 'task[0] should have 1 assignee');
-  t.equal(body[1].id, task2.id, 'task[1] should match ids');
+  t.equal(body.find((val: DetailsTaskWithAssignees) =>
+    task.id === val.id).id, task.id, 'task[0] should match ids');
+  t.equal(body.find((val: DetailsTaskWithAssignees) =>
+    task.id === val.id).assignees.length, 1, 'task[0] should have 1 assignee');
+  t.equal(body.find((val: DetailsTaskWithAssignees) =>
+    task2.id === val.id).id, task2.id, 'task[1] should match ids');
 });
 
 test('POST /tasks creates Task and TaskEvent successfully', async (t: tape.Test) => {
@@ -472,4 +478,68 @@ test('PUT /tasks/:taskId/comment/:id creates a task comment', async (t: tape.Tes
 
   // A notification is sent when comments are made
   sinon.assert.callCount(notificationStub, 1);
+});
+
+test('GET list returns all tasks by resource with limit & offset', async (t: tape.Test) => {
+  const { session, user } = await createUser();
+  const collection = await CollectionsDAO.create({
+    createdAt: new Date(),
+    createdBy: user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
+    title: 'FW19'
+  });
+  const design = await createDesign({
+    productType: 'test',
+    title: 'design',
+    userId: user.id
+  });
+  await CollectionsDAO.addDesign(collection.id, design.id);
+  const { stage } = await generateProductDesignStage({ designId: design.id }, user.id);
+
+  const collaborator = await CollaboratorsDAO.create({
+    collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
+    userId: user.id
+  });
+  const { task } = await generateTask({ designStageId: stage.id, ordering: 0 });
+
+  const { task: task2 } = await generateTask({
+    createdBy: user.id,
+    designStageId: stage.id,
+    ordering: 1
+  });
+  await CollaboratorTasksDAO
+    .create({ collaboratorId: collaborator.id, taskId: task.id });
+
+  const [response, body] = await get(`/tasks?userId=${user.id}&limit=1&offset=1`, {
+    headers: authHeader(session.id)
+  });
+
+  if (body.length === 0) { return t.fail('no content'); }
+  t.equal(response.status, 200, 'it should respond with 200');
+  t.equal(body.length, 1, 'it should have 1 tasks');
+  t.equal(body[0].id, task2.id, 'task[0] should match ids');
+
+  const [response2, body2] = await get(`/tasks?collectionId=${collection.id}&limit=1&offset=1`, {
+    headers: authHeader(session.id)
+  });
+
+  if (body2.length === 0) { return t.fail('no content'); }
+  t.equal(response2.status, 200, 'it should respond with 200');
+  t.equal(body2.length, 1, 'it should have 1 tasks');
+  t.equal(body2[0].id, task2.id, 'task[0] should match ids');
+
+  const [response3, body3] = await get(`/tasks?stageId=${stage.id}&limit=1&offset=1`, {
+    headers: authHeader(session.id)
+  });
+
+  if (body3.length === 0) { return t.fail('no content'); }
+  t.equal(response3.status, 200, 'it should respond with 200');
+  t.equal(body3.length, 1, 'it should have 1 tasks');
+  t.equal(body3[0].id, task2.id, 'task[0] should match ids');
 });
