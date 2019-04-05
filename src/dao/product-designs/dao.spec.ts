@@ -16,6 +16,7 @@ import generateCollection from '../../test-helpers/factories/collection';
 
 import createDesign from '../../services/create-design';
 import { CollaboratorWithUser } from '../../components/collaborators/domain-objects/collaborator';
+import generateCollaborator from '../../test-helpers/factories/collaborator';
 
 test(
   'ProductDesignCanvases DAO supports creation/retrieval, enriched with image links',
@@ -83,7 +84,7 @@ test(
 
     const designSharedDesign = await createDesign(
       { productType: 'test', title: 'design', userId: notUser.id });
-    await CollaboratorsDAO.create({
+    await generateCollaborator({
       collectionId: null,
       designId: designSharedDesign.id,
       invitationMessage: '',
@@ -96,7 +97,7 @@ test(
       { productType: 'test', title: 'design', userId: notUser.id });
     const { collection } = await generateCollection({ createdBy: notUser.id });
     await CollectionsDAO.addDesign(collection.id, collectionSharedDesign.id);
-    await CollaboratorsDAO.create({
+    await generateCollaborator({
       collectionId: collection.id,
       designId: null,
       invitationMessage: '',

@@ -26,6 +26,7 @@ test('CollaboratorTask DAO supports creation/retrieval', async (t: tape.Test) =>
   });
 
   const collaboratorOne = await createCollaborator({
+    cancelledAt: null,
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',
@@ -34,6 +35,7 @@ test('CollaboratorTask DAO supports creation/retrieval', async (t: tape.Test) =>
     userId: userOne.user.id
   });
   const collaboratorTwo = await createCollaborator({
+    cancelledAt: null,
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',
@@ -78,6 +80,7 @@ test('CollaboratorTask DAO does not allow non-unique creation', async (t: tape.T
   });
 
   const collaborator = await createCollaborator({
+    cancelledAt: null,
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',
@@ -115,6 +118,7 @@ test('CollaboratorTask DAO supports multiple simultaneous creations', async (t: 
   });
 
   const collaboratorOne = await createCollaborator({
+    cancelledAt: null,
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',
@@ -123,6 +127,7 @@ test('CollaboratorTask DAO supports multiple simultaneous creations', async (t: 
     userId: userOne.user.id
   });
   const collaboratorTwo = await createCollaborator({
+    cancelledAt: null,
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',
@@ -164,6 +169,7 @@ test('CollaboratorTask DAO supports multiple simultaneous deletions', async (t: 
   });
 
   const collaboratorOne = await createCollaborator({
+    cancelledAt: null,
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',
@@ -172,6 +178,7 @@ test('CollaboratorTask DAO supports multiple simultaneous deletions', async (t: 
     userId: userOne.user.id
   });
   const collaboratorTwo = await createCollaborator({
+    cancelledAt: null,
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',
@@ -180,6 +187,7 @@ test('CollaboratorTask DAO supports multiple simultaneous deletions', async (t: 
     userId: userTwo.user.id
   });
   const collaboratorThree = await createCollaborator({
+    cancelledAt: null,
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',

@@ -14,6 +14,7 @@ import * as CollaboratorsDAO from '../collaborators/dao';
 import * as DesignEventsDAO from '../../dao/design-events';
 import * as ProductDesignsDAO from '../../dao/product-designs';
 import * as NotificationsService from '../../services/create-notifications';
+import generateCollaborator from '../../test-helpers/factories/collaborator';
 
 test('GET /bids', async (t: Test) => {
   const admin = await createUser({ role: 'ADMIN' });
@@ -257,7 +258,7 @@ test('PUT /bids/:bidId/assignees/:userId', async (t: Test) => {
     title: 'Plain White Tee',
     userId: user.id
   });
-  await CollaboratorsDAO.create({
+  await generateCollaborator({
     collectionId: null,
     designId: design.id,
     invitationMessage: '',

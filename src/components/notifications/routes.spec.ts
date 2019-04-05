@@ -4,12 +4,12 @@ import { test } from '../../test-helpers/fresh';
 import * as API from '../../test-helpers/http';
 import createUser = require('../../test-helpers/create-user');
 
-import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import * as DesignsDAO from '../../dao/product-designs';
 import generateNotification from '../../test-helpers/factories/notification';
 import generateCollection from '../../test-helpers/factories/collection';
 import { NotificationMessage } from '@cala/ts-lib';
 import { NotificationType } from './domain-object';
+import generateCollaborator from '../../test-helpers/factories/collaborator';
 
 const API_PATH = '/notifications';
 
@@ -24,7 +24,7 @@ async (t: tape.Test) => {
     userId: userOne.user.id
   });
   const collection1 = await generateCollection({ createdBy: userOne.user.id });
-  const c1 = await CollaboratorsDAO.create({
+  const { collaborator: c1 } = await generateCollaborator({
     collectionId: null,
     designId: d1.id,
     invitationMessage: '',
@@ -32,7 +32,7 @@ async (t: tape.Test) => {
     userEmail: null,
     userId: userTwo.user.id
   });
-  const c2 = await CollaboratorsDAO.create({
+  const { collaborator: c2 } = await generateCollaborator({
     collectionId: null,
     designId: d1.id,
     invitationMessage: '',

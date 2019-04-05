@@ -50,6 +50,9 @@ function encode(row: CollaboratorWithUserMetaByDesignRow): CollaboratorWithUserM
       }
 
       return {
+        cancelledAt: collaborator.cancelled_at
+          ? new Date(collaborator.cancelled_at)
+          : null,
         collectionId: collaborator.collection_id,
         createdAt: new Date(collaborator.created_at),
         deletedAt: collaborator.deleted_at
@@ -80,6 +83,9 @@ function decode(data: CollaboratorWithUserMetaByDesign): CollaboratorWithUserMet
       }
 
       return {
+        cancelled_at: collaborator.cancelledAt
+          ? new Date(collaborator.cancelledAt).toISOString()
+          : null,
         collection_id: collaborator.collectionId,
         created_at: new Date(collaborator.createdAt).toISOString(),
         deleted_at: collaborator.deletedAt

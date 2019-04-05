@@ -7,7 +7,6 @@ import { DetailsTask, TaskStatus } from '../../domain-objects/task-event';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as TasksDAO from '../../dao/tasks';
 import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
-import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import * as CollectionsDAO from '../../dao/collections';
 import * as productDesignStageTasksDAO from '../../dao/product-design-stage-tasks';
 import createUser = require('../../test-helpers/create-user');
@@ -18,6 +17,7 @@ import Collaborator from '../../components/collaborators/domain-objects/collabor
 import generateTask from '../../test-helpers/factories/task';
 import createDesign from '../../services/create-design';
 import generateProductDesignStage from '../../test-helpers/factories/product-design-stage';
+import generateCollaborator from '../../test-helpers/factories/collaborator';
 
 const BASE_TASK_EVENT: DetailsTask & { assignees: Collaborator[] } = {
   assignees: [],
@@ -162,7 +162,7 @@ test('GET /tasks?userId=:userId returns all tasks for a user', async (t: tape.Te
   await CollectionsDAO.addDesign(collection.id, design.id);
   const { stage } = await generateProductDesignStage({ designId: design.id }, user.id);
 
-  const collaborator = await CollaboratorsDAO.create({
+  const { collaborator } = await generateCollaborator({
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',
@@ -240,7 +240,7 @@ async (t: tape.Test) => {
     title: 'FW19'
   });
 
-  const collaborator = await CollaboratorsDAO.create({
+  const { collaborator } = await generateCollaborator({
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',
@@ -248,7 +248,7 @@ async (t: tape.Test) => {
     userEmail: null,
     userId: user.id
   });
-  const secondCollaborator = await CollaboratorsDAO.create({
+  const { collaborator: secondCollaborator } = await generateCollaborator({
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',
@@ -325,7 +325,7 @@ async (t: tape.Test) => {
     title: 'FW19'
   });
 
-  const collaborator = await CollaboratorsDAO.create({
+  const { collaborator } = await generateCollaborator({
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',
@@ -333,7 +333,7 @@ async (t: tape.Test) => {
     userEmail: null,
     userId: user.id
   });
-  await CollaboratorsDAO.create({
+  await generateCollaborator({
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',

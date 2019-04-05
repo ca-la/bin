@@ -51,6 +51,7 @@ export default async function addCollaborator(
   const invitationMessage = escapedMessage || 'Check out CALA!';
 
   const collaborator = user ? await CollaboratorsDAO.create({
+    cancelledAt: null,
     collectionId: options.collectionId || null,
     designId: options.designId || null,
     invitationMessage: '',
@@ -58,6 +59,7 @@ export default async function addCollaborator(
     userEmail: null,
     userId: user.id
   }) : await CollaboratorsDAO.create({
+    cancelledAt: null,
     collectionId: options.collectionId || null,
     designId: options.designId || null,
     invitationMessage,

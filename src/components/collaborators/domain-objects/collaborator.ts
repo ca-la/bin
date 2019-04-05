@@ -18,6 +18,7 @@ export default interface Collaborator {
   role: Roles;
   createdAt: Date;
   deletedAt: Date | null;
+  cancelledAt: Date | null;
 }
 
 export interface CollaboratorWithUser extends Collaborator {
@@ -34,6 +35,7 @@ export interface CollaboratorRow {
   role: string;
   created_at: string;
   deleted_at: string | null;
+  cancelled_at: string | null;
 }
 
 export type Roles = 'EDIT' | 'VIEW' | 'PARTNER' | 'PREVIEW';
@@ -60,6 +62,7 @@ export function isCollaboratorRow(row: object): row is CollaboratorRow {
     'invitation_message',
     'role',
     'created_at',
-    'deleted_at'
+    'deleted_at',
+    'cancelled_at'
   );
 }

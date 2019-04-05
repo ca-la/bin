@@ -3,7 +3,6 @@ import * as tape from 'tape';
 import * as uuid from 'node-uuid';
 import { test } from '../../test-helpers/fresh';
 import * as NotificationsDAO from './dao';
-import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import * as DesignsDAO from '../../dao/product-designs';
 import createUser = require('../../test-helpers/create-user');
 import db = require('../../services/db');
@@ -16,12 +15,13 @@ import generateCollection from '../../test-helpers/factories/collection';
 import { InviteCollaboratorNotification } from './models/invite-collaborator';
 import { PartnerAcceptServiceBidNotification } from './models/partner-accept-service-bid';
 import { templateNotification } from './models/base';
+import generateCollaborator from '../../test-helpers/factories/collaborator';
 
 test('Notifications DAO supports creation', async (t: tape.Test) => {
   const { user: userOne } = await createUser({ withSession: false });
   const { user: userTwo } = await createUser({ withSession: false });
   const { collection } = await generateCollection({ createdBy: userOne.id });
-  const c1 = await CollaboratorsDAO.create({
+  const { collaborator: c1 } = await generateCollaborator({
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',
@@ -56,7 +56,7 @@ test('Notifications DAO supports finding by user id', async (t: tape.Test) => {
     title: 'Raf Simons x Sterling Ruby Hoodie',
     userId: userOne.user.id
   });
-  const c1 = await CollaboratorsDAO.create({
+  const { collaborator: c1 } = await generateCollaborator({
     collectionId: null,
     designId: d1.id,
     invitationMessage: '',
@@ -64,7 +64,7 @@ test('Notifications DAO supports finding by user id', async (t: tape.Test) => {
     userEmail: null,
     userId: userTwo.user.id
   });
-  const c2 = await CollaboratorsDAO.create({
+  const { collaborator: c2 } = await generateCollaborator({
     collectionId: null,
     designId: d1.id,
     invitationMessage: '',

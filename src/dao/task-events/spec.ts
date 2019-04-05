@@ -322,6 +322,7 @@ test('Task Events DAO supports retrieval by userId on shared collection', async 
   const { stage } = await generateProductDesignStage({ designId: design.id }, user.id);
   const { task: taskEvent } = await generateTask({ createdBy: user.id, designStageId: stage.id });
   await createCollaborator({
+    cancelledAt: null,
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',
@@ -350,6 +351,7 @@ test('Task Events DAO supports retrieval by userId on shared design', async (t: 
   const { stage } = await generateProductDesignStage({ designId: design.id }, user.id);
   const { task: taskEvent } = await generateTask({ createdBy: user.id, designStageId: stage.id });
   await createCollaborator({
+    cancelledAt: null,
     collectionId: null,
     designId: design.id,
     invitationMessage: '',

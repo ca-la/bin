@@ -44,6 +44,7 @@ function* createCollection(
     if (!CALA_OPS_USER_ID) { throw new Error('Cala Ops user not set!'); }
 
     yield CollaboratorsDAO.create({
+      cancelledAt: null,
       collectionId: collection.id,
       designId: null,
       invitationMessage: '',
@@ -52,6 +53,7 @@ function* createCollection(
       userId
     });
     yield CollaboratorsDAO.create({
+      cancelledAt: null,
       collectionId: collection.id,
       designId: null,
       invitationMessage: '',

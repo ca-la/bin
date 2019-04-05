@@ -9,6 +9,7 @@ export default async function generateCollaborator(
   options: Unsaved<Partial<Collaborator>> = {}
 ): Promise<CollaboratorWithResources> {
   const collaborator = await create({
+    cancelledAt: null,
     collectionId: null,
     designId: null,
     invitationMessage: 'Hey check out my cool thing on CALA',

@@ -11,6 +11,7 @@ async function createDesign(
   const design = await ProductDesignsDAO.create(data, trx);
 
   await CollaboratorsDAO.create({
+    cancelledAt: null,
     collectionId: null,
     designId: design.id,
     invitationMessage: '',

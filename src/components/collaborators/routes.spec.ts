@@ -1,6 +1,5 @@
 import * as uuid from 'node-uuid';
 
-import * as CollaboratorsDAO from './dao';
 import CollectionsDAO = require('../../dao/collections');
 import createUser = require('../../test-helpers/create-user');
 import EmailService = require('../../services/email');
@@ -21,7 +20,7 @@ test(
       userId: user.id
     });
 
-    const collaborator = await CollaboratorsDAO.create({
+    const { collaborator } = await generateCollaborator({
       collectionId: null,
       designId: design.id,
       invitationMessage: '',

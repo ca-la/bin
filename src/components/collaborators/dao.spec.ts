@@ -20,7 +20,7 @@ test('Collaborators DAO can find all collaborators with a list of ids', async (t
     userId: user.id
   });
 
-  const c1 = await CollaboratorsDAO.create({
+  const { collaborator: c1 } = await generateCollaborator({
     collectionId: null,
     designId: design.id,
     invitationMessage: 'Come see my cool bomber',
@@ -28,7 +28,7 @@ test('Collaborators DAO can find all collaborators with a list of ids', async (t
     userEmail: null,
     userId: user2.id
   });
-  const c2 = await CollaboratorsDAO.create({
+  const { collaborator: c2 } = await generateCollaborator({
     collectionId: null,
     designId: design.id,
     invitationMessage: 'Come see my cool bomber',
@@ -56,7 +56,7 @@ test('CollaboratorsDAO.findByDesign returns collaborators', async (t: Test) => {
     userId: user.id
   });
 
-  const collaborator = await CollaboratorsDAO.create({
+  const { collaborator } = await generateCollaborator({
     collectionId: null,
     designId: design.id,
     invitationMessage: '',
@@ -79,7 +79,7 @@ test('CollaboratorsDAO.create throws invalid data error', async (t: Test) => {
     userId: user.id
   });
 
-  await CollaboratorsDAO.create({
+  await generateCollaborator({
     collectionId: null,
     designId: invalidId,
     invitationMessage: '',
@@ -91,7 +91,7 @@ test('CollaboratorsDAO.create throws invalid data error', async (t: Test) => {
   .catch((err: Error) => {
     t.equal(err.message, `Invalid design ID: ${invalidId}`);
   });
-  await CollaboratorsDAO.create({
+  await generateCollaborator({
     collectionId: invalidId,
     designId: null,
     invitationMessage: '',
@@ -103,7 +103,7 @@ test('CollaboratorsDAO.create throws invalid data error', async (t: Test) => {
   .catch((err: Error) => {
     t.equal(err.message, `Invalid collection ID: ${invalidId}`);
   });
-  await CollaboratorsDAO.create({
+  await generateCollaborator({
     collectionId: null,
     designId: design.id,
     invitationMessage: '',
@@ -139,7 +139,7 @@ test('CollaboratorsDAO.findByDesign returns collection collaborators', async (t:
 
   await CollectionsDAO.addDesign(collection.id, design.id);
 
-  const collaborator = await CollaboratorsDAO.create({
+  const { collaborator } = await generateCollaborator({
     collectionId: null,
     designId: design.id,
     invitationMessage: '',
@@ -165,7 +165,7 @@ test('CollaboratorsDAO.findByCollection returns collaborators', async (t: Test) 
     title: 'Drop 001/The Early Years'
   });
 
-  const collaborator = await CollaboratorsDAO.create({
+  const { collaborator } = await generateCollaborator({
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',
@@ -283,7 +283,7 @@ test('CollaboratorsDAO.findByCollectionAndUser returns collaborators', async (t:
     title: 'Drop 001/The Early Years'
   });
 
-  const collaborator = await CollaboratorsDAO.create({
+  const { collaborator } = await generateCollaborator({
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',
@@ -310,7 +310,7 @@ test('CollaboratorsDAO.deleteByDesignIdAndUserId deletes collaborator', async (t
     userId: user.id
   });
 
-  await CollaboratorsDAO.create({
+  await generateCollaborator({
     collectionId: null,
     designId: design.id,
     invitationMessage: '',
@@ -341,7 +341,7 @@ test('CollaboratorsDAO.update', async (t: Test) => {
     title: 'A product design',
     userId: designer.id
   });
-  const collaborator = await CollaboratorsDAO.create({
+  const { collaborator } = await generateCollaborator({
     collectionId: null,
     designId: design.id,
     invitationMessage: '',
@@ -380,7 +380,7 @@ test('CollaboratorsDAO.findUnclaimedByEmail', async (t: Test) => {
     userId: designer.id
   });
   const newUserEmail = 'new-user@someplace.else';
-  const collaborator = await CollaboratorsDAO.create({
+  const { collaborator } = await generateCollaborator({
     collectionId: null,
     designId: design.id,
     invitationMessage: '',

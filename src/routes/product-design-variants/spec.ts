@@ -5,8 +5,8 @@ import { create as createDesign } from '../../dao/product-designs';
 import * as API from '../../test-helpers/http';
 import { test } from '../../test-helpers/fresh';
 import * as ProductDesignVariantsDAO from '../../dao/product-design-variants';
-import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import ProductDesignVariant from '../../domain-objects/product-design-variant';
+import generateCollaborator from '../../test-helpers/factories/collaborator';
 
 const API_PATH = '/product-design-variants';
 
@@ -20,7 +20,7 @@ test(`GET ${API_PATH}?designId fetches all variants for a design`, async (t: tap
     title: 'Plain White Tee',
     userId: user.id
   });
-  await CollaboratorsDAO.create({
+  await generateCollaborator({
     collectionId: null,
     designId: design.id,
     invitationMessage: 'Come see my cool shirt',
@@ -80,7 +80,7 @@ test(`PUT ${API_PATH}?designId replaces all variants for a design`, async (t: ta
     title: 'Plain White Tee',
     userId: user.id
   });
-  await CollaboratorsDAO.create({
+  await generateCollaborator({
     collectionId: null,
     designId: design.id,
     invitationMessage: 'Come see my cool shirt',

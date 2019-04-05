@@ -3,13 +3,13 @@ import * as tape from 'tape';
 import * as CollectionsDAO from './index';
 import * as DesignEventsDAO from '../design-events';
 import * as ProductDesignsDAO from '../product-designs';
-import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import { test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
 import ProductDesign = require('../../domain-objects/product-design');
 import createDesign from '../../services/create-design';
 import generateCollection from '../../test-helpers/factories/collection';
 import DesignEvent from '../../domain-objects/design-event';
+import generateCollaborator from '../../test-helpers/factories/collaborator';
 
 test('CollectionsDAO#create creates a collection', async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
@@ -114,7 +114,7 @@ test('CollectionsDAO#findByCollaboratorAndUserId finds all collections', async (
     id: id2,
     title: 'Drop 002'
   });
-  await CollaboratorsDAO.create({
+  await generateCollaborator({
     collectionId: collection1.id,
     designId: null,
     invitationMessage: '',
@@ -122,7 +122,7 @@ test('CollectionsDAO#findByCollaboratorAndUserId finds all collections', async (
     userEmail: null,
     userId: user1.id
   });
-  await CollaboratorsDAO.create({
+  await generateCollaborator({
     collectionId: collection2.id,
     designId: null,
     invitationMessage: '',

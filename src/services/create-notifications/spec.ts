@@ -6,7 +6,6 @@ import { sandbox, test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
 import { NotificationType } from '../../components/notifications/domain-object';
 import * as NotificationsService from './index';
-import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
 import * as TasksDAO from '../../dao/tasks';
 import * as TaskEventsDAO from '../../dao/task-events';
@@ -24,6 +23,7 @@ import generateCollection from '../../test-helpers/factories/collection';
 import * as SlackService from '../../services/slack';
 import * as Config from '../../config';
 import generateMeasurement from '../../test-helpers/factories/product-design-canvas-measurement';
+import generateCollaborator from '../../test-helpers/factories/collaborator';
 
 test('sendDesignOwnerAnnotationCommentCreateNotification', async (t: tape.Test) => {
   const { user: user } = await createUser({ withSession: false });
@@ -236,7 +236,7 @@ test('sendTaskCommentCreateNotification', async (t: tape.Test) => {
     title: 'test'
   });
 
-  await CollaboratorsDAO.create({
+  await generateCollaborator({
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',
@@ -244,7 +244,7 @@ test('sendTaskCommentCreateNotification', async (t: tape.Test) => {
     userEmail: null,
     userId: userOne.user.id
   });
-  const collaboratorTwo = await CollaboratorsDAO.create({
+  const { collaborator: collaboratorTwo } = await generateCollaborator({
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',
@@ -334,7 +334,7 @@ test('sendTaskCommentMentionNotification', async (t: tape.Test) => {
     title: 'test'
   });
 
-  await CollaboratorsDAO.create({
+  await generateCollaborator({
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',
@@ -342,7 +342,7 @@ test('sendTaskCommentMentionNotification', async (t: tape.Test) => {
     userEmail: null,
     userId: userOne.user.id
   });
-  const collaboratorTwo = await CollaboratorsDAO.create({
+  const { collaborator: collaboratorTwo } = await generateCollaborator({
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',
@@ -427,7 +427,7 @@ test('sendTaskAssignmentNotification', async (t: tape.Test) => {
     ordering: 0,
     title: 'test'
   });
-  await CollaboratorsDAO.create({
+  await generateCollaborator({
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',
@@ -435,7 +435,7 @@ test('sendTaskAssignmentNotification', async (t: tape.Test) => {
     userEmail: null,
     userId: userOne.user.id
   });
-  const collaboratorTwo = await CollaboratorsDAO.create({
+  const { collaborator: collaboratorTwo } = await generateCollaborator({
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',
@@ -506,7 +506,7 @@ test('sendTaskAssignmentNotification does not send if assigned to self', async (
     ordering: 0,
     title: 'test'
   });
-  const collaborator = await CollaboratorsDAO.create({
+  const { collaborator } = await generateCollaborator({
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',
@@ -569,7 +569,7 @@ async (t: tape.Test) => {
     ordering: 0,
     title: 'test'
   });
-  await CollaboratorsDAO.create({
+  await generateCollaborator({
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',
@@ -577,7 +577,7 @@ async (t: tape.Test) => {
     userEmail: null,
     userId: user.id
   });
-  const collaborator2 = await CollaboratorsDAO.create({
+  const { collaborator: collaborator2 } = await generateCollaborator({
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',
@@ -640,7 +640,7 @@ test('sendTaskCompletionNotification', async (t: tape.Test) => {
     ordering: 0,
     title: 'test'
   });
-  await CollaboratorsDAO.create({
+  await generateCollaborator({
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',
@@ -648,7 +648,7 @@ test('sendTaskCompletionNotification', async (t: tape.Test) => {
     userEmail: null,
     userId: userOne.user.id
   });
-  const collaboratorTwo = await CollaboratorsDAO.create({
+  const { collaborator: collaboratorTwo } = await generateCollaborator({
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',
@@ -656,7 +656,7 @@ test('sendTaskCompletionNotification', async (t: tape.Test) => {
     userEmail: null,
     userId: userTwo.user.id
   });
-  await CollaboratorsDAO.create({
+  await generateCollaborator({
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',
@@ -738,7 +738,7 @@ test('immediatelySendFullyCostedCollection', async (t: tape.Test) => {
     id: uuid.v4(),
     title: 'AW19'
   });
-  await CollaboratorsDAO.create({
+  await generateCollaborator({
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',
@@ -746,7 +746,7 @@ test('immediatelySendFullyCostedCollection', async (t: tape.Test) => {
     userEmail: null,
     userId: userOne.user.id
   });
-  await CollaboratorsDAO.create({
+  await generateCollaborator({
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',
@@ -754,7 +754,7 @@ test('immediatelySendFullyCostedCollection', async (t: tape.Test) => {
     userEmail: null,
     userId: userTwo.user.id
   });
-  await CollaboratorsDAO.create({
+  await generateCollaborator({
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',
@@ -793,7 +793,7 @@ test('immediatelySendInviteCollaborator', async (t: tape.Test) => {
     id: uuid.v4(),
     title: 'AW19'
   });
-  const collaboratorOne = await CollaboratorsDAO.create({
+  const { collaborator: collaboratorOne } = await generateCollaborator({
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',

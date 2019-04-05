@@ -137,6 +137,7 @@ function* assignBidToPartner(this: Koa.Application.Context): AsyncIterableIterat
 
   if (!maybeCollaborator) {
     yield CollaboratorsDAO.create({
+      cancelledAt: null,
       collectionId: null,
       designId: design.id,
       invitationMessage: '',

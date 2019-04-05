@@ -13,6 +13,7 @@ import * as CreateNotifications from '../../services/create-notifications';
 import * as DesignTasksService from '../../services/create-design-tasks';
 import { stubFindWithUncostedDesigns } from '../../test-helpers/stubs/collections-dao';
 import Collection from '../../domain-objects/collection';
+import generateCollaborator from '../../test-helpers/factories/collaborator';
 
 test('GET /collections/:id returns a created collection', async (t: tape.Test) => {
   const { session, user } = await createUser();
@@ -191,7 +192,7 @@ test('GET /collections', async (t: tape.Test) => {
     id: uuid.v4(),
     title: 'Drop 002'
   });
-  await CollaboratorsDAO.create({
+  await generateCollaborator({
     collectionId: collection1.id,
     designId: null,
     invitationMessage: '',
@@ -199,7 +200,7 @@ test('GET /collections', async (t: tape.Test) => {
     userEmail: null,
     userId: user.id
   });
-  await CollaboratorsDAO.create({
+  await generateCollaborator({
     collectionId: collection2.id,
     designId: null,
     invitationMessage: '',
@@ -460,7 +461,7 @@ test('GET /collections/:id/designs', async (t: tape.Test) => {
     title: 'Vader Mask',
     userId: user.id
   });
-  await CollaboratorsDAO.create({
+  await generateCollaborator({
     collectionId: null,
     designId: design.id,
     invitationMessage: '',
@@ -512,7 +513,7 @@ test('POST /collections/:id/submissions', async (t: tape.Test) => {
     id: uuid.v4(),
     title: 'Drop 001/The Early Years'
   });
-  await CollaboratorsDAO.create({
+  await generateCollaborator({
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',
@@ -642,7 +643,7 @@ test('GET /collections/:collectionId/submissions', async (t: tape.Test) => {
     id: uuid.v4(),
     title: 'Drop 001/The Early Years'
   });
-  await CollaboratorsDAO.create({
+  await generateCollaborator({
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',

@@ -5,9 +5,9 @@ import { test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
 
 import * as CollectionsDAO from '../../dao/collections';
-import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import * as DesignsDAO from '../../dao/product-designs';
 import * as PermissionsService from './index';
+import generateCollaborator from '../../test-helpers/factories/collaborator';
 
 test('#getDesignPermissions', async (t: tape.Test) => {
   const { user, session } = await createUser();
@@ -54,7 +54,7 @@ test('#getDesignPermissions', async (t: tape.Test) => {
   });
   await CollectionsDAO.moveDesign(collection2.id, design4.id);
 
-  await CollaboratorsDAO.create({
+  await generateCollaborator({
     collectionId: collection1.id,
     designId: null,
     invitationMessage: '',
@@ -62,7 +62,7 @@ test('#getDesignPermissions', async (t: tape.Test) => {
     userEmail: null,
     userId: user.id
   });
-  await CollaboratorsDAO.create({
+  await generateCollaborator({
     collectionId: null,
     designId: design2.id,
     invitationMessage: '',
@@ -70,7 +70,7 @@ test('#getDesignPermissions', async (t: tape.Test) => {
     userEmail: null,
     userId: user.id
   });
-  await CollaboratorsDAO.create({
+  await generateCollaborator({
     collectionId: collection1.id,
     designId: null,
     invitationMessage: '',
@@ -78,7 +78,7 @@ test('#getDesignPermissions', async (t: tape.Test) => {
     userEmail: null,
     userId: user2.id
   });
-  await CollaboratorsDAO.create({
+  await generateCollaborator({
     collectionId: collection2.id,
     designId: null,
     invitationMessage: '',
@@ -181,7 +181,7 @@ test('#getCollectionPermissions', async (t: tape.Test) => {
     id: uuid.v4(),
     title: 'C4'
   });
-  await CollaboratorsDAO.create({
+  await generateCollaborator({
     collectionId: collection1.id,
     designId: null,
     invitationMessage: '',
@@ -189,7 +189,7 @@ test('#getCollectionPermissions', async (t: tape.Test) => {
     userEmail: null,
     userId: user.id
   });
-  await CollaboratorsDAO.create({
+  await generateCollaborator({
     collectionId: collection1.id,
     designId: null,
     invitationMessage: '',
@@ -197,7 +197,7 @@ test('#getCollectionPermissions', async (t: tape.Test) => {
     userEmail: null,
     userId: user2.id
   });
-  await CollaboratorsDAO.create({
+  await generateCollaborator({
     collectionId: collection2.id,
     designId: null,
     invitationMessage: '',
@@ -205,7 +205,7 @@ test('#getCollectionPermissions', async (t: tape.Test) => {
     userEmail: null,
     userId: user.id
   });
-  await CollaboratorsDAO.create({
+  await generateCollaborator({
     collectionId: collection4.id,
     designId: null,
     invitationMessage: '',
@@ -213,7 +213,7 @@ test('#getCollectionPermissions', async (t: tape.Test) => {
     userEmail: null,
     userId: user.id
   });
-  await CollaboratorsDAO.create({
+  await generateCollaborator({
     collectionId: collection4.id,
     designId: null,
     invitationMessage: '',

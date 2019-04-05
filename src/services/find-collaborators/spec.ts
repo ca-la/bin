@@ -9,6 +9,7 @@ import ProductDesignsDAO = require('../../dao/product-designs');
 import User = require('../../domain-objects/user');
 import { CALA_OPS_USER_ID } from '../../config';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
+import generateCollaborator from '../../test-helpers/factories/collaborator';
 
 async function createResources(): Promise<{
   collection: Collection,
@@ -43,7 +44,7 @@ async function createResources(): Promise<{
 
 test('findCollaboratorsByRole finds the designer', async (t: Test) => {
   const { design, user } = await createResources();
-  const ownerCollaborator = await CollaboratorsDAO.create({
+  const { collaborator: ownerCollaborator } = await generateCollaborator({
     collectionId: null,
     designId: design.id,
     invitationMessage: '',
@@ -63,7 +64,7 @@ test('findCollaboratorsByRole finds partners', async (t: Test) => {
 
   const { user: partnerUser } = await createUser({ withSession: false, role: 'PARTNER' });
 
-  const partnerCollaborator = await CollaboratorsDAO.create({
+  const { collaborator: partnerCollaborator } = await generateCollaborator({
     collectionId: null,
     designId: design.id,
     invitationMessage: '',
@@ -74,7 +75,7 @@ test('findCollaboratorsByRole finds partners', async (t: Test) => {
 
   // Add a 3rd-party collaborator; we had a previous failure case where we
   // weren't handling filtering out collaborators without users
-  await CollaboratorsDAO.create({
+  await generateCollaborator({
     collectionId: null,
     designId: design.id,
     invitationMessage: 'Cmon check it out',
@@ -94,7 +95,7 @@ test('findCollaboratorsByRole finds the CALA admin user', async (t: Test) => {
 
   const { user: calaUser } = await createUser({ withSession: false });
 
-  const calaCollaborator = await CollaboratorsDAO.create({
+  const { collaborator: calaCollaborator } = await generateCollaborator({
     collectionId: collection.id,
     designId: null,
     invitationMessage: '',

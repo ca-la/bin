@@ -12,6 +12,7 @@ export const stubFindByDesigns = (
   const collaboratorsByDesign = [
     {
       collaborators: [{
+        cancelledAt: null,
         collectionId: null,
         createdAt: new Date('2019-02-06T18:20:45.530Z'),
         deletedAt: null,
@@ -27,6 +28,7 @@ export const stubFindByDesigns = (
     },
     {
       collaborators: [{
+        cancelledAt: null,
         collectionId: null,
         createdAt: new Date('2019-02-01T18:20:47.170Z'),
         deletedAt: null,

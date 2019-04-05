@@ -49,6 +49,7 @@ ${
 
   for (const design of designsMissingDesigner) {
     await CollaboratorsDAO.create({
+      cancelledAt: null,
       collectionId: null,
       designId: design.id,
       invitationMessage: '',
