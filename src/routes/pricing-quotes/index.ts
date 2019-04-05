@@ -3,14 +3,25 @@ import * as Router from 'koa-router';
 import * as Koa from 'koa';
 import * as uuid from 'node-uuid';
 
-import { FINANCING_MARGIN } from '../../config';
+import * as CollectionsDAO from '../../dao/collections';
 import * as DesignEventsDAO from '../../dao/design-events';
+import * as PricingCostInputsDAO from '../../dao/pricing-cost-inputs';
+import * as SlackService from '../../services/slack';
+import * as UsersDAO from '../../dao/users';
+import addMargin from '../../services/add-margin';
+import Bid from '../../components/bids/domain-object';
+import filterError = require('../../services/filter-error');
+import InvalidDataError = require('../../errors/invalid-data');
+import requireAdmin = require('../../middleware/require-admin');
+import requireAuth = require('../../middleware/require-auth');
+import { FINANCING_MARGIN } from '../../config';
 import { findByDesignId, findById } from '../../dao/pricing-quotes';
+import { hasProperties } from '../../services/require-properties';
+import { isCreateRequest } from '../../services/payment';
 import {
   create as createBid,
   findByQuoteId as findBidsByQuoteId
 } from '../../components/bids/dao';
-import * as PricingCostInputsDAO from '../../dao/pricing-cost-inputs';
 import PricingCostInput, {
   isUnsavedPricingCostInput
 } from '../../domain-objects/pricing-cost-input';
@@ -18,20 +29,10 @@ import {
   PricingQuote,
   PricingQuoteRequest
 } from '../../domain-objects/pricing-quote';
-import requireAdmin = require('../../middleware/require-admin');
-import requireAuth = require('../../middleware/require-auth');
-import { hasProperties } from '../../services/require-properties';
 import generatePricingQuote, {
   generateUnsavedQuote,
   UnsavedQuote
 } from '../../services/generate-pricing-quote';
-import Bid from '../../components/bids/domain-object';
-import addMargin from '../../services/add-margin';
-import { isCreateRequest } from '../../services/payment';
-import * as SlackService from '../../services/slack';
-import * as CollectionsDAO from '../../dao/collections';
-import * as UsersDAO from '../../dao/users';
-import InvalidDataError = require('../../errors/invalid-data');
 
 const router = new Router();
 
@@ -80,17 +81,9 @@ function* createQuote(this: Koa.Application.Context): AsyncIterableIterator<Pric
       units: unitsNumber
     };
 
-    let quote: PricingQuote;
-
-    try {
-      quote = yield generatePricingQuote(quoteRequest);
-    } catch (error) {
-      if (error instanceof InvalidDataError) {
-        this.throw(400, 'Failed to generate a pricing quote with the given request!');
-      }
-      this.throw(500, error.message);
-      return;
-    }
+    const quote = yield generatePricingQuote(quoteRequest)
+      .catch(filterError(InvalidDataError, (err: InvalidDataError) =>
+        this.throw(400, err)));
 
     quotes.push(quote);
 
@@ -154,17 +147,9 @@ function* getQuotes(this: Koa.Application.Context): AsyncIterableIterator<any> {
       units: unitsNumber
     };
 
-    let unsavedQuote: UnsavedQuote;
-
-    try {
-      unsavedQuote = yield generateUnsavedQuote(quoteRequest);
-    } catch (error) {
-      if (error instanceof InvalidDataError) {
-        this.throw(400, 'Failed to generate an unsaved quote with the given request!');
-      }
-      this.throw(500, error.message);
-      return;
-    }
+    const unsavedQuote = yield generateUnsavedQuote(quoteRequest)
+      .catch(filterError(InvalidDataError, (err: InvalidDataError) =>
+        this.throw(400, err)));
 
     const { payLaterTotalCents, payNowTotalCents } = calculateAmounts(unsavedQuote);
 
@@ -218,17 +203,10 @@ function* previewQuote(this: Koa.Application.Context): AsyncIterableIterator<any
     ...omit(body.uncommittedCostInput, ['id', 'createdAt', 'deletedAt']),
     units
   };
-  let unsavedQuote: UnsavedQuote;
 
-  try {
-    unsavedQuote = yield generateUnsavedQuote(quoteRequest);
-  } catch (error) {
-    if (error instanceof InvalidDataError) {
-      this.throw(400, 'Failed to generate an unsaved quote with the given request!');
-    }
-    this.throw(500, error.message);
-    return;
-  }
+  const unsavedQuote = yield generateUnsavedQuote(quoteRequest)
+    .catch(filterError(InvalidDataError, (err: InvalidDataError) =>
+      this.throw(400, err)));
 
   const { payLaterTotalCents, payNowTotalCents } = calculateAmounts(unsavedQuote);
 

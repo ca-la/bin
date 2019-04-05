@@ -50,7 +50,7 @@ test('/pricing-quotes POST -> GET quote', async (t: Test) => {
   t.equal(failedResponse.status, 400, 'fails to create the quote');
   t.equal(
     failedBody.message,
-    'Failed to generate a pricing quote with the given request!',
+    'Latest pricing constant could not be found!',
     'Responds with a failure message'
   );
 
@@ -369,7 +369,7 @@ test(
     t.equal(failedResponse.status, 400, 'fails to create the quote');
     t.equal(
       failedBody.message,
-      'Failed to generate an unsaved quote with the given request!',
+      'Latest pricing constant could not be found!',
       'Responds with a failure message'
     );
   }
