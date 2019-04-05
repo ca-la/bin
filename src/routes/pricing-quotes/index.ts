@@ -31,6 +31,7 @@ import { isCreateRequest } from '../../services/payment';
 import * as SlackService from '../../services/slack';
 import * as CollectionsDAO from '../../dao/collections';
 import * as UsersDAO from '../../dao/users';
+import InvalidDataError = require('../../errors/invalid-data');
 
 const router = new Router();
 
@@ -79,7 +80,18 @@ function* createQuote(this: Koa.Application.Context): AsyncIterableIterator<Pric
       units: unitsNumber
     };
 
-    const quote = yield generatePricingQuote(quoteRequest);
+    let quote: PricingQuote;
+
+    try {
+      quote = yield generatePricingQuote(quoteRequest);
+    } catch (error) {
+      if (error instanceof InvalidDataError) {
+        this.throw(400, 'Failed to generate a pricing quote with the given request!');
+      }
+      this.throw(500, error.message);
+      return;
+    }
+
     quotes.push(quote);
 
     yield DesignEventsDAO.create({
@@ -141,7 +153,19 @@ function* getQuotes(this: Koa.Application.Context): AsyncIterableIterator<any> {
       ...omit(costInputs[0], ['id', 'createdAt', 'deletedAt']),
       units: unitsNumber
     };
-    const unsavedQuote: UnsavedQuote = yield generateUnsavedQuote(quoteRequest);
+
+    let unsavedQuote: UnsavedQuote;
+
+    try {
+      unsavedQuote = yield generateUnsavedQuote(quoteRequest);
+    } catch (error) {
+      if (error instanceof InvalidDataError) {
+        this.throw(400, 'Failed to generate an unsaved quote with the given request!');
+      }
+      this.throw(500, error.message);
+      return;
+    }
+
     const { payLaterTotalCents, payNowTotalCents } = calculateAmounts(unsavedQuote);
 
     this.body = {
@@ -194,7 +218,18 @@ function* previewQuote(this: Koa.Application.Context): AsyncIterableIterator<any
     ...omit(body.uncommittedCostInput, ['id', 'createdAt', 'deletedAt']),
     units
   };
-  const unsavedQuote: UnsavedQuote = yield generateUnsavedQuote(quoteRequest);
+  let unsavedQuote: UnsavedQuote;
+
+  try {
+    unsavedQuote = yield generateUnsavedQuote(quoteRequest);
+  } catch (error) {
+    if (error instanceof InvalidDataError) {
+      this.throw(400, 'Failed to generate an unsaved quote with the given request!');
+    }
+    this.throw(500, error.message);
+    return;
+  }
+
   const { payLaterTotalCents, payNowTotalCents } = calculateAmounts(unsavedQuote);
 
   this.body = {

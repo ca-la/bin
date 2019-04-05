@@ -16,7 +16,6 @@ import PricingCostInput from '../../domain-objects/pricing-cost-input';
 
 test('/pricing-quotes POST -> GET quote', async (t: Test) => {
   const { user, session } = await createUser();
-  await generatePricingValues();
   const design = await createDesign({
     productType: 'A product type',
     title: 'A design',
@@ -39,6 +38,23 @@ test('/pricing-quotes POST -> GET quote', async (t: Test) => {
     productComplexity: 'SIMPLE',
     productType: 'TEESHIRT'
   });
+
+  const [failedResponse, failedBody] = await post('/pricing-quotes', {
+    body: [{
+      designId: design.id,
+      units: 300
+    }],
+    headers: authHeader(session.id)
+  });
+
+  t.equal(failedResponse.status, 400, 'fails to create the quote');
+  t.equal(
+    failedBody.message,
+    'Failed to generate a pricing quote with the given request!',
+    'Responds with a failure message'
+  );
+
+  await generatePricingValues();
 
   const [postResponse, createdQuotes] = await post('/pricing-quotes', {
     body: [{
@@ -308,6 +324,54 @@ test(
       payNowTotalCents: 496000,
       payNowTotalCentsPerUnit: 4960
     });
+  }
+);
+
+test(
+  'POST /pricing-quotes/preview fails if there are no pricing values for the request',
+  async (t: Test) => {
+    const { user, session } = await createUser({ role: 'ADMIN' });
+
+    const design = await createDesign({
+      productType: 'A product type',
+      title: 'A design',
+      userId: user.id
+    });
+    const uncommittedCostInput: PricingCostInput = {
+      createdAt: new Date(),
+      deletedAt: null,
+      designId: design.id,
+      id: uuid.v4(),
+      materialBudgetCents: 1200,
+      materialCategory: 'BASIC',
+      processes: [{
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      }, {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      }],
+      productComplexity: 'SIMPLE',
+      productType: 'TEESHIRT'
+    };
+
+    const [failedResponse, failedBody] = await post(
+      '/pricing-quotes/preview',
+      {
+        body: {
+          uncommittedCostInput,
+          units: 100
+        },
+        headers: authHeader(session.id)
+      }
+    );
+
+    t.equal(failedResponse.status, 400, 'fails to create the quote');
+    t.equal(
+      failedBody.message,
+      'Failed to generate an unsaved quote with the given request!',
+      'Responds with a failure message'
+    );
   }
 );
 

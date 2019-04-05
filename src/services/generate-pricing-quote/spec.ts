@@ -2,8 +2,46 @@ import * as uuid from 'node-uuid';
 
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import * as PricingQuotesDAO from '../../dao/pricing-quotes';
-import { PricingQuoteValues } from '../../domain-objects/pricing-quote';
-import { generateUnsavedQuote } from './index';
+import { PricingQuoteRequest, PricingQuoteValues } from '../../domain-objects/pricing-quote';
+import generatePricingQuote, { generateUnsavedQuote } from './index';
+
+const quoteRequestOne: PricingQuoteRequest = {
+  designId: null,
+  materialBudgetCents: 1200,
+  materialCategory: 'BASIC',
+  processes: [{
+    complexity: '1_COLOR',
+    name: 'SCREEN_PRINTING'
+  }, {
+    complexity: '1_COLOR',
+    name: 'SCREEN_PRINTING'
+  }],
+  productComplexity: 'SIMPLE',
+  productType: 'TEESHIRT',
+  units: 100000
+};
+
+test('generateUnsavedQuote failure', async (t: Test) => {
+  sandbox().stub(PricingQuotesDAO, 'findLatestValuesForRequest').throws();
+
+  try {
+    await generateUnsavedQuote(quoteRequestOne);
+    t.fail('Should not have succeeded!');
+  } catch {
+    t.ok('Fails to generate an unsaved quote');
+  }
+});
+
+test('generatePricingQuote failure', async (t: Test) => {
+  sandbox().stub(PricingQuotesDAO, 'findLatestValuesForRequest').throws();
+
+  try {
+    await generatePricingQuote(quoteRequestOne);
+    t.fail('Should not have succeeded!');
+  } catch {
+    t.ok('Fails to generate an unsaved quote');
+  }
+});
 
 test('generateUnsavedQuote', async (t: Test) => {
   const latestValues: PricingQuoteValues = {
@@ -87,21 +125,7 @@ test('generateUnsavedQuote', async (t: Test) => {
   sandbox().stub(PricingQuotesDAO, 'findLatestValuesForRequest')
     .resolves(latestValues);
 
-  const unsavedQuote = await generateUnsavedQuote({
-    designId: null,
-    materialBudgetCents: 1200,
-    materialCategory: 'BASIC',
-    processes: [{
-      complexity: '1_COLOR',
-      name: 'SCREEN_PRINTING'
-    }, {
-      complexity: '1_COLOR',
-      name: 'SCREEN_PRINTING'
-    }],
-    productComplexity: 'SIMPLE',
-    productType: 'TEESHIRT',
-    units: 100000
-  });
+  const unsavedQuote = await generateUnsavedQuote(quoteRequestOne);
 
   t.equal(unsavedQuote.baseCostCents, 385, 'calculates base cost correctly');
   t.equal(unsavedQuote.processCostCents, 101, 'calculates process cost correctly');

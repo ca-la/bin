@@ -31,6 +31,7 @@ export async function generateUnsavedQuote(
   request: PricingQuoteRequest
 ): Promise<UnsavedQuote> {
   const quoteValues = await findLatestValuesForRequest(request);
+
   return calculateQuote(request, quoteValues);
 }
 
@@ -39,6 +40,7 @@ export default async function generatePricingQuote(
   trx?: Knex.Transaction
 ): Promise<PricingQuote> {
   const quoteValues = await findLatestValuesForRequest(request);
+
   const pricingQuoteInputId = await getQuoteInput(quoteValues);
   const {
     quote,

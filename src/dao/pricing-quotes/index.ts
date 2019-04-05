@@ -19,15 +19,18 @@ import {
 } from '../../domain-objects/pricing-quote';
 import PricingConstant, {
   dataAdapter as constantDataAdapter,
-  isPricingConstantRow
+  isPricingConstantRow,
+  PricingConstantRow
 } from '../../domain-objects/pricing-constant';
 import PricingProductMaterial, {
   dataAdapter as materialDataAdapter,
-  isPricingProductMaterialRow
+  isPricingProductMaterialRow,
+  PricingProductMaterialRow
 } from '../../domain-objects/pricing-product-material';
 import PricingProductType, {
   dataAdapter as typeDataAdapter,
-  isPricingProductTypeRow
+  isPricingProductTypeRow,
+  PricingProductTypeRow
 } from '../../domain-objects/pricing-product-type';
 import PricingProcess, {
   dataAdapter as processDataAdapter,
@@ -36,13 +39,16 @@ import PricingProcess, {
 } from '../../domain-objects/pricing-process';
 import PricingMargin, {
   dataAdapter as marginDataAdapter,
-  isPricingMarginRow
+  isPricingMarginRow,
+  PricingMarginRow
 } from '../../domain-objects/pricing-margin';
 import PricingCareLabel, {
   dataAdapter as careLabelDataAdapter,
-  isPricingCareLabelRow
+  isPricingCareLabelRow,
+  PricingCareLabelRow
 } from '../../domain-objects/pricing-care-label';
 import DataAdapter from '../../services/data-adapter';
+import InvalidDataError = require('../../errors/invalid-data');
 
 type TableName = 'pricing_care_labels'
   | 'pricing_constants'
@@ -100,36 +106,26 @@ export async function findLatestValuesForRequest(
   request: PricingQuoteRequest
 ): Promise<PricingQuoteValues> {
   const { units } = request;
-  const [
-    { id: constantId, ...pricingValues },
-    careLabel,
-    material,
-    type,
-    sample,
-    processes,
-    margin
-  ] = await Promise.all([
-    await findLatestConstants(),
-    await findLatestCareLabel(units),
-    await findLatestProductMaterial(request.materialCategory, units),
-    await findLatestProductType(request.productType, request.productComplexity, units),
-    await findLatestProductType(request.productType, request.productComplexity, 1),
-    await findLatestProcesses(request.processes, units),
-    await findLatestMargin(request.units)
-  ]);
+  const latestConstant = await findLatestConstants();
+  const careLabel = await findLatestCareLabel(units);
+  const material = await findLatestProductMaterial(request.materialCategory, units);
+  const type = await findLatestProductType(request.productType, request.productComplexity, units);
+  const sample = await findLatestProductType(request.productType, request.productComplexity, 1);
+  const processes = await findLatestProcesses(request.processes, units);
+  const margin = await findLatestMargin(request.units);
 
-  return Object.assign(
-    {
-      careLabel,
-      constantId,
-      margin,
-      material,
-      processes,
-      sample,
-      type
-    },
-    omit(pricingValues, 'version')
-  );
+  const { id: constantId, ...pricingValues } = latestConstant;
+
+  return {
+    careLabel,
+    constantId,
+    margin,
+    material,
+    processes,
+    sample,
+    type,
+    ...omit(pricingValues, 'createdAt', 'version')
+  };
 }
 
 export async function createPricingProcesses(
@@ -198,7 +194,12 @@ export async function findByDesignId(designId: string): Promise<PricingQuote[] |
 
 async function findLatestCareLabel(units: number): Promise<PricingCareLabel> {
   const TABLE_NAME = 'pricing_care_labels';
-  const careLabelRow = await findLatest(TABLE_NAME, units);
+  const careLabelRow: PricingCareLabelRow | null =
+    await findLatest<Promise<PricingCareLabelRow | null>>(TABLE_NAME, units);
+
+  if (!careLabelRow) {
+    throw new InvalidDataError('Pricing care label does not exist!');
+  }
 
   return validate(
     TABLE_NAME,
@@ -210,9 +211,13 @@ async function findLatestCareLabel(units: number): Promise<PricingCareLabel> {
 
 async function findLatestConstants(): Promise<PricingConstant> {
   const TABLE_NAME = 'pricing_constants';
-  const constantRow = await db(TABLE_NAME)
+  const constantRow: PricingConstantRow | null = await db(TABLE_NAME)
     .first()
     .orderBy('created_at', 'desc');
+
+  if (!constantRow) {
+    throw new InvalidDataError('Latest pricing constant could not be found!');
+  }
 
   return validate(
     TABLE_NAME,
@@ -227,8 +232,12 @@ async function findLatestProductMaterial(
   units: number
 ): Promise<PricingProductMaterial> {
   const TABLE_NAME = 'pricing_product_materials';
-  const materialRow = await findLatest(TABLE_NAME, units)
-    .where({ category });
+  const materialRow: PricingProductMaterialRow | null =
+    await findLatest<Knex.QueryBuilder>(TABLE_NAME, units).where({ category });
+
+  if (!materialRow) {
+    throw new InvalidDataError('Latest pricing product material could not be found!');
+  }
 
   return validate(
     TABLE_NAME,
@@ -244,8 +253,12 @@ async function findLatestProductType(
   units: number
 ): Promise<PricingProductType> {
   const TABLE_NAME = 'pricing_product_types';
-  const typeRow = await findLatest(TABLE_NAME, units)
-    .where({ name, complexity });
+  const typeRow: PricingProductTypeRow | null =
+    await findLatest<Knex.QueryBuilder>(TABLE_NAME, units).where({ name, complexity });
+
+  if (!typeRow) {
+    throw new InvalidDataError('Latest pricing product type could not be found!');
+  }
 
   return validate(
     TABLE_NAME,
@@ -316,7 +329,12 @@ Found processes: ${JSON.stringify(processRows, null, 4)}`);
 
 async function findLatestMargin(units: number): Promise<PricingMargin> {
   const TABLE_NAME = 'pricing_margins';
-  const marginRow = await findLatest(TABLE_NAME, units);
+  const marginRow: PricingMarginRow | null =
+    await findLatest<Promise<PricingMarginRow | null>>(TABLE_NAME, units);
+
+  if (!marginRow) {
+    throw new InvalidDataError('Pricing margin does not exist!');
+  }
 
   return validate(
     TABLE_NAME,
@@ -326,7 +344,7 @@ async function findLatestMargin(units: number): Promise<PricingMargin> {
   );
 }
 
-function findLatest(from: TableName, units: number): Knex.QueryBuilder {
+function findLatest<T>(from: TableName, units: number): T {
   return db(from)
     .first()
     .whereIn('version', db(from).max('version'))
