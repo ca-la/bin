@@ -1,5 +1,4 @@
 import DataAdapter from '../../services/data-adapter';
-import InvalidDataError = require('../../errors/invalid-data');
 import { test, Test } from '../../test-helpers/simple';
 
 import { validate, validateEvery } from './index';
@@ -48,7 +47,7 @@ test('#validate, with invalid data', (t: Test) => {
 
   t.throws(
     () => validate(table, isProductRow, productAdapter, invalid),
-    InvalidDataError
+    Error
   );
 });
 
@@ -83,14 +82,14 @@ test('#validateEvery, with invalid data', (t: Test) => {
 
   t.throws(
     () => validateEvery(table, isProductRow, productAdapter, [invalid]),
-    InvalidDataError
+    Error
   );
 });
 
 test('#validateEvery, with null', (t: Test) => {
   t.throws(
     () => validateEvery(table, isProductRow, productAdapter, null),
-    InvalidDataError
+    Error
   );
 });
 
@@ -115,7 +114,7 @@ test('#validateEvery, with a mixed array', (t: Test) => {
         null,
         undefined
       ]),
-    InvalidDataError,
+    Error,
     'throws with first error'
   );
   t.throws(
