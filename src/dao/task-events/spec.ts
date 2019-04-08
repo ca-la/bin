@@ -14,7 +14,11 @@ import { create as createTask } from '../tasks';
 import { create as createDesignStageTask } from '../product-design-stage-tasks';
 import { create as createDesignStage } from '../product-design-stages';
 import { deleteById as deleteDesign } from '../product-designs';
-import { create as createCollaborator } from '../../components/collaborators/dao';
+import {
+  create as createCollaborator,
+  deleteById as deleteCollaborator
+} from '../../components/collaborators/dao';
+import * as CollaboratorTasksDAO from '../collaborator-tasks';
 import { create as createTaskComment } from '../task-comments';
 import { addDesign, create as createCollection } from '../collections';
 import { create as createImage } from '../../components/images/dao';
@@ -29,13 +33,18 @@ import generateComponent from '../../test-helpers/factories/component';
 import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 
 import createDesign from '../../services/create-design';
+import generateCollection from '../../test-helpers/factories/collection';
+import generateCollaborator from '../../test-helpers/factories/collaborator';
+import { CollaboratorWithUser } from '../../components/collaborators/domain-objects/collaborator';
 
 const getInsertedWithDetails = (
-  inserted: DetailsTask, result: DetailsTaskWithAssignees
+  inserted: DetailsTask,
+  result: DetailsTaskWithAssignees,
+  expectedAssignees: CollaboratorWithUser[] = []
 ): DetailsTaskWithAssignees => {
   return {
     ...inserted,
-    assignees: [],
+    assignees: expectedAssignees,
     collection: {
       createdAt: result.collection.createdAt,
       id: result.collection.id,
@@ -175,6 +184,40 @@ test('Task Events DAO supports retrieval by designId', async (t: tape.Test) => {
     { ...result[2], createdAt: new Date(result[2].createdAt) },
     thirdInsertion,
     'Returned third inserted task'
+  );
+});
+
+test('Task Events DAO returns assignees for existing collaborators', async (t: tape.Test) => {
+  const { task: inserted, createdBy: user } = await generateTask({ ordering: 0 });
+  const { collection } = await generateCollection({ createdBy: user.id });
+  const design = await createDesign({ userId: user.id, productType: 'test', title: 'test' });
+  await addDesign(collection.id, design.id);
+  const stage = await createDesignStage({
+    description: '',
+    designId: design.id,
+    ordering: 0,
+    title: 'test'
+  });
+  const task = await createDesignStageTask({ designStageId: stage.id, taskId: inserted.id });
+
+  const { user: collab1User } = await createUser({ withSession: false });
+  const { user: collab2User } = await createUser({ withSession: false });
+
+  const { collaborator: collab1 } = await generateCollaborator(
+    { collectionId: collection.id, userId: collab1User.id });
+  const { collaborator: collab2 } = await generateCollaborator(
+    { collectionId: collection.id, userId: collab2User.id });
+  await CollaboratorTasksDAO.createAllByCollaboratorIdsAndTaskId(
+    [collab1.id, collab2.id], task.taskId);
+  await deleteCollaborator(collab2.id);
+
+  const result = await findByDesignId(design.id);
+  const insertedWithDetails = getInsertedWithDetails(inserted, result[0], [collab1]);
+
+  t.deepEqual(
+    { ...result[0] },
+    insertedWithDetails,
+    'Returned first inserted task'
   );
 });
 

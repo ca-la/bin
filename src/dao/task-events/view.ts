@@ -8,7 +8,6 @@ export const ALIASES = {
   stageId: 'stagesfortasksviewraw.id',
   taskId: 'tasksfortasksviewraw.id'
 };
-export const DESIGN_ID_ALIAS = 'designsfortasksviewraw.id';
 
 export function getBuilder(): Knex.QueryBuilder {
   return db.select(
@@ -34,11 +33,12 @@ export function getBuilder(): Knex.QueryBuilder {
   .count('commentsfortasksviewraw.id as comment_count')
   .select(db.raw(`
     (
-      SELECT to_json(array[cwuForTasksViewRaw.*])
+      SELECT to_json(array[cwufortasksviewraw.*])
       FROM (:collaboratorsWithUsers) as cwufortasksviewraw
             JOIN collaborator_tasks as ctfortasksviewraw
               ON ctfortasksviewraw.collaborator_id = cwufortasksviewraw.id
             WHERE ctfortasksviewraw.task_id = tasksfortasksviewraw.id
+              AND cwufortasksviewraw.deleted_at is null
     ) as assignees
   `, { collaboratorsWithUsers: getCollaboratorsBuilder() }))
   .from('task_events as taskeventsfortasksviewraw')

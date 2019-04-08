@@ -29,7 +29,7 @@ import {
 import UsersDAO = require('../../dao/users');
 import { validate, validateEvery } from '../../services/validate-from-db';
 import { pick, uniqBy } from 'lodash';
-import { ALIASES, getBuilder } from './view';
+import { ALIASES, getBuilder as getCollaboratorViewBuilder } from './view';
 
 const TABLE_NAME = 'collaborators';
 
@@ -132,7 +132,7 @@ Updatable Properties: ${UPDATABLE_PROPERTIES.join(', ')}`.trim());
 }
 
 export async function findById(collaboratorId: string): Promise<CollaboratorWithUser | null> {
-  const collaboratorRow = await getBuilder()
+  const collaboratorRow = await getCollaboratorViewBuilder()
     .where({ [ALIASES.collaboratorId]: collaboratorId, deleted_at: null })
     .then((rows: CollaboratorWithUserRow[]) => first<CollaboratorWithUserRow>(rows));
 
@@ -148,7 +148,7 @@ export async function findById(collaboratorId: string): Promise<CollaboratorWith
 }
 
 export async function findAllByIds(collaboratorIds: string[]): Promise<CollaboratorWithUser[]> {
-  const collaboratorRows = await getBuilder()
+  const collaboratorRows = await getCollaboratorViewBuilder()
     .whereIn(ALIASES.collaboratorId, collaboratorIds)
     .andWhere({ deleted_at: null })
     .orderBy('created_at', 'desc');
@@ -167,7 +167,7 @@ export async function findByDesign(
 ): Promise<CollaboratorWithUser[]> {
   const design = await ProductDesignsDAO.findById(designId);
   if (!design) { return []; }
-  const collaboratorRows = await getBuilder()
+  const collaboratorRows = await getCollaboratorViewBuilder()
     .where({
       deleted_at: null,
       design_id: designId
@@ -240,7 +240,7 @@ ORDER BY d.created_at DESC;
 }
 
 export async function findByCollection(collectionId: string): Promise<Collaborator[]> {
-  const collaboratorRows = await getBuilder()
+  const collaboratorRows = await getCollaboratorViewBuilder()
     .where({
       collection_id: collectionId,
       deleted_at: null
@@ -256,7 +256,7 @@ export async function findByCollection(collectionId: string): Promise<Collaborat
 }
 
 export async function findByTask(taskId: string): Promise<CollaboratorWithUser[]> {
-  const collaboratorRows = await getBuilder()
+  const collaboratorRows = await getCollaboratorViewBuilder()
     .join('collaborator_tasks', ALIASES.collaboratorId, 'collaborator_tasks.collaborator_id')
     .where({
       'collaborator_tasks.task_id': taskId,
@@ -273,7 +273,7 @@ export async function findByTask(taskId: string): Promise<CollaboratorWithUser[]
 }
 
 export async function findByUserId(userId: string): Promise<CollaboratorWithUser[]> {
-  const collaboratorRows = await getBuilder()
+  const collaboratorRows = await getCollaboratorViewBuilder()
     .where({
       deleted_at: null,
       user_id: userId
@@ -293,7 +293,7 @@ export async function findByDesignAndUser(
   userId: string,
   trx?: Knex.Transaction
 ): Promise<CollaboratorWithUser | null> {
-  const collaboratorRow = await getBuilder()
+  const collaboratorRow = await getCollaboratorViewBuilder()
     .where({
       deleted_at: null,
       design_id: designId,
@@ -322,7 +322,7 @@ export async function findByCollectionAndUser(
   userId: string,
   trx?: Knex.Transaction
 ): Promise<CollaboratorWithUser[]> {
-  const collaboratorRows = await getBuilder()
+  const collaboratorRows = await getCollaboratorViewBuilder()
     .where({
       collection_id: collectionId,
       deleted_at: null,
@@ -346,7 +346,7 @@ export async function findByCollectionAndUser(
 export async function findUnclaimedByEmail(email: string): Promise<Collaborator[]> {
   const normalized = normalizeEmail(email);
 
-  const collaboratorRows = await getBuilder()
+  const collaboratorRows = await getCollaboratorViewBuilder()
     .whereRaw('lower(user_email) = lower(?)', [normalized])
     .andWhere({ deleted_at: null });
 

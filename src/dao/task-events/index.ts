@@ -18,12 +18,12 @@ import first from '../../services/first';
 import { validate, validateEvery } from '../../services/validate-from-db';
 import { findAllDesignIdsThroughCollaborator } from '../product-designs/dao';
 import limitOrOffset from '../../services/limit-or-offset';
-import { ALIASES, getBuilder } from './view';
+import { ALIASES, getBuilder as getTaskViewBuilder } from './view';
 
 const TABLE_NAME = 'task_events';
 
 /**
- * This will group group tasks in 4 ways:
+ * This will group tasks in 4 ways:
  *
  * Collection: designs in the same collection will be grouped
  * Design: stages in the same design will be grouped
@@ -55,7 +55,7 @@ export async function create(
 
   if (!created) { throw new Error('Failed to create rows'); }
 
-  const taskEvent = await getBuilder()
+  const taskEvent = await getTaskViewBuilder()
     .where({ [ALIASES.taskId]: data.taskId })
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
@@ -78,7 +78,7 @@ export async function create(
 
 export async function findById(id: string): Promise<DetailsTaskWithAssignees | null> {
   const taskEvent: DetailTaskWithAssigneesEventRow | undefined =
-    await getBuilder()
+    await getTaskViewBuilder()
       .where({ [ALIASES.taskId]: id })
       .then((rows: DetailTaskWithAssigneesEventRow[]) =>
         first<DetailTaskWithAssigneesEventRow>(rows));
@@ -99,7 +99,7 @@ export async function findByDesignId(
   limit?: number,
   offset?: number
 ): Promise<DetailsTaskWithAssignees[]> {
-  const taskEvents: DetailTaskWithAssigneesEventRow[] = await getBuilder()
+  const taskEvents: DetailTaskWithAssigneesEventRow[] = await getTaskViewBuilder()
     .where({ [ALIASES.designId]: designId })
     .modify(limitOrOffset(limit, offset))
     .orderByRaw(VIEW_ORDERING);
@@ -117,7 +117,7 @@ export async function findByCollectionId(
   limit?: number,
   offset?: number
 ): Promise<DetailsTaskWithAssignees[]> {
-  const taskResponses: DetailTaskWithAssigneesEventRow[] = await getBuilder()
+  const taskResponses: DetailTaskWithAssigneesEventRow[] = await getTaskViewBuilder()
     .where({ [ALIASES.collectionId]: collectionId })
     .modify(limitOrOffset(limit, offset))
     .orderByRaw(VIEW_ORDERING);
@@ -136,7 +136,7 @@ export async function findByUserId(
   offset?: number
 ): Promise<DetailsTaskWithAssignees[]> {
   const designIds = await findAllDesignIdsThroughCollaborator(userId);
-  const taskEvents: DetailTaskWithAssigneesEventRow[] = await getBuilder()
+  const taskEvents: DetailTaskWithAssigneesEventRow[] = await getTaskViewBuilder()
     .whereIn(ALIASES.designId, designIds)
     .modify(limitOrOffset(limit, offset))
     .orderByRaw(VIEW_ORDERING);
@@ -154,7 +154,7 @@ export async function findByStageId(
   limit?: number,
   offset?: number
 ): Promise<DetailsTaskWithAssignees[]> {
-  const taskEvents: DetailTaskWithAssigneesEventRow[] = await getBuilder()
+  const taskEvents: DetailTaskWithAssigneesEventRow[] = await getTaskViewBuilder()
     .where({ [ALIASES.stageId]: stageId })
     .modify(limitOrOffset(limit, offset))
     .orderByRaw(VIEW_ORDERING);
