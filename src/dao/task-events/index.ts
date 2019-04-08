@@ -6,26 +6,39 @@ import * as db from '../../services/db';
 import TaskEvent, {
   createDetailsTask,
   dataAdapter,
-  detailsAdapter,
-  DetailsTask,
-  DetailsTaskAdaptedRow,
-  DetailTaskEventRow,
-  isDetailTaskRow,
+  DetailsTaskWithAssignees,
+  DetailsTaskWithAssigneesAdaptedRow,
+  detailsWithAssigneesAdapter,
+  DetailTaskWithAssigneesEventRow,
+  isDetailTaskWithAssigneeRow,
   TaskEventRow,
   TaskStatus
 } from '../../domain-objects/task-event';
-import ProductDesign = require('../../domain-objects/product-design');
 import first from '../../services/first';
 import { validate, validateEvery } from '../../services/validate-from-db';
-import { findAllDesignsThroughCollaborator } from '../product-designs/dao';
+import { findAllDesignIdsThroughCollaborator } from '../product-designs/dao';
+import limitOrOffset from '../../services/limit-or-offset';
+import { ALIASES, getBuilder } from './view';
 
 const TABLE_NAME = 'task_events';
-const DETAILS_VIEW_NAME = 'detail_tasks';
+
+/**
+ * This will group group tasks in 4 ways:
+ *
+ * Collection: designs in the same collection will be grouped
+ * Design: stages in the same design will be grouped
+ * Stage: stage order is kept
+ * Task: task order is kept
+ *
+ * The order is important so that your most recent designs show first
+ */
+// tslint:disable-next-line:max-line-length
+const VIEW_ORDERING = 'collection_created_at desc, design_created_at desc, design_stage_ordering asc, ordering asc';
 
 export async function create(
   data: Unsaved<TaskEvent>,
   trx?: Knex.Transaction
-): Promise<DetailsTask> {
+): Promise<DetailsTaskWithAssignees> {
   const rowData = dataAdapter.forInsertion({
     ...data,
     id: uuid.v4(),
@@ -42,102 +55,114 @@ export async function create(
 
   if (!created) { throw new Error('Failed to create rows'); }
 
-  const taskEvent = await db(TABLE_NAME)
-    .select('*')
-    .from(DETAILS_VIEW_NAME)
-    .where({ id: data.taskId })
+  const taskEvent = await getBuilder()
+    .where({ [ALIASES.taskId]: data.taskId })
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
       }
     })
-    .then((rows: DetailTaskEventRow[]) => first<DetailTaskEventRow>(rows));
+    .then((rows: DetailTaskWithAssigneesEventRow[]) =>
+      first<DetailTaskWithAssigneesEventRow>(rows));
 
-  if (!taskEvent) { throw new Error('Failed to get with stage ID'); }
+  if (!taskEvent) { throw new Error('Failed to get by id'); }
 
-  return createDetailsTask(validate<DetailTaskEventRow, DetailsTaskAdaptedRow>(
-    TABLE_NAME,
-    isDetailTaskRow,
-    detailsAdapter,
-    taskEvent
-  ));
+  return createDetailsTask(
+    validate<DetailTaskWithAssigneesEventRow, DetailsTaskWithAssigneesAdaptedRow>(
+      TABLE_NAME,
+      isDetailTaskWithAssigneeRow,
+      detailsWithAssigneesAdapter,
+      taskEvent
+    ));
 }
 
-export async function findById(id: string): Promise<DetailsTask | null> {
-  const taskEvent: DetailTaskEventRow | undefined = await db(DETAILS_VIEW_NAME)
-    .select('*')
-    .from(DETAILS_VIEW_NAME)
-    .where({ id })
-    .then((rows: DetailTaskEventRow[]) => first<DetailTaskEventRow>(rows));
+export async function findById(id: string): Promise<DetailsTaskWithAssignees | null> {
+  const taskEvent: DetailTaskWithAssigneesEventRow | undefined =
+    await getBuilder()
+      .where({ [ALIASES.taskId]: id })
+      .then((rows: DetailTaskWithAssigneesEventRow[]) =>
+        first<DetailTaskWithAssigneesEventRow>(rows));
 
   if (!taskEvent) { return null; }
 
-  return createDetailsTask(validate<DetailTaskEventRow, DetailsTaskAdaptedRow>(
-    TABLE_NAME,
-    isDetailTaskRow,
-    detailsAdapter,
-    taskEvent
-  ));
+  return createDetailsTask(
+    validate<DetailTaskWithAssigneesEventRow, DetailsTaskWithAssigneesAdaptedRow>(
+      TABLE_NAME,
+      isDetailTaskWithAssigneeRow,
+      detailsWithAssigneesAdapter,
+      taskEvent
+    ));
 }
 
-export async function findByDesignId(designId: string): Promise<DetailsTask[]> {
-  const taskEvents: DetailTaskEventRow[] = await db(TABLE_NAME)
-    .select('*')
-    .from(DETAILS_VIEW_NAME)
-    .where({ design_id: designId })
-    .orderByRaw('design_stage_ordering asc, ordering asc');
+export async function findByDesignId(
+  designId: string,
+  limit?: number,
+  offset?: number
+): Promise<DetailsTaskWithAssignees[]> {
+  const taskEvents: DetailTaskWithAssigneesEventRow[] = await getBuilder()
+    .where({ [ALIASES.designId]: designId })
+    .modify(limitOrOffset(limit, offset))
+    .orderByRaw(VIEW_ORDERING);
 
-  return validateEvery<DetailTaskEventRow, DetailsTaskAdaptedRow>(
+  return validateEvery<DetailTaskWithAssigneesEventRow, DetailsTaskWithAssigneesAdaptedRow>(
     TABLE_NAME,
-    isDetailTaskRow,
-    detailsAdapter,
+    isDetailTaskWithAssigneeRow,
+    detailsWithAssigneesAdapter,
     taskEvents
   ).map(createDetailsTask);
 }
 
-export async function findByCollectionId(collectionId: string): Promise<DetailsTask[]> {
-  const taskResponses: DetailTaskEventRow[] = await db(TABLE_NAME)
-    .select('*')
-    .from(DETAILS_VIEW_NAME)
-    .where({ collection_id: collectionId })
-    .orderByRaw('design_stage_ordering asc, ordering asc');
+export async function findByCollectionId(
+  collectionId: string,
+  limit?: number,
+  offset?: number
+): Promise<DetailsTaskWithAssignees[]> {
+  const taskResponses: DetailTaskWithAssigneesEventRow[] = await getBuilder()
+    .where({ [ALIASES.collectionId]: collectionId })
+    .modify(limitOrOffset(limit, offset))
+    .orderByRaw(VIEW_ORDERING);
 
-  return validateEvery<DetailTaskEventRow, DetailsTaskAdaptedRow>(
+  return validateEvery<DetailTaskWithAssigneesEventRow, DetailsTaskWithAssigneesAdaptedRow>(
     TABLE_NAME,
-    isDetailTaskRow,
-    detailsAdapter,
+    isDetailTaskWithAssigneeRow,
+    detailsWithAssigneesAdapter,
     taskResponses
   ).map(createDetailsTask);
 }
 
-export async function findByUserId(userId: string): Promise<DetailsTask[]> {
-  const designs = await findAllDesignsThroughCollaborator(userId);
-  const designIds = designs.map((design: ProductDesign): string => design.id);
-  const taskEvents: DetailTaskEventRow[] = await db(TABLE_NAME)
-    .select('detail_tasks.*')
-    .from(DETAILS_VIEW_NAME)
-    .whereIn('design_id', designIds)
-    .orderByRaw('design_stage_ordering asc, ordering asc');
+export async function findByUserId(
+  userId: string,
+  limit?: number,
+  offset?: number
+): Promise<DetailsTaskWithAssignees[]> {
+  const designIds = await findAllDesignIdsThroughCollaborator(userId);
+  const taskEvents: DetailTaskWithAssigneesEventRow[] = await getBuilder()
+    .whereIn(ALIASES.designId, designIds)
+    .modify(limitOrOffset(limit, offset))
+    .orderByRaw(VIEW_ORDERING);
 
-  return validateEvery<DetailTaskEventRow, DetailsTaskAdaptedRow>(
+  return validateEvery<DetailTaskWithAssigneesEventRow, DetailsTaskWithAssigneesAdaptedRow>(
     TABLE_NAME,
-    isDetailTaskRow,
-    detailsAdapter,
+    isDetailTaskWithAssigneeRow,
+    detailsWithAssigneesAdapter,
     taskEvents
   ).map(createDetailsTask);
 }
 
-export async function findByStageId(stageId: string): Promise<DetailsTask[]> {
-  const taskEvents: DetailTaskEventRow[] = await db(TABLE_NAME)
-    .select('*')
-    .from(DETAILS_VIEW_NAME)
-    .where({ design_stage_id: stageId })
-    .orderByRaw('design_stage_ordering asc, ordering asc');
+export async function findByStageId(
+  stageId: string,
+  limit?: number,
+  offset?: number
+): Promise<DetailsTaskWithAssignees[]> {
+  const taskEvents: DetailTaskWithAssigneesEventRow[] = await getBuilder()
+    .where({ [ALIASES.stageId]: stageId })
+    .modify(limitOrOffset(limit, offset))
+    .orderByRaw(VIEW_ORDERING);
 
-  return validateEvery<DetailTaskEventRow, DetailsTaskAdaptedRow>(
+  return validateEvery<DetailTaskWithAssigneesEventRow, DetailsTaskWithAssigneesAdaptedRow>(
     TABLE_NAME,
-    isDetailTaskRow,
-    detailsAdapter,
+    isDetailTaskWithAssigneeRow,
+    detailsWithAssigneesAdapter,
     taskEvents
   ).map(createDetailsTask);
 }
