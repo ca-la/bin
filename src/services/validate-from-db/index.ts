@@ -1,17 +1,18 @@
 import DataAdapter from '../data-adapter';
+import InvalidDataError = require('../../errors/invalid-data');
 
 export function validate<RowData extends object, UserData>(
   table: string,
   validator: (a: any) => a is RowData,
   adapter: DataAdapter<RowData, UserData>,
-  data: RowData
+  data?: RowData | null
 ): UserData {
   if (validator(data)) {
     return adapter.parse(data);
   }
 
-  throw new TypeError(
-    `Schema mismatch: ${table}. Columns: ${Object.keys(data)}`
+  throw new InvalidDataError(
+    `Schema mismatch: ${table}. Columns: ${data && Object.keys(data)}`
   );
 }
 
@@ -19,16 +20,14 @@ export function validateEvery<RowData extends object, UserData>(
   table: string,
   validator: (a: any) => a is RowData,
   adapter: DataAdapter<RowData, UserData>,
-  data: RowData[]
+  data?: (RowData | null | undefined)[] | null
 ): UserData[] {
-  if (isEvery(validator, data)) {
-    return data.map((d: RowData) => adapter.parse(d));
+  if (!data) {
+    throw new InvalidDataError('Validator was passed a falsy value');
   }
 
-  const keySets = (data as object[]).map((d: object) => Object.keys(d));
-
-  throw new TypeError(
-    `Schema mismatch: ${table}. Columns: ${keySets}`
+  return data.map((d: RowData | null | undefined) =>
+    validate(table, validator, adapter, d)
   );
 }
 
