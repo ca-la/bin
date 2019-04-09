@@ -1,8 +1,8 @@
 import * as Knex from 'knex';
 import { map } from 'lodash';
 
-import * as db from '../services/db';
-import Logger = require('../services/logger');
+import * as db from '../../services/db';
+import Logger = require('../../services/logger');
 
 interface WithIds {
   id: string;
@@ -17,6 +17,9 @@ function isRowsOfIds(candidate: any): candidate is WithIds[] {
   );
 }
 
+/**
+ * Rolls back a collection that was checked out to a pre-checkout state.
+ */
 async function reversePaymentRecords(): Promise<void> {
   const collectionId = process.argv[2];
 
