@@ -35,11 +35,10 @@ async function generateScans(): Promise<void> {
       // This is the customer of the partner, not the partner
       const customer = await db('fit_partner_customers')
         .insert({
-          createdAt: new Date(),
-          deletedAt: null,
+          created_at: new Date(),
           id: uuid.v4(),
-          partnerId,
-          shopifyUserId: 'NONE' // This value is non-null, but can't be an empty string
+          partner_id: partnerId,
+          shopify_user_id: 'NONE' // This value is non-null, but can't be an empty string
         }, '*')
         .transacting(trx)
         .then(first)
