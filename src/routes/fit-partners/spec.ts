@@ -17,6 +17,7 @@ test('POST /fit-partners/send-fit-link creates and sends a scan link', async (t:
 
   const partner = await FitPartnersDAO.create({
     adminUserId: user.id,
+    customFitDomain: null,
     shopifyAppApiKey: '123',
     shopifyAppPassword: '123',
     shopifyHostname: 'example.com',
@@ -51,6 +52,7 @@ test(
 
     const partner = await FitPartnersDAO.create({
       adminUserId: user.id,
+      customFitDomain: null,
       shopifyAppApiKey: '123',
       shopifyAppPassword: '123',
       shopifyHostname: 'example.com',
@@ -82,6 +84,7 @@ test(
 
     const partner = await FitPartnersDAO.create({
       adminUserId: user.id,
+      customFitDomain: null,
       shopifyAppApiKey: '123',
       shopifyAppPassword: '123',
       shopifyHostname: 'example.com',
@@ -110,6 +113,7 @@ test(
 
     const partner = await FitPartnersDAO.create({
       adminUserId: user.id,
+      customFitDomain: null,
       shopifyAppApiKey: '123',
       shopifyAppPassword: '123',
       shopifyHostname: 'example.com',

@@ -5,13 +5,14 @@ import ShopifyClient = require('../shopify');
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import { saveCalculatedValues, saveFittingUrl } from './index';
 import FitPartner from '../../domain-objects/fit-partner';
-import FitPartnerCustomer from '../../domain-objects/fit-partner-customer';
+import FitPartnerCustomer = require('../../domain-objects/fit-partner-customer');
 
 async function createPartnerAndCustomer(): Promise<{
   partner: FitPartner,
   customer: FitPartnerCustomer
 }> {
   const partner = await FitPartnersDAO.create({
+    customFitDomain: null,
     shopifyAppApiKey: '123',
     shopifyAppPassword: '123',
     shopifyHostname: 'example.com'

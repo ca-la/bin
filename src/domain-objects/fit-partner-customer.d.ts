@@ -1,7 +1,11 @@
-export default interface FitPartnerCustomer {
-  id: string;
-  createdAt: Date;
-  deletedAt?: Date;
-  partnerId: string;
-  shopifyUserId: string;
+declare class FitPartnerCustomer {
+  public id: string;
+  public createdAt: Date;
+  public deletedAt?: Date;
+  public partnerId: string;
+  public shopifyUserId: string;
+
+  constructor(data: any);
 }
+
+export = FitPartnerCustomer;

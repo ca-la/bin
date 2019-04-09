@@ -119,6 +119,9 @@ const config = {
   // e.g. 'https://fit-client.ca.la'
   FIT_CLIENT_HOST: process.env.FIT_CLIENT_HOST,
 
+  // e.g. 'https://magic.ca.la'
+  MAGIC_HOST: process.env.MAGIC_HOST,
+
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
 
   FINANCING_MARGIN: 0.06,

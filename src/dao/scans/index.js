@@ -24,7 +24,7 @@ const SCAN_TYPES = {
   humanSolutions: 'HUMANSOLUTIONS'
 };
 
-function create(data) {
+function create(data, trx) {
   const rowData = Object.assign(
     {},
     compact(dataMapper.userDataToRowData(data)),
@@ -33,6 +33,11 @@ function create(data) {
 
   return db(TABLE_NAME)
     .insert(rowData, '*')
+    .modify((query) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .catch(rethrow)
     .catch(filterError(rethrow.ERRORS.NotNullViolation, (err) => {
       if (err.column === 'type') {

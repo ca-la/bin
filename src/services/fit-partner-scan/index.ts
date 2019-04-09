@@ -1,7 +1,7 @@
 import { chunk } from 'lodash';
 import { Transaction } from 'knex';
 
-import FitPartnerCustomer from '../../domain-objects/fit-partner-customer';
+import FitPartnerCustomer = require('../../domain-objects/fit-partner-customer');
 import FitPartnerCustomersDAO = require('../../dao/fit-partner-customers');
 import FitPartnersDAO = require('../../dao/fit-partners');
 import Scan = require('../../domain-objects/scan');

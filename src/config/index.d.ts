@@ -42,6 +42,7 @@ export const API_HOST: string;
 export const SITE_HOST: string;
 export const STUDIO_HOST: string;
 export const FIT_CLIENT_HOST: string;
+export const MAGIC_HOST: string;
 
 export const STRIPE_SECRET_KEY: string;
 

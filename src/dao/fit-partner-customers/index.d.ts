@@ -1,4 +1,4 @@
-import FitPartnerCustomer from '../../domain-objects/fit-partner-customer';
+import FitPartnerCustomer = require('../../domain-objects/fit-partner-customer');
 
 interface FindOrCreateOptions {
   partnerId: string;
