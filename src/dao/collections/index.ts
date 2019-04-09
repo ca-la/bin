@@ -96,7 +96,10 @@ export async function findByCollaboratorAndUserId(userId: string): Promise<Colle
     .distinct('collections.id')
     .from(TABLE_NAME)
     .join('collaborators', 'collaborators.collection_id', 'collections.id')
-    .where({ 'collaborators.user_id': userId })
+    .where({
+      'collaborators.user_id': userId,
+      'collections.deleted_at': null
+    })
     .andWhereRaw('(collaborators.cancelled_at IS NULL OR collaborators.cancelled_at > now())')
     .orWhere({
       'collections.created_by': userId,

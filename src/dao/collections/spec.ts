@@ -123,6 +123,9 @@ test('CollectionsDAO#findByCollaboratorAndUserId finds all collections', async (
     id: id3,
     title: 'Drop 003'
   });
+  const { collection: collection4 } = await generateCollection({
+    createdBy: user2.id
+  });
   await generateCollaborator({
     collectionId: collection1.id,
     designId: null,
@@ -148,6 +151,15 @@ test('CollectionsDAO#findByCollaboratorAndUserId finds all collections', async (
     userEmail: null,
     userId: user1.id
   });
+  await generateCollaborator({
+    collectionId: collection4.id,
+    designId: null,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
+    userId: user1.id
+  });
+  await CollectionsDAO.deleteById(collection4.id);
 
   const collections = await CollectionsDAO.findByCollaboratorAndUserId(user1.id);
 
