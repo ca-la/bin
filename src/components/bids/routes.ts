@@ -136,8 +136,11 @@ function* assignBidToPartner(this: Koa.Application.Context): AsyncIterableIterat
   const maybeCollaborator = yield CollaboratorsDAO.findByDesignAndUser(design.id, userId);
 
   if (!maybeCollaborator) {
+    const now = new Date();
+    const tomorrow = new Date(now.setDate(now.getDate() + 1));
+
     yield CollaboratorsDAO.create({
-      cancelledAt: null,
+      cancelledAt: tomorrow,
       collectionId: null,
       designId: design.id,
       invitationMessage: '',
@@ -192,8 +195,7 @@ function* removeBidFromPartner(this: Koa.Application.Context): AsyncIterableIter
     type: 'REMOVE_PARTNER'
   });
 
-  yield CollaboratorsDAO.deleteByDesignAndUser(design.id, target.id);
-
+  yield CollaboratorsDAO.cancelPreviewRoleForDesignAndUser(design.id, target.id);
   this.status = 204;
 }
 
@@ -233,7 +235,9 @@ export function* acceptDesignBid(this: AcceptDesignBidContext): AsyncIterableIte
     targetId: null,
     type: 'ACCEPT_SERVICE_BID'
   });
+
   yield CollaboratorsDAO.update(collaborator.id, {
+    cancelledAt: null,
     role: 'PARTNER'
   });
   NotificationsService.sendPartnerAcceptServiceBidNotification(
@@ -281,7 +285,11 @@ export function* rejectDesignBid(this: AcceptDesignBidContext): AsyncIterableIte
     targetId: null,
     type: 'REJECT_SERVICE_BID'
   });
-  yield CollaboratorsDAO.deleteById(collaborator.id);
+
+  if (collaborator.role === 'PREVIEW') {
+    yield CollaboratorsDAO.deleteById(collaborator.id);
+  }
+
   NotificationsService.sendPartnerRejectServiceBidNotification(
     quote.designId!,
     this.state.userId

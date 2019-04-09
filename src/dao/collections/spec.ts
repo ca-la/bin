@@ -97,6 +97,7 @@ test('CollectionsDAO#findByCollaboratorAndUserId finds all collections', async (
 
   const id1 = uuid.v4();
   const id2 = uuid.v4();
+  const id3 = uuid.v4();
 
   const collection1 = await CollectionsDAO.create({
     createdAt: new Date(),
@@ -114,6 +115,14 @@ test('CollectionsDAO#findByCollaboratorAndUserId finds all collections', async (
     id: id2,
     title: 'Drop 002'
   });
+  const collection3 = await CollectionsDAO.create({
+    createdAt: new Date(),
+    createdBy: user2.id,
+    deletedAt: null,
+    description: 'gucci gang gucci gang gucci gang',
+    id: id3,
+    title: 'Drop 003'
+  });
   await generateCollaborator({
     collectionId: collection1.id,
     designId: null,
@@ -124,6 +133,15 @@ test('CollectionsDAO#findByCollaboratorAndUserId finds all collections', async (
   });
   await generateCollaborator({
     collectionId: collection2.id,
+    designId: null,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
+    userId: user1.id
+  });
+  await generateCollaborator({
+    cancelledAt: new Date('2018-04-20'),
+    collectionId: collection3.id,
     designId: null,
     invitationMessage: '',
     role: 'EDIT',

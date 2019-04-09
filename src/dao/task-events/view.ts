@@ -38,7 +38,10 @@ export function getBuilder(): Knex.QueryBuilder {
             JOIN collaborator_tasks as ctfortasksviewraw
               ON ctfortasksviewraw.collaborator_id = cwufortasksviewraw.id
             WHERE ctfortasksviewraw.task_id = tasksfortasksviewraw.id
-              AND cwufortasksviewraw.deleted_at is null
+              AND (
+                cwufortasksviewraw.cancelled_at IS null
+                  OR cwufortasksviewraw.cancelled_at > now()
+              )
     ) as assignees
   `, { collaboratorsWithUsers: getCollaboratorsBuilder() }))
   .from('task_events as taskeventsfortasksviewraw')

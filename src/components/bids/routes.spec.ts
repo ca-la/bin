@@ -250,6 +250,43 @@ test('GET /bids?userId&state=ACCEPTED', async (t: Test) => {
   t.deepEqual(bids, [], 'returns empty bids list');
 });
 
+test('PUT /bids/:bidId/assignees/:userId creates a new collaborator role', async (t: Test) => {
+  const admin = await createUser({ role: 'ADMIN' });
+  const partner = await createUser({ role: 'PARTNER' });
+  const designer = await createUser();
+  const design = await ProductDesignsDAO.create({
+    productType: 'TEESHIRT',
+    title: 'Plain White Tee',
+    userId: designer.user.id
+  });
+  const { bid } = await generateBid(design.id, partner.user.id);
+
+  const notificationStub = sandbox()
+    .stub(NotificationsService, 'sendPartnerDesignBid')
+    .resolves();
+
+  const [response] = await put(
+    `/bids/${bid.id}/assignees/${partner.user.id}`,
+    { headers: authHeader(admin.session.id) }
+  );
+
+  t.equal(response.status, 204, 'Successfully assigns first partner');
+  t.equal(notificationStub.callCount, 1, 'Only calls notification once');
+
+  const collaborator = await CollaboratorsDAO.findByDesignAndUser(design.id, partner.user.id);
+
+  if (!collaborator) {
+    throw new Error('Could not find collaborators for the partner and design!');
+  }
+
+  t.equal(collaborator.role, 'PREVIEW', 'Creates a preview collaborator');
+  t.equal(collaborator.userId, partner.user.id, 'Associates with the partner');
+  t.true(
+    collaborator.cancelledAt && collaborator.cancelledAt  > new Date(),
+    'Returns a cancelled date ahead of now'
+  );
+});
+
 test('PUT /bids/:bidId/assignees/:userId', async (t: Test) => {
   const { user, session } = await createUser({ role: 'ADMIN' });
   const collaborator = await createUser({ role: 'PARTNER' });
@@ -369,7 +406,7 @@ test('DELETE /bids/:bidId/assignees/:userId', async (t: Test) => {
     { headers: authHeader(session.id) }
   );
   t.equal(collaboratorResponse.status, 200);
-  t.deepEqual(collaborators, []);
+  t.equal(collaborators.length, 0, 'Removes the partner collaborator for the design');
 });
 
 test('Partner pairing: accept', async (t: Test) => {
@@ -608,7 +645,7 @@ test('Partner pairing: reject', async (t: Test) => {
   t.equal(
     designCollaborator,
     null,
-    'The partner not a collaborator'
+    'The partner is no longer a collaborator'
   );
 
   t.equal(notificationStub.callCount, 1);

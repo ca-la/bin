@@ -332,6 +332,46 @@ test('CollaboratorsDAO.deleteByDesignIdAndUserId deletes collaborator', async (t
   t.deepEqual(collaborator, null);
 });
 
+test('cancelPreviewRoleForDesignAndUser cancels the preview role', async (t: Test) => {
+  const { user: designer } = await createUser({ withSession: false });
+  const { user: partner } = await createUser({ withSession: false, role: 'PARTNER' });
+  const design = await ProductDesignsDAO.create({
+    productType: 'TEESHIRT',
+    title: 'Helmut Lang Shirt',
+    userId: designer.id
+  });
+  await generateCollaborator({
+    designId: design.id,
+    role: 'EDIT',
+    userId: designer.id
+  });
+  await generateCollaborator({
+    designId: design.id,
+    role: 'PREVIEW',
+    userId: partner.id
+  });
+
+  const updatedCollaborators = await CollaboratorsDAO.cancelPreviewRoleForDesignAndUser(
+    design.id,
+    partner.id
+  );
+
+  t.equal(updatedCollaborators.length, 1, 'Only returns one cancelled collaborator');
+  const cancelledCollaborator = updatedCollaborators[0];
+
+  if (cancelledCollaborator && cancelledCollaborator.cancelledAt) {
+    t.true(cancelledCollaborator.cancelledAt < new Date());
+  } else {
+    t.fail('Does not have a cancelledAt date');
+  }
+
+  const notUpdatedCollaborators = await CollaboratorsDAO.cancelPreviewRoleForDesignAndUser(
+    design.id,
+    designer.id
+  );
+  t.deepEqual(notUpdatedCollaborators, [], 'Does not update non-preview roles');
+});
+
 test('CollaboratorsDAO.update', async (t: Test) => {
   const { user: designer } = await createUser({ withSession: false });
   const { user: friend } = await createUser({ withSession: false });
