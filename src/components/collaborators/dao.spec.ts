@@ -360,7 +360,7 @@ test('cancelPreviewRoleForDesignAndUser cancels the preview role', async (t: Tes
   const cancelledCollaborator = updatedCollaborators[0];
 
   if (cancelledCollaborator && cancelledCollaborator.cancelledAt) {
-    t.true(cancelledCollaborator.cancelledAt < new Date());
+    t.true(cancelledCollaborator.cancelledAt <= new Date());
   } else {
     t.fail('Does not have a cancelledAt date');
   }
