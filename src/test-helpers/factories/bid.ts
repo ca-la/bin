@@ -15,17 +15,28 @@ interface BidInterface {
   bid: Bid;
 }
 
-export default async function generateBid(
-  designId: string | null = null,
-  userId: string | null = null
-): Promise<BidInterface> {
-  await generatePricingValues();
+interface GenerateBidInputs {
+  bidOptions?: Partial<Bid>;
+  designId: string | null;
+  generatePricing?: boolean;
+  userId: string | null;
+}
+
+export default async function generateBid({
+  bidOptions = {},
+  designId = null,
+  generatePricing = true,
+  userId = null
+}: Partial<GenerateBidInputs> = {}): Promise<BidInterface> {
+  if (generatePricing) {
+    await generatePricingValues();
+  }
   const { user } = await createUser();
 
   const createdBy = userId || user.id;
 
   const quote = await generatePricingQuote({
-    designId,
+    designId: designId || null,
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
     processes: [{
@@ -45,7 +56,8 @@ export default async function generateBid(
     createdBy,
     description: 'Full Service',
     id: uuid.v4(),
-    quoteId: quote.id
+    quoteId: quote.id,
+    ...bidOptions
   });
 
   return { bid, quote, user };

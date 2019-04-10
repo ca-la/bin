@@ -26,7 +26,11 @@ test('GET /bids', async (t: Test) => {
     userId: admin.user.id
   });
 
-  const { bid, quote } = await generateBid(design.id, admin.user.id);
+  const { bid, quote } = await generateBid({
+    designId: design.id,
+    generatePricing: true,
+    userId: admin.user.id
+  });
   const otherBid = await BidsDAO.create({
     bidPriceCents: 100000,
     createdAt: new Date(2012, 12, 22),
@@ -59,6 +63,28 @@ test('GET /bids', async (t: Test) => {
   }], 'returns only bids assigned to requested user');
 });
 
+test('GET /bids as an admin fetching everything', async (t: Test) => {
+  const admin = await createUser({ role: 'ADMIN' });
+  const findAllStub = sandbox().stub(BidsDAO, 'findAll').resolves([]);
+
+  const [response, bids] = await get(
+    '/bids?limit=100&offset=50',
+    { headers: authHeader(admin.session.id) }
+  );
+
+  t.equal(response.status, 200, 'Successfully returns');
+  t.deepEqual(bids, [], 'Successfully returns the stub list');
+  t.equal(findAllStub.callCount, 1, 'Calls the findAll method exactly once');
+
+  const [badResponse, badBody] = await get(
+    '/bids',
+    { headers: authHeader(admin.session.id) }
+  );
+
+  t.equal(badResponse.status, 400, 'Fails when a limit/offset is not passed');
+  t.equal(badBody.message, 'Must specify a limit and offset when fetching all bids!');
+});
+
 test('GET /bids?userId&state=OPEN', async (t: Test) => {
   const admin = await createUser({ role: 'ADMIN' });
   const partner = await createUser({ role: 'PARTNER' });
@@ -69,7 +95,11 @@ test('GET /bids?userId&state=OPEN', async (t: Test) => {
     userId: admin.user.id
   });
 
-  const { bid, quote } = await generateBid(design.id, admin.user.id);
+  const { bid, quote } = await generateBid({
+    designId: design.id,
+    generatePricing: true,
+    userId: admin.user.id
+  });
   const otherBid = await BidsDAO.create({
     bidPriceCents: 100000,
     createdAt: new Date(2012, 12, 22),
@@ -127,7 +157,11 @@ test('GET /bids?userId&state=EXPIRED', async (t: Test) => {
     userId: admin.user.id
   });
 
-  const { bid, quote } = await generateBid(design.id, admin.user.id);
+  const { bid, quote } = await generateBid({
+    designId: design.id,
+    generatePricing: true,
+    userId: admin.user.id
+  });
   const otherBid = await BidsDAO.create({
     bidPriceCents: 100000,
     createdAt: new Date(2012, 12, 22),
@@ -180,7 +214,11 @@ test('GET /bids?userId&state=REJECTED', async (t: Test) => {
     title: 'Plain White Tee',
     userId: admin.user.id
   });
-  const { quote } = await generateBid(design.id, admin.user.id);
+  const { quote } = await generateBid({
+    designId: design.id,
+    generatePricing: true,
+    userId: admin.user.id
+  });
   const otherBid = await BidsDAO.create({
     bidPriceCents: 100000,
     createdAt: new Date(2012, 12, 22),
@@ -224,7 +262,11 @@ test('GET /bids?userId&state=ACCEPTED', async (t: Test) => {
     userId: admin.user.id
   });
 
-  const { bid, quote } = await generateBid(design.id, admin.user.id);
+  const { bid, quote } = await generateBid({
+    designId: design.id,
+    generatePricing: true,
+    userId: admin.user.id
+  });
   const otherBid = await BidsDAO.create({
     bidPriceCents: 100000,
     createdAt: new Date(2012, 12, 22),
@@ -259,7 +301,11 @@ test('PUT /bids/:bidId/assignees/:userId creates a new collaborator role', async
     title: 'Plain White Tee',
     userId: designer.user.id
   });
-  const { bid } = await generateBid(design.id, partner.user.id);
+  const { bid } = await generateBid({
+    designId: design.id,
+    generatePricing: true,
+    userId: partner.user.id
+  });
 
   const notificationStub = sandbox()
     .stub(NotificationsService, 'sendPartnerDesignBid')
@@ -304,7 +350,11 @@ test('PUT /bids/:bidId/assignees/:userId', async (t: Test) => {
     userId: collaborator.user.id
   });
 
-  const { bid } = await generateBid(design.id, user.id);
+  const { bid } = await generateBid({
+    designId: design.id,
+    generatePricing: true,
+    userId: user.id
+  });
 
   const notificationStub = sandbox()
     .stub(NotificationsService, 'sendPartnerDesignBid')
@@ -355,7 +405,11 @@ test('GET /bids/:bidId/assignees', async (t: Test) => {
     userId: user.id
   });
 
-  const { bid } = await generateBid(design.id, user.id);
+  const { bid } = await generateBid({
+    designId: design.id,
+    generatePricing: true,
+    userId: user.id
+  });
 
   await put(
     `/bids/${bid.id}/assignees/${partner.id}`,
@@ -383,7 +437,11 @@ test('DELETE /bids/:bidId/assignees/:userId', async (t: Test) => {
     userId: user.id
   });
 
-  const { bid } = await generateBid(design.id, user.id);
+  const { bid } = await generateBid({
+    designId: design.id,
+    generatePricing: true,
+    userId: user.id
+  });
 
   await put(
     `/bids/${bid.id}/assignees/${partner.id}`,
@@ -533,7 +591,11 @@ test('Partner pairing: accept on a deleted design', async (t: Test) => {
     title: 'Off-White Socks',
     userId: designer.user.id
   });
-  const { bid } = await generateBid(design.id, admin.user.id);
+  const { bid } = await generateBid({
+    designId: design.id,
+    generatePricing: true,
+    userId: admin.user.id
+  });
   await put(
     `/bids/${bid.id}/assignees/${partner.user.id}`,
     { headers: authHeader(admin.session.id) }

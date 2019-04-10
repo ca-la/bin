@@ -18,6 +18,12 @@ import * as NotificationsService from '../../services/create-notifications';
 
 const router = new Router();
 
+interface GetListQuery {
+  limit?: number;
+  offset?: number;
+  state?: string;
+}
+
 type IOBid = Bid & { design: ProductDesign };
 
 async function attachDesignToBid(bid: Bid): Promise<IOBid | null> {
@@ -57,17 +63,24 @@ function not(predicateFunction: (a: any) => boolean): (a: any) => boolean {
   return (a: any): boolean => !predicateFunction(a);
 }
 
-function* listBidsByAssignee(this: Koa.Application.Context): AsyncIterableIterator<any> {
-  const { state, userId } = this.query;
-  const isAdmin = this.state.role === 'ADMIN';
+function* listAllBids(this: Koa.Application.Context): AsyncIterableIterator<any> {
+  const { limit, offset, state }: GetListQuery = this.query;
 
-  if (!userId) {
-    this.throw(400, 'You must specify the user to retrieve bids for');
+  if (!limit || !offset) {
+    this.throw(400, 'Must specify a limit and offset when fetching all bids!');
     return;
   }
 
-  if (!isAdmin && userId !== this.state.userId) {
-    this.throw(403, 'You can only retrieve bids for your own user');
+  const bids = yield BidsDAO.findAll({ limit, offset, state });
+  this.body = bids;
+  this.status = 200;
+}
+
+function* listBidsByAssignee(this: Koa.Application.Context): AsyncIterableIterator<any> {
+  const { state, userId } = this.query;
+
+  if (!userId) {
+    this.throw(400, 'You must specify the user to retrieve bids for');
     return;
   }
 
@@ -99,6 +112,20 @@ function* listBidsByAssignee(this: Koa.Application.Context): AsyncIterableIterat
 
   this.body = ioBids;
   this.status = 200;
+}
+
+function* listBids(this: Koa.Application.Context): AsyncIterableIterator<any> {
+  const { userId } = this.query;
+  const isAdmin = this.state.role === 'ADMIN';
+
+  if (isAdmin && !userId) {
+    yield listAllBids;
+  } else if (isAdmin || (userId === this.state.userId)) {
+    yield listBidsByAssignee;
+  } else {
+    this.throw(403, 'You must either be an admin or retrieve bids for your own user!');
+    return;
+  }
 }
 
 function* assignBidToPartner(this: Koa.Application.Context): AsyncIterableIterator<any> {
@@ -298,7 +325,7 @@ export function* rejectDesignBid(this: AcceptDesignBidContext): AsyncIterableIte
   this.status = 204;
 }
 
-router.get('/', requireAuth, listBidsByAssignee);
+router.get('/', requireAuth, listBids);
 
 router.put('/:bidId/assignees/:userId', requireAdmin, assignBidToPartner);
 router.get('/:bidId/assignees', requireAdmin, listBidAssignees);

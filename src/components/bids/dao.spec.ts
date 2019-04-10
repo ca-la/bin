@@ -10,12 +10,15 @@ import Bid from './domain-object';
 import {
   create,
   findAcceptedByTargetId,
+  findAll,
   findById,
   findByQuoteId,
   findOpenByTargetId,
   findRejectedByTargetId
 } from './dao';
 import DesignEvent from '../../domain-objects/design-event';
+import generateBid from '../../test-helpers/factories/bid';
+import generateDesignEvent from '../../test-helpers/factories/design-event';
 
 test('Bids DAO supports creation and retrieval', async (t: Test) => {
   await generatePricingValues();
@@ -261,4 +264,105 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
 
   t.deepEqual(rejectedBids, [rejectedBid], 'returns rejected bid');
   t.deepEqual(otherRejectedBids, [openBid], 'returns rejected bid');
+});
+
+test('Bids DAO supports finding all with a limit and offset', async (t: Test) => {
+  const { bid: bid1 } = await generateBid();
+  const { bid: bid2 } = await generateBid({ generatePricing: false });
+  const { bid: bid3 } = await generateBid({ generatePricing: false });
+  const { bid: bid4 } = await generateBid({ generatePricing: false });
+  const { bid: bid5 } = await generateBid({ generatePricing: false });
+
+  const result1 = await findAll({});
+  t.deepEqual(result1, [bid5, bid4, bid3, bid2, bid1], 'Returns all in desc order');
+
+  const result2 = await findAll({ limit: 2 });
+  t.deepEqual(result2, [bid5, bid4], 'Returns with a limit');
+
+  const result3 = await findAll({ limit: 2, offset: 0 });
+  t.deepEqual(result3, [bid5, bid4], 'Returns with a limit and offset');
+
+  const result4 = await findAll({ limit: 3, offset: 2 });
+  t.deepEqual(result4, [bid3, bid2, bid1], 'Returns with a limit and offset');
+});
+
+test('Bids DAO supports finding all bids by status', async (t: Test) => {
+  const { bid: openBid1 } = await generateBid();
+  await generateDesignEvent({
+    bidId: openBid1.id,
+    createdAt: new Date(),
+    type: 'BID_DESIGN'
+  });
+
+  const { bid: acceptedBid } = await generateBid({ generatePricing: false });
+  await generateDesignEvent({
+    bidId: acceptedBid.id,
+    createdAt: new Date(),
+    type: 'BID_DESIGN'
+  });
+  await generateDesignEvent({
+    bidId: acceptedBid.id,
+    createdAt: new Date(),
+    type: 'ACCEPT_SERVICE_BID'
+  });
+  const { bid: acceptedBid2 } = await generateBid({
+    bidOptions: {
+      createdAt: new Date('2019-01-15')
+    },
+    generatePricing: false
+  });
+  await generateDesignEvent({
+    bidId: acceptedBid2.id,
+    createdAt: new Date('2019-01-15'),
+    type: 'BID_DESIGN'
+  });
+  await generateDesignEvent({
+    bidId: acceptedBid2.id,
+    createdAt: new Date('2019-01-16'),
+    type: 'ACCEPT_SERVICE_BID'
+  });
+
+  const { bid: expiredBid } = await generateBid({
+    bidOptions: {
+      createdAt: new Date('2019-01-02')
+    },
+    generatePricing: false
+  });
+  await generateDesignEvent({
+    bidId: expiredBid.id,
+    createdAt: new Date('2019-01-02'),
+    type: 'BID_DESIGN'
+  });
+
+  const { bid: rejectedBid } = await generateBid({
+    bidOptions: {
+      createdAt: new Date('2019-02-05')
+    },
+    generatePricing: false
+  });
+  await generateDesignEvent({
+    bidId: rejectedBid.id,
+    createdAt: new Date('2019-02-05'),
+    type: 'BID_DESIGN'
+  });
+  await generateDesignEvent({
+    bidId: rejectedBid.id,
+    createdAt: new Date('2019-02-06'),
+    type: 'REJECT_SERVICE_BID'
+  });
+
+  const result1 = await findAll({ state: 'OPEN' });
+  t.deepEqual(result1, [openBid1], 'Only returns the open bids');
+
+  const result2 = await findAll({ state: 'ACCEPTED' });
+  t.deepEqual(result2, [acceptedBid, acceptedBid2], 'Only returns the accepted bids');
+
+  const result2a = await findAll({ limit: 1, offset: 1, state: 'ACCEPTED' });
+  t.deepEqual(result2a, [acceptedBid2], 'Only returns the accepted bids in the range');
+
+  const result3 = await findAll({ state: 'EXPIRED' });
+  t.deepEqual(result3, [expiredBid], 'Only returns the expired bids');
+
+  const result4 = await findAll({ state: 'REJECTED' });
+  t.deepEqual(result4, [rejectedBid], 'Only returns the rejected bids');
 });
