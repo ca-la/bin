@@ -17,6 +17,7 @@ export interface UserRow {
 }
 
 export const UPDATABLE_PROPERTIES = [
+  'cancelled_at',
   'user_email',
   'user_id',
   'role'

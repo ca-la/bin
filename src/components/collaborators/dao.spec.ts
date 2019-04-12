@@ -411,6 +411,67 @@ test('CollaboratorsDAO.update', async (t: Test) => {
     .catch(() => t.pass('Correctly rejected invalid update'));
 });
 
+test('CollaboratorsDAO.update with the cancelled_at property', async (t: Test) => {
+  const { user: designer } = await createUser({ withSession: false });
+  const { user: partner } = await createUser({ withSession: false });
+
+  const design = await ProductDesignsDAO.create({
+    productType: 'TEESHIRT',
+    title: 'A product design',
+    userId: designer.id
+  });
+  const now = new Date();
+  const tomorrow = new Date(now.setDate(now.getDate() + 1));
+  const { collaborator } = await generateCollaborator({
+    cancelledAt: tomorrow,
+    collectionId: null,
+    designId: design.id,
+    invitationMessage: '',
+    role: 'PREVIEW',
+    userId: partner.id
+  });
+
+  const validUpdate = await CollaboratorsDAO.update(collaborator.id, {
+    cancelledAt: null,
+    role: 'PARTNER'
+  });
+
+  t.deepEqual(validUpdate, {
+    ...collaborator,
+    cancelledAt: null,
+    role: 'PARTNER'
+  });
+});
+
+test('CollaboratorsDAO.update on a cancelled collaborator', async (t: Test) => {
+  const { user: designer } = await createUser({ withSession: false });
+  const { user: partner } = await createUser({ withSession: false });
+
+  const design = await ProductDesignsDAO.create({
+    productType: 'TEESHIRT',
+    title: 'A product design',
+    userId: designer.id
+  });
+  const { collaborator } = await generateCollaborator({
+    cancelledAt: new Date('2019-02-02'),
+    collectionId: null,
+    designId: design.id,
+    invitationMessage: '',
+    role: 'PREVIEW',
+    userId: partner.id
+  });
+
+  try {
+    await CollaboratorsDAO.update(collaborator.id, {
+      cancelledAt: null,
+      role: 'PARTNER'
+    });
+    t.fail('Should not successfully update!');
+  } catch (error) {
+    t.equal(error.message, 'Failed to update rows');
+  }
+});
+
 test('CollaboratorsDAO.findUnclaimedByEmail', async (t: Test) => {
   const { user: designer } = await createUser({ withSession: false });
 
