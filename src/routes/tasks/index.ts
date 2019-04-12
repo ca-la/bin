@@ -205,13 +205,23 @@ interface GetListQuery {
   collectionId?: string;
   stageId?: string;
   userId?: string;
+  assignFilterUserId?: string;
+  stageFilter?: string;
   limit?: number;
   offset?: number;
 }
 
 function* getList(this: Koa.Application.Context): AsyncIterableIterator<DetailsTask[]> {
   const query: GetListQuery = this.query;
-  const { collectionId, stageId, userId, limit, offset } = query;
+  const {
+    collectionId,
+    stageId,
+    userId,
+    assignFilterUserId,
+    stageFilter,
+    limit,
+    offset
+  } = query;
   if (!collectionId && !stageId && !userId) {
     return this.throw('Missing collectionId, stageId, or userId');
   }
@@ -222,7 +232,13 @@ function* getList(this: Koa.Application.Context): AsyncIterableIterator<DetailsT
   } else if (stageId) {
     tasks = yield TaskEventsDAO.findByStageId(stageId, limit, offset);
   }  else if (userId) {
-    tasks = yield TaskEventsDAO.findByUserId(userId, limit, offset);
+    tasks = yield TaskEventsDAO.findByUserId(
+      userId, {
+        assignFilterUserId,
+        limit,
+        offset,
+        stageFilter
+      });
   }
 
   this.status = 200;

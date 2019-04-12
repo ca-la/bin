@@ -4,6 +4,7 @@ import * as uuid from 'node-uuid';
 import createUser = require('../../test-helpers/create-user');
 import { authHeader, get, post } from '../../test-helpers/http';
 import { sandbox, test } from '../../test-helpers/fresh';
+import generateProductDesignStage from '../../test-helpers/factories/product-design-stage';
 
 test('POST /product-design-stages creates a new stage', async (t: tape.Test) => {
   const { session } = await createUser();
@@ -70,3 +71,24 @@ test('GET /product-design-stages returns 400 if design ID is not provided',
     t.equal(response.status, 400);
     t.equal(body.message, 'Missing design ID');
   });
+
+test('GET /product-design-stages/titles returns all titles for stages', async (t: tape.Test) => {
+  const { session } = await createUser();
+
+  const title = 'test';
+  const title2 = 'test2';
+
+  const { design, stage } = await generateProductDesignStage({ title });
+  await generateProductDesignStage({ title, designId: design.id });
+  const { stage: stage2 } = await generateProductDesignStage({
+    designId: design.id,
+    title: title2
+  });
+
+  const [response, body] = await get('/product-design-stages/titles', {
+    headers: authHeader(session.id)
+  });
+  t.equal(response.status, 200);
+  t.equal(body.length, 2);
+  t.deepEqual(body, [stage.title, stage2.title]);
+});

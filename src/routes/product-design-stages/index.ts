@@ -39,7 +39,15 @@ function* getList(this: Koa.Application.Context): AsyncIterableIterator<ProductD
   this.status = 200;
 }
 
+function* getTitlesList(this: Koa.Application.Context): AsyncIterableIterator<ProductDesignStage> {
+  const stageTitles: string[] = yield ProductDesignStagesDAO.findAllTitles();
+
+  this.body = stageTitles;
+  this.status = 200;
+}
+
 router.post('/', requireAuth, create);
 router.get('/', requireAuth, getList);
+router.get('/titles', requireAuth, getTitlesList);
 
 export = router.routes();

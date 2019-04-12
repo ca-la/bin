@@ -18,14 +18,17 @@ import first from '../../services/first';
 import { validate, validateEvery } from '../../services/validate-from-db';
 import { findAllDesignIdsThroughCollaborator } from '../product-designs/dao';
 import limitOrOffset from '../../services/limit-or-offset';
-import { ALIASES, getBuilder as getTaskViewBuilder } from './view';
+import { ALIASES, getAssigneesBuilder, getBuilder as getTaskViewBuilder } from './view';
+import {
+  ALIASES as COLLABORATOR_ALIASES,
+  getBuilder as getCollaboratorsBuilder
+} from '../../components/collaborators/view';
 
 const TABLE_NAME = 'task_events';
 
 /**
  * This will group tasks in 4 ways:
  *
- * Collection: designs in the same collection will be grouped
  * Design: stages in the same design will be grouped
  * Stage: stage order is kept
  * Task: task order is kept
@@ -33,7 +36,7 @@ const TABLE_NAME = 'task_events';
  * The order is important so that your most recent designs show first
  */
 // tslint:disable-next-line:max-line-length
-const VIEW_ORDERING = 'collection_created_at desc, design_created_at desc, design_stage_ordering asc, ordering asc';
+const VIEW_ORDERING = 'design_created_at desc, design_stage_ordering asc, ordering asc';
 
 export async function create(
   data: Unsaved<TaskEvent>,
@@ -130,14 +133,37 @@ export async function findByCollectionId(
   ).map(createDetailsTask);
 }
 
+export interface TasksListOptions {
+  assignFilterUserId?: string;
+  stageFilter?: string;
+  limit?: number;
+  offset?: number;
+}
+
 export async function findByUserId(
   userId: string,
-  limit?: number,
-  offset?: number
+  options: TasksListOptions = {}
 ): Promise<DetailsTaskWithAssignees[]> {
   const designIds = await findAllDesignIdsThroughCollaborator(userId);
-  const taskEvents: DetailTaskWithAssigneesEventRow[] = await getTaskViewBuilder()
+  const { assignFilterUserId, stageFilter, limit, offset } = options;
+  const collaboratorsBuilder = getCollaboratorsBuilder().modify((query: Knex.QueryBuilder) => {
+    if (assignFilterUserId) {
+      query.where({ [COLLABORATOR_ALIASES.userId]: assignFilterUserId });
+    }
+  });
+  const taskEvents: DetailTaskWithAssigneesEventRow[] = await
+    getTaskViewBuilder(collaboratorsBuilder)
     .whereIn(ALIASES.designId, designIds)
+    .modify((query: Knex.QueryBuilder) => {
+      if (stageFilter) {
+        query.where({ [ALIASES.stageTitle]: stageFilter });
+      }
+      if (assignFilterUserId) {
+        query.havingRaw(
+          'json_array_length((:assigneesBuilder)) > 0',
+          { assigneesBuilder: getAssigneesBuilder(collaboratorsBuilder) });
+      }
+    })
     .modify(limitOrOffset(limit, offset))
     .orderByRaw(VIEW_ORDERING);
 

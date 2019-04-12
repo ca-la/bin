@@ -11,8 +11,8 @@ export default async function generateProductDesignStage(
   options: Partial<ProductDesignStage> = {},
   userId?: string
 ): Promise<{ stage: ProductDesignStage, design: ProductDesign, user: User }> {
-  const user = userId
-    ? await findUserById(userId)
+  const { user } = userId
+    ? { user: await findUserById(userId) }
     : await createUser();
 
   const design = options.designId

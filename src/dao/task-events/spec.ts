@@ -389,7 +389,46 @@ test('Task Events DAO supports retrieval by userId on shared collection', async 
     'Returned inserted task');
 });
 
-test('Task Events DAO supports retrieval by userId on shared design', async (t: tape.Test) => {
+test('Task Events DAO supports retrieval by userId on shared collection', async (t: tape.Test) => {
+  const { user } = await createUser();
+  const { user: user2 } = await createUser();
+  const collection = await createCollection({
+    createdAt: new Date(),
+    createdBy: user2.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
+    title: 'FW19'
+  });
+
+  const design = await createDesign({
+    productType: 'test',
+    title: 'design',
+    userId: user2.id
+  });
+  await addDesign(collection.id, design.id);
+  const { stage } = await generateProductDesignStage({ designId: design.id }, user.id);
+  const { task: taskEvent } = await generateTask({ createdBy: user.id, designStageId: stage.id });
+  await createCollaborator({
+    cancelledAt: null,
+    collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
+    userId: user.id
+  });
+
+  const result = await findByUserId(user.id);
+  if (result.length === 0) { return t.fail('No tasks returned'); }
+  const insertedWithDetails = getInsertedWithDetails(taskEvent, result[0]);
+  t.deepEqual(
+    { ...result[0], createdAt: new Date(result[0].createdAt) },
+    insertedWithDetails,
+    'Returned inserted task');
+});
+
+test('Task Events DAO supports retrieval by userId with assignee filter', async (t: tape.Test) => {
   const { user } = await createUser();
   const { user: user2 } = await createUser();
   const design = await createDesign({
@@ -399,6 +438,46 @@ test('Task Events DAO supports retrieval by userId on shared design', async (t: 
   });
   const { stage } = await generateProductDesignStage({ designId: design.id }, user.id);
   const { task: taskEvent } = await generateTask({ createdBy: user.id, designStageId: stage.id });
+  await generateTask({ createdBy: user.id, designStageId: stage.id });
+  const collaborator = await createCollaborator({
+    cancelledAt: null,
+    collectionId: null,
+    designId: design.id,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
+    userId: user.id
+  });
+
+  await CollaboratorTasksDAO.create({ taskId: taskEvent.id, collaboratorId: collaborator.id });
+
+  const result = await findByUserId(user.id, { assignFilterUserId: user.id });
+  if (result.length === 0) { return t.fail('No tasks returned'); }
+  const insertedWithDetails = getInsertedWithDetails(taskEvent, result[0], [collaborator]);
+  t.equals(result.length, 1, 'Only one task is returned');
+  t.deepEqual(
+    { ...result[0], createdAt: new Date(result[0].createdAt) },
+    insertedWithDetails,
+    'Returned task assigned to collaborator');
+});
+
+test('Task Events DAO supports retrieval by userId with stage filter', async (t: tape.Test) => {
+  const { user } = await createUser();
+  const { user: user2 } = await createUser();
+  const design = await createDesign({
+    productType: 'test',
+    title: 'design',
+    userId: user2.id
+  });
+  const stageTitle = 'test';
+  const { stage } = await generateProductDesignStage(
+    { designId: design.id, title: stageTitle },
+    user.id);
+  const { stage: stage2 } = await generateProductDesignStage(
+    { designId: design.id, title: 'not a real title' },
+    user.id);
+  const { task: taskEvent } = await generateTask({ createdBy: user.id, designStageId: stage.id });
+  await generateTask({ createdBy: user.id, designStageId: stage2.id });
   await createCollaborator({
     cancelledAt: null,
     collectionId: null,
@@ -409,9 +488,10 @@ test('Task Events DAO supports retrieval by userId on shared design', async (t: 
     userId: user.id
   });
 
-  const result = await findByUserId(user.id);
+  const result = await findByUserId(user.id, { stageFilter: stageTitle });
   if (result.length === 0) { return t.fail('No tasks returned'); }
   const insertedWithDetails = getInsertedWithDetails(taskEvent, result[0]);
+  t.equals(result.length, 1, 'Returns a single task');
   t.deepEqual(
     { ...result[0], createdAt: new Date(result[0].createdAt) },
     insertedWithDetails,

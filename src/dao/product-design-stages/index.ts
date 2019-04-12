@@ -72,3 +72,10 @@ export async function findAllByDesignId(
     stages
   );
 }
+
+export async function findAllTitles(): Promise<string[]> {
+  return db(TABLE_NAME).distinct('title').distinct('ordering').orderBy('ordering')
+    .then((rows: {title: string}[]) =>
+      rows.map((row: {title: string}) =>
+        row.title));
+}

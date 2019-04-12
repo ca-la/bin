@@ -6,10 +6,25 @@ export const ALIASES = {
   collectionId: 'collectionsfortasksviewraw.id',
   designId: 'designsfortasksviewraw.id',
   stageId: 'stagesfortasksviewraw.id',
+  stageTitle: 'stagesfortasksviewraw.title',
   taskId: 'tasksfortasksviewraw.id'
 };
 
-export function getBuilder(): Knex.QueryBuilder {
+export function getAssigneesBuilder(collaboratorsBuilder?: Knex.QueryBuilder): Knex.Raw {
+  return db.raw(`
+SELECT to_json(array[cwufortasksviewraw.*])
+FROM (:collaboratorsWithUsers) as cwufortasksviewraw
+JOIN collaborator_tasks as ctfortasksviewraw
+  ON ctfortasksviewraw.collaborator_id = cwufortasksviewraw.id
+WHERE ctfortasksviewraw.task_id = tasksfortasksviewraw.id
+  AND (
+    cwufortasksviewraw.cancelled_at IS null
+    OR cwufortasksviewraw.cancelled_at > now()
+  )
+  `, { collaboratorsWithUsers: collaboratorsBuilder || getCollaboratorsBuilder() });
+}
+
+export function getBuilder(collaboratorsBuilder?: Knex.QueryBuilder): Knex.QueryBuilder {
   return db.select(
     'tasksfortasksviewraw.id as id',
     'tasksfortasksviewraw.created_at as created_at',
@@ -32,18 +47,8 @@ export function getBuilder(): Knex.QueryBuilder {
   )
   .count('commentsfortasksviewraw.id as comment_count')
   .select(db.raw(`
-    (
-      SELECT to_json(array[cwufortasksviewraw.*])
-      FROM (:collaboratorsWithUsers) as cwufortasksviewraw
-            JOIN collaborator_tasks as ctfortasksviewraw
-              ON ctfortasksviewraw.collaborator_id = cwufortasksviewraw.id
-            WHERE ctfortasksviewraw.task_id = tasksfortasksviewraw.id
-              AND (
-                cwufortasksviewraw.cancelled_at IS null
-                  OR cwufortasksviewraw.cancelled_at > now()
-              )
-    ) as assignees
-  `, { collaboratorsWithUsers: getCollaboratorsBuilder() }))
+    (:assigneesBuilder) as assignees
+  `, { assigneesBuilder: getAssigneesBuilder(collaboratorsBuilder) }))
   .from('task_events as taskeventsfortasksviewraw')
   .join(
     'tasks as tasksfortasksviewraw',
