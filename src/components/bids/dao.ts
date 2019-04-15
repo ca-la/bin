@@ -20,24 +20,37 @@ const statusToEvents = {
   ACCEPTED: {
     andAlsoContains: ['ACCEPT_SERVICE_BID'],
     contains: ['BID_DESIGN'],
-    doesNotContain: []
+    doesNotContain: ['REMOVE_PARTNER']
   },
   EXPIRED: {
     andAlsoContains: [],
     contains: ['BID_DESIGN'],
-    doesNotContain: ['REJECT_SERVICE_BID', 'ACCEPT_SERVICE_BID']
+    doesNotContain: ['REJECT_SERVICE_BID', 'ACCEPT_SERVICE_BID', 'REMOVE_PARTNER']
   },
   OPEN: {
     andAlsoContains: [],
     contains: ['BID_DESIGN'],
-    doesNotContain: ['REJECT_SERVICE_BID', 'ACCEPT_SERVICE_BID']
+    doesNotContain: ['REJECT_SERVICE_BID', 'ACCEPT_SERVICE_BID', 'REMOVE_PARTNER']
   },
   REJECTED: {
     andAlsoContains: ['REJECT_SERVICE_BID'],
     contains: ['BID_DESIGN'],
-    doesNotContain: []
+    doesNotContain: ['REMOVE_PARTNER']
   }
 };
+
+function filterRemovalEvents(targetId: string): (query: Knex.QueryBuilder) => void {
+  return (query: Knex.QueryBuilder): void => {
+    query.whereNotIn(
+      'design_events.bid_id',
+      db
+        .select('design_events.bid_id')
+        .from('design_events')
+        .where('design_events.type', 'REMOVE_PARTNER')
+        .andWhere('design_events.target_id', targetId)
+    );
+  };
+}
 
 export async function create(bid: Bid): Promise<Bid> {
   const rowData = dataAdapter.forInsertion(bid);
@@ -171,6 +184,7 @@ export async function findOpenByTargetId(targetId: string): Promise<Bid[]> {
         .whereIn('design_events.type', statusToEvents.OPEN.doesNotContain)
         .andWhere({ 'design_events.actor_id': targetId })
     )
+    .modify(filterRemovalEvents(targetId))
     .groupBy('pricing_bids.id')
     .orderBy('pricing_bids.created_at', 'asc');
 
@@ -199,6 +213,7 @@ export async function findAcceptedByTargetId(targetId: string): Promise<Bid[]> {
         .whereIn('design_events.type', statusToEvents.ACCEPTED.andAlsoContains)
         .andWhere({ 'design_events.actor_id': targetId })
     )
+    .modify(filterRemovalEvents(targetId))
     .groupBy('pricing_bids.id')
     .orderBy('pricing_bids.created_at', 'asc');
 
@@ -227,6 +242,7 @@ export async function findRejectedByTargetId(targetId: string): Promise<Bid[]> {
         .whereIn('design_events.type', statusToEvents.REJECTED.andAlsoContains)
         .andWhere({ 'design_events.actor_id': targetId })
     )
+    .modify(filterRemovalEvents(targetId))
     .groupBy('pricing_bids.id')
     .orderBy('pricing_bids.created_at', 'asc');
 

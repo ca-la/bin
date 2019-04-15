@@ -267,6 +267,125 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
   t.deepEqual(otherRejectedBids, [openBid], 'returns rejected bid');
 });
 
+test('findOpenByTargetId', async (t: Test) => {
+  await generatePricingValues();
+  const { user: admin } = await createUser();
+  const { user: partner } = await createUser();
+
+  const { bid: b1 } = await generateBid({
+    generatePricing: false
+  });
+  await generateDesignEvent({
+    actorId: admin.id,
+    bidId: b1.id,
+    targetId: partner.id,
+    type: 'BID_DESIGN'
+  });
+  await generateDesignEvent({
+    bidId: b1.id,
+    targetId: partner.id,
+    type: 'REMOVE_PARTNER'
+  });
+  const { bid: b2 } = await generateBid({
+    generatePricing: false
+  });
+  await generateDesignEvent({
+    actorId: admin.id,
+    bidId: b2.id,
+    targetId: partner.id,
+    type: 'BID_DESIGN'
+  });
+
+  const openBids = await findOpenByTargetId(partner.id);
+  t.deepEqual(openBids, [b2], 'Returns all open bids for the partner');
+});
+
+test('findAcceptedByTargetId', async (t: Test) => {
+  await generatePricingValues();
+  const { user: admin } = await createUser();
+  const { user: partner } = await createUser();
+
+  const { bid: b1 } = await generateBid({
+    generatePricing: false
+  });
+  await generateDesignEvent({
+    actorId: admin.id,
+    bidId: b1.id,
+    targetId: partner.id,
+    type: 'BID_DESIGN'
+  });
+  await generateDesignEvent({
+    actorId: partner.id,
+    bidId: b1.id,
+    type: 'ACCEPT_SERVICE_BID'
+  });
+  await generateDesignEvent({
+    bidId: b1.id,
+    targetId: partner.id,
+    type: 'REMOVE_PARTNER'
+  });
+  const { bid: b2 } = await generateBid({
+    generatePricing: false
+  });
+  await generateDesignEvent({
+    actorId: admin.id,
+    bidId: b2.id,
+    targetId: partner.id,
+    type: 'BID_DESIGN'
+  });
+  await generateDesignEvent({
+    actorId: partner.id,
+    bidId: b2.id,
+    type: 'ACCEPT_SERVICE_BID'
+  });
+
+  const acceptedBids = await findAcceptedByTargetId(partner.id);
+  t.deepEqual(acceptedBids, [b2], 'Returns all accepted bids for the partner');
+});
+
+test('findRejectedByTargetId', async (t: Test) => {
+  await generatePricingValues();
+  const { user: admin } = await createUser();
+  const { user: partner } = await createUser();
+
+  const { bid: b1 } = await generateBid({
+    generatePricing: false
+  });
+  await generateDesignEvent({
+    actorId: admin.id,
+    bidId: b1.id,
+    targetId: partner.id,
+    type: 'BID_DESIGN'
+  });
+  await generateDesignEvent({
+    actorId: partner.id,
+    bidId: b1.id,
+    type: 'REJECT_SERVICE_BID'
+  });
+  await generateDesignEvent({
+    bidId: b1.id,
+    targetId: partner.id,
+    type: 'REMOVE_PARTNER'
+  });
+  const { bid: b2 } = await generateBid({
+    generatePricing: false
+  });
+  await generateDesignEvent({
+    actorId: admin.id,
+    bidId: b2.id,
+    targetId: partner.id,
+    type: 'BID_DESIGN'
+  });
+  await generateDesignEvent({
+    actorId: partner.id,
+    bidId: b2.id,
+    type: 'REJECT_SERVICE_BID'
+  });
+
+  const rejectedBids = await findRejectedByTargetId(partner.id);
+  t.deepEqual(rejectedBids, [b2], 'Returns all rejected bids for the partner');
+});
+
 test('Bids DAO supports finding all with a limit and offset', async (t: Test) => {
   const { bid: bid1 } = await generateBid();
   const { bid: bid2 } = await generateBid({ generatePricing: false });
@@ -360,6 +479,14 @@ test('Bids DAO supports finding all bids by status', async (t: Test) => {
 
   const result2a = await findAll({ limit: 1, offset: 1, state: 'ACCEPTED' });
   t.deepEqual(result2a, [acceptedBid2], 'Only returns the accepted bids in the range');
+
+  await generateDesignEvent({
+    bidId: acceptedBid.id,
+    type: 'REMOVE_PARTNER'
+  });
+
+  const result2b = await findAll({ state: 'ACCEPTED' });
+  t.deepEqual(result2b, [acceptedBid2], 'Only returns the accepted bids that were not removed');
 
   const result3 = await findAll({ state: 'EXPIRED' });
   t.deepEqual(result3, [expiredBid], 'Only returns the expired bids');
