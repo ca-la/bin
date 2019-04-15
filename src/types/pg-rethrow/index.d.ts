@@ -5,6 +5,7 @@ declare module 'pg-rethrow' {
   interface UniqueViolation {
     constraint: string;
   }
+  interface InvalidRegularExpression extends Error {}
 
   function Rethrow(err: object | Error): never;
 
@@ -12,6 +13,7 @@ declare module 'pg-rethrow' {
     export interface Errors {
       ForeignKeyViolation: ForeignKeyViolation;
       UniqueViolation: UniqueViolation;
+      InvalidRegularExpression: InvalidRegularExpression;
     }
 
     export const ERRORS: Errors;

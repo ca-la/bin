@@ -39,3 +39,15 @@ test('GET /product-designs allows getting tasks', async (t: tape.Test) => {
   t.equal(body[0].stages[0].tasks[0].id, 'task1234');
   t.equal(body[0].stages[0].tasks[0].assignees[0].id, 'collaborator1234');
 });
+
+test('GET /product-designs?search with malformed RegExp throws 400', async (t: tape.Test) => {
+  const { session } = await createUser({ role: 'ADMIN' });
+  sandbox().stub(EmailService, 'enqueueSend').returns(Promise.resolve());
+
+  const [response, body] = await get('/product-designs?search=(', {
+    headers: authHeader(session.id)
+  });
+
+  t.equal(response.status, 400);
+  t.deepEqual(body, { message: 'Search contained invalid characters' });
+});

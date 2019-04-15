@@ -154,7 +154,11 @@ export async function findAll({
         query.andWhere({ role });
       }
     })
-    .modify(limitOrOffset(limit, offset));
+    .modify(limitOrOffset(limit, offset))
+    .catch(rethrow)
+    .catch(filterError(rethrow.ERRORS.InvalidRegularExpression, () => {
+      throw new InvalidDataError('Search contained invalid characters');
+    }));
 
   return validateEvery<UserRow, User>(
     TABLE_NAME,

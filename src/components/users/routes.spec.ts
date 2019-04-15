@@ -281,3 +281,17 @@ test('POST /users?promoCode=X applies a code at registration', async (t: Test) =
   t.equal(response.status, 201, 'status=201');
   t.equal(await CreditsDAO.getCreditAmount(newUser.id), 1239);
 });
+
+test('GET /users?search with malformed RegExp throws 400', async (t: Test) => {
+  const { session } = await createUser({ role: 'ADMIN' });
+
+  const [response, body] = await get(
+    '/users?search=(',
+    {
+      headers: authHeader(session.id)
+    }
+  );
+
+  t.equal(response.status, 400);
+  t.deepEqual(body, { message: 'Search contained invalid characters' });
+});

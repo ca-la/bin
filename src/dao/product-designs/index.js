@@ -161,6 +161,10 @@ function findAll({
     })
     .limit(limit)
     .offset(offset)
+    .catch(rethrow)
+    .catch(filterError(rethrow.ERRORS.InvalidRegularExpression, () => {
+      throw new InvalidDataError('Search contained invalid characters');
+    }))
     .then(designs => designs.map(instantiate));
 }
 
