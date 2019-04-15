@@ -70,21 +70,19 @@ export function getBuilder(collaboratorsBuilder?: Knex.QueryBuilder): Knex.Query
     'collection_designs as collectiondesignsfortasksviewraw',
     'designsfortasksviewraw.id',
     'collectiondesignsfortasksviewraw.design_id')
-  .leftJoin(
-    'collections as collectionsfortasksviewraw',
-    'collectiondesignsfortasksviewraw.collection_id',
-    'collectionsfortasksviewraw.id')
+  .leftJoin('collections as collectionsfortasksviewraw', function(this: Knex.JoinClause): void {
+    this.on('collectiondesignsfortasksviewraw.collection_id', '=', 'collectionsfortasksviewraw.id')
+      .andOnNull('collectionsfortasksviewraw.deleted_at');
+  })
   .leftJoin(
     'task_comments as taskcommentsfortasksviewraw',
     'taskcommentsfortasksviewraw.task_id',
     'tasksfortasksviewraw.id')
-  .leftJoin(
-    'comments as commentsfortasksviewraw',
-    'taskcommentsfortasksviewraw.comment_id',
-    'commentsfortasksviewraw.id')
+  .leftJoin('comments as commentsfortasksviewraw', function(this: Knex.JoinClause): void {
+    this.on('taskcommentsfortasksviewraw.comment_id', '=', 'commentsfortasksviewraw.id')
+      .andOnNull('commentsfortasksviewraw.deleted_at');
+  })
   .where({
-    'collectionsfortasksviewraw.deleted_at': null,
-    'commentsfortasksviewraw.deleted_at': null,
     'designsfortasksviewraw.deleted_at': null
   })
   .andWhereRaw(`

@@ -19,10 +19,12 @@ import {
   deleteById as deleteCollaborator
 } from '../../components/collaborators/dao';
 import * as CollaboratorTasksDAO from '../collaborator-tasks';
-import { create as createTaskComment } from '../task-comments';
 import { addDesign, create as createCollection } from '../collections';
 import { create as createImage } from '../../components/images/dao';
+import { create as createTaskComment } from '../task-comments';
 import { del as deleteComponent } from '../../dao/components';
+import { deleteById as deleteCollection } from '../../dao/collections';
+import { deleteById as deleteComment } from '../../components/comments/dao';
 
 import createUser = require('../../test-helpers/create-user');
 import { DetailsTask, DetailsTaskWithAssignees, TaskStatus } from '../../domain-objects/task-event';
@@ -106,6 +108,53 @@ test('Task Events DAO returns correct number of comments', async (t: tape.Test) 
   const insertedWithDetails = getInsertedWithDetails(inserted, result);
 
   t.equal(result.commentCount, 3, 'task has three comments');
+  t.deepEqual(
+    { ...result, createdAt: new Date(result.createdAt) },
+    insertedWithDetails,
+    'Returned inserted task');
+});
+
+test('Task Events DAO returns tasks even if they have deleted comments', async (t: tape.Test) => {
+  const { task: inserted } = await generateTask();
+
+  const { comment } = await generateComment();
+  await deleteComment(comment.id);
+
+  await createTaskComment({ commentId: comment.id, taskId: inserted.id });
+
+  const result = await findById(inserted.id);
+  if (!result) { throw Error('No Result'); }
+  const insertedWithDetails = getInsertedWithDetails(inserted, result);
+
+  t.equal(result.commentCount, 0, 'task has no comments');
+
+  t.deepEqual(
+    { ...result, createdAt: new Date(result.createdAt) },
+    insertedWithDetails,
+    'Returned inserted task');
+});
+
+test('Task Events DAO returns tasks inside deleted collections', async (t: tape.Test) => {
+  const { task: inserted } = await generateTask();
+  const { user } = await createUser({ withSession: false });
+  const { collection } = await generateCollection({ createdBy: user.id });
+  await deleteCollection(collection.id);
+
+  const design = await createDesign({ userId: user.id, productType: 'test', title: 'test' });
+  await addDesign(collection.id, design.id);
+  const stage = await createDesignStage({
+    description: '',
+    designId: design.id,
+    ordering: 0,
+    title: 'test'
+  });
+
+  await createDesignStageTask({ designStageId: stage.id, taskId: inserted.id });
+
+  const result = await findById(inserted.id);
+  if (!result) { throw Error('No Result'); }
+  const insertedWithDetails = getInsertedWithDetails(inserted, result);
+
   t.deepEqual(
     { ...result, createdAt: new Date(result.createdAt) },
     insertedWithDetails,
