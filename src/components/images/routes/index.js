@@ -7,7 +7,7 @@ const probeSize = require('probe-image-size');
 
 const ProductDesignImagesDAO = require('../dao');
 const requireAuth = require('../../../middleware/require-auth');
-const User = require('../../../domain-objects/user');
+const User = require('../../../components/users/domain-object');
 const { AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME } = require('../../../config');
 const { getDownloadUrl, uploadFile } = require('../../../services/aws');
 const uploadStatus = require('./upload-status');

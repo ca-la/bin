@@ -3,10 +3,10 @@ import { escape as escapeHtml } from 'lodash';
 import CollaboratorsDAO = require('../../components/collaborators/dao');
 import InvalidDataError = require('../../errors/invalid-data');
 import normalizeEmail = require('../normalize-email');
-import UsersDAO = require('../../dao/users');
+import UsersDAO = require('../../components/users/dao');
 import Validation = require('../../services/validation');
 import * as NotificationsService from '../../services/create-notifications';
-import User = require('../../domain-objects/user');
+import User from '../../components/users/domain-object';
 import {
   CollaboratorWithUser,
   Roles

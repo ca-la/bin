@@ -5,7 +5,7 @@ const uniqBy = require('lodash/uniqBy');
 const CollaboratorsDAO = require('../../components/collaborators/dao');
 const ProductDesignServicesDAO = require('../../dao/product-design-services');
 const ProductDesignsDAO = require('../../dao/product-designs');
-const UsersDAO = require('../../dao/users');
+const UsersDAO = require('../../components/users/dao');
 
 /**
  * Find a list of users with access to a design

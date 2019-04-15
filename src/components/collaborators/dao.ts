@@ -26,7 +26,7 @@ import {
   dataAdapterByDesign,
   isCollaboratorWithUserMetaByDesignRow
 } from './domain-objects/collaborator-by-design';
-import UsersDAO = require('../../dao/users');
+import * as UsersDAO from '../../components/users/dao';
 import { validate, validateEvery } from '../../services/validate-from-db';
 import { pick, uniqBy } from 'lodash';
 import { ALIASES, getBuilder as getCollaboratorViewBuilder } from './view';

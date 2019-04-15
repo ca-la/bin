@@ -1,53 +1,51 @@
-'use strict';
+import * as Router from 'koa-router';
+import * as Koa from 'koa';
 
-const Router = require('koa-router');
-
-const applyCode = require('../../components/promo-codes/apply-code').default;
-const canAccessUserResource = require('../../middleware/can-access-user-resource');
-const claimDesignInvitations = require('../../services/claim-design-invitations');
-const CohortsDAO = require('../../components/cohorts/dao');
-const CohortUsersDAO = require('../../components/cohorts/users/dao');
-const DuplicationService = require('../../services/duplicate');
-const filterError = require('../../services/filter-error');
-const InvalidDataError = require('../../errors/invalid-data');
-const MailChimp = require('../../services/mailchimp');
-const requireAuth = require('../../middleware/require-auth');
-const SessionsDAO = require('../../dao/sessions');
-const User = require('../../domain-objects/user');
-const UsersDAO = require('../../dao/users');
-const { logServerError } = require('../../services/logger');
-const { REQUIRE_CALA_EMAIL } = require('../../config');
+import MailChimp = require('../../services/mailchimp');
+import InvalidDataError = require('../../errors/invalid-data');
+import applyCode from '../../components/promo-codes/apply-code';
+import claimDesignInvitations = require('../../services/claim-design-invitations');
+import CohortsDAO = require('../../components/cohorts/dao');
+import CohortUsersDAO = require('../../components/cohorts/users/dao');
+import DuplicationService = require('../../services/duplicate');
+import filterError = require('../../services/filter-error');
+import canAccessUserResource = require('../../middleware/can-access-user-resource');
+import { hasProperties } from '../../services/require-properties';
+import requireAuth = require('../../middleware/require-auth');
+import SessionsDAO = require('../../dao/sessions');
+import User, { Role, ROLES, UserIO } from './domain-object';
+import * as UsersDAO from './dao';
+import { logServerError } from '../../services/logger';
+import { REQUIRE_CALA_EMAIL } from '../../config';
+import { isValidEmail } from '../../services/validation';
 
 const router = new Router();
 
 /**
  * POST /users
  */
-function* createUser() {
+function* createUser(this: Koa.Application.Context<UserIO>): AsyncIterableIterator<User> {
   const {
     name,
-    email,
-    phone,
-    password
+    email
   } = this.request.body;
-  const { cohort, initialDesigns, promoCode } = this.request.query;
+  const { cohort, initialDesigns, promoCode } = this.query;
 
-  this.assert(name, 400, 'Name must be provided');
-  this.assert(email, 400, 'Email must be provided');
+  if (!email) { return this.throw(400, 'Email must be provided'); }
+  if (!name) { return this.throw(400, 'Name must be provided'); }
 
   if (REQUIRE_CALA_EMAIL && !email.match(/@ca\.la$/)) {
+    // tslint:disable-next-line:max-line-length
     this.throw(400, 'Only @ca.la emails can sign up on this server. Please visit https://studio.ca.la to access the live version of Studio');
   }
 
   const referralCode = 'n/a';
 
   const user = yield UsersDAO.create({
-    name,
-    email,
-    password,
-    phone,
-    referralCode
-  }).catch(filterError(InvalidDataError, err => this.throw(400, err)));
+    ...this.request.body,
+    referralCode,
+    role: ROLES.user
+  }).catch(filterError(InvalidDataError, (err: Error) => this.throw(400, err)));
 
   let targetCohort = null;
   if (cohort) {
@@ -55,8 +53,8 @@ function* createUser() {
 
     if (targetCohort) {
       yield CohortUsersDAO.create({
-        userId: user.id,
-        cohortId: targetCohort.id
+        cohortId: targetCohort.id,
+        userId: user.id
       });
     }
   }
@@ -71,10 +69,10 @@ function* createUser() {
   // someone makes a mistake signing up.
   try {
     yield MailChimp.subscribeToUsers({
+      cohort: targetCohort && targetCohort.slug,
       email,
       name,
-      referralCode,
-      cohort: targetCohort && targetCohort.slug
+      referralCode
     });
   } catch (err) {
     // Not rethrowing since this shouldn't be fatal... but if we ever see this
@@ -109,21 +107,28 @@ function* createUser() {
  * PUT /users/:userId/password
  * @param {String} password
  */
-function* updatePassword() {
+interface WithPassword {
+  password: string;
+}
+function* updatePassword(
+  this: Koa.Application.Context<{password: string}>
+): AsyncIterableIterator<object> {
   this.assert(this.params.userId === this.state.userId, 403, 'You can only update your own user');
+  const { body } = this.request;
+  const hasPassword = (data: object): data is WithPassword => {
+    return hasProperties(data, 'password');
+  };
+  this.assert(hasPassword(body), 400, 'Must include a password');
 
-  const { password } = this.request.body;
-  this.assert(password, 400, 'A new password must be provided');
-
+  const { password } = body;
   yield UsersDAO.updatePassword(this.params.userId, password);
 
   this.status = 200;
   this.body = { ok: true };
 }
 
-function* acceptDesignerTerms() {
+function* acceptDesignerTerms(this: Koa.Application.Context): AsyncIterableIterator<User> {
   canAccessUserResource.call(this, this.params.userId);
-
   const updated = yield UsersDAO.update(this.params.userId, {
     lastAcceptedDesignerTermsAt: new Date()
   });
@@ -138,7 +143,7 @@ function* acceptDesignerTerms() {
   this.status = 200;
 }
 
-function* acceptPartnerTerms() {
+function* acceptPartnerTerms(this: Koa.Application.Context): AsyncIterableIterator<User> {
   canAccessUserResource.call(this, this.params.userId);
 
   const updated = yield UsersDAO.update(this.params.userId, {
@@ -158,39 +163,32 @@ function* acceptPartnerTerms() {
 /**
  * PUT /users/:userId
  */
-function* updateUser() {
-  const isAdmin = (this.state.role === User.ROLES.admin);
+function* updateUser(this: Koa.Application.Context<UserIO>): AsyncIterableIterator<User> {
+  const isAdmin = (this.state.role === ROLES.admin);
   const isCurrentUser = (this.params.userId === this.state.userId);
 
   this.assert(isAdmin || isCurrentUser, 403, 'You can only update your own user');
+  const { body } = this.request;
 
-  const {
-    birthday, name, email, role, phone
-  } = this.request.body;
-  const data = {
-    birthday, name, email, phone
-  };
-
-  if (isAdmin && role) {
-    data.role = role;
+  if (isAdmin && body.role) {
     yield SessionsDAO.deleteByUserId(this.params.userId);
   }
 
-  const updated = yield UsersDAO.update(this.params.userId, data)
-    .catch(filterError(InvalidDataError, err => this.throw(400, err)));
+  const updated = yield UsersDAO.update(this.params.userId, body)
+    .catch(filterError(InvalidDataError, (err: Error) => this.throw(400, err)));
 
   this.status = 200;
   this.body = updated;
 }
 
-function* getAllUsers() {
+function* getAllUsers(this: Koa.Application.Context): AsyncIterableIterator<User[]> {
   this.assert(this.state.userId, 401);
-  this.assert(this.state.role === User.ROLES.admin, 403);
+  this.assert(this.state.role === ROLES.admin, 403);
 
   const users = yield UsersDAO.findAll({
     limit: Number(this.query.limit) || 10,
     offset: Number(this.query.offset) || 0,
-    role: this.query.role,
+    role: this.query.role as Role,
     search: this.query.search
   });
 
@@ -198,15 +196,15 @@ function* getAllUsers() {
   this.status = 200;
 }
 
-function* getList() {
+function* getList(this: Koa.Application.Context): AsyncIterableIterator<User[]> {
   yield getAllUsers;
 }
 
 /**
  * GET /users/:id
  */
-function* getUser() {
-  this.assert(this.state.role === User.ROLES.admin, 403);
+function* getUser(this: Koa.Application.Context): AsyncIterableIterator<User[]> {
+  this.assert(this.state.role === ROLES.admin, 403);
 
   const user = yield UsersDAO.findById(this.params.userId);
   this.assert(user, 404, 'User not found');
@@ -219,18 +217,18 @@ function* getUser() {
  *
  * Not RESTful. No regrets.
  */
-function* getEmailAvailability() {
+function* getEmailAvailability(this: Koa.Application.Context): AsyncIterableIterator<User[]> {
   const { email } = this.params;
 
   const user = yield UsersDAO.findByEmail(email);
 
-  const isValid = UsersDAO.isValidEmail(email);
+  const isValid = isValidEmail(email);
   const isTaken = Boolean(user);
 
   this.body = {
-    isValid,
+    available: isValid && !isTaken,
     isTaken,
-    available: isValid && !isTaken
+    isValid
   };
 
   this.status = 200;
@@ -246,4 +244,4 @@ router.put('/:userId', requireAuth, updateUser); // TODO: deprecate
 router.patch('/:userId', requireAuth, updateUser);
 router.put('/:userId/password', requireAuth, updatePassword);
 
-module.exports = router.routes();
+export default router.routes();

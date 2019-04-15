@@ -4,10 +4,10 @@ import TaskEvent, { DetailsTask, TaskStatus } from '../../domain-objects/task-ev
 import { create } from '../../dao/task-events';
 import { create as createStageTask } from '../../dao/product-design-stage-tasks';
 import * as DesignStagesDAO from '../../dao/product-design-stages';
-import { findById as findUserById } from '../../dao/users';
+import { findById as findUserById } from '../../components/users/dao';
 import { create as createTask } from '../../dao/tasks';
 import createUser = require('../create-user');
-import User = require('../../domain-objects/user');
+import User from '../../components/users/domain-object';
 import generateProductDesignStage from './product-design-stage';
 import ProductDesignStage from '../../domain-objects/product-design-stage';
 

@@ -4,7 +4,7 @@ const pick = require('lodash/pick');
 
 const filterError = require('../../services/filter-error');
 const InvalidDataError = require('../../errors/invalid-data');
-const UsersDAO = require('../../dao/users');
+const UsersDAO = require('../../components/users/dao');
 const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
 const ProductDesignSectionAnnotationsDAO = require('../../dao/product-design-section-annotations');
 const ProductDesignFeaturePlacementsDAO = require('../../dao/product-design-feature-placements');

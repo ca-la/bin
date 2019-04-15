@@ -1,4 +1,4 @@
-import User = require('./user');
+import User from '../components/users/domain-object';
 
 declare class Session {
   public id: string;

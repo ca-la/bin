@@ -7,7 +7,7 @@ import { PricingQuote } from '../../domain-objects/pricing-quote';
 import Bid from '../../components/bids/domain-object';
 import { create as createBid } from '../../components/bids/dao';
 import createUser = require('../create-user');
-import User = require('../../domain-objects/user');
+import User from '../../components/users/domain-object';
 
 interface BidInterface {
   user: User;

@@ -1,20 +1,7 @@
 import DataAdapter from '../../../services/data-adapter';
 import { hasProperties } from '../../../services/require-properties';
 import toDateOrNull from '../../../services/to-date';
-import User = require('../../../domain-objects/user');
-
-// temporary pending users conversion to typescript
-export interface UserRow {
-  created_at: Date;
-  email: string;
-  id: string;
-  name: string;
-  password_hash: string;
-  is_sms_preregistration: boolean;
-  phone: string;
-  referral_code: string;
-  role: string;
-}
+import User, { encode as encodeUser, UserRow } from '../../users/domain-object';
 
 export const UPDATABLE_PROPERTIES = [
   'cancelled_at',
@@ -69,7 +56,7 @@ export function isRole(role: string): role is Roles {
 export const encode = (data: CollaboratorWithUserRow): CollaboratorWithUser => {
   let user = null;
   if (data.user) {
-    user = new User(data.user);
+    user = encodeUser(data.user);
   }
   return {
     cancelledAt: toDateOrNull(data.cancelled_at),

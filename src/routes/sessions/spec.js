@@ -2,14 +2,13 @@
 
 const InvalidDataError = require('../../errors/invalid-data');
 const SessionsDAO = require('../../dao/sessions');
-const UsersDAO = require('../../dao/users');
+const UsersDAO = require('../../components/users/dao');
 const { get, post } = require('../../test-helpers/http');
 const { test, sandbox } = require('../../test-helpers/fresh');
 
 const USER_DATA = Object.freeze({
   name: 'Q User',
   email: 'UsEr@example.com',
-  zip: '94117',
   password: 'hunter2',
   referralCode: 'freebie',
   role: 'ADMIN'

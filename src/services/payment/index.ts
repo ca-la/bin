@@ -5,7 +5,7 @@ import * as db from '../../services/db';
 import * as ProductDesignsDAO from '../../dao/product-designs';
 import * as InvoicesDAO from '../../dao/invoices';
 import * as LineItemsDAO from '../../dao/line-items';
-import * as UsersDAO from '../../dao/users';
+import * as UsersDAO from '../../components/users/dao';
 import * as SlackService from '../../services/slack';
 import InvalidDataError = require('../../errors/invalid-data');
 import payInvoice = require('../../services/pay-invoice');

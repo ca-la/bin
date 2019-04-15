@@ -2,6 +2,7 @@
 
 const rethrow = require('pg-rethrow');
 const uuid = require('node-uuid');
+const _ = require('lodash');
 
 const db = require('../../services/db');
 const filterError = require('../../services/filter-error');
@@ -9,9 +10,9 @@ const first = require('../../services/first').default;
 const InvalidDataError = require('../../errors/invalid-data');
 const Session = require('../../domain-objects/session');
 const UnauthorizedRoleError = require('../../errors/unauthorized-role');
-const UsersDAO = require('../users');
+const UsersDAO = require('../../components/users/dao');
 const { compare } = require('../../services/hash');
-const { ALLOWED_SESSION_ROLES } = require('../../domain-objects/user');
+const { ALLOWED_SESSION_ROLES } = require('../../components/users/domain-object');
 
 const instantiate = data => new Session(data);
 const maybeInstantiate = data => (data ? instantiate(data) : null);
@@ -68,7 +69,7 @@ function create(data) {
 
   let user;
 
-  return UsersDAO.findByEmail(email)
+  return UsersDAO.findByEmailWithPasswordHash(email)
     .then((_user) => {
       user = _user;
 
@@ -94,6 +95,7 @@ function create(data) {
       if (expiresAt !== null && !expiresAt) {
         expiresOrComputed = getSessionExpirationByRole(role);
       }
+      user = _.omit(user, 'passwordHash');
 
       return createForUser(user, {
         expiresAt: expiresOrComputed,

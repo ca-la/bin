@@ -9,7 +9,7 @@ const Logger = require('../../services/logger');
 const SessionsDAO = require('../../dao/sessions');
 const ShopifyClient = require('../../services/shopify');
 const ShopifyNotFoundError = require('../../errors/shopify-not-found');
-const UsersDAO = require('../../dao/users');
+const UsersDAO = require('../../components/users/dao');
 const { buildSMSResponseMarkup } = require('../../services/twilio');
 const { SITE_HOST } = require('../../config');
 

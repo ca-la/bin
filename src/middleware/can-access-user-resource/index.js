@@ -1,6 +1,6 @@
 'use strict';
 
-const User = require('../../domain-objects/user');
+const User = require('../../components/users/domain-object');
 
 // A simple psuedo-middleware for determining if a user is either the owner of a
 // resource, or an admin who can access something anyway.

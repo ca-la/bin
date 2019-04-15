@@ -4,8 +4,8 @@ import { create } from '../../dao/product-design-stages';
 import { findById } from '../../dao/product-designs';
 import createDesign from '../../services/create-design';
 import createUser = require('../../test-helpers/create-user');
-import { findById as findUserById } from '../../dao/users';
-import User = require('../../domain-objects/user');
+import { findById as findUserById } from '../../components/users/dao';
+import User from '../../components/users/domain-object';
 
 export default async function generateProductDesignStage(
   options: Partial<ProductDesignStage> = {},

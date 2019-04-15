@@ -4,7 +4,7 @@ const Router = require('koa-router');
 
 const ProductVideosDAO = require('../../dao/product-videos');
 const requireAuth = require('../../middleware/require-auth');
-const User = require('../../domain-objects/user');
+const User = require('../../components/users/domain-object');
 
 const router = new Router();
 

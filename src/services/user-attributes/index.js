@@ -1,7 +1,7 @@
 'use strict';
 
 const InvalidDataError = require('../../errors/invalid-data');
-const UsersDAO = require('../../dao/users');
+const UsersDAO = require('../../components/users/dao');
 const { updateUser } = require('../mailchimp');
 
 function recordScan(userId) {

@@ -7,7 +7,7 @@ import * as CollectionsDAO from '../../dao/collections';
 import * as DesignEventsDAO from '../../dao/design-events';
 import * as PricingCostInputsDAO from '../../dao/pricing-cost-inputs';
 import * as SlackService from '../../services/slack';
-import * as UsersDAO from '../../dao/users';
+import * as UsersDAO from '../../components/users/dao';
 import addMargin from '../../services/add-margin';
 import Bid from '../../components/bids/domain-object';
 import filterError = require('../../services/filter-error');

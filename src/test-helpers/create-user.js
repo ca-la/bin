@@ -1,7 +1,8 @@
 'use strict';
 
 const SessionsDAO = require('../dao/sessions');
-const UsersDAO = require('../dao/users');
+const UsersDAO = require('../components/users/dao');
+const User = require('../components/users/domain-object');
 const AddressesDAO = require('../dao/addresses');
 
 const USER_DATA = Object.freeze({
@@ -34,7 +35,7 @@ const ADDRESS_DATA = Object.freeze({
 function createUser({
   withSession = true,
   withAddress = false,
-  role
+  role = User.ROLES.user
 } = {}) {
   let user;
 

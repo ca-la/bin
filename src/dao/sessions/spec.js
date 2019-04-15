@@ -2,12 +2,11 @@
 
 const InvalidDataError = require('../../errors/invalid-data');
 const SessionsDAO = require('./index');
-const UsersDAO = require('../users');
+const UsersDAO = require('../../components/users/dao');
 const { test } = require('../../test-helpers/fresh');
 
 const USER_DATA = {
   name: 'Q User',
-  zip: '94117',
   email: 'user@example.com',
   password: 'hunter2',
   referralCode: 'freebie'
@@ -61,6 +60,7 @@ test('Sessions.create succeeds and returns a new session with user attached', (t
       t.equal(session.userId, user.id);
       t.equal(session.id.length, 36);
       t.equal(session.user.name, 'Q User');
+      t.equal(session.user.passwordHash, undefined);
     });
 });
 

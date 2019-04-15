@@ -1,7 +1,7 @@
 import * as uuid from 'node-uuid';
 import { create } from '../../components/processes/dao';
 import Process from '../../components/processes/domain-object';
-import { findById as findUserById } from '../../dao/users';
+import * as UsersDAO from '../../components/users/dao';
 import createUser = require('../create-user');
 import { ComponentType } from '../../domain-objects/component';
 
@@ -14,7 +14,7 @@ export default async function generateProcess(
   options: Partial<Process>
 ): Promise<ProcessWithResources> {
   const user = options.createdBy
-    ? await findUserById(options.createdBy)
+    ? await UsersDAO.findById(options.createdBy)
     : await createUser({ withSession: false }).then((response: any): any => response.user);
   const process = await create({
     componentType: options.componentType || ComponentType.Sketch,

@@ -6,7 +6,7 @@ import createUser = require('../../test-helpers/create-user');
 import findCollaboratorsByRole from './index';
 import ProductDesign = require('../../domain-objects/product-design');
 import ProductDesignsDAO = require('../../dao/product-designs');
-import User = require('../../domain-objects/user');
+import User from '../../components/users/domain-object';
 import { CALA_OPS_USER_ID } from '../../config';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import generateCollaborator from '../../test-helpers/factories/collaborator';

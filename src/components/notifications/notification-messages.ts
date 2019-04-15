@@ -4,7 +4,7 @@ import { BreadCrumb, NotificationMessage } from '@cala/ts-lib';
 import InvalidDataError = require('../../errors/invalid-data');
 import * as ComponentsDAO from '../../dao/components';
 import ProductDesign = require('../../domain-objects/product-design');
-import * as UsersDAO from '../../dao/users';
+import * as UsersDAO from '../../components/users/dao';
 import * as ProductDesignsDAO from '../../dao/product-designs';
 import * as CollectionsDAO from '../../dao/collections';
 import * as TaskEventsDAO from '../../dao/task-events';
@@ -84,6 +84,8 @@ export const createNotificationMessage = async (
     createdAt: notification.createdAt,
     id: notification.id
   };
+
+  if (!baseNotificationMessage.actor) { throw new Error('Actor could not be found!'); }
 
   switch (notification.type) {
     case (NotificationType.INVITE_COLLABORATOR): {

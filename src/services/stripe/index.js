@@ -8,7 +8,7 @@ const InvalidPaymentError = require('../../errors/invalid-payment');
 const Logger = require('../logger');
 const PaymentMethodsDAO = require('../../dao/payment-methods');
 const StripeError = require('../../errors/stripe');
-const UsersDAO = require('../../dao/users');
+const UsersDAO = require('../../components/users/dao');
 const { requireValues } = require('../../services/require-properties');
 const { STRIPE_SECRET_KEY } = require('../../config');
 

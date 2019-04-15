@@ -1,7 +1,7 @@
 import * as uuid from 'node-uuid';
 import { create } from '../../dao/product-design-canvases';
 import ProductDesignCanvas from '../../domain-objects/product-design-canvas';
-import { findById as findUserById } from '../../dao/users';
+import { findById as findUserById } from '../../components/users/dao';
 import createUser = require('../create-user');
 import * as ProductDesignsDAO from '../../dao/product-designs';
 import * as ComponentsDAO from '../../dao/components';

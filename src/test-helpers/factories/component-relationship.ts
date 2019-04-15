@@ -1,6 +1,6 @@
 import * as uuid from 'node-uuid';
 import { create } from '../../components/component-relationships/dao';
-import { findById as findUserById } from '../../dao/users';
+import { findById as findUserById } from '../../components/users/dao';
 import { findById as findComponentById } from '../../dao/components';
 import { findById as findProcessById } from '../../components/processes/dao';
 import ComponentRelationship from '../../components/component-relationships/domain-object';

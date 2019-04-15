@@ -1,6 +1,6 @@
 'use strict';
 
-const User = require('../../domain-objects/user');
+const User = require('../../components/users/domain-object');
 
 function* requireAdmin(next) {
   this.assert(this.state.role === User.ROLES.admin, 403);

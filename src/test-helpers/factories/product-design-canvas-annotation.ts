@@ -1,12 +1,12 @@
 import * as uuid from 'node-uuid';
 import ProductDesignCanvas from '../../domain-objects/product-design-canvas';
-import { findById as findUserById } from '../../dao/users';
+import { findById as findUserById } from '../../components/users/dao';
 import createUser = require('../create-user');
 import * as CanvasesDAO from '../../dao/product-design-canvases';
 import Annotation from '../../components/product-design-canvas-annotations/domain-object';
 import { create } from '../../components/product-design-canvas-annotations/dao';
 import generateCanvas from './product-design-canvas';
-import User = require('../../domain-objects/user');
+import User from '../../components/users/domain-object';
 
 interface AnnotationWithResources {
   annotation: Annotation;

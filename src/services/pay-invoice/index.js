@@ -8,7 +8,7 @@ const InvoicePaymentsDAO = require('../../components/invoice-payments/dao');
 const InvoicesDAO = require('../../dao/invoices');
 const PaymentMethods = require('../../dao/payment-methods');
 const spendCredit = require('../../components/credits/spend-credit').default;
-const UsersDAO = require('../../dao/users');
+const UsersDAO = require('../../components/users/dao');
 
 const Logger = require('../logger');
 const SlackService = require('../slack');

@@ -8,7 +8,7 @@ import * as StagesDAO from '../../dao/product-design-stages';
 import * as DesignsDAO from '../../dao/product-designs';
 import * as CollectionsDAO from '../../dao/collections';
 import * as TaskEventsDAO from '../../dao/task-events';
-import * as UsersDAO from '../../dao/users';
+import * as UsersDAO from '../../components/users/dao';
 
 import {
   Notification,
@@ -81,7 +81,7 @@ import {
 async function isAdmins(userIds: string[]): Promise<boolean> {
   for (const userId of userIds) {
     const user = await UsersDAO.findById(userId);
-    if (user.role !== 'ADMIN') {
+    if (!user || user.role !== 'ADMIN') {
       return false;
     }
   }
@@ -558,6 +558,7 @@ export async function immediatelySendFullyCostedCollection(
 
   return Promise.all(recipients.map(
     async (recipient: Collaborator): Promise<CommitCostInputsNotification> => {
+      if (!recipient.userId) { throw new Error('User id not on collaborator!'); }
       const user = await UsersDAO.findById(recipient.userId);
       if (!user) { throw new Error(`User ${recipient.userId} not found!`); }
 

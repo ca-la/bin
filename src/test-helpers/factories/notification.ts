@@ -5,7 +5,7 @@ import {
   Notification,
   NotificationType
 } from '../../components/notifications/domain-object';
-import { findById as findUserById } from '../../dao/users';
+import { findById as findUserById } from '../../components/users/dao';
 import createUser = require('../create-user');
 import {
   CollaboratorWithUser
@@ -21,7 +21,7 @@ import * as StagesDAO from '../../dao/product-design-stages';
 import * as TasksDAO from '../../dao/task-events';
 import generateCollection from './collection';
 import Collection from '../../domain-objects/collection';
-import User = require('../../domain-objects/user');
+import User from '../../components/users/domain-object';
 import ProductDesign = require('../../domain-objects/product-design');
 import { templateNotification } from '../../components/notifications/models/base';
 // tslint:disable-next-line:max-line-length

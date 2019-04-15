@@ -4,7 +4,7 @@ import { NotificationMessage } from '@cala/ts-lib';
 import * as Logger from '../../services/logger';
 import * as EmailService from '../../services/email';
 import * as NotificationsDAO from '../../components/notifications/dao';
-import * as UsersDAO from '../../dao/users';
+import * as UsersDAO from '../../components/users/dao';
 import filterError = require('../../services/filter-error');
 import InvalidDataError = require('../../errors/invalid-data');
 

@@ -2,7 +2,7 @@
 
 const DesignEventsDAO = require('../../dao/design-events');
 const NotificationsService = require('../../services/create-notifications');
-const User = require('../../domain-objects/user');
+const User = require('../../components/users/domain-object');
 
 function isAllowedEventType(role, event) {
   if (!event || (event && !event.type)) {

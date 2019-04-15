@@ -1,7 +1,7 @@
 import * as uuid from 'node-uuid';
 import { create } from '../../dao/design-events';
 import DesignEvent from '../../domain-objects/design-event';
-import { findById as findUserById } from '../../dao/users';
+import { findById as findUserById } from '../../components/users/dao';
 import createUser = require('../create-user');
 import * as ProductDesignsDAO from '../../dao/product-designs';
 

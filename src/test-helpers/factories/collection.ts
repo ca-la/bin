@@ -1,7 +1,7 @@
 import * as uuid from 'node-uuid';
 import { create } from '../../dao/collections';
 import Collection from '../../domain-objects/collection';
-import { findById as findUserById } from '../../dao/users';
+import { findById as findUserById } from '../../components/users/dao';
 import createUser = require('../create-user');
 
 interface CollectionWithResources {

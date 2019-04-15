@@ -6,8 +6,8 @@ const filterError = require('../../services/filter-error');
 const InvalidDataError = require('../../errors/invalid-data');
 const ProductionPricesDAO = require('../../dao/production-prices');
 const requireAuth = require('../../middleware/require-auth');
-const User = require('../../domain-objects/user');
-const UsersDAO = require('../../dao/users');
+const User = require('../../components/users/domain-object');
+const UsersDAO = require('../../components/users/dao');
 
 const router = new Router();
 

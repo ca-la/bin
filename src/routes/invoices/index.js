@@ -7,7 +7,7 @@ const createManualPaymentRecord = require('./manual-payments').default;
 const InvoicesDAO = require('../../dao/invoices');
 const payOutPartner = require('../../services/pay-out-partner');
 const requireAdmin = require('../../middleware/require-admin');
-const User = require('../../domain-objects/user');
+const User = require('../../components/users/domain-object');
 
 const router = new Router();
 

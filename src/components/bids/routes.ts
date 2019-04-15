@@ -6,7 +6,7 @@ import Bid from './domain-object';
 import Collaborator from '../collaborators/domain-objects/collaborator';
 import ProductDesign = require('../../domain-objects/product-design');
 import { PricingQuote } from '../../domain-objects/pricing-quote';
-import * as UsersDAO from '../../dao/users';
+import * as UsersDAO from '../../components/users/dao';
 import * as BidsDAO from './dao';
 import * as PricingQuotesDAO from '../../dao/pricing-quotes';
 import * as ProductDesignsDAO from '../../dao/product-designs';

@@ -3,7 +3,7 @@
 const Router = require('koa-router');
 
 const SessionsDAO = require('../../dao/sessions');
-const UsersDAO = require('../../dao/users');
+const UsersDAO = require('../../components/users/dao');
 const passwordReset = require('../../emails/password-reset');
 const { sendSynchronouslyDeprecated } = require('../../services/email');
 

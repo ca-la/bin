@@ -26,3 +26,25 @@ export function toDateStringOrNull(
 
   return maybeDate && maybeDate.toISOString();
 }
+
+/**
+ * Returns a `Date` if the input is parseable by `Date`, or else `undefined`
+ */
+export function toDateOrUndefined(
+  input: string | number | Date | null | undefined
+): Date | undefined {
+  const date = toDateOrNull(input);
+
+  return date ? date : undefined;
+}
+
+/**
+ * Returns an ISO8601 date string if input is parseable by `Date`, or else `undefined`
+ */
+export function toDateStringOrUndefined(
+  input: string | number | Date | null | undefined
+): string | undefined {
+  const maybeDate = toDateOrUndefined(input);
+
+  return maybeDate && maybeDate.toISOString();
+}

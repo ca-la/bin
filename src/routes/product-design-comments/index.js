@@ -7,7 +7,7 @@ const ProductDesignCommentsDAO = require('../../dao/product-design-comments');
 const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
 const requireAuth = require('../../middleware/require-auth');
 const sendCommentNotifications = require('../../services/send-comment-notifications');
-const UsersDAO = require('../../dao/users');
+const UsersDAO = require('../../components/users/dao');
 const { attachDesignPermissions } = require('../../middleware/can-access-design');
 
 const router = new Router();

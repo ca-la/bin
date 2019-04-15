@@ -6,7 +6,7 @@ const filterError = require('../../services/filter-error');
 const InvalidDataError = require('../../errors/invalid-data');
 const requireAdmin = require('../../middleware/require-admin');
 const SessionsDAO = require('../../dao/sessions');
-const UsersDAO = require('../../dao/users');
+const UsersDAO = require('../../components/users/dao');
 const UnauthorizedRoleError = require('../../errors/unauthorized-role');
 
 const router = new Router();

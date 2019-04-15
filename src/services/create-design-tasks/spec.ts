@@ -8,7 +8,7 @@ import { createDesignTasks } from './index';
 import createUser = require('../../test-helpers/create-user');
 import ProductDesign = require('../../domain-objects/product-design');
 import ProductDesignsDAO = require('../../dao/product-designs');
-import User = require('../../domain-objects/user');
+import User from '../../components/users/domain-object';
 import { CALA_OPS_USER_ID } from '../../config';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import { createTemplates } from '../../test-helpers/factories/stage-and-task-templates';

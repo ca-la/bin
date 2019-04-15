@@ -3,12 +3,11 @@
 const pick = require('lodash/pick');
 
 const AddressesDAO = require('./index');
-const UsersDAO = require('../users');
+const UsersDAO = require('../../components/users/dao');
 const { test } = require('../../test-helpers/fresh');
 
 const USER_DATA = {
   name: 'Q User',
-  zip: '94117',
   email: 'user@example.com',
   password: 'hunter2',
   referralCode: 'freebie'
