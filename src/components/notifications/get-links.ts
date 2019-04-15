@@ -16,6 +16,7 @@ export enum LinkType {
   CollectionDesignTask = 'COLLECTION_DESIGN_TASK',
   CollectionDesign = 'COLLECTION_DESIGN',
   Design = 'DESIGN',
+  PartnerDesign = 'PARTNER_DESIGN',
   Collection = 'COLLECTION'
 }
 
@@ -40,6 +41,10 @@ export type LinkBase =
   }
   | {
     type: LinkType.Design;
+    design: ProductDesign;
+  }
+  | {
+    type: LinkType.PartnerDesign;
     design: ProductDesign;
   }
   | {
@@ -100,6 +105,16 @@ export default function getLinks(linkBase: LinkBase): Links {
     case LinkType.Design: {
       const { design } = linkBase;
       const deepLink = `${STUDIO_HOST}/designs?previewDesignId=${design.id}`;
+      const title = normalizeTitle(design);
+      return {
+        deepLink,
+        htmlLink: constructHtmlLink(deepLink, title)
+      };
+    }
+
+    case LinkType.PartnerDesign: {
+      const { design } = linkBase;
+      const deepLink = `${STUDIO_HOST}/partners?previewDesignId=${design.id}`;
       const title = normalizeTitle(design);
       return {
         deepLink,

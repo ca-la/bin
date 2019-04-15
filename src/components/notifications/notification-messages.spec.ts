@@ -248,7 +248,7 @@ test('notification messages returns partner accept service bid message to the us
 
 test('notification messages returns partner design bid message to the user if resources exist',
   async (t: tape.Test) => {
-    const { notification: parDesBidNotification, design, actor } = await generateNotification({
+    const { notification: parDesBidNotification, actor } = await generateNotification({
       type: NotificationType.PARTNER_DESIGN_BID
     });
     const {
@@ -261,8 +261,7 @@ test('notification messages returns partner design bid message to the user if re
 
     const message = await createNotificationMessage(parDesBidNotification);
     if (!message) { throw new Error('Did not create message'); }
-    t.assert(message.html.includes(design.title),
-      'message html contains the design title');
+    t.assert(message.link.includes('partners'), 'message link goes to partners page');
     t.assert(message.actor && message.actor.id === actor.id,
       'message.actor && message.actor.id is the user');
     const messageDeleted = await createNotificationMessage(parDesBidDeleted);

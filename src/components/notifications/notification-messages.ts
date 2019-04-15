@@ -357,7 +357,7 @@ export const createNotificationMessage = async (
       const collection = await getCollection(collectionId);
       const { deepLink } = getLinks({
         design,
-        type: LinkType.Design
+        type: LinkType.PartnerDesign
       });
       return {
         ...baseNotificationMessage,
