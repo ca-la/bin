@@ -1,5 +1,9 @@
 import DataAdapter from '../../services/data-adapter';
 import { hasProperties } from '../../services/require-properties';
+import DesignEvent, {
+  dataAdapter as eventDataAdapter,
+  DesignEventRow
+} from '../../domain-objects/design-event';
 
 /**
  * A pricing bid for matching partners to a set of services on a design
@@ -46,5 +50,38 @@ export function isBidRow(row: object): row is BidRow {
     'quote_id',
     'bid_price_cents',
     'description'
+  );
+}
+
+export interface BidWithEventsRow extends BidRow {
+  design_events: DesignEventRow[] | null;
+}
+
+export interface BidWithEvents extends Bid {
+  designEvents: DesignEvent[];
+}
+
+function withEventEncode(row: BidWithEventsRow): BidWithEvents {
+  const { design_events, ...bidRow } = row;
+
+  return {
+    ...dataAdapter.parse.apply(dataAdapter, [bidRow]),
+    designEvents: design_events ? design_events.map((event: DesignEventRow): DesignEvent => {
+      return {
+        ...eventDataAdapter.parse.apply(eventDataAdapter, [event]),
+        createdAt: new Date(event.created_at)
+      };
+    }) : []
+  };
+}
+
+export const bidWithEventsDataAdapter = new DataAdapter<BidWithEventsRow, BidWithEvents>(
+  withEventEncode
+);
+
+export function isBidWithEventsRow(row: object): row is BidWithEventsRow {
+  return isBidRow(row) && hasProperties(
+    row,
+    'design_events'
   );
 }

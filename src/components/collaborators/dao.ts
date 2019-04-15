@@ -380,11 +380,17 @@ export async function deleteByDesignAndUser(
   return deleted;
 }
 
-export async function cancelPreviewRoleForDesignAndUser(
+/**
+ * Cancels the collaborator role specifically for a partner (one of PARTNER or PREVIEW).
+ * @param designId The design uuid.
+ * @param userId The partner uuid.
+ */
+export async function cancelForDesignAndPartner(
   designId: string, userId: string
 ): Promise<Collaborator[]> {
   const cancelledRows = await db(TABLE_NAME)
-    .where({ design_id: designId, role: 'PREVIEW', user_id: userId })
+    .where({ design_id: designId, user_id: userId })
+    .andWhereRaw("(role = 'PREVIEW' OR role = 'PARTNER')")
     .andWhereRaw('(cancelled_at IS null OR cancelled_at > now())')
     .update({ cancelled_at: new Date() }, '*');
 

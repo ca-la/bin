@@ -2,8 +2,12 @@ import * as Knex from 'knex';
 import * as db from '../../services/db';
 import Bid, {
   BidRow,
+  BidWithEvents,
+  bidWithEventsDataAdapter,
+  BidWithEventsRow,
   dataAdapter,
-  isBidRow
+  isBidRow,
+  isBidWithEventsRow
 } from './domain-object';
 import first from '../../services/first';
 import { validate, validateEvery } from '../../services/validate-from-db';
@@ -157,14 +161,14 @@ export async function findOpenByTargetId(targetId: string): Promise<Bid[]> {
       join
         .on('design_events.bid_id', '=', 'pricing_bids.id')
         .andOnIn('design_events.target_id', [targetId])
-        .andOnIn('design_events.type', ['BID_DESIGN']);
+        .andOnIn('design_events.type', statusToEvents.OPEN.contains);
     })
     .whereNotIn(
       'design_events.bid_id',
       db
         .select('design_events.bid_id')
         .from('design_events')
-        .whereIn('design_events.type', ['REJECT_SERVICE_BID', 'ACCEPT_SERVICE_BID'])
+        .whereIn('design_events.type', statusToEvents.OPEN.doesNotContain)
         .andWhere({ 'design_events.actor_id': targetId })
     )
     .groupBy('pricing_bids.id')
@@ -185,14 +189,14 @@ export async function findAcceptedByTargetId(targetId: string): Promise<Bid[]> {
       join
         .on('design_events.bid_id', '=', 'pricing_bids.id')
         .andOnIn('design_events.target_id', [targetId])
-        .andOnIn('design_events.type', ['BID_DESIGN']);
+        .andOnIn('design_events.type', statusToEvents.ACCEPTED.contains);
     })
     .whereIn(
       'design_events.bid_id',
       db
         .select('design_events.bid_id')
         .from('design_events')
-        .whereIn('design_events.type', ['ACCEPT_SERVICE_BID'])
+        .whereIn('design_events.type', statusToEvents.ACCEPTED.andAlsoContains)
         .andWhere({ 'design_events.actor_id': targetId })
     )
     .groupBy('pricing_bids.id')
@@ -213,14 +217,14 @@ export async function findRejectedByTargetId(targetId: string): Promise<Bid[]> {
       join
         .on('design_events.bid_id', '=', 'pricing_bids.id')
         .andOnIn('design_events.target_id', [targetId])
-        .andOnIn('design_events.type', ['BID_DESIGN']);
+        .andOnIn('design_events.type', statusToEvents.REJECTED.contains);
     })
     .whereIn(
       'design_events.bid_id',
       db
         .select('design_events.bid_id')
         .from('design_events')
-        .whereIn('design_events.type', ['REJECT_SERVICE_BID'])
+        .whereIn('design_events.type', statusToEvents.REJECTED.andAlsoContains)
         .andWhere({ 'design_events.actor_id': targetId })
     )
     .groupBy('pricing_bids.id')
@@ -235,7 +239,7 @@ export async function findRejectedByTargetId(targetId: string): Promise<Bid[]> {
 }
 
 export async function findByQuoteId(quoteId: string): Promise<Bid[]> {
-  const quoteRows = await db(TABLE_NAME)
+  const bidRows = await db(TABLE_NAME)
     .select('*')
     .orderBy('created_at', 'asc')
     .where({ quote_id: quoteId });
@@ -244,6 +248,49 @@ export async function findByQuoteId(quoteId: string): Promise<Bid[]> {
     TABLE_NAME,
     isBidRow,
     dataAdapter,
-    quoteRows
+    bidRows
+  );
+}
+
+/**
+ * Returns all bids with bid-specific design events associated with the quote and user.
+ * Returns events of type: BID_DESIGN | ACCEPT_SERVICE_BID | REJECT_SERVICE_BID | REMOVE_PARTNER.
+ * @param quoteId
+ * @param userId
+ */
+export async function findAllByQuoteAndUserId(
+  quoteId: string,
+  userId: string
+): Promise<BidWithEvents[]> {
+  const { rows: bidWithEventsRows } = await db.raw(`
+SELECT bids.*, (
+  SELECT to_json(array_agg(ordered_events.*))
+  FROM (
+    SELECT events.* FROM design_events AS events
+    WHERE events.bid_id = bids.id
+    AND (
+      (events.type = 'BID_DESIGN' AND events.target_id = :userId)
+      OR (events.type = 'ACCEPT_SERVICE_BID' AND events.actor_id = :userId)
+      OR (events.type = 'REJECT_SERVICE_BID' AND events.actor_id = :userId)
+      OR (events.type = 'REMOVE_PARTNER' AND events.target_id = :userId)
+    )
+    ORDER BY events.created_at ASC
+  ) AS ordered_events
+) AS design_events
+FROM pricing_bids as bids
+LEFT JOIN pricing_quotes AS quotes ON quotes.id = bids.quote_id
+WHERE quotes.id = :quoteId
+ORDER BY bids.created_at DESC;
+  `, { quoteId, userId });
+
+  if (!bidWithEventsRows) {
+    return [];
+  }
+
+  return validateEvery<BidWithEventsRow, BidWithEvents>(
+    TABLE_NAME,
+    isBidWithEventsRow,
+    bidWithEventsDataAdapter,
+    bidWithEventsRows
   );
 }

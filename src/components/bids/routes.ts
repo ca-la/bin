@@ -15,6 +15,9 @@ import * as CollaboratorsDAO from '../collaborators/dao';
 import requireAdmin = require('../../middleware/require-admin');
 import requireAuth = require('../../middleware/require-auth');
 import * as NotificationsService from '../../services/create-notifications';
+import { isExpired } from './services/is-expired';
+import { hasActiveBids } from './services/has-active-bids';
+import { MILLISECONDS_TO_EXPIRE } from './constants';
 
 const router = new Router();
 
@@ -50,13 +53,6 @@ async function attachDesignsToBids(bids: Bid[]): Promise<IOBid[]> {
   }
 
   return ioBids;
-}
-
-function isExpired(bid: Bid): boolean {
-  const dayAfterCreation = new Date(bid.createdAt);
-  dayAfterCreation.setDate(dayAfterCreation.getDate() + 1);
-
-  return new Date().getTime() > dayAfterCreation.getTime();
 }
 
 function not(predicateFunction: (a: any) => boolean): (a: any) => boolean {
@@ -149,6 +145,12 @@ function* assignBidToPartner(this: Koa.Application.Context): AsyncIterableIterat
     return;
   }
 
+  const hasActive = yield hasActiveBids(bid.quoteId, userId);
+  if (hasActive) {
+    this.throw(403, `There are active bids for user ${userId} on the design ${design.id}`);
+    return;
+  }
+
   yield DesignEventsDAO.create({
     actorId: this.state.userId,
     bidId,
@@ -161,11 +163,10 @@ function* assignBidToPartner(this: Koa.Application.Context): AsyncIterableIterat
   });
 
   const maybeCollaborator = yield CollaboratorsDAO.findByDesignAndUser(design.id, userId);
+  const now = new Date();
+  const tomorrow = new Date(now.getTime() + MILLISECONDS_TO_EXPIRE);
 
   if (!maybeCollaborator) {
-    const now = new Date();
-    const tomorrow = new Date(now.setDate(now.getDate() + 1));
-
     yield CollaboratorsDAO.create({
       cancelledAt: tomorrow,
       collectionId: null,
@@ -174,6 +175,10 @@ function* assignBidToPartner(this: Koa.Application.Context): AsyncIterableIterat
       role: 'PREVIEW',
       userEmail: null,
       userId: target.id
+    });
+  } else if (maybeCollaborator.cancelledAt) {
+    yield CollaboratorsDAO.update(maybeCollaborator.id, {
+      cancelledAt: tomorrow
     });
   }
 
@@ -222,7 +227,7 @@ function* removeBidFromPartner(this: Koa.Application.Context): AsyncIterableIter
     type: 'REMOVE_PARTNER'
   });
 
-  yield CollaboratorsDAO.cancelPreviewRoleForDesignAndUser(design.id, target.id);
+  yield CollaboratorsDAO.cancelForDesignAndPartner(design.id, target.id);
   this.status = 204;
 }
 

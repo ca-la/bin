@@ -11,6 +11,7 @@ import {
   create,
   findAcceptedByTargetId,
   findAll,
+  findAllByQuoteAndUserId,
   findById,
   findByQuoteId,
   findOpenByTargetId,
@@ -365,4 +366,62 @@ test('Bids DAO supports finding all bids by status', async (t: Test) => {
 
   const result4 = await findAll({ state: 'REJECTED' });
   t.deepEqual(result4, [rejectedBid], 'Only returns the rejected bids');
+});
+
+test('Bids DAO supports finding by quote and user id with events', async (t: Test) => {
+  const { user: designer } = await createUser({ withSession: false });
+  const { user: partner } = await createUser({ withSession: false, role: 'PARTNER' });
+
+  const design = await createDesign({
+    productType: 'TEESHIRT',
+    title: 'My cool shirt',
+    userId: designer.id
+  });
+  const { bid: openBid1, quote } = await generateBid({
+    designId: design.id
+  });
+  await generateDesignEvent({
+    createdAt: new Date(),
+    designId: design.id,
+    targetId: designer.id,
+    type: 'COMMIT_COST_INPUTS'
+  });
+  await generateDesignEvent({
+    actorId: designer.id,
+    createdAt: new Date(),
+    designId: design.id,
+    type: 'COMMIT_QUOTE'
+  });
+  const { designEvent: de1 } = await generateDesignEvent({
+    bidId: openBid1.id,
+    createdAt: new Date(),
+    targetId: partner.id,
+    type: 'BID_DESIGN'
+  });
+  const { designEvent: de2 } = await generateDesignEvent({
+    actorId: partner.id,
+    bidId: openBid1.id,
+    createdAt: new Date(),
+    type: 'ACCEPT_SERVICE_BID'
+  });
+  const { bid: openBid2 } = await generateBid({
+    bidOptions: { quoteId: quote.id },
+    generatePricing: false
+  });
+  await generateBid({ generatePricing: false });
+
+  const result = await findAllByQuoteAndUserId(quote.id, partner.id);
+  t.deepEqual(result, [{
+    ...openBid2,
+    designEvents: []
+  }, {
+    ...openBid1,
+    designEvents: [{
+      ...de1,
+      createdAt: new Date(de1.createdAt)
+    }, {
+      ...de2,
+      createdAt: new Date(de2.createdAt)
+    }]
+  }], 'Returns a list of bids with bid-specific events');
 });

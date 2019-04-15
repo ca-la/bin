@@ -15,6 +15,7 @@ import * as DesignEventsDAO from '../../dao/design-events';
 import * as ProductDesignsDAO from '../../dao/product-designs';
 import * as NotificationsService from '../../services/create-notifications';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
+import generateDesignEvent from '../../test-helpers/factories/design-event';
 
 test('GET /bids', async (t: Test) => {
   const admin = await createUser({ role: 'ADMIN' });
@@ -174,9 +175,15 @@ test('GET /bids?userId&state=EXPIRED', async (t: Test) => {
     bidPriceCents: 100000,
     createdAt: twoDaysAgo,
     createdBy: admin.user.id,
-    description: 'Full Service',
+    description: 'Full Service Brah',
     id: uuid.v4(),
     quoteId: quote.id
+  });
+  await generateDesignEvent({
+    bidId: expiredBid.id,
+    createdAt: twoDaysAgo,
+    targetId: partner.user.id,
+    type: 'BID_DESIGN'
   });
 
   await put(
@@ -331,6 +338,14 @@ test('PUT /bids/:bidId/assignees/:userId creates a new collaborator role', async
     collaborator.cancelledAt && collaborator.cancelledAt  > new Date(),
     'Returns a cancelled date ahead of now'
   );
+
+  const [failedResponse, failedBody] = await put(
+    `/bids/${bid.id}/assignees/${partner.user.id}`,
+    { headers: authHeader(admin.session.id) }
+  );
+
+  t.equal(failedResponse.status, 403, 'Fails to assign a bid again');
+  t.true(failedBody.message.includes('There are active bids for user'));
 });
 
 test('PUT /bids/:bidId/assignees/:userId', async (t: Test) => {
@@ -465,6 +480,14 @@ test('DELETE /bids/:bidId/assignees/:userId', async (t: Test) => {
   );
   t.equal(collaboratorResponse.status, 200);
   t.equal(collaborators.length, 0, 'Removes the partner collaborator for the design');
+
+  const events = await DesignEventsDAO.findByDesignId(design.id);
+
+  t.equal(events.length, 2, 'Returns two events for the design');
+  t.equal(events[0].type, 'BID_DESIGN');
+  t.equal(events[0].bidId, bid.id);
+  t.equal(events[1].type, 'REMOVE_PARTNER');
+  t.equal(events[1].bidId, bid.id);
 });
 
 test('Partner pairing: accept', async (t: Test) => {
