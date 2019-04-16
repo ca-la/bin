@@ -33,6 +33,7 @@ import notificationRoutes from './components/notifications/routes';
 import commentRoutes from './components/comments/routes';
 import bidRoutes from './components/bids/routes';
 import userRoutes from './components/users/routes';
+import subscriptionRoutes from './components/subscriptions/routes';
 
 import koa = require('koa');
 const app = koa();
@@ -77,6 +78,7 @@ router.use('/comments', commentRoutes);
 router.use('/credits', creditRoutes);
 router.use('/bids', bidRoutes);
 router.use('/users', userRoutes);
+router.use('/subscriptions', subscriptionRoutes);
 
 const loadTime = Date.now() - beginTime;
 Logger.log(`Loaded ${routeDirectories.length} route prefixes in ${loadTime}ms`);

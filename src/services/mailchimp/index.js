@@ -8,7 +8,6 @@ const { logServerError } = require('../logger');
 
 const {
   MAILCHIMP_API_KEY,
-  MAILCHIMP_LIST_ID_SUBSCRIPTIONS,
   MAILCHIMP_LIST_ID_USERS
 } = require('../../config');
 
@@ -92,13 +91,6 @@ function update(listId, email, mergeFields) {
   return makeRequest('patch', path, requestBody);
 }
 
-function subscribeToSubscriptions({ email, name, zip }) {
-  return subscribe(MAILCHIMP_LIST_ID_SUBSCRIPTIONS, email, {
-    FULL_NAME: name,
-    ZIP_CODE: zip
-  });
-}
-
 function subscribeToUsers({
   email,
   name,
@@ -144,7 +136,6 @@ function updateUser({
 
 module.exports = {
   subscribe,
-  subscribeToSubscriptions,
   subscribeToUsers,
   updateUser
 };

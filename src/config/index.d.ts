@@ -15,7 +15,6 @@ export const AWS_S3_THUMBNAIL_BUCKET_NAME: string;
 export const AWS_S3_THUMBNAIL_BUCKET_REGION: string;
 
 export const MAILCHIMP_API_KEY: string;
-export const MAILCHIMP_LIST_ID_SUBSCRIPTIONS: string;
 export const MAILCHIMP_LIST_ID_PRODUCTION_PARTNERS: string;
 export const MAILCHIMP_LIST_ID_DESIGNERS: string;
 export const MAILCHIMP_LIST_ID_USERS: string;

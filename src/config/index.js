@@ -71,10 +71,6 @@ const config = {
 
   MAILCHIMP_API_KEY: process.env.MAILCHIMP_API_KEY,
 
-  // The Mailchimp list ID for users who subscribe to the mailing list but do
-  // not have an account yet.
-  MAILCHIMP_LIST_ID_SUBSCRIPTIONS: process.env.MAILCHIMP_LIST_ID_SUBSCRIPTIONS,
-
   // The Mailchimp list ID for interested designer/production partners
   MAILCHIMP_LIST_ID_PRODUCTION_PARTNERS: process.env.MAILCHIMP_LIST_ID_PRODUCTION_PARTNERS,
   MAILCHIMP_LIST_ID_DESIGNERS: process.env.MAILCHIMP_LIST_ID_DESIGNERS,
