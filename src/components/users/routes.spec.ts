@@ -1,5 +1,6 @@
 import * as uuid from 'node-uuid';
 
+import * as Config from '../../config';
 import * as UsersDAO from './dao';
 import InvalidDataError = require('../../errors/invalid-data');
 import * as PromoCodesDAO from '../../components/promo-codes/dao';
@@ -25,6 +26,7 @@ function stubUserDependencies(): void {
 }
 
 test('POST /users returns a 400 if user creation fails', async (t: Test) => {
+  sandbox().stub(DuplicationService, 'duplicateDesigns').resolves();
   stubUserDependencies();
 
   sandbox().stub(UsersDAO, 'create').rejects(new InvalidDataError('Bad email'));
@@ -36,6 +38,7 @@ test('POST /users returns a 400 if user creation fails', async (t: Test) => {
 });
 
 test('POST /users returns new user data', async (t: Test) => {
+  sandbox().stub(DuplicationService, 'duplicateDesigns').resolves();
   stubUserDependencies();
 
   const [response, body] = await post('/users', { body: USER_DATA });
@@ -49,6 +52,7 @@ test('POST /users returns new user data', async (t: Test) => {
 });
 
 test('POST /users returns a session instead if requested', async (t: Test) => {
+  sandbox().stub(DuplicationService, 'duplicateDesigns').resolves();
   stubUserDependencies();
 
   const [response, body] = await post('/users?returnValue=session', { body: USER_DATA });
@@ -170,6 +174,44 @@ test('PUT /users/:id updates the current user', async (t: Test) => {
   t.equal(new Date(body.birthday).getMilliseconds(), new Date('2017-01-02').getMilliseconds());
 });
 
+test('POST /users allows registration + design duplication', async (t: Test) => {
+  const dOne = uuid.v4();
+  const dTwo = uuid.v4();
+  const dThree = uuid.v4();
+
+  sandbox().stub(Config, 'DEFAULT_DESIGN_IDS').value([dOne, dTwo, dThree].join(','));
+  const mailchimpStub = sandbox().stub(MailChimp, 'subscribeToUsers').returns(Promise.resolve());
+  const duplicationStub = sandbox()
+    .stub(DuplicationService, 'duplicateDesigns')
+    .callsFake(async (_: string, designIds: string[]): Promise<void> => {
+      t.true(designIds.includes(dOne), 'Contains first design id');
+      t.true(designIds.includes(dTwo), 'Contains second design id');
+      t.true(designIds.includes(dThree), 'Contains third design id');
+    });
+
+  const [response, body] = await post(
+    '/users',
+    {
+      body: {
+        email: 'user@example.com',
+        name: 'Rick Owens',
+        password: 'rick_owens_la_4_lyfe',
+        phone: '323 931 4960'
+      }
+    }
+  );
+
+  t.equal(response.status, 201, 'status=201');
+  t.equal(body.name, 'Rick Owens');
+  t.equal(body.email, 'user@example.com');
+  t.equal(body.phone, '+13239314960');
+  t.equal(body.password, undefined);
+  t.equal(body.passwordHash, undefined);
+
+  t.equal(duplicationStub.callCount, 1, 'Expect the duplication service to be called once');
+  t.equal(mailchimpStub.callCount, 1, 'Expect mailchimp to be called once');
+});
+
 test('POST /users?initialDesigns= allows registration + design duplication', async (t: Test) => {
   const dOne = uuid.v4();
   const dTwo = uuid.v4();
@@ -208,6 +250,7 @@ test('POST /users?initialDesigns= allows registration + design duplication', asy
 });
 
 test('POST /users?cohort allows registration + adding a cohort user', async (t: Test) => {
+  sandbox().stub(DuplicationService, 'duplicateDesigns').resolves();
   const admin = await createUser({ role: 'ADMIN' });
   const cohort = await CohortsDAO.create({
     createdBy: admin.user.id,
@@ -254,6 +297,7 @@ test('POST /users?cohort allows registration + adding a cohort user', async (t: 
 });
 
 test('POST /users?promoCode=X applies a code at registration', async (t: Test) => {
+  sandbox().stub(DuplicationService, 'duplicateDesigns').resolves();
   sandbox().stub(MailChimp, 'subscribeToUsers').returns(Promise.resolve());
 
   const { user: adminUser } = await createUser({ role: 'ADMIN' });

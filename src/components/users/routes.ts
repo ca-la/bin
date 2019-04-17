@@ -16,7 +16,7 @@ import SessionsDAO = require('../../dao/sessions');
 import User, { Role, ROLES, UserIO } from './domain-object';
 import * as UsersDAO from './dao';
 import { logServerError } from '../../services/logger';
-import { REQUIRE_CALA_EMAIL } from '../../config';
+import { DEFAULT_DESIGN_IDS, REQUIRE_CALA_EMAIL } from '../../config';
 import { isValidEmail } from '../../services/validation';
 
 const router = new Router();
@@ -85,8 +85,13 @@ function* createUser(this: Koa.Application.Context<UserIO>): AsyncIterableIterat
     user.id
   );
 
-  if (initialDesigns && Array.isArray(initialDesigns)) {
+  if (initialDesigns && Array.isArray(initialDesigns) && initialDesigns.length > 0) {
     yield DuplicationService.duplicateDesigns(user.id, initialDesigns);
+  } else {
+    // This will start off the user with any number of 'default' designs that
+    // will automatically show in their drafts when they first log in.
+    const defaultDesignIds = DEFAULT_DESIGN_IDS.split(',');
+    yield DuplicationService.duplicateDesigns(user.id, defaultDesignIds);
   }
 
   this.status = 201;
