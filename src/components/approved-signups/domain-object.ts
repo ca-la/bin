@@ -4,17 +4,17 @@ import { hasProperties } from '../../services/require-properties';
 export interface ApprovedSignup {
   createdAt: Date;
   email: string;
-  firstName: string;
+  firstName: string | null;
   id: string;
-  lastName: string;
+  lastName: string | null;
 }
 
 export interface ApprovedSignupRow {
   created_at: string;
   email: string;
-  first_name: string;
+  first_name: string | null;
   id: string;
-  last_name: string;
+  last_name: string | null;
 }
 
 export const dataAdapter = new DataAdapter<ApprovedSignupRow, ApprovedSignup>();
