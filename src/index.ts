@@ -24,6 +24,7 @@ const { default: validatePagination } = require('./middleware/validate-paginatio
 
 /* application routes */
 import annotationRoutes from './components/product-design-canvas-annotations/routes';
+import approvedSignupRoutes from './components/approved-signups/routes';
 import collaboratorRoutes from './components/collaborators/routes';
 import creditRoutes from './components/credits/routes';
 import componentRelationshipRoutes from './components/component-relationships/routes';
@@ -79,6 +80,7 @@ router.use('/credits', creditRoutes);
 router.use('/bids', bidRoutes);
 router.use('/users', userRoutes);
 router.use('/subscriptions', subscriptionRoutes);
+router.use('/approved-signups', approvedSignupRoutes);
 
 const loadTime = Date.now() - beginTime;
 Logger.log(`Loaded ${routeDirectories.length} route prefixes in ${loadTime}ms`);
