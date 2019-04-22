@@ -1,19 +1,34 @@
 import * as Router from 'koa-router';
 import * as Koa from 'koa';
+import * as uuid from 'node-uuid';
 
 import InvalidDataError = require('../../errors/invalid-data');
 import filterError = require('../../services/filter-error');
 import requireAdmin = require('../../middleware/require-admin');
-import { isApprovedSignup } from './domain-object';
+import { ApprovedSignup } from './domain-object';
 import { create } from './dao';
+import { hasProperties } from '../../services/require-properties';
 
 const router = new Router();
+
+function isUnsavedApprovedSignup(data: object): data is Unsaved<ApprovedSignup> {
+  return hasProperties(
+    data,
+    'email',
+    'firstName',
+    'lastName'
+  );
+}
 
 function* createApproval(this: Koa.Application.Context): AsyncIterableIterator<any> {
   const { body } = this.request;
 
-  if (body && isApprovedSignup(body)) {
-    const approval = yield create(body).catch(
+  if (body && isUnsavedApprovedSignup(body)) {
+    const approval = yield create({
+      createdAt: new Date(),
+      id: uuid.v4(),
+      ...body
+    }).catch(
       filterError(InvalidDataError, (err: Error) => this.throw(400, err))
     );
     this.status = 201;
@@ -23,6 +38,6 @@ function* createApproval(this: Koa.Application.Context): AsyncIterableIterator<a
   }
 }
 
-router.put('/:signupId', requireAdmin, createApproval);
+router.post('/', requireAdmin, createApproval);
 
 export default router.routes();

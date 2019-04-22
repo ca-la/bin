@@ -1,4 +1,5 @@
 import rethrow = require('pg-rethrow');
+import { omit } from 'lodash';
 
 import filterError = require('../../services/filter-error');
 import InvalidDataError = require('../../errors/invalid-data');
@@ -11,6 +12,7 @@ import {
 } from './domain-object';
 import first from '../../services/first';
 import { validate } from '../../services/validate-from-db';
+import normalizeEmail = require('../../services/normalize-email');
 
 const TABLE_NAME = 'approved_signups';
 const ERROR_CODES = {
@@ -18,7 +20,10 @@ const ERROR_CODES = {
 };
 
 export async function create(signup: ApprovedSignup): Promise<ApprovedSignup> {
-  const rowData = dataAdapter.forInsertion(signup);
+  const rowData = dataAdapter.forInsertion(omit({
+    ...signup,
+    email: normalizeEmail(signup.email)
+  }, 'createdAt'));
 
   const created = await db(TABLE_NAME)
     .insert(rowData)
@@ -49,6 +54,24 @@ export async function findById(id: string): Promise<ApprovedSignup | null> {
   const signup: ApprovedSignupRow | undefined = await db(TABLE_NAME)
     .select('*')
     .where({ id })
+    .then((rows: ApprovedSignupRow[]) => first(rows));
+
+  if (!signup) {
+    return null;
+  }
+
+  return validate<ApprovedSignupRow, ApprovedSignup>(
+    TABLE_NAME,
+    isApprovedSignupRow,
+    dataAdapter,
+    signup
+  );
+}
+
+export async function findByEmail(email: string): Promise<ApprovedSignup | null> {
+  const signup: ApprovedSignupRow | undefined = await db(TABLE_NAME)
+    .select('*')
+    .where({ email: normalizeEmail(email) })
     .then((rows: ApprovedSignupRow[]) => first(rows));
 
   if (!signup) {

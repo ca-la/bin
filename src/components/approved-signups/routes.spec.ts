@@ -1,13 +1,33 @@
 import * as uuid from 'node-uuid';
 
-import { authHeader, put } from '../../test-helpers/http';
+import { authHeader, post } from '../../test-helpers/http';
 import { test, Test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
 import { omit } from 'lodash';
 
 const API_PATH = '/approved-signups';
 
-test(`PUT ${API_PATH}/:signupId creates an approved signup`, async (t: Test) => {
+test(`POST ${API_PATH}/ creates an approved signup with minimal data`, async (t: Test) => {
+  const { session } = await createUser({ role: 'ADMIN' });
+  const data = {
+    email: 'barry@example.com',
+    firstName: 'Barry',
+    lastName: 'Fooster'
+  };
+  const [response, body] = await post(`${API_PATH}/`, {
+    body: data,
+    headers: authHeader(session.id)
+  });
+
+  t.equal(response.status, 201, 'Succeeds');
+  t.deepEqual(
+    omit(body, 'id', 'createdAt'),
+    data,
+    'Returns the approved signup row'
+  );
+});
+
+test(`POST ${API_PATH}/ creates an approved signup`, async (t: Test) => {
   const { session } = await createUser({ role: 'ADMIN' });
   const data = {
     createdAt: new Date('2019-01-02'),
@@ -16,7 +36,7 @@ test(`PUT ${API_PATH}/:signupId creates an approved signup`, async (t: Test) => 
     id: uuid.v4(),
     lastName: 'Bar'
   };
-  const [response, body] = await put(`${API_PATH}/${data.id}`, {
+  const [response, body] = await post(`${API_PATH}/`, {
     body: data,
     headers: authHeader(session.id)
   });
@@ -28,7 +48,7 @@ test(`PUT ${API_PATH}/:signupId creates an approved signup`, async (t: Test) => 
     'Returns the approved signup row'
   );
 
-  const [failedResponse, failedBody] = await put(`${API_PATH}/${data.id}`, {
+  const [failedResponse, failedBody] = await post(`${API_PATH}/`, {
     body: { ...data, id: uuid.v4() },
     headers: authHeader(session.id)
   });
@@ -36,14 +56,14 @@ test(`PUT ${API_PATH}/:signupId creates an approved signup`, async (t: Test) => 
   t.equal(failedBody.message, 'Email is already taken');
 });
 
-test(`PUT ${API_PATH}/:signupId will fail with incomplete data`, async (t: Test) => {
+test(`POST ${API_PATH}/ will fail with incomplete data`, async (t: Test) => {
   const { session } = await createUser({ role: 'ADMIN' });
   const data = {
     createdAt: new Date('2019-01-02'),
     email: 'foo@example.com',
     id: uuid.v4()
   };
-  const [response, body] = await put(`${API_PATH}/${data.id}`, {
+  const [response, body] = await post(`${API_PATH}/`, {
     body: data,
     headers: authHeader(session.id)
   });
