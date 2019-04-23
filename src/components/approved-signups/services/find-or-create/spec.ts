@@ -24,4 +24,15 @@ test('findOrCreate can find or create an approval', async (t: Test) => {
     firstName: 'Foo',
     lastName: 'Bar'
   }, 'Returns a pre-existing row');
+
+  const create2 = await findOrCreate({
+    email: 'bar@example.com',
+    firstName: null,
+    lastName: null
+  });
+  t.deepEqual(omit(create2, 'id', 'createdAt'), {
+    email: 'bar@example.com',
+    firstName: null,
+    lastName: null
+  }, 'Returns a newly created row');
 });

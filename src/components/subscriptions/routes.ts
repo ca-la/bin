@@ -5,6 +5,9 @@ import * as MailChimp from '../../services/mailchimp';
 import { MAILCHIMP_LIST_ID_DESIGNERS, MAILCHIMP_LIST_ID_PRODUCTION_PARTNERS } from '../../config';
 import { hasProperties } from '../../services/require-properties';
 
+import isApprovable from '../approved-signups/services/is-approvable';
+import findOrCreateSignup from '../approved-signups/services/find-or-create';
+
 const router = new Router();
 
 interface DesignerSubscription {
@@ -49,6 +52,14 @@ function* createDesignerSubscription(this: Koa.Application.Context): AsyncIterab
     readyToGo,
     source
   } = body;
+
+  if (isApprovable(howManyUnits || '', readyForProduction || '')) {
+    yield findOrCreateSignup({
+      email,
+      firstName,
+      lastName
+    });
+  }
 
   try {
     yield MailChimp.subscribe(MAILCHIMP_LIST_ID_DESIGNERS, email, {
