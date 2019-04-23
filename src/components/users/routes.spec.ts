@@ -1,4 +1,5 @@
 import * as uuid from 'node-uuid';
+import * as sinon from 'sinon';
 
 import * as Config from '../../config';
 import * as UsersDAO from './dao';
@@ -21,12 +22,22 @@ const USER_DATA: UserIO = Object.freeze({
   phone: '415 580 9925'
 });
 
-function stubUserDependencies(): void {
-  sandbox().stub(MailChimp, 'subscribeToUsers').returns(Promise.resolve());
+interface UserDependenciesInterface {
+  duplicationStub: sinon.SinonStub;
+  mailchimpStub: sinon.SinonStub;
+}
+
+function stubUserDependencies(): UserDependenciesInterface {
+  const duplicationStub = sandbox().stub(DuplicationService, 'duplicateDesigns').resolves();
+  const mailchimpStub = sandbox().stub(MailChimp, 'subscribeToUsers').returns(Promise.resolve());
+
+  return {
+    duplicationStub,
+    mailchimpStub
+  };
 }
 
 test('POST /users returns a 400 if user creation fails', async (t: Test) => {
-  sandbox().stub(DuplicationService, 'duplicateDesigns').resolves();
   stubUserDependencies();
 
   sandbox().stub(UsersDAO, 'create').rejects(new InvalidDataError('Bad email'));
@@ -38,7 +49,6 @@ test('POST /users returns a 400 if user creation fails', async (t: Test) => {
 });
 
 test('POST /users returns new user data', async (t: Test) => {
-  sandbox().stub(DuplicationService, 'duplicateDesigns').resolves();
   stubUserDependencies();
 
   const [response, body] = await post('/users', { body: USER_DATA });
@@ -52,7 +62,6 @@ test('POST /users returns new user data', async (t: Test) => {
 });
 
 test('POST /users returns a session instead if requested', async (t: Test) => {
-  sandbox().stub(DuplicationService, 'duplicateDesigns').resolves();
   stubUserDependencies();
 
   const [response, body] = await post('/users?returnValue=session', { body: USER_DATA });
@@ -250,7 +259,8 @@ test('POST /users?initialDesigns= allows registration + design duplication', asy
 });
 
 test('POST /users?cohort allows registration + adding a cohort user', async (t: Test) => {
-  sandbox().stub(DuplicationService, 'duplicateDesigns').resolves();
+  const { mailchimpStub } = stubUserDependencies();
+
   const admin = await createUser({ role: 'ADMIN' });
   const cohort = await CohortsDAO.create({
     createdBy: admin.user.id,
@@ -259,8 +269,6 @@ test('POST /users?cohort allows registration + adding a cohort user', async (t: 
     slug: 'moma-demo-june-2020',
     title: 'MoMA Demo Participants'
   });
-
-  const mailchimpStub = sandbox().stub(MailChimp, 'subscribeToUsers').returns(Promise.resolve());
 
   const [response, newUser] = await post(
     `/users?cohort=${cohort.slug}`,
@@ -297,8 +305,7 @@ test('POST /users?cohort allows registration + adding a cohort user', async (t: 
 });
 
 test('POST /users?promoCode=X applies a code at registration', async (t: Test) => {
-  sandbox().stub(DuplicationService, 'duplicateDesigns').resolves();
-  sandbox().stub(MailChimp, 'subscribeToUsers').returns(Promise.resolve());
+  stubUserDependencies();
 
   const { user: adminUser } = await createUser({ role: 'ADMIN' });
 

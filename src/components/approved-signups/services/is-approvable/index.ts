@@ -1,11 +1,9 @@
-export default function isApprovable(howManyUnits: string, readyForProduction: string): boolean {
-  const isReady = readyForProduction === 'YES';
-
-  if (howManyUnits === '150+') {
-    return true;
-  }
-
-  if (isReady && (howManyUnits === '50-150' || howManyUnits === '150+')) {
+/**
+ * Returns true if the value is 150_PLUS.
+ * @param howManyUnitsPerStyle a string representing the response to "How many units per style?"
+ */
+export default function isApprovable(howManyUnitsPerStyle: string): boolean {
+  if (howManyUnitsPerStyle === '150_PLUS') {
     return true;
   }
 

@@ -91,6 +91,17 @@ function update(listId, email, mergeFields) {
   return makeRequest('patch', path, requestBody);
 }
 
+function addOrUpdateListMember(listId, email, mergeFields) {
+  const hash = md5(email);
+  const path = `/lists/${listId}/members/${hash}`;
+  const requestBody = {
+    email_address: email,
+    status: 'subscribed',
+    merge_fields: mergeFields
+  };
+  return makeRequest('put', path, requestBody);
+}
+
 function subscribeToUsers({
   email,
   name,
@@ -135,7 +146,9 @@ function updateUser({
 }
 
 module.exports = {
+  addOrUpdateListMember,
   subscribe,
   subscribeToUsers,
+  update,
   updateUser
 };

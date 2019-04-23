@@ -2,21 +2,26 @@ import { sandbox, test, Test } from '../../test-helpers/fresh';
 import { post } from '../../test-helpers/http';
 import * as MailChimp from '../../services/mailchimp';
 import * as ApprovalService from '../approved-signups/services/find-or-create';
-import { MAILCHIMP_LIST_ID_DESIGNERS, MAILCHIMP_LIST_ID_PRODUCTION_PARTNERS } from '../../config';
+import {
+  MAILCHIMP_LIST_ID_DESIGNERS,
+  MAILCHIMP_LIST_ID_PRODUCTION_PARTNERS,
+  STUDIO_HOST
+} from '../../config';
 
 test('POST /subscriptions/designers creates a designer subscription', async (t: Test) => {
-  const subscribeStub = sandbox().stub(MailChimp, 'subscribe').resolves();
-  const approvalStub = sandbox().stub(ApprovalService, 'default').resolves();
+  const subscribeStub = sandbox().stub(MailChimp, 'addOrUpdateListMember').resolves();
+  const approvalStub = sandbox().stub(ApprovalService, 'default').resolves({
+    id: 'abc-123'
+  });
 
   const [response, body] = await post('/subscriptions/designers', {
     body: {
       brandInstagram: 'thisiscala',
       email: 'foo@example.com',
       firstName: 'CA',
-      howManyUnits: '150+',
+      howManyUnitsPerStyle: '150_PLUS',
       language: 'TypeScript',
       lastName: 'LA',
-      readyForProduction: 'YES',
       source: 'homepage-overlay'
     }
   });
@@ -29,13 +34,12 @@ test('POST /subscriptions/designers creates a designer subscription', async (t: 
     lastName: 'LA'
   }), 'Calls with the expected arguments');
   t.true(subscribeStub.calledWith(MAILCHIMP_LIST_ID_DESIGNERS, 'foo@example.com', {
+    APPROVED: 'TRUE',
     FNAME: 'CA',
-    HOWMANYUNI: '150+',
     INSTA: 'thisiscala',
     LANGUAGE: 'TypeScript',
     LNAME: 'LA',
-    READYFORPR: 'YES',
-    READYTOGO: undefined,
+    REGLINK: `${STUDIO_HOST}/register?approvedSignupId=abc-123`,
     SOURCE: 'homepage-overlay'
   }), 'Calls with the expected arguments');
 
@@ -53,7 +57,7 @@ test('POST /subscriptions/designers creates a designer subscription', async (t: 
 });
 
 test('POST /subscriptions/designers creates an unqualified designer sub', async (t: Test) => {
-  const subscribeStub = sandbox().stub(MailChimp, 'subscribe').resolves();
+  const subscribeStub = sandbox().stub(MailChimp, 'addOrUpdateListMember').resolves();
   const approvalStub = sandbox().stub(ApprovalService, 'default').resolves();
 
   const [response, body] = await post('/subscriptions/designers', {
@@ -61,10 +65,9 @@ test('POST /subscriptions/designers creates an unqualified designer sub', async 
       brandInstagram: 'thisiscala',
       email: 'foo@example.com',
       firstName: 'CA',
-      howManyUnits: '0-10',
+      howManyUnitsPerStyle: '0_TO_10',
       language: 'TypeScript',
       lastName: 'LA',
-      readyForProduction: 'NO',
       source: 'homepage-overlay'
     }
   });
@@ -72,13 +75,12 @@ test('POST /subscriptions/designers creates an unqualified designer sub', async 
   t.equal(subscribeStub.callCount, 1, 'Calls mailchimp');
   t.equal(approvalStub.callCount, 0, 'Calls the approval creation function');
   t.true(subscribeStub.calledWith(MAILCHIMP_LIST_ID_DESIGNERS, 'foo@example.com', {
+    APPROVED: 'FALSE',
     FNAME: 'CA',
-    HOWMANYUNI: '0-10',
     INSTA: 'thisiscala',
     LANGUAGE: 'TypeScript',
     LNAME: 'LA',
-    READYFORPR: 'NO',
-    READYTOGO: undefined,
+    REGLINK: undefined,
     SOURCE: 'homepage-overlay'
   }), 'Calls with the expected arguments');
 
@@ -87,7 +89,7 @@ test('POST /subscriptions/designers creates an unqualified designer sub', async 
 });
 
 test('POST /subscriptions/production-partners creates a partner subscription', async (t: Test) => {
-  const subscribeStub = sandbox().stub(MailChimp, 'subscribe').resolves();
+  const subscribeStub = sandbox().stub(MailChimp, 'addOrUpdateListMember').resolves();
 
   const [response, body] = await post('/subscriptions/production-partners', {
     body: {

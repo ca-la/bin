@@ -2,23 +2,26 @@ import * as Router from 'koa-router';
 import * as Koa from 'koa';
 
 import * as MailChimp from '../../services/mailchimp';
-import { MAILCHIMP_LIST_ID_DESIGNERS, MAILCHIMP_LIST_ID_PRODUCTION_PARTNERS } from '../../config';
+import {
+  MAILCHIMP_LIST_ID_DESIGNERS,
+  MAILCHIMP_LIST_ID_PRODUCTION_PARTNERS,
+  STUDIO_HOST
+} from '../../config';
 import { hasProperties } from '../../services/require-properties';
 
 import isApprovable from '../approved-signups/services/is-approvable';
 import findOrCreateSignup from '../approved-signups/services/find-or-create';
+import { ApprovedSignup } from '../approved-signups/domain-object';
 
 const router = new Router();
 
 interface DesignerSubscription {
   brandInstagram: string;
   email: string;
-  howManyUnits?: string;
+  howManyUnitsPerStyle?: string;
   firstName: string;
   language: string;
   lastName: string;
-  readyForProduction?: string;
-  readyToGo?: string;
   source: string;
 }
 
@@ -45,31 +48,31 @@ function* createDesignerSubscription(this: Koa.Application.Context): AsyncIterab
     brandInstagram,
     email,
     firstName,
-    howManyUnits,
+    howManyUnitsPerStyle,
     language,
     lastName,
-    readyForProduction,
-    readyToGo,
     source
   } = body;
+  const isApproved = isApprovable(howManyUnitsPerStyle || '');
+  let registrationLink: string | undefined;
 
-  if (isApprovable(howManyUnits || '', readyForProduction || '')) {
-    yield findOrCreateSignup({
+  if (isApproved) {
+    const signup: ApprovedSignup = yield findOrCreateSignup({
       email,
       firstName,
       lastName
     });
+    registrationLink = `${STUDIO_HOST}/register?approvedSignupId=${signup.id}`;
   }
 
   try {
-    yield MailChimp.subscribe(MAILCHIMP_LIST_ID_DESIGNERS, email, {
+    yield MailChimp.addOrUpdateListMember(MAILCHIMP_LIST_ID_DESIGNERS, email, {
+      APPROVED: isApproved ? 'TRUE' : 'FALSE',
       FNAME: firstName,
-      HOWMANYUNI: howManyUnits,
       INSTA: brandInstagram,
       LANGUAGE: language,
       LNAME: lastName,
-      READYFORPR: readyForProduction,
-      READYTOGO: readyToGo,
+      REGLINK: registrationLink,
       SOURCE: source
     });
   } catch (error) {
@@ -114,7 +117,7 @@ function* createPartnerSubscription(this: Koa.Application.Context): AsyncIterabl
   } = body;
 
   try {
-    yield MailChimp.subscribe(MAILCHIMP_LIST_ID_PRODUCTION_PARTNERS, email, {
+    yield MailChimp.addOrUpdateListMember(MAILCHIMP_LIST_ID_PRODUCTION_PARTNERS, email, {
       LANGUAGE: language,
       NAME: name,
       SOURCE: source,
