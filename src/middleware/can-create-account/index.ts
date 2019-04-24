@@ -24,7 +24,7 @@ export  function* canCreateAccount(
   }
 
   if (!approvedSignup) {
-    return this.throw(403, `${email} is not authorized to make an account!`);
+    return this.throw(403, 'Sorry, this email address is not approved');
   }
 
   yield next;

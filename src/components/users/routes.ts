@@ -18,6 +18,7 @@ import * as UsersDAO from './dao';
 import { logServerError } from '../../services/logger';
 import { DEFAULT_DESIGN_IDS, REQUIRE_CALA_EMAIL } from '../../config';
 import { isValidEmail } from '../../services/validation';
+import { canCreateAccount } from '../../middleware/can-create-account';
 
 const router = new Router();
 
@@ -242,7 +243,7 @@ function* getEmailAvailability(this: Koa.Application.Context): AsyncIterableIter
 router.get('/', getList);
 router.get('/:userId', requireAuth, getUser);
 router.get('/email-availability/:email', getEmailAvailability);
-router.post('/', createUser);
+router.post('/', canCreateAccount, createUser);
 router.post('/:userId/accept-designer-terms', requireAuth, acceptDesignerTerms);
 router.post('/:userId/accept-partner-terms', requireAuth, acceptPartnerTerms);
 router.put('/:userId', requireAuth, updateUser); // TODO: deprecate

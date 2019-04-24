@@ -36,6 +36,7 @@ test('POST /subscriptions/designers creates a designer subscription', async (t: 
   t.true(subscribeStub.calledWith(MAILCHIMP_LIST_ID_DESIGNERS, 'foo@example.com', {
     APPROVED: 'TRUE',
     FNAME: 'CA',
+    HOWMANYUNI: '150_PLUS',
     INSTA: 'thisiscala',
     LANGUAGE: 'TypeScript',
     LNAME: 'LA',
@@ -77,6 +78,7 @@ test('POST /subscriptions/designers creates an unqualified designer sub', async 
   t.true(subscribeStub.calledWith(MAILCHIMP_LIST_ID_DESIGNERS, 'foo@example.com', {
     APPROVED: 'FALSE',
     FNAME: 'CA',
+    HOWMANYUNI: '0_TO_10',
     INSTA: 'thisiscala',
     LANGUAGE: 'TypeScript',
     LNAME: 'LA',

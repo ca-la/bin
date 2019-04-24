@@ -14,6 +14,8 @@ import { authHeader, get, post, put } from '../../test-helpers/http';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import * as CohortUsersDAO from '../../components/cohorts/users/dao';
 import { baseUser, UserIO } from './domain-object';
+import * as ApprovedSignupsDAO from '../../components/approved-signups/dao';
+import { pick } from 'lodash';
 
 const USER_DATA: UserIO = Object.freeze({
   email: 'user@example.com',
@@ -39,6 +41,7 @@ function stubUserDependencies(): UserDependenciesInterface {
 
 test('POST /users returns a 400 if user creation fails', async (t: Test) => {
   stubUserDependencies();
+  sandbox().stub(ApprovedSignupsDAO, 'findByEmail').resolves({});
 
   sandbox().stub(UsersDAO, 'create').rejects(new InvalidDataError('Bad email'));
 
@@ -50,6 +53,7 @@ test('POST /users returns a 400 if user creation fails', async (t: Test) => {
 
 test('POST /users returns new user data', async (t: Test) => {
   stubUserDependencies();
+  sandbox().stub(ApprovedSignupsDAO, 'findByEmail').resolves({});
 
   const [response, body] = await post('/users', { body: USER_DATA });
 
@@ -63,6 +67,7 @@ test('POST /users returns new user data', async (t: Test) => {
 
 test('POST /users returns a session instead if requested', async (t: Test) => {
   stubUserDependencies();
+  sandbox().stub(ApprovedSignupsDAO, 'findByEmail').resolves({});
 
   const [response, body] = await post('/users?returnValue=session', { body: USER_DATA });
   t.equal(response.status, 201, 'status=201');
@@ -197,6 +202,7 @@ test('POST /users allows registration + design duplication', async (t: Test) => 
       t.true(designIds.includes(dTwo), 'Contains second design id');
       t.true(designIds.includes(dThree), 'Contains third design id');
     });
+  sandbox().stub(ApprovedSignupsDAO, 'findByEmail').resolves({});
 
   const [response, body] = await post(
     '/users',
@@ -234,6 +240,7 @@ test('POST /users?initialDesigns= allows registration + design duplication', asy
       t.true(designIds.includes(dTwo), 'Contains second design id');
       t.true(designIds.includes(dThree), 'Contains third design id');
     });
+  sandbox().stub(ApprovedSignupsDAO, 'findByEmail').resolves({});
 
   const [response, body] = await post(
     `/users?initialDesigns=${dOne}&initialDesigns=${dTwo}&initialDesigns=${dThree}`,
@@ -260,6 +267,7 @@ test('POST /users?initialDesigns= allows registration + design duplication', asy
 
 test('POST /users?cohort allows registration + adding a cohort user', async (t: Test) => {
   const { mailchimpStub } = stubUserDependencies();
+  sandbox().stub(ApprovedSignupsDAO, 'findByEmail').resolves({});
 
   const admin = await createUser({ role: 'ADMIN' });
   const cohort = await CohortsDAO.create({
@@ -306,6 +314,7 @@ test('POST /users?cohort allows registration + adding a cohort user', async (t: 
 
 test('POST /users?promoCode=X applies a code at registration', async (t: Test) => {
   stubUserDependencies();
+  sandbox().stub(ApprovedSignupsDAO, 'findByEmail').resolves({});
 
   const { user: adminUser } = await createUser({ role: 'ADMIN' });
 
@@ -345,4 +354,64 @@ test('GET /users?search with malformed RegExp throws 400', async (t: Test) => {
 
   t.equal(response.status, 400);
   t.deepEqual(body, { message: 'Search contained invalid characters' });
+});
+
+test('POST /users will fail if the user is not pre-approved', async (t: Test) => {
+  sandbox().stub(ApprovedSignupsDAO, 'findByEmail').resolves(null);
+
+  const [response, body] = await post(
+    '/users',
+    {
+      body: {
+        email: 'user@example.com',
+        name: 'Rick Owens',
+        password: 'rick_owens_la_4_lyfe',
+        phone: '323 931 4960'
+      }
+    }
+  );
+
+  t.equal(response.status, 403, 'Is unauthorized');
+  t.equal(body.message, 'Sorry, this email address is not approved');
+});
+
+test('POST /users?approvedSignupId will fail id is non-existent', async (t: Test) => {
+  sandbox().stub(ApprovedSignupsDAO, 'findByEmail').resolves(null);
+  sandbox().stub(ApprovedSignupsDAO, 'findById').resolves(null);
+
+  const [response, body] = await post(
+    '/users?approvedSignupId=abc-123',
+    {
+      body: {
+        email: 'user@example.com',
+        name: 'Rick Owens',
+        password: 'rick_owens_la_4_lyfe',
+        phone: '323 931 4960'
+      }
+    }
+  );
+
+  t.equal(response.status, 403, 'Is unauthorized');
+  t.equal(body.message, 'Sorry, this email address is not approved');
+});
+
+test('POST /users?approvedSignupId will succeed if id exists', async (t: Test) => {
+  stubUserDependencies();
+  sandbox().stub(ApprovedSignupsDAO, 'findByEmail').resolves(null);
+  sandbox().stub(ApprovedSignupsDAO, 'findById').resolves({});
+
+  const [response, body] = await post(
+    '/users?approvedSignupId=abc-123',
+    {
+      body: {
+        email: 'user@example.com',
+        name: 'Rick Owens',
+        password: 'rick_owens_la_4_lyfe',
+        phone: '323 931 4960'
+      }
+    }
+  );
+
+  t.equal(response.status, 201, 'Is authorized');
+  t.deepEqual(pick(body, 'email', 'name'), { email: 'user@example.com', name: 'Rick Owens' });
 });

@@ -69,6 +69,7 @@ function* createDesignerSubscription(this: Koa.Application.Context): AsyncIterab
     yield MailChimp.addOrUpdateListMember(MAILCHIMP_LIST_ID_DESIGNERS, email, {
       APPROVED: isApproved ? 'TRUE' : 'FALSE',
       FNAME: firstName,
+      HOWMANYUNI: howManyUnitsPerStyle,
       INSTA: brandInstagram,
       LANGUAGE: language,
       LNAME: lastName,
