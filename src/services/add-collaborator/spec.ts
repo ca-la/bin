@@ -24,6 +24,7 @@ test('addCollaborator can add a collaborator', async (t: Test) => {
 
   t.equal(approvalStub.callCount, 1, 'Calls the approval creation service');
   t.true(approvalStub.calledWith({
+    consumedAt: null,
     email: 'foo@example.com',
     firstName: null,
     lastName: null

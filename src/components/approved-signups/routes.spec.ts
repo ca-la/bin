@@ -65,7 +65,7 @@ test(`POST ${API_PATH}/ creates an approved signup`, async (t: Test) => {
 
   t.equal(response.status, 201, 'Succeeds');
   t.deepEqual(
-    omit(body, 'createdAt'),
+    omit(body, 'createdAt', 'consumedAt'),
     omit(data, 'createdAt'),
     'Returns the approved signup row'
   );

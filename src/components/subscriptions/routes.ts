@@ -58,6 +58,7 @@ function* createDesignerSubscription(this: Koa.Application.Context): AsyncIterab
 
   if (isApproved) {
     const signup: ApprovedSignup = yield findOrCreateSignup({
+      consumedAt: null,
       email,
       firstName,
       lastName

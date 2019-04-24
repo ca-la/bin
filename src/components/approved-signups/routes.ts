@@ -27,6 +27,7 @@ function* createApproval(this: Koa.Application.Context): AsyncIterableIterator<a
 
   if (body && isUnsavedApprovedSignup(body)) {
     const approval = yield create({
+      consumedAt: null,
       createdAt: new Date(),
       id: uuid.v4(),
       ...body

@@ -50,6 +50,29 @@ export async function create(signup: ApprovedSignup): Promise<ApprovedSignup> {
   );
 }
 
+export async function update(data: ApprovedSignup): Promise<ApprovedSignup> {
+  const rowDataForUpdate = omit(
+    dataAdapter.forInsertion(data),
+    'createdAt',
+    'id'
+  );
+  const updated = await db(TABLE_NAME)
+    .where({ id: data.id })
+    .update(rowDataForUpdate, '*')
+    .then((rows: ApprovedSignupRow[]) => first<ApprovedSignupRow>(rows));
+
+  if (!updated) {
+    throw new Error('There was a problem saving the approved signup!');
+  }
+
+  return validate<ApprovedSignupRow, ApprovedSignup>(
+    TABLE_NAME,
+    isApprovedSignupRow,
+    dataAdapter,
+    updated
+  );
+}
+
 export async function findById(id: string): Promise<ApprovedSignup | null> {
   const signup: ApprovedSignupRow | undefined = await db(TABLE_NAME)
     .select('*')

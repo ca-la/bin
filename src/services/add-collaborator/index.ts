@@ -71,6 +71,7 @@ export default async function addCollaborator(
 
   if (!user) {
     await findOrCreateSignup({
+      consumedAt: null,
       email,
       firstName: null,
       lastName: null

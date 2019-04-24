@@ -29,6 +29,7 @@ test('POST /subscriptions/designers creates a designer subscription', async (t: 
   t.equal(subscribeStub.callCount, 1, 'Calls mailchimp');
   t.equal(approvalStub.callCount, 1, 'Calls the approval creation function');
   t.true(approvalStub.calledWith({
+    consumedAt: null,
     email: 'foo@example.com',
     firstName: 'CA',
     lastName: 'LA'
