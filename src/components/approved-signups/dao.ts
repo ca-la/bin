@@ -77,7 +77,11 @@ export async function findById(id: string): Promise<ApprovedSignup | null> {
   const signup: ApprovedSignupRow | undefined = await db(TABLE_NAME)
     .select('*')
     .where({ id })
-    .then((rows: ApprovedSignupRow[]) => first(rows));
+    .then((rows: ApprovedSignupRow[]) => first(rows))
+    .catch(rethrow)
+    .catch(filterError(rethrow.ERRORS.InvalidTextRepresentation, () => {
+      return null;
+    }));
 
   if (!signup) {
     return null;

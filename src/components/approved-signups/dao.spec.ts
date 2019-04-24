@@ -4,6 +4,11 @@ import { test, Test } from '../../test-helpers/fresh';
 
 import * as ApprovedSignupsDAO from './dao';
 
+test('ApprovedSignups DAO returns null if the id is malformed', async (t: Test) => {
+  const result = await ApprovedSignupsDAO.findById('abc-123');
+  t.equal(result, null, 'Returns nothing if the identifier is invalid');
+});
+
 test('ApprovedSignups DAO supports creation and retrieval', async (t: Test) => {
   const id = uuid.v4();
   const randomId = uuid.v4();
