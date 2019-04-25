@@ -43,6 +43,7 @@ test(`POST ${API_PATH}/ creates an approved signup with minimal data`, async (t:
     INSTA: undefined,
     LANGUAGE: 'en',
     LNAME: 'Fooster',
+    MANAPPR: 'TRUE',
     REGLINK: `${STUDIO_HOST}/register?approvedSignupId=abc-123`,
     SOURCE: MAGIC_HOST
   }));

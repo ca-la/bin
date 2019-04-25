@@ -74,6 +74,7 @@ function* createDesignerSubscription(this: Koa.Application.Context): AsyncIterab
       INSTA: brandInstagram,
       LANGUAGE: language,
       LNAME: lastName,
+      MANAPPR: undefined,
       REGLINK: registrationLink,
       SOURCE: source
     });

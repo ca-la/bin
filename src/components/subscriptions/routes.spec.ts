@@ -41,6 +41,7 @@ test('POST /subscriptions/designers creates a designer subscription', async (t: 
     INSTA: 'thisiscala',
     LANGUAGE: 'TypeScript',
     LNAME: 'LA',
+    MANAPPR: undefined,
     REGLINK: `${STUDIO_HOST}/register?approvedSignupId=abc-123`,
     SOURCE: 'homepage-overlay'
   }), 'Calls with the expected arguments');
@@ -83,6 +84,7 @@ test('POST /subscriptions/designers creates an unqualified designer sub', async 
     INSTA: 'thisiscala',
     LANGUAGE: 'TypeScript',
     LNAME: 'LA',
+    MANAPPR: undefined,
     REGLINK: undefined,
     SOURCE: 'homepage-overlay'
   }), 'Calls with the expected arguments');

@@ -42,6 +42,7 @@ function* createApproval(this: Koa.Application.Context): AsyncIterableIterator<a
         INSTA: undefined,
         LANGUAGE: 'en',
         LNAME: approval.lastName,
+        MANAPPR: 'TRUE',
         REGLINK: `${STUDIO_HOST}/register?approvedSignupId=${approval.id}`,
         SOURCE: MAGIC_HOST
       });
