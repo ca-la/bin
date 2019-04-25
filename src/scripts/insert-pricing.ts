@@ -225,7 +225,14 @@ function isRawType(candidate: object): candidate is RawType {
     'complexity',
     'unit_cents',
     'yield',
-    'contrast'
+    'contrast',
+    'creation_time_ms',
+    'specification_time_ms',
+    'sourcing_time_ms',
+    'sampling_time_ms',
+    'pre_production_time_ms',
+    'production_time_ms',
+    'fulfillment_time_ms'
   );
 }
 function everyRawType(candidate: object[]): candidate is RawType[] {
@@ -289,11 +296,18 @@ function toType(latestVersion: number, raw: RawType): PricingProductTypeRow {
   return {
     complexity: raw.complexity,
     contrast: parseInt(raw.contrast, 10),
-    created_at: new Date(),
+    created_at: new Date().toISOString(),
+    creation_time_ms: raw.creation_time_ms,
+    fulfillment_time_ms: raw.fulfillment_time_ms,
     id: uuid.v4(),
     minimum_units: parseInt(raw.minimum_units, 10),
     name: raw.name,
     pattern_minimum_cents: parseInt(raw.pattern_minimum_cents, 10),
+    pre_production_time_ms: raw.pre_production_time_ms,
+    production_time_ms: raw.production_time_ms,
+    sampling_time_ms: raw.sampling_time_ms,
+    sourcing_time_ms: raw.sourcing_time_ms,
+    specification_time_ms: raw.specification_time_ms,
     unit_cents: parseInt(raw.unit_cents, 10),
     version: latestVersion + 1,
     yield: parseInt(raw.yield, 10)

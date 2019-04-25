@@ -322,7 +322,8 @@ test(
       payLaterTotalCents: 527660,
       payLaterTotalCentsPerUnit: 5277,
       payNowTotalCents: 496000,
-      payNowTotalCentsPerUnit: 4960
+      payNowTotalCentsPerUnit: 4960,
+      timeTotalMs: 1056000000
     });
   }
 );

@@ -126,9 +126,16 @@ test('PricingQuotes DAO supports finding the latest values', async (t: tape.Test
     sample: {
       complexity: 'SIMPLE',
       contrast: '0.15',
+      creationTimeMs: 0,
+      fulfillmentTimeMs: 259200000,
       minimumUnits: 1,
       name: 'TEESHIRT',
       patternMinimumCents: 10000,
+      preProductionTimeMs: 129600000,
+      productionTimeMs: 21600000,
+      samplingTimeMs: 129600000,
+      sourcingTimeMs: 129600000,
+      specificationTimeMs: 129600000,
       unitCents: 15000,
       version: 0,
       yield: '1.5'
@@ -138,9 +145,16 @@ test('PricingQuotes DAO supports finding the latest values', async (t: tape.Test
     type: {
       complexity: 'SIMPLE',
       contrast: '0.15',
+      creationTimeMs: 0,
+      fulfillmentTimeMs: 259200000,
       minimumUnits: 750,
       name: 'TEESHIRT',
       patternMinimumCents: 10000,
+      preProductionTimeMs: 129600000,
+      productionTimeMs: 270000000,
+      samplingTimeMs: 129600000,
+      sourcingTimeMs: 129600000,
+      specificationTimeMs: 129600000,
       unitCents: 750,
       version: 0,
       yield: '1.5'

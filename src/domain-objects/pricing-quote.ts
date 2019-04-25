@@ -31,6 +31,13 @@ export interface PricingQuoteCalculated {
   materialCostCents: number;
   processCostCents: number;
   unitCostCents: number;
+  creationTimeMs: number;
+  specificationTimeMs: number;
+  sourcingTimeMs: number;
+  samplingTimeMs: number;
+  preProductionTimeMs: number;
+  productionTimeMs: number;
+  fulfillmentTimeMs: number;
 }
 
 export interface PricingQuote extends BasePricingQuoteRequest, PricingQuoteCalculated {
@@ -54,6 +61,13 @@ export interface PricingQuoteRow {
   process_cost_cents: number;
   unit_cost_cents: number;
   design_id: string | null;
+  creation_time_ms: number;
+  specification_time_ms: number;
+  sourcing_time_ms: number;
+  sampling_time_ms: number;
+  pre_production_time_ms: number;
+  production_time_ms: number;
+  fulfillment_time_ms: number;
 }
 
 export interface PricingProcessQuoteRow {
@@ -114,7 +128,14 @@ export function isPricingQuote(candidate: object): candidate is PricingQuote {
     'materialCostCents',
     'processCostCents',
     'unitCostCents',
-    'designId'
+    'designId',
+    'creationTimeMs',
+    'specificationTimeMs',
+    'sourcingTimeMs',
+    'samplingTimeMs',
+    'pre_productionTimeMs',
+    'productionTimeMs',
+    'fulfillmentTimeMs'
   );
 }
 
@@ -133,6 +154,13 @@ export function isPricingQuoteRow(candidate: object): candidate is PricingQuoteR
     'material_cost_cents',
     'process_cost_cents',
     'unit_cost_cents',
-    'design_id'
+    'design_id',
+    'creation_time_ms',
+    'specification_time_ms',
+    'sourcing_time_ms',
+    'sampling_time_ms',
+    'pre_production_time_ms',
+    'production_time_ms',
+    'fulfillment_time_ms'
   );
 }

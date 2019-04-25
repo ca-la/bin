@@ -1,4 +1,4 @@
-import { omit } from 'lodash';
+import { omit, sum } from 'lodash';
 import * as Router from 'koa-router';
 import * as Koa from 'koa';
 import * as uuid from 'node-uuid';
@@ -33,6 +33,7 @@ import generatePricingQuote, {
   generateUnsavedQuote,
   UnsavedQuote
 } from '../../services/generate-pricing-quote';
+import addTimeBuffer from '../../services/add-time-buffer';
 
 const router = new Router();
 
@@ -49,10 +50,20 @@ function isBidRequest(candidate: object): candidate is BidRequest {
 
 function calculateAmounts(
   quote: UnsavedQuote
-): { payNowTotalCents: number; payLaterTotalCents: number } {
+): { payNowTotalCents: number; payLaterTotalCents: number, timeTotalMs: number } {
   const payNowTotalCents = quote.units * quote.unitCostCents;
   const payLaterTotalCents = addMargin(payNowTotalCents, FINANCING_MARGIN);
-  return { payNowTotalCents, payLaterTotalCents };
+  const timeTotalMsWithoutBuffer = sum([
+    quote.creationTimeMs,
+    quote.specificationTimeMs,
+    quote.sourcingTimeMs,
+    quote.samplingTimeMs,
+    quote.preProductionTimeMs,
+    quote.productionTimeMs,
+    quote.fulfillmentTimeMs
+  ]);
+  const timeTotalMs = addTimeBuffer(timeTotalMsWithoutBuffer);
+  return { payNowTotalCents, payLaterTotalCents, timeTotalMs };
 }
 
 function* createQuote(this: Koa.Application.Context): AsyncIterableIterator<PricingQuote> {
@@ -208,13 +219,14 @@ function* previewQuote(this: Koa.Application.Context): AsyncIterableIterator<any
     .catch(filterError(InvalidDataError, (err: InvalidDataError) =>
       this.throw(400, err)));
 
-  const { payLaterTotalCents, payNowTotalCents } = calculateAmounts(unsavedQuote);
+  const { payLaterTotalCents, payNowTotalCents, timeTotalMs } = calculateAmounts(unsavedQuote);
 
   this.body = {
     payLaterTotalCents,
     payLaterTotalCentsPerUnit: Math.round(payLaterTotalCents / units),
     payNowTotalCents,
-    payNowTotalCentsPerUnit: Math.round(payNowTotalCents / units)
+    payNowTotalCentsPerUnit: Math.round(payNowTotalCents / units),
+    timeTotalMs
   };
   this.status = 200;
 }

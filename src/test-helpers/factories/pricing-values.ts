@@ -26,13 +26,14 @@ export default async function generatePricingValues(): Promise<any> {
     ],
     0
   );
-  const pricingProductTypeTee = generateProductTypes(
-    'TEESHIRT',
-    Dollars(20),
-    1.5,
-    [0.15, 0.5, 1, 0],
-    0
-  );
+  const pricingProductTypeTee = generateProductTypes({
+    contrast: [0.15, 0.5, 1, 0],
+    typeMediumCents: Dollars(20),
+    typeMediumDays: 5,
+    typeName: 'TEESHIRT',
+    typeYield: 1.5,
+    version: 0
+  });
   const createCareLabel = (units: number, cents: number): Uninserted<PricingCareLabelRow> => ({
     id: uuid.v4(),
     minimum_units: units,

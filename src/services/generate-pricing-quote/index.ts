@@ -80,6 +80,15 @@ function calculateQuote(
     materialCostCents: Math.max(calculateMaterialCents(values), request.materialBudgetCents || 0),
     processCostCents: calculateProcessCents(units, values)
   };
+  const {
+    creationTimeMs,
+    specificationTimeMs,
+    sourcingTimeMs,
+    samplingTimeMs,
+    preProductionTimeMs,
+    productionTimeMs,
+    fulfillmentTimeMs
+  } = values.type;
   const developmentCostCents = request.productComplexity !== 'BLANK'
     ? calculateDevelopmentCosts(
       units,
@@ -99,6 +108,13 @@ function calculateQuote(
   return {
     ...omit(request, ['processes']),
     ...baseCost,
+    creationTimeMs,
+    fulfillmentTimeMs,
+    preProductionTimeMs,
+    productionTimeMs,
+    samplingTimeMs,
+    sourcingTimeMs,
+    specificationTimeMs,
     unitCostCents
   };
 }

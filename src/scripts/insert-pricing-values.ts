@@ -542,205 +542,234 @@ async function intialPricingValues(): Promise<void> {
     }
   ];
 
-  const contrasts: [number, number, number, number] = [0.15, 0.5, 1, 0];
+  const contrast: [number, number, number, number] = [0.15, 0.5, 1, 0];
+  const typeYield = 1;
 
   const pricingProductTypes: Uninserted<PricingProductTypeRow>[] = flatten([
-    generateProductTypes(
-      'BACKPACK',
-      Dollars(45),
-      1,
-      contrasts,
+    generateProductTypes({
+      contrast,
+      typeMediumCents: Dollars(45),
+      typeMediumDays: 1,
+      typeName: 'BACKPACK',
+      typeYield,
       version
-    ),
-    generateProductTypes(
-      'TOPCOAT',
-      Dollars(75),
-      1,
-      contrasts,
+    }),
+    generateProductTypes({
+      contrast,
+      typeMediumCents: Dollars(75),
+      typeMediumDays: 1,
+      typeName: 'TOPCOAT',
+      typeYield,
       version
-    ),
-    generateProductTypes(
-      'SUNGLASSES',
-      Dollars(15),
-      1,
-      contrasts,
+    }),
+    generateProductTypes({
+      contrast,
+      typeMediumCents: Dollars(15),
+      typeMediumDays: 1,
+      typeName: 'SUNGLASSES',
+      typeYield,
       version
-    ),
-    generateProductTypes(
-      'TEESHIRT',
-      Dollars(12),
-      1,
-      contrasts,
+    }),
+    generateProductTypes({
+      contrast,
+      typeMediumCents: Dollars(12),
+      typeMediumDays: 1,
+      typeName: 'TEESHIRT',
+      typeYield,
       version
-    ),
-    generateProductTypes(
-      'BLOUSE',
-      Dollars(15),
-      1,
-      contrasts,
+    }),
+    generateProductTypes({
+      contrast,
+      typeMediumCents: Dollars(15),
+      typeMediumDays: 1,
+      typeName: 'BLOUSE',
+      typeYield,
       version
-    ),
-    generateProductTypes(
-      'BLAZER',
-      Dollars(56),
-      1,
-      contrasts,
+    }),
+    generateProductTypes({
+      contrast,
+      typeMediumCents: Dollars(56),
+      typeMediumDays: 1,
+      typeName: 'BLAZER',
+      typeYield,
       version
-    ),
-    generateProductTypes(
-      'DRESS',
-      Dollars(24),
-      1,
-      contrasts,
+    }),
+    generateProductTypes({
+      contrast,
+      typeMediumCents: Dollars(24),
+      typeMediumDays: 1,
+      typeName: 'DRESS',
+      typeYield,
       version
-    ),
-    generateProductTypes(
-      'SHORTS',
-      Dollars(25),
-      1,
-      contrasts,
+    }),
+    generateProductTypes({
+      contrast,
+      typeMediumCents: Dollars(25),
+      typeMediumDays: 1,
+      typeName: 'SHORTS',
+      typeYield,
       version
-    ),
-    generateProductTypes(
-      'PANTS',
-      Dollars(29.5),
-      1,
-      contrasts,
+    }),
+    generateProductTypes({
+      contrast,
+      typeMediumCents: Dollars(29.5),
+      typeMediumDays: 1,
+      typeName: 'PANTS',
+      typeYield,
       version
-    ),
-    generateProductTypes(
-      'SKIRT',
-      Dollars(19.5),
-      1,
-      contrasts,
+    }),
+    generateProductTypes({
+      contrast,
+      typeMediumCents: Dollars(19.5),
+      typeMediumDays: 1,
+      typeName: 'SKIRT',
+      typeYield,
       version
-    ),
-    generateProductTypes(
-      'LONG SKIRT',
-      Dollars(40),
-      1,
-      contrasts,
+    }),
+    generateProductTypes({
+      contrast,
+      typeMediumCents: Dollars(40),
+      typeMediumDays: 1,
+      typeName: 'LONG SKIRT',
+      typeYield,
       version
-    ),
-    generateProductTypes(
-      'COAT',
-      Dollars(65),
-      1,
-      contrasts,
+    }),
+    generateProductTypes({
+      contrast,
+      typeMediumCents: Dollars(65),
+      typeMediumDays: 1,
+      typeName: 'COAT',
+      typeYield,
       version
-    ),
-    generateProductTypes(
-      'LONGSLEEVE TEESHIRT',
-      Dollars(12),
-      1,
-      contrasts,
+    }),
+    generateProductTypes({
+      contrast,
+      typeMediumCents: Dollars(12),
+      typeMediumDays: 1,
+      typeName: 'LONGSLEEVE TEESHIRT',
+      typeYield,
       version
-    ),
-    generateProductTypes(
-      'DRESS SHIRT',
-      Dollars(20),
-      1,
-      contrasts,
+    }),
+    generateProductTypes({
+      contrast,
+      typeMediumCents: Dollars(20),
+      typeMediumDays: 1,
+      typeName: 'DRESS SHIRT',
+      typeYield,
       version
-    ),
-    generateProductTypes(
-      'SHORTSLEEVE DRESS SHIRT',
-      Dollars(15),
-      1,
-      contrasts,
+    }),
+    generateProductTypes({
+      contrast,
+      typeMediumCents: Dollars(15),
+      typeMediumDays: 1,
+      typeName: 'SHORTSLEEVE DRESS SHIRT',
+      typeYield,
       version
-    ),
-    generateProductTypes(
-      'SWEATSHIRT',
-      Dollars(15),
-      1,
-      contrasts,
+    }),
+    generateProductTypes({
+      contrast,
+      typeMediumCents: Dollars(15),
+      typeMediumDays: 1,
+      typeName: 'SWEATSHIRT',
+      typeYield,
       version
-    ),
-    generateProductTypes(
-      'HOODED SWEATSHIRT',
-      Dollars(25),
-      1,
-      contrasts,
+    }),
+    generateProductTypes({
+      contrast,
+      typeMediumCents: Dollars(25),
+      typeMediumDays: 1,
+      typeName: 'HOODED SWEATSHIRT',
+      typeYield,
       version
-    ),
-    generateProductTypes(
-      'UNDERWEAR',
-      Dollars(10),
-      1,
-      contrasts,
+    }),
+    generateProductTypes({
+      contrast,
+      typeMediumCents: Dollars(10),
+      typeMediumDays: 1,
+      typeName: 'UNDERWEAR',
+      typeYield,
       version
-    ),
-    generateProductTypes(
-      'JACKET',
-      Dollars(45),
-      1,
-      contrasts,
+    }),
+    generateProductTypes({
+      contrast,
+      typeMediumCents: Dollars(45),
+      typeMediumDays: 1,
+      typeName: 'JACKET',
+      typeYield,
       version
-    ),
-    generateProductTypes(
-      'SWEATER',
-      Dollars(38),
-      1,
-      contrasts,
+    }),
+    generateProductTypes({
+      contrast,
+      typeMediumCents: Dollars(38),
+      typeMediumDays: 1,
+      typeName: 'SWEATER',
+      typeYield,
       version
-    ),
-    generateProductTypes(
-      'SPORT COAT',
-      Dollars(75),
-      1,
-      contrasts,
+    }),
+    generateProductTypes({
+      contrast,
+      typeMediumCents: Dollars(75),
+      typeMediumDays: 1,
+      typeName: 'SPORT COAT',
+      typeYield,
       version
-    ),
-    generateProductTypes(
-      'BATHROBE',
-      Dollars(35),
-      1,
-      contrasts,
+    }),
+    generateProductTypes({
+      contrast,
+      typeMediumCents: Dollars(35),
+      typeMediumDays: 1,
+      typeName: 'BATHROBE',
+      typeYield,
       version
-    ),
-    generateProductTypes(
-      'TIE',
-      Dollars(25),
-      1,
-      contrasts,
+    }),
+    generateProductTypes({
+      contrast,
+      typeMediumCents: Dollars(25),
+      typeMediumDays: 1,
+      typeName: 'TIE',
+      typeYield,
       version
-    ),
-    generateProductTypes(
-      'PURSE',
-      Dollars(20),
-      1,
-      contrasts,
+    }),
+    generateProductTypes({
+      contrast,
+      typeMediumCents: Dollars(20),
+      typeMediumDays: 1,
+      typeName: 'PURSE',
+      typeYield,
       version
-    ),
-    generateProductTypes(
-      'WALLET',
-      Dollars(30),
-      1,
-      contrasts,
+    }),
+    generateProductTypes({
+      contrast,
+      typeMediumCents: Dollars(30),
+      typeMediumDays: 1,
+      typeName: 'WALLET',
+      typeYield,
       version
-    ),
-    generateProductTypes(
-      'SMALL BAG',
-      Dollars(30),
-      1,
-      contrasts,
+    }),
+    generateProductTypes({
+      contrast,
+      typeMediumCents: Dollars(30),
+      typeMediumDays: 1,
+      typeName: 'SMALL BAG',
+      typeYield,
       version
-    ),
-    generateProductTypes(
-      'LARGE BAG',
-      Dollars(73),
-      1,
-      contrasts,
+    }),
+    generateProductTypes({
+      contrast,
+      typeMediumCents: Dollars(73),
+      typeMediumDays: 1,
+      typeName: 'LARGE BAG',
+      typeYield,
       version
-    ),
-    generateProductTypes(
-      'TANK TOP',
-      Dollars(5),
-      1,
-      contrasts,
+    }),
+    generateProductTypes({
+      contrast,
+      typeMediumCents: Dollars(5),
+      typeMediumDays: 1,
+      typeName: 'TANK TOP',
+      typeYield,
       version
-    )
+    })
   ]);
   const createCareLabel = (units: number, cents: number): Uninserted<PricingCareLabelRow> => ({
     id: uuid.v4(),
