@@ -353,7 +353,8 @@ test('POST /users?promoCode=X applies a code at registration', async (t: Test) =
     codeExpiresAt: null,
     createdBy: adminUser.id,
     creditAmountCents: 1239,
-    creditExpiresAt: null
+    creditExpiresAt: null,
+    isSingleUse: false
   });
 
   const [response, newUser] = await post(

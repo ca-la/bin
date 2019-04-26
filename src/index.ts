@@ -4,16 +4,12 @@ const beginTime = Date.now();
 require('dd-trace').init();
 
 import * as Logger from './services/logger';
-import * as Router from 'koa-router';
-import { cloneDeep } from 'lodash';
-import compress = require('koa-compress');
-
 Logger.log('Starting CALA API...');
 
-import * as fs from 'fs';
-import * as path from 'path';
+import compress = require('koa-compress');
+import koa = require('koa');
 
-/* tslint:disable:no-var-requires */
+import router from './routes';
 const attachSession = require('./middleware/attach-session');
 const errors = require('./middleware/errors');
 const headers = require('./middleware/headers');
@@ -22,21 +18,6 @@ const loggerMiddleware = require('./middleware/logger');
 const options = require('./middleware/options');
 const { default: validatePagination } = require('./middleware/validate-pagination');
 
-/* application routes */
-import annotationRoutes from './components/product-design-canvas-annotations/routes';
-import approvedSignupRoutes from './components/approved-signups/routes';
-import collaboratorRoutes from './components/collaborators/routes';
-import creditRoutes from './components/credits/routes';
-import componentRelationshipRoutes from './components/component-relationships/routes';
-import imageRoutes = require('./components/images/routes');
-import processRoutes from './components/processes/routes';
-import notificationRoutes from './components/notifications/routes';
-import commentRoutes from './components/comments/routes';
-import bidRoutes from './components/bids/routes';
-import userRoutes from './components/users/routes';
-import subscriptionRoutes from './components/subscriptions/routes';
-
-import koa = require('koa');
 const app = koa();
 
 app.use(compress());
@@ -48,44 +29,10 @@ app.use(options);
 app.use(attachSession);
 app.use(validatePagination);
 
-const router = new Router({
-  prefix: '/:version(v1)?'
-});
-
-router.use('/', require('./middleware/root-route'));
-router.use('/product-design-collaborators', cloneDeep(collaboratorRoutes));
-/* tslint:enable:no-var-requires */
-
-const routesDir = path.join(__dirname, 'routes');
-const routeDirectories = fs.readdirSync(routesDir);
-
-routeDirectories.forEach((directoryName: string): void => {
-  // One of the few legit use cases for dynamic requires. May need to remove
-  // this once we add a build system.
-  //
-  // We use `cloneDeep` to avoid a Koa issue preventing mounting the same routes
-  // in mutliple places: https://github.com/alexmingoia/koa-router/issues/244
-  router.use(`/${directoryName}`, cloneDeep(require(path.join(routesDir, directoryName))));
-});
-
-/* component-based routing */
-router.use('/collaborators', collaboratorRoutes);
-router.use('/component-relationships', componentRelationshipRoutes);
-router.use('/notifications', notificationRoutes);
-router.use('/processes', processRoutes);
-router.use('/product-design-canvas-annotations', annotationRoutes);
-router.use('/product-design-images', imageRoutes);
-router.use('/comments', commentRoutes);
-router.use('/credits', creditRoutes);
-router.use('/bids', bidRoutes);
-router.use('/users', userRoutes);
-router.use('/subscriptions', subscriptionRoutes);
-router.use('/approved-signups', approvedSignupRoutes);
+app.use(router.routes());
 
 const loadTime = Date.now() - beginTime;
-Logger.log(`Loaded ${routeDirectories.length} route prefixes in ${loadTime}ms`);
-
-app.use(router.routes());
+Logger.log(`Loaded ${router.stack.length} routes in ${loadTime}ms`);
 
 if (!module.parent) {
   const port = process.env.PORT || 8001;

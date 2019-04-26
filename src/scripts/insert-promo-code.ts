@@ -20,9 +20,10 @@ insertNewPromoCode()
 async function insertNewPromoCode(): Promise<void> {
   const code = process.argv[2];
   const creditAmountString = process.argv[3];
+  const isSingleUse = process.argv[4] === '--singleUse';
 
   if (!code || !creditAmountString) {
-    throw new Error('Usage: insert-promo-code.ts [code] [amount in cents]');
+    throw new Error('Usage: insert-promo-code.ts <code> <amount in cents> [--singleUse]');
   }
 
   const newCode: PromoCode = {
@@ -32,7 +33,8 @@ async function insertNewPromoCode(): Promise<void> {
     createdBy: CALA_OPS_USER_ID,
     creditAmountCents: Number(creditAmountString),
     creditExpiresAt: null,
-    id: uuid.v4()
+    id: uuid.v4(),
+    isSingleUse
   };
 
   const inserted = await PromoCodesDAO.create(newCode);

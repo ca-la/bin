@@ -10,7 +10,8 @@ test('PromoCodesDAO supports creation and retrieval', async (t: Test) => {
     codeExpiresAt: null,
     createdBy: user.id,
     creditAmountCents: 1239,
-    creditExpiresAt: null
+    creditExpiresAt: null,
+    isSingleUse: false
   });
 
   const code = await PromoCodesDAO.findByCode('freeBie');
@@ -31,7 +32,8 @@ test('PromoCodesDAO does not allow duplicate codes', async (t: Test) => {
     codeExpiresAt: null,
     createdBy: user.id,
     creditAmountCents: 1239,
-    creditExpiresAt: null
+    creditExpiresAt: null,
+    isSingleUse: false
   });
 
   try {
@@ -40,10 +42,43 @@ test('PromoCodesDAO does not allow duplicate codes', async (t: Test) => {
       codeExpiresAt: null,
       createdBy: user.id,
       creditAmountCents: 1239,
-      creditExpiresAt: null
+      creditExpiresAt: null,
+      isSingleUse: false
     });
     t.fail('should not succeed');
   } catch (err) {
     t.equal(err.message, 'Promo code already exists');
   }
+});
+
+test('PromoCodesDAO allows updating codes', async (t: Test) => {
+  const { user } = await createUser({ withSession: false });
+
+  const code = await PromoCodesDAO.create({
+    code: 'FREEBIE',
+    codeExpiresAt: null,
+    createdBy: user.id,
+    creditAmountCents: 1239,
+    creditExpiresAt: null,
+    isSingleUse: false
+  });
+
+  const updated = await PromoCodesDAO.update(code.id, {
+    codeExpiresAt: new Date('2019-01-01')
+  });
+
+  t.equal(
+    updated &&
+    updated.codeExpiresAt &&
+    updated.codeExpiresAt.toISOString(),
+    (new Date('2019-01-01')).toISOString()
+  );
+});
+
+test('PromoCodesDAO.update returns null if none match', async (t: Test) => {
+  const updated = await PromoCodesDAO.update('00000000-0000-0000-0000-000000000000', {
+    codeExpiresAt: new Date('2019-01-01')
+  });
+
+  t.equal(updated, null);
 });

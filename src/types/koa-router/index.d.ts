@@ -13,6 +13,10 @@ declare module 'koa-router' {
   }
 
   class Router {
+    // `stack` is an undocumented array of the registered routes. Not useful
+    // except for counting how many routes we have mounted.
+    public stack: never[];
+
     /**
      * Create a new router.
      */

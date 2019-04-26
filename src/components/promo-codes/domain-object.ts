@@ -9,6 +9,7 @@ export interface PromoCodeRow {
   credit_amount_cents: string; // bigint
   credit_expires_at: string | null;
   id: string;
+  is_single_use: boolean;
 }
 
 export interface PromoCode {
@@ -19,6 +20,7 @@ export interface PromoCode {
   creditAmountCents: number;
   creditExpiresAt: Date | null;
   id: string;
+  isSingleUse: boolean;
 }
 
 function decode(row: PromoCodeRow): PromoCode {
@@ -29,19 +31,8 @@ function decode(row: PromoCodeRow): PromoCode {
     createdBy: row.created_by,
     creditAmountCents: Number(row.credit_amount_cents),
     creditExpiresAt: row.credit_expires_at === null ? null : new Date(row.credit_expires_at),
-    id: row.id
-  };
-}
-
-function encode(data: PromoCode): PromoCodeRow {
-  return {
-    code: data.code,
-    code_expires_at: data.codeExpiresAt && data.codeExpiresAt.toISOString(),
-    created_at: data.createdAt.toISOString(),
-    created_by: data.createdBy,
-    credit_amount_cents: String(data.creditAmountCents),
-    credit_expires_at: data.creditExpiresAt && data.creditExpiresAt.toISOString(),
-    id: data.id
+    id: row.id,
+    isSingleUse: row.is_single_use
   };
 }
 
@@ -52,7 +43,15 @@ function forInsertion(data: Uninserted<PromoCode>): Uninserted<PromoCodeRow> {
     created_by: data.createdBy,
     credit_amount_cents: String(data.creditAmountCents),
     credit_expires_at: data.creditExpiresAt && data.creditExpiresAt.toISOString(),
-    id: data.id
+    id: data.id,
+    is_single_use: data.isSingleUse
+  };
+}
+
+function encode(data: PromoCode): PromoCodeRow {
+  return {
+    ...forInsertion(data),
+    created_at: data.createdAt.toISOString()
   };
 }
 
@@ -70,7 +69,8 @@ export function isPromoCodeRow(row: object): row is PromoCodeRow {
     'created_by',
     'credit_amount_cents',
     'code_expires_at',
-    'credit_expires_at'
+    'credit_expires_at',
+    'is_single_use'
   );
 }
 
@@ -82,6 +82,7 @@ export function isPromoCode(row: object): row is PromoCode {
     'createdBy',
     'creditAmountCents',
     'codeExpiresAt',
-    'creditExpiresAt'
+    'creditExpiresAt',
+    'isSingleUse'
   );
 }

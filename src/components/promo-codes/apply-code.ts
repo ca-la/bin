@@ -1,6 +1,9 @@
+import * as Knex from 'knex';
+
+import * as db from '../../services/db';
 import InvalidDataError = require('../../errors/invalid-data');
 import { addCredit } from '../credits/dao';
-import { findByCode } from './dao';
+import { findByCode, update } from './dao';
 
 type CreditedAmountCents = number;
 
@@ -12,13 +15,21 @@ export default async function applyCode(
 
   if (!promoCode) { throw new InvalidDataError(`Invalid promo code: ${code}`); }
 
-  await addCredit({
-    amountCents: promoCode.creditAmountCents,
-    createdBy: userId,
-    description: `Promo code applied: ${code}`,
-    expiresAt: promoCode.creditExpiresAt,
-    givenTo: userId
-  });
+  return await db.transaction(async (trx: Knex.Transaction): Promise<CreditedAmountCents> => {
+    await addCredit({
+      amountCents: promoCode.creditAmountCents,
+      createdBy: userId,
+      description: `Promo code applied: ${code}`,
+      expiresAt: promoCode.creditExpiresAt,
+      givenTo: userId
+    }, trx);
 
-  return promoCode.creditAmountCents;
+    if (promoCode.isSingleUse) {
+      await update(promoCode.id, {
+        codeExpiresAt: new Date()
+      }, trx);
+    }
+
+    return promoCode.creditAmountCents;
+  });
 }

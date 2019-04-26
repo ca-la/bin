@@ -1,3 +1,4 @@
+import * as Knex from 'knex';
 import * as uuid from 'node-uuid';
 import rethrow = require('pg-rethrow');
 
@@ -64,5 +65,34 @@ export async function create(
     isPromoCodeRow,
     dataAdapter,
     created
+  );
+}
+
+export async function update(
+  promoCodeId: string,
+  data: Partial<PromoCode>,
+  trx?: Knex.Transaction
+): Promise<PromoCode | null> {
+  const rowData = {
+    code_expires_at: data.codeExpiresAt && data.codeExpiresAt.toISOString()
+  };
+
+  const updated = await db(TABLE_NAME)
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
+    .where({ id: promoCodeId })
+    .update(rowData, '*')
+    .then((rows: PromoCodeRow[]) => first<PromoCodeRow>(rows));
+
+  if (!updated) { return null; }
+
+  return validate<PromoCodeRow, PromoCode>(
+    TABLE_NAME,
+    isPromoCodeRow,
+    dataAdapter,
+    updated
   );
 }
