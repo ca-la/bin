@@ -59,6 +59,7 @@ function calculateAmounts(
     quote.sourcingTimeMs,
     quote.samplingTimeMs,
     quote.preProductionTimeMs,
+    quote.processTimeMs,
     quote.productionTimeMs,
     quote.fulfillmentTimeMs
   ]);
@@ -162,12 +163,13 @@ function* getQuotes(this: Koa.Application.Context): AsyncIterableIterator<any> {
       .catch(filterError(InvalidDataError, (err: InvalidDataError) =>
         this.throw(400, err)));
 
-    const { payLaterTotalCents, payNowTotalCents } = calculateAmounts(unsavedQuote);
+    const { payLaterTotalCents, payNowTotalCents, timeTotalMs } = calculateAmounts(unsavedQuote);
 
     this.body = {
       designId,
       payLaterTotalCents,
       payNowTotalCents,
+      timeTotalMs,
       units: unsavedQuote.units
     };
     this.status = 200;

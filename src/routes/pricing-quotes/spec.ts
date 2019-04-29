@@ -237,6 +237,7 @@ test('GET /pricing-quotes?designId&units returns unsaved quote', async (t: Test)
     designId: design.id,
     payLaterTotalCents: 527660,
     payNowTotalCents: 496000,
+    timeTotalMs: 1152000000,
     units: 100
   });
 });
@@ -323,7 +324,7 @@ test(
       payLaterTotalCentsPerUnit: 5277,
       payNowTotalCents: 496000,
       payNowTotalCentsPerUnit: 4960,
-      timeTotalMs: 1056000000
+      timeTotalMs: 1152000000
     });
   }
 );

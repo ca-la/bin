@@ -10,6 +10,8 @@ import generateProductTypes from '../../services/generate-product-types';
 import { PricingProductMaterialRow } from '../../domain-objects/pricing-product-material';
 import { PricingMarginRow } from '../../domain-objects/pricing-margin';
 import { PricingCareLabelRow } from '../../domain-objects/pricing-care-label';
+import { PricingProcessTimelineRow } from '../../components/pricing-process-timeline/domain-object';
+import { daysToMs } from '../../services/time-conversion';
 
 export default async function generatePricingValues(): Promise<any> {
   const pricingProcessScreenPrinting = generateScreenPrintingProcess(
@@ -122,6 +124,148 @@ export default async function generatePricingValues(): Promise<any> {
       version: 0
     }
   ];
+  const pricingProcessTimelines: Uninserted<PricingProcessTimelineRow>[] = [
+    {
+      id: uuid.v4(),
+      minimum_units: 1,
+      time_ms: daysToMs(0).toString(),
+      unique_processes: 0,
+      version: 0
+    },
+    {
+      id: uuid.v4(),
+      minimum_units: 1,
+      time_ms: daysToMs(1).toString(),
+      unique_processes: 1,
+      version: 0
+    },
+    {
+      id: uuid.v4(),
+      minimum_units: 1,
+      time_ms: daysToMs(2).toString(),
+      unique_processes: 2,
+      version: 0
+    },
+    {
+      id: uuid.v4(),
+      minimum_units: 1,
+      time_ms: daysToMs(3).toString(),
+      unique_processes: 3,
+      version: 0
+    },
+    {
+      id: uuid.v4(),
+      minimum_units: 5,
+      time_ms: daysToMs(0).toString(),
+      unique_processes: 0,
+      version: 0
+    },
+    {
+      id: uuid.v4(),
+      minimum_units: 5,
+      time_ms: daysToMs(1).toString(),
+      unique_processes: 1,
+      version: 0
+    },
+    {
+      id: uuid.v4(),
+      minimum_units: 5,
+      time_ms: daysToMs(2).toString(),
+      unique_processes: 2,
+      version: 0
+    },
+    {
+      id: uuid.v4(),
+      minimum_units: 5,
+      time_ms: daysToMs(3).toString(),
+      unique_processes: 3,
+      version: 0
+    },
+    {
+      id: uuid.v4(),
+      minimum_units: 15,
+      time_ms: daysToMs(0).toString(),
+      unique_processes: 0,
+      version: 0
+    },
+    {
+      id: uuid.v4(),
+      minimum_units: 15,
+      time_ms: daysToMs(1).toString(),
+      unique_processes: 1,
+      version: 0
+    },
+    {
+      id: uuid.v4(),
+      minimum_units: 15,
+      time_ms: daysToMs(2).toString(),
+      unique_processes: 2,
+      version: 0
+    },
+    {
+      id: uuid.v4(),
+      minimum_units: 15,
+      time_ms: daysToMs(3).toString(),
+      unique_processes: 3,
+      version: 0
+    },
+    {
+      id: uuid.v4(),
+      minimum_units: 25,
+      time_ms: daysToMs(0).toString(),
+      unique_processes: 0,
+      version: 0
+    },
+    {
+      id: uuid.v4(),
+      minimum_units: 25,
+      time_ms: daysToMs(1).toString(),
+      unique_processes: 1,
+      version: 0
+    },
+    {
+      id: uuid.v4(),
+      minimum_units: 25,
+      time_ms: daysToMs(2).toString(),
+      unique_processes: 2,
+      version: 0
+    },
+    {
+      id: uuid.v4(),
+      minimum_units: 25,
+      time_ms: daysToMs(3).toString(),
+      unique_processes: 3,
+      version: 0
+    },
+    {
+      id: uuid.v4(),
+      minimum_units: 50,
+      time_ms: daysToMs(0).toString(),
+      unique_processes: 0,
+      version: 0
+    },
+    {
+      id: uuid.v4(),
+      minimum_units: 50,
+      time_ms: daysToMs(1).toString(),
+      unique_processes: 1,
+      version: 0
+    },
+    {
+      id: uuid.v4(),
+      minimum_units: 50,
+      time_ms: daysToMs(2).toString(),
+      unique_processes: 2,
+      version: 0
+    },
+    {
+      id: uuid.v4(),
+      minimum_units: 50,
+      time_ms: daysToMs(3).toString(),
+      unique_processes: 3,
+      version: 0
+    }
+  ];
   const pricingConstants: Uninserted<PricingConstantRow>[] = [
     {
       branded_labels_additional_cents: 5,
@@ -202,6 +346,7 @@ export default async function generatePricingValues(): Promise<any> {
     pricingConstants.length,
     pricingMargins.length,
     pricingMaterials.length,
+    pricingProcessTimelines.length,
     pricingProductTypeTee.length
   ]);
 
@@ -211,6 +356,7 @@ export default async function generatePricingValues(): Promise<any> {
       await trx.insert(pricingConstants).into('pricing_constants'),
       await trx.insert(pricingCareLabels).into('pricing_care_labels'),
       await trx.insert(pricingMargins).into('pricing_margins'),
+      await trx.insert(pricingProcessTimelines).into('pricing_process_timelines'),
       await trx.insert(pricingMaterials).into('pricing_product_materials'),
       await trx.insert(pricingProductTypeTee).into('pricing_product_types')
     ];

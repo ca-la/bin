@@ -75,6 +75,14 @@ test('generateUnsavedQuote', async (t: Test) => {
       version: 0
     },
     patternRevisionCents: 5000,
+    processTimeline: {
+      createdAt: new Date(),
+      id: uuid.v4(),
+      minimumUnits: 2000,
+      timeMs: daysToMs(4),
+      uniqueProcesses: 1,
+      version: 0
+    },
     processes: [{
       complexity: '1_COLOR',
       createdAt: new Date(),
@@ -178,6 +186,14 @@ test('generateUnsavedQuote for blank', async (t: Test) => {
       version: 0
     },
     patternRevisionCents: 5000,
+    processTimeline: {
+      createdAt: new Date(),
+      id: uuid.v4(),
+      minimumUnits: 100,
+      timeMs: daysToMs(2),
+      uniqueProcesses: 1,
+      version: 0
+    },
     processes: [{
       complexity: '1_COLOR',
       createdAt: new Date(),

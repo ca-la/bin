@@ -62,6 +62,7 @@ async function getQuoteInput(values: PricingQuoteValues): Promise<string> {
     constant_id: values.constantId,
     id: uuid.v4(),
     margin_id: values.margin.id,
+    pricing_process_timeline_id: values.processTimeline && values.processTimeline.id,
     product_material_id: values.material.id,
     product_type_id: values.type.id
   };
@@ -89,6 +90,7 @@ function calculateQuote(
     productionTimeMs,
     fulfillmentTimeMs
   } = values.type;
+  const processTimeMs = values.processTimeline ? values.processTimeline.timeMs : 0;
   const developmentCostCents = request.productComplexity !== 'BLANK'
     ? calculateDevelopmentCosts(
       units,
@@ -111,6 +113,7 @@ function calculateQuote(
     creationTimeMs,
     fulfillmentTimeMs,
     preProductionTimeMs,
+    processTimeMs,
     productionTimeMs,
     samplingTimeMs,
     sourcingTimeMs,

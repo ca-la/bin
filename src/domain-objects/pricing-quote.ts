@@ -12,6 +12,7 @@ import { hasProperties } from '../services/require-properties';
 import DataAdapter from '../services/data-adapter';
 import PricingMargin from './pricing-margin';
 import PricingCareLabel from './pricing-care-label';
+import PricingProcessTimeline from '../components/pricing-process-timeline/domain-object';
 
 interface BasePricingQuoteRequest {
   productType: ProductType;
@@ -36,6 +37,7 @@ export interface PricingQuoteCalculated {
   sourcingTimeMs: number;
   samplingTimeMs: number;
   preProductionTimeMs: number;
+  processTimeMs: number;
   productionTimeMs: number;
   fulfillmentTimeMs: number;
 }
@@ -67,6 +69,7 @@ export interface PricingQuoteRow {
   sampling_time_ms: number;
   pre_production_time_ms: number;
   production_time_ms: number;
+  process_time_ms: number;
   fulfillment_time_ms: number;
 }
 
@@ -83,6 +86,7 @@ export interface PricingQuoteInputRow {
   margin_id: string;
   product_material_id: string;
   product_type_id: string;
+  pricing_process_timeline_id: string | null;
   care_label_id: string;
   created_at: Date;
 }
@@ -93,6 +97,7 @@ export interface PricingQuoteValues extends Omit<PricingConstant, 'id' | 'create
   type: PricingProductType;
   sample: PricingProductType;
   processes: PricingProcess[];
+  processTimeline: PricingProcessTimeline | null;
   margin: PricingMargin;
   careLabel: PricingCareLabel;
 }

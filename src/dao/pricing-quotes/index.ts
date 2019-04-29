@@ -49,6 +49,12 @@ import PricingCareLabel, {
 } from '../../domain-objects/pricing-care-label';
 import DataAdapter from '../../services/data-adapter';
 import InvalidDataError = require('../../errors/invalid-data');
+import first from '../../services/first';
+import PricingProcessTimeline, {
+  dataAdapter as pricingProcessTimelineDataAdapter,
+  isPricingProcessTimelineRow,
+  PricingProcessTimelineRow
+} from '../../components/pricing-process-timeline/domain-object';
 
 type TableName = 'pricing_care_labels'
   | 'pricing_constants'
@@ -112,6 +118,7 @@ export async function findLatestValuesForRequest(
   const type = await findLatestProductType(request.productType, request.productComplexity, units);
   const sample = await findLatestProductType(request.productType, request.productComplexity, 1);
   const processes = await findLatestProcesses(request.processes, units);
+  const processTimeline = await findLatestProcessTimeline(request.processes, units);
   const margin = await findLatestMargin(request.units);
 
   const { id: constantId, ...pricingValues } = latestConstant;
@@ -121,6 +128,7 @@ export async function findLatestValuesForRequest(
     constantId,
     margin,
     material,
+    processTimeline,
     processes,
     sample,
     type,
@@ -324,6 +332,49 @@ Found processes: ${JSON.stringify(processRows, null, 4)}`);
       // lodash thinks process is a function since it has a name property
       return find(processRows, process as object);
     })
+  );
+}
+
+async function findLatestProcessTimeline(
+  processes: Process[],
+  units: number
+): Promise<PricingProcessTimeline | null> {
+  if (processes.length === 0) {
+    return null;
+  }
+  const TABLE_NAME = 'pricing_process_timelines';
+  const uniqueProcesses = uniqBy(
+    processes,
+    (process: Process): string => process.name
+  ).length;
+
+  const processTimelineRow = await db(TABLE_NAME)
+      .select()
+      .where('unique_processes', '<=', uniqueProcesses)
+      .whereIn(
+        'version',
+        db(TABLE_NAME)
+          .max('version')
+      )
+      .whereIn(
+        'unique_processes',
+        db(TABLE_NAME)
+          .where('unique_processes', '<=', uniqueProcesses)
+          .max('unique_processes'))
+      .whereIn(
+        'minimum_units',
+        db(TABLE_NAME)
+          .where('minimum_units', '<=', units)
+          .max('minimum_units')
+      ).then((rows: PricingProcessTimelineRow[]) => first<PricingProcessTimelineRow>(rows));
+
+  if (!processTimelineRow) { return null; }
+
+  return validate(
+    TABLE_NAME,
+    isPricingProcessTimelineRow,
+    pricingProcessTimelineDataAdapter,
+    processTimelineRow
   );
 }
 

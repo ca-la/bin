@@ -24,6 +24,7 @@ const TABLES = [
   'pricing_inputs',
   'pricing_margins',
   'pricing_processes',
+  'pricing_process_timelines',
   'pricing_product_materials',
   'pricing_product_types',
   'pricing_quotes',
