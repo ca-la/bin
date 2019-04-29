@@ -146,8 +146,8 @@ test('GET /bids?userId&state=OPEN', async (t: Test) => {
 });
 
 test('GET /bids?userId&state=EXPIRED', async (t: Test) => {
-  const twoDaysAgo = new Date();
-  twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+  const threeDaysAgo = new Date();
+  threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
 
   const admin = await createUser({ role: 'ADMIN' });
   const partner = await createUser({ role: 'PARTNER' });
@@ -173,7 +173,7 @@ test('GET /bids?userId&state=EXPIRED', async (t: Test) => {
   });
   const expiredBid = await BidsDAO.create({
     bidPriceCents: 100000,
-    createdAt: twoDaysAgo,
+    createdAt: threeDaysAgo,
     createdBy: admin.user.id,
     description: 'Full Service Brah',
     id: uuid.v4(),
@@ -181,7 +181,7 @@ test('GET /bids?userId&state=EXPIRED', async (t: Test) => {
   });
   await generateDesignEvent({
     bidId: expiredBid.id,
-    createdAt: twoDaysAgo,
+    createdAt: threeDaysAgo,
     targetId: partner.user.id,
     type: 'BID_DESIGN'
   });

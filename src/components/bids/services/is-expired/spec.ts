@@ -12,18 +12,18 @@ test('isExpired can determine if a bid is expired', async (t: Test) => {
     generatePricing: false
   });
   const now = new Date();
-  const yesterday = new Date(now.setHours(now.getHours() - 24));
+  const threeDaysAgo = new Date(now.setHours(now.getHours() - 72));
   const now2 = new Date();
-  const twentyThreeHoursAgo = new Date(now2.setHours(now2.getHours() - 23));
+  const seventyOneHoursAgo = new Date(now2.setHours(now2.getHours() - 71));
   const { bid: bid3 } = await generateBid({
     bidOptions: {
-      createdAt: yesterday
+      createdAt: threeDaysAgo
     },
     generatePricing: false
   });
   const { bid: bid4 } = await generateBid({
     bidOptions: {
-      createdAt: twentyThreeHoursAgo
+      createdAt: seventyOneHoursAgo
     },
     generatePricing: false
   });

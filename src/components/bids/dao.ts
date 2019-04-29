@@ -12,6 +12,7 @@ import Bid, {
 import first from '../../services/first';
 import { validate, validateEvery } from '../../services/validate-from-db';
 import limitOrOffset from '../../services/limit-or-offset';
+import { MILLISECONDS_TO_EXPIRE } from './constants';
 
 const TABLE_NAME = 'pricing_bids';
 const DESIGN_EVENTS_TABLE = 'design_events';
@@ -106,9 +107,13 @@ function findAllByState(state: 'OPEN' | 'ACCEPTED' | 'REJECTED' | 'EXPIRED'): Kn
       }
 
       if (state === 'OPEN') {
-        query.andWhereRaw('pricing_bids.created_at > (now() - INTERVAL \'1 Day\')');
+        query.andWhereRaw(
+          `pricing_bids.created_at > (now() - INTERVAL '${MILLISECONDS_TO_EXPIRE} milliseconds')`
+        );
       } else if (state === 'EXPIRED') {
-        query.andWhereRaw('pricing_bids.created_at < (now() - INTERVAL \'1 Day\')');
+        query.andWhereRaw(
+          `pricing_bids.created_at < (now() - INTERVAL '${MILLISECONDS_TO_EXPIRE} milliseconds')`
+        );
       }
     })
     .groupBy('pricing_bids.id')

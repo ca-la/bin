@@ -407,10 +407,23 @@ test('Bids DAO supports finding all with a limit and offset', async (t: Test) =>
 });
 
 test('Bids DAO supports finding all bids by status', async (t: Test) => {
+  const now = new Date();
   const { bid: openBid1 } = await generateBid();
   await generateDesignEvent({
     bidId: openBid1.id,
-    createdAt: new Date(),
+    createdAt: now,
+    type: 'BID_DESIGN'
+  });
+  const fiftyHoursAgo = new Date(now.setHours(now.getHours() - 50));
+  const { bid: openBid2 } = await generateBid({
+    bidOptions: {
+      createdAt: fiftyHoursAgo
+    },
+    generatePricing: false
+  });
+  await generateDesignEvent({
+    bidId: openBid2.id,
+    createdAt: fiftyHoursAgo,
     type: 'BID_DESIGN'
   });
 
@@ -472,7 +485,7 @@ test('Bids DAO supports finding all bids by status', async (t: Test) => {
   });
 
   const result1 = await findAll({ state: 'OPEN' });
-  t.deepEqual(result1, [openBid1], 'Only returns the open bids');
+  t.deepEqual(result1, [openBid1, openBid2], 'Only returns the open bids');
 
   const result2 = await findAll({ state: 'ACCEPTED' });
   t.deepEqual(result2, [acceptedBid, acceptedBid2], 'Only returns the accepted bids');

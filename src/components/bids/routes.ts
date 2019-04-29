@@ -164,11 +164,11 @@ function* assignBidToPartner(this: Koa.Application.Context): AsyncIterableIterat
 
   const maybeCollaborator = yield CollaboratorsDAO.findByDesignAndUser(design.id, userId);
   const now = new Date();
-  const tomorrow = new Date(now.getTime() + MILLISECONDS_TO_EXPIRE);
+  const cancellationDate = new Date(now.getTime() + MILLISECONDS_TO_EXPIRE);
 
   if (!maybeCollaborator) {
     yield CollaboratorsDAO.create({
-      cancelledAt: tomorrow,
+      cancelledAt: cancellationDate,
       collectionId: null,
       designId: design.id,
       invitationMessage: '',
@@ -178,7 +178,7 @@ function* assignBidToPartner(this: Koa.Application.Context): AsyncIterableIterat
     });
   } else if (maybeCollaborator.cancelledAt) {
     yield CollaboratorsDAO.update(maybeCollaborator.id, {
-      cancelledAt: tomorrow
+      cancelledAt: cancellationDate
     });
   }
 
