@@ -1,13 +1,7 @@
 'use strict';
 
-const {
-  FEATURED_PRODUCT_IDS_PROD,
-  FEATURED_PRODUCT_IDS_DEV,
-  FEATURED_COLLECTION_LISTS_DEV,
-  FEATURED_COLLECTION_LISTS_PROD
-} = require('./featured');
-
 const envs = Object.freeze({
+  DEMO: Symbol('demo'),
   LOCAL: Symbol('local'),
   PROD: Symbol('prod'),
   STG: Symbol('stg')
@@ -15,31 +9,22 @@ const envs = Object.freeze({
 
 const ENV = envs[process.env.DEPLOYMENT_NAME] || envs.LOCAL;
 
-const FEATURED_PRODUCT_IDS = {
-  [envs.LOCAL]: FEATURED_PRODUCT_IDS_DEV,
-  [envs.PROD]: FEATURED_PRODUCT_IDS_PROD,
-  [envs.STG]: FEATURED_PRODUCT_IDS_DEV
-}[ENV];
-
-const FEATURED_COLLECTION_LISTS = {
-  [envs.LOCAL]: FEATURED_COLLECTION_LISTS_DEV,
-  [envs.PROD]: FEATURED_COLLECTION_LISTS_PROD,
-  [envs.STG]: FEATURED_COLLECTION_LISTS_DEV
-}[ENV];
-
 const MINIMUM_SCAN_PITCH_RADIANS = {
+  [envs.DEMO]: 1.35,
   [envs.LOCAL]: 1.35,
   [envs.PROD]: 1.35,
   [envs.STG]: 1.35
 }[ENV];
 
 const ADMIN_EMAIL = {
+  [envs.DEMO]: 'hi@ca.la',
   [envs.LOCAL]: 'devops@ca.la',
   [envs.PROD]: 'hi@ca.la',
   [envs.STG]: 'hi@ca.la'
 }[ENV];
 
 const REQUIRE_CALA_EMAIL = {
+  [envs.DEMO]: true,
   [envs.LOCAL]: false,
   [envs.PROD]: false,
   [envs.STG]: true
@@ -87,10 +72,6 @@ const config = {
 
   // API key and password separated by a colon, e.g. 'tok12345:password12345'
   SHOPIFY_STORE_AUTH: process.env.SHOPIFY_STORE_AUTH,
-
-  FEATURED_PRODUCT_IDS,
-
-  FEATURED_COLLECTION_LISTS,
 
   REFERRAL_VALUE_DOLLARS: 50,
 

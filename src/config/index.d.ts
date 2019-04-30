@@ -25,9 +25,6 @@ export const MAILGUN_API_KEY: string;
 export const SHOPIFY_STORE_BASE: string;
 export const SHOPIFY_STORE_AUTH: string;
 
-export const FEATURED_PRODUCT_IDS: string;
-export const FEATURED_COLLECTION_LISTS: string;
-
 export const REFERRAL_VALUE_DOLLARS: number;
 
 export const TWILIO_SID: string;
