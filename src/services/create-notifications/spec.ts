@@ -72,16 +72,28 @@ test('sendDesignOwnerAnnotationCommentCreateNotification', async (t: tape.Test) 
       annotation.id,
       canvas.id,
       ownerComment.id,
-      owner.id
+      owner.id,
+      []
     );
   t.equal(nullNotification, null, 'A notification will not be made if the actor is the recipient');
+
+  const mentionedNotification = await NotificationsService
+    .sendDesignOwnerAnnotationCommentCreateNotification(
+      annotation.id,
+      canvas.id,
+      ownerComment.id,
+      user.id,
+      [owner.id]
+    );
+  t.equal(mentionedNotification, null, 'A notification will not be made if the owner is mentioned');
 
   const notification = await NotificationsService
     .sendDesignOwnerAnnotationCommentCreateNotification(
       annotation.id,
       canvas.id,
       otherComment.id,
-      user.id
+      user.id,
+      []
     );
   if (!notification) { throw new Error('Expected a notification!'); }
   const {

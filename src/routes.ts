@@ -5,6 +5,7 @@ import { cloneDeep } from 'lodash';
 
 /* application routes */
 import annotationRoutes from './components/product-design-canvas-annotations/routes';
+import annotationCommentRoutes from './components/annotation-comments/routes';
 import approvedSignupRoutes from './components/approved-signups/routes';
 import bidRoutes from './components/bids/routes';
 import collaboratorRoutes from './components/collaborators/routes';
@@ -49,6 +50,7 @@ router.use('/credits', creditRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/processes', processRoutes);
 router.use('/product-design-canvas-annotations', annotationRoutes);
+router.use('/product-design-canvas-annotations/:annotationId/comments', annotationCommentRoutes);
 router.use('/product-design-images', imageRoutes);
 router.use('/promo-codes', promoCodeRoutes);
 router.use('/subscriptions', subscriptionRoutes);

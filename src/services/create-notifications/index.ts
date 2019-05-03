@@ -107,7 +107,8 @@ export async function sendDesignOwnerAnnotationCommentCreateNotification(
   annotationId: string,
   canvasId: string,
   commentId: string,
-  actorId: string
+  actorId: string,
+  mentionedUserIds: string[]
 ): Promise<AnnotationCommentCreateNotification | null> {
   const canvas = await CanvasesDAO.findById(canvasId);
   if (!canvas) { throw new Error(`Canvas ${canvasId} does not exist!`); }
@@ -117,6 +118,7 @@ export async function sendDesignOwnerAnnotationCommentCreateNotification(
   const collectionId = design.collectionIds[0] || null;
 
   if (actorId === targetId) { return null; }
+  if (mentionedUserIds.includes(targetId)) { return null; }
 
   const id = uuid.v4();
   const notification = await replaceNotifications({
