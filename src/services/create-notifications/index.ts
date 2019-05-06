@@ -78,16 +78,6 @@ import {
   isAnnotationCommentMentionNotification
 } from '../../components/notifications/models/annotation-mention';
 
-async function isAdmins(userIds: string[]): Promise<boolean> {
-  for (const userId of userIds) {
-    const user = await UsersDAO.findById(userId);
-    if (!user || user.role !== 'ADMIN') {
-      return false;
-    }
-  }
-  return true;
-}
-
 /**
  * Deletes pre-existing similar notifications and adds in a new one.
  */
@@ -158,8 +148,7 @@ export async function sendAnnotationCommentMentionNotification(
   if (!design) { throw new Error(`Design ${canvas.designId} does not exist!`); }
   const collectionId = design.collectionIds[0] || null;
 
-  const isBetweenAdmins = await isAdmins([actorId, recipientUserId]);
-  if (actorId === recipientUserId || !isBetweenAdmins) { return null; }
+  if (actorId === recipientUserId) { return null; }
 
   const id = uuid.v4();
   const notification = await replaceNotifications({
@@ -296,8 +285,7 @@ export async function sendTaskCommentMentionNotification(
   actorId: string,
   recipientId: string
 ): Promise<TaskCommentMentionNotification | null> {
-  const isBetweenAdmins = await isAdmins([recipientId, actorId]);
-  if (recipientId === actorId || !isBetweenAdmins) {
+  if (recipientId === actorId) {
     return null;
   }
 
