@@ -94,15 +94,3 @@ test('AWS Service supports getting a thumbnail upload policy', async (t: tape.Te
   sinon.assert.callCount(awsStub, 1);
   t.ok('Presigned post statement is executed on the AWS instance');
 });
-
-test('AWS Service supports enqueuing a message', async (t: tape.Test) => {
-  const awsStub = sandbox().stub(AWS, 'SQS').returns({
-    sendMessage: (): object => {
-      return { promise: (): void => { /* NO-OP */ } };
-    }
-  });
-
-  await AWSService.enqueueMessage('foo-bar.biz', 'us-east-2', 'foo-bar', 'foo');
-  sinon.assert.callCount(awsStub, 1);
-  t.ok('Presigned post statement is executed on the AWS instance');
-});

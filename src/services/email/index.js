@@ -3,7 +3,7 @@
 const fetch = require('node-fetch');
 const FormData = require('form-data');
 
-const { enqueueMessage } = require('../aws');
+const { enqueueMessage } = require('../aws/sqs');
 const { requireProperties } = require('../require-properties');
 const {
   AWS_NOTIFICATION_SQS_URL,
@@ -37,12 +37,12 @@ function sendSynchronouslyDeprecated(to, subject, emailBody) {
 function enqueueSend(data) {
   requireProperties(data, 'to', 'templateName', 'params');
 
-  return enqueueMessage(
-    AWS_NOTIFICATION_SQS_URL,
-    AWS_NOTIFICATION_SQS_REGION,
-    'email',
-    data
-  );
+  return enqueueMessage({
+    queueUrl: AWS_NOTIFICATION_SQS_URL,
+    queueRegion: AWS_NOTIFICATION_SQS_REGION,
+    messageType: 'email',
+    payload: data
+  });
 }
 
 module.exports = {

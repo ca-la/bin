@@ -2,7 +2,6 @@ import * as mime from 'mime-types';
 import * as AWS from 'aws-sdk';
 import { DeleteObjectOutput, GetObjectOutput, PresignedPost } from 'aws-sdk/clients/s3';
 import { PromiseResult } from 'aws-sdk/lib/request';
-import { SendMessageResult } from 'aws-sdk/clients/sqs';
 import * as fs from 'fs';
 import {
   AWS_ACCESS_KEY,
@@ -139,24 +138,4 @@ export function getThumbnailUploadPolicy(
     ],
     Expires: 60
   });
-}
-
-export async function enqueueMessage(
-  queueUrl: string,
-  queueRegion: string,
-  messageType: string,
-  payload: any
-): Promise<PromiseResult<SendMessageResult, AWS.AWSError>> {
-  const sqs = new AWS.SQS({ region: queueRegion });
-  const params = {
-    MessageAttributes: {
-      type: {
-        DataType: 'String',
-        StringValue: messageType
-      }
-    },
-    MessageBody: JSON.stringify(payload),
-    QueueUrl: queueUrl
-  };
-  return sqs.sendMessage(params).promise();
 }
