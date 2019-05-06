@@ -20,6 +20,8 @@
     "cala-validate-deployment-readiness": "validate-deployment-readiness"
   },
   "scripts": {
+    "cala-format": "prettier \"src/**/*.ts\" \"src/**/*.tsx\" --write",
+    "cala-test-format": "prettier \"src/**/*.ts\" \"src/**/*.tsx\" -l",
     "lint": "eslint -c ./.eslintrc ./validate-deployment-readiness",
     "release-minor": "npm run lint && npm version minor && git push origin master --tags && npm publish",
     "release-patch": "npm run lint && npm version patch && git push origin master --tags && npm publish"
