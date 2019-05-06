@@ -16,6 +16,7 @@ import imageRoutes = require('./components/images/routes');
 import notificationRoutes from './components/notifications/routes';
 import processRoutes from './components/processes/routes';
 import promoCodeRoutes from './components/promo-codes/routes';
+import resolveAccountRoutes from './components/resolve-accounts/routes';
 import subscriptionRoutes from './components/subscriptions/routes';
 import userRoutes from './components/users/routes';
 
@@ -53,6 +54,7 @@ router.use('/product-design-canvas-annotations', annotationRoutes);
 router.use('/product-design-canvas-annotations/:annotationId/comments', annotationCommentRoutes);
 router.use('/product-design-images', imageRoutes);
 router.use('/promo-codes', promoCodeRoutes);
+router.use('/resolve-accounts', resolveAccountRoutes);
 router.use('/subscriptions', subscriptionRoutes);
 router.use('/users', userRoutes);
 

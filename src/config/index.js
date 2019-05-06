@@ -120,7 +120,8 @@ const config = {
 
   IMGIX_DOMAIN: process.env.IMGIX_DOMAIN,
 
-  DEFAULT_DESIGN_IDS: process.env.DEFAULT_DESIGN_IDS
+  DEFAULT_DESIGN_IDS: process.env.DEFAULT_DESIGN_IDS,
+  RESOLVE_API_URL: process.env.RESOLVE_API_URL
 };
 
 Object.keys(config).forEach((key) => {

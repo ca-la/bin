@@ -99,6 +99,28 @@ test(
 );
 
 test(
+  'InvoicesDAO.findByUserAndUpaid',
+  async (t, { createdInvoices, users }) => {
+    const invoices = await InvoicesDAO.findByUserAndUnpaid(users[0].id);
+    t.deepEqual(
+      invoices.map(i => i.id).sort(),
+      createdInvoices
+        .filter(i => i.userId === users[0].id && i.paid_at === false)
+        .map(i => i.id).sort(),
+      'returns all invoices associated with a user'
+    );
+
+    const notFoundInvoices = await InvoicesDAO.findByUser(uuid.v4());
+    t.deepEqual(
+      notFoundInvoices,
+      [],
+      'returns an empty array when no invoices match'
+    );
+  },
+  createInvoicesWithPayments
+);
+
+test(
   'InvoicesDAO.update',
   async (t, { createdInvoices }) => {
     await InvoicesDAO.update(createdInvoices[0].id, { totalCents: 10000 });

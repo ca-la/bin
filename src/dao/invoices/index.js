@@ -41,6 +41,19 @@ async function findByUser(userId) {
     .catch(rethrow);
 }
 
+async function findByUserAndUnpaid(userId) {
+  return db
+    .select('invoice_with_payments.*')
+    .from(VIEW_NAME)
+    .where({
+      user_id: userId,
+      is_paid: false,
+      deleted_at: null
+    })
+    .then(invoices => invoices.map(instantiate))
+    .catch(rethrow);
+}
+
 async function findById(id) {
   return db(VIEW_NAME)
     .where({ id, deleted_at: null })
@@ -104,6 +117,7 @@ module.exports = {
   deleteById,
   findByCollection,
   findByUser,
+  findByUserAndUnpaid,
   findById,
   findByIdTrx,
   createTrx,

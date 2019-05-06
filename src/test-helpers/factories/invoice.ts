@@ -35,8 +35,9 @@ export default async function generateInvoice(
   const invoice = await db.transaction(async (trx: Knex.Transaction): Promise<Invoice> => {
     const { id } = await InvoicesDAO.createTrx(trx, {
       collectionId: collection.id,
-      title: 'My First Invoice',
-      totalCents: 1234
+      title: options.title || 'My First Invoice',
+      totalCents: options.totalCents || 1234,
+      userId: user.id
     });
     return await InvoicesDAO.findByIdTrx(trx, id);
   });
