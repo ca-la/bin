@@ -1,6 +1,5 @@
-'use strict';
-
-module.exports = {
+// tslint:disable
+export default {
   id: 5349620173,
   email: 'd@ca.la',
   closed_at: null,

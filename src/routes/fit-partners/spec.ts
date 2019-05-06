@@ -1,10 +1,11 @@
-import { omit } from 'lodash';
+import { cloneDeep, omit } from 'lodash';
 
+import * as Configuration from '../../config';
 import createUser = require('../../test-helpers/create-user');
 import FitPartnerCustomersDAO = require('../../dao/fit-partner-customers');
 import FitPartnerScanService = require('../../services/fit-partner-scan');
 import FitPartnersDAO = require('../../dao/fit-partners');
-import orderCreatePayload = require('../../test-helpers/fixtures/shopify-order-create-payload');
+import orderCreatePayload from '../../test-helpers/fixtures/shopify-order-create-payload';
 import ScansDAO = require('../../dao/scans');
 import Twilio = require('../../services/twilio');
 import { authHeader, post } from '../../test-helpers/http';
@@ -47,6 +48,8 @@ test(
   'POST /fit-partners/:partnerId/shopify-order-created handles a webhook payload',
   async (t: Test) => {
     sandbox().stub(FitPartnerScanService, 'saveFittingUrl').resolves();
+    sandbox().stub(Configuration, 'FIT_PARTNER_SMS_PRODUCT_ID_BLACKLIST')
+      .value([111, 222, 444, 6789]);
 
     const { session, user } = await createUser();
 
@@ -61,8 +64,86 @@ test(
 
     const twilioStub = sandbox().stub(Twilio, 'sendSMS').resolves();
 
+    const smsProduct = cloneDeep(orderCreatePayload);
+    smsProduct.line_items[0].product_id = 12345;
+
     const [response] = await post(`/fit-partners/${partner.id}/shopify-order-created`, {
-      body: orderCreatePayload,
+      body: smsProduct,
+      headers: authHeader(session.id)
+    });
+
+    t.equal(response.status, 200);
+    t.equal(twilioStub.callCount, 1);
+    t.deepEqual(twilioStub.firstCall.args[0], '+14155551234');
+
+    const scan = (await ScansDAO.findAll({ limit: 1, offset: 0 }))[0];
+    t.equal(twilioStub.firstCall.args[1].includes(scan.id), true);
+  }
+);
+
+test(
+  // tslint:disable-next-line:max-line-length
+  'POST /fit-partners/:partnerId/shopify-order-created does nothing if all products in the order are blacklisted',
+  async (t: Test) => {
+    sandbox().stub(FitPartnerScanService, 'saveFittingUrl').resolves();
+    sandbox().stub(Configuration, 'FIT_PARTNER_SMS_PRODUCT_ID_BLACKLIST')
+      .value([11, 22, 123, 12345, 456]);
+
+    const { session, user } = await createUser();
+
+    const partner = await FitPartnersDAO.create({
+      adminUserId: user.id,
+      customFitDomain: null,
+      shopifyAppApiKey: '123',
+      shopifyAppPassword: '123',
+      shopifyHostname: 'example.com',
+      smsCopy: 'Click here: {{link}}'
+    });
+
+    const twilioStub = sandbox().stub(Twilio, 'sendSMS').resolves();
+
+    const nonSmsProduct = cloneDeep(orderCreatePayload);
+    nonSmsProduct.line_items[0].product_id = 12345;
+
+    const [response] = await post(`/fit-partners/${partner.id}/shopify-order-created`, {
+      body: nonSmsProduct,
+      headers: authHeader(session.id)
+    });
+
+    t.equal(response.status, 200);
+    t.equal(twilioStub.callCount, 0);
+  }
+);
+
+test(
+  // tslint:disable-next-line:max-line-length
+  'POST /fit-partners/:partnerId/shopify-order-created still sends a fit link if some but not all products are blacklisted',
+
+  async (t: Test) => {
+    sandbox().stub(FitPartnerScanService, 'saveFittingUrl').resolves();
+    sandbox().stub(Configuration, 'FIT_PARTNER_SMS_PRODUCT_ID_BLACKLIST')
+      .value([11, 22, 123, 12345, 456]);
+
+    const { session, user } = await createUser();
+
+    const partner = await FitPartnersDAO.create({
+      adminUserId: user.id,
+      customFitDomain: null,
+      shopifyAppApiKey: '123',
+      shopifyAppPassword: '123',
+      shopifyHostname: 'example.com',
+      smsCopy: 'Click here: {{link}}'
+    });
+
+    const twilioStub = sandbox().stub(Twilio, 'sendSMS').resolves();
+
+    const nonSmsProduct = cloneDeep(orderCreatePayload);
+    nonSmsProduct.line_items[0].product_id = 12345;
+    nonSmsProduct.line_items[1] = cloneDeep(nonSmsProduct.line_items[0]);
+    nonSmsProduct.line_items[1].product_id = 999;
+
+    const [response] = await post(`/fit-partners/${partner.id}/shopify-order-created`, {
+      body: nonSmsProduct,
       headers: authHeader(session.id)
     });
 

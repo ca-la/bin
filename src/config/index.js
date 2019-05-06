@@ -121,7 +121,11 @@ const config = {
   IMGIX_DOMAIN: process.env.IMGIX_DOMAIN,
 
   DEFAULT_DESIGN_IDS: process.env.DEFAULT_DESIGN_IDS,
-  RESOLVE_API_URL: process.env.RESOLVE_API_URL
+
+  RESOLVE_API_URL: process.env.RESOLVE_API_URL,
+
+  FIT_PARTNER_SMS_PRODUCT_ID_BLACKLIST: process.env.FIT_PARTNER_SMS_PRODUCT_ID_BLACKLIST &&
+    JSON.parse(process.env.FIT_PARTNER_SMS_PRODUCT_ID_BLACKLIST)
 };
 
 Object.keys(config).forEach((key) => {

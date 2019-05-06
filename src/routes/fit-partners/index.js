@@ -9,7 +9,7 @@ const InvalidDataError = require('../../errors/invalid-data');
 const Logger = require('../../services/logger');
 const ScansDAO = require('../../dao/scans');
 const Twilio = require('../../services/twilio');
-const { FIT_CLIENT_HOST } = require('../../config');
+const Configuration = require('../../config');
 const { requireValues } = require('../../services/require-properties');
 const { validatePropertiesFormatted } = require('../../services/validate');
 
@@ -38,7 +38,7 @@ async function createAndSendScanLink({
     type: 'PHOTO'
   });
 
-  const fitHost = partner.customFitDomain || FIT_CLIENT_HOST;
+  const fitHost = partner.customFitDomain || Configuration.FIT_CLIENT_HOST;
   const link = `${fitHost}/scans/${scan.id}`;
 
   const fitCopy = substituteLink(partner.smsCopy || DEFAULT_SMS_COPY, link);
@@ -75,7 +75,21 @@ function* shopifyOrderCreated() {
   };
 
   const { partnerId } = this.params;
-  const { shipping_address: shippingAddress, customer } = this.request.body;
+  const {
+    shipping_address: shippingAddress,
+    customer,
+    line_items: lineItems
+  } = this.request.body;
+
+  const isAllBlacklisted = lineItems.every((lineItem) => {
+    return Configuration.FIT_PARTNER_SMS_PRODUCT_ID_BLACKLIST.includes(lineItem.product_id);
+  });
+
+  if (isAllBlacklisted) {
+    this.status = 200;
+    this.body = { success: true };
+    return;
+  }
 
   if (!shippingAddress) {
     this.status = 200;
@@ -124,7 +138,7 @@ function* resendFitLink() {
   const partner = yield FitPartnersDAO.findById(customer.partnerId);
   this.assert(partner, 400, 'Partner with associated ID not found');
 
-  const fitHost = partner.customFitDomain || FIT_CLIENT_HOST;
+  const fitHost = partner.customFitDomain || Configuration.FIT_CLIENT_HOST;
   const link = `${fitHost}/scans/${scan.id}`;
 
   const fitCopy = substituteLink(partner.smsCopy || DEFAULT_SMS_COPY, link);
