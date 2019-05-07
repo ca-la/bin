@@ -5,13 +5,18 @@ import requireAuth = require('../../middleware/require-auth');
 import requireAdmin = require('../../middleware/require-admin');
 import ResolveAccount, { isResolveAccountRequest } from './domain-object';
 import * as ResolveAccountsDAO from './dao';
-import { getAllResolveAccountData } from './resolve';
+import { getAllResolveAccountData, hasResolveAccount } from './resolve';
 
 const router = new Router();
 
 function* create(this: Koa.Application.Context): AsyncIterableIterator<ResolveAccount> {
   const { body } = this.request;
   if (isResolveAccountRequest(body)) {
+    const accountExists = yield hasResolveAccount(body.resolveCustomerId);
+
+    if (!accountExists) {
+      return this.throw(404, 'This account does not exist in resolve.');
+    }
     const account = yield ResolveAccountsDAO.create(body);
     this.status = 201;
     this.body = account;

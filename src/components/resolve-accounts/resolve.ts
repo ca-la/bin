@@ -10,6 +10,27 @@ import toDateOrNull from '../../services/to-date';
 import fetch from 'node-fetch';
 import Invoice from '../../domain-objects/invoice';
 
+export async function hasResolveAccount(resolveCustomerId: string): Promise<boolean> {
+  const url = `${RESOLVE_API_URL}/customers/${resolveCustomerId}`;
+  const headers = {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json'
+  };
+
+  const response = await fetch(url, { headers });
+  if (response.status >= 500) {
+    throw new Error(`GET request to resolve failed: ${response.status}: ${response.statusText}`);
+  }
+  if (response.status < 200 || response.status >= 400) {
+    return false;
+  }
+  const data = await response.json();
+  if (data && isRawResolveData(data)) {
+    return true;
+  }
+  return false;
+}
+
 export async function getResolveAccountData(account: ResolveAccount): Promise<ResolveAccountData> {
   const { resolveCustomerId } = account;
   const url = `${RESOLVE_API_URL}/customers/${resolveCustomerId}`;

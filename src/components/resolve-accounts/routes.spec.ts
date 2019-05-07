@@ -72,6 +72,9 @@ test(
   async (t: tape.Test) => {
     const { session, user } = await createUser({ role: 'ADMIN' });
     const resolveCustomerId = 'test123';
+    const fetchStub = sandbox()
+      .stub(NodeFetch, 'default')
+      .resolves(fetchResponse);
 
     const [getResponse, getBody] = await API.post(
       '/resolve-accounts',
@@ -84,6 +87,7 @@ test(
       }
     );
     t.equal(getResponse.status, 201, 'POST returns a 201 status');
+    t.true(fetchStub.calledOnce, 'resolve integration was called');
     t.deepEqual(
       getBody.userId,
       user.id,
@@ -94,5 +98,53 @@ test(
       resolveCustomerId,
       'Successfully creates account with correct resolve customer id'
     );
+  }
+);
+
+test(
+  'POST /resolve-accounts fails to create a new account with invalid resolve customer id',
+  async (t: tape.Test) => {
+    const { session, user } = await createUser({ role: 'ADMIN' });
+    const resolveCustomerId = 'test123';
+    const fetchStub = sandbox()
+      .stub(NodeFetch, 'default')
+      .resolves({ ...fetchResponse, status: 404 });
+
+    const [getResponse] = await API.post(
+      '/resolve-accounts',
+      {
+        body: {
+          resolveCustomerId,
+          userId: user.id
+        },
+        headers: API.authHeader(session.id)
+      }
+    );
+    t.equal(getResponse.status, 404, 'POST returns a 404 status');
+    t.true(fetchStub.calledOnce, 'resolve integration was called');
+  }
+);
+
+test(
+  'POST /resolve-accounts fails to create a new account with resolve down',
+  async (t: tape.Test) => {
+    const { session, user } = await createUser({ role: 'ADMIN' });
+    const resolveCustomerId = 'test123';
+    const fetchStub = sandbox()
+      .stub(NodeFetch, 'default')
+      .resolves({ ...fetchResponse, status: 500 });
+
+    const [getResponse] = await API.post(
+      '/resolve-accounts',
+      {
+        body: {
+          resolveCustomerId,
+          userId: user.id
+        },
+        headers: API.authHeader(session.id)
+      }
+    );
+    t.equal(getResponse.status, 500, 'POST returns a 500 status');
+    t.true(fetchStub.calledOnce, 'resolve integration was called');
   }
 );

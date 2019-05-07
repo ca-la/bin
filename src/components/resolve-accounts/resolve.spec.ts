@@ -4,7 +4,7 @@ import * as uuid from 'node-uuid';
 import createUser = require('../../test-helpers/create-user');
 import { sandbox, test } from '../../test-helpers/fresh';
 import * as NodeFetch from 'node-fetch';
-import { getAllResolveAccountData } from './resolve';
+import { getAllResolveAccountData, hasResolveAccount } from './resolve';
 import generateInvoice from '../../test-helpers/factories/invoice';
 
 const resolveResponseData = {
@@ -29,6 +29,42 @@ const fetchResponse = {
   json: (): Promise<object> => Promise.resolve(resolveResponseData),
   status: 200
 };
+
+test('hasResolveAccount returns if there is a resolve account', async (t: tape.Test) => {
+  const fetchStub = sandbox()
+    .stub(NodeFetch, 'default')
+    .resolves(fetchResponse);
+
+  const id = uuid.v4();
+  const response = await hasResolveAccount(id);
+  t.equal(fetchStub.calledOnce, true, 'calls to resolve api once');
+  t.true(response, 'the account exists');
+});
+
+test('hasResolveAccount returns if there is not a resolve account', async (t: tape.Test) => {
+  const fetchStub = sandbox()
+    .stub(NodeFetch, 'default')
+    .resolves({ ...fetchResponse, status: 404 });
+
+  const id = uuid.v4();
+  const response = await hasResolveAccount(id);
+  t.equal(fetchStub.calledOnce, true, 'calls to resolve api once');
+  t.false(response, 'the account exists');
+});
+
+test('hasResolveAccount throws if there is a problem', async (t: tape.Test) => {
+  sandbox()
+    .stub(NodeFetch, 'default')
+    .resolves({ ...fetchResponse, status: 500 });
+
+  const id = uuid.v4();
+  try {
+    await hasResolveAccount(id);
+    t.fail('did not throw error');
+  } catch (err) {
+    t.pass('throws error');
+  }
+});
 
 test('getAllAccountResolveData returns parsed resolve account data', async (t: tape.Test) => {
   const fetchStub = sandbox()
