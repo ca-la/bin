@@ -8,6 +8,7 @@ import createDesign from '../create-design';
 import Canvas from '../../domain-objects/product-design-canvas';
 import Design = require('../../domain-objects/product-design');
 import prepareForDuplication from './prepare-for-duplication';
+import ResourceNotFoundError from '../../errors/resource-not-found';
 import { findAndDuplicateCanvas } from './canvases';
 import { findAndDuplicateVariants } from './variants';
 
@@ -22,7 +23,9 @@ export async function findAndDuplicateDesign(
   trx: Knex.Transaction
 ): Promise<Design> {
   const design = await DesignsDAO.findById(designId);
-  if (!design) { throw new Error(`Design ${designId} not found!`); }
+  if (!design) {
+    throw new ResourceNotFoundError(`Design ${designId} not found`);
+  }
   const duplicatedDesign = await createDesign(
     prepareForDuplication(omit(
       design,

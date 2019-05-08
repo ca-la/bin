@@ -87,6 +87,7 @@ function* createUser(this: Koa.Application.Context<UserIO>): AsyncIterableIterat
   );
 
   if (initialDesigns && Array.isArray(initialDesigns) && initialDesigns.length > 0) {
+    // Intentionally not checking ownership permissions - TODO reconsider security model
     yield DuplicationService.duplicateDesigns(user.id, initialDesigns);
   } else {
     // This will start off the user with any number of 'default' designs that
