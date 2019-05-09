@@ -4,6 +4,7 @@ import * as path from 'path';
 import { cloneDeep } from 'lodash';
 
 /* application routes */
+import accessControlRoutes from './components/access-control/routes';
 import annotationRoutes from './components/product-design-canvas-annotations/routes';
 import annotationCommentRoutes from './components/annotation-comments/routes';
 import approvedSignupRoutes from './components/approved-signups/routes';
@@ -43,6 +44,7 @@ routeDirectories.forEach((directoryName: string): void => {
 });
 
 /* component-based routing */
+router.use('/access-control', accessControlRoutes);
 router.use('/approved-signups', approvedSignupRoutes);
 router.use('/bids', bidRoutes);
 router.use('/collaborators', collaboratorRoutes);
