@@ -1,14 +1,21 @@
 import * as tape from 'tape';
 import * as uuid from 'node-uuid';
 
+import * as Configuration from '../../config';
+import { addAssetLink, generatePreviewLinks } from './index';
 import { sandbox, test } from '../../test-helpers/fresh';
-import { addAssetLink, AWS_BASE_URL, generatePreviewLinks, IMGIX_BASE_URL } from './index';
 
 import Component, { ComponentType } from '../../domain-objects/component';
 import * as OptionsDAO from '../../dao/product-design-options';
 import * as ImagesDAO from '../../components/images/dao';
 
+function stubUrls(): void {
+  sandbox().stub(Configuration, 'AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME').value('aws-example');
+  sandbox().stub(Configuration, 'IMGIX_BASE_URL').value('https://imgix.example.com');
+}
+
 test('attachAssetsLink returns aws link when component is of type sketch', async (t: tape.Test) => {
+  stubUrls();
   const id = uuid.v4();
   const sketchId = uuid.v4();
   const component: Component = {
@@ -28,13 +35,12 @@ test('attachAssetsLink returns aws link when component is of type sketch', async
     .resolves({ uploadCompletedAt: new Date() });
 
   const enrichedComponent = await addAssetLink(component);
-  t.ok(enrichedComponent.downloadLink.includes(sketchId), 'download link contains the sketch id.');
-  t.ok(enrichedComponent.downloadLink.includes(AWS_BASE_URL), 'download link points to AWS.');
-  t.ok(enrichedComponent.assetLink.includes(sketchId), 'asset link matches sketch id.');
-  t.ok(enrichedComponent.assetLink.includes(IMGIX_BASE_URL), 'asset link points to imgix.');
+  t.equal(enrichedComponent.downloadLink, `https://aws-example.s3.amazonaws.com/${sketchId}`);
+  t.equal(enrichedComponent.assetLink, `https://imgix.example.com/${sketchId}?fm=jpg&max-w=2288`);
 });
 
 test('attachAssetsLink returns link when component is of type artwork', async (t: tape.Test) => {
+  stubUrls();
   const id = uuid.v4();
   const artworkId = uuid.v4();
   const component: Component = {
@@ -54,13 +60,12 @@ test('attachAssetsLink returns link when component is of type artwork', async (t
     .resolves({ uploadCompletedAt: new Date() });
 
   const enrichedComponent = await addAssetLink(component);
-  t.ok(enrichedComponent.downloadLink.includes(artworkId), 'download link contains artwork id.');
-  t.ok(enrichedComponent.downloadLink.includes(AWS_BASE_URL), 'download link points to AWS.');
-  t.ok(enrichedComponent.assetLink.includes(artworkId), 'asset link contains artwork id.');
-  t.ok(enrichedComponent.assetLink.includes(IMGIX_BASE_URL), 'asset link points to imgix.');
+  t.equal(enrichedComponent.downloadLink, `https://aws-example.s3.amazonaws.com/${artworkId}`);
+  t.equal(enrichedComponent.assetLink, `https://imgix.example.com/${artworkId}?fm=jpg&max-w=2288`);
 });
 
 test('attachAssetsLink returns link when component is of type material', async (t: tape.Test) => {
+  stubUrls();
   const id = uuid.v4();
   const materialId = uuid.v4();
   const materialImageId = uuid.v4();
@@ -84,24 +89,23 @@ test('attachAssetsLink returns link when component is of type material', async (
     .resolves({ uploadCompletedAt: new Date() });
 
   const enrichedComponent = await addAssetLink(component);
-  t.ok(
-    enrichedComponent.downloadLink.includes(materialImageId),
-    'download link contains material id.'
+  t.equal(
+    enrichedComponent.downloadLink,
+    `https://aws-example.s3.amazonaws.com/${materialImageId}`
   );
-  t.ok(enrichedComponent.downloadLink.includes(AWS_BASE_URL), 'download link points to AWS.');
-  t.ok(
-    enrichedComponent.assetLink.includes(materialImageId),
-    'asset link contains material id.'
+  t.equal(
+    enrichedComponent.assetLink,
+    `https://imgix.example.com/${materialImageId}?fm=jpg&max-w=2288`
   );
-  t.ok(enrichedComponent.assetLink.includes(IMGIX_BASE_URL), 'asset link points to imgix.');
 });
 
 test('attachAssetsLink returns link when component is of type material', async (t: tape.Test) => {
+  stubUrls();
   const imageId = uuid.v4();
   const imageIdTwo = uuid.v4();
   const enrichedImages = generatePreviewLinks([imageId, imageIdTwo]);
-  t.ok(enrichedImages[0].thumbnailLink.includes(imageId));
-  t.ok(enrichedImages[0].previewLink.includes(imageId));
-  t.ok(enrichedImages[1].thumbnailLink.includes(imageIdTwo));
-  t.ok(enrichedImages[1].previewLink.includes(imageIdTwo));
+  t.equal(enrichedImages[0].thumbnailLink, `https://imgix.example.com/${imageId}?fm=jpg&w=48`);
+  t.equal(enrichedImages[0].previewLink, `https://imgix.example.com/${imageId}?fm=jpg&w=560`);
+  t.equal(enrichedImages[1].thumbnailLink, `https://imgix.example.com/${imageIdTwo}?fm=jpg&w=48`);
+  t.equal(enrichedImages[1].previewLink, `https://imgix.example.com/${imageIdTwo}?fm=jpg&w=560`);
 });
