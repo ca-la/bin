@@ -118,7 +118,7 @@ const config = {
 
   DATABASE_URL: process.env.DATABASE_URL,
 
-  IMGIX_DOMAIN: process.env.IMGIX_DOMAIN,
+  IMGIX_BASE_URL: process.env.IMGIX_BASE_URL,
 
   DEFAULT_DESIGN_IDS: process.env.DEFAULT_DESIGN_IDS,
 

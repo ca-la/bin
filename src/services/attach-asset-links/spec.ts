@@ -2,7 +2,8 @@ import * as tape from 'tape';
 import * as uuid from 'node-uuid';
 
 import { sandbox, test } from '../../test-helpers/fresh';
-import { addAssetLink, AWS_BASE_URL, generatePreviewLinks, IMGIX_BASE_URL } from './index';
+import { addAssetLink, AWS_BASE_URL, generatePreviewLinks } from './index';
+import { IMGIX_BASE_URL } from '../../config';
 
 import Component, { ComponentType } from '../../domain-objects/component';
 import * as OptionsDAO from '../../dao/product-design-options';
