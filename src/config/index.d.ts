@@ -57,7 +57,7 @@ export const CALA_OPS_USER_ID: string;
 export const DATABASE_URL: string;
 export const MAX_DB_CONNECTION_POOL_SIZE: string;
 
-export const IMGIX_BASE_URL: string;
+export const IMGIX_DOMAIN: string;
 
 export const DEFAULT_DESIGN_IDS: string;
 

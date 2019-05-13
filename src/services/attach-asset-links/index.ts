@@ -1,4 +1,4 @@
-import { AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME, IMGIX_BASE_URL } from '../../config';
+import { AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME, IMGIX_DOMAIN } from '../../config';
 import Component, { ComponentType } from '../../domain-objects/component';
 import * as OptionsDAO from '../../dao/product-design-options';
 import * as ImagesDAO from '../../components/images/dao';
@@ -8,7 +8,8 @@ interface AssetLinks {
   downloadLink: string;
 }
 
-export const AWS_BASE_URL = `https://${AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME}.s3.amazonaws.com`;
+export const AWS_BASE_URL = `https://${AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME}.s3.amazonaws.com/`;
+export const IMGIX_BASE_URL = `https://${IMGIX_DOMAIN}.imgix.net/`;
 
 const DESIGN_PREVIEW_TOOL_FORMAT = '?fm=jpg&max-w=2288';
 const PREVIEW_CARD_FORMAT = '?fm=jpg&w=560';
@@ -25,24 +26,24 @@ async function getLink(component: Component): Promise<AssetLinks> {
       if (!artworkImage.uploadCompletedAt) { break; }
 
       return {
-        assetLink: `${IMGIX_BASE_URL}/${component.artworkId}${DESIGN_PREVIEW_TOOL_FORMAT}`,
-        downloadLink: `${AWS_BASE_URL}/${component.artworkId}`
+        assetLink: `${IMGIX_BASE_URL}${component.artworkId}${DESIGN_PREVIEW_TOOL_FORMAT}`,
+        downloadLink: `${AWS_BASE_URL}${component.artworkId}`
       };
     case ComponentType.Sketch:
       const sketchImage = await ImagesDAO.findById(component.sketchId);
       if (!sketchImage.uploadCompletedAt) { break; }
 
       return {
-        assetLink: `${IMGIX_BASE_URL}/${component.sketchId}${DESIGN_PREVIEW_TOOL_FORMAT}`,
-        downloadLink: `${AWS_BASE_URL}/${component.sketchId}`
+        assetLink: `${IMGIX_BASE_URL}${component.sketchId}${DESIGN_PREVIEW_TOOL_FORMAT}`,
+        downloadLink: `${AWS_BASE_URL}${component.sketchId}`
       };
     case ComponentType.Material:
       const option = await OptionsDAO.findById(component.materialId);
       const materialImage = await ImagesDAO.findById(option.previewImageId);
       if (!materialImage.uploadCompletedAt) { break; }
       return {
-        assetLink: `${IMGIX_BASE_URL}/${option.previewImageId}${DESIGN_PREVIEW_TOOL_FORMAT}`,
-        downloadLink: `${AWS_BASE_URL}/${option.previewImageId}`
+        assetLink: `${IMGIX_BASE_URL}${option.previewImageId}${DESIGN_PREVIEW_TOOL_FORMAT}`,
+        downloadLink: `${AWS_BASE_URL}${option.previewImageId}`
       };
   }
 
