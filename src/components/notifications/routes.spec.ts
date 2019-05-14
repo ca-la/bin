@@ -83,3 +83,104 @@ async (t: tape.Test) => {
   });
   t.equal(response3.status, 400);
 });
+
+test(`PATCH ${API_PATH}/read marks notifications as read`,
+async (t: tape.Test) => {
+  sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
+  const userOne = await createUser();
+  const userTwo = await createUser();
+
+  const d1 = await DesignsDAO.create({
+    productType: 'HOODIE',
+    title: 'Raf Simons x Sterling Ruby Hoodie',
+    userId: userOne.user.id
+  });
+  const collection1 = await generateCollection({ createdBy: userOne.user.id });
+  const { collaborator: c1 } = await generateCollaborator({
+    collectionId: null,
+    designId: d1.id,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
+    userId: userTwo.user.id
+  });
+  const { notification: n1 } = await generateNotification({
+    actorUserId: userOne.user.id,
+    recipientUserId: userTwo.user.id,
+    type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
+  });
+  const { notification: n2 } = await generateNotification({
+    actorUserId: userOne.user.id,
+    collaboratorId: c1.id,
+    collectionId: collection1.collection.id,
+    recipientUserId: null,
+    type: NotificationType.INVITE_COLLABORATOR
+  });
+
+  const [response1, body1] = await API.get(API_PATH, {
+    headers: API.authHeader(userTwo.session.id)
+  });
+  t.equal(response1.status, 200);
+  t.deepEqual(
+    body1.map((notification: NotificationMessage): string => notification.id),
+    [n2.id, n1.id],
+    'Returns the list of notifications for the user session'
+  );
+
+  const [response2, body2] = await API.patch(`${API_PATH}/read?notificationIds=${n1.id},${n2.id}`, {
+    headers: API.authHeader(userTwo.session.id)
+  });
+  t.equal(response2.status, 200);
+  t.deepEqual(body2.ok, true, 'successfully marks notifications as read'
+  );
+
+  const [response3, body3] = await API.get(API_PATH, {
+    headers: API.authHeader(userTwo.session.id)
+  });
+  t.equal(response3.status, 200);
+  t.deepEqual(
+    body3.every((notification: NotificationMessage): boolean =>
+      notification.readAt !== null),
+    true,
+    'readAt is set correctly'
+  );
+});
+
+test(`PATCH ${API_PATH}/read returns 403 for wrong user`,
+async (t: tape.Test) => {
+  sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
+  const userOne = await createUser();
+  const userTwo = await createUser();
+
+  const d1 = await DesignsDAO.create({
+    productType: 'HOODIE',
+    title: 'Raf Simons x Sterling Ruby Hoodie',
+    userId: userOne.user.id
+  });
+  const collection1 = await generateCollection({ createdBy: userOne.user.id });
+  const { collaborator: c1 } = await generateCollaborator({
+    collectionId: null,
+    designId: d1.id,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
+    userId: userTwo.user.id
+  });
+  const { notification: n1 } = await generateNotification({
+    actorUserId: userTwo.user.id,
+    recipientUserId: userOne.user.id,
+    type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
+  });
+  const { notification: n2 } = await generateNotification({
+    actorUserId: userOne.user.id,
+    collaboratorId: c1.id,
+    collectionId: collection1.collection.id,
+    recipientUserId: null,
+    type: NotificationType.INVITE_COLLABORATOR
+  });
+
+  const [response2] = await API.patch(`${API_PATH}/read?notificationIds=${n1.id},${n2.id}`, {
+    headers: API.authHeader(userTwo.session.id)
+  });
+  t.equal(response2.status, 403, 'Access is denied');
+});

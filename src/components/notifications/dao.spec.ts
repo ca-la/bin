@@ -227,3 +227,38 @@ test('Notifications DAO supports deleting similar notifications', async (t: tape
 
   t.deepEqual(deletedCount, 2, 'Successfully deletes similar notifications');
 });
+
+test('Notifications DAO supports marking read', async (t: tape.Test) => {
+  sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
+  const { user: userOne } = await createUser({ withSession: false });
+  const { user: userTwo } = await createUser({ withSession: false });
+  const { collection } = await generateCollection({ createdBy: userOne.id });
+  const { collaborator: c1 } = await generateCollaborator({
+    collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
+    userId: userTwo.id
+  });
+  const data: InviteCollaboratorNotification = {
+    ...templateNotification,
+    actorUserId: userOne.id,
+    collaboratorId: c1.id,
+    collectionId: collection.id,
+    createdAt: new Date(),
+    designId: null,
+    id: uuid.v4(),
+    recipientUserId: userTwo.id,
+    sentEmailAt: new Date(),
+    type: NotificationType.INVITE_COLLABORATOR
+  };
+
+  const inserted = await NotificationsDAO.create(data);
+  const result = await NotificationsDAO.findById(inserted.id);
+  t.deepEqual(result, inserted, 'Returned the inserted notification');
+  await NotificationsDAO.markRead([inserted.id]);
+  const read = await NotificationsDAO.findById(inserted.id);
+  if (!read) { throw new Error('FindById failed!'); }
+  t.notDeepEqual(read.readAt, null, 'readAt is no longer null');
+});

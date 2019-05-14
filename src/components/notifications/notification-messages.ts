@@ -82,7 +82,8 @@ export const createNotificationMessage = async (
   const baseNotificationMessage = {
     actor: await UsersDAO.findById(notification.actorUserId),
     createdAt: notification.createdAt,
-    id: notification.id
+    id: notification.id,
+    readAt: notification.readAt
   };
 
   if (!baseNotificationMessage.actor) { throw new Error('Actor could not be found!'); }

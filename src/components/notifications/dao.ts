@@ -27,7 +27,7 @@ const TABLE_NAME = 'notifications';
 export async function findOutstanding(trx?: Knex.Transaction): Promise<Notification[]> {
   const outstandingNotifications: NotificationRow[] = await db(TABLE_NAME)
     .select('*')
-    .where({ sent_email_at: null })
+    .where({ sent_email_at: null, read_at: null })
     .whereNot({ recipient_user_id: null })
     .orderBy('created_at', 'desc')
     .modify((query: Knex.QueryBuilder) => {
@@ -48,6 +48,24 @@ export async function markSent(ids: string[], trx?: Knex.Transaction): Promise<N
   const updatedNotifications: NotificationRow[] = await db(TABLE_NAME)
     .whereIn('id', ids)
     .update({ sent_email_at: (new Date()).toISOString() }, '*')
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    });
+
+  return validateEvery<NotificationRow, Notification>(
+    TABLE_NAME,
+    isNotificationRow,
+    dataAdapter,
+    updatedNotifications
+  );
+}
+
+export async function markRead(ids: string[], trx?: Knex.Transaction): Promise<Notification[]> {
+  const updatedNotifications: NotificationRow[] = await db(TABLE_NAME)
+    .whereIn('id', ids)
+    .update({ read_at: (new Date()).toISOString() }, '*')
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);

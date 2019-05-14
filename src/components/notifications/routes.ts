@@ -5,6 +5,7 @@ import * as NotificationsDAO from './dao';
 import requireAuth = require('../../middleware/require-auth');
 import { createNotificationMessage } from './notification-messages';
 import { NotificationMessage } from '@cala/ts-lib';
+import { Notification } from './domain-object';
 
 const router = new Router();
 
@@ -32,6 +33,27 @@ function* getList(this: Koa.Application.Context): AsyncIterableIterator<Notifica
   this.body = messages.filter((message: NotificationMessage | null) => message !== null);
 }
 
+function* setRead(this: Koa.Application.Context): AsyncIterableIterator<void> {
+  const { notificationIds } = this.query;
+  if (notificationIds) {
+    const idList = notificationIds.split(',');
+    for (const id of idList) {
+      const notification: Notification = yield NotificationsDAO.findById(id);
+      if (!notification ||
+        (notification.recipientUserId !== null
+          && notification.recipientUserId !== this.state.userId)) {
+        return this.throw(403, 'Access denied for this resource');
+      }
+    }
+    yield NotificationsDAO.markRead(idList);
+    this.status = 200;
+    this.body = { ok: true };
+  } else {
+    this.throw('Missing notification ids');
+  }
+}
+
 router.get('/', requireAuth, getList);
+router.patch('/read', requireAuth, setRead);
 
 export default router.routes();

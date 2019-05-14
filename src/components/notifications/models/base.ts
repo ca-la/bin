@@ -16,6 +16,7 @@ export interface BaseNotificationRow {
   design_id: null;
   id: string;
   measurement_id: null;
+  read_at: string | null;
   recipient_user_id: null;
   section_id: null; // DEPRECATED
   sent_email_at: string | null;
@@ -36,6 +37,7 @@ export interface BaseNotification {
   designId: null;
   id: string;
   measurementId: null;
+  readAt: Date | null;
   recipientUserId: null;
   sectionId: null; // DEPRECATED
   sentEmailAt: Date | null;
@@ -53,6 +55,7 @@ export const templateNotification = {
   commentId: null,
   designId: null,
   measurementId: null,
+  readAt: null,
   recipientUserId: null,
   sectionId: null, // DEPRECATED
   sentEmailAt: null,
