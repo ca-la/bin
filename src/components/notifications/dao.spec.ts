@@ -1,7 +1,7 @@
 import * as Knex from 'knex';
 import * as tape from 'tape';
 import * as uuid from 'node-uuid';
-import { test } from '../../test-helpers/fresh';
+import { sandbox, test } from '../../test-helpers/fresh';
 import * as NotificationsDAO from './dao';
 import * as DesignsDAO from '../../dao/product-designs';
 import createUser = require('../../test-helpers/create-user');
@@ -16,8 +16,11 @@ import { InviteCollaboratorNotification } from './models/invite-collaborator';
 import { PartnerAcceptServiceBidNotification } from './models/partner-accept-service-bid';
 import { templateNotification } from './models/base';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
+import * as NotificationAnnouncer from '../iris/messages/notification';
 
 test('Notifications DAO supports creation', async (t: tape.Test) => {
+  sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
+
   const { user: userOne } = await createUser({ withSession: false });
   const { user: userTwo } = await createUser({ withSession: false });
   const { collection } = await generateCollection({ createdBy: userOne.id });
@@ -48,6 +51,7 @@ test('Notifications DAO supports creation', async (t: tape.Test) => {
 });
 
 test('Notifications DAO supports finding by user id', async (t: tape.Test) => {
+  sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
   const userOne = await createUser({ withSession: false });
   const userTwo = await createUser({ withSession: false });
 
@@ -110,6 +114,7 @@ test('Notifications DAO supports finding by user id', async (t: tape.Test) => {
 });
 
 test('Notifications DAO supports finding outstanding notifications', async (t: tape.Test) => {
+  sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
   const { user } = await createUser({ withSession: false });
 
   const {
@@ -149,6 +154,7 @@ test('Notifications DAO supports finding outstanding notifications', async (t: t
 });
 
 test('Notifications DAO supports marking notifications as sent', async (t: tape.Test) => {
+  sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
   const { user } = await createUser();
 
   const { notification: notificationOne } = await generateNotification({
@@ -174,6 +180,7 @@ test('Notifications DAO supports marking notifications as sent', async (t: tape.
 });
 
 test('Notifications DAO supports deleting similar notifications', async (t: tape.Test) => {
+  sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
   const userOne = await createUser({ withSession: false });
   const userTwo = await createUser({ withSession: false });
   const { user: admin } = await createUser({ withSession: false, role: 'ADMIN' });

@@ -5,11 +5,14 @@ import * as S3Service from '../../services/aws/s3';
 import * as Configuration from '../../config';
 import { sandbox, test } from '../../test-helpers/fresh';
 import { sendMessage } from './send-message';
-import { RealtimeNotification } from './models/notification';
+import { RealtimeNotification } from '@cala/ts-lib';
 import generateNotification from '../../test-helpers/factories/notification';
 import { NotificationType } from '../notifications/domain-object';
+import { createNotificationMessage } from '../notifications/notification-messages';
+import * as NotificationAnnouncer from '../iris/messages/notification';
 
 test('sendMessage supports sending a message', async (t: tape.Test) => {
+  sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
   const s3Stub = sandbox().stub(S3Service, 'uploadToS3').resolves({
     bucketName: 'iris-foo',
     remoteFilename: 'abc-123'
@@ -20,9 +23,16 @@ test('sendMessage supports sending a message', async (t: tape.Test) => {
   sandbox().stub(Configuration, 'AWS_IRIS_SQS_REGION').value('iris-sqs-region-biz');
 
   const { notification } = await generateNotification({ type: NotificationType.TASK_ASSIGNMENT });
+  const notificationMessage = await createNotificationMessage(notification);
+
+  if (!notificationMessage || !notification.recipientUserId) {
+    throw new Error('Expected there to be a notification message and a recipient!');
+  }
+
   const realtimeNotification: RealtimeNotification = {
     actorId: 'actor-one',
-    resource: notification,
+    resource: notificationMessage,
+    targetId: notification.recipientUserId,
     type: 'notification'
   };
   await sendMessage(realtimeNotification);
@@ -35,6 +45,7 @@ test('sendMessage supports sending a message', async (t: tape.Test) => {
   }), 'Called with the expected arguments');
 
   t.deepEqual(sqsStub.args[0][0], {
+    deduplicationId: notification.id,
     messageGroupId: 'notification',
     messageType: 'realtime-message',
     payload: {

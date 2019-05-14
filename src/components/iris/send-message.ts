@@ -1,4 +1,4 @@
-import { RealtimeMessage } from './domain-object';
+import { RealtimeMessage } from '@cala/ts-lib';
 import { uploadToS3 } from '../../services/aws/s3';
 import { enqueueMessage } from '../../services/aws/sqs';
 import { AWS_IRIS_S3_BUCKET, AWS_IRIS_SQS_REGION, AWS_IRIS_SQS_URL } from '../../config';
@@ -16,6 +16,7 @@ export async function sendMessage(resource: RealtimeMessage): Promise<void> {
   });
 
   await enqueueMessage({
+    deduplicationId: resource.resource.id,
     messageGroupId: resource.type,
     messageType: 'realtime-message',
     payload: uploadResponse,

@@ -3,6 +3,7 @@ import { PromiseResult } from 'aws-sdk/lib/request';
 import { SendMessageResult } from 'aws-sdk/clients/sqs';
 
 interface SQSRequest {
+  deduplicationId?: string;
   queueUrl: string;
   queueRegion: string;
   messageType: string;
@@ -14,7 +15,7 @@ export async function enqueueMessage(
   request: SQSRequest
 ): Promise<PromiseResult<SendMessageResult, AWS.AWSError>> {
   const sqs = new AWS.SQS({ region: request.queueRegion });
-  const params = {
+  const params: AWS.SQS.SendMessageRequest = {
     MessageAttributes: {
       type: {
         DataType: 'String',
@@ -22,6 +23,7 @@ export async function enqueueMessage(
       }
     },
     MessageBody: JSON.stringify(request.payload),
+    MessageDeduplicationId: request.deduplicationId,
     MessageGroupId: request.messageGroupId,
     QueueUrl: request.queueUrl
   };

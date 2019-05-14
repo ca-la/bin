@@ -12,6 +12,7 @@ import {
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import Collaborator from '../../components/collaborators/domain-objects/collaborator';
 import { validate, validateEvery } from '../../services/validate-from-db';
+import { announceNotificationUpdate } from '../iris/messages/notification';
 
 interface SearchInterface {
   limit: number;
@@ -69,12 +70,14 @@ export async function create(data: Uninserted<Notification>): Promise<Notificati
 
   if (!created) { throw new Error('Failed to create a notification!'); }
 
-  return validate<NotificationRow, Notification>(
+  const notification = validate<NotificationRow, Notification>(
     TABLE_NAME,
     isNotificationRow,
     dataAdapter,
     created
   );
+  await announceNotificationUpdate(notification);
+  return notification;
 }
 
 export async function findById(id: string): Promise<Notification | null> {

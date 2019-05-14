@@ -24,8 +24,10 @@ import * as SlackService from '../../services/slack';
 import * as Config from '../../config';
 import generateMeasurement from '../../test-helpers/factories/product-design-canvas-measurement';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
+import * as NotificationAnnouncer from '../../components/iris/messages/notification';
 
 test('sendDesignOwnerAnnotationCommentCreateNotification', async (t: tape.Test) => {
+  sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
   const { user: user } = await createUser({ withSession: false });
   const { user: owner } = await createUser({ withSession: false });
 
@@ -115,6 +117,7 @@ test('sendDesignOwnerAnnotationCommentCreateNotification', async (t: tape.Test) 
 });
 
 test('sendAnnotationCommentMentionNotification', async (t: tape.Test) => {
+  sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
   const { user: user } = await createUser({ withSession: false, role: 'ADMIN' });
   const { user: owner } = await createUser({ withSession: false, role: 'ADMIN' });
 
@@ -174,6 +177,7 @@ test('sendAnnotationCommentMentionNotification', async (t: tape.Test) => {
 });
 
 test('sendDesignOwnerMeasurementCreateNotification', async (t: tape.Test) => {
+  sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
   const { user: user } = await createUser({ withSession: false });
   const { user: owner } = await createUser({ withSession: false });
 
@@ -223,6 +227,7 @@ test('sendDesignOwnerMeasurementCreateNotification', async (t: tape.Test) => {
 });
 
 test('sendTaskCommentCreateNotification', async (t: tape.Test) => {
+  sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
   const userOne = await createUser();
   const userTwo = await createUser();
 
@@ -321,6 +326,7 @@ test('sendTaskCommentCreateNotification', async (t: tape.Test) => {
 });
 
 test('sendTaskCommentMentionNotification', async (t: tape.Test) => {
+  sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
   const userOne = await createUser({ role: 'ADMIN' });
   const userTwo = await createUser({ role: 'ADMIN' });
 
@@ -416,6 +422,7 @@ test('sendTaskCommentMentionNotification', async (t: tape.Test) => {
 });
 
 test('sendTaskAssignmentNotification', async (t: tape.Test) => {
+  sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
   const userOne = await createUser();
   const userTwo = await createUser();
 
@@ -629,6 +636,7 @@ async (t: tape.Test) => {
 });
 
 test('sendTaskCompletionNotification', async (t: tape.Test) => {
+  sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
   const userOne = await createUser();
   const userTwo = await createUser();
 
@@ -717,6 +725,7 @@ test('sendTaskCompletionNotification', async (t: tape.Test) => {
 });
 
 test('sendDesignerSubmitCollection', async (t: tape.Test) => {
+  sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
   const { user } = await createUser({ withSession: false });
   const { user: calaOps } = await createUser({ withSession: false });
   const { collection } = await generateCollection({ createdBy: user.id });
@@ -738,6 +747,7 @@ test('sendDesignerSubmitCollection', async (t: tape.Test) => {
 });
 
 test('immediatelySendFullyCostedCollection', async (t: tape.Test) => {
+  sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
   const admin = await createUser({ withSession: false, role: 'ADMIN' });
   const userOne = await createUser({ withSession: false });
   const userTwo = await createUser({ withSession: false });
@@ -796,6 +806,7 @@ test('immediatelySendFullyCostedCollection', async (t: tape.Test) => {
 });
 
 test('immediatelySendInviteCollaborator', async (t: tape.Test) => {
+  sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
   const userOne = await createUser();
   const collection = await CollectionsDAO.create({
     createdAt: new Date(),

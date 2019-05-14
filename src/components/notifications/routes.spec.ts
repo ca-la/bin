@@ -1,6 +1,6 @@
 import * as tape from 'tape';
 
-import { test } from '../../test-helpers/fresh';
+import { sandbox, test } from '../../test-helpers/fresh';
 import * as API from '../../test-helpers/http';
 import createUser = require('../../test-helpers/create-user');
 
@@ -10,11 +10,13 @@ import generateCollection from '../../test-helpers/factories/collection';
 import { NotificationMessage } from '@cala/ts-lib';
 import { NotificationType } from './domain-object';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
+import * as NotificationAnnouncer from '../iris/messages/notification';
 
 const API_PATH = '/notifications';
 
 test(`GET ${API_PATH} returns a list of notificationMessages for the user`,
 async (t: tape.Test) => {
+  sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
   const userOne = await createUser();
   const userTwo = await createUser();
 

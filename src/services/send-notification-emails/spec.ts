@@ -9,8 +9,10 @@ import * as EmailService from '../email';
 import { sendNotificationEmails } from './index';
 import generateNotification from '../../test-helpers/factories/notification';
 import { NotificationType } from '../../components/notifications/domain-object';
+import * as NotificationAnnouncer from '../../components/iris/messages/notification';
 
 test('sendNotificationEmails supports finding outstanding notifications', async (t: tape.Test) => {
+  sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
   const userOne = await createUser();
   const userTwo = await createUser();
 
@@ -42,6 +44,7 @@ test('sendNotificationEmails supports finding outstanding notifications', async 
 });
 
 test('sendNotificationEmails gracefully handles failures', async (t: tape.Test) => {
+  sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
   const userOne = await createUser();
   const userTwo = await createUser();
 
