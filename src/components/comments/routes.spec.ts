@@ -5,11 +5,16 @@ import { authHeader, del, get, post, put } from '../../test-helpers/http';
 import { sandbox, test } from '../../test-helpers/fresh';
 import * as CreateNotifications from '../../services/create-notifications';
 import * as AnnotationCommentsDAO from '../../components/annotation-comments/dao';
+import * as AnnounceCommentService from '../../components/iris/messages/task-comment';
 
 test('DELETE /comment/:id deletes a task comment', async (t: tape.Test) => {
   const { session, user } = await createUser();
 
   sandbox().stub(CreateNotifications, 'sendTaskCommentCreateNotification').resolves();
+  sandbox().stub(AnnounceCommentService, 'announceTaskCommentCreation').resolves({});
+  const announceDeleteStub = sandbox()
+    .stub(AnnounceCommentService, 'announceTaskCommentDeletion')
+    .resolves({});
 
   const task = await post('/tasks', {
     body: {
@@ -75,10 +80,12 @@ test('DELETE /comment/:id deletes a task comment', async (t: tape.Test) => {
     'Comment retrieval returns the created comment in an array'
   );
   const deleteRequest = await del(
-    `/comments/${comment[1].id}`,
+    `/comments/${comment[1].id}?taskId=${task[1].id}`,
     { headers: authHeader(session.id) }
   );
   t.equal(deleteRequest[0].status, 204, 'Comment deletion succeeds');
+  t.true(announceDeleteStub.calledOnce);
+
   const withoutComment = await get(
     `/tasks/${task[1].id}/comments`,
     { headers: authHeader(session.id) }

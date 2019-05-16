@@ -16,7 +16,7 @@ const API_PATH = '/notifications';
 
 test(`GET ${API_PATH} returns a list of notificationMessages for the user`,
 async (t: tape.Test) => {
-  sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
+  sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
   const userOne = await createUser();
   const userTwo = await createUser();
 
@@ -130,7 +130,7 @@ async (t: tape.Test) => {
 
 test(`PATCH ${API_PATH}/read marks notifications as read`,
 async (t: tape.Test) => {
-  sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
+  sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
   const userOne = await createUser();
   const userTwo = await createUser();
 
@@ -192,7 +192,7 @@ async (t: tape.Test) => {
 
 test(`PATCH ${API_PATH}/read returns 403 for wrong user`,
 async (t: tape.Test) => {
-  sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
+  sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
   const userOne = await createUser();
   const userTwo = await createUser();
 

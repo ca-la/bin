@@ -12,7 +12,7 @@ import { createNotificationMessage } from '../notifications/notification-message
 import * as NotificationAnnouncer from '../iris/messages/notification';
 
 test('sendMessage supports sending a message', async (t: tape.Test) => {
-  sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
+  sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
   const s3Stub = sandbox().stub(S3Service, 'uploadToS3').resolves({
     bucketName: 'iris-foo',
     remoteFilename: 'abc-123'
@@ -45,7 +45,7 @@ test('sendMessage supports sending a message', async (t: tape.Test) => {
   }), 'Called with the expected arguments');
 
   t.deepEqual(sqsStub.args[0][0], {
-    deduplicationId: notification.id,
+    deduplicationId: `notification-${notification.id}`,
     messageGroupId: 'notification',
     messageType: 'realtime-message',
     payload: {

@@ -10,12 +10,16 @@ import * as CreateNotifications from '../../services/create-notifications';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
 import generateCollection from '../../test-helpers/factories/collection';
 import { Notification } from '../notifications/domain-object';
+import * as AnnounceCommentService from '../iris/messages/annotation-comment';
 
 const API_PATH = '/product-design-canvas-annotations';
 
 test(
   `PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`,
   async (t: Test) => {
+    const announcementStub = sandbox()
+      .stub(AnnounceCommentService, 'announceAnnotationCommentCreation')
+      .resolves({});
     const { session, user } = await createUser();
 
     const annotationId = uuid.v4();
@@ -106,6 +110,7 @@ test(
     t.equal(commentResponse[0].status, 201, 'Comment creation succeeds');
     t.equal(notificationMentionStub.callCount, 0, 'Mentions notification not called');
     t.equal(notificationStub.callCount, 1, 'Comment notification called');
+    t.equal(announcementStub.callCount, 1, 'Announces the new comment to Iris');
 
     const annotationCommentResponse = await get(
       `${API_PATH}/${annotationResponse[1].id}/comments`,
@@ -155,6 +160,7 @@ test(
         [collaborator.user!.id]
       ]
     );
+    t.equal(announcementStub.callCount, 2, 'Announces the comment to Iris');
 
     notificationStub.rejects(new Error('Notification creation failure'));
 
@@ -180,6 +186,7 @@ test(
         []
       ]
     );
+    t.equal(announcementStub.callCount, 3, 'Announces the comment to Iris');
 
     const noNewCommentResponse = await get(
       `${API_PATH}/${annotationResponse[1].id}/comments`,

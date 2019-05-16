@@ -16,7 +16,7 @@ import * as NotificationAnnouncer from '../iris/messages/notification';
 test('notification messages returns annotation comment create message to the user'
   + ' if resources exist',
   async (t: tape.Test) => {
-    sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
+    sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
     const userOne = await createUser();
 
     const { collection } = await generateCollection({ createdBy: userOne.user.id, title: 'test' });
@@ -58,7 +58,7 @@ test('notification messages returns annotation comment create message to the use
 
 test('notification messages returns annotation mention message to the user if resources exist',
   async (t: tape.Test) => {
-    sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
+    sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
     const { notification: annMenNotification, design, actor } = await generateNotification({
       type: NotificationType.ANNOTATION_COMMENT_MENTION
     });
@@ -84,7 +84,7 @@ test('notification messages returns annotation mention message to the user if re
 
 test('notification messages returns collection submit message to the user if resources exist',
   async (t: tape.Test) => {
-    sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
+    sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
     const userOne = await createUser();
 
     const { collection } = await generateCollection({ createdBy: userOne.user.id, title: 'test' });
@@ -119,7 +119,7 @@ test('notification messages returns collection submit message to the user if res
 
 test('notification messages returns commit cost inputs message to the user if resources exist',
   async (t: tape.Test) => {
-    sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
+    sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
     const userOne = await createUser();
 
     const { collection } = await generateCollection({ createdBy: userOne.user.id, title: 'test' });
@@ -156,7 +156,7 @@ test('notification messages returns commit cost inputs message to the user if re
 
 test('notification messages returns invite collaborator message to the user if resources exist',
   async (t: tape.Test) => {
-    sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
+    sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
     const userOne = await createUser();
 
     const { collection } = await generateCollection({ createdBy: userOne.user.id, title: 'test' });
@@ -192,7 +192,7 @@ test('notification messages returns invite collaborator message to the user if r
 
 test('notification messages returns measurement create message to the user if resources exist',
   async (t: tape.Test) => {
-    sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
+    sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
     const { notification: meaCreNotification, design, actor } = await generateNotification({
       type: NotificationType.MEASUREMENT_CREATE
     });
@@ -230,7 +230,7 @@ test('notification messages returns measurement create message to the user if re
 test('notification messages returns partner accept service bid message to the user'
   + ' if resources exist',
   async (t: tape.Test) => {
-    sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
+    sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
     const { notification: parAccSerBidNotification, design, actor } = await generateNotification({
       type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
     });
@@ -256,7 +256,7 @@ test('notification messages returns partner accept service bid message to the us
 
 test('notification messages returns partner design bid message to the user if resources exist',
   async (t: tape.Test) => {
-    sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
+    sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
     const { notification: parDesBidNotification, actor } = await generateNotification({
       type: NotificationType.PARTNER_DESIGN_BID
     });
@@ -282,7 +282,7 @@ test('notification messages returns partner design bid message to the user if re
 test('notification messages returns partner reject service bid messages to the user'
   + ' if resources exist',
   async (t: tape.Test) => {
-    sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
+    sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
     const { notification: parRejSerBidNotification, design, actor } = await generateNotification({
       type: NotificationType.PARTNER_REJECT_SERVICE_BID
     });
@@ -308,7 +308,7 @@ test('notification messages returns partner reject service bid messages to the u
 
 test('notification messages returns task assignment message to the user if resources exist',
   async (t: tape.Test) => {
-    sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
+    sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
     const { notification: tasAsnNotification, task, actor } = await generateNotification({
       type: NotificationType.TASK_ASSIGNMENT
     });
@@ -334,7 +334,7 @@ test('notification messages returns task assignment message to the user if resou
 
 test('notification messages returns task comment create message to the user if resources exist',
   async (t: tape.Test) => {
-    sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
+    sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
     const { notification: tasComCreNotification, task, actor } = await generateNotification({
       type: NotificationType.TASK_COMMENT_CREATE
     });
@@ -363,7 +363,7 @@ test('notification messages returns task comment create message to the user if r
 
 test('notification messages returns task comment mention message to the user if resources exist',
   async (t: tape.Test) => {
-    sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
+    sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
     const { notification: tasComMenNotification, task, actor } = await generateNotification({
       type: NotificationType.TASK_COMMENT_MENTION
     });
@@ -392,7 +392,7 @@ test('notification messages returns task comment mention message to the user if 
 
 test('notification messages returns task completion message to the user if resources exist',
   async (t: tape.Test) => {
-    sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
+    sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
     const { notification: tasComNotification, task, actor } = await generateNotification({
       type: NotificationType.TASK_COMPLETION
     });
@@ -417,7 +417,7 @@ test('notification messages returns task completion message to the user if resou
   });
 
 test('unsupported notifications', async (t: tape.Test) => {
-  sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
+  sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
   const { notification } = await generateNotification({
     type: NotificationType.TASK_ASSIGNMENT
   });

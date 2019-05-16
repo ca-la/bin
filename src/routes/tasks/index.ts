@@ -29,6 +29,7 @@ import * as NotificationsService from '../../services/create-notifications';
 import { typeGuard } from '../../middleware/type-guard';
 import addAtMentionDetails from '../../services/add-at-mention-details';
 import parseAtMentions, { MentionType } from '@cala/ts-lib/dist/parsing/comment-mentions';
+import { announceTaskCommentCreation } from '../../components/iris/messages/task-comment';
 
 const router = new Router();
 
@@ -253,7 +254,7 @@ function* createTaskComment(this: Koa.Application.Context): AsyncIterableIterato
 
   if (filteredBody && isBaseComment(filteredBody) && taskId) {
     const comment = yield CommentDAO.create({ ...filteredBody, userId });
-    yield TaskCommentDAO.create({ commentId: comment.id, taskId });
+    const taskComment = yield TaskCommentDAO.create({ commentId: comment.id, taskId });
     const mentions = parseAtMentions(filteredBody.text);
     const mentionedUserIds: string[] = [];
     for (const mention of mentions) {
@@ -268,6 +269,7 @@ function* createTaskComment(this: Koa.Application.Context): AsyncIterableIterato
         }
       }
     }
+    yield announceTaskCommentCreation(taskComment, comment);
     yield NotificationsService
       .sendTaskCommentCreateNotification(taskId, comment.id, userId, mentionedUserIds);
 

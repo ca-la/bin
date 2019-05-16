@@ -12,6 +12,7 @@ import * as CommentDAO from '../comments/dao';
 import * as AnnotationCommentDAO from '../annotation-comments/dao';
 import sendCreationNotifications from './send-creation-notifications';
 import requireAuth = require('../../middleware/require-auth');
+import { announceAnnotationCommentCreation } from '../iris/messages/annotation-comment';
 
 const router = new Router();
 
@@ -27,12 +28,12 @@ function* createAnnotationComment(this: Koa.Application.Context): AsyncIterableI
         ...body,
         userId
       }, trx);
-
-      await AnnotationCommentDAO.create({
+      const annotationComment = await AnnotationCommentDAO.create({
         annotationId,
         commentId: comment.id
       }, trx);
 
+      await announceAnnotationCommentCreation(annotationComment, comment);
       await sendCreationNotifications({
         actorUserId: this.state.userId,
         annotationId,

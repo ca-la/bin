@@ -1,6 +1,5 @@
 import * as tape from 'tape';
 import * as uuid from 'node-uuid';
-import * as sinon from 'sinon';
 
 import User from '../../components/users/domain-object';
 import { DetailsTask, DetailsTaskWithAssignees, TaskStatus } from '../../domain-objects/task-event';
@@ -19,6 +18,7 @@ import generateTask from '../../test-helpers/factories/task';
 import createDesign from '../../services/create-design';
 import generateProductDesignStage from '../../test-helpers/factories/product-design-stage';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
+import * as AnnounceCommentService from '../../components/iris/messages/task-comment';
 
 const BASE_TASK_EVENT: DetailsTask & { assignees: Collaborator[] } = {
   assignees: [],
@@ -431,6 +431,9 @@ test('PUT /tasks/:taskId/comment/:id creates a task comment', async (t: tape.Tes
   const { session, user } = await createUser();
 
   const taskId = uuid.v4();
+  const announcementStub = sandbox()
+    .stub(AnnounceCommentService, 'announceTaskCommentCreation')
+    .resolves({});
   const notificationStub = sandbox()
     .stub(CreateNotifications, 'sendTaskCommentCreateNotification')
     .resolves();
@@ -478,7 +481,8 @@ test('PUT /tasks/:taskId/comment/:id creates a task comment', async (t: tape.Tes
   );
 
   // A notification is sent when comments are made
-  sinon.assert.callCount(notificationStub, 1);
+  t.equal(notificationStub.callCount, 1, 'Notification is generated from the comment');
+  t.equal(announcementStub.callCount, 1, 'New task comment is announced to Iris');
 });
 
 test('GET list returns all tasks by resource with limit & offset', async (t: tape.Test) => {

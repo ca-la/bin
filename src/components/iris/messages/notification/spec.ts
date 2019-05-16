@@ -1,12 +1,12 @@
 import * as tape from 'tape';
 
-import { sandbox, test } from '../../../test-helpers/fresh';
-import * as SendMessageService from '../send-message';
-import * as CreateNotificationService from '../../notifications/notification-messages';
-import { NotificationType } from '../../notifications/domain-object';
-import { announceNotificationUpdate } from './notification';
-import { TaskAssigmentNotification } from '../../notifications/models/task-assignment';
-import { InviteCollaboratorNotification } from '../../notifications/models/invite-collaborator';
+import { sandbox, test } from '../../../../test-helpers/fresh';
+import * as SendMessageService from '../../send-message';
+import * as CreateNotificationService from '../../../notifications/notification-messages';
+import { NotificationType } from '../../../notifications/domain-object';
+import { announceNotificationCreation } from './index';
+import { TaskAssigmentNotification } from '../../../notifications/models/task-assignment';
+import { InviteCollaboratorNotification } from '../../../notifications/models/invite-collaborator';
 
 test('sendMessage supports sending a message', async (t: tape.Test) => {
   const sendStub = sandbox().stub(SendMessageService, 'sendMessage').resolves({});
@@ -36,7 +36,7 @@ test('sendMessage supports sending a message', async (t: tape.Test) => {
     taskId: 'abc-123',
     type: NotificationType.TASK_ASSIGNMENT
   };
-  const response = await announceNotificationUpdate(notification);
+  const response = await announceNotificationCreation(notification);
 
   t.deepEqual(response, {
     actorId: notification.actorUserId,
@@ -74,7 +74,7 @@ test('sendMessage can early return if the notification is missing data', async (
     taskId: 'abc-123',
     type: NotificationType.TASK_ASSIGNMENT
   };
-  const response = await announceNotificationUpdate(notification);
+  const response = await announceNotificationCreation(notification);
 
   t.equal(response, null);
   t.equal(sendStub.callCount, 0);
@@ -107,7 +107,7 @@ test('sendMessage can early return if the notification is missing data', async (
     taskId: null,
     type: NotificationType.INVITE_COLLABORATOR
   };
-  const response = await announceNotificationUpdate(notification);
+  const response = await announceNotificationCreation(notification);
 
   t.equal(response, null);
   t.equal(sendStub.callCount, 0);

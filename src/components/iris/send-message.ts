@@ -16,7 +16,7 @@ export async function sendMessage(resource: RealtimeMessage): Promise<void> {
   });
 
   await enqueueMessage({
-    deduplicationId: resource.resource.id,
+    deduplicationId: `${resource.type}-${resource.resource.id}`,
     messageGroupId: resource.type,
     messageType: 'realtime-message',
     payload: uploadResponse,

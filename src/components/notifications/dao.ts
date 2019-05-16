@@ -12,7 +12,7 @@ import {
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import Collaborator from '../../components/collaborators/domain-objects/collaborator';
 import { validate, validateEvery } from '../../services/validate-from-db';
-import { announceNotificationUpdate } from '../iris/messages/notification';
+import { announceNotificationCreation } from '../iris/messages/notification';
 
 interface SearchInterface {
   limit: number;
@@ -94,7 +94,7 @@ export async function create(data: Uninserted<Notification>): Promise<Notificati
     dataAdapter,
     created
   );
-  await announceNotificationUpdate(notification);
+  await announceNotificationCreation(notification);
   return notification;
 }
 

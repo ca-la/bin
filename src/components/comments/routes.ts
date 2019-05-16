@@ -4,6 +4,8 @@ import * as Koa from 'koa';
 import * as AnnotationCommentsDAO from '../../components/annotation-comments/dao';
 import * as CommentDAO from './dao';
 import requireAuth = require('../../middleware/require-auth');
+import { announceAnnotationCommentDeletion } from '../iris/messages/annotation-comment';
+import { announceTaskCommentDeletion } from '../iris/messages/task-comment';
 
 const router = new Router();
 
@@ -28,13 +30,27 @@ function* getList(this: Koa.Application.Context): AsyncIterableIterator<void> {
   this.status = 200;
 }
 
+interface DeleteCommentQuery {
+  annotationId?: string;
+  taskId?: string;
+}
+
 function* deleteComment(this: Koa.Application.Context): AsyncIterableIterator<void> {
+  const { userId } = this.state;
+  const { annotationId, taskId }: DeleteCommentQuery = this.query;
   const { commentId } = this.params;
   const comment = yield CommentDAO.findById(commentId);
 
   this.assert(comment, 404);
 
   yield CommentDAO.deleteById(commentId);
+
+  if (annotationId) {
+    yield announceAnnotationCommentDeletion({ actorId: userId, annotationId, commentId });
+  } else if (taskId) {
+    yield announceTaskCommentDeletion({ actorId: userId, commentId, taskId });
+  }
+
   this.status = 204;
 }
 
