@@ -297,6 +297,14 @@ test('Notifications DAO supports finding unread count', async (t: tape.Test) => 
 
   await generateNotification({
     actorUserId: userOne.id,
+    collaboratorId: c1.id,
+    readAt: new Date(),
+    recipientUserId: userTwo.id,
+    type: NotificationType.TASK_ASSIGNMENT
+  });
+
+  await generateNotification({
+    actorUserId: userOne.id,
     readAt: new Date(),
     recipientUserId: userTwo.id,
     type: NotificationType.ANNOTATION_COMMENT_CREATE

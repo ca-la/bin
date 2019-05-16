@@ -147,13 +147,12 @@ export async function findUnreadCountByUserId(
   const collaborators = await CollaboratorsDAO.findByUserId(userId);
   const notificationRows: NotificationRow[] = await db(TABLE_NAME)
     .select('*')
-    .where({ recipient_user_id: userId, read_at: null })
-    .orWhereIn(
-      'collaborator_id',
-      collaborators.map((collaborator: Collaborator): string => {
-        return collaborator.id;
-      })
-    );
+    .where({ read_at: null })
+    .andWhere((query: Knex.QueryBuilder) => query
+      .where({ recipient_user_id: userId })
+      .orWhereIn(
+        'collaborator_id',
+        collaborators.map((collaborator: Collaborator): string => collaborator.id)));
 
   const notifications = validateEvery<NotificationRow, Notification>(
     TABLE_NAME,
