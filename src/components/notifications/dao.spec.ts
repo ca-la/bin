@@ -262,3 +262,47 @@ test('Notifications DAO supports marking read', async (t: tape.Test) => {
   if (!read) { throw new Error('FindById failed!'); }
   t.notDeepEqual(read.readAt, null, 'readAt is no longer null');
 });
+
+test('Notifications DAO supports finding unread count', async (t: tape.Test) => {
+  sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
+  const { user: userOne } = await createUser({ withSession: false });
+  const { user: userTwo } = await createUser({ withSession: false });
+  const { collection } = await generateCollection({ createdBy: userOne.id });
+  const { collaborator: c1 } = await generateCollaborator({
+    collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
+    userId: userTwo.id
+  });
+  const data: InviteCollaboratorNotification = {
+    ...templateNotification,
+    actorUserId: userOne.id,
+    collaboratorId: c1.id,
+    collectionId: collection.id,
+    createdAt: new Date(),
+    designId: null,
+    id: uuid.v4(),
+    recipientUserId: userTwo.id,
+    sentEmailAt: new Date(),
+    type: NotificationType.INVITE_COLLABORATOR
+  };
+
+  await generateNotification({
+    actorUserId: userOne.id,
+    recipientUserId: userTwo.id,
+    type: NotificationType.ANNOTATION_COMMENT_CREATE
+  });
+
+  await generateNotification({
+    actorUserId: userOne.id,
+    readAt: new Date(),
+    recipientUserId: userTwo.id,
+    type: NotificationType.ANNOTATION_COMMENT_CREATE
+  });
+
+  await NotificationsDAO.create(data);
+  const unreadCount = await NotificationsDAO.findUnreadCountByUserId(userTwo.id);
+  t.deepEqual(unreadCount, 2, 'there are two unread notification');
+});

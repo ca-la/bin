@@ -33,6 +33,15 @@ function* getList(this: Koa.Application.Context): AsyncIterableIterator<Notifica
   this.body = messages.filter((message: NotificationMessage | null) => message !== null);
 }
 
+function* getUnreadCount(this: Koa.Application.Context): AsyncIterableIterator<number[]> {
+  const { userId } = this.state;
+
+  const unreadNotificationsCount = yield NotificationsDAO.findUnreadCountByUserId(userId);
+
+  this.status = 200;
+  this.body = { unreadNotificationsCount };
+}
+
 function* setRead(this: Koa.Application.Context): AsyncIterableIterator<void> {
   const { notificationIds } = this.query;
   if (notificationIds) {
@@ -54,6 +63,7 @@ function* setRead(this: Koa.Application.Context): AsyncIterableIterator<void> {
 }
 
 router.get('/', requireAuth, getList);
+router.get('/unread', requireAuth, getUnreadCount);
 router.patch('/read', requireAuth, setRead);
 
 export default router.routes();

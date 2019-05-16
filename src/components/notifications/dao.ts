@@ -141,6 +141,30 @@ export async function findByUserId(
   );
 }
 
+export async function findUnreadCountByUserId(
+  userId: string
+): Promise<number> {
+  const collaborators = await CollaboratorsDAO.findByUserId(userId);
+  const notificationRows: NotificationRow[] = await db(TABLE_NAME)
+    .select('*')
+    .where({ recipient_user_id: userId, read_at: null })
+    .orWhereIn(
+      'collaborator_id',
+      collaborators.map((collaborator: Collaborator): string => {
+        return collaborator.id;
+      })
+    );
+
+  const notifications = validateEvery<NotificationRow, Notification>(
+    TABLE_NAME,
+    isNotificationRow,
+    dataAdapter,
+    notificationRows
+  );
+
+  return notifications.length;
+}
+
 /**
  * Delete recent identical notifications, i.e. to batch up groups of many
  * "someone edited this text" actions into one single message.

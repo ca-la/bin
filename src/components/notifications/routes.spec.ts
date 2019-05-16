@@ -84,6 +84,50 @@ async (t: tape.Test) => {
   t.equal(response3.status, 400);
 });
 
+test(`GET ${API_PATH}/unread returns the number of unread notifications`,
+async (t: tape.Test) => {
+  sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
+  const userOne = await createUser();
+  const userTwo = await createUser();
+
+  const d1 = await DesignsDAO.create({
+    productType: 'HOODIE',
+    title: 'Raf Simons x Sterling Ruby Hoodie',
+    userId: userOne.user.id
+  });
+  const collection1 = await generateCollection({ createdBy: userOne.user.id });
+  const { collaborator: c1 } = await generateCollaborator({
+    collectionId: null,
+    designId: d1.id,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
+    userId: userTwo.user.id
+  });
+  await generateNotification({
+    actorUserId: userOne.user.id,
+    recipientUserId: userTwo.user.id,
+    type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
+  });
+  await generateNotification({
+    actorUserId: userOne.user.id,
+    collaboratorId: c1.id,
+    collectionId: collection1.collection.id,
+    recipientUserId: null,
+    type: NotificationType.INVITE_COLLABORATOR
+  });
+
+  const [response, body] = await API.get(`${API_PATH}/unread`, {
+    headers: API.authHeader(userTwo.session.id)
+  });
+  t.equal(response.status, 200);
+  t.deepEqual(
+    body.unreadNotificationsCount,
+    2,
+    'Returns the number of unread notifications for the user'
+  );
+});
+
 test(`PATCH ${API_PATH}/read marks notifications as read`,
 async (t: tape.Test) => {
   sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});

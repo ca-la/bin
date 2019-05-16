@@ -137,6 +137,7 @@ export default async function generateNotification(
     ...templateNotification,
     actorUserId: actor.id,
     id: options.id || id,
+    readAt: options.readAt || null,
     recipientUserId: recipient.id,
     sentEmailAt: options.sentEmailAt || null
   };
