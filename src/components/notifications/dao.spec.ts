@@ -264,7 +264,7 @@ test('Notifications DAO supports marking read', async (t: tape.Test) => {
 });
 
 test('Notifications DAO supports finding unread count', async (t: tape.Test) => {
-  sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
+  sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
   const { user: userOne } = await createUser({ withSession: false });
   const { user: userTwo } = await createUser({ withSession: false });
   const { collection } = await generateCollection({ createdBy: userOne.id });

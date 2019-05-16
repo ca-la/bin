@@ -86,7 +86,7 @@ async (t: tape.Test) => {
 
 test(`GET ${API_PATH}/unread returns the number of unread notifications`,
 async (t: tape.Test) => {
-  sandbox().stub(NotificationAnnouncer, 'announceNotificationUpdate').resolves({});
+  sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
   const userOne = await createUser();
   const userTwo = await createUser();
 
