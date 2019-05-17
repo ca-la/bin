@@ -20,6 +20,7 @@ interface SearchInterface {
 }
 
 const TABLE_NAME = 'notifications';
+const DELAY_MINUTES = 45;
 
 /**
  * Returns all outstanding notifications (e.g. not sent) with associated objects attached.
@@ -29,6 +30,7 @@ export async function findOutstanding(trx?: Knex.Transaction): Promise<Notificat
     .select('*')
     .where({ sent_email_at: null, read_at: null })
     .whereNot({ recipient_user_id: null })
+    .andWhereRaw(`created_at < NOW() - INTERVAL '${DELAY_MINUTES} minutes'`)
     .orderBy('created_at', 'desc')
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {

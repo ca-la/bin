@@ -119,21 +119,20 @@ test('Notifications DAO supports finding by user id', async (t: tape.Test) => {
   );
 });
 
-test('Notifications DAO supports finding outstanding notifications', async (t: tape.Test) => {
+test('Notifications DAO supports finding outstanding notifications over 45min old',
+async (t: tape.Test) => {
   sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
   const { user } = await createUser({ withSession: false });
 
-  const {
-    notification: notificationOne
-  } = await generateNotification({
+  const { notification: notificationOne } = await generateNotification({
     actorUserId: user.id,
+    createdAt: new Date(new Date().getTime() - (46 * 60 * 1000)),
     type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });
-  const {
-    design: designTwo,
-    notification: notificationTwo
-  } = await generateNotification({
+
+  const { notification: notificationTwo, design } = await generateNotification({
     actorUserId: user.id,
+    createdAt: new Date(new Date().getTime() - (126 * 60 * 1000)),
     type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });
   await generateNotification({
@@ -143,8 +142,15 @@ test('Notifications DAO supports finding outstanding notifications', async (t: t
   });
   await generateNotification({
     actorUserId: user.id,
-    designId: designTwo.id,
+    designId: design.id,
     sentEmailAt: new Date(),
+    type: NotificationType.PARTNER_DESIGN_BID
+  });
+
+  await generateNotification({
+    actorUserId: user.id,
+    designId: design.id,
+    sentEmailAt: null,
     type: NotificationType.PARTNER_DESIGN_BID
   });
 
@@ -153,7 +159,7 @@ test('Notifications DAO supports finding outstanding notifications', async (t: t
 
     t.deepEqual(
       results,
-      [notificationTwo , notificationOne],
+      [notificationOne, notificationTwo],
       'Returns unsent notifications with recipients'
     );
   });

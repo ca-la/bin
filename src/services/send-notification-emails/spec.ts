@@ -18,10 +18,12 @@ test('sendNotificationEmails supports finding outstanding notifications', async 
 
   const { notification: notificationOne } = await generateNotification({
     actorUserId: userOne.user.id,
+    createdAt: new Date(new Date().getMilliseconds() - (46 * 60 * 1000)),
     type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });
   const { notification: notificationTwo } = await generateNotification({
     actorUserId: userTwo.user.id,
+    createdAt: new Date(new Date().getMilliseconds() - (46 * 60 * 1000)),
     type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });
   await generateNotification({ type: NotificationType.INVITE_COLLABORATOR });
@@ -54,16 +56,19 @@ test('sendNotificationEmails gracefully handles failures', async (t: tape.Test) 
 
   const { notification: notificationOne } = await generateNotification({
     actorUserId: userOne.user.id,
+    createdAt: new Date(new Date().getMilliseconds() - (46 * 60 * 1000)),
     id: idOne,
     type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });
   const { notification: notificationTwo } = await generateNotification({
     actorUserId: userTwo.user.id,
+    createdAt: new Date(new Date().getMilliseconds() - (46 * 60 * 1000)),
     id: idTwo,
     type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });
   const { notification: notificationThree } = await generateNotification({
     actorUserId: userTwo.user.id,
+    createdAt: new Date(new Date().getMilliseconds() - (46 * 60 * 1000)),
     id: idThree,
     type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });

@@ -136,11 +136,12 @@ export default async function generateNotification(
   const baseNotification = {
     ...templateNotification,
     actorUserId: actor.id,
+    createdAt: options.createdAt || new Date(),
     id: options.id || id,
     readAt: options.readAt || null,
     recipientUserId: recipient.id,
     sentEmailAt: options.sentEmailAt || null
-  };
+  } as any;
 
   switch (options.type) {
     case NotificationType.ANNOTATION_COMMENT_CREATE: {
