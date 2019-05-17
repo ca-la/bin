@@ -17,6 +17,12 @@ import { PartnerAcceptServiceBidNotification } from './models/partner-accept-ser
 import { templateNotification } from './models/base';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
 import * as NotificationAnnouncer from '../iris/messages/notification';
+import * as CollectionsDAO from '../../dao/collections';
+import * as CollaboratorsDAO from '../../components/collaborators/dao';
+import * as AnnotationsDAO from '../../components/product-design-canvas-annotations/dao';
+import * as CanvasesDAO from '../../dao/product-design-canvases';
+import * as CommentsDAO from '../../components/comments/dao';
+import * as MeasurementsDAO from '../../dao/product-design-canvas-measurements';
 
 test('Notifications DAO supports creation', async (t: tape.Test) => {
   sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
@@ -267,27 +273,13 @@ test('Notifications DAO supports finding unread count', async (t: tape.Test) => 
   sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
   const { user: userOne } = await createUser({ withSession: false });
   const { user: userTwo } = await createUser({ withSession: false });
-  const { collection } = await generateCollection({ createdBy: userOne.id });
-  const { collaborator: c1 } = await generateCollaborator({
-    collectionId: collection.id,
-    designId: null,
-    invitationMessage: '',
-    role: 'EDIT',
-    userEmail: null,
-    userId: userTwo.id
-  });
-  const data: InviteCollaboratorNotification = {
-    ...templateNotification,
+
+  await generateNotification({
     actorUserId: userOne.id,
-    collaboratorId: c1.id,
-    collectionId: collection.id,
-    createdAt: new Date(),
-    designId: null,
-    id: uuid.v4(),
     recipientUserId: userTwo.id,
     sentEmailAt: new Date(),
     type: NotificationType.INVITE_COLLABORATOR
-  };
+  });
 
   await generateNotification({
     actorUserId: userOne.id,
@@ -297,7 +289,6 @@ test('Notifications DAO supports finding unread count', async (t: tape.Test) => 
 
   await generateNotification({
     actorUserId: userOne.id,
-    collaboratorId: c1.id,
     readAt: new Date(),
     recipientUserId: userTwo.id,
     type: NotificationType.TASK_ASSIGNMENT
@@ -310,7 +301,55 @@ test('Notifications DAO supports finding unread count', async (t: tape.Test) => 
     type: NotificationType.ANNOTATION_COMMENT_CREATE
   });
 
-  await NotificationsDAO.create(data);
+  const { collection: deletedCollection } = await generateNotification({
+    actorUserId: userOne.id,
+    recipientUserId: userTwo.id,
+    type: NotificationType.ANNOTATION_COMMENT_CREATE
+  });
+  await CollectionsDAO.deleteById(deletedCollection.id);
+
+  const { design: deletedDesign } = await generateNotification({
+    actorUserId: userOne.id,
+    recipientUserId: userTwo.id,
+    type: NotificationType.ANNOTATION_COMMENT_CREATE
+  });
+  await DesignsDAO.deleteById(deletedDesign.id);
+
+  const { annotation: deletedAnnotation } = await generateNotification({
+    actorUserId: userOne.id,
+    recipientUserId: userTwo.id,
+    type: NotificationType.ANNOTATION_COMMENT_CREATE
+  });
+  await AnnotationsDAO.deleteById(deletedAnnotation.id);
+
+  const { canvas: deletedCanvas } = await generateNotification({
+    actorUserId: userOne.id,
+    recipientUserId: userTwo.id,
+    type: NotificationType.ANNOTATION_COMMENT_CREATE
+  });
+  await CanvasesDAO.del(deletedCanvas.id);
+
+  const { comment: deletedComment } = await generateNotification({
+    actorUserId: userOne.id,
+    recipientUserId: userTwo.id,
+    type: NotificationType.ANNOTATION_COMMENT_CREATE
+  });
+  await CommentsDAO.deleteById(deletedComment.id);
+
+  const { measurement: deletedMeasurement } = await generateNotification({
+    actorUserId: userOne.id,
+    recipientUserId: userTwo.id,
+    type: NotificationType.MEASUREMENT_CREATE
+  });
+  await MeasurementsDAO.deleteById(deletedMeasurement.id);
+
+  const { collaborator: deletedCollaborator } = await generateNotification({
+    actorUserId: userOne.id,
+    recipientUserId: null,
+    type: NotificationType.INVITE_COLLABORATOR
+  });
+  await CollaboratorsDAO.deleteById(deletedCollaborator.id);
+
   const unreadCount = await NotificationsDAO.findUnreadCountByUserId(userTwo.id);
   t.deepEqual(unreadCount, 2, 'there are two unread notification');
 });

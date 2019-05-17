@@ -146,12 +146,29 @@ export async function findUnreadCountByUserId(
 ): Promise<number> {
   const collaborators = await CollaboratorsDAO.findByUserId(userId);
   const notificationRows: NotificationRow[] = await db(TABLE_NAME)
-    .select('*')
-    .where({ read_at: null })
+    .select('n.*')
+    .from('notifications as n')
+    .leftJoin('product_designs as d', 'd.id', 'n.design_id')
+    .leftJoin('collections as c', 'c.id', 'n.collection_id')
+    .leftJoin('comments as co', 'co.id', 'n.comment_id')
+    .leftJoin('collaborators as cl', 'cl.id', 'n.collaborator_id')
+    .leftJoin('product_design_canvas_annotations as a', 'a.id', 'n.annotation_id')
+    .leftJoin('product_design_canvases as can', 'can.id', 'n.canvas_id')
+    .leftJoin('product_design_canvas_measurements as m', 'm.id', 'n.measurement_id')
+    .where({
+      'a.deleted_at': null,
+      'c.deleted_at': null,
+      'can.deleted_at': null,
+      'co.deleted_at': null,
+      'd.deleted_at': null,
+      'm.deleted_at': null,
+      'n.read_at': null
+    })
+    .andWhereRaw('(cl.cancelled_at IS null OR cl.cancelled_at > now())')
     .andWhere((query: Knex.QueryBuilder) => query
-      .where({ recipient_user_id: userId })
+      .where({ 'n.recipient_user_id': userId })
       .orWhereIn(
-        'collaborator_id',
+        'n.collaborator_id',
         collaborators.map((collaborator: Collaborator): string => collaborator.id)));
 
   const notifications = validateEvery<NotificationRow, Notification>(
