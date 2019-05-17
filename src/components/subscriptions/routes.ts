@@ -61,6 +61,7 @@ function* createDesignerSubscription(this: Koa.Application.Context): AsyncIterab
       consumedAt: null,
       email,
       firstName,
+      isManuallyApproved: false,
       lastName
     });
     registrationLink = `${STUDIO_HOST}/register?approvedSignupId=${signup.id}`;

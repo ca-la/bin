@@ -32,6 +32,7 @@ test('POST /subscriptions/designers creates a designer subscription', async (t: 
     consumedAt: null,
     email: 'foo@example.com',
     firstName: 'CA',
+    isManuallyApproved: false,
     lastName: 'LA'
   }), 'Calls with the expected arguments');
   t.true(subscribeStub.calledWith(MAILCHIMP_LIST_ID_DESIGNERS, 'foo@example.com', {

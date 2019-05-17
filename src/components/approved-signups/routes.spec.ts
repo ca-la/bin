@@ -57,6 +57,7 @@ test(`POST ${API_PATH}/ creates an approved signup`, async (t: Test) => {
     email: 'foo@example.com',
     firstName: 'Foo',
     id: uuid.v4(),
+    isManuallyApproved: true,
     lastName: 'Bar'
   };
   const [response, body] = await post(`${API_PATH}/`, {
@@ -104,6 +105,7 @@ test(`GET ${API_PATH}/:approvedSignupId will fetch a row`, async (t: Test) => {
     email: 'foo@example.com',
     firstName: 'Foo',
     id: 'abc-123',
+    isManuallyApproved: true,
     lastName: 'Bar'
   });
 
@@ -115,6 +117,7 @@ test(`GET ${API_PATH}/:approvedSignupId will fetch a row`, async (t: Test) => {
     email: 'foo@example.com',
     firstName: 'Foo',
     id: 'abc-123',
+    isManuallyApproved: true,
     lastName: 'Bar'
   });
   t.true(signupStub.calledOnceWith('abc-123'));

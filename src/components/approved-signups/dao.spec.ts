@@ -18,6 +18,7 @@ test('ApprovedSignups DAO supports creation and retrieval', async (t: Test) => {
     email: 'foo@example.com',
     firstName: 'Foo',
     id,
+    isManuallyApproved: true,
     lastName: 'Bar'
   });
   const foundSignup = await ApprovedSignupsDAO.findById(id);
@@ -38,6 +39,7 @@ test('ApprovedSignups DAO supports creation and retrieval', async (t: Test) => {
       email: '  fOO@example.com  ',
       firstName: 'Foob',
       id: randomId,
+      isManuallyApproved: true,
       lastName: 'Barre'
     });
     t.fail('It was able to create a duplicate email row');
@@ -55,6 +57,7 @@ test('ApprovedSignups DAO supports updating', async (t: Test) => {
     email: 'foo@example.com',
     firstName: 'Foo',
     id,
+    isManuallyApproved: true,
     lastName: 'Bar'
   });
 

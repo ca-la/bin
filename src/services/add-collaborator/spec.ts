@@ -27,6 +27,7 @@ test('addCollaborator can add a collaborator', async (t: Test) => {
     consumedAt: null,
     email: 'foo@example.com',
     firstName: null,
+    isManuallyApproved: false,
     lastName: null
   }), 'Calls with the expected arguments');
   t.equal(notificationsStub.callCount, 1, 'Calls the notifications service');

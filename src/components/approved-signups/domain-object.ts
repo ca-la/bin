@@ -7,6 +7,7 @@ export interface ApprovedSignup {
   email: string;
   firstName: string | null;
   id: string;
+  isManuallyApproved: boolean | null;
   lastName: string | null;
 }
 
@@ -16,6 +17,7 @@ export interface ApprovedSignupRow {
   email: string;
   first_name: string | null;
   id: string;
+  is_manually_approved: string | null;
   last_name: string | null;
 }
 
@@ -29,6 +31,7 @@ export function isApprovedSignupRow(row: object): row is ApprovedSignupRow {
     'email',
     'first_name',
     'id',
+    'is_manually_approved',
     'last_name'
   );
 }
@@ -41,6 +44,7 @@ export function isApprovedSignup(data: object): data is ApprovedSignup {
     'email',
     'firstName',
     'id',
+    'isManuallyApproved',
     'lastName'
   );
 }

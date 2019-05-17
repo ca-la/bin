@@ -74,6 +74,7 @@ export default async function addCollaborator(
       consumedAt: null,
       email,
       firstName: null,
+      isManuallyApproved: false,
       lastName: null
     });
   }

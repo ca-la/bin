@@ -7,12 +7,14 @@ test('findOrCreate can find or create an approval', async (t: Test) => {
     consumedAt: null,
     email: 'FOO@example.com',
     firstName: 'Foo',
+    isManuallyApproved: true,
     lastName: 'Bar'
   });
   t.deepEqual(omit(create1, 'id', 'createdAt'), {
     consumedAt: null,
     email: 'foo@example.com',
     firstName: 'Foo',
+    isManuallyApproved: true,
     lastName: 'Bar'
   }, 'Returns a newly created row');
 
@@ -20,12 +22,14 @@ test('findOrCreate can find or create an approval', async (t: Test) => {
     consumedAt: null,
     email: 'foo@EXAMPLE.com',
     firstName: 'Fooster',
+    isManuallyApproved: true,
     lastName: 'McBarry'
   });
   t.deepEqual(omit(found1, 'id', 'createdAt'), {
     consumedAt: null,
     email: 'foo@example.com',
     firstName: 'Foo',
+    isManuallyApproved: true,
     lastName: 'Bar'
   }, 'Returns a pre-existing row');
 
@@ -33,12 +37,14 @@ test('findOrCreate can find or create an approval', async (t: Test) => {
     consumedAt: null,
     email: 'bar@example.com',
     firstName: null,
+    isManuallyApproved: true,
     lastName: null
   });
   t.deepEqual(omit(create2, 'id', 'createdAt'), {
     consumedAt: null,
     email: 'bar@example.com',
     firstName: null,
+    isManuallyApproved: true,
     lastName: null
   }, 'Returns a newly created row');
 });

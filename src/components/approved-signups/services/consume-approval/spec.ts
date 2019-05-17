@@ -14,6 +14,7 @@ test('ApprovedSignups DAO supports updating', async (t: Test) => {
     email: 'foo@example.com',
     firstName: 'Foo',
     id,
+    isManuallyApproved: true,
     lastName: 'Bar'
   });
 
