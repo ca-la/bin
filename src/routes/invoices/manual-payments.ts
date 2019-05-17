@@ -33,7 +33,8 @@ export default function* createManualPaymentRecord(
       throw new InvalidDataError('This invoice is already paid');
     }
 
-    const totalCents = this.request.body.totalCents || invoice.totalCents;
+    const totalCents: number = Number(this.request.body.totalCents ||
+      (invoice.totalCents - (invoice.totalPaid || 0)));
 
     return await InvoicePaymentsDAO.createTrx(trx, {
       createdAt: createdAt ? new Date(createdAt) : undefined,
