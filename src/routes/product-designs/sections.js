@@ -148,29 +148,6 @@ function* createSectionAnnotation() {
   this.status = 200;
 }
 
-function* deleteSectionAnnotation() {
-  yield ProductDesignSectionAnnotationsDAO.deleteById(
-    this.params.annotationId
-  )
-    .catch(filterError(InvalidDataError, err => this.throw(400, err)));
-
-  this.status = 204;
-}
-
-function* updateSectionAnnotation() {
-  const updated = yield ProductDesignSectionAnnotationsDAO.update(
-    this.params.annotationId,
-    {
-      text: this.request.body.text
-    }
-  )
-    .catch(filterError(InvalidDataError, err => this.throw(400, err)));
-
-  const withUser = yield attachAnnotationUser(updated);
-  this.body = withUser;
-  this.status = 200;
-}
-
 module.exports = {
   getSections,
   createSection,
@@ -179,7 +156,5 @@ module.exports = {
   getSectionFeaturePlacements,
   replaceSectionFeaturePlacements,
   getSectionAnnotations,
-  createSectionAnnotation,
-  deleteSectionAnnotation,
-  updateSectionAnnotation
+  createSectionAnnotation
 };

@@ -332,6 +332,60 @@ test('CollaboratorsDAO.deleteByDesignIdAndUserId deletes collaborator', async (t
   t.deepEqual(collaborator, null);
 });
 
+test('findAllForUserThroughDesign can find all collaborators', async (t: Test) => {
+  const { user } = await createUser({ withSession: false });
+
+  const { collection } = await generateCollection();
+  const design = await ProductDesignsDAO.create({
+    productType: 'TEESHIRT',
+    title: 'A product design',
+    userId: user.id
+  });
+  await CollectionsDAO.addDesign(collection.id, design.id);
+
+  const { collaborator: collaboratorOne } = await generateCollaborator({
+    collectionId: null,
+    designId: design.id,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
+    userId: user.id
+  });
+  const { collaborator: collaboratorTwo } = await generateCollaborator({
+    collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
+    role: 'VIEW',
+    userEmail: null,
+    userId: user.id
+  });
+
+  const result = await CollaboratorsDAO.findAllForUserThroughDesign(
+    design.id,
+    user.id
+  );
+
+  t.deepEqual(result, [collaboratorTwo, collaboratorOne]);
+
+  await CollectionsDAO.deleteById(collection.id);
+
+  const resultTwo = await CollaboratorsDAO.findAllForUserThroughDesign(
+    design.id,
+    user.id
+  );
+
+  t.deepEqual(resultTwo, [collaboratorOne]);
+
+  await CollectionsDAO.removeDesign(collection.id, design.id);
+
+  const resultThree = await CollaboratorsDAO.findAllForUserThroughDesign(
+    design.id,
+    user.id
+  );
+
+  t.deepEqual(resultThree, [collaboratorOne]);
+});
+
 test('cancelForDesignAndPartner cancels the preview role', async (t: Test) => {
   const { user: designer } = await createUser({ withSession: false });
   const { user: partner } = await createUser({ withSession: false, role: 'PARTNER' });

@@ -308,6 +308,45 @@ export async function findByDesignAndUser(
   return collaborator;
 }
 
+export async function findAllForUserThroughDesign(
+  designId: string,
+  userId: string,
+  trx?: Knex.Transaction
+): Promise<CollaboratorWithUser[]> {
+  const collaboratorRows = await getCollaboratorViewBuilder()
+    .joinRaw(`
+LEFT JOIN collection_designs AS cd ON cd.design_id = ?
+LEFT JOIN collections AS c ON c.id = cd.collection_id AND c.deleted_at IS null
+LEFT JOIN product_designs AS d ON d.id = ? AND d.deleted_at IS null
+    `, [designId, designId])
+    .whereRaw(`
+collaborators_forcollaboratorsviewraw.user_id = ?
+AND (
+  collaborators_forcollaboratorsviewraw.collection_id = c.id
+  OR collaborators_forcollaboratorsviewraw.design_id = ?
+)
+AND (
+  collaborators_forcollaboratorsviewraw.cancelled_at IS null
+  OR collaborators_forcollaboratorsviewraw.cancelled_at > now()
+)
+    `, [userId, designId])
+    .orderByRaw(`
+collaborators_forcollaboratorsviewraw.created_at DESC
+    `)
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    });
+
+  return validateEvery<CollaboratorWithUserRow, CollaboratorWithUser>(
+    TABLE_NAME,
+    isCollaboratorWithUserRow,
+    dataWithUserAdapter,
+    collaboratorRows
+  );
+}
+
 export async function findByCollectionAndUser(
   collectionId: string,
   userId: string,

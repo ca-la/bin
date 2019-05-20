@@ -3,7 +3,6 @@
 const pick = require('lodash/pick');
 const Router = require('koa-router');
 
-const canAccessAnnotation = require('../../middleware/can-access-annotation');
 const canAccessSection = require('../../middleware/can-access-section');
 const canAccessUserResource = require('../../middleware/can-access-user-resource');
 const CollaboratorsDAO = require('../../components/collaborators/dao');
@@ -35,9 +34,7 @@ const {
   getSectionFeaturePlacements,
   replaceSectionFeaturePlacements,
   getSectionAnnotations,
-  createSectionAnnotation,
-  deleteSectionAnnotation,
-  updateSectionAnnotation
+  createSectionAnnotation
 } = require('./sections');
 const { findAllDesignsThroughCollaborator } = require('../../dao/product-designs/dao');
 
@@ -320,7 +317,5 @@ router.get('/:designId/sections/:sectionId/annotations', requireAuth, canAccessD
 router.post('/:designId/sections/:sectionId/annotations', requireAuth, canAccessDesignInParam, canCommentOnDesign, canAccessSection, createSectionAnnotation);
 router.get('/:designId/sections/:sectionId/feature-placements', requireAuth, canAccessDesignInParam, canAccessSection, getSectionFeaturePlacements);
 router.put('/:designId/sections/:sectionId/feature-placements', requireAuth, canAccessDesignInParam, canAccessSection, replaceSectionFeaturePlacements);
-router.del('/:designId/sections/:sectionId/annotations/:annotationId', requireAuth, canAccessDesignInParam, canAccessSection, canAccessAnnotation, deleteSectionAnnotation);
-router.patch('/:designId/sections/:sectionId/annotations/:annotationId', requireAuth, canAccessDesignInParam, canAccessSection, canAccessAnnotation, updateSectionAnnotation);
 
 module.exports = router.routes();

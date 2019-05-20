@@ -55,7 +55,40 @@ SELECT d2.id
   return result.rows.map((row: any) => row.id);
 }
 
+export async function findDesignByAnnotationId(
+  annotationId: string
+): Promise<ProductDesign | null> {
+  const result = await db.raw(`
+SELECT designs.* FROM product_designs_with_metadata AS designs
+INNER JOIN product_design_canvases AS canvases ON canvases.design_id = designs.id
+INNER JOIN product_design_canvas_annotations AS annotations ON annotations.canvas_id = canvases.id
+WHERE annotations.id = ?
+AND annotations.deleted_at IS null
+AND designs.deleted_at IS null
+  `, [annotationId]);
+
+  const productDesigns = result.rows.map((row: any): ProductDesign => new ProductDesign(row));
+  return productDesigns[0] || null;
+}
+
+export async function findDesignByTaskId(
+  taskId: string
+): Promise<ProductDesign | null> {
+  const result = await db.raw(`
+SELECT designs.* FROM product_designs_with_metadata AS designs
+INNER JOIN product_design_stages AS stages ON stages.design_id = designs.id
+INNER JOIN product_design_stage_tasks AS tasks ON tasks.design_stage_id = stages.id
+WHERE tasks.task_id = ?
+AND designs.deleted_at IS null
+  `, [taskId]);
+
+  const productDesigns = result.rows.map((row: any): ProductDesign => new ProductDesign(row));
+  return productDesigns[0] || null;
+}
+
 module.exports = {
   findAllDesignIdsThroughCollaborator,
-  findAllDesignsThroughCollaborator
+  findAllDesignsThroughCollaborator,
+  findDesignByAnnotationId,
+  findDesignByTaskId
 };

@@ -28,8 +28,14 @@ interface LocalRoles {
 
 const ROLE_ORDERING = ['EDIT', 'PARTNER', 'VIEW', 'PREVIEW'];
 
-// TODO: This is deprecated and should be removed once Studio only consumes the `permissions`
-//       object.
+/**
+ * Given a design and a session, returns the permissions for the session on the design.
+ * Permissions are based off at least one of the following:
+ * - Ownership of the design
+ * - Ownership of a collection that the design resides in
+ * - Having a collaborator connected to either the design or a collection that the design
+ *   resides in.
+ */
 export async function getDesignPermissionsAndRole(
   design: ProductDesign,
   sessionRole: string,
@@ -37,32 +43,17 @@ export async function getDesignPermissionsAndRole(
 ): Promise<PermissionsAndRole> {
   const isAdmin = sessionRole === 'ADMIN';
   const isDesignOwner = sessionUserId === design.userId;
+
   const collections = await CollectionsDAO.findByDesign(design.id);
   const userCreatedCollection = collections.find((collection: Collection): boolean => {
     return collection.createdBy === sessionUserId;
   });
   const isOwner = isDesignOwner || Boolean(userCreatedCollection);
 
-  const designCollaborator = await CollaboratorsDAO.findByDesignAndUser(
+  const combinedCollaborators = await CollaboratorsDAO.findAllForUserThroughDesign(
     design.id,
     sessionUserId
   );
-  const collaboratorsForEachCollection: Collaborator[][] = await Promise.all(
-    collections.map(async (collection: Collection): Promise<Collaborator[]> => {
-      return CollaboratorsDAO.findByCollectionAndUser(
-        collection.id,
-        sessionUserId
-      );
-    })
-  );
-  const collectionCollaborators: Collaborator[] = collaboratorsForEachCollection.reduce(
-    (acc: Collaborator[], collaborators: Collaborator[]): Collaborator[] => {
-      return [...collaborators, ...acc];
-    }, []
-  );
-  const combinedCollaborators: Collaborator[] = designCollaborator
-    ? [designCollaborator, ...collectionCollaborators]
-    : collectionCollaborators;
   const roles = combinedCollaborators.map(
     (collaborator: Collaborator): string => {
       return collaborator.role;
