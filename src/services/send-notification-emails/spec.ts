@@ -56,13 +56,13 @@ test('sendNotificationEmails gracefully handles failures', async (t: tape.Test) 
 
   const { notification: notificationOne } = await generateNotification({
     actorUserId: userOne.user.id,
-    createdAt: new Date(new Date().getMilliseconds() - (46 * 60 * 1000)),
+    createdAt: new Date(new Date().getMilliseconds() - (48 * 60 * 1000)),
     id: idOne,
     type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });
   const { notification: notificationTwo } = await generateNotification({
     actorUserId: userTwo.user.id,
-    createdAt: new Date(new Date().getMilliseconds() - (46 * 60 * 1000)),
+    createdAt: new Date(new Date().getMilliseconds() - (47 * 60 * 1000)),
     id: idTwo,
     type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });
@@ -73,14 +73,13 @@ test('sendNotificationEmails gracefully handles failures', async (t: tape.Test) 
     type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });
 
-  const emailStub = sandbox().stub(EmailService, 'enqueueSend').callsFake((queueObject: any) => {
-    if (queueObject.params.notifications[0].id === idTwo) {
-      const err = new Error('Not gonna send!!!');
-      return Promise.reject(err);
+  const emailStub = sandbox().stub(EmailService, 'enqueueSend').callsFake(
+    async (queueObject: any): Promise<void> => {
+      if (queueObject.params.notifications[0].id === idTwo) {
+        throw new Error('Not going to send!');
+      }
     }
-
-    return Promise.resolve();
-  });
+  );
 
   try {
     await sendNotificationEmails();

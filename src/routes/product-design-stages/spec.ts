@@ -90,5 +90,6 @@ test('GET /product-design-stages/titles returns all titles for stages', async (t
   });
   t.equal(response.status, 200);
   t.equal(body.length, 2);
-  t.deepEqual(body, [stage.title, stage2.title]);
+  t.true(body.includes(stage.title), 'Contains the first stage title');
+  t.true(body.includes(stage2.title), 'Contains the second stage title');
 });
