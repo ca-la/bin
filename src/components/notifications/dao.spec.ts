@@ -58,13 +58,13 @@ test('Notifications DAO supports creation', async (t: tape.Test) => {
 
 test('Notifications DAO supports finding by user id', async (t: tape.Test) => {
   sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
-  const { user: userOne } = await createUser({ withSession: false });
-  const { user: userTwo } = await createUser({ withSession: false });
+  const userOne = await createUser({ withSession: false });
+  const userTwo = await createUser({ withSession: false });
 
   const d1 = await DesignsDAO.create({
     productType: 'HOODIE',
     title: 'Raf Simons x Sterling Ruby Hoodie',
-    userId: userOne.id
+    userId: userOne.user.id
   });
   const { collaborator: c1 } = await generateCollaborator({
     collectionId: null,
@@ -72,7 +72,7 @@ test('Notifications DAO supports finding by user id', async (t: tape.Test) => {
     invitationMessage: '',
     role: 'EDIT',
     userEmail: null,
-    userId: userTwo.id
+    userId: userTwo.user.id
   });
   const { collaborator: c2 } = await generateCollaborator({
     collectionId: null,
@@ -83,86 +83,37 @@ test('Notifications DAO supports finding by user id', async (t: tape.Test) => {
     userId: null
   });
   await generateNotification({
-    actorUserId: userOne.id,
+    actorUserId: userOne.user.id,
     type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });
   const { notification: n2 } = await generateNotification({
-    actorUserId: userOne.id,
+    actorUserId: userOne.user.id,
     collaboratorId: c1.id,
     type: NotificationType.INVITE_COLLABORATOR
   });
   await generateNotification({
-    actorUserId: userOne.id,
+    actorUserId: userOne.user.id,
     collaboratorId: c2.id,
     type: NotificationType.INVITE_COLLABORATOR
   });
 
-  const { collection: deletedCollection } = await generateNotification({
-    actorUserId: userOne.id,
-    recipientUserId: userTwo.id,
-    type: NotificationType.ANNOTATION_COMMENT_CREATE
-  });
-  await CollectionsDAO.deleteById(deletedCollection.id);
-
-  const { design: deletedDesign } = await generateNotification({
-    actorUserId: userOne.id,
-    recipientUserId: userTwo.id,
-    type: NotificationType.ANNOTATION_COMMENT_CREATE
-  });
-  await DesignsDAO.deleteById(deletedDesign.id);
-
-  const { annotation: deletedAnnotation } = await generateNotification({
-    actorUserId: userOne.id,
-    recipientUserId: userTwo.id,
-    type: NotificationType.ANNOTATION_COMMENT_CREATE
-  });
-  await AnnotationsDAO.deleteById(deletedAnnotation.id);
-
-  const { canvas: deletedCanvas } = await generateNotification({
-    actorUserId: userOne.id,
-    recipientUserId: userTwo.id,
-    type: NotificationType.ANNOTATION_COMMENT_CREATE
-  });
-  await CanvasesDAO.del(deletedCanvas.id);
-
-  const { comment: deletedComment } = await generateNotification({
-    actorUserId: userOne.id,
-    recipientUserId: userTwo.id,
-    type: NotificationType.ANNOTATION_COMMENT_CREATE
-  });
-  await CommentsDAO.deleteById(deletedComment.id);
-
-  const { measurement: deletedMeasurement } = await generateNotification({
-    actorUserId: userOne.id,
-    recipientUserId: userTwo.id,
-    type: NotificationType.MEASUREMENT_CREATE
-  });
-  await MeasurementsDAO.deleteById(deletedMeasurement.id);
-
-  const { collaborator: deletedCollaborator } = await generateNotification({
-    actorUserId: userOne.id,
-    recipientUserId: null,
-    type: NotificationType.INVITE_COLLABORATOR
-  });
-  await CollaboratorsDAO.deleteById(deletedCollaborator.id);
-
   t.deepEqual(
-    await NotificationsDAO.findByUserId(userTwo.id, { offset: 0, limit: 10 }),
+    await NotificationsDAO.findByUserId(userTwo.user.id, { offset: 0, limit: 10 }),
     [n2],
     'Returns only the notifications associated with the user (collaborator + user)'
   );
   t.deepEqual(
-    await NotificationsDAO.findByUserId(userTwo.id, { offset: 2, limit: 4 }),
+    await NotificationsDAO.findByUserId(userTwo.user.id, { offset: 2, limit: 4 }),
     [],
     'Returns notifications based off the limit and offset'
   );
   t.deepEqual(
-    await NotificationsDAO.findByUserId(userTwo.id, { offset: 6, limit: 3 }),
+    await NotificationsDAO.findByUserId(userTwo.user.id, { offset: 6, limit: 3 }),
     [],
     'Returns notifications based off the limit and offset (even if they are whack)'
   );
   t.deepEqual(
-    await NotificationsDAO.findByUserId(userOne.id, { offset: 0, limit: 10 }),
+    await NotificationsDAO.findByUserId(userOne.user.id, { offset: 0, limit: 10 }),
     [],
     'Returns only the notifications associated with the user (collaborator + user)'
   );

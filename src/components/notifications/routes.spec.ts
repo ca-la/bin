@@ -82,17 +82,6 @@ async (t: tape.Test) => {
     headers: API.authHeader(userTwo.session.id)
   });
   t.equal(response3.status, 400);
-
-  const [response4, body4] = await API.get(`${API_PATH}?limit=1&offset=1`, {
-    headers: API.authHeader(userTwo.session.id)
-  });
-  t.equal(response4.status, 200);
-  t.deepEqual(
-    body4.map((notification: NotificationMessage): string => notification.id),
-    [n1.id],
-    'Returns the limit + offset list of notifications for the user session'
-  );
-
 });
 
 test(`GET ${API_PATH}/unread returns the number of unread notifications`,
