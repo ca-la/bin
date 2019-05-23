@@ -1,5 +1,10 @@
 #!/bin/bash
+set -e
 
 # Run a single test
 # Usage: `bin/tt routes/users/spec.js`
+
+source bin/util/loadenv
+loadenv-test
+
 npx ts-node $1 | npx tap-spec

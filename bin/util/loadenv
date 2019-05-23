@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# Load environment variables from .env or Heroku config
+
+function loadenv() {
+  set -o allexport
+  eval $($@ | xargs -d '\n')
+  set +o allexport
+}
+
+function loadenv-local() {
+  loadenv "cat .env"
+}
+
+function loadenv-test() {
+  loadenv-local
+  loadenv "cat .test.env"
+}
+
+function loadenv-heroku() {
+  eval $(heroku config -s -a $1 | xargs -d '\n')
+  export DATABASE_URL=$(heroku config:get DATABASE_URL -a $1)?ssl=true
+}
+
+function loadenv-stg() {
+  loadenv-heroku cala-api-stg
+}
+
+function loadenv-prod() {
+  loadenv-heroku cala-api-prod
+}
+
+function loadenv-demo() {
+  loadenv-heroku cala-api-demo
+}

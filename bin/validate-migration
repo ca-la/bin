@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set -euo pipefail
+
+# Validate migration to ensure migrate -> rollback produces the original schema
+# Usage: bin/validate-migration
+
+source bin/util/loadenv
+
+loadenv-test
+
+npx cala-validate-migration

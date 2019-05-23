@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -euo pipefail
+
+# Run node REPL with local environment loaded
+# Usage: bin/console
+
+source bin/util/loadenv
+
+loadenv-local
+node

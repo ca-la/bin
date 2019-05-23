@@ -2,6 +2,11 @@
 
 set -euo pipefail
 
+# Run migration or rollback
+# Usage: bin/migrate <local|staging|production> [rollback]
+
+source bin/util/loadenv
+
 confirm() {
   echo -n "Are you sure? Type \"$@\" to continue: "
   read response
@@ -13,15 +18,15 @@ confirm() {
 }
 
 migrate() {
-  $(npm bin)/knex migrate:latest --knexfile dist/knexfile.js
+  npx knex migrate:latest --knexfile dist/knexfile.js
 }
 
 rollback() {
-  $(npm bin)/knex migrate:rollback --knexfile dist/knexfile.js
+  npx knex migrate:rollback --knexfile dist/knexfile.js
 }
 
 usage_fail() {
-  echo "Usage: migrate <local|staging|production> [rollback]"
+  echo "Usage: bin/migrate <local|staging|production> [rollback]"
   exit 1
 }
 
@@ -53,7 +58,9 @@ main() {
   fi
 
   if [ "$skip_build" != "true" ]; then
-    npm run build
+    echo 'Building...'
+    bin/util/clean
+    bin/util/build
   fi
 
   take_action() {
@@ -71,8 +78,14 @@ main() {
   case "$host" in
     local)
       echo -n 'Local DB: '
+      loadenv-local
+      take_action
+
+      echo -n 'Test DB: '
+      loadenv-test
       take_action
       ;;
+
     staging)
       if [ "$rollback_flag" == "rollback" ]; then
         confirm 'DANGEROUS_STAGING_ROLLBACK'
@@ -81,8 +94,10 @@ main() {
       fi
 
       echo -n 'Staging DB: '
-      DATABASE_URL=$(heroku config:get DATABASE_URL --app cala-api-stg)?ssl=true take_action
+      loadenv-stg
+      take_action
       ;;
+
     production)
       if [ "$rollback_flag" == "rollback" ]; then
         confirm 'DANGEROUS_PRODUCTION_ROLLBACK'
@@ -91,10 +106,14 @@ main() {
       fi
 
       echo -n 'Production DB: '
-      DATABASE_URL=$(heroku config:get DATABASE_URL --app cala-api-prod)?ssl=true take_action
+      loadenv-prod
+      take_action
+
       echo -n 'Demo DB: '
-      DATABASE_URL=$(heroku config:get DATABASE_URL --app cala-api-demo)?ssl=true take_action
+      loadenv-demo
+      take_action
       ;;
+
     *)
       usage_fail
   esac

@@ -1,0 +1,17 @@
+#!/bin/bash
+
+set -euo pipefail
+
+# Start up node API server
+# Usage: bin/start
+
+source bin/util/loadenv
+
+loadenv-local
+
+if [ ! -d "dist" ]; then
+  echo 'No built application found in dist/ directory'
+  exit 1
+fi
+
+node dist

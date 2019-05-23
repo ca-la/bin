@@ -1,0 +1,27 @@
+#!/bin/bash
+
+set -o pipefail
+
+# Release new version
+# Usage: bin/release <patch|minor|major>
+
+semver=${1:-""}
+shift
+
+take_action() {
+  bin/test && npx cala-release "$semver" "$@"
+}
+
+usage_fail() {
+  echo "Usage: bin/release <patch|minor|major>"
+  exit 1
+}
+
+case "$semver" in
+  patch|minor|major)
+    take_action "$@"
+    ;;
+  *)
+    usage_fail
+    ;;
+esac

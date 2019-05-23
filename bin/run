@@ -1,4 +1,32 @@
 #!/bin/bash
-set -e
 
-$(npm bin)/ts-node "$@"
+set -euo pipefail
+
+# Run JS or TS script in environment
+# Usage: bin/run <local|staging|production|demo> <path-to-script>
+
+source bin/util/loadenv
+
+host=${1:-""}
+shift
+
+case "$host" in
+  local)
+    loadenv-local
+    ;;
+  staging)
+    loadenv-stg
+    ;;
+  production)
+    loadenv-prod
+    ;;
+  demo)
+    loadenv-demo
+    ;;
+  *)
+    echo 'Usage: bin/run <local|staging|production|demo> <path-to-script>'
+    exit 1
+    ;;
+esac
+
+npx ts-node "$@"
