@@ -18,8 +18,10 @@ function loadenv-test() {
 }
 
 function loadenv-heroku() {
+  set -o allexport
   eval $(heroku config -s -a $1 | xargs -d '\n')
-  export DATABASE_URL=$(heroku config:get DATABASE_URL -a $1)?ssl=true
+  DATABASE_URL=$(heroku config:get DATABASE_URL -a $1)?ssl=true
+  set +o allexport
 }
 
 function loadenv-stg() {
