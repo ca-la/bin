@@ -1,16 +1,29 @@
 {
   "extends": ["tslint-config-airbnb", "tslint:recommended"],
   "rules": {
-    "eofline": true,
-    "function-name": [true, {
-      "function-regex": "^[a-zA-Z][\\w\\d]+$"
-    }],
-    "quotemark": [true, "single", "avoid-template", "avoid-escape"],
+    "function-name": [
+      true,
+      {
+        "function-regex": "^[a-zA-Z][\\w\\d]+$"
+      }
+    ],
+    "quotemark": [false],
     "import-name": [false],
     "interface-name": [true, "never-prefix"],
-    "ordered-imports": [true, { "import-sources-order": "any", "named-imports-order": "case-insensitive" }],
-    "trailing-comma": [true, {"multiline": "never", "singleline": "never"}],
-    "variable-name": [true, "ban-keywords", "check-format", "allow-pascal-case"],
+    "ordered-imports": [
+      true,
+      {
+        "import-sources-order": "any",
+        "named-imports-order": "case-insensitive"
+      }
+    ],
+    "trailing-comma": [false],
+    "variable-name": [
+      true,
+      "ban-keywords",
+      "check-format",
+      "allow-pascal-case"
+    ],
     "typedef": [
       true,
       "parameter",
@@ -19,9 +32,7 @@
       "call-signature",
       "arrow-call-signature"
     ],
-    "max-line-length": [true, 100],
     "object-shorthand-properties-first": [false],
-    "indent": [true, "spaces", 2],
     "no-empty-interface": [false],
     "array-type": [true, "array"],
     "no-duplicate-imports": true,
