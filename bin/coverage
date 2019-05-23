@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -euo pipefail
+
+# Run tests with coverage report
+# Usage: bin/coverage
+
+source bin/util/loadenv
+
+loadenv-test
+npx nyc tape "dist/**/*spec.js" | npx tap-spec

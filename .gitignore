@@ -1,7 +1,7 @@
-reports
-dist
-node_modules
+reports/
+dist/
+node_modules/
 npm-debug.log
 *.env
-coverage
+coverage/
 .nyc_output
