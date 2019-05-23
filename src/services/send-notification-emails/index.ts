@@ -20,7 +20,8 @@ interface NotificationsByRecipient {
 /**
  * Organizes all unsent notifications by recipient and dispatches it out to SQS.
  */
-export async function sendNotificationEmails(): Promise<void> {
+export async function sendNotificationEmails(): Promise<number> {
+  let sentMessages = 0;
   const notifications = await NotificationsDAO.findOutstanding();
   Logger.log(`Processing ${notifications.length} outstanding notifications`);
 
@@ -62,6 +63,7 @@ Enqueuing an email with ${notificationList.length} notifications for user ${reci
           templateName: 'batch_notification',
           to: recipient.email
         });
+        sentMessages += notificationList.length;
       } catch (e) {
         const messageCopy = 'Failed to send to SQS the following notifications';
         Logger.logServerError(e);
@@ -71,4 +73,6 @@ Enqueuing an email with ${notificationList.length} notifications for user ${reci
       await NotificationsDAO.markSent(notificationListIds);
     }
   }
+
+  return sentMessages;
 }
