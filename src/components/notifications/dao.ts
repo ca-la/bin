@@ -5,12 +5,11 @@ import * as db from '../../services/db';
 import first from '../../services/first';
 import {
   dataAdapter,
+  DEPRECATED_NOTIFICATION_TYPES,
   isNotificationRow,
   Notification,
   NotificationRow
 } from './domain-object';
-import * as CollaboratorsDAO from '../../components/collaborators/dao';
-import Collaborator from '../../components/collaborators/domain-objects/collaborator';
 import { validate, validateEvery } from '../../services/validate-from-db';
 import { announceNotificationCreation } from '../iris/messages/notification';
 
@@ -121,16 +120,40 @@ export async function findByUserId(
   userId: string,
   options: SearchInterface
 ): Promise<Notification[]> {
-  const collaborators = await CollaboratorsDAO.findByUserId(userId);
   const notifications: NotificationRow[] = await db(TABLE_NAME)
-    .select('*')
-    .where({ recipient_user_id: userId })
-    .orWhereIn(
-      'collaborator_id',
-      collaborators.map((collaborator: Collaborator): string => {
-        return collaborator.id;
-      })
-    )
+    .select('n.*')
+    .from('notifications as n')
+    .joinRaw(`
+    left join product_designs as d
+      on d.id = n.design_id
+    left join collections as c
+      on c.id = n.collection_id
+    left join comments as co
+      on co.id = n.comment_id
+    left join collaborators as cl
+      on cl.id = n.collaborator_id
+    left join product_design_canvas_annotations as a
+      on a.id = n.annotation_id
+    left join product_design_canvases as can
+      on can.id = n.canvas_id
+    left join product_design_canvas_measurements as m
+      on m.id = n.measurement_id
+    `)
+    .whereNotIn('type', DEPRECATED_NOTIFICATION_TYPES)
+    .andWhere({
+      'a.deleted_at': null,
+      'c.deleted_at': null,
+      'can.deleted_at': null,
+      'co.deleted_at': null,
+      'd.deleted_at': null,
+      'm.deleted_at': null
+    })
+    .andWhereRaw(`
+      (cl.cancelled_at is null or cl.cancelled_at > now())
+    `)
+    .andWhere((query: Knex.QueryBuilder) => query
+      .where({ 'n.recipient_user_id': userId })
+      .orWhere({ 'cl.user_id': userId }))
     .orderBy('created_at', 'desc')
     .limit(options.limit)
     .offset(options.offset);
@@ -146,18 +169,27 @@ export async function findByUserId(
 export async function findUnreadCountByUserId(
   userId: string
 ): Promise<number> {
-  const collaborators = await CollaboratorsDAO.findByUserId(userId);
   const notificationRows: NotificationRow[] = await db(TABLE_NAME)
     .select('n.*')
     .from('notifications as n')
-    .leftJoin('product_designs as d', 'd.id', 'n.design_id')
-    .leftJoin('collections as c', 'c.id', 'n.collection_id')
-    .leftJoin('comments as co', 'co.id', 'n.comment_id')
-    .leftJoin('collaborators as cl', 'cl.id', 'n.collaborator_id')
-    .leftJoin('product_design_canvas_annotations as a', 'a.id', 'n.annotation_id')
-    .leftJoin('product_design_canvases as can', 'can.id', 'n.canvas_id')
-    .leftJoin('product_design_canvas_measurements as m', 'm.id', 'n.measurement_id')
-    .where({
+    .joinRaw(`
+    left join product_designs as d
+      on d.id = n.design_id
+    left join collections as c
+      on c.id = n.collection_id
+    left join comments as co
+      on co.id = n.comment_id
+    left join collaborators as cl
+      on cl.id = n.collaborator_id
+    left join product_design_canvas_annotations as a
+      on a.id = n.annotation_id
+    left join product_design_canvases as can
+      on can.id = n.canvas_id
+    left join product_design_canvas_measurements as m
+      on m.id = n.measurement_id
+    `)
+    .whereNotIn('type', DEPRECATED_NOTIFICATION_TYPES)
+    .andWhere({
       'a.deleted_at': null,
       'c.deleted_at': null,
       'can.deleted_at': null,
@@ -166,12 +198,12 @@ export async function findUnreadCountByUserId(
       'm.deleted_at': null,
       'n.read_at': null
     })
-    .andWhereRaw('(cl.cancelled_at IS null OR cl.cancelled_at > now())')
+    .andWhereRaw(`
+      (cl.cancelled_at is null or cl.cancelled_at > now())
+    `)
     .andWhere((query: Knex.QueryBuilder) => query
       .where({ 'n.recipient_user_id': userId })
-      .orWhereIn(
-        'n.collaborator_id',
-        collaborators.map((collaborator: Collaborator): string => collaborator.id)));
+      .orWhere({ 'cl.user_id': userId }));
 
   const notifications = validateEvery<NotificationRow, Notification>(
     TABLE_NAME,
