@@ -5,7 +5,7 @@ set -euo pipefail
 # Start up node API server
 # Usage: bin/start
 
-source bin/util/loadenv
+source bin/lib/loadenv
 
 loadenv-local
 

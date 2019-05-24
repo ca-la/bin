@@ -5,7 +5,7 @@ set -euo pipefail
 # Run migration or rollback
 # Usage: bin/migrate <local|staging|production> [rollback]
 
-source bin/util/loadenv
+source bin/lib/loadenv
 
 confirm() {
   echo -n "Are you sure? Type \"$@\" to continue: "
@@ -59,8 +59,8 @@ main() {
 
   if [ "$skip_build" != "true" ]; then
     echo 'Building...'
-    bin/util/clean
-    bin/util/build
+    bin/lib/clean
+    bin/lib/build
   fi
 
   take_action() {

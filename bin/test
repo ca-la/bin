@@ -5,7 +5,7 @@ set -o noglob
 # Run the test suite
 # Usage: `bin/test`
 
-source bin/util/loadenv
+source bin/lib/loadenv
 loadenv-test
 
 if [ "$CI" == "true" ]; then
@@ -13,7 +13,7 @@ if [ "$CI" == "true" ]; then
   npx tape "dist/**/*spec.js" | npx tap-xunit > ./reports/tape.xml
 else
   echo "Building..."
-  bin/util/build
+  bin/lib/build
   echo "Linting..."
   bin/lint
   echo "Testing..."

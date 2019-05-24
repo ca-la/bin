@@ -5,7 +5,7 @@ set -euo pipefail
 # Run tests with coverage report
 # Usage: bin/coverage
 
-source bin/util/loadenv
+source bin/lib/loadenv
 
 loadenv-test
 npx nyc tape "dist/**/*spec.js" | npx tap-spec

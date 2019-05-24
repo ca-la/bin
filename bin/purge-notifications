@@ -4,7 +4,7 @@ set -e
 # Purges all unsent/unread notifications
 # Usage: bin/purge-notifications <local|staging|production|demo>
 
-source bin/util/loadenv
+source bin/lib/loadenv
 
 host=${1:-""}
 

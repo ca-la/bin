@@ -5,7 +5,7 @@ set -euo pipefail
 # Validate migration to ensure migrate -> rollback produces the original schema
 # Usage: bin/validate-migration
 
-source bin/util/loadenv
+source bin/lib/loadenv
 
 loadenv-test
 

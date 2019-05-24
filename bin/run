@@ -5,7 +5,7 @@ set -euo pipefail
 # Run JS or TS script in environment
 # Usage: bin/run <local|staging|production|demo> <path-to-script>
 
-source bin/util/loadenv
+source bin/lib/loadenv
 
 host=${1:-""}
 shift

@@ -6,7 +6,7 @@ set -euo pipefail
 # Usage: bin/dev
 
 trap "kill 0" EXIT # Kill children when this process is killed
-source bin/util/loadenv
+source bin/lib/loadenv
 
 loadenv-local
 
