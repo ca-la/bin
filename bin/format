@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -o pipefail
+set -o noglob
 
 # Format .js/.ts source files that have been updated since master with
 # prettier.

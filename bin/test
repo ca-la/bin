@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+set -o noglob
 
 # Run the test suite
 # Usage: `bin/test`
