@@ -14,6 +14,7 @@ code is written in vanilla JavaScript.
 - heroku-cli 7.19.4
 - findutils 4.6.0
   - If you install these using homebrew, make sure you add the homebrew executables to your `$PATH`
+- A local [SQS server](https://github.com/ca-la/sqs-local).
 - You'll need several environment variables set to correctly run the API. These
 are available as a note named `CALA API .env file (development)` in the engineering
 group in 1Password. `CALA API .test.env file (development)`.
