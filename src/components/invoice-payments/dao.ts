@@ -23,7 +23,9 @@ export async function findById(id: string): Promise<InvoicePayment | null> {
     .then((rows: InvoicePaymentRow[]) => first<InvoicePaymentRow>(rows))
     .catch(rethrow);
 
-  if (!invoicePaymentRow) { return null; }
+  if (!invoicePaymentRow) {
+    return null;
+  }
 
   return validate<InvoicePaymentRow, InvoicePayment>(
     TABLE_NAME,
@@ -33,7 +35,9 @@ export async function findById(id: string): Promise<InvoicePayment | null> {
   );
 }
 
-export async function findByInvoiceId(invoiceId: string): Promise<InvoicePayment[]> {
+export async function findByInvoiceId(
+  invoiceId: string
+): Promise<InvoicePayment[]> {
   const invoicePaymentRows = await db(TABLE_NAME)
     .select('*')
     .where({ invoice_id: invoiceId, deleted_at: null })
@@ -68,7 +72,9 @@ export async function createTrx(
     .then((rows: InvoicePaymentRow[]) => first<InvoicePaymentRow>(rows))
     .catch(rethrow);
 
-  if (!created) { throw new Error('Failed to create invoice payment row'); }
+  if (!created) {
+    throw new Error('Failed to create invoice payment row');
+  }
 
   return validate<InvoicePaymentRow, InvoicePayment>(
     TABLE_NAME,

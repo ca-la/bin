@@ -3,7 +3,14 @@ import * as ProductDesignImagesDAO from '../../components/images/dao';
 import * as tape from 'tape';
 import * as uuid from 'node-uuid';
 import createUser = require('../../test-helpers/create-user');
-import { authHeader, del, get, patch, post, put } from '../../test-helpers/http';
+import {
+  authHeader,
+  del,
+  get,
+  patch,
+  post,
+  put
+} from '../../test-helpers/http';
 import { sandbox, test } from '../../test-helpers/fresh';
 import { ComponentType } from '../../domain-objects/component';
 import { omit } from 'lodash';
@@ -37,8 +44,12 @@ test('GET /components/:componentId returns Component', async (t: tape.Test) => {
     userId: ''
   };
 
-  sandbox().stub(ComponentsDAO, 'findById').resolves(data);
-  sandbox().stub(ProductDesignImagesDAO, 'findById').resolves(image);
+  sandbox()
+    .stub(ComponentsDAO, 'findById')
+    .resolves(data);
+  sandbox()
+    .stub(ProductDesignImagesDAO, 'findById')
+    .resolves(image);
 
   const [response, body] = await get(`/components/${id}`, {
     headers: authHeader(session.id)
@@ -76,8 +87,12 @@ test('POST /components/ returns a Component', async (t: tape.Test) => {
     userId: ''
   };
 
-  sandbox().stub(ComponentsDAO, 'create').resolves(data);
-  sandbox().stub(ProductDesignImagesDAO, 'findById').resolves(image);
+  sandbox()
+    .stub(ComponentsDAO, 'create')
+    .resolves(data);
+  sandbox()
+    .stub(ProductDesignImagesDAO, 'findById')
+    .resolves(image);
 
   const [response, body] = await post('/components/', {
     body: data,
@@ -116,8 +131,12 @@ test('PUT /components/:id returns a Component', async (t: tape.Test) => {
     userId: ''
   };
 
-  sandbox().stub(ComponentsDAO, 'create').resolves(data);
-  sandbox().stub(ProductDesignImagesDAO, 'findById').resolves(image);
+  sandbox()
+    .stub(ComponentsDAO, 'create')
+    .resolves(data);
+  sandbox()
+    .stub(ProductDesignImagesDAO, 'findById')
+    .resolves(image);
 
   const [response, body] = await put(`/components/${id}`, {
     body: data,
@@ -156,8 +175,12 @@ test('PATCH /components/:componentId returns a Component', async (t: tape.Test) 
     userId: ''
   };
 
-  sandbox().stub(ComponentsDAO, 'update').resolves(data);
-  sandbox().stub(ProductDesignImagesDAO, 'findById').resolves(image);
+  sandbox()
+    .stub(ComponentsDAO, 'update')
+    .resolves(data);
+  sandbox()
+    .stub(ProductDesignImagesDAO, 'findById')
+    .resolves(image);
 
   const [response, body] = await patch(`/components/${id}`, {
     body: data,
@@ -196,8 +219,12 @@ test('DELETE /components/:componentId deletes a Component', async (t: tape.Test)
     userId: ''
   };
 
-  sandbox().stub(ComponentsDAO, 'del').resolves(data);
-  sandbox().stub(ProductDesignImagesDAO, 'findById').resolves(image);
+  sandbox()
+    .stub(ComponentsDAO, 'del')
+    .resolves(data);
+  sandbox()
+    .stub(ProductDesignImagesDAO, 'findById')
+    .resolves(image);
 
   const [response] = await del(`/components/${id}`, {
     body: data,

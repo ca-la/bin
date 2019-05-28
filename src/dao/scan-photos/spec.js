@@ -1,16 +1,12 @@
 'use strict';
 
-const {
-  create,
-  updateOneById,
-  findByScanId
-} = require('./index');
+const { create, updateOneById, findByScanId } = require('./index');
 
 const ScansDAO = require('../scans');
 const { test } = require('../../test-helpers/fresh');
 const createUser = require('../../test-helpers/create-user');
 
-test('ScanPhotosDAO.findByScanId orders by creation time', (t) => {
+test('ScanPhotosDAO.findByScanId orders by creation time', t => {
   let scanId;
   let firstId;
   let secondId;
@@ -22,15 +18,15 @@ test('ScanPhotosDAO.findByScanId orders by creation time', (t) => {
         type: ScansDAO.SCAN_TYPES.photo
       });
     })
-    .then((scan) => {
+    .then(scan => {
       scanId = scan.id;
       return create({ scanId });
     })
-    .then((scanPhoto) => {
+    .then(scanPhoto => {
       firstId = scanPhoto.id;
       return create({ scanId });
     })
-    .then((scanPhoto) => {
+    .then(scanPhoto => {
       secondId = scanPhoto.id;
       return updateOneById(firstId, {
         calibrationData: {}
@@ -39,13 +35,13 @@ test('ScanPhotosDAO.findByScanId orders by creation time', (t) => {
     .then(() => {
       return findByScanId(scanId);
     })
-    .then((photos) => {
+    .then(photos => {
       t.equal(photos[0].id, firstId);
       t.equal(photos[1].id, secondId);
     });
 });
 
-test('ScanPhotosDAO.updateOneById updates a photo', (t) => {
+test('ScanPhotosDAO.updateOneById updates a photo', t => {
   return createUser({ withSession: false })
     .then(({ user }) => {
       return ScansDAO.create({
@@ -53,12 +49,12 @@ test('ScanPhotosDAO.updateOneById updates a photo', (t) => {
         type: ScansDAO.SCAN_TYPES.photo
       });
     })
-    .then((scan) => {
+    .then(scan => {
       return create({
         scanId: scan.id
       });
     })
-    .then((scanPhoto) => {
+    .then(scanPhoto => {
       return updateOneById(scanPhoto.id, {
         controlPoints: {
           ok: { x: 1, y: 2 }
@@ -68,7 +64,7 @@ test('ScanPhotosDAO.updateOneById updates a photo', (t) => {
         }
       });
     })
-    .then((updated) => {
+    .then(updated => {
       t.deepEqual(updated.controlPoints, { ok: { x: 1, y: 2 } });
       t.deepEqual(updated.calibrationData, { tilt: 100 });
     });

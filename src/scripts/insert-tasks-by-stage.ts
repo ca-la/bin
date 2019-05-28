@@ -11,18 +11,27 @@ async function createTasks(): Promise<void> {
   const stageTitle = process.argv[3];
 
   if (!designId || !stageTitle) {
-    throw new Error('Usage: insert-tasks-by-stage.ts [design ID] [stage title]');
+    throw new Error(
+      'Usage: insert-tasks-by-stage.ts [design ID] [stage title]'
+    );
   }
 
   await db.transaction(async (trx: Knex.Transaction) => {
     const taskTemplates = await TaskTemplatesDAO.findByStageTitle(stageTitle);
 
-    Logger.log(`Found ${taskTemplates.length} task templates for stage ${stageTitle}`);
+    Logger.log(
+      `Found ${taskTemplates.length} task templates for stage ${stageTitle}`
+    );
     const stages = await ProductDesignStagesDAO.findAllByDesignId(designId);
 
     Logger.log(`Found ${stages.length} existing stages for design`);
 
-    const tasks = await createTasksFromTemplates(designId, taskTemplates, stages, trx);
+    const tasks = await createTasksFromTemplates(
+      designId,
+      taskTemplates,
+      stages,
+      trx
+    );
     Logger.log(`Successfully created ${tasks.length} tasks`);
   });
 }

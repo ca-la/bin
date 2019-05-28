@@ -30,11 +30,15 @@ function isComponentRelationship(data: object): data is ComponentRelationship {
   );
 }
 
-function* getList(this: Koa.Application.Context): AsyncIterableIterator<ComponentRelationship[]> {
+function* getList(
+  this: Koa.Application.Context
+): AsyncIterableIterator<ComponentRelationship[]> {
   const { componentId } = this.query;
 
   if (componentId) {
-    const relationships = yield ComponentRelationshipsDAO.findAllByComponent(componentId);
+    const relationships = yield ComponentRelationshipsDAO.findAllByComponent(
+      componentId
+    );
     this.status = 200;
     this.body = relationships;
   } else {
@@ -42,10 +46,18 @@ function* getList(this: Koa.Application.Context): AsyncIterableIterator<Componen
   }
 }
 
-function* getById(this: Koa.Application.Context): AsyncIterableIterator<ComponentRelationship> {
-  const relationship = yield ComponentRelationshipsDAO.findById(this.params.relationshipId);
+function* getById(
+  this: Koa.Application.Context
+): AsyncIterableIterator<ComponentRelationship> {
+  const relationship = yield ComponentRelationshipsDAO.findById(
+    this.params.relationshipId
+  );
 
-  this.assert(relationship, 404, `Component with id ${this.params.relationshipId} not found`);
+  this.assert(
+    relationship,
+    404,
+    `Component with id ${this.params.relationshipId} not found`
+  );
 
   this.status = 200;
   this.body = relationship;
@@ -65,7 +77,10 @@ function* update(
   this: Koa.Application.Context<ComponentRelationship>
 ): AsyncIterableIterator<ComponentRelationship> {
   const { body } = this.request;
-  const relationship = yield ComponentRelationshipsDAO.update(this.params.relationshipId, body);
+  const relationship = yield ComponentRelationshipsDAO.update(
+    this.params.relationshipId,
+    body
+  );
   this.status = 200;
   this.body = relationship;
 }
@@ -75,17 +90,8 @@ function* del(this: Koa.Application.Context): AsyncIterableIterator<any> {
   this.status = 204;
 }
 
-router.get(
-  '/',
-  requireAuth,
-  canViewComponentInQueryParam,
-  getList
-);
-router.get(
-  '/:relationshipId',
-  requireAuth,
-  getById
-);
+router.get('/', requireAuth, canViewComponentInQueryParam, getList);
+router.get('/:relationshipId', requireAuth, getById);
 router.put(
   '/:relationshipId',
   requireAuth,

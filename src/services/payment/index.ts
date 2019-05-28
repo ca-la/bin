@@ -13,9 +13,7 @@ import ProductDesign = require('../../domain-objects/product-design');
 import spendCredit from '../../components/credits/spend-credit';
 import { createPaymentMethod } from '../../services/payment-methods';
 import addMargin from '../../services/add-margin';
-import {
-  PricingQuote
-} from '../../domain-objects/pricing-quote';
+import { PricingQuote } from '../../domain-objects/pricing-quote';
 import {
   CreateQuotePayload,
   generateFromPayloadAndUser as createQuotes
@@ -30,9 +28,10 @@ type CreateRequest = CreateQuotePayload[];
 export function isCreateRequest(body: any): body is CreateRequest {
   return (
     body instanceof Array &&
-    body.every((payload: any) =>
-      typeof payload.designId === 'string' &&
-      typeof payload.units === 'number'
+    body.every(
+      (payload: any) =>
+        typeof payload.designId === 'string' &&
+        typeof payload.units === 'number'
     )
   );
 }
@@ -59,27 +58,34 @@ function createLineItem(
   invoiceId: string,
   trx: Knex.Transaction
 ): Promise<LineItem> {
-  return LineItemsDAO.create({
-    createdAt: new Date(),
-    description: 'Design Production',
-    designId: quote.designId,
-    id: uuid.v4(),
-    invoiceId,
-    quoteId: quote.id,
-    title: quote.designId || ''
-  }, trx);
+  return LineItemsDAO.create(
+    {
+      createdAt: new Date(),
+      description: 'Design Production',
+      designId: quote.designId,
+      id: uuid.v4(),
+      invoiceId,
+      quoteId: quote.id,
+      title: quote.designId || ''
+    },
+    trx
+  );
 }
 
 const getDesignNames = async (quotes: PricingQuote[]): Promise<string[]> => {
-  const designIds = quotes.reduce((acc: string[], quote: PricingQuote) =>
-    quote.designId ? [...acc, quote.designId] : acc, []);
+  const designIds = quotes.reduce(
+    (acc: string[], quote: PricingQuote) =>
+      quote.designId ? [...acc, quote.designId] : acc,
+    []
+  );
   const designs = await ProductDesignsDAO.findByIds(designIds);
   return designs.map((design: ProductDesign) => design.title);
 };
 
 const getQuoteTotal = (quotes: PricingQuote[]): number => {
-  return quotes.map((quote: PricingQuote) => quote.units * quote.unitCostCents)
-      .reduce((total: number, current: number) => total + current, 0);
+  return quotes
+    .map((quote: PricingQuote) => quote.units * quote.unitCostCents)
+    .reduce((total: number, current: number) => total + current, 0);
 };
 
 /**
@@ -99,18 +105,34 @@ export default async function payInvoiceWithNewPaymentMethod(
 ): Promise<Invoice> {
   return db.transaction(async (trx: Knex.Transaction) => {
     const paymentMethodId: string = await createPaymentMethod(
-      paymentMethodTokenId, userId, trx);
-    const quotes: PricingQuote[] = await createQuotes(quoteRequests, userId, trx);
+      paymentMethodTokenId,
+      userId,
+      trx
+    );
+    const quotes: PricingQuote[] = await createQuotes(
+      quoteRequests,
+      userId,
+      trx
+    );
 
     const designNames = await getDesignNames(quotes);
     const collectionName = collection.title || 'Untitled';
     const totalCents = getQuoteTotal(quotes);
 
     const invoice = await createInvoice(
-      designNames, collectionName, collection.id, totalCents, userId, trx);
+      designNames,
+      collectionName,
+      collection.id,
+      totalCents,
+      userId,
+      trx
+    );
 
     await Promise.all(
-      quotes.map((quote: PricingQuote) => createLineItem(quote, invoice.id, trx)));
+      quotes.map((quote: PricingQuote) =>
+        createLineItem(quote, invoice.id, trx)
+      )
+    );
 
     return payInvoice(invoice.id, paymentMethodId, userId, trx);
   });
@@ -122,20 +144,36 @@ export async function createInvoiceWithoutMethod(
   collection: Collection
 ): Promise<Invoice> {
   return db.transaction(async (trx: Knex.Transaction) => {
-    const quotes: PricingQuote[] = await createQuotes(quoteRequests, userId, trx);
+    const quotes: PricingQuote[] = await createQuotes(
+      quoteRequests,
+      userId,
+      trx
+    );
     const designNames = await getDesignNames(quotes);
     const collectionName = collection.title || 'Untitled';
 
     const totalCentsWithoutFinanceMargin = getQuoteTotal(quotes);
-    const totalCents = addMargin(totalCentsWithoutFinanceMargin, FINANCING_MARGIN);
+    const totalCents = addMargin(
+      totalCentsWithoutFinanceMargin,
+      FINANCING_MARGIN
+    );
 
     const invoice = await createInvoice(
-      designNames, collectionName, collection.id, totalCents, userId, trx);
+      designNames,
+      collectionName,
+      collection.id,
+      totalCents,
+      userId,
+      trx
+    );
 
     await spendCredit(userId, invoice, trx);
 
     await Promise.all(
-      quotes.map((quote: PricingQuote) => createLineItem(quote, invoice.id, trx)));
+      quotes.map((quote: PricingQuote) =>
+        createLineItem(quote, invoice.id, trx)
+      )
+    );
 
     const user = await UsersDAO.findById(userId);
     await SlackService.enqueueSend({
@@ -158,7 +196,11 @@ export async function payWaivedQuote(
   collection: Collection
 ): Promise<Invoice> {
   return db.transaction(async (trx: Knex.Transaction) => {
-    const quotes: PricingQuote[] = await createQuotes(quoteRequests, userId, trx);
+    const quotes: PricingQuote[] = await createQuotes(
+      quoteRequests,
+      userId,
+      trx
+    );
     const designNames = await getDesignNames(quotes);
     const collectionName = collection.title || 'Untitled';
 
@@ -176,11 +218,16 @@ export async function payWaivedQuote(
     const { nonCreditPaymentAmount } = await spendCredit(userId, invoice, trx);
 
     if (nonCreditPaymentAmount) {
-      throw new InvalidDataError('Cannot waive payment for amounts greater than $0');
+      throw new InvalidDataError(
+        'Cannot waive payment for amounts greater than $0'
+      );
     }
 
     Promise.all(
-      quotes.map((quote: PricingQuote) => createLineItem(quote, invoice.id, trx)));
+      quotes.map((quote: PricingQuote) =>
+        createLineItem(quote, invoice.id, trx)
+      )
+    );
 
     await SlackService.enqueueSend({
       channel: 'designers',

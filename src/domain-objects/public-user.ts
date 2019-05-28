@@ -20,10 +20,5 @@ export interface PublicUserRow {
 export const dataAdapter = new DataAdapter<PublicUserRow, PublicUser>();
 
 export function isPublicUserRow(row: object): row is PublicUserRow {
-  return hasProperties(
-    row,
-    'id',
-    'name',
-    'referral_code'
-  );
+  return hasProperties(row, 'id', 'name', 'referral_code');
 }

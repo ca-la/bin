@@ -41,10 +41,14 @@ const decode = (data: PricingProcessTimeline): PricingProcessTimelineRow => {
   };
 };
 
-export const dataAdapter = new DataAdapter<PricingProcessTimelineRow, PricingProcessTimeline>(
-  encode, decode);
+export const dataAdapter = new DataAdapter<
+  PricingProcessTimelineRow,
+  PricingProcessTimeline
+>(encode, decode);
 
-export function isPricingProcessTimelineRow(row: object): row is PricingProcessTimelineRow {
+export function isPricingProcessTimelineRow(
+  row: object
+): row is PricingProcessTimelineRow {
   return hasProperties(
     row,
     'id',

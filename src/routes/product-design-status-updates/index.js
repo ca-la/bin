@@ -4,7 +4,9 @@ const Router = require('koa-router');
 
 const ProductDesignStatusUpdatesDAO = require('../../dao/product-design-status-updates');
 const requireAuth = require('../../middleware/require-auth');
-const { attachDesignPermissions } = require('../../middleware/can-access-design');
+const {
+  attachDesignPermissions
+} = require('../../middleware/can-access-design');
 
 const router = new Router();
 

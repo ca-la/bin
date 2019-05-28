@@ -6,19 +6,27 @@ import * as ApprovedSignupsDAO from './dao';
 import * as Mailchimp from '../../services/mailchimp';
 import createUser = require('../../test-helpers/create-user');
 import { omit } from 'lodash';
-import { MAGIC_HOST, MAILCHIMP_LIST_ID_DESIGNERS, STUDIO_HOST } from '../../config';
+import {
+  MAGIC_HOST,
+  MAILCHIMP_LIST_ID_DESIGNERS,
+  STUDIO_HOST
+} from '../../config';
 
 const API_PATH = '/approved-signups';
 
 test(`POST ${API_PATH}/ creates an approved signup with minimal data`, async (t: Test) => {
-  const mailchimpStub = sandbox().stub(Mailchimp, 'addOrUpdateListMember').resolves({});
-  const signupStub = sandbox().stub(ApprovedSignupsDAO, 'create').resolves({
-    createdAt: new Date('2019-01-02').toISOString(),
-    email: 'barry@example.com',
-    firstName: 'Barry',
-    id: 'abc-123',
-    lastName: 'Fooster'
-  });
+  const mailchimpStub = sandbox()
+    .stub(Mailchimp, 'addOrUpdateListMember')
+    .resolves({});
+  const signupStub = sandbox()
+    .stub(ApprovedSignupsDAO, 'create')
+    .resolves({
+      createdAt: new Date('2019-01-02').toISOString(),
+      email: 'barry@example.com',
+      firstName: 'Barry',
+      id: 'abc-123',
+      lastName: 'Fooster'
+    });
   const { session } = await createUser({ role: 'ADMIN' });
   const data = {
     email: 'barry@example.com',
@@ -37,20 +45,28 @@ test(`POST ${API_PATH}/ creates an approved signup with minimal data`, async (t:
     'Returns the approved signup row'
   );
   t.true(signupStub.calledOnce);
-  t.true(mailchimpStub.calledOnceWith(MAILCHIMP_LIST_ID_DESIGNERS, 'barry@example.com', {
-    APPROVED: 'TRUE',
-    FNAME: 'Barry',
-    INSTA: undefined,
-    LANGUAGE: 'en',
-    LNAME: 'Fooster',
-    MANAPPR: 'TRUE',
-    REGLINK: `${STUDIO_HOST}/register?approvedSignupId=abc-123`,
-    SOURCE: MAGIC_HOST
-  }));
+  t.true(
+    mailchimpStub.calledOnceWith(
+      MAILCHIMP_LIST_ID_DESIGNERS,
+      'barry@example.com',
+      {
+        APPROVED: 'TRUE',
+        FNAME: 'Barry',
+        INSTA: undefined,
+        LANGUAGE: 'en',
+        LNAME: 'Fooster',
+        MANAPPR: 'TRUE',
+        REGLINK: `${STUDIO_HOST}/register?approvedSignupId=abc-123`,
+        SOURCE: MAGIC_HOST
+      }
+    )
+  );
 });
 
 test(`POST ${API_PATH}/ creates an approved signup`, async (t: Test) => {
-  const mailchimpStub = sandbox().stub(Mailchimp, 'addOrUpdateListMember').resolves({});
+  const mailchimpStub = sandbox()
+    .stub(Mailchimp, 'addOrUpdateListMember')
+    .resolves({});
   const { session } = await createUser({ role: 'ADMIN' });
   const data = {
     createdAt: new Date('2019-01-02'),
@@ -82,7 +98,9 @@ test(`POST ${API_PATH}/ creates an approved signup`, async (t: Test) => {
 });
 
 test(`POST ${API_PATH}/ will fail with incomplete data`, async (t: Test) => {
-  const mailchimpStub = sandbox().stub(Mailchimp, 'addOrUpdateListMember').resolves({});
+  const mailchimpStub = sandbox()
+    .stub(Mailchimp, 'addOrUpdateListMember')
+    .resolves({});
   const { session } = await createUser({ role: 'ADMIN' });
   const data = {
     createdAt: new Date('2019-01-02'),
@@ -95,19 +113,24 @@ test(`POST ${API_PATH}/ will fail with incomplete data`, async (t: Test) => {
   });
 
   t.equal(response.status, 400, 'Fails');
-  t.equal(body.message, 'Request does not match the Approved Signup properties.');
+  t.equal(
+    body.message,
+    'Request does not match the Approved Signup properties.'
+  );
   t.false(mailchimpStub.calledOnce);
 });
 
 test(`GET ${API_PATH}/:approvedSignupId will fetch a row`, async (t: Test) => {
-  const signupStub = sandbox().stub(ApprovedSignupsDAO, 'findById').resolves({
-    createdAt: new Date('2019-01-02').toISOString(),
-    email: 'foo@example.com',
-    firstName: 'Foo',
-    id: 'abc-123',
-    isManuallyApproved: true,
-    lastName: 'Bar'
-  });
+  const signupStub = sandbox()
+    .stub(ApprovedSignupsDAO, 'findById')
+    .resolves({
+      createdAt: new Date('2019-01-02').toISOString(),
+      email: 'foo@example.com',
+      firstName: 'Foo',
+      id: 'abc-123',
+      isManuallyApproved: true,
+      lastName: 'Bar'
+    });
 
   const [response, body] = await get(`${API_PATH}/abc-123`);
 
@@ -124,7 +147,9 @@ test(`GET ${API_PATH}/:approvedSignupId will fetch a row`, async (t: Test) => {
 });
 
 test(`GET ${API_PATH}/:approvedSignupId will 404 if not found`, async (t: Test) => {
-  const signupStub = sandbox().stub(ApprovedSignupsDAO, 'findById').resolves(null);
+  const signupStub = sandbox()
+    .stub(ApprovedSignupsDAO, 'findById')
+    .resolves(null);
 
   const [response, body] = await get(`${API_PATH}/abc-123`);
 

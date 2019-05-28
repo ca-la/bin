@@ -9,7 +9,8 @@ const first = require('../../services/first').default;
 const ProductDesignSelectedOption = require('../../domain-objects/product-design-selected-option');
 
 const instantiate = data => new ProductDesignSelectedOption(data);
-const maybeInstantiate = data => (data && new ProductDesignSelectedOption(data)) || null;
+const maybeInstantiate = data =>
+  (data && new ProductDesignSelectedOption(data)) || null;
 
 const { dataMapper } = ProductDesignSelectedOption;
 
@@ -64,9 +65,12 @@ function deleteById(id) {
       id,
       deleted_at: null
     })
-    .update({
-      deleted_at: new Date()
-    }, '*')
+    .update(
+      {
+        deleted_at: new Date()
+      },
+      '*'
+    )
     .then(first)
     .then(instantiate);
 }
@@ -78,9 +82,12 @@ function deleteForSectionTrx(trx, sectionId) {
       section_id: sectionId,
       deleted_at: null
     })
-    .update({
-      deleted_at: new Date()
-    }, '*')
+    .update(
+      {
+        deleted_at: new Date()
+      },
+      '*'
+    )
     .then(options => options.map(instantiate));
 }
 

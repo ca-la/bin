@@ -19,9 +19,7 @@ const CREDENTIALS = Buffer.from(`${STRIPE_SECRET_KEY}:`).toString('base64');
 const STRIPE_FEE_PERCENT = 0.029;
 const STRIPE_FEE_BASE_CENTS = 30;
 
-async function makeRequest({
-  method, path, apiBase, data, idempotencyKey
-}) {
+async function makeRequest({ method, path, apiBase, data, idempotencyKey }) {
   requireValues({ method, path });
 
   const base = apiBase || STRIPE_API_BASE;
@@ -57,20 +55,30 @@ async function makeRequest({
   const json = await response.json();
 
   switch (response.status) {
-    case 200: return json;
-    case 402: throw new InvalidPaymentError(
-      (json.error && json.error.message) ||
-      'Your payment method was declined'
-    );
-    default: throw new StripeError(json.error);
+    case 200:
+      return json;
+    case 402:
+      throw new InvalidPaymentError(
+        (json.error && json.error.message) || 'Your payment method was declined'
+      );
+    default:
+      throw new StripeError(json.error);
   }
 }
 
 async function charge({
-  customerId, sourceId, amountCents, description, invoiceId
+  customerId,
+  sourceId,
+  amountCents,
+  description,
+  invoiceId
 }) {
   requireValues({
-    customerId, sourceId, amountCents, description, invoiceId
+    customerId,
+    sourceId,
+    amountCents,
+    description,
+    invoiceId
   });
 
   // Using a combination of invoiceId + sourceId ensures that:
@@ -78,7 +86,9 @@ async function charge({
   // - Switching sources lets you try again
   //
   // TBD if we need a better solution here but this seems ~fine for now.
-  const idempotencyKey = insecureHash(`${invoiceId}/${sourceId}/${amountCents}`);
+  const idempotencyKey = insecureHash(
+    `${invoiceId}/${sourceId}/${amountCents}`
+  );
 
   return makeRequest({
     method: 'post',
@@ -96,13 +106,21 @@ async function charge({
 }
 
 async function sendTransfer({
-  destination, amountCents, description, invoiceId
+  destination,
+  amountCents,
+  description,
+  invoiceId
 }) {
   requireValues({
-    destination, amountCents, description, invoiceId
+    destination,
+    amountCents,
+    description,
+    invoiceId
   });
 
-  const idempotencyKey = insecureHash(`${description}-${invoiceId}-${destination}`);
+  const idempotencyKey = insecureHash(
+    `${description}-${invoiceId}-${destination}`
+  );
 
   return makeRequest({
     method: 'post',
@@ -196,7 +214,7 @@ async function createLoginLink({ accountId }) {
 
 // Will have to update this if we ever switch to an enterprise plan
 function calculateStripeFee(totalCents) {
-  return Math.round((STRIPE_FEE_PERCENT * totalCents) + STRIPE_FEE_BASE_CENTS);
+  return Math.round(STRIPE_FEE_PERCENT * totalCents + STRIPE_FEE_BASE_CENTS);
 }
 
 module.exports = {

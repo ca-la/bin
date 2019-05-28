@@ -27,20 +27,21 @@ export async function findAndDuplicateDesign(
     throw new ResourceNotFoundError(`Design ${designId} not found`);
   }
   const duplicatedDesign = await createDesign(
-    prepareForDuplication(omit(
-      design,
-      'collections',
-      'collectionIds',
-      'imageIds',
-      'imageLinks'
-    ), { userId: newCreatorId }),
+    prepareForDuplication(
+      omit(design, 'collections', 'collectionIds', 'imageIds', 'imageLinks'),
+      { userId: newCreatorId }
+    ),
     trx
   );
 
   const canvases = await CanvasesDAO.findAllByDesignId(designId);
-  await Promise.all(canvases.map(async (canvas: Canvas): Promise<void> => {
-    await findAndDuplicateCanvas(canvas.id, duplicatedDesign.id, trx);
-  }));
+  await Promise.all(
+    canvases.map(
+      async (canvas: Canvas): Promise<void> => {
+        await findAndDuplicateCanvas(canvas.id, duplicatedDesign.id, trx);
+      }
+    )
+  );
 
   await findAndDuplicateVariants(designId, duplicatedDesign.id, trx);
 

@@ -1,6 +1,9 @@
 import * as uuid from 'node-uuid';
 
-import TaskEvent, { DetailsTask, TaskStatus } from '../../domain-objects/task-event';
+import TaskEvent, {
+  DetailsTask,
+  TaskStatus
+} from '../../domain-objects/task-event';
 import { create } from '../../dao/task-events';
 import { create as createStageTask } from '../../dao/product-design-stage-tasks';
 import * as DesignStagesDAO from '../../dao/product-design-stages';
@@ -13,7 +16,7 @@ import ProductDesignStage from '../../domain-objects/product-design-stage';
 
 export default async function generateTask(
   options: Partial<TaskEvent> = {}
-): Promise<{ task: DetailsTask, createdBy: User, stage: ProductDesignStage }> {
+): Promise<{ task: DetailsTask; createdBy: User; stage: ProductDesignStage }> {
   const { user } = options.createdBy
     ? { user: await findUserById(options.createdBy) }
     : await createUser({ withSession: false });
@@ -22,7 +25,9 @@ export default async function generateTask(
     ? { stage: await DesignStagesDAO.findById(options.designStageId) }
     : await generateProductDesignStage({}, user.id);
 
-  if (!stage) { throw new Error('Could not create stage'); }
+  if (!stage) {
+    throw new Error('Could not create stage');
+  }
 
   await createStageTask({
     designStageId: stage.id,

@@ -3,7 +3,9 @@
 const Router = require('koa-router');
 
 const requireAuth = require('../../middleware/require-auth');
-const { canAccessDesignInQuery } = require('../../middleware/can-access-design');
+const {
+  canAccessDesignInQuery
+} = require('../../middleware/can-access-design');
 const ProductDesignStatusSlasDAO = require('../../dao/product-design-status-slas');
 
 const router = new Router();
@@ -18,7 +20,9 @@ function* replaceSlas() {
 }
 
 function* getSlas() {
-  this.body = yield ProductDesignStatusSlasDAO.findByDesignId(this.query.designId);
+  this.body = yield ProductDesignStatusSlasDAO.findByDesignId(
+    this.query.designId
+  );
   this.status = 200;
 }
 

@@ -14,9 +14,9 @@ import { sandbox, test, Test } from '../../test-helpers/fresh';
 import { createTemplates } from '../../test-helpers/factories/stage-and-task-templates';
 
 async function createResources(): Promise<{
-  user: User,
-  design: ProductDesign,
-  collection: Collection
+  user: User;
+  design: ProductDesign;
+  collection: Collection;
 }> {
   const { user } = await createUser({ withSession: false });
   const collection = await CollectionsDAO.create({

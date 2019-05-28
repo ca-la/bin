@@ -12,23 +12,27 @@ import { NotificationType } from '../../components/notifications/domain-object';
 import * as NotificationAnnouncer from '../../components/iris/messages/notification';
 
 test('sendNotificationEmails supports finding outstanding notifications', async (t: tape.Test) => {
-  sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
   const userOne = await createUser();
   const userTwo = await createUser();
 
   const { notification: notificationOne } = await generateNotification({
     actorUserId: userOne.user.id,
-    createdAt: new Date(new Date().getMilliseconds() - (46 * 60 * 1000)),
+    createdAt: new Date(new Date().getMilliseconds() - 46 * 60 * 1000),
     type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });
   const { notification: notificationTwo } = await generateNotification({
     actorUserId: userTwo.user.id,
-    createdAt: new Date(new Date().getMilliseconds() - (46 * 60 * 1000)),
+    createdAt: new Date(new Date().getMilliseconds() - 46 * 60 * 1000),
     type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });
   await generateNotification({ type: NotificationType.INVITE_COLLABORATOR });
 
-  const emailStub = sandbox().stub(EmailService, 'enqueueSend').returns(Promise.resolve());
+  const emailStub = sandbox()
+    .stub(EmailService, 'enqueueSend')
+    .returns(Promise.resolve());
 
   await sendNotificationEmails();
 
@@ -46,7 +50,9 @@ test('sendNotificationEmails supports finding outstanding notifications', async 
 });
 
 test('sendNotificationEmails gracefully handles failures', async (t: tape.Test) => {
-  sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
   const userOne = await createUser();
   const userTwo = await createUser();
 
@@ -56,36 +62,41 @@ test('sendNotificationEmails gracefully handles failures', async (t: tape.Test) 
 
   const { notification: notificationOne } = await generateNotification({
     actorUserId: userOne.user.id,
-    createdAt: new Date(new Date().getMilliseconds() - (48 * 60 * 1000)),
+    createdAt: new Date(new Date().getMilliseconds() - 48 * 60 * 1000),
     id: idOne,
     type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });
   const { notification: notificationTwo } = await generateNotification({
     actorUserId: userTwo.user.id,
-    createdAt: new Date(new Date().getMilliseconds() - (47 * 60 * 1000)),
+    createdAt: new Date(new Date().getMilliseconds() - 47 * 60 * 1000),
     id: idTwo,
     type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });
   const { notification: notificationThree } = await generateNotification({
     actorUserId: userTwo.user.id,
-    createdAt: new Date(new Date().getMilliseconds() - (46 * 60 * 1000)),
+    createdAt: new Date(new Date().getMilliseconds() - 46 * 60 * 1000),
     id: idThree,
     type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });
 
-  const emailStub = sandbox().stub(EmailService, 'enqueueSend').callsFake(
-    async (queueObject: any): Promise<void> => {
-      if (queueObject.params.notifications[0].id === idTwo) {
-        throw new Error('Not going to send!');
+  const emailStub = sandbox()
+    .stub(EmailService, 'enqueueSend')
+    .callsFake(
+      async (queueObject: any): Promise<void> => {
+        if (queueObject.params.notifications[0].id === idTwo) {
+          throw new Error('Not going to send!');
+        }
       }
-    }
-  );
+    );
 
   try {
     await sendNotificationEmails();
     t.fail('Should not actually go through');
   } catch (e) {
-    t.equal(e.message, `Failed to send to SQS the following notifications: ${idTwo}`);
+    t.equal(
+      e.message,
+      `Failed to send to SQS the following notifications: ${idTwo}`
+    );
   }
 
   t.equal(emailStub.callCount, 2, 'Email service is called twice');

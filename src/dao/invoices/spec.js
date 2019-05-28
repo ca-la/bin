@@ -1,7 +1,9 @@
 'use strict';
 
 const uuid = require('node-uuid');
-const { createInvoicesWithPayments } = require('../../test-helpers/factories/invoice-payments');
+const {
+  createInvoicesWithPayments
+} = require('../../test-helpers/factories/invoice-payments');
 const InvoicesDAO = require('.');
 const { test } = require('../../test-helpers/fresh');
 
@@ -51,11 +53,7 @@ test(
     );
 
     const nonValidIdInvoice = await InvoicesDAO.findById(uuid.v4());
-    t.equal(
-      nonValidIdInvoice,
-      null,
-      'returns null for non-existent IDs'
-    );
+    t.equal(nonValidIdInvoice, null, 'returns null for non-existent IDs');
   },
   createInvoicesWithPayments
 );
@@ -64,8 +62,9 @@ test(
   'InvoicesDAO.findByCollection',
   async (t, { createdInvoices, collections }) => {
     const invoices = await InvoicesDAO.findByCollection(collections[0].id);
-    const invoicesForFirstCollection = createdInvoices
-      .filter(i => i.collectionId === collections[0].id);
+    const invoicesForFirstCollection = createdInvoices.filter(
+      i => i.collectionId === collections[0].id
+    );
 
     t.deepEqual(
       invoices.map(i => i.id).sort(),
@@ -84,7 +83,8 @@ test(
       invoices.map(i => i.id).sort(),
       createdInvoices
         .filter(i => i.userId === users[0].id)
-        .map(i => i.id).sort(),
+        .map(i => i.id)
+        .sort(),
       'returns all invoices associated with a user'
     );
 
@@ -106,7 +106,8 @@ test(
       invoices.map(i => i.id).sort(),
       createdInvoices
         .filter(i => i.userId === users[0].id && i.paid_at === false)
-        .map(i => i.id).sort(),
+        .map(i => i.id)
+        .sort(),
       'returns all invoices associated with a user'
     );
 
@@ -125,11 +126,7 @@ test(
   async (t, { createdInvoices }) => {
     await InvoicesDAO.update(createdInvoices[0].id, { totalCents: 10000 });
     const updated = await InvoicesDAO.findById(createdInvoices[0].id);
-    t.equal(
-      updated.totalCents,
-      10000,
-      'updates invoice value'
-    );
+    t.equal(updated.totalCents, 10000, 'updates invoice value');
   },
   createInvoicesWithPayments
 );
@@ -139,11 +136,7 @@ test(
   async (t, { createdInvoices }) => {
     await InvoicesDAO.deleteById(createdInvoices[0].id);
     const deleted = await InvoicesDAO.findById(createdInvoices[0].id);
-    t.equal(
-      deleted,
-      null,
-      'removes invoice from returned results'
-    );
+    t.equal(deleted, null, 'removes invoice from returned results');
   },
   createInvoicesWithPayments
 );

@@ -20,8 +20,9 @@ function* getList() {
  * GET /designers/:designerId
  */
 function* getById() {
-  const designer = yield DesignersDAO.getById(this.params.designerId)
-    .catch(filterError(InvalidDataError, err => this.throw(404, err.message)));
+  const designer = yield DesignersDAO.getById(this.params.designerId).catch(
+    filterError(InvalidDataError, err => this.throw(404, err.message))
+  );
 
   this.body = designer;
   this.status = 200;

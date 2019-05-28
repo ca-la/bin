@@ -14,7 +14,10 @@ export function* canAccessAnnotationInParams(
   const { annotationId } = this.params;
 
   if (!annotationId) {
-    return this.throw(400, 'Must provide an annotationId in the query parameters.');
+    return this.throw(
+      400,
+      'Must provide an annotationId in the query parameters.'
+    );
   }
   const design = yield findDesignByAnnotationId(annotationId);
   if (!design) {
@@ -26,7 +29,7 @@ export function* canAccessAnnotationInParams(
   this.assert(
     permissions && permissions.canView,
     403,
-    'You don\'t have permission to view the annotation on this design.'
+    "You don't have permission to view the annotation on this design."
   );
 
   yield next;

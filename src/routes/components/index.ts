@@ -8,18 +8,20 @@ import { addAssetLink } from '../../services/attach-asset-links';
 
 const router = new Router();
 
-const attachUser = (
-  request: any,
-  userId: string
-): any => {
+const attachUser = (request: any, userId: string): any => {
   return {
     ...request,
     createdBy: userId
   };
 };
 
-function* create(this: Koa.Application.Context): AsyncIterableIterator<Component> {
-  const { assetLink, ...body } = attachUser(this.request.body, this.state.userId);
+function* create(
+  this: Koa.Application.Context
+): AsyncIterableIterator<Component> {
+  const { assetLink, ...body } = attachUser(
+    this.request.body,
+    this.state.userId
+  );
   if (!this.request.body || !isUnsavedComponent(body)) {
     return this.throw(400, 'Request does not match Component');
   }
@@ -29,8 +31,13 @@ function* create(this: Koa.Application.Context): AsyncIterableIterator<Component
   this.body = component;
 }
 
-function* update(this: Koa.Application.Context): AsyncIterableIterator<Component> {
-  const { assetLink, ...body } = attachUser(this.request.body, this.state.userId);
+function* update(
+  this: Koa.Application.Context
+): AsyncIterableIterator<Component> {
+  const { assetLink, ...body } = attachUser(
+    this.request.body,
+    this.state.userId
+  );
   if (!this.request.body || !isUnsavedComponent(body)) {
     return this.throw(400, 'Request does not match Component');
   }
@@ -42,14 +49,24 @@ function* update(this: Koa.Application.Context): AsyncIterableIterator<Component
 
 function* del(this: Koa.Application.Context): AsyncIterableIterator<Component> {
   const component = yield ComponentsDAO.del(this.params.componentId);
-  if (!component) { return this.throw('component delete failed', 400); }
+  if (!component) {
+    return this.throw('component delete failed', 400);
+  }
   this.status = 204;
 }
 
-function* getById(this: Koa.Application.Context): AsyncIterableIterator<Component> {
-  const component: Component = yield ComponentsDAO.findById(this.params.componentId);
+function* getById(
+  this: Koa.Application.Context
+): AsyncIterableIterator<Component> {
+  const component: Component = yield ComponentsDAO.findById(
+    this.params.componentId
+  );
 
-  this.assert(component, 404, `Component with id ${this.params.componentId} not found`);
+  this.assert(
+    component,
+    404,
+    `Component with id ${this.params.componentId} not found`
+  );
 
   this.status = 200;
   this.body = yield addAssetLink(component);

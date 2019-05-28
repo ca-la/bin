@@ -14,7 +14,11 @@ const router = new Router();
 async function verifyEligibility(vendorUserId) {
   const user = await UsersDAO.findById(vendorUserId);
   const name = (user && user.name) || 'This user';
-  this.assert(user && user.role === 'PARTNER', 400, `${name} is not a production partner. Only production partners can specify pricing tables.`);
+  this.assert(
+    user && user.role === 'PARTNER',
+    400,
+    `${name} is not a production partner. Only production partners can specify pricing tables.`
+  );
 }
 
 function* replacePrices() {
@@ -24,10 +28,14 @@ function* replacePrices() {
   this.assert(vendorUserId, 400, 'Vendor ID must be provided');
   yield verifyEligibility.call(this, vendorUserId);
 
-  const isAdmin = (this.state.role === User.ROLES.admin);
-  const isCurrentUser = (vendorUserId === this.state.userId);
+  const isAdmin = this.state.role === User.ROLES.admin;
+  const isCurrentUser = vendorUserId === this.state.userId;
 
-  this.assert(isAdmin || isCurrentUser, 403, 'You can only update your own pricing');
+  this.assert(
+    isAdmin || isCurrentUser,
+    403,
+    'You can only update your own pricing'
+  );
 
   const prices = yield ProductionPricesDAO.replaceForVendorAndService(
     vendorUserId,
@@ -47,12 +55,15 @@ function* getPrices() {
 
   if (vendorUserId && serviceId) {
     // Both filters are provided, find a list by vendor *and* service
-    this.body = yield ProductionPricesDAO.findByVendorAndService(vendorUserId, serviceId)
-      .catch(filterError(InvalidDataError, err => this.throw(400, err)));
+    this.body = yield ProductionPricesDAO.findByVendorAndService(
+      vendorUserId,
+      serviceId
+    ).catch(filterError(InvalidDataError, err => this.throw(400, err)));
   } else {
     // Only vendor was provided, find all services
-    this.body = yield ProductionPricesDAO.findByVendor(vendorUserId)
-      .catch(filterError(InvalidDataError, err => this.throw(400, err)));
+    this.body = yield ProductionPricesDAO.findByVendor(vendorUserId).catch(
+      filterError(InvalidDataError, err => this.throw(400, err))
+    );
   }
 
   this.status = 200;

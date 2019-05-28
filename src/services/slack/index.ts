@@ -8,7 +8,8 @@ import {
   AWS_NOTIFICATION_SQS_URL
 } from '../../config';
 
-type TemplateName = 'collection_submission'
+type TemplateName =
+  | 'collection_submission'
   | 'designer_pay_later'
   | 'designer_payment'
   | 'partner_accept_bid'

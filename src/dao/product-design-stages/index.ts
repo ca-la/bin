@@ -27,9 +27,13 @@ export async function create(
         query.transacting(trx);
       }
     })
-    .then((rows: ProductDesignStageRow[]) => first<ProductDesignStageRow>(rows));
+    .then((rows: ProductDesignStageRow[]) =>
+      first<ProductDesignStageRow>(rows)
+    );
 
-  if (!created) { throw new Error('Failed to create rows'); }
+  if (!created) {
+    throw new Error('Failed to create rows');
+  }
 
   return validate<ProductDesignStageRow, ProductDesignStage>(
     TABLE_NAME,
@@ -47,7 +51,9 @@ export async function findById(id: string): Promise<ProductDesignStage | null> {
     .limit(1);
 
   const stage = stages[0];
-  if (!stage) { return null; }
+  if (!stage) {
+    return null;
+  }
 
   return validate<ProductDesignStageRow, ProductDesignStage>(
     TABLE_NAME,
@@ -74,8 +80,11 @@ export async function findAllByDesignId(
 }
 
 export async function findAllTitles(): Promise<string[]> {
-  return db(TABLE_NAME).distinct('title').distinct('ordering').orderBy('ordering')
-    .then((rows: {title: string}[]) =>
-      rows.map((row: {title: string}) =>
-        row.title));
+  return db(TABLE_NAME)
+    .distinct('title')
+    .distinct('ordering')
+    .orderBy('ordering')
+    .then((rows: { title: string }[]) =>
+      rows.map((row: { title: string }) => row.title)
+    );
 }

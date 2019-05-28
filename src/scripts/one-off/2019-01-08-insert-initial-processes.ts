@@ -198,18 +198,20 @@ insertProcesses()
     log(`${green}Successfully inserted!`);
     process.exit();
   })
-  .catch((err: any): void => {
-    log(`${red}ERROR:\n${reset}`, err);
-    process.exit(1);
-  });
+  .catch(
+    (err: any): void => {
+      log(`${red}ERROR:\n${reset}`, err);
+      process.exit(1);
+    }
+  );
 
 async function insertProcesses(): Promise<void> {
   const expectedCount = processes.length;
 
   return db.transaction(async (trx: Knex.Transaction) => {
-    const processesInserted = await trx.insert(
-      processes.map(dataAdapter.forInsertion.bind(dataAdapter))
-    ).into('processes');
+    const processesInserted = await trx
+      .insert(processes.map(dataAdapter.forInsertion.bind(dataAdapter)))
+      .into('processes');
     const rowCount = processesInserted.rowCount;
 
     if (rowCount !== expectedCount) {

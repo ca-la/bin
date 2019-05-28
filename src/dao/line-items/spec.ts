@@ -21,7 +21,9 @@ test('LineItems DAO supports creation/retrieval', async (t: tape.Test) => {
     invoice = await createInvoice(trx, invoiceData);
   });
 
-  if (!invoice) { return t.fail(); }
+  if (!invoice) {
+    return t.fail();
+  }
 
   const data: LineItem = {
     createdAt: new Date(),
@@ -51,7 +53,9 @@ test('LineItems DAO supports retrieval by invoice id', async (t: tape.Test) => {
     invoice = await createInvoice(trx, invoiceData);
   });
 
-  if (!invoice) { return t.fail(); }
+  if (!invoice) {
+    return t.fail();
+  }
 
   const data: LineItem = {
     createdAt: new Date(),

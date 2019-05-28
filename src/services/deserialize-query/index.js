@@ -27,27 +27,26 @@ const { reduce } = require('lodash');
  * @param {Object} input Input object that will be deserialized
  * @returns {Object} The deserialized object
  */
-module.exports = function deserializeQuery(
-  defaults,
-  serialize,
-  check,
-  input
-) {
-  return reduce(input, (memo, prop, key) => {
-    const serializer = serialize[key];
-    let transformed = prop;
+module.exports = function deserializeQuery(defaults, serialize, check, input) {
+  return reduce(
+    input,
+    (memo, prop, key) => {
+      const serializer = serialize[key];
+      let transformed = prop;
 
-    if (typeof serializer === 'function') {
-      const checker = check[key];
-      const candidate = serializer(prop);
+      if (typeof serializer === 'function') {
+        const checker = check[key];
+        const candidate = serializer(prop);
 
-      if (typeof checker === 'function') {
-        transformed = checker(candidate) ? candidate : defaults[key];
-      } else {
-        transformed = candidate;
+        if (typeof checker === 'function') {
+          transformed = checker(candidate) ? candidate : defaults[key];
+        } else {
+          transformed = candidate;
+        }
       }
-    }
 
-    return Object.assign(memo, { [key]: transformed });
-  }, defaults);
+      return Object.assign(memo, { [key]: transformed });
+    },
+    defaults
+  );
 };

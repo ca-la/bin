@@ -3,62 +3,70 @@
 const uuid = require('node-uuid');
 
 const ProductDesignsDAO = require('./index');
-const { default: generatePricingQuote } = require('../../services/generate-pricing-quote');
-const { default: generatePricingValues } = require('../../test-helpers/factories/pricing-values');
+const {
+  default: generatePricingQuote
+} = require('../../services/generate-pricing-quote');
+const {
+  default: generatePricingValues
+} = require('../../test-helpers/factories/pricing-values');
 const CollectionsDAO = require('../collections');
 const DesignEventsDAO = require('../design-events');
 const { test } = require('../../test-helpers/fresh');
 const createUser = require('../../test-helpers/create-user');
 
-test('ProductDesignsDAO.create creates a design', async (t) => {
+test('ProductDesignsDAO.create creates a design', async t => {
   const { user } = await createUser({ withSession: false });
   const forCreation = {
     title: 'Plain White Tee',
     productType: 'TEESHIRT',
     userId: user.id,
-    previewImageUrls: [
-      'abcd', 'efgh'
-    ],
+    previewImageUrls: ['abcd', 'efgh'],
     metadata: {
       'dipped drawstrings': 'yes please'
     }
   };
   const design = await ProductDesignsDAO.create(forCreation);
 
-  t.deepEqual(design, {
-    ...forCreation,
-    id: design.id,
-    computedPricingTable: null,
-    createdAt: design.createdAt,
-    deletedAt: null,
-    description: null,
-    dueDate: null,
-    expectedCostCents: null,
-    imageIds: [],
-    imageLinks: [],
-    previewImageUrls: [],
-    overridePricingTable: null,
-    retailPriceCents: null,
-    showPricingBreakdown: true,
-    status: 'DRAFT',
-    collectionIds: [],
-    collections: []
-  }, 'adds the collections and default/nullable values');
+  t.deepEqual(
+    design,
+    {
+      ...forCreation,
+      id: design.id,
+      computedPricingTable: null,
+      createdAt: design.createdAt,
+      deletedAt: null,
+      description: null,
+      dueDate: null,
+      expectedCostCents: null,
+      imageIds: [],
+      imageLinks: [],
+      previewImageUrls: [],
+      overridePricingTable: null,
+      retailPriceCents: null,
+      showPricingBreakdown: true,
+      status: 'DRAFT',
+      collectionIds: [],
+      collections: []
+    },
+    'adds the collections and default/nullable values'
+  );
 });
 
-test('ProductDesignsDAO.update updates a design', async (t) => {
+test('ProductDesignsDAO.update updates a design', async t => {
   const { user } = await createUser({ withSession: false });
   const design = await ProductDesignsDAO.create({
     title: 'Plain White Tee',
     productType: 'TEESHIRT',
     userId: user.id
   });
-  const updated = await ProductDesignsDAO.update(design.id, { title: 'Blue Tee' });
+  const updated = await ProductDesignsDAO.update(design.id, {
+    title: 'Blue Tee'
+  });
 
   t.deepEqual(updated, { ...design, title: 'Blue Tee' });
 });
 
-test("ProductDesignsDAO.findById doesn't include deleted designs", async (t) => {
+test("ProductDesignsDAO.findById doesn't include deleted designs", async t => {
   const { user } = await createUser({ withSession: false });
   const { id } = await ProductDesignsDAO.create({
     title: 'Plain White Tee',
@@ -71,7 +79,7 @@ test("ProductDesignsDAO.findById doesn't include deleted designs", async (t) => 
   t.equal(design, null);
 });
 
-test('ProductDesignsDAO.findById includes deleted designs when specified', async (t) => {
+test('ProductDesignsDAO.findById includes deleted designs when specified', async t => {
   const { user } = await createUser({ withSession: false });
   const { id } = await ProductDesignsDAO.create({
     title: 'Plain White Tee',
@@ -80,11 +88,13 @@ test('ProductDesignsDAO.findById includes deleted designs when specified', async
   });
 
   await ProductDesignsDAO.deleteById(id);
-  const design = await ProductDesignsDAO.findById(id, null, { includeDeleted: true });
+  const design = await ProductDesignsDAO.findById(id, null, {
+    includeDeleted: true
+  });
   t.equal(design.id, id);
 });
 
-test('ProductDesignsDAO.findByIds includes several designs', async (t) => {
+test('ProductDesignsDAO.findByIds includes several designs', async t => {
   const { user } = await createUser({ withSession: false });
   const design = await ProductDesignsDAO.create({
     title: 'Plain White Tee',
@@ -101,7 +111,7 @@ test('ProductDesignsDAO.findByIds includes several designs', async (t) => {
   t.deepEqual(result, [design2, design]);
 });
 
-test('ProductDesignsDAO.findByUserId', async (t) => {
+test('ProductDesignsDAO.findByUserId', async t => {
   const { user } = await createUser({ withSession: false });
   const design = await ProductDesignsDAO.create({
     title: 'Plain White Tee',
@@ -113,7 +123,7 @@ test('ProductDesignsDAO.findByUserId', async (t) => {
   t.deepEqual(userDesigns, [design]);
 });
 
-test('ProductDesignsDAO.findByCollectionId', async (t) => {
+test('ProductDesignsDAO.findByCollectionId', async t => {
   const { user } = await createUser({ withSession: false });
   const collection = await CollectionsDAO.create({
     createdAt: new Date(),
@@ -130,15 +140,19 @@ test('ProductDesignsDAO.findByCollectionId', async (t) => {
   });
   await CollectionsDAO.moveDesign(collection.id, design.id);
 
-  const collectionDesigns = await ProductDesignsDAO.findByCollectionId(collection.id);
+  const collectionDesigns = await ProductDesignsDAO.findByCollectionId(
+    collection.id
+  );
 
   t.deepEqual(
     collectionDesigns,
-    [{
-      ...design,
-      collectionIds: [collection.id],
-      collections: [{ id: collection.id, title: collection.title }]
-    }],
+    [
+      {
+        ...design,
+        collectionIds: [collection.id],
+        collections: [{ id: collection.id, title: collection.title }]
+      }
+    ],
     'Passes through the design associated with the collection'
   );
   t.deepEqual(
@@ -148,7 +162,7 @@ test('ProductDesignsDAO.findByCollectionId', async (t) => {
   );
 });
 
-test('ProductDesignsDAO.findAll with needsQuote query', async (t) => {
+test('ProductDesignsDAO.findAll with needsQuote query', async t => {
   const { user } = await createUser({ withSession: false });
   const design = await ProductDesignsDAO.create({
     title: 'Plain White Tee',
@@ -192,7 +206,7 @@ test('ProductDesignsDAO.findAll with needsQuote query', async (t) => {
   t.deepEqual(needsQuote, []);
 });
 
-test('ProductDesignsDAO.findByQuoteId', async (t) => {
+test('ProductDesignsDAO.findByQuoteId', async t => {
   const { user } = await createUser({ withSession: false });
   const design = await ProductDesignsDAO.create({
     title: 'Plain White Tee',
@@ -204,13 +218,16 @@ test('ProductDesignsDAO.findByQuoteId', async (t) => {
     designId: design.id,
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
-    processes: [{
-      complexity: '1_COLOR',
-      name: 'SCREEN_PRINTING'
-    }, {
-      complexity: '1_COLOR',
-      name: 'SCREEN_PRINTING'
-    }],
+    processes: [
+      {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      },
+      {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      }
+    ],
     productComplexity: 'SIMPLE',
     productType: 'TEESHIRT',
     units: 200

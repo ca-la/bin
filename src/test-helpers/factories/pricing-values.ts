@@ -15,7 +15,7 @@ import { daysToMs } from '../../services/time-conversion';
 
 export default async function generatePricingValues(): Promise<any> {
   const pricingProcessScreenPrinting = generateScreenPrintingProcess(
-    (units: number) => units >= 500 ? 3000 : 6000,
+    (units: number) => (units >= 500 ? 3000 : 6000),
     25,
     [
       [1, 100],
@@ -36,7 +36,10 @@ export default async function generatePricingValues(): Promise<any> {
     typeYield: 1.5,
     version: 0
   });
-  const createCareLabel = (units: number, cents: number): Uninserted<PricingCareLabelRow> => ({
+  const createCareLabel = (
+    units: number,
+    cents: number
+  ): Uninserted<PricingCareLabelRow> => ({
     id: uuid.v4(),
     minimum_units: units,
     unit_cents: cents,
@@ -356,7 +359,9 @@ export default async function generatePricingValues(): Promise<any> {
       await trx.insert(pricingConstants).into('pricing_constants'),
       await trx.insert(pricingCareLabels).into('pricing_care_labels'),
       await trx.insert(pricingMargins).into('pricing_margins'),
-      await trx.insert(pricingProcessTimelines).into('pricing_process_timelines'),
+      await trx
+        .insert(pricingProcessTimelines)
+        .into('pricing_process_timelines'),
       await trx.insert(pricingMaterials).into('pricing_product_materials'),
       await trx.insert(pricingProductTypeTee).into('pricing_product_types')
     ];

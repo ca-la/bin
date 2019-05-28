@@ -34,9 +34,15 @@ function* createLoginLink() {
 
 function* createAccount() {
   const { stripeAuthorizationCode } = this.request.body;
-  this.assert(stripeAuthorizationCode, 400, 'Missing Stripe authorization code');
+  this.assert(
+    stripeAuthorizationCode,
+    400,
+    'Missing Stripe authorization code'
+  );
 
-  const connectAccount = yield Stripe.createConnectAccount(stripeAuthorizationCode);
+  const connectAccount = yield Stripe.createConnectAccount(
+    stripeAuthorizationCode
+  );
 
   const account = yield PartnerPayoutAccounts.create({
     userId: this.state.userId,

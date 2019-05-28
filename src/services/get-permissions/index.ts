@@ -45,9 +45,11 @@ export async function getDesignPermissionsAndRole(
   const isDesignOwner = sessionUserId === design.userId;
 
   const collections = await CollectionsDAO.findByDesign(design.id);
-  const userCreatedCollection = collections.find((collection: Collection): boolean => {
-    return collection.createdBy === sessionUserId;
-  });
+  const userCreatedCollection = collections.find(
+    (collection: Collection): boolean => {
+      return collection.createdBy === sessionUserId;
+    }
+  );
   const isOwner = isDesignOwner || Boolean(userCreatedCollection);
 
   const combinedCollaborators = await CollaboratorsDAO.findAllForUserThroughDesign(
@@ -101,9 +103,13 @@ export async function getCollectionPermissions(
     collection.id,
     sessionUserId
   );
-  const role = findMostPermissiveRole(collaborators.map((collaborator: Collaborator): string => {
-    return collaborator.role;
-  }));
+  const role = findMostPermissiveRole(
+    collaborators.map(
+      (collaborator: Collaborator): string => {
+        return collaborator.role;
+      }
+    )
+  );
 
   const isOwner = sessionUserId === collection.createdBy;
   const isAdmin = sessionRole === 'ADMIN';
@@ -185,8 +191,12 @@ function getPermissionsFromRole(roles: LocalRoles): Permissions {
 // TODO use collaborators role when that gets added.
 export function findMostPermissiveRole(roles: string[]): string | undefined {
   const roleIndex = roles.reduce((acc: number, role: string): number => {
-    const index = ROLE_ORDERING.findIndex((roleOrdering: string): boolean => roleOrdering === role);
-    if (acc >= 0 && index >= 0) { return acc < index ? acc : index; }
+    const index = ROLE_ORDERING.findIndex(
+      (roleOrdering: string): boolean => roleOrdering === role
+    );
+    if (acc >= 0 && index >= 0) {
+      return acc < index ? acc : index;
+    }
     return index;
   }, -1);
 

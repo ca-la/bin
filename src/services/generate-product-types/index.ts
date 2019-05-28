@@ -49,7 +49,14 @@ interface ProductTypeGeneratorArgs {
 export default function generateProductTypes(
   args: ProductTypeGeneratorArgs
 ): Uninserted<PricingProductTypeRow>[] {
-  const { typeMediumCents, typeMediumDays, typeName, typeYield, contrast, version } = args;
+  const {
+    typeMediumCents,
+    typeMediumDays,
+    typeName,
+    typeYield,
+    contrast,
+    version
+  } = args;
   return currentUnitsAndMultiplier.reduce(
     (
       acc: Uninserted<PricingProductTypeRow>[],
@@ -59,24 +66,27 @@ export default function generateProductTypes(
         {
           complexity: 'SIMPLE',
           contrast: contrast[0],
-          creation_time_ms:
-            daysToMs(baseCreationDays).toString(),
-          fulfillment_time_ms:
-            daysToMs(baseFulfillmentDays).toString(),
+          creation_time_ms: daysToMs(baseCreationDays).toString(),
+          fulfillment_time_ms: daysToMs(baseFulfillmentDays).toString(),
           id: uuid.v4(),
           minimum_units: units,
           name: typeName,
           pattern_minimum_cents: Dollars(100),
-          pre_production_time_ms:
-            (daysToMs(basePreProductionDays) * timeComplexityMultiple.simple).toString(),
-          production_time_ms:
-            (daysToMs(typeMediumDays * timeComplexityMultiple.simple * timeMultiplier)).toString(),
-          sampling_time_ms:
-            (daysToMs(baseSamplingDays) * timeComplexityMultiple.simple).toString(),
-          sourcing_time_ms:
-            (daysToMs(baseSourcingDays) * timeComplexityMultiple.simple).toString(),
-          specification_time_ms:
-            (daysToMs(baseSpecificationDays) * timeComplexityMultiple.simple).toString(),
+          pre_production_time_ms: (
+            daysToMs(basePreProductionDays) * timeComplexityMultiple.simple
+          ).toString(),
+          production_time_ms: daysToMs(
+            typeMediumDays * timeComplexityMultiple.simple * timeMultiplier
+          ).toString(),
+          sampling_time_ms: (
+            daysToMs(baseSamplingDays) * timeComplexityMultiple.simple
+          ).toString(),
+          sourcing_time_ms: (
+            daysToMs(baseSourcingDays) * timeComplexityMultiple.simple
+          ).toString(),
+          specification_time_ms: (
+            daysToMs(baseSpecificationDays) * timeComplexityMultiple.simple
+          ).toString(),
           unit_cents: Math.ceil(typeMediumCents * 0.75 * unitMultiplier),
           version,
           yield: typeYield
@@ -84,23 +94,27 @@ export default function generateProductTypes(
         {
           complexity: 'MEDIUM',
           contrast: contrast[1],
-          creation_time_ms:
-            daysToMs(baseCreationDays).toString(),
+          creation_time_ms: daysToMs(baseCreationDays).toString(),
           fulfillment_time_ms: daysToMs(baseFulfillmentDays).toString(),
           id: uuid.v4(),
           minimum_units: units,
           name: typeName,
           pattern_minimum_cents: Dollars(250),
-          pre_production_time_ms:
-            (daysToMs(basePreProductionDays) * timeComplexityMultiple.medium).toString(),
-          production_time_ms:
-            (daysToMs(typeMediumDays * timeComplexityMultiple.medium * timeMultiplier)).toString(),
-          sampling_time_ms:
-            (daysToMs(baseSamplingDays) * timeComplexityMultiple.medium).toString(),
-          sourcing_time_ms:
-            (daysToMs(baseSourcingDays) * timeComplexityMultiple.medium).toString(),
-          specification_time_ms:
-            (daysToMs(baseSpecificationDays) * timeComplexityMultiple.medium).toString(),
+          pre_production_time_ms: (
+            daysToMs(basePreProductionDays) * timeComplexityMultiple.medium
+          ).toString(),
+          production_time_ms: daysToMs(
+            typeMediumDays * timeComplexityMultiple.medium * timeMultiplier
+          ).toString(),
+          sampling_time_ms: (
+            daysToMs(baseSamplingDays) * timeComplexityMultiple.medium
+          ).toString(),
+          sourcing_time_ms: (
+            daysToMs(baseSourcingDays) * timeComplexityMultiple.medium
+          ).toString(),
+          specification_time_ms: (
+            daysToMs(baseSpecificationDays) * timeComplexityMultiple.medium
+          ).toString(),
           unit_cents: Math.ceil(typeMediumCents * 1 * unitMultiplier),
           version,
           yield: typeYield
@@ -108,23 +122,27 @@ export default function generateProductTypes(
         {
           complexity: 'COMPLEX',
           contrast: contrast[2],
-          creation_time_ms:
-            daysToMs(baseCreationDays).toString(),
+          creation_time_ms: daysToMs(baseCreationDays).toString(),
           fulfillment_time_ms: daysToMs(baseFulfillmentDays).toString(),
           id: uuid.v4(),
           minimum_units: units,
           name: typeName,
           pattern_minimum_cents: Dollars(400),
-          pre_production_time_ms:
-            (daysToMs(basePreProductionDays) * timeComplexityMultiple.complex).toString(),
-          production_time_ms:
-            (daysToMs(typeMediumDays * timeComplexityMultiple.complex * timeMultiplier)).toString(),
-          sampling_time_ms:
-            (daysToMs(baseSamplingDays) * timeComplexityMultiple.complex).toString(),
-          sourcing_time_ms:
-            (daysToMs(baseSpecificationDays) * timeComplexityMultiple.complex).toString(),
-          specification_time_ms:
-            (daysToMs(baseSpecificationDays) * timeComplexityMultiple.complex).toString(),
+          pre_production_time_ms: (
+            daysToMs(basePreProductionDays) * timeComplexityMultiple.complex
+          ).toString(),
+          production_time_ms: daysToMs(
+            typeMediumDays * timeComplexityMultiple.complex * timeMultiplier
+          ).toString(),
+          sampling_time_ms: (
+            daysToMs(baseSamplingDays) * timeComplexityMultiple.complex
+          ).toString(),
+          sourcing_time_ms: (
+            daysToMs(baseSpecificationDays) * timeComplexityMultiple.complex
+          ).toString(),
+          specification_time_ms: (
+            daysToMs(baseSpecificationDays) * timeComplexityMultiple.complex
+          ).toString(),
           unit_cents: Math.ceil(typeMediumCents * 1.75 * unitMultiplier),
           version,
           yield: typeYield
@@ -132,21 +150,23 @@ export default function generateProductTypes(
         {
           complexity: 'BLANK',
           contrast: contrast[3],
-          creation_time_ms:
-            daysToMs(baseCreationDays).toString(),
+          creation_time_ms: daysToMs(baseCreationDays).toString(),
           fulfillment_time_ms: daysToMs(baseSpecificationDays).toString(),
           id: uuid.v4(),
           minimum_units: units,
           name: typeName,
           pattern_minimum_cents: 0,
-          pre_production_time_ms:
-            (daysToMs(baseSpecificationDays) * timeComplexityMultiple.blank).toString(),
-          production_time_ms:
-            (daysToMs(typeMediumDays * timeComplexityMultiple.blank * timeMultiplier)).toString(),
+          pre_production_time_ms: (
+            daysToMs(baseSpecificationDays) * timeComplexityMultiple.blank
+          ).toString(),
+          production_time_ms: daysToMs(
+            typeMediumDays * timeComplexityMultiple.blank * timeMultiplier
+          ).toString(),
           sampling_time_ms: '0',
           sourcing_time_ms: '0',
-          specification_time_ms:
-            (daysToMs(baseSpecificationDays) * timeComplexityMultiple.blank).toString(),
+          specification_time_ms: (
+            daysToMs(baseSpecificationDays) * timeComplexityMultiple.blank
+          ).toString(),
           unit_cents: 0,
           version,
           yield: typeYield

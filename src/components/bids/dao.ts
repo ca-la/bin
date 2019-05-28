@@ -26,12 +26,20 @@ const statusToEvents = {
   EXPIRED: {
     andAlsoContains: [],
     contains: ['BID_DESIGN'],
-    doesNotContain: ['REJECT_SERVICE_BID', 'ACCEPT_SERVICE_BID', 'REMOVE_PARTNER']
+    doesNotContain: [
+      'REJECT_SERVICE_BID',
+      'ACCEPT_SERVICE_BID',
+      'REMOVE_PARTNER'
+    ]
   },
   OPEN: {
     andAlsoContains: [],
     contains: ['BID_DESIGN'],
-    doesNotContain: ['REJECT_SERVICE_BID', 'ACCEPT_SERVICE_BID', 'REMOVE_PARTNER']
+    doesNotContain: [
+      'REJECT_SERVICE_BID',
+      'ACCEPT_SERVICE_BID',
+      'REMOVE_PARTNER'
+    ]
   },
   REJECTED: {
     andAlsoContains: ['REJECT_SERVICE_BID'],
@@ -40,7 +48,9 @@ const statusToEvents = {
   }
 };
 
-function filterRemovalEvents(targetId: string): (query: Knex.QueryBuilder) => void {
+function filterRemovalEvents(
+  targetId: string
+): (query: Knex.QueryBuilder) => void {
   return (query: Knex.QueryBuilder): void => {
     query.whereNotIn(
       'design_events.bid_id',
@@ -65,15 +75,12 @@ export async function create(bid: Bid): Promise<Bid> {
     throw new Error('Failed to create Bid');
   }
 
-  return validate<BidRow, Bid>(
-    TABLE_NAME,
-    isBidRow,
-    dataAdapter,
-    created
-  );
+  return validate<BidRow, Bid>(TABLE_NAME, isBidRow, dataAdapter, created);
 }
 
-function findAllByState(state: 'OPEN' | 'ACCEPTED' | 'REJECTED' | 'EXPIRED'): Knex.QueryBuilder {
+function findAllByState(
+  state: 'OPEN' | 'ACCEPTED' | 'REJECTED' | 'EXPIRED'
+): Knex.QueryBuilder {
   const contains = statusToEvents[state].contains;
   const alsoContains = statusToEvents[state].andAlsoContains;
   const doesNotContain = statusToEvents[state].doesNotContain;
@@ -85,45 +92,47 @@ function findAllByState(state: 'OPEN' | 'ACCEPTED' | 'REJECTED' | 'EXPIRED'): Kn
         .on('design_events.bid_id', '=', 'pricing_bids.id')
         .andOnIn('design_events.type', contains);
     })
-    .modify((query: Knex.QueryBuilder): void => {
-      if (alsoContains.length > 0) {
-        query.whereIn(
-          'design_events.bid_id',
-          db
-            .select('design_events.bid_id')
-            .from('design_events')
-            .whereIn('design_events.type', alsoContains)
-        );
-      }
+    .modify(
+      (query: Knex.QueryBuilder): void => {
+        if (alsoContains.length > 0) {
+          query.whereIn(
+            'design_events.bid_id',
+            db
+              .select('design_events.bid_id')
+              .from('design_events')
+              .whereIn('design_events.type', alsoContains)
+          );
+        }
 
-      if (doesNotContain.length > 0) {
-        query.whereNotIn(
-          'design_events.bid_id',
-          db
-            .select('design_events.bid_id')
-            .from('design_events')
-            .whereIn('design_events.type', doesNotContain)
-        );
-      }
+        if (doesNotContain.length > 0) {
+          query.whereNotIn(
+            'design_events.bid_id',
+            db
+              .select('design_events.bid_id')
+              .from('design_events')
+              .whereIn('design_events.type', doesNotContain)
+          );
+        }
 
-      if (state === 'OPEN') {
-        query.andWhereRaw(
-          `pricing_bids.created_at > (now() - INTERVAL '${MILLISECONDS_TO_EXPIRE} milliseconds')`
-        );
-      } else if (state === 'EXPIRED') {
-        query.andWhereRaw(
-          `pricing_bids.created_at < (now() - INTERVAL '${MILLISECONDS_TO_EXPIRE} milliseconds')`
-        );
+        if (state === 'OPEN') {
+          query.andWhereRaw(
+            `pricing_bids.created_at > (now() - INTERVAL '${MILLISECONDS_TO_EXPIRE} milliseconds')`
+          );
+        } else if (state === 'EXPIRED') {
+          query.andWhereRaw(
+            `pricing_bids.created_at < (now() - INTERVAL '${MILLISECONDS_TO_EXPIRE} milliseconds')`
+          );
+        }
       }
-    })
+    )
     .groupBy('pricing_bids.id')
     .orderBy('pricing_bids.created_at', 'DESC');
 }
 
 export async function findAll(modifiers: {
-  limit?: number,
-  offset?: number,
-  state?: string
+  limit?: number;
+  offset?: number;
+  state?: string;
 }): Promise<Bid[]> {
   let query: Knex.QueryBuilder;
 
@@ -144,14 +153,11 @@ export async function findAll(modifiers: {
     }
   }
 
-  const bids: BidRow[] = await query.modify(limitOrOffset(modifiers.limit, modifiers.offset));
-
-  return validateEvery<BidRow, Bid>(
-    TABLE_NAME,
-    isBidRow,
-    dataAdapter,
-    bids
+  const bids: BidRow[] = await query.modify(
+    limitOrOffset(modifiers.limit, modifiers.offset)
   );
+
+  return validateEvery<BidRow, Bid>(TABLE_NAME, isBidRow, dataAdapter, bids);
 }
 
 export async function findById(id: string): Promise<Bid | null> {
@@ -164,12 +170,7 @@ export async function findById(id: string): Promise<Bid | null> {
     return null;
   }
 
-  return validate<BidRow, Bid>(
-    TABLE_NAME,
-    isBidRow,
-    dataAdapter,
-    bid
-  );
+  return validate<BidRow, Bid>(TABLE_NAME, isBidRow, dataAdapter, bid);
 }
 
 export async function findOpenByTargetId(targetId: string): Promise<Bid[]> {
@@ -265,12 +266,7 @@ export async function findByQuoteId(quoteId: string): Promise<Bid[]> {
     .orderBy('created_at', 'asc')
     .where({ quote_id: quoteId });
 
-  return validateEvery<BidRow, Bid>(
-    TABLE_NAME,
-    isBidRow,
-    dataAdapter,
-    bidRows
-  );
+  return validateEvery<BidRow, Bid>(TABLE_NAME, isBidRow, dataAdapter, bidRows);
 }
 
 /**
@@ -283,7 +279,8 @@ export async function findAllByQuoteAndUserId(
   quoteId: string,
   userId: string
 ): Promise<BidWithEvents[]> {
-  const { rows: bidWithEventsRows } = await db.raw(`
+  const { rows: bidWithEventsRows } = await db.raw(
+    `
 SELECT bids.*, (
   SELECT to_json(array_agg(ordered_events.*))
   FROM (
@@ -302,7 +299,9 @@ FROM pricing_bids as bids
 LEFT JOIN pricing_quotes AS quotes ON quotes.id = bids.quote_id
 WHERE quotes.id = :quoteId
 ORDER BY bids.created_at DESC;
-  `, { quoteId, userId });
+  `,
+    { quoteId, userId }
+  );
 
   if (!bidWithEventsRows) {
     return [];

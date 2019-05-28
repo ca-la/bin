@@ -42,18 +42,16 @@ export default async function generatePricingQuote(
   const quoteValues = await findLatestValuesForRequest(request);
 
   const pricingQuoteInputId = await getQuoteInput(quoteValues);
-  const {
-    quote,
-    processes
-  } = calculateQuoteAndProcesses(request, quoteValues, pricingQuoteInputId);
+  const { quote, processes } = calculateQuoteAndProcesses(
+    request,
+    quoteValues,
+    pricingQuoteInputId
+  );
   const createdQuote = await create(quote, trx);
 
   await createPricingProcesses(processes, trx);
 
-  return Object.assign(
-    createdQuote,
-    { processes: quoteValues.processes }
-  );
+  return Object.assign(createdQuote, { processes: quoteValues.processes });
 }
 
 async function getQuoteInput(values: PricingQuoteValues): Promise<string> {
@@ -62,11 +60,14 @@ async function getQuoteInput(values: PricingQuoteValues): Promise<string> {
     constant_id: values.constantId,
     id: uuid.v4(),
     margin_id: values.margin.id,
-    pricing_process_timeline_id: values.processTimeline && values.processTimeline.id,
+    pricing_process_timeline_id:
+      values.processTimeline && values.processTimeline.id,
     product_material_id: values.material.id,
     product_type_id: values.type.id
   };
-  const pricingQuoteInputRow = await findMatchingOrCreateInput(pricingQuoteInput);
+  const pricingQuoteInputRow = await findMatchingOrCreateInput(
+    pricingQuoteInput
+  );
 
   return pricingQuoteInputRow.id;
 }
@@ -78,7 +79,10 @@ function calculateQuote(
   const { units } = request;
   const baseCost = {
     baseCostCents: calculateBaseUnitCost(units, values),
-    materialCostCents: Math.max(calculateMaterialCents(values), request.materialBudgetCents || 0),
+    materialCostCents: Math.max(
+      calculateMaterialCents(values),
+      request.materialBudgetCents || 0
+    ),
     processCostCents: calculateProcessCents(units, values)
   };
   const {
@@ -90,20 +94,15 @@ function calculateQuote(
     productionTimeMs,
     fulfillmentTimeMs
   } = values.type;
-  const processTimeMs = values.processTimeline ? values.processTimeline.timeMs : 0;
-  const developmentCostCents = request.productComplexity !== 'BLANK'
-    ? calculateDevelopmentCosts(
-      units,
-      values,
-      baseCost.materialCostCents
-    )
+  const processTimeMs = values.processTimeline
+    ? values.processTimeline.timeMs
     : 0;
+  const developmentCostCents =
+    request.productComplexity !== 'BLANK'
+      ? calculateDevelopmentCosts(units, values, baseCost.materialCostCents)
+      : 0;
   const beforeMargin = sum(
-    Object
-      .values(baseCost)
-      .concat([
-        developmentCostCents
-      ])
+    Object.values(baseCost).concat([developmentCostCents])
   );
   const unitCostCents = addMargin(beforeMargin, values.margin.margin / 100);
 
@@ -126,18 +125,25 @@ function calculateQuoteAndProcesses(
   request: PricingQuoteRequest,
   values: PricingQuoteValues,
   pricingQuoteInputId: string
-): { quote: Uninserted<PricingQuoteRow>, processes: Uninserted<PricingProcessQuoteRow>[] } {
-  const adapter = new DataAdapter<PricingQuoteRow, Omit<PricingQuote, 'processes'>>();
-  const quote: Uninserted<PricingQuoteRow> = adapter
-    .forInsertion(Object.assign(
+): {
+  quote: Uninserted<PricingQuoteRow>;
+  processes: Uninserted<PricingProcessQuoteRow>[];
+} {
+  const adapter = new DataAdapter<
+    PricingQuoteRow,
+    Omit<PricingQuote, 'processes'>
+  >();
+  const quote: Uninserted<PricingQuoteRow> = adapter.forInsertion(
+    Object.assign(
       {
         id: uuid.v4(),
         pricingQuoteInputId
       },
       calculateQuote(request, values)
-    ));
+    )
+  );
   const processes: Uninserted<PricingProcessQuoteRow>[] = values.processes.map(
-      toPricingProcessQuoteRow.bind(null, quote)
+    toPricingProcessQuoteRow.bind(null, quote)
   );
 
   return { quote, processes };
@@ -158,37 +164,48 @@ function calculateBaseUnitCost(
   units: number,
   values: PricingQuoteValues
 ): number {
-  const brandedLabelAdditionalCents = units > values.brandedLabelsMinimumUnits
-    ? (units - values.brandedLabelsMinimumUnits) * values.brandedLabelsAdditionalCents
-    : 0;
+  const brandedLabelAdditionalCents =
+    units > values.brandedLabelsMinimumUnits
+      ? (units - values.brandedLabelsMinimumUnits) *
+        values.brandedLabelsAdditionalCents
+      : 0;
 
-  return Math.ceil(sum([
-    values.type.unitCents,
-    values.brandedLabelsMinimumCents / units,
-    brandedLabelAdditionalCents / units,
-    values.careLabel.unitCents
-  ]));
+  return Math.ceil(
+    sum([
+      values.type.unitCents,
+      values.brandedLabelsMinimumCents / units,
+      brandedLabelAdditionalCents / units,
+      values.careLabel.unitCents
+    ])
+  );
 }
 
-function calculateMaterialCents(
-  values: PricingQuoteValues
-): number {
+function calculateMaterialCents(values: PricingQuoteValues): number {
   const categoryCents = values.material.unitCents;
 
-  return Math.ceil(sum([
-    categoryCents * values.type.yield,
-    categoryCents * values.type.contrast
-  ]));
+  return Math.ceil(
+    sum([
+      categoryCents * values.type.yield,
+      categoryCents * values.type.contrast
+    ])
+  );
 }
 
 function calculateProcessCents(
   units: number,
   values: PricingQuoteValues
 ): number {
-  return Math.ceil(sum([
-    sum(map(values.processes, (process: PricingProcess): number => process.setupCents / units)),
-    sum(map(values.processes, 'unitCents'))
-  ]));
+  return Math.ceil(
+    sum([
+      sum(
+        map(
+          values.processes,
+          (process: PricingProcess): number => process.setupCents / units
+        )
+      ),
+      sum(map(values.processes, 'unitCents'))
+    ])
+  );
 }
 
 function calculateDevelopmentCosts(
@@ -196,10 +213,9 @@ function calculateDevelopmentCosts(
   values: PricingQuoteValues,
   materialCostCents: number
 ): number {
-  const sampleCents = Math.max(
-    values.sampleMinimumCents,
-    values.sample.unitCents
-  ) + materialCostCents;
+  const sampleCents =
+    Math.max(values.sampleMinimumCents, values.sample.unitCents) +
+    materialCostCents;
   const patternCents = values.type.patternMinimumCents;
   const developmentCents = sum([
     values.workingSessionCents,
@@ -230,8 +246,10 @@ export async function generateFromPayloadAndUser(
 
     const unitsNumber = Number(units);
 
-    const costInputs: PricingCostInputs[] = await PricingCostInputsDAO
-      .findByDesignId(designId, trx);
+    const costInputs: PricingCostInputs[] = await PricingCostInputsDAO.findByDesignId(
+      designId,
+      trx
+    );
 
     if (costInputs.length === 0) {
       throw new Error('No costing inputs associated with design ID');
@@ -245,16 +263,19 @@ export async function generateFromPayloadAndUser(
     const quote = await generatePricingQuote(quoteRequest, trx);
     quotes.push(quote);
 
-    await DesignEventsDAO.create({
-      actorId: userId,
-      bidId: null,
-      createdAt: new Date(),
-      designId,
-      id: uuid.v4(),
-      quoteId: quote.id,
-      targetId: null,
-      type: 'COMMIT_QUOTE'
-    }, trx);
+    await DesignEventsDAO.create(
+      {
+        actorId: userId,
+        bidId: null,
+        createdAt: new Date(),
+        designId,
+        id: uuid.v4(),
+        quoteId: quote.id,
+        targetId: null,
+        type: 'COMMIT_QUOTE'
+      },
+      trx
+    );
   }
 
   return quotes;

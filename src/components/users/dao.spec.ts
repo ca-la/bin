@@ -23,7 +23,9 @@ const USER_DATA_WITH_PHONE: UserIO = Object.assign({}, USER_DATA, {
 
 test('UsersDAO.create fails when email or phone is missing', (t: Test) => {
   return UsersDAO.create({ name: 'Q User', password: 'hunter2' } as any)
-    .then(() => { throw new Error("Shouldn't get here"); })
+    .then(() => {
+      throw new Error("Shouldn't get here");
+    })
     .catch((err: Error) => {
       t.ok(err instanceof InvalidDataError);
     });
@@ -31,7 +33,9 @@ test('UsersDAO.create fails when email or phone is missing', (t: Test) => {
 
 test('UsersDAO.create fails when password is missing', (t: Test) => {
   return UsersDAO.create({ name: 'Q User', email: 'fooz@example.com' } as any)
-    .then(() => { throw new Error("Shouldn't get here"); })
+    .then(() => {
+      throw new Error("Shouldn't get here");
+    })
     .catch((err: Error) => {
       t.ok(err instanceof InvalidDataError);
       t.equal(err.message, 'Missing required information');
@@ -41,7 +45,9 @@ test('UsersDAO.create fails when password is missing', (t: Test) => {
 test('UsersDAO.create fails if email already exists', (t: Test) => {
   return UsersDAO.create(USER_DATA)
     .then(() => UsersDAO.create(USER_DATA))
-    .then(() => { throw new Error("Shouldn't get here"); })
+    .then(() => {
+      throw new Error("Shouldn't get here");
+    })
     .catch((err: Error) => {
       t.ok(err instanceof InvalidDataError);
       t.equal(err.message, 'Email is already taken');
@@ -51,7 +57,9 @@ test('UsersDAO.create fails if email already exists', (t: Test) => {
 test('UsersDAO.create fails if phone already exists', (t: Test) => {
   return UsersDAO.create(USER_DATA_WITH_PHONE)
     .then(() => UsersDAO.create(USER_DATA_WITH_PHONE))
-    .then(() => { throw new Error("Shouldn't get here"); })
+    .then(() => {
+      throw new Error("Shouldn't get here");
+    })
     .catch((err: Error) => {
       t.ok(err instanceof InvalidDataError);
       t.equal(err.message, 'Phone number is already taken');
@@ -64,7 +72,9 @@ test('UsersDAO.create fails if email is invalid', (t: Test) => {
     name: 'Q User',
     password: 'hunter2'
   })
-    .then(() => { throw new Error("Shouldn't get here"); })
+    .then(() => {
+      throw new Error("Shouldn't get here");
+    })
     .catch((err: Error) => {
       t.ok(err instanceof InvalidDataError);
       t.equal(err.message, 'Invalid email');
@@ -78,7 +88,9 @@ test('UsersDAO.create fails if phone is invalid', (t: Test) => {
     password: 'hunter2',
     phone: '911'
   })
-    .then(() => { throw new Error("Shouldn't get here"); })
+    .then(() => {
+      throw new Error("Shouldn't get here");
+    })
     .catch((err: Error) => {
       t.ok(err instanceof InvalidDataError);
       t.equal(err.message, 'Invalid country calling code');
@@ -86,38 +98,36 @@ test('UsersDAO.create fails if phone is invalid', (t: Test) => {
 });
 
 test('UsersDAO.create returns a new user with email but no phone', (t: Test) => {
-  return UsersDAO.create(USER_DATA)
-    .then((user: User) => {
-      t.equal(user.name, 'Q User');
-      t.equal(user.email, 'user@example.com');
-      t.equal(user.id.length, 36);
-      t.equal(user.phone, null);
-      t.equal(user.isSmsPreregistration, false);
-    });
+  return UsersDAO.create(USER_DATA).then((user: User) => {
+    t.equal(user.name, 'Q User');
+    t.equal(user.email, 'user@example.com');
+    t.equal(user.id.length, 36);
+    t.equal(user.phone, null);
+    t.equal(user.isSmsPreregistration, false);
+  });
 });
 
 test('UsersDAO.create returns a new user with phone but no email', (t: Test) => {
-  return UsersDAO.create(USER_DATA_WITH_PHONE)
-    .then((user: User) => {
-      t.equal(user.name, 'Q User');
-      t.equal(user.id.length, 36);
-      t.equal(user.phone, '+14155809925');
-      t.equal(user.email, null);
-    });
+  return UsersDAO.create(USER_DATA_WITH_PHONE).then((user: User) => {
+    t.equal(user.name, 'Q User');
+    t.equal(user.id.length, 36);
+    t.equal(user.phone, '+14155809925');
+    t.equal(user.email, null);
+  });
 });
 
-test('UsersDAO.createSmsPreregistration allows creating SMS preregistration without password',
-(t: Test) => {
-  const sansPassword = Object.assign({}, USER_DATA_WITH_PHONE, { password: null });
+test('UsersDAO.createSmsPreregistration allows creating SMS preregistration without password', (t: Test) => {
+  const sansPassword = Object.assign({}, USER_DATA_WITH_PHONE, {
+    password: null
+  });
 
-  return UsersDAO.createSmsPreregistration(sansPassword)
-    .then((user: User) => {
-      t.equal(user.name, 'Q User');
-      t.equal(user.id.length, 36);
-      t.equal(user.phone, '+14155809925');
-      t.equal(user.email, null);
-      t.equal(user.isSmsPreregistration, true);
-    });
+  return UsersDAO.createSmsPreregistration(sansPassword).then((user: User) => {
+    t.equal(user.name, 'Q User');
+    t.equal(user.id.length, 36);
+    t.equal(user.phone, '+14155809925');
+    t.equal(user.email, null);
+    t.equal(user.isSmsPreregistration, true);
+  });
 });
 
 test('UsersDAO.findByEmail returns null if a user does not exist', (t: Test) => {
@@ -202,7 +212,9 @@ test('UsersDAO.update updates a user', async (t: Test) => {
 });
 
 test('UsersDAO.completeSmsPreregistration completes a user', (t: Test) => {
-  const sansPassword = Object.assign({}, USER_DATA_WITH_PHONE, { password: null });
+  const sansPassword = Object.assign({}, USER_DATA_WITH_PHONE, {
+    password: null
+  });
 
   return UsersDAO.createSmsPreregistration(sansPassword)
     .then((user: User) => {

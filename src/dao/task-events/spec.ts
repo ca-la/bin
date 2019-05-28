@@ -27,7 +27,11 @@ import { deleteById as deleteCollection } from '../../dao/collections';
 import { deleteById as deleteComment } from '../../components/comments/dao';
 
 import createUser = require('../../test-helpers/create-user');
-import { DetailsTask, DetailsTaskWithAssignees, TaskStatus } from '../../domain-objects/task-event';
+import {
+  DetailsTask,
+  DetailsTaskWithAssignees,
+  TaskStatus
+} from '../../domain-objects/task-event';
 import generateTask from '../../test-helpers/factories/task';
 import generateProductDesignStage from '../../test-helpers/factories/product-design-stage';
 import generateComment from '../../test-helpers/factories/comment';
@@ -84,12 +88,15 @@ test('Task Events DAO supports creation/retrieval', async (t: tape.Test) => {
   });
 
   const result = await findById(inserted.id);
-  if (!result) { throw Error('No Result'); }
+  if (!result) {
+    throw Error('No Result');
+  }
   const insertedWithDetails = getInsertedWithDetails(inserted, result);
   t.deepEqual(
     { ...result, createdAt: new Date(result.createdAt) },
     insertedWithDetails,
-    'Returned inserted task');
+    'Returned inserted task'
+  );
 });
 
 test('Task Events DAO returns correct number of comments', async (t: tape.Test) => {
@@ -104,14 +111,17 @@ test('Task Events DAO returns correct number of comments', async (t: tape.Test) 
   await createTaskComment({ commentId: comment3.id, taskId: inserted.id });
 
   const result = await findById(inserted.id);
-  if (!result) { throw Error('No Result'); }
+  if (!result) {
+    throw Error('No Result');
+  }
   const insertedWithDetails = getInsertedWithDetails(inserted, result);
 
   t.equal(result.commentCount, 3, 'task has three comments');
   t.deepEqual(
     { ...result, createdAt: new Date(result.createdAt) },
     insertedWithDetails,
-    'Returned inserted task');
+    'Returned inserted task'
+  );
 });
 
 test('Task Events DAO returns tasks even if they have deleted comments', async (t: tape.Test) => {
@@ -123,7 +133,9 @@ test('Task Events DAO returns tasks even if they have deleted comments', async (
   await createTaskComment({ commentId: comment.id, taskId: inserted.id });
 
   const result = await findById(inserted.id);
-  if (!result) { throw Error('No Result'); }
+  if (!result) {
+    throw Error('No Result');
+  }
   const insertedWithDetails = getInsertedWithDetails(inserted, result);
 
   t.equal(result.commentCount, 0, 'task has no comments');
@@ -131,7 +143,8 @@ test('Task Events DAO returns tasks even if they have deleted comments', async (
   t.deepEqual(
     { ...result, createdAt: new Date(result.createdAt) },
     insertedWithDetails,
-    'Returned inserted task');
+    'Returned inserted task'
+  );
 });
 
 test('Task Events DAO returns tasks inside deleted collections', async (t: tape.Test) => {
@@ -140,7 +153,11 @@ test('Task Events DAO returns tasks inside deleted collections', async (t: tape.
   const { collection } = await generateCollection({ createdBy: user.id });
   await deleteCollection(collection.id);
 
-  const design = await createDesign({ userId: user.id, productType: 'test', title: 'test' });
+  const design = await createDesign({
+    userId: user.id,
+    productType: 'test',
+    title: 'test'
+  });
   await addDesign(collection.id, design.id);
   const stage = await createDesignStage({
     description: '',
@@ -152,13 +169,16 @@ test('Task Events DAO returns tasks inside deleted collections', async (t: tape.
   await createDesignStageTask({ designStageId: stage.id, taskId: inserted.id });
 
   const result = await findById(inserted.id);
-  if (!result) { throw Error('No Result'); }
+  if (!result) {
+    throw Error('No Result');
+  }
   const insertedWithDetails = getInsertedWithDetails(inserted, result);
 
   t.deepEqual(
     { ...result, createdAt: new Date(result.createdAt) },
     insertedWithDetails,
-    'Returned inserted task');
+    'Returned inserted task'
+  );
 });
 
 test('Task Events DAO returns images from the canvases on the design', async (t: tape.Test) => {
@@ -172,7 +192,10 @@ test('Task Events DAO returns images from the canvases on the design', async (t:
     title: 'FooBar.png',
     userId: user.id
   });
-  const { component } = await generateComponent({ createdBy: user.id, sketchId: sketch.id });
+  const { component } = await generateComponent({
+    createdBy: user.id,
+    sketchId: sketch.id
+  });
   const { design } = await generateCanvas({
     componentId: component.id,
     createdBy: user.id
@@ -186,24 +209,53 @@ test('Task Events DAO returns images from the canvases on the design', async (t:
   const { task: inserted } = await generateTask({ designStageId: stage.id });
 
   const result = await findById(inserted.id);
-  if (!result) { throw Error('No Result'); }
-  if (!result.design.previewImageUrls) { throw Error('Task has no images!'); }
+  if (!result) {
+    throw Error('No Result');
+  }
+  if (!result.design.previewImageUrls) {
+    throw Error('Task has no images!');
+  }
 
-  t.equal(result.design.previewImageUrls.length, 1, 'task has one preview image');
-  t.ok(result.design.previewImageUrls[0].includes(sketch.id), 'the task image is the sketch');
+  t.equal(
+    result.design.previewImageUrls.length,
+    1,
+    'task has one preview image'
+  );
+  t.ok(
+    result.design.previewImageUrls[0].includes(sketch.id),
+    'the task image is the sketch'
+  );
 
   await deleteComponent(component.id);
 
   const secondResult = await findById(inserted.id);
-  if (!secondResult) { throw Error('No Result'); }
-  t.deepEqual(secondResult.design.previewImageUrls, [], 'task has an empty list of images');
+  if (!secondResult) {
+    throw Error('No Result');
+  }
+  t.deepEqual(
+    secondResult.design.previewImageUrls,
+    [],
+    'task has an empty list of images'
+  );
 });
 
 test('Task Events DAO supports retrieval by designId', async (t: tape.Test) => {
-  const { task: inserted, createdBy: user } = await generateTask({ ordering: 0 });
-  const { task: insertedTwo } = await generateTask({ createdBy: user.id, ordering: 1 });
-  const { task: insertedThree } = await generateTask({ createdBy: user.id, ordering: 2 });
-  const design = await createDesign({ userId: user.id, productType: 'test', title: 'test' });
+  const { task: inserted, createdBy: user } = await generateTask({
+    ordering: 0
+  });
+  const { task: insertedTwo } = await generateTask({
+    createdBy: user.id,
+    ordering: 1
+  });
+  const { task: insertedThree } = await generateTask({
+    createdBy: user.id,
+    ordering: 2
+  });
+  const design = await createDesign({
+    userId: user.id,
+    productType: 'test',
+    title: 'test'
+  });
   const stage = await createDesignStage({
     description: '',
     designId: design.id,
@@ -211,8 +263,14 @@ test('Task Events DAO supports retrieval by designId', async (t: tape.Test) => {
     title: 'test'
   });
   await createDesignStageTask({ designStageId: stage.id, taskId: inserted.id });
-  await createDesignStageTask({ designStageId: stage.id, taskId: insertedTwo.id });
-  await createDesignStageTask({ designStageId: stage.id, taskId: insertedThree.id });
+  await createDesignStageTask({
+    designStageId: stage.id,
+    taskId: insertedTwo.id
+  });
+  await createDesignStageTask({
+    designStageId: stage.id,
+    taskId: insertedThree.id
+  });
 
   const result = await findByDesignId(design.id);
   const insertedWithDetails = getInsertedWithDetails(inserted, result[0]);
@@ -237,9 +295,15 @@ test('Task Events DAO supports retrieval by designId', async (t: tape.Test) => {
 });
 
 test('Task Events DAO returns assignees for existing collaborators', async (t: tape.Test) => {
-  const { task: inserted, createdBy: user } = await generateTask({ ordering: 0 });
+  const { task: inserted, createdBy: user } = await generateTask({
+    ordering: 0
+  });
   const { collection } = await generateCollection({ createdBy: user.id });
-  const design = await createDesign({ userId: user.id, productType: 'test', title: 'test' });
+  const design = await createDesign({
+    userId: user.id,
+    productType: 'test',
+    title: 'test'
+  });
   await addDesign(collection.id, design.id);
   const stage = await createDesignStage({
     description: '',
@@ -247,21 +311,32 @@ test('Task Events DAO returns assignees for existing collaborators', async (t: t
     ordering: 0,
     title: 'test'
   });
-  const task = await createDesignStageTask({ designStageId: stage.id, taskId: inserted.id });
+  const task = await createDesignStageTask({
+    designStageId: stage.id,
+    taskId: inserted.id
+  });
 
   const { user: collab1User } = await createUser({ withSession: false });
   const { user: collab2User } = await createUser({ withSession: false });
 
-  const { collaborator: collab1 } = await generateCollaborator(
-    { collectionId: collection.id, userId: collab1User.id });
-  const { collaborator: collab2 } = await generateCollaborator(
-    { collectionId: collection.id, userId: collab2User.id });
+  const { collaborator: collab1 } = await generateCollaborator({
+    collectionId: collection.id,
+    userId: collab1User.id
+  });
+  const { collaborator: collab2 } = await generateCollaborator({
+    collectionId: collection.id,
+    userId: collab2User.id
+  });
   await CollaboratorTasksDAO.createAllByCollaboratorIdsAndTaskId(
-    [collab1.id, collab2.id], task.taskId);
+    [collab1.id, collab2.id],
+    task.taskId
+  );
   await deleteCollaborator(collab2.id);
 
   const result = await findByDesignId(design.id);
-  const insertedWithDetails = getInsertedWithDetails(inserted, result[0], [collab1]);
+  const insertedWithDetails = getInsertedWithDetails(inserted, result[0], [
+    collab1
+  ]);
 
   t.deepEqual(
     { ...result[0] },
@@ -274,7 +349,11 @@ test('Task Events DAO does not retrieve deleted design tasks', async (t: tape.Te
   const { task: inserted, createdBy: user } = await generateTask({});
   const { task: insertedTwo } = await generateTask({ createdBy: user.id });
   const { task: insertedThree } = await generateTask({ createdBy: user.id });
-  const design = await createDesign({ userId: user.id, productType: 'test', title: 'test' });
+  const design = await createDesign({
+    userId: user.id,
+    productType: 'test',
+    title: 'test'
+  });
   const stage = await createDesignStage({
     description: '',
     designId: design.id,
@@ -282,8 +361,14 @@ test('Task Events DAO does not retrieve deleted design tasks', async (t: tape.Te
     title: 'test'
   });
   await createDesignStageTask({ designStageId: stage.id, taskId: inserted.id });
-  await createDesignStageTask({ designStageId: stage.id, taskId: insertedTwo.id });
-  await createDesignStageTask({ designStageId: stage.id, taskId: insertedThree.id });
+  await createDesignStageTask({
+    designStageId: stage.id,
+    taskId: insertedTwo.id
+  });
+  await createDesignStageTask({
+    designStageId: stage.id,
+    taskId: insertedThree.id
+  });
   await deleteDesign(design.id);
 
   const result = await findByDesignId(design.id);
@@ -293,7 +378,11 @@ test('Task Events DAO does not retrieve deleted design tasks', async (t: tape.Te
 
 test('Task Events DAO supports retrieval by collectionId', async (t: tape.Test) => {
   const { task: inserted, createdBy: user } = await generateTask({});
-  const design = await createDesign({ userId: user.id, productType: 'test', title: 'test' });
+  const design = await createDesign({
+    userId: user.id,
+    productType: 'test',
+    title: 'test'
+  });
   const stage = await createDesignStage({
     description: '',
     designId: design.id,
@@ -317,7 +406,8 @@ test('Task Events DAO supports retrieval by collectionId', async (t: tape.Test) 
   t.deepEqual(
     { ...result[0], createdAt: new Date(result[0].createdAt) },
     insertedWithDetails,
-    'Returned inserted task');
+    'Returned inserted task'
+  );
 });
 
 test('Task Events DAO supports retrieval by userId on own design', async (t: tape.Test) => {
@@ -328,16 +418,25 @@ test('Task Events DAO supports retrieval by userId on own design', async (t: tap
     title: 'design',
     userId: user.id
   });
-  const { stage } = await generateProductDesignStage({ designId: design.id }, user.id);
-  const { task } = await generateTask({ createdBy: user.id, designStageId: stage.id });
+  const { stage } = await generateProductDesignStage(
+    { designId: design.id },
+    user.id
+  );
+  const { task } = await generateTask({
+    createdBy: user.id,
+    designStageId: stage.id
+  });
 
   const result = await findByUserId(user.id);
-  if (result.length === 0) { return t.fail('No tasks returned'); }
+  if (result.length === 0) {
+    return t.fail('No tasks returned');
+  }
   const insertedWithDetails = getInsertedWithDetails(task, result[0]);
   t.deepEqual(
     { ...result[0], createdAt: new Date(result[0].createdAt) },
     insertedWithDetails,
-    'Returned inserted task');
+    'Returned inserted task'
+  );
 });
 
 test('Task Events DAO supports retrieval by userId in the stage ordering', async (t: tape.Test) => {
@@ -383,7 +482,9 @@ test('Task Events DAO supports retrieval by userId in the stage ordering', async
   });
 
   const result = await findByUserId(user.id);
-  if (result.length === 0) { return t.fail('No tasks returned'); }
+  if (result.length === 0) {
+    return t.fail('No tasks returned');
+  }
 
   t.equal(result.length, 4);
   // stageTwo tasks should appear first.
@@ -417,8 +518,14 @@ test('Task Events DAO supports retrieval by userId on shared collection', async 
     userId: user2.id
   });
   await addDesign(collection.id, design.id);
-  const { stage } = await generateProductDesignStage({ designId: design.id }, user.id);
-  const { task: taskEvent } = await generateTask({ createdBy: user.id, designStageId: stage.id });
+  const { stage } = await generateProductDesignStage(
+    { designId: design.id },
+    user.id
+  );
+  const { task: taskEvent } = await generateTask({
+    createdBy: user.id,
+    designStageId: stage.id
+  });
   await createCollaborator({
     cancelledAt: null,
     collectionId: collection.id,
@@ -430,12 +537,15 @@ test('Task Events DAO supports retrieval by userId on shared collection', async 
   });
 
   const result = await findByUserId(user.id);
-  if (result.length === 0) { return t.fail('No tasks returned'); }
+  if (result.length === 0) {
+    return t.fail('No tasks returned');
+  }
   const insertedWithDetails = getInsertedWithDetails(taskEvent, result[0]);
   t.deepEqual(
     { ...result[0], createdAt: new Date(result[0].createdAt) },
     insertedWithDetails,
-    'Returned inserted task');
+    'Returned inserted task'
+  );
 });
 
 test('Task Events DAO supports retrieval by userId on shared collection', async (t: tape.Test) => {
@@ -456,8 +566,14 @@ test('Task Events DAO supports retrieval by userId on shared collection', async 
     userId: user2.id
   });
   await addDesign(collection.id, design.id);
-  const { stage } = await generateProductDesignStage({ designId: design.id }, user.id);
-  const { task: taskEvent } = await generateTask({ createdBy: user.id, designStageId: stage.id });
+  const { stage } = await generateProductDesignStage(
+    { designId: design.id },
+    user.id
+  );
+  const { task: taskEvent } = await generateTask({
+    createdBy: user.id,
+    designStageId: stage.id
+  });
   await createCollaborator({
     cancelledAt: null,
     collectionId: collection.id,
@@ -469,12 +585,15 @@ test('Task Events DAO supports retrieval by userId on shared collection', async 
   });
 
   const result = await findByUserId(user.id);
-  if (result.length === 0) { return t.fail('No tasks returned'); }
+  if (result.length === 0) {
+    return t.fail('No tasks returned');
+  }
   const insertedWithDetails = getInsertedWithDetails(taskEvent, result[0]);
   t.deepEqual(
     { ...result[0], createdAt: new Date(result[0].createdAt) },
     insertedWithDetails,
-    'Returned inserted task');
+    'Returned inserted task'
+  );
 });
 
 test('Task Events DAO supports retrieval by userId with assignee filter', async (t: tape.Test) => {
@@ -485,8 +604,14 @@ test('Task Events DAO supports retrieval by userId with assignee filter', async 
     title: 'design',
     userId: user2.id
   });
-  const { stage } = await generateProductDesignStage({ designId: design.id }, user.id);
-  const { task: taskEvent } = await generateTask({ createdBy: user.id, designStageId: stage.id });
+  const { stage } = await generateProductDesignStage(
+    { designId: design.id },
+    user.id
+  );
+  const { task: taskEvent } = await generateTask({
+    createdBy: user.id,
+    designStageId: stage.id
+  });
   await generateTask({ createdBy: user.id, designStageId: stage.id });
   const collaborator = await createCollaborator({
     cancelledAt: null,
@@ -498,16 +623,24 @@ test('Task Events DAO supports retrieval by userId with assignee filter', async 
     userId: user.id
   });
 
-  await CollaboratorTasksDAO.create({ taskId: taskEvent.id, collaboratorId: collaborator.id });
+  await CollaboratorTasksDAO.create({
+    taskId: taskEvent.id,
+    collaboratorId: collaborator.id
+  });
 
   const result = await findByUserId(user.id, { assignFilterUserId: user.id });
-  if (result.length === 0) { return t.fail('No tasks returned'); }
-  const insertedWithDetails = getInsertedWithDetails(taskEvent, result[0], [collaborator]);
+  if (result.length === 0) {
+    return t.fail('No tasks returned');
+  }
+  const insertedWithDetails = getInsertedWithDetails(taskEvent, result[0], [
+    collaborator
+  ]);
   t.equals(result.length, 1, 'Only one task is returned');
   t.deepEqual(
     { ...result[0], createdAt: new Date(result[0].createdAt) },
     insertedWithDetails,
-    'Returned task assigned to collaborator');
+    'Returned task assigned to collaborator'
+  );
 });
 
 test('Task Events DAO supports retrieval by userId with stage filter', async (t: tape.Test) => {
@@ -521,11 +654,16 @@ test('Task Events DAO supports retrieval by userId with stage filter', async (t:
   const stageTitle = 'test';
   const { stage } = await generateProductDesignStage(
     { designId: design.id, title: stageTitle },
-    user.id);
+    user.id
+  );
   const { stage: stage2 } = await generateProductDesignStage(
     { designId: design.id, title: 'not a real title' },
-    user.id);
-  const { task: taskEvent } = await generateTask({ createdBy: user.id, designStageId: stage.id });
+    user.id
+  );
+  const { task: taskEvent } = await generateTask({
+    createdBy: user.id,
+    designStageId: stage.id
+  });
   await generateTask({ createdBy: user.id, designStageId: stage2.id });
   await createCollaborator({
     cancelledAt: null,
@@ -538,13 +676,16 @@ test('Task Events DAO supports retrieval by userId with stage filter', async (t:
   });
 
   const result = await findByUserId(user.id, { stageFilter: stageTitle });
-  if (result.length === 0) { return t.fail('No tasks returned'); }
+  if (result.length === 0) {
+    return t.fail('No tasks returned');
+  }
   const insertedWithDetails = getInsertedWithDetails(taskEvent, result[0]);
   t.equals(result.length, 1, 'Returns a single task');
   t.deepEqual(
     { ...result[0], createdAt: new Date(result[0].createdAt) },
     insertedWithDetails,
-    'Returned inserted task');
+    'Returned inserted task'
+  );
 });
 
 test('Task Events DAO supports retrieval by stageId', async (t: tape.Test) => {
@@ -567,7 +708,8 @@ test('Task Events DAO supports retrieval by stageId', async (t: tape.Test) => {
   t.deepEqual(
     { ...result[0], createdAt: new Date(result[0].createdAt) },
     insertedWithDetails,
-    'Returned inserted task');
+    'Returned inserted task'
+  );
 });
 
 test('Task Events DAO supports creating a task with a long description', async (t: tape.Test) => {

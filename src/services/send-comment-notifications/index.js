@@ -5,10 +5,18 @@ const { requireValues } = require('../require-properties');
 const { enqueueSend } = require('../email');
 
 async function sendCommentNotifications({
-  comment, design, section, user, text
+  comment,
+  design,
+  section,
+  user,
+  text
 }) {
   requireValues({
-    comment, design, section, user, text
+    comment,
+    design,
+    section,
+    user,
+    text
   });
 
   const recipients = (await findDesignUsers(design.id))

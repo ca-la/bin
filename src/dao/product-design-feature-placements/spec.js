@@ -9,45 +9,44 @@ const ProductDesignSectionsDAO = require('../product-design-sections');
 const { test } = require('../../test-helpers/fresh');
 
 function getPlacementData(imageId, iteration = 0) {
-  return [{
-    x: iteration + 101,
-    y: iteration + 102,
-    imageId,
-    zIndex: iteration + 103,
-    rotation: iteration + 104,
-    height: iteration + 105,
-    productionHeightCm: 10,
-    productionWidthCm: 10,
-    width: iteration + 106,
-    type: 'IMAGE',
-    processName: 'Embroidery'
-  },
-  {
-    x: iteration + 201,
-    y: iteration + 202,
-    imageId,
-    zIndex: iteration + 203,
-    rotation: iteration + 204,
-    height: iteration + 205,
-    width: iteration + 206,
-    productionHeightCm: 10,
-    productionWidthCm: 10,
-    type: 'IMAGE',
-    processName: 'Embroidery'
-  }];
+  return [
+    {
+      x: iteration + 101,
+      y: iteration + 102,
+      imageId,
+      zIndex: iteration + 103,
+      rotation: iteration + 104,
+      height: iteration + 105,
+      productionHeightCm: 10,
+      productionWidthCm: 10,
+      width: iteration + 106,
+      type: 'IMAGE',
+      processName: 'Embroidery'
+    },
+    {
+      x: iteration + 201,
+      y: iteration + 202,
+      imageId,
+      zIndex: iteration + 203,
+      rotation: iteration + 204,
+      height: iteration + 205,
+      width: iteration + 206,
+      productionHeightCm: 10,
+      productionWidthCm: 10,
+      type: 'IMAGE',
+      processName: 'Embroidery'
+    }
+  ];
 }
 
-test('ProductDesignFeaturePlacementsDAO.replaceForSection creates pathData placements', (t) => {
+test('ProductDesignFeaturePlacementsDAO.replaceForSection creates pathData placements', t => {
   let sectionId;
 
   const pathPlacement = {
     x: 12,
     y: 13,
     pathData: {
-      points: [
-        { x: 1, y: 2 },
-        { x: 1000, y: 1200 }
-      ]
+      points: [{ x: 1, y: 2 }, { x: 1000, y: 1200 }]
     },
     zIndex: 14,
     rotation: 15,
@@ -64,23 +63,25 @@ test('ProductDesignFeaturePlacementsDAO.replaceForSection creates pathData place
         userId: user.id
       });
     })
-    .then((design) => {
+    .then(design => {
       return ProductDesignSectionsDAO.create({
         designId: design.id,
         templateName: 'okok',
         position: 0
       });
     })
-    .then((section) => {
+    .then(section => {
       sectionId = section.id;
-      return ProductDesignFeaturePlacementsDAO.replaceForSection(sectionId, [pathPlacement]);
+      return ProductDesignFeaturePlacementsDAO.replaceForSection(sectionId, [
+        pathPlacement
+      ]);
     })
-    .then((placements) => {
+    .then(placements => {
       t.deepEqual(placements[0].pathData, pathPlacement.pathData);
     });
 });
 
-test('ProductDesignFeaturePlacementsDAO.replaceForSection creates and updates placements', (t) => {
+test('ProductDesignFeaturePlacementsDAO.replaceForSection creates and updates placements', t => {
   let imageId;
   let sectionId;
 
@@ -112,14 +113,17 @@ test('ProductDesignFeaturePlacementsDAO.replaceForSection creates and updates pl
         position: 0
       });
     })
-    .then((section) => {
+    .then(section => {
       sectionId = section.id;
-      return ProductDesignFeaturePlacementsDAO.replaceForSection(sectionId, firstPlacementData);
+      return ProductDesignFeaturePlacementsDAO.replaceForSection(
+        sectionId,
+        firstPlacementData
+      );
     })
     .then(() => {
       return ProductDesignFeaturePlacementsDAO.findBySectionId(sectionId);
     })
-    .then((placements) => {
+    .then(placements => {
       t.equal(placements.length, 2);
       t.equal(placements[0].sectionId, sectionId);
       t.equal(placements[1].sectionId, sectionId);
@@ -132,12 +136,15 @@ test('ProductDesignFeaturePlacementsDAO.replaceForSection creates and updates pl
         firstPlacementData[1]
       );
 
-      return ProductDesignFeaturePlacementsDAO.replaceForSection(sectionId, secondPlacementData);
+      return ProductDesignFeaturePlacementsDAO.replaceForSection(
+        sectionId,
+        secondPlacementData
+      );
     })
     .then(() => {
       return ProductDesignFeaturePlacementsDAO.findBySectionId(sectionId);
     })
-    .then((placements) => {
+    .then(placements => {
       t.equal(placements.length, 2);
       t.equal(placements[0].sectionId, sectionId);
       t.equal(placements[1].sectionId, sectionId);

@@ -20,27 +20,37 @@ const ERROR_CODES = {
 };
 
 export async function create(signup: ApprovedSignup): Promise<ApprovedSignup> {
-  const rowData = dataAdapter.forInsertion(omit({
-    ...signup,
-    email: normalizeEmail(signup.email)
-  }, 'createdAt'));
+  const rowData = dataAdapter.forInsertion(
+    omit(
+      {
+        ...signup,
+        email: normalizeEmail(signup.email)
+      },
+      'createdAt'
+    )
+  );
 
   const created = await db(TABLE_NAME)
     .insert(rowData)
     .returning('*')
     .then((rows: ApprovedSignupRow[]) => first(rows))
     .catch(rethrow)
-    .catch(filterError(rethrow.ERRORS.UniqueViolation, (err: Error & { constraint: string }) => {
-      switch (err.constraint) {
-        case 'approved_signups_email_key':
-          throw new InvalidDataError(
-            'Email is already taken',
-            ERROR_CODES.emailTaken
-          );
-        default:
-          throw err;
-      }
-    }));
+    .catch(
+      filterError(
+        rethrow.ERRORS.UniqueViolation,
+        (err: Error & { constraint: string }) => {
+          switch (err.constraint) {
+            case 'approved_signups_email_key':
+              throw new InvalidDataError(
+                'Email is already taken',
+                ERROR_CODES.emailTaken
+              );
+            default:
+              throw err;
+          }
+        }
+      )
+    );
 
   return validate<ApprovedSignupRow, ApprovedSignup>(
     TABLE_NAME,
@@ -79,9 +89,11 @@ export async function findById(id: string): Promise<ApprovedSignup | null> {
     .where({ id })
     .then((rows: ApprovedSignupRow[]) => first(rows))
     .catch(rethrow)
-    .catch(filterError(rethrow.ERRORS.InvalidTextRepresentation, () => {
-      return null;
-    }));
+    .catch(
+      filterError(rethrow.ERRORS.InvalidTextRepresentation, () => {
+        return null;
+      })
+    );
 
   if (!signup) {
     return null;
@@ -95,7 +107,9 @@ export async function findById(id: string): Promise<ApprovedSignup | null> {
   );
 }
 
-export async function findByEmail(email: string): Promise<ApprovedSignup | null> {
+export async function findByEmail(
+  email: string
+): Promise<ApprovedSignup | null> {
   const signup: ApprovedSignupRow | undefined = await db(TABLE_NAME)
     .select('*')
     .where({ email: normalizeEmail(email) })

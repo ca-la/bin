@@ -7,9 +7,9 @@ import { sandbox, test } from '../../test-helpers/fresh';
 test('GET /templates returns templates', async (t: tape.Test) => {
   const { session } = await createUser();
 
-  sandbox().stub(TemplatesDAO, 'findAll').returns(Promise.resolve([
-    { id: 'template-123' }
-  ]));
+  sandbox()
+    .stub(TemplatesDAO, 'findAll')
+    .returns(Promise.resolve([{ id: 'template-123' }]));
 
   const [response, body] = await get('/templates', {
     headers: authHeader(session.id)

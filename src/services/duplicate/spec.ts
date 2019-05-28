@@ -26,14 +26,17 @@ test('findAndDuplicateDesign', async (t: tape.Test) => {
     userId: ogUser.id
   });
 
-  const duplicatedDesigns = await duplicateDesigns(
-    duplicatingUser.id,
-    [designOne.id, designTwo.id, designThree.id]
-  );
+  const duplicatedDesigns = await duplicateDesigns(duplicatingUser.id, [
+    designOne.id,
+    designTwo.id,
+    designThree.id
+  ]);
 
-  const sortedDupes = duplicatedDesigns.sort((a: Design, b: Design): number => {
-    return a.createdAt.getTime() - b.createdAt.getTime();
-  });
+  const sortedDupes = duplicatedDesigns.sort(
+    (a: Design, b: Design): number => {
+      return a.createdAt.getTime() - b.createdAt.getTime();
+    }
+  );
 
   t.equal(sortedDupes.length, 3, 'Returns three new designs for the user');
   const dupeOne = sortedDupes[0];
@@ -69,5 +72,4 @@ test('findAndDuplicateDesign', async (t: tape.Test) => {
     },
     'Returns the third design with the same information but with new associations'
   );
-
 });

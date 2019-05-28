@@ -16,16 +16,18 @@
     "no-unused-vars": [2, { "varsIgnorePattern": "^_.+$" }],
     "no-await-in-loop": 0,
     "comma-dangle": [2, "never"],
-    "operator-linebreak": [2, "after"],
+    "operator-linebreak": 0,
     "implicit-arrow-linebreak": 0,
     "no-console": 2,
-    "function-paren-newline": [2, "consistent"],
+    "function-paren-newline": 0,
     "no-restricted-syntax": [
       "error",
       "ForInStatement",
       "LabeledStatement",
       "WithStatement"
     ],
-    "eqeqeq": ["error", "always"]
+    "eqeqeq": ["error", "always"],
+    "arrow-parens": 0,
+    "object-curly-newline": 0
   }
 }

@@ -14,7 +14,7 @@ const { requireValues } = require('../require-properties');
 function filterError(errorType, handler) {
   requireValues({ errorType, handler });
 
-  return (err) => {
+  return err => {
     if (err instanceof errorType) {
       return handler(err);
     }

@@ -113,7 +113,9 @@ test(`DELETE ${API_PATH}/:annotationId deletes an Annotation`, async (t: Test) =
     x: 1,
     y: 1
   };
-  const deleteStub = sandbox().stub(AnnotationDAO, 'deleteById').resolves(data);
+  const deleteStub = sandbox()
+    .stub(AnnotationDAO, 'deleteById')
+    .resolves(data);
   const [response] = await del(`${API_PATH}/${annotationId}`, {
     headers: authHeader(session.id)
   });
@@ -138,22 +140,29 @@ test(`GET ${API_PATH}/?canvasId=:canvasId returns Annotations`, async (t: Test) 
   const { session, user } = await createUser();
   const canvasId = uuid.v4();
 
-  const data = [{
-    canvasId,
-    createdBy: user.id,
-    id: uuid.v4(),
-    x: 5,
-    y: 2
-  }, {
-    canvasId,
-    createdBy: user.id,
-    id: uuid.v4(),
-    x: 1,
-    y: 1
-  }];
+  const data = [
+    {
+      canvasId,
+      createdBy: user.id,
+      id: uuid.v4(),
+      x: 5,
+      y: 2
+    },
+    {
+      canvasId,
+      createdBy: user.id,
+      id: uuid.v4(),
+      x: 1,
+      y: 1
+    }
+  ];
 
-  sandbox().stub(AnnotationDAO, 'findAllByCanvasId').resolves(data);
-  sandbox().stub(AnnotationDAO, 'findAllWithCommentsByCanvasId').resolves([data[1]]);
+  sandbox()
+    .stub(AnnotationDAO, 'findAllByCanvasId')
+    .resolves(data);
+  sandbox()
+    .stub(AnnotationDAO, 'findAllWithCommentsByCanvasId')
+    .resolves([data[1]]);
 
   const [response, body] = await get(`${API_PATH}/?canvasId=${canvasId}`, {
     headers: authHeader(session.id)

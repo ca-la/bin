@@ -1,7 +1,4 @@
-import {
-  BaseNotification,
-  BaseNotificationRow
-} from './base';
+import { BaseNotification, BaseNotificationRow } from './base';
 import { NotificationType } from '../domain-object';
 
 type BaseRow = Omit<
@@ -12,7 +9,7 @@ type BaseRow = Omit<
   | 'task_id'
   | 'comment_id'
   | 'recipient_user_id'
-  >;
+>;
 export interface TaskCommentMentionNotificationRow extends BaseRow {
   collection_id: string | null;
   design_id: string;
@@ -30,7 +27,7 @@ type Base = Omit<
   | 'taskId'
   | 'commentId'
   | 'recipientUserId'
-  >;
+>;
 export interface TaskCommentMentionNotification extends Base {
   collectionId: string | null;
   designId: string;

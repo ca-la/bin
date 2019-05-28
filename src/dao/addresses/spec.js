@@ -23,7 +23,7 @@ const ADDRESS_DATA = Object.freeze({
   country: 'USA'
 });
 
-test('AddressesDAO.create creates a new address', async (t) => {
+test('AddressesDAO.create creates a new address', async t => {
   const user = await UsersDAO.create(USER_DATA);
 
   const expectedAddress = Object.assign({}, ADDRESS_DATA, {
@@ -36,7 +36,7 @@ test('AddressesDAO.create creates a new address', async (t) => {
   t.deepEqual(actualAddress, expectedAddress);
 });
 
-test('AddressesDAO.deleteById deletes an address', async (t) => {
+test('AddressesDAO.deleteById deletes an address', async t => {
   const user = await UsersDAO.create(USER_DATA);
 
   const data = Object.assign({}, ADDRESS_DATA, { userId: user.id });

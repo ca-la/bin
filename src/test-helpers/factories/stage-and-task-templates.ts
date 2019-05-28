@@ -5,9 +5,9 @@ import StageTemplate from '../../domain-objects/stage-template';
 import TaskTemplate from '../../domain-objects/task-template';
 
 export async function createTemplates(): Promise<{
-  stage1: StageTemplate,
-  stage2: StageTemplate,
-  tasks: TaskTemplate[]
+  stage1: StageTemplate;
+  stage2: StageTemplate;
+  tasks: TaskTemplate[];
 }> {
   const stage1 = await StageTemplatesDAO.create({
     description: 'Designey Stuff',

@@ -9,7 +9,9 @@ import { TaskAssigmentNotification } from '../../../notifications/models/task-as
 import { InviteCollaboratorNotification } from '../../../notifications/models/invite-collaborator';
 
 test('sendMessage supports sending a message', async (t: tape.Test) => {
-  const sendStub = sandbox().stub(SendMessageService, 'sendMessage').resolves({});
+  const sendStub = sandbox()
+    .stub(SendMessageService, 'sendMessage')
+    .resolves({});
   const createStub = sandbox()
     .stub(CreateNotificationService, 'createNotificationMessage')
     .resolves({
@@ -49,7 +51,9 @@ test('sendMessage supports sending a message', async (t: tape.Test) => {
 });
 
 test('sendMessage can early return if the notification is missing data', async (t: tape.Test) => {
-  const sendStub = sandbox().stub(SendMessageService, 'sendMessage').resolves({});
+  const sendStub = sandbox()
+    .stub(SendMessageService, 'sendMessage')
+    .resolves({});
   const createStub = sandbox()
     .stub(CreateNotificationService, 'createNotificationMessage')
     .resolves(null);
@@ -82,7 +86,9 @@ test('sendMessage can early return if the notification is missing data', async (
 });
 
 test('sendMessage can early return if the notification is missing data', async (t: tape.Test) => {
-  const sendStub = sandbox().stub(SendMessageService, 'sendMessage').resolves({});
+  const sendStub = sandbox()
+    .stub(SendMessageService, 'sendMessage')
+    .resolves({});
   const createStub = sandbox()
     .stub(CreateNotificationService, 'createNotificationMessage')
     .resolves({ foo: 'bar' });

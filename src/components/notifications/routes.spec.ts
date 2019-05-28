@@ -14,9 +14,10 @@ import * as NotificationAnnouncer from '../iris/messages/notification';
 
 const API_PATH = '/notifications';
 
-test(`GET ${API_PATH} returns a list of notificationMessages for the user`,
-async (t: tape.Test) => {
-  sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
+test(`GET ${API_PATH} returns a list of notificationMessages for the user`, async (t: tape.Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
   const userOne = await createUser();
   const userTwo = await createUser();
 
@@ -76,7 +77,11 @@ async (t: tape.Test) => {
     headers: API.authHeader(userOne.session.id)
   });
   t.equal(response2.status, 200);
-  t.deepEqual(body2, [], 'Returns the list of notifications for the user session');
+  t.deepEqual(
+    body2,
+    [],
+    'Returns the list of notifications for the user session'
+  );
 
   const [response3] = await API.get(`${API_PATH}?limit=-1&offset=7`, {
     headers: API.authHeader(userTwo.session.id)
@@ -92,12 +97,12 @@ async (t: tape.Test) => {
     [n1.id],
     'Returns the limit + offset list of notifications for the user session'
   );
-
 });
 
-test(`GET ${API_PATH}/unread returns the number of unread notifications`,
-async (t: tape.Test) => {
-  sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
+test(`GET ${API_PATH}/unread returns the number of unread notifications`, async (t: tape.Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
   const userOne = await createUser();
   const userTwo = await createUser();
 
@@ -139,9 +144,10 @@ async (t: tape.Test) => {
   );
 });
 
-test(`PATCH ${API_PATH}/read marks notifications as read`,
-async (t: tape.Test) => {
-  sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
+test(`PATCH ${API_PATH}/read marks notifications as read`, async (t: tape.Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
   const userOne = await createUser();
   const userTwo = await createUser();
 
@@ -182,28 +188,33 @@ async (t: tape.Test) => {
     'Returns the list of notifications for the user session'
   );
 
-  const [response2, body2] = await API.patch(`${API_PATH}/read?notificationIds=${n1.id},${n2.id}`, {
-    headers: API.authHeader(userTwo.session.id)
-  });
-  t.equal(response2.status, 200);
-  t.deepEqual(body2.ok, true, 'successfully marks notifications as read'
+  const [response2, body2] = await API.patch(
+    `${API_PATH}/read?notificationIds=${n1.id},${n2.id}`,
+    {
+      headers: API.authHeader(userTwo.session.id)
+    }
   );
+  t.equal(response2.status, 200);
+  t.deepEqual(body2.ok, true, 'successfully marks notifications as read');
 
   const [response3, body3] = await API.get(API_PATH, {
     headers: API.authHeader(userTwo.session.id)
   });
   t.equal(response3.status, 200);
   t.deepEqual(
-    body3.every((notification: NotificationMessage): boolean =>
-      notification.readAt !== null),
+    body3.every(
+      (notification: NotificationMessage): boolean =>
+        notification.readAt !== null
+    ),
     true,
     'readAt is set correctly'
   );
 });
 
-test(`PATCH ${API_PATH}/read returns 403 for wrong user`,
-async (t: tape.Test) => {
-  sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
+test(`PATCH ${API_PATH}/read returns 403 for wrong user`, async (t: tape.Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
   const userOne = await createUser();
   const userTwo = await createUser();
 
@@ -234,8 +245,11 @@ async (t: tape.Test) => {
     type: NotificationType.INVITE_COLLABORATOR
   });
 
-  const [response2] = await API.patch(`${API_PATH}/read?notificationIds=${n1.id},${n2.id}`, {
-    headers: API.authHeader(userTwo.session.id)
-  });
+  const [response2] = await API.patch(
+    `${API_PATH}/read?notificationIds=${n1.id},${n2.id}`,
+    {
+      headers: API.authHeader(userTwo.session.id)
+    }
+  );
   t.equal(response2.status, 403, 'Access is denied');
 });

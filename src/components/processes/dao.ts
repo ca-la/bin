@@ -12,9 +12,7 @@ import { ComponentType } from '../../domain-objects/component';
 
 const TABLE_NAME = 'processes';
 
-export async function create(
-  data: MaybeUnsaved<Process>
-): Promise<Process> {
+export async function create(data: MaybeUnsaved<Process>): Promise<Process> {
   const rowData = dataAdapter.forInsertion({
     id: uuid.v4(),
     ...data,
@@ -24,7 +22,9 @@ export async function create(
     .insert(rowData, '*')
     .then((rows: ProcessRow[]) => first<ProcessRow>(rows));
 
-  if (!created) { throw new Error('Failed to create a process!'); }
+  if (!created) {
+    throw new Error('Failed to create a process!');
+  }
 
   return validate<ProcessRow, Process>(
     TABLE_NAME,
@@ -41,7 +41,9 @@ export async function findById(id: string): Promise<Process | null> {
     .limit(1)
     .then((rows: ProcessRow[]) => first<ProcessRow>(rows));
 
-  if (!process) { return null; }
+  if (!process) {
+    return null;
+  }
 
   return validate<ProcessRow, Process>(
     TABLE_NAME,
@@ -72,7 +74,9 @@ export async function findAll(): Promise<Process[]> {
 /**
  * Returns every non-deleted process for a given component type, ordered by its ordering.
  */
-export async function findAllByComponentType(type: ComponentType): Promise<Process[]> {
+export async function findAllByComponentType(
+  type: ComponentType
+): Promise<Process[]> {
   const processes = await db(TABLE_NAME)
     .select('*')
     .where({ component_type: type, deleted_at: null })

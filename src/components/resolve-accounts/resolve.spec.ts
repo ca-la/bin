@@ -72,13 +72,15 @@ test('getAllAccountResolveData returns parsed resolve account data', async (t: t
     .resolves(fetchResponse);
 
   const id = uuid.v4();
-  const accounts = [{
-    createdAt: new Date(),
-    deletedAt: null,
-    id,
-    resolveCustomerId: uuid.v4(),
-    userId: uuid.v4()
-  }];
+  const accounts = [
+    {
+      createdAt: new Date(),
+      deletedAt: null,
+      id,
+      resolveCustomerId: uuid.v4(),
+      userId: uuid.v4()
+    }
+  ];
 
   const response = await getAllResolveAccountData(accounts);
   t.equal(fetchStub.calledOnce, true, 'calls to resolve api once');
@@ -94,21 +96,24 @@ test('getAllAccountResolveData returns parsed resolve account data', async (t: t
   const { user } = await createUser({ withSession: false });
   await generateInvoice({ userId: user.id, totalCents: unTrackedSpend });
   const id = uuid.v4();
-  const accounts = [{
-    createdAt: new Date(),
-    deletedAt: null,
-    id,
-    resolveCustomerId: uuid.v4(),
-    userId: user.id
-  }];
+  const accounts = [
+    {
+      createdAt: new Date(),
+      deletedAt: null,
+      id,
+      resolveCustomerId: uuid.v4(),
+      userId: user.id
+    }
+  ];
 
   const response = await getAllResolveAccountData(accounts);
   t.equal(fetchStub.calledOnce, true, 'calls to resolve api once');
   t.equal(response[0].id, id, 'the ids match');
   t.equal(
     response[0].availableAmountCents,
-    (resolveResponseData.amount_available * 100) - unTrackedSpend,
-    'the untracked spend is subtracted from the available amount');
+    resolveResponseData.amount_available * 100 - unTrackedSpend,
+    'the untracked spend is subtracted from the available amount'
+  );
 });
 
 test('getAllAccountResolveData returns parsed multiple accounts data', async (t: tape.Test) => {
@@ -118,19 +123,22 @@ test('getAllAccountResolveData returns parsed multiple accounts data', async (t:
 
   const id1 = uuid.v4();
   const id2 = uuid.v4();
-  const accounts = [{
-    createdAt: new Date(),
-    deletedAt: null,
-    id: id1,
-    resolveCustomerId: uuid.v4(),
-    userId: uuid.v4()
-  }, {
-    createdAt: new Date(),
-    deletedAt: null,
-    id: id2,
-    resolveCustomerId: uuid.v4(),
-    userId: uuid.v4()
-  }];
+  const accounts = [
+    {
+      createdAt: new Date(),
+      deletedAt: null,
+      id: id1,
+      resolveCustomerId: uuid.v4(),
+      userId: uuid.v4()
+    },
+    {
+      createdAt: new Date(),
+      deletedAt: null,
+      id: id2,
+      resolveCustomerId: uuid.v4(),
+      userId: uuid.v4()
+    }
+  ];
 
   const response = await getAllResolveAccountData(accounts);
   t.equal(fetchStub.calledTwice, true, 'calls to resolve api twice');
@@ -138,27 +146,29 @@ test('getAllAccountResolveData returns parsed multiple accounts data', async (t:
   t.equal(response[1].id, id2, 'the ids match');
 });
 
-test('getAllAccountResolveData returns parsed multiple accounts data leaving out errors',
-async (t: tape.Test) => {
+test('getAllAccountResolveData returns parsed multiple accounts data leaving out errors', async (t: tape.Test) => {
   sandbox()
     .stub(NodeFetch, 'default')
     .rejects();
 
   const id1 = uuid.v4();
   const id2 = uuid.v4();
-  const accounts = [{
-    createdAt: new Date(),
-    deletedAt: null,
-    id: id1,
-    resolveCustomerId: uuid.v4(),
-    userId: uuid.v4()
-  }, {
-    createdAt: new Date(),
-    deletedAt: null,
-    id: id2,
-    resolveCustomerId: uuid.v4(),
-    userId: uuid.v4()
-  }];
+  const accounts = [
+    {
+      createdAt: new Date(),
+      deletedAt: null,
+      id: id1,
+      resolveCustomerId: uuid.v4(),
+      userId: uuid.v4()
+    },
+    {
+      createdAt: new Date(),
+      deletedAt: null,
+      id: id2,
+      resolveCustomerId: uuid.v4(),
+      userId: uuid.v4()
+    }
+  ];
 
   try {
     await getAllResolveAccountData(accounts);

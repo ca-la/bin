@@ -31,13 +31,16 @@ test('Cohorts DAO supports creation and retrieval in a transaction', async (t: T
   const cohortId = uuid.v4();
 
   await db.transaction(async (trx: Knex.Transaction) => {
-    const created = await CohortsDAO.create({
-      createdBy: user.id,
-      description: 'A bunch of delightful designers',
-      id: cohortId,
-      slug: 'moma-demo-june-2020',
-      title: 'MoMA Demo Participants'
-    }, trx);
+    const created = await CohortsDAO.create(
+      {
+        createdBy: user.id,
+        description: 'A bunch of delightful designers',
+        id: cohortId,
+        slug: 'moma-demo-june-2020',
+        title: 'MoMA Demo Participants'
+      },
+      trx
+    );
 
     const found = await CohortsDAO.findById(cohortId, trx);
     const foundBySlug = await CohortsDAO.findBySlug('moma-demo-june-2020', trx);

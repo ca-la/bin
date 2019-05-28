@@ -12,7 +12,9 @@ const Session = require('../../domain-objects/session');
 const UnauthorizedRoleError = require('../../errors/unauthorized-role');
 const UsersDAO = require('../../components/users/dao');
 const { compare } = require('../../services/hash');
-const { ALLOWED_SESSION_ROLES } = require('../../components/users/domain-object');
+const {
+  ALLOWED_SESSION_ROLES
+} = require('../../components/users/domain-object');
 
 const instantiate = data => new Session(data);
 const maybeInstantiate = data => (data ? instantiate(data) : null);
@@ -29,8 +31,8 @@ function getSessionExpirationByRole(role) {
   let expiresAt = null;
 
   if (role === 'ADMIN') {
-    const now = (new Date()).getTime();
-    expiresAt = new Date(now + (3 * 24 * 60 * 60 * 1000));
+    const now = new Date().getTime();
+    expiresAt = new Date(now + 3 * 24 * 60 * 60 * 1000);
   }
   return expiresAt;
 }
@@ -44,24 +46,26 @@ function createForUser(user, additionalData = {}) {
 
   ensureCanAssumeRole(user, role);
 
-  return db('sessions').insert({
-    id: uuid.v4(),
-    user_id: user.id,
-    expires_at: additionalData.expiresAt,
-    role
-  }, '*')
+  return db('sessions')
+    .insert(
+      {
+        id: uuid.v4(),
+        user_id: user.id,
+        expires_at: additionalData.expiresAt,
+        role
+      },
+      '*'
+    )
     .then(first)
     .then(instantiate)
-    .then((session) => {
+    .then(session => {
       session.setUser(user);
       return session;
     });
 }
 
 function create(data) {
-  const {
-    email, password, role, expiresAt
-  } = data;
+  const { email, password, role, expiresAt } = data;
 
   if (!email || !password) {
     return Promise.reject(new InvalidDataError('Missing required information'));
@@ -70,7 +74,7 @@ function create(data) {
   let user;
 
   return UsersDAO.findByEmailWithPasswordHash(email)
-    .then((_user) => {
+    .then(_user => {
       user = _user;
 
       if (!user) {
@@ -78,12 +82,14 @@ function create(data) {
       }
 
       if (!user.passwordHash) {
-        throw new InvalidDataError('It looks like you donʼt have a password yet. To create one, use the Forgot Password link.');
+        throw new InvalidDataError(
+          'It looks like you donʼt have a password yet. To create one, use the Forgot Password link.'
+        );
       }
 
       return compare(password, user.passwordHash);
     })
-    .then((match) => {
+    .then(match => {
       if (!match) {
         throw new InvalidDataError(`Incorrect password for ${email}`);
       }
@@ -110,18 +116,15 @@ function create(data) {
  * resource and attach it to the Session domain object.
  */
 function findById(id, shouldAttachUser = false) {
-  const now = (new Date()).toISOString();
+  const now = new Date().toISOString();
 
   return db('sessions')
-    .whereRaw(
-      'id = ? and (expires_at is null or expires_at > ?)',
-      [id, now]
-    )
+    .whereRaw('id = ? and (expires_at is null or expires_at > ?)', [id, now])
     .then(first)
     .then(maybeInstantiate)
-    .then((session) => {
+    .then(session => {
       if (session && shouldAttachUser) {
-        return UsersDAO.findById(session.userId).then((user) => {
+        return UsersDAO.findById(session.userId).then(user => {
           session.setUser(user);
           return session;
         });
@@ -130,11 +133,13 @@ function findById(id, shouldAttachUser = false) {
       return session;
     })
     .catch(rethrow)
-    .catch(filterError(rethrow.ERRORS.InvalidTextRepresentation, () => {
-      // If an invalid UUID is passed in, Postgres will complain. Treat this as
-      // any other not-found case.
-      return null;
-    }));
+    .catch(
+      filterError(rethrow.ERRORS.InvalidTextRepresentation, () => {
+        // If an invalid UUID is passed in, Postgres will complain. Treat this as
+        // any other not-found case.
+        return null;
+      })
+    );
 }
 
 function deleteByUserId(userId) {

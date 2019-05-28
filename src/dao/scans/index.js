@@ -33,27 +33,29 @@ function create(data, trx) {
 
   return db(TABLE_NAME)
     .insert(rowData, '*')
-    .modify((query) => {
+    .modify(query => {
       if (trx) {
         query.transacting(trx);
       }
     })
     .catch(rethrow)
-    .catch(filterError(rethrow.ERRORS.NotNullViolation, (err) => {
-      if (err.column === 'type') {
-        throw new InvalidDataError('Scan type must be provided');
-      }
+    .catch(
+      filterError(rethrow.ERRORS.NotNullViolation, err => {
+        if (err.column === 'type') {
+          throw new InvalidDataError('Scan type must be provided');
+        }
 
-      throw err;
-    }))
+        throw err;
+      })
+    )
     .then(first)
     .then(instantiate);
 }
 
 /**
-  * @returns {Promise}
-  * @resolves {Object|null}
-  */
+ * @returns {Promise}
+ * @resolves {Object|null}
+ */
 function findById(id) {
   return db(TABLE_NAME)
     .where({ id, deleted_at: null })
@@ -64,9 +66,9 @@ function findById(id) {
 }
 
 /**
-  * @returns {Promise}
-  * @resolves {Array}
-  */
+ * @returns {Promise}
+ * @resolves {Array}
+ */
 function findByUserId(userId) {
   return db(TABLE_NAME)
     .where({ user_id: userId, deleted_at: null })
@@ -80,7 +82,8 @@ function findAll({ limit, offset }) {
     throw new Error('Limit and offset must be provided to find all scans');
   }
 
-  return db(TABLE_NAME).select('*')
+  return db(TABLE_NAME)
+    .select('*')
     .orderBy('created_at', 'desc')
     .limit(limit)
     .offset(offset)
@@ -92,7 +95,9 @@ async function findByFitPartner(userId, { limit, offset }) {
     throw new Error('Limit and offset must be provided to find all scans');
   }
 
-  const result = await db.raw(`
+  const result = await db
+    .raw(
+      `
 select s.*
   from scans as s
     inner join fit_partner_customers as customers
@@ -105,7 +110,9 @@ select s.*
   order by s.created_at desc
   limit ?
   offset ?;
-    `, [userId, limit, offset])
+    `,
+      [userId, limit, offset]
+    )
     .catch(rethrow);
 
   const { rows } = result;
@@ -118,12 +125,15 @@ function updateOneById(id, data) {
       id,
       deleted_at: null
     })
-    .update(compact({
-      is_complete: data.isComplete,
-      is_started: data.isStarted,
-      measurements: data.measurements,
-      user_id: data.userId
-    }), '*')
+    .update(
+      compact({
+        is_complete: data.isComplete,
+        is_started: data.isStarted,
+        measurements: data.measurements,
+        user_id: data.userId
+      }),
+      '*'
+    )
     .then(first)
     .then(instantiate);
 }
@@ -131,11 +141,14 @@ function updateOneById(id, data) {
 function deleteById(id) {
   return db(TABLE_NAME)
     .where({ id })
-    .update({
-      deleted_at: new Date()
-    }, '*')
+    .update(
+      {
+        deleted_at: new Date()
+      },
+      '*'
+    )
     .then(first)
-    .then((scan) => {
+    .then(scan => {
       if (!scan) {
         throw new Error(`Could not find scan ${id} to delete`);
       }

@@ -1,17 +1,20 @@
 import DataAdapter from '../../services/data-adapter';
 import { hasProperties } from '../../services/require-properties';
-import toDateOrNull, { toDateStringOrNull, toDateStringOrUndefined } from '../../services/to-date';
+import toDateOrNull, {
+  toDateStringOrNull,
+  toDateStringOrUndefined
+} from '../../services/to-date';
 
 export type Role = 'ADMIN' | 'FIT_PARTNER' | 'PARTNER' | 'USER';
 
-export const ROLES: {[id: string]: Role} = {
+export const ROLES: { [id: string]: Role } = {
   admin: 'ADMIN',
   fitPartner: 'FIT_PARTNER',
   partner: 'PARTNER',
   user: 'USER'
 };
 
-export const ALLOWED_SESSION_ROLES: {[id: string]: Role[]}  = {
+export const ALLOWED_SESSION_ROLES: { [id: string]: Role[] } = {
   [ROLES.admin]: [ROLES.user, ROLES.partner, ROLES.admin],
   [ROLES.user]: [ROLES.user],
   // Important: Partners cannot log in as a regular user!
@@ -74,8 +77,12 @@ export function partialDecode(data: Partial<User>): Partial<UserRow> {
     birthday: data.birthday,
     email: data.email,
     is_sms_preregistration: data.isSmsPreregistration,
-    last_accepted_designer_terms_at: toDateStringOrUndefined(data.lastAcceptedDesignerTermsAt),
-    last_accepted_partner_terms_at: toDateStringOrUndefined(data.lastAcceptedPartnerTermsAt),
+    last_accepted_designer_terms_at: toDateStringOrUndefined(
+      data.lastAcceptedDesignerTermsAt
+    ),
+    last_accepted_partner_terms_at: toDateStringOrUndefined(
+      data.lastAcceptedPartnerTermsAt
+    ),
     name: data.name,
     phone: data.phone,
     referral_code: data.referralCode,
@@ -90,8 +97,12 @@ export function passwordHashDecode(data: UserWithPasswordHash): UserRow {
     email: data.email,
     id: data.id,
     is_sms_preregistration: data.isSmsPreregistration,
-    last_accepted_designer_terms_at: toDateStringOrNull(data.lastAcceptedDesignerTermsAt),
-    last_accepted_partner_terms_at: toDateStringOrNull(data.lastAcceptedPartnerTermsAt),
+    last_accepted_designer_terms_at: toDateStringOrNull(
+      data.lastAcceptedDesignerTermsAt
+    ),
+    last_accepted_partner_terms_at: toDateStringOrNull(
+      data.lastAcceptedPartnerTermsAt
+    ),
     name: data.name,
     password_hash: data.passwordHash,
     phone: data.phone,
@@ -107,8 +118,12 @@ export function passwordHashEncode(row: UserRow): UserWithPasswordHash {
     email: row.email,
     id: row.id,
     isSmsPreregistration: row.is_sms_preregistration,
-    lastAcceptedDesignerTermsAt: toDateOrNull(row.last_accepted_designer_terms_at),
-    lastAcceptedPartnerTermsAt: toDateOrNull(row.last_accepted_partner_terms_at),
+    lastAcceptedDesignerTermsAt: toDateOrNull(
+      row.last_accepted_designer_terms_at
+    ),
+    lastAcceptedPartnerTermsAt: toDateOrNull(
+      row.last_accepted_partner_terms_at
+    ),
     name: row.name,
     passwordHash: row.password_hash,
     phone: row.phone,
@@ -124,8 +139,12 @@ export function encode(row: UserRow): User {
     email: row.email,
     id: row.id,
     isSmsPreregistration: row.is_sms_preregistration,
-    lastAcceptedDesignerTermsAt: toDateOrNull(row.last_accepted_designer_terms_at),
-    lastAcceptedPartnerTermsAt: toDateOrNull(row.last_accepted_partner_terms_at),
+    lastAcceptedDesignerTermsAt: toDateOrNull(
+      row.last_accepted_designer_terms_at
+    ),
+    lastAcceptedPartnerTermsAt: toDateOrNull(
+      row.last_accepted_partner_terms_at
+    ),
     name: row.name,
     phone: row.phone,
     referralCode: row.referral_code,
@@ -135,12 +154,15 @@ export function encode(row: UserRow): User {
 
 export const dataAdapter = new DataAdapter<UserRow, User>(encode);
 
-export const DANGEROUS_PASSWORD_HASH_DATA_ADAPTER = new DataAdapter<UserRow, UserWithPasswordHash>(
-  passwordHashEncode,
-  passwordHashDecode);
+export const DANGEROUS_PASSWORD_HASH_DATA_ADAPTER = new DataAdapter<
+  UserRow,
+  UserWithPasswordHash
+>(passwordHashEncode, passwordHashDecode);
 
-export const partialDataAdapter =
-  new DataAdapter<Partial<UserRow>, Partial<User>>(undefined, partialDecode);
+export const partialDataAdapter = new DataAdapter<
+  Partial<UserRow>,
+  Partial<User>
+>(undefined, partialDecode);
 
 export function isUserRow(row: object): row is UserRow {
   return hasProperties(
@@ -158,11 +180,5 @@ export function isUserRow(row: object): row is UserRow {
 }
 
 export function isUserIO(data: object): data is UserIO {
-  return hasProperties(
-    data,
-    'email',
-    'name',
-    'password',
-    'phone'
-  );
+  return hasProperties(data, 'email', 'name', 'password', 'phone');
 }

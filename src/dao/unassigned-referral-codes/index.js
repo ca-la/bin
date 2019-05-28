@@ -10,18 +10,25 @@ const db = require('../../services/db');
  * @resolves {String}
  */
 function get() {
-  return db.raw(`
+  return db
+    .raw(
+      `
 lock table unassigned_referral_codes in exclusive mode;
 delete from unassigned_referral_codes
   where code in (select code from unassigned_referral_codes limit 1)
   returning *;
-`)
-    .then((responses) => {
+`
+    )
+    .then(responses => {
       const { rows } = responses[1];
-      if (!rows) { throw new Error('No response received from delete query'); }
+      if (!rows) {
+        throw new Error('No response received from delete query');
+      }
 
       if (rows.length < 1) {
-        throw new Error('No more unused referral codes found! Create more in Shopify then add them to the database!');
+        throw new Error(
+          'No more unused referral codes found! Create more in Shopify then add them to the database!'
+        );
       }
 
       return rows[0].code;

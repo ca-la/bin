@@ -33,9 +33,11 @@ test('findAndDuplicateDesign', async (t: tape.Test) => {
     unitsToProduce: 123
   });
 
-  const duplicatedDesign = await db.transaction(async (trx: Knex.Transaction) => {
-    return findAndDuplicateDesign(design.id, duplicatingUser.id, trx);
-  });
+  const duplicatedDesign = await db.transaction(
+    async (trx: Knex.Transaction) => {
+      return findAndDuplicateDesign(design.id, duplicatingUser.id, trx);
+    }
+  );
 
   t.deepEqual(
     duplicatedDesign,
@@ -48,7 +50,9 @@ test('findAndDuplicateDesign', async (t: tape.Test) => {
     'Returns the same design but with a new id and created at timestamp'
   );
 
-  const duplicateVariants = await VariantsDAO.findByDesignId(duplicatedDesign.id);
+  const duplicateVariants = await VariantsDAO.findByDesignId(
+    duplicatedDesign.id
+  );
   t.equal(duplicateVariants.length, 1);
   const variantDupeOne = duplicateVariants[0];
   t.deepEqual(
@@ -62,11 +66,15 @@ test('findAndDuplicateDesign', async (t: tape.Test) => {
     'A variant duplicate was generated that is based off the original design variant'
   );
 
-  const duplicateCollaborators = await CollaboratorsDAO.findByDesign(duplicatedDesign.id);
+  const duplicateCollaborators = await CollaboratorsDAO.findByDesign(
+    duplicatedDesign.id
+  );
   t.equal(duplicateCollaborators.length, 1);
   t.equal(duplicateCollaborators[0].userId, duplicatingUser.id);
 
-  const stages = await ProductDesignStagesDAO.findAllByDesignId(duplicatedDesign.id);
+  const stages = await ProductDesignStagesDAO.findAllByDesignId(
+    duplicatedDesign.id
+  );
   t.equal(stages.length, 2);
   t.equal(stages[0].title, 'Stage 1');
   t.equal(stages[1].title, 'Stage 2');
@@ -75,7 +83,9 @@ test('findAndDuplicateDesign', async (t: tape.Test) => {
   t.equal(tasks.length, 1);
   t.equal(tasks[0].title, 'Task 1');
 
-  const duplicateCanvases = await CanvasesDAO.findAllByDesignId(duplicatedDesign.id);
+  const duplicateCanvases = await CanvasesDAO.findAllByDesignId(
+    duplicatedDesign.id
+  );
   t.equal(duplicateCanvases.length, 1, 'only has one duplicate canvas');
   const duplicateCanvas = duplicateCanvases[0];
   t.deepEqual(
@@ -90,7 +100,9 @@ test('findAndDuplicateDesign', async (t: tape.Test) => {
     'Has an associated canvas that is the same as the original but w/ new associations'
   );
 
-  const duplicateComponents = await ComponentsDAO.findAllByCanvasId(duplicateCanvas.id);
+  const duplicateComponents = await ComponentsDAO.findAllByCanvasId(
+    duplicateCanvas.id
+  );
   t.equal(duplicateComponents.length, 1, 'only has one duplicate component');
   t.deepEqual(
     duplicateComponents[0],

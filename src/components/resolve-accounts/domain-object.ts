@@ -40,12 +40,10 @@ export interface ResolveAccountRow {
 
 export const dataAdapter = new DataAdapter<ResolveAccountRow, ResolveAccount>();
 
-export function isResolveAccountRequest(row: object): row is ResolveAccountRequest {
-  return hasProperties(
-    row,
-    'resolveCustomerId',
-    'userId'
-  );
+export function isResolveAccountRequest(
+  row: object
+): row is ResolveAccountRequest {
+  return hasProperties(row, 'resolveCustomerId', 'userId');
 }
 
 export function isResolveAccountRow(row: object): row is ResolveAccountRow {

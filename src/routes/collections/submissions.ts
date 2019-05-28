@@ -1,7 +1,9 @@
 import * as Koa from 'koa';
 import * as uuid from 'node-uuid';
 import CollectionSubmissionStatus from '../../domain-objects/collection-submission-status';
-import CollectionService, { isCollectionService } from '../../domain-objects/collection-service';
+import CollectionService, {
+  isCollectionService
+} from '../../domain-objects/collection-service';
 import * as CollectionsDAO from '../../dao/collections';
 import * as CollectionServicesDAO from '../../dao/collection-services';
 import * as ProductDesignsDAO from '../../dao/product-designs';
@@ -19,8 +21,9 @@ export function* createSubmission(
 
   if (isCollectionService(body)) {
     const services: CollectionService = attachDefaults(body, userId);
-    const existingServices: CollectionService = yield CollectionServicesDAO
-      .findById(services.id);
+    const existingServices: CollectionService = yield CollectionServicesDAO.findById(
+      services.id
+    );
 
     if (existingServices) {
       yield CollectionServicesDAO.update(existingServices.id, services);
@@ -29,18 +32,20 @@ export function* createSubmission(
     }
 
     const designs = yield ProductDesignsDAO.findByCollectionId(collectionId);
-    yield Promise.all(designs.map((design: ProductDesign) => {
-      return DesignEventsDAO.create({
-        actorId: userId,
-        bidId: null,
-        createdAt: new Date(),
-        designId: design.id,
-        id: uuid.v4(),
-        quoteId: null,
-        targetId: null,
-        type: 'SUBMIT_DESIGN'
-      });
-    }));
+    yield Promise.all(
+      designs.map((design: ProductDesign) => {
+        return DesignEventsDAO.create({
+          actorId: userId,
+          bidId: null,
+          createdAt: new Date(),
+          designId: design.id,
+          id: uuid.v4(),
+          quoteId: null,
+          targetId: null,
+          type: 'SUBMIT_DESIGN'
+        });
+      })
+    );
     CreateNotifications.sendDesignerSubmitCollection(collectionId, userId);
     const submissionStatus = yield CollectionsDAO.getStatusById(collectionId);
     this.status = 201;

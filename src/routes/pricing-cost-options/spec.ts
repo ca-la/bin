@@ -7,25 +7,14 @@ test('GET /pricing-cost-options', async (t: Test) => {
   const { session } = await createUser({ role: 'ADMIN' });
   await generatePricingValues();
 
-  const [response, options] = await get(
-    '/pricing-cost-options',
-    { headers: authHeader(session.id) }
-  );
+  const [response, options] = await get('/pricing-cost-options', {
+    headers: authHeader(session.id)
+  });
 
   t.equal(response.status, 200);
   t.deepEqual(options, {
-    complexities: [
-      'BLANK',
-      'COMPLEX',
-      'MEDIUM',
-      'SIMPLE'
-    ],
-    materialCategories: [
-      'BASIC',
-      'LUXE',
-      'STANDARD',
-      'ULTRA_LUXE'
-    ],
+    complexities: ['BLANK', 'COMPLEX', 'MEDIUM', 'SIMPLE'],
+    materialCategories: ['BASIC', 'LUXE', 'STANDARD', 'ULTRA_LUXE'],
     processes: [
       { name: 'SCREEN_PRINTING', complexity: '1_COLOR' },
       { name: 'SCREEN_PRINTING', complexity: '2_COLORS' },
@@ -37,8 +26,6 @@ test('GET /pricing-cost-options', async (t: Test) => {
       { name: 'SCREEN_PRINTING', complexity: '8_COLORS' },
       { name: 'SCREEN_PRINTING', complexity: '9_COLORS' }
     ],
-    types: [
-      'TEESHIRT'
-    ]
+    types: ['TEESHIRT']
   });
 });

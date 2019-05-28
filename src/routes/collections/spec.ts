@@ -34,10 +34,10 @@ test('GET /collections/:id returns a created collection', async (t: tape.Test) =
       userId: uuid.v4()
     });
 
-  const [postResponse, postCollection] = await API.post(
-    '/collections',
-    { headers: API.authHeader(session.id), body }
-  );
+  const [postResponse, postCollection] = await API.post('/collections', {
+    headers: API.authHeader(session.id),
+    body
+  });
   const [getResponse, getCollection] = await API.get(
     `/collections/${postCollection.id}`,
     { headers: API.authHeader(session.id) }
@@ -69,10 +69,10 @@ test('POST /collections/ without a full object can create a collection', async (
       userId: uuid.v4()
     });
 
-  const [postResponse, postCollection] = await API.post(
-    '/collections',
-    { headers: API.authHeader(session.id), body }
-  );
+  const [postResponse, postCollection] = await API.post('/collections', {
+    headers: API.authHeader(session.id),
+    body
+  });
   const [getResponse, getCollection] = await API.get(
     `/collections/${postCollection.id}`,
     { headers: API.authHeader(session.id) }
@@ -106,10 +106,10 @@ test('PATCH /collections/:collectionId allows updates to a collection', async (t
       userId: uuid.v4()
     });
 
-  const postResponse = await API.post(
-    '/collections',
-    { headers: API.authHeader(session.id), body }
-  );
+  const postResponse = await API.post('/collections', {
+    headers: API.authHeader(session.id),
+    body
+  });
 
   const updateBody = {
     createdAt: postResponse[1].createdAt,
@@ -119,10 +119,10 @@ test('PATCH /collections/:collectionId allows updates to a collection', async (t
     id: postResponse[1].id,
     title: 'Droppin bombs'
   };
-  const updateResponse = await API.patch(
-    `/collections/${postResponse[1].id}`,
-    { body: updateBody, headers: API.authHeader(session.id) }
-  );
+  const updateResponse = await API.patch(`/collections/${postResponse[1].id}`, {
+    body: updateBody,
+    headers: API.authHeader(session.id)
+  });
   t.deepEqual(
     updateResponse[1],
     { ...postResponse[1], title: updateBody.title },
@@ -130,47 +130,48 @@ test('PATCH /collections/:collectionId allows updates to a collection', async (t
   );
 });
 
-test(
-  'PATCH /collections/:collectionId supports partial updates to a collection',
-  async (t: tape.Test) => {
-    const { session, user } = await createUser();
-    const body = {
-      createdAt: new Date(),
-      createdBy: user.id,
-      deletedAt: null,
-      description: 'Initial commit',
+test('PATCH /collections/:collectionId supports partial updates to a collection', async (t: tape.Test) => {
+  const { session, user } = await createUser();
+  const body = {
+    createdAt: new Date(),
+    createdBy: user.id,
+    deletedAt: null,
+    description: 'Initial commit',
+    id: uuid.v4(),
+    title: 'Drop 001/The Early Years'
+  };
+  sandbox()
+    .stub(CollaboratorsDAO, 'create')
+    .resolves({
+      collectionId: uuid.v4(),
       id: uuid.v4(),
-      title: 'Drop 001/The Early Years'
-    };
-    sandbox()
-      .stub(CollaboratorsDAO, 'create')
-      .resolves({
-        collectionId: uuid.v4(),
-        id: uuid.v4(),
-        role: 'EDIT',
-        userId: uuid.v4()
-      });
+      role: 'EDIT',
+      userId: uuid.v4()
+    });
 
-    const postResponse = await API.post(
-      '/collections',
-      { headers: API.authHeader(session.id), body }
-    );
+  const postResponse = await API.post('/collections', {
+    headers: API.authHeader(session.id),
+    body
+  });
 
-    const updateBody = {
-      description: 'Updated Description',
-      title: 'Updated Title'
-    };
-    const updateResponse = await API.patch(
-      `/collections/${postResponse[1].id}`,
-      { body: updateBody, headers: API.authHeader(session.id) }
-    );
-    t.deepEqual(
-      updateResponse[1],
-      { ...postResponse[1], description: updateBody.description, title: updateBody.title },
-      'PATCH updates the record'
-    );
-  }
-);
+  const updateBody = {
+    description: 'Updated Description',
+    title: 'Updated Title'
+  };
+  const updateResponse = await API.patch(`/collections/${postResponse[1].id}`, {
+    body: updateBody,
+    headers: API.authHeader(session.id)
+  });
+  t.deepEqual(
+    updateResponse[1],
+    {
+      ...postResponse[1],
+      description: updateBody.description,
+      title: updateBody.title
+    },
+    'PATCH updates the record'
+  );
+});
 
 test('GET /collections', async (t: tape.Test) => {
   const { user, session } = await createUser();
@@ -213,10 +214,9 @@ test('GET /collections', async (t: tape.Test) => {
     `/collections?userId=${user.id}`,
     { headers: API.authHeader(session.id) }
   );
-  const [forbiddenResponse] = await API.get(
-    '/collections',
-    { headers: API.authHeader(session.id) }
-  );
+  const [forbiddenResponse] = await API.get('/collections', {
+    headers: API.authHeader(session.id)
+  });
 
   t.equal(getResponse.status, 200, 'GET returns "200 OK" status');
   t.equal(
@@ -282,18 +282,17 @@ test('DELETE /collections/:id', async (t: tape.Test) => {
       userId: uuid.v4()
     });
 
-  const [postResponse, postCollection] = await API.post(
-    '/collections',
-    { headers: API.authHeader(session.id), body: mine }
-  );
-  const [otherResponse, otherCollection] = await API.post(
-    '/collections',
-    { headers: API.authHeader(session2.id), body: theirs }
-  );
-  const [deleteResponse] = await API.del(
-    `/collections/${postCollection.id}`,
-    { headers: API.authHeader(session.id) }
-  );
+  const [postResponse, postCollection] = await API.post('/collections', {
+    headers: API.authHeader(session.id),
+    body: mine
+  });
+  const [otherResponse, otherCollection] = await API.post('/collections', {
+    headers: API.authHeader(session2.id),
+    body: theirs
+  });
+  const [deleteResponse] = await API.del(`/collections/${postCollection.id}`, {
+    headers: API.authHeader(session.id)
+  });
   const [failureResponse] = await API.del(
     `/collections/${otherCollection.id}`,
     { headers: API.authHeader(session.id) }
@@ -321,45 +320,36 @@ test('PUT /collections/:id/designs/:id', async (t: tape.Test) => {
       userId: uuid.v4()
     });
 
-  const collection = await API.post(
-    '/collections',
-    {
-      body: {
-        createdAt: new Date(),
-        createdBy: user.id,
-        deletedAt: null,
-        description: 'Initial commit',
-        id: uuid.v4(),
-        title: 'Drop 001/The Early Years'
-      },
-      headers: API.authHeader(session.id)
-    }
-  );
-  const otherCollection = await API.post(
-    '/collections',
-    {
-      body: {
-        createdAt: new Date(),
-        createdBy: user.id,
-        deletedAt: null,
-        description: 'Ewoks',
-        id: uuid.v4(),
-        title: 'Drop 002/Empire Strikes Back'
-      },
-      headers: API.authHeader(session.id)
-    }
-  );
-  const design = await API.post(
-    '/product-designs',
-    {
-      body: {
-        description: 'Black, bold, beautiful',
-        title: 'Vader Mask',
-        userId: user.id
-      },
-      headers: API.authHeader(session.id)
-    }
-  );
+  const collection = await API.post('/collections', {
+    body: {
+      createdAt: new Date(),
+      createdBy: user.id,
+      deletedAt: null,
+      description: 'Initial commit',
+      id: uuid.v4(),
+      title: 'Drop 001/The Early Years'
+    },
+    headers: API.authHeader(session.id)
+  });
+  const otherCollection = await API.post('/collections', {
+    body: {
+      createdAt: new Date(),
+      createdBy: user.id,
+      deletedAt: null,
+      description: 'Ewoks',
+      id: uuid.v4(),
+      title: 'Drop 002/Empire Strikes Back'
+    },
+    headers: API.authHeader(session.id)
+  });
+  const design = await API.post('/product-designs', {
+    body: {
+      description: 'Black, bold, beautiful',
+      title: 'Vader Mask',
+      userId: user.id
+    },
+    headers: API.authHeader(session.id)
+  });
   const collectionDesigns = await API.put(
     `/collections/${collection[1].id}/designs/${design[1].id}`,
     { headers: API.authHeader(session.id) }
@@ -395,35 +385,28 @@ test('DELETE /collections/:id/designs/:id', async (t: tape.Test) => {
       userId: uuid.v4()
     });
 
-  const collection = await API.post(
-    '/collections',
-    {
-      body: {
-        createdAt: new Date(),
-        createdBy: user.id,
-        deletedAt: null,
-        description: 'Initial commit',
-        id: uuid.v4(),
-        title: 'Drop 001/The Early Years'
-      },
-      headers: API.authHeader(session.id)
-    }
-  );
-  const design = await API.post(
-    '/product-designs',
-    {
-      body: {
-        description: 'Black, bold, beautiful',
-        title: 'Vader Mask',
-        userId: user.id
-      },
-      headers: API.authHeader(session.id)
-    }
-  );
-  await API.put(
-    `/collections/${collection[1].id}/designs/${design[1].id}`,
-    { headers: API.authHeader(session.id) }
-  );
+  const collection = await API.post('/collections', {
+    body: {
+      createdAt: new Date(),
+      createdBy: user.id,
+      deletedAt: null,
+      description: 'Initial commit',
+      id: uuid.v4(),
+      title: 'Drop 001/The Early Years'
+    },
+    headers: API.authHeader(session.id)
+  });
+  const design = await API.post('/product-designs', {
+    body: {
+      description: 'Black, bold, beautiful',
+      title: 'Vader Mask',
+      userId: user.id
+    },
+    headers: API.authHeader(session.id)
+  });
+  await API.put(`/collections/${collection[1].id}/designs/${design[1].id}`, {
+    headers: API.authHeader(session.id)
+  });
 
   const failedResponse = await API.del(
     `/collections/${collection[1].id}/designs/${design[1].id}`,
@@ -436,11 +419,7 @@ test('DELETE /collections/:id/designs/:id', async (t: tape.Test) => {
     { headers: API.authHeader(session.id) }
   );
 
-  t.deepEqual(
-    collectionDesigns[1],
-    [],
-    'removes design from collection'
-  );
+  t.deepEqual(collectionDesigns[1], [], 'removes design from collection');
 });
 
 test('GET /collections/:id/designs', async (t: tape.Test) => {
@@ -470,15 +449,13 @@ test('GET /collections/:id/designs', async (t: tape.Test) => {
     userId: user.id
   });
 
-  await API.put(
-    `/collections/${collection.id}/designs/${design.id}`,
-    { headers: API.authHeader(session.id) }
-  );
+  await API.put(`/collections/${collection.id}/designs/${design.id}`, {
+    headers: API.authHeader(session.id)
+  });
 
-  const [, designs] = await API.get(
-    `/collections/${collection.id}/designs`,
-    { headers: API.authHeader(session.id) }
-  );
+  const [, designs] = await API.get(`/collections/${collection.id}/designs`, {
+    headers: API.authHeader(session.id)
+  });
 
   t.equal(designs.length, 1);
   t.deepEqual(
@@ -564,15 +541,27 @@ test('POST /collections/:id/submissions', async (t: tape.Test) => {
   sinon.assert.callCount(notificationStub, 1);
 
   t.deepEqual(response.status, 201, 'Successfully posts');
-  t.deepEqual(body, {
-    collectionId: collection.id,
-    isCosted: false,
-    isPaired: false,
-    isQuoted: false,
-    isSubmitted: true
-  }, 'Returns current submission status');
-  t.deepEqual(designEventOne[0].type, 'SUBMIT_DESIGN', 'Submitted the design to CALA');
-  t.deepEqual(designEventTwo[0].type, 'SUBMIT_DESIGN', 'Submitted the design to CALA');
+  t.deepEqual(
+    body,
+    {
+      collectionId: collection.id,
+      isCosted: false,
+      isPaired: false,
+      isQuoted: false,
+      isSubmitted: true
+    },
+    'Returns current submission status'
+  );
+  t.deepEqual(
+    designEventOne[0].type,
+    'SUBMIT_DESIGN',
+    'Submitted the design to CALA'
+  );
+  t.deepEqual(
+    designEventTwo[0].type,
+    'SUBMIT_DESIGN',
+    'Submitted the design to CALA'
+  );
 
   const collaboratorPost = await API.post(
     `/collections/${collection.id}/submissions`,
@@ -591,7 +580,11 @@ test('POST /collections/:id/submissions', async (t: tape.Test) => {
     }
   );
 
-  t.equal(collaboratorPost[0].status, 201, 'Collaborators can submit collections');
+  t.equal(
+    collaboratorPost[0].status,
+    201,
+    'Collaborators can submit collections'
+  );
 
   const designThree = await ProductDesignsDAO.create({
     description: 'Generic Shirt',
@@ -618,13 +611,17 @@ test('POST /collections/:id/submissions', async (t: tape.Test) => {
     }
   );
   t.deepEqual(secondSubmission[0].status, 201, 'Successfully posts');
-  t.deepEqual(secondSubmission[1], {
-    collectionId: collection.id,
-    isCosted: false,
-    isPaired: false,
-    isQuoted: false,
-    isSubmitted: true
-  }, 'Returns current submission status');
+  t.deepEqual(
+    secondSubmission[1],
+    {
+      collectionId: collection.id,
+      isCosted: false,
+      isPaired: false,
+      isQuoted: false,
+      isSubmitted: true
+    },
+    'Returns current submission status'
+  );
 });
 
 test('GET /collections/:collectionId/submissions', async (t: tape.Test) => {
@@ -666,10 +663,9 @@ test('GET /collections/:collectionId/submissions', async (t: tape.Test) => {
   await CollectionsDAO.moveDesign(collection.id, designOne.id);
   await CollectionsDAO.moveDesign(collection.id, designTwo.id);
 
-  const statusOne = await API.get(
-    `/collections/${collection.id}/submissions`,
-    { headers: API.authHeader(designer.session.id) }
-  );
+  const statusOne = await API.get(`/collections/${collection.id}/submissions`, {
+    headers: API.authHeader(designer.session.id)
+  });
 
   t.equal(statusOne[0].status, 200);
   t.deepEqual(statusOne[1], {
@@ -680,27 +676,23 @@ test('GET /collections/:collectionId/submissions', async (t: tape.Test) => {
     isSubmitted: false
   });
 
-  await API.post(
-    `/collections/${collection.id}/submissions`,
-    {
-      body: {
-        collectionId: collection.id,
-        createdAt: new Date(),
-        createdBy: designer.user.id,
-        deletedAt: null,
-        id: uuid.v4(),
-        needsDesignConsulting: true,
-        needsFulfillment: true,
-        needsPackaging: true
-      },
-      headers: API.authHeader(designer.session.id)
-    }
-  );
+  await API.post(`/collections/${collection.id}/submissions`, {
+    body: {
+      collectionId: collection.id,
+      createdAt: new Date(),
+      createdBy: designer.user.id,
+      deletedAt: null,
+      id: uuid.v4(),
+      needsDesignConsulting: true,
+      needsFulfillment: true,
+      needsPackaging: true
+    },
+    headers: API.authHeader(designer.session.id)
+  });
 
-  const statusTwo = await API.get(
-    `/collections/${collection.id}/submissions`,
-    { headers: API.authHeader(designer.session.id) }
-  );
+  const statusTwo = await API.get(`/collections/${collection.id}/submissions`, {
+    headers: API.authHeader(designer.session.id)
+  });
 
   t.equal(statusTwo[0].status, 200);
   t.deepEqual(statusTwo[1], {
@@ -717,20 +709,14 @@ test('GET /collections/:collectionId/submissions', async (t: tape.Test) => {
     type: 'COMMIT_COST_INPUTS'
   };
 
-  await API.post(
-    `/product-designs/${designOne.id}/events`,
-    {
-      body: [commitEvent],
-      headers: API.authHeader(admin.session.id)
-    }
-  );
-  await API.post(
-    `/product-designs/${designTwo.id}/events`,
-    {
-      body: [commitEvent],
-      headers: API.authHeader(admin.session.id)
-    }
-  );
+  await API.post(`/product-designs/${designOne.id}/events`, {
+    body: [commitEvent],
+    headers: API.authHeader(admin.session.id)
+  });
+  await API.post(`/product-designs/${designTwo.id}/events`, {
+    body: [commitEvent],
+    headers: API.authHeader(admin.session.id)
+  });
 
   const statusThree = await API.get(
     `/collections/${collection.id}/submissions`,
@@ -752,20 +738,14 @@ test('GET /collections/:collectionId/submissions', async (t: tape.Test) => {
     type: 'COMMIT_QUOTE'
   };
 
-  await API.post(
-    `/product-designs/${designOne.id}/events`,
-    {
-      body: [commitQuoteEvent],
-      headers: API.authHeader(designer.session.id)
-    }
-  );
-  await API.post(
-    `/product-designs/${designTwo.id}/events`,
-    {
-      body: [commitQuoteEvent],
-      headers: API.authHeader(designer.session.id)
-    }
-  );
+  await API.post(`/product-designs/${designOne.id}/events`, {
+    body: [commitQuoteEvent],
+    headers: API.authHeader(designer.session.id)
+  });
+  await API.post(`/product-designs/${designTwo.id}/events`, {
+    body: [commitQuoteEvent],
+    headers: API.authHeader(designer.session.id)
+  });
 
   const statusFour = await API.get(
     `/collections/${collection.id}/submissions`,
@@ -843,17 +823,28 @@ test('POST /collections/:collectionId/cost-inputs', async (t: tape.Test) => {
 
   const designOneEvents = await DesignEventsDAO.findByDesignId(designOne.id);
   t.equal(designOneEvents.length, 1, 'Creates one design event for the design');
-  t.equal(designOneEvents[0].type, 'COMMIT_COST_INPUTS', 'Creates a cost input event');
+  t.equal(
+    designOneEvents[0].type,
+    'COMMIT_COST_INPUTS',
+    'Creates a cost input event'
+  );
   const designTwoEvents = await DesignEventsDAO.findByDesignId(designTwo.id);
   t.equal(designTwoEvents.length, 1, 'Creates one design event for the design');
-  t.equal(designTwoEvents[0].type, 'COMMIT_COST_INPUTS', 'Creates a second cost input event');
+  t.equal(
+    designTwoEvents[0].type,
+    'COMMIT_COST_INPUTS',
+    'Creates a second cost input event'
+  );
 });
 
 test('POST /collections/:collectionId/partner-pairings', async (t: tape.Test) => {
   const designer = await createUser();
   const admin = await createUser({ role: 'ADMIN' });
 
-  const createDesignTasksSpy = sandbox().spy(DesignTasksService, 'createDesignTasks');
+  const createDesignTasksSpy = sandbox().spy(
+    DesignTasksService,
+    'createDesignTasks'
+  );
 
   const collectionOne = await CollectionsDAO.create({
     createdAt: new Date(),
@@ -892,34 +883,55 @@ test('POST /collections/:collectionId/partner-pairings', async (t: tape.Test) =>
 
   const designOneEvents = await DesignEventsDAO.findByDesignId(designOne.id);
   t.equal(designOneEvents.length, 1, 'Creates one design event for the design');
-  t.equal(designOneEvents[0].type, 'COMMIT_PARTNER_PAIRING', 'Creates a partner pairing event');
+  t.equal(
+    designOneEvents[0].type,
+    'COMMIT_PARTNER_PAIRING',
+    'Creates a partner pairing event'
+  );
   const designTwoEvents = await DesignEventsDAO.findByDesignId(designTwo.id);
   t.equal(designTwoEvents.length, 1, 'Creates one design event for the design');
-  t.equal(designTwoEvents[0].type, 'COMMIT_PARTNER_PAIRING', 'Creates a partner pairing event');
+  t.equal(
+    designTwoEvents[0].type,
+    'COMMIT_PARTNER_PAIRING',
+    'Creates a partner pairing event'
+  );
 
-  t.assert(createDesignTasksSpy.calledTwice, 'Design tasks are generated for each design');
+  t.assert(
+    createDesignTasksSpy.calledTwice,
+    'Design tasks are generated for each design'
+  );
 });
 
-test('GET /collections?isSubmitted=true&isCosted=false returns collections with uncosted designs',
-async (t: tape.Test) => {
+test('GET /collections?isSubmitted=true&isCosted=false returns collections with uncosted designs', async (t: tape.Test) => {
   const { session: sessionAdmin } = await createUser({ role: 'ADMIN' });
   const { session: sessionUser } = await createUser();
 
   const { collections } = stubFindWithUncostedDesigns();
-  const [responseOk, bodyOk] = await API.get('/collections?isSubmitted=true&isCosted=false', {
-    headers: API.authHeader(sessionAdmin.id)
-  });
+  const [responseOk, bodyOk] = await API.get(
+    '/collections?isSubmitted=true&isCosted=false',
+    {
+      headers: API.authHeader(sessionAdmin.id)
+    }
+  );
 
   t.equal(responseOk.status, 200, 'GET returns "200 OK" status');
   t.equal(bodyOk.length, 2, '2 collections are returned');
-  const newTimeBody = bodyOk.map((el: Collection) =>
-    ({ ...el, createdAt: new Date(el.createdAt) }));
+  const newTimeBody = bodyOk.map((el: Collection) => ({
+    ...el,
+    createdAt: new Date(el.createdAt)
+  }));
   t.deepEqual(newTimeBody, collections, 'collections match stub');
 
-  const [responseBad] = await
-    API.get('/collections?isSubmitted=false&isCosted=false', {
+  const [responseBad] = await API.get(
+    '/collections?isSubmitted=false&isCosted=false',
+    {
       headers: API.authHeader(sessionUser.id)
-    });
+    }
+  );
 
-  t.equal(responseBad.status, 403, 'GET returns "403 Permission Denied" status');
+  t.equal(
+    responseBad.status,
+    403,
+    'GET returns "403 Permission Denied" status'
+  );
 });

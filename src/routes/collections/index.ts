@@ -17,10 +17,16 @@ import requireAdmin = require('../../middleware/require-admin');
 
 import * as CollectionsDAO from '../../dao/collections';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
-import Collection, { isCollection, isPartialCollection } from '../../domain-objects/collection';
+import Collection, {
+  isCollection,
+  isPartialCollection
+} from '../../domain-objects/collection';
 import { createSubmission, getSubmissionStatus } from './submissions';
 import { deleteDesign, getCollectionDesigns, putDesign } from './designs';
-import { getCollectionPermissions, Permissions } from '../../services/get-permissions';
+import {
+  getCollectionPermissions,
+  Permissions
+} from '../../services/get-permissions';
 import { commitCostInputs, createPartnerPairing } from './admin';
 
 const router = new Router();
@@ -37,11 +43,15 @@ function* createCollection(
   const data = { ...body, deletedAt: null, createdBy: userId };
 
   if (data && isCollection(data)) {
-    const collection = yield CollectionsDAO
-      .create(data)
-      .catch(filterError(InvalidDataError, (err: InvalidDataError) => this.throw(400, err)));
+    const collection = yield CollectionsDAO.create(data).catch(
+      filterError(InvalidDataError, (err: InvalidDataError) =>
+        this.throw(400, err)
+      )
+    );
 
-    if (!CALA_OPS_USER_ID) { throw new Error('Cala Ops user not set!'); }
+    if (!CALA_OPS_USER_ID) {
+      throw new Error('Cala Ops user not set!');
+    }
 
     yield CollaboratorsDAO.create({
       cancelledAt: null,
@@ -61,7 +71,11 @@ function* createCollection(
       userEmail: null,
       userId: CALA_OPS_USER_ID
     });
-    const permissions = yield getCollectionPermissions(collection, role, userId);
+    const permissions = yield getCollectionPermissions(
+      collection,
+      role,
+      userId
+    );
 
     this.body = { ...collection, permissions };
     this.status = 201;
@@ -76,23 +90,32 @@ function* getList(
   const { userId, isCosted, isSubmitted } = this.query;
   const { role, userId: currentUserId } = this.state;
 
-  const userIdToQuery = role === 'ADMIN'
-    ? userId
-    : currentUserId === userId
-      ? currentUserId
-      : null;
+  const userIdToQuery =
+    role === 'ADMIN' ? userId : currentUserId === userId ? currentUserId : null;
 
   if (userIdToQuery) {
-    const collections = yield CollectionsDAO.findByCollaboratorAndUserId(userIdToQuery);
-    const collectionsWithPermissions = yield Promise.all(collections.map(
-      async (collection: Collection): Promise<CollectionWithPermissions> => {
-        const permissions = await getCollectionPermissions(collection, role, userIdToQuery);
-        return { ...collection, permissions };
-      }
-    ));
+    const collections = yield CollectionsDAO.findByCollaboratorAndUserId(
+      userIdToQuery
+    );
+    const collectionsWithPermissions = yield Promise.all(
+      collections.map(
+        async (collection: Collection): Promise<CollectionWithPermissions> => {
+          const permissions = await getCollectionPermissions(
+            collection,
+            role,
+            userIdToQuery
+          );
+          return { ...collection, permissions };
+        }
+      )
+    );
     this.body = collectionsWithPermissions;
     this.status = 200;
-  } else if (role === 'ADMIN' && isCosted === 'false' && isSubmitted === 'true') {
+  } else if (
+    role === 'ADMIN' &&
+    isCosted === 'false' &&
+    isSubmitted === 'true'
+  ) {
     this.body = yield CollectionsDAO.findWithUncostedDesigns();
     this.status = 200;
   } else {
@@ -100,7 +123,9 @@ function* getList(
   }
 }
 
-function* deleteCollection(this: Koa.Application.Context): AsyncIterableIterator<void> {
+function* deleteCollection(
+  this: Koa.Application.Context
+): AsyncIterableIterator<void> {
   const { collectionId } = this.params;
   const targetCollection = yield CollectionsDAO.findById(collectionId);
   canAccessUserResource.call(this, targetCollection.createdBy);
@@ -117,7 +142,11 @@ function* getCollection(
 
   if (collectionId) {
     const collection = yield CollectionsDAO.findById(collectionId);
-    const permissions = yield getCollectionPermissions(collection, role, userId);
+    const permissions = yield getCollectionPermissions(
+      collection,
+      role,
+      userId
+    );
     this.body = { ...collection, permissions };
     this.status = 200;
   } else {
@@ -125,16 +154,24 @@ function* getCollection(
   }
 }
 
-function* updateCollection(this: Koa.Application.Context): AsyncIterableIterator<Collection> {
+function* updateCollection(
+  this: Koa.Application.Context
+): AsyncIterableIterator<Collection> {
   const { collectionId } = this.params;
   const { body } = this.request;
   const { role, userId } = this.state;
 
   if (body && isPartialCollection(body)) {
-    const collection = yield CollectionsDAO
-      .update(collectionId, body)
-      .catch(filterError(InvalidDataError, (err: InvalidDataError) => this.throw(400, err)));
-    const permissions = yield getCollectionPermissions(collection, role, userId);
+    const collection = yield CollectionsDAO.update(collectionId, body).catch(
+      filterError(InvalidDataError, (err: InvalidDataError) =>
+        this.throw(400, err)
+      )
+    );
+    const permissions = yield getCollectionPermissions(
+      collection,
+      role,
+      userId
+    );
 
     this.body = { ...collection, permissions };
     this.status = 200;

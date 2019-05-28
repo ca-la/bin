@@ -6,49 +6,60 @@ import * as db from '../services/db';
 import { log } from '../services/logger';
 import { green, red, reset, yellow } from '../services/colors';
 
-import StageTemplate, { dataAdapter as stageDataAdapter } from '../domain-objects/stage-template';
-import TaskTemplate, { dataAdapter as taskDataAdapter } from '../domain-objects/task-template';
+import StageTemplate, {
+  dataAdapter as stageDataAdapter
+} from '../domain-objects/stage-template';
+import TaskTemplate, {
+  dataAdapter as taskDataAdapter
+} from '../domain-objects/task-template';
 
 /*tslint:disable:max-line-length*/
 const stages: StageTemplate[] = [
   {
-    description: 'Creation is the first phase of every project. Add as much detail as you can in the form of references, sketches, annotations, and measurements about your design, materials, and artwork.',
+    description:
+      'Creation is the first phase of every project. Add as much detail as you can in the form of references, sketches, annotations, and measurements about your design, materials, and artwork.',
     id: uuid.v4(),
     ordering: 0,
     title: 'Creation'
   },
   {
-    description: 'The Specification phase is where things get technical. During this phase you finalize the technical details–measurements, materials, and process–of your design.',
+    description:
+      'The Specification phase is where things get technical. During this phase you finalize the technical details–measurements, materials, and process–of your design.',
     id: uuid.v4(),
     ordering: 1,
     title: 'Specification'
   },
   {
-    description: 'Sourcing is where things start to get fun. Partners will ship you physical material options for approval based on your material, and artwork specifications.',
+    description:
+      'Sourcing is where things start to get fun. Partners will ship you physical material options for approval based on your material, and artwork specifications.',
     id: uuid.v4(),
     ordering: 2,
     title: 'Sourcing'
   },
   {
-    description: 'The Sampling phase is where your design comes to life. Partners take all your specifications and approvals from previous phases and turn it into a physical sample for you to approve.',
+    description:
+      'The Sampling phase is where your design comes to life. Partners take all your specifications and approvals from previous phases and turn it into a physical sample for you to approve.',
     id: uuid.v4(),
     ordering: 3,
     title: 'Sampling'
   },
   {
-    description: 'Pre-production comes after final approval of the sample. This preparation phase ensures production is smooth and without delay.',
+    description:
+      'Pre-production comes after final approval of the sample. This preparation phase ensures production is smooth and without delay.',
     id: uuid.v4(),
     ordering: 4,
     title: 'Pre-Production'
   },
   {
-    description: 'The Production phase. During this phase your full order is produced, quality checked and prepared for shipment.',
+    description:
+      'The Production phase. During this phase your full order is produced, quality checked and prepared for shipment.',
     id: uuid.v4(),
     ordering: 5,
     title: 'Production'
   },
   {
-    description: 'Fulfillment is the final phase. Your products are shipped either directly to you or to a fulfillment partner who will warehouse, pack and ship orders to your customers directly.',
+    description:
+      'Fulfillment is the final phase. Your products are shipped either directly to you or to a fulfillment partner who will warehouse, pack and ship orders to your customers directly.',
     id: uuid.v4(),
     ordering: 6,
     title: 'Fulfillment'
@@ -58,7 +69,7 @@ const stages: StageTemplate[] = [
 const tasks: TaskTemplate[] = [
   {
     assigneeRole: 'DESIGNER',
-    description: 'It\'s OK if this is a rough idea',
+    description: "It's OK if this is a rough idea",
     designPhase: 'POST_CREATION',
     id: uuid.v4(),
     ordering: 0,
@@ -67,7 +78,8 @@ const tasks: TaskTemplate[] = [
   },
   {
     assigneeRole: 'DESIGNER',
-    description: 'Let us know what you\'re thinking for style, fit, fabric, and trim details',
+    description:
+      "Let us know what you're thinking for style, fit, fabric, and trim details",
     designPhase: 'POST_CREATION',
     id: uuid.v4(),
     ordering: 1,
@@ -76,7 +88,8 @@ const tasks: TaskTemplate[] = [
   },
   {
     assigneeRole: 'DESIGNER',
-    description: 'If you have specific fabric & trim preferences, let us know (type, weight, content, color, print, or wash)',
+    description:
+      'If you have specific fabric & trim preferences, let us know (type, weight, content, color, print, or wash)',
     designPhase: 'POST_CREATION',
     id: uuid.v4(),
     ordering: 2,
@@ -85,7 +98,8 @@ const tasks: TaskTemplate[] = [
   },
   {
     assigneeRole: 'DESIGNER',
-    description: 'Send over your references for fit, fabric, color, wash, etc. ',
+    description:
+      'Send over your references for fit, fabric, color, wash, etc. ',
     designPhase: 'POST_APPROVAL',
     id: uuid.v4(),
     ordering: 2,
@@ -130,7 +144,8 @@ const tasks: TaskTemplate[] = [
   },
   {
     assigneeRole: 'PARTNER',
-    description: 'Capture and upload the front, back, and details on dress form or mannequin',
+    description:
+      'Capture and upload the front, back, and details on dress form or mannequin',
     designPhase: 'POST_APPROVAL',
     id: uuid.v4(),
     ordering: 2,
@@ -157,7 +172,8 @@ const tasks: TaskTemplate[] = [
   },
   {
     assigneeRole: 'DESIGNER',
-    description: 'Tell us how the sample fits. Request changes or approve this sample.',
+    description:
+      'Tell us how the sample fits. Request changes or approve this sample.',
     designPhase: 'POST_APPROVAL',
     id: uuid.v4(),
     ordering: 5,
@@ -166,25 +182,28 @@ const tasks: TaskTemplate[] = [
   },
   {
     assigneeRole: 'DESIGNER',
-    description: 'Are the materials what you were expecting? Request changes or approve this sample',
+    description:
+      'Are the materials what you were expecting? Request changes or approve this sample',
     designPhase: 'POST_APPROVAL',
     id: uuid.v4(),
     ordering: 6,
     stageTemplateId: stages[3].id,
-    title: 'Approve sample\'s materials'
+    title: "Approve sample's materials"
   },
   {
     assigneeRole: 'DESIGNER',
-    description: 'Is the art placed correctly? Does anything look off? Request changes or approve this sample.',
+    description:
+      'Is the art placed correctly? Does anything look off? Request changes or approve this sample.',
     designPhase: 'POST_APPROVAL',
     id: uuid.v4(),
     ordering: 7,
     stageTemplateId: stages[3].id,
-    title: 'Approve sample\'s artwork'
+    title: "Approve sample's artwork"
   },
   {
     assigneeRole: 'PARTNER',
-    description: 'Make sure you understand all specifications and quantities required for production completion',
+    description:
+      'Make sure you understand all specifications and quantities required for production completion',
     designPhase: 'POST_APPROVAL',
     id: uuid.v4(),
     ordering: 9,
@@ -193,7 +212,8 @@ const tasks: TaskTemplate[] = [
   },
   {
     assigneeRole: 'PARTNER',
-    description: 'Tell us how much a fully packed product weighs, so we can calculate shipping',
+    description:
+      'Tell us how much a fully packed product weighs, so we can calculate shipping',
     designPhase: 'POST_APPROVAL',
     id: uuid.v4(),
     ordering: 0,
@@ -211,7 +231,8 @@ const tasks: TaskTemplate[] = [
   },
   {
     assigneeRole: 'PARTNER',
-    description: 'Add images and annotate details of options for fabric, trim, processes and artwork',
+    description:
+      'Add images and annotate details of options for fabric, trim, processes and artwork',
     designPhase: 'POST_APPROVAL',
     id: uuid.v4(),
     ordering: 4,
@@ -220,7 +241,8 @@ const tasks: TaskTemplate[] = [
   },
   {
     assigneeRole: 'DESIGNER',
-    description: 'Tell us any specific measurements and placement for details, trims, or artwork.',
+    description:
+      'Tell us any specific measurements and placement for details, trims, or artwork.',
     designPhase: 'POST_APPROVAL',
     id: uuid.v4(),
     ordering: 0,
@@ -229,7 +251,8 @@ const tasks: TaskTemplate[] = [
   },
   {
     assigneeRole: 'DESIGNER',
-    description: 'Feel free to markup a sketch to help us understand your vision.',
+    description:
+      'Feel free to markup a sketch to help us understand your vision.',
     designPhase: 'POST_APPROVAL',
     id: uuid.v4(),
     ordering: 1,
@@ -238,7 +261,8 @@ const tasks: TaskTemplate[] = [
   },
   {
     assigneeRole: 'DESIGNER',
-    description: 'Give us your files for prints or patterns (SVG or AI preferred; but we can work with anything).',
+    description:
+      'Give us your files for prints or patterns (SVG or AI preferred; but we can work with anything).',
     designPhase: 'POST_APPROVAL',
     id: uuid.v4(),
     ordering: 2,
@@ -247,7 +271,8 @@ const tasks: TaskTemplate[] = [
   },
   {
     assigneeRole: 'DESIGNER',
-    description: 'Add a sketch or annotation detailing where you want your brand and/or care labels.',
+    description:
+      'Add a sketch or annotation detailing where you want your brand and/or care labels.',
     designPhase: 'POST_APPROVAL',
     id: uuid.v4(),
     ordering: 3,
@@ -256,7 +281,8 @@ const tasks: TaskTemplate[] = [
   },
   {
     assigneeRole: 'DESIGNER',
-    description: 'Let us know how you want your customer to receive your product.',
+    description:
+      'Let us know how you want your customer to receive your product.',
     designPhase: 'POST_APPROVAL',
     id: uuid.v4(),
     ordering: 4,
@@ -274,7 +300,8 @@ const tasks: TaskTemplate[] = [
   },
   {
     assigneeRole: 'DESIGNER',
-    description: 'After this approval, the design cannot change. Production will move forward and cannot be canceled.',
+    description:
+      'After this approval, the design cannot change. Production will move forward and cannot be canceled.',
     designPhase: 'POST_APPROVAL',
     id: uuid.v4(),
     ordering: 8,
@@ -283,7 +310,8 @@ const tasks: TaskTemplate[] = [
   },
   {
     assigneeRole: 'DESIGNER',
-    description: 'Review materials, processes, and artwork options and approve. If it looks good we\'ll send you a physical version.',
+    description:
+      "Review materials, processes, and artwork options and approve. If it looks good we'll send you a physical version.",
     designPhase: 'POST_APPROVAL',
     id: uuid.v4(),
     ordering: 5,
@@ -301,7 +329,7 @@ const tasks: TaskTemplate[] = [
   },
   {
     assigneeRole: 'PARTNER',
-    description: 'Confirm that the designer\'s materials were shipped',
+    description: "Confirm that the designer's materials were shipped",
     designPhase: 'POST_APPROVAL',
     id: uuid.v4(),
     ordering: 7,
@@ -310,7 +338,8 @@ const tasks: TaskTemplate[] = [
   },
   {
     assigneeRole: 'PARTNER',
-    description: 'Create an \'Approve\' task for each item the designer needs to approve',
+    description:
+      "Create an 'Approve' task for each item the designer needs to approve",
     designPhase: 'POST_APPROVAL',
     id: uuid.v4(),
     ordering: 8,
@@ -319,7 +348,8 @@ const tasks: TaskTemplate[] = [
   },
   {
     assigneeRole: 'DESIGNER',
-    description: 'Be sure to review and approval all materials, processes, and artwork options for the sample',
+    description:
+      'Be sure to review and approval all materials, processes, and artwork options for the sample',
     designPhase: 'POST_APPROVAL',
     id: uuid.v4(),
     ordering: 9,
@@ -355,7 +385,7 @@ const tasks: TaskTemplate[] = [
   },
   {
     assigneeRole: 'PARTNER',
-    description: 'Send back the Designer\'s reference items',
+    description: "Send back the Designer's reference items",
     designPhase: 'POST_APPROVAL',
     id: uuid.v4(),
     ordering: 3,
@@ -364,7 +394,8 @@ const tasks: TaskTemplate[] = [
   },
   {
     assigneeRole: 'PARTNER',
-    description: 'Confirm that you\'ve completed the grading process – if necessary',
+    description:
+      "Confirm that you've completed the grading process – if necessary",
     designPhase: 'POST_APPROVAL',
     id: uuid.v4(),
     ordering: 4,
@@ -373,7 +404,8 @@ const tasks: TaskTemplate[] = [
   },
   {
     assigneeRole: 'PARTNER',
-    description: 'Add the date you expect the materials to arrive and be ready for production',
+    description:
+      'Add the date you expect the materials to arrive and be ready for production',
     designPhase: 'POST_APPROVAL',
     id: uuid.v4(),
     ordering: 5,
@@ -382,7 +414,8 @@ const tasks: TaskTemplate[] = [
   },
   {
     assigneeRole: 'PARTNER',
-    description: 'Make sure you account for all fabric, trims, labels, and packaging',
+    description:
+      'Make sure you account for all fabric, trims, labels, and packaging',
     designPhase: 'POST_APPROVAL',
     id: uuid.v4(),
     ordering: 6,
@@ -391,7 +424,8 @@ const tasks: TaskTemplate[] = [
   },
   {
     assigneeRole: 'PARTNER',
-    description: 'Barcode stickers should be placed on outside of final packaging once products are complete',
+    description:
+      'Barcode stickers should be placed on outside of final packaging once products are complete',
     designPhase: 'POST_APPROVAL',
     id: uuid.v4(),
     ordering: 7,
@@ -400,7 +434,8 @@ const tasks: TaskTemplate[] = [
   },
   {
     assigneeRole: 'PARTNER',
-    description: 'Set the due date of this task for when production will be done',
+    description:
+      'Set the due date of this task for when production will be done',
     designPhase: 'POST_APPROVAL',
     id: uuid.v4(),
     ordering: 8,
@@ -409,7 +444,8 @@ const tasks: TaskTemplate[] = [
   },
   {
     assigneeRole: 'DESIGNER',
-    description: 'This is where we\'ll send your completed order if you\'re not using our fulfillment service',
+    description:
+      "This is where we'll send your completed order if you're not using our fulfillment service",
     designPhase: 'POST_APPROVAL',
     id: uuid.v4(),
     ordering: 9,
@@ -436,7 +472,7 @@ const tasks: TaskTemplate[] = [
   },
   {
     assigneeRole: 'PARTNER',
-    description: 'Confirm that you\'ve completed the quality report',
+    description: "Confirm that you've completed the quality report",
     designPhase: 'POST_APPROVAL',
     id: uuid.v4(),
     ordering: 0,
@@ -454,7 +490,8 @@ const tasks: TaskTemplate[] = [
   },
   {
     assigneeRole: 'PARTNER',
-    description: 'Confirm that garment is properly inspected and meets quality criteria',
+    description:
+      'Confirm that garment is properly inspected and meets quality criteria',
     designPhase: 'POST_APPROVAL',
     id: uuid.v4(),
     ordering: 2,
@@ -463,7 +500,8 @@ const tasks: TaskTemplate[] = [
   },
   {
     assigneeRole: 'PARTNER',
-    description: 'All shipped units must match the quantities confirmed for production',
+    description:
+      'All shipped units must match the quantities confirmed for production',
     designPhase: 'POST_APPROVAL',
     id: uuid.v4(),
     ordering: 3,
@@ -490,7 +528,8 @@ const tasks: TaskTemplate[] = [
   },
   {
     assigneeRole: 'PARTNER',
-    description: 'Let us know when the shipment is ready. Give at least 72 hours notice.',
+    description:
+      'Let us know when the shipment is ready. Give at least 72 hours notice.',
     designPhase: 'POST_APPROVAL',
     id: uuid.v4(),
     ordering: 6,
@@ -553,7 +592,8 @@ const tasks: TaskTemplate[] = [
   },
   {
     assigneeRole: 'CALA',
-    description: 'Let us know that everything is ready for consumers to purchase.',
+    description:
+      'Let us know that everything is ready for consumers to purchase.',
     designPhase: 'POST_APPROVAL',
     id: uuid.v4(),
     ordering: 3,
@@ -562,7 +602,8 @@ const tasks: TaskTemplate[] = [
   },
   {
     assigneeRole: 'PARTNER',
-    description: 'Review material specifications and submissions. Request further info if something is missing.',
+    description:
+      'Review material specifications and submissions. Request further info if something is missing.',
     designPhase: 'POST_APPROVAL',
     id: uuid.v4(),
     ordering: 1,
@@ -577,21 +618,23 @@ insertTaskAndStageTemplates()
     log(`${green}Successfully inserted!`);
     process.exit();
   })
-  .catch((err: any): void => {
-    log(`${red}ERROR:\n${reset}`, err);
-    process.exit(1);
-  });
+  .catch(
+    (err: any): void => {
+      log(`${red}ERROR:\n${reset}`, err);
+      process.exit(1);
+    }
+  );
 
 async function insertTaskAndStageTemplates(): Promise<void> {
   const expectedCount = stages.length + tasks.length;
 
   return db.transaction(async (trx: Knex.Transaction) => {
-    const stagesInserted = await trx.insert(
-      stages.map(stageDataAdapter.forInsertion.bind(stageDataAdapter))
-    ).into('stage_templates');
-    const tasksInserted = await trx.insert(
-      tasks.map(taskDataAdapter.forInsertion.bind(taskDataAdapter))
-    ).into('task_templates');
+    const stagesInserted = await trx
+      .insert(stages.map(stageDataAdapter.forInsertion.bind(stageDataAdapter)))
+      .into('stage_templates');
+    const tasksInserted = await trx
+      .insert(tasks.map(taskDataAdapter.forInsertion.bind(taskDataAdapter)))
+      .into('task_templates');
     const rowCount = stagesInserted.rowCount + tasksInserted.rowCount;
 
     if (rowCount !== expectedCount) {

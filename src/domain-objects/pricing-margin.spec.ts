@@ -43,8 +43,5 @@ test('PricingMargin', async (t: Test): Promise<void> => {
     isPricingMarginRow(invalidRowData),
     'type guard rejects invalid data'
   );
-  t.ok(
-    isPricingMarginRow(validRowData),
-    'type guard passes with valid data'
-  );
+  t.ok(isPricingMarginRow(validRowData), 'type guard passes with valid data');
 });

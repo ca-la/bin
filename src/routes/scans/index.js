@@ -28,14 +28,16 @@ function* createScan() {
     type,
     userId: this.state.userId,
     isComplete
-  })
-    .catch(filterError(InvalidDataError, err => this.throw(400, err)));
+  }).catch(filterError(InvalidDataError, err => this.throw(400, err)));
 
   if (this.state.userId && isComplete) {
     try {
       yield UserAttributesService.recordScan(this.state.userId);
     } catch (err) {
-      logServerError('Could not save scan status in Mailchimp for user', this.state.userId);
+      logServerError(
+        'Could not save scan status in Mailchimp for user',
+        this.state.userId
+      );
       logServerError(err);
     }
   }
@@ -48,9 +50,11 @@ function* deleteScan() {
   yield ScansDAO.deleteById(this.params.scanId);
   const deletedPhotos = yield ScanPhotosDAO.deleteByScanId(this.params.scanId);
 
-  yield Promise.all(deletedPhotos.map((photo) => {
-    return deleteFile(AWS_SCANPHOTO_BUCKET_NAME, `${photo.id}.jpg`);
-  }));
+  yield Promise.all(
+    deletedPhotos.map(photo => {
+      return deleteFile(AWS_SCANPHOTO_BUCKET_NAME, `${photo.id}.jpg`);
+    })
+  );
 
   this.body = { success: true };
   this.status = 200;
@@ -59,7 +63,11 @@ function* deleteScan() {
 function* createScanPhoto() {
   const data = this.req.files.image;
   this.assert(data, 400, 'Image must be uploaded as `image`');
-  this.assert(data.mimetype === 'image/jpeg', 400, 'Only photos can be uploaded');
+  this.assert(
+    data.mimetype === 'image/jpeg',
+    400,
+    'Only photos can be uploaded'
+  );
 
   const localPath = data.path;
 
@@ -96,15 +104,19 @@ function* updateScan() {
     try {
       yield UserAttributesService.recordScan(this.state.userId);
     } catch (err) {
-      logServerError('Could not save scan status in Mailchimp for user', this.state.userId);
+      logServerError(
+        'Could not save scan status in Mailchimp for user',
+        this.state.userId
+      );
       logServerError(err);
     }
   }
 
-  const updated = yield ScansDAO.updateOneById(
-    this.params.scanId,
-    { isComplete, isStarted, measurements }
-  );
+  const updated = yield ScansDAO.updateOneById(this.params.scanId, {
+    isComplete,
+    isStarted,
+    measurements
+  });
 
   // Scan is owned by a 3rd party CALA fit customer, potentially update details
   // in their Shopify site
@@ -174,7 +186,11 @@ function* getList() {
  * endpoint to claim it afterwards.
  */
 function* claimScan() {
-  this.assert(!this.state.scan.userId, 400, 'This scan has already been claimed');
+  this.assert(
+    !this.state.scan.userId,
+    400,
+    'This scan has already been claimed'
+  );
 
   const updated = yield ScansDAO.updateOneById(this.params.scanId, {
     userId: this.state.userId
@@ -183,7 +199,10 @@ function* claimScan() {
   try {
     yield UserAttributesService.recordScan(this.state.userId);
   } catch (err) {
-    logServerError('Could not save scan status in Mailchimp for user', this.state.userId);
+    logServerError(
+      'Could not save scan status in Mailchimp for user',
+      this.state.userId
+    );
     logServerError(err);
   }
 

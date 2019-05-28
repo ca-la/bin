@@ -8,12 +8,9 @@
 const SessionsDAO = require('../../dao/sessions');
 
 function* attachSession(next) {
-  const headerMatches = (/^Token (.+)$/).exec(this.headers.authorization);
+  const headerMatches = /^Token (.+)$/.exec(this.headers.authorization);
 
-  const token = (
-    (headerMatches && headerMatches[1]) ||
-    this.query.token
-  );
+  const token = (headerMatches && headerMatches[1]) || this.query.token;
 
   let session;
 

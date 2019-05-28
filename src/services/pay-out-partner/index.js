@@ -29,13 +29,18 @@ async function payOutPartner({
   payoutAmountCents
 }) {
   requireValues({
-    invoiceId, payoutAccountId, payoutAmountCents, message
+    invoiceId,
+    payoutAccountId,
+    payoutAmountCents,
+    message
   });
 
   const invoice = await InvoicesDAO.findById(invoiceId);
   assert(invoice, `No invoice with ID ${invoiceId}`);
 
-  const payoutAccount = await PartnerPayoutAccountsDAO.findById(payoutAccountId);
+  const payoutAccount = await PartnerPayoutAccountsDAO.findById(
+    payoutAccountId
+  );
   assert(payoutAccount, `No payout account with ID ${payoutAccountId}`);
 
   const vendorUser = await UsersDAO.findById(payoutAccount.userId);

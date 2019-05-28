@@ -13,12 +13,22 @@ import StripeService = require('../stripe');
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 
 test('payOutPartner', async (t: Test) => {
-  const emailStub = sandbox().stub(EmailService, 'enqueueSend').resolves();
-  sandbox().stub(StripeService, 'sendTransfer').resolves();
+  const emailStub = sandbox()
+    .stub(EmailService, 'enqueueSend')
+    .resolves();
+  sandbox()
+    .stub(StripeService, 'sendTransfer')
+    .resolves();
 
-  const { user: adminUser } = await createUser({ role: 'ADMIN', withSession: false });
+  const { user: adminUser } = await createUser({
+    role: 'ADMIN',
+    withSession: false
+  });
   const { user: regularUser } = await createUser({ withSession: false });
-  const { user: partnerUser } = await createUser({ role: 'PARTNER', withSession: false });
+  const { user: partnerUser } = await createUser({
+    role: 'PARTNER',
+    withSession: false
+  });
 
   const { collection } = await generateCollection();
 
@@ -49,7 +59,9 @@ test('payOutPartner', async (t: Test) => {
     payoutAmountCents: 222
   });
 
-  const logs = await PartnerPayoutLogsDAO.findByPayoutAccountId(payoutAccount.id);
+  const logs = await PartnerPayoutLogsDAO.findByPayoutAccountId(
+    payoutAccount.id
+  );
   t.equal(logs.length, 1);
   t.equal(logs[0].invoiceId, invoice!.id);
   t.equal(logs[0].payoutAmountCents, 222);
@@ -57,12 +69,22 @@ test('payOutPartner', async (t: Test) => {
 });
 
 test('payOutPartner can pay amounts larger than invoice amount', async (t: Test) => {
-  const emailStub = sandbox().stub(EmailService, 'enqueueSend').resolves();
-  sandbox().stub(StripeService, 'sendTransfer').resolves();
+  const emailStub = sandbox()
+    .stub(EmailService, 'enqueueSend')
+    .resolves();
+  sandbox()
+    .stub(StripeService, 'sendTransfer')
+    .resolves();
 
-  const { user: adminUser } = await createUser({ role: 'ADMIN', withSession: false });
+  const { user: adminUser } = await createUser({
+    role: 'ADMIN',
+    withSession: false
+  });
   const { user: regularUser } = await createUser({ withSession: false });
-  const { user: partnerUser } = await createUser({ role: 'PARTNER', withSession: false });
+  const { user: partnerUser } = await createUser({
+    role: 'PARTNER',
+    withSession: false
+  });
 
   const { collection } = await generateCollection();
 
@@ -93,7 +115,9 @@ test('payOutPartner can pay amounts larger than invoice amount', async (t: Test)
     payoutAmountCents: 1235
   });
 
-  const logs = await PartnerPayoutLogsDAO.findByPayoutAccountId(payoutAccount.id);
+  const logs = await PartnerPayoutLogsDAO.findByPayoutAccountId(
+    payoutAccount.id
+  );
   t.equal(logs.length, 1);
   t.equal(logs[0].invoiceId, invoice!.id);
   t.equal(logs[0].payoutAmountCents, 1235);

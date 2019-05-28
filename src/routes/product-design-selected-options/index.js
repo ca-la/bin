@@ -7,7 +7,9 @@ const filterError = require('../../services/filter-error');
 const InvalidDataError = require('../../errors/invalid-data');
 const ProductDesignSelectedOptionsDAO = require('../../dao/product-design-selected-options');
 const requireAuth = require('../../middleware/require-auth');
-const { attachDesignPermissions } = require('../../middleware/can-access-design');
+const {
+  attachDesignPermissions
+} = require('../../middleware/can-access-design');
 
 const router = new Router();
 
@@ -40,8 +42,9 @@ function* canAccessSelectedOption(next) {
 function* create() {
   const allowedAttrs = pick(this.request.body, ALLOWED_ATTRS);
 
-  const option = yield ProductDesignSelectedOptionsDAO.create(allowedAttrs)
-    .catch(filterError(InvalidDataError, err => this.throw(404, err)));
+  const option = yield ProductDesignSelectedOptionsDAO.create(
+    allowedAttrs
+  ).catch(filterError(InvalidDataError, err => this.throw(404, err)));
 
   this.body = option;
   this.status = 201;
@@ -53,7 +56,9 @@ function* getByDesign() {
 
   yield attachDesignPermissions.call(this, designId);
 
-  const options = yield ProductDesignSelectedOptionsDAO.findByDesignId(designId);
+  const options = yield ProductDesignSelectedOptionsDAO.findByDesignId(
+    designId
+  );
   this.body = options;
   this.status = 200;
 }
@@ -77,7 +82,12 @@ function* update() {
 
 router.post('/', requireAuth, create);
 router.get('/', requireAuth, getByDesign);
-router.del('/:optionId', requireAuth, canAccessSelectedOption, deleteSelectedOption);
+router.del(
+  '/:optionId',
+  requireAuth,
+  canAccessSelectedOption,
+  deleteSelectedOption
+);
 router.patch('/:optionId', requireAuth, canAccessSelectedOption, update);
 
 module.exports = router.routes();

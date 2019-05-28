@@ -13,7 +13,7 @@ const SERVICE_MARGIN_TIERS = {
     50: 0.14,
     100: 0.12,
     200: 0.11,
-    300: 0.10,
+    300: 0.1,
     500: 0.09,
     750: 0.08,
     1750: 0.07,
@@ -44,9 +44,7 @@ const SERVICE_MARGIN_TIERS = {
 const SETUP_MARGIN_TIERS = SERVICE_MARGIN_TIERS;
 
 // Helper used by both calculation functions
-function getMargin({
-  serviceId, partnerPriceCents, unitsToProduce, tiers
-}) {
+function getMargin({ serviceId, partnerPriceCents, unitsToProduce, tiers }) {
   const margins = tiers[serviceId];
 
   if (!margins) {
@@ -68,27 +66,43 @@ function getMargin({
       const marginPercentage = margins[unitTier];
 
       return Math.round(
-        (partnerPriceCents / (1 - marginPercentage)) - partnerPriceCents
+        partnerPriceCents / (1 - marginPercentage) - partnerPriceCents
       );
     }
   }
 
-  throw new Error(`No applicable margin category found for ${serviceId}@${unitsToProduce}`);
+  throw new Error(
+    `No applicable margin category found for ${serviceId}@${unitsToProduce}`
+  );
 }
 
 // Given the price (in cents) charged by our vendor, return our margin (also in
 // cents). Adding these two will give you the final cost to charge the customer.
-function getServiceMarginCents({ serviceId, partnerPriceCents, unitsToProduce }) {
+function getServiceMarginCents({
+  serviceId,
+  partnerPriceCents,
+  unitsToProduce
+}) {
   requireValues({ serviceId, partnerPriceCents, unitsToProduce });
   return getMargin({
-    serviceId, partnerPriceCents, unitsToProduce, tiers: SERVICE_MARGIN_TIERS
+    serviceId,
+    partnerPriceCents,
+    unitsToProduce,
+    tiers: SERVICE_MARGIN_TIERS
   });
 }
 
-function getServiceSetupMarginCents({ serviceId, partnerPriceCents, unitsToProduce }) {
+function getServiceSetupMarginCents({
+  serviceId,
+  partnerPriceCents,
+  unitsToProduce
+}) {
   requireValues({ serviceId, partnerPriceCents, unitsToProduce });
   return getMargin({
-    serviceId, partnerPriceCents, unitsToProduce, tiers: SETUP_MARGIN_TIERS
+    serviceId,
+    partnerPriceCents,
+    unitsToProduce,
+    tiers: SETUP_MARGIN_TIERS
   });
 }
 

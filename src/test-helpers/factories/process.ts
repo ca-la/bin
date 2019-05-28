@@ -15,7 +15,9 @@ export default async function generateProcess(
 ): Promise<ProcessWithResources> {
   const user = options.createdBy
     ? await UsersDAO.findById(options.createdBy)
-    : await createUser({ withSession: false }).then((response: any): any => response.user);
+    : await createUser({ withSession: false }).then(
+        (response: any): any => response.user
+      );
   const process = await create({
     componentType: options.componentType || ComponentType.Sketch,
     createdBy: user.id,

@@ -15,10 +15,13 @@ export default async function generateResolveAccount(
 ): Promise<ResolveAccountWithResources> {
   const user = options.userId
     ? await UsersDAO.findById(options.userId)
-    : await createUser({ withSession: false })
-      .then((response: {user: User}): User => response.user);
+    : await createUser({ withSession: false }).then(
+        (response: { user: User }): User => response.user
+      );
 
-  if (!user) { throw new Error('Could not get User'); }
+  if (!user) {
+    throw new Error('Could not get User');
+  }
 
   const account = await create({
     id: options.id || uuid.v4(),

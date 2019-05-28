@@ -4,8 +4,11 @@ import ProductDesign = require('../../domain-objects/product-design');
 /**
  * Find all designs that the user is a collaborator on.
  */
-export async function findAllDesignsThroughCollaborator(userId: string): Promise<ProductDesign[]> {
-  const result = await db.raw(`
+export async function findAllDesignsThroughCollaborator(
+  userId: string
+): Promise<ProductDesign[]> {
+  const result = await db.raw(
+    `
 SELECT * FROM product_designs_with_metadata
 WHERE id in (
   SELECT product_designs.id
@@ -25,7 +28,9 @@ WHERE id in (
 			AND co.deleted_at IS NULL
       AND product_designs.deleted_at IS NULL
 );
-    `, [userId, userId]);
+    `,
+    [userId, userId]
+  );
 
   return result.rows.map((row: any): ProductDesign => new ProductDesign(row));
 }
@@ -33,7 +38,8 @@ WHERE id in (
 export async function findAllDesignIdsThroughCollaborator(
   userId: string
 ): Promise<string[]> {
-  const result = await db.raw(`
+  const result = await db.raw(
+    `
 SELECT d1.id
 	FROM product_designs as d1
 	JOIN collaborators AS c1 ON c1.design_id = d1.id
@@ -50,7 +56,9 @@ SELECT d2.id
 		AND (c2.cancelled_at IS NULL OR c2.cancelled_at > now())
 		AND co.deleted_at IS NULL
 		AND d2.deleted_at IS NULL
-    `, [userId, userId]);
+    `,
+    [userId, userId]
+  );
 
   return result.rows.map((row: any) => row.id);
 }
@@ -58,31 +66,41 @@ SELECT d2.id
 export async function findDesignByAnnotationId(
   annotationId: string
 ): Promise<ProductDesign | null> {
-  const result = await db.raw(`
+  const result = await db.raw(
+    `
 SELECT designs.* FROM product_designs_with_metadata AS designs
 INNER JOIN product_design_canvases AS canvases ON canvases.design_id = designs.id
 INNER JOIN product_design_canvas_annotations AS annotations ON annotations.canvas_id = canvases.id
 WHERE annotations.id = ?
 AND annotations.deleted_at IS null
 AND designs.deleted_at IS null
-  `, [annotationId]);
+  `,
+    [annotationId]
+  );
 
-  const productDesigns = result.rows.map((row: any): ProductDesign => new ProductDesign(row));
+  const productDesigns = result.rows.map(
+    (row: any): ProductDesign => new ProductDesign(row)
+  );
   return productDesigns[0] || null;
 }
 
 export async function findDesignByTaskId(
   taskId: string
 ): Promise<ProductDesign | null> {
-  const result = await db.raw(`
+  const result = await db.raw(
+    `
 SELECT designs.* FROM product_designs_with_metadata AS designs
 INNER JOIN product_design_stages AS stages ON stages.design_id = designs.id
 INNER JOIN product_design_stage_tasks AS tasks ON tasks.design_stage_id = stages.id
 WHERE tasks.task_id = ?
 AND designs.deleted_at IS null
-  `, [taskId]);
+  `,
+    [taskId]
+  );
 
-  const productDesigns = result.rows.map((row: any): ProductDesign => new ProductDesign(row));
+  const productDesigns = result.rows.map(
+    (row: any): ProductDesign => new ProductDesign(row)
+  );
   return productDesigns[0] || null;
 }
 

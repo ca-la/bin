@@ -27,11 +27,5 @@ export interface TemplateRow {
 export const dataAdapter = new DataAdapter<TemplateRow, Template>();
 
 export function isTemplateRow(row: object): row is TemplateRow {
-  return hasProperties(
-    row,
-    'id',
-    'created_at',
-    'title',
-    'description'
-  );
+  return hasProperties(row, 'id', 'created_at', 'title', 'description');
 }

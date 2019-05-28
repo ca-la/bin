@@ -6,11 +6,17 @@ import * as SQSService from './sqs';
 import { sandbox, test } from '../../test-helpers/fresh';
 
 test('AWS Service supports enqueuing a message', async (t: tape.Test) => {
-  const awsStub = sandbox().stub(AWS, 'SQS').returns({
-    sendMessage: (): object => {
-      return { promise: (): void => { /* NO-OP */ } };
-    }
-  });
+  const awsStub = sandbox()
+    .stub(AWS, 'SQS')
+    .returns({
+      sendMessage: (): object => {
+        return {
+          promise: (): void => {
+            /* NO-OP */
+          }
+        };
+      }
+    });
 
   await SQSService.enqueueMessage({
     messageType: 'foo-bar',

@@ -45,7 +45,10 @@ export interface PricingConstantRow {
   version: number;
 }
 
-export const dataAdapter = new DataAdapter<PricingConstantRow, PricingConstant>();
+export const dataAdapter = new DataAdapter<
+  PricingConstantRow,
+  PricingConstant
+>();
 
 export function isPricingConstantRow(row: object): row is PricingConstantRow {
   return hasProperties(

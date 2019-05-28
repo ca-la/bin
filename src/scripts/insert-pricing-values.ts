@@ -24,27 +24,30 @@ intialPricingValues()
     log(`${green}Successfully inserted!`);
     process.exit();
   })
-  .catch((err: any): void => {
-    log(`${red}ERROR:\n${reset}`, err);
-    process.exit(1);
-  });
+  .catch(
+    (err: any): void => {
+      log(`${red}ERROR:\n${reset}`, err);
+      process.exit(1);
+    }
+  );
 
 async function intialPricingValues(): Promise<void> {
-  const pricingProcessesScreenPrinting: Uninserted<PricingProcessRow>[] =
-    generateScreenPrintingProcess(
-      (units: number): Cents => Dollars(units >= 500 ? 30 : 60),
-      Dollars(0.25),
-      [
-        [1, 100],
-        [100, 85],
-        [250, 85],
-        [500, 70],
-        [1000, 55],
-        [1500, 40],
-        [2000, 25]
-      ],
-      version
-    );
+  const pricingProcessesScreenPrinting: Uninserted<
+    PricingProcessRow
+  >[] = generateScreenPrintingProcess(
+    (units: number): Cents => Dollars(units >= 500 ? 30 : 60),
+    Dollars(0.25),
+    [
+      [1, 100],
+      [100, 85],
+      [250, 85],
+      [500, 70],
+      [1000, 55],
+      [1500, 40],
+      [2000, 25]
+    ],
+    version
+  );
   const pricingProcessesEmbroidery: Uninserted<PricingProcessRow>[] = [
     {
       complexity: 'SMALL',
@@ -771,7 +774,10 @@ async function intialPricingValues(): Promise<void> {
       version
     })
   ]);
-  const createCareLabel = (units: number, cents: number): Uninserted<PricingCareLabelRow> => ({
+  const createCareLabel = (
+    units: number,
+    cents: number
+  ): Uninserted<PricingCareLabelRow> => ({
     id: uuid.v4(),
     minimum_units: units,
     unit_cents: cents,
@@ -1013,11 +1019,15 @@ async function intialPricingValues(): Promise<void> {
     pricingMaterials.length
   ]);
 
-  log(`${yellow}Attempting to insert ${reset}${expectedCount} ${yellow}rows...`);
+  log(
+    `${yellow}Attempting to insert ${reset}${expectedCount} ${yellow}rows...`
+  );
 
   return db.transaction(async (trx: knex.Transaction) => {
     const inserted: any[] = [
-      await trx.insert(pricingProcessesScreenPrinting).into('pricing_processes'),
+      await trx
+        .insert(pricingProcessesScreenPrinting)
+        .into('pricing_processes'),
       await trx.insert(pricingProcessesEmbroidery).into('pricing_processes'),
       await trx.insert(pricingProcessesWash).into('pricing_processes'),
       await trx.insert(pricingProcessesDye).into('pricing_processes'),

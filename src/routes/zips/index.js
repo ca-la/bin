@@ -8,7 +8,8 @@ const router = new Router();
 /**
  * GET /zips/:zip
  */
-function* getZip() { // eslint-disable-line require-yield
+// eslint-disable-next-line require-yield
+function* getZip() {
   const zip = zipcodes.lookup(this.params.zip);
   this.assert(zip, 404, 'Zip not found');
   this.status = 200;

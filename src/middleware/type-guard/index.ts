@@ -2,8 +2,10 @@ import * as Koa from 'koa';
 
 export function typeGuard<T>(
   guardFn: (data: any) => data is T
-): (this: Koa.Application.Context, next: () => Promise<any>) => IterableIterator<any> {
-
+): (
+  this: Koa.Application.Context,
+  next: () => Promise<any>
+) => IterableIterator<any> {
   function* middleware(
     this: Koa.Application.Context,
     next: () => Promise<any>

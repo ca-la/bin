@@ -8,24 +8,34 @@ import TaskComment from '../../../../domain-objects/task-comment';
 import generateComment from '../../../../test-helpers/factories/comment';
 
 test('announceTaskCommentCreation supports sending a message', async (t: tape.Test) => {
-  const sendStub = sandbox().stub(SendMessageService, 'sendMessage').resolves({});
+  const sendStub = sandbox()
+    .stub(SendMessageService, 'sendMessage')
+    .resolves({});
   const { comment } = await generateComment();
-  const tcOne: TaskComment =  {
+  const tcOne: TaskComment = {
     commentId: comment.id,
     taskId: 'task-one'
   };
-  const mentionStub = sandbox().stub(MentionDetailsService, 'default').resolves([{
-    ...comment,
-    mentions: {}
-  }]);
+  const mentionStub = sandbox()
+    .stub(MentionDetailsService, 'default')
+    .resolves([
+      {
+        ...comment,
+        mentions: {}
+      }
+    ]);
 
   const response = await announceTaskCommentCreation(tcOne, comment);
-  t.deepEqual(response, {
-    actorId: comment.userId,
-    resource: { ...comment, mentions: {} },
-    taskId: 'task-one',
-    type: 'task-comment'
-  }, 'Returns the realtime message that was sent');
+  t.deepEqual(
+    response,
+    {
+      actorId: comment.userId,
+      resource: { ...comment, mentions: {} },
+      taskId: 'task-one',
+      type: 'task-comment'
+    },
+    'Returns the realtime message that was sent'
+  );
   t.true(sendStub.calledOnce);
   t.true(mentionStub.calledOnce);
 });

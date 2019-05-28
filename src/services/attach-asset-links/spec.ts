@@ -10,8 +10,12 @@ import * as OptionsDAO from '../../dao/product-design-options';
 import * as ImagesDAO from '../../components/images/dao';
 
 function stubUrls(): void {
-  sandbox().stub(Configuration, 'AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME').value('aws-example');
-  sandbox().stub(Configuration, 'IMGIX_BASE_URL').value('https://imgix.example.com');
+  sandbox()
+    .stub(Configuration, 'AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME')
+    .value('aws-example');
+  sandbox()
+    .stub(Configuration, 'IMGIX_BASE_URL')
+    .value('https://imgix.example.com');
 }
 
 test('attachAssetsLink returns aws link when component is of type sketch', async (t: tape.Test) => {
@@ -35,8 +39,14 @@ test('attachAssetsLink returns aws link when component is of type sketch', async
     .resolves({ uploadCompletedAt: new Date() });
 
   const enrichedComponent = await addAssetLink(component);
-  t.equal(enrichedComponent.downloadLink, `https://aws-example.s3.amazonaws.com/${sketchId}`);
-  t.equal(enrichedComponent.assetLink, `https://imgix.example.com/${sketchId}?fm=jpg&max-w=2288`);
+  t.equal(
+    enrichedComponent.downloadLink,
+    `https://aws-example.s3.amazonaws.com/${sketchId}`
+  );
+  t.equal(
+    enrichedComponent.assetLink,
+    `https://imgix.example.com/${sketchId}?fm=jpg&max-w=2288`
+  );
 });
 
 test('attachAssetsLink returns link when component is of type artwork', async (t: tape.Test) => {
@@ -60,8 +70,14 @@ test('attachAssetsLink returns link when component is of type artwork', async (t
     .resolves({ uploadCompletedAt: new Date() });
 
   const enrichedComponent = await addAssetLink(component);
-  t.equal(enrichedComponent.downloadLink, `https://aws-example.s3.amazonaws.com/${artworkId}`);
-  t.equal(enrichedComponent.assetLink, `https://imgix.example.com/${artworkId}?fm=jpg&max-w=2288`);
+  t.equal(
+    enrichedComponent.downloadLink,
+    `https://aws-example.s3.amazonaws.com/${artworkId}`
+  );
+  t.equal(
+    enrichedComponent.assetLink,
+    `https://imgix.example.com/${artworkId}?fm=jpg&max-w=2288`
+  );
 });
 
 test('attachAssetsLink returns link when component is of type material', async (t: tape.Test) => {
@@ -83,7 +99,10 @@ test('attachAssetsLink returns link when component is of type material', async (
 
   sandbox()
     .stub(OptionsDAO, 'findById')
-    .resolves({ previewImageId: materialImageId, uploadCompletedAt: new Date() });
+    .resolves({
+      previewImageId: materialImageId,
+      uploadCompletedAt: new Date()
+    });
   sandbox()
     .stub(ImagesDAO, 'findById')
     .resolves({ uploadCompletedAt: new Date() });
@@ -104,8 +123,20 @@ test('attachAssetsLink returns link when component is of type material', async (
   const imageId = uuid.v4();
   const imageIdTwo = uuid.v4();
   const enrichedImages = generatePreviewLinks([imageId, imageIdTwo]);
-  t.equal(enrichedImages[0].thumbnailLink, `https://imgix.example.com/${imageId}?fm=jpg&w=48`);
-  t.equal(enrichedImages[0].previewLink, `https://imgix.example.com/${imageId}?fm=jpg&w=560`);
-  t.equal(enrichedImages[1].thumbnailLink, `https://imgix.example.com/${imageIdTwo}?fm=jpg&w=48`);
-  t.equal(enrichedImages[1].previewLink, `https://imgix.example.com/${imageIdTwo}?fm=jpg&w=560`);
+  t.equal(
+    enrichedImages[0].thumbnailLink,
+    `https://imgix.example.com/${imageId}?fm=jpg&w=48`
+  );
+  t.equal(
+    enrichedImages[0].previewLink,
+    `https://imgix.example.com/${imageId}?fm=jpg&w=560`
+  );
+  t.equal(
+    enrichedImages[1].thumbnailLink,
+    `https://imgix.example.com/${imageIdTwo}?fm=jpg&w=48`
+  );
+  t.equal(
+    enrichedImages[1].previewLink,
+    `https://imgix.example.com/${imageIdTwo}?fm=jpg&w=560`
+  );
 });

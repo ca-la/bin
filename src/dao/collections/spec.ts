@@ -40,10 +40,10 @@ test('CollectionsDAO#update updates a collection', async (t: tape.Test) => {
     title: 'Drop 001/The Early Years'
   });
 
-  const updatedCollection = await CollectionsDAO.update(
-    createdCollection.id,
-    { ...createdCollection, description: 'A New Hope' }
-  );
+  const updatedCollection = await CollectionsDAO.update(createdCollection.id, {
+    ...createdCollection,
+    description: 'A New Hope'
+  });
 
   t.deepEqual(updatedCollection.description, 'A New Hope');
 });
@@ -59,7 +59,9 @@ test('CollectionsDAO#findById does not find deleted collections', async (t: tape
     title: 'Drop 001/The Early Years'
   });
   await CollectionsDAO.deleteById(createdCollection.id);
-  const retrievedCollection = await CollectionsDAO.findById(createdCollection.id);
+  const retrievedCollection = await CollectionsDAO.findById(
+    createdCollection.id
+  );
   t.equal(retrievedCollection, null, 'deleted collection is not returned');
 });
 
@@ -161,9 +163,15 @@ test('CollectionsDAO#findByCollaboratorAndUserId finds all collections', async (
   });
   await CollectionsDAO.deleteById(collection4.id);
 
-  const collections = await CollectionsDAO.findByCollaboratorAndUserId(user1.id);
+  const collections = await CollectionsDAO.findByCollaboratorAndUserId(
+    user1.id
+  );
 
-  t.deepEqual(collections, [collection2, collection1], 'all collections I can access are returned');
+  t.deepEqual(
+    collections,
+    [collection2, collection1],
+    'all collections I can access are returned'
+  );
 });
 
 test('CollectionsDAO#addDesign adds a design to a collection', async (t: tape.Test) => {
@@ -193,10 +201,11 @@ test('CollectionsDAO#addDesign adds a design to a collection', async (t: tape.Te
       userId: user.id
     })
   ]);
-  await CollectionsDAO
-    .addDesign(createdCollection.id, createdDesigns[0].id);
-  const collectionDesigns = await CollectionsDAO
-    .addDesign(createdCollection.id, createdDesigns[1].id);
+  await CollectionsDAO.addDesign(createdCollection.id, createdDesigns[0].id);
+  const collectionDesigns = await CollectionsDAO.addDesign(
+    createdCollection.id,
+    createdDesigns[1].id
+  );
 
   t.deepEqual(
     collectionDesigns.map((design: ProductDesign) => design.id).sort(),
@@ -244,8 +253,10 @@ test('CollectionsDAO#moveDesign moves designs to different collections', async (
     'ensure that the design was added to the collection'
   );
 
-  const collectionDesignsTwo = await CollectionsDAO
-    .moveDesign(createdCollectionTwo.id, createdDesign.id);
+  const collectionDesignsTwo = await CollectionsDAO.moveDesign(
+    createdCollectionTwo.id,
+    createdDesign.id
+  );
 
   t.deepEqual(
     collectionDesignsTwo.map((design: ProductDesign) => design.id).sort(),
@@ -281,11 +292,15 @@ test('CollectionsDAO#removeDesign removes a design from a collection', async (t:
 
   t.deepEqual(
     collectionDesigns,
-    [{
-      ...createdDesign,
-      collectionIds: [createdCollection.id],
-      collections: [{ id: createdCollection.id, title: createdCollection.title }]
-    }],
+    [
+      {
+        ...createdDesign,
+        collectionIds: [createdCollection.id],
+        collections: [
+          { id: createdCollection.id, title: createdCollection.title }
+        ]
+      }
+    ],
     '#add successfully adds the design'
   );
   t.deepEqual(
@@ -308,14 +323,20 @@ test('CollectionsDAO.getStatusById', async (t: tape.Test) => {
     title: 'Drop 001/The Early Years'
   });
 
-  const initialStatus = await CollectionsDAO.getStatusById(createdCollection.id);
-  t.deepEqual(initialStatus, {
-    collectionId: createdCollection.id,
-    isCosted: false,
-    isPaired: false,
-    isQuoted: false,
-    isSubmitted: false
-  }, 'Empty collection is in a fully-false state');
+  const initialStatus = await CollectionsDAO.getStatusById(
+    createdCollection.id
+  );
+  t.deepEqual(
+    initialStatus,
+    {
+      collectionId: createdCollection.id,
+      isCosted: false,
+      isPaired: false,
+      isQuoted: false,
+      isSubmitted: false
+    },
+    'Empty collection is in a fully-false state'
+  );
 
   const createdDesigns = await Promise.all([
     ProductDesignsDAO.create({
@@ -329,10 +350,8 @@ test('CollectionsDAO.getStatusById', async (t: tape.Test) => {
       userId: designer.id
     })
   ]);
-  await CollectionsDAO
-    .addDesign(createdCollection.id, createdDesigns[0].id);
-  await CollectionsDAO
-    .addDesign(createdCollection.id, createdDesigns[1].id);
+  await CollectionsDAO.addDesign(createdCollection.id, createdDesigns[0].id);
+  await CollectionsDAO.addDesign(createdCollection.id, createdDesigns[1].id);
 
   await DesignEventsDAO.create({
     actorId: designer.id,
@@ -356,7 +375,9 @@ test('CollectionsDAO.getStatusById', async (t: tape.Test) => {
     type: 'SUBMIT_DESIGN'
   });
 
-  const submittedStatus = await CollectionsDAO.getStatusById(createdCollection.id);
+  const submittedStatus = await CollectionsDAO.getStatusById(
+    createdCollection.id
+  );
 
   t.deepEqual(submittedStatus, {
     collectionId: createdCollection.id,
@@ -432,7 +453,9 @@ test('CollectionsDAO.getStatusById', async (t: tape.Test) => {
 
   await ProductDesignsDAO.deleteById(createdDesigns[0].id);
 
-  const stillQuotedStatus = await CollectionsDAO.getStatusById(createdCollection.id);
+  const stillQuotedStatus = await CollectionsDAO.getStatusById(
+    createdCollection.id
+  );
 
   t.deepEqual(stillQuotedStatus, {
     collectionId: createdCollection.id,
@@ -443,8 +466,7 @@ test('CollectionsDAO.getStatusById', async (t: tape.Test) => {
   });
 });
 
-test('CollectionsDAO#findWithUncostedDesigns finds all collections with uncosted designs',
-async (t: tape.Test) => {
+test('CollectionsDAO#findWithUncostedDesigns finds all collections with uncosted designs', async (t: tape.Test) => {
   const { user } = await createUser({ role: 'ADMIN' });
   const { user: user2 } = await createUser();
 
@@ -472,8 +494,12 @@ async (t: tape.Test) => {
     userId: user2.id
   });
 
-  const { collection: collection1 } = await generateCollection({ createdBy: user2.id });
-  const { collection: collection2 } = await generateCollection({ createdBy: user2.id });
+  const { collection: collection1 } = await generateCollection({
+    createdBy: user2.id
+  });
+  const { collection: collection2 } = await generateCollection({
+    createdBy: user2.id
+  });
   const { collection: collection3 } = await generateCollection({
     createdBy: user2.id,
     deletedAt: new Date()
@@ -557,10 +583,13 @@ async (t: tape.Test) => {
   };
 
   await DesignEventsDAO.createAll([
-    submitEvent, submitEvent2, submitEvent3, submitEvent4]);
+    submitEvent,
+    submitEvent2,
+    submitEvent3,
+    submitEvent4
+  ]);
 
-  await DesignEventsDAO.createAll([
-    costEvent1, costEvent2, costEvent3]);
+  await DesignEventsDAO.createAll([costEvent1, costEvent2, costEvent3]);
 
   const response = await CollectionsDAO.findWithUncostedDesigns();
 

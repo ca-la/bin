@@ -43,6 +43,12 @@
     "strict-type-predicates": true,
     "deprecation": true,
     "await-promise": [true, "Bluebird"],
-    "no-namespace": [true, "allow-declarations"]
+    "no-namespace": [true, "allow-declarations"],
+    "ter-func-call-spacing": [false],
+    "ter-indent": [false],
+    "max-line-length": [false],
+    "whitespace": [false],
+    "object-literal-key-quotes": [true, "as-needed"],
+    "object-literal-sort-keys": [false]
   }
 }

@@ -17,8 +17,8 @@ function canAccessUserResource(ownerUserId) {
     throw new Error('Must pass ownerUserId to canAccessUserResource');
   }
 
-  const isAdmin = (this.state.role === User.ROLES.admin);
-  const isUserOrAdmin = isAdmin || (ownerUserId === this.state.userId);
+  const isAdmin = this.state.role === User.ROLES.admin;
+  const isUserOrAdmin = isAdmin || ownerUserId === this.state.userId;
   this.assert(isUserOrAdmin, 403);
 }
 

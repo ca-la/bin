@@ -15,19 +15,22 @@ export async function addAtMentionDetailsForComment(
   const mentionMatches = parseAtMentions(comment.text);
   if (mentionMatches.length > 0) {
     const mentions = await mentionMatches.reduce(
-      async (accPromise: Promise<{ [id: string]: string }>, match: MentionMeta) => {
+      async (
+        accPromise: Promise<{ [id: string]: string }>,
+        match: MentionMeta
+      ) => {
         const acc = await accPromise;
         if (match.type === MentionType.collaborator) {
           const collaborator = await CollaboratorsDAO.findById(match.id);
           if (!collaborator) {
             return acc;
           }
-          return ({
+          return {
             ...acc,
             [match.id]: collaborator.user
-            ? collaborator.user.name
-            : collaborator.userEmail || 'Unknown'
-          });
+              ? collaborator.user.name
+              : collaborator.userEmail || 'Unknown'
+          };
         }
         return acc;
       },

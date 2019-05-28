@@ -4,9 +4,7 @@ const findDesignUsers = require('../../services/find-design-users');
 const { validateValues } = require('../validate');
 const { enqueueSend } = require('../email');
 
-async function sendAnnotationNotifications({
-  annotation, design, user, text
-}) {
+async function sendAnnotationNotifications({ annotation, design, user, text }) {
   validateValues({ design, user, text });
 
   const recipients = (await findDesignUsers(design.id))

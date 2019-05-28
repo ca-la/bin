@@ -11,9 +11,17 @@ import { reverseSubmissionRecords } from './reverse';
 
 test('reverseSubmissionRecords', async (t: tape.Test) => {
   const { user: designer } = await createUser({ withSession: false });
-  const { user: admin } = await createUser({ role: 'ADMIN', withSession: false });
-  const { user: partner } = await createUser({ role: 'PARTNER', withSession: false });
-  const { collection: c1 } = await generateCollection({ createdBy: designer.id });
+  const { user: admin } = await createUser({
+    role: 'ADMIN',
+    withSession: false
+  });
+  const { user: partner } = await createUser({
+    role: 'PARTNER',
+    withSession: false
+  });
+  const { collection: c1 } = await generateCollection({
+    createdBy: designer.id
+  });
   const d1 = await createDesign({
     productType: 'TEESHIRT',
     title: 'Virgil Shirt',
@@ -57,12 +65,18 @@ test('reverseSubmissionRecords', async (t: tape.Test) => {
   await reverseSubmissionRecords(c1.id);
 
   const result = await DesignEventsDAO.findByDesignId(d1.id);
-  t.deepEqual(result, [de3], 'Successfully removes only the costing and submission events');
+  t.deepEqual(
+    result,
+    [de3],
+    'Successfully removes only the costing and submission events'
+  );
 });
 
 test('reverseSubmissionRecords on an empty collection', async (t: tape.Test) => {
   const { user: designer } = await createUser({ withSession: false });
-  const { collection: c1 } = await generateCollection({ createdBy: designer.id });
+  const { collection: c1 } = await generateCollection({
+    createdBy: designer.id
+  });
   const d1 = await createDesign({
     productType: 'TEESHIRT',
     title: 'Virgil Shirt',

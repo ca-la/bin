@@ -84,7 +84,11 @@ test('determineStateFromEvents works for bids that have been accepted', async (t
   });
 
   const result2 = determineStateFromEvents(bid2, [e1, e2, e3]);
-  t.deepEqual(result2, BidState.ACCEPTED, 'The bid is accepted (even though it is old)');
+  t.deepEqual(
+    result2,
+    BidState.ACCEPTED,
+    'The bid is accepted (even though it is old)'
+  );
 });
 
 test('determineStateFromEvents works for bids that have been rejected', async (t: Test) => {
@@ -113,7 +117,11 @@ test('determineStateFromEvents works for bids that have been rejected', async (t
   });
 
   const result2 = determineStateFromEvents(bid2, [e1, e2]);
-  t.deepEqual(result2, BidState.REJECTED, 'The bid is rejected (even though it is old)');
+  t.deepEqual(
+    result2,
+    BidState.REJECTED,
+    'The bid is rejected (even though it is old)'
+  );
 });
 
 test('determineStateFromEvents works for bids that have been rejected', async (t: Test) => {
@@ -146,5 +154,9 @@ test('determineStateFromEvents works for bids that have been rejected', async (t
   });
 
   const result2 = determineStateFromEvents(bid2, [e1, e3]);
-  t.deepEqual(result2, BidState.REMOVED, 'The bid is removed (even though it is old)');
+  t.deepEqual(
+    result2,
+    BidState.REMOVED,
+    'The bid is removed (even though it is old)'
+  );
 });

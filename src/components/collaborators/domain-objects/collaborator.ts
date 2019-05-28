@@ -74,10 +74,14 @@ export const encode = (data: CollaboratorWithUserRow): CollaboratorWithUser => {
 };
 
 export const dataAdapter = new DataAdapter<CollaboratorRow, Collaborator>();
-export const dataWithUserAdapter =
-  new DataAdapter<CollaboratorWithUserRow, CollaboratorWithUser>(encode);
-export const partialDataAdapter =
-  new DataAdapter<Partial<CollaboratorRow>, Partial<Collaborator>>();
+export const dataWithUserAdapter = new DataAdapter<
+  CollaboratorWithUserRow,
+  CollaboratorWithUser
+>(encode);
+export const partialDataAdapter = new DataAdapter<
+  Partial<CollaboratorRow>,
+  Partial<Collaborator>
+>();
 
 export function isCollaboratorRow(row: object): row is CollaboratorRow {
   return hasProperties(
@@ -95,7 +99,9 @@ export function isCollaboratorRow(row: object): row is CollaboratorRow {
   );
 }
 
-export function isCollaboratorWithUserRow(row: object): row is CollaboratorWithUserRow {
+export function isCollaboratorWithUserRow(
+  row: object
+): row is CollaboratorWithUserRow {
   return hasProperties(
     row,
     'id',

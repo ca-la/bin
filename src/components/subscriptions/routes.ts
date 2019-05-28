@@ -25,7 +25,9 @@ interface DesignerSubscription {
   source: string;
 }
 
-function isDesignerSubscription(candidate: object): candidate is DesignerSubscription {
+function isDesignerSubscription(
+  candidate: object
+): candidate is DesignerSubscription {
   return hasProperties(
     candidate,
     'brandInstagram',
@@ -37,7 +39,9 @@ function isDesignerSubscription(candidate: object): candidate is DesignerSubscri
   );
 }
 
-function* createDesignerSubscription(this: Koa.Application.Context): AsyncIterableIterator<any> {
+function* createDesignerSubscription(
+  this: Koa.Application.Context
+): AsyncIterableIterator<any> {
   const { body } = this.request;
   if (!body || !isDesignerSubscription(body)) {
     this.throw(400, 'Missing required information');
@@ -95,38 +99,34 @@ interface PartnerSubscription {
   website?: string;
 }
 
-function isPartnerSubscription(candidate: object): candidate is PartnerSubscription {
-  return hasProperties(
-    candidate,
-    'email',
-    'language',
-    'name',
-    'source'
-  );
+function isPartnerSubscription(
+  candidate: object
+): candidate is PartnerSubscription {
+  return hasProperties(candidate, 'email', 'language', 'name', 'source');
 }
 
-function* createPartnerSubscription(this: Koa.Application.Context): AsyncIterableIterator<any> {
+function* createPartnerSubscription(
+  this: Koa.Application.Context
+): AsyncIterableIterator<any> {
   const { body } = this.request;
   if (!body || !isPartnerSubscription(body)) {
     this.throw(400, 'Missing required information');
     return;
   }
 
-  const {
-    email,
-    language,
-    name,
-    source,
-    website
-  } = body;
+  const { email, language, name, source, website } = body;
 
   try {
-    yield MailChimp.addOrUpdateListMember(MAILCHIMP_LIST_ID_PRODUCTION_PARTNERS, email, {
-      LANGUAGE: language,
-      NAME: name,
-      SOURCE: source,
-      WEB: website
-    });
+    yield MailChimp.addOrUpdateListMember(
+      MAILCHIMP_LIST_ID_PRODUCTION_PARTNERS,
+      email,
+      {
+        LANGUAGE: language,
+        NAME: name,
+        SOURCE: source,
+        WEB: website
+      }
+    );
   } catch (error) {
     this.throw(400, error.message);
   }

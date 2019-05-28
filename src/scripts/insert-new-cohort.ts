@@ -12,10 +12,12 @@ insertNewCohort()
     log(`${green}Successfully inserted!`);
     process.exit();
   })
-  .catch((err: any): void => {
-    logServerError(err);
-    process.exit(1);
-  });
+  .catch(
+    (err: any): void => {
+      logServerError(err);
+      process.exit(1);
+    }
+  );
 
 async function insertNewCohort(): Promise<void> {
   const description = process.argv[2];

@@ -10,12 +10,16 @@ const ProductDesignsDAO = require('../../dao/product-designs');
 const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
 const EmailService = require('../../services/email');
 const {
-  authHeader, get, patch, post, put
+  authHeader,
+  get,
+  patch,
+  post,
+  put
 } = require('../../test-helpers/http');
 const { test, sandbox } = require('../../test-helpers/fresh');
 const AWSService = require('../../services/aws');
 
-test('PATCH /product-designs/:id rejects empty data', (t) => {
+test('PATCH /product-designs/:id rejects empty data', t => {
   let designId;
   let sessionId;
 
@@ -27,7 +31,7 @@ test('PATCH /product-designs/:id rejects empty data', (t) => {
         userId: user.id
       });
     })
-    .then((design) => {
+    .then(design => {
       designId = design.id;
 
       return patch(`/product-designs/${designId}`, {
@@ -41,7 +45,7 @@ test('PATCH /product-designs/:id rejects empty data', (t) => {
     });
 });
 
-test('PATCH /product-designs/:id allows certain params, rejects others', (t) => {
+test('PATCH /product-designs/:id allows certain params, rejects others', t => {
   let designId;
   let sessionId;
 
@@ -56,7 +60,7 @@ test('PATCH /product-designs/:id allows certain params, rejects others', (t) => 
         }
       });
     })
-    .then((response) => {
+    .then(response => {
       designId = response[1].id;
 
       return patch(`/product-designs/${designId}`, {
@@ -76,7 +80,7 @@ test('PATCH /product-designs/:id allows certain params, rejects others', (t) => 
     });
 });
 
-test('PATCH /product-designs/:id allows admins to update a wider range of keys', (t) => {
+test('PATCH /product-designs/:id allows admins to update a wider range of keys', t => {
   let designId;
   let sessionId;
 
@@ -88,7 +92,7 @@ test('PATCH /product-designs/:id allows admins to update a wider range of keys',
         userId: user.id
       });
     })
-    .then((design) => {
+    .then(design => {
       designId = design.id;
 
       return patch(`/product-designs/${designId}`, {
@@ -112,8 +116,10 @@ test('PATCH /product-designs/:id allows admins to update a wider range of keys',
     });
 });
 
-test('GET /product-designs allows searching', async (t) => {
-  sandbox().stub(EmailService, 'enqueueSend').returns(Promise.resolve());
+test('GET /product-designs allows searching', async t => {
+  sandbox()
+    .stub(EmailService, 'enqueueSend')
+    .returns(Promise.resolve());
 
   const { user, session } = await createUser({ role: 'ADMIN' });
 
@@ -139,13 +145,10 @@ test('GET /product-designs allows searching', async (t) => {
   t.equal(response.status, 200);
   t.equal(body.length, 2);
 
-  t.deepEqual(
-    [body[0].id, body[1].id].sort(),
-    [first.id, third.id].sort()
-  );
+  t.deepEqual([body[0].id, body[1].id].sort(), [first.id, third.id].sort());
 });
 
-test('GET /product-designs allows fetching designs await quotes', async (t) => {
+test('GET /product-designs allows fetching designs await quotes', async t => {
   const { user, session } = await createUser({ role: 'ADMIN' });
   const first = await ProductDesignsDAO.create({
     userId: user.id,
@@ -192,38 +195,40 @@ test('GET /product-designs allows fetching designs await quotes', async (t) => {
   );
 
   t.equal(response.status, 200);
-  t.deepEqual(needsQuote, [{
-    ...first,
-    owner: {
-      ...omit(user, ['passwordHash']),
-      createdAt: new Date(user.createdAt).toISOString()
-    },
-    createdAt: new Date(first.createdAt).toISOString(),
-    currentStatus: {
-      actionName: 'Submit',
-      id: 'DRAFT',
-      label: 'Draft',
-      nextStatus: 'IN_REVIEW',
-      slaDescription: ''
-    },
-    nextStatus: {
-      actionName: 'Approve',
-      id: 'IN_REVIEW',
-      label: 'In Review',
-      nextStatus: 'NEEDS_DEVELOPMENT_PAYMENT',
-      slaDescription: ''
-    },
-    permissions: {
-      canComment: true,
-      canDelete: true,
-      canEdit: true,
-      canSubmit: true,
-      canView: true
+  t.deepEqual(needsQuote, [
+    {
+      ...first,
+      owner: {
+        ...omit(user, ['passwordHash']),
+        createdAt: new Date(user.createdAt).toISOString()
+      },
+      createdAt: new Date(first.createdAt).toISOString(),
+      currentStatus: {
+        actionName: 'Submit',
+        id: 'DRAFT',
+        label: 'Draft',
+        nextStatus: 'IN_REVIEW',
+        slaDescription: ''
+      },
+      nextStatus: {
+        actionName: 'Approve',
+        id: 'IN_REVIEW',
+        label: 'In Review',
+        nextStatus: 'NEEDS_DEVELOPMENT_PAYMENT',
+        slaDescription: ''
+      },
+      permissions: {
+        canComment: true,
+        canDelete: true,
+        canEdit: true,
+        canSubmit: true,
+        canView: true
+      }
     }
-  }]);
+  ]);
 });
 
-test('GET /product-designs/:designId/upload-policy/:sectionId', async (t) => {
+test('GET /product-designs/:designId/upload-policy/:sectionId', async t => {
   const { user, session } = await createUser({ role: 'ADMIN' });
 
   const design = await ProductDesignsDAO.create({
@@ -232,12 +237,16 @@ test('GET /product-designs/:designId/upload-policy/:sectionId', async (t) => {
   });
   const sectionId = uuid.v4();
 
-  sandbox().stub(AWSService, 'getThumbnailUploadPolicy').returns(Promise.resolve({
-    url: 'stub url',
-    fields: {
-      'x-aws-foo': 'bar'
-    }
-  }));
+  sandbox()
+    .stub(AWSService, 'getThumbnailUploadPolicy')
+    .returns(
+      Promise.resolve({
+        url: 'stub url',
+        fields: {
+          'x-aws-foo': 'bar'
+        }
+      })
+    );
 
   const [response, body] = await get(
     `/product-designs/${design.id}/upload-policy/${sectionId}`,
@@ -255,7 +264,7 @@ test('GET /product-designs/:designId/upload-policy/:sectionId', async (t) => {
   });
 });
 
-test('POST /product-designs/:designId/sections/:sectionId/annotations creates annotation with valid data', async (t) => {
+test('POST /product-designs/:designId/sections/:sectionId/annotations creates annotation with valid data', async t => {
   const { user, session } = await createUser();
 
   const design = await ProductDesignsDAO.create({
@@ -284,7 +293,7 @@ test('POST /product-designs/:designId/sections/:sectionId/annotations creates an
   t.equal(validResponse.status, 200);
 });
 
-test('POST /product-designs/:designId/sections/:sectionId/annotations returns 400 with invalid input', async (t) => {
+test('POST /product-designs/:designId/sections/:sectionId/annotations returns 400 with invalid input', async t => {
   const { user, session } = await createUser();
 
   const design = await ProductDesignsDAO.create({
@@ -312,7 +321,7 @@ test('POST /product-designs/:designId/sections/:sectionId/annotations returns 40
   t.equal(invalidResponse.status, 400);
 });
 
-test('POST /product-designs/:designId/events with multiple events creates them', async (t) => {
+test('POST /product-designs/:designId/events with multiple events creates them', async t => {
   const { user, session } = await createUser();
 
   const design = await ProductDesignsDAO.create({
@@ -363,7 +372,7 @@ test('POST /product-designs/:designId/events with multiple events creates them',
   ]);
 });
 
-test('POST /product-designs/:designId/events with multiple events with some forbidden types returns 403', async (t) => {
+test('POST /product-designs/:designId/events with multiple events with some forbidden types returns 403', async t => {
   const { user, session } = await createUser();
 
   const design = await ProductDesignsDAO.create({
@@ -400,18 +409,15 @@ test('POST /product-designs/:designId/events with multiple events with some forb
     }
   ];
 
-  const [response] = await post(
-    `/product-designs/${design.id}/events`,
-    {
-      headers: authHeader(session.id),
-      body: inputEvents
-    }
-  );
+  const [response] = await post(`/product-designs/${design.id}/events`, {
+    headers: authHeader(session.id),
+    body: inputEvents
+  });
 
   t.equal(response.status, 403);
 });
 
-test('PUT /product-designs/:designId/events/:eventId with an event creates it', async (t) => {
+test('PUT /product-designs/:designId/events/:eventId with an event creates it', async t => {
   const { user, session } = await createUser();
 
   const design = await ProductDesignsDAO.create({
@@ -444,7 +450,7 @@ test('PUT /product-designs/:designId/events/:eventId with an event creates it', 
   });
 });
 
-test('PUT /product-designs/:designId/events/:eventId a forbidden type returns 403', async (t) => {
+test('PUT /product-designs/:designId/events/:eventId a forbidden type returns 403', async t => {
   const { user, session } = await createUser();
 
   const design = await ProductDesignsDAO.create({
@@ -472,7 +478,7 @@ test('PUT /product-designs/:designId/events/:eventId a forbidden type returns 40
   t.equal(response.status, 403);
 });
 
-test('PUT /product-designs/:designId/events/:eventId with wrong ID in body', async (t) => {
+test('PUT /product-designs/:designId/events/:eventId with wrong ID in body', async t => {
   const { user, session } = await createUser();
 
   const design = await ProductDesignsDAO.create({
@@ -500,7 +506,7 @@ test('PUT /product-designs/:designId/events/:eventId with wrong ID in body', asy
   t.equal(response.status, 400);
 });
 
-test('GET /product-designs/:designId/events', async (t) => {
+test('GET /product-designs/:designId/events', async t => {
   const { user, session } = await createUser({ role: 'ADMIN' });
   const design = await ProductDesignsDAO.create({
     userId: user.id,
@@ -551,7 +557,7 @@ test('GET /product-designs/:designId/events', async (t) => {
   t.deepEqual(designEvents, createdEvents);
 });
 
-test('GET /product-designs/:designId/collections returns collections', async (t) => {
+test('GET /product-designs/:designId/collections returns collections', async t => {
   const { user, session } = await createUser({ role: 'ADMIN' });
 
   const collection = await CollectionsDAO.create({
@@ -576,5 +582,9 @@ test('GET /product-designs/:designId/collections returns collections', async (t)
   t.equal(response.status, 200);
   t.equal(body.length, 1, 'Returns the collection');
   const responseCollection = body[0];
-  t.deepEqual(responseCollection.id, collection.id, 'Returns the same collection');
+  t.deepEqual(
+    responseCollection.id,
+    collection.id,
+    'Returns the same collection'
+  );
 });

@@ -16,7 +16,9 @@ const UsersDAO = require('../../components/users/dao');
  */
 async function findDesignUsers(designId) {
   const design = await ProductDesignsDAO.findById(designId);
-  if (!design) { throw new Error(`Cannot find users for unknown design ${designId}`); }
+  if (!design) {
+    throw new Error(`Cannot find users for unknown design ${designId}`);
+  }
 
   const owner = await UsersDAO.findById(design.userId);
 
@@ -24,7 +26,7 @@ async function findDesignUsers(designId) {
 
   const collaborators = await CollaboratorsDAO.findByDesign(designId);
 
-  collaborators.forEach((collaborator) => {
+  collaborators.forEach(collaborator => {
     if (collaborator.user) {
       users.push(collaborator.user);
     }

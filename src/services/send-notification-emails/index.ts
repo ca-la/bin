@@ -26,7 +26,8 @@ export async function sendNotificationEmails(): Promise<number> {
   Logger.log(`Processing ${notifications.length} outstanding notifications`);
 
   const notificationsByRecipient: NotificationsByRecipient = groupBy(
-    notifications, 'recipientUserId'
+    notifications,
+    'recipientUserId'
   );
   const recipients = Object.keys(notificationsByRecipient);
 
@@ -34,11 +35,12 @@ export async function sendNotificationEmails(): Promise<number> {
     const recipientNotifications = notificationsByRecipient[recipientId];
     const recipientNotificationMessages = [];
     for (const notification of recipientNotifications) {
-      const message = await createNotificationMessage(notification)
-          .catch(filterError(InvalidDataError, (err: InvalidDataError) => {
-            Logger.logWarning(err.message);
-            return null;
-          }));
+      const message = await createNotificationMessage(notification).catch(
+        filterError(InvalidDataError, (err: InvalidDataError) => {
+          Logger.logWarning(err.message);
+          return null;
+        })
+      );
 
       if (message) {
         recipientNotificationMessages.push(message);
@@ -46,15 +48,22 @@ export async function sendNotificationEmails(): Promise<number> {
     }
     const recipient = await UsersDAO.findById(recipientId);
 
-    if (!recipient) { throw new Error(`Could not find user ${recipientId}`); }
+    if (!recipient) {
+      throw new Error(`Could not find user ${recipientId}`);
+    }
 
-    const listOfNotificationList = chunk(recipientNotificationMessages, QUEUE_LIMIT);
+    const listOfNotificationList = chunk(
+      recipientNotificationMessages,
+      QUEUE_LIMIT
+    );
     for (const notificationList of listOfNotificationList) {
       const notificationListIds = notificationList.map(
         (notification: NotificationMessage): string => notification.id
       );
       Logger.log(`
-Enqueuing an email with ${notificationList.length} notifications for user ${recipient.id}.
+Enqueuing an email with ${notificationList.length} notifications for user ${
+        recipient.id
+      }.
       `);
 
       try {

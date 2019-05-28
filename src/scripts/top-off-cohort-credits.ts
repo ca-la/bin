@@ -18,17 +18,21 @@ run()
     log(`${green}Successfully credited users!`);
     process.exit();
   })
-  .catch((err: any): void => {
-    logServerError(err);
-    process.exit(1);
-  });
+  .catch(
+    (err: any): void => {
+      logServerError(err);
+      process.exit(1);
+    }
+  );
 
 async function run(): Promise<void> {
   const cohortId = process.argv[2];
   const creditAmountString = process.argv[3];
 
   if (!cohortId || !creditAmountString) {
-    throw new Error('Usage: top-off-cohort-credits.ts [cohortId] [amount in cents]');
+    throw new Error(
+      'Usage: top-off-cohort-credits.ts [cohortId] [amount in cents]'
+    );
   }
 
   const creditAmountCents = Number(creditAmountString);
@@ -43,7 +47,10 @@ async function run(): Promise<void> {
   for (const cohortUser of cohortUsers) {
     const userId = cohortUser.user_id;
     const existingCredits = await CreditsDAO.getCreditAmount(userId);
-    log(green, `User ${userId} has ${existingCredits} cents of existing credit`);
+    log(
+      green,
+      `User ${userId} has ${existingCredits} cents of existing credit`
+    );
     const amountToAdd = Math.max(0, creditAmountCents - existingCredits);
 
     if (amountToAdd > 0) {

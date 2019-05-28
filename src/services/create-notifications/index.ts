@@ -101,14 +101,22 @@ export async function sendDesignOwnerAnnotationCommentCreateNotification(
   mentionedUserIds: string[]
 ): Promise<AnnotationCommentCreateNotification | null> {
   const canvas = await CanvasesDAO.findById(canvasId);
-  if (!canvas) { throw new Error(`Canvas ${canvasId} does not exist!`); }
+  if (!canvas) {
+    throw new Error(`Canvas ${canvasId} does not exist!`);
+  }
   const design = await DesignsDAO.findById(canvas.designId);
-  if (!design) { throw new Error(`Design ${canvas.designId} does not exist!`); }
+  if (!design) {
+    throw new Error(`Design ${canvas.designId} does not exist!`);
+  }
   const targetId = design.userId;
   const collectionId = design.collectionIds[0] || null;
 
-  if (actorId === targetId) { return null; }
-  if (mentionedUserIds.includes(targetId)) { return null; }
+  if (actorId === targetId) {
+    return null;
+  }
+  if (mentionedUserIds.includes(targetId)) {
+    return null;
+  }
 
   const id = uuid.v4();
   const notification = await replaceNotifications({
@@ -128,7 +136,10 @@ export async function sendDesignOwnerAnnotationCommentCreateNotification(
     notification,
     isAnnotationCommentCreateNotification,
     // tslint:disable-next-line:max-line-length
-    `Could not validate ${NotificationType.ANNOTATION_COMMENT_CREATE} notification type from database with id: ${id}`);
+    `Could not validate ${
+      NotificationType.ANNOTATION_COMMENT_CREATE
+    } notification type from database with id: ${id}`
+  );
 }
 
 /**
@@ -143,12 +154,18 @@ export async function sendAnnotationCommentMentionNotification(
   recipientUserId: string
 ): Promise<AnnotationCommentMentionNotification | null> {
   const canvas = await CanvasesDAO.findById(canvasId);
-  if (!canvas) { throw new Error(`Canvas ${canvasId} does not exist!`); }
+  if (!canvas) {
+    throw new Error(`Canvas ${canvasId} does not exist!`);
+  }
   const design = await DesignsDAO.findById(canvas.designId);
-  if (!design) { throw new Error(`Design ${canvas.designId} does not exist!`); }
+  if (!design) {
+    throw new Error(`Design ${canvas.designId} does not exist!`);
+  }
   const collectionId = design.collectionIds[0] || null;
 
-  if (actorId === recipientUserId) { return null; }
+  if (actorId === recipientUserId) {
+    return null;
+  }
 
   const id = uuid.v4();
   const notification = await replaceNotifications({
@@ -168,7 +185,10 @@ export async function sendAnnotationCommentMentionNotification(
     notification,
     isAnnotationCommentMentionNotification,
     // tslint:disable-next-line:max-line-length
-    `Could not validate ${NotificationType.ANNOTATION_COMMENT_MENTION} notification type from database with id: ${id}`);
+    `Could not validate ${
+      NotificationType.ANNOTATION_COMMENT_MENTION
+    } notification type from database with id: ${id}`
+  );
 }
 
 /**
@@ -181,16 +201,22 @@ export async function sendDesignOwnerMeasurementCreateNotification(
   actorId: string
 ): Promise<MeasurementCreateNotification | null> {
   const canvas = await CanvasesDAO.findById(canvasId);
-  if (!canvas) { throw new Error(`Canvas ${canvasId} does not exist!`); }
+  if (!canvas) {
+    throw new Error(`Canvas ${canvasId} does not exist!`);
+  }
   const design = await DesignsDAO.findById(canvas.designId);
-  if (!design) { throw new Error(`Design ${canvas.designId} does not exist!`); }
+  if (!design) {
+    throw new Error(`Design ${canvas.designId} does not exist!`);
+  }
   const targetId = design.userId;
   const collectionId = design.collectionIds[0];
   if (!collectionId) {
     throw new Error(`Collection does not exist for design ${canvas.designId}!`);
   }
 
-  if (actorId === targetId) { return null; }
+  if (actorId === targetId) {
+    return null;
+  }
 
   const id = uuid.v4();
   const notification = await replaceNotifications({
@@ -209,7 +235,10 @@ export async function sendDesignOwnerMeasurementCreateNotification(
     notification,
     isMeasurementCreateNotification,
     // tslint:disable-next-line:max-line-length
-    `Could not validate ${NotificationType.MEASUREMENT_CREATE} notification type from database with id: ${id}`);
+    `Could not validate ${
+      NotificationType.MEASUREMENT_CREATE
+    } notification type from database with id: ${id}`
+  );
 }
 
 /**
@@ -221,13 +250,19 @@ export async function sendTaskCommentCreateNotification(
   actorId: string,
   mentionedUserIds: string[]
 ): Promise<TaskCommentCreateNotification[]> {
-  const collaborators = await CollaboratorsDAO.findByTask(taskId) as Collaborator[];
-  const recipients = collaborators.filter((collaborator: Collaborator): boolean => {
-    return Boolean(collaborator.userId);
-  }) as Collaborator[];
+  const collaborators = (await CollaboratorsDAO.findByTask(
+    taskId
+  )) as Collaborator[];
+  const recipients = collaborators.filter(
+    (collaborator: Collaborator): boolean => {
+      return Boolean(collaborator.userId);
+    }
+  ) as Collaborator[];
 
   const taskEvent = await TaskEventsDAO.findById(taskId);
-  if (!taskEvent) { throw new Error(`Could not find a task event with task id: ${taskId}`); }
+  if (!taskEvent) {
+    throw new Error(`Could not find a task event with task id: ${taskId}`);
+  }
 
   const collaboratorUserIds: string[] = recipients
     .filter((collaborator: Collaborator) => Boolean(collaborator.userId))
@@ -235,20 +270,34 @@ export async function sendTaskCommentCreateNotification(
 
   const recipientIds: string[] = taskEvent.createdBy
     ? [...collaboratorUserIds, taskEvent.createdBy]
-    : collaboratorUserIds ;
-  const filteredRecipientIds = recipientIds.filter((recipientId: string): boolean => {
-    return recipientId !== actorId
-      && !mentionedUserIds.some((mentionedId: string) => mentionedId === recipientId);
-  });
+    : collaboratorUserIds;
+  const filteredRecipientIds = recipientIds.filter(
+    (recipientId: string): boolean => {
+      return (
+        recipientId !== actorId &&
+        !mentionedUserIds.some(
+          (mentionedId: string) => mentionedId === recipientId
+        )
+      );
+    }
+  );
 
   const stageTask = await StageTasksDAO.findByTaskId(taskId);
-  if (!stageTask) { throw new Error(`Could not find a stage task with task id: ${taskId}`); }
+  if (!stageTask) {
+    throw new Error(`Could not find a stage task with task id: ${taskId}`);
+  }
 
   const stage = await StagesDAO.findById(stageTask.designStageId);
-  if (!stage) { throw new Error(`Could not find a stage with id: ${stageTask.designStageId}`); }
+  if (!stage) {
+    throw new Error(
+      `Could not find a stage with id: ${stageTask.designStageId}`
+    );
+  }
 
   const design = await DesignsDAO.findById(stage.designId);
-  if (!design) { throw new Error(`Could not find a design with id: ${stage.designId}`); }
+  if (!design) {
+    throw new Error(`Could not find a design with id: ${stage.designId}`);
+  }
 
   const notifications = [];
   for (const recipientId of filteredRecipientIds) {
@@ -270,7 +319,10 @@ export async function sendTaskCommentCreateNotification(
       notification,
       isTaskCommentCreateNotification,
       // tslint:disable-next-line:max-line-length
-      `Could not validate ${NotificationType.TASK_COMMENT_CREATE} notification type from database with id: ${id}`);
+      `Could not validate ${
+        NotificationType.TASK_COMMENT_CREATE
+      } notification type from database with id: ${id}`
+    );
     notifications.push(validated);
   }
   return notifications;
@@ -290,16 +342,26 @@ export async function sendTaskCommentMentionNotification(
   }
 
   const taskEvent = await TaskEventsDAO.findById(taskId);
-  if (!taskEvent) { throw new Error(`Could not find a task event with task id: ${taskId}`); }
+  if (!taskEvent) {
+    throw new Error(`Could not find a task event with task id: ${taskId}`);
+  }
 
   const stageTask = await StageTasksDAO.findByTaskId(taskId);
-  if (!stageTask) { throw new Error(`Could not find a stage task with task id: ${taskId}`); }
+  if (!stageTask) {
+    throw new Error(`Could not find a stage task with task id: ${taskId}`);
+  }
 
   const stage = await StagesDAO.findById(stageTask.designStageId);
-  if (!stage) { throw new Error(`Could not find a stage with id: ${stageTask.designStageId}`); }
+  if (!stage) {
+    throw new Error(
+      `Could not find a stage with id: ${stageTask.designStageId}`
+    );
+  }
 
   const design = await DesignsDAO.findById(stage.designId);
-  if (!design) { throw new Error(`Could not find a design with id: ${stage.designId}`); }
+  if (!design) {
+    throw new Error(`Could not find a design with id: ${stage.designId}`);
+  }
 
   const id = uuid.v4();
   const notification = await replaceNotifications({
@@ -319,7 +381,10 @@ export async function sendTaskCommentMentionNotification(
     notification,
     isTaskCommentMentionNotification,
     // tslint:disable-next-line:max-line-length
-    `Could not validate ${NotificationType.TASK_COMMENT_MENTION} notification type from database with id: ${id}`);
+    `Could not validate ${
+      NotificationType.TASK_COMMENT_MENTION
+    } notification type from database with id: ${id}`
+  );
   return validated;
 }
 
@@ -331,13 +396,21 @@ export async function sendTaskAssignmentNotification(
   const collaborators = await CollaboratorsDAO.findAllByIds(collaboratorIds);
 
   const stageTask = await StageTasksDAO.findByTaskId(taskId);
-  if (!stageTask) { throw new Error(`Could not find a stage task with task id: ${taskId}`); }
+  if (!stageTask) {
+    throw new Error(`Could not find a stage task with task id: ${taskId}`);
+  }
 
   const stage = await StagesDAO.findById(stageTask.designStageId);
-  if (!stage) { throw new Error(`Could not find a stage with id: ${stageTask.designStageId}`); }
+  if (!stage) {
+    throw new Error(
+      `Could not find a stage with id: ${stageTask.designStageId}`
+    );
+  }
 
   const design = await DesignsDAO.findById(stage.designId);
-  if (!design) { throw new Error(`Could not find a design with id: ${stage.designId}`); }
+  if (!design) {
+    throw new Error(`Could not find a design with id: ${stage.designId}`);
+  }
 
   const notifications = [];
 
@@ -363,7 +436,10 @@ export async function sendTaskAssignmentNotification(
       notification,
       isTaskAssigmentNotification,
       // tslint:disable-next-line:max-line-length
-      `Could not validate ${NotificationType.TASK_ASSIGNMENT} notification type from database with id: ${id}`);
+      `Could not validate ${
+        NotificationType.TASK_ASSIGNMENT
+      } notification type from database with id: ${id}`
+    );
     notifications.push(validated);
   }
 
@@ -375,21 +451,31 @@ export async function sendTaskCompletionNotification(
   actorId: string
 ): Promise<TaskCompletionNotification[]> {
   const stageTask = await StageTasksDAO.findByTaskId(taskId);
-  if (!stageTask) { throw new Error(`Could not find a stage task with task id: ${taskId}`); }
+  if (!stageTask) {
+    throw new Error(`Could not find a stage task with task id: ${taskId}`);
+  }
 
   const stage = await StagesDAO.findById(stageTask.designStageId);
-  if (!stage) { throw new Error(`Could not find a stage with id: ${stageTask.designStageId}`); }
+  if (!stage) {
+    throw new Error(
+      `Could not find a stage with id: ${stageTask.designStageId}`
+    );
+  }
 
   const design = await DesignsDAO.findById(stage.designId);
-  if (!design) { throw new Error(`Could not find a design with id: ${stage.designId}`); }
+  if (!design) {
+    throw new Error(`Could not find a design with id: ${stage.designId}`);
+  }
 
-  const collaborators: CollaboratorWithUser[] =
-    await CollaboratorsDAO.findByDesign(design.id);
+  const collaborators: CollaboratorWithUser[] = await CollaboratorsDAO.findByDesign(
+    design.id
+  );
 
-  const recipients: CollaboratorWithUser[] = collaborators
-    .filter((collaborator: CollaboratorWithUser) => {
+  const recipients: CollaboratorWithUser[] = collaborators.filter(
+    (collaborator: CollaboratorWithUser) => {
       return Boolean(collaborator.user) && collaborator.userId !== actorId;
-    });
+    }
+  );
 
   const notifications = [];
   for (const collaborator of recipients) {
@@ -414,7 +500,10 @@ export async function sendTaskCompletionNotification(
       notification,
       isTaskCompletionNotification,
       // tslint:disable-next-line:max-line-length
-      `Could not validate ${NotificationType.TASK_COMPLETION} notification type from database with id: ${id}`);
+      `Could not validate ${
+        NotificationType.TASK_COMPLETION
+      } notification type from database with id: ${id}`
+    );
     notifications.push(validated);
   }
   return notifications;
@@ -451,7 +540,10 @@ export async function sendPartnerAcceptServiceBidNotification(
     notification,
     isPartnerAcceptServiceBidNotification,
     // tslint:disable-next-line:max-line-length
-    `Could not validate ${NotificationType.PARTNER_ACCEPT_SERVICE_BID} notification type from database with id: ${id}`);
+    `Could not validate ${
+      NotificationType.PARTNER_ACCEPT_SERVICE_BID
+    } notification type from database with id: ${id}`
+  );
 
   return validated;
 }
@@ -487,7 +579,10 @@ export async function sendPartnerRejectServiceBidNotification(
     notification,
     isPartnerRejectServiceBidNotification,
     // tslint:disable-next-line:max-line-length
-    `Could not validate ${NotificationType.PARTNER_REJECT_SERVICE_BID} notification type from database with id: ${id}`);
+    `Could not validate ${
+      NotificationType.PARTNER_REJECT_SERVICE_BID
+    } notification type from database with id: ${id}`
+  );
 
   return validated;
 }
@@ -523,7 +618,10 @@ export async function sendDesignerSubmitCollection(
     notification,
     isCollectionSubmitNotification,
     // tslint:disable-next-line:max-line-length
-    `Could not validate ${NotificationType.COLLECTION_SUBMIT} notification type from database with id: ${id}`);
+    `Could not validate ${
+      NotificationType.COLLECTION_SUBMIT
+    } notification type from database with id: ${id}`
+  );
 }
 
 /**
@@ -536,53 +634,72 @@ export async function immediatelySendFullyCostedCollection(
   actorId: string
 ): Promise<CommitCostInputsNotification[]> {
   const actor = await UsersDAO.findById(actorId);
-  if (!actor) { throw new Error(`User ${actorId} does not exist!`); }
+  if (!actor) {
+    throw new Error(`User ${actorId} does not exist!`);
+  }
 
   const collection = await CollectionsDAO.findById(collectionId);
-  if (!collection) { throw new Error(`Collection ${collectionId} does not exist!`); }
+  if (!collection) {
+    throw new Error(`Collection ${collectionId} does not exist!`);
+  }
 
   const collaborators = await CollaboratorsDAO.findByCollection(collectionId);
-  const recipients = collaborators.filter((collaborator: Collaborator): boolean => {
-    return collaborator.role === 'EDIT' && Boolean(collaborator.userId);
-  });
-
-  return Promise.all(recipients.map(
-    async (recipient: Collaborator): Promise<CommitCostInputsNotification> => {
-      if (!recipient.userId) { throw new Error('User id not on collaborator!'); }
-      const user = await UsersDAO.findById(recipient.userId);
-      if (!user) { throw new Error(`User ${recipient.userId} not found!`); }
-
-      const id = uuid.v4();
-      const notification = await NotificationsDAO.create({
-        ...templateNotification,
-        actorUserId: actor.id,
-        collectionId,
-        id,
-        recipientUserId: user.id,
-        sentEmailAt: new Date(),
-        type: NotificationType.COMMIT_COST_INPUTS
-      });
-      const notificationMessage = await createNotificationMessage(notification);
-      if (!notificationMessage) {
-        throw new Error('Could not create notification message');
-      }
-      await EmailService.enqueueSend({
-        params: {
-          collection,
-          notification: notificationMessage
-        },
-        templateName: 'single_notification',
-        to: user.email
-      });
-      const validated = validateTypeWithGuardOrThrow(
-        notification,
-        isCommitCostInputsNotification,
-        // tslint:disable-next-line:max-line-length
-        `Could not validate ${NotificationType.COMMIT_COST_INPUTS} notification type from database with id: ${id}`);
-
-      return validated;
+  const recipients = collaborators.filter(
+    (collaborator: Collaborator): boolean => {
+      return collaborator.role === 'EDIT' && Boolean(collaborator.userId);
     }
-  ));
+  );
+
+  return Promise.all(
+    recipients.map(
+      async (
+        recipient: Collaborator
+      ): Promise<CommitCostInputsNotification> => {
+        if (!recipient.userId) {
+          throw new Error('User id not on collaborator!');
+        }
+        const user = await UsersDAO.findById(recipient.userId);
+        if (!user) {
+          throw new Error(`User ${recipient.userId} not found!`);
+        }
+
+        const id = uuid.v4();
+        const notification = await NotificationsDAO.create({
+          ...templateNotification,
+          actorUserId: actor.id,
+          collectionId,
+          id,
+          recipientUserId: user.id,
+          sentEmailAt: new Date(),
+          type: NotificationType.COMMIT_COST_INPUTS
+        });
+        const notificationMessage = await createNotificationMessage(
+          notification
+        );
+        if (!notificationMessage) {
+          throw new Error('Could not create notification message');
+        }
+        await EmailService.enqueueSend({
+          params: {
+            collection,
+            notification: notificationMessage
+          },
+          templateName: 'single_notification',
+          to: user.email
+        });
+        const validated = validateTypeWithGuardOrThrow(
+          notification,
+          isCommitCostInputsNotification,
+          // tslint:disable-next-line:max-line-length
+          `Could not validate ${
+            NotificationType.COMMIT_COST_INPUTS
+          } notification type from database with id: ${id}`
+        );
+
+        return validated;
+      }
+    )
+  );
 }
 
 /**
@@ -607,7 +724,10 @@ export async function sendPartnerDesignBid(
     notification,
     isPartnerDesignBidNotification,
     // tslint:disable-next-line:max-line-length
-    `Could not validate ${NotificationType.PARTNER_DESIGN_BID} notification type from database with id: ${id}`);
+    `Could not validate ${
+      NotificationType.PARTNER_DESIGN_BID
+    } notification type from database with id: ${id}`
+  );
 }
 
 interface CollaboratorInviteArguments {
@@ -646,15 +766,15 @@ export async function immediatelySendInviteCollaborator(
   const target = invitation.targetUserId
     ? await UsersDAO.findById(invitation.targetUserId)
     : null;
-  const collaborator = await CollaboratorsDAO.findById(
+  const collaborator = (await CollaboratorsDAO.findById(
     invitation.targetCollaboratorId
-  ) as (Collaborator | null);
+  )) as (Collaborator | null);
 
   const emailAddress = target
     ? target.email
     : collaborator
-      ? collaborator.userEmail
-      : new Error('No one is specified to send an email to!');
+    ? collaborator.userEmail
+    : new Error('No one is specified to send an email to!');
 
   const notificationMessage = await createNotificationMessage(notification);
   if (!notificationMessage) {
@@ -674,7 +794,10 @@ export async function immediatelySendInviteCollaborator(
     notification,
     isInviteCollaboratorNotification,
     // tslint:disable-next-line:max-line-length
-    `Could not validate ${NotificationType.INVITE_COLLABORATOR} notification type from database with id: ${id}`);
+    `Could not validate ${
+      NotificationType.INVITE_COLLABORATOR
+    } notification type from database with id: ${id}`
+  );
 
   return validated;
 }

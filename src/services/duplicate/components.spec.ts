@@ -26,7 +26,11 @@ test('findAndDuplicateComponent without sub-resources', async (t: tape.Test) => 
   await createComponent(componentData);
 
   await db.transaction(async (trx: Knex.Transaction) => {
-    const duplicateComponent = await findAndDuplicateComponent(componentId, null, trx);
+    const duplicateComponent = await findAndDuplicateComponent(
+      componentId,
+      null,
+      trx
+    );
     t.deepEqual(
       {
         artworkId: duplicateComponent.artworkId,
@@ -73,7 +77,11 @@ test('findAndDuplicateComponent with sub-resources', async (t: tape.Test) => {
   await createComponent(componentData);
 
   await db.transaction(async (trx: Knex.Transaction) => {
-    const duplicateComponent = await findAndDuplicateComponent(componentId, null, trx);
+    const duplicateComponent = await findAndDuplicateComponent(
+      componentId,
+      null,
+      trx
+    );
     t.deepEqual(
       {
         artworkId: duplicateComponent.artworkId,

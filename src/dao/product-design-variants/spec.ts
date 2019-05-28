@@ -69,7 +69,9 @@ test('ProductDesignVariantsDAO.getSizes returns a list of sizes', async (t: Test
 
 test('replaceVariants does not delete old ones if creation fails', async (t: Test) => {
   const { design } = await createPrerequisites();
-  sandbox().stub(dataAdapter, 'forInsertion').throws(new Error('A deep internal error'));
+  sandbox()
+    .stub(dataAdapter, 'forInsertion')
+    .throws(new Error('A deep internal error'));
 
   await replaceForDesign(design.id, [
     {
@@ -106,6 +108,10 @@ test('replaceVariants works for well formed variants', async (t: Test) => {
   ]);
 
   t.equal(variants.length, 1, 'Replaces all variants for the new one');
-  t.equal(variants[0].colorNamePosition, 9, 'Saves the color position correctly');
+  t.equal(
+    variants[0].colorNamePosition,
+    9,
+    'Saves the color position correctly'
+  );
   t.equal(variants[0].position, 20, 'Saves the position correctly');
 });

@@ -19,24 +19,24 @@ export default function generateScreenPrintingProcess(
       [units, base]: [number, number]
     ): UninsertedPricingProcessRow[] => {
       return acc.concat(
-        range(1, 10)
-          .reduce(
-            (
-              rowsForUnits: UninsertedPricingProcessRow[],
-              colorCount: number
-            ): UninsertedPricingProcessRow[] => {
-              return rowsForUnits.concat({
-                complexity: '' + colorCount + '_COLOR' + (colorCount > 1 ? 'S' : ''),
-                id: uuid.v4(),
-                minimum_units: units,
-                name: 'SCREEN_PRINTING',
-                setup_cents: colorCount * setup(units),
-                unit_cents: base + (colorCount * perHit),
-                version
-              });
-            },
-            []
-          )
+        range(1, 10).reduce(
+          (
+            rowsForUnits: UninsertedPricingProcessRow[],
+            colorCount: number
+          ): UninsertedPricingProcessRow[] => {
+            return rowsForUnits.concat({
+              complexity:
+                '' + colorCount + '_COLOR' + (colorCount > 1 ? 'S' : ''),
+              id: uuid.v4(),
+              minimum_units: units,
+              name: 'SCREEN_PRINTING',
+              setup_cents: colorCount * setup(units),
+              unit_cents: base + colorCount * perHit,
+              version
+            });
+          },
+          []
+        )
       );
     },
     []

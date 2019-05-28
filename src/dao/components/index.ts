@@ -47,7 +47,9 @@ export async function create(
     })
     .then((rows: ComponentRow[]) => first<ComponentRow>(rows));
 
-  if (!created) { throw new Error('Failed to create rows'); }
+  if (!created) {
+    throw new Error('Failed to create rows');
+  }
 
   return validate<ComponentRow, Component>(
     TABLE_NAME,
@@ -74,7 +76,9 @@ export async function update(
     .update(rowData, '*')
     .then((rows: ComponentRow[]) => first<ComponentRow>(rows));
 
-  if (!updated) { throw new Error('Failed to update rows'); }
+  if (!updated) {
+    throw new Error('Failed to update rows');
+  }
 
   return validate<ComponentRow, Component>(
     TABLE_NAME,
@@ -90,7 +94,9 @@ export async function del(id: string): Promise<Component> {
     .update({ deleted_at: new Date() }, '*')
     .then((rows: ComponentRow[]) => first<ComponentRow>(rows));
 
-  if (!deleted) { throw new Error('Failed to delete rows'); }
+  if (!deleted) {
+    throw new Error('Failed to delete rows');
+  }
 
   return validate<ComponentRow, Component>(
     TABLE_NAME,
@@ -107,7 +113,9 @@ export async function findById(id: string): Promise<Component | null> {
     .limit(1)
     .then((rows: ComponentRow[]) => first<ComponentRow>(rows));
 
-  if (!component) { return null; }
+  if (!component) {
+    return null;
+  }
 
   return validate<ComponentRow, Component>(
     TABLE_NAME,
@@ -121,7 +129,11 @@ export async function findAllByCanvasId(id: string): Promise<Component[]> {
   const components: ComponentRow[] = await db(TABLE_NAME)
     .select('components.*')
     .from(TABLE_NAME)
-    .innerJoin('product_design_canvases', 'components.id', 'product_design_canvases.component_id')
+    .innerJoin(
+      'product_design_canvases',
+      'components.id',
+      'product_design_canvases.component_id'
+    )
     .where({ 'product_design_canvases.id': id, 'components.deleted_at': null });
 
   return validateEvery<ComponentRow, Component>(
@@ -137,7 +149,8 @@ export async function findAllByCanvasId(id: string): Promise<Component[]> {
  */
 export async function findRoot(id: string): Promise<Component> {
   const rootComponent = await db
-    .raw(`
+    .raw(
+      `
 WITH RECURSIVE parent_components AS (
 	SELECT *
   FROM components
@@ -147,11 +160,15 @@ WITH RECURSIVE parent_components AS (
   	FROM components c
   	INNER JOIN parent_components p ON p.parent_id = c.id
 ) SELECT * FROM parent_components WHERE parent_id is null;
-`, [id])
+`,
+      [id]
+    )
     .then((rawResult: any): ComponentRow[] => rawResult.rows)
     .then((rows: ComponentRow[]) => first<ComponentRow>(rows));
 
-  if (!rootComponent) { throw new Error(`Cannot find root component for component ${id}`); }
+  if (!rootComponent) {
+    throw new Error(`Cannot find root component for component ${id}`);
+  }
 
   return validate<ComponentRow, Component>(
     TABLE_NAME,

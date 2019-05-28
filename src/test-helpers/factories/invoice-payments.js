@@ -23,7 +23,7 @@ async function createInvoicesWithPayments() {
   let createdInvoices;
   let createdPayments;
 
-  await db.transaction(async (trx) => {
+  await db.transaction(async trx => {
     createdInvoices = await Promise.all([
       InvoicesDAO.createTrx(trx, {
         collectionId: collection.id,

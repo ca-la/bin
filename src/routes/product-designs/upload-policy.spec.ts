@@ -11,12 +11,16 @@ test('GET /product-designs/upload-policy/:id returns an upload policy', async (t
   const { session } = await createUser();
   const assetId = uuid.v4();
 
-  sandbox().stub(AWSService, 'getUploadPolicy').returns(Promise.resolve({
-    fields: {
-      'x-aws-foo': 'bar'
-    },
-    url: 'stub aws url'
-  }));
+  sandbox()
+    .stub(AWSService, 'getUploadPolicy')
+    .returns(
+      Promise.resolve({
+        fields: {
+          'x-aws-foo': 'bar'
+        },
+        url: 'stub aws url'
+      })
+    );
 
   const [response, body] = await get(
     `/product-designs/upload-policy/${assetId}?mimeType=image/png`,

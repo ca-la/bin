@@ -21,9 +21,5 @@ export interface TaskRow {
 export const dataAdapter = new DataAdapter<TaskRow, Task>();
 
 export function isTaskRow(row: object): row is TaskRow {
-  return hasProperties(
-    row,
-    'id',
-    'created_at'
-  );
+  return hasProperties(row, 'id', 'created_at');
 }

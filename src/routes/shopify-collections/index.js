@@ -24,7 +24,9 @@ function* getList() {
  * GET /shopify-collections/:collectionId/products
  */
 function* getProducts() {
-  const products = yield shopify.getProductsByCollectionId(this.params.collectionId);
+  const products = yield shopify.getProductsByCollectionId(
+    this.params.collectionId
+  );
 
   this.body = products;
   this.status = 200;

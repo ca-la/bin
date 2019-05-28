@@ -1,14 +1,11 @@
 'use strict';
 
-const {
-  create,
-  findByUserId
-} = require('./dao');
+const { create, findByUserId } = require('./dao');
 
 const createUser = require('../../test-helpers/create-user');
 const { test } = require('../../test-helpers/fresh');
 
-test('ProductDesignImagesDAO.findByUserId returns images', (t) => {
+test('ProductDesignImagesDAO.findByUserId returns images', t => {
   let userId;
   let imageId;
 
@@ -23,11 +20,11 @@ test('ProductDesignImagesDAO.findByUserId returns images', (t) => {
         mimeType: 'image/jpeg'
       });
     })
-    .then((image) => {
+    .then(image => {
       imageId = image.id;
       return findByUserId(userId);
     })
-    .then((images) => {
+    .then(images => {
       t.equal(images[0].id, imageId);
       t.equal(images[0].originalWidthPx, 1024);
       t.equal(images[0].originalHeightPx, 768);

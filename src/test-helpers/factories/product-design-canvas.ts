@@ -24,16 +24,20 @@ export default async function generateCanvas(
   const design = options.designId
     ? await ProductDesignsDAO.findById(options.designId)
     : await ProductDesignsDAO.create({
-      productType: 'SWEATER',
-      title: 'Mohair Wool Sweater',
-      userId: user.id
-    });
+        productType: 'SWEATER',
+        title: 'Mohair Wool Sweater',
+        userId: user.id
+      });
   const { component } = options.componentId
     ? { component: await ComponentsDAO.findById(options.componentId) }
     : await generateComponent({});
 
-  if (!component) { throw new Error('Component was unable to be found or created!'); }
-  if (!design) { throw new Error('Design was unable to be found or created!'); }
+  if (!component) {
+    throw new Error('Component was unable to be found or created!');
+  }
+  if (!design) {
+    throw new Error('Design was unable to be found or created!');
+  }
 
   const canvas = await create({
     componentId: component.id,

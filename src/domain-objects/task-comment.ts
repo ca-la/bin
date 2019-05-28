@@ -20,9 +20,5 @@ export interface TaskCommentRow {
 export const dataAdapter = new DataAdapter<TaskCommentRow, TaskComment>();
 
 export function isTaskCommentRow(row: object): row is TaskCommentRow {
-  return hasProperties(
-    row,
-    'comment_id',
-    'task_id'
-  );
+  return hasProperties(row, 'comment_id', 'task_id');
 }

@@ -24,14 +24,13 @@ export interface ProductDesignStageTaskRow {
   created_at: Date;
 }
 
-export const dataAdapter = new DataAdapter<ProductDesignStageTaskRow, ProductDesignStageTask>();
+export const dataAdapter = new DataAdapter<
+  ProductDesignStageTaskRow,
+  ProductDesignStageTask
+>();
 
-export function isDesignStageTaskRow(row: object): row is ProductDesignStageTaskRow {
-  return hasProperties(
-    row,
-    'id',
-    'task_id',
-    'created_at',
-    'design_stage_id'
-  );
+export function isDesignStageTaskRow(
+  row: object
+): row is ProductDesignStageTaskRow {
+  return hasProperties(row, 'id', 'task_id', 'created_at', 'design_stage_id');
 }

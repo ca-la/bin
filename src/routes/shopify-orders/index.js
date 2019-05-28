@@ -19,8 +19,11 @@ const router = new Router();
  *   - Enforce that the email on the order matches logged-in account email
  */
 function* getOrderById() {
-  const order = yield shopify.getOrder(this.params.orderId)
-    .catch(filterError(ShopifyNotFoundError, err => this.throw(404, err.message)));
+  const order = yield shopify
+    .getOrder(this.params.orderId)
+    .catch(
+      filterError(ShopifyNotFoundError, err => this.throw(404, err.message))
+    );
 
   this.status = 200;
   this.body = order;

@@ -16,7 +16,9 @@ const { SITE_HOST } = require('../../config');
 const router = new Router();
 const shopify = new ShopifyClient(ShopifyClient.CALA_STORE_CREDENTIALS);
 
-const existingAccountMsg = buildSMSResponseMarkup('Looks like you already have an account. Follow the link in the previous message to complete your registration.');
+const existingAccountMsg = buildSMSResponseMarkup(
+  'Looks like you already have an account. Follow the link in the previous message to complete your registration.'
+);
 
 /**
  * POST /incoming-preregistration
@@ -31,19 +33,20 @@ function* postIncomingPreRegistration() {
   const fromNumber = this.request.formDataBody.From;
   const messageBody = this.request.formDataBody.Body;
 
-  const nameParts = messageBody
-    .trim()
-    .split(' ');
+  const nameParts = messageBody.trim().split(' ');
 
   if (nameParts.length !== 2) {
-    this.body = buildSMSResponseMarkup('To sign up for CALA, reply to this message with your first and last name.');
+    this.body = buildSMSResponseMarkup(
+      'To sign up for CALA, reply to this message with your first and last name.'
+    );
     return;
   }
 
   this.status = 200;
   this.set('content-type', 'text/xml');
 
-  const shopifyCustomer = yield shopify.getCustomerByPhone(fromNumber)
+  const shopifyCustomer = yield shopify
+    .getCustomerByPhone(fromNumber)
     .catch(filterError(ShopifyNotFoundError, () => {}));
 
   if (shopifyCustomer) {
@@ -73,7 +76,9 @@ function* postIncomingPreRegistration() {
       }
     } else {
       Logger.logServerError(err);
-      this.body = buildSMSResponseMarkup('Error signing up. Please email us at hi@ca.la for assistance');
+      this.body = buildSMSResponseMarkup(
+        'Error signing up. Please email us at hi@ca.la for assistance'
+      );
     }
 
     this.status = 200;
@@ -84,9 +89,17 @@ function* postIncomingPreRegistration() {
 
   const URL = `${SITE_HOST}/sms-signup/${session.id}`;
 
-  this.body = buildSMSResponseMarkup(`Hi ${nameParts[0]}, Welcome to CALA. Click the following link to complete your profile. ${URL}`);
+  this.body = buildSMSResponseMarkup(
+    `Hi ${
+      nameParts[0]
+    }, Welcome to CALA. Click the following link to complete your profile. ${URL}`
+  );
 }
 
-router.post('/incoming-preregistration-sms', formDataBody, postIncomingPreRegistration);
+router.post(
+  '/incoming-preregistration-sms',
+  formDataBody,
+  postIncomingPreRegistration
+);
 
 module.exports = router.routes();

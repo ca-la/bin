@@ -1,4 +1,3 @@
-
 import DataAdapter from '../services/data-adapter';
 import { hasProperties } from '../services/require-properties';
 
@@ -26,14 +25,13 @@ export interface TemplateComponentRow {
   component_id: string;
 }
 
-export const dataAdapter = new DataAdapter<TemplateComponentRow, TemplateComponent>();
+export const dataAdapter = new DataAdapter<
+  TemplateComponentRow,
+  TemplateComponent
+>();
 
-export function isTemplateComponentRow(row: object): row is TemplateComponentRow {
-  return hasProperties(
-    row,
-    'id',
-    'created_at',
-    'template_id',
-    'component_id'
-  );
+export function isTemplateComponentRow(
+  row: object
+): row is TemplateComponentRow {
+  return hasProperties(row, 'id', 'created_at', 'template_id', 'component_id');
 }

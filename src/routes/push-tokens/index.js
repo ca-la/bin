@@ -6,11 +6,7 @@ const PushTokensDAO = require('../../dao/push-tokens');
 const router = new Router();
 
 function* createToken() {
-  const {
-    apnsDeviceToken,
-    userId,
-    anonymousId
-  } = this.request.body;
+  const { apnsDeviceToken, userId, anonymousId } = this.request.body;
 
   const token = yield PushTokensDAO.create({
     apnsDeviceToken,

@@ -16,16 +16,25 @@ async function findAndDuplicateAnnotationComments(
   newAnnotationId: string,
   trx: Knex.Transaction
 ): Promise<Comment[]> {
-  const comments = await AnnotationCommentsDAO.findByAnnotationId(annotationId) || [];
+  const comments =
+    (await AnnotationCommentsDAO.findByAnnotationId(annotationId)) || [];
 
-  return Promise.all(comments.map(async (comment: Comment) => {
-    const duplicateComment = await CommentsDAO.create(prepareForDuplication(comment), trx);
-    await AnnotationCommentsDAO.create({
-      annotationId: newAnnotationId,
-      commentId: duplicateComment.id
-    }, trx);
-    return duplicateComment;
-  }));
+  return Promise.all(
+    comments.map(async (comment: Comment) => {
+      const duplicateComment = await CommentsDAO.create(
+        prepareForDuplication(comment),
+        trx
+      );
+      await AnnotationCommentsDAO.create(
+        {
+          annotationId: newAnnotationId,
+          commentId: duplicateComment.id
+        },
+        trx
+      );
+      return duplicateComment;
+    })
+  );
 }
 
 /**
@@ -42,15 +51,21 @@ export async function findAndDuplicateAnnotations(
 
   // create annotation duplicates.
   return Promise.all(
-    annotations.map(async (annotation: Annotation): Promise<Annotation> => {
-      const duplicateAnnotation = await AnnotationsDAO.create(
-        prepareForDuplication(annotation, { canvasId: newCanvasId }),
-        trx
-      );
+    annotations.map(
+      async (annotation: Annotation): Promise<Annotation> => {
+        const duplicateAnnotation = await AnnotationsDAO.create(
+          prepareForDuplication(annotation, { canvasId: newCanvasId }),
+          trx
+        );
 
-      await findAndDuplicateAnnotationComments(annotation.id, duplicateAnnotation.id, trx);
+        await findAndDuplicateAnnotationComments(
+          annotation.id,
+          duplicateAnnotation.id,
+          trx
+        );
 
-      return duplicateAnnotation;
-    })
+        return duplicateAnnotation;
+      }
+    )
   );
 }

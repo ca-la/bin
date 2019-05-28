@@ -54,15 +54,18 @@ test(`GET ${API_PATH}?designId fetches all variants for a design`, async (t: tap
     headers: API.authHeader(session.id)
   });
   t.equal(response.status, 200);
-  t.deepEqual(
-    body.map((variant: ProductDesignVariant): string => variant.id),
-    [variantOne.id, variantTwo.id]
-  );
+  t.deepEqual(body.map((variant: ProductDesignVariant): string => variant.id), [
+    variantOne.id,
+    variantTwo.id
+  ]);
 
   // A collaborator should have access to the variants.
-  const [responseTwo, bodyTwo] = await API.get(`${API_PATH}/?designId=${design.id}`, {
-    headers: API.authHeader(sessionTwo.id)
-  });
+  const [responseTwo, bodyTwo] = await API.get(
+    `${API_PATH}/?designId=${design.id}`,
+    {
+      headers: API.authHeader(sessionTwo.id)
+    }
+  );
   t.equal(responseTwo.status, 200);
   t.deepEqual(
     bodyTwo.map((variant: ProductDesignVariant): string => variant.id),
@@ -105,23 +108,26 @@ test(`PUT ${API_PATH}?designId replaces all variants for a design`, async (t: ta
     unitsToProduce: 1
   });
 
-  const variants = [{
-    colorName: 'Green',
-    createdAt: new Date(),
-    designId: design.id,
-    id: uuid.v4(),
-    position: 0,
-    sizeName: 'L',
-    unitsToProduce: 101
-  }, {
-    colorName: 'Green',
-    createdAt: new Date(),
-    designId: design.id,
-    id: uuid.v4(),
-    position: 1,
-    sizeName: 'M',
-    unitsToProduce: 899
-  }];
+  const variants = [
+    {
+      colorName: 'Green',
+      createdAt: new Date(),
+      designId: design.id,
+      id: uuid.v4(),
+      position: 0,
+      sizeName: 'L',
+      unitsToProduce: 101
+    },
+    {
+      colorName: 'Green',
+      createdAt: new Date(),
+      designId: design.id,
+      id: uuid.v4(),
+      position: 1,
+      sizeName: 'M',
+      unitsToProduce: 899
+    }
+  ];
 
   const [failedResponse] = await API.put(`${API_PATH}/?designId=${design.id}`, {
     body: variants,
@@ -134,15 +140,18 @@ test(`PUT ${API_PATH}?designId replaces all variants for a design`, async (t: ta
     headers: API.authHeader(session.id)
   });
   t.equal(response.status, 200);
-  t.deepEqual(
-    body.map((variant: ProductDesignVariant): string => variant.id),
-    [variants[0].id, variants[1].id]
-  );
+  t.deepEqual(body.map((variant: ProductDesignVariant): string => variant.id), [
+    variants[0].id,
+    variants[1].id
+  ]);
 
-  const [responseTwo, bodyTwo] = await API.put(`${API_PATH}/?designId=${design.id}`, {
-    body: [],
-    headers: API.authHeader(session.id)
-  });
+  const [responseTwo, bodyTwo] = await API.put(
+    `${API_PATH}/?designId=${design.id}`,
+    {
+      body: [],
+      headers: API.authHeader(session.id)
+    }
+  );
   t.equal(responseTwo.status, 200);
   t.deepEqual(bodyTwo, [], 'Returns an empty list');
 

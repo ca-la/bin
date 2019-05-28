@@ -6,9 +6,7 @@ const emailHtml = require('./template');
 const { requireProperties } = require('../../services/require-properties');
 
 module.exports = function passwordReset(data) {
-  requireProperties(data,
-    'sessionId',
-    'name');
+  requireProperties(data, 'sessionId', 'name');
 
   const resetLink = `https://ca.la/password-reset?sessionId=${data.sessionId}`;
 

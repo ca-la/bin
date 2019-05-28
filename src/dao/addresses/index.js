@@ -28,17 +28,21 @@ function validate(data) {
 function create(data) {
   validate(data);
 
-  return db(TABLE_NAME).insert({
-    id: uuid.v4(),
-    company_name: data.companyName,
-    address_line_1: data.addressLine1,
-    address_line_2: data.addressLine2,
-    city: data.city,
-    region: data.region,
-    post_code: data.postCode,
-    country: data.country,
-    user_id: data.userId
-  }, '*')
+  return db(TABLE_NAME)
+    .insert(
+      {
+        id: uuid.v4(),
+        company_name: data.companyName,
+        address_line_1: data.addressLine1,
+        address_line_2: data.addressLine2,
+        city: data.city,
+        region: data.region,
+        post_code: data.postCode,
+        country: data.country,
+        user_id: data.userId
+      },
+      '*'
+    )
     .catch(rethrow)
     .then(first)
     .then(instantiate);
@@ -72,9 +76,12 @@ function deleteById(id) {
       id,
       deleted_at: null
     })
-    .update({
-      deleted_at: new Date()
-    }, '*')
+    .update(
+      {
+        deleted_at: new Date()
+      },
+      '*'
+    )
     .then(first)
     .then(maybeInstantiate)
     .catch(rethrow);

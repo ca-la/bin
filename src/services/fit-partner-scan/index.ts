@@ -13,7 +13,9 @@ type ShopifyMetafieldDefinition = ShopifyClient.ShopifyMetafieldDefinition;
 type UnsavedMetafield = Omit<ShopifyMetafieldDefinition, 'id'>;
 
 // We can store any arbitrary data in Shopify metafields
-interface Data { [key: string]: any; }
+interface Data {
+  [key: string]: any;
+}
 
 function constructMetafields(data: Data): UnsavedMetafield[] {
   const fields: UnsavedMetafield[] = [];
@@ -65,9 +67,11 @@ async function updateMetafields(
     for (const newField of newFields) {
       // If there's an existing metafield with the same key, we have to delete it
       // before setting the new value.
-      const supersededField = currentFields.find((currentField: ShopifyMetafieldDefinition) =>
-        newField.key === currentField.key &&
-        newField.namespace === currentField.namespace);
+      const supersededField = currentFields.find(
+        (currentField: ShopifyMetafieldDefinition) =>
+          newField.key === currentField.key &&
+          newField.namespace === currentField.namespace
+      );
 
       if (supersededField) {
         await shopify.deleteMetafield(supersededField.id);
@@ -78,28 +82,35 @@ async function updateMetafields(
     const fieldChunks = chunk(metafields, METAFIELDS_PER_REQUEST);
 
     for (const fieldSubset of fieldChunks) {
-      await shopify.updateCustomer(
-        customerId,
-        { metafields: fieldSubset }
-      );
+      await shopify.updateCustomer(customerId, { metafields: fieldSubset });
     }
   });
 }
 
-async function getShopifyClient(scan: Scan): Promise<{
-  shopify: ShopifyClient,
-  customer: FitPartnerCustomer
+async function getShopifyClient(
+  scan: Scan
+): Promise<{
+  shopify: ShopifyClient;
+  customer: FitPartnerCustomer;
 }> {
-  if (!scan.fitPartnerCustomerId) { throw new Error(`No customer ID on scan ${scan.id}`); }
+  if (!scan.fitPartnerCustomerId) {
+    throw new Error(`No customer ID on scan ${scan.id}`);
+  }
 
-  const customer = await FitPartnerCustomersDAO.findById(scan.fitPartnerCustomerId);
+  const customer = await FitPartnerCustomersDAO.findById(
+    scan.fitPartnerCustomerId
+  );
   if (!customer) {
-    throw new Error(`Customer ${scan.fitPartnerCustomerId} not found for scan ${scan.id}`);
+    throw new Error(
+      `Customer ${scan.fitPartnerCustomerId} not found for scan ${scan.id}`
+    );
   }
 
   const partner = await FitPartnersDAO.findById(customer.partnerId);
   if (!partner) {
-    throw new Error(`Partner ${customer.partnerId} not found for customer ${customer.id}`);
+    throw new Error(
+      `Partner ${customer.partnerId} not found for customer ${customer.id}`
+    );
   }
 
   const shopify = new ShopifyClient({
@@ -127,16 +138,27 @@ export async function saveCalculatedValues(scan: Scan): Promise<void> {
     throw new Error(`Missing calculated values on scan ${scan.id}`);
   }
 
-  await updateMetafields(shopify, customer.shopifyUserId, scan.measurements.calculatedValues);
+  await updateMetafields(
+    shopify,
+    customer.shopifyUserId,
+    scan.measurements.calculatedValues
+  );
 }
 
-export async function saveFittingUrl(customerId: string, fittingUrl: string): Promise<void> {
+export async function saveFittingUrl(
+  customerId: string,
+  fittingUrl: string
+): Promise<void> {
   const customer = await FitPartnerCustomersDAO.findById(customerId);
-  if (!customer) { throw new Error(`Customer not found: ${customerId}`); }
+  if (!customer) {
+    throw new Error(`Customer not found: ${customerId}`);
+  }
 
   const partner = await FitPartnersDAO.findById(customer.partnerId);
   if (!partner) {
-    throw new Error(`Partner ${customer.partnerId} not found for customer ${customer.id}`);
+    throw new Error(
+      `Partner ${customer.partnerId} not found for customer ${customer.id}`
+    );
   }
 
   const shopify = new ShopifyClient({

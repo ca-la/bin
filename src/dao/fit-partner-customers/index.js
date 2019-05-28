@@ -56,9 +56,11 @@ function createTrx(trx, data) {
 async function findOrCreate({ partnerId, shopifyUserId }) {
   requireValues({ partnerId, shopifyUserId });
 
-  return db.transaction(async (trx) => {
+  return db.transaction(async trx => {
     const found = await findComplexTrx(trx, { partnerId, shopifyUserId });
-    if (found) { return found; }
+    if (found) {
+      return found;
+    }
 
     const created = await createTrx(trx, { partnerId, shopifyUserId });
     return created;

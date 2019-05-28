@@ -9,9 +9,8 @@ const COLORS = {
   fmt: {}
 };
 
-Object.keys(COLORS).forEach((color) => {
-  COLORS.fmt[color] = str =>
-    `${COLORS[color]}${str}${COLORS.reset}`;
+Object.keys(COLORS).forEach(color => {
+  COLORS.fmt[color] = str => `${COLORS[color]}${str}${COLORS.reset}`;
 });
 
 module.exports = COLORS;

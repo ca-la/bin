@@ -22,9 +22,13 @@ export async function create(
   });
   const created = await db(TABLE_NAME)
     .insert(rowData, '*')
-    .then((rows: ComponentRelationshipRow[]) => first<ComponentRelationshipRow>(rows));
+    .then((rows: ComponentRelationshipRow[]) =>
+      first<ComponentRelationshipRow>(rows)
+    );
 
-  if (!created) { throw new Error('Failed to create a component relationship!'); }
+  if (!created) {
+    throw new Error('Failed to create a component relationship!');
+  }
 
   return validate<ComponentRelationshipRow, ComponentRelationship>(
     TABLE_NAME,
@@ -46,9 +50,13 @@ export async function update(
   const updated = await db(TABLE_NAME)
     .where({ id, deleted_at: null })
     .update(rowData, '*')
-    .then((rows: ComponentRelationshipRow[]) => first<ComponentRelationshipRow>(rows));
+    .then((rows: ComponentRelationshipRow[]) =>
+      first<ComponentRelationshipRow>(rows)
+    );
 
-  if (!updated) { throw new Error(`Failed to update component relationship ${id}!`); }
+  if (!updated) {
+    throw new Error(`Failed to update component relationship ${id}!`);
+  }
 
   return validate<ComponentRelationshipRow, ComponentRelationship>(
     TABLE_NAME,
@@ -63,7 +71,9 @@ export async function del(id: string): Promise<number> {
     .where({ id, deleted_at: null })
     .update({ deleted_at: new Date() });
 
-  if (deleted !== 1) { throw new Error(`Failed to delete ComponentRelationship ${id}!`); }
+  if (deleted !== 1) {
+    throw new Error(`Failed to delete ComponentRelationship ${id}!`);
+  }
 
   return deleted;
 }
@@ -71,13 +81,17 @@ export async function del(id: string): Promise<number> {
 /**
  * Returns all relationships where the given id is either the source or target.
  */
-export async function findAllByComponent(componentId: string): Promise<ComponentRelationship[]> {
+export async function findAllByComponent(
+  componentId: string
+): Promise<ComponentRelationship[]> {
   const relationships = await db(TABLE_NAME)
-    .where((builder: Knex.QueryBuilder): void => {
-      builder
-        .where({ source_component_id: componentId })
-        .orWhere({ target_component_id: componentId });
-    })
+    .where(
+      (builder: Knex.QueryBuilder): void => {
+        builder
+          .where({ source_component_id: componentId })
+          .orWhere({ target_component_id: componentId });
+      }
+    )
     .andWhere({ deleted_at: null })
     .orderBy('created_at', 'asc');
 
@@ -89,14 +103,20 @@ export async function findAllByComponent(componentId: string): Promise<Component
   );
 }
 
-export async function findById(id: string): Promise<ComponentRelationship | null> {
+export async function findById(
+  id: string
+): Promise<ComponentRelationship | null> {
   const componentRelationship = await db(TABLE_NAME)
     .select('*')
     .where({ id, deleted_at: null })
     .limit(1)
-    .then((rows: ComponentRelationshipRow[]) => first<ComponentRelationshipRow>(rows));
+    .then((rows: ComponentRelationshipRow[]) =>
+      first<ComponentRelationshipRow>(rows)
+    );
 
-  if (!componentRelationship) { return null; }
+  if (!componentRelationship) {
+    return null;
+  }
 
   return validate<ComponentRelationshipRow, ComponentRelationship>(
     TABLE_NAME,

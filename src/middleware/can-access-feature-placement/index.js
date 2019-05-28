@@ -8,11 +8,14 @@ const { attachDesignPermissions } = require('../can-access-design');
 
 function* canAccessFeaturePlacement(next) {
   if (!this.params.featureId) {
-    throw new Error('canAccessFeaturePlacment requires `featureId` in route params');
+    throw new Error(
+      'canAccessFeaturePlacment requires `featureId` in route params'
+    );
   }
 
-  const feature = yield ProductDesignFeaturePlacementsDAO.findById(this.params.featureId)
-    .catch(filterError(InvalidDataError, err => this.throw(404, err)));
+  const feature = yield ProductDesignFeaturePlacementsDAO.findById(
+    this.params.featureId
+  ).catch(filterError(InvalidDataError, err => this.throw(404, err)));
 
   this.assert(feature, 404);
 

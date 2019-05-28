@@ -100,9 +100,12 @@ async function update(id, data) {
 async function deleteById(id) {
   await db(TABLE_NAME)
     .where({ id, deleted_at: null })
-    .update({
-      deleted_at: (new Date()).toISOString()
-    }, '*')
+    .update(
+      {
+        deleted_at: new Date().toISOString()
+      },
+      '*'
+    )
     .then(first);
 
   return db(VIEW_NAME)

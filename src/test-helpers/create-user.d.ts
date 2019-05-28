@@ -8,4 +8,4 @@ interface CreateUserOptions {
 
 declare function createUser(
   options?: CreateUserOptions
-): Promise<{ user: any, session: any, address: any }>;
+): Promise<{ user: any; session: any; address: any }>;

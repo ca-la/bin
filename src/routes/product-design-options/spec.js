@@ -4,12 +4,10 @@ const uuid = require('node-uuid');
 
 const ProductDesignOptionsDAO = require('../../dao/product-design-options');
 const createUser = require('../../test-helpers/create-user');
-const {
-  authHeader, del, post
-} = require('../../test-helpers/http');
+const { authHeader, del, post } = require('../../test-helpers/http');
 const { test } = require('../../test-helpers/fresh');
 
-test('POST /product-design-options/', (t) => {
+test('POST /product-design-options/', t => {
   let sessionId;
   return createUser()
     .then(({ user, session }) => {
@@ -30,7 +28,7 @@ test('POST /product-design-options/', (t) => {
     });
 });
 
-test('DELETE /product-design-options/:id', (t) => {
+test('DELETE /product-design-options/:id', t => {
   let sessionId;
   return createUser()
     .then(({ user, session }) => {
@@ -54,7 +52,7 @@ test('DELETE /product-design-options/:id', (t) => {
     });
 });
 
-test('DELETE /product-design-options/:id on bad id returns 404', (t) => {
+test('DELETE /product-design-options/:id on bad id returns 404', t => {
   let sessionId;
   return createUser()
     .then(({ user, session }) => {
@@ -79,7 +77,7 @@ test('DELETE /product-design-options/:id on bad id returns 404', (t) => {
     });
 });
 
-test('DELETE /product-design-options/:id on deleted id returns 404', (t) => {
+test('DELETE /product-design-options/:id on deleted id returns 404', t => {
   let sessionId;
   let optionsId;
 

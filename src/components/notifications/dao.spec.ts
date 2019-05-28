@@ -6,10 +6,7 @@ import * as NotificationsDAO from './dao';
 import * as DesignsDAO from '../../dao/product-designs';
 import createUser = require('../../test-helpers/create-user');
 import db = require('../../services/db');
-import {
-  Notification,
-  NotificationType
-} from './domain-object';
+import { Notification, NotificationType } from './domain-object';
 import generateNotification from '../../test-helpers/factories/notification';
 import generateCollection from '../../test-helpers/factories/collection';
 import { InviteCollaboratorNotification } from './models/invite-collaborator';
@@ -25,7 +22,9 @@ import * as CommentsDAO from '../../components/comments/dao';
 import * as MeasurementsDAO from '../../dao/product-design-canvas-measurements';
 
 test('Notifications DAO supports creation', async (t: tape.Test) => {
-  sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
 
   const { user: userOne } = await createUser({ withSession: false });
   const { user: userTwo } = await createUser({ withSession: false });
@@ -57,7 +56,9 @@ test('Notifications DAO supports creation', async (t: tape.Test) => {
 });
 
 test('Notifications DAO supports finding by user id', async (t: tape.Test) => {
-  sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
   const { user: userOne } = await createUser({ withSession: false });
   const { user: userTwo } = await createUser({ withSession: false });
 
@@ -168,20 +169,21 @@ test('Notifications DAO supports finding by user id', async (t: tape.Test) => {
   );
 });
 
-test('Notifications DAO supports finding outstanding notifications over 45min old',
-async (t: tape.Test) => {
-  sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
+test('Notifications DAO supports finding outstanding notifications over 45min old', async (t: tape.Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
   const { user } = await createUser({ withSession: false });
 
   const { notification: notificationOne } = await generateNotification({
     actorUserId: user.id,
-    createdAt: new Date(new Date().getTime() - (46 * 60 * 1000)),
+    createdAt: new Date(new Date().getTime() - 46 * 60 * 1000),
     type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });
 
   const { notification: notificationTwo, design } = await generateNotification({
     actorUserId: user.id,
-    createdAt: new Date(new Date().getTime() - (126 * 60 * 1000)),
+    createdAt: new Date(new Date().getTime() - 126 * 60 * 1000),
     type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });
   await generateNotification({
@@ -215,7 +217,9 @@ async (t: tape.Test) => {
 });
 
 test('Notifications DAO supports marking notifications as sent', async (t: tape.Test) => {
-  sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
   const { user } = await createUser();
 
   const { notification: notificationOne } = await generateNotification({
@@ -235,23 +239,36 @@ test('Notifications DAO supports marking notifications as sent', async (t: tape.
     const notificationIds = notifications.map(
       (notification: Notification): string => notification.id
     );
-    t.true(notificationIds.includes(notificationOne.id), 'Returns first marked notification');
-    t.true(notificationIds.includes(notificationTwo.id), 'Returns second marked notification');
+    t.true(
+      notificationIds.includes(notificationOne.id),
+      'Returns first marked notification'
+    );
+    t.true(
+      notificationIds.includes(notificationTwo.id),
+      'Returns second marked notification'
+    );
   });
 });
 
 test('Notifications DAO supports deleting similar notifications', async (t: tape.Test) => {
-  sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
   const userOne = await createUser({ withSession: false });
   const userTwo = await createUser({ withSession: false });
-  const { user: admin } = await createUser({ withSession: false, role: 'ADMIN' });
+  const { user: admin } = await createUser({
+    withSession: false,
+    role: 'ADMIN'
+  });
 
   const design = await DesignsDAO.create({
     productType: 'TEESHIRT',
     title: 'Green Tee',
     userId: userTwo.user.id
   });
-  const { collection } = await generateCollection({ createdBy: userTwo.user.id });
+  const { collection } = await generateCollection({
+    createdBy: userTwo.user.id
+  });
 
   await NotificationsDAO.create({
     ...templateNotification,
@@ -290,7 +307,9 @@ test('Notifications DAO supports deleting similar notifications', async (t: tape
 });
 
 test('Notifications DAO supports marking read', async (t: tape.Test) => {
-  sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
   const { user: userOne } = await createUser({ withSession: false });
   const { user: userTwo } = await createUser({ withSession: false });
   const { collection } = await generateCollection({ createdBy: userOne.id });
@@ -320,12 +339,16 @@ test('Notifications DAO supports marking read', async (t: tape.Test) => {
   t.deepEqual(result, inserted, 'Returned the inserted notification');
   await NotificationsDAO.markRead([inserted.id]);
   const read = await NotificationsDAO.findById(inserted.id);
-  if (!read) { throw new Error('FindById failed!'); }
+  if (!read) {
+    throw new Error('FindById failed!');
+  }
   t.notDeepEqual(read.readAt, null, 'readAt is no longer null');
 });
 
 test('Notifications DAO supports finding unread count', async (t: tape.Test) => {
-  sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
   const { user: userOne } = await createUser({ withSession: false });
   const { user: userTwo } = await createUser({ withSession: false });
 
@@ -405,6 +428,8 @@ test('Notifications DAO supports finding unread count', async (t: tape.Test) => 
   });
   await CollaboratorsDAO.deleteById(deletedCollaborator.id);
 
-  const unreadCount = await NotificationsDAO.findUnreadCountByUserId(userTwo.id);
+  const unreadCount = await NotificationsDAO.findUnreadCountByUserId(
+    userTwo.id
+  );
   t.deepEqual(unreadCount, 2, 'there are two unread notification');
 });

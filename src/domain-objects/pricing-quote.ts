@@ -1,9 +1,4 @@
-import {
-  Complexity,
-  MaterialCategory,
-  Process,
-  ProductType
-} from './pricing';
+import { Complexity, MaterialCategory, Process, ProductType } from './pricing';
 import PricingConstant from './pricing-constant';
 import PricingProductMaterial from './pricing-product-material';
 import PricingProductType from './pricing-product-type';
@@ -42,7 +37,9 @@ export interface PricingQuoteCalculated {
   fulfillmentTimeMs: number;
 }
 
-export interface PricingQuote extends BasePricingQuoteRequest, PricingQuoteCalculated {
+export interface PricingQuote
+  extends BasePricingQuoteRequest,
+    PricingQuoteCalculated {
   id: string;
   pricingQuoteInputId: string;
   createdAt: Date;
@@ -91,7 +88,8 @@ export interface PricingQuoteInputRow {
   created_at: Date;
 }
 
-export interface PricingQuoteValues extends Omit<PricingConstant, 'id' | 'createdAt' | 'version'> {
+export interface PricingQuoteValues
+  extends Omit<PricingConstant, 'id' | 'createdAt' | 'version'> {
   constantId: string;
   material: PricingProductMaterial;
   type: PricingProductType;
@@ -104,7 +102,9 @@ export interface PricingQuoteValues extends Omit<PricingConstant, 'id' | 'create
 
 export const dataAdapter = new DataAdapter<PricingQuoteRow, PricingQuote>();
 
-export function isPricingQuoteRequest(candidate: object): candidate is PricingQuoteRequest {
+export function isPricingQuoteRequest(
+  candidate: object
+): candidate is PricingQuoteRequest {
   return hasProperties(
     candidate,
     'productType',
@@ -144,7 +144,9 @@ export function isPricingQuote(candidate: object): candidate is PricingQuote {
   );
 }
 
-export function isPricingQuoteRow(candidate: object): candidate is PricingQuoteRow {
+export function isPricingQuoteRow(
+  candidate: object
+): candidate is PricingQuoteRow {
   return hasProperties(
     candidate,
     'id',

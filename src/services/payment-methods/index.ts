@@ -12,12 +12,17 @@ export const createPaymentMethod = async (
     cardToken: token,
     customerId: stripeCustomerId
   });
-  const method = await PaymentMethodsDAO.create({
-    lastFourDigits: source.last4,
-    stripeCustomerId,
-    stripeSourceId: source.id,
-    userId
-  }, trx);
-  if (!method) { throw new Error('Unable to create payment method'); }
+  const method = await PaymentMethodsDAO.create(
+    {
+      lastFourDigits: source.last4,
+      stripeCustomerId,
+      stripeSourceId: source.id,
+      userId
+    },
+    trx
+  );
+  if (!method) {
+    throw new Error('Unable to create payment method');
+  }
   return method.id;
 };

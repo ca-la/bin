@@ -9,10 +9,7 @@ const Logger = require('../logger');
 const ShopifyNotFoundError = require('../../errors/shopify-not-found');
 const { requireValues } = require('../../services/require-properties');
 
-const {
-  SHOPIFY_STORE_AUTH,
-  SHOPIFY_STORE_BASE
-} = require('../../config');
+const { SHOPIFY_STORE_AUTH, SHOPIFY_STORE_BASE } = require('../../config');
 
 /**
  * @param {String|Object} error A Shopify `error` key
@@ -23,9 +20,10 @@ function parseError(error) {
       return error;
     case 'object':
       return Object.keys(error)
-        .map((key) => {
+        .map(key => {
           const messages = error[key];
-          return [].concat(messages)
+          return []
+            .concat(messages)
             .map(message => `${key} ${message}`)
             .join(', ');
         })
@@ -42,8 +40,7 @@ class ShopifyClient {
     this.appApiKey = appApiKey;
     this.appPassword = appPassword;
 
-    bindAll(this,
-      '_attachMetafields');
+    bindAll(this, '_attachMetafields');
   }
 
   async makeRequest(method, path, data) {
@@ -90,7 +87,7 @@ class ShopifyClient {
       return {};
     }
 
-    body.metafields.forEach((field) => {
+    body.metafields.forEach(field => {
       if (!fields[field.namespace]) {
         fields[field.namespace] = {};
       }
@@ -121,8 +118,8 @@ class ShopifyClient {
   }
 
   /**
-  * Retrieve a list of collections
-  */
+   * Retrieve a list of collections
+   */
   async getCollections(filters) {
     const query = querystring.stringify(filters);
     const path = `/custom_collections.json?${query}`;
@@ -138,9 +135,9 @@ class ShopifyClient {
   }
 
   /**
-  * Retrieve a list of "collects" - Shopify's join table between products and
-  * collections
-  */
+   * Retrieve a list of "collects" - Shopify's join table between products and
+   * collections
+   */
   async getCollects(filters) {
     const query = querystring.stringify(filters);
     const path = `/collects.json?${query}`;
@@ -150,8 +147,8 @@ class ShopifyClient {
   }
 
   /**
-  * Retrieve a set of products in a certain collection
-  */
+   * Retrieve a set of products in a certain collection
+   */
   async getProductsByCollectionId(collectionId) {
     const path = `/products.json?collection_id=${collectionId}&order=created_at+desc`;
 
@@ -160,8 +157,8 @@ class ShopifyClient {
   }
 
   /**
-  * Retrieve a single order by ID
-  */
+   * Retrieve a single order by ID
+   */
   async getOrder(id) {
     const path = `/orders/${id}.json`;
 
@@ -180,8 +177,8 @@ class ShopifyClient {
   }
 
   /**
-  * Get a single product
-  */
+   * Get a single product
+   */
   async getProductById(id) {
     const path = `/products/${id}.json`;
 
@@ -213,34 +210,33 @@ class ShopifyClient {
     }
 
     return products
-      .filter((product) => {
+      .filter(product => {
         // Exclude 'special' products from public list
         // ... unless you're filtering by handle specifically
         // probably want to reevaluate this and add a `getByHandle` endpoint
         // b/c this is weird
         if (
-          !filters.handle && (
-            product.product_type === 'VIP' ||
-            product.product_type === 'Hidden'
-          )
-        ) return false;
+          !filters.handle &&
+          (product.product_type === 'VIP' || product.product_type === 'Hidden')
+        ) {
+          return false;
+        }
 
-        if (
-          !includeDesigners &&
-          product.product_type === 'Designer'
-        ) return false;
+        if (!includeDesigners && product.product_type === 'Designer') {
+          return false;
+        }
 
         return true;
       })
       .sort((a, b) => {
         // Sort by published_at desc
-        return (new Date(b.published_at)) - (new Date(a.published_at));
+        return new Date(b.published_at) - new Date(a.published_at);
       });
   }
 
   /**
-  * Get the number of orders that used a given discount code.
-  */
+   * Get the number of orders that used a given discount code.
+   */
   async getRedemptionCount(discountCode) {
     // TODO allow calculation for more than 250
     // https://trello.com/c/FaTW4F4R/80-allow-referral-code-calculation-for-more-than-250-previous-orders
@@ -266,10 +262,10 @@ class ShopifyClient {
   }
 
   /**
-  * @param {String} data.name Customer's full name
-  * @param {String} data.phone Customer's phone number
-  * @returns {Object} customer data
-  */
+   * @param {String} data.name Customer's full name
+   * @param {String} data.phone Customer's phone number
+   * @returns {Object} customer data
+   */
   async createCustomer(data) {
     const { name, phone } = data;
 
@@ -297,7 +293,10 @@ class ShopifyClient {
   }
 
   async getCustomerByPhone(phone) {
-    const [body] = await this.makeRequest('get', `/customers/search.json?query=${phone}`);
+    const [body] = await this.makeRequest(
+      'get',
+      `/customers/search.json?query=${phone}`
+    );
 
     if (!body.customers) {
       Logger.log('Shopify response: ', body);
@@ -314,11 +313,20 @@ class ShopifyClient {
   }
 
   async updateCustomer(customerId, data) {
-    const [body] = await this.makeRequest('put', `/customers/${customerId}.json`, {
-      customer: data
-    });
+    const [body] = await this.makeRequest(
+      'put',
+      `/customers/${customerId}.json`,
+      {
+        customer: data
+      }
+    );
 
-    Logger.log(`Updated Shopify customer ${customerId} on store ${this.storeBase} with data:`, data);
+    Logger.log(
+      `Updated Shopify customer ${customerId} on store ${
+        this.storeBase
+      } with data:`,
+      data
+    );
     Logger.log('Response:', body);
 
     if (!body.customer) {

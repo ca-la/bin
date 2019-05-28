@@ -101,10 +101,14 @@ const decode = (data: PricingProductType): PricingProductTypeRow => {
   };
 };
 
-export const dataAdapter = new DataAdapter<PricingProductTypeRow, PricingProductType>(
-  encode, decode);
+export const dataAdapter = new DataAdapter<
+  PricingProductTypeRow,
+  PricingProductType
+>(encode, decode);
 
-export function isPricingProductTypeRow(row: object): row is PricingProductTypeRow {
+export function isPricingProductTypeRow(
+  row: object
+): row is PricingProductTypeRow {
   return hasProperties(
     row,
     'id',

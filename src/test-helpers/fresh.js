@@ -54,9 +54,9 @@ function afterEach() {
 
   // Very naive 'wipe the database' query.
   // Should be expanded to reset sequences, be more efficient, &etc.
-  const query = TABLES
-    .map(table => `truncate table ${table} cascade;`)
-    .join('\n');
+  const query = TABLES.map(table => `truncate table ${table} cascade;`).join(
+    '\n'
+  );
 
   return db.raw(query);
 }
@@ -66,13 +66,8 @@ tape.onFinish(() => {
 });
 
 // Run a test in a 'fresh' environment; clear DB and any stubs
-function freshTest(
-  description,
-  fn,
-  setup = () => {},
-  teardown = () => {}
-) {
-  tape(description, async (t) => {
+function freshTest(description, fn, setup = () => {}, teardown = () => {}) {
+  tape(description, async t => {
     const { end } = t;
 
     // Tests should not be able to end themselves early. Using `plan` has the
@@ -114,7 +109,9 @@ function freshTest(
   });
 }
 
-function skip() { /* noop */ }
+function skip() {
+  /* noop */
+}
 
 /**
  * Create a new test block which runs a given setup/teardown for each test
@@ -127,7 +124,9 @@ function group(setup, teardown) {
 
 module.exports = {
   group,
-  sandbox() { return currentSandbox; },
+  sandbox() {
+    return currentSandbox;
+  },
   test: freshTest,
   skip
 };

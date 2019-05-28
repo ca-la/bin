@@ -18,7 +18,8 @@ test('Resolve Accounts DAO supports creation and retrieval', async (t: tape.Test
   t.deepEqual(
     createdResolveAccount,
     foundResolveAccount,
-    'Creating and finding returns the same instance.');
+    'Creating and finding returns the same instance.'
+  );
 });
 
 test('Resolve Accounts DAO supports finding all by User Id', async (t: tape.Test) => {

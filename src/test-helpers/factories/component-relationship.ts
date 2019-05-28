@@ -34,9 +34,15 @@ export default async function generateComponentRelationship(
     ? { component: await findComponentById(options.targetComponentId) }
     : await generateComponent({ createdBy: user.id });
 
-  if (!process) { throw new Error(`Process ${options.processId} not found!`); }
-  if (!sourceComponent) { throw new Error(`Component ${options.sourceComponentId} not found!`); }
-  if (!targetComponent) { throw new Error(`Component ${options.targetComponentId} not found!`); }
+  if (!process) {
+    throw new Error(`Process ${options.processId} not found!`);
+  }
+  if (!sourceComponent) {
+    throw new Error(`Component ${options.sourceComponentId} not found!`);
+  }
+  if (!targetComponent) {
+    throw new Error(`Component ${options.targetComponentId} not found!`);
+  }
 
   const componentRelationship = await create({
     createdBy: user.id,

@@ -33,7 +33,9 @@ export async function create(
     })
     .then((rows: TaskTemplateRow[]) => first<TaskTemplateRow>(rows));
 
-  if (!created) { throw new Error('Failed to create rows'); }
+  if (!created) {
+    throw new Error('Failed to create rows');
+  }
 
   return validate<TaskTemplateRow, TaskTemplate>(
     TABLE_NAME,
@@ -60,7 +62,9 @@ export async function update(
     })
     .then((rows: TaskTemplateRow[]) => first<TaskTemplateRow>(rows));
 
-  if (!created) { throw new Error('Failed to create rows'); }
+  if (!created) {
+    throw new Error('Failed to create rows');
+  }
 
   return validate<TaskTemplateRow, TaskTemplate>(
     TABLE_NAME,
@@ -97,7 +101,11 @@ export async function findByStageTitle(
 ): Promise<TaskTemplate[]> {
   const templates = await db(TABLE_NAME)
     .select('task_templates.*')
-    .leftJoin('stage_templates', 'stage_templates.id', 'task_templates.stage_template_id')
+    .leftJoin(
+      'stage_templates',
+      'stage_templates.id',
+      'task_templates.stage_template_id'
+    )
     .where({ 'stage_templates.title': stageTitle })
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {

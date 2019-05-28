@@ -12,16 +12,18 @@ import createDesign from '../../services/create-design';
 
 test('GET /product-designs allows getting tasks', async (t: tape.Test) => {
   const { user, session } = await createUser({ role: 'ADMIN' });
-  sandbox().stub(EmailService, 'enqueueSend').returns(Promise.resolve());
-  sandbox().stub(TaskEventsDAO, 'findByStageId').returns(Promise.resolve(
-    [{ id: 'task1234' }]
-  ));
-  sandbox().stub(CollaboratorsDAO, 'findByTask').returns(Promise.resolve(
-    [{ id: 'collaborator1234' }]
-  ));
-  sandbox().stub(ProductDesignStagesDAO, 'findAllByDesignId').returns(Promise.resolve(
-    [{ id: 'stage1234', title: 'stage title' }]
-  ));
+  sandbox()
+    .stub(EmailService, 'enqueueSend')
+    .returns(Promise.resolve());
+  sandbox()
+    .stub(TaskEventsDAO, 'findByStageId')
+    .returns(Promise.resolve([{ id: 'task1234' }]));
+  sandbox()
+    .stub(CollaboratorsDAO, 'findByTask')
+    .returns(Promise.resolve([{ id: 'collaborator1234' }]));
+  sandbox()
+    .stub(ProductDesignStagesDAO, 'findAllByDesignId')
+    .returns(Promise.resolve([{ id: 'stage1234', title: 'stage title' }]));
 
   const design = await createDesign({
     productType: 'SHIRT',
@@ -29,9 +31,12 @@ test('GET /product-designs allows getting tasks', async (t: tape.Test) => {
     userId: user.id
   });
 
-  const [response, body] = await get(`/product-designs?userId=${user.id}&tasks=true`, {
-    headers: authHeader(session.id)
-  });
+  const [response, body] = await get(
+    `/product-designs?userId=${user.id}&tasks=true`,
+    {
+      headers: authHeader(session.id)
+    }
+  );
 
   t.equal(response.status, 200);
   t.equal(body[0].id, design.id);
@@ -42,7 +47,9 @@ test('GET /product-designs allows getting tasks', async (t: tape.Test) => {
 
 test('GET /product-designs?search with malformed RegExp throws 400', async (t: tape.Test) => {
   const { session } = await createUser({ role: 'ADMIN' });
-  sandbox().stub(EmailService, 'enqueueSend').returns(Promise.resolve());
+  sandbox()
+    .stub(EmailService, 'enqueueSend')
+    .returns(Promise.resolve());
 
   const [response, body] = await get('/product-designs?search=(', {
     headers: authHeader(session.id)

@@ -10,13 +10,17 @@ test('findOrCreate can find or create an approval', async (t: Test) => {
     isManuallyApproved: true,
     lastName: 'Bar'
   });
-  t.deepEqual(omit(create1, 'id', 'createdAt'), {
-    consumedAt: null,
-    email: 'foo@example.com',
-    firstName: 'Foo',
-    isManuallyApproved: true,
-    lastName: 'Bar'
-  }, 'Returns a newly created row');
+  t.deepEqual(
+    omit(create1, 'id', 'createdAt'),
+    {
+      consumedAt: null,
+      email: 'foo@example.com',
+      firstName: 'Foo',
+      isManuallyApproved: true,
+      lastName: 'Bar'
+    },
+    'Returns a newly created row'
+  );
 
   const found1 = await findOrCreate({
     consumedAt: null,
@@ -25,13 +29,17 @@ test('findOrCreate can find or create an approval', async (t: Test) => {
     isManuallyApproved: true,
     lastName: 'McBarry'
   });
-  t.deepEqual(omit(found1, 'id', 'createdAt'), {
-    consumedAt: null,
-    email: 'foo@example.com',
-    firstName: 'Foo',
-    isManuallyApproved: true,
-    lastName: 'Bar'
-  }, 'Returns a pre-existing row');
+  t.deepEqual(
+    omit(found1, 'id', 'createdAt'),
+    {
+      consumedAt: null,
+      email: 'foo@example.com',
+      firstName: 'Foo',
+      isManuallyApproved: true,
+      lastName: 'Bar'
+    },
+    'Returns a pre-existing row'
+  );
 
   const create2 = await findOrCreate({
     consumedAt: null,
@@ -40,11 +48,15 @@ test('findOrCreate can find or create an approval', async (t: Test) => {
     isManuallyApproved: true,
     lastName: null
   });
-  t.deepEqual(omit(create2, 'id', 'createdAt'), {
-    consumedAt: null,
-    email: 'bar@example.com',
-    firstName: null,
-    isManuallyApproved: true,
-    lastName: null
-  }, 'Returns a newly created row');
+  t.deepEqual(
+    omit(create2, 'id', 'createdAt'),
+    {
+      consumedAt: null,
+      email: 'bar@example.com',
+      firstName: null,
+      isManuallyApproved: true,
+      lastName: null
+    },
+    'Returns a newly created row'
+  );
 });

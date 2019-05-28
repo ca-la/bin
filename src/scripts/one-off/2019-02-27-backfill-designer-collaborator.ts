@@ -18,10 +18,12 @@ run()
   .then(() => {
     process.exit();
   })
-  .catch((err: any): void => {
-    logServerError(err);
-    process.exit(1);
-  });
+  .catch(
+    (err: any): void => {
+      logServerError(err);
+      process.exit(1);
+    }
+  );
 
 async function run(): Promise<void> {
   const designsMissingDesigner: SparseDesign[] = await db('product_designs')
@@ -40,11 +42,9 @@ async function run(): Promise<void> {
 
   log(`${reset}Found ${designsMissingDesigner.length} designs:
 
-${
-  designsMissingDesigner
-    .map((design: SparseDesign) => `${design.id} >> ${design.title}`)
-    .join('\n')
-}
+${designsMissingDesigner
+  .map((design: SparseDesign) => `${design.id} >> ${design.title}`)
+  .join('\n')}
 `);
 
   for (const design of designsMissingDesigner) {

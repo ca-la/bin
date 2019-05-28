@@ -14,10 +14,9 @@ test('POST /promo-codes/:id/redeem returns 404 on invalid code', async (t: tape.
 
   const { session, user } = await createUser();
 
-  const [response, body] = await post(
-    '/promo-codes/freeBie/redeem',
-    { headers: authHeader(session.id) }
-  );
+  const [response, body] = await post('/promo-codes/freeBie/redeem', {
+    headers: authHeader(session.id)
+  });
 
   t.equal(response.status, 404);
   t.equal(body.message, 'Invalid promo code: freeBie');
@@ -25,7 +24,9 @@ test('POST /promo-codes/:id/redeem returns 404 on invalid code', async (t: tape.
 });
 
 test('POST /promo-codes/:id/redeem applies a valid code', async (t: tape.Test) => {
-  const applyStub = sandbox().stub(applyCode, 'default').resolves(1239);
+  const applyStub = sandbox()
+    .stub(applyCode, 'default')
+    .resolves(1239);
 
   const { session, user } = await createUser();
 
@@ -38,10 +39,9 @@ test('POST /promo-codes/:id/redeem applies a valid code', async (t: tape.Test) =
     isSingleUse: false
   });
 
-  const [response, body] = await post(
-    '/promo-codes/freeBie/redeem',
-    { headers: authHeader(session.id) }
-  );
+  const [response, body] = await post('/promo-codes/freeBie/redeem', {
+    headers: authHeader(session.id)
+  });
 
   t.equal(response.status, 200);
   t.equal(body.appliedAmountCents, 1239);

@@ -3,7 +3,7 @@
 const { test } = require('../../test-helpers/fresh');
 const { getServiceMarginCents } = require('./index');
 
-test('getServiceMarginCents returns appropriate margins', async (t) => {
+test('getServiceMarginCents returns appropriate margins', async t => {
   t.equal(
     getServiceMarginCents({
       serviceId: 'WASH',

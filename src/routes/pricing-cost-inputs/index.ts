@@ -11,9 +11,11 @@ import PricingCostInput, {
 
 const router = new Router();
 
-function* createCostInputs(this: Koa.Application.Context): AsyncIterableIterator<any> {
+function* createCostInputs(
+  this: Koa.Application.Context
+): AsyncIterableIterator<any> {
   const { body: inputs } = this.request;
-  if (!inputs || inputs && !isUnsavedPricingCostInput(inputs)) {
+  if (!inputs || (inputs && !isUnsavedPricingCostInput(inputs))) {
     this.throw(400, 'Request does not match model');
     return;
   }
@@ -35,11 +37,16 @@ function* createCostInputs(this: Koa.Application.Context): AsyncIterableIterator
   this.status = 201;
 }
 
-function* getCostInputs(this: Koa.Application.Context): AsyncIterableIterator<any> {
+function* getCostInputs(
+  this: Koa.Application.Context
+): AsyncIterableIterator<any> {
   const { designId } = this.query;
 
   if (!designId) {
-    this.throw(400, 'You must provide a design ID when getting list of Cost Inputs');
+    this.throw(
+      400,
+      'You must provide a design ID when getting list of Cost Inputs'
+    );
     return;
   }
 
@@ -49,7 +56,9 @@ function* getCostInputs(this: Koa.Application.Context): AsyncIterableIterator<an
     return;
   }
 
-  const designInputs: PricingCostInput[] = yield PricingCostInputsDAO.findByDesignId(designId);
+  const designInputs: PricingCostInput[] = yield PricingCostInputsDAO.findByDesignId(
+    designId
+  );
 
   this.body = designInputs;
   this.status = 200;

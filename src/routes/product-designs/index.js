@@ -20,12 +20,23 @@ const requireAuth = require('../../middleware/require-auth');
 const createDesign = require('../../services/create-design').default;
 const User = require('../../components/users/domain-object');
 const UsersDAO = require('../../components/users/dao');
-const { canAccessDesignInParam, canCommentOnDesign, canDeleteDesign } = require('../../middleware/can-access-design');
+const {
+  canAccessDesignInParam,
+  canCommentOnDesign,
+  canDeleteDesign
+} = require('../../middleware/can-access-design');
 const { requireValues } = require('../../services/require-properties');
 const { getDesignPermissions } = require('../../services/get-permissions');
 
-const { getDesignUploadPolicy, getThumbnailUploadPolicy } = require('./upload-policy');
-const { addDesignEvent, addDesignEvents, getDesignEvents } = require('./events');
+const {
+  getDesignUploadPolicy,
+  getThumbnailUploadPolicy
+} = require('./upload-policy');
+const {
+  addDesignEvent,
+  addDesignEvents,
+  getDesignEvents
+} = require('./events');
 const {
   getSections,
   createSection,
@@ -36,7 +47,9 @@ const {
   getSectionAnnotations,
   createSectionAnnotation
 } = require('./sections');
-const { findAllDesignsThroughCollaborator } = require('../../dao/product-designs/dao');
+const {
+  findAllDesignsThroughCollaborator
+} = require('../../dao/product-designs/dao');
 
 const router = new Router();
 
@@ -65,7 +78,10 @@ async function attachDesignOwner(design) {
 async function attachStatuses(design) {
   const status = await ProductDesignStatusesDAO.findById(design.status);
 
-  const sla = await ProductDesignStatusSlasDAO.findByDesignAndStatus(design.id, design.status);
+  const sla = await ProductDesignStatusSlasDAO.findByDesignAndStatus(
+    design.id,
+    design.status
+  );
 
   if (sla) {
     status.setSla(sla);
@@ -74,7 +90,9 @@ async function attachStatuses(design) {
   design.setCurrentStatus(status);
 
   if (status.nextStatus) {
-    const nextStatus = await ProductDesignStatusesDAO.findById(status.nextStatus);
+    const nextStatus = await ProductDesignStatusesDAO.findById(
+      status.nextStatus
+    );
     design.setNextStatus(nextStatus);
   }
 
@@ -82,8 +100,10 @@ async function attachStatuses(design) {
 }
 
 async function attachRole(requestorId, design) {
-  const requestorAsCollaborator = await CollaboratorsDAO
-    .findByDesignAndUser(design.id, requestorId);
+  const requestorAsCollaborator = await CollaboratorsDAO.findByDesignAndUser(
+    design.id,
+    requestorId
+  );
 
   if (!requestorAsCollaborator) {
     return design;
@@ -109,10 +129,16 @@ function* getDesignsByUser() {
   canAccessUserResource.call(this, this.query.userId);
 
   const designs = yield findAllDesignsThroughCollaborator(this.query.userId);
-  const designsWithPermissions = yield Promise.all(designs.map(async (design) => {
-    const designPermissions = await getDesignPermissions(design, role, userId);
-    return { ...design, permissions: designPermissions };
-  }));
+  const designsWithPermissions = yield Promise.all(
+    designs.map(async design => {
+      const designPermissions = await getDesignPermissions(
+        design,
+        role,
+        userId
+      );
+      return { ...design, permissions: designPermissions };
+    })
+  );
 
   this.body = designsWithPermissions;
   this.status = 200;
@@ -161,10 +187,12 @@ function* getDesignsAndTasksByUser() {
   // TODO: this could end up making 100s of queries to the db, this could be improved by using
   //       one large JOIN
   const designsAndTasks = yield attachTasksToDesigns(designs);
-  const designsWithPermissions = yield Promise.all(designsAndTasks.map(async (design) => {
-    const permissions = await getDesignPermissions(design, role, userId);
-    return { ...design, permissions };
-  }));
+  const designsWithPermissions = yield Promise.all(
+    designsAndTasks.map(async design => {
+      const permissions = await getDesignPermissions(design, role, userId);
+      return { ...design, permissions };
+    })
+  );
 
   this.body = designsWithPermissions;
   this.status = 200;
@@ -181,10 +209,12 @@ function* getAllDesigns() {
     needsQuote: Boolean(this.query.needsQuote)
   });
 
-  const designsWithPermissions = yield Promise.all(designs.map(async (design) => {
-    const permissions = await getDesignPermissions(design, role, userId);
-    return attachResources(design, userId, permissions);
-  }));
+  const designsWithPermissions = yield Promise.all(
+    designs.map(async design => {
+      const permissions = await getDesignPermissions(design, role, userId);
+      return attachResources(design, userId, permissions);
+    })
+  );
 
   this.body = designsWithPermissions;
   this.status = 200;
@@ -223,7 +253,8 @@ function* getDesignPricing() {
     computedPricingTable,
     overridePricingTable,
     finalPricingTable
-  } = yield calculator.getAllPricingTables()
+  } = yield calculator
+    .getAllPricingTables()
     .catch(filterError(MissingPrerequisitesError, err => this.throw(400, err)));
   let finalTable = finalPricingTable;
 
@@ -256,11 +287,7 @@ function* create() {
   );
   const designPermissions = yield getDesignPermissions(design, role, userId);
 
-  design = yield attachResources(
-    design,
-    userId,
-    designPermissions
-  );
+  design = yield attachResources(design, userId, designPermissions);
 
   this.body = design;
   this.status = 201;
@@ -271,7 +298,9 @@ function* updateDesign() {
   const { designId } = this.params;
 
   const isAdmin = role === User.ROLES.admin;
-  const allowedParams = isAdmin ? ADMIN_ALLOWED_DESIGN_PARAMS : ALLOWED_DESIGN_PARAMS;
+  const allowedParams = isAdmin
+    ? ADMIN_ALLOWED_DESIGN_PARAMS
+    : ALLOWED_DESIGN_PARAMS;
   const data = pick(this.request.body, allowedParams);
 
   let updated = yield ProductDesignsDAO.update(designId, data).catch(
@@ -299,23 +328,99 @@ router.del(
 );
 router.get('/:designId', requireAuth, canAccessDesignInParam, getDesign);
 router.patch('/:designId', requireAuth, canAccessDesignInParam, updateDesign);
-router.get('/:designId/pricing', requireAuth, canAccessDesignInParam, getDesignPricing);
-router.get('/:designId/collections', requireAuth, canAccessDesignInParam, getDesignCollections);
+router.get(
+  '/:designId/pricing',
+  requireAuth,
+  canAccessDesignInParam,
+  getDesignPricing
+);
+router.get(
+  '/:designId/collections',
+  requireAuth,
+  canAccessDesignInParam,
+  getDesignCollections
+);
 
-router.get('/:designId/upload-policy/:sectionId', requireAuth, canAccessDesignInParam, getThumbnailUploadPolicy);
+router.get(
+  '/:designId/upload-policy/:sectionId',
+  requireAuth,
+  canAccessDesignInParam,
+  getThumbnailUploadPolicy
+);
 router.get('/upload-policy/:id', requireAuth, getDesignUploadPolicy);
 
-router.get('/:designId/events', requireAuth, canAccessDesignInParam, getDesignEvents);
-router.post('/:designId/events', requireAuth, canAccessDesignInParam, addDesignEvents);
-router.put('/:designId/events/:eventId', requireAuth, canAccessDesignInParam, addDesignEvent);
+router.get(
+  '/:designId/events',
+  requireAuth,
+  canAccessDesignInParam,
+  getDesignEvents
+);
+router.post(
+  '/:designId/events',
+  requireAuth,
+  canAccessDesignInParam,
+  addDesignEvents
+);
+router.put(
+  '/:designId/events/:eventId',
+  requireAuth,
+  canAccessDesignInParam,
+  addDesignEvent
+);
 
-router.get('/:designId/sections', requireAuth, canAccessDesignInParam, getSections);
-router.post('/:designId/sections', requireAuth, canAccessDesignInParam, createSection);
-router.del('/:designId/sections/:sectionId', requireAuth, canAccessDesignInParam, deleteSectionId);
-router.patch('/:designId/sections/:sectionId', requireAuth, canAccessDesignInParam, canAccessSection, updateSection);
-router.get('/:designId/sections/:sectionId/annotations', requireAuth, canAccessDesignInParam, canAccessSection, getSectionAnnotations);
-router.post('/:designId/sections/:sectionId/annotations', requireAuth, canAccessDesignInParam, canCommentOnDesign, canAccessSection, createSectionAnnotation);
-router.get('/:designId/sections/:sectionId/feature-placements', requireAuth, canAccessDesignInParam, canAccessSection, getSectionFeaturePlacements);
-router.put('/:designId/sections/:sectionId/feature-placements', requireAuth, canAccessDesignInParam, canAccessSection, replaceSectionFeaturePlacements);
+router.get(
+  '/:designId/sections',
+  requireAuth,
+  canAccessDesignInParam,
+  getSections
+);
+router.post(
+  '/:designId/sections',
+  requireAuth,
+  canAccessDesignInParam,
+  createSection
+);
+router.del(
+  '/:designId/sections/:sectionId',
+  requireAuth,
+  canAccessDesignInParam,
+  deleteSectionId
+);
+router.patch(
+  '/:designId/sections/:sectionId',
+  requireAuth,
+  canAccessDesignInParam,
+  canAccessSection,
+  updateSection
+);
+router.get(
+  '/:designId/sections/:sectionId/annotations',
+  requireAuth,
+  canAccessDesignInParam,
+  canAccessSection,
+  getSectionAnnotations
+);
+router.post(
+  '/:designId/sections/:sectionId/annotations',
+  requireAuth,
+  canAccessDesignInParam,
+  canCommentOnDesign,
+  canAccessSection,
+  createSectionAnnotation
+);
+router.get(
+  '/:designId/sections/:sectionId/feature-placements',
+  requireAuth,
+  canAccessDesignInParam,
+  canAccessSection,
+  getSectionFeaturePlacements
+);
+router.put(
+  '/:designId/sections/:sectionId/feature-placements',
+  requireAuth,
+  canAccessDesignInParam,
+  canAccessSection,
+  replaceSectionFeaturePlacements
+);
 
 module.exports = router.routes();

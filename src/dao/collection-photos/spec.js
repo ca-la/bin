@@ -3,18 +3,17 @@
 const CollectionPhotosDAO = require('./index');
 const { test } = require('../../test-helpers/fresh');
 
-test('CollectionPhotosDAO.create creates a new photo', (t) => {
+test('CollectionPhotosDAO.create creates a new photo', t => {
   return CollectionPhotosDAO.create({
     collectionId: '123123',
     photoUrl: 'https://example.com/photo.jpg'
-  })
-    .then((photo) => {
-      t.equal(photo.collectionId, '123123');
-      t.equal(photo.photoUrl, 'https://example.com/photo.jpg');
-    });
+  }).then(photo => {
+    t.equal(photo.collectionId, '123123');
+    t.equal(photo.photoUrl, 'https://example.com/photo.jpg');
+  });
 });
 
-test('CollectionPhotosDAO.findByCollectionId returns photos', (t) => {
+test('CollectionPhotosDAO.findByCollectionId returns photos', t => {
   return Promise.all([
     CollectionPhotosDAO.create({
       collectionId: '1',
@@ -32,7 +31,7 @@ test('CollectionPhotosDAO.findByCollectionId returns photos', (t) => {
     .then(() => {
       return CollectionPhotosDAO.findByCollectionId('1');
     })
-    .then((photos) => {
+    .then(photos => {
       t.equal(photos.length, 2);
 
       const urls = photos.map(photo => photo.photoUrl).sort();

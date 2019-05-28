@@ -1,4 +1,7 @@
-import { RealtimeAnnotationComment, RealtimeAnnotationCommentDeletion } from '@cala/ts-lib';
+import {
+  RealtimeAnnotationComment,
+  RealtimeAnnotationCommentDeletion
+} from '@cala/ts-lib';
 import { sendMessage } from '../../send-message';
 import AnnotationComment from '../../../annotation-comments/domain-object';
 import Comment from '../../../comments/domain-object';
@@ -27,9 +30,9 @@ export async function announceAnnotationCommentCreation(
  * Publishes an annotation comment deletion to the Iris SQS.
  */
 export async function announceAnnotationCommentDeletion(options: {
-  actorId: string,
-  annotationId: string,
-  commentId: string
+  actorId: string;
+  annotationId: string;
+  commentId: string;
 }): Promise<RealtimeAnnotationCommentDeletion> {
   const { actorId, annotationId, commentId } = options;
 

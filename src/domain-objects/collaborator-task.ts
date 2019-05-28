@@ -21,13 +21,11 @@ export interface CollaboratorTaskRow {
   collaborator_id: string;
 }
 
-export const dataAdapter = new DataAdapter<CollaboratorTaskRow, CollaboratorTask>();
+export const dataAdapter = new DataAdapter<
+  CollaboratorTaskRow,
+  CollaboratorTask
+>();
 
 export function isCollaboratorTaskRow(row: object): row is CollaboratorTaskRow {
-  return hasProperties(
-    row,
-    'created_at',
-    'task_id',
-    'collaborator_id'
-  );
+  return hasProperties(row, 'created_at', 'task_id', 'collaborator_id');
 }

@@ -14,7 +14,9 @@ export default async function generateComponent(
 ): Promise<ComponentWithResources> {
   const user = options.createdBy
     ? await findUserById(options.createdBy)
-    : await createUser({ withSession: false }).then((response: any): any => response.user);
+    : await createUser({ withSession: false }).then(
+        (response: any): any => response.user
+      );
 
   const component = await create({
     artworkId: null,

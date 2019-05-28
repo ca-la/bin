@@ -73,7 +73,9 @@ test('addAtMentionDetails adds details for multiple at mentions', async (t: tape
     id: uuid.v4(),
     isPinned: false,
     parentCommentId: null,
-    text: `A comment @<${collaborator.id}|collaborator> with mentions @<${c2.id}|collaborator>`,
+    text: `A comment @<${collaborator.id}|collaborator> with mentions @<${
+      c2.id
+    }|collaborator>`,
     userId: user.id
   });
 
@@ -92,8 +94,7 @@ test('addAtMentionDetails adds details for multiple at mentions', async (t: tape
   );
 });
 
-test('addAtMentionDetails adds single detail for multiple at mentions of single user',
-async (t: tape.Test) => {
+test('addAtMentionDetails adds single detail for multiple at mentions of single user', async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
   const { collection } = await generateCollection();
 
@@ -108,7 +109,9 @@ async (t: tape.Test) => {
     id: uuid.v4(),
     isPinned: false,
     parentCommentId: null,
-    text: `A comment @<${c1.id}|collaborator> with mentions @<${c1.id}|collaborator>`,
+    text: `A comment @<${c1.id}|collaborator> with mentions @<${
+      c1.id
+    }|collaborator>`,
     userId: user.id
   });
 

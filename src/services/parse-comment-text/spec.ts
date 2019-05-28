@@ -18,18 +18,24 @@ test('parseCommentText adds replaces mentions with names', async (t: Test) => {
   const noMentionResult = await parseCommentText(noMentionText);
   t.deepEqual(noMentionResult, 'hello there', 'comment no mentions is parsed');
 
-  const oneMentionText = `hello @<${collaborator.id}|${MentionType.collaborator}> there`;
+  const oneMentionText = `hello @<${collaborator.id}|${
+    MentionType.collaborator
+  }> there`;
   const oneMentionResult = await parseCommentText(oneMentionText);
-  t.deepEqual(oneMentionResult,
+  t.deepEqual(
+    oneMentionResult,
     `hello @${getCollaboratorName(collaborator)} there`,
     'comment with single mention is parsed'
   );
 
-  const multiMentionText = `hello @<${collaborator.id}|${MentionType.collaborator}> there
+  const multiMentionText = `hello @<${collaborator.id}|${
+    MentionType.collaborator
+  }> there
   what is up @<${collaborator.id}|${MentionType.collaborator}>?
   `;
   const multiMentionResult = await parseCommentText(multiMentionText);
-  t.deepEqual(multiMentionResult,
+  t.deepEqual(
+    multiMentionResult,
     `hello @${getCollaboratorName(collaborator)} there
   what is up @${getCollaboratorName(collaborator)}?
   `,

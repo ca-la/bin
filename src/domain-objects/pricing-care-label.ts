@@ -26,7 +26,10 @@ export interface PricingCareLabelRow {
   created_at: Date;
 }
 
-export const dataAdapter = new DataAdapter<PricingCareLabelRow, PricingCareLabel>();
+export const dataAdapter = new DataAdapter<
+  PricingCareLabelRow,
+  PricingCareLabel
+>();
 
 export function isPricingCareLabelRow(row: object): row is PricingCareLabelRow {
   return hasProperties(

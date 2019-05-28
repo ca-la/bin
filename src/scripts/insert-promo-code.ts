@@ -12,10 +12,12 @@ insertNewPromoCode()
     log(`${green}Successfully inserted!`);
     process.exit();
   })
-  .catch((err: any): void => {
-    logServerError(err);
-    process.exit(1);
-  });
+  .catch(
+    (err: any): void => {
+      logServerError(err);
+      process.exit(1);
+    }
+  );
 
 async function insertNewPromoCode(): Promise<void> {
   const code = process.argv[2];
@@ -23,7 +25,9 @@ async function insertNewPromoCode(): Promise<void> {
   const isSingleUse = process.argv[4] === '--singleUse';
 
   if (!code || !creditAmountString) {
-    throw new Error('Usage: insert-promo-code.ts <code> <amount in cents> [--singleUse]');
+    throw new Error(
+      'Usage: insert-promo-code.ts <code> <amount in cents> [--singleUse]'
+    );
   }
 
   const newCode: PromoCode = {

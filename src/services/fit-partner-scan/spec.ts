@@ -8,8 +8,8 @@ import FitPartner from '../../domain-objects/fit-partner';
 import FitPartnerCustomer = require('../../domain-objects/fit-partner-customer');
 
 async function createPartnerAndCustomer(): Promise<{
-  partner: FitPartner,
-  customer: FitPartnerCustomer
+  partner: FitPartner;
+  customer: FitPartnerCustomer;
 }> {
   const partner = await FitPartnersDAO.create({
     customFitDomain: null,
@@ -29,10 +29,12 @@ async function createPartnerAndCustomer(): Promise<{
 test('saveFittingUrl saves correct URL to Shopify customer data', async (t: Test) => {
   const { customer } = await createPartnerAndCustomer();
 
-  sandbox().stub(ShopifyClient.prototype, 'getCustomerMetafields')
+  sandbox()
+    .stub(ShopifyClient.prototype, 'getCustomerMetafields')
     .returns(Promise.resolve([]));
 
-  const updateStub = sandbox().stub(ShopifyClient.prototype, 'updateCustomer')
+  const updateStub = sandbox()
+    .stub(ShopifyClient.prototype, 'updateCustomer')
     .returns(Promise.resolve());
 
   await saveFittingUrl(customer.id, 'http://example.com');
@@ -56,10 +58,12 @@ test('saveFittingUrl saves correct URL to Shopify customer data', async (t: Test
 test('saveCalculatedValues truncates key names to 30 characters', async (t: Test) => {
   const { customer } = await createPartnerAndCustomer();
 
-  sandbox().stub(ShopifyClient.prototype, 'getCustomerMetafields')
+  sandbox()
+    .stub(ShopifyClient.prototype, 'getCustomerMetafields')
     .returns(Promise.resolve([]));
 
-  const updateStub = sandbox().stub(ShopifyClient.prototype, 'updateCustomer')
+  const updateStub = sandbox()
+    .stub(ShopifyClient.prototype, 'updateCustomer')
     .returns(Promise.resolve());
 
   const scanStub = new Scan({ id: '123' });
@@ -99,10 +103,12 @@ test('saveCalculatedValues truncates key names to 30 characters', async (t: Test
 test('saveCalculatedValues batches keys into groups', async (t: Test) => {
   const { customer } = await createPartnerAndCustomer();
 
-  sandbox().stub(ShopifyClient.prototype, 'getCustomerMetafields')
+  sandbox()
+    .stub(ShopifyClient.prototype, 'getCustomerMetafields')
     .returns(Promise.resolve([]));
 
-  const updateStub = sandbox().stub(ShopifyClient.prototype, 'updateCustomer')
+  const updateStub = sandbox()
+    .stub(ShopifyClient.prototype, 'updateCustomer')
     .returns(Promise.resolve());
 
   const scanStub = new Scan({ id: '123' });
@@ -123,43 +129,42 @@ test('saveCalculatedValues batches keys into groups', async (t: Test) => {
   t.equal(updateStub.args[3][1].metafields.length, 10);
 });
 
-test(
-  'saveCalculatedValues does not run multiple requests for the same customer in parallel',
-  async (t: Test) => {
-    const { customer } = await createPartnerAndCustomer();
+test('saveCalculatedValues does not run multiple requests for the same customer in parallel', async (t: Test) => {
+  const { customer } = await createPartnerAndCustomer();
 
-    sandbox().stub(ShopifyClient.prototype, 'getCustomerMetafields')
-      .returns(Promise.resolve([]));
+  sandbox()
+    .stub(ShopifyClient.prototype, 'getCustomerMetafields')
+    .returns(Promise.resolve([]));
 
-    const updateStub = sandbox().stub(ShopifyClient.prototype, 'updateCustomer')
-      .returns(Promise.resolve());
+  const updateStub = sandbox()
+    .stub(ShopifyClient.prototype, 'updateCustomer')
+    .returns(Promise.resolve());
 
-    const scanStub = new Scan({ id: '123' });
-    scanStub.measurements = { calculatedValues: {} };
+  const scanStub = new Scan({ id: '123' });
+  scanStub.measurements = { calculatedValues: {} };
 
-    for (let i = 1; i <= 31; i += 1) {
-      scanStub.measurements.calculatedValues![`measurement-${i}`] = 1234;
-    }
-
-    scanStub.fitPartnerCustomerId = customer.id;
-
-    await Promise.all([
-      saveCalculatedValues(scanStub),
-      saveCalculatedValues(scanStub),
-      saveCalculatedValues(scanStub)
-    ]);
-
-    t.equal(updateStub.callCount, 6);
-
-    // Since these 3 requests happened in serial, we saved the metafields
-    // group-by-group; 31, then 31, then 31. If this had happened in parallel
-    // we would see (30, 30, 30, 1, 1, 1) here, which is what we're trying to
-    // avoid.
-    t.equal(updateStub.args[0][1].metafields.length, 30);
-    t.equal(updateStub.args[1][1].metafields.length, 1);
-    t.equal(updateStub.args[2][1].metafields.length, 30);
-    t.equal(updateStub.args[3][1].metafields.length, 1);
-    t.equal(updateStub.args[4][1].metafields.length, 30);
-    t.equal(updateStub.args[5][1].metafields.length, 1);
+  for (let i = 1; i <= 31; i += 1) {
+    scanStub.measurements.calculatedValues![`measurement-${i}`] = 1234;
   }
-);
+
+  scanStub.fitPartnerCustomerId = customer.id;
+
+  await Promise.all([
+    saveCalculatedValues(scanStub),
+    saveCalculatedValues(scanStub),
+    saveCalculatedValues(scanStub)
+  ]);
+
+  t.equal(updateStub.callCount, 6);
+
+  // Since these 3 requests happened in serial, we saved the metafields
+  // group-by-group; 31, then 31, then 31. If this had happened in parallel
+  // we would see (30, 30, 30, 1, 1, 1) here, which is what we're trying to
+  // avoid.
+  t.equal(updateStub.args[0][1].metafields.length, 30);
+  t.equal(updateStub.args[1][1].metafields.length, 1);
+  t.equal(updateStub.args[2][1].metafields.length, 30);
+  t.equal(updateStub.args[3][1].metafields.length, 1);
+  t.equal(updateStub.args[4][1].metafields.length, 30);
+  t.equal(updateStub.args[5][1].metafields.length, 1);
+});

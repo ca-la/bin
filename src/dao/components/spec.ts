@@ -3,7 +3,14 @@ import * as tape from 'tape';
 import { omit } from 'lodash';
 
 import { test } from '../../test-helpers/fresh';
-import { create, del, findAllByCanvasId, findById, findRoot, update } from './index';
+import {
+  create,
+  del,
+  findAllByCanvasId,
+  findById,
+  findRoot,
+  update
+} from './index';
 import { create as createImage } from '../../components/images/dao';
 import { create as createCanvas } from '../product-design-canvases';
 import { ComponentType } from '../../domain-objects/component';
@@ -90,8 +97,11 @@ test('Components DAO supports update', async (t: tape.Test) => {
     type: ComponentType.Sketch
   };
   await createImage(imageData);
-  const  { id, createdAt, deletedAt, ...first } = await create(data);
-  const inserted = await update(componentId, { ...first, type: ComponentType.Artwork });
+  const { id, createdAt, deletedAt, ...first } = await create(data);
+  const inserted = await update(componentId, {
+    ...first,
+    type: ComponentType.Artwork
+  });
 
   const result = await findById(componentId);
   t.deepEqual(result, inserted, 'Returned inserted component');
@@ -185,7 +195,9 @@ test('Components DAO can get the root component', async (t: tape.Test) => {
   const root = await findRoot(component.id);
   t.deepEqual(component, root, 'Returns itself if it is the root.');
 
-  const { component: childComponentOne } = await generateComponent({ parentId: component.id });
+  const { component: childComponentOne } = await generateComponent({
+    parentId: component.id
+  });
   const { component: childComponentTwo } = await generateComponent({
     parentId: childComponentOne.id
   });

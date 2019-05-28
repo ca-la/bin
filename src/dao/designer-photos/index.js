@@ -11,12 +11,15 @@ const instantiate = row => new DesignerPhoto(row);
 
 function create(data) {
   return db('designerphotos')
-    .insert({
-      id: uuid.v4(),
-      photo_url: data.photoUrl,
-      designer_id: data.designerId,
-      position: data.position
-    }, '*')
+    .insert(
+      {
+        id: uuid.v4(),
+        photo_url: data.photoUrl,
+        designer_id: data.designerId,
+        position: data.position
+      },
+      '*'
+    )
     .then(first)
     .then(instantiate)
     .catch(rethrow);

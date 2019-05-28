@@ -11,12 +11,15 @@ const instantiate = data => new ProductVideo(data);
 
 function create(data) {
   return db('productvideos')
-    .insert({
-      id: uuid.v4(),
-      product_id: data.productId,
-      video_url: data.videoUrl,
-      poster_image_url: data.posterImageUrl
-    }, '*')
+    .insert(
+      {
+        id: uuid.v4(),
+        product_id: data.productId,
+        video_url: data.videoUrl,
+        poster_image_url: data.posterImageUrl
+      },
+      '*'
+    )
     .catch(rethrow)
     .then(first)
     .then(instantiate);

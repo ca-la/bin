@@ -23,7 +23,9 @@ export default async function generateInvoice(
     ? { user: await findUserById(options.userId) }
     : await createUser({ withSession: false });
 
-  if (!user) { throw new Error('Could not get user'); }
+  if (!user) {
+    throw new Error('Could not get user');
+  }
 
   const maybeCollection = options.collectionId
     ? await CollectionsDAO.findById(options.collectionId)
@@ -32,15 +34,17 @@ export default async function generateInvoice(
     ? { collection: maybeCollection }
     : await generateCollection({ createdBy: user.id });
 
-  const invoice = await db.transaction(async (trx: Knex.Transaction): Promise<Invoice> => {
-    const { id } = await InvoicesDAO.createTrx(trx, {
-      collectionId: collection.id,
-      title: options.title || 'My First Invoice',
-      totalCents: options.totalCents || 1234,
-      userId: user.id
-    });
-    return await InvoicesDAO.findByIdTrx(trx, id);
-  });
+  const invoice = await db.transaction(
+    async (trx: Knex.Transaction): Promise<Invoice> => {
+      const { id } = await InvoicesDAO.createTrx(trx, {
+        collectionId: collection.id,
+        title: options.title || 'My First Invoice',
+        totalCents: options.totalCents || 1234,
+        userId: user.id
+      });
+      return await InvoicesDAO.findByIdTrx(trx, id);
+    }
+  );
 
   return { invoice, userId: user, collection };
 }

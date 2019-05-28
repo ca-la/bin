@@ -10,19 +10,10 @@ export async function findLatest(): Promise<Process[]> {
 
   const processes = await db(TABLE_NAME)
     .select(['name', 'complexity'])
-    .whereIn(
-      'version',
-      db(TABLE_NAME)
-        .max('version')
-    )
+    .whereIn('version', db(TABLE_NAME).max('version'))
     .groupBy(['name', 'complexity'])
     .orderBy('name')
     .orderBy('complexity');
 
-  return validateEvery(
-    'pricing_processes',
-    isProcess,
-    dataAdapter,
-    processes
-  );
+  return validateEvery('pricing_processes', isProcess, dataAdapter, processes);
 }

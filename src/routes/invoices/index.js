@@ -12,10 +12,7 @@ const User = require('../../components/users/domain-object');
 const router = new Router();
 
 function* getInvoices() {
-  const {
-    collectionId,
-    userId
-  } = this.query;
+  const { collectionId, userId } = this.query;
 
   let invoices;
 
@@ -23,7 +20,7 @@ function* getInvoices() {
     canAccessUserResource.call(this, userId);
     invoices = yield InvoicesDAO.findByUser(userId);
   } else if (collectionId) {
-    const isAdmin = (this.state.role === User.ROLES.admin);
+    const isAdmin = this.state.role === User.ROLES.admin;
     this.assert(isAdmin, 403);
     invoices = yield InvoicesDAO.findByCollection(collectionId);
   } else {
@@ -74,7 +71,11 @@ function* postPayOut() {
 router.get('/', getInvoices);
 router.get('/:invoiceId', requireAdmin, getInvoice);
 router.del('/:invoiceId', requireAdmin, deleteInvoice);
-router.post('/:invoiceId/manual-payments', requireAdmin, createManualPaymentRecord);
+router.post(
+  '/:invoiceId/manual-payments',
+  requireAdmin,
+  createManualPaymentRecord
+);
 router.post('/:invoiceId/pay-out-to-partner', requireAdmin, postPayOut);
 
 module.exports = router.routes();

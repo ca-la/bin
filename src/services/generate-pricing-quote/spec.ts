@@ -2,7 +2,10 @@ import * as uuid from 'node-uuid';
 
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import * as PricingQuotesDAO from '../../dao/pricing-quotes';
-import { PricingQuoteRequest, PricingQuoteValues } from '../../domain-objects/pricing-quote';
+import {
+  PricingQuoteRequest,
+  PricingQuoteValues
+} from '../../domain-objects/pricing-quote';
 import generatePricingQuote, { generateUnsavedQuote } from './index';
 import { daysToMs } from '../time-conversion';
 
@@ -10,20 +13,25 @@ const quoteRequestOne: PricingQuoteRequest = {
   designId: null,
   materialBudgetCents: 1200,
   materialCategory: 'BASIC',
-  processes: [{
-    complexity: '1_COLOR',
-    name: 'SCREEN_PRINTING'
-  }, {
-    complexity: '1_COLOR',
-    name: 'SCREEN_PRINTING'
-  }],
+  processes: [
+    {
+      complexity: '1_COLOR',
+      name: 'SCREEN_PRINTING'
+    },
+    {
+      complexity: '1_COLOR',
+      name: 'SCREEN_PRINTING'
+    }
+  ],
   productComplexity: 'SIMPLE',
   productType: 'TEESHIRT',
   units: 100000
 };
 
 test('generateUnsavedQuote failure', async (t: Test) => {
-  sandbox().stub(PricingQuotesDAO, 'findLatestValuesForRequest').throws();
+  sandbox()
+    .stub(PricingQuotesDAO, 'findLatestValuesForRequest')
+    .throws();
 
   try {
     await generateUnsavedQuote(quoteRequestOne);
@@ -34,7 +42,9 @@ test('generateUnsavedQuote failure', async (t: Test) => {
 });
 
 test('generatePricingQuote failure', async (t: Test) => {
-  sandbox().stub(PricingQuotesDAO, 'findLatestValuesForRequest').throws();
+  sandbox()
+    .stub(PricingQuotesDAO, 'findLatestValuesForRequest')
+    .throws();
 
   try {
     await generatePricingQuote(quoteRequestOne);
@@ -83,25 +93,28 @@ test('generateUnsavedQuote', async (t: Test) => {
       uniqueProcesses: 1,
       version: 0
     },
-    processes: [{
-      complexity: '1_COLOR',
-      createdAt: new Date(),
-      id: uuid.v4(),
-      minimumUnits: 2000,
-      name: 'SCREEN_PRINTING',
-      setupCents: 3000,
-      unitCents: 50,
-      version: 0
-    }, {
-      complexity: '1_COLOR',
-      createdAt: new Date(),
-      id: uuid.v4(),
-      minimumUnits: 2000,
-      name: 'SCREEN_PRINTING',
-      setupCents: 3000,
-      unitCents: 50,
-      version: 0
-    }],
+    processes: [
+      {
+        complexity: '1_COLOR',
+        createdAt: new Date(),
+        id: uuid.v4(),
+        minimumUnits: 2000,
+        name: 'SCREEN_PRINTING',
+        setupCents: 3000,
+        unitCents: 50,
+        version: 0
+      },
+      {
+        complexity: '1_COLOR',
+        createdAt: new Date(),
+        id: uuid.v4(),
+        minimumUnits: 2000,
+        name: 'SCREEN_PRINTING',
+        setupCents: 3000,
+        unitCents: 50,
+        version: 0
+      }
+    ],
     sample: {
       complexity: 'SIMPLE',
       contrast: 0.15,
@@ -119,7 +132,7 @@ test('generateUnsavedQuote', async (t: Test) => {
       specificationTimeMs: daysToMs(3),
       unitCents: 15000,
       version: 0,
-      yield: 1.50
+      yield: 1.5
     },
     sampleMinimumCents: 7500,
     technicalDesignCents: 5000,
@@ -140,19 +153,28 @@ test('generateUnsavedQuote', async (t: Test) => {
       specificationTimeMs: daysToMs(3),
       unitCents: 375,
       version: 0,
-      yield: 1.50
+      yield: 1.5
     },
     workingSessionCents: 2500
   };
 
-  sandbox().stub(PricingQuotesDAO, 'findLatestValuesForRequest')
+  sandbox()
+    .stub(PricingQuotesDAO, 'findLatestValuesForRequest')
     .resolves(latestValues);
 
   const unsavedQuote = await generateUnsavedQuote(quoteRequestOne);
 
   t.equal(unsavedQuote.baseCostCents, 385, 'calculates base cost correctly');
-  t.equal(unsavedQuote.processCostCents, 101, 'calculates process cost correctly');
-  t.equal(unsavedQuote.unitCostCents, 1776, 'calculates total unit cost correctly');
+  t.equal(
+    unsavedQuote.processCostCents,
+    101,
+    'calculates process cost correctly'
+  );
+  t.equal(
+    unsavedQuote.unitCostCents,
+    1776,
+    'calculates total unit cost correctly'
+  );
 });
 
 test('generateUnsavedQuote for blank', async (t: Test) => {
@@ -194,16 +216,18 @@ test('generateUnsavedQuote for blank', async (t: Test) => {
       uniqueProcesses: 1,
       version: 0
     },
-    processes: [{
-      complexity: '1_COLOR',
-      createdAt: new Date(),
-      id: uuid.v4(),
-      minimumUnits: 100,
-      name: 'SCREEN_PRINTING',
-      setupCents: 6000,
-      unitCents: 110,
-      version: 0
-    }],
+    processes: [
+      {
+        complexity: '1_COLOR',
+        createdAt: new Date(),
+        id: uuid.v4(),
+        minimumUnits: 100,
+        name: 'SCREEN_PRINTING',
+        setupCents: 6000,
+        unitCents: 110,
+        version: 0
+      }
+    ],
     sample: {
       complexity: 'BLANK',
       contrast: 0,
@@ -247,23 +271,34 @@ test('generateUnsavedQuote for blank', async (t: Test) => {
     workingSessionCents: 2500
   };
 
-  sandbox().stub(PricingQuotesDAO, 'findLatestValuesForRequest')
+  sandbox()
+    .stub(PricingQuotesDAO, 'findLatestValuesForRequest')
     .resolves(latestValues);
 
   const unsavedQuote = await generateUnsavedQuote({
     designId: null,
     materialBudgetCents: 1100,
     materialCategory: 'BASIC',
-    processes: [{
-      complexity: '1_COLOR',
-      name: 'SCREEN_PRINTING'
-    }],
+    processes: [
+      {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      }
+    ],
     productComplexity: 'BLANK',
     productType: 'TEESHIRT',
     units: 100
   });
 
   t.equal(unsavedQuote.baseCostCents, 260, 'calculates base cost correctly');
-  t.equal(unsavedQuote.processCostCents, 170, 'calculates process cost correctly');
-  t.equal(unsavedQuote.unitCostCents, 1751, 'calculates total unit cost correctly');
+  t.equal(
+    unsavedQuote.processCostCents,
+    170,
+    'calculates process cost correctly'
+  );
+  t.equal(
+    unsavedQuote.unitCostCents,
+    1751,
+    'calculates total unit cost correctly'
+  );
 });

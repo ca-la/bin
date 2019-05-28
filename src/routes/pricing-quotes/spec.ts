@@ -28,22 +28,27 @@ test('/pricing-quotes POST -> GET quote', async (t: Test) => {
     id: uuid.v4(),
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
-    processes: [{
-      complexity: '1_COLOR',
-      name: 'SCREEN_PRINTING'
-    }, {
-      complexity: '1_COLOR',
-      name: 'SCREEN_PRINTING'
-    }],
+    processes: [
+      {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      },
+      {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      }
+    ],
     productComplexity: 'SIMPLE',
     productType: 'TEESHIRT'
   });
 
   const [failedResponse, failedBody] = await post('/pricing-quotes', {
-    body: [{
-      designId: design.id,
-      units: 300
-    }],
+    body: [
+      {
+        designId: design.id,
+        units: 300
+      }
+    ],
     headers: authHeader(session.id)
   });
 
@@ -57,16 +62,20 @@ test('/pricing-quotes POST -> GET quote', async (t: Test) => {
   await generatePricingValues();
 
   const [postResponse, createdQuotes] = await post('/pricing-quotes', {
-    body: [{
-      designId: design.id,
-      units: 300
-    }],
+    body: [
+      {
+        designId: design.id,
+        units: 300
+      }
+    ],
     headers: authHeader(session.id)
   });
 
   t.equal(postResponse.status, 201, 'successfully creates the quote');
 
-  const [getResponse, retrievedQuote] = await get(`/pricing-quotes/${createdQuotes[0].id}`);
+  const [getResponse, retrievedQuote] = await get(
+    `/pricing-quotes/${createdQuotes[0].id}`
+  );
 
   t.equal(getResponse.status, 200, 'successfully retrieves saved quote');
   t.deepEquals(
@@ -95,24 +104,31 @@ test('POST /pricing-quotes creates commit event', async (t: Test) => {
     id: uuid.v4(),
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
-    processes: [{
-      complexity: '1_COLOR',
-      name: 'SCREEN_PRINTING'
-    }, {
-      complexity: '1_COLOR',
-      name: 'SCREEN_PRINTING'
-    }],
+    processes: [
+      {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      },
+      {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      }
+    ],
     productComplexity: 'SIMPLE',
     productType: 'TEESHIRT'
   });
 
-  const slackStub = sandbox().stub(SlackService, 'enqueueSend').resolves();
+  const slackStub = sandbox()
+    .stub(SlackService, 'enqueueSend')
+    .resolves();
 
   await post('/pricing-quotes', {
-    body: [{
-      designId: design.id,
-      units: 300
-    }],
+    body: [
+      {
+        designId: design.id,
+        units: 300
+      }
+    ],
     headers: authHeader(session.id)
   });
 
@@ -147,10 +163,12 @@ test('/pricing-quotes?designId retrieves the set of quotes for a design', async 
     id: uuid.v4(),
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
-    processes: [{
-      complexity: '1_COLOR',
-      name: 'SCREEN_PRINTING'
-    }],
+    processes: [
+      {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      }
+    ],
     productComplexity: 'SIMPLE',
     productType: 'TEESHIRT'
   });
@@ -161,30 +179,37 @@ test('/pricing-quotes?designId retrieves the set of quotes for a design', async 
     id: uuid.v4(),
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
-    processes: [{
-      complexity: '1_COLOR',
-      name: 'SCREEN_PRINTING'
-    }, {
-      complexity: '1_COLOR',
-      name: 'SCREEN_PRINTING'
-    }],
+    processes: [
+      {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      },
+      {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      }
+    ],
     productComplexity: 'SIMPLE',
     productType: 'TEESHIRT'
   });
 
-  const created = (await post('/pricing-quotes', {
-    body: [{
-      designId: design.id,
-      units: 300
-    }],
+  const [, created] = await post('/pricing-quotes', {
+    body: [
+      {
+        designId: design.id,
+        units: 300
+      }
+    ],
     headers: authHeader(session.id)
-  }))[1];
+  });
 
   await post('/pricing-quotes', {
-    body: [{
-      designId: otherDesign.id,
-      units: 300
-    }],
+    body: [
+      {
+        designId: otherDesign.id,
+        units: 300
+      }
+    ],
     headers: authHeader(session.id)
   });
 
@@ -216,13 +241,16 @@ test('GET /pricing-quotes?designId&units returns unsaved quote', async (t: Test)
     id: uuid.v4(),
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
-    processes: [{
-      complexity: '1_COLOR',
-      name: 'SCREEN_PRINTING'
-    }, {
-      complexity: '1_COLOR',
-      name: 'SCREEN_PRINTING'
-    }],
+    processes: [
+      {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      },
+      {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      }
+    ],
     productComplexity: 'SIMPLE',
     productType: 'TEESHIRT'
   });
@@ -257,13 +285,16 @@ test('GET /pricing-quotes?designId&units with very large quantity', async (t: Te
     id: uuid.v4(),
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
-    processes: [{
-      complexity: '1_COLOR',
-      name: 'SCREEN_PRINTING'
-    }, {
-      complexity: '1_COLOR',
-      name: 'SCREEN_PRINTING'
-    }],
+    processes: [
+      {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      },
+      {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      }
+    ],
     productComplexity: 'SIMPLE',
     productType: 'TEESHIRT'
   });
@@ -278,140 +309,125 @@ test('GET /pricing-quotes?designId&units with very large quantity', async (t: Te
   t.equal(unsavedQuote.payNowTotalCents, 177700000);
 });
 
-test(
-  'POST /pricing-quotes/preview returns an unsaved quote from an uncommitted cost',
-  async (t: Test) => {
-    await generatePricingValues();
-    const { user, session } = await createUser({ role: 'ADMIN' });
+test('POST /pricing-quotes/preview returns an unsaved quote from an uncommitted cost', async (t: Test) => {
+  await generatePricingValues();
+  const { user, session } = await createUser({ role: 'ADMIN' });
 
-    const design = await createDesign({
-      productType: 'A product type',
-      title: 'A design',
-      userId: user.id
-    });
-    const uncommittedCostInput: PricingCostInput = {
-      createdAt: new Date(),
-      deletedAt: null,
-      designId: design.id,
-      id: uuid.v4(),
-      materialBudgetCents: 1200,
-      materialCategory: 'BASIC',
-      processes: [{
-        complexity: '1_COLOR',
-        name: 'SCREEN_PRINTING'
-      }, {
-        complexity: '1_COLOR',
-        name: 'SCREEN_PRINTING'
-      }],
-      productComplexity: 'SIMPLE',
-      productType: 'TEESHIRT'
-    };
-
-    const [response, unsavedQuote] = await post(
-      '/pricing-quotes/preview',
+  const design = await createDesign({
+    productType: 'A product type',
+    title: 'A design',
+    userId: user.id
+  });
+  const uncommittedCostInput: PricingCostInput = {
+    createdAt: new Date(),
+    deletedAt: null,
+    designId: design.id,
+    id: uuid.v4(),
+    materialBudgetCents: 1200,
+    materialCategory: 'BASIC',
+    processes: [
       {
-        body: {
-          uncommittedCostInput,
-          units: 100
-        },
-        headers: authHeader(session.id)
-      }
-    );
-
-    t.equal(response.status, 200);
-    t.deepEqual(unsavedQuote, {
-      payLaterTotalCents: 527660,
-      payLaterTotalCentsPerUnit: 5277,
-      payNowTotalCents: 496000,
-      payNowTotalCentsPerUnit: 4960,
-      timeTotalMs: 1152000000
-    });
-  }
-);
-
-test(
-  'POST /pricing-quotes/preview fails if there are no pricing values for the request',
-  async (t: Test) => {
-    const { user, session } = await createUser({ role: 'ADMIN' });
-
-    const design = await createDesign({
-      productType: 'A product type',
-      title: 'A design',
-      userId: user.id
-    });
-    const uncommittedCostInput: PricingCostInput = {
-      createdAt: new Date(),
-      deletedAt: null,
-      designId: design.id,
-      id: uuid.v4(),
-      materialBudgetCents: 1200,
-      materialCategory: 'BASIC',
-      processes: [{
         complexity: '1_COLOR',
         name: 'SCREEN_PRINTING'
-      }, {
-        complexity: '1_COLOR',
-        name: 'SCREEN_PRINTING'
-      }],
-      productComplexity: 'SIMPLE',
-      productType: 'TEESHIRT'
-    };
-
-    const [failedResponse, failedBody] = await post(
-      '/pricing-quotes/preview',
+      },
       {
-        body: {
-          uncommittedCostInput,
-          units: 100
-        },
-        headers: authHeader(session.id)
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
       }
-    );
+    ],
+    productComplexity: 'SIMPLE',
+    productType: 'TEESHIRT'
+  };
 
-    t.equal(failedResponse.status, 400, 'fails to create the quote');
-    t.equal(
-      failedBody.message,
-      'Latest pricing constant could not be found!',
-      'Responds with a failure message'
-    );
-  }
-);
+  const [response, unsavedQuote] = await post('/pricing-quotes/preview', {
+    body: {
+      uncommittedCostInput,
+      units: 100
+    },
+    headers: authHeader(session.id)
+  });
+
+  t.equal(response.status, 200);
+  t.deepEqual(unsavedQuote, {
+    payLaterTotalCents: 527660,
+    payLaterTotalCentsPerUnit: 5277,
+    payNowTotalCents: 496000,
+    payNowTotalCentsPerUnit: 4960,
+    timeTotalMs: 1152000000
+  });
+});
+
+test('POST /pricing-quotes/preview fails if there are no pricing values for the request', async (t: Test) => {
+  const { user, session } = await createUser({ role: 'ADMIN' });
+
+  const design = await createDesign({
+    productType: 'A product type',
+    title: 'A design',
+    userId: user.id
+  });
+  const uncommittedCostInput: PricingCostInput = {
+    createdAt: new Date(),
+    deletedAt: null,
+    designId: design.id,
+    id: uuid.v4(),
+    materialBudgetCents: 1200,
+    materialCategory: 'BASIC',
+    processes: [
+      {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      },
+      {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      }
+    ],
+    productComplexity: 'SIMPLE',
+    productType: 'TEESHIRT'
+  };
+
+  const [failedResponse, failedBody] = await post('/pricing-quotes/preview', {
+    body: {
+      uncommittedCostInput,
+      units: 100
+    },
+    headers: authHeader(session.id)
+  });
+
+  t.equal(failedResponse.status, 400, 'fails to create the quote');
+  t.equal(
+    failedBody.message,
+    'Latest pricing constant could not be found!',
+    'Responds with a failure message'
+  );
+});
 
 test('POST /pricing-quotes/preview is an admin-only endpoint', async (t: Test) => {
   const { session } = await createUser();
-  const [response] = await post(
-    '/pricing-quotes/preview',
-    {
-      body: {},
-      headers: authHeader(session.id)
-    }
-  );
+  const [response] = await post('/pricing-quotes/preview', {
+    body: {},
+    headers: authHeader(session.id)
+  });
   t.equal(response.status, 403);
 });
 
 test('POST /pricing-quotes/preview requires units and a cost input', async (t: Test) => {
   const { session } = await createUser({ role: 'ADMIN' });
-  const [responseOne] = await post(
-    '/pricing-quotes/preview',
-    {
-      body: { fizz: 'buzz' },
-      headers: authHeader(session.id)
-    }
-  );
+  const [responseOne] = await post('/pricing-quotes/preview', {
+    body: { fizz: 'buzz' },
+    headers: authHeader(session.id)
+  });
   t.equal(responseOne.status, 400);
 
-  const [responseTwo] = await post(
-    '/pricing-quotes/preview',
-    {
-      body: {
-        uncommittedCostInput: {
-          foo: 'bar'
-        },
-        units: 'blah'
+  const [responseTwo] = await post('/pricing-quotes/preview', {
+    body: {
+      uncommittedCostInput: {
+        foo: 'bar'
       },
-      headers: authHeader(session.id)
-    }
-  );
+      units: 'blah'
+    },
+    headers: authHeader(session.id)
+  });
   t.equal(responseTwo.status, 400);
 });
 
@@ -430,24 +446,29 @@ test('PUT /pricing-quotes/:quoteId/bid/:bidId creates bid', async (t: Test) => {
     id: uuid.v4(),
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
-    processes: [{
-      complexity: '1_COLOR',
-      name: 'SCREEN_PRINTING'
-    }, {
-      complexity: '1_COLOR',
-      name: 'SCREEN_PRINTING'
-    }],
+    processes: [
+      {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      },
+      {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      }
+    ],
     productComplexity: 'SIMPLE',
     productType: 'TEESHIRT'
   });
 
-  const createdQuotes = (await post('/pricing-quotes', {
-    body: [{
-      designId: design.id,
-      units: 200
-    }],
+  const [, createdQuotes] = await post('/pricing-quotes', {
+    body: [
+      {
+        designId: design.id,
+        units: 200
+      }
+    ],
     headers: authHeader(session.id)
-  }))[1];
+  });
 
   const inputBid: Bid = {
     bidPriceCents: 100000,
@@ -488,24 +509,29 @@ test('POST /pricing-quotes/:quoteId/bids creates bid', async (t: Test) => {
     id: uuid.v4(),
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
-    processes: [{
-      complexity: '1_COLOR',
-      name: 'SCREEN_PRINTING'
-    }, {
-      complexity: '1_COLOR',
-      name: 'SCREEN_PRINTING'
-    }],
+    processes: [
+      {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      },
+      {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      }
+    ],
     productComplexity: 'SIMPLE',
     productType: 'TEESHIRT'
   });
 
-  const createdQuotes = (await post('/pricing-quotes', {
-    body: [{
-      designId: design.id,
-      units: 200
-    }],
+  const [, createdQuotes] = await post('/pricing-quotes', {
+    body: [
+      {
+        designId: design.id,
+        units: 200
+      }
+    ],
     headers: authHeader(session.id)
-  }))[1];
+  });
 
   const inputBid: Unsaved<Bid> = {
     bidPriceCents: 100000,
@@ -545,24 +571,29 @@ test('GET /pricing-quotes/:quoteId/bids returns list of bids for quote', async (
     id: uuid.v4(),
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
-    processes: [{
-      complexity: '1_COLOR',
-      name: 'SCREEN_PRINTING'
-    }, {
-      complexity: '1_COLOR',
-      name: 'SCREEN_PRINTING'
-    }],
+    processes: [
+      {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      },
+      {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      }
+    ],
     productComplexity: 'SIMPLE',
     productType: 'TEESHIRT'
   });
 
-  const createdQuotes = (await post('/pricing-quotes', {
-    body: [{
-      designId: design.id,
-      units: 200
-    }],
+  const [, createdQuotes] = await post('/pricing-quotes', {
+    body: [
+      {
+        designId: design.id,
+        units: 200
+      }
+    ],
     headers: authHeader(session.id)
-  }))[1];
+  });
 
   const inputBid: Bid = {
     bidPriceCents: 100000,
@@ -573,10 +604,10 @@ test('GET /pricing-quotes/:quoteId/bids returns list of bids for quote', async (
     quoteId: createdQuotes[0].id
   };
 
-  await put(
-    `/pricing-quotes/${inputBid.quoteId}/bids/${inputBid.id}`,
-    { body: inputBid, headers: authHeader(session.id) }
-  );
+  await put(`/pricing-quotes/${inputBid.quoteId}/bids/${inputBid.id}`, {
+    body: inputBid,
+    headers: authHeader(session.id)
+  });
 
   const [response, bids] = await get(
     `/pricing-quotes/${inputBid.quoteId}/bids`,
@@ -584,8 +615,10 @@ test('GET /pricing-quotes/:quoteId/bids returns list of bids for quote', async (
   );
 
   t.equal(response.status, 200);
-  t.deepEqual(bids, [{
-    ...inputBid,
-    createdAt: inputBid.createdAt.toISOString()
-  }]);
+  t.deepEqual(bids, [
+    {
+      ...inputBid,
+      createdAt: inputBid.createdAt.toISOString()
+    }
+  ]);
 });

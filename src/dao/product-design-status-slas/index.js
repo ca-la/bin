@@ -11,7 +11,8 @@ const ProductDesignStatusSla = require('../../domain-objects/product-design-stat
 const { dataMapper } = ProductDesignStatusSla;
 
 const instantiate = data => new ProductDesignStatusSla(data);
-const maybeInstantiate = data => (data && new ProductDesignStatusSla(data)) || null;
+const maybeInstantiate = data =>
+  (data && new ProductDesignStatusSla(data)) || null;
 
 const TABLE_NAME = 'product_design_status_slas';
 
@@ -23,7 +24,7 @@ function deleteForDesign(trx, designId) {
 }
 
 function createForDesign(trx, designId, slas) {
-  const rowData = slas.map((data) => {
+  const rowData = slas.map(data => {
     return Object.assign({}, dataMapper.userDataToRowData(data), {
       id: uuid.v4(),
       design_id: designId
@@ -36,7 +37,7 @@ function createForDesign(trx, designId, slas) {
     .returning('*')
     .then(inserted => inserted.map(instantiate))
     .catch(rethrow)
-    .catch((err) => {
+    .catch(err => {
       if (err instanceof rethrow.ERRORS.NotNullViolation) {
         const keyName = dataMapper.getKeyName(err.column) || 'All data';
         throw new InvalidDataError(`${keyName} must be provided`);
@@ -61,7 +62,7 @@ function createForDesign(trx, designId, slas) {
 }
 
 function replaceForDesign(designId, slas) {
-  return db.transaction((trx) => {
+  return db.transaction(trx => {
     deleteForDesign(trx, designId)
       .then(() => {
         if (slas.length > 0) {

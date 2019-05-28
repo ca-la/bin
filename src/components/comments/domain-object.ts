@@ -91,10 +91,7 @@ export function isComment(candidate: object): candidate is Comment {
   );
 }
 
-export const UPDATABLE_COLUMNS = [
-  'is_pinned',
-  'text'
-];
+export const UPDATABLE_COLUMNS = ['is_pinned', 'text'];
 
 export const INSERTABLE_COLUMNS = [
   'id',

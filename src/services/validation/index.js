@@ -26,25 +26,18 @@ function assertRangeIfExists(val, min, max, message) {
 }
 
 /**
-  * @returns {String} An e164-formatted number, if validation passed
-  */
+ * @returns {String} An e164-formatted number, if validation passed
+ */
 function validateAndFormatPhoneNumber(number) {
   const trimmedNumber = number.replace(/[^\d+]/g, '');
   let adjustedNumber = trimmedNumber;
 
-  if (
-    trimmedNumber.indexOf('+') === -1 &&
-    trimmedNumber.length === 10
-  ) {
+  if (trimmedNumber.indexOf('+') === -1 && trimmedNumber.length === 10) {
     // Assume domestic without +1 prefix
     adjustedNumber = `+1${trimmedNumber}`;
   }
 
-
-  if (
-    trimmedNumber.indexOf('1') === 0 &&
-    trimmedNumber.length === 11
-  ) {
+  if (trimmedNumber.indexOf('1') === 0 && trimmedNumber.length === 11) {
     // Assume domestic 1-XXX-XXX-XXXX format
     adjustedNumber = `+${trimmedNumber}`;
   }
@@ -65,7 +58,6 @@ function validateAndFormatPhoneNumber(number) {
 
   return util.format(parsedNumber, PhoneNumberFormat.E164);
 }
-
 
 const EMAIL_PATTERN = /^[^@]+@[^@]+\.[^@]+$/;
 

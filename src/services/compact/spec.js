@@ -3,7 +3,7 @@
 const { test } = require('../../test-helpers/simple');
 const compact = require('./index');
 
-test('compact compacts objects', async (t) => {
+test('compact compacts objects', async t => {
   const input = {
     a: 123,
     b: 'something',

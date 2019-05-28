@@ -1,6 +1,8 @@
 import { Machine, StateMachine } from 'xstate';
 import Bid from '../../domain-object';
-import DesignEvent, { DesignEventTypes } from '../../../../domain-objects/design-event';
+import DesignEvent, {
+  DesignEventTypes
+} from '../../../../domain-objects/design-event';
 import { isExpired } from '../is-expired';
 
 export enum BidState {
@@ -23,9 +25,7 @@ interface BidMachineStateSchema {
   };
 }
 
-type BidMachineEvent =
-  | { type: DesignEventTypes }
-  | { type: 'EXPIRE_BID' };
+type BidMachineEvent = { type: DesignEventTypes } | { type: 'EXPIRE_BID' };
 
 interface BidMachineContext {}
 
@@ -68,7 +68,10 @@ function createBidMachine(
   });
 }
 
-export function determineStateFromEvents(bid: Bid, events: DesignEvent[]): BidState {
+export function determineStateFromEvents(
+  bid: Bid,
+  events: DesignEvent[]
+): BidState {
   const machine = createBidMachine(bid.id);
   let state = machine.initialState;
 

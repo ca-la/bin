@@ -27,7 +27,9 @@ import generateCollaborator from '../../test-helpers/factories/collaborator';
 import * as NotificationAnnouncer from '../../components/iris/messages/notification';
 
 test('sendDesignOwnerAnnotationCommentCreateNotification', async (t: tape.Test) => {
-  sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
   const { user: user } = await createUser({ withSession: false });
   const { user: owner } = await createUser({ withSession: false });
 
@@ -69,35 +71,42 @@ test('sendDesignOwnerAnnotationCommentCreateNotification', async (t: tape.Test) 
     commentId: otherComment.id
   });
 
-  const nullNotification = await NotificationsService
-    .sendDesignOwnerAnnotationCommentCreateNotification(
-      annotation.id,
-      canvas.id,
-      ownerComment.id,
-      owner.id,
-      []
-    );
-  t.equal(nullNotification, null, 'A notification will not be made if the actor is the recipient');
+  const nullNotification = await NotificationsService.sendDesignOwnerAnnotationCommentCreateNotification(
+    annotation.id,
+    canvas.id,
+    ownerComment.id,
+    owner.id,
+    []
+  );
+  t.equal(
+    nullNotification,
+    null,
+    'A notification will not be made if the actor is the recipient'
+  );
 
-  const mentionedNotification = await NotificationsService
-    .sendDesignOwnerAnnotationCommentCreateNotification(
-      annotation.id,
-      canvas.id,
-      ownerComment.id,
-      user.id,
-      [owner.id]
-    );
-  t.equal(mentionedNotification, null, 'A notification will not be made if the owner is mentioned');
+  const mentionedNotification = await NotificationsService.sendDesignOwnerAnnotationCommentCreateNotification(
+    annotation.id,
+    canvas.id,
+    ownerComment.id,
+    user.id,
+    [owner.id]
+  );
+  t.equal(
+    mentionedNotification,
+    null,
+    'A notification will not be made if the owner is mentioned'
+  );
 
-  const notification = await NotificationsService
-    .sendDesignOwnerAnnotationCommentCreateNotification(
-      annotation.id,
-      canvas.id,
-      otherComment.id,
-      user.id,
-      []
-    );
-  if (!notification) { throw new Error('Expected a notification!'); }
+  const notification = await NotificationsService.sendDesignOwnerAnnotationCommentCreateNotification(
+    annotation.id,
+    canvas.id,
+    otherComment.id,
+    user.id,
+    []
+  );
+  if (!notification) {
+    throw new Error('Expected a notification!');
+  }
   const {
     actorUserId,
     canvasId,
@@ -117,9 +126,17 @@ test('sendDesignOwnerAnnotationCommentCreateNotification', async (t: tape.Test) 
 });
 
 test('sendAnnotationCommentMentionNotification', async (t: tape.Test) => {
-  sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
-  const { user: user } = await createUser({ withSession: false, role: 'ADMIN' });
-  const { user: owner } = await createUser({ withSession: false, role: 'ADMIN' });
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
+  const { user: user } = await createUser({
+    withSession: false,
+    role: 'ADMIN'
+  });
+  const { user: owner } = await createUser({
+    withSession: false,
+    role: 'ADMIN'
+  });
 
   const design = await DesignsDAO.create({
     productType: 'A product type',
@@ -146,15 +163,16 @@ test('sendAnnotationCommentMentionNotification', async (t: tape.Test) => {
     commentId: ownerComment.id
   });
 
-  const notification = await NotificationsService
-    .sendAnnotationCommentMentionNotification(
-      annotation.id,
-      canvas.id,
-      ownerComment.id,
-      owner.id,
-      user.id
-    );
-  if (!notification) { throw new Error('Expected a notification!'); }
+  const notification = await NotificationsService.sendAnnotationCommentMentionNotification(
+    annotation.id,
+    canvas.id,
+    ownerComment.id,
+    owner.id,
+    user.id
+  );
+  if (!notification) {
+    throw new Error('Expected a notification!');
+  }
   const {
     actorUserId,
     canvasId,
@@ -173,11 +191,14 @@ test('sendAnnotationCommentMentionNotification', async (t: tape.Test) => {
   t.equal(
     type,
     NotificationType.ANNOTATION_COMMENT_MENTION,
-    'Notification type should be ANNOTATION_COMMENT_MENTION');
+    'Notification type should be ANNOTATION_COMMENT_MENTION'
+  );
 });
 
 test('sendDesignOwnerMeasurementCreateNotification', async (t: tape.Test) => {
-  sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
   const { user: user } = await createUser({ withSession: false });
   const { user: owner } = await createUser({ withSession: false });
 
@@ -200,14 +221,20 @@ test('sendDesignOwnerMeasurementCreateNotification', async (t: tape.Test) => {
     canvas.id,
     owner.id
   );
-  t.equal(nullNotification, null, 'A notification will not be made if the actor is the recipient');
+  t.equal(
+    nullNotification,
+    null,
+    'A notification will not be made if the actor is the recipient'
+  );
 
   const notification = await NotificationsService.sendDesignOwnerMeasurementCreateNotification(
     measurement.id,
     canvas.id,
     user.id
   );
-  if (!notification) { throw new Error('Expected a notification!'); }
+  if (!notification) {
+    throw new Error('Expected a notification!');
+  }
   const {
     actorUserId,
     canvasId,
@@ -227,7 +254,9 @@ test('sendDesignOwnerMeasurementCreateNotification', async (t: tape.Test) => {
 });
 
 test('sendTaskCommentCreateNotification', async (t: tape.Test) => {
-  sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
   const userOne = await createUser();
   const userTwo = await createUser();
 
@@ -305,8 +334,12 @@ test('sendTaskCommentCreateNotification', async (t: tape.Test) => {
     taskId: taskOne.id
   });
 
-  const notifications = await NotificationsService
-    .sendTaskCommentCreateNotification(taskOne.id, comment.id, userOne.user.id, []);
+  const notifications = await NotificationsService.sendTaskCommentCreateNotification(
+    taskOne.id,
+    comment.id,
+    userOne.user.id,
+    []
+  );
 
   t.equal(
     notifications.length,
@@ -326,7 +359,9 @@ test('sendTaskCommentCreateNotification', async (t: tape.Test) => {
 });
 
 test('sendTaskCommentMentionNotification', async (t: tape.Test) => {
-  sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
   const userOne = await createUser({ role: 'ADMIN' });
   const userTwo = await createUser({ role: 'ADMIN' });
 
@@ -404,10 +439,16 @@ test('sendTaskCommentMentionNotification', async (t: tape.Test) => {
     taskId: taskOne.id
   });
 
-  const notification = await NotificationsService
-    .sendTaskCommentMentionNotification(taskOne.id, comment.id, userOne.user.id, userTwo.user.id);
+  const notification = await NotificationsService.sendTaskCommentMentionNotification(
+    taskOne.id,
+    comment.id,
+    userOne.user.id,
+    userTwo.user.id
+  );
 
-  if (!notification) { return t.fail('Notification Failed to create'); }
+  if (!notification) {
+    return t.fail('Notification Failed to create');
+  }
 
   t.deepEqual(
     notification.recipientUserId,
@@ -422,7 +463,9 @@ test('sendTaskCommentMentionNotification', async (t: tape.Test) => {
 });
 
 test('sendTaskAssignmentNotification', async (t: tape.Test) => {
-  sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
   const userOne = await createUser();
   const userTwo = await createUser();
 
@@ -482,8 +525,11 @@ test('sendTaskAssignmentNotification', async (t: tape.Test) => {
     taskId: taskOne.id
   });
 
-  const notifications = await NotificationsService
-    .sendTaskAssignmentNotification(taskOne.id, userOne.user.id, [collaboratorTwo.id]);
+  const notifications = await NotificationsService.sendTaskAssignmentNotification(
+    taskOne.id,
+    userOne.user.id,
+    [collaboratorTwo.id]
+  );
 
   t.equal(
     notifications.length,
@@ -554,8 +600,11 @@ test('sendTaskAssignmentNotification does not send if assigned to self', async (
     taskId: taskOne.id
   });
 
-  const notifications = await NotificationsService
-    .sendTaskAssignmentNotification(taskOne.id, user.id, [collaborator.id]);
+  const notifications = await NotificationsService.sendTaskAssignmentNotification(
+    taskOne.id,
+    user.id,
+    [collaborator.id]
+  );
 
   t.equal(
     notifications.length,
@@ -564,8 +613,7 @@ test('sendTaskAssignmentNotification does not send if assigned to self', async (
   );
 });
 
-test('sendTaskAssignmentNotification does not send if assigned to collaborator without an account',
-async (t: tape.Test) => {
+test('sendTaskAssignmentNotification does not send if assigned to collaborator without an account', async (t: tape.Test) => {
   const { user } = await createUser();
 
   const collection = await CollectionsDAO.create({
@@ -625,8 +673,11 @@ async (t: tape.Test) => {
     taskId: taskOne.id
   });
 
-  const notifications = await NotificationsService
-    .sendTaskAssignmentNotification(taskOne.id, user.id, [collaborator2.id]);
+  const notifications = await NotificationsService.sendTaskAssignmentNotification(
+    taskOne.id,
+    user.id,
+    [collaborator2.id]
+  );
 
   t.equal(
     notifications.length,
@@ -636,7 +687,9 @@ async (t: tape.Test) => {
 });
 
 test('sendTaskCompletionNotification', async (t: tape.Test) => {
-  sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
   const userOne = await createUser();
   const userTwo = await createUser();
 
@@ -704,8 +757,10 @@ test('sendTaskCompletionNotification', async (t: tape.Test) => {
     taskId: taskOne.id
   });
 
-  const notifications = await NotificationsService
-    .sendTaskCompletionNotification(taskOne.id, userTwo.user.id);
+  const notifications = await NotificationsService.sendTaskCompletionNotification(
+    taskOne.id,
+    userTwo.user.id
+  );
 
   t.equal(
     notifications.length,
@@ -725,13 +780,19 @@ test('sendTaskCompletionNotification', async (t: tape.Test) => {
 });
 
 test('sendDesignerSubmitCollection', async (t: tape.Test) => {
-  sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
   const { user } = await createUser({ withSession: false });
   const { user: calaOps } = await createUser({ withSession: false });
   const { collection } = await generateCollection({ createdBy: user.id });
 
-  const slackStub = sandbox().stub(SlackService, 'enqueueSend').returns(Promise.resolve());
-  sandbox().stub(Config, 'CALA_OPS_USER_ID').value(calaOps.id);
+  const slackStub = sandbox()
+    .stub(SlackService, 'enqueueSend')
+    .returns(Promise.resolve());
+  sandbox()
+    .stub(Config, 'CALA_OPS_USER_ID')
+    .value(calaOps.id);
 
   const notification = await NotificationsService.sendDesignerSubmitCollection(
     collection.id,
@@ -747,7 +808,9 @@ test('sendDesignerSubmitCollection', async (t: tape.Test) => {
 });
 
 test('immediatelySendFullyCostedCollection', async (t: tape.Test) => {
-  sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
   const admin = await createUser({ withSession: false, role: 'ADMIN' });
   const userOne = await createUser({ withSession: false });
   const userTwo = await createUser({ withSession: false });
@@ -785,7 +848,9 @@ test('immediatelySendFullyCostedCollection', async (t: tape.Test) => {
     userId: null
   });
 
-  const emailStub = sandbox().stub(EmailService, 'enqueueSend').returns(Promise.resolve());
+  const emailStub = sandbox()
+    .stub(EmailService, 'enqueueSend')
+    .returns(Promise.resolve());
 
   const notifications = await NotificationsService.immediatelySendFullyCostedCollection(
     collection.id,
@@ -806,7 +871,9 @@ test('immediatelySendFullyCostedCollection', async (t: tape.Test) => {
 });
 
 test('immediatelySendInviteCollaborator', async (t: tape.Test) => {
-  sandbox().stub(NotificationAnnouncer, 'announceNotificationCreation').resolves({});
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
   const userOne = await createUser();
   const collection = await CollectionsDAO.create({
     createdAt: new Date(),
@@ -825,15 +892,19 @@ test('immediatelySendInviteCollaborator', async (t: tape.Test) => {
     userId: null
   });
 
-  const emailStub = sandbox().stub(EmailService, 'enqueueSend').returns(Promise.resolve());
+  const emailStub = sandbox()
+    .stub(EmailService, 'enqueueSend')
+    .returns(Promise.resolve());
 
-  const notification = await NotificationsService.immediatelySendInviteCollaborator({
-    actorId: userOne.user.id,
-    collectionId: collection.id,
-    designId: null,
-    targetCollaboratorId: collaboratorOne.id,
-    targetUserId: null
-  });
+  const notification = await NotificationsService.immediatelySendInviteCollaborator(
+    {
+      actorId: userOne.user.id,
+      collectionId: collection.id,
+      designId: null,
+      targetCollaboratorId: collaboratorOne.id,
+      targetUserId: null
+    }
+  );
 
   sinon.assert.callCount(emailStub, 1);
   t.not(notification.sentEmailAt, null, 'Notification is marked as sent');

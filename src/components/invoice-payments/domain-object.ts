@@ -44,17 +44,22 @@ interface CreditPayment extends InvoicePaymentBase {
   creditUserId: string;
 }
 
-export type InvoicePayment = StripePayment | RumbleshipPayment | ResolvePayment | CreditPayment;
+export type InvoicePayment =
+  | StripePayment
+  | RumbleshipPayment
+  | ResolvePayment
+  | CreditPayment;
 
 type MaybeSaved<T extends InvoicePaymentBase> = Omit<T, 'createdAt' | 'id'> & {
   createdAt?: Date;
   id?: string;
 };
 
-export type MaybeSavedInvoicePayment = MaybeSaved<StripePayment> |
-  MaybeSaved<RumbleshipPayment> |
-  MaybeSaved<ResolvePayment> |
-  MaybeSaved<CreditPayment>;
+export type MaybeSavedInvoicePayment =
+  | MaybeSaved<StripePayment>
+  | MaybeSaved<RumbleshipPayment>
+  | MaybeSaved<ResolvePayment>
+  | MaybeSaved<CreditPayment>;
 
 export const dataAdapter = new DataAdapter<InvoicePaymentRow, InvoicePayment>();
 

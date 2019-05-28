@@ -26,11 +26,13 @@ export interface PromoCode {
 function decode(row: PromoCodeRow): PromoCode {
   return {
     code: row.code,
-    codeExpiresAt: row.code_expires_at === null ? null : new Date(row.code_expires_at),
+    codeExpiresAt:
+      row.code_expires_at === null ? null : new Date(row.code_expires_at),
     createdAt: new Date(row.created_at),
     createdBy: row.created_by,
     creditAmountCents: Number(row.credit_amount_cents),
-    creditExpiresAt: row.credit_expires_at === null ? null : new Date(row.credit_expires_at),
+    creditExpiresAt:
+      row.credit_expires_at === null ? null : new Date(row.credit_expires_at),
     id: row.id,
     isSingleUse: row.is_single_use
   };
@@ -42,7 +44,8 @@ function forInsertion(data: Uninserted<PromoCode>): Uninserted<PromoCodeRow> {
     code_expires_at: data.codeExpiresAt && data.codeExpiresAt.toISOString(),
     created_by: data.createdBy,
     credit_amount_cents: String(data.creditAmountCents),
-    credit_expires_at: data.creditExpiresAt && data.creditExpiresAt.toISOString(),
+    credit_expires_at:
+      data.creditExpiresAt && data.creditExpiresAt.toISOString(),
     id: data.id,
     is_single_use: data.isSingleUse
   };

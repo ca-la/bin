@@ -23,9 +23,14 @@ export interface ProductDesignVariantRow {
   units_to_produce: number;
 }
 
-export const dataAdapter = new DataAdapter<ProductDesignVariantRow, ProductDesignVariant>();
+export const dataAdapter = new DataAdapter<
+  ProductDesignVariantRow,
+  ProductDesignVariant
+>();
 
-export function isProductDesignVariantRow(candidate: object): candidate is ProductDesignVariantRow {
+export function isProductDesignVariantRow(
+  candidate: object
+): candidate is ProductDesignVariantRow {
   return hasProperties(
     candidate,
     'color_name',

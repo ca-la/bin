@@ -5,12 +5,18 @@ const CreditsDAO = require('../../components/credits/dao');
 const payInvoice = require('./index');
 const SlackService = require('../slack');
 const Stripe = require('../stripe');
-const { createInvoicesWithPayments } = require('../../test-helpers/factories/invoice-payments');
+const {
+  createInvoicesWithPayments
+} = require('../../test-helpers/factories/invoice-payments');
 const { test, sandbox } = require('../../test-helpers/fresh');
 
-test('payInvoice', async (t) => {
-  sandbox().stub(Stripe, 'charge').returns(Promise.resolve({ id: 'chargeId' }));
-  sandbox().stub(SlackService, 'enqueueSend').returns(Promise.resolve());
+test('payInvoice', async t => {
+  sandbox()
+    .stub(Stripe, 'charge')
+    .returns(Promise.resolve({ id: 'chargeId' }));
+  sandbox()
+    .stub(SlackService, 'enqueueSend')
+    .returns(Promise.resolve());
 
   const {
     collections,
@@ -53,13 +59,19 @@ test('payInvoice', async (t) => {
   t.ok(Stripe.charge.calledOnce, 'only notify once');
 
   t.ok(paidInvoice.isPaid, 'paid invoice is paid');
-  t.equal(paidInvoice.totalPaid, unpaidInvoice.totalCents, 'total paid is total invoice due');
+  t.equal(
+    paidInvoice.totalPaid,
+    unpaidInvoice.totalCents,
+    'total paid is total invoice due'
+  );
   t.ok(paidInvoice.paidAt, 'has a last paid at date');
 });
 
-test('payInvoice does not charge a $0 amount', async (t) => {
+test('payInvoice does not charge a $0 amount', async t => {
   sandbox().stub(Stripe, 'charge');
-  sandbox().stub(SlackService, 'enqueueSend').returns(Promise.resolve());
+  sandbox()
+    .stub(SlackService, 'enqueueSend')
+    .returns(Promise.resolve());
 
   const {
     users,
@@ -88,10 +100,13 @@ test('payInvoice does not charge a $0 amount', async (t) => {
   t.ok(paidInvoice.isPaid, 'paid invoice is paid');
 });
 
-
-test('payInvoice cannot pay the same invoice twice in parallel', async (t) => {
-  sandbox().stub(Stripe, 'charge').returns(Promise.resolve({ id: 'chargeId' }));
-  sandbox().stub(SlackService, 'enqueueSend').returns(Promise.resolve());
+test('payInvoice cannot pay the same invoice twice in parallel', async t => {
+  sandbox()
+    .stub(Stripe, 'charge')
+    .returns(Promise.resolve({ id: 'chargeId' }));
+  sandbox()
+    .stub(SlackService, 'enqueueSend')
+    .returns(Promise.resolve());
 
   const {
     users,
@@ -103,16 +118,8 @@ test('payInvoice cannot pay the same invoice twice in parallel', async (t) => {
 
   try {
     await Promise.all([
-      payInvoice(
-        unpaidInvoice.id,
-        paymentMethod.id,
-        users[1].id
-      ),
-      payInvoice(
-        unpaidInvoice.id,
-        paymentMethod.id,
-        users[1].id
-      )
+      payInvoice(unpaidInvoice.id, paymentMethod.id, users[1].id),
+      payInvoice(unpaidInvoice.id, paymentMethod.id, users[1].id)
     ]);
 
     throw new Error("Shouldn't get here");

@@ -1,9 +1,4 @@
-import {
-  Complexity,
-  MaterialCategory,
-  Process,
-  ProductType
-} from './pricing';
+import { Complexity, MaterialCategory, Process, ProductType } from './pricing';
 import { hasProperties } from '../services/require-properties';
 import DataAdapter from '../services/data-adapter';
 
@@ -31,7 +26,10 @@ export interface PricingCostInputRow {
   processes: Process[];
 }
 
-export const dataAdapter = new DataAdapter<PricingCostInputRow, PricingCostInput>();
+export const dataAdapter = new DataAdapter<
+  PricingCostInputRow,
+  PricingCostInput
+>();
 
 export function isUnsavedPricingCostInput(
   candidate: object
@@ -47,7 +45,9 @@ export function isUnsavedPricingCostInput(
   );
 }
 
-export function isPricingCostInput(candidate: object): candidate is PricingCostInput {
+export function isPricingCostInput(
+  candidate: object
+): candidate is PricingCostInput {
   return hasProperties(
     candidate,
     'id',
@@ -62,7 +62,9 @@ export function isPricingCostInput(candidate: object): candidate is PricingCostI
   );
 }
 
-export function isPricingCostInputRow(candidate: object): candidate is PricingCostInputRow {
+export function isPricingCostInputRow(
+  candidate: object
+): candidate is PricingCostInputRow {
   return hasProperties(
     candidate,
     'id',

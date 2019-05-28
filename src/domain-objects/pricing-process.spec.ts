@@ -50,8 +50,5 @@ test('PricingProcess', async (t: Test): Promise<void> => {
     isPricingProcessRow(invalidRowData),
     'type guard rejects invalid data'
   );
-  t.ok(
-    isPricingProcessRow(validRowData),
-    'type guard passes with valid data'
-  );
+  t.ok(isPricingProcessRow(validRowData), 'type guard passes with valid data');
 });

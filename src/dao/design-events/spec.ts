@@ -5,12 +5,7 @@ import createUser = require('../../test-helpers/create-user');
 
 import DesignEvent from '../../domain-objects/design-event';
 import { create as createDesign } from '../product-designs';
-import {
-  create,
-  createAll,
-  findByDesignId,
-  findByTargetId
-} from './index';
+import { create, createAll, findByDesignId, findByTargetId } from './index';
 
 test('Design Events DAO supports creation', async (t: Test) => {
   const { bid } = await generateBid();
@@ -157,9 +152,9 @@ test('Design Events DAO supports retrieval by target ID', async (t: Test) => {
   await createAll([bidEvent, submitEvent, acceptBidEvent]);
   const designEvents = await findByDesignId(design.id);
 
-  t.deepEqual(designEvents, [
-    submitEvent,
-    bidEvent,
-    acceptBidEvent
-  ], 'returns the events in createdAt order');
+  t.deepEqual(
+    designEvents,
+    [submitEvent, bidEvent, acceptBidEvent],
+    'returns the events in createdAt order'
+  );
 });

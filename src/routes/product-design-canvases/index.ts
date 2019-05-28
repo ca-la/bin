@@ -8,9 +8,13 @@ import * as ProductDesignOptionsDAO from '../../dao/product-design-options';
 import * as ProductDesignsDAO from '../../dao/product-designs';
 import * as ProductDesignImagesDAO from '../../components/images/dao';
 import ProductDesignCanvas, {
-  isProductDesignCanvas, isUnsavedProductDesignCanvas
+  isProductDesignCanvas,
+  isUnsavedProductDesignCanvas
 } from '../../domain-objects/product-design-canvas';
-import Component, { ComponentType, isUnsavedComponent } from '../../domain-objects/component';
+import Component, {
+  ComponentType,
+  isUnsavedComponent
+} from '../../domain-objects/component';
 import * as EnrichmentService from '../../services/attach-asset-links';
 import filterError = require('../../services/filter-error');
 import ProductDesignImage = require('../../components/images/domain-object');
@@ -24,17 +28,16 @@ const router = new Router();
 type CanvasNotFoundError = ProductDesignCanvasesDAO.CanvasNotFoundError;
 const { CanvasNotFoundError } = ProductDesignCanvasesDAO;
 
-const attachUser = (
-  request: any,
-  userId: string
-): any => {
+const attachUser = (request: any, userId: string): any => {
   return {
     ...request,
     createdBy: userId
   };
 };
 
-function* create(this: Koa.Application.Context): AsyncIterableIterator<ProductDesignCanvas> {
+function* create(
+  this: Koa.Application.Context
+): AsyncIterableIterator<ProductDesignCanvas> {
   if (Array.isArray(this.request.body)) {
     yield createWithComponents;
   } else {
@@ -42,7 +45,9 @@ function* create(this: Koa.Application.Context): AsyncIterableIterator<ProductDe
   }
 }
 
-function* createCanvas(this: Koa.Application.Context): AsyncIterableIterator<ProductDesignCanvas> {
+function* createCanvas(
+  this: Koa.Application.Context
+): AsyncIterableIterator<ProductDesignCanvas> {
   const body = attachUser(this.request.body, this.state.userId);
   if (!this.request.body || !isUnsavedProductDesignCanvas(body)) {
     return this.throw(400, 'Request does not match ProductDesignCanvas');
@@ -54,19 +59,24 @@ function* createCanvas(this: Koa.Application.Context): AsyncIterableIterator<Pro
 }
 
 type ComponentWithImageAndOption = Component & {
-  assetLink: string,
-  downloadLink?: string,
-  image: ProductDesignImage,
-  option?: ProductDesignOption
+  assetLink: string;
+  downloadLink?: string;
+  image: ProductDesignImage;
+  option?: ProductDesignOption;
 };
 
-type CanvasWithComponent = ProductDesignCanvas & { components: ComponentWithImageAndOption[]};
+type CanvasWithComponent = ProductDesignCanvas & {
+  components: ComponentWithImageAndOption[];
+};
 
 function isCanvasWithComponent(data: any): data is CanvasWithComponent {
   const isCanvas = isProductDesignCanvas(omit(data, 'components'));
-  const isComponents = data.components.every((component: any) => isUnsavedComponent(component));
+  const isComponents = data.components.every((component: any) =>
+    isUnsavedComponent(component)
+  );
   const isImages = data.components.every((component: any) =>
-    hasProperties(component.image, 'userId', 'mimeType', 'id'));
+    hasProperties(component.image, 'userId', 'mimeType', 'id')
+  );
 
   return isCanvas && isComponents && isImages;
 }
@@ -74,28 +84,29 @@ function isCanvasWithComponent(data: any): data is CanvasWithComponent {
 function* createWithComponents(
   this: Koa.Application.Context
 ): AsyncIterableIterator<ProductDesignCanvas> {
-  const body: Unsaved<CanvasWithComponent>[] = (this.request.body as any);
+  const body: Unsaved<CanvasWithComponent>[] = this.request.body as any;
 
   this.assert(body.length >= 1, 400, 'At least one canvas must be provided');
 
   const canvases: CanvasWithComponent[] = yield Promise.all(
     body.map(async (data: Unsaved<CanvasWithComponent>) =>
-      createCanvasAndComponents(this.state.userId, data))
+      createCanvasAndComponents(this.state.userId, data)
+    )
   );
 
   if (canvases.length < 1) {
     throw new Error('No canvases were succesfully created');
   }
 
-  const assetLinks: string[] = canvases
-    .reduce(
-      (list: string[], canvas: CanvasWithComponent): string[] =>
-        list.concat(canvas.components.map((component: ComponentWithImageAndOption) =>
-          component.assetLink
+  const assetLinks: string[] = canvases.reduce(
+    (list: string[], canvas: CanvasWithComponent): string[] =>
+      list.concat(
+        canvas.components.map(
+          (component: ComponentWithImageAndOption) => component.assetLink
         )
       ),
-      []
-    );
+    []
+  );
 
   yield updateDesignPreview(canvases[0].designId, assetLinks);
   this.status = 201;
@@ -103,14 +114,23 @@ function* createWithComponents(
 }
 
 async function createCanvasAndComponents(
-  userId: string, data: Unsaved<CanvasWithComponent>
-): Promise<ProductDesignCanvas & { components: ComponentWithImageAndOption[]}> {
-  if (!data || !isCanvasWithComponent(data)) { throw new Error('Request does not match Schema'); }
+  userId: string,
+  data: Unsaved<CanvasWithComponent>
+): Promise<
+  ProductDesignCanvas & { components: ComponentWithImageAndOption[] }
+> {
+  if (!data || !isCanvasWithComponent(data)) {
+    throw new Error('Request does not match Schema');
+  }
 
-  const enrichedComponents = await Promise.all(data.components.map(
-    async (component: ComponentWithImageAndOption): Promise<ComponentWithImageAndOption> => {
-      return createComponent(component, userId);
-    })
+  const enrichedComponents = await Promise.all(
+    data.components.map(
+      async (
+        component: ComponentWithImageAndOption
+      ): Promise<ComponentWithImageAndOption> => {
+        return createComponent(component, userId);
+      }
+    )
   );
   const canvasWithUser = attachUser(omit(data, 'components'), userId);
   await ProductDesignCanvasesDAO.create({ ...canvasWithUser, deletedAt: null });
@@ -123,11 +143,18 @@ async function createComponent(
   userId: string
 ): Promise<ComponentWithImageAndOption> {
   const image = component.image;
-  const createdImage = await ProductDesignImagesDAO.create({ ...image, userId, deletedAt: null });
+  const createdImage = await ProductDesignImagesDAO.create({
+    ...image,
+    userId,
+    deletedAt: null
+  });
   let option;
 
   if (component.type === ComponentType.Material) {
-    option = await ProductDesignOptionsDAO.create({ ...component.option, deletedAt: null });
+    option = await ProductDesignOptionsDAO.create({
+      ...component.option,
+      deletedAt: null
+    });
   }
 
   const created = await ComponentsDAO.create(attachUser(component, userId));
@@ -139,7 +166,10 @@ async function createComponent(
   };
 }
 
-async function updateDesignPreview(designId: string, assetLinks: string[]): Promise<void> {
+async function updateDesignPreview(
+  designId: string,
+  assetLinks: string[]
+): Promise<void> {
   const design = await ProductDesignsDAO.findById(designId);
   if (!design) {
     throw new Error(`No design for id: ${designId}`);
@@ -150,8 +180,13 @@ async function updateDesignPreview(designId: string, assetLinks: string[]): Prom
   await ProductDesignsDAO.update(designId, { previewImageUrls });
 }
 
-function* addComponent(this: Koa.Application.Context): AsyncIterableIterator<ProductDesignCanvas> {
-  const { assetLink, ...body } = attachUser(this.request.body, this.state.userId);
+function* addComponent(
+  this: Koa.Application.Context
+): AsyncIterableIterator<ProductDesignCanvas> {
+  const { assetLink, ...body } = attachUser(
+    this.request.body,
+    this.state.userId
+  );
   if (!this.request.body || !isUnsavedComponent(body)) {
     return this.throw(400, 'Request does not match ProductDesignCanvas');
   }
@@ -165,23 +200,31 @@ function* addComponent(this: Koa.Application.Context): AsyncIterableIterator<Pro
     : [assetLink];
   yield ProductDesignsDAO.update(canvas.designId, { previewImageUrls });
 
-  const updatedCanvas = yield ProductDesignCanvasesDAO
-    .update(this.params.canvasId, { ...canvas, componentId: component.id });
+  const updatedCanvas = yield ProductDesignCanvasesDAO.update(
+    this.params.canvasId,
+    { ...canvas, componentId: component.id }
+  );
   const components = yield ComponentsDAO.findAllByCanvasId(canvas.id);
   this.status = 200;
   this.body = { ...updatedCanvas, components };
 }
 
-function* update(this: Koa.Application.Context): AsyncIterableIterator<ProductDesignCanvas> {
+function* update(
+  this: Koa.Application.Context
+): AsyncIterableIterator<ProductDesignCanvas> {
   const body = attachUser(this.request.body, this.state.userId);
   if (!this.request.body || !isUnsavedProductDesignCanvas(body)) {
     return this.throw(400, 'Request does not match ProductDesignCanvas');
   }
 
-  const canvas = yield ProductDesignCanvasesDAO.update(this.params.canvasId, body)
-    .catch(filterError(CanvasNotFoundError, (err: CanvasNotFoundError) => {
+  const canvas = yield ProductDesignCanvasesDAO.update(
+    this.params.canvasId,
+    body
+  ).catch(
+    filterError(CanvasNotFoundError, (err: CanvasNotFoundError) => {
       this.throw(404, err);
-    }));
+    })
+  );
   this.status = 200;
   this.body = canvas;
 }
@@ -200,11 +243,14 @@ function* reorder(
   this.body = canvases;
 }
 
-function* del(this: Koa.Application.Context): AsyncIterableIterator<ProductDesignCanvas> {
-  yield ProductDesignCanvasesDAO.del(this.params.canvasId)
-    .catch(filterError(CanvasNotFoundError, (err: CanvasNotFoundError) => {
+function* del(
+  this: Koa.Application.Context
+): AsyncIterableIterator<ProductDesignCanvas> {
+  yield ProductDesignCanvasesDAO.del(this.params.canvasId).catch(
+    filterError(CanvasNotFoundError, (err: CanvasNotFoundError) => {
       this.throw(404, err);
-    }));
+    })
+  );
   this.status = 204;
 }
 
@@ -212,7 +258,9 @@ function* getById(this: Koa.Application.Context): AsyncIterableIterator<any> {
   const canvas = yield ProductDesignCanvasesDAO.findById(this.params.canvasId);
   this.assert(canvas, 404);
   const components = yield ComponentsDAO.findAllByCanvasId(canvas.id);
-  const enrichedComponents = yield Promise.all(components.map(EnrichmentService.addAssetLink));
+  const enrichedComponents = yield Promise.all(
+    components.map(EnrichmentService.addAssetLink)
+  );
   const enrichedCanvas = { ...canvas, components: enrichedComponents };
 
   this.status = 200;
@@ -223,21 +271,25 @@ interface GetListQuery {
   designId?: string;
 }
 
-function* getList(
-  this: Koa.Application.Context
-): AsyncIterableIterator<any[]> {
+function* getList(this: Koa.Application.Context): AsyncIterableIterator<any[]> {
   const query: GetListQuery = this.query;
 
   if (!query.designId) {
     return this.throw(400, 'Missing designId');
   }
 
-  const canvases = yield ProductDesignCanvasesDAO.findAllByDesignId(query.designId);
-  const enrichedCanvases = yield canvases.map(async (canvas: ProductDesignCanvas) => {
-    const components = await ComponentsDAO.findAllByCanvasId(canvas.id);
-    const enrichedComponents = await Promise.all(components.map(EnrichmentService.addAssetLink));
-    return { ...canvas, components: enrichedComponents };
-  });
+  const canvases = yield ProductDesignCanvasesDAO.findAllByDesignId(
+    query.designId
+  );
+  const enrichedCanvases = yield canvases.map(
+    async (canvas: ProductDesignCanvas) => {
+      const components = await ComponentsDAO.findAllByCanvasId(canvas.id);
+      const enrichedComponents = await Promise.all(
+        components.map(EnrichmentService.addAssetLink)
+      );
+      return { ...canvas, components: enrichedComponents };
+    }
+  );
 
   this.status = 200;
   this.body = enrichedCanvases;
@@ -246,7 +298,12 @@ function* getList(
 router.post('/', requireAuth, create);
 router.put('/:canvasId', requireAuth, create);
 router.patch('/:canvasId', requireAuth, update);
-router.patch('/reorder', requireAuth, typeGuard<ReorderRequest[]>(isReorderRequest), reorder);
+router.patch(
+  '/reorder',
+  requireAuth,
+  typeGuard<ReorderRequest[]>(isReorderRequest),
+  reorder
+);
 
 router.put('/:canvasId/component/:componentId', requireAuth, addComponent);
 router.del('/:canvasId', requireAuth, del);

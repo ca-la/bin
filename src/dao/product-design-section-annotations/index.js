@@ -12,24 +12,30 @@ const instantiate = data => new ProductDesignSectionAnnotation(data);
 function deleteById(id) {
   return db('product_design_section_annotations')
     .where({ id, deleted_at: null })
-    .update({
-      deleted_at: new Date()
-    }, '*')
+    .update(
+      {
+        deleted_at: new Date()
+      },
+      '*'
+    )
     .then(first)
     .then(instantiate);
 }
 
 function createForSection(sectionId, data) {
   return db('product_design_section_annotations')
-    .insert({
-      id: uuid.v4(),
-      section_id: sectionId,
-      x: data.x,
-      y: data.y,
-      text: data.text,
-      in_reply_to_id: data.inReplyToId,
-      user_id: data.userId
-    }, '*')
+    .insert(
+      {
+        id: uuid.v4(),
+        section_id: sectionId,
+        x: data.x,
+        y: data.y,
+        text: data.text,
+        in_reply_to_id: data.inReplyToId,
+        user_id: data.userId
+      },
+      '*'
+    )
     .catch(rethrow)
     .then(first)
     .then(instantiate);
@@ -54,9 +60,12 @@ function findBySectionId(sectionId) {
 function update(id, data) {
   return db('product_design_section_annotations')
     .where({ id, deleted_at: null })
-    .update({
-      text: data.text
-    }, '*')
+    .update(
+      {
+        text: data.text
+      },
+      '*'
+    )
     .then(first)
     .then(instantiate);
 }

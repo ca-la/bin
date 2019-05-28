@@ -12,7 +12,9 @@ async function backfill() {
     .from('product_designs')
     .whereNotNull('units_to_produce');
 
-  Logger.log(`${COLORS.yellow}Found ${rows.length} applicable designs${COLORS.reset}`);
+  Logger.log(
+    `${COLORS.yellow}Found ${rows.length} applicable designs${COLORS.reset}`
+  );
 
   for (let i = 0; i < rows.length; i += 1) {
     Logger.log(`${COLORS.yellow}Updating ${rows[i].id}${COLORS.reset}`);
@@ -27,8 +29,14 @@ async function backfill() {
       ]
     );
 
-    variants.forEach((variant) => {
-      Logger.log(`${COLORS.green}Created variant (units: ${variant.unitsToProduce}, sizeName: ${variant.sizeName}, colorName: ${variant.colorName})${COLORS.reset}`);
+    variants.forEach(variant => {
+      Logger.log(
+        `${COLORS.green}Created variant (units: ${
+          variant.unitsToProduce
+        }, sizeName: ${variant.sizeName}, colorName: ${variant.colorName})${
+          COLORS.reset
+        }`
+      );
     });
   }
 

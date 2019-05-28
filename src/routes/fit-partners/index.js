@@ -19,7 +19,8 @@ function substituteLink(message, link) {
   return message.replace(/{{link}}/g, link);
 }
 
-const DEFAULT_SMS_COPY = 'To complete your fitting, open this link on your mobile device: {{link}}';
+const DEFAULT_SMS_COPY =
+  'To complete your fitting, open this link on your mobile device: {{link}}';
 
 async function createAndSendScanLink({
   partnerId,
@@ -29,9 +30,14 @@ async function createAndSendScanLink({
   requireValues({ partnerId, phoneNumber, shopifyUserId });
 
   const partner = await FitPartnersDAO.findById(partnerId);
-  if (!partner) { throw new InvalidDataError(`Unknown partner ID: ${partnerId}`); }
+  if (!partner) {
+    throw new InvalidDataError(`Unknown partner ID: ${partnerId}`);
+  }
 
-  const customer = await FitPartnerCustomersDAO.findOrCreate({ partnerId, shopifyUserId });
+  const customer = await FitPartnerCustomersDAO.findOrCreate({
+    partnerId,
+    shopifyUserId
+  });
 
   const scan = await ScansDAO.create({
     fitPartnerCustomerId: customer.id,
@@ -81,8 +87,10 @@ function* shopifyOrderCreated() {
     line_items: lineItems
   } = this.request.body;
 
-  const isAllBlacklisted = lineItems.every((lineItem) => {
-    return Configuration.FIT_PARTNER_SMS_PRODUCT_ID_BLACKLIST.includes(lineItem.product_id);
+  const isAllBlacklisted = lineItems.every(lineItem => {
+    return Configuration.FIT_PARTNER_SMS_PRODUCT_ID_BLACKLIST.includes(
+      lineItem.product_id
+    );
   });
 
   if (isAllBlacklisted) {
@@ -119,7 +127,6 @@ function* shopifyOrderCreated() {
   this.body = { success: true };
 }
 
-
 function* resendFitLink() {
   validatePropertiesFormatted(this.request.body, {
     scanId: 'Scan ID',
@@ -130,9 +137,15 @@ function* resendFitLink() {
 
   const scan = yield ScansDAO.findById(scanId);
   this.assert(scan, 400, 'Scan not found');
-  this.assert(scan.fitPartnerCustomerId, 400, 'Scan is not associated with a fit partner customer');
+  this.assert(
+    scan.fitPartnerCustomerId,
+    400,
+    'Scan is not associated with a fit partner customer'
+  );
 
-  const customer = yield FitPartnerCustomersDAO.findById(scan.fitPartnerCustomerId);
+  const customer = yield FitPartnerCustomersDAO.findById(
+    scan.fitPartnerCustomerId
+  );
   this.assert(customer, 400, 'Customer with associated ID not found');
 
   const partner = yield FitPartnersDAO.findById(customer.partnerId);

@@ -5,8 +5,14 @@ export type DataTransformer<A, B> = (a: A) => B;
 
 export default class DataAdapter<RowData extends object, UserData> {
   constructor(
-    private encodeTransformer: DataTransformer<RowData, UserData> = defaultEncoder,
-    private decodeTransformer: DataTransformer<UserData, RowData> = defaultDecoder,
+    private encodeTransformer: DataTransformer<
+      RowData,
+      UserData
+    > = defaultEncoder,
+    private decodeTransformer: DataTransformer<
+      UserData,
+      RowData
+    > = defaultDecoder,
     private insertionTransformer: DataTransformer<
       Uninserted<UserData>,
       Uninserted<RowData>
@@ -57,11 +63,7 @@ function transformKeys(keyTransformer: KeyTransformer, source: any): any {
         }
 
         const transformed = keyTransformer(key);
-        return Object.assign(
-          {},
-          acc,
-          { [transformed]: val }
-        );
+        return Object.assign({}, acc, { [transformed]: val });
       },
       undefined
     );
@@ -75,5 +77,8 @@ export function camelize(snakeCase: string): string {
 }
 
 export function snakify(camelCase: string): string {
-  return camelCase.replace(/([a-z0-9][A-Z0-9])/g, (m: string) => m[0] + '_' + m[1].toLowerCase());
+  return camelCase.replace(
+    /([a-z0-9][A-Z0-9])/g,
+    (m: string) => m[0] + '_' + m[1].toLowerCase()
+  );
 }

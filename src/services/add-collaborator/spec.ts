@@ -7,11 +7,12 @@ import * as ApprovalService from '../../components/approved-signups/services/fin
 import * as NotificationsService from '../../services/create-notifications';
 
 test('addCollaborator can add a collaborator', async (t: Test) => {
-  const approvalStub = sandbox().stub(ApprovalService, 'default').resolves();
-  const notificationsStub = sandbox().stub(
-    NotificationsService,
-    'immediatelySendInviteCollaborator'
-  ).resolves();
+  const approvalStub = sandbox()
+    .stub(ApprovalService, 'default')
+    .resolves();
+  const notificationsStub = sandbox()
+    .stub(NotificationsService, 'immediatelySendInviteCollaborator')
+    .resolves();
 
   const { collection, createdBy } = await generateCollection();
   const collaborator = await addCollaborator({
@@ -23,18 +24,18 @@ test('addCollaborator can add a collaborator', async (t: Test) => {
   });
 
   t.equal(approvalStub.callCount, 1, 'Calls the approval creation service');
-  t.true(approvalStub.calledWith({
-    consumedAt: null,
-    email: 'foo@example.com',
-    firstName: null,
-    isManuallyApproved: false,
-    lastName: null
-  }), 'Calls with the expected arguments');
-  t.equal(notificationsStub.callCount, 1, 'Calls the notifications service');
-  const partialCollaborator = pick(
-    collaborator,
-    ['userEmail', 'role']
+  t.true(
+    approvalStub.calledWith({
+      consumedAt: null,
+      email: 'foo@example.com',
+      firstName: null,
+      isManuallyApproved: false,
+      lastName: null
+    }),
+    'Calls with the expected arguments'
   );
+  t.equal(notificationsStub.callCount, 1, 'Calls the notifications service');
+  const partialCollaborator = pick(collaborator, ['userEmail', 'role']);
   t.deepEqual(
     partialCollaborator,
     {

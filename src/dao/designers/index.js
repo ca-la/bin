@@ -25,7 +25,9 @@ function instantiateWithPhotos(row) {
 }
 
 async function getList() {
-  const res = await db.raw(`
+  const res = await db
+    .raw(
+      `
     select
       to_json(designers.*) as designer,
       json_agg(to_json(designerphotos.*)) as photos
@@ -33,7 +35,9 @@ async function getList() {
     left join designerphotos
       on designerphotos.designer_id = designers.id
     group by designers.id;
-  `).catch(rethrow);
+  `
+    )
+    .catch(rethrow);
 
   const results = res.rows;
 
@@ -43,7 +47,9 @@ async function getList() {
 }
 
 async function getById(designerId) {
-  const res = await db.raw(`
+  const res = await db
+    .raw(
+      `
     select
       to_json(designers.*) as designer,
       json_agg(to_json(designerphotos.*)) as photos
@@ -52,11 +58,15 @@ async function getById(designerId) {
       on designerphotos.designer_id = designers.id
     where designers.id = ?
     group by designers.id;
-  `, [designerId])
+  `,
+      [designerId]
+    )
     .catch(rethrow)
-    .catch(filterError(rethrow.ERRORS.InvalidTextRepresentation, () => {
-      throw new InvalidDataError('Invalid designer ID format');
-    }));
+    .catch(
+      filterError(rethrow.ERRORS.InvalidTextRepresentation, () => {
+        throw new InvalidDataError('Invalid designer ID format');
+      })
+    );
 
   const result = res.rows[0];
 
@@ -69,14 +79,17 @@ async function getById(designerId) {
 
 function create(data) {
   return db('designers')
-    .insert({
-      id: uuid.v4(),
-      name: data.name,
-      bio_html: data.bioHtml,
-      twitter_handle: data.twitterHandle,
-      instagram_handle: data.instagramHandle,
-      position: data.position
-    }, '*')
+    .insert(
+      {
+        id: uuid.v4(),
+        name: data.name,
+        bio_html: data.bioHtml,
+        twitter_handle: data.twitterHandle,
+        instagram_handle: data.instagramHandle,
+        position: data.position
+      },
+      '*'
+    )
     .catch(rethrow)
     .then(first)
     .then(instantiate);

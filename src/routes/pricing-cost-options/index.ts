@@ -6,19 +6,30 @@ import * as PricingProductTypesDAO from '../../dao/pricing-product-types';
 import * as PricingComplexitiesDAO from '../../dao/pricing-complexities';
 import * as PricingMaterialCategoriesDAO from '../../dao/pricing-material-categories';
 import requireAdmin = require('../../middleware/require-admin');
-import { Complexity, MaterialCategory, Process, ProductType } from '../../domain-objects/pricing';
+import {
+  Complexity,
+  MaterialCategory,
+  Process,
+  ProductType
+} from '../../domain-objects/pricing';
 
 const router = new Router();
 // tslint:disable-next-line:typedef
 const prop = (key: string) => (input: { [k: string]: any }): any => input[key];
 
-function* getOptions(this: Koa.Application.Context): AsyncIterableIterator<any> {
+function* getOptions(
+  this: Koa.Application.Context
+): AsyncIterableIterator<any> {
   const processes: Process[] = yield PricingProcessesDAO.findLatest();
-  const types: { name: ProductType }[] = yield PricingProductTypesDAO.findLatest();
-  const complexities: { complexity: Complexity }[] =
-    yield PricingComplexitiesDAO.findLatest();
-  const materialCategories: { category: MaterialCategory }[] =
-    yield PricingMaterialCategoriesDAO.findLatest();
+  const types: {
+    name: ProductType;
+  }[] = yield PricingProductTypesDAO.findLatest();
+  const complexities: {
+    complexity: Complexity;
+  }[] = yield PricingComplexitiesDAO.findLatest();
+  const materialCategories: {
+    category: MaterialCategory;
+  }[] = yield PricingMaterialCategoriesDAO.findLatest();
 
   this.body = {
     complexities: complexities.map(prop('complexity')),

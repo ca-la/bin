@@ -13,7 +13,10 @@ export function isActiveBid(bidWithEvent: BidWithEvents): boolean {
  * @param quoteId
  * @param userId
  */
-export async function hasActiveBids(quoteId: string, userId: string): Promise<boolean> {
+export async function hasActiveBids(
+  quoteId: string,
+  userId: string
+): Promise<boolean> {
   const bidsWithEvents = await findAllByQuoteAndUserId(quoteId, userId);
 
   return bidsWithEvents.some(isActiveBid);

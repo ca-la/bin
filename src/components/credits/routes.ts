@@ -14,10 +14,14 @@ interface GetCreditResponse {
   creditAmountCents: number;
 }
 
-function* getCredits(this: Koa.Application.Context): AsyncIterableIterator<GetCreditResponse> {
+function* getCredits(
+  this: Koa.Application.Context
+): AsyncIterableIterator<GetCreditResponse> {
   const { userId }: GetCreditQuery = this.query;
 
-  if (!userId) { return this.throw(400, 'Missing user ID'); }
+  if (!userId) {
+    return this.throw(400, 'Missing user ID');
+  }
 
   const creditAmountCents = yield getCreditAmount(userId);
 

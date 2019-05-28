@@ -2,7 +2,9 @@ import * as AnnotationsDAO from '../../components/product-design-canvas-annotati
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import * as NotificationsService from '../../services/create-notifications';
 import Comment from '../comments/domain-object';
-import parseAtMentions, { MentionType } from '@cala/ts-lib/dist/parsing/comment-mentions';
+import parseAtMentions, {
+  MentionType
+} from '@cala/ts-lib/dist/parsing/comment-mentions';
 import { CollaboratorWithUser } from '../collaborators/domain-objects/collaborator';
 
 interface Options {
@@ -11,12 +13,16 @@ interface Options {
   actorUserId: string;
 }
 
-export default async function sendCreationNotifications(options: Options): Promise<void> {
+export default async function sendCreationNotifications(
+  options: Options
+): Promise<void> {
   const { comment, annotationId, actorUserId } = options;
 
   const annotation = await AnnotationsDAO.findById(annotationId);
   if (!annotation) {
-    throw new Error(`Could not find matching annotation for comment ${comment.id}`);
+    throw new Error(
+      `Could not find matching annotation for comment ${comment.id}`
+    );
   }
 
   const mentions = parseAtMentions(comment.text);
@@ -26,8 +32,9 @@ export default async function sendCreationNotifications(options: Options): Promi
       return;
     }
 
-    const collaborator: CollaboratorWithUser | null = await CollaboratorsDAO
-      .findById(mention.id);
+    const collaborator: CollaboratorWithUser | null = await CollaboratorsDAO.findById(
+      mention.id
+    );
 
     if (!collaborator) {
       throw new Error(`Cannot find mentioned collaborator ${mention.id}`);

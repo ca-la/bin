@@ -28,7 +28,9 @@ export async function create(
     .insert(rowData, '*')
     .then((rows: CollaboratorTaskRow[]) => first<CollaboratorTaskRow>(rows));
 
-  if (!created) { throw new Error('Failed to create rows'); }
+  if (!created) {
+    throw new Error('Failed to create rows');
+  }
 
   return validate<CollaboratorTaskRow, CollaboratorTask>(
     TABLE_NAME,
@@ -69,7 +71,9 @@ export async function createAllByCollaboratorIdsAndTaskId(
   );
 }
 
-export async function findAllByTaskId(taskId: string): Promise<CollaboratorTask[]> {
+export async function findAllByTaskId(
+  taskId: string
+): Promise<CollaboratorTask[]> {
   const collaboratorTasks: CollaboratorTaskRow[] = await db(TABLE_NAME)
     .select('*')
     .where({ task_id: taskId })
@@ -83,7 +87,9 @@ export async function findAllByTaskId(taskId: string): Promise<CollaboratorTask[
   );
 }
 
-export async function findAllCollaboratorsByTaskId(taskId: string): Promise<Collaborator[]> {
+export async function findAllCollaboratorsByTaskId(
+  taskId: string
+): Promise<Collaborator[]> {
   const collaborators: CollaboratorWithUserRow[] = await getBuilder()
     .innerJoin(
       'collaborator_tasks',

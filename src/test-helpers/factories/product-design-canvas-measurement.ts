@@ -23,7 +23,9 @@ export default async function generateMeasurement(
     ? { canvas: await CanvasesDAO.findById(options.canvasId) }
     : await generateCanvas({ createdBy: user.id });
 
-  if (!canvas) { throw new Error('Canvas was unable to be found or created!'); }
+  if (!canvas) {
+    throw new Error('Canvas was unable to be found or created!');
+  }
 
   const measurement = await create({
     canvasId: canvas.id,

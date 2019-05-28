@@ -18,8 +18,12 @@ export default async function parseCommentText(text: string): Promise<string> {
     const acc = await accPromise;
     const matchId = match.substring(
       MENTION_UUID_START,
-      MENTION_UUID_START + MENTION_UUID_LENGTH);
-    const matchType = match.substring(MENTION_TYPE_START, match.length - 1) as MentionType;
+      MENTION_UUID_START + MENTION_UUID_LENGTH
+    );
+    const matchType = match.substring(
+      MENTION_TYPE_START,
+      match.length - 1
+    ) as MentionType;
     switch (matchType) {
       case MentionType.collaborator: {
         const collaborator = await findCollaboratorById(matchId);
@@ -32,6 +36,5 @@ export default async function parseCommentText(text: string): Promise<string> {
         return acc;
       }
     }
-  },
-  Promise.resolve(text));
+  }, Promise.resolve(text));
 }

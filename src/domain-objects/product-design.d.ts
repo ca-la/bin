@@ -9,7 +9,7 @@ declare class ProductDesign {
   public description?: string;
   public userId: string;
   public previewImageUrls?: string[]; // DEPRECATED; use imageLinks instead.
-  public collections?: { id: string; title: string; }[];
+  public collections?: { id: string; title: string }[];
   public collectionIds?: string[];
   public imageIds?: string[];
   public imageLinks?: ThumbnailAndPreviewLinks[];

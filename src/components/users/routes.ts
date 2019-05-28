@@ -25,19 +25,25 @@ const router = new Router();
 /**
  * POST /users
  */
-function* createUser(this: Koa.Application.Context<UserIO>): AsyncIterableIterator<User> {
-  const {
-    name,
-    email
-  } = this.request.body;
+function* createUser(
+  this: Koa.Application.Context<UserIO>
+): AsyncIterableIterator<User> {
+  const { name, email } = this.request.body;
   const { cohort, initialDesigns, promoCode } = this.query;
 
-  if (!email) { return this.throw(400, 'Email must be provided'); }
-  if (!name) { return this.throw(400, 'Name must be provided'); }
+  if (!email) {
+    return this.throw(400, 'Email must be provided');
+  }
+  if (!name) {
+    return this.throw(400, 'Name must be provided');
+  }
 
   if (REQUIRE_CALA_EMAIL && !email.match(/@ca\.la$/)) {
     // tslint:disable-next-line:max-line-length
-    this.throw(400, 'Only @ca.la emails can sign up on this server. Please visit https://studio.ca.la to access the live version of Studio');
+    this.throw(
+      400,
+      'Only @ca.la emails can sign up on this server. Please visit https://studio.ca.la to access the live version of Studio'
+    );
   }
 
   const referralCode = 'n/a';
@@ -81,12 +87,13 @@ function* createUser(this: Koa.Application.Context<UserIO>): AsyncIterableIterat
     logServerError(`Failed to sign up user to Mailchimp: ${email}`);
   }
 
-  yield claimDesignInvitations(
-    user.email,
-    user.id
-  );
+  yield claimDesignInvitations(user.email, user.id);
 
-  if (initialDesigns && Array.isArray(initialDesigns) && initialDesigns.length > 0) {
+  if (
+    initialDesigns &&
+    Array.isArray(initialDesigns) &&
+    initialDesigns.length > 0
+  ) {
     // Intentionally not checking ownership permissions - TODO reconsider security model
     yield DuplicationService.duplicateDesigns(user.id, initialDesigns);
   } else {
@@ -118,9 +125,13 @@ interface WithPassword {
   password: string;
 }
 function* updatePassword(
-  this: Koa.Application.Context<{password: string}>
+  this: Koa.Application.Context<{ password: string }>
 ): AsyncIterableIterator<object> {
-  this.assert(this.params.userId === this.state.userId, 403, 'You can only update your own user');
+  this.assert(
+    this.params.userId === this.state.userId,
+    403,
+    'You can only update your own user'
+  );
   const { body } = this.request;
   const hasPassword = (data: object): data is WithPassword => {
     return hasProperties(data, 'password');
@@ -134,14 +145,18 @@ function* updatePassword(
   this.body = { ok: true };
 }
 
-function* acceptDesignerTerms(this: Koa.Application.Context): AsyncIterableIterator<User> {
+function* acceptDesignerTerms(
+  this: Koa.Application.Context
+): AsyncIterableIterator<User> {
   canAccessUserResource.call(this, this.params.userId);
   const updated = yield UsersDAO.update(this.params.userId, {
     lastAcceptedDesignerTermsAt: new Date()
   });
 
   if (this.query.returnValue === 'session') {
-    const session = yield SessionsDAO.createForUser(updated, { role: this.state.role });
+    const session = yield SessionsDAO.createForUser(updated, {
+      role: this.state.role
+    });
     this.body = session;
   } else {
     this.body = { ok: true };
@@ -150,7 +165,9 @@ function* acceptDesignerTerms(this: Koa.Application.Context): AsyncIterableItera
   this.status = 200;
 }
 
-function* acceptPartnerTerms(this: Koa.Application.Context): AsyncIterableIterator<User> {
+function* acceptPartnerTerms(
+  this: Koa.Application.Context
+): AsyncIterableIterator<User> {
   canAccessUserResource.call(this, this.params.userId);
 
   const updated = yield UsersDAO.update(this.params.userId, {
@@ -158,7 +175,9 @@ function* acceptPartnerTerms(this: Koa.Application.Context): AsyncIterableIterat
   });
 
   if (this.query.returnValue === 'session') {
-    const session = yield SessionsDAO.createForUser(updated, { role: this.state.role });
+    const session = yield SessionsDAO.createForUser(updated, {
+      role: this.state.role
+    });
     this.body = session;
   } else {
     this.body = { ok: true };
@@ -170,25 +189,34 @@ function* acceptPartnerTerms(this: Koa.Application.Context): AsyncIterableIterat
 /**
  * PUT /users/:userId
  */
-function* updateUser(this: Koa.Application.Context<UserIO>): AsyncIterableIterator<User> {
-  const isAdmin = (this.state.role === ROLES.admin);
-  const isCurrentUser = (this.params.userId === this.state.userId);
+function* updateUser(
+  this: Koa.Application.Context<UserIO>
+): AsyncIterableIterator<User> {
+  const isAdmin = this.state.role === ROLES.admin;
+  const isCurrentUser = this.params.userId === this.state.userId;
 
-  this.assert(isAdmin || isCurrentUser, 403, 'You can only update your own user');
+  this.assert(
+    isAdmin || isCurrentUser,
+    403,
+    'You can only update your own user'
+  );
   const { body } = this.request;
 
   if (isAdmin && body.role) {
     yield SessionsDAO.deleteByUserId(this.params.userId);
   }
 
-  const updated = yield UsersDAO.update(this.params.userId, body)
-    .catch(filterError(InvalidDataError, (err: Error) => this.throw(400, err)));
+  const updated = yield UsersDAO.update(this.params.userId, body).catch(
+    filterError(InvalidDataError, (err: Error) => this.throw(400, err))
+  );
 
   this.status = 200;
   this.body = updated;
 }
 
-function* getAllUsers(this: Koa.Application.Context): AsyncIterableIterator<User[]> {
+function* getAllUsers(
+  this: Koa.Application.Context
+): AsyncIterableIterator<User[]> {
   this.assert(this.state.userId, 401);
   this.assert(this.state.role === ROLES.admin, 403);
 
@@ -203,14 +231,18 @@ function* getAllUsers(this: Koa.Application.Context): AsyncIterableIterator<User
   this.status = 200;
 }
 
-function* getList(this: Koa.Application.Context): AsyncIterableIterator<User[]> {
+function* getList(
+  this: Koa.Application.Context
+): AsyncIterableIterator<User[]> {
   yield getAllUsers;
 }
 
 /**
  * GET /users/:id
  */
-function* getUser(this: Koa.Application.Context): AsyncIterableIterator<User[]> {
+function* getUser(
+  this: Koa.Application.Context
+): AsyncIterableIterator<User[]> {
   this.assert(this.state.role === ROLES.admin, 403);
 
   const user = yield UsersDAO.findById(this.params.userId);
@@ -224,7 +256,9 @@ function* getUser(this: Koa.Application.Context): AsyncIterableIterator<User[]> 
  *
  * Not RESTful. No regrets.
  */
-function* getEmailAvailability(this: Koa.Application.Context): AsyncIterableIterator<User[]> {
+function* getEmailAvailability(
+  this: Koa.Application.Context
+): AsyncIterableIterator<User[]> {
   const { email } = this.params;
 
   const user = yield UsersDAO.findByEmail(email);

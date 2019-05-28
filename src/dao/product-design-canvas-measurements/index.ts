@@ -57,23 +57,27 @@ export async function create(
         query.transacting(trx);
       }
     })
-    .then((rows: MeasurementRow[]) =>
-      first<MeasurementRow>(rows)
-    )
+    .then((rows: MeasurementRow[]) => first<MeasurementRow>(rows))
     .catch(rethrow)
-    .catch(filterError(
-      rethrow.ERRORS.ForeignKeyViolation,
-      handleForeignKeyViolation.bind(null, data.canvasId)
-    ));
+    .catch(
+      filterError(
+        rethrow.ERRORS.ForeignKeyViolation,
+        handleForeignKeyViolation.bind(null, data.canvasId)
+      )
+    );
 
-  if (!created) { throw new Error('Failed to create a measurement'); }
+  if (!created) {
+    throw new Error('Failed to create a measurement');
+  }
 
-  return parseNumerics(validate<MeasurementRow, Measurement>(
-    TABLE_NAME,
-    isMeasurementRow,
-    dataAdapter,
-    created
-  ));
+  return parseNumerics(
+    validate<MeasurementRow, Measurement>(
+      TABLE_NAME,
+      isMeasurementRow,
+      dataAdapter,
+      created
+    )
+  );
 }
 
 export async function findById(id: string): Promise<Measurement | null> {
@@ -83,17 +87,24 @@ export async function findById(id: string): Promise<Measurement | null> {
     .limit(1);
 
   const measurement = measurements[0];
-  if (!measurement) { return null; }
+  if (!measurement) {
+    return null;
+  }
 
-  return parseNumerics(validate<MeasurementRow, Measurement>(
-    TABLE_NAME,
-    isMeasurementRow,
-    dataAdapter,
-    measurement
-  ));
+  return parseNumerics(
+    validate<MeasurementRow, Measurement>(
+      TABLE_NAME,
+      isMeasurementRow,
+      dataAdapter,
+      measurement
+    )
+  );
 }
 
-export async function update(id: string, data: Measurement): Promise<Measurement> {
+export async function update(
+  id: string,
+  data: Measurement
+): Promise<Measurement> {
   const rowData = pick(dataAdapter.forInsertion(data), UPDATABLE_PROPERTIES);
 
   const updated = await db(TABLE_NAME)
@@ -101,21 +112,25 @@ export async function update(id: string, data: Measurement): Promise<Measurement
     .update(rowData, '*')
     .then((rows: MeasurementRow[]) => first<MeasurementRow>(rows))
     .catch(rethrow)
-    .catch(filterError(
-      rethrow.ERRORS.ForeignKeyViolation,
-      handleForeignKeyViolation.bind(null, data.canvasId)
-    ));
+    .catch(
+      filterError(
+        rethrow.ERRORS.ForeignKeyViolation,
+        handleForeignKeyViolation.bind(null, data.canvasId)
+      )
+    );
 
   if (!updated) {
     throw new MeasurementNotFoundError('Measurement not found');
   }
 
-  return parseNumerics(validate<MeasurementRow, Measurement>(
-    TABLE_NAME,
-    isMeasurementRow,
-    dataAdapter,
-    updated
-  ));
+  return parseNumerics(
+    validate<MeasurementRow, Measurement>(
+      TABLE_NAME,
+      isMeasurementRow,
+      dataAdapter,
+      updated
+    )
+  );
 }
 
 export async function deleteById(id: string): Promise<Measurement> {
@@ -128,25 +143,31 @@ export async function deleteById(id: string): Promise<Measurement> {
     throw new MeasurementNotFoundError('Measurement not found');
   }
 
-  return parseNumerics(validate<MeasurementRow, Measurement>(
-    TABLE_NAME,
-    isMeasurementRow,
-    dataAdapter,
-    deleted
-  ));
+  return parseNumerics(
+    validate<MeasurementRow, Measurement>(
+      TABLE_NAME,
+      isMeasurementRow,
+      dataAdapter,
+      deleted
+    )
+  );
 }
 
-export async function findAllByCanvasId(canvasId: string): Promise<Measurement[]> {
+export async function findAllByCanvasId(
+  canvasId: string
+): Promise<Measurement[]> {
   const measurements: MeasurementRow[] = await db(TABLE_NAME)
     .select('*')
     .where({ canvas_id: canvasId, deleted_at: null })
     .orderBy('created_at', 'desc');
-  return parseNumericsList(validateEvery<MeasurementRow, Measurement>(
-    TABLE_NAME,
-    isMeasurementRow,
-    dataAdapter,
-    measurements
-  ));
+  return parseNumericsList(
+    validateEvery<MeasurementRow, Measurement>(
+      TABLE_NAME,
+      isMeasurementRow,
+      dataAdapter,
+      measurements
+    )
+  );
 }
 
 export async function getLabel(canvasId: string): Promise<string> {

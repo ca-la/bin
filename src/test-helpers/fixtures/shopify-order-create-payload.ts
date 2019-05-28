@@ -24,7 +24,8 @@ export default {
   buyer_accepts_marketing: false,
   name: '#1030',
   referring_site: null,
-  landing_site: '/cart/29237252941:1?attributes[userEmail]=d%40ca.la&attributes[userId]=cc2db0b9-42f0-4697-9286-7b676b163c0b&checkout[email]=d%40ca.la&checkout[shipping_address][first_name]=Dylan&checkout[shipping_address][last_name]=Pyle&checkout[shipping_address][zip]=94117&checkout[shipping_address][address1]=1025%20Oak%20Street&checkout[shipping_address][address2]=B&checkout[shipping_address][city]=San%20Francisco&checkout[shipping_address][province]=California&checkout[shipping_address][country]=United%20States',
+  landing_site:
+    '/cart/29237252941:1?attributes[userEmail]=d%40ca.la&attributes[userId]=cc2db0b9-42f0-4697-9286-7b676b163c0b&checkout[email]=d%40ca.la&checkout[shipping_address][first_name]=Dylan&checkout[shipping_address][last_name]=Pyle&checkout[shipping_address][zip]=94117&checkout[shipping_address][address1]=1025%20Oak%20Street&checkout[shipping_address][address2]=B&checkout[shipping_address][city]=San%20Francisco&checkout[shipping_address][province]=California&checkout[shipping_address][country]=United%20States',
   cancelled_at: null,
   cancel_reason: null,
   total_price_usd: '754.08',
@@ -50,9 +51,7 @@ export default {
       value: 'cc2db0b9-42f0-4697-9286-7b676b163c0b'
     }
   ],
-  payment_gateway_names: [
-    'shopify_payments'
-  ],
+  payment_gateway_names: ['shopify_payments'],
   processing_method: 'direct',
   checkout_id: 16514753869,
   source_name: 'web',
@@ -71,7 +70,8 @@ export default {
   ],
   tags: '',
   contact_email: 'd@ca.la',
-  order_status_url: 'https://checkout.shopify.com/14415076/checkouts/f11f1d19883e833a094fae8d05bee881/thank_you_token?key=2f1ea1f14ca31e2b9ba5a94ed5667cb2',
+  order_status_url:
+    'https://checkout.shopify.com/14415076/checkouts/f11f1d19883e833a094fae8d05bee881/thank_you_token?key=2f1ea1f14ca31e2b9ba5a94ed5667cb2',
   line_items: [
     {
       id: 9583316493,
@@ -181,7 +181,8 @@ export default {
   client_details: {
     browser_ip: '136.24.92.135',
     accept_language: 'en-ie',
-    user_agent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 10_2_1 like Mac OS X) AppleWebKit/602.4.6 (KHTML, like Gecko) Mobile/14D27',
+    user_agent:
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 10_2_1 like Mac OS X) AppleWebKit/602.4.6 (KHTML, like Gecko) Mobile/14D27',
     session_hash: 'e65127e89e7fa6c4c1042f4e58e52f01',
     browser_width: 414,
     browser_height: 736

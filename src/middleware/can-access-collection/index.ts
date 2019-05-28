@@ -34,7 +34,7 @@ export function* canAccessCollectionInParam(
 }
 
 export function* canAccessCollectionInRequestBody(
-  this: Koa.Application.Context<object & {collectionId: string}>,
+  this: Koa.Application.Context<object & { collectionId: string }>,
   next: () => Promise<any>
 ): IterableIterator<any> {
   const { collectionId } = this.request.body;
@@ -56,7 +56,9 @@ export function* canDeleteCollection(
 ): any {
   const { permissions } = this.state;
   if (!permissions) {
-    throw new Error('canDeleteCollection must be chained with canAccessCollectionInParam');
+    throw new Error(
+      'canDeleteCollection must be chained with canAccessCollectionInParam'
+    );
   }
 
   this.assert(
@@ -74,7 +76,9 @@ export function* canEditCollection(
 ): any {
   const { permissions } = this.state;
   if (!permissions) {
-    throw new Error('canEditCollection must be chained with canAccessCollectionInParam');
+    throw new Error(
+      'canEditCollection must be chained with canAccessCollectionInParam'
+    );
   }
 
   this.assert(
@@ -92,7 +96,9 @@ export function* canSubmitCollection(
 ): any {
   const { permissions } = this.state;
   if (!permissions) {
-    throw new Error('canSubmitCollection must be chained with canAccessCollectionInParam');
+    throw new Error(
+      'canSubmitCollection must be chained with canAccessCollectionInParam'
+    );
   }
 
   this.assert(

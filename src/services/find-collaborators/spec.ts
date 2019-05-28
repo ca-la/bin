@@ -12,9 +12,9 @@ import { sandbox, test, Test } from '../../test-helpers/fresh';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
 
 async function createResources(): Promise<{
-  collection: Collection,
-  user: User,
-  design: ProductDesign
+  collection: Collection;
+  user: User;
+  design: ProductDesign;
 }> {
   const { user } = await createUser({ withSession: false });
   const collection = await CollectionsDAO.create({
@@ -62,7 +62,10 @@ test('findCollaboratorsByRole finds the designer', async (t: Test) => {
 test('findCollaboratorsByRole finds partners', async (t: Test) => {
   const { design } = await createResources();
 
-  const { user: partnerUser } = await createUser({ withSession: false, role: 'PARTNER' });
+  const { user: partnerUser } = await createUser({
+    withSession: false,
+    role: 'PARTNER'
+  });
 
   const { collaborator: partnerCollaborator } = await generateCollaborator({
     collectionId: null,

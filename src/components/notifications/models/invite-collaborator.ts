@@ -1,7 +1,4 @@
-import {
-  BaseNotification,
-  BaseNotificationRow
-} from './base';
+import { BaseNotification, BaseNotificationRow } from './base';
 import { NotificationType } from '../domain-object';
 
 type BaseRow = Omit<
@@ -12,7 +9,7 @@ type BaseRow = Omit<
   | 'collaborator_id'
   | 'sent_email_at'
   | 'recipient_user_id'
-  >;
+>;
 export interface InviteCollaboratorNotificationRow extends BaseRow {
   actor_user_id: string;
   collection_id: string | null;
@@ -29,7 +26,7 @@ type Base = Omit<
   | 'collaboratorId'
   | 'sentEmailAt'
   | 'recipientUserId'
-  >;
+>;
 export interface InviteCollaboratorNotification extends Base {
   collectionId: string | null;
   designId: string | null;

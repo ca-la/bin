@@ -8,21 +8,24 @@ import requireAdmin = require('../../middleware/require-admin');
 import { ApprovedSignup } from './domain-object';
 import { create, findById } from './dao';
 import { hasProperties } from '../../services/require-properties';
-import { MAGIC_HOST, MAILCHIMP_LIST_ID_DESIGNERS, STUDIO_HOST } from '../../config';
+import {
+  MAGIC_HOST,
+  MAILCHIMP_LIST_ID_DESIGNERS,
+  STUDIO_HOST
+} from '../../config';
 import * as MailChimp from '../../services/mailchimp';
 
 const router = new Router();
 
-function isUnsavedApprovedSignup(data: object): data is Unsaved<ApprovedSignup> {
-  return hasProperties(
-    data,
-    'email',
-    'firstName',
-    'lastName'
-  );
+function isUnsavedApprovedSignup(
+  data: object
+): data is Unsaved<ApprovedSignup> {
+  return hasProperties(data, 'email', 'firstName', 'lastName');
 }
 
-function* createApproval(this: Koa.Application.Context): AsyncIterableIterator<any> {
+function* createApproval(
+  this: Koa.Application.Context
+): AsyncIterableIterator<any> {
   const { body } = this.request;
 
   if (body && isUnsavedApprovedSignup(body)) {
@@ -36,16 +39,20 @@ function* createApproval(this: Koa.Application.Context): AsyncIterableIterator<a
     );
 
     try {
-      yield MailChimp.addOrUpdateListMember(MAILCHIMP_LIST_ID_DESIGNERS, approval.email, {
-        APPROVED: 'TRUE',
-        FNAME: approval.firstName,
-        INSTA: undefined,
-        LANGUAGE: 'en',
-        LNAME: approval.lastName,
-        MANAPPR: 'TRUE',
-        REGLINK: `${STUDIO_HOST}/register?approvedSignupId=${approval.id}`,
-        SOURCE: MAGIC_HOST
-      });
+      yield MailChimp.addOrUpdateListMember(
+        MAILCHIMP_LIST_ID_DESIGNERS,
+        approval.email,
+        {
+          APPROVED: 'TRUE',
+          FNAME: approval.firstName,
+          INSTA: undefined,
+          LANGUAGE: 'en',
+          LNAME: approval.lastName,
+          MANAPPR: 'TRUE',
+          REGLINK: `${STUDIO_HOST}/register?approvedSignupId=${approval.id}`,
+          SOURCE: MAGIC_HOST
+        }
+      );
     } catch (error) {
       this.throw(400, error.message);
     }
@@ -57,7 +64,9 @@ function* createApproval(this: Koa.Application.Context): AsyncIterableIterator<a
   }
 }
 
-function* findApproval(this: Koa.Application.Context): AsyncIterableIterator<any> {
+function* findApproval(
+  this: Koa.Application.Context
+): AsyncIterableIterator<any> {
   const { approvedSignupId } = this.params;
   const approvedSignup = yield findById(approvedSignupId);
 

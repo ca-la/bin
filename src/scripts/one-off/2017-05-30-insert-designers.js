@@ -13,19 +13,23 @@ const designers = [
     position: 1,
     photos: [
       {
-        photoUrl: 'https://cdn.shopify.com/s/files/1/1373/8933/products/L_1.jpg?v=1474925784',
+        photoUrl:
+          'https://cdn.shopify.com/s/files/1/1373/8933/products/L_1.jpg?v=1474925784',
         position: 1
       },
       {
-        photoUrl: 'https://cdn.shopify.com/s/files/1/1373/8933/products/Detail_1_3608bfcf-c0de-4b37-9ac1-691d6ec0adfe.jpg?v=1474925784',
+        photoUrl:
+          'https://cdn.shopify.com/s/files/1/1373/8933/products/Detail_1_3608bfcf-c0de-4b37-9ac1-691d6ec0adfe.jpg?v=1474925784',
         position: 2
       },
       {
-        photoUrl: 'https://cdn.shopify.com/s/files/1/1373/8933/products/Detail_2_1cd5fb2d-5d1a-4fcd-a383-2f8d2c184dc6.jpg?v=1474925784',
+        photoUrl:
+          'https://cdn.shopify.com/s/files/1/1373/8933/products/Detail_2_1cd5fb2d-5d1a-4fcd-a383-2f8d2c184dc6.jpg?v=1474925784',
         position: 3
       },
       {
-        photoUrl: 'https://cdn.shopify.com/s/files/1/1373/8933/products/L_2.jpg?v=1474925784',
+        photoUrl:
+          'https://cdn.shopify.com/s/files/1/1373/8933/products/L_2.jpg?v=1474925784',
         position: 4
       }
     ]
@@ -37,19 +41,23 @@ const designers = [
     instagramHandle: 'vu_do_child',
     photos: [
       {
-        photoUrl: 'https://cdn.shopify.com/s/files/1/1373/8933/products/vu_bio.jpg?v=1490041059',
+        photoUrl:
+          'https://cdn.shopify.com/s/files/1/1373/8933/products/vu_bio.jpg?v=1490041059',
         position: 1
       },
       {
-        photoUrl: 'https://cdn.shopify.com/s/files/1/1373/8933/products/photo1.jpg?v=1490041060',
+        photoUrl:
+          'https://cdn.shopify.com/s/files/1/1373/8933/products/photo1.jpg?v=1490041060',
         position: 2
       },
       {
-        photoUrl: 'https://cdn.shopify.com/s/files/1/1373/8933/products/photo_2.jpg?v=1490041060',
+        photoUrl:
+          'https://cdn.shopify.com/s/files/1/1373/8933/products/photo_2.jpg?v=1490041060',
         position: 3
       },
       {
-        photoUrl: 'https://cdn.shopify.com/s/files/1/1373/8933/products/photo_3.jpg?v=1490041061',
+        photoUrl:
+          'https://cdn.shopify.com/s/files/1/1373/8933/products/photo_3.jpg?v=1490041061',
         position: 4
       }
     ]
@@ -62,23 +70,28 @@ const designers = [
     twitterHandle: 'lynpaolo',
     photos: [
       {
-        photoUrl: 'https://cdn.shopify.com/s/files/1/1373/8933/products/Lyn_1.jpg?v=1495553623',
+        photoUrl:
+          'https://cdn.shopify.com/s/files/1/1373/8933/products/Lyn_1.jpg?v=1495553623',
         position: 1
       },
       {
-        photoUrl: 'https://cdn.shopify.com/s/files/1/1373/8933/products/unspecified.jpg?v=1495553623',
+        photoUrl:
+          'https://cdn.shopify.com/s/files/1/1373/8933/products/unspecified.jpg?v=1495553623',
         position: 2
       },
       {
-        photoUrl: 'https://cdn.shopify.com/s/files/1/1373/8933/products/IMG_8137.jpg?v=1495553623',
+        photoUrl:
+          'https://cdn.shopify.com/s/files/1/1373/8933/products/IMG_8137.jpg?v=1495553623',
         position: 3
       },
       {
-        photoUrl: 'https://cdn.shopify.com/s/files/1/1373/8933/products/Group_of_3.jpg?v=1495553623',
+        photoUrl:
+          'https://cdn.shopify.com/s/files/1/1373/8933/products/Group_of_3.jpg?v=1495553623',
         position: 4
       },
       {
-        photoUrl: 'https://cdn.shopify.com/s/files/1/1373/8933/products/Lyn_4.jpg?v=1495553623',
+        photoUrl:
+          'https://cdn.shopify.com/s/files/1/1373/8933/products/Lyn_4.jpg?v=1495553623',
         position: 5
       }
     ]
@@ -101,29 +114,26 @@ const designers = [
 
 function createPhotos(designerId, photos) {
   return Promise.all(
-    photos.map((photoData) => {
+    photos.map(photoData => {
       const data = Object.assign({}, photoData, {
         designerId
       });
 
-      return DesignerPhotosDAO.create(data)
-        .then((photo) => {
-          Logger.log(`Created photo ${photo.id} for designer ${designerId}`);
-        });
+      return DesignerPhotosDAO.create(data).then(photo => {
+        Logger.log(`Created photo ${photo.id} for designer ${designerId}`);
+      });
     })
   );
 }
 
 Promise.all(
-  designers.map((designerData) => {
-    return DesignersDAO.create(designerData)
-      .then((designer) => {
-        Logger.log(`Created designer ${designer.id}`);
-        return createPhotos(designer.id, designerData.photos);
-      });
+  designers.map(designerData => {
+    return DesignersDAO.create(designerData).then(designer => {
+      Logger.log(`Created designer ${designer.id}`);
+      return createPhotos(designer.id, designerData.photos);
+    });
   })
-)
-  .then(() => {
-    Logger.log('Complete, exiting');
-    process.exit(0);
-  });
+).then(() => {
+  Logger.log('Complete, exiting');
+  process.exit(0);
+});

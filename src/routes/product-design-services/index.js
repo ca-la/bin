@@ -3,7 +3,9 @@
 const Router = require('koa-router');
 
 const requireAuth = require('../../middleware/require-auth');
-const { canAccessDesignInQuery } = require('../../middleware/can-access-design');
+const {
+  canAccessDesignInQuery
+} = require('../../middleware/can-access-design');
 const ProductDesignServicesDAO = require('../../dao/product-design-services');
 
 const router = new Router();
@@ -24,7 +26,9 @@ function* replaceServices() {
  * GET /product-design-services
  */
 function* getServices() {
-  this.body = yield ProductDesignServicesDAO.findByDesignId(this.query.designId);
+  this.body = yield ProductDesignServicesDAO.findByDesignId(
+    this.query.designId
+  );
   this.status = 200;
 }
 
@@ -32,7 +36,10 @@ function* getServices() {
  * PATCH /product-design-services/:serviceId
  */
 function* updateService() {
-  const updated = yield ProductDesignServicesDAO.update(this.params.serviceId, this.request.body);
+  const updated = yield ProductDesignServicesDAO.update(
+    this.params.serviceId,
+    this.request.body
+  );
   this.body = updated;
   this.status = 200;
 }

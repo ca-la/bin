@@ -63,7 +63,11 @@ test('TaskTemplatesDAO supports creation/retrieval', async (t: Test) => {
   t.equal(templates[2].ordering, 4);
 
   const byStageTitle = await findByStageTitle('Stage 2');
-  t.deepEqual(byStageTitle, [stageTwoTaskOne], 'Returns only tasks in the given stage');
+  t.deepEqual(
+    byStageTitle,
+    [stageTwoTaskOne],
+    'Returns only tasks in the given stage'
+  );
 });
 
 test('TaskTemplatesDAO supports update', async (t: Test) => {

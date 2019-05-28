@@ -5,10 +5,7 @@ import { hasProperties } from '../services/require-properties';
  * A log entry for a quote and partner assignment event that occured on a design
  */
 
-export type DesignEventTypes =
-  | DesignerEvents
-  | CALAEvents
-  | PartnerEvents;
+export type DesignEventTypes = DesignerEvents | CALAEvents | PartnerEvents;
 
 type DesignerEvents =
   // Send the design to CALA initially for review
@@ -29,9 +26,7 @@ type CALAEvents =
   // Indicate if CALA has finalized pairing of a partner(s) to a design.
   | 'COMMIT_PARTNER_PAIRING';
 
-type PartnerEvents =
-  | 'ACCEPT_SERVICE_BID'
-  | 'REJECT_SERVICE_BID';
+type PartnerEvents = 'ACCEPT_SERVICE_BID' | 'REJECT_SERVICE_BID';
 
 export default interface DesignEvent {
   id: string;

@@ -27,14 +27,27 @@ interface PayWithMethodRequest extends PayRequest {
 }
 
 const isPayRequest = (data: any): data is PayRequest | PayWithMethodRequest => {
-  return (hasProperties(data, 'createQuotes', 'collectionId')
-    || hasProperties(data, 'paymentMethodTokenId', 'createQuotes', 'collectionId'))
-    && isCreateRequest(data.createQuotes);
+  return (
+    (hasProperties(data, 'createQuotes', 'collectionId') ||
+      hasProperties(
+        data,
+        'paymentMethodTokenId',
+        'createQuotes',
+        'collectionId'
+      )) &&
+    isCreateRequest(data.createQuotes)
+  );
 };
 
 const isPayWithMethodRequest = (data: any): data is PayWithMethodRequest => {
-  return hasProperties(data, 'paymentMethodTokenId', 'createQuotes', 'collectionId')
-    && isCreateRequest(data.createQuotes);
+  return (
+    hasProperties(
+      data,
+      'paymentMethodTokenId',
+      'createQuotes',
+      'collectionId'
+    ) && isCreateRequest(data.createQuotes)
+  );
 };
 
 function* payQuote(
@@ -43,27 +56,25 @@ function* payQuote(
   const { body } = this.request;
   const { isFinanced, isWaived } = this.query;
   const { userId, collection } = this.state;
-  if (!collection) { return this.throw(403, 'Unable to access collection'); }
+  if (!collection) {
+    return this.throw(403, 'Unable to access collection');
+  }
 
   if (isWaived) {
-    this.body = yield payWaivedQuote(
-      body.createQuotes,
-      userId,
-      collection
-    );
+    this.body = yield payWaivedQuote(body.createQuotes, userId, collection);
   } else if (!isFinanced && isPayWithMethodRequest(body)) {
     this.body = yield payInvoiceWithNewPaymentMethod(
       body.createQuotes,
       body.paymentMethodTokenId,
       userId,
-      collection)
-    .catch((err: Error) => this.throw(400, err.message));
+      collection
+    ).catch((err: Error) => this.throw(400, err.message));
   } else if (isFinanced) {
     this.body = yield createInvoiceWithoutMethod(
       body.createQuotes,
       userId,
-      collection)
-    .catch((err: Error) => this.throw(400, err.message));
+      collection
+    ).catch((err: Error) => this.throw(400, err.message));
   } else {
     return this.throw('Request must match type');
   }

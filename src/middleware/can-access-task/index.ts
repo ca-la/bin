@@ -26,7 +26,7 @@ export function* canAccessTaskInParams(
   this.assert(
     permissions && permissions.canView,
     403,
-    'You don\'t have permission to view the task on this design.'
+    "You don't have permission to view the task on this design."
   );
 
   yield next;

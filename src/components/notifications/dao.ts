@@ -24,7 +24,9 @@ const DELAY_MINUTES = 45;
 /**
  * Returns all outstanding notifications (e.g. not sent) with associated objects attached.
  */
-export async function findOutstanding(trx?: Knex.Transaction): Promise<Notification[]> {
+export async function findOutstanding(
+  trx?: Knex.Transaction
+): Promise<Notification[]> {
   const outstandingNotifications: NotificationRow[] = await db(TABLE_NAME)
     .select('*')
     .where({ sent_email_at: null, read_at: null })
@@ -45,10 +47,13 @@ export async function findOutstanding(trx?: Knex.Transaction): Promise<Notificat
   );
 }
 
-export async function markSent(ids: string[], trx?: Knex.Transaction): Promise<Notification[]> {
+export async function markSent(
+  ids: string[],
+  trx?: Knex.Transaction
+): Promise<Notification[]> {
   const updatedNotifications: NotificationRow[] = await db(TABLE_NAME)
     .whereIn('id', ids)
-    .update({ sent_email_at: (new Date()).toISOString() }, '*')
+    .update({ sent_email_at: new Date().toISOString() }, '*')
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
@@ -63,10 +68,13 @@ export async function markSent(ids: string[], trx?: Knex.Transaction): Promise<N
   );
 }
 
-export async function markRead(ids: string[], trx?: Knex.Transaction): Promise<Notification[]> {
+export async function markRead(
+  ids: string[],
+  trx?: Knex.Transaction
+): Promise<Notification[]> {
   const updatedNotifications: NotificationRow[] = await db(TABLE_NAME)
     .whereIn('id', ids)
-    .update({ read_at: (new Date()).toISOString() }, '*')
+    .update({ read_at: new Date().toISOString() }, '*')
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
@@ -81,13 +89,17 @@ export async function markRead(ids: string[], trx?: Knex.Transaction): Promise<N
   );
 }
 
-export async function create(data: Uninserted<Notification>): Promise<Notification> {
+export async function create(
+  data: Uninserted<Notification>
+): Promise<Notification> {
   const rowData = dataAdapter.forInsertion(data);
   const created = await db(TABLE_NAME)
     .insert(rowData, '*')
     .then((rows: NotificationRow[]) => first<NotificationRow>(rows));
 
-  if (!created) { throw new Error('Failed to create a notification!'); }
+  if (!created) {
+    throw new Error('Failed to create a notification!');
+  }
 
   const notification = validate<NotificationRow, Notification>(
     TABLE_NAME,
@@ -106,7 +118,9 @@ export async function findById(id: string): Promise<Notification | null> {
     .limit(1);
   const notification = notifications[0];
 
-  if (!notification) { return null; }
+  if (!notification) {
+    return null;
+  }
 
   return validate<NotificationRow, Notification>(
     TABLE_NAME,
@@ -123,7 +137,8 @@ export async function findByUserId(
   const notifications: NotificationRow[] = await db(TABLE_NAME)
     .select('n.*')
     .from('notifications as n')
-    .joinRaw(`
+    .joinRaw(
+      `
     left join product_designs as d
       on d.id = n.design_id
     left join collections as c
@@ -138,7 +153,8 @@ export async function findByUserId(
       on can.id = n.canvas_id
     left join product_design_canvas_measurements as m
       on m.id = n.measurement_id
-    `)
+    `
+    )
     .whereNotIn('type', DEPRECATED_NOTIFICATION_TYPES)
     .andWhere({
       'a.deleted_at': null,
@@ -148,12 +164,16 @@ export async function findByUserId(
       'd.deleted_at': null,
       'm.deleted_at': null
     })
-    .andWhereRaw(`
+    .andWhereRaw(
+      `
       (cl.cancelled_at is null or cl.cancelled_at > now())
-    `)
-    .andWhere((query: Knex.QueryBuilder) => query
-      .where({ 'n.recipient_user_id': userId })
-      .orWhere({ 'cl.user_id': userId }))
+    `
+    )
+    .andWhere((query: Knex.QueryBuilder) =>
+      query
+        .where({ 'n.recipient_user_id': userId })
+        .orWhere({ 'cl.user_id': userId })
+    )
     .orderBy('created_at', 'desc')
     .limit(options.limit)
     .offset(options.offset);
@@ -166,13 +186,12 @@ export async function findByUserId(
   );
 }
 
-export async function findUnreadCountByUserId(
-  userId: string
-): Promise<number> {
+export async function findUnreadCountByUserId(userId: string): Promise<number> {
   const notificationRows: NotificationRow[] = await db(TABLE_NAME)
     .select('n.*')
     .from('notifications as n')
-    .joinRaw(`
+    .joinRaw(
+      `
     left join product_designs as d
       on d.id = n.design_id
     left join collections as c
@@ -187,7 +206,8 @@ export async function findUnreadCountByUserId(
       on can.id = n.canvas_id
     left join product_design_canvas_measurements as m
       on m.id = n.measurement_id
-    `)
+    `
+    )
     .whereNotIn('type', DEPRECATED_NOTIFICATION_TYPES)
     .andWhere({
       'a.deleted_at': null,
@@ -198,12 +218,16 @@ export async function findUnreadCountByUserId(
       'm.deleted_at': null,
       'n.read_at': null
     })
-    .andWhereRaw(`
+    .andWhereRaw(
+      `
       (cl.cancelled_at is null or cl.cancelled_at > now())
-    `)
-    .andWhere((query: Knex.QueryBuilder) => query
-      .where({ 'n.recipient_user_id': userId })
-      .orWhere({ 'cl.user_id': userId }));
+    `
+    )
+    .andWhere((query: Knex.QueryBuilder) =>
+      query
+        .where({ 'n.recipient_user_id': userId })
+        .orWhere({ 'cl.user_id': userId })
+    );
 
   const notifications = validateEvery<NotificationRow, Notification>(
     TABLE_NAME,
@@ -225,15 +249,17 @@ export async function findUnreadCountByUserId(
  * might even want to experiment with lowering it to make sure we're getting
  * granular enough changes.
  */
-export async function deleteRecent(data: Uninserted<Notification>): Promise<number> {
+export async function deleteRecent(
+  data: Uninserted<Notification>
+): Promise<number> {
   const rowData = omit(dataAdapter.forInsertion(data), 'id', 'created_at');
 
   const now = Date.now();
   // 5 minutes ago
-  const startingThreshold = now - (1000 * 60 * 5);
+  const startingThreshold = now - 1000 * 60 * 5;
   const deletedRows: number = await db(TABLE_NAME)
     .where(rowData)
-    .andWhere('created_at', '>', (new Date(startingThreshold)).toISOString())
+    .andWhere('created_at', '>', new Date(startingThreshold).toISOString())
     .andWhere({ sent_email_at: null })
     .del();
 

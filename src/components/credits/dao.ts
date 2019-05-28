@@ -29,7 +29,9 @@ interface AddCreditOptions extends CreditOptions {
 
 function validateAmount(amountCents: number): void {
   if (amountCents < 1 || amountCents % 1 !== 0) {
-    throw new Error(`${amountCents} cents of credit must be a positive integer`);
+    throw new Error(
+      `${amountCents} cents of credit must be a positive integer`
+    );
   }
 }
 
@@ -42,15 +44,18 @@ export async function addCredit(
   validateAmount(amountCents);
 
   await db(TABLE_NAME)
-    .insert({
-      created_at: new Date(),
-      created_by: options.createdBy,
-      credit_delta_cents: amountCents,
-      description: options.description,
-      expires_at: options.expiresAt,
-      given_to: options.givenTo,
-      id: uuid.v4()
-    }, '*')
+    .insert(
+      {
+        created_at: new Date(),
+        created_by: options.createdBy,
+        credit_delta_cents: amountCents,
+        description: options.description,
+        expires_at: options.expiresAt,
+        given_to: options.givenTo,
+        id: uuid.v4()
+      },
+      '*'
+    )
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
@@ -68,33 +73,40 @@ export async function removeCredit(
   // We acquire an update lock on the most recent transaction, if possible, to
   // ensure we don't remove the same "available" credit multiple times if
   // called in parallel
-  await db.raw(`
+  await db
+    .raw(
+      `
     select * from credit_transactions
     where given_to = ?
     order by created_at desc
     limit 1
-    for update`
-  , [options.givenTo])
+    for update`,
+      [options.givenTo]
+    )
     .transacting(trx);
 
   const availableAmount = await getCreditAmount(options.givenTo, trx);
 
   if (amountCents > availableAmount) {
     throw new Error(
-      `Cannot remove ${amountCents} cents of credit from user ${options.givenTo}; ` +
-      `they only have ${availableAmount} available`
+      `Cannot remove ${amountCents} cents of credit from user ${
+        options.givenTo
+      }; ` + `they only have ${availableAmount} available`
     );
   }
 
   await db(TABLE_NAME)
-    .insert({
-      created_at: new Date(),
-      created_by: options.createdBy,
-      credit_delta_cents: -1 * amountCents,
-      description: options.description,
-      given_to: options.givenTo,
-      id: uuid.v4()
-    }, '*')
+    .insert(
+      {
+        created_at: new Date(),
+        created_by: options.createdBy,
+        credit_delta_cents: -1 * amountCents,
+        description: options.description,
+        given_to: options.givenTo,
+        id: uuid.v4()
+      },
+      '*'
+    )
     .transacting(trx);
 }
 
@@ -127,10 +139,16 @@ export async function getCreditAmount(
       // Add credit bucket in the right spot to ensure they're sorted by
       // expiration
       const newBucket: CreditBucket = { amount: deltaCents, expiresAt };
-      const bucketIndex = sortedIndexBy(creditBuckets, newBucket, (b: CreditBucket): number => {
-        if (b.expiresAt === null) { return Infinity; }
-        return b.expiresAt.getTime();
-      });
+      const bucketIndex = sortedIndexBy(
+        creditBuckets,
+        newBucket,
+        (b: CreditBucket): number => {
+          if (b.expiresAt === null) {
+            return Infinity;
+          }
+          return b.expiresAt.getTime();
+        }
+      );
       creditBuckets.splice(bucketIndex, 0, newBucket);
     } else {
       // Subtract from available credit buckets, and take the remainder off the

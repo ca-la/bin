@@ -10,28 +10,37 @@ test('CreditsDAO supports adding & removing credits', async (t: Test) => {
   const { user: otherUser } = await createUser({ withSession: false });
 
   await db.transaction(async (trx: Knex.Transaction) => {
-    await addCredit({
-      amountCents: 12300,
-      createdBy: otherUser.id,
-      description: 'For being a good customer',
-      expiresAt: null,
-      givenTo: user.id
-    }, trx);
+    await addCredit(
+      {
+        amountCents: 12300,
+        createdBy: otherUser.id,
+        description: 'For being a good customer',
+        expiresAt: null,
+        givenTo: user.id
+      },
+      trx
+    );
 
-    await addCredit({
-      amountCents: 999,
-      createdBy: user.id,
-      description: 'thanks you too',
-      expiresAt: null,
-      givenTo: otherUser.id
-    }, trx);
+    await addCredit(
+      {
+        amountCents: 999,
+        createdBy: user.id,
+        description: 'thanks you too',
+        expiresAt: null,
+        givenTo: otherUser.id
+      },
+      trx
+    );
 
-    await removeCredit({
-      amountCents: 300,
-      createdBy: user.id,
-      description: 'spending some money',
-      givenTo: user.id
-    }, trx);
+    await removeCredit(
+      {
+        amountCents: 300,
+        createdBy: user.id,
+        description: 'spending some money',
+        givenTo: user.id
+      },
+      trx
+    );
   });
 
   const amount = await getCreditAmount(user.id);
@@ -43,25 +52,36 @@ test('CreditsDAO prevents you from removing more than available credits', async 
 
   try {
     await db.transaction(async (trx: Knex.Transaction) => {
-      await addCredit({
-        amountCents: 123,
-        createdBy: user.id,
-        description: 'For being a good customer',
-        expiresAt: null,
-        givenTo: user.id
-      }, trx);
+      await addCredit(
+        {
+          amountCents: 123,
+          createdBy: user.id,
+          description: 'For being a good customer',
+          expiresAt: null,
+          givenTo: user.id
+        },
+        trx
+      );
 
-      await removeCredit({
-        amountCents: 223,
-        createdBy: user.id,
-        description: 'spending some money',
-        givenTo: user.id
-      }, trx);
+      await removeCredit(
+        {
+          amountCents: 223,
+          createdBy: user.id,
+          description: 'spending some money',
+          givenTo: user.id
+        },
+        trx
+      );
     });
     t.fail('Should not have completed transaction');
   } catch (err) {
     // tslint:disable-next-line:max-line-length
-    t.equal(err.message, `Cannot remove 223 cents of credit from user ${user.id}; they only have 123 available`);
+    t.equal(
+      err.message,
+      `Cannot remove 223 cents of credit from user ${
+        user.id
+      }; they only have 123 available`
+    );
   }
 
   const amount = await getCreditAmount(user.id);
@@ -73,66 +93,82 @@ test('CreditsDAO prevents you from removing with 0 credits', async (t: Test) => 
 
   try {
     await db.transaction(async (trx: Knex.Transaction) => {
-      await removeCredit({
-        amountCents: 100,
-        createdBy: user.id,
-        description: 'spending some money',
-        givenTo: user.id
-      }, trx);
+      await removeCredit(
+        {
+          amountCents: 100,
+          createdBy: user.id,
+          description: 'spending some money',
+          givenTo: user.id
+        },
+        trx
+      );
     });
     t.fail('Should not have completed transaction');
   } catch (err) {
     // tslint:disable-next-line:max-line-length
-    t.equal(err.message, `Cannot remove 100 cents of credit from user ${user.id}; they only have 0 available`);
+    t.equal(
+      err.message,
+      `Cannot remove 100 cents of credit from user ${
+        user.id
+      }; they only have 0 available`
+    );
   }
 
   const amount = await getCreditAmount(user.id);
   t.equal(amount, 0);
 });
 
-test(
-  'CreditsDAO prevents you from spending the same credits twice in parallel',
-  async (t: Test) => {
-    const { user } = await createUser({ withSession: false });
+test('CreditsDAO prevents you from spending the same credits twice in parallel', async (t: Test) => {
+  const { user } = await createUser({ withSession: false });
 
-    await addCredit({
-      amountCents: 500,
-      createdBy: user.id,
-      description: 'For being a good customer',
-      expiresAt: null,
-      givenTo: user.id
-    });
+  await addCredit({
+    amountCents: 500,
+    createdBy: user.id,
+    description: 'For being a good customer',
+    expiresAt: null,
+    givenTo: user.id
+  });
 
-    try {
-      await Promise.all([
-        db.transaction(async (trx: Knex.Transaction) => {
-          await removeCredit({
+  try {
+    await Promise.all([
+      db.transaction(async (trx: Knex.Transaction) => {
+        await removeCredit(
+          {
             amountCents: 400,
             createdBy: user.id,
             description: 'spending some money',
             givenTo: user.id
-          }, trx);
-        }),
-        db.transaction(async (trx: Knex.Transaction) => {
-          await removeCredit({
+          },
+          trx
+        );
+      }),
+      db.transaction(async (trx: Knex.Transaction) => {
+        await removeCredit(
+          {
             amountCents: 400,
             createdBy: user.id,
             description: 'spending some money',
             givenTo: user.id
-          }, trx);
-        })
-      ]);
+          },
+          trx
+        );
+      })
+    ]);
 
-      t.fail('Should not have completed transaction');
-    } catch (err) {
-      // tslint:disable-next-line:max-line-length
-      t.equal(err.message, `Cannot remove 400 cents of credit from user ${user.id}; they only have 100 available`);
-    }
-
-    const amount = await getCreditAmount(user.id);
-    t.equal(amount, 100);
+    t.fail('Should not have completed transaction');
+  } catch (err) {
+    // tslint:disable-next-line:max-line-length
+    t.equal(
+      err.message,
+      `Cannot remove 400 cents of credit from user ${
+        user.id
+      }; they only have 100 available`
+    );
   }
-);
+
+  const amount = await getCreditAmount(user.id);
+  t.equal(amount, 100);
+});
 
 test('CreditsDAO supports credit expiration', async (t: Test) => {
   const clock = sandbox().useFakeTimers();
@@ -141,39 +177,51 @@ test('CreditsDAO supports credit expiration', async (t: Test) => {
 
   await db.transaction(async (trx: Knex.Transaction) => {
     // Add 99c that never expires
-    await addCredit({
-      amountCents: 99,
-      createdBy: user.id,
-      description: 'Cool',
-      expiresAt: null,
-      givenTo: user.id
-    }, trx);
+    await addCredit(
+      {
+        amountCents: 99,
+        createdBy: user.id,
+        description: 'Cool',
+        expiresAt: null,
+        givenTo: user.id
+      },
+      trx
+    );
 
     // Add $5 of expired credit
-    await addCredit({
-      amountCents: 500,
-      createdBy: user.id,
-      description: 'Cool',
-      expiresAt: new Date(Date.now() - 1),
-      givenTo: user.id
-    }, trx);
+    await addCredit(
+      {
+        amountCents: 500,
+        createdBy: user.id,
+        description: 'Cool',
+        expiresAt: new Date(Date.now() - 1),
+        givenTo: user.id
+      },
+      trx
+    );
 
     // Add $10 of credit that expires soon
-    await addCredit({
-      amountCents: 1000,
-      createdBy: user.id,
-      description: 'Cooler',
-      expiresAt: new Date(Date.now() + 1000),
-      givenTo: user.id
-    }, trx);
+    await addCredit(
+      {
+        amountCents: 1000,
+        createdBy: user.id,
+        description: 'Cooler',
+        expiresAt: new Date(Date.now() + 1000),
+        givenTo: user.id
+      },
+      trx
+    );
 
     // Spend $2
-    await removeCredit({
-      amountCents: 200,
-      createdBy: user.id,
-      description: 'spending some money',
-      givenTo: user.id
-    }, trx);
+    await removeCredit(
+      {
+        amountCents: 200,
+        createdBy: user.id,
+        description: 'spending some money',
+        givenTo: user.id
+      },
+      trx
+    );
   });
 
   // As of right now, we should have $8.99 available
@@ -208,13 +256,16 @@ test('CreditsDAO subtracts from the soonest-expiring credits first', async (t: T
   await db.transaction(async (trx: Knex.Transaction) => {
     clock.tick(1000); // Brings us to 1k
 
-    await addCredit({
-      amountCents: 2000,
-      createdBy: user.id,
-      description: 'Credit A',
-      expiresAt: new Date(Date.now() + 4000),
-      givenTo: user.id
-    }, trx);
+    await addCredit(
+      {
+        amountCents: 2000,
+        createdBy: user.id,
+        description: 'Credit A',
+        expiresAt: new Date(Date.now() + 4000),
+        givenTo: user.id
+      },
+      trx
+    );
 
     clock.tick(500); // To 1.5k (checkpoint V)
 
@@ -222,13 +273,16 @@ test('CreditsDAO subtracts from the soonest-expiring credits first', async (t: T
 
     clock.tick(500); // To 2k
 
-    await addCredit({
-      amountCents: 3300,
-      createdBy: user.id,
-      description: 'Credit B',
-      expiresAt: new Date(Date.now() + 2000),
-      givenTo: user.id
-    }, trx);
+    await addCredit(
+      {
+        amountCents: 3300,
+        createdBy: user.id,
+        description: 'Credit B',
+        expiresAt: new Date(Date.now() + 2000),
+        givenTo: user.id
+      },
+      trx
+    );
 
     clock.tick(500); // To 2.5k
 
@@ -236,12 +290,15 @@ test('CreditsDAO subtracts from the soonest-expiring credits first', async (t: T
 
     clock.tick(500); // To 3k
 
-    await removeCredit({
-      amountCents: 4000,
-      createdBy: user.id,
-      description: 'Spending',
-      givenTo: user.id
-    }, trx);
+    await removeCredit(
+      {
+        amountCents: 4000,
+        createdBy: user.id,
+        description: 'Spending',
+        givenTo: user.id
+      },
+      trx
+    );
 
     clock.tick(500); // To 3.5k
 

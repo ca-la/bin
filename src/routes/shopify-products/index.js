@@ -31,8 +31,11 @@ function* getList() {
  * GET /shopify-products/:productId
  */
 function* getById() {
-  const product = yield shopify.getProductById(this.params.productId)
-    .catch(filterError(ShopifyNotFoundError, err => this.throw(404, err.message)));
+  const product = yield shopify
+    .getProductById(this.params.productId)
+    .catch(
+      filterError(ShopifyNotFoundError, err => this.throw(404, err.message))
+    );
 
   this.body = product;
   this.status = 200;
@@ -42,8 +45,11 @@ function* getById() {
  * GET /shopify-products/:productId/collections
  */
 function* getCollections() {
-  const collections = yield shopify.getCollections({ product_id: this.params.productId })
-    .catch(filterError(ShopifyNotFoundError, err => this.throw(404, err.message)));
+  const collections = yield shopify
+    .getCollections({ product_id: this.params.productId })
+    .catch(
+      filterError(ShopifyNotFoundError, err => this.throw(404, err.message))
+    );
 
   this.body = collections;
   this.status = 200;

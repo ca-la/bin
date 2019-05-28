@@ -14,7 +14,6 @@ export async function findAndDuplicateComponent(
   newParentId: string | null,
   trx: Knex.Transaction
 ): Promise<Component> {
-
   const component = await ComponentsDAO.findById(componentId);
   const additionalFields: {
     artworkId?: string;
@@ -22,15 +21,23 @@ export async function findAndDuplicateComponent(
     sketchId?: string;
   } = {};
 
-  if (!component) { throw new Error(`Component ${componentId} does not exist!`); }
+  if (!component) {
+    throw new Error(`Component ${componentId} does not exist!`);
+  }
 
   if (component.materialId) {
-    const materialOption = await findAndDuplicateOption(component.materialId, trx);
+    const materialOption = await findAndDuplicateOption(
+      component.materialId,
+      trx
+    );
     additionalFields.materialId = materialOption.id;
   }
 
   return ComponentsDAO.create(
-    prepareForDuplication(component, { ...additionalFields, parentId: newParentId }),
+    prepareForDuplication(component, {
+      ...additionalFields,
+      parentId: newParentId
+    }),
     trx
   );
 }

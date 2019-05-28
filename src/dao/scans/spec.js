@@ -13,7 +13,7 @@ const createUser = require('../../test-helpers/create-user');
 const FitPartnerCustomersDAO = require('../../dao/fit-partner-customers');
 const InvalidDataError = require('../../errors/invalid-data');
 
-test('ScansDAO.create creates a new scan', (t) => {
+test('ScansDAO.create creates a new scan', t => {
   return createUser({ withSession: false })
     .then(({ user }) => {
       return create({
@@ -25,28 +25,30 @@ test('ScansDAO.create creates a new scan', (t) => {
         }
       });
     })
-    .then((scan) => {
+    .then(scan => {
       t.equal(scan.id.length, 36);
       t.equal(scan.measurements.heightCm, 200);
       t.equal(scan.measurements.weightKg, 60);
     });
 });
 
-test('ScansDAO.create fails without a type', (t) => {
+test('ScansDAO.create fails without a type', t => {
   return createUser({ withSession: false })
     .then(({ user }) => {
       return create({
         userId: user.id
       });
     })
-    .then(() => { throw new Error("Shouldn't get here"); })
-    .catch((err) => {
+    .then(() => {
+      throw new Error("Shouldn't get here");
+    })
+    .catch(err => {
       t.equal(err instanceof InvalidDataError, true);
       t.equal(err.message, 'Scan type must be provided');
     });
 });
 
-test('ScansDAO.updateOneById updates a scan', (t) => {
+test('ScansDAO.updateOneById updates a scan', t => {
   return createUser({ withSession: false })
     .then(({ user }) => {
       return create({
@@ -54,17 +56,17 @@ test('ScansDAO.updateOneById updates a scan', (t) => {
         type: SCAN_TYPES.photo
       });
     })
-    .then((scan) => {
+    .then(scan => {
       return updateOneById(scan.id, {
         measurements: { heightCm: 200 }
       });
     })
-    .then((updated) => {
+    .then(updated => {
       t.equal(updated.measurements.heightCm, 200);
     });
 });
 
-test('ScansDAO.updateOneById allows marking as started', async (t) => {
+test('ScansDAO.updateOneById allows marking as started', async t => {
   const { user } = await createUser({ withSession: false });
   const scan = await create({
     userId: user.id,
@@ -77,7 +79,7 @@ test('ScansDAO.updateOneById allows marking as started', async (t) => {
   t.equal(updated.isStarted, true);
 });
 
-test('ScansDAO.findByUserId does not find deleted scans', (t) => {
+test('ScansDAO.findByUserId does not find deleted scans', t => {
   let userId;
   return createUser({ withSession: false })
     .then(({ user }) => {
@@ -98,13 +100,13 @@ test('ScansDAO.findByUserId does not find deleted scans', (t) => {
     .then(() => {
       return findByUserId(userId);
     })
-    .then((scans) => {
+    .then(scans => {
       t.equal(scans.length, 1);
       t.equal(scans[0].deletedAt, null);
     });
 });
 
-test('ScansDAO.findByFitPartner returns only scans owned by a partner', async (t) => {
+test('ScansDAO.findByFitPartner returns only scans owned by a partner', async t => {
   const calaCustomer = (await createUser({ withSession: false })).user;
 
   const owner1 = (await createUser({ withSession: false })).user;

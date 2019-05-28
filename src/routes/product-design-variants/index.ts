@@ -4,7 +4,10 @@ import * as Koa from 'koa';
 import * as ProductDesignVariantsDAO from '../../dao/product-design-variants';
 import ProductDesignVariant from '../../domain-objects/product-design-variant';
 import requireAuth = require('../../middleware/require-auth');
-import { canAccessDesignInQuery, canEditDesign } from '../../middleware/can-access-design';
+import {
+  canAccessDesignInQuery,
+  canEditDesign
+} from '../../middleware/can-access-design';
 import { hasProperties } from '../../services/require-properties';
 
 const router = new Router();
@@ -46,12 +49,18 @@ function* replaceVariants(
   const { body } = this.request;
 
   if (!designId) {
-    this.throw(400, 'A designId needs to be specified in the query parameters!');
+    this.throw(
+      400,
+      'A designId needs to be specified in the query parameters!'
+    );
     return;
   }
 
   if (Array.isArray(body) && isProductDesignVariantsIO(body)) {
-    const variants = yield ProductDesignVariantsDAO.replaceForDesign(designId, body);
+    const variants = yield ProductDesignVariantsDAO.replaceForDesign(
+      designId,
+      body
+    );
     this.body = variants;
     this.status = 200;
   } else {
@@ -65,7 +74,10 @@ function* getVariants(
   const { designId } = this.query;
 
   if (!designId) {
-    this.throw(400, 'A designId needs to be specified in the query parameters!');
+    this.throw(
+      400,
+      'A designId needs to be specified in the query parameters!'
+    );
     return;
   }
 
@@ -80,11 +92,6 @@ router.put(
   canEditDesign,
   replaceVariants
 );
-router.get(
-  '/',
-  requireAuth,
-  canAccessDesignInQuery,
-  getVariants
-);
+router.get('/', requireAuth, canAccessDesignInQuery, getVariants);
 
 module.exports = router.routes();

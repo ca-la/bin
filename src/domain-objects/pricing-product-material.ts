@@ -29,9 +29,14 @@ export interface PricingProductMaterialRow {
   created_at: Date;
 }
 
-export const dataAdapter = new DataAdapter<PricingProductMaterialRow, PricingProductMaterial>();
+export const dataAdapter = new DataAdapter<
+  PricingProductMaterialRow,
+  PricingProductMaterial
+>();
 
-export function isPricingProductMaterialRow(row: object): row is PricingProductMaterialRow {
+export function isPricingProductMaterialRow(
+  row: object
+): row is PricingProductMaterialRow {
   return hasProperties(
     row,
     'id',

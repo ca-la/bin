@@ -1,12 +1,13 @@
 'use strict';
 
 const createDesign = require('../../dao/product-designs').create;
-const replaceVariants = require('../../dao/product-design-variants').replaceForDesign;
+const replaceVariants = require('../../dao/product-design-variants')
+  .replaceForDesign;
 const createUser = require('../../test-helpers/create-user');
 const PricingCalculator = require('./index');
 const { test } = require('../../test-helpers/fresh');
 
-test('PricingCalculator constructs pricing tables', async (t) => {
+test('PricingCalculator constructs pricing tables', async t => {
   const { user } = await createUser({ withSession: false });
 
   const design = await createDesign({
@@ -40,7 +41,7 @@ test('PricingCalculator constructs pricing tables', async (t) => {
   t.equal(finalPricingTable.profit.unitProfitCents, 12345);
 });
 
-test('PricingCalculator supports overriding pricing tables, and returns class instances', async (t) => {
+test('PricingCalculator supports overriding pricing tables, and returns class instances', async t => {
   const { user } = await createUser({ withSession: false });
 
   const design = await createDesign({
@@ -78,5 +79,8 @@ test('PricingCalculator supports overriding pricing tables, and returns class in
   const { finalPricingTable } = await calculator.getAllPricingTables();
 
   t.equal(finalPricingTable.summary.upfrontCostCents, 123456);
-  t.equal(finalPricingTable.serializeWithoutBreakdown().summary.upfrontCostCents, 123456);
+  t.equal(
+    finalPricingTable.serializeWithoutBreakdown().summary.upfrontCostCents,
+    123456
+  );
 });

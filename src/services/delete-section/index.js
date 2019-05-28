@@ -10,8 +10,11 @@ const { sendSectionDeleteNotifications } = require('../create-notifications');
 async function deleteSection({ sectionId, designId, actorUserId }) {
   requireValues({ sectionId, designId, actorUserId });
 
-  return db.transaction(async (trx) => {
-    const deleted = await ProductDesignSectionsDAO.deleteByIdTrx(trx, sectionId);
+  return db.transaction(async trx => {
+    const deleted = await ProductDesignSectionsDAO.deleteByIdTrx(
+      trx,
+      sectionId
+    );
 
     await ProductDesignFeaturePlacementsDAO.deleteForSectionTrx(trx, sectionId);
     await ProductDesignSelectedOptionsDAO.deleteForSectionTrx(trx, sectionId);

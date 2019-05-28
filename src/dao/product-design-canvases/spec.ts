@@ -39,8 +39,7 @@ test('ProductDesignCanvases DAO supports creation/retrieval', async (t: tape.Tes
   t.deepEqual(result, inserted, 'Returned inserted task');
 });
 
-test('ProductDesignCanvases DAO supports creation/retrieval without ordering',
-async (t: tape.Test) => {
+test('ProductDesignCanvases DAO supports creation/retrieval without ordering', async (t: tape.Test) => {
   const userData = await createUser();
   const userId = userData.user.id;
   const design = await createDesign({
@@ -89,7 +88,9 @@ test('ProductDesignCanvases DAO supports update', async (t: tape.Test) => {
   const inserted = await update(id, { ...canvas, title: 'updated' });
 
   const result = await findById(inserted.id);
-  if (!result) { return t.fail('no result'); }
+  if (!result) {
+    return t.fail('no result');
+  }
   t.deepEqual(result, inserted, 'Returned inserted canvas');
   t.equal(result.title, 'updated', 'Title was updated');
 });
@@ -127,10 +128,15 @@ test('ProductDesignCanvases DAO supports reorder', async (t: tape.Test) => {
   };
   const canvas = await create(data);
   const canvas2 = await create(data2);
-  const inserted = await reorder([{ id: canvas2.id, ordering: 0 }, { id: canvas.id, ordering: 1 }]);
+  const inserted = await reorder([
+    { id: canvas2.id, ordering: 0 },
+    { id: canvas.id, ordering: 1 }
+  ]);
 
   const result = await findAllByDesignId(design.id);
-  if (!result) { return t.fail('no result'); }
+  if (!result) {
+    return t.fail('no result');
+  }
   t.deepEqual(result, inserted, 'Returned inserted canvases');
   t.deepEqual(result[1].id, canvas.id, 'First canvas is correct');
   t.equal(result[1].ordering, 1, 'Canvas has new ordering');
@@ -192,5 +198,9 @@ test('ProductDesignCanvases DAO supports retrieval by designId', async (t: tape.
 test('ProductDesignCanvases DAO supports retrieval by componentId', async (t: tape.Test) => {
   const { canvas, component } = await generateCanvas({});
   const foundCanvas = await findByComponentId(component.id);
-  t.deepEqual(canvas, foundCanvas, 'Returns the canvas associated with the given component');
+  t.deepEqual(
+    canvas,
+    foundCanvas,
+    'Returns the canvas associated with the given component'
+  );
 });

@@ -16,7 +16,9 @@ import { announceAnnotationCommentCreation } from '../iris/messages/annotation-c
 
 const router = new Router();
 
-function* createAnnotationComment(this: Koa.Application.Context): AsyncIterableIterator<Comment> {
+function* createAnnotationComment(
+  this: Koa.Application.Context
+): AsyncIterableIterator<Comment> {
   let comment: Comment | undefined;
   const userId = this.state.userId;
   const body = pick(this.request.body, BASE_COMMENT_PROPERTIES);
@@ -24,14 +26,20 @@ function* createAnnotationComment(this: Koa.Application.Context): AsyncIterableI
 
   if (body && isBaseComment(body) && annotationId) {
     yield db.transaction(async (trx: Knex.Transaction) => {
-      comment = await CommentDAO.create({
-        ...body,
-        userId
-      }, trx);
-      const annotationComment = await AnnotationCommentDAO.create({
-        annotationId,
-        commentId: comment.id
-      }, trx);
+      comment = await CommentDAO.create(
+        {
+          ...body,
+          userId
+        },
+        trx
+      );
+      const annotationComment = await AnnotationCommentDAO.create(
+        {
+          annotationId,
+          commentId: comment.id
+        },
+        trx
+      );
 
       await announceAnnotationCommentCreation(annotationComment, comment);
       await sendCreationNotifications({

@@ -24,7 +24,9 @@ function* postOrdersCreate() {
   const userId = userIdAttr && userIdAttr.value;
 
   if (!userId) {
-    Logger.logWarning('Shopify webhook missing user ID. Maybe an order was created without a CALA account?');
+    Logger.logWarning(
+      'Shopify webhook missing user ID. Maybe an order was created without a CALA account?'
+    );
     return;
   }
 

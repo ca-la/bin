@@ -7,7 +7,11 @@ import createUser = require('../../test-helpers/create-user');
 test('ProductDesign Stage DAO supports creation/retrieval', async (t: tape.Test) => {
   const { user } = await createUser();
 
-  const design = await createProductDesign({ productType: 'test', title: 'test', userId: user.id });
+  const design = await createProductDesign({
+    productType: 'test',
+    title: 'test',
+    userId: user.id
+  });
   const stage = await create({
     description: '',
     designId: design.id,
@@ -22,7 +26,11 @@ test('ProductDesign Stage DAO supports creation/retrieval', async (t: tape.Test)
 test('ProductDesign Stage DAO supports retrieval by designId', async (t: tape.Test) => {
   const { user } = await createUser();
 
-  const design = await createProductDesign({ productType: 'test', title: 'test', userId: user.id });
+  const design = await createProductDesign({
+    productType: 'test',
+    title: 'test',
+    userId: user.id
+  });
   const stage = await create({
     description: '',
     designId: design.id,

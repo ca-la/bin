@@ -1,10 +1,7 @@
 import DataAdapter from '../services/data-adapter';
 import { hasProperties } from '../services/require-properties';
 
-export const UPDATABLE_PROPERTIES = [
-  'collection_id',
-  'design_id'
-];
+export const UPDATABLE_PROPERTIES = ['collection_id', 'design_id'];
 
 export default interface CollectionDesign {
   collectionId: string;
@@ -18,14 +15,11 @@ export interface CollectionDesignRow {
   design_id: string;
 }
 
-export const dataAdapter = new DataAdapter<CollectionDesignRow, CollectionDesign>();
+export const dataAdapter = new DataAdapter<
+  CollectionDesignRow,
+  CollectionDesign
+>();
 
-export function isCollectionDesignRow(row: object):
-  row is CollectionDesignRow {
-  return hasProperties(
-    row,
-    'collection_id',
-    'created_at',
-    'design_id'
-  );
+export function isCollectionDesignRow(row: object): row is CollectionDesignRow {
+  return hasProperties(row, 'collection_id', 'created_at', 'design_id');
 }

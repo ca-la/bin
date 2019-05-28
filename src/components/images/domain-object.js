@@ -19,7 +19,9 @@ class ProductDesignImage {
   }
 
   getUrl() {
-    return `https://${AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME}.s3.amazonaws.com/${this.id}`;
+    return `https://${AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME}.s3.amazonaws.com/${
+      this.id
+    }`;
   }
 
   toJSON() {

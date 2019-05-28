@@ -22,10 +22,7 @@ function* getRawPhoto() {
     canAccessUserResource.call(this, scan.userId);
   }
 
-  const data = yield getFile(
-    AWS_SCANPHOTO_BUCKET_NAME,
-    `${photo.id}.jpg`
-  );
+  const data = yield getFile(AWS_SCANPHOTO_BUCKET_NAME, `${photo.id}.jpg`);
 
   this.status = 200;
   this.set('content-type', 'image/jpeg');
@@ -45,10 +42,10 @@ function* updatePhoto() {
 
   const { calibrationData, controlPoints } = this.request.body;
 
-  const updated = yield ScanPhotosDAO.updateOneById(
-    this.params.photoId,
-    { calibrationData, controlPoints }
-  );
+  const updated = yield ScanPhotosDAO.updateOneById(this.params.photoId, {
+    calibrationData,
+    controlPoints
+  });
 
   updated.setUrl(getScanPhotoUrl(this, updated.id));
 

@@ -26,15 +26,15 @@ interface CreateQuotePayloadRow {
   units: number;
 }
 
-const dataAdapter = new DataAdapter<CreateQuotePayloadRow, CreateQuotePayload>();
+const dataAdapter = new DataAdapter<
+  CreateQuotePayloadRow,
+  CreateQuotePayload
+>();
 
-export function isCreateQuotePayloadRow(row: object):
-  row is CreateQuotePayloadRow {
-  return hasProperties(
-    row,
-    'design_id',
-    'units'
-  );
+export function isCreateQuotePayloadRow(
+  row: object
+): row is CreateQuotePayloadRow {
+  return hasProperties(row, 'design_id', 'units');
 }
 
 async function getQuoteRequests(
@@ -45,11 +45,13 @@ async function getQuoteRequests(
     .select('design_events.design_id as design_id')
     .select('q.units as units')
     .from('design_events')
-    .joinRaw(`
+    .joinRaw(
+      `
 JOIN pricing_quotes AS q ON q.id = design_events.quote_id
 JOIN collection_designs AS cd ON cd.design_id = design_events.design_id
 JOIN collections AS c ON c.id = cd.collection_id
-    `)
+    `
+    )
     .where({ 'c.id': collectionId, 'design_events.type': 'COMMIT_QUOTE' })
     .transacting(trx);
 
@@ -75,14 +77,23 @@ function areQuotesAndDesignsMatched(
   quotes: CreateQuotePayload[],
   designs: ProductDesign[]
 ): boolean {
-  return quotes.length === designs.length &&
+  return (
+    quotes.length === designs.length &&
     quotes.reduce((acc: boolean, quote: CreateQuotePayload) => {
-      return acc && Boolean(designs.find((design: ProductDesign) => design.id === quote.designId));
-    }, true);
+      return (
+        acc &&
+        Boolean(
+          designs.find((design: ProductDesign) => design.id === quote.designId)
+        )
+      );
+    }, true)
+  );
 }
 
 async function createInvoicesForPayLaterSubmits(): Promise<number> {
-  const collectionsResult = await db.raw(`
+  const collectionsResult = await db
+    .raw(
+      `
 SELECT DISTINCT c.id as id, c.title as title, c.created_by as user_id
   FROM collections AS c
   JOIN collection_designs AS cd
@@ -110,33 +121,56 @@ SELECT DISTINCT c.id as id, c.title as title, c.created_by as user_id
      AND d.deleted_at IS NULL
   ) as pd
     ON pd.id = cd.design_id
-  `).catch(rethrow);
+  `
+    )
+    .catch(rethrow);
   const collections: CollectionMeta[] = collectionsResult.rows;
   return db.transaction(async (trx: Knex.Transaction) => {
-    const createPayloadsAndErrors: (PayloadObject | string)[] = await Promise.all(
+    const createPayloadsAndErrors: (
+      | PayloadObject
+      | string)[] = await Promise.all(
       collections.map(async (collection: CollectionMeta) => {
         const fullCollection = await CollectionsDAO.findById(collection.id);
         const quotes = await getQuoteRequests(collection.id, trx);
-        const designs = await ProductDesignsDAO.findByCollectionId(collection.id);
-        if (quotes.length !== designs.length || !areQuotesAndDesignsMatched(quotes, designs)) {
+        const designs = await ProductDesignsDAO.findByCollectionId(
+          collection.id
+        );
+        if (
+          quotes.length !== designs.length ||
+          !areQuotesAndDesignsMatched(quotes, designs)
+        ) {
           return collection.id;
         }
-        if (!fullCollection) { return collection.id; }
-        log(`INFO: Retrieved ${quotes.length} commited quotes for collection ${collection.id}`);
+        if (!fullCollection) {
+          return collection.id;
+        }
+        log(
+          `INFO: Retrieved ${quotes.length} commited quotes for collection ${
+            collection.id
+          }`
+        );
         return {
           collection: fullCollection,
           quotes,
           userId: collection.user_id
         };
-      }));
-    const errorCollectionIds = createPayloadsAndErrors
-      .filter((el: PayloadObject | string): el is string => typeof el === 'string');
+      })
+    );
+    const errorCollectionIds = createPayloadsAndErrors.filter(
+      (el: PayloadObject | string): el is string => typeof el === 'string'
+    );
     if (errorCollectionIds.length > 0) {
       // tslint:disable-next-line:max-line-length
-      log(`${red}ERROR: The following collections could not have an invoice automatically created due to the quotes and designs not matching: ${errorCollectionIds.join(', ')}${reset}`);
+      log(
+        `${red}ERROR: The following collections could not have an invoice automatically created due to the quotes and designs not matching: ${errorCollectionIds.join(
+          ', '
+        )}${reset}`
+      );
     }
-    const createPayloads: PayloadObject[] = createPayloadsAndErrors
-      .filter((el: PayloadObject | string): el is PayloadObject => typeof el !== 'string');
+    const createPayloads: PayloadObject[] = createPayloadsAndErrors.filter(
+      (el: PayloadObject | string): el is PayloadObject =>
+        typeof el !== 'string'
+    );
 
     const invoices = [];
     for (const createPayload of createPayloads) {
@@ -156,7 +190,9 @@ createInvoicesForPayLaterSubmits()
     log(`${green}Successfully created invoices for ${x} collections!${reset}`);
     process.exit();
   })
-  .catch((err: any): void => {
-    log(`${red}ERROR:\n${reset}`, err);
-    process.exit(1);
-  });
+  .catch(
+    (err: any): void => {
+      log(`${red}ERROR:\n${reset}`, err);
+      process.exit(1);
+    }
+  );

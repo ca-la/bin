@@ -1,6 +1,10 @@
 import * as mime from 'mime-types';
 import * as AWS from 'aws-sdk';
-import { DeleteObjectOutput, GetObjectOutput, PresignedPost } from 'aws-sdk/clients/s3';
+import {
+  DeleteObjectOutput,
+  GetObjectOutput,
+  PresignedPost
+} from 'aws-sdk/clients/s3';
 import { PromiseResult } from 'aws-sdk/lib/request';
 import * as fs from 'fs';
 import {
@@ -26,16 +30,20 @@ export async function uploadFile(
   const s3 = new AWS.S3();
   const buffer = fs.readFileSync(localFileName);
 
-  const { $response: response } = await s3.putObject({
-    ACL: acl,
-    Body: buffer,
-    Bucket: bucketName,
-    ContentType: contentType,
-    Key: remoteFileName,
-    ServerSideEncryption: 'AES256'
-  }).promise();
+  const { $response: response } = await s3
+    .putObject({
+      ACL: acl,
+      Body: buffer,
+      Bucket: bucketName,
+      ContentType: contentType,
+      Key: remoteFileName,
+      ServerSideEncryption: 'AES256'
+    })
+    .promise();
 
-  if (response.error) { throw response.error; }
+  if (response.error) {
+    throw response.error;
+  }
 
   return `https://${bucketName}.s3.amazonaws.com/${remoteFileName}`;
 }
@@ -45,10 +53,12 @@ export async function deleteFile(
   remoteFileName: string
 ): Promise<PromiseResult<DeleteObjectOutput, AWS.AWSError>> {
   const s3 = new AWS.S3();
-  return s3.deleteObject({
-    Bucket: bucketName,
-    Key: remoteFileName
-  }).promise();
+  return s3
+    .deleteObject({
+      Bucket: bucketName,
+      Key: remoteFileName
+    })
+    .promise();
 }
 
 export async function getFile(
@@ -56,13 +66,18 @@ export async function getFile(
   remoteFileName: string
 ): Promise<PromiseResult<GetObjectOutput, AWS.AWSError>> {
   const s3 = new AWS.S3();
-  return s3.getObject({
-    Bucket: bucketName,
-    Key: remoteFileName
-  }).promise();
+  return s3
+    .getObject({
+      Bucket: bucketName,
+      Key: remoteFileName
+    })
+    .promise();
 }
 
-export async function getDownloadUrl(bucketName: string, remoteFileName: string): Promise<string> {
+export async function getDownloadUrl(
+  bucketName: string,
+  remoteFileName: string
+): Promise<string> {
   const s3 = new AWS.S3();
   const file = await getFile(bucketName, remoteFileName);
   const extension = mime.extension(file.ContentType || '');
@@ -88,7 +103,7 @@ export function getUploadPolicy(
   contentType: string = 'binary/octet-stream'
 ): PresignedPost {
   const s3 = new AWS.S3({ region });
-  const FILE_LIMIT = 500 * (1024 ** 2);
+  const FILE_LIMIT = 500 * 1024 ** 2;
 
   return s3.createPresignedPost({
     Bucket: bucketName,
@@ -127,7 +142,7 @@ export function getThumbnailUploadPolicy(
     }),
     region: AWS_S3_THUMBNAIL_BUCKET_REGION
   });
-  const TEN_MB = 10 * (1024 ** 2);
+  const TEN_MB = 10 * 1024 ** 2;
 
   return s3.createPresignedPost({
     Bucket: bucketName,

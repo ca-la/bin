@@ -45,8 +45,9 @@ function attachImages(option) {
 }
 
 function* canModifyOption(next) {
-  const option = yield ProductDesignOptionsDAO.findById(this.params.optionId)
-    .catch(filterError(InvalidDataError, err => this.throw(404, err)));
+  const option = yield ProductDesignOptionsDAO.findById(
+    this.params.optionId
+  ).catch(filterError(InvalidDataError, err => this.throw(404, err)));
 
   this.assert(option, 404);
 
@@ -64,8 +65,9 @@ function* create() {
     userId: this.state.userId
   });
 
-  const option = yield ProductDesignOptionsDAO.create(attrs)
-    .catch(filterError(InvalidDataError, err => this.throw(404, err)));
+  const option = yield ProductDesignOptionsDAO.create(attrs).catch(
+    filterError(InvalidDataError, err => this.throw(404, err))
+  );
 
   this.body = yield attachImages(option);
   this.status = 201;

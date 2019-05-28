@@ -9,11 +9,16 @@ import {
 import * as AWSService from '../../services/aws';
 import { generateFilename } from '../../services/generate-filename';
 
-function* getDesignUploadPolicy(this: Koa.Application.Context): AsyncIterableIterator<any> {
+function* getDesignUploadPolicy(
+  this: Koa.Application.Context
+): AsyncIterableIterator<any> {
   const { mimeType } = this.query;
 
   if (!mimeType) {
-    return this.throw(400, 'A mimeType must be specified in the query parameters!');
+    return this.throw(
+      400,
+      'A mimeType must be specified in the query parameters!'
+    );
   }
 
   const remoteFileName = this.params.id || uuid.v4();
@@ -39,7 +44,9 @@ function* getDesignUploadPolicy(this: Koa.Application.Context): AsyncIterableIte
   this.status = 200;
 }
 
-function* getThumbnailUploadPolicy(this: Koa.Application.Context): AsyncIterableIterator<any> {
+function* getThumbnailUploadPolicy(
+  this: Koa.Application.Context
+): AsyncIterableIterator<any> {
   const remoteFileName = this.params.sectionId || uuid.v4();
   const { url, fields } = yield AWSService.getThumbnailUploadPolicy(
     AWS_S3_THUMBNAIL_BUCKET_NAME,

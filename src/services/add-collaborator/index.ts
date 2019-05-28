@@ -33,41 +33,42 @@ interface BaseOptions {
 export default async function addCollaborator(
   options: BaseOptions
 ): Promise<CollaboratorWithUser> {
-  const {
-    email,
-    inviterUserId,
-    role,
-    unsafeInvitationMessage
-  } = options;
+  const { email, inviterUserId, role, unsafeInvitationMessage } = options;
 
-  if (!Validation.isValidEmail(email)) { throw new InvalidDataError('Invalid email address'); }
+  if (!Validation.isValidEmail(email)) {
+    throw new InvalidDataError('Invalid email address');
+  }
 
   const normalizedEmail = normalizeEmail(email);
-  const user = await UsersDAO.findByEmail(normalizedEmail) as (User | null);
-  const inviter = await UsersDAO.findById(inviterUserId) as (User | null);
+  const user = (await UsersDAO.findByEmail(normalizedEmail)) as (User | null);
+  const inviter = (await UsersDAO.findById(inviterUserId)) as (User | null);
 
-  if (!inviter) { throw new Error('Inviter is not specified!'); }
+  if (!inviter) {
+    throw new Error('Inviter is not specified!');
+  }
 
   const escapedMessage = escapeHtml(unsafeInvitationMessage);
   const invitationMessage = escapedMessage || 'Check out CALA!';
 
-  const collaborator = user ? await CollaboratorsDAO.create({
-    cancelledAt: null,
-    collectionId: options.collectionId || null,
-    designId: options.designId || null,
-    invitationMessage: '',
-    role,
-    userEmail: null,
-    userId: user.id
-  }) : await CollaboratorsDAO.create({
-    cancelledAt: null,
-    collectionId: options.collectionId || null,
-    designId: options.designId || null,
-    invitationMessage,
-    role,
-    userEmail: normalizedEmail,
-    userId: null
-  });
+  const collaborator = user
+    ? await CollaboratorsDAO.create({
+        cancelledAt: null,
+        collectionId: options.collectionId || null,
+        designId: options.designId || null,
+        invitationMessage: '',
+        role,
+        userEmail: null,
+        userId: user.id
+      })
+    : await CollaboratorsDAO.create({
+        cancelledAt: null,
+        collectionId: options.collectionId || null,
+        designId: options.designId || null,
+        invitationMessage,
+        role,
+        userEmail: normalizedEmail,
+        userId: null
+      });
 
   if (!user) {
     await findOrCreateSignup({

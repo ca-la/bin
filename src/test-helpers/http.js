@@ -6,12 +6,12 @@ const { baseUrl } = require('./boot');
 function parseResponse(res) {
   const contentType = res.headers.get('Content-Type');
   if (contentType && contentType.indexOf('application/json') === 0) {
-    return res.json().then((body) => {
+    return res.json().then(body => {
       return [res, body];
     });
   }
 
-  return res.text().then((body) => {
+  return res.text().then(body => {
     return [res, body];
   });
 }
@@ -25,40 +25,47 @@ function authHeader(sessionId) {
 function options(url, opts = {}) {
   const fullUrl = baseUrl + url;
 
-  const headers = Object.assign({
-    Accept: 'application/json'
-  }, opts.headers);
-
-  return fetch(
-    fullUrl,
+  const headers = Object.assign(
     {
-      ...opts, method: 'options', headers
-    }
-  ).then(parseResponse);
+      Accept: 'application/json'
+    },
+    opts.headers
+  );
+
+  return fetch(fullUrl, {
+    ...opts,
+    method: 'options',
+    headers
+  }).then(parseResponse);
 }
 
 function get(url, opts = {}) {
   const fullUrl = baseUrl + url;
 
-  const headers = Object.assign({
-    Accept: 'application/json'
-  }, opts.headers);
-
-  return fetch(
-    fullUrl,
+  const headers = Object.assign(
     {
-      ...opts, method: 'get', headers
-    }
-  ).then(parseResponse);
+      Accept: 'application/json'
+    },
+    opts.headers
+  );
+
+  return fetch(fullUrl, {
+    ...opts,
+    method: 'get',
+    headers
+  }).then(parseResponse);
 }
 
 function post(url, opts = {}) {
   const fullUrl = baseUrl + url;
 
-  const headers = Object.assign({
-    Accept: 'application/json',
-    'Content-Type': 'application/json'
-  }, opts.headers);
+  const headers = Object.assign(
+    {
+      Accept: 'application/json',
+      'Content-Type': 'application/json'
+    },
+    opts.headers
+  );
 
   let body = null;
 
@@ -66,21 +73,24 @@ function post(url, opts = {}) {
     body = JSON.stringify(opts.body);
   }
 
-  return fetch(
-    fullUrl,
-    {
-      ...opts, method: 'post', body, headers
-    }
-  ).then(parseResponse);
+  return fetch(fullUrl, {
+    ...opts,
+    method: 'post',
+    body,
+    headers
+  }).then(parseResponse);
 }
 
 function patch(url, opts = {}) {
   const fullUrl = baseUrl + url;
 
-  const headers = Object.assign({
-    Accept: 'application/json',
-    'Content-Type': 'application/json'
-  }, opts.headers);
+  const headers = Object.assign(
+    {
+      Accept: 'application/json',
+      'Content-Type': 'application/json'
+    },
+    opts.headers
+  );
 
   let body = null;
 
@@ -88,21 +98,24 @@ function patch(url, opts = {}) {
     body = JSON.stringify(opts.body);
   }
 
-  return fetch(
-    fullUrl,
-    {
-      ...opts, method: 'patch', body, headers
-    }
-  ).then(parseResponse);
+  return fetch(fullUrl, {
+    ...opts,
+    method: 'patch',
+    body,
+    headers
+  }).then(parseResponse);
 }
 
 function put(url, opts = {}) {
   const fullUrl = baseUrl + url;
 
-  const headers = Object.assign({
-    Accept: 'application/json',
-    'Content-Type': 'application/json'
-  }, opts.headers);
+  const headers = Object.assign(
+    {
+      Accept: 'application/json',
+      'Content-Type': 'application/json'
+    },
+    opts.headers
+  );
 
   let body = null;
 
@@ -110,21 +123,24 @@ function put(url, opts = {}) {
     body = JSON.stringify(opts.body);
   }
 
-  return fetch(
-    fullUrl,
-    {
-      ...opts, method: 'put', body, headers
-    }
-  ).then(parseResponse);
+  return fetch(fullUrl, {
+    ...opts,
+    method: 'put',
+    body,
+    headers
+  }).then(parseResponse);
 }
 
 function del(url, opts = {}) {
   const fullUrl = baseUrl + url;
 
-  const headers = Object.assign({
-    Accept: 'application/json',
-    'Content-Type': 'application/json'
-  }, opts.headers);
+  const headers = Object.assign(
+    {
+      Accept: 'application/json',
+      'Content-Type': 'application/json'
+    },
+    opts.headers
+  );
 
   let body = null;
 
@@ -132,12 +148,12 @@ function del(url, opts = {}) {
     body = JSON.stringify(opts.body);
   }
 
-  return fetch(
-    fullUrl,
-    {
-      ...opts, method: 'delete', body, headers
-    }
-  ).then(parseResponse);
+  return fetch(fullUrl, {
+    ...opts,
+    method: 'delete',
+    body,
+    headers
+  }).then(parseResponse);
 }
 
 module.exports = {

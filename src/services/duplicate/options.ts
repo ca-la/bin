@@ -14,8 +14,5 @@ export async function findAndDuplicateOption(
 ): Promise<ProductDesignOption> {
   const option = await OptionsDAO.findById(optionId);
 
-  return OptionsDAO.create(
-    prepareForDuplication(option),
-    trx
-  );
+  return OptionsDAO.create(prepareForDuplication(option), trx);
 }

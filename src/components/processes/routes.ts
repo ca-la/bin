@@ -10,17 +10,23 @@ import { ComponentType } from '../../domain-objects/component';
 const router = new Router();
 
 function isComponentType(data: string): data is ComponentType {
-  return data === ComponentType.Artwork
-    || data === ComponentType.Material
-    || data === ComponentType.Sketch;
+  return (
+    data === ComponentType.Artwork ||
+    data === ComponentType.Material ||
+    data === ComponentType.Sketch
+  );
 }
 
-function* getAll(this: Koa.Application.Context): AsyncIterableIterator<Processes> {
+function* getAll(
+  this: Koa.Application.Context
+): AsyncIterableIterator<Processes> {
   const { componentType } = this.query;
 
   if (componentType) {
     if (isComponentType(componentType)) {
-      const processes = yield ProcessesDAO.findAllByComponentType(componentType);
+      const processes = yield ProcessesDAO.findAllByComponentType(
+        componentType
+      );
       this.status = 200;
       this.body = processes;
     } else {
@@ -33,10 +39,6 @@ function* getAll(this: Koa.Application.Context): AsyncIterableIterator<Processes
   }
 }
 
-router.get(
-  '/',
-  requireAuth,
-  getAll
-);
+router.get('/', requireAuth, getAll);
 
 export default router.routes();

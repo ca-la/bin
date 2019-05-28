@@ -58,7 +58,8 @@ export interface DetailsTaskAdaptedRow extends Omit<TaskEvent, 'taskId'> {
   imageIds: string[] | null;
 }
 
-export interface DetailsTaskWithAssigneesAdaptedRow extends DetailsTaskAdaptedRow {
+export interface DetailsTaskWithAssigneesAdaptedRow
+  extends DetailsTaskAdaptedRow {
   assignees: CollaboratorWithUser[];
 }
 
@@ -209,7 +210,10 @@ export function isDetailTaskRow(
   );
 }
 
-export const detailsAdapter = new DataAdapter<DetailTaskEventRow, DetailsTaskAdaptedRow>();
+export const detailsAdapter = new DataAdapter<
+  DetailTaskEventRow,
+  DetailsTaskAdaptedRow
+>();
 
 export function isDetailTaskWithAssigneeRow(
   candidate: object
@@ -239,7 +243,9 @@ export function isDetailTaskWithAssigneeRow(
   );
 }
 
-const encode = (data: DetailTaskWithAssigneesEventRow): DetailsTaskWithAssigneesAdaptedRow => {
+const encode = (
+  data: DetailTaskWithAssigneesEventRow
+): DetailsTaskWithAssigneesAdaptedRow => {
   let assignees: CollaboratorWithUser[] = [];
   if (data.assignees) {
     assignees = data.assignees.map(encodeCollaborator);
@@ -269,5 +275,7 @@ const encode = (data: DetailTaskWithAssigneesEventRow): DetailsTaskWithAssignees
   };
 };
 
-export const detailsWithAssigneesAdapter =
-  new DataAdapter<DetailTaskWithAssigneesEventRow, DetailsTaskWithAssigneesAdaptedRow>(encode);
+export const detailsWithAssigneesAdapter = new DataAdapter<
+  DetailTaskWithAssigneesEventRow,
+  DetailsTaskWithAssigneesAdaptedRow
+>(encode);

@@ -10,37 +10,37 @@ import { stubFindByDesigns } from '../../test-helpers/stubs/collaborators-dao';
 import createDesign from '../../services/create-design';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
 
-test(
-  'DELETE /collaborators/:id returns 404 if collaborator was already deleted',
-  async (t: Test) => {
-    const { session, user } = await createUser();
-    const design = await ProductDesignsDAO.create({
-      productType: 'TEESHIRT',
-      title: 'Plain White Tee',
-      userId: user.id
-    });
+test('DELETE /collaborators/:id returns 404 if collaborator was already deleted', async (t: Test) => {
+  const { session, user } = await createUser();
+  const design = await ProductDesignsDAO.create({
+    productType: 'TEESHIRT',
+    title: 'Plain White Tee',
+    userId: user.id
+  });
 
-    const { collaborator } = await generateCollaborator({
-      collectionId: null,
-      designId: design.id,
-      invitationMessage: '',
-      role: 'EDIT',
-      userEmail: 'person@example.com',
-      userId: null
-    });
+  const { collaborator } = await generateCollaborator({
+    collectionId: null,
+    designId: design.id,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: 'person@example.com',
+    userId: null
+  });
 
-    const [firstResponse] = await del(`/collaborators/${collaborator.id}`, {
+  const [firstResponse] = await del(`/collaborators/${collaborator.id}`, {
+    headers: authHeader(session.id)
+  });
+  t.equal(firstResponse.status, 204);
+
+  const [secondResponse, body] = await del(
+    `/collaborators/${collaborator.id}`,
+    {
       headers: authHeader(session.id)
-    });
-    t.equal(firstResponse.status, 204);
-
-    const [secondResponse, body] = await del(`/collaborators/${collaborator.id}`, {
-      headers: authHeader(session.id)
-    });
-    t.equal(secondResponse.status, 404);
-    t.equal(body.message, 'Collaborator not found');
-  }
-);
+    }
+  );
+  t.equal(secondResponse.status, 404);
+  t.equal(body.message, 'Collaborator not found');
+});
 
 test('GET /product-design-collaborators/:id is accessible at the old URL', async (t: Test) => {
   const { session, user } = await createUser();
@@ -50,16 +50,21 @@ test('GET /product-design-collaborators/:id is accessible at the old URL', async
     userId: user.id
   });
 
-  const [response, body] = await get(`/product-design-collaborators?designId=${design.id}`, {
-    headers: authHeader(session.id)
-  });
+  const [response, body] = await get(
+    `/product-design-collaborators?designId=${design.id}`,
+    {
+      headers: authHeader(session.id)
+    }
+  );
 
   t.equal(response.status, 200);
   t.deepEqual(body, []);
 });
 
 test('POST /collaborators allows adding collaborators on a collection', async (t: Test) => {
-  sandbox().stub(EmailService, 'enqueueSend').resolves();
+  sandbox()
+    .stub(EmailService, 'enqueueSend')
+    .resolves();
 
   const { session, user } = await createUser();
   const collection = await CollectionsDAO.create({
@@ -87,7 +92,9 @@ test('POST /collaborators allows adding collaborators on a collection', async (t
 });
 
 test('PATCH /collaborators allows updating collaborators on a collection', async (t: Test) => {
-  sandbox().stub(EmailService, 'enqueueSend').resolves();
+  sandbox()
+    .stub(EmailService, 'enqueueSend')
+    .resolves();
 
   const { session, user } = await createUser();
   const collection = await CollectionsDAO.create({
@@ -123,7 +130,9 @@ test('PATCH /collaborators allows updating collaborators on a collection', async
 });
 
 test('PATCH /collaborators allows updating collaborators on a design', async (t: Test) => {
-  sandbox().stub(EmailService, 'enqueueSend').resolves();
+  sandbox()
+    .stub(EmailService, 'enqueueSend')
+    .resolves();
 
   const { session, user } = await createUser();
   const design = await ProductDesignsDAO.create({
@@ -156,7 +165,9 @@ test('PATCH /collaborators allows updating collaborators on a design', async (t:
 });
 
 test('PATCH /collaborators throws 400 with unknown role', async (t: Test) => {
-  sandbox().stub(EmailService, 'enqueueSend').resolves();
+  sandbox()
+    .stub(EmailService, 'enqueueSend')
+    .resolves();
 
   const { session, user } = await createUser();
   const design = await ProductDesignsDAO.create({
@@ -171,17 +182,22 @@ test('PATCH /collaborators throws 400 with unknown role', async (t: Test) => {
     userEmail: 'm8@example.com'
   });
 
-  const [responseTwo, bodyTwo] = await patch(`/collaborators/${collaborator.id}`, {
-    body: { role: 'COMMENT' },
-    headers: authHeader(session.id)
-  });
+  const [responseTwo, bodyTwo] = await patch(
+    `/collaborators/${collaborator.id}`,
+    {
+      body: { role: 'COMMENT' },
+      headers: authHeader(session.id)
+    }
+  );
 
   t.equal(responseTwo.status, 400);
   t.equal(bodyTwo.message, 'Unknown role: COMMENT');
 });
 
 test('POST /collaborators throws 400 with unknown role', async (t: Test) => {
-  sandbox().stub(EmailService, 'enqueueSend').resolves();
+  sandbox()
+    .stub(EmailService, 'enqueueSend')
+    .resolves();
 
   const { session, user } = await createUser();
   const collection = await CollectionsDAO.create({
@@ -221,7 +237,9 @@ test('POST /collaborators throws 400 with unknown role', async (t: Test) => {
 });
 
 test('GET /collaborators allows querying by collection ID', async (t: Test) => {
-  sandbox().stub(EmailService, 'enqueueSend').resolves();
+  sandbox()
+    .stub(EmailService, 'enqueueSend')
+    .resolves();
   const { session, user } = await createUser();
 
   const collection = await CollectionsDAO.create({
@@ -243,9 +261,12 @@ test('GET /collaborators allows querying by collection ID', async (t: Test) => {
     headers: authHeader(session.id)
   });
 
-  const [response, body] = await get(`/collaborators?collectionId=${collection.id}`, {
-    headers: authHeader(session.id)
-  });
+  const [response, body] = await get(
+    `/collaborators?collectionId=${collection.id}`,
+    {
+      headers: authHeader(session.id)
+    }
+  );
 
   t.equal(response.status, 200);
   t.equal(body.length, 1);
@@ -303,7 +324,10 @@ test('GET /collaborators returns a 400 for an invalid collection or design ID', 
   );
 
   t.equal(collectionResponse.status, 400);
-  t.equal(collectionBody.message, 'Could not find collection d7567ce0-2fe3-404d-b1a4-393b661d5683');
+  t.equal(
+    collectionBody.message,
+    'Could not find collection d7567ce0-2fe3-404d-b1a4-393b661d5683'
+  );
 
   const [designResponse, designBody] = await get(
     '/collaborators?designId=d7567ce0-2fe3-404d-b1a4-393b661d5683',
@@ -311,11 +335,16 @@ test('GET /collaborators returns a 400 for an invalid collection or design ID', 
   );
 
   t.equal(designResponse.status, 400);
-  t.equal(designBody.message, 'Could not find design d7567ce0-2fe3-404d-b1a4-393b661d5683');
+  t.equal(
+    designBody.message,
+    'Could not find design d7567ce0-2fe3-404d-b1a4-393b661d5683'
+  );
 });
 
 test('GET /collaborators requires access to the resource you want to access', async (t: Test) => {
-  sandbox().stub(EmailService, 'enqueueSend').resolves();
+  sandbox()
+    .stub(EmailService, 'enqueueSend')
+    .resolves();
   const { session: maliciousSession, user: maliciousUser } = await createUser();
   const { session: targetSession, user: targetUser } = await createUser();
 
@@ -345,7 +374,8 @@ test('GET /collaborators requires access to the resource you want to access', as
   });
 
   const [response, body] = await get(
-    `/collaborators?collectionId=${collection.id}&designId=${design.id}`, {
+    `/collaborators?collectionId=${collection.id}&designId=${design.id}`,
+    {
       headers: authHeader(maliciousSession.id)
     }
   );

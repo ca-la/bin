@@ -31,8 +31,12 @@ interface UserDependenciesInterface {
 }
 
 function stubUserDependencies(): UserDependenciesInterface {
-  const duplicationStub = sandbox().stub(DuplicationService, 'duplicateDesigns').resolves();
-  const mailchimpStub = sandbox().stub(MailChimp, 'subscribeToUsers').returns(Promise.resolve());
+  const duplicationStub = sandbox()
+    .stub(DuplicationService, 'duplicateDesigns')
+    .resolves();
+  const mailchimpStub = sandbox()
+    .stub(MailChimp, 'subscribeToUsers')
+    .returns(Promise.resolve());
 
   return {
     duplicationStub,
@@ -46,22 +50,26 @@ interface ApprovalDependencies {
 }
 
 function stubApprovalDependencies(): ApprovalDependencies {
-  const findByEmailStub = sandbox().stub(ApprovedSignupsDAO, 'findByEmail').resolves({
-    consumedAt: null,
-    createdAt: new Date('2019-01-03'),
-    email: 'foo@example.com',
-    firstName: 'Foo',
-    id: 'abc-123-xyz',
-    lastName: 'Bar'
-  });
-  const updateStub = sandbox().stub(ApprovalConsumer, 'default').resolves({
-    consumedAt: new Date('2019-04-24'),
-    createdAt: new Date('2019-01-03'),
-    email: 'foo@example.com',
-    firstName: 'Foo',
-    id: 'abc-123-xyz',
-    lastName: 'Bar'
-  });
+  const findByEmailStub = sandbox()
+    .stub(ApprovedSignupsDAO, 'findByEmail')
+    .resolves({
+      consumedAt: null,
+      createdAt: new Date('2019-01-03'),
+      email: 'foo@example.com',
+      firstName: 'Foo',
+      id: 'abc-123-xyz',
+      lastName: 'Bar'
+    });
+  const updateStub = sandbox()
+    .stub(ApprovalConsumer, 'default')
+    .resolves({
+      consumedAt: new Date('2019-04-24'),
+      createdAt: new Date('2019-01-03'),
+      email: 'foo@example.com',
+      firstName: 'Foo',
+      id: 'abc-123-xyz',
+      lastName: 'Bar'
+    });
 
   return {
     findByEmailStub,
@@ -73,7 +81,9 @@ test('POST /users returns a 400 if user creation fails', async (t: Test) => {
   stubUserDependencies();
   stubApprovalDependencies();
 
-  sandbox().stub(UsersDAO, 'create').rejects(new InvalidDataError('Bad email'));
+  sandbox()
+    .stub(UsersDAO, 'create')
+    .rejects(new InvalidDataError('Bad email'));
 
   const [response, body] = await post('/users', { body: USER_DATA });
 
@@ -99,14 +109,18 @@ test('POST /users returns a session instead if requested', async (t: Test) => {
   stubUserDependencies();
   stubApprovalDependencies();
 
-  const [response, body] = await post('/users?returnValue=session', { body: USER_DATA });
+  const [response, body] = await post('/users?returnValue=session', {
+    body: USER_DATA
+  });
   t.equal(response.status, 201, 'status=201');
   t.equal(body.userId.length, 36);
   t.equal(body.user.name, 'Q User');
 });
 
 test('PUT /users/:id/password returns a 401 if unauthenticated', async (t: Test) => {
-  const [response, body] = await put('/users/123/password', { body: USER_DATA });
+  const [response, body] = await put('/users/123/password', {
+    body: USER_DATA
+  });
   t.equal(response.status, 401);
   t.equal(body.message, 'Authorization is required to access this resource');
 });
@@ -189,9 +203,11 @@ test('GET /users/email-availability/:email returns false when invalid', async (t
 });
 
 test('PUT /users/:id returns a 401 if unauthenticated', async (t: Test) => {
-  const [response, body] = await put('/users/123', { body: {
-    ...baseUser
-  } });
+  const [response, body] = await put('/users/123', {
+    body: {
+      ...baseUser
+    }
+  });
   t.equal(response.status, 401);
   t.equal(body.message, 'Authorization is required to access this resource');
 });
@@ -215,7 +231,10 @@ test('PUT /users/:id updates the current user', async (t: Test) => {
     headers: authHeader(session.id)
   });
   t.equal(response.status, 200);
-  t.equal(new Date(body.birthday).getMilliseconds(), new Date('2017-01-02').getMilliseconds());
+  t.equal(
+    new Date(body.birthday).getMilliseconds(),
+    new Date('2017-01-02').getMilliseconds()
+  );
 });
 
 test('POST /users allows registration + design duplication', async (t: Test) => {
@@ -223,28 +242,31 @@ test('POST /users allows registration + design duplication', async (t: Test) => 
   const dTwo = uuid.v4();
   const dThree = uuid.v4();
 
-  sandbox().stub(Config, 'DEFAULT_DESIGN_IDS').value([dOne, dTwo, dThree].join(','));
-  const mailchimpStub = sandbox().stub(MailChimp, 'subscribeToUsers').returns(Promise.resolve());
+  sandbox()
+    .stub(Config, 'DEFAULT_DESIGN_IDS')
+    .value([dOne, dTwo, dThree].join(','));
+  const mailchimpStub = sandbox()
+    .stub(MailChimp, 'subscribeToUsers')
+    .returns(Promise.resolve());
   const duplicationStub = sandbox()
     .stub(DuplicationService, 'duplicateDesigns')
-    .callsFake(async (_: string, designIds: string[]): Promise<void> => {
-      t.true(designIds.includes(dOne), 'Contains first design id');
-      t.true(designIds.includes(dTwo), 'Contains second design id');
-      t.true(designIds.includes(dThree), 'Contains third design id');
-    });
+    .callsFake(
+      async (_: string, designIds: string[]): Promise<void> => {
+        t.true(designIds.includes(dOne), 'Contains first design id');
+        t.true(designIds.includes(dTwo), 'Contains second design id');
+        t.true(designIds.includes(dThree), 'Contains third design id');
+      }
+    );
   stubApprovalDependencies();
 
-  const [response, body] = await post(
-    '/users',
-    {
-      body: {
-        email: 'user@example.com',
-        name: 'Rick Owens',
-        password: 'rick_owens_la_4_lyfe',
-        phone: '323 931 4960'
-      }
+  const [response, body] = await post('/users', {
+    body: {
+      email: 'user@example.com',
+      name: 'Rick Owens',
+      password: 'rick_owens_la_4_lyfe',
+      phone: '323 931 4960'
     }
-  );
+  });
 
   t.equal(response.status, 201, 'status=201');
   t.equal(body.name, 'Rick Owens');
@@ -253,7 +275,11 @@ test('POST /users allows registration + design duplication', async (t: Test) => 
   t.equal(body.password, undefined);
   t.equal(body.passwordHash, undefined);
 
-  t.equal(duplicationStub.callCount, 1, 'Expect the duplication service to be called once');
+  t.equal(
+    duplicationStub.callCount,
+    1,
+    'Expect the duplication service to be called once'
+  );
   t.equal(mailchimpStub.callCount, 1, 'Expect mailchimp to be called once');
 });
 
@@ -262,14 +288,18 @@ test('POST /users?initialDesigns= allows registration + design duplication', asy
   const dTwo = uuid.v4();
   const dThree = uuid.v4();
 
-  const mailchimpStub = sandbox().stub(MailChimp, 'subscribeToUsers').returns(Promise.resolve());
+  const mailchimpStub = sandbox()
+    .stub(MailChimp, 'subscribeToUsers')
+    .returns(Promise.resolve());
   const duplicationStub = sandbox()
     .stub(DuplicationService, 'duplicateDesigns')
-    .callsFake(async (_: string, designIds: string[]): Promise<void> => {
-      t.true(designIds.includes(dOne), 'Contains first design id');
-      t.true(designIds.includes(dTwo), 'Contains second design id');
-      t.true(designIds.includes(dThree), 'Contains third design id');
-    });
+    .callsFake(
+      async (_: string, designIds: string[]): Promise<void> => {
+        t.true(designIds.includes(dOne), 'Contains first design id');
+        t.true(designIds.includes(dTwo), 'Contains second design id');
+        t.true(designIds.includes(dThree), 'Contains third design id');
+      }
+    );
   stubApprovalDependencies();
 
   const [response, body] = await post(
@@ -291,7 +321,11 @@ test('POST /users?initialDesigns= allows registration + design duplication', asy
   t.equal(body.password, undefined);
   t.equal(body.passwordHash, undefined);
 
-  t.equal(duplicationStub.callCount, 1, 'Expect the duplication service to be called once');
+  t.equal(
+    duplicationStub.callCount,
+    1,
+    'Expect the duplication service to be called once'
+  );
   t.equal(mailchimpStub.callCount, 1, 'Expect mailchimp to be called once');
 });
 
@@ -308,17 +342,14 @@ test('POST /users?cohort allows registration + adding a cohort user', async (t: 
     title: 'MoMA Demo Participants'
   });
 
-  const [response, newUser] = await post(
-    `/users?cohort=${cohort.slug}`,
-    {
-      body: {
-        email: 'user@example.com',
-        name: 'Rick Owens',
-        password: 'rick_owens_la_4_lyfe',
-        phone: '323 931 4960'
-      }
+  const [response, newUser] = await post(`/users?cohort=${cohort.slug}`, {
+    body: {
+      email: 'user@example.com',
+      name: 'Rick Owens',
+      password: 'rick_owens_la_4_lyfe',
+      phone: '323 931 4960'
     }
-  );
+  });
   const cohortUser = await CohortUsersDAO.findAllByUser(newUser.id);
 
   t.equal(response.status, 201, 'status=201');
@@ -329,12 +360,16 @@ test('POST /users?cohort allows registration + adding a cohort user', async (t: 
   t.equal(newUser.passwordHash, undefined);
 
   t.equal(mailchimpStub.callCount, 1, 'Expect mailchimp to be called once');
-  t.deepEqual(mailchimpStub.firstCall.args[0], {
-    cohort: 'moma-demo-june-2020',
-    email: newUser.email,
-    name: newUser.name,
-    referralCode: 'n/a'
-  }, 'Expect the correct tags for Mailchimp subscription');
+  t.deepEqual(
+    mailchimpStub.firstCall.args[0],
+    {
+      cohort: 'moma-demo-june-2020',
+      email: newUser.email,
+      name: newUser.name,
+      referralCode: 'n/a'
+    },
+    'Expect the correct tags for Mailchimp subscription'
+  );
   t.deepEqual(
     cohortUser,
     [{ cohortId: cohort.id, userId: newUser.id }],
@@ -357,17 +392,14 @@ test('POST /users?promoCode=X applies a code at registration', async (t: Test) =
     isSingleUse: false
   });
 
-  const [response, newUser] = await post(
-    '/users?promoCode=newbie',
-    {
-      body: {
-        email: 'user@example.com',
-        name: 'Rick Owens',
-        password: 'rick_owens_la_4_lyfe',
-        phone: '323 931 4960'
-      }
+  const [response, newUser] = await post('/users?promoCode=newbie', {
+    body: {
+      email: 'user@example.com',
+      name: 'Rick Owens',
+      password: 'rick_owens_la_4_lyfe',
+      phone: '323 931 4960'
     }
-  );
+  });
 
   t.equal(response.status, 201, 'status=201');
   t.equal(await CreditsDAO.getCreditAmount(newUser.id), 1239);
@@ -376,51 +408,48 @@ test('POST /users?promoCode=X applies a code at registration', async (t: Test) =
 test('GET /users?search with malformed RegExp throws 400', async (t: Test) => {
   const { session } = await createUser({ role: 'ADMIN' });
 
-  const [response, body] = await get(
-    '/users?search=(',
-    {
-      headers: authHeader(session.id)
-    }
-  );
+  const [response, body] = await get('/users?search=(', {
+    headers: authHeader(session.id)
+  });
 
   t.equal(response.status, 400);
   t.deepEqual(body, { message: 'Search contained invalid characters' });
 });
 
 test('POST /users will fail if the user is not pre-approved', async (t: Test) => {
-  sandbox().stub(ApprovedSignupsDAO, 'findByEmail').resolves(null);
+  sandbox()
+    .stub(ApprovedSignupsDAO, 'findByEmail')
+    .resolves(null);
 
-  const [response, body] = await post(
-    '/users',
-    {
-      body: {
-        email: 'user@example.com',
-        name: 'Rick Owens',
-        password: 'rick_owens_la_4_lyfe',
-        phone: '323 931 4960'
-      }
+  const [response, body] = await post('/users', {
+    body: {
+      email: 'user@example.com',
+      name: 'Rick Owens',
+      password: 'rick_owens_la_4_lyfe',
+      phone: '323 931 4960'
     }
-  );
+  });
 
   t.equal(response.status, 403, 'Is unauthorized');
   t.equal(body.message, 'Sorry, this email address is not approved');
 });
 
 test('POST /users?approvedSignupId will fail id is non-existent', async (t: Test) => {
-  sandbox().stub(ApprovedSignupsDAO, 'findByEmail').resolves(null);
-  sandbox().stub(ApprovedSignupsDAO, 'findById').resolves(null);
+  sandbox()
+    .stub(ApprovedSignupsDAO, 'findByEmail')
+    .resolves(null);
+  sandbox()
+    .stub(ApprovedSignupsDAO, 'findById')
+    .resolves(null);
 
-  const [response, body] = await post(
-    '/users?approvedSignupId=abc-123',
-    {
-      body: {
-        email: 'user@example.com',
-        name: 'Rick Owens',
-        password: 'rick_owens_la_4_lyfe',
-        phone: '323 931 4960'
-      }
+  const [response, body] = await post('/users?approvedSignupId=abc-123', {
+    body: {
+      email: 'user@example.com',
+      name: 'Rick Owens',
+      password: 'rick_owens_la_4_lyfe',
+      phone: '323 931 4960'
     }
-  );
+  });
 
   t.equal(response.status, 403, 'Is unauthorized');
   t.equal(body.message, 'Sorry, this email address is not approved');
@@ -428,23 +457,26 @@ test('POST /users?approvedSignupId will fail id is non-existent', async (t: Test
 
 test('POST /users?approvedSignupId will fail if approval has been consumed', async (t: Test) => {
   stubUserDependencies();
-  sandbox().stub(ApprovedSignupsDAO, 'findByEmail').resolves(null);
-  sandbox().stub(ApprovedSignupsDAO, 'findById').resolves({
-    consumedAt: new Date('2019-04-24')
-  });
-  const updateStub = sandbox().stub(ApprovalConsumer, 'default').resolves({});
+  sandbox()
+    .stub(ApprovedSignupsDAO, 'findByEmail')
+    .resolves(null);
+  sandbox()
+    .stub(ApprovedSignupsDAO, 'findById')
+    .resolves({
+      consumedAt: new Date('2019-04-24')
+    });
+  const updateStub = sandbox()
+    .stub(ApprovalConsumer, 'default')
+    .resolves({});
 
-  const [response, body] = await post(
-    '/users?approvedSignupId=abc-123',
-    {
-      body: {
-        email: 'user@example.com',
-        name: 'Rick Owens',
-        password: 'rick_owens_la_4_lyfe',
-        phone: '323 931 4960'
-      }
+  const [response, body] = await post('/users?approvedSignupId=abc-123', {
+    body: {
+      email: 'user@example.com',
+      name: 'Rick Owens',
+      password: 'rick_owens_la_4_lyfe',
+      phone: '323 931 4960'
     }
-  );
+  });
 
   t.equal(response.status, 403, 'Is not authorized');
   t.equal(body.message, 'Sorry, this email registration was already used');
@@ -453,23 +485,29 @@ test('POST /users?approvedSignupId will fail if approval has been consumed', asy
 
 test('POST /users?approvedSignupId will succeed if id exists', async (t: Test) => {
   stubUserDependencies();
-  sandbox().stub(ApprovedSignupsDAO, 'findByEmail').resolves(null);
-  sandbox().stub(ApprovedSignupsDAO, 'findById').resolves({});
-  const updateStub = sandbox().stub(ApprovalConsumer, 'default').resolves({});
+  sandbox()
+    .stub(ApprovedSignupsDAO, 'findByEmail')
+    .resolves(null);
+  sandbox()
+    .stub(ApprovedSignupsDAO, 'findById')
+    .resolves({});
+  const updateStub = sandbox()
+    .stub(ApprovalConsumer, 'default')
+    .resolves({});
 
-  const [response, body] = await post(
-    '/users?approvedSignupId=abc-123',
-    {
-      body: {
-        email: 'user@example.com',
-        name: 'Rick Owens',
-        password: 'rick_owens_la_4_lyfe',
-        phone: '323 931 4960'
-      }
+  const [response, body] = await post('/users?approvedSignupId=abc-123', {
+    body: {
+      email: 'user@example.com',
+      name: 'Rick Owens',
+      password: 'rick_owens_la_4_lyfe',
+      phone: '323 931 4960'
     }
-  );
+  });
 
   t.equal(response.status, 201, 'Is authorized');
-  t.deepEqual(pick(body, 'email', 'name'), { email: 'user@example.com', name: 'Rick Owens' });
+  t.deepEqual(pick(body, 'email', 'name'), {
+    email: 'user@example.com',
+    name: 'Rick Owens'
+  });
   t.true(updateStub.calledOnce, 'Calls update once');
 });

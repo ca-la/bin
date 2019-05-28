@@ -12,10 +12,13 @@ const instantiate = data => new ScanPhoto(data);
 
 function create(data) {
   return db('scanphotos')
-    .insert({
-      id: uuid.v4(),
-      scan_id: data.scanId
-    }, '*')
+    .insert(
+      {
+        id: uuid.v4(),
+        scan_id: data.scanId
+      },
+      '*'
+    )
     .catch(rethrow)
     .then(first)
     .then(instantiate);
@@ -23,10 +26,13 @@ function create(data) {
 
 function findByScanId(scanId) {
   return db('scanphotos')
-    .where({
-      scan_id: scanId,
-      deleted_at: null
-    }, '*')
+    .where(
+      {
+        scan_id: scanId,
+        deleted_at: null
+      },
+      '*'
+    )
     .orderBy('created_at', 'asc')
     .catch(rethrow)
     .then(photos => photos.map(instantiate));
@@ -46,9 +52,12 @@ function deleteByScanId(scanId) {
       scan_id: scanId,
       deleted_at: null
     })
-    .update({
-      deleted_at: new Date()
-    }, '*')
+    .update(
+      {
+        deleted_at: new Date()
+      },
+      '*'
+    )
     .catch(rethrow)
     .then(photos => photos.map(instantiate));
 }
@@ -59,10 +68,13 @@ function updateOneById(id, data) {
       id,
       deleted_at: null
     })
-    .update(compact({
-      calibration_data: data.calibrationData,
-      control_points: data.controlPoints
-    }), '*')
+    .update(
+      compact({
+        calibration_data: data.calibrationData,
+        control_points: data.controlPoints
+      }),
+      '*'
+    )
     .then(first)
     .then(instantiate);
 }

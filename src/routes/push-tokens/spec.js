@@ -5,7 +5,7 @@ const PushTokensDAO = require('../../dao/push-tokens');
 const { post } = require('../../test-helpers/http');
 const { test } = require('../../test-helpers/fresh');
 
-test('POST /push-tokens creates a token', (t) => {
+test('POST /push-tokens creates a token', t => {
   let userId;
   return createUser({ withSession: false })
     .then(({ user }) => {
@@ -27,7 +27,7 @@ test('POST /push-tokens creates a token', (t) => {
     });
 });
 
-test('POST /push-tokens/alias updates an alias', (t) => {
+test('POST /push-tokens/alias updates an alias', t => {
   let userId;
   return createUser({ withSession: false })
     .then(({ user }) => {

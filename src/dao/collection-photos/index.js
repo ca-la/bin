@@ -11,11 +11,14 @@ const instantiate = data => new CollectionPhoto(data);
 
 function create(data) {
   return db('collectionphotos')
-    .insert({
-      id: uuid.v4(),
-      collection_id: data.collectionId,
-      photo_url: data.photoUrl
-    }, '*')
+    .insert(
+      {
+        id: uuid.v4(),
+        collection_id: data.collectionId,
+        photo_url: data.photoUrl
+      },
+      '*'
+    )
     .catch(rethrow)
     .then(first)
     .then(instantiate);

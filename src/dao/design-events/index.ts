@@ -12,7 +12,10 @@ import { validate, validateEvery } from '../../services/validate-from-db';
 
 const TABLE_NAME = 'design_events';
 
-export async function create(event: DesignEvent, trx?: Knex.Transaction): Promise<DesignEvent> {
+export async function create(
+  event: DesignEvent,
+  trx?: Knex.Transaction
+): Promise<DesignEvent> {
   const rowData = dataAdapter.forInsertion(event);
 
   const created = await db(TABLE_NAME)
@@ -37,7 +40,9 @@ export async function create(event: DesignEvent, trx?: Knex.Transaction): Promis
   );
 }
 
-export async function createAll(events: MaybeUnsaved<DesignEvent>[]): Promise<DesignEvent[]> {
+export async function createAll(
+  events: MaybeUnsaved<DesignEvent>[]
+): Promise<DesignEvent[]> {
   const rowData = events.map((event: MaybeUnsaved<DesignEvent>) => {
     return dataAdapter.forInsertion({
       id: uuid.v4(),
@@ -49,8 +54,9 @@ export async function createAll(events: MaybeUnsaved<DesignEvent>[]): Promise<De
     .insert(rowData)
     .returning('*');
 
-  const sorted = created.sort((a: DesignEventRow, b: DesignEventRow) =>
-    a.created_at.getTime() - b.created_at.getTime()
+  const sorted = created.sort(
+    (a: DesignEventRow, b: DesignEventRow) =>
+      a.created_at.getTime() - b.created_at.getTime()
   );
 
   return validateEvery<DesignEventRow, DesignEvent>(

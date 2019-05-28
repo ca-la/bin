@@ -30,7 +30,10 @@ import {
   PartnerRejectServiceBidNotification,
   PartnerRejectServiceBidNotificationRow
 } from './models/partner-reject-service-bid';
-import { TaskAssigmentNotification, TaskAssigmentNotificationRow } from './models/task-assignment';
+import {
+  TaskAssigmentNotification,
+  TaskAssigmentNotificationRow
+} from './models/task-assignment';
 import {
   TaskCommentCreateNotification,
   TaskCommentCreateNotificationRow
@@ -97,11 +100,11 @@ export type NotificationRow =
   | TaskCommentMentionNotificationRow
   | TaskCompletionNotificationRow;
 
-type EqualKeys<T> = {
-  [P in keyof T]: any;
-};
+type EqualKeys<T> = { [P in keyof T]: any };
 
-export function encode(row: EqualKeys<NotificationRow>): EqualKeys<Notification> {
+export function encode(
+  row: EqualKeys<NotificationRow>
+): EqualKeys<Notification> {
   return {
     actionDescription: row.action_description,
     actorUserId: row.actor_user_id,
@@ -124,7 +127,9 @@ export function encode(row: EqualKeys<NotificationRow>): EqualKeys<Notification>
   };
 }
 
-export function decode(data: EqualKeys<Notification>): EqualKeys<NotificationRow> {
+export function decode(
+  data: EqualKeys<Notification>
+): EqualKeys<NotificationRow> {
   return {
     action_description: data.actionDescription,
     actor_user_id: data.actorUserId,
@@ -148,8 +153,7 @@ export function decode(data: EqualKeys<Notification>): EqualKeys<NotificationRow
 }
 export const dataAdapter = new DataAdapter<NotificationRow, Notification>();
 
-export function isNotificationRow(row: object):
-  row is NotificationRow {
+export function isNotificationRow(row: object): row is NotificationRow {
   return hasProperties(
     row,
     'action_description',

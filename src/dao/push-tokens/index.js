@@ -11,12 +11,15 @@ const instantiate = data => new PushToken(data);
 
 function create(data) {
   return db('pushtokens')
-    .insert({
-      id: uuid.v4(),
-      user_id: data.userId,
-      anonymous_id: data.anonymousId,
-      apns_device_token: data.apnsDeviceToken
-    }, '*')
+    .insert(
+      {
+        id: uuid.v4(),
+        user_id: data.userId,
+        anonymous_id: data.anonymousId,
+        apns_device_token: data.apnsDeviceToken
+      },
+      '*'
+    )
     .catch(rethrow)
     .then(first)
     .then(instantiate);
@@ -27,9 +30,12 @@ function addAlias(anonymousId, userId) {
     .where({
       anonymous_id: anonymousId
     })
-    .update({
-      user_id: userId
-    }, '*')
+    .update(
+      {
+        user_id: userId
+      },
+      '*'
+    )
     .catch(rethrow)
     .then(tokens => tokens.map(instantiate));
 }

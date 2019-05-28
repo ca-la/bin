@@ -32,7 +32,9 @@ export async function create(data: Collection): Promise<Collection> {
     .then((rows: CollectionRow[]) => first<CollectionRow>(rows))
     .catch(rethrow);
 
-  if (!created) { throw new Error('Failed to create a collection'); }
+  if (!created) {
+    throw new Error('Failed to create a collection');
+  }
 
   return validate<CollectionRow, Collection>(
     TABLE_NAME,
@@ -48,7 +50,9 @@ export async function deleteById(id: string): Promise<Collection> {
     .update({ deleted_at: new Date() }, '*')
     .then((rows: CollectionRow[]) => first<CollectionRow>(rows));
 
-  if (!deleted) { throw new Error(`Failed to delete collection ${id}`); }
+  if (!deleted) {
+    throw new Error(`Failed to delete collection ${id}`);
+  }
 
   return validate<CollectionRow, Collection>(
     TABLE_NAME,
@@ -58,15 +62,23 @@ export async function deleteById(id: string): Promise<Collection> {
   );
 }
 
-export async function update(id: string, data: Partial<Collection>): Promise<Collection> {
-  const rowData = pick(partialDataAdapter.forInsertion(data), UPDATABLE_PROPERTIES);
+export async function update(
+  id: string,
+  data: Partial<Collection>
+): Promise<Collection> {
+  const rowData = pick(
+    partialDataAdapter.forInsertion(data),
+    UPDATABLE_PROPERTIES
+  );
   const updated = await db(TABLE_NAME)
     .where({ deleted_at: null, id })
     .update(rowData, '*')
     .then((rows: CollectionRow[]) => first<CollectionRow>(rows))
     .catch(rethrow);
 
-  if (!updated) { throw new Error(`Failed to update collection ${id}`); }
+  if (!updated) {
+    throw new Error(`Failed to update collection ${id}`);
+  }
 
   return validate<CollectionRow, Collection>(
     TABLE_NAME,
@@ -90,7 +102,9 @@ export async function findByUserId(userId: string): Promise<Collection[]> {
   );
 }
 
-export async function findByCollaboratorAndUserId(userId: string): Promise<Collection[]> {
+export async function findByCollaboratorAndUserId(
+  userId: string
+): Promise<Collection[]> {
   const collections: CollectionRow[] = await db(TABLE_NAME)
     .select('collections.*')
     .distinct('collections.id')
@@ -100,7 +114,9 @@ export async function findByCollaboratorAndUserId(userId: string): Promise<Colle
       'collaborators.user_id': userId,
       'collections.deleted_at': null
     })
-    .andWhereRaw('(collaborators.cancelled_at IS NULL OR collaborators.cancelled_at > now())')
+    .andWhereRaw(
+      '(collaborators.cancelled_at IS NULL OR collaborators.cancelled_at > now())'
+    )
     .orWhere({
       'collections.created_by': userId,
       'collections.deleted_at': null
@@ -116,7 +132,10 @@ export async function findByCollaboratorAndUserId(userId: string): Promise<Colle
   );
 }
 
-export async function findById(id: string, trx?: Knex.Transaction): Promise<Collection | null> {
+export async function findById(
+  id: string,
+  trx?: Knex.Transaction
+): Promise<Collection | null> {
   const collection = await db(TABLE_NAME)
     .where({ id, deleted_at: null })
     .modify((query: Knex.QueryBuilder) => {
@@ -127,7 +146,9 @@ export async function findById(id: string, trx?: Knex.Transaction): Promise<Coll
     .then((rows: CollectionRow[]) => first<CollectionRow>(rows))
     .catch(rethrow);
 
-  if (!collection) { return null; }
+  if (!collection) {
+    return null;
+  }
 
   return validate<CollectionRow, Collection>(
     TABLE_NAME,
@@ -141,7 +162,9 @@ export async function findByDesign(
   designId: string,
   trx?: Knex.Transaction
 ): Promise<Collection[]> {
-  const collectionDesigns: CollectionDesignRow[] = await db('collection_designs')
+  const collectionDesigns: CollectionDesignRow[] = await db(
+    'collection_designs'
+  )
     .where({ design_id: designId })
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
@@ -149,13 +172,16 @@ export async function findByDesign(
       }
     });
   const maybeCollections = await Promise.all(
-    collectionDesigns.map((collectionDesign: CollectionDesignRow): Promise<Collection | null> =>
-      findById(collectionDesign.collection_id, trx)
+    collectionDesigns.map(
+      (collectionDesign: CollectionDesignRow): Promise<Collection | null> =>
+        findById(collectionDesign.collection_id, trx)
     )
   );
-  const collections = maybeCollections.filter((maybeCollection: Collection | null): boolean => {
-    return maybeCollection !== null;
-  }) as Collection[];
+  const collections = maybeCollections.filter(
+    (maybeCollection: Collection | null): boolean => {
+      return maybeCollection !== null;
+    }
+  ) as Collection[];
 
   return collections;
 }
@@ -165,11 +191,14 @@ export async function findWithUncostedDesigns(): Promise<Collection[]> {
     .select('collections.*')
     .distinct('collections.id')
     .from(TABLE_NAME)
-    .joinRaw(`
+    .joinRaw(
+      `
 JOIN collection_designs as cd
   ON cd.collection_id = collections.id
-    `)
-    .joinRaw(`
+    `
+    )
+    .joinRaw(
+      `
 JOIN (
   SELECT *
   FROM design_events AS de1
@@ -181,7 +210,8 @@ JOIN (
       AND de2.created_at > de1.created_at)
 ) AS de
   ON de.design_id = cd.design_id
-    `)
+    `
+    )
     .where({ 'collections.deleted_at': null })
     .orderBy('collections.id');
 
@@ -193,7 +223,10 @@ JOIN (
   );
 }
 
-export async function addDesign(collectionId: string, designId: string): Promise<ProductDesign[]> {
+export async function addDesign(
+  collectionId: string,
+  designId: string
+): Promise<ProductDesign[]> {
   await db('collection_designs')
     .insert({ collection_id: collectionId, design_id: designId }, '*')
     .catch(rethrow);
@@ -223,7 +256,9 @@ export async function removeDesign(
   return ProductDesignsDAO.findByCollectionId(collectionId);
 }
 
-export async function getStatusById(collectionId: string): Promise<CollectionSubmissionStatus> {
+export async function getStatusById(
+  collectionId: string
+): Promise<CollectionSubmissionStatus> {
   const submissionStatus = await db
     .raw(
       `
@@ -280,7 +315,9 @@ SELECT
       first<CollectionSubmissionStatusRow>(rows)
     );
 
-  if (!submissionStatus) { throw new Error(`Cannot find status of collection ${collectionId}`); }
+  if (!submissionStatus) {
+    throw new Error(`Cannot find status of collection ${collectionId}`);
+  }
 
   return collectionSubmissionStatusAdapter.parse(submissionStatus);
 }

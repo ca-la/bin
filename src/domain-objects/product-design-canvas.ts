@@ -47,11 +47,18 @@ export interface ProductDesignCanvasRow {
   ordering?: number;
 }
 
-export const dataAdapter = new DataAdapter<ProductDesignCanvasRow, ProductDesignCanvas>();
-export const partialDataAdapter = new
-  DataAdapter<Partial<ProductDesignCanvasRow>, Partial<ProductDesignCanvas>>();
+export const dataAdapter = new DataAdapter<
+  ProductDesignCanvasRow,
+  ProductDesignCanvas
+>();
+export const partialDataAdapter = new DataAdapter<
+  Partial<ProductDesignCanvasRow>,
+  Partial<ProductDesignCanvas>
+>();
 
-export function isUnsavedProductDesignCanvas(obj: object): obj is Unsaved<ProductDesignCanvas> {
+export function isUnsavedProductDesignCanvas(
+  obj: object
+): obj is Unsaved<ProductDesignCanvas> {
   return hasProperties(
     obj,
     'createdBy',
@@ -83,7 +90,9 @@ export function isProductDesignCanvas(obj: object): obj is ProductDesignCanvas {
   );
 }
 
-export function isProductDesignCanvasRow(row: object): row is ProductDesignCanvasRow {
+export function isProductDesignCanvasRow(
+  row: object
+): row is ProductDesignCanvasRow {
   return hasProperties(
     row,
     'id',

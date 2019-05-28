@@ -87,10 +87,10 @@ test('CollaboratorsDAO.create throws invalid data error', async (t: Test) => {
     userEmail: null,
     userId: user.id
   })
-  .then(() => t.fail('Expected error'))
-  .catch((err: Error) => {
-    t.equal(err.message, `Invalid design ID: ${invalidId}`);
-  });
+    .then(() => t.fail('Expected error'))
+    .catch((err: Error) => {
+      t.equal(err.message, `Invalid design ID: ${invalidId}`);
+    });
   await generateCollaborator({
     collectionId: invalidId,
     designId: null,
@@ -99,10 +99,10 @@ test('CollaboratorsDAO.create throws invalid data error', async (t: Test) => {
     userEmail: null,
     userId: user.id
   })
-  .then(() => t.fail('Expected error'))
-  .catch((err: Error) => {
-    t.equal(err.message, `Invalid collection ID: ${invalidId}`);
-  });
+    .then(() => t.fail('Expected error'))
+    .catch((err: Error) => {
+      t.equal(err.message, `Invalid collection ID: ${invalidId}`);
+    });
   await generateCollaborator({
     collectionId: null,
     designId: design.id,
@@ -111,10 +111,10 @@ test('CollaboratorsDAO.create throws invalid data error', async (t: Test) => {
     userEmail: null,
     userId: invalidId
   })
-  .then(() => t.fail('Expected error'))
-  .catch((err: Error) => {
-    t.equal(err.message, `Invalid user ID: ${invalidId}`);
-  });
+    .then(() => t.fail('Expected error'))
+    .catch((err: Error) => {
+      t.equal(err.message, `Invalid user ID: ${invalidId}`);
+    });
 });
 
 test('CollaboratorsDAO.findByDesign returns collection collaborators', async (t: Test) => {
@@ -197,10 +197,16 @@ test('CollaboratorsDAO.findByDesigns', async (t: Test) => {
   };
 
   const results = await CollaboratorsDAO.findByDesigns([design.id]);
-  t.deepEqual(results, [{
-    collaborators: [expectedInitialCollaborator],
-    designId: design.id
-  }], 'Returns the only collaborator for the design');
+  t.deepEqual(
+    results,
+    [
+      {
+        collaborators: [expectedInitialCollaborator],
+        designId: design.id
+      }
+    ],
+    'Returns the only collaborator for the design'
+  );
 
   const { collaborator } = await generateCollaborator({
     designId: design.id,
@@ -212,10 +218,19 @@ test('CollaboratorsDAO.findByDesigns', async (t: Test) => {
   };
 
   const resultsTwo = await CollaboratorsDAO.findByDesigns([design.id]);
-  t.deepEqual(resultsTwo, [{
-    collaborators: [expectedSecondCollaborator, expectedInitialCollaborator],
-    designId: design.id
-  }], 'Returns both collaborators for the design');
+  t.deepEqual(
+    resultsTwo,
+    [
+      {
+        collaborators: [
+          expectedSecondCollaborator,
+          expectedInitialCollaborator
+        ],
+        designId: design.id
+      }
+    ],
+    'Returns both collaborators for the design'
+  );
 
   // create a collection.
   const { collection, createdBy } = await generateCollection();
@@ -240,7 +255,10 @@ test('CollaboratorsDAO.findByDesigns', async (t: Test) => {
   });
   await CollectionsDAO.addDesign(collection.id, designThree.id);
   // add in a random collaborator on the third design.
-  await generateCollaborator({ designId: designThree.id, userId: userThree.id });
+  await generateCollaborator({
+    designId: designThree.id,
+    userId: userThree.id
+  });
 
   // make the creator of the collection a collaborator.
   const { collaborator: collectionCollaborator } = await generateCollaborator({
@@ -257,18 +275,31 @@ test('CollaboratorsDAO.findByDesigns', async (t: Test) => {
     user: { id: createdBy.id, name: createdBy.name, email: createdBy.email }
   };
 
-  const resultsThree = await CollaboratorsDAO.findByDesigns([designTwo.id, design.id]);
-  t.deepEqual(resultsThree, [{
-    collaborators: [expectedDTwoCollaboratorTwo, expectedDTwoCollaboratorOne],
-    designId: designTwo.id
-  }, {
-    collaborators: [
-      expectedDTwoCollaboratorTwo,
-      expectedSecondCollaborator,
-      expectedInitialCollaborator
+  const resultsThree = await CollaboratorsDAO.findByDesigns([
+    designTwo.id,
+    design.id
+  ]);
+  t.deepEqual(
+    resultsThree,
+    [
+      {
+        collaborators: [
+          expectedDTwoCollaboratorTwo,
+          expectedDTwoCollaboratorOne
+        ],
+        designId: designTwo.id
+      },
+      {
+        collaborators: [
+          expectedDTwoCollaboratorTwo,
+          expectedSecondCollaborator,
+          expectedInitialCollaborator
+        ],
+        designId: design.id
+      }
     ],
-    designId: design.id
-  }], 'Returns collection and design collaborators for the designs');
+    'Returns collection and design collaborators for the designs'
+  );
 });
 
 test('CollaboratorsDAO.findByCollectionAndUser returns collaborators', async (t: Test) => {
@@ -319,10 +350,7 @@ test('CollaboratorsDAO.deleteByDesignIdAndUserId deletes collaborator', async (t
     userId: user.id
   });
 
-  await CollaboratorsDAO.deleteByDesignAndUser(
-    design.id,
-    user.id
-  );
+  await CollaboratorsDAO.deleteByDesignAndUser(design.id, user.id);
 
   const collaborator = await CollaboratorsDAO.findByDesignAndUser(
     design.id,
@@ -388,7 +416,10 @@ test('findAllForUserThroughDesign can find all collaborators', async (t: Test) =
 
 test('cancelForDesignAndPartner cancels the preview role', async (t: Test) => {
   const { user: designer } = await createUser({ withSession: false });
-  const { user: partner } = await createUser({ withSession: false, role: 'PARTNER' });
+  const { user: partner } = await createUser({
+    withSession: false,
+    role: 'PARTNER'
+  });
   const design = await ProductDesignsDAO.create({
     productType: 'TEESHIRT',
     title: 'Helmut Lang Shirt',
@@ -410,7 +441,11 @@ test('cancelForDesignAndPartner cancels the preview role', async (t: Test) => {
     partner.id
   );
 
-  t.equal(updatedCollaborators.length, 1, 'Only returns one cancelled collaborator');
+  t.equal(
+    updatedCollaborators.length,
+    1,
+    'Only returns one cancelled collaborator'
+  );
   const cancelledCollaborator = updatedCollaborators[0];
 
   if (cancelledCollaborator && cancelledCollaborator.cancelledAt) {
@@ -428,7 +463,10 @@ test('cancelForDesignAndPartner cancels the preview role', async (t: Test) => {
 
 test('cancelForDesignAndPartner cancels the partner role', async (t: Test) => {
   const { user: designer } = await createUser({ withSession: false });
-  const { user: partner } = await createUser({ withSession: false, role: 'PARTNER' });
+  const { user: partner } = await createUser({
+    withSession: false,
+    role: 'PARTNER'
+  });
   const design = await ProductDesignsDAO.create({
     productType: 'TEESHIRT',
     title: 'Helmut Lang Shirt',
@@ -450,7 +488,11 @@ test('cancelForDesignAndPartner cancels the partner role', async (t: Test) => {
     partner.id
   );
 
-  t.equal(updatedCollaborators.length, 1, 'Only returns one cancelled collaborator');
+  t.equal(
+    updatedCollaborators.length,
+    1,
+    'Only returns one cancelled collaborator'
+  );
   const cancelledCollaborator = updatedCollaborators[0];
 
   if (cancelledCollaborator && cancelledCollaborator.cancelledAt) {

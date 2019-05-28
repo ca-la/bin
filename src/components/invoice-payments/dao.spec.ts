@@ -23,9 +23,19 @@ test('InvoicePayments DAO supports creation and retrieval', async (t: tape.Test)
   const invoicePayments = await InvoicePaymentsDAO.findByInvoiceId(invoice.id);
   const invoicePayment = invoicePayments[0];
 
-  if (!invoicePayment) { return t.fail('No invoice payment was created'); }
+  if (!invoicePayment) {
+    return t.fail('No invoice payment was created');
+  }
 
   t.deepEqual(invoicePayment.invoiceId, invoice.id, 'Invoice id is correct.');
-  t.deepEqual(invoicePayment.resolvePaymentId, 'test', 'Payment resolve id is correct.');
-  t.deepEqual(invoicePayment.totalCents, 111000, 'Payment is for correct amount.');
+  t.deepEqual(
+    invoicePayment.resolvePaymentId,
+    'test',
+    'Payment resolve id is correct.'
+  );
+  t.deepEqual(
+    invoicePayment.totalCents,
+    111000,
+    'Payment is for correct amount.'
+  );
 });

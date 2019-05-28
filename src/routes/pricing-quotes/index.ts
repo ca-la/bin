@@ -40,17 +40,16 @@ const router = new Router();
 type BidRequest = Unsaved<Bid> | Bid;
 
 function isBidRequest(candidate: object): candidate is BidRequest {
-  return hasProperties(
-    candidate,
-    'quoteId',
-    'bidPriceCents',
-    'description'
-  );
+  return hasProperties(candidate, 'quoteId', 'bidPriceCents', 'description');
 }
 
 function calculateAmounts(
   quote: UnsavedQuote
-): { payNowTotalCents: number; payLaterTotalCents: number, timeTotalMs: number } {
+): {
+  payNowTotalCents: number;
+  payLaterTotalCents: number;
+  timeTotalMs: number;
+} {
   const payNowTotalCents = quote.units * quote.unitCostCents;
   const payLaterTotalCents = addMargin(payNowTotalCents, FINANCING_MARGIN);
   const timeTotalMsWithoutBuffer = sum([
@@ -67,7 +66,9 @@ function calculateAmounts(
   return { payNowTotalCents, payLaterTotalCents, timeTotalMs };
 }
 
-function* createQuote(this: Koa.Application.Context): AsyncIterableIterator<PricingQuote> {
+function* createQuote(
+  this: Koa.Application.Context
+): AsyncIterableIterator<PricingQuote> {
   const { body } = this.request;
 
   if (!body || !isCreateRequest(body)) {
@@ -81,7 +82,9 @@ function* createQuote(this: Koa.Application.Context): AsyncIterableIterator<Pric
     const { designId, units } = payload;
 
     const unitsNumber = Number(units);
-    const costInputs: PricingCostInput[] = yield PricingCostInputsDAO.findByDesignId(designId);
+    const costInputs: PricingCostInput[] = yield PricingCostInputsDAO.findByDesignId(
+      designId
+    );
 
     if (costInputs.length === 0) {
       this.throw(404, 'No costing inputs associated with design ID');
@@ -93,9 +96,11 @@ function* createQuote(this: Koa.Application.Context): AsyncIterableIterator<Pric
       units: unitsNumber
     };
 
-    const quote = yield generatePricingQuote(quoteRequest)
-      .catch(filterError(InvalidDataError, (err: InvalidDataError) =>
-        this.throw(400, err)));
+    const quote = yield generatePricingQuote(quoteRequest).catch(
+      filterError(InvalidDataError, (err: InvalidDataError) =>
+        this.throw(400, err)
+      )
+    );
 
     quotes.push(quote);
 
@@ -113,9 +118,12 @@ function* createQuote(this: Koa.Application.Context): AsyncIterableIterator<Pric
 
   const collections = yield CollectionsDAO.findByDesign(body[0].designId);
   const user = yield UsersDAO.findById(this.state.userId);
-  const payLaterTotalCents = quotes.reduce((acc: number, quote: PricingQuote): number => {
-    return acc + calculateAmounts(quote).payLaterTotalCents;
-  }, 0);
+  const payLaterTotalCents = quotes.reduce(
+    (acc: number, quote: PricingQuote): number => {
+      return acc + calculateAmounts(quote).payLaterTotalCents;
+    },
+    0
+  );
   SlackService.enqueueSend({
     channel: 'designers',
     params: {
@@ -130,7 +138,9 @@ function* createQuote(this: Koa.Application.Context): AsyncIterableIterator<Pric
   this.status = 201;
 }
 
-function* getQuote(this: Koa.Application.Context): AsyncIterableIterator<PricingQuote> {
+function* getQuote(
+  this: Koa.Application.Context
+): AsyncIterableIterator<PricingQuote> {
   const { quoteId } = this.params;
 
   const quote = yield findById(quoteId);
@@ -147,7 +157,9 @@ function* getQuotes(this: Koa.Application.Context): AsyncIterableIterator<any> {
   if (!designId) {
     this.throw(400, 'You must pass a design ID');
   } else if (unitsNumber) {
-    const costInputs: PricingCostInput[] = yield PricingCostInputsDAO.findByDesignId(designId);
+    const costInputs: PricingCostInput[] = yield PricingCostInputsDAO.findByDesignId(
+      designId
+    );
 
     if (costInputs.length === 0) {
       this.throw(404, 'No costing inputs associated with design ID');
@@ -159,11 +171,17 @@ function* getQuotes(this: Koa.Application.Context): AsyncIterableIterator<any> {
       units: unitsNumber
     };
 
-    const unsavedQuote = yield generateUnsavedQuote(quoteRequest)
-      .catch(filterError(InvalidDataError, (err: InvalidDataError) =>
-        this.throw(400, err)));
+    const unsavedQuote = yield generateUnsavedQuote(quoteRequest).catch(
+      filterError(InvalidDataError, (err: InvalidDataError) =>
+        this.throw(400, err)
+      )
+    );
 
-    const { payLaterTotalCents, payNowTotalCents, timeTotalMs } = calculateAmounts(unsavedQuote);
+    const {
+      payLaterTotalCents,
+      payNowTotalCents,
+      timeTotalMs
+    } = calculateAmounts(unsavedQuote);
 
     this.body = {
       designId,
@@ -191,24 +209,28 @@ interface PreviewQuoteBody {
 }
 
 function isPreviewQuoteBody(candidate: object): candidate is PreviewQuoteBody {
-  return hasProperties(
-    candidate,
-    'units',
-    'uncommittedCostInput'
-  );
+  return hasProperties(candidate, 'units', 'uncommittedCostInput');
 }
 
-function* previewQuote(this: Koa.Application.Context): AsyncIterableIterator<any> {
+function* previewQuote(
+  this: Koa.Application.Context
+): AsyncIterableIterator<any> {
   const { body } = this.request;
 
   if (!isPreviewQuoteBody(body)) {
-    this.throw(400, 'units and uncommittedCostInput is required in the request body!');
+    this.throw(
+      400,
+      'units and uncommittedCostInput is required in the request body!'
+    );
     return;
   }
 
   const units = Number(body.units);
   if (!isUnsavedPricingCostInput(body.uncommittedCostInput) || !units) {
-    this.throw(400, 'A cost input object and units are required to generate a preview quote!');
+    this.throw(
+      400,
+      'A cost input object and units are required to generate a preview quote!'
+    );
     return;
   }
 
@@ -217,11 +239,17 @@ function* previewQuote(this: Koa.Application.Context): AsyncIterableIterator<any
     units
   };
 
-  const unsavedQuote = yield generateUnsavedQuote(quoteRequest)
-    .catch(filterError(InvalidDataError, (err: InvalidDataError) =>
-      this.throw(400, err)));
+  const unsavedQuote = yield generateUnsavedQuote(quoteRequest).catch(
+    filterError(InvalidDataError, (err: InvalidDataError) =>
+      this.throw(400, err)
+    )
+  );
 
-  const { payLaterTotalCents, payNowTotalCents, timeTotalMs } = calculateAmounts(unsavedQuote);
+  const {
+    payLaterTotalCents,
+    payNowTotalCents,
+    timeTotalMs
+  } = calculateAmounts(unsavedQuote);
 
   this.body = {
     payLaterTotalCents,
@@ -233,7 +261,9 @@ function* previewQuote(this: Koa.Application.Context): AsyncIterableIterator<any
   this.status = 200;
 }
 
-function* createBidForQuote(this: Koa.Application.Context): AsyncIterableIterator<any> {
+function* createBidForQuote(
+  this: Koa.Application.Context
+): AsyncIterableIterator<any> {
   const { quoteId } = this.params;
   const { body } = this.request;
   const quote = yield findById(quoteId);
@@ -255,7 +285,9 @@ function* createBidForQuote(this: Koa.Application.Context): AsyncIterableIterato
   }
 }
 
-function* getBidsForQuote(this: Koa.Application.Context): AsyncIterableIterator<any> {
+function* getBidsForQuote(
+  this: Koa.Application.Context
+): AsyncIterableIterator<any> {
   const { quoteId } = this.params;
   const quote = yield findById(quoteId);
   this.assert(quote, 404);

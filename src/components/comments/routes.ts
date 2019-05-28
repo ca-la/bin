@@ -24,7 +24,9 @@ function* getList(this: Koa.Application.Context): AsyncIterableIterator<void> {
     ? query.annotationIds
     : [query.annotationIds];
 
-  const commentsByAnnotation = yield AnnotationCommentsDAO.findByAnnotationIds(idList);
+  const commentsByAnnotation = yield AnnotationCommentsDAO.findByAnnotationIds(
+    idList
+  );
 
   this.body = commentsByAnnotation;
   this.status = 200;
@@ -35,7 +37,9 @@ interface DeleteCommentQuery {
   taskId?: string;
 }
 
-function* deleteComment(this: Koa.Application.Context): AsyncIterableIterator<void> {
+function* deleteComment(
+  this: Koa.Application.Context
+): AsyncIterableIterator<void> {
   const { userId } = this.state;
   const { annotationId, taskId }: DeleteCommentQuery = this.query;
   const { commentId } = this.params;
@@ -46,7 +50,11 @@ function* deleteComment(this: Koa.Application.Context): AsyncIterableIterator<vo
   yield CommentDAO.deleteById(commentId);
 
   if (annotationId) {
-    yield announceAnnotationCommentDeletion({ actorId: userId, annotationId, commentId });
+    yield announceAnnotationCommentDeletion({
+      actorId: userId,
+      annotationId,
+      commentId
+    });
   } else if (taskId) {
     yield announceTaskCommentDeletion({ actorId: userId, commentId, taskId });
   }

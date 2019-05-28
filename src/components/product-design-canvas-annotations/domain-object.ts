@@ -21,11 +21,7 @@ export interface ProductDesignCanvasAnnotationRow {
   y: number;
 }
 
-export const UPDATABLE_PROPERTIES = [
-  'canvas_id',
-  'x',
-  'y'
-];
+export const UPDATABLE_PROPERTIES = ['canvas_id', 'x', 'y'];
 
 export function parseNumerics(
   annotation: ProductDesignCanvasAnnotation
@@ -48,8 +44,9 @@ export const dataAdapter = new DataAdapter<
   ProductDesignCanvasAnnotation
 >();
 
-export function isProductDesignCanvasAnnotationRow(row: object):
-  row is ProductDesignCanvasAnnotationRow {
+export function isProductDesignCanvasAnnotationRow(
+  row: object
+): row is ProductDesignCanvasAnnotationRow {
   return hasProperties(
     row,
     'canvas_id',

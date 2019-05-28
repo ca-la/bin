@@ -8,7 +8,8 @@ const first = require('../../services/first').default;
 const PartnerPayoutAccount = require('../../domain-objects/partner-payout-account');
 
 const instantiate = row => new PartnerPayoutAccount(row);
-const maybeInstantiate = data => (data && new PartnerPayoutAccount(data)) || null;
+const maybeInstantiate = data =>
+  (data && new PartnerPayoutAccount(data)) || null;
 
 const { dataMapper } = PartnerPayoutAccount;
 

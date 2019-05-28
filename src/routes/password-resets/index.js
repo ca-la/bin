@@ -33,7 +33,11 @@ function* sendReset() {
     name: user.name
   });
 
-  yield sendSynchronouslyDeprecated(user.email, 'CALA Password Reset', emailTemplate);
+  yield sendSynchronouslyDeprecated(
+    user.email,
+    'CALA Password Reset',
+    emailTemplate
+  );
 
   this.status = 201;
   this.body = { success: true };

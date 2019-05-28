@@ -45,10 +45,7 @@ test('#validate, with invalid data', (t: Test) => {
     id: 42
   } as any) as ProductRow;
 
-  t.throws(
-    () => validate(table, isProductRow, productAdapter, invalid),
-    Error
-  );
+  t.throws(() => validate(table, isProductRow, productAdapter, invalid), Error);
 });
 
 test('#validate, with null', (t: Test) => {

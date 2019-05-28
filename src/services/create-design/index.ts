@@ -10,20 +10,26 @@ async function createDesign(
 ): Promise<ProductDesign> {
   const design = await ProductDesignsDAO.create(data, trx);
 
-  await CollaboratorsDAO.create({
-    cancelledAt: null,
-    collectionId: null,
-    designId: design.id,
-    invitationMessage: '',
-    role: 'EDIT',
-    userEmail: null,
-    userId: design.userId
-  }, trx);
+  await CollaboratorsDAO.create(
+    {
+      cancelledAt: null,
+      collectionId: null,
+      designId: design.id,
+      invitationMessage: '',
+      role: 'EDIT',
+      userEmail: null,
+      userId: design.userId
+    },
+    trx
+  );
 
-  await createDesignTasks({
-    designId: design.id,
-    designPhase: 'POST_CREATION'
-  }, trx);
+  await createDesignTasks(
+    {
+      designId: design.id,
+      designPhase: 'POST_CREATION'
+    },
+    trx
+  );
 
   return design;
 }

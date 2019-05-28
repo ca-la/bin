@@ -16,7 +16,9 @@ const headers = require('./middleware/headers');
 const jsonBody = require('./middleware/json-body');
 const loggerMiddleware = require('./middleware/logger');
 const options = require('./middleware/options');
-const { default: validatePagination } = require('./middleware/validate-pagination');
+const {
+  default: validatePagination
+} = require('./middleware/validate-pagination');
 
 const app = koa();
 

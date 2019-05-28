@@ -5,10 +5,17 @@ test('toDate', (t: Test) => {
   const validDate = new Date();
   const validDateString = validDate.toISOString();
   t.deepEqual(toDateOrNull(validDate), validDate, 'Date returns Date');
-  t.deepEqual(toDateOrNull(validDateString), validDate, 'Date string returns Date');
+  t.deepEqual(
+    toDateOrNull(validDateString),
+    validDate,
+    'Date string returns Date'
+  );
   t.deepEqual(toDateOrNull(null), null, 'null returns null');
   t.deepEqual(toDateOrNull(undefined), null, 'undefined returns null');
-  t.throws(() => toDateOrNull('invalid date string'), 'returns invalid date object');
+  t.throws(
+    () => toDateOrNull('invalid date string'),
+    'returns invalid date object'
+  );
 });
 
 test('toDateString', (t: Test) => {

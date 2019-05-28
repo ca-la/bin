@@ -13,6 +13,11 @@ function* deleteFeature() {
   this.status = 204;
 }
 
-router.del('/:featureId', requireAuth, canAccessFeaturePlacement, deleteFeature);
+router.del(
+  '/:featureId',
+  requireAuth,
+  canAccessFeaturePlacement,
+  deleteFeature
+);
 
 module.exports = router.routes();

@@ -9,8 +9,9 @@ function* canAccessSection(next) {
     throw new Error('Must confirm canAccessDesign first');
   }
 
-  const section = yield ProductDesignSectionsDAO.findById(this.params.sectionId)
-    .catch(filterError(InvalidDataError, err => this.throw(404, err)));
+  const section = yield ProductDesignSectionsDAO.findById(
+    this.params.sectionId
+  ).catch(filterError(InvalidDataError, err => this.throw(404, err)));
   this.assert(section, 404);
   this.assert(section.designId === this.state.design.id, 404);
 

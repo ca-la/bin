@@ -9,14 +9,17 @@ const first = require('../../services/first').default;
 const ProductDesignComment = require('../../domain-objects/product-design-comment');
 
 const instantiate = row => new ProductDesignComment(row);
-const maybeInstantiate = data => (data && new ProductDesignComment(data)) || null;
+const maybeInstantiate = data =>
+  (data && new ProductDesignComment(data)) || null;
 
 const { dataMapper } = ProductDesignComment;
 
 const TABLE_NAME = 'product_design_comments';
 
 async function findByDesign(designId) {
-  const result = await db.raw(`
+  const result = await db
+    .raw(
+      `
 select c.*
   from product_design_comments as c
     left join product_design_sections as s
@@ -25,7 +28,9 @@ select c.*
   and c.deleted_at is null
   and s.deleted_at is null
   order by c.created_at asc;
-    `, [designId])
+    `,
+      [designId]
+    )
     .catch(rethrow);
 
   const { rows } = result;
@@ -68,9 +73,12 @@ async function findById(id) {
 async function deleteById(id) {
   return db(TABLE_NAME)
     .where({ id, deleted_at: null })
-    .update({
-      deleted_at: (new Date()).toISOString()
-    }, '*')
+    .update(
+      {
+        deleted_at: new Date().toISOString()
+      },
+      '*'
+    )
     .then(first)
     .then(maybeInstantiate)
     .catch(rethrow);

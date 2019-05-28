@@ -56,7 +56,8 @@ import PricingProcessTimeline, {
   PricingProcessTimelineRow
 } from '../../components/pricing-process-timeline/domain-object';
 
-type TableName = 'pricing_care_labels'
+type TableName =
+  | 'pricing_care_labels'
   | 'pricing_constants'
   | 'pricing_product_materials'
   | 'pricing_product_types'
@@ -65,8 +66,10 @@ type TableName = 'pricing_care_labels'
   | 'pricing_inputs';
 
 type NormalizedPricingQuote = Omit<PricingQuote, 'processes'>;
-const normalizedPricingQuoteAdapter =
-  new DataAdapter<PricingQuoteRow, NormalizedPricingQuote>();
+const normalizedPricingQuoteAdapter = new DataAdapter<
+  PricingQuoteRow,
+  NormalizedPricingQuote
+>();
 
 export async function create(
   quote: Uninserted<PricingQuoteRow>,
@@ -114,11 +117,25 @@ export async function findLatestValuesForRequest(
   const { units } = request;
   const latestConstant = await findLatestConstants();
   const careLabel = await findLatestCareLabel(units);
-  const material = await findLatestProductMaterial(request.materialCategory, units);
-  const type = await findLatestProductType(request.productType, request.productComplexity, units);
-  const sample = await findLatestProductType(request.productType, request.productComplexity, 1);
+  const material = await findLatestProductMaterial(
+    request.materialCategory,
+    units
+  );
+  const type = await findLatestProductType(
+    request.productType,
+    request.productComplexity,
+    units
+  );
+  const sample = await findLatestProductType(
+    request.productType,
+    request.productComplexity,
+    1
+  );
   const processes = await findLatestProcesses(request.processes, units);
-  const processTimeline = await findLatestProcessTimeline(request.processes, units);
+  const processTimeline = await findLatestProcessTimeline(
+    request.processes,
+    units
+  );
   const margin = await findLatestMargin(request.units);
 
   const { id: constantId, ...pricingValues } = latestConstant;
@@ -143,19 +160,23 @@ export async function createPricingProcesses(
   const TABLE_NAME = 'pricing_quote_processes';
   return Promise.all(
     processRows.map(
-      async (processRow: Uninserted<PricingProcessQuoteRow>): Promise<PricingProcess> =>
+      async (
+        processRow: Uninserted<PricingProcessQuoteRow>
+      ): Promise<PricingProcess> =>
         db(TABLE_NAME)
-        .insert(processRow)
-        .modify((query: Knex.QueryBuilder) => {
-          if (trx) {
-            query.transacting(trx);
-          }
-        })
+          .insert(processRow)
+          .modify((query: Knex.QueryBuilder) => {
+            if (trx) {
+              query.transacting(trx);
+            }
+          })
     )
   );
 }
 
-async function attachProcesses(quoteRow: PricingQuoteRow): Promise<PricingQuote> {
+async function attachProcesses(
+  quoteRow: PricingQuoteRow
+): Promise<PricingQuote> {
   const processes: object[] = await db('pricing_quote_processes')
     .select('pricing_processes.*')
     .leftJoin(
@@ -188,10 +209,11 @@ export async function findById(id: string): Promise<PricingQuote | null> {
   return attachProcesses(quote);
 }
 
-export async function findByDesignId(designId: string): Promise<PricingQuote[] | null> {
+export async function findByDesignId(
+  designId: string
+): Promise<PricingQuote[] | null> {
   const TABLE_NAME = 'pricing_quotes';
-  const quotes: object[] = await db(TABLE_NAME)
-    .where({ design_id: designId });
+  const quotes: object[] = await db(TABLE_NAME).where({ design_id: designId });
 
   if (!quotes.every(isPricingQuoteRow)) {
     return null;
@@ -202,8 +224,9 @@ export async function findByDesignId(designId: string): Promise<PricingQuote[] |
 
 async function findLatestCareLabel(units: number): Promise<PricingCareLabel> {
   const TABLE_NAME = 'pricing_care_labels';
-  const careLabelRow: PricingCareLabelRow | null =
-    await findLatest<Promise<PricingCareLabelRow | null>>(TABLE_NAME, units);
+  const careLabelRow: PricingCareLabelRow | null = await findLatest<
+    Promise<PricingCareLabelRow | null>
+  >(TABLE_NAME, units);
 
   if (!careLabelRow) {
     throw new InvalidDataError('Pricing care label does not exist!');
@@ -240,11 +263,14 @@ async function findLatestProductMaterial(
   units: number
 ): Promise<PricingProductMaterial> {
   const TABLE_NAME = 'pricing_product_materials';
-  const materialRow: PricingProductMaterialRow | null =
-    await findLatest<Knex.QueryBuilder>(TABLE_NAME, units).where({ category });
+  const materialRow: PricingProductMaterialRow | null = await findLatest<
+    Knex.QueryBuilder
+  >(TABLE_NAME, units).where({ category });
 
   if (!materialRow) {
-    throw new InvalidDataError('Latest pricing product material could not be found!');
+    throw new InvalidDataError(
+      'Latest pricing product material could not be found!'
+    );
   }
 
   return validate(
@@ -261,11 +287,14 @@ async function findLatestProductType(
   units: number
 ): Promise<PricingProductType> {
   const TABLE_NAME = 'pricing_product_types';
-  const typeRow: PricingProductTypeRow | null =
-    await findLatest<Knex.QueryBuilder>(TABLE_NAME, units).where({ name, complexity });
+  const typeRow: PricingProductTypeRow | null = await findLatest<
+    Knex.QueryBuilder
+  >(TABLE_NAME, units).where({ name, complexity });
 
   if (!typeRow) {
-    throw new InvalidDataError('Latest pricing product type could not be found!');
+    throw new InvalidDataError(
+      'Latest pricing product type could not be found!'
+    );
   }
 
   return validate(
@@ -293,11 +322,7 @@ async function findLatestProcesses(
     db(TABLE_NAME)
       .select()
       .where(process)
-      .whereIn(
-        'version',
-        db(TABLE_NAME)
-          .max('version')
-      )
+      .whereIn('version', db(TABLE_NAME).max('version'))
       .whereIn(
         'minimum_units',
         db(TABLE_NAME)
@@ -328,10 +353,12 @@ Found processes: ${JSON.stringify(processRows, null, 4)}`);
     'pricing_processes',
     isPricingProcessRow,
     processDataAdapter,
-    processes.map((process: Process): PricingProcessRow => {
-      // lodash thinks process is a function since it has a name property
-      return find(processRows, process as object);
-    })
+    processes.map(
+      (process: Process): PricingProcessRow => {
+        // lodash thinks process is a function since it has a name property
+        return find(processRows, process as object);
+      }
+    )
   );
 }
 
@@ -349,26 +376,28 @@ async function findLatestProcessTimeline(
   ).length;
 
   const processTimelineRow = await db(TABLE_NAME)
-      .select()
-      .where('unique_processes', '<=', uniqueProcesses)
-      .whereIn(
-        'version',
-        db(TABLE_NAME)
-          .max('version')
-      )
-      .whereIn(
-        'unique_processes',
-        db(TABLE_NAME)
-          .where('unique_processes', '<=', uniqueProcesses)
-          .max('unique_processes'))
-      .whereIn(
-        'minimum_units',
-        db(TABLE_NAME)
-          .where('minimum_units', '<=', units)
-          .max('minimum_units')
-      ).then((rows: PricingProcessTimelineRow[]) => first<PricingProcessTimelineRow>(rows));
+    .select()
+    .where('unique_processes', '<=', uniqueProcesses)
+    .whereIn('version', db(TABLE_NAME).max('version'))
+    .whereIn(
+      'unique_processes',
+      db(TABLE_NAME)
+        .where('unique_processes', '<=', uniqueProcesses)
+        .max('unique_processes')
+    )
+    .whereIn(
+      'minimum_units',
+      db(TABLE_NAME)
+        .where('minimum_units', '<=', units)
+        .max('minimum_units')
+    )
+    .then((rows: PricingProcessTimelineRow[]) =>
+      first<PricingProcessTimelineRow>(rows)
+    );
 
-  if (!processTimelineRow) { return null; }
+  if (!processTimelineRow) {
+    return null;
+  }
 
   return validate(
     TABLE_NAME,
@@ -380,19 +409,15 @@ async function findLatestProcessTimeline(
 
 async function findLatestMargin(units: number): Promise<PricingMargin> {
   const TABLE_NAME = 'pricing_margins';
-  const marginRow: PricingMarginRow | null =
-    await findLatest<Promise<PricingMarginRow | null>>(TABLE_NAME, units);
+  const marginRow: PricingMarginRow | null = await findLatest<
+    Promise<PricingMarginRow | null>
+  >(TABLE_NAME, units);
 
   if (!marginRow) {
     throw new InvalidDataError('Pricing margin does not exist!');
   }
 
-  return validate(
-    TABLE_NAME,
-    isPricingMarginRow,
-    marginDataAdapter,
-    marginRow
-  );
+  return validate(TABLE_NAME, isPricingMarginRow, marginDataAdapter, marginRow);
 }
 
 function findLatest<T>(from: TableName, units: number): T {

@@ -23,7 +23,9 @@ export async function create(
     .insert(rowData, '*')
     .then((rows: ResolveAccountRow[]) => first<ResolveAccountRow>(rows));
 
-  if (!created) { throw new Error('Failed to create a process!'); }
+  if (!created) {
+    throw new Error('Failed to create a process!');
+  }
 
   return validate<ResolveAccountRow, ResolveAccount>(
     TABLE_NAME,
@@ -39,7 +41,9 @@ export async function findById(id: string): Promise<ResolveAccount | null> {
     .where({ id, deleted_at: null })
     .then((rows: ResolveAccountRow[]) => first<ResolveAccountRow>(rows));
 
-  if (!process) { return null; }
+  if (!process) {
+    return null;
+  }
 
   return validate<ResolveAccountRow, ResolveAccount>(
     TABLE_NAME,
@@ -49,7 +53,9 @@ export async function findById(id: string): Promise<ResolveAccount | null> {
   );
 }
 
-export async function findAllByUserId(userId: string): Promise<ResolveAccount[]> {
+export async function findAllByUserId(
+  userId: string
+): Promise<ResolveAccount[]> {
   const processes = await db(TABLE_NAME)
     .select('*')
     .where({ user_id: userId, deleted_at: null });

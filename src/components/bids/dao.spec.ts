@@ -28,13 +28,16 @@ test('Bids DAO supports creation and retrieval', async (t: Test) => {
     designId: null,
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
-    processes: [{
-      complexity: '1_COLOR',
-      name: 'SCREEN_PRINTING'
-    }, {
-      complexity: '1_COLOR',
-      name: 'SCREEN_PRINTING'
-    }],
+    processes: [
+      {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      },
+      {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      }
+    ],
     productComplexity: 'SIMPLE',
     productType: 'TEESHIRT',
     units: 200
@@ -67,13 +70,16 @@ test('Bids DAO supports retrieval by quote ID', async (t: Test) => {
     designId: null,
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
-    processes: [{
-      complexity: '1_COLOR',
-      name: 'SCREEN_PRINTING'
-    }, {
-      complexity: '1_COLOR',
-      name: 'SCREEN_PRINTING'
-    }],
+    processes: [
+      {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      },
+      {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      }
+    ],
     productComplexity: 'SIMPLE',
     productType: 'TEESHIRT',
     units: 200
@@ -103,13 +109,16 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
     designId: null,
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
-    processes: [{
-      complexity: '1_COLOR',
-      name: 'SCREEN_PRINTING'
-    }, {
-      complexity: '1_COLOR',
-      name: 'SCREEN_PRINTING'
-    }],
+    processes: [
+      {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      },
+      {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      }
+    ],
     productComplexity: 'SIMPLE',
     productType: 'TEESHIRT',
     units: 200
@@ -394,7 +403,11 @@ test('Bids DAO supports finding all with a limit and offset', async (t: Test) =>
   const { bid: bid5 } = await generateBid({ generatePricing: false });
 
   const result1 = await findAll({});
-  t.deepEqual(result1, [bid5, bid4, bid3, bid2, bid1], 'Returns all in desc order');
+  t.deepEqual(
+    result1,
+    [bid5, bid4, bid3, bid2, bid1],
+    'Returns all in desc order'
+  );
 
   const result2 = await findAll({ limit: 2 });
   t.deepEqual(result2, [bid5, bid4], 'Returns with a limit');
@@ -488,10 +501,18 @@ test('Bids DAO supports finding all bids by status', async (t: Test) => {
   t.deepEqual(result1, [openBid1, openBid2], 'Only returns the open bids');
 
   const result2 = await findAll({ state: 'ACCEPTED' });
-  t.deepEqual(result2, [acceptedBid, acceptedBid2], 'Only returns the accepted bids');
+  t.deepEqual(
+    result2,
+    [acceptedBid, acceptedBid2],
+    'Only returns the accepted bids'
+  );
 
   const result2a = await findAll({ limit: 1, offset: 1, state: 'ACCEPTED' });
-  t.deepEqual(result2a, [acceptedBid2], 'Only returns the accepted bids in the range');
+  t.deepEqual(
+    result2a,
+    [acceptedBid2],
+    'Only returns the accepted bids in the range'
+  );
 
   await generateDesignEvent({
     bidId: acceptedBid.id,
@@ -499,7 +520,11 @@ test('Bids DAO supports finding all bids by status', async (t: Test) => {
   });
 
   const result2b = await findAll({ state: 'ACCEPTED' });
-  t.deepEqual(result2b, [acceptedBid2], 'Only returns the accepted bids that were not removed');
+  t.deepEqual(
+    result2b,
+    [acceptedBid2],
+    'Only returns the accepted bids that were not removed'
+  );
 
   const result3 = await findAll({ state: 'EXPIRED' });
   t.deepEqual(result3, [expiredBid], 'Only returns the expired bids');
@@ -510,7 +535,10 @@ test('Bids DAO supports finding all bids by status', async (t: Test) => {
 
 test('Bids DAO supports finding by quote and user id with events', async (t: Test) => {
   const { user: designer } = await createUser({ withSession: false });
-  const { user: partner } = await createUser({ withSession: false, role: 'PARTNER' });
+  const { user: partner } = await createUser({
+    role: 'PARTNER',
+    withSession: false
+  });
 
   const design = await createDesign({
     productType: 'TEESHIRT',
@@ -551,17 +579,27 @@ test('Bids DAO supports finding by quote and user id with events', async (t: Tes
   await generateBid({ generatePricing: false });
 
   const result = await findAllByQuoteAndUserId(quote.id, partner.id);
-  t.deepEqual(result, [{
-    ...openBid2,
-    designEvents: []
-  }, {
-    ...openBid1,
-    designEvents: [{
-      ...de1,
-      createdAt: new Date(de1.createdAt)
-    }, {
-      ...de2,
-      createdAt: new Date(de2.createdAt)
-    }]
-  }], 'Returns a list of bids with bid-specific events');
+  t.deepEqual(
+    result,
+    [
+      {
+        ...openBid2,
+        designEvents: []
+      },
+      {
+        ...openBid1,
+        designEvents: [
+          {
+            ...de1,
+            createdAt: new Date(de1.createdAt)
+          },
+          {
+            ...de2,
+            createdAt: new Date(de2.createdAt)
+          }
+        ]
+      }
+    ],
+    'Returns a list of bids with bid-specific events'
+  );
 });

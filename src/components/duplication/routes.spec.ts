@@ -14,10 +14,7 @@ test('POST /duplication/designs returns 400 with bad body', async (t: Test) => {
   });
 
   t.equal(response.status, 400);
-  t.deepEqual(
-    body,
-    { message: 'Missing design ID list' }
-  );
+  t.deepEqual(body, { message: 'Missing design ID list' });
 });
 
 test('POST /duplication/designs returns 400 if one or more ID is invalid', async (t: Test) => {
@@ -31,10 +28,9 @@ test('POST /duplication/designs returns 400 if one or more ID is invalid', async
   });
 
   t.equal(response.status, 400);
-  t.deepEqual(
-    body,
-    { message: 'Design 36379007-e0cc-4b9f-8a55-7785f2da61cc not found' }
-  );
+  t.deepEqual(body, {
+    message: 'Design 36379007-e0cc-4b9f-8a55-7785f2da61cc not found'
+  });
 });
 
 test('POST /duplication/designs duplicates designs', async (t: Test) => {

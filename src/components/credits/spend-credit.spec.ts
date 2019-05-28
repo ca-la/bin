@@ -12,13 +12,16 @@ test('spendCredit spends the available amount', async (t: Test) => {
   const { invoice } = await generateInvoice();
 
   await db.transaction(async (trx: Knex.Transaction) => {
-    await addCredit({
-      amountCents: 1230,
-      createdBy: user.id,
-      description: 'For being a good customer',
-      expiresAt: null,
-      givenTo: user.id
-    }, trx);
+    await addCredit(
+      {
+        amountCents: 1230,
+        createdBy: user.id,
+        description: 'For being a good customer',
+        expiresAt: null,
+        givenTo: user.id
+      },
+      trx
+    );
 
     const result = await spendCredit(user.id, invoice, trx);
 
@@ -33,13 +36,16 @@ test('spendCredit spends all if more credit is available', async (t: Test) => {
   const { invoice } = await generateInvoice();
 
   await db.transaction(async (trx: Knex.Transaction) => {
-    await addCredit({
-      amountCents: 9999,
-      createdBy: user.id,
-      description: 'For being a good customer',
-      expiresAt: null,
-      givenTo: user.id
-    }, trx);
+    await addCredit(
+      {
+        amountCents: 9999,
+        createdBy: user.id,
+        description: 'For being a good customer',
+        expiresAt: null,
+        givenTo: user.id
+      },
+      trx
+    );
 
     const result = await spendCredit(user.id, invoice, trx);
 

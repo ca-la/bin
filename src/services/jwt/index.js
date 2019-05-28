@@ -7,9 +7,7 @@ function decode(token) {
   const parts = token.split('.');
   const encodedPayload = parts[1];
 
-  const base64 = encodedPayload
-    .replace(/-/g, '+')
-    .replace(/_/g, '/');
+  const base64 = encodedPayload.replace(/-/g, '+').replace(/_/g, '/');
 
   const stringPayload = Buffer.from(base64, 'base64').toString('ascii');
   const payload = JSON.parse(stringPayload);

@@ -30,11 +30,7 @@ class PaymentMethod {
   }
 
   toJSON() {
-    return omit(
-      this,
-      'stripeCustomerId',
-      'stripeSourceId'
-    );
+    return omit(this, 'stripeCustomerId', 'stripeSourceId');
   }
 }
 

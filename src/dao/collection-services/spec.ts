@@ -58,10 +58,15 @@ test('CollectionService DAO supports creation/retrieval of all', async (t: tape.
     needsPackaging: true
   });
 
-  const services = await CollectionServicesDAO
-    .findAllByCollectionId(collection.id);
+  const services = await CollectionServicesDAO.findAllByCollectionId(
+    collection.id
+  );
 
-  t.deepEqual(services, [services1, services2], 'Returns services, newest first');
+  t.deepEqual(
+    services,
+    [services1, services2],
+    'Returns services, newest first'
+  );
 });
 
 test('CollectionService DAO supports updating', async (t: tape.Test) => {
@@ -93,7 +98,10 @@ test('CollectionService DAO supports updating', async (t: tape.Test) => {
     needsFulfillment: false,
     needsPackaging: false
   };
-  const updated = await CollectionServicesDAO.update(collectionService.id, data);
+  const updated = await CollectionServicesDAO.update(
+    collectionService.id,
+    data
+  );
   t.deepEqual(
     updated,
     {

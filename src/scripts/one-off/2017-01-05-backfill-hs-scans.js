@@ -12,12 +12,15 @@ function createUserScan(userId) {
   });
 }
 
-return db('users').select()
-  .then((users) => {
-    Logger.log(`Found ${users.length} users to create Human Solutions scan records for`);
+return db('users')
+  .select()
+  .then(users => {
+    Logger.log(
+      `Found ${users.length} users to create Human Solutions scan records for`
+    );
     return Promise.all(users.map(user => createUserScan(user.id)));
   })
-  .then((scans) => {
+  .then(scans => {
     Logger.log(`Created ${scans.length} scans`);
 
     process.exit(0);

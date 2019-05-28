@@ -7,9 +7,7 @@ import {
 } from '../../components/notifications/domain-object';
 import { findById as findUserById } from '../../components/users/dao';
 import createUser = require('../create-user');
-import {
-  CollaboratorWithUser
-} from '../../components/collaborators/domain-objects/collaborator';
+import { CollaboratorWithUser } from '../../components/collaborators/domain-objects/collaborator';
 import * as ProductDesignsDAO from '../../dao/product-designs';
 import * as CollectionsDAO from '../../dao/collections';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
@@ -71,12 +69,20 @@ export default async function generateNotification(
   const { collection } = options.collectionId
     ? { collection: await CollectionsDAO.findById(options.collectionId) }
     : await generateCollection({ createdBy: actor.id });
-  if (!collection) { throw new Error('Could not create collection'); }
+  if (!collection) {
+    throw new Error('Could not create collection');
+  }
 
   const design = options.designId
     ? await ProductDesignsDAO.findById(options.designId)
-    : await createDesign({ productType: 'test', title: 'design', userId: actor.id });
-  if (!design) { throw new Error('Could not create design'); }
+    : await createDesign({
+        productType: 'test',
+        title: 'design',
+        userId: actor.id
+      });
+  if (!design) {
+    throw new Error('Could not create design');
+  }
 
   try {
     await CollectionsDAO.addDesign(collection.id, design.id);
@@ -86,38 +92,58 @@ export default async function generateNotification(
 
   const { collaborator } = options.collaboratorId
     ? { collaborator: await CollaboratorsDAO.findById(options.collaboratorId) }
-    : await generateCollaborator({ collectionId: collection.id, userId: recipient.id });
-  if (!collaborator) { throw new Error('Could not create collaborator'); }
+    : await generateCollaborator({
+        collectionId: collection.id,
+        userId: recipient.id
+      });
+  if (!collaborator) {
+    throw new Error('Could not create collaborator');
+  }
 
   const { canvas } = options.canvasId
     ? { canvas: await CanvasesDAO.findById(options.canvasId) }
     : await generateCanvas({ createdBy: actor.id });
-  if (!canvas) { throw new Error('Could not create canvas'); }
+  if (!canvas) {
+    throw new Error('Could not create canvas');
+  }
 
   const { annotation } = options.annotationId
     ? { annotation: await AnnotationsDAO.findById(options.annotationId) }
     : await generateAnnotation({ createdBy: actor.id, canvasId: canvas.id });
-  if (!annotation) { throw new Error('Could not create annotation'); }
+  if (!annotation) {
+    throw new Error('Could not create annotation');
+  }
 
   const { measurement } = options.measurementId
     ? { measurement: await MeasurementsDAO.findById(options.measurementId) }
     : await generateMeasurement({ createdBy: actor.id, canvasId: canvas.id });
-  if (!measurement) { throw new Error('Could not create measurement'); }
+  if (!measurement) {
+    throw new Error('Could not create measurement');
+  }
 
   const { comment } = options.commentId
     ? { comment: await CommentsDAO.findById(options.commentId) }
-    : await generateComment({ userId: actor.id, text: `Hello @<${collaborator.id}|collaborator>` });
-  if (!comment) { throw new Error('Could not create comment'); }
+    : await generateComment({
+        userId: actor.id,
+        text: `Hello @<${collaborator.id}|collaborator>`
+      });
+  if (!comment) {
+    throw new Error('Could not create comment');
+  }
 
   const { stage } = options.stageId
     ? { stage: await StagesDAO.findById(options.stageId) }
     : await generateProductDesignStage({ designId: design.id });
-  if (!stage) { throw new Error('Could not create stage'); }
+  if (!stage) {
+    throw new Error('Could not create stage');
+  }
 
   const { task } = options.taskId
     ? { task: await TasksDAO.findById(options.taskId) }
     : await generateTask({ createdBy: actor.id, designStageId: stage.id });
-  if (!task) { throw new Error('Could not create task'); }
+  if (!task) {
+    throw new Error('Could not create task');
+  }
 
   const base = {
     actor,

@@ -1,12 +1,7 @@
 import * as tape from 'tape';
 import * as uuid from 'node-uuid';
 import { test } from '../../test-helpers/fresh';
-import {
-  create,
-  deleteById,
-  findById,
-  update
-} from './dao';
+import { create, deleteById, findById, update } from './dao';
 import createUser = require('../../test-helpers/create-user');
 
 test('Comment DAO supports creation/retrieval', async (t: tape.Test) => {
@@ -44,11 +39,7 @@ test('Comment DAO supports update', async (t: tape.Test) => {
   });
 
   const result = await findById(comment.id);
-  t.deepEqual(
-    result,
-    updated,
-    'Updated comment matches found'
-  );
+  t.deepEqual(result, updated, 'Updated comment matches found');
 });
 
 test('Comment DAO supports delete', async (t: tape.Test) => {
@@ -66,9 +57,5 @@ test('Comment DAO supports delete', async (t: tape.Test) => {
   await deleteById(comment.id);
 
   const result = await findById(comment.id);
-  t.equal(
-    result,
-    null,
-    'Removes comment'
-  );
+  t.equal(result, null, 'Removes comment');
 });

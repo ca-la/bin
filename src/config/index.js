@@ -41,8 +41,10 @@ const config = {
   REQUIRE_CALA_EMAIL,
 
   AWS_SCANPHOTO_BUCKET_NAME: process.env.AWS_SCANPHOTO_BUCKET_NAME,
-  AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME: process.env.AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME,
-  AWS_PRODUCT_DESIGN_IMAGE_BUCKET_REGION: process.env.AWS_PRODUCT_DESIGN_IMAGE_BUCKET_REGION,
+  AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME:
+    process.env.AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME,
+  AWS_PRODUCT_DESIGN_IMAGE_BUCKET_REGION:
+    process.env.AWS_PRODUCT_DESIGN_IMAGE_BUCKET_REGION,
 
   AWS_ACCESS_KEY: process.env.AWS_ACCESS_KEY,
   AWS_SECRET_KEY: process.env.AWS_SECRET_KEY,
@@ -61,7 +63,8 @@ const config = {
   MAILCHIMP_API_KEY: process.env.MAILCHIMP_API_KEY,
 
   // The Mailchimp list ID for interested designer/production partners
-  MAILCHIMP_LIST_ID_PRODUCTION_PARTNERS: process.env.MAILCHIMP_LIST_ID_PRODUCTION_PARTNERS,
+  MAILCHIMP_LIST_ID_PRODUCTION_PARTNERS:
+    process.env.MAILCHIMP_LIST_ID_PRODUCTION_PARTNERS,
   MAILCHIMP_LIST_ID_DESIGNERS: process.env.MAILCHIMP_LIST_ID_DESIGNERS,
 
   // The Mailchimp list ID for users who have an account (i.e. are scanned)
@@ -85,7 +88,8 @@ const config = {
 
   TWILIO_OUTBOUND_NUMBER: process.env.TWILIO_OUTBOUND_NUMBER,
 
-  TWILIO_PREREGISTRATION_OUTBOUND_NUMBER: process.env.TWILIO_PREREGISTRATION_OUTBOUND_NUMBER,
+  TWILIO_PREREGISTRATION_OUTBOUND_NUMBER:
+    process.env.TWILIO_PREREGISTRATION_OUTBOUND_NUMBER,
 
   MINIMUM_SCAN_PITCH_RADIANS,
 
@@ -107,13 +111,14 @@ const config = {
 
   FINANCING_MARGIN: 0.06,
 
-  LOG_ALL_QUERIES: (process.env.LOG_ALL_QUERIES === 'true'),
+  LOG_ALL_QUERIES: process.env.LOG_ALL_QUERIES === 'true',
 
   ADMIN_EMAIL,
 
   CALA_OPS_USER_ID: process.env.CALA_OPS_USER_ID,
 
-  MAX_DB_CONNECTION_POOL_SIZE: process.env.MAX_DB_CONNECTION_POOL_SIZE &&
+  MAX_DB_CONNECTION_POOL_SIZE:
+    process.env.MAX_DB_CONNECTION_POOL_SIZE &&
     parseInt(process.env.MAX_DB_CONNECTION_POOL_SIZE, 10),
 
   DATABASE_URL: process.env.DATABASE_URL,
@@ -124,11 +129,12 @@ const config = {
 
   RESOLVE_API_URL: process.env.RESOLVE_API_URL,
 
-  FIT_PARTNER_SMS_PRODUCT_ID_BLACKLIST: process.env.FIT_PARTNER_SMS_PRODUCT_ID_BLACKLIST &&
+  FIT_PARTNER_SMS_PRODUCT_ID_BLACKLIST:
+    process.env.FIT_PARTNER_SMS_PRODUCT_ID_BLACKLIST &&
     JSON.parse(process.env.FIT_PARTNER_SMS_PRODUCT_ID_BLACKLIST)
 };
 
-Object.keys(config).forEach((key) => {
+Object.keys(config).forEach(key => {
   const value = config[key];
   if (value === undefined || value === '') {
     throw new Error(`Missing config value: ${key}`);

@@ -24,7 +24,8 @@ export default function* createManualPaymentRecord(
   this.assert(invoiceId, 400, 'Missing invoice ID');
 
   this.body = yield db.transaction(async (trx: Knex.Transaction) => {
-    await db.raw('select * from invoices where id = ? for update', [invoiceId])
+    await db
+      .raw('select * from invoices where id = ? for update', [invoiceId])
       .transacting(trx);
 
     const invoice = await InvoicesDAO.findByIdTrx(trx, invoiceId);
@@ -33,8 +34,10 @@ export default function* createManualPaymentRecord(
       throw new InvalidDataError('This invoice is already paid');
     }
 
-    const totalCents: number = Number(this.request.body.totalCents ||
-      (invoice.totalCents - (invoice.totalPaid || 0)));
+    const totalCents: number = Number(
+      this.request.body.totalCents ||
+        invoice.totalCents - (invoice.totalPaid || 0)
+    );
 
     return await InvoicePaymentsDAO.createTrx(trx, {
       createdAt: createdAt ? new Date(createdAt) : undefined,

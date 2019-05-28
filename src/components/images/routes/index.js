@@ -21,7 +21,7 @@ const ALLOWED_MIMETYPES = [
   'image/svg+xml'
 ];
 
-const HUMAN_READABLE_NAMES = ALLOWED_MIMETYPES.map((type) => {
+const HUMAN_READABLE_NAMES = ALLOWED_MIMETYPES.map(type => {
   const afterSlash = type.split('/')[1];
   const ext = afterSlash.split('+')[0];
   return ext;
@@ -32,14 +32,17 @@ function* createImage() {
   this.assert(data, 400, 'Image must be uploaded as `image`');
 
   const isAllowed = ALLOWED_MIMETYPES.indexOf(data.mimetype) > -1;
-  this.assert(isAllowed, 400, `We don't support "${data.mimetype}" files yet. Please choose a file with one of these formats: ${HUMAN_READABLE_NAMES}`);
+  this.assert(
+    isAllowed,
+    400,
+    `We don't support "${
+      data.mimetype
+    }" files yet. Please choose a file with one of these formats: ${HUMAN_READABLE_NAMES}`
+  );
 
   const localPath = data.path;
 
-  const {
-    title,
-    description
-  } = this.req.body;
+  const { title, description } = this.req.body;
 
   const localStream = fs.createReadStream(localPath);
   const size = yield probeSize(localStream);
@@ -96,10 +99,9 @@ function* create() {
 }
 
 function* getList() {
-  const isAuthorized = (
+  const isAuthorized =
     this.query.userId === this.state.userId ||
-    this.state.role === User.ROLES.admin
-  );
+    this.state.role === User.ROLES.admin;
 
   this.assert(isAuthorized, 403);
   this.assert(this.query.userId, 400, 'User ID must be provided');

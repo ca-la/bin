@@ -1,4 +1,3 @@
-
 import * as process from 'process';
 import { CALA_OPS_USER_ID } from '../config';
 import { log, logServerError } from '../services/logger';
@@ -11,10 +10,12 @@ run()
     log(`${green}Successfully credited!`);
     process.exit();
   })
-  .catch((err: any): void => {
-    logServerError(err);
-    process.exit(1);
-  });
+  .catch(
+    (err: any): void => {
+      logServerError(err);
+      process.exit(1);
+    }
+  );
 
 async function run(): Promise<void> {
   const userId = process.argv[2];

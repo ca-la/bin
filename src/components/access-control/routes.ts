@@ -10,7 +10,9 @@ const router = new Router();
  * Checks if the authenticated user has access to the given task.
  * Responds with a 200 if there's a match, otherwise throws a 400.
  */
-function* getAnnotationsAccess(this: Koa.Application.Context): AsyncIterableIterator<any> {
+function* getAnnotationsAccess(
+  this: Koa.Application.Context
+): AsyncIterableIterator<any> {
   this.status = 200;
 }
 
@@ -22,12 +24,17 @@ interface NotificationAccessQuery {
  * Checks the state's userId against the query param's userId;
  * Responds with a 200 if there's a match, otherwise throws a 400.
  */
-function* getNotificationAccess(this: Koa.Application.Context): AsyncIterableIterator<any> {
+function* getNotificationAccess(
+  this: Koa.Application.Context
+): AsyncIterableIterator<any> {
   const { userId } = this.state;
   const { userId: checkUserId }: NotificationAccessQuery = this.query;
 
   if (userId !== checkUserId) {
-    return this.throw(400, 'The user id in the query does not match the session\'s user!');
+    return this.throw(
+      400,
+      "The user id in the query does not match the session's user!"
+    );
   }
 
   this.status = 200;
@@ -37,7 +44,9 @@ function* getNotificationAccess(this: Koa.Application.Context): AsyncIterableIte
  * Checks if the authenticated user has access to the given task.
  * Responds with a 200 if there's a match, otherwise throws a 400.
  */
-function* getTasksAccess(this: Koa.Application.Context): AsyncIterableIterator<any> {
+function* getTasksAccess(
+  this: Koa.Application.Context
+): AsyncIterableIterator<any> {
   this.status = 200;
 }
 

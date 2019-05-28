@@ -38,12 +38,20 @@ async function backfill() {
       size = { width: 0, height: 0 };
     }
 
-    Logger.log(yellow(`Found dimensions ${size.width} x ${size.height}. Updating...`));
+    Logger.log(
+      yellow(`Found dimensions ${size.width} x ${size.height}. Updating...`)
+    );
     const updated = await update(image.id, {
       originalHeightPx: size.height,
       originalWidthPx: size.width
     });
-    Logger.log(yellow(`Updated ${updated.id}: ${updated.originalWidthPx} x ${updated.originalHeightPx}`));
+    Logger.log(
+      yellow(
+        `Updated ${updated.id}: ${updated.originalWidthPx} x ${
+          updated.originalHeightPx
+        }`
+      )
+    );
   }
 
   Logger.log(green('fin'));

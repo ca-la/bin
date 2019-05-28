@@ -59,8 +59,5 @@ test('PricingConstant', async (t: Test): Promise<void> => {
     isPricingConstantRow(invalidRowData),
     'type guard rejects invalid data'
   );
-  t.ok(
-    isPricingConstantRow(validRowData),
-    'type guard passes with valid data'
-  );
+  t.ok(isPricingConstantRow(validRowData), 'type guard passes with valid data');
 });

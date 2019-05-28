@@ -10,7 +10,8 @@ const first = require('../../services/first').default;
 const ProductDesignOption = require('../../domain-objects/product-design-option');
 
 const instantiate = data => new ProductDesignOption(data);
-const maybeInstantiate = data => (data && new ProductDesignOption(data)) || null;
+const maybeInstantiate = data =>
+  (data && new ProductDesignOption(data)) || null;
 
 const { dataMapper } = ProductDesignOption;
 
@@ -21,7 +22,7 @@ function create(data, trx) {
 
   return db('product_design_options')
     .insert(rowData, '*')
-    .modify((query) => {
+    .modify(query => {
       if (trx) {
         query.transacting(trx);
       }
@@ -52,11 +53,11 @@ function findById(optionId) {
 
 function findForUser(userId, queryOptions) {
   const defaultOptions = { limit: null, offset: null, search: null };
-  const { limit, offset, search } = Object.assign(
-    defaultOptions,
-    queryOptions
-  );
-  if ((limit !== null && typeof limit !== 'number') || (offset !== null && typeof offset !== 'number')) {
+  const { limit, offset, search } = Object.assign(defaultOptions, queryOptions);
+  if (
+    (limit !== null && typeof limit !== 'number') ||
+    (offset !== null && typeof offset !== 'number')
+  ) {
     throw new Error('Limit and offset must be numbers if provided');
   }
 
@@ -64,7 +65,7 @@ function findForUser(userId, queryOptions) {
     .where({
       deleted_at: null
     })
-    .where((builder) => {
+    .where(builder => {
       builder
         .andWhere({
           user_id: userId
@@ -77,8 +78,10 @@ function findForUser(userId, queryOptions) {
         builder.andWhere(db.raw('title ~* :search', { search }));
       }
     })
-    .orderByRaw('user_id is not null desc, preview_image_id is not null desc, created_at desc, id desc')
-    .modify((query) => {
+    .orderByRaw(
+      'user_id is not null desc, preview_image_id is not null desc, created_at desc, id desc'
+    )
+    .modify(query => {
       if (limit !== null) {
         query.limit(limit);
       }
@@ -96,9 +99,12 @@ function deleteById(id) {
       id,
       deleted_at: null
     })
-    .update({
-      deleted_at: new Date()
-    }, '*')
+    .update(
+      {
+        deleted_at: new Date()
+      },
+      '*'
+    )
     .then(first)
     .then(maybeInstantiate);
 }

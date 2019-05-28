@@ -27,9 +27,13 @@ export async function create(
         query.transacting(trx);
       }
     })
-    .then((rows: ProductDesignStageTaskRow[]) => first<ProductDesignStageTaskRow>(rows));
+    .then((rows: ProductDesignStageTaskRow[]) =>
+      first<ProductDesignStageTaskRow>(rows)
+    );
 
-  if (!created) { throw new Error('Failed to create rows'); }
+  if (!created) {
+    throw new Error('Failed to create rows');
+  }
 
   return validate<ProductDesignStageTaskRow, ProductDesignStageTask>(
     TABLE_NAME,
@@ -39,7 +43,9 @@ export async function create(
   );
 }
 
-export async function findById(id: string): Promise<ProductDesignStageTask | null> {
+export async function findById(
+  id: string
+): Promise<ProductDesignStageTask | null> {
   const stageTasks: ProductDesignStageTaskRow[] = await db(TABLE_NAME)
     .select('*')
     .where({ id })
@@ -47,7 +53,9 @@ export async function findById(id: string): Promise<ProductDesignStageTask | nul
 
   const stageTask = stageTasks[0];
 
-  if (!stageTask) { return null; }
+  if (!stageTask) {
+    return null;
+  }
 
   return validate<ProductDesignStageTaskRow, ProductDesignStageTask>(
     TABLE_NAME,
@@ -57,7 +65,9 @@ export async function findById(id: string): Promise<ProductDesignStageTask | nul
   );
 }
 
-export async function findByTaskId(taskId: string): Promise<ProductDesignStageTask | null> {
+export async function findByTaskId(
+  taskId: string
+): Promise<ProductDesignStageTask | null> {
   const stageTasks: ProductDesignStageTaskRow[] = await db(TABLE_NAME)
     .select('*')
     .where({ task_id: taskId })
@@ -65,7 +75,9 @@ export async function findByTaskId(taskId: string): Promise<ProductDesignStageTa
 
   const stageTask = stageTasks[0];
 
-  if (!stageTask) { return null; }
+  if (!stageTask) {
+    return null;
+  }
 
   return validate<ProductDesignStageTaskRow, ProductDesignStageTask>(
     TABLE_NAME,
@@ -84,7 +96,8 @@ export async function findAllByDesignId(
     .leftJoin(
       'product_design_stages',
       'product_design_stages.id',
-      'product_design_stage_tasks.design_stage_id')
+      'product_design_stage_tasks.design_stage_id'
+    )
     .where({ 'product_design_stages.design_id': designId })
     .orderBy('created_at', 'desc');
 

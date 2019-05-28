@@ -6,13 +6,12 @@ const crypto = require('crypto');
 const InvalidDataError = require('../../errors/invalid-data');
 const { logServerError } = require('../logger');
 
-const {
-  MAILCHIMP_API_KEY,
-  MAILCHIMP_LIST_ID_USERS
-} = require('../../config');
+const { MAILCHIMP_API_KEY, MAILCHIMP_LIST_ID_USERS } = require('../../config');
 
 const MAILCHIMP_API_BASE = 'https://us13.api.mailchimp.com/3.0';
-const MAILCHIMP_AUTH = Buffer.from(`cala:${MAILCHIMP_API_KEY}`).toString('base64');
+const MAILCHIMP_AUTH = Buffer.from(`cala:${MAILCHIMP_API_KEY}`).toString(
+  'base64'
+);
 
 const ERROR_GLOSSARY = {
   'Member Exists': "You're already signed up for this list!"
@@ -37,14 +36,14 @@ function makeRequest(method, path, requestBody) {
     },
     body: JSON.stringify(requestBody)
   })
-    .then((_response) => {
+    .then(_response => {
       response = _response;
 
       const contentType = response.headers.get('content-type');
       const isJson = /application\/.*json/.test(contentType);
 
       if (!isJson) {
-        return response.text().then((text) => {
+        return response.text().then(text => {
           logServerError('Mailchimp request: ', method, url, requestBody);
           logServerError('Mailchimp response: ', response.status, text);
           throw new Error(`Unexpected Mailchimp response type: ${contentType}`);
@@ -53,7 +52,7 @@ function makeRequest(method, path, requestBody) {
 
       return response.json();
     })
-    .then((body) => {
+    .then(body => {
       // eslint-disable-next-line no-console
       console.log('Mailchimp response: ', response.status, body);
 
@@ -102,12 +101,7 @@ function addOrUpdateListMember(listId, email, mergeFields) {
   return makeRequest('put', path, requestBody);
 }
 
-function subscribeToUsers({
-  email,
-  name,
-  referralCode,
-  cohort
-}) {
+function subscribeToUsers({ email, name, referralCode, cohort }) {
   const tags = {
     FULL_NAME: name,
     REF_CODE: referralCode,
@@ -122,12 +116,7 @@ function subscribeToUsers({
   return subscribe(MAILCHIMP_LIST_ID_USERS, email, tags);
 }
 
-function updateUser({
-  email,
-  hasScan,
-  hasBought,
-  cohort
-}) {
+function updateUser({ email, hasScan, hasBought, cohort }) {
   const data = {};
 
   if (hasScan !== undefined) {

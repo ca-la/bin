@@ -25,7 +25,7 @@ const commentFactory = (userId, sectionId) => ({
   sectionId
 });
 
-test('ProductDesignComments.findByDesign only returns relevant comments', async (t) => {
+test('ProductDesignComments.findByDesign only returns relevant comments', async t => {
   const { user } = await createUser({ withSession: false });
 
   const design1 = await DesignsDAO.create(designFactory(user.id));

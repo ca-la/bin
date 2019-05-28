@@ -20,17 +20,20 @@ function create(data) {
   }
 
   return db('product_design_sections')
-    .insert({
-      template_name: data.templateName,
-      design_id: data.designId,
-      title: data.title,
-      custom_image_id: data.customImageId,
-      panel_data: data.panelData,
-      position: data.position,
-      custom_data: data.customData,
-      id: uuid.v4(),
-      type: data.type
-    }, '*')
+    .insert(
+      {
+        template_name: data.templateName,
+        design_id: data.designId,
+        title: data.title,
+        custom_image_id: data.customImageId,
+        panel_data: data.panelData,
+        position: data.position,
+        custom_data: data.customData,
+        id: uuid.v4(),
+        type: data.type
+      },
+      '*'
+    )
     .catch(rethrow)
     .then(first)
     .then(instantiate);
@@ -39,15 +42,18 @@ function create(data) {
 function update(sectionId, data) {
   return db('product_design_sections')
     .where({ id: sectionId, deleted_at: null })
-    .update(compact({
-      template_name: data.templateName,
-      title: data.title,
-      custom_image_id: data.customImageId,
-      custom_data: data.customData,
-      panel_data: data.panelData,
-      position: data.position,
-      type: data.type
-    }), '*')
+    .update(
+      compact({
+        template_name: data.templateName,
+        title: data.title,
+        custom_image_id: data.customImageId,
+        custom_data: data.customData,
+        panel_data: data.panelData,
+        position: data.position,
+        type: data.type
+      }),
+      '*'
+    )
     .then(first)
     .then(instantiate);
 }
@@ -56,9 +62,12 @@ function deleteByIdTrx(trx, id) {
   return db('product_design_sections')
     .transacting(trx)
     .where({ id, deleted_at: null })
-    .update({
-      deleted_at: new Date()
-    }, '*')
+    .update(
+      {
+        deleted_at: new Date()
+      },
+      '*'
+    )
     .then(first)
     .then(instantiate);
 }

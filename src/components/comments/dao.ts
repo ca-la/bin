@@ -23,10 +23,13 @@ export async function create(
     baseDataAdapter.forInsertion(data),
     INSERTABLE_COLUMNS
   );
-  await db(TABLE_NAME)
-    .insert(rowDataForInsertion);
+  await db(TABLE_NAME).insert(rowDataForInsertion);
   const comment: CommentRow | undefined = await db(TABLE_NAME)
-    .select(['comments.*', { user_name: 'users.name' }, { user_email: 'users.email' }])
+    .select([
+      'comments.*',
+      { user_name: 'users.name' },
+      { user_email: 'users.email' }
+    ])
     .join('users', 'users.id', 'comments.user_id')
     .where({ 'comments.id': data.id, 'comments.deleted_at': null })
     .orderBy('created_at', 'asc')
@@ -50,18 +53,22 @@ export async function create(
   );
 }
 
-export async function findById(
-  id: string
-): Promise<Comment | null> {
+export async function findById(id: string): Promise<Comment | null> {
   const comment: CommentRow | undefined = await db(TABLE_NAME)
-    .select(['comments.*', { user_name: 'users.name' }, { user_email: 'users.email' }])
+    .select([
+      'comments.*',
+      { user_name: 'users.name' },
+      { user_email: 'users.email' }
+    ])
     .join('users', 'users.id', 'comments.user_id')
     .where({ 'comments.id': id, 'comments.deleted_at': null })
     .orderBy('created_at', 'asc')
     .limit(1)
     .then((comments: CommentRow[]) => first(comments));
 
-  if (!comment) { return null; }
+  if (!comment) {
+    return null;
+  }
 
   return validate<CommentRow, Comment>(
     TABLE_NAME,
@@ -71,9 +78,7 @@ export async function findById(
   );
 }
 
-export async function update(
-  data: Comment
-): Promise<Comment> {
+export async function update(data: Comment): Promise<Comment> {
   const rowDataForUpdate = pick(
     dataAdapter.forInsertion(data),
     UPDATABLE_COLUMNS
@@ -83,7 +88,11 @@ export async function update(
     .update(rowDataForUpdate);
 
   const comment: CommentRow | undefined = await db(TABLE_NAME)
-    .select(['comments.*', { user_name: 'users.name' }, { user_email: 'users.email' }])
+    .select([
+      'comments.*',
+      { user_name: 'users.name' },
+      { user_email: 'users.email' }
+    ])
     .join('users', 'users.id', 'comments.user_id')
     .where({ 'comments.id': data.id, 'comments.deleted_at': null })
     .orderBy('created_at', 'asc')

@@ -9,10 +9,7 @@ interface UploadStatus {
 }
 
 function isUploadBody(data: object): data is UploadStatus {
-  return hasOnlyProperties(
-    data,
-    'uploadCompletedAt'
-  );
+  return hasOnlyProperties(data, 'uploadCompletedAt');
 }
 
 export function* uploadStatus(

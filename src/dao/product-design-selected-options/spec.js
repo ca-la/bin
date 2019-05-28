@@ -37,11 +37,11 @@ function createPrerequisites() {
         position: 0
       });
     })
-    .then((section) => {
+    .then(section => {
       return { option, design, section };
     });
 }
-test('ProductDesignSelectedOptionsDAO.create creates and returns a selected option', (t) => {
+test('ProductDesignSelectedOptionsDAO.create creates and returns a selected option', t => {
   let data;
 
   return createPrerequisites()
@@ -61,10 +61,7 @@ test('ProductDesignSelectedOptionsDAO.create creates and returns a selected opti
 
       return create(data);
     })
-    .then((selectedOption) => {
-      t.deepEqual(
-        pick(selectedOption, Object.keys(data)),
-        data
-      );
+    .then(selectedOption => {
+      t.deepEqual(pick(selectedOption, Object.keys(data)), data);
     });
 });

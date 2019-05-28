@@ -19,12 +19,14 @@ export default async function generateDesignEvent(
   const design = options.designId
     ? await ProductDesignsDAO.findById(options.designId)
     : await ProductDesignsDAO.create({
-      productType: 'SWEATER',
-      title: 'Mohair Wool Sweater',
-      userId: actor.id
-    });
+        productType: 'SWEATER',
+        title: 'Mohair Wool Sweater',
+        userId: actor.id
+      });
 
-  if (!design) { throw new Error('Design was unable to be found or created!'); }
+  if (!design) {
+    throw new Error('Design was unable to be found or created!');
+  }
 
   const designEvent = await create({
     actorId: actor.id,

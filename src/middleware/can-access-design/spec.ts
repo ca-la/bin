@@ -17,5 +17,9 @@ test('canDeleteDesign middleware', async (t: tape.Test) => {
   const [validResponse] = await API.del(`/product-designs/${design.id}`, {
     headers: API.authHeader(session2.id)
   });
-  t.equal(validResponse.status, 403, 'does not allow a stranger to delete a design');
+  t.equal(
+    validResponse.status,
+    403,
+    'does not allow a stranger to delete a design'
+  );
 });

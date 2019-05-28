@@ -41,49 +41,55 @@ test('GET /bids', async (t: Test) => {
     quoteId: quote.id
   });
 
-  await put(
-    `/bids/${bid.id}/assignees/${partner.user.id}`,
-    { headers: authHeader(admin.session.id) }
-  );
-  await put(
-    `/bids/${otherBid.id}/assignees/${other.user.id}`,
-    { headers: authHeader(admin.session.id) }
-  );
-  const [response, bids] = await get(
-    `/bids?userId=${partner.user.id}`,
-    { headers: authHeader(partner.session.id) }
-  );
+  await put(`/bids/${bid.id}/assignees/${partner.user.id}`, {
+    headers: authHeader(admin.session.id)
+  });
+  await put(`/bids/${otherBid.id}/assignees/${other.user.id}`, {
+    headers: authHeader(admin.session.id)
+  });
+  const [response, bids] = await get(`/bids?userId=${partner.user.id}`, {
+    headers: authHeader(partner.session.id)
+  });
   t.equal(response.status, 200);
-  t.deepEqual(bids, [{
-    ...bid,
-    createdAt: bid.createdAt.toISOString(),
-    design: {
-      ...design,
-      createdAt: design.createdAt.toISOString()
-    }
-  }], 'returns only bids assigned to requested user');
+  t.deepEqual(
+    bids,
+    [
+      {
+        ...bid,
+        createdAt: bid.createdAt.toISOString(),
+        design: {
+          ...design,
+          createdAt: design.createdAt.toISOString()
+        }
+      }
+    ],
+    'returns only bids assigned to requested user'
+  );
 });
 
 test('GET /bids as an admin fetching everything', async (t: Test) => {
   const admin = await createUser({ role: 'ADMIN' });
-  const findAllStub = sandbox().stub(BidsDAO, 'findAll').resolves([]);
+  const findAllStub = sandbox()
+    .stub(BidsDAO, 'findAll')
+    .resolves([]);
 
-  const [response, bids] = await get(
-    '/bids?limit=100&offset=50',
-    { headers: authHeader(admin.session.id) }
-  );
+  const [response, bids] = await get('/bids?limit=100&offset=50', {
+    headers: authHeader(admin.session.id)
+  });
 
   t.equal(response.status, 200, 'Successfully returns');
   t.deepEqual(bids, [], 'Successfully returns the stub list');
   t.equal(findAllStub.callCount, 1, 'Calls the findAll method exactly once');
 
-  const [badResponse, badBody] = await get(
-    '/bids',
-    { headers: authHeader(admin.session.id) }
-  );
+  const [badResponse, badBody] = await get('/bids', {
+    headers: authHeader(admin.session.id)
+  });
 
   t.equal(badResponse.status, 400, 'Fails when a limit/offset is not passed');
-  t.equal(badBody.message, 'Must specify a limit and offset when fetching all bids!');
+  t.equal(
+    badBody.message,
+    'Must specify a limit and offset when fetching all bids!'
+  );
 });
 
 test('GET /bids?userId&state=OPEN', async (t: Test) => {
@@ -118,31 +124,34 @@ test('GET /bids?userId&state=OPEN', async (t: Test) => {
     quoteId: quote.id
   });
 
-  await put(
-    `/bids/${bid.id}/assignees/${partner.user.id}`,
-    { headers: authHeader(admin.session.id) }
-  );
-  await put(
-    `/bids/${expiredBid.id}/assignees/${partner.user.id}`,
-    { headers: authHeader(admin.session.id) }
-  );
-  await put(
-    `/bids/${otherBid.id}/assignees/${other.user.id}`,
-    { headers: authHeader(admin.session.id) }
-  );
+  await put(`/bids/${bid.id}/assignees/${partner.user.id}`, {
+    headers: authHeader(admin.session.id)
+  });
+  await put(`/bids/${expiredBid.id}/assignees/${partner.user.id}`, {
+    headers: authHeader(admin.session.id)
+  });
+  await put(`/bids/${otherBid.id}/assignees/${other.user.id}`, {
+    headers: authHeader(admin.session.id)
+  });
   const [response, bids] = await get(
     `/bids?userId=${partner.user.id}&state=OPEN`,
     { headers: authHeader(partner.session.id) }
   );
   t.equal(response.status, 200);
-  t.deepEqual(bids, [{
-    ...bid,
-    createdAt: bid.createdAt.toISOString(),
-    design: {
-      ...design,
-      createdAt: design.createdAt.toISOString()
-    }
-  }], 'returns only bids assigned to requested user');
+  t.deepEqual(
+    bids,
+    [
+      {
+        ...bid,
+        createdAt: bid.createdAt.toISOString(),
+        design: {
+          ...design,
+          createdAt: design.createdAt.toISOString()
+        }
+      }
+    ],
+    'returns only bids assigned to requested user'
+  );
 });
 
 test('GET /bids?userId&state=EXPIRED', async (t: Test) => {
@@ -186,31 +195,34 @@ test('GET /bids?userId&state=EXPIRED', async (t: Test) => {
     type: 'BID_DESIGN'
   });
 
-  await put(
-    `/bids/${bid.id}/assignees/${partner.user.id}`,
-    { headers: authHeader(admin.session.id) }
-  );
-  await put(
-    `/bids/${expiredBid.id}/assignees/${partner.user.id}`,
-    { headers: authHeader(admin.session.id) }
-  );
-  await put(
-    `/bids/${otherBid.id}/assignees/${other.user.id}`,
-    { headers: authHeader(admin.session.id) }
-  );
+  await put(`/bids/${bid.id}/assignees/${partner.user.id}`, {
+    headers: authHeader(admin.session.id)
+  });
+  await put(`/bids/${expiredBid.id}/assignees/${partner.user.id}`, {
+    headers: authHeader(admin.session.id)
+  });
+  await put(`/bids/${otherBid.id}/assignees/${other.user.id}`, {
+    headers: authHeader(admin.session.id)
+  });
   const [response, bids] = await get(
     `/bids?userId=${partner.user.id}&state=EXPIRED`,
     { headers: authHeader(partner.session.id) }
   );
   t.equal(response.status, 200);
-  t.deepEqual(bids, [{
-    ...expiredBid,
-    createdAt: expiredBid.createdAt.toISOString(),
-    design: {
-      ...design,
-      createdAt: design.createdAt.toISOString()
-    }
-  }], 'returns only expired bid assigned to the user');
+  t.deepEqual(
+    bids,
+    [
+      {
+        ...expiredBid,
+        createdAt: expiredBid.createdAt.toISOString(),
+        design: {
+          ...design,
+          createdAt: design.createdAt.toISOString()
+        }
+      }
+    ],
+    'returns only expired bid assigned to the user'
+  );
 });
 
 test('GET /bids?userId&state=REJECTED', async (t: Test) => {
@@ -246,17 +258,23 @@ test('GET /bids?userId&state=REJECTED', async (t: Test) => {
   t.equal(response.status, 200);
   t.deepEqual(
     bids,
-    [{
-      ...otherBid,
-      createdAt: otherBid.createdAt.toISOString(),
-      design: {
-        ...design,
-        createdAt: design.createdAt.toISOString()
+    [
+      {
+        ...otherBid,
+        createdAt: otherBid.createdAt.toISOString(),
+        design: {
+          ...design,
+          createdAt: design.createdAt.toISOString()
+        }
       }
-    }],
+    ],
     'returns empty bids list'
   );
-  t.equal(bidsDaoStub.callCount, 1, 'calls findRejectedByTargetId stub exactly once');
+  t.equal(
+    bidsDaoStub.callCount,
+    1,
+    'calls findRejectedByTargetId stub exactly once'
+  );
 });
 
 test('GET /bids?userId&state=ACCEPTED', async (t: Test) => {
@@ -283,14 +301,12 @@ test('GET /bids?userId&state=ACCEPTED', async (t: Test) => {
     quoteId: quote.id
   });
 
-  await put(
-    `/bids/${bid.id}/assignees/${partner.user.id}`,
-    { headers: authHeader(admin.session.id) }
-  );
-  await put(
-    `/bids/${otherBid.id}/assignees/${other.user.id}`,
-    { headers: authHeader(admin.session.id) }
-  );
+  await put(`/bids/${bid.id}/assignees/${partner.user.id}`, {
+    headers: authHeader(admin.session.id)
+  });
+  await put(`/bids/${otherBid.id}/assignees/${other.user.id}`, {
+    headers: authHeader(admin.session.id)
+  });
   const [response, bids] = await get(
     `/bids?userId=${partner.user.id}&state=ACCEPTED`,
     { headers: authHeader(partner.session.id) }
@@ -318,15 +334,17 @@ test('PUT /bids/:bidId/assignees/:userId creates a new collaborator role', async
     .stub(NotificationsService, 'sendPartnerDesignBid')
     .resolves();
 
-  const [response] = await put(
-    `/bids/${bid.id}/assignees/${partner.user.id}`,
-    { headers: authHeader(admin.session.id) }
-  );
+  const [response] = await put(`/bids/${bid.id}/assignees/${partner.user.id}`, {
+    headers: authHeader(admin.session.id)
+  });
 
   t.equal(response.status, 204, 'Successfully assigns first partner');
   t.equal(notificationStub.callCount, 1, 'Only calls notification once');
 
-  const collaborator = await CollaboratorsDAO.findByDesignAndUser(design.id, partner.user.id);
+  const collaborator = await CollaboratorsDAO.findByDesignAndUser(
+    design.id,
+    partner.user.id
+  );
 
   if (!collaborator) {
     throw new Error('Could not find collaborators for the partner and design!');
@@ -335,7 +353,7 @@ test('PUT /bids/:bidId/assignees/:userId creates a new collaborator role', async
   t.equal(collaborator.role, 'PREVIEW', 'Creates a preview collaborator');
   t.equal(collaborator.userId, partner.user.id, 'Associates with the partner');
   t.true(
-    collaborator.cancelledAt && collaborator.cancelledAt  > new Date(),
+    collaborator.cancelledAt && collaborator.cancelledAt > new Date(),
     'Returns a cancelled date ahead of now'
   );
 
@@ -375,10 +393,9 @@ test('PUT /bids/:bidId/assignees/:userId', async (t: Test) => {
     .stub(NotificationsService, 'sendPartnerDesignBid')
     .resolves();
 
-  const [response] = await put(
-    `/bids/${bid.id}/assignees/${user.id}`,
-    { headers: authHeader(session.id) }
-  );
+  const [response] = await put(`/bids/${bid.id}/assignees/${user.id}`, {
+    headers: authHeader(session.id)
+  });
   t.equal(response.status, 204, 'Successfully assigns first partner');
   sinon.assert.callCount(notificationStub, 1);
 
@@ -386,7 +403,11 @@ test('PUT /bids/:bidId/assignees/:userId', async (t: Test) => {
     `/bids/${bid.id}/assignees/${collaborator.user.id}`,
     { headers: authHeader(session.id) }
   );
-  t.equal(collaboratorAssignment[0].status, 204, 'Successfully assigns second partner');
+  t.equal(
+    collaboratorAssignment[0].status,
+    204,
+    'Successfully assigns second partner'
+  );
   sinon.assert.callCount(notificationStub, 2);
 
   const [collaboratorResponse, collaborators] = await get(
@@ -398,16 +419,14 @@ test('PUT /bids/:bidId/assignees/:userId', async (t: Test) => {
   t.equal(collaborators[0].role, 'EDIT', 'Keeps existing role');
   t.equal(collaborators[1].userId, user.id);
 
-  const [notFoundUser] = await put(
-    `/bids/${bid.id}/assignees/${uuid.v4()}`,
-    { headers: authHeader(session.id) }
-  );
+  const [notFoundUser] = await put(`/bids/${bid.id}/assignees/${uuid.v4()}`, {
+    headers: authHeader(session.id)
+  });
   t.equal(notFoundUser.status, 404);
 
-  const [notFoundBid] = await put(
-    `/bids/${uuid.v4()}/assignees/${user.id}`,
-    { headers: authHeader(session.id) }
-  );
+  const [notFoundBid] = await put(`/bids/${uuid.v4()}/assignees/${user.id}`, {
+    headers: authHeader(session.id)
+  });
   t.equal(notFoundBid.status, 404);
 });
 
@@ -426,21 +445,21 @@ test('GET /bids/:bidId/assignees', async (t: Test) => {
     userId: user.id
   });
 
-  await put(
-    `/bids/${bid.id}/assignees/${partner.id}`,
-    { headers: authHeader(session.id) }
-  );
+  await put(`/bids/${bid.id}/assignees/${partner.id}`, {
+    headers: authHeader(session.id)
+  });
 
-  const [response, assignees] = await get(
-    `/bids/${bid.id}/assignees`,
-    { headers: authHeader(session.id) }
-  );
+  const [response, assignees] = await get(`/bids/${bid.id}/assignees`, {
+    headers: authHeader(session.id)
+  });
 
   t.equal(response.status, 200);
-  t.deepEqual(assignees, [{
-    ...omit(partner, ['passwordHash']),
-    createdAt: partner.createdAt.toISOString()
-  }]);
+  t.deepEqual(assignees, [
+    {
+      ...omit(partner, ['passwordHash']),
+      createdAt: partner.createdAt.toISOString()
+    }
+  ]);
 });
 
 test('DELETE /bids/:bidId/assignees/:userId', async (t: Test) => {
@@ -458,20 +477,17 @@ test('DELETE /bids/:bidId/assignees/:userId', async (t: Test) => {
     userId: user.id
   });
 
-  await put(
-    `/bids/${bid.id}/assignees/${partner.id}`,
-    { headers: authHeader(session.id) }
-  );
-  const [response] = await del(
-    `/bids/${bid.id}/assignees/${partner.id}`,
-    { headers: authHeader(session.id) }
-  );
+  await put(`/bids/${bid.id}/assignees/${partner.id}`, {
+    headers: authHeader(session.id)
+  });
+  const [response] = await del(`/bids/${bid.id}/assignees/${partner.id}`, {
+    headers: authHeader(session.id)
+  });
   t.equal(response.status, 204);
 
-  const assignees = await get(
-    `/bids/${bid.id}/assignees`,
-    { headers: authHeader(session.id) }
-  );
+  const assignees = await get(`/bids/${bid.id}/assignees`, {
+    headers: authHeader(session.id)
+  });
   t.deepEqual(assignees[1], []);
 
   const [collaboratorResponse, collaborators] = await get(
@@ -479,7 +495,11 @@ test('DELETE /bids/:bidId/assignees/:userId', async (t: Test) => {
     { headers: authHeader(session.id) }
   );
   t.equal(collaboratorResponse.status, 200);
-  t.equal(collaborators.length, 0, 'Removes the partner collaborator for the design');
+  t.equal(
+    collaborators.length,
+    0,
+    'Removes the partner collaborator for the design'
+  );
 
   const events = await DesignEventsDAO.findByDesignId(design.id);
 
@@ -512,10 +532,12 @@ test('Partner pairing: accept', async (t: Test) => {
     productType: 'TEESHIRT'
   });
   const quotesRequest = await post('/pricing-quotes', {
-    body: [{
-      designId: design.id,
-      units: 300
-    }],
+    body: [
+      {
+        designId: design.id,
+        units: 300
+      }
+    ],
     headers: authHeader(admin.session.id)
   });
   const bid = await BidsDAO.create({
@@ -526,49 +548,59 @@ test('Partner pairing: accept', async (t: Test) => {
     id: uuid.v4(),
     quoteId: quotesRequest[1][0].id
   });
-  await put(
-    `/bids/${bid.id}/assignees/${partner.user.id}`,
-    { headers: authHeader(admin.session.id) }
-  );
+  await put(`/bids/${bid.id}/assignees/${partner.user.id}`, {
+    headers: authHeader(admin.session.id)
+  });
   const notificationStub = sandbox().stub(
     NotificationsService,
     'sendPartnerAcceptServiceBidNotification'
   );
 
-  const [missingBidResponse] = await post(
-    `/bids/${uuid.v4()}/accept`,
-    { headers: authHeader(partner.session.id) }
-  );
+  const [missingBidResponse] = await post(`/bids/${uuid.v4()}/accept`, {
+    headers: authHeader(partner.session.id)
+  });
   t.equal(missingBidResponse.status, 404, 'Unknown bid returns 404');
 
-  const [unauthorizedBidResponse] = await post(
-    `/bids/${bid.id}/accept`,
-    { headers: authHeader(designer.session.id) }
+  const [unauthorizedBidResponse] = await post(`/bids/${bid.id}/accept`, {
+    headers: authHeader(designer.session.id)
+  });
+  t.equal(
+    unauthorizedBidResponse.status,
+    403,
+    'Non-collaborator cannot accept bid'
   );
-  t.equal(unauthorizedBidResponse.status, 403, 'Non-collaborator cannot accept bid');
 
-  const [response, body] = await post(
-    `/bids/${bid.id}/accept`,
-    { headers: authHeader(partner.session.id) }
-  );
+  const [response, body] = await post(`/bids/${bid.id}/accept`, {
+    headers: authHeader(partner.session.id)
+  });
 
   const designEvents = await DesignEventsDAO.findByDesignId(design.id);
 
-  t.equal(response.status, 200, 'returns a 200 when successfully accepting a bid.');
-  t.deepEqual(body, {
-    ...bid,
-    createdAt: bid.createdAt.toISOString(),
-    design: {
-      ...design,
-      createdAt: design.createdAt.toISOString()
-    }
-  }, 'responds with the accepted bid and associated design.');
+  t.equal(
+    response.status,
+    200,
+    'returns a 200 when successfully accepting a bid.'
+  );
   t.deepEqual(
-    designEvents.map((event: DesignEvent): any => ({
-      actorId: event.actorId,
-      designId: event.designId,
-      type: event.type
-    })),
+    body,
+    {
+      ...bid,
+      createdAt: bid.createdAt.toISOString(),
+      design: {
+        ...design,
+        createdAt: design.createdAt.toISOString()
+      }
+    },
+    'responds with the accepted bid and associated design.'
+  );
+  t.deepEqual(
+    designEvents.map(
+      (event: DesignEvent): any => ({
+        actorId: event.actorId,
+        designId: event.designId,
+        type: event.type
+      })
+    ),
     [
       {
         actorId: admin.user.id,
@@ -589,7 +621,10 @@ test('Partner pairing: accept', async (t: Test) => {
     'Adds an acceptance event'
   );
 
-  const designCollaborator = await CollaboratorsDAO.findByDesignAndUser(design.id, partner.user.id);
+  const designCollaborator = await CollaboratorsDAO.findByDesignAndUser(
+    design.id,
+    partner.user.id
+  );
 
   t.equal(
     designCollaborator!.userId,
@@ -619,17 +654,15 @@ test('Partner pairing: accept on a deleted design', async (t: Test) => {
     generatePricing: true,
     userId: admin.user.id
   });
-  await put(
-    `/bids/${bid.id}/assignees/${partner.user.id}`,
-    { headers: authHeader(admin.session.id) }
-  );
+  await put(`/bids/${bid.id}/assignees/${partner.user.id}`, {
+    headers: authHeader(admin.session.id)
+  });
 
   await ProductDesignsDAO.deleteById(design.id);
 
-  const [noDesignResponse] = await post(
-    `/bids/${bid.id}/accept`,
-    { headers: authHeader(partner.session.id) }
-  );
+  const [noDesignResponse] = await post(`/bids/${bid.id}/accept`, {
+    headers: authHeader(partner.session.id)
+  });
 
   t.equal(noDesignResponse.status, 400, 'Expect the bid assignment to fail.');
 });
@@ -656,10 +689,12 @@ test('Partner pairing: reject', async (t: Test) => {
     productType: 'TEESHIRT'
   });
   const quotesRequest = await post('/pricing-quotes', {
-    body: [{
-      designId: design.id,
-      units: 300
-    }],
+    body: [
+      {
+        designId: design.id,
+        units: 300
+      }
+    ],
     headers: authHeader(admin.session.id)
   });
   const bid = await BidsDAO.create({
@@ -670,41 +705,43 @@ test('Partner pairing: reject', async (t: Test) => {
     id: uuid.v4(),
     quoteId: quotesRequest[1][0].id
   });
-  await put(
-    `/bids/${bid.id}/assignees/${partner.user.id}`,
-    { headers: authHeader(admin.session.id) }
-  );
+  await put(`/bids/${bid.id}/assignees/${partner.user.id}`, {
+    headers: authHeader(admin.session.id)
+  });
   const notificationStub = sandbox().stub(
     NotificationsService,
     'sendPartnerRejectServiceBidNotification'
   );
 
-  const [missingBidResponse] = await post(
-    `/bids/${uuid.v4()}/reject`,
-    { headers: authHeader(partner.session.id) }
-  );
+  const [missingBidResponse] = await post(`/bids/${uuid.v4()}/reject`, {
+    headers: authHeader(partner.session.id)
+  });
   t.equal(missingBidResponse.status, 404, 'Unknown bid returns 404');
 
-  const [unauthorizedBidResponse] = await post(
-    `/bids/${bid.id}/reject`,
-    { headers: authHeader(designer.session.id) }
+  const [unauthorizedBidResponse] = await post(`/bids/${bid.id}/reject`, {
+    headers: authHeader(designer.session.id)
+  });
+  t.equal(
+    unauthorizedBidResponse.status,
+    403,
+    'Non-collaborator cannot reject bid'
   );
-  t.equal(unauthorizedBidResponse.status, 403, 'Non-collaborator cannot reject bid');
 
-  const [response] = await post(
-    `/bids/${bid.id}/reject`,
-    { headers: authHeader(partner.session.id) }
-  );
+  const [response] = await post(`/bids/${bid.id}/reject`, {
+    headers: authHeader(partner.session.id)
+  });
 
   const designEvents = await DesignEventsDAO.findByDesignId(design.id);
 
   t.equal(response.status, 204);
   t.deepEqual(
-    designEvents.map((event: DesignEvent): any => ({
-      actorId: event.actorId,
-      designId: event.designId,
-      type: event.type
-    })),
+    designEvents.map(
+      (event: DesignEvent): any => ({
+        actorId: event.actorId,
+        designId: event.designId,
+        type: event.type
+      })
+    ),
     [
       {
         actorId: admin.user.id,
@@ -725,13 +762,12 @@ test('Partner pairing: reject', async (t: Test) => {
     'Adds a rejection event'
   );
 
-  const designCollaborator = await CollaboratorsDAO.findByDesignAndUser(design.id, partner.user.id);
-
-  t.equal(
-    designCollaborator,
-    null,
-    'The partner is no longer a collaborator'
+  const designCollaborator = await CollaboratorsDAO.findByDesignAndUser(
+    design.id,
+    partner.user.id
   );
+
+  t.equal(designCollaborator, null, 'The partner is no longer a collaborator');
 
   t.equal(notificationStub.callCount, 1);
 });

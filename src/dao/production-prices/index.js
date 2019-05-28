@@ -29,10 +29,13 @@ function deleteForVendorAndService(trx, vendorUserId, serviceId) {
 
 function createForVendorAndService(trx, vendorUserId, serviceId, prices) {
   requireValues({
-    trx, vendorUserId, serviceId, prices
+    trx,
+    vendorUserId,
+    serviceId,
+    prices
   });
 
-  const rowData = prices.map((data) => {
+  const rowData = prices.map(data => {
     return Object.assign({}, dataMapper.userDataToRowData(data), {
       id: uuid.v4(),
       service_id: serviceId,
@@ -44,40 +47,49 @@ function createForVendorAndService(trx, vendorUserId, serviceId, prices) {
     .transacting(trx)
     .insert(rowData)
     .returning('*')
-    .then((inserted) => {
+    .then(inserted => {
       return inserted
         .map(instantiate)
         .sort((a, b) => a.minimumUnits - b.minimumUnits);
     })
     .catch(rethrow)
-    .catch(filterError(rethrow.ERRORS.NotNullViolation, (err) => {
-      switch (err.column) {
-        case 'minimum_units':
-          throw new InvalidDataError('Minimum units must be provided');
-        case 'complexity_level':
-          throw new InvalidDataError('Complexity level must be provided');
-        case 'price_cents':
-          throw new InvalidDataError('Price must be provided');
-        default:
-          throw err;
-      }
-    }))
-    .catch(filterError(rethrow.ERRORS.ForeignKeyViolation, (err) => {
-      if (err.constraint === 'production_prices_service_id_fkey') {
-        throw new InvalidDataError('Invalid service ID');
-      }
-      throw err;
-    }));
+    .catch(
+      filterError(rethrow.ERRORS.NotNullViolation, err => {
+        switch (err.column) {
+          case 'minimum_units':
+            throw new InvalidDataError('Minimum units must be provided');
+          case 'complexity_level':
+            throw new InvalidDataError('Complexity level must be provided');
+          case 'price_cents':
+            throw new InvalidDataError('Price must be provided');
+          default:
+            throw err;
+        }
+      })
+    )
+    .catch(
+      filterError(rethrow.ERRORS.ForeignKeyViolation, err => {
+        if (err.constraint === 'production_prices_service_id_fkey') {
+          throw new InvalidDataError('Invalid service ID');
+        }
+        throw err;
+      })
+    );
 }
 
 function replaceForVendorAndService(vendorUserId, serviceId, prices) {
   requireValues({ vendorUserId, serviceId, prices });
 
-  return db.transaction((trx) => {
+  return db.transaction(trx => {
     deleteForVendorAndService(trx, vendorUserId, serviceId)
       .then(() => {
         if (prices.length > 0) {
-          return createForVendorAndService(trx, vendorUserId, serviceId, prices);
+          return createForVendorAndService(
+            trx,
+            vendorUserId,
+            serviceId,
+            prices
+          );
         }
 
         return [];
@@ -95,9 +107,11 @@ function findByVendor(vendorUserId) {
     .orderBy('minimum_units', 'asc')
     .then(prices => prices.map(instantiate))
     .catch(rethrow)
-    .catch(filterError(rethrow.ERRORS.InvalidTextRepresentation, () => {
-      throw new InvalidDataError('Invalid User ID');
-    }));
+    .catch(
+      filterError(rethrow.ERRORS.InvalidTextRepresentation, () => {
+        throw new InvalidDataError('Invalid User ID');
+      })
+    );
 }
 
 function findByVendorAndService(vendorUserId, serviceId) {
@@ -109,9 +123,11 @@ function findByVendorAndService(vendorUserId, serviceId) {
     .orderBy('minimum_units', 'asc')
     .then(prices => prices.map(instantiate))
     .catch(rethrow)
-    .catch(filterError(rethrow.ERRORS.InvalidTextRepresentation, () => {
-      throw new InvalidDataError('Invalid ID');
-    }));
+    .catch(
+      filterError(rethrow.ERRORS.InvalidTextRepresentation, () => {
+        throw new InvalidDataError('Invalid ID');
+      })
+    );
 }
 
 module.exports = {

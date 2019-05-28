@@ -16,14 +16,11 @@ export async function create(id: string = uuid.v4()): Promise<Task> {
     .insert(rowData, '*')
     .then((rows: TaskRow[]) => first<TaskRow>(rows));
 
-  if (!created) { throw new Error('Failed to create rows'); }
+  if (!created) {
+    throw new Error('Failed to create rows');
+  }
 
-  return validate<TaskRow, Task>(
-    TABLE_NAME,
-    isTaskRow,
-    dataAdapter,
-    created
-  );
+  return validate<TaskRow, Task>(TABLE_NAME, isTaskRow, dataAdapter, created);
 }
 
 export async function findById(id: string): Promise<Task | null> {
@@ -34,12 +31,9 @@ export async function findById(id: string): Promise<Task | null> {
 
   const task = tasks[0];
 
-  if (!task) { return null; }
+  if (!task) {
+    return null;
+  }
 
-  return validate<TaskRow, Task>(
-    TABLE_NAME,
-    isTaskRow,
-    dataAdapter,
-    task
-  );
+  return validate<TaskRow, Task>(TABLE_NAME, isTaskRow, dataAdapter, task);
 }

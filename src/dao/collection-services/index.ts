@@ -11,7 +11,9 @@ import { validate, validateEvery } from '../../services/validate-from-db';
 
 const TABLE_NAME = 'collection_services';
 
-export async function create(data: Uninserted<CollectionService>): Promise<CollectionService> {
+export async function create(
+  data: Uninserted<CollectionService>
+): Promise<CollectionService> {
   const rowData = dataAdapter.forInsertion({
     ...data,
     deletedAt: null
@@ -21,7 +23,9 @@ export async function create(data: Uninserted<CollectionService>): Promise<Colle
     .insert(rowData, '*')
     .then((rows: CollectionServiceRow[]) => first<CollectionServiceRow>(rows));
 
-  if (!created) { throw new Error('Failed to create a collectionService'); }
+  if (!created) {
+    throw new Error('Failed to create a collectionService');
+  }
 
   return validate<CollectionServiceRow, CollectionService>(
     TABLE_NAME,
@@ -39,7 +43,9 @@ export async function findById(id: string): Promise<CollectionService | null> {
 
   const collectionService = collectionServices[0];
 
-  if (!collectionService) { return null; }
+  if (!collectionService) {
+    return null;
+  }
 
   return validate<CollectionServiceRow, CollectionService>(
     TABLE_NAME,
@@ -49,14 +55,19 @@ export async function findById(id: string): Promise<CollectionService | null> {
   );
 }
 
-export async function update(id: string, data: CollectionService): Promise<CollectionService> {
+export async function update(
+  id: string,
+  data: CollectionService
+): Promise<CollectionService> {
   const rowData = pick(dataAdapter.forInsertion(data), UPDATABLE_PROPERTIES);
   const updated = await db(TABLE_NAME)
     .where({ id, deleted_at: null })
     .update(rowData, '*')
     .then((rows: CollectionServiceRow[]) => first<CollectionServiceRow>(rows));
 
-  if (!updated) { throw new Error('Failed to update row'); }
+  if (!updated) {
+    throw new Error('Failed to update row');
+  }
 
   return validate<CollectionServiceRow, CollectionService>(
     TABLE_NAME,
@@ -72,7 +83,9 @@ export async function deleteById(id: string): Promise<CollectionService> {
     .update({ deleted_at: new Date() }, '*')
     .then((rows: CollectionServiceRow[]) => first<CollectionServiceRow>(rows));
 
-  if (!deleted) { throw new Error('Failed to delete row'); }
+  if (!deleted) {
+    throw new Error('Failed to delete row');
+  }
 
   return validate<CollectionServiceRow, CollectionService>(
     TABLE_NAME,
@@ -82,7 +95,9 @@ export async function deleteById(id: string): Promise<CollectionService> {
   );
 }
 
-export async function findAllByCollectionId(collectionId: string): Promise<CollectionService[]> {
+export async function findAllByCollectionId(
+  collectionId: string
+): Promise<CollectionService[]> {
   const collectionServices: CollectionServiceRow[] = await db(TABLE_NAME)
     .select('*')
     .where({ collection_id: collectionId, deleted_at: null })

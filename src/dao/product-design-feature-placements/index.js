@@ -26,7 +26,7 @@ function deleteById(id) {
 }
 
 function createForSectionTrx(trx, sectionId, placements) {
-  const rows = placements.map((placementData) => {
+  const rows = placements.map(placementData => {
     return Object.assign({}, dataMapper.userDataToRowData(placementData), {
       id: uuid.v4(),
       section_id: sectionId
@@ -42,7 +42,7 @@ function createForSectionTrx(trx, sectionId, placements) {
 }
 
 function replaceForSection(sectionId, placements) {
-  return db.transaction(async (trx) => {
+  return db.transaction(async trx => {
     await deleteForSectionTrx(trx, sectionId);
 
     if (placements.length > 0) {

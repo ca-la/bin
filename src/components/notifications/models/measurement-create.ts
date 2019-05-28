@@ -1,7 +1,4 @@
-import {
-  BaseNotification,
-  BaseNotificationRow
-} from './base';
+import { BaseNotification, BaseNotificationRow } from './base';
 import { NotificationType } from '../domain-object';
 
 type BaseRow = Omit<

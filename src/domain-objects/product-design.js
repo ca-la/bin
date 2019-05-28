@@ -38,7 +38,7 @@ class ProductDesign {
 
     const data = dataMapper.rowDataToUserData(row);
     const imageLinks = generatePreviewLinks(data.imageIds);
-    const previewImageUrls = imageLinks.map((imageLink) => {
+    const previewImageUrls = imageLinks.map(imageLink => {
       return imageLink.previewLink;
     });
 

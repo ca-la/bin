@@ -18,7 +18,8 @@ const { requireValues } = require('../require-properties');
 async function transactInvoice(invoiceId, paymentMethodId, userId, trx) {
   // We acquire an update lock on the relevant invoice row to make sure we can
   // only be in the process of paying for one invoice at a given time.
-  await db.raw('select * from invoices where id = ? for update', [invoiceId])
+  await db
+    .raw('select * from invoices where id = ? for update', [invoiceId])
     .transacting(trx);
 
   let invoice = await InvoicesDAO.findByIdTrx(trx, invoiceId);
@@ -75,7 +76,10 @@ async function transactInvoice(invoiceId, paymentMethodId, userId, trx) {
   try {
     await SlackService.enqueueSend(paymentNotification);
   } catch (e) {
-    Logger.logWarning('There was a problem sending the payment notification to Slack', e);
+    Logger.logWarning(
+      'There was a problem sending the payment notification to Slack',
+      e
+    );
   }
 
   return invoice;
@@ -87,7 +91,7 @@ async function payInvoice(invoiceId, paymentMethodId, userId, trx) {
   if (trx) {
     return transactInvoice(invoiceId, paymentMethodId, userId, trx);
   }
-  return db.transaction(async (freshTrx) => {
+  return db.transaction(async freshTrx => {
     return transactInvoice(invoiceId, paymentMethodId, userId, freshTrx);
   });
 }

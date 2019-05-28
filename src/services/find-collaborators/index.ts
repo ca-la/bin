@@ -18,19 +18,34 @@ export default async function findCollaboratorsByRole(
   role: CollaboratorRole,
   trx?: Knex.Transaction
 ): Promise<Collaborator[]> {
-  const design = await ProductDesignsDAO.findById(designId, undefined, undefined, trx);
-  if (!design) { throw new Error(`No design found with ID ${designId}`); }
+  const design = await ProductDesignsDAO.findById(
+    designId,
+    undefined,
+    undefined,
+    trx
+  );
+  if (!design) {
+    throw new Error(`No design found with ID ${designId}`);
+  }
 
   switch (role) {
     case 'DESIGNER': {
-      const collaborator = await CollaboratorsDAO.findByDesignAndUser(designId, design.userId, trx);
+      const collaborator = await CollaboratorsDAO.findByDesignAndUser(
+        designId,
+        design.userId,
+        trx
+      );
       return collaborator ? [collaborator] : [];
     }
 
     case 'PARTNER': {
-      const designCollaborators = await CollaboratorsDAO.findByDesign(designId, trx);
-      return designCollaborators
-        .filter((collaborator: Collaborator) => collaborator.role === 'PARTNER');
+      const designCollaborators = await CollaboratorsDAO.findByDesign(
+        designId,
+        trx
+      );
+      return designCollaborators.filter(
+        (collaborator: Collaborator) => collaborator.role === 'PARTNER'
+      );
     }
 
     case 'CALA': {
@@ -42,9 +57,15 @@ export default async function findCollaboratorsByRole(
 
       const collection = collections[0];
 
-      if (!CALA_OPS_USER_ID) { throw new Error('No CALA Ops user!'); }
+      if (!CALA_OPS_USER_ID) {
+        throw new Error('No CALA Ops user!');
+      }
 
-      return CollaboratorsDAO.findByCollectionAndUser(collection.id, CALA_OPS_USER_ID, trx);
+      return CollaboratorsDAO.findByCollectionAndUser(
+        collection.id,
+        CALA_OPS_USER_ID,
+        trx
+      );
     }
   }
 }

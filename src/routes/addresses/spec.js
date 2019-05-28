@@ -5,15 +5,14 @@ const createUser = require('../../test-helpers/create-user');
 const { get, post, authHeader } = require('../../test-helpers/http');
 const { test } = require('../../test-helpers/fresh');
 
-test('GET /addresses returns a 401 when called without auth', (t) => {
-  return get('/addresses')
-    .then(([response, body]) => {
-      t.equal(response.status, 401);
-      t.equal(body.message, 'Authorization is required to access this resource');
-    });
+test('GET /addresses returns a 401 when called without auth', t => {
+  return get('/addresses').then(([response, body]) => {
+    t.equal(response.status, 401);
+    t.equal(body.message, 'Authorization is required to access this resource');
+  });
 });
 
-test('GET /addresses returns a 403 when called with someone elses user ID', (t) => {
+test('GET /addresses returns a 403 when called with someone elses user ID', t => {
   return createUser()
     .then(({ session }) => {
       return get('/addresses?userId=123', {
@@ -26,7 +25,7 @@ test('GET /addresses returns a 403 when called with someone elses user ID', (t) 
     });
 });
 
-test('GET /addresses returns a list of addresses', (t) => {
+test('GET /addresses returns a list of addresses', t => {
   let addressId;
 
   return createUser({ withAddress: true })
@@ -44,15 +43,14 @@ test('GET /addresses returns a list of addresses', (t) => {
     });
 });
 
-test('POST /addresses returns a 401 when called without auth', (t) => {
-  return post('/addresses')
-    .then(([response, body]) => {
-      t.equal(response.status, 401);
-      t.equal(body.message, 'Authorization is required to access this resource');
-    });
+test('POST /addresses returns a 401 when called without auth', t => {
+  return post('/addresses').then(([response, body]) => {
+    t.equal(response.status, 401);
+    t.equal(body.message, 'Authorization is required to access this resource');
+  });
 });
 
-test('POST /addresses returns a 400 when called with missing data', (t) => {
+test('POST /addresses returns a 400 when called with missing data', t => {
   return createUser()
     .then(({ session }) => {
       return post('/addresses', {
@@ -73,7 +71,7 @@ test('POST /addresses returns a 400 when called with missing data', (t) => {
     });
 });
 
-test('POST /addresses creates and returns an address', (t) => {
+test('POST /addresses creates and returns an address', t => {
   let userId;
 
   return createUser()

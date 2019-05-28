@@ -18,7 +18,11 @@ import first from '../../services/first';
 import { validate, validateEvery } from '../../services/validate-from-db';
 import { findAllDesignIdsThroughCollaborator } from '../product-designs/dao';
 import limitOrOffset from '../../services/limit-or-offset';
-import { ALIASES, getAssigneesBuilder, getBuilder as getTaskViewBuilder } from './view';
+import {
+  ALIASES,
+  getAssigneesBuilder,
+  getBuilder as getTaskViewBuilder
+} from './view';
 import {
   ALIASES as COLLABORATOR_ALIASES,
   getBuilder as getCollaboratorsBuilder
@@ -36,7 +40,8 @@ const TABLE_NAME = 'task_events';
  * The order is important so that your most recent designs show first
  */
 // tslint:disable-next-line:max-line-length
-const VIEW_ORDERING = 'design_created_at desc, design_stage_ordering asc, ordering asc';
+const VIEW_ORDERING =
+  'design_created_at desc, design_stage_ordering asc, ordering asc';
 
 export async function create(
   data: Unsaved<TaskEvent>,
@@ -56,7 +61,9 @@ export async function create(
     })
     .then((rows: TaskEventRow[]) => first<TaskEventRow>(rows));
 
-  if (!created) { throw new Error('Failed to create rows'); }
+  if (!created) {
+    throw new Error('Failed to create rows');
+  }
 
   const taskEvent = await getTaskViewBuilder()
     .where({ [ALIASES.taskId]: data.taskId })
@@ -66,35 +73,52 @@ export async function create(
       }
     })
     .then((rows: DetailTaskWithAssigneesEventRow[]) =>
-      first<DetailTaskWithAssigneesEventRow>(rows));
+      first<DetailTaskWithAssigneesEventRow>(rows)
+    );
 
-  if (!taskEvent) { throw new Error('Failed to get by id'); }
+  if (!taskEvent) {
+    throw new Error('Failed to get by id');
+  }
 
   return createDetailsTask(
-    validate<DetailTaskWithAssigneesEventRow, DetailsTaskWithAssigneesAdaptedRow>(
+    validate<
+      DetailTaskWithAssigneesEventRow,
+      DetailsTaskWithAssigneesAdaptedRow
+    >(
       TABLE_NAME,
       isDetailTaskWithAssigneeRow,
       detailsWithAssigneesAdapter,
       taskEvent
-    ));
+    )
+  );
 }
 
-export async function findById(id: string): Promise<DetailsTaskWithAssignees | null> {
-  const taskEvent: DetailTaskWithAssigneesEventRow | undefined =
-    await getTaskViewBuilder()
-      .where({ [ALIASES.taskId]: id })
-      .then((rows: DetailTaskWithAssigneesEventRow[]) =>
-        first<DetailTaskWithAssigneesEventRow>(rows));
+export async function findById(
+  id: string
+): Promise<DetailsTaskWithAssignees | null> {
+  const taskEvent:
+    | DetailTaskWithAssigneesEventRow
+    | undefined = await getTaskViewBuilder()
+    .where({ [ALIASES.taskId]: id })
+    .then((rows: DetailTaskWithAssigneesEventRow[]) =>
+      first<DetailTaskWithAssigneesEventRow>(rows)
+    );
 
-  if (!taskEvent) { return null; }
+  if (!taskEvent) {
+    return null;
+  }
 
   return createDetailsTask(
-    validate<DetailTaskWithAssigneesEventRow, DetailsTaskWithAssigneesAdaptedRow>(
+    validate<
+      DetailTaskWithAssigneesEventRow,
+      DetailsTaskWithAssigneesAdaptedRow
+    >(
       TABLE_NAME,
       isDetailTaskWithAssigneeRow,
       detailsWithAssigneesAdapter,
       taskEvent
-    ));
+    )
+  );
 }
 
 export async function findByDesignId(
@@ -107,7 +131,10 @@ export async function findByDesignId(
     .modify(limitOrOffset(limit, offset))
     .orderByRaw(VIEW_ORDERING);
 
-  return validateEvery<DetailTaskWithAssigneesEventRow, DetailsTaskWithAssigneesAdaptedRow>(
+  return validateEvery<
+    DetailTaskWithAssigneesEventRow,
+    DetailsTaskWithAssigneesAdaptedRow
+  >(
     TABLE_NAME,
     isDetailTaskWithAssigneeRow,
     detailsWithAssigneesAdapter,
@@ -125,7 +152,10 @@ export async function findByCollectionId(
     .modify(limitOrOffset(limit, offset))
     .orderByRaw(VIEW_ORDERING);
 
-  return validateEvery<DetailTaskWithAssigneesEventRow, DetailsTaskWithAssigneesAdaptedRow>(
+  return validateEvery<
+    DetailTaskWithAssigneesEventRow,
+    DetailsTaskWithAssigneesAdaptedRow
+  >(
     TABLE_NAME,
     isDetailTaskWithAssigneeRow,
     detailsWithAssigneesAdapter,
@@ -146,28 +176,34 @@ export async function findByUserId(
 ): Promise<DetailsTaskWithAssignees[]> {
   const designIds = await findAllDesignIdsThroughCollaborator(userId);
   const { assignFilterUserId, stageFilter, limit, offset } = options;
-  const collaboratorsBuilder = getCollaboratorsBuilder().modify((query: Knex.QueryBuilder) => {
-    if (assignFilterUserId) {
-      query.where({ [COLLABORATOR_ALIASES.userId]: assignFilterUserId });
+  const collaboratorsBuilder = getCollaboratorsBuilder().modify(
+    (query: Knex.QueryBuilder) => {
+      if (assignFilterUserId) {
+        query.where({ [COLLABORATOR_ALIASES.userId]: assignFilterUserId });
+      }
     }
-  });
-  const taskEvents: DetailTaskWithAssigneesEventRow[] = await
-    getTaskViewBuilder(collaboratorsBuilder)
+  );
+  const taskEvents: DetailTaskWithAssigneesEventRow[] = await getTaskViewBuilder(
+    collaboratorsBuilder
+  )
     .whereIn(ALIASES.designId, designIds)
     .modify((query: Knex.QueryBuilder) => {
       if (stageFilter) {
         query.where({ [ALIASES.stageTitle]: stageFilter });
       }
       if (assignFilterUserId) {
-        query.havingRaw(
-          'json_array_length((:assigneesBuilder)) > 0',
-          { assigneesBuilder: getAssigneesBuilder(collaboratorsBuilder) });
+        query.havingRaw('json_array_length((:assigneesBuilder)) > 0', {
+          assigneesBuilder: getAssigneesBuilder(collaboratorsBuilder)
+        });
       }
     })
     .modify(limitOrOffset(limit, offset))
     .orderByRaw(VIEW_ORDERING);
 
-  return validateEvery<DetailTaskWithAssigneesEventRow, DetailsTaskWithAssigneesAdaptedRow>(
+  return validateEvery<
+    DetailTaskWithAssigneesEventRow,
+    DetailsTaskWithAssigneesAdaptedRow
+  >(
     TABLE_NAME,
     isDetailTaskWithAssigneeRow,
     detailsWithAssigneesAdapter,
@@ -185,7 +221,10 @@ export async function findByStageId(
     .modify(limitOrOffset(limit, offset))
     .orderByRaw(VIEW_ORDERING);
 
-  return validateEvery<DetailTaskWithAssigneesEventRow, DetailsTaskWithAssigneesAdaptedRow>(
+  return validateEvery<
+    DetailTaskWithAssigneesEventRow,
+    DetailsTaskWithAssigneesAdaptedRow
+  >(
     TABLE_NAME,
     isDetailTaskWithAssigneeRow,
     detailsWithAssigneesAdapter,

@@ -10,13 +10,16 @@ test('GET /credits returns credit amount', async (t: Test) => {
   const { session, user } = await createUser();
 
   await db.transaction(async (trx: Knex.Transaction) => {
-    await addCredit({
-      amountCents: 12345,
-      createdBy: user.id,
-      description: 'For being a good customer',
-      expiresAt: null,
-      givenTo: user.id
-    }, trx);
+    await addCredit(
+      {
+        amountCents: 12345,
+        createdBy: user.id,
+        description: 'For being a good customer',
+        expiresAt: null,
+        givenTo: user.id
+      },
+      trx
+    );
   });
 
   const [response, body] = await API.get(`/credits?userId=${user.id}`, {
@@ -24,8 +27,5 @@ test('GET /credits returns credit amount', async (t: Test) => {
   });
 
   t.equal(response.status, 200);
-  t.deepEqual(
-    body,
-    { creditAmountCents: 12345 }
-  );
+  t.deepEqual(body, { creditAmountCents: 12345 });
 });

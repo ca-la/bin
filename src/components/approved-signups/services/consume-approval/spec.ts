@@ -20,6 +20,10 @@ test('ApprovedSignups DAO supports updating', async (t: Test) => {
 
   const updated = await consumeApproval(signup);
 
-  t.deepEqual(omit(signup, 'consumedAt'), omit(updated, 'consumedAt'), 'Is the same object');
+  t.deepEqual(
+    omit(signup, 'consumedAt'),
+    omit(updated, 'consumedAt'),
+    'Is the same object'
+  );
   t.not(updated.consumedAt, null, 'Set the consumedAt property');
 });

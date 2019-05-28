@@ -22,36 +22,36 @@ export enum LinkType {
 
 export type LinkBase =
   | {
-    type: LinkType.DesignAnnotation;
-    annotationId: string;
-    design: ProductDesign;
-    canvasId: string;
-    componentType: ComponentType;
-  }
+      type: LinkType.DesignAnnotation;
+      annotationId: string;
+      design: ProductDesign;
+      canvasId: string;
+      componentType: ComponentType;
+    }
   | {
-    type: LinkType.CollectionDesignTask;
-    design: ProductDesign;
-    collection: Collection | null;
-    task: DetailsTask;
-  }
+      type: LinkType.CollectionDesignTask;
+      design: ProductDesign;
+      collection: Collection | null;
+      task: DetailsTask;
+    }
   | {
-    type: LinkType.CollectionDesign;
-    design: ProductDesign;
-    collection: Collection;
-  }
+      type: LinkType.CollectionDesign;
+      design: ProductDesign;
+      collection: Collection;
+    }
   | {
-    type: LinkType.Design;
-    design: ProductDesign;
-  }
+      type: LinkType.Design;
+      design: ProductDesign;
+    }
   | {
-    type: LinkType.PartnerDesign;
-    design: ProductDesign;
-  }
+      type: LinkType.PartnerDesign;
+      design: ProductDesign;
+    }
   | {
-    type: LinkType.Collection;
-    collection: Collection;
-    isCheckout?: boolean;
-  };
+      type: LinkType.Collection;
+      collection: Collection;
+      isCheckout?: boolean;
+    };
 
 function constructHtmlLink(deepLink: string, title: string): string {
   return `
@@ -64,13 +64,16 @@ export default function getLinks(linkBase: LinkBase): Links {
   switch (linkBase.type) {
     case LinkType.DesignAnnotation: {
       const { annotationId, canvasId, componentType, design } = linkBase;
-      const tab = componentType === ComponentType.Artwork
-        ? 'tab=artwork&'
-        : componentType === ComponentType.Material
-        ? 'tab=materials&'
-        : '';
+      const tab =
+        componentType === ComponentType.Artwork
+          ? 'tab=artwork&'
+          : componentType === ComponentType.Material
+          ? 'tab=materials&'
+          : '';
       // tslint:disable-next-line:max-line-length
-      const deepLink = `${STUDIO_HOST}/designs?${tab}previewDesignId=${design.id}&canvasId=${canvasId}&annotationId=${annotationId}`;
+      const deepLink = `${STUDIO_HOST}/designs?${tab}previewDesignId=${
+        design.id
+      }&canvasId=${canvasId}&annotationId=${annotationId}`;
       const title = normalizeTitle(design);
       return {
         deepLink,
@@ -81,8 +84,10 @@ export default function getLinks(linkBase: LinkBase): Links {
     case LinkType.CollectionDesignTask: {
       const { collection, design, task } = linkBase;
       const deepLink = collection
-        // tslint:disable-next-line:max-line-length
-        ? `${STUDIO_HOST}/collections/${collection.id}/tasks/design/${design.id}?taskId=${task.id}&designId=${design.id}`
+        ? // tslint:disable-next-line:max-line-length
+          `${STUDIO_HOST}/collections/${collection.id}/tasks/design/${
+            design.id
+          }?taskId=${task.id}&designId=${design.id}`
         : `${STUDIO_HOST}/tasks?taskId=${task.id}&designId=${design.id}`;
       const title = normalizeTitle(task);
       return {
@@ -94,7 +99,9 @@ export default function getLinks(linkBase: LinkBase): Links {
     case LinkType.CollectionDesign: {
       const { collection, design } = linkBase;
       // tslint:disable-next-line:max-line-length
-      const deepLink = `${STUDIO_HOST}/collections/${collection.id}/designs?previewDesignId=${design.id}`;
+      const deepLink = `${STUDIO_HOST}/collections/${
+        collection.id
+      }/designs?previewDesignId=${design.id}`;
       const title = normalizeTitle(design);
       return {
         deepLink,
@@ -125,7 +132,9 @@ export default function getLinks(linkBase: LinkBase): Links {
     case LinkType.Collection: {
       const { collection, isCheckout } = linkBase;
       // tslint:disable-next-line:max-line-length
-      const deepLink = `${STUDIO_HOST}/collections/${collection.id}/designs${isCheckout ? '?isCheckout=true' : ''}`;
+      const deepLink = `${STUDIO_HOST}/collections/${collection.id}/designs${
+        isCheckout ? '?isCheckout=true' : ''
+      }`;
       const title = normalizeTitle(collection);
       return {
         deepLink,

@@ -1,15 +1,28 @@
 #!/bin/bash
-set -e
+
+set -o errexit
+set -o nounset
+set -o pipefail
 set -o noglob
 
-if [ "$CI" == "true" ]
-then
-  mkdir -p ./reports
-  npx eslint src --ignore-path .gitignore --format junit --output-file ./reports/eslint.xml
-  npx tslint -p tsconfig-tslint.json "src/**/*.ts" -t junit > ./reports/tslint.xml
-else
-  npx eslint src --ignore-path .gitignore
-  npx tslint -p tsconfig-tslint.json "src/**/*.ts" -t stylish
-fi
+# Run code format checking and linting
+# Usage: bin/lint
 
-npx cala-lint-commented-code
+main() {
+  bin/format -al
+  ci=${CI:-"false"}
+
+  if [ "$ci" == "true" ]
+  then
+    mkdir -p ./reports
+    npx eslint src --ignore-path .gitignore --format junit --output-file ./reports/eslint.xml
+    npx tslint -p tsconfig-tslint.json "src/**/*.ts" -t junit > ./reports/tslint.xml
+  else
+    npx eslint src --ignore-path .gitignore
+    npx tslint -p tsconfig-tslint.json "src/**/*.ts" -t stylish
+  fi
+
+  npx cala-lint-commented-code
+}
+
+main "$@"

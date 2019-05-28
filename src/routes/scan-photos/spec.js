@@ -8,7 +8,7 @@ const ScansDAO = require('../../dao/scans');
 const { put, authHeader } = require('../../test-helpers/http');
 const { test, sandbox } = require('../../test-helpers/fresh');
 
-test('PUT /scan-photos/:photoId updates a photo', (t) => {
+test('PUT /scan-photos/:photoId updates a photo', t => {
   const sb = sandbox();
 
   let scan;

@@ -21,9 +21,11 @@ test('findAndDuplicateVariants for a design with no variants', async (t: tape.Te
     userId: user.id
   });
 
-  const duplicatedVariants = await db.transaction(async (trx: Knex.Transaction) => {
-    return findAndDuplicateVariants(design.id, design.id, trx);
-  });
+  const duplicatedVariants = await db.transaction(
+    async (trx: Knex.Transaction) => {
+      return findAndDuplicateVariants(design.id, design.id, trx);
+    }
+  );
 
   t.equal(duplicatedVariants.length, 0, 'no variants were duplicated.');
 });
@@ -58,13 +60,17 @@ test('findAndDuplicateVariants for a design with variants', async (t: tape.Test)
     unitsToProduce: 456
   });
 
-  const duplicatedVariants = await db.transaction(async (trx: Knex.Transaction) => {
-    return findAndDuplicateVariants(design.id, newDesign.id, trx);
-  });
+  const duplicatedVariants = await db.transaction(
+    async (trx: Knex.Transaction) => {
+      return findAndDuplicateVariants(design.id, newDesign.id, trx);
+    }
+  );
 
-  const sortedDupes = duplicatedVariants.sort((a: Variant, b: Variant): number => {
-    return a.createdAt.getTime() - b.createdAt.getTime();
-  });
+  const sortedDupes = duplicatedVariants.sort(
+    (a: Variant, b: Variant): number => {
+      return a.createdAt.getTime() - b.createdAt.getTime();
+    }
+  );
 
   t.equal(sortedDupes.length, 2, 'Should return two duplicate variants');
   const dupeOne = sortedDupes[0];

@@ -38,29 +38,35 @@ function findSectionsByDesignId(designId) {
 function setSection(selectedOptionId, sectionId) {
   return db('product_design_selected_options')
     .where({ id: selectedOptionId })
-    .update({
-      section_id: sectionId
-    }, '*');
+    .update(
+      {
+        section_id: sectionId
+      },
+      '*'
+    );
 }
 
 async function attachSection(selectedOption) {
   const sections = await findSectionsByDesignId(selectedOption.design_id);
-  green(`Found ${sections.length} potential sections for selectedOption:${selectedOption.id}`);
-
-  const ownerSection = sections.find(
-    (section) => {
-      if (!section.panel_data) {
-        yellow(`No panel data for section:${section.id}`);
-        return false;
-      }
-
-      const panelData = section.panel_data;
-
-      const ownerPanel = panelData.panels.find(panel =>
-        panel.id === selectedOption.panel_id);
-      return Boolean(ownerPanel);
-    }
+  green(
+    `Found ${sections.length} potential sections for selectedOption:${
+      selectedOption.id
+    }`
   );
+
+  const ownerSection = sections.find(section => {
+    if (!section.panel_data) {
+      yellow(`No panel data for section:${section.id}`);
+      return false;
+    }
+
+    const panelData = section.panel_data;
+
+    const ownerPanel = panelData.panels.find(
+      panel => panel.id === selectedOption.panel_id
+    );
+    return Boolean(ownerPanel);
+  });
 
   if (!ownerSection) {
     red('Did not find a matching section!');
@@ -78,14 +84,16 @@ async function attachSection(selectedOption) {
   }
 }
 
-return db('product_design_selected_options').where({ section_id: null })
-  .then((selectedOptions) => {
-    Logger.log(`Found ${selectedOptions.length} selected options without sections`);
+return db('product_design_selected_options')
+  .where({ section_id: null })
+  .then(selectedOptions => {
+    Logger.log(
+      `Found ${selectedOptions.length} selected options without sections`
+    );
     let attaching = Promise.resolve();
 
-    selectedOptions.forEach((option) => {
-      attaching = attaching.then(() =>
-        attachSection(option));
+    selectedOptions.forEach(option => {
+      attaching = attaching.then(() => attachSection(option));
     });
 
     return attaching;

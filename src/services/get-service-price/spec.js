@@ -36,7 +36,7 @@ const prices = [
   }
 ];
 
-test('getServiceBasePrice returns the first eligible bucket', async (t) => {
+test('getServiceBasePrice returns the first eligible bucket', async t => {
   const price = getServiceBasePrice({
     productionPrices: prices,
     serviceId: 'WASH',
@@ -47,22 +47,24 @@ test('getServiceBasePrice returns the first eligible bucket', async (t) => {
   t.equal(price.id, '789');
 });
 
-test('getServiceBasePrice throws if no matching complexity is found', async (t) => {
+test('getServiceBasePrice throws if no matching complexity is found', async t => {
   t.throws(() =>
     getServiceBasePrice({
       productionPrices: prices,
       serviceId: 'WASH',
       unitsToProduce: 75,
       complexityLevel: 0
-    }));
+    })
+  );
 });
 
-test('getServiceBasePrice throws if no matching service is found', async (t) => {
+test('getServiceBasePrice throws if no matching service is found', async t => {
   t.throws(() =>
     getServiceBasePrice({
       productionPrices: prices,
       serviceId: 'DYE',
       unitsToProduce: 75,
       complexityLevel: 1
-    }));
+    })
+  );
 });

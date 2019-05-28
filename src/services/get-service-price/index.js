@@ -20,17 +20,21 @@ function getServiceBasePrice({
   complexityLevel
 }) {
   requireValues({
-    productionPrices, serviceId, unitsToProduce, complexityLevel
+    productionPrices,
+    serviceId,
+    unitsToProduce,
+    complexityLevel
   });
 
   // The list of buckets sorted high -> low by the minimum units, so the first
   // bucket we hit that's *lower* than the units to produce is the one we want
   const buckets = productionPrices
-    .filter(price =>
-      price.serviceId === serviceId &&
-      price.complexityLevel === complexityLevel)
-    .sort((a, b) =>
-      b.minimumUnits - a.minimumUnits);
+    .filter(
+      price =>
+        price.serviceId === serviceId &&
+        price.complexityLevel === complexityLevel
+    )
+    .sort((a, b) => b.minimumUnits - a.minimumUnits);
 
   for (const bucket of buckets) {
     if (bucket.minimumUnits <= unitsToProduce) {
@@ -38,7 +42,9 @@ function getServiceBasePrice({
     }
   }
 
-  throw new NoBucketError(`No eligible bucket found for ${unitsToProduce}/${complexityLevel}`);
+  throw new NoBucketError(
+    `No eligible bucket found for ${unitsToProduce}/${complexityLevel}`
+  );
 }
 
 module.exports = {

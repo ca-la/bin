@@ -32,13 +32,10 @@ test('POST /pricing-cost-inputs', async (t: Test) => {
     productType: 'DRESS'
   };
 
-  const [response, costInputs] = await post(
-    '/pricing-cost-inputs',
-    {
-      body: input,
-      headers: authHeader(session.id)
-    }
-  );
+  const [response, costInputs] = await post('/pricing-cost-inputs', {
+    body: input,
+    headers: authHeader(session.id)
+  });
 
   t.equal(response.status, 201);
   t.deepEqual(omit(costInputs, ['createdAt', 'id', 'deletedAt']), input);
@@ -70,13 +67,10 @@ test('GET /pricing-cost-inputs?designId', async (t: Test) => {
     productType: 'DRESS'
   };
 
-  await post(
-    '/pricing-cost-inputs',
-    {
-      body: input,
-      headers: authHeader(session.id)
-    }
-  );
+  await post('/pricing-cost-inputs', {
+    body: input,
+    headers: authHeader(session.id)
+  });
   const [response, costInputs] = await get(
     `/pricing-cost-inputs?designId=${design.id}`,
     { headers: authHeader(session.id) }
@@ -85,8 +79,7 @@ test('GET /pricing-cost-inputs?designId', async (t: Test) => {
   t.equal(response.status, 200);
   t.deepEqual(
     omit(costInputs[0], ['createdAt', 'id', 'deletedAt', 'processes']),
-    omit(input, 'processes'));
-  t.deepEqual(
-    costInputs[0].processes,
-    input.processes);
+    omit(input, 'processes')
+  );
+  t.deepEqual(costInputs[0].processes, input.processes);
 });

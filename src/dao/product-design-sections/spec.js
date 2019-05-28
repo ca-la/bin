@@ -6,7 +6,7 @@ const ProductDesignSectionsDAO = require('./index');
 const ProductDesignImagesDAO = require('../../components/images/dao');
 const { test } = require('../../test-helpers/fresh');
 
-test('ProductDesignSectionsDAO.create creates a section', (t) => {
+test('ProductDesignSectionsDAO.create creates a section', t => {
   return createUser({ withSession: false })
     .then(({ user }) => {
       return ProductDesignsDAO.create({
@@ -15,7 +15,7 @@ test('ProductDesignSectionsDAO.create creates a section', (t) => {
         userId: user.id
       });
     })
-    .then((design) => {
+    .then(design => {
       return ProductDesignSectionsDAO.create({
         designId: design.id,
         title: 'Front',
@@ -31,14 +31,14 @@ test('ProductDesignSectionsDAO.create creates a section', (t) => {
         position: 0
       });
     })
-    .then((section) => {
+    .then(section => {
       t.equal(section.templateName, 'okok');
       t.equal(section.panelData.panels[0].id, 'left-sleeve');
       t.equal(section.title, 'Front');
     });
 });
 
-test('ProductDesignSectionsDAO.update updates a section', (t) => {
+test('ProductDesignSectionsDAO.update updates a section', t => {
   let imageId;
   return createUser({ withSession: false })
     .then(({ user }) => {
@@ -65,7 +65,7 @@ test('ProductDesignSectionsDAO.update updates a section', (t) => {
         position: 0
       });
     })
-    .then((section) => {
+    .then(section => {
       return ProductDesignSectionsDAO.update(section.id, {
         templateName: null,
         customImageId: imageId,
@@ -80,7 +80,7 @@ test('ProductDesignSectionsDAO.update updates a section', (t) => {
         }
       });
     })
-    .then((section) => {
+    .then(section => {
       t.equal(section.customImageId, imageId);
       t.equal(section.panelData.panels[0].id, 'left-sleeve');
       t.equal(section.title, 'Front');

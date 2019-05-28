@@ -8,7 +8,9 @@ const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
 const requireAuth = require('../../middleware/require-auth');
 const sendCommentNotifications = require('../../services/send-comment-notifications');
 const UsersDAO = require('../../components/users/dao');
-const { attachDesignPermissions } = require('../../middleware/can-access-design');
+const {
+  attachDesignPermissions
+} = require('../../middleware/can-access-design');
 
 const router = new Router();
 
@@ -57,7 +59,10 @@ function* update() {
     canAccessUserResource.call(this, comment.userId);
   }
 
-  const updated = yield ProductDesignCommentsDAO.update(commentId, this.request.body);
+  const updated = yield ProductDesignCommentsDAO.update(
+    commentId,
+    this.request.body
+  );
   const withUser = yield attachUser(updated);
 
   this.body = withUser;

@@ -13,9 +13,7 @@ import { validate, validateEvery } from '../../services/validate-from-db';
 
 const TABLE_NAME = 'task_comments';
 
-export async function create(
-  data: TaskComment
-): Promise<TaskComment> {
+export async function create(data: TaskComment): Promise<TaskComment> {
   const rowData = dataAdapter.forInsertion(data);
   const taskComments: TaskCommentRow[] = await db(TABLE_NAME)
     .insert(rowData)
@@ -34,11 +32,13 @@ export async function create(
   );
 }
 
-export async function findByTaskId(
-  taskId: string
-): Promise<Comment[] | null> {
+export async function findByTaskId(taskId: string): Promise<Comment[] | null> {
   const comments: CommentRow[] = await db
-    .select(['comments.*', { user_name: 'users.name' }, { user_email: 'users.email' }])
+    .select([
+      'comments.*',
+      { user_name: 'users.name' },
+      { user_email: 'users.email' }
+    ])
     .from('comments')
     .join('task_comments', 'task_comments.comment_id', 'comments.id')
     .join('users', 'users.id', 'comments.user_id')

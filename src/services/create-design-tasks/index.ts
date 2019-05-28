@@ -46,7 +46,9 @@ export async function createTasksFromTemplates(
   // in a row, cache old results as we iterate through the task template list
   const collaboratorsByRole: CollaboratorsByRole = {};
 
-  async function getCollaborators(role: CollaboratorRole): Promise<Collaborator[]> {
+  async function getCollaborators(
+    role: CollaboratorRole
+  ): Promise<Collaborator[]> {
     let collaborators: Collaborator[];
     const cached = collaboratorsByRole[role];
     if (cached && cached.length > 0) {
@@ -59,12 +61,15 @@ export async function createTasksFromTemplates(
 
   for (const taskTemplate of taskTemplates) {
     const taskStage = stages.find(
-      (stage: ProductDesignStage): boolean => stage.stageTemplateId === taskTemplate.stageTemplateId
+      (stage: ProductDesignStage): boolean =>
+        stage.stageTemplateId === taskTemplate.stageTemplateId
     );
 
     if (!taskStage) {
       Logger.logServerError(
-        `No matching stage on design ${designId} found for task template ${taskTemplate.title}`
+        `No matching stage on design ${designId} found for task template ${
+          taskTemplate.title
+        }`
       );
 
       continue;
@@ -73,23 +78,29 @@ export async function createTasksFromTemplates(
     // TODO: Consider wrapping all 3 records up into a 'create-task' service.
     const task = await TasksDAO.create();
 
-    const taskEvent = await TaskEventsDAO.create({
-      createdBy: null,
-      description: taskTemplate.description || '',
-      designStageId: taskStage.id,
-      dueDate: null,
-      ordering: taskTemplate.ordering,
-      status: TaskStatus.NOT_STARTED,
-      taskId: task.id,
-      title: taskTemplate.title
-    }, trx);
+    const taskEvent = await TaskEventsDAO.create(
+      {
+        createdBy: null,
+        description: taskTemplate.description || '',
+        designStageId: taskStage.id,
+        dueDate: null,
+        ordering: taskTemplate.ordering,
+        status: TaskStatus.NOT_STARTED,
+        taskId: task.id,
+        title: taskTemplate.title
+      },
+      trx
+    );
 
     const collaborators = await getCollaborators(taskTemplate.assigneeRole);
 
-    await ProductDesignStageTasksDAO.create({
-      designStageId: taskStage.id,
-      taskId: task.id
-    }, trx);
+    await ProductDesignStageTasksDAO.create(
+      {
+        designStageId: taskStage.id,
+        taskId: task.id
+      },
+      trx
+    );
 
     if (collaborators.length > 0) {
       // Using first collaborator in each role for now - can reevaluate if/when
@@ -105,7 +116,11 @@ export async function createTasksFromTemplates(
       // approval without a partner assigned.
       //
       // tslint:disable-next-line:max-line-length
-      Logger.logServerError(`No matching collaborators with role ${taskTemplate.assigneeRole} are shared on design ${designId}`);
+      Logger.logServerError(
+        `No matching collaborators with role ${
+          taskTemplate.assigneeRole
+        } are shared on design ${designId}`
+      );
     }
 
     tasks.push(taskEvent);
@@ -120,16 +135,22 @@ async function createPostCreationTasks(
   const stageTemplates = await StageTemplatesDAO.findAll();
   const { designId, designPhase } = options;
 
-  const stages: ProductDesignStage[] = await Promise.all(stageTemplates.map(
-    (template: StageTemplate): Promise<ProductDesignStage> => {
-      return ProductDesignStagesDAO.create({
-        description: template.description,
-        designId,
-        ordering: template.ordering,
-        stageTemplateId: template.id,
-        title: template.title
-      }, trx);
-    }));
+  const stages: ProductDesignStage[] = await Promise.all(
+    stageTemplates.map(
+      (template: StageTemplate): Promise<ProductDesignStage> => {
+        return ProductDesignStagesDAO.create(
+          {
+            description: template.description,
+            designId,
+            ordering: template.ordering,
+            stageTemplateId: template.id,
+            title: template.title
+          },
+          trx
+        );
+      }
+    )
+  );
   const taskTemplates = await TaskTemplatesDAO.findByPhase(designPhase);
 
   return await createTasksFromTemplates(designId, taskTemplates, stages, trx);

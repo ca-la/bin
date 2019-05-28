@@ -27,9 +27,9 @@ export async function announceTaskCommentCreation(
  * Publishes a task comment deletion to the Iris SQS.
  */
 export async function announceTaskCommentDeletion(options: {
-  actorId: string,
-  commentId: string,
-  taskId: string
+  actorId: string;
+  commentId: string;
+  taskId: string;
 }): Promise<RealtimeTaskCommentDeletion> {
   const { actorId, commentId, taskId } = options;
 

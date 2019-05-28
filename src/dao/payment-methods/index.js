@@ -17,7 +17,7 @@ const TABLE_NAME = 'payment_methods';
 async function findById(id, trx) {
   return db(TABLE_NAME)
     .where({ id, deleted_at: null })
-    .modify((query) => {
+    .modify(query => {
       if (trx) {
         query.transacting(trx);
       }
@@ -43,7 +43,7 @@ async function create(data, trx) {
 
   return db(TABLE_NAME)
     .insert(rowData, '*')
-    .modify((query) => {
+    .modify(query => {
       if (trx) {
         query.transacting(trx);
       }

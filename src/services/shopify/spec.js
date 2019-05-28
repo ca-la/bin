@@ -7,7 +7,7 @@ const ShopifyClient = require('./index');
 
 // Run these tests with RUN_SHOPIFY_TESTS=true to run the integration tests
 // against a real Shopify store.
-const testLive = (process.env.RUN_SHOPIFY_TESTS === 'true') ? test : skip;
+const testLive = process.env.RUN_SHOPIFY_TESTS === 'true' ? test : skip;
 const liveClient = new ShopifyClient(ShopifyClient.CALA_STORE_CREDENTIALS);
 
 function getPhone() {
@@ -20,12 +20,13 @@ function getPhone() {
 
 const phone1 = getPhone();
 
-testLive('getRedemptionCount', (t) => {
-  return liveClient.getRedemptionCount('CHEAPO')
+testLive('getRedemptionCount', t => {
+  return liveClient
+    .getRedemptionCount('CHEAPO')
     .then(count => t.equal(count, 1));
 });
 
-testLive('createCustomer', async (t) => {
+testLive('createCustomer', async t => {
   const customer = await liveClient.createCustomer({
     name: 'Customer Name',
     phone: phone1
@@ -36,61 +37,58 @@ testLive('createCustomer', async (t) => {
   t.equal(customer.phone, phone1);
 });
 
-testLive('updateCustomerByPhone', (t) => {
-  return liveClient.updateCustomerByPhone(phone1, {
-    last_name: 'Something',
-    first_name: 'Someone',
-    email: 'someone@example.com',
-    addresses: [
-      {
-        default: true,
-        address1: '1025 Oak st',
-        address2: 'B',
-        company: 'CALA',
-        city: 'San Francisco',
-        province: 'California',
-        phone: phone1,
-        zip: '94117',
-        last_name: 'Something',
-        first_name: 'Someone'
-      }
-    ]
-  })
-    .then((customer) => {
+testLive('updateCustomerByPhone', t => {
+  return liveClient
+    .updateCustomerByPhone(phone1, {
+      last_name: 'Something',
+      first_name: 'Someone',
+      email: 'someone@example.com',
+      addresses: [
+        {
+          default: true,
+          address1: '1025 Oak st',
+          address2: 'B',
+          company: 'CALA',
+          city: 'San Francisco',
+          province: 'California',
+          phone: phone1,
+          zip: '94117',
+          last_name: 'Something',
+          first_name: 'Someone'
+        }
+      ]
+    })
+    .then(customer => {
       t.equal(customer.first_name, 'Someone');
       t.equal(customer.last_name, 'Something');
       t.equal(customer.addresses[0].address1, '1025 Oak st');
     });
 });
 
-testLive('getCollects', (t) => {
-  return liveClient.getCollects()
-    .then((collects) => {
-      t.equal(typeof collects[0].product_id, 'number');
-    });
+testLive('getCollects', t => {
+  return liveClient.getCollects().then(collects => {
+    t.equal(typeof collects[0].product_id, 'number');
+  });
 });
 
-test('parseError parses string errors', async (t) => {
+test('parseError parses string errors', async t => {
   const errorMessage = ShopifyClient.parseError('wowza');
   t.equal(errorMessage, 'wowza');
 });
 
-test('parseError parses object errors', async (t) => {
+test('parseError parses object errors', async t => {
   const errorMessage = ShopifyClient.parseError({
-    phone: [
-      'is invalid',
-      'is very bad'
-    ],
-    name: [
-      'also bad',
-      'not good'
-    ]
+    phone: ['is invalid', 'is very bad'],
+    name: ['also bad', 'not good']
   });
 
-  t.equal(errorMessage, 'phone is invalid, phone is very bad, name also bad, name not good');
+  t.equal(
+    errorMessage,
+    'phone is invalid, phone is very bad, name also bad, name not good'
+  );
 });
 
-test('parseError parses object errors', async (t) => {
+test('parseError parses object errors', async t => {
   const errorMessage = ShopifyClient.parseError({
     phone: 'no bueno'
   });
@@ -98,8 +96,10 @@ test('parseError parses object errors', async (t) => {
   t.equal(errorMessage, 'phone no bueno');
 });
 
-test('getCustomerMetafields includes high limit in URL', async (t) => {
-  const requestStub = sandbox().stub(ShopifyClient.prototype, 'makeRequest').returns(Promise.resolve([{}, {}]));
+test('getCustomerMetafields includes high limit in URL', async t => {
+  const requestStub = sandbox()
+    .stub(ShopifyClient.prototype, 'makeRequest')
+    .returns(Promise.resolve([{}, {}]));
 
   const client = new ShopifyClient(ShopifyClient.CALA_STORE_CREDENTIALS);
 

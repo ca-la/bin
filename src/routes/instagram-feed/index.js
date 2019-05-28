@@ -13,7 +13,9 @@ const router = new Router();
  * own CORS stuff if this gets abused.
  */
 function* getFeed() {
-  const response = yield fetch(`https://www.instagram.com/${this.params.handle}/media/`);
+  const response = yield fetch(
+    `https://www.instagram.com/${this.params.handle}/media/`
+  );
 
   if (response.status !== 200) {
     // Instagram appears to have removed this API as of 2017-11-07

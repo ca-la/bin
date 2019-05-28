@@ -208,14 +208,24 @@ test('CollaboratorTask DAO supports multiple simultaneous deletions', async (t: 
     taskId: taskOne.id
   });
 
-  const emptyDeletionResults = await deleteAllByCollaboratorIdsAndTaskId([], taskOne.id);
-  t.equal(emptyDeletionResults, 0, 'Specifying no collaborators does not delete anything');
+  const emptyDeletionResults = await deleteAllByCollaboratorIdsAndTaskId(
+    [],
+    taskOne.id
+  );
+  t.equal(
+    emptyDeletionResults,
+    0,
+    'Specifying no collaborators does not delete anything'
+  );
 
   const deletionResults = await deleteAllByCollaboratorIdsAndTaskId(
     [collaboratorOne.id, collaboratorThree.id],
     taskOne.id
   );
-  t.deepEqual(await
-    findAllByTaskId(taskOne.id), [collaboratorTaskTwo], 'Record is still there.');
+  t.deepEqual(
+    await findAllByTaskId(taskOne.id),
+    [collaboratorTaskTwo],
+    'Record is still there.'
+  );
   t.deepEqual(deletionResults, 2, 'Deleted the collaborator task associations');
 });

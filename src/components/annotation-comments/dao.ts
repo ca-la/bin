@@ -24,8 +24,13 @@ export async function create(
 ): Promise<AnnotationComment> {
   const rowData = dataAdapter.forInsertion(data);
   const annotationComments: AnnotationCommentRow[] = trx
-    ? await db(TABLE_NAME).transacting(trx).insert(rowData).returning('*')
-    : await db(TABLE_NAME).insert(rowData).returning('*');
+    ? await db(TABLE_NAME)
+        .transacting(trx)
+        .insert(rowData)
+        .returning('*')
+    : await db(TABLE_NAME)
+        .insert(rowData)
+        .returning('*');
   const annotationComment = annotationComments[0];
 
   if (!annotationComment) {
@@ -40,7 +45,9 @@ export async function create(
   );
 }
 
-export async function findByAnnotationId(annotationId: string): Promise<CommentWithMeta[]> {
+export async function findByAnnotationId(
+  annotationId: string
+): Promise<CommentWithMeta[]> {
   const comments: CommentWithMetaRow[] = await db(VIEW_NAME)
     .select('*')
     .from('annotation_comments_view')
@@ -77,7 +84,9 @@ export async function findByAnnotationIds(
   const commentsByAnnotation: AnnotationToCommentsWithMentions = {};
   for (const validatedComment of validatedComments) {
     const { annotationId, ...baseComment } = validatedComment;
-    const baseCommentWithMentions = await addAtMentionDetailsForComment(baseComment);
+    const baseCommentWithMentions = await addAtMentionDetailsForComment(
+      baseComment
+    );
 
     const values = commentsByAnnotation[annotationId];
     if (values) {

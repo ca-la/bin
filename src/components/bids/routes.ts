@@ -59,7 +59,9 @@ function not(predicateFunction: (a: any) => boolean): (a: any) => boolean {
   return (a: any): boolean => !predicateFunction(a);
 }
 
-function* listAllBids(this: Koa.Application.Context): AsyncIterableIterator<any> {
+function* listAllBids(
+  this: Koa.Application.Context
+): AsyncIterableIterator<any> {
   const { limit, offset, state }: GetListQuery = this.query;
 
   if (!limit || !offset) {
@@ -72,7 +74,9 @@ function* listAllBids(this: Koa.Application.Context): AsyncIterableIterator<any>
   this.status = 200;
 }
 
-function* listBidsByAssignee(this: Koa.Application.Context): AsyncIterableIterator<any> {
+function* listBidsByAssignee(
+  this: Koa.Application.Context
+): AsyncIterableIterator<any> {
   const { state, userId } = this.query;
 
   if (!userId) {
@@ -87,8 +91,9 @@ function* listBidsByAssignee(this: Koa.Application.Context): AsyncIterableIterat
       break;
 
     case 'EXPIRED':
-      bids = yield BidsDAO.findOpenByTargetId(userId)
-        .then((openBids: Bid[]): Bid[] => openBids.filter(isExpired));
+      bids = yield BidsDAO.findOpenByTargetId(userId).then(
+        (openBids: Bid[]): Bid[] => openBids.filter(isExpired)
+      );
       break;
 
     case 'REJECTED':
@@ -97,8 +102,9 @@ function* listBidsByAssignee(this: Koa.Application.Context): AsyncIterableIterat
 
     case 'OPEN':
     case undefined:
-      bids = yield BidsDAO.findOpenByTargetId(userId)
-        .then((openBids: Bid[]): Bid[] => openBids.filter(not(isExpired)));
+      bids = yield BidsDAO.findOpenByTargetId(userId).then(
+        (openBids: Bid[]): Bid[] => openBids.filter(not(isExpired))
+      );
       break;
 
     default:
@@ -116,15 +122,20 @@ function* listBids(this: Koa.Application.Context): AsyncIterableIterator<any> {
 
   if (isAdmin && !userId) {
     yield listAllBids;
-  } else if (isAdmin || (userId === this.state.userId)) {
+  } else if (isAdmin || userId === this.state.userId) {
     yield listBidsByAssignee;
   } else {
-    this.throw(403, 'You must either be an admin or retrieve bids for your own user!');
+    this.throw(
+      403,
+      'You must either be an admin or retrieve bids for your own user!'
+    );
     return;
   }
 }
 
-function* assignBidToPartner(this: Koa.Application.Context): AsyncIterableIterator<any> {
+function* assignBidToPartner(
+  this: Koa.Application.Context
+): AsyncIterableIterator<any> {
   const { bidId, userId } = this.params;
 
   const bid = yield BidsDAO.findById(bidId);
@@ -147,7 +158,10 @@ function* assignBidToPartner(this: Koa.Application.Context): AsyncIterableIterat
 
   const hasActive = yield hasActiveBids(bid.quoteId, userId);
   if (hasActive) {
-    this.throw(403, `There are active bids for user ${userId} on the design ${design.id}`);
+    this.throw(
+      403,
+      `There are active bids for user ${userId} on the design ${design.id}`
+    );
     return;
   }
 
@@ -162,7 +176,10 @@ function* assignBidToPartner(this: Koa.Application.Context): AsyncIterableIterat
     type: 'BID_DESIGN'
   });
 
-  const maybeCollaborator = yield CollaboratorsDAO.findByDesignAndUser(design.id, userId);
+  const maybeCollaborator = yield CollaboratorsDAO.findByDesignAndUser(
+    design.id,
+    userId
+  );
   const now = new Date();
   const cancellationDate = new Date(now.getTime() + MILLISECONDS_TO_EXPIRE);
 
@@ -182,12 +199,18 @@ function* assignBidToPartner(this: Koa.Application.Context): AsyncIterableIterat
     });
   }
 
-  NotificationsService.sendPartnerDesignBid(design.id, this.state.userId, target.id);
+  NotificationsService.sendPartnerDesignBid(
+    design.id,
+    this.state.userId,
+    target.id
+  );
 
   this.status = 204;
 }
 
-function* listBidAssignees(this: Koa.Application.Context): AsyncIterableIterator<any> {
+function* listBidAssignees(
+  this: Koa.Application.Context
+): AsyncIterableIterator<any> {
   const { bidId } = this.params;
   const assignees = yield UsersDAO.findByBidId(bidId);
 
@@ -195,7 +218,9 @@ function* listBidAssignees(this: Koa.Application.Context): AsyncIterableIterator
   this.status = 200;
 }
 
-function* removeBidFromPartner(this: Koa.Application.Context): AsyncIterableIterator<any> {
+function* removeBidFromPartner(
+  this: Koa.Application.Context
+): AsyncIterableIterator<any> {
   const { bidId, userId } = this.params;
 
   const bid = yield BidsDAO.findById(bidId);
@@ -237,7 +262,9 @@ interface AcceptDesignBidContext extends Koa.Application.Context {
   };
 }
 
-export function* acceptDesignBid(this: AcceptDesignBidContext): AsyncIterableIterator<void> {
+export function* acceptDesignBid(
+  this: AcceptDesignBidContext
+): AsyncIterableIterator<void> {
   const { bidId } = this.params;
   const { userId } = this.state;
 
@@ -255,7 +282,11 @@ export function* acceptDesignBid(this: AcceptDesignBidContext): AsyncIterableIte
     quote.designId!,
     userId
   );
-  this.assert(collaborator, 403, 'You may only accept a bid you have been assigned to');
+  this.assert(
+    collaborator,
+    403,
+    'You may only accept a bid you have been assigned to'
+  );
 
   yield DesignEventsDAO.create({
     actorId: userId,
@@ -284,10 +315,11 @@ export function* acceptDesignBid(this: AcceptDesignBidContext): AsyncIterableIte
 
   this.status = 200;
   this.body = maybeIOBid;
-
 }
 
-export function* rejectDesignBid(this: AcceptDesignBidContext): AsyncIterableIterator<void> {
+export function* rejectDesignBid(
+  this: AcceptDesignBidContext
+): AsyncIterableIterator<void> {
   const { bidId } = this.params;
   const { userId } = this.state;
 
@@ -305,7 +337,11 @@ export function* rejectDesignBid(this: AcceptDesignBidContext): AsyncIterableIte
     quote.designId!,
     userId
   );
-  this.assert(collaborator, 403, 'You may only reject a bid you have been assigned to');
+  this.assert(
+    collaborator,
+    403,
+    'You may only reject a bid you have been assigned to'
+  );
 
   yield DesignEventsDAO.create({
     actorId: userId,

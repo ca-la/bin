@@ -45,22 +45,31 @@ test('CohortUsers DAO supports creation and retrieval in a transaction', async (
   const { user: otherUser } = await createUser({ withSession: false });
 
   await db.transaction(async (trx: Knex.Transaction) => {
-    const cohort = await CohortsDAO.create({
-      createdBy: user.id,
-      description: 'A bunch of delightful designers',
-      id: uuid.v4(),
-      slug: 'moma-demo-june-2020',
-      title: 'MoMA Demo Participants'
-    }, trx);
+    const cohort = await CohortsDAO.create(
+      {
+        createdBy: user.id,
+        description: 'A bunch of delightful designers',
+        id: uuid.v4(),
+        slug: 'moma-demo-june-2020',
+        title: 'MoMA Demo Participants'
+      },
+      trx
+    );
 
-    const created = await CohortUsersDAO.create({
-      cohortId: cohort.id,
-      userId: user.id
-    }, trx);
-    const createdOther = await CohortUsersDAO.create({
-      cohortId: cohort.id,
-      userId: otherUser.id
-    }, trx);
+    const created = await CohortUsersDAO.create(
+      {
+        cohortId: cohort.id,
+        userId: user.id
+      },
+      trx
+    );
+    const createdOther = await CohortUsersDAO.create(
+      {
+        cohortId: cohort.id,
+        userId: otherUser.id
+      },
+      trx
+    );
 
     const foundByCohort = await CohortUsersDAO.findAllByCohort(cohort.id, trx);
     const foundByUser = await CohortUsersDAO.findAllByUser(user.id, trx);

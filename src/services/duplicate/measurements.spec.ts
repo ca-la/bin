@@ -19,12 +19,26 @@ test('findAndDuplicateMeasurements', async (t: tape.Test) => {
   });
 
   await db.transaction(async (trx: Knex.Transaction) => {
-    const duplicateMeasurements = await findAndDuplicateMeasurements(canvas.id, canvas.id, trx);
-    const m1 = duplicateMeasurements.find((m: Measurement): boolean => m.name === 'wattup');
-    const m2 = duplicateMeasurements.find((m: Measurement): boolean => m.name === 'yo');
-    if (!m1 || !m2) { throw new Error('Duplicate measurements were not found!'); }
+    const duplicateMeasurements = await findAndDuplicateMeasurements(
+      canvas.id,
+      canvas.id,
+      trx
+    );
+    const m1 = duplicateMeasurements.find(
+      (m: Measurement): boolean => m.name === 'wattup'
+    );
+    const m2 = duplicateMeasurements.find(
+      (m: Measurement): boolean => m.name === 'yo'
+    );
+    if (!m1 || !m2) {
+      throw new Error('Duplicate measurements were not found!');
+    }
 
-    t.equal(duplicateMeasurements.length, 2, 'Only the two created measurements were duplicated.');
+    t.equal(
+      duplicateMeasurements.length,
+      2,
+      'Only the two created measurements were duplicated.'
+    );
     t.deepEqual(
       [m1, m2],
       [

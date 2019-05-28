@@ -15,7 +15,9 @@ test('PromoCodesDAO supports creation and retrieval', async (t: Test) => {
   });
 
   const code = await PromoCodesDAO.findByCode('freeBie');
-  if (!code) { throw new Error('No code'); }
+  if (!code) {
+    throw new Error('No code');
+  }
   t.equal(code.creditAmountCents, 1239);
 });
 
@@ -68,17 +70,18 @@ test('PromoCodesDAO allows updating codes', async (t: Test) => {
   });
 
   t.equal(
-    updated &&
-    updated.codeExpiresAt &&
-    updated.codeExpiresAt.toISOString(),
-    (new Date('2019-01-01')).toISOString()
+    updated && updated.codeExpiresAt && updated.codeExpiresAt.toISOString(),
+    new Date('2019-01-01').toISOString()
   );
 });
 
 test('PromoCodesDAO.update returns null if none match', async (t: Test) => {
-  const updated = await PromoCodesDAO.update('00000000-0000-0000-0000-000000000000', {
-    codeExpiresAt: new Date('2019-01-01')
-  });
+  const updated = await PromoCodesDAO.update(
+    '00000000-0000-0000-0000-000000000000',
+    {
+      codeExpiresAt: new Date('2019-01-01')
+    }
+  );
 
   t.equal(updated, null);
 });

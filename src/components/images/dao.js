@@ -15,17 +15,20 @@ const TABLE_NAME = 'images';
 
 function create(data, trx) {
   return db(TABLE_NAME)
-    .insert({
-      id: data.id || uuid.v4(),
-      user_id: data.userId,
-      original_height_px: data.originalHeightPx,
-      original_width_px: data.originalWidthPx,
-      mime_type: data.mimeType,
-      title: data.title,
-      description: data.description,
-      upload_completed_at: data.uploadCompletedAt || null
-    }, '*')
-    .modify((query) => {
+    .insert(
+      {
+        id: data.id || uuid.v4(),
+        user_id: data.userId,
+        original_height_px: data.originalHeightPx,
+        original_width_px: data.originalWidthPx,
+        mime_type: data.mimeType,
+        title: data.title,
+        description: data.description,
+        upload_completed_at: data.uploadCompletedAt || null
+      },
+      '*'
+    )
+    .modify(query => {
       if (trx) {
         query.transacting(trx);
       }
@@ -37,10 +40,13 @@ function create(data, trx) {
 
 function findByUserId(userId) {
   return db(TABLE_NAME)
-    .where({
-      user_id: userId,
-      deleted_at: null
-    }, '*')
+    .where(
+      {
+        user_id: userId,
+        deleted_at: null
+      },
+      '*'
+    )
     .orderBy('created_at', 'desc')
     .catch(rethrow)
     .then(images => images.map(instantiate));
@@ -57,14 +63,17 @@ function findById(id) {
 function update(id, data) {
   return db(TABLE_NAME)
     .where({ id })
-    .update(compact({
-      description: data.description,
-      mime_type: data.mimeType,
-      original_height_px: data.originalHeightPx,
-      original_width_px: data.originalWidthPx,
-      title: data.title,
-      upload_completed_at: data.uploadCompletedAt
-    }), '*')
+    .update(
+      compact({
+        description: data.description,
+        mime_type: data.mimeType,
+        original_height_px: data.originalHeightPx,
+        original_width_px: data.originalWidthPx,
+        title: data.title,
+        upload_completed_at: data.uploadCompletedAt
+      }),
+      '*'
+    )
     .catch(rethrow)
     .then(first)
     .then(instantiate);

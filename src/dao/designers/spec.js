@@ -5,10 +5,10 @@ const InvalidDataError = require('../../errors/invalid-data');
 const { createDesigners } = require('../../test-helpers/factories/designer');
 const { test } = require('../../test-helpers/fresh');
 
-test('DesignersDAO.getList returns many designers and their photos', (t) => {
+test('DesignersDAO.getList returns many designers and their photos', t => {
   return createDesigners()
     .then(() => DesignersDAO.getList())
-    .then((list) => {
+    .then(list => {
       t.equal(list.length, 2);
       t.equal(list[0].name, 'Designer 1');
       t.equal(list[0].bioHtml, 'The original and best');
@@ -31,10 +31,10 @@ test('DesignersDAO.getList returns many designers and their photos', (t) => {
     });
 });
 
-test('DesignersDAO.getById returns a single designer and their photos', (t) => {
+test('DesignersDAO.getById returns a single designer and their photos', t => {
   return createDesigners()
     .then(() => DesignersDAO.getById('5de8a9ee-e46b-4e5b-b7f9-bffb3c3b405c'))
-    .then((designer) => {
+    .then(designer => {
       t.equal(designer.name, 'Designer 1');
       t.equal(designer.twitterHandle, 'thisiscala');
 
@@ -47,29 +47,28 @@ test('DesignersDAO.getById returns a single designer and their photos', (t) => {
     });
 });
 
-test('DesignersDAO.create creates designers', (t) => {
+test('DesignersDAO.create creates designers', t => {
   return DesignersDAO.create({
     name: 'J Designer',
     twitterHandle: 'desiigner',
     instagramHandle: 'desiigner',
     position: 1,
     bioHtml: '<h1>the real deal</h1>'
-  })
-    .then((designer) => {
-      t.equal(designer.name, 'J Designer');
-      t.equal(designer.twitterHandle, 'desiigner');
-      t.equal(designer.instagramHandle, 'desiigner');
-      t.equal(designer.position, 1);
-      t.equal(designer.bioHtml, '<h1>the real deal</h1>');
-    });
+  }).then(designer => {
+    t.equal(designer.name, 'J Designer');
+    t.equal(designer.twitterHandle, 'desiigner');
+    t.equal(designer.instagramHandle, 'desiigner');
+    t.equal(designer.position, 1);
+    t.equal(designer.bioHtml, '<h1>the real deal</h1>');
+  });
 });
 
-test('DesignersDAO.getById throws InvalidDataError on invalid ID format', (t) => {
+test('DesignersDAO.getById throws InvalidDataError on invalid ID format', t => {
   return DesignersDAO.getById('123')
     .then(() => {
       throw new Error("Shouldn't get here");
     })
-    .catch((err) => {
+    .catch(err => {
       t.equal(err instanceof InvalidDataError, true);
       t.equal(err.message, 'Invalid designer ID format');
     });

@@ -31,12 +31,15 @@ export default async function spendCredit(
       totalCents: creditPaymentAmount
     });
 
-    await removeCredit({
-      amountCents: creditPaymentAmount,
-      createdBy: userId,
-      description: `Spent credits on invoice ${invoice.id}`,
-      givenTo: userId
-    }, trx);
+    await removeCredit(
+      {
+        amountCents: creditPaymentAmount,
+        createdBy: userId,
+        description: `Spent credits on invoice ${invoice.id}`,
+        givenTo: userId
+      },
+      trx
+    );
   }
 
   return {

@@ -10,13 +10,17 @@ import requireAuth = require('../../middleware/require-auth');
 
 const router = new Router();
 
-function* create(this: Koa.Application.Context): AsyncIterableIterator<ProductDesignStage> {
+function* create(
+  this: Koa.Application.Context
+): AsyncIterableIterator<ProductDesignStage> {
   if (!isDesignStageRequest(this.request.body)) {
     return this.throw(400, 'Invalid request body');
   }
 
   const body: ProductDesignStageRequest = this.request.body;
-  const productDesignStage: ProductDesignStage = yield ProductDesignStagesDAO.create(body);
+  const productDesignStage: ProductDesignStage = yield ProductDesignStagesDAO.create(
+    body
+  );
   this.body = productDesignStage;
   this.status = 201;
 }
@@ -25,21 +29,26 @@ interface GetListQuery {
   designId?: string;
 }
 
-function* getList(this: Koa.Application.Context): AsyncIterableIterator<ProductDesignStage> {
+function* getList(
+  this: Koa.Application.Context
+): AsyncIterableIterator<ProductDesignStage> {
   const query: GetListQuery = this.query;
 
   if (!query.designId) {
     return this.throw(400, 'Missing design ID');
   }
 
-  const stages: ProductDesignStage[] = yield ProductDesignStagesDAO
-    .findAllByDesignId(query.designId);
+  const stages: ProductDesignStage[] = yield ProductDesignStagesDAO.findAllByDesignId(
+    query.designId
+  );
 
   this.body = stages;
   this.status = 200;
 }
 
-function* getTitlesList(this: Koa.Application.Context): AsyncIterableIterator<ProductDesignStage> {
+function* getTitlesList(
+  this: Koa.Application.Context
+): AsyncIterableIterator<ProductDesignStage> {
   const stageTitles: string[] = yield ProductDesignStagesDAO.findAllTitles();
 
   this.body = stageTitles;

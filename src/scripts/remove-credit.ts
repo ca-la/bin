@@ -13,10 +13,12 @@ run()
     log(`${green}Successfully removed credit!`);
     process.exit();
   })
-  .catch((err: any): void => {
-    logServerError(err);
-    process.exit(1);
-  });
+  .catch(
+    (err: any): void => {
+      logServerError(err);
+      process.exit(1);
+    }
+  );
 
 async function run(): Promise<void> {
   const userId = process.argv[2];
@@ -27,12 +29,15 @@ async function run(): Promise<void> {
   }
 
   await db.transaction(async (trx: Knex.Transaction) => {
-    await CreditsDAO.removeCredit({
-      amountCents: Number(creditAmountString),
-      createdBy: CALA_OPS_USER_ID,
-      description: 'Manual reduction of credit',
-      givenTo: userId
-    }, trx);
+    await CreditsDAO.removeCredit(
+      {
+        amountCents: Number(creditAmountString),
+        createdBy: CALA_OPS_USER_ID,
+        description: 'Manual reduction of credit',
+        givenTo: userId
+      },
+      trx
+    );
   });
 
   log(green, `Removed ${creditAmountString} cents of credit`, reset);

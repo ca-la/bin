@@ -87,14 +87,20 @@ test('ComponentRelationships DAO supports deleting', async (t: tape.Test) => {
 test('ComponentRelationships DAO supports finding by a component', async (t: tape.Test) => {
   const { component } = await generateComponent({});
   const { component: componentTwo } = await generateComponent({});
-  const { componentRelationship: relationshipOne } = await generateComponentRelationship({
+  const {
+    componentRelationship: relationshipOne
+  } = await generateComponentRelationship({
     sourceComponentId: component.id,
     targetComponentId: component.id
   });
-  const { componentRelationship: relationshipTwo } = await generateComponentRelationship({
+  const {
+    componentRelationship: relationshipTwo
+  } = await generateComponentRelationship({
     sourceComponentId: component.id
   });
-  const { componentRelationship: relationshipThree } = await generateComponentRelationship({
+  const {
+    componentRelationship: relationshipThree
+  } = await generateComponentRelationship({
     targetComponentId: component.id
   });
   await generateComponentRelationship({});
@@ -104,13 +110,21 @@ test('ComponentRelationships DAO supports finding by a component', async (t: tap
 
   await ComponentRelationshipsDAO.del(relationshipFour.id);
 
-  const relationships = await ComponentRelationshipsDAO.findAllByComponent(component.id);
+  const relationships = await ComponentRelationshipsDAO.findAllByComponent(
+    component.id
+  );
   t.deepEqual(
     relationships,
     [relationshipOne, relationshipTwo, relationshipThree],
     'Returns only the relationships the supplied component is a part of.'
   );
 
-  const emptyRelationships = await ComponentRelationshipsDAO.findAllByComponent(componentTwo.id);
-  t.deepEqual(emptyRelationships, [], 'Returns no relationships if they do not exist.');
+  const emptyRelationships = await ComponentRelationshipsDAO.findAllByComponent(
+    componentTwo.id
+  );
+  t.deepEqual(
+    emptyRelationships,
+    [],
+    'Returns no relationships if they do not exist.'
+  );
 });

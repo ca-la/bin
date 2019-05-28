@@ -11,7 +11,10 @@ import { validate, validateEvery } from '../../services/validate-from-db';
 
 const TABLE_NAME = 'line_items';
 
-export async function create(data: LineItem, trx?: Knex.Transaction): Promise<LineItem> {
+export async function create(
+  data: LineItem,
+  trx?: Knex.Transaction
+): Promise<LineItem> {
   if (!data || !isLineItem(data)) {
     throw new Error('Invalid data');
   }
@@ -25,7 +28,9 @@ export async function create(data: LineItem, trx?: Knex.Transaction): Promise<Li
     })
     .then((rows: LineItemRow[]) => first<LineItemRow>(rows));
 
-  if (!created) { throw new Error('Failed to create rows'); }
+  if (!created) {
+    throw new Error('Failed to create rows');
+  }
 
   return validate<LineItemRow, LineItem>(
     TABLE_NAME,
@@ -42,7 +47,9 @@ export async function findById(id: string): Promise<LineItem | null> {
     .limit(1)
     .then((rows: LineItemRow[]) => first<LineItemRow>(rows));
 
-  if (!lineItem) { return null; }
+  if (!lineItem) {
+    return null;
+  }
 
   return validate<LineItemRow, LineItem>(
     TABLE_NAME,

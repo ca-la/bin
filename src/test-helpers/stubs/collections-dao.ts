@@ -3,8 +3,10 @@ import * as Sinon from 'sinon';
 import * as CollectionsDAO from '../../dao/collections';
 import Collection from '../../domain-objects/collection';
 
-export const stubFindWithUncostedDesigns = (
-): { collections: Collection[], stub: Sinon.SinonStub } => {
+export const stubFindWithUncostedDesigns = (): {
+  collections: Collection[];
+  stub: Sinon.SinonStub;
+} => {
   const collections = [
     {
       createdAt: new Date('2019-02-04T23:06:17.537Z'),

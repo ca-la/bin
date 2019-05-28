@@ -22,7 +22,7 @@ const rl = readline.createInterface({
   output: process.stdout
 });
 
-type Stringly<T extends { id: any, created_at: any, version: any }> = {
+type Stringly<T extends { id: any; created_at: any; version: any }> = {
   [P in keyof Omit<T, 'id' | 'created_at' | 'version'>]: string
 };
 
@@ -137,9 +137,14 @@ async function main(): Promise<void> {
 
   let isConfirmed = cli.flags.force;
   if (!isConfirmed) {
-    const confirmInsert = await ask(rl, `
-Are you sure you want to insert ${casted.length} rows into ${tableName}? If so, please confirm
-by typing '${tableName.toUpperCase()}': `);
+    const confirmInsert = await ask(
+      rl,
+      `
+Are you sure you want to insert ${
+        casted.length
+      } rows into ${tableName}? If so, please confirm
+by typing '${tableName.toUpperCase()}': `
+    );
     if (confirmInsert === tableName.toUpperCase()) {
       isConfirmed = true;
     } else {
@@ -155,25 +160,38 @@ by typing '${tableName.toUpperCase()}': `);
 
   if (cli.flags.verbose) {
     log(`${raw.length - deduplicated.length} duplicate rows removed.`);
-    log(`Inserted ${JSON.stringify(insertResult.length)} rows at version ${latestVersion + 1}`);
+    log(
+      `Inserted ${JSON.stringify(
+        insertResult.length
+      )} rows at version ${latestVersion + 1}`
+    );
   }
 }
 
-function ask(readlineInterface: readline.ReadLine, question: string): Promise<string> {
-  return new Promise((resolve: (value: string) => void): void => {
-    readlineInterface.question(question, resolve);
-  });
+function ask(
+  readlineInterface: readline.ReadLine,
+  question: string
+): Promise<string> {
+  return new Promise(
+    (resolve: (value: string) => void): void => {
+      readlineInterface.question(question, resolve);
+    }
+  );
 }
 
 async function getLatestVersion(tableName: string): Promise<number> {
-  const row = await db(tableName).max('version').first();
+  const row = await db(tableName)
+    .max('version')
+    .first();
 
   return row.max !== null ? row.max : -1;
 }
 
-function buildInsertQuery(tableName: string, casted: DomainObject[]): Knex.QueryBuilder {
-  return db(tableName)
-    .insert(casted, 'id');
+function buildInsertQuery(
+  tableName: string,
+  casted: DomainObject[]
+): Knex.QueryBuilder {
+  return db(tableName).insert(casted, 'id');
 }
 
 function castFromRaw(
@@ -201,7 +219,10 @@ function castFromRaw(
     return raw.map(toProcess.bind(null, latestVersion));
   }
 
-  if (tableName === 'pricing_process_timelines' && isEveryRawProcessTimeline(raw)) {
+  if (
+    tableName === 'pricing_process_timelines' &&
+    isEveryRawProcessTimeline(raw)
+  ) {
     return raw.map(toProcessTimeline.bind(null, latestVersion));
   }
 
@@ -250,22 +271,14 @@ function isEveryRawType(candidate: object[]): candidate is RawType[] {
 }
 
 function isRawLabel(candidate: object): candidate is RawLabel {
-  return hasOnlyProperties(
-    candidate,
-    'minimum_units',
-    'unit_cents'
-  );
+  return hasOnlyProperties(candidate, 'minimum_units', 'unit_cents');
 }
 function isEveryRawLabel(candidate: object[]): candidate is RawLabel[] {
   return candidate.every(isRawLabel);
 }
 
 function isRawMargin(candidate: object): candidate is RawMargin {
-  return hasOnlyProperties(
-    candidate,
-    'minimum_units',
-    'margin'
-  );
+  return hasOnlyProperties(candidate, 'minimum_units', 'margin');
 }
 function isEveryRawMargin(candidate: object[]): candidate is RawMargin[] {
   return candidate.every(isRawMargin);
@@ -293,15 +306,29 @@ function isRawProcessTimeline(candidate: object): candidate is RawProcess {
     'time_ms'
   );
 }
-function isEveryRawProcessTimeline(candidate: object[]): candidate is RawProcessTimeline[] {
+function isEveryRawProcessTimeline(
+  candidate: object[]
+): candidate is RawProcessTimeline[] {
   return candidate.every(isRawProcessTimeline);
 }
 
-function toConstants(latestVersion: number, raw: RawConstants): PricingConstantRow {
+function toConstants(
+  latestVersion: number,
+  raw: RawConstants
+): PricingConstantRow {
   return {
-    branded_labels_additional_cents: parseInt(raw.branded_labels_additional_cents, 10),
-    branded_labels_minimum_cents: parseInt(raw.branded_labels_minimum_cents, 10),
-    branded_labels_minimum_units: parseInt(raw.branded_labels_minimum_units, 10),
+    branded_labels_additional_cents: parseInt(
+      raw.branded_labels_additional_cents,
+      10
+    ),
+    branded_labels_minimum_cents: parseInt(
+      raw.branded_labels_minimum_cents,
+      10
+    ),
+    branded_labels_minimum_units: parseInt(
+      raw.branded_labels_minimum_units,
+      10
+    ),
     created_at: new Date(),
     grading_cents: parseInt(raw.grading_cents, 10),
     id: uuid.v4(),

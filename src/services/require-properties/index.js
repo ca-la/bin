@@ -3,18 +3,11 @@
 const Logger = require('../../services/logger');
 
 function isEmptyString(val) {
-  return (
-    typeof val === 'string' &&
-    val.trim() === ''
-  );
+  return typeof val === 'string' && val.trim() === '';
 }
 
 function exists(val) {
-  return (
-    val !== null &&
-    val !== undefined &&
-    !isEmptyString(val)
-  );
+  return val !== null && val !== undefined && !isEmptyString(val);
 }
 
 /**
@@ -34,7 +27,7 @@ function requireProperties(obj, ...props) {
 
   const missingProps = [];
 
-  props.forEach((prop) => {
+  props.forEach(prop => {
     if (!exists(obj[prop])) {
       missingProps.push(prop);
     }
@@ -61,7 +54,7 @@ function requirePropertiesFormatted(data, messages) {
     throw new Error('Missing required information');
   }
 
-  Object.keys(messages).forEach((key) => {
+  Object.keys(messages).forEach(key => {
     if (!exists(data[key])) {
       throw new Error(`Missing required information: ${messages[key]}`);
     }
@@ -129,8 +122,9 @@ function hasProperties(data, ...props) {
  *   - will return false
  */
 function hasOnlyProperties(data, ...props) {
-  return Object.keys(data).length === props.length &&
-    hasProperties(data, ...props);
+  return (
+    Object.keys(data).length === props.length && hasProperties(data, ...props)
+  );
 }
 
 module.exports = {

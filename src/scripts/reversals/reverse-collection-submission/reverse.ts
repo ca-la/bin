@@ -20,7 +20,9 @@ function isRowsOfIds(candidate: any): candidate is WithIds[] {
 /**
  * Rolls back a collection that was submitted to a pre-submission state.
  */
-export async function reverseSubmissionRecords(collectionId?: string): Promise<void> {
+export async function reverseSubmissionRecords(
+  collectionId?: string
+): Promise<void> {
   if (!collectionId) {
     throw new Error('Usage: reverse-collection-submission.ts [collection ID]');
   }
@@ -36,7 +38,7 @@ export async function reverseSubmissionRecords(collectionId?: string): Promise<v
           .where({ collection_id: collectionId });
       })
       .andWhereRaw(
-        '(design_events.type = \'SUBMIT_DESIGN\' OR design_events.type = \'COMMIT_COST_INPUTS\')'
+        "(design_events.type = 'SUBMIT_DESIGN' OR design_events.type = 'COMMIT_COST_INPUTS')"
       )
       .transacting(trx);
 

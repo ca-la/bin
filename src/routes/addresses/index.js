@@ -14,7 +14,11 @@ const router = new Router();
  * GET /addresses?userId=ABC123
  */
 function* getList() {
-  this.assert(this.query.userId === this.state.userId, 403, 'You can only request addresses for your own user');
+  this.assert(
+    this.query.userId === this.state.userId,
+    403,
+    'You can only request addresses for your own user'
+  );
 
   const addresses = yield AddressesDAO.findByUserId(this.query.userId);
 
@@ -30,8 +34,9 @@ function* createAddress() {
     userId: this.state.userId
   });
 
-  const address = yield AddressesDAO.create(addressData)
-    .catch(filterError(InvalidDataError, err => this.throw(400, err)));
+  const address = yield AddressesDAO.create(addressData).catch(
+    filterError(InvalidDataError, err => this.throw(400, err))
+  );
 
   this.status = 201;
   this.body = address;

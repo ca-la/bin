@@ -13,22 +13,30 @@ interface DuplicateDesignsBody {
 }
 
 function isDuplicateDesignsBody(body: any): body is DuplicateDesignsBody {
-  return body.designIds &&
+  return (
+    body.designIds &&
     Array.isArray(body.designIds) &&
-    body.designIds.every((id: any) => typeof id === 'string');
+    body.designIds.every((id: any) => typeof id === 'string')
+  );
 }
 
-function* duplicateDesigns(this: Koa.Application.Context): AsyncIterableIterator<any> {
+function* duplicateDesigns(
+  this: Koa.Application.Context
+): AsyncIterableIterator<any> {
   const { body } = this.request;
 
   if (!isDuplicateDesignsBody(body)) {
     return this.throw(400, 'Missing design ID list');
   }
 
-  const duplicated = yield DuplicationService.duplicateDesigns(this.state.userId, body.designIds)
-    .catch(filterError(ResourceNotFoundError, (err: ResourceNotFoundError) =>
+  const duplicated = yield DuplicationService.duplicateDesigns(
+    this.state.userId,
+    body.designIds
+  ).catch(
+    filterError(ResourceNotFoundError, (err: ResourceNotFoundError) =>
       this.throw(400, err)
-    ));
+    )
+  );
 
   this.body = duplicated;
   this.status = 201;

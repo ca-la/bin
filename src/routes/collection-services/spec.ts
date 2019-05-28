@@ -85,82 +85,79 @@ test(`PATCH ${API_PATH}/:collectionServiceId updates a CollectionService`, async
   });
 });
 
-test(
-  `DELETE ${API_PATH}/:collectionServiceId deletes a CollectionService`,
-  async (t: tape.Test) => {
-    const { session, user } = await createUser();
-    const collectionServiceId = uuid.v4();
-    const collection = await createCollection({
-      createdAt: new Date(),
-      createdBy: user.id,
-      deletedAt: null,
-      description: null,
-      id: uuid.v4(),
-      title: 'FW19'
-    });
+test(`DELETE ${API_PATH}/:collectionServiceId deletes a CollectionService`, async (t: tape.Test) => {
+  const { session, user } = await createUser();
+  const collectionServiceId = uuid.v4();
+  const collection = await createCollection({
+    createdAt: new Date(),
+    createdBy: user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
+    title: 'FW19'
+  });
 
-    await CollectionServiceDAO.create({
-      collectionId: collection.id,
-      createdBy: user.id,
-      deletedAt: null,
-      id: collectionServiceId,
-      needsDesignConsulting: true,
-      needsFulfillment: true,
-      needsPackaging: true
-    });
+  await CollectionServiceDAO.create({
+    collectionId: collection.id,
+    createdBy: user.id,
+    deletedAt: null,
+    id: collectionServiceId,
+    needsDesignConsulting: true,
+    needsFulfillment: true,
+    needsPackaging: true
+  });
 
-    const [response] = await del(`${API_PATH}/${collectionServiceId}`, {
+  const [response] = await del(`${API_PATH}/${collectionServiceId}`, {
+    headers: authHeader(session.id)
+  });
+  t.equal(response.status, 204);
+});
+
+test(`GET ${API_PATH}/?collectionId=:collectionId returns CollectionServices`, async (t: tape.Test) => {
+  const { session, user } = await createUser();
+  const collectionServiceIdOne = uuid.v4();
+  const collectionServiceIdTwo = uuid.v4();
+
+  const collection = await createCollection({
+    createdAt: new Date(),
+    createdBy: user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
+    title: 'FW19'
+  });
+
+  const serviceOne = await CollectionServiceDAO.create({
+    collectionId: collection.id,
+    createdBy: user.id,
+    deletedAt: null,
+    id: collectionServiceIdOne,
+    needsDesignConsulting: true,
+    needsFulfillment: true,
+    needsPackaging: true
+  });
+  const serviceTwo = await CollectionServiceDAO.create({
+    collectionId: collection.id,
+    createdBy: user.id,
+    deletedAt: null,
+    id: collectionServiceIdTwo,
+    needsDesignConsulting: false,
+    needsFulfillment: true,
+    needsPackaging: false
+  });
+
+  const [response, body] = await get(
+    `${API_PATH}/?collectionId=${collection.id}`,
+    {
       headers: authHeader(session.id)
-    });
-    t.equal(response.status, 204);
-  }
-);
-
-test(
-  `GET ${API_PATH}/?collectionId=:collectionId returns CollectionServices`,
-  async (t: tape.Test) => {
-    const { session, user } = await createUser();
-    const collectionServiceIdOne = uuid.v4();
-    const collectionServiceIdTwo = uuid.v4();
-
-    const collection = await createCollection({
-      createdAt: new Date(),
-      createdBy: user.id,
-      deletedAt: null,
-      description: null,
-      id: uuid.v4(),
-      title: 'FW19'
-    });
-
-    const serviceOne = await CollectionServiceDAO.create({
-      collectionId: collection.id,
-      createdBy: user.id,
-      deletedAt: null,
-      id: collectionServiceIdOne,
-      needsDesignConsulting: true,
-      needsFulfillment: true,
-      needsPackaging: true
-    });
-    const serviceTwo = await CollectionServiceDAO.create({
-      collectionId: collection.id,
-      createdBy: user.id,
-      deletedAt: null,
-      id: collectionServiceIdTwo,
-      needsDesignConsulting: false,
-      needsFulfillment: true,
-      needsPackaging: false
-    });
-
-    const [response, body] = await get(`${API_PATH}/?collectionId=${collection.id}`, {
-      headers: authHeader(session.id)
-    });
-    t.equal(response.status, 200);
-    t.deepEqual(
-      body.map((service: CollectionService): string => service.id),
-      [serviceOne.id, serviceTwo.id]
-    );
-  }
-);
+    }
+  );
+  t.equal(response.status, 200);
+  t.deepEqual(body.map((service: CollectionService): string => service.id), [
+    serviceOne.id,
+    serviceTwo.id
+  ]);
+});
 
 test(`GET ${API_PATH}/ without a collectionId fails`, async (t: tape.Test) => {
   const { session } = await createUser();

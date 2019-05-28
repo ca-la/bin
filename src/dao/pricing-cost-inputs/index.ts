@@ -4,10 +4,7 @@ import { omit } from 'lodash';
 
 import * as db from '../../services/db';
 import first from '../../services/first';
-import {
-  validate,
-  validateEvery
-} from '../../services/validate-from-db';
+import { validate, validateEvery } from '../../services/validate-from-db';
 import { Process } from '../../domain-objects/pricing';
 import PricingCostInput, {
   dataAdapter,
@@ -19,11 +16,16 @@ const TABLE_NAME = 'pricing_cost_inputs';
 
 type WithoutProcesses = Omit<PricingCostInputRow, 'processes'>;
 
-export async function create(inputs: PricingCostInput): Promise<PricingCostInput> {
-  const rowData = omit({
-    id: uuid.v4(),
-    ...dataAdapter.forInsertion(inputs)
-  }, ['processes']);
+export async function create(
+  inputs: PricingCostInput
+): Promise<PricingCostInput> {
+  const rowData = omit(
+    {
+      id: uuid.v4(),
+      ...dataAdapter.forInsertion(inputs)
+    },
+    ['processes']
+  );
   const inputsCreated: WithoutProcesses | undefined = await db(TABLE_NAME)
     .insert(rowData)
     .returning('*')
@@ -49,12 +51,7 @@ export async function create(inputs: PricingCostInput): Promise<PricingCostInput
     processes: processesCreated
   };
 
-  return validate(
-    TABLE_NAME,
-    isPricingCostInputRow,
-    dataAdapter,
-    created
-  );
+  return validate(TABLE_NAME, isPricingCostInputRow, dataAdapter, created);
 }
 
 async function attachProcesses(inputs: WithoutProcesses): Promise<any> {
@@ -67,7 +64,6 @@ async function attachProcesses(inputs: WithoutProcesses): Promise<any> {
     ...inputs,
     processes
   };
-
 }
 
 export async function findById(id: string): Promise<PricingCostInput | null> {
@@ -82,12 +78,7 @@ export async function findById(id: string): Promise<PricingCostInput | null> {
 
   const inputs = await attachProcesses(withoutProcesses);
 
-  return validate(
-    TABLE_NAME,
-    isPricingCostInputRow,
-    dataAdapter,
-    inputs
-  );
+  return validate(TABLE_NAME, isPricingCostInputRow, dataAdapter, inputs);
 }
 
 export async function findByDesignId(
@@ -106,10 +97,5 @@ export async function findByDesignId(
 
   const inputs = await Promise.all(withoutProcesses.map(attachProcesses));
 
-  return validateEvery(
-    TABLE_NAME,
-    isPricingCostInputRow,
-    dataAdapter,
-    inputs
-  );
+  return validateEvery(TABLE_NAME, isPricingCostInputRow, dataAdapter, inputs);
 }

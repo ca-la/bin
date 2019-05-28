@@ -12,7 +12,9 @@ import { authHeader, post } from '../../test-helpers/http';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 
 test('POST /fit-partners/send-fit-link creates and sends a scan link', async (t: Test) => {
-  sandbox().stub(FitPartnerScanService, 'saveFittingUrl').resolves();
+  sandbox()
+    .stub(FitPartnerScanService, 'saveFittingUrl')
+    .resolves();
 
   const { session, user } = await createUser();
 
@@ -25,7 +27,9 @@ test('POST /fit-partners/send-fit-link creates and sends a scan link', async (t:
     smsCopy: 'Click here: {{link}}'
   });
 
-  const twilioStub = sandbox().stub(Twilio, 'sendSMS').resolves();
+  const twilioStub = sandbox()
+    .stub(Twilio, 'sendSMS')
+    .resolves();
 
   const [response] = await post('/fit-partners/send-fit-link', {
     body: {
@@ -44,186 +48,203 @@ test('POST /fit-partners/send-fit-link creates and sends a scan link', async (t:
   t.equal(twilioStub.firstCall.args[1].includes(scan.id), true);
 });
 
-test(
-  'POST /fit-partners/:partnerId/shopify-order-created handles a webhook payload',
-  async (t: Test) => {
-    sandbox().stub(FitPartnerScanService, 'saveFittingUrl').resolves();
-    sandbox().stub(Configuration, 'FIT_PARTNER_SMS_PRODUCT_ID_BLACKLIST')
-      .value([111, 222, 444, 6789]);
+test('POST /fit-partners/:partnerId/shopify-order-created handles a webhook payload', async (t: Test) => {
+  sandbox()
+    .stub(FitPartnerScanService, 'saveFittingUrl')
+    .resolves();
+  sandbox()
+    .stub(Configuration, 'FIT_PARTNER_SMS_PRODUCT_ID_BLACKLIST')
+    .value([111, 222, 444, 6789]);
 
-    const { session, user } = await createUser();
+  const { session, user } = await createUser();
 
-    const partner = await FitPartnersDAO.create({
-      adminUserId: user.id,
-      customFitDomain: null,
-      shopifyAppApiKey: '123',
-      shopifyAppPassword: '123',
-      shopifyHostname: 'example.com',
-      smsCopy: 'Click here: {{link}}'
-    });
+  const partner = await FitPartnersDAO.create({
+    adminUserId: user.id,
+    customFitDomain: null,
+    shopifyAppApiKey: '123',
+    shopifyAppPassword: '123',
+    shopifyHostname: 'example.com',
+    smsCopy: 'Click here: {{link}}'
+  });
 
-    const twilioStub = sandbox().stub(Twilio, 'sendSMS').resolves();
+  const twilioStub = sandbox()
+    .stub(Twilio, 'sendSMS')
+    .resolves();
 
-    const smsProduct = cloneDeep(orderCreatePayload);
-    smsProduct.line_items[0].product_id = 12345;
+  const smsProduct = cloneDeep(orderCreatePayload);
+  smsProduct.line_items[0].product_id = 12345;
 
-    const [response] = await post(`/fit-partners/${partner.id}/shopify-order-created`, {
+  const [response] = await post(
+    `/fit-partners/${partner.id}/shopify-order-created`,
+    {
       body: smsProduct,
       headers: authHeader(session.id)
-    });
+    }
+  );
 
-    t.equal(response.status, 200);
-    t.equal(twilioStub.callCount, 1);
-    t.deepEqual(twilioStub.firstCall.args[0], '+14155551234');
+  t.equal(response.status, 200);
+  t.equal(twilioStub.callCount, 1);
+  t.deepEqual(twilioStub.firstCall.args[0], '+14155551234');
 
-    const scan = (await ScansDAO.findAll({ limit: 1, offset: 0 }))[0];
-    t.equal(twilioStub.firstCall.args[1].includes(scan.id), true);
-  }
-);
+  const scan = (await ScansDAO.findAll({ limit: 1, offset: 0 }))[0];
+  t.equal(twilioStub.firstCall.args[1].includes(scan.id), true);
+});
 
-test(
-  // tslint:disable-next-line:max-line-length
-  'POST /fit-partners/:partnerId/shopify-order-created does nothing if all products in the order are blacklisted',
-  async (t: Test) => {
-    sandbox().stub(FitPartnerScanService, 'saveFittingUrl').resolves();
-    sandbox().stub(Configuration, 'FIT_PARTNER_SMS_PRODUCT_ID_BLACKLIST')
-      .value([11, 22, 123, 12345, 456]);
+test(// tslint:disable-next-line:max-line-length
+'POST /fit-partners/:partnerId/shopify-order-created does nothing if all products in the order are blacklisted', async (t: Test) => {
+  sandbox()
+    .stub(FitPartnerScanService, 'saveFittingUrl')
+    .resolves();
+  sandbox()
+    .stub(Configuration, 'FIT_PARTNER_SMS_PRODUCT_ID_BLACKLIST')
+    .value([11, 22, 123, 12345, 456]);
 
-    const { session, user } = await createUser();
+  const { session, user } = await createUser();
 
-    const partner = await FitPartnersDAO.create({
-      adminUserId: user.id,
-      customFitDomain: null,
-      shopifyAppApiKey: '123',
-      shopifyAppPassword: '123',
-      shopifyHostname: 'example.com',
-      smsCopy: 'Click here: {{link}}'
-    });
+  const partner = await FitPartnersDAO.create({
+    adminUserId: user.id,
+    customFitDomain: null,
+    shopifyAppApiKey: '123',
+    shopifyAppPassword: '123',
+    shopifyHostname: 'example.com',
+    smsCopy: 'Click here: {{link}}'
+  });
 
-    const twilioStub = sandbox().stub(Twilio, 'sendSMS').resolves();
+  const twilioStub = sandbox()
+    .stub(Twilio, 'sendSMS')
+    .resolves();
 
-    const nonSmsProduct = cloneDeep(orderCreatePayload);
-    nonSmsProduct.line_items[0].product_id = 12345;
+  const nonSmsProduct = cloneDeep(orderCreatePayload);
+  nonSmsProduct.line_items[0].product_id = 12345;
 
-    const [response] = await post(`/fit-partners/${partner.id}/shopify-order-created`, {
+  const [response] = await post(
+    `/fit-partners/${partner.id}/shopify-order-created`,
+    {
       body: nonSmsProduct,
       headers: authHeader(session.id)
-    });
+    }
+  );
 
-    t.equal(response.status, 200);
-    t.equal(twilioStub.callCount, 0);
-  }
-);
+  t.equal(response.status, 200);
+  t.equal(twilioStub.callCount, 0);
+});
 
-test(
-  // tslint:disable-next-line:max-line-length
-  'POST /fit-partners/:partnerId/shopify-order-created still sends a fit link if some but not all products are blacklisted',
+test(// tslint:disable-next-line:max-line-length
+'POST /fit-partners/:partnerId/shopify-order-created still sends a fit link if some but not all products are blacklisted', async (t: Test) => {
+  sandbox()
+    .stub(FitPartnerScanService, 'saveFittingUrl')
+    .resolves();
+  sandbox()
+    .stub(Configuration, 'FIT_PARTNER_SMS_PRODUCT_ID_BLACKLIST')
+    .value([11, 22, 123, 12345, 456]);
 
-  async (t: Test) => {
-    sandbox().stub(FitPartnerScanService, 'saveFittingUrl').resolves();
-    sandbox().stub(Configuration, 'FIT_PARTNER_SMS_PRODUCT_ID_BLACKLIST')
-      .value([11, 22, 123, 12345, 456]);
+  const { session, user } = await createUser();
 
-    const { session, user } = await createUser();
+  const partner = await FitPartnersDAO.create({
+    adminUserId: user.id,
+    customFitDomain: null,
+    shopifyAppApiKey: '123',
+    shopifyAppPassword: '123',
+    shopifyHostname: 'example.com',
+    smsCopy: 'Click here: {{link}}'
+  });
 
-    const partner = await FitPartnersDAO.create({
-      adminUserId: user.id,
-      customFitDomain: null,
-      shopifyAppApiKey: '123',
-      shopifyAppPassword: '123',
-      shopifyHostname: 'example.com',
-      smsCopy: 'Click here: {{link}}'
-    });
+  const twilioStub = sandbox()
+    .stub(Twilio, 'sendSMS')
+    .resolves();
 
-    const twilioStub = sandbox().stub(Twilio, 'sendSMS').resolves();
+  const nonSmsProduct = cloneDeep(orderCreatePayload);
+  nonSmsProduct.line_items[0].product_id = 12345;
+  nonSmsProduct.line_items[1] = cloneDeep(nonSmsProduct.line_items[0]);
+  nonSmsProduct.line_items[1].product_id = 999;
 
-    const nonSmsProduct = cloneDeep(orderCreatePayload);
-    nonSmsProduct.line_items[0].product_id = 12345;
-    nonSmsProduct.line_items[1] = cloneDeep(nonSmsProduct.line_items[0]);
-    nonSmsProduct.line_items[1].product_id = 999;
-
-    const [response] = await post(`/fit-partners/${partner.id}/shopify-order-created`, {
+  const [response] = await post(
+    `/fit-partners/${partner.id}/shopify-order-created`,
+    {
       body: nonSmsProduct,
       headers: authHeader(session.id)
-    });
+    }
+  );
 
-    t.equal(response.status, 200);
-    t.equal(twilioStub.callCount, 1);
-    t.deepEqual(twilioStub.firstCall.args[0], '+14155551234');
+  t.equal(response.status, 200);
+  t.equal(twilioStub.callCount, 1);
+  t.deepEqual(twilioStub.firstCall.args[0], '+14155551234');
 
-    const scan = (await ScansDAO.findAll({ limit: 1, offset: 0 }))[0];
-    t.equal(twilioStub.firstCall.args[1].includes(scan.id), true);
-  }
-);
+  const scan = (await ScansDAO.findAll({ limit: 1, offset: 0 }))[0];
+  t.equal(twilioStub.firstCall.args[1].includes(scan.id), true);
+});
 
-test(
-  'POST /fit-partners/:partnerId/shopify-order-created missing shipping address warns and skips',
-  async (t: Test) => {
-    sandbox().stub(FitPartnerScanService, 'saveFittingUrl').resolves();
+test('POST /fit-partners/:partnerId/shopify-order-created missing shipping address warns and skips', async (t: Test) => {
+  sandbox()
+    .stub(FitPartnerScanService, 'saveFittingUrl')
+    .resolves();
 
-    const { session, user } = await createUser();
+  const { session, user } = await createUser();
 
-    const partner = await FitPartnersDAO.create({
-      adminUserId: user.id,
-      customFitDomain: null,
-      shopifyAppApiKey: '123',
-      shopifyAppPassword: '123',
-      shopifyHostname: 'example.com',
-      smsCopy: 'Click here: {{link}}'
-    });
+  const partner = await FitPartnersDAO.create({
+    adminUserId: user.id,
+    customFitDomain: null,
+    shopifyAppApiKey: '123',
+    shopifyAppPassword: '123',
+    shopifyHostname: 'example.com',
+    smsCopy: 'Click here: {{link}}'
+  });
 
-    const twilioStub = sandbox().stub(Twilio, 'sendSMS').resolves();
+  const twilioStub = sandbox()
+    .stub(Twilio, 'sendSMS')
+    .resolves();
 
-    const [response] = await post(`/fit-partners/${partner.id}/shopify-order-created`, {
+  const [response] = await post(
+    `/fit-partners/${partner.id}/shopify-order-created`,
+    {
       body: omit(orderCreatePayload, ['shipping_address']),
       headers: authHeader(session.id)
-    });
+    }
+  );
 
-    t.equal(response.status, 200);
-    t.equal(twilioStub.callCount, 0);
+  t.equal(response.status, 200);
+  t.equal(twilioStub.callCount, 0);
 
-    const scans = await ScansDAO.findAll({ limit: 1, offset: 0 });
-    t.deepEqual(scans, []);
-  }
-);
+  const scans = await ScansDAO.findAll({ limit: 1, offset: 0 });
+  t.deepEqual(scans, []);
+});
 
-test(
-  'POST /fit-partners/resend-fit-link retrieves and resends a scan link',
-  async (t: Test) => {
-    const { session, user } = await createUser();
+test('POST /fit-partners/resend-fit-link retrieves and resends a scan link', async (t: Test) => {
+  const { session, user } = await createUser();
 
-    const partner = await FitPartnersDAO.create({
-      adminUserId: user.id,
-      customFitDomain: null,
-      shopifyAppApiKey: '123',
-      shopifyAppPassword: '123',
-      shopifyHostname: 'example.com',
-      smsCopy: 'Click here: {{link}}'
-    });
+  const partner = await FitPartnersDAO.create({
+    adminUserId: user.id,
+    customFitDomain: null,
+    shopifyAppApiKey: '123',
+    shopifyAppPassword: '123',
+    shopifyHostname: 'example.com',
+    smsCopy: 'Click here: {{link}}'
+  });
 
-    const customer = await FitPartnerCustomersDAO.findOrCreate({
-      partnerId: partner.id,
-      shopifyUserId: 'shopify-user-123'
-    });
+  const customer = await FitPartnerCustomersDAO.findOrCreate({
+    partnerId: partner.id,
+    shopifyUserId: 'shopify-user-123'
+  });
 
-    const scan = await ScansDAO.create({
-      fitPartnerCustomerId: customer.id,
-      type: 'PHOTO'
-    });
+  const scan = await ScansDAO.create({
+    fitPartnerCustomerId: customer.id,
+    type: 'PHOTO'
+  });
 
-    const twilioStub = sandbox().stub(Twilio, 'sendSMS').resolves();
+  const twilioStub = sandbox()
+    .stub(Twilio, 'sendSMS')
+    .resolves();
 
-    const [response] = await post('/fit-partners/resend-fit-link', {
-      body: {
-        phoneNumber: '+14155551234',
-        scanId: scan.id
-      },
-      headers: authHeader(session.id)
-    });
+  const [response] = await post('/fit-partners/resend-fit-link', {
+    body: {
+      phoneNumber: '+14155551234',
+      scanId: scan.id
+    },
+    headers: authHeader(session.id)
+  });
 
-    t.equal(response.status, 204);
-    t.equal(twilioStub.callCount, 1);
-    t.deepEqual(twilioStub.firstCall.args[0], '+14155551234');
-    t.equal(twilioStub.firstCall.args[1].includes(scan.id), true);
-  }
-);
+  t.equal(response.status, 204);
+  t.equal(twilioStub.callCount, 1);
+  t.deepEqual(twilioStub.firstCall.args[0], '+14155551234');
+  t.equal(twilioStub.firstCall.args[1].includes(scan.id), true);
+});

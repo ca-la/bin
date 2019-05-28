@@ -5,10 +5,15 @@ import { getDesignPermissions } from '../../services/get-permissions';
 import InvalidDataError = require('../../errors/invalid-data');
 import * as ProductDesignsDAO from '../../dao/product-designs';
 
-export function* attachDesignPermissions(this: Koa.Application.Context, designId: string): any {
+export function* attachDesignPermissions(
+  this: Koa.Application.Context,
+  designId: string
+): any {
   const { role, userId } = this.state;
   const design = yield ProductDesignsDAO.findById(designId).catch(
-    filterError(InvalidDataError, (err: InvalidDataError) => this.throw(404, err))
+    filterError(InvalidDataError, (err: InvalidDataError) =>
+      this.throw(404, err)
+    )
   );
   this.assert(design, 404, 'Design not found');
 

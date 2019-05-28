@@ -45,7 +45,7 @@ function createUser({
   });
 
   return UsersDAO.create(data)
-    .then((_user) => {
+    .then(_user => {
       user = _user;
 
       const addressData = Object.assign({}, ADDRESS_DATA, {

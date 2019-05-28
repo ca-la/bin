@@ -223,7 +223,11 @@ test('#getCollectionPermissions', async (t: tape.Test) => {
   });
 
   t.deepEqual(
-    await PermissionsService.getCollectionPermissions(collection1, session, user.id),
+    await PermissionsService.getCollectionPermissions(
+      collection1,
+      session,
+      user.id
+    ),
     {
       canComment: true,
       canDelete: true,
@@ -234,7 +238,11 @@ test('#getCollectionPermissions', async (t: tape.Test) => {
     'Returns all access permissions for the collection the user created.'
   );
   t.deepEqual(
-    await PermissionsService.getCollectionPermissions(collection1, session2, user2.id),
+    await PermissionsService.getCollectionPermissions(
+      collection1,
+      session2,
+      user2.id
+    ),
     {
       canComment: true,
       canDelete: false,
@@ -245,7 +253,11 @@ test('#getCollectionPermissions', async (t: tape.Test) => {
     'Returns partner permissions for the collection the user is a partner on.'
   );
   t.deepEqual(
-    await PermissionsService.getCollectionPermissions(collection2, session, user.id),
+    await PermissionsService.getCollectionPermissions(
+      collection2,
+      session,
+      user.id
+    ),
     {
       canComment: true,
       canDelete: false,
@@ -256,7 +268,11 @@ test('#getCollectionPermissions', async (t: tape.Test) => {
     'Returns edit access permissions for the collection the user is an edit collaborator on.'
   );
   t.deepEqual(
-    await PermissionsService.getCollectionPermissions(collection4, session, user.id),
+    await PermissionsService.getCollectionPermissions(
+      collection4,
+      session,
+      user.id
+    ),
     {
       canComment: true,
       canDelete: false,
@@ -267,7 +283,11 @@ test('#getCollectionPermissions', async (t: tape.Test) => {
     'Returns view access permissions for the collection the user is a view collaborator on.'
   );
   t.deepEqual(
-    await PermissionsService.getCollectionPermissions(collection4, partnerSession, partnerUser.id),
+    await PermissionsService.getCollectionPermissions(
+      collection4,
+      partnerSession,
+      partnerUser.id
+    ),
     {
       canComment: true,
       canDelete: false,
@@ -278,7 +298,11 @@ test('#getCollectionPermissions', async (t: tape.Test) => {
     'Returns partner access permissions for the collection the user is a partner collaborator on.'
   );
   t.deepEqual(
-    await PermissionsService.getCollectionPermissions(collection3, session, user.id),
+    await PermissionsService.getCollectionPermissions(
+      collection3,
+      session,
+      user.id
+    ),
     {
       canComment: false,
       canDelete: false,
@@ -292,16 +316,26 @@ test('#getCollectionPermissions', async (t: tape.Test) => {
 
 test('#getCollectionPermissions', async (t: tape.Test) => {
   t.equal(
-    PermissionsService.findMostPermissiveRole(
-      ['VIEW', 'PREVIEW', 'VIEW', 'EDIT', 'EDIT', 'PARTNER']
-    ),
+    PermissionsService.findMostPermissiveRole([
+      'VIEW',
+      'PREVIEW',
+      'VIEW',
+      'EDIT',
+      'EDIT',
+      'PARTNER'
+    ]),
     'EDIT',
     'Finds the most permissive role in the list'
   );
   t.equal(
-    PermissionsService.findMostPermissiveRole(
-      ['VIEW', 'VIEW', 'VIEW', 'PREVIEW', 'VIEW', 'PARTNER']
-    ),
+    PermissionsService.findMostPermissiveRole([
+      'VIEW',
+      'VIEW',
+      'VIEW',
+      'PREVIEW',
+      'VIEW',
+      'PARTNER'
+    ]),
     'PARTNER',
     'Finds the most permissive role in the list'
   );

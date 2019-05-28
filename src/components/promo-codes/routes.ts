@@ -8,11 +8,14 @@ import requireAuth = require('../../middleware/require-auth');
 
 const router = new Router();
 
-function* redeemCode(this: Koa.Application.Context): AsyncIterableIterator<void> {
+function* redeemCode(
+  this: Koa.Application.Context
+): AsyncIterableIterator<void> {
   const { code } = this.params;
 
-  const appliedAmountCents = yield applyCode(this.state.userId, code)
-    .catch(filterError(InvalidDataError, (err: Error) => this.throw(404, err.message)));
+  const appliedAmountCents = yield applyCode(this.state.userId, code).catch(
+    filterError(InvalidDataError, (err: Error) => this.throw(404, err.message))
+  );
 
   this.body = { appliedAmountCents };
   this.status = 200;

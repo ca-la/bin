@@ -66,22 +66,24 @@ function withEventEncode(row: BidWithEventsRow): BidWithEvents {
 
   return {
     ...dataAdapter.parse.apply(dataAdapter, [bidRow]),
-    designEvents: design_events ? design_events.map((event: DesignEventRow): DesignEvent => {
-      return {
-        ...eventDataAdapter.parse.apply(eventDataAdapter, [event]),
-        createdAt: new Date(event.created_at)
-      };
-    }) : []
+    designEvents: design_events
+      ? design_events.map(
+          (event: DesignEventRow): DesignEvent => {
+            return {
+              ...eventDataAdapter.parse.apply(eventDataAdapter, [event]),
+              createdAt: new Date(event.created_at)
+            };
+          }
+        )
+      : []
   };
 }
 
-export const bidWithEventsDataAdapter = new DataAdapter<BidWithEventsRow, BidWithEvents>(
-  withEventEncode
-);
+export const bidWithEventsDataAdapter = new DataAdapter<
+  BidWithEventsRow,
+  BidWithEvents
+>(withEventEncode);
 
 export function isBidWithEventsRow(row: object): row is BidWithEventsRow {
-  return isBidRow(row) && hasProperties(
-    row,
-    'design_events'
-  );
+  return isBidRow(row) && hasProperties(row, 'design_events');
 }

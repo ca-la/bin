@@ -21,13 +21,15 @@ class ScanPhoto {
   }
 
   toJSON() {
-    return pick(this,
+    return pick(
+      this,
       'id',
       'scanId',
       'createdAt',
       'calibrationData',
       'url',
-      'controlPoints');
+      'controlPoints'
+    );
   }
 }
 

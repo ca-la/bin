@@ -3,20 +3,19 @@
 const ProductVideosDAO = require('./index');
 const { test } = require('../../test-helpers/fresh');
 
-test('ProductVideosDAO.create creates a new video', (t) => {
+test('ProductVideosDAO.create creates a new video', t => {
   return ProductVideosDAO.create({
     productId: '123123',
     videoUrl: 'https://example.com/video.mp4',
     posterImageUrl: 'https://example.com/poster.jpg'
-  })
-    .then((video) => {
-      t.equal(video.productId, '123123');
-      t.equal(video.videoUrl, 'https://example.com/video.mp4');
-      t.equal(video.posterImageUrl, 'https://example.com/poster.jpg');
-    });
+  }).then(video => {
+    t.equal(video.productId, '123123');
+    t.equal(video.videoUrl, 'https://example.com/video.mp4');
+    t.equal(video.posterImageUrl, 'https://example.com/poster.jpg');
+  });
 });
 
-test('ProductVideosDAO.findByProductIds returns videos given a set of ids', (t) => {
+test('ProductVideosDAO.findByProductIds returns videos given a set of ids', t => {
   return Promise.all([
     ProductVideosDAO.create({
       productId: '1',
@@ -42,7 +41,7 @@ test('ProductVideosDAO.findByProductIds returns videos given a set of ids', (t) 
     .then(() => {
       return ProductVideosDAO.findByProductIds(['1', '3']);
     })
-    .then((videos) => {
+    .then(videos => {
       t.equal(videos.length, 3);
 
       const urls = videos.map(video => video.videoUrl).sort();

@@ -17,7 +17,9 @@ function* jsonBody(next) {
     this.throw(400, 'Could not parse body as JSON');
   }
 
-  if (!this.request.body) { this.request.body = {}; }
+  if (!this.request.body) {
+    this.request.body = {};
+  }
 
   return yield next;
 }

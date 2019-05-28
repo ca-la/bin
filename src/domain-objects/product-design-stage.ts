@@ -32,17 +32,15 @@ export interface ProductDesignStageRow {
   ordering: number;
 }
 
-export const dataAdapter = new DataAdapter<ProductDesignStageRow, ProductDesignStage>();
+export const dataAdapter = new DataAdapter<
+  ProductDesignStageRow,
+  ProductDesignStage
+>();
 
 export function isDesignStageRequest(
   candidate: object
 ): candidate is ProductDesignStageRequest {
-  return hasProperties(
-    candidate,
-    'designId',
-    'title',
-    'ordering'
-  );
+  return hasProperties(candidate, 'designId', 'title', 'ordering');
 }
 
 export function isDesignStageRow(row: object): row is ProductDesignStageRow {

@@ -28,9 +28,14 @@ export interface ComponentRelationshipRow {
   target_component_id: string;
 }
 
-export const dataAdapter = new DataAdapter<ComponentRelationshipRow, ComponentRelationship>();
+export const dataAdapter = new DataAdapter<
+  ComponentRelationshipRow,
+  ComponentRelationship
+>();
 
-export function isComponentRelationshipRow(row: object): row is ComponentRelationshipRow {
+export function isComponentRelationshipRow(
+  row: object
+): row is ComponentRelationshipRow {
   return hasProperties(
     row,
     'created_at',

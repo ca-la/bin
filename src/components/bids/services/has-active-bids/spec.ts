@@ -21,11 +21,10 @@ test('hasActiveBids can determine the state for a user and quote', async (t: Tes
   });
   const bidWithEvent1: BidWithEvents = { ...bid1, designEvents: [e1, e2] };
   const bidWithEvent2: BidWithEvents = { ...bid2, designEvents: [] };
-  const bidAndEventList = [
-    bidWithEvent1,
-    bidWithEvent2
-  ];
-  const findAllStub = sandbox().stub(BidsDAO, 'findAllByQuoteAndUserId').resolves(bidAndEventList);
+  const bidAndEventList = [bidWithEvent1, bidWithEvent2];
+  const findAllStub = sandbox()
+    .stub(BidsDAO, 'findAllByQuoteAndUserId')
+    .resolves(bidAndEventList);
 
   const result = await hasActiveBids('abc-123', 'xyz-456');
   t.true(result, 'Has an active bid');
@@ -50,11 +49,10 @@ test('hasActiveBids can determine the state for a user and quote', async (t: Tes
   });
   const bidWithEvent1: BidWithEvents = { ...bid1, designEvents: [e1, e2] };
   const bidWithEvent2: BidWithEvents = { ...bid2, designEvents: [] };
-  const bidAndEventList = [
-    bidWithEvent1,
-    bidWithEvent2
-  ];
-  const findAllStub = sandbox().stub(BidsDAO, 'findAllByQuoteAndUserId').resolves(bidAndEventList);
+  const bidAndEventList = [bidWithEvent1, bidWithEvent2];
+  const findAllStub = sandbox()
+    .stub(BidsDAO, 'findAllByQuoteAndUserId')
+    .resolves(bidAndEventList);
 
   const result = await hasActiveBids('abc-123', 'xyz-456');
   t.false(result, 'Does not have an active bid');

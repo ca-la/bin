@@ -13,20 +13,19 @@ import {
 } from '../../services/get-permissions';
 import { hasProperties } from '../../services/require-properties';
 
-export type CollaboratorRequest =
-  Pick<Collaborator, 'role' | 'userEmail' | 'invitationMessage'>
-  & { collectionId?: string, designId?: string };
+export type CollaboratorRequest = Pick<
+  Collaborator,
+  'role' | 'userEmail' | 'invitationMessage'
+> & { collectionId?: string; designId?: string };
 
-export function isCollaboratorRequest(data: object): data is CollaboratorRequest {
+export function isCollaboratorRequest(
+  data: object
+): data is CollaboratorRequest {
   const keys = Object.keys(data);
   if (!keys.includes('collectionId') && !keys.includes('designId')) {
     return false;
   }
-  return hasProperties(
-    data,
-    'role',
-    'userEmail'
-  );
+  return hasProperties(data, 'role', 'userEmail');
 }
 
 async function findPermissionsFromCollectionOrDesign(
@@ -35,12 +34,16 @@ async function findPermissionsFromCollectionOrDesign(
   collectionId: string | undefined,
   designId: string | undefined
 ): Promise<Permissions | null> {
-  if (collectionId && designId) { throw new Error('Must pass collectionId or designId, not both'); }
+  if (collectionId && designId) {
+    throw new Error('Must pass collectionId or designId, not both');
+  }
 
   if (collectionId) {
     const collection = await CollectionsDAO.findById(collectionId);
     if (!collection) {
-      throw new ResourceNotFoundError(`Could not find collection ${collectionId}`);
+      throw new ResourceNotFoundError(
+        `Could not find collection ${collectionId}`
+      );
     }
     return getCollectionPermissions(collection, role, userId);
   }
@@ -98,9 +101,11 @@ export function* canAccessViaQueryParameters(
       userId,
       collectionId,
       designId
-    ).catch(filterError(ResourceNotFoundError, (err: ResourceNotFoundError) =>
-      this.throw(400, err)
-    ));
+    ).catch(
+      filterError(ResourceNotFoundError, (err: ResourceNotFoundError) =>
+        this.throw(400, err)
+      )
+    );
 
     this.state.permissions = permissions;
     this.assert(
@@ -122,7 +127,10 @@ export function* canAccessViaDesignOrCollectionInRequestBody(
   next: () => Promise<any>
 ): IterableIterator<any> {
   if (!isCollaboratorRequest(this.request.body)) {
-    return this.throw(400, 'A design or collection id must be specified in the request!');
+    return this.throw(
+      400,
+      'A design or collection id must be specified in the request!'
+    );
   }
   const { collectionId, designId } = this.request.body;
   if (collectionId && designId) {
@@ -135,9 +143,11 @@ export function* canAccessViaDesignOrCollectionInRequestBody(
     userId,
     collectionId,
     designId
-  ).catch(filterError(ResourceNotFoundError, (err: ResourceNotFoundError) =>
-    this.throw(400, err)
-  ));
+  ).catch(
+    filterError(ResourceNotFoundError, (err: ResourceNotFoundError) =>
+      this.throw(400, err)
+    )
+  );
 
   this.state.permissions = permissions;
   this.assert(
