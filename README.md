@@ -25,7 +25,7 @@ generated with `npm token create --read-only`
 
 ```bash
 $ npm install
-$ npm run dev
+$ bin/dev
 ```
 
 ### Initial Setup
@@ -35,7 +35,7 @@ $ npm run dev
 After initial setup, you will need to migrate the newly created databases:
 
 ```bash
-$ npm run migration:run:local && npm run migration:run:test
+$ bin/migrate local
 ```
 
 For more details about Migrations, see the section titled
@@ -47,7 +47,7 @@ There are also a number of scripts that provide seed data in the `src/scripts`
 directory.
 
 ```bash
-$ npm run scripts -- src/scripts/<TARGET SCRIPT FILENAME>
+$ bin/run src/scripts/<TARGET SCRIPT FILENAME>
 ```
 
 ## Deployment
@@ -62,9 +62,9 @@ Branch | Heroku App | URL | Build Status
 To tag off and release a new version to production, run the release script:
 
 ```bash
-$ npm run release -- patch    # 0.0.x - bug fixes
-$ npm run release -- minor    # 0.x.0 - new features or changes
-$ npm run release -- major    # x.0.0 - large, backwards-incompatible changes
+$ bin/release patch    # 0.0.x - bug fixes
+$ bin/release minor    # 0.x.0 - new features or changes
+$ bin/release major    # x.0.0 - large, backwards-incompatible changes
 ```
 
 ## Usage
@@ -75,15 +75,15 @@ in `package.json`.
 ### Testing / Linting
 
 ```bash
-$ npm run lint
-$ npm run test # Will build and lint the app, no need to npm run lint && npm run test
-$ npm run coverage # Will run tests and output coverage
+$ bin/lint
+$ bin/test      # Will build and lint the app, no need to npm run lint && npm run test
+$ bin/coverage  # Will run tests and output coverage
 ```
 
 ### Run a single test file
 
 ```bash
-$ npm run tt -- src/routes/users/spec.ts
+$ bin/tt src/routes/users/spec.ts
 ```
 
 ### Migrations
@@ -109,11 +109,11 @@ deploy; first add the column, then deploy the application code, then add the
 `not null` constraint.
 
 ```bash
-$ npm run migration:create -- some-descriptive-name  # Create a new migration
-$ npm run migration:run:local                        # Migrate local DBs to latest schema
-$ npm run migration:rollback:local                   # Roll back latest migration on local DBs
-$ npm run migration:run:staging                      # Migrate staging DB
-$ npm run migration:run:production                   # Migrate production DB
+$ bin/create-migration some-descriptive-name  # Create a new migration
+$ bin/migrate local                           # Migrate local DBs to latest schema
+$ bin/migrate local rollback                  # Roll back latest migration on local DBs
+$ bin/migrate staging                         # Migrate staging DB
+$ bin/migrate production                      # Migrate production/demo DB
 ```
 
 For advanced usage, see [knexjs.org](http://knexjs.org/#Migrations).
