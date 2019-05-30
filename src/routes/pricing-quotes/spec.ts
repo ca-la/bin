@@ -13,6 +13,7 @@ import generateCollection from '../../test-helpers/factories/collection';
 import * as CollectionsDAO from '../../dao/collections';
 import * as SlackService from '../../services/slack';
 import PricingCostInput from '../../domain-objects/pricing-cost-input';
+import { daysToMs } from '../../services/time-conversion';
 
 test('/pricing-quotes POST -> GET quote', async (t: Test) => {
   const { user, session } = await createUser();
@@ -472,6 +473,7 @@ test('PUT /pricing-quotes/:quoteId/bid/:bidId creates bid', async (t: Test) => {
 
   const inputBid: Bid = {
     bidPriceCents: 100000,
+    projectDueInMs: daysToMs(10),
     createdAt: new Date(2012, 12, 22),
     createdBy: user.id,
     description: 'Full Service',
@@ -535,6 +537,7 @@ test('POST /pricing-quotes/:quoteId/bids creates bid', async (t: Test) => {
 
   const inputBid: Unsaved<Bid> = {
     bidPriceCents: 100000,
+    projectDueInMs: daysToMs(10),
     createdBy: user.id,
     description: 'Full Service',
     quoteId: createdQuotes[0].id
@@ -597,6 +600,7 @@ test('GET /pricing-quotes/:quoteId/bids returns list of bids for quote', async (
 
   const inputBid: Bid = {
     bidPriceCents: 100000,
+    projectDueInMs: daysToMs(10),
     createdAt: new Date(2012, 12, 22),
     createdBy: user.id,
     description: 'Full Service',

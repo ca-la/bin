@@ -8,6 +8,7 @@ import Bid from '../../components/bids/domain-object';
 import { create as createBid } from '../../components/bids/dao';
 import createUser = require('../create-user');
 import User from '../../components/users/domain-object';
+import { daysToMs } from '../../services/time-conversion';
 
 interface BidInterface {
   user: User;
@@ -55,6 +56,7 @@ export default async function generateBid({
   });
   const bid = await createBid({
     bidPriceCents: 100000,
+    projectDueInMs: daysToMs(10),
     createdAt: new Date(),
     createdBy,
     description: 'Full Service',

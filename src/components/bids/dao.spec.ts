@@ -20,6 +20,7 @@ import {
 import DesignEvent from '../../domain-objects/design-event';
 import generateBid from '../../test-helpers/factories/bid';
 import generateDesignEvent from '../../test-helpers/factories/design-event';
+import { daysToMs } from '../../services/time-conversion';
 
 test('Bids DAO supports creation and retrieval', async (t: Test) => {
   await generatePricingValues();
@@ -44,6 +45,7 @@ test('Bids DAO supports creation and retrieval', async (t: Test) => {
   });
   const inputBid: Bid = {
     bidPriceCents: 100000,
+    projectDueInMs: daysToMs(10),
     createdAt: new Date(2012, 11, 22),
     createdBy: user.id,
     description: 'Full Service',
@@ -86,6 +88,7 @@ test('Bids DAO supports retrieval by quote ID', async (t: Test) => {
   });
   const inputBid: Bid = {
     bidPriceCents: 100000,
+    projectDueInMs: daysToMs(10),
     createdAt: new Date(2012, 11, 22),
     createdBy: user.id,
     description: 'Full Service',
@@ -125,6 +128,7 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
   });
   const openBid: Bid = {
     bidPriceCents: 100000,
+    projectDueInMs: daysToMs(10),
     createdAt: new Date(2012, 11, 22),
     createdBy: admin.id,
     description: 'Full Service',
@@ -133,6 +137,7 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
   };
   const rejectedBid: Bid = {
     bidPriceCents: 100000,
+    projectDueInMs: daysToMs(10),
     createdAt: new Date(2012, 11, 22),
     createdBy: admin.id,
     description: 'Full Service (Rejected)',
@@ -141,6 +146,7 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
   };
   const acceptedBid: Bid = {
     bidPriceCents: 110000,
+    projectDueInMs: daysToMs(10),
     createdAt: new Date(2012, 11, 26),
     createdBy: admin.id,
     description: 'Full Service (Accepted)',

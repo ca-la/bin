@@ -15,19 +15,44 @@ export default interface Bid {
   createdBy: string;
   quoteId: string;
   bidPriceCents: number;
+  projectDueInMs: number | null;
   description?: string;
 }
 
 export interface BidRow {
   id: string;
-  created_at: Date;
+  created_at: string;
   created_by: string;
   quote_id: string;
   bid_price_cents: number;
+  project_due_in_ms: string | null;
   description?: string;
 }
 
-export const dataAdapter = new DataAdapter<BidRow, Bid>();
+export const encode = (row: BidRow): Bid => ({
+  id: row.id,
+  createdAt: new Date(row.created_at),
+  createdBy: row.created_by,
+  quoteId: row.quote_id,
+  bidPriceCents: row.bid_price_cents,
+  projectDueInMs:
+    row.project_due_in_ms !== null ? Number(row.project_due_in_ms) : null,
+  description: row.description
+});
+
+export const decode = (data: Bid): BidRow => ({
+  id: data.id,
+  created_at: data.createdAt.toISOString(),
+  created_by: data.createdBy,
+  quote_id: data.quoteId,
+  bid_price_cents: data.bidPriceCents,
+  project_due_in_ms: data.projectDueInMs
+    ? data.projectDueInMs.toString()
+    : null,
+  description: data.description
+});
+
+export const dataAdapter = new DataAdapter<BidRow, Bid>(encode, decode);
 
 export function isBid(row: object): row is Bid {
   return hasProperties(
@@ -37,6 +62,7 @@ export function isBid(row: object): row is Bid {
     'createdBy',
     'quoteId',
     'bidPriceCents',
+    'projectDueInMs',
     'description'
   );
 }
@@ -49,6 +75,7 @@ export function isBidRow(row: object): row is BidRow {
     'created_by',
     'quote_id',
     'bid_price_cents',
+    'project_due_in_ms',
     'description'
   );
 }

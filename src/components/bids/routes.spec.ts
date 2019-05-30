@@ -16,6 +16,7 @@ import * as ProductDesignsDAO from '../../dao/product-designs';
 import * as NotificationsService from '../../services/create-notifications';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
 import generateDesignEvent from '../../test-helpers/factories/design-event';
+import { daysToMs } from '../../services/time-conversion';
 
 test('GET /bids', async (t: Test) => {
   const admin = await createUser({ role: 'ADMIN' });
@@ -34,6 +35,7 @@ test('GET /bids', async (t: Test) => {
   });
   const otherBid = await BidsDAO.create({
     bidPriceCents: 100000,
+    projectDueInMs: daysToMs(10),
     createdAt: new Date(2012, 12, 22),
     createdBy: admin.user.id,
     description: 'Full Service',
@@ -109,6 +111,7 @@ test('GET /bids?userId&state=OPEN', async (t: Test) => {
   });
   const otherBid = await BidsDAO.create({
     bidPriceCents: 100000,
+    projectDueInMs: daysToMs(10),
     createdAt: new Date(2012, 12, 22),
     createdBy: admin.user.id,
     description: 'Full Service',
@@ -117,6 +120,7 @@ test('GET /bids?userId&state=OPEN', async (t: Test) => {
   });
   const expiredBid = await BidsDAO.create({
     bidPriceCents: 100000,
+    projectDueInMs: daysToMs(10),
     createdAt: new Date(2012, 12, 22),
     createdBy: admin.user.id,
     description: 'Full Service',
@@ -174,6 +178,7 @@ test('GET /bids?userId&state=EXPIRED', async (t: Test) => {
   });
   const otherBid = await BidsDAO.create({
     bidPriceCents: 100000,
+    projectDueInMs: daysToMs(10),
     createdAt: new Date(2012, 12, 22),
     createdBy: admin.user.id,
     description: 'Full Service',
@@ -182,6 +187,7 @@ test('GET /bids?userId&state=EXPIRED', async (t: Test) => {
   });
   const expiredBid = await BidsDAO.create({
     bidPriceCents: 100000,
+    projectDueInMs: daysToMs(10),
     createdAt: threeDaysAgo,
     createdBy: admin.user.id,
     description: 'Full Service Brah',
@@ -240,6 +246,7 @@ test('GET /bids?userId&state=REJECTED', async (t: Test) => {
   });
   const otherBid = await BidsDAO.create({
     bidPriceCents: 100000,
+    projectDueInMs: daysToMs(10),
     createdAt: new Date(2012, 12, 22),
     createdBy: admin.user.id,
     description: 'Full Service',
@@ -294,6 +301,7 @@ test('GET /bids?userId&state=ACCEPTED', async (t: Test) => {
   });
   const otherBid = await BidsDAO.create({
     bidPriceCents: 100000,
+    projectDueInMs: daysToMs(10),
     createdAt: new Date(2012, 12, 22),
     createdBy: admin.user.id,
     description: 'Full Service',
@@ -542,6 +550,7 @@ test('Partner pairing: accept', async (t: Test) => {
   });
   const bid = await BidsDAO.create({
     bidPriceCents: 20000,
+    projectDueInMs: daysToMs(10),
     createdAt: new Date(),
     createdBy: admin.user.id,
     description: 'Do me a favor, please.',
@@ -699,6 +708,7 @@ test('Partner pairing: reject', async (t: Test) => {
   });
   const bid = await BidsDAO.create({
     bidPriceCents: 20000,
+    projectDueInMs: daysToMs(10),
     createdAt: new Date(),
     createdBy: admin.user.id,
     description: 'Do me a favor, please.',
