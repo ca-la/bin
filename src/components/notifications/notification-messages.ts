@@ -2,7 +2,7 @@ import { escape as escapeHtml } from 'lodash';
 import { BreadCrumb, NotificationMessage } from '@cala/ts-lib';
 
 import InvalidDataError = require('../../errors/invalid-data');
-import * as ComponentsDAO from '../../dao/components';
+import * as ComponentsDAO from '../components/dao';
 import ProductDesign = require('../../domain-objects/product-design');
 import * as UsersDAO from '../../components/users/dao';
 import * as ProductDesignsDAO from '../../dao/product-designs';
@@ -19,7 +19,7 @@ import {
 import getLinks, { LinkType } from './get-links';
 import normalizeTitle from '../../services/normalize-title';
 import Comment from '../../components/comments/domain-object';
-import { ComponentType } from '../../domain-objects/component';
+import { ComponentType } from '../components/domain-object';
 import ProductDesignCanvas from '../../domain-objects/product-design-canvas';
 import { DetailsTask } from '../../domain-objects/task-event';
 import Collection from '../../domain-objects/collection';

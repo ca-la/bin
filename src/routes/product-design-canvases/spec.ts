@@ -6,8 +6,10 @@ import * as ProductDesignCanvasesDAO from '../../dao/product-design-canvases';
 import * as ProductDesignImagesDAO from '../../components/images/dao';
 import * as ProductDesignOptionsDAO from '../../dao/product-design-options';
 import * as ProductDesignsDAO from '../../dao/product-designs';
-import * as ComponentsDAO from '../../dao/components';
-import Component, { ComponentType } from '../../domain-objects/component';
+import * as ComponentsDAO from '../../components/components/dao';
+import Component, {
+  ComponentType
+} from '../../components/components/domain-object';
 
 import createUser = require('../../test-helpers/create-user');
 import {

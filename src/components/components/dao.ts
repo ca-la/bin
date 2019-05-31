@@ -7,7 +7,7 @@ import Component, {
   ComponentRow,
   dataAdapter,
   isComponentRow
-} from '../../domain-objects/component';
+} from './domain-object';
 import first from '../../services/first';
 import { validate, validateEvery } from '../../services/validate-from-db';
 

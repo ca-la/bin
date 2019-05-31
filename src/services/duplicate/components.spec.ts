@@ -6,8 +6,8 @@ import * as db from '../../services/db';
 import { test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
 
-import { ComponentType } from '../../domain-objects/component';
-import { create as createComponent } from '../../dao/components';
+import { ComponentType } from '../../components/components/domain-object';
+import { create as createComponent } from '../../components/components/dao';
 import { create as createImage } from '../../components/images/dao';
 import { findAndDuplicateComponent } from './components';
 

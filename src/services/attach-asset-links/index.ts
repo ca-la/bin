@@ -2,7 +2,9 @@ import {
   AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME,
   IMGIX_BASE_URL
 } from '../../config';
-import Component, { ComponentType } from '../../domain-objects/component';
+import Component, {
+  ComponentType
+} from '../../components/components/domain-object';
 import * as OptionsDAO from '../../dao/product-design-options';
 import * as ImagesDAO from '../../components/images/dao';
 

@@ -1,14 +1,14 @@
 import * as uuid from 'node-uuid';
 import { create } from '../../components/component-relationships/dao';
 import { findById as findUserById } from '../../components/users/dao';
-import { findById as findComponentById } from '../../dao/components';
+import { findById as findComponentById } from '../../components/components/dao';
 import { findById as findProcessById } from '../../components/processes/dao';
 import ComponentRelationship from '../../components/component-relationships/domain-object';
 import createUser = require('../create-user');
 import generateProcess from './process';
 import generateComponent from './component';
 import Process from '../../components/processes/domain-object';
-import Component from '../../domain-objects/component';
+import Component from '../../components/components/domain-object';
 
 interface ComponentRelationshipWithResources {
   componentRelationship: ComponentRelationship;

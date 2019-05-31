@@ -22,7 +22,7 @@ import * as CollaboratorTasksDAO from '../collaborator-tasks';
 import { addDesign, create as createCollection } from '../collections';
 import { create as createImage } from '../../components/images/dao';
 import { create as createTaskComment } from '../task-comments';
-import { del as deleteComponent } from '../../dao/components';
+import { del as deleteComponent } from '../../components/components/dao';
 import { deleteById as deleteCollection } from '../../dao/collections';
 import { deleteById as deleteComment } from '../../components/comments/dao';
 

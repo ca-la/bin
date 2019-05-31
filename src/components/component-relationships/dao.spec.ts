@@ -2,10 +2,10 @@ import * as tape from 'tape';
 import * as uuid from 'node-uuid';
 
 import { create as createImage } from '../../components/images/dao';
-import * as ComponentsDAO from '../../dao/components';
+import * as ComponentsDAO from '../components/dao';
 import * as ComponentRelationshipsDAO from './dao';
 
-import { ComponentType } from '../../domain-objects/component';
+import { ComponentType } from '../components/domain-object';
 import createUser = require('../../test-helpers/create-user');
 import { test } from '../../test-helpers/fresh';
 import generateProcess from '../../test-helpers/factories/process';

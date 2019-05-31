@@ -3,7 +3,7 @@ import { create } from '../../components/processes/dao';
 import Process from '../../components/processes/domain-object';
 import * as UsersDAO from '../../components/users/dao';
 import createUser = require('../create-user');
-import { ComponentType } from '../../domain-objects/component';
+import { ComponentType } from '../../components/components/domain-object';
 
 interface ProcessWithResources {
   createdBy: any;

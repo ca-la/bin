@@ -3,7 +3,7 @@ import * as Koa from 'koa';
 import ComponentRelationship from '../../components/component-relationships/domain-object';
 import * as RelationshipsDAO from '../../components/component-relationships/dao';
 import { attachDesignPermissions } from '../can-access-design';
-import { findRoot } from '../../dao/components';
+import { findRoot } from '../../components/components/dao';
 import { findByComponentId } from '../../dao/product-design-canvases';
 import ProductDesignCanvas from '../../domain-objects/product-design-canvas';
 

@@ -3,7 +3,7 @@ import { STUDIO_HOST } from '../../config';
 import ProductDesign = require('../../domain-objects/product-design');
 import Collection from '../../domain-objects/collection';
 import { DetailsTask } from '../../domain-objects/task-event';
-import { ComponentType } from '../../domain-objects/component';
+import { ComponentType } from '../components/domain-object';
 import normalizeTitle from '../../services/normalize-title';
 
 interface Links {

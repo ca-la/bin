@@ -6,7 +6,7 @@ import * as db from '../../services/db';
 import { test } from '../../test-helpers/fresh';
 import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 
-import { findById as findComponent } from '../../dao/components';
+import { findById as findComponent } from '../../components/components/dao';
 import { findAndDuplicateCanvas } from './canvases';
 
 test('findAndDuplicateCanvas', async (t: tape.Test) => {

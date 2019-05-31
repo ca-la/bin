@@ -3,7 +3,7 @@ import * as uuid from 'node-uuid';
 import { test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
 import * as ProcessesDAO from './dao';
-import { ComponentType } from '../../domain-objects/component';
+import { ComponentType } from '../components/domain-object';
 import generateProcess from '../../test-helpers/factories/process';
 
 test('Processes DAO supports creation and retrieval', async (t: tape.Test) => {

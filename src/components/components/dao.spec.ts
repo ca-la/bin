@@ -10,11 +10,11 @@ import {
   findById,
   findRoot,
   update
-} from './index';
-import { create as createImage } from '../../components/images/dao';
-import { create as createCanvas } from '../product-design-canvases';
-import { ComponentType } from '../../domain-objects/component';
-import { create as createDesign } from '../product-designs';
+} from './dao';
+import { create as createImage } from '../images/dao';
+import { create as createCanvas } from '../../dao/product-design-canvases';
+import { ComponentType } from './domain-object';
+import { create as createDesign } from '../../dao/product-designs';
 import createUser = require('../../test-helpers/create-user');
 import generateComponent from '../../test-helpers/factories/component';
 

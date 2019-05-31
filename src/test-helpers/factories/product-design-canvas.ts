@@ -4,8 +4,8 @@ import ProductDesignCanvas from '../../domain-objects/product-design-canvas';
 import { findById as findUserById } from '../../components/users/dao';
 import createUser = require('../create-user');
 import * as ProductDesignsDAO from '../../dao/product-designs';
-import * as ComponentsDAO from '../../dao/components';
-import Component from '../../domain-objects/component';
+import * as ComponentsDAO from '../../components/components/dao';
+import Component from '../../components/components/domain-object';
 import generateComponent from './component';
 
 interface ProductDesignCanvasWithResources {

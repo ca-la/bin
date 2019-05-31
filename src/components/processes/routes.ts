@@ -5,7 +5,7 @@ import requireAuth = require('../../middleware/require-auth');
 
 import Processes from './domain-object';
 import * as ProcessesDAO from './dao';
-import { ComponentType } from '../../domain-objects/component';
+import { ComponentType } from '../components/domain-object';
 
 const router = new Router();
 

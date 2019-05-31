@@ -1,5 +1,5 @@
-import * as ComponentsDAO from '../../dao/components';
-import * as ProductDesignImagesDAO from '../../components/images/dao';
+import * as ComponentsDAO from './dao';
+import * as ProductDesignImagesDAO from '../images/dao';
 import * as tape from 'tape';
 import * as uuid from 'node-uuid';
 import createUser = require('../../test-helpers/create-user');
@@ -12,7 +12,7 @@ import {
   put
 } from '../../test-helpers/http';
 import { sandbox, test } from '../../test-helpers/fresh';
-import { ComponentType } from '../../domain-objects/component';
+import { ComponentType } from './domain-object';
 import { omit } from 'lodash';
 
 test('GET /components/:componentId returns Component', async (t: tape.Test) => {

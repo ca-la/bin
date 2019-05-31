@@ -3,7 +3,7 @@ import * as Koa from 'koa';
 
 import * as ProductDesignCanvasesDAO from '../../dao/product-design-canvases';
 import requireAuth = require('../../middleware/require-auth');
-import * as ComponentsDAO from '../../dao/components';
+import * as ComponentsDAO from '../../components/components/dao';
 import * as ProductDesignOptionsDAO from '../../dao/product-design-options';
 import * as ProductDesignsDAO from '../../dao/product-designs';
 import * as ProductDesignImagesDAO from '../../components/images/dao';
@@ -14,7 +14,7 @@ import ProductDesignCanvas, {
 import Component, {
   ComponentType,
   isUnsavedComponent
-} from '../../domain-objects/component';
+} from '../../components/components/domain-object';
 import * as EnrichmentService from '../../services/attach-asset-links';
 import filterError = require('../../services/filter-error');
 import ProductDesignImage = require('../../components/images/domain-object');

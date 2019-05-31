@@ -1,6 +1,8 @@
 import * as uuid from 'node-uuid';
-import { create } from '../../dao/components';
-import Component, { ComponentType } from '../../domain-objects/component';
+import { create } from '../../components/components/dao';
+import Component, {
+  ComponentType
+} from '../../components/components/domain-object';
 import { findById as findUserById } from '../../components/users/dao';
 import createUser = require('../create-user');
 

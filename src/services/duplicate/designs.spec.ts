@@ -12,7 +12,7 @@ import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import * as ProductDesignStagesDAO from '../../dao/product-design-stages';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as CanvasesDAO from '../../dao/product-design-canvases';
-import * as ComponentsDAO from '../../dao/components';
+import * as ComponentsDAO from '../../components/components/dao';
 import * as VariantsDAO from '../../dao/product-design-variants';
 
 import { findAndDuplicateDesign } from './designs';

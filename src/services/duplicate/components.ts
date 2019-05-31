@@ -1,7 +1,7 @@
 import * as Knex from 'knex';
 
-import * as ComponentsDAO from '../../dao/components';
-import Component from '../../domain-objects/component';
+import * as ComponentsDAO from '../../components/components/dao';
+import Component from '../../components/components/domain-object';
 import prepareForDuplication from './prepare-for-duplication';
 import { findAndDuplicateOption } from './options';
 

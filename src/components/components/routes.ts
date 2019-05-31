@@ -1,8 +1,8 @@
 import * as Router from 'koa-router';
 import * as Koa from 'koa';
 
-import * as ComponentsDAO from '../../dao/components';
-import Component, { isUnsavedComponent } from '../../domain-objects/component';
+import * as ComponentsDAO from './dao';
+import Component, { isUnsavedComponent } from './domain-object';
 import requireAuth = require('../../middleware/require-auth');
 import { addAssetLink } from '../../services/attach-asset-links';
 
@@ -99,4 +99,4 @@ router.del('/:componentId', requireAuth, del);
 router.get('/', requireAuth, getList);
 router.get('/:componentId', requireAuth, getById);
 
-export = router.routes();
+export default router.routes();
