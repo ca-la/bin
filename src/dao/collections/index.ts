@@ -206,8 +206,7 @@ JOIN (
     AND NOT EXISTS (
     SELECT * from design_events AS de2
     WHERE de1.design_id = de2.design_id
-      AND de2.type = 'COMMIT_COST_INPUTS'
-      AND de2.created_at > de1.created_at)
+      AND de2.type = 'COMMIT_COST_INPUTS')
 ) AS de
   ON de.design_id = cd.design_id
     `

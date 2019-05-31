@@ -494,6 +494,12 @@ test('CollectionsDAO#findWithUncostedDesigns finds all collections with uncosted
     userId: user2.id
   });
 
+  const design5 = await createDesign({
+    productType: 'test4',
+    title: 'test design costed and moved',
+    userId: user2.id
+  });
+
   const { collection: collection1 } = await generateCollection({
     createdBy: user2.id
   });
@@ -504,12 +510,19 @@ test('CollectionsDAO#findWithUncostedDesigns finds all collections with uncosted
     createdBy: user2.id,
     deletedAt: new Date()
   });
+  const { collection: collection4 } = await generateCollection({
+    createdBy: user2.id
+  });
+  const { collection: collection5 } = await generateCollection({
+    createdBy: user2.id
+  });
   await generateCollection({ createdBy: user2.id });
 
   await CollectionsDAO.addDesign(collection1.id, design1.id);
   await CollectionsDAO.addDesign(collection1.id, design2.id);
   await CollectionsDAO.addDesign(collection2.id, design3.id);
   await CollectionsDAO.addDesign(collection3.id, design4.id);
+  await CollectionsDAO.addDesign(collection4.id, design5.id);
 
   const submitEvent: DesignEvent = {
     actorId: user2.id,
@@ -551,6 +564,16 @@ test('CollectionsDAO#findWithUncostedDesigns finds all collections with uncosted
     targetId: user.id,
     type: 'SUBMIT_DESIGN'
   };
+  const submitEvent5: DesignEvent = {
+    actorId: user2.id,
+    bidId: null,
+    createdAt: new Date(2012, 1, 1),
+    designId: design5.id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: user.id,
+    type: 'SUBMIT_DESIGN'
+  };
   const costEvent1: DesignEvent = {
     actorId: user.id,
     bidId: null,
@@ -581,15 +604,44 @@ test('CollectionsDAO#findWithUncostedDesigns finds all collections with uncosted
     targetId: user2.id,
     type: 'COMMIT_COST_INPUTS'
   };
+  const costEvent4: DesignEvent = {
+    actorId: user.id,
+    bidId: null,
+    createdAt: new Date(),
+    designId: design5.id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: user2.id,
+    type: 'COMMIT_COST_INPUTS'
+  };
 
   await DesignEventsDAO.createAll([
     submitEvent,
     submitEvent2,
     submitEvent3,
-    submitEvent4
+    submitEvent4,
+    submitEvent5
   ]);
 
-  await DesignEventsDAO.createAll([costEvent1, costEvent2, costEvent3]);
+  await DesignEventsDAO.createAll([
+    costEvent1,
+    costEvent2,
+    costEvent3,
+    costEvent4
+  ]);
+
+  await CollectionsDAO.moveDesign(collection5.id, design5.id);
+
+  await DesignEventsDAO.create({
+    actorId: user2.id,
+    bidId: null,
+    createdAt: new Date(),
+    designId: design5.id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: user.id,
+    type: 'SUBMIT_DESIGN'
+  });
 
   const response = await CollectionsDAO.findWithUncostedDesigns();
 
