@@ -29,7 +29,7 @@ postflight() {
 
 main() {
   host=${1:-""}
-  if [[ "$host" != "staging" || "$host" != "production" ]]; then
+  if [[ "$host" != "staging" && "$host" != "production" ]]; then
     usage_fail
   fi
 
