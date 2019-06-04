@@ -299,7 +299,7 @@ async function insertTaskAndStageTemplates(): Promise<void> {
     const stages = await trx('stage_templates')
       .select('*')
       .orderBy('ordering');
-    if (stages.length !== 7 || stages.length !== 6) {
+    if (stages.length !== 7 && stages.length !== 6) {
       return trx.rollback(`
 ${red}Unexpected number of stages!
 ${reset}Expected ${yellow}${7}${reset}, but got ${red}${stages.length}${reset}.
