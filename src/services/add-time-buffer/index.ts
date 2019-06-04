@@ -1,4 +1,4 @@
-const BUFFER_PERCENT = 0.1;
+const BUFFER_PERCENT = 0.15;
 
 // time should be a non-negative integer
 export default function addTimeBuffer(numericTime: number): number {

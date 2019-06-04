@@ -3,7 +3,7 @@ import addTimeBuffer from '.';
 
 test('addTimeBuffer adds the correct amount of buffer', (t: Test) => {
   const actual = addTimeBuffer(72);
-  const expected = 80;
+  const expected = 85;
   t.equal(actual, expected, 'it returns the expected buffer');
 });
 
@@ -21,6 +21,6 @@ test('addTimeBuffer adds to 0', (t: Test) => {
 
 test('addTimeBuffer adds correct buffer to 1000', (t: Test) => {
   const actual = addTimeBuffer(1000);
-  const expected = 1111;
+  const expected = 1176;
   t.equal(actual, expected, 'it returns the expected buffer');
 });
