@@ -20,12 +20,6 @@ function getPhone() {
 
 const phone1 = getPhone();
 
-testLive('getRedemptionCount', t => {
-  return liveClient
-    .getRedemptionCount('CHEAPO')
-    .then(count => t.equal(count, 1));
-});
-
 testLive('createCustomer', async t => {
   const customer = await liveClient.createCustomer({
     name: 'Customer Name',
@@ -35,40 +29,6 @@ testLive('createCustomer', async t => {
   t.equal(customer.first_name, 'Customer');
   t.equal(customer.last_name, 'Name');
   t.equal(customer.phone, phone1);
-});
-
-testLive('updateCustomerByPhone', t => {
-  return liveClient
-    .updateCustomerByPhone(phone1, {
-      last_name: 'Something',
-      first_name: 'Someone',
-      email: 'someone@example.com',
-      addresses: [
-        {
-          default: true,
-          address1: '1025 Oak st',
-          address2: 'B',
-          company: 'CALA',
-          city: 'San Francisco',
-          province: 'California',
-          phone: phone1,
-          zip: '94117',
-          last_name: 'Something',
-          first_name: 'Someone'
-        }
-      ]
-    })
-    .then(customer => {
-      t.equal(customer.first_name, 'Someone');
-      t.equal(customer.last_name, 'Something');
-      t.equal(customer.addresses[0].address1, '1025 Oak st');
-    });
-});
-
-testLive('getCollects', t => {
-  return liveClient.getCollects().then(collects => {
-    t.equal(typeof collects[0].product_id, 'number');
-  });
 });
 
 test('parseError parses string errors', async t => {

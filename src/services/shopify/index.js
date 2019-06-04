@@ -1,7 +1,6 @@
 'use strict';
 
 const fetch = require('node-fetch');
-const querystring = require('querystring');
 const bindAll = require('lodash/bindAll');
 
 const InvalidDataError = require('../../errors/invalid-data');
@@ -118,150 +117,6 @@ class ShopifyClient {
   }
 
   /**
-   * Retrieve a list of collections
-   */
-  async getCollections(filters) {
-    const query = querystring.stringify(filters);
-    const path = `/custom_collections.json?${query}`;
-
-    const [body] = await this.makeRequest('get', path);
-    const collections = body.custom_collections || [];
-
-    const sorted = collections.sort((a, b) => {
-      return new Date(b.published_at) - new Date(a.published_at);
-    });
-
-    return Promise.all(sorted.map(this._attachMetafields));
-  }
-
-  /**
-   * Retrieve a list of "collects" - Shopify's join table between products and
-   * collections
-   */
-  async getCollects(filters) {
-    const query = querystring.stringify(filters);
-    const path = `/collects.json?${query}`;
-
-    const [body] = await this.makeRequest('get', path);
-    return body.collects || [];
-  }
-
-  /**
-   * Retrieve a set of products in a certain collection
-   */
-  async getProductsByCollectionId(collectionId) {
-    const path = `/products.json?collection_id=${collectionId}&order=created_at+desc`;
-
-    const [body] = await this.makeRequest('get', path);
-    return body.products;
-  }
-
-  /**
-   * Retrieve a single order by ID
-   */
-  async getOrder(id) {
-    const path = `/orders/${id}.json`;
-
-    const [body, response] = await this.makeRequest('get', path);
-
-    if (response.status === 404) {
-      throw new ShopifyNotFoundError('Order not found');
-    }
-
-    if (!body.order) {
-      Logger.log('Shopify response: ', body);
-      throw new Error('Shopify response did not contain order');
-    }
-
-    return body.order;
-  }
-
-  /**
-   * Get a single product
-   */
-  async getProductById(id) {
-    const path = `/products/${id}.json`;
-
-    const [body, response] = await this.makeRequest('get', path);
-
-    if (response.status === 404) {
-      throw new ShopifyNotFoundError('Product not found');
-    }
-
-    if (!body.product) {
-      Logger.log('Shopify response: ', body);
-      throw new Error('Shopify response did not contain product');
-    }
-
-    return body.product;
-  }
-
-  async getAllProducts(filters, { includeDesigners = false }) {
-    const query = querystring.stringify(filters);
-
-    const path = `/products.json?${query}`;
-
-    const [body] = await this.makeRequest('get', path);
-    const { products } = body;
-
-    if (!products) {
-      Logger.log('Shopify response: ', body);
-      throw new Error('Shopify response did not contain products');
-    }
-
-    return products
-      .filter(product => {
-        // Exclude 'special' products from public list
-        // ... unless you're filtering by handle specifically
-        // probably want to reevaluate this and add a `getByHandle` endpoint
-        // b/c this is weird
-        if (
-          !filters.handle &&
-          (product.product_type === 'VIP' || product.product_type === 'Hidden')
-        ) {
-          return false;
-        }
-
-        if (!includeDesigners && product.product_type === 'Designer') {
-          return false;
-        }
-
-        return true;
-      })
-      .sort((a, b) => {
-        // Sort by published_at desc
-        return new Date(b.published_at) - new Date(a.published_at);
-      });
-  }
-
-  /**
-   * Get the number of orders that used a given discount code.
-   */
-  async getRedemptionCount(discountCode) {
-    // TODO allow calculation for more than 250
-    // https://trello.com/c/FaTW4F4R/80-allow-referral-code-calculation-for-more-than-250-previous-orders
-    const path = '/orders.json?limit=250';
-
-    const [body] = await this.makeRequest('get', path);
-
-    if (!body.orders) {
-      Logger.log('Shopify response: ', body);
-      throw new Error('Could not retrieve Shopify orders');
-    }
-
-    return body.orders.reduce((memo, order) => {
-      for (let i = 0; i < order.discount_codes.length; i += 1) {
-        const { code } = order.discount_codes[i];
-
-        if (code === discountCode) {
-          return memo + 1;
-        }
-      }
-      return memo;
-    }, 0);
-  }
-
-  /**
    * @param {String} data.name Customer's full name
    * @param {String} data.phone Customer's phone number
    * @returns {Object} customer data
@@ -335,12 +190,6 @@ class ShopifyClient {
     }
 
     return body.customer;
-  }
-
-  async updateCustomerByPhone(phone, data) {
-    const customer = await this.getCustomerByPhone(phone);
-    const updated = await this.updateCustomer(customer.id, data);
-    return updated;
   }
 }
 

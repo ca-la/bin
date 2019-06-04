@@ -17,20 +17,6 @@ function recordScan(userId) {
   });
 }
 
-function recordPurchase(userId) {
-  return UsersDAO.findById(userId).then(user => {
-    if (!user) {
-      throw new InvalidDataError(`User not found: ${userId}`);
-    }
-
-    return updateUser({
-      email: user.email,
-      hasBought: true
-    });
-  });
-}
-
 module.exports = {
-  recordScan,
-  recordPurchase
+  recordScan
 };
