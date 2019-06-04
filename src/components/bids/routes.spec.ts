@@ -9,6 +9,7 @@ import createUser = require('../../test-helpers/create-user');
 import generateBid from '../../test-helpers/factories/bid';
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
 import * as BidsDAO from './dao';
+import * as BidRejectionDAO from '../bid-rejections/dao';
 import * as PricingCostInputsDAO from '../../dao/pricing-cost-inputs';
 import * as CollaboratorsDAO from '../collaborators/dao';
 import * as DesignEventsDAO from '../../dao/design-events';
@@ -715,6 +716,14 @@ test('Partner pairing: reject', async (t: Test) => {
     id: uuid.v4(),
     quoteId: quotesRequest[1][0].id
   });
+  const bidRejection = {
+    createdBy: admin.user.id,
+    priceTooLow: false,
+    deadlineTooShort: false,
+    missingInformation: false,
+    other: true,
+    notes: 'Unable to complete as designed'
+  };
   await put(`/bids/${bid.id}/assignees/${partner.user.id}`, {
     headers: authHeader(admin.session.id)
   });
@@ -724,7 +733,8 @@ test('Partner pairing: reject', async (t: Test) => {
   );
 
   const [missingBidResponse] = await post(`/bids/${uuid.v4()}/reject`, {
-    headers: authHeader(partner.session.id)
+    headers: authHeader(partner.session.id),
+    body: bidRejection
   });
   t.equal(missingBidResponse.status, 404, 'Unknown bid returns 404');
 
@@ -738,10 +748,12 @@ test('Partner pairing: reject', async (t: Test) => {
   );
 
   const [response] = await post(`/bids/${bid.id}/reject`, {
-    headers: authHeader(partner.session.id)
+    headers: authHeader(partner.session.id),
+    body: bidRejection
   });
 
   const designEvents = await DesignEventsDAO.findByDesignId(design.id);
+  const createdRejection = await BidRejectionDAO.findByBidId(bid.id);
 
   t.equal(response.status, 204);
   t.deepEqual(
@@ -771,6 +783,7 @@ test('Partner pairing: reject', async (t: Test) => {
     ],
     'Adds a rejection event'
   );
+  t.deepEqual(omit(createdRejection, 'id', 'createdAt', 'bidId'), bidRejection);
 
   const designCollaborator = await CollaboratorsDAO.findByDesignAndUser(
     design.id,

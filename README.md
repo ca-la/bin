@@ -91,11 +91,11 @@ $ bin/tt src/routes/users/spec.ts
 To run staging/production migrations, you'll need the [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli).
 
 Staging database migrations should be performed immediately after a pull request
-is merged. Please paste the output of `npm run migration:run:staging` into the #eng
+is merged. Please paste the output of `bin/migrate staging` into the #eng
 channel in Slack.
 
 When a production deployment is approved, please run production migrations
-(`npm run migration:run:production`) immediately prior to running the release script.
+(`bin/migrate production`) immediately prior to running the release script.
 Again, paste the output into Slack for visibility.
 
 All migrations **must** be able to work both with the currently-deployed
@@ -118,7 +118,7 @@ $ bin/migrate production                      # Migrate production/demo DB
 
 For advanced usage, see [knexjs.org](http://knexjs.org/#Migrations).
 
-A good sanity-check for testing migrations locally is the `npm run migration:validate`
+A good sanity-check for testing migrations locally is the `bin/validate-migration`
 script, which gives a summary of the effects of the migration and any unexpected
 side-effects after rolling it back. Note that this should be run before migrating
 locally. You can roll back the migration to get an accurate result.

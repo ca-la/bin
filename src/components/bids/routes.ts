@@ -7,6 +7,7 @@ import Collaborator from '../collaborators/domain-objects/collaborator';
 import ProductDesign = require('../../domain-objects/product-design');
 import { PricingQuote } from '../../domain-objects/pricing-quote';
 import * as UsersDAO from '../../components/users/dao';
+import * as BidRejectionsDAO from '../bid-rejections/dao';
 import * as BidsDAO from './dao';
 import * as PricingQuotesDAO from '../../dao/pricing-quotes';
 import * as ProductDesignsDAO from '../../dao/product-designs';
@@ -18,6 +19,8 @@ import * as NotificationsService from '../../services/create-notifications';
 import { isExpired } from './services/is-expired';
 import { hasActiveBids } from './services/has-active-bids';
 import { MILLISECONDS_TO_EXPIRE } from './constants';
+import { BidRejection } from '../bid-rejections/domain-object';
+import { hasOnlyProperties } from '../../services/require-properties';
 
 const router = new Router();
 
@@ -317,11 +320,31 @@ export function* acceptDesignBid(
   this.body = maybeIOBid;
 }
 
+interface RejectDesignBidContext extends Koa.Application.Context {
+  params: {
+    bidId: string;
+  };
+  body: Unsaved<BidRejection>;
+}
+
+function isRejectionReasons(data: object): data is Unsaved<BidRejection> {
+  return hasOnlyProperties(
+    data,
+    'createdBy',
+    'priceTooLow',
+    'deadlineTooShort',
+    'missingInformation',
+    'other',
+    'notes'
+  );
+}
+
 export function* rejectDesignBid(
-  this: AcceptDesignBidContext
+  this: RejectDesignBidContext
 ): AsyncIterableIterator<void> {
   const { bidId } = this.params;
   const { userId } = this.state;
+  const { body } = this.request;
 
   const bid: Bid = yield BidsDAO.findById(bidId);
   this.assert(bid, 404, `Bid not found with ID ${bidId}`);
@@ -342,6 +365,12 @@ export function* rejectDesignBid(
     403,
     'You may only reject a bid you have been assigned to'
   );
+
+  if (body && isRejectionReasons(body)) {
+    yield BidRejectionsDAO.create({ bidId: bid.id, ...body });
+  } else {
+    return this.throw('Bid rejection reasons are required', 400);
+  }
 
   yield DesignEventsDAO.create({
     actorId: userId,
