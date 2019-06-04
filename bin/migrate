@@ -11,7 +11,7 @@ confirm() {
   echo -n "Are you sure? Type \"$@\" to continue: "
   read response
 
-  if [ "$response" != "$@" ]; then
+  if [[ "$response" != "$@" ]]; then
     echo "Response does not match, exiting"
     exit 1
   fi
@@ -53,21 +53,21 @@ main() {
   rollback_flag=${2:-""}
   skip_build=${SKIP_BUILD:-"false"}
 
-  if [ "$host" != "local" ]; then
+  if [[ "$host" != "local" ]]; then
     live_migration_preflight
   fi
 
-  if [ "$skip_build" != "true" ]; then
+  if [[ "$skip_build" != "true" ]]; then
     echo 'Building...'
     bin/lib/clean
     bin/lib/build
   fi
 
   take_action() {
-    if [ "$rollback_flag" == "" ]; then
+    if [[ "$rollback_flag" == "" ]]; then
       echo 'Migrating...'
       migrate
-    elif [ "$rollback_flag" == "rollback" ]; then
+    elif [[ "$rollback_flag" == "rollback" ]]; then
       echo 'Rolling back migration...'
       rollback
     else
@@ -87,7 +87,7 @@ main() {
       ;;
 
     staging)
-      if [ "$rollback_flag" == "rollback" ]; then
+      if [[ "$rollback_flag" == "rollback" ]]; then
         confirm 'DANGEROUS_STAGING_ROLLBACK'
       else
         confirm 'STAGING'
@@ -99,7 +99,7 @@ main() {
       ;;
 
     production)
-      if [ "$rollback_flag" == "rollback" ]; then
+      if [[ "$rollback_flag" == "rollback" ]]; then
         confirm 'DANGEROUS_PRODUCTION_ROLLBACK'
       else
         confirm 'PRODUCTION'

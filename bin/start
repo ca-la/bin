@@ -9,7 +9,7 @@ source bin/lib/loadenv
 
 loadenv-local
 
-if [ ! -d "dist" ]; then
+if [[ ! -d "dist" ]]; then
   echo 'No built application found in dist/ directory'
   exit 1
 fi

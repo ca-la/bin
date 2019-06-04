@@ -8,7 +8,7 @@ set -o noglob
 source bin/lib/loadenv
 loadenv-test
 
-if [ "$CI" == "true" ]; then
+if [[ "$CI" == "true" ]]; then
   mkdir -p ./reports
   npx tape "dist/**/*spec.js" | npx tap-xunit > ./reports/tape.xml
 else

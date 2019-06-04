@@ -8,10 +8,9 @@ usage_fail() {
 }
 
 preflight() {
-  if [ ! -d dist ];
-  then
-    echo 'Missing built code';
-  exit 1;
+  if [[ ! -d dist ]]; then
+    echo 'Missing built code'
+    exit 1
   fi
 
   echo 'Checking deployment readiness...'
@@ -30,7 +29,7 @@ postflight() {
 
 main() {
   host=${1:-""}
-  if [ "$host" != "staging" || "$host" != "production" ]; then
+  if [[ "$host" != "staging" || "$host" != "production" ]]; then
     usage_fail
   fi
 
@@ -49,6 +48,7 @@ main() {
       ;;
     *)
       usage_fail
+      ;;
   esac
 
   postflight
