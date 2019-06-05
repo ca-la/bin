@@ -3,8 +3,8 @@ import * as Router from 'koa-router';
 import * as Koa from 'koa';
 import * as uuid from 'node-uuid';
 
+import requireAuth = require('../../middleware/require-auth');
 import * as CollectionsDAO from '../../dao/collections';
-import * as DesignEventsDAO from '../../dao/design-events';
 import * as PricingCostInputsDAO from '../../dao/pricing-cost-inputs';
 import * as SlackService from '../../services/slack';
 import * as UsersDAO from '../../components/users/dao';
@@ -13,7 +13,7 @@ import Bid from '../../components/bids/domain-object';
 import filterError = require('../../services/filter-error');
 import InvalidDataError = require('../../errors/invalid-data');
 import requireAdmin = require('../../middleware/require-admin');
-import requireAuth = require('../../middleware/require-auth');
+import * as DesignEventsDAO from '../../dao/design-events';
 import { FINANCING_MARGIN } from '../../config';
 import { findByDesignId, findById } from '../../dao/pricing-quotes';
 import { hasProperties } from '../../services/require-properties';
@@ -27,10 +27,12 @@ import PricingCostInput, {
 } from '../../domain-objects/pricing-cost-input';
 import {
   PricingQuote,
-  PricingQuoteRequest
+  PricingQuoteRequest,
+  PricingQuoteRequestWithVersions
 } from '../../domain-objects/pricing-quote';
 import generatePricingQuote, {
   generateUnsavedQuote,
+  generateUnsavedQuoteWithoutVersions,
   UnsavedQuote
 } from '../../services/generate-pricing-quote';
 import addTimeBuffer from '../../services/add-time-buffer';
@@ -91,14 +93,14 @@ function* createQuote(
       return;
     }
 
-    const quoteRequest: PricingQuoteRequest = {
+    const quoteRequest: PricingQuoteRequestWithVersions = {
       ...omit(costInputs[0], ['id', 'createdAt', 'deletedAt']),
       units: unitsNumber
     };
 
     const quote = yield generatePricingQuote(quoteRequest).catch(
       filterError(InvalidDataError, (err: InvalidDataError) =>
-        this.throw(400, err)
+        this.throw(500, err)
       )
     );
 
@@ -166,14 +168,14 @@ function* getQuotes(this: Koa.Application.Context): AsyncIterableIterator<any> {
       return;
     }
 
-    const quoteRequest: PricingQuoteRequest = {
+    const quoteRequest: PricingQuoteRequestWithVersions = {
       ...omit(costInputs[0], ['id', 'createdAt', 'deletedAt']),
       units: unitsNumber
     };
 
     const unsavedQuote = yield generateUnsavedQuote(quoteRequest).catch(
       filterError(InvalidDataError, (err: InvalidDataError) =>
-        this.throw(400, err)
+        this.throw(500, err)
       )
     );
 
@@ -239,9 +241,11 @@ function* previewQuote(
     units
   };
 
-  const unsavedQuote = yield generateUnsavedQuote(quoteRequest).catch(
+  const unsavedQuote = yield generateUnsavedQuoteWithoutVersions(
+    quoteRequest
+  ).catch(
     filterError(InvalidDataError, (err: InvalidDataError) =>
-      this.throw(400, err)
+      this.throw(500, err)
     )
   );
 

@@ -1,6 +1,7 @@
 import * as uuid from 'node-uuid';
 import * as sinon from 'sinon';
 
+import * as db from '../../services/db';
 import * as DesignEventsDAO from '../../dao/design-events';
 import * as PricingCostInputsDAO from '../../dao/pricing-cost-inputs';
 import Bid from '../../components/bids/domain-object';
@@ -12,16 +13,21 @@ import { sandbox, test, Test } from '../../test-helpers/fresh';
 import generateCollection from '../../test-helpers/factories/collection';
 import * as CollectionsDAO from '../../dao/collections';
 import * as SlackService from '../../services/slack';
-import PricingCostInput from '../../domain-objects/pricing-cost-input';
+import PricingCostInput, {
+  PricingCostInputWithoutVersions
+} from '../../domain-objects/pricing-cost-input';
 import { daysToMs } from '../../services/time-conversion';
+import generateProductTypes from '../../services/generate-product-types';
+import { Dollars } from '../../services/dollars';
 
-test('/pricing-quotes POST -> GET quote', async (t: Test) => {
+test('/pricing-quotes POST -> GET quote fails with malformed inputs', async (t: Test) => {
   const { user, session } = await createUser();
   const design = await createDesign({
     productType: 'A product type',
     title: 'A design',
     userId: user.id
   });
+  await generatePricingValues();
   await PricingCostInputsDAO.create({
     createdAt: new Date(),
     deletedAt: null,
@@ -42,8 +48,9 @@ test('/pricing-quotes POST -> GET quote', async (t: Test) => {
     productComplexity: 'SIMPLE',
     productType: 'TEESHIRT'
   });
+  await db('pricing_constants').del();
 
-  const [failedResponse, failedBody] = await post('/pricing-quotes', {
+  const [failedResponse] = await post('/pricing-quotes', {
     body: [
       {
         designId: design.id,
@@ -53,15 +60,38 @@ test('/pricing-quotes POST -> GET quote', async (t: Test) => {
     headers: authHeader(session.id)
   });
 
-  t.equal(failedResponse.status, 400, 'fails to create the quote');
-  t.equal(
-    failedBody.message,
-    'Latest pricing constant could not be found!',
-    'Responds with a failure message'
-  );
+  t.equal(failedResponse.status, 500, 'fails to create the quote');
+});
+
+test('/pricing-quotes POST -> GET quote from original version', async (t: Test) => {
+  const { user, session } = await createUser();
+  const design = await createDesign({
+    productType: 'A product type',
+    title: 'A design',
+    userId: user.id
+  });
 
   await generatePricingValues();
-
+  await PricingCostInputsDAO.create({
+    createdAt: new Date(),
+    deletedAt: null,
+    designId: design.id,
+    id: uuid.v4(),
+    materialBudgetCents: 1200,
+    materialCategory: 'BASIC',
+    processes: [
+      {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      },
+      {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      }
+    ],
+    productComplexity: 'SIMPLE',
+    productType: 'TEESHIRT'
+  });
   const [postResponse, createdQuotes] = await post('/pricing-quotes', {
     body: [
       {
@@ -73,6 +103,16 @@ test('/pricing-quotes POST -> GET quote', async (t: Test) => {
   });
 
   t.equal(postResponse.status, 201, 'successfully creates the quote');
+
+  const pricingProductTypeTee = generateProductTypes({
+    contrast: [0.15, 0.5, 1, 0],
+    typeMediumCents: Dollars(30),
+    typeMediumDays: 10,
+    typeName: 'TEESHIRT',
+    typeYield: 1.5,
+    version: 1
+  });
+  await db.insert(pricingProductTypeTee).into('pricing_product_types');
 
   const [getResponse, retrievedQuote] = await get(
     `/pricing-quotes/${createdQuotes[0].id}`
@@ -319,7 +359,7 @@ test('POST /pricing-quotes/preview returns an unsaved quote from an uncommitted 
     title: 'A design',
     userId: user.id
   });
-  const uncommittedCostInput: PricingCostInput = {
+  const uncommittedCostInput: PricingCostInputWithoutVersions = {
     createdAt: new Date(),
     deletedAt: null,
     designId: design.id,
@@ -356,6 +396,37 @@ test('POST /pricing-quotes/preview returns an unsaved quote from an uncommitted 
     payNowTotalCentsPerUnit: 4960,
     timeTotalMs: 1219764706
   });
+
+  const pricingProductTypeTee = generateProductTypes({
+    contrast: [0.15, 0.5, 1, 0],
+    typeMediumCents: Dollars(30),
+    typeMediumDays: 10,
+    typeName: 'TEESHIRT',
+    typeYield: 1.5,
+    version: 1
+  });
+  await db.insert(pricingProductTypeTee).into('pricing_product_types');
+
+  const [response2, unsavedQuote2] = await post('/pricing-quotes/preview', {
+    body: {
+      uncommittedCostInput,
+      units: 100
+    },
+    headers: authHeader(session.id)
+  });
+
+  t.equal(response2.status, 200);
+  t.deepEqual(
+    unsavedQuote2,
+    {
+      payLaterTotalCents: 659575,
+      payLaterTotalCentsPerUnit: 6596,
+      payNowTotalCents: 620000,
+      payNowTotalCentsPerUnit: 6200,
+      timeTotalMs: 1423058824
+    },
+    'quote is on new pricing'
+  );
 });
 
 test('POST /pricing-quotes/preview fails if there are no pricing values for the request', async (t: Test) => {
@@ -384,10 +455,17 @@ test('POST /pricing-quotes/preview fails if there are no pricing values for the 
       }
     ],
     productComplexity: 'SIMPLE',
-    productType: 'TEESHIRT'
+    productType: 'TEESHIRT',
+    processTimelinesVersion: 0,
+    processesVersion: 0,
+    productMaterialsVersion: 0,
+    productTypeVersion: 0,
+    marginVersion: 0,
+    constantsVersion: 0,
+    careLabelsVersion: 0
   };
 
-  const [failedResponse, failedBody] = await post('/pricing-quotes/preview', {
+  const [failedResponse] = await post('/pricing-quotes/preview', {
     body: {
       uncommittedCostInput,
       units: 100
@@ -395,12 +473,7 @@ test('POST /pricing-quotes/preview fails if there are no pricing values for the 
     headers: authHeader(session.id)
   });
 
-  t.equal(failedResponse.status, 400, 'fails to create the quote');
-  t.equal(
-    failedBody.message,
-    'Latest pricing constant could not be found!',
-    'Responds with a failure message'
-  );
+  t.equal(failedResponse.status, 500, 'fails to create the quote');
 });
 
 test('POST /pricing-quotes/preview is an admin-only endpoint', async (t: Test) => {

@@ -42,7 +42,7 @@ test('PricingQuotes DAO supports finding the latest values', async (t: tape.Test
       units: 1000
     });
   } catch (error) {
-    t.equal(error.message, 'Latest pricing product type could not be found!');
+    t.equal(error.message, 'Pricing product type could not be found!');
   }
 
   // complexity failure
@@ -57,7 +57,7 @@ test('PricingQuotes DAO supports finding the latest values', async (t: tape.Test
       units: 1000
     });
   } catch (error) {
-    t.equal(error.message, 'Latest pricing product type could not be found!');
+    t.equal(error.message, 'Pricing product type could not be found!');
   }
 
   // material failure
@@ -72,10 +72,7 @@ test('PricingQuotes DAO supports finding the latest values', async (t: tape.Test
       units: 1000
     });
   } catch (error) {
-    t.equal(
-      error.message,
-      'Latest pricing product material could not be found!'
-    );
+    t.equal(error.message, 'Pricing product material could not be found!');
   }
 
   // success

@@ -22,6 +22,16 @@ export interface PricingQuoteRequest extends BasePricingQuoteRequest {
   processes: Process[];
 }
 
+export interface PricingQuoteRequestWithVersions extends PricingQuoteRequest {
+  processesVersion: number;
+  productTypeVersion: number;
+  constantsVersion: number;
+  marginVersion: number;
+  productMaterialsVersion: number;
+  careLabelsVersion: number;
+  processTimelinesVersion: number;
+}
+
 export interface PricingQuoteCalculated {
   baseCostCents: number;
   materialCostCents: number;

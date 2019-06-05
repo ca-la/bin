@@ -2,7 +2,7 @@ import { Complexity, MaterialCategory, Process, ProductType } from './pricing';
 import { hasProperties } from '../services/require-properties';
 import DataAdapter from '../services/data-adapter';
 
-export default interface PricingCostInput {
+export interface PricingCostInputWithoutVersions {
   id: string;
   createdAt: Date;
   deletedAt: Date | null;
@@ -14,7 +14,18 @@ export default interface PricingCostInput {
   processes: Process[];
 }
 
-export interface PricingCostInputRow {
+export default interface PricingCostInput
+  extends PricingCostInputWithoutVersions {
+  processesVersion: number;
+  productTypeVersion: number;
+  constantsVersion: number;
+  marginVersion: number;
+  productMaterialsVersion: number;
+  careLabelsVersion: number;
+  processTimelinesVersion: number;
+}
+
+export interface PricingCostInputRowWithoutVersions {
   id: string;
   created_at: Date;
   deleted_at: Date | null;
@@ -26,14 +37,30 @@ export interface PricingCostInputRow {
   processes: Process[];
 }
 
+export interface PricingCostInputRow
+  extends PricingCostInputRowWithoutVersions {
+  processes_version: number;
+  constants_version: number;
+  margin_version: number;
+  product_materials_version: number;
+  care_labels_version: number;
+  process_timelines_version: number;
+  product_type_version: number;
+}
+
 export const dataAdapter = new DataAdapter<
   PricingCostInputRow,
   PricingCostInput
 >();
 
+export const dataAdapterWithoutVersions = new DataAdapter<
+  PricingCostInputRowWithoutVersions,
+  PricingCostInputWithoutVersions
+>();
+
 export function isUnsavedPricingCostInput(
   candidate: object
-): candidate is Unsaved<PricingCostInput> {
+): candidate is Unsaved<PricingCostInputWithoutVersions> {
   return hasProperties(
     candidate,
     'productType',
@@ -58,7 +85,14 @@ export function isPricingCostInput(
     'materialCategory',
     'materialBudgetCents',
     'processes',
-    'designId'
+    'designId',
+    'processesVersion',
+    'productTypeVersion',
+    'constantsVersion',
+    'marginVersion',
+    'productMaterialsVersion',
+    'careLabelsVersion',
+    'processTimelinesVersion'
   );
 }
 
@@ -75,6 +109,13 @@ export function isPricingCostInputRow(
     'material_category',
     'material_budget_cents',
     'processes',
-    'design_id'
+    'design_id',
+    'processes_version',
+    'constants_version',
+    'margin_version',
+    'product_materials_version',
+    'care_labels_version',
+    'process_timelines_version',
+    'product_type_version'
   );
 }

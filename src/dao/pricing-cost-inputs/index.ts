@@ -8,8 +8,10 @@ import { validate, validateEvery } from '../../services/validate-from-db';
 import { Process } from '../../domain-objects/pricing';
 import PricingCostInput, {
   dataAdapter,
+  dataAdapterWithoutVersions,
   isPricingCostInputRow,
-  PricingCostInputRow
+  PricingCostInputRow,
+  PricingCostInputWithoutVersions
 } from '../../domain-objects/pricing-cost-input';
 
 const TABLE_NAME = 'pricing_cost_inputs';
@@ -17,12 +19,55 @@ const TABLE_NAME = 'pricing_cost_inputs';
 type WithoutProcesses = Omit<PricingCostInputRow, 'processes'>;
 
 export async function create(
-  inputs: PricingCostInput
+  inputs: PricingCostInputWithoutVersions
 ): Promise<PricingCostInput> {
+  const { rows } = await db.raw(`
+SELECT (
+  SELECT MAX(version) FROM pricing_process_timelines
+) as process_timelines_version, (
+  SELECT MAX(version) FROM pricing_care_labels
+) as care_labels_version, (
+  SELECT MAX(version) FROM pricing_product_materials
+) as product_materials_version, (
+  SELECT MAX(version) FROM pricing_product_types
+) as product_type_version, (
+  SELECT MAX(version) FROM pricing_margins
+) as margin_version, (
+  SELECT MAX(version) FROM pricing_constants
+) as constants_version, (
+  SELECT MAX(version) FROM pricing_processes
+) as processes_version
+
+FROM pricing_product_types
+LIMIT 1;
+  `);
+
+  if (!rows[0]) {
+    throw new Error('No pricing inputs found!');
+  }
+
+  const [
+    {
+      process_timelines_version,
+      care_labels_version,
+      product_materials_version,
+      product_type_version,
+      margin_version,
+      constants_version,
+      processes_version
+    }
+  ] = rows;
   const rowData = omit(
     {
       id: uuid.v4(),
-      ...dataAdapter.forInsertion(inputs)
+      ...dataAdapterWithoutVersions.forInsertion(inputs),
+      process_timelines_version,
+      processes_version,
+      care_labels_version,
+      product_materials_version,
+      product_type_version,
+      margin_version,
+      constants_version
     },
     ['processes']
   );

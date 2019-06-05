@@ -14,6 +14,7 @@ import {
   PricingQuote,
   PricingQuoteInputRow,
   PricingQuoteRequest,
+  PricingQuoteRequestWithVersions,
   PricingQuoteRow,
   PricingQuoteValues
 } from '../../domain-objects/pricing-quote';
@@ -111,32 +112,77 @@ export async function findMatchingOrCreateInput(
   return created;
 }
 
+export async function findVersionValuesForRequest(
+  request: PricingQuoteRequestWithVersions
+): Promise<PricingQuoteValues> {
+  const { units } = request;
+  const constant = await findConstants(request.constantsVersion);
+  const careLabel = await findCareLabel(units, request.careLabelsVersion);
+  const material = await findProductMaterial(
+    request.materialCategory,
+    units,
+    request.productMaterialsVersion
+  );
+  const type = await findProductType(
+    request.productType,
+    request.productComplexity,
+    units,
+    request.productTypeVersion
+  );
+  const sample = await findProductType(
+    request.productType,
+    request.productComplexity,
+    1,
+    request.productTypeVersion
+  );
+
+  const processes = await findProcesses(
+    request.processes,
+    units,
+    request.processesVersion
+  );
+  const processTimeline = await findProcessTimeline(
+    request.processes,
+    units,
+    request.processTimelinesVersion
+  );
+  const margin = await findMargin(request.units, request.marginVersion);
+
+  const { id: constantId, ...pricingValues } = constant;
+
+  return {
+    careLabel,
+    constantId,
+    margin,
+    material,
+    processTimeline,
+    processes,
+    sample,
+    type,
+    ...omit(pricingValues, 'createdAt', 'version')
+  };
+}
+
 export async function findLatestValuesForRequest(
   request: PricingQuoteRequest
 ): Promise<PricingQuoteValues> {
   const { units } = request;
-  const latestConstant = await findLatestConstants();
-  const careLabel = await findLatestCareLabel(units);
-  const material = await findLatestProductMaterial(
-    request.materialCategory,
-    units
-  );
-  const type = await findLatestProductType(
+  const latestConstant = await findConstants();
+  const careLabel = await findCareLabel(units);
+  const material = await findProductMaterial(request.materialCategory, units);
+  const type = await findProductType(
     request.productType,
     request.productComplexity,
     units
   );
-  const sample = await findLatestProductType(
+  const sample = await findProductType(
     request.productType,
     request.productComplexity,
     1
   );
-  const processes = await findLatestProcesses(request.processes, units);
-  const processTimeline = await findLatestProcessTimeline(
-    request.processes,
-    units
-  );
-  const margin = await findLatestMargin(request.units);
+  const processes = await findProcesses(request.processes, units);
+  const processTimeline = await findProcessTimeline(request.processes, units);
+  const margin = await findMargin(request.units);
 
   const { id: constantId, ...pricingValues } = latestConstant;
 
@@ -222,11 +268,14 @@ export async function findByDesignId(
   return Promise.all((quotes as PricingQuoteRow[]).map(attachProcesses));
 }
 
-async function findLatestCareLabel(units: number): Promise<PricingCareLabel> {
+async function findCareLabel(
+  units: number,
+  version?: number
+): Promise<PricingCareLabel> {
   const TABLE_NAME = 'pricing_care_labels';
-  const careLabelRow: PricingCareLabelRow | null = await findLatest<
+  const careLabelRow: PricingCareLabelRow | null = await findAtVersionOrLatest<
     Promise<PricingCareLabelRow | null>
-  >(TABLE_NAME, units);
+  >(TABLE_NAME, units, version);
 
   if (!careLabelRow) {
     throw new InvalidDataError('Pricing care label does not exist!');
@@ -240,14 +289,19 @@ async function findLatestCareLabel(units: number): Promise<PricingCareLabel> {
   );
 }
 
-async function findLatestConstants(): Promise<PricingConstant> {
+async function findConstants(version?: number): Promise<PricingConstant> {
   const TABLE_NAME = 'pricing_constants';
   const constantRow: PricingConstantRow | null = await db(TABLE_NAME)
     .first()
+    .modify((query: Knex.QueryBuilder) => {
+      if (version) {
+        query.where({ version });
+      }
+    })
     .orderBy('created_at', 'desc');
 
   if (!constantRow) {
-    throw new InvalidDataError('Latest pricing constant could not be found!');
+    throw new Error('Pricing constant could not be found!');
   }
 
   return validate(
@@ -258,19 +312,18 @@ async function findLatestConstants(): Promise<PricingConstant> {
   );
 }
 
-async function findLatestProductMaterial(
+async function findProductMaterial(
   category: string,
-  units: number
+  units: number,
+  version?: number
 ): Promise<PricingProductMaterial> {
   const TABLE_NAME = 'pricing_product_materials';
-  const materialRow: PricingProductMaterialRow | null = await findLatest<
+  const materialRow: PricingProductMaterialRow | null = await findAtVersionOrLatest<
     Knex.QueryBuilder
-  >(TABLE_NAME, units).where({ category });
+  >(TABLE_NAME, units, version).where({ category });
 
   if (!materialRow) {
-    throw new InvalidDataError(
-      'Latest pricing product material could not be found!'
-    );
+    throw new Error('Pricing product material could not be found!');
   }
 
   return validate(
@@ -281,20 +334,19 @@ async function findLatestProductMaterial(
   );
 }
 
-async function findLatestProductType(
+async function findProductType(
   name: string,
   complexity: string,
-  units: number
+  units: number,
+  version?: number
 ): Promise<PricingProductType> {
   const TABLE_NAME = 'pricing_product_types';
-  const typeRow: PricingProductTypeRow | null = await findLatest<
+  const typeRow: PricingProductTypeRow | null = await findAtVersionOrLatest<
     Knex.QueryBuilder
-  >(TABLE_NAME, units).where({ name, complexity });
+  >(TABLE_NAME, units, version).where({ name, complexity });
 
   if (!typeRow) {
-    throw new InvalidDataError(
-      'Latest pricing product type could not be found!'
-    );
+    throw new Error('Pricing product type could not be found!');
   }
 
   return validate(
@@ -305,9 +357,10 @@ async function findLatestProductType(
   );
 }
 
-async function findLatestProcesses(
+async function findProcesses(
   processes: Process[],
-  units: number
+  units: number,
+  version?: number
 ): Promise<PricingProcess[]> {
   const TABLE_NAME = 'pricing_processes';
   if (processes.length === 0) {
@@ -322,7 +375,13 @@ async function findLatestProcesses(
     db(TABLE_NAME)
       .select()
       .where(process)
-      .whereIn('version', db(TABLE_NAME).max('version'))
+      .modify((modifyQuery: Knex.QueryBuilder) => {
+        if (version) {
+          modifyQuery.where({ version });
+        } else {
+          modifyQuery.whereIn('version', db(TABLE_NAME).max('version'));
+        }
+      })
       .whereIn(
         'minimum_units',
         db(TABLE_NAME)
@@ -362,9 +421,10 @@ Found processes: ${JSON.stringify(processRows, null, 4)}`);
   );
 }
 
-async function findLatestProcessTimeline(
+async function findProcessTimeline(
   processes: Process[],
-  units: number
+  units: number,
+  version?: number
 ): Promise<PricingProcessTimeline | null> {
   if (processes.length === 0) {
     return null;
@@ -378,7 +438,13 @@ async function findLatestProcessTimeline(
   const processTimelineRow = await db(TABLE_NAME)
     .select()
     .where('unique_processes', '<=', uniqueProcesses)
-    .whereIn('version', db(TABLE_NAME).max('version'))
+    .modify((modifyQuery: Knex.QueryBuilder) => {
+      if (version) {
+        modifyQuery.where({ version });
+      } else {
+        modifyQuery.whereIn('version', db(TABLE_NAME).max('version'));
+      }
+    })
     .whereIn(
       'unique_processes',
       db(TABLE_NAME)
@@ -407,23 +473,36 @@ async function findLatestProcessTimeline(
   );
 }
 
-async function findLatestMargin(units: number): Promise<PricingMargin> {
+async function findMargin(
+  units: number,
+  version?: number
+): Promise<PricingMargin> {
   const TABLE_NAME = 'pricing_margins';
-  const marginRow: PricingMarginRow | null = await findLatest<
+  const marginRow: PricingMarginRow | null = await findAtVersionOrLatest<
     Promise<PricingMarginRow | null>
-  >(TABLE_NAME, units);
+  >(TABLE_NAME, units, version);
 
   if (!marginRow) {
-    throw new InvalidDataError('Pricing margin does not exist!');
+    throw new Error('Pricing margin does not exist!');
   }
 
   return validate(TABLE_NAME, isPricingMarginRow, marginDataAdapter, marginRow);
 }
 
-function findLatest<T>(from: TableName, units: number): T {
+function findAtVersionOrLatest<T>(
+  from: TableName,
+  units: number,
+  version?: number
+): T {
   return db(from)
     .first()
-    .whereIn('version', db(from).max('version'))
+    .modify((modifyQuery: Knex.QueryBuilder) => {
+      if (version) {
+        modifyQuery.where({ version });
+      } else {
+        modifyQuery.whereIn('version', db(from).max('version'));
+      }
+    })
     .andWhere('minimum_units', '<=', units)
     .orderBy('minimum_units', 'desc');
 }

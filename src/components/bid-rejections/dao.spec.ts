@@ -27,7 +27,14 @@ test('Bid Rejections DAO supports creation and retrieval by Bid ID', async (t: T
     ],
     productComplexity: 'SIMPLE',
     productType: 'TEESHIRT',
-    units: 200
+    units: 200,
+    processTimelinesVersion: 0,
+    processesVersion: 0,
+    productMaterialsVersion: 0,
+    productTypeVersion: 0,
+    marginVersion: 0,
+    constantsVersion: 0,
+    careLabelsVersion: 0
   });
   const inputBid: Bid = {
     bidPriceCents: 100000,

@@ -3,13 +3,13 @@ import * as uuid from 'node-uuid';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import * as PricingQuotesDAO from '../../dao/pricing-quotes';
 import {
-  PricingQuoteRequest,
+  PricingQuoteRequestWithVersions,
   PricingQuoteValues
 } from '../../domain-objects/pricing-quote';
 import generatePricingQuote, { generateUnsavedQuote } from './index';
 import { daysToMs } from '../time-conversion';
 
-const quoteRequestOne: PricingQuoteRequest = {
+const quoteRequestOne: PricingQuoteRequestWithVersions = {
   designId: null,
   materialBudgetCents: 1200,
   materialCategory: 'BASIC',
@@ -25,7 +25,14 @@ const quoteRequestOne: PricingQuoteRequest = {
   ],
   productComplexity: 'SIMPLE',
   productType: 'TEESHIRT',
-  units: 100000
+  units: 100000,
+  processTimelinesVersion: 0,
+  processesVersion: 0,
+  productMaterialsVersion: 0,
+  productTypeVersion: 0,
+  marginVersion: 0,
+  constantsVersion: 0,
+  careLabelsVersion: 0
 };
 
 test('generateUnsavedQuote failure', async (t: Test) => {
@@ -47,7 +54,16 @@ test('generatePricingQuote failure', async (t: Test) => {
     .throws();
 
   try {
-    await generatePricingQuote(quoteRequestOne);
+    await generatePricingQuote({
+      ...quoteRequestOne,
+      processTimelinesVersion: 0,
+      processesVersion: 0,
+      productMaterialsVersion: 0,
+      productTypeVersion: 0,
+      marginVersion: 0,
+      constantsVersion: 0,
+      careLabelsVersion: 0
+    });
     t.fail('Should not have succeeded!');
   } catch {
     t.ok('Fails to generate an unsaved quote');
@@ -159,7 +175,7 @@ test('generateUnsavedQuote', async (t: Test) => {
   };
 
   sandbox()
-    .stub(PricingQuotesDAO, 'findLatestValuesForRequest')
+    .stub(PricingQuotesDAO, 'findVersionValuesForRequest')
     .resolves(latestValues);
 
   const unsavedQuote = await generateUnsavedQuote(quoteRequestOne);
@@ -272,7 +288,7 @@ test('generateUnsavedQuote for blank', async (t: Test) => {
   };
 
   sandbox()
-    .stub(PricingQuotesDAO, 'findLatestValuesForRequest')
+    .stub(PricingQuotesDAO, 'findVersionValuesForRequest')
     .resolves(latestValues);
 
   const unsavedQuote = await generateUnsavedQuote({
@@ -287,7 +303,14 @@ test('generateUnsavedQuote for blank', async (t: Test) => {
     ],
     productComplexity: 'BLANK',
     productType: 'TEESHIRT',
-    units: 100
+    units: 100,
+    processTimelinesVersion: 0,
+    processesVersion: 0,
+    productMaterialsVersion: 0,
+    productTypeVersion: 0,
+    marginVersion: 0,
+    constantsVersion: 0,
+    careLabelsVersion: 0
   });
 
   t.equal(unsavedQuote.baseCostCents, 260, 'calculates base cost correctly');

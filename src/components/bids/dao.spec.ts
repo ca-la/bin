@@ -41,7 +41,14 @@ test('Bids DAO supports creation and retrieval', async (t: Test) => {
     ],
     productComplexity: 'SIMPLE',
     productType: 'TEESHIRT',
-    units: 200
+    units: 200,
+    processTimelinesVersion: 0,
+    processesVersion: 0,
+    productMaterialsVersion: 0,
+    productTypeVersion: 0,
+    marginVersion: 0,
+    constantsVersion: 0,
+    careLabelsVersion: 0
   });
   const inputBid: Bid = {
     bidPriceCents: 100000,
@@ -84,7 +91,14 @@ test('Bids DAO supports retrieval by quote ID', async (t: Test) => {
     ],
     productComplexity: 'SIMPLE',
     productType: 'TEESHIRT',
-    units: 200
+    units: 200,
+    processTimelinesVersion: 0,
+    processesVersion: 0,
+    productMaterialsVersion: 0,
+    productTypeVersion: 0,
+    marginVersion: 0,
+    constantsVersion: 0,
+    careLabelsVersion: 0
   });
   const inputBid: Bid = {
     bidPriceCents: 100000,
@@ -124,7 +138,14 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
     ],
     productComplexity: 'SIMPLE',
     productType: 'TEESHIRT',
-    units: 200
+    units: 200,
+    processTimelinesVersion: 0,
+    processesVersion: 0,
+    productMaterialsVersion: 0,
+    productTypeVersion: 0,
+    marginVersion: 0,
+    constantsVersion: 0,
+    careLabelsVersion: 0
   });
   const openBid: Bid = {
     bidPriceCents: 100000,

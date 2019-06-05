@@ -6,8 +6,10 @@ import * as ProductDesignsDAO from '../product-designs';
 import * as PricingCostInputsDAO from './index';
 import PricingCostInput from '../../domain-objects/pricing-cost-input';
 import { omit } from 'lodash';
+import generatePricingValues from '../../test-helpers/factories/pricing-values';
 
 test('PricingCostInputsDAO supports creation and retrieval', async (t: Test) => {
+  await generatePricingValues();
   const { user } = await createUser();
   const design = await ProductDesignsDAO.create({
     productType: 'DRESS',
@@ -32,7 +34,14 @@ test('PricingCostInputsDAO supports creation and retrieval', async (t: Test) => 
       }
     ],
     productComplexity: 'MEDIUM',
-    productType: 'DRESS'
+    productType: 'DRESS',
+    processTimelinesVersion: 0,
+    processesVersion: 0,
+    productMaterialsVersion: 0,
+    productTypeVersion: 0,
+    marginVersion: 0,
+    constantsVersion: 0,
+    careLabelsVersion: 0
   };
 
   const created = await PricingCostInputsDAO.create(input);
@@ -46,6 +55,7 @@ test('PricingCostInputsDAO supports creation and retrieval', async (t: Test) => 
 });
 
 test('PricingCostInputsDAO supports retrieval by designID', async (t: Test) => {
+  await generatePricingValues();
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
 
@@ -73,7 +83,14 @@ test('PricingCostInputsDAO supports retrieval by designID', async (t: Test) => {
       }
     ],
     productComplexity: 'MEDIUM',
-    productType: 'DRESS'
+    productType: 'DRESS',
+    processTimelinesVersion: 0,
+    processesVersion: 0,
+    productMaterialsVersion: 0,
+    productTypeVersion: 0,
+    marginVersion: 0,
+    constantsVersion: 0,
+    careLabelsVersion: 0
   };
   const anotherInput: PricingCostInput = {
     createdAt: new Date(),
@@ -93,7 +110,14 @@ test('PricingCostInputsDAO supports retrieval by designID', async (t: Test) => {
       }
     ],
     productComplexity: 'MEDIUM',
-    productType: 'DRESS'
+    productType: 'DRESS',
+    processTimelinesVersion: 0,
+    processesVersion: 0,
+    productMaterialsVersion: 0,
+    productTypeVersion: 0,
+    marginVersion: 0,
+    constantsVersion: 0,
+    careLabelsVersion: 0
   };
   await PricingCostInputsDAO.create(input);
   await PricingCostInputsDAO.create(anotherInput);
