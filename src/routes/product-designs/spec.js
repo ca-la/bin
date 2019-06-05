@@ -221,6 +221,7 @@ test('GET /product-designs allows fetching designs await quotes', async t => {
         canComment: true,
         canDelete: true,
         canEdit: true,
+        canEditVariants: true,
         canSubmit: true,
         canView: true
       }

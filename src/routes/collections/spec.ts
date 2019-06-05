@@ -234,6 +234,7 @@ test('GET /collections', async (t: tape.Test) => {
           canComment: true,
           canDelete: false,
           canEdit: false,
+          canEditVariants: false,
           canSubmit: false,
           canView: true
         }
@@ -245,6 +246,7 @@ test('GET /collections', async (t: tape.Test) => {
           canComment: true,
           canDelete: true,
           canEdit: true,
+          canEditVariants: false,
           canSubmit: true,
           canView: true
         }
@@ -469,6 +471,7 @@ test('GET /collections/:id/designs', async (t: tape.Test) => {
         canComment: true,
         canDelete: true,
         canEdit: true,
+        canEditVariants: true,
         canSubmit: true,
         canView: true
       },

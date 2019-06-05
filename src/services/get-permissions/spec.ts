@@ -8,6 +8,7 @@ import * as CollectionsDAO from '../../dao/collections';
 import * as DesignsDAO from '../../dao/product-designs';
 import * as PermissionsService from './index';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
+import generateDesignEvent from '../../test-helpers/factories/design-event';
 
 test('#getDesignPermissions', async (t: tape.Test) => {
   const { user, session } = await createUser();
@@ -53,6 +54,10 @@ test('#getDesignPermissions', async (t: tape.Test) => {
     userId: user2.id
   });
   await CollectionsDAO.moveDesign(collection2.id, design4.id);
+  const { design: design5 } = await generateDesignEvent({
+    type: 'COMMIT_QUOTE',
+    actorId: user.id
+  });
 
   await generateCollaborator({
     collectionId: collection1.id,
@@ -93,10 +98,23 @@ test('#getDesignPermissions', async (t: tape.Test) => {
       canComment: true,
       canDelete: true,
       canEdit: true,
+      canEditVariants: true,
       canSubmit: true,
       canView: true
     },
     'Returns all access permissions for the design the user created.'
+  );
+  t.deepEqual(
+    await PermissionsService.getDesignPermissions(design5, session, user.id),
+    {
+      canComment: true,
+      canDelete: true,
+      canEdit: true,
+      canEditVariants: false,
+      canSubmit: true,
+      canView: true
+    },
+    'Returns non edit variant permissions for the designs that have been paid for.'
   );
   t.deepEqual(
     await PermissionsService.getDesignPermissions(design1, session2, user2.id),
@@ -104,6 +122,7 @@ test('#getDesignPermissions', async (t: tape.Test) => {
       canComment: false,
       canDelete: false,
       canEdit: false,
+      canEditVariants: false,
       canSubmit: false,
       canView: true
     },
@@ -115,6 +134,7 @@ test('#getDesignPermissions', async (t: tape.Test) => {
       canComment: true,
       canDelete: false,
       canEdit: true,
+      canEditVariants: true,
       canSubmit: true,
       canView: true
     },
@@ -126,6 +146,7 @@ test('#getDesignPermissions', async (t: tape.Test) => {
       canComment: true,
       canDelete: false,
       canEdit: false,
+      canEditVariants: false,
       canSubmit: false,
       canView: true
     },
@@ -137,6 +158,7 @@ test('#getDesignPermissions', async (t: tape.Test) => {
       canComment: false,
       canDelete: false,
       canEdit: false,
+      canEditVariants: false,
       canSubmit: false,
       canView: false
     },
@@ -232,6 +254,7 @@ test('#getCollectionPermissions', async (t: tape.Test) => {
       canComment: true,
       canDelete: true,
       canEdit: true,
+      canEditVariants: false,
       canSubmit: true,
       canView: true
     },
@@ -247,6 +270,7 @@ test('#getCollectionPermissions', async (t: tape.Test) => {
       canComment: true,
       canDelete: false,
       canEdit: true,
+      canEditVariants: false,
       canSubmit: false,
       canView: true
     },
@@ -262,6 +286,7 @@ test('#getCollectionPermissions', async (t: tape.Test) => {
       canComment: true,
       canDelete: false,
       canEdit: true,
+      canEditVariants: false,
       canSubmit: true,
       canView: true
     },
@@ -277,6 +302,7 @@ test('#getCollectionPermissions', async (t: tape.Test) => {
       canComment: true,
       canDelete: false,
       canEdit: false,
+      canEditVariants: false,
       canSubmit: false,
       canView: true
     },
@@ -292,6 +318,7 @@ test('#getCollectionPermissions', async (t: tape.Test) => {
       canComment: true,
       canDelete: false,
       canEdit: true,
+      canEditVariants: false,
       canSubmit: false,
       canView: true
     },
@@ -307,6 +334,7 @@ test('#getCollectionPermissions', async (t: tape.Test) => {
       canComment: false,
       canDelete: false,
       canEdit: false,
+      canEditVariants: false,
       canSubmit: false,
       canView: false
     },

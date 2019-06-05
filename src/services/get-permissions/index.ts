@@ -1,6 +1,7 @@
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import Collaborator from '../../components/collaborators/domain-objects/collaborator';
 import * as CollectionsDAO from '../../dao/collections';
+import * as DesignEventsDAO from '../../dao/design-events';
 import ProductDesign = require('../../domain-objects/product-design');
 import Collection from '../../domain-objects/collection';
 
@@ -8,6 +9,7 @@ export interface Permissions {
   canComment: boolean;
   canDelete: boolean;
   canEdit: boolean;
+  canEditVariants: boolean;
   canSubmit: boolean;
   canView: boolean;
 }
@@ -69,14 +71,17 @@ export async function getDesignPermissionsAndRole(
   const isViewer = role === 'VIEW';
 
   return {
-    permissions: getPermissionsFromRole({
-      isAdmin,
-      isEditor,
-      isOwner,
-      isPartner,
-      isPreviewer,
-      isViewer
-    }),
+    permissions: await getPermissionsFromRoleAndDesignId(
+      {
+        isAdmin,
+        isEditor,
+        isOwner,
+        isPartner,
+        isPreviewer,
+        isViewer
+      },
+      design.id
+    ),
     role
   };
 }
@@ -118,7 +123,7 @@ export async function getCollectionPermissions(
   const isPreviewer = role === 'PREVIEW';
   const isViewer = role === 'VIEW';
 
-  return getPermissionsFromRole({
+  return getPermissionsFromRoleAndDesignId({
     isAdmin,
     isEditor,
     isOwner,
@@ -128,12 +133,31 @@ export async function getCollectionPermissions(
   });
 }
 
-function getPermissionsFromRole(roles: LocalRoles): Permissions {
-  if (roles.isOwner || roles.isAdmin) {
+async function getPermissionsFromRoleAndDesignId(
+  roles: LocalRoles,
+  designId?: string
+): Promise<Permissions> {
+  const isVariantsEditable = designId
+    ? await DesignEventsDAO.canEditVariants(designId)
+    : false;
+
+  if (roles.isAdmin) {
     return {
       canComment: true,
       canDelete: true,
       canEdit: true,
+      canEditVariants: true,
+      canSubmit: true,
+      canView: true
+    };
+  }
+
+  if (roles.isOwner) {
+    return {
+      canComment: true,
+      canDelete: true,
+      canEdit: true,
+      canEditVariants: isVariantsEditable,
       canSubmit: true,
       canView: true
     };
@@ -144,6 +168,7 @@ function getPermissionsFromRole(roles: LocalRoles): Permissions {
       canComment: true,
       canDelete: false,
       canEdit: true,
+      canEditVariants: isVariantsEditable,
       canSubmit: true,
       canView: true
     };
@@ -154,6 +179,7 @@ function getPermissionsFromRole(roles: LocalRoles): Permissions {
       canComment: true,
       canDelete: false,
       canEdit: true,
+      canEditVariants: false,
       canSubmit: false,
       canView: true
     };
@@ -164,6 +190,7 @@ function getPermissionsFromRole(roles: LocalRoles): Permissions {
       canComment: false,
       canDelete: false,
       canEdit: false,
+      canEditVariants: false,
       canSubmit: false,
       canView: true
     };
@@ -174,6 +201,7 @@ function getPermissionsFromRole(roles: LocalRoles): Permissions {
       canComment: true,
       canDelete: false,
       canEdit: false,
+      canEditVariants: false,
       canSubmit: false,
       canView: true
     };
@@ -183,6 +211,7 @@ function getPermissionsFromRole(roles: LocalRoles): Permissions {
     canComment: false,
     canDelete: false,
     canEdit: false,
+    canEditVariants: false,
     canSubmit: false,
     canView: false
   };

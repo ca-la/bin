@@ -3,10 +3,12 @@ import { create } from '../../dao/design-events';
 import DesignEvent from '../../domain-objects/design-event';
 import { findById as findUserById } from '../../components/users/dao';
 import createUser = require('../create-user');
+import ProductDesign = require('../../domain-objects/product-design');
 import * as ProductDesignsDAO from '../../dao/product-designs';
 
 interface DesignEventWithResources {
   designEvent: DesignEvent;
+  design: ProductDesign;
   actor: any;
 }
 
@@ -40,5 +42,5 @@ export default async function generateDesignEvent(
     ...options
   });
 
-  return { actor, designEvent };
+  return { actor, designEvent, design };
 }
