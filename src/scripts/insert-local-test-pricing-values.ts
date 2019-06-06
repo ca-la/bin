@@ -15,6 +15,8 @@ import { PricingMarginRow } from '../domain-objects/pricing-margin';
 import { PricingCareLabelRow } from '../domain-objects/pricing-care-label';
 import { PricingProcessRow } from '../domain-objects/pricing-process';
 import { PricingProductTypeRow } from '../domain-objects/pricing-product-type';
+import { PricingProcessTimelineRow } from '../components/pricing-process-timeline/domain-object';
+import { daysToMs } from '../services/time-conversion';
 
 // BUMP THIS BETWEEN EVERY RUN
 const version = 3;
@@ -1005,6 +1007,36 @@ async function intialPricingValues(): Promise<void> {
       version
     }
   ];
+  const pricingProcessTimelines: Uninserted<PricingProcessTimelineRow>[] = [
+    {
+      id: uuid.v4(),
+      minimum_units: 1,
+      time_ms: daysToMs(3).toString(),
+      unique_processes: 1,
+      version
+    },
+    {
+      id: uuid.v4(),
+      minimum_units: 100,
+      time_ms: daysToMs(5).toString(),
+      unique_processes: 1,
+      version
+    },
+    {
+      id: uuid.v4(),
+      minimum_units: 1,
+      time_ms: daysToMs(6).toString(),
+      unique_processes: 2,
+      version
+    },
+    {
+      id: uuid.v4(),
+      minimum_units: 100,
+      time_ms: daysToMs(8).toString(),
+      unique_processes: 2,
+      version
+    }
+  ];
   const expectedCount = sum([
     pricingProductTypes.length,
     pricingProcessesScreenPrinting.length,
@@ -1013,6 +1045,7 @@ async function intialPricingValues(): Promise<void> {
     pricingProcessesDye.length,
     pricingProcessesDistress.length,
     pricingProcessesEmbellish.length,
+    pricingProcessTimelines.length,
     pricingCareLabels.length,
     pricingConstants.length,
     pricingMargins.length,
@@ -1033,6 +1066,9 @@ async function intialPricingValues(): Promise<void> {
       await trx.insert(pricingProcessesDye).into('pricing_processes'),
       await trx.insert(pricingProcessesDistress).into('pricing_processes'),
       await trx.insert(pricingProcessesEmbellish).into('pricing_processes'),
+      await trx
+        .insert(pricingProcessTimelines)
+        .into('pricing_process_timelines'),
       await trx.insert(pricingConstants).into('pricing_constants'),
       await trx.insert(pricingCareLabels).into('pricing_care_labels'),
       await trx.insert(pricingMargins).into('pricing_margins'),
