@@ -125,6 +125,10 @@ async function getShopifyClient(
 export async function markComplete(scan: Scan): Promise<void> {
   const { shopify, customer } = await getShopifyClient(scan);
 
+  if (!customer.shopifyUserId) {
+    return;
+  }
+
   await updateMetafields(shopify, customer.shopifyUserId, {
     'scan-complete': true,
     'scan-id': scan.id
@@ -133,6 +137,10 @@ export async function markComplete(scan: Scan): Promise<void> {
 
 export async function saveCalculatedValues(scan: Scan): Promise<void> {
   const { shopify, customer } = await getShopifyClient(scan);
+
+  if (!customer.shopifyUserId) {
+    return;
+  }
 
   if (!scan.measurements || !scan.measurements.calculatedValues) {
     throw new Error(`Missing calculated values on scan ${scan.id}`);
@@ -152,6 +160,10 @@ export async function saveFittingUrl(
   const customer = await FitPartnerCustomersDAO.findById(customerId);
   if (!customer) {
     throw new Error(`Customer not found: ${customerId}`);
+  }
+
+  if (!customer.shopifyUserId) {
+    return;
   }
 
   const partner = await FitPartnersDAO.findById(customer.partnerId);

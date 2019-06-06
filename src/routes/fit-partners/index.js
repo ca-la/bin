@@ -27,17 +27,18 @@ async function createAndSendScanLink({
   phoneNumber,
   shopifyUserId
 }) {
-  requireValues({ partnerId, phoneNumber, shopifyUserId });
+  requireValues({ partnerId, phoneNumber });
 
   const partner = await FitPartnersDAO.findById(partnerId);
   if (!partner) {
     throw new InvalidDataError(`Unknown partner ID: ${partnerId}`);
   }
 
-  const customer = await FitPartnerCustomersDAO.findOrCreate({
-    partnerId,
-    shopifyUserId
-  });
+  const customerData = shopifyUserId
+    ? { partnerId, shopifyUserId }
+    : { partnerId, phone: phoneNumber };
+
+  const customer = await FitPartnerCustomersDAO.findOrCreate(customerData);
 
   const scan = await ScansDAO.create({
     fitPartnerCustomerId: customer.id,
@@ -52,25 +53,25 @@ async function createAndSendScanLink({
   await FitPartnerScanService.saveFittingUrl(customer.id, link);
 
   await Twilio.sendSMS(phoneNumber, fitCopy);
+  return link;
 }
 
 function* sendFitLink() {
   validatePropertiesFormatted(this.request.body, {
     partnerId: 'Partner ID',
-    phoneNumber: 'Phone number',
-    shopifyUserId: 'Shopify User ID'
+    phoneNumber: 'Phone number'
   });
 
   const { partnerId, phoneNumber, shopifyUserId } = this.request.body;
 
-  yield createAndSendScanLink({
+  const link = yield createAndSendScanLink({
     partnerId,
     phoneNumber,
     shopifyUserId
   });
 
-  this.status = 204;
-  this.body = null;
+  this.status = 201;
+  this.body = { link };
 }
 
 function* shopifyOrderCreated() {

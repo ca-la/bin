@@ -53,16 +53,20 @@ function createTrx(trx, data) {
     .catch(rethrow);
 }
 
-async function findOrCreate({ partnerId, shopifyUserId }) {
-  requireValues({ partnerId, shopifyUserId });
+async function findOrCreate({ partnerId, shopifyUserId, phone }) {
+  requireValues({ partnerId });
 
   return db.transaction(async trx => {
-    const found = await findComplexTrx(trx, { partnerId, shopifyUserId });
+    const found = await findComplexTrx(trx, {
+      partnerId,
+      shopifyUserId,
+      phone
+    });
     if (found) {
       return found;
     }
 
-    const created = await createTrx(trx, { partnerId, shopifyUserId });
+    const created = await createTrx(trx, { partnerId, shopifyUserId, phone });
     return created;
   });
 }

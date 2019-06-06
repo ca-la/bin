@@ -7,7 +7,9 @@ import { saveCalculatedValues, saveFittingUrl } from './index';
 import FitPartner from '../../domain-objects/fit-partner';
 import FitPartnerCustomer = require('../../domain-objects/fit-partner-customer');
 
-async function createPartnerAndCustomer(): Promise<{
+async function createPartnerAndCustomer(
+  withPhone?: boolean
+): Promise<{
   partner: FitPartner;
   customer: FitPartnerCustomer;
 }> {
@@ -18,10 +20,11 @@ async function createPartnerAndCustomer(): Promise<{
     shopifyHostname: 'example.com'
   });
 
-  const customer = await FitPartnerCustomersDAO.findOrCreate({
-    partnerId: partner.id,
-    shopifyUserId: 'shopify-user-123'
-  });
+  const data = withPhone
+    ? { partnerId: partner.id, phone: '+14155551234' }
+    : { partnerId: partner.id, shopifyUserId: 'shopify-user-123' };
+
+  const customer = await FitPartnerCustomersDAO.findOrCreate(data);
 
   return { customer, partner };
 }
@@ -167,4 +170,24 @@ test('saveCalculatedValues does not run multiple requests for the same customer 
   t.equal(updateStub.args[3][1].metafields.length, 1);
   t.equal(updateStub.args[4][1].metafields.length, 30);
   t.equal(updateStub.args[5][1].metafields.length, 1);
+});
+
+test('saveCalculatedValues does nothing for non-shopify customers', async (t: Test) => {
+  const { customer } = await createPartnerAndCustomer(true);
+
+  sandbox()
+    .stub(ShopifyClient.prototype, 'getCustomerMetafields')
+    .returns(Promise.resolve([]));
+
+  const updateStub = sandbox()
+    .stub(ShopifyClient.prototype, 'updateCustomer')
+    .returns(Promise.resolve());
+
+  const scanStub = new Scan({ id: '123' });
+  scanStub.measurements = { calculatedValues: { foo: 1 } };
+  scanStub.fitPartnerCustomerId = customer.id;
+
+  await saveCalculatedValues(scanStub);
+
+  t.equal(updateStub.callCount, 0);
 });

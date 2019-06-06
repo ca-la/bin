@@ -9,4 +9,7 @@ source bin/lib/loadenv
 
 loadenv-test
 
+bin/lib/clean
+bin/lib/build
+
 npx cala-validate-migration
