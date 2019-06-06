@@ -387,6 +387,13 @@ async function findProcesses(
         db(TABLE_NAME)
           .where('minimum_units', '<=', units)
           .andWhere(process)
+          .modify((modifyQuery: Knex.QueryBuilder) => {
+            if (version) {
+              modifyQuery.where({ version });
+            } else {
+              modifyQuery.whereIn('version', db(TABLE_NAME).max('version'));
+            }
+          })
           .max('minimum_units')
       );
 
@@ -450,12 +457,26 @@ async function findProcessTimeline(
       db(TABLE_NAME)
         .where('unique_processes', '<=', uniqueProcesses)
         .max('unique_processes')
+        .modify((modifyQuery: Knex.QueryBuilder) => {
+          if (version) {
+            modifyQuery.where({ version });
+          } else {
+            modifyQuery.whereIn('version', db(TABLE_NAME).max('version'));
+          }
+        })
     )
     .whereIn(
       'minimum_units',
       db(TABLE_NAME)
         .where('minimum_units', '<=', units)
         .max('minimum_units')
+        .modify((modifyQuery: Knex.QueryBuilder) => {
+          if (version) {
+            modifyQuery.where({ version });
+          } else {
+            modifyQuery.whereIn('version', db(TABLE_NAME).max('version'));
+          }
+        })
     )
     .then((rows: PricingProcessTimelineRow[]) =>
       first<PricingProcessTimelineRow>(rows)
