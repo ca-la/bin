@@ -117,6 +117,11 @@ function* shopifyOrderCreated() {
   const shopifyUserId = customer.id;
   assert(shopifyUserId, 'Missing customer Id');
 
+  yield FitPartnerCustomersDAO.claimPhoneRecords({
+    phone: phoneNumber,
+    shopifyUserId
+  });
+
   yield createAndSendScanLink({
     partnerId,
     phoneNumber,

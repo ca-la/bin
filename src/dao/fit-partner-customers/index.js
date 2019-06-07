@@ -71,7 +71,18 @@ async function findOrCreate({ partnerId, shopifyUserId, phone }) {
   });
 }
 
+async function claimPhoneRecords({ phone, shopifyUserId }) {
+  requireValues({ phone, shopifyUserId });
+
+  return db(TABLE_NAME)
+    .where({ phone })
+    .update({ phone: null, shopify_user_id: shopifyUserId }, '*')
+    .map(instantiate)
+    .catch(rethrow);
+}
+
 module.exports = {
+  claimPhoneRecords,
   findById,
   findOrCreate
 };

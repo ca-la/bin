@@ -126,6 +126,50 @@ test('POST /fit-partners/:partnerId/shopify-order-created handles a webhook payl
   t.equal(twilioStub.firstCall.args[1].includes(scan.id), true);
 });
 
+test('POST /fit-partners/:partnerId/shopify-order-created claims old customers', async (t: Test) => {
+  sandbox()
+    .stub(FitPartnerScanService, 'saveFittingUrl')
+    .resolves();
+
+  const { session, user } = await createUser();
+
+  const partner = await FitPartnersDAO.create({
+    adminUserId: user.id,
+    customFitDomain: null,
+    shopifyAppApiKey: '123',
+    shopifyAppPassword: '123',
+    shopifyHostname: 'example.com',
+    smsCopy: 'Click here: {{link}}'
+  });
+
+  const phoneCustomer = await FitPartnerCustomersDAO.findOrCreate({
+    partnerId: partner.id,
+    phone: '+14155551234'
+  });
+
+  sandbox()
+    .stub(Twilio, 'sendSMS')
+    .resolves();
+
+  const smsProduct = cloneDeep(orderCreatePayload);
+  smsProduct.line_items[0].product_id = 12345;
+
+  await post(`/fit-partners/${partner.id}/shopify-order-created`, {
+    body: smsProduct,
+    headers: authHeader(session.id)
+  });
+
+  const updatedPhoneCustomer = await FitPartnerCustomersDAO.findById(
+    phoneCustomer.id
+  );
+  if (!updatedPhoneCustomer) {
+    throw new Error('Missing customer');
+  }
+
+  t.equal(updatedPhoneCustomer.phone, null);
+  t.equal(updatedPhoneCustomer.shopifyUserId, '4567143233');
+});
+
 test(// tslint:disable-next-line:max-line-length
 'POST /fit-partners/:partnerId/shopify-order-created does nothing if all products in the order are blacklisted', async (t: Test) => {
   sandbox()

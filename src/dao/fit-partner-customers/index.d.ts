@@ -14,9 +14,15 @@ type FindOrCreateOptions = PhoneCustomer | ShopifyCustomer;
 
 declare namespace FitPartnerCustomersDAO {
   function findById(id: string): Promise<FitPartnerCustomer | null>;
+
   function findOrCreate(
     options: FindOrCreateOptions
   ): Promise<FitPartnerCustomer>;
+
+  function claimPhoneRecords(options: {
+    phone: string;
+    shopifyUserId: string;
+  }): Promise<FitPartnerCustomer[]>;
 }
 
 export = FitPartnerCustomersDAO;
