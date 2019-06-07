@@ -43,11 +43,11 @@ test('claimPhoneRecords updates previous phone-based customers with a new ID', a
 
   await FitPartnerCustomersDAO.findOrCreate({
     partnerId: partner.id,
-    phone: '+14155555555'
+    phone: '415 555 5555'
   });
 
   const updated = await FitPartnerCustomersDAO.claimPhoneRecords({
-    phone: '+14155555555',
+    phone: '+1 4155555555',
     shopifyUserId: '123'
   });
 

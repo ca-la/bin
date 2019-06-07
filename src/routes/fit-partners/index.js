@@ -12,6 +12,7 @@ const Twilio = require('../../services/twilio');
 const Configuration = require('../../config');
 const { requireValues } = require('../../services/require-properties');
 const { validatePropertiesFormatted } = require('../../services/validate');
+const { validateAndFormatPhoneNumber } = require('../../services/validation');
 
 const router = new Router();
 
@@ -29,6 +30,8 @@ async function createAndSendScanLink({
 }) {
   requireValues({ partnerId, phoneNumber });
 
+  const normalizedPhone = validateAndFormatPhoneNumber(phoneNumber);
+
   const partner = await FitPartnersDAO.findById(partnerId);
   if (!partner) {
     throw new InvalidDataError(`Unknown partner ID: ${partnerId}`);
@@ -36,7 +39,7 @@ async function createAndSendScanLink({
 
   const customerData = shopifyUserId
     ? { partnerId, shopifyUserId }
-    : { partnerId, phone: phoneNumber };
+    : { partnerId, phone: normalizedPhone };
 
   const customer = await FitPartnerCustomersDAO.findOrCreate(customerData);
 
@@ -52,7 +55,7 @@ async function createAndSendScanLink({
 
   await FitPartnerScanService.saveFittingUrl(customer.id, link);
 
-  await Twilio.sendSMS(phoneNumber, fitCopy);
+  await Twilio.sendSMS(normalizedPhone, fitCopy);
   return link;
 }
 

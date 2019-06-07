@@ -144,7 +144,7 @@ test('POST /fit-partners/:partnerId/shopify-order-created claims old customers',
 
   const phoneCustomer = await FitPartnerCustomersDAO.findOrCreate({
     partnerId: partner.id,
-    phone: '+14155551234'
+    phone: '415 555 1234'
   });
 
   sandbox()
