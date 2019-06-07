@@ -69,6 +69,7 @@ function* createCanvas(
 type ComponentWithImageAndOption = Component & {
   assetLink: string;
   downloadLink?: string;
+  thumbnailLink: string;
   image: ProductDesignImage;
   option?: ProductDesignOption;
 };

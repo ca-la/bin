@@ -55,7 +55,7 @@ test('GET /components/:componentId returns Component', async (t: tape.Test) => {
     headers: authHeader(session.id)
   });
   t.equal(response.status, 200);
-  t.deepEqual(omit(body, 'assetLink', 'downloadLink'), data);
+  t.deepEqual(omit(body, 'assetLink', 'downloadLink', 'thumbnailLink'), data);
 });
 
 test('POST /components/ returns a Component', async (t: tape.Test) => {

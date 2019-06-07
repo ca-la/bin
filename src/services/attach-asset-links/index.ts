@@ -11,11 +11,13 @@ import * as ImagesDAO from '../../components/images/dao';
 interface AssetLinks {
   assetLink: string;
   downloadLink: string;
+  thumbnailLink: string;
 }
 
 const DESIGN_PREVIEW_TOOL_FORMAT = '?fm=jpg&max-w=2288';
 const PREVIEW_CARD_FORMAT = '?fm=jpg&w=560';
 const THUMBNAIL_FORMAT = '?fm=jpg&w=48';
+const DESIGN_PREVIEW_THUMBNAIL = '?fm=jpg&fit=fill&h=104&w=104';
 
 /**
  * Adds in image links based off the given component.
@@ -34,7 +36,10 @@ async function getLink(component: Component): Promise<AssetLinks> {
         assetLink: `${IMGIX_BASE_URL}/${
           component.artworkId
         }${DESIGN_PREVIEW_TOOL_FORMAT}`,
-        downloadLink: `${AWS_BASE_URL}/${component.artworkId}`
+        downloadLink: `${AWS_BASE_URL}/${component.artworkId}`,
+        thumbnailLink: `${IMGIX_BASE_URL}/${
+          component.artworkId
+        }${DESIGN_PREVIEW_THUMBNAIL}`
       };
     case ComponentType.Sketch:
       const sketchImage = await ImagesDAO.findById(component.sketchId);
@@ -46,7 +51,10 @@ async function getLink(component: Component): Promise<AssetLinks> {
         assetLink: `${IMGIX_BASE_URL}/${
           component.sketchId
         }${DESIGN_PREVIEW_TOOL_FORMAT}`,
-        downloadLink: `${AWS_BASE_URL}/${component.sketchId}`
+        downloadLink: `${AWS_BASE_URL}/${component.sketchId}`,
+        thumbnailLink: `${IMGIX_BASE_URL}/${
+          component.sketchId
+        }${DESIGN_PREVIEW_THUMBNAIL}`
       };
     case ComponentType.Material:
       const option = await OptionsDAO.findById(component.materialId);
@@ -58,13 +66,17 @@ async function getLink(component: Component): Promise<AssetLinks> {
         assetLink: `${IMGIX_BASE_URL}/${
           option.previewImageId
         }${DESIGN_PREVIEW_TOOL_FORMAT}`,
-        downloadLink: `${AWS_BASE_URL}/${option.previewImageId}`
+        downloadLink: `${AWS_BASE_URL}/${option.previewImageId}`,
+        thumbnailLink: `${IMGIX_BASE_URL}/${
+          option.previewImageId
+        }${DESIGN_PREVIEW_THUMBNAIL}`
       };
   }
 
   return {
     assetLink: '',
-    downloadLink: ''
+    downloadLink: '',
+    thumbnailLink: ''
   };
 }
 
