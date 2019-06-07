@@ -9,7 +9,7 @@ import * as ProductDesignsDAO from '../../dao/product-designs';
 import * as CollectionsDAO from '../../dao/collections';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as CommentsDAO from '../../components/comments/dao';
-import * as CanvasesDAO from '../../dao/product-design-canvases';
+import * as CanvasesDAO from '../canvases/dao';
 import * as MeasurementsDAO from '../../dao/product-design-canvas-measurements';
 import {
   DEPRECATED_NOTIFICATION_TYPES,
@@ -20,7 +20,7 @@ import getLinks, { LinkType } from './get-links';
 import normalizeTitle from '../../services/normalize-title';
 import Comment from '../../components/comments/domain-object';
 import { ComponentType } from '../components/domain-object';
-import ProductDesignCanvas from '../../domain-objects/product-design-canvas';
+import Canvas from '../canvases/domain-object';
 import { DetailsTask } from '../../domain-objects/task-event';
 import Collection from '../../domain-objects/collection';
 import { addAtMentionDetailsForComment } from '../../services/add-at-mention-details';
@@ -158,7 +158,7 @@ export const createNotificationMessage = async (
       const { designId, collectionId, commentId } = notification;
       const design = await getDesign(designId);
       const collection = await getCollection(collectionId);
-      const canvas: ProductDesignCanvas | null = await CanvasesDAO.findById(
+      const canvas: Canvas | null = await CanvasesDAO.findById(
         notification.canvasId
       );
       if (!design || !canvas) {
@@ -196,7 +196,7 @@ export const createNotificationMessage = async (
       const { designId, collectionId, commentId } = notification;
       const design = await getDesign(designId);
       const collection = await getCollection(collectionId);
-      const canvas: ProductDesignCanvas | null = await CanvasesDAO.findById(
+      const canvas: Canvas | null = await CanvasesDAO.findById(
         notification.canvasId
       );
       if (!design || !canvas) {

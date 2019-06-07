@@ -1,23 +1,20 @@
 import * as Router from 'koa-router';
 import * as Koa from 'koa';
 
-import * as ProductDesignCanvasesDAO from '../../dao/product-design-canvases';
+import * as CanvasesDAO from './dao';
 import requireAuth = require('../../middleware/require-auth');
-import * as ComponentsDAO from '../../components/components/dao';
+import * as ComponentsDAO from '../components/dao';
 import * as ProductDesignOptionsDAO from '../../dao/product-design-options';
 import * as ProductDesignsDAO from '../../dao/product-designs';
-import * as ProductDesignImagesDAO from '../../components/images/dao';
-import ProductDesignCanvas, {
-  isProductDesignCanvas,
-  isUnsavedProductDesignCanvas
-} from '../../domain-objects/product-design-canvas';
+import * as ProductDesignImagesDAO from '../images/dao';
+import Canvas from './domain-object';
 import Component, {
   ComponentType,
   isUnsavedComponent
-} from '../../components/components/domain-object';
+} from '../components/domain-object';
 import * as EnrichmentService from '../../services/attach-asset-links';
 import filterError = require('../../services/filter-error');
-import ProductDesignImage = require('../../components/images/domain-object');
+import ProductDesignImage = require('../images/domain-object');
 import ProductDesignOption = require('../../domain-objects/product-design-option');
 import { hasProperties } from '../../services/require-properties';
 import { omit } from 'lodash';
@@ -25,8 +22,21 @@ import { typeGuard } from '../../middleware/type-guard';
 
 const router = new Router();
 
-type CanvasNotFoundError = ProductDesignCanvasesDAO.CanvasNotFoundError;
-const { CanvasNotFoundError } = ProductDesignCanvasesDAO;
+type CanvasNotFoundError = CanvasesDAO.CanvasNotFoundError;
+const { CanvasNotFoundError } = CanvasesDAO;
+
+function isSaveableCanvas(obj: any): obj is MaybeUnsaved<Canvas> {
+  return hasProperties(
+    obj,
+    'createdBy',
+    'designId',
+    'title',
+    'width',
+    'height',
+    'x',
+    'y'
+  );
+}
 
 const attachUser = (request: any, userId: string): any => {
   return {
@@ -35,9 +45,7 @@ const attachUser = (request: any, userId: string): any => {
   };
 };
 
-function* create(
-  this: Koa.Application.Context
-): AsyncIterableIterator<ProductDesignCanvas> {
+function* create(this: Koa.Application.Context): AsyncIterableIterator<Canvas> {
   if (Array.isArray(this.request.body)) {
     yield createWithComponents;
   } else {
@@ -47,13 +55,13 @@ function* create(
 
 function* createCanvas(
   this: Koa.Application.Context
-): AsyncIterableIterator<ProductDesignCanvas> {
+): AsyncIterableIterator<Canvas> {
   const body = attachUser(this.request.body, this.state.userId);
-  if (!this.request.body || !isUnsavedProductDesignCanvas(body)) {
-    return this.throw(400, 'Request does not match ProductDesignCanvas');
+  if (!this.request.body || !isSaveableCanvas(body)) {
+    return this.throw(400, 'Request does not match Canvas');
   }
 
-  const canvas = yield ProductDesignCanvasesDAO.create(body);
+  const canvas = yield CanvasesDAO.create(body);
   this.status = 201;
   this.body = canvas;
 }
@@ -65,12 +73,12 @@ type ComponentWithImageAndOption = Component & {
   option?: ProductDesignOption;
 };
 
-type CanvasWithComponent = ProductDesignCanvas & {
+type CanvasWithComponent = Canvas & {
   components: ComponentWithImageAndOption[];
 };
 
 function isCanvasWithComponent(data: any): data is CanvasWithComponent {
-  const isCanvas = isProductDesignCanvas(omit(data, 'components'));
+  const isCanvasInstance = isSaveableCanvas(omit(data, 'components'));
   const isComponents = data.components.every((component: any) =>
     isUnsavedComponent(component)
   );
@@ -78,12 +86,12 @@ function isCanvasWithComponent(data: any): data is CanvasWithComponent {
     hasProperties(component.image, 'userId', 'mimeType', 'id')
   );
 
-  return isCanvas && isComponents && isImages;
+  return isCanvasInstance && isComponents && isImages;
 }
 
 function* createWithComponents(
   this: Koa.Application.Context
-): AsyncIterableIterator<ProductDesignCanvas> {
+): AsyncIterableIterator<Canvas> {
   const body: Unsaved<CanvasWithComponent>[] = this.request.body as any;
 
   this.assert(body.length >= 1, 400, 'At least one canvas must be provided');
@@ -116,9 +124,7 @@ function* createWithComponents(
 async function createCanvasAndComponents(
   userId: string,
   data: Unsaved<CanvasWithComponent>
-): Promise<
-  ProductDesignCanvas & { components: ComponentWithImageAndOption[] }
-> {
+): Promise<Canvas & { components: ComponentWithImageAndOption[] }> {
   if (!data || !isCanvasWithComponent(data)) {
     throw new Error('Request does not match Schema');
   }
@@ -133,9 +139,12 @@ async function createCanvasAndComponents(
     )
   );
   const canvasWithUser = attachUser(omit(data, 'components'), userId);
-  await ProductDesignCanvasesDAO.create({ ...canvasWithUser, deletedAt: null });
+  const createdCanvas = await CanvasesDAO.create({
+    ...canvasWithUser,
+    deletedAt: null
+  });
 
-  return { ...canvasWithUser, components: enrichedComponents };
+  return { ...createdCanvas, components: enrichedComponents };
 }
 
 async function createComponent(
@@ -182,17 +191,17 @@ async function updateDesignPreview(
 
 function* addComponent(
   this: Koa.Application.Context
-): AsyncIterableIterator<ProductDesignCanvas> {
+): AsyncIterableIterator<Canvas> {
   const { assetLink, ...body } = attachUser(
     this.request.body,
     this.state.userId
   );
   if (!this.request.body || !isUnsavedComponent(body)) {
-    return this.throw(400, 'Request does not match ProductDesignCanvas');
+    return this.throw(400, 'Request does not match Canvas');
   }
 
   const component = yield ComponentsDAO.create(body);
-  const canvas = yield ProductDesignCanvasesDAO.findById(this.params.canvasId);
+  const canvas = yield CanvasesDAO.findById(this.params.canvasId);
 
   const design = yield ProductDesignsDAO.findById(canvas.designId);
   const previewImageUrls = design.previewImageUrls
@@ -200,27 +209,22 @@ function* addComponent(
     : [assetLink];
   yield ProductDesignsDAO.update(canvas.designId, { previewImageUrls });
 
-  const updatedCanvas = yield ProductDesignCanvasesDAO.update(
-    this.params.canvasId,
-    { ...canvas, componentId: component.id }
-  );
+  const updatedCanvas = yield CanvasesDAO.update(this.params.canvasId, {
+    ...canvas,
+    componentId: component.id
+  });
   const components = yield ComponentsDAO.findAllByCanvasId(canvas.id);
   this.status = 200;
   this.body = { ...updatedCanvas, components };
 }
 
-function* update(
-  this: Koa.Application.Context
-): AsyncIterableIterator<ProductDesignCanvas> {
+function* update(this: Koa.Application.Context): AsyncIterableIterator<Canvas> {
   const body = attachUser(this.request.body, this.state.userId);
-  if (!this.request.body || !isUnsavedProductDesignCanvas(body)) {
-    return this.throw(400, 'Request does not match ProductDesignCanvas');
+  if (!this.request.body || !isSaveableCanvas(body)) {
+    return this.throw(400, 'Request does not match Canvas');
   }
 
-  const canvas = yield ProductDesignCanvasesDAO.update(
-    this.params.canvasId,
-    body
-  ).catch(
+  const canvas = yield CanvasesDAO.update(this.params.canvasId, body).catch(
     filterError(CanvasNotFoundError, (err: CanvasNotFoundError) => {
       this.throw(404, err);
     })
@@ -229,7 +233,7 @@ function* update(
   this.body = canvas;
 }
 
-type ReorderRequest = ProductDesignCanvasesDAO.ReorderRequest;
+type ReorderRequest = CanvasesDAO.ReorderRequest;
 
 function isReorderRequest(data: any[]): data is ReorderRequest[] {
   return data.every((value: any) => hasProperties(value, 'id', 'ordering'));
@@ -237,16 +241,14 @@ function isReorderRequest(data: any[]): data is ReorderRequest[] {
 
 function* reorder(
   this: Koa.Application.Context<ReorderRequest[]>
-): AsyncIterableIterator<ProductDesignCanvas> {
-  const canvases = yield ProductDesignCanvasesDAO.reorder(this.request.body);
+): AsyncIterableIterator<Canvas> {
+  const canvases = yield CanvasesDAO.reorder(this.request.body);
   this.status = 200;
   this.body = canvases;
 }
 
-function* del(
-  this: Koa.Application.Context
-): AsyncIterableIterator<ProductDesignCanvas> {
-  yield ProductDesignCanvasesDAO.del(this.params.canvasId).catch(
+function* del(this: Koa.Application.Context): AsyncIterableIterator<Canvas> {
+  yield CanvasesDAO.del(this.params.canvasId).catch(
     filterError(CanvasNotFoundError, (err: CanvasNotFoundError) => {
       this.throw(404, err);
     })
@@ -255,7 +257,7 @@ function* del(
 }
 
 function* getById(this: Koa.Application.Context): AsyncIterableIterator<any> {
-  const canvas = yield ProductDesignCanvasesDAO.findById(this.params.canvasId);
+  const canvas = yield CanvasesDAO.findById(this.params.canvasId);
   this.assert(canvas, 404);
   const components = yield ComponentsDAO.findAllByCanvasId(canvas.id);
   const enrichedComponents = yield Promise.all(
@@ -278,18 +280,14 @@ function* getList(this: Koa.Application.Context): AsyncIterableIterator<any[]> {
     return this.throw(400, 'Missing designId');
   }
 
-  const canvases = yield ProductDesignCanvasesDAO.findAllByDesignId(
-    query.designId
-  );
-  const enrichedCanvases = yield canvases.map(
-    async (canvas: ProductDesignCanvas) => {
-      const components = await ComponentsDAO.findAllByCanvasId(canvas.id);
-      const enrichedComponents = await Promise.all(
-        components.map(EnrichmentService.addAssetLink)
-      );
-      return { ...canvas, components: enrichedComponents };
-    }
-  );
+  const canvases = yield CanvasesDAO.findAllByDesignId(query.designId);
+  const enrichedCanvases = yield canvases.map(async (canvas: Canvas) => {
+    const components = await ComponentsDAO.findAllByCanvasId(canvas.id);
+    const enrichedComponents = await Promise.all(
+      components.map(EnrichmentService.addAssetLink)
+    );
+    return { ...canvas, components: enrichedComponents };
+  });
 
   this.status = 200;
   this.body = enrichedCanvases;
@@ -311,4 +309,4 @@ router.del('/:canvasId', requireAuth, del);
 router.get('/', requireAuth, getList);
 router.get('/:canvasId', requireAuth, getById);
 
-export = router.routes();
+export default router.routes();

@@ -8,7 +8,7 @@ import {
   findDesignByTaskId
 } from './dao';
 import { create as createImage } from '../../components/images/dao';
-import { del as deleteCanvas } from '../../dao/product-design-canvases';
+import { del as deleteCanvas } from '../../components/canvases/dao';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import { deleteById as deleteAnnotation } from '../../components/product-design-canvas-annotations/dao';
 import * as CollectionsDAO from '../../dao/collections';

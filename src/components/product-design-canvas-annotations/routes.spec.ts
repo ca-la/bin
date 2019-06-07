@@ -6,7 +6,7 @@ import { authHeader, del, get, patch, put } from '../../test-helpers/http';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import * as AnnotationDAO from './dao';
 import { create as createDesign } from '../../dao/product-designs';
-import { create as createDesignCanvas } from '../../dao/product-design-canvases';
+import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 
 const API_PATH = '/product-design-canvas-annotations';
 
@@ -20,7 +20,7 @@ test(`PUT ${API_PATH}/:annotationId creates an Annotation`, async (t: Test) => {
     title: 'Green Tee',
     userId: user.id
   });
-  const designCanvas = await createDesignCanvas({
+  const { canvas: designCanvas } = await generateCanvas({
     componentId: null,
     createdBy: user.id,
     designId: design.id,
@@ -58,7 +58,7 @@ test(`PATCH ${API_PATH}/:annotationId updates an Annotation`, async (t: Test) =>
     title: 'Green Tee',
     userId: user.id
   });
-  const designCanvas = await createDesignCanvas({
+  const { canvas: designCanvas } = await generateCanvas({
     componentId: null,
     createdBy: user.id,
     designId: design.id,

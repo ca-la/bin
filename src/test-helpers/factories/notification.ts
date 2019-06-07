@@ -12,7 +12,7 @@ import * as ProductDesignsDAO from '../../dao/product-designs';
 import * as CollectionsDAO from '../../dao/collections';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import * as AnnotationsDAO from '../../components/product-design-canvas-annotations/dao';
-import * as CanvasesDAO from '../../dao/product-design-canvases';
+import * as CanvasesDAO from '../../components/canvases/dao';
 import * as CommentsDAO from '../../components/comments/dao';
 import * as MeasurementsDAO from '../../dao/product-design-canvas-measurements';
 import * as StagesDAO from '../../dao/product-design-stages';
@@ -25,7 +25,7 @@ import { templateNotification } from '../../components/notifications/models/base
 // tslint:disable-next-line:max-line-length
 import ProductDesignCanvasAnnotation from '../../components/product-design-canvas-annotations/domain-object';
 import { DetailsTask } from '../../domain-objects/task-event';
-import ProductDesignCanvas from '../../domain-objects/product-design-canvas';
+import Canvas from '../../components/canvases/domain-object';
 import ProductDesignStage from '../../domain-objects/product-design-stage';
 import Comment from '../../components/comments/domain-object';
 import createDesign from '../../services/create-design';
@@ -48,7 +48,7 @@ interface NotificationWithResources {
   annotation: ProductDesignCanvasAnnotation;
   measurement: ProductDesignCanvasMeasurement;
   task: DetailsTask;
-  canvas: ProductDesignCanvas;
+  canvas: Canvas;
   stage: ProductDesignStage;
   comment: Comment;
 }

@@ -6,7 +6,6 @@ import * as db from '../../services/db';
 import createUser = require('../../test-helpers/create-user');
 import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 import { create as createDesign } from '../product-designs';
-import { create as createDesignCanvas } from '../product-design-canvases';
 import { omit } from 'lodash';
 import { test } from '../../test-helpers/fresh';
 import {
@@ -26,7 +25,7 @@ test('ProductDesignCanvasMeasurement DAO supports creation/retrieval', async (t:
     title: 'Green Tee',
     userId: user.id
   });
-  const designCanvas = await createDesignCanvas({
+  const { canvas: designCanvas } = await generateCanvas({
     componentId: null,
     createdBy: user.id,
     designId: design.id,
@@ -156,7 +155,7 @@ test('ProductDesignCanvasMeasurement DAO supports updating', async (t: tape.Test
     title: 'Green Tee',
     userId: user.id
   });
-  const designCanvas = await createDesignCanvas({
+  const { canvas: designCanvas } = await generateCanvas({
     componentId: null,
     createdBy: user.id,
     designId: design.id,
@@ -214,7 +213,7 @@ test('ProductDesignCanvasMeasurement DAO throws an appopriate error when canvas 
     title: 'Green Tee',
     userId: user.id
   });
-  const designCanvas = await createDesignCanvas({
+  const { canvas: designCanvas } = await generateCanvas({
     componentId: null,
     createdBy: user.id,
     designId: design.id,
@@ -270,7 +269,7 @@ test('ProductDesignCanvasMeasurement DAO supports deletion', async (t: tape.Test
     title: 'Green Tee',
     userId: user.id
   });
-  const designCanvas = await createDesignCanvas({
+  const { canvas: designCanvas } = await generateCanvas({
     componentId: null,
     createdBy: user.id,
     designId: design.id,
@@ -345,7 +344,7 @@ test('ProductDesignCanvasMeasurement DAO supports getting latest label', async (
     title: 'Green Tee',
     userId: user.id
   });
-  const designCanvas = await createDesignCanvas({
+  const { canvas: designCanvas } = await generateCanvas({
     componentId: null,
     createdBy: user.id,
     designId: design.id,

@@ -2,16 +2,16 @@ import * as uuid from 'node-uuid';
 import * as Knex from 'knex';
 
 import * as db from '../../services/db';
-import ProductDesignCanvas, {
+import Canvas, {
+  CanvasRow,
   dataAdapter,
-  isProductDesignCanvasRow,
-  partialDataAdapter,
-  ProductDesignCanvasRow
-} from '../../domain-objects/product-design-canvas';
+  isCanvasRow,
+  partialDataAdapter
+} from './domain-object';
 import first from '../../services/first';
 import { validate, validateEvery } from '../../services/validate-from-db';
 
-const TABLE_NAME = 'product_design_canvases';
+const TABLE_NAME = 'canvases';
 
 export class CanvasNotFoundError extends Error {
   constructor(message: string) {
@@ -22,9 +22,9 @@ export class CanvasNotFoundError extends Error {
 }
 
 export async function create(
-  data: MaybeUnsaved<ProductDesignCanvas>,
+  data: MaybeUnsaved<Canvas>,
   trx?: Knex.Transaction
-): Promise<ProductDesignCanvas> {
+): Promise<Canvas> {
   const rowData = dataAdapter.forInsertion({
     id: uuid.v4(),
     ...data,
@@ -37,17 +37,15 @@ export async function create(
         query.transacting(trx);
       }
     })
-    .then((rows: ProductDesignCanvasRow[]) =>
-      first<ProductDesignCanvasRow>(rows)
-    );
+    .then((rows: CanvasRow[]) => first<CanvasRow>(rows));
 
   if (!created) {
     throw new Error('Failed to create rows');
   }
 
-  return validate<ProductDesignCanvasRow, ProductDesignCanvas>(
+  return validate<CanvasRow, Canvas>(
     TABLE_NAME,
-    isProductDesignCanvasRow,
+    isCanvasRow,
     dataAdapter,
     created
   );
@@ -55,8 +53,8 @@ export async function create(
 
 export async function update(
   id: string,
-  data: Unsaved<ProductDesignCanvas>
-): Promise<ProductDesignCanvas> {
+  data: Unsaved<Canvas>
+): Promise<Canvas> {
   const rowData = dataAdapter.forInsertion({
     ...data,
     deletedAt: null,
@@ -65,17 +63,15 @@ export async function update(
   const updated = await db(TABLE_NAME)
     .where({ id, deleted_at: null })
     .update(rowData, '*')
-    .then((rows: ProductDesignCanvasRow[]) =>
-      first<ProductDesignCanvasRow>(rows)
-    );
+    .then((rows: CanvasRow[]) => first<CanvasRow>(rows));
 
   if (!updated) {
     throw new CanvasNotFoundError("Can't update canvas; canvas not found");
   }
 
-  return validate<ProductDesignCanvasRow, ProductDesignCanvas>(
+  return validate<CanvasRow, Canvas>(
     TABLE_NAME,
-    isProductDesignCanvasRow,
+    isCanvasRow,
     dataAdapter,
     updated
   );
@@ -86,10 +82,8 @@ export interface ReorderRequest {
   ordering: number;
 }
 
-export async function reorder(
-  data: ReorderRequest[]
-): Promise<ProductDesignCanvas[]> {
-  let updated: ProductDesignCanvasRow[] = [];
+export async function reorder(data: ReorderRequest[]): Promise<Canvas[]> {
+  let updated: CanvasRow[] = [];
   await db.transaction(async (trx: Knex.Transaction) => {
     updated = await Promise.all(
       data.map(async (reorderReq: ReorderRequest) => {
@@ -101,9 +95,7 @@ export async function reorder(
           .update(rowData, '*')
           .where({ id })
           .transacting(trx)
-          .then((rows: ProductDesignCanvasRow[]) =>
-            first<ProductDesignCanvasRow>(rows)
-          );
+          .then((rows: CanvasRow[]) => first<CanvasRow>(rows));
         if (!row) {
           throw new Error('Row could not be updated');
         }
@@ -112,68 +104,60 @@ export async function reorder(
     );
   });
 
-  return validateEvery<ProductDesignCanvasRow, ProductDesignCanvas>(
+  return validateEvery<CanvasRow, Canvas>(
     TABLE_NAME,
-    isProductDesignCanvasRow,
+    isCanvasRow,
     dataAdapter,
     updated
   );
 }
 
-export async function del(id: string): Promise<ProductDesignCanvas> {
+export async function del(id: string): Promise<Canvas> {
   const deleted = await db(TABLE_NAME)
     .where({ id, deleted_at: null })
     .update({ deleted_at: new Date() }, '*')
-    .then((rows: ProductDesignCanvasRow[]) =>
-      first<ProductDesignCanvasRow>(rows)
-    );
+    .then((rows: CanvasRow[]) => first<CanvasRow>(rows));
 
   if (!deleted) {
     throw new CanvasNotFoundError("Can't delete canvas; canvas not found");
   }
 
-  return validate<ProductDesignCanvasRow, ProductDesignCanvas>(
+  return validate<CanvasRow, Canvas>(
     TABLE_NAME,
-    isProductDesignCanvasRow,
+    isCanvasRow,
     dataAdapter,
     deleted
   );
 }
 
-export async function findById(
-  id: string
-): Promise<ProductDesignCanvas | null> {
+export async function findById(id: string): Promise<Canvas | null> {
   const canvas = await db(TABLE_NAME)
     .select('*')
     .where({ id, deleted_at: null })
     .limit(1)
-    .then((rows: ProductDesignCanvasRow[]) =>
-      first<ProductDesignCanvasRow>(rows)
-    );
+    .then((rows: CanvasRow[]) => first<CanvasRow>(rows));
 
   if (!canvas) {
     return null;
   }
 
-  return validate<ProductDesignCanvasRow, ProductDesignCanvas>(
+  return validate<CanvasRow, Canvas>(
     TABLE_NAME,
-    isProductDesignCanvasRow,
+    isCanvasRow,
     dataAdapter,
     canvas
   );
 }
 
-export async function findAllByDesignId(
-  id: string
-): Promise<ProductDesignCanvas[]> {
-  const canvases: ProductDesignCanvasRow[] = await db(TABLE_NAME)
+export async function findAllByDesignId(id: string): Promise<Canvas[]> {
+  const canvases: CanvasRow[] = await db(TABLE_NAME)
     .select('*')
     .where({ design_id: id, deleted_at: null })
     .orderBy('ordering');
 
-  return validateEvery<ProductDesignCanvasRow, ProductDesignCanvas>(
+  return validateEvery<CanvasRow, Canvas>(
     TABLE_NAME,
-    isProductDesignCanvasRow,
+    isCanvasRow,
     dataAdapter,
     canvases
   );
@@ -181,22 +165,20 @@ export async function findAllByDesignId(
 
 export async function findByComponentId(
   componentId: string
-): Promise<ProductDesignCanvas | null> {
+): Promise<Canvas | null> {
   const canvas = await db(TABLE_NAME)
     .select('*')
     .where({ component_id: componentId, deleted_at: null })
     .limit(1)
-    .then((rows: ProductDesignCanvasRow[]) =>
-      first<ProductDesignCanvasRow>(rows)
-    );
+    .then((rows: CanvasRow[]) => first<CanvasRow>(rows));
 
   if (!canvas) {
     return null;
   }
 
-  return validate<ProductDesignCanvasRow, ProductDesignCanvas>(
+  return validate<CanvasRow, Canvas>(
     TABLE_NAME,
-    isProductDesignCanvasRow,
+    isCanvasRow,
     dataAdapter,
     canvas
   );

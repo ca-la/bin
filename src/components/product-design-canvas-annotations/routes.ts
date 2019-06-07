@@ -53,7 +53,7 @@ function* createAnnotation(
     this.status = 201;
     this.body = annotation;
   } else {
-    this.throw(400, 'Request does not match ProductDesignCanvas');
+    this.throw(400, 'Request does not match Canvas');
   }
 }
 

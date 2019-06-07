@@ -2,14 +2,12 @@ import * as tape from 'tape';
 import * as uuid from 'node-uuid';
 import { omit } from 'lodash';
 
-import * as ProductDesignCanvasesDAO from '../../dao/product-design-canvases';
-import * as ProductDesignImagesDAO from '../../components/images/dao';
+import * as ProductDesignCanvasesDAO from './dao';
+import * as ProductDesignImagesDAO from '../images/dao';
 import * as ProductDesignOptionsDAO from '../../dao/product-design-options';
 import * as ProductDesignsDAO from '../../dao/product-designs';
-import * as ComponentsDAO from '../../components/components/dao';
-import Component, {
-  ComponentType
-} from '../../components/components/domain-object';
+import * as ComponentsDAO from '../components/dao';
+import Component, { ComponentType } from '../components/domain-object';
 
 import createUser = require('../../test-helpers/create-user');
 import {
@@ -23,7 +21,8 @@ import {
 import { sandbox, test } from '../../test-helpers/fresh';
 import createDesign from '../../services/create-design';
 import * as EnrichmentService from '../../services/attach-asset-links';
-import ProductDesignImage = require('../../components/images/domain-object');
+import ProductDesignImage = require('../images/domain-object');
+import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 
 test('GET /product-design-canvases/:canvasId returns Canvas', async (t: tape.Test) => {
   const { session } = await createUser();
@@ -203,7 +202,10 @@ test('POST /product-design-canvases returns a Canvas with Components', async (t:
     headers: authHeader(session.id)
   });
   t.equal(response.status, 201);
-  t.deepEqual(omit(body[0], 'components'), omit(data[0], 'components'));
+  t.deepEqual(
+    omit(body[0], 'archivedAt', 'components'),
+    omit(data[0], 'components')
+  );
   t.deepEqual(omit(body[0].components[0], 'image'), omit(component, 'image'));
   t.deepEqual(
     omit(
@@ -233,6 +235,7 @@ test('PUT /product-design-canvases/:id returns a Canvas', async (t: tape.Test) =
   const id = uuid.v4();
 
   const data = {
+    archivedAt: new Date('2019-01-02'),
     componentId: null,
     createdAt: '',
     designId: id,
@@ -254,7 +257,7 @@ test('PUT /product-design-canvases/:id returns a Canvas', async (t: tape.Test) =
     headers: authHeader(session.id)
   });
   t.equal(response.status, 201);
-  t.deepEqual(body, data);
+  t.deepEqual({ ...body, archivedAt: new Date(body.archivedAt) }, data);
 });
 
 test('PUT /product-design-canvases/:id creates a canvas, component and image', async (t: tape.Test) => {
@@ -305,7 +308,7 @@ test('PUT /product-design-canvases/:id creates a canvas, component and image', a
 
   sandbox()
     .stub(ProductDesignCanvasesDAO, 'create')
-    .resolves(data);
+    .resolves(omit(data[0], 'components'));
   sandbox()
     .stub(ProductDesignCanvasesDAO, 'update')
     .resolves(data);
@@ -396,7 +399,7 @@ test('PUT /product-design-canvases/:id creates canvas, component, image, and opt
 
   sandbox()
     .stub(ProductDesignCanvasesDAO, 'create')
-    .resolves(data);
+    .resolves(omit(data[0], 'components'));
   sandbox()
     .stub(ProductDesignOptionsDAO, 'create')
     .resolves(data[0].components[0].option);
@@ -507,7 +510,7 @@ test('PUT /product-design-canvases/:canvasId/component/:componentId adds a compo
     title: 'Rick Tee',
     userId: user.id
   });
-  const designCanvas = await ProductDesignCanvasesDAO.create({
+  const { canvas: designCanvas } = await generateCanvas({
     componentId: null,
     createdBy: user.id,
     designId: design.id,
@@ -556,7 +559,7 @@ pre-existing preview image`, async (t: tape.Test) => {
     title: 'Rick Tee',
     userId: user.id
   });
-  const designCanvas = await ProductDesignCanvasesDAO.create({
+  const { canvas: designCanvas } = await generateCanvas({
     componentId: null,
     createdBy: user.id,
     designId: design.id,

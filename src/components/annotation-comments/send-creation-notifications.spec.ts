@@ -6,10 +6,10 @@ import createUser = require('../../test-helpers/create-user');
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import * as CollectionsDAO from '../../dao/collections';
 import { create as createDesign } from '../../dao/product-designs';
-import { create as createDesignCanvas } from '../../dao/product-design-canvases';
 import * as CreateNotifications from '../../services/create-notifications';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
 import generateCollection from '../../test-helpers/factories/collection';
+import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 
 test('sendCreationNotifications loops through mentions and sends notifications', async (t: Test) => {
   const ownerStub = sandbox()
@@ -39,7 +39,7 @@ test('sendCreationNotifications loops through mentions and sends notifications',
   });
   await CollectionsDAO.addDesign(collection.id, design.id);
 
-  const designCanvas = await createDesignCanvas({
+  const { canvas: designCanvas } = await generateCanvas({
     componentId: null,
     createdBy: ownerUser.id,
     designId: design.id,

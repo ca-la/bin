@@ -8,7 +8,6 @@ import {
 } from '../comments/dao';
 import { create, findByAnnotationId, findByAnnotationIds } from './dao';
 import { create as createDesign } from '../../dao/product-designs';
-import { create as createDesignCanvas } from '../../dao/product-design-canvases';
 import createUser = require('../../test-helpers/create-user');
 import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 import generateAnnotation from '../../test-helpers/factories/product-design-canvas-annotation';
@@ -25,7 +24,7 @@ test('ProductDesignCanvasAnnotationComment DAO supports creation/retrieval', asy
     title: 'Green Tee',
     userId: user.id
   });
-  const designCanvas = await createDesignCanvas({
+  const { canvas: designCanvas } = await generateCanvas({
     componentId: null,
     createdBy: user.id,
     designId: design.id,

@@ -8,9 +8,9 @@ import {
   findById,
   reorder,
   update
-} from './index';
+} from './dao';
 import createUser = require('../../test-helpers/create-user');
-import { create as createDesign } from '../product-designs';
+import { create as createDesign } from '../../dao/product-designs';
 import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 
 test('ProductDesignCanvases DAO supports creation/retrieval', async (t: tape.Test) => {
@@ -23,6 +23,7 @@ test('ProductDesignCanvases DAO supports creation/retrieval', async (t: tape.Tes
   });
 
   const data = {
+    archivedAt: null,
     componentId: null,
     createdBy: userId,
     designId: design.id,
@@ -34,7 +35,6 @@ test('ProductDesignCanvases DAO supports creation/retrieval', async (t: tape.Tes
     y: 1
   };
   const inserted = await create(data);
-
   const result = await findById(inserted.id);
   t.deepEqual(result, inserted, 'Returned inserted task');
 });
@@ -49,6 +49,7 @@ test('ProductDesignCanvases DAO supports creation/retrieval without ordering', a
   });
 
   const data = {
+    archivedAt: null,
     componentId: null,
     createdBy: userId,
     designId: design.id,
@@ -74,6 +75,7 @@ test('ProductDesignCanvases DAO supports update', async (t: tape.Test) => {
   });
 
   const data = {
+    archivedAt: null,
     componentId: null,
     createdBy: userId,
     designId: design.id,
@@ -85,7 +87,11 @@ test('ProductDesignCanvases DAO supports update', async (t: tape.Test) => {
     y: 1
   };
   const { id, createdAt, deletedAt, ...canvas } = await create(data);
-  const inserted = await update(id, { ...canvas, title: 'updated' });
+  const inserted = await update(id, {
+    ...canvas,
+    title: 'updated',
+    archivedAt: new Date('2019-01-01')
+  });
 
   const result = await findById(inserted.id);
   if (!result) {
@@ -93,6 +99,14 @@ test('ProductDesignCanvases DAO supports update', async (t: tape.Test) => {
   }
   t.deepEqual(result, inserted, 'Returned inserted canvas');
   t.equal(result.title, 'updated', 'Title was updated');
+  if (!inserted.archivedAt) {
+    return t.fail('expected an archivedAt date!');
+  }
+  t.deepEqual(
+    new Date(inserted.archivedAt),
+    new Date('2019-01-01'),
+    'Returns the same date'
+  );
 });
 
 test('ProductDesignCanvases DAO supports reorder', async (t: tape.Test) => {
@@ -105,6 +119,7 @@ test('ProductDesignCanvases DAO supports reorder', async (t: tape.Test) => {
   });
 
   const data = {
+    archivedAt: null,
     componentId: null,
     createdBy: userId,
     designId: design.id,
@@ -116,6 +131,7 @@ test('ProductDesignCanvases DAO supports reorder', async (t: tape.Test) => {
     y: 1
   };
   const data2 = {
+    archivedAt: null,
     componentId: null,
     createdBy: userId,
     designId: design.id,
@@ -152,6 +168,7 @@ test('ProductDesignCanvases DAO supports delete', async (t: tape.Test) => {
   });
 
   const data = {
+    archivedAt: null,
     componentId: null,
     createdBy: userId,
     designId: design.id,
@@ -179,6 +196,7 @@ test('ProductDesignCanvases DAO supports retrieval by designId', async (t: tape.
   });
 
   const data = {
+    archivedAt: null,
     componentId: null,
     createdBy: userId,
     designId: design.id,

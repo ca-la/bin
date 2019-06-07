@@ -17,7 +17,7 @@ import * as NotificationAnnouncer from '../iris/messages/notification';
 import * as CollectionsDAO from '../../dao/collections';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import * as AnnotationsDAO from '../../components/product-design-canvas-annotations/dao';
-import * as CanvasesDAO from '../../dao/product-design-canvases';
+import * as CanvasesDAO from '../canvases/dao';
 import * as CommentsDAO from '../../components/comments/dao';
 import * as MeasurementsDAO from '../../dao/product-design-canvas-measurements';
 

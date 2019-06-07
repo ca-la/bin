@@ -1,15 +1,15 @@
 import * as uuid from 'node-uuid';
-import ProductDesignCanvas from '../../domain-objects/product-design-canvas';
+import Canvas from '../../components/canvases/domain-object';
 import { findById as findUserById } from '../../components/users/dao';
 import createUser = require('../create-user');
-import * as CanvasesDAO from '../../dao/product-design-canvases';
+import * as CanvasesDAO from '../../components/canvases/dao';
 import Measurement from '../../domain-objects/product-design-canvas-measurement';
 import { create } from '../../dao/product-design-canvas-measurements';
 import generateCanvas from './product-design-canvas';
 
 interface MeasurementWithResources {
   measurement: Measurement;
-  canvas: ProductDesignCanvas;
+  canvas: Canvas;
   createdBy: any;
 }
 

@@ -4,12 +4,12 @@ import { test } from '../../test-helpers/fresh';
 import * as AnnotationsDAO from './dao';
 import createUser = require('../../test-helpers/create-user');
 import { create as createDesign } from '../../dao/product-designs';
-import { create as createDesignCanvas } from '../../dao/product-design-canvases';
 import ResourceNotFoundError from '../../errors/resource-not-found';
 import * as AnnotationCommentsDAO from '../annotation-comments/dao';
 import * as CommentsDAO from '../comments/dao';
 import generateComment from '../../test-helpers/factories/comment';
 import generateAnnotation from '../../test-helpers/factories/product-design-canvas-annotation';
+import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 
 test('ProductDesignCanvasAnnotation DAO supports creation/retrieval', async (t: tape.Test) => {
   const { user } = await createUser();
@@ -18,7 +18,7 @@ test('ProductDesignCanvasAnnotation DAO supports creation/retrieval', async (t: 
     title: 'Green Tee',
     userId: user.id
   });
-  const designCanvas = await createDesignCanvas({
+  const { canvas: designCanvas } = await generateCanvas({
     componentId: null,
     createdBy: user.id,
     designId: design.id,
@@ -74,7 +74,7 @@ test('findAllWithCommentsByCanvasId with no comments', async (t: tape.Test) => {
     title: 'Green Tee',
     userId: user.id
   });
-  const designCanvas = await createDesignCanvas({
+  const { canvas: designCanvas } = await generateCanvas({
     componentId: null,
     createdBy: user.id,
     designId: design.id,
@@ -166,7 +166,7 @@ test('ProductDesignCanvasAnnotation DAO supports updating', async (t: tape.Test)
     title: 'Green Tee',
     userId: user.id
   });
-  const designCanvas = await createDesignCanvas({
+  const { canvas: designCanvas } = await generateCanvas({
     componentId: null,
     createdBy: user.id,
     designId: design.id,
@@ -212,7 +212,7 @@ test('ProductDesignCanvasAnnotation DAO supports deletion', async (t: tape.Test)
     title: 'Green Tee',
     userId: user.id
   });
-  const designCanvas = await createDesignCanvas({
+  const { canvas: designCanvas } = await generateCanvas({
     componentId: null,
     createdBy: user.id,
     designId: design.id,

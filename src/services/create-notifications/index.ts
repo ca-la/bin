@@ -1,7 +1,7 @@
 import * as uuid from 'node-uuid';
 
 import * as NotificationsDAO from '../../components/notifications/dao';
-import * as CanvasesDAO from '../../dao/product-design-canvases';
+import * as CanvasesDAO from '../../components/canvases/dao';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import * as StageTasksDAO from '../../dao/product-design-stage-tasks';
 import * as StagesDAO from '../../dao/product-design-stages';

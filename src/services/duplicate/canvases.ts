@@ -1,10 +1,10 @@
 import * as Knex from 'knex';
 
 import * as ComponentsDAO from '../../components/components/dao';
-import * as CanvasesDAO from '../../dao/product-design-canvases';
+import * as CanvasesDAO from '../../components/canvases/dao';
 
 import Component from '../../components/components/domain-object';
-import Canvas from '../../domain-objects/product-design-canvas';
+import Canvas from '../../components/canvases/domain-object';
 
 import { findAndDuplicateComponent } from './components';
 import prepareForDuplication from './prepare-for-duplication';

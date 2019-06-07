@@ -1,6 +1,6 @@
 import * as uuid from 'node-uuid';
-import { create } from '../../dao/product-design-canvases';
-import ProductDesignCanvas from '../../domain-objects/product-design-canvas';
+import { create } from '../../components/canvases/dao';
+import Canvas from '../../components/canvases/domain-object';
 import { findById as findUserById } from '../../components/users/dao';
 import createUser = require('../create-user');
 import * as ProductDesignsDAO from '../../dao/product-designs';
@@ -9,14 +9,14 @@ import Component from '../../components/components/domain-object';
 import generateComponent from './component';
 
 interface ProductDesignCanvasWithResources {
-  canvas: ProductDesignCanvas;
+  canvas: Canvas;
   component: Component;
   createdBy: any;
   design: any;
 }
 
 export default async function generateCanvas(
-  options: Partial<ProductDesignCanvas>
+  options: Partial<Canvas>
 ): Promise<ProductDesignCanvasWithResources> {
   const { user } = options.createdBy
     ? { user: await findUserById(options.createdBy) }
@@ -40,6 +40,7 @@ export default async function generateCanvas(
   }
 
   const canvas = await create({
+    archivedAt: null,
     componentId: component.id,
     createdBy: user.id,
     designId: design.id,

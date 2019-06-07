@@ -7,8 +7,8 @@ import { authHeader, del, get, patch, put } from '../../test-helpers/http';
 import { sandbox, test } from '../../test-helpers/fresh';
 import * as MeasurementDAO from '../../dao/product-design-canvas-measurements';
 import { create as createDesign } from '../../dao/product-designs';
-import { create as createDesignCanvas } from '../../dao/product-design-canvases';
 import * as CreateNotifications from '../../services/create-notifications';
+import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 
 test('PUT /:measurementId creates a Measurement', async (t: tape.Test) => {
   const { session, user } = await createUser();
@@ -19,7 +19,7 @@ test('PUT /:measurementId creates a Measurement', async (t: tape.Test) => {
     title: 'Green Tee',
     userId: user.id
   });
-  const designCanvas = await createDesignCanvas({
+  const { canvas: designCanvas } = await generateCanvas({
     componentId: null,
     createdBy: user.id,
     designId: design.id,
@@ -104,7 +104,7 @@ test('PATCH /:measurementId updates a Measurement', async (t: tape.Test) => {
     title: 'Green Tee',
     userId: user.id
   });
-  const designCanvas = await createDesignCanvas({
+  const { canvas: designCanvas } = await generateCanvas({
     componentId: null,
     createdBy: user.id,
     designId: design.id,
@@ -163,7 +163,7 @@ test('PATCH /:measurementId returns 400 if canvasid is invalid', async (t: tape.
     title: 'Green Tee',
     userId: user.id
   });
-  const designCanvas = await createDesignCanvas({
+  const { canvas: designCanvas } = await generateCanvas({
     componentId: null,
     createdBy: user.id,
     designId: design.id,
@@ -342,7 +342,7 @@ test('GET /label?canvasId= gets the next label to use', async (t: tape.Test) => 
     title: 'Green Tee',
     userId: user.id
   });
-  const designCanvas = await createDesignCanvas({
+  const { canvas: designCanvas } = await generateCanvas({
     componentId: null,
     createdBy: user.id,
     designId: design.id,

@@ -9,6 +9,7 @@ import annotationRoutes from './components/product-design-canvas-annotations/rou
 import annotationCommentRoutes from './components/annotation-comments/routes';
 import approvedSignupRoutes from './components/approved-signups/routes';
 import bidRoutes from './components/bids/routes';
+import canvasRoutes from './components/canvases/routes';
 import collaboratorRoutes from './components/collaborators/routes';
 import componentRoutes from './components/components/routes';
 import commentRoutes from './components/comments/routes';
@@ -61,6 +62,7 @@ router.use('/credits', creditRoutes);
 router.use('/duplication', duplicationRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/processes', processRoutes);
+router.use('/product-design-canvases', canvasRoutes);
 router.use('/product-design-canvas-annotations', annotationRoutes);
 router.use(
   '/product-design-canvas-annotations/:annotationId/comments',

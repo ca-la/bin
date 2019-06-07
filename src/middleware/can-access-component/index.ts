@@ -4,12 +4,12 @@ import ComponentRelationship from '../../components/component-relationships/doma
 import * as RelationshipsDAO from '../../components/component-relationships/dao';
 import { attachDesignPermissions } from '../can-access-design';
 import { findRoot } from '../../components/components/dao';
-import { findByComponentId } from '../../dao/product-design-canvases';
-import ProductDesignCanvas from '../../domain-objects/product-design-canvas';
+import { findByComponentId } from '../../components/canvases/dao';
+import Canvas from '../../components/canvases/domain-object';
 
 interface RelationshipCanvases {
-  sourceCanvas: ProductDesignCanvas;
-  targetCanvas: ProductDesignCanvas;
+  sourceCanvas: Canvas;
+  targetCanvas: Canvas;
 }
 
 async function getCanvases(

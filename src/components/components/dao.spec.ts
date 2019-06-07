@@ -12,11 +12,11 @@ import {
   update
 } from './dao';
 import { create as createImage } from '../images/dao';
-import { create as createCanvas } from '../../dao/product-design-canvases';
 import { ComponentType } from './domain-object';
 import { create as createDesign } from '../../dao/product-designs';
 import createUser = require('../../test-helpers/create-user');
 import generateComponent from '../../test-helpers/factories/component';
+import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 
 test('Components DAO supports creation/retrieval', async (t: tape.Test) => {
   const userData = await createUser();
@@ -184,7 +184,7 @@ test('Components DAO supports retrieval by canvasId', async (t: tape.Test) => {
   };
   await createImage(imageData);
   const inserted = await create(data);
-  const canvas = await createCanvas(canvasData);
+  const { canvas } = await generateCanvas(canvasData);
 
   const result = await findAllByCanvasId(canvas.id);
   t.deepEqual(result[0], inserted, 'Returned inserted component');
