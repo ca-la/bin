@@ -3,10 +3,11 @@ import * as uuid from 'node-uuid';
 import createUser = require('../../test-helpers/create-user');
 import { create as createDesign } from '../../dao/product-designs';
 import * as API from '../../test-helpers/http';
-import { test } from '../../test-helpers/fresh';
+import { sandbox, test } from '../../test-helpers/fresh';
 import * as ProductDesignVariantsDAO from '../../dao/product-design-variants';
 import ProductDesignVariant from '../../domain-objects/product-design-variant';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
+import * as DesignEventsDAO from '../../dao/design-events';
 
 const API_PATH = '/product-design-variants';
 
@@ -77,6 +78,9 @@ test(`PUT ${API_PATH}?designId replaces all variants for a design`, async (t: ta
   const { session, user } = await createUser();
   const { session: sessionTwo, user: userTwo } = await createUser();
   const { session: randomSession } = await createUser();
+  const editableStub = sandbox()
+    .stub(DesignEventsDAO, 'canEditVariants')
+    .resolves(true);
 
   const design = await createDesign({
     productType: 'TEESHIRT',
@@ -161,4 +165,15 @@ test(`PUT ${API_PATH}?designId replaces all variants for a design`, async (t: ta
     headers: API.authHeader(sessionTwo.id)
   });
   t.equal(responseThree.status, 403);
+  t.equal(
+    editableStub.callCount,
+    6,
+    'variant editability is checked for each request'
+  );
+  editableStub.resolves(false);
+  const [responseFour] = await API.put(`${API_PATH}/?designId=${design.id}`, {
+    body: variants,
+    headers: API.authHeader(session.id)
+  });
+  t.equal(responseFour.status, 400);
 });

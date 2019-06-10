@@ -9,6 +9,7 @@ import {
   canEditDesign
 } from '../../middleware/can-access-design';
 import { hasProperties } from '../../services/require-properties';
+import { canEditVariants } from '../../dao/design-events';
 
 const router = new Router();
 
@@ -49,11 +50,17 @@ function* replaceVariants(
   const { body } = this.request;
 
   if (!designId) {
-    this.throw(
+    return this.throw(
       400,
       'A designId needs to be specified in the query parameters!'
     );
-    return;
+  }
+  const isVariantsEditable = yield canEditVariants(designId);
+  if (!isVariantsEditable) {
+    return this.throw(
+      400,
+      'These variants are locked! You cannot edit variants after payment.'
+    );
   }
 
   if (Array.isArray(body) && isProductDesignVariantsIO(body)) {
