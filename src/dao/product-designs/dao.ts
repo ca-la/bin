@@ -1,16 +1,20 @@
 import db = require('../../services/db');
 import ProductDesign = require('../../domain-objects/product-design');
+import limitOrOffset from '../../services/limit-or-offset';
 
 /**
  * Find all designs that the user is a collaborator on.
  */
 export async function findAllDesignsThroughCollaborator(
-  userId: string
+  userId: string,
+  limit?: number,
+  offset?: number
 ): Promise<ProductDesign[]> {
-  const result = await db.raw(
-    `
-SELECT * FROM product_designs_with_metadata
-WHERE id in (
+  const result = await db('product_designs_with_metadata')
+    .select('*')
+    .whereRaw(
+      `
+id in (
   SELECT product_designs.id
 		FROM product_designs
 		JOIN collaborators AS c ON c.design_id = product_designs.id
@@ -27,12 +31,13 @@ WHERE id in (
 			AND (c.cancelled_at IS NULL	OR c.cancelled_at > now())
 			AND co.deleted_at IS NULL
       AND product_designs.deleted_at IS NULL
-);
+)
     `,
-    [userId, userId]
-  );
+      [userId, userId]
+    )
+    .modify(limitOrOffset(limit, offset));
 
-  return result.rows.map((row: any): ProductDesign => new ProductDesign(row));
+  return result.map((row: any): ProductDesign => new ProductDesign(row));
 }
 
 export async function findAllDesignIdsThroughCollaborator(

@@ -22,6 +22,7 @@ import processRoutes from './components/processes/routes';
 import promoCodeRoutes from './components/promo-codes/routes';
 import resolveAccountRoutes from './components/resolve-accounts/routes';
 import subscriptionRoutes from './components/subscriptions/routes';
+import timelineRoutes from './components/timeline/routes';
 import userRoutes from './components/users/routes';
 
 const router = new Router({
@@ -72,6 +73,7 @@ router.use('/product-design-images', imageRoutes);
 router.use('/promo-codes', promoCodeRoutes);
 router.use('/resolve-accounts', resolveAccountRoutes);
 router.use('/subscriptions', subscriptionRoutes);
+router.use('/timelines', timelineRoutes);
 router.use('/users', userRoutes);
 
 export default router;

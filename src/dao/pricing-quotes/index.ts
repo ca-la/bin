@@ -67,10 +67,36 @@ type TableName =
   | 'pricing_inputs';
 
 type NormalizedPricingQuote = Omit<PricingQuote, 'processes'>;
+const encodeNormalizedPricingQuote = (
+  row: PricingQuoteRow
+): NormalizedPricingQuote => ({
+  id: row.id,
+  preProductionTimeMs: Number(row.pre_production_time_ms),
+  pricingQuoteInputId: row.pricing_quote_input_id,
+  createdAt: row.created_at,
+  productType: row.product_type,
+  productComplexity: row.product_complexity,
+  materialCategory: row.material_category,
+  materialBudgetCents: row.material_budget_cents,
+  units: row.units,
+  baseCostCents: row.base_cost_cents,
+  materialCostCents: row.material_cost_cents,
+  processCostCents: row.process_cost_cents,
+  unitCostCents: row.unit_cost_cents,
+  designId: row.design_id,
+  creationTimeMs: Number(row.creation_time_ms),
+  specificationTimeMs: Number(row.specification_time_ms),
+  sourcingTimeMs: Number(row.sourcing_time_ms),
+  samplingTimeMs: Number(row.sampling_time_ms),
+  productionTimeMs: Number(row.production_time_ms),
+  processTimeMs: Number(row.process_time_ms),
+  fulfillmentTimeMs: Number(row.fulfillment_time_ms)
+});
+
 const normalizedPricingQuoteAdapter = new DataAdapter<
   PricingQuoteRow,
   NormalizedPricingQuote
->();
+>(encodeNormalizedPricingQuote);
 
 export async function create(
   quote: Uninserted<PricingQuoteRow>,
@@ -260,6 +286,19 @@ export async function findByDesignId(
 ): Promise<PricingQuote[] | null> {
   const TABLE_NAME = 'pricing_quotes';
   const quotes: object[] = await db(TABLE_NAME).where({ design_id: designId });
+
+  if (!quotes.every(isPricingQuoteRow)) {
+    return null;
+  }
+
+  return Promise.all((quotes as PricingQuoteRow[]).map(attachProcesses));
+}
+
+export async function findByDesignIds(
+  designIds: string[]
+): Promise<PricingQuote[] | null> {
+  const TABLE_NAME = 'pricing_quotes';
+  const quotes: object[] = await db(TABLE_NAME).whereIn('design_id', designIds);
 
   if (!quotes.every(isPricingQuoteRow)) {
     return null;
