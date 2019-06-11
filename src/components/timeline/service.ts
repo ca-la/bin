@@ -41,7 +41,8 @@ function formatTimelines(
       designId: quote.designId,
       design: {
         id: design.id,
-        title: design.title
+        title: design.title,
+        imageLinks: design.imageLinks || []
       },
       collections: design.collections,
       startDate: quote.createdAt,

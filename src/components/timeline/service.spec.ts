@@ -11,6 +11,9 @@ import * as CollectionsDAO from '../../dao/collections';
 import { create as createDesign } from '../../dao/product-designs';
 import generateCollection from '../../test-helpers/factories/collection';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
+import { create as createImage } from '../../components/images/dao';
+import generateCanvas from '../../test-helpers/factories/product-design-canvas';
+import generateComponent from '../../test-helpers/factories/component';
 
 test('findByUserId finds timelines by user id', async (t: tape.Test) => {
   const { user, session } = await createUser();
@@ -61,7 +64,8 @@ test('findByUserId finds timelines by user id', async (t: tape.Test) => {
         creationTimeMs: 0,
         design: {
           id: design.id,
-          title: design.title
+          title: design.title,
+          imageLinks: []
         },
         designId: design.id,
         fulfillmentTimeMs: 259200000,
@@ -87,6 +91,24 @@ test('findByCollectionId finds timelines by collection id', async (t: tape.Test)
   });
   await CollectionsDAO.moveDesign(collection.id, design.id);
 
+  const sketch = await createImage({
+    description: '',
+    id: uuid.v4(),
+    mimeType: 'image/png',
+    originalHeightPx: 0,
+    originalWidthPx: 0,
+    title: 'FooBar.png',
+    userId: user.id
+  });
+  const { component } = await generateComponent({
+    createdBy: user.id,
+    sketchId: sketch.id
+  });
+  await generateCanvas({
+    designId: design.id,
+    componentId: component.id,
+    createdBy: user.id
+  });
   await generatePricingValues();
   await PricingCostInputsDAO.create({
     createdAt: new Date(),
@@ -127,7 +149,8 @@ test('findByCollectionId finds timelines by collection id', async (t: tape.Test)
         creationTimeMs: 0,
         design: {
           id: design.id,
-          title: design.title
+          title: design.title,
+          imageLinks: timeline[0].design.imageLinks
         },
         designId: design.id,
         fulfillmentTimeMs: 259200000,
@@ -140,5 +163,15 @@ test('findByCollectionId finds timelines by collection id', async (t: tape.Test)
       }
     ],
     'returns expected timeline values'
+  );
+  t.equal(
+    timeline[0].design.imageLinks[0].previewLink.includes(sketch.id),
+    true,
+    'image preview links contain sketch id'
+  );
+  t.equal(
+    timeline[0].design.imageLinks[0].thumbnailLink.includes(sketch.id),
+    true,
+    'image thumbnail links contain sketch id'
   );
 });

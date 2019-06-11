@@ -65,7 +65,8 @@ test('GET /timelines?userId and /timelines?collectionId finds timelines by user 
         creationTimeMs: 0,
         design: {
           id: design.id,
-          title: design.title
+          title: design.title,
+          imageLinks: []
         },
         designId: design.id,
         fulfillmentTimeMs: 259200000,
@@ -96,7 +97,8 @@ test('GET /timelines?userId and /timelines?collectionId finds timelines by user 
         creationTimeMs: 0,
         design: {
           id: design.id,
-          title: design.title
+          title: design.title,
+          imageLinks: []
         },
         designId: design.id,
         fulfillmentTimeMs: 259200000,
