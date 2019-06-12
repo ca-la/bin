@@ -10,6 +10,12 @@ import Canvas, {
 } from './domain-object';
 import first from '../../services/first';
 import { validate, validateEvery } from '../../services/validate-from-db';
+import {
+  creatorDataAdapter,
+  CreatorMetadata,
+  CreatorMetadataRow,
+  isCreatorMetadataRow
+} from './domain-object/creator-metadata';
 
 const TABLE_NAME = 'canvases';
 
@@ -181,5 +187,32 @@ export async function findByComponentId(
     isCanvasRow,
     dataAdapter,
     canvas
+  );
+}
+
+export async function getCreatorMetadata(
+  canvasId: string
+): Promise<CreatorMetadata | null> {
+  const creatorRow = await db(TABLE_NAME)
+    .select(
+      'users.name AS created_by_name',
+      'canvases.created_at AS created_at',
+      'canvases.id AS canvas_id'
+    )
+    .leftJoin('users', 'users.id', 'canvases.created_by')
+    .where({ 'canvases.id': canvasId })
+    .then((rows: CreatorMetadataRow[]) => {
+      return first<CreatorMetadataRow>(rows);
+    });
+
+  if (!creatorRow) {
+    return null;
+  }
+
+  return validate<CreatorMetadataRow, CreatorMetadata>(
+    TABLE_NAME,
+    isCreatorMetadataRow,
+    creatorDataAdapter,
+    creatorRow
   );
 }

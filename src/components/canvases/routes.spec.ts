@@ -23,6 +23,7 @@ import createDesign from '../../services/create-design';
 import * as EnrichmentService from '../../services/attach-asset-links';
 import ProductDesignImage = require('../images/domain-object');
 import generateCanvas from '../../test-helpers/factories/product-design-canvas';
+import * as Changes from './services/gather-changes';
 
 test('GET /product-design-canvases/:canvasId returns Canvas', async (t: tape.Test) => {
   const { session } = await createUser();
@@ -597,4 +598,41 @@ pre-existing preview image`, async (t: tape.Test) => {
     omit(data, 'assetLink'),
     'Creates a component'
   );
+});
+
+test('GET /:canvasId/changes returns a list of changes', async (t: tape.Test) => {
+  const { session, user } = await createUser();
+  const { canvas } = await generateCanvas({ createdBy: user.id });
+  const changes = [
+    {
+      statement: 'Created by Raf Simons',
+      timestamp: new Date('2019-04-20')
+    },
+    {
+      statement: 'Changed by Rick Owens',
+      timestamp: new Date('2019-04-21')
+    }
+  ];
+  const gatherStub = sandbox()
+    .stub(Changes, 'gatherChanges')
+    .resolves(changes);
+
+  const [response, body] = await get(
+    `/product-design-canvases/${canvas.id}/changes`,
+    {
+      headers: authHeader(session.id)
+    }
+  );
+
+  t.equal(response.status, 200);
+  t.equal(body.length, 2);
+  t.deepEqual(
+    { ...body[0], timestamp: new Date(body[0].timestamp) },
+    changes[0]
+  );
+  t.deepEqual(
+    { ...body[1], timestamp: new Date(body[1].timestamp) },
+    changes[1]
+  );
+  t.deepEqual(gatherStub.args[0], [canvas.id]);
 });

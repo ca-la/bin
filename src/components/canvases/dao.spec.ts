@@ -1,4 +1,5 @@
 import * as tape from 'tape';
+import * as uuid from 'node-uuid';
 import { test } from '../../test-helpers/fresh';
 import {
   create,
@@ -6,6 +7,7 @@ import {
   findAllByDesignId,
   findByComponentId,
   findById,
+  getCreatorMetadata,
   reorder,
   update
 } from './dao';
@@ -221,4 +223,21 @@ test('ProductDesignCanvases DAO supports retrieval by componentId', async (t: ta
     foundCanvas,
     'Returns the canvas associated with the given component'
   );
+});
+
+test('getCreatorMetadata', async (t: tape.Test) => {
+  const { user } = await createUser({ withSession: false });
+  const { canvas } = await generateCanvas({ createdBy: user.id });
+  const randomId = uuid.v4();
+
+  const creator = await getCreatorMetadata(canvas.id);
+
+  t.deepEqual(creator, {
+    canvasId: canvas.id,
+    createdAt: canvas.createdAt,
+    createdByName: user.name
+  });
+
+  const empty = await getCreatorMetadata(randomId);
+  t.equal(empty, null);
 });

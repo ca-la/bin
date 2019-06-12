@@ -1,5 +1,5 @@
-import DataAdapter from '../../services/data-adapter';
-import { hasProperties } from '../../services/require-properties';
+import DataAdapter from '../../../services/data-adapter';
+import { hasProperties } from '../../../services/require-properties';
 
 /**
  * @typedef {object} Canvas A canvas in a design space holding a view to a design

@@ -19,6 +19,7 @@ import ProductDesignOption = require('../../domain-objects/product-design-option
 import { hasProperties } from '../../services/require-properties';
 import { omit } from 'lodash';
 import { typeGuard } from '../../middleware/type-guard';
+import { gatherChanges } from './services/gather-changes';
 
 const router = new Router();
 
@@ -294,6 +295,16 @@ function* getList(this: Koa.Application.Context): AsyncIterableIterator<any[]> {
   this.body = enrichedCanvases;
 }
 
+function* getChangeLog(
+  this: Koa.Application.Context
+): AsyncIterableIterator<any[]> {
+  const { canvasId } = this.params;
+
+  const changes = yield gatherChanges(canvasId);
+  this.status = 200;
+  this.body = changes;
+}
+
 router.post('/', requireAuth, create);
 router.put('/:canvasId', requireAuth, create);
 router.patch('/:canvasId', requireAuth, update);
@@ -309,5 +320,6 @@ router.del('/:canvasId', requireAuth, del);
 
 router.get('/', requireAuth, getList);
 router.get('/:canvasId', requireAuth, getById);
+router.get('/:canvasId/changes', requireAuth, getChangeLog);
 
 export default router.routes();
