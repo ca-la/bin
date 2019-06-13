@@ -2,7 +2,8 @@
 
 const uuid = require('node-uuid');
 const {
-  createInvoicesWithPayments
+  createInvoicesWithPayments,
+  createInvoicesWithOverPayments
 } = require('../../test-helpers/factories/invoice-payments');
 const InvoicesDAO = require('.');
 const { test } = require('../../test-helpers/fresh');
@@ -56,6 +57,57 @@ test(
     t.equal(nonValidIdInvoice, null, 'returns null for non-existent IDs');
   },
   createInvoicesWithPayments
+);
+
+test(
+  'InvoicesDAO.findById',
+  async (t, { collections, createdInvoices, createdPayments }) => {
+    const paidInvoice = await InvoicesDAO.findById(createdInvoices[0].id);
+    t.deepEqual(
+      paidInvoice,
+      {
+        id: createdInvoices[0].id,
+        collectionId: collections[0].id,
+        createdAt: createdInvoices[0].createdAt,
+        deletedAt: null,
+        description: null,
+        designId: null,
+        designStatusId: null,
+        totalCents: 1234,
+        totalPaid: 2234,
+        isPaid: true,
+        paidAt: createdPayments[0].createdAt,
+        userId: null,
+        title: 'My Development Invoice'
+      },
+      'returns an existing invoice'
+    );
+
+    const unpaidInvoice = await InvoicesDAO.findById(createdInvoices[2].id);
+    t.deepEqual(
+      unpaidInvoice,
+      {
+        id: createdInvoices[2].id,
+        collectionId: collections[1].id,
+        createdAt: createdInvoices[2].createdAt,
+        deletedAt: null,
+        description: null,
+        designId: null,
+        designStatusId: null,
+        totalCents: 3214,
+        totalPaid: 0,
+        isPaid: false,
+        paidAt: null,
+        userId: null,
+        title: 'My Development Invoice'
+      },
+      'returns an existing invoice'
+    );
+
+    const nonValidIdInvoice = await InvoicesDAO.findById(uuid.v4());
+    t.equal(nonValidIdInvoice, null, 'returns null for non-existent IDs');
+  },
+  createInvoicesWithOverPayments
 );
 
 test(
