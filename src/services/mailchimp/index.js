@@ -4,6 +4,8 @@ const fetch = require('node-fetch');
 const crypto = require('crypto');
 
 const InvalidDataError = require('../../errors/invalid-data');
+const ResourceNotFoundError = require('../../errors/resource-not-found')
+  .default;
 const { logServerError } = require('../logger');
 
 const { MAILCHIMP_API_KEY, MAILCHIMP_LIST_ID_USERS } = require('../../config');
@@ -59,6 +61,9 @@ function makeRequest(method, path, requestBody) {
       if (response.status !== 200) {
         const message = ERROR_GLOSSARY[body.title] || body.detail;
 
+        if (response.status === 404) {
+          throw new ResourceNotFoundError(`User not in list ${path}`);
+        }
         throw new InvalidDataError(message);
       }
 
@@ -136,6 +141,8 @@ function updateUser({ email, hasScan, hasBought, cohort }) {
 
 module.exports = {
   addOrUpdateListMember,
+  makeRequest,
+  md5,
   subscribe,
   subscribeToUsers,
   update,

@@ -3,11 +3,13 @@ import * as uuid from 'node-uuid';
 import InvalidDataError = require('../../errors/invalid-data');
 import * as UsersDAO from './dao';
 import * as DesignEventsDAO from '../../dao/design-events';
-import { test, Test } from '../../test-helpers/fresh';
+import { sandbox, test, Test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
 import createBid from '../../test-helpers/factories/bid';
 import * as ProductDesignsDAO from '../../dao/product-designs';
 import User, { ROLES, UserIO } from './domain-object';
+import { validatePassword } from './services/validate-password';
+import * as MailChimpFunctions from '../../services/mailchimp/update-email';
 
 const USER_DATA: UserIO = Object.freeze({
   email: 'USER@example.com',
@@ -209,6 +211,40 @@ test('UsersDAO.update updates a user', async (t: Test) => {
     name: 'Kanye West'
   });
   t.equal(user.name, 'Kanye West', 'name returned is updated');
+});
+
+test('UsersDAO.update throw on already taken email', async (t: Test) => {
+  const user1 = await UsersDAO.create(USER_DATA);
+  const user2 = await UsersDAO.create({
+    ...USER_DATA,
+    email: 'example@user.com'
+  });
+  try {
+    await UsersDAO.update(user2.id, {
+      email: user1.email
+    });
+  } catch (err) {
+    t.equal(err.constraint, 'users_unique_email');
+  }
+});
+
+test('UsersDAO.update updates MailChimp email if email is updated', async (t: Test) => {
+  const updateEmailStub = sandbox().stub(MailChimpFunctions, 'updateEmail');
+
+  const user = await UsersDAO.create(USER_DATA);
+  await UsersDAO.update(user.id, {
+    email: 'new@email.com'
+  });
+  t.equal(updateEmailStub.callCount, 1);
+});
+
+test('UsersDAO.updatePassword updates password', async (t: Test) => {
+  const inserted = await UsersDAO.create(USER_DATA);
+  const updated = await UsersDAO.updatePassword(inserted.id, 'P@ssw0rd');
+  const wrongPasswordCheck = await validatePassword(updated.id, 'hunter2');
+  const correctPasswordCheck = await validatePassword(updated.id, 'P@ssw0rd');
+  t.false(wrongPasswordCheck);
+  t.true(correctPasswordCheck);
 });
 
 test('UsersDAO.completeSmsPreregistration completes a user', (t: Test) => {

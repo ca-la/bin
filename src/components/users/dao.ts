@@ -27,6 +27,7 @@ import {
 import { validate, validateEvery } from '../../services/validate-from-db';
 import limitOrOffset from '../../services/limit-or-offset';
 import { omit } from 'lodash';
+import { updateEmail } from '../../services/mailchimp/update-email';
 
 const ERROR_CODES = {
   emailTaken: Symbol('Email taken'),
@@ -224,13 +225,19 @@ export async function findByReferralCode(referralCode: string): Promise<User> {
 
 export async function updatePassword(
   userId: string,
-  password: string
+  password: string,
+  trx?: Knex.Transaction
 ): Promise<User> {
   const passwordHash = await hash(password);
 
   const user = await db('users')
     .where({ id: userId })
     .update({ password_hash: passwordHash }, '*')
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .then((users: UserRow[]) => first<UserRow>(users));
 
   if (!user) {
@@ -242,17 +249,32 @@ export async function updatePassword(
 
 export async function update(
   userId: string,
-  data: Partial<User>
+  data: Partial<User>,
+  trx?: Knex.Transaction
 ): Promise<User> {
-  if (data.email !== undefined && !isValidEmail(data.email)) {
-    return Promise.reject(new InvalidDataError('Invalid email'));
+  let previousEmail;
+  if (data.email) {
+    if (!isValidEmail(data.email)) {
+      return Promise.reject(new InvalidDataError('Invalid email'));
+    }
+    const beforeUpdate = await findById(userId);
+    previousEmail = beforeUpdate ? beforeUpdate.email : null;
   }
   const rowData = partialDataAdapter.forInsertion(data);
 
   const user = await db('users')
     .where({ id: userId })
     .update(rowData, '*')
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .then((users: UserRow[]) => first<UserRow>(users));
+
+  if (previousEmail) {
+    await updateEmail(previousEmail, user.email);
+  }
 
   return validate<UserRow, User>(TABLE_NAME, isUserRow, dataAdapter, user);
 }

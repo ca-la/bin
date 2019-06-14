@@ -1,5 +1,6 @@
 import * as Router from 'koa-router';
 import * as Koa from 'koa';
+import * as Knex from 'knex';
 
 import MailChimp = require('../../services/mailchimp');
 import InvalidDataError = require('../../errors/invalid-data');
@@ -19,7 +20,10 @@ import { logServerError } from '../../services/logger';
 import { DEFAULT_DESIGN_IDS, REQUIRE_CALA_EMAIL } from '../../config';
 import { isValidEmail } from '../../services/validation';
 import { canCreateAccount } from '../../middleware/can-create-account';
-
+import db = require('../../services/db');
+import { validatePassword } from './services/validate-password';
+import { isEmpty, omit } from 'lodash';
+import rethrow = require('pg-rethrow');
 const router = new Router();
 
 /**
@@ -186,11 +190,19 @@ function* acceptPartnerTerms(
   this.status = 200;
 }
 
+interface UserWithNewPassword extends User {
+  currentPassword?: string;
+  newPassword?: string;
+}
+interface CaughtError {
+  field: string;
+  message: string;
+}
 /**
  * PUT /users/:userId
  */
 function* updateUser(
-  this: Koa.Application.Context<UserIO>
+  this: Koa.Application.Context<UserWithNewPassword>
 ): AsyncIterableIterator<User> {
   const isAdmin = this.state.role === ROLES.admin;
   const isCurrentUser = this.params.userId === this.state.userId;
@@ -205,13 +217,65 @@ function* updateUser(
   if (isAdmin && body.role) {
     yield SessionsDAO.deleteByUserId(this.params.userId);
   }
+  const errors: (Error | CaughtError)[] = [];
+  const updated = yield db
+    .transaction(async (trx: Knex.Transaction) => {
+      if (body.newPassword && body.currentPassword) {
+        const doPasswordsMatch = await validatePassword(
+          this.params.userId,
+          body.currentPassword
+        );
+        if (doPasswordsMatch) {
+          await UsersDAO.updatePassword(
+            this.params.userId,
+            body.newPassword,
+            trx
+          );
+        } else {
+          errors.push({
+            field: 'password',
+            message: 'Invalid password'
+          });
+        }
+      }
 
-  const updated = yield UsersDAO.update(this.params.userId, body).catch(
-    filterError(InvalidDataError, (err: Error) => this.throw(400, err))
-  );
+      const user = omit(body, 'currentPassword', 'newPassword');
+      if (isEmpty(user)) {
+        return UsersDAO.findById(this.params.userId);
+      }
 
-  this.status = 200;
-  this.body = updated;
+      return UsersDAO.update(
+        this.params.userId,
+        omit(body, 'currentPassword', 'newPassword'),
+        trx
+      )
+        .catch(rethrow)
+        .catch(
+          filterError(
+            rethrow.ERRORS.UniqueViolation,
+            (err: Error & { constraint: string }) => {
+              switch (err.constraint) {
+                case 'users_unique_email':
+                  errors.push({
+                    field: 'email',
+                    message: 'Invalid email'
+                  });
+                  break;
+                default:
+                  errors.push(err);
+              }
+            }
+          )
+        );
+    })
+    .catch(
+      (err: Error): void => {
+        errors.push(err);
+      }
+    );
+
+  this.status = errors.length ? 400 : 200;
+  this.body = errors.length ? { errors } : updated;
 }
 
 function* getAllUsers(

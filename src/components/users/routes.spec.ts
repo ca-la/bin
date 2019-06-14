@@ -237,6 +237,70 @@ test('PUT /users/:id updates the current user', async (t: Test) => {
   );
 });
 
+test('PATCH /users/:id returns errors on taken email', async (t: Test) => {
+  const { user: user1, session } = await createUser();
+  const { user: user2 } = await createUser();
+
+  const [response, body] = await put(`/users/${user1.id}`, {
+    body: {
+      email: user2.email
+    },
+    headers: authHeader(session.id)
+  });
+  t.equal(response.status, 400);
+  t.true(Array.isArray(body.errors) && body.errors.length === 1);
+});
+
+test('PATCH /users/:id returns error on incorrect password', async (t: Test) => {
+  const { user, session } = await createUser();
+
+  const [response, body] = await put(`/users/${user.id}`, {
+    body: {
+      currentPassword: 'incorrectPassword',
+      newPassword: 'hunter3'
+    },
+    headers: authHeader(session.id)
+  });
+  t.equal(response.status, 400);
+  t.true(Array.isArray(body.errors) && body.errors.length === 1);
+});
+
+test('PATCH /users/:id returns error on password update fail', async (t: Test) => {
+  const { user, session } = await createUser();
+
+  sandbox()
+    .stub(UsersDAO, 'updatePassword')
+    .throws(new InvalidDataError('update failed'));
+
+  const [response, body] = await put(`/users/${user.id}`, {
+    body: {
+      email: user.email,
+      currentPassword: 'hunter2',
+      newPassword: '*******'
+    },
+    headers: authHeader(session.id)
+  });
+  t.equal(response.status, 400);
+  t.true(Array.isArray(body.errors) && body.errors.length === 1);
+  t.true(body.errors[0].name === 'InvalidDataError');
+});
+
+test('PATCH /users/:id returns multiple errors', async (t: Test) => {
+  const { user: user1, session } = await createUser();
+  const { user: user2 } = await createUser();
+
+  const [response, body] = await put(`/users/${user1.id}`, {
+    body: {
+      email: user2.email,
+      currentPassword: 'incorrectPassword',
+      newPassword: 'hunter3'
+    },
+    headers: authHeader(session.id)
+  });
+  t.equal(response.status, 400);
+  t.true(Array.isArray(body.errors) && body.errors.length === 2);
+});
+
 test('POST /users allows registration + design duplication', async (t: Test) => {
   const dOne = uuid.v4();
   const dTwo = uuid.v4();
