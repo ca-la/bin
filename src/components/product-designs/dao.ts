@@ -1,6 +1,16 @@
 import db = require('../../services/db');
 import ProductDesign = require('../../domain-objects/product-design');
 import limitOrOffset from '../../services/limit-or-offset';
+import {
+  dataAdapter,
+  isProductDesignRow,
+  ProductDesignData,
+  ProductDesignRow
+} from './domain-object';
+import first from '../../services/first';
+import { validate } from '../../services/validate-from-db';
+
+export const TABLE_NAME = 'product_designs';
 
 /**
  * Find all designs that the user is a collaborator on.
@@ -70,10 +80,10 @@ SELECT d2.id
 
 export async function findDesignByAnnotationId(
   annotationId: string
-): Promise<ProductDesign | null> {
+): Promise<ProductDesignData | null> {
   const result = await db.raw(
     `
-SELECT designs.* FROM product_designs_with_metadata AS designs
+SELECT designs.* FROM ${TABLE_NAME} AS designs
 INNER JOIN product_design_canvases AS canvases ON canvases.design_id = designs.id
 INNER JOIN product_design_canvas_annotations AS annotations ON annotations.canvas_id = canvases.id
 WHERE annotations.id = ?
@@ -82,19 +92,26 @@ AND designs.deleted_at IS null
   `,
     [annotationId]
   );
+  const row = first<ProductDesignRow>(result.rows);
 
-  const productDesigns = result.rows.map(
-    (row: any): ProductDesign => new ProductDesign(row)
+  if (!row) {
+    return null;
+  }
+
+  return validate<ProductDesignRow, ProductDesignData>(
+    TABLE_NAME,
+    isProductDesignRow,
+    dataAdapter,
+    row
   );
-  return productDesigns[0] || null;
 }
 
 export async function findDesignByTaskId(
   taskId: string
-): Promise<ProductDesign | null> {
+): Promise<ProductDesignData | null> {
   const result = await db.raw(
     `
-SELECT designs.* FROM product_designs_with_metadata AS designs
+SELECT designs.* FROM ${TABLE_NAME} AS designs
 INNER JOIN product_design_stages AS stages ON stages.design_id = designs.id
 INNER JOIN product_design_stage_tasks AS tasks ON tasks.design_stage_id = stages.id
 WHERE tasks.task_id = ?
@@ -102,11 +119,18 @@ AND designs.deleted_at IS null
   `,
     [taskId]
   );
+  const row = first<ProductDesignRow>(result.rows);
 
-  const productDesigns = result.rows.map(
-    (row: any): ProductDesign => new ProductDesign(row)
+  if (!row) {
+    return null;
+  }
+
+  return validate<ProductDesignRow, ProductDesignData>(
+    TABLE_NAME,
+    isProductDesignRow,
+    dataAdapter,
+    row
   );
-  return productDesigns[0] || null;
 }
 
 module.exports = {

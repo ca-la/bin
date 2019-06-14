@@ -4,7 +4,7 @@ import { PricingQuote } from '../../domain-objects/pricing-quote';
 import Timeline from './domain-object';
 import { getTimeBuffer } from '../../services/add-time-buffer';
 import ProductDesign = require('../../domain-objects/product-design');
-import { findAllDesignsThroughCollaborator } from '../../dao/product-designs/dao';
+import { findAllDesignsThroughCollaborator } from '../product-designs/dao';
 
 function formatTimelines(
   quotes: PricingQuote[],

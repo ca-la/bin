@@ -49,7 +49,7 @@ const {
 } = require('./sections');
 const {
   findAllDesignsThroughCollaborator
-} = require('../../dao/product-designs/dao');
+} = require('../../components/product-designs/dao');
 
 const router = new Router();
 

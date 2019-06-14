@@ -1,16 +1,16 @@
 import * as tape from 'tape';
 import * as uuid from 'node-uuid';
 
-import { deleteById, findById } from './index';
+import { deleteById, findById } from '../../dao/product-designs/index';
 import {
   findAllDesignsThroughCollaborator,
   findDesignByAnnotationId,
   findDesignByTaskId
 } from './dao';
-import { create as createImage } from '../../components/images/dao';
-import { del as deleteCanvas } from '../../components/canvases/dao';
-import * as CollaboratorsDAO from '../../components/collaborators/dao';
-import { deleteById as deleteAnnotation } from '../../components/product-design-canvas-annotations/dao';
+import { create as createImage } from '../images/dao';
+import { del as deleteCanvas } from '../canvases/dao';
+import * as CollaboratorsDAO from '../collaborators/dao';
+import { deleteById as deleteAnnotation } from '../product-design-canvas-annotations/dao';
 import * as CollectionsDAO from '../../dao/collections';
 
 import { test } from '../../test-helpers/fresh';
@@ -20,7 +20,7 @@ import generateComponent from '../../test-helpers/factories/component';
 import generateCollection from '../../test-helpers/factories/collection';
 
 import createDesign from '../../services/create-design';
-import { CollaboratorWithUser } from '../../components/collaborators/domain-objects/collaborator';
+import { CollaboratorWithUser } from '../collaborators/domain-objects/collaborator';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
 import generateAnnotation from '../../test-helpers/factories/product-design-canvas-annotation';
 import generateProductDesignStage from '../../test-helpers/factories/product-design-stage';
