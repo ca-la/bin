@@ -7,7 +7,7 @@ import {
   AWS_S3_THUMBNAIL_BUCKET_NAME
 } from '../../config';
 import * as AWSService from '../../services/aws';
-import { generateFilename } from '../../services/generate-filename';
+import { generateUploadPolicy } from '../../services/upload-policy';
 
 function* getDesignUploadPolicy(
   this: Koa.Application.Context
@@ -21,26 +21,14 @@ function* getDesignUploadPolicy(
     );
   }
 
-  const remoteFileName = this.params.id || uuid.v4();
-  const filenameWithExtension = generateFilename(remoteFileName, mimeType);
-  const contentDisposition = `attachment; filename="${filenameWithExtension}"`;
-  const contentType = mimeType;
-  const { url, fields } = yield AWSService.getUploadPolicy(
-    BUCKET_NAME,
-    BUCKET_REGION,
-    remoteFileName,
-    contentDisposition,
-    contentType
-  );
+  const uploadPolicy = generateUploadPolicy({
+    id: this.params.id || uuid.v4(),
+    mimeType,
+    s3Bucket: BUCKET_NAME,
+    s3Region: BUCKET_REGION
+  });
 
-  this.body = {
-    contentDisposition,
-    contentType,
-    downloadUrl: `https://${BUCKET_NAME}.s3.amazonaws.com/${remoteFileName}`,
-    formData: fields,
-    remoteFileName,
-    uploadUrl: url
-  };
+  this.body = uploadPolicy;
   this.status = 200;
 }
 

@@ -60,6 +60,9 @@ const config = {
   AWS_IRIS_SQS_REGION: process.env.AWS_IRIS_SQS_REGION,
   AWS_IRIS_SQS_URL: process.env.AWS_IRIS_SQS_URL,
 
+  AWS_FILES_BUCKET_NAME: process.env.AWS_FILES_BUCKET_NAME,
+  AWS_FILES_BUCKET_REGION: process.env.AWS_FILES_BUCKET_REGION,
+
   MAILCHIMP_API_KEY: process.env.MAILCHIMP_API_KEY,
 
   // The Mailchimp list ID for interested designer/production partners
