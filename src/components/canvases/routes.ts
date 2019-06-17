@@ -5,7 +5,6 @@ import * as CanvasesDAO from './dao';
 import requireAuth = require('../../middleware/require-auth');
 import * as ComponentsDAO from '../components/dao';
 import * as ProductDesignOptionsDAO from '../../dao/product-design-options';
-import * as ProductDesignsDAO from '../../dao/product-designs';
 import * as ProductDesignImagesDAO from '../images/dao';
 import Canvas from './domain-object';
 import Component, {
@@ -68,15 +67,16 @@ function* createCanvas(
 }
 
 type ComponentWithImageAndOption = Component & {
-  assetLink: string;
-  downloadLink?: string;
-  thumbnailLink: string;
   image: ProductDesignImage;
   option?: ProductDesignOption;
 };
 
 type CanvasWithComponent = Canvas & {
   components: ComponentWithImageAndOption[];
+};
+
+type CanvasWithEnrichedComponents = Canvas & {
+  components: EnrichmentService.EnrichedComponent[];
 };
 
 function isCanvasWithComponent(data: any): data is CanvasWithComponent {
@@ -98,7 +98,7 @@ function* createWithComponents(
 
   this.assert(body.length >= 1, 400, 'At least one canvas must be provided');
 
-  const canvases: CanvasWithComponent[] = yield Promise.all(
+  const canvases: CanvasWithEnrichedComponents[] = yield Promise.all(
     body.map(async (data: Unsaved<CanvasWithComponent>) =>
       createCanvasAndComponents(this.state.userId, data)
     )
@@ -108,17 +108,6 @@ function* createWithComponents(
     throw new Error('No canvases were succesfully created');
   }
 
-  const assetLinks: string[] = canvases.reduce(
-    (list: string[], canvas: CanvasWithComponent): string[] =>
-      list.concat(
-        canvas.components.map(
-          (component: ComponentWithImageAndOption) => component.assetLink
-        )
-      ),
-    []
-  );
-
-  yield updateDesignPreview(canvases[0].designId, assetLinks);
   this.status = 201;
   this.body = canvases;
 }
@@ -126,7 +115,7 @@ function* createWithComponents(
 async function createCanvasAndComponents(
   userId: string,
   data: Unsaved<CanvasWithComponent>
-): Promise<Canvas & { components: ComponentWithImageAndOption[] }> {
+): Promise<Canvas & { components: EnrichmentService.EnrichedComponent[] }> {
   if (!data || !isCanvasWithComponent(data)) {
     throw new Error('Request does not match Schema');
   }
@@ -135,7 +124,7 @@ async function createCanvasAndComponents(
     data.components.map(
       async (
         component: ComponentWithImageAndOption
-      ): Promise<ComponentWithImageAndOption> => {
+      ): Promise<EnrichmentService.EnrichedComponent> => {
         return createComponent(component, userId);
       }
     )
@@ -152,43 +141,23 @@ async function createCanvasAndComponents(
 async function createComponent(
   component: ComponentWithImageAndOption,
   userId: string
-): Promise<ComponentWithImageAndOption> {
+): Promise<EnrichmentService.EnrichedComponent> {
   const image = component.image;
-  const createdImage = await ProductDesignImagesDAO.create({
+  await ProductDesignImagesDAO.create({
     ...image,
     userId,
     deletedAt: null
   });
-  let option;
 
   if (component.type === ComponentType.Material) {
-    option = await ProductDesignOptionsDAO.create({
+    await ProductDesignOptionsDAO.create({
       ...component.option,
       deletedAt: null
     });
   }
 
   const created = await ComponentsDAO.create(attachUser(component, userId));
-  const enrichedComponent = await EnrichmentService.addAssetLink(created);
-  return {
-    ...enrichedComponent,
-    image: createdImage,
-    option
-  };
-}
-
-async function updateDesignPreview(
-  designId: string,
-  assetLinks: string[]
-): Promise<void> {
-  const design = await ProductDesignsDAO.findById(designId);
-  if (!design) {
-    throw new Error(`No design for id: ${designId}`);
-  }
-  const previewImageUrls = design.previewImageUrls
-    ? design.previewImageUrls.concat(assetLinks)
-    : assetLinks;
-  await ProductDesignsDAO.update(designId, { previewImageUrls });
+  return EnrichmentService.addAssetLink(created);
 }
 
 function* addComponent(
@@ -204,12 +173,6 @@ function* addComponent(
 
   const component = yield ComponentsDAO.create(body);
   const canvas = yield CanvasesDAO.findById(this.params.canvasId);
-
-  const design = yield ProductDesignsDAO.findById(canvas.designId);
-  const previewImageUrls = design.previewImageUrls
-    ? [...design.previewImageUrls, assetLink]
-    : [assetLink];
-  yield ProductDesignsDAO.update(canvas.designId, { previewImageUrls });
 
   const updatedCanvas = yield CanvasesDAO.update(this.params.canvasId, {
     ...canvas,

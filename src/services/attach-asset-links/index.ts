@@ -1,3 +1,4 @@
+import * as mime from 'mime-types';
 import {
   AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME,
   IMGIX_BASE_URL
@@ -7,11 +8,13 @@ import Component, {
 } from '../../components/components/domain-object';
 import * as OptionsDAO from '../../dao/product-design-options';
 import * as ImagesDAO from '../../components/images/dao';
+import { isPreviewable } from '../../components/images/services/is-previewable';
 
-interface AssetLinks {
-  assetLink: string;
+export interface AssetLinks {
+  assetLink: string | null;
   downloadLink: string;
-  thumbnailLink: string;
+  fileType: string;
+  thumbnailLink: string | null;
 }
 
 const DESIGN_PREVIEW_TOOL_FORMAT = '?fm=jpg&max-w=2288';
@@ -19,71 +22,76 @@ const PREVIEW_CARD_FORMAT = '?fm=jpg&w=560';
 const THUMBNAIL_FORMAT = '?fm=jpg&w=48';
 const DESIGN_PREVIEW_THUMBNAIL = '?fm=jpg&fit=fill&h=104&w=104';
 
+function constructAssetLinks(options: {
+  id: string;
+  mimeType: string;
+}): AssetLinks {
+  const AWS_BASE_URL = `https://${AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME}.s3.amazonaws.com`;
+  const hasPreview = isPreviewable(options.mimeType);
+  return {
+    assetLink: hasPreview
+      ? `${IMGIX_BASE_URL}/${options.id}${DESIGN_PREVIEW_TOOL_FORMAT}`
+      : null,
+    downloadLink: `${AWS_BASE_URL}/${options.id}`,
+    fileType: mime.extension(options.mimeType) || 'Unknown',
+    thumbnailLink: hasPreview
+      ? `${IMGIX_BASE_URL}/${options.id}${DESIGN_PREVIEW_THUMBNAIL}`
+      : null
+  };
+}
+
 /**
  * Adds in image links based off the given component.
  */
 async function getLink(component: Component): Promise<AssetLinks> {
-  const AWS_BASE_URL = `https://${AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME}.s3.amazonaws.com`;
-
   switch (component.type) {
-    case ComponentType.Artwork:
+    case ComponentType.Artwork: {
       const artworkImage = await ImagesDAO.findById(component.artworkId);
       if (!artworkImage.uploadCompletedAt) {
         break;
       }
 
-      return {
-        assetLink: `${IMGIX_BASE_URL}/${
-          component.artworkId
-        }${DESIGN_PREVIEW_TOOL_FORMAT}`,
-        downloadLink: `${AWS_BASE_URL}/${component.artworkId}`,
-        thumbnailLink: `${IMGIX_BASE_URL}/${
-          component.artworkId
-        }${DESIGN_PREVIEW_THUMBNAIL}`
-      };
-    case ComponentType.Sketch:
+      return constructAssetLinks({
+        id: artworkImage.id,
+        mimeType: artworkImage.mimeType
+      });
+    }
+
+    case ComponentType.Sketch: {
       const sketchImage = await ImagesDAO.findById(component.sketchId);
       if (!sketchImage.uploadCompletedAt) {
         break;
       }
 
-      return {
-        assetLink: `${IMGIX_BASE_URL}/${
-          component.sketchId
-        }${DESIGN_PREVIEW_TOOL_FORMAT}`,
-        downloadLink: `${AWS_BASE_URL}/${component.sketchId}`,
-        thumbnailLink: `${IMGIX_BASE_URL}/${
-          component.sketchId
-        }${DESIGN_PREVIEW_THUMBNAIL}`
-      };
-    case ComponentType.Material:
+      return constructAssetLinks({
+        id: sketchImage.id,
+        mimeType: sketchImage.mimeType
+      });
+    }
+
+    case ComponentType.Material: {
       const option = await OptionsDAO.findById(component.materialId);
       const materialImage = await ImagesDAO.findById(option.previewImageId);
       if (!materialImage.uploadCompletedAt) {
         break;
       }
-      return {
-        assetLink: `${IMGIX_BASE_URL}/${
-          option.previewImageId
-        }${DESIGN_PREVIEW_TOOL_FORMAT}`,
-        downloadLink: `${AWS_BASE_URL}/${option.previewImageId}`,
-        thumbnailLink: `${IMGIX_BASE_URL}/${
-          option.previewImageId
-        }${DESIGN_PREVIEW_THUMBNAIL}`
-      };
+
+      return constructAssetLinks({
+        id: materialImage.id,
+        mimeType: materialImage.mimeType
+      });
+    }
   }
 
   return {
-    assetLink: '',
+    assetLink: null,
     downloadLink: '',
-    thumbnailLink: ''
+    fileType: '',
+    thumbnailLink: null
   };
 }
 
-export interface EnrichedComponent extends Component {
-  assetLink: string;
-  downloadLink: string;
-}
+export type EnrichedComponent = Component & AssetLinks;
 
 /**
  * addAssetLink simplifies the api for getting an image on a component that

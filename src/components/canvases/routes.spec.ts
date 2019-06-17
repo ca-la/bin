@@ -132,7 +132,9 @@ test('POST /product-design-canvases returns a Canvas with Components', async (t:
         return {
           ...c,
           assetLink: 'https://foo.bar/test.png',
-          downloadLink: ''
+          downloadLink: '',
+          fileType: 'png',
+          thumbnailLink: 'https://foo.bar/test-small.png'
         };
       }
     );
@@ -167,11 +169,9 @@ test('POST /product-design-canvases returns a Canvas with Components', async (t:
   };
   const component = {
     artworkId: null,
-    assetLink: 'https://foo.bar/test.png',
     createdAt: new Date().toISOString(),
     createdBy: user.id,
     deletedAt: null,
-    downloadLink: '',
     id: componentId,
     image,
     materialId: null,
@@ -207,15 +207,16 @@ test('POST /product-design-canvases returns a Canvas with Components', async (t:
     omit(body[0], 'archivedAt', 'components'),
     omit(data[0], 'components')
   );
-  t.deepEqual(omit(body[0].components[0], 'image'), omit(component, 'image'));
   t.deepEqual(
     omit(
-      body[0].components[0].image,
-      'createdAt',
-      'description',
-      'uploadCompletedAt'
+      body[0].components[0],
+      'image',
+      'assetLink',
+      'downloadLink',
+      'thumbnailLink',
+      'fileType'
     ),
-    omit(image, 'createdAt', 'description', 'uploadCompletedAt')
+    omit(component, 'image')
   );
 });
 

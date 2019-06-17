@@ -20,7 +20,7 @@ function stubUrls(): void {
     .value('https://imgix.example.com');
 }
 
-test('attachAssetsLink returns aws link when component is of type sketch', async (t: tape.Test) => {
+test('addAssetLink returns only the download link for non-previewable assets', async (t: tape.Test) => {
   stubUrls();
   const id = uuid.v4();
   const sketchId = uuid.v4();
@@ -38,7 +38,45 @@ test('attachAssetsLink returns aws link when component is of type sketch', async
 
   sandbox()
     .stub(ImagesDAO, 'findById')
-    .resolves({ uploadCompletedAt: new Date() });
+    .resolves({
+      id: sketchId,
+      mimeType: 'text/csv',
+      uploadCompletedAt: new Date()
+    });
+
+  const enrichedComponent = await addAssetLink(component);
+  t.equal(
+    enrichedComponent.downloadLink,
+    `https://aws-example.s3.amazonaws.com/${sketchId}`
+  );
+  t.equal(enrichedComponent.assetLink, null);
+  t.equal(enrichedComponent.thumbnailLink, null);
+  t.equal(enrichedComponent.fileType, 'csv');
+});
+
+test('addAssetLink returns aws link when component is of type sketch', async (t: tape.Test) => {
+  stubUrls();
+  const id = uuid.v4();
+  const sketchId = uuid.v4();
+  const component: Component = {
+    artworkId: null,
+    createdAt: new Date(),
+    createdBy: 'test',
+    deletedAt: new Date(),
+    id,
+    materialId: null,
+    parentId: null,
+    sketchId,
+    type: ComponentType.Sketch
+  };
+
+  sandbox()
+    .stub(ImagesDAO, 'findById')
+    .resolves({
+      id: sketchId,
+      mimeType: 'image/png',
+      uploadCompletedAt: new Date()
+    });
 
   const enrichedComponent = await addAssetLink(component);
   t.equal(
@@ -53,9 +91,10 @@ test('attachAssetsLink returns aws link when component is of type sketch', async
     enrichedComponent.thumbnailLink,
     `https://imgix.example.com/${sketchId}?fm=jpg&fit=fill&h=104&w=104`
   );
+  t.equal(enrichedComponent.fileType, 'png');
 });
 
-test('attachAssetsLink returns link when component is of type artwork', async (t: tape.Test) => {
+test('addAssetLink returns link when component is of type artwork', async (t: tape.Test) => {
   stubUrls();
   const id = uuid.v4();
   const artworkId = uuid.v4();
@@ -73,7 +112,11 @@ test('attachAssetsLink returns link when component is of type artwork', async (t
 
   sandbox()
     .stub(ImagesDAO, 'findById')
-    .resolves({ uploadCompletedAt: new Date() });
+    .resolves({
+      id: artworkId,
+      mimeType: 'image/heic',
+      uploadCompletedAt: new Date()
+    });
 
   const enrichedComponent = await addAssetLink(component);
   t.equal(
@@ -88,9 +131,10 @@ test('attachAssetsLink returns link when component is of type artwork', async (t
     enrichedComponent.thumbnailLink,
     `https://imgix.example.com/${artworkId}?fm=jpg&fit=fill&h=104&w=104`
   );
+  t.equal(enrichedComponent.fileType, 'heic');
 });
 
-test('attachAssetsLink returns link when component is of type material', async (t: tape.Test) => {
+test('addAssetLink returns link when component is of type material', async (t: tape.Test) => {
   stubUrls();
   const id = uuid.v4();
   const materialId = uuid.v4();
@@ -115,7 +159,11 @@ test('attachAssetsLink returns link when component is of type material', async (
     });
   sandbox()
     .stub(ImagesDAO, 'findById')
-    .resolves({ uploadCompletedAt: new Date() });
+    .resolves({
+      id: materialImageId,
+      mimeType: 'image/vnd.adobe.photoshop',
+      uploadCompletedAt: new Date()
+    });
 
   const enrichedComponent = await addAssetLink(component);
   t.equal(
@@ -130,9 +178,10 @@ test('attachAssetsLink returns link when component is of type material', async (
     enrichedComponent.thumbnailLink,
     `https://imgix.example.com/${materialImageId}?fm=jpg&fit=fill&h=104&w=104`
   );
+  t.equal(enrichedComponent.fileType, 'psd');
 });
 
-test('attachAssetsLink returns link when component is of type material', async (t: tape.Test) => {
+test('addAssetLink returns link when component is of type material', async (t: tape.Test) => {
   stubUrls();
   const imageId = uuid.v4();
   const imageIdTwo = uuid.v4();
