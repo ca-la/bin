@@ -88,7 +88,10 @@ function* createDesignerSubscription(
   }
 
   this.status = 201;
-  this.body = { success: true };
+  this.body = {
+    registrationLink,
+    success: true
+  };
 }
 
 interface PartnerSubscription {

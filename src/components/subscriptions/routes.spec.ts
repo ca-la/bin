@@ -58,7 +58,14 @@ test('POST /subscriptions/designers creates a designer subscription', async (t: 
   );
 
   t.equal(response.status, 201, 'Returns with success');
-  t.deepEqual(body, { success: true }, 'Returns a success body');
+  t.deepEqual(
+    body,
+    {
+      registrationLink: `${STUDIO_HOST}/register?approvedSignupId=abc-123`,
+      success: true
+    },
+    'Returns a success body with a registration link'
+  );
 
   const [badResponse, badBody] = await post('/subscriptions/designers', {
     body: {
@@ -112,7 +119,11 @@ test('POST /subscriptions/designers creates an unqualified designer sub', async 
   );
 
   t.equal(response.status, 201, 'Returns with success');
-  t.deepEqual(body, { success: true }, 'Returns a success body');
+  t.deepEqual(
+    body,
+    { success: true },
+    'Returns a success body with no registration link'
+  );
 });
 
 test('POST /subscriptions/production-partners creates a partner subscription', async (t: Test) => {
