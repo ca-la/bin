@@ -195,7 +195,8 @@ function calculateBaseUnitCost(
       values.type.unitCents,
       values.brandedLabelsMinimumCents / units,
       brandedLabelAdditionalCents / units,
-      values.careLabel.unitCents
+      values.careLabel.unitCents,
+      values.technicalDesignCents / units
     ])
   );
 }
@@ -239,7 +240,6 @@ function calculateDevelopmentCosts(
   const patternCents = values.type.patternMinimumCents;
   const developmentCents = sum([
     values.workingSessionCents,
-    values.technicalDesignCents,
     values.patternRevisionCents,
     values.gradingCents,
     values.markingCents,

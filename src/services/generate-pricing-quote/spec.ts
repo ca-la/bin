@@ -180,7 +180,7 @@ test('generateUnsavedQuote', async (t: Test) => {
 
   const unsavedQuote = await generateUnsavedQuote(quoteRequestOne);
 
-  t.equal(unsavedQuote.baseCostCents, 385, 'calculates base cost correctly');
+  t.equal(unsavedQuote.baseCostCents, 386, 'calculates base cost correctly');
   t.equal(
     unsavedQuote.processCostCents,
     101,
@@ -188,7 +188,7 @@ test('generateUnsavedQuote', async (t: Test) => {
   );
   t.equal(
     unsavedQuote.unitCostCents,
-    1776,
+    1777,
     'calculates total unit cost correctly'
   );
 });
@@ -313,7 +313,7 @@ test('generateUnsavedQuote for blank', async (t: Test) => {
     careLabelsVersion: 0
   });
 
-  t.equal(unsavedQuote.baseCostCents, 260, 'calculates base cost correctly');
+  t.equal(unsavedQuote.baseCostCents, 310, 'calculates base cost correctly');
   t.equal(
     unsavedQuote.processCostCents,
     170,
@@ -321,7 +321,7 @@ test('generateUnsavedQuote for blank', async (t: Test) => {
   );
   t.equal(
     unsavedQuote.unitCostCents,
-    1751,
+    1808,
     'calculates total unit cost correctly'
   );
 });
