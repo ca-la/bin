@@ -1,32 +1,31 @@
 import * as Koa from 'koa';
 
-import ProductDesignImage = require('../domain-object');
-import ProductDesignImagesDAO = require('../dao');
+import Asset from '../domain-object';
+import * as AssetsDAO from '../dao';
 import { hasOnlyProperties } from '../../../services/require-properties';
+import { Serialized } from '../../../types/serialized';
 
 interface UploadStatus {
   uploadCompletedAt: Date;
 }
 
-function isUploadBody(data: object): data is UploadStatus {
+function isUploadBody(data: object): data is Serialized<UploadStatus> {
   return hasOnlyProperties(data, 'uploadCompletedAt');
 }
 
 export function* uploadStatus(
   this: Koa.Application.Context
-): AsyncIterableIterator<ProductDesignImage> {
+): AsyncIterableIterator<Asset> {
   const { body } = this.request;
-  const { imageId } = this.params;
+  const { assetId } = this.params;
 
   if (!isUploadBody(body)) {
     return this.throw(400, 'Body must contain an uploadCompletedAt date!');
   }
 
-  const image = yield ProductDesignImagesDAO.update(imageId, {
-    uploadCompletedAt: body.uploadCompletedAt
+  const asset = yield AssetsDAO.update(assetId, {
+    uploadCompletedAt: new Date(body.uploadCompletedAt)
   });
   this.status = 200;
-  this.body = image;
+  this.body = asset;
 }
-
-module.exports = uploadStatus;

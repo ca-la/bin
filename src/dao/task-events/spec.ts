@@ -20,7 +20,6 @@ import {
 } from '../../components/collaborators/dao';
 import * as CollaboratorTasksDAO from '../collaborator-tasks';
 import { addDesign, create as createCollection } from '../collections';
-import { create as createImage } from '../../components/images/dao';
 import { create as createTaskComment } from '../task-comments';
 import { del as deleteComponent } from '../../components/components/dao';
 import { deleteById as deleteCollection } from '../../dao/collections';
@@ -42,6 +41,7 @@ import createDesign from '../../services/create-design';
 import generateCollection from '../../test-helpers/factories/collection';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
 import { CollaboratorWithUser } from '../../components/collaborators/domain-objects/collaborator';
+import generateAsset from '../../test-helpers/factories/asset';
 
 const getInsertedWithDetails = (
   inserted: DetailsTask,
@@ -183,7 +183,7 @@ test('Task Events DAO returns tasks inside deleted collections', async (t: tape.
 
 test('Task Events DAO returns images from the canvases on the design', async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
-  const sketch = await createImage({
+  const { asset: sketch } = await generateAsset({
     description: '',
     id: uuid.v4(),
     mimeType: 'image/png',

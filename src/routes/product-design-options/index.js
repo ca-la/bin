@@ -6,7 +6,7 @@ const pick = require('lodash/pick');
 const filterError = require('../../services/filter-error');
 const deserializeQuery = require('../../services/deserialize-query');
 const InvalidDataError = require('../../errors/invalid-data');
-const ProductDesignImagesDAO = require('../../components/images/dao');
+const ProductDesignImagesDAO = require('../../components/assets/dao');
 const ProductDesignOptionsDAO = require('../../dao/product-design-options');
 const requireAuth = require('../../middleware/require-auth');
 

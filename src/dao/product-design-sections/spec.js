@@ -3,7 +3,7 @@
 const createUser = require('../../test-helpers/create-user');
 const ProductDesignsDAO = require('../product-designs');
 const ProductDesignSectionsDAO = require('./index');
-const ProductDesignImagesDAO = require('../../components/images/dao');
+const generateAsset = require('../../test-helpers/factories/asset').default;
 const { test } = require('../../test-helpers/fresh');
 
 test('ProductDesignSectionsDAO.create creates a section', t => {
@@ -43,7 +43,7 @@ test('ProductDesignSectionsDAO.update updates a section', t => {
   return createUser({ withSession: false })
     .then(({ user }) => {
       return Promise.all([
-        ProductDesignImagesDAO.create({
+        generateAsset({
           originalHeightPx: 1024,
           originalWidthPx: 1024,
           mimeType: 'image/jpeg',
@@ -56,8 +56,8 @@ test('ProductDesignSectionsDAO.update updates a section', t => {
         })
       ]);
     })
-    .then(([image, design]) => {
-      imageId = image.id;
+    .then(([assets, design]) => {
+      imageId = assets.asset.id;
 
       return ProductDesignSectionsDAO.create({
         designId: design.id,

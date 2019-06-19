@@ -8,8 +8,8 @@ import createUser = require('../../test-helpers/create-user');
 
 import { ComponentType } from '../../components/components/domain-object';
 import { create as createComponent } from '../../components/components/dao';
-import { create as createImage } from '../../components/images/dao';
 import { findAndDuplicateComponent } from './components';
+import generateAsset from '../../test-helpers/factories/asset';
 
 test('findAndDuplicateComponent without sub-resources', async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
@@ -62,7 +62,7 @@ test('findAndDuplicateComponent with sub-resources', async (t: tape.Test) => {
     title: '',
     userId: user.id
   };
-  await createImage(imageData);
+  await generateAsset(imageData);
 
   const componentId = uuid.v4();
   const componentData = {

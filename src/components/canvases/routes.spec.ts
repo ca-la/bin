@@ -3,7 +3,7 @@ import * as uuid from 'node-uuid';
 import { omit } from 'lodash';
 
 import * as ProductDesignCanvasesDAO from './dao';
-import * as ProductDesignImagesDAO from '../images/dao';
+import * as ProductDesignImagesDAO from '../assets/dao';
 import * as ProductDesignOptionsDAO from '../../dao/product-design-options';
 import * as ProductDesignsDAO from '../../dao/product-designs';
 import * as ComponentsDAO from '../components/dao';
@@ -21,9 +21,9 @@ import {
 import { sandbox, test } from '../../test-helpers/fresh';
 import createDesign from '../../services/create-design';
 import * as EnrichmentService from '../../services/attach-asset-links';
-import ProductDesignImage = require('../images/domain-object');
 import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 import * as Changes from './services/gather-changes';
+import generateAsset from '../../test-helpers/factories/asset';
 
 test('GET /product-design-canvases/:canvasId returns Canvas', async (t: tape.Test) => {
   const { session } = await createUser();
@@ -138,16 +138,13 @@ test('POST /product-design-canvases returns a Canvas with Components', async (t:
         };
       }
     );
-  sandbox()
-    .stub(ProductDesignImage.prototype, 'getUrl')
-    .callsFake((): string => 'https://foo.bar/test.png');
 
   const design = await createDesign({
     productType: 'TEESHIRT',
     title: 'Plain White Tee',
     userId: user.id
   });
-  const sketch = await ProductDesignImagesDAO.create({
+  const { asset: sketch } = await generateAsset({
     description: '',
     id: uuid.v4(),
     mimeType: 'image/png',
@@ -159,11 +156,13 @@ test('POST /product-design-canvases returns a Canvas with Components', async (t:
   const componentId = uuid.v4();
 
   const image = {
+    createdAt: new Date('2019-05-05'),
     id: uuid.v4(),
     mimeType: 'image%2Fpng',
     originalHeightPx: 192,
     originalWidthPx: 192,
     title: 'Michele Lamy',
+    uploadCompletedAt: null,
     url: 'https://foo.bar/test.png',
     userId: user.id
   };

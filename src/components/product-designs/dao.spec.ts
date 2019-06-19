@@ -7,7 +7,6 @@ import {
   findDesignByAnnotationId,
   findDesignByTaskId
 } from './dao';
-import { create as createImage } from '../images/dao';
 import { del as deleteCanvas } from '../canvases/dao';
 import * as CollaboratorsDAO from '../collaborators/dao';
 import { deleteById as deleteAnnotation } from '../product-design-canvas-annotations/dao';
@@ -25,11 +24,12 @@ import generateCollaborator from '../../test-helpers/factories/collaborator';
 import generateAnnotation from '../../test-helpers/factories/product-design-canvas-annotation';
 import generateProductDesignStage from '../../test-helpers/factories/product-design-stage';
 import generateTask from '../../test-helpers/factories/task';
+import generateAsset from '../../test-helpers/factories/asset';
 
 test('ProductDesignCanvases DAO supports creation/retrieval, enriched with image links', async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
 
-  const sketch = await createImage({
+  const { asset: sketch } = await generateAsset({
     description: '',
     id: uuid.v4(),
     mimeType: 'image/png',

@@ -7,8 +7,8 @@ import { test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
 
 import { create as createOption } from '../../dao/product-design-options';
-import { create as createImage } from '../../components/images/dao';
 import { findAndDuplicateOption } from './options';
+import generateAsset from '../../test-helpers/factories/asset';
 
 test('findAndDuplicateOption without sub-resources', async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
@@ -51,7 +51,7 @@ test('findAndDuplicateOption with sub-resources', async (t: tape.Test) => {
     title: '',
     userId: user.id
   };
-  await createImage(imageData);
+  await generateAsset(imageData);
 
   const optionId = uuid.v4();
   const optionData = {

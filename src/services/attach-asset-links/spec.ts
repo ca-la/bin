@@ -9,7 +9,7 @@ import Component, {
   ComponentType
 } from '../../components/components/domain-object';
 import * as OptionsDAO from '../../dao/product-design-options';
-import * as ImagesDAO from '../../components/images/dao';
+import * as ImagesDAO from '../../components/assets/dao';
 
 function stubUrls(): void {
   sandbox()

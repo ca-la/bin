@@ -5,7 +5,7 @@ const db = require('../../services/db');
 const Logger = require('../../services/logger');
 const { getFile } = require('../../services/aws');
 const { AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME } = require('../../config');
-const { update } = require('../../components/images/dao');
+const { update } = require('../../components/assets/dao');
 
 const { green, yellow, red } = COLORS.fmt;
 

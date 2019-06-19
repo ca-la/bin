@@ -8,6 +8,7 @@ import accessControlRoutes from './components/access-control/routes';
 import annotationRoutes from './components/product-design-canvas-annotations/routes';
 import annotationCommentRoutes from './components/annotation-comments/routes';
 import approvedSignupRoutes from './components/approved-signups/routes';
+import assetRoutes from './components/assets/routes';
 import bidRoutes from './components/bids/routes';
 import canvasRoutes from './components/canvases/routes';
 import collaboratorRoutes from './components/collaborators/routes';
@@ -16,8 +17,6 @@ import commentRoutes from './components/comments/routes';
 import componentRelationshipRoutes from './components/component-relationships/routes';
 import creditRoutes from './components/credits/routes';
 import duplicationRoutes from './components/duplication/routes';
-import fileRoutes from './components/files/routes';
-import imageRoutes = require('./components/images/routes');
 import notificationRoutes from './components/notifications/routes';
 import processRoutes from './components/processes/routes';
 import promoCodeRoutes from './components/promo-codes/routes';
@@ -62,7 +61,6 @@ router.use('/comments', commentRoutes);
 router.use('/component-relationships', componentRelationshipRoutes);
 router.use('/credits', creditRoutes);
 router.use('/duplication', duplicationRoutes);
-router.use('/files', fileRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/processes', processRoutes);
 router.use('/product-design-canvases', canvasRoutes);
@@ -71,7 +69,7 @@ router.use(
   '/product-design-canvas-annotations/:annotationId/comments',
   annotationCommentRoutes
 );
-router.use('/product-design-images', imageRoutes);
+router.use('/product-design-images', assetRoutes);
 router.use('/promo-codes', promoCodeRoutes);
 router.use('/resolve-accounts', resolveAccountRoutes);
 router.use('/subscriptions', subscriptionRoutes);

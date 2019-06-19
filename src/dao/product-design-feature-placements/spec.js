@@ -3,7 +3,7 @@
 const pick = require('lodash/pick');
 const createUser = require('../../test-helpers/create-user');
 const ProductDesignFeaturePlacementsDAO = require('./index');
-const ProductDesignImagesDAO = require('../../components/images/dao');
+const generateAsset = require('../../test-helpers/factories/asset').default;
 const ProductDesignsDAO = require('../product-designs');
 const ProductDesignSectionsDAO = require('../product-design-sections');
 const { test } = require('../../test-helpers/fresh');
@@ -90,7 +90,7 @@ test('ProductDesignFeaturePlacementsDAO.replaceForSection creates and updates pl
   return createUser({ withSession: false })
     .then(({ user }) => {
       return Promise.all([
-        ProductDesignImagesDAO.create({
+        generateAsset({
           userId: user.id,
           originalWidthPx: 1024,
           originalHeightPx: 768,
@@ -103,8 +103,8 @@ test('ProductDesignFeaturePlacementsDAO.replaceForSection creates and updates pl
         })
       ]);
     })
-    .then(([image, design]) => {
-      imageId = image.id;
+    .then(([assets, design]) => {
+      imageId = assets.asset.id;
       firstPlacementData = getPlacementData(imageId);
       secondPlacementData = getPlacementData(imageId, 100);
       return ProductDesignSectionsDAO.create({

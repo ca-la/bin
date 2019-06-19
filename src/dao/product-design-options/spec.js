@@ -2,7 +2,7 @@
 
 const { create, findForUser } = require('./index');
 
-const createImage = require('../../components/images/dao').create;
+const createImage = require('../../test-helpers/factories/asset').default;
 
 const createUser = require('../../test-helpers/create-user');
 const { test } = require('../../test-helpers/fresh');
@@ -20,7 +20,7 @@ test('ProductDesignOptionsDAO.findForUser returns user fabrics first, then built
         originalWidthPx: 1024
       });
     })
-    .then(image => {
+    .then(factoryAsset => {
       return Promise.all([
         create({
           userId,
@@ -34,13 +34,13 @@ test('ProductDesignOptionsDAO.findForUser returns user fabrics first, then built
         }),
         create({
           userId,
-          previewImageId: image.id,
+          previewImageId: factoryAsset.asset.id,
           title: 'User - With Image',
           type: 'FABRIC'
         }),
         create({
           isBuiltinOption: true,
-          previewImageId: image.id,
+          previewImageId: factoryAsset.asset.id,
           title: 'Builtin - With Image',
           type: 'FABRIC'
         }),
@@ -82,7 +82,7 @@ test('ProductDesignOptionsDAO.findForUser returns respects limit and offset if p
         originalWidthPx: 1024
       });
     })
-    .then(image => {
+    .then(factoryAsset => {
       return Promise.all([
         create({
           userId,
@@ -96,13 +96,13 @@ test('ProductDesignOptionsDAO.findForUser returns respects limit and offset if p
         }),
         create({
           userId,
-          previewImageId: image.id,
+          previewImageId: factoryAsset.asset.id,
           title: 'User - With Image',
           type: 'FABRIC'
         }),
         create({
           isBuiltinOption: true,
-          previewImageId: image.id,
+          previewImageId: factoryAsset.asset.id,
           title: 'Builtin - With Image',
           type: 'FABRIC'
         }),
@@ -140,11 +140,11 @@ test('ProductDesignOptionsDAO.findForUser respects zero limit', t => {
         originalWidthPx: 1024
       });
     })
-    .then(image => {
+    .then(factoryAsset => {
       return Promise.all([
         create({
           userId,
-          previewImageId: image.id,
+          previewImageId: factoryAsset.asset.id,
           title: 'User - With Image',
           type: 'FABRIC'
         })

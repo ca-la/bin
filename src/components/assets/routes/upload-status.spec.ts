@@ -4,14 +4,14 @@ import * as uuid from 'node-uuid';
 import { test } from '../../../test-helpers/fresh';
 import * as API from '../../../test-helpers/http';
 import createUser = require('../../../test-helpers/create-user');
-import { create as createImage } from '../dao';
+import generateAsset from '../../../test-helpers/factories/asset';
 
 const API_PATH = '/product-design-images';
 
 test(`PUT ${API_PATH}/upload-status returns an updated image`, async (t: tape.Test) => {
   const userOne = await createUser();
 
-  const sketch = await createImage({
+  const { asset: sketch } = await generateAsset({
     description: '',
     id: uuid.v4(),
     mimeType: 'image/png',

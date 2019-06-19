@@ -7,8 +7,8 @@ import Component, {
   ComponentType
 } from '../../components/components/domain-object';
 import * as OptionsDAO from '../../dao/product-design-options';
-import * as ImagesDAO from '../../components/images/dao';
-import { isPreviewable } from '../../components/images/services/is-previewable';
+import * as ImagesDAO from '../../components/assets/dao';
+import { isPreviewable } from '../../components/assets/services/is-previewable';
 
 export interface AssetLinks {
   assetLink: string | null;
@@ -46,8 +46,12 @@ function constructAssetLinks(options: {
 async function getLink(component: Component): Promise<AssetLinks> {
   switch (component.type) {
     case ComponentType.Artwork: {
+      if (!component.artworkId) {
+        throw new Error(`Component ${component.id} has no artwork_id.`);
+      }
+
       const artworkImage = await ImagesDAO.findById(component.artworkId);
-      if (!artworkImage.uploadCompletedAt) {
+      if (!artworkImage || !artworkImage.uploadCompletedAt) {
         break;
       }
 
@@ -58,8 +62,12 @@ async function getLink(component: Component): Promise<AssetLinks> {
     }
 
     case ComponentType.Sketch: {
+      if (!component.sketchId) {
+        throw new Error(`Component ${component.id} has no sketch_id.`);
+      }
+
       const sketchImage = await ImagesDAO.findById(component.sketchId);
-      if (!sketchImage.uploadCompletedAt) {
+      if (!sketchImage || !sketchImage.uploadCompletedAt) {
         break;
       }
 
@@ -72,7 +80,7 @@ async function getLink(component: Component): Promise<AssetLinks> {
     case ComponentType.Material: {
       const option = await OptionsDAO.findById(component.materialId);
       const materialImage = await ImagesDAO.findById(option.previewImageId);
-      if (!materialImage.uploadCompletedAt) {
+      if (!materialImage || !materialImage.uploadCompletedAt) {
         break;
       }
 

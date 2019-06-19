@@ -11,12 +11,12 @@ import {
   findRoot,
   update
 } from './dao';
-import { create as createImage } from '../images/dao';
 import { ComponentType } from './domain-object';
 import { create as createDesign } from '../../dao/product-designs';
 import createUser = require('../../test-helpers/create-user');
 import generateComponent from '../../test-helpers/factories/component';
 import generateCanvas from '../../test-helpers/factories/product-design-canvas';
+import generateAsset from '../../test-helpers/factories/asset';
 
 test('Components DAO supports creation/retrieval', async (t: tape.Test) => {
   const userData = await createUser();
@@ -43,7 +43,7 @@ test('Components DAO supports creation/retrieval', async (t: tape.Test) => {
     sketchId,
     type: ComponentType.Sketch
   };
-  await createImage(imageData);
+  await generateAsset(imageData);
   const inserted = await create(data);
 
   const result = await findById(id);
@@ -96,7 +96,7 @@ test('Components DAO supports update', async (t: tape.Test) => {
     sketchId,
     type: ComponentType.Sketch
   };
-  await createImage(imageData);
+  await generateAsset(imageData);
   const { id, createdAt, deletedAt, ...first } = await create(data);
   const inserted = await update(componentId, {
     ...first,
@@ -182,7 +182,7 @@ test('Components DAO supports retrieval by canvasId', async (t: tape.Test) => {
     sketchId,
     type: ComponentType.Sketch
   };
-  await createImage(imageData);
+  await generateAsset(imageData);
   const inserted = await create(data);
   const { canvas } = await generateCanvas(canvasData);
 

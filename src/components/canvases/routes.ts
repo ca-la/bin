@@ -5,7 +5,7 @@ import * as CanvasesDAO from './dao';
 import requireAuth = require('../../middleware/require-auth');
 import * as ComponentsDAO from '../components/dao';
 import * as ProductDesignOptionsDAO from '../../dao/product-design-options';
-import * as ProductDesignImagesDAO from '../images/dao';
+import * as ProductDesignImagesDAO from '../assets/dao';
 import Canvas from './domain-object';
 import Component, {
   ComponentType,
@@ -13,12 +13,14 @@ import Component, {
 } from '../components/domain-object';
 import * as EnrichmentService from '../../services/attach-asset-links';
 import filterError = require('../../services/filter-error');
-import ProductDesignImage = require('../images/domain-object');
+import ProductDesignImage from '../assets/domain-object';
 import ProductDesignOption = require('../../domain-objects/product-design-option');
 import { hasProperties } from '../../services/require-properties';
 import { omit } from 'lodash';
 import { typeGuard } from '../../middleware/type-guard';
 import { gatherChanges } from './services/gather-changes';
+import { deserializeAsset } from '../assets/services/serializer';
+import { Serialized } from '../../types/serialized';
 
 const router = new Router();
 
@@ -67,7 +69,7 @@ function* createCanvas(
 }
 
 type ComponentWithImageAndOption = Component & {
-  image: ProductDesignImage;
+  image: Serialized<ProductDesignImage>;
   option?: ProductDesignOption;
 };
 
@@ -142,11 +144,11 @@ async function createComponent(
   component: ComponentWithImageAndOption,
   userId: string
 ): Promise<EnrichmentService.EnrichedComponent> {
-  const image = component.image;
+  const { image } = component;
+  const deserializedImgae = deserializeAsset(image);
   await ProductDesignImagesDAO.create({
-    ...image,
-    userId,
-    deletedAt: null
+    ...deserializedImgae,
+    userId
   });
 
   if (component.type === ComponentType.Material) {

@@ -11,9 +11,9 @@ import * as CollectionsDAO from '../../dao/collections';
 import { create as createDesign } from '../../dao/product-designs';
 import generateCollection from '../../test-helpers/factories/collection';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
-import { create as createImage } from '../../components/images/dao';
 import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 import generateComponent from '../../test-helpers/factories/component';
+import generateAsset from '../../test-helpers/factories/asset';
 
 test('findByUserId finds timelines by user id', async (t: tape.Test) => {
   const { user, session } = await createUser();
@@ -91,7 +91,7 @@ test('findByCollectionId finds timelines by collection id', async (t: tape.Test)
   });
   await CollectionsDAO.moveDesign(collection.id, design.id);
 
-  const sketch = await createImage({
+  const { asset: sketch } = await generateAsset({
     description: '',
     id: uuid.v4(),
     mimeType: 'image/png',
