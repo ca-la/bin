@@ -15,6 +15,7 @@ interface StageBreakdown {
   totalTasks: number;
   completedTasks: number;
   ordering: number;
+  time: number;
 }
 
 function isTaskMostRecentCompletedTask(
@@ -88,6 +89,7 @@ function createStageBreakdown(
       ordering: task.designStage.ordering,
       startedAt: null,
       completedAt: null,
+      time: 0,
       totalTasks: 1,
       completedTasks: task.status === TaskStatus.COMPLETED ? 1 : 0
     };
@@ -190,6 +192,9 @@ async function formatTimelines(
   }
 
   const timelines = [];
+  function notNull(val: StageBreakdown | null): val is StageBreakdown {
+    return val !== null;
+  }
 
   for (const designId of Object.keys(designQuotes)) {
     const design = designQuotes[designId].design;
@@ -199,6 +204,17 @@ async function formatTimelines(
       throw new Error('Design not in list of designs!');
     }
     const stageBreakdowns = await getStageBreakdownsByDesignId(designId);
+    const stageOrNulls: (StageBreakdown | null)[] = stageBreakdowns.map(
+      (stage: StageBreakdown) => {
+        try {
+          return { ...stage, time: getStageTime(stage, quote) };
+        } catch (e) {
+          return null;
+        }
+      }
+    );
+    const stages: StageBreakdown[] = stageOrNulls.filter(notNull);
+
     timelines.push({
       designId: quote.designId,
       design: {
@@ -208,12 +224,7 @@ async function formatTimelines(
       },
       collections: design.collections,
       startDate: quote.createdAt,
-      stages: stageBreakdowns.map((stage: StageBreakdown) => {
-        return {
-          ...stage,
-          time: getStageTime(stage, quote)
-        };
-      }),
+      stages,
       creationTimeMs: quote.creationTimeMs,
       specificationTimeMs: quote.specificationTimeMs,
       sourcingTimeMs: quote.sourcingTimeMs,

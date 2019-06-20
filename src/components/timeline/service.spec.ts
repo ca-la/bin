@@ -30,6 +30,10 @@ test('findByUserId finds timelines by user id with task breakdowns', async (t: t
   await generateTask({ designStageId: stage.id, status: TaskStatus.COMPLETED });
   await generateTask({ designStageId: stage.id });
   await generateTask({ designStageId: stage.id });
+  await generateProductDesignStage({
+    designId: design.id,
+    title: 'Unsupported'
+  });
 
   await generatePricingValues();
   await PricingCostInputsDAO.create({
@@ -94,7 +98,7 @@ test('findByUserId finds timelines by user id with task breakdowns', async (t: t
         startDate: timeline[0].startDate
       }
     ],
-    'returns expected timeline values'
+    'returns expected timeline values without unsupported stage'
   );
 });
 
