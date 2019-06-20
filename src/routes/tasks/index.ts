@@ -20,7 +20,10 @@ import Comment, {
   BASE_COMMENT_PROPERTIES,
   isBaseComment
 } from '../../components/comments/domain-object';
-import { hasOnlyProperties } from '../../services/require-properties';
+import {
+  hasOnlyProperties,
+  hasProperties
+} from '../../services/require-properties';
 import requireAuth = require('../../middleware/require-auth');
 import Collaborator, {
   CollaboratorWithUser
@@ -61,9 +64,10 @@ function isIOTask(candidate: object): candidate is IOTask {
       'design',
       'designStage',
       'collection',
-      'commentCount'
+      'commentCount',
+      'lastModifiedAt'
     ) || // TODO: Remove this check once studio is using new model for tasks and passes
-    hasOnlyProperties(
+    hasProperties(
       candidate,
       'dueDate',
       'status',
@@ -92,7 +96,8 @@ const taskEventFromIO = (request: IOTask, userId: string): TaskEvent => {
     'design',
     'designStage',
     'collection',
-    'commentCount'
+    'commentCount',
+    'lastModifiedAt'
   );
   return Object.assign({}, filteredRequest, {
     createdAt: new Date(),

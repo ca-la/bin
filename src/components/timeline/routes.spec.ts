@@ -69,12 +69,12 @@ test('GET /timelines?userId and /timelines?collectionId finds timelines by user 
           imageLinks: []
         },
         designId: design.id,
-        fulfillmentTimeMs: 259200000,
         preProductionTimeMs: 129600000,
-        productionTimeMs: 302400000,
+        productionTimeMs: 561600000,
         samplingTimeMs: 129600000,
         sourcingTimeMs: 129600000,
         specificationTimeMs: 129600000,
+        stages: [],
         startDate: body[0].startDate
       }
     ],
@@ -101,12 +101,12 @@ test('GET /timelines?userId and /timelines?collectionId finds timelines by user 
           imageLinks: []
         },
         designId: design.id,
-        fulfillmentTimeMs: 259200000,
         preProductionTimeMs: 129600000,
-        productionTimeMs: 302400000,
+        productionTimeMs: 561600000,
         samplingTimeMs: 129600000,
         sourcingTimeMs: 129600000,
         specificationTimeMs: 129600000,
+        stages: [],
         startDate: body[0].startDate
       }
     ],

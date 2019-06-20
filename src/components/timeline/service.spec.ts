@@ -13,9 +13,12 @@ import generateCollection from '../../test-helpers/factories/collection';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
 import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 import generateComponent from '../../test-helpers/factories/component';
+import generateTask from '../../test-helpers/factories/task';
+import generateProductDesignStage from '../../test-helpers/factories/product-design-stage';
+import { TaskStatus } from '../../domain-objects/task-event';
 import generateAsset from '../../test-helpers/factories/asset';
 
-test('findByUserId finds timelines by user id', async (t: tape.Test) => {
+test('findByUserId finds timelines by user id with task breakdowns', async (t: tape.Test) => {
   const { user, session } = await createUser();
   const design = await createDesign({
     productType: 'A product type',
@@ -23,6 +26,10 @@ test('findByUserId finds timelines by user id', async (t: tape.Test) => {
     userId: user.id
   });
   await generateCollaborator({ userId: user.id, designId: design.id });
+  const { stage } = await generateProductDesignStage({ designId: design.id });
+  await generateTask({ designStageId: stage.id, status: TaskStatus.COMPLETED });
+  await generateTask({ designStageId: stage.id });
+  await generateTask({ designStageId: stage.id });
 
   await generatePricingValues();
   await PricingCostInputsDAO.create({
@@ -68,12 +75,22 @@ test('findByUserId finds timelines by user id', async (t: tape.Test) => {
           imageLinks: []
         },
         designId: design.id,
-        fulfillmentTimeMs: 259200000,
         preProductionTimeMs: 129600000,
-        productionTimeMs: 302400000,
+        productionTimeMs: 561600000,
         samplingTimeMs: 129600000,
         sourcingTimeMs: 129600000,
         specificationTimeMs: 129600000,
+        stages: [
+          {
+            completedAt: null,
+            completedTasks: 1,
+            ordering: 0,
+            startedAt: timeline[0].stages[0].startedAt,
+            time: 0,
+            title: 'Creation',
+            totalTasks: 3
+          }
+        ],
         startDate: timeline[0].startDate
       }
     ],
@@ -81,7 +98,7 @@ test('findByUserId finds timelines by user id', async (t: tape.Test) => {
   );
 });
 
-test('findByCollectionId finds timelines by collection id', async (t: tape.Test) => {
+test('findByCollectionId finds timelines by collection id and completed stage', async (t: tape.Test) => {
   const { user, session } = await createUser();
   const { collection } = await generateCollection({ createdBy: user.id });
   const design = await createDesign({
@@ -109,6 +126,12 @@ test('findByCollectionId finds timelines by collection id', async (t: tape.Test)
     componentId: component.id,
     createdBy: user.id
   });
+
+  const { stage } = await generateProductDesignStage({ designId: design.id });
+  await generateTask({ designStageId: stage.id, status: TaskStatus.COMPLETED });
+  await generateTask({ designStageId: stage.id, status: TaskStatus.COMPLETED });
+  await generateTask({ designStageId: stage.id, status: TaskStatus.COMPLETED });
+
   await generatePricingValues();
   await PricingCostInputsDAO.create({
     createdAt: new Date(),
@@ -153,12 +176,22 @@ test('findByCollectionId finds timelines by collection id', async (t: tape.Test)
           imageLinks: timeline[0].design.imageLinks
         },
         designId: design.id,
-        fulfillmentTimeMs: 259200000,
         preProductionTimeMs: 129600000,
-        productionTimeMs: 302400000,
+        productionTimeMs: 561600000,
         samplingTimeMs: 129600000,
         sourcingTimeMs: 129600000,
         specificationTimeMs: 129600000,
+        stages: [
+          {
+            completedAt: timeline[0].stages[0].completedAt,
+            completedTasks: 3,
+            ordering: 0,
+            startedAt: timeline[0].stages[0].startedAt,
+            time: 0,
+            title: 'Creation',
+            totalTasks: 3
+          }
+        ],
         startDate: timeline[0].startDate
       }
     ],

@@ -30,7 +30,7 @@ export default async function generateProductDesignStage(
     description: options.description || '',
     designId: design.id,
     ordering: options.ordering || 0,
-    title: options.title || 'My First Task'
+    title: options.title || 'Creation'
   });
 
   return {

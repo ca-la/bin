@@ -33,6 +33,7 @@ const BASE_TASK_EVENT: DetailsTask & { assignees: Collaborator[] } = {
   },
   commentCount: 0,
   createdAt: new Date(),
+  lastModifiedAt: new Date(),
   createdBy: uuid.v4(),
   description: 'test',
   design: {
@@ -99,8 +100,16 @@ test('GET /tasks/:taskId returns Task', async (t: tape.Test) => {
   });
   t.equal(response.status, 200, 'should respond with 200');
   t.deepEqual(
-    { ...body, createdAt: new Date(body.createdAt) },
-    { ...taskEvent, createdAt: new Date(taskEvent.createdAt) },
+    {
+      ...body,
+      createdAt: new Date(body.createdAt),
+      lastModifiedAt: new Date(body.lastModifiedAt)
+    },
+    {
+      ...taskEvent,
+      createdAt: new Date(taskEvent.createdAt),
+      lastModifiedAt: new Date(taskEvent.lastModifiedAt)
+    },
     'should match body'
   );
 });
@@ -126,12 +135,14 @@ test('GET /tasks?collectionId=:collectionId returns tasks on collection', async 
         ...taskEvents[0],
         assignees: [],
         createdAt: taskEvents[0].createdAt.toISOString(),
+        lastModifiedAt: taskEvents[0].lastModifiedAt.toISOString(),
         id: taskEvents[0].id
       },
       {
         ...taskEvents[1],
         assignees: [],
         createdAt: taskEvents[1].createdAt.toISOString(),
+        lastModifiedAt: taskEvents[0].lastModifiedAt.toISOString(),
         id: taskEvents[1].id
       }
     ],
@@ -163,12 +174,14 @@ test('GET /tasks?stageId=:stageId returns tasks on design stage', async (t: tape
         ...taskEvents[0],
         assignees: [],
         createdAt: taskEvents[0].createdAt.toISOString(),
+        lastModifiedAt: taskEvents[0].lastModifiedAt.toISOString(),
         id: taskEvents[0].id
       },
       {
         ...taskEvents[1],
         assignees: [],
         createdAt: taskEvents[1].createdAt.toISOString(),
+        lastModifiedAt: taskEvents[0].lastModifiedAt.toISOString(),
         id: taskEvents[1].id
       }
     ],

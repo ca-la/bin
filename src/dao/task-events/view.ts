@@ -39,6 +39,7 @@ export function getBuilder(
       'tasksfortasksviewraw.id as id',
       'tasksfortasksviewraw.created_at as created_at',
       'taskeventsfortasksviewraw.created_by as created_by',
+      'taskeventsfortasksviewraw.created_at as last_modified_at',
       'taskeventsfortasksviewraw.title as title',
       'taskeventsfortasksviewraw.description as description',
       'taskeventsfortasksviewraw.ordering as ordering',

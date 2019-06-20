@@ -5,12 +5,20 @@ export default interface Timeline {
   design: { id: string; title: string; imageLinks: ThumbnailAndPreviewLinks[] };
   collections?: { id: string; title: string }[];
   startDate: Date;
+  stages: {
+    title: string;
+    time: number;
+    startedAt: Date | null;
+    completedAt: Date | null;
+    ordering: number;
+    totalTasks: number;
+    completedTasks: number;
+  }[];
   creationTimeMs: number;
   specificationTimeMs: number;
   sourcingTimeMs: number;
   samplingTimeMs: number;
   preProductionTimeMs: number;
   productionTimeMs: number;
-  fulfillmentTimeMs: number;
   bufferTimeMs: number;
 }

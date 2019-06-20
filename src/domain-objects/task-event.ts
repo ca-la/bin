@@ -54,6 +54,7 @@ export interface DetailsTaskAdaptedRow extends Omit<TaskEvent, 'taskId'> {
   collectionId: string | null;
   collectionTitle: string | null;
   collectionCreatedAt: string | null;
+  lastModifiedAt: Date;
   commentCount: number;
   imageIds: string[] | null;
 }
@@ -109,6 +110,7 @@ export interface DetailsTask extends Omit<TaskEvent, 'taskId'> {
   design: DesignResourceMeta;
   collection: RelatedResourceMeta;
   commentCount: number;
+  lastModifiedAt: Date;
 }
 
 export interface DetailsTaskWithAssignees extends DetailsTask {
@@ -177,6 +179,7 @@ export interface DetailTaskEventRow extends TaskEventRow {
   collection_title: string | null;
   comment_count: number;
   image_ids: string[] | null;
+  last_modified_at: string;
 }
 
 export interface DetailTaskWithAssigneesEventRow extends DetailTaskEventRow {
@@ -192,6 +195,7 @@ export function isDetailTaskRow(
     candidate,
     'id',
     'created_at',
+    'last_modified_at',
     'created_by',
     'title',
     'status',
@@ -223,6 +227,7 @@ export function isDetailTaskWithAssigneeRow(
     'assignees',
     'id',
     'created_at',
+    'last_modified_at',
     'created_by',
     'title',
     'status',
@@ -258,6 +263,7 @@ const encode = (
     collectionTitle: data.collection_title,
     commentCount: data.comment_count,
     createdAt: new Date(data.created_at),
+    lastModifiedAt: new Date(data.last_modified_at),
     createdBy: data.created_by,
     description: data.description,
     designCreatedAt: data.design_created_at,
