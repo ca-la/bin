@@ -41,6 +41,7 @@ export async function findByInvoiceId(
   const invoicePaymentRows = await db(TABLE_NAME)
     .select('*')
     .where({ invoice_id: invoiceId, deleted_at: null })
+    .orderBy('created_at', 'DESC')
     .catch(rethrow);
 
   return validateEvery<InvoicePaymentRow, InvoicePayment>(

@@ -18,6 +18,7 @@ import componentRelationshipRoutes from './components/component-relationships/ro
 import creditRoutes from './components/credits/routes';
 import duplicationRoutes from './components/duplication/routes';
 import notificationRoutes from './components/notifications/routes';
+import orderHistoryRoutes from './components/order-history/routes';
 import processRoutes from './components/processes/routes';
 import promoCodeRoutes from './components/promo-codes/routes';
 import resolveAccountRoutes from './components/resolve-accounts/routes';
@@ -62,6 +63,7 @@ router.use('/component-relationships', componentRelationshipRoutes);
 router.use('/credits', creditRoutes);
 router.use('/duplication', duplicationRoutes);
 router.use('/notifications', notificationRoutes);
+router.use('/order-history', orderHistoryRoutes);
 router.use('/processes', processRoutes);
 router.use('/product-design-canvases', canvasRoutes);
 router.use('/product-design-canvas-annotations', annotationRoutes);
