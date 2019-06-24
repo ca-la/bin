@@ -134,6 +134,7 @@ test('POST /product-design-canvases returns a Canvas with Components', async (t:
           assetLink: 'https://foo.bar/test.png',
           downloadLink: '',
           fileType: 'png',
+          thumbnail2xLink: 'https://foo.bar/test-small/2x.png',
           thumbnailLink: 'https://foo.bar/test-small.png'
         };
       }
@@ -212,6 +213,7 @@ test('POST /product-design-canvases returns a Canvas with Components', async (t:
       'image',
       'assetLink',
       'downloadLink',
+      'thumbnail2xLink',
       'thumbnailLink',
       'fileType'
     ),

@@ -56,7 +56,14 @@ test('GET /components/:componentId returns Component', async (t: tape.Test) => {
   });
   t.equal(response.status, 200);
   t.deepEqual(
-    omit(body, 'assetLink', 'downloadLink', 'thumbnailLink', 'fileType'),
+    omit(
+      body,
+      'assetLink',
+      'downloadLink',
+      'thumbnail2xLink',
+      'thumbnailLink',
+      'fileType'
+    ),
     data
   );
 });

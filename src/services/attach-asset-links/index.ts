@@ -14,6 +14,7 @@ export interface AssetLinks {
   assetLink: string | null;
   downloadLink: string;
   fileType: string;
+  thumbnail2xLink: string | null;
   thumbnailLink: string | null;
 }
 
@@ -21,6 +22,7 @@ const DESIGN_PREVIEW_TOOL_FORMAT = '?fm=jpg&max-w=2288';
 const PREVIEW_CARD_FORMAT = '?fm=jpg&w=560';
 const THUMBNAIL_FORMAT = '?fm=jpg&w=48';
 const DESIGN_PREVIEW_THUMBNAIL = '?fm=jpg&fit=fill&h=104&w=104';
+const DESIGN_PREVIEW_THUMBNAIL_2X = DESIGN_PREVIEW_THUMBNAIL + '&dpr=2';
 
 function constructAssetLinks(options: {
   id: string;
@@ -36,6 +38,9 @@ function constructAssetLinks(options: {
     fileType: mime.extension(options.mimeType) || 'Unknown',
     thumbnailLink: hasPreview
       ? `${IMGIX_BASE_URL}/${options.id}${DESIGN_PREVIEW_THUMBNAIL}`
+      : null,
+    thumbnail2xLink: hasPreview
+      ? `${IMGIX_BASE_URL}/${options.id}${DESIGN_PREVIEW_THUMBNAIL_2X}`
       : null
   };
 }
@@ -95,6 +100,7 @@ async function getLink(component: Component): Promise<AssetLinks> {
     assetLink: null,
     downloadLink: '',
     fileType: '',
+    thumbnail2xLink: null,
     thumbnailLink: null
   };
 }

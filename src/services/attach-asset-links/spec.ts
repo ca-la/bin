@@ -91,6 +91,10 @@ test('addAssetLink returns aws link when component is of type sketch', async (t:
     enrichedComponent.thumbnailLink,
     `https://imgix.example.com/${sketchId}?fm=jpg&fit=fill&h=104&w=104`
   );
+  t.equal(
+    enrichedComponent.thumbnail2xLink,
+    `https://imgix.example.com/${sketchId}?fm=jpg&fit=fill&h=104&w=104&dpr=2`
+  );
   t.equal(enrichedComponent.fileType, 'png');
 });
 
@@ -130,6 +134,10 @@ test('addAssetLink returns link when component is of type artwork', async (t: ta
   t.equal(
     enrichedComponent.thumbnailLink,
     `https://imgix.example.com/${artworkId}?fm=jpg&fit=fill&h=104&w=104`
+  );
+  t.equal(
+    enrichedComponent.thumbnail2xLink,
+    `https://imgix.example.com/${artworkId}?fm=jpg&fit=fill&h=104&w=104&dpr=2`
   );
   t.equal(enrichedComponent.fileType, 'heic');
 });
@@ -177,6 +185,10 @@ test('addAssetLink returns link when component is of type material', async (t: t
   t.equal(
     enrichedComponent.thumbnailLink,
     `https://imgix.example.com/${materialImageId}?fm=jpg&fit=fill&h=104&w=104`
+  );
+  t.equal(
+    enrichedComponent.thumbnail2xLink,
+    `https://imgix.example.com/${materialImageId}?fm=jpg&fit=fill&h=104&w=104&dpr=2`
   );
   t.equal(enrichedComponent.fileType, 'psd');
 });
