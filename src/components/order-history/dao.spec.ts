@@ -123,3 +123,58 @@ test('getOrderHistoryByUserId returns a list of all purchases', async (t: Test) 
     'Returns the constructed object.'
   );
 });
+
+test('getOrderHistoryByUserId returns a list with partial data', async (t: Test) => {
+  const { user } = await createUser({ withSession: false });
+
+  const design1 = await createDesign({
+    productType: 'TEESHIRT',
+    title: 'Plain White Tee',
+    userId: user.id
+  });
+  const { collection } = await generateCollection({
+    createdBy: user.id,
+    title: 'Collection1'
+  });
+  await moveDesign(collection.id, design1.id);
+
+  const { invoice } = await generateInvoice({
+    collectionId: collection.id,
+    totalCents: 100000,
+    userId: user.id
+  });
+  await generateInvoicePayment({
+    invoiceId: invoice.id,
+    stripeChargeId: 'stripe-foo-bar'
+  });
+  const quote = await createQuote(true);
+  const { lineItem } = await generateLineItem(quote.id, {
+    designId: design1.id,
+    invoiceId: invoice.id
+  });
+
+  const result2 = await getOrderHistoryByUserId({ userId: user.id });
+
+  t.equal(result2.length, 1);
+  t.deepEqual(
+    result2[0],
+    {
+      lineItemId: lineItem.id,
+      invoiceId: invoice.id,
+      designId: design1.id,
+      designTitle: 'Plain White Tee',
+      designCollections: [
+        {
+          id: collection.id,
+          title: 'Collection1'
+        }
+      ],
+      designImageIds: [],
+      createdAt: invoice.createdAt,
+      totalCostCents: invoice.totalCents,
+      units: quote.units,
+      baseUnitCostCents: quote.unitCostCents
+    },
+    'Returns the constructed object.'
+  );
+});
