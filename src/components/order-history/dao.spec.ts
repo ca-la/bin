@@ -153,11 +153,11 @@ test('getOrderHistoryByUserId returns a list with partial data', async (t: Test)
     invoiceId: invoice.id
   });
 
-  const result2 = await getOrderHistoryByUserId({ userId: user.id });
+  const result = await getOrderHistoryByUserId({ userId: user.id });
 
-  t.equal(result2.length, 1);
+  t.equal(result.length, 1);
   t.deepEqual(
-    result2[0],
+    result[0],
     {
       lineItemId: lineItem.id,
       invoiceId: invoice.id,
@@ -177,4 +177,30 @@ test('getOrderHistoryByUserId returns a list with partial data', async (t: Test)
     },
     'Returns the constructed object.'
   );
+});
+
+test('getOrderHistoryByUserId does not return for a line-item-less invoice', async (t: Test) => {
+  const { user } = await createUser({ withSession: false });
+
+  const design1 = await createDesign({
+    productType: 'TEESHIRT',
+    title: 'Plain White Tee',
+    userId: user.id
+  });
+  const { collection } = await generateCollection({
+    createdBy: user.id,
+    title: 'Collection1'
+  });
+  await moveDesign(collection.id, design1.id);
+
+  await generateInvoice({
+    collectionId: collection.id,
+    totalCents: 100000,
+    userId: user.id
+  });
+
+  const result = await getOrderHistoryByUserId({ userId: user.id });
+
+  t.equal(result.length, 0);
+  t.deepEqual(result, [], 'Returns an empty list.');
 });

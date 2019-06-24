@@ -6,7 +6,7 @@ export interface OrderHistoryRow {
   line_item_id: string;
   design_id: string;
   design_title: string | null;
-  design_collections: { id: string; title: string | null }[];
+  design_collections: { id: string; title: string | null }[] | null;
   design_image_ids: string[] | null;
   created_at: string;
   total_cost_cents: number;
@@ -33,7 +33,7 @@ export function toData(row: OrderHistoryRow): OrderHistory {
     lineItemId: row.line_item_id,
     designId: row.design_id,
     designTitle: row.design_title,
-    designCollections: row.design_collections,
+    designCollections: row.design_collections || [],
     designImageIds: row.design_image_ids || [],
     createdAt: new Date(row.created_at),
     totalCostCents: row.total_cost_cents,

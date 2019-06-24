@@ -36,7 +36,7 @@ export async function getOrderHistoryByUserId(options: {
       'q.unit_cost_cents AS base_unit_cost_cents'
     )
     .from('invoices AS i')
-    .leftJoin('line_items AS li', 'li.invoice_id', 'i.id')
+    .innerJoin('line_items AS li', 'li.invoice_id', 'i.id')
     .leftJoin('pricing_quotes AS q', 'q.id', 'li.quote_id')
     .leftJoin(
       'product_designs_with_metadata AS designs',
