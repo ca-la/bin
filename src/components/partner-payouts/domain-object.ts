@@ -62,3 +62,57 @@ export function isPartnerPayoutLogRow(row: any): row is PartnerPayoutLogRow {
     'initiator_user_id'
   );
 }
+
+export interface PartnerPayoutLogRowWithMeta extends PartnerPayoutLogRow {
+  collection_title: string | null;
+  collection_id: string | null;
+}
+
+export interface PartnerPayoutLogWithMeta extends PartnerPayoutLog {
+  collectionTitle: string | null;
+  collectionId: string | null;
+}
+
+export function toDataForMeta(
+  row: PartnerPayoutLogRowWithMeta
+): PartnerPayoutLogWithMeta {
+  const { collection_id, collection_title, ...baseRow } = row;
+  return {
+    collectionId: collection_id,
+    collectionTitle: collection_title,
+    ...toData(baseRow)
+  };
+}
+
+export function toInsertionForMeta(
+  data: PartnerPayoutLogWithMeta
+): PartnerPayoutLogRowWithMeta {
+  const { collectionId, collectionTitle, ...baseData } = data;
+  return {
+    collection_id: collectionId,
+    collection_title: collectionTitle,
+    ...toInsertion(baseData)
+  };
+}
+
+export const dataAdapterForMeta = new DataAdapter<
+  PartnerPayoutLogRowWithMeta,
+  PartnerPayoutLogWithMeta
+>(toDataForMeta, toInsertionForMeta);
+
+export function isPartnerPayoutLogRowWithMeta(
+  row: any
+): row is PartnerPayoutLogRowWithMeta {
+  return hasProperties(
+    row,
+    'id',
+    'collection_id',
+    'collection_title',
+    'created_at',
+    'invoice_id',
+    'payout_account_id',
+    'payout_amount_cents',
+    'message',
+    'initiator_user_id'
+  );
+}

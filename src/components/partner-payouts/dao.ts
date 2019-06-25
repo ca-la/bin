@@ -4,9 +4,13 @@ import * as uuid from 'node-uuid';
 import * as db from '../../services/db';
 import {
   dataAdapter,
+  dataAdapterForMeta,
   isPartnerPayoutLogRow,
+  isPartnerPayoutLogRowWithMeta,
   PartnerPayoutLog,
-  PartnerPayoutLogRow
+  PartnerPayoutLogRow,
+  PartnerPayoutLogRowWithMeta,
+  PartnerPayoutLogWithMeta
 } from './domain-object';
 import first from '../../services/first';
 import { validate, validateEvery } from '../../services/validate-from-db';
@@ -59,20 +63,26 @@ export async function findByPayoutAccountId(
 
 export async function findByUserId(
   userId: string
-): Promise<PartnerPayoutLog[]> {
+): Promise<PartnerPayoutLogWithMeta[]> {
   const result = await db(ACCOUNTS_TABLE_NAME)
-    .select(`${TABLE_NAME}.*`)
+    .select(
+      `${TABLE_NAME}.*`,
+      'collections.id AS collection_id',
+      'collections.title AS collection_title'
+    )
     .joinRaw(
       `INNER JOIN ${TABLE_NAME} on ${TABLE_NAME}.payout_account_id = ${ACCOUNTS_TABLE_NAME}.id`
     )
+    .joinRaw(`INNER JOIN invoices ON invoices.id = ${TABLE_NAME}.invoice_id`)
+    .joinRaw('LEFT JOIN collections ON collections.id = invoices.collection_id')
     .whereRaw(`${ACCOUNTS_TABLE_NAME}.user_id = ?`, userId)
     .orderByRaw(`${ACCOUNTS_TABLE_NAME}.created_at DESC`)
     .catch(rethrow);
 
-  return validateEvery<PartnerPayoutLogRow, PartnerPayoutLog>(
+  return validateEvery<PartnerPayoutLogRowWithMeta, PartnerPayoutLogWithMeta>(
     TABLE_NAME,
-    isPartnerPayoutLogRow,
-    dataAdapter,
+    isPartnerPayoutLogRowWithMeta,
+    dataAdapterForMeta,
     result
   );
 }

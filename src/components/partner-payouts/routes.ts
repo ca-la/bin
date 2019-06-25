@@ -21,7 +21,7 @@ function* getLogs(this: Koa.Application.Context): AsyncIterableIterator<any> {
     this.status = 200;
     this.body = logs;
   } else {
-    const logs = PartnerPayoutLogs.findByUserId(userId);
+    const logs = yield PartnerPayoutLogs.findByUserId(userId);
     this.status = 200;
     this.body = logs;
   }

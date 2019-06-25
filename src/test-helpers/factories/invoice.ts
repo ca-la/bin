@@ -11,7 +11,7 @@ import generateCollection from './collection';
 import User from '../../components/users/domain-object';
 
 interface InvoiceWithResources {
-  collection: Collection | null;
+  collection: Collection;
   userId: any;
   invoice: Invoice;
 }

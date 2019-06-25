@@ -25,7 +25,7 @@ test('can create a payout log and find the logs', async (t: Test) => {
     stripeUserId: 'stripe-user-one'
   });
 
-  const { invoice } = await generateInvoice();
+  const { collection, invoice } = await generateInvoice();
 
   const data = {
     id: uuid.v4(),
@@ -47,5 +47,17 @@ test('can create a payout log and find the logs', async (t: Test) => {
   t.deepEqual(logsFromAccount, [payout]);
 
   const logsFromUser = await findByUserId(user.id);
-  t.deepEqual(logsFromUser, [payout]);
+  t.deepEqual(logsFromUser, [
+    {
+      ...payout,
+      collectionId: collection.id,
+      collectionTitle: collection.title
+    }
+  ]);
+});
+
+test('empty case when searching logs', async (t: Test) => {
+  const { user } = await createUser({ role: 'PARTNER', withSession: false });
+  const logsFromUser = await findByUserId(user.id);
+  t.deepEqual(logsFromUser, [], 'Returns an empty list');
 });
