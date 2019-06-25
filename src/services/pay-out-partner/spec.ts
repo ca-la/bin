@@ -7,7 +7,7 @@ import generateCollection from '../../test-helpers/factories/collection';
 import Invoice from '../../domain-objects/invoice';
 import InvoicesDAO = require('../../dao/invoices');
 import PartnerPayoutAccountsDAO = require('../../dao/partner-payout-accounts');
-import PartnerPayoutLogsDAO = require('../../dao/partner-payout-logs');
+import * as PartnerPayoutLogsDAO from '../../components/partner-payouts/dao';
 import payOutPartner = require('./index');
 import StripeService = require('../stripe');
 import { sandbox, test, Test } from '../../test-helpers/fresh';

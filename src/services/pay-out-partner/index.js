@@ -3,7 +3,7 @@
 const InvalidDataError = require('../../errors/invalid-data');
 const InvoicesDAO = require('../../dao/invoices');
 const PartnerPayoutAccountsDAO = require('../../dao/partner-payout-accounts');
-const PartnerPayoutLogsDAO = require('../../dao/partner-payout-logs');
+const PartnerPayoutLogsDAO = require('../../components/partner-payouts/dao');
 const UsersDAO = require('../../components/users/dao');
 const EmailService = require('../email');
 const { requireValues } = require('../require-properties');
