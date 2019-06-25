@@ -6,7 +6,7 @@ import Timeline from './domain-object';
 import { getTimeBuffer } from '../../services/add-time-buffer';
 import ProductDesign = require('../../domain-objects/product-design');
 import { DetailsTask, TaskStatus } from '../../domain-objects/task-event';
-import { findAllDesignsThroughCollaborator } from '../product-designs/dao';
+import { findAllDesignsThroughCollaborator } from '../../dao/product-designs/dao';
 
 interface StageBreakdown {
   title: string;

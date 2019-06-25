@@ -28,7 +28,7 @@ array_to_json(array_remove(
     end],
     null
 )) as collections,
-array_remove(array_agg(pdi.id), null) AS image_ids
+array_remove(array_agg(pdi.id ORDER BY c.ordering ASC), null) AS image_ids
     `)
     )
     .leftJoin(
@@ -43,7 +43,7 @@ array_remove(array_agg(pdi.id), null) AS image_ids
     )
     .joinRaw(
       `
-LEFT JOIN (SELECT * FROM product_design_canvases AS c WHERE c.deleted_at IS null) AS c
+LEFT JOIN (SELECT * FROM product_design_canvases AS c WHERE c.deleted_at IS null ORDER BY c.ordering ASC) AS c
 ON c.design_id = product_designs.id
     `
     )
@@ -267,5 +267,6 @@ module.exports = {
   findByIds,
   findByUserId,
   findByCollectionId,
-  findByQuoteId
+  findByQuoteId,
+  queryWithCollectionMeta
 };

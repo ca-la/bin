@@ -7,6 +7,15 @@ const {
   default: generatePricingQuote
 } = require('../../services/generate-pricing-quote');
 const {
+  default: generateCanvas
+} = require('../../test-helpers/factories/product-design-canvas');
+const {
+  default: generateComponent
+} = require('../../test-helpers/factories/component');
+const {
+  default: generateAsset
+} = require('../../test-helpers/factories/asset');
+const {
   default: generatePricingValues
 } = require('../../test-helpers/factories/pricing-values');
 const CollectionsDAO = require('../collections');
@@ -26,9 +35,45 @@ test('ProductDesignsDAO.create creates a design', async t => {
     }
   };
   const design = await ProductDesignsDAO.create(forCreation);
+  const { asset: image1 } = await generateAsset();
+  const { component: c1 } = await generateComponent({ sketchId: image1.id });
+  await generateCanvas({
+    createdBy: user.id,
+    designId: design.id,
+    componentId: c1.id,
+    ordering: 1
+  });
+  const { asset: image2 } = await generateAsset();
+  const { component: c2 } = await generateComponent({ sketchId: image2.id });
+  await generateCanvas({
+    createdBy: user.id,
+    designId: design.id,
+    componentId: c2.id,
+    ordering: 0
+  });
+
+  const { asset: image3 } = await generateAsset();
+  const { component: c3 } = await generateComponent({ sketchId: image3.id });
+  await generateCanvas({
+    createdBy: user.id,
+    designId: design.id,
+    componentId: c3.id,
+    ordering: 3
+  });
+
+  const { asset: image4 } = await generateAsset();
+  const { component: c4 } = await generateComponent({ sketchId: image4.id });
+  await generateCanvas({
+    createdBy: user.id,
+    designId: design.id,
+    componentId: c4.id,
+    ordering: 2
+  });
+
+  const returned = await ProductDesignsDAO.findById(design.id);
 
   t.deepEqual(
-    design,
+    returned,
     {
       ...forCreation,
       id: design.id,
@@ -38,9 +83,9 @@ test('ProductDesignsDAO.create creates a design', async t => {
       description: null,
       dueDate: null,
       expectedCostCents: null,
-      imageIds: [],
-      imageLinks: [],
-      previewImageUrls: [],
+      imageIds: [image2.id, image1.id, image4.id, image3.id],
+      imageLinks: returned.imageLinks,
+      previewImageUrls: returned.previewImageUrls,
       overridePricingTable: null,
       retailPriceCents: null,
       showPricingBreakdown: true,

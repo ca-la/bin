@@ -6,9 +6,10 @@ import {
   isProductDesignRow,
   ProductDesignData,
   ProductDesignRow
-} from './domain-object';
+} from '../../domain-objects/product-designs-new';
 import first from '../../services/first';
 import { validate } from '../../services/validate-from-db';
+import { queryWithCollectionMeta } from './index';
 
 export const TABLE_NAME = 'product_designs';
 
@@ -20,11 +21,10 @@ export async function findAllDesignsThroughCollaborator(
   limit?: number,
   offset?: number
 ): Promise<ProductDesign[]> {
-  const result = await db('product_designs_with_metadata')
-    .select('*')
+  const result = await queryWithCollectionMeta(db)
     .whereRaw(
       `
-id in (
+product_designs.id in (
   SELECT product_designs.id
 		FROM product_designs
 		JOIN collaborators AS c ON c.design_id = product_designs.id
@@ -89,6 +89,7 @@ INNER JOIN product_design_canvas_annotations AS annotations ON annotations.canva
 WHERE annotations.id = ?
 AND annotations.deleted_at IS null
 AND designs.deleted_at IS null
+ORDER BY canvases.ordering ASC
   `,
     [annotationId]
   );

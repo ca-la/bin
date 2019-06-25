@@ -30,7 +30,7 @@ export default async function generateCanvas(
       });
   const { component } = options.componentId
     ? { component: await ComponentsDAO.findById(options.componentId) }
-    : await generateComponent({});
+    : await generateComponent({ createdBy: user.id });
 
   if (!component) {
     throw new Error('Component was unable to be found or created!');
