@@ -14,15 +14,18 @@ import {
 } from './domain-object';
 import first from '../../services/first';
 import { validate, validateEvery } from '../../services/validate-from-db';
+import { computeUniqueShortId } from '../../services/short-id';
 
 const TABLE_NAME = 'partner_payout_logs';
 const ACCOUNTS_TABLE_NAME = 'partner_payout_accounts';
 
 export async function create(
-  data: Uninserted<PartnerPayoutLog>
+  data: UninsertedWithoutShortId<PartnerPayoutLog>
 ): Promise<PartnerPayoutLog> {
+  const shortId = await computeUniqueShortId();
   const rowData = dataAdapter.forInsertion({
     id: uuid.v4(),
+    shortId,
     ...data
   });
 

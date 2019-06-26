@@ -9,6 +9,7 @@ export interface PartnerPayoutLog {
   payoutAmountCents: number;
   message: string;
   initiatorUserId: string;
+  shortId: string | null;
 }
 
 export interface PartnerPayoutLogRow {
@@ -19,6 +20,7 @@ export interface PartnerPayoutLogRow {
   payout_amount_cents: number;
   message: string;
   initiator_user_id: string;
+  short_id: string | null;
 }
 
 export function toData(row: PartnerPayoutLogRow): PartnerPayoutLog {
@@ -29,7 +31,8 @@ export function toData(row: PartnerPayoutLogRow): PartnerPayoutLog {
     payoutAccountId: row.payout_account_id,
     payoutAmountCents: row.payout_amount_cents,
     message: row.message,
-    initiatorUserId: row.initiator_user_id
+    initiatorUserId: row.initiator_user_id,
+    shortId: row.short_id
   };
 }
 
@@ -41,7 +44,8 @@ export function toInsertion(data: PartnerPayoutLog): PartnerPayoutLogRow {
     payout_account_id: data.payoutAccountId,
     payout_amount_cents: data.payoutAmountCents,
     message: data.message,
-    initiator_user_id: data.initiatorUserId
+    initiator_user_id: data.initiatorUserId,
+    short_id: data.shortId
   };
 }
 
@@ -59,7 +63,8 @@ export function isPartnerPayoutLogRow(row: any): row is PartnerPayoutLogRow {
     'payout_account_id',
     'payout_amount_cents',
     'message',
-    'initiator_user_id'
+    'initiator_user_id',
+    'short_id'
   );
 }
 
@@ -113,6 +118,7 @@ export function isPartnerPayoutLogRowWithMeta(
     'payout_account_id',
     'payout_amount_cents',
     'message',
-    'initiator_user_id'
+    'initiator_user_id',
+    'short_id'
   );
 }

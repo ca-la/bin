@@ -7,9 +7,19 @@ interface WithCreatedDate {
   createdAt?: Date;
 }
 
+interface WithShortId {
+  short_id?: string | null;
+  shortId?: string | null;
+}
+
 type Uninserted<T extends WithCreatedDate> = Omit<
   T,
   'created_at' | 'createdAt'
+>;
+
+type UninsertedWithoutShortId<T extends WithCreatedDate & WithShortId> = Omit<
+  T,
+  'created_at' | 'createdAt' | 'short_id' | 'shortId'
 >;
 
 type Unsaved<

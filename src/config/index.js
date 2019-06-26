@@ -134,7 +134,9 @@ const config = {
 
   FIT_PARTNER_SMS_PRODUCT_ID_BLACKLIST:
     process.env.FIT_PARTNER_SMS_PRODUCT_ID_BLACKLIST &&
-    JSON.parse(process.env.FIT_PARTNER_SMS_PRODUCT_ID_BLACKLIST)
+    JSON.parse(process.env.FIT_PARTNER_SMS_PRODUCT_ID_BLACKLIST),
+
+  SHORT_ID_SALT: process.env.SHORT_ID_SALT
 };
 
 Object.keys(config).forEach(key => {
