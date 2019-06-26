@@ -12,6 +12,8 @@ if [[ "$CI" == "true" ]]; then
   mkdir -p ./reports
   npx tape "dist/**/*spec.js" | npx tap-xunit > ./reports/tape.xml
 else
+  echo "Cleaning..."
+  bin/lib/clean
   echo "Building..."
   bin/lib/build
   echo "Linting..."
