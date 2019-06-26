@@ -380,6 +380,36 @@ test('POST /pricing-quotes/preview returns an unsaved quote from an uncommitted 
     productType: 'TEESHIRT'
   };
 
+  const nullUncommittedCostInput: object = {
+    createdAt: new Date(),
+    deletedAt: null,
+    designId: design.id,
+    id: uuid.v4(),
+    materialBudgetCents: 1200,
+    materialCategory: 'BASIC',
+    processes: [
+      {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      },
+      {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      }
+    ],
+    productComplexity: 'SIMPLE',
+    productType: null
+  };
+  const [badResponse] = await post('/pricing-quotes/preview', {
+    body: {
+      nullUncommittedCostInput,
+      units: 100
+    },
+    headers: authHeader(session.id)
+  });
+
+  t.equal(badResponse.status, 400);
+
   const [response, unsavedQuote] = await post('/pricing-quotes/preview', {
     body: {
       uncommittedCostInput,

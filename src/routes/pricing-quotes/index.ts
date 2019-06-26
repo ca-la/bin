@@ -23,7 +23,8 @@ import {
   findByQuoteId as findBidsByQuoteId
 } from '../../components/bids/dao';
 import PricingCostInput, {
-  isUnsavedPricingCostInput
+  isUnsavedPricingCostInput,
+  PricingCostInputWithoutVersions
 } from '../../domain-objects/pricing-cost-input';
 import {
   PricingQuote,
@@ -214,6 +215,20 @@ function isPreviewQuoteBody(candidate: object): candidate is PreviewQuoteBody {
   return hasProperties(candidate, 'units', 'uncommittedCostInput');
 }
 
+type Nullable<T> = { [P in keyof T]: T[P] | null };
+
+function hasNullValuesPricingCostInput(
+  candidate: Nullable<Unsaved<PricingCostInputWithoutVersions>>
+): boolean {
+  return (
+    candidate.productType === null ||
+    candidate.productComplexity === null ||
+    candidate.materialCategory === null ||
+    candidate.processes === null ||
+    candidate.designId === null
+  );
+}
+
 function* previewQuote(
   this: Koa.Application.Context
 ): AsyncIterableIterator<any> {
@@ -228,7 +243,11 @@ function* previewQuote(
   }
 
   const units = Number(body.units);
-  if (!isUnsavedPricingCostInput(body.uncommittedCostInput) || !units) {
+  if (
+    !isUnsavedPricingCostInput(body.uncommittedCostInput) ||
+    !units ||
+    hasNullValuesPricingCostInput(body.uncommittedCostInput)
+  ) {
     this.throw(
       400,
       'A cost input object and units are required to generate a preview quote!'
