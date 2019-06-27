@@ -1,10 +1,16 @@
 import * as Knex from 'knex';
+import rethrow = require('pg-rethrow');
+
 import * as db from '../../services/db';
 import LineItem, {
   dataAdapter,
+  dataAdapterMeta,
   isLineItem,
   isLineItemRow,
-  LineItemRow
+  isLineItemWithMetaRow,
+  LineItemRow,
+  LineItemWithMeta,
+  LineItemWithMetaRow
 } from '../../domain-objects/line-item';
 import first from '../../services/first';
 import { validate, validateEvery } from '../../services/validate-from-db';
@@ -69,5 +75,35 @@ export async function findByInvoiceId(invoiceId: string): Promise<LineItem[]> {
     isLineItemRow,
     dataAdapter,
     lineItems
+  );
+}
+
+export async function getLineItemsWithMetaByInvoiceId(
+  invoiceId: string
+): Promise<LineItemWithMeta[]> {
+  const lineItemsWithMeta = await db(TABLE_NAME)
+    .select(
+      'li.*',
+      'designs.title AS design_title',
+      'designs.collections AS design_collections',
+      'designs.image_ids AS design_image_ids',
+      'q.units AS quoted_units',
+      'q.unit_cost_cents AS quoted_unit_cost_cents'
+    )
+    .from('line_items AS li')
+    .leftJoin('pricing_quotes AS q', 'q.id', 'li.quote_id')
+    .leftJoin(
+      'product_designs_with_metadata AS designs',
+      'designs.id',
+      'li.design_id'
+    )
+    .where({ 'li.invoice_id': invoiceId })
+    .catch(rethrow);
+
+  return validateEvery<LineItemWithMetaRow, LineItemWithMeta>(
+    TABLE_NAME,
+    isLineItemWithMetaRow,
+    dataAdapterMeta,
+    lineItemsWithMeta
   );
 }

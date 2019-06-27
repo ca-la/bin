@@ -2,16 +2,13 @@ import * as Router from 'koa-router';
 import * as Koa from 'koa';
 
 import requireAuth = require('../../middleware/require-auth');
-import {
-  getOrderHistory,
-  OrderHistoryWithMeta
-} from './services/get-order-history';
+import { getOrderHistory, InvoiceWithMeta } from './services/get-order-history';
 
 const router = new Router();
 
 function* retrieveOrderHistory(
   this: Koa.Application.Context
-): AsyncIterableIterator<OrderHistoryWithMeta[]> {
+): AsyncIterableIterator<InvoiceWithMeta[]> {
   const { userId } = this.state;
   const { limit, offset, type } = this.query;
 

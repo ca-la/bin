@@ -1,5 +1,6 @@
 'use strict';
 
+const omit = require('lodash/omit');
 const uuid = require('node-uuid');
 const db = require('../../services/db');
 const {
@@ -33,7 +34,7 @@ test(
   async (t, { collections, createdInvoices, createdPayments }) => {
     const paidInvoice = await InvoicesDAO.findById(createdInvoices[0].id);
     t.deepEqual(
-      paidInvoice,
+      omit(paidInvoice, 'shortId'),
       {
         id: createdInvoices[0].id,
         collectionId: collections[0].id,
@@ -54,7 +55,7 @@ test(
 
     const unpaidInvoice = await InvoicesDAO.findById(createdInvoices[2].id);
     t.deepEqual(
-      unpaidInvoice,
+      omit(unpaidInvoice, 'shortId'),
       {
         id: createdInvoices[2].id,
         collectionId: collections[1].id,
@@ -84,7 +85,7 @@ test(
   async (t, { collections, createdInvoices, createdPayments }) => {
     const paidInvoice = await InvoicesDAO.findById(createdInvoices[0].id);
     t.deepEqual(
-      paidInvoice,
+      omit(paidInvoice, 'shortId'),
       {
         id: createdInvoices[0].id,
         collectionId: collections[0].id,
@@ -105,7 +106,7 @@ test(
 
     const unpaidInvoice = await InvoicesDAO.findById(createdInvoices[2].id);
     t.deepEqual(
-      unpaidInvoice,
+      omit(unpaidInvoice, 'shortId'),
       {
         id: createdInvoices[2].id,
         collectionId: collections[1].id,

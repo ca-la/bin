@@ -6,7 +6,7 @@ import { findById as findUserById } from '../../components/users/dao';
 import * as CollectionsDAO from '../../dao/collections';
 import * as InvoicesDAO from '../../dao/invoices';
 import createUser = require('../create-user');
-import Invoice from '../../domain-objects/invoice';
+import Invoice = require('../../domain-objects/invoice');
 import generateCollection from './collection';
 import User from '../../components/users/domain-object';
 

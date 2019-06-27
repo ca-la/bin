@@ -1,7 +1,7 @@
 import * as Knex from 'knex';
 
 import { getCreditAmount, removeCredit } from './dao';
-import Invoice from '../../domain-objects/invoice';
+import Invoice = require('../../domain-objects/invoice');
 import * as InvoicePaymentsDAO from '../invoice-payments/dao';
 
 interface SpentResult {

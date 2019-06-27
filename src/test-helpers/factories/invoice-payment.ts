@@ -5,7 +5,7 @@ import * as uuid from 'node-uuid';
 import * as InvoicesDAO from '../../dao/invoices';
 import { InvoicePayment } from '../../components/invoice-payments/domain-object';
 import * as InvoicePaymentsDAO from '../../components/invoice-payments/dao';
-import Invoice from '../../domain-objects/invoice';
+import Invoice = require('../../domain-objects/invoice');
 import generateInvoice from './invoice';
 
 interface InvoiceWithResources {

@@ -19,7 +19,7 @@ import {
   generateFromPayloadAndUser as createQuotes
 } from '../../services/generate-pricing-quote';
 import Collection from '../../domain-objects/collection';
-import Invoice from '../../domain-objects/invoice';
+import Invoice = require('../../domain-objects/invoice');
 import { FINANCING_MARGIN } from '../../config';
 import LineItem from '../../domain-objects/line-item';
 

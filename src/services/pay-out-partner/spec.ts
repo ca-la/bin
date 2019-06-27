@@ -4,7 +4,7 @@ import createUser = require('../../test-helpers/create-user');
 import db = require('../db');
 import EmailService = require('../email');
 import generateCollection from '../../test-helpers/factories/collection';
-import Invoice from '../../domain-objects/invoice';
+import Invoice = require('../../domain-objects/invoice');
 import InvoicesDAO = require('../../dao/invoices');
 import PartnerPayoutAccountsDAO = require('../../dao/partner-payout-accounts');
 import * as PartnerPayoutLogsDAO from '../../components/partner-payouts/dao';

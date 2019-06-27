@@ -14,4 +14,4 @@ declare class Invoice {
   constructor(data: any);
 }
 
-export default Invoice;
+export = Invoice;

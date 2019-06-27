@@ -1,13 +1,13 @@
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import { authHeader, get } from '../../test-helpers/http';
 import createUser = require('../../test-helpers/create-user');
-import * as OrderHistoryDAO from './dao';
+import * as HistoryService from './services/get-order-history';
 
 const API_PATH = '/order-history';
 
 test(`GET ${API_PATH}/ returns the order history of the logged in user`, async (t: Test) => {
   const getHistoryStub = sandbox()
-    .stub(OrderHistoryDAO, 'getOrderHistoryByUserId')
+    .stub(HistoryService, 'getOrderHistory')
     .resolves([]);
 
   const { session } = await createUser();

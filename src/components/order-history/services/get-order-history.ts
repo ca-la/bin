@@ -1,5 +1,3 @@
-import { OrderHistory } from '../domain-object';
-import { getOrderHistoryByUserId } from '../dao';
 import {
   generatePreviewLinks,
   ThumbnailAndPreviewLinks
@@ -7,15 +5,21 @@ import {
 import { findByInvoiceId as findPaymentsByInvoiceId } from '../../invoice-payments/dao';
 import { InvoicePayment } from '../../invoice-payments/domain-object';
 import { isFinanced } from './is-financed';
-import addMargin from '../../../services/add-margin';
-import { FINANCING_MARGIN } from '../../../config';
+import { getInvoicesByUser } from '../../../dao/invoices/search';
+import { getLineItemsWithMetaByInvoiceId } from '../../../dao/line-items';
+import { LineItemWithMeta } from '../../../domain-objects/line-item';
+import Invoice = require('../../../domain-objects/invoice');
 
-export interface OrderHistoryWithMeta extends OrderHistory {
-  firstPaidAt: Date | null;
-  imageLinks: ThumbnailAndPreviewLinks[];
-  isCreditApplied: boolean;
+export interface InvoiceWithMeta extends Invoice {
+  amountCreditApplied: number;
   isPayLater: boolean;
-  unitCostCents: number;
+  lineItems: LineItemWithImageLinks[];
+  payments: InvoicePayment[];
+  totalUnits: number;
+}
+
+interface LineItemWithImageLinks extends LineItemWithMeta {
+  imageLinks: ThumbnailAndPreviewLinks[];
 }
 
 /**
@@ -25,35 +29,48 @@ export async function getOrderHistory(options: {
   limit?: number;
   offset?: number;
   userId: string;
-}): Promise<OrderHistoryWithMeta[]> {
-  const orderList = await getOrderHistoryByUserId(options);
-  const orderListWithMeta: OrderHistoryWithMeta[] = [];
+}): Promise<InvoiceWithMeta[]> {
+  const invoices = await getInvoicesByUser(options);
+  const invoicesWithMeta: InvoiceWithMeta[] = [];
 
-  for (const order of orderList) {
-    const invoicePayments = await findPaymentsByInvoiceId(order.invoiceId);
-    const imageLinks = generatePreviewLinks(order.designImageIds);
-    const isPayLater = isFinanced(order.totalCostCents, invoicePayments);
-    const isCreditApplied = invoicePayments.some(
-      (invoicePayment: InvoicePayment): boolean => {
-        return invoicePayment.creditUserId !== null;
+  for (const invoice of invoices) {
+    const invoicePayments = await findPaymentsByInvoiceId(invoice.id);
+    const lineItems = await getLineItemsWithMetaByInvoiceId(invoice.id);
+    const lineItemsWithImageLinks = lineItems.map(
+      (lineItem: LineItemWithMeta): LineItemWithImageLinks => {
+        return {
+          ...lineItem,
+          imageLinks: generatePreviewLinks(lineItem.designImageIds || [])
+        };
       }
     );
-    const firstPaidAt = invoicePayments[0]
-      ? invoicePayments[0].createdAt
-      : null;
-    const unitCostCents = isPayLater
-      ? addMargin(order.baseUnitCostCents, FINANCING_MARGIN)
-      : order.baseUnitCostCents;
+    const totalUnits = lineItems.reduce(
+      (acc: number, lineItem: LineItemWithMeta): number => {
+        return acc + lineItem.quotedUnits;
+      },
+      0
+    );
+    const isPayLater = isFinanced(invoice.totalCents, invoicePayments);
+    const amountCreditApplied = invoicePayments.reduce(
+      (accumulator: number, invoicePayment: InvoicePayment): number => {
+        if (invoicePayment.creditUserId) {
+          return invoicePayment.totalCents + accumulator;
+        }
 
-    orderListWithMeta.push({
-      ...order,
-      firstPaidAt,
-      imageLinks,
-      isCreditApplied,
+        return accumulator;
+      },
+      0
+    );
+
+    invoicesWithMeta.push({
+      ...invoice,
+      amountCreditApplied,
       isPayLater,
-      unitCostCents
+      lineItems: lineItemsWithImageLinks,
+      payments: invoicePayments,
+      totalUnits
     });
   }
 
-  return orderListWithMeta;
+  return invoicesWithMeta;
 }
