@@ -8,6 +8,7 @@ const db = require('../../services/db');
 const first = require('../../services/first').default;
 const Invoice = require('../../domain-objects/invoice');
 const { requireValues } = require('../../services/require-properties');
+const { computeUniqueShortId } = require('../../services/short-id');
 
 const instantiate = row => new Invoice(row);
 const maybeInstantiate = data => (data && new Invoice(data)) || null;
@@ -74,9 +75,11 @@ async function findByIdTrx(trx, id) {
 // Create must happen in a transaction that also creates an InvoiceBreakdown
 async function createTrx(trx, data) {
   requireValues({ data, trx });
+  const shortId = await computeUniqueShortId();
 
   const rowData = Object.assign({}, dataMapper.userDataToRowData(data), {
-    id: uuid.v4()
+    id: uuid.v4(),
+    short_id: shortId
   });
 
   return db(TABLE_NAME)

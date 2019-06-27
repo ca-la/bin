@@ -16,7 +16,8 @@ const keyNamesByColumnName = {
   design_status_id: 'designStatusId',
   is_paid: 'isPaid',
   total_paid: 'totalPaid',
-  paid_at: 'paidAt'
+  paid_at: 'paidAt',
+  short_id: 'shortId'
 };
 
 const dataMapper = new DataMapper(keyNamesByColumnName);

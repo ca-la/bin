@@ -1,12 +1,32 @@
 'use strict';
 
 const uuid = require('node-uuid');
+const db = require('../../services/db');
 const {
   createInvoicesWithPayments,
   createInvoicesWithOverPayments
 } = require('../../test-helpers/factories/invoice-payments');
 const InvoicesDAO = require('.');
 const { test } = require('../../test-helpers/fresh');
+const generateCollection = require('../../test-helpers/factories/collection')
+  .default;
+
+test('InvoicesDAO.create', async t => {
+  const { collection } = await generateCollection();
+
+  await db.transaction(async trx => {
+    const createdInvoice = await InvoicesDAO.createTrx(trx, {
+      collectionId: collection.id,
+      totalCents: 1234,
+      title: 'My Development Invoice'
+    });
+
+    t.true(
+      createdInvoice.shortId.length >= 8,
+      'The created invoice has a shortId'
+    );
+  });
+});
 
 test(
   'InvoicesDAO.findById',
