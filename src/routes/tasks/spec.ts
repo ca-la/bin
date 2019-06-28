@@ -40,6 +40,7 @@ const BASE_TASK_EVENT: DetailsTask & { assignees: Collaborator[] } = {
     createdAt: null,
     id: uuid.v4(),
     previewImageUrls: [],
+    imageLinks: [],
     title: 'test'
   },
   designStage: {
@@ -164,6 +165,45 @@ test('GET /tasks?stageId=:stageId returns tasks on design stage', async (t: tape
     .resolves([]);
 
   const [response, body] = await get(`/tasks?stageId=${stageId}`, {
+    headers: authHeader(session.id)
+  });
+  t.equal(response.status, 200, 'should respond with 200');
+  t.deepEqual(
+    body,
+    [
+      {
+        ...taskEvents[0],
+        assignees: [],
+        createdAt: taskEvents[0].createdAt.toISOString(),
+        lastModifiedAt: taskEvents[0].lastModifiedAt.toISOString(),
+        id: taskEvents[0].id
+      },
+      {
+        ...taskEvents[1],
+        assignees: [],
+        createdAt: taskEvents[1].createdAt.toISOString(),
+        lastModifiedAt: taskEvents[0].lastModifiedAt.toISOString(),
+        id: taskEvents[1].id
+      }
+    ],
+    'should match body'
+  );
+});
+
+test('GET /tasks?designId=:designId returns tasks on design', async (t: tape.Test) => {
+  const { session, user } = await createUser();
+
+  const designId = uuid.v4();
+  const taskEvents = createTaskEvents(user);
+
+  sandbox()
+    .stub(TaskEventsDAO, 'findByDesignId')
+    .resolves(taskEvents);
+  sandbox()
+    .stub(CollaboratorTasksDAO, 'findAllCollaboratorsByTaskId')
+    .resolves([]);
+
+  const [response, body] = await get(`/tasks?designId=${designId}`, {
     headers: authHeader(session.id)
   });
   t.equal(response.status, 200, 'should respond with 200');

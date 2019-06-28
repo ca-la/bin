@@ -61,6 +61,7 @@ const getInsertedWithDetails = (
       createdAt: result.design.createdAt,
       id: result.design.id,
       previewImageUrls: result.design.previewImageUrls,
+      imageLinks: result.design.imageLinks,
       title: result.design.title
     },
     designStage: {

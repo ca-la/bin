@@ -1,6 +1,10 @@
 import DataAdapter from '../services/data-adapter';
 import { hasOnlyProperties } from '../services/require-properties';
-import { generateThumbnailLinks } from '../services/attach-asset-links';
+import {
+  generatePreviewLinks,
+  generateThumbnailLinks,
+  ThumbnailAndPreviewLinks
+} from '../services/attach-asset-links';
 import {
   CollaboratorWithUser,
   CollaboratorWithUserRow,
@@ -39,6 +43,7 @@ export interface RelatedResourceMeta {
 
 export interface DesignResourceMeta extends RelatedResourceMeta {
   previewImageUrls: string[] | null;
+  imageLinks: ThumbnailAndPreviewLinks[] | null;
 }
 
 export interface OrderedResourceMeta extends RelatedResourceMeta {
@@ -93,6 +98,7 @@ export const createDetailsTask = (
       createdAt: designCreatedAt ? new Date(designCreatedAt) : null,
       id: designId,
       previewImageUrls: imageIds ? generateThumbnailLinks(imageIds) : null,
+      imageLinks: imageIds ? generatePreviewLinks(imageIds) : null,
       title: designTitle
     },
     designStage: {

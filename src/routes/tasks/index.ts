@@ -232,6 +232,7 @@ function* updateTaskAssignment(
 interface GetListQuery {
   collectionId?: string;
   stageId?: string;
+  designId?: string;
   userId?: string;
   assignFilterUserId?: string;
   stageFilter?: string;
@@ -246,13 +247,14 @@ function* getList(
   const {
     collectionId,
     stageId,
+    designId,
     userId,
     assignFilterUserId,
     stageFilter,
     limit,
     offset
   } = query;
-  if (!collectionId && !stageId && !userId) {
+  if (!collectionId && !stageId && !userId && !designId) {
     return this.throw('Missing collectionId, stageId, or userId');
   }
 
@@ -261,6 +263,8 @@ function* getList(
     tasks = yield TaskEventsDAO.findByCollectionId(collectionId, limit, offset);
   } else if (stageId) {
     tasks = yield TaskEventsDAO.findByStageId(stageId, limit, offset);
+  } else if (designId) {
+    tasks = yield TaskEventsDAO.findByDesignId(designId, limit, offset);
   } else if (userId) {
     tasks = yield TaskEventsDAO.findByUserId(userId, {
       assignFilterUserId,
