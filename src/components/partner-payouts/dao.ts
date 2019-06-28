@@ -79,7 +79,7 @@ export async function findByUserId(
     .joinRaw(`INNER JOIN invoices ON invoices.id = ${TABLE_NAME}.invoice_id`)
     .joinRaw('LEFT JOIN collections ON collections.id = invoices.collection_id')
     .whereRaw(`${ACCOUNTS_TABLE_NAME}.user_id = ?`, userId)
-    .orderByRaw(`${ACCOUNTS_TABLE_NAME}.created_at DESC`)
+    .orderByRaw(`${TABLE_NAME}.created_at DESC`)
     .catch(rethrow);
 
   return validateEvery<PartnerPayoutLogRowWithMeta, PartnerPayoutLogWithMeta>(

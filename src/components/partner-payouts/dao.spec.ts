@@ -43,11 +43,26 @@ test('can create a payout log and find the logs', async (t: Test) => {
     'Returns the newly created resource'
   );
 
+  const data2 = {
+    id: uuid.v4(),
+    invoiceId: invoice.id,
+    payoutAccountId: payoutAccount.id,
+    payoutAmountCents: 123400,
+    message: 'Get yo money again!!',
+    initiatorUserId: admin.id
+  };
+  const payout2 = await create(data2);
+
   const logsFromAccount = await findByPayoutAccountId(payoutAccount.id);
-  t.deepEqual(logsFromAccount, [payout]);
+  t.deepEqual(logsFromAccount, [payout2, payout]);
 
   const logsFromUser = await findByUserId(user.id);
   t.deepEqual(logsFromUser, [
+    {
+      ...payout2,
+      collectionId: collection.id,
+      collectionTitle: collection.title
+    },
     {
       ...payout,
       collectionId: collection.id,
