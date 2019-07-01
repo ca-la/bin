@@ -33,6 +33,23 @@ test('POST /duplication/designs returns 400 if one or more ID is invalid', async
   });
 });
 
+test('POST /duplication/designs returns 403 if requested userId is not the authenticated user', async (t: Test) => {
+  const { session } = await createUser();
+
+  const [response, body] = await API.post('/duplication/designs', {
+    body: {
+      designIds: ['36379007-e0cc-4b9f-8a55-7785f2da61cc'],
+      userId: 'not the same user'
+    },
+    headers: API.authHeader(session.id)
+  });
+
+  t.equal(response.status, 403);
+  t.deepEqual(body, {
+    message: 'Cannot duplicate designs for other users'
+  });
+});
+
 test('POST /duplication/designs duplicates designs', async (t: Test) => {
   const { session, user } = await createUser();
 
@@ -53,4 +70,30 @@ test('POST /duplication/designs duplicates designs', async (t: Test) => {
   t.equal(body.length, 1);
   t.notEqual(body[0].id, design.id);
   t.equal(body[0].title, design.title);
+});
+
+test('POST /duplication/designs duplicates designs for other users', async (t: Test) => {
+  const designer = await createUser({ withSession: false });
+  const other = await createUser({ withSession: false });
+  const admin = await createUser({ role: 'ADMIN' });
+
+  const design = await createDesign({
+    productType: 'TEESHIRT',
+    title: 'Green Tee',
+    userId: designer.user.id
+  });
+
+  const [response, body] = await API.post('/duplication/designs', {
+    body: {
+      designIds: [design.id],
+      userId: other.user.id
+    },
+    headers: API.authHeader(admin.session.id)
+  });
+
+  t.equal(response.status, 201);
+  t.equal(body.length, 1);
+  t.notEqual(body[0].id, design.id);
+  t.equal(body[0].title, design.title);
+  t.equal(body[0].userId, other.user.id);
 });

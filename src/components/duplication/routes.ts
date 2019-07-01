@@ -10,13 +10,15 @@ const router = new Router();
 
 interface DuplicateDesignsBody {
   designIds: string[];
+  userId?: string;
 }
 
 function isDuplicateDesignsBody(body: any): body is DuplicateDesignsBody {
   return (
     body.designIds &&
     Array.isArray(body.designIds) &&
-    body.designIds.every((id: any) => typeof id === 'string')
+    body.designIds.every((id: any) => typeof id === 'string') &&
+    (!body.userId || (body.userId && typeof body.userId === 'string'))
   );
 }
 
@@ -24,13 +26,22 @@ function* duplicateDesigns(
   this: Koa.Application.Context
 ): AsyncIterableIterator<any> {
   const { body } = this.request;
+  let userId = this.state.userId;
 
   if (!isDuplicateDesignsBody(body)) {
     return this.throw(400, 'Missing design ID list');
   }
 
+  if (body.userId) {
+    if (this.state.role === 'ADMIN' || this.state.userId === body.userId) {
+      userId = body.userId;
+    } else {
+      return this.throw(403, 'Cannot duplicate designs for other users');
+    }
+  }
+
   const duplicated = yield DuplicationService.duplicateDesigns(
-    this.state.userId,
+    userId,
     body.designIds
   ).catch(
     filterError(ResourceNotFoundError, (err: ResourceNotFoundError) =>
