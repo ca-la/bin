@@ -9,6 +9,7 @@ import { test, Test } from '../../test-helpers/fresh';
 import createDesign from '../../services/create-design';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
 import generateCollection from '../../test-helpers/factories/collection';
+import Collaborator from './domain-objects/collaborator';
 
 test('Collaborators DAO can find all collaborators with a list of ids', async (t: Test) => {
   const { user } = await createUser({ withSession: false });
@@ -45,16 +46,28 @@ test('Collaborators DAO can find all collaborators with a list of ids', async (t
   );
 });
 
-test('CollaboratorsDAO.findByDesign returns collaborators', async (t: Test) => {
+test('CollaboratorsDAO.findByDesign returns design and collection collaborators', async (t: Test) => {
   const { user } = await createUser({ withSession: false });
-  const data = await createUser({ withSession: false });
-  const user2 = data.user;
+  const { user: user2 } = await createUser({ withSession: false });
+  const { user: user3 } = await createUser({ withSession: false });
+  const { user: user4 } = await createUser({ withSession: false });
+  const { user: user5 } = await createUser({ withSession: false });
 
   const design = await createDesign({
     productType: 'BOMBER',
     title: 'AW19',
     userId: user.id
   });
+  const collection = await CollectionsDAO.create({
+    createdAt: new Date(),
+    createdBy: user.id,
+    deletedAt: null,
+    description: '',
+    id: uuid.v4(),
+    title: 'AW19'
+  });
+
+  await CollectionsDAO.addDesign(collection.id, design.id);
 
   const { collaborator } = await generateCollaborator({
     collectionId: null,
@@ -64,10 +77,53 @@ test('CollaboratorsDAO.findByDesign returns collaborators', async (t: Test) => {
     userEmail: null,
     userId: user2.id
   });
+  const { collaborator: collectionCollaborator } = await generateCollaborator({
+    collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
+    userId: user3.id
+  });
+  const {
+    collaborator: cancelledCollectionCollaborator
+  } = await generateCollaborator({
+    collectionId: collection.id,
+    designId: null,
+    cancelledAt: new Date(),
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
+    userId: user4.id
+  });
+  const {
+    collaborator: cancelledDesignCollaborator
+  } = await generateCollaborator({
+    collectionId: null,
+    designId: design.id,
+    cancelledAt: new Date(),
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
+    userId: user5.id
+  });
 
   const list = await CollaboratorsDAO.findByDesign(design.id);
-  t.equal(list.length, 2);
-  t.equal(list[1].id, collaborator.id);
+  const ids = list.map((c: Collaborator) => c.id);
+  t.equal(list.length, 3);
+  t.true(ids.includes(collaborator.id), 'includes design collabortor');
+  t.true(
+    ids.includes(collectionCollaborator.id),
+    'includes collection collaborator'
+  );
+  t.false(
+    ids.includes(cancelledCollectionCollaborator.id),
+    'does not include cancelled collection collaborator'
+  );
+  t.false(
+    ids.includes(cancelledDesignCollaborator.id),
+    'does not include cancelled design collaborator'
+  );
 });
 
 test('CollaboratorsDAO.create throws invalid data error', async (t: Test) => {

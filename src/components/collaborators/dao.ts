@@ -203,13 +203,14 @@ export async function findByDesign(
     return [];
   }
   const collaboratorRows = await getCollaboratorViewBuilder()
-    .where({ design_id: designId })
-    .andWhereRaw('(cancelled_at IS null OR cancelled_at > now())')
-    .modify((query: Knex.QueryBuilder) => {
+    .whereRaw(
+      '(cancelled_at IS NULL OR cancelled_at > now()) AND deleted_at IS NULL'
+    )
+    .andWhere((query: Knex.QueryBuilder) => {
+      query.where({ design_id: designId });
       if (design.collectionIds.length > 0) {
         query.orWhere({
-          collection_id: design.collectionIds[0],
-          deleted_at: null
+          collection_id: design.collectionIds[0]
         });
       }
     })
