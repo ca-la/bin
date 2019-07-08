@@ -43,7 +43,7 @@ array_remove(array_agg(pdi.id ORDER BY c.ordering ASC), null) AS image_ids
     )
     .joinRaw(
       `
-LEFT JOIN (SELECT * FROM product_design_canvases AS c WHERE c.deleted_at IS null ORDER BY c.ordering ASC) AS c
+LEFT JOIN (SELECT * FROM canvases AS c WHERE c.deleted_at IS null AND archived_at IS null ORDER BY c.ordering ASC) AS c
 ON c.design_id = product_designs.id
     `
     )

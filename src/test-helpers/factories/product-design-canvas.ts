@@ -40,7 +40,7 @@ export default async function generateCanvas(
   }
 
   const canvas = await create({
-    archivedAt: null,
+    archivedAt: options.archivedAt || null,
     componentId: component.id,
     createdBy: user.id,
     designId: design.id,

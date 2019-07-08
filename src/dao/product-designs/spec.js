@@ -64,6 +64,7 @@ test('ProductDesignsDAO.create creates a design', async t => {
   const { asset: image4 } = await generateAsset();
   const { component: c4 } = await generateComponent({ sketchId: image4.id });
   await generateCanvas({
+    archivedAt: new Date(),
     createdBy: user.id,
     designId: design.id,
     componentId: c4.id,
@@ -83,7 +84,7 @@ test('ProductDesignsDAO.create creates a design', async t => {
       description: null,
       dueDate: null,
       expectedCostCents: null,
-      imageIds: [image2.id, image1.id, image4.id, image3.id],
+      imageIds: [image2.id, image1.id, image3.id],
       imageLinks: returned.imageLinks,
       previewImageUrls: returned.previewImageUrls,
       overridePricingTable: null,
