@@ -1,12 +1,18 @@
 #!/bin/bash
 
-set -euo pipefail
+set -o errexit
+set -o nounset
+set -o pipefail
+set -o noglob
+
+# Create a new migration file
+# Usage: bin/create_migration <migration name>
 
 main() {
   name=${1:-""}
 
   if [[ "$name" == "" ]]; then
-    echo "Usage: create-migration [migration-name]"
+    echo "Usage: create_migration [migration-name]"
     exit 1
   fi
 

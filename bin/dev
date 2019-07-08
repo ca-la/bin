@@ -1,16 +1,23 @@
 #!/bin/bash
 
-set -euo pipefail
+set -o errexit
+set -o nounset
+set -o pipefail
+set -o noglob
 
 # Run TypeScript compiler and API server in watch mode
 # Usage: bin/dev
 
-trap "kill 0" EXIT # Kill children when this process is killed
-source bin/lib/loadenv
+main() {
+  trap "kill 0" EXIT # Kill children when this process is killed
 
-loadenv-local
+  source bin/lib/loadenv
+  loadenv_local
 
-npx tsc --preserveWatchOutput -w -p . &
-npx nodemon --delay 2 -w ./dist dist &
+  npx tsc --preserveWatchOutput -w -p . &
+  npx nodemon --delay 2 -w ./dist dist &
 
-wait
+  wait
+}
+
+main "$@"

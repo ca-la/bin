@@ -1,23 +1,42 @@
 #!/bin/bash
-set -e
+
+set -o errexit
+set -o nounset
+set -o pipefail
 set -o noglob
 
 # Run the test suite
-# Usage: `bin/test`
+# Usage: bin/test
 
-source bin/lib/loadenv
-loadenv-test
+main() {
+  source bin/lib/loadenv
+  source bin/lib/colors
+  source bin/lib/clean
+  source bin/lib/build
 
-if [[ "$CI" == "true" ]]; then
-  mkdir -p ./reports
-  npx tape "dist/**/*spec.js" | npx tap-xunit > ./reports/tape.xml
-else
-  echo "Cleaning..."
-  bin/lib/clean
-  echo "Building..."
-  bin/lib/build
-  echo "Linting..."
-  bin/lint
-  echo "Testing..."
-  npx tape "dist/**/*spec.js" | npx tap-difflet --pessimistic
-fi
+  loadenv_test
+
+  ci=${CI:-"false"}
+  if [ "$ci" == "true" ]; then
+    mkdir -p ./reports
+    npx tape "dist/**/*spec.js" | npx tap-xunit > ./reports/tape.xml
+  else
+    echo -n "Cleaning..."
+    clean
+    echo -e "${green}Done${reset}"
+
+    echo -n "Linting..."
+    bin/lint
+    echo -e "${green}Done${reset}"
+
+    echo -n "Building..."
+    build
+    echo -e "${green}Done${reset}"
+
+    echo -n "Testing..."
+    npx tape "dist/**/*spec.js" | npx tap-difflet --pessimistic
+    echo -e "${green}Done${reset}"
+  fi
+}
+
+main "$@"

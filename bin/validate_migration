@@ -1,0 +1,23 @@
+#!/bin/bash
+
+set -o errexit
+set -o nounset
+set -o pipefail
+set -o noglob
+
+# Validate migration to ensure migrate -> rollback produces the original schema
+# Usage: bin/validate_migration
+
+main() {
+  source bin/lib/loadenv
+  source bin/lib/clean
+  source bin/lib/build
+  loadenv_test
+
+  clean
+  build
+
+  npx cala-validate-migration
+}
+
+main "$@"

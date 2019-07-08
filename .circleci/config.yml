@@ -28,7 +28,7 @@ jobs:
             - "~/.npm"
           key: v3-dependencies-{{ checksum "package-lock.json" }}
 
-      - run: bin/ci-check
+      - run: bin/ci_check
 
       - store_test_results:
           path: ~/repo/reports

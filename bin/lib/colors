@@ -1,0 +1,4 @@
+#!/bin/bash
+
+export green="\033[0;32m"
+export reset="\033[0m"

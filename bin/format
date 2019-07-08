@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -o errexit
+set -o nounset
 set -o pipefail
 set -o noglob
 
@@ -11,28 +13,34 @@ set -o noglob
 #  -a Run on all .js/.ts files, not just divergent files
 #  -l List non-conforming files and exit with non-zero if any exist
 
-files=$(git diff --name-only master | grep ".[j|t]s$")
-prettier_opts="--write"
+main() {
+  files=$(git diff --name-only master | grep ".[jt]s$" || true)
+  prettier_opts="--write"
 
-while getopts "al" opt; do
-  case $opt in
-    a)
-      files='src/**/*.ts src/**/*.js'
-      ;;
-    l)
-      prettier_opts="-l"
-      ;;
-    *)
-      echo 'Usage: bin/format [-al]'
-      echo 'Options:'
-      echo ' -a Run on all valid files, not just divergent files'
-      echo ' -l List non-conforming files and exit with non-zero if any exist'
-  esac
-done
+  while getopts "al" opt; do
+    case $opt in
+      a)
+        files='src/**/*.ts src/**/*.js'
+        ;;
+      l)
+        prettier_opts="-l"
+        ;;
+      *)
+        echo 'Usage: bin/format [-al]'
+        echo 'Options:'
+        echo ' -a Run on all valid files, not just divergent files'
+        echo ' -l List non-conforming files and exit with non-zero if any exist'
+        exit 1
+        ;;
+    esac
+  done
 
-if [[ -n $files ]]
-then
-  npx prettier $prettier_opts $files
-else
-  exit 0
-fi
+  if [[ -n $files ]]
+  then
+    npx prettier $prettier_opts $files
+  else
+    exit 0
+  fi
+}
+
+main "$@"

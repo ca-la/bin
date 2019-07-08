@@ -1,17 +1,23 @@
 #!/bin/bash
 
-set -euo pipefail
+set -o errexit
+set -o nounset
+set -o pipefail
+set -o noglob
 
 # Start up node API server
 # Usage: bin/start
 
-source bin/lib/loadenv
+main() {
+  source bin/lib/loadenv
+  loadenv_local
 
-loadenv-local
+  if [ ! -d "dist" ]; then
+    echo 'No built application found in dist/ directory'
+    exit 1
+  fi
 
-if [[ ! -d "dist" ]]; then
-  echo 'No built application found in dist/ directory'
-  exit 1
-fi
+  node dist
+}
 
-node dist
+main "$@"

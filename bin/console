@@ -1,11 +1,18 @@
 #!/bin/bash
 
-set -euo pipefail
+set -o errexit
+set -o nounset
+set -o pipefail
+set -o noglob
 
 # Run node REPL with local environment loaded
 # Usage: bin/console
 
-source bin/lib/loadenv
+main() {
+  source bin/lib/loadenv
+  loadenv_local
 
-loadenv-local
-node
+  node
+}
+
+main "$@"

@@ -1,9 +1,16 @@
 #!/bin/bash
 
-set -euo pipefail
+set -o errexit
+set -o nounset
+set -o pipefail
+set -o noglob
+
+# Publish built assets to environments
+# Usage: bin/publish <staging|production>
+
 
 usage_fail() {
-  echo "Usage: publish <staging|production>"
+  echo "Usage: bin/publish <staging|production>"
   exit 1
 }
 

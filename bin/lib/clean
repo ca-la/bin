@@ -1,4 +1,7 @@
 #!/bin/bash
+# Reset dist directory to empty state
 
-rm -rf ./dist
-mkdir -p ./dist
+clean() {
+  rm -rf ./dist
+  mkdir -p ./dist
+}

@@ -1,0 +1,15 @@
+#!/bin/bash
+
+set -o errexit
+set -o nounset
+set -o pipefail
+set -o noglob
+
+# Describe the purpose of this script
+# Usage: bin/script-name [optional] <required>
+
+main() {
+  # Code here
+}
+
+main "$@"

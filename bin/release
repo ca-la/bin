@@ -1,15 +1,21 @@
 #!/bin/bash
 
+set -o errexit
+set -o nounset
 set -o pipefail
+set -o noglob
 
 # Release new version
 # Usage: bin/release <patch|minor|major>
 
-semver=${1:-""}
-shift
-
 take_action() {
-  bin/test && npx cala-release "$semver" "$@"
+  source bin/lib/colors
+
+  bin/test
+
+  echo "Releasing $1..."
+  npx cala-release $1
+  echo -e "${green}Done${reset}"
 }
 
 usage_fail() {
@@ -17,11 +23,17 @@ usage_fail() {
   exit 1
 }
 
-case "$semver" in
-  patch|minor|major)
-    take_action "$@"
-    ;;
-  *)
-    usage_fail
-    ;;
-esac
+main() {
+  semver=${1:-""}
+
+  case "$semver" in
+    patch|minor|major)
+      take_action "$semver"
+      ;;
+    *)
+      usage_fail
+      ;;
+  esac
+}
+
+main "$@"

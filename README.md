@@ -109,7 +109,7 @@ deploy; first add the column, then deploy the application code, then add the
 `not null` constraint.
 
 ```bash
-$ bin/create-migration some-descriptive-name  # Create a new migration
+$ bin/create_migration some-descriptive-name  # Create a new migration
 $ bin/migrate local                           # Migrate local DBs to latest schema
 $ bin/migrate local rollback                  # Roll back latest migration on local DBs
 $ bin/migrate staging                         # Migrate staging DB
@@ -118,7 +118,7 @@ $ bin/migrate production                      # Migrate production/demo DB
 
 For advanced usage, see [knexjs.org](http://knexjs.org/#Migrations).
 
-A good sanity-check for testing migrations locally is the `bin/validate-migration`
+A good sanity-check for testing migrations locally is the `bin/validate_migration`
 script, which gives a summary of the effects of the migration and any unexpected
 side-effects after rolling it back. Note that this should be run before migrating
 locally. You can roll back the migration to get an accurate result.

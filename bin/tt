@@ -1,10 +1,18 @@
 #!/bin/bash
-set -e
+
+set -o errexit
+set -o nounset
+set -o pipefail
+set -o noglob
 
 # Run a single test
-# Usage: `bin/tt routes/users/spec.js`
+# Usage: bin/tt <path-to-spec>
 
-source bin/lib/loadenv
-loadenv-test
+main() {
+  source bin/lib/loadenv
+  loadenv_test
 
-npx ts-node $1 | npx tap-spec
+  npx ts-node $1 | npx tap-spec
+}
+
+main "$@"

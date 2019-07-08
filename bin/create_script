@@ -1,0 +1,32 @@
+#!/bin/bash
+
+set -o errexit
+set -o nounset
+set -o pipefail
+set -o noglob
+
+# Creates a new script from the script template
+# Usage: bin/create_script <script name>
+
+main() {
+  name=${1:-""}
+
+  if [ "name" == "" ]; then
+    echo "Usage: create_script [script-name]"
+    exit 1
+  fi
+
+  filename=bin/$name
+  cp bin/.template $filename
+  chmod a+x $filename
+  echo 'Created '$filename
+
+  echo -n "Open in $EDITOR? [y/n] "
+  read -n 1 should_edit
+
+  if [ "$should_edit" == "y" ]; then
+    $EDITOR $filename
+  fi
+}
+
+main "$@"
