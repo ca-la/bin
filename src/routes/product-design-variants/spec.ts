@@ -75,17 +75,20 @@ test(`GET ${API_PATH}?designId fetches all variants for a design`, async (t: tap
 });
 
 test(`PUT ${API_PATH}?designId replaces all variants for a design`, async (t: tape.Test) => {
-  const { session, user } = await createUser();
-  const { session: sessionTwo, user: userTwo } = await createUser();
-  const { session: randomSession } = await createUser();
-  const editableStub = sandbox()
-    .stub(DesignEventsDAO, 'canEditVariants')
-    .resolves(true);
+  const owner = await createUser();
+  const viewer = await createUser();
+  const editor = await createUser();
+  const rando = await createUser();
+  const admin = await createUser({ role: 'ADMIN' });
+
+  const isQuoteCommittedStub = sandbox()
+    .stub(DesignEventsDAO, 'isQuoteCommitted')
+    .resolves(false);
 
   const design = await createDesign({
     productType: 'TEESHIRT',
     title: 'Plain White Tee',
-    userId: user.id
+    userId: owner.user.id
   });
   await generateCollaborator({
     collectionId: null,
@@ -93,7 +96,15 @@ test(`PUT ${API_PATH}?designId replaces all variants for a design`, async (t: ta
     invitationMessage: 'Come see my cool shirt',
     role: 'VIEW',
     userEmail: null,
-    userId: userTwo.id
+    userId: viewer.user.id
+  });
+  await generateCollaborator({
+    collectionId: null,
+    designId: design.id,
+    invitationMessage: 'Come edit my cool shirt',
+    role: 'EDIT',
+    userEmail: null,
+    userId: editor.user.id
   });
   await ProductDesignVariantsDAO.create({
     colorName: 'Green',
@@ -135,45 +146,77 @@ test(`PUT ${API_PATH}?designId replaces all variants for a design`, async (t: ta
 
   const [failedResponse] = await API.put(`${API_PATH}/?designId=${design.id}`, {
     body: variants,
-    headers: API.authHeader(randomSession.id)
+    headers: API.authHeader(rando.session.id)
   });
   t.equal(failedResponse.status, 403);
 
-  const [response, body] = await API.put(`${API_PATH}/?designId=${design.id}`, {
-    body: variants,
-    headers: API.authHeader(session.id)
-  });
-  t.equal(response.status, 200);
-  t.deepEqual(body.map((variant: ProductDesignVariant): string => variant.id), [
-    variants[0].id,
-    variants[1].id
-  ]);
+  const [initialResponse, initialBody] = await API.put(
+    `${API_PATH}/?designId=${design.id}`,
+    {
+      body: variants,
+      headers: API.authHeader(owner.session.id)
+    }
+  );
+  t.equal(initialResponse.status, 200);
+  t.deepEqual(
+    initialBody.map((variant: ProductDesignVariant): string => variant.id),
+    [variants[0].id, variants[1].id]
+  );
 
-  const [responseTwo, bodyTwo] = await API.put(
+  const [emptyResponse, emptyBody] = await API.put(
     `${API_PATH}/?designId=${design.id}`,
     {
       body: [],
-      headers: API.authHeader(session.id)
+      headers: API.authHeader(owner.session.id)
     }
   );
-  t.equal(responseTwo.status, 200);
-  t.deepEqual(bodyTwo, [], 'Returns an empty list');
+  t.equal(emptyResponse.status, 200);
+  t.deepEqual(emptyBody, [], 'Returns an empty list');
+
+  const [editorResponse, editorBody] = await API.put(
+    `${API_PATH}/?designId=${design.id}`,
+    {
+      body: variants,
+      headers: API.authHeader(editor.session.id)
+    }
+  );
+  t.equal(editorResponse.status, 200);
+  t.deepEqual(
+    editorBody.map((variant: ProductDesignVariant): string => variant.id),
+    [variants[0].id, variants[1].id]
+  );
 
   // A view collaborator should not have permissions to edit the variants.
-  const [responseThree] = await API.put(`${API_PATH}/?designId=${design.id}`, {
+  const [viewerResponse] = await API.put(`${API_PATH}/?designId=${design.id}`, {
     body: variants,
-    headers: API.authHeader(sessionTwo.id)
+    headers: API.authHeader(viewer.session.id)
   });
-  t.equal(responseThree.status, 403);
+  t.equal(viewerResponse.status, 403);
   t.equal(
-    editableStub.callCount,
-    6,
-    'variant editability is checked for each request'
+    isQuoteCommittedStub.callCount,
+    3,
+    'variant editability is checked for owner and editor only'
   );
-  editableStub.resolves(false);
-  const [responseFour] = await API.put(`${API_PATH}/?designId=${design.id}`, {
+
+  isQuoteCommittedStub.resolves(true);
+  const [ownerLockedResponse] = await API.put(
+    `${API_PATH}/?designId=${design.id}`,
+    {
+      body: variants,
+      headers: API.authHeader(owner.session.id)
+    }
+  );
+  t.equal(
+    ownerLockedResponse.status,
+    400,
+    'non-admins cannot update locked variants'
+  );
+
+  isQuoteCommittedStub.resetHistory();
+  const [adminResponse] = await API.put(`${API_PATH}/?designId=${design.id}`, {
     body: variants,
-    headers: API.authHeader(session.id)
+    headers: API.authHeader(admin.session.id)
   });
-  t.equal(responseFour.status, 400);
+  t.equal(adminResponse.status, 200, 'admins can update locked variants');
+  t.equal(isQuoteCommittedStub.callCount, 0, 'admins skip the commit check');
 });

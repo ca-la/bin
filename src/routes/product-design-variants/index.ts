@@ -9,7 +9,6 @@ import {
   canEditDesign
 } from '../../middleware/can-access-design';
 import { hasProperties } from '../../services/require-properties';
-import { canEditVariants } from '../../dao/design-events';
 
 const router = new Router();
 
@@ -55,8 +54,7 @@ function* replaceVariants(
       'A designId needs to be specified in the query parameters!'
     );
   }
-  const isVariantsEditable = yield canEditVariants(designId);
-  if (!isVariantsEditable) {
+  if (!this.state.permissions || !this.state.permissions.canEditVariants) {
     return this.throw(
       400,
       'These variants are locked! You cannot edit variants after payment.'

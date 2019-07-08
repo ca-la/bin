@@ -137,10 +137,6 @@ async function getPermissionsFromRoleAndDesignId(
   roles: LocalRoles,
   designId?: string
 ): Promise<Permissions> {
-  const isVariantsEditable = designId
-    ? await DesignEventsDAO.canEditVariants(designId)
-    : false;
-
   if (roles.isAdmin) {
     return {
       canComment: true,
@@ -152,26 +148,33 @@ async function getPermissionsFromRoleAndDesignId(
     };
   }
 
-  if (roles.isOwner) {
-    return {
-      canComment: true,
-      canDelete: true,
-      canEdit: true,
-      canEditVariants: isVariantsEditable,
-      canSubmit: true,
-      canView: true
-    };
-  }
+  if (roles.isOwner || roles.isEditor) {
+    const isQuoteCommitted = designId
+      ? await DesignEventsDAO.isQuoteCommitted(designId)
+      : true;
+    const canEditVariants = !isQuoteCommitted;
 
-  if (roles.isEditor) {
-    return {
-      canComment: true,
-      canDelete: false,
-      canEdit: true,
-      canEditVariants: isVariantsEditable,
-      canSubmit: true,
-      canView: true
-    };
+    if (roles.isOwner) {
+      return {
+        canComment: true,
+        canDelete: true,
+        canEdit: true,
+        canEditVariants,
+        canSubmit: true,
+        canView: true
+      };
+    }
+
+    if (roles.isEditor) {
+      return {
+        canComment: true,
+        canDelete: false,
+        canEdit: true,
+        canEditVariants,
+        canSubmit: true,
+        canView: true
+      };
+    }
   }
 
   if (roles.isPartner) {

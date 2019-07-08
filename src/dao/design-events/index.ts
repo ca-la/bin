@@ -95,9 +95,9 @@ export async function findByDesignId(designId: string): Promise<DesignEvent[]> {
   );
 }
 
-export async function canEditVariants(designId: string): Promise<boolean> {
+export async function isQuoteCommitted(designId: string): Promise<boolean> {
   const designEvents = await findByDesignId(designId);
-  return !designEvents.some(
+  return designEvents.some(
     (event: DesignEvent) => event.type === 'COMMIT_QUOTE'
   );
 }
