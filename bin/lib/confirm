@@ -1,0 +1,12 @@
+#!/bin/bash
+# Add a confirmation preflight script to subsequent commands
+confirm() {
+  echo -n "Are you sure? Type \"$@\" to continue: "
+  read response
+
+  if [[ "$response" != "$@" ]]; then
+    echo "Response does not match, exiting"
+    exit 1
+  fi
+}
+

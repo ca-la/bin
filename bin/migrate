@@ -9,16 +9,7 @@ set -o noglob
 # Usage: bin/migrate <local|staging|production> [rollback]
 
 source bin/lib/loadenv
-
-confirm() {
-  echo -n "Are you sure? Type \"$@\" to continue: "
-  read response
-
-  if [[ "$response" != "$@" ]]; then
-    echo "Response does not match, exiting"
-    exit 1
-  fi
-}
+source bin/lib/confirm
 
 migrate() {
   npx knex migrate:latest --knexfile dist/knexfile.js

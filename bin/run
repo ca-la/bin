@@ -6,34 +6,57 @@ set -o pipefail
 set -o noglob
 
 # Run JS or TS script in environment
-# Usage: bin/run <local|staging|production|demo> <path-to-script>
+# Usage: bin/run <local|staging|production_and_demo|production_only|demo_only> <path-to-script>
+
+source bin/lib/loadenv
+source bin/lib/confirm
 
 main() {
-  source bin/lib/loadenv
-
   host=${1:-""}
   shift
+
+  run() {
+    npx ts-node "$@"
+  }
 
   case "$host" in
     local)
       loadenv_local
+      run "$@"
       ;;
     staging)
+      confirm 'STAGING'
       loadenv_stg
+      run "$@"
       ;;
-    production)
-      loadenv_prod
-      ;;
-    demo)
+    production_and_demo)
+      # Scripts that should be run in all production enviroments (prod + demo),
+      # such as updating pricing values.
+      confirm 'PRODUCTION_AND_DEMO'
+
       loadenv_demo
+      run "$@"
+
+      loadenv_prod
+      run "$@"
+      ;;
+    production_only)
+      # Scripts that only need run in production (not demo), such as adding
+      # credits to a certain user or rolling back a certain payment.
+      confirm 'PRODUCTION_ONLY'
+      loadenv_prod
+      run "$@"
+      ;;
+    demo_only)
+      confirm 'DEMO_ONLY'
+      loadenv_demo
+      run "$@"
       ;;
     *)
-      echo 'Usage: bin/run <local|staging|production|demo> <path-to-script>'
+      echo 'Usage: bin/run <local|staging|production_and_demo|production_only|demo_only> <path-to-script>'
       exit 1
       ;;
   esac
-
-  npx ts-node "$@"
 }
 
 main "$@"

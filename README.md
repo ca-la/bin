@@ -41,13 +41,13 @@ $ bin/migrate local
 For more details about Migrations, see the section titled
 [Migrations](#Migrations)
 
-#### Seeding databases
+#### Seeding databases & running scripts
 
 There are also a number of scripts that provide seed data in the `src/scripts`
 directory.
 
 ```bash
-$ bin/run src/scripts/<TARGET SCRIPT FILENAME>
+$ bin/run <environment> src/scripts/<TARGET SCRIPT FILENAME>
 ```
 
 ## Deployment
@@ -69,8 +69,8 @@ $ bin/release major    # x.0.0 - large, backwards-incompatible changes
 
 ## Usage
 
-Many common actions have corresponding npm run scripts. Check out the `scripts` key
-in `package.json`.
+Check out the `bin/` directory to explore available tools and CLI entry points
+for API features. The most common ones are documented below:
 
 ### Testing / Linting
 
