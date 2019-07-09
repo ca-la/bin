@@ -8,16 +8,6 @@ set -o noglob
 # Release new version
 # Usage: bin/release <patch|minor|major>
 
-take_action() {
-  source bin/lib/colors
-
-  bin/test
-
-  echo "Releasing $1..."
-  npx cala-release $1
-  echo -e "${green}Done${reset}"
-}
-
 usage_fail() {
   echo "Usage: bin/release <patch|minor|major>"
   exit 1
@@ -28,7 +18,7 @@ main() {
 
   case "$semver" in
     patch|minor|major)
-      take_action "$semver"
+      npx cala-release "$semver"
       ;;
     *)
       usage_fail
