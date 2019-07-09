@@ -9,6 +9,7 @@ import { DetailsTask, TaskStatus } from '../../domain-objects/task-event';
 import { findAllDesignsThroughCollaborator } from '../../dao/product-designs/dao';
 
 interface StageBreakdown {
+  id: string;
   title: string;
   startedAt: Date | null;
   completedAt: Date | null;
@@ -85,6 +86,7 @@ function createStageBreakdown(
 ): void {
   if (task.designStage.title && task.designStage.ordering !== null) {
     stages[task.designStageId] = {
+      id: task.designStageId,
       title: task.designStage.title,
       ordering: task.designStage.ordering,
       startedAt: null,

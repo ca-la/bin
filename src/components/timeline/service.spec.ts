@@ -86,6 +86,7 @@ test('findByUserId finds timelines by user id with task breakdowns', async (t: t
         specificationTimeMs: 129600000,
         stages: [
           {
+            id: timeline[0].stages[0].id,
             completedAt: null,
             completedTasks: 1,
             ordering: 0,
@@ -187,6 +188,7 @@ test('findByCollectionId finds timelines by collection id and completed stage', 
         specificationTimeMs: 129600000,
         stages: [
           {
+            id: timeline[0].stages[0].id,
             completedAt: timeline[0].stages[0].completedAt,
             completedTasks: 3,
             ordering: 0,

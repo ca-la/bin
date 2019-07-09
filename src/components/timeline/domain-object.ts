@@ -6,6 +6,7 @@ export default interface Timeline {
   collections?: { id: string; title: string }[];
   startDate: Date;
   stages: {
+    id: string;
     title: string;
     time: number;
     startedAt: Date | null;
