@@ -10,6 +10,8 @@ set -o noglob
 
 source bin/lib/loadenv
 source bin/lib/confirm
+source bin/lib/clean
+source bin/lib/build
 
 migrate() {
   npx knex migrate:latest --knexfile dist/knexfile.js
@@ -53,8 +55,8 @@ main() {
 
   if [[ "$skip_build" != "true" ]]; then
     echo 'Building...'
-    bin/lib/clean
-    bin/lib/build
+    clean
+    build
   fi
 
   take_action() {
