@@ -19,7 +19,7 @@ interface SearchInterface {
 }
 
 const TABLE_NAME = 'notifications';
-const DELAY_MINUTES = 45;
+const DELAY_MINUTES = 10;
 
 /**
  * Returns all outstanding notifications (e.g. not sent) with associated objects attached.

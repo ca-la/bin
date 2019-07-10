@@ -169,7 +169,7 @@ test('Notifications DAO supports finding by user id', async (t: tape.Test) => {
   );
 });
 
-test('Notifications DAO supports finding outstanding notifications over 45min old', async (t: tape.Test) => {
+test('Notifications DAO supports finding outstanding notifications over 10min old', async (t: tape.Test) => {
   sandbox()
     .stub(NotificationAnnouncer, 'announceNotificationCreation')
     .resolves({});
@@ -177,7 +177,7 @@ test('Notifications DAO supports finding outstanding notifications over 45min ol
 
   const { notification: notificationOne } = await generateNotification({
     actorUserId: user.id,
-    createdAt: new Date(new Date().getTime() - 46 * 60 * 1000),
+    createdAt: new Date(new Date().getTime() - 11 * 60 * 1000),
     type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });
 
