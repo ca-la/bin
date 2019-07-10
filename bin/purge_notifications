@@ -6,12 +6,10 @@ set -o pipefail
 set -o noglob
 
 # Purges all unsent/unread notifications
-# Usage: bin/purge_notifications <local|staging|production|demo>
+# Usage: bin/purge_notifications <local|built>
 
 main() {
   source bin/lib/loadenv
-  source bin/lib/clean
-  source bin/lib/build
 
   host=${1:-""}
 
@@ -20,13 +18,11 @@ main() {
       loadenv_local
       npx ts-node src/workers/purge-notifications/index.ts
       ;;
-    staging|production|demo)
-      clean
-      build
+    built)
       node dist/workers/purge-notifications/index.js
       ;;
     *)
-      echo 'Usage: bin/purge_notifications <local|staging|production|demo>'
+      echo 'Usage: bin/purge_notifications <local|built>'
       exit 1
       ;;
   esac
