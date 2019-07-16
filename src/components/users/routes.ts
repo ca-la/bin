@@ -10,7 +10,9 @@ import CohortsDAO = require('../../components/cohorts/dao');
 import CohortUsersDAO = require('../../components/cohorts/users/dao');
 import DuplicationService = require('../../services/duplicate');
 import filterError = require('../../services/filter-error');
+import MultipleErrors from '../../errors/multiple-errors';
 import canAccessUserResource = require('../../middleware/can-access-user-resource');
+import compact = require('../../services/compact');
 import { hasProperties } from '../../services/require-properties';
 import requireAuth = require('../../middleware/require-auth');
 import SessionsDAO = require('../../dao/sessions');
@@ -22,8 +24,8 @@ import { isValidEmail } from '../../services/validation';
 import { canCreateAccount } from '../../middleware/can-create-account';
 import db = require('../../services/db');
 import { validatePassword } from './services/validate-password';
-import { isEmpty, omit } from 'lodash';
 import rethrow = require('pg-rethrow');
+
 const router = new Router();
 
 /**
@@ -32,7 +34,7 @@ const router = new Router();
 function* createUser(
   this: Koa.Application.Context<UserIO>
 ): AsyncIterableIterator<User> {
-  const { name, email } = this.request.body;
+  const { name, email, password, phone } = this.request.body;
   const { cohort, initialDesigns, promoCode } = this.query;
 
   if (!email) {
@@ -46,14 +48,17 @@ function* createUser(
     // tslint:disable-next-line:max-line-length
     this.throw(
       400,
-      'Only @ca.la emails can sign up on this server. Please visit https://studio.ca.la to access the live version of Studio'
+      'Only @ca.la emails can sign up on this server. Please visit https://app.ca.la to access the live version of Studio'
     );
   }
 
   const referralCode = 'n/a';
 
   const user = yield UsersDAO.create({
-    ...this.request.body,
+    email,
+    name,
+    password,
+    phone,
     referralCode,
     role: ROLES.user
   }).catch(filterError(InvalidDataError, (err: Error) => this.throw(400, err)));
@@ -198,6 +203,7 @@ interface CaughtError {
   field: string;
   message: string;
 }
+
 /**
  * PUT /users/:userId
  */
@@ -213,24 +219,43 @@ function* updateUser(
     'You can only update your own user'
   );
   const { body } = this.request;
+  const {
+    name,
+    phone,
+    email,
+    role,
+    newPassword,
+    currentPassword,
+    subscriptionWaivedAt
+  } = body;
 
-  if (isAdmin && body.role) {
+  if (isAdmin && role) {
     yield SessionsDAO.deleteByUserId(this.params.userId);
   }
   const errors: (Error | CaughtError)[] = [];
+
+  const updatedValues: Partial<User> = {
+    name,
+    email,
+    phone
+  };
+
+  if (isAdmin) {
+    Object.assign(updatedValues, {
+      role,
+      subscriptionWaivedAt
+    });
+  }
+
   const updated = yield db
     .transaction(async (trx: Knex.Transaction) => {
-      if (body.newPassword && body.currentPassword) {
+      if (newPassword && currentPassword) {
         const doPasswordsMatch = await validatePassword(
           this.params.userId,
-          body.currentPassword
+          currentPassword
         );
         if (doPasswordsMatch) {
-          await UsersDAO.updatePassword(
-            this.params.userId,
-            body.newPassword,
-            trx
-          );
+          await UsersDAO.updatePassword(this.params.userId, newPassword, trx);
         } else {
           errors.push({
             field: 'password',
@@ -239,16 +264,11 @@ function* updateUser(
         }
       }
 
-      const user = omit(body, 'currentPassword', 'newPassword');
-      if (isEmpty(user)) {
+      if (Object.keys(compact(updatedValues)).length === 0) {
         return UsersDAO.findById(this.params.userId);
       }
 
-      return UsersDAO.update(
-        this.params.userId,
-        omit(body, 'currentPassword', 'newPassword'),
-        trx
-      )
+      return UsersDAO.update(this.params.userId, updatedValues, trx)
         .catch(rethrow)
         .catch(
           filterError(
@@ -274,8 +294,13 @@ function* updateUser(
       }
     );
 
-  this.status = errors.length ? 400 : 200;
-  this.body = errors.length ? { errors } : updated;
+  if (errors.length > 0) {
+    const error = new MultipleErrors<Error | CaughtError>(errors);
+    this.throw(400, error);
+  }
+
+  this.status = 200;
+  this.body = updated;
 }
 
 function* getAllUsers(

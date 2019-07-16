@@ -83,8 +83,6 @@ const config = {
   // API key and password separated by a colon, e.g. 'tok12345:password12345'
   SHOPIFY_STORE_AUTH: process.env.SHOPIFY_STORE_AUTH,
 
-  REFERRAL_VALUE_DOLLARS: 50,
-
   TWILIO_SID: process.env.TWILIO_SID,
 
   TWILIO_TOKEN: process.env.TWILIO_TOKEN,
@@ -101,7 +99,7 @@ const config = {
   // e.g. 'https://ca.la'
   SITE_HOST: process.env.SITE_HOST,
 
-  // e.g. 'https://studio.ca.la'
+  // e.g. 'https://app.ca.la'
   STUDIO_HOST: process.env.STUDIO_HOST,
 
   // e.g. 'https://fit-client.ca.la'

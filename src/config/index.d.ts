@@ -32,8 +32,6 @@ export const MAILGUN_API_KEY: string;
 export const SHOPIFY_STORE_BASE: string;
 export const SHOPIFY_STORE_AUTH: string;
 
-export const REFERRAL_VALUE_DOLLARS: number;
-
 export const TWILIO_SID: string;
 export const TWILIO_TOKEN: string;
 export const TWILIO_OUTBOUND_NUMBER: string;

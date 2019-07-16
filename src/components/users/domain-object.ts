@@ -31,6 +31,7 @@ export default interface User {
   lastAcceptedPartnerTermsAt: Date | null;
   name: string;
   isSmsPreregistration: boolean;
+  subscriptionWaivedAt: Date | null;
   phone: string | null;
   referralCode: string;
   role: Role;
@@ -44,6 +45,7 @@ export const baseUser = {
   birthday: null,
   email: null,
   isSmsPreregistration: false,
+  subscriptionWaivedAt: null,
   lastAcceptedDesignerTermsAt: null,
   lastAcceptedPartnerTermsAt: null,
   phone: null,
@@ -67,6 +69,7 @@ export interface UserRow {
   name: string;
   password_hash: string | null;
   is_sms_preregistration: boolean;
+  subscription_waived_at: string | null;
   phone: string | null;
   referral_code: string;
   role: Role;
@@ -97,6 +100,7 @@ export function passwordHashDecode(data: UserWithPasswordHash): UserRow {
     email: data.email,
     id: data.id,
     is_sms_preregistration: data.isSmsPreregistration,
+    subscription_waived_at: toDateStringOrNull(data.subscriptionWaivedAt),
     last_accepted_designer_terms_at: toDateStringOrNull(
       data.lastAcceptedDesignerTermsAt
     ),
@@ -118,6 +122,7 @@ export function passwordHashEncode(row: UserRow): UserWithPasswordHash {
     email: row.email,
     id: row.id,
     isSmsPreregistration: row.is_sms_preregistration,
+    subscriptionWaivedAt: toDateOrNull(row.subscription_waived_at),
     lastAcceptedDesignerTermsAt: toDateOrNull(
       row.last_accepted_designer_terms_at
     ),
@@ -139,6 +144,7 @@ export function encode(row: UserRow): User {
     email: row.email,
     id: row.id,
     isSmsPreregistration: row.is_sms_preregistration,
+    subscriptionWaivedAt: toDateOrNull(row.subscription_waived_at),
     lastAcceptedDesignerTermsAt: toDateOrNull(
       row.last_accepted_designer_terms_at
     ),

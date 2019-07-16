@@ -28,7 +28,7 @@ function* errors(next) {
       };
     } else {
       logClientError(err.stack);
-      this.body = { message: err.message };
+      this.body = { message: err.message, errors: err.errors };
     }
   }
 }

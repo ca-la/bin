@@ -105,6 +105,22 @@ test('POST /users returns new user data', async (t: Test) => {
   t.equal(body.passwordHash, undefined);
 });
 
+test('POST /users does not allow private values to be set', async (t: Test) => {
+  stubUserDependencies();
+  stubApprovalDependencies();
+
+  const data = {
+    ...USER_DATA,
+    role: 'ADMIN',
+    subscriptionWaivedAt: new Date('2019-01-01').toISOString()
+  };
+
+  const body = (await post('/users', { body: data }))[1];
+
+  t.equal(body.role, 'USER');
+  t.equal(body.subscriptionWaivedAt, null);
+});
+
 test('POST /users returns a session instead if requested', async (t: Test) => {
   stubUserDependencies();
   stubApprovalDependencies();
@@ -237,6 +253,40 @@ test('PUT /users/:id updates the current user', async (t: Test) => {
   );
 });
 
+test('PUT /users/:id does not allow private values to be set', async (t: Test) => {
+  const { user, session } = await createUser();
+  const [response, body] = await put(`/users/${user.id}`, {
+    body: {
+      birthday: '2017-01-02',
+      role: 'ADMIN',
+      subscriptionWaivedAt: new Date('2019-01-01').toISOString()
+    },
+    headers: authHeader(session.id)
+  });
+
+  t.equal(response.status, 200);
+
+  t.equal(body.role, 'USER');
+  t.equal(body.subscriptionWaivedAt, null);
+});
+
+test('PUT /users/:id allows admins to set private values', async (t: Test) => {
+  const { user } = await createUser();
+  const { session: adminSession } = await createUser({ role: 'ADMIN' });
+  const [response, body] = await put(`/users/${user.id}`, {
+    body: {
+      birthday: '2017-01-02',
+      role: 'ADMIN',
+      subscriptionWaivedAt: new Date('2019-01-01').toISOString()
+    },
+    headers: authHeader(adminSession.id)
+  });
+
+  t.equal(response.status, 200);
+
+  t.equal(body.role, 'ADMIN');
+  t.equal(body.subscriptionWaivedAt, new Date('2019-01-01').toISOString());
+});
 test('PATCH /users/:id returns errors on taken email', async (t: Test) => {
   const { user: user1, session } = await createUser();
   const { user: user2 } = await createUser();
