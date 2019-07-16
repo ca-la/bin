@@ -28,7 +28,7 @@
     "koa-compress": "^1.0.9",
     "koa-multer": "0.0.2",
     "koa-router": "5.4.0",
-    "lodash": "^4.17.11",
+    "lodash": "^4.17.13",
     "mime-types": "2.1.21",
     "node-fetch": "1.6.3",
     "node-uuid": "1.4.7",
