@@ -18,9 +18,6 @@ export const AWS_IRIS_S3_BUCKET: string;
 export const AWS_IRIS_SQS_REGION: string;
 export const AWS_IRIS_SQS_URL: string;
 
-export const AWS_FILES_BUCKET_NAME: string;
-export const AWS_FILES_BUCKET_REGION: string;
-
 export const MAILCHIMP_API_KEY: string;
 export const MAILCHIMP_LIST_ID_PRODUCTION_PARTNERS: string;
 export const MAILCHIMP_LIST_ID_DESIGNERS: string;
