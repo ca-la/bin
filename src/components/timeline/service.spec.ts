@@ -17,6 +17,7 @@ import generateTask from '../../test-helpers/factories/task';
 import generateProductDesignStage from '../../test-helpers/factories/product-design-stage';
 import { TaskStatus } from '../../domain-objects/task-event';
 import generateAsset from '../../test-helpers/factories/asset';
+import { PricingQuote } from '../../domain-objects/pricing-quote';
 
 test('findByUserId finds timelines by user id with task breakdowns', async (t: tape.Test) => {
   const { user, session } = await createUser();
@@ -213,4 +214,69 @@ test('findByCollectionId finds timelines by collection id and completed stage', 
     true,
     'image thumbnail links contain sketch id'
   );
+});
+
+test('format timelines only returns valid timelines', async (t: tape.Test) => {
+  const { user } = await createUser();
+  const validDesign = await createDesign({
+    productType: 'A product type',
+    title: 'A newer design',
+    userId: user.id
+  });
+
+  const invalidDesign = await createDesign({
+    productType: 'A product type',
+    title: 'An older design',
+    userId: user.id
+  });
+
+  const baseQuote: PricingQuote = {
+    id: uuid.v4(),
+    processes: [],
+    createdAt: new Date(),
+    pricingQuoteInputId: '',
+    productType: 'BLAZER',
+    productComplexity: 'COMPLEX',
+    materialCategory: 'BASIC',
+    materialBudgetCents: 0,
+    units: 0,
+    baseCostCents: 0,
+    materialCostCents: 0,
+    processCostCents: 0,
+    unitCostCents: 0,
+    designId: '',
+    creationTimeMs: 0,
+    specificationTimeMs: 0,
+    sourcingTimeMs: 0,
+    samplingTimeMs: 0,
+    preProductionTimeMs: 0,
+    productionTimeMs: 0,
+    fulfillmentTimeMs: 0,
+    processTimeMs: 0
+  };
+
+  const validQuote = {
+    ...baseQuote,
+    designId: validDesign.id
+  };
+
+  const invalidQuote = {
+    ...baseQuote,
+    designId: invalidDesign.id,
+    creationTimeMs: null,
+    specificationTimeMs: null,
+    sourcingTimeMs: null,
+    samplingTimeMs: null,
+    preProductionTimeMs: null,
+    productionTimeMs: null,
+    fulfillmentTimeMs: null,
+    processTimeMs: null
+  };
+
+  const timelines = await Service.formatTimelines(
+    [validQuote, invalidQuote],
+    [validDesign, invalidDesign]
+  );
+
+  t.equal(timelines.length, 1, 'returns only valid timelines');
 });

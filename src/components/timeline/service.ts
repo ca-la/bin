@@ -1,7 +1,10 @@
 import * as QuotesDAO from '../../dao/pricing-quotes';
 import * as DesignsDAO from '../../dao/product-designs';
 import * as TaskEventsDAO from '../../dao/task-events';
-import { PricingQuote } from '../../domain-objects/pricing-quote';
+import {
+  PricingQuote,
+  PricingQuoteCalculated
+} from '../../domain-objects/pricing-quote';
 import Timeline from './domain-object';
 import { getTimeBuffer } from '../../services/add-time-buffer';
 import ProductDesign = require('../../domain-objects/product-design');
@@ -18,6 +21,9 @@ interface StageBreakdown {
   ordering: number;
   time: number;
 }
+
+type RemoveNull<T> = { [P in keyof T]: NonNullable<T[P]> };
+type TimelineQuote = RemoveNull<PricingQuoteCalculated>;
 
 function isTaskMostRecentCompletedTask(
   task: DetailsTask & { designStageId: string },
@@ -140,7 +146,7 @@ async function getStageBreakdownsByDesignId(
   return Object.values(stages);
 }
 
-function getStageTime(stage: StageBreakdown, quote: PricingQuote): number {
+function getStageTime(stage: StageBreakdown, quote: TimelineQuote): number {
   switch (stage.title) {
     case 'Creation': {
       return quote.creationTimeMs;
@@ -170,19 +176,35 @@ function getStageTime(stage: StageBreakdown, quote: PricingQuote): number {
   }
 }
 
-async function formatTimelines(
+function isValidTimelineQuote(quote: PricingQuote): boolean {
+  return (
+    quote.designId !== null &&
+    quote.creationTimeMs !== null &&
+    quote.specificationTimeMs !== null &&
+    quote.sourcingTimeMs !== null &&
+    quote.samplingTimeMs !== null &&
+    quote.preProductionTimeMs !== null &&
+    quote.processTimeMs !== null &&
+    quote.productionTimeMs !== null &&
+    quote.fulfillmentTimeMs !== null
+  );
+}
+
+export async function formatTimelines(
   quotes: PricingQuote[],
   designs: ProductDesign[]
 ): Promise<Timeline[]> {
   const designQuotes: {
     [designId: string]: {
       design?: ProductDesign;
-      quote: PricingQuote & { designId: string };
+      quote: PricingQuote & { designId: string } & TimelineQuote;
     };
   } = {};
   const filteredQuotes = quotes.filter(
-    (quote: PricingQuote): quote is PricingQuote & { designId: string } =>
-      quote.designId !== null
+    (
+      quote: PricingQuote
+    ): quote is PricingQuote & { designId: string } & TimelineQuote =>
+      isValidTimelineQuote(quote)
   );
   for (const quote of filteredQuotes) {
     designQuotes[quote.designId] = { quote };

@@ -9,7 +9,7 @@ import PricingMargin from './pricing-margin';
 import PricingCareLabel from './pricing-care-label';
 import PricingProcessTimeline from '../components/pricing-process-timeline/domain-object';
 
-interface BasePricingQuoteRequest {
+export interface BasePricingQuoteRequest {
   productType: ProductType;
   productComplexity: Complexity;
   materialCategory: MaterialCategory;
@@ -37,14 +37,14 @@ export interface PricingQuoteCalculated {
   materialCostCents: number;
   processCostCents: number;
   unitCostCents: number;
-  creationTimeMs: number;
-  specificationTimeMs: number;
-  sourcingTimeMs: number;
-  samplingTimeMs: number;
-  preProductionTimeMs: number;
-  processTimeMs: number;
-  productionTimeMs: number;
-  fulfillmentTimeMs: number;
+  creationTimeMs: number | null;
+  specificationTimeMs: number | null;
+  sourcingTimeMs: number | null;
+  samplingTimeMs: number | null;
+  preProductionTimeMs: number | null;
+  processTimeMs: number | null;
+  productionTimeMs: number | null;
+  fulfillmentTimeMs: number | null;
 }
 
 export interface PricingQuote
@@ -70,14 +70,14 @@ export interface PricingQuoteRow {
   process_cost_cents: number;
   unit_cost_cents: number;
   design_id: string | null;
-  creation_time_ms: number;
-  specification_time_ms: number;
-  sourcing_time_ms: number;
-  sampling_time_ms: number;
-  pre_production_time_ms: number;
-  production_time_ms: number;
-  process_time_ms: number;
-  fulfillment_time_ms: number;
+  creation_time_ms: number | null;
+  specification_time_ms: number | null;
+  sourcing_time_ms: number | null;
+  sampling_time_ms: number | null;
+  pre_production_time_ms: number | null;
+  production_time_ms: number | null;
+  process_time_ms: number | null;
+  fulfillment_time_ms: number | null;
 }
 
 export interface PricingProcessQuoteRow {
