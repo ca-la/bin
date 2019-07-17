@@ -561,10 +561,9 @@ test('Partner pairing: accept', async (t: Test) => {
   await put(`/bids/${bid.id}/assignees/${partner.user.id}`, {
     headers: authHeader(admin.session.id)
   });
-  const notificationStub = sandbox().stub(
-    NotificationsService,
-    'sendPartnerAcceptServiceBidNotification'
-  );
+  const notificationStub = sandbox()
+    .stub(NotificationsService, 'sendPartnerAcceptServiceBidNotification')
+    .resolves();
 
   const [missingBidResponse] = await post(`/bids/${uuid.v4()}/accept`, {
     headers: authHeader(partner.session.id)
@@ -664,6 +663,7 @@ test('Partner pairing: accept on a deleted design', async (t: Test) => {
     generatePricing: true,
     userId: admin.user.id
   });
+
   await put(`/bids/${bid.id}/assignees/${partner.user.id}`, {
     headers: authHeader(admin.session.id)
   });
@@ -727,10 +727,9 @@ test('Partner pairing: reject', async (t: Test) => {
   await put(`/bids/${bid.id}/assignees/${partner.user.id}`, {
     headers: authHeader(admin.session.id)
   });
-  const notificationStub = sandbox().stub(
-    NotificationsService,
-    'sendPartnerRejectServiceBidNotification'
-  );
+  const notificationStub = sandbox()
+    .stub(NotificationsService, 'sendPartnerRejectServiceBidNotification')
+    .resolves();
 
   const [missingBidResponse] = await post(`/bids/${uuid.v4()}/reject`, {
     headers: authHeader(partner.session.id),

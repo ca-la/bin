@@ -291,6 +291,11 @@ export function* acceptDesignBid(
     'You may only accept a bid you have been assigned to'
   );
 
+  const maybeIOBid = yield attachDesignToBid(bid);
+  if (!maybeIOBid) {
+    this.throw(400, `Design for bid ${bid.id} does not exist!`);
+  }
+
   yield DesignEventsDAO.create({
     actorId: userId,
     bidId: bid.id,
@@ -306,15 +311,10 @@ export function* acceptDesignBid(
     cancelledAt: null,
     role: 'PARTNER'
   });
-  NotificationsService.sendPartnerAcceptServiceBidNotification(
+  yield NotificationsService.sendPartnerAcceptServiceBidNotification(
     quote.designId!,
     this.state.userId
   );
-
-  const maybeIOBid = yield attachDesignToBid(bid);
-  if (!maybeIOBid) {
-    this.throw(400, `Design for bid ${bid.id} does not exist!`);
-  }
 
   this.status = 200;
   this.body = maybeIOBid;
@@ -387,10 +387,11 @@ export function* rejectDesignBid(
     yield CollaboratorsDAO.deleteById(collaborator.id);
   }
 
-  NotificationsService.sendPartnerRejectServiceBidNotification(
-    quote.designId!,
-    this.state.userId
-  );
+  yield NotificationsService.sendPartnerRejectServiceBidNotification({
+    actorId: this.state.userId,
+    bidId,
+    designId: quote.designId!
+  });
 
   this.status = 204;
 }

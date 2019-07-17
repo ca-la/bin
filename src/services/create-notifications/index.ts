@@ -9,6 +9,7 @@ import * as DesignsDAO from '../../dao/product-designs';
 import * as CollectionsDAO from '../../dao/collections';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as UsersDAO from '../../components/users/dao';
+import * as BidRejectionsDAO from '../../components/bid-rejections/dao';
 
 import {
   Notification,
@@ -551,10 +552,13 @@ export async function sendPartnerAcceptServiceBidNotification(
 /**
  * Creates notifications to CALA Ops for a partner rejecting a bid.
  */
-export async function sendPartnerRejectServiceBidNotification(
-  designId: string,
-  actorId: string
-): Promise<PartnerRejectServiceBidNotification> {
+export async function sendPartnerRejectServiceBidNotification(params: {
+  actorId: string;
+  designId: string;
+  bidId: string;
+}): Promise<PartnerRejectServiceBidNotification> {
+  const { actorId, bidId, designId } = params;
+
   const id = uuid.v4();
   const notification = await NotificationsDAO.create({
     ...templateNotification,
@@ -565,10 +569,10 @@ export async function sendPartnerRejectServiceBidNotification(
     sentEmailAt: null,
     type: NotificationType.PARTNER_REJECT_SERVICE_BID
   });
-
   SlackService.enqueueSend({
     channel: 'partners',
     params: {
+      bidRejection: await BidRejectionsDAO.findByBidId(bidId),
       design: await DesignsDAO.findById(designId),
       partner: await UsersDAO.findById(actorId)
     },
