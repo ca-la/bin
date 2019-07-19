@@ -6,7 +6,7 @@ import createUser = require('../../test-helpers/create-user');
 import { createAll as createDesignEvents } from '../../dao/design-events';
 import { create as createDesign } from '../../dao/product-designs';
 
-import Bid from './domain-object';
+import { BidCreationPayload } from './domain-object';
 import {
   create,
   findAcceptedByTargetId,
@@ -50,7 +50,8 @@ test('Bids DAO supports creation and retrieval', async (t: Test) => {
     constantsVersion: 0,
     careLabelsVersion: 0
   });
-  const inputBid: Bid = {
+  const inputBid: BidCreationPayload = {
+    acceptedAt: null,
     bidPriceCents: 100000,
     projectDueInMs: daysToMs(10),
     createdAt: new Date(2012, 11, 22),
@@ -100,7 +101,8 @@ test('Bids DAO supports retrieval by quote ID', async (t: Test) => {
     constantsVersion: 0,
     careLabelsVersion: 0
   });
-  const inputBid: Bid = {
+  const inputBid: BidCreationPayload = {
+    acceptedAt: null,
     bidPriceCents: 100000,
     projectDueInMs: daysToMs(10),
     createdAt: new Date(2012, 11, 22),
@@ -147,7 +149,8 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
     constantsVersion: 0,
     careLabelsVersion: 0
   });
-  const openBid: Bid = {
+  const openBid: BidCreationPayload = {
+    acceptedAt: null,
     bidPriceCents: 100000,
     projectDueInMs: daysToMs(10),
     createdAt: new Date(2012, 11, 22),
@@ -156,7 +159,8 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
     id: uuid.v4(),
     quoteId: quote.id
   };
-  const rejectedBid: Bid = {
+  const rejectedBid: BidCreationPayload = {
+    acceptedAt: null,
     bidPriceCents: 100000,
     projectDueInMs: daysToMs(10),
     createdAt: new Date(2012, 11, 22),
@@ -165,7 +169,8 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
     id: uuid.v4(),
     quoteId: quote.id
   };
-  const acceptedBid: Bid = {
+  const acceptedBid: BidCreationPayload = {
+    acceptedAt: null,
     bidPriceCents: 110000,
     projectDueInMs: daysToMs(10),
     createdAt: new Date(2012, 11, 26),
@@ -293,7 +298,19 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
   const acceptedBids = await findAcceptedByTargetId(partner.id);
   const otherAcceptedBids = await findAcceptedByTargetId(otherPartner.id);
 
-  t.deepEqual(acceptedBids, [acceptedBid], 'returns accepted bid');
+  t.deepEqual(
+    acceptedBids,
+    [{ ...acceptedBid, acceptedAt: acceptedBids[0].acceptedAt }],
+    'returns accepted bid'
+  );
+  t.equal(
+    (acceptedBids[0].createdAt as Date).toString(),
+    new Date(2012, 11, 26).toString()
+  );
+  t.equal(
+    (acceptedBids[0].acceptedAt as Date).toString(),
+    new Date(2012, 11, 27).toString()
+  );
   t.deepEqual(otherAcceptedBids, [], 'returns no bids');
 
   const rejectedBids = await findRejectedByTargetId(partner.id);
@@ -376,7 +393,11 @@ test('findAcceptedByTargetId', async (t: Test) => {
   });
 
   const acceptedBids = await findAcceptedByTargetId(partner.id);
-  t.deepEqual(acceptedBids, [b2], 'Returns all accepted bids for the partner');
+  t.deepEqual(
+    acceptedBids,
+    [{ ...b2, acceptedAt: acceptedBids[0].acceptedAt }],
+    'Returns all accepted bids for the partner'
+  );
 });
 
 test('findRejectedByTargetId', async (t: Test) => {
@@ -530,14 +551,17 @@ test('Bids DAO supports finding all bids by status', async (t: Test) => {
   const result2 = await findAll({ state: 'ACCEPTED' });
   t.deepEqual(
     result2,
-    [acceptedBid, acceptedBid2],
+    [
+      { ...acceptedBid, acceptedAt: result2[0].acceptedAt },
+      { ...acceptedBid2, acceptedAt: result2[1].acceptedAt }
+    ],
     'Only returns the accepted bids'
   );
 
   const result2a = await findAll({ limit: 1, offset: 1, state: 'ACCEPTED' });
   t.deepEqual(
     result2a,
-    [acceptedBid2],
+    [{ ...acceptedBid2, acceptedAt: result2a[0].acceptedAt }],
     'Only returns the accepted bids in the range'
   );
 
@@ -549,7 +573,7 @@ test('Bids DAO supports finding all bids by status', async (t: Test) => {
   const result2b = await findAll({ state: 'ACCEPTED' });
   t.deepEqual(
     result2b,
-    [acceptedBid2],
+    [{ ...acceptedBid2, acceptedAt: result2b[0].acceptedAt }],
     'Only returns the accepted bids that were not removed'
   );
 
@@ -611,10 +635,12 @@ test('Bids DAO supports finding by quote and user id with events', async (t: Tes
     [
       {
         ...openBid2,
+        acceptedAt: result[0].acceptedAt,
         designEvents: []
       },
       {
         ...openBid1,
+        acceptedAt: result[1].acceptedAt,
         designEvents: [
           {
             ...de1,

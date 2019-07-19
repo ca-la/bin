@@ -4,7 +4,7 @@ import generatePricingValues from './pricing-values';
 import generatePricingQuote from '../../services/generate-pricing-quote';
 
 import { PricingQuote } from '../../domain-objects/pricing-quote';
-import Bid from '../../components/bids/domain-object';
+import Bid, { BidCreationPayload } from '../../components/bids/domain-object';
 import { create as createBid } from '../../components/bids/dao';
 import createUser = require('../create-user');
 import User from '../../components/users/domain-object';
@@ -17,7 +17,7 @@ interface BidInterface {
 }
 
 interface GenerateBidInputs {
-  bidOptions?: Partial<Bid>;
+  bidOptions?: Partial<BidCreationPayload>;
   designId: string | null;
   generatePricing?: boolean;
   userId: string | null;
@@ -62,6 +62,7 @@ export default async function generateBid({
     careLabelsVersion: 0
   });
   const bid = await createBid({
+    acceptedAt: null,
     bidPriceCents: 100000,
     projectDueInMs: daysToMs(10),
     createdAt: new Date(),

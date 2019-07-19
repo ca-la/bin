@@ -30,7 +30,9 @@ interface GetListQuery {
   state?: string;
 }
 
-type IOBid = Bid & { design: ProductDesign };
+interface IOBid extends Bid {
+  design: ProductDesign;
+}
 
 async function attachDesignToBid(bid: Bid): Promise<IOBid | null> {
   const design = await ProductDesignsDAO.findByQuoteId(bid.quoteId);

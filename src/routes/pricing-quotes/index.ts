@@ -298,6 +298,7 @@ function* createBidForQuote(
       createdAt: new Date(),
       id: uuid.v4(),
       ...bidRequest,
+      acceptedAt: null,
       createdBy: this.state.userId
     });
 

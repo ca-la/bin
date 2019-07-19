@@ -9,7 +9,7 @@
     ],
     "quotemark": [false],
     "import-name": [false],
-    "interface-name": [true, "never-prefix"],
+    "interface-name": [false],
     "ordered-imports": [
       true,
       {

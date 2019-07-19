@@ -11,6 +11,7 @@ import DesignEvent, {
 
 export default interface Bid {
   id: string;
+  acceptedAt: Date | null;
   createdAt: Date;
   createdBy: string;
   quoteId: string;
@@ -19,8 +20,13 @@ export default interface Bid {
   description?: string;
 }
 
+export interface BidCreationPayload extends Bid {
+  acceptedAt: null;
+}
+
 export interface BidRow {
   id: string;
+  accepted_at: string | null;
   created_at: string;
   created_by: string;
   quote_id: string;
@@ -31,6 +37,7 @@ export interface BidRow {
 
 export const encode = (row: BidRow): Bid => ({
   id: row.id,
+  acceptedAt: row.accepted_at ? new Date(row.accepted_at) : null,
   createdAt: new Date(row.created_at),
   createdBy: row.created_by,
   quoteId: row.quote_id,
@@ -42,6 +49,7 @@ export const encode = (row: BidRow): Bid => ({
 
 export const decode = (data: Bid): BidRow => ({
   id: data.id,
+  accepted_at: data.acceptedAt ? data.acceptedAt.toISOString() : null,
   created_at: data.createdAt.toISOString(),
   created_by: data.createdBy,
   quote_id: data.quoteId,
@@ -58,6 +66,7 @@ export function isBid(row: object): row is Bid {
   return hasProperties(
     row,
     'id',
+    'acceptedAt',
     'createdAt',
     'createdBy',
     'quoteId',
@@ -71,6 +80,7 @@ export function isBidRow(row: object): row is BidRow {
   return hasProperties(
     row,
     'id',
+    'accepted_at',
     'created_at',
     'created_by',
     'quote_id',

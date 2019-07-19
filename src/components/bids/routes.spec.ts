@@ -35,6 +35,7 @@ test('GET /bids', async (t: Test) => {
     userId: admin.user.id
   });
   const otherBid = await BidsDAO.create({
+    acceptedAt: null,
     bidPriceCents: 100000,
     projectDueInMs: daysToMs(10),
     createdAt: new Date(2012, 12, 22),
@@ -111,6 +112,7 @@ test('GET /bids?userId&state=OPEN', async (t: Test) => {
     userId: admin.user.id
   });
   const otherBid = await BidsDAO.create({
+    acceptedAt: null,
     bidPriceCents: 100000,
     projectDueInMs: daysToMs(10),
     createdAt: new Date(2012, 12, 22),
@@ -120,6 +122,7 @@ test('GET /bids?userId&state=OPEN', async (t: Test) => {
     quoteId: quote.id
   });
   const expiredBid = await BidsDAO.create({
+    acceptedAt: null,
     bidPriceCents: 100000,
     projectDueInMs: daysToMs(10),
     createdAt: new Date(2012, 12, 22),
@@ -178,6 +181,7 @@ test('GET /bids?userId&state=EXPIRED', async (t: Test) => {
     userId: admin.user.id
   });
   const otherBid = await BidsDAO.create({
+    acceptedAt: null,
     bidPriceCents: 100000,
     projectDueInMs: daysToMs(10),
     createdAt: new Date(2012, 12, 22),
@@ -187,6 +191,7 @@ test('GET /bids?userId&state=EXPIRED', async (t: Test) => {
     quoteId: quote.id
   });
   const expiredBid = await BidsDAO.create({
+    acceptedAt: null,
     bidPriceCents: 100000,
     projectDueInMs: daysToMs(10),
     createdAt: threeDaysAgo,
@@ -246,6 +251,7 @@ test('GET /bids?userId&state=REJECTED', async (t: Test) => {
     userId: admin.user.id
   });
   const otherBid = await BidsDAO.create({
+    acceptedAt: null,
     bidPriceCents: 100000,
     projectDueInMs: daysToMs(10),
     createdAt: new Date(2012, 12, 22),
@@ -301,6 +307,7 @@ test('GET /bids?userId&state=ACCEPTED', async (t: Test) => {
     userId: admin.user.id
   });
   const otherBid = await BidsDAO.create({
+    acceptedAt: null,
     bidPriceCents: 100000,
     projectDueInMs: daysToMs(10),
     createdAt: new Date(2012, 12, 22),
@@ -550,6 +557,7 @@ test('Partner pairing: accept', async (t: Test) => {
     headers: authHeader(admin.session.id)
   });
   const bid = await BidsDAO.create({
+    acceptedAt: null,
     bidPriceCents: 20000,
     projectDueInMs: daysToMs(10),
     createdAt: new Date(),
@@ -708,6 +716,7 @@ test('Partner pairing: reject', async (t: Test) => {
     headers: authHeader(admin.session.id)
   });
   const bid = await BidsDAO.create({
+    acceptedAt: null,
     bidPriceCents: 20000,
     projectDueInMs: daysToMs(10),
     createdAt: new Date(),

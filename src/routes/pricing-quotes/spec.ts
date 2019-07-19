@@ -575,6 +575,7 @@ test('PUT /pricing-quotes/:quoteId/bid/:bidId creates bid', async (t: Test) => {
   });
 
   const inputBid: Bid = {
+    acceptedAt: null,
     bidPriceCents: 100000,
     projectDueInMs: daysToMs(10),
     createdAt: new Date(2012, 12, 22),
@@ -639,6 +640,7 @@ test('POST /pricing-quotes/:quoteId/bids creates bid', async (t: Test) => {
   });
 
   const inputBid: Unsaved<Bid> = {
+    acceptedAt: null,
     bidPriceCents: 100000,
     projectDueInMs: daysToMs(10),
     createdBy: user.id,
@@ -702,6 +704,7 @@ test('GET /pricing-quotes/:quoteId/bids returns list of bids for quote', async (
   });
 
   const inputBid: Bid = {
+    acceptedAt: null,
     bidPriceCents: 100000,
     projectDueInMs: daysToMs(10),
     createdAt: new Date(2012, 12, 22),
