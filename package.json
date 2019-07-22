@@ -16,6 +16,7 @@
     "@types/node": "10.3.1",
     "@types/node-fetch": "^2.3.3",
     "@types/node-uuid": "0.0.28",
+    "@types/pg": "^7.4.14",
     "aws-sdk": "^2.302.0",
     "bcrypt": "2.0.1",
     "co-body": "4.2.0",

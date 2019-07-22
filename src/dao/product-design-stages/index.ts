@@ -1,5 +1,6 @@
 import * as Knex from 'knex';
 import * as uuid from 'node-uuid';
+import { QueryResult } from 'pg';
 
 import * as db from '../../services/db';
 import ProductDesignStage, {
@@ -79,12 +80,22 @@ export async function findAllByDesignId(
   );
 }
 
+interface OrderedTitle {
+  title: string;
+  ordering: number;
+}
+
 export async function findAllTitles(): Promise<string[]> {
-  return db(TABLE_NAME)
-    .distinct('title')
-    .distinct('ordering')
-    .orderBy('ordering')
-    .then((rows: { title: string }[]) =>
-      rows.map((row: { title: string }) => row.title)
+  return db
+    .raw(
+      `
+SELECT * FROM (
+  SELECT DISTINCT ON (title) title, ordering FROM product_design_stages
+) AS stages
+ORDER BY ordering;
+`
+    )
+    .then((result: QueryResult) =>
+      (result.rows as OrderedTitle[]).map((row: OrderedTitle) => row.title)
     );
 }
