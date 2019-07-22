@@ -4,7 +4,7 @@ const COLORS = require('../../services/colors');
 const db = require('../../services/db');
 const Logger = require('../../services/logger');
 const { getFile } = require('../../services/aws');
-const { AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME } = require('../../config');
+const { AWS_USER_UPLOADS_BUCKET_NAME } = require('../../config');
 const { update } = require('../../components/assets/dao');
 
 const { green, yellow, red } = COLORS.fmt;
@@ -22,10 +22,7 @@ async function backfill() {
 
     let mimeType;
     try {
-      const data = await getFile(
-        AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME,
-        rows[i].id
-      );
+      const data = await getFile(AWS_USER_UPLOADS_BUCKET_NAME, rows[i].id);
       mimeType = data.ContentType;
     } catch (err) {
       Logger.log(red(err.message));

@@ -6,7 +6,7 @@ import { authHeader, get, patch, put } from '../../../test-helpers/http';
 import { sandbox, test } from '../../../test-helpers/fresh';
 import * as AWSService from '../../../services/aws';
 import * as AssetsDAO from '../dao';
-import { AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME as BUCKET_NAME } from '../../../config';
+import { USER_UPLOADS_BASE_URL } from '../../../config';
 import generateAsset from '../../../test-helpers/factories/asset';
 
 test('GET /product-design-images/:assetId returns an asset', async (t: tape.Test) => {
@@ -129,7 +129,7 @@ test('GET /product-design-images/:assetId/upload-policy returns an upload policy
   t.deepEqual(body, {
     contentDisposition: `attachment; filename="${assetId}.png"`,
     contentType: 'image/png',
-    downloadUrl: `https://${BUCKET_NAME}.s3.amazonaws.com/${assetId}`,
+    downloadUrl: `${USER_UPLOADS_BASE_URL}/${assetId}`,
     formData: {
       'x-aws-foo': 'bar'
     },

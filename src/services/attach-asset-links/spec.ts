@@ -13,10 +13,10 @@ import * as ImagesDAO from '../../components/assets/dao';
 
 function stubUrls(): void {
   sandbox()
-    .stub(Configuration, 'AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME')
-    .value('aws-example');
+    .stub(Configuration, 'USER_UPLOADS_BASE_URL')
+    .value('https://user-uploads.example.com');
   sandbox()
-    .stub(Configuration, 'IMGIX_BASE_URL')
+    .stub(Configuration, 'USER_UPLOADS_IMGIX_URL')
     .value('https://imgix.example.com');
 }
 
@@ -47,7 +47,7 @@ test('addAssetLink returns only the download link for non-previewable assets', a
   const enrichedComponent = await addAssetLink(component);
   t.equal(
     enrichedComponent.downloadLink,
-    `https://aws-example.s3.amazonaws.com/${sketchId}`
+    `https://user-uploads.example.com/${sketchId}`
   );
   t.equal(enrichedComponent.assetLink, null);
   t.equal(enrichedComponent.thumbnailLink, null);
@@ -81,7 +81,7 @@ test('addAssetLink returns aws link when component is of type sketch', async (t:
   const enrichedComponent = await addAssetLink(component);
   t.equal(
     enrichedComponent.downloadLink,
-    `https://aws-example.s3.amazonaws.com/${sketchId}`
+    `https://user-uploads.example.com/${sketchId}`
   );
   t.equal(
     enrichedComponent.assetLink,
@@ -125,7 +125,7 @@ test('addAssetLink returns link when component is of type artwork', async (t: ta
   const enrichedComponent = await addAssetLink(component);
   t.equal(
     enrichedComponent.downloadLink,
-    `https://aws-example.s3.amazonaws.com/${artworkId}`
+    `https://user-uploads.example.com/${artworkId}`
   );
   t.equal(
     enrichedComponent.assetLink,
@@ -176,7 +176,7 @@ test('addAssetLink returns link when component is of type material', async (t: t
   const enrichedComponent = await addAssetLink(component);
   t.equal(
     enrichedComponent.downloadLink,
-    `https://aws-example.s3.amazonaws.com/${materialImageId}`
+    `https://user-uploads.example.com/${materialImageId}`
   );
   t.equal(
     enrichedComponent.assetLink,

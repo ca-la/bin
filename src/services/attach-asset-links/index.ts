@@ -1,8 +1,5 @@
 import * as mime from 'mime-types';
-import {
-  AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME,
-  IMGIX_BASE_URL
-} from '../../config';
+import { USER_UPLOADS_BASE_URL, USER_UPLOADS_IMGIX_URL } from '../../config';
 import Component, {
   ComponentType
 } from '../../components/components/domain-object';
@@ -28,19 +25,18 @@ function constructAssetLinks(options: {
   id: string;
   mimeType: string;
 }): AssetLinks {
-  const AWS_BASE_URL = `https://${AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME}.s3.amazonaws.com`;
   const hasPreview = isPreviewable(options.mimeType);
   return {
     assetLink: hasPreview
-      ? `${IMGIX_BASE_URL}/${options.id}${DESIGN_PREVIEW_TOOL_FORMAT}`
+      ? `${USER_UPLOADS_IMGIX_URL}/${options.id}${DESIGN_PREVIEW_TOOL_FORMAT}`
       : null,
-    downloadLink: `${AWS_BASE_URL}/${options.id}`,
+    downloadLink: `${USER_UPLOADS_BASE_URL}/${options.id}`,
     fileType: mime.extension(options.mimeType) || 'Unknown',
     thumbnailLink: hasPreview
-      ? `${IMGIX_BASE_URL}/${options.id}${DESIGN_PREVIEW_THUMBNAIL}`
+      ? `${USER_UPLOADS_IMGIX_URL}/${options.id}${DESIGN_PREVIEW_THUMBNAIL}`
       : null,
     thumbnail2xLink: hasPreview
-      ? `${IMGIX_BASE_URL}/${options.id}${DESIGN_PREVIEW_THUMBNAIL_2X}`
+      ? `${USER_UPLOADS_IMGIX_URL}/${options.id}${DESIGN_PREVIEW_THUMBNAIL_2X}`
       : null
   };
 }
@@ -136,8 +132,8 @@ export function generatePreviewLinks(
   return imageIds.map(
     (imageId: string): ThumbnailAndPreviewLinks => {
       return {
-        previewLink: `${IMGIX_BASE_URL}/${imageId}${PREVIEW_CARD_FORMAT}`,
-        thumbnailLink: `${IMGIX_BASE_URL}/${imageId}${THUMBNAIL_FORMAT}`
+        previewLink: `${USER_UPLOADS_IMGIX_URL}/${imageId}${PREVIEW_CARD_FORMAT}`,
+        thumbnailLink: `${USER_UPLOADS_IMGIX_URL}/${imageId}${THUMBNAIL_FORMAT}`
       };
     }
   );
@@ -151,7 +147,7 @@ export function generatePreviewLinks(
 export function generateThumbnailLinks(imageIds: string[]): string[] {
   return imageIds.map(
     (imageId: string): string => {
-      return `${IMGIX_BASE_URL}/${imageId}${THUMBNAIL_FORMAT}`;
+      return `${USER_UPLOADS_IMGIX_URL}/${imageId}${THUMBNAIL_FORMAT}`;
     }
   );
 }

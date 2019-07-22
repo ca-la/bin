@@ -1,14 +1,13 @@
 export const REQUIRE_CALA_EMAIL: boolean;
 
 export const AWS_SCANPHOTO_BUCKET_NAME: string;
-export const AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME: string;
-export const AWS_PRODUCT_DESIGN_IMAGE_BUCKET_REGION: string;
 
 export const AWS_ACCESS_KEY: string;
 export const AWS_SECRET_KEY: string;
 
 export const AWS_NOTIFICATION_SQS_URL: string;
 export const AWS_NOTIFICATION_SQS_REGION: string;
+
 export const AWS_S3_THUMBNAIL_ACCESS_KEY: string;
 export const AWS_S3_THUMBNAIL_SECRET_KEY: string;
 export const AWS_S3_THUMBNAIL_BUCKET_NAME: string;
@@ -17,6 +16,10 @@ export const AWS_S3_THUMBNAIL_BUCKET_REGION: string;
 export const AWS_IRIS_S3_BUCKET: string;
 export const AWS_IRIS_SQS_REGION: string;
 export const AWS_IRIS_SQS_URL: string;
+
+export const AWS_USER_UPLOADS_BUCKET_NAME: string;
+export const AWS_USER_UPLOADS_BUCKET_REGION: string;
+export const USER_UPLOADS_BASE_URL: string;
 
 export const MAILCHIMP_API_KEY: string;
 export const MAILCHIMP_LIST_ID_PRODUCTION_PARTNERS: string;
@@ -55,7 +58,7 @@ export const CALA_OPS_USER_ID: string;
 export const DATABASE_URL: string;
 export const MAX_DB_CONNECTION_POOL_SIZE: string;
 
-export const IMGIX_BASE_URL: string;
+export const USER_UPLOADS_IMGIX_URL: string;
 
 export const DEFAULT_DESIGN_IDS: string;
 

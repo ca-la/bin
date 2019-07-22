@@ -5,7 +5,7 @@ import createUser = require('../../test-helpers/create-user');
 import { authHeader, get } from '../../test-helpers/http';
 import { sandbox, test } from '../../test-helpers/fresh';
 import * as AWSService from '../../services/aws';
-import { AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME as BUCKET_NAME } from '../../config';
+import { USER_UPLOADS_BASE_URL } from '../../config';
 
 test('GET /product-designs/upload-policy/:id returns an upload policy', async (t: tape.Test) => {
   const { session } = await createUser();
@@ -29,7 +29,7 @@ test('GET /product-designs/upload-policy/:id returns an upload policy', async (t
   t.deepEqual(body, {
     contentDisposition: `attachment; filename="${assetId}.png"`,
     contentType: 'image/png',
-    downloadUrl: `https://${BUCKET_NAME}.s3.amazonaws.com/${assetId}`,
+    downloadUrl: `${USER_UPLOADS_BASE_URL}/${assetId}`,
     formData: {
       'x-aws-foo': 'bar'
     },

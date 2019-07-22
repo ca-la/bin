@@ -7,8 +7,8 @@ import { uploadStatus } from './upload-status';
 import { isPartialAsset } from '../domain-object';
 import { generateUploadPolicy } from '../../../services/upload-policy';
 import {
-  AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME as BUCKET_NAME,
-  AWS_PRODUCT_DESIGN_IMAGE_BUCKET_REGION as BUCKET_REGION
+  AWS_USER_UPLOADS_BUCKET_NAME as BUCKET_NAME,
+  AWS_USER_UPLOADS_BUCKET_REGION as BUCKET_REGION
 } from '../../../config';
 import {
   deserializeAsset,

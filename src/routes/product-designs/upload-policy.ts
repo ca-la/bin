@@ -2,9 +2,9 @@ import * as Koa from 'koa';
 import * as uuid from 'node-uuid';
 
 import {
-  AWS_PRODUCT_DESIGN_IMAGE_BUCKET_NAME as BUCKET_NAME,
-  AWS_PRODUCT_DESIGN_IMAGE_BUCKET_REGION as BUCKET_REGION,
-  AWS_S3_THUMBNAIL_BUCKET_NAME
+  AWS_S3_THUMBNAIL_BUCKET_NAME,
+  AWS_USER_UPLOADS_BUCKET_NAME as BUCKET_NAME,
+  AWS_USER_UPLOADS_BUCKET_REGION as BUCKET_REGION
 } from '../../config';
 import * as AWSService from '../../services/aws';
 import { generateUploadPolicy } from '../../services/upload-policy';

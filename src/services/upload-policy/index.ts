@@ -1,5 +1,6 @@
 import { generateFilename } from '../generate-filename';
 import * as AWSService from '../../services/aws';
+import { USER_UPLOADS_BASE_URL } from '../../config';
 
 export interface UploadPolicy {
   contentDisposition: string;
@@ -39,9 +40,7 @@ export function generateUploadPolicy(options: Options): UploadPolicy {
   return {
     contentDisposition,
     contentType,
-    downloadUrl: `https://${
-      options.s3Bucket
-    }.s3.amazonaws.com/${remoteFileName}`,
+    downloadUrl: `${USER_UPLOADS_BASE_URL}/${remoteFileName}`,
     formData: fields,
     remoteFileName,
     uploadUrl: url
