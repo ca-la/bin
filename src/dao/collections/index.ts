@@ -202,7 +202,10 @@ JOIN collection_designs as cd
 JOIN (
   SELECT *
   FROM design_events AS de1
+  JOIN product_designs as d
+    ON d.id = de1.design_id
   WHERE type='SUBMIT_DESIGN'
+    AND d.deleted_at is null
     AND NOT EXISTS (
     SELECT * from design_events AS de2
     WHERE de1.design_id = de2.design_id

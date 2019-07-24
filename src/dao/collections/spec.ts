@@ -476,6 +476,18 @@ test('CollectionsDAO#findWithUncostedDesigns finds all collections with uncosted
     userId: user2.id
   });
 
+  const designDeleted = await createDesign({
+    productType: 'test',
+    title: 'test design uncosted',
+    userId: user2.id
+  });
+
+  const designDeleted2 = await createDesign({
+    productType: 'test',
+    title: 'test design uncosted',
+    userId: user2.id
+  });
+
   const design2 = await createDesign({
     productType: 'test2',
     title: 'test design costed',
@@ -503,6 +515,9 @@ test('CollectionsDAO#findWithUncostedDesigns finds all collections with uncosted
   const { collection: collection1 } = await generateCollection({
     createdBy: user2.id
   });
+  const { collection: collectionDeleted } = await generateCollection({
+    createdBy: user2.id
+  });
   const { collection: collection2 } = await generateCollection({
     createdBy: user2.id
   });
@@ -520,6 +535,8 @@ test('CollectionsDAO#findWithUncostedDesigns finds all collections with uncosted
 
   await CollectionsDAO.addDesign(collection1.id, design1.id);
   await CollectionsDAO.addDesign(collection1.id, design2.id);
+  await CollectionsDAO.addDesign(collection1.id, designDeleted2.id);
+  await CollectionsDAO.addDesign(collectionDeleted.id, designDeleted.id);
   await CollectionsDAO.addDesign(collection2.id, design3.id);
   await CollectionsDAO.addDesign(collection3.id, design4.id);
   await CollectionsDAO.addDesign(collection4.id, design5.id);
@@ -529,6 +546,26 @@ test('CollectionsDAO#findWithUncostedDesigns finds all collections with uncosted
     bidId: null,
     createdAt: new Date(),
     designId: design1.id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: user.id,
+    type: 'SUBMIT_DESIGN'
+  };
+  const submitEventDeleted: DesignEvent = {
+    actorId: user2.id,
+    bidId: null,
+    createdAt: new Date(),
+    designId: designDeleted.id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: user.id,
+    type: 'SUBMIT_DESIGN'
+  };
+  const submitEventDeleted2: DesignEvent = {
+    actorId: user2.id,
+    bidId: null,
+    createdAt: new Date(),
+    designId: designDeleted.id,
     id: uuid.v4(),
     quoteId: null,
     targetId: user.id,
@@ -617,6 +654,8 @@ test('CollectionsDAO#findWithUncostedDesigns finds all collections with uncosted
 
   await DesignEventsDAO.createAll([
     submitEvent,
+    submitEventDeleted,
+    submitEventDeleted2,
     submitEvent2,
     submitEvent3,
     submitEvent4,
@@ -643,6 +682,7 @@ test('CollectionsDAO#findWithUncostedDesigns finds all collections with uncosted
     type: 'SUBMIT_DESIGN'
   });
 
+  await ProductDesignsDAO.deleteById(designDeleted.id);
   const response = await CollectionsDAO.findWithUncostedDesigns();
 
   t.equal(response.length, 1, 'Only one collection is returned');
