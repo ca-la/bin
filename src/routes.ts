@@ -24,7 +24,7 @@ import partnerPayouts from './components/partner-payouts/routes';
 import processRoutes from './components/processes/routes';
 import promoCodeRoutes from './components/promo-codes/routes';
 import resolveAccountRoutes from './components/resolve-accounts/routes';
-import subscriptionRoutes from './components/subscriptions/routes';
+import newsletterSubscriptionRoutes from './components/newsletter-subscriptions/routes';
 import timelineRoutes from './components/timeline/routes';
 import userRoutes from './components/users/routes';
 
@@ -78,8 +78,11 @@ router.use(
 router.use('/product-design-images', assetRoutes);
 router.use('/promo-codes', promoCodeRoutes);
 router.use('/resolve-accounts', resolveAccountRoutes);
-router.use('/subscriptions', subscriptionRoutes);
+router.use('/newsletter-subscriptions', newsletterSubscriptionRoutes);
 router.use('/timelines', timelineRoutes);
 router.use('/users', userRoutes);
+
+// TODO: Deprecate as soon as cala-site is using the correct /newsletter-subscriptions/ routes
+router.use('/subscriptions', cloneDeep(newsletterSubscriptionRoutes));
 
 export default router;

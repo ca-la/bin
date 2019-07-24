@@ -8,7 +8,7 @@ import {
   STUDIO_HOST
 } from '../../config';
 
-test('POST /subscriptions/designers creates a designer subscription', async (t: Test) => {
+test('POST /newsletter-subscriptions/designers creates a designer subscription', async (t: Test) => {
   const subscribeStub = sandbox()
     .stub(MailChimp, 'addOrUpdateListMember')
     .resolves();
@@ -18,7 +18,7 @@ test('POST /subscriptions/designers creates a designer subscription', async (t: 
       id: 'abc-123'
     });
 
-  const [response, body] = await post('/subscriptions/designers', {
+  const [response, body] = await post('/newsletter-subscriptions/designers', {
     body: {
       brandInstagram: 'thisiscala',
       email: 'foo@example.com',
@@ -67,11 +67,14 @@ test('POST /subscriptions/designers creates a designer subscription', async (t: 
     'Returns a success body with a registration link'
   );
 
-  const [badResponse, badBody] = await post('/subscriptions/designers', {
-    body: {
-      foo: 'bar'
+  const [badResponse, badBody] = await post(
+    '/newsletter-subscriptions/designers',
+    {
+      body: {
+        foo: 'bar'
+      }
     }
-  });
+  );
 
   t.equal(badResponse.status, 400, 'Fails on bad body');
   t.equal(
@@ -81,7 +84,7 @@ test('POST /subscriptions/designers creates a designer subscription', async (t: 
   );
 });
 
-test('POST /subscriptions/designers creates an unqualified designer sub', async (t: Test) => {
+test('POST /newsletter-subscriptions/designers creates an unqualified designer sub', async (t: Test) => {
   const subscribeStub = sandbox()
     .stub(MailChimp, 'addOrUpdateListMember')
     .resolves();
@@ -89,7 +92,7 @@ test('POST /subscriptions/designers creates an unqualified designer sub', async 
     .stub(ApprovalService, 'default')
     .resolves();
 
-  const [response, body] = await post('/subscriptions/designers', {
+  const [response, body] = await post('/newsletter-subscriptions/designers', {
     body: {
       brandInstagram: 'thisiscala',
       email: 'foo@example.com',
@@ -126,19 +129,22 @@ test('POST /subscriptions/designers creates an unqualified designer sub', async 
   );
 });
 
-test('POST /subscriptions/production-partners creates a partner subscription', async (t: Test) => {
+test('POST /newsletter-subscriptions/production-partners creates a partner subscription', async (t: Test) => {
   const subscribeStub = sandbox()
     .stub(MailChimp, 'addOrUpdateListMember')
     .resolves();
 
-  const [response, body] = await post('/subscriptions/production-partners', {
-    body: {
-      email: 'foo@example.com',
-      language: 'TypeScript',
-      name: 'CA LA',
-      source: 'homepage-overlay'
+  const [response, body] = await post(
+    '/newsletter-subscriptions/production-partners',
+    {
+      body: {
+        email: 'foo@example.com',
+        language: 'TypeScript',
+        name: 'CA LA',
+        source: 'homepage-overlay'
+      }
     }
-  });
+  );
 
   t.equal(subscribeStub.callCount, 1, 'Calls mailchimp');
   t.true(
@@ -159,7 +165,7 @@ test('POST /subscriptions/production-partners creates a partner subscription', a
   t.deepEqual(body, { success: true }, 'Returns a success body');
 
   const [badResponse, badBody] = await post(
-    '/subscriptions/production-partners',
+    '/newsletter-subscriptions/production-partners',
     {
       body: {
         foo: 'bar'
