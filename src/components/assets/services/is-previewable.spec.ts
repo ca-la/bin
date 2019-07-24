@@ -9,6 +9,7 @@ test('isPreviewable can determine if a mimeType is previewable', async (t: tape.
 
   t.true(isPreviewable('image/heic'));
   t.true(isPreviewable('image/vnd.adobe.photoshop'));
+  t.true(isPreviewable('application/x-photoshop'));
   t.true(isPreviewable('application/pdf'));
   t.true(isPreviewable('application/postscript'));
 

@@ -1,4 +1,3 @@
-import * as mime from 'mime-types';
 import { USER_UPLOADS_BASE_URL, USER_UPLOADS_IMGIX_URL } from '../../config';
 import Component, {
   ComponentType
@@ -6,6 +5,7 @@ import Component, {
 import * as OptionsDAO from '../../dao/product-design-options';
 import * as ImagesDAO from '../../components/assets/dao';
 import { isPreviewable } from '../../components/assets/services/is-previewable';
+import { getExtension } from '../../components/assets/services/get-extension';
 
 export interface AssetLinks {
   assetLink: string | null;
@@ -31,7 +31,7 @@ function constructAssetLinks(options: {
       ? `${USER_UPLOADS_IMGIX_URL}/${options.id}${DESIGN_PREVIEW_TOOL_FORMAT}`
       : null,
     downloadLink: `${USER_UPLOADS_BASE_URL}/${options.id}`,
-    fileType: mime.extension(options.mimeType) || 'Unknown',
+    fileType: getExtension(options.mimeType) || 'Unknown',
     thumbnailLink: hasPreview
       ? `${USER_UPLOADS_IMGIX_URL}/${options.id}${DESIGN_PREVIEW_THUMBNAIL}`
       : null,
