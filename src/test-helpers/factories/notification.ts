@@ -163,6 +163,7 @@ export default async function generateNotification(
     ...templateNotification,
     actorUserId: actor.id,
     createdAt: options.createdAt || new Date(),
+    deletedAt: options.deletedAt || null,
     id: options.id || id,
     readAt: options.readAt || null,
     recipientUserId: recipient.id,

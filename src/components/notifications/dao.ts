@@ -29,7 +29,7 @@ export async function findOutstanding(
 ): Promise<Notification[]> {
   const outstandingNotifications: NotificationRow[] = await db(TABLE_NAME)
     .select('*')
-    .where({ sent_email_at: null, read_at: null })
+    .where({ deleted_at: null, sent_email_at: null, read_at: null })
     .whereNot({ recipient_user_id: null })
     .andWhereRaw(`created_at < NOW() - INTERVAL '${DELAY_MINUTES} minutes'`)
     .orderBy('created_at', 'desc')
@@ -53,6 +53,7 @@ export async function markSent(
 ): Promise<Notification[]> {
   const updatedNotifications: NotificationRow[] = await db(TABLE_NAME)
     .whereIn('id', ids)
+    .andWhere({ deleted_at: null })
     .update({ sent_email_at: new Date().toISOString() }, '*')
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
@@ -74,6 +75,7 @@ export async function markRead(
 ): Promise<Notification[]> {
   const updatedNotifications: NotificationRow[] = await db(TABLE_NAME)
     .whereIn('id', ids)
+    .andWhere({ deleted_at: null })
     .update({ read_at: new Date().toISOString() }, '*')
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
@@ -114,7 +116,7 @@ export async function create(
 export async function findById(id: string): Promise<Notification | null> {
   const notifications: NotificationRow[] = await db(TABLE_NAME)
     .select('*')
-    .where({ id })
+    .where({ id, deleted_at: null })
     .limit(1);
   const notification = notifications[0];
 
@@ -162,7 +164,8 @@ export async function findByUserId(
       'can.deleted_at': null,
       'co.deleted_at': null,
       'd.deleted_at': null,
-      'm.deleted_at': null
+      'm.deleted_at': null,
+      'n.deleted_at': null
     })
     .andWhereRaw(
       `
@@ -216,7 +219,8 @@ export async function findUnreadCountByUserId(userId: string): Promise<number> {
       'co.deleted_at': null,
       'd.deleted_at': null,
       'm.deleted_at': null,
-      'n.read_at': null
+      'n.read_at': null,
+      'n.deleted_at': null
     })
     .andWhereRaw(
       `
@@ -237,6 +241,17 @@ export async function findUnreadCountByUserId(userId: string): Promise<number> {
   );
 
   return notifications.length;
+}
+
+export async function del(id: string): Promise<void> {
+  const deleted = await db(TABLE_NAME)
+    .where({ id, deleted_at: null })
+    .update({ deleted_at: new Date() }, '*')
+    .then((rows: NotificationRow[]) => first<NotificationRow>(rows));
+
+  if (!deleted) {
+    throw new Error('Unable to delete Notification as it was not found.');
+  }
 }
 
 /**

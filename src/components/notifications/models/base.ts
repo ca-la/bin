@@ -13,6 +13,7 @@ export interface BaseNotificationRow {
   collection_id: null;
   comment_id: null;
   created_at: string;
+  deleted_at: string | null;
   design_id: null;
   id: string;
   measurement_id: null;
@@ -34,6 +35,7 @@ export interface BaseNotification {
   collectionId: null;
   commentId: null;
   createdAt: Date;
+  deletedAt: Date | null;
   designId: null;
   id: string;
   measurementId: null;
@@ -53,6 +55,7 @@ export const templateNotification = {
   collaboratorId: null,
   collectionId: null,
   commentId: null,
+  deletedAt: null,
   designId: null,
   measurementId: null,
   readAt: null,

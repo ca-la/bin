@@ -44,6 +44,9 @@ export async function sendNotificationEmails(): Promise<number> {
 
       if (message) {
         recipientNotificationMessages.push(message);
+      } else {
+        // if a notification is unable to be sent, mark it as deleted.
+        await NotificationsDAO.del(notification.id);
       }
     }
     const recipient = await UsersDAO.findById(recipientId);

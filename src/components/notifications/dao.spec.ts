@@ -197,11 +197,19 @@ test('Notifications DAO supports finding outstanding notifications over 10min ol
     sentEmailAt: new Date(),
     type: NotificationType.PARTNER_DESIGN_BID
   });
-
   await generateNotification({
     actorUserId: user.id,
     designId: design.id,
     sentEmailAt: null,
+    type: NotificationType.PARTNER_DESIGN_BID
+  });
+  await generateNotification({
+    actorUserId: user.id,
+    createdAt: new Date('2019-04-20'),
+    deletedAt: new Date('2019-06-20'),
+    designId: design.id,
+    sentEmailAt: null,
+    readAt: null,
     type: NotificationType.PARTNER_DESIGN_BID
   });
 
@@ -248,6 +256,33 @@ test('Notifications DAO supports marking notifications as sent', async (t: tape.
       'Returns second marked notification'
     );
   });
+});
+
+test('Notifications DAO supports marking a row as deleted', async (t: tape.Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
+
+  const { user: userOne } = await createUser({ withSession: false });
+  const { user: userTwo } = await createUser({ withSession: false });
+
+  const design = await DesignsDAO.create({
+    productType: 'TEESHIRT',
+    title: 'Green Tee',
+    userId: userTwo.id
+  });
+
+  const { notification: nOne } = await generateNotification({
+    actorUserId: userOne.id,
+    designId: design.id,
+    recipientUserId: userTwo.id,
+    type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
+  });
+
+  await NotificationsDAO.del(nOne.id);
+
+  const unfound = await NotificationsDAO.findById(nOne.id);
+  t.equal(unfound, null, 'A deleted notification is not found');
 });
 
 test('Notifications DAO supports deleting similar notifications', async (t: tape.Test) => {

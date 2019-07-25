@@ -10,6 +10,7 @@ import { sendNotificationEmails } from './index';
 import generateNotification from '../../test-helpers/factories/notification';
 import { NotificationType } from '../../components/notifications/domain-object';
 import * as NotificationAnnouncer from '../../components/iris/messages/notification';
+import * as MessageService from '../../components/notifications/notification-messages';
 
 test('sendNotificationEmails supports finding outstanding notifications', async (t: tape.Test) => {
   sandbox()
@@ -47,6 +48,38 @@ test('sendNotificationEmails supports finding outstanding notifications', async 
   } else {
     t.fail('Notifications improperly deleted.');
   }
+});
+
+test('sendNotificationEmails will delete an unsendable notification', async (t: tape.Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
+  const emailStub = sandbox()
+    .stub(EmailService, 'enqueueSend')
+    .returns(Promise.resolve());
+  const createMessageStub = sandbox()
+    .stub(MessageService, 'createNotificationMessage')
+    .resolves(null);
+  const { user: userOne } = await createUser({ withSession: false });
+
+  const { notification: nOne } = await generateNotification({
+    actorUserId: userOne.id,
+    createdAt: new Date(new Date().getMilliseconds() - 46 * 60 * 1000),
+    type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
+  });
+
+  await sendNotificationEmails();
+
+  t.equal(emailStub.callCount, 0, 'The email service is never triggered');
+  t.equal(
+    createMessageStub.callCount,
+    1,
+    'Message notification was called once.'
+  );
+  t.deepEqual(createMessageStub.args[0][0], nOne);
+
+  const unfoundNotification = await NotificationsDAO.findById(nOne.id);
+  t.equal(unfoundNotification, null, 'The notification was marked as deleted');
 });
 
 test('sendNotificationEmails gracefully handles failures', async (t: tape.Test) => {
