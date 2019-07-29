@@ -2,7 +2,7 @@ import * as Router from 'koa-router';
 import * as Koa from 'koa';
 
 import * as PricingProcessesDAO from '../../dao/pricing-processes';
-import * as PricingProductTypesDAO from '../../dao/pricing-product-types';
+import * as PricingProductTypesDAO from '../../components/pricing-product-types/dao';
 import * as PricingComplexitiesDAO from '../../dao/pricing-complexities';
 import * as PricingMaterialCategoriesDAO from '../../dao/pricing-material-categories';
 import requireAdmin = require('../../middleware/require-admin');

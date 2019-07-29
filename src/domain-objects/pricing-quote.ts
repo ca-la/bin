@@ -1,7 +1,7 @@
 import { Complexity, MaterialCategory, Process, ProductType } from './pricing';
 import PricingConstant from './pricing-constant';
 import PricingProductMaterial from './pricing-product-material';
-import PricingProductType from './pricing-product-type';
+import PricingProductType from '../components/pricing-product-types/domain-object';
 import PricingProcess from './pricing-process';
 import { hasProperties } from '../services/require-properties';
 import DataAdapter from '../services/data-adapter';

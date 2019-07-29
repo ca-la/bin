@@ -1,5 +1,5 @@
-import DataAdapter from '../services/data-adapter';
-import { hasProperties } from '../services/require-properties';
+import DataAdapter from '../../services/data-adapter';
+import { hasProperties } from '../../services/require-properties';
 
 /**
  * @typedef {object} PricingProductType The cost by type of product and

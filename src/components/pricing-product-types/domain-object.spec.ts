@@ -1,11 +1,11 @@
-import { test, Test } from '../test-helpers/fresh';
+import { test, Test } from '../../test-helpers/fresh';
 
 import PricingProductType, {
   dataAdapter,
   isPricingProductTypeRow,
   PricingProductTypeRow
-} from './pricing-product-type';
-import { daysToMs } from '../services/time-conversion';
+} from './domain-object';
+import { daysToMs } from '../../services/time-conversion';
 
 const now = new Date();
 const validRowData: PricingProductTypeRow = {

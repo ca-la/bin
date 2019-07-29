@@ -1,6 +1,6 @@
 import * as uuid from 'node-uuid';
 import { Cents, Dollars } from '../../services/dollars';
-import { PricingProductTypeRow } from '../../domain-objects/pricing-product-type';
+import { PricingProductTypeRow } from '../../components/pricing-product-types/domain-object';
 import { daysToMs } from '../time-conversion';
 
 // [units, priceMultiplier, timeMultiplier]

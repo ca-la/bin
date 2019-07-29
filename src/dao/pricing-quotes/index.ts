@@ -32,7 +32,7 @@ import PricingProductType, {
   dataAdapter as typeDataAdapter,
   isPricingProductTypeRow,
   PricingProductTypeRow
-} from '../../domain-objects/pricing-product-type';
+} from '../../components/pricing-product-types/domain-object';
 import PricingProcess, {
   dataAdapter as processDataAdapter,
   isPricingProcessRow,
