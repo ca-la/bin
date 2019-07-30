@@ -5,7 +5,6 @@ import * as uuid from 'node-uuid';
 import * as db from '../../services/db';
 import { test } from '../../test-helpers/fresh';
 import generateCanvas from '../../test-helpers/factories/product-design-canvas';
-import { createTemplates } from '../../test-helpers/factories/stage-and-task-templates';
 import createUser = require('../../test-helpers/create-user');
 
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
@@ -14,6 +13,7 @@ import * as TaskEventsDAO from '../../dao/task-events';
 import * as CanvasesDAO from '../../components/canvases/dao';
 import * as ComponentsDAO from '../../components/components/dao';
 import * as VariantsDAO from '../../dao/product-design-variants';
+import * as StageTemplate from '../../components/tasks/templates/stages';
 
 import { findAndDuplicateDesign } from './designs';
 
@@ -21,8 +21,6 @@ test('findAndDuplicateDesign', async (t: tape.Test) => {
   const { user: duplicatingUser } = await createUser({ withSession: false });
   // generate a design with a canvas with a component.
   const { component, canvas, design } = await generateCanvas({});
-  // generate some stage + task templates.
-  await createTemplates();
   // generate a variant for the design.
   const variantOne = await VariantsDAO.create({
     colorName: 'Green',
@@ -75,13 +73,16 @@ test('findAndDuplicateDesign', async (t: tape.Test) => {
   const stages = await ProductDesignStagesDAO.findAllByDesignId(
     duplicatedDesign.id
   );
-  t.equal(stages.length, 2);
-  t.equal(stages[0].title, 'Stage 1');
-  t.equal(stages[1].title, 'Stage 2');
+  t.equal(stages.length, StageTemplate.POST_CREATION_TEMPLATES.length);
+  t.equal(stages[0].title, StageTemplate.POST_CREATION_TEMPLATES[0].title);
 
   const tasks = await TaskEventsDAO.findByDesignId(duplicatedDesign.id);
-  t.equal(tasks.length, 1);
-  t.equal(tasks[0].title, 'Task 1');
+  const getTitle = (d: { title: string }): string => d.title;
+  t.equal(tasks.length, StageTemplate.POST_CREATION_TEMPLATES[0].tasks.length);
+  t.deepEqual(
+    tasks.map(getTitle),
+    StageTemplate.POST_CREATION_TEMPLATES[0].tasks.map(getTitle)
+  );
 
   const duplicateCanvases = await CanvasesDAO.findAllByDesignId(
     duplicatedDesign.id

@@ -1,47 +1,30 @@
 import * as Knex from 'knex';
+import { flatten } from 'lodash';
 import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
 import * as ProductDesignStagesDAO from '../../dao/product-design-stages';
 import * as ProductDesignStageTasksDAO from '../../dao/product-design-stage-tasks';
-import * as StageTemplatesDAO from '../../dao/stage-templates';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as TasksDAO from '../../dao/tasks';
-import * as TaskTemplatesDAO from '../../dao/task-templates';
 import findCollaborators, { CollaboratorRole } from '../find-collaborators';
 import Logger = require('../logger');
-import ProductDesignStage from '../../domain-objects/product-design-stage';
 import { DetailsTask, TaskStatus } from '../../domain-objects/task-event';
-import TaskTemplate, { DesignPhase } from '../../domain-objects/task-template';
 import Collaborator from '../../components/collaborators/domain-objects/collaborator';
-import StageTemplate from '../../domain-objects/stage-template';
-
-interface Options {
-  designId: string;
-  designPhase: DesignPhase;
-}
-
-export async function createDesignTasks(
-  options: Options,
-  trx?: Knex.Transaction
-): Promise<DetailsTask[]> {
-  switch (options.designPhase) {
-    case 'POST_CREATION':
-      return createPostCreationTasks(options, trx);
-
-    case 'POST_APPROVAL':
-      return createPostApprovalTasks(options, trx);
-  }
-}
+import {
+  POST_APPROVAL_TEMPLATES,
+  POST_CREATION_TEMPLATES,
+  StageTemplate
+} from '../../components/tasks/templates/stages';
+import { TaskTemplate } from '../../components/tasks/templates/tasks';
+import { DesignPhase } from '../../domain-objects/task-template';
 
 type CollaboratorsByRole = { [role in CollaboratorRole]?: Collaborator[] };
 
-export async function createTasksFromTemplates(
+async function createTasksFromTemplates(
   designId: string,
   taskTemplates: TaskTemplate[],
-  stages: ProductDesignStage[],
+  stageId: string,
   trx?: Knex.Transaction
 ): Promise<DetailsTask[]> {
-  const tasks: DetailsTask[] = [];
-
   // To avoid making the same "get collaborators by role" query for many tasks
   // in a row, cache old results as we iterate through the task template list
   const collaboratorsByRole: CollaboratorsByRole = {};
@@ -59,111 +42,93 @@ export async function createTasksFromTemplates(
     return collaborators;
   }
 
-  for (const taskTemplate of taskTemplates) {
-    const taskStage = stages.find(
-      (stage: ProductDesignStage): boolean =>
-        stage.stageTemplateId === taskTemplate.stageTemplateId
-    );
+  return Promise.all(
+    taskTemplates.map(async (taskTemplate: TaskTemplate, index: number) => {
+      // TODO: Consider wrapping all 3 records up into a 'create-task' service.
+      const task = await TasksDAO.create(undefined, trx);
 
-    if (!taskStage) {
-      Logger.logServerError(
-        `No matching stage on design ${designId} found for task template ${
-          taskTemplate.title
-        }`
-      );
-
-      continue;
-    }
-
-    // TODO: Consider wrapping all 3 records up into a 'create-task' service.
-    const task = await TasksDAO.create();
-
-    const taskEvent = await TaskEventsDAO.create(
-      {
-        createdBy: null,
-        description: taskTemplate.description || '',
-        designStageId: taskStage.id,
-        dueDate: null,
-        ordering: taskTemplate.ordering,
-        status: TaskStatus.NOT_STARTED,
-        taskId: task.id,
-        title: taskTemplate.title
-      },
-      trx
-    );
-
-    const collaborators = await getCollaborators(taskTemplate.assigneeRole);
-
-    await ProductDesignStageTasksDAO.create(
-      {
-        designStageId: taskStage.id,
-        taskId: task.id
-      },
-      trx
-    );
-
-    if (collaborators.length > 0) {
-      // Using first collaborator in each role for now - can reevaluate if/when
-      // we have multiple for a given role
-      await CollaboratorTasksDAO.createAllByCollaboratorIdsAndTaskId(
-        [collaborators[0].id],
-        task.id,
+      const taskEvent = await TaskEventsDAO.create(
+        {
+          createdBy: null,
+          description: taskTemplate.description || '',
+          designStageId: stageId,
+          dueDate: null,
+          ordering: index,
+          status: TaskStatus.NOT_STARTED,
+          taskId: task.id,
+          title: taskTemplate.title
+        },
         trx
       );
-    } else {
-      // This is a non-fatal warning, but does indicate something wrong; either
-      // the designer/CALA isn't shared on the collection, or we moved to
-      // approval without a partner assigned.
-      //
-      // tslint:disable-next-line:max-line-length
-      Logger.logServerError(
-        `No matching collaborators with role ${
-          taskTemplate.assigneeRole
-        } are shared on design ${designId}`
-      );
-    }
 
-    tasks.push(taskEvent);
-  }
-  return tasks;
+      const collaborators = await getCollaborators(
+        taskTemplate.taskType.assigneeRole
+      );
+
+      await ProductDesignStageTasksDAO.create(
+        {
+          designStageId: stageId,
+          taskId: task.id
+        },
+        trx
+      );
+
+      if (collaborators.length > 0) {
+        // Using first collaborator in each role for now - can reevaluate if/when
+        // we have multiple for a given role
+        await CollaboratorTasksDAO.createAllByCollaboratorIdsAndTaskId(
+          [collaborators[0].id],
+          task.id,
+          trx
+        );
+      } else {
+        // This is a non-fatal warning, but does indicate something wrong; either
+        // the designer/CALA isn't shared on the collection, or we moved to
+        // approval without a partner assigned.
+        Logger.logServerError(
+          `No matching collaborators with role ${
+            taskTemplate.taskType.assigneeRole
+          } are shared on design ${designId}`
+        );
+      }
+
+      return taskEvent;
+    })
+  );
 }
 
-async function createPostCreationTasks(
-  options: Options,
+export default async function createDesignTasks(
+  designId: string,
+  designPhase: DesignPhase,
   trx?: Knex.Transaction
 ): Promise<DetailsTask[]> {
-  const stageTemplates = await StageTemplatesDAO.findAll();
-  const { designId, designPhase } = options;
+  const stageTemplates =
+    designPhase === 'POST_CREATION'
+      ? POST_CREATION_TEMPLATES
+      : POST_APPROVAL_TEMPLATES;
 
-  const stages: ProductDesignStage[] = await Promise.all(
+  const stageTasks = await Promise.all(
     stageTemplates.map(
-      (template: StageTemplate): Promise<ProductDesignStage> => {
-        return ProductDesignStagesDAO.create(
+      async (template: StageTemplate): Promise<DetailsTask[]> => {
+        const stage = await ProductDesignStagesDAO.create(
           {
             description: template.description,
             designId,
             ordering: template.ordering,
-            stageTemplateId: template.id,
             title: template.title
           },
+          trx
+        );
+
+        return createTasksFromTemplates(
+          designId,
+          template.tasks,
+          stage.id,
           trx
         );
       }
     )
   );
-  const taskTemplates = await TaskTemplatesDAO.findByPhase(designPhase);
 
-  return await createTasksFromTemplates(designId, taskTemplates, stages, trx);
-}
-
-async function createPostApprovalTasks(
-  options: Options,
-  trx?: Knex.Transaction
-): Promise<DetailsTask[]> {
-  const { designId, designPhase } = options;
-  const taskTemplates = await TaskTemplatesDAO.findByPhase(designPhase);
-
-  const stages = await ProductDesignStagesDAO.findAllByDesignId(designId);
-
-  return await createTasksFromTemplates(designId, taskTemplates, stages, trx);
+  return flatten(stageTasks);
 }

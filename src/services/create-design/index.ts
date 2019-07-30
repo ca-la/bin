@@ -1,6 +1,6 @@
 import * as Knex from 'knex';
 import CollaboratorsDAO = require('../../components/collaborators/dao');
-import { createDesignTasks } from '../create-design-tasks';
+import createDesignTasks from '../create-design-tasks';
 import ProductDesign = require('../../domain-objects/product-design');
 import ProductDesignsDAO = require('../../dao/product-designs');
 
@@ -23,13 +23,7 @@ async function createDesign(
     trx
   );
 
-  await createDesignTasks(
-    {
-      designId: design.id,
-      designPhase: 'POST_CREATION'
-    },
-    trx
-  );
+  await createDesignTasks(design.id, 'POST_CREATION', trx);
 
   return design;
 }

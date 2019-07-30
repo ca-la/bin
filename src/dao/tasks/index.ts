@@ -1,4 +1,5 @@
 import * as uuid from 'node-uuid';
+import * as Knex from 'knex';
 import * as db from '../../services/db';
 import Task, {
   dataAdapter,
@@ -10,10 +11,18 @@ import { validate } from '../../services/validate-from-db';
 
 const TABLE_NAME = 'tasks';
 
-export async function create(id: string = uuid.v4()): Promise<Task> {
+export async function create(
+  id: string = uuid.v4(),
+  trx?: Knex.Transaction
+): Promise<Task> {
   const rowData = dataAdapter.forInsertion({ id });
   const created = await db(TABLE_NAME)
     .insert(rowData, '*')
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .then((rows: TaskRow[]) => first<TaskRow>(rows));
 
   if (!created) {

@@ -844,10 +844,7 @@ test('POST /collections/:collectionId/partner-pairings', async (t: tape.Test) =>
   const designer = await createUser();
   const admin = await createUser({ role: 'ADMIN' });
 
-  const createDesignTasksSpy = sandbox().spy(
-    DesignTasksService,
-    'createDesignTasks'
-  );
+  const createDesignTasksStub = sandbox().stub(DesignTasksService, 'default');
 
   const collectionOne = await CollectionsDAO.create({
     createdAt: new Date(),
@@ -900,7 +897,7 @@ test('POST /collections/:collectionId/partner-pairings', async (t: tape.Test) =>
   );
 
   t.assert(
-    createDesignTasksSpy.calledTwice,
+    createDesignTasksStub.calledTwice,
     'Design tasks are generated for each design'
   );
 });

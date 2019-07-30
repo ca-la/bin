@@ -4,7 +4,7 @@ import * as uuid from 'node-uuid';
 import * as DesignsDAO from '../../dao/product-designs';
 import * as DesignEventsDAO from '../../dao/design-events';
 import ProductDesign = require('../../domain-objects/product-design');
-import * as DesignTasksService from '../../services/create-design-tasks';
+import createDesignTasks from '../../services/create-design-tasks';
 import * as NotificationsService from '../../services/create-notifications';
 
 export function* commitCostInputs(
@@ -60,10 +60,7 @@ export function* createPartnerPairing(
           targetId: null,
           type: 'COMMIT_PARTNER_PAIRING'
         });
-        await DesignTasksService.createDesignTasks({
-          designId: design.id,
-          designPhase: 'POST_APPROVAL'
-        });
+        await createDesignTasks(design.id, 'POST_APPROVAL');
       }
     )
   );

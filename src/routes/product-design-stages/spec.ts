@@ -3,8 +3,25 @@ import * as tape from 'tape';
 import * as uuid from 'node-uuid';
 import createUser = require('../../test-helpers/create-user');
 import { authHeader, get, post } from '../../test-helpers/http';
-import { sandbox, test } from '../../test-helpers/fresh';
+import { sandbox, test as originalTest } from '../../test-helpers/fresh';
 import generateProductDesignStage from '../../test-helpers/factories/product-design-stage';
+import * as StageTemplate from '../../components/tasks/templates/stages';
+
+const beforeEach = (): void => {
+  sandbox()
+    .stub(StageTemplate, 'POST_CREATION_TEMPLATES')
+    .value([]);
+  sandbox()
+    .stub(StageTemplate, 'POST_APPROVAL_TEMPLATES')
+    .value([]);
+};
+
+function test(
+  description: string,
+  testCase: (t: tape.Test) => Promise<void>
+): void {
+  originalTest(description, async (t: tape.Test) => testCase(t), beforeEach);
+}
 
 test('POST /product-design-stages creates a new stage', async (t: tape.Test) => {
   const { session } = await createUser();

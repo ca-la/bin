@@ -1,6 +1,6 @@
 import * as tape from 'tape';
 import * as uuid from 'node-uuid';
-import { test } from '../../test-helpers/fresh';
+import { sandbox, test as originalTest } from '../../test-helpers/fresh';
 import {
   create,
   findByCollectionId,
@@ -10,6 +10,7 @@ import {
   findByUserId
 } from './index';
 
+import * as StageTemplate from '../../components/tasks/templates/stages';
 import { create as createTask } from '../tasks';
 import { create as createDesignStageTask } from '../product-design-stage-tasks';
 import { create as createDesignStage } from '../product-design-stages';
@@ -42,6 +43,22 @@ import generateCollection from '../../test-helpers/factories/collection';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
 import { CollaboratorWithUser } from '../../components/collaborators/domain-objects/collaborator';
 import generateAsset from '../../test-helpers/factories/asset';
+
+const beforeEach = (): void => {
+  sandbox()
+    .stub(StageTemplate, 'POST_CREATION_TEMPLATES')
+    .value([]);
+  sandbox()
+    .stub(StageTemplate, 'POST_APPROVAL_TEMPLATES')
+    .value([]);
+};
+
+function test(
+  description: string,
+  testCase: (t: tape.Test) => Promise<void>
+): void {
+  originalTest(description, async (t: tape.Test) => testCase(t), beforeEach);
+}
 
 const getInsertedWithDetails = (
   inserted: DetailsTask,
