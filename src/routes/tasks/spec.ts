@@ -355,7 +355,7 @@ test('PUT /tasks/:taskId/assignees adds Collaborators to Tasks successfully', as
 
   const { session, user } = await createUser();
   const secondUser = await createUser();
-  const task = await TasksDAO.create(uuid.v4());
+  const task = await TasksDAO.create();
   const collection = await CollectionsDAO.create({
     createdAt: new Date(),
     createdBy: user.id,
@@ -439,7 +439,7 @@ test('PUT /tasks/:taskId/assignees adds Collaborators to Tasks successfully', as
 test('PUT /tasks/:taskId when changing status to Completed', async (t: tape.Test) => {
   const { session, user } = await createUser();
   const secondUser = await createUser();
-  const task = await TasksDAO.create(uuid.v4());
+  const task = await TasksDAO.create();
   const collection = await CollectionsDAO.create({
     createdAt: new Date(),
     createdBy: user.id,

@@ -299,7 +299,7 @@ test('sendTaskCommentCreateNotification', async (t: tape.Test) => {
     userId: userTwo.user.id
   });
 
-  const taskOne = await TasksDAO.create(uuid.v4());
+  const taskOne = await TasksDAO.create();
   await TaskEventsDAO.create({
     createdBy: userOne.user.id,
     description: '',
@@ -404,7 +404,7 @@ test('sendTaskCommentMentionNotification', async (t: tape.Test) => {
     userId: userTwo.user.id
   });
 
-  const taskOne = await TasksDAO.create(uuid.v4());
+  const taskOne = await TasksDAO.create();
   await TaskEventsDAO.create({
     createdBy: userOne.user.id,
     description: '',
@@ -505,7 +505,7 @@ test('sendTaskAssignmentNotification', async (t: tape.Test) => {
     userEmail: null,
     userId: userTwo.user.id
   });
-  const taskOne = await TasksDAO.create(uuid.v4());
+  const taskOne = await TasksDAO.create();
   await TaskEventsDAO.create({
     createdBy: userOne.user.id,
     description: '',
@@ -580,7 +580,7 @@ test('sendTaskAssignmentNotification does not send if assigned to self', async (
     userId: user.id
   });
 
-  const taskOne = await TasksDAO.create(uuid.v4());
+  const taskOne = await TasksDAO.create();
   await TaskEventsDAO.create({
     createdBy: user.id,
     description: '',
@@ -653,7 +653,7 @@ test('sendTaskAssignmentNotification does not send if assigned to collaborator w
     userId: null
   });
 
-  const taskOne = await TasksDAO.create(uuid.v4());
+  const taskOne = await TasksDAO.create();
   await TaskEventsDAO.create({
     createdBy: user.id,
     description: '',
@@ -737,7 +737,7 @@ test('sendTaskCompletionNotification', async (t: tape.Test) => {
     userEmail: 'test@test.test',
     userId: null
   });
-  const taskOne = await TasksDAO.create(uuid.v4());
+  const taskOne = await TasksDAO.create();
   await TaskEventsDAO.create({
     createdBy: userOne.user.id,
     description: '',

@@ -1,11 +1,9 @@
 import * as uuid from 'node-uuid';
 import * as Knex from 'knex';
 import * as ProductDesignStagesDAO from '../../dao/product-design-stages';
-import * as ProductDesignStageTasksDAO from '../../dao/product-design-stage-tasks';
 import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
-import * as TasksDAO from '../../dao/tasks';
-import * as TaskEventsDAO from '../../dao/task-events';
 import * as findCollaborators from '../../services/find-collaborators';
+import * as CreateTaskService from '../../services/create-task';
 import Collection from '../../domain-objects/collection';
 import * as CollectionsDAO from '../../dao/collections';
 import createDesignTasks from './index';
@@ -60,12 +58,10 @@ test('createDesignTasks creates POST_CREATION tasks', async (t: Test) => {
   const { collaborator, design } = await createResources();
   const mockTrx = {} as Knex.Transaction;
   const mockStage = { id: uuid.v4() };
-  const mockTask = { id: uuid.v4() };
-  const mockStageTask = { id: uuid.v4() };
   const mockTaskEvent = { id: uuid.v4() };
   const mockCollaboratorTask = {
     collaboratorId: collaborator.id,
-    taskId: mockTask.id
+    taskId: mockTaskEvent.id
   };
 
   sandbox()
@@ -75,14 +71,8 @@ test('createDesignTasks creates POST_CREATION tasks', async (t: Test) => {
   const stagesStub = sandbox()
     .stub(ProductDesignStagesDAO, 'create')
     .resolves(mockStage);
-  const stageTasksStub = sandbox()
-    .stub(ProductDesignStageTasksDAO, 'create')
-    .resolves(mockStageTask);
-  const tasksStub = sandbox()
-    .stub(TasksDAO, 'create')
-    .resolves(mockTask);
-  const taskEventsStub = sandbox()
-    .stub(TaskEventsDAO, 'create')
+  const createTaskStub = sandbox()
+    .stub(CreateTaskService, 'default')
     .resolves(mockTaskEvent);
   const collaboratorsTasksStub = sandbox()
     .stub(CollaboratorTasksDAO, 'createAllByCollaboratorIdsAndTaskId')
@@ -91,7 +81,11 @@ test('createDesignTasks creates POST_CREATION tasks', async (t: Test) => {
   await createDesignTasks(design.id, 'POST_CREATION', mockTrx);
   const firstStage = POST_CREATION_TEMPLATES[0];
 
-  t.equal(stagesStub.callCount, POST_CREATION_TEMPLATES.length);
+  t.equal(
+    stagesStub.callCount,
+    POST_CREATION_TEMPLATES.length,
+    'creates each stage'
+  );
   t.ok(
     stagesStub.calledWith(
       {
@@ -101,22 +95,9 @@ test('createDesignTasks creates POST_CREATION tasks', async (t: Test) => {
         title: firstStage.title
       },
       mockTrx
-    )
+    ),
+    'Creates the first stage'
   );
-  t.equal(stageTasksStub.callCount, firstStage.tasks.length);
-  t.ok(
-    stageTasksStub.calledWith(
-      {
-        designStageId: mockStage.id,
-        taskId: mockTask.id
-      },
-      mockTrx
-    )
-  );
-  t.equal(tasksStub.callCount, firstStage.tasks.length);
-  t.ok(tasksStub.calledWith(undefined, mockTrx));
-  t.equal(taskEventsStub.callCount, firstStage.tasks.length);
-  t.ok(
-    collaboratorsTasksStub.calledWith([collaborator.id], mockTask.id, mockTrx)
-  );
+  t.ok(createTaskStub.called);
+  t.ok(collaboratorsTasksStub.called, 'creates each collaborator task');
 });

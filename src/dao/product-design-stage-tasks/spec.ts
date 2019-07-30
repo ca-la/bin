@@ -1,5 +1,4 @@
 import * as tape from 'tape';
-import * as uuid from 'node-uuid';
 import { test } from '../../test-helpers/fresh';
 import { create, findAllByDesignId, findById } from './index';
 import { create as createTask } from '../tasks';
@@ -10,7 +9,7 @@ import createUser = require('../../test-helpers/create-user');
 test('ProductDesign Stage Task DAO supports creation/retrieval', async (t: tape.Test) => {
   const { user } = await createUser();
 
-  const task = await createTask(uuid.v4());
+  const task = await createTask();
   const design = await createDesign({
     productType: 'test',
     title: 'test',
@@ -31,7 +30,7 @@ test('ProductDesign Stage Task DAO supports creation/retrieval', async (t: tape.
 test('ProductDesign Stage Task DAO supports retrieval by designId', async (t: tape.Test) => {
   const { user } = await createUser();
 
-  const task = await createTask(uuid.v4());
+  const task = await createTask();
   const design = await createDesign({
     productType: 'test',
     title: 'test',

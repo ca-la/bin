@@ -43,8 +43,8 @@ test('CollaboratorTask DAO supports creation/retrieval', async (t: tape.Test) =>
     userEmail: null,
     userId: userTwo.user.id
   });
-  const taskOne = await createTask(uuid.v4());
-  const taskTwo = await createTask(uuid.v4());
+  const taskOne = await createTask();
+  const taskTwo = await createTask();
 
   const collaboratorOneTaskOne = await create({
     collaboratorId: collaboratorOne.id,
@@ -69,7 +69,7 @@ test('CollaboratorTask DAO supports creation/retrieval', async (t: tape.Test) =>
 
 test('CollaboratorTask DAO does not allow non-unique creation', async (t: tape.Test) => {
   const { user } = await createUser();
-  const task = await createTask(uuid.v4());
+  const task = await createTask();
   const collection = await createCollection({
     createdAt: new Date(),
     createdBy: user.id,
@@ -107,7 +107,7 @@ test('CollaboratorTask DAO does not allow non-unique creation', async (t: tape.T
 test('CollaboratorTask DAO supports multiple simultaneous creations', async (t: tape.Test) => {
   const userOne = await createUser();
   const userTwo = await createUser();
-  const taskOne = await createTask(uuid.v4());
+  const taskOne = await createTask();
   const collection = await createCollection({
     createdAt: new Date(),
     createdBy: userOne.user.id,
@@ -144,7 +144,7 @@ test('CollaboratorTask DAO supports multiple simultaneous creations', async (t: 
 });
 
 test('CollaboratorTask DAO prevents task assignment on no collaborators', async (t: tape.Test) => {
-  const task = await createTask(uuid.v4());
+  const task = await createTask();
 
   try {
     await createAllByCollaboratorIdsAndTaskId([], task.id);
@@ -158,7 +158,7 @@ test('CollaboratorTask DAO supports multiple simultaneous deletions', async (t: 
   const userOne = await createUser();
   const userTwo = await createUser();
   const userThree = await createUser();
-  const taskOne = await createTask(uuid.v4());
+  const taskOne = await createTask();
   const collection = await createCollection({
     createdAt: new Date(),
     createdBy: userOne.user.id,

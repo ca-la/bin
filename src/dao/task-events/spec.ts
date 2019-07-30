@@ -93,7 +93,7 @@ const getInsertedWithDetails = (
 
 test('Task Events DAO supports creation/retrieval', async (t: tape.Test) => {
   const { user } = await createUser();
-  const task = await createTask(uuid.v4());
+  const task = await createTask();
   const inserted = await create({
     createdBy: user.id,
     description: 'A description',
@@ -732,7 +732,7 @@ test('Task Events DAO supports retrieval by stageId', async (t: tape.Test) => {
 
 test('Task Events DAO supports creating a task with a long description', async (t: tape.Test) => {
   const { user } = await createUser();
-  const task = await createTask(uuid.v4());
+  const task = await createTask();
 
   const inserted = await create({
     createdBy: user.id,

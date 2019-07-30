@@ -30,7 +30,7 @@ test('TaskComment DAO supports creation/retrieval', async (t: tape.Test) => {
     text: 'A comment',
     userId: user.id
   });
-  const task = await createTask(uuid.v4());
+  const task = await createTask();
   await create({
     commentId: comment1.id,
     taskId: task.id

@@ -4,13 +4,12 @@ import * as uuid from 'node-uuid';
 import { omit, pick } from 'lodash';
 
 import * as TaskEventsDAO from '../../dao/task-events';
-import * as ProductDesignStageTasksDAO from '../../dao/product-design-stage-tasks';
-import * as TasksDAO from '../../dao/tasks';
 import * as CommentDAO from '../../components/comments/dao';
 import * as TaskCommentDAO from '../../dao/task-comments';
 import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import CollaboratorTask from '../../domain-objects/collaborator-task';
+import createTask from '../../services/create-task';
 import TaskEvent, {
   DetailsTask,
   DetailsTaskWithAssignees,
@@ -111,13 +110,14 @@ const taskEventFromIO = (request: IOTask, userId: string): TaskEvent => {
 function* createTaskWithEvent(
   this: Koa.Application.Context<IOTask>
 ): AsyncIterableIterator<DetailsTask> {
-  const body = addDefaultOrdering(this.request.body);
-  yield TasksDAO.create(body.id);
-  const taskEvent: DetailsTaskWithAssignees = yield TaskEventsDAO.create(
-    taskEventFromIO(body, this.state.userId)
+  const taskId = this.request.body.id;
+  const taskEvent = taskEventFromIO(
+    addDefaultOrdering(this.request.body),
+    this.state.userId
   );
+  const created = yield createTask(taskId, taskEvent);
 
-  this.body = taskEvent;
+  this.body = created;
   this.status = 201;
 }
 
@@ -147,18 +147,18 @@ function* createTaskEvent(
 function* createTaskWithEventOnStage(
   this: Koa.Application.Context<IOTask>
 ): AsyncIterableIterator<DetailsTask> {
-  const body = addDefaultOrdering(this.request.body);
+  const taskId = this.request.body.id;
   const stageId = this.params.stageId;
-  yield TasksDAO.create(body.id);
-  yield TaskEventsDAO.create(taskEventFromIO(body, this.state.userId));
-  yield ProductDesignStageTasksDAO.create({
-    designStageId: stageId,
-    taskId: body.id
-  });
-  const taskEvent: DetailsTaskWithAssignees = yield TaskEventsDAO.findById(
-    body.id
+  const taskEvent = taskEventFromIO(
+    addDefaultOrdering(this.request.body),
+    this.state.userId
   );
-  this.body = taskEvent;
+  yield createTask(taskId, taskEvent, stageId);
+
+  const taskEventWithAssignees: DetailsTaskWithAssignees = yield TaskEventsDAO.findById(
+    taskId
+  );
+  this.body = taskEventWithAssignees;
   this.status = 201;
 }
 

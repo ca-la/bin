@@ -1,10 +1,8 @@
+import * as uuid from 'node-uuid';
 import * as Knex from 'knex';
 import { flatten } from 'lodash';
 import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
 import * as ProductDesignStagesDAO from '../../dao/product-design-stages';
-import * as ProductDesignStageTasksDAO from '../../dao/product-design-stage-tasks';
-import * as TaskEventsDAO from '../../dao/task-events';
-import * as TasksDAO from '../../dao/tasks';
 import findCollaborators, { CollaboratorRole } from '../find-collaborators';
 import Logger = require('../logger');
 import { DetailsTask, TaskStatus } from '../../domain-objects/task-event';
@@ -16,6 +14,7 @@ import {
 } from '../../components/tasks/templates/stages';
 import { TaskTemplate } from '../../components/tasks/templates/tasks';
 import { DesignPhase } from '../../domain-objects/task-template';
+import createTask from '../create-task';
 
 type CollaboratorsByRole = { [role in CollaboratorRole]?: Collaborator[] };
 
@@ -44,33 +43,21 @@ async function createTasksFromTemplates(
 
   return Promise.all(
     taskTemplates.map(async (taskTemplate: TaskTemplate, index: number) => {
-      // TODO: Consider wrapping all 3 records up into a 'create-task' service.
-      const task = await TasksDAO.create(undefined, trx);
-
-      const taskEvent = await TaskEventsDAO.create(
-        {
-          createdBy: null,
-          description: taskTemplate.description || '',
-          designStageId: stageId,
-          dueDate: null,
-          ordering: index,
-          status: TaskStatus.NOT_STARTED,
-          taskId: task.id,
-          title: taskTemplate.title
-        },
-        trx
-      );
+      const taskId = uuid.v4();
+      const task = {
+        createdBy: null,
+        description: taskTemplate.description || '',
+        designStageId: stageId,
+        dueDate: null,
+        ordering: index,
+        status: TaskStatus.NOT_STARTED,
+        taskId,
+        title: taskTemplate.title
+      };
+      const taskEvent = await createTask(taskId, task, stageId, trx);
 
       const collaborators = await getCollaborators(
         taskTemplate.taskType.assigneeRole
-      );
-
-      await ProductDesignStageTasksDAO.create(
-        {
-          designStageId: stageId,
-          taskId: task.id
-        },
-        trx
       );
 
       if (collaborators.length > 0) {
@@ -78,7 +65,7 @@ async function createTasksFromTemplates(
         // we have multiple for a given role
         await CollaboratorTasksDAO.createAllByCollaboratorIdsAndTaskId(
           [collaborators[0].id],
-          task.id,
+          taskId,
           trx
         );
       } else {
