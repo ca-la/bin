@@ -15,6 +15,9 @@ import {
 import { TaskTemplate } from '../../components/tasks/templates/tasks';
 import { DesignPhase } from '../../domain-objects/task-template';
 import createTask from '../create-task';
+import { findByDesignId as findProductTypeByDesignId } from '../../components/pricing-product-types/dao';
+import { findAllByProductType } from '../../components/product-type-stages/dao';
+import ProductTypeStage from '../../components/product-type-stages/domain-object';
 
 type CollaboratorsByRole = { [role in CollaboratorRole]?: Collaborator[] };
 
@@ -84,15 +87,48 @@ async function createTasksFromTemplates(
   );
 }
 
+/**
+ * Returns a list of stage templates based off the phase and the specific design.
+ */
+export async function retrieveStageTemplates(
+  designId: string,
+  designPhase: DesignPhase
+): Promise<StageTemplate[]> {
+  if (designPhase === 'POST_CREATION') {
+    return POST_CREATION_TEMPLATES;
+  }
+
+  const productType = await findProductTypeByDesignId(designId);
+  if (!productType) {
+    throw new Error(
+      `Unable to find a PricingProductType for design "${designId}".`
+    );
+  }
+  const productTypeStageTemplates = await findAllByProductType(productType.id);
+  if (productTypeStageTemplates.length === 0) {
+    throw new Error(
+      `No stage templates were found for pricing product type ${
+        productType.id
+      }.`
+    );
+  }
+  const productTypeStageTemplateIds = productTypeStageTemplates.map(
+    (typeStage: ProductTypeStage): string => {
+      return typeStage.stageTemplateId;
+    }
+  );
+
+  return POST_APPROVAL_TEMPLATES.filter((template: StageTemplate) => {
+    return productTypeStageTemplateIds.includes(template.id);
+  });
+}
+
 export default async function createDesignTasks(
   designId: string,
   designPhase: DesignPhase,
   trx?: Knex.Transaction
 ): Promise<DetailsTask[]> {
-  const stageTemplates =
-    designPhase === 'POST_CREATION'
-      ? POST_CREATION_TEMPLATES
-      : POST_APPROVAL_TEMPLATES;
+  const stageTemplates = await retrieveStageTemplates(designId, designPhase);
 
   const stageTasks = await Promise.all(
     stageTemplates.map(

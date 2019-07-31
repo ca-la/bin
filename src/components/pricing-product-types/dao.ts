@@ -55,3 +55,36 @@ export async function findLatest(): Promise<ProductType[]> {
 
   return types;
 }
+
+export async function findByDesignId(
+  designId: string
+): Promise<PricingProductType | null> {
+  const result = await db(TABLE_NAME)
+    .select('pricing_product_types.*')
+    .innerJoin(
+      'pricing_inputs',
+      'pricing_inputs.product_type_id',
+      'pricing_product_types.id'
+    )
+    .innerJoin(
+      'pricing_quotes',
+      'pricing_quotes.pricing_quote_input_id',
+      'pricing_inputs.id'
+    )
+    .where({ 'pricing_quotes.design_id': designId })
+    .orderBy('pricing_quotes.created_at', 'DESC')
+    .then((rows: PricingProductTypeRow[]) => {
+      return first(rows);
+    });
+
+  if (!result) {
+    return null;
+  }
+
+  return validate<PricingProductTypeRow, PricingProductType>(
+    TABLE_NAME,
+    isPricingProductTypeRow,
+    dataAdapter,
+    result
+  );
+}
