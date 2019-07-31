@@ -9,6 +9,7 @@ test('ProductTypeStagesDAO can create and find by product type id', async (t: Te
   const id2 = uuid.v4();
   const productTypeId = uuid.v4();
   const stageTemplateId = uuid.v4();
+  const stageTemplateId2 = uuid.v4();
   const { pricingProductType } = await generatePricingProductType({
     id: productTypeId
   });
@@ -18,10 +19,26 @@ test('ProductTypeStagesDAO can create and find by product type id', async (t: Te
     pricingProductTypeId: pricingProductType.id,
     stageTemplateId
   });
+
+  try {
+    await ProductTypeStagesDAO.create({
+      id: id2,
+      pricingProductTypeId: pricingProductType.id,
+      stageTemplateId
+    });
+    t.fail('Should not succeed.');
+  } catch (error) {
+    t.true(
+      error.message.includes(
+        'duplicate key value violates unique constraint "unique_type_and_stage"'
+      )
+    );
+  }
+
   const created2 = await ProductTypeStagesDAO.create({
     id: id2,
     pricingProductTypeId: pricingProductType.id,
-    stageTemplateId
+    stageTemplateId: stageTemplateId2
   });
 
   t.deepEqual(created, {
@@ -32,7 +49,7 @@ test('ProductTypeStagesDAO can create and find by product type id', async (t: Te
   t.deepEqual(created2, {
     id: id2,
     pricingProductTypeId: pricingProductType.id,
-    stageTemplateId
+    stageTemplateId: stageTemplateId2
   });
 
   const results = await ProductTypeStagesDAO.findAllByProductType(
