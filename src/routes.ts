@@ -10,6 +10,7 @@ import annotationCommentRoutes from './components/annotation-comments/routes';
 import approvedSignupRoutes from './components/approved-signups/routes';
 import assetRoutes from './components/assets/routes';
 import bidRoutes from './components/bids/routes';
+import bidTaskTypeRoutes from './components/bid-task-types/routes';
 import canvasRoutes from './components/canvases/routes';
 import collaboratorRoutes from './components/collaborators/routes';
 import componentRoutes from './components/components/routes';
@@ -58,6 +59,7 @@ routeDirectories.forEach(
 router.use('/access-control', accessControlRoutes);
 router.use('/approved-signups', approvedSignupRoutes);
 router.use('/bids', bidRoutes);
+router.use('/bid-task-types', bidTaskTypeRoutes);
 router.use('/collaborators', collaboratorRoutes);
 router.use('/components', componentRoutes);
 router.use('/comments', commentRoutes);
