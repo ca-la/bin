@@ -6,7 +6,7 @@ interface TaskType {
   assigneeRole: CollaboratorRole;
 }
 
-const taskTypes: { [key: string]: TaskType } = {
+export const taskTypes: { [key: string]: TaskType } = {
   CALA: {
     id: '065f32d9-7d25-49f8-b25d-970e148b59d8',
     title: 'CALA',

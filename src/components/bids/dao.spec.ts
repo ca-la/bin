@@ -1,5 +1,5 @@
 import * as uuid from 'node-uuid';
-import { test, Test } from '../../test-helpers/fresh';
+import { sandbox, test, Test } from '../../test-helpers/fresh';
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
 import generatePricingQuote from '../../services/generate-pricing-quote';
 import createUser = require('../../test-helpers/create-user');
@@ -21,8 +21,13 @@ import DesignEvent from '../../domain-objects/design-event';
 import generateBid from '../../test-helpers/factories/bid';
 import generateDesignEvent from '../../test-helpers/factories/design-event';
 import { daysToMs } from '../../services/time-conversion';
+import * as BidTaskTypesDAO from '../bid-task-types/dao';
+import { taskTypes } from '../tasks/templates/tasks';
 
 test('Bids DAO supports creation and retrieval', async (t: Test) => {
+  const bidTaskTypesCreateStub = sandbox()
+    .stub(BidTaskTypesDAO, 'create')
+    .resolves({});
   await generatePricingValues();
   const { user } = await createUser();
   const quote = await generatePricingQuote({
@@ -65,6 +70,18 @@ test('Bids DAO supports creation and retrieval', async (t: Test) => {
 
   t.deepEqual(inputBid, bid);
   t.deepEqual(bid, retrieved);
+  t.ok(
+    bidTaskTypesCreateStub.calledWith({
+      pricingBidId: bid.id,
+      taskTypeId: taskTypes.TECHNICAL_DESIGN.id
+    })
+  );
+  t.ok(
+    bidTaskTypesCreateStub.calledWith({
+      pricingBidId: bid.id,
+      taskTypeId: taskTypes.PRODUCTION.id
+    })
+  );
 });
 
 test('Bids DAO findById returns null with a lookup-miss', async (t: Test) => {

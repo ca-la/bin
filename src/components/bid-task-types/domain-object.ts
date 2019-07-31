@@ -13,7 +13,7 @@ export interface BidTaskTypeRow {
   task_type_id: string;
 }
 
-export const dataAdapater = new DataAdapter<BidTaskTypeRow, BidTaskType>();
+export const dataAdapter = new DataAdapter<BidTaskTypeRow, BidTaskType>();
 
 export function isBidTaskTypeRow(row: any): row is BidTaskTypeRow {
   return hasProperties(row, 'id', 'pricing_bid_id', 'task_type_id');

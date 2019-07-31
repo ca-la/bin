@@ -10,11 +10,14 @@ import Bid, {
   isBidRow,
   isBidWithEventsRow
 } from './domain-object';
+import { taskTypes } from '../../components/tasks/templates/tasks';
 import first from '../../services/first';
 import { validate, validateEvery } from '../../services/validate-from-db';
 import limitOrOffset from '../../services/limit-or-offset';
 import { MILLISECONDS_TO_EXPIRE } from './constants';
 import { omit } from 'lodash';
+import * as BidTaskTypesDAO from '../bid-task-types/dao';
+import BidTaskType from '../bid-task-types/domain-object';
 
 const TABLE_NAME = 'pricing_bids';
 const DESIGN_EVENTS_TABLE = 'design_events';
@@ -96,21 +99,38 @@ const orderByBidId = (query: Knex.QueryBuilder): Knex.QueryBuilder =>
     .from({ data: query })
     .orderBy('created_at', 'desc');
 
-export async function create(bid: BidCreationPayload): Promise<Bid> {
+export function create(bid: BidCreationPayload): Promise<Bid> {
   const rowData = dataAdapter.forInsertion(bid);
 
-  const created = await db(TABLE_NAME)
-    .insert(omit(rowData, 'accepted_at'))
-    .returning('*')
-    .then((rows: BidRow[]) => first(rows));
+  return db.transaction(async (trx: Knex.Transaction) => {
+    const createdBid = await db(TABLE_NAME)
+      .insert(omit(rowData, 'accepted_at'))
+      .returning('*')
+      .transacting(trx)
+      .then((rows: BidRow[]) => first(rows));
 
-  const withAcceptedAt = await findById(created.id);
+    const withAcceptedAt = await findById(createdBid.id, trx);
 
-  if (!withAcceptedAt) {
-    throw new Error('Failed to create Bid');
-  }
+    if (!withAcceptedAt) {
+      throw new Error('Failed to create Bid');
+    }
 
-  return withAcceptedAt;
+    await Promise.all(
+      // TODO: Get taskTypeIds from `bid` once it is included in the payload
+      [taskTypes.TECHNICAL_DESIGN.id, taskTypes.PRODUCTION.id].map(
+        (taskTypeId: string): Promise<BidTaskType> =>
+          BidTaskTypesDAO.create(
+            {
+              pricingBidId: withAcceptedAt.id,
+              taskTypeId
+            },
+            trx
+          )
+      )
+    );
+
+    return withAcceptedAt;
+  });
 }
 
 function findAllByState(
@@ -210,7 +230,10 @@ export async function findAll(modifiers: {
   return validateEvery<BidRow, Bid>(TABLE_NAME, isBidRow, dataAdapter, bids);
 }
 
-export async function findById(id: string): Promise<Bid | null> {
+export async function findById(
+  id: string,
+  trx?: Knex.Transaction
+): Promise<Bid | null> {
   const bid: BidRow | undefined = await db(DESIGN_EVENTS_TABLE)
     .select(selectWithAcceptedAt)
     .rightJoin('pricing_bids', (join: Knex.JoinClause) => {
@@ -225,6 +248,11 @@ export async function findById(id: string): Promise<Bid | null> {
     .orderBy('pricing_bids.id')
     .orderBy('pricing_bids.created_at', 'desc')
     .limit(1)
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .then((bids: BidRow[]) => first(bids));
 
   if (!bid) {
