@@ -78,10 +78,16 @@ test('findAndDuplicateDesign', async (t: tape.Test) => {
 
   const tasks = await TaskEventsDAO.findByDesignId(duplicatedDesign.id);
   const getTitle = (d: { title: string }): string => d.title;
-  t.equal(tasks.length, StageTemplate.POST_CREATION_TEMPLATES[0].tasks.length);
+  t.equal(
+    tasks.length,
+    StageTemplate.POST_CREATION_TEMPLATES[0].tasks.length +
+      StageTemplate.POST_CREATION_TEMPLATES[1].tasks.length
+  );
   t.deepEqual(
     tasks.map(getTitle),
-    StageTemplate.POST_CREATION_TEMPLATES[0].tasks.map(getTitle)
+    StageTemplate.POST_CREATION_TEMPLATES[0].tasks
+      .map(getTitle)
+      .concat(StageTemplate.POST_CREATION_TEMPLATES[1].tasks.map(getTitle))
   );
 
   const duplicateCanvases = await CanvasesDAO.findAllByDesignId(
