@@ -32,12 +32,14 @@ async function backfillSpecificationStage(): Promise<void> {
     const creationWithoutSpecification = await trx
       .raw(
         `
-SELECT design_id, id FROM product_design_stages
- WHERE title = 'Creation'
+SELECT design_id, product_design_stages.id FROM product_design_stages
+  JOIN product_designs ON product_designs.id = product_design_stages.design_id
+ WHERE product_design_stages.title = 'Creation'
    AND design_id NOT IN (
      SELECT design_id FROM product_design_stages
       WHERE title = 'Specification'
-   );
+   )
+   AND product_designs.deleted_at IS NULL;
 `
       )
       .then((result: pg.QueryResult) => result.rows as Row[]);
@@ -47,6 +49,14 @@ SELECT design_id, id FROM product_design_stages
         'Could not find any designs that were missing the Specification stage'
       );
     }
+
+    await trx
+      .delete()
+      .from('notifications')
+      .whereIn(
+        'stage_id',
+        creationWithoutSpecification.map((row: Row) => row.id)
+      );
 
     await trx
       .delete()
@@ -81,12 +91,14 @@ SELECT design_id, id FROM product_design_stages
     const postRunRowCheck = await trx
       .raw(
         `
-SELECT DISTINCT design_id FROM product_design_stages
- WHERE title = 'Creation'
+SELECT design_id, product_design_stages.id FROM product_design_stages
+  JOIN product_designs ON product_designs.id = product_design_stages.design_id
+ WHERE product_design_stages.title = 'Creation'
    AND design_id NOT IN (
      SELECT design_id FROM product_design_stages
-      WHERE title = 'Specification'
-   );
+     WHERE title = 'Specification'
+   )
+   AND product_designs.deleted_at IS NULL;
 `
       )
       .then((result: pg.QueryResult) => result.rowCount);
