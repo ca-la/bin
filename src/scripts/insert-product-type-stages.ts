@@ -1,6 +1,7 @@
 import * as Knex from 'knex';
 import * as process from 'process';
 import * as uuid from 'node-uuid';
+import { chunk } from 'lodash';
 
 import * as db from '../services/db';
 import { log } from '../services/logger';
@@ -41,40 +42,48 @@ insertProductTypeStages()
  * `pricing_product_types`. The only difference on insertions is between product type
  * blanks vs everything else.
  */
+
+interface Row {
+  id: string;
+  complexity: string;
+}
+
 async function insertProductTypeStages(): Promise<void> {
   return db.transaction(async (trx: Knex.Transaction) => {
-    const pricingProductTypes = (await trx('pricing_product_types')
-      .select('id', 'complexity')
-      .whereIn('version', db('pricing_product_types').max('version'))) as {
-      id: string;
-      complexity: string;
-    }[];
+    log('Removing all existing product_type_stages rows');
+    await trx.raw(`
+TRUNCATE TABLE product_type_stages;
+`);
+
+    const pricingProductTypes: Row[] = await trx(
+      'pricing_product_types'
+    ).select('id', 'complexity');
     log(
       `Inserting stage type rows from ${
         pricingProductTypes.length
       } product types.`
     );
 
+    const insertions: ProductTypeStageRow[] = [];
     for (const productType of pricingProductTypes) {
       const stageTemplateIds =
         productType.complexity === 'BLANK' ? BLANKS_STAGES : ALL_STAGES;
-      const insertions: ProductTypeStageRow[] = [];
 
       for (const stageTemplateId of stageTemplateIds) {
         const id = uuid.v4();
-        log(
-          `Creating ProductTypeStage row "${id}", productTypeId "${
-            productType.id
-          }", stageTemplateId "${stageTemplateId}".`
-        );
         insertions.push({
           id,
           pricing_product_type_id: productType.id,
           stage_template_id: stageTemplateId
         });
       }
+    }
 
-      await trx('product_type_stages').insert(insertions);
+    log(`Preparing ${insertions.length} ProductTypeStages for insertion`);
+
+    for (const c of chunk(insertions, 10000)) {
+      log(`Creating ${c.length} ProductTypeStages`);
+      await trx('product_type_stages').insert(c);
     }
   });
 }
