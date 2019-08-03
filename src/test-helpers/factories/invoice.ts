@@ -1,9 +1,9 @@
 import db = require('../../services/db');
 import * as Knex from 'knex';
 
-import Collection from '../../domain-objects/collection';
+import Collection from '../../components/collections/domain-object';
 import { findById as findUserById } from '../../components/users/dao';
-import * as CollectionsDAO from '../../dao/collections';
+import * as CollectionsDAO from '../../components/collections/dao';
 import * as InvoicesDAO from '../../dao/invoices';
 import createUser = require('../create-user');
 import Invoice = require('../../domain-objects/invoice');

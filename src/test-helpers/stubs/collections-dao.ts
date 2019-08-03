@@ -1,7 +1,7 @@
 import { sandbox } from '../../test-helpers/fresh';
 import * as Sinon from 'sinon';
-import * as CollectionsDAO from '../../dao/collections';
-import Collection from '../../domain-objects/collection';
+import * as CollectionsDAO from '../../components/collections/dao';
+import Collection from '../../components/collections/domain-object';
 
 export const stubFindWithUncostedDesigns = (): {
   collections: Collection[];

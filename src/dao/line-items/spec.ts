@@ -22,7 +22,7 @@ import createUser = require('../../test-helpers/create-user');
 import generateInvoice from '../../test-helpers/factories/invoice';
 import createDesign from '../../services/create-design';
 import generateCollection from '../../test-helpers/factories/collection';
-import { moveDesign } from '../collections';
+import { moveDesign } from '../../components/collections/dao';
 import generateAsset from '../../test-helpers/factories/asset';
 import generateComponent from '../../test-helpers/factories/component';
 import generateCanvas from '../../test-helpers/factories/product-design-canvas';

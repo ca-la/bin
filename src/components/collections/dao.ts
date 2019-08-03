@@ -9,14 +9,14 @@ import Collection, {
   isCollectionRow,
   partialDataAdapter,
   UPDATABLE_PROPERTIES
-} from '../../domain-objects/collection';
+} from './domain-object';
 import { CollectionDesignRow } from '../../domain-objects/collection-design';
 import CollectionSubmissionStatus, {
   CollectionSubmissionStatusRow,
   dataAdapter as collectionSubmissionStatusAdapter
 } from '../../domain-objects/collection-submission-status';
 import ProductDesign = require('../../domain-objects/product-design');
-import * as ProductDesignsDAO from '../product-designs';
+import * as ProductDesignsDAO from '../../dao/product-designs';
 
 import * as db from '../../services/db';
 import { validate, validateEvery } from '../../services/validate-from-db';

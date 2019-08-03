@@ -4,7 +4,7 @@ import * as Koa from 'koa';
 import requireAuth = require('../../middleware/require-auth');
 import Timeline from './domain-object';
 import * as Service from './service';
-import * as CollectionsDAO from '../../dao/collections';
+import * as CollectionsDAO from '../collections/dao';
 import { getCollectionPermissions } from '../../services/get-permissions';
 
 const router = new Router();

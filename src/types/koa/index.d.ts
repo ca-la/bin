@@ -10,7 +10,7 @@ declare module 'koa' {
     userId: string;
     role: string;
     collaborator?: import('../../components/collaborators/domain-objects/collaborator').default;
-    collection?: import('../../domain-objects/collection').default;
+    collection?: import('../../components/collections/domain-object').default;
     design?: import('../../domain-objects/product-design');
     permissions?: import('../../services/get-permissions').Permissions;
   }

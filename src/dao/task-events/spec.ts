@@ -20,10 +20,13 @@ import {
   deleteById as deleteCollaborator
 } from '../../components/collaborators/dao';
 import * as CollaboratorTasksDAO from '../collaborator-tasks';
-import { addDesign, create as createCollection } from '../collections';
+import {
+  addDesign,
+  create as createCollection,
+  deleteById as deleteCollection
+} from '../../components/collections/dao';
 import { create as createTaskComment } from '../task-comments';
 import { del as deleteComponent } from '../../components/components/dao';
-import { deleteById as deleteCollection } from '../../dao/collections';
 import { deleteById as deleteComment } from '../../components/comments/dao';
 
 import createUser = require('../../test-helpers/create-user');

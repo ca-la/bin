@@ -1,11 +1,11 @@
 import * as Koa from 'koa';
 import * as uuid from 'node-uuid';
 
-import * as DesignsDAO from '../../dao/product-designs';
-import * as DesignEventsDAO from '../../dao/design-events';
-import ProductDesign = require('../../domain-objects/product-design');
-import createDesignTasks from '../../services/create-design-tasks';
-import * as NotificationsService from '../../services/create-notifications';
+import * as DesignsDAO from '../../../dao/product-designs';
+import * as DesignEventsDAO from '../../../dao/design-events';
+import ProductDesign = require('../../../domain-objects/product-design');
+import createDesignTasks from '../../../services/create-design-tasks';
+import * as NotificationsService from '../../../services/create-notifications';
 
 export function* commitCostInputs(
   this: Koa.Application.Context

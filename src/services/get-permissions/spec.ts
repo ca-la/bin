@@ -4,7 +4,7 @@ import * as tape from 'tape';
 import { test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
 
-import * as CollectionsDAO from '../../dao/collections';
+import * as CollectionsDAO from '../../components/collections/dao';
 import * as DesignsDAO from '../../dao/product-designs';
 import * as PermissionsService from './index';
 import generateCollaborator from '../../test-helpers/factories/collaborator';

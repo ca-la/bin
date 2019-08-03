@@ -1,9 +1,9 @@
-import DataAdapter from '../services/data-adapter';
+import DataAdapter from '../../services/data-adapter';
 import {
   hasOnlyProperties,
   hasProperties,
   hasSomeProperties
-} from '../services/require-properties';
+} from '../../services/require-properties';
 
 export const UPDATABLE_PROPERTIES = ['description', 'title'];
 

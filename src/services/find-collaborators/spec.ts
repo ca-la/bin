@@ -1,7 +1,7 @@
 import * as uuid from 'node-uuid';
 import CollaboratorsDAO = require('../../components/collaborators/dao');
-import Collection from '../../domain-objects/collection';
-import * as CollectionsDAO from '../../dao/collections';
+import Collection from '../../components/collections/domain-object';
+import * as CollectionsDAO from '../../components/collections/dao';
 import createUser = require('../../test-helpers/create-user');
 import findCollaboratorsByRole from './index';
 import ProductDesign = require('../../domain-objects/product-design');

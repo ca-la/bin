@@ -1,7 +1,7 @@
 import * as Koa from 'koa';
 
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
-import * as CollectionsDAO from '../../dao/collections';
+import * as CollectionsDAO from '../../components/collections/dao';
 import * as DesignsDAO from '../../dao/product-designs';
 import Collaborator from '../../components/collaborators/domain-objects/collaborator';
 import filterError = require('../../services/filter-error');

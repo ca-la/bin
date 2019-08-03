@@ -4,7 +4,7 @@ import * as Koa from 'koa';
 import * as uuid from 'node-uuid';
 
 import requireAuth = require('../../middleware/require-auth');
-import * as CollectionsDAO from '../../dao/collections';
+import * as CollectionsDAO from '../../components/collections/dao';
 import * as PricingCostInputsDAO from '../../dao/pricing-cost-inputs';
 import * as SlackService from '../../services/slack';
 import * as UsersDAO from '../../components/users/dao';

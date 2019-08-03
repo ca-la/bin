@@ -10,7 +10,7 @@ import {
 } from './index';
 import { create as createTask } from '../tasks';
 import { create as createCollaborator } from '../../components/collaborators/dao';
-import { create as createCollection } from '../collections';
+import { create as createCollection } from '../../components/collections/dao';
 import createUser = require('../../test-helpers/create-user');
 
 test('CollaboratorTask DAO supports creation/retrieval', async (t: tape.Test) => {

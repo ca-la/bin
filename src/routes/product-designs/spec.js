@@ -3,7 +3,7 @@
 const uuid = require('node-uuid');
 const { omit } = require('lodash');
 
-const CollectionsDAO = require('../../dao/collections');
+const CollectionsDAO = require('../../components/collections/dao');
 const createUser = require('../../test-helpers/create-user');
 const DesignEventsDAO = require('../../dao/design-events');
 const ProductDesignsDAO = require('../../dao/product-designs');

@@ -3,7 +3,7 @@ import * as tape from 'tape';
 import { sandbox, test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
 
-import * as CollectionsDAO from '../../dao/collections';
+import * as CollectionsDAO from '../collections/dao';
 import * as DesignsDAO from '../../dao/product-designs';
 import * as MeasurementsDAO from '../../dao/product-design-canvas-measurements';
 import generateNotification from '../../test-helpers/factories/notification';

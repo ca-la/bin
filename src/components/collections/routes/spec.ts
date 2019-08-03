@@ -2,18 +2,18 @@ import * as uuid from 'node-uuid';
 import * as sinon from 'sinon';
 import * as tape from 'tape';
 
-import * as CollectionsDAO from '../../dao/collections';
-import * as CollaboratorsDAO from '../../components/collaborators/dao';
-import createUser = require('../../test-helpers/create-user');
-import * as ProductDesignsDAO from '../../dao/product-designs';
-import * as DesignEventsDAO from '../../dao/design-events';
-import * as API from '../../test-helpers/http';
-import { sandbox, test } from '../../test-helpers/fresh';
-import * as CreateNotifications from '../../services/create-notifications';
-import * as DesignTasksService from '../../services/create-design-tasks';
-import { stubFindWithUncostedDesigns } from '../../test-helpers/stubs/collections-dao';
-import Collection from '../../domain-objects/collection';
-import generateCollaborator from '../../test-helpers/factories/collaborator';
+import * as CollectionsDAO from '../dao';
+import * as CollaboratorsDAO from '../../collaborators/dao';
+import createUser = require('../../../test-helpers/create-user');
+import * as ProductDesignsDAO from '../../../dao/product-designs';
+import * as DesignEventsDAO from '../../../dao/design-events';
+import * as API from '../../../test-helpers/http';
+import { sandbox, test } from '../../../test-helpers/fresh';
+import * as CreateNotifications from '../../../services/create-notifications';
+import * as DesignTasksService from '../../../services/create-design-tasks';
+import { stubFindWithUncostedDesigns } from '../../../test-helpers/stubs/collections-dao';
+import Collection from '../domain-object';
+import generateCollaborator from '../../../test-helpers/factories/collaborator';
 
 test('GET /collections/:id returns a created collection', async (t: tape.Test) => {
   const { session, user } = await createUser();

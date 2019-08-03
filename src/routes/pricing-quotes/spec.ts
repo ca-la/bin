@@ -11,7 +11,7 @@ import { authHeader, get, post, put } from '../../test-helpers/http';
 import { create as createDesign } from '../../dao/product-designs';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import generateCollection from '../../test-helpers/factories/collection';
-import * as CollectionsDAO from '../../dao/collections';
+import * as CollectionsDAO from '../../components/collections/dao';
 import * as SlackService from '../../services/slack';
 import PricingCostInput, {
   PricingCostInputWithoutVersions

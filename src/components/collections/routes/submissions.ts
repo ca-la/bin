@@ -1,16 +1,16 @@
 import * as Koa from 'koa';
 import * as uuid from 'node-uuid';
-import CollectionSubmissionStatus from '../../domain-objects/collection-submission-status';
+import CollectionSubmissionStatus from '../../../domain-objects/collection-submission-status';
 import CollectionService, {
   isCollectionService
-} from '../../domain-objects/collection-service';
-import * as CollectionsDAO from '../../dao/collections';
-import * as CollectionServicesDAO from '../../dao/collection-services';
-import * as ProductDesignsDAO from '../../dao/product-designs';
-import * as DesignEventsDAO from '../../dao/design-events';
-import ProductDesign = require('../../domain-objects/product-design');
-import * as CreateNotifications from '../../services/create-notifications';
-import attachDefaults from '../../services/attach-defaults';
+} from '../../../domain-objects/collection-service';
+import * as CollectionsDAO from '../dao';
+import * as CollectionServicesDAO from '../../../dao/collection-services';
+import * as ProductDesignsDAO from '../../../dao/product-designs';
+import * as DesignEventsDAO from '../../../dao/design-events';
+import ProductDesign = require('../../../domain-objects/product-design');
+import * as CreateNotifications from '../../../services/create-notifications';
+import attachDefaults from '../../../services/attach-defaults';
 
 export function* createSubmission(
   this: Koa.Application.Context

@@ -2,7 +2,7 @@
 
 const InvalidDataError = require('../../errors/invalid-data');
 
-const CollectionsDAO = require('../../dao/collections');
+const CollectionsDAO = require('../../components/collections/dao');
 const db = require('../../services/db');
 const InvoicePaymentsDAO = require('../../components/invoice-payments/dao');
 const InvoicesDAO = require('../../dao/invoices');

@@ -14,7 +14,7 @@ import * as DesignStageTasksDAO from '../../dao/product-design-stage-tasks';
 import * as CommentsDAO from '../../components/comments/dao';
 import * as TaskCommentsDAO from '../../dao/task-comments';
 import * as AnnotationCommentsDAO from '../../components/annotation-comments/dao';
-import * as CollectionsDAO from '../../dao/collections';
+import * as CollectionsDAO from '../../components/collections/dao';
 import * as DesignsDAO from '../../dao/product-designs';
 import * as EmailService from '../../services/email';
 import generateCanvas from '../../test-helpers/factories/product-design-canvas';

@@ -3,7 +3,7 @@ import * as uuid from 'node-uuid';
 import createUser = require('../../test-helpers/create-user');
 import { authHeader, get, put } from '../../test-helpers/http';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
-import * as CollectionsDAO from '../../dao/collections';
+import * as CollectionsDAO from '../collections/dao';
 import { create as createDesign } from '../../dao/product-designs';
 import * as CreateNotifications from '../../services/create-notifications';
 import generateCollaborator from '../../test-helpers/factories/collaborator';

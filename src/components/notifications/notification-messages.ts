@@ -6,7 +6,7 @@ import * as ComponentsDAO from '../components/dao';
 import ProductDesign = require('../../domain-objects/product-design');
 import * as UsersDAO from '../../components/users/dao';
 import * as ProductDesignsDAO from '../../dao/product-designs';
-import * as CollectionsDAO from '../../dao/collections';
+import * as CollectionsDAO from '../collections/dao';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as CommentsDAO from '../../components/comments/dao';
 import * as CanvasesDAO from '../canvases/dao';
@@ -22,7 +22,7 @@ import Comment from '../../components/comments/domain-object';
 import { ComponentType } from '../components/domain-object';
 import Canvas from '../canvases/domain-object';
 import { DetailsTask } from '../../domain-objects/task-event';
-import Collection from '../../domain-objects/collection';
+import Collection from '../collections/domain-object';
 import { addAtMentionDetailsForComment } from '../../services/add-at-mention-details';
 
 function span(text: string, className?: string): string {

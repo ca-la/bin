@@ -1,5 +1,5 @@
 import * as Koa from 'koa';
-import CollectionsDAO = require('../../dao/collections');
+import CollectionsDAO = require('../../components/collections/dao');
 import { getCollectionPermissions } from '../../services/get-permissions';
 
 export function* attachCollectionAndPermissions(

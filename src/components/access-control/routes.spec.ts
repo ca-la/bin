@@ -5,7 +5,7 @@ import * as API from '../../test-helpers/http';
 import createUser = require('../../test-helpers/create-user');
 import createDesign from '../../services/create-design';
 import generateCollection from '../../test-helpers/factories/collection';
-import { addDesign } from '../../dao/collections';
+import { addDesign } from '../collections/dao';
 import generateProductDesignStage from '../../test-helpers/factories/product-design-stage';
 import generateTask from '../../test-helpers/factories/task';
 import generateCollaborator from '../../test-helpers/factories/collaborator';

@@ -10,7 +10,7 @@ import {
 import { del as deleteCanvas } from '../../components/canvases/dao';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import { deleteById as deleteAnnotation } from '../../components/product-design-canvas-annotations/dao';
-import * as CollectionsDAO from '../../dao/collections';
+import * as CollectionsDAO from '../../components/collections/dao';
 
 import { test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');

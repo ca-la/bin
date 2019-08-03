@@ -4,7 +4,7 @@ import sendCreationNotifications from './send-creation-notifications';
 import * as AnnotationsDAO from '../../components/product-design-canvas-annotations/dao';
 import createUser = require('../../test-helpers/create-user');
 import { sandbox, test, Test } from '../../test-helpers/fresh';
-import * as CollectionsDAO from '../../dao/collections';
+import * as CollectionsDAO from '../collections/dao';
 import { create as createDesign } from '../../dao/product-designs';
 import * as CreateNotifications from '../../services/create-notifications';
 import generateCollaborator from '../../test-helpers/factories/collaborator';

@@ -1,32 +1,32 @@
 import * as Router from 'koa-router';
 import * as Koa from 'koa';
 
-import { CALA_OPS_USER_ID } from '../../config';
-import filterError = require('../../services/filter-error');
-import InvalidDataError = require('../../errors/invalid-data');
+import { CALA_OPS_USER_ID } from '../../../config';
+import filterError = require('../../../services/filter-error');
+import InvalidDataError = require('../../../errors/invalid-data');
 
 import {
   canAccessCollectionInParam,
   canDeleteCollection,
   canEditCollection,
   canSubmitCollection
-} from '../../middleware/can-access-collection';
-import canAccessUserResource = require('../../middleware/can-access-user-resource');
-import requireAuth = require('../../middleware/require-auth');
-import requireAdmin = require('../../middleware/require-admin');
+} from '../../../middleware/can-access-collection';
+import canAccessUserResource = require('../../../middleware/can-access-user-resource');
+import requireAuth = require('../../../middleware/require-auth');
+import requireAdmin = require('../../../middleware/require-admin');
 
-import * as CollectionsDAO from '../../dao/collections';
-import * as CollaboratorsDAO from '../../components/collaborators/dao';
+import * as CollectionsDAO from '../dao';
+import * as CollaboratorsDAO from '../../collaborators/dao';
 import Collection, {
   isCollection,
   isPartialCollection
-} from '../../domain-objects/collection';
+} from '../domain-object';
 import { createSubmission, getSubmissionStatus } from './submissions';
 import { deleteDesign, getCollectionDesigns, putDesign } from './designs';
 import {
   getCollectionPermissions,
   Permissions
-} from '../../services/get-permissions';
+} from '../../../services/get-permissions';
 import { commitCostInputs, createPartnerPairing } from './admin';
 
 const router = new Router();
@@ -252,4 +252,4 @@ router.post(
   createPartnerPairing
 );
 
-export = router.routes();
+export default router.routes();

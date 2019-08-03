@@ -1,8 +1,8 @@
 import * as uuid from 'node-uuid';
 import * as tape from 'tape';
-import * as CollectionsDAO from './index';
-import * as DesignEventsDAO from '../design-events';
-import * as ProductDesignsDAO from '../product-designs';
+import * as CollectionsDAO from './dao';
+import * as DesignEventsDAO from '../../dao/design-events';
+import * as ProductDesignsDAO from '../../dao/product-designs';
 import { test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
 import ProductDesign = require('../../domain-objects/product-design');

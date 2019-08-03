@@ -1,7 +1,7 @@
 import { escape as escapeHtml } from 'lodash';
 import { STUDIO_HOST } from '../../config';
 import ProductDesign = require('../../domain-objects/product-design');
-import Collection from '../../domain-objects/collection';
+import Collection from '../collections/domain-object';
 import { DetailsTask } from '../../domain-objects/task-event';
 import { ComponentType } from '../components/domain-object';
 import normalizeTitle from '../../services/normalize-title';

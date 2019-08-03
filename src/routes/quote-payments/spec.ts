@@ -1,6 +1,6 @@
 import * as uuid from 'node-uuid';
 
-import * as CollectionsDAO from '../../dao/collections';
+import * as CollectionsDAO from '../../components/collections/dao';
 import * as CreditsDAO from '../../components/credits/dao';
 import * as InvoicesDAO from '../../dao/invoices';
 import * as LineItemsDAO from '../../dao/line-items';

@@ -10,7 +10,7 @@ import {
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as TasksDAO from '../../dao/tasks';
 import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
-import * as CollectionsDAO from '../../dao/collections';
+import * as CollectionsDAO from '../../components/collections/dao';
 import * as productDesignStageTasksDAO from '../../dao/product-design-stage-tasks';
 import createUser = require('../../test-helpers/create-user');
 import { authHeader, get, post, put } from '../../test-helpers/http';

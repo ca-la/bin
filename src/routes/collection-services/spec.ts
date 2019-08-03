@@ -3,7 +3,7 @@ import * as uuid from 'node-uuid';
 import createUser = require('../../test-helpers/create-user');
 import { authHeader, del, get, patch, put } from '../../test-helpers/http';
 import { test } from '../../test-helpers/fresh';
-import { create as createCollection } from '../../dao/collections';
+import { create as createCollection } from '../../components/collections/dao';
 import * as CollectionServiceDAO from '../../dao/collection-services';
 import CollectionService from '../../domain-objects/collection-service';
 
