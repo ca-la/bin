@@ -85,7 +85,7 @@ test('addAssetLink returns aws link when component is of type sketch', async (t:
   );
   t.equal(
     enrichedComponent.assetLink,
-    `https://imgix.example.com/${sketchId}?fm=jpg&max-w=2288`
+    `https://imgix.example.com/${sketchId}?fm=jpg&fit=max`
   );
   t.equal(
     enrichedComponent.thumbnailLink,
@@ -129,7 +129,7 @@ test('addAssetLink returns link when component is of type artwork', async (t: ta
   );
   t.equal(
     enrichedComponent.assetLink,
-    `https://imgix.example.com/${artworkId}?fm=jpg&max-w=2288`
+    `https://imgix.example.com/${artworkId}?fm=jpg&fit=max`
   );
   t.equal(
     enrichedComponent.thumbnailLink,
@@ -180,7 +180,7 @@ test('addAssetLink returns link when component is of type material', async (t: t
   );
   t.equal(
     enrichedComponent.assetLink,
-    `https://imgix.example.com/${materialImageId}?fm=jpg&max-w=2288`
+    `https://imgix.example.com/${materialImageId}?fm=jpg&fit=max`
   );
   t.equal(
     enrichedComponent.thumbnailLink,

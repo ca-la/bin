@@ -15,7 +15,7 @@ export interface AssetLinks {
   thumbnailLink: string | null;
 }
 
-const DESIGN_PREVIEW_TOOL_FORMAT = '?fm=jpg&max-w=2288';
+const DESIGN_PREVIEW_TOOL_FORMAT = '?fm=jpg&fit=max';
 const PREVIEW_CARD_FORMAT = '?fm=jpg&w=560';
 const THUMBNAIL_FORMAT = '?fm=jpg&w=48';
 const DESIGN_PREVIEW_THUMBNAIL = '?fm=jpg&fit=fill&h=104&w=104';
