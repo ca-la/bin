@@ -34,7 +34,13 @@ const router = new Router();
 function* createUser(
   this: Koa.Application.Context<UserIO>
 ): AsyncIterableIterator<User> {
-  const { name, email, password, phone } = this.request.body;
+  const {
+    name,
+    email,
+    password,
+    phone,
+    lastAcceptedDesignerTermsAt
+  } = this.request.body;
   const { cohort, initialDesigns, promoCode } = this.query;
 
   if (!email) {
@@ -56,6 +62,7 @@ function* createUser(
 
   const user = yield UsersDAO.create({
     email,
+    lastAcceptedDesignerTermsAt,
     name,
     password,
     phone,

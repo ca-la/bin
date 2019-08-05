@@ -91,11 +91,18 @@ test('POST /users returns a 400 if user creation fails', async (t: Test) => {
   t.equal(body.message, 'Bad email');
 });
 
-test('POST /users returns new user data', async (t: Test) => {
+test('POST /users allows public values to be set', async (t: Test) => {
   stubUserDependencies();
   stubApprovalDependencies();
 
-  const [response, body] = await post('/users', { body: USER_DATA });
+  const acceptedAt = new Date('2019-01-01').toISOString();
+
+  const [response, body] = await post('/users', {
+    body: {
+      ...USER_DATA,
+      lastAcceptedDesignerTermsAt: acceptedAt
+    }
+  });
 
   t.equal(response.status, 201, 'status=201');
   t.equal(body.name, 'Q User');
@@ -103,6 +110,7 @@ test('POST /users returns new user data', async (t: Test) => {
   t.equal(body.phone, '+14155809925');
   t.equal(body.password, undefined);
   t.equal(body.passwordHash, undefined);
+  t.equal(body.lastAcceptedDesignerTermsAt, acceptedAt);
 });
 
 test('POST /users does not allow private values to be set', async (t: Test) => {
