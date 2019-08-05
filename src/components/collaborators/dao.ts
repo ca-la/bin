@@ -533,3 +533,33 @@ export async function cancelForDesignAndPartner(
 
   return cancelled;
 }
+
+export async function findByDesignAndTaskType(
+  designId: string,
+  taskTypeId: string,
+  trx: Knex.Transaction
+): Promise<Collaborator[]> {
+  const rows = await db(TABLE_NAME)
+    .transacting(trx)
+    .select('collaborators.*')
+    .join('design_events', 'design_events.actor_id', 'collaborators.user_id')
+    .join(
+      'bid_task_types',
+      'bid_task_types.pricing_bid_id',
+      'design_events.bid_id'
+    )
+    .where({
+      'collaborators.design_id': designId,
+      'design_events.type': 'ACCEPT_SERVICE_BID',
+      'collaborators.deleted_at': null,
+      'bid_task_types.task_type_id': taskTypeId
+    })
+    .andWhereRaw('(cancelled_at IS NULL OR cancelled_at > now())');
+
+  return validateEvery<CollaboratorRow, Collaborator>(
+    TABLE_NAME,
+    isCollaboratorRow,
+    dataAdapter,
+    rows
+  );
+}

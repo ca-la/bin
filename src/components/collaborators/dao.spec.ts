@@ -1,8 +1,12 @@
+import * as Knex from 'knex';
 import * as uuid from 'node-uuid';
+import { omit } from 'lodash';
 
+import * as db from '../../services/db';
 import * as CollaboratorsDAO from './dao';
 import * as CollectionsDAO from '../collections/dao';
 import ProductDesignsDAO = require('../../dao/product-designs');
+import * as DesignEventsDAO from '../../dao/design-events';
 
 import createUser = require('../../test-helpers/create-user');
 import { test, Test } from '../../test-helpers/fresh';
@@ -10,6 +14,8 @@ import createDesign from '../../services/create-design';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
 import generateCollection from '../../test-helpers/factories/collection';
 import Collaborator from './domain-objects/collaborator';
+import generateBid from '../../test-helpers/factories/bid';
+import { taskTypes } from '../tasks/templates/tasks';
 
 test('Collaborators DAO can find all collaborators with a list of ids', async (t: Test) => {
   const { user } = await createUser({ withSession: false });
@@ -695,4 +701,58 @@ test('CollaboratorsDAO.findUnclaimedByEmail', async (t: Test) => {
     [],
     'does not find the deleted invitation'
   );
+});
+
+test('CollaboratorsDAO.findByDesignAndTaskType', async (t: Test) => {
+  const designer = await createUser({ withSession: false });
+  const partner = await createUser({ role: 'PARTNER' });
+  const design = await ProductDesignsDAO.create({
+    productType: 'TEESHIRT',
+    title: 'A product design',
+    userId: designer.user.id
+  });
+  const { bid, quote } = await generateBid({ designId: design.id });
+  const { collaborator } = await generateCollaborator({
+    cancelledAt: null,
+    collectionId: null,
+    designId: quote.designId,
+    invitationMessage: '',
+    role: 'PARTNER',
+    userEmail: null,
+    userId: partner.user.id
+  });
+  await DesignEventsDAO.create({
+    actorId: partner.user.id,
+    bidId: bid.id,
+    createdAt: new Date(),
+    designId: design.id,
+    id: uuid.v4(),
+    quoteId: quote.id,
+    targetId: null,
+    type: 'ACCEPT_SERVICE_BID'
+  });
+
+  return db.transaction(async (trx: Knex.Transaction) => {
+    const found = await CollaboratorsDAO.findByDesignAndTaskType(
+      design.id,
+      taskTypes.TECHNICAL_DESIGN.id,
+      trx
+    );
+
+    t.deepEqual([omit(collaborator, ['user'])], found);
+
+    const draftDesign = await ProductDesignsDAO.create({
+      productType: 'TEESHIRT',
+      title: 'A product design',
+      userId: designer.user.id
+    });
+
+    const notFound = await CollaboratorsDAO.findByDesignAndTaskType(
+      draftDesign.id,
+      taskTypes.TECHNICAL_DESIGN.id,
+      trx
+    );
+
+    t.deepEqual([], notFound);
+  });
 });

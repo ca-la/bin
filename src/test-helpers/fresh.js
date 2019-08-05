@@ -30,6 +30,7 @@ const TABLES = [
   'pricing_product_types',
   'pricing_quotes',
   'product_designs',
+  'product_type_stages',
   'productvideos',
   'pushtokens',
   'scanphotos',

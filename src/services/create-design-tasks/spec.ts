@@ -1,9 +1,10 @@
 import * as uuid from 'node-uuid';
 import * as Knex from 'knex';
+import * as db from '../db';
 import * as ProductDesignStagesDAO from '../../dao/product-design-stages';
 import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
-import * as findCollaborators from '../../services/find-collaborators';
-import * as CreateTaskService from '../../services/create-task';
+import * as CreateTaskService from '../create-task';
+import * as FindTaskTypeCollaborators from '../find-task-type-collaborators';
 import Collection from '../../components/collections/domain-object';
 import * as CollectionsDAO from '../../components/collections/dao';
 import createDesignTasks, { retrieveStageTemplates } from './index';
@@ -18,6 +19,7 @@ import {
   POST_APPROVAL_TEMPLATES,
   POST_CREATION_TEMPLATES
 } from '../../components/tasks/templates/stages';
+import { taskTypes } from '../../components/tasks/templates/tasks';
 import * as ProductTypesDAO from '../../components/pricing-product-types/dao';
 import * as ProductTypeStagesDAO from '../../components/product-type-stages/dao';
 import StageTemplate from '../../domain-objects/stage-template';
@@ -100,7 +102,6 @@ test('retrieveStageTemplates returns a list of stages for the given design and p
 
 test('createDesignTasks creates POST_CREATION tasks', async (t: Test) => {
   const { collaborator, design } = await createResources();
-  const mockTrx = {} as Knex.Transaction;
   const mockStage = { id: uuid.v4() };
   const mockTaskEvent = { id: uuid.v4() };
   const mockCollaboratorTask = {
@@ -109,8 +110,13 @@ test('createDesignTasks creates POST_CREATION tasks', async (t: Test) => {
   };
 
   sandbox()
-    .stub(findCollaborators, 'default')
-    .resolves([collaborator]);
+    .stub(FindTaskTypeCollaborators, 'default')
+    .resolves({
+      [taskTypes.CALA.id]: [collaborator],
+      [taskTypes.DESIGN.id]: [collaborator],
+      [taskTypes.PRODUCTION.id]: [collaborator],
+      [taskTypes.TECHNICAL_DESIGN.id]: [collaborator]
+    });
 
   const stagesStub = sandbox()
     .stub(ProductDesignStagesDAO, 'create')
@@ -122,26 +128,25 @@ test('createDesignTasks creates POST_CREATION tasks', async (t: Test) => {
     .stub(CollaboratorTasksDAO, 'createAllByCollaboratorIdsAndTaskId')
     .resolves(mockCollaboratorTask);
 
-  await createDesignTasks(design.id, 'POST_CREATION', mockTrx);
-  const firstStage = POST_CREATION_TEMPLATES[0];
+  return db.transaction(async (trx: Knex.Transaction) => {
+    await createDesignTasks(design.id, 'POST_CREATION', trx);
+    const firstStage = POST_CREATION_TEMPLATES[0];
 
-  t.equal(
-    stagesStub.callCount,
-    POST_CREATION_TEMPLATES.length,
-    'creates each stage'
-  );
-  t.ok(
-    stagesStub.calledWith(
-      {
+    t.equal(
+      stagesStub.callCount,
+      POST_CREATION_TEMPLATES.length,
+      'creates each stage'
+    );
+    t.ok(
+      stagesStub.calledWith({
         description: firstStage.description,
         designId: design.id,
         ordering: firstStage.ordering,
         title: firstStage.title
-      },
-      mockTrx
-    ),
-    'Creates the first stage'
-  );
-  t.ok(createTaskStub.called);
-  t.ok(collaboratorsTasksStub.called, 'creates each collaborator task');
+      }),
+      'Creates the first stage'
+    );
+    t.ok(createTaskStub.called);
+    t.ok(collaboratorsTasksStub.called, 'creates each collaborator task');
+  });
 });

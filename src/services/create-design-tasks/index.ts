@@ -1,12 +1,12 @@
 import * as uuid from 'node-uuid';
 import * as Knex from 'knex';
 import { flatten } from 'lodash';
+
 import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
 import * as ProductDesignStagesDAO from '../../dao/product-design-stages';
-import findCollaborators, { CollaboratorRole } from '../find-collaborators';
+import findTaskTypeCollaborators from '../../services/find-task-type-collaborators';
 import Logger = require('../logger');
 import { DetailsTask, TaskStatus } from '../../domain-objects/task-event';
-import Collaborator from '../../components/collaborators/domain-objects/collaborator';
 import {
   POST_APPROVAL_TEMPLATES,
   POST_CREATION_TEMPLATES,
@@ -19,30 +19,16 @@ import { findByDesignId as findProductTypeByDesignId } from '../../components/pr
 import { findAllByProductType } from '../../components/product-type-stages/dao';
 import ProductTypeStage from '../../components/product-type-stages/domain-object';
 
-type CollaboratorsByRole = { [role in CollaboratorRole]?: Collaborator[] };
-
 async function createTasksFromTemplates(
   designId: string,
   taskTemplates: TaskTemplate[],
   stageId: string,
-  trx?: Knex.Transaction
+  trx: Knex.Transaction
 ): Promise<DetailsTask[]> {
-  // To avoid making the same "get collaborators by role" query for many tasks
-  // in a row, cache old results as we iterate through the task template list
-  const collaboratorsByRole: CollaboratorsByRole = {};
-
-  async function getCollaborators(
-    role: CollaboratorRole
-  ): Promise<Collaborator[]> {
-    let collaborators: Collaborator[];
-    const cached = collaboratorsByRole[role];
-    if (cached && cached.length > 0) {
-      collaborators = cached;
-    } else {
-      collaborators = await findCollaborators(designId, role, trx);
-    }
-    return collaborators;
-  }
+  const collaboratorsByTaskType = await findTaskTypeCollaborators(
+    designId,
+    trx
+  );
 
   return Promise.all(
     taskTemplates.map(async (taskTemplate: TaskTemplate, index: number) => {
@@ -59,13 +45,11 @@ async function createTasksFromTemplates(
       };
       const taskEvent = await createTask(taskId, task, stageId, trx);
 
-      const collaborators = await getCollaborators(
-        taskTemplate.taskType.assigneeRole
-      );
+      const collaborators = collaboratorsByTaskType[taskTemplate.taskType.id];
 
-      if (collaborators.length > 0) {
-        // Using first collaborator in each role for now - can reevaluate if/when
-        // we have multiple for a given role
+      if (collaborators && collaborators.length > 0) {
+        // Using first collaborator in each role/task type for now - can reevaluate if/when
+        // we have multiple for a given role/task type
         await CollaboratorTasksDAO.createAllByCollaboratorIdsAndTaskId(
           [collaborators[0].id],
           taskId,
@@ -126,7 +110,7 @@ export async function retrieveStageTemplates(
 export default async function createDesignTasks(
   designId: string,
   designPhase: DesignPhase,
-  trx?: Knex.Transaction
+  trx: Knex.Transaction
 ): Promise<DetailsTask[]> {
   const stageTemplates = await retrieveStageTemplates(designId, designPhase);
 

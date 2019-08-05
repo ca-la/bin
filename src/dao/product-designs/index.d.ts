@@ -5,7 +5,7 @@ type UnsavedDesign = Unsaved<ProductDesign>;
 type UninsertedDesign = Uninserted<ProductDesign>;
 
 interface ProductDesignWithCollectionId extends ProductDesign {
-  collectionIds: [string];
+  collectionIds: string[];
 }
 
 declare namespace ProductDesignsDAO {
