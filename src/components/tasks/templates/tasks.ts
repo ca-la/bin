@@ -201,7 +201,7 @@ export const production: TaskTemplate[] = [
   },
   {
     description: "Let us know that you've successfully received your order 🎉.",
-    taskType: taskTypes.PRODUCTION,
+    taskType: taskTypes.DESIGN,
     title: 'Confirm receipt of products'
   }
 ];
