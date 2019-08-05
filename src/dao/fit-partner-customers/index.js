@@ -78,7 +78,9 @@ async function findOrCreate({ partnerId, shopifyUserId, phone }) {
   });
 }
 
-async function claimPhoneRecords({ phone, shopifyUserId }) {
+// We enforce via `findOrCreate` that there's only one FitPartnerCustomer
+// record for a given phone number, so this returns `FitPartnerCustomer | null`
+async function claimPhoneRecord({ phone, shopifyUserId }) {
   requireValues({ phone, shopifyUserId });
 
   const normalizedPhone = validateAndFormatPhoneNumber(phone);
@@ -86,12 +88,13 @@ async function claimPhoneRecords({ phone, shopifyUserId }) {
   return db(TABLE_NAME)
     .where({ phone: normalizedPhone })
     .update({ phone: null, shopify_user_id: shopifyUserId }, '*')
-    .map(instantiate)
+    .then(first)
+    .then(maybeInstantiate)
     .catch(rethrow);
 }
 
 module.exports = {
-  claimPhoneRecords,
+  claimPhoneRecord,
   findById,
   findOrCreate
 };

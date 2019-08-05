@@ -126,9 +126,17 @@ test('POST /fit-partners/:partnerId/shopify-order-created handles a webhook payl
   t.equal(twilioStub.firstCall.args[1].includes(scan.id), true);
 });
 
-test('POST /fit-partners/:partnerId/shopify-order-created claims old customers', async (t: Test) => {
-  sandbox()
+test('POST /fit-partners/:partnerId/shopify-order-created claims old customers and saves their scan info to Shopify', async (t: Test) => {
+  const saveUrlStub = sandbox()
     .stub(FitPartnerScanService, 'saveFittingUrl')
+    .resolves();
+
+  const saveValuesStub = sandbox()
+    .stub(FitPartnerScanService, 'saveCalculatedValues')
+    .resolves();
+
+  sandbox()
+    .stub(Twilio, 'sendSMS')
     .resolves();
 
   const { session, user } = await createUser();
@@ -147,9 +155,17 @@ test('POST /fit-partners/:partnerId/shopify-order-created claims old customers',
     phone: '415 555 1234'
   });
 
-  sandbox()
-    .stub(Twilio, 'sendSMS')
-    .resolves();
+  const scan = await ScansDAO.create({
+    fitPartnerCustomerId: phoneCustomer.id,
+    isComplete: true,
+    measurements: {
+      x: 1,
+      calculatedValues: {
+        y: 3
+      }
+    },
+    type: 'PHOTO'
+  });
 
   const smsProduct = cloneDeep(orderCreatePayload);
   smsProduct.line_items[0].product_id = 12345;
@@ -168,6 +184,14 @@ test('POST /fit-partners/:partnerId/shopify-order-created claims old customers',
 
   t.equal(updatedPhoneCustomer.phone, null);
   t.equal(updatedPhoneCustomer.shopifyUserId, '4567143233');
+
+  t.equal(saveValuesStub.callCount, 1);
+  t.equal(saveValuesStub.firstCall.args[0].id, scan.id);
+
+  // We assert that the values were saved *after* the new scan URL, as they
+  // represent the most complete set of information. Otherwise the data in Shopify
+  // would be partially mangled; using the new Scan ID but with old measuremrents.
+  t.equal(saveValuesStub.calledAfter(saveUrlStub), true);
 });
 
 test(// tslint:disable-next-line:max-line-length

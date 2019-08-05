@@ -3,6 +3,7 @@
 const {
   create,
   findByFitPartner,
+  findByFitPartnerCustomer,
   findByUserId,
   SCAN_TYPES,
   updateOneById
@@ -147,4 +148,34 @@ test('ScansDAO.findByFitPartner returns only scans owned by a partner', async t 
 
   t.equal(scans.length, 1);
   t.equal(scans[0].id, owner2Scan.id);
+});
+
+test('ScansDAO.findByFitPartnerCustomer returns scans for a customer', async t => {
+  const { user } = await createUser({ withSession: false });
+  const partner = await createFitPartner({ adminUserId: user.id });
+
+  const customer1 = await FitPartnerCustomersDAO.findOrCreate({
+    partnerId: partner.id,
+    shopifyUserId: '1234'
+  });
+
+  const customer2 = await FitPartnerCustomersDAO.findOrCreate({
+    partnerId: partner.id,
+    shopifyUserId: '4321'
+  });
+
+  const scan1 = await create({
+    fitPartnerCustomerId: customer1.id,
+    type: SCAN_TYPES.photo
+  });
+
+  await create({
+    fitPartnerCustomerId: customer2.id,
+    type: SCAN_TYPES.photo
+  });
+
+  const scans = await findByFitPartnerCustomer(customer1.id);
+
+  t.equal(scans.length, 1);
+  t.equal(scans[0].id, scan1.id);
 });

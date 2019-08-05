@@ -19,10 +19,10 @@ declare namespace FitPartnerCustomersDAO {
     options: FindOrCreateOptions
   ): Promise<FitPartnerCustomer>;
 
-  function claimPhoneRecords(options: {
+  function claimPhoneRecord(options: {
     phone: string;
     shopifyUserId: string;
-  }): Promise<FitPartnerCustomer[]>;
+  }): Promise<FitPartnerCustomer | null>;
 }
 
 export = FitPartnerCustomersDAO;

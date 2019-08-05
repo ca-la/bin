@@ -120,16 +120,30 @@ function* shopifyOrderCreated() {
   const shopifyUserId = customer.id;
   assert(shopifyUserId, 'Missing customer Id');
 
-  yield FitPartnerCustomersDAO.claimPhoneRecords({
-    phone: phoneNumber,
-    shopifyUserId
-  });
-
   yield createAndSendScanLink({
     partnerId,
     phoneNumber,
     shopifyUserId
   });
+
+  const claimed = yield FitPartnerCustomersDAO.claimPhoneRecord({
+    phone: phoneNumber,
+    shopifyUserId
+  });
+
+  if (claimed) {
+    // The customer had completed an "anonymous" scan with only a phone number
+    // on file, which is now associated with their Shopify user. We save these
+    // values to Shopify, as they're the most complete source of truth we have
+    // so far.
+    const allScans = yield ScansDAO.findByFitPartnerCustomer(claimed.id);
+    const completedScans = allScans.filter(scan => scan.isComplete);
+
+    if (completedScans.length > 0) {
+      const latest = completedScans[completedScans.length - 1];
+      yield FitPartnerScanService.saveCalculatedValues(latest);
+    }
+  }
 
   // Shopify specifically requires a 200 response
   this.status = 200;

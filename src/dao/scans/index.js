@@ -156,11 +156,21 @@ function deleteById(id) {
     });
 }
 
+function findByFitPartnerCustomer(fitPartnerCustomerId) {
+  return db(TABLE_NAME)
+    .where({
+      fit_partner_customer_id: fitPartnerCustomerId,
+      deleted_at: null
+    })
+    .map(instantiate);
+}
+
 module.exports = {
   create,
   deleteById,
   findAll,
   findByFitPartner,
+  findByFitPartnerCustomer,
   findById,
   findByUserId,
   SCAN_TYPES,
