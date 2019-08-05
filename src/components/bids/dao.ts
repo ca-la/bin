@@ -99,7 +99,8 @@ const orderByBidId = (query: Knex.QueryBuilder): Knex.QueryBuilder =>
     .from({ data: query })
     .orderBy('created_at', 'desc');
 
-export function create(bid: BidCreationPayload): Promise<Bid> {
+export function create(bidPayload: BidCreationPayload): Promise<Bid> {
+  const { taskTypeIds, ...bid } = bidPayload;
   const rowData = dataAdapter.forInsertion(bid);
 
   return db.transaction(async (trx: Knex.Transaction) => {

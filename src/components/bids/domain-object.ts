@@ -22,6 +22,7 @@ export default interface Bid {
 
 export interface BidCreationPayload extends Bid {
   acceptedAt: null;
+  taskTypeIds?: string[];
 }
 
 export interface BidRow {
