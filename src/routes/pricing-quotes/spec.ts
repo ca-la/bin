@@ -588,7 +588,7 @@ test('PUT /pricing-quotes/:quoteId/bid/:bidId creates bid', async (t: Test) => {
   const [putResponse, createdBid] = await put(
     `/pricing-quotes/${inputBid.quoteId}/bids/${inputBid.id}`,
     {
-      body: inputBid,
+      body: { ...inputBid, taskTypeIds: [] },
       headers: authHeader(session.id)
     }
   );
@@ -651,7 +651,7 @@ test('POST /pricing-quotes/:quoteId/bids creates bid', async (t: Test) => {
   const [postResponse, createdBid] = await post(
     `/pricing-quotes/${inputBid.quoteId}/bids`,
     {
-      body: inputBid,
+      body: { ...inputBid, taskTypeIds: [] },
       headers: authHeader(session.id)
     }
   );
@@ -715,7 +715,7 @@ test('GET /pricing-quotes/:quoteId/bids returns list of bids for quote', async (
   };
 
   await put(`/pricing-quotes/${inputBid.quoteId}/bids/${inputBid.id}`, {
-    body: inputBid,
+    body: { ...inputBid, taskTypeIds: [] },
     headers: authHeader(session.id)
   });
 

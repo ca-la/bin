@@ -10,14 +10,12 @@ import Bid, {
   isBidRow,
   isBidWithEventsRow
 } from './domain-object';
-import { taskTypes } from '../../components/tasks/templates/tasks';
 import first from '../../services/first';
 import { validate, validateEvery } from '../../services/validate-from-db';
 import limitOrOffset from '../../services/limit-or-offset';
 import { MILLISECONDS_TO_EXPIRE } from './constants';
 import { omit } from 'lodash';
 import * as BidTaskTypesDAO from '../bid-task-types/dao';
-import BidTaskType from '../bid-task-types/domain-object';
 
 const TABLE_NAME = 'pricing_bids';
 const DESIGN_EVENTS_TABLE = 'design_events';
@@ -116,19 +114,15 @@ export function create(bidPayload: BidCreationPayload): Promise<Bid> {
       throw new Error('Failed to create Bid');
     }
 
-    await Promise.all(
-      // TODO: Get taskTypeIds from `bid` once it is included in the payload
-      [taskTypes.TECHNICAL_DESIGN.id, taskTypes.PRODUCTION.id].map(
-        (taskTypeId: string): Promise<BidTaskType> =>
-          BidTaskTypesDAO.create(
-            {
-              pricingBidId: withAcceptedAt.id,
-              taskTypeId
-            },
-            trx
-          )
-      )
-    );
+    for (const taskTypeId of taskTypeIds) {
+      await BidTaskTypesDAO.create(
+        {
+          pricingBidId: withAcceptedAt.id,
+          taskTypeId
+        },
+        trx
+      );
+    }
 
     return withAcceptedAt;
   });

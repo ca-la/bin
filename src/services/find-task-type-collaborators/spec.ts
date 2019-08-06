@@ -24,7 +24,10 @@ test('findTaskTypeCollaborators', async (t: Test) => {
   const { collection, design } = await createCollectionDesign(user.id);
   const { bid, quote } = await createBid({
     designId: design.id,
-    userId: ops.user.id
+    userId: ops.user.id,
+    bidOptions: {
+      taskTypeIds: [taskTypes.TECHNICAL_DESIGN.id, taskTypes.PRODUCTION.id]
+    }
   });
   await DesignEventsDAO.create({
     id: uuid.v4(),

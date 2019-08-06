@@ -711,7 +711,12 @@ test('CollaboratorsDAO.findByDesignAndTaskType', async (t: Test) => {
     title: 'A product design',
     userId: designer.user.id
   });
-  const { bid, quote } = await generateBid({ designId: design.id });
+  const { bid, quote } = await generateBid({
+    designId: design.id,
+    bidOptions: {
+      taskTypeIds: [taskTypes.TECHNICAL_DESIGN.id]
+    }
+  });
   const { collaborator } = await generateCollaborator({
     cancelledAt: null,
     collectionId: null,

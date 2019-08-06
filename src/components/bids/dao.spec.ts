@@ -6,7 +6,7 @@ import createUser = require('../../test-helpers/create-user');
 import { createAll as createDesignEvents } from '../../dao/design-events';
 import { create as createDesign } from '../../dao/product-designs';
 
-import { BidCreationPayload } from './domain-object';
+import Bid from './domain-object';
 import {
   create,
   findAcceptedByTargetId,
@@ -22,7 +22,6 @@ import generateBid from '../../test-helpers/factories/bid';
 import generateDesignEvent from '../../test-helpers/factories/design-event';
 import { daysToMs } from '../../services/time-conversion';
 import * as BidTaskTypesDAO from '../bid-task-types/dao';
-import { taskTypes } from '../tasks/templates/tasks';
 
 test('Bids DAO supports creation and retrieval', async (t: Test) => {
   const bidTaskTypesCreateStub = sandbox()
@@ -55,7 +54,7 @@ test('Bids DAO supports creation and retrieval', async (t: Test) => {
     constantsVersion: 0,
     careLabelsVersion: 0
   });
-  const inputBid: BidCreationPayload = {
+  const inputBid: Bid = {
     acceptedAt: null,
     bidPriceCents: 100000,
     projectDueInMs: daysToMs(10),
@@ -65,7 +64,8 @@ test('Bids DAO supports creation and retrieval', async (t: Test) => {
     id: uuid.v4(),
     quoteId: quote.id
   };
-  const bid = await create(inputBid);
+  const taskTypeIds = ['some-task-type', 'another-one'];
+  const bid = await create({ ...inputBid, acceptedAt: null, taskTypeIds });
   const retrieved = await findById(inputBid.id);
 
   t.deepEqual(inputBid, bid);
@@ -73,13 +73,13 @@ test('Bids DAO supports creation and retrieval', async (t: Test) => {
   t.ok(
     bidTaskTypesCreateStub.calledWith({
       pricingBidId: bid.id,
-      taskTypeId: taskTypes.TECHNICAL_DESIGN.id
+      taskTypeId: 'some-task-type'
     })
   );
   t.ok(
     bidTaskTypesCreateStub.calledWith({
       pricingBidId: bid.id,
-      taskTypeId: taskTypes.PRODUCTION.id
+      taskTypeId: 'another-one'
     })
   );
 });
@@ -118,7 +118,7 @@ test('Bids DAO supports retrieval by quote ID', async (t: Test) => {
     constantsVersion: 0,
     careLabelsVersion: 0
   });
-  const inputBid: BidCreationPayload = {
+  const inputBid: Bid = {
     acceptedAt: null,
     bidPriceCents: 100000,
     projectDueInMs: daysToMs(10),
@@ -128,7 +128,7 @@ test('Bids DAO supports retrieval by quote ID', async (t: Test) => {
     id: uuid.v4(),
     quoteId: quote.id
   };
-  await create(inputBid);
+  await create({ ...inputBid, acceptedAt: null, taskTypeIds: [] });
   const bids = await findByQuoteId(quote.id);
 
   t.deepEqual(bids, [inputBid], 'returns the bids in createdAt order');
@@ -166,7 +166,7 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
     constantsVersion: 0,
     careLabelsVersion: 0
   });
-  const openBid: BidCreationPayload = {
+  const openBid: Bid = {
     acceptedAt: null,
     bidPriceCents: 100000,
     projectDueInMs: daysToMs(10),
@@ -176,7 +176,7 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
     id: uuid.v4(),
     quoteId: quote.id
   };
-  const rejectedBid: BidCreationPayload = {
+  const rejectedBid: Bid = {
     acceptedAt: null,
     bidPriceCents: 100000,
     projectDueInMs: daysToMs(10),
@@ -186,7 +186,7 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
     id: uuid.v4(),
     quoteId: quote.id
   };
-  const acceptedBid: BidCreationPayload = {
+  const acceptedBid: Bid = {
     acceptedAt: null,
     bidPriceCents: 110000,
     projectDueInMs: daysToMs(10),
@@ -292,9 +292,9 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
     type: 'REJECT_SERVICE_BID'
   };
 
-  await create(openBid);
-  await create(rejectedBid);
-  await create(acceptedBid);
+  await create({ ...openBid, acceptedAt: null, taskTypeIds: [] });
+  await create({ ...rejectedBid, acceptedAt: null, taskTypeIds: [] });
+  await create({ ...acceptedBid, acceptedAt: null, taskTypeIds: [] });
   await createDesignEvents([
     submitEvent,
     bidEvent,

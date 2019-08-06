@@ -42,7 +42,8 @@ test('GET /bids', async (t: Test) => {
     createdBy: admin.user.id,
     description: 'Full Service',
     id: uuid.v4(),
-    quoteId: quote.id
+    quoteId: quote.id,
+    taskTypeIds: []
   });
 
   await put(`/bids/${bid.id}/assignees/${partner.user.id}`, {
@@ -119,7 +120,8 @@ test('GET /bids?userId&state=OPEN', async (t: Test) => {
     createdBy: admin.user.id,
     description: 'Full Service',
     id: uuid.v4(),
-    quoteId: quote.id
+    quoteId: quote.id,
+    taskTypeIds: []
   });
   const expiredBid = await BidsDAO.create({
     acceptedAt: null,
@@ -129,7 +131,8 @@ test('GET /bids?userId&state=OPEN', async (t: Test) => {
     createdBy: admin.user.id,
     description: 'Full Service',
     id: uuid.v4(),
-    quoteId: quote.id
+    quoteId: quote.id,
+    taskTypeIds: []
   });
 
   await put(`/bids/${bid.id}/assignees/${partner.user.id}`, {
@@ -188,7 +191,8 @@ test('GET /bids?userId&state=EXPIRED', async (t: Test) => {
     createdBy: admin.user.id,
     description: 'Full Service',
     id: uuid.v4(),
-    quoteId: quote.id
+    quoteId: quote.id,
+    taskTypeIds: []
   });
   const expiredBid = await BidsDAO.create({
     acceptedAt: null,
@@ -198,7 +202,8 @@ test('GET /bids?userId&state=EXPIRED', async (t: Test) => {
     createdBy: admin.user.id,
     description: 'Full Service Brah',
     id: uuid.v4(),
-    quoteId: quote.id
+    quoteId: quote.id,
+    taskTypeIds: []
   });
   await generateDesignEvent({
     bidId: expiredBid.id,
@@ -258,7 +263,8 @@ test('GET /bids?userId&state=REJECTED', async (t: Test) => {
     createdBy: admin.user.id,
     description: 'Full Service',
     id: uuid.v4(),
-    quoteId: quote.id
+    quoteId: quote.id,
+    taskTypeIds: []
   });
 
   const bidsDaoStub = sandbox()
@@ -314,7 +320,8 @@ test('GET /bids?userId&state=ACCEPTED', async (t: Test) => {
     createdBy: admin.user.id,
     description: 'Full Service',
     id: uuid.v4(),
-    quoteId: quote.id
+    quoteId: quote.id,
+    taskTypeIds: []
   });
 
   await put(`/bids/${bid.id}/assignees/${partner.user.id}`, {
@@ -564,7 +571,8 @@ test('Partner pairing: accept', async (t: Test) => {
     createdBy: admin.user.id,
     description: 'Do me a favor, please.',
     id: uuid.v4(),
-    quoteId: quotesRequest[1][0].id
+    quoteId: quotesRequest[1][0].id,
+    taskTypeIds: []
   });
   await put(`/bids/${bid.id}/assignees/${partner.user.id}`, {
     headers: authHeader(admin.session.id)
@@ -723,7 +731,8 @@ test('Partner pairing: reject', async (t: Test) => {
     createdBy: admin.user.id,
     description: 'Do me a favor, please.',
     id: uuid.v4(),
-    quoteId: quotesRequest[1][0].id
+    quoteId: quotesRequest[1][0].id,
+    taskTypeIds: []
   });
   const bidRejection = {
     createdBy: admin.user.id,

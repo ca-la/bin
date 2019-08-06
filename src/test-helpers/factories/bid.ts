@@ -70,6 +70,7 @@ export default async function generateBid({
     description: 'Full Service',
     id: uuid.v4(),
     quoteId: quote.id,
+    taskTypeIds: [],
     ...bidOptions
   });
 

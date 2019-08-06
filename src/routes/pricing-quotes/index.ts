@@ -40,10 +40,16 @@ import addTimeBuffer from '../../services/add-time-buffer';
 
 const router = new Router();
 
-type BidRequest = Unsaved<Bid> | Bid;
+type BidRequest = (Unsaved<Bid> | Bid) & { taskTypeIds: string[] };
 
 function isBidRequest(candidate: object): candidate is BidRequest {
-  return hasProperties(candidate, 'quoteId', 'bidPriceCents', 'description');
+  return hasProperties(
+    candidate,
+    'quoteId',
+    'bidPriceCents',
+    'description',
+    'taskTypeIds'
+  );
 }
 
 function calculateAmounts(
