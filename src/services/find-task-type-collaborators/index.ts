@@ -1,9 +1,11 @@
 import * as Knex from 'knex';
+import { values } from 'lodash';
 import Collaborator from '../../components/collaborators/domain-objects/collaborator';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import ProductDesignsDAO = require('../../dao/product-designs');
 import { CALA_OPS_USER_ID } from '../../config';
-import { taskTypes } from '../../components/tasks/templates/tasks';
+import { TaskType, taskTypes } from '../../components/tasks/templates/tasks';
+import { CollaboratorRole } from '../../components/collaborators/domain-objects/role';
 
 export interface TaskTypeCollaborators {
   [id: string]: Collaborator[] | undefined;
@@ -37,21 +39,23 @@ export default async function findTaskTypeCollaborators(
         )
       : [];
   const DESIGN = designer ? [designer] : [];
-  const PRODUCTION = await CollaboratorsDAO.findByDesignAndTaskType(
-    design.id,
-    taskTypes.PRODUCTION.id,
-    trx
-  );
-  const TECHNICAL_DESIGN = await CollaboratorsDAO.findByDesignAndTaskType(
-    design.id,
-    taskTypes.TECHNICAL_DESIGN.id,
-    trx
+
+  const byTaskType: TaskTypeCollaborators = {
+    [taskTypes.CALA.id]: CALA,
+    [taskTypes.DESIGN.id]: DESIGN
+  };
+
+  const partnerTypes = values(taskTypes).filter(
+    (type: TaskType) => type.assigneeRole === CollaboratorRole.PARTNER
   );
 
-  return {
-    [taskTypes.CALA.id]: CALA,
-    [taskTypes.DESIGN.id]: DESIGN,
-    [taskTypes.PRODUCTION.id]: PRODUCTION,
-    [taskTypes.TECHNICAL_DESIGN.id]: TECHNICAL_DESIGN
-  };
+  for (const partnerType of partnerTypes) {
+    byTaskType[partnerType.id] = await CollaboratorsDAO.findByDesignAndTaskType(
+      design.id,
+      partnerType.id,
+      trx
+    );
+  }
+
+  return byTaskType;
 }

@@ -1,6 +1,6 @@
 import { CollaboratorRole } from '../../collaborators/domain-objects/role';
 
-interface TaskType {
+export interface TaskType {
   id: string;
   title: string;
   assigneeRole: CollaboratorRole;
