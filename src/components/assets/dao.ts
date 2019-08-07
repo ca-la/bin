@@ -13,7 +13,7 @@ import Asset, {
 import db = require('../../services/db');
 import first from '../../services/first';
 
-const TABLE_NAME = 'images';
+const TABLE_NAME = 'assets';
 
 export async function create(
   asset: Asset | MaybeUnsaved<Asset>,
