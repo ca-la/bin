@@ -127,8 +127,12 @@ async function attachResources(design, requestorId, permissions) {
 function* getDesignsByUser() {
   const { role, userId } = this.state;
   canAccessUserResource.call(this, this.query.userId);
-
-  const designs = yield findAllDesignsThroughCollaborator(this.query.userId);
+  const designs = yield findAllDesignsThroughCollaborator({
+    userId: this.query.userId,
+    limit: this.query.limit,
+    offset: this.query.offset,
+    search: this.query.search
+  });
   const designsWithPermissions = yield Promise.all(
     designs.map(async design => {
       const designPermissions = await getDesignPermissions(
@@ -182,7 +186,9 @@ function* getDesignsAndTasksByUser() {
   const { role, userId } = this.state;
   canAccessUserResource.call(this, this.query.userId);
 
-  const designs = yield findAllDesignsThroughCollaborator(this.query.userId);
+  const designs = yield findAllDesignsThroughCollaborator({
+    userId: this.query.userId
+  });
 
   // TODO: this could end up making 100s of queries to the db, this could be improved by using
   //       one large JOIN

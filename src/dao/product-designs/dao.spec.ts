@@ -152,7 +152,7 @@ test('findAllDesignsThroughCollaborator finds all undeleted designs that the use
     collectionSharedDesignDeleted.id
   );
 
-  const designs = await findAllDesignsThroughCollaborator(user.id);
+  const designs = await findAllDesignsThroughCollaborator({ userId: user.id });
   t.equal(
     designs.length,
     3,
@@ -168,7 +168,9 @@ test('findAllDesignsThroughCollaborator finds all undeleted designs that the use
 
   await deleteById(collectionSharedDesignDeleted.id);
 
-  const designsAgain = await findAllDesignsThroughCollaborator(user.id);
+  const designsAgain = await findAllDesignsThroughCollaborator({
+    userId: user.id
+  });
   t.equal(
     designsAgain.length,
     2,
@@ -180,6 +182,58 @@ test('findAllDesignsThroughCollaborator finds all undeleted designs that the use
     'should match ids'
   );
   t.deepEqual(designsAgain[1].id, designSharedDesign.id, 'should match ids');
+});
+
+test('findAllDesignsThroughCollaborator finds all designs with a search string', async (t: tape.Test) => {
+  const { user } = await createUser();
+
+  const firstDesign = await createDesign({
+    productType: 'test',
+    title: 'first design',
+    userId: user.id
+  });
+  const secondDesign = await createDesign({
+    productType: 'test',
+    title: 'second design',
+    userId: user.id
+  });
+
+  const { collection } = await generateCollection({
+    createdBy: user.id,
+    title: 'Collection'
+  });
+  await CollectionsDAO.addDesign(collection.id, secondDesign.id);
+
+  const allDesigns = await findAllDesignsThroughCollaborator({
+    userId: user.id
+  });
+  t.equal(
+    allDesigns.length,
+    2,
+    'returns all designs when no search is provided'
+  );
+
+  const designSearch = await findAllDesignsThroughCollaborator({
+    userId: user.id,
+    search: 'first'
+  });
+  t.equal(
+    designSearch.length,
+    1,
+    'returns design when searched by design title'
+  );
+  t.deepEqual(designSearch[0].id, firstDesign.id, 'should match ids');
+
+  const collectionSearch = await findAllDesignsThroughCollaborator({
+    userId: user.id,
+    search: 'collection'
+  });
+  t.equal(
+    collectionSearch.length,
+    1,
+    'returns design when searched by collection title'
+  );
+  t.deepEqual(collectionSearch[0].id, secondDesign.id, 'should match ids');
 });
 
 test('findDesignByAnnotationId', async (t: tape.Test) => {

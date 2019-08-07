@@ -664,7 +664,213 @@ test('Task Events DAO supports retrieval by userId with assignee filter', async 
   );
 });
 
-test('Task Events DAO supports retrieval by userId with stage filter', async (t: tape.Test) => {
+test('Task Events DAO supports retrieval by design id', async (t: tape.Test) => {
+  const { user } = await createUser();
+  const design1 = await createDesign({
+    productType: 'test',
+    title: 'design',
+    userId: user.id
+  });
+  const { stage: stage1 } = await generateProductDesignStage(
+    { designId: design1.id },
+    user.id
+  );
+  const { task: taskEvent } = await generateTask({
+    createdBy: user.id,
+    designStageId: stage1.id
+  });
+  const design2 = await createDesign({
+    productType: 'test',
+    title: 'design',
+    userId: user.id
+  });
+  const { stage: stage2 } = await generateProductDesignStage(
+    { designId: design2.id },
+    user.id
+  );
+  await generateTask({
+    createdBy: user.id,
+    designStageId: stage2.id
+  });
+
+  const result = await findByUserId(user.id, {
+    filters: [{ type: 'DESIGN', value: design1.id }]
+  });
+  if (result.length === 0) {
+    return t.fail('No tasks returned');
+  }
+  const insertedWithDetails = getInsertedWithDetails(taskEvent, result[0]);
+  t.equals(result.length, 1, 'Only one task is returned');
+  t.deepEqual(
+    { ...result[0], createdAt: new Date(result[0].createdAt) },
+    insertedWithDetails,
+    'Returned task assigned to collaborator'
+  );
+});
+
+test('Task Events DAO supports retrieval by with collection id filter', async (t: tape.Test) => {
+  const { user } = await createUser();
+
+  const collection = await createCollection({
+    createdAt: new Date(),
+    createdBy: user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
+    title: 'FW19'
+  });
+  const design1 = await createDesign({
+    productType: 'test',
+    title: 'design',
+    userId: user.id
+  });
+  await addDesign(collection.id, design1.id);
+  const { stage: stage1 } = await generateProductDesignStage(
+    { designId: design1.id },
+    user.id
+  );
+  await generateTask({
+    createdBy: user.id,
+    designStageId: stage1.id
+  });
+  const collection2 = await createCollection({
+    createdAt: new Date(),
+    createdBy: user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
+    title: 'FW19'
+  });
+  const design2 = await createDesign({
+    productType: 'test',
+    title: 'design',
+    userId: user.id
+  });
+  await addDesign(collection2.id, design2.id);
+  const { stage: stage2 } = await generateProductDesignStage(
+    { designId: design2.id },
+    user.id
+  );
+  await generateTask({
+    createdBy: user.id,
+    designStageId: stage2.id
+  });
+  const design3 = await createDesign({
+    productType: 'test',
+    title: 'design',
+    userId: user.id
+  });
+  const { stage: stage3 } = await generateProductDesignStage(
+    { designId: design3.id },
+    user.id
+  );
+  await generateTask({
+    createdBy: user.id,
+    designStageId: stage3.id
+  });
+
+  const wildcardResult = await findByUserId(user.id, {
+    filters: [{ type: 'COLLECTION', value: '*' }]
+  });
+  if (wildcardResult.length === 0) {
+    return t.fail('No tasks returned');
+  }
+  t.equals(wildcardResult.length, 2, 'Tasks in collections are returned');
+  wildcardResult.forEach(
+    (task: DetailsTaskWithAssignees): void => {
+      t.notEqual(task.collection, undefined, 'Collection task returned');
+    }
+  );
+
+  const singleResult = await findByUserId(user.id, {
+    filters: [{ type: 'COLLECTION', value: collection.id }]
+  });
+  if (singleResult.length === 0) {
+    return t.fail('No tasks returned');
+  }
+  t.equals(singleResult.length, 1, 'Only one task is returned');
+  t.equals(
+    singleResult[0].collection.id,
+    collection.id,
+    'Collection task returned'
+  );
+});
+
+test('Task Events DAO supports retrieval by completed/incomplete status', async (t: tape.Test) => {
+  const { user } = await createUser();
+  const designWithIncompleteTasks = await createDesign({
+    productType: 'test',
+    title: 'design',
+    userId: user.id
+  });
+  const { stage: stage1 } = await generateProductDesignStage(
+    { designId: designWithIncompleteTasks.id },
+    user.id
+  );
+  const { task: incompleteTaskEvent } = await generateTask({
+    createdBy: user.id,
+    designStageId: stage1.id,
+    status: TaskStatus.IN_PROGRESS
+  });
+  const designWithCompletedTasks = await createDesign({
+    productType: 'test',
+    title: 'design',
+    userId: user.id
+  });
+  const { stage: stage2 } = await generateProductDesignStage(
+    { designId: designWithCompletedTasks.id },
+    user.id
+  );
+  const { task: completedTaskEvent } = await generateTask({
+    createdBy: user.id,
+    designStageId: stage2.id,
+    status: TaskStatus.COMPLETED
+  });
+
+  const incompleteResult = await findByUserId(user.id, {
+    filters: [{ type: 'STATUS', value: 'INCOMPLETE' }]
+  });
+  if (incompleteResult.length === 0) {
+    return t.fail('No tasks returned');
+  }
+  const insertedWithDetails1 = getInsertedWithDetails(
+    incompleteTaskEvent,
+    incompleteResult[0]
+  );
+  t.equals(incompleteResult.length, 1, 'Only one task is returned');
+  t.deepEqual(
+    {
+      ...incompleteResult[0],
+      createdAt: new Date(incompleteResult[0].createdAt),
+      status: TaskStatus.IN_PROGRESS
+    },
+    insertedWithDetails1,
+    'Returned task is not complete'
+  );
+
+  const completedResult = await findByUserId(user.id, {
+    filters: [{ type: 'STATUS', value: 'COMPLETED' }]
+  });
+  if (completedResult.length === 0) {
+    return t.fail('No tasks returned');
+  }
+  const insertedWithDetails2 = getInsertedWithDetails(
+    completedTaskEvent,
+    completedResult[0]
+  );
+  t.equals(completedResult.length, 1, 'Only one task is returned');
+  t.deepEqual(
+    {
+      ...completedResult[0],
+      createdAt: new Date(completedResult[0].createdAt),
+      status: TaskStatus.COMPLETED
+    },
+    insertedWithDetails2,
+    'Returned task is complete'
+  );
+});
+
+test('Task Events DAO supports retrieval by userId with multiple stage filter', async (t: tape.Test) => {
   const { user } = await createUser();
   const { user: user2 } = await createUser();
   const design = await createDesign({
@@ -672,20 +878,27 @@ test('Task Events DAO supports retrieval by userId with stage filter', async (t:
     title: 'design',
     userId: user2.id
   });
-  const stageTitle = 'test';
-  const { stage } = await generateProductDesignStage(
-    { designId: design.id, title: stageTitle },
+  const { stage: stage1 } = await generateProductDesignStage(
+    { designId: design.id, title: 'stage1' },
     user.id
   );
   const { stage: stage2 } = await generateProductDesignStage(
-    { designId: design.id, title: 'not a real title' },
+    { designId: design.id, title: 'stage2' },
     user.id
   );
-  const { task: taskEvent } = await generateTask({
+  const { stage: stage3 } = await generateProductDesignStage(
+    { designId: design.id, title: 'stage3' },
+    user.id
+  );
+  const { task: taskEvent1 } = await generateTask({
     createdBy: user.id,
-    designStageId: stage.id
+    designStageId: stage1.id
   });
-  await generateTask({ createdBy: user.id, designStageId: stage2.id });
+  await generateTask({
+    createdBy: user.id,
+    designStageId: stage2.id
+  });
+  await generateTask({ createdBy: user.id, designStageId: stage3.id });
   await createCollaborator({
     cancelledAt: null,
     collectionId: null,
@@ -696,17 +909,33 @@ test('Task Events DAO supports retrieval by userId with stage filter', async (t:
     userId: user.id
   });
 
-  const result = await findByUserId(user.id, { stageFilter: stageTitle });
-  if (result.length === 0) {
+  const singleStageResult = await findByUserId(user.id, {
+    filters: [{ type: 'STAGE', value: stage1.title }]
+  });
+  if (singleStageResult.length === 0) {
     return t.fail('No tasks returned');
   }
-  const insertedWithDetails = getInsertedWithDetails(taskEvent, result[0]);
-  t.equals(result.length, 1, 'Returns a single task');
+  const task1InsertedWithDetails = getInsertedWithDetails(
+    taskEvent1,
+    singleStageResult[0]
+  );
+  t.equals(singleStageResult.length, 1, 'Returns a single task');
   t.deepEqual(
-    { ...result[0], createdAt: new Date(result[0].createdAt) },
-    insertedWithDetails,
+    {
+      ...singleStageResult[0],
+      createdAt: new Date(singleStageResult[0].createdAt)
+    },
+    task1InsertedWithDetails,
     'Returned inserted task'
   );
+
+  const multipleStageResult = await findByUserId(user.id, {
+    filters: [{ type: 'STAGE', value: `${stage1.title},${stage2.title}` }]
+  });
+  if (multipleStageResult.length === 0) {
+    return t.fail('No tasks returned');
+  }
+  t.equals(multipleStageResult.length, 2, 'Returns multiple task');
 });
 
 test('Task Events DAO supports retrieval by stageId', async (t: tape.Test) => {

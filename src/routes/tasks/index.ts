@@ -235,9 +235,12 @@ interface GetListQuery {
   designId?: string;
   userId?: string;
   assignFilterUserId?: string;
-  stageFilter?: string;
   limit?: number;
   offset?: number;
+  stageFilter?: string;
+  statusFilter?: string;
+  collectionFilterId?: string;
+  designFilterId?: string;
 }
 
 function* getList(
@@ -248,16 +251,18 @@ function* getList(
     collectionId,
     stageId,
     designId,
+    designFilterId,
     userId,
     assignFilterUserId,
     stageFilter,
     limit,
-    offset
+    offset,
+    statusFilter,
+    collectionFilterId
   } = query;
   if (!collectionId && !stageId && !userId && !designId) {
     return this.throw('Missing collectionId, stageId, or userId');
   }
-
   let tasks: DetailsTask[] = [];
   if (collectionId) {
     tasks = yield TaskEventsDAO.findByCollectionId(collectionId, limit, offset);
@@ -266,11 +271,28 @@ function* getList(
   } else if (designId) {
     tasks = yield TaskEventsDAO.findByDesignId(designId, limit, offset);
   } else if (userId) {
+    const filters: TaskEventsDAO.TaskFilter[] = [];
+    if (stageFilter) {
+      filters.push({ type: 'STAGE', value: stageFilter });
+    }
+    if (collectionFilterId) {
+      filters.push({ type: 'COLLECTION', value: collectionFilterId });
+    }
+    if (designFilterId) {
+      filters.push({ type: 'DESIGN', value: designFilterId });
+    }
+    if (statusFilter) {
+      if (statusFilter === 'COMPLETED' || statusFilter === 'INCOMPLETE') {
+        filters.push({ type: 'STATUS', value: statusFilter });
+      } else {
+        throw new Error(`Invalid status filter "${statusFilter}".`);
+      }
+    }
     tasks = yield TaskEventsDAO.findByUserId(userId, {
       assignFilterUserId,
       limit,
       offset,
-      stageFilter
+      filters
     });
   }
 

@@ -284,11 +284,11 @@ export async function findAllByUserId(
   limit?: number,
   offset?: number
 ): Promise<Timeline[]> {
-  const designs = await findAllDesignsThroughCollaborator(
+  const designs = await findAllDesignsThroughCollaborator({
     userId,
     limit,
     offset
-  );
+  });
   const designIds = designs.map((design: ProductDesign): string => design.id);
   const initialEstimates:
     | PricingQuote[]

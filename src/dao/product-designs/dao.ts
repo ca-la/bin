@@ -1,3 +1,4 @@
+import * as Knex from 'knex';
 import db = require('../../services/db');
 import ProductDesign = require('../../domain-objects/product-design');
 import limitOrOffset from '../../services/limit-or-offset';
@@ -16,11 +17,12 @@ export const TABLE_NAME = 'product_designs';
 /**
  * Find all designs that the user is a collaborator on.
  */
-export async function findAllDesignsThroughCollaborator(
-  userId: string,
-  limit?: number,
-  offset?: number
-): Promise<ProductDesign[]> {
+export async function findAllDesignsThroughCollaborator(options: {
+  userId: string;
+  limit?: number;
+  offset?: number;
+  search?: string;
+}): Promise<ProductDesign[]> {
   const result = await queryWithCollectionMeta(db)
     .whereRaw(
       `
@@ -43,9 +45,21 @@ product_designs.id in (
       AND product_designs.deleted_at IS NULL
 )
     `,
-      [userId, userId]
+      [options.userId, options.userId]
     )
-    .modify(limitOrOffset(limit, offset));
+    .modify(
+      (query: Knex.QueryBuilder): void => {
+        if (options.search) {
+          query.andWhere(
+            db.raw(
+              '(product_designs.title ~* :search or collections.title ~* :search)',
+              { search: options.search }
+            )
+          );
+        }
+      }
+    )
+    .modify(limitOrOffset(options.limit, options.offset));
 
   return result.map((row: any): ProductDesign => new ProductDesign(row));
 }

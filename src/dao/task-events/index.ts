@@ -163,9 +163,15 @@ export async function findByCollectionId(
   ).map(createDetailsTask);
 }
 
+export type TaskFilter =
+  | { type: 'STATUS'; value: 'COMPLETED' | 'INCOMPLETE' }
+  | { type: 'DESIGN'; value: string }
+  | { type: 'COLLECTION'; value: '*' | string }
+  | { type: 'STAGE'; value: string };
+
 export interface TasksListOptions {
   assignFilterUserId?: string;
-  stageFilter?: string;
+  filters?: TaskFilter[];
   limit?: number;
   offset?: number;
 }
@@ -175,7 +181,7 @@ export async function findByUserId(
   options: TasksListOptions = {}
 ): Promise<DetailsTaskWithAssignees[]> {
   const designIds = await findAllDesignIdsThroughCollaborator(userId);
-  const { assignFilterUserId, stageFilter, limit, offset } = options;
+  const { assignFilterUserId, filters, limit, offset } = options;
   const collaboratorsBuilder = getCollaboratorsBuilder().modify(
     (query: Knex.QueryBuilder) => {
       if (assignFilterUserId) {
@@ -188,13 +194,15 @@ export async function findByUserId(
   )
     .whereIn(ALIASES.designId, designIds)
     .modify((query: Knex.QueryBuilder) => {
-      if (stageFilter) {
-        query.where({ [ALIASES.stageTitle]: stageFilter });
-      }
       if (assignFilterUserId) {
         query.havingRaw('json_array_length((:assigneesBuilder)) > 0', {
           assigneesBuilder: getAssigneesBuilder(collaboratorsBuilder)
         });
+      }
+      if (filters && filters.length > 0) {
+        filters.forEach(
+          (taskFilter: TaskFilter): void => applyFilter(taskFilter, query)
+        );
       }
     })
     .modify(limitOrOffset(limit, offset))
@@ -209,6 +217,36 @@ export async function findByUserId(
     detailsWithAssigneesAdapter,
     taskEvents
   ).map(createDetailsTask);
+}
+
+function applyFilter(taskFilter: TaskFilter, query: Knex.QueryBuilder): void {
+  switch (taskFilter.type) {
+    case 'STATUS': {
+      if (taskFilter.value === 'COMPLETED') {
+        query.where(ALIASES.taskStatus, TaskStatus.COMPLETED);
+      }
+      if (taskFilter.value === 'INCOMPLETE') {
+        query.whereNot(ALIASES.taskStatus, TaskStatus.COMPLETED);
+      }
+      break;
+    }
+    case 'DESIGN': {
+      query.where(ALIASES.designId, taskFilter.value);
+      break;
+    }
+    case 'COLLECTION': {
+      if (taskFilter.value === '*') {
+        query.whereNotNull(ALIASES.collectionId);
+      } else {
+        query.where(ALIASES.collectionId, taskFilter.value);
+      }
+      break;
+    }
+    case 'STAGE': {
+      query.whereIn(ALIASES.stageTitle, taskFilter.value.split(','));
+      break;
+    }
+  }
 }
 
 export async function findByStageId(

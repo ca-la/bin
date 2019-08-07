@@ -7,6 +7,7 @@ export const ALIASES = {
   designId: 'designsfortasksviewraw.id',
   stageId: 'stagesfortasksviewraw.id',
   stageTitle: 'stagesfortasksviewraw.title',
+  taskStatus: 'taskeventsfortasksviewraw.status',
   taskId: 'tasksfortasksviewraw.id'
 };
 
