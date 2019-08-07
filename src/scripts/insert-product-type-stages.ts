@@ -15,13 +15,11 @@ import { ProductTypeStageRow } from '../components/product-type-stages/domain-ob
 
 const STAGES = [...POST_APPROVAL_TEMPLATES, ...POST_CREATION_TEMPLATES];
 const ALL_STAGES = STAGES.map((template: StageTemplate): string => template.id);
-const BLANKS_STAGES = STAGES.filter(
-  (template: StageTemplate): boolean => {
-    return template.title !== 'Sourcing' && template.title !== 'Sampling';
-  }
-).map((template: StageTemplate) => {
-  return template.id;
-});
+const BLANKS_STAGES = STAGES.reduce(
+  (acc: string[], template: StageTemplate) =>
+    template.shouldShowForBlanks ? acc.concat(template.id) : acc,
+  []
+);
 
 insertProductTypeStages()
   .then(() => {

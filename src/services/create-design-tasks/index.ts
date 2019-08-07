@@ -5,7 +5,6 @@ import { flatten } from 'lodash';
 import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
 import * as ProductDesignStagesDAO from '../../dao/product-design-stages';
 import findTaskTypeCollaborators from '../../services/find-task-type-collaborators';
-import Logger = require('../logger');
 import { DetailsTask, TaskStatus } from '../../domain-objects/task-event';
 import {
   POST_APPROVAL_TEMPLATES,
@@ -30,45 +29,36 @@ async function createTasksFromTemplates(
     trx
   );
 
-  return Promise.all(
-    taskTemplates.map(async (taskTemplate: TaskTemplate, index: number) => {
-      const taskId = uuid.v4();
-      const task = {
-        createdBy: null,
-        description: taskTemplate.description || '',
-        designStageId: stageId,
-        dueDate: null,
-        ordering: index,
-        status: TaskStatus.NOT_STARTED,
+  const createdTasks: DetailsTask[] = [];
+  for (const taskTemplate of taskTemplates) {
+    const taskId = uuid.v4();
+    const task = {
+      createdBy: null,
+      description: taskTemplate.description || '',
+      designStageId: stageId,
+      dueDate: null,
+      ordering: taskTemplates.indexOf(taskTemplate),
+      status: TaskStatus.NOT_STARTED,
+      taskId,
+      title: taskTemplate.title
+    };
+    const taskEvent = await createTask(taskId, task, stageId, trx);
+    createdTasks.push(taskEvent);
+
+    const collaborators = collaboratorsByTaskType[taskTemplate.taskType.id];
+
+    if (collaborators && collaborators.length > 0) {
+      // Using first collaborator in each role/task type for now - can reevaluate if/when
+      // we have multiple for a given role/task type
+      await CollaboratorTasksDAO.createAllByCollaboratorIdsAndTaskId(
+        [collaborators[0].id],
         taskId,
-        title: taskTemplate.title
-      };
-      const taskEvent = await createTask(taskId, task, stageId, trx);
+        trx
+      );
+    }
+  }
 
-      const collaborators = collaboratorsByTaskType[taskTemplate.taskType.id];
-
-      if (collaborators && collaborators.length > 0) {
-        // Using first collaborator in each role/task type for now - can reevaluate if/when
-        // we have multiple for a given role/task type
-        await CollaboratorTasksDAO.createAllByCollaboratorIdsAndTaskId(
-          [collaborators[0].id],
-          taskId,
-          trx
-        );
-      } else {
-        // This is a non-fatal warning, but does indicate something wrong; either
-        // the designer/CALA isn't shared on the collection, or we moved to
-        // approval without a partner assigned.
-        Logger.logServerError(
-          `No matching collaborators with role ${
-            taskTemplate.taskType.assigneeRole
-          } are shared on design ${designId}`
-        );
-      }
-
-      return taskEvent;
-    })
-  );
+  return createdTasks;
 }
 
 /**

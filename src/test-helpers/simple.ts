@@ -7,9 +7,12 @@ export type Test = tape.Test;
  * network layer. Test will need to provide their own setup and teardown within
  * the body of their test case.
  */
-export function test(description: string, testCase: tape.TestCase): void {
-  tape(description, (t: tape.Test) => {
-    testCase(t);
+export function test(
+  description: string,
+  testCase: (t: tape.Test) => Promise<void> | void
+): void {
+  tape(description, async (t: tape.Test) => {
+    await testCase(t);
     t.end();
   });
 }

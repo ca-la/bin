@@ -843,6 +843,7 @@ test('POST /collections/:collectionId/cost-inputs', async (t: tape.Test) => {
 test('POST /collections/:collectionId/partner-pairings', async (t: tape.Test) => {
   const designer = await createUser();
   const admin = await createUser({ role: 'ADMIN' });
+  const partner = await createUser({ role: 'PARTNER' });
 
   const createDesignTasksStub = sandbox().stub(DesignTasksService, 'default');
 
@@ -869,6 +870,27 @@ test('POST /collections/:collectionId/partner-pairings', async (t: tape.Test) =>
   await CollectionsDAO.moveDesign(collectionOne.id, designOne.id);
   await CollectionsDAO.moveDesign(collectionOne.id, designTwo.id);
 
+  await DesignEventsDAO.createAll([
+    {
+      id: uuid.v4(),
+      actorId: partner.user.id,
+      targetId: null,
+      designId: designOne.id,
+      bidId: null,
+      quoteId: null,
+      type: 'ACCEPT_SERVICE_BID'
+    },
+    {
+      id: uuid.v4(),
+      actorId: partner.user.id,
+      targetId: null,
+      designId: designTwo.id,
+      bidId: null,
+      quoteId: null,
+      type: 'ACCEPT_SERVICE_BID'
+    }
+  ]);
+
   const failedPartnerPairing = await API.post(
     `/collections/${collectionOne.id}/partner-pairings`,
     { headers: API.authHeader(designer.session.id) }
@@ -882,16 +904,16 @@ test('POST /collections/:collectionId/partner-pairings', async (t: tape.Test) =>
   t.equal(partnerPairing[0].status, 204);
 
   const designOneEvents = await DesignEventsDAO.findByDesignId(designOne.id);
-  t.equal(designOneEvents.length, 1, 'Creates one design event for the design');
+  t.equal(designOneEvents.length, 2, 'Creates one design event for the design');
   t.equal(
-    designOneEvents[0].type,
+    designOneEvents[1].type,
     'COMMIT_PARTNER_PAIRING',
     'Creates a partner pairing event'
   );
   const designTwoEvents = await DesignEventsDAO.findByDesignId(designTwo.id);
-  t.equal(designTwoEvents.length, 1, 'Creates one design event for the design');
+  t.equal(designTwoEvents.length, 2, 'Creates one design event for the design');
   t.equal(
-    designTwoEvents[0].type,
+    designTwoEvents[1].type,
     'COMMIT_PARTNER_PAIRING',
     'Creates a partner pairing event'
   );
@@ -900,6 +922,35 @@ test('POST /collections/:collectionId/partner-pairings', async (t: tape.Test) =>
     createDesignTasksStub.calledTwice,
     'Design tasks are generated for each design'
   );
+
+  const collectionTwo = await CollectionsDAO.create({
+    createdAt: new Date(),
+    createdBy: designer.user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
+    title: 'Yohji Yamamoto FW19'
+  });
+  const designThree = await ProductDesignsDAO.create({
+    description: 'Oversize Placket Shirt',
+    productType: 'SHIRT',
+    title: 'Cozy Shirt',
+    userId: designer.user.id
+  });
+  const designFour = await ProductDesignsDAO.create({
+    description: 'Gabardine Wool Pant',
+    productType: 'PANT',
+    title: 'Balloon Pants',
+    userId: designer.user.id
+  });
+  await CollectionsDAO.moveDesign(collectionTwo.id, designThree.id);
+  await CollectionsDAO.moveDesign(collectionTwo.id, designFour.id);
+
+  const notPairedFailure = await API.post(
+    `/collections/${collectionTwo.id}/partner-pairings`,
+    { headers: API.authHeader(admin.session.id) }
+  );
+  t.equal(notPairedFailure[0].status, 409);
 });
 
 test('GET /collections?isSubmitted=true&isCosted=false returns collections with uncosted designs', async (t: tape.Test) => {

@@ -26,6 +26,11 @@ export const taskTypes: { [key: string]: TaskType } = {
     id: '31c52ddf-88be-4ed2-9f32-8279ae62fcab',
     title: 'Production',
     assigneeRole: CollaboratorRole.PARTNER
+  },
+  PRODUCT_PHOTOGRAPHY: {
+    id: '9a188eba-b472-4b50-85ac-eb86319e642b',
+    title: 'Product Photography',
+    assigneeRole: CollaboratorRole.PARTNER
   }
 };
 
@@ -89,6 +94,11 @@ export const specification: TaskTemplate[] = [
     description: 'The default sample size is Medium.',
     taskType: taskTypes.DESIGN,
     title: 'What size do you want your sample to be?'
+  },
+  {
+    description: '',
+    taskType: taskTypes.TECHNICAL_DESIGN,
+    title: 'Complete technical consulting'
   }
 ];
 
@@ -185,8 +195,8 @@ export const production: TaskTemplate[] = [
   },
   {
     description: "Upload flat front and back photography to 'Design' tab.",
-    taskType: taskTypes.PRODUCTION,
-    title: 'Upload ecom photography photos'
+    taskType: taskTypes.PRODUCT_PHOTOGRAPHY,
+    title: 'Upload e-commerce photos'
   },
   {
     description:
