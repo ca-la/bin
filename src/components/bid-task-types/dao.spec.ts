@@ -4,7 +4,7 @@ import * as db from '../../services/db';
 import { test, Test } from '../../test-helpers/fresh';
 import generateBid from '../../test-helpers/factories/bid';
 import * as BidTaskTypesDAO from './dao';
-import { taskTypes } from '../tasks/templates/tasks';
+import { taskTypes } from '../tasks/templates';
 
 test('BidTaskTypesDAO.create', async (t: Test) => {
   const { bid } = await generateBid();

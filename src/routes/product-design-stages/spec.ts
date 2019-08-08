@@ -5,15 +5,12 @@ import createUser = require('../../test-helpers/create-user');
 import { authHeader, get, post } from '../../test-helpers/http';
 import { sandbox, test as originalTest } from '../../test-helpers/fresh';
 import generateProductDesignStage from '../../test-helpers/factories/product-design-stage';
-import * as StageTemplate from '../../components/tasks/templates/stages';
+import * as StageTemplate from '../../components/tasks/templates';
 
 const beforeEach = (): void => {
   sandbox()
-    .stub(StageTemplate, 'POST_CREATION_TEMPLATES')
-    .value([]);
-  sandbox()
-    .stub(StageTemplate, 'POST_APPROVAL_TEMPLATES')
-    .value([]);
+    .stub(StageTemplate, 'getTemplatesFor')
+    .returns([]);
 };
 
 function test(

@@ -10,7 +10,7 @@ import {
   findByUserId
 } from './index';
 
-import * as StageTemplate from '../../components/tasks/templates/stages';
+import * as StageTemplate from '../../components/tasks/templates';
 import { create as createTask } from '../tasks';
 import { create as createDesignStageTask } from '../product-design-stage-tasks';
 import { create as createDesignStage } from '../product-design-stages';
@@ -49,11 +49,8 @@ import generateAsset from '../../test-helpers/factories/asset';
 
 const beforeEach = (): void => {
   sandbox()
-    .stub(StageTemplate, 'POST_CREATION_TEMPLATES')
-    .value([]);
-  sandbox()
-    .stub(StageTemplate, 'POST_APPROVAL_TEMPLATES')
-    .value([]);
+    .stub(StageTemplate, 'getTemplatesFor')
+    .returns([]);
 };
 
 function test(

@@ -3,7 +3,7 @@ import * as Koa from 'koa';
 import { values } from 'lodash';
 
 import requireAuth = require('../../middleware/require-auth');
-import { taskTypes } from '../tasks/templates/tasks';
+import { taskTypes } from '../tasks/templates';
 
 const router = new Router();
 

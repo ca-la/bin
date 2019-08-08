@@ -5,7 +5,7 @@ import { test } from '../../../test-helpers/fresh';
 import generateCollection from '../../../test-helpers/factories/collection';
 import createUser = require('../../../test-helpers/create-user');
 import createDesign from '../../../services/create-design';
-import * as CollectionsDAO from '../../../dao/collections';
+import * as CollectionsDAO from '../../../components/collections/dao';
 import * as DesignEventsDAO from '../../../dao/design-events';
 import { reverseSubmissionRecords } from './reverse';
 

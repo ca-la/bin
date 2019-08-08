@@ -13,7 +13,6 @@ import * as TaskEventsDAO from '../../dao/task-events';
 import * as CanvasesDAO from '../../components/canvases/dao';
 import * as ComponentsDAO from '../../components/components/dao';
 import * as VariantsDAO from '../../dao/product-design-variants';
-import * as StageTemplate from '../../components/tasks/templates/stages';
 
 import { findAndDuplicateDesign } from './designs';
 
@@ -31,10 +30,8 @@ test('findAndDuplicateDesign', async (t: tape.Test) => {
     unitsToProduce: 123
   });
 
-  const duplicatedDesign = await db.transaction(
-    async (trx: Knex.Transaction) => {
-      return findAndDuplicateDesign(design.id, duplicatingUser.id, trx);
-    }
+  const duplicatedDesign = await db.transaction((trx: Knex.Transaction) =>
+    findAndDuplicateDesign(design.id, duplicatingUser.id, trx)
   );
 
   t.deepEqual(
@@ -70,25 +67,20 @@ test('findAndDuplicateDesign', async (t: tape.Test) => {
   t.equal(duplicateCollaborators.length, 1);
   t.equal(duplicateCollaborators[0].userId, duplicatingUser.id);
 
+  const originalStages = await ProductDesignStagesDAO.findAllByDesignId(
+    design.id
+  );
   const stages = await ProductDesignStagesDAO.findAllByDesignId(
     duplicatedDesign.id
   );
-  t.equal(stages.length, StageTemplate.POST_CREATION_TEMPLATES.length);
-  t.equal(stages[0].title, StageTemplate.POST_CREATION_TEMPLATES[0].title);
-
-  const tasks = await TaskEventsDAO.findByDesignId(duplicatedDesign.id);
   const getTitle = (d: { title: string }): string => d.title;
-  t.equal(
-    tasks.length,
-    StageTemplate.POST_CREATION_TEMPLATES[0].tasks.length +
-      StageTemplate.POST_CREATION_TEMPLATES[1].tasks.length
-  );
-  t.deepEqual(
-    tasks.map(getTitle),
-    StageTemplate.POST_CREATION_TEMPLATES[0].tasks
-      .map(getTitle)
-      .concat(StageTemplate.POST_CREATION_TEMPLATES[1].tasks.map(getTitle))
-  );
+  t.equal(stages.length, originalStages.length);
+  t.deepEqual(stages.map(getTitle), originalStages.map(getTitle));
+
+  const originalTasks = await TaskEventsDAO.findByDesignId(design.id);
+  const tasks = await TaskEventsDAO.findByDesignId(duplicatedDesign.id);
+  t.equal(tasks.length, originalTasks.length);
+  t.deepEqual(tasks.map(getTitle), originalTasks.map(getTitle));
 
   const duplicateCanvases = await CanvasesDAO.findAllByDesignId(
     duplicatedDesign.id

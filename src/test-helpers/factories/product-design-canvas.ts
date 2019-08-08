@@ -4,6 +4,7 @@ import Canvas from '../../components/canvases/domain-object';
 import { findById as findUserById } from '../../components/users/dao';
 import createUser = require('../create-user');
 import * as ProductDesignsDAO from '../../dao/product-designs';
+import createDesign from '../../services/create-design';
 import * as ComponentsDAO from '../../components/components/dao';
 import Component from '../../components/components/domain-object';
 import generateComponent from './component';
@@ -23,7 +24,7 @@ export default async function generateCanvas(
     : await createUser({ withSession: false });
   const design = options.designId
     ? await ProductDesignsDAO.findById(options.designId)
-    : await ProductDesignsDAO.create({
+    : await createDesign({
         productType: 'SWEATER',
         title: 'Mohair Wool Sweater',
         userId: user.id

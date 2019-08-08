@@ -7,7 +7,7 @@ import * as CreateTaskService from '../create-task';
 import * as FindTaskTypeCollaborators from '../find-task-type-collaborators';
 import Collection from '../../components/collections/domain-object';
 import * as CollectionsDAO from '../../components/collections/dao';
-import createDesignTasks, { retrieveStageTemplates } from './index';
+import createDesignTasks from './index';
 import createUser = require('../../test-helpers/create-user');
 import ProductDesign = require('../../domain-objects/product-design');
 import ProductDesignsDAO = require('../../dao/product-designs');
@@ -15,14 +15,7 @@ import User from '../../components/users/domain-object';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import createCollaborator from '../../test-helpers/factories/collaborator';
 import Collaborator from '../../components/collaborators/domain-objects/collaborator';
-import {
-  POST_APPROVAL_TEMPLATES,
-  POST_CREATION_TEMPLATES
-} from '../../components/tasks/templates/stages';
-import { taskTypes } from '../../components/tasks/templates/tasks';
-import * as ProductTypesDAO from '../../components/pricing-product-types/dao';
-import * as ProductTypeStagesDAO from '../../components/product-type-stages/dao';
-import StageTemplate from '../../domain-objects/stage-template';
+import { getTemplatesFor, taskTypes } from '../../components/tasks/templates';
 
 async function createResources(): Promise<{
   user: User;
@@ -62,44 +55,6 @@ async function createResources(): Promise<{
   };
 }
 
-test('retrieveStageTemplates returns a list of stages for the given design and phase', async (t: Test) => {
-  const designId = uuid.v4();
-  const productTypeId = uuid.v4();
-  const findTypeByDesignStub = sandbox()
-    .stub(ProductTypesDAO, 'findByDesignId')
-    .resolves({
-      id: productTypeId,
-      name: 'BACKPACK',
-      complexity: 'BLANK'
-    });
-  const findStagesByTypeStub = sandbox()
-    .stub(ProductTypeStagesDAO, 'findAllByProductType')
-    .resolves([
-      { stageTemplateId: '3a50af7c-1663-4a08-af15-7630faee69ef' },
-      { stageTemplateId: 'fadd74b8-952e-448b-8eb4-c8f9c21f7500' }
-    ]);
-
-  const results1 = await retrieveStageTemplates(designId, 'POST_CREATION');
-  t.deepEqual(results1, POST_CREATION_TEMPLATES);
-  t.equal(findTypeByDesignStub.callCount, 0);
-  t.equal(findStagesByTypeStub.callCount, 0);
-
-  const results2 = await retrieveStageTemplates(designId, 'POST_APPROVAL');
-  t.deepEqual(
-    results2,
-    POST_APPROVAL_TEMPLATES.filter(
-      (template: StageTemplate): boolean => {
-        return (
-          template.id === '3a50af7c-1663-4a08-af15-7630faee69ef' ||
-          template.id === 'fadd74b8-952e-448b-8eb4-c8f9c21f7500'
-        );
-      }
-    )
-  );
-  t.equal(findTypeByDesignStub.callCount, 1);
-  t.equal(findStagesByTypeStub.callCount, 1);
-});
-
 test('createDesignTasks creates POST_CREATION tasks', async (t: Test) => {
   const { collaborator, design } = await createResources();
   const mockStage = { id: uuid.v4() };
@@ -115,7 +70,8 @@ test('createDesignTasks creates POST_CREATION tasks', async (t: Test) => {
       [taskTypes.CALA.id]: [collaborator],
       [taskTypes.DESIGN.id]: [collaborator],
       [taskTypes.PRODUCTION.id]: [collaborator],
-      [taskTypes.TECHNICAL_DESIGN.id]: [collaborator]
+      [taskTypes.TECHNICAL_DESIGN.id]: [collaborator],
+      [taskTypes.PRODUCT_PHOTOGRAPHY.id]: [collaborator]
     });
 
   const stagesStub = sandbox()
@@ -130,19 +86,15 @@ test('createDesignTasks creates POST_CREATION tasks', async (t: Test) => {
 
   return db.transaction(async (trx: Knex.Transaction) => {
     await createDesignTasks(design.id, 'POST_CREATION', trx);
-    const firstStage = POST_CREATION_TEMPLATES[0];
+    const stages = getTemplatesFor('POST_CREATION', 'BLANK');
 
-    t.equal(
-      stagesStub.callCount,
-      POST_CREATION_TEMPLATES.length,
-      'creates each stage'
-    );
+    t.equal(stagesStub.callCount, stages.length, 'creates each stage');
     t.ok(
       stagesStub.calledWith({
-        description: firstStage.description,
+        description: stages[0].description,
         designId: design.id,
-        ordering: firstStage.ordering,
-        title: firstStage.title
+        ordering: stages[0].ordering,
+        title: stages[0].title
       }),
       'Creates the first stage'
     );

@@ -1,3 +1,4 @@
+import { Complexity } from '../../domain-objects/pricing';
 import DataAdapter from '../../services/data-adapter';
 import { hasProperties } from '../../services/require-properties';
 
@@ -23,7 +24,7 @@ export default interface PricingProductType {
   minimumUnits: number;
   name: string;
   patternMinimumCents: number;
-  complexity: string;
+  complexity: Complexity;
   unitCents: number;
   yield: number;
   contrast: number;
@@ -59,7 +60,7 @@ export interface PricingProductTypeRow {
 
 const encode = (row: PricingProductTypeRow): PricingProductType => {
   return {
-    complexity: row.complexity,
+    complexity: row.complexity as Complexity,
     contrast: row.contrast,
     createdAt: new Date(row.created_at),
     creationTimeMs: parseInt(row.creation_time_ms, 10),

@@ -10,7 +10,7 @@ import createBid from '../../test-helpers/factories/bid';
 import createCollectionDesign from '../../test-helpers/factories/collection-design';
 import * as DesignEventsDAO from '../../dao/design-events';
 import findTaskTypeCollaborators from '.';
-import { taskTypes } from '../../components/tasks/templates/tasks';
+import { taskTypes } from '../../components/tasks/templates';
 import { CollaboratorRole } from '../../components/collaborators/domain-objects/role';
 
 test('findTaskTypeCollaborators', async (t: Test) => {

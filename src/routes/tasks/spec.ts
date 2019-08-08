@@ -23,15 +23,12 @@ import createDesign from '../../services/create-design';
 import generateProductDesignStage from '../../test-helpers/factories/product-design-stage';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
 import * as AnnounceCommentService from '../../components/iris/messages/task-comment';
-import * as StageTemplate from '../../components/tasks/templates/stages';
+import * as StageTemplate from '../../components/tasks/templates';
 
 const beforeEach = (): void => {
   sandbox()
-    .stub(StageTemplate, 'POST_CREATION_TEMPLATES')
-    .value([]);
-  sandbox()
-    .stub(StageTemplate, 'POST_APPROVAL_TEMPLATES')
-    .value([]);
+    .stub(StageTemplate, 'getTemplatesFor')
+    .returns([]);
 };
 
 function test(

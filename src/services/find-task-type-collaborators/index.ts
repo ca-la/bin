@@ -4,7 +4,10 @@ import Collaborator from '../../components/collaborators/domain-objects/collabor
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import ProductDesignsDAO = require('../../dao/product-designs');
 import { CALA_OPS_USER_ID } from '../../config';
-import { TaskType, taskTypes } from '../../components/tasks/templates/tasks';
+import {
+  TaskType,
+  taskTypes
+} from '../../components/tasks/templates/task-types';
 import { CollaboratorRole } from '../../components/collaborators/domain-objects/role';
 
 export interface TaskTypeCollaborators {

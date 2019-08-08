@@ -1,7 +1,7 @@
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
 import { authHeader, get } from '../../test-helpers/http';
-import * as TaskTemplate from '../tasks/templates/tasks';
+import * as TaskTemplate from '../tasks/templates';
 
 test('GET /bid-task-types', async (t: Test) => {
   const mockTaskTypes = {

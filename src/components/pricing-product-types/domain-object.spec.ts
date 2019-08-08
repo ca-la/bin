@@ -9,7 +9,7 @@ import { daysToMs } from '../../services/time-conversion';
 
 const now = new Date();
 const validRowData: PricingProductTypeRow = {
-  complexity: 'string',
+  complexity: 'MEDIUM',
   contrast: 0,
   created_at: now.toISOString(),
   creation_time_ms: daysToMs(0).toString(),
@@ -34,7 +34,7 @@ const invalidRowData = {
   yield: 0
 };
 const equivalentUserData: PricingProductType = {
-  complexity: 'string',
+  complexity: 'MEDIUM',
   contrast: 0,
   createdAt: now,
   creationTimeMs: daysToMs(0),

@@ -15,7 +15,7 @@ import generateCollaborator from '../../test-helpers/factories/collaborator';
 import generateCollection from '../../test-helpers/factories/collection';
 import Collaborator from './domain-objects/collaborator';
 import generateBid from '../../test-helpers/factories/bid';
-import { taskTypes } from '../tasks/templates/tasks';
+import { taskTypes } from '../tasks/templates';
 
 test('Collaborators DAO can find all collaborators with a list of ids', async (t: Test) => {
   const { user } = await createUser({ withSession: false });

@@ -6,17 +6,12 @@ import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
 import * as ProductDesignStagesDAO from '../../dao/product-design-stages';
 import findTaskTypeCollaborators from '../../services/find-task-type-collaborators';
 import { DetailsTask, TaskStatus } from '../../domain-objects/task-event';
-import {
-  POST_APPROVAL_TEMPLATES,
-  POST_CREATION_TEMPLATES,
-  StageTemplate
-} from '../../components/tasks/templates/stages';
-import { TaskTemplate } from '../../components/tasks/templates/tasks';
+import { getTemplatesFor } from '../../components/tasks/templates';
+import { TaskTemplate } from '../../components/tasks/templates/task-template';
+import { StageTemplate } from '../../components/tasks/templates/stage-template';
 import { DesignPhase } from '../../domain-objects/task-template';
 import createTask from '../create-task';
 import { findByDesignId as findProductTypeByDesignId } from '../../components/pricing-product-types/dao';
-import { findAllByProductType } from '../../components/product-type-stages/dao';
-import ProductTypeStage from '../../components/product-type-stages/domain-object';
 
 async function createTasksFromTemplates(
   designId: string,
@@ -64,12 +59,13 @@ async function createTasksFromTemplates(
 /**
  * Returns a list of stage templates based off the phase and the specific design.
  */
-export async function retrieveStageTemplates(
+async function retrieveStageTemplates(
   designId: string,
   designPhase: DesignPhase
 ): Promise<StageTemplate[]> {
   if (designPhase === 'POST_CREATION') {
-    return POST_CREATION_TEMPLATES;
+    // TODO Fix once we can tell upon creation what kind of design this is,
+    return getTemplatesFor('POST_CREATION', 'BLANK');
   }
 
   const productType = await findProductTypeByDesignId(designId);
@@ -78,23 +74,7 @@ export async function retrieveStageTemplates(
       `Unable to find a PricingProductType for design "${designId}".`
     );
   }
-  const productTypeStageTemplates = await findAllByProductType(productType.id);
-  if (productTypeStageTemplates.length === 0) {
-    throw new Error(
-      `No stage templates were found for pricing product type ${
-        productType.id
-      }.`
-    );
-  }
-  const productTypeStageTemplateIds = productTypeStageTemplates.map(
-    (typeStage: ProductTypeStage): string => {
-      return typeStage.stageTemplateId;
-    }
-  );
-
-  return POST_APPROVAL_TEMPLATES.filter((template: StageTemplate) => {
-    return productTypeStageTemplateIds.includes(template.id);
-  });
+  return getTemplatesFor(designPhase, productType.complexity);
 }
 
 export default async function createDesignTasks(
