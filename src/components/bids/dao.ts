@@ -1,4 +1,5 @@
 import * as Knex from 'knex';
+
 import * as db from '../../services/db';
 import Bid, {
   BidCreationPayload,
@@ -221,6 +222,32 @@ export async function findAll(modifiers: {
   const bids: BidRow[] = await orderByBidId(query).modify(
     limitOrOffset(modifiers.limit, modifiers.offset)
   );
+
+  return validateEvery<BidRow, Bid>(TABLE_NAME, isBidRow, dataAdapter, bids);
+}
+
+export async function findUnpaidByUserId(userId: string): Promise<Bid[]> {
+  const bids = await db('users')
+    .select(selectWithAcceptedAt)
+    .from('users')
+    .join('design_events', 'users.id', 'design_events.actor_id')
+    .join('product_designs as d', 'design_events.design_id', 'd.id')
+    .join('collection_designs as c', 'd.id', 'c.design_id')
+    .join('invoices as i', 'c.collection_id', 'i.collection_id')
+    .join('pricing_bids', 'design_events.bid_id', 'pricing_bids.id')
+    .leftJoin('partner_payout_logs as l', 'i.id', 'l.invoice_id')
+    .where({ 'design_events.type': 'ACCEPT_SERVICE_BID', 'users.id': userId })
+    .groupBy([
+      'i.id',
+      'pricing_bids.id',
+      'design_events.bid_id',
+      'pricing_bids.bid_price_cents'
+    ])
+    .having(
+      db.raw(
+        'pricing_bids.bid_price_cents > coalesce(sum(l.payout_amount_cents), 0)'
+      )
+    );
 
   return validateEvery<BidRow, Bid>(TABLE_NAME, isBidRow, dataAdapter, bids);
 }

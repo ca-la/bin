@@ -359,12 +359,53 @@ export async function findByBidId(bidId: string): Promise<User[]> {
   );
 }
 
+export async function findAllUnpaidPartners({
+  limit,
+  offset
+}: FindAllOptions = {}): Promise<User[]> {
+  if ((!limit && limit !== 0) || (!offset && offset !== 0)) {
+    throw new Error(
+      'Limit and offset must be provided to find all unpaid partners'
+    );
+  }
+
+  const partners = await db(TABLE_NAME)
+    .distinct()
+    .select('users.*')
+    .join('design_events as de', 'users.id', 'de.actor_id')
+    .join('product_designs as d', 'de.design_id', 'd.id')
+    .join('collection_designs as c', 'd.id', 'c.design_id')
+    .join('invoices as i', 'c.collection_id', 'i.collection_id')
+    .join('pricing_bids as b', 'de.bid_id', 'b.id')
+    .leftJoin('partner_payout_logs as l', 'i.id', 'l.invoice_id')
+    .where({ 'de.type': 'ACCEPT_SERVICE_BID' })
+    .modify(limitOrOffset(limit, offset))
+    .groupBy(['i.id', 'users.id', 'b.bid_price_cents'])
+    .having(
+      db.raw('b.bid_price_cents > coalesce(sum(l.payout_amount_cents), 0)')
+    )
+    .catch(rethrow)
+    .catch(
+      filterError(rethrow.ERRORS.InvalidRegularExpression, () => {
+        throw new InvalidDataError('Search contained invalid characters');
+      })
+    );
+
+  return validateEvery<UserRow, User>(
+    TABLE_NAME,
+    isUserRow,
+    dataAdapter,
+    partners
+  );
+}
+
 module.exports = {
   ERROR_CODES,
   completeSmsPreregistration,
   create,
   createSmsPreregistration,
   findAll,
+  findAllUnpaidPartners,
   findByBidId,
   findByEmail,
   findByEmailWithPasswordHash,

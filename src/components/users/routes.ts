@@ -371,14 +371,33 @@ function* getEmailAvailability(
   this.status = 200;
 }
 
+/**
+ * GET /users/email-availability/:email
+ */
+function* getUnpaidPartners(
+  this: Koa.Application.Context
+): AsyncIterableIterator<User[]> {
+  const partners = yield UsersDAO.findAllUnpaidPartners({
+    limit: Number(this.query.limit) || 10,
+    offset: Number(this.query.offset) || 0,
+    role: this.query.role as Role,
+    search: this.query.search
+  });
+
+  this.body = partners;
+
+  this.status = 200;
+}
+
 router.get('/', getList);
 router.get('/:userId', requireAuth, getUser);
 router.get('/email-availability/:email', getEmailAvailability);
+router.get('/unpaid-partners', getUnpaidPartners);
 router.post('/', canCreateAccount, createUser);
 router.post('/:userId/accept-designer-terms', requireAuth, acceptDesignerTerms);
 router.post('/:userId/accept-partner-terms', requireAuth, acceptPartnerTerms);
 router.put('/:userId', requireAuth, updateUser); // TODO: deprecate
-router.patch('/:userId', requireAuth, updateUser);
 router.put('/:userId/password', requireAuth, updatePassword);
+router.patch('/:userId', requireAuth, updateUser);
 
 export default router.routes();

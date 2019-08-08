@@ -15,13 +15,19 @@ import {
   findById,
   findByQuoteId,
   findOpenByTargetId,
-  findRejectedByTargetId
+  findRejectedByTargetId,
+  findUnpaidByUserId
 } from './dao';
 import DesignEvent from '../../domain-objects/design-event';
 import generateBid from '../../test-helpers/factories/bid';
 import generateDesignEvent from '../../test-helpers/factories/design-event';
 import { daysToMs } from '../../services/time-conversion';
 import * as BidTaskTypesDAO from '../bid-task-types/dao';
+import { addDesign } from '../collections/dao';
+import generateCollection from '../../test-helpers/factories/collection';
+import generateInvoice from '../../test-helpers/factories/invoice';
+import PayoutAccountsDAO = require('../../dao/partner-payout-accounts');
+import PartnerPayoutsDAO = require('../../components/partner-payouts/dao');
 
 test('Bids DAO supports creation and retrieval', async (t: Test) => {
   const bidTaskTypesCreateStub = sandbox()
@@ -672,4 +678,104 @@ test('Bids DAO supports finding by quote and user id with events', async (t: Tes
     ],
     'Returns a list of bids with bid-specific events'
   );
+});
+
+test('Bids DAO supports finding all unpaid bids by user id', async (t: Test) => {
+  const { user: designer } = await createUser();
+  const { user: partner } = await createUser({ role: 'PARTNER' });
+
+  const design = await createDesign({
+    productType: 'TEESHIRT',
+    title: 'Plain White Tee',
+    userId: designer.id
+  });
+
+  const { collection } = await generateCollection({ createdBy: designer.id });
+  await addDesign(collection.id, design.id);
+  const { bid, user: admin } = await generateBid({
+    bidOptions: { bidPriceCents: 1000 },
+    designId: design.id
+  });
+
+  await generateDesignEvent({
+    actorId: admin.id,
+    bidId: bid.id,
+    createdAt: new Date(),
+    designId: design.id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: partner.id,
+    type: 'BID_DESIGN'
+  });
+  await generateDesignEvent({
+    type: 'ACCEPT_SERVICE_BID',
+    bidId: bid.id,
+    actorId: partner.id,
+    designId: design.id
+  });
+
+  await generateInvoice({ userId: designer.id, collectionId: collection.id });
+
+  const { user: designer2 } = await createUser();
+
+  const design2 = await createDesign({
+    productType: 'TEESHIRT',
+    title: 'Plain White Tee',
+    userId: designer2.id
+  });
+  const { collection: collection2 } = await generateCollection({
+    createdBy: designer2.id
+  });
+  await addDesign(collection2.id, design2.id);
+  const { bid: bid2, user: admin2 } = await generateBid({
+    bidOptions: { bidPriceCents: 1000 },
+    designId: design2.id
+  });
+
+  await generateDesignEvent({
+    actorId: admin2.id,
+    bidId: bid2.id,
+    createdAt: new Date(),
+    designId: design2.id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: partner.id,
+    type: 'BID_DESIGN'
+  });
+  await generateDesignEvent({
+    type: 'ACCEPT_SERVICE_BID',
+    bidId: bid2.id,
+    actorId: partner.id,
+    designId: design2.id
+  });
+
+  const payoutAccount = await PayoutAccountsDAO.create({
+    id: uuid.v4(),
+    createdAt: new Date(),
+    deletedAt: null,
+    userId: partner.id,
+    stripeAccessToken: 'stripe-access-one',
+    stripeRefreshToken: 'stripe-refresh-one',
+    stripePublishableKey: 'stripe-publish-one',
+    stripeUserId: 'stripe-user-one'
+  });
+
+  const { invoice } = await generateInvoice({
+    userId: designer2.id,
+    collectionId: collection2.id
+  });
+
+  const data = {
+    id: uuid.v4(),
+    invoiceId: invoice.id,
+    payoutAccountId: payoutAccount.id,
+    payoutAmountCents: 1000,
+    message: 'Get yo money',
+    initiatorUserId: admin.id
+  };
+  await PartnerPayoutsDAO.create(data);
+
+  const bids = await findUnpaidByUserId(partner.id);
+
+  t.deepEqual(bids, [{ ...bid, acceptedAt: bids[0].acceptedAt }]);
 });

@@ -138,6 +138,16 @@ function* listBids(this: Koa.Application.Context): AsyncIterableIterator<any> {
   }
 }
 
+function* getUnpaidBidsByUserId(
+  this: Koa.Application.Context
+): AsyncIterableIterator<any> {
+  const { userId } = this.params;
+
+  const bids = yield BidsDAO.findUnpaidByUserId(userId);
+  this.body = bids;
+  this.status = 200;
+}
+
 function* assignBidToPartner(
   this: Koa.Application.Context
 ): AsyncIterableIterator<any> {
@@ -399,6 +409,7 @@ export function* rejectDesignBid(
 }
 
 router.get('/', requireAuth, listBids);
+router.get('/unpaid/:userId', requireAdmin, getUnpaidBidsByUserId);
 
 router.put('/:bidId/assignees/:userId', requireAdmin, assignBidToPartner);
 router.get('/:bidId/assignees', requireAdmin, listBidAssignees);

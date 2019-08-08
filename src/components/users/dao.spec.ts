@@ -10,6 +10,12 @@ import * as ProductDesignsDAO from '../../dao/product-designs';
 import User, { ROLES, UserIO } from './domain-object';
 import { validatePassword } from './services/validate-password';
 import * as MailChimpFunctions from '../../services/mailchimp/update-email';
+import generateDesignEvent from '../../test-helpers/factories/design-event';
+import PayoutAccountsDAO = require('../../dao/partner-payout-accounts');
+import PartnerPayoutsDAO = require('../../components/partner-payouts/dao');
+import generateInvoice from '../../test-helpers/factories/invoice';
+import generateCollection from '../../test-helpers/factories/collection';
+import { addDesign } from '../collections/dao';
 
 const USER_DATA: UserIO = Object.freeze({
   email: 'USER@example.com',
@@ -304,4 +310,105 @@ test('UsersDAO.findByBidId returns all users on a pricing bid', async (t: Test) 
   const assignees = await UsersDAO.findByBidId(bid.id);
 
   t.deepEqual(assignees, [one, two]);
+});
+
+test('UsersDAO.findAllUnpaidPartners returns all unpaid partners', async (t: Test) => {
+  const { user: designer } = await createUser();
+  const { user: unpaidPartner } = await createUser({ role: 'PARTNER' });
+
+  const design = await ProductDesignsDAO.create({
+    productType: 'TEESHIRT',
+    title: 'Plain White Tee',
+    userId: designer.id
+  });
+
+  const { collection } = await generateCollection({ createdBy: designer.id });
+  await addDesign(collection.id, design.id);
+  const { bid, user: admin } = await createBid({
+    bidOptions: { bidPriceCents: 1000 },
+    designId: design.id
+  });
+
+  await DesignEventsDAO.create({
+    actorId: admin.id,
+    bidId: bid.id,
+    createdAt: new Date(),
+    designId: design.id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: unpaidPartner.id,
+    type: 'BID_DESIGN'
+  });
+  await generateDesignEvent({
+    type: 'ACCEPT_SERVICE_BID',
+    bidId: bid.id,
+    actorId: unpaidPartner.id,
+    designId: design.id
+  });
+
+  await generateInvoice({ userId: designer.id, collectionId: collection.id });
+
+  const { user: designer2 } = await createUser();
+  const { user: paidPartner } = await createUser({ role: 'PARTNER' });
+
+  const design2 = await ProductDesignsDAO.create({
+    productType: 'TEESHIRT',
+    title: 'Plain White Tee',
+    userId: designer2.id
+  });
+  const { collection: collection2 } = await generateCollection({
+    createdBy: designer.id
+  });
+  await addDesign(collection2.id, design2.id);
+  const { bid: bid2, user: admin2 } = await createBid({
+    bidOptions: { bidPriceCents: 1000 },
+    designId: design2.id
+  });
+
+  await DesignEventsDAO.create({
+    actorId: admin2.id,
+    bidId: bid2.id,
+    createdAt: new Date(),
+    designId: design2.id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: paidPartner.id,
+    type: 'BID_DESIGN'
+  });
+  await generateDesignEvent({
+    type: 'ACCEPT_SERVICE_BID',
+    bidId: bid2.id,
+    actorId: paidPartner.id,
+    designId: design2.id
+  });
+
+  const payoutAccount = await PayoutAccountsDAO.create({
+    id: uuid.v4(),
+    createdAt: new Date(),
+    deletedAt: null,
+    userId: paidPartner.id,
+    stripeAccessToken: 'stripe-access-one',
+    stripeRefreshToken: 'stripe-refresh-one',
+    stripePublishableKey: 'stripe-publish-one',
+    stripeUserId: 'stripe-user-one'
+  });
+
+  const { invoice } = await generateInvoice({
+    userId: designer2.id,
+    collectionId: collection2.id
+  });
+
+  const data = {
+    id: uuid.v4(),
+    invoiceId: invoice.id,
+    payoutAccountId: payoutAccount.id,
+    payoutAmountCents: 1000,
+    message: 'Get yo money',
+    initiatorUserId: admin.id
+  };
+  await PartnerPayoutsDAO.create(data);
+
+  const users = await UsersDAO.findAllUnpaidPartners({ limit: 20, offset: 0 });
+
+  t.deepEqual(users, [unpaidPartner]);
 });

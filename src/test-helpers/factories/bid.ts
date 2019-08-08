@@ -45,16 +45,7 @@ export default async function generateBid({
         designId: designId || null,
         materialBudgetCents: 1200,
         materialCategory: 'BASIC',
-        processes: [
-          {
-            complexity: '1_COLOR',
-            name: 'SCREEN_PRINTING'
-          },
-          {
-            complexity: '1_COLOR',
-            name: 'SCREEN_PRINTING'
-          }
-        ],
+        processes: [],
         productComplexity: 'SIMPLE',
         productType: 'TEESHIRT',
         units: 200,
