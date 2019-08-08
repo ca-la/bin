@@ -82,13 +82,10 @@ export default function getLinks(linkBase: LinkBase): Links {
     }
 
     case LinkType.CollectionDesignTask: {
-      const { collection, design, task } = linkBase;
-      const deepLink = collection
-        ? // tslint:disable-next-line:max-line-length
-          `${STUDIO_HOST}/collections/${collection.id}/tasks/design/${
-            design.id
-          }?taskId=${task.id}&designId=${design.id}`
-        : `${STUDIO_HOST}/tasks?taskId=${task.id}&designId=${design.id}`;
+      const { design, task } = linkBase;
+      const deepLink = `${STUDIO_HOST}/tasks?taskId=${task.id}&designId=${
+        design.id
+      }`;
       const title = normalizeTitle(task);
       return {
         deepLink,

@@ -420,9 +420,6 @@ export const createNotificationMessage = async (
       if (!design) {
         return null;
       }
-      const collectionId =
-        (design.collectionIds && design.collectionIds[0]) || null;
-      const collection = await getCollection(collectionId);
       const { deepLink } = getLinks({
         design,
         type: LinkType.PartnerDesign
@@ -433,7 +430,7 @@ export const createNotificationMessage = async (
         html: `You have a <a href="${deepLink}">new project</a> to review`,
         imageUrl: null,
         link: deepLink,
-        location: getLocation({ collection, design }),
+        location: getLocation({ collection: null, design }),
         title: 'You have a new project to review'
       };
     }
