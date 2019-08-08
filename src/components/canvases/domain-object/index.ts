@@ -36,7 +36,7 @@ export default interface Canvas {
 export interface CanvasRow {
   id: string;
   design_id: string;
-  created_at: Date;
+  created_at: string;
   created_by: string;
   component_id: string | null;
   title: string;
@@ -44,9 +44,9 @@ export interface CanvasRow {
   height: number;
   x: number;
   y: number;
-  deleted_at: Date | null;
+  deleted_at: string | null;
   ordering?: number;
-  archived_at: Date | null;
+  archived_at: string | null;
 }
 
 function encodeCanvasRow(row: CanvasRow): Canvas {
@@ -71,7 +71,7 @@ function decodeCanvas(data: Canvas): CanvasRow {
   return {
     id: data.id,
     design_id: data.designId,
-    created_at: data.createdAt,
+    created_at: data.createdAt.toISOString(),
     created_by: data.createdBy,
     component_id: data.componentId,
     title: data.title,
@@ -79,9 +79,9 @@ function decodeCanvas(data: Canvas): CanvasRow {
     height: data.height,
     x: data.x,
     y: data.y,
-    deleted_at: data.deletedAt,
+    deleted_at: data.deletedAt ? data.deletedAt.toISOString() : null,
     ordering: data.ordering,
-    archived_at: data.archivedAt
+    archived_at: data.archivedAt ? data.archivedAt.toISOString() : null
   };
 }
 

@@ -22,9 +22,9 @@ export default interface Component {
 export interface ComponentRow {
   id: string;
   parent_id: string | null;
-  created_at: Date;
+  created_at: string;
   created_by: string;
-  deleted_at: Date | null;
+  deleted_at: string | null;
   type: ComponentType;
   material_id: string | null;
   artwork_id: string | null;
