@@ -6,6 +6,7 @@ import * as OptionsDAO from '../../dao/product-design-options';
 import * as ImagesDAO from '../../components/assets/dao';
 import { isPreviewable } from '../../components/assets/services/is-previewable';
 import { getExtension } from '../../components/assets/services/get-extension';
+import Asset from '../../components/assets/domain-object';
 
 export interface AssetLinks {
   assetLink: string | null;
@@ -39,6 +40,14 @@ function constructAssetLinks(options: {
       ? `${USER_UPLOADS_IMGIX_URL}/${options.id}${DESIGN_PREVIEW_THUMBNAIL_2X}`
       : null
   };
+}
+
+export function getLinksForAsset(asset: Asset): AssetLinks | null {
+  if (asset.uploadCompletedAt) {
+    return constructAssetLinks({ id: asset.id, mimeType: asset.mimeType });
+  }
+
+  return null;
 }
 
 /**

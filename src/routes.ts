@@ -20,6 +20,7 @@ import componentRelationshipRoutes from './components/component-relationships/ro
 import creditRoutes from './components/credits/routes';
 import duplicationRoutes from './components/duplication/routes';
 import healthRoutes from './components/health/routes';
+import nodeRoutes from './components/nodes/routes';
 import notificationRoutes from './components/notifications/routes';
 import orderHistoryRoutes from './components/order-history/routes';
 import partnerPayouts from './components/partner-payouts/routes';
@@ -69,6 +70,7 @@ router.use('/component-relationships', componentRelationshipRoutes);
 router.use('/credits', creditRoutes);
 router.use('/duplication', duplicationRoutes);
 router.use('/health', healthRoutes);
+router.use('/nodes', nodeRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/order-history', orderHistoryRoutes);
 router.use('/partner-payout-logs', partnerPayouts);

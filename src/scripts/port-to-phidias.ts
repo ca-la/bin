@@ -10,11 +10,17 @@ import { CanvasRow } from '../components/canvases/domain-object';
 import { NodeRow } from '../components/nodes/domain-objects';
 import { DesignRootNodeRow } from '../components/nodes/domain-objects/design-root';
 import { ComponentRow } from '../components/components/domain-object';
-import { ArtworkAttributeRow } from '../components/attributes/artwork-attributes/domain-object';
-import { MaterialAttributeRow } from '../components/attributes/material-attributes/domain-object';
-import { SketchAttributeRow } from '../components/attributes/sketch-attributes/domain-object';
+import { ArtworkAttributeRow } from '../components/attributes/artwork-attributes/domain-objects';
+import { MaterialAttributeRow } from '../components/attributes/material-attributes/domain-objects';
+import { SketchAttributeRow } from '../components/attributes/sketch-attributes/domain-objects';
 import { AssetRow } from '../components/assets/domain-object';
-import first from '../services/first';
+
+type EnrichedComponent = ComponentRow & {
+  canvas_id: string;
+  artwork_asset: AssetRow | null;
+  material_asset: AssetRow | null;
+  sketch_asset: AssetRow | null;
+};
 
 portToPhidias()
   .then(() => {
@@ -41,7 +47,7 @@ TRUNCATE TABLE material_attributes CASCADE;
 TRUNCATE TABLE sketch_attributes CASCADE;
 TRUNCATE TABLE design_root_nodes CASCADE;
 TRUNCATE TABLE nodes CASCADE;
-     `);
+    `);
 
     const canvases: CanvasRow[] = await trx('canvases')
       .select('*')
@@ -49,12 +55,28 @@ TRUNCATE TABLE nodes CASCADE;
     log(`Porting ${canvases.length} canvases to DesignRootNodes.`);
     await portCanvases(canvases, trx);
 
-    const components: (ComponentRow & { canvas_id: string })[] = await trx(
-      'components'
-    )
-      .select('components.*', 'canvases.id AS canvas_id')
+    const components: EnrichedComponent[] = await trx('components')
+      .select(
+        'components.*',
+        'canvases.id AS canvas_id',
+        db.raw('row_to_json(artwork_assets.*) as artwork_asset'),
+        db.raw('row_to_json(material_assets.*) as material_asset'),
+        db.raw('row_to_json(sketch_assets.*) as sketch_asset')
+      )
       .from('components')
       .joinRaw(`LEFT JOIN canvases ON canvases.component_id = components.id`)
+      .joinRaw(
+        `LEFT JOIN assets AS artwork_assets ON artwork_assets.id = components.artwork_id`
+      )
+      .joinRaw(
+        `LEFT JOIN assets AS sketch_assets ON sketch_assets.id = components.sketch_id`
+      )
+      .joinRaw(
+        `LEFT JOIN product_design_options AS options ON options.id = components.material_id`
+      )
+      .joinRaw(
+        `LEFT JOIN assets AS material_assets ON material_assets.id = options.preview_image_id`
+      )
       .where({ 'components.deleted_at': null })
       .whereIn(
         'components.id',
@@ -105,7 +127,7 @@ async function portCanvases(
 }
 
 async function portComponents(
-  components: (ComponentRow & { canvas_id: string })[],
+  components: EnrichedComponent[],
   trx: Knex.Transaction
 ): Promise<void> {
   const nodeInsertions: NodeRow[] = [];
@@ -128,70 +150,69 @@ async function portComponents(
     nodeInsertions.push(node);
 
     if (component.artwork_id) {
-      const asset: AssetRow | undefined = await trx('assets')
-        .select('*')
-        .where({ id: component.artwork_id })
-        .then((rows: AssetRow[]) => first(rows));
+      const { artwork_asset } = component;
 
-      if (!asset) {
+      if (!artwork_asset) {
         throw new Error(
           `Could not find asset for id "${component.artwork_id}"`
         );
       }
 
       artworkInsertions.push({
+        id: uuid.v4(),
+        created_at: component.created_at,
+        created_by: component.created_by,
+        deleted_at: null,
         node_id: component.id,
         asset_id: component.artwork_id,
         x: '0',
         y: '0',
-        width: asset.original_width_px || '0',
-        height: asset.original_height_px || '0'
+        width: artwork_asset.original_width_px || '0',
+        height: artwork_asset.original_height_px || '0'
       });
     }
 
     if (component.material_id) {
-      const asset: AssetRow | undefined = await trx('assets')
-        .select('assets.*')
-        .from('assets')
-        .joinRaw(
-          `LEFT JOIN product_design_options ON product_design_options.preview_image_id = assets.id`
-        )
-        .where({ 'product_design_options.id': component.material_id })
-        .then((rows: AssetRow[]) => first(rows));
+      const { material_asset } = component;
 
-      if (!asset) {
+      if (!material_asset) {
         throw new Error(
-          `Could not find asset for product_desing_option ${
+          `Could not find asset for component with material_id of ${
             component.material_id
           }`
         );
       }
 
       materialInsertions.push({
+        id: uuid.v4(),
+        created_at: component.created_at,
+        created_by: component.created_by,
+        deleted_at: null,
         node_id: component.id,
-        asset_id: asset.id,
-        width: asset.original_width_px || '0',
-        height: asset.original_height_px || '0'
+        asset_id: material_asset.id,
+        width: material_asset.original_width_px || '0',
+        height: material_asset.original_height_px || '0'
       });
     }
 
     if (component.sketch_id) {
-      const asset: AssetRow | undefined = await trx('assets')
-        .select('*')
-        .where({ id: component.sketch_id })
-        .then((rows: AssetRow[]) => first(rows));
+      const { sketch_asset } = component;
 
-      if (!asset) {
+      if (!sketch_asset) {
         throw new Error(`Could not find asset for id "${component.sketch_id}"`);
       }
 
       sketchInsertions.push({
+        id: uuid.v4(),
+        created_at: component.created_at,
+        created_by: component.created_by,
+        deleted_at: null,
         node_id: component.id,
         asset_id: component.sketch_id,
         x: '0',
         y: '0',
-        width: asset.original_width_px || '0',
-        height: asset.original_height_px || '0'
+        width: sketch_asset.original_width_px || '0',
+        height: sketch_asset.original_height_px || '0'
       });
     }
   }
