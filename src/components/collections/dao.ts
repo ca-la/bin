@@ -21,6 +21,7 @@ import * as ProductDesignsDAO from '../../dao/product-designs';
 import * as db from '../../services/db';
 import { validate, validateEvery } from '../../services/validate-from-db';
 import first from '../../services/first';
+import limitOrOffset from '../../services/limit-or-offset';
 
 const TABLE_NAME = 'collections';
 
@@ -102,25 +103,35 @@ export async function findByUserId(userId: string): Promise<Collection[]> {
   );
 }
 
-export async function findByCollaboratorAndUserId(
-  userId: string
-): Promise<Collection[]> {
+export async function findByCollaboratorAndUserId(options: {
+  userId: string;
+  limit?: number;
+  offset?: number;
+  search?: string;
+}): Promise<Collection[]> {
   const collections: CollectionRow[] = await db(TABLE_NAME)
     .select('collections.*')
     .distinct('collections.id')
     .from(TABLE_NAME)
     .join('collaborators', 'collaborators.collection_id', 'collections.id')
-    .where({
-      'collaborators.user_id': userId,
-      'collections.deleted_at': null
-    })
-    .andWhereRaw(
-      '(collaborators.cancelled_at IS NULL OR collaborators.cancelled_at > now())'
+    .modify(
+      (query: Knex.QueryBuilder): void => {
+        if (options.search) {
+          query.where(db.raw('(collections.title ~* ?)', options.search));
+        }
+      }
     )
-    .orWhere({
-      'collections.created_by': userId,
+    .where({
+      'collaborators.user_id': options.userId,
       'collections.deleted_at': null
     })
+    .whereRaw(
+      `
+      ((collaborators.cancelled_at IS NULL OR collaborators.cancelled_at > now()) OR
+      (collections.created_by = ? AND collections.deleted_at IS NULL))`,
+      options.userId
+    )
+    .modify(limitOrOffset(options.limit, options.offset))
     .orderBy('collections.created_at', 'desc')
     .catch(rethrow);
 

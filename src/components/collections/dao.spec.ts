@@ -93,7 +93,7 @@ test('CollectionsDAO#findByUserId includes referenced user collections', async (
   t.deepEqual(retrievedCollection[0].id, id1, 'only my collection is returned');
 });
 
-test('CollectionsDAO#findByCollaboratorAndUserId finds all collections', async (t: tape.Test) => {
+test('CollectionsDAO#findByCollaboratorAndUserId finds all collections and searches', async (t: tape.Test) => {
   const { user: user1 } = await createUser({ withSession: false });
   const { user: user2 } = await createUser({ withSession: false });
 
@@ -163,15 +163,35 @@ test('CollectionsDAO#findByCollaboratorAndUserId finds all collections', async (
   });
   await CollectionsDAO.deleteById(collection4.id);
 
-  const collections = await CollectionsDAO.findByCollaboratorAndUserId(
-    user1.id
-  );
+  const collections = await CollectionsDAO.findByCollaboratorAndUserId({
+    userId: user1.id
+  });
 
   t.deepEqual(
     collections,
     [collection2, collection1],
     'all collections I can access are returned'
   );
+
+  const searchCollections = await CollectionsDAO.findByCollaboratorAndUserId({
+    userId: user1.id,
+    search: 'Early yEars'
+  });
+
+  t.deepEqual(
+    searchCollections,
+    [collection1],
+    'Collections I searched for are returned'
+  );
+
+  const limitedOffsetCollections = await CollectionsDAO.findByCollaboratorAndUserId(
+    {
+      userId: user1.id,
+      limit: 1
+    }
+  );
+
+  t.equal(limitedOffsetCollections.length, 1);
 });
 
 test('CollectionsDAO#addDesign adds a design to a collection', async (t: tape.Test) => {

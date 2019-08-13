@@ -87,16 +87,18 @@ function* createCollection(
 function* getList(
   this: Koa.Application.Context
 ): AsyncIterableIterator<CollectionWithPermissions[]> {
-  const { userId, isCosted, isSubmitted } = this.query;
+  const { userId, isCosted, isSubmitted, limit, offset, search } = this.query;
   const { role, userId: currentUserId } = this.state;
-
   const userIdToQuery =
     role === 'ADMIN' ? userId : currentUserId === userId ? currentUserId : null;
 
   if (userIdToQuery) {
-    const collections = yield CollectionsDAO.findByCollaboratorAndUserId(
-      userIdToQuery
-    );
+    const collections = yield CollectionsDAO.findByCollaboratorAndUserId({
+      userId: userIdToQuery,
+      limit: Number(limit),
+      offset: Number(offset),
+      search
+    });
     const collectionsWithPermissions = yield Promise.all(
       collections.map(
         async (collection: Collection): Promise<CollectionWithPermissions> => {

@@ -223,17 +223,6 @@ test('findAllDesignsThroughCollaborator finds all designs with a search string',
     'returns design when searched by design title'
   );
   t.deepEqual(designSearch[0].id, firstDesign.id, 'should match ids');
-
-  const collectionSearch = await findAllDesignsThroughCollaborator({
-    userId: user.id,
-    search: 'collection'
-  });
-  t.equal(
-    collectionSearch.length,
-    1,
-    'returns design when searched by collection title'
-  );
-  t.deepEqual(collectionSearch[0].id, secondDesign.id, 'should match ids');
 });
 
 test('findDesignByAnnotationId', async (t: tape.Test) => {

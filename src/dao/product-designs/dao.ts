@@ -51,10 +51,9 @@ product_designs.id in (
       (query: Knex.QueryBuilder): void => {
         if (options.search) {
           query.andWhere(
-            db.raw(
-              '(product_designs.title ~* :search or collections.title ~* :search)',
-              { search: options.search }
-            )
+            db.raw('(product_designs.title ~* :search)', {
+              search: options.search
+            })
           );
         }
       }
