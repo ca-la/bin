@@ -14,9 +14,9 @@ import {
   addAtMentionDetailsForComment,
   CommentWithMentions
 } from '../../services/add-at-mention-details';
+import { annotationCommentsView } from './view';
 
 const TABLE_NAME = 'product_design_canvas_annotation_comments';
-const VIEW_NAME = 'annotation_comments_view';
 
 export async function create(
   data: AnnotationComment,
@@ -48,14 +48,14 @@ export async function create(
 export async function findByAnnotationId(
   annotationId: string
 ): Promise<CommentWithMeta[]> {
-  const comments: CommentWithMetaRow[] = await db(VIEW_NAME)
-    .select('*')
-    .from('annotation_comments_view')
-    .where({ annotation_id: annotationId })
+  const comments: CommentWithMetaRow[] = await annotationCommentsView()
+    .where({
+      annotation_id: annotationId
+    })
     .orderBy('created_at', 'asc');
 
   return validateEvery<CommentWithMetaRow, CommentWithMeta>(
-    VIEW_NAME,
+    TABLE_NAME,
     isCommentWithMetaRow,
     commentWithMetaAdapter,
     comments
@@ -69,13 +69,12 @@ interface AnnotationToCommentsWithMentions {
 export async function findByAnnotationIds(
   annotationIds: string[]
 ): Promise<AnnotationToCommentsWithMentions> {
-  const comments: CommentWithMetaRow[] = await db(VIEW_NAME)
-    .select('*')
-    .from('annotation_comments_view')
+  const comments: CommentWithMetaRow[] = await annotationCommentsView()
     .whereIn('annotation_id', annotationIds)
     .orderBy('created_at', 'asc');
+
   const validatedComments = validateEvery<CommentWithMetaRow, CommentWithMeta>(
-    VIEW_NAME,
+    TABLE_NAME,
     isCommentWithMetaRow,
     commentWithMetaAdapter,
     comments
