@@ -1,8 +1,5 @@
 import DataAdapter from '../../services/data-adapter';
-import {
-  hasOnlyProperties,
-  hasProperties
-} from '../../services/require-properties';
+import { hasProperties } from '../../services/require-properties';
 import Comment, { CommentRow } from '../comments/domain-object';
 
 export default interface AnnotationComment {
@@ -40,7 +37,7 @@ export const withMetaDataAdapter = new DataAdapter<
 >();
 
 export function isCommentWithMetaRow(row: object): row is CommentWithMetaRow {
-  return hasOnlyProperties(
+  return hasProperties(
     row,
     'id',
     'annotation_id',
