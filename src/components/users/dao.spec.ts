@@ -109,6 +109,7 @@ test('UsersDAO.create returns a new user with email but no phone', (t: Test) => 
   return UsersDAO.create(USER_DATA).then((user: User) => {
     t.equal(user.name, 'Q User');
     t.equal(user.email, 'user@example.com');
+    t.equal(user.locale, 'en-US');
     t.equal(user.id.length, 36);
     t.equal(user.phone, null);
     t.equal(user.isSmsPreregistration, false);
@@ -120,6 +121,7 @@ test('UsersDAO.create returns a new user with phone but no email', (t: Test) => 
     t.equal(user.name, 'Q User');
     t.equal(user.id.length, 36);
     t.equal(user.phone, '+14155809925');
+    t.equal(user.locale, 'en-US');
     t.equal(user.email, null);
   });
 });
@@ -133,6 +135,7 @@ test('UsersDAO.createSmsPreregistration allows creating SMS preregistration with
     t.equal(user.name, 'Q User');
     t.equal(user.id.length, 36);
     t.equal(user.phone, '+14155809925');
+    t.equal(user.locale, 'en-US');
     t.equal(user.email, null);
     t.equal(user.isSmsPreregistration, true);
   });
@@ -214,9 +217,11 @@ test('UsersDAO.findAll returns nothing if no search matches', (t: Test) => {
 test('UsersDAO.update updates a user', async (t: Test) => {
   const inserted = await UsersDAO.create(USER_DATA);
   const user = await UsersDAO.update(inserted.id, {
-    name: 'Kanye West'
+    name: 'Kanye West',
+    locale: 'zh-CN'
   });
   t.equal(user.name, 'Kanye West', 'name returned is updated');
+  t.equal(user.locale, 'zh-CN', 'locale returned is updated');
 });
 
 test('UsersDAO.update throw on already taken email', async (t: Test) => {
@@ -271,6 +276,7 @@ test('UsersDAO.completeSmsPreregistration completes a user', (t: Test) => {
       t.equal(user.name, 'okie dokie');
       t.equal(user.isSmsPreregistration, false);
       t.equal(user.phone, '+14155551234');
+      t.equal(user.locale, 'en-US');
       t.equal(user.email, 'okie@example.com');
     });
 });

@@ -27,14 +27,15 @@ export default interface User {
   createdAt: Date;
   email: string | null;
   id: string;
+  isSmsPreregistration: boolean;
   lastAcceptedDesignerTermsAt: Date | null;
   lastAcceptedPartnerTermsAt: Date | null;
+  locale: string;
   name: string;
-  isSmsPreregistration: boolean;
-  subscriptionWaivedAt: Date | null;
   phone: string | null;
   referralCode: string;
   role: Role;
+  subscriptionWaivedAt: Date | null;
 }
 
 export interface UserWithPasswordHash extends User {
@@ -45,17 +46,18 @@ export const baseUser = {
   birthday: null,
   email: null,
   isSmsPreregistration: false,
-  subscriptionWaivedAt: null,
   lastAcceptedDesignerTermsAt: null,
   lastAcceptedPartnerTermsAt: null,
+  locale: 'en-US',
   phone: null,
   referralCode: 'n/a',
-  role: ROLES.user
+  role: ROLES.user,
+  subscriptionWaivedAt: null
 };
 
 export interface UserIO extends Partial<Omit<User, 'createdAt' | 'id'>> {
-  name: string;
   email: string;
+  name: string;
   password: string;
 }
 
@@ -64,15 +66,16 @@ export interface UserRow {
   created_at: string;
   email: string | null;
   id: string;
+  is_sms_preregistration: boolean;
   last_accepted_designer_terms_at: string | null;
   last_accepted_partner_terms_at: string | null;
+  locale: string;
   name: string;
   password_hash: string | null;
-  is_sms_preregistration: boolean;
-  subscription_waived_at: string | null;
   phone: string | null;
   referral_code: string;
   role: Role;
+  subscription_waived_at: string | null;
 }
 
 export function partialDecode(data: Partial<User>): Partial<UserRow> {
@@ -86,6 +89,7 @@ export function partialDecode(data: Partial<User>): Partial<UserRow> {
     last_accepted_partner_terms_at: toDateStringOrUndefined(
       data.lastAcceptedPartnerTermsAt
     ),
+    locale: data.locale,
     name: data.name,
     phone: data.phone,
     referral_code: data.referralCode,
@@ -107,6 +111,7 @@ export function passwordHashDecode(data: UserWithPasswordHash): UserRow {
     last_accepted_partner_terms_at: toDateStringOrNull(
       data.lastAcceptedPartnerTermsAt
     ),
+    locale: data.locale,
     name: data.name,
     password_hash: data.passwordHash,
     phone: data.phone,
@@ -129,6 +134,7 @@ export function passwordHashEncode(row: UserRow): UserWithPasswordHash {
     lastAcceptedPartnerTermsAt: toDateOrNull(
       row.last_accepted_partner_terms_at
     ),
+    locale: row.locale,
     name: row.name,
     passwordHash: row.password_hash,
     phone: row.phone,
@@ -151,6 +157,7 @@ export function encode(row: UserRow): User {
     lastAcceptedPartnerTermsAt: toDateOrNull(
       row.last_accepted_partner_terms_at
     ),
+    locale: row.locale,
     name: row.name,
     phone: row.phone,
     referralCode: row.referral_code,
@@ -176,9 +183,10 @@ export function isUserRow(row: object): row is UserRow {
     'created_at',
     'email',
     'id',
+    'is_sms_preregistration',
+    'locale',
     'name',
     'password_hash',
-    'is_sms_preregistration',
     'phone',
     'referral_code',
     'role'
