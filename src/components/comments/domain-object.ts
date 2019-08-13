@@ -1,5 +1,5 @@
 import DataAdapter from '../../services/data-adapter';
-import { hasOnlyProperties } from '../../services/require-properties';
+import { hasProperties } from '../../services/require-properties';
 
 /**
  * @typedef {object} Comment User comment
@@ -49,7 +49,7 @@ export const dataAdapter = new DataAdapter<CommentRow, Comment>();
 export const baseDataAdapter = new DataAdapter<BaseCommentRow, BaseComment>();
 
 export function isBaseComment(row: object): row is BaseComment {
-  return hasOnlyProperties(
+  return hasProperties(
     row,
     'createdAt',
     'deletedAt',
@@ -62,7 +62,7 @@ export function isBaseComment(row: object): row is BaseComment {
 }
 
 export function isCommentRow(row: object): row is CommentRow {
-  return hasOnlyProperties(
+  return hasProperties(
     row,
     'id',
     'created_at',
@@ -77,7 +77,7 @@ export function isCommentRow(row: object): row is CommentRow {
 }
 
 export function isComment(candidate: object): candidate is Comment {
-  return hasOnlyProperties(
+  return hasProperties(
     candidate,
     'createdAt',
     'deletedAt',
