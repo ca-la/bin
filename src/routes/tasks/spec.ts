@@ -599,6 +599,7 @@ test('PUT /tasks/:taskId/comment/:id creates a task comment', async (t: tape.Tes
     [
       {
         ...commentBody,
+        collaborators: [],
         mentions: {},
         userEmail: user.email,
         userId: user.id,

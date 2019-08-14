@@ -12,7 +12,7 @@ import * as TaskEventsDAO from '../../dao/task-events';
 import * as DesignStagesDAO from '../../dao/product-design-stages';
 import * as DesignStageTasksDAO from '../../dao/product-design-stage-tasks';
 import * as CommentsDAO from '../../components/comments/dao';
-import * as TaskCommentsDAO from '../../dao/task-comments';
+import * as TaskCommentsDAO from '../../components/task-comments/dao';
 import * as AnnotationCommentsDAO from '../../components/annotation-comments/dao';
 import * as CollectionsDAO from '../../components/collections/dao';
 import * as DesignsDAO from '../../dao/product-designs';

@@ -25,7 +25,7 @@ import {
   create as createCollection,
   deleteById as deleteCollection
 } from '../../components/collections/dao';
-import { create as createTaskComment } from '../task-comments';
+import { create as createTaskComment } from '../../components/task-comments/dao';
 import { del as deleteComponent } from '../../components/components/dao';
 import { deleteById as deleteComment } from '../../components/comments/dao';
 

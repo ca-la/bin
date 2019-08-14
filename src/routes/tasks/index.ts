@@ -5,7 +5,7 @@ import { omit, pick } from 'lodash';
 
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as CommentDAO from '../../components/comments/dao';
-import * as TaskCommentDAO from '../../dao/task-comments';
+import * as TaskCommentDAO from '../../components/task-comments/dao';
 import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import CollaboratorTask from '../../domain-objects/collaborator-task';

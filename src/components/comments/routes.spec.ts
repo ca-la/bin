@@ -73,6 +73,7 @@ test('DELETE /comment/:id deletes a task comment', async (t: tape.Test) => {
     [
       {
         ...commentBody,
+        collaborators: [],
         mentions: {},
         userEmail: user.email,
         userId: user.id,

@@ -1,7 +1,7 @@
 import { RealtimeTaskComment, RealtimeTaskCommentDeletion } from '@cala/ts-lib';
 import { sendMessage } from '../../send-message';
 import Comment from '../../../comments/domain-object';
-import TaskComment from '../../../../domain-objects/task-comment';
+import TaskComment from '../../../task-comments/domain-object';
 import addAtMentionDetails from '../../../../services/add-at-mention-details';
 
 /**

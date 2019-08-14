@@ -8,6 +8,7 @@ import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 import generateComment from '../../test-helpers/factories/comment';
 
 import * as AnnotationCommentsDAO from '../../components/annotation-comments/dao';
+import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import { findAndDuplicateAnnotations } from './annotations';
 
 test('findAndDuplicateAnnotations', async (t: tape.Test) => {
@@ -15,9 +16,18 @@ test('findAndDuplicateAnnotations', async (t: tape.Test) => {
   const { annotation, canvas } = await generateAnnotation({
     createdBy: createdBy.id
   });
-  const { canvas: canvasTwo } = await generateCanvas({
+  const { canvas: canvasTwo, design } = await generateCanvas({
     createdBy: createdBy.id
   });
+  const col1 = await CollaboratorsDAO.findByDesignAndUser(
+    design.id,
+    createdBy.id
+  );
+
+  if (!col1) {
+    throw new Error('Collaborator could not be found.');
+  }
+
   await AnnotationCommentsDAO.create({
     annotationId: annotation.id,
     commentId: comment.id
@@ -56,6 +66,7 @@ test('findAndDuplicateAnnotations', async (t: tape.Test) => {
     c1[0],
     {
       ...comment,
+      collaborators: [{ cancelledAt: null, id: col1.id }],
       annotationId: a1.id,
       createdAt: c1[0].createdAt,
       id: c1[0].id

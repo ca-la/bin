@@ -8,7 +8,6 @@ import { create as createDesign } from '../../dao/product-designs';
 import * as CreateNotifications from '../../services/create-notifications';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
 import generateCollection from '../../test-helpers/factories/collection';
-import { Notification } from '../notifications/domain-object';
 import * as AnnounceCommentService from '../iris/messages/annotation-comment';
 import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 
@@ -57,9 +56,11 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
     x: 1,
     y: 1
   };
+  const date1 = new Date();
+  const date2 = new Date(date1.getTime() + 1000);
 
   const commentBody = {
-    createdAt: new Date().toISOString(),
+    createdAt: date1.toISOString(),
     deletedAt: null,
     id: commentId,
     isPinned: false,
@@ -72,12 +73,12 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
   };
 
   const commentWithMentionBody = {
-    createdAt: new Date().toISOString(),
+    createdAt: date2.toISOString(),
     deletedAt: null,
     id: commentWithMentionId,
     isPinned: false,
     mentions: {
-      [collaborator.id]: collaborator.userEmail
+      [collaborator.id]: user.name
     },
     parentCommentId: null,
     text: `A comment @<${collaborator.id}|collaborator>`,
@@ -131,6 +132,7 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
     [
       {
         ...commentBody,
+        collaborators: [{ cancelledAt: null, id: collaborator.id }],
         annotationId: annotationResponse[1].id,
         mentions: {},
         userEmail: user.email,
@@ -194,22 +196,33 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
   ]);
   t.equal(announcementStub.callCount, 3, 'Announces the comment to Iris');
 
-  const noNewCommentResponse = await get(
+  const [response, body] = await get(
     `${API_PATH}/${annotationResponse[1].id}/comments`,
     { headers: authHeader(session.id) }
   );
+  t.equal(response.status, 200);
+  t.equal(body.length, 2);
   t.deepEqual(
-    (noNewCommentResponse[1] as Notification[]).find(
-      (val: Notification) => val.annotationId === annotationResponse[1].id
-    ),
-    {
-      ...commentBody,
-      annotationId: annotationResponse[1].id,
-      mentions: {},
-      userEmail: user.email,
-      userId: user.id,
-      userName: user.name
-    },
-    'Comment retrieval does not return the new comment'
+    body,
+    [
+      {
+        ...commentBody,
+        collaborators: [{ cancelledAt: null, id: collaborator.id }],
+        annotationId: annotationResponse[1].id,
+        mentions: {},
+        userEmail: user.email,
+        userId: user.id,
+        userName: user.name
+      },
+      {
+        ...commentWithMentionBody,
+        collaborators: [{ cancelledAt: null, id: collaborator.id }],
+        annotationId: annotationResponse[1].id,
+        userEmail: user.email,
+        userId: user.id,
+        userName: user.name
+      }
+    ],
+    'Comment retrieval returns all the comments for the annotation'
   );
 });

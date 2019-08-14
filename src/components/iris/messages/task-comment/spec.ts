@@ -4,7 +4,7 @@ import * as SendMessageService from '../../send-message';
 import * as MentionDetailsService from '../../../../services/add-at-mention-details';
 import { sandbox, test } from '../../../../test-helpers/fresh';
 import { announceTaskCommentCreation } from './index';
-import TaskComment from '../../../../domain-objects/task-comment';
+import TaskComment from '../../../task-comments/domain-object';
 import generateComment from '../../../../test-helpers/factories/comment';
 
 test('announceTaskCommentCreation supports sending a message', async (t: tape.Test) => {
