@@ -613,6 +613,44 @@ test('notification messages returns task completion message to the user if resou
   );
 });
 
+test('notification messages returns partner pairing committed message to the user if resources exist', async (t: tape.Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
+  const {
+    notification: parPairNotification,
+    collection,
+    actor
+  } = await generateNotification({
+    type: NotificationType.PARTNER_PAIRING_COMMITTED
+  });
+  const {
+    notification: parPairDeleted,
+    collection: parPairCollection
+  } = await generateNotification({
+    type: NotificationType.PARTNER_PAIRING_COMMITTED
+  });
+  await CollectionsDAO.deleteById(parPairCollection.id);
+
+  const message = await createNotificationMessage(parPairNotification);
+  if (!message) {
+    throw new Error('Did not create message');
+  }
+  t.assert(
+    message.html.includes(collection.title || 'Untitled'),
+    'message html contains the collection title'
+  );
+  t.assert(
+    message.actor && message.actor.id === actor.id,
+    'message.actor && message.actor.id is the user'
+  );
+  const messageDeleted = await createNotificationMessage(parPairDeleted);
+  t.assert(
+    messageDeleted === null,
+    'No message is created for a deleted subresource'
+  );
+});
+
 test('unsupported notifications', async (t: tape.Test) => {
   sandbox()
     .stub(NotificationAnnouncer, 'announceNotificationCreation')

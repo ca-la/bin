@@ -846,6 +846,9 @@ test('POST /collections/:collectionId/partner-pairings', async (t: tape.Test) =>
   const partner = await createUser({ role: 'PARTNER' });
 
   const createDesignTasksStub = sandbox().stub(DesignTasksService, 'default');
+  const createNotificationsStub = sandbox()
+    .stub(CreateNotifications, 'immediatelySendPartnerPairingCommitted')
+    .resolves();
 
   const collectionOne = await CollectionsDAO.create({
     createdAt: new Date(),
@@ -901,7 +904,12 @@ test('POST /collections/:collectionId/partner-pairings', async (t: tape.Test) =>
     `/collections/${collectionOne.id}/partner-pairings`,
     { headers: API.authHeader(admin.session.id) }
   );
-  t.equal(partnerPairing[0].status, 204);
+  t.equal(partnerPairing[0].status, 204, 'Partner pairing should give 204');
+  t.equal(
+    createNotificationsStub.callCount,
+    1,
+    'Partner pairing notification is created'
+  );
 
   const designOneEvents = await DesignEventsDAO.findByDesignId(designOne.id);
   t.equal(designOneEvents.length, 2, 'Creates one design event for the design');

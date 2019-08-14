@@ -78,6 +78,10 @@ import {
   AnnotationCommentMentionNotification,
   isAnnotationCommentMentionNotification
 } from '../../components/notifications/models/annotation-mention';
+import {
+  isPartnerPairingCommittedNotification,
+  PartnerPairingCommittedNotification
+} from '../../components/notifications/models/partner-pairing-committed';
 
 /**
  * Deletes pre-existing similar notifications and adds in a new one.
@@ -136,7 +140,6 @@ export async function sendDesignOwnerAnnotationCommentCreateNotification(
   return validateTypeWithGuardOrThrow(
     notification,
     isAnnotationCommentCreateNotification,
-    // tslint:disable-next-line:max-line-length
     `Could not validate ${
       NotificationType.ANNOTATION_COMMENT_CREATE
     } notification type from database with id: ${id}`
@@ -185,7 +188,6 @@ export async function sendAnnotationCommentMentionNotification(
   return validateTypeWithGuardOrThrow(
     notification,
     isAnnotationCommentMentionNotification,
-    // tslint:disable-next-line:max-line-length
     `Could not validate ${
       NotificationType.ANNOTATION_COMMENT_MENTION
     } notification type from database with id: ${id}`
@@ -235,7 +237,6 @@ export async function sendDesignOwnerMeasurementCreateNotification(
   return validateTypeWithGuardOrThrow(
     notification,
     isMeasurementCreateNotification,
-    // tslint:disable-next-line:max-line-length
     `Could not validate ${
       NotificationType.MEASUREMENT_CREATE
     } notification type from database with id: ${id}`
@@ -319,7 +320,6 @@ export async function sendTaskCommentCreateNotification(
     const validated = validateTypeWithGuardOrThrow(
       notification,
       isTaskCommentCreateNotification,
-      // tslint:disable-next-line:max-line-length
       `Could not validate ${
         NotificationType.TASK_COMMENT_CREATE
       } notification type from database with id: ${id}`
@@ -381,7 +381,6 @@ export async function sendTaskCommentMentionNotification(
   const validated = validateTypeWithGuardOrThrow(
     notification,
     isTaskCommentMentionNotification,
-    // tslint:disable-next-line:max-line-length
     `Could not validate ${
       NotificationType.TASK_COMMENT_MENTION
     } notification type from database with id: ${id}`
@@ -436,7 +435,6 @@ export async function sendTaskAssignmentNotification(
     const validated = validateTypeWithGuardOrThrow(
       notification,
       isTaskAssigmentNotification,
-      // tslint:disable-next-line:max-line-length
       `Could not validate ${
         NotificationType.TASK_ASSIGNMENT
       } notification type from database with id: ${id}`
@@ -500,7 +498,6 @@ export async function sendTaskCompletionNotification(
     const validated = validateTypeWithGuardOrThrow(
       notification,
       isTaskCompletionNotification,
-      // tslint:disable-next-line:max-line-length
       `Could not validate ${
         NotificationType.TASK_COMPLETION
       } notification type from database with id: ${id}`
@@ -540,7 +537,6 @@ export async function sendPartnerAcceptServiceBidNotification(
   const validated = validateTypeWithGuardOrThrow(
     notification,
     isPartnerAcceptServiceBidNotification,
-    // tslint:disable-next-line:max-line-length
     `Could not validate ${
       NotificationType.PARTNER_ACCEPT_SERVICE_BID
     } notification type from database with id: ${id}`
@@ -582,7 +578,6 @@ export async function sendPartnerRejectServiceBidNotification(params: {
   const validated = validateTypeWithGuardOrThrow(
     notification,
     isPartnerRejectServiceBidNotification,
-    // tslint:disable-next-line:max-line-length
     `Could not validate ${
       NotificationType.PARTNER_REJECT_SERVICE_BID
     } notification type from database with id: ${id}`
@@ -621,7 +616,6 @@ export async function sendDesignerSubmitCollection(
   return validateTypeWithGuardOrThrow(
     notification,
     isCollectionSubmitNotification,
-    // tslint:disable-next-line:max-line-length
     `Could not validate ${
       NotificationType.COLLECTION_SUBMIT
     } notification type from database with id: ${id}`
@@ -694,7 +688,6 @@ export async function immediatelySendFullyCostedCollection(
         const validated = validateTypeWithGuardOrThrow(
           notification,
           isCommitCostInputsNotification,
-          // tslint:disable-next-line:max-line-length
           `Could not validate ${
             NotificationType.COMMIT_COST_INPUTS
           } notification type from database with id: ${id}`
@@ -727,11 +720,67 @@ export async function sendPartnerDesignBid(
   return validateTypeWithGuardOrThrow(
     notification,
     isPartnerDesignBidNotification,
-    // tslint:disable-next-line:max-line-length
     `Could not validate ${
       NotificationType.PARTNER_DESIGN_BID
     } notification type from database with id: ${id}`
   );
+}
+
+interface PartnerPairingCommittedArguments {
+  actorId: string;
+  collectionId: string;
+  targetUserId: string;
+}
+
+/**
+ * Creates notifications to a designer for CALA Ops committing partner pairings on a collection.
+ */
+export async function immediatelySendPartnerPairingCommitted(
+  options: PartnerPairingCommittedArguments
+): Promise<PartnerPairingCommittedNotification> {
+  const id = uuid.v4();
+  const notification = await NotificationsDAO.create({
+    ...templateNotification,
+    actorUserId: options.actorId,
+    collectionId: options.collectionId,
+    id,
+    recipientUserId: options.targetUserId,
+    sentEmailAt: new Date(),
+    type: NotificationType.PARTNER_PAIRING_COMMITTED
+  });
+
+  const collection = await CollectionsDAO.findById(options.collectionId);
+
+  const target = await UsersDAO.findById(options.targetUserId);
+  if (!target) {
+    throw new Error('Could not find target user');
+  }
+
+  const emailAddress = target.email;
+
+  const notificationMessage = await createNotificationMessage(notification);
+  if (!notificationMessage) {
+    throw new Error('Could not create notification message');
+  }
+
+  await EmailService.enqueueSend({
+    params: {
+      collection,
+      notification: notificationMessage
+    },
+    templateName: 'single_notification',
+    to: emailAddress
+  });
+
+  const validated = validateTypeWithGuardOrThrow(
+    notification,
+    isPartnerPairingCommittedNotification,
+    `Could not validate ${
+      NotificationType.INVITE_COLLABORATOR
+    } notification type from database with id: ${id}`
+  );
+
+  return validated;
 }
 
 interface CollaboratorInviteArguments {
@@ -797,7 +846,6 @@ export async function immediatelySendInviteCollaborator(
   const validated = validateTypeWithGuardOrThrow(
     notification,
     isInviteCollaboratorNotification,
-    // tslint:disable-next-line:max-line-length
     `Could not validate ${
       NotificationType.INVITE_COLLABORATOR
     } notification type from database with id: ${id}`

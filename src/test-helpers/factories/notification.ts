@@ -303,6 +303,19 @@ export default async function generateNotification(
         notification
       };
     }
+    case NotificationType.PARTNER_PAIRING_COMMITTED: {
+      const notification = await create({
+        ...baseNotification,
+        collectionId: collection.id,
+        recipientUserId: base.recipient.id,
+        type: options.type
+      });
+
+      return {
+        ...base,
+        notification
+      };
+    }
     case NotificationType.TASK_ASSIGNMENT: {
       const notification = await create({
         ...baseNotification,

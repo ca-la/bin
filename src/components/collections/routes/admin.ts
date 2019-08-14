@@ -4,6 +4,7 @@ import * as Knex from 'knex';
 
 import * as db from '../../../services/db';
 import * as DesignsDAO from '../../../dao/product-designs';
+import * as CollectionsDAO from '../../../components/collections/dao';
 import * as DesignEventsDAO from '../../../dao/design-events';
 import createDesignTasks from '../../../services/create-design-tasks';
 import isEveryDesignPaired from '../../../services/is-every-design-paired';
@@ -42,6 +43,10 @@ export function* createPartnerPairing(
 ): AsyncIterableIterator<any> {
   const { collectionId } = this.params;
   const { userId } = this.state;
+  const collection = yield CollectionsDAO.findById(collectionId);
+  if (!collection) {
+    return this.throw(404, 'Could not find collection');
+  }
 
   const designs = yield DesignsDAO.findByCollectionId(collectionId);
   const allArePaired = yield isEveryDesignPaired(collectionId);
@@ -70,6 +75,12 @@ export function* createPartnerPairing(
       }
     }
   );
+
+  yield NotificationsService.immediatelySendPartnerPairingCommitted({
+    actorId: userId,
+    collectionId,
+    targetUserId: collection.createdBy
+  });
 
   this.status = 204;
 }

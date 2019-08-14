@@ -53,21 +53,26 @@ import {
 import toDateOrNull, { toDateStringOrNull } from '../../services/to-date';
 import DataAdapter from '../../services/data-adapter';
 import { hasProperties } from '../../services/require-properties';
+import {
+  PartnerPairingCommittedNotification,
+  PartnerPairingCommittedNotificationRow
+} from './models/partner-pairing-committed';
 
 export enum NotificationType {
   ANNOTATION_COMMENT_CREATE = 'ANNOTATION_COMMENT_CREATE',
   ANNOTATION_COMMENT_MENTION = 'ANNOTATION_COMMENT_MENTION',
+  COLLECTION_SUBMIT = 'COLLECTION_SUBMIT',
+  COMMIT_COST_INPUTS = 'COMMIT_COST_INPUTS',
+  INVITE_COLLABORATOR = 'INVITE_COLLABORATOR',
   MEASUREMENT_CREATE = 'MEASUREMENT_CREATE',
+  PARTNER_ACCEPT_SERVICE_BID = 'PARTNER_ACCEPT_SERVICE_BID',
+  PARTNER_DESIGN_BID = 'PARTNER_DESIGN_BID',
+  PARTNER_PAIRING_COMMITTED = 'PARTNER_PAIRING_COMMITTED',
+  PARTNER_REJECT_SERVICE_BID = 'PARTNER_REJECT_SERVICE_BID',
   TASK_ASSIGNMENT = 'TASK_ASSIGNMENT',
   TASK_COMMENT_CREATE = 'TASK_COMMENT_CREATE',
   TASK_COMMENT_MENTION = 'TASK_COMMENT_MENTION',
-  TASK_COMPLETION = 'TASK_COMPLETION',
-  PARTNER_ACCEPT_SERVICE_BID = 'PARTNER_ACCEPT_SERVICE_BID',
-  PARTNER_REJECT_SERVICE_BID = 'PARTNER_REJECT_SERVICE_BID',
-  COLLECTION_SUBMIT = 'COLLECTION_SUBMIT',
-  COMMIT_COST_INPUTS = 'COMMIT_COST_INPUTS',
-  PARTNER_DESIGN_BID = 'PARTNER_DESIGN_BID',
-  INVITE_COLLABORATOR = 'INVITE_COLLABORATOR'
+  TASK_COMPLETION = 'TASK_COMPLETION'
 }
 
 export type Notification =
@@ -79,6 +84,7 @@ export type Notification =
   | MeasurementCreateNotification
   | PartnerAcceptServiceBidNotification
   | PartnerDesignBidNotification
+  | PartnerPairingCommittedNotification
   | PartnerRejectServiceBidNotification
   | TaskAssigmentNotification
   | TaskCommentCreateNotification
@@ -94,6 +100,7 @@ export type NotificationRow =
   | MeasurementCreateNotificationRow
   | PartnerAcceptServiceBidNotificationRow
   | PartnerDesignBidNotificationRow
+  | PartnerPairingCommittedNotificationRow
   | PartnerRejectServiceBidNotificationRow
   | TaskAssigmentNotificationRow
   | TaskCommentCreateNotificationRow

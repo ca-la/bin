@@ -465,6 +465,29 @@ export const createNotificationMessage = async (
       };
     }
 
+    case NotificationType.PARTNER_PAIRING_COMMITTED: {
+      const { collectionId } = notification;
+      const collection = await getCollection(collectionId);
+      if (!collection) {
+        return null;
+      }
+      const { htmlLink, deepLink } = getLinks({
+        collection,
+        type: LinkType.Collection
+      });
+      return {
+        ...baseNotificationMessage,
+        attachments: [],
+        html: `${htmlLink} has been paired with all partners! 🎉 You can now track development progress on Timeline.`,
+        imageUrl: null,
+        link: deepLink,
+        location: [],
+        title: `Your collection, ${normalizeTitle(
+          collection
+        )} has been paired with all partners! 🙌`
+      };
+    }
+
     case NotificationType.COLLECTION_SUBMIT: {
       const { collectionId } = notification;
       const collection = await getCollection(collectionId);
@@ -513,7 +536,6 @@ export const createNotificationMessage = async (
     }
 
     default: {
-      // tslint:disable-next-line:max-line-length
       throw new InvalidDataError(
         `Unknown notification type found with id ${notification!.id} and type ${
           notification!.type
