@@ -4,9 +4,26 @@ import parseAtMentions, {
   MentionType
 } from '@cala/ts-lib/dist/parsing/comment-mentions';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
+import { CollaboratorWithUser } from '../../components/collaborators/domain-objects/collaborator';
 
 export interface CommentWithMentions extends Comment {
   mentions: { [id: string]: string };
+}
+
+/**
+ * Constructs the name to add to the @mention detail.
+ */
+function constructCollaboratorName(
+  collaborator: CollaboratorWithUser | null
+): string {
+  if (!collaborator) {
+    return 'Unknown';
+  }
+
+  const { cancelledAt, user, userEmail } = collaborator;
+  const adjective = cancelledAt ? ' (Removed)' : '';
+  const name = (user && user.name) || userEmail || 'Unknown';
+  return name + adjective;
 }
 
 export async function addAtMentionDetailsForComment(
@@ -21,15 +38,11 @@ export async function addAtMentionDetailsForComment(
       ) => {
         const acc = await accPromise;
         if (match.type === MentionType.collaborator) {
-          const collaborator = await CollaboratorsDAO.findById(match.id);
-          if (!collaborator) {
-            return acc;
-          }
+          const collaborator = await CollaboratorsDAO.findById(match.id, true);
+          const name = constructCollaboratorName(collaborator);
           return {
             ...acc,
-            [match.id]: collaborator.user
-              ? collaborator.user.name
-              : collaborator.userEmail || 'Unknown'
+            [match.id]: name
           };
         }
         return acc;

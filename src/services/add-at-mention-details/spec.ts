@@ -1,11 +1,13 @@
 import * as tape from 'tape';
 import * as uuid from 'node-uuid';
+
 import { test } from '../../test-helpers/fresh';
 import { create } from '../../components/comments/dao';
 import createUser = require('../../test-helpers/create-user');
 import addAtMentionDetails from '.';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
 import generateCollection from '../../test-helpers/factories/collection';
+import * as CollaboratorsDAO from '../../components/collaborators/dao';
 
 test('addAtMentionDetails adds null when there are no at mentions', async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
@@ -49,6 +51,60 @@ test('addAtMentionDetails adds details when there is an at mention', async (t: t
   t.deepEqual(
     mentions[collaborator.id],
     user.name,
+    'comments mention has correct name as value'
+  );
+});
+
+test('addAtMentionDetails adds details when there is an at mention even for a removed collaborator', async (t: tape.Test) => {
+  const { user } = await createUser({ withSession: false });
+
+  const { collection } = await generateCollection();
+  const { collaborator } = await generateCollaborator({
+    collectionId: collection.id,
+    userId: user.id
+  });
+  await CollaboratorsDAO.deleteById(collaborator.id);
+
+  const comment = await create({
+    createdAt: new Date(),
+    deletedAt: null,
+    id: uuid.v4(),
+    isPinned: false,
+    parentCommentId: null,
+    text: `A comment @<${collaborator.id}|collaborator> with mentions`,
+    userId: user.id
+  });
+
+  const result = await addAtMentionDetails([comment]);
+  const { mentions } = result[0];
+
+  t.deepEqual(
+    mentions[collaborator.id],
+    `${user.name} (Removed)`,
+    'comments mention has correct name as value'
+  );
+});
+
+test('addAtMentionDetails can add details when there is an at mention for an unknown collaborator', async (t: tape.Test) => {
+  const { user } = await createUser({ withSession: false });
+  const randomId = uuid.v4();
+
+  const comment = await create({
+    createdAt: new Date(),
+    deletedAt: null,
+    id: uuid.v4(),
+    isPinned: false,
+    parentCommentId: null,
+    text: `A comment @<${randomId}|collaborator> with mentions`,
+    userId: user.id
+  });
+
+  const result = await addAtMentionDetails([comment]);
+  const { mentions } = result[0];
+
+  t.deepEqual(
+    mentions[randomId],
+    'Unknown',
     'comments mention has correct name as value'
   );
 });

@@ -156,11 +156,19 @@ Updatable Properties: ${UPDATABLE_PROPERTIES.join(', ')}`.trim()
 }
 
 export async function findById(
-  collaboratorId: string
+  collaboratorId: string,
+  includeCancelled: boolean = false
 ): Promise<CollaboratorWithUser | null> {
   const collaboratorRow = await getCollaboratorViewBuilder()
     .where({ [ALIASES.collaboratorId]: collaboratorId })
-    .andWhereRaw('(cancelled_at IS null OR cancelled_at > now())')
+    .modify(
+      (query: Knex.QueryBuilder): void => {
+        if (!includeCancelled) {
+          query.andWhereRaw('(cancelled_at IS null OR cancelled_at > now())');
+        }
+      }
+    )
+
     .then((rows: CollaboratorWithUserRow[]) =>
       first<CollaboratorWithUserRow>(rows)
     );
