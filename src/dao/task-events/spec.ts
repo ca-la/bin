@@ -349,17 +349,18 @@ test('Task Events DAO returns assignees for existing collaborators', async (t: t
     [collab1.id, collab2.id],
     task.taskId
   );
-  await deleteCollaborator(collab2.id);
+  const deletedCollaborator = await deleteCollaborator(collab2.id);
 
   const result = await findByDesignId(design.id);
   const insertedWithDetails = getInsertedWithDetails(inserted, result[0], [
-    collab1
+    collab1,
+    { ...collab2, cancelledAt: deletedCollaborator.cancelledAt }
   ]);
 
   t.deepEqual(
     { ...result[0] },
     insertedWithDetails,
-    'Returned first inserted task'
+    'Returned first inserted task with all associated collaborators'
   );
 });
 

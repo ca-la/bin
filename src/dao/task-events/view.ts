@@ -16,15 +16,11 @@ export function getAssigneesBuilder(
 ): Knex.Raw {
   return db.raw(
     `
-SELECT to_json(array[cwufortasksviewraw.*])
+SELECT to_json(array_agg(cwufortasksviewraw.*))
 FROM (:collaboratorsWithUsers) as cwufortasksviewraw
 JOIN collaborator_tasks as ctfortasksviewraw
   ON ctfortasksviewraw.collaborator_id = cwufortasksviewraw.id
 WHERE ctfortasksviewraw.task_id = tasksfortasksviewraw.id
-  AND (
-    cwufortasksviewraw.cancelled_at IS null
-    OR cwufortasksviewraw.cancelled_at > now()
-  )
   `,
     {
       collaboratorsWithUsers: collaboratorsBuilder || getCollaboratorsBuilder()
