@@ -80,7 +80,7 @@ test('addAtMentionDetails adds details when there is an at mention even for a re
 
   t.deepEqual(
     mentions[collaborator.id],
-    `${user.name} (Removed)`,
+    user.name,
     'comments mention has correct name as value'
   );
 });

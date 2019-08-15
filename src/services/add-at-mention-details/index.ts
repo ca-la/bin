@@ -20,10 +20,8 @@ function constructCollaboratorName(
     return 'Unknown';
   }
 
-  const { cancelledAt, user, userEmail } = collaborator;
-  const adjective = cancelledAt ? ' (Removed)' : '';
-  const name = (user && user.name) || userEmail || 'Unknown';
-  return name + adjective;
+  const { user, userEmail } = collaborator;
+  return (user && user.name) || userEmail || 'Unknown';
 }
 
 export async function addAtMentionDetailsForComment(
