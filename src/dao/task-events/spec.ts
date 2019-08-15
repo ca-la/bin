@@ -353,8 +353,8 @@ test('Task Events DAO returns assignees for existing collaborators', async (t: t
 
   const result = await findByDesignId(design.id);
   const insertedWithDetails = getInsertedWithDetails(inserted, result[0], [
-    collab1,
-    { ...collab2, cancelledAt: deletedCollaborator.cancelledAt }
+    { ...collab2, cancelledAt: deletedCollaborator.cancelledAt },
+    collab1
   ]);
 
   t.deepEqual(

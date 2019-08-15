@@ -16,7 +16,7 @@ export function getAssigneesBuilder(
 ): Knex.Raw {
   return db.raw(
     `
-SELECT to_json(array_agg(cwufortasksviewraw.*))
+SELECT to_json(array_agg(cwufortasksviewraw.* ORDER BY cwufortasksviewraw.created_at DESC))
 FROM (:collaboratorsWithUsers) as cwufortasksviewraw
 JOIN collaborator_tasks as ctfortasksviewraw
   ON ctfortasksviewraw.collaborator_id = cwufortasksviewraw.id
