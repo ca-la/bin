@@ -5,7 +5,7 @@ import { test, Test } from '../../test-helpers/fresh';
 import { authHeader, get, post } from '../../test-helpers/http';
 import createUser = require('../../test-helpers/create-user');
 import { create as createDesign } from '../../dao/product-designs';
-import PricingCostInput from '../../domain-objects/pricing-cost-input';
+import PricingCostInput from './domain-object';
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
 import generateProductTypes from '../../services/generate-product-types';
 import { Dollars } from '../../services/dollars';
@@ -21,6 +21,7 @@ test('POST /pricing-cost-inputs', async (t: Test) => {
 
   const input: Unsaved<PricingCostInput> = {
     designId: design.id,
+    expiresAt: null,
     materialBudgetCents: 12000,
     materialCategory: 'STANDARD',
     processes: [
@@ -50,7 +51,10 @@ test('POST /pricing-cost-inputs', async (t: Test) => {
   });
 
   t.equal(response.status, 201);
-  t.deepEqual(omit(costInputs, ['createdAt', 'id', 'deletedAt']), input);
+  t.deepEqual(omit(costInputs, ['createdAt', 'id', 'deletedAt']), {
+    ...input,
+    expiresAt: null
+  });
 });
 
 test('GET /pricing-cost-inputs?designId gets the original versions', async (t: Test) => {
@@ -64,6 +68,7 @@ test('GET /pricing-cost-inputs?designId gets the original versions', async (t: T
 
   const input: Unsaved<PricingCostInput> = {
     designId: design.id,
+    expiresAt: null,
     materialBudgetCents: 12000,
     materialCategory: 'STANDARD',
     processes: [
@@ -110,7 +115,7 @@ test('GET /pricing-cost-inputs?designId gets the original versions', async (t: T
   t.equal(response.status, 200);
   t.deepEqual(
     omit(costInputs[0], ['createdAt', 'id', 'deletedAt', 'processes']),
-    omit(input, 'processes')
+    omit({ ...input, expiresAt: null }, 'processes')
   );
   t.deepEqual(costInputs[0].processes, input.processes);
 });

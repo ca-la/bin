@@ -3,7 +3,7 @@ import * as sinon from 'sinon';
 
 import * as db from '../../services/db';
 import * as DesignEventsDAO from '../../dao/design-events';
-import * as PricingCostInputsDAO from '../../dao/pricing-cost-inputs';
+import * as PricingCostInputsDAO from '../../components/pricing-cost-inputs/dao';
 import Bid from '../../components/bids/domain-object';
 import createUser = require('../../test-helpers/create-user');
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
@@ -15,7 +15,7 @@ import * as CollectionsDAO from '../../components/collections/dao';
 import * as SlackService from '../../services/slack';
 import PricingCostInput, {
   PricingCostInputWithoutVersions
-} from '../../domain-objects/pricing-cost-input';
+} from '../../components/pricing-cost-inputs/domain-object';
 import { daysToMs } from '../../services/time-conversion';
 import generateProductTypes from '../../services/generate-product-types';
 import { Dollars } from '../../services/dollars';
@@ -32,6 +32,7 @@ test('/pricing-quotes POST -> GET quote fails with malformed inputs', async (t: 
     createdAt: new Date(),
     deletedAt: null,
     designId: design.id,
+    expiresAt: null,
     id: uuid.v4(),
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
@@ -76,6 +77,7 @@ test('/pricing-quotes POST -> GET quote from original version', async (t: Test) 
     createdAt: new Date(),
     deletedAt: null,
     designId: design.id,
+    expiresAt: null,
     id: uuid.v4(),
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
@@ -142,6 +144,7 @@ test('POST /pricing-quotes creates commit event', async (t: Test) => {
     createdAt: new Date(),
     deletedAt: null,
     designId: design.id,
+    expiresAt: null,
     id: uuid.v4(),
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
@@ -201,6 +204,7 @@ test('/pricing-quotes?designId retrieves the set of quotes for a design', async 
     createdAt: yesterday,
     deletedAt: null,
     designId: design.id,
+    expiresAt: null,
     id: uuid.v4(),
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
@@ -217,6 +221,7 @@ test('/pricing-quotes?designId retrieves the set of quotes for a design', async 
     createdAt: new Date(),
     deletedAt: null,
     designId: otherDesign.id,
+    expiresAt: null,
     id: uuid.v4(),
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
@@ -279,6 +284,7 @@ test('GET /pricing-quotes?designId&units returns unsaved quote', async (t: Test)
     createdAt: new Date(),
     deletedAt: null,
     designId: design.id,
+    expiresAt: null,
     id: uuid.v4(),
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
@@ -323,6 +329,7 @@ test('GET /pricing-quotes?designId&units with very large quantity', async (t: Te
     createdAt: new Date(),
     deletedAt: null,
     designId: design.id,
+    expiresAt: null,
     id: uuid.v4(),
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
@@ -363,6 +370,7 @@ test('POST /pricing-quotes/preview returns an unsaved quote from an uncommitted 
     createdAt: new Date(),
     deletedAt: null,
     designId: design.id,
+    expiresAt: null,
     id: uuid.v4(),
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
@@ -471,6 +479,7 @@ test('POST /pricing-quotes/preview fails if there are no pricing values for the 
     createdAt: new Date(),
     deletedAt: null,
     designId: design.id,
+    expiresAt: null,
     id: uuid.v4(),
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
@@ -547,6 +556,7 @@ test('PUT /pricing-quotes/:quoteId/bid/:bidId creates bid', async (t: Test) => {
     createdAt: new Date(),
     deletedAt: null,
     designId: design.id,
+    expiresAt: null,
     id: uuid.v4(),
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
@@ -612,6 +622,7 @@ test('POST /pricing-quotes/:quoteId/bids creates bid', async (t: Test) => {
     createdAt: new Date(),
     deletedAt: null,
     designId: design.id,
+    expiresAt: null,
     id: uuid.v4(),
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
@@ -676,6 +687,7 @@ test('GET /pricing-quotes/:quoteId/bids returns list of bids for quote', async (
     createdAt: new Date(),
     deletedAt: null,
     designId: design.id,
+    expiresAt: null,
     id: uuid.v4(),
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',

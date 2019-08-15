@@ -10,7 +10,7 @@ import generateBid from '../../test-helpers/factories/bid';
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
 import * as BidsDAO from './dao';
 import * as BidRejectionDAO from '../bid-rejections/dao';
-import * as PricingCostInputsDAO from '../../dao/pricing-cost-inputs';
+import * as PricingCostInputsDAO from '../pricing-cost-inputs/dao';
 import * as CollaboratorsDAO from '../collaborators/dao';
 import * as DesignEventsDAO from '../../dao/design-events';
 import * as ProductDesignsDAO from '../../dao/product-designs';
@@ -547,6 +547,7 @@ test('Partner pairing: accept', async (t: Test) => {
     createdAt: new Date(),
     deletedAt: null,
     designId: design.id,
+    expiresAt: null,
     id: uuid.v4(),
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
@@ -707,6 +708,7 @@ test('Partner pairing: reject', async (t: Test) => {
     createdAt: new Date(),
     deletedAt: null,
     designId: design.id,
+    expiresAt: null,
     id: uuid.v4(),
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',

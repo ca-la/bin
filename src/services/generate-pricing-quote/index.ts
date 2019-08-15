@@ -18,9 +18,9 @@ import {
   PricingQuoteValues
 } from '../../domain-objects/pricing-quote';
 import * as Knex from 'knex';
-import * as PricingCostInputsDAO from '../../dao/pricing-cost-inputs';
+import * as PricingCostInputsDAO from '../../components/pricing-cost-inputs/dao';
 import * as DesignEventsDAO from '../../dao/design-events';
-import PricingCostInputs from '../../domain-objects/pricing-cost-input';
+import PricingCostInputs from '../../components/pricing-cost-inputs/domain-object';
 import DataAdapter from '../data-adapter';
 import addMargin from '../add-margin';
 
@@ -276,7 +276,7 @@ export async function generateFromPayloadAndUser(
     }
 
     const quoteRequest: PricingQuoteRequestWithVersions = {
-      ...omit(costInputs[0], ['id', 'createdAt', 'deletedAt']),
+      ...omit(costInputs[0], ['id', 'createdAt', 'deletedAt', 'expiresAt']),
       units: unitsNumber
     };
 

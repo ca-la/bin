@@ -1,12 +1,18 @@
-import { Complexity, MaterialCategory, Process, ProductType } from './pricing';
-import { hasProperties } from '../services/require-properties';
-import DataAdapter from '../services/data-adapter';
+import {
+  Complexity,
+  MaterialCategory,
+  Process,
+  ProductType
+} from '../../domain-objects/pricing';
+import { hasProperties } from '../../services/require-properties';
+import DataAdapter from '../../services/data-adapter';
 
 export interface PricingCostInputWithoutVersions {
   id: string;
   createdAt: Date;
   deletedAt: Date | null;
   designId: string;
+  expiresAt: Date | null;
   productType: ProductType;
   productComplexity: Complexity;
   materialCategory: MaterialCategory;
@@ -30,6 +36,7 @@ export interface PricingCostInputRowWithoutVersions {
   created_at: Date;
   deleted_at: Date | null;
   design_id: string;
+  expires_at: string | null;
   product_type: ProductType;
   product_complexity: Complexity;
   material_category: MaterialCategory;
@@ -80,6 +87,7 @@ export function isPricingCostInput(
     'id',
     'createdAt',
     'deletedAt',
+    'expiresAt',
     'productType',
     'productComplexity',
     'materialCategory',
@@ -104,6 +112,7 @@ export function isPricingCostInputRow(
     'id',
     'created_at',
     'deleted_at',
+    'expires_at',
     'product_type',
     'product_complexity',
     'material_category',

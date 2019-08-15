@@ -4,7 +4,7 @@ import * as CollectionsDAO from '../../components/collections/dao';
 import * as CreditsDAO from '../../components/credits/dao';
 import * as InvoicesDAO from '../../dao/invoices';
 import * as LineItemsDAO from '../../dao/line-items';
-import * as PricingCostInputsDAO from '../../dao/pricing-cost-inputs';
+import * as PricingCostInputsDAO from '../../components/pricing-cost-inputs/dao';
 import * as ProductDesignsDAO from '../../dao/product-designs';
 import createUser = require('../../test-helpers/create-user');
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
@@ -53,6 +53,7 @@ test('/quote-payments POST generates quotes, payment method, invoice, lineItems,
     createdAt: new Date(),
     deletedAt: null,
     designId: design.id,
+    expiresAt: null,
     id: uuid.v4(),
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
@@ -141,6 +142,7 @@ test('/quote-payments POST does not generate quotes, payment method, invoice, li
     createdAt: new Date(),
     deletedAt: null,
     designId: design.id,
+    expiresAt: null,
     id: uuid.v4(),
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
@@ -208,6 +210,7 @@ test('/quote-payments?isFinanced=true POST generates quotes, invoice, lineItems'
     createdAt: new Date(),
     deletedAt: null,
     designId: design.id,
+    expiresAt: null,
     id: uuid.v4(),
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
@@ -283,6 +286,7 @@ test('POST /quote-payments?isWaived=true waives payment', async (t: Test) => {
     createdAt: new Date(),
     deletedAt: null,
     designId: design.id,
+    expiresAt: null,
     id: uuid.v4(),
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
@@ -358,6 +362,7 @@ test('POST /quote-payments?isWaived=true fails if ineligible', async (t: Test) =
     createdAt: new Date(),
     deletedAt: null,
     designId: design.id,
+    expiresAt: null,
     id: uuid.v4(),
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
@@ -428,6 +433,7 @@ test(
       createdAt: new Date(),
       deletedAt: null,
       designId: design.id,
+      expiresAt: null,
       id: uuid.v4(),
       materialBudgetCents: 1200,
       materialCategory: 'BASIC',

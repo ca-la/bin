@@ -2,9 +2,9 @@ import * as uuid from 'node-uuid';
 
 import { test, Test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
-import * as ProductDesignsDAO from '../product-designs';
-import * as PricingCostInputsDAO from './index';
-import PricingCostInput from '../../domain-objects/pricing-cost-input';
+import * as ProductDesignsDAO from '../../dao/product-designs';
+import * as PricingCostInputsDAO from './dao';
+import PricingCostInput from './domain-object';
 import { omit } from 'lodash';
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
 
@@ -20,6 +20,7 @@ test('PricingCostInputsDAO supports creation and retrieval', async (t: Test) => 
     createdAt: new Date(),
     deletedAt: null,
     designId: design.id,
+    expiresAt: null,
     id: uuid.v4(),
     materialBudgetCents: 12000,
     materialCategory: 'STANDARD',
@@ -46,12 +47,15 @@ test('PricingCostInputsDAO supports creation and retrieval', async (t: Test) => 
 
   const created = await PricingCostInputsDAO.create(input);
 
-  t.deepEqual(omit(created, 'processes'), omit(input, 'processes'));
+  t.deepEqual(
+    omit(created, 'processes'),
+    omit({ ...input, expiresAt: null }, 'processes')
+  );
   t.deepEqual(created.processes.sort(), input.processes.sort());
 
   const retrieved = await PricingCostInputsDAO.findById(input.id);
 
-  t.deepEqual(retrieved, created);
+  t.deepEqual(retrieved, { ...created, expiresAt: null });
 });
 
 test('PricingCostInputsDAO supports retrieval by designID', async (t: Test) => {
@@ -69,6 +73,7 @@ test('PricingCostInputsDAO supports retrieval by designID', async (t: Test) => {
     createdAt: yesterday,
     deletedAt: null,
     designId: design.id,
+    expiresAt: null,
     id: uuid.v4(),
     materialBudgetCents: 12000,
     materialCategory: 'STANDARD',
@@ -96,6 +101,7 @@ test('PricingCostInputsDAO supports retrieval by designID', async (t: Test) => {
     createdAt: new Date(),
     deletedAt: null,
     designId: design.id,
+    expiresAt: null,
     id: uuid.v4(),
     materialBudgetCents: 12500,
     materialCategory: 'SPECIFY',
@@ -123,5 +129,8 @@ test('PricingCostInputsDAO supports retrieval by designID', async (t: Test) => {
   await PricingCostInputsDAO.create(anotherInput);
   const designInputs = await PricingCostInputsDAO.findByDesignId(design.id);
 
-  t.deepEqual(designInputs, [anotherInput, input]);
+  t.deepEqual(designInputs, [
+    { ...anotherInput, expiresAt: null },
+    { ...input, expiresAt: null }
+  ]);
 });

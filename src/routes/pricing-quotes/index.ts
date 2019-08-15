@@ -5,7 +5,7 @@ import * as uuid from 'node-uuid';
 
 import requireAuth = require('../../middleware/require-auth');
 import * as CollectionsDAO from '../../components/collections/dao';
-import * as PricingCostInputsDAO from '../../dao/pricing-cost-inputs';
+import * as PricingCostInputsDAO from '../../components/pricing-cost-inputs/dao';
 import * as SlackService from '../../services/slack';
 import * as UsersDAO from '../../components/users/dao';
 import addMargin from '../../services/add-margin';
@@ -25,7 +25,7 @@ import {
 import PricingCostInput, {
   isUnsavedPricingCostInput,
   PricingCostInputWithoutVersions
-} from '../../domain-objects/pricing-cost-input';
+} from '../../components/pricing-cost-inputs/domain-object';
 import {
   PricingQuote,
   PricingQuoteRequest,
@@ -101,7 +101,7 @@ function* createQuote(
     }
 
     const quoteRequest: PricingQuoteRequestWithVersions = {
-      ...omit(costInputs[0], ['id', 'createdAt', 'deletedAt']),
+      ...omit(costInputs[0], ['id', 'createdAt', 'deletedAt', 'expiresAt']),
       units: unitsNumber
     };
 
@@ -176,7 +176,7 @@ function* getQuotes(this: Koa.Application.Context): AsyncIterableIterator<any> {
     }
 
     const quoteRequest: PricingQuoteRequestWithVersions = {
-      ...omit(costInputs[0], ['id', 'createdAt', 'deletedAt']),
+      ...omit(costInputs[0], ['id', 'createdAt', 'deletedAt', 'expiresAt']),
       units: unitsNumber
     };
 
@@ -261,10 +261,18 @@ function* previewQuote(
     return;
   }
 
-  const quoteRequest: PricingQuoteRequest = {
-    ...omit(body.uncommittedCostInput, ['id', 'createdAt', 'deletedAt']),
-    units
-  };
+  const quoteRequest: PricingQuoteRequest = omit(
+    {
+      ...omit(body.uncommittedCostInput, [
+        'id',
+        'createdAt',
+        'deletedAt',
+        'expiresAt'
+      ]),
+      units
+    },
+    'expiresAt'
+  );
 
   const unsavedQuote = yield generateUnsavedQuoteWithoutVersions(
     quoteRequest

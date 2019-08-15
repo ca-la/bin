@@ -12,7 +12,7 @@ import PricingCostInput, {
   isPricingCostInputRow,
   PricingCostInputRow,
   PricingCostInputWithoutVersions
-} from '../../domain-objects/pricing-cost-input';
+} from './domain-object';
 
 const TABLE_NAME = 'pricing_cost_inputs';
 

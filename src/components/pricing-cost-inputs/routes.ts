@@ -3,11 +3,9 @@ import * as Koa from 'koa';
 import * as uuid from 'node-uuid';
 
 import * as ProductDesignsDAO from '../../dao/product-designs';
-import * as PricingCostInputsDAO from '../../dao/pricing-cost-inputs';
+import * as PricingCostInputsDAO from './dao';
 import requireAdmin = require('../../middleware/require-admin');
-import PricingCostInput, {
-  isUnsavedPricingCostInput
-} from '../../domain-objects/pricing-cost-input';
+import PricingCostInput, { isUnsavedPricingCostInput } from './domain-object';
 
 const router = new Router();
 
@@ -30,6 +28,7 @@ function* createCostInputs(
     ...inputs,
     createdAt: new Date(),
     deletedAt: null,
+    expiresAt: null,
     id: uuid.v4()
   });
 
@@ -67,4 +66,4 @@ function* getCostInputs(
 router.post('/', requireAdmin, createCostInputs);
 router.get('/', requireAdmin, getCostInputs);
 
-module.exports = router.routes();
+export default router.routes();

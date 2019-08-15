@@ -5,7 +5,7 @@ import { authHeader, get, post } from '../../test-helpers/http';
 import { test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
-import * as PricingCostInputsDAO from '../../dao/pricing-cost-inputs';
+import * as PricingCostInputsDAO from '../pricing-cost-inputs/dao';
 import * as CollectionsDAO from '../collections/dao';
 import { create as createDesign } from '../../dao/product-designs';
 import generateCollection from '../../test-helpers/factories/collection';
@@ -27,6 +27,7 @@ test('GET /timelines?userId and /timelines?collectionId finds timelines by user 
     createdAt: new Date(),
     deletedAt: null,
     designId: design.id,
+    expiresAt: null,
     id: uuid.v4(),
     materialBudgetCents: 1200,
     materialCategory: 'BASIC',
