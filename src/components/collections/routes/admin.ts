@@ -9,32 +9,14 @@ import * as DesignEventsDAO from '../../../dao/design-events';
 import createDesignTasks from '../../../services/create-design-tasks';
 import isEveryDesignPaired from '../../../services/is-every-design-paired';
 import * as NotificationsService from '../../../services/create-notifications';
+import { commitCostInputs as commitInputs } from '../services/commit-cost-inputs';
 
 export function* commitCostInputs(
   this: Koa.Application.Context
 ): AsyncIterableIterator<any> {
   const { collectionId } = this.params;
   const { userId } = this.state;
-
-  const designs = yield DesignsDAO.findByCollectionId(collectionId);
-
-  for (const design of designs) {
-    yield DesignEventsDAO.create({
-      actorId: userId,
-      bidId: null,
-      createdAt: new Date(),
-      designId: design.id,
-      id: uuid.v4(),
-      quoteId: null,
-      targetId: design.userId,
-      type: 'COMMIT_COST_INPUTS'
-    });
-  }
-  NotificationsService.immediatelySendFullyCostedCollection(
-    collectionId,
-    userId
-  );
-
+  yield commitInputs(collectionId, userId);
   this.status = 204;
 }
 

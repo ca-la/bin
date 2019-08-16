@@ -99,7 +99,9 @@ LIMIT 1;
   return validate(TABLE_NAME, isPricingCostInputRow, dataAdapter, created);
 }
 
-async function attachProcesses(inputs: WithoutProcesses): Promise<any> {
+async function attachProcesses(
+  inputs: WithoutProcesses
+): Promise<PricingCostInputRow> {
   const processes: Process[] = await db('pricing_cost_input_processes')
     .select(['name', 'complexity'])
     .where({ pricing_cost_input_id: inputs.id })
@@ -139,8 +141,41 @@ export async function findByDesignId(
         query.transacting(trx);
       }
     });
+  const inputs: PricingCostInputRow[] = [];
 
-  const inputs = await Promise.all(withoutProcesses.map(attachProcesses));
+  for (const costInput of withoutProcesses) {
+    const input = await attachProcesses(costInput);
+    inputs.push(input);
+  }
 
   return validateEvery(TABLE_NAME, isPricingCostInputRow, dataAdapter, inputs);
+}
+
+/**
+ * Sets the expiration date for all cost inputs with the given design ids.
+ */
+export async function expireCostInputs(
+  designIds: string[],
+  expiresAt: Date,
+  trx: Knex.Transaction
+): Promise<PricingCostInput[]> {
+  const costInputs: WithoutProcesses[] = await db(TABLE_NAME)
+    .where({ deleted_at: null })
+    .whereIn('design_id', designIds)
+    .update({ expires_at: expiresAt }, '*')
+    .transacting(trx);
+
+  const inputs: PricingCostInputRow[] = [];
+
+  for (const costInput of costInputs) {
+    const input = await attachProcesses(costInput);
+    inputs.push(input);
+  }
+
+  return validateEvery<PricingCostInputRow, PricingCostInput>(
+    TABLE_NAME,
+    isPricingCostInputRow,
+    dataAdapter,
+    inputs
+  );
 }

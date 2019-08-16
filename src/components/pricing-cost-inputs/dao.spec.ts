@@ -1,4 +1,5 @@
 import * as uuid from 'node-uuid';
+import * as Knex from 'knex';
 
 import { test, Test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
@@ -7,6 +8,8 @@ import * as PricingCostInputsDAO from './dao';
 import PricingCostInput from './domain-object';
 import { omit } from 'lodash';
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
+import generatePricingCostInput from '../../test-helpers/factories/pricing-cost-input';
+import * as db from './../../services/db';
 
 test('PricingCostInputsDAO supports creation and retrieval', async (t: Test) => {
   await generatePricingValues();
@@ -133,4 +136,45 @@ test('PricingCostInputsDAO supports retrieval by designID', async (t: Test) => {
     { ...anotherInput, expiresAt: null },
     { ...input, expiresAt: null }
   ]);
+});
+
+test('expireCostInputs can expire rows with the associated designs', async (t: Test) => {
+  await generatePricingValues();
+
+  const {
+    design: d1,
+    pricingCostInput: ci1
+  } = await generatePricingCostInput();
+  const {
+    design: d2,
+    pricingCostInput: ci2
+  } = await generatePricingCostInput();
+  const date = new Date('2019-04-20');
+
+  await db.transaction(
+    async (trx: Knex.Transaction): Promise<void> => {
+      t.deepEqual(ci1.expiresAt, null);
+      t.deepEqual(ci2.expiresAt, null);
+
+      const results = await PricingCostInputsDAO.expireCostInputs(
+        [d1.id, d2.id],
+        date,
+        trx
+      );
+
+      const resultExpirations = results.map(
+        (result: PricingCostInput): Date => {
+          return new Date(result.expiresAt!);
+        }
+      );
+      const resultIds = results.map(
+        (result: PricingCostInput): string => {
+          return result.id;
+        }
+      );
+
+      t.deepEqual(resultIds, [ci1.id, ci2.id]);
+      t.deepEqual(resultExpirations, [date, date]);
+    }
+  );
 });
