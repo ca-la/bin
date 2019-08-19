@@ -4,7 +4,7 @@ import { sandbox, test } from '../../test-helpers/fresh';
 import * as API from '../../test-helpers/http';
 import createUser = require('../../test-helpers/create-user');
 
-import * as DesignsDAO from '../../dao/product-designs';
+import * as DesignsDAO from '../product-designs/dao';
 import generateNotification from '../../test-helpers/factories/notification';
 import generateCollection from '../../test-helpers/factories/collection';
 import { NotificationMessage } from '@cala/ts-lib';

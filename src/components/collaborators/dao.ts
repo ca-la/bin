@@ -2,7 +2,7 @@ import * as Knex from 'knex';
 import uuid = require('node-uuid');
 import rethrow = require('pg-rethrow');
 
-import * as ProductDesignsDAO from '../../dao/product-designs';
+import * as ProductDesignsDAO from '../product-designs/dao';
 import db = require('../../services/db');
 import InvalidDataError = require('../../errors/invalid-data');
 import first from '../../services/first';

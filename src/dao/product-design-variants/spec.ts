@@ -1,6 +1,6 @@
 import * as uuid from 'node-uuid';
 
-import { create as createDesign } from '../product-designs';
+import { create as createDesign } from '../../components/product-designs/dao';
 import createUser = require('../../test-helpers/create-user');
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 

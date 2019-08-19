@@ -5,7 +5,7 @@ import { omit } from 'lodash';
 import * as ProductDesignCanvasesDAO from './dao';
 import * as ProductDesignImagesDAO from '../assets/dao';
 import * as ProductDesignOptionsDAO from '../../dao/product-design-options';
-import * as ProductDesignsDAO from '../../dao/product-designs';
+import * as ProductDesignsDAO from '../product-designs/dao';
 import * as ComponentsDAO from '../components/dao';
 import Component, { ComponentType } from '../components/domain-object';
 

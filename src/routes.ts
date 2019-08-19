@@ -26,6 +26,7 @@ import orderHistoryRoutes from './components/order-history/routes';
 import partnerPayouts from './components/partner-payouts/routes';
 import pricingCostInputs from './components/pricing-cost-inputs/routes';
 import processRoutes from './components/processes/routes';
+import productDesignRoutes = require('./components/product-designs/routes');
 import promoCodeRoutes from './components/promo-codes/routes';
 import resolveAccountRoutes from './components/resolve-accounts/routes';
 import newsletterSubscriptionRoutes from './components/newsletter-subscriptions/routes';
@@ -84,6 +85,7 @@ router.use(
   annotationCommentRoutes
 );
 router.use('/product-design-images', assetRoutes);
+router.use('/product-designs', productDesignRoutes);
 router.use('/promo-codes', promoCodeRoutes);
 router.use('/resolve-accounts', resolveAccountRoutes);
 router.use('/newsletter-subscriptions', newsletterSubscriptionRoutes);

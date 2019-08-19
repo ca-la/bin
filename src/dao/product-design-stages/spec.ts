@@ -1,7 +1,7 @@
 import * as tape from 'tape';
 import { test } from '../../test-helpers/fresh';
 import { create, findAllByDesignId, findAllTitles, findById } from './index';
-import { create as createProductDesign } from '../product-designs';
+import { create as createProductDesign } from '../../components/product-designs/dao';
 import createUser = require('../../test-helpers/create-user');
 
 test('ProductDesign Stage DAO supports creation/retrieval', async (t: tape.Test) => {

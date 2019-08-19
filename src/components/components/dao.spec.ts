@@ -12,7 +12,7 @@ import {
   update
 } from './dao';
 import { ComponentType } from './domain-object';
-import { create as createDesign } from '../../dao/product-designs';
+import { create as createDesign } from '../product-designs/dao';
 import createUser = require('../../test-helpers/create-user');
 import generateComponent from '../../test-helpers/factories/component';
 import generateCanvas from '../../test-helpers/factories/product-design-canvas';

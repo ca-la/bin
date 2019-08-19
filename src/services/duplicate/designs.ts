@@ -2,11 +2,11 @@ import * as Knex from 'knex';
 import { omit } from 'lodash';
 
 import * as CanvasesDAO from '../../components/canvases/dao';
-import DesignsDAO = require('../../dao/product-designs');
+import DesignsDAO = require('../../components/product-designs/dao');
 import createDesign from '../create-design';
 
 import Canvas from '../../components/canvases/domain-object';
-import Design = require('../../domain-objects/product-design');
+import Design = require('../../components/product-designs/domain-objects/product-design');
 import prepareForDuplication from './prepare-for-duplication';
 import ResourceNotFoundError from '../../errors/resource-not-found';
 import { findAndDuplicateCanvas } from './canvases';

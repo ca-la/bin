@@ -5,7 +5,7 @@ import * as tape from 'tape';
 import * as CollectionsDAO from '../dao';
 import * as CollaboratorsDAO from '../../collaborators/dao';
 import createUser = require('../../../test-helpers/create-user');
-import * as ProductDesignsDAO from '../../../dao/product-designs';
+import * as ProductDesignsDAO from '../../product-designs/dao';
 import * as DesignEventsDAO from '../../../dao/design-events';
 import * as API from '../../../test-helpers/http';
 import { sandbox, test } from '../../../test-helpers/fresh';

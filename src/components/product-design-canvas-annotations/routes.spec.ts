@@ -5,7 +5,7 @@ import createUser = require('../../test-helpers/create-user');
 import { authHeader, del, get, patch, put } from '../../test-helpers/http';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import * as AnnotationDAO from './dao';
-import { create as createDesign } from '../../dao/product-designs';
+import { create as createDesign } from '../product-designs/dao';
 import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 
 const API_PATH = '/product-design-canvas-annotations';

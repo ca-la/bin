@@ -12,7 +12,7 @@ import {
   update
 } from './dao';
 import createUser = require('../../test-helpers/create-user');
-import { create as createDesign } from '../../dao/product-designs';
+import { create as createDesign } from '../product-designs/dao';
 import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 
 test('ProductDesignCanvases DAO supports creation/retrieval', async (t: tape.Test) => {

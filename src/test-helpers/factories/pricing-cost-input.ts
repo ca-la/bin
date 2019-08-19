@@ -4,7 +4,7 @@ import PricingCostInput, {
   PricingCostInputWithoutVersions
 } from '../../components/pricing-cost-inputs/domain-object';
 import { create } from '../../components/pricing-cost-inputs/dao';
-import * as ProductDesignsDAO from '../../dao/product-designs';
+import * as ProductDesignsDAO from '../../components/product-designs/dao';
 import createDesign from '../../services/create-design';
 import { findById as findUserById } from '../../components/users/dao';
 import createUser = require('../create-user');

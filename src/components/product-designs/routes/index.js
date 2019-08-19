@@ -3,30 +3,30 @@
 const pick = require('lodash/pick');
 const Router = require('koa-router');
 
-const canAccessSection = require('../../middleware/can-access-section');
-const canAccessUserResource = require('../../middleware/can-access-user-resource');
-const CollaboratorsDAO = require('../../components/collaborators/dao');
-const CollectionsDAO = require('../../components/collections/dao');
-const filterError = require('../../services/filter-error');
-const InvalidDataError = require('../../errors/invalid-data');
-const MissingPrerequisitesError = require('../../errors/missing-prerequisites');
-const PricingCalculator = require('../../services/pricing-table');
-const ProductDesignsDAO = require('../../dao/product-designs');
-const ProductDesignStatusesDAO = require('../../dao/product-design-statuses');
-const ProductDesignStatusSlasDAO = require('../../dao/product-design-status-slas');
-const TaskEventsDAO = require('../../dao/task-events');
-const ProductDesignStagesDAO = require('../../dao/product-design-stages');
-const requireAuth = require('../../middleware/require-auth');
-const createDesign = require('../../services/create-design').default;
-const User = require('../../components/users/domain-object');
-const UsersDAO = require('../../components/users/dao');
+const canAccessSection = require('../../../middleware/can-access-section');
+const canAccessUserResource = require('../../../middleware/can-access-user-resource');
+const CollaboratorsDAO = require('../../collaborators/dao');
+const CollectionsDAO = require('../../collections/dao');
+const filterError = require('../../../services/filter-error');
+const InvalidDataError = require('../../../errors/invalid-data');
+const MissingPrerequisitesError = require('../../../errors/missing-prerequisites');
+const PricingCalculator = require('../../../services/pricing-table');
+const ProductDesignsDAO = require('../dao');
+const ProductDesignStatusesDAO = require('../../../dao/product-design-statuses');
+const ProductDesignStatusSlasDAO = require('../../../dao/product-design-status-slas');
+const TaskEventsDAO = require('../../../dao/task-events');
+const ProductDesignStagesDAO = require('../../../dao/product-design-stages');
+const requireAuth = require('../../../middleware/require-auth');
+const createDesign = require('../../../services/create-design').default;
+const User = require('../../users/domain-object');
+const UsersDAO = require('../../users/dao');
 const {
   canAccessDesignInParam,
   canCommentOnDesign,
   canDeleteDesign
-} = require('../../middleware/can-access-design');
-const { requireValues } = require('../../services/require-properties');
-const { getDesignPermissions } = require('../../services/get-permissions');
+} = require('../../../middleware/can-access-design');
+const { requireValues } = require('../../../services/require-properties');
+const { getDesignPermissions } = require('../../../services/get-permissions');
 
 const {
   getDesignUploadPolicy,
@@ -47,9 +47,7 @@ const {
   getSectionAnnotations,
   createSectionAnnotation
 } = require('./sections');
-const {
-  findAllDesignsThroughCollaborator
-} = require('../../dao/product-designs/dao');
+const { findAllDesignsThroughCollaborator } = require('../dao/dao');
 
 const router = new Router();
 

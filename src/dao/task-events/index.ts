@@ -16,7 +16,7 @@ import TaskEvent, {
 } from '../../domain-objects/task-event';
 import first from '../../services/first';
 import { validate, validateEvery } from '../../services/validate-from-db';
-import { findAllDesignIdsThroughCollaborator } from '../../dao/product-designs/dao';
+import { findAllDesignIdsThroughCollaborator } from '../../components/product-designs/dao/dao';
 import limitOrOffset from '../../services/limit-or-offset';
 import {
   ALIASES,

@@ -6,7 +6,7 @@ import * as DesignEventsDAO from '../../dao/design-events';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
 import createBid from '../../test-helpers/factories/bid';
-import * as ProductDesignsDAO from '../../dao/product-designs';
+import * as ProductDesignsDAO from '../product-designs/dao';
 import User, { ROLES, UserIO } from './domain-object';
 import { validatePassword } from './services/validate-password';
 import * as MailChimpFunctions from '../../services/mailchimp/update-email';

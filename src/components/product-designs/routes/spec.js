@@ -3,21 +3,21 @@
 const uuid = require('node-uuid');
 const { omit } = require('lodash');
 
-const CollectionsDAO = require('../../components/collections/dao');
-const createUser = require('../../test-helpers/create-user');
-const DesignEventsDAO = require('../../dao/design-events');
-const ProductDesignsDAO = require('../../dao/product-designs');
-const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
-const EmailService = require('../../services/email');
+const CollectionsDAO = require('../../collections/dao');
+const createUser = require('../../../test-helpers/create-user');
+const DesignEventsDAO = require('../../../dao/design-events');
+const ProductDesignsDAO = require('../dao');
+const ProductDesignSectionsDAO = require('../../../dao/product-design-sections');
+const EmailService = require('../../../services/email');
 const {
   authHeader,
   get,
   patch,
   post,
   put
-} = require('../../test-helpers/http');
-const { test, sandbox } = require('../../test-helpers/fresh');
-const AWSService = require('../../services/aws');
+} = require('../../../test-helpers/http');
+const { test, sandbox } = require('../../../test-helpers/fresh');
+const AWSService = require('../../../services/aws');
 
 test('PATCH /product-designs/:id rejects empty data', t => {
   let designId;

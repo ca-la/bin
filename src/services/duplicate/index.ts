@@ -1,7 +1,7 @@
 import * as Knex from 'knex';
 import * as db from '../../services/db';
 
-import Design = require('../../domain-objects/product-design');
+import Design = require('../../components/product-designs/domain-objects/product-design');
 import { findAndDuplicateDesign } from './designs';
 
 /**

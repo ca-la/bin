@@ -3,8 +3,8 @@ import * as Knex from 'knex';
 
 import * as db from '../../../services/db';
 import * as DesignEventsDAO from '../../../dao/design-events';
-import * as DesignsDAO from '../../../dao/product-designs';
-import ProductDesign = require('../../../domain-objects/product-design');
+import * as DesignsDAO from '../../product-designs/dao';
+import ProductDesign = require('../../product-designs/domain-objects/product-design');
 import { expireCostInputs } from '../../pricing-cost-inputs/dao';
 import { immediatelySendFullyCostedCollection } from '../../../services/create-notifications';
 

@@ -2,7 +2,7 @@ import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import Collaborator from '../../components/collaborators/domain-objects/collaborator';
 import * as CollectionsDAO from '../../components/collections/dao';
 import * as DesignEventsDAO from '../../dao/design-events';
-import ProductDesign = require('../../domain-objects/product-design');
+import ProductDesign = require('../../components/product-designs/domain-objects/product-design');
 import Collection from '../../components/collections/domain-object';
 
 export interface Permissions {

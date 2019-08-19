@@ -2,7 +2,7 @@ import * as tape from 'tape';
 import { test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
 import * as API from '../../test-helpers/http';
-import * as DesignsDAO from '../../dao/product-designs';
+import * as DesignsDAO from '../../components/product-designs/dao';
 
 test('canDeleteDesign middleware', async (t: tape.Test) => {
   const { user } = await createUser();

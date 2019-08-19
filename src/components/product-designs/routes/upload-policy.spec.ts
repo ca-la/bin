@@ -1,11 +1,11 @@
 import * as tape from 'tape';
 import * as uuid from 'node-uuid';
 
-import createUser = require('../../test-helpers/create-user');
-import { authHeader, get } from '../../test-helpers/http';
-import { sandbox, test } from '../../test-helpers/fresh';
-import * as AWSService from '../../services/aws';
-import { USER_UPLOADS_BASE_URL } from '../../config';
+import createUser = require('../../../test-helpers/create-user');
+import { authHeader, get } from '../../../test-helpers/http';
+import { sandbox, test } from '../../../test-helpers/fresh';
+import * as AWSService from '../../../services/aws';
+import { USER_UPLOADS_BASE_URL } from '../../../config';
 
 test('GET /product-designs/upload-policy/:id returns an upload policy', async (t: tape.Test) => {
   const { session } = await createUser();

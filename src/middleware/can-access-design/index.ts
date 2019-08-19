@@ -3,7 +3,7 @@ import * as Koa from 'koa';
 import filterError = require('../../services/filter-error');
 import { getDesignPermissions } from '../../services/get-permissions';
 import InvalidDataError = require('../../errors/invalid-data');
-import * as ProductDesignsDAO from '../../dao/product-designs';
+import * as ProductDesignsDAO from '../../components/product-designs/dao';
 
 export function* attachDesignPermissions(
   this: Koa.Application.Context,

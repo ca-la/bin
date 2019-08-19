@@ -4,7 +4,7 @@ import * as LineItemsDAO from '../../dao/line-items';
 import LineItem from '../../domain-objects/line-item';
 import * as InvoicesDAO from '../../dao/invoices';
 import generateInvoice from './invoice';
-import * as ProductDesignsDAO from '../../dao/product-designs';
+import * as ProductDesignsDAO from '../../components/product-designs/dao';
 import createUser = require('../create-user');
 import createDesign from '../../services/create-design';
 

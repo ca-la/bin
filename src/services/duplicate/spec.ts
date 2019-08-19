@@ -2,7 +2,7 @@ import * as tape from 'tape';
 
 import { test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
-import Design = require('../../domain-objects/product-design');
+import Design = require('../../components/product-designs/domain-objects/product-design');
 import createDesign from '../create-design';
 import { duplicateDesigns } from './index';
 

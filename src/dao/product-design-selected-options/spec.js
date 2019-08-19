@@ -3,7 +3,7 @@
 const pick = require('lodash/pick');
 const { create } = require('./index');
 
-const createDesign = require('../product-designs').create;
+const createDesign = require('../../components/product-designs/dao').create;
 const createOption = require('../product-design-options').create;
 const createSection = require('../product-design-sections').create;
 const createUser = require('../../test-helpers/create-user');

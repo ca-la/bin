@@ -1,7 +1,7 @@
 import * as tape from 'tape';
 import * as uuid from 'node-uuid';
 import createUser = require('../../test-helpers/create-user');
-import { create as createDesign } from '../../dao/product-designs';
+import { create as createDesign } from '../../components/product-designs/dao';
 import * as API from '../../test-helpers/http';
 import { sandbox, test } from '../../test-helpers/fresh';
 import * as ProductDesignVariantsDAO from '../../dao/product-design-variants';

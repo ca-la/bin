@@ -11,7 +11,7 @@ declare module 'koa' {
     role: string;
     collaborator?: import('../../components/collaborators/domain-objects/collaborator').default;
     collection?: import('../../components/collections/domain-object').default;
-    design?: import('../../domain-objects/product-design');
+    design?: import('../../components/product-designs/domain-objects/product-design');
     permissions?: import('../../services/get-permissions').Permissions;
   }
 

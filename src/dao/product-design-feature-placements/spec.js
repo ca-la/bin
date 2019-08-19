@@ -4,7 +4,7 @@ const pick = require('lodash/pick');
 const createUser = require('../../test-helpers/create-user');
 const ProductDesignFeaturePlacementsDAO = require('./index');
 const generateAsset = require('../../test-helpers/factories/asset').default;
-const ProductDesignsDAO = require('../product-designs');
+const ProductDesignsDAO = require('../../components/product-designs/dao');
 const ProductDesignSectionsDAO = require('../product-design-sections');
 const { test } = require('../../test-helpers/fresh');
 

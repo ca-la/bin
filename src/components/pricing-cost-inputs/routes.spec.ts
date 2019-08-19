@@ -4,7 +4,7 @@ import * as db from '../../services/db';
 import { test, Test } from '../../test-helpers/fresh';
 import { authHeader, get, post } from '../../test-helpers/http';
 import createUser = require('../../test-helpers/create-user');
-import { create as createDesign } from '../../dao/product-designs';
+import { create as createDesign } from '../product-designs/dao';
 import PricingCostInput from './domain-object';
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
 import generateProductTypes from '../../services/generate-product-types';

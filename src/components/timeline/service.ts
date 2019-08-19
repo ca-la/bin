@@ -1,5 +1,5 @@
 import * as QuotesDAO from '../../dao/pricing-quotes';
-import * as DesignsDAO from '../../dao/product-designs';
+import * as DesignsDAO from '../product-designs/dao';
 import * as TaskEventsDAO from '../../dao/task-events';
 import {
   PricingQuote,
@@ -7,9 +7,9 @@ import {
 } from '../../domain-objects/pricing-quote';
 import Timeline from './domain-object';
 import { getTimeBuffer } from '../../services/add-time-buffer';
-import ProductDesign = require('../../domain-objects/product-design');
+import ProductDesign = require('../product-designs/domain-objects/product-design');
 import { DetailsTask, TaskStatus } from '../../domain-objects/task-event';
-import { findAllDesignsThroughCollaborator } from '../../dao/product-designs/dao';
+import { findAllDesignsThroughCollaborator } from '../product-designs/dao/dao';
 
 interface StageBreakdown {
   id: string;

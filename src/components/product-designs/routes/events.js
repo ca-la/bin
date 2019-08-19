@@ -1,8 +1,8 @@
 'use strict';
 
-const DesignEventsDAO = require('../../dao/design-events');
-const NotificationsService = require('../../services/create-notifications');
-const User = require('../../components/users/domain-object');
+const DesignEventsDAO = require('../../../dao/design-events');
+const NotificationsService = require('../../../services/create-notifications');
+const User = require('../../users/domain-object');
 
 function isAllowedEventType(role, event) {
   if (!event || (event && !event.type)) {

@@ -1,7 +1,7 @@
 'use strict';
 
 const createUser = require('../../test-helpers/create-user');
-const ProductDesignsDAO = require('../product-designs');
+const ProductDesignsDAO = require('../../components/product-designs/dao');
 const ProductDesignSectionsDAO = require('./index');
 const generateAsset = require('../../test-helpers/factories/asset').default;
 const { test } = require('../../test-helpers/fresh');

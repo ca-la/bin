@@ -5,7 +5,7 @@ import * as AnnotationsDAO from '../../components/product-design-canvas-annotati
 import createUser = require('../../test-helpers/create-user');
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import * as CollectionsDAO from '../collections/dao';
-import { create as createDesign } from '../../dao/product-designs';
+import { create as createDesign } from '../product-designs/dao';
 import * as CreateNotifications from '../../services/create-notifications';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
 import generateCollection from '../../test-helpers/factories/collection';

@@ -5,7 +5,7 @@ import * as CanvasesDAO from '../../components/canvases/dao';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import * as StageTasksDAO from '../../dao/product-design-stage-tasks';
 import * as StagesDAO from '../../dao/product-design-stages';
-import * as DesignsDAO from '../../dao/product-designs';
+import * as DesignsDAO from '../../components/product-designs/dao';
 import * as CollectionsDAO from '../../components/collections/dao';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as UsersDAO from '../../components/users/dao';

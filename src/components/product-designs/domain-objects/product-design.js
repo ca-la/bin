@@ -1,9 +1,11 @@
 'use strict';
 
-const { default: DataMapper } = require('../services/data-mapper');
-const formatDateString = require('../services/format-date-string');
-const { requireProperties } = require('../services/require-properties');
-const { generatePreviewLinks } = require('../services/attach-asset-links');
+const { default: DataMapper } = require('../../../services/data-mapper');
+const formatDateString = require('../../../services/format-date-string');
+const { requireProperties } = require('../../../services/require-properties');
+const {
+  generatePreviewLinks
+} = require('../../../services/attach-asset-links');
 
 const keyNamesByColumnName = {
   id: 'id',

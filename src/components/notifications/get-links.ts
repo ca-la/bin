@@ -1,6 +1,6 @@
 import { escape as escapeHtml } from 'lodash';
 import { STUDIO_HOST } from '../../config';
-import ProductDesign = require('../../domain-objects/product-design');
+import ProductDesign = require('../product-designs/domain-objects/product-design');
 import Collection from '../collections/domain-object';
 import { DetailsTask } from '../../domain-objects/task-event';
 import { ComponentType } from '../components/domain-object';

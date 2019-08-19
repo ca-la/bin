@@ -4,7 +4,7 @@ import { sandbox, test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
 
 import * as CollectionsDAO from '../collections/dao';
-import * as DesignsDAO from '../../dao/product-designs';
+import * as DesignsDAO from '../product-designs/dao';
 import * as MeasurementsDAO from '../../dao/product-design-canvas-measurements';
 import generateNotification from '../../test-helpers/factories/notification';
 import { createNotificationMessage } from './notification-messages';

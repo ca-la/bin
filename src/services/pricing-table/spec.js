@@ -1,6 +1,6 @@
 'use strict';
 
-const createDesign = require('../../dao/product-designs').create;
+const createDesign = require('../../components/product-designs/dao').create;
 const replaceVariants = require('../../dao/product-design-variants')
   .replaceForDesign;
 const createUser = require('../../test-helpers/create-user');

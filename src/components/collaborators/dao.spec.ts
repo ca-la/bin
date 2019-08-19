@@ -5,7 +5,7 @@ import { omit } from 'lodash';
 import * as db from '../../services/db';
 import * as CollaboratorsDAO from './dao';
 import * as CollectionsDAO from '../collections/dao';
-import ProductDesignsDAO = require('../../dao/product-designs');
+import ProductDesignsDAO = require('../product-designs/dao');
 import * as DesignEventsDAO from '../../dao/design-events';
 
 import createUser = require('../../test-helpers/create-user');

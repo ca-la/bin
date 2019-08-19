@@ -1,14 +1,14 @@
 import * as tape from 'tape';
 
-import EmailService = require('../../services/email');
-import * as TaskEventsDAO from '../../dao/task-events';
-import * as CollaboratorsDAO from '../../components/collaborators/dao';
-import * as ProductDesignStagesDAO from '../../dao/product-design-stages';
+import EmailService = require('../../../services/email');
+import * as TaskEventsDAO from '../../../dao/task-events';
+import * as CollaboratorsDAO from '../../collaborators/dao';
+import * as ProductDesignStagesDAO from '../../../dao/product-design-stages';
 
-import { authHeader, get } from '../../test-helpers/http';
-import { sandbox, test } from '../../test-helpers/fresh';
-import createUser = require('../../test-helpers/create-user');
-import createDesign from '../../services/create-design';
+import { authHeader, get } from '../../../test-helpers/http';
+import { sandbox, test } from '../../../test-helpers/fresh';
+import createUser = require('../../../test-helpers/create-user');
+import createDesign from '../../../services/create-design';
 
 test('GET /product-designs allows getting tasks', async (t: tape.Test) => {
   const { user, session } = await createUser({ role: 'ADMIN' });

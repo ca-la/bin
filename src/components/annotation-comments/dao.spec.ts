@@ -7,7 +7,7 @@ import {
   deleteById as deleteComment
 } from '../comments/dao';
 import { create, findByAnnotationId, findByAnnotationIds } from './dao';
-import { create as createDesign } from '../../dao/product-designs';
+import { create as createDesign } from '../product-designs/dao';
 import createUser = require('../../test-helpers/create-user');
 import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 import generateAnnotation from '../../test-helpers/factories/product-design-canvas-annotation';

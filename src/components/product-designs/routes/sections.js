@@ -2,18 +2,18 @@
 
 const pick = require('lodash/pick');
 
-const filterError = require('../../services/filter-error');
-const InvalidDataError = require('../../errors/invalid-data');
-const UsersDAO = require('../../components/users/dao');
-const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
-const ProductDesignSectionAnnotationsDAO = require('../../dao/product-design-section-annotations');
-const ProductDesignFeaturePlacementsDAO = require('../../dao/product-design-feature-placements');
-const sendAnnotationNotifications = require('../../services/send-annotation-notifications');
+const filterError = require('../../../services/filter-error');
+const InvalidDataError = require('../../../errors/invalid-data');
+const UsersDAO = require('../../users/dao');
+const ProductDesignSectionsDAO = require('../../../dao/product-design-sections');
+const ProductDesignSectionAnnotationsDAO = require('../../../dao/product-design-section-annotations');
+const ProductDesignFeaturePlacementsDAO = require('../../../dao/product-design-feature-placements');
+const sendAnnotationNotifications = require('../../../services/send-annotation-notifications');
 const {
   sendSectionCreateNotifications,
   sendSectionUpdateNotifications
-} = require('../../services/create-notifications');
-const deleteSection = require('../../services/delete-section');
+} = require('../../../services/create-notifications');
+const deleteSection = require('../../../services/delete-section');
 
 const ALLOWED_SECTION_PARAMS = [
   'position',

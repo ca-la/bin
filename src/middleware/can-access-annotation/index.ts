@@ -1,7 +1,7 @@
 import * as Koa from 'koa';
 
 import { getDesignPermissions } from '../../services/get-permissions';
-import { findDesignByAnnotationId } from '../../dao/product-designs/dao';
+import { findDesignByAnnotationId } from '../../components/product-designs/dao/dao';
 
 /**
  * Determines whether or not the current user has access to the supplied annotation.

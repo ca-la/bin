@@ -1,5 +1,5 @@
 import * as Knex from 'knex';
-import ProductDesign = require('../../domain-objects/product-design');
+import ProductDesign = require('../domain-objects/product-design');
 
 type UnsavedDesign = Unsaved<ProductDesign>;
 type UninsertedDesign = Uninserted<ProductDesign>;

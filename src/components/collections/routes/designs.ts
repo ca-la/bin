@@ -1,8 +1,8 @@
 import * as Koa from 'koa';
 
-import * as ProductDesignsDAO from '../../../dao/product-designs';
+import * as ProductDesignsDAO from '../../product-designs/dao';
 import * as CollectionsDAO from '../dao';
-import ProductDesign = require('../../../domain-objects/product-design');
+import ProductDesign = require('../../product-designs/domain-objects/product-design');
 import {
   getDesignPermissionsAndRole,
   PermissionsAndRole

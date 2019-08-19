@@ -5,23 +5,23 @@ const uuid = require('node-uuid');
 const ProductDesignsDAO = require('./index');
 const {
   default: generatePricingQuote
-} = require('../../services/generate-pricing-quote');
+} = require('../../../services/generate-pricing-quote');
 const {
   default: generateCanvas
-} = require('../../test-helpers/factories/product-design-canvas');
+} = require('../../../test-helpers/factories/product-design-canvas');
 const {
   default: generateComponent
-} = require('../../test-helpers/factories/component');
+} = require('../../../test-helpers/factories/component');
 const {
   default: generateAsset
-} = require('../../test-helpers/factories/asset');
+} = require('../../../test-helpers/factories/asset');
 const {
   default: generatePricingValues
-} = require('../../test-helpers/factories/pricing-values');
-const CollectionsDAO = require('../../components/collections/dao');
-const DesignEventsDAO = require('../design-events');
-const { test } = require('../../test-helpers/fresh');
-const createUser = require('../../test-helpers/create-user');
+} = require('../../../test-helpers/factories/pricing-values');
+const CollectionsDAO = require('../../collections/dao');
+const DesignEventsDAO = require('../../../dao/design-events');
+const { test } = require('../../../test-helpers/fresh');
+const createUser = require('../../../test-helpers/create-user');
 
 test('ProductDesignsDAO.create creates a design', async t => {
   const { user } = await createUser({ withSession: false });

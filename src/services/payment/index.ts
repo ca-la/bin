@@ -2,14 +2,14 @@ import * as Knex from 'knex';
 import uuid = require('node-uuid');
 
 import * as db from '../../services/db';
-import * as ProductDesignsDAO from '../../dao/product-designs';
+import * as ProductDesignsDAO from '../../components/product-designs/dao';
 import * as InvoicesDAO from '../../dao/invoices';
 import * as LineItemsDAO from '../../dao/line-items';
 import * as UsersDAO from '../../components/users/dao';
 import * as SlackService from '../../services/slack';
 import InvalidDataError = require('../../errors/invalid-data');
 import payInvoice = require('../../services/pay-invoice');
-import ProductDesign = require('../../domain-objects/product-design');
+import ProductDesign = require('../../components/product-designs/domain-objects/product-design');
 import spendCredit from '../../components/credits/spend-credit';
 import { createPaymentMethod } from '../../services/payment-methods';
 import addMargin from '../../services/add-margin';

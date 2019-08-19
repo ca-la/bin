@@ -6,7 +6,7 @@ import createUser = require('../../test-helpers/create-user');
 import { authHeader, del, get, patch, put } from '../../test-helpers/http';
 import { sandbox, test } from '../../test-helpers/fresh';
 import * as MeasurementDAO from '../../dao/product-design-canvas-measurements';
-import { create as createDesign } from '../../dao/product-designs';
+import { create as createDesign } from '../../components/product-designs/dao';
 import * as CreateNotifications from '../../services/create-notifications';
 import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 

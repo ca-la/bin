@@ -4,7 +4,7 @@ import { pick } from 'lodash';
 import { sandbox, test } from '../../test-helpers/fresh';
 import * as SlackService from '../../services/slack';
 import * as BidRejectionsDAO from '../../components/bid-rejections/dao';
-import * as DesignsDAO from '../../dao/product-designs';
+import * as DesignsDAO from '../../components/product-designs/dao';
 import * as UsersDAO from '../../components/users/dao';
 import * as Config from '../../config';
 import createUser = require('../../test-helpers/create-user');

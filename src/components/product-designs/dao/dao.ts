@@ -1,15 +1,15 @@
 import * as Knex from 'knex';
-import db = require('../../services/db');
-import ProductDesign = require('../../domain-objects/product-design');
-import limitOrOffset from '../../services/limit-or-offset';
+import db = require('../../../services/db');
+import ProductDesign = require('../../../components/product-designs/domain-objects/product-design');
+import limitOrOffset from '../../../services/limit-or-offset';
 import {
   dataAdapter,
   isProductDesignRow,
   ProductDesignData,
   ProductDesignRow
-} from '../../domain-objects/product-designs-new';
-import first from '../../services/first';
-import { validate } from '../../services/validate-from-db';
+} from '../../../domain-objects/product-designs-new';
+import first from '../../../services/first';
+import { validate } from '../../../services/validate-from-db';
 import { queryWithCollectionMeta } from './index';
 
 export const TABLE_NAME = 'product_designs';

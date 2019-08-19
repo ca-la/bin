@@ -3,9 +3,9 @@ import { BreadCrumb, NotificationMessage } from '@cala/ts-lib';
 
 import InvalidDataError = require('../../errors/invalid-data');
 import * as ComponentsDAO from '../components/dao';
-import ProductDesign = require('../../domain-objects/product-design');
+import ProductDesign = require('../product-designs/domain-objects/product-design');
 import * as UsersDAO from '../../components/users/dao';
-import * as ProductDesignsDAO from '../../dao/product-designs';
+import * as ProductDesignsDAO from '../product-designs/dao';
 import * as CollectionsDAO from '../collections/dao';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as CommentsDAO from '../../components/comments/dao';

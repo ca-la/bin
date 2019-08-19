@@ -3,7 +3,7 @@ import * as tape from 'tape';
 import { test } from '../../test-helpers/fresh';
 import * as AnnotationsDAO from './dao';
 import createUser = require('../../test-helpers/create-user');
-import { create as createDesign } from '../../dao/product-designs';
+import { create as createDesign } from '../product-designs/dao';
 import ResourceNotFoundError from '../../errors/resource-not-found';
 import * as AnnotationCommentsDAO from '../annotation-comments/dao';
 import * as CommentsDAO from '../comments/dao';

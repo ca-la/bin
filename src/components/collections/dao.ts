@@ -15,8 +15,8 @@ import CollectionSubmissionStatus, {
   CollectionSubmissionStatusRow,
   dataAdapter as collectionSubmissionStatusAdapter
 } from '../../domain-objects/collection-submission-status';
-import ProductDesign = require('../../domain-objects/product-design');
-import * as ProductDesignsDAO from '../../dao/product-designs';
+import ProductDesign = require('../product-designs/domain-objects/product-design');
+import * as ProductDesignsDAO from '../product-designs/dao';
 
 import * as db from '../../services/db';
 import { validate, validateEvery } from '../../services/validate-from-db';

@@ -8,7 +8,7 @@ import {
 import { findById as findUserById } from '../../components/users/dao';
 import createUser = require('../create-user');
 import { CollaboratorWithUser } from '../../components/collaborators/domain-objects/collaborator';
-import * as ProductDesignsDAO from '../../dao/product-designs';
+import * as ProductDesignsDAO from '../../components/product-designs/dao';
 import * as CollectionsDAO from '../../components/collections/dao';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import * as AnnotationsDAO from '../../components/product-design-canvas-annotations/dao';
@@ -20,7 +20,7 @@ import * as TasksDAO from '../../dao/task-events';
 import generateCollection from './collection';
 import Collection from '../../components/collections/domain-object';
 import User from '../../components/users/domain-object';
-import ProductDesign = require('../../domain-objects/product-design');
+import ProductDesign = require('../../components/product-designs/domain-objects/product-design');
 import { templateNotification } from '../../components/notifications/models/base';
 // tslint:disable-next-line:max-line-length
 import ProductDesignCanvasAnnotation from '../../components/product-design-canvas-annotations/domain-object';

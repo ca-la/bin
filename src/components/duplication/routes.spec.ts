@@ -1,6 +1,6 @@
 import * as API from '../../test-helpers/http';
 import createUser = require('../../test-helpers/create-user');
-import { create as createDesign } from '../../dao/product-designs';
+import { create as createDesign } from '../product-designs/dao';
 import { test, Test } from '../../test-helpers/fresh';
 
 test('POST /duplication/designs returns 400 with bad body', async (t: Test) => {

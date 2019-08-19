@@ -13,7 +13,7 @@ import * as BidRejectionDAO from '../bid-rejections/dao';
 import * as PricingCostInputsDAO from '../pricing-cost-inputs/dao';
 import * as CollaboratorsDAO from '../collaborators/dao';
 import * as DesignEventsDAO from '../../dao/design-events';
-import * as ProductDesignsDAO from '../../dao/product-designs';
+import * as ProductDesignsDAO from '../product-designs/dao';
 import * as NotificationsService from '../../services/create-notifications';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
 import generateDesignEvent from '../../test-helpers/factories/design-event';

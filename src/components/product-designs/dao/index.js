@@ -3,12 +3,12 @@
 const uuid = require('node-uuid');
 const rethrow = require('pg-rethrow');
 
-const compact = require('../../services/compact');
-const db = require('../../services/db');
-const filterError = require('../../services/filter-error');
-const first = require('../../services/first').default;
-const InvalidDataError = require('../../errors/invalid-data');
-const ProductDesign = require('../../domain-objects/product-design');
+const compact = require('../../../services/compact');
+const db = require('../../../services/db');
+const filterError = require('../../../services/filter-error');
+const first = require('../../../services/first').default;
+const InvalidDataError = require('../../../errors/invalid-data');
+const ProductDesign = require('../domain-objects/product-design');
 
 const instantiate = data => new ProductDesign(data);
 const maybeInstantiate = data => (data && new ProductDesign(data)) || null;

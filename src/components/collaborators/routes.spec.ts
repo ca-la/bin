@@ -3,7 +3,7 @@ import * as uuid from 'node-uuid';
 import CollectionsDAO = require('../collections/dao');
 import createUser = require('../../test-helpers/create-user');
 import EmailService = require('../../services/email');
-import ProductDesignsDAO = require('../../dao/product-designs');
+import ProductDesignsDAO = require('../product-designs/dao');
 import { authHeader, del, get, patch, post } from '../../test-helpers/http';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import { stubFindByDesigns } from '../../test-helpers/stubs/collaborators-dao';

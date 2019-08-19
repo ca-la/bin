@@ -2,7 +2,7 @@ import * as tape from 'tape';
 import { test } from '../../test-helpers/fresh';
 import { create, findAllByDesignId, findById } from './index';
 import { create as createTask } from '../tasks';
-import { create as createDesign } from '../product-designs';
+import { create as createDesign } from '../../components/product-designs/dao';
 import { create as createDesignStage } from '../product-design-stages';
 import createUser = require('../../test-helpers/create-user');
 

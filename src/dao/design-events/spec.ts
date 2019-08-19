@@ -4,7 +4,7 @@ import generateBid from '../../test-helpers/factories/bid';
 import createUser = require('../../test-helpers/create-user');
 
 import DesignEvent from '../../domain-objects/design-event';
-import { create as createDesign } from '../product-designs';
+import { create as createDesign } from '../../components/product-designs/dao';
 import {
   create,
   createAll,

@@ -1,5 +1,5 @@
-import * as ProductDesignsDAO from '../../dao/product-designs';
-import ProductDesign = require('../../domain-objects/product-design');
+import * as ProductDesignsDAO from '../../components/product-designs/dao';
+import ProductDesign = require('../../components/product-designs/domain-objects/product-design');
 import * as DesignEventsDAO from '../../dao/design-events';
 import DesignEvent from '../../domain-objects/design-event';
 

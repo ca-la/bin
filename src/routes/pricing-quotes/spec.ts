@@ -8,7 +8,7 @@ import Bid from '../../components/bids/domain-object';
 import createUser = require('../../test-helpers/create-user');
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
 import { authHeader, get, post, put } from '../../test-helpers/http';
-import { create as createDesign } from '../../dao/product-designs';
+import { create as createDesign } from '../../components/product-designs/dao';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import generateCollection from '../../test-helpers/factories/collection';
 import * as CollectionsDAO from '../../components/collections/dao';

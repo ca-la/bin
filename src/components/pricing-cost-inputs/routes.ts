@@ -2,7 +2,7 @@ import * as Router from 'koa-router';
 import * as Koa from 'koa';
 import * as uuid from 'node-uuid';
 
-import * as ProductDesignsDAO from '../../dao/product-designs';
+import * as ProductDesignsDAO from '../product-designs/dao';
 import * as PricingCostInputsDAO from './dao';
 import requireAdmin = require('../../middleware/require-admin');
 import PricingCostInput, { isUnsavedPricingCostInput } from './domain-object';

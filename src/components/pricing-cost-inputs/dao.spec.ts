@@ -3,7 +3,7 @@ import * as Knex from 'knex';
 
 import { test, Test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
-import * as ProductDesignsDAO from '../../dao/product-designs';
+import * as ProductDesignsDAO from '../product-designs/dao';
 import * as PricingCostInputsDAO from './dao';
 import PricingCostInput from './domain-object';
 import { omit } from 'lodash';

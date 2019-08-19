@@ -1,7 +1,7 @@
 import ProductDesignStage from '../../domain-objects/product-design-stage';
-import ProductDesign = require('../../domain-objects/product-design');
+import ProductDesign = require('../../components/product-designs/domain-objects/product-design');
 import { create } from '../../dao/product-design-stages';
-import { findById } from '../../dao/product-designs';
+import { findById } from '../../components/product-designs/dao';
 import createDesign from '../../services/create-design';
 import createUser = require('../../test-helpers/create-user');
 import { findById as findUserById } from '../../components/users/dao';

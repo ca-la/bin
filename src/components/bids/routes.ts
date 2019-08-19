@@ -4,13 +4,13 @@ import * as uuid from 'node-uuid';
 
 import Bid from './domain-object';
 import Collaborator from '../collaborators/domain-objects/collaborator';
-import ProductDesign = require('../../domain-objects/product-design');
+import ProductDesign = require('../product-designs/domain-objects/product-design');
 import { PricingQuote } from '../../domain-objects/pricing-quote';
 import * as UsersDAO from '../../components/users/dao';
 import * as BidRejectionsDAO from '../bid-rejections/dao';
 import * as BidsDAO from './dao';
 import * as PricingQuotesDAO from '../../dao/pricing-quotes';
-import * as ProductDesignsDAO from '../../dao/product-designs';
+import * as ProductDesignsDAO from '../product-designs/dao';
 import * as DesignEventsDAO from '../../dao/design-events';
 import * as CollaboratorsDAO from '../collaborators/dao';
 import requireAdmin = require('../../middleware/require-admin');

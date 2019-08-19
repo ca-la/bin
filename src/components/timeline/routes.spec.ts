@@ -7,7 +7,7 @@ import createUser = require('../../test-helpers/create-user');
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
 import * as PricingCostInputsDAO from '../pricing-cost-inputs/dao';
 import * as CollectionsDAO from '../collections/dao';
-import { create as createDesign } from '../../dao/product-designs';
+import { create as createDesign } from '../product-designs/dao';
 import generateCollection from '../../test-helpers/factories/collection';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
 

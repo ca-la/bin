@@ -6,9 +6,9 @@ import CollectionService, {
 } from '../../../domain-objects/collection-service';
 import * as CollectionsDAO from '../dao';
 import * as CollectionServicesDAO from '../../../dao/collection-services';
-import * as ProductDesignsDAO from '../../../dao/product-designs';
+import * as ProductDesignsDAO from '../../product-designs/dao';
 import * as DesignEventsDAO from '../../../dao/design-events';
-import ProductDesign = require('../../../domain-objects/product-design');
+import ProductDesign = require('../../product-designs/domain-objects/product-design');
 import * as CreateNotifications from '../../../services/create-notifications';
 import attachDefaults from '../../../services/attach-defaults';
 

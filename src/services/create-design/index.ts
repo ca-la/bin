@@ -3,8 +3,8 @@ import * as db from '../db';
 
 import CollaboratorsDAO = require('../../components/collaborators/dao');
 import createDesignTasks from '../create-design-tasks';
-import ProductDesign = require('../../domain-objects/product-design');
-import ProductDesignsDAO = require('../../dao/product-designs');
+import ProductDesign = require('../../components/product-designs/domain-objects/product-design');
+import ProductDesignsDAO = require('../../components/product-designs/dao');
 
 async function createInTransaction(
   data: Unsaved<ProductDesign>,

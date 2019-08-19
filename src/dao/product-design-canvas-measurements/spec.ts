@@ -5,7 +5,7 @@ import * as Knex from 'knex';
 import * as db from '../../services/db';
 import createUser = require('../../test-helpers/create-user');
 import generateCanvas from '../../test-helpers/factories/product-design-canvas';
-import { create as createDesign } from '../product-designs';
+import { create as createDesign } from '../../components/product-designs/dao';
 import { omit } from 'lodash';
 import { test } from '../../test-helpers/fresh';
 import {

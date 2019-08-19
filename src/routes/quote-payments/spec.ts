@@ -5,7 +5,7 @@ import * as CreditsDAO from '../../components/credits/dao';
 import * as InvoicesDAO from '../../dao/invoices';
 import * as LineItemsDAO from '../../dao/line-items';
 import * as PricingCostInputsDAO from '../../components/pricing-cost-inputs/dao';
-import * as ProductDesignsDAO from '../../dao/product-designs';
+import * as ProductDesignsDAO from '../../components/product-designs/dao';
 import createUser = require('../../test-helpers/create-user');
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
 import { authHeader, post } from '../../test-helpers/http';

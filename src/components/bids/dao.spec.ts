@@ -4,7 +4,7 @@ import generatePricingValues from '../../test-helpers/factories/pricing-values';
 import generatePricingQuote from '../../services/generate-pricing-quote';
 import createUser = require('../../test-helpers/create-user');
 import { createAll as createDesignEvents } from '../../dao/design-events';
-import { create as createDesign } from '../../dao/product-designs';
+import { create as createDesign } from '../product-designs/dao';
 
 import Bid from './domain-object';
 import {

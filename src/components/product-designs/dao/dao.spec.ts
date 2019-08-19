@@ -1,30 +1,30 @@
 import * as tape from 'tape';
 import * as uuid from 'node-uuid';
 
-import { deleteById, findById } from '../../dao/product-designs/index';
+import { deleteById, findById } from './';
 import {
   findAllDesignsThroughCollaborator,
   findDesignByAnnotationId,
   findDesignByTaskId
 } from './dao';
-import { del as deleteCanvas } from '../../components/canvases/dao';
-import * as CollaboratorsDAO from '../../components/collaborators/dao';
-import { deleteById as deleteAnnotation } from '../../components/product-design-canvas-annotations/dao';
-import * as CollectionsDAO from '../../components/collections/dao';
+import { del as deleteCanvas } from '../../canvases/dao';
+import * as CollaboratorsDAO from '../../collaborators/dao';
+import { deleteById as deleteAnnotation } from '../../product-design-canvas-annotations/dao';
+import * as CollectionsDAO from '../../collections/dao';
 
-import { test } from '../../test-helpers/fresh';
-import createUser = require('../../test-helpers/create-user');
-import generateCanvas from '../../test-helpers/factories/product-design-canvas';
-import generateComponent from '../../test-helpers/factories/component';
-import generateCollection from '../../test-helpers/factories/collection';
+import { test } from '../../../test-helpers/fresh';
+import createUser = require('../../../test-helpers/create-user');
+import generateCanvas from '../../../test-helpers/factories/product-design-canvas';
+import generateComponent from '../../../test-helpers/factories/component';
+import generateCollection from '../../../test-helpers/factories/collection';
 
-import createDesign from '../../services/create-design';
-import { CollaboratorWithUser } from '../../components/collaborators/domain-objects/collaborator';
-import generateCollaborator from '../../test-helpers/factories/collaborator';
-import generateAnnotation from '../../test-helpers/factories/product-design-canvas-annotation';
-import generateProductDesignStage from '../../test-helpers/factories/product-design-stage';
-import generateTask from '../../test-helpers/factories/task';
-import generateAsset from '../../test-helpers/factories/asset';
+import createDesign from '../../../services/create-design';
+import { CollaboratorWithUser } from '../../collaborators/domain-objects/collaborator';
+import generateCollaborator from '../../../test-helpers/factories/collaborator';
+import generateAnnotation from '../../../test-helpers/factories/product-design-canvas-annotation';
+import generateProductDesignStage from '../../../test-helpers/factories/product-design-stage';
+import generateTask from '../../../test-helpers/factories/task';
+import generateAsset from '../../../test-helpers/factories/asset';
 
 test('ProductDesignCanvases DAO supports creation/retrieval, enriched with image links', async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });

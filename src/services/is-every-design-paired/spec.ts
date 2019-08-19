@@ -1,6 +1,6 @@
 import * as sinon from 'sinon';
 import { test, Test } from '../../test-helpers/simple';
-import ProductDesignsDAO = require('../../dao/product-designs');
+import ProductDesignsDAO = require('../../components/product-designs/dao');
 import * as DesignEventsDAO from '../../dao/design-events';
 import isEveryDesignPaired from './index';
 
