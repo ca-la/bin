@@ -3,12 +3,12 @@
 const pick = require('lodash/pick');
 
 const filterError = require('../../../services/filter-error');
+const { validateValues } = require('../../../services/validate');
 const InvalidDataError = require('../../../errors/invalid-data');
 const UsersDAO = require('../../users/dao');
 const ProductDesignSectionsDAO = require('../../../dao/product-design-sections');
 const ProductDesignSectionAnnotationsDAO = require('../../../dao/product-design-section-annotations');
 const ProductDesignFeaturePlacementsDAO = require('../../../dao/product-design-feature-placements');
-const sendAnnotationNotifications = require('../../../services/send-annotation-notifications');
 const {
   sendSectionCreateNotifications,
   sendSectionUpdateNotifications
@@ -24,6 +24,8 @@ const ALLOWED_SECTION_PARAMS = [
   'panelData',
   'type'
 ];
+
+// TODO: Deprecated as of V2.
 
 function* getSections() {
   const sections = yield ProductDesignSectionsDAO.findByDesignId(
@@ -121,6 +123,7 @@ function* getSectionAnnotations() {
 
 function* createSectionAnnotation() {
   const { x, y, text, inReplyToId } = this.request.body;
+  validateValues({ x, y, text });
 
   const created = yield ProductDesignSectionAnnotationsDAO.createForSection(
     this.params.sectionId,
@@ -134,13 +137,6 @@ function* createSectionAnnotation() {
   ).catch(filterError(InvalidDataError, err => this.throw(400, err)));
 
   const withUser = yield attachAnnotationUser(created);
-
-  yield sendAnnotationNotifications({
-    annotation: created,
-    design: this.state.design,
-    user: withUser.user,
-    text
-  }).catch(filterError(InvalidDataError, err => this.throw(400, err)));
 
   this.body = withUser;
   this.status = 200;

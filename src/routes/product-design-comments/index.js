@@ -6,13 +6,14 @@ const canAccessUserResource = require('../../middleware/can-access-user-resource
 const ProductDesignCommentsDAO = require('../../dao/product-design-comments');
 const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
 const requireAuth = require('../../middleware/require-auth');
-const sendCommentNotifications = require('../../services/send-comment-notifications');
 const UsersDAO = require('../../components/users/dao');
 const {
   attachDesignPermissions
 } = require('../../middleware/can-access-design');
 
 const router = new Router();
+
+// TODO: Deprecated as of V2.
 
 async function attachUser(comment) {
   const user = await UsersDAO.findById(comment.userId);
@@ -87,14 +88,6 @@ function* create() {
   });
 
   const withUser = yield attachUser(created);
-
-  yield sendCommentNotifications({
-    comment: created,
-    design: this.state.design,
-    section,
-    text,
-    user: withUser.user
-  });
 
   this.body = withUser;
   this.status = 201;

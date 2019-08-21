@@ -67,6 +67,7 @@ async function payOutPartner({
     payoutAmountCents
   });
 
+  // TODO: convert to `single_notification` template and construct a NotificationMessage.
   await EmailService.enqueueSend({
     to: vendorUser.email,
     cc: ADMIN_EMAIL,
