@@ -11,7 +11,7 @@ import InvalidDataError = require('../../errors/invalid-data');
 import payInvoice = require('../../services/pay-invoice');
 import ProductDesign = require('../../components/product-designs/domain-objects/product-design');
 import spendCredit from '../../components/credits/spend-credit';
-import { createPaymentMethod } from '../../services/payment-methods';
+import createPaymentMethod from '../../components/payment-methods/create-payment-method';
 import addMargin from '../../services/add-margin';
 import { PricingQuote } from '../../domain-objects/pricing-quote';
 import {
@@ -104,11 +104,11 @@ export default async function payInvoiceWithNewPaymentMethod(
   collection: Collection
 ): Promise<Invoice> {
   return db.transaction(async (trx: Knex.Transaction) => {
-    const paymentMethodId: string = await createPaymentMethod(
-      paymentMethodTokenId,
+    const paymentMethod = await createPaymentMethod({
+      token: paymentMethodTokenId,
       userId,
       trx
-    );
+    });
     const quotes: PricingQuote[] = await createQuotes(
       quoteRequests,
       userId,
@@ -134,7 +134,7 @@ export default async function payInvoiceWithNewPaymentMethod(
       )
     );
 
-    return payInvoice(invoice.id, paymentMethodId, userId, trx);
+    return payInvoice(invoice.id, paymentMethod.id, userId, trx);
   });
 }
 

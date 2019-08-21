@@ -11,7 +11,6 @@ import {
   CollaboratorWithUser,
   Roles
 } from '../../components/collaborators/domain-objects/collaborator';
-import findOrCreateSignup from '../../components/approved-signups/services/find-or-create';
 
 /**
  * Add a collaborator to a design. If a user exists with this email, adds them
@@ -69,16 +68,6 @@ export default async function addCollaborator(
         userEmail: normalizedEmail,
         userId: null
       });
-
-  if (!user) {
-    await findOrCreateSignup({
-      consumedAt: null,
-      email,
-      firstName: null,
-      isManuallyApproved: false,
-      lastName: null
-    });
-  }
 
   NotificationsService.immediatelySendInviteCollaborator({
     actorId: inviter.id,

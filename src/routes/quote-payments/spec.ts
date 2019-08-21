@@ -1,5 +1,6 @@
 import * as uuid from 'node-uuid';
 
+import * as attachSource from '../../services/stripe/attach-source';
 import * as CollectionsDAO from '../../components/collections/dao';
 import * as CreditsDAO from '../../components/credits/dao';
 import * as InvoicesDAO from '../../dao/invoices';
@@ -7,12 +8,12 @@ import * as LineItemsDAO from '../../dao/line-items';
 import * as PricingCostInputsDAO from '../../components/pricing-cost-inputs/dao';
 import * as ProductDesignsDAO from '../../components/product-designs/dao';
 import createUser = require('../../test-helpers/create-user');
+import EmailService = require('../../services/email');
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
+import SlackService = require('../../services/slack');
+import Stripe = require('../../services/stripe');
 import { authHeader, post } from '../../test-helpers/http';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
-import SlackService = require('../../services/slack');
-import EmailService = require('../../services/email');
-import Stripe = require('../../services/stripe');
 
 test('/quote-payments POST generates quotes, payment method, invoice, lineItems, and charges', async (t: Test) => {
   const { user, session } = await createUser();
@@ -23,8 +24,8 @@ test('/quote-payments POST generates quotes, payment method, invoice, lineItems,
     .stub(Stripe, 'findOrCreateCustomerId')
     .resolves('customerId');
   sandbox()
-    .stub(Stripe, 'attachSource')
-    .returns(Promise.resolve({ id: 'sourceId', last4: '1234' }));
+    .stub(attachSource, 'default')
+    .resolves({ id: 'sourceId', last4: '1234' });
   sandbox()
     .stub(EmailService, 'enqueueSend')
     .resolves();
@@ -112,8 +113,8 @@ test('/quote-payments POST does not generate quotes, payment method, invoice, li
     .stub(Stripe, 'findOrCreateCustomerId')
     .resolves('customerId');
   sandbox()
-    .stub(Stripe, 'attachSource')
-    .returns(Promise.resolve({ id: 'sourceId', last4: '1234' }));
+    .stub(attachSource, 'default')
+    .resolves({ id: 'sourceId', last4: '1234' });
   sandbox()
     .stub(EmailService, 'enqueueSend')
     .resolves();
@@ -336,6 +337,9 @@ test('POST /quote-payments?isWaived=true fails if ineligible', async (t: Test) =
     .stub(EmailService, 'enqueueSend')
     .resolves();
   sandbox()
+    .stub(attachSource, 'default')
+    .resolves({ id: 'sourceId', last4: '1234' });
+  sandbox()
     .stub(SlackService, 'enqueueSend')
     .resolves();
 
@@ -408,6 +412,12 @@ test(
     sandbox()
       .stub(SlackService, 'enqueueSend')
       .resolves();
+    sandbox()
+      .stub(attachSource, 'default')
+      .resolves({ id: 'sourceId', last4: '1234' });
+    sandbox()
+      .stub(Stripe, 'findOrCreateCustomerId')
+      .resolves('customerId');
     sandbox()
       .stub(LineItemsDAO, 'create')
       .rejects();

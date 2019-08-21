@@ -5,7 +5,7 @@ const uuid = require('node-uuid');
 
 const db = require('../../services/db');
 const first = require('../../services/first').default;
-const PaymentMethod = require('../../domain-objects/payment-method');
+const PaymentMethod = require('./domain-object');
 
 const instantiate = row => new PaymentMethod(row);
 const maybeInstantiate = data => (data && new PaymentMethod(data)) || null;
@@ -26,8 +26,8 @@ async function findById(id, trx) {
     .then(maybeInstantiate);
 }
 
-async function findByUserId(userId) {
-  return db(TABLE_NAME)
+async function findByUserId(userId, trx) {
+  return trx(TABLE_NAME)
     .where({
       deleted_at: null,
       user_id: userId

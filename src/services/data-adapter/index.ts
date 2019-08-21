@@ -32,11 +32,11 @@ export default class DataAdapter<RowData extends object, UserData> {
   }
 }
 
-function defaultEncoder<A, B>(source: A): B {
+export function defaultEncoder<A, B>(source: A): B {
   return transformKeys(camelize, source);
 }
 
-function defaultDecoder<A, B>(source: A): B {
+export function defaultDecoder<A, B>(source: A): B {
   return transformKeys(snakify, source);
 }
 

@@ -3,7 +3,7 @@
 const db = require('../../services/db');
 const createUser = require('../create-user');
 const generateCollection = require('./collection').default;
-const PaymentMethodsDAO = require('../../dao/payment-methods');
+const PaymentMethodsDAO = require('../../components/payment-methods/dao');
 const InvoicesDAO = require('../../dao/invoices');
 const InvoicePaymentsDAO = require('../../components/invoice-payments/dao');
 

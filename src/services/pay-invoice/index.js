@@ -6,7 +6,7 @@ const CollectionsDAO = require('../../components/collections/dao');
 const db = require('../../services/db');
 const InvoicePaymentsDAO = require('../../components/invoice-payments/dao');
 const InvoicesDAO = require('../../dao/invoices');
-const PaymentMethods = require('../../dao/payment-methods');
+const PaymentMethods = require('../../components/payment-methods/dao');
 const spendCredit = require('../../components/credits/spend-credit').default;
 const UsersDAO = require('../../components/users/dao');
 

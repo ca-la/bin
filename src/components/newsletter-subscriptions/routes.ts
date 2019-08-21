@@ -4,14 +4,9 @@ import * as Koa from 'koa';
 import * as MailChimp from '../../services/mailchimp';
 import {
   MAILCHIMP_LIST_ID_DESIGNERS,
-  MAILCHIMP_LIST_ID_PRODUCTION_PARTNERS,
-  STUDIO_HOST
+  MAILCHIMP_LIST_ID_PRODUCTION_PARTNERS
 } from '../../config';
 import { hasProperties } from '../../services/require-properties';
-
-import isApprovable from '../approved-signups/services/is-approvable';
-import findOrCreateSignup from '../approved-signups/services/find-or-create';
-import { ApprovedSignup } from '../approved-signups/domain-object';
 
 const router = new Router();
 
@@ -57,30 +52,15 @@ function* createDesignerSubscription(
     lastName,
     source
   } = body;
-  const isApproved = isApprovable(howManyUnitsPerStyle || '');
-  let registrationLink: string | undefined;
-
-  if (isApproved) {
-    const signup: ApprovedSignup = yield findOrCreateSignup({
-      consumedAt: null,
-      email,
-      firstName,
-      isManuallyApproved: false,
-      lastName
-    });
-    registrationLink = `${STUDIO_HOST}/register?approvedSignupId=${signup.id}`;
-  }
 
   try {
     yield MailChimp.addOrUpdateListMember(MAILCHIMP_LIST_ID_DESIGNERS, email, {
-      APPROVED: isApproved ? 'TRUE' : 'FALSE',
       FNAME: firstName,
       HOWMANYUNI: howManyUnitsPerStyle,
       INSTA: brandInstagram,
       LANGUAGE: language,
       LNAME: lastName,
       MANAPPR: undefined,
-      REGLINK: registrationLink,
       SOURCE: source
     });
   } catch (error) {
@@ -89,7 +69,6 @@ function* createDesignerSubscription(
 
   this.status = 201;
   this.body = {
-    registrationLink,
     success: true
   };
 }

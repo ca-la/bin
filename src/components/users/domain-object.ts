@@ -35,7 +35,6 @@ export default interface User {
   phone: string | null;
   referralCode: string;
   role: Role;
-  subscriptionWaivedAt: Date | null;
 }
 
 export interface UserWithPasswordHash extends User {
@@ -51,8 +50,7 @@ export const baseUser = {
   locale: 'en-US',
   phone: null,
   referralCode: 'n/a',
-  role: ROLES.user,
-  subscriptionWaivedAt: null
+  role: ROLES.user
 };
 
 export interface UserIO extends Partial<Omit<User, 'createdAt' | 'id'>> {
@@ -75,7 +73,6 @@ export interface UserRow {
   phone: string | null;
   referral_code: string;
   role: Role;
-  subscription_waived_at: string | null;
 }
 
 export function partialDecode(data: Partial<User>): Partial<UserRow> {
@@ -104,7 +101,6 @@ export function passwordHashDecode(data: UserWithPasswordHash): UserRow {
     email: data.email,
     id: data.id,
     is_sms_preregistration: data.isSmsPreregistration,
-    subscription_waived_at: toDateStringOrNull(data.subscriptionWaivedAt),
     last_accepted_designer_terms_at: toDateStringOrNull(
       data.lastAcceptedDesignerTermsAt
     ),
@@ -127,7 +123,6 @@ export function passwordHashEncode(row: UserRow): UserWithPasswordHash {
     email: row.email,
     id: row.id,
     isSmsPreregistration: row.is_sms_preregistration,
-    subscriptionWaivedAt: toDateOrNull(row.subscription_waived_at),
     lastAcceptedDesignerTermsAt: toDateOrNull(
       row.last_accepted_designer_terms_at
     ),
@@ -150,7 +145,6 @@ export function encode(row: UserRow): User {
     email: row.email,
     id: row.id,
     isSmsPreregistration: row.is_sms_preregistration,
-    subscriptionWaivedAt: toDateOrNull(row.subscription_waived_at),
     lastAcceptedDesignerTermsAt: toDateOrNull(
       row.last_accepted_designer_terms_at
     ),

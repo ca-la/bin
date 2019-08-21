@@ -36,6 +36,7 @@ const ERROR_CODES = {
 
 interface CreateOptions {
   requirePassword?: boolean;
+  trx?: Knex.Transaction;
 }
 
 const TABLE_NAME = 'users';
@@ -78,7 +79,9 @@ export async function create(
     phone: validatedPhone,
     referralCode
   });
-  const user: UserRow = await db(TABLE_NAME)
+
+  const connection = options.trx || db;
+  const user: UserRow = await connection(TABLE_NAME)
     .insert(rowData, '*')
     .catch(rethrow)
     .catch(
@@ -117,12 +120,17 @@ export function createSmsPreregistration(data: UserIO): Promise<User> {
   });
 }
 
-export async function findById(id: string): Promise<User | null> {
+export async function findById(
+  id: string,
+  trx?: Knex.Transaction
+): Promise<User | null> {
   if (!id) {
     throw new Error('Missing user ID');
   }
 
-  const user = await db(TABLE_NAME)
+  const connection = trx || db;
+
+  const user = await connection(TABLE_NAME)
     .where({ id })
     .then((users: UserRow[]) => first<UserRow>(users));
 

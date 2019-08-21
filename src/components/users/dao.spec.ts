@@ -1,4 +1,5 @@
 import * as uuid from 'node-uuid';
+import * as Knex from 'knex';
 
 import InvalidDataError = require('../../errors/invalid-data');
 import * as UsersDAO from './dao';
@@ -9,6 +10,7 @@ import createBid from '../../test-helpers/factories/bid';
 import * as ProductDesignsDAO from '../product-designs/dao';
 import User, { ROLES, UserIO } from './domain-object';
 import { validatePassword } from './services/validate-password';
+import db = require('../../services/db');
 import * as MailChimpFunctions from '../../services/mailchimp/update-email';
 import generateDesignEvent from '../../test-helpers/factories/design-event';
 import PayoutAccountsDAO = require('../../dao/partner-payout-accounts');
@@ -417,4 +419,34 @@ test('UsersDAO.findAllUnpaidPartners returns all unpaid partners', async (t: Tes
   const users = await UsersDAO.findAllUnpaidPartners({ limit: 20, offset: 0 });
 
   t.deepEqual(users, [unpaidPartner]);
+});
+
+test('UsersDAO.create allows passing in a transaction', async (t: Test) => {
+  let userId;
+
+  try {
+    await db.transaction(async (trx: Knex.Transaction) => {
+      const user = await UsersDAO.create(USER_DATA, { trx });
+      t.equal(user.name, 'Q User');
+      userId = user.id;
+      throw new Error('Cancel the transaction');
+    });
+  } catch (err) {
+    /* noop */
+  }
+
+  if (!userId) {
+    throw new Error('Missing user ID');
+  }
+
+  const afterTrx = await UsersDAO.findById(userId);
+  t.equal(afterTrx, null);
+});
+
+test('UsersDAO.findById allows passing in a transaction', async (t: Test) => {
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const created = await UsersDAO.create(USER_DATA, { trx });
+    const found = await UsersDAO.findById(created.id, trx);
+    t.equal(found && found.name, 'Q User');
+  });
 });

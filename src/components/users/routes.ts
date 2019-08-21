@@ -1,45 +1,52 @@
-import * as Router from 'koa-router';
-import * as Koa from 'koa';
 import * as Knex from 'knex';
+import * as Koa from 'koa';
+import * as Router from 'koa-router';
+import rethrow = require('pg-rethrow');
 
-import MailChimp = require('../../services/mailchimp');
-import InvalidDataError = require('../../errors/invalid-data');
+import * as UsersDAO from './dao';
 import applyCode from '../../components/promo-codes/apply-code';
+import canAccessUserResource = require('../../middleware/can-access-user-resource');
 import claimDesignInvitations = require('../../services/claim-design-invitations');
 import CohortsDAO = require('../../components/cohorts/dao');
 import CohortUsersDAO = require('../../components/cohorts/users/dao');
+import compact = require('../../services/compact');
+import createOrUpdateSubscription from '../subscriptions/create-or-update';
+import db = require('../../services/db');
 import DuplicationService = require('../../services/duplicate');
 import filterError = require('../../services/filter-error');
+import InvalidDataError = require('../../errors/invalid-data');
+import MailChimp = require('../../services/mailchimp');
 import MultipleErrors from '../../errors/multiple-errors';
-import canAccessUserResource = require('../../middleware/can-access-user-resource');
-import compact = require('../../services/compact');
-import { hasProperties } from '../../services/require-properties';
 import requireAuth = require('../../middleware/require-auth');
 import SessionsDAO = require('../../dao/sessions');
 import User, { Role, ROLES, UserIO } from './domain-object';
-import * as UsersDAO from './dao';
-import { logServerError } from '../../services/logger';
 import { DEFAULT_DESIGN_IDS, REQUIRE_CALA_EMAIL } from '../../config';
+import { hasProperties } from '../../services/require-properties';
 import { isValidEmail } from '../../services/validation';
-import { canCreateAccount } from '../../middleware/can-create-account';
-import db = require('../../services/db');
+import { logServerError } from '../../services/logger';
 import { validatePassword } from './services/validate-password';
-import rethrow = require('pg-rethrow');
 
 const router = new Router();
+
+interface CreateBody extends UserIO {
+  planId?: string;
+  stripeCardToken?: string;
+}
 
 /**
  * POST /users
  */
 function* createUser(
-  this: Koa.Application.Context<UserIO>
+  this: Koa.Application.Context<CreateBody>
 ): AsyncIterableIterator<User> {
   const {
     name,
     email,
     password,
     phone,
-    lastAcceptedDesignerTermsAt
+    lastAcceptedDesignerTermsAt,
+    planId,
+    stripeCardToken
   } = this.request.body;
   const { cohort, initialDesigns, promoCode } = this.query;
 
@@ -60,15 +67,34 @@ function* createUser(
 
   const referralCode = 'n/a';
 
-  const user = yield UsersDAO.create({
-    email,
-    lastAcceptedDesignerTermsAt,
-    name,
-    password,
-    phone,
-    referralCode,
-    role: ROLES.user
-  }).catch(filterError(InvalidDataError, (err: Error) => this.throw(400, err)));
+  // TODO: Move all other resource creations into transaction
+  const user = yield db.transaction(async (trx: Knex.Transaction) => {
+    const userInTrx = await UsersDAO.create(
+      {
+        email,
+        lastAcceptedDesignerTermsAt,
+        name,
+        password,
+        phone,
+        referralCode,
+        role: ROLES.user
+      },
+      { trx }
+    ).catch(
+      filterError(InvalidDataError, (err: Error) => this.throw(400, err))
+    );
+
+    if (planId && stripeCardToken) {
+      await createOrUpdateSubscription({
+        userId: userInTrx.id,
+        stripeCardToken,
+        planId,
+        trx
+      });
+    }
+
+    return userInTrx;
+  });
 
   let targetCohort = null;
   if (cohort) {
@@ -119,8 +145,6 @@ function* createUser(
     yield DuplicationService.duplicateDesigns(user.id, defaultDesignIds);
   }
 
-  this.status = 201;
-
   // Allow `?returnValue=session` on the end of the URL to return a session (with
   // attached user) rather than just a user.
   // Not the most RESTful thing in the world... but much nicer from a client
@@ -131,6 +155,8 @@ function* createUser(
   } else {
     this.body = user;
   }
+
+  this.status = 201;
 }
 
 /**
@@ -226,15 +252,7 @@ function* updateUser(
     'You can only update your own user'
   );
   const { body } = this.request;
-  const {
-    name,
-    phone,
-    email,
-    role,
-    newPassword,
-    currentPassword,
-    subscriptionWaivedAt
-  } = body;
+  const { name, phone, email, role, newPassword, currentPassword } = body;
 
   if (isAdmin && role) {
     yield SessionsDAO.deleteByUserId(this.params.userId);
@@ -249,8 +267,7 @@ function* updateUser(
 
   if (isAdmin) {
     Object.assign(updatedValues, {
-      role,
-      subscriptionWaivedAt
+      role
     });
   }
 
@@ -393,7 +410,7 @@ router.get('/', getList);
 router.get('/:userId', requireAuth, getUser);
 router.get('/email-availability/:email', getEmailAvailability);
 router.get('/unpaid-partners', getUnpaidPartners);
-router.post('/', canCreateAccount, createUser);
+router.post('/', createUser);
 router.post('/:userId/accept-designer-terms', requireAuth, acceptDesignerTerms);
 router.post('/:userId/accept-partner-terms', requireAuth, acceptPartnerTerms);
 router.put('/:userId', requireAuth, updateUser); // TODO: deprecate

@@ -2,8 +2,8 @@
 
 const omit = require('lodash/omit');
 
-const { requireProperties } = require('../services/require-properties');
-const { default: DataMapper } = require('../services/data-mapper');
+const { requireProperties } = require('../../services/require-properties');
+const { default: DataMapper } = require('../../services/data-mapper');
 
 const keyNamesByColumnName = {
   id: 'id',

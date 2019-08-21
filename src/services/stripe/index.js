@@ -1,70 +1,17 @@
 'use strict';
 
-const fetch = require('node-fetch');
-const qs = require('querystring');
-
 const insecureHash = require('../insecure-hash');
-const InvalidPaymentError = require('../../errors/invalid-payment');
 const Logger = require('../logger');
-const PaymentMethodsDAO = require('../../dao/payment-methods');
-const StripeError = require('../../errors/stripe');
+const makeRequest = require('./make-request').default;
+const PaymentMethodsDAO = require('../../components/payment-methods/dao');
 const UsersDAO = require('../../components/users/dao');
 const { requireValues } = require('../../services/require-properties');
 const { STRIPE_SECRET_KEY } = require('../../config');
 
-const STRIPE_API_BASE = 'https://api.stripe.com/v1';
 const STRIPE_CONNECT_API_BASE = 'https://connect.stripe.com';
 
-const CREDENTIALS = Buffer.from(`${STRIPE_SECRET_KEY}:`).toString('base64');
 const STRIPE_FEE_PERCENT = 0.029;
 const STRIPE_FEE_BASE_CENTS = 30;
-
-async function makeRequest({ method, path, apiBase, data, idempotencyKey }) {
-  requireValues({ method, path });
-
-  const base = apiBase || STRIPE_API_BASE;
-  const url = `${base}${path}`;
-
-  const options = {
-    method,
-    headers: {
-      Authorization: `Basic ${CREDENTIALS}`
-    }
-  };
-
-  if (data) {
-    options.headers['Content-Type'] = 'application/x-www-form-urlencoded';
-    options.body = qs.stringify(data);
-  }
-
-  if (idempotencyKey) {
-    options.headers['Idempotency-Key'] = idempotencyKey;
-  }
-
-  const response = await fetch(url, options);
-  const contentType = response.headers.get('content-type');
-  const isJson = /application\/.*json/.test(contentType);
-
-  if (!isJson) {
-    const text = await response.text();
-    Logger.logServerError('Stripe request: ', method, url);
-    Logger.logServerError('Stripe response: ', response.status, text);
-    throw new Error(`Unexpected Stripe response type: ${contentType}`);
-  }
-
-  const json = await response.json();
-
-  switch (response.status) {
-    case 200:
-      return json;
-    case 402:
-      throw new InvalidPaymentError(
-        (json.error && json.error.message) || 'Your payment method was declined'
-      );
-    default:
-      throw new StripeError(json.error);
-  }
-}
 
 async function charge({
   customerId,
@@ -149,25 +96,21 @@ async function createCustomer({ email, name }) {
   });
 }
 
-async function attachSource({ customerId, cardToken }) {
-  requireValues({ customerId, cardToken });
-
-  return makeRequest({
-    method: 'post',
-    path: `/customers/${customerId}/sources`,
-    data: {
-      source: cardToken
-    }
-  });
-}
-
-async function findOrCreateCustomerId(userId) {
-  const existingPaymentMethods = await PaymentMethodsDAO.findByUserId(userId);
+async function findOrCreateCustomerId(userId, trx) {
+  const existingPaymentMethods = await PaymentMethodsDAO.findByUserId(
+    userId,
+    trx
+  );
   if (existingPaymentMethods.length > 0) {
     return existingPaymentMethods[0].stripeCustomerId;
   }
 
-  const user = await UsersDAO.findById(userId);
+  const user = await UsersDAO.findById(userId, trx);
+
+  if (!user) {
+    throw new Error(`Invalid user ID: ${user.id}`);
+  }
+
   const customer = await createCustomer({ name: user.name, email: user.email });
   return customer.id;
 }
@@ -218,7 +161,6 @@ function calculateStripeFee(totalCents) {
 }
 
 module.exports = {
-  attachSource,
   calculateStripeFee,
   charge,
   createConnectAccount,

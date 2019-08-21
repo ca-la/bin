@@ -1,22 +1,26 @@
-import * as uuid from 'node-uuid';
+import * as Knex from 'knex';
 import * as sinon from 'sinon';
+import * as uuid from 'node-uuid';
 
-import * as Config from '../../config';
-import * as UsersDAO from './dao';
-import InvalidDataError = require('../../errors/invalid-data');
-import * as PromoCodesDAO from '../../components/promo-codes/dao';
+import * as attachSource from '../../services/stripe/attach-source';
 import * as CohortsDAO from '../../components/cohorts/dao';
-import * as DuplicationService from '../../services/duplicate';
-import * as CreditsDAO from '../../components/credits/dao';
-import createUser = require('../../test-helpers/create-user');
-import MailChimp = require('../../services/mailchimp');
-import { authHeader, get, post, put } from '../../test-helpers/http';
-import { sandbox, test, Test } from '../../test-helpers/fresh';
 import * as CohortUsersDAO from '../../components/cohorts/users/dao';
+import * as Config from '../../config';
+import * as createStripeSubscription from '../../services/stripe/create-subscription';
+import * as CreditsDAO from '../../components/credits/dao';
+import * as DuplicationService from '../../services/duplicate';
+import * as PlansDAO from '../plans/dao';
+import * as PromoCodesDAO from '../../components/promo-codes/dao';
+import * as SubscriptionsDAO from '../../components/subscriptions/dao';
+import * as UsersDAO from './dao';
+import createUser = require('../../test-helpers/create-user');
+import db = require('../../services/db');
+import InvalidDataError = require('../../errors/invalid-data');
+import MailChimp = require('../../services/mailchimp');
+import Stripe = require('../../services/stripe');
+import { authHeader, get, post, put } from '../../test-helpers/http';
 import { baseUser, UserIO } from './domain-object';
-import * as ApprovedSignupsDAO from '../../components/approved-signups/dao';
-import * as ApprovalConsumer from '../../components/approved-signups/services/consume-approval';
-import { pick } from 'lodash';
+import { sandbox, Test, test } from '../../test-helpers/fresh';
 
 const USER_DATA: UserIO = Object.freeze({
   email: 'user@example.com',
@@ -44,42 +48,8 @@ function stubUserDependencies(): UserDependenciesInterface {
   };
 }
 
-interface ApprovalDependencies {
-  findByEmailStub: sinon.SinonStub;
-  updateStub: sinon.SinonStub;
-}
-
-function stubApprovalDependencies(): ApprovalDependencies {
-  const findByEmailStub = sandbox()
-    .stub(ApprovedSignupsDAO, 'findByEmail')
-    .resolves({
-      consumedAt: null,
-      createdAt: new Date('2019-01-03'),
-      email: 'foo@example.com',
-      firstName: 'Foo',
-      id: 'abc-123-xyz',
-      lastName: 'Bar'
-    });
-  const updateStub = sandbox()
-    .stub(ApprovalConsumer, 'default')
-    .resolves({
-      consumedAt: new Date('2019-04-24'),
-      createdAt: new Date('2019-01-03'),
-      email: 'foo@example.com',
-      firstName: 'Foo',
-      id: 'abc-123-xyz',
-      lastName: 'Bar'
-    });
-
-  return {
-    findByEmailStub,
-    updateStub
-  };
-}
-
 test('POST /users returns a 400 if user creation fails', async (t: Test) => {
   stubUserDependencies();
-  stubApprovalDependencies();
 
   sandbox()
     .stub(UsersDAO, 'create')
@@ -93,7 +63,6 @@ test('POST /users returns a 400 if user creation fails', async (t: Test) => {
 
 test('POST /users allows public values to be set', async (t: Test) => {
   stubUserDependencies();
-  stubApprovalDependencies();
 
   const acceptedAt = new Date('2019-01-01').toISOString();
 
@@ -115,23 +84,19 @@ test('POST /users allows public values to be set', async (t: Test) => {
 
 test('POST /users does not allow private values to be set', async (t: Test) => {
   stubUserDependencies();
-  stubApprovalDependencies();
 
   const data = {
     ...USER_DATA,
-    role: 'ADMIN',
-    subscriptionWaivedAt: new Date('2019-01-01').toISOString()
+    role: 'ADMIN'
   };
 
   const body = (await post('/users', { body: data }))[1];
 
   t.equal(body.role, 'USER');
-  t.equal(body.subscriptionWaivedAt, null);
 });
 
 test('POST /users returns a session instead if requested', async (t: Test) => {
   stubUserDependencies();
-  stubApprovalDependencies();
 
   const [response, body] = await post('/users?returnValue=session', {
     body: USER_DATA
@@ -266,8 +231,7 @@ test('PUT /users/:id does not allow private values to be set', async (t: Test) =
   const [response, body] = await put(`/users/${user.id}`, {
     body: {
       birthday: '2017-01-02',
-      role: 'ADMIN',
-      subscriptionWaivedAt: new Date('2019-01-01').toISOString()
+      role: 'ADMIN'
     },
     headers: authHeader(session.id)
   });
@@ -275,7 +239,6 @@ test('PUT /users/:id does not allow private values to be set', async (t: Test) =
   t.equal(response.status, 200);
 
   t.equal(body.role, 'USER');
-  t.equal(body.subscriptionWaivedAt, null);
 });
 
 test('PUT /users/:id allows admins to set private values', async (t: Test) => {
@@ -284,8 +247,7 @@ test('PUT /users/:id allows admins to set private values', async (t: Test) => {
   const [response, body] = await put(`/users/${user.id}`, {
     body: {
       birthday: '2017-01-02',
-      role: 'ADMIN',
-      subscriptionWaivedAt: new Date('2019-01-01').toISOString()
+      role: 'ADMIN'
     },
     headers: authHeader(adminSession.id)
   });
@@ -293,7 +255,6 @@ test('PUT /users/:id allows admins to set private values', async (t: Test) => {
   t.equal(response.status, 200);
 
   t.equal(body.role, 'ADMIN');
-  t.equal(body.subscriptionWaivedAt, new Date('2019-01-01').toISOString());
 });
 test('PATCH /users/:id returns errors on taken email', async (t: Test) => {
   const { user: user1, session } = await createUser();
@@ -379,7 +340,6 @@ test('POST /users allows registration + design duplication', async (t: Test) => 
         t.true(designIds.includes(dThree), 'Contains third design id');
       }
     );
-  stubApprovalDependencies();
 
   const [response, body] = await post('/users', {
     body: {
@@ -422,7 +382,6 @@ test('POST /users?initialDesigns= allows registration + design duplication', asy
         t.true(designIds.includes(dThree), 'Contains third design id');
       }
     );
-  stubApprovalDependencies();
 
   const [response, body] = await post(
     `/users?initialDesigns=${dOne}&initialDesigns=${dTwo}&initialDesigns=${dThree}`,
@@ -453,7 +412,6 @@ test('POST /users?initialDesigns= allows registration + design duplication', asy
 
 test('POST /users?cohort allows registration + adding a cohort user', async (t: Test) => {
   const { mailchimpStub } = stubUserDependencies();
-  stubApprovalDependencies();
 
   const admin = await createUser({ role: 'ADMIN' });
   const cohort = await CohortsDAO.create({
@@ -501,7 +459,6 @@ test('POST /users?cohort allows registration + adding a cohort user', async (t: 
 
 test('POST /users?promoCode=X applies a code at registration', async (t: Test) => {
   stubUserDependencies();
-  stubApprovalDependencies();
 
   const { user: adminUser } = await createUser({ role: 'ADMIN' });
 
@@ -538,98 +495,46 @@ test('GET /users?search with malformed RegExp throws 400', async (t: Test) => {
   t.deepEqual(body, { message: 'Search contained invalid characters' });
 });
 
-test('POST /users will fail if the user is not pre-approved', async (t: Test) => {
+test('POST /users allows subscribing to a plan', async (t: Test) => {
+  stubUserDependencies();
+
   sandbox()
-    .stub(ApprovedSignupsDAO, 'findByEmail')
-    .resolves(null);
+    .stub(attachSource, 'default')
+    .resolves({ id: 'sourceId', last4: '1234' });
+
+  sandbox()
+    .stub(createStripeSubscription, 'default')
+    .resolves({
+      id: 'sub_123'
+    });
+
+  sandbox()
+    .stub(Stripe, 'findOrCreateCustomerId')
+    .resolves('customerId');
+
+  const plan = await PlansDAO.create({
+    id: uuid.v4(),
+    billingInterval: 'MONTHLY',
+    monthlyCostCents: 4567,
+    stripePlanId: 'plan_456',
+    title: 'Some More',
+    isDefault: true
+  });
 
   const [response, body] = await post('/users', {
     body: {
-      email: 'user@example.com',
-      name: 'Rick Owens',
-      password: 'rick_owens_la_4_lyfe',
-      phone: '323 931 4960'
+      ...USER_DATA,
+      planId: plan.id,
+      stripeCardToken: 'tok_123'
     }
   });
 
-  t.equal(response.status, 403, 'Is unauthorized');
-  t.equal(body.message, 'Sorry, this email address is not approved');
-});
+  t.equal(response.status, 201);
 
-test('POST /users?approvedSignupId will fail id is non-existent', async (t: Test) => {
-  sandbox()
-    .stub(ApprovedSignupsDAO, 'findByEmail')
-    .resolves(null);
-  sandbox()
-    .stub(ApprovedSignupsDAO, 'findById')
-    .resolves(null);
-
-  const [response, body] = await post('/users?approvedSignupId=abc-123', {
-    body: {
-      email: 'user@example.com',
-      name: 'Rick Owens',
-      password: 'rick_owens_la_4_lyfe',
-      phone: '323 931 4960'
-    }
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const subscriptions = await SubscriptionsDAO.findForUser(body.id, trx);
+    t.equal(subscriptions.length, 1);
+    t.equal(subscriptions[0].planId, plan.id);
+    t.notEqual(subscriptions[0].paymentMethodId, null);
   });
-
-  t.equal(response.status, 403, 'Is unauthorized');
-  t.equal(body.message, 'Sorry, this email address is not approved');
-});
-
-test('POST /users?approvedSignupId will fail if approval has been consumed', async (t: Test) => {
-  stubUserDependencies();
-  sandbox()
-    .stub(ApprovedSignupsDAO, 'findByEmail')
-    .resolves(null);
-  sandbox()
-    .stub(ApprovedSignupsDAO, 'findById')
-    .resolves({
-      consumedAt: new Date('2019-04-24')
-    });
-  const updateStub = sandbox()
-    .stub(ApprovalConsumer, 'default')
-    .resolves({});
-
-  const [response, body] = await post('/users?approvedSignupId=abc-123', {
-    body: {
-      email: 'user@example.com',
-      name: 'Rick Owens',
-      password: 'rick_owens_la_4_lyfe',
-      phone: '323 931 4960'
-    }
-  });
-
-  t.equal(response.status, 403, 'Is not authorized');
-  t.equal(body.message, 'Sorry, this email registration was already used');
-  t.equal(updateStub.callCount, 0, 'Never calls the update');
-});
-
-test('POST /users?approvedSignupId will succeed if id exists', async (t: Test) => {
-  stubUserDependencies();
-  sandbox()
-    .stub(ApprovedSignupsDAO, 'findByEmail')
-    .resolves(null);
-  sandbox()
-    .stub(ApprovedSignupsDAO, 'findById')
-    .resolves({});
-  const updateStub = sandbox()
-    .stub(ApprovalConsumer, 'default')
-    .resolves({});
-
-  const [response, body] = await post('/users?approvedSignupId=abc-123', {
-    body: {
-      email: 'user@example.com',
-      name: 'Rick Owens',
-      password: 'rick_owens_la_4_lyfe',
-      phone: '323 931 4960'
-    }
-  });
-
-  t.equal(response.status, 201, 'Is authorized');
-  t.deepEqual(pick(body, 'email', 'name'), {
-    email: 'user@example.com',
-    name: 'Rick Owens'
-  });
-  t.true(updateStub.calledOnce, 'Calls update once');
 });
