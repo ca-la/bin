@@ -14,6 +14,7 @@ import { ArtworkAttributeRow } from '../components/attributes/artwork-attributes
 import { MaterialAttributeRow } from '../components/attributes/material-attributes/domain-objects';
 import { SketchAttributeRow } from '../components/attributes/sketch-attributes/domain-objects';
 import { AssetRow } from '../components/assets/domain-object';
+import { DimensionAttributeRow } from '../components/attributes/dimension-attributes/domain-object';
 
 type EnrichedComponent = ComponentRow & {
   canvas_id: string;
@@ -43,6 +44,7 @@ async function portToPhidias(): Promise<void> {
     log('Removing all existing nodes');
     await trx.raw(`
 TRUNCATE TABLE artwork_attributes CASCADE;
+TRUNCATE TABLE dimension_attributes CASCADE;
 TRUNCATE TABLE material_attributes CASCADE;
 TRUNCATE TABLE sketch_attributes CASCADE;
 TRUNCATE TABLE design_root_nodes CASCADE;
@@ -132,6 +134,7 @@ async function portComponents(
 ): Promise<void> {
   const nodeInsertions: NodeRow[] = [];
   const artworkInsertions: ArtworkAttributeRow[] = [];
+  const dimensionInsertions: DimensionAttributeRow[] = [];
   const materialInsertions: MaterialAttributeRow[] = [];
   const sketchInsertions: SketchAttributeRow[] = [];
 
@@ -170,6 +173,15 @@ async function portComponents(
         width: artwork_asset.original_width_px || '0',
         height: artwork_asset.original_height_px || '0'
       });
+      dimensionInsertions.push({
+        id: uuid.v4(),
+        created_at: component.created_at,
+        created_by: component.created_by,
+        deleted_at: null,
+        node_id: component.id,
+        width: artwork_asset.original_width_px || '0',
+        height: artwork_asset.original_height_px || '0'
+      });
     }
 
     if (component.material_id) {
@@ -190,6 +202,15 @@ async function portComponents(
         deleted_at: null,
         node_id: component.id,
         asset_id: material_asset.id,
+        width: material_asset.original_width_px || '0',
+        height: material_asset.original_height_px || '0'
+      });
+      dimensionInsertions.push({
+        id: uuid.v4(),
+        created_at: component.created_at,
+        created_by: component.created_by,
+        deleted_at: null,
+        node_id: component.id,
         width: material_asset.original_width_px || '0',
         height: material_asset.original_height_px || '0'
       });
@@ -214,6 +235,15 @@ async function portComponents(
         width: sketch_asset.original_width_px || '0',
         height: sketch_asset.original_height_px || '0'
       });
+      dimensionInsertions.push({
+        id: uuid.v4(),
+        created_at: component.created_at,
+        created_by: component.created_by,
+        deleted_at: null,
+        node_id: component.id,
+        width: sketch_asset.original_width_px || '0',
+        height: sketch_asset.original_height_px || '0'
+      });
     }
   }
 
@@ -227,6 +257,14 @@ async function portComponents(
   for (const c of chunk(artworkInsertions, 10000)) {
     log(`Creating ${c.length} ArtworkAttributes`);
     await trx('artwork_attributes').insert(c);
+  }
+
+  log(
+    `Preparing ${dimensionInsertions.length} DimensionAttributes for insertion`
+  );
+  for (const c of chunk(dimensionInsertions, 10000)) {
+    log(`Creating ${c.length} DimensionAttributes`);
+    await trx('dimension_attributes').insert(c);
   }
 
   log(
