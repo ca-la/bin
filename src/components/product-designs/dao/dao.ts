@@ -7,10 +7,16 @@ import {
   isProductDesignRow,
   ProductDesignData,
   ProductDesignRow
-} from '../../../domain-objects/product-designs-new';
+} from '../domain-objects/product-designs-new';
 import first from '../../../services/first';
-import { validate } from '../../../services/validate-from-db';
+import { validate, validateEvery } from '../../../services/validate-from-db';
 import { queryWithCollectionMeta } from './index';
+import {
+  isProductDesignRowWithMeta,
+  ProductDesignDataWithMeta,
+  ProductDesignRowWithMeta,
+  withMetaDataAdapter
+} from '../domain-objects/with-meta';
 
 export const TABLE_NAME = 'product_designs';
 
@@ -147,9 +153,79 @@ AND designs.deleted_at IS null
   );
 }
 
+export async function findAllWithCostsAndEvents(
+  collectionId: string,
+  trx?: Knex.Transaction
+): Promise<ProductDesignDataWithMeta[]> {
+  const rows = await db
+    .select(
+      'd.*',
+      'cost_inputs.input_list AS cost_inputs',
+      'events.event_list AS events'
+    )
+    .from('product_designs AS d')
+    .joinRaw(
+      'INNER JOIN collection_designs AS cd ON cd.design_id = d.id AND cd.collection_id = ?',
+      [collectionId]
+    )
+    .joinRaw(
+      `
+left join (
+  select
+    e.design_id,
+    to_jsonb(
+      array_remove(
+        array_agg(
+          e.* ORDER BY e.created_at ASC
+        )
+      , null)
+    ) as event_list
+  from design_events as e
+  group by e.design_id
+) as events on events.design_id = d.id
+    `
+    )
+    .joinRaw(
+      `
+left join (
+  select
+    i.design_id,
+    to_jsonb(
+      array_remove(
+        array_agg(
+          i.* ORDER BY i.expires_at DESC NULLS FIRST
+        )
+      , null)
+    ) as input_list
+  from pricing_cost_inputs as i
+  group by i.design_id
+) as cost_inputs on cost_inputs.design_id = d.id
+    `
+    )
+    .where({
+      'd.deleted_at': null
+    })
+    .orderBy('d.created_at', 'DESC')
+    .modify(
+      (query: Knex.QueryBuilder): void => {
+        if (trx) {
+          query.transacting(trx);
+        }
+      }
+    );
+
+  return validateEvery<ProductDesignRowWithMeta, ProductDesignDataWithMeta>(
+    TABLE_NAME,
+    isProductDesignRowWithMeta,
+    withMetaDataAdapter,
+    rows
+  );
+}
+
 module.exports = {
   findAllDesignIdsThroughCollaborator,
   findAllDesignsThroughCollaborator,
+  findAllWithCostsAndEvents,
   findDesignByAnnotationId,
   findDesignByTaskId
 };

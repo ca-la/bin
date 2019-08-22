@@ -1,10 +1,10 @@
-import { sandbox, test, Test } from '../../../test-helpers/fresh';
-import * as DesignsDAO from '../../product-designs/dao';
-import * as CostInputsDAO from '../../pricing-cost-inputs/dao';
-import * as DesignEventsDAO from '../../../dao/design-events';
-import * as NotificationsService from '../../../services/create-notifications';
+import { sandbox, test, Test } from '../../../../test-helpers/fresh';
+import * as DesignsDAO from '../../../product-designs/dao';
+import * as CostInputsDAO from '../../../pricing-cost-inputs/dao';
+import * as DesignEventsDAO from '../../../../dao/design-events';
+import * as NotificationsService from '../../../../services/create-notifications';
 
-import { commitCostInputs } from './commit-cost-inputs';
+import { commitCostInputs } from '.';
 
 test('commitCostInputs commits cost inputs', async (t: Test) => {
   const findByCollectionStub = sandbox()

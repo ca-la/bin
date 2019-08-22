@@ -330,163 +330,7 @@ test('CollectionsDAO#removeDesign removes a design from a collection', async (t:
   );
 });
 
-test('CollectionsDAO.getStatusById', async (t: tape.Test) => {
-  const { user: designer } = await createUser({ withSession: false });
-  const { user: admin } = await createUser({ withSession: false });
-
-  const createdCollection = await CollectionsDAO.create({
-    createdAt: new Date(),
-    createdBy: designer.id,
-    deletedAt: null,
-    description: 'Initial commit',
-    id: uuid.v4(),
-    title: 'Drop 001/The Early Years'
-  });
-
-  const initialStatus = await CollectionsDAO.getStatusById(
-    createdCollection.id
-  );
-  t.deepEqual(
-    initialStatus,
-    {
-      collectionId: createdCollection.id,
-      isCosted: false,
-      isPaired: false,
-      isQuoted: false,
-      isSubmitted: false
-    },
-    'Empty collection is in a fully-false state'
-  );
-
-  const createdDesigns = await Promise.all([
-    ProductDesignsDAO.create({
-      productType: 'HELMET',
-      title: 'Vader Mask',
-      userId: designer.id
-    }),
-    ProductDesignsDAO.create({
-      productType: 'HELMET',
-      title: 'Stormtrooper Helmet',
-      userId: designer.id
-    })
-  ]);
-  await CollectionsDAO.addDesign(createdCollection.id, createdDesigns[0].id);
-  await CollectionsDAO.addDesign(createdCollection.id, createdDesigns[1].id);
-
-  await DesignEventsDAO.create({
-    actorId: designer.id,
-    bidId: null,
-    createdAt: new Date(2012, 11, 23),
-    designId: createdDesigns[0].id,
-    id: uuid.v4(),
-    quoteId: null,
-    targetId: null,
-    type: 'SUBMIT_DESIGN'
-  });
-
-  await DesignEventsDAO.create({
-    actorId: designer.id,
-    bidId: null,
-    createdAt: new Date(2012, 11, 23),
-    designId: createdDesigns[1].id,
-    id: uuid.v4(),
-    quoteId: null,
-    targetId: null,
-    type: 'SUBMIT_DESIGN'
-  });
-
-  const submittedStatus = await CollectionsDAO.getStatusById(
-    createdCollection.id
-  );
-
-  t.deepEqual(submittedStatus, {
-    collectionId: createdCollection.id,
-    isCosted: false,
-    isPaired: false,
-    isQuoted: false,
-    isSubmitted: true
-  });
-
-  await DesignEventsDAO.create({
-    actorId: admin.id,
-    bidId: null,
-    createdAt: new Date(2012, 11, 23),
-    designId: createdDesigns[0].id,
-    id: uuid.v4(),
-    quoteId: null,
-    targetId: designer.id,
-    type: 'COMMIT_COST_INPUTS'
-  });
-
-  await DesignEventsDAO.create({
-    actorId: admin.id,
-    bidId: null,
-    createdAt: new Date(2012, 11, 23),
-    designId: createdDesigns[1].id,
-    id: uuid.v4(),
-    quoteId: null,
-    targetId: designer.id,
-    type: 'COMMIT_COST_INPUTS'
-  });
-
-  const costedStatus = await CollectionsDAO.getStatusById(createdCollection.id);
-
-  t.deepEqual(costedStatus, {
-    collectionId: createdCollection.id,
-    isCosted: true,
-    isPaired: false,
-    isQuoted: false,
-    isSubmitted: true
-  });
-
-  await DesignEventsDAO.create({
-    actorId: designer.id,
-    bidId: null,
-    createdAt: new Date(2012, 11, 23),
-    designId: createdDesigns[0].id,
-    id: uuid.v4(),
-    quoteId: null,
-    targetId: null,
-    type: 'COMMIT_QUOTE'
-  });
-
-  await DesignEventsDAO.create({
-    actorId: designer.id,
-    bidId: null,
-    createdAt: new Date(2012, 11, 23),
-    designId: createdDesigns[1].id,
-    id: uuid.v4(),
-    quoteId: null,
-    targetId: null,
-    type: 'COMMIT_QUOTE'
-  });
-
-  const quotedStatus = await CollectionsDAO.getStatusById(createdCollection.id);
-
-  t.deepEqual(quotedStatus, {
-    collectionId: createdCollection.id,
-    isCosted: true,
-    isPaired: false,
-    isQuoted: true,
-    isSubmitted: true
-  });
-
-  await ProductDesignsDAO.deleteById(createdDesigns[0].id);
-
-  const stillQuotedStatus = await CollectionsDAO.getStatusById(
-    createdCollection.id
-  );
-
-  t.deepEqual(stillQuotedStatus, {
-    collectionId: createdCollection.id,
-    isCosted: true,
-    isPaired: false,
-    isQuoted: true,
-    isSubmitted: true
-  });
-});
-
-test('CollectionsDAO#findWithUncostedDesigns finds all collections with uncosted designs', async (t: tape.Test) => {
+test('findSubmittedButUnpaidCollections finds all submitted but unpaid collections', async (t: tape.Test) => {
   const { user } = await createUser({ role: 'ADMIN' });
   const { user: user2 } = await createUser();
 
@@ -631,7 +475,7 @@ test('CollectionsDAO#findWithUncostedDesigns finds all collections with uncosted
     targetId: user.id,
     type: 'SUBMIT_DESIGN'
   };
-  const costEvent1: DesignEvent = {
+  const paymentEvent1: DesignEvent = {
     actorId: user.id,
     bidId: null,
     createdAt: new Date(),
@@ -639,9 +483,9 @@ test('CollectionsDAO#findWithUncostedDesigns finds all collections with uncosted
     id: uuid.v4(),
     quoteId: null,
     targetId: user2.id,
-    type: 'COMMIT_COST_INPUTS'
+    type: 'COMMIT_QUOTE'
   };
-  const costEvent2: DesignEvent = {
+  const paymentEvent2: DesignEvent = {
     actorId: user.id,
     bidId: null,
     createdAt: new Date(),
@@ -649,9 +493,9 @@ test('CollectionsDAO#findWithUncostedDesigns finds all collections with uncosted
     id: uuid.v4(),
     quoteId: null,
     targetId: user2.id,
-    type: 'COMMIT_COST_INPUTS'
+    type: 'COMMIT_QUOTE'
   };
-  const costEvent3: DesignEvent = {
+  const paymentEvent3: DesignEvent = {
     actorId: user.id,
     bidId: null,
     createdAt: new Date(),
@@ -659,9 +503,9 @@ test('CollectionsDAO#findWithUncostedDesigns finds all collections with uncosted
     id: uuid.v4(),
     quoteId: null,
     targetId: user2.id,
-    type: 'COMMIT_COST_INPUTS'
+    type: 'COMMIT_QUOTE'
   };
-  const costEvent4: DesignEvent = {
+  const paymentEvent4: DesignEvent = {
     actorId: user.id,
     bidId: null,
     createdAt: new Date(),
@@ -669,7 +513,7 @@ test('CollectionsDAO#findWithUncostedDesigns finds all collections with uncosted
     id: uuid.v4(),
     quoteId: null,
     targetId: user2.id,
-    type: 'COMMIT_COST_INPUTS'
+    type: 'COMMIT_QUOTE'
   };
 
   await DesignEventsDAO.createAll([
@@ -683,10 +527,10 @@ test('CollectionsDAO#findWithUncostedDesigns finds all collections with uncosted
   ]);
 
   await DesignEventsDAO.createAll([
-    costEvent1,
-    costEvent2,
-    costEvent3,
-    costEvent4
+    paymentEvent1,
+    paymentEvent2,
+    paymentEvent3,
+    paymentEvent4
   ]);
 
   await CollectionsDAO.moveDesign(collection5.id, design5.id);
@@ -703,7 +547,7 @@ test('CollectionsDAO#findWithUncostedDesigns finds all collections with uncosted
   });
 
   await ProductDesignsDAO.deleteById(designDeleted.id);
-  const response = await CollectionsDAO.findWithUncostedDesigns();
+  const response = await CollectionsDAO.findSubmittedButUnpaidCollections();
 
   t.equal(response.length, 1, 'Only one collection is returned');
   t.deepEqual(

@@ -11,10 +11,6 @@ import Collection, {
   UPDATABLE_PROPERTIES
 } from './domain-object';
 import { CollectionDesignRow } from '../../domain-objects/collection-design';
-import CollectionSubmissionStatus, {
-  CollectionSubmissionStatusRow,
-  dataAdapter as collectionSubmissionStatusAdapter
-} from '../../domain-objects/collection-submission-status';
 import ProductDesign = require('../product-designs/domain-objects/product-design');
 import * as ProductDesignsDAO from '../product-designs/dao';
 
@@ -197,7 +193,12 @@ export async function findByDesign(
   return collections;
 }
 
-export async function findWithUncostedDesigns(): Promise<Collection[]> {
+/**
+ * Finds all submitted but unpaid for collections
+ */
+export async function findSubmittedButUnpaidCollections(): Promise<
+  Collection[]
+> {
   const collections: CollectionRow[] = await db(TABLE_NAME)
     .select('collections.*')
     .distinct('collections.id')
@@ -220,7 +221,7 @@ JOIN (
     AND NOT EXISTS (
     SELECT * from design_events AS de2
     WHERE de1.design_id = de2.design_id
-      AND de2.type = 'COMMIT_COST_INPUTS')
+      AND de2.type = 'COMMIT_QUOTE')
 ) AS de
   ON de.design_id = cd.design_id
     `
@@ -267,70 +268,4 @@ export async function removeDesign(
     .del()
     .catch(rethrow);
   return ProductDesignsDAO.findByCollectionId(collectionId);
-}
-
-export async function getStatusById(
-  collectionId: string
-): Promise<CollectionSubmissionStatus> {
-  const submissionStatus = await db
-    .raw(
-      `
-SELECT
-    c.id AS collection_id,
-    count(d.id) > 0 AND (SELECT COUNT(DISTINCT cd.design_id)
-       FROM collection_designs as cd
-       JOIN design_events AS de
-         ON cd.design_id = de.design_id
-        AND de.type = 'SUBMIT_DESIGN'
-       JOIN product_designs as d
-         ON cd.design_id = d.id AND d.deleted_at IS NULL
-      WHERE cd.collection_id = c.id) = count(d.id) AS is_submitted,
-
-    count(d.id) > 0 AND (SELECT COUNT(DISTINCT cd.design_id)
-       FROM collection_designs as cd
-       JOIN design_events AS de
-         ON cd.design_id = de.design_id
-        AND de.type = 'COMMIT_COST_INPUTS'
-       JOIN product_designs as d
-         ON cd.design_id = d.id AND d.deleted_at IS NULL
-      WHERE cd.collection_id = c.id) = count(d.id) AS is_costed,
-
-    count(d.id) > 0 AND (SELECT COUNT(DISTINCT cd.design_id)
-       FROM collection_designs as cd
-       JOIN design_events AS de
-         ON cd.design_id = de.design_id
-        AND de.type = 'COMMIT_QUOTE'
-       JOIN product_designs as d
-         ON cd.design_id = d.id AND d.deleted_at IS NULL
-      WHERE cd.collection_id = c.id) = count(d.id) AS is_quoted,
-
-    count(d.id) > 0 AND (SELECT COUNT(DISTINCT cd.design_id)
-       FROM collection_designs as cd
-       JOIN design_events AS de
-         ON cd.design_id = de.design_id
-        AND de.type = 'COMMIT_PARTNER_PAIRING'
-       JOIN product_designs as d
-         ON cd.design_id = d.id AND d.deleted_at IS NULL
-      WHERE cd.collection_id = c.id) = count(d.id) AS is_paired
-
-  FROM collections AS c
-
-  LEFT JOIN collection_designs AS cd ON cd.collection_id = c.id
-  LEFT JOIN product_designs AS d ON cd.design_id = d.id AND d.deleted_at IS NULL
-
- WHERE c.id = ? AND c.deleted_at IS NULL
- GROUP BY c.id;
-`,
-      [collectionId]
-    )
-    .then((rawResult: any): CollectionSubmissionStatusRow[] => rawResult.rows)
-    .then((rows: CollectionSubmissionStatusRow[]) =>
-      first<CollectionSubmissionStatusRow>(rows)
-    );
-
-  if (!submissionStatus) {
-    throw new Error(`Cannot find status of collection ${collectionId}`);
-  }
-
-  return collectionSubmissionStatusAdapter.parse(submissionStatus);
 }

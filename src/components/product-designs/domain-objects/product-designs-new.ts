@@ -1,5 +1,5 @@
-import { hasProperties } from '../services/require-properties';
-import DataAdapter from '../services/data-adapter';
+import { hasProperties } from '../../../services/require-properties';
+import DataAdapter from '../../../services/data-adapter';
 
 export interface ProductDesignData {
   id: string;

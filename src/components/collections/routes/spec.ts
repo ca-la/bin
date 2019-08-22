@@ -11,9 +11,10 @@ import * as API from '../../../test-helpers/http';
 import { sandbox, test } from '../../../test-helpers/fresh';
 import * as CreateNotifications from '../../../services/create-notifications';
 import * as DesignTasksService from '../../../services/create-design-tasks';
-import { stubFindWithUncostedDesigns } from '../../../test-helpers/stubs/collections-dao';
+import { stubFetchUncostedWithLabels } from '../../../test-helpers/stubs/collections';
 import Collection from '../domain-object';
 import generateCollaborator from '../../../test-helpers/factories/collaborator';
+import * as SubmissionStatusService from '../services/determine-submission-status';
 
 test('GET /collections/:id returns a created collection', async (t: tape.Test) => {
   const { session, user } = await createUser();
@@ -551,7 +552,8 @@ test('POST /collections/:id/submissions', async (t: tape.Test) => {
       isCosted: false,
       isPaired: false,
       isQuoted: false,
-      isSubmitted: true
+      isSubmitted: true,
+      pricingExpiresAt: null
     },
     'Returns current submission status'
   );
@@ -621,162 +623,77 @@ test('POST /collections/:id/submissions', async (t: tape.Test) => {
       isCosted: false,
       isPaired: false,
       isQuoted: false,
-      isSubmitted: true
+      isSubmitted: true,
+      pricingExpiresAt: null
     },
     'Returns current submission status'
   );
 });
 
 test('GET /collections/:collectionId/submissions', async (t: tape.Test) => {
-  sandbox()
-    .stub(CreateNotifications, 'sendDesignerSubmitCollection')
-    .resolves();
-
   const designer = await createUser();
-  const admin = await createUser({ role: 'ADMIN' });
-  const collaborator = await createUser();
-  const collection = await CollectionsDAO.create({
+  const rando = await createUser();
+  const collectionId = uuid.v4();
+  await CollectionsDAO.create({
     createdAt: new Date(),
     createdBy: designer.user.id,
     deletedAt: null,
     description: 'Initial commit',
-    id: uuid.v4(),
+    id: collectionId,
     title: 'Drop 001/The Early Years'
   });
-  await generateCollaborator({
-    collectionId: collection.id,
-    designId: null,
-    invitationMessage: '',
-    role: 'EDIT',
-    userEmail: null,
-    userId: collaborator.user.id
-  });
-  const designOne = await ProductDesignsDAO.create({
-    description: 'Generic Shirt',
-    productType: 'TEESHIRT',
-    title: 'T-Shirt One',
-    userId: designer.user.id
-  });
-  const designTwo = await ProductDesignsDAO.create({
-    description: 'Generic Shirt',
-    productType: 'TEESHIRT',
-    title: 'T-Shirt Two',
-    userId: designer.user.id
-  });
-  await CollectionsDAO.moveDesign(collection.id, designOne.id);
-  await CollectionsDAO.moveDesign(collection.id, designTwo.id);
 
-  const statusOne = await API.get(`/collections/${collection.id}/submissions`, {
+  const statusStub = sandbox()
+    .stub(SubmissionStatusService, 'determineSubmissionStatus')
+    .resolves({
+      collectionId,
+      isCosted: false,
+      isPaired: false,
+      isQuoted: false,
+      isSubmitted: false,
+      pricingExpiresAt: null
+    });
+  const statusOne = await API.get(`/collections/${collectionId}/submissions`, {
     headers: API.authHeader(designer.session.id)
   });
-
   t.equal(statusOne[0].status, 200);
   t.deepEqual(statusOne[1], {
-    collectionId: collection.id,
+    collectionId,
     isCosted: false,
     isPaired: false,
     isQuoted: false,
-    isSubmitted: false
+    isSubmitted: false,
+    pricingExpiresAt: null
   });
 
-  await API.post(`/collections/${collection.id}/submissions`, {
-    body: {
-      collectionId: collection.id,
-      createdAt: new Date(),
-      createdBy: designer.user.id,
-      deletedAt: null,
-      id: uuid.v4(),
-      needsDesignConsulting: true,
-      needsFulfillment: true,
-      needsPackaging: true
-    },
+  statusStub.resolves({
+    collectionId,
+    isCosted: true,
+    isPaired: false,
+    isQuoted: false,
+    isSubmitted: true,
+    pricingExpiresAt: new Date('2019-04-20')
+  });
+  const statusTwo = await API.get(`/collections/${collectionId}/submissions`, {
     headers: API.authHeader(designer.session.id)
   });
-
-  const statusTwo = await API.get(`/collections/${collection.id}/submissions`, {
-    headers: API.authHeader(designer.session.id)
-  });
-
   t.equal(statusTwo[0].status, 200);
   t.deepEqual(statusTwo[1], {
-    collectionId: collection.id,
-    isCosted: false,
+    collectionId,
+    isCosted: true,
     isPaired: false,
     isQuoted: false,
-    isSubmitted: true
-  });
-
-  const commitEvent = {
-    actorId: admin.user.id,
-    targetId: designer.user.id,
-    type: 'COMMIT_COST_INPUTS'
-  };
-
-  await API.post(`/product-designs/${designOne.id}/events`, {
-    body: [commitEvent],
-    headers: API.authHeader(admin.session.id)
-  });
-  await API.post(`/product-designs/${designTwo.id}/events`, {
-    body: [commitEvent],
-    headers: API.authHeader(admin.session.id)
+    isSubmitted: true,
+    pricingExpiresAt: new Date('2019-04-20').toISOString()
   });
 
   const statusThree = await API.get(
-    `/collections/${collection.id}/submissions`,
-    { headers: API.authHeader(designer.session.id) }
+    `/collections/${collectionId}/submissions`,
+    {
+      headers: API.authHeader(rando.session.id)
+    }
   );
-
-  t.equal(statusThree[0].status, 200);
-  t.deepEqual(statusThree[1], {
-    collectionId: collection.id,
-    isCosted: true,
-    isPaired: false,
-    isQuoted: false,
-    isSubmitted: true
-  });
-
-  const commitQuoteEvent = {
-    actorId: designer.user.id,
-    targetId: null,
-    type: 'COMMIT_QUOTE'
-  };
-
-  await API.post(`/product-designs/${designOne.id}/events`, {
-    body: [commitQuoteEvent],
-    headers: API.authHeader(designer.session.id)
-  });
-  await API.post(`/product-designs/${designTwo.id}/events`, {
-    body: [commitQuoteEvent],
-    headers: API.authHeader(designer.session.id)
-  });
-
-  const statusFour = await API.get(
-    `/collections/${collection.id}/submissions`,
-    { headers: API.authHeader(designer.session.id) }
-  );
-
-  t.equal(statusFour[0].status, 200);
-  t.deepEqual(statusFour[1], {
-    collectionId: collection.id,
-    isCosted: true,
-    isPaired: false,
-    isQuoted: true,
-    isSubmitted: true
-  });
-
-  const collaboratorGet = await API.get(
-    `/collections/${collection.id}/submissions`,
-    { headers: API.authHeader(collaborator.session.id) }
-  );
-
-  t.equal(collaboratorGet[0].status, 200);
-  t.deepEqual(collaboratorGet[1], {
-    collectionId: collection.id,
-    isCosted: true,
-    isPaired: false,
-    isQuoted: true,
-    isSubmitted: true
-  });
+  t.equal(statusThree[0].status, 403);
 });
 
 test('POST /collections/:collectionId/cost-inputs', async (t: tape.Test) => {
@@ -965,7 +882,7 @@ test('GET /collections?isSubmitted=true&isCosted=false returns collections with 
   const { session: sessionAdmin } = await createUser({ role: 'ADMIN' });
   const { session: sessionUser } = await createUser();
 
-  const { collections } = stubFindWithUncostedDesigns();
+  const { collections } = stubFetchUncostedWithLabels();
   const [responseOk, bodyOk] = await API.get(
     '/collections?isSubmitted=true&isCosted=false',
     {

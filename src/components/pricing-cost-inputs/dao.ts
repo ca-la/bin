@@ -117,6 +117,7 @@ export async function findById(id: string): Promise<PricingCostInput | null> {
   const withoutProcesses: WithoutProcesses | null = await db(TABLE_NAME)
     .select('*')
     .where({ id, deleted_at: null })
+    .andWhereRaw('(expires_at IS null OR expires_at > now())')
     .first();
 
   if (!withoutProcesses) {
@@ -135,6 +136,7 @@ export async function findByDesignId(
   const withoutProcesses: WithoutProcesses[] = await db(TABLE_NAME)
     .select('*')
     .where({ design_id: designId, deleted_at: null })
+    .andWhereRaw('(expires_at IS null OR expires_at > now())')
     .orderBy('created_at', 'DESC')
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {

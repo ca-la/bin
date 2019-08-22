@@ -1,16 +1,18 @@
 import * as Koa from 'koa';
 import * as uuid from 'node-uuid';
-import CollectionSubmissionStatus from '../../../domain-objects/collection-submission-status';
 import CollectionService, {
   isCollectionService
 } from '../../../domain-objects/collection-service';
-import * as CollectionsDAO from '../dao';
 import * as CollectionServicesDAO from '../../../dao/collection-services';
 import * as ProductDesignsDAO from '../../product-designs/dao';
 import * as DesignEventsDAO from '../../../dao/design-events';
 import ProductDesign = require('../../product-designs/domain-objects/product-design');
 import * as CreateNotifications from '../../../services/create-notifications';
 import attachDefaults from '../../../services/attach-defaults';
+import {
+  CollectionSubmissionStatus,
+  determineSubmissionStatus
+} from '../services/determine-submission-status';
 
 export function* createSubmission(
   this: Koa.Application.Context
@@ -47,7 +49,7 @@ export function* createSubmission(
       })
     );
     CreateNotifications.sendDesignerSubmitCollection(collectionId, userId);
-    const submissionStatus = yield CollectionsDAO.getStatusById(collectionId);
+    const submissionStatus = yield determineSubmissionStatus(collectionId);
     this.status = 201;
     this.body = submissionStatus;
   } else {
@@ -59,7 +61,7 @@ export function* getSubmissionStatus(
   this: Koa.Application.Context
 ): AsyncIterableIterator<CollectionSubmissionStatus> {
   const { collectionId } = this.params;
-  const submissionStatus = yield CollectionsDAO.getStatusById(collectionId);
+  const submissionStatus = yield determineSubmissionStatus(collectionId);
 
   this.status = 200;
   this.body = submissionStatus;

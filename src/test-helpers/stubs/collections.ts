@@ -1,9 +1,9 @@
-import { sandbox } from '../../test-helpers/fresh';
+import { sandbox } from '../fresh';
 import * as Sinon from 'sinon';
-import * as CollectionsDAO from '../../components/collections/dao';
+import * as FetchService from '../../components/collections/services/fetch-with-labels';
 import Collection from '../../components/collections/domain-object';
 
-export const stubFindWithUncostedDesigns = (): {
+export const stubFetchUncostedWithLabels = (): {
   collections: Collection[];
   stub: Sinon.SinonStub;
 } => {
@@ -14,7 +14,8 @@ export const stubFindWithUncostedDesigns = (): {
       deletedAt: null,
       description: '',
       id: '48b54194-257f-42a3-a6a2-31e91862a463',
-      title: 'unsubmitted test collection'
+      title: 'unsubmitted test collection',
+      label: 'Needs Costing'
     },
     {
       createdAt: new Date('2019-02-05T19:59:45.239Z'),
@@ -22,12 +23,13 @@ export const stubFindWithUncostedDesigns = (): {
       deletedAt: null,
       description: '',
       id: '4e92fdf8-fc6c-4d33-96f6-ba325d9ab5e8',
-      title: 'jhadfkjhas'
+      title: 'jhadfkjhas',
+      label: 'Needs Costing'
     }
   ];
 
   const stub = sandbox()
-    .stub(CollectionsDAO, 'findWithUncostedDesigns')
+    .stub(FetchService, 'fetchUncostedWithLabels')
     .resolves(collections);
 
   return {

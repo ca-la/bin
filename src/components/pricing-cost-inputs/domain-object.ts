@@ -7,7 +7,7 @@ import {
 import { hasProperties } from '../../services/require-properties';
 import DataAdapter from '../../services/data-adapter';
 
-export interface PricingCostInputWithoutVersions {
+export interface BasePricingCostInput {
   id: string;
   createdAt: Date;
   deletedAt: Date | null;
@@ -17,6 +17,9 @@ export interface PricingCostInputWithoutVersions {
   productComplexity: Complexity;
   materialCategory: MaterialCategory;
   materialBudgetCents?: number;
+}
+
+export interface PricingCostInputWithoutVersions extends BasePricingCostInput {
   processes: Process[];
 }
 
@@ -31,7 +34,7 @@ export default interface PricingCostInput
   processTimelinesVersion: number;
 }
 
-export interface PricingCostInputRowWithoutVersions {
+export interface BasePricingCostInputRow {
   id: string;
   created_at: Date;
   deleted_at: Date | null;
@@ -41,6 +44,10 @@ export interface PricingCostInputRowWithoutVersions {
   product_complexity: Complexity;
   material_category: MaterialCategory;
   material_budget_cents?: number;
+}
+
+export interface PricingCostInputRowWithoutVersions
+  extends BasePricingCostInputRow {
   processes: Process[];
 }
 
@@ -63,6 +70,11 @@ export const dataAdapter = new DataAdapter<
 export const dataAdapterWithoutVersions = new DataAdapter<
   PricingCostInputRowWithoutVersions,
   PricingCostInputWithoutVersions
+>();
+
+export const baseDataAdapter = new DataAdapter<
+  BasePricingCostInputRow,
+  BasePricingCostInput
 >();
 
 export function isUnsavedPricingCostInput(

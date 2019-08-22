@@ -28,6 +28,7 @@ import {
   Permissions
 } from '../../../services/get-permissions';
 import { commitCostInputs, createPartnerPairing } from './admin';
+import { fetchUncostedWithLabels } from '../services/fetch-with-labels';
 
 const router = new Router();
 
@@ -118,7 +119,7 @@ function* getList(
     isCosted === 'false' &&
     isSubmitted === 'true'
   ) {
-    this.body = yield CollectionsDAO.findWithUncostedDesigns();
+    this.body = yield fetchUncostedWithLabels();
     this.status = 200;
   } else {
     this.throw(403, 'Unable to match query');

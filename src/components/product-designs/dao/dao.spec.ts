@@ -4,6 +4,7 @@ import * as uuid from 'node-uuid';
 import { deleteById, findById } from './';
 import {
   findAllDesignsThroughCollaborator,
+  findAllWithCostsAndEvents,
   findDesignByAnnotationId,
   findDesignByTaskId
 } from './dao';
@@ -25,6 +26,10 @@ import generateAnnotation from '../../../test-helpers/factories/product-design-c
 import generateProductDesignStage from '../../../test-helpers/factories/product-design-stage';
 import generateTask from '../../../test-helpers/factories/task';
 import generateAsset from '../../../test-helpers/factories/asset';
+import omit = require('lodash/omit');
+import generateDesignEvent from '../../../test-helpers/factories/design-event';
+import generatePricingCostInput from '../../../test-helpers/factories/pricing-cost-input';
+import generatePricingValues from '../../../test-helpers/factories/pricing-values';
 
 test('ProductDesignCanvases DAO supports creation/retrieval, enriched with image links', async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
@@ -298,5 +303,157 @@ test('findDesignByTaskId', async (t: tape.Test) => {
     designTwo,
     null,
     'Returns null if a resource in the chain was deleted'
+  );
+});
+
+test('findAllWithCostsAndEvents base cases', async (t: tape.Test) => {
+  const { user: u1 } = await createUser({ withSession: false });
+  const { collection: c1 } = await generateCollection({ createdBy: u1.id });
+  const { collection: c2 } = await generateCollection({ createdBy: u1.id });
+  const d1 = await createDesign({
+    productType: 'TEESHIRT',
+    title: 'd1',
+    userId: u1.id
+  });
+  const d2 = await createDesign({
+    productType: 'PANTS',
+    title: 'd2',
+    userId: u1.id
+  });
+  await CollectionsDAO.addDesign(c1.id, d1.id);
+
+  const results = await findAllWithCostsAndEvents(c1.id);
+  t.deepEqual(
+    results,
+    [
+      {
+        ...omit(d1, 'collectionIds', 'collections', 'imageIds', 'imageLinks'),
+        costInputs: [],
+        events: [],
+        previewImageUrls: null
+      }
+    ],
+    'Returns the design with no events or cost inputs'
+  );
+
+  const results2 = await findAllWithCostsAndEvents(c2.id);
+  t.deepEqual(results2, [], 'Returns an empty list if there are no designs');
+
+  await CollectionsDAO.addDesign(c1.id, d2.id);
+  const results3 = await findAllWithCostsAndEvents(c1.id);
+  t.deepEqual(
+    results3,
+    [
+      {
+        ...omit(d2, 'collectionIds', 'collections', 'imageIds', 'imageLinks'),
+        costInputs: [],
+        events: [],
+        previewImageUrls: null
+      },
+      {
+        ...omit(d1, 'collectionIds', 'collections', 'imageIds', 'imageLinks'),
+        costInputs: [],
+        events: [],
+        previewImageUrls: null
+      }
+    ],
+    'Returns the design with no events or cost inputs'
+  );
+});
+
+test('findAllWithCostsAndEvents +1 case', async (t: tape.Test) => {
+  await generatePricingValues();
+
+  const { user: u1 } = await createUser({ withSession: false });
+  const { collection: c1 } = await generateCollection({ createdBy: u1.id });
+  const d1 = await createDesign({
+    productType: 'TEESHIRT',
+    title: 'd1',
+    userId: u1.id
+  });
+  const d2 = await createDesign({
+    productType: 'PANTALOONES',
+    title: 'd2',
+    userId: u1.id
+  });
+  await CollectionsDAO.addDesign(c1.id, d1.id);
+  await CollectionsDAO.addDesign(c1.id, d2.id);
+
+  const { designEvent: de1 } = await generateDesignEvent({
+    createdAt: new Date('2019-04-20'),
+    designId: d1.id,
+    type: 'SUBMIT_DESIGN'
+  });
+  const { designEvent: de2 } = await generateDesignEvent({
+    createdAt: new Date('2019-04-20'),
+    designId: d2.id,
+    type: 'SUBMIT_DESIGN'
+  });
+  const { designEvent: de3 } = await generateDesignEvent({
+    createdAt: new Date('2019-04-21'),
+    designId: d2.id,
+    type: 'COMMIT_COST_INPUTS'
+  });
+  const { pricingCostInput: ci1 } = await generatePricingCostInput({
+    designId: d2.id
+  });
+
+  const results = await findAllWithCostsAndEvents(c1.id);
+
+  t.equal(results.length, 2, 'Returns the two designs');
+
+  // First Item
+  t.deepEqual(
+    omit(results[0], 'costInputs', 'events'),
+    {
+      ...omit(d2, 'collectionIds', 'collections', 'imageIds', 'imageLinks'),
+      previewImageUrls: null
+    },
+    'Returns the latest made design first'
+  );
+  t.equal(results[0].events.length, 2, 'Returns the two design events');
+  t.deepEqual(
+    {
+      ...results[0].events[0],
+      createdAt: new Date(results[0].events[0].createdAt)
+    },
+    de2,
+    'Returns the oldest design event first'
+  );
+  t.deepEqual(
+    {
+      ...results[0].events[1],
+      createdAt: new Date(results[0].events[1].createdAt)
+    },
+    de3,
+    'Returns the newest design event last'
+  );
+  t.equal(results[0].costInputs.length, 1, 'Returns a single cost input');
+  t.deepEqual(
+    {
+      ...results[0].costInputs[0],
+      createdAt: new Date(results[0].costInputs[0].createdAt)
+    },
+    omit(ci1, 'processes'),
+    'Returns the first cost input'
+  );
+
+  // Second Item
+  t.deepEqual(
+    omit(results[1], 'costInputs', 'events'),
+    {
+      ...omit(d1, 'collectionIds', 'collections', 'imageIds', 'imageLinks'),
+      previewImageUrls: null
+    },
+    'Returns the first created design last'
+  );
+  t.deepEqual(results[1].costInputs, [], 'Returns no cost inputs');
+  t.deepEqual(results[1].events.length, 1, 'Returns a single event');
+  t.deepEqual(
+    {
+      ...results[1].events[0],
+      createdAt: new Date(results[1].events[0].createdAt)
+    },
+    de1
   );
 });
