@@ -8,12 +8,14 @@ import MaterialAttributeWithAsset from '../../attributes/material-attributes/dom
 import SketchAttributeWithAsset from '../../attributes/sketch-attributes/domain-objects/with-asset';
 import { findNodeTrees, findRootNodesByDesign } from '../dao';
 import { findAllByNodes as findAllArtworks } from '../../attributes/artwork-attributes/dao';
+import { findAllByNodes as findAllDimensions } from '../../attributes/dimension-attributes/dao';
 import { findAllByNodes as findAllMaterials } from '../../attributes/material-attributes/dao';
 import { findAllByNodes as findAllSketches } from '../../attributes/sketch-attributes/dao';
 import {
   AssetLinks,
   getLinksForAsset
 } from '../../../services/attach-asset-links';
+import DimensionAttribute from '../../attributes/dimension-attributes/domain-object';
 
 interface AssetWithLinks extends Asset {
   assetLinks: AssetLinks | null;
@@ -25,6 +27,7 @@ export interface NodeResources {
     artworks: ArtworkAttribute[];
     materials: MaterialAttribute[];
     sketches: SketchAttribute[];
+    dimensions: DimensionAttribute[];
   };
   nodes: Node[];
 }
@@ -69,6 +72,8 @@ export async function getAllByDesign(designId: string): Promise<NodeResources> {
     }
   );
 
+  const dimensions = await findAllDimensions(allNodeIds);
+
   const assetSet = [...artworkAssets, ...materialAssets, ...sketchAssets];
   const assetsWithLinks = assetSet.map(
     (asset: Asset): AssetWithLinks => {
@@ -84,7 +89,8 @@ export async function getAllByDesign(designId: string): Promise<NodeResources> {
     attributes: {
       artworks: plainArtworks,
       materials: plainMaterials,
-      sketches: plainSketches
+      sketches: plainSketches,
+      dimensions
     },
     nodes: allNodes
   };

@@ -11,6 +11,7 @@ test(`GET ${API_PATH} returns a node resource object for a specific design`, asy
     assets: [],
     attributes: {
       artworks: [],
+      dimensions: [],
       materials: [],
       sketches: []
     },

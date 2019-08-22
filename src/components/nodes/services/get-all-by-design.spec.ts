@@ -6,6 +6,7 @@ import { sandbox, test } from '../../../test-helpers/fresh';
 import { getAllByDesign } from './get-all-by-design';
 import * as NodesDAO from '../dao';
 import * as ArtworksDAO from '../../attributes/artwork-attributes/dao';
+import * as DimensionsDAO from '../../attributes/dimension-attributes/dao';
 import * as MaterialsDAO from '../../attributes/material-attributes/dao';
 import * as SketchesDAO from '../../attributes/sketch-attributes/dao';
 import generateNode from '../../../test-helpers/factories/node';
@@ -25,6 +26,9 @@ test('getAllByDesign can handle the empty case', async (t: tape.Test) => {
   const artworkStub = sandbox()
     .stub(ArtworksDAO, 'findAllByNodes')
     .resolves([]);
+  const dimensionStub = sandbox()
+    .stub(DimensionsDAO, 'findAllByNodes')
+    .resolves([]);
   const materialStub = sandbox()
     .stub(MaterialsDAO, 'findAllByNodes')
     .resolves([]);
@@ -40,6 +44,7 @@ test('getAllByDesign can handle the empty case', async (t: tape.Test) => {
       assets: [],
       attributes: {
         artworks: [],
+        dimensions: [],
         materials: [],
         sketches: []
       },
@@ -51,6 +56,7 @@ test('getAllByDesign can handle the empty case', async (t: tape.Test) => {
   t.equal(findTreesStub.callCount, 1);
   t.equal(findRootStub.callCount, 1);
   t.equal(artworkStub.callCount, 1);
+  t.equal(dimensionStub.callCount, 1);
   t.equal(materialStub.callCount, 1);
   t.equal(sketchStub.callCount, 1);
 });
@@ -111,10 +117,21 @@ test('getAllByDesign will fetch all resources necessary for phidias', async (t: 
       };
       const sketch1 = await SketchesDAO.create(sketchData, trx);
       const sketch2 = await SketchesDAO.create(sketchData2, trx);
+      const dimension1 = await DimensionsDAO.create(
+        {
+          createdBy: user.id,
+          id: uuid.v4(),
+          nodeId: node1.id,
+          width: 300,
+          height: 300
+        },
+        trx
+      );
 
       return {
         asset1,
         asset2,
+        dimension1,
         node1,
         node2,
         node3,
@@ -148,6 +165,7 @@ test('getAllByDesign will fetch all resources necessary for phidias', async (t: 
   ]);
   t.deepEqual(result.attributes, {
     artworks: [],
+    dimensions: [data.dimension1],
     materials: [],
     sketches: [data.sketch1, data.sketch2]
   });
