@@ -162,7 +162,7 @@ export async function expireCostInputs(
   trx: Knex.Transaction
 ): Promise<PricingCostInput[]> {
   const costInputs: WithoutProcesses[] = await db(TABLE_NAME)
-    .where({ deleted_at: null })
+    .where({ deleted_at: null, expires_at: null })
     .whereIn('design_id', designIds)
     .update({ expires_at: expiresAt }, '*')
     .transacting(trx);

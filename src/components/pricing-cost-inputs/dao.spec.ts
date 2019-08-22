@@ -227,3 +227,50 @@ test('expireCostInputs can expire rows with the associated designs', async (t: T
     }
   );
 });
+
+test('expireCostInputs does not expire rows that are already expired', async (t: Test) => {
+  await generatePricingValues();
+
+  const {
+    design: d1,
+    pricingCostInput: ci1
+  } = await generatePricingCostInput();
+  const {
+    design: d2,
+    pricingCostInput: ci2
+  } = await generatePricingCostInput();
+  const priorExpiration = new Date('2019-04-10');
+  const { pricingCostInput: ci3 } = await generatePricingCostInput({
+    designId: d2.id,
+    expiresAt: priorExpiration
+  });
+  const date = new Date('2019-04-20');
+
+  await db.transaction(
+    async (trx: Knex.Transaction): Promise<void> => {
+      t.deepEqual(ci1.expiresAt, null);
+      t.deepEqual(ci2.expiresAt, null);
+      t.deepEqual(new Date(ci3.expiresAt!), priorExpiration);
+
+      const results = await PricingCostInputsDAO.expireCostInputs(
+        [d1.id, d2.id],
+        date,
+        trx
+      );
+
+      const resultExpirations = results.map(
+        (result: PricingCostInput): Date => {
+          return new Date(result.expiresAt!);
+        }
+      );
+      const resultIds = results.map(
+        (result: PricingCostInput): string => {
+          return result.id;
+        }
+      );
+
+      t.deepEqual(resultIds, [ci1.id, ci2.id]);
+      t.deepEqual(resultExpirations, [date, date]);
+    }
+  );
+});
