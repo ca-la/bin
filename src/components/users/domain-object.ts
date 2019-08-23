@@ -47,7 +47,7 @@ export const baseUser = {
   isSmsPreregistration: false,
   lastAcceptedDesignerTermsAt: null,
   lastAcceptedPartnerTermsAt: null,
-  locale: 'en-US',
+  locale: 'en',
   phone: null,
   referralCode: 'n/a',
   role: ROLES.user
