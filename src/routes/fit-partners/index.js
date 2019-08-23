@@ -137,15 +137,15 @@ function* shopifyOrderCreated() {
     // values to Shopify, as they're the most complete source of truth we have
     // so far.
     const allScans = yield ScansDAO.findByFitPartnerCustomer(claimed.id);
-    const completedScans = allScans.filter(
-      scan =>
-        scan.isComplete &&
-        scan.measurements &&
-        scan.measurements.calculatedValues
-    );
+    const completedScans = allScans.filter(scan => scan.isComplete);
+
     if (completedScans.length > 0) {
       const latest = completedScans[completedScans.length - 1];
-      yield FitPartnerScanService.saveCalculatedValues(latest);
+      if (latest.measurements && latest.measurements.calculatedValues) {
+        yield FitPartnerScanService.saveCalculatedValues(latest);
+      } else {
+        yield FitPartnerScanService.markComplete(latest);
+      }
     }
   }
 

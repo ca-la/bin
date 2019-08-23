@@ -9,8 +9,10 @@ const first = require('../../services/first').default;
 const compact = require('../../services/compact');
 const InvalidDataError = require('../../errors/invalid-data');
 const Scan = require('../../domain-objects/scan');
+const dataAdapter = require('../../domain-objects/scan-with-meta').dataApater;
 
 const instantiate = data => new Scan(data);
+const instantiateWithMeta = data => dataAdapter.parse(data);
 const maybeInstantiate = data => (data && new Scan(data)) || null;
 
 const { dataMapper } = Scan;
@@ -83,11 +85,20 @@ function findAll({ limit, offset }) {
   }
 
   return db(TABLE_NAME)
-    .select('*')
+    .select(
+      'scans.*',
+      'fit_partner_customers.shopify_user_id',
+      'fit_partner_customers.phone'
+    )
     .orderBy('created_at', 'desc')
     .limit(limit)
+    .join(
+      'fit_partner_customers',
+      'scans.fit_partner_customer_id',
+      'fit_partner_customers.id'
+    )
     .offset(offset)
-    .then(scans => scans.map(instantiate));
+    .then(scans => scans.map(instantiateWithMeta));
 }
 
 async function findByFitPartner(userId, { limit, offset }) {

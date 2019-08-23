@@ -194,6 +194,68 @@ test('POST /fit-partners/:partnerId/shopify-order-created claims old customers a
   t.equal(saveValuesStub.calledAfter(saveUrlStub), true);
 });
 
+test('POST /fit-partners/:partnerId/shopify-order-created claims old customers and saves partial scan info to Shopify', async (t: Test) => {
+  const saveUrlStub = sandbox()
+    .stub(FitPartnerScanService, 'saveFittingUrl')
+    .resolves();
+
+  const markCompleteStub = sandbox()
+    .stub(FitPartnerScanService, 'markComplete')
+    .resolves();
+
+  sandbox()
+    .stub(Twilio, 'sendSMS')
+    .resolves();
+
+  const { session, user } = await createUser();
+
+  const partner = await FitPartnersDAO.create({
+    adminUserId: user.id,
+    customFitDomain: null,
+    shopifyAppApiKey: '123',
+    shopifyAppPassword: '123',
+    shopifyHostname: 'example.com',
+    smsCopy: 'Click here: {{link}}'
+  });
+
+  const phoneCustomer = await FitPartnerCustomersDAO.findOrCreate({
+    partnerId: partner.id,
+    phone: '415 555 1234'
+  });
+
+  const unMeasuredScan = await ScansDAO.create({
+    fitPartnerCustomerId: phoneCustomer.id,
+    isComplete: true,
+    type: 'PHOTO'
+  });
+
+  const smsProduct = cloneDeep(orderCreatePayload);
+  smsProduct.line_items[0].product_id = 12345;
+
+  await post(`/fit-partners/${partner.id}/shopify-order-created`, {
+    body: smsProduct,
+    headers: authHeader(session.id)
+  });
+
+  const updatedPhoneCustomer = await FitPartnerCustomersDAO.findById(
+    phoneCustomer.id
+  );
+  if (!updatedPhoneCustomer) {
+    throw new Error('Missing customer');
+  }
+
+  t.equal(updatedPhoneCustomer.phone, null);
+  t.equal(updatedPhoneCustomer.shopifyUserId, '4567143233');
+
+  t.equal(markCompleteStub.callCount, 1);
+  t.equal(markCompleteStub.firstCall.args[0].id, unMeasuredScan.id);
+
+  // We assert that the values were saved *after* the new scan URL, as they
+  // represent the most complete set of information. Otherwise the data in Shopify
+  // would be partially mangled; using the new Scan ID but with old measuremrents.
+  t.equal(markCompleteStub.calledAfter(saveUrlStub), true);
+});
+
 test('POST /fit-partners/:partnerId/shopify-order-created claims old customers and does not save their scan if it is missing information', async (t: Test) => {
   sandbox()
     .stub(FitPartnerScanService, 'saveFittingUrl')

@@ -2,6 +2,7 @@
 
 const {
   create,
+  findAll,
   findByFitPartner,
   findByFitPartnerCustomer,
   findByUserId,
@@ -178,4 +179,38 @@ test('ScansDAO.findByFitPartnerCustomer returns scans for a customer', async t =
 
   t.equal(scans.length, 1);
   t.equal(scans[0].id, scan1.id);
+});
+
+test('ScansDAO.findAll returns all scans with fit customer meta', async t => {
+  const { user } = await createUser({ withSession: false });
+  const partner = await createFitPartner({ adminUserId: user.id });
+
+  const customer1 = await FitPartnerCustomersDAO.findOrCreate({
+    partnerId: partner.id,
+    shopifyUserId: '1234'
+  });
+
+  const customer2 = await FitPartnerCustomersDAO.findOrCreate({
+    partnerId: partner.id,
+    phone: '+18002349087'
+  });
+
+  const scan1 = await create({
+    fitPartnerCustomerId: customer1.id,
+    type: SCAN_TYPES.photo
+  });
+  const scan2 = await create({
+    fitPartnerCustomerId: customer2.id,
+    type: SCAN_TYPES.photo
+  });
+
+  const scans = await findAll({ limit: 10, offset: 0 });
+
+  t.equal(scans.length, 2);
+  const foundScan1 = scans.find(scan => scan.id === scan1.id);
+  const foundScan2 = scans.find(scan => scan.id === scan2.id);
+  t.isNot(foundScan1, null);
+  t.isNot(foundScan2, null);
+  t.equal(foundScan1.shopifyUserId, customer1.shopifyUserId);
+  t.equal(foundScan2.shopifyUserId, customer2.shopifyUserId);
 });
