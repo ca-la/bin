@@ -14,11 +14,14 @@ export async function fetchUncostedWithLabels(): Promise<
 > {
   const collections = await findSubmittedButUnpaidCollections();
   const labelledCollections: CollectionWithLabels[] = [];
+  const collectionStatuses = await determineSubmissionStatus(
+    collections.map((collection: Collection): string => collection.id)
+  );
 
   for (const collection of collections) {
-    const state = await determineSubmissionStatus(collection.id);
+    const status = collectionStatuses[collection.id];
 
-    if (state.isSubmitted && !state.isCosted) {
+    if (status.isSubmitted && !status.isCosted) {
       labelledCollections.push({ ...collection, label: 'Needs Costing' });
     }
   }

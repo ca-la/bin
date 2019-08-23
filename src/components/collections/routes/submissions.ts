@@ -49,9 +49,11 @@ export function* createSubmission(
       })
     );
     CreateNotifications.sendDesignerSubmitCollection(collectionId, userId);
-    const submissionStatus = yield determineSubmissionStatus(collectionId);
+    const submissionStatusByCollection = yield determineSubmissionStatus([
+      collectionId
+    ]);
     this.status = 201;
-    this.body = submissionStatus;
+    this.body = submissionStatusByCollection[collectionId];
   } else {
     this.throw(400, 'Request does not match collection service');
   }
@@ -61,8 +63,10 @@ export function* getSubmissionStatus(
   this: Koa.Application.Context
 ): AsyncIterableIterator<CollectionSubmissionStatus> {
   const { collectionId } = this.params;
-  const submissionStatus = yield determineSubmissionStatus(collectionId);
+  const submissionStatusByCollection = yield determineSubmissionStatus([
+    collectionId
+  ]);
 
   this.status = 200;
-  this.body = submissionStatus;
+  this.body = submissionStatusByCollection[collectionId];
 }

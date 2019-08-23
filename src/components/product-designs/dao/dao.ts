@@ -154,20 +154,18 @@ AND designs.deleted_at IS null
 }
 
 export async function findAllWithCostsAndEvents(
-  collectionId: string,
+  collectionIds: string[],
   trx?: Knex.Transaction
 ): Promise<ProductDesignDataWithMeta[]> {
   const rows = await db
     .select(
       'd.*',
       'cost_inputs.input_list AS cost_inputs',
-      'events.event_list AS events'
+      'events.event_list AS events',
+      'cd.collection_id AS collection_id'
     )
     .from('product_designs AS d')
-    .joinRaw(
-      'INNER JOIN collection_designs AS cd ON cd.design_id = d.id AND cd.collection_id = ?',
-      [collectionId]
-    )
+    .joinRaw('INNER JOIN collection_designs AS cd ON cd.design_id = d.id')
     .joinRaw(
       `
 left join (
@@ -205,6 +203,7 @@ left join (
     .where({
       'd.deleted_at': null
     })
+    .whereIn('cd.collection_id', collectionIds)
     .orderBy('d.created_at', 'DESC')
     .modify(
       (query: Knex.QueryBuilder): void => {

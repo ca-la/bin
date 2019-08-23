@@ -17,6 +17,7 @@ test('determineState works for designs with no events or cost inputs', async (t:
   })) as ProductDesignData;
   const designWithData: ProductDesignDataWithMeta = {
     ...design,
+    collectionId: 'collection-one',
     costInputs: [],
     events: []
   };
@@ -63,6 +64,7 @@ test('determineState works for a design with events', async (t: Test) => {
   // With a submission event
   let designWithData: ProductDesignDataWithMeta = {
     ...design,
+    collectionId: 'collection-one',
     costInputs: [],
     events: [e1]
   };
@@ -72,6 +74,7 @@ test('determineState works for a design with events', async (t: Test) => {
   // With costing event
   designWithData = {
     ...design,
+    collectionId: 'collection-one',
     costInputs: [ci1],
     events: [e1, e2]
   };
@@ -81,6 +84,7 @@ test('determineState works for a design with events', async (t: Test) => {
   // With an expired cost input
   designWithData = {
     ...design,
+    collectionId: 'collection-one',
     costInputs: [ci2],
     events: [e1, e2]
   };
@@ -94,6 +98,7 @@ test('determineState works for a design with events', async (t: Test) => {
   // With an expired cost input but committed quote
   designWithData = {
     ...design,
+    collectionId: 'collection-one',
     costInputs: [ci2],
     events: [e1, e2, e3]
   };
@@ -103,6 +108,7 @@ test('determineState works for a design with events', async (t: Test) => {
   // With an expired cost input but committed quote and committed pairing
   designWithData = {
     ...design,
+    collectionId: 'collection-one',
     costInputs: [ci2],
     events: [e1, e2, e3, e4]
   };
@@ -123,6 +129,7 @@ test('determineState works for a design with events', async (t: Test) => {
   // With an expired cost input
   designWithData = {
     ...design,
+    collectionId: 'collection-one',
     costInputs: [ci2],
     events: [e1, e2, e5]
   };
@@ -131,6 +138,7 @@ test('determineState works for a design with events', async (t: Test) => {
 
   designWithData = {
     ...design,
+    collectionId: 'collection-one',
     costInputs: [ci2, ci1],
     events: [e1, e2, e5, e6]
   };

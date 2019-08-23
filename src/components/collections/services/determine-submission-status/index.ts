@@ -16,14 +16,20 @@ export interface CollectionSubmissionStatus {
   pricingExpiresAt: Date | null;
 }
 
-/**
- * Determines the submission status for a given collection.
- */
-export async function determineSubmissionStatus(
-  collectionId: string
-): Promise<CollectionSubmissionStatus> {
-  const designs = await findAllWithCostsAndEvents(collectionId);
+export interface SubmissionStatusByCollection {
+  [collectionId: string]: CollectionSubmissionStatus;
+}
+
+interface DesignsByCollection {
+  [collectionId: string]: ProductDesignDataWithMeta[];
+}
+
+function determineStatusFromDesigns(
+  collectionId: string,
+  designs: ProductDesignDataWithMeta[]
+): CollectionSubmissionStatus {
   const hasDesigns = designs.length > 0;
+
   const designStates: DesignState[] = designs.map(
     (design: ProductDesignDataWithMeta) => determineState(design)
   );
@@ -71,4 +77,30 @@ export async function determineSubmissionStatus(
     isPaired: hasDesigns && isPaired,
     pricingExpiresAt
   };
+}
+
+/**
+ * Determines the submission status for each collection.
+ */
+export async function determineSubmissionStatus(
+  collectionIds: string[]
+): Promise<SubmissionStatusByCollection> {
+  const designsWithMeta = await findAllWithCostsAndEvents(collectionIds);
+  const designsByCollection: DesignsByCollection = {};
+  const submissionStatusByCollection: SubmissionStatusByCollection = {};
+
+  for (const designWithMeta of designsWithMeta) {
+    const { collectionId } = designWithMeta;
+    const designList = designsByCollection[collectionId] || [];
+    designsByCollection[collectionId] = [...designList, designWithMeta];
+  }
+
+  for (const collectionId of collectionIds) {
+    submissionStatusByCollection[collectionId] = determineStatusFromDesigns(
+      collectionId,
+      designsByCollection[collectionId] || []
+    );
+  }
+
+  return submissionStatusByCollection;
 }

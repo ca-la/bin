@@ -13,7 +13,7 @@ test('fetchUncostedWithLabels empty case', async (t: Test) => {
 
   t.deepEqual(result, [], 'Returns an empty list');
   t.equal(findStub.callCount, 1);
-  t.equal(statusStub.callCount, 0);
+  t.equal(statusStub.callCount, 1);
 });
 
 test('fetchUncostedWithLabels returns a list of uncosted collections only', async (t: Test) => {
@@ -27,25 +27,32 @@ test('fetchUncostedWithLabels returns a list of uncosted collections only', asyn
   const statusStub = sandbox()
     .stub(StatusService, 'determineSubmissionStatus')
     .callsFake(
-      (collectionId: string): StatusService.CollectionSubmissionStatus => {
-        if (collectionId === 'collection-two') {
-          return {
-            collectionId,
+      (): StatusService.SubmissionStatusByCollection => {
+        return {
+          'collection-one': {
+            collectionId: 'collection-one',
+            isCosted: false,
+            isPaired: false,
+            isQuoted: false,
+            isSubmitted: true,
+            pricingExpiresAt: null
+          },
+          'collection-two': {
+            collectionId: 'collection-two',
             isCosted: true,
             isPaired: false,
             isQuoted: false,
             isSubmitted: true,
             pricingExpiresAt: new Date('2019-04-20')
-          };
-        }
-
-        return {
-          collectionId,
-          isCosted: false,
-          isPaired: false,
-          isQuoted: false,
-          isSubmitted: true,
-          pricingExpiresAt: null
+          },
+          'collection-three': {
+            collectionId: 'collection-three',
+            isCosted: false,
+            isPaired: false,
+            isQuoted: false,
+            isSubmitted: true,
+            pricingExpiresAt: null
+          }
         };
       }
     );
@@ -61,5 +68,5 @@ test('fetchUncostedWithLabels returns a list of uncosted collections only', asyn
     'Returns only the collections that do not have costing but have been submitted'
   );
   t.equal(findStub.callCount, 1);
-  t.equal(statusStub.callCount, 3);
+  t.equal(statusStub.callCount, 1);
 });

@@ -18,9 +18,9 @@ test('determineSubmissionStatus works for a collection with no designs', async (
     .stub(ExpirationService, 'determineEarliestExpiration')
     .returns(null);
 
-  const result = await determineSubmissionStatus(collectionId);
+  const result = await determineSubmissionStatus([collectionId]);
   t.deepEqual(
-    result,
+    result[collectionId],
     {
       collectionId,
       isSubmitted: false,
@@ -46,14 +46,14 @@ test('determineSubmissionStatus works for a collection with designs and no event
 
   const findDesignsStub = sandbox()
     .stub(DesignsDAO, 'findAllWithCostsAndEvents')
-    .resolves([{ ...design, events: [], costInputs: [] }]);
+    .resolves([{ ...design, events: [], costInputs: [], collectionId }]);
   const expiryStub = sandbox()
     .stub(ExpirationService, 'determineEarliestExpiration')
     .returns(null);
 
-  const result = await determineSubmissionStatus(collectionId);
+  const result = await determineSubmissionStatus([collectionId]);
   t.deepEqual(
-    result,
+    result[collectionId],
     {
       collectionId,
       isSubmitted: false,
@@ -73,7 +73,10 @@ test('determineSubmissionStatus works for a collection with designs that have be
 
   const findDesignsStub = sandbox()
     .stub(DesignsDAO, 'findAllWithCostsAndEvents')
-    .resolves([{ id: 1, costInputs: [] }, { id: 2, costInputs: [] }]);
+    .resolves([
+      { id: 1, costInputs: [], collectionId },
+      { id: 2, costInputs: [], collectionId }
+    ]);
   const determineStateStub = sandbox()
     .stub(MachineService, 'determineState')
     .callsFake(() => MachineService.DesignState.SUBMITTED);
@@ -81,9 +84,9 @@ test('determineSubmissionStatus works for a collection with designs that have be
     .stub(ExpirationService, 'determineEarliestExpiration')
     .returns(null);
 
-  const result = await determineSubmissionStatus(collectionId);
+  const result = await determineSubmissionStatus([collectionId]);
   t.deepEqual(
-    result,
+    result[collectionId],
     {
       collectionId,
       isSubmitted: true,
@@ -105,9 +108,9 @@ test('determineSubmissionStatus works for a collection with designs that are par
   const findDesignsStub = sandbox()
     .stub(DesignsDAO, 'findAllWithCostsAndEvents')
     .resolves([
-      { id: 1, costInputs: [] },
-      { id: 2, costInputs: [] },
-      { id: 3, costInputs: [] }
+      { id: 1, costInputs: [], collectionId },
+      { id: 2, costInputs: [], collectionId },
+      { id: 3, costInputs: [], collectionId }
     ]);
   const determineStateStub = sandbox()
     .stub(MachineService, 'determineState')
@@ -122,9 +125,9 @@ test('determineSubmissionStatus works for a collection with designs that are par
     .stub(ExpirationService, 'determineEarliestExpiration')
     .returns(null);
 
-  const result = await determineSubmissionStatus(collectionId);
+  const result = await determineSubmissionStatus([collectionId]);
   t.deepEqual(
-    result,
+    result[collectionId],
     {
       collectionId,
       isSubmitted: false,
@@ -146,9 +149,9 @@ test('determineSubmissionStatus works for a collection with designs that are par
   const findDesignsStub = sandbox()
     .stub(DesignsDAO, 'findAllWithCostsAndEvents')
     .resolves([
-      { id: 1, costInputs: [] },
-      { id: 2, costInputs: [] },
-      { id: 3, costInputs: [] }
+      { id: 1, costInputs: [], collectionId },
+      { id: 2, costInputs: [], collectionId },
+      { id: 3, costInputs: [], collectionId }
     ]);
   const determineStateStub = sandbox()
     .stub(MachineService, 'determineState')
@@ -163,9 +166,9 @@ test('determineSubmissionStatus works for a collection with designs that are par
     .stub(ExpirationService, 'determineEarliestExpiration')
     .returns(new Date('2019-04-20'));
 
-  const result = await determineSubmissionStatus(collectionId);
+  const result = await determineSubmissionStatus([collectionId]);
   t.deepEqual(
-    result,
+    result[collectionId],
     {
       collectionId,
       isSubmitted: true,

@@ -646,12 +646,14 @@ test('GET /collections/:collectionId/submissions', async (t: tape.Test) => {
   const statusStub = sandbox()
     .stub(SubmissionStatusService, 'determineSubmissionStatus')
     .resolves({
-      collectionId,
-      isCosted: false,
-      isPaired: false,
-      isQuoted: false,
-      isSubmitted: false,
-      pricingExpiresAt: null
+      [collectionId]: {
+        collectionId,
+        isCosted: false,
+        isPaired: false,
+        isQuoted: false,
+        isSubmitted: false,
+        pricingExpiresAt: null
+      }
     });
   const statusOne = await API.get(`/collections/${collectionId}/submissions`, {
     headers: API.authHeader(designer.session.id)
@@ -667,12 +669,14 @@ test('GET /collections/:collectionId/submissions', async (t: tape.Test) => {
   });
 
   statusStub.resolves({
-    collectionId,
-    isCosted: true,
-    isPaired: false,
-    isQuoted: false,
-    isSubmitted: true,
-    pricingExpiresAt: new Date('2019-04-20')
+    [collectionId]: {
+      collectionId,
+      isCosted: true,
+      isPaired: false,
+      isQuoted: false,
+      isSubmitted: true,
+      pricingExpiresAt: new Date('2019-04-20')
+    }
   });
   const statusTwo = await API.get(`/collections/${collectionId}/submissions`, {
     headers: API.authHeader(designer.session.id)

@@ -17,11 +17,13 @@ import DataAdapter from '../../../services/data-adapter';
 import { hasProperties } from '@cala/ts-lib';
 
 export interface ProductDesignDataWithMeta extends ProductDesignData {
+  collectionId: string;
   costInputs: BasePricingCostInput[];
   events: DesignEvent[];
 }
 
 export interface ProductDesignRowWithMeta extends ProductDesignRow {
+  collection_id: string;
   cost_inputs: BasePricingCostInputRow[] | null;
   events: DesignEventRow[] | null;
 }
@@ -43,6 +45,7 @@ const encode = (row: ProductDesignRowWithMeta): ProductDesignDataWithMeta => {
 
   return {
     ...baseDataAdapter.parse(baseRow),
+    collectionId: row.collection_id,
     costInputs,
     events
   };
@@ -56,5 +59,8 @@ export const withMetaDataAdapter = new DataAdapter<
 export function isProductDesignRowWithMeta(
   row: any
 ): row is ProductDesignRowWithMeta {
-  return isProductDesignRow(row) && hasProperties(row, 'cost_inputs', 'events');
+  return (
+    isProductDesignRow(row) &&
+    hasProperties(row, 'collection_id', 'cost_inputs', 'events')
+  );
 }

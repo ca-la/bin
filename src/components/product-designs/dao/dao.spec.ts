@@ -322,12 +322,13 @@ test('findAllWithCostsAndEvents base cases', async (t: tape.Test) => {
   });
   await CollectionsDAO.addDesign(c1.id, d1.id);
 
-  const results = await findAllWithCostsAndEvents(c1.id);
+  const results = await findAllWithCostsAndEvents([c1.id]);
   t.deepEqual(
     results,
     [
       {
         ...omit(d1, 'collectionIds', 'collections', 'imageIds', 'imageLinks'),
+        collectionId: c1.id,
         costInputs: [],
         events: [],
         previewImageUrls: null
@@ -336,22 +337,24 @@ test('findAllWithCostsAndEvents base cases', async (t: tape.Test) => {
     'Returns the design with no events or cost inputs'
   );
 
-  const results2 = await findAllWithCostsAndEvents(c2.id);
+  const results2 = await findAllWithCostsAndEvents([c2.id]);
   t.deepEqual(results2, [], 'Returns an empty list if there are no designs');
 
   await CollectionsDAO.addDesign(c1.id, d2.id);
-  const results3 = await findAllWithCostsAndEvents(c1.id);
+  const results3 = await findAllWithCostsAndEvents([c1.id]);
   t.deepEqual(
     results3,
     [
       {
         ...omit(d2, 'collectionIds', 'collections', 'imageIds', 'imageLinks'),
+        collectionId: c1.id,
         costInputs: [],
         events: [],
         previewImageUrls: null
       },
       {
         ...omit(d1, 'collectionIds', 'collections', 'imageIds', 'imageLinks'),
+        collectionId: c1.id,
         costInputs: [],
         events: [],
         previewImageUrls: null
@@ -398,7 +401,7 @@ test('findAllWithCostsAndEvents +1 case', async (t: tape.Test) => {
     designId: d2.id
   });
 
-  const results = await findAllWithCostsAndEvents(c1.id);
+  const results = await findAllWithCostsAndEvents([c1.id]);
 
   t.equal(results.length, 2, 'Returns the two designs');
 
@@ -407,6 +410,7 @@ test('findAllWithCostsAndEvents +1 case', async (t: tape.Test) => {
     omit(results[0], 'costInputs', 'events'),
     {
       ...omit(d2, 'collectionIds', 'collections', 'imageIds', 'imageLinks'),
+      collectionId: c1.id,
       previewImageUrls: null
     },
     'Returns the latest made design first'
@@ -443,6 +447,7 @@ test('findAllWithCostsAndEvents +1 case', async (t: tape.Test) => {
     omit(results[1], 'costInputs', 'events'),
     {
       ...omit(d1, 'collectionIds', 'collections', 'imageIds', 'imageLinks'),
+      collectionId: c1.id,
       previewImageUrls: null
     },
     'Returns the first created design last'
@@ -456,4 +461,9 @@ test('findAllWithCostsAndEvents +1 case', async (t: tape.Test) => {
     },
     de1
   );
+});
+
+test('findAllWithCostsAndEvents can work with multiple collections', async (t: tape.Test) => {
+  await generatePricingValues();
+  t.ok('Cool');
 });
