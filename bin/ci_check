@@ -12,6 +12,7 @@ main() {
   source bin/lib/clean
   source bin/lib/build
 
+  bin/format -al
   bin/lint
 
   clean

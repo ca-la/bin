@@ -10,9 +10,6 @@ set -o noglob
 
 main() {
   source bin/lib/loadenv
-  source bin/lib/colors
-  source bin/lib/clean
-  source bin/lib/build
 
   loadenv_test
 
@@ -21,21 +18,7 @@ main() {
     mkdir -p ./reports
     npx tape "dist/**/*spec.js" | npx tap-xunit > ./reports/tape.xml
   else
-    echo -n "Cleaning..."
-    clean
-    echo -e "${green}Done${reset}"
-
-    echo -n "Linting..."
-    bin/lint
-    echo -e "${green}Done${reset}"
-
-    echo -n "Building..."
-    build
-    echo -e "${green}Done${reset}"
-
-    echo -n "Testing..."
-    npx tape "dist/**/*spec.js" | npx tap-difflet --pessimistic
-    echo -e "${green}Done${reset}"
+    npx ts-node $(npm bin)/tape "src/**/*spec.ts" | npx tap-difflet --pessimistic
   fi
 }
 

@@ -14,7 +14,7 @@ set -o noglob
 #  -l List non-conforming files and exit with non-zero if any exist
 
 main() {
-  files=$(git diff --name-only master | grep ".[jt]s$" || true)
+  files=$({ git diff --name-only master; git ls-files --other --modified --exclude-standard; } | grep ".[jt]s$" || true)
   prettier_opts="--write"
 
   while getopts "al" opt; do

@@ -9,7 +9,6 @@ set -o noglob
 # Usage: bin/lint
 
 main() {
-  bin/format -al
   ci=${CI:-"false"}
 
   if [[ "$ci" == "true" ]]
