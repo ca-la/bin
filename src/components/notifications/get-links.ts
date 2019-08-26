@@ -51,6 +51,7 @@ export type LinkBase =
       type: LinkType.Collection;
       collection: Collection;
       isCheckout?: boolean;
+      isSubmit?: boolean;
     };
 
 function constructHtmlLink(deepLink: string, title: string): string {
@@ -127,11 +128,14 @@ export default function getLinks(linkBase: LinkBase): Links {
     }
 
     case LinkType.Collection: {
-      const { collection, isCheckout } = linkBase;
+      const { collection, isCheckout, isSubmit } = linkBase;
+      const checkoutParam = isCheckout ? '?isCheckout=true' : '';
+      const submitParam = isSubmit ? '?isSubmit=true' : '';
+
       // tslint:disable-next-line:max-line-length
-      const deepLink = `${STUDIO_HOST}/collections/${collection.id}/designs${
-        isCheckout ? '?isCheckout=true' : ''
-      }`;
+      const deepLink = `${STUDIO_HOST}/collections/${
+        collection.id
+      }/designs${checkoutParam}${submitParam}`;
       const title = normalizeTitle(collection);
       return {
         deepLink,

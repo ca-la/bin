@@ -651,6 +651,62 @@ test('notification messages returns partner pairing committed message to the use
   );
 });
 
+test('notification messages supports costing expiration messages', async (t: tape.Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
+
+  const { collection } = await generateCollection({
+    title: 'Testing123'
+  });
+
+  // Costing Expired Message
+
+  const { notification: notification1 } = await generateNotification({
+    collectionId: collection.id,
+    type: NotificationType.COSTING_EXPIRED
+  });
+  const message1 = await createNotificationMessage(notification1);
+  t.assert(
+    message1!.html.includes(collection.title || 'Untitled'),
+    'message html contains the collection title'
+  );
+  t.true(
+    message1!.html.includes(
+      'pricing has expired. Please resubmit for updated costing.'
+    )
+  );
+  t.equal(message1!.title, 'Pricing for Testing123 has expired.');
+
+  // Costing Expiration Two Days
+
+  const { notification: notification2 } = await generateNotification({
+    collectionId: collection.id,
+    type: NotificationType.COSTING_EXPIRATION_TWO_DAYS
+  });
+  const message2 = await createNotificationMessage(notification2);
+  t.assert(
+    message2!.html.includes(collection.title || 'Untitled'),
+    'message html contains the collection title'
+  );
+  t.true(message2!.html.includes('pricing expires in 48 hours.'));
+  t.equal(message2!.title, 'Pricing for Testing123 will expire in 48 hours.');
+
+  // Costing Expiration One Week
+
+  const { notification: notification3 } = await generateNotification({
+    collectionId: collection.id,
+    type: NotificationType.COSTING_EXPIRATION_ONE_WEEK
+  });
+  const message3 = await createNotificationMessage(notification3);
+  t.assert(
+    message3!.html.includes(collection.title || 'Untitled'),
+    'message html contains the collection title'
+  );
+  t.true(message3!.html.includes('pricing expires in 7 days.'));
+  t.equal(message3!.title, 'Pricing for Testing123 will expire in 7 days.');
+});
+
 test('unsupported notifications', async (t: tape.Test) => {
   sandbox()
     .stub(NotificationAnnouncer, 'announceNotificationCreation')

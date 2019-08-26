@@ -535,6 +535,76 @@ export const createNotificationMessage = async (
       };
     }
 
+    case NotificationType.COSTING_EXPIRED: {
+      const { collectionId } = notification;
+      const collection = await getCollection(collectionId);
+      if (!collection) {
+        return null;
+      }
+      const { htmlLink, deepLink } = getLinks({
+        collection,
+        isSubmit: true,
+        type: LinkType.Collection
+      });
+      return {
+        ...baseNotificationMessage,
+        attachments: [],
+        html: `${htmlLink} pricing has expired. Please resubmit for updated costing.`,
+        imageUrl: null,
+        link: deepLink,
+        location: [],
+        title: `Pricing for ${normalizeTitle(collection)} has expired.`
+      };
+    }
+
+    case NotificationType.COSTING_EXPIRATION_TWO_DAYS: {
+      const { collectionId } = notification;
+      const collection = await getCollection(collectionId);
+      if (!collection) {
+        return null;
+      }
+      const { htmlLink, deepLink } = getLinks({
+        collection,
+        isCheckout: true,
+        type: LinkType.Collection
+      });
+      return {
+        ...baseNotificationMessage,
+        attachments: [],
+        html: `${htmlLink} pricing expires in 48 hours.`,
+        imageUrl: null,
+        link: deepLink,
+        location: [],
+        title: `Pricing for ${normalizeTitle(
+          collection
+        )} will expire in 48 hours.`
+      };
+    }
+
+    case NotificationType.COSTING_EXPIRATION_ONE_WEEK: {
+      const { collectionId } = notification;
+      const collection = await getCollection(collectionId);
+      if (!collection) {
+        return null;
+      }
+      const { htmlLink, deepLink } = getLinks({
+        collection,
+        isCheckout: true,
+        type: LinkType.Collection
+      });
+      return {
+        ...baseNotificationMessage,
+        attachments: [],
+        html: `${htmlLink} pricing expires in 7 days.`,
+        imageUrl: null,
+        link: deepLink,
+        location: [],
+        title: `Pricing for ${normalizeTitle(
+          collection
+        )} will expire in 7 days.`
+      };
+    }
+
     default: {
       throw new InvalidDataError(
         `Unknown notification type found with id ${notification!.id} and type ${

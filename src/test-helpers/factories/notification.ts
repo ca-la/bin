@@ -384,5 +384,20 @@ export default async function generateNotification(
         notification
       };
     }
+    case NotificationType.COSTING_EXPIRATION_TWO_DAYS:
+    case NotificationType.COSTING_EXPIRATION_ONE_WEEK:
+    case NotificationType.COSTING_EXPIRED: {
+      const notification = await create({
+        ...baseNotification,
+        collectionId: collection.id,
+        recipientUserId: base.recipient.id,
+        type: options.type
+      });
+
+      return {
+        ...base,
+        notification
+      };
+    }
   }
 }

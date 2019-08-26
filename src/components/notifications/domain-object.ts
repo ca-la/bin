@@ -57,6 +57,14 @@ import {
   PartnerPairingCommittedNotification,
   PartnerPairingCommittedNotificationRow
 } from './models/partner-pairing-committed';
+import {
+  ExpiredNotification,
+  ExpiredNotificationRow,
+  OneWeekExpirationNotification,
+  OneWeekExpirationNotificationRow,
+  TwoDayExpirationNotification,
+  TwoDayExpirationNotificationRow
+} from './models/costing-expiration';
 
 export enum NotificationType {
   ANNOTATION_COMMENT_CREATE = 'ANNOTATION_COMMENT_CREATE',
@@ -72,7 +80,10 @@ export enum NotificationType {
   TASK_ASSIGNMENT = 'TASK_ASSIGNMENT',
   TASK_COMMENT_CREATE = 'TASK_COMMENT_CREATE',
   TASK_COMMENT_MENTION = 'TASK_COMMENT_MENTION',
-  TASK_COMPLETION = 'TASK_COMPLETION'
+  TASK_COMPLETION = 'TASK_COMPLETION',
+  COSTING_EXPIRATION_ONE_WEEK = 'COSTING_EXPIRATION_ONE_WEEK',
+  COSTING_EXPIRATION_TWO_DAYS = 'COSTING_EXPIRATION_TWO_DAYS',
+  COSTING_EXPIRED = 'COSTING_EXPIRED'
 }
 
 export type Notification =
@@ -89,7 +100,10 @@ export type Notification =
   | TaskAssigmentNotification
   | TaskCommentCreateNotification
   | TaskCommentMentionNotification
-  | TaskCompletionNotification;
+  | TaskCompletionNotification
+  | ExpiredNotification
+  | OneWeekExpirationNotification
+  | TwoDayExpirationNotification;
 
 export type NotificationRow =
   | AnnotationCommentCreateNotificationRow
@@ -105,7 +119,10 @@ export type NotificationRow =
   | TaskAssigmentNotificationRow
   | TaskCommentCreateNotificationRow
   | TaskCommentMentionNotificationRow
-  | TaskCompletionNotificationRow;
+  | TaskCompletionNotificationRow
+  | ExpiredNotificationRow
+  | OneWeekExpirationNotificationRow
+  | TwoDayExpirationNotificationRow;
 
 type EqualKeys<T> = { [P in keyof T]: any };
 
