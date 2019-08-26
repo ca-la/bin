@@ -156,7 +156,9 @@ test('PricingCostInputsDAO supports retrieval by designID', async (t: Test) => {
   };
   await PricingCostInputsDAO.create(input);
   await PricingCostInputsDAO.create(anotherInput);
-  const designInputs = await PricingCostInputsDAO.findByDesignId(design.id);
+  const designInputs = await PricingCostInputsDAO.findByDesignId({
+    designId: design.id
+  });
 
   t.deepEqual(designInputs, [
     { ...anotherInput, expiresAt: null },
@@ -164,7 +166,7 @@ test('PricingCostInputsDAO supports retrieval by designID', async (t: Test) => {
   ]);
 });
 
-test('findByDesignId does not return expired cost inputs', async (t: Test) => {
+test('findByDesignId can filter expired cost inputs', async (t: Test) => {
   await generatePricingValues();
   const { user: u1 } = await createUser({ withSession: false });
   const design1 = await createDesign({
@@ -174,7 +176,7 @@ test('findByDesignId does not return expired cost inputs', async (t: Test) => {
   });
   const nextWeek = new Date();
   nextWeek.setDate(nextWeek.getDate() + 7);
-  await generatePricingCostInput({
+  const { pricingCostInput: ci1 } = await generatePricingCostInput({
     designId: design1.id,
     expiresAt: new Date('2019-04-20')
   });
@@ -183,8 +185,16 @@ test('findByDesignId does not return expired cost inputs', async (t: Test) => {
     expiresAt: nextWeek
   });
 
-  const result = await PricingCostInputsDAO.findByDesignId(design1.id);
+  const result = await PricingCostInputsDAO.findByDesignId({
+    designId: design1.id
+  });
   t.deepEqual(result, [{ ...ci2, processes: [] }]);
+
+  const result2 = await PricingCostInputsDAO.findByDesignId({
+    designId: design1.id,
+    showExpired: true
+  });
+  t.deepEqual(result2, [{ ...ci2, processes: [] }, { ...ci1, processes: [] }]);
 });
 
 test('expireCostInputs can expire rows with the associated designs', async (t: Test) => {

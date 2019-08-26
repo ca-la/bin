@@ -1,19 +1,20 @@
 import { omit } from 'lodash';
 
 import * as db from '../../services/db';
-import { test, Test } from '../../test-helpers/fresh';
+import { sandbox, test, Test } from '../../test-helpers/fresh';
 import { authHeader, get, post } from '../../test-helpers/http';
 import createUser = require('../../test-helpers/create-user');
-import { create as createDesign } from '../product-designs/dao';
 import PricingCostInput from './domain-object';
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
 import generateProductTypes from '../../services/generate-product-types';
 import { Dollars } from '../../services/dollars';
+import * as PricingCostInputsDAO from './dao';
+import * as ProductDesignsDAO from '../product-designs/dao';
 
 test('POST /pricing-cost-inputs', async (t: Test) => {
   await generatePricingValues();
   const { user, session } = await createUser({ role: 'ADMIN' });
-  const design = await createDesign({
+  const design = await ProductDesignsDAO.create({
     productType: 'DRESS',
     title: 'A beautiful dress',
     userId: user.id
@@ -60,7 +61,7 @@ test('POST /pricing-cost-inputs', async (t: Test) => {
 test('GET /pricing-cost-inputs?designId gets the original versions', async (t: Test) => {
   await generatePricingValues();
   const { user, session } = await createUser({ role: 'ADMIN' });
-  const design = await createDesign({
+  const design = await ProductDesignsDAO.create({
     productType: 'DRESS',
     title: 'A beautiful dress',
     userId: user.id
@@ -118,4 +119,28 @@ test('GET /pricing-cost-inputs?designId gets the original versions', async (t: T
     omit({ ...input, expiresAt: null }, 'processes')
   );
   t.deepEqual(costInputs[0].processes, input.processes);
+});
+
+test('GET /pricing-cost-inputs?designId&showExpired can surface expired cost inputs', async (t: Test) => {
+  const { session } = await createUser({ role: 'ADMIN' });
+  const findDesignStub = sandbox()
+    .stub(ProductDesignsDAO, 'findById')
+    .resolves({});
+  const findStub = sandbox()
+    .stub(PricingCostInputsDAO, 'findByDesignId')
+    .resolves([]);
+
+  const [response, body] = await get(
+    `/pricing-cost-inputs?designId=abc-123&showExpired=true`,
+    { headers: authHeader(session.id) }
+  );
+
+  t.equal(response.status, 200);
+  t.deepEqual(body, []);
+  t.equal(findDesignStub.callCount, 1);
+  t.equal(findStub.callCount, 1);
+  t.deepEqual(findStub.args[0][0], {
+    designId: 'abc-123',
+    showExpired: true
+  });
 });

@@ -39,7 +39,7 @@ function* createCostInputs(
 function* getCostInputs(
   this: Koa.Application.Context
 ): AsyncIterableIterator<any> {
-  const { designId } = this.query;
+  const { designId, showExpired } = this.query;
 
   if (!designId) {
     this.throw(
@@ -56,7 +56,10 @@ function* getCostInputs(
   }
 
   const designInputs: PricingCostInput[] = yield PricingCostInputsDAO.findByDesignId(
-    designId
+    {
+      designId,
+      showExpired: showExpired === 'true'
+    }
   );
 
   this.body = designInputs;

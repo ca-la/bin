@@ -267,8 +267,10 @@ export async function generateFromPayloadAndUser(
     const unitsNumber = Number(units);
 
     const costInputs: PricingCostInputs[] = await PricingCostInputsDAO.findByDesignId(
-      designId,
-      trx
+      {
+        designId,
+        trx
+      }
     );
 
     if (costInputs.length === 0) {

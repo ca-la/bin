@@ -92,7 +92,9 @@ function* createQuote(
 
     const unitsNumber = Number(units);
     const costInputs: PricingCostInput[] = yield PricingCostInputsDAO.findByDesignId(
-      designId
+      {
+        designId
+      }
     );
 
     if (costInputs.length === 0) {
@@ -167,7 +169,9 @@ function* getQuotes(this: Koa.Application.Context): AsyncIterableIterator<any> {
     this.throw(400, 'You must pass a design ID');
   } else if (unitsNumber) {
     const costInputs: PricingCostInput[] = yield PricingCostInputsDAO.findByDesignId(
-      designId
+      {
+        designId
+      }
     );
 
     if (costInputs.length === 0) {
