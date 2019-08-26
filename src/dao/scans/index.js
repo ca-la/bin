@@ -109,7 +109,7 @@ async function findByFitPartner(userId, { limit, offset }) {
   const result = await db
     .raw(
       `
-select s.*
+  select s.*, customers.shopify_user_id, customers.phone
   from scans as s
     inner join fit_partner_customers as customers
       on customers.id = s.fit_partner_customer_id
@@ -127,7 +127,7 @@ select s.*
     .catch(rethrow);
 
   const { rows } = result;
-  return rows.map(instantiate);
+  return rows.map(instantiateWithMeta);
 }
 
 function updateOneById(id, data) {

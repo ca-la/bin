@@ -124,7 +124,7 @@ test('ScansDAO.findByFitPartner returns only scans owned by a partner', async t 
 
   const owner2Customer = await FitPartnerCustomersDAO.findOrCreate({
     partnerId: owner2Partner.id,
-    shopifyUserId: '4321'
+    phone: '+18002349087'
   });
 
   // A scan not owned by either fit partner
@@ -134,7 +134,7 @@ test('ScansDAO.findByFitPartner returns only scans owned by a partner', async t 
   });
 
   // A scan owned by Owner 1
-  await create({
+  const owner1Scan = await create({
     fitPartnerCustomerId: owner1Customer.id,
     type: SCAN_TYPES.photo
   });
@@ -145,10 +145,22 @@ test('ScansDAO.findByFitPartner returns only scans owned by a partner', async t 
     type: SCAN_TYPES.photo
   });
 
-  const scans = await findByFitPartner(owner2.id, { limit: 10, offset: 0 });
+  const owner1Scans = await findByFitPartner(owner1.id, {
+    limit: 10,
+    offset: 0
+  });
+  const owner2Scans = await findByFitPartner(owner2.id, {
+    limit: 10,
+    offset: 0
+  });
 
-  t.equal(scans.length, 1);
-  t.equal(scans[0].id, owner2Scan.id);
+  t.equal(owner1Scans.length, 1);
+  t.equal(owner1Scans[0].id, owner1Scan.id);
+  t.equal(owner1Scans[0].shopifyUserId, owner1Customer.shopifyUserId);
+
+  t.equal(owner2Scans.length, 1);
+  t.equal(owner2Scans[0].id, owner2Scan.id);
+  t.equal(owner2Scans[0].phone, owner2Customer.phone);
 });
 
 test('ScansDAO.findByFitPartnerCustomer returns scans for a customer', async t => {
@@ -209,8 +221,6 @@ test('ScansDAO.findAll returns all scans with fit customer meta', async t => {
   t.equal(scans.length, 2);
   const foundScan1 = scans.find(scan => scan.id === scan1.id);
   const foundScan2 = scans.find(scan => scan.id === scan2.id);
-  t.isNot(foundScan1, null);
-  t.isNot(foundScan2, null);
   t.equal(foundScan1.shopifyUserId, customer1.shopifyUserId);
-  t.equal(foundScan2.shopifyUserId, customer2.shopifyUserId);
+  t.equal(foundScan2.phone, customer2.phone);
 });
