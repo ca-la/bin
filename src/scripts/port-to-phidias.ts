@@ -117,12 +117,12 @@ async function portCanvases(
   }
 
   log(`Preparing ${nodeInsertions.length} Nodes for insertion`);
-  for (const c of chunk(nodeInsertions, 10000)) {
+  for (const c of chunk(nodeInsertions, 1000)) {
     log(`Creating ${c.length} Nodes`);
     await trx('nodes').insert(c);
   }
   log(`Preparing ${rootNodeInsertions.length} DesignRootNodes for insertion`);
-  for (const c of chunk(rootNodeInsertions, 10000)) {
+  for (const c of chunk(rootNodeInsertions, 1000)) {
     log(`Creating ${c.length} DesignRootNodes`);
     await trx('design_root_nodes').insert(c);
   }
