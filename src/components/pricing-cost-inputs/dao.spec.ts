@@ -62,6 +62,39 @@ test('PricingCostInputsDAO supports creation and retrieval', async (t: Test) => 
   t.deepEqual(retrieved, { ...created, expiresAt: null });
 });
 
+test('supports creation without processes', async (t: Test) => {
+  await generatePricingValues();
+  const { user } = await createUser();
+  const design = await ProductDesignsDAO.create({
+    productType: 'DRESS',
+    title: 'A design',
+    userId: user.id
+  });
+  const input: PricingCostInput = {
+    createdAt: new Date(),
+    deletedAt: null,
+    designId: design.id,
+    expiresAt: null,
+    id: uuid.v4(),
+    materialBudgetCents: 12000,
+    materialCategory: 'STANDARD',
+    processes: [],
+    productComplexity: 'MEDIUM',
+    productType: 'DRESS',
+    processTimelinesVersion: 0,
+    processesVersion: 0,
+    productMaterialsVersion: 0,
+    productTypeVersion: 0,
+    marginVersion: 0,
+    constantsVersion: 0,
+    careLabelsVersion: 0
+  };
+
+  const created = await PricingCostInputsDAO.create(input);
+
+  t.deepEqual(created, { ...input, expiresAt: null, processes: [] });
+});
+
 test('findById does not return expired cost inputs', async (t: Test) => {
   await generatePricingValues();
   const { user: u1 } = await createUser({ withSession: false });

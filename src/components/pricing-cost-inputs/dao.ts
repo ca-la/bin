@@ -87,10 +87,13 @@ LIMIT 1;
       ...process
     };
   });
-  const processesCreated: Process[] = await db('pricing_cost_input_processes')
-    .insert(processRowData)
-    .returning(['name', 'complexity']);
 
+  const processesCreated: Process[] =
+    processRowData.length > 0
+      ? await db('pricing_cost_input_processes')
+          .insert(processRowData)
+          .returning(['name', 'complexity'])
+      : [];
   const created = {
     ...inputsCreated,
     processes: processesCreated
