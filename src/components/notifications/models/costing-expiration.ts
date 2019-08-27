@@ -4,6 +4,11 @@ import { NotificationType } from '../domain-object';
 type BaseRow = Omit<BaseNotificationRow, 'collection_id' | 'recipient_user_id'>;
 type Base = Omit<BaseNotification, 'collectionId' | 'recipientUserId'>;
 
+export type ExpirationNotification =
+  | NotificationType.COSTING_EXPIRATION_ONE_WEEK
+  | NotificationType.COSTING_EXPIRATION_TWO_DAYS
+  | NotificationType.COSTING_EXPIRED;
+
 // One Week Expiration
 
 export interface OneWeekExpirationNotificationRow extends BaseRow {

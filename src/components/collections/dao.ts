@@ -18,6 +18,13 @@ import * as db from '../../services/db';
 import { validate, validateEvery } from '../../services/validate-from-db';
 import first from '../../services/first';
 import limitOrOffset from '../../services/limit-or-offset';
+import { ExpirationNotification } from '../notifications/models/costing-expiration';
+import {
+  dataAdapter as metaDataApapter,
+  isMetaCollectionRow,
+  MetaCollection,
+  MetaCollectionRow
+} from './meta-domain-object';
 
 const TABLE_NAME = 'collections';
 
@@ -268,4 +275,60 @@ export async function removeDesign(
     .del()
     .catch(rethrow);
   return ProductDesignsDAO.findByCollectionId(collectionId);
+}
+
+/**
+ * Finds all collections that are:
+ * - have cost inputs that are going to expire within the supplied time bound
+ * - do not have a notification sent of the given type
+ * - not deleted
+ */
+export async function findAllUnnotifiedCollectionsWithExpiringCostInputs(options: {
+  time: Date;
+  boundingHours: number;
+  notificationType: ExpirationNotification;
+  trx: Knex.Transaction;
+}): Promise<MetaCollection[]> {
+  const { boundingHours, notificationType, time, trx } = options;
+
+  const lowerBound = new Date(time);
+  lowerBound.setHours(time.getHours() - boundingHours);
+  const upperBound = new Date(time);
+  upperBound.setHours(time.getHours() + boundingHours);
+
+  const rows: MetaCollectionRow[] = await db(TABLE_NAME)
+    .distinct('collections.id AS id')
+    .select('collections.created_by AS created_by')
+    .from('pricing_cost_inputs AS pci')
+    .leftJoin(
+      'collection_designs',
+      'collection_designs.design_id',
+      'pci.design_id'
+    )
+    .leftJoin(
+      'collections',
+      'collections.id',
+      'collection_designs.collection_id'
+    )
+    .leftJoin('notifications', 'notifications.collection_id', 'collections.id')
+    .where({
+      'pci.deleted_at': null
+    })
+    .whereBetween('pci.expires_at', [lowerBound, upperBound])
+    .whereNotIn(
+      'collections.id',
+      trx
+        .distinct('c2.id')
+        .from('collections AS c2')
+        .leftJoin('notifications', 'notifications.collection_id', 'c2.id')
+        .where({ 'notifications.type': notificationType })
+    )
+    .transacting(trx);
+
+  return validateEvery<MetaCollectionRow, MetaCollection>(
+    TABLE_NAME,
+    isMetaCollectionRow,
+    metaDataApapter,
+    rows
+  );
 }

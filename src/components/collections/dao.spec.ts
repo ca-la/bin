@@ -1,17 +1,24 @@
 import * as uuid from 'node-uuid';
-import * as tape from 'tape';
+import * as Knex from 'knex';
+
 import * as CollectionsDAO from './dao';
 import * as DesignEventsDAO from '../../dao/design-events';
 import * as ProductDesignsDAO from '../product-designs/dao';
-import { test } from '../../test-helpers/fresh';
+import { sandbox, test, Test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
 import ProductDesign = require('../product-designs/domain-objects/product-design');
 import createDesign from '../../services/create-design';
 import generateCollection from '../../test-helpers/factories/collection';
 import DesignEvent from '../../domain-objects/design-event';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
+import generatePricingValues from '../../test-helpers/factories/pricing-values';
+import generatePricingCostInput from '../../test-helpers/factories/pricing-cost-input';
+import * as db from './../../services/db';
+import { NotificationType } from '../notifications/domain-object';
+import generateNotification from '../../test-helpers/factories/notification';
+import * as NotificationAnnouncer from '../../components/iris/messages/notification';
 
-test('CollectionsDAO#create creates a collection', async (t: tape.Test) => {
+test('CollectionsDAO#create creates a collection', async (t: Test) => {
   const { user } = await createUser({ withSession: false });
   const one = await CollectionsDAO.create({
     createdAt: new Date(),
@@ -28,7 +35,7 @@ test('CollectionsDAO#create creates a collection', async (t: tape.Test) => {
   t.equal(one.deletedAt, null);
 });
 
-test('CollectionsDAO#update updates a collection', async (t: tape.Test) => {
+test('CollectionsDAO#update updates a collection', async (t: Test) => {
   const { user } = await createUser({ withSession: false });
 
   const createdCollection = await CollectionsDAO.create({
@@ -48,7 +55,7 @@ test('CollectionsDAO#update updates a collection', async (t: tape.Test) => {
   t.deepEqual(updatedCollection.description, 'A New Hope');
 });
 
-test('CollectionsDAO#findById does not find deleted collections', async (t: tape.Test) => {
+test('CollectionsDAO#findById does not find deleted collections', async (t: Test) => {
   const { user } = await createUser({ withSession: false });
   const createdCollection = await CollectionsDAO.create({
     createdAt: new Date(),
@@ -65,7 +72,7 @@ test('CollectionsDAO#findById does not find deleted collections', async (t: tape
   t.equal(retrievedCollection, null, 'deleted collection is not returned');
 });
 
-test('CollectionsDAO#findByUserId includes referenced user collections', async (t: tape.Test) => {
+test('CollectionsDAO#findByUserId includes referenced user collections', async (t: Test) => {
   const { user: user1 } = await createUser({ withSession: false });
   const { user: user2 } = await createUser({ withSession: false });
 
@@ -93,7 +100,7 @@ test('CollectionsDAO#findByUserId includes referenced user collections', async (
   t.deepEqual(retrievedCollection[0].id, id1, 'only my collection is returned');
 });
 
-test('CollectionsDAO#findByCollaboratorAndUserId finds all collections and searches', async (t: tape.Test) => {
+test('CollectionsDAO#findByCollaboratorAndUserId finds all collections and searches', async (t: Test) => {
   const { user: user1 } = await createUser({ withSession: false });
   const { user: user2 } = await createUser({ withSession: false });
 
@@ -194,7 +201,7 @@ test('CollectionsDAO#findByCollaboratorAndUserId finds all collections and searc
   t.equal(limitedOffsetCollections.length, 1);
 });
 
-test('CollectionsDAO#addDesign adds a design to a collection', async (t: tape.Test) => {
+test('CollectionsDAO#addDesign adds a design to a collection', async (t: Test) => {
   const { user } = await createUser({ withSession: false });
   const createdCollection = await CollectionsDAO.create({
     createdAt: new Date(),
@@ -237,7 +244,7 @@ test('CollectionsDAO#addDesign adds a design to a collection', async (t: tape.Te
   );
 });
 
-test('CollectionsDAO#moveDesign moves designs to different collections', async (t: tape.Test) => {
+test('CollectionsDAO#moveDesign moves designs to different collections', async (t: Test) => {
   const { user } = await createUser({ withSession: false });
   const createdCollectionOne = await CollectionsDAO.create({
     createdAt: new Date(),
@@ -285,7 +292,7 @@ test('CollectionsDAO#moveDesign moves designs to different collections', async (
   );
 });
 
-test('CollectionsDAO#removeDesign removes a design from a collection', async (t: tape.Test) => {
+test('CollectionsDAO#removeDesign removes a design from a collection', async (t: Test) => {
   const { user } = await createUser({ withSession: false });
   const createdCollection = await CollectionsDAO.create({
     createdAt: new Date(),
@@ -330,7 +337,7 @@ test('CollectionsDAO#removeDesign removes a design from a collection', async (t:
   );
 });
 
-test('findSubmittedButUnpaidCollections finds all submitted but unpaid collections', async (t: tape.Test) => {
+test('findSubmittedButUnpaidCollections finds all submitted but unpaid collections', async (t: Test) => {
   const { user } = await createUser({ role: 'ADMIN' });
   const { user: user2 } = await createUser();
 
@@ -554,5 +561,129 @@ test('findSubmittedButUnpaidCollections finds all submitted but unpaid collectio
     [{ ...response[0], createdAt: new Date(response[0].createdAt) }],
     [{ ...collection1, createdAt: new Date(collection1.createdAt) }],
     'returns Collection with uncosted designs'
+  );
+});
+
+test('findAllUnnotifiedByExpiration works on the empty case', async (t: Test) => {
+  await generatePricingValues();
+
+  const { design: d1 } = await generatePricingCostInput({
+    expiresAt: null
+  });
+  const { design: d2 } = await generatePricingCostInput({
+    expiresAt: null
+  });
+  const { collection: c1 } = await generateCollection();
+  await CollectionsDAO.moveDesign(c1.id, d1.id);
+  await CollectionsDAO.moveDesign(c1.id, d2.id);
+
+  await db.transaction(
+    async (trx: Knex.Transaction): Promise<void> => {
+      const results = await CollectionsDAO.findAllUnnotifiedCollectionsWithExpiringCostInputs(
+        {
+          time: new Date(),
+          boundingHours: 48,
+          notificationType: NotificationType.COSTING_EXPIRED,
+          trx
+        }
+      );
+      t.deepEqual(results, []);
+    }
+  );
+});
+
+test('findAllUnnotifiedByExpiration will returns all cost inputs that have not been sent with a notification', async (t: Test) => {
+  await generatePricingValues();
+
+  const testDate = new Date('2019-04-20');
+  const anHourAgo = new Date(testDate);
+  anHourAgo.setHours(anHourAgo.getHours() - 1);
+  const anHourFromNow = new Date(testDate);
+  anHourFromNow.setHours(anHourFromNow.getHours() + 1);
+
+  const { design: d1 } = await generatePricingCostInput({
+    expiresAt: anHourAgo
+  });
+  const { design: d2 } = await generatePricingCostInput({
+    expiresAt: anHourFromNow
+  });
+  const { collection: c1, createdBy: u1 } = await generateCollection();
+  await CollectionsDAO.moveDesign(c1.id, d1.id);
+  await CollectionsDAO.moveDesign(c1.id, d2.id);
+
+  await db.transaction(
+    async (trx: Knex.Transaction): Promise<void> => {
+      const results = await CollectionsDAO.findAllUnnotifiedCollectionsWithExpiringCostInputs(
+        {
+          time: testDate,
+          boundingHours: 1,
+          notificationType: NotificationType.COSTING_EXPIRED,
+          trx
+        }
+      );
+      t.deepEqual(results, [
+        {
+          id: c1.id,
+          createdBy: u1.id
+        }
+      ]);
+    }
+  );
+});
+
+test('findAllUnnotifiedByExpiration will filter for ones with notifications already sent', async (t: Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
+  await generatePricingValues();
+
+  const testDate = new Date('2019-04-20');
+  const { design: d1 } = await generatePricingCostInput({
+    expiresAt: testDate
+  });
+  const { design: d2 } = await generatePricingCostInput({
+    expiresAt: testDate
+  });
+  const { design: d3 } = await generatePricingCostInput({
+    expiresAt: testDate
+  });
+  const { collection: c1, createdBy: u1 } = await generateCollection();
+  const { collection: c2, createdBy: u2 } = await generateCollection();
+  await generateNotification({
+    collectionId: c1.id,
+    recipientUserId: u1.id,
+    type: NotificationType.COSTING_EXPIRED
+  });
+  await generateNotification({
+    collectionId: c2.id,
+    recipientUserId: u1.id,
+    type: NotificationType.COSTING_EXPIRATION_TWO_DAYS
+  });
+  await generateNotification({
+    collectionId: c2.id,
+    recipientUserId: u1.id,
+    type: NotificationType.COSTING_EXPIRATION_ONE_WEEK
+  });
+  await CollectionsDAO.moveDesign(c1.id, d1.id);
+  await CollectionsDAO.moveDesign(c1.id, d2.id);
+  await CollectionsDAO.moveDesign(c2.id, d3.id);
+
+  await db.transaction(
+    async (trx: Knex.Transaction): Promise<void> => {
+      const results = await CollectionsDAO.findAllUnnotifiedCollectionsWithExpiringCostInputs(
+        {
+          time: testDate,
+          boundingHours: 1,
+          notificationType: NotificationType.COSTING_EXPIRED,
+          trx
+        }
+      );
+      t.deepEqual(results, [
+        {
+          id: c2.id,
+          createdBy: u2.id
+        }
+      ]);
+    }
   );
 });
