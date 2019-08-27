@@ -1,0 +1,31 @@
+#!/bin/bash
+
+set -o errexit
+set -o nounset
+set -o pipefail
+set -o noglob
+
+# Sends cost input expiration notifications to all applicable collection owners.
+# Usage: bin/notify_pricing_expiration <local|built>
+
+main() {
+  source bin/lib/loadenv
+
+  host=${1:-""}
+
+  case "$host" in
+    local)
+      loadenv_local
+      npx ts-node src/workers/notify-pricing-expiration/index.ts
+      ;;
+    built)
+      node dist/workers/notify-pricing-expiration/index.js
+      ;;
+    *)
+      echo 'Usage: bin/notify_pricing_expiration <local|built>'
+      exit 1
+      ;;
+  esac
+}
+
+main "$@"
