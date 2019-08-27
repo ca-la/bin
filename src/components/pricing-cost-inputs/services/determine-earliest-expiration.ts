@@ -24,7 +24,7 @@ export function determineEarliestExpiration(
         currentValue: BasePricingCostInput
       ): Date | null => {
         if (currentValue.expiresAt && !previousValue) {
-          return currentValue.expiresAt;
+          return new Date(currentValue.expiresAt);
         }
 
         if (currentValue.expiresAt && previousValue) {
