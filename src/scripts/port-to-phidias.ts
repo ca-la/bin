@@ -275,13 +275,13 @@ async function portComponents(
   }
 
   log(`Preparing ${nodeInsertions.length} Nodes for insertion`);
-  for (const c of chunk(nodeInsertions, 10000)) {
+  for (const c of chunk(nodeInsertions, 1000)) {
     log(`Creating ${c.length} Nodes`);
     await trx('nodes').insert(c);
   }
 
   log(`Preparing ${artworkInsertions.length} ArtworkAttributes for insertion`);
-  for (const c of chunk(artworkInsertions, 10000)) {
+  for (const c of chunk(artworkInsertions, 1000)) {
     log(`Creating ${c.length} ArtworkAttributes`);
     await trx('artwork_attributes').insert(c);
   }
@@ -289,7 +289,7 @@ async function portComponents(
   log(
     `Preparing ${dimensionInsertions.length} DimensionAttributes for insertion`
   );
-  for (const c of chunk(dimensionInsertions, 10000)) {
+  for (const c of chunk(dimensionInsertions, 1000)) {
     log(`Creating ${c.length} DimensionAttributes`);
     await trx('dimension_attributes').insert(c);
   }
@@ -297,13 +297,13 @@ async function portComponents(
   log(
     `Preparing ${materialInsertions.length} MaterialAttributes for insertion`
   );
-  for (const c of chunk(materialInsertions, 10000)) {
+  for (const c of chunk(materialInsertions, 1000)) {
     log(`Creating ${c.length} MaterialAttributes`);
     await trx('material_attributes').insert(c);
   }
 
   log(`Preparing ${sketchInsertions.length} SketchsAttributes for insertion`);
-  for (const c of chunk(sketchInsertions, 10000)) {
+  for (const c of chunk(sketchInsertions, 1000)) {
     log(`Creating ${c.length} SketchAttributes`);
     await trx('sketch_attributes').insert(c);
   }
