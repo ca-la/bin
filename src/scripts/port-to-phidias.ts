@@ -170,8 +170,8 @@ async function portComponents(
         asset_id: component.artwork_id,
         x: '0',
         y: '0',
-        width: artwork_asset.original_width_px || '0',
-        height: artwork_asset.original_height_px || '0'
+        width: artwork_asset.original_width_px,
+        height: artwork_asset.original_height_px
       });
       dimensionInsertions.push({
         id: uuid.v4(),
@@ -179,8 +179,17 @@ async function portComponents(
         created_by: component.created_by,
         deleted_at: null,
         node_id: component.id,
-        width: artwork_asset.original_width_px || '0',
-        height: artwork_asset.original_height_px || '0'
+        width: artwork_asset.original_width_px,
+        height: artwork_asset.original_height_px
+      });
+      dimensionInsertions.push({
+        id: uuid.v4(),
+        created_at: component.created_at,
+        created_by: component.created_by,
+        deleted_at: null,
+        node_id: component.canvas_id,
+        width: artwork_asset.original_width_px,
+        height: artwork_asset.original_height_px
       });
     }
 
@@ -202,8 +211,8 @@ async function portComponents(
         deleted_at: null,
         node_id: component.id,
         asset_id: material_asset.id,
-        width: material_asset.original_width_px || '0',
-        height: material_asset.original_height_px || '0'
+        width: material_asset.original_width_px,
+        height: material_asset.original_height_px
       });
       dimensionInsertions.push({
         id: uuid.v4(),
@@ -211,8 +220,17 @@ async function portComponents(
         created_by: component.created_by,
         deleted_at: null,
         node_id: component.id,
-        width: material_asset.original_width_px || '0',
-        height: material_asset.original_height_px || '0'
+        width: material_asset.original_width_px,
+        height: material_asset.original_height_px
+      });
+      dimensionInsertions.push({
+        id: uuid.v4(),
+        created_at: component.created_at,
+        created_by: component.created_by,
+        deleted_at: null,
+        node_id: component.canvas_id,
+        width: material_asset.original_width_px,
+        height: material_asset.original_height_px
       });
     }
 
@@ -232,8 +250,8 @@ async function portComponents(
         asset_id: component.sketch_id,
         x: '0',
         y: '0',
-        width: sketch_asset.original_width_px || '0',
-        height: sketch_asset.original_height_px || '0'
+        width: sketch_asset.original_width_px,
+        height: sketch_asset.original_height_px
       });
       dimensionInsertions.push({
         id: uuid.v4(),
@@ -241,8 +259,17 @@ async function portComponents(
         created_by: component.created_by,
         deleted_at: null,
         node_id: component.id,
-        width: sketch_asset.original_width_px || '0',
-        height: sketch_asset.original_height_px || '0'
+        width: sketch_asset.original_width_px,
+        height: sketch_asset.original_height_px
+      });
+      dimensionInsertions.push({
+        id: uuid.v4(),
+        created_at: component.created_at,
+        created_by: component.created_by,
+        deleted_at: null,
+        node_id: component.canvas_id,
+        width: sketch_asset.original_width_px,
+        height: sketch_asset.original_height_px
       });
     }
   }
