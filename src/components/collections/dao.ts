@@ -312,7 +312,8 @@ export async function findAllUnnotifiedCollectionsWithExpiringCostInputs(options
     )
     .leftJoin('notifications', 'notifications.collection_id', 'collections.id')
     .where({
-      'pci.deleted_at': null
+      'pci.deleted_at': null,
+      'collections.deleted_at': null
     })
     .whereBetween('pci.expires_at', [lowerBound, upperBound])
     .whereNotIn(

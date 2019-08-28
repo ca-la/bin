@@ -564,7 +564,7 @@ test('findSubmittedButUnpaidCollections finds all submitted but unpaid collectio
   );
 });
 
-test('findAllUnnotifiedByExpiration works on the empty case', async (t: Test) => {
+test('findAllUnnotifiedCollectionsWithExpiringCostInputs works on the empty case', async (t: Test) => {
   await generatePricingValues();
 
   const { design: d1 } = await generatePricingCostInput({
@@ -592,7 +592,7 @@ test('findAllUnnotifiedByExpiration works on the empty case', async (t: Test) =>
   );
 });
 
-test('findAllUnnotifiedByExpiration will returns all cost inputs that have not been sent with a notification', async (t: Test) => {
+test('findAllUnnotifiedCollectionsWithExpiringCostInputs will returns all collections that have not been sent with a notification', async (t: Test) => {
   await generatePricingValues();
 
   const testDate = new Date('2019-04-20');
@@ -631,7 +631,44 @@ test('findAllUnnotifiedByExpiration will returns all cost inputs that have not b
   );
 });
 
-test('findAllUnnotifiedByExpiration will filter for ones with notifications already sent', async (t: Test) => {
+test('findAllUnnotifiedCollectionsWithExpiringCostInputs filters against expired/deleted cost inputs and collections', async (t: Test) => {
+  await generatePricingValues();
+
+  const testDate = new Date('2019-04-20');
+  const threeHoursAgo = new Date(testDate);
+  threeHoursAgo.setHours(threeHoursAgo.getHours() - 3);
+  const anHourFromNow = new Date(testDate);
+  anHourFromNow.setHours(anHourFromNow.getHours() + 1);
+
+  const { design: d1 } = await generatePricingCostInput({
+    expiresAt: threeHoursAgo
+  });
+  const { design: d2 } = await generatePricingCostInput({
+    expiresAt: anHourFromNow
+  });
+  const { collection: c1 } = await generateCollection();
+  const { collection: c2 } = await generateCollection();
+  await CollectionsDAO.moveDesign(c1.id, d1.id);
+  await CollectionsDAO.moveDesign(c2.id, d2.id);
+
+  CollectionsDAO.deleteById(c2.id);
+
+  await db.transaction(
+    async (trx: Knex.Transaction): Promise<void> => {
+      const results = await CollectionsDAO.findAllUnnotifiedCollectionsWithExpiringCostInputs(
+        {
+          time: testDate,
+          boundingHours: 1,
+          notificationType: NotificationType.COSTING_EXPIRED,
+          trx
+        }
+      );
+      t.deepEqual(results, []);
+    }
+  );
+});
+
+test('findAllUnnotifiedCollectionsWithExpiringCostInputs will filter for ones with notifications already sent', async (t: Test) => {
   sandbox()
     .stub(NotificationAnnouncer, 'announceNotificationCreation')
     .resolves({});
