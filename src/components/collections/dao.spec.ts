@@ -651,7 +651,7 @@ test('findAllUnnotifiedCollectionsWithExpiringCostInputs filters against expired
   await CollectionsDAO.moveDesign(c1.id, d1.id);
   await CollectionsDAO.moveDesign(c2.id, d2.id);
 
-  CollectionsDAO.deleteById(c2.id);
+  await CollectionsDAO.deleteById(c2.id);
 
   await db.transaction(
     async (trx: Knex.Transaction): Promise<void> => {
