@@ -41,6 +41,7 @@ test('ProductDesignCanvases DAO supports creation/retrieval, enriched with image
     originalHeightPx: 0,
     originalWidthPx: 0,
     title: 'FooBar.png',
+    uploadCompletedAt: new Date(),
     userId: user.id
   });
   const { component } = await generateComponent({
@@ -49,6 +50,25 @@ test('ProductDesignCanvases DAO supports creation/retrieval, enriched with image
   });
   const { canvas, design } = await generateCanvas({
     componentId: component.id,
+    createdBy: user.id
+  });
+  const { asset: uploading } = await generateAsset({
+    description: '',
+    id: uuid.v4(),
+    mimeType: 'image/png',
+    originalHeightPx: 0,
+    originalWidthPx: 0,
+    title: 'FooBar.png',
+    uploadCompletedAt: null,
+    userId: user.id
+  });
+  const { component: uploadingComponent } = await generateComponent({
+    createdBy: user.id,
+    sketchId: uploading.id
+  });
+  await generateCanvas({
+    componentId: uploadingComponent.id,
+    designId: design.id,
     createdBy: user.id
   });
   const result = await findById(design.id);
@@ -60,15 +80,18 @@ test('ProductDesignCanvases DAO supports creation/retrieval, enriched with image
     [sketch.id],
     'Returns the associated image ids for the design'
   );
+  t.equal(
+    result.previewImageUrls!.length,
+    1,
+    'Does not return uploading assets'
+  );
   t.ok(
-    result.previewImageUrls && result.previewImageUrls[0].includes(sketch.id),
+    result.previewImageUrls![0].includes(sketch.id),
     'The preview image urls are the same as the image links'
   );
 
-  if (!result.imageLinks) {
-    throw new Error('Design should have image links!');
-  }
-  const { previewLink, thumbnailLink } = result.imageLinks[0];
+  t.equal(result.imageLinks!.length, 1, 'Does not return uploading assets');
+  const { previewLink, thumbnailLink } = result.imageLinks![0];
   t.ok(
     previewLink.includes(sketch.id),
     'Preview link contains the sketch id for the design'

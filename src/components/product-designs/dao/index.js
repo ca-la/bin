@@ -55,7 +55,11 @@ ON co.id = c.component_id
     )
     .joinRaw(
       `
-LEFT JOIN (SELECT * FROM product_design_images AS pdi WHERE pdi.deleted_at IS null) AS pdi
+LEFT JOIN (
+  SELECT * FROM product_design_images AS pdi
+   WHERE pdi.deleted_at IS NULL
+     AND pdi.upload_completed_at IS NOT NULL
+) AS pdi
 ON pdi.id = co.sketch_id
     `
     )

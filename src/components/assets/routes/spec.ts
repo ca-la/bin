@@ -25,7 +25,8 @@ test('GET /product-design-images/:assetId returns an asset', async (t: tape.Test
   t.deepEqual(
     {
       ...body,
-      createdAt: new Date(body.createdAt)
+      createdAt: new Date(body.createdAt),
+      uploadCompletedAt: new Date(body.uploadCompletedAt)
     },
     asset,
     'Returns the found asset'
@@ -61,7 +62,8 @@ test('PUT /product-design-images/:assetId creates an asset', async (t: tape.Test
   t.deepEqual(
     {
       ...body,
-      createdAt: new Date(body.createdAt)
+      createdAt: new Date(body.createdAt),
+      uploadCompletedAt: new Date(body.uploadCompletedAt)
     },
     asset,
     'Returns the created file'
@@ -90,7 +92,8 @@ test('PATCH /product-design-images/:assetId updates an asset', async (t: tape.Te
   t.deepEqual(
     {
       ...body,
-      createdAt: new Date(body.createdAt)
+      createdAt: new Date(body.createdAt),
+      uploadCompletedAt: new Date(body.uploadCompletedAt)
     },
     asset,
     'Returns the created asset'

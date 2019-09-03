@@ -26,7 +26,7 @@ export default async function generateAsset(
     originalHeightPx: 0,
     originalWidthPx: 0,
     title: null,
-    uploadCompletedAt: null,
+    uploadCompletedAt: new Date(),
     userId: user.id,
     ...options
   });

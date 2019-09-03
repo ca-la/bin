@@ -70,7 +70,10 @@ test('getAllByDesign will fetch all resources necessary for phidias', async (t: 
     .value('imgix-foo.com');
 
   const { user } = await createUser({ withSession: false });
-  const { asset: asset1 } = await generateAsset({ userId: user.id });
+  const { asset: asset1 } = await generateAsset({
+    userId: user.id,
+    uploadCompletedAt: null
+  });
   const assetId2 = uuid.v4();
   const { asset: asset2 } = await generateAsset({
     id: assetId2,
@@ -149,7 +152,10 @@ test('getAllByDesign will fetch all resources necessary for phidias', async (t: 
   const result = await getAllByDesign('abc-123');
 
   t.deepEqual(result.assets, [
-    { ...data.asset1, assetLinks: null },
+    {
+      ...data.asset1,
+      assetLinks: null
+    },
     {
       ...data.asset2,
       assetLinks: {
@@ -160,7 +166,8 @@ test('getAllByDesign will fetch all resources necessary for phidias', async (t: 
         thumbnail2xLink: `imgix-foo.com/${
           asset2.id
         }?fm=jpg&fit=fill&h=104&w=104&dpr=2`
-      }
+      },
+      uploadCompletedAt: new Date(data.asset2.uploadCompletedAt)
     }
   ]);
   t.deepEqual(result.attributes, {

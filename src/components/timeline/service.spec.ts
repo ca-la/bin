@@ -122,6 +122,7 @@ test('findByCollectionId finds timelines by collection id and completed stage', 
     originalHeightPx: 0,
     originalWidthPx: 0,
     title: 'FooBar.png',
+    uploadCompletedAt: new Date(),
     userId: user.id
   });
   const { component } = await generateComponent({
