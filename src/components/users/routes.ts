@@ -252,7 +252,15 @@ function* updateUser(
     'You can only update your own user'
   );
   const { body } = this.request;
-  const { name, phone, email, role, newPassword, currentPassword } = body;
+  const {
+    name,
+    locale,
+    phone,
+    email,
+    role,
+    newPassword,
+    currentPassword
+  } = body;
 
   if (isAdmin && role) {
     yield SessionsDAO.deleteByUserId(this.params.userId);
@@ -260,8 +268,9 @@ function* updateUser(
   const errors: (Error | CaughtError)[] = [];
 
   const updatedValues: Partial<User> = {
-    name,
     email,
+    locale,
+    name,
     phone
   };
 

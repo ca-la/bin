@@ -18,7 +18,7 @@ import db = require('../../services/db');
 import InvalidDataError = require('../../errors/invalid-data');
 import MailChimp = require('../../services/mailchimp');
 import Stripe = require('../../services/stripe');
-import { authHeader, get, post, put } from '../../test-helpers/http';
+import { authHeader, get, patch, post, put } from '../../test-helpers/http';
 import { baseUser, UserIO } from './domain-object';
 import { sandbox, Test, test } from '../../test-helpers/fresh';
 
@@ -191,8 +191,8 @@ test('GET /users/email-availability/:email returns false when invalid', async (t
   t.deepEqual(body, { available: false, isTaken: false, isValid: false });
 });
 
-test('PUT /users/:id returns a 401 if unauthenticated', async (t: Test) => {
-  const [response, body] = await put('/users/123', {
+test('PATCH /users/:id returns a 401 if unauthenticated', async (t: Test) => {
+  const [response, body] = await patch('/users/123', {
     body: {
       ...baseUser
     }
@@ -201,9 +201,9 @@ test('PUT /users/:id returns a 401 if unauthenticated', async (t: Test) => {
   t.equal(body.message, 'Authorization is required to access this resource');
 });
 
-test('PUT /users/:id returns a 403 if not the current user', async (t: Test) => {
+test('PATCH /users/:id returns a 403 if not the current user', async (t: Test) => {
   const { session } = await createUser();
-  const [response, body] = await put('/users/123', {
+  const [response, body] = await patch('/users/123', {
     body: {},
     headers: authHeader(session.id)
   });
@@ -211,24 +211,26 @@ test('PUT /users/:id returns a 403 if not the current user', async (t: Test) => 
   t.equal(body.message, 'You can only update your own user');
 });
 
-test('PUT /users/:id updates the current user', async (t: Test) => {
+test('PATCH /users/:id updates the current user', async (t: Test) => {
   const { user, session } = await createUser();
-  const [response, body] = await put(`/users/${user.id}`, {
+  const [response, body] = await patch(`/users/${user.id}`, {
     body: {
-      birthday: '2017-01-02'
+      birthday: '2017-01-02',
+      locale: 'zh'
     },
     headers: authHeader(session.id)
   });
   t.equal(response.status, 200);
+  t.equal(body.locale, 'zh');
   t.equal(
     new Date(body.birthday).getMilliseconds(),
     new Date('2017-01-02').getMilliseconds()
   );
 });
 
-test('PUT /users/:id does not allow private values to be set', async (t: Test) => {
+test('PATCH /users/:id does not allow private values to be set', async (t: Test) => {
   const { user, session } = await createUser();
-  const [response, body] = await put(`/users/${user.id}`, {
+  const [response, body] = await patch(`/users/${user.id}`, {
     body: {
       birthday: '2017-01-02',
       role: 'ADMIN'
@@ -241,10 +243,10 @@ test('PUT /users/:id does not allow private values to be set', async (t: Test) =
   t.equal(body.role, 'USER');
 });
 
-test('PUT /users/:id allows admins to set private values', async (t: Test) => {
+test('PATCH /users/:id allows admins to set private values', async (t: Test) => {
   const { user } = await createUser();
   const { session: adminSession } = await createUser({ role: 'ADMIN' });
-  const [response, body] = await put(`/users/${user.id}`, {
+  const [response, body] = await patch(`/users/${user.id}`, {
     body: {
       birthday: '2017-01-02',
       role: 'ADMIN'
@@ -256,11 +258,12 @@ test('PUT /users/:id allows admins to set private values', async (t: Test) => {
 
   t.equal(body.role, 'ADMIN');
 });
+
 test('PATCH /users/:id returns errors on taken email', async (t: Test) => {
   const { user: user1, session } = await createUser();
   const { user: user2 } = await createUser();
 
-  const [response, body] = await put(`/users/${user1.id}`, {
+  const [response, body] = await patch(`/users/${user1.id}`, {
     body: {
       email: user2.email
     },
@@ -273,7 +276,7 @@ test('PATCH /users/:id returns errors on taken email', async (t: Test) => {
 test('PATCH /users/:id returns error on incorrect password', async (t: Test) => {
   const { user, session } = await createUser();
 
-  const [response, body] = await put(`/users/${user.id}`, {
+  const [response, body] = await patch(`/users/${user.id}`, {
     body: {
       currentPassword: 'incorrectPassword',
       newPassword: 'hunter3'
@@ -291,7 +294,7 @@ test('PATCH /users/:id returns error on password update fail', async (t: Test) =
     .stub(UsersDAO, 'updatePassword')
     .throws(new InvalidDataError('update failed'));
 
-  const [response, body] = await put(`/users/${user.id}`, {
+  const [response, body] = await patch(`/users/${user.id}`, {
     body: {
       email: user.email,
       currentPassword: 'hunter2',
@@ -308,7 +311,7 @@ test('PATCH /users/:id returns multiple errors', async (t: Test) => {
   const { user: user1, session } = await createUser();
   const { user: user2 } = await createUser();
 
-  const [response, body] = await put(`/users/${user1.id}`, {
+  const [response, body] = await patch(`/users/${user1.id}`, {
     body: {
       email: user2.email,
       currentPassword: 'incorrectPassword',
