@@ -62,13 +62,16 @@ export default async function generateBid({
     throw new Error('Could not find or create quote for new pricing bid');
   }
 
+  const createdAt = new Date();
+  const dueDate = new Date(createdAt.getTime() + daysToMs(10));
   const bid = await createBid({
     acceptedAt: null,
     bidPriceCents: 100000,
     projectDueInMs: daysToMs(10),
-    createdAt: new Date(),
+    createdAt,
     createdBy,
     description: 'Full Service',
+    dueDate,
     id: uuid.v4(),
     quoteId: quote.id,
     taskTypeIds: [],

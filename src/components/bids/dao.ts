@@ -100,7 +100,15 @@ const orderByBidId = (query: Knex.QueryBuilder): Knex.QueryBuilder =>
 
 export function create(bidPayload: BidCreationPayload): Promise<Bid> {
   const { taskTypeIds, ...bid } = bidPayload;
-  const rowData = dataAdapter.forInsertion(bid);
+  const createdAt = new Date();
+  const dueDate = bid.projectDueInMs
+    ? new Date(createdAt.getTime() + bid.projectDueInMs)
+    : null;
+  const rowData = {
+    ...dataAdapter.forInsertion(bid),
+    created_at: createdAt,
+    due_date: dueDate
+  };
 
   return db.transaction(async (trx: Knex.Transaction) => {
     const createdBid = await db(TABLE_NAME)

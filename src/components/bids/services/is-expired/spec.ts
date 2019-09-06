@@ -1,30 +1,32 @@
-import { test, Test } from '../../../../test-helpers/fresh';
+import daysToMs from '@cala/ts-lib/dist/time/days-to-ms';
+import { sandbox, test, Test } from '../../../../test-helpers/fresh';
 
 import { isExpired } from './index';
 import generateBid from '../../../../test-helpers/factories/bid';
 
+const ONE_HOUR = 1000 * 60 * 60;
+
 test('isExpired can determine if a bid is expired', async (t: Test) => {
-  const { bid: bid1 } = await generateBid();
-  const { bid: bid2 } = await generateBid({
-    bidOptions: {
-      createdAt: new Date('2019-02-01')
-    },
-    generatePricing: false
-  });
-  const now = new Date();
-  const threeDaysAgo = new Date(now.setHours(now.getHours() - 72));
-  const now2 = new Date();
-  const seventyOneHoursAgo = new Date(now2.setHours(now2.getHours() - 71));
+  const now = new Date(2019, 5, 15);
+  const threeDaysAgo = new Date(now.getTime() - daysToMs(3) - 1);
+  const seventyOneHoursAgo = new Date(now.getTime() - daysToMs(3) + ONE_HOUR);
+  const febFirst = new Date(2019, 1, 1);
+
+  sandbox().useFakeTimers(febFirst);
+  const { bid: bid2 } = await generateBid();
+
+  sandbox().useFakeTimers(threeDaysAgo);
   const { bid: bid3 } = await generateBid({
-    bidOptions: {
-      createdAt: threeDaysAgo
-    },
     generatePricing: false
   });
+
+  sandbox().useFakeTimers(seventyOneHoursAgo);
   const { bid: bid4 } = await generateBid({
-    bidOptions: {
-      createdAt: seventyOneHoursAgo
-    },
+    generatePricing: false
+  });
+
+  sandbox().useFakeTimers(now);
+  const { bid: bid1 } = await generateBid({
     generatePricing: false
   });
 

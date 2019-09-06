@@ -545,6 +545,8 @@ test('POST /pricing-quotes/preview requires units and a cost input', async (t: T
 });
 
 test('PUT /pricing-quotes/:quoteId/bid/:bidId creates bid', async (t: Test) => {
+  const now = new Date(2012, 11, 22);
+  sandbox().useFakeTimers(now);
   await generatePricingValues();
   const { user, session } = await createUser({ role: 'ADMIN' });
   const design = await createDesign({
@@ -588,9 +590,10 @@ test('PUT /pricing-quotes/:quoteId/bid/:bidId creates bid', async (t: Test) => {
     acceptedAt: null,
     bidPriceCents: 100000,
     projectDueInMs: daysToMs(10),
-    createdAt: new Date(2012, 12, 22),
+    createdAt: now,
     createdBy: user.id,
     description: 'Full Service',
+    dueDate: new Date(now.getTime() + daysToMs(10)),
     id: uuid.v4(),
     quoteId: createdQuotes[0].id
   };
@@ -606,7 +609,8 @@ test('PUT /pricing-quotes/:quoteId/bid/:bidId creates bid', async (t: Test) => {
   t.equal(putResponse.status, 201);
   t.deepEqual(createdBid, {
     ...inputBid,
-    createdAt: inputBid.createdAt.toISOString()
+    createdAt: inputBid.createdAt.toISOString(),
+    dueDate: inputBid.dueDate!.toISOString()
   });
 });
 
@@ -656,13 +660,14 @@ test('POST /pricing-quotes/:quoteId/bids creates bid', async (t: Test) => {
     projectDueInMs: daysToMs(10),
     createdBy: user.id,
     description: 'Full Service',
+    dueDate: new Date(new Date(2012, 11, 22).getTime() + daysToMs(10)),
     quoteId: createdQuotes[0].id
   };
 
   const [postResponse, createdBid] = await post(
     `/pricing-quotes/${inputBid.quoteId}/bids`,
     {
-      body: { ...inputBid, taskTypeIds: [] },
+      body: { ...inputBid, createdAt: new Date(2012, 11, 22), taskTypeIds: [] },
       headers: authHeader(session.id)
     }
   );
@@ -671,11 +676,14 @@ test('POST /pricing-quotes/:quoteId/bids creates bid', async (t: Test) => {
   t.deepEqual(createdBid, {
     ...inputBid,
     createdAt: createdBid.createdAt,
+    dueDate: createdBid.dueDate,
     id: createdBid.id
   });
 });
 
 test('GET /pricing-quotes/:quoteId/bids returns list of bids for quote', async (t: Test) => {
+  const now = new Date(2012, 11, 22);
+  sandbox().useFakeTimers(now);
   await generatePricingValues();
   const { user, session } = await createUser({ role: 'ADMIN' });
   const design = await createDesign({
@@ -719,9 +727,10 @@ test('GET /pricing-quotes/:quoteId/bids returns list of bids for quote', async (
     acceptedAt: null,
     bidPriceCents: 100000,
     projectDueInMs: daysToMs(10),
-    createdAt: new Date(2012, 12, 22),
+    createdAt: now,
     createdBy: user.id,
     description: 'Full Service',
+    dueDate: new Date(now.getTime() + daysToMs(10)),
     id: uuid.v4(),
     quoteId: createdQuotes[0].id
   };
@@ -740,7 +749,8 @@ test('GET /pricing-quotes/:quoteId/bids returns list of bids for quote', async (
   t.deepEqual(bids, [
     {
       ...inputBid,
-      createdAt: inputBid.createdAt.toISOString()
+      createdAt: inputBid.createdAt.toISOString(),
+      dueDate: inputBid.dueDate!.toISOString()
     }
   ]);
 });

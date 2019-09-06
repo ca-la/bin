@@ -29,7 +29,10 @@ import generateInvoice from '../../test-helpers/factories/invoice';
 import PayoutAccountsDAO = require('../../dao/partner-payout-accounts');
 import PartnerPayoutsDAO = require('../../components/partner-payouts/dao');
 
+const testDate = new Date(2012, 11, 22);
+
 test('Bids DAO supports creation and retrieval', async (t: Test) => {
+  sandbox().useFakeTimers(testDate);
   const bidTaskTypesCreateStub = sandbox()
     .stub(BidTaskTypesDAO, 'create')
     .resolves({});
@@ -64,9 +67,10 @@ test('Bids DAO supports creation and retrieval', async (t: Test) => {
     acceptedAt: null,
     bidPriceCents: 100000,
     projectDueInMs: daysToMs(10),
-    createdAt: new Date(2012, 11, 22),
+    createdAt: testDate,
     createdBy: user.id,
     description: 'Full Service',
+    dueDate: new Date(testDate.getTime() + daysToMs(10)),
     id: uuid.v4(),
     quoteId: quote.id
   };
@@ -97,6 +101,7 @@ test('Bids DAO findById returns null with a lookup-miss', async (t: Test) => {
 });
 
 test('Bids DAO supports retrieval by quote ID', async (t: Test) => {
+  sandbox().useFakeTimers(testDate);
   await generatePricingValues();
   const { user } = await createUser();
   const quote = await generatePricingQuote({
@@ -128,9 +133,10 @@ test('Bids DAO supports retrieval by quote ID', async (t: Test) => {
     acceptedAt: null,
     bidPriceCents: 100000,
     projectDueInMs: daysToMs(10),
-    createdAt: new Date(2012, 11, 22),
+    createdAt: testDate,
     createdBy: user.id,
     description: 'Full Service',
+    dueDate: new Date(testDate.getTime() + daysToMs(10)),
     id: uuid.v4(),
     quoteId: quote.id
   };
@@ -141,6 +147,7 @@ test('Bids DAO supports retrieval by quote ID', async (t: Test) => {
 });
 
 test('Bids DAO supports retrieval of bids by target ID and status', async (t: Test) => {
+  sandbox().useFakeTimers(testDate);
   await generatePricingValues();
   const { user: designer } = await createUser();
   const { user: admin } = await createUser();
@@ -176,9 +183,10 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
     acceptedAt: null,
     bidPriceCents: 100000,
     projectDueInMs: daysToMs(10),
-    createdAt: new Date(2012, 11, 22),
+    createdAt: testDate,
     createdBy: admin.id,
     description: 'Full Service',
+    dueDate: new Date(testDate.getTime() + daysToMs(10)),
     id: uuid.v4(),
     quoteId: quote.id
   };
@@ -186,9 +194,10 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
     acceptedAt: null,
     bidPriceCents: 100000,
     projectDueInMs: daysToMs(10),
-    createdAt: new Date(2012, 11, 22),
+    createdAt: testDate,
     createdBy: admin.id,
     description: 'Full Service (Rejected)',
+    dueDate: new Date(testDate.getTime() + daysToMs(10)),
     id: uuid.v4(),
     quoteId: quote.id
   };
@@ -196,9 +205,10 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
     acceptedAt: null,
     bidPriceCents: 110000,
     projectDueInMs: daysToMs(10),
-    createdAt: new Date(2012, 11, 26),
+    createdAt: testDate,
     createdBy: admin.id,
     description: 'Full Service (Accepted)',
+    dueDate: new Date(testDate.getTime() + daysToMs(10)),
     id: uuid.v4(),
     quoteId: quote.id
   };
@@ -328,7 +338,7 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
   );
   t.equal(
     (acceptedBids[0].createdAt as Date).toString(),
-    new Date(2012, 11, 26).toString()
+    new Date(2012, 11, 22).toString()
   );
   t.equal(
     (acceptedBids[0].acceptedAt as Date).toString(),
@@ -492,79 +502,66 @@ test('Bids DAO supports finding all with a limit and offset', async (t: Test) =>
 
 test('Bids DAO supports finding all bids by status', async (t: Test) => {
   const now = new Date();
+  sandbox().useFakeTimers(now);
   const { bid: openBid1 } = await generateBid();
   await generateDesignEvent({
     bidId: openBid1.id,
-    createdAt: now,
     type: 'BID_DESIGN'
   });
   const fiftyHoursAgo = new Date(now.setHours(now.getHours() - 50));
+  sandbox().useFakeTimers(fiftyHoursAgo);
   const { bid: openBid2 } = await generateBid({
-    bidOptions: {
-      createdAt: fiftyHoursAgo
-    },
     generatePricing: false
   });
   await generateDesignEvent({
     bidId: openBid2.id,
-    createdAt: fiftyHoursAgo,
     type: 'BID_DESIGN'
   });
 
+  sandbox().useFakeTimers(now);
   const { bid: acceptedBid } = await generateBid({ generatePricing: false });
   await generateDesignEvent({
     bidId: acceptedBid.id,
-    createdAt: new Date(),
     type: 'BID_DESIGN'
   });
   await generateDesignEvent({
     bidId: acceptedBid.id,
-    createdAt: new Date(),
     type: 'ACCEPT_SERVICE_BID'
   });
+  sandbox().useFakeTimers(new Date('2019-01-15'));
   const { bid: acceptedBid2 } = await generateBid({
-    bidOptions: {
-      createdAt: new Date('2019-01-15')
-    },
     generatePricing: false
   });
   await generateDesignEvent({
     bidId: acceptedBid2.id,
-    createdAt: new Date('2019-01-15'),
     type: 'BID_DESIGN'
   });
+  sandbox().useFakeTimers(new Date('2019-01-16'));
   await generateDesignEvent({
     bidId: acceptedBid2.id,
-    createdAt: new Date('2019-01-16'),
     type: 'ACCEPT_SERVICE_BID'
   });
 
+  sandbox().useFakeTimers(new Date('2019-01-02'));
   const { bid: expiredBid } = await generateBid({
-    bidOptions: {
-      createdAt: new Date('2019-01-02')
-    },
     generatePricing: false
   });
   await generateDesignEvent({
     bidId: expiredBid.id,
-    createdAt: new Date('2019-01-02'),
     type: 'BID_DESIGN'
   });
 
+  sandbox().useFakeTimers(new Date('2019-02-05'));
   const { bid: rejectedBid } = await generateBid({
-    bidOptions: {
-      createdAt: new Date('2019-02-05')
-    },
     generatePricing: false
   });
   await generateDesignEvent({
     bidId: rejectedBid.id,
-    createdAt: new Date('2019-02-05'),
     type: 'BID_DESIGN'
   });
+  sandbox().useFakeTimers(new Date('2019-02-06'));
   await generateDesignEvent({
     bidId: rejectedBid.id,
-    createdAt: new Date('2019-02-06'),
     type: 'REJECT_SERVICE_BID'
   });
 

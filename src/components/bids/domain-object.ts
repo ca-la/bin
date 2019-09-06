@@ -14,6 +14,7 @@ export default interface Bid {
   acceptedAt: Date | null;
   createdAt: Date;
   createdBy: string;
+  dueDate: Date | null;
   quoteId: string;
   bidPriceCents: number;
   projectDueInMs: number | null;
@@ -30,6 +31,7 @@ export interface BidRow {
   accepted_at: string | null;
   created_at: string;
   created_by: string;
+  due_date: string | null;
   quote_id: string;
   bid_price_cents: number;
   project_due_in_ms: string | null;
@@ -41,6 +43,7 @@ export const encode = (row: BidRow): Bid => ({
   acceptedAt: row.accepted_at ? new Date(row.accepted_at) : null,
   createdAt: new Date(row.created_at),
   createdBy: row.created_by,
+  dueDate: row.due_date ? new Date(row.due_date) : null,
   quoteId: row.quote_id,
   bidPriceCents: row.bid_price_cents,
   projectDueInMs:
@@ -53,6 +56,7 @@ export const decode = (data: Bid): BidRow => ({
   accepted_at: data.acceptedAt ? data.acceptedAt.toISOString() : null,
   created_at: data.createdAt.toISOString(),
   created_by: data.createdBy,
+  due_date: data.dueDate ? data.dueDate.toISOString() : null,
   quote_id: data.quoteId,
   bid_price_cents: data.bidPriceCents,
   project_due_in_ms: data.projectDueInMs
@@ -70,6 +74,7 @@ export function isBid(row: object): row is Bid {
     'acceptedAt',
     'createdAt',
     'createdBy',
+    'dueDate',
     'quoteId',
     'bidPriceCents',
     'projectDueInMs',
@@ -84,6 +89,7 @@ export function isBidRow(row: object): row is BidRow {
     'accepted_at',
     'created_at',
     'created_by',
+    'due_date',
     'quote_id',
     'bid_price_cents',
     'project_due_in_ms',
