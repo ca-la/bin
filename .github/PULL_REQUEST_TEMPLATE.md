@@ -1,11 +1,13 @@
-☣️ Release blocked by ca-la/studio#
-🔗 [Pivotal Story](https://www.pivotaltracker.com/story/show/)
-🤖 Test Coverage?
+- [ ] Release blocked by ca-la/api#
+- [ ] [Linear Ticket](https://linear.app/issue/)
+- [ ] Test Coverage?
 
 ## Changeset
 
 ## Notes
 
 ## Migration Output
+
 ```
+
 ```
