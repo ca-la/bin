@@ -37,6 +37,7 @@ const {
   addDesignEvents,
   getDesignEvents
 } = require('./events');
+const { updateAllNodes } = require('./phidias');
 const {
   getSections,
   createSection,
@@ -426,5 +427,6 @@ router.put(
   canAccessSection,
   replaceSectionFeaturePlacements
 );
+router.put('/:designId', requireAuth, canAccessDesignInParam, updateAllNodes);
 
 module.exports = router.routes();

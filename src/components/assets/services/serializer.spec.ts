@@ -7,6 +7,7 @@ import {
   isSerializedAsset
 } from './serializer';
 import Asset from '../domain-object';
+import { omit } from 'lodash';
 
 test('isSerializedAsset can determine if an object is an asset', async (t: tape.Test) => {
   t.false(
@@ -16,7 +17,6 @@ test('isSerializedAsset can determine if an object is an asset', async (t: tape.
   );
   const payload: Asset = {
     createdAt: new Date(),
-    deletedAt: null,
     description: null,
     id: 'abc-123',
     mimeType: 'image/jpeg',
@@ -33,7 +33,6 @@ test('isSerializedAsset can determine if an object is an asset', async (t: tape.
 test('deserializeAsset can deserialize an object', async (t: tape.Test) => {
   const payload: Asset = {
     createdAt: new Date(),
-    deletedAt: null,
     description: null,
     id: 'abc-123',
     mimeType: 'image/jpeg',
@@ -50,9 +49,8 @@ test('deserializeAsset can deserialize an object', async (t: tape.Test) => {
 test('deserializePartialAsset can deserialize a partial object', async (t: tape.Test) => {
   const payload = {
     createdAt: new Date('2019-04-20'),
-    deletedAt: new Date('2019-04-24'),
     uploadCompletedAt: new Date('2019-04-22')
   };
   const serialized = JSON.parse(JSON.stringify(payload));
-  t.deepEqual(deserializePartialAsset(serialized), payload);
+  t.deepEqual(omit(deserializePartialAsset(serialized), 'deletedAt'), payload);
 });

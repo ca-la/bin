@@ -129,3 +129,67 @@ test(`GET ${API_PATH}/tasks checks access`, async (t: tape.Test) => {
   });
   t.equal(responseThree.status, 200);
 });
+
+test(`GET ${API_PATH}/designs checks access`, async (t: tape.Test) => {
+  const userOne = await createUser();
+  const userTwo = await createUser();
+
+  const designOne = await createDesign({
+    productType: 'test',
+    title: 'design',
+    userId: userOne.user.id
+  });
+
+  const { collection: collectionOne } = await generateCollection({
+    createdBy: userOne.user.id
+  });
+  await addDesign(collectionOne.id, designOne.id);
+
+  const [responseOne, bodyOne] = await API.get(
+    `${API_PATH}/designs/${designOne.id}`,
+    {
+      headers: API.authHeader(userOne.session.id)
+    }
+  );
+  t.equal(responseOne.status, 200);
+  t.deepEqual(bodyOne, {
+    canComment: true,
+    canDelete: true,
+    canEdit: true,
+    canEditVariants: true,
+    canSubmit: true,
+    canView: true
+  });
+
+  const [responseTwo, bodyTwo] = await API.get(
+    `${API_PATH}/designs/${designOne.id}`,
+    {
+      headers: API.authHeader(userTwo.session.id)
+    }
+  );
+  t.equal(responseTwo.status, 403);
+  t.deepEqual(bodyTwo, {
+    message: "You don't have permission to view this design"
+  });
+
+  await generateCollaborator({
+    collectionId: collectionOne.id,
+    userId: userTwo.user.id,
+    role: 'VIEW'
+  });
+  const [responseThree, bodyThree] = await API.get(
+    `${API_PATH}/designs/${designOne.id}`,
+    {
+      headers: API.authHeader(userTwo.session.id)
+    }
+  );
+  t.equal(responseThree.status, 200);
+  t.deepEqual(bodyThree, {
+    canComment: true,
+    canDelete: false,
+    canEdit: false,
+    canEditVariants: false,
+    canSubmit: false,
+    canView: true
+  });
+});

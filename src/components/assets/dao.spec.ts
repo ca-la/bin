@@ -15,7 +15,6 @@ test('AssetsDAO supports creation', async (t: Test) => {
   const id = uuid.v4();
   const created = await AssetsDAO.create({
     createdAt: new Date('2019-04-20'),
-    deletedAt: null,
     description: null,
     id,
     mimeType: 'text/csv',
@@ -31,7 +30,6 @@ test('AssetsDAO supports creation', async (t: Test) => {
     created,
     {
       createdAt: new Date('2019-04-20'),
-      deletedAt: null,
       description: null,
       id,
       mimeType: 'text/csv',
@@ -51,7 +49,6 @@ test('AssetsDAO supports updating', async (t: Test) => {
   const id = uuid.v4();
   await AssetsDAO.create({
     createdAt: new Date('2019-04-20'),
-    deletedAt: null,
     description: null,
     id,
     mimeType: 'text/csv',
@@ -70,7 +67,6 @@ test('AssetsDAO supports updating', async (t: Test) => {
     updated,
     {
       createdAt: new Date('2019-04-20'),
-      deletedAt: null,
       description: null,
       id,
       mimeType: 'text/csv',

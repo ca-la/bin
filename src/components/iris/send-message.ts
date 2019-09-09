@@ -7,6 +7,17 @@ import {
   AWS_IRIS_SQS_URL
 } from '../../config';
 
+function getResourceId(resource: RealtimeMessage): string {
+  switch (resource.type) {
+    case 'design-nodes/update': {
+      return resource.designId;
+    }
+    default: {
+      return resource.resource.id;
+    }
+  }
+}
+
 /**
  * Uploads a realtime resource to s3 then enqueues into SQS.
  * @param resource A realtime resource
@@ -20,7 +31,7 @@ export async function sendMessage(resource: RealtimeMessage): Promise<void> {
   });
 
   await enqueueMessage({
-    deduplicationId: `${resource.type}-${resource.resource.id}`,
+    deduplicationId: `${resource.type}-${getResourceId(resource)}`,
     messageGroupId: resource.type,
     messageType: 'realtime-message',
     payload: uploadResponse,

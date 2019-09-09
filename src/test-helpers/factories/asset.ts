@@ -19,7 +19,6 @@ export default async function generateAsset(
 
   const asset = await create({
     createdAt: new Date(),
-    deletedAt: null,
     description: null,
     id: uuid.v4(),
     mimeType: 'image/jpeg',

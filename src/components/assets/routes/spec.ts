@@ -48,7 +48,6 @@ test('PUT /product-design-images/:assetId creates an asset', async (t: tape.Test
     headers: authHeader(session.id),
     body: {
       createdAt: new Date('2019-04-20'),
-      deletedAt: null,
       description: null,
       id: assetId,
       mimeType: 'text/csv',

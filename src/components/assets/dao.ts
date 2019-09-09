@@ -22,7 +22,6 @@ export async function create(
   const row = toInsertion({
     id: uuid.v4(),
     createdAt: new Date(),
-    deletedAt: null,
     ...asset
   });
 
@@ -65,13 +64,19 @@ export async function findById(assetId: string): Promise<Asset | null> {
 
 export async function update(
   id: string,
-  fileData: Partial<Asset>
+  fileData: Partial<Asset>,
+  trx?: Knex.Transaction
 ): Promise<Asset> {
   const row = toPartialInsertion(fileData);
 
   const updated = await db(TABLE_NAME)
     .where({ id })
     .update(row, '*')
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .then((rows: AssetRow[]) => first<AssetRow>(rows));
 
   if (!updated) {
@@ -84,4 +89,15 @@ export async function update(
     dataAdapter,
     updated
   );
+}
+
+export async function updateOrCreate(
+  data: Asset,
+  trx: Knex.Transaction
+): Promise<Asset> {
+  const existingAsset = await findById(data.id);
+  if (existingAsset) {
+    return update(data.id, data, trx);
+  }
+  return create(data, trx);
 }

@@ -3,6 +3,7 @@ import * as Koa from 'koa';
 import requireAuth = require('../../middleware/require-auth');
 import { canAccessAnnotationInParams } from '../../middleware/can-access-annotation';
 import { canAccessTaskInParams } from '../../middleware/can-access-task';
+import { canAccessDesignInParam } from '../../middleware/can-access-design';
 
 const router = new Router();
 
@@ -50,6 +51,18 @@ function* getTasksAccess(
   this.status = 200;
 }
 
+/**
+ * Checks if the authenticated user has access to the given design.
+ * Responds with a 200 and permissions object if there's a match,
+ * otherwise throws a 400.
+ */
+function* getDesignAccess(
+  this: Koa.Application.Context
+): AsyncIterableIterator<any> {
+  this.status = 200;
+  this.body = this.state.permissions;
+}
+
 router.get('/notifications', requireAuth, getNotificationAccess);
 router.get(
   '/annotations/:annotationId',
@@ -62,6 +75,12 @@ router.get(
   requireAuth,
   canAccessTaskInParams,
   getTasksAccess
+);
+router.get(
+  '/designs/:designId',
+  requireAuth,
+  canAccessDesignInParam,
+  getDesignAccess
 );
 
 export default router.routes();

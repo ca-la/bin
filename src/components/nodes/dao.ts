@@ -63,6 +63,37 @@ export async function createDesignRoot(
   return node;
 }
 
+export async function update(data: Node, trx: Knex.Transaction): Promise<Node> {
+  const rowData = dataAdapter.forInsertion(data);
+  const node = await db(NODES_TABLE)
+    // 'deleted_at' is ignored here as the client will set it to mark nodes as deleted in realtime
+    .where({ id: data.id })
+    .update(rowData, '*')
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
+    .then((rows: NodeRow[]) => first<NodeRow>(rows));
+
+  if (!node) {
+    throw new Error('Failed to update node!');
+  }
+
+  return validate<NodeRow, Node>(NODES_TABLE, isNodeRow, dataAdapter, node);
+}
+
+export async function updateOrCreate(
+  data: Node,
+  trx: Knex.Transaction
+): Promise<Node> {
+  const existingNode = await findById(data.id);
+  if (existingNode) {
+    return update(data, trx);
+  }
+  return create(data, trx);
+}
+
 /**
  * Returns a node with a matching id.
  */

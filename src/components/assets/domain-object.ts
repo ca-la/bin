@@ -14,7 +14,6 @@ import {
 
 export default interface Asset {
   createdAt: Date;
-  deletedAt: Date | null;
   description: string | null;
   id: string;
   mimeType: string;
@@ -27,7 +26,6 @@ export default interface Asset {
 
 export interface AssetRow {
   created_at: string;
-  deleted_at: string | null;
   description: string | null;
   id: string;
   mime_type: string;
@@ -46,7 +44,6 @@ export const dataAdapter = new DataAdapter<AssetRow, Asset>(
 export function toInsertion(data: Asset): AssetRow {
   return {
     created_at: data.createdAt.toISOString(),
-    deleted_at: data.deletedAt ? data.deletedAt.toISOString() : null,
     description: data.description,
     id: data.id,
     mime_type: data.mimeType,
@@ -63,7 +60,6 @@ export function toInsertion(data: Asset): AssetRow {
 export function toPartialInsertion(data: Partial<Asset>): Partial<AssetRow> {
   return {
     created_at: data.createdAt ? data.createdAt.toISOString() : undefined,
-    deleted_at: data.deletedAt ? data.deletedAt.toISOString() : undefined,
     description: data.description,
     id: data.id,
     mime_type: data.mimeType,
@@ -84,7 +80,6 @@ export function toPartialInsertion(data: Partial<Asset>): Partial<AssetRow> {
 export function toData(row: AssetRow): Asset {
   return {
     createdAt: new Date(row.created_at),
-    deletedAt: row.deleted_at ? new Date(row.deleted_at) : null,
     description: row.description,
     id: row.id,
     mimeType: row.mime_type,
@@ -102,7 +97,6 @@ export function isAssetRow(row: any): row is AssetRow {
   return hasProperties(
     row,
     'created_at',
-    'deleted_at',
     'description',
     'id',
     'mime_type',
@@ -118,7 +112,6 @@ export function isAsset(data: any): data is Asset {
   return hasProperties(
     data,
     'createdAt',
-    'deletedAt',
     'description',
     'id',
     'mimeType',
@@ -134,7 +127,6 @@ export function isPartialAsset(data: any): data is Partial<Asset> {
   return hasSomeProperties(
     data,
     'createdAt',
-    'deletedAt',
     'description',
     'id',
     'mimeType',
