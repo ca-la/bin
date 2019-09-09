@@ -419,6 +419,8 @@ test('POST /product-designs/:designId/events with multiple events with some forb
 });
 
 test('PUT /product-designs/:designId/events/:eventId with an event creates it', async t => {
+  const testDate = new Date(2012, 11, 24);
+  sandbox().useFakeTimers(testDate);
   const { user, session } = await createUser();
 
   const design = await ProductDesignsDAO.create({
@@ -427,7 +429,7 @@ test('PUT /product-designs/:designId/events/:eventId with an event creates it', 
   });
   const inputEvent = {
     bidId: null,
-    createdAt: new Date(2012, 12, 24),
+    createdAt: testDate,
     id: uuid.v4(),
     quoteId: null,
     targetId: null,
@@ -446,7 +448,7 @@ test('PUT /product-designs/:designId/events/:eventId with an event creates it', 
   t.deepEqual(event, {
     ...inputEvent,
     actorId: user.id,
-    createdAt: new Date(2012, 12, 24).toISOString(),
+    createdAt: testDate.toISOString(),
     designId: design.id
   });
 });

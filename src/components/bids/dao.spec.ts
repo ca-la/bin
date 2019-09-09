@@ -3,7 +3,7 @@ import { sandbox, test, Test } from '../../test-helpers/fresh';
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
 import generatePricingQuote from '../../services/generate-pricing-quote';
 import createUser = require('../../test-helpers/create-user');
-import { createAll as createDesignEvents } from '../../dao/design-events';
+import * as DesignEventsDAO from '../../dao/design-events';
 import { create as createDesign } from '../product-designs/dao';
 
 import Bid from './domain-object';
@@ -311,7 +311,7 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
   await create({ ...openBid, acceptedAt: null, taskTypeIds: [] });
   await create({ ...rejectedBid, acceptedAt: null, taskTypeIds: [] });
   await create({ ...acceptedBid, acceptedAt: null, taskTypeIds: [] });
-  await createDesignEvents([
+  await DesignEventsDAO.createAll([
     submitEvent,
     bidEvent,
     bidToOtherEvent,
@@ -387,6 +387,7 @@ test('findOpenByTargetId', async (t: Test) => {
 });
 
 test('findAcceptedByTargetId', async (t: Test) => {
+  sandbox().useFakeTimers(testDate);
   await generatePricingValues();
   const { user: admin } = await createUser();
   const { user: partner } = await createUser();
@@ -410,6 +411,7 @@ test('findAcceptedByTargetId', async (t: Test) => {
     targetId: partner.id,
     type: 'REMOVE_PARTNER'
   });
+
   const { bid: b2 } = await generateBid({
     generatePricing: false
   });
@@ -419,16 +421,55 @@ test('findAcceptedByTargetId', async (t: Test) => {
     targetId: partner.id,
     type: 'BID_DESIGN'
   });
+  const { bid: b3 } = await generateBid({
+    generatePricing: false
+  });
+  await generateDesignEvent({
+    actorId: admin.id,
+    bidId: b3.id,
+    targetId: partner.id,
+    type: 'BID_DESIGN'
+  });
+  const { bid: b4 } = await generateBid({
+    generatePricing: false
+  });
+  await generateDesignEvent({
+    actorId: admin.id,
+    bidId: b4.id,
+    targetId: partner.id,
+    type: 'BID_DESIGN'
+  });
+
+  const acceptDate1 = new Date(testDate.getTime() + daysToMs(1));
+  sandbox().useFakeTimers(acceptDate1);
+  await generateDesignEvent({
+    actorId: partner.id,
+    bidId: b4.id,
+    type: 'ACCEPT_SERVICE_BID'
+  });
+  const acceptDate2 = new Date(testDate.getTime() + daysToMs(2));
+  sandbox().useFakeTimers(acceptDate2);
   await generateDesignEvent({
     actorId: partner.id,
     bidId: b2.id,
+    type: 'ACCEPT_SERVICE_BID'
+  });
+  const acceptDate3 = new Date(testDate.getTime() + daysToMs(12));
+  sandbox().useFakeTimers(acceptDate3);
+  await generateDesignEvent({
+    actorId: partner.id,
+    bidId: b3.id,
     type: 'ACCEPT_SERVICE_BID'
   });
 
   const acceptedBids = await findAcceptedByTargetId(partner.id);
   t.deepEqual(
     acceptedBids,
-    [{ ...b2, acceptedAt: acceptedBids[0].acceptedAt }],
+    [
+      { ...b3, acceptedAt: acceptDate3 },
+      { ...b2, acceptedAt: acceptDate2 },
+      { ...b4, acceptedAt: acceptDate1 }
+    ],
     'Returns all accepted bids for the partner'
   );
 });
@@ -605,6 +646,7 @@ test('Bids DAO supports finding all bids by status', async (t: Test) => {
 });
 
 test('Bids DAO supports finding by quote and user id with events', async (t: Test) => {
+  sandbox().useFakeTimers(testDate);
   const { user: designer } = await createUser({ withSession: false });
   const { user: partner } = await createUser({
     role: 'PARTNER',
@@ -637,40 +679,69 @@ test('Bids DAO supports finding by quote and user id with events', async (t: Tes
     targetId: partner.id,
     type: 'BID_DESIGN'
   });
-  const { designEvent: de2 } = await generateDesignEvent({
-    actorId: partner.id,
-    bidId: openBid1.id,
-    createdAt: new Date(),
-    type: 'ACCEPT_SERVICE_BID'
-  });
   const { bid: openBid2 } = await generateBid({
     bidOptions: { quoteId: quote.id },
     generatePricing: false
   });
+  const { bid: openBid3 } = await generateBid({
+    bidOptions: { quoteId: quote.id },
+    generatePricing: false,
+    designId: design.id
+  });
+  await generateDesignEvent({
+    createdAt: new Date(),
+    designId: design.id,
+    targetId: designer.id,
+    type: 'COMMIT_COST_INPUTS'
+  });
+  await generateDesignEvent({
+    actorId: designer.id,
+    createdAt: new Date(),
+    designId: design.id,
+    type: 'COMMIT_QUOTE'
+  });
+  const { designEvent: de3 } = await generateDesignEvent({
+    bidId: openBid3.id,
+    createdAt: new Date(),
+    targetId: partner.id,
+    type: 'BID_DESIGN'
+  });
   await generateBid({ generatePricing: false });
+
+  const acceptDate1 = new Date(testDate.getTime() + daysToMs(1));
+  sandbox().useFakeTimers(acceptDate1);
+  const { designEvent: de2 } = await generateDesignEvent({
+    actorId: partner.id,
+    bidId: openBid1.id,
+    type: 'ACCEPT_SERVICE_BID'
+  });
+
+  const acceptDate2 = new Date(testDate.getTime() + daysToMs(3));
+  sandbox().useFakeTimers(acceptDate2);
+  const { designEvent: de4 } = await generateDesignEvent({
+    actorId: partner.id,
+    bidId: openBid3.id,
+    type: 'ACCEPT_SERVICE_BID'
+  });
 
   const result = await findAllByQuoteAndUserId(quote.id, partner.id);
   t.deepEqual(
     result,
     [
       {
-        ...openBid2,
-        acceptedAt: result[0].acceptedAt,
-        designEvents: []
+        ...openBid3,
+        acceptedAt: acceptDate2,
+        designEvents: [de3, de4]
       },
       {
         ...openBid1,
-        acceptedAt: result[1].acceptedAt,
-        designEvents: [
-          {
-            ...de1,
-            createdAt: new Date(de1.createdAt)
-          },
-          {
-            ...de2,
-            createdAt: new Date(de2.createdAt)
-          }
-        ]
+        acceptedAt: acceptDate1,
+        designEvents: [de1, de2]
+      },
+      {
+        ...openBid2,
+        acceptedAt: null,
+        designEvents: []
       }
     ],
     'Returns a list of bids with bid-specific events'

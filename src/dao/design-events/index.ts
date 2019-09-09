@@ -16,7 +16,10 @@ export async function create(
   event: DesignEvent,
   trx?: Knex.Transaction
 ): Promise<DesignEvent> {
-  const rowData = dataAdapter.forInsertion(event);
+  const rowData = {
+    ...dataAdapter.forInsertion(event),
+    created_at: new Date()
+  };
 
   const created = await db(TABLE_NAME)
     .insert(rowData)
