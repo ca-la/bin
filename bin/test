@@ -18,7 +18,7 @@ main() {
     mkdir -p ./reports
     npx tape "dist/**/*spec.js" | npx tap-xunit > ./reports/tape.xml
   else
-    npx ts-node $(npm bin)/tape "src/**/*spec.ts" | npx tap-difflet --pessimistic
+    npx ts-node $(npm bin)/tape "src/**/*spec.[jt]s" | npx tap-difflet --pessimistic
   fi
 }
 
