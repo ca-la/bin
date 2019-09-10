@@ -12,7 +12,10 @@ test('createSubscription calls the correct api', async (t: Test) => {
     },
     status: 200,
     json(): object {
-      return {};
+      return {
+        id: 'sub_123',
+        status: 'active'
+      };
     }
   };
 
@@ -35,4 +38,36 @@ test('createSubscription calls the correct api', async (t: Test) => {
     fetchStub.firstCall.args[1].body,
     'items[0][plan]=plan_123&customer=cus_123&default_source=source_123'
   );
+});
+
+test('createSubscription fails if marked incomplete', async (t: Test) => {
+  const fakeResponse = {
+    headers: {
+      get(): string {
+        return 'application/json';
+      }
+    },
+    status: 200,
+    json(): object {
+      return {
+        id: 'sub_123',
+        status: 'incomplete'
+      };
+    }
+  };
+
+  sandbox()
+    .stub(fetch, 'default')
+    .resolves(fakeResponse);
+
+  try {
+    await createSubscription({
+      stripeCustomerId: 'cus_123',
+      stripePlanId: 'plan_123',
+      stripeSourceId: 'source_123'
+    });
+    throw new Error("Shouldn't get here");
+  } catch (err) {
+    t.equal(err.message, 'Failed to charge card for this subscription');
+  }
 });
