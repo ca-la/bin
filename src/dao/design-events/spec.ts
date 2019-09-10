@@ -1,5 +1,5 @@
 import * as uuid from 'node-uuid';
-import { test, Test } from '../../test-helpers/fresh';
+import { sandbox, test, Test } from '../../test-helpers/fresh';
 import generateBid from '../../test-helpers/factories/bid';
 import createUser = require('../../test-helpers/create-user');
 
@@ -14,6 +14,8 @@ import {
 } from './index';
 
 test('Design Events DAO supports creation', async (t: Test) => {
+  const testDate = new Date(2012, 11, 22);
+  sandbox().useFakeTimers(testDate);
   const { bid } = await generateBid();
   const { user: designer } = await createUser();
   const { user: cala } = await createUser();
@@ -27,7 +29,7 @@ test('Design Events DAO supports creation', async (t: Test) => {
   const inputEvent: DesignEvent = {
     actorId: cala.id,
     bidId: bid.id,
-    createdAt: new Date(),
+    createdAt: testDate,
     designId: design.id,
     id: uuid.v4(),
     quoteId: null,
