@@ -1,9 +1,20 @@
 import * as Knex from 'knex';
+import * as pg from 'pg';
 import * as process from 'process';
 
 import * as db from '../../services/db';
 import { log } from '../../services/logger';
 import { green, red, reset } from '../../services/colors';
+import * as meow from 'meow';
+
+const cli = meow('', {
+  flags: {
+    dryRun: {
+      default: false,
+      type: 'boolean'
+    }
+  }
+});
 
 backfillBidDueDates()
   .then(() => {
@@ -22,10 +33,38 @@ backfillBidDueDates()
  */
 async function backfillBidDueDates(): Promise<void> {
   return db.transaction(async (trx: Knex.Transaction) => {
+    await trx.raw(`
+CREATE TEMPORARY VIEW bids_with_accepted_at AS
+  SELECT DISTINCT ON (pricing_bids.id) pricing_bids.*,
+      CASE WHEN "design_events"."bid_id" IN (
+
+        SELECT "design_events"."bid_id"
+          FROM "design_events"
+         WHERE "design_events"."type" IN ('ACCEPT_SERVICE_BID')
+
+      ) AND "design_events"."bid_id" NOT IN (
+
+        SELECT "design_events"."bid_id"
+          FROM "design_events"
+         WHERE "design_events"."type" IN ('REMOVE_PARTNER')
+
+      ) THEN (
+        SELECT "design_events"."created_at"
+          FROM "design_events"
+         WHERE "design_events"."type" IN ('ACCEPT_SERVICE_BID')
+           AND "design_events"."bid_id" = "pricing_bids"."id"
+         ORDER BY "design_events"."created_at" DESC LIMIT 1
+      ) ELSE null END
+    AS accepted_at
+  FROM "design_events"
+ RIGHT JOIN "pricing_bids" ON "design_events"."bid_id" = "pricing_bids"."id"
+ GROUP BY "pricing_bids"."id", "design_events"."bid_id", "design_events"."created_at";
+`);
+
     const bidsToUpdate = await trx
       .select('id')
-      .from('pricing_bids')
-      .whereRaw(`due_date IS NULL AND project_due_in_ms IS NOT NULL`);
+      .from('bids_with_accepted_at')
+      .whereNot({ project_due_in_ms: null });
 
     if (bidsToUpdate.length === 0) {
       log(`${reset}No bids needed updating, skipping!`);
@@ -33,12 +72,18 @@ async function backfillBidDueDates(): Promise<void> {
     }
 
     log(`${reset}Expecting to update ${bidsToUpdate.length} bids`);
-    const result = await trx.raw(`
+
+    const result: pg.QueryResult = await trx.raw(`
 UPDATE pricing_bids
-   SET due_date = (created_at + INTERVAL '1 millisecond' * project_due_in_ms)
- WHERE due_date IS NULL
-   AND project_due_in_ms IS NOT NULL;
+   SET due_date = (bids_with_accepted.accepted_at + INTERVAL '1 millisecond' * pricing_bids.project_due_in_ms)
+  FROM bids_with_accepted_at AS bids_with_accepted
+ WHERE pricing_bids.project_due_in_ms IS NOT NULL;
     `);
+
+    await trx.raw(`
+DROP VIEW bids_with_accepted_at;
+`);
+
     if (bidsToUpdate.length !== result.rowCount) {
       throw new Error(
         `Did not update the expected number of rows\nBids to update: ${
@@ -48,5 +93,8 @@ UPDATE pricing_bids
     }
 
     log(`${green}Successfully updated ${result.rowCount} bids.`);
+    if (cli.flags.dryRun) {
+      return trx.rollback(new Error('Dry run detected, rolling back!'));
+    }
   });
 }
