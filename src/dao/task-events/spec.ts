@@ -1,5 +1,7 @@
 import * as tape from 'tape';
 import * as uuid from 'node-uuid';
+import { omit } from 'lodash';
+
 import { sandbox, test as originalTest } from '../../test-helpers/fresh';
 import {
   create,
@@ -7,7 +9,8 @@ import {
   findByDesignId,
   findById,
   findByStageId,
-  findByUserId
+  findByUserId,
+  findRawById
 } from './index';
 
 import * as StageTemplate from '../../components/tasks/templates';
@@ -113,6 +116,36 @@ test('Task Events DAO supports creation/retrieval', async (t: tape.Test) => {
   t.deepEqual(
     { ...result, createdAt: new Date(result.createdAt) },
     insertedWithDetails,
+    'Returned inserted task'
+  );
+});
+
+test('Task Events DAO supports raw retrieval', async (t: tape.Test) => {
+  const { user } = await createUser();
+  const task = await createTask();
+  const taskData = {
+    createdBy: user.id,
+    description: 'A description',
+    designStageId: null,
+    dueDate: null,
+    ordering: 0,
+    status: TaskStatus.NOT_STARTED,
+    taskId: task.id,
+    title: 'My First Task'
+  };
+  const inserted = await create(taskData);
+
+  const result = await findRawById(inserted.id);
+  if (!result) {
+    throw Error('No Result');
+  }
+  t.deepEqual(
+    { ...result, createdAt: new Date(result.createdAt) },
+    {
+      ...omit(taskData, 'designStageId'),
+      createdAt: new Date(result.createdAt),
+      id: result.id
+    },
     'Returned inserted task'
   );
 });

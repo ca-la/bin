@@ -155,7 +155,6 @@ export function isTaskEvent(candidate: object): candidate is TaskEvent {
     'status',
     'dueDate',
     'description',
-    'designStageId',
     'ordering'
   );
 }

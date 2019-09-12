@@ -7,6 +7,8 @@ import TaskEvent, {
 import { create } from '../../dao/task-events';
 import { create as createStageTask } from '../../dao/product-design-stage-tasks';
 import * as DesignStagesDAO from '../../dao/product-design-stages';
+import * as DesignsDAO from '../../components/product-designs/dao';
+import ProductDesign = require('../../components/product-designs/domain-objects/product-design');
 import { findById as findUserById } from '../../components/users/dao';
 import { create as createTask } from '../../dao/tasks';
 import createUser = require('../create-user');
@@ -16,17 +18,37 @@ import ProductDesignStage from '../../domain-objects/product-design-stage';
 
 export default async function generateTask(
   options: Partial<TaskEvent> = {}
-): Promise<{ task: DetailsTask; createdBy: User; stage: ProductDesignStage }> {
+): Promise<{
+  task: DetailsTask;
+  design: ProductDesign;
+
+  createdBy: User;
+  stage: ProductDesignStage;
+}> {
   const { user } = options.createdBy
     ? { user: await findUserById(options.createdBy) }
     : await createUser({ withSession: false });
   const task = await createTask(uuid.v4());
-  const { stage } = options.designStageId
-    ? { stage: await DesignStagesDAO.findById(options.designStageId) }
-    : await generateProductDesignStage({}, user.id);
+  let stage;
+  let design;
+  if (options.designStageId) {
+    stage = await DesignStagesDAO.findById(options.designStageId);
+    if (!stage) {
+      throw new Error('Could not find stage');
+    }
+    design = await DesignsDAO.findById(stage.designId);
+  } else {
+    const stageGen = await generateProductDesignStage();
+    stage = stageGen.stage;
+    design = stageGen.design;
+  }
 
   if (!stage) {
     throw new Error('Could not create stage');
+  }
+
+  if (!design) {
+    throw new Error('Could not create design');
   }
 
   await createStageTask({
@@ -47,6 +69,7 @@ export default async function generateTask(
 
   return {
     createdBy: user,
+    design,
     stage,
     task: detailsTask
   };

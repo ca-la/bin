@@ -11,6 +11,7 @@ import TaskEvent, {
   detailsWithAssigneesAdapter,
   DetailTaskWithAssigneesEventRow,
   isDetailTaskWithAssigneeRow,
+  isTaskEventRow,
   TaskEventRow,
   TaskStatus
 } from '../../domain-objects/task-event';
@@ -118,6 +119,25 @@ export async function findById(
       detailsWithAssigneesAdapter,
       taskEvent
     )
+  );
+}
+
+export async function findRawById(id: string): Promise<TaskEvent | null> {
+  const taskEvent: TaskEventRow | undefined = await db(TABLE_NAME)
+    .where({ task_id: id })
+    .limit(1)
+    .orderBy('created_at', 'desc')
+    .then((rows: TaskEventRow[]) => first<TaskEventRow>(rows));
+
+  if (!taskEvent) {
+    return null;
+  }
+
+  return validate<TaskEventRow, TaskEvent>(
+    TABLE_NAME,
+    isTaskEventRow,
+    dataAdapter,
+    taskEvent
   );
 }
 
