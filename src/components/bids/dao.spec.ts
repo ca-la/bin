@@ -70,7 +70,7 @@ test('Bids DAO supports creation and retrieval', async (t: Test) => {
     createdAt: testDate,
     createdBy: user.id,
     description: 'Full Service',
-    dueDate: new Date(testDate.getTime() + daysToMs(10)),
+    dueDate: new Date(quote.createdAt.getTime() + daysToMs(10)),
     id: uuid.v4(),
     quoteId: quote.id
   };
@@ -136,7 +136,7 @@ test('Bids DAO supports retrieval by quote ID', async (t: Test) => {
     createdAt: testDate,
     createdBy: user.id,
     description: 'Full Service',
-    dueDate: new Date(testDate.getTime() + daysToMs(10)),
+    dueDate: new Date(quote.createdAt.getTime() + daysToMs(10)),
     id: uuid.v4(),
     quoteId: quote.id
   };
@@ -186,7 +186,7 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
     createdAt: testDate,
     createdBy: admin.id,
     description: 'Full Service',
-    dueDate: new Date(testDate.getTime() + daysToMs(10)),
+    dueDate: new Date(quote.createdAt.getTime() + daysToMs(10)),
     id: uuid.v4(),
     quoteId: quote.id
   };
@@ -197,7 +197,7 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
     createdAt: testDate,
     createdBy: admin.id,
     description: 'Full Service (Rejected)',
-    dueDate: new Date(testDate.getTime() + daysToMs(10)),
+    dueDate: new Date(quote.createdAt.getTime() + daysToMs(10)),
     id: uuid.v4(),
     quoteId: quote.id
   };
@@ -208,7 +208,7 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
     createdAt: testDate,
     createdBy: admin.id,
     description: 'Full Service (Accepted)',
-    dueDate: new Date(testDate.getTime() + daysToMs(10)),
+    dueDate: new Date(quote.createdAt.getTime() + daysToMs(10)),
     id: uuid.v4(),
     quoteId: quote.id
   };

@@ -593,7 +593,9 @@ test('PUT /pricing-quotes/:quoteId/bid/:bidId creates bid', async (t: Test) => {
     createdAt: now,
     createdBy: user.id,
     description: 'Full Service',
-    dueDate: new Date(now.getTime() + daysToMs(10)),
+    dueDate: new Date(
+      new Date(createdQuotes[0].createdAt).getTime() + daysToMs(10)
+    ),
     id: uuid.v4(),
     quoteId: createdQuotes[0].id
   };
@@ -730,7 +732,9 @@ test('GET /pricing-quotes/:quoteId/bids returns list of bids for quote', async (
     createdAt: now,
     createdBy: user.id,
     description: 'Full Service',
-    dueDate: new Date(now.getTime() + daysToMs(10)),
+    dueDate: new Date(
+      new Date(createdQuotes[0].createdAt).getTime() + daysToMs(10)
+    ),
     id: uuid.v4(),
     quoteId: createdQuotes[0].id
   };

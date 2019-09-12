@@ -17,6 +17,8 @@ import limitOrOffset from '../../services/limit-or-offset';
 import { MILLISECONDS_TO_EXPIRE } from './constants';
 import { omit } from 'lodash';
 import * as BidTaskTypesDAO from '../bid-task-types/dao';
+import * as PricingQuotesDAO from '../../dao/pricing-quotes';
+import ResourceNotFoundError from '../../errors/resource-not-found';
 
 const TABLE_NAME = 'pricing_bids';
 const DESIGN_EVENTS_TABLE = 'design_events';
@@ -108,18 +110,24 @@ const orderByAcceptedAt = orderBy.bind(
 );
 
 export function create(bidPayload: BidCreationPayload): Promise<Bid> {
-  const { taskTypeIds, ...bid } = bidPayload;
-  const createdAt = new Date();
-  const dueDate = bid.projectDueInMs
-    ? new Date(createdAt.getTime() + bid.projectDueInMs)
-    : null;
-  const rowData = {
-    ...dataAdapter.forInsertion(bid),
-    created_at: createdAt,
-    due_date: dueDate
-  };
-
   return db.transaction(async (trx: Knex.Transaction) => {
+    const { taskTypeIds, ...bid } = bidPayload;
+    const createdAt = new Date();
+    const paidQuote = await PricingQuotesDAO.findById(bid.quoteId);
+    if (!paidQuote) {
+      throw new ResourceNotFoundError(
+        `Could not find the paid quote for bid ${bid.id}`
+      );
+    }
+
+    const dueDate = bid.projectDueInMs
+      ? new Date(paidQuote.createdAt.getTime() + bid.projectDueInMs)
+      : null;
+    const rowData = {
+      ...dataAdapter.forInsertion(bid),
+      created_at: createdAt,
+      due_date: dueDate
+    };
     const createdBid = await db(TABLE_NAME)
       .insert(omit(rowData, 'accepted_at'))
       .returning('*')

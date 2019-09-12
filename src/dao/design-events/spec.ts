@@ -13,8 +13,8 @@ import {
   isQuoteCommitted
 } from './index';
 
+const testDate = new Date(2012, 11, 22);
 test('Design Events DAO supports creation', async (t: Test) => {
-  const testDate = new Date(2012, 11, 22);
   sandbox().useFakeTimers(testDate);
   const { bid } = await generateBid();
   const { user: designer } = await createUser();
@@ -88,6 +88,7 @@ test('Design Events DAO supports creating multiple events at once', async (t: Te
 });
 
 test('Design Events DAO supports retrieval by design ID', async (t: Test) => {
+  sandbox().useFakeTimers(testDate);
   const { bid } = await generateBid();
   const { user: designer } = await createUser();
   const { user: cala } = await createUser();
@@ -101,7 +102,7 @@ test('Design Events DAO supports retrieval by design ID', async (t: Test) => {
   const inputEvent: DesignEvent = {
     actorId: cala.id,
     bidId: bid.id,
-    createdAt: new Date(),
+    createdAt: testDate,
     designId: design.id,
     id: uuid.v4(),
     quoteId: null,
