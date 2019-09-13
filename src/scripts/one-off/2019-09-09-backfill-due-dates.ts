@@ -77,7 +77,8 @@ CREATE TEMPORARY VIEW bids_with_accepted_at AS
 UPDATE pricing_bids
    SET due_date = (bids_with_accepted.accepted_at + INTERVAL '1 millisecond' * pricing_bids.project_due_in_ms)
   FROM bids_with_accepted_at AS bids_with_accepted
- WHERE pricing_bids.project_due_in_ms IS NOT NULL;
+ WHERE pricing_bids.project_due_in_ms IS NOT NULL
+   AND pricing_bids.id = bids_with_accepted.id;
     `);
 
     await trx.raw(`
