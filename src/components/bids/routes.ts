@@ -2,7 +2,7 @@ import * as Router from 'koa-router';
 import * as Koa from 'koa';
 import * as uuid from 'node-uuid';
 
-import Bid from './domain-object';
+import Bid, { isBidSortByParam } from './domain-object';
 import Collaborator from '../collaborators/domain-objects/collaborator';
 import ProductDesign = require('../product-designs/domain-objects/product-design');
 import { PricingQuote } from '../../domain-objects/pricing-quote';
@@ -82,38 +82,47 @@ function* listAllBids(
 function* listBidsByAssignee(
   this: Koa.Application.Context
 ): AsyncIterableIterator<any> {
-  const { state, userId } = this.query;
+  const { state, userId, sortBy = 'ACCEPTED' } = this.query;
 
   if (!userId) {
     this.throw(400, 'You must specify the user to retrieve bids for');
     return;
   }
 
+  if (!isBidSortByParam(sortBy)) {
+    this.throw(
+      400,
+      `Invalid sortBy query parameter "${sortBy}". Must be "ACCEPTED" or "DUE".`
+    );
+    return;
+  }
+
   let bids: Bid[] = [];
   switch (state) {
     case 'ACCEPTED':
-      bids = yield BidsDAO.findAcceptedByTargetId(userId);
+      bids = yield BidsDAO.findAcceptedByTargetId(userId, sortBy);
       break;
 
     case 'EXPIRED':
-      bids = yield BidsDAO.findOpenByTargetId(userId).then(
+      bids = yield BidsDAO.findOpenByTargetId(userId, sortBy).then(
         (openBids: Bid[]): Bid[] => openBids.filter(isExpired)
       );
       break;
 
     case 'REJECTED':
-      bids = yield BidsDAO.findRejectedByTargetId(userId);
+      bids = yield BidsDAO.findRejectedByTargetId(userId, sortBy);
       break;
 
     case 'OPEN':
     case undefined:
-      bids = yield BidsDAO.findOpenByTargetId(userId).then(
+      bids = yield BidsDAO.findOpenByTargetId(userId, sortBy).then(
         (openBids: Bid[]): Bid[] => openBids.filter(not(isExpired))
       );
       break;
 
     default:
       this.throw(400, 'Invalid status query');
+      return;
   }
   const ioBids: IOBid[] = yield attachDesignsToBids(bids);
 

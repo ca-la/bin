@@ -131,3 +131,11 @@ export const bidWithEventsDataAdapter = new DataAdapter<
 export function isBidWithEventsRow(row: object): row is BidWithEventsRow {
   return isBidRow(row) && hasProperties(row, 'design_events');
 }
+
+export type BidSortByParam = 'ACCEPTED' | 'DUE';
+
+export function isBidSortByParam(
+  candidate: string | undefined
+): candidate is BidSortByParam {
+  return candidate === 'ACCEPTED' || candidate === 'DUE';
+}

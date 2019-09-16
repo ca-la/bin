@@ -322,14 +322,17 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
     acceptDesignEvent
   ]);
 
-  const openBids = await findOpenByTargetId(partner.id);
-  const otherBids = await findOpenByTargetId(otherPartner.id);
+  const openBids = await findOpenByTargetId(partner.id, 'ACCEPTED');
+  const otherBids = await findOpenByTargetId(otherPartner.id, 'ACCEPTED');
 
   t.deepEqual(openBids, [openBid], 'returns non-rejected/accepted bid');
   t.deepEqual(otherBids, [], 'returns no bids');
 
-  const acceptedBids = await findAcceptedByTargetId(partner.id);
-  const otherAcceptedBids = await findAcceptedByTargetId(otherPartner.id);
+  const acceptedBids = await findAcceptedByTargetId(partner.id, 'ACCEPTED');
+  const otherAcceptedBids = await findAcceptedByTargetId(
+    otherPartner.id,
+    'ACCEPTED'
+  );
 
   t.deepEqual(
     acceptedBids,
@@ -346,8 +349,11 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
   );
   t.deepEqual(otherAcceptedBids, [], 'returns no bids');
 
-  const rejectedBids = await findRejectedByTargetId(partner.id);
-  const otherRejectedBids = await findRejectedByTargetId(otherPartner.id);
+  const rejectedBids = await findRejectedByTargetId(partner.id, 'ACCEPTED');
+  const otherRejectedBids = await findRejectedByTargetId(
+    otherPartner.id,
+    'ACCEPTED'
+  );
 
   t.deepEqual(rejectedBids, [rejectedBid], 'returns rejected bid');
   t.deepEqual(otherRejectedBids, [openBid], 'returns rejected bid');
@@ -382,7 +388,7 @@ test('findOpenByTargetId', async (t: Test) => {
     type: 'BID_DESIGN'
   });
 
-  const openBids = await findOpenByTargetId(partner.id);
+  const openBids = await findOpenByTargetId(partner.id, 'ACCEPTED');
   t.deepEqual(openBids, [b2], 'Returns all open bids for the partner');
 });
 
@@ -462,7 +468,7 @@ test('findAcceptedByTargetId', async (t: Test) => {
     type: 'ACCEPT_SERVICE_BID'
   });
 
-  const acceptedBids = await findAcceptedByTargetId(partner.id);
+  const acceptedBids = await findAcceptedByTargetId(partner.id, 'ACCEPTED');
   t.deepEqual(
     acceptedBids,
     [
@@ -471,6 +477,17 @@ test('findAcceptedByTargetId', async (t: Test) => {
       { ...b4, acceptedAt: acceptDate1 }
     ],
     'Returns all accepted bids for the partner'
+  );
+
+  const sortedByDueDate = await findAcceptedByTargetId(partner.id, 'DUE');
+  t.deepEqual(
+    sortedByDueDate,
+    [
+      { ...b2, acceptedAt: acceptDate2 },
+      { ...b3, acceptedAt: acceptDate3 },
+      { ...b4, acceptedAt: acceptDate1 }
+    ],
+    'Returns all accepted bids for the partner sorted by Due Date'
   );
 });
 
@@ -513,7 +530,7 @@ test('findRejectedByTargetId', async (t: Test) => {
     type: 'REJECT_SERVICE_BID'
   });
 
-  const rejectedBids = await findRejectedByTargetId(partner.id);
+  const rejectedBids = await findRejectedByTargetId(partner.id, 'ACCEPTED');
   t.deepEqual(rejectedBids, [b2], 'Returns all rejected bids for the partner');
 });
 

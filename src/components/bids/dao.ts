@@ -4,6 +4,7 @@ import * as db from '../../services/db';
 import Bid, {
   BidCreationPayload,
   BidRow,
+  BidSortByParam,
   BidWithEvents,
   bidWithEventsDataAdapter,
   BidWithEventsRow,
@@ -107,6 +108,11 @@ const orderBy = (
 const orderByAcceptedAt = orderBy.bind(
   null,
   'accepted_at desc NULLS LAST, created_at desc'
+);
+
+const orderByDueDate = orderBy.bind(
+  null,
+  'due_date asc NULLS LAST, created_at desc'
 );
 
 export function create(bidPayload: BidCreationPayload): Promise<Bid> {
@@ -309,8 +315,20 @@ export async function findById(
   return validate<BidRow, Bid>(TABLE_NAME, isBidRow, dataAdapter, bid);
 }
 
-export async function findOpenByTargetId(targetId: string): Promise<Bid[]> {
-  const targetRows = await orderByAcceptedAt(
+export async function findOpenByTargetId(
+  targetId: string,
+  sortBy: BidSortByParam
+): Promise<Bid[]> {
+  let sortingFunction = orderByAcceptedAt;
+  switch (sortBy) {
+    case 'ACCEPTED':
+      sortingFunction = orderByAcceptedAt;
+      break;
+    case 'DUE':
+      sortingFunction = orderByDueDate;
+      break;
+  }
+  const targetRows = await sortingFunction(
     db(DESIGN_EVENTS_TABLE)
       .select(selectWithAcceptedAt)
       .join('pricing_bids', (join: Knex.JoinClause) => {
@@ -333,8 +351,6 @@ export async function findOpenByTargetId(targetId: string): Promise<Bid[]> {
         'design_events.bid_id',
         'design_events.created_at'
       ])
-      .orderBy('pricing_bids.id')
-      .orderBy('pricing_bids.created_at', 'asc')
   );
 
   return validateEvery<BidRow, Bid>(
@@ -345,8 +361,20 @@ export async function findOpenByTargetId(targetId: string): Promise<Bid[]> {
   );
 }
 
-export async function findAcceptedByTargetId(targetId: string): Promise<Bid[]> {
-  const targetRows = await orderByAcceptedAt(
+export async function findAcceptedByTargetId(
+  targetId: string,
+  sortBy: BidSortByParam
+): Promise<Bid[]> {
+  let sortingFunction = orderByAcceptedAt;
+  switch (sortBy) {
+    case 'ACCEPTED':
+      sortingFunction = orderByAcceptedAt;
+      break;
+    case 'DUE':
+      sortingFunction = orderByDueDate;
+      break;
+  }
+  const targetRows = await sortingFunction(
     db(DESIGN_EVENTS_TABLE)
       .select(selectWithAcceptedAt)
       .rightJoin('pricing_bids', (join: Knex.JoinClause) => {
@@ -372,8 +400,6 @@ export async function findAcceptedByTargetId(targetId: string): Promise<Bid[]> {
         'design_events.bid_id',
         'design_events.created_at'
       ])
-      .orderBy('pricing_bids.id')
-      .orderBy('pricing_bids.created_at', 'asc')
   );
 
   return validateEvery<BidRow, Bid>(
@@ -384,8 +410,20 @@ export async function findAcceptedByTargetId(targetId: string): Promise<Bid[]> {
   );
 }
 
-export async function findRejectedByTargetId(targetId: string): Promise<Bid[]> {
-  const targetRows = await orderByAcceptedAt(
+export async function findRejectedByTargetId(
+  targetId: string,
+  sortBy: BidSortByParam
+): Promise<Bid[]> {
+  let sortingFunction = orderByAcceptedAt;
+  switch (sortBy) {
+    case 'ACCEPTED':
+      sortingFunction = orderByAcceptedAt;
+      break;
+    case 'DUE':
+      sortingFunction = orderByDueDate;
+      break;
+  }
+  const targetRows = await sortingFunction(
     db(DESIGN_EVENTS_TABLE)
       .select(selectWithAcceptedAt)
       .rightJoin('pricing_bids', (join: Knex.JoinClause) => {
@@ -411,8 +449,6 @@ export async function findRejectedByTargetId(targetId: string): Promise<Bid[]> {
         'design_events.bid_id',
         'design_events.created_at'
       ])
-      .orderBy('pricing_bids.id')
-      .orderBy('pricing_bids.created_at', 'asc')
   );
 
   return validateEvery<BidRow, Bid>(
