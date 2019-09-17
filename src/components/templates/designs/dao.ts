@@ -9,7 +9,7 @@ import {
   TemplateDesignRow
 } from './domain-object';
 import * as db from '../../../services/db';
-import { validate } from '../../../services/validate-from-db';
+import { validate, validateEvery } from '../../../services/validate-from-db';
 import filterError = require('../../../services/filter-error');
 import InvalidDataError = require('../../../errors/invalid-data');
 
@@ -63,5 +63,32 @@ export async function create(
     isTemplateDesignRow,
     dataAdapter,
     created
+  );
+}
+
+export async function remove(
+  designId: string,
+  trx: Knex.Transaction
+): Promise<void> {
+  const count: number = await db(TABLE_NAME)
+    .where({ design_id: designId })
+    .delete()
+    .transacting(trx);
+
+  if (count === 0) {
+    throw new InvalidDataError(`Template for design ${designId} not found.`);
+  }
+}
+
+export async function getAll(trx: Knex.Transaction): Promise<TemplateDesign[]> {
+  const rows = await db(TABLE_NAME)
+    .select('*')
+    .transacting(trx);
+
+  return validateEvery<TemplateDesignRow, TemplateDesign>(
+    TABLE_NAME,
+    isTemplateDesignRow,
+    dataAdapter,
+    rows
   );
 }

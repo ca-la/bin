@@ -71,3 +71,72 @@ test(`PUT ${API_PATH}/:designId fails with an unknown error`, async (t: Test) =>
   });
   t.equal(createStub.callCount, 1);
 });
+
+test(`DEL ${API_PATH}/:designId with an admin account`, async (t: Test) => {
+  const admin = await createUser({ role: 'ADMIN' });
+  const removeStub = sandbox()
+    .stub(TemplateDesignsDAO, 'remove')
+    .resolves({
+      designId: 'design-one'
+    });
+
+  const [response] = await API.del('/templates/designs/design-one', {
+    headers: API.authHeader(admin.session.id)
+  });
+
+  t.equal(response.status, 204);
+  t.equal(removeStub.callCount, 1);
+});
+
+test(`DEL ${API_PATH}/:designId without an admin account`, async (t: Test) => {
+  const user = await createUser({ role: 'USER' });
+  const removeStub = sandbox()
+    .stub(TemplateDesignsDAO, 'remove')
+    .resolves({
+      designId: 'design-one'
+    });
+
+  const [response] = await API.del('/templates/designs/design-one', {
+    headers: API.authHeader(user.session.id)
+  });
+
+  t.equal(response.status, 403);
+  t.equal(removeStub.callCount, 0);
+});
+
+test(`DEL ${API_PATH}/:designId for non-existent resource`, async (t: Test) => {
+  const admin = await createUser({ role: 'ADMIN' });
+  const removeStub = sandbox()
+    .stub(TemplateDesignsDAO, 'remove')
+    .rejects(new InvalidDataError('Foo!'));
+
+  const [response, body] = await API.del('/templates/designs/design-one', {
+    headers: API.authHeader(admin.session.id)
+  });
+
+  t.equal(response.status, 404);
+  t.deepEqual(body, { message: 'Foo!' });
+  t.equal(removeStub.callCount, 1);
+});
+
+test(`GET ${API_PATH}/ with a user account`, async (t: Test) => {
+  const user = await createUser({ role: 'USER' });
+  const removeStub = sandbox()
+    .stub(TemplateDesignsDAO, 'getAll')
+    .resolves([
+      {
+        designId: 'design-one'
+      },
+      {
+        designId: 'design-two'
+      }
+    ]);
+
+  const [response, body] = await API.get('/templates/designs', {
+    headers: API.authHeader(user.session.id)
+  });
+
+  t.equal(response.status, 200);
+  t.deepEqual(body, [{ designId: 'design-one' }, { designId: 'design-two' }]);
+  t.equal(removeStub.callCount, 1);
+});
