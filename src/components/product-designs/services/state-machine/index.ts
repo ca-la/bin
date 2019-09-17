@@ -46,7 +46,8 @@ function createDesignMachine(
     states: {
       [DesignState.INITIAL]: {
         on: {
-          SUBMIT_DESIGN: DesignState.SUBMITTED
+          SUBMIT_DESIGN: DesignState.SUBMITTED,
+          COMMIT_COST_INPUTS: DesignState.COSTED
         }
       },
       [DesignState.SUBMITTED]: {
