@@ -1,4 +1,3 @@
-import * as uuid from 'node-uuid';
 import * as Knex from 'knex';
 
 import * as db from '../../services/db';
@@ -40,33 +39,6 @@ export async function create(
     isDesignEventRow,
     dataAdapter,
     created
-  );
-}
-
-export async function createAll(
-  events: MaybeUnsaved<DesignEvent>[]
-): Promise<DesignEvent[]> {
-  const rowData = events.map((event: MaybeUnsaved<DesignEvent>) => {
-    return dataAdapter.forInsertion({
-      id: uuid.v4(),
-      ...event
-    });
-  });
-
-  const created = await db(TABLE_NAME)
-    .insert(rowData)
-    .returning('*');
-
-  const sorted = created.sort(
-    (a: DesignEventRow, b: DesignEventRow) =>
-      a.created_at.getTime() - b.created_at.getTime()
-  );
-
-  return validateEvery<DesignEventRow, DesignEvent>(
-    TABLE_NAME,
-    isDesignEventRow,
-    dataAdapter,
-    sorted
   );
 }
 

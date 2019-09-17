@@ -265,8 +265,8 @@ test('expireCostInputs can expire rows with the associated designs', async (t: T
         }
       );
 
-      t.deepEqual(resultIds, [ci1.id, ci2.id]);
-      t.deepEqual(resultExpirations, [date, date]);
+      t.deepEqual(new Set(resultIds), new Set([ci1.id, ci2.id]));
+      t.deepEqual(new Set(resultExpirations), new Set([date, date]));
     }
   );
 });
@@ -312,8 +312,8 @@ test('expireCostInputs does not expire rows that are already expired', async (t:
         }
       );
 
-      t.deepEqual(resultIds, [ci1.id, ci2.id]);
-      t.deepEqual(resultExpirations, [date, date]);
+      t.deepEqual(new Set(resultIds), new Set([ci1.id, ci2.id]));
+      t.deepEqual(new Set(resultExpirations), new Set([date, date]));
     }
   );
 });

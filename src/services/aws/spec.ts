@@ -115,17 +115,3 @@ test('AWS Service supports getting an upload policy', async (t: tape.Test) => {
   sinon.assert.callCount(awsStub, 1);
   t.ok('Presigned post statement is executed on the AWS instance');
 });
-
-test('AWS Service supports getting a thumbnail upload policy', async (t: tape.Test) => {
-  const awsStub = sandbox()
-    .stub(AWS, 'S3')
-    .returns({
-      createPresignedPost: (): void => {
-        /* NO-OP */
-      }
-    });
-
-  AWSService.getThumbnailUploadPolicy('foo', 'bar.jpg');
-  sinon.assert.callCount(awsStub, 1);
-  t.ok('Presigned post statement is executed on the AWS instance');
-});
