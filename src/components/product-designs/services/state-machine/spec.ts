@@ -148,18 +148,4 @@ test('determineState works for a design with events', async (t: Test) => {
     DesignState.COSTED,
     'Sits at checkout state when committed with new cost inputs'
   );
-
-  // With costing and submitting "out of normal order"
-  designWithData = {
-    ...design,
-    collectionId: 'collection-one',
-    costInputs: [ci2],
-    events: [e2, e1, e3]
-  };
-  const state8 = determineState(designWithData);
-  t.deepEqual(
-    state8,
-    DesignState.CHECKED_OUT,
-    'Continues to checkout state'
-  );
 });
