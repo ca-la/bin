@@ -139,4 +139,31 @@ test(`GET ${API_PATH}/ with a user account`, async (t: Test) => {
   t.equal(response.status, 200);
   t.deepEqual(body, [{ designId: 'design-one' }, { designId: 'design-two' }]);
   t.equal(removeStub.callCount, 1);
+  t.deepEqual(removeStub.args[0][1], { limit: 20, offset: 0 });
+});
+
+test(`GET ${API_PATH}/ with query parameters`, async (t: Test) => {
+  const user = await createUser({ role: 'USER' });
+  const removeStub = sandbox()
+    .stub(TemplateDesignsDAO, 'getAll')
+    .resolves([
+      {
+        designId: 'design-one'
+      },
+      {
+        designId: 'design-two'
+      }
+    ]);
+
+  const [response, body] = await API.get(
+    '/templates/designs?limit=5&offset=20',
+    {
+      headers: API.authHeader(user.session.id)
+    }
+  );
+
+  t.equal(response.status, 200);
+  t.deepEqual(body, [{ designId: 'design-one' }, { designId: 'design-two' }]);
+  t.equal(removeStub.callCount, 1);
+  t.deepEqual(removeStub.args[0][1], { limit: 5, offset: 20 });
 });

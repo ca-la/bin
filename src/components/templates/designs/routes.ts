@@ -45,11 +45,21 @@ function* removeTemplate(
   });
 }
 
+interface ListQueryParameters {
+  limit?: number;
+  offset?: number;
+}
+
 function* listTemplates(
   this: Koa.Application.Context
 ): AsyncIterableIterator<any> {
+  const { limit, offset }: ListQueryParameters = this.query;
+
   yield db.transaction(async (trx: Knex.Transaction) => {
-    const templates = await getAll(trx);
+    const templates = await getAll(trx, {
+      limit: Number(limit) || 20,
+      offset: Number(offset) || 0
+    });
     this.status = 200;
     this.body = templates;
   });

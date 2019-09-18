@@ -9,9 +9,11 @@ import {
   TemplateDesignRow
 } from './domain-object';
 import * as db from '../../../services/db';
-import { validate, validateEvery } from '../../../services/validate-from-db';
+import { validate } from '../../../services/validate-from-db';
 import filterError = require('../../../services/filter-error');
 import InvalidDataError = require('../../../errors/invalid-data');
+import { queryWithCollectionMeta } from '../../product-designs/dao';
+import ProductDesign = require('../../product-designs/domain-objects/product-design');
 
 const TABLE_NAME = 'template_designs';
 
@@ -80,15 +82,28 @@ export async function remove(
   }
 }
 
-export async function getAll(trx: Knex.Transaction): Promise<TemplateDesign[]> {
-  const rows = await db(TABLE_NAME)
-    .select('*')
-    .transacting(trx);
+interface ListOptions {
+  limit: number;
+  offset: number;
+}
 
-  return validateEvery<TemplateDesignRow, TemplateDesign>(
-    TABLE_NAME,
-    isTemplateDesignRow,
-    dataAdapter,
-    rows
-  );
+export async function getAll(
+  trx: Knex.Transaction,
+  options: ListOptions
+): Promise<ProductDesign[]> {
+  return db(TABLE_NAME)
+    .select('product_designs.*')
+    .innerJoin(
+      queryWithCollectionMeta(db).as('product_designs'),
+      'product_designs.id',
+      'template_designs.design_id'
+    )
+    .limit(options.limit)
+    .offset(options.offset)
+    .orderBy('product_designs.created_at', 'DESC')
+    .transacting(trx)
+    .then(
+      (rows: any): ProductDesign[] =>
+        rows.map((row: any) => new ProductDesign(row))
+    );
 }

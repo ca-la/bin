@@ -54,12 +54,8 @@ test('remove()', async (t: Test) => {
   // create a template
   await db.transaction(async (trx: Knex.Transaction) => {
     await create({ designId: design.id }, trx);
-    const results = await getAll(trx);
-    t.deepEqual(
-      results,
-      [{ designId: design.id }],
-      'There is only one element in the list.'
-    );
+    const results = await getAll(trx, { limit: 10, offset: 0 });
+    t.deepEqual(results, [design], 'There is only one element in the list.');
   });
 
   // deleting something that isn't there
@@ -76,7 +72,58 @@ test('remove()', async (t: Test) => {
   // can remove a template.
   await db.transaction(async (trx: Knex.Transaction) => {
     await remove(design.id, trx);
-    const results = await getAll(trx);
+    const results = await getAll(trx, { limit: 10, offset: 0 });
     t.deepEqual(results, [], 'There are no templates in the list.');
+  });
+});
+
+test('getAll()', async (t: Test) => {
+  const { user } = await createUser({ role: 'ADMIN', withSession: false });
+  const design1 = await createDesign({
+    productType: 'SHIRT',
+    title: 'Test Shirt',
+    userId: user.id
+  });
+  const design2 = await createDesign({
+    productType: 'SHIRT',
+    title: 'Test Shirt',
+    userId: user.id
+  });
+  const design3 = await createDesign({
+    productType: 'SHIRT',
+    title: 'Test Shirt',
+    userId: user.id
+  });
+  await createDesign({
+    productType: '???',
+    title: 'Random',
+    userId: user.id
+  });
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await create({ designId: design1.id }, trx);
+    await create({ designId: design2.id }, trx);
+    await create({ designId: design3.id }, trx);
+
+    const results = await getAll(trx, { limit: 10, offset: 0 });
+    t.deepEqual(
+      results,
+      [design3, design2, design1],
+      'Returns the list in order of when each design was made'
+    );
+
+    const results2 = await getAll(trx, { limit: 10, offset: 2 });
+    t.deepEqual(
+      results2,
+      [design1],
+      'Returns the list using the given offset and limit'
+    );
+
+    const results3 = await getAll(trx, { limit: 1, offset: 1 });
+    t.deepEqual(
+      results3,
+      [design2],
+      'Returns a single element list using the given offset and limit'
+    );
   });
 });
