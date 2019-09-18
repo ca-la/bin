@@ -8,6 +8,11 @@ export const AWS_SECRET_KEY: string;
 export const AWS_NOTIFICATION_SQS_URL: string;
 export const AWS_NOTIFICATION_SQS_REGION: string;
 
+export const AWS_S3_THUMBNAIL_ACCESS_KEY: string;
+export const AWS_S3_THUMBNAIL_SECRET_KEY: string;
+export const AWS_S3_THUMBNAIL_BUCKET_NAME: string;
+export const AWS_S3_THUMBNAIL_BUCKET_REGION: string;
+
 export const AWS_IRIS_S3_BUCKET: string;
 export const AWS_IRIS_SQS_REGION: string;
 export const AWS_IRIS_SQS_URL: string;

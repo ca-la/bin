@@ -7,6 +7,7 @@ import DesignEvent from '../../domain-objects/design-event';
 import { create as createDesign } from '../../components/product-designs/dao';
 import {
   create,
+  createAll,
   findByDesignId,
   findByTargetId,
   isQuoteCommitted
@@ -40,38 +41,7 @@ test('Design Events DAO supports creation', async (t: Test) => {
   t.deepEqual(inputEvent, designEvent);
 });
 
-test('Design Events DAO supports retrieval by design ID', async (t: Test) => {
-  sandbox().useFakeTimers(testDate);
-  const { bid } = await generateBid();
-  const { user: designer } = await createUser();
-  const { user: cala } = await createUser();
-  const { user: partner } = await createUser();
-  const design = await createDesign({
-    previewImageUrls: [],
-    productType: 'A product type',
-    title: 'A design',
-    userId: designer.id
-  });
-  const inputEvent: DesignEvent = {
-    actorId: cala.id,
-    bidId: bid.id,
-    createdAt: testDate,
-    designId: design.id,
-    id: uuid.v4(),
-    quoteId: null,
-    targetId: partner.id,
-    type: 'BID_DESIGN'
-  };
-  await create(inputEvent);
-  const partnerEvents = await findByTargetId(partner.id);
-  const designerEvents = await findByTargetId(designer.id);
-
-  t.deepEqual(partnerEvents, [inputEvent]);
-  t.deepEqual(designerEvents, []);
-});
-
-test('Design Events DAO supports retrieval by target ID', async (t: Test) => {
-  sandbox().useFakeTimers(testDate);
+test('Design Events DAO supports creating multiple events at once', async (t: Test) => {
   const { bid } = await generateBid();
   const { user: designer } = await createUser();
   const { user: cala } = await createUser();
@@ -112,11 +82,83 @@ test('Design Events DAO supports retrieval by target ID', async (t: Test) => {
     targetId: cala.id,
     type: 'ACCEPT_SERVICE_BID'
   };
-  const events = [bidEvent, submitEvent, acceptBidEvent];
-  for (const event of events) {
-    sandbox().useFakeTimers(event.createdAt);
-    await create(event);
-  }
+  const created = await createAll([bidEvent, submitEvent, acceptBidEvent]);
+
+  t.deepEqual(created, [submitEvent, bidEvent, acceptBidEvent]);
+});
+
+test('Design Events DAO supports retrieval by design ID', async (t: Test) => {
+  sandbox().useFakeTimers(testDate);
+  const { bid } = await generateBid();
+  const { user: designer } = await createUser();
+  const { user: cala } = await createUser();
+  const { user: partner } = await createUser();
+  const design = await createDesign({
+    previewImageUrls: [],
+    productType: 'A product type',
+    title: 'A design',
+    userId: designer.id
+  });
+  const inputEvent: DesignEvent = {
+    actorId: cala.id,
+    bidId: bid.id,
+    createdAt: testDate,
+    designId: design.id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: partner.id,
+    type: 'BID_DESIGN'
+  };
+  await create(inputEvent);
+  const partnerEvents = await findByTargetId(partner.id);
+  const designerEvents = await findByTargetId(designer.id);
+
+  t.deepEqual(partnerEvents, [inputEvent]);
+  t.deepEqual(designerEvents, []);
+});
+
+test('Design Events DAO supports retrieval by target ID', async (t: Test) => {
+  const { bid } = await generateBid();
+  const { user: designer } = await createUser();
+  const { user: cala } = await createUser();
+  const { user: partner } = await createUser();
+  const design = await createDesign({
+    previewImageUrls: [],
+    productType: 'A product type',
+    title: 'A design',
+    userId: designer.id
+  });
+  const submitEvent: DesignEvent = {
+    actorId: designer.id,
+    bidId: null,
+    createdAt: new Date(2012, 11, 23),
+    designId: design.id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: cala.id,
+    type: 'SUBMIT_DESIGN'
+  };
+  const bidEvent: DesignEvent = {
+    actorId: cala.id,
+    bidId: bid.id,
+    createdAt: new Date(2012, 11, 24),
+    designId: design.id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: partner.id,
+    type: 'BID_DESIGN'
+  };
+  const acceptBidEvent: DesignEvent = {
+    actorId: partner.id,
+    bidId: bidEvent.bidId,
+    createdAt: new Date(2012, 11, 25),
+    designId: design.id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: cala.id,
+    type: 'ACCEPT_SERVICE_BID'
+  };
+  await createAll([bidEvent, submitEvent, acceptBidEvent]);
   const designEvents = await findByDesignId(design.id);
 
   t.deepEqual(
@@ -167,11 +209,7 @@ test('isQuoteCommitted returns the correct value', async (t: Test) => {
     targetId: cala.id,
     type: 'ACCEPT_SERVICE_BID'
   };
-  const events = [submitEvent, bidEvent, acceptBidEvent];
-  for (const event of events) {
-    sandbox().useFakeTimers(event.createdAt);
-    await create(event);
-  }
+  await createAll([bidEvent, submitEvent, acceptBidEvent]);
 
   t.false(await isQuoteCommitted(design.id));
 
@@ -185,7 +223,6 @@ test('isQuoteCommitted returns the correct value', async (t: Test) => {
     targetId: cala.id,
     type: 'COMMIT_QUOTE'
   };
-  sandbox().useFakeTimers(commitQuoteEvent.createdAt);
   await create(commitQuoteEvent);
 
   t.true(await isQuoteCommitted(design.id));

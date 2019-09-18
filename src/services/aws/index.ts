@@ -7,7 +7,13 @@ import {
 } from 'aws-sdk/clients/s3';
 import { PromiseResult } from 'aws-sdk/lib/request';
 import * as fs from 'fs';
-import { AWS_ACCESS_KEY, AWS_SECRET_KEY } from '../../config';
+import {
+  AWS_ACCESS_KEY,
+  AWS_S3_THUMBNAIL_ACCESS_KEY,
+  AWS_S3_THUMBNAIL_BUCKET_REGION,
+  AWS_S3_THUMBNAIL_SECRET_KEY,
+  AWS_SECRET_KEY
+} from '../../config';
 
 AWS.config.update({
   accessKeyId: AWS_ACCESS_KEY,
@@ -107,6 +113,43 @@ export function getUploadPolicy(
       ['eq', '$content-disposition', contentDisposition],
       ['eq', '$content-type', contentType],
       ['content-length-range', 0, FILE_LIMIT]
+    ],
+    Expires: 60
+  });
+}
+
+/**
+ * Get POST upload policy document for Thumbnail S3 bucket
+ * URL expires after 60 seconds, and thumbnail must be smaller than 10 MB
+ *
+ * See: https://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-HTTPPOSTConstructPolicy.html
+ */
+export function getThumbnailUploadPolicy(
+  bucketName: string,
+  remoteFileName: string
+): PresignedPost {
+  if (!AWS_S3_THUMBNAIL_ACCESS_KEY) {
+    throw new Error('AWS_S3_THUMBNAIL_ACCESS_KEY not set as an env variable!');
+  }
+  if (!AWS_S3_THUMBNAIL_SECRET_KEY) {
+    throw new Error('AWS_S3_THUMBNAIL_SECRET_KEY not set as an env variable!');
+  }
+
+  const s3 = new AWS.S3({
+    credentials: new AWS.Credentials({
+      accessKeyId: AWS_S3_THUMBNAIL_ACCESS_KEY,
+      secretAccessKey: AWS_S3_THUMBNAIL_SECRET_KEY
+    }),
+    region: AWS_S3_THUMBNAIL_BUCKET_REGION
+  });
+  const TEN_MB = 10 * 1024 ** 2;
+
+  return s3.createPresignedPost({
+    Bucket: bucketName,
+    Conditions: [
+      { acl: 'public-read' },
+      { key: remoteFileName },
+      ['content-length-range', 0, TEN_MB]
     ],
     Expires: 60
   });

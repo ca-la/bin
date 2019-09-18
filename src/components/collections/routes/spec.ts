@@ -794,26 +794,26 @@ test('POST /collections/:collectionId/partner-pairings', async (t: tape.Test) =>
   await CollectionsDAO.moveDesign(collectionOne.id, designOne.id);
   await CollectionsDAO.moveDesign(collectionOne.id, designTwo.id);
 
-  await DesignEventsDAO.create({
-    id: uuid.v4(),
-    actorId: partner.user.id,
-    createdAt: new Date(),
-    targetId: null,
-    designId: designOne.id,
-    bidId: null,
-    quoteId: null,
-    type: 'ACCEPT_SERVICE_BID'
-  });
-  await DesignEventsDAO.create({
-    id: uuid.v4(),
-    actorId: partner.user.id,
-    createdAt: new Date(),
-    targetId: null,
-    designId: designTwo.id,
-    bidId: null,
-    quoteId: null,
-    type: 'ACCEPT_SERVICE_BID'
-  });
+  await DesignEventsDAO.createAll([
+    {
+      id: uuid.v4(),
+      actorId: partner.user.id,
+      targetId: null,
+      designId: designOne.id,
+      bidId: null,
+      quoteId: null,
+      type: 'ACCEPT_SERVICE_BID'
+    },
+    {
+      id: uuid.v4(),
+      actorId: partner.user.id,
+      targetId: null,
+      designId: designTwo.id,
+      bidId: null,
+      quoteId: null,
+      type: 'ACCEPT_SERVICE_BID'
+    }
+  ]);
 
   const failedPartnerPairing = await API.post(
     `/collections/${collectionOne.id}/partner-pairings`,

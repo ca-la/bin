@@ -37,6 +37,7 @@ import { omit } from 'lodash';
 import { taskEventFromIO, TaskStatus } from '../../domain-objects/task-event';
 
 const testDate = new Date(2012, 11, 22);
+
 test('Bids DAO supports creation and retrieval', async (t: Test) => {
   sandbox().useFakeTimers(testDate);
   const bidTaskTypesCreateStub = sandbox()
@@ -327,7 +328,7 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
   await create({ ...openBid, acceptedAt: null, taskTypeIds: [] });
   await create({ ...rejectedBid, acceptedAt: null, taskTypeIds: [] });
   await create({ ...acceptedBid, acceptedAt: null, taskTypeIds: [] });
-  const events = [
+  await DesignEventsDAO.createAll([
     submitEvent,
     bidEvent,
     bidToOtherEvent,
@@ -336,11 +337,7 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
     bidDesignToAcceptEvent,
     rejectDesignEvent,
     acceptDesignEvent
-  ];
-  for (const event of events) {
-    sandbox().useFakeTimers(event.createdAt);
-    await DesignEventsDAO.create(event);
-  }
+  ]);
 
   const openBids = await findOpenByTargetId(partner.id, 'ACCEPTED');
   const otherBids = await findOpenByTargetId(otherPartner.id, 'ACCEPTED');

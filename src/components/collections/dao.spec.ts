@@ -18,17 +18,6 @@ import { NotificationType } from '../notifications/domain-object';
 import generateNotification from '../../test-helpers/factories/notification';
 import * as NotificationAnnouncer from '../../components/iris/messages/notification';
 
-const createDesignEvents = async (
-  events: DesignEvent[]
-): Promise<DesignEvent[]> => {
-  const createdEvents: DesignEvent[] = [];
-  for (const event of events) {
-    const created = await DesignEventsDAO.create(event);
-    createdEvents.push(created);
-  }
-  return createdEvents;
-};
-
 test('CollectionsDAO#create creates a collection', async (t: Test) => {
   const { user } = await createUser({ withSession: false });
   const one = await CollectionsDAO.create({
@@ -534,7 +523,7 @@ test('findSubmittedButUnpaidCollections finds all submitted but unpaid collectio
     type: 'COMMIT_QUOTE'
   };
 
-  await createDesignEvents([
+  await DesignEventsDAO.createAll([
     submitEvent,
     submitEventDeleted,
     submitEventDeleted2,
@@ -544,7 +533,7 @@ test('findSubmittedButUnpaidCollections finds all submitted but unpaid collectio
     submitEvent5
   ]);
 
-  await createDesignEvents([
+  await DesignEventsDAO.createAll([
     paymentEvent1,
     paymentEvent2,
     paymentEvent3,
