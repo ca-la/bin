@@ -20,6 +20,7 @@ import { omit } from 'lodash';
 import * as BidTaskTypesDAO from '../bid-task-types/dao';
 import * as PricingQuotesDAO from '../../dao/pricing-quotes';
 import ResourceNotFoundError from '../../errors/resource-not-found';
+import { getBuilder as getTasksViewBuilder } from '../../dao/task-events/view';
 
 const TABLE_NAME = 'pricing_bids';
 const DESIGN_EVENTS_TABLE = 'design_events';
@@ -94,7 +95,38 @@ const selectWithAcceptedAt = db.raw(`distinct on (pricing_bids.id) pricing_bids.
       order by "design_events"."created_at" desc limit 1)
   ELSE
     null
-  END AS accepted_at`);
+  END AS accepted_at, null as completed_at`);
+
+const selectWithAcceptedAtAndCompletedAt = db.raw(
+  `distinct on (pricing_bids.id) pricing_bids.*,
+  CASE WHEN "design_events"."bid_id" IN (
+    SELECT
+      "design_events"."bid_id"
+    FROM
+      "design_events"
+    WHERE
+      "design_events"."type" IN ('ACCEPT_SERVICE_BID'))
+    AND "design_events"."bid_id" NOT IN (
+      SELECT
+        "design_events"."bid_id"
+      FROM
+        "design_events"
+      WHERE
+        "design_events"."type" IN ('REMOVE_PARTNER')) THEN
+    (SELECT
+      "design_events"."created_at"
+    FROM
+      "design_events"
+    WHERE "design_events"."type" IN ('ACCEPT_SERVICE_BID')
+      AND "design_events"."bid_id" = "pricing_bids"."id"
+      order by "design_events"."created_at" desc limit 1)
+  ELSE
+    null
+  END AS accepted_at,
+  (select max(t.last_modified_at)
+  from (:taskView) as t where t.design_id = design_events.design_id) as completed_at`,
+  { taskView: getTasksViewBuilder() }
+);
 
 const orderBy = (
   orderClause: string,
@@ -130,7 +162,7 @@ export function create(bidPayload: BidCreationPayload): Promise<Bid> {
       ? new Date(paidQuote.createdAt.getTime() + bid.projectDueInMs)
       : null;
     const rowData = {
-      ...dataAdapter.forInsertion(bid),
+      ...omit(dataAdapter.forInsertion(bid), 'completed_at'),
       created_at: createdAt,
       due_date: dueDate
     };
@@ -400,6 +432,159 @@ export async function findAcceptedByTargetId(
         'design_events.bid_id',
         'design_events.created_at'
       ])
+  );
+
+  return validateEvery<BidRow, Bid>(
+    TABLE_NAME,
+    isBidRow,
+    dataAdapter,
+    targetRows
+  );
+}
+
+export async function findActiveByTargetId(
+  targetId: string,
+  sortBy: BidSortByParam
+): Promise<Bid[]> {
+  let sortingFunction = orderByAcceptedAt;
+  switch (sortBy) {
+    case 'ACCEPTED':
+      sortingFunction = orderByAcceptedAt;
+      break;
+    case 'DUE':
+      sortingFunction = orderByDueDate;
+      break;
+  }
+  const targetRows = await sortingFunction(
+    db(DESIGN_EVENTS_TABLE)
+      .select(selectWithAcceptedAt)
+      .rightJoin('pricing_bids', (join: Knex.JoinClause) => {
+        join
+          .on('design_events.bid_id', '=', 'pricing_bids.id')
+          .andOnIn('design_events.target_id', [targetId])
+          .andOnIn('design_events.type', statusToEvents.ACCEPTED.contains);
+      })
+      // The purpose of this is to get the list of designs that are completed and see
+      // if this is not one of them. The strategy here is to get all of the tasks by
+      // unique designId and status. If there is one status and that status is
+      // completed then the design is completed.
+      .whereNotIn(
+        'design_events.design_id',
+        db.raw(
+          `
+        select
+          outerquery.design_id
+        from (
+          select distinct on (t.design_id, t.status) t.design_id as design_id, t.status as status
+          from :taskView as t) as outerquery
+        where outerquery.status = 'COMPLETED'
+        and outerquery.design_id in (
+          select innertasks.design_id from (
+            select distinct on (t.design_id, t.status) t.design_id, t.status
+            from :taskView as t
+          ) as innertasks
+          group by innertasks.design_id
+          having count(innertasks.design_id) = 1)
+        `,
+          { taskView: getTasksViewBuilder() }
+        )
+      )
+      .whereIn(
+        'design_events.bid_id',
+        db
+          .select('design_events.bid_id')
+          .from('design_events')
+          .whereIn(
+            'design_events.type',
+            statusToEvents.ACCEPTED.andAlsoContains
+          )
+          .andWhere({ 'design_events.actor_id': targetId })
+      )
+      .modify(filterRemovalEvents(targetId))
+      .groupBy([
+        'pricing_bids.id',
+        'design_events.bid_id',
+        'design_events.created_at'
+      ])
+      .orderBy('pricing_bids.id')
+      .orderBy('pricing_bids.created_at', 'asc')
+  );
+
+  return validateEvery<BidRow, Bid>(
+    TABLE_NAME,
+    isBidRow,
+    dataAdapter,
+    targetRows
+  );
+}
+
+export async function findCompletedByTargetId(
+  targetId: string,
+  sortBy: BidSortByParam
+): Promise<Bid[]> {
+  let sortingFunction = orderByAcceptedAt;
+  switch (sortBy) {
+    case 'ACCEPTED':
+      sortingFunction = orderByAcceptedAt;
+      break;
+    case 'DUE':
+      sortingFunction = orderByDueDate;
+      break;
+  }
+  const targetRows = await sortingFunction(
+    db(DESIGN_EVENTS_TABLE)
+      .select(selectWithAcceptedAtAndCompletedAt)
+      .rightJoin('pricing_bids', (join: Knex.JoinClause) => {
+        join
+          .on('design_events.bid_id', '=', 'pricing_bids.id')
+          .andOnIn('design_events.target_id', [targetId])
+          .andOnIn('design_events.type', statusToEvents.ACCEPTED.contains);
+      })
+      // The purpose of this is to get the list of designs that are completed and see
+      // if this is one of them. The strategy here is to get all of the tasks by
+      // unique designId and status. If there is one status and that status is
+      // completed then the design is completed.
+      .whereIn(
+        'design_events.design_id',
+        db.raw(
+          `
+        select
+          outerquery.design_id
+        from (
+          select distinct on (t.design_id, t.status) t.design_id as design_id, t.status as status
+          from :taskView as t) as outerquery
+        where outerquery.status = 'COMPLETED'
+        and outerquery.design_id in (
+          select innertasks.design_id from (
+            select distinct on (t.design_id, t.status) t.design_id, t.status
+            from :taskView as t
+          ) as innertasks
+          group by innertasks.design_id
+          having count(innertasks.design_id) = 1)
+        `,
+          { taskView: getTasksViewBuilder() }
+        )
+      )
+      .whereIn(
+        'design_events.bid_id',
+        db
+          .select('design_events.bid_id')
+          .from('design_events')
+          .whereIn(
+            'design_events.type',
+            statusToEvents.ACCEPTED.andAlsoContains
+          )
+          .andWhere({ 'design_events.actor_id': targetId })
+      )
+      .modify(filterRemovalEvents(targetId))
+      .groupBy([
+        'pricing_bids.id',
+        'design_events.bid_id',
+        'design_events.created_at',
+        'design_events.design_id'
+      ])
+      .orderBy('pricing_bids.id')
+      .orderBy('pricing_bids.created_at', 'asc')
   );
 
   return validateEvery<BidRow, Bid>(

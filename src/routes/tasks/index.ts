@@ -1,6 +1,5 @@
 import * as Router from 'koa-router';
 import * as Koa from 'koa';
-import * as uuid from 'node-uuid';
 import { omit, pick } from 'lodash';
 
 import * as TaskEventsDAO from '../../dao/task-events';
@@ -13,6 +12,8 @@ import createTask from '../../services/create-task';
 import TaskEvent, {
   DetailsTask,
   DetailsTaskWithAssignees,
+  IOTask,
+  taskEventFromIO,
   TaskStatus
 } from '../../domain-objects/task-event';
 import Comment, {
@@ -24,9 +25,7 @@ import {
   hasProperties
 } from '../../services/require-properties';
 import requireAuth = require('../../middleware/require-auth');
-import Collaborator, {
-  CollaboratorWithUser
-} from '../../components/collaborators/domain-objects/collaborator';
+import { CollaboratorWithUser } from '../../components/collaborators/domain-objects/collaborator';
 import * as NotificationsService from '../../services/create-notifications';
 import { typeGuard } from '../../middleware/type-guard';
 import addAtMentionDetails from '../../services/add-at-mention-details';
@@ -37,7 +36,6 @@ import { announceTaskCommentCreation } from '../../components/iris/messages/task
 
 const router = new Router();
 
-type IOTask = DetailsTask & { assignees: Collaborator[] };
 interface CollaboratorTaskRequest {
   collaboratorIds: string[];
 }
@@ -87,25 +85,6 @@ function isCollaboratorTaskRequest(
 ): candidate is CollaboratorTaskRequest {
   return hasOnlyProperties(candidate, 'collaboratorIds');
 }
-
-const taskEventFromIO = (request: IOTask, userId: string): TaskEvent => {
-  const filteredRequest = omit(
-    request,
-    'assignees',
-    'design',
-    'designStage',
-    'collection',
-    'commentCount',
-    'lastModifiedAt'
-  );
-  return Object.assign({}, filteredRequest, {
-    createdAt: new Date(),
-    createdBy: userId,
-    id: uuid.v4(),
-    status: request.status || TaskStatus.NOT_STARTED,
-    taskId: request.id
-  });
-};
 
 function* createTaskWithEvent(
   this: Koa.Application.Context<IOTask>

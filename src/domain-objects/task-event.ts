@@ -1,3 +1,6 @@
+import { omit } from 'lodash';
+import uuid = require('node-uuid');
+
 import DataAdapter from '../services/data-adapter';
 import { hasOnlyProperties } from '../services/require-properties';
 import {
@@ -5,7 +8,7 @@ import {
   generateThumbnailLinks,
   ThumbnailAndPreviewLinks
 } from '../services/attach-asset-links';
-import {
+import Collaborator, {
   CollaboratorWithUser,
   CollaboratorWithUserRow,
   encode as encodeCollaborator
@@ -290,3 +293,24 @@ export const detailsWithAssigneesAdapter = new DataAdapter<
   DetailTaskWithAssigneesEventRow,
   DetailsTaskWithAssigneesAdaptedRow
 >(encode);
+
+export type IOTask = DetailsTask & { assignees: Collaborator[] };
+
+export const taskEventFromIO = (request: IOTask, userId: string): TaskEvent => {
+  const filteredRequest: TaskEvent = omit(
+    { ...request, taskId: request.id },
+    'assignees',
+    'design',
+    'designStage',
+    'collection',
+    'commentCount',
+    'lastModifiedAt'
+  );
+  return {
+    ...filteredRequest,
+    createdAt: new Date(),
+    createdBy: userId,
+    id: uuid.v4(),
+    status: request.status || TaskStatus.NOT_STARTED
+  };
+};

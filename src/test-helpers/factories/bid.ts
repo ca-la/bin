@@ -70,6 +70,7 @@ export default async function generateBid({
     projectDueInMs: daysToMs(10),
     createdAt,
     createdBy,
+    completedAt: null,
     description: 'Full Service',
     dueDate,
     id: uuid.v4(),

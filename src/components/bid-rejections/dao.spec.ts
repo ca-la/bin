@@ -42,6 +42,7 @@ test('Bid Rejections DAO supports creation and retrieval by Bid ID', async (t: T
     projectDueInMs: daysToMs(10),
     createdAt: new Date(2012, 11, 22),
     createdBy: user.id,
+    completedAt: null,
     description: 'Full Service',
     dueDate: new Date(new Date(2012, 11, 22).getTime() + daysToMs(10)),
     id: uuid.v4(),

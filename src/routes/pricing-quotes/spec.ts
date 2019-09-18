@@ -592,6 +592,7 @@ test('PUT /pricing-quotes/:quoteId/bid/:bidId creates bid', async (t: Test) => {
     projectDueInMs: daysToMs(10),
     createdAt: now,
     createdBy: user.id,
+    completedAt: null,
     description: 'Full Service',
     dueDate: new Date(
       new Date(createdQuotes[0].createdAt).getTime() + daysToMs(10)
@@ -661,6 +662,7 @@ test('POST /pricing-quotes/:quoteId/bids creates bid', async (t: Test) => {
     bidPriceCents: 100000,
     projectDueInMs: daysToMs(10),
     createdBy: user.id,
+    completedAt: null,
     description: 'Full Service',
     dueDate: new Date(new Date(2012, 11, 22).getTime() + daysToMs(10)),
     quoteId: createdQuotes[0].id
@@ -731,6 +733,7 @@ test('GET /pricing-quotes/:quoteId/bids returns list of bids for quote', async (
     projectDueInMs: daysToMs(10),
     createdAt: now,
     createdBy: user.id,
+    completedAt: null,
     description: 'Full Service',
     dueDate: new Date(
       new Date(createdQuotes[0].createdAt).getTime() + daysToMs(10)
