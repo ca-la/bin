@@ -1,10 +1,11 @@
 import * as uuid from 'node-uuid';
 import * as sinon from 'sinon';
+import { omit } from 'lodash';
 
 import * as db from '../../services/db';
 import * as DesignEventsDAO from '../../dao/design-events';
 import * as PricingCostInputsDAO from '../../components/pricing-cost-inputs/dao';
-import Bid from '../../components/bids/domain-object';
+import { BidCreationPayload } from '../../components/bids/domain-object';
 import createUser = require('../../test-helpers/create-user');
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
 import { authHeader, get, post, put } from '../../test-helpers/http';
@@ -586,10 +587,9 @@ test('PUT /pricing-quotes/:quoteId/bid/:bidId creates bid', async (t: Test) => {
     headers: authHeader(session.id)
   });
 
-  const inputBid: Bid = {
+  const inputBid: BidCreationPayload = {
     acceptedAt: null,
     bidPriceCents: 100000,
-    projectDueInMs: daysToMs(10),
     createdAt: now,
     createdBy: user.id,
     completedAt: null,
@@ -598,7 +598,8 @@ test('PUT /pricing-quotes/:quoteId/bid/:bidId creates bid', async (t: Test) => {
       new Date(createdQuotes[0].createdAt).getTime() + daysToMs(10)
     ),
     id: uuid.v4(),
-    quoteId: createdQuotes[0].id
+    quoteId: createdQuotes[0].id,
+    taskTypeIds: []
   };
 
   const [putResponse, createdBid] = await put(
@@ -611,7 +612,7 @@ test('PUT /pricing-quotes/:quoteId/bid/:bidId creates bid', async (t: Test) => {
 
   t.equal(putResponse.status, 201);
   t.deepEqual(createdBid, {
-    ...inputBid,
+    ...omit(inputBid, ['taskTypeIds']),
     createdAt: inputBid.createdAt.toISOString(),
     dueDate: inputBid.dueDate!.toISOString()
   });
@@ -657,15 +658,15 @@ test('POST /pricing-quotes/:quoteId/bids creates bid', async (t: Test) => {
     headers: authHeader(session.id)
   });
 
-  const inputBid: Unsaved<Bid> = {
+  const inputBid: Unsaved<BidCreationPayload> = {
     acceptedAt: null,
     bidPriceCents: 100000,
-    projectDueInMs: daysToMs(10),
     createdBy: user.id,
     completedAt: null,
     description: 'Full Service',
     dueDate: new Date(new Date(2012, 11, 22).getTime() + daysToMs(10)),
-    quoteId: createdQuotes[0].id
+    quoteId: createdQuotes[0].id,
+    taskTypeIds: []
   };
 
   const [postResponse, createdBid] = await post(
@@ -678,7 +679,7 @@ test('POST /pricing-quotes/:quoteId/bids creates bid', async (t: Test) => {
 
   t.equal(postResponse.status, 201);
   t.deepEqual(createdBid, {
-    ...inputBid,
+    ...omit(inputBid, ['taskTypeIds']),
     createdAt: createdBid.createdAt,
     dueDate: createdBid.dueDate,
     id: createdBid.id
@@ -727,10 +728,9 @@ test('GET /pricing-quotes/:quoteId/bids returns list of bids for quote', async (
     headers: authHeader(session.id)
   });
 
-  const inputBid: Bid = {
+  const inputBid: BidCreationPayload = {
     acceptedAt: null,
     bidPriceCents: 100000,
-    projectDueInMs: daysToMs(10),
     createdAt: now,
     createdBy: user.id,
     completedAt: null,
@@ -739,7 +739,8 @@ test('GET /pricing-quotes/:quoteId/bids returns list of bids for quote', async (
       new Date(createdQuotes[0].createdAt).getTime() + daysToMs(10)
     ),
     id: uuid.v4(),
-    quoteId: createdQuotes[0].id
+    quoteId: createdQuotes[0].id,
+    taskTypeIds: []
   };
 
   await put(`/pricing-quotes/${inputBid.quoteId}/bids/${inputBid.id}`, {
@@ -755,7 +756,7 @@ test('GET /pricing-quotes/:quoteId/bids returns list of bids for quote', async (
   t.equal(response.status, 200);
   t.deepEqual(bids, [
     {
-      ...inputBid,
+      ...omit(inputBid, ['taskTypeIds']),
       createdAt: inputBid.createdAt.toISOString(),
       dueDate: inputBid.dueDate!.toISOString()
     }

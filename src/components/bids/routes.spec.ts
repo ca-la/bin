@@ -37,7 +37,6 @@ test('GET /bids', async (t: Test) => {
   const otherBid = await BidsDAO.create({
     acceptedAt: null,
     bidPriceCents: 100000,
-    projectDueInMs: daysToMs(10),
     createdAt: new Date(2012, 11, 22),
     createdBy: admin.user.id,
     completedAt: null,
@@ -118,7 +117,6 @@ test('GET /bids?userId&state=OPEN', async (t: Test) => {
   const otherBid = await BidsDAO.create({
     acceptedAt: null,
     bidPriceCents: 100000,
-    projectDueInMs: daysToMs(10),
     createdAt: new Date(2012, 11, 22),
     createdBy: admin.user.id,
     completedAt: null,
@@ -131,7 +129,6 @@ test('GET /bids?userId&state=OPEN', async (t: Test) => {
   const expiredBid = await BidsDAO.create({
     acceptedAt: null,
     bidPriceCents: 100000,
-    projectDueInMs: daysToMs(10),
     createdAt: new Date(2012, 11, 22),
     createdBy: admin.user.id,
     completedAt: null,
@@ -194,7 +191,6 @@ test('GET /bids?userId&state=EXPIRED', async (t: Test) => {
   const otherBid = await BidsDAO.create({
     acceptedAt: null,
     bidPriceCents: 100000,
-    projectDueInMs: daysToMs(10),
     createdAt: now,
     createdBy: admin.user.id,
     completedAt: null,
@@ -210,7 +206,6 @@ test('GET /bids?userId&state=EXPIRED', async (t: Test) => {
   const expiredBid = await BidsDAO.create({
     acceptedAt: null,
     bidPriceCents: 100000,
-    projectDueInMs: daysToMs(10),
     createdAt: threeDaysAgo,
     createdBy: admin.user.id,
     completedAt: null,
@@ -275,7 +270,6 @@ test('GET /bids?userId&state=REJECTED', async (t: Test) => {
   const otherBid = await BidsDAO.create({
     acceptedAt: null,
     bidPriceCents: 100000,
-    projectDueInMs: daysToMs(10),
     createdAt: new Date(2012, 11, 22),
     createdBy: admin.user.id,
     completedAt: null,
@@ -335,7 +329,6 @@ test('GET /bids?userId&state=ACCEPTED', async (t: Test) => {
   const otherBid = await BidsDAO.create({
     acceptedAt: null,
     bidPriceCents: 100000,
-    projectDueInMs: daysToMs(10),
     createdAt: new Date(2012, 11, 22),
     createdBy: admin.user.id,
     completedAt: null,
@@ -591,7 +584,6 @@ test('Partner pairing: accept', async (t: Test) => {
   const bid = await BidsDAO.create({
     acceptedAt: null,
     bidPriceCents: 20000,
-    projectDueInMs: daysToMs(10),
     createdAt,
     createdBy: admin.user.id,
     completedAt: null,
@@ -757,7 +749,6 @@ test('Partner pairing: reject', async (t: Test) => {
   const bid = await BidsDAO.create({
     acceptedAt: null,
     bidPriceCents: 20000,
-    projectDueInMs: daysToMs(10),
     createdAt,
     createdBy: admin.user.id,
     completedAt: null,

@@ -9,7 +9,7 @@ import * as PricingCostInputsDAO from '../../components/pricing-cost-inputs/dao'
 import * as SlackService from '../../services/slack';
 import * as UsersDAO from '../../components/users/dao';
 import addMargin from '../../services/add-margin';
-import Bid from '../../components/bids/domain-object';
+import { BidCreationPayload } from '../../components/bids/domain-object';
 import filterError = require('../../services/filter-error');
 import InvalidDataError = require('../../errors/invalid-data');
 import requireAdmin = require('../../middleware/require-admin');
@@ -40,7 +40,7 @@ import addTimeBuffer from '../../services/add-time-buffer';
 
 const router = new Router();
 
-type BidRequest = (Unsaved<Bid> | Bid) & { taskTypeIds: string[] };
+type BidRequest = Unsaved<BidCreationPayload> | BidCreationPayload;
 
 function isBidRequest(candidate: object): candidate is BidRequest {
   return hasProperties(
@@ -48,6 +48,7 @@ function isBidRequest(candidate: object): candidate is BidRequest {
     'quoteId',
     'bidPriceCents',
     'description',
+    'dueDate',
     'taskTypeIds'
   );
 }
@@ -307,7 +308,7 @@ function* createBidForQuote(
 ): AsyncIterableIterator<any> {
   const { quoteId } = this.params;
   const { body } = this.request;
-  const quote = yield findById(quoteId);
+  const quote: PricingQuote | null = yield findById(quoteId);
   this.assert(quote, 404, 'No quote found for ID');
 
   if (body && isBidRequest(body)) {

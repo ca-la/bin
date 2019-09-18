@@ -1,4 +1,5 @@
 import * as uuid from 'node-uuid';
+import { omit } from 'lodash';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
 import generatePricingQuote from '../../services/generate-pricing-quote';
@@ -6,7 +7,7 @@ import createUser = require('../../test-helpers/create-user');
 import * as DesignEventsDAO from '../../dao/design-events';
 import { create as createDesign } from '../product-designs/dao';
 
-import Bid from './domain-object';
+import { BidCreationPayload } from './domain-object';
 import {
   create,
   findAcceptedByTargetId,
@@ -33,7 +34,6 @@ import PayoutAccountsDAO = require('../../dao/partner-payout-accounts');
 import PartnerPayoutsDAO = require('../../components/partner-payouts/dao');
 import generateTask from '../../test-helpers/factories/task';
 import generateProductDesignStage from '../../test-helpers/factories/product-design-stage';
-import { omit } from 'lodash';
 import { taskEventFromIO, TaskStatus } from '../../domain-objects/task-event';
 
 const testDate = new Date(2012, 11, 22);
@@ -70,23 +70,23 @@ test('Bids DAO supports creation and retrieval', async (t: Test) => {
     constantsVersion: 0,
     careLabelsVersion: 0
   });
-  const inputBid: Bid = {
+  const inputBid: BidCreationPayload = {
     acceptedAt: null,
     bidPriceCents: 100000,
-    projectDueInMs: daysToMs(10),
     createdAt: testDate,
     createdBy: user.id,
     completedAt: null,
     description: 'Full Service',
     dueDate: new Date(quote.createdAt.getTime() + daysToMs(10)),
     id: uuid.v4(),
-    quoteId: quote.id
+    quoteId: quote.id,
+    taskTypeIds: []
   };
   const taskTypeIds = ['some-task-type', 'another-one'];
   const bid = await create({ ...inputBid, acceptedAt: null, taskTypeIds });
   const retrieved = await findById(inputBid.id);
 
-  t.deepEqual(inputBid, bid);
+  t.deepEqual(omit(inputBid, ['taskTypeIds']), bid);
   t.deepEqual(bid, retrieved);
   t.ok(
     bidTaskTypesCreateStub.calledWith({
@@ -137,22 +137,26 @@ test('Bids DAO supports retrieval by quote ID', async (t: Test) => {
     constantsVersion: 0,
     careLabelsVersion: 0
   });
-  const inputBid: Bid = {
+  const inputBid: BidCreationPayload = {
     acceptedAt: null,
     bidPriceCents: 100000,
-    projectDueInMs: daysToMs(10),
     createdAt: testDate,
     createdBy: user.id,
     completedAt: null,
     description: 'Full Service',
     dueDate: new Date(quote.createdAt.getTime() + daysToMs(10)),
     id: uuid.v4(),
-    quoteId: quote.id
+    quoteId: quote.id,
+    taskTypeIds: []
   };
   await create({ ...inputBid, acceptedAt: null, taskTypeIds: [] });
   const bids = await findByQuoteId(quote.id);
 
-  t.deepEqual(bids, [inputBid], 'returns the bids in createdAt order');
+  t.deepEqual(
+    bids,
+    [omit(inputBid, ['taskTypeIds'])],
+    'returns the bids in createdAt order'
+  );
 });
 
 test('Bids DAO supports retrieval of bids by target ID and status', async (t: Test) => {
@@ -188,41 +192,41 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
     constantsVersion: 0,
     careLabelsVersion: 0
   });
-  const openBid: Bid = {
+  const openBid: BidCreationPayload = {
     acceptedAt: null,
     bidPriceCents: 100000,
-    projectDueInMs: daysToMs(10),
     createdAt: testDate,
     createdBy: admin.id,
     completedAt: null,
     description: 'Full Service',
     dueDate: new Date(quote.createdAt.getTime() + daysToMs(10)),
     id: uuid.v4(),
-    quoteId: quote.id
+    quoteId: quote.id,
+    taskTypeIds: []
   };
-  const rejectedBid: Bid = {
+  const rejectedBid: BidCreationPayload = {
     acceptedAt: null,
     bidPriceCents: 100000,
-    projectDueInMs: daysToMs(10),
     createdAt: testDate,
     createdBy: admin.id,
     completedAt: null,
     description: 'Full Service (Rejected)',
     dueDate: new Date(quote.createdAt.getTime() + daysToMs(10)),
     id: uuid.v4(),
-    quoteId: quote.id
+    quoteId: quote.id,
+    taskTypeIds: []
   };
-  const acceptedBid: Bid = {
+  const acceptedBid: BidCreationPayload = {
     acceptedAt: null,
     bidPriceCents: 110000,
-    projectDueInMs: daysToMs(10),
     createdAt: testDate,
     createdBy: admin.id,
     completedAt: null,
     description: 'Full Service (Accepted)',
     dueDate: new Date(quote.createdAt.getTime() + daysToMs(10)),
     id: uuid.v4(),
-    quoteId: quote.id
+    quoteId: quote.id,
+    taskTypeIds: []
   };
   const design = await createDesign({
     previewImageUrls: [],
@@ -342,7 +346,11 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
   const openBids = await findOpenByTargetId(partner.id, 'ACCEPTED');
   const otherBids = await findOpenByTargetId(otherPartner.id, 'ACCEPTED');
 
-  t.deepEqual(openBids, [openBid], 'returns non-rejected/accepted bid');
+  t.deepEqual(
+    openBids,
+    [omit(openBid, ['taskTypeIds'])],
+    'returns non-rejected/accepted bid'
+  );
   t.deepEqual(otherBids, [], 'returns no bids');
 
   const acceptedBids = await findAcceptedByTargetId(partner.id, 'ACCEPTED');
@@ -373,19 +381,29 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
 
   t.deepEqual(
     acceptedBids,
-    [{ ...acceptedBid, acceptedAt: acceptedBids[0].acceptedAt }],
+    [
+      {
+        ...omit(acceptedBid, ['taskTypeIds']),
+        acceptedAt: acceptedBids[0].acceptedAt
+      }
+    ],
     'returns accepted bid'
   );
   t.deepEqual(
     activeBids,
-    [{ ...acceptedBid, acceptedAt: activeBids[0].acceptedAt }],
+    [
+      {
+        ...omit(acceptedBid, ['taskTypeIds']),
+        acceptedAt: activeBids[0].acceptedAt
+      }
+    ],
     'returns active bid'
   );
   t.deepEqual(
     completedBids,
     [
       {
-        ...acceptedBid,
+        ...omit(acceptedBid, ['taskTypeIds']),
         acceptedAt: completedBids[0].acceptedAt,
         completedAt: taskUpdate.lastModifiedAt
       }
@@ -408,8 +426,16 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
     'ACCEPTED'
   );
 
-  t.deepEqual(rejectedBids, [rejectedBid], 'returns rejected bid');
-  t.deepEqual(otherRejectedBids, [openBid], 'returns rejected bid');
+  t.deepEqual(
+    rejectedBids,
+    [omit(rejectedBid, ['taskTypeIds'])],
+    'returns rejected bid'
+  );
+  t.deepEqual(
+    otherRejectedBids,
+    [omit(openBid, ['taskTypeIds'])],
+    'returns rejected bid'
+  );
 });
 
 test('findOpenByTargetId', async (t: Test) => {
@@ -452,6 +478,9 @@ test('findAcceptedByTargetId', async (t: Test) => {
   const { user: partner } = await createUser();
 
   const { bid: b1 } = await generateBid({
+    bidOptions: {
+      dueDate: new Date(testDate.getTime() + daysToMs(1))
+    },
     generatePricing: false
   });
   await generateDesignEvent({
@@ -472,6 +501,9 @@ test('findAcceptedByTargetId', async (t: Test) => {
   });
 
   const { bid: b2 } = await generateBid({
+    bidOptions: {
+      dueDate: new Date(testDate.getTime() + daysToMs(2))
+    },
     generatePricing: false
   });
   await generateDesignEvent({
@@ -481,6 +513,9 @@ test('findAcceptedByTargetId', async (t: Test) => {
     type: 'BID_DESIGN'
   });
   const { bid: b3 } = await generateBid({
+    bidOptions: {
+      dueDate: new Date(testDate.getTime() + daysToMs(3))
+    },
     generatePricing: false
   });
   await generateDesignEvent({
@@ -490,6 +525,9 @@ test('findAcceptedByTargetId', async (t: Test) => {
     type: 'BID_DESIGN'
   });
   const { bid: b4 } = await generateBid({
+    bidOptions: {
+      dueDate: new Date(testDate.getTime() + daysToMs(4))
+    },
     generatePricing: false
   });
   await generateDesignEvent({

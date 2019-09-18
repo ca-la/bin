@@ -67,7 +67,6 @@ export default async function generateBid({
   const bid = await createBid({
     acceptedAt: null,
     bidPriceCents: 100000,
-    projectDueInMs: daysToMs(10),
     createdAt,
     createdBy,
     completedAt: null,

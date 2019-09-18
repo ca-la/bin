@@ -2,7 +2,7 @@ import { test, Test } from '../../test-helpers/fresh';
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
 import createUser = require('../../test-helpers/create-user');
 import generatePricingQuote from '../../services/generate-pricing-quote';
-import Bid from '../bids/domain-object';
+import { BidCreationPayload } from '../bids/domain-object';
 import { daysToMs } from '../../services/time-conversion';
 import uuid = require('node-uuid');
 import { create as createBid } from '../bids/dao';
@@ -36,17 +36,17 @@ test('Bid Rejections DAO supports creation and retrieval by Bid ID', async (t: T
     constantsVersion: 0,
     careLabelsVersion: 0
   });
-  const inputBid: Bid = {
+  const inputBid: BidCreationPayload = {
     acceptedAt: null,
     bidPriceCents: 100000,
-    projectDueInMs: daysToMs(10),
     createdAt: new Date(2012, 11, 22),
     createdBy: user.id,
     completedAt: null,
     description: 'Full Service',
     dueDate: new Date(new Date(2012, 11, 22).getTime() + daysToMs(10)),
     id: uuid.v4(),
-    quoteId: quote.id
+    quoteId: quote.id,
+    taskTypeIds: []
   };
   await createBid({ ...inputBid, acceptedAt: null, taskTypeIds: [] });
 
