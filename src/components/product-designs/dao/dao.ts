@@ -220,33 +220,3 @@ left join (
     rows
   );
 }
-
-export async function findDesignByBidId(
-  bidId: string
-): Promise<ProductDesignData | null> {
-  const result = await db(TABLE_NAME)
-    .select('product_designs.*')
-    .join('pricing_quotes', 'pricing_quotes.design_id', 'product_designs.id')
-    .join('pricing_bids', 'pricing_bids.quote_id', 'pricing_quotes.id')
-    .where({ 'pricing_bids.id': bidId, 'product_designs.deleted_at': null });
-  const row = first<ProductDesignRow>(result);
-  if (!row) {
-    return null;
-  }
-
-  return validate<ProductDesignRow, ProductDesignData>(
-    TABLE_NAME,
-    isProductDesignRow,
-    dataAdapter,
-    row
-  );
-}
-
-module.exports = {
-  findAllDesignIdsThroughCollaborator,
-  findAllDesignsThroughCollaborator,
-  findAllWithCostsAndEvents,
-  findDesignByAnnotationId,
-  findDesignByTaskId,
-  findDesignByBidId
-};

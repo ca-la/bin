@@ -15,6 +15,7 @@ import * as MailChimpFunctions from '../../services/mailchimp/update-email';
 import generateDesignEvent from '../../test-helpers/factories/design-event';
 import PayoutAccountsDAO = require('../../dao/partner-payout-accounts');
 import PartnerPayoutsDAO = require('../../components/partner-payouts/dao');
+import generateInvoice from '../../test-helpers/factories/invoice';
 import generateCollection from '../../test-helpers/factories/collection';
 import { addDesign } from '../collections/dao';
 
@@ -320,7 +321,6 @@ test('UsersDAO.findByBidId returns all users on a pricing bid', async (t: Test) 
 });
 
 test('UsersDAO.findAllUnpaidPartners returns all unpaid partners', async (t: Test) => {
-  sandbox().useFakeTimers(new Date(2020, 2, 0));
   const { user: designer } = await createUser();
   const { user: unpaidPartner } = await createUser({ role: 'PARTNER' });
 
@@ -351,9 +351,10 @@ test('UsersDAO.findAllUnpaidPartners returns all unpaid partners', async (t: Tes
     type: 'ACCEPT_SERVICE_BID',
     bidId: bid.id,
     actorId: unpaidPartner.id,
-    designId: design.id,
-    createdAt: new Date()
+    designId: design.id
   });
+
+  await generateInvoice({ userId: designer.id, collectionId: collection.id });
 
   const { user: designer2 } = await createUser();
   const { user: paidPartner } = await createUser({ role: 'PARTNER' });
@@ -386,8 +387,7 @@ test('UsersDAO.findAllUnpaidPartners returns all unpaid partners', async (t: Tes
     type: 'ACCEPT_SERVICE_BID',
     bidId: bid2.id,
     actorId: paidPartner.id,
-    designId: design2.id,
-    createdAt: new Date()
+    designId: design2.id
   });
 
   const payoutAccount = await PayoutAccountsDAO.create({
@@ -401,15 +401,18 @@ test('UsersDAO.findAllUnpaidPartners returns all unpaid partners', async (t: Tes
     stripeUserId: 'stripe-user-one'
   });
 
+  const { invoice } = await generateInvoice({
+    userId: designer2.id,
+    collectionId: collection2.id
+  });
+
   const data = {
     id: uuid.v4(),
-    invoiceId: null,
+    invoiceId: invoice.id,
     payoutAccountId: payoutAccount.id,
     payoutAmountCents: 1000,
     message: 'Get yo money',
-    initiatorUserId: admin.id,
-    bidId: bid2.id,
-    isManual: false
+    initiatorUserId: admin.id
   };
   await PartnerPayoutsDAO.create(data);
 

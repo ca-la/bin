@@ -8,13 +8,9 @@ import Bid, {
   BidWithEvents,
   bidWithEventsDataAdapter,
   BidWithEventsRow,
-  BidWithPayoutLogs,
-  bidWithPayoutLogsDataAdapter,
-  BidWithPayoutLogsRow,
   dataAdapter,
   isBidRow,
-  isBidWithEventsRow,
-  isBidWithPaymentLogsRow
+  isBidWithEventsRow
 } from './domain-object';
 import first from '../../services/first';
 import { validate, validateEvery } from '../../services/validate-from-db';
@@ -23,11 +19,6 @@ import { MILLISECONDS_TO_EXPIRE } from './constants';
 import { omit } from 'lodash';
 import * as BidTaskTypesDAO from '../bid-task-types/dao';
 import { getBuilder as getTasksViewBuilder } from '../../dao/task-events/view';
-
-// Any payouts to a partner cannot be linked to a bid before this date, as
-// they were linked to an invoice. Having a cut-off date allows the API to
-// accurately determine if a partner has been paid out completely
-export const BID_CUTOFF_DATE = '2019-09-20';
 
 const TABLE_NAME = 'pricing_bids';
 const DESIGN_EVENTS_TABLE = 'design_events';
@@ -183,7 +174,7 @@ export function create(bidPayload: BidCreationPayload): Promise<Bid> {
       );
     }
 
-    return omit(withAcceptedAt, 'partnerPayoutLogs');
+    return withAcceptedAt;
   });
 }
 
@@ -291,11 +282,12 @@ export async function findUnpaidByUserId(userId: string): Promise<Bid[]> {
     .join('design_events', 'users.id', 'design_events.actor_id')
     .join('product_designs as d', 'design_events.design_id', 'd.id')
     .join('collection_designs as c', 'd.id', 'c.design_id')
+    .join('invoices as i', 'c.collection_id', 'i.collection_id')
     .join('pricing_bids', 'design_events.bid_id', 'pricing_bids.id')
-    .leftJoin('partner_payout_logs as l', 'pricing_bids.id', 'l.bid_id')
+    .leftJoin('partner_payout_logs as l', 'i.id', 'l.invoice_id')
     .where({ 'design_events.type': 'ACCEPT_SERVICE_BID', 'users.id': userId })
-    .andWhere('design_events.created_at', '>', new Date(BID_CUTOFF_DATE))
     .groupBy([
+      'i.id',
       'pricing_bids.id',
       'design_events.bid_id',
       'pricing_bids.bid_price_cents'
@@ -312,22 +304,9 @@ export async function findUnpaidByUserId(userId: string): Promise<Bid[]> {
 export async function findById(
   id: string,
   trx?: Knex.Transaction
-): Promise<BidWithPayoutLogs | null> {
-  const bid: BidWithPayoutLogsRow | undefined = await db(DESIGN_EVENTS_TABLE)
+): Promise<Bid | null> {
+  const bid: BidRow | undefined = await db(DESIGN_EVENTS_TABLE)
     .select(selectWithAcceptedAt)
-    .select(
-      db.raw(
-        `
-        (
-          SELECT to_json(array_agg(ordered_logs.*))
-          FROM (
-            SELECT logs.* FROM partner_payout_logs AS logs
-            WHERE logs.bid_id = pricing_bids.id
-            ORDER BY logs.created_at DESC
-          ) AS ordered_logs
-        ) AS partner_payout_logs`
-      )
-    )
     .rightJoin('pricing_bids', (join: Knex.JoinClause) => {
       join.on('design_events.bid_id', '=', 'pricing_bids.id');
     })
@@ -345,18 +324,13 @@ export async function findById(
         query.transacting(trx);
       }
     })
-    .then((bids: BidWithPayoutLogsRow[]) => first(bids));
+    .then((bids: BidRow[]) => first(bids));
 
   if (!bid) {
     return null;
   }
 
-  return validate<BidWithPayoutLogsRow, BidWithPayoutLogs>(
-    TABLE_NAME,
-    isBidWithPaymentLogsRow,
-    bidWithPayoutLogsDataAdapter,
-    bid
-  );
+  return validate<BidRow, Bid>(TABLE_NAME, isBidRow, dataAdapter, bid);
 }
 
 export async function findOpenByTargetId(

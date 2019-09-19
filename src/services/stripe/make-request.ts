@@ -11,7 +11,7 @@ const STRIPE_API_BASE = 'https://api.stripe.com/v1';
 interface RequestOptions {
   method: 'post' | 'get';
   path: string;
-  data?: object;
+  data: object;
   idempotencyKey?: string;
   apiBase?: string;
 }

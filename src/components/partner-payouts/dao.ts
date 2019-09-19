@@ -67,40 +67,18 @@ export async function findByPayoutAccountId(
 export async function findByUserId(
   userId: string
 ): Promise<PartnerPayoutLogWithMeta[]> {
-  const result = await db(TABLE_NAME)
+  const result = await db(ACCOUNTS_TABLE_NAME)
     .select(
       `${TABLE_NAME}.*`,
       'collections.id AS collection_id',
       'collections.title AS collection_title'
     )
-    .leftJoin(
-      ACCOUNTS_TABLE_NAME,
-      `${TABLE_NAME}.payout_account_id`,
-      `${ACCOUNTS_TABLE_NAME}.id`
-    )
-    .leftJoin('invoices', 'invoices.id', `${TABLE_NAME}.invoice_id`)
-    .leftJoin('pricing_bids', 'pricing_bids.id', `${TABLE_NAME}.bid_id`)
-    .leftJoin('design_events', 'design_events.bid_id', 'pricing_bids.id')
-    .leftJoin(
-      'collection_designs',
-      'collection_designs.design_id',
-      'design_events.design_id'
-    )
     .joinRaw(
-      `LEFT JOIN collections ON
-      (
-        collections.id = invoices.collection_id OR
-        collections.id = collection_designs.collection_id
-      )`
+      `INNER JOIN ${TABLE_NAME} on ${TABLE_NAME}.payout_account_id = ${ACCOUNTS_TABLE_NAME}.id`
     )
-    .where({
-      'partner_payout_accounts.user_id': userId,
-      'partner_payout_logs.bid_id': null
-    })
-    .orWhere({
-      'design_events.actor_id': userId,
-      'design_events.type': 'ACCEPT_SERVICE_BID'
-    })
+    .joinRaw(`INNER JOIN invoices ON invoices.id = ${TABLE_NAME}.invoice_id`)
+    .joinRaw('LEFT JOIN collections ON collections.id = invoices.collection_id')
+    .whereRaw(`${ACCOUNTS_TABLE_NAME}.user_id = ?`, userId)
     .orderByRaw(`${TABLE_NAME}.created_at DESC`)
     .catch(rethrow);
 

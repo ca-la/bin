@@ -4,11 +4,7 @@ import DesignEvent, {
   dataAdapter as eventDataAdapter,
   DesignEventRow
 } from '../../domain-objects/design-event';
-import {
-  dataAdapter as logDataAdapter,
-  PartnerPayoutLog,
-  PartnerPayoutLogRow
-} from '../partner-payouts/domain-object';
+
 /**
  * A pricing bid for matching partners to a set of services on a design
  */
@@ -140,49 +136,4 @@ export function isBidSortByParam(
   candidate: string | undefined
 ): candidate is BidSortByParam {
   return candidate === 'ACCEPTED' || candidate === 'DUE';
-}
-
-export interface BidWithPayoutLogsRow extends BidRow {
-  partner_payout_logs: PartnerPayoutLogRow[] | null;
-}
-
-export interface BidWithPayoutLogs extends Bid {
-  partnerPayoutLogs: PartnerPayoutLog[];
-}
-
-export function isBidWithPaymentLogsRow(
-  row: object
-): row is BidWithPayoutLogsRow {
-  return isBidRow(row) && hasProperties(row, 'partner_payout_logs');
-}
-
-function withPayoutLogsEncode(row: BidWithPayoutLogsRow): BidWithPayoutLogs {
-  const { partner_payout_logs, ...bidRow } = row;
-  return {
-    ...dataAdapter.parse(bidRow),
-    partnerPayoutLogs: partner_payout_logs
-      ? partner_payout_logs.map(
-          (log: PartnerPayoutLogRow): PartnerPayoutLog => {
-            return logDataAdapter.parse(log);
-          }
-        )
-      : []
-  };
-}
-
-export const bidWithPayoutLogsDataAdapter = new DataAdapter<
-  BidWithPayoutLogsRow,
-  BidWithPayoutLogs
->(withPayoutLogsEncode);
-
-export function isUninsertedPartnerPayoutLog(
-  data: object
-): data is Omit<UninsertedWithoutShortId<PartnerPayoutLog>, 'initiatorUserId'> {
-  return hasProperties(
-    data,
-    'payoutAmountCents',
-    'message',
-    'isManual',
-    'bidId'
-  );
 }
