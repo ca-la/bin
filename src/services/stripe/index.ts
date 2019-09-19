@@ -1,32 +1,23 @@
-'use strict';
-
-const insecureHash = require('../insecure-hash');
-const Logger = require('../logger');
-const makeRequest = require('./make-request').default;
-const PaymentMethodsDAO = require('../../components/payment-methods/dao');
-const UsersDAO = require('../../components/users/dao');
-const { requireValues } = require('../../services/require-properties');
-const { STRIPE_SECRET_KEY } = require('../../config');
+import * as Knex from 'knex';
+import { insecureHash } from '../insecure-hash';
+import * as Logger from '../logger';
+import makeRequest from './make-request';
+import * as PaymentMethodsDAO from '../../components/payment-methods/dao';
+import * as UsersDAO from '../../components/users/dao';
+import { STRIPE_SECRET_KEY } from '../../config';
 
 const STRIPE_CONNECT_API_BASE = 'https://connect.stripe.com';
 
-const STRIPE_FEE_PERCENT = 0.029;
-const STRIPE_FEE_BASE_CENTS = 30;
+interface StripeChargeOptions {
+  customerId: string;
+  sourceId: string;
+  amountCents: number;
+  description: string;
+  invoiceId: string;
+}
 
-async function charge({
-  customerId,
-  sourceId,
-  amountCents,
-  description,
-  invoiceId
-}) {
-  requireValues({
-    customerId,
-    sourceId,
-    amountCents,
-    description,
-    invoiceId
-  });
+export async function charge(options: StripeChargeOptions): Promise<object> {
+  const { customerId, sourceId, amountCents, description, invoiceId } = options;
 
   // Using a combination of invoiceId + sourceId ensures that:
   // - We can't charge the same card for the same invoice twice in rapid succesion
@@ -52,22 +43,18 @@ async function charge({
   });
 }
 
-async function sendTransfer({
-  destination,
-  amountCents,
-  description,
-  invoiceId
-}) {
-  requireValues({
-    destination,
-    amountCents,
-    description,
-    invoiceId
-  });
+interface StripeTransferOptions {
+  destination: string;
+  amountCents: number;
+  description: string;
+  bidId: string;
+}
 
-  const idempotencyKey = insecureHash(
-    `${description}-${invoiceId}-${destination}`
-  );
+export async function sendTransfer(
+  options: StripeTransferOptions
+): Promise<object> {
+  const { description, bidId, destination, amountCents } = options;
+  const idempotencyKey = insecureHash(`${description}-${bidId}-${destination}`);
 
   return makeRequest({
     method: 'post',
@@ -77,16 +64,20 @@ async function sendTransfer({
       currency: 'usd',
       destination,
       description,
-      transfer_group: invoiceId
+      transfer_group: bidId
     },
     idempotencyKey
   });
 }
 
-async function createCustomer({ email, name }) {
-  requireValues({ email, name });
-
-  return makeRequest({
+async function createCustomer({
+  email,
+  name
+}: {
+  email: string;
+  name: string;
+}): Promise<{ id: string }> {
+  return makeRequest<{ id: string }>({
     method: 'post',
     path: '/customers',
     data: {
@@ -96,7 +87,10 @@ async function createCustomer({ email, name }) {
   });
 }
 
-async function findOrCreateCustomerId(userId, trx) {
+export async function findOrCreateCustomerId(
+  userId: string,
+  trx: Knex.Transaction
+): Promise<string> {
   const existingPaymentMethods = await PaymentMethodsDAO.findByUserId(
     userId,
     trx
@@ -108,17 +102,21 @@ async function findOrCreateCustomerId(userId, trx) {
   const user = await UsersDAO.findById(userId, trx);
 
   if (!user) {
-    throw new Error(`Invalid user ID: ${user.id}`);
+    throw new Error(`Invalid user ID: ${userId}`);
   }
-
+  if (!user.email) {
+    throw new Error(
+      `Email is required to create stripe customer for User ${user.id}`
+    );
+  }
   const customer = await createCustomer({ name: user.name, email: user.email });
   return customer.id;
 }
 
 // https://stripe.com/docs/connect/express-accounts#token-request
-async function createConnectAccount(authorizationCode) {
-  requireValues({ authorizationCode });
-
+export async function createConnectAccount(
+  authorizationCode: string
+): Promise<object> {
   return makeRequest({
     apiBase: STRIPE_CONNECT_API_BASE,
     method: 'post',
@@ -131,11 +129,9 @@ async function createConnectAccount(authorizationCode) {
   });
 }
 
-async function createLoginLink({ accountId }) {
-  requireValues({ accountId });
-
+export async function createLoginLink(accountId: string): Promise<string> {
   try {
-    const response = await makeRequest({
+    const response = await makeRequest<{ url: string }>({
       method: 'post',
       path: `/accounts/${accountId}/login_links`
     });
@@ -154,18 +150,3 @@ async function createLoginLink({ accountId }) {
     throw err;
   }
 }
-
-// Will have to update this if we ever switch to an enterprise plan
-function calculateStripeFee(totalCents) {
-  return Math.round(STRIPE_FEE_PERCENT * totalCents + STRIPE_FEE_BASE_CENTS);
-}
-
-module.exports = {
-  calculateStripeFee,
-  charge,
-  createConnectAccount,
-  createCustomer,
-  createLoginLink,
-  findOrCreateCustomerId,
-  sendTransfer
-};

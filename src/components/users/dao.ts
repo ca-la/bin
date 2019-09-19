@@ -28,6 +28,7 @@ import { validate, validateEvery } from '../../services/validate-from-db';
 import limitOrOffset from '../../services/limit-or-offset';
 import { omit } from 'lodash';
 import { updateEmail } from '../../services/mailchimp/update-email';
+import { BID_CUTOFF_DATE } from '../bids/dao';
 
 const ERROR_CODES = {
   emailTaken: Symbol('Email taken'),
@@ -381,14 +382,12 @@ export async function findAllUnpaidPartners({
     .distinct()
     .select('users.*')
     .join('design_events as de', 'users.id', 'de.actor_id')
-    .join('product_designs as d', 'de.design_id', 'd.id')
-    .join('collection_designs as c', 'd.id', 'c.design_id')
-    .join('invoices as i', 'c.collection_id', 'i.collection_id')
     .join('pricing_bids as b', 'de.bid_id', 'b.id')
-    .leftJoin('partner_payout_logs as l', 'i.id', 'l.invoice_id')
+    .leftJoin('partner_payout_logs as l', 'b.id', 'l.bid_id')
     .where({ 'de.type': 'ACCEPT_SERVICE_BID' })
+    .andWhere('de.created_at', '>', new Date(BID_CUTOFF_DATE))
     .modify(limitOrOffset(limit, offset))
-    .groupBy(['i.id', 'users.id', 'b.bid_price_cents'])
+    .groupBy(['b.id', 'users.id', 'b.bid_price_cents'])
     .having(
       db.raw('b.bid_price_cents > coalesce(sum(l.payout_amount_cents), 0)')
     )

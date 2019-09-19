@@ -2,7 +2,10 @@ import * as Router from 'koa-router';
 import * as Koa from 'koa';
 import * as uuid from 'node-uuid';
 
-import Bid, { isBidSortByParam } from './domain-object';
+import Bid, {
+  isBidSortByParam,
+  isUninsertedPartnerPayoutLog
+} from './domain-object';
 import Collaborator from '../collaborators/domain-objects/collaborator';
 import ProductDesign = require('../product-designs/domain-objects/product-design');
 import { PricingQuote } from '../../domain-objects/pricing-quote';
@@ -21,6 +24,8 @@ import { hasActiveBids } from './services/has-active-bids';
 import { MILLISECONDS_TO_EXPIRE } from './constants';
 import { BidRejection } from '../bid-rejections/domain-object';
 import { hasOnlyProperties } from '../../services/require-properties';
+import { PartnerPayoutLog } from '../partner-payouts/domain-object';
+import { payOutPartner } from '../../services/pay-out-partner';
 
 const router = new Router();
 
@@ -425,14 +430,57 @@ export function* rejectDesignBid(
   this.status = 204;
 }
 
+interface GetByIdContext extends Koa.Application.Context {
+  params: {
+    bidId: string;
+  };
+}
+
+function* getById(this: GetByIdContext): AsyncIterableIterator<void> {
+  const { bidId } = this.params;
+
+  const bid = yield BidsDAO.findById(bidId);
+  this.body = bid;
+  this.status = 200;
+}
+
+interface PayOutPartnerContext extends Koa.Application.Context {
+  params: {
+    bidId: string;
+  };
+}
+
+function* postPayOut(this: PayOutPartnerContext): AsyncIterableIterator<void> {
+  const { bidId } = this.params;
+  if (!isUninsertedPartnerPayoutLog(this.request.body)) {
+    return this.throw(400, 'Request does not match Payout Log');
+  }
+
+  const { payoutAccountId, isManual } = this.request.body;
+  if (!isManual) {
+    this.assert(payoutAccountId, 400, 'Missing payout account ID');
+  }
+  const payoutLog: UninsertedWithoutShortId<PartnerPayoutLog> = {
+    ...this.request.body,
+    bidId,
+    initiatorUserId: this.state.userId
+  };
+
+  yield payOutPartner(payoutLog);
+
+  this.status = 204;
+}
+
 router.get('/', requireAuth, listBids);
 router.get('/unpaid/:userId', requireAdmin, getUnpaidBidsByUserId);
 
+router.get('/:bidId', requireAdmin, getById);
 router.put('/:bidId/assignees/:userId', requireAdmin, assignBidToPartner);
 router.get('/:bidId/assignees', requireAdmin, listBidAssignees);
 router.del('/:bidId/assignees/:userId', requireAdmin, removeBidFromPartner);
 
 router.post('/:bidId/accept', requireAuth, acceptDesignBid);
 router.post('/:bidId/reject', requireAuth, rejectDesignBid);
+router.post('/:bidId/pay-out-to-partner', requireAdmin, postPayOut);
 
 export default router.routes();
