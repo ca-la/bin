@@ -905,6 +905,18 @@ test('POST /bids/:bidId/pay-out-to-partner', async (t: Test) => {
   );
   t.equal(missingpayoutAccount.status, 400, 'Expect payout to fail.');
 
+  const [missingMessage] = await post(`/bids/${bid.id}/pay-out-to-partner`, {
+    headers: authHeader(admin.session.id),
+    body: {
+      payoutAccountId: payoutAccount.id,
+      bidId: bid.id,
+      message: '',
+      isManual: false,
+      payoutAmountCents: 100
+    }
+  });
+  t.equal(missingMessage.status, 400, 'Expect payout to fail.');
+
   const [successfulPayout] = await post(`/bids/${bid.id}/pay-out-to-partner`, {
     headers: authHeader(admin.session.id),
     body: {

@@ -456,7 +456,8 @@ function* postPayOut(this: PayOutPartnerContext): AsyncIterableIterator<void> {
     return this.throw(400, 'Request does not match Payout Log');
   }
 
-  const { payoutAccountId, isManual } = this.request.body;
+  const { payoutAccountId, isManual, message } = this.request.body;
+  this.assert(message, 400, 'Message is required');
   if (!isManual) {
     this.assert(payoutAccountId, 400, 'Missing payout account ID');
   }
