@@ -12,7 +12,7 @@ import * as db from '../../../services/db';
 import { validate } from '../../../services/validate-from-db';
 import filterError = require('../../../services/filter-error');
 import InvalidDataError = require('../../../errors/invalid-data');
-import { queryWithCollectionMeta } from '../../product-designs/dao';
+import { queryWithCollectionMeta } from '../../product-designs/dao/view';
 import ProductDesign = require('../../product-designs/domain-objects/product-design');
 
 const TABLE_NAME = 'template_designs';

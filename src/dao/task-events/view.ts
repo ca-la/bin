@@ -1,6 +1,7 @@
 import * as Knex from 'knex';
 import * as db from '../../services/db';
 import { getBuilder as getCollaboratorsBuilder } from '../../components/collaborators/view';
+import { queryWithCollectionMeta as getDesignsBuilder } from '../../components/product-designs/dao/view';
 
 export const ALIASES = {
   collectionId: 'collectionsfortasksviewraw.id',
@@ -79,9 +80,15 @@ export function getBuilder(
       'stagesfortasksviewraw.id'
     )
     .leftJoin(
-      'product_designs_with_metadata as designsfortasksviewraw',
-      'designsfortasksviewraw.id',
-      'stagesfortasksviewraw.design_id'
+      db.raw(
+        `
+    (:designsBuilder) as designsfortasksviewraw
+    on designsfortasksviewraw.id = stagesfortasksviewraw.design_id
+  `,
+        {
+          designsBuilder: getDesignsBuilder(db)
+        }
+      )
     )
     .leftJoin(
       'collection_designs as collectiondesignsfortasksviewraw',

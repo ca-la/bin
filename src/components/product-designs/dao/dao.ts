@@ -10,7 +10,7 @@ import {
 } from '../domain-objects/product-designs-new';
 import first from '../../../services/first';
 import { validate, validateEvery } from '../../../services/validate-from-db';
-import { queryWithCollectionMeta } from './index';
+import { queryWithCollectionMeta } from './view';
 import {
   isProductDesignRowWithMeta,
   ProductDesignDataWithMeta,
@@ -220,11 +220,3 @@ left join (
     rows
   );
 }
-
-module.exports = {
-  findAllDesignIdsThroughCollaborator,
-  findAllDesignsThroughCollaborator,
-  findAllWithCostsAndEvents,
-  findDesignByAnnotationId,
-  findDesignByTaskId
-};

@@ -9,6 +9,9 @@ const filterError = require('../../../services/filter-error');
 const first = require('../../../services/first').default;
 const InvalidDataError = require('../../../errors/invalid-data');
 const ProductDesign = require('../domain-objects/product-design');
+const View = require('./view');
+
+const { queryWithCollectionMeta } = View;
 
 const instantiate = data => new ProductDesign(data);
 const maybeInstantiate = data => (data && new ProductDesign(data)) || null;
@@ -16,65 +19,6 @@ const maybeInstantiate = data => (data && new ProductDesign(data)) || null;
 const { dataMapper } = ProductDesign;
 
 const TABLE_NAME = 'product_designs';
-
-function queryWithCollectionMeta(dbInstance, trx) {
-  return dbInstance(TABLE_NAME)
-    .select(
-      db.raw(`
-product_designs.*,
-array_to_json(array_remove(
-    array[case when collection_designs.collection_id is not null
-        then jsonb_build_object('id', collection_designs.collection_id, 'title', collections.title)
-    end],
-    null
-)) as collections,
-array_remove(array_agg(pdi.id ORDER BY c.ordering ASC), null) AS image_ids
-    `)
-    )
-    .leftJoin(
-      'collection_designs',
-      'product_designs.id',
-      'collection_designs.design_id'
-    )
-    .leftJoin(
-      'collections',
-      'collections.id',
-      'collection_designs.collection_id'
-    )
-    .joinRaw(
-      `
-LEFT JOIN (SELECT * FROM canvases AS c WHERE c.deleted_at IS null AND archived_at IS null ORDER BY c.ordering ASC) AS c
-ON c.design_id = product_designs.id
-    `
-    )
-    .joinRaw(
-      `
-LEFT JOIN (SELECT * FROM components AS co WHERE co.deleted_at IS null) AS co
-ON co.id = c.component_id
-    `
-    )
-    .joinRaw(
-      `
-LEFT JOIN (
-  SELECT * FROM product_design_images AS pdi
-   WHERE pdi.deleted_at IS NULL
-     AND pdi.upload_completed_at IS NOT NULL
-) AS pdi
-ON pdi.id = co.sketch_id
-    `
-    )
-    .groupBy([
-      'product_designs.id',
-      'collection_designs.collection_id',
-      'collections.title'
-    ])
-    .orderBy('product_designs.created_at', 'desc')
-    .modify(query => {
-      if (trx) {
-        query.transacting(trx);
-      }
-    });
-}
 
 function create(data, trx) {
   const rowData = Object.assign({}, dataMapper.userDataToRowData(data), {
@@ -271,6 +215,5 @@ module.exports = {
   findByIds,
   findByUserId,
   findByCollectionId,
-  findByQuoteId,
-  queryWithCollectionMeta
+  findByQuoteId
 };
