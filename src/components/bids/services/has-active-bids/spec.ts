@@ -7,9 +7,7 @@ import generateDesignEvent from '../../../../test-helpers/factories/design-event
 import { BidWithEvents } from '../../domain-object';
 
 test('hasActiveBids can determine the state for a user and quote', async (t: Test) => {
-  const { bid: bid1 } = await generateBid({
-    bidOptions: { createdAt: new Date('2019-02-02') }
-  });
+  const { bid: bid1 } = await generateBid();
   const { bid: bid2 } = await generateBid({ generatePricing: false });
   const { designEvent: e1 } = await generateDesignEvent({
     bidId: bid1.id,
@@ -32,11 +30,8 @@ test('hasActiveBids can determine the state for a user and quote', async (t: Tes
 });
 
 test('hasActiveBids can determine the state for a user and quote', async (t: Test) => {
-  const { bid: bid1 } = await generateBid({
-    bidOptions: { createdAt: new Date('2019-02-02') }
-  });
+  const { bid: bid1 } = await generateBid();
   const { bid: bid2 } = await generateBid({
-    bidOptions: { createdAt: new Date('2019-03-03') },
     generatePricing: false
   });
   const { designEvent: e1 } = await generateDesignEvent({

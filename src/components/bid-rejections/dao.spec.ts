@@ -39,7 +39,6 @@ test('Bid Rejections DAO supports creation and retrieval by Bid ID', async (t: T
   const inputBid: BidCreationPayload = {
     acceptedAt: null,
     bidPriceCents: 100000,
-    createdAt: new Date(2012, 11, 22),
     createdBy: user.id,
     completedAt: null,
     description: 'Full Service',

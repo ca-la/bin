@@ -73,7 +73,6 @@ test('Bids DAO supports creation and retrieval', async (t: Test) => {
   const inputBid: BidCreationPayload = {
     acceptedAt: null,
     bidPriceCents: 100000,
-    createdAt: testDate,
     createdBy: user.id,
     completedAt: null,
     description: 'Full Service',
@@ -86,7 +85,10 @@ test('Bids DAO supports creation and retrieval', async (t: Test) => {
   const bid = await create({ ...inputBid, acceptedAt: null, taskTypeIds });
   const retrieved = await findById(inputBid.id);
 
-  t.deepEqual(omit(inputBid, ['taskTypeIds']), bid);
+  t.deepEqual(
+    { ...omit(inputBid, ['taskTypeIds']), createdAt: bid.createdAt },
+    bid
+  );
   t.deepEqual(bid, omit(retrieved, 'partnerPayoutLogs'));
   t.ok(
     bidTaskTypesCreateStub.calledWith({
@@ -140,7 +142,6 @@ test('Bids DAO supports retrieval by quote ID', async (t: Test) => {
   const inputBid: BidCreationPayload = {
     acceptedAt: null,
     bidPriceCents: 100000,
-    createdAt: testDate,
     createdBy: user.id,
     completedAt: null,
     description: 'Full Service',
@@ -154,7 +155,12 @@ test('Bids DAO supports retrieval by quote ID', async (t: Test) => {
 
   t.deepEqual(
     bids,
-    [omit(inputBid, ['taskTypeIds'])],
+    [
+      {
+        ...omit(inputBid, ['taskTypeIds']),
+        createdAt: bids[0].createdAt
+      }
+    ],
     'returns the bids in createdAt order'
   );
 });
@@ -195,7 +201,6 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
   const openBid: BidCreationPayload = {
     acceptedAt: null,
     bidPriceCents: 100000,
-    createdAt: testDate,
     createdBy: admin.id,
     completedAt: null,
     description: 'Full Service',
@@ -207,7 +212,6 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
   const rejectedBid: BidCreationPayload = {
     acceptedAt: null,
     bidPriceCents: 100000,
-    createdAt: testDate,
     createdBy: admin.id,
     completedAt: null,
     description: 'Full Service (Rejected)',
@@ -219,7 +223,6 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
   const acceptedBid: BidCreationPayload = {
     acceptedAt: null,
     bidPriceCents: 110000,
-    createdAt: testDate,
     createdBy: admin.id,
     completedAt: null,
     description: 'Full Service (Accepted)',
@@ -348,7 +351,12 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
 
   t.deepEqual(
     openBids,
-    [omit(openBid, ['taskTypeIds'])],
+    [
+      {
+        ...omit(openBid, ['taskTypeIds']),
+        createdAt: openBids[0].createdAt
+      }
+    ],
     'returns non-rejected/accepted bid'
   );
   t.deepEqual(otherBids, [], 'returns no bids');
@@ -384,7 +392,8 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
     [
       {
         ...omit(acceptedBid, ['taskTypeIds']),
-        acceptedAt: acceptedBids[0].acceptedAt
+        acceptedAt: acceptedBids[0].acceptedAt,
+        createdAt: acceptedBids[0].createdAt
       }
     ],
     'returns accepted bid'
@@ -394,7 +403,8 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
     [
       {
         ...omit(acceptedBid, ['taskTypeIds']),
-        acceptedAt: activeBids[0].acceptedAt
+        acceptedAt: activeBids[0].acceptedAt,
+        createdAt: activeBids[0].createdAt
       }
     ],
     'returns active bid'
@@ -405,7 +415,8 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
       {
         ...omit(acceptedBid, ['taskTypeIds']),
         acceptedAt: completedBids[0].acceptedAt,
-        completedAt: taskUpdate.lastModifiedAt
+        completedAt: taskUpdate.lastModifiedAt,
+        createdAt: completedBids[0].createdAt
       }
     ],
     'returns completed bid'
@@ -428,12 +439,22 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
 
   t.deepEqual(
     rejectedBids,
-    [omit(rejectedBid, ['taskTypeIds'])],
+    [
+      {
+        ...omit(rejectedBid, ['taskTypeIds']),
+        createdAt: rejectedBids[0].createdAt
+      }
+    ],
     'returns rejected bid'
   );
   t.deepEqual(
     otherRejectedBids,
-    [omit(openBid, ['taskTypeIds'])],
+    [
+      {
+        ...omit(openBid, ['taskTypeIds']),
+        createdAt: otherRejectedBids[0].createdAt
+      }
+    ],
     'returns rejected bid'
   );
 });

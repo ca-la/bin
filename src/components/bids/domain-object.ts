@@ -25,7 +25,7 @@ export default interface Bid {
   description?: string;
 }
 
-export type BidCreationPayload = Bid & {
+export type BidCreationPayload = Omit<Bid, 'createdAt'> & {
   acceptedAt: null;
   dueDate: Date;
   taskTypeIds: string[];

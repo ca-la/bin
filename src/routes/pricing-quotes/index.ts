@@ -306,19 +306,22 @@ function* previewQuote(
 function* createBidForQuote(
   this: Koa.Application.Context
 ): AsyncIterableIterator<any> {
-  const { quoteId } = this.params;
+  const { quoteId, bidId } = this.params;
   const { body } = this.request;
   const quote: PricingQuote | null = yield findById(quoteId);
   this.assert(quote, 404, 'No quote found for ID');
 
   if (body && isBidRequest(body)) {
-    const bidRequest: BidRequest = body;
     const bid = yield createBid({
-      createdAt: new Date(),
-      id: uuid.v4(),
-      ...bidRequest,
       acceptedAt: null,
-      createdBy: this.state.userId
+      bidPriceCents: body.bidPriceCents,
+      completedAt: null,
+      createdBy: this.state.userId,
+      description: body.description,
+      dueDate: body.dueDate,
+      id: bidId || uuid.v4(),
+      quoteId: body.quoteId,
+      taskTypeIds: body.taskTypeIds
     });
 
     this.body = bid;

@@ -590,7 +590,6 @@ test('PUT /pricing-quotes/:quoteId/bid/:bidId creates bid', async (t: Test) => {
   const inputBid: BidCreationPayload = {
     acceptedAt: null,
     bidPriceCents: 100000,
-    createdAt: now,
     createdBy: user.id,
     completedAt: null,
     description: 'Full Service',
@@ -613,7 +612,7 @@ test('PUT /pricing-quotes/:quoteId/bid/:bidId creates bid', async (t: Test) => {
   t.equal(putResponse.status, 201);
   t.deepEqual(createdBid, {
     ...omit(inputBid, ['taskTypeIds']),
-    createdAt: inputBid.createdAt.toISOString(),
+    createdAt: new Date(createdBid.createdAt).toISOString(),
     dueDate: inputBid.dueDate!.toISOString()
   });
 });
@@ -728,23 +727,21 @@ test('GET /pricing-quotes/:quoteId/bids returns list of bids for quote', async (
     headers: authHeader(session.id)
   });
 
-  const inputBid: BidCreationPayload = {
+  const inputBid: Unsaved<BidCreationPayload> = {
     acceptedAt: null,
     bidPriceCents: 100000,
-    createdAt: now,
     createdBy: user.id,
     completedAt: null,
     description: 'Full Service',
     dueDate: new Date(
       new Date(createdQuotes[0].createdAt).getTime() + daysToMs(10)
     ),
-    id: uuid.v4(),
     quoteId: createdQuotes[0].id,
     taskTypeIds: []
   };
 
-  await put(`/pricing-quotes/${inputBid.quoteId}/bids/${inputBid.id}`, {
-    body: { ...inputBid, taskTypeIds: [] },
+  await post(`/pricing-quotes/${inputBid.quoteId}/bids`, {
+    body: inputBid,
     headers: authHeader(session.id)
   });
 
@@ -757,8 +754,45 @@ test('GET /pricing-quotes/:quoteId/bids returns list of bids for quote', async (
   t.deepEqual(bids, [
     {
       ...omit(inputBid, ['taskTypeIds']),
-      createdAt: inputBid.createdAt.toISOString(),
+      id: bids[0].id,
+      createdAt: bids[0].createdAt,
       dueDate: inputBid.dueDate!.toISOString()
     }
   ]);
+
+  const hasExtras = {
+    acceptedAt: null,
+    bidPriceCents: 100000,
+    createdAt: now,
+    createdBy: user.id,
+    completedAt: null,
+    description: 'Full Service',
+    dueDate: new Date(
+      new Date(createdQuotes[0].createdAt).getTime() + daysToMs(10)
+    ),
+    id: uuid.v4(),
+    quoteId: createdQuotes[0].id,
+    taskTypeIds: [],
+    XXXXXTRA: 'Boom!'
+  };
+
+  await post(`/pricing-quotes/${inputBid.quoteId}/bids`, {
+    body: hasExtras,
+    headers: authHeader(session.id)
+  });
+
+  const [withExtrasResponse, withExtrasBids] = await get(
+    `/pricing-quotes/${inputBid.quoteId}/bids`,
+    {
+      headers: authHeader(session.id)
+    }
+  );
+
+  t.equal(withExtrasResponse.status, 200);
+  t.deepEqual(withExtrasBids[1], {
+    ...omit(hasExtras, ['XXXXXTRA', 'taskTypeIds']),
+    id: withExtrasBids[1].id,
+    createdAt: withExtrasBids[1].createdAt,
+    dueDate: inputBid.dueDate!.toISOString()
+  });
 });

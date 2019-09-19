@@ -40,7 +40,6 @@ test('GET /bids', async (t: Test) => {
   const otherBid = await BidsDAO.create({
     acceptedAt: null,
     bidPriceCents: 100000,
-    createdAt: new Date(2012, 11, 22),
     createdBy: admin.user.id,
     completedAt: null,
     description: 'Full Service',
@@ -120,7 +119,6 @@ test('GET /bids?userId&state=OPEN', async (t: Test) => {
   const otherBid = await BidsDAO.create({
     acceptedAt: null,
     bidPriceCents: 100000,
-    createdAt: new Date(2012, 11, 22),
     createdBy: admin.user.id,
     completedAt: null,
     description: 'Full Service',
@@ -132,7 +130,6 @@ test('GET /bids?userId&state=OPEN', async (t: Test) => {
   const expiredBid = await BidsDAO.create({
     acceptedAt: null,
     bidPriceCents: 100000,
-    createdAt: new Date(2012, 11, 22),
     createdBy: admin.user.id,
     completedAt: null,
     description: 'Full Service',
@@ -194,7 +191,6 @@ test('GET /bids?userId&state=EXPIRED', async (t: Test) => {
   const otherBid = await BidsDAO.create({
     acceptedAt: null,
     bidPriceCents: 100000,
-    createdAt: now,
     createdBy: admin.user.id,
     completedAt: null,
     description: 'Full Service',
@@ -209,7 +205,6 @@ test('GET /bids?userId&state=EXPIRED', async (t: Test) => {
   const expiredBid = await BidsDAO.create({
     acceptedAt: null,
     bidPriceCents: 100000,
-    createdAt: threeDaysAgo,
     createdBy: admin.user.id,
     completedAt: null,
     description: 'Full Service Brah',
@@ -273,7 +268,6 @@ test('GET /bids?userId&state=REJECTED', async (t: Test) => {
   const otherBid = await BidsDAO.create({
     acceptedAt: null,
     bidPriceCents: 100000,
-    createdAt: new Date(2012, 11, 22),
     createdBy: admin.user.id,
     completedAt: null,
     description: 'Full Service',
@@ -332,7 +326,6 @@ test('GET /bids?userId&state=ACCEPTED', async (t: Test) => {
   const otherBid = await BidsDAO.create({
     acceptedAt: null,
     bidPriceCents: 100000,
-    createdAt: new Date(2012, 11, 22),
     createdBy: admin.user.id,
     completedAt: null,
     description: 'Full Service',
@@ -587,7 +580,6 @@ test('Partner pairing: accept', async (t: Test) => {
   const bid = await BidsDAO.create({
     acceptedAt: null,
     bidPriceCents: 20000,
-    createdAt,
     createdBy: admin.user.id,
     completedAt: null,
     description: 'Do me a favor, please.',
@@ -753,7 +745,6 @@ test('Partner pairing: reject', async (t: Test) => {
   const bid = await BidsDAO.create({
     acceptedAt: null,
     bidPriceCents: 20000,
-    createdAt,
     createdBy: admin.user.id,
     completedAt: null,
     description: 'Do me a favor, please.',
