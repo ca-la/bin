@@ -1,14 +1,13 @@
-import * as tape from 'tape';
 import * as uuid from 'node-uuid';
 import * as Knex from 'knex';
 
-import { test } from '../../test-helpers/fresh';
+import { Test, test } from '../../test-helpers/fresh';
 import * as NodesDAO from './dao';
 import createUser = require('../../test-helpers/create-user');
 import * as db from '../../services/db';
 import createDesign from '../../services/create-design';
 
-test('NodesDAO supports creation and retrieval', async (t: tape.Test) => {
+test('NodesDAO supports creation and retrieval', async (t: Test) => {
   const { user } = await createUser({ withSession: false });
   const design = await createDesign({
     productType: 'TEESHIRT',
@@ -70,7 +69,7 @@ test('NodesDAO supports creation and retrieval', async (t: tape.Test) => {
   });
 });
 
-test('NodesDAO supports returning a tree association as a list', async (t: tape.Test) => {
+test('NodesDAO supports returning a tree association as a list', async (t: Test) => {
   const { user } = await createUser({ withSession: false });
   const design = await createDesign({
     productType: 'TEESHIRT',

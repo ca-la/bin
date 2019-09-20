@@ -82,6 +82,36 @@ export async function remove(
   }
 }
 
+export async function findByDesignId(
+  designId: string,
+  trx?: Knex.Transaction
+): Promise<TemplateDesign | null> {
+  const templates = await db(TABLE_NAME)
+    .select('*')
+    .where({ design_id: designId })
+    .limit(1)
+    .modify(
+      (query: Knex.QueryBuilder): void => {
+        if (trx) {
+          query.transacting(trx);
+        }
+      }
+    )
+    .catch(rethrow)
+    .catch(onNoDesignError(designId));
+
+  if (templates.length === 0) {
+    return null;
+  }
+
+  return validate<TemplateDesignRow, TemplateDesign>(
+    TABLE_NAME,
+    isTemplateDesignRow,
+    dataAdapter,
+    templates[0]
+  );
+}
+
 interface ListOptions {
   limit: number;
   offset: number;

@@ -5,7 +5,7 @@ import { test, Test } from '../../../test-helpers/fresh';
 import createDesign from '../../../services/create-design';
 import createUser = require('../../../test-helpers/create-user');
 import * as db from '../../../services/db';
-import { create, getAll, remove } from './dao';
+import { create, findByDesignId, getAll, remove } from './dao';
 
 test('create()', async (t: Test) => {
   const { user } = await createUser({ role: 'ADMIN', withSession: false });
@@ -40,6 +40,26 @@ test('create()', async (t: Test) => {
     } catch (error) {
       t.equal(error.message, `Design ${design.id} is already a template.`);
     }
+  });
+});
+
+test('findByDesignId()', async (t: Test) => {
+  const { user } = await createUser({ role: 'ADMIN', withSession: false });
+  const design = await createDesign({
+    productType: 'SHIRT',
+    title: 'Test Shirt',
+    userId: user.id
+  });
+
+  const result1 = await findByDesignId(design.id);
+  t.equal(result1, null, 'Returns nothing');
+
+  // Can find a design that was marked as a template.
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await create({ designId: design.id }, trx);
+
+    const result2 = await findByDesignId(design.id, trx);
+    t.deepEqual(result2, { designId: design.id }, 'Returns the inserted row');
   });
 });
 
