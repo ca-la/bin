@@ -5,7 +5,11 @@ import { omit } from 'lodash';
 import { create, findByPayoutAccountId, findByUserId } from './dao';
 import PayoutAccountsDAO = require('../../dao/partner-payout-accounts');
 import createUser = require('../../test-helpers/create-user');
-import generateInvoice from '../../test-helpers/factories/invoice';
+import createDesign from '../../services/create-design';
+import generateBid from '../../test-helpers/factories/bid';
+import generateCollection from '../../test-helpers/factories/collection';
+import { addDesign } from '../collections/dao';
+import generateDesignEvent from '../../test-helpers/factories/design-event';
 
 test('can create a payout log and find the logs', async (t: Test) => {
   const { user: admin } = await createUser({
@@ -24,16 +28,45 @@ test('can create a payout log and find the logs', async (t: Test) => {
     stripePublishableKey: 'stripe-publish-one',
     stripeUserId: 'stripe-user-one'
   });
-
-  const { collection, invoice } = await generateInvoice();
+  const { collection } = await generateCollection({
+    title: "Brett's Bolo"
+  });
+  const design = await createDesign({
+    productType: 'TEESHIRT',
+    title: 'Plain White Tee',
+    userId: user.id
+  });
+  await addDesign(collection.id, design.id);
+  const { bid } = await generateBid({
+    bidOptions: { bidPriceCents: 1000 },
+    designId: design.id
+  });
+  await generateDesignEvent({
+    actorId: admin.id,
+    bidId: bid.id,
+    createdAt: new Date(),
+    designId: design.id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: user.id,
+    type: 'BID_DESIGN'
+  });
+  await generateDesignEvent({
+    type: 'ACCEPT_SERVICE_BID',
+    bidId: bid.id,
+    actorId: user.id,
+    designId: design.id
+  });
 
   const data = {
     id: uuid.v4(),
-    invoiceId: invoice.id,
+    invoiceId: null,
     payoutAccountId: payoutAccount.id,
     payoutAmountCents: 123400,
     message: 'Get yo money',
-    initiatorUserId: admin.id
+    initiatorUserId: admin.id,
+    bidId: bid.id,
+    isManual: false
   };
   const payout = await create(data);
 
@@ -45,14 +78,15 @@ test('can create a payout log and find the logs', async (t: Test) => {
 
   const data2 = {
     id: uuid.v4(),
-    invoiceId: invoice.id,
+    invoiceId: null,
     payoutAccountId: payoutAccount.id,
     payoutAmountCents: 123400,
     message: 'Get yo money again!!',
-    initiatorUserId: admin.id
+    initiatorUserId: admin.id,
+    bidId: bid.id,
+    isManual: false
   };
   const payout2 = await create(data2);
-
   const logsFromAccount = await findByPayoutAccountId(payoutAccount.id);
   t.deepEqual(logsFromAccount, [payout2, payout]);
 

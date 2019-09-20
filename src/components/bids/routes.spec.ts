@@ -15,10 +15,13 @@ import * as CollaboratorsDAO from '../collaborators/dao';
 import * as DesignEventsDAO from '../../dao/design-events';
 import * as ProductDesignsDAO from '../product-designs/dao';
 import * as NotificationsService from '../../services/create-notifications';
+import * as PayoutAccountsDAO from '../../dao/partner-payout-accounts';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
 import generateDesignEvent from '../../test-helpers/factories/design-event';
 import { daysToMs } from '../../services/time-conversion';
-
+import createDesign from '../../services/create-design';
+import * as Stripe from '../../services/stripe';
+import * as EmailService from '../../services/email';
 test('GET /bids', async (t: Test) => {
   const admin = await createUser({ role: 'ADMIN' });
   const partner = await createUser({ role: 'PARTNER' });
@@ -622,6 +625,7 @@ test('Partner pairing: accept', async (t: Test) => {
     {
       ...bid,
       createdAt: bid.createdAt.toISOString(),
+      partnerPayoutLogs: [],
       design: {
         ...design,
         createdAt: design.createdAt.toISOString()
@@ -825,4 +829,123 @@ test('Partner pairing: reject', async (t: Test) => {
   t.equal(designCollaborator, null, 'The partner is no longer a collaborator');
 
   t.equal(notificationStub.callCount, 1);
+});
+
+test('GET /bids/:bidId gets a bid by an id', async (t: Test) => {
+  const admin = await createUser({ role: 'ADMIN' });
+  const getBidByIdStub = sandbox().stub(BidsDAO, 'findById');
+  await get(`/bids/a-real-bid-id`, {
+    headers: authHeader(admin.session.id)
+  });
+  t.equal(getBidByIdStub.callCount, 1);
+  t.deepEqual(getBidByIdStub.args[0], ['a-real-bid-id']);
+});
+
+test('POST /bids/:bidId/pay-out-to-partner', async (t: Test) => {
+  const sendTransferStub = sandbox().stub(Stripe, 'sendTransfer');
+  const enqueueSendStub = sandbox().stub(EmailService, 'enqueueSend');
+  const { user } = await createUser({ withSession: false });
+  const admin = await createUser({
+    role: 'ADMIN'
+  });
+  const { user: partner } = await createUser({
+    role: 'PARTNER',
+    withSession: false
+  });
+
+  const payoutAccount = await PayoutAccountsDAO.create({
+    id: uuid.v4(),
+    createdAt: new Date(),
+    deletedAt: null,
+    userId: user.id,
+    stripeAccessToken: 'stripe-access-one',
+    stripeRefreshToken: 'stripe-refresh-one',
+    stripePublishableKey: 'stripe-publish-one',
+    stripeUserId: 'stripe-user-one'
+  });
+
+  const design = await createDesign({
+    productType: 'TEESHIRT',
+    title: 'Plain White Tee',
+    userId: user.id
+  });
+
+  const { bid } = await generateBid({
+    bidOptions: { bidPriceCents: 1000 },
+    designId: design.id
+  });
+
+  await generateDesignEvent({
+    actorId: admin.user.id,
+    bidId: bid.id,
+    createdAt: new Date(),
+    designId: design.id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: partner.id,
+    type: 'BID_DESIGN'
+  });
+  await generateDesignEvent({
+    type: 'ACCEPT_SERVICE_BID',
+    bidId: bid.id,
+    actorId: partner.id,
+    designId: design.id
+  });
+  const [missingpayoutAccount] = await post(
+    `/bids/${bid.id}/pay-out-to-partner`,
+    {
+      headers: authHeader(admin.session.id),
+      body: {
+        message: 'Money 4 u',
+        bidId: bid.id,
+        isManual: false,
+        payoutAmountCents: 100
+      }
+    }
+  );
+  t.equal(missingpayoutAccount.status, 400, 'Expect payout to fail.');
+
+  const [missingMessage] = await post(`/bids/${bid.id}/pay-out-to-partner`, {
+    headers: authHeader(admin.session.id),
+    body: {
+      payoutAccountId: payoutAccount.id,
+      bidId: bid.id,
+      message: '',
+      isManual: false,
+      payoutAmountCents: 100
+    }
+  });
+  t.equal(missingMessage.status, 400, 'Expect payout to fail.');
+
+  const [successfulPayout] = await post(`/bids/${bid.id}/pay-out-to-partner`, {
+    headers: authHeader(admin.session.id),
+    body: {
+      payoutAccountId: payoutAccount.id,
+      message: 'Money 4 u',
+      bidId: bid.id,
+      isManual: false,
+      payoutAmountCents: 100
+    }
+  });
+  t.equal(successfulPayout.status, 204, 'Payout succeeds');
+  t.equal(sendTransferStub.callCount, 1);
+  t.equal(enqueueSendStub.callCount, 1);
+
+  enqueueSendStub.reset();
+  sendTransferStub.reset();
+  const [manualPayout] = await post(`/bids/${bid.id}/pay-out-to-partner`, {
+    headers: authHeader(admin.session.id),
+    body: {
+      payoutAccountId: null,
+      message: 'Money 4 u',
+      bidId: bid.id,
+      isManual: true,
+      payoutAmountCents: 100
+    }
+  });
+  t.equal(manualPayout.status, 204, 'Manual payout succeeds');
+
+  // Callcount should not have changed
+  t.equal(sendTransferStub.callCount, 0);
+  t.equal(enqueueSendStub.callCount, 0);
 });

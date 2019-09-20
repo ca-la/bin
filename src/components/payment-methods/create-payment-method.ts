@@ -3,8 +3,7 @@ import * as Knex from 'knex';
 import * as PaymentMethodsDAO from './dao';
 import PaymentMethod = require('./domain-object');
 import attachSource from '../../services/stripe/attach-source';
-import Stripe = require('../../services/stripe');
-
+import { findOrCreateCustomerId } from '../../services/stripe';
 interface Options {
   token: string;
   userId: string;
@@ -16,7 +15,7 @@ export default async function createPaymentMethod(
 ): Promise<PaymentMethod> {
   const { token, userId, trx } = options;
 
-  const stripeCustomerId = await Stripe.findOrCreateCustomerId(userId, trx);
+  const stripeCustomerId = await findOrCreateCustomerId(userId, trx);
   const source = await attachSource({
     cardToken: token,
     customerId: stripeCustomerId

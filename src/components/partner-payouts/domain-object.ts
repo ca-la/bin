@@ -4,23 +4,27 @@ import { hasProperties } from '@cala/ts-lib';
 export interface PartnerPayoutLog {
   id: string;
   createdAt: Date;
-  invoiceId: string;
-  payoutAccountId: string;
+  invoiceId: string | null;
+  payoutAccountId: string | null;
   payoutAmountCents: number;
   message: string;
   initiatorUserId: string;
   shortId: string | null;
+  bidId: string | null;
+  isManual: boolean;
 }
 
 export interface PartnerPayoutLogRow {
   id: string;
   created_at: string;
-  invoice_id: string;
-  payout_account_id: string;
+  invoice_id: string | null;
+  payout_account_id: string | null;
   payout_amount_cents: number;
   message: string;
   initiator_user_id: string;
   short_id: string | null;
+  bid_id: string | null;
+  is_manual: string;
 }
 
 export function toData(row: PartnerPayoutLogRow): PartnerPayoutLog {
@@ -32,7 +36,9 @@ export function toData(row: PartnerPayoutLogRow): PartnerPayoutLog {
     payoutAmountCents: row.payout_amount_cents,
     message: row.message,
     initiatorUserId: row.initiator_user_id,
-    shortId: row.short_id
+    shortId: row.short_id,
+    bidId: row.bid_id,
+    isManual: Boolean(row.is_manual)
   };
 }
 
@@ -45,7 +51,9 @@ export function toInsertion(data: PartnerPayoutLog): PartnerPayoutLogRow {
     payout_amount_cents: data.payoutAmountCents,
     message: data.message,
     initiator_user_id: data.initiatorUserId,
-    short_id: data.shortId
+    short_id: data.shortId,
+    bid_id: data.bidId,
+    is_manual: data.isManual.toString()
   };
 }
 
@@ -64,7 +72,9 @@ export function isPartnerPayoutLogRow(row: any): row is PartnerPayoutLogRow {
     'payout_amount_cents',
     'message',
     'initiator_user_id',
-    'short_id'
+    'short_id',
+    'bid_id',
+    'is_manual'
   );
 }
 
