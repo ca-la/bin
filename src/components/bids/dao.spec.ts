@@ -89,7 +89,7 @@ test('Bids DAO supports creation and retrieval', async (t: Test) => {
     { ...omit(inputBid, ['taskTypeIds']), createdAt: bid.createdAt },
     bid
   );
-  t.deepEqual(bid, omit(retrieved, 'partnerPayoutLogs'));
+  t.deepEqual(bid, omit(retrieved, ['partnerPayoutLogs', 'partnerUserId']));
   t.ok(
     bidTaskTypesCreateStub.calledWith({
       pricingBidId: bid.id,
@@ -987,7 +987,16 @@ test('Bids DAO supports finding bid with payout logs by id', async (t: Test) => 
     bidOptions: { bidPriceCents: 2000 },
     designId: design.id
   });
-
+  await generateDesignEvent({
+    actorId: partner.id,
+    bidId: bid.id,
+    createdAt: new Date(),
+    designId: design.id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: partner.id,
+    type: 'BID_DESIGN'
+  });
   const payout1 = {
     id: uuid.v4(),
     invoiceId: null,
@@ -1044,6 +1053,94 @@ test('Bids DAO supports finding bid with payout logs by id', async (t: Test) => 
     description: 'Full Service',
     id: bid.id,
     partnerPayoutLogs: [payout1, payout2],
+    partnerUserId: partner.id,
     quoteId: quote.id
   });
+});
+
+async function generatePartnerAndBidEvents(
+  designerUserId: string,
+  partnerUserId: string
+): Promise<string> {
+  const design = await createDesign({
+    productType: 'TEESHIRT',
+    title: 'My cool shirt',
+    userId: designerUserId
+  });
+  const { bid, user: admin } = await generateBid({
+    bidOptions: { bidPriceCents: 2000 },
+    designId: design.id
+  });
+  await generateDesignEvent({
+    actorId: partnerUserId,
+    bidId: bid.id,
+    createdAt: new Date(),
+    designId: design.id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: partnerUserId,
+    type: 'BID_DESIGN'
+  });
+  await generateDesignEvent({
+    actorId: partnerUserId,
+    bidId: bid.id,
+    createdAt: new Date(),
+    designId: design.id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: partnerUserId,
+    type: 'ACCEPT_SERVICE_BID'
+  });
+  const payout1 = {
+    id: uuid.v4(),
+    invoiceId: null,
+    payoutAccountId: null,
+    payoutAmountCents: 1000,
+    message: 'Get yo money',
+    initiatorUserId: admin.id,
+    bidId: bid.id,
+    isManual: true,
+    createdAt: new Date(2019, 8, 15),
+    shortId: null
+  };
+  await PartnerPayoutsDAO.create(payout1);
+  return bid.id;
+}
+
+test('Bids DAO supports finding bid by id returns the correct partner id', async (t: Test) => {
+  await generatePricingValues();
+  const { user: designer } = await createUser({ withSession: false });
+  const bidPayouts: { bidId: string; partnerId: string }[] = [];
+  for (let i = 0; i < 5; i += 1) {
+    const { user: partner } = await createUser({
+      role: 'PARTNER',
+      withSession: false
+    });
+    const bidId = await generatePartnerAndBidEvents(designer.id, partner.id);
+    bidPayouts.push({
+      partnerId: partner.id,
+      bidId
+    });
+  }
+  const foundBid1 = await findById(bidPayouts[0].bidId);
+  if (foundBid1 === null) {
+    t.fail('Bid was not found');
+    return;
+  }
+  t.deepEquals(
+    foundBid1.partnerUserId,
+    bidPayouts[0].partnerId,
+    'Found bid partner id is correct'
+  );
+
+  const foundBid2 = await findById(bidPayouts[3].bidId);
+  if (foundBid2 === null) {
+    t.fail('Bid was not found');
+    return;
+  }
+  t.deepEquals(
+    foundBid2.partnerUserId,
+    bidPayouts[3].partnerId,
+    'Found bid partner id is correct'
+  );
 });

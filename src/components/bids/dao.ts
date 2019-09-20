@@ -27,7 +27,7 @@ import { getBuilder as getTasksViewBuilder } from '../../dao/task-events/view';
 // Any payouts to a partner cannot be linked to a bid before this date, as
 // they were linked to an invoice. Having a cut-off date allows the API to
 // accurately determine if a partner has been paid out completely
-export const BID_CUTOFF_DATE = '2019-09-20';
+export const BID_CUTOFF_DATE = '2019-09-21';
 
 const TABLE_NAME = 'pricing_bids';
 const DESIGN_EVENTS_TABLE = 'design_events';
@@ -183,7 +183,7 @@ export function create(bidPayload: BidCreationPayload): Promise<Bid> {
       );
     }
 
-    return omit(withAcceptedAt, 'partnerPayoutLogs');
+    return omit(withAcceptedAt, ['partnerPayoutLogs', 'partnerUserId']);
   });
 }
 
@@ -316,6 +316,17 @@ export async function findById(
   const bid: BidWithPayoutLogsRow | undefined = await db(DESIGN_EVENTS_TABLE)
     .select(selectWithAcceptedAt)
     .select(
+      db.raw(`
+        CASE
+          WHEN design_events.type = 'BID_DESIGN' THEN
+            design_events.target_id
+          WHEN design_events.type = 'ACCEPT_SERVICE_BID' OR design_events.type = 'REJECT_SERVICE_BID' THEN
+            design_events.actor_id
+          ELSE null
+        END as partner_user_id
+      `)
+    )
+    .select(
       db.raw(
         `
         (
@@ -335,7 +346,8 @@ export async function findById(
     .groupBy([
       'pricing_bids.id',
       'design_events.bid_id',
-      'design_events.created_at'
+      'design_events.created_at',
+      'partner_user_id'
     ])
     .orderBy('pricing_bids.id')
     .orderBy('pricing_bids.created_at', 'desc')

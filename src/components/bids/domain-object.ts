@@ -143,10 +143,12 @@ export function isBidSortByParam(
 }
 
 export interface BidWithPayoutLogsRow extends BidRow {
+  partner_user_id: string;
   partner_payout_logs: PartnerPayoutLogRow[] | null;
 }
 
 export interface BidWithPayoutLogs extends Bid {
+  partnerUserId: string;
   partnerPayoutLogs: PartnerPayoutLog[];
 }
 
@@ -157,9 +159,10 @@ export function isBidWithPaymentLogsRow(
 }
 
 function withPayoutLogsEncode(row: BidWithPayoutLogsRow): BidWithPayoutLogs {
-  const { partner_payout_logs, ...bidRow } = row;
+  const { partner_payout_logs, partner_user_id, ...bidRow } = row;
   return {
     ...dataAdapter.parse(bidRow),
+    partnerUserId: partner_user_id,
     partnerPayoutLogs: partner_payout_logs
       ? partner_payout_logs.map(
           (log: PartnerPayoutLogRow): PartnerPayoutLog => {

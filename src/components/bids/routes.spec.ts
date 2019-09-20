@@ -626,6 +626,7 @@ test('Partner pairing: accept', async (t: Test) => {
       ...bid,
       createdAt: bid.createdAt.toISOString(),
       partnerPayoutLogs: [],
+      partnerUserId: partner.user.id,
       design: {
         ...design,
         createdAt: design.createdAt.toISOString()
