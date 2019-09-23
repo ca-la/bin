@@ -44,6 +44,35 @@ export async function create(
 }
 
 /**
+ * Returns a dimension attribute with a matching id.
+ */
+export async function findById(
+  dimensionId: string,
+  trx?: Knex.Transaction
+): Promise<DimensionAttribute | null> {
+  const dimension: DimensionAttributeRow | undefined = await db(TABLE_NAME)
+    .select('*')
+    .where({ deleted_at: null, id: dimensionId })
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
+    .then((rows: DimensionAttributeRow[]) => first(rows));
+
+  if (!dimension) {
+    return null;
+  }
+
+  return validate<DimensionAttributeRow, DimensionAttribute>(
+    TABLE_NAME,
+    isDimensionAttributeRow,
+    dataAdapter,
+    dimension
+  );
+}
+
+/**
  * Find all dimension attributes by a list of node ids.
  */
 export async function findAllByNodes(

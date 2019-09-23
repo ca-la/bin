@@ -10,7 +10,7 @@ import * as DimensionsDAO from '../../attributes/dimension-attributes/dao';
 import * as MaterialsDAO from '../../attributes/material-attributes/dao';
 import * as SketchesDAO from '../../attributes/sketch-attributes/dao';
 import generateNode from '../../../test-helpers/factories/node';
-import db = require('../../../services/db');
+import * as db from '../../../services/db';
 import createUser = require('../../../test-helpers/create-user');
 import generateAsset from '../../../test-helpers/factories/asset';
 import SketchAttribute from '../../attributes/sketch-attributes/domain-objects';

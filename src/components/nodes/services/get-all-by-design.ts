@@ -21,14 +21,16 @@ interface AssetWithLinks extends Asset {
   assetLinks: AssetLinks | null;
 }
 
+export interface NodeAttributes {
+  artworks: ArtworkAttribute[];
+  materials: MaterialAttribute[];
+  sketches: SketchAttribute[];
+  dimensions: DimensionAttribute[];
+}
+
 export interface NodeResources {
   assets: AssetWithLinks[];
-  attributes: {
-    artworks: ArtworkAttribute[];
-    materials: MaterialAttribute[];
-    sketches: SketchAttribute[];
-    dimensions: DimensionAttribute[];
-  };
+  attributes: NodeAttributes;
   nodes: Node[];
 }
 
