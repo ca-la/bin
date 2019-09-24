@@ -17,6 +17,7 @@ import * as DuplicateMaterial from './material';
 import * as DuplicateSketch from './sketch';
 import { staticArtworkAttribute } from '../../../test-helpers/factories/artwork-attribute';
 import { staticDimensionAttribute } from '../../../test-helpers/factories/dimension-attribute';
+import { staticAsset } from '../../../test-helpers/factories/asset';
 
 test('findAndDuplicateAttributesForNode() empty case', async (t: Test) => {
   const findArtworksStub = sandbox()
@@ -79,12 +80,13 @@ test('findAndDuplicateAttributesForNode() empty case', async (t: Test) => {
 });
 
 test('findAndDuplicatAttributesForNode() standard case', async (t: Test) => {
-  const a1 = staticArtworkAttribute();
+  const asset1 = staticAsset();
+  const a1 = staticArtworkAttribute({ assetId: asset1.id });
   const d1 = staticDimensionAttribute();
 
   const findArtworksStub = sandbox()
     .stub(ArtworksDAO, 'findAllByNodes')
-    .resolves([a1]);
+    .resolves([{ ...a1, asset: asset1 }]);
   const findDimensionsStub = sandbox()
     .stub(DimensionsDAO, 'findAllByNodes')
     .resolves([d1]);

@@ -13,13 +13,18 @@ export default async function createFromDesignTemplate(
   return db.transaction(
     async (trx: Knex.Transaction): Promise<ProductDesign> => {
       const result = await findByDesignId(templateDesignId, trx);
+
       if (!result) {
         throw new ResourceNotFoundError(
           `Template for design "${templateDesignId}" does not exist.`
         );
       }
 
-      return findAndDuplicateTemplateDesign(result.designId, newCreatorId, trx);
+      return await findAndDuplicateTemplateDesign(
+        result.designId,
+        newCreatorId,
+        trx
+      );
     }
   );
 }

@@ -13,6 +13,7 @@ import ArtworkAttribute from '../../../components/attributes/artwork-attributes/
 import DimensionAttribute from '../../../components/attributes/dimension-attributes/domain-object';
 import MaterialAttribute from '../../../components/attributes/material-attributes/domain-objects';
 import SketchAttribute from '../../../components/attributes/sketch-attributes/domain-objects';
+import { omit } from 'lodash';
 
 /**
  * Duplicates all attributes related to the given node.
@@ -37,7 +38,7 @@ export default async function findAndDuplicateAttributesForNode(options: {
 
   for (const artwork of artworks) {
     const duplicateArtwork = await findAndDuplicateArtwork({
-      currentArtwork: artwork,
+      currentArtwork: omit(artwork, 'asset'),
       currentArtworkId: artwork.id,
       newCreatorId,
       newNodeId,
@@ -59,7 +60,7 @@ export default async function findAndDuplicateAttributesForNode(options: {
 
   for (const material of materials) {
     const duplicateMaterial = await findAndDuplicateMaterial({
-      currentMaterial: material,
+      currentMaterial: omit(material, 'asset'),
       currentMaterialId: material.id,
       newCreatorId,
       newNodeId,
@@ -70,7 +71,7 @@ export default async function findAndDuplicateAttributesForNode(options: {
 
   for (const sketch of sketches) {
     const duplicateSketch = await findAndDuplicateSketch({
-      currentSketch: sketch,
+      currentSketch: omit(sketch, 'asset'),
       currentSketchId: sketch.id,
       newCreatorId,
       newNodeId,

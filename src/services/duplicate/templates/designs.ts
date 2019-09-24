@@ -2,7 +2,7 @@ import * as Knex from 'knex';
 import { omit } from 'lodash';
 import { constructNodeTree } from '@cala/ts-lib/dist/phidias';
 
-import DesignsDAO = require('../../../components/product-designs/dao');
+import * as DesignsDAO from '../../../components/product-designs/dao';
 import createDesign from '../../create-design';
 
 import Design = require('../../../components/product-designs/domain-objects/product-design');
@@ -25,7 +25,7 @@ export default async function findAndDuplicateTemplateDesign(
   newCreatorId: string,
   trx: Knex.Transaction
 ): Promise<Design> {
-  const design = await DesignsDAO.findById(designId, trx);
+  const design = await DesignsDAO.findById(designId, undefined, undefined, trx);
 
   if (!design) {
     throw new ResourceNotFoundError(`Design ${designId} not found.`);

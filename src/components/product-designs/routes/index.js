@@ -49,6 +49,7 @@ const {
   createSectionAnnotation
 } = require('./sections');
 const { findAllDesignsThroughCollaborator } = require('../dao/dao');
+const { createFromTemplate } = require('./templates');
 
 const router = new Router();
 
@@ -428,5 +429,6 @@ router.put(
   replaceSectionFeaturePlacements
 );
 router.put('/:designId', requireAuth, canAccessDesignInParam, updateAllNodes);
+router.post('/templates/:templateDesignId', requireAuth, createFromTemplate);
 
 module.exports = router.routes();

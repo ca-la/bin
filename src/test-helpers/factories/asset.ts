@@ -17,7 +17,24 @@ export default async function generateAsset(
     throw new Error('Could not get user');
   }
 
-  const asset = await create({
+  const asset = await create(
+    staticAsset({
+      userId: user.id,
+      ...options
+    })
+  );
+
+  return {
+    asset,
+    createdBy: user
+  };
+}
+
+/**
+ * Creates an in-memory instance of an Asset.
+ */
+export function staticAsset(options?: Partial<Asset>): Asset {
+  return {
     createdAt: new Date(),
     description: null,
     id: uuid.v4(),
@@ -26,12 +43,7 @@ export default async function generateAsset(
     originalWidthPx: 0,
     title: null,
     uploadCompletedAt: new Date(),
-    userId: user.id,
+    userId: uuid.v4(),
     ...options
-  });
-
-  return {
-    asset,
-    createdBy: user
   };
 }
