@@ -47,25 +47,41 @@ export default async function generateArtworkAttribute(
     throw new Error('Could not get user.');
   }
 
-  const artworkData: ArtworkAttribute = {
-    assetId: asset.id,
-    createdAt: new Date('2019-04-20'),
-    createdBy: user.id,
-    deletedAt: null,
-    id: uuid.v4(),
-    height: 0,
-    nodeId: node.id,
-    width: 0,
-    x: 0,
-    y: 0,
-    ...options
-  };
-  const artwork = await create(artworkData, trx);
+  const artwork = await create(
+    staticArtworkAttribute({
+      assetId: asset.id,
+      createdBy: user.id,
+      nodeId: node.id,
+      ...options
+    }),
+    trx
+  );
 
   return {
     asset,
     artwork,
     createdBy: user,
     node
+  };
+}
+
+/**
+ * Makes an in-memory instance of an Artwork Attribute.
+ */
+export function staticArtworkAttribute(
+  options?: Partial<ArtworkAttribute>
+): ArtworkAttribute {
+  return {
+    assetId: uuid.v4(),
+    createdAt: new Date('2019-04-20'),
+    createdBy: uuid.v4(),
+    deletedAt: null,
+    id: uuid.v4(),
+    height: 0,
+    nodeId: uuid.v4(),
+    width: 0,
+    x: 0,
+    y: 0,
+    ...options
   };
 }

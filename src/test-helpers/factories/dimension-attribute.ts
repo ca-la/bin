@@ -35,21 +35,36 @@ export default async function generateDimensionAttribute(
     throw new Error('Could not get user.');
   }
 
-  const dimensionData: DimensionAttribute = {
-    createdAt: new Date('2019-04-20'),
-    createdBy: user.id,
-    deletedAt: null,
-    id: uuid.v4(),
-    height: 0,
-    nodeId: node.id,
-    width: 0,
-    ...options
-  };
-  const dimension = await create(dimensionData, trx);
+  const dimension = await create(
+    staticDimensionAttribute({
+      createdBy: user.id,
+      nodeId: node.id,
+      ...options
+    }),
+    trx
+  );
 
   return {
     createdBy: user,
     dimension,
     node
+  };
+}
+
+/**
+ * Creates an in-memory instance of a dimension attribute.
+ */
+export function staticDimensionAttribute(
+  options?: Partial<DimensionAttribute>
+): DimensionAttribute {
+  return {
+    createdAt: new Date('2019-04-20'),
+    createdBy: uuid.v4(),
+    deletedAt: null,
+    id: uuid.v4(),
+    height: 0,
+    nodeId: uuid.v4(),
+    width: 0,
+    ...options
   };
 }

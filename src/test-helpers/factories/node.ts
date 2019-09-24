@@ -19,10 +19,25 @@ export default async function generateNode(
     throw new Error('Could not get user');
   }
 
-  const nodeData = {
+  const node = await create(
+    staticNode({ ...options, createdBy: user.id }),
+    trx
+  );
+
+  return {
+    node,
+    createdBy: user
+  };
+}
+
+/**
+ * Creates an in-memory instance of a node
+ */
+export function staticNode(options?: Partial<Node>): Node {
+  return {
     id: uuid.v4(),
     createdAt: new Date('2019-04-20'),
-    createdBy: user.id,
+    createdBy: uuid.v4(),
     deletedAt: null,
     parentId: null,
     x: 0,
@@ -30,11 +45,5 @@ export default async function generateNode(
     ordering: 0,
     title: null,
     ...options
-  };
-  const node = await create(nodeData, trx);
-
-  return {
-    node,
-    createdBy: user
   };
 }
