@@ -84,12 +84,16 @@ export async function update(data: Node, trx: Knex.Transaction): Promise<Node> {
 }
 
 export async function updateOrCreate(
+  designId: string,
   data: Node,
   trx: Knex.Transaction
 ): Promise<Node> {
   const existingNode = await findById(data.id);
   if (existingNode) {
     return update(data, trx);
+  }
+  if (data.parentId === null) {
+    return createDesignRoot(data, designId, trx);
   }
   return create(data, trx);
 }

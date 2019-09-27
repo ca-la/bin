@@ -134,4 +134,25 @@ test('NodesDAO supports returning a tree association as a list', async (t: Test)
       'Returns all nodes in the trees'
     );
   });
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const node1OG = await NodesDAO.updateOrCreate(design.id, node1Data, trx);
+    const node1 = await NodesDAO.updateOrCreate(
+      design.id,
+      { ...node1Data, title: 'A new title' },
+      trx
+    );
+    const node2 = await NodesDAO.updateOrCreate(design.id, node2Data, trx);
+    const node3 = await NodesDAO.updateOrCreate(design.id, node3Data, trx);
+    const node4 = await NodesDAO.updateOrCreate(design.id, node4Data, trx);
+
+    const resultList = await NodesDAO.findNodeTrees([node1.id, node3.id], trx);
+    t.deepEqual(
+      resultList,
+      [node1, node3, node2, node4],
+      'Creates and updates nodes correctly'
+    );
+    t.equals(node1OG.id, node1.id, 'Updated node has the correct ID');
+    t.doesNotEqual(node1OG.title, node1.title, 'Title is updated');
+  });
 });

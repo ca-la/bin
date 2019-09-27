@@ -26,7 +26,7 @@ export async function create(
   });
   const created = await db(TABLE_NAME)
     .insert(rowData, '*')
-    .modify((query: Knex.QueryBuilder) => query.transacting(trx))
+    .transacting(trx)
     .then((rows: DimensionAttributeRow[]) =>
       first<DimensionAttributeRow>(rows)
     );
@@ -96,4 +96,44 @@ export async function findAllByNodes(
     dataAdapter,
     dimensions
   );
+}
+
+/**
+ * Update dimension
+ */
+export async function update(
+  id: string,
+  dimension: DimensionAttribute,
+  trx: Knex.Transaction
+): Promise<DimensionAttribute> {
+  const rowData = dataAdapter.forInsertion(dimension);
+  const updated = await db(TABLE_NAME)
+    .update(rowData, '*')
+    .where({ id })
+    .transacting(trx)
+    .then((rows: DimensionAttributeRow[]) =>
+      first<DimensionAttributeRow>(rows)
+    );
+
+  if (!updated) {
+    throw new Error('Failed to create an Dimension Attribute!');
+  }
+
+  return validate<DimensionAttributeRow, DimensionAttribute>(
+    TABLE_NAME,
+    isDimensionAttributeRow,
+    dataAdapter,
+    updated
+  );
+}
+
+export async function updateOrCreate(
+  data: DimensionAttribute,
+  trx: Knex.Transaction
+): Promise<DimensionAttribute> {
+  const existingDimension = await findById(data.id, trx);
+  if (existingDimension) {
+    return update(data.id, data, trx);
+  }
+  return create(data, trx);
 }

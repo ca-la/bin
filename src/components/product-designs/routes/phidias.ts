@@ -4,13 +4,15 @@ import * as Koa from 'koa';
 
 import { updateOrCreate as updateOrCreateNode } from '../../nodes/dao';
 import { updateOrCreate as updateOrCreateAsset } from '../../assets/dao';
+import { updateOrCreate as updateOrCreateDimension } from '../../attributes/dimension-attributes/dao';
 import * as db from '../../../services/db';
 import toDateOrNull from '../../../services/to-date';
 
 function* updateAllNodes(
   this: Koa.Application.Context
 ): AsyncIterableIterator<any> {
-  const design = this.request.body;
+  const { body: design } = this.request;
+  const { designId } = this.params;
 
   if (!design) {
     return this.throw(400, 'A design body is missing!');
@@ -23,6 +25,7 @@ function* updateAllNodes(
   const updated = yield db.transaction(async (trx: Knex.Transaction) => {
     const { nodes, assets, attributes } = design;
     const newNodes = [];
+    const newDimensions = [];
     const newAssets = [];
 
     for (const node of nodes) {
@@ -31,8 +34,21 @@ function* updateAllNodes(
         createdAt: new Date(node.createdAt),
         deletedAt: toDateOrNull(node.deletedAt)
       };
-      const newNode = await updateOrCreateNode(updateableNode, trx);
+      const newNode = await updateOrCreateNode(designId, updateableNode, trx);
       newNodes.push(newNode);
+    }
+
+    for (const dimension of attributes.dimensions) {
+      const updateableDimension = {
+        ...dimension,
+        createdAt: new Date(dimension.createdAt),
+        deletedAt: toDateOrNull(dimension.deletedAt)
+      };
+      const newDimension = await updateOrCreateDimension(
+        updateableDimension,
+        trx
+      );
+      newDimensions.push(newDimension);
     }
 
     for (const asset of assets) {
@@ -47,7 +63,10 @@ function* updateAllNodes(
 
     return {
       assets: newAssets,
-      attributes,
+      attributes: {
+        ...attributes,
+        dimensions: newDimensions
+      },
       nodes: newNodes
     };
   });
