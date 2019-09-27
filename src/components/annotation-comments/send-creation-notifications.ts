@@ -29,7 +29,7 @@ export default async function sendCreationNotifications(
   const mentionedUserIds: string[] = [];
   for (const mention of mentions) {
     if (mention.type !== MentionType.collaborator) {
-      return;
+      continue;
     }
 
     const collaborator: CollaboratorWithUser | null = await CollaboratorsDAO.findById(
@@ -41,7 +41,7 @@ export default async function sendCreationNotifications(
     }
 
     if (!collaborator.user) {
-      return;
+      continue;
     }
 
     await NotificationsService.sendAnnotationCommentMentionNotification(
