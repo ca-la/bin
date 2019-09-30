@@ -15,7 +15,7 @@ import SketchAttributeWithAsset, {
   SketchAttributeWithAssetRow
 } from './domain-objects/with-asset';
 
-const TABLE_NAME = 'sketch_attributes';
+const TABLE_NAME = 'image_attributes';
 
 /**
  * Creates a Sketch Attribute.
@@ -83,11 +83,11 @@ export async function findAllByNodes(
   trx?: Knex.Transaction
 ): Promise<SketchAttributeWithAsset[]> {
   const sketches: SketchAttributeWithAssetRow[] = await db(TABLE_NAME)
-    .select('sketch_attributes.*', db.raw('row_to_json(assets.*) as asset'))
-    .leftJoin('assets', 'assets.id', 'sketch_attributes.asset_id')
-    .whereIn('sketch_attributes.node_id', nodeIds)
-    .andWhere({ 'sketch_attributes.deleted_at': null })
-    .orderBy('sketch_attributes.created_at', 'DESC')
+    .select('image_attributes.*', db.raw('row_to_json(assets.*) as asset'))
+    .leftJoin('assets', 'assets.id', 'image_attributes.asset_id')
+    .whereIn('image_attributes.node_id', nodeIds)
+    .andWhere({ 'image_attributes.deleted_at': null })
+    .orderBy('image_attributes.created_at', 'DESC')
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
