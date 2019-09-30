@@ -1,6 +1,8 @@
 import DataAdapter from '../../../services/data-adapter';
 import { hasProperties } from '@cala/ts-lib';
 
+export type NodeType = 'FRAME' | 'IMAGE' | 'VECTOR';
+
 export default interface Node {
   id: string;
   createdAt: Date;
@@ -11,6 +13,7 @@ export default interface Node {
   y: number;
   ordering: number;
   title: string | null;
+  type: NodeType | null;
 }
 
 export interface NodeRow {
@@ -23,6 +26,7 @@ export interface NodeRow {
   y: string;
   ordering: number;
   title: string | null;
+  type: NodeType | null;
 }
 
 function encode(row: NodeRow): Node {
@@ -35,7 +39,8 @@ function encode(row: NodeRow): Node {
     x: Number(row.x),
     y: Number(row.y),
     ordering: row.ordering,
-    title: row.title
+    title: row.title,
+    type: row.type
   };
 }
 
@@ -49,7 +54,8 @@ function decode(data: Node): NodeRow {
     x: String(data.x),
     y: String(data.y),
     ordering: data.ordering,
-    title: data.title
+    title: data.title,
+    type: data.type
   };
 }
 
@@ -66,7 +72,8 @@ export function isNode(obj: object): obj is Node {
     'x',
     'y',
     'ordering',
-    'title'
+    'title',
+    'type'
   );
 }
 
@@ -81,6 +88,7 @@ export function isNodeRow(row: object): row is NodeRow {
     'x',
     'y',
     'ordering',
-    'title'
+    'title',
+    'type'
   );
 }

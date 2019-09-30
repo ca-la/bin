@@ -32,7 +32,8 @@ function* updateAllNodes(
       const updateableNode = {
         ...node,
         createdAt: new Date(node.createdAt),
-        deletedAt: toDateOrNull(node.deletedAt)
+        deletedAt: toDateOrNull(node.deletedAt),
+        type: null
       };
       const newNode = await updateOrCreateNode(designId, updateableNode, trx);
       newNodes.push(newNode);

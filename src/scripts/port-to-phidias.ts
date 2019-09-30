@@ -107,7 +107,8 @@ async function portCanvases(
       x: String(canvas.x),
       y: String(canvas.y),
       ordering: canvas.ordering || 0,
-      title: canvas.title
+      title: canvas.title,
+      type: null
     });
     rootNodeInsertions.push({
       id: uuid.v4(),
@@ -148,7 +149,8 @@ async function portComponents(
       x: '0',
       y: '0',
       ordering: 0,
-      title: null
+      title: null,
+      type: null
     };
     nodeInsertions.push(node);
 

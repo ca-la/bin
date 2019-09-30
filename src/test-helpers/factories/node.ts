@@ -44,6 +44,7 @@ export function staticNode(options?: Partial<Node>): Node {
     y: 0,
     ordering: 0,
     title: null,
+    type: null,
     ...options
   };
 }

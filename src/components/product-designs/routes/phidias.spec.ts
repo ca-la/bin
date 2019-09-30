@@ -104,7 +104,7 @@ test('updateAllNodes updates all nodes', async (t: Test) => {
         materials: [],
         sketches: []
       },
-      nodes: [{ ...node, createdAt: node.createdAt.toISOString() }]
+      nodes: [{ ...node, createdAt: node.createdAt.toISOString(), type: null }]
     },
     'body matches expected shape'
   );

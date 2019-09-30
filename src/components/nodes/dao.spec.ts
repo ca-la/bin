@@ -27,7 +27,8 @@ test('NodesDAO supports creation and retrieval', async (t: Test) => {
     x: 103,
     y: 50,
     ordering: 0,
-    title: null
+    title: null,
+    type: null
   };
   const node2Data = {
     id: id2,
@@ -38,7 +39,8 @@ test('NodesDAO supports creation and retrieval', async (t: Test) => {
     x: 905,
     y: 1000,
     ordering: 0,
-    title: null
+    title: null,
+    type: null
   };
   const node3Data = {
     id: id3,
@@ -49,7 +51,8 @@ test('NodesDAO supports creation and retrieval', async (t: Test) => {
     x: 0,
     y: 0,
     ordering: 1,
-    title: null
+    title: null,
+    type: null
   };
 
   await db.transaction(async (trx: Knex.Transaction) => {
@@ -81,7 +84,8 @@ test('NodesDAO supports returning a tree association as a list', async (t: Test)
     createdAt: new Date('2019-04-20'),
     createdBy: user.id,
     deletedAt: null,
-    title: null
+    title: null,
+    type: null
   };
 
   const id1 = '1f8a29f2-9254-48be-8fbf-eed45435a30c';
