@@ -10,10 +10,10 @@ import { CanvasRow } from '../../components/canvases/domain-object';
 import { NodeRow } from '../../components/nodes/domain-objects';
 import { DesignRootNodeRow } from '../../components/nodes/domain-objects/design-root';
 import { ComponentRow } from '../../components/components/domain-object';
-import { ArtworkAttributeRow } from '../../components/attributes/artwork-attributes/domain-objects';
 import { AssetRow } from '../../components/assets/domain-object';
 import { DimensionAttributeRow } from '../../components/attributes/dimension-attributes/domain-object';
 import portComponent from './port-component';
+import { SketchAttributeRow } from '../../components/attributes/sketch-attributes/domain-objects';
 
 export type EnrichedComponent = ComponentRow & {
   canvas_id: string;
@@ -42,7 +42,6 @@ async function portToPhidias(): Promise<void> {
   return db.transaction(async (trx: Knex.Transaction) => {
     log('Removing all existing nodes');
     await trx.raw(`
-TRUNCATE TABLE artwork_attributes CASCADE;
 TRUNCATE TABLE dimension_attributes CASCADE;
 TRUNCATE TABLE material_attributes CASCADE;
 TRUNCATE TABLE image_attributes CASCADE;
@@ -136,7 +135,7 @@ async function portComponents(
   trx: Knex.Transaction
 ): Promise<void> {
   const nodeInsertions: NodeRow[] = [];
-  const imageInsertions: ArtworkAttributeRow[] = [];
+  const imageInsertions: SketchAttributeRow[] = [];
   const dimensionInsertions: DimensionAttributeRow[] = [];
 
   for (const component of components) {

@@ -5,7 +5,6 @@ import * as uuid from 'node-uuid';
 import { sandbox, test } from '../../../test-helpers/fresh';
 import { getAllByDesign } from './get-all-by-design';
 import * as NodesDAO from '../dao';
-import * as ArtworksDAO from '../../attributes/artwork-attributes/dao';
 import * as DimensionsDAO from '../../attributes/dimension-attributes/dao';
 import * as MaterialsDAO from '../../attributes/material-attributes/dao';
 import * as SketchesDAO from '../../attributes/sketch-attributes/dao';
@@ -22,9 +21,6 @@ test('getAllByDesign can handle the empty case', async (t: tape.Test) => {
     .resolves([]);
   const findRootStub = sandbox()
     .stub(NodesDAO, 'findRootNodesByDesign')
-    .resolves([]);
-  const artworkStub = sandbox()
-    .stub(ArtworksDAO, 'findAllByNodes')
     .resolves([]);
   const dimensionStub = sandbox()
     .stub(DimensionsDAO, 'findAllByNodes')
@@ -55,7 +51,6 @@ test('getAllByDesign can handle the empty case', async (t: tape.Test) => {
 
   t.equal(findTreesStub.callCount, 1);
   t.equal(findRootStub.callCount, 1);
-  t.equal(artworkStub.callCount, 1);
   t.equal(dimensionStub.callCount, 1);
   t.equal(materialStub.callCount, 1);
   t.equal(sketchStub.callCount, 1);
