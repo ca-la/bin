@@ -1,7 +1,7 @@
 import DataAdapter from '../../../../services/data-adapter';
 import { hasProperties } from '@cala/ts-lib';
 
-export default interface SketchAttribute {
+export default interface ImageAttribute {
   createdAt: Date;
   createdBy: string;
   deletedAt: Date | null;
@@ -14,7 +14,7 @@ export default interface SketchAttribute {
   height: number;
 }
 
-export interface SketchAttributeRow {
+export interface ImageAttributeRow {
   created_at: string;
   created_by: string;
   deleted_at: string | null;
@@ -27,7 +27,7 @@ export interface SketchAttributeRow {
   height: string;
 }
 
-export function encode(row: SketchAttributeRow): SketchAttribute {
+export function encode(row: ImageAttributeRow): ImageAttribute {
   return {
     assetId: row.asset_id,
     createdAt: new Date(row.created_at),
@@ -42,7 +42,7 @@ export function encode(row: SketchAttributeRow): SketchAttribute {
   };
 }
 
-export function decode(data: SketchAttribute): SketchAttributeRow {
+export function decode(data: ImageAttribute): ImageAttributeRow {
   return {
     asset_id: data.assetId,
     created_at: data.createdAt.toISOString(),
@@ -57,12 +57,12 @@ export function decode(data: SketchAttribute): SketchAttributeRow {
   };
 }
 
-export const dataAdapter = new DataAdapter<SketchAttributeRow, SketchAttribute>(
+export const dataAdapter = new DataAdapter<ImageAttributeRow, ImageAttribute>(
   encode,
   decode
 );
 
-export function isSketchAttribute(obj: object): obj is SketchAttribute {
+export function isImageAttribute(obj: object): obj is ImageAttribute {
   return hasProperties(
     obj,
     'assetId',
@@ -78,7 +78,7 @@ export function isSketchAttribute(obj: object): obj is SketchAttribute {
   );
 }
 
-export function isSketchAttributeRow(row: object): row is SketchAttributeRow {
+export function isImageAttributeRow(row: object): row is ImageAttributeRow {
   return hasProperties(
     row,
     'asset_id',

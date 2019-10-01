@@ -1,16 +1,16 @@
 import * as Knex from 'knex';
+import { omit } from 'lodash';
 import { NodeAttributes } from '../../../components/nodes/services/get-all-by-design';
 
 import { findAllByNodes as findAllDimensions } from '../../../components/attributes/dimension-attributes/dao';
 import { findAllByNodes as findAllMaterials } from '../../../components/attributes/material-attributes/dao';
-import { findAllByNodes as findAllSketches } from '../../../components/attributes/sketch-attributes/dao';
+import { findAllByNodes as findAllImages } from '../../../components/attributes/image-attributes/dao';
 import findAndDuplicateDimension from './dimension';
 import findAndDuplicateMaterial from './material';
-import findAndDuplicateSketch from './sketch';
+import findAndDuplicateImage from './image';
 import DimensionAttribute from '../../../components/attributes/dimension-attributes/domain-object';
 import MaterialAttribute from '../../../components/attributes/material-attributes/domain-objects';
-import SketchAttribute from '../../../components/attributes/sketch-attributes/domain-objects';
-import { omit } from 'lodash';
+import ImageAttribute from '../../../components/attributes/image-attributes/domain-objects';
 
 /**
  * Duplicates all attributes related to the given node.
@@ -25,11 +25,11 @@ export default async function findAndDuplicateAttributesForNode(options: {
 
   const dimensions = await findAllDimensions([currentNodeId], trx);
   const materials = await findAllMaterials([currentNodeId], trx);
-  const sketches = await findAllSketches([currentNodeId], trx);
+  const images = await findAllImages([currentNodeId], trx);
 
   const duplicateDimensions: DimensionAttribute[] = [];
   const duplicateMaterials: MaterialAttribute[] = [];
-  const duplicateSketches: SketchAttribute[] = [];
+  const duplicateImages: ImageAttribute[] = [];
 
   for (const dimension of dimensions) {
     const duplicateDimension = await findAndDuplicateDimension({
@@ -53,21 +53,21 @@ export default async function findAndDuplicateAttributesForNode(options: {
     duplicateMaterials.push(duplicateMaterial);
   }
 
-  for (const sketch of sketches) {
-    const duplicateSketch = await findAndDuplicateSketch({
-      currentSketch: omit(sketch, 'asset'),
-      currentSketchId: sketch.id,
+  for (const image of images) {
+    const duplicateImage = await findAndDuplicateImage({
+      currentImage: omit(image, 'asset'),
+      currentImageId: image.id,
       newCreatorId,
       newNodeId,
       trx
     });
-    duplicateSketches.push(duplicateSketch);
+    duplicateImages.push(duplicateImage);
   }
 
   return {
     artworks: [],
     dimensions: duplicateDimensions,
     materials: duplicateMaterials,
-    sketches: duplicateSketches
+    sketches: duplicateImages
   };
 }

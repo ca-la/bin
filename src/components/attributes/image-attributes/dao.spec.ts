@@ -7,17 +7,17 @@ import createUser = require('../../../test-helpers/create-user');
 import * as db from '../../../services/db';
 import generateNode from '../../../test-helpers/factories/node';
 import generateAsset from '../../../test-helpers/factories/asset';
-import * as SketchesDAO from './dao';
-import SketchAttribute from './domain-objects';
+import * as ImagesDAO from './dao';
+import ImageAttribute from './domain-objects';
 
-test('SketchAttributesDAO supports creation and retrieval', async (t: tape.Test) => {
+test('ImageAttributesDAO supports creation and retrieval', async (t: tape.Test) => {
   const { user } = await createUser({ withAddress: false });
   const { asset } = await generateAsset({ userId: user.id });
   const id1 = uuid.v4();
 
   await db.transaction(async (trx: Knex.Transaction) => {
     const { node: node1 } = await generateNode({ createdBy: user.id }, trx);
-    const sketch1Data: SketchAttribute = {
+    const image1Data: ImageAttribute = {
       assetId: asset.id,
       createdAt: new Date('2019-04-20'),
       createdBy: user.id,
@@ -29,16 +29,16 @@ test('SketchAttributesDAO supports creation and retrieval', async (t: tape.Test)
       x: 0,
       y: 0
     };
-    const sketch1 = await SketchesDAO.create(sketch1Data, trx);
-    const foundArtwork = await SketchesDAO.findById(id1, trx);
-    const foundAll = await SketchesDAO.findAllByNodes([node1.id], trx);
+    const image1 = await ImagesDAO.create(image1Data, trx);
+    const foundArtwork = await ImagesDAO.findById(id1, trx);
+    const foundAll = await ImagesDAO.findAllByNodes([node1.id], trx);
 
-    t.deepEqual(sketch1, sketch1Data, 'Successfully saves with the data');
-    t.deepEqual(sketch1, foundArtwork, 'Can find by id');
+    t.deepEqual(image1, image1Data, 'Successfully saves with the data');
+    t.deepEqual(image1, foundArtwork, 'Can find by id');
     t.deepEqual(
       foundAll,
-      [{ ...sketch1Data, asset }],
-      'Returns all sketches with the asset attached.'
+      [{ ...image1Data, asset }],
+      'Returns all Images with the asset attached.'
     );
   });
 });

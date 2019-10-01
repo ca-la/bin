@@ -1,46 +1,46 @@
 import * as Knex from 'knex';
 import * as uuid from 'node-uuid';
 
-import SketchAttribute, {
+import ImageAttribute, {
   dataAdapter,
-  isSketchAttributeRow,
-  SketchAttributeRow
+  ImageAttributeRow,
+  isImageAttributeRow
 } from './domain-objects';
 import db = require('../../../services/db');
 import first from '../../../services/first';
 import { validate, validateEvery } from '../../../services/validate-from-db';
-import SketchAttributeWithAsset, {
+import ImageAttributeWithAsset, {
   dataAdapter as dataAdapterWithAsset,
-  isSketchAttributeWithAssetRow,
-  SketchAttributeWithAssetRow
+  ImageAttributeWithAssetRow,
+  isImageAttributeWithAssetRow
 } from './domain-objects/with-asset';
 
 const TABLE_NAME = 'image_attributes';
 
 /**
- * Creates a Sketch Attribute.
+ * Creates a Image Attribute.
  */
 export async function create(
-  sketch: MaybeUnsaved<SketchAttribute>,
+  image: MaybeUnsaved<ImageAttribute>,
   trx: Knex.Transaction
-): Promise<SketchAttribute> {
+): Promise<ImageAttribute> {
   const rowData = dataAdapter.forInsertion({
     id: uuid.v4(),
-    ...sketch,
+    ...image,
     deletedAt: null
   });
   const created = await db(TABLE_NAME)
     .insert(rowData, '*')
     .modify((query: Knex.QueryBuilder) => query.transacting(trx))
-    .then((rows: SketchAttributeRow[]) => first<SketchAttributeRow>(rows));
+    .then((rows: ImageAttributeRow[]) => first<ImageAttributeRow>(rows));
 
   if (!created) {
-    throw new Error('Failed to create a Sketch Attribute!');
+    throw new Error('Failed to create a Image Attribute!');
   }
 
-  return validate<SketchAttributeRow, SketchAttribute>(
+  return validate<ImageAttributeRow, ImageAttribute>(
     TABLE_NAME,
-    isSketchAttributeRow,
+    isImageAttributeRow,
     dataAdapter,
     created
   );
@@ -50,39 +50,39 @@ export async function create(
  * Returns an attribute with a matching id.
  */
 export async function findById(
-  sketchId: string,
+  imageId: string,
   trx?: Knex.Transaction
-): Promise<SketchAttribute | null> {
-  const sketch: SketchAttributeRow | undefined = await db(TABLE_NAME)
+): Promise<ImageAttribute | null> {
+  const image: ImageAttributeRow | undefined = await db(TABLE_NAME)
     .select('*')
-    .where({ deleted_at: null, id: sketchId })
+    .where({ deleted_at: null, id: imageId })
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
       }
     })
-    .then((rows: SketchAttributeRow[]) => first(rows));
+    .then((rows: ImageAttributeRow[]) => first(rows));
 
-  if (!sketch) {
+  if (!image) {
     return null;
   }
 
-  return validate<SketchAttributeRow, SketchAttribute>(
+  return validate<ImageAttributeRow, ImageAttribute>(
     TABLE_NAME,
-    isSketchAttributeRow,
+    isImageAttributeRow,
     dataAdapter,
-    sketch
+    image
   );
 }
 
 /**
- * Find all sketch attributes by a list of node ids.
+ * Find all image attributes by a list of node ids.
  */
 export async function findAllByNodes(
   nodeIds: string[],
   trx?: Knex.Transaction
-): Promise<SketchAttributeWithAsset[]> {
-  const sketches: SketchAttributeWithAssetRow[] = await db(TABLE_NAME)
+): Promise<ImageAttributeWithAsset[]> {
+  const images: ImageAttributeWithAssetRow[] = await db(TABLE_NAME)
     .select('image_attributes.*', db.raw('row_to_json(assets.*) as asset'))
     .leftJoin('assets', 'assets.id', 'image_attributes.asset_id')
     .whereIn('image_attributes.node_id', nodeIds)
@@ -94,10 +94,10 @@ export async function findAllByNodes(
       }
     });
 
-  return validateEvery<SketchAttributeWithAssetRow, SketchAttributeWithAsset>(
+  return validateEvery<ImageAttributeWithAssetRow, ImageAttributeWithAsset>(
     TABLE_NAME,
-    isSketchAttributeWithAssetRow,
+    isImageAttributeWithAssetRow,
     dataAdapterWithAsset,
-    sketches
+    images
   );
 }

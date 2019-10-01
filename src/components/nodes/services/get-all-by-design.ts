@@ -1,13 +1,13 @@
 import Node from '../domain-objects';
 import MaterialAttribute from '../../attributes/material-attributes/domain-objects';
-import SketchAttribute from '../../attributes/sketch-attributes/domain-objects';
+import ImageAttribute from '../../attributes/image-attributes/domain-objects';
 import Asset from '../../assets/domain-object';
 import MaterialAttributeWithAsset from '../../attributes/material-attributes/domain-objects/with-asset';
-import SketchAttributeWithAsset from '../../attributes/sketch-attributes/domain-objects/with-asset';
+import ImageAttributeWithAsset from '../../attributes/image-attributes/domain-objects/with-asset';
 import { findNodeTrees, findRootNodesByDesign } from '../dao';
 import { findAllByNodes as findAllDimensions } from '../../attributes/dimension-attributes/dao';
 import { findAllByNodes as findAllMaterials } from '../../attributes/material-attributes/dao';
-import { findAllByNodes as findAllSketches } from '../../attributes/sketch-attributes/dao';
+import { findAllByNodes as findAllImages } from '../../attributes/image-attributes/dao';
 import {
   AssetLinks,
   getLinksForAsset
@@ -20,9 +20,9 @@ interface AssetWithLinks extends Asset {
 
 export interface NodeAttributes {
   artworks: never[];
-  materials: MaterialAttribute[];
-  sketches: SketchAttribute[];
   dimensions: DimensionAttribute[];
+  materials: MaterialAttribute[];
+  sketches: ImageAttribute[];
 }
 
 export interface NodeResources {
@@ -51,19 +51,19 @@ export async function getAllByDesign(designId: string): Promise<NodeResources> {
     }
   );
 
-  const sketches = await findAllSketches(allNodeIds);
-  const plainSketches: SketchAttribute[] = [];
-  const sketchAssets = sketches.map(
-    (sketchWithAsset: SketchAttributeWithAsset): Asset => {
-      const { asset, ...sketch } = sketchWithAsset;
-      plainSketches.push(sketch);
+  const images = await findAllImages(allNodeIds);
+  const plainImages: ImageAttribute[] = [];
+  const imageAssets = images.map(
+    (imageWithAsset: ImageAttributeWithAsset): Asset => {
+      const { asset, ...image } = imageWithAsset;
+      plainImages.push(image);
       return asset;
     }
   );
 
   const dimensions = await findAllDimensions(allNodeIds);
 
-  const assetSet = [...materialAssets, ...sketchAssets];
+  const assetSet = [...materialAssets, ...imageAssets];
   const assetsWithLinks = assetSet.map(
     (asset: Asset): AssetWithLinks => {
       return {
@@ -78,7 +78,7 @@ export async function getAllByDesign(designId: string): Promise<NodeResources> {
     attributes: {
       artworks: [],
       materials: plainMaterials,
-      sketches: plainSketches,
+      sketches: plainImages,
       dimensions
     },
     nodes: allNodes

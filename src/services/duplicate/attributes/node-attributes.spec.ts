@@ -8,11 +8,11 @@ import * as db from '../../../services/db';
 
 import * as DimensionsDAO from '../../../components/attributes/dimension-attributes/dao';
 import * as MaterialsDAO from '../../../components/attributes/material-attributes/dao';
-import * as SketchesDAO from '../../../components/attributes/sketch-attributes/dao';
+import * as SketchesDAO from '../../../components/attributes/image-attributes/dao';
 
 import * as DuplicateDimension from './dimension';
 import * as DuplicateMaterial from './material';
-import * as DuplicateSketch from './sketch';
+import * as DuplicateSketch from './image';
 import { staticDimensionAttribute } from '../../../test-helpers/factories/dimension-attribute';
 
 test('findAndDuplicateAttributesForNode() empty case', async (t: Test) => {

@@ -5,8 +5,8 @@ import { findById as findUserById } from '../../components/users/dao';
 import createUser = require('../create-user');
 import User from '../../components/users/domain-object';
 
-import { create } from '../../components/attributes/sketch-attributes/dao';
-import SketchAttribute from '../../components/attributes/sketch-attributes/domain-objects';
+import { create } from '../../components/attributes/image-attributes/dao';
+import ImageAttribute from '../../components/attributes/image-attributes/domain-objects';
 
 import Node from '../../components/nodes/domain-objects';
 import { findById as findNode } from '../../components/nodes/dao';
@@ -16,14 +16,14 @@ import Asset from '../../components/assets/domain-object';
 import { findById as findAsset } from '../../components/assets/dao';
 import generateAsset from './asset';
 
-export default async function generateSketchAttribute(
-  options: Partial<SketchAttribute> = {},
+export default async function generateImageAttribute(
+  options: Partial<ImageAttribute> = {},
   trx: Knex.Transaction
 ): Promise<{
   asset: Asset;
   createdBy: User;
   node: Node;
-  sketch: SketchAttribute;
+  image: ImageAttribute;
 }> {
   const { user }: { user: User | null } = options.createdBy
     ? { user: await findUserById(options.createdBy, trx) }
@@ -47,7 +47,7 @@ export default async function generateSketchAttribute(
     throw new Error('Could not get user.');
   }
 
-  const sketchData: SketchAttribute = {
+  const imageData: ImageAttribute = {
     assetId: asset.id,
     createdAt: new Date('2019-04-20'),
     createdBy: user.id,
@@ -60,12 +60,12 @@ export default async function generateSketchAttribute(
     y: 0,
     ...options
   };
-  const sketch = await create(sketchData, trx);
+  const image = await create(imageData, trx);
 
   return {
     asset,
     createdBy: user,
     node,
-    sketch
+    image
   };
 }

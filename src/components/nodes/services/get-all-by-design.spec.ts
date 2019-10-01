@@ -7,12 +7,12 @@ import { getAllByDesign } from './get-all-by-design';
 import * as NodesDAO from '../dao';
 import * as DimensionsDAO from '../../attributes/dimension-attributes/dao';
 import * as MaterialsDAO from '../../attributes/material-attributes/dao';
-import * as SketchesDAO from '../../attributes/sketch-attributes/dao';
+import * as ImagesDAO from '../../attributes/image-attributes/dao';
 import generateNode from '../../../test-helpers/factories/node';
 import * as db from '../../../services/db';
 import createUser = require('../../../test-helpers/create-user');
 import generateAsset from '../../../test-helpers/factories/asset';
-import SketchAttribute from '../../attributes/sketch-attributes/domain-objects';
+import ImageAttribute from '../../attributes/image-attributes/domain-objects';
 import * as Config from '../../../config';
 
 test('getAllByDesign can handle the empty case', async (t: tape.Test) => {
@@ -28,8 +28,8 @@ test('getAllByDesign can handle the empty case', async (t: tape.Test) => {
   const materialStub = sandbox()
     .stub(MaterialsDAO, 'findAllByNodes')
     .resolves([]);
-  const sketchStub = sandbox()
-    .stub(SketchesDAO, 'findAllByNodes')
+  const imageStub = sandbox()
+    .stub(ImagesDAO, 'findAllByNodes')
     .resolves([]);
 
   const result = await getAllByDesign('abc-123');
@@ -53,7 +53,7 @@ test('getAllByDesign can handle the empty case', async (t: tape.Test) => {
   t.equal(findRootStub.callCount, 1);
   t.equal(dimensionStub.callCount, 1);
   t.equal(materialStub.callCount, 1);
-  t.equal(sketchStub.callCount, 1);
+  t.equal(imageStub.callCount, 1);
 });
 
 test('getAllByDesign will fetch all resources necessary for phidias', async (t: tape.Test) => {
@@ -95,7 +95,7 @@ test('getAllByDesign will fetch all resources necessary for phidias', async (t: 
         { createdBy: user.id, ordering: 1, parentId: node1.id },
         trx
       );
-      const sketchData: SketchAttribute = {
+      const imageData: ImageAttribute = {
         createdAt: new Date(),
         createdBy: user.id,
         deletedAt: null,
@@ -107,14 +107,14 @@ test('getAllByDesign will fetch all resources necessary for phidias', async (t: 
         width: 1000,
         height: 1000
       };
-      const sketchData2: SketchAttribute = {
-        ...sketchData,
+      const imageData2: ImageAttribute = {
+        ...imageData,
         assetId: asset2.id,
         id: uuid.v4(),
         nodeId: node4.id
       };
-      const sketch1 = await SketchesDAO.create(sketchData, trx);
-      const sketch2 = await SketchesDAO.create(sketchData2, trx);
+      const image1 = await ImagesDAO.create(imageData, trx);
+      const image2 = await ImagesDAO.create(imageData2, trx);
       const dimension1 = await DimensionsDAO.create(
         {
           createdBy: user.id,
@@ -134,8 +134,8 @@ test('getAllByDesign will fetch all resources necessary for phidias', async (t: 
         node2,
         node3,
         node4,
-        sketch1,
-        sketch2
+        image1,
+        image2
       };
     }
   );
@@ -169,7 +169,7 @@ test('getAllByDesign will fetch all resources necessary for phidias', async (t: 
     artworks: [],
     dimensions: [data.dimension1],
     materials: [],
-    sketches: [data.sketch1, data.sketch2]
+    sketches: [data.image1, data.image2]
   });
   t.deepEqual(result.nodes, [data.node1, data.node3, data.node2, data.node4]);
 
