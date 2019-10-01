@@ -1,6 +1,6 @@
 import * as Knex from 'knex';
 import { omit } from 'lodash';
-import { constructNodeTree } from '@cala/ts-lib/dist/phidias';
+import { constructNodeTree, PhidiasNode } from '@cala/ts-lib/dist/phidias';
 
 import * as DesignsDAO from '../../../components/product-designs/dao';
 import createDesign from '../../create-design';
@@ -50,7 +50,7 @@ export default async function findAndDuplicateTemplateDesign(
   );
 
   // constructs a tree that's acyclic.
-  const { tree } = constructNodeTree(allNodes);
+  const { tree } = constructNodeTree(allNodes as PhidiasNode[]);
 
   for (const rootNode of rootNodes) {
     await findAndDuplicateNode({

@@ -8,6 +8,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
+    "preserveSymlinks": true,
     "strict": true,
     "strictNullChecks": true,
     "module": "commonjs",
