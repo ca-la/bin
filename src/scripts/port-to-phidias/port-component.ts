@@ -4,7 +4,7 @@ import { NodeRow } from '../../components/nodes/domain-objects';
 import { DimensionAttributeRow } from '../../components/attributes/dimension-attributes/domain-object';
 import { EnrichedComponent } from '.';
 import { getExtension } from '../../components/assets/services/get-extension';
-import { SketchAttributeRow } from '../../components/attributes/sketch-attributes/domain-objects';
+import { ImageAttributeRow } from '../../components/attributes/image-attributes/domain-objects';
 import { ACCEPTED_IMAGE_TYPES } from '@cala/ts-lib';
 
 const VECTOR_FILE_TYPES = ['svg'];
@@ -12,7 +12,7 @@ const VECTOR_FILE_TYPES = ['svg'];
 interface Created {
   dimensionAttribute: DimensionAttributeRow;
   dimensionAttributeForRoot: DimensionAttributeRow;
-  imageAttribute: SketchAttributeRow;
+  imageAttribute: ImageAttributeRow;
   node: NodeRow;
 }
 
@@ -61,7 +61,7 @@ export default function portComponent(
     type: isVector ? 'VECTOR' : 'IMAGE'
   };
 
-  const imageAttribute: SketchAttributeRow = {
+  const imageAttribute: ImageAttributeRow = {
     id: uuid.v4(),
     created_at: component.created_at,
     created_by: component.created_by,

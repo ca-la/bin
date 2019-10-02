@@ -13,7 +13,7 @@ import { ComponentRow } from '../../components/components/domain-object';
 import { AssetRow } from '../../components/assets/domain-object';
 import { DimensionAttributeRow } from '../../components/attributes/dimension-attributes/domain-object';
 import portComponent from './port-component';
-import { SketchAttributeRow } from '../../components/attributes/sketch-attributes/domain-objects';
+import { ImageAttributeRow } from '../../components/attributes/image-attributes/domain-objects';
 
 export type EnrichedComponent = ComponentRow & {
   canvas_id: string;
@@ -42,7 +42,7 @@ async function portToPhidias(): Promise<void> {
   return db.transaction(async (trx: Knex.Transaction) => {
     log('Removing all existing nodes');
     await trx.raw(`
-TRUNCATE TABLE dimension_attributes CASCADE;
+TRUNCATE TABLE layout_attributes CASCADE;
 TRUNCATE TABLE material_attributes CASCADE;
 TRUNCATE TABLE image_attributes CASCADE;
 TRUNCATE TABLE design_root_nodes CASCADE;
@@ -135,7 +135,7 @@ async function portComponents(
   trx: Knex.Transaction
 ): Promise<void> {
   const nodeInsertions: NodeRow[] = [];
-  const imageInsertions: SketchAttributeRow[] = [];
+  const imageInsertions: ImageAttributeRow[] = [];
   const dimensionInsertions: DimensionAttributeRow[] = [];
 
   for (const component of components) {
@@ -162,11 +162,9 @@ async function portComponents(
     await trx('image_attributes').insert(c);
   }
 
-  log(
-    `Preparing ${dimensionInsertions.length} DimensionAttributes for insertion`
-  );
+  log(`Preparing ${dimensionInsertions.length} LayoutAttributes for insertion`);
   for (const c of chunk(dimensionInsertions, 1000)) {
-    log(`Creating ${c.length} DimensionAttributes`);
-    await trx('dimension_attributes').insert(c);
+    log(`Creating ${c.length} LayoutAttributes`);
+    await trx('layout_attributes').insert(c);
   }
 }
