@@ -4,13 +4,13 @@ import { omit } from 'lodash';
 
 import { sandbox, test, Test } from '../../../test-helpers/fresh';
 import * as db from '../../../services/db';
-import findAndDuplicateDimension from './dimension';
-import generateDimensionAttribute from '../../../test-helpers/factories/dimension-attribute';
+import findAndDuplicateLayout from './layout';
+import generateLayoutAttribute from '../../../test-helpers/factories/layout-attribute';
 import createUser = require('../../../test-helpers/create-user');
 import generateNode from '../../../test-helpers/factories/node';
-import * as DimensionsDAO from '../../../components/attributes/dimension-attributes/dao';
+import * as LayoutsDAO from '../../../components/attributes/layout-attributes/dao';
 
-test('findAndDuplicateDimension() failure case', async (t: Test) => {
+test('findAndDuplicateLayout() failure case', async (t: Test) => {
   const d1 = uuid.v4();
   const userId = uuid.v4();
   const nodeId = uuid.v4();
@@ -18,22 +18,22 @@ test('findAndDuplicateDimension() failure case', async (t: Test) => {
   await db.transaction(
     async (trx: Knex.Transaction): Promise<void> => {
       try {
-        await findAndDuplicateDimension({
-          currentDimensionId: d1,
+        await findAndDuplicateLayout({
+          currentLayoutId: d1,
           newCreatorId: userId,
           newNodeId: nodeId,
           trx
         });
         t.fail('Should not get here.');
       } catch (error) {
-        t.equal(error.message, `Dimension attribute ${d1} not found.`);
+        t.equal(error.message, `Layout attribute ${d1} not found.`);
       }
     }
   );
 });
 
-test('findAndDuplicateDimension() standard case', async (t: Test) => {
-  const findStub = sandbox().spy(DimensionsDAO, 'findById');
+test('findAndDuplicateLayout() standard case', async (t: Test) => {
+  const findStub = sandbox().spy(LayoutsDAO, 'findById');
   const { user: newUser } = await createUser({ withSession: false });
   const d1 = uuid.v4();
   const n2 = uuid.v4();
@@ -41,22 +41,22 @@ test('findAndDuplicateDimension() standard case', async (t: Test) => {
   await db.transaction(
     async (trx: Knex.Transaction): Promise<void> => {
       await generateNode({ id: n2 }, trx);
-      const { dimension } = await generateDimensionAttribute({ id: d1 }, trx);
+      const { layout } = await generateLayoutAttribute({ id: d1 }, trx);
 
-      const result = await findAndDuplicateDimension({
-        currentDimensionId: d1,
+      const result = await findAndDuplicateLayout({
+        currentLayoutId: d1,
         newCreatorId: newUser.id,
         newNodeId: n2,
         trx
       });
 
-      t.notEqual(result.id, dimension.id);
-      t.notEqual(result.createdAt, dimension.createdAt);
+      t.notEqual(result.id, layout.id);
+      t.notEqual(result.createdAt, layout.createdAt);
       t.deepEqual(
         omit(result, 'id', 'createdAt'),
         omit(
           {
-            ...dimension,
+            ...layout,
             nodeId: n2,
             createdBy: newUser.id
           },
@@ -70,8 +70,8 @@ test('findAndDuplicateDimension() standard case', async (t: Test) => {
   );
 });
 
-test('findAndDuplicateDimension() with a dimension object passed in', async (t: Test) => {
-  const findStub = sandbox().spy(DimensionsDAO, 'findById');
+test('findAndDuplicateLayout() with a layout object passed in', async (t: Test) => {
+  const findStub = sandbox().spy(LayoutsDAO, 'findById');
   const { user: newUser } = await createUser({ withSession: false });
   const d1 = uuid.v4();
   const n2 = uuid.v4();
@@ -79,23 +79,23 @@ test('findAndDuplicateDimension() with a dimension object passed in', async (t: 
   await db.transaction(
     async (trx: Knex.Transaction): Promise<void> => {
       await generateNode({ id: n2 }, trx);
-      const { dimension } = await generateDimensionAttribute({ id: d1 }, trx);
+      const { layout } = await generateLayoutAttribute({ id: d1 }, trx);
 
-      const result = await findAndDuplicateDimension({
-        currentDimension: dimension,
-        currentDimensionId: d1,
+      const result = await findAndDuplicateLayout({
+        currentLayout: layout,
+        currentLayoutId: d1,
         newCreatorId: newUser.id,
         newNodeId: n2,
         trx
       });
 
-      t.notEqual(result.id, dimension.id);
-      t.notEqual(result.createdAt, dimension.createdAt);
+      t.notEqual(result.id, layout.id);
+      t.notEqual(result.createdAt, layout.createdAt);
       t.deepEqual(
         omit(result, 'id', 'createdAt'),
         omit(
           {
-            ...dimension,
+            ...layout,
             nodeId: n2,
             createdBy: newUser.id
           },

@@ -5,7 +5,7 @@ import * as uuid from 'node-uuid';
 import { sandbox, test } from '../../../test-helpers/fresh';
 import { getAllByDesign } from './get-all-by-design';
 import * as NodesDAO from '../dao';
-import * as DimensionsDAO from '../../attributes/dimension-attributes/dao';
+import * as LayoutsDAO from '../../attributes/layout-attributes/dao';
 import * as MaterialsDAO from '../../attributes/material-attributes/dao';
 import * as ImagesDAO from '../../attributes/image-attributes/dao';
 import generateNode from '../../../test-helpers/factories/node';
@@ -23,7 +23,7 @@ test('getAllByDesign can handle the empty case', async (t: tape.Test) => {
     .stub(NodesDAO, 'findRootNodesByDesign')
     .resolves([]);
   const dimensionStub = sandbox()
-    .stub(DimensionsDAO, 'findAllByNodes')
+    .stub(LayoutsDAO, 'findAllByNodes')
     .resolves([]);
   const materialStub = sandbox()
     .stub(MaterialsDAO, 'findAllByNodes')
@@ -115,7 +115,7 @@ test('getAllByDesign will fetch all resources necessary for phidias', async (t: 
       };
       const image1 = await ImagesDAO.create(imageData, trx);
       const image2 = await ImagesDAO.create(imageData2, trx);
-      const dimension1 = await DimensionsDAO.create(
+      const dimension1 = await LayoutsDAO.create(
         {
           createdBy: user.id,
           id: uuid.v4(),

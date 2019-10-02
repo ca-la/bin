@@ -5,7 +5,7 @@ import { sandbox, test, Test } from '../../../test-helpers/fresh';
 import { authHeader, put } from '../../../test-helpers/http';
 import * as NodesDAO from '../../nodes/dao';
 import * as AssetsDAO from '../../assets/dao';
-import * as DimensionsDAO from '../../attributes/dimension-attributes/dao';
+import * as LayoutsDAO from '../../attributes/layout-attributes/dao';
 import createUser = require('../../../test-helpers/create-user');
 import createDesign from '../../../services/create-design';
 
@@ -127,7 +127,7 @@ test('updateAllNodes returns an error if any of the updates fail', async (t: Tes
   const { admin, asset, design, dimension, node } = await generateAllData();
 
   sandbox()
-    .stub(DimensionsDAO, 'updateOrCreate')
+    .stub(LayoutsDAO, 'updateOrCreate')
     .rejects(new ERRORS.InvalidTextRepresentation());
   sandbox()
     .stub(AssetsDAO, 'updateOrCreate')

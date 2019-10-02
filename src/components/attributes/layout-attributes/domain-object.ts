@@ -1,17 +1,11 @@
-import DataAdapter from '../../../services/data-adapter';
 import { hasProperties } from '@cala/ts-lib';
+import { PhidiasLayout as LayoutAttribute } from '@cala/ts-lib/dist/phidias';
 
-export default interface DimensionAttribute {
-  createdAt: Date;
-  createdBy: string;
-  deletedAt: Date | null;
-  id: string;
-  height: number;
-  nodeId: string;
-  width: number;
-}
+import DataAdapter from '../../../services/data-adapter';
 
-export interface DimensionAttributeRow {
+export default LayoutAttribute;
+
+export interface LayoutAttributeRow {
   created_at: string;
   created_by: string;
   deleted_at: string | null;
@@ -21,7 +15,7 @@ export interface DimensionAttributeRow {
   width: string;
 }
 
-export function encode(row: DimensionAttributeRow): DimensionAttribute {
+export function encode(row: LayoutAttributeRow): LayoutAttribute {
   return {
     createdAt: new Date(row.created_at),
     createdBy: row.created_by,
@@ -33,7 +27,7 @@ export function encode(row: DimensionAttributeRow): DimensionAttribute {
   };
 }
 
-export function decode(data: DimensionAttribute): DimensionAttributeRow {
+export function decode(data: LayoutAttribute): LayoutAttributeRow {
   return {
     created_at: data.createdAt.toISOString(),
     created_by: data.createdBy,
@@ -45,12 +39,12 @@ export function decode(data: DimensionAttribute): DimensionAttributeRow {
   };
 }
 
-export const dataAdapter = new DataAdapter<
-  DimensionAttributeRow,
-  DimensionAttribute
->(encode, decode);
+export const dataAdapter = new DataAdapter<LayoutAttributeRow, LayoutAttribute>(
+  encode,
+  decode
+);
 
-export function isDimensionAttribute(obj: object): obj is DimensionAttribute {
+export function isLayoutAttribute(obj: object): obj is LayoutAttribute {
   return hasProperties(
     obj,
     'createdAt',
@@ -63,9 +57,7 @@ export function isDimensionAttribute(obj: object): obj is DimensionAttribute {
   );
 }
 
-export function isDimensionAttributeRow(
-  row: object
-): row is DimensionAttributeRow {
+export function isLayoutAttributeRow(row: object): row is LayoutAttributeRow {
   return hasProperties(
     row,
     'created_at',

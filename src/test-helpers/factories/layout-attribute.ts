@@ -5,19 +5,19 @@ import { findById as findUserById } from '../../components/users/dao';
 import createUser = require('../create-user');
 import User from '../../components/users/domain-object';
 
-import { create } from '../../components/attributes/dimension-attributes/dao';
-import DimensionAttribute from '../../components/attributes/dimension-attributes/domain-object';
+import { create } from '../../components/attributes/layout-attributes/dao';
+import LayoutAttribute from '../../components/attributes/layout-attributes/domain-object';
 
 import Node from '../../components/nodes/domain-objects';
 import { findById as findNode } from '../../components/nodes/dao';
 import generateNode from './node';
 
-export default async function generateDimensionAttribute(
-  options: Partial<DimensionAttribute> = {},
+export default async function generateLayoutAttribute(
+  options: Partial<LayoutAttribute> = {},
   trx: Knex.Transaction
 ): Promise<{
   createdBy: User;
-  dimension: DimensionAttribute;
+  layout: LayoutAttribute;
   node: Node;
 }> {
   const { user }: { user: User | null } = options.createdBy
@@ -35,8 +35,8 @@ export default async function generateDimensionAttribute(
     throw new Error('Could not get user.');
   }
 
-  const dimension = await create(
-    staticDimensionAttribute({
+  const layout = await create(
+    staticLayoutAttribute({
       createdBy: user.id,
       nodeId: node.id,
       ...options
@@ -46,7 +46,7 @@ export default async function generateDimensionAttribute(
 
   return {
     createdBy: user,
-    dimension,
+    layout,
     node
   };
 }
@@ -54,9 +54,9 @@ export default async function generateDimensionAttribute(
 /**
  * Creates an in-memory instance of a dimension attribute.
  */
-export function staticDimensionAttribute(
-  options?: Partial<DimensionAttribute>
-): DimensionAttribute {
+export function staticLayoutAttribute(
+  options?: Partial<LayoutAttribute>
+): LayoutAttribute {
   return {
     createdAt: new Date('2019-04-20'),
     createdBy: uuid.v4(),

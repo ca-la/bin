@@ -4,7 +4,7 @@ import * as Koa from 'koa';
 
 import { updateOrCreate as updateOrCreateNode } from '../../nodes/dao';
 import { updateOrCreate as updateOrCreateAsset } from '../../assets/dao';
-import { updateOrCreate as updateOrCreateDimension } from '../../attributes/dimension-attributes/dao';
+import { updateOrCreate as updateOrCreateLayout } from '../../attributes/layout-attributes/dao';
 import * as db from '../../../services/db';
 import toDateOrNull from '../../../services/to-date';
 
@@ -25,7 +25,7 @@ function* updateAllNodes(
   const updated = yield db.transaction(async (trx: Knex.Transaction) => {
     const { nodes, assets, attributes } = design;
     const newNodes = [];
-    const newDimensions = [];
+    const newLayouts = [];
     const newAssets = [];
 
     for (const node of nodes) {
@@ -39,17 +39,14 @@ function* updateAllNodes(
       newNodes.push(newNode);
     }
 
-    for (const dimension of attributes.dimensions) {
-      const updateableDimension = {
-        ...dimension,
-        createdAt: new Date(dimension.createdAt),
-        deletedAt: toDateOrNull(dimension.deletedAt)
+    for (const layout of attributes.dimensions) {
+      const updateableLayout = {
+        ...layout,
+        createdAt: new Date(layout.createdAt),
+        deletedAt: toDateOrNull(layout.deletedAt)
       };
-      const newDimension = await updateOrCreateDimension(
-        updateableDimension,
-        trx
-      );
-      newDimensions.push(newDimension);
+      const newLayout = await updateOrCreateLayout(updateableLayout, trx);
+      newLayouts.push(newLayout);
     }
 
     for (const asset of assets) {
@@ -66,7 +63,7 @@ function* updateAllNodes(
       assets: newAssets,
       attributes: {
         ...attributes,
-        dimensions: newDimensions
+        dimensions: newLayouts
       },
       nodes: newNodes
     };

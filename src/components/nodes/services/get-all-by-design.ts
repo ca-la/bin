@@ -5,14 +5,14 @@ import Asset from '../../assets/domain-object';
 import MaterialAttributeWithAsset from '../../attributes/material-attributes/domain-objects/with-asset';
 import ImageAttributeWithAsset from '../../attributes/image-attributes/domain-objects/with-asset';
 import { findNodeTrees, findRootNodesByDesign } from '../dao';
-import { findAllByNodes as findAllDimensions } from '../../attributes/dimension-attributes/dao';
+import { findAllByNodes as findAllLayouts } from '../../attributes/layout-attributes/dao';
 import { findAllByNodes as findAllMaterials } from '../../attributes/material-attributes/dao';
 import { findAllByNodes as findAllImages } from '../../attributes/image-attributes/dao';
 import {
   AssetLinks,
   getLinksForAsset
 } from '../../../services/attach-asset-links';
-import DimensionAttribute from '../../attributes/dimension-attributes/domain-object';
+import LayoutAttribute from '../../attributes/layout-attributes/domain-object';
 
 interface AssetWithLinks extends Asset {
   assetLinks: AssetLinks | null;
@@ -20,7 +20,7 @@ interface AssetWithLinks extends Asset {
 
 export interface NodeAttributes {
   artworks: never[];
-  dimensions: DimensionAttribute[];
+  dimensions: LayoutAttribute[];
   materials: MaterialAttribute[];
   sketches: ImageAttribute[];
 }
@@ -61,7 +61,7 @@ export async function getAllByDesign(designId: string): Promise<NodeResources> {
     }
   );
 
-  const dimensions = await findAllDimensions(allNodeIds);
+  const layouts = await findAllLayouts(allNodeIds);
 
   const assetSet = [...materialAssets, ...imageAssets];
   const assetsWithLinks = assetSet.map(
@@ -79,7 +79,7 @@ export async function getAllByDesign(designId: string): Promise<NodeResources> {
       artworks: [],
       materials: plainMaterials,
       sketches: plainImages,
-      dimensions
+      dimensions: layouts
     },
     nodes: allNodes
   };

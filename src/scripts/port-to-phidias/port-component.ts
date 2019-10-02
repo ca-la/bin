@@ -1,7 +1,7 @@
 import * as uuid from 'node-uuid';
 
 import { NodeRow } from '../../components/nodes/domain-objects';
-import { DimensionAttributeRow } from '../../components/attributes/dimension-attributes/domain-object';
+import { LayoutAttributeRow } from '../../components/attributes/layout-attributes/domain-object';
 import { EnrichedComponent } from '.';
 import { getExtension } from '../../components/assets/services/get-extension';
 import { ImageAttributeRow } from '../../components/attributes/image-attributes/domain-objects';
@@ -10,8 +10,8 @@ import { ACCEPTED_IMAGE_TYPES } from '@cala/ts-lib';
 const VECTOR_FILE_TYPES = ['svg'];
 
 interface Created {
-  dimensionAttribute: DimensionAttributeRow;
-  dimensionAttributeForRoot: DimensionAttributeRow;
+  layoutAttribute: LayoutAttributeRow;
+  layoutAttributeForRoot: LayoutAttributeRow;
   imageAttribute: ImageAttributeRow;
   node: NodeRow;
 }
@@ -73,7 +73,7 @@ export default function portComponent(
     width: currentAsset.original_width_px,
     height: currentAsset.original_height_px
   };
-  const dimensionAttribute: DimensionAttributeRow = {
+  const layoutAttribute: LayoutAttributeRow = {
     id: uuid.v4(),
     created_at: component.created_at,
     created_by: component.created_by,
@@ -83,7 +83,7 @@ export default function portComponent(
     height: currentAsset.original_height_px
   };
   // The "Frame" for the root node (AKA the ported canvas).
-  const dimensionAttributeForRoot: DimensionAttributeRow = {
+  const layoutAttributeForRoot: LayoutAttributeRow = {
     id: uuid.v4(),
     created_at: component.created_at,
     created_by: component.created_by,
@@ -94,8 +94,8 @@ export default function portComponent(
   };
 
   return {
-    dimensionAttribute,
-    dimensionAttributeForRoot,
+    layoutAttribute,
+    layoutAttributeForRoot,
     imageAttribute,
     node
   };

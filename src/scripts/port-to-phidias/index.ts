@@ -11,7 +11,7 @@ import { NodeRow } from '../../components/nodes/domain-objects';
 import { DesignRootNodeRow } from '../../components/nodes/domain-objects/design-root';
 import { ComponentRow } from '../../components/components/domain-object';
 import { AssetRow } from '../../components/assets/domain-object';
-import { DimensionAttributeRow } from '../../components/attributes/dimension-attributes/domain-object';
+import { LayoutAttributeRow } from '../../components/attributes/layout-attributes/domain-object';
 import portComponent from './port-component';
 import { ImageAttributeRow } from '../../components/attributes/image-attributes/domain-objects';
 
@@ -136,16 +136,16 @@ async function portComponents(
 ): Promise<void> {
   const nodeInsertions: NodeRow[] = [];
   const imageInsertions: ImageAttributeRow[] = [];
-  const dimensionInsertions: DimensionAttributeRow[] = [];
+  const layoutInsertions: LayoutAttributeRow[] = [];
 
   for (const component of components) {
     const bundle = portComponent(component);
     if (bundle) {
       nodeInsertions.push(bundle.node);
       imageInsertions.push(bundle.imageAttribute);
-      dimensionInsertions.push(
-        bundle.dimensionAttributeForRoot,
-        bundle.dimensionAttribute
+      layoutInsertions.push(
+        bundle.layoutAttributeForRoot,
+        bundle.layoutAttribute
       );
     }
   }
@@ -162,8 +162,8 @@ async function portComponents(
     await trx('image_attributes').insert(c);
   }
 
-  log(`Preparing ${dimensionInsertions.length} LayoutAttributes for insertion`);
-  for (const c of chunk(dimensionInsertions, 1000)) {
+  log(`Preparing ${layoutInsertions.length} LayoutAttributes for insertion`);
+  for (const c of chunk(layoutInsertions, 1000)) {
     log(`Creating ${c.length} LayoutAttributes`);
     await trx('layout_attributes').insert(c);
   }

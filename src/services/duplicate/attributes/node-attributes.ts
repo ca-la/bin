@@ -2,13 +2,13 @@ import * as Knex from 'knex';
 import { omit } from 'lodash';
 import { NodeAttributes } from '../../../components/nodes/services/get-all-by-design';
 
-import { findAllByNodes as findAllDimensions } from '../../../components/attributes/dimension-attributes/dao';
+import { findAllByNodes as findAllLayouts } from '../../../components/attributes/layout-attributes/dao';
 import { findAllByNodes as findAllMaterials } from '../../../components/attributes/material-attributes/dao';
 import { findAllByNodes as findAllImages } from '../../../components/attributes/image-attributes/dao';
-import findAndDuplicateDimension from './dimension';
+import findAndDuplicateLayout from './layout';
 import findAndDuplicateMaterial from './material';
 import findAndDuplicateImage from './image';
-import DimensionAttribute from '../../../components/attributes/dimension-attributes/domain-object';
+import LayoutAttribute from '../../../components/attributes/layout-attributes/domain-object';
 import MaterialAttribute from '../../../components/attributes/material-attributes/domain-objects';
 import ImageAttribute from '../../../components/attributes/image-attributes/domain-objects';
 
@@ -23,23 +23,23 @@ export default async function findAndDuplicateAttributesForNode(options: {
 }): Promise<NodeAttributes> {
   const { currentNodeId, newCreatorId, newNodeId, trx } = options;
 
-  const dimensions = await findAllDimensions([currentNodeId], trx);
+  const layouts = await findAllLayouts([currentNodeId], trx);
   const materials = await findAllMaterials([currentNodeId], trx);
   const images = await findAllImages([currentNodeId], trx);
 
-  const duplicateDimensions: DimensionAttribute[] = [];
+  const duplicateLayouts: LayoutAttribute[] = [];
   const duplicateMaterials: MaterialAttribute[] = [];
   const duplicateImages: ImageAttribute[] = [];
 
-  for (const dimension of dimensions) {
-    const duplicateDimension = await findAndDuplicateDimension({
-      currentDimension: dimension,
-      currentDimensionId: dimension.id,
+  for (const layout of layouts) {
+    const duplicateLayout = await findAndDuplicateLayout({
+      currentLayout: layout,
+      currentLayoutId: layout.id,
       newCreatorId,
       newNodeId,
       trx
     });
-    duplicateDimensions.push(duplicateDimension);
+    duplicateLayouts.push(duplicateLayout);
   }
 
   for (const material of materials) {
@@ -66,7 +66,7 @@ export default async function findAndDuplicateAttributesForNode(options: {
 
   return {
     artworks: [],
-    dimensions: duplicateDimensions,
+    dimensions: duplicateLayouts,
     materials: duplicateMaterials,
     sketches: duplicateImages
   };
