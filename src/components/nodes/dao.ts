@@ -18,12 +18,18 @@ export async function create(
   trx: Knex.Transaction
 ): Promise<Node> {
   const rowData = dataAdapter.forInsertion({
-    id: uuid.v4(),
-    ...node,
-    deletedAt: null
+    id: node.id || uuid.v4(),
+    createdBy: node.createdBy,
+    deletedAt: null,
+    parentId: node.parentId,
+    x: node.x,
+    y: node.y,
+    ordering: node.ordering,
+    title: node.title,
+    type: node.type
   });
   const created = await db(NODES_TABLE)
-    .insert(rowData, '*')
+    .insert({ ...rowData, created_at: new Date() }, '*')
     .modify((query: Knex.QueryBuilder) => query.transacting(trx))
     .then((rows: NodeRow[]) => first<NodeRow>(rows));
 

@@ -30,7 +30,7 @@ async function generateAllData() {
     mimeType: 'image/jpeg',
     originalHeightPx: 0,
     originalWidthPx: 0,
-    title: null,
+    title: '',
     uploadCompletedAt: null,
     userId: admin.user.id
   };
@@ -45,7 +45,6 @@ async function generateAllData() {
   };
   const node = {
     id: nodeId,
-    createdAt: new Date('2019-04-20'),
     createdBy: admin.user.id,
     deletedAt: null,
     parentId: null,
@@ -104,7 +103,9 @@ test('updateAllNodes updates all nodes', async (t: Test) => {
         materials: [],
         sketches: []
       },
-      nodes: [{ ...node, createdAt: node.createdAt.toISOString(), type: null }]
+      nodes: [
+        { ...node, createdAt: responseBody.nodes[0].createdAt, type: null }
+      ]
     },
     'body matches expected shape'
   );

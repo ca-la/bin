@@ -22,9 +22,9 @@ test('isSerializedAsset can determine if an object is an asset', async (t: tape.
     mimeType: 'image/jpeg',
     originalHeightPx: 0,
     originalWidthPx: 0,
-    title: null,
+    title: '',
     uploadCompletedAt: null,
-    userId: null
+    userId: ''
   };
   const serialized = JSON.parse(JSON.stringify(payload));
   t.true(isSerializedAsset(serialized));
@@ -38,9 +38,9 @@ test('deserializeAsset can deserialize an object', async (t: tape.Test) => {
     mimeType: 'image/jpeg',
     originalHeightPx: 0,
     originalWidthPx: 0,
-    title: null,
+    title: '',
     uploadCompletedAt: null,
-    userId: null
+    userId: ''
   };
   const serialized = JSON.parse(JSON.stringify(payload));
   t.deepEqual(deserializeAsset(serialized), payload);

@@ -1,3 +1,16 @@
+import { groupBy } from 'lodash';
+import {
+  PhidiasImage,
+  PhidiasLayout,
+  PhidiasNode
+} from '@cala/ts-lib/dist/phidias';
+import {
+  DEPRECATED_NullNode,
+  FrameNode,
+  ImageNode,
+  VectorNode
+} from '@cala/ts-lib/dist/phidias/node';
+
 import Node from '../domain-objects';
 import MaterialAttribute from '../../attributes/material-attributes/domain-objects';
 import ImageAttribute from '../../attributes/image-attributes/domain-objects';
@@ -5,9 +18,10 @@ import Asset from '../../assets/domain-object';
 import MaterialAttributeWithAsset from '../../attributes/material-attributes/domain-objects/with-asset';
 import ImageAttributeWithAsset from '../../attributes/image-attributes/domain-objects/with-asset';
 import { findNodeTrees, findRootNodesByDesign } from '../dao';
-import { findAllByNodes as findAllLayouts } from '../../attributes/layout-attributes/dao';
 import { findAllByNodes as findAllMaterials } from '../../attributes/material-attributes/dao';
+import { findAllByNodes as findAllLayouts } from '../../attributes/layout-attributes/dao';
 import { findAllByNodes as findAllImages } from '../../attributes/image-attributes/dao';
+
 import {
   AssetLinks,
   getLinksForAsset
@@ -83,4 +97,94 @@ export async function getAllByDesign(designId: string): Promise<NodeResources> {
     },
     nodes: allNodes
   };
+}
+
+function isIntermediateNullNode(node: Node): node is DEPRECATED_NullNode {
+  return node.type === null;
+}
+
+function isIntermediateFrameNode(
+  node: Node
+): node is Omit<FrameNode, 'layout'> {
+  return node.type === 'FRAME';
+}
+
+function isIntermediateImageNode(
+  node: Node
+): node is Omit<ImageNode, 'layout' | 'image'> {
+  return node.type === 'IMAGE';
+}
+
+function isIntermediateVectorNode(
+  node: Node
+): node is Omit<VectorNode, 'layout' | 'image'> {
+  return node.type === 'VECTOR';
+}
+
+interface NodeAttributeMap {
+  [nodeId: string]: {
+    layout: PhidiasLayout | null;
+    image: PhidiasImage | null;
+  };
+}
+
+function denormalizeNode(
+  context: NodeAttributeMap
+): (node: Node) => PhidiasNode {
+  return (node: Node): PhidiasNode => {
+    const { layout, image } = context[node.id];
+    if (isIntermediateNullNode(node)) {
+      return node;
+    }
+    if (isIntermediateFrameNode(node) && layout) {
+      return {
+        ...node,
+        layout
+      };
+    }
+    if (
+      (isIntermediateImageNode(node) || isIntermediateVectorNode(node)) &&
+      layout &&
+      image
+    ) {
+      return {
+        ...node,
+        layout,
+        image
+      };
+    }
+
+    throw new TypeError(
+      'Node type is unknown, or required attributes are missing'
+    );
+  };
+}
+
+export async function getAllByDesignInclude(
+  designId: string
+): Promise<PhidiasNode[]> {
+  const rootNodes = await findRootNodesByDesign(designId);
+  const allNodes = await findNodeTrees(
+    rootNodes.map((rootNode: Node): string => rootNode.id)
+  );
+  const allNodeIds = allNodes.map((node: Node): string => node.id);
+
+  const images = groupBy(await findAllImages(allNodeIds), 'nodeId');
+  const layouts = groupBy(await findAllLayouts(allNodeIds), 'nodeId');
+  const nodeAttributeMap: NodeAttributeMap = allNodes.reduce(
+    (acc: NodeAttributeMap, node: Node): NodeAttributeMap => {
+      const imagesForNode = images[node.id];
+      const layoutsForNode = layouts[node.id];
+      return {
+        ...acc,
+        [node.id]: {
+          layout: layoutsForNode ? layoutsForNode[0] : null,
+          image: imagesForNode ? imagesForNode[0] : null
+        }
+      };
+    },
+    {}
+  );
+
+  return allNodes.map(denormalizeNode(nodeAttributeMap));
 }

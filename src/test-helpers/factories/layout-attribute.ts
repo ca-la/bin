@@ -55,7 +55,7 @@ export default async function generateLayoutAttribute(
  * Creates an in-memory instance of a dimension attribute.
  */
 export function staticLayoutAttribute(
-  options?: Partial<LayoutAttribute>
+  options: Partial<LayoutAttribute> = {}
 ): LayoutAttribute {
   return {
     createdAt: new Date('2019-04-20'),

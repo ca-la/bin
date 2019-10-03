@@ -1,13 +1,16 @@
 import * as uuid from 'node-uuid';
 import * as Knex from 'knex';
 
-import { Test, test } from '../../test-helpers/fresh';
+import { sandbox, Test, test } from '../../test-helpers/fresh';
 import * as NodesDAO from './dao';
 import createUser = require('../../test-helpers/create-user');
 import * as db from '../../services/db';
 import createDesign from '../../services/create-design';
 
+const testDate = new Date(2019, 3, 20);
+
 test('NodesDAO supports creation and retrieval', async (t: Test) => {
+  sandbox().useFakeTimers(testDate);
   const { user } = await createUser({ withSession: false });
   const design = await createDesign({
     productType: 'TEESHIRT',
@@ -20,7 +23,7 @@ test('NodesDAO supports creation and retrieval', async (t: Test) => {
   const id3 = uuid.v4();
   const node1Data = {
     id: id1,
-    createdAt: new Date('2019-04-20'),
+    createdAt: testDate,
     createdBy: user.id,
     deletedAt: null,
     parentId: null,
@@ -32,7 +35,7 @@ test('NodesDAO supports creation and retrieval', async (t: Test) => {
   };
   const node2Data = {
     id: id2,
-    createdAt: new Date('2019-04-20'),
+    createdAt: testDate,
     createdBy: user.id,
     deletedAt: null,
     parentId: node1Data.id,
@@ -44,7 +47,7 @@ test('NodesDAO supports creation and retrieval', async (t: Test) => {
   };
   const node3Data = {
     id: id3,
-    createdAt: new Date('2019-04-20'),
+    createdAt: testDate,
     createdBy: user.id,
     deletedAt: null,
     parentId: null,
@@ -73,6 +76,7 @@ test('NodesDAO supports creation and retrieval', async (t: Test) => {
 });
 
 test('NodesDAO supports returning a tree association as a list', async (t: Test) => {
+  sandbox().useFakeTimers(testDate);
   const { user } = await createUser({ withSession: false });
   const design = await createDesign({
     productType: 'TEESHIRT',
@@ -81,7 +85,7 @@ test('NodesDAO supports returning a tree association as a list', async (t: Test)
   });
 
   const baseData = {
-    createdAt: new Date('2019-04-20'),
+    createdAt: testDate,
     createdBy: user.id,
     deletedAt: null,
     title: null,

@@ -1,3 +1,4 @@
+import { Asset } from '@cala/ts-lib/dist/assets';
 import DataAdapter from '../../services/data-adapter';
 import {
   hasProperties,
@@ -12,17 +13,7 @@ import {
  * - Pull out `original_height_px` and `original_width_px` into an Image Metadata table.
  */
 
-export default interface Asset {
-  createdAt: Date;
-  description: string | null;
-  id: string;
-  mimeType: string;
-  originalHeightPx: number;
-  originalWidthPx: number;
-  title: string | null;
-  uploadCompletedAt: Date | null;
-  userId: string | null;
-}
+export default Asset;
 
 export interface AssetRow {
   created_at: string;

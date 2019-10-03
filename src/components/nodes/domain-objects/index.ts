@@ -1,7 +1,6 @@
-import DataAdapter from '../../../services/data-adapter';
+import { NodeType } from '@cala/ts-lib/dist/phidias';
 import { hasProperties } from '@cala/ts-lib';
-
-export type NodeType = 'FRAME' | 'IMAGE' | 'VECTOR';
+import DataAdapter from '../../../services/data-adapter';
 
 export default interface Node {
   id: string;

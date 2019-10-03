@@ -41,7 +41,7 @@ export function staticAsset(options?: Partial<Asset>): Asset {
     mimeType: 'image/jpeg',
     originalHeightPx: 0,
     originalWidthPx: 0,
-    title: null,
+    title: '',
     uploadCompletedAt: new Date(),
     userId: uuid.v4(),
     ...options

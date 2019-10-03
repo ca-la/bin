@@ -1,7 +1,7 @@
 import * as uuid from 'node-uuid';
 import * as Knex from 'knex';
 
-import { create } from '../../components/nodes/dao';
+import { create, createDesignRoot } from '../../components/nodes/dao';
 import { findById as findUserById } from '../../components/users/dao';
 import createUser = require('../create-user');
 import User from '../../components/users/domain-object';
@@ -9,7 +9,8 @@ import Node from '../../components/nodes/domain-objects';
 
 export default async function generateNode(
   options: Partial<Node> = {},
-  trx: Knex.Transaction
+  trx: Knex.Transaction,
+  designId?: string
 ): Promise<{ node: Node; createdBy: User }> {
   const { user }: { user: User | null } = options.createdBy
     ? { user: await findUserById(options.createdBy) }
@@ -19,10 +20,14 @@ export default async function generateNode(
     throw new Error('Could not get user');
   }
 
-  const node = await create(
-    staticNode({ ...options, createdBy: user.id }),
-    trx
-  );
+  const node =
+    !options.parentId && designId
+      ? await createDesignRoot(
+          staticNode({ ...options, createdBy: user.id }),
+          designId,
+          trx
+        )
+      : await create(staticNode({ ...options, createdBy: user.id }), trx);
 
   return {
     node,

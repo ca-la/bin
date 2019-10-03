@@ -31,7 +31,7 @@ function* updateAllNodes(
     for (const node of nodes) {
       const updateableNode = {
         ...node,
-        createdAt: new Date(node.createdAt),
+        createdAt: new Date(node.createdAt || new Date()),
         deletedAt: toDateOrNull(node.deletedAt),
         type: null
       };

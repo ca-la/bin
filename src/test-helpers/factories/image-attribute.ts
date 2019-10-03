@@ -47,25 +47,38 @@ export default async function generateImageAttribute(
     throw new Error('Could not get user.');
   }
 
-  const imageData: ImageAttribute = {
-    assetId: asset.id,
-    createdAt: new Date('2019-04-20'),
-    createdBy: user.id,
-    deletedAt: null,
-    id: uuid.v4(),
-    height: 0,
-    nodeId: node.id,
-    width: 0,
-    x: 0,
-    y: 0,
-    ...options
-  };
-  const image = await create(imageData, trx);
+  const image = await create(
+    staticImageAttribute({
+      assetId: asset.id,
+      createdBy: user.id,
+      nodeId: node.id,
+      ...options
+    }),
+    trx
+  );
 
   return {
     asset,
     createdBy: user,
     node,
     image
+  };
+}
+
+export function staticImageAttribute(
+  options: Partial<ImageAttribute> = {}
+): ImageAttribute {
+  return {
+    assetId: uuid.v4(),
+    createdAt: new Date('2019-04-20'),
+    createdBy: uuid.v4(),
+    deletedAt: null,
+    id: uuid.v4(),
+    height: 0,
+    nodeId: uuid.v4(),
+    width: 0,
+    x: 0,
+    y: 0,
+    ...options
   };
 }
