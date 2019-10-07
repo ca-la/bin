@@ -8,11 +8,13 @@ export function* createFromTemplate(
   this: Koa.Application.Context
 ): AsyncIterableIterator<any> {
   const { userId } = this.state;
+  const { isPhidias } = this.query;
   const { templateDesignId } = this.params;
-  const templateDesign = yield createFromDesignTemplate(
-    templateDesignId,
-    userId
-  ).catch(
+  const templateDesign = yield createFromDesignTemplate({
+    isPhidias: isPhidias === 'true',
+    newCreatorId: userId,
+    templateDesignId
+  }).catch(
     filterError(ResourceNotFoundError, (err: ResourceNotFoundError) =>
       this.throw(400, err)
     )
