@@ -15,6 +15,7 @@ test('SubscriptionsDAO supports creation and retrieval', async (t: tape.Test) =>
     id: uuid.v4(),
     billingInterval: 'MONTHLY',
     monthlyCostCents: 4567,
+    revenueSharePercentage: 50,
     stripePlanId: 'plan_456',
     title: 'Some More',
     isDefault: true
@@ -53,6 +54,7 @@ test('SubscriptionsDAO supports updating', async (t: tape.Test) => {
     id: uuid.v4(),
     billingInterval: 'MONTHLY',
     monthlyCostCents: 4567,
+    revenueSharePercentage: 50,
     stripePlanId: 'plan_456',
     title: 'Some More',
     isDefault: true

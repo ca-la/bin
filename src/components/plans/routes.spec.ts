@@ -10,6 +10,7 @@ test('GET /plans lists available plans', async (t: Test) => {
     id: uuid.v4(),
     billingInterval: 'MONTHLY',
     monthlyCostCents: 1234,
+    revenueSharePercentage: 12,
     stripePlanId: 'plan_123',
     title: 'A little Bit',
     isDefault: false
@@ -19,6 +20,7 @@ test('GET /plans lists available plans', async (t: Test) => {
     id: uuid.v4(),
     billingInterval: 'MONTHLY',
     monthlyCostCents: 4567,
+    revenueSharePercentage: 12,
     stripePlanId: 'plan_456',
     title: 'Some More',
     isDefault: true
@@ -43,6 +45,7 @@ test('GET /plans/:id returns a plan', async (t: Test) => {
     id: uuid.v4(),
     billingInterval: 'MONTHLY',
     monthlyCostCents: 1234,
+    revenueSharePercentage: 12,
     stripePlanId: 'plan_123',
     title: 'A little Bit',
     isDefault: false
@@ -61,6 +64,7 @@ test('GET /plans/:id returns 404 when non-existent', async (t: Test) => {
     id: uuid.v4(),
     billingInterval: 'MONTHLY',
     monthlyCostCents: 1234,
+    revenueSharePercentage: 12,
     stripePlanId: 'plan_123',
     title: 'A little Bit',
     isDefault: false

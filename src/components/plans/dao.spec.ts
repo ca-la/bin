@@ -11,6 +11,7 @@ test('PlansDAO supports creation and retrieval', async (t: Test) => {
     id: p1id,
     billingInterval: 'MONTHLY',
     monthlyCostCents: 1234,
+    revenueSharePercentage: 12,
     stripePlanId: 'plan_123',
     title: 'A little Bit',
     isDefault: false
@@ -20,6 +21,7 @@ test('PlansDAO supports creation and retrieval', async (t: Test) => {
     id: uuid.v4(),
     billingInterval: 'MONTHLY',
     monthlyCostCents: 4567,
+    revenueSharePercentage: 50,
     stripePlanId: 'plan_456',
     title: 'Some More',
     isDefault: true
@@ -36,8 +38,10 @@ test('PlansDAO supports creation and retrieval', async (t: Test) => {
   );
   t.equal(sorted[0].title, 'A little Bit');
   t.equal(sorted[0].monthlyCostCents, 1234);
+  t.equal(sorted[0].revenueSharePercentage, 12);
   t.equal(sorted[1].title, 'Some More');
   t.equal(sorted[1].monthlyCostCents, 4567);
+  t.equal(sorted[1].revenueSharePercentage, 50);
 });
 
 test('PlansDAO.findById returns null if not found', async (t: Test) => {
@@ -50,6 +54,7 @@ test('PlansDAO prevents creating multiple default plans', async (t: Test) => {
     id: uuid.v4(),
     billingInterval: 'MONTHLY',
     monthlyCostCents: 1234,
+    revenueSharePercentage: 12,
     stripePlanId: 'plan_123',
     title: 'A little Bit',
     isDefault: true
@@ -60,6 +65,7 @@ test('PlansDAO prevents creating multiple default plans', async (t: Test) => {
       id: uuid.v4(),
       billingInterval: 'MONTHLY',
       monthlyCostCents: 4567,
+      revenueSharePercentage: 50,
       stripePlanId: 'plan_456',
       title: 'Some More',
       isDefault: true
