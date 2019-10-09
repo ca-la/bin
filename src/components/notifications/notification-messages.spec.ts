@@ -68,6 +68,11 @@ test(
       mentions && Object.keys(mentions).length === 1,
       'message attachments contains one mention'
     );
+    const { collaborators } = annCommCreateMessage.actions[0];
+    t.assert(
+      collaborators.length === 3,
+      'message actions contains three collaborators'
+    );
     const annCommCreateDeletedMessage = await createNotificationMessage(
       annCommCreateDesignDeleted
     );
@@ -113,6 +118,11 @@ test('notification messages returns annotation mention message to the user if re
   t.assert(
     mentions && Object.keys(mentions).length === 1,
     'message attachments contains one mention'
+  );
+  const { collaborators } = message.actions[0];
+  t.assert(
+    collaborators.length === 2,
+    'message actions contains two collaborators'
   );
   const messageDeleted = await createNotificationMessage(annMenDeleted);
   t.assert(
@@ -525,6 +535,11 @@ test('notification messages returns task comment create message to the user if r
     message.actor && message.actor.id === actor.id,
     'message.actor && message.actor.id is the user'
   );
+  const { collaborators } = message.actions[0];
+  t.assert(
+    collaborators.length === 2,
+    'message actions contains two collaborators'
+  );
   const messageDeleted = await createNotificationMessage(tasComCreDeleted);
   t.assert(
     messageDeleted === null,
@@ -567,6 +582,11 @@ test('notification messages returns task comment mention message to the user if 
   t.assert(
     mentions && Object.keys(mentions).length === 1,
     'message attachments contains one mention'
+  );
+  const { collaborators } = message.actions[0];
+  t.assert(
+    collaborators.length === 2,
+    'message actions contains two collaborators'
   );
   const messageDeleted = await createNotificationMessage(tasComMenDeleted);
   t.assert(

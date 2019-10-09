@@ -1,5 +1,9 @@
 import { escape as escapeHtml } from 'lodash';
-import { BreadCrumb, NotificationMessage } from '@cala/ts-lib';
+import {
+  BreadCrumb,
+  NotificationMessage,
+  NotificationMessageActionType
+} from '@cala/ts-lib';
 
 import InvalidDataError = require('../../errors/invalid-data');
 import * as ComponentsDAO from '../components/dao';
@@ -7,6 +11,7 @@ import ProductDesign = require('../product-designs/domain-objects/product-design
 import * as UsersDAO from '../../components/users/dao';
 import * as ProductDesignsDAO from '../product-designs/dao';
 import * as CollectionsDAO from '../collections/dao';
+import * as CollaboratorsDAO from '../collaborators/dao';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as CommentsDAO from '../../components/comments/dao';
 import * as CanvasesDAO from '../canvases/dao';
@@ -88,7 +93,9 @@ export const createNotificationMessage = async (
   }
 
   const baseNotificationMessage = {
+    actions: [],
     actor: await UsersDAO.findById(notification.actorUserId),
+    attachments: [],
     createdAt: notification.createdAt,
     id: notification.id,
     readAt: notification.readAt
@@ -113,7 +120,6 @@ export const createNotificationMessage = async (
       const cleanName = escapeHtml(baseNotificationMessage.actor.name);
       const partialMessage = {
         ...baseNotificationMessage,
-        attachments: [],
         imageUrl: design ? findImageUrl(design) : null,
         location: getLocation({ collection, design }),
         title: `${cleanName} invited you to collaborate on ${resourceName}`
@@ -155,12 +161,17 @@ export const createNotificationMessage = async (
     }
 
     case NotificationType.ANNOTATION_COMMENT_CREATE: {
-      const { designId, collectionId, commentId } = notification;
+      const {
+        annotationId,
+        canvasId,
+        designId,
+        collectionId,
+        commentId
+      } = notification;
       const design = await getDesign(designId);
+      const collaborators = await CollaboratorsDAO.findByDesign(designId);
       const collection = await getCollection(collectionId);
-      const canvas: Canvas | null = await CanvasesDAO.findById(
-        notification.canvasId
-      );
+      const canvas: Canvas | null = await CanvasesDAO.findById(canvasId);
       if (!design || !canvas) {
         return null;
       }
@@ -175,14 +186,22 @@ export const createNotificationMessage = async (
       const { mentions } = await addAtMentionDetailsForComment(comment);
       const cleanName = escapeHtml(baseNotificationMessage.actor.name);
       const { deepLink, htmlLink } = getLinks({
-        annotationId: notification.annotationId,
-        canvasId: notification.canvasId,
+        annotationId,
+        canvasId,
         componentType,
         design,
         type: LinkType.DesignAnnotation
       });
       return {
         ...baseNotificationMessage,
+        actions: [
+          {
+            type: NotificationMessageActionType.ANNOTATION_COMMENT_REPLY,
+            annotationId,
+            parentCommentId: commentId,
+            collaborators
+          }
+        ],
         attachments: [{ text: comment.text, url: deepLink, mentions }],
         html: `${span(cleanName, 'user-name')} commented on ${htmlLink}`,
         imageUrl: design ? findImageUrl(design) : null,
@@ -193,12 +212,17 @@ export const createNotificationMessage = async (
     }
 
     case NotificationType.ANNOTATION_COMMENT_MENTION: {
-      const { designId, collectionId, commentId } = notification;
+      const {
+        annotationId,
+        canvasId,
+        designId,
+        collectionId,
+        commentId
+      } = notification;
       const design = await getDesign(designId);
+      const collaborators = await CollaboratorsDAO.findByDesign(designId);
       const collection = await getCollection(collectionId);
-      const canvas: Canvas | null = await CanvasesDAO.findById(
-        notification.canvasId
-      );
+      const canvas: Canvas | null = await CanvasesDAO.findById(canvasId);
       if (!design || !canvas) {
         return null;
       }
@@ -213,14 +237,22 @@ export const createNotificationMessage = async (
       const { mentions } = await addAtMentionDetailsForComment(comment);
       const cleanName = escapeHtml(baseNotificationMessage.actor.name);
       const { deepLink, htmlLink } = getLinks({
-        annotationId: notification.annotationId,
-        canvasId: notification.canvasId,
+        annotationId,
+        canvasId,
         componentType,
         design,
         type: LinkType.DesignAnnotation
       });
       return {
         ...baseNotificationMessage,
+        actions: [
+          {
+            type: NotificationMessageActionType.ANNOTATION_COMMENT_REPLY,
+            annotationId,
+            parentCommentId: commentId,
+            collaborators
+          }
+        ],
         attachments: [{ text: comment.text, url: deepLink, mentions }],
         html: `${span(cleanName, 'user-name')} mentioned you on ${htmlLink}`,
         imageUrl: design ? findImageUrl(design) : null,
@@ -245,7 +277,6 @@ export const createNotificationMessage = async (
       const cleanName = escapeHtml(baseNotificationMessage.actor.name);
       return {
         ...baseNotificationMessage,
-        attachments: [],
         html: `${span(
           cleanName,
           'user-name'
@@ -258,8 +289,9 @@ export const createNotificationMessage = async (
     }
 
     case NotificationType.TASK_COMMENT_CREATE: {
-      const { designId, collectionId, taskId } = notification;
+      const { designId, collectionId, taskId, commentId } = notification;
       const design = await getDesign(designId);
+      const collaborators = await CollaboratorsDAO.findByDesign(designId);
       const collection = await getCollection(collectionId);
       const task = await getTask(taskId);
       if (!design || !task) {
@@ -271,9 +303,7 @@ export const createNotificationMessage = async (
         task,
         type: LinkType.CollectionDesignTask
       });
-      const comment: Comment | null = await CommentsDAO.findById(
-        notification.commentId
-      );
+      const comment: Comment | null = await CommentsDAO.findById(commentId);
       if (!comment) {
         return null;
       }
@@ -281,6 +311,14 @@ export const createNotificationMessage = async (
       const cleanName = escapeHtml(baseNotificationMessage.actor.name);
       return {
         ...baseNotificationMessage,
+        actions: [
+          {
+            type: NotificationMessageActionType.TASK_COMMENT_REPLY,
+            taskId,
+            parentCommentId: commentId,
+            collaborators
+          }
+        ],
         attachments: [{ text: comment.text, url: deepLink, mentions }],
         html: `${span(
           cleanName,
@@ -294,8 +332,9 @@ export const createNotificationMessage = async (
     }
 
     case NotificationType.TASK_COMMENT_MENTION: {
-      const { designId, collectionId, taskId } = notification;
+      const { designId, collectionId, taskId, commentId } = notification;
       const design = await getDesign(designId);
+      const collaborators = await CollaboratorsDAO.findByDesign(designId);
       const collection = await getCollection(collectionId);
       const task = await getTask(taskId);
       if (!design || !task) {
@@ -307,9 +346,7 @@ export const createNotificationMessage = async (
         task,
         type: LinkType.CollectionDesignTask
       });
-      const comment: Comment | null = await CommentsDAO.findById(
-        notification.commentId
-      );
+      const comment: Comment | null = await CommentsDAO.findById(commentId);
       if (!comment) {
         return null;
       }
@@ -317,6 +354,14 @@ export const createNotificationMessage = async (
       const cleanName = escapeHtml(baseNotificationMessage.actor.name);
       return {
         ...baseNotificationMessage,
+        actions: [
+          {
+            type: NotificationMessageActionType.TASK_COMMENT_REPLY,
+            taskId,
+            parentCommentId: commentId,
+            collaborators
+          }
+        ],
         attachments: [{ text: comment.text, url: deepLink, mentions }],
         html: `${span(
           cleanName,
@@ -346,7 +391,6 @@ export const createNotificationMessage = async (
       const cleanName = escapeHtml(baseNotificationMessage.actor.name);
       return {
         ...baseNotificationMessage,
-        attachments: [],
         html: `${span(
           cleanName,
           'user-name'
@@ -375,7 +419,6 @@ export const createNotificationMessage = async (
       const cleanName = escapeHtml(baseNotificationMessage.actor.name);
       return {
         ...baseNotificationMessage,
-        attachments: [],
         html: `${span(cleanName, 'user-name')} completed the task ${htmlLink}`,
         imageUrl: design ? findImageUrl(design) : null,
         link: deepLink,
@@ -400,7 +443,6 @@ export const createNotificationMessage = async (
       const cleanName = escapeHtml(baseNotificationMessage.actor.name);
       return {
         ...baseNotificationMessage,
-        attachments: [],
         html: `${span(
           cleanName,
           'user-name'
@@ -426,7 +468,6 @@ export const createNotificationMessage = async (
       });
       return {
         ...baseNotificationMessage,
-        attachments: [],
         html: `You have a <a href="${deepLink}">new project</a> to review`,
         imageUrl: null,
         link: deepLink,
@@ -451,7 +492,6 @@ export const createNotificationMessage = async (
       const cleanName = escapeHtml(baseNotificationMessage.actor.name);
       return {
         ...baseNotificationMessage,
-        attachments: [],
         html: `${span(
           cleanName,
           'user-name'
@@ -477,7 +517,6 @@ export const createNotificationMessage = async (
       });
       return {
         ...baseNotificationMessage,
-        attachments: [],
         html: `${htmlLink} has been paired with all partners! 🎉 You can now track development progress on Timeline.`,
         imageUrl: null,
         link: deepLink,
@@ -500,7 +539,6 @@ export const createNotificationMessage = async (
       });
       return {
         ...baseNotificationMessage,
-        attachments: [],
         html: `${htmlLink} has been submitted, and will be reviewed by our team`,
         imageUrl: null,
         link: deepLink,
@@ -524,7 +562,6 @@ export const createNotificationMessage = async (
       });
       return {
         ...baseNotificationMessage,
-        attachments: [],
         html: `${htmlLink} has been reviewed and is now ready for checkout`,
         imageUrl: null,
         link: deepLink,
@@ -548,7 +585,6 @@ export const createNotificationMessage = async (
       });
       return {
         ...baseNotificationMessage,
-        attachments: [],
         html: `${htmlLink} pricing has expired. Please resubmit for updated costing.`,
         imageUrl: null,
         link: deepLink,
@@ -570,7 +606,6 @@ export const createNotificationMessage = async (
       });
       return {
         ...baseNotificationMessage,
-        attachments: [],
         html: `${htmlLink} pricing expires in 48 hours.`,
         imageUrl: null,
         link: deepLink,
@@ -594,7 +629,6 @@ export const createNotificationMessage = async (
       });
       return {
         ...baseNotificationMessage,
-        attachments: [],
         html: `${htmlLink} pricing expires in 7 days.`,
         imageUrl: null,
         link: deepLink,
