@@ -6,6 +6,7 @@ import * as ReportsDAO from './dao';
 import { authHeader, post } from '../../test-helpers/http';
 import createUser = require('../../test-helpers/create-user');
 import MonthlySalesReport from './domain-object';
+import * as ReportEmail from '../../services/create-notifications/monthly-sales-report';
 
 test('POST /sales-reports/monthly fails for non-admin accounts', async (t: Test) => {
   const reportStub = sandbox()
@@ -45,6 +46,9 @@ test('POST /sales-reports/monthly creates a monthly sales report', async (t: Tes
   const reportStub = sandbox()
     .stub(ReportsDAO, 'create')
     .resolves(report);
+  const emailStub = sandbox()
+    .stub(ReportEmail, 'immediatelySendMonthlySalesReport')
+    .resolves();
 
   const [res, body] = await post('/sales-reports/monthly', {
     body: report,
@@ -54,4 +58,5 @@ test('POST /sales-reports/monthly creates a monthly sales report', async (t: Tes
   t.equal(res.status, 201);
   t.deepEqual(omit(body, 'createdAt'), omit(report, 'createdAt'));
   t.equal(reportStub.callCount, 1);
+  t.equal(emailStub.callCount, 1);
 });

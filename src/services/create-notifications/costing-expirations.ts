@@ -11,34 +11,10 @@ import {
   TwoDayExpirationNotification
 } from '../../components/notifications/models/costing-expiration';
 import { templateNotification } from '../../components/notifications/models/base';
-import {
-  Notification,
-  NotificationType
-} from '../../components/notifications/domain-object';
-import { createNotificationMessage } from '../../components/notifications/notification-messages';
+import { NotificationType } from '../../components/notifications/domain-object';
 import { CALA_OPS_USER_ID } from '../../config';
-import * as EmailService from '../../services/email';
 import { validateTypeWithGuardOrThrow } from '../validate';
-import User from '../../components/users/domain-object';
-
-async function sendNotification(
-  notification: Notification,
-  recipient: User
-): Promise<void> {
-  const notificationMessage = await createNotificationMessage(notification);
-
-  if (!notificationMessage) {
-    throw new Error('Could not create notification message');
-  }
-
-  await EmailService.enqueueSend({
-    params: {
-      notification: notificationMessage
-    },
-    templateName: 'single_notification',
-    to: recipient.email
-  });
-}
+import sendNotification from '../send-notification-emails/immediate-send';
 
 /**
  * Immediately sends a notification about the costing expiring in one week for the given collection.

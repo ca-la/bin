@@ -7,6 +7,7 @@ import * as db from '../../services/db';
 import MonthlySalesReport from './domain-object';
 import * as ReportsDAO from './dao';
 import requireAdmin = require('../../middleware/require-admin');
+import { immediatelySendMonthlySalesReport } from '../../services/create-notifications/monthly-sales-report';
 
 const router = new Router();
 
@@ -42,6 +43,8 @@ function* createMonthly(
       return ReportsDAO.create(body, trx);
     }
   );
+
+  yield immediatelySendMonthlySalesReport(report);
 
   this.body = report;
   this.status = 201;
