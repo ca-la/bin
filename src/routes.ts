@@ -36,6 +36,7 @@ import subscriptionRoutes from './components/subscriptions/routes';
 import templateDesignRoutes from './components/templates/designs/routes';
 import timelineRoutes from './components/timeline/routes';
 import userRoutes from './components/users/routes';
+import userOnboardingRoutes from './components/user-onboardings/routes';
 
 const router = new Router({
   prefix: '/:version(v1)?'
@@ -99,5 +100,6 @@ router.use('/subscriptions', subscriptionRoutes);
 router.use('/templates/designs', templateDesignRoutes);
 router.use('/timelines', timelineRoutes);
 router.use('/users', userRoutes);
+router.use('/user-onboardings', userOnboardingRoutes);
 
 export default router;
