@@ -19,6 +19,14 @@ function constructRow(label: string, value: string): string {
   `;
 }
 
+const SPACER = `
+  <tr style='height: 8px;'>
+    <td colspan='2'>
+      <hr style='border:0.5px solid rgba(0,0,0,0.1);' />
+    </td>
+  </tr>
+`;
+
 /**
  * Immediately sends a notification about the monthly sales report.
  * Note: this does not persist the Notification into the database!
@@ -33,43 +41,60 @@ export async function immediatelySendMonthlySalesReport(
     throw new Error(`Unknown user ${salesReport.designerId}`);
   }
 
+  const calaRevShareCents =
+    (salesReport.revenueSharePercentage / 100) * salesReport.revenueCents;
+
   const message: NotificationMessage = {
     id: uuid.v4(),
     title: 'Monthly Sales Report',
     html: `
       <table style='margin:auto;'>
-        ${constructRow(
-          'Available Credit',
-          formatCentsToDollars(salesReport.availableCreditCents)
-        )}
-        ${constructRow(
-          'Cost of Returned Goods',
-          formatCentsToDollars(salesReport.costOfReturnedGoodsCents)
-        )}
-        ${constructRow(
-          'Financing Balance',
-          formatCentsToDollars(salesReport.financingBalanceCents)
-        )}
-        ${constructRow(
-          'Financing Principal Paid',
-          formatCentsToDollars(salesReport.financingPrincipalPaidCents)
-        )}
-        ${constructRow(
-          'Fulfillment Cost',
-          formatCentsToDollars(salesReport.fulfillmentCostCents)
-        )}
-        ${constructRow(
-          'Paid Out To You',
-          formatCentsToDollars(salesReport.paidToDesignerCents)
-        )}
-        ${constructRow(
-          'Revenue',
-          formatCentsToDollars(salesReport.revenueCents)
-        )}
-        ${constructRow(
-          'Revenue Shared with CALA',
-          `${salesReport.revenueSharePercentage}%`
-        )}
+        <tbody>
+          ${constructRow(
+            'Available Credit',
+            formatCentsToDollars(salesReport.availableCreditCents)
+          )}
+          ${constructRow(
+            'Financing Balance',
+            formatCentsToDollars(salesReport.financingBalanceCents)
+          )}
+          ${constructRow(
+            'CALA Revenue Share',
+            `${salesReport.revenueSharePercentage}%`
+          )}
+        </tbody>
+
+        <tbody>
+          ${SPACER}
+          ${constructRow(
+            'Revenue',
+            formatCentsToDollars(salesReport.revenueCents)
+          )}
+          ${constructRow(
+            'Revenue Shared with CALA',
+            `${formatCentsToDollars(calaRevShareCents)}`
+          )}
+          ${constructRow(
+            'Financing Principal Paid',
+            formatCentsToDollars(salesReport.financingPrincipalPaidCents)
+          )}
+          ${constructRow(
+            'Fulfillment Cost',
+            formatCentsToDollars(salesReport.fulfillmentCostCents)
+          )}
+          ${constructRow(
+            'Cost of Returned Goods',
+            formatCentsToDollars(salesReport.costOfReturnedGoodsCents)
+          )}
+        </tbody>
+
+        <tbody>
+          ${SPACER}
+          ${constructRow(
+            'Paid Out To You',
+            formatCentsToDollars(salesReport.paidToDesignerCents)
+          )}
+        </tbody>
       </table>
     `,
     readAt: null,
