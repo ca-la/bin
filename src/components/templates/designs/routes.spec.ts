@@ -3,6 +3,7 @@ import { sandbox, test, Test } from '../../../test-helpers/fresh';
 import createUser = require('../../../test-helpers/create-user');
 import * as TemplateDesignsDAO from './dao';
 import InvalidDataError = require('../../../errors/invalid-data');
+import * as DesignsDAO from '../../product-designs/dao';
 
 const API_PATH = '/templates/designs';
 
@@ -13,14 +14,18 @@ test(`PUT ${API_PATH}/:designId with an admin account`, async (t: Test) => {
     .resolves({
       designId: 'design-one'
     });
+  const findStub = sandbox()
+    .stub(DesignsDAO, 'findById')
+    .resolves({ id: 'design-one' });
 
   const [response, body] = await API.put('/templates/designs/design-one', {
     headers: API.authHeader(admin.session.id)
   });
 
   t.equal(response.status, 201);
-  t.deepEqual(body, { designId: 'design-one' });
+  t.deepEqual(body, { id: 'design-one' });
   t.equal(createStub.callCount, 1);
+  t.equal(findStub.callCount, 1);
 });
 
 test(`PUT ${API_PATH}/:designId without an admin account`, async (t: Test) => {

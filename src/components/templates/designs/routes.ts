@@ -7,6 +7,7 @@ import { create, getAll, remove } from './dao';
 import requireAdmin = require('../../../middleware/require-admin');
 import InvalidDataError = require('../../../errors/invalid-data');
 import requireAuth = require('../../../middleware/require-auth');
+import * as DesignsDAO from '../../product-designs/dao';
 
 const router = new Router();
 
@@ -16,16 +17,21 @@ function* createTemplate(
   const { designId } = this.params;
 
   yield db.transaction(async (trx: Knex.Transaction) => {
-    const templateDesign = await create({ designId }, trx).catch(
-      (error: Error) => {
-        if (error instanceof InvalidDataError) {
-          return this.throw(400, error.message);
-        }
-        return this.throw(500, error.message);
+    await create({ designId }, trx).catch((error: Error) => {
+      if (error instanceof InvalidDataError) {
+        return this.throw(400, error.message);
       }
-    );
+      return this.throw(500, error.message);
+    });
+
+    const design = await DesignsDAO.findById(designId);
+
+    if (!design) {
+      this.throw(404, `Design ${designId} does not exist.`);
+    }
+
     this.status = 201;
-    this.body = templateDesign;
+    this.body = design;
   });
 }
 
