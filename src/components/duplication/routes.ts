@@ -1,6 +1,7 @@
 import * as Router from 'koa-router';
 import * as Koa from 'koa';
 
+import * as UsersDAO from '../../components/users/dao';
 import * as DuplicationService from '../../services/duplicate';
 import filterError = require('../../services/filter-error');
 import requireAuth = require('../../middleware/require-auth');
@@ -11,6 +12,7 @@ const router = new Router();
 interface DuplicateDesignsBody {
   designIds: string[];
   userId?: string;
+  email?: string;
 }
 
 function isDuplicateDesignsBody(body: any): body is DuplicateDesignsBody {
@@ -18,7 +20,8 @@ function isDuplicateDesignsBody(body: any): body is DuplicateDesignsBody {
     body.designIds &&
     Array.isArray(body.designIds) &&
     body.designIds.every((id: any) => typeof id === 'string') &&
-    (!body.userId || (body.userId && typeof body.userId === 'string'))
+    (!body.userId || (body.userId && typeof body.userId === 'string')) &&
+    (!body.email || (body.email && typeof body.email === 'string'))
   );
 }
 
@@ -38,6 +41,17 @@ function* duplicateDesigns(
     } else {
       return this.throw(403, 'Cannot duplicate designs for other users');
     }
+  } else if (body.email) {
+    if (this.state.role !== 'ADMIN') {
+      return this.throw(403, 'Cannot duplicate designs for other users');
+    }
+
+    const maybeUser = yield UsersDAO.findByEmail(body.email);
+    if (!maybeUser) {
+      return this.throw(404, 'User not found');
+    }
+
+    userId = maybeUser.id;
   }
 
   const duplicated = yield DuplicationService.duplicateDesigns(

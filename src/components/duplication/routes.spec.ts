@@ -97,3 +97,49 @@ test('POST /duplication/designs duplicates designs for other users', async (t: T
   t.equal(body[0].title, design.title);
   t.equal(body[0].userId, other.user.id);
 });
+
+test('POST /duplication/designs duplicates designs by email', async (t: Test) => {
+  const designer = await createUser();
+  const other = await createUser({ withSession: false });
+  const admin = await createUser({ role: 'ADMIN' });
+
+  const design = await createDesign({
+    productType: 'TEESHIRT',
+    title: 'Green Tee',
+    userId: designer.user.id
+  });
+
+  const [response, body] = await API.post('/duplication/designs', {
+    body: {
+      designIds: [design.id],
+      email: other.user.email
+    },
+    headers: API.authHeader(admin.session.id)
+  });
+
+  t.equal(response.status, 201);
+  t.equal(body.length, 1);
+  t.notEqual(body[0].id, design.id);
+  t.equal(body[0].title, design.title);
+  t.equal(body[0].userId, other.user.id);
+
+  const [noUser] = await API.post('/duplication/designs', {
+    body: {
+      designIds: [design.id],
+      email: 'random.email@example.com'
+    },
+    headers: API.authHeader(admin.session.id)
+  });
+
+  t.equal(noUser.status, 404);
+
+  const [notAdmin] = await API.post('/duplication/designs', {
+    body: {
+      designIds: [design.id],
+      email: other.user.email
+    },
+    headers: API.authHeader(designer.session.id)
+  });
+
+  t.equal(notAdmin.status, 403);
+});
