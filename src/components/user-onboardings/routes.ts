@@ -21,7 +21,13 @@ function* createOrUpdate(
   }
 
   this.status = 201;
-  this.body = yield create(body);
+  this.body = yield create({
+    partnerDashboardViewedAt: body.partnerDashboardViewedAt,
+    tasksPageViewedAt: body.tasksPageViewedAt,
+    timelinePageViewedAt: body.timelinePageViewedAt,
+    userId,
+    welcomeModalViewedAt: body.welcomeModalViewedAt
+  });
 }
 
 function* getByUserId(

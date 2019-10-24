@@ -33,7 +33,6 @@ export function isUserOnboardingRow(row: object): row is UserOnboardingRow {
 export function isUserOnboarding(data: object): data is UserOnboarding {
   return hasProperties(
     data,
-    'userId',
     'welcomeModalViewedAt',
     'tasksPageViewedAt',
     'timelinePageViewedAt',

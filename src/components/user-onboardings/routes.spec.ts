@@ -89,4 +89,22 @@ test('PUT /user-onboardings/:userId creates and updates user onboardings', async
     },
     'Update body matches update'
   );
+
+  const [response3, body3] = await put(`/user-onboardings/${user.id}`, {
+    body: {
+      ...userOnboarding,
+      userId: 'some other user'
+    },
+    headers: authHeader(session.id)
+  });
+
+  t.equal(response3.status, 201, 'Update status returned is 201');
+  t.deepEqual(
+    {
+      ...body3,
+      welcomeModalViewedAt: new Date(body3.welcomeModalViewedAt)
+    },
+    userOnboarding,
+    'Update body matches update'
+  );
 });
