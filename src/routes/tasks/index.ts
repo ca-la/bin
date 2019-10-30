@@ -107,20 +107,15 @@ function* createTaskEvent(
   const body = addDefaultOrdering(this.request.body);
   const taskId = body.id;
   const previousState: TaskEvent = yield TaskEventsDAO.findRawById(taskId);
-  const taskEvent: DetailsTaskWithAssignees = yield TaskEventsDAO.create(
-    taskEventFromIO(body, this.state.userId)
-  );
+  const taskEvent: {
+    id: string;
+    status: TaskStatus;
+  } = yield TaskEventsDAO.create(taskEventFromIO(body, this.state.userId));
   const updateDidCompleteTask =
     taskEvent.status === TaskStatus.COMPLETED &&
     previousState.status !== TaskStatus.COMPLETED;
-  if (updateDidCompleteTask && taskEvent.design.id && taskEvent.designStageId) {
-    NotificationsService.sendTaskCompletionNotification(
-      taskId,
-      taskEvent.design.id,
-      taskEvent.designStageId,
-      sessionUserId,
-      taskEvent.collection.id
-    );
+  if (updateDidCompleteTask) {
+    NotificationsService.sendTaskCompletionNotification(taskId, sessionUserId);
   }
 
   this.body = taskEvent;

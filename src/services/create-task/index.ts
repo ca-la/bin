@@ -11,10 +11,14 @@ function createWithTransaction(
   taskId: string,
   taskEvent: Unsaved<TaskEvent>,
   stageId?: string
-): (trx: Knex.Transaction) => Promise<DetailsTaskWithAssignees> {
-  return async (trx: Knex.Transaction): Promise<DetailsTaskWithAssignees> => {
+): (trx: Knex.Transaction) => Promise<TaskEvent> {
+  return async (trx: Knex.Transaction): Promise<TaskEvent> => {
     await TasksDAO.create(taskId, trx);
-    const created = await TaskEventsDAO.create(taskEvent, trx);
+    const task = await TaskEventsDAO.create(taskEvent, trx);
+    if (!task) {
+      throw new Error('Could not create task!');
+    }
+
     if (stageId) {
       await ProductDesignStageTasksDAO.create(
         {
@@ -24,7 +28,7 @@ function createWithTransaction(
         trx
       );
     }
-    return created;
+    return task;
   };
 }
 

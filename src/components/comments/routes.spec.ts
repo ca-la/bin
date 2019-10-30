@@ -60,11 +60,11 @@ test('DELETE /comment/:id deletes a task comment', async (t: tape.Test) => {
     userId: 'purposefully incorrect',
     userName: 'Somebody Cool'
   };
-  const comment = await put(`/tasks/${task[1].id}/comments/${uuid.v4()}`, {
+  const comment = await put(`/tasks/${task[1].taskId}/comments/${uuid.v4()}`, {
     body: commentBody,
     headers: authHeader(session.id)
   });
-  const withComment = await get(`/tasks/${task[1].id}/comments`, {
+  const withComment = await get(`/tasks/${task[1].taskId}/comments`, {
     headers: authHeader(session.id)
   });
 
@@ -83,13 +83,13 @@ test('DELETE /comment/:id deletes a task comment', async (t: tape.Test) => {
     'Comment retrieval returns the created comment in an array'
   );
   const deleteRequest = await del(
-    `/comments/${comment[1].id}?taskId=${task[1].id}`,
+    `/comments/${comment[1].id}?taskId=${task[1].taskId}`,
     { headers: authHeader(session.id) }
   );
   t.equal(deleteRequest[0].status, 204, 'Comment deletion succeeds');
   t.true(announceDeleteStub.calledOnce);
 
-  const withoutComment = await get(`/tasks/${task[1].id}/comments`, {
+  const withoutComment = await get(`/tasks/${task[1].taskId}/comments`, {
     headers: authHeader(session.id)
   });
 

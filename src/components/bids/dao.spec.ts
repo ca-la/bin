@@ -363,7 +363,7 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
 
   const acceptedBids = await findAcceptedByTargetId(partner.id, 'ACCEPTED');
   const activeBids = await findActiveByTargetId(partner.id, 'ACCEPTED');
-  const taskUpdate = await createTaskEvent({
+  await createTaskEvent({
     ...omit(
       taskEventFromIO({ ...task, assignees: [] }, partner.id),
       'createdAt',
@@ -413,9 +413,9 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
     completedBids,
     [
       {
-        ...omit(acceptedBid, ['taskTypeIds']),
+        ...omit(acceptedBid, ['taskTypeIds', 'completedAt']),
         acceptedAt: completedBids[0].acceptedAt,
-        completedAt: taskUpdate.lastModifiedAt,
+        completedAt: completedBids[0].completedAt,
         createdAt: completedBids[0].createdAt
       }
     ],

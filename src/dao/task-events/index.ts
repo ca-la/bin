@@ -40,14 +40,13 @@ const TABLE_NAME = 'task_events';
  *
  * The order is important so that your most recent designs show first
  */
-// tslint:disable-next-line:max-line-length
 const VIEW_ORDERING =
   'design_created_at desc, design_stage_ordering asc, ordering asc';
 
 export async function create(
   data: Unsaved<TaskEvent>,
   trx?: Knex.Transaction
-): Promise<DetailsTaskWithAssignees> {
+): Promise<TaskEvent> {
   const rowData = dataAdapter.forInsertion({
     ...data,
     id: uuid.v4(),
@@ -66,41 +65,27 @@ export async function create(
     throw new Error('Failed to create rows');
   }
 
-  const taskEvent = await getTaskViewBuilder()
-    .where({ [ALIASES.taskId]: data.taskId })
-    .modify((query: Knex.QueryBuilder) => {
-      if (trx) {
-        query.transacting(trx);
-      }
-    })
-    .then((rows: DetailTaskWithAssigneesEventRow[]) =>
-      first<DetailTaskWithAssigneesEventRow>(rows)
-    );
-
-  if (!taskEvent) {
-    throw new Error('Failed to get by id');
-  }
-
-  return createDetailsTask(
-    validate<
-      DetailTaskWithAssigneesEventRow,
-      DetailsTaskWithAssigneesAdaptedRow
-    >(
-      TABLE_NAME,
-      isDetailTaskWithAssigneeRow,
-      detailsWithAssigneesAdapter,
-      taskEvent
-    )
+  return validate<TaskEventRow, TaskEvent>(
+    TABLE_NAME,
+    isTaskEventRow,
+    dataAdapter,
+    created
   );
 }
 
 export async function findById(
-  id: string
+  id: string,
+  trx?: Knex.Transaction
 ): Promise<DetailsTaskWithAssignees | null> {
   const taskEvent:
     | DetailTaskWithAssigneesEventRow
     | undefined = await getTaskViewBuilder()
     .where({ [ALIASES.taskId]: id })
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .then((rows: DetailTaskWithAssigneesEventRow[]) =>
       first<DetailTaskWithAssigneesEventRow>(rows)
     );

@@ -341,7 +341,7 @@ test('PUT /tasks/:taskId creates TaskEvent successfully', async (t: tape.Test) =
     headers: authHeader(session.id)
   });
   t.equal(response.status, 201);
-  t.equal(body.id, task.id);
+  t.equal(body.taskId, task.id);
 });
 
 test('PUT /tasks/:taskId/assignees adds Collaborators to Tasks successfully', async (t: tape.Test) => {
@@ -435,7 +435,7 @@ test('PUT /tasks/:taskId/assignees adds Collaborators to Tasks successfully', as
 test('PUT /tasks/:taskId when changing status to Completed', async (t: tape.Test) => {
   const { session, user } = await createUser();
   const secondUser = await createUser();
-  const { task, design, stage } = await generateTask();
+  const { task } = await generateTask();
   const collection = await CollectionsDAO.create({
     createdAt: new Date(),
     createdBy: user.id,
@@ -494,7 +494,7 @@ test('PUT /tasks/:taskId when changing status to Completed', async (t: tape.Test
 
   t.deepEqual(
     completionNotificationStub.getCall(0).args,
-    [task.id, design.id, stage.id, user.id, null],
+    [task.id, user.id],
     'It sends a completion notification'
   );
   t.deepEqual(

@@ -4,7 +4,7 @@ import TaskEvent, {
   DetailsTask,
   TaskStatus
 } from '../../domain-objects/task-event';
-import { create } from '../../dao/task-events';
+import { create, findById } from '../../dao/task-events';
 import { create as createStageTask } from '../../dao/product-design-stage-tasks';
 import * as DesignStagesDAO from '../../dao/product-design-stages';
 import * as DesignsDAO from '../../components/product-designs/dao';
@@ -56,7 +56,7 @@ export default async function generateTask(
     taskId: task.id
   });
 
-  const detailsTask = await create({
+  const created = await create({
     createdBy: user.id,
     description: options.description || '',
     designStageId: options.designStageId || null,
@@ -66,6 +66,12 @@ export default async function generateTask(
     taskId: task.id,
     title: options.title || 'My First Task'
   });
+
+  const detailsTask = await findById(created.taskId);
+
+  if (!detailsTask) {
+    throw new Error('Could not create task');
+  }
 
   return {
     createdBy: user,

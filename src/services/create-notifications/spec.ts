@@ -759,10 +759,7 @@ test('sendTaskCompletionNotification', async (t: tape.Test) => {
 
   const notifications = await NotificationsService.sendTaskCompletionNotification(
     taskOne.id,
-    design.id,
-    designStage.id,
-    userTwo.user.id,
-    null
+    userTwo.user.id
   );
 
   t.equal(

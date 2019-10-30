@@ -1,6 +1,5 @@
 import * as tape from 'tape';
 import * as uuid from 'node-uuid';
-import { omit } from 'lodash';
 
 import { sandbox, test as originalTest } from '../../test-helpers/fresh';
 import {
@@ -108,16 +107,11 @@ test('Task Events DAO supports creation/retrieval', async (t: tape.Test) => {
     title: 'My First Task'
   });
 
-  const result = await findById(inserted.id);
+  const result = await findById(inserted.taskId);
   if (!result) {
     throw Error('No Result');
   }
-  const insertedWithDetails = getInsertedWithDetails(inserted, result);
-  t.deepEqual(
-    { ...result, createdAt: new Date(result.createdAt) },
-    insertedWithDetails,
-    'Returned inserted task'
-  );
+  t.deepEqual(inserted.taskId, result.id, 'Returned inserted task');
 });
 
 test('Task Events DAO supports raw retrieval', async (t: tape.Test) => {
@@ -135,19 +129,11 @@ test('Task Events DAO supports raw retrieval', async (t: tape.Test) => {
   };
   const inserted = await create(taskData);
 
-  const result = await findRawById(inserted.id);
+  const result = await findRawById(inserted.taskId);
   if (!result) {
     throw Error('No Result');
   }
-  t.deepEqual(
-    { ...result, createdAt: new Date(result.createdAt) },
-    {
-      ...omit(taskData, 'designStageId'),
-      createdAt: new Date(result.createdAt),
-      id: result.id
-    },
-    'Returned inserted task'
-  );
+  t.deepEqual(inserted.taskId, result.taskId, 'Returned inserted task');
 });
 
 test('Task Events DAO returns correct number of comments', async (t: tape.Test) => {
@@ -165,14 +151,9 @@ test('Task Events DAO returns correct number of comments', async (t: tape.Test) 
   if (!result) {
     throw Error('No Result');
   }
-  const insertedWithDetails = getInsertedWithDetails(inserted, result);
 
   t.equal(result.commentCount, 3, 'task has three comments');
-  t.deepEqual(
-    { ...result, createdAt: new Date(result.createdAt) },
-    insertedWithDetails,
-    'Returned inserted task'
-  );
+  t.deepEqual(inserted.id, result.id, 'Returned inserted task');
 });
 
 test('Task Events DAO returns tasks even if they have deleted comments', async (t: tape.Test) => {
@@ -187,15 +168,10 @@ test('Task Events DAO returns tasks even if they have deleted comments', async (
   if (!result) {
     throw Error('No Result');
   }
-  const insertedWithDetails = getInsertedWithDetails(inserted, result);
 
   t.equal(result.commentCount, 0, 'task has no comments');
 
-  t.deepEqual(
-    { ...result, createdAt: new Date(result.createdAt) },
-    insertedWithDetails,
-    'Returned inserted task'
-  );
+  t.deepEqual(inserted.id, result.id, 'Returned inserted task');
 });
 
 test('Task Events DAO returns tasks inside deleted collections', async (t: tape.Test) => {
@@ -223,13 +199,8 @@ test('Task Events DAO returns tasks inside deleted collections', async (t: tape.
   if (!result) {
     throw Error('No Result');
   }
-  const insertedWithDetails = getInsertedWithDetails(inserted, result);
 
-  t.deepEqual(
-    { ...result, createdAt: new Date(result.createdAt) },
-    insertedWithDetails,
-    'Returned inserted task'
-  );
+  t.deepEqual(inserted.id, result.id, 'Returned inserted task');
 });
 
 test('Task Events DAO returns images from the canvases on the design', async (t: tape.Test) => {
@@ -454,12 +425,7 @@ test('Task Events DAO supports retrieval by collectionId', async (t: tape.Test) 
   await addDesign(collection.id, design.id);
 
   const result = await findByCollectionId(collection.id);
-  const insertedWithDetails = getInsertedWithDetails(inserted, result[0]);
-  t.deepEqual(
-    { ...result[0], createdAt: new Date(result[0].createdAt) },
-    insertedWithDetails,
-    'Returned inserted task'
-  );
+  t.deepEqual(inserted.id, result[0].id, 'Returned inserted task');
 });
 
 test('Task Events DAO supports retrieval by userId on own design', async (t: tape.Test) => {
@@ -483,12 +449,7 @@ test('Task Events DAO supports retrieval by userId on own design', async (t: tap
   if (result.length === 0) {
     return t.fail('No tasks returned');
   }
-  const insertedWithDetails = getInsertedWithDetails(task, result[0]);
-  t.deepEqual(
-    { ...result[0], createdAt: new Date(result[0].createdAt) },
-    insertedWithDetails,
-    'Returned inserted task'
-  );
+  t.deepEqual(task.id, result[0].id, 'Returned inserted task');
 });
 
 test('Task Events DAO supports retrieval by userId in the stage ordering', async (t: tape.Test) => {
@@ -592,12 +553,7 @@ test('Task Events DAO supports retrieval by userId on shared collection', async 
   if (result.length === 0) {
     return t.fail('No tasks returned');
   }
-  const insertedWithDetails = getInsertedWithDetails(taskEvent, result[0]);
-  t.deepEqual(
-    { ...result[0], createdAt: new Date(result[0].createdAt) },
-    insertedWithDetails,
-    'Returned inserted task'
-  );
+  t.deepEqual(taskEvent.id, result[0].id, 'Returned inserted task');
 });
 
 test('Task Events DAO supports retrieval by userId on shared collection', async (t: tape.Test) => {
@@ -640,12 +596,7 @@ test('Task Events DAO supports retrieval by userId on shared collection', async 
   if (result.length === 0) {
     return t.fail('No tasks returned');
   }
-  const insertedWithDetails = getInsertedWithDetails(taskEvent, result[0]);
-  t.deepEqual(
-    { ...result[0], createdAt: new Date(result[0].createdAt) },
-    insertedWithDetails,
-    'Returned inserted task'
-  );
+  t.deepEqual(taskEvent.id, result[0].id, 'Returned inserted task');
 });
 
 test('Task Events DAO supports retrieval by userId with assignee filter', async (t: tape.Test) => {
@@ -946,19 +897,8 @@ test('Task Events DAO supports retrieval by userId with multiple stage filter', 
   if (singleStageResult.length === 0) {
     return t.fail('No tasks returned');
   }
-  const task1InsertedWithDetails = getInsertedWithDetails(
-    taskEvent1,
-    singleStageResult[0]
-  );
   t.equals(singleStageResult.length, 1, 'Returns a single task');
-  t.deepEqual(
-    {
-      ...singleStageResult[0],
-      createdAt: new Date(singleStageResult[0].createdAt)
-    },
-    task1InsertedWithDetails,
-    'Returned inserted task'
-  );
+  t.deepEqual(taskEvent1.id, singleStageResult[0].id, 'Returned inserted task');
 
   const multipleStageResult = await findByUserId(user.id, {
     filters: [{ type: 'STAGE', value: `${stage1.title},${stage2.title}` }]
@@ -985,19 +925,14 @@ test('Task Events DAO supports retrieval by stageId', async (t: tape.Test) => {
   await createDesignStageTask({ designStageId: stage.id, taskId: inserted.id });
 
   const result = await findByStageId(stage.id);
-  const insertedWithDetails = getInsertedWithDetails(inserted, result[0]);
-  t.deepEqual(
-    { ...result[0], createdAt: new Date(result[0].createdAt) },
-    insertedWithDetails,
-    'Returned inserted task'
-  );
+  t.deepEqual(inserted.id, result[0].id, 'Returned inserted task');
 });
 
 test('Task Events DAO supports creating a task with a long description', async (t: tape.Test) => {
   const { user } = await createUser();
   const task = await createTask();
 
-  const inserted = await create({
+  const insertedId = await create({
     createdBy: user.id,
     // tslint:disable-next-line:prefer-array-literal
     description: new Array(1000).fill('a').join(''),
@@ -1008,6 +943,11 @@ test('Task Events DAO supports creating a task with a long description', async (
     taskId: task.id,
     title: 'My First Task'
   });
+
+  const inserted = await findRawById(insertedId.taskId);
+  if (!inserted) {
+    throw new Error('Could not find task!');
+  }
 
   t.equal(inserted.description.length, 1000);
 });

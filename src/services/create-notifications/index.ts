@@ -447,13 +447,26 @@ export async function sendTaskAssignmentNotification(
 
 export async function sendTaskCompletionNotification(
   taskId: string,
-  designId: string,
-  stageId: string,
-  actorId: string,
-  collectionId: string | null
+  actorId: string
 ): Promise<TaskCompletionNotification[]> {
+  const stageTask = await StageTasksDAO.findByTaskId(taskId);
+  if (!stageTask) {
+    throw new Error(`Could not find a stage task with task id: ${taskId}`);
+  }
+
+  const stage = await StagesDAO.findById(stageTask.designStageId);
+  if (!stage) {
+    throw new Error(
+      `Could not find a stage with id: ${stageTask.designStageId}`
+    );
+  }
+
+  const design = await DesignsDAO.findById(stage.designId);
+  if (!design) {
+    throw new Error(`Could not find a design with id: ${stage.designId}`);
+  }
   const collaborators: CollaboratorWithUser[] = await CollaboratorsDAO.findByDesign(
-    designId
+    design.id
   );
 
   const recipients: CollaboratorWithUser[] = collaborators.filter(
@@ -472,12 +485,12 @@ export async function sendTaskCompletionNotification(
       ...templateNotification,
       actorUserId: actorId,
       collaboratorId: collaborator.id,
-      collectionId: collectionId || null,
-      designId,
+      collectionId: design.collectionIds[0] || null,
+      designId: design.id,
       id,
       recipientUserId: collaborator.user.id,
       sentEmailAt: null,
-      stageId,
+      stageId: stage.id,
       taskId,
       type: NotificationType.TASK_COMPLETION
     });
