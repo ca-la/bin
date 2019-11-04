@@ -46,6 +46,10 @@ export async function create(
 export async function createAll(
   events: MaybeUnsaved<DesignEvent>[]
 ): Promise<DesignEvent[]> {
+  if (events.length === 0) {
+    return [];
+  }
+
   const rowData = events.map((event: MaybeUnsaved<DesignEvent>) => {
     return dataAdapter.forInsertion({
       id: uuid.v4(),

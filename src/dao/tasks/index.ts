@@ -7,7 +7,7 @@ import Task, {
   TaskRow
 } from '../../domain-objects/task';
 import first from '../../services/first';
-import { validate } from '../../services/validate-from-db';
+import { validate, validateEvery } from '../../services/validate-from-db';
 
 const TABLE_NAME = 'tasks';
 
@@ -30,6 +30,31 @@ export async function create(
   }
 
   return validate<TaskRow, Task>(TABLE_NAME, isTaskRow, dataAdapter, created);
+}
+
+export async function createAll(
+  ids: string[],
+  trx?: Knex.Transaction
+): Promise<Task[]> {
+  if (ids.length === 0) {
+    return [];
+  }
+
+  const rowData = ids.map((id: string) => dataAdapter.forInsertion({ id }));
+  const created = await db(TABLE_NAME)
+    .insert(rowData, '*')
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    });
+
+  return validateEvery<TaskRow, Task>(
+    TABLE_NAME,
+    isTaskRow,
+    dataAdapter,
+    created
+  );
 }
 
 export async function findById(id: string): Promise<Task | null> {

@@ -4,6 +4,7 @@ import * as uuid from 'node-uuid';
 import { sandbox, test as originalTest } from '../../test-helpers/fresh';
 import {
   create,
+  createAll,
   findByCollectionId,
   findByDesignId,
   findById,
@@ -950,4 +951,40 @@ test('Task Events DAO supports creating a task with a long description', async (
   }
 
   t.equal(inserted.description.length, 1000);
+});
+
+test('Task Events DAO supports create all', async (t: tape.Test) => {
+  const { user } = await createUser();
+  const task = await createTask();
+  const task2 = await createTask();
+  const inserted = await createAll([
+    {
+      createdBy: user.id,
+      description: 'A description',
+      designStageId: null,
+      dueDate: null,
+      ordering: 0,
+      status: TaskStatus.NOT_STARTED,
+      taskId: task.id,
+      title: 'My First Task'
+    },
+    {
+      createdBy: user.id,
+      description: 'A description',
+      designStageId: null,
+      dueDate: null,
+      ordering: 0,
+      status: TaskStatus.NOT_STARTED,
+      taskId: task2.id,
+      title: 'My First Task'
+    }
+  ]);
+
+  const result = await findById(inserted[0].taskId);
+  const result2 = await findById(inserted[1].taskId);
+  if (!result || !result2) {
+    throw Error('No Result');
+  }
+  t.deepEqual(inserted[0].taskId, result.id, 'Returned inserted task');
+  t.deepEqual(inserted[1].taskId, result2.id, 'Returned inserted task');
 });

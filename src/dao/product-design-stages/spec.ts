@@ -1,6 +1,12 @@
 import * as tape from 'tape';
 import { test } from '../../test-helpers/fresh';
-import { create, findAllByDesignId, findAllTitles, findById } from './index';
+import {
+  create,
+  createAll,
+  findAllByDesignId,
+  findAllTitles,
+  findById
+} from './index';
 import { create as createProductDesign } from '../../components/product-designs/dao';
 import createUser = require('../../test-helpers/create-user');
 
@@ -92,4 +98,33 @@ test('ProductDesignStagesDAO.findAllTitles', async (t: tape.Test) => {
 
   const result = await findAllTitles();
   t.deepEqual(result, ['test', 'test 2'], 'Returns unique titles');
+});
+
+test('ProductDesign Stage DAO supports create all', async (t: tape.Test) => {
+  const { user } = await createUser();
+
+  const design = await createProductDesign({
+    productType: 'test',
+    title: 'test',
+    userId: user.id
+  });
+  const stages = await createAll([
+    {
+      description: '',
+      designId: design.id,
+      ordering: 0,
+      title: 'test'
+    },
+    {
+      description: '',
+      designId: design.id,
+      ordering: 0,
+      title: 'test 2'
+    }
+  ]);
+
+  const result = await findById(stages[0].id);
+  const result2 = await findById(stages[1].id);
+  t.deepEqual(result, stages[0], 'Returned inserted task');
+  t.deepEqual(result2, stages[1], 'Returned inserted task');
 });

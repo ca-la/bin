@@ -43,6 +43,36 @@ export async function create(
   );
 }
 
+export async function createAll(
+  data: Unsaved<ProductDesignStageTask>[],
+  trx?: Knex.Transaction
+): Promise<ProductDesignStageTask[]> {
+  if (data.length === 0) {
+    return [];
+  }
+
+  const rowData = data.map((stageData: Unsaved<ProductDesignStageTask>) =>
+    dataAdapter.forInsertion({
+      ...stageData,
+      id: uuid.v4()
+    })
+  );
+  const created = await db(TABLE_NAME)
+    .insert(rowData, '*')
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    });
+
+  return validateEvery<ProductDesignStageTaskRow, ProductDesignStageTask>(
+    TABLE_NAME,
+    isDesignStageTaskRow,
+    dataAdapter,
+    created
+  );
+}
+
 export async function findById(
   id: string
 ): Promise<ProductDesignStageTask | null> {

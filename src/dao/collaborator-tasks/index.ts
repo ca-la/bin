@@ -40,6 +40,46 @@ export async function create(
   );
 }
 
+export interface CollaboratorsWithTaskId {
+  taskId: string;
+  collaborators: Collaborator[];
+}
+
+export async function createAll(
+  collaboratorTasks: CollaboratorsWithTaskId[],
+  trx?: Knex.Transaction
+): Promise<CollaboratorTask[]> {
+  const dataRows = collaboratorTasks.map(
+    (collaboratorTask: CollaboratorsWithTaskId) => {
+      const { taskId, collaborators } = collaboratorTask;
+      if (collaborators.length === 0) {
+        throw new Error(
+          'At least one collaborator is needed for task assignment'
+        );
+      }
+
+      return dataAdapter.forInsertion({
+        collaboratorId: collaborators[0].id,
+        taskId
+      });
+    }
+  );
+  const createdRows = await db(TABLE_NAME)
+    .insert(dataRows, '*')
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    });
+
+  return validateEvery<CollaboratorTaskRow, CollaboratorTask>(
+    TABLE_NAME,
+    isCollaboratorTaskRow,
+    dataAdapter,
+    createdRows
+  );
+}
+
 export async function createAllByCollaboratorIdsAndTaskId(
   collaboratorIds: string[],
   taskId: string,

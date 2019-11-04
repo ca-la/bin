@@ -3,6 +3,7 @@ import * as uuid from 'node-uuid';
 import { test } from '../../test-helpers/fresh';
 import {
   create,
+  createAll,
   createAllByCollaboratorIdsAndTaskId,
   deleteAllByCollaboratorIdsAndTaskId,
   findAllByTaskId,
@@ -228,4 +229,56 @@ test('CollaboratorTask DAO supports multiple simultaneous deletions', async (t: 
     'Record is still there.'
   );
   t.deepEqual(deletionResults, 2, 'Deleted the collaborator task associations');
+});
+
+test('CollaboratorTask DAO supports create all', async (t: tape.Test) => {
+  const userOne = await createUser();
+  const userTwo = await createUser();
+  const collection = await createCollection({
+    createdAt: new Date(),
+    createdBy: userOne.user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
+    title: 'FW19'
+  });
+
+  const collaboratorOne = await createCollaborator({
+    cancelledAt: null,
+    collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
+    userId: userOne.user.id
+  });
+  const collaboratorTwo = await createCollaborator({
+    cancelledAt: null,
+    collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
+    userId: userTwo.user.id
+  });
+  const taskOne = await createTask();
+
+  const collaboratorTasks = await createAll([
+    {
+      collaborators: [collaboratorOne],
+      taskId: taskOne.id
+    },
+    {
+      collaborators: [collaboratorTwo],
+      taskId: taskOne.id
+    }
+  ]);
+
+  const returned = await findAllByTaskId(taskOne.id);
+
+  t.deepEqual(
+    new Set(returned),
+    new Set(collaboratorTasks),
+    'Returned both collaborator task associations for the given task'
+  );
 });

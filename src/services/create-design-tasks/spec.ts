@@ -57,10 +57,10 @@ async function createResources(): Promise<{
 
 test('createDesignTasks creates POST_CREATION tasks', async (t: Test) => {
   const { collaborator, design } = await createResources();
-  const mockStage = { id: uuid.v4() };
+  const mockStage = { id: uuid.v4(), title: 'Creation' };
   const mockTaskEvent = { id: uuid.v4() };
   const mockCollaboratorTask = {
-    collaboratorId: collaborator.id,
+    collaborators: [collaborator.id],
     taskId: mockTaskEvent.id
   };
 
@@ -75,30 +75,38 @@ test('createDesignTasks creates POST_CREATION tasks', async (t: Test) => {
     });
 
   const stagesStub = sandbox()
-    .stub(ProductDesignStagesDAO, 'create')
-    .resolves(mockStage);
+    .stub(ProductDesignStagesDAO, 'createAll')
+    .resolves([mockStage]);
   const createTaskStub = sandbox()
-    .stub(CreateTaskService, 'default')
-    .resolves(mockTaskEvent);
+    .stub(CreateTaskService, 'createTasks')
+    .resolves([mockTaskEvent]);
   const collaboratorsTasksStub = sandbox()
-    .stub(CollaboratorTasksDAO, 'createAllByCollaboratorIdsAndTaskId')
-    .resolves(mockCollaboratorTask);
+    .stub(CollaboratorTasksDAO, 'createAll')
+    .resolves([mockCollaboratorTask]);
 
   return db.transaction(async (trx: Knex.Transaction) => {
     await createDesignTasks(design.id, 'POST_CREATION', trx);
     const stages = getTemplatesFor('POST_CREATION', 'BLANK');
 
-    t.equal(stagesStub.callCount, stages.length, 'creates each stage');
+    t.equal(stagesStub.callCount, 1, 'creates all stages');
     t.ok(
-      stagesStub.calledWith({
-        description: stages[0].description,
-        designId: design.id,
-        ordering: stages[0].ordering,
-        title: stages[0].title
-      }),
+      stagesStub.calledWith([
+        {
+          description: stages[0].description,
+          designId: design.id,
+          ordering: stages[0].ordering,
+          title: stages[0].title
+        },
+        {
+          description: stages[1].description,
+          designId: design.id,
+          ordering: stages[1].ordering,
+          title: stages[1].title
+        }
+      ]),
       'Creates the first stage'
     );
-    t.ok(createTaskStub.called);
-    t.ok(collaboratorsTasksStub.called, 'creates each collaborator task');
+    t.ok(createTaskStub.called, 'creates all tasks');
+    t.ok(collaboratorsTasksStub.called, 'creates all collaborator tasks');
   });
 });

@@ -73,6 +73,38 @@ export async function create(
   );
 }
 
+export async function createAll(
+  data: Unsaved<TaskEvent>[],
+  trx?: Knex.Transaction
+): Promise<TaskEvent[]> {
+  if (data.length === 0) {
+    return [];
+  }
+
+  const rowData = data.map((unsavedTask: Unsaved<TaskEvent>) =>
+    dataAdapter.forInsertion({
+      ...omit(unsavedTask, 'designStageId'),
+      id: uuid.v4(),
+      status: unsavedTask.status || TaskStatus.NOT_STARTED
+    })
+  );
+
+  const created = await db(TABLE_NAME)
+    .insert(rowData, '*')
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    });
+
+  return validateEvery<TaskEventRow, TaskEvent>(
+    TABLE_NAME,
+    isTaskEventRow,
+    dataAdapter,
+    created
+  );
+}
+
 export async function findById(
   id: string,
   trx?: Knex.Transaction

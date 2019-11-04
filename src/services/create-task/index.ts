@@ -41,3 +41,18 @@ export default async function createTask(
   const create = createWithTransaction(taskId, taskEvent, stageId);
   return trx ? create(trx) : db.transaction(create);
 }
+
+export async function createTasks(
+  tasks: Unsaved<TaskEvent>[],
+  trx: Knex.Transaction
+): Promise<TaskEvent[]> {
+  const taskIds = tasks.map((task: Unsaved<TaskEvent>) => task.taskId);
+  const stageTasks = tasks.map((task: Unsaved<TaskEvent>) => ({
+    designStageId: task.designStageId as string,
+    taskId: task.taskId
+  }));
+  await TasksDAO.createAll(taskIds, trx);
+  const taskEvents = await TaskEventsDAO.createAll(tasks, trx);
+  await ProductDesignStageTasksDAO.createAll(stageTasks, trx);
+  return taskEvents;
+}
