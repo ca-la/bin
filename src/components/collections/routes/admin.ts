@@ -4,7 +4,7 @@ import * as Knex from 'knex';
 
 import * as db from '../../../services/db';
 import * as DesignsDAO from '../../product-designs/dao';
-import * as CollectionsDAO from '../../../components/collections/dao';
+import * as CollectionsDAO from '../dao';
 import * as DesignEventsDAO from '../../../dao/design-events';
 import createDesignTasks from '../../../services/create-design-tasks';
 import isEveryDesignPaired from '../../../services/is-every-design-paired';

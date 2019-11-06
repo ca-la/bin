@@ -9,24 +9,24 @@ import Collection, {
   isCollectionRow,
   partialDataAdapter,
   UPDATABLE_PROPERTIES
-} from './domain-object';
-import { CollectionDesignRow } from '../../domain-objects/collection-design';
-import ProductDesign = require('../product-designs/domain-objects/product-design');
-import * as ProductDesignsDAO from '../product-designs/dao';
+} from '../domain-object';
+import { CollectionDesignRow } from '../../../domain-objects/collection-design';
+import ProductDesign = require('../../product-designs/domain-objects/product-design');
+import * as ProductDesignsDAO from '../../product-designs/dao';
 
-import * as db from '../../services/db';
-import { validate, validateEvery } from '../../services/validate-from-db';
-import first from '../../services/first';
-import limitOrOffset from '../../services/limit-or-offset';
-import { ExpirationNotification } from '../notifications/models/costing-expiration';
+import * as db from '../../../services/db';
+import { validate, validateEvery } from '../../../services/validate-from-db';
+import first from '../../../services/first';
+import limitOrOffset from '../../../services/limit-or-offset';
+import { ExpirationNotification } from '../../notifications/models/costing-expiration';
 import {
   dataAdapter as metaDataApapter,
   isMetaCollectionRow,
   MetaCollection,
   MetaCollectionRow
-} from './meta-domain-object';
+} from '../meta-domain-object';
 
-const TABLE_NAME = 'collections';
+export const TABLE_NAME = 'collections';
 
 export async function create(data: Collection): Promise<Collection> {
   const rowData = pick(dataAdapter.forInsertion(data), INSERTABLE_PROPERTIES);

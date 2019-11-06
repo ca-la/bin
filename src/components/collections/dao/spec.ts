@@ -1,22 +1,22 @@
 import * as uuid from 'node-uuid';
 import * as Knex from 'knex';
 
-import * as CollectionsDAO from './dao';
-import * as DesignEventsDAO from '../../dao/design-events';
-import * as ProductDesignsDAO from '../product-designs/dao';
-import { sandbox, test, Test } from '../../test-helpers/fresh';
-import createUser = require('../../test-helpers/create-user');
-import ProductDesign = require('../product-designs/domain-objects/product-design');
-import createDesign from '../../services/create-design';
-import generateCollection from '../../test-helpers/factories/collection';
-import DesignEvent from '../../domain-objects/design-event';
-import generateCollaborator from '../../test-helpers/factories/collaborator';
-import generatePricingValues from '../../test-helpers/factories/pricing-values';
-import generatePricingCostInput from '../../test-helpers/factories/pricing-cost-input';
-import * as db from './../../services/db';
-import { NotificationType } from '../notifications/domain-object';
-import generateNotification from '../../test-helpers/factories/notification';
-import * as NotificationAnnouncer from '../../components/iris/messages/notification';
+import * as CollectionsDAO from '.';
+import * as DesignEventsDAO from '../../../dao/design-events';
+import * as ProductDesignsDAO from '../../product-designs/dao';
+import { sandbox, test, Test } from '../../../test-helpers/fresh';
+import createUser = require('../../../test-helpers/create-user');
+import ProductDesign = require('../../product-designs/domain-objects/product-design');
+import createDesign from '../../../services/create-design';
+import generateCollection from '../../../test-helpers/factories/collection';
+import DesignEvent from '../../../domain-objects/design-event';
+import generateCollaborator from '../../../test-helpers/factories/collaborator';
+import generatePricingValues from '../../../test-helpers/factories/pricing-values';
+import generatePricingCostInput from '../../../test-helpers/factories/pricing-cost-input';
+import * as db from '../../../services/db';
+import { NotificationType } from '../../notifications/domain-object';
+import generateNotification from '../../../test-helpers/factories/notification';
+import * as NotificationAnnouncer from '../../iris/messages/notification';
 
 test('CollectionsDAO#create creates a collection', async (t: Test) => {
   const { user } = await createUser({ withSession: false });

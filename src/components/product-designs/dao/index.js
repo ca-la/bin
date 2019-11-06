@@ -189,6 +189,7 @@ function findByCollectionId(collectionId) {
       'collection_designs.collection_id': collectionId,
       'product_designs.deleted_at': null
     })
+    .orderBy('product_designs.created_at', 'DESC')
     .catch(rethrow)
     .then(designs => designs.map(instantiate));
 }
