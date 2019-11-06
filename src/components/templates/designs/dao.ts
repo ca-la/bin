@@ -9,7 +9,7 @@ import {
   TemplateDesignRow
 } from './domain-object';
 import * as db from '../../../services/db';
-import { validate } from '../../../services/validate-from-db';
+import { validate, validateEvery } from '../../../services/validate-from-db';
 import filterError = require('../../../services/filter-error');
 import InvalidDataError = require('../../../errors/invalid-data');
 import { queryWithCollectionMeta } from '../../product-designs/dao/view';
@@ -43,6 +43,26 @@ function onDuplicateDesignError(designId: string): typeof filterError {
   );
 }
 
+export async function createList(
+  dataList: TemplateDesign[],
+  trx: Knex.Transaction
+): Promise<TemplateDesign[]> {
+  const insertionData = dataList.map((data: TemplateDesign) =>
+    dataAdapter.forInsertion(data)
+  );
+  const createdRows = await db(TABLE_NAME)
+    .insert(insertionData, '*')
+    .transacting(trx)
+    .catch(rethrow);
+
+  return validateEvery<TemplateDesignRow, TemplateDesign>(
+    TABLE_NAME,
+    isTemplateDesignRow,
+    dataAdapter,
+    createdRows
+  );
+}
+
 export async function create(
   data: TemplateDesign,
   trx: Knex.Transaction
@@ -66,6 +86,16 @@ export async function create(
     dataAdapter,
     created
   );
+}
+
+export async function removeList(
+  designIds: string[],
+  trx: Knex.Transaction
+): Promise<number> {
+  return db(TABLE_NAME)
+    .whereIn('design_id', designIds)
+    .delete()
+    .transacting(trx);
 }
 
 export async function remove(

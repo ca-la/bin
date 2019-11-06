@@ -4,19 +4,22 @@ import createUser = require('../../../test-helpers/create-user');
 import * as TemplateDesignsDAO from './dao';
 import InvalidDataError = require('../../../errors/invalid-data');
 import * as DesignsDAO from '../../product-designs/dao';
+import * as DesignTemplateService from '../services/create-design-template';
 
 const API_PATH = '/templates/designs';
 
 test(`PUT ${API_PATH}/:designId with an admin account`, async (t: Test) => {
   const admin = await createUser({ role: 'ADMIN' });
   const createStub = sandbox()
-    .stub(TemplateDesignsDAO, 'create')
-    .resolves({
-      designId: 'design-one'
-    });
+    .stub(TemplateDesignsDAO, 'createList')
+    .resolves([
+      {
+        designId: 'design-one'
+      }
+    ]);
   const findStub = sandbox()
-    .stub(DesignsDAO, 'findById')
-    .resolves({ id: 'design-one' });
+    .stub(DesignsDAO, 'findByIds')
+    .resolves([{ id: 'design-one' }]);
 
   const [response, body] = await API.put('/templates/designs/design-one', {
     headers: API.authHeader(admin.session.id)
@@ -47,7 +50,7 @@ test(`PUT ${API_PATH}/:designId without an admin account`, async (t: Test) => {
 test(`PUT ${API_PATH}/:designId fails with a known error`, async (t: Test) => {
   const admin = await createUser({ role: 'ADMIN' });
   const createStub = sandbox()
-    .stub(TemplateDesignsDAO, 'create')
+    .stub(TemplateDesignsDAO, 'createList')
     .rejects(new InvalidDataError('Foo'));
 
   const [response, body] = await API.put('/templates/designs/design-one', {
@@ -62,7 +65,7 @@ test(`PUT ${API_PATH}/:designId fails with a known error`, async (t: Test) => {
 test(`PUT ${API_PATH}/:designId fails with an unknown error`, async (t: Test) => {
   const admin = await createUser({ role: 'ADMIN' });
   const createStub = sandbox()
-    .stub(TemplateDesignsDAO, 'create')
+    .stub(TemplateDesignsDAO, 'createList')
     .rejects(new Error('Bizz Bazz'));
 
   const [response, body] = await API.put('/templates/designs/design-one', {
@@ -74,6 +77,28 @@ test(`PUT ${API_PATH}/:designId fails with an unknown error`, async (t: Test) =>
     message:
       'Something went wrong! Please try again, or email hi@ca.la if this message persists.'
   });
+  t.equal(createStub.callCount, 1);
+});
+
+test(`PUT ${API_PATH}?designIds= with an admin account`, async (t: Test) => {
+  const admin = await createUser({ role: 'ADMIN' });
+  const createStub = sandbox()
+    .stub(DesignTemplateService, 'createDesignTemplates')
+    .callsFake(async (designIds: string[]) => {
+      return designIds.map((designId: string) => {
+        return { id: designId };
+      });
+    });
+
+  const [response, body] = await API.put(
+    '/templates/designs?designIds=design-one,design-two',
+    {
+      headers: API.authHeader(admin.session.id)
+    }
+  );
+
+  t.equal(response.status, 201);
+  t.deepEqual(body, [{ id: 'design-one' }, { id: 'design-two' }]);
   t.equal(createStub.callCount, 1);
 });
 
@@ -122,6 +147,23 @@ test(`DEL ${API_PATH}/:designId for non-existent resource`, async (t: Test) => {
   t.equal(response.status, 404);
   t.deepEqual(body, { message: 'Foo!' });
   t.equal(removeStub.callCount, 1);
+});
+
+test(`DEL ${API_PATH}?designIds= with an admin account`, async (t: Test) => {
+  const admin = await createUser({ role: 'ADMIN' });
+  const removeListStub = sandbox()
+    .stub(TemplateDesignsDAO, 'removeList')
+    .resolves();
+
+  const [response] = await API.del(
+    '/templates/designs?designIds=design-one,design-two',
+    {
+      headers: API.authHeader(admin.session.id)
+    }
+  );
+
+  t.equal(response.status, 204);
+  t.equal(removeListStub.callCount, 1);
 });
 
 test(`GET ${API_PATH}/ with a user account`, async (t: Test) => {

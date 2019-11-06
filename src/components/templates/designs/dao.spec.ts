@@ -5,7 +5,43 @@ import { test, Test } from '../../../test-helpers/fresh';
 import createDesign from '../../../services/create-design';
 import createUser = require('../../../test-helpers/create-user');
 import * as db from '../../../services/db';
-import { create, findByDesignId, getAll, remove } from './dao';
+import {
+  create,
+  createList,
+  findByDesignId,
+  getAll,
+  remove,
+  removeList
+} from './dao';
+
+test('createList() + removeList()', async (t: Test) => {
+  const { user } = await createUser({ role: 'ADMIN', withSession: false });
+  const design1 = await createDesign({
+    productType: 'SHIRT',
+    title: 'Test Shirt',
+    userId: user.id
+  });
+  const design2 = await createDesign({
+    productType: 'PANT',
+    title: 'Test Pant',
+    userId: user.id
+  });
+
+  // Can mark designs as a template.
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const result = await createList(
+      [{ designId: design1.id }, { designId: design2.id }],
+      trx
+    );
+    t.deepEqual(result, [{ designId: design1.id }, { designId: design2.id }]);
+  });
+
+  // Can remove designs marked as a template.
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const result = await removeList([design1.id, design2.id], trx);
+    t.equal(result, 2);
+  });
+});
 
 test('create()', async (t: Test) => {
   const { user } = await createUser({ role: 'ADMIN', withSession: false });
