@@ -28,6 +28,34 @@ export function* putDesign(
   }
 }
 
+export function* putDesigns(
+  this: Koa.Application.Context
+): AsyncIterableIterator<any> {
+  const { collectionId } = this.params;
+  const { designIds } = this.query;
+
+  if (!designIds) {
+    return this.throw(400, 'designIds is a required query parameter.');
+  }
+
+  const designIdList = designIds.split(',');
+
+  if (designIdList.length === 0) {
+    return this.throw(400, 'designIds must have at least one design.');
+  }
+
+  try {
+    yield db.transaction(async (trx: Knex.Transaction) => {
+      await moveDesigns({ collectionId, designIds: designIdList, trx });
+    });
+
+    this.body = yield ProductDesignsDAO.findByCollectionId(collectionId);
+    this.status = 200;
+  } catch (error) {
+    return this.throw(500, error.message);
+  }
+}
+
 export function* deleteDesign(
   this: Koa.Application.Context
 ): AsyncIterableIterator<void> {
@@ -35,6 +63,30 @@ export function* deleteDesign(
   yield db.transaction(async (trx: Knex.Transaction) => {
     await removeDesigns({ collectionId, designIds: [designId], trx });
   });
+  this.body = yield ProductDesignsDAO.findByCollectionId(collectionId);
+  this.status = 200;
+}
+
+export function* deleteDesigns(
+  this: Koa.Application.Context
+): AsyncIterableIterator<void> {
+  const { collectionId } = this.params;
+  const { designIds } = this.query;
+
+  if (!designIds) {
+    return this.throw(400, 'designIds is a required query parameter.');
+  }
+
+  const designIdList = designIds.split(',');
+
+  if (designIdList.length === 0) {
+    return this.throw(400, 'designIds must have at least one design.');
+  }
+
+  yield db.transaction(async (trx: Knex.Transaction) => {
+    await removeDesigns({ collectionId, designIds: designIdList, trx });
+  });
+
   this.body = yield ProductDesignsDAO.findByCollectionId(collectionId);
   this.status = 200;
 }

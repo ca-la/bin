@@ -22,7 +22,13 @@ import Collection, {
   isPartialCollection
 } from '../domain-object';
 import { createSubmission, getSubmissionStatus } from './submissions';
-import { deleteDesign, getCollectionDesigns, putDesign } from './designs';
+import {
+  deleteDesign,
+  deleteDesigns,
+  getCollectionDesigns,
+  putDesign,
+  putDesigns
+} from './designs';
 import {
   getCollectionPermissions,
   Permissions
@@ -221,11 +227,25 @@ router.get(
   getSubmissionStatus
 );
 
+// Moving Designs
+
 router.get(
   '/:collectionId/designs',
   requireAuth,
   canAccessCollectionInParam,
   getCollectionDesigns
+);
+router.put(
+  '/:collectionId/designs',
+  requireAuth,
+  canAccessCollectionInParam,
+  putDesigns
+);
+router.del(
+  '/:collectionId/designs',
+  requireAuth,
+  canAccessCollectionInParam,
+  deleteDesigns
 );
 router.del(
   '/:collectionId/designs/:designId',
