@@ -9,6 +9,7 @@ import * as DesignsDAO from '../../components/product-designs/dao';
 import * as PermissionsService from './index';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
 import generateDesignEvent from '../../test-helpers/factories/design-event';
+import { moveDesign } from '../../test-helpers/collections';
 
 test('#getDesignPermissions', async (t: tape.Test) => {
   const { user, session } = await createUser();
@@ -36,7 +37,7 @@ test('#getDesignPermissions', async (t: tape.Test) => {
     title: 'My Tee',
     userId: user.id
   });
-  await CollectionsDAO.moveDesign(collection1.id, design1.id);
+  await moveDesign(collection1.id, design1.id);
 
   const design2 = await DesignsDAO.create({
     productType: 'PANT',
@@ -53,7 +54,7 @@ test('#getDesignPermissions', async (t: tape.Test) => {
     title: 'Oversize Hoodie',
     userId: user2.id
   });
-  await CollectionsDAO.moveDesign(collection2.id, design4.id);
+  await moveDesign(collection2.id, design4.id);
   const { design: design5 } = await generateDesignEvent({
     type: 'COMMIT_QUOTE',
     actorId: user.id

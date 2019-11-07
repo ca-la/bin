@@ -14,7 +14,7 @@ const PartnerPayoutLogsDAO = require('../../components/partner-payouts/dao');
 const PartnerPayoutAccountsDAO = require('../../dao/partner-payout-accounts');
 const { sandbox, test } = require('../../test-helpers/fresh');
 const generateInvoice = require('../../test-helpers/factories/invoice').default;
-const { addDesign } = require('../../components/collections/dao');
+const { addDesign } = require('../../test-helpers/collections');
 
 test('GET /invoices allows admins to list invoices for a collection', async t => {
   const { user } = await createUser({ withSession: false });

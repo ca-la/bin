@@ -1,11 +1,11 @@
 import createCollection from './collection';
-import * as CollectionsDAO from '../../components/collections/dao';
 import ProductDesignsDAO = require('../../components/product-designs/dao');
 import Collection from '../../components/collections/domain-object';
 import { findById as findUserById } from '../../components/users/dao';
 import createUser = require('../create-user');
 import User from '../../components/users/domain-object';
 import ProductDesign = require('../../components/product-designs/domain-objects/product-design');
+import { moveDesign } from '../collections';
 
 interface CollectionWithResources {
   collection: Collection;
@@ -30,7 +30,7 @@ export default async function createCollectionDesign(
     title: 'A design',
     userId: user.id
   });
-  await CollectionsDAO.moveDesign(collection.id, design.id);
+  await moveDesign(collection.id, design.id);
 
   return {
     collection,

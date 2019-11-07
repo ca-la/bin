@@ -16,6 +16,7 @@ import { sandbox, test, Test } from '../../test-helpers/fresh';
 import createCollaborator from '../../test-helpers/factories/collaborator';
 import Collaborator from '../../components/collaborators/domain-objects/collaborator';
 import { getTemplatesFor, taskTypes } from '../../components/tasks/templates';
+import { moveDesign } from '../../test-helpers/collections';
 
 async function createResources(): Promise<{
   user: User;
@@ -40,7 +41,7 @@ async function createResources(): Promise<{
     userId: designer.user.id
   });
 
-  await CollectionsDAO.moveDesign(collection.id, design.id);
+  await moveDesign(collection.id, design.id);
   const { collaborator } = await createCollaborator({
     collectionId: collection.id,
     role: 'EDIT',

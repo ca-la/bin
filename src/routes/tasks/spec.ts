@@ -24,6 +24,7 @@ import generateProductDesignStage from '../../test-helpers/factories/product-des
 import generateCollaborator from '../../test-helpers/factories/collaborator';
 import * as AnnounceCommentService from '../../components/iris/messages/task-comment';
 import * as StageTemplate from '../../components/tasks/templates';
+import { addDesign } from '../../test-helpers/collections';
 
 const beforeEach = (): void => {
   sandbox()
@@ -258,7 +259,7 @@ test('GET /tasks?userId=:userId returns all tasks for a user', async (t: tape.Te
     title: 'design',
     userId: user.id
   });
-  await CollectionsDAO.addDesign(collection.id, design.id);
+  await addDesign(collection.id, design.id);
   const { stage } = await generateProductDesignStage(
     { designId: design.id },
     user.id
@@ -636,7 +637,7 @@ test('GET list returns all tasks by resource with limit & offset', async (t: tap
     title: 'design',
     userId: user.id
   });
-  await CollectionsDAO.addDesign(collection.id, design.id);
+  await addDesign(collection.id, design.id);
   const { stage } = await generateProductDesignStage(
     { designId: design.id },
     user.id

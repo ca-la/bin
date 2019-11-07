@@ -17,6 +17,11 @@ import * as db from '../../../services/db';
 import { NotificationType } from '../../notifications/domain-object';
 import generateNotification from '../../../test-helpers/factories/notification';
 import * as NotificationAnnouncer from '../../iris/messages/notification';
+import {
+  addDesign,
+  moveDesign,
+  removeDesign
+} from '../../../test-helpers/collections';
 
 test('CollectionsDAO#create creates a collection', async (t: Test) => {
   const { user } = await createUser({ withSession: false });
@@ -228,8 +233,8 @@ test('CollectionsDAO#addDesign adds a design to a collection', async (t: Test) =
       userId: user.id
     })
   ]);
-  await CollectionsDAO.addDesign(createdCollection.id, createdDesigns[0].id);
-  const collectionDesigns = await CollectionsDAO.addDesign(
+  await addDesign(createdCollection.id, createdDesigns[0].id);
+  const collectionDesigns = await addDesign(
     createdCollection.id,
     createdDesigns[1].id
   );
@@ -269,7 +274,7 @@ test('CollectionsDAO#moveDesign moves designs to different collections', async (
     userId: user.id
   });
 
-  const collectionDesigns = await CollectionsDAO.moveDesign(
+  const collectionDesigns = await moveDesign(
     createdCollectionOne.id,
     createdDesign.id
   );
@@ -280,7 +285,7 @@ test('CollectionsDAO#moveDesign moves designs to different collections', async (
     'ensure that the design was added to the collection'
   );
 
-  const collectionDesignsTwo = await CollectionsDAO.moveDesign(
+  const collectionDesignsTwo = await moveDesign(
     createdCollectionTwo.id,
     createdDesign.id
   );
@@ -308,11 +313,11 @@ test('CollectionsDAO#removeDesign removes a design from a collection', async (t:
     title: 'Vader Mask',
     userId: user.id
   });
-  const collectionDesigns = await CollectionsDAO.addDesign(
+  const collectionDesigns = await addDesign(
     createdCollection.id,
     createdDesign.id
   );
-  const afterRemoveCollectionDesigns = await CollectionsDAO.removeDesign(
+  const afterRemoveCollectionDesigns = await removeDesign(
     createdCollection.id,
     createdDesign.id
   );
@@ -404,13 +409,13 @@ test('findSubmittedButUnpaidCollections finds all submitted but unpaid collectio
   });
   await generateCollection({ createdBy: user2.id });
 
-  await CollectionsDAO.addDesign(collection1.id, design1.id);
-  await CollectionsDAO.addDesign(collection1.id, design2.id);
-  await CollectionsDAO.addDesign(collection1.id, designDeleted2.id);
-  await CollectionsDAO.addDesign(collectionDeleted.id, designDeleted.id);
-  await CollectionsDAO.addDesign(collection2.id, design3.id);
-  await CollectionsDAO.addDesign(collection3.id, design4.id);
-  await CollectionsDAO.addDesign(collection4.id, design5.id);
+  await addDesign(collection1.id, design1.id);
+  await addDesign(collection1.id, design2.id);
+  await addDesign(collection1.id, designDeleted2.id);
+  await addDesign(collectionDeleted.id, designDeleted.id);
+  await addDesign(collection2.id, design3.id);
+  await addDesign(collection3.id, design4.id);
+  await addDesign(collection4.id, design5.id);
 
   const submitEvent: DesignEvent = {
     actorId: user2.id,
@@ -540,7 +545,7 @@ test('findSubmittedButUnpaidCollections finds all submitted but unpaid collectio
     paymentEvent4
   ]);
 
-  await CollectionsDAO.moveDesign(collection5.id, design5.id);
+  await moveDesign(collection5.id, design5.id);
 
   await DesignEventsDAO.create({
     actorId: user2.id,
@@ -574,8 +579,8 @@ test('findAllUnnotifiedCollectionsWithExpiringCostInputs works on the empty case
     expiresAt: null
   });
   const { collection: c1 } = await generateCollection();
-  await CollectionsDAO.moveDesign(c1.id, d1.id);
-  await CollectionsDAO.moveDesign(c1.id, d2.id);
+  await moveDesign(c1.id, d1.id);
+  await moveDesign(c1.id, d2.id);
 
   await db.transaction(
     async (trx: Knex.Transaction): Promise<void> => {
@@ -608,8 +613,8 @@ test('findAllUnnotifiedCollectionsWithExpiringCostInputs will returns all collec
     expiresAt: anHourFromNow
   });
   const { collection: c1, createdBy: u1 } = await generateCollection();
-  await CollectionsDAO.moveDesign(c1.id, d1.id);
-  await CollectionsDAO.moveDesign(c1.id, d2.id);
+  await moveDesign(c1.id, d1.id);
+  await moveDesign(c1.id, d2.id);
 
   await db.transaction(
     async (trx: Knex.Transaction): Promise<void> => {
@@ -648,8 +653,8 @@ test('findAllUnnotifiedCollectionsWithExpiringCostInputs filters against expired
   });
   const { collection: c1 } = await generateCollection();
   const { collection: c2 } = await generateCollection();
-  await CollectionsDAO.moveDesign(c1.id, d1.id);
-  await CollectionsDAO.moveDesign(c2.id, d2.id);
+  await moveDesign(c1.id, d1.id);
+  await moveDesign(c2.id, d2.id);
 
   await CollectionsDAO.deleteById(c2.id);
 
@@ -701,9 +706,9 @@ test('findAllUnnotifiedCollectionsWithExpiringCostInputs will filter for ones wi
     recipientUserId: u1.id,
     type: NotificationType.COSTING_EXPIRATION_ONE_WEEK
   });
-  await CollectionsDAO.moveDesign(c1.id, d1.id);
-  await CollectionsDAO.moveDesign(c1.id, d2.id);
-  await CollectionsDAO.moveDesign(c2.id, d3.id);
+  await moveDesign(c1.id, d1.id);
+  await moveDesign(c1.id, d2.id);
+  await moveDesign(c2.id, d3.id);
 
   await db.transaction(
     async (trx: Knex.Transaction): Promise<void> => {

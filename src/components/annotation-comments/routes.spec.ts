@@ -3,13 +3,13 @@ import * as uuid from 'node-uuid';
 import createUser = require('../../test-helpers/create-user');
 import { authHeader, get, put } from '../../test-helpers/http';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
-import * as CollectionsDAO from '../collections/dao';
 import { create as createDesign } from '../product-designs/dao';
 import * as CreateNotifications from '../../services/create-notifications';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
 import generateCollection from '../../test-helpers/factories/collection';
 import * as AnnounceCommentService from '../iris/messages/annotation-comment';
 import generateCanvas from '../../test-helpers/factories/product-design-canvas';
+import { addDesign } from '../../test-helpers/collections';
 
 const API_PATH = '/product-design-canvas-annotations';
 
@@ -34,7 +34,7 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
     title: 'Green Tee',
     userId: user.id
   });
-  await CollectionsDAO.addDesign(collection.id, design.id);
+  await addDesign(collection.id, design.id);
 
   const { canvas: designCanvas } = await generateCanvas({
     componentId: null,

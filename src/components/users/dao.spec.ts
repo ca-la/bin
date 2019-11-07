@@ -16,7 +16,7 @@ import generateDesignEvent from '../../test-helpers/factories/design-event';
 import PayoutAccountsDAO = require('../../dao/partner-payout-accounts');
 import PartnerPayoutsDAO = require('../../components/partner-payouts/dao');
 import generateCollection from '../../test-helpers/factories/collection';
-import { addDesign } from '../collections/dao';
+import { addDesign } from '../../test-helpers/collections';
 
 const USER_DATA: UserIO = Object.freeze({
   email: 'USER@example.com',

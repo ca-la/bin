@@ -6,7 +6,7 @@ import * as PartnerPayoutLogsDAO from '../../components/partner-payouts/dao';
 import StripeService = require('../stripe');
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import generateBid from '../../test-helpers/factories/bid';
-import { addDesign } from '../../components/collections/dao';
+import { addDesign } from '../../test-helpers/collections';
 import { payOutPartner } from '.';
 import uuid = require('node-uuid');
 import * as ProductDesignsDAO from '../../components/product-designs/dao';

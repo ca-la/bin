@@ -11,8 +11,6 @@ import Collection, {
   UPDATABLE_PROPERTIES
 } from '../domain-object';
 import { CollectionDesignRow } from '../../../domain-objects/collection-design';
-import ProductDesign = require('../../product-designs/domain-objects/product-design');
-import * as ProductDesignsDAO from '../../product-designs/dao';
 
 import * as db from '../../../services/db';
 import { validate, validateEvery } from '../../../services/validate-from-db';
@@ -242,39 +240,6 @@ JOIN (
     dataAdapter,
     collections
   );
-}
-
-export async function addDesign(
-  collectionId: string,
-  designId: string
-): Promise<ProductDesign[]> {
-  await db('collection_designs')
-    .insert({ collection_id: collectionId, design_id: designId }, '*')
-    .catch(rethrow);
-  return ProductDesignsDAO.findByCollectionId(collectionId);
-}
-
-export async function moveDesign(
-  collectionId: string,
-  designId: string
-): Promise<ProductDesign[]> {
-  await db('collection_designs')
-    .where({ design_id: designId })
-    .del()
-    .then(() => addDesign(collectionId, designId))
-    .catch(rethrow);
-  return ProductDesignsDAO.findByCollectionId(collectionId);
-}
-
-export async function removeDesign(
-  collectionId: string,
-  designId: string
-): Promise<ProductDesign[]> {
-  await db('collection_designs')
-    .where({ collection_id: collectionId, design_id: designId })
-    .del()
-    .catch(rethrow);
-  return ProductDesignsDAO.findByCollectionId(collectionId);
 }
 
 /**

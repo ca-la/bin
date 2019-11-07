@@ -18,6 +18,7 @@ const {
 } = require('../../../test-helpers/http');
 const { test, sandbox } = require('../../../test-helpers/fresh');
 const AWSService = require('../../../services/aws');
+const { addDesign } = require('../../../test-helpers/collections');
 
 test('PATCH /product-designs/:id rejects empty data', t => {
   let designId;
@@ -575,7 +576,7 @@ test('GET /product-designs/:designId/collections returns collections', async t =
     userId: user.id,
     title: 'Design'
   });
-  await CollectionsDAO.addDesign(collection.id, design.id);
+  await addDesign(collection.id, design.id);
 
   const [response, body] = await get(
     `/product-designs/${design.id}/collections`,

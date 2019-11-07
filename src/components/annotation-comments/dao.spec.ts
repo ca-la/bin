@@ -15,7 +15,7 @@ import generateComment from '../../test-helpers/factories/comment';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
 import * as CollaboratorsDAO from '../collaborators/dao';
 import generateCollection from '../../test-helpers/factories/collection';
-import { addDesign } from '../collections/dao';
+import { addDesign } from '../../test-helpers/collections';
 import { omit } from 'lodash';
 
 test('ProductDesignCanvasAnnotationComment DAO supports creation/retrieval', async (t: tape.Test) => {

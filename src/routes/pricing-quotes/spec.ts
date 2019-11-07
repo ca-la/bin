@@ -12,7 +12,6 @@ import { authHeader, get, post, put } from '../../test-helpers/http';
 import { create as createDesign } from '../../components/product-designs/dao';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import generateCollection from '../../test-helpers/factories/collection';
-import * as CollectionsDAO from '../../components/collections/dao';
 import * as SlackService from '../../services/slack';
 import PricingCostInput, {
   PricingCostInputWithoutVersions
@@ -20,6 +19,7 @@ import PricingCostInput, {
 import { daysToMs } from '../../services/time-conversion';
 import generateProductTypes from '../../services/generate-product-types';
 import { Dollars } from '../../services/dollars';
+import { moveDesign } from '../../test-helpers/collections';
 
 test('/pricing-quotes POST -> GET quote fails with malformed inputs', async (t: Test) => {
   const { user, session } = await createUser();
@@ -139,7 +139,7 @@ test('POST /pricing-quotes creates commit event', async (t: Test) => {
     title: 'A design',
     userId: user.id
   });
-  await CollectionsDAO.moveDesign(collection.id, design.id);
+  await moveDesign(collection.id, design.id);
 
   await PricingCostInputsDAO.create({
     createdAt: new Date(),

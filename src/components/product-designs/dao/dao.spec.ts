@@ -11,7 +11,6 @@ import {
 import { del as deleteCanvas } from '../../canvases/dao';
 import * as CollaboratorsDAO from '../../collaborators/dao';
 import { deleteById as deleteAnnotation } from '../../product-design-canvas-annotations/dao';
-import * as CollectionsDAO from '../../collections/dao';
 
 import { test } from '../../../test-helpers/fresh';
 import createUser = require('../../../test-helpers/create-user');
@@ -30,6 +29,7 @@ import omit = require('lodash/omit');
 import generateDesignEvent from '../../../test-helpers/factories/design-event';
 import generatePricingCostInput from '../../../test-helpers/factories/pricing-cost-input';
 import generatePricingValues from '../../../test-helpers/factories/pricing-values';
+import { addDesign } from '../../../test-helpers/collections';
 
 test('ProductDesignCanvases DAO supports creation/retrieval, enriched with image links', async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
@@ -160,7 +160,7 @@ test('findAllDesignsThroughCollaborator finds all undeleted designs that the use
     userId: notUser.id
   });
   const { collection } = await generateCollection({ createdBy: notUser.id });
-  await CollectionsDAO.addDesign(collection.id, collectionSharedDesign.id);
+  await addDesign(collection.id, collectionSharedDesign.id);
   await generateCollaborator({
     collectionId: collection.id,
     designId: null,
@@ -175,10 +175,7 @@ test('findAllDesignsThroughCollaborator finds all undeleted designs that the use
     title: 'design',
     userId: notUser.id
   });
-  await CollectionsDAO.addDesign(
-    collection.id,
-    collectionSharedDesignDeleted.id
-  );
+  await addDesign(collection.id, collectionSharedDesignDeleted.id);
 
   const designs = await findAllDesignsThroughCollaborator({ userId: user.id });
   t.equal(
@@ -230,7 +227,7 @@ test('findAllDesignsThroughCollaborator finds all designs with a search string',
     createdBy: user.id,
     title: 'Collection'
   });
-  await CollectionsDAO.addDesign(collection.id, secondDesign.id);
+  await addDesign(collection.id, secondDesign.id);
 
   const allDesigns = await findAllDesignsThroughCollaborator({
     userId: user.id
@@ -263,7 +260,7 @@ test('findDesignByAnnotationId', async (t: tape.Test) => {
     title: 'design',
     userId: userOne.user.id
   });
-  await CollectionsDAO.addDesign(collectionOne.id, designOne.id);
+  await addDesign(collectionOne.id, designOne.id);
   const { canvas: canvasOne } = await generateCanvas({
     designId: designOne.id
   });
@@ -302,7 +299,7 @@ test('findDesignByTaskId', async (t: tape.Test) => {
     title: 'design',
     userId: userOne.user.id
   });
-  await CollectionsDAO.addDesign(collectionOne.id, designOne.id);
+  await addDesign(collectionOne.id, designOne.id);
   const { stage: stageOne } = await generateProductDesignStage({
     designId: designOne.id
   });
@@ -343,7 +340,7 @@ test('findAllWithCostsAndEvents base cases', async (t: tape.Test) => {
     title: 'd2',
     userId: u1.id
   });
-  await CollectionsDAO.addDesign(c1.id, d1.id);
+  await addDesign(c1.id, d1.id);
 
   const results = await findAllWithCostsAndEvents([c1.id]);
   t.deepEqual(
@@ -363,7 +360,7 @@ test('findAllWithCostsAndEvents base cases', async (t: tape.Test) => {
   const results2 = await findAllWithCostsAndEvents([c2.id]);
   t.deepEqual(results2, [], 'Returns an empty list if there are no designs');
 
-  await CollectionsDAO.addDesign(c1.id, d2.id);
+  await addDesign(c1.id, d2.id);
   const results3 = await findAllWithCostsAndEvents([c1.id]);
   t.deepEqual(
     results3,
@@ -402,8 +399,8 @@ test('findAllWithCostsAndEvents +1 case', async (t: tape.Test) => {
     title: 'd2',
     userId: u1.id
   });
-  await CollectionsDAO.addDesign(c1.id, d1.id);
-  await CollectionsDAO.addDesign(c1.id, d2.id);
+  await addDesign(c1.id, d1.id);
+  await addDesign(c1.id, d2.id);
 
   const { designEvent: de1 } = await generateDesignEvent({
     createdAt: new Date('2019-04-20'),

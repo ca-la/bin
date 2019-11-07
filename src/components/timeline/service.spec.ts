@@ -7,7 +7,6 @@ import { test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
 import * as PricingCostInputsDAO from '../pricing-cost-inputs/dao';
-import * as CollectionsDAO from '../collections/dao';
 import { create as createDesign } from '../product-designs/dao';
 import generateCollection from '../../test-helpers/factories/collection';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
@@ -18,6 +17,7 @@ import generateProductDesignStage from '../../test-helpers/factories/product-des
 import { TaskStatus } from '../../domain-objects/task-event';
 import generateAsset from '../../test-helpers/factories/asset';
 import { PricingQuote } from '../../domain-objects/pricing-quote';
+import { moveDesign } from '../../test-helpers/collections';
 
 test('findByUserId finds timelines by user id with task breakdowns', async (t: tape.Test) => {
   const { user, session } = await createUser();
@@ -113,7 +113,7 @@ test('findByCollectionId finds timelines by collection id and completed stage', 
     title: 'A design',
     userId: user.id
   });
-  await CollectionsDAO.moveDesign(collection.id, design.id);
+  await moveDesign(collection.id, design.id);
 
   const { asset: sketch } = await generateAsset({
     description: '',

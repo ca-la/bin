@@ -22,6 +22,7 @@ const CollectionsDAO = require('../../collections/dao');
 const DesignEventsDAO = require('../../../dao/design-events');
 const { test } = require('../../../test-helpers/fresh');
 const createUser = require('../../../test-helpers/create-user');
+const { moveDesign } = require('../../../test-helpers/collections');
 
 test('ProductDesignsDAO.create creates a design', async t => {
   const { user } = await createUser({ withSession: false });
@@ -184,7 +185,7 @@ test('ProductDesignsDAO.findByCollectionId', async t => {
     productType: 'TEESHIRT',
     userId: user.id
   });
-  await CollectionsDAO.moveDesign(collection.id, design.id);
+  await moveDesign(collection.id, design.id);
 
   const collectionDesigns = await ProductDesignsDAO.findByCollectionId(
     collection.id

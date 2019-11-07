@@ -37,6 +37,7 @@ import generateTask from './task';
 import ProductDesignCanvasMeasurement from '../../domain-objects/product-design-canvas-measurement';
 import generateCanvas from './product-design-canvas';
 import generateProductDesignStage from './product-design-stage';
+import { addDesign } from '../collections';
 
 interface NotificationWithResources {
   actor: User;
@@ -85,9 +86,9 @@ export default async function generateNotification(
   }
 
   try {
-    await CollectionsDAO.addDesign(collection.id, design.id);
+    await addDesign(collection.id, design.id);
   } catch (e) {
-    // noop
+    // no-op
   }
 
   const { collaborator } = options.collaboratorId

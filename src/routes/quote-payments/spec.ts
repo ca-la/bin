@@ -14,6 +14,7 @@ import SlackService = require('../../services/slack');
 import Stripe = require('../../services/stripe');
 import { authHeader, post } from '../../test-helpers/http';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
+import { addDesign } from '../../test-helpers/collections';
 
 test('/quote-payments POST generates quotes, payment method, invoice, lineItems, and charges', async (t: Test) => {
   const { user, session } = await createUser();
@@ -47,7 +48,7 @@ test('/quote-payments POST generates quotes, payment method, invoice, lineItems,
     title: 'A design',
     userId: user.id
   });
-  await CollectionsDAO.addDesign(collection.id, design.id);
+  await addDesign(collection.id, design.id);
 
   await generatePricingValues();
   await PricingCostInputsDAO.create({
@@ -136,7 +137,7 @@ test('/quote-payments POST does not generate quotes, payment method, invoice, li
     title: 'A design',
     userId: user.id
   });
-  await CollectionsDAO.addDesign(collection.id, design.id);
+  await addDesign(collection.id, design.id);
 
   await generatePricingValues();
   await PricingCostInputsDAO.create({
@@ -204,7 +205,7 @@ test('/quote-payments?isFinanced=true POST generates quotes, invoice, lineItems'
     title: 'A design',
     userId: user.id
   });
-  await CollectionsDAO.addDesign(collection.id, design.id);
+  await addDesign(collection.id, design.id);
 
   await generatePricingValues();
   await PricingCostInputsDAO.create({
@@ -279,7 +280,7 @@ test('POST /quote-payments?isWaived=true waives payment', async (t: Test) => {
     userId: user.id
   });
 
-  await CollectionsDAO.addDesign(collection.id, design.id);
+  await addDesign(collection.id, design.id);
 
   await generatePricingValues();
 
@@ -358,7 +359,7 @@ test('POST /quote-payments?isWaived=true fails if ineligible', async (t: Test) =
     userId: user.id
   });
 
-  await CollectionsDAO.addDesign(collection.id, design.id);
+  await addDesign(collection.id, design.id);
 
   await generatePricingValues();
 
@@ -436,7 +437,7 @@ test(
       title: 'A design',
       userId: user.id
     });
-    await CollectionsDAO.addDesign(collection.id, design.id);
+    await addDesign(collection.id, design.id);
 
     await generatePricingValues();
     await PricingCostInputsDAO.create({

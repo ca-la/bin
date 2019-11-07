@@ -8,7 +8,7 @@ import createUser = require('../../test-helpers/create-user');
 import createDesign from '../../services/create-design';
 import generateBid from '../../test-helpers/factories/bid';
 import generateCollection from '../../test-helpers/factories/collection';
-import { addDesign } from '../collections/dao';
+import { addDesign } from '../../test-helpers/collections';
 import generateDesignEvent from '../../test-helpers/factories/design-event';
 
 test('can create a payout log and find the logs', async (t: Test) => {

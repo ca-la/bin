@@ -16,6 +16,7 @@ import generateCollection from '../../test-helpers/factories/collection';
 import Collaborator from './domain-objects/collaborator';
 import generateBid from '../../test-helpers/factories/bid';
 import { taskTypes } from '../tasks/templates';
+import { addDesign, removeDesign } from '../../test-helpers/collections';
 
 test('Collaborators DAO can find all collaborators with a list of ids', async (t: Test) => {
   const { user } = await createUser({ withSession: false });
@@ -73,7 +74,7 @@ test('CollaboratorsDAO.findByDesign returns design and collection collaborators'
     title: 'AW19'
   });
 
-  await CollectionsDAO.addDesign(collection.id, design.id);
+  await addDesign(collection.id, design.id);
 
   const { collaborator } = await generateCollaborator({
     collectionId: null,
@@ -199,7 +200,7 @@ test('CollaboratorsDAO.findByDesign returns collection collaborators', async (t:
     title: 'AW19'
   });
 
-  await CollectionsDAO.addDesign(collection.id, design.id);
+  await addDesign(collection.id, design.id);
 
   const { collaborator } = await generateCollaborator({
     collectionId: null,
@@ -298,7 +299,7 @@ test('CollaboratorsDAO.findByDesigns', async (t: Test) => {
   const { collection, createdBy } = await generateCollection();
 
   // add initial design to the new collection.
-  await CollectionsDAO.addDesign(collection.id, design.id);
+  await addDesign(collection.id, design.id);
 
   // create another design by the main test user for the new collection.
   const designTwo = await createDesign({
@@ -306,7 +307,7 @@ test('CollaboratorsDAO.findByDesigns', async (t: Test) => {
     title: 'AW19',
     userId: user.id
   });
-  await CollectionsDAO.addDesign(collection.id, designTwo.id);
+  await addDesign(collection.id, designTwo.id);
   const dTwoCollaborators = await CollaboratorsDAO.findByDesign(designTwo.id);
 
   // create a third design by a secondary user for the main collection.
@@ -315,7 +316,7 @@ test('CollaboratorsDAO.findByDesigns', async (t: Test) => {
     title: 'Studded Military Boots',
     userId: userTwo.id
   });
-  await CollectionsDAO.addDesign(collection.id, designThree.id);
+  await addDesign(collection.id, designThree.id);
   // add in a random collaborator on the third design.
   await generateCollaborator({
     designId: designThree.id,
@@ -431,7 +432,7 @@ test('findAllForUserThroughDesign can find all collaborators', async (t: Test) =
     title: 'A product design',
     userId: user.id
   });
-  await CollectionsDAO.addDesign(collection.id, design.id);
+  await addDesign(collection.id, design.id);
 
   const { collaborator: collaboratorOne } = await generateCollaborator({
     collectionId: null,
@@ -466,7 +467,7 @@ test('findAllForUserThroughDesign can find all collaborators', async (t: Test) =
 
   t.deepEqual(resultTwo, [collaboratorOne]);
 
-  await CollectionsDAO.removeDesign(collection.id, design.id);
+  await removeDesign(collection.id, design.id);
 
   const resultThree = await CollaboratorsDAO.findAllForUserThroughDesign(
     design.id,

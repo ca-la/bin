@@ -15,6 +15,7 @@ import { stubFetchUncostedWithLabels } from '../../../test-helpers/stubs/collect
 import Collection from '../domain-object';
 import generateCollaborator from '../../../test-helpers/factories/collaborator';
 import * as SubmissionStatusService from '../services/determine-submission-status';
+import { moveDesign } from '../../../test-helpers/collections';
 
 test('GET /collections/:id returns a created collection', async (t: tape.Test) => {
   const { session, user } = await createUser();
@@ -514,8 +515,8 @@ test('POST /collections/:id/submissions', async (t: tape.Test) => {
     title: 'T-Shirt Two',
     userId: owner.user.id
   });
-  await CollectionsDAO.moveDesign(collection.id, designOne.id);
-  await CollectionsDAO.moveDesign(collection.id, designTwo.id);
+  await moveDesign(collection.id, designOne.id);
+  await moveDesign(collection.id, designTwo.id);
 
   const notificationStub = sandbox()
     .stub(CreateNotifications, 'sendDesignerSubmitCollection')
@@ -597,7 +598,7 @@ test('POST /collections/:id/submissions', async (t: tape.Test) => {
     title: 'T-Shirt Two',
     userId: owner.user.id
   });
-  await CollectionsDAO.moveDesign(collection.id, designThree.id);
+  await moveDesign(collection.id, designThree.id);
 
   const secondSubmission = await API.post(
     `/collections/${collection.id}/submissions`,
@@ -724,8 +725,8 @@ test('POST /collections/:collectionId/cost-inputs', async (t: tape.Test) => {
     title: 'Balloon Pants',
     userId: designer.user.id
   });
-  await CollectionsDAO.moveDesign(collectionOne.id, designOne.id);
-  await CollectionsDAO.moveDesign(collectionOne.id, designTwo.id);
+  await moveDesign(collectionOne.id, designOne.id);
+  await moveDesign(collectionOne.id, designTwo.id);
 
   const notificationStub = sandbox()
     .stub(CreateNotifications, 'immediatelySendFullyCostedCollection')
@@ -791,8 +792,8 @@ test('POST /collections/:collectionId/partner-pairings', async (t: tape.Test) =>
     title: 'Balloon Pants',
     userId: designer.user.id
   });
-  await CollectionsDAO.moveDesign(collectionOne.id, designOne.id);
-  await CollectionsDAO.moveDesign(collectionOne.id, designTwo.id);
+  await moveDesign(collectionOne.id, designOne.id);
+  await moveDesign(collectionOne.id, designTwo.id);
 
   await DesignEventsDAO.createAll([
     {
@@ -872,8 +873,8 @@ test('POST /collections/:collectionId/partner-pairings', async (t: tape.Test) =>
     title: 'Balloon Pants',
     userId: designer.user.id
   });
-  await CollectionsDAO.moveDesign(collectionTwo.id, designThree.id);
-  await CollectionsDAO.moveDesign(collectionTwo.id, designFour.id);
+  await moveDesign(collectionTwo.id, designThree.id);
+  await moveDesign(collectionTwo.id, designFour.id);
 
   const notPairedFailure = await API.post(
     `/collections/${collectionTwo.id}/partner-pairings`,

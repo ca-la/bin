@@ -25,6 +25,7 @@ import * as Config from '../../config';
 import generateMeasurement from '../../test-helpers/factories/product-design-canvas-measurement';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
 import * as NotificationAnnouncer from '../../components/iris/messages/notification';
+import { addDesign } from '../../test-helpers/collections';
 
 test('sendDesignOwnerAnnotationCommentCreateNotification', async (t: tape.Test) => {
   sandbox()
@@ -208,7 +209,7 @@ test('sendDesignOwnerMeasurementCreateNotification', async (t: tape.Test) => {
     title: 'A design',
     userId: owner.id
   });
-  await CollectionsDAO.addDesign(collection.id, design.id);
+  await addDesign(collection.id, design.id);
 
   const { canvas } = await generateCanvas({
     createdBy: owner.id,
@@ -273,7 +274,7 @@ test('sendTaskCommentCreateNotification', async (t: tape.Test) => {
     title: 'A design',
     userId: userOne.user.id
   });
-  await CollectionsDAO.addDesign(collection.id, design.id);
+  await addDesign(collection.id, design.id);
 
   const designStage = await DesignStagesDAO.create({
     description: '',
@@ -378,7 +379,7 @@ test('sendTaskCommentMentionNotification', async (t: tape.Test) => {
     title: 'A design',
     userId: userOne.user.id
   });
-  await CollectionsDAO.addDesign(collection.id, design.id);
+  await addDesign(collection.id, design.id);
 
   const designStage = await DesignStagesDAO.create({
     description: '',
@@ -482,7 +483,7 @@ test('sendTaskAssignmentNotification', async (t: tape.Test) => {
     title: 'A design',
     userId: userOne.user.id
   });
-  await CollectionsDAO.addDesign(collection.id, design.id);
+  await addDesign(collection.id, design.id);
   const designStage = await DesignStagesDAO.create({
     description: '',
     designId: design.id,
@@ -564,7 +565,7 @@ test('sendTaskAssignmentNotification does not send if assigned to self', async (
     title: 'A design',
     userId: user.id
   });
-  await CollectionsDAO.addDesign(collection.id, design.id);
+  await addDesign(collection.id, design.id);
   const designStage = await DesignStagesDAO.create({
     description: '',
     designId: design.id,
@@ -629,7 +630,7 @@ test('sendTaskAssignmentNotification does not send if assigned to collaborator w
     title: 'A design',
     userId: user.id
   });
-  await CollectionsDAO.addDesign(collection.id, design.id);
+  await addDesign(collection.id, design.id);
   const designStage = await DesignStagesDAO.create({
     description: '',
     designId: design.id,
@@ -706,7 +707,7 @@ test('sendTaskCompletionNotification', async (t: tape.Test) => {
     title: 'A design',
     userId: userOne.user.id
   });
-  await CollectionsDAO.addDesign(collection.id, design.id);
+  await addDesign(collection.id, design.id);
   const designStage = await DesignStagesDAO.create({
     description: '',
     designId: design.id,

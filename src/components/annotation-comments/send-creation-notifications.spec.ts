@@ -8,12 +8,12 @@ import sendCreationNotifications from './send-creation-notifications';
 import User from '../../components/users/domain-object';
 import createUser = require('../../test-helpers/create-user');
 import { sandbox, test, Test } from '../../test-helpers/fresh';
-import * as CollectionsDAO from '../collections/dao';
 import { create as createDesign } from '../product-designs/dao';
 import * as CreateNotifications from '../../services/create-notifications';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
 import generateCollection from '../../test-helpers/factories/collection';
 import generateCanvas from '../../test-helpers/factories/product-design-canvas';
+import { addDesign } from '../../test-helpers/collections';
 
 async function setup(): Promise<{
   annotation: Annotation;
@@ -49,7 +49,7 @@ async function setup(): Promise<{
     title: 'Green Tee',
     userId: ownerUser.id
   });
-  await CollectionsDAO.addDesign(collection.id, design.id);
+  await addDesign(collection.id, design.id);
 
   const { canvas: designCanvas } = await generateCanvas({
     componentId: null,

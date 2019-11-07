@@ -1,5 +1,6 @@
 import * as Knex from 'knex';
 import * as rethrow from 'pg-rethrow';
+import db = require('../../../services/db');
 
 const TABLE_COLLECTION_DESIGNS = 'collection_designs';
 
@@ -9,7 +10,7 @@ const TABLE_COLLECTION_DESIGNS = 'collection_designs';
 export async function addDesigns(options: {
   collectionId: string;
   designIds: string[];
-  trx: Knex.Transaction;
+  trx?: Knex.Transaction;
 }): Promise<number> {
   const { collectionId, designIds, trx } = options;
 
@@ -20,8 +21,13 @@ export async function addDesigns(options: {
     };
   });
 
-  const rows = await trx(TABLE_COLLECTION_DESIGNS)
+  const rows = await db(TABLE_COLLECTION_DESIGNS)
     .insert(dataRows, '*')
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .catch(rethrow);
 
   if (rows.length !== designIds.length) {
@@ -39,13 +45,18 @@ export async function addDesigns(options: {
 export async function moveDesigns(options: {
   collectionId: string;
   designIds: string[];
-  trx: Knex.Transaction;
+  trx?: Knex.Transaction;
 }): Promise<number> {
   const { collectionId, designIds, trx } = options;
 
-  await trx(TABLE_COLLECTION_DESIGNS)
+  await db(TABLE_COLLECTION_DESIGNS)
     .whereIn('design_id', designIds)
     .del()
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .catch(rethrow);
   const insertedCount = await addDesigns(options);
 
@@ -64,14 +75,19 @@ export async function moveDesigns(options: {
 export async function removeDesigns(options: {
   collectionId: string;
   designIds: string[];
-  trx: Knex.Transaction;
+  trx?: Knex.Transaction;
 }): Promise<number> {
   const { collectionId, designIds, trx } = options;
 
-  const rowCount = await trx(TABLE_COLLECTION_DESIGNS)
+  const rowCount = await db(TABLE_COLLECTION_DESIGNS)
     .whereIn('design_id', designIds)
     .andWhere({ collection_id: collectionId })
     .del()
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .catch(rethrow);
 
   if (rowCount !== designIds.length) {

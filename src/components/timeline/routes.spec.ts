@@ -6,10 +6,10 @@ import { test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
 import * as PricingCostInputsDAO from '../pricing-cost-inputs/dao';
-import * as CollectionsDAO from '../collections/dao';
 import { create as createDesign } from '../product-designs/dao';
 import generateCollection from '../../test-helpers/factories/collection';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
+import { moveDesign } from '../../test-helpers/collections';
 
 test('GET /timelines?userId and /timelines?collectionId finds timelines by user id', async (t: tape.Test) => {
   const { user, session } = await createUser();
@@ -19,7 +19,7 @@ test('GET /timelines?userId and /timelines?collectionId finds timelines by user 
     title: 'A design',
     userId: user.id
   });
-  await CollectionsDAO.moveDesign(collection.id, design.id);
+  await moveDesign(collection.id, design.id);
   await generateCollaborator({ userId: user.id, designId: design.id });
 
   await generatePricingValues();

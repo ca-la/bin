@@ -26,7 +26,7 @@ import generateBid from '../../test-helpers/factories/bid';
 import generateDesignEvent from '../../test-helpers/factories/design-event';
 import { daysToMs } from '../../services/time-conversion';
 import * as BidTaskTypesDAO from '../bid-task-types/dao';
-import { addDesign } from '../collections/dao';
+import { addDesign } from '../../test-helpers/collections';
 import { create as createTaskEvent } from '../../dao/task-events';
 import generateCollection from '../../test-helpers/factories/collection';
 import PayoutAccountsDAO = require('../../dao/partner-payout-accounts');

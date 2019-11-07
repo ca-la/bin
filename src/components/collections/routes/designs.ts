@@ -1,12 +1,14 @@
 import * as Koa from 'koa';
+import * as Knex from 'knex';
 
 import * as ProductDesignsDAO from '../../product-designs/dao';
-import * as CollectionsDAO from '../dao';
 import ProductDesign = require('../../product-designs/domain-objects/product-design');
 import {
   getDesignPermissionsAndRole,
   PermissionsAndRole
 } from '../../../services/get-permissions';
+import { moveDesigns, removeDesigns } from '../dao/design';
+import db = require('../../../services/db');
 
 type DesignWithPermissions = ProductDesign & PermissionsAndRole;
 
@@ -16,7 +18,10 @@ export function* putDesign(
   const { collectionId, designId } = this.params;
 
   try {
-    this.body = yield CollectionsDAO.moveDesign(collectionId, designId);
+    yield db.transaction(async (trx: Knex.Transaction) => {
+      await moveDesigns({ collectionId, designIds: [designId], trx });
+    });
+    this.body = yield ProductDesignsDAO.findByCollectionId(collectionId);
     this.status = 200;
   } catch (error) {
     throw error;
@@ -27,7 +32,10 @@ export function* deleteDesign(
   this: Koa.Application.Context
 ): AsyncIterableIterator<void> {
   const { collectionId, designId } = this.params;
-  this.body = yield CollectionsDAO.removeDesign(collectionId, designId);
+  yield db.transaction(async (trx: Knex.Transaction) => {
+    await removeDesigns({ collectionId, designIds: [designId], trx });
+  });
+  this.body = yield ProductDesignsDAO.findByCollectionId(collectionId);
   this.status = 200;
 }
 

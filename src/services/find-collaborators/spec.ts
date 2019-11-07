@@ -10,6 +10,7 @@ import User from '../../components/users/domain-object';
 import { CALA_OPS_USER_ID } from '../../config';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
+import { moveDesign } from '../../test-helpers/collections';
 
 async function createResources(): Promise<{
   collection: Collection;
@@ -33,7 +34,7 @@ async function createResources(): Promise<{
     userId: user.id
   });
 
-  await CollectionsDAO.moveDesign(collection.id, design.id);
+  await moveDesign(collection.id, design.id);
 
   return {
     collection,

@@ -5,9 +5,9 @@ import { test } from '../../../test-helpers/fresh';
 import generateCollection from '../../../test-helpers/factories/collection';
 import createUser = require('../../../test-helpers/create-user');
 import createDesign from '../../../services/create-design';
-import * as CollectionsDAO from '../../../components/collections/dao';
 import * as DesignEventsDAO from '../../../dao/design-events';
 import { reverseSubmissionRecords } from './reverse';
+import { moveDesign } from '../../../test-helpers/collections';
 
 test('reverseSubmissionRecords', async (t: tape.Test) => {
   const { user: designer } = await createUser({ withSession: false });
@@ -27,7 +27,7 @@ test('reverseSubmissionRecords', async (t: tape.Test) => {
     title: 'Virgil Shirt',
     userId: designer.id
   });
-  await CollectionsDAO.moveDesign(c1.id, d1.id);
+  await moveDesign(c1.id, d1.id);
   const de1 = await DesignEventsDAO.create({
     actorId: designer.id,
     bidId: null,
@@ -82,7 +82,7 @@ test('reverseSubmissionRecords on an empty collection', async (t: tape.Test) => 
     title: 'Virgil Shirt',
     userId: designer.id
   });
-  await CollectionsDAO.moveDesign(c1.id, d1.id);
+  await moveDesign(c1.id, d1.id);
 
   try {
     await reverseSubmissionRecords(c1.id);

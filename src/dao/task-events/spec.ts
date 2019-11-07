@@ -24,7 +24,6 @@ import {
 } from '../../components/collaborators/dao';
 import * as CollaboratorTasksDAO from '../collaborator-tasks';
 import {
-  addDesign,
   create as createCollection,
   deleteById as deleteCollection
 } from '../../components/collections/dao';
@@ -49,6 +48,7 @@ import generateCollection from '../../test-helpers/factories/collection';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
 import { CollaboratorWithUser } from '../../components/collaborators/domain-objects/collaborator';
 import generateAsset from '../../test-helpers/factories/asset';
+import { addDesign } from '../../test-helpers/collections';
 
 const beforeEach = (): void => {
   sandbox()
