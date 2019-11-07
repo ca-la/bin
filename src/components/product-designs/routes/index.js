@@ -22,11 +22,14 @@ const User = require('../../users/domain-object');
 const UsersDAO = require('../../users/dao');
 const {
   canAccessDesignInParam,
+  canAccessDesignsInQuery,
   canCommentOnDesign,
-  canDeleteDesign
+  canDeleteDesign,
+  canDeleteDesigns
 } = require('../../../middleware/can-access-design');
 const { requireValues } = require('../../../services/require-properties');
 const { getDesignPermissions } = require('../../../services/get-permissions');
+const { deleteDesign, deleteDesigns } = require('./deletion');
 
 const {
   getDesignUploadPolicy,
@@ -318,13 +321,15 @@ function* updateDesign() {
   this.status = 200;
 }
 
-function* deleteDesign() {
-  yield ProductDesignsDAO.deleteById(this.params.designId);
-  this.status = 204;
-}
-
 router.post('/', requireAuth, create);
 router.get('/', requireAuth, getDesigns);
+router.del(
+  '/',
+  requireAuth,
+  canAccessDesignsInQuery,
+  canDeleteDesigns,
+  deleteDesigns
+);
 router.del(
   '/:designId',
   requireAuth,

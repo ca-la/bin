@@ -23,6 +23,7 @@ const DesignEventsDAO = require('../../../dao/design-events');
 const { test } = require('../../../test-helpers/fresh');
 const createUser = require('../../../test-helpers/create-user');
 const { moveDesign } = require('../../../test-helpers/collections');
+const { deleteById } = require('../../../test-helpers/designs');
 
 test('ProductDesignsDAO.create creates a design', async t => {
   const { user } = await createUser({ withSession: false });
@@ -121,7 +122,7 @@ test("ProductDesignsDAO.findById doesn't include deleted designs", async t => {
     userId: user.id
   });
 
-  await ProductDesignsDAO.deleteById(id);
+  await deleteById(id);
   const design = await ProductDesignsDAO.findById(id);
   t.equal(design, null);
 });
@@ -134,7 +135,7 @@ test('ProductDesignsDAO.findById includes deleted designs when specified', async
     userId: user.id
   });
 
-  await ProductDesignsDAO.deleteById(id);
+  await deleteById(id);
   const design = await ProductDesignsDAO.findById(id, null, {
     includeDeleted: true
   });

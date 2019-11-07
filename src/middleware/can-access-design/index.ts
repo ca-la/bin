@@ -1,7 +1,10 @@
 import * as Koa from 'koa';
 
 import filterError = require('../../services/filter-error');
-import { getDesignPermissions } from '../../services/get-permissions';
+import {
+  getDesignPermissions,
+  Permissions
+} from '../../services/get-permissions';
 import InvalidDataError = require('../../errors/invalid-data');
 import * as ProductDesignsDAO from '../../components/product-designs/dao';
 
@@ -19,6 +22,43 @@ export function* attachDesignPermissions(
 
   this.state.design = design;
   this.state.permissions = yield getDesignPermissions(design, role, userId);
+}
+
+export function* attachAggregateDesignPermissions(
+  this: Koa.Application.Context,
+  designIds: string[]
+): any {
+  const { role, userId } = this.state;
+  const designs = yield ProductDesignsDAO.findByIds(designIds).catch(
+    filterError(InvalidDataError, (err: InvalidDataError) => {
+      return this.throw(404, err);
+    })
+  );
+
+  let aggregatePermissions: Permissions = {
+    canComment: true,
+    canDelete: true,
+    canEdit: true,
+    canEditVariants: true,
+    canSubmit: true,
+    canView: true
+  };
+
+  for (const design of designs) {
+    const permissions = yield getDesignPermissions(design, role, userId);
+
+    aggregatePermissions = {
+      canComment: aggregatePermissions.canComment && permissions.canComment,
+      canDelete: aggregatePermissions.canDelete && permissions.canDelete,
+      canEdit: aggregatePermissions.canEdit && permissions.canEdit,
+      canEditVariants:
+        aggregatePermissions.canEditVariants && permissions.canEditVariants,
+      canSubmit: aggregatePermissions.canSubmit && permissions.canSubmit,
+      canView: aggregatePermissions.canView && permissions.canView
+    };
+  }
+
+  this.state.permissions = aggregatePermissions;
 }
 
 export function* canAccessDesignInParam(
@@ -39,12 +79,37 @@ export function* canAccessDesignInParam(
   yield next;
 }
 
+export function* canAccessDesignsInQuery(
+  this: Koa.Application.Context,
+  next: () => Promise<any>
+): any {
+  const { designIds } = this.query;
+  if (!designIds) {
+    return this.throw(400, 'Must provide designIds in query parameters');
+  }
+
+  yield attachAggregateDesignPermissions.call(this, designIds.split(','));
+
+  const { permissions } = this.state;
+  this.assert(
+    permissions && permissions.canView,
+    403,
+    "You don't have permission to view this design"
+  );
+
+  yield next;
+}
+
 export function* canAccessDesignInQuery(
   this: Koa.Application.Context,
   next: () => Promise<any>
 ): any {
   const { designId } = this.query;
-  this.assert(designId, 400, 'Must provide design ID');
+
+  if (!designId) {
+    return this.throw(400, 'Must provide a designId in query parameters');
+  }
+
   yield attachDesignPermissions.call(this, designId);
 
   const { permissions } = this.state;
@@ -87,6 +152,21 @@ export function* canDeleteDesign(
   yield next;
 }
 
+export function* canDeleteDesigns(
+  this: Koa.Application.Context,
+  next: () => Promise<any>
+): any {
+  if (!this.state.permissions) {
+    throw new Error('canDeleteDesigns must be chained from canAccessDesigns');
+  }
+  this.assert(
+    this.state.permissions.canDelete,
+    403,
+    "You don't have permission to delete these designs"
+  );
+  yield next;
+}
+
 export function* canEditDesign(
   this: Koa.Application.Context,
   next: () => Promise<any>
@@ -106,7 +186,9 @@ module.exports = {
   attachDesignPermissions,
   canAccessDesignInParam,
   canAccessDesignInQuery,
+  canAccessDesignsInQuery,
   canCommentOnDesign,
   canDeleteDesign,
+  canDeleteDesigns,
   canEditDesign
 };

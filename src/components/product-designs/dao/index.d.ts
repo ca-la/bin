@@ -26,7 +26,6 @@ declare namespace ProductDesignsDAO {
     id: string,
     data: Partial<ProductDesign>
   ): Promise<ProductDesign>;
-  function deleteById(id: string): Promise<ProductDesign>;
   function queryWithCollectionMeta(db: Knex): Knex.QueryBuilder;
 }
 

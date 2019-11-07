@@ -42,23 +42,6 @@ function create(data, trx) {
     .then(instantiate);
 }
 
-function deleteById(productDesignId) {
-  return db(TABLE_NAME)
-    .where({ id: productDesignId, deleted_at: null })
-    .update(
-      {
-        deleted_at: new Date()
-      },
-      'id'
-    )
-    .then(ids =>
-      queryWithCollectionMeta(db).where({ 'product_designs.id': ids[0] })
-    )
-    .catch(rethrow)
-    .then(first)
-    .then(instantiate);
-}
-
 function update(productDesignId, data) {
   const rowData = Object.assign({}, dataMapper.userDataToRowData(data), {
     preview_image_urls: JSON.stringify(data.previewImageUrls)
@@ -179,6 +162,7 @@ function findById(id, filters, options = {}, trx) {
 function findByIds(ids) {
   return queryWithCollectionMeta(db)
     .whereIn('product_designs.id', ids)
+    .andWhere({ 'product_designs.deleted_at': null })
     .catch(rethrow)
     .then(designs => designs.map(instantiate));
 }
@@ -209,7 +193,6 @@ function findByQuoteId(quoteId) {
 
 module.exports = {
   create,
-  deleteById,
   update,
   findAll,
   findById,

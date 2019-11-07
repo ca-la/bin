@@ -20,6 +20,7 @@ import * as AnnotationsDAO from '../../components/product-design-canvas-annotati
 import * as CanvasesDAO from '../canvases/dao';
 import * as CommentsDAO from '../../components/comments/dao';
 import * as MeasurementsDAO from '../../dao/product-design-canvas-measurements';
+import { deleteById } from '../../test-helpers/designs';
 
 test('Notifications DAO supports creation', async (t: tape.Test) => {
   sandbox()
@@ -110,7 +111,7 @@ test('Notifications DAO supports finding by user id', async (t: tape.Test) => {
     recipientUserId: userTwo.id,
     type: NotificationType.ANNOTATION_COMMENT_CREATE
   });
-  await DesignsDAO.deleteById(deletedDesign.id);
+  await deleteById(deletedDesign.id);
 
   const { annotation: deletedAnnotation } = await generateNotification({
     actorUserId: userOne.id,
@@ -426,7 +427,7 @@ test('Notifications DAO supports finding unread count', async (t: tape.Test) => 
     recipientUserId: userTwo.id,
     type: NotificationType.ANNOTATION_COMMENT_CREATE
   });
-  await DesignsDAO.deleteById(deletedDesign.id);
+  await deleteById(deletedDesign.id);
 
   const { annotation: deletedAnnotation } = await generateNotification({
     actorUserId: userOne.id,

@@ -22,6 +22,7 @@ import {
   moveDesign,
   removeDesign
 } from '../../../test-helpers/collections';
+import { deleteById } from '../../../test-helpers/designs';
 
 test('CollectionsDAO#create creates a collection', async (t: Test) => {
   const { user } = await createUser({ withSession: false });
@@ -558,7 +559,7 @@ test('findSubmittedButUnpaidCollections finds all submitted but unpaid collectio
     type: 'SUBMIT_DESIGN'
   });
 
-  await ProductDesignsDAO.deleteById(designDeleted.id);
+  await deleteById(designDeleted.id);
   const response = await CollectionsDAO.findSubmittedButUnpaidCollections();
 
   t.equal(response.length, 1, 'Only one collection is returned');

@@ -242,7 +242,31 @@ export async function findDesignByBidId(
   );
 }
 
+export async function deleteByIds(options: {
+  designIds: string[];
+  trx: Knex.Transaction;
+}): Promise<number> {
+  const { designIds, trx } = options;
+
+  const deleted = await trx(TABLE_NAME)
+    .whereIn('id', designIds)
+    .update(
+      {
+        deleted_at: new Date()
+      },
+      'id'
+    );
+  if (deleted.length !== designIds.length) {
+    throw new Error(
+      `Only deleted ${deleted.length} out of an expected ${designIds.length}.`
+    );
+  }
+
+  return deleted.length;
+}
+
 module.exports = {
+  deleteByIds,
   findAllDesignIdsThroughCollaborator,
   findAllDesignsThroughCollaborator,
   findAllWithCostsAndEvents,

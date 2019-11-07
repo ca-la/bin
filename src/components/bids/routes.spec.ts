@@ -22,6 +22,7 @@ import { daysToMs } from '../../services/time-conversion';
 import createDesign from '../../services/create-design';
 import * as Stripe from '../../services/stripe';
 import * as EmailService from '../../services/email';
+import { deleteById } from '../../test-helpers/designs';
 test('GET /bids', async (t: Test) => {
   const admin = await createUser({ role: 'ADMIN' });
   const partner = await createUser({ role: 'PARTNER' });
@@ -701,7 +702,7 @@ test('Partner pairing: accept on a deleted design', async (t: Test) => {
     headers: authHeader(admin.session.id)
   });
 
-  await ProductDesignsDAO.deleteById(design.id);
+  await deleteById(design.id);
 
   const [noDesignResponse] = await post(`/bids/${bid.id}/accept`, {
     headers: authHeader(partner.session.id)

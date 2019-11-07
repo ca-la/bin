@@ -17,7 +17,7 @@ import * as StageTemplate from '../../components/tasks/templates';
 import { create as createTask } from '../tasks';
 import { create as createDesignStageTask } from '../product-design-stage-tasks';
 import { create as createDesignStage } from '../product-design-stages';
-import { deleteById as deleteDesign } from '../../components/product-designs/dao';
+import { deleteById as deleteDesign } from '../../test-helpers/designs';
 import {
   create as createCollaborator,
   deleteById as deleteCollaborator

@@ -1,8 +1,10 @@
 import * as tape from 'tape';
 import * as uuid from 'node-uuid';
+import * as Knex from 'knex';
 
-import { deleteById, findById } from './';
+import { findById, findByIds } from './';
 import {
+  deleteByIds,
   findAllDesignsThroughCollaborator,
   findAllWithCostsAndEvents,
   findDesignByAnnotationId,
@@ -30,6 +32,9 @@ import generateDesignEvent from '../../../test-helpers/factories/design-event';
 import generatePricingCostInput from '../../../test-helpers/factories/pricing-cost-input';
 import generatePricingValues from '../../../test-helpers/factories/pricing-values';
 import { addDesign } from '../../../test-helpers/collections';
+import { deleteById } from '../../../test-helpers/designs';
+import { generateDesign } from '../../../test-helpers/factories/product-design';
+import db = require('../../../services/db');
 
 test('ProductDesignCanvases DAO supports creation/retrieval, enriched with image links', async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
@@ -483,7 +488,16 @@ test('findAllWithCostsAndEvents +1 case', async (t: tape.Test) => {
   );
 });
 
-test('findAllWithCostsAndEvents can work with multiple collections', async (t: tape.Test) => {
-  await generatePricingValues();
-  t.ok('Cool');
+test('deleteByIds can delete a bunch of designs simultaneously', async (t: tape.Test) => {
+  const { user } = await createUser({ withSession: false });
+  const d1 = await generateDesign({ userId: user.id });
+  const d2 = await generateDesign({ userId: user.id });
+  const d3 = await generateDesign({ userId: user.id });
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await deleteByIds({ designIds: [d1.id, d3.id], trx });
+  });
+
+  const designs = await findByIds([d1.id, d2.id, d3.id]);
+  t.deepEqual(designs, [d2], 'Only returns the only un-deleted design');
 });

@@ -4,7 +4,6 @@ import { sandbox, test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
 
 import * as CollectionsDAO from '../collections/dao';
-import * as DesignsDAO from '../product-designs/dao';
 import * as MeasurementsDAO from '../../dao/product-design-canvas-measurements';
 import generateNotification from '../../test-helpers/factories/notification';
 import { createNotificationMessage } from './notification-messages';
@@ -12,6 +11,7 @@ import { STUDIO_HOST } from '../../config';
 import { Notification, NotificationType } from './domain-object';
 import generateCollection from '../../test-helpers/factories/collection';
 import * as NotificationAnnouncer from '../iris/messages/notification';
+import { deleteById } from '../../test-helpers/designs';
 
 test(
   'notification messages returns annotation comment create message to the user' +
@@ -47,7 +47,7 @@ test(
       collectionId: collection.id,
       type: NotificationType.ANNOTATION_COMMENT_CREATE
     });
-    await DesignsDAO.deleteById(annCommCreateDesign.id);
+    await deleteById(annCommCreateDesign.id);
 
     const annCommCreateMessage = await createNotificationMessage(
       annCommCreateDesignNotification
@@ -100,7 +100,7 @@ test('notification messages returns annotation mention message to the user if re
   } = await generateNotification({
     type: NotificationType.ANNOTATION_COMMENT_MENTION
   });
-  await DesignsDAO.deleteById(annMenDesign.id);
+  await deleteById(annMenDesign.id);
 
   const message = await createNotificationMessage(annMenNotification);
   if (!message) {
@@ -262,7 +262,7 @@ test('notification messages returns invite collaborator message to the user if r
     collectionId: collection.id,
     type: NotificationType.INVITE_COLLABORATOR
   });
-  await DesignsDAO.deleteById(invColDesign.id);
+  await deleteById(invColDesign.id);
 
   const message = await createNotificationMessage(invColNotification);
   if (!message) {
@@ -314,7 +314,7 @@ test('notification messages returns measurement create message to the user if re
     type: NotificationType.MEASUREMENT_CREATE
   });
   await MeasurementsDAO.deleteById(meaCreMeasurement.id);
-  await DesignsDAO.deleteById(meaCreDesign.id);
+  await deleteById(meaCreDesign.id);
 
   const message = await createNotificationMessage(meaCreNotification);
   if (!message) {
@@ -360,7 +360,7 @@ test(
     } = await generateNotification({
       type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
     });
-    await DesignsDAO.deleteById(parAccSerBidDesign.id);
+    await deleteById(parAccSerBidDesign.id);
 
     const message = await createNotificationMessage(parAccSerBidNotification);
     if (!message) {
@@ -398,7 +398,7 @@ test('notification messages returns partner design bid message to the user if re
   } = await generateNotification({
     type: NotificationType.PARTNER_DESIGN_BID
   });
-  await DesignsDAO.deleteById(parDesBidDesign.id);
+  await deleteById(parDesBidDesign.id);
 
   const message = await createNotificationMessage(parDesBidNotification);
   if (!message) {
@@ -439,7 +439,7 @@ test(
     } = await generateNotification({
       type: NotificationType.PARTNER_REJECT_SERVICE_BID
     });
-    await DesignsDAO.deleteById(parRejSerBidDesign.id);
+    await deleteById(parRejSerBidDesign.id);
 
     const message = await createNotificationMessage(parRejSerBidNotification);
     if (!message) {
@@ -478,7 +478,7 @@ test('notification messages returns task assignment message to the user if resou
   } = await generateNotification({
     type: NotificationType.TASK_ASSIGNMENT
   });
-  await DesignsDAO.deleteById(tasAsnDesign.id);
+  await deleteById(tasAsnDesign.id);
 
   const message = await createNotificationMessage(tasAsnNotification);
   if (!message) {
@@ -516,7 +516,7 @@ test('notification messages returns task comment create message to the user if r
   } = await generateNotification({
     type: NotificationType.TASK_COMMENT_CREATE
   });
-  await DesignsDAO.deleteById(tasComCreDesign.id);
+  await deleteById(tasComCreDesign.id);
 
   const message = await createNotificationMessage(tasComCreNotification);
   if (!message) {
@@ -564,7 +564,7 @@ test('notification messages returns task comment mention message to the user if 
   } = await generateNotification({
     type: NotificationType.TASK_COMMENT_MENTION
   });
-  await DesignsDAO.deleteById(tasComMenDesign.id);
+  await deleteById(tasComMenDesign.id);
 
   const message = await createNotificationMessage(tasComMenNotification);
   if (!message) {
@@ -612,7 +612,7 @@ test('notification messages returns task completion message to the user if resou
   } = await generateNotification({
     type: NotificationType.TASK_COMPLETION
   });
-  await DesignsDAO.deleteById(tasComDesign.id);
+  await deleteById(tasComDesign.id);
 
   const message = await createNotificationMessage(tasComNotification);
   if (!message) {
