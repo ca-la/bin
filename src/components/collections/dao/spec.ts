@@ -23,7 +23,6 @@ import {
   removeDesign
 } from '../../../test-helpers/collections';
 import { deleteById } from '../../../test-helpers/designs';
-import { generateDesign } from '../../../test-helpers/factories/product-design';
 
 test('CollectionsDAO#create creates a collection', async (t: Test) => {
   const { user } = await createUser({ withSession: false });
@@ -729,36 +728,5 @@ test('findAllUnnotifiedCollectionsWithExpiringCostInputs will filter for ones wi
         }
       ]);
     }
-  );
-});
-
-test('hasOwnership', async (t: Test) => {
-  const { user } = await createUser({ withSession: false });
-  const { user: user2 } = await createUser({ withSession: false });
-  const { collection: c1 } = await generateCollection({ createdBy: user.id });
-  const d1 = await generateDesign({ userId: user.id });
-  const d2 = await generateDesign({ userId: user2.id });
-  const d3 = await generateDesign({ userId: user.id });
-  await moveDesign(c1.id, d1.id);
-
-  const result1 = await CollectionsDAO.hasOwnership({
-    designId: d1.id,
-    userId: user.id
-  });
-  t.true(result1, 'is an owner of a parent collection');
-
-  const result2 = await CollectionsDAO.hasOwnership({
-    designId: d2.id,
-    userId: user.id
-  });
-  t.false(result2, 'is not an owner of a parent collection.');
-
-  const result3 = await CollectionsDAO.hasOwnership({
-    designId: d3.id,
-    userId: user.id
-  });
-  t.false(
-    result3,
-    'is not an owner of a parent collection (even though owner of design).'
   );
 });

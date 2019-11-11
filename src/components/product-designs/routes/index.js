@@ -3,6 +3,7 @@
 const pick = require('lodash/pick');
 const Router = require('koa-router');
 
+const canAccessSection = require('../../../middleware/can-access-section');
 const canAccessUserResource = require('../../../middleware/can-access-user-resource');
 const CollaboratorsDAO = require('../../collaborators/dao');
 const CollectionsDAO = require('../../collections/dao');
@@ -22,6 +23,7 @@ const UsersDAO = require('../../users/dao');
 const {
   canAccessDesignInParam,
   canAccessDesignsInQuery,
+  canCommentOnDesign,
   canDeleteDesign,
   canDeleteDesigns
 } = require('../../../middleware/can-access-design');
@@ -39,6 +41,16 @@ const {
   getDesignEvents
 } = require('./events');
 const { updateAllNodes } = require('./phidias');
+const {
+  getSections,
+  createSection,
+  deleteSectionId,
+  updateSection,
+  getSectionFeaturePlacements,
+  replaceSectionFeaturePlacements,
+  getSectionAnnotations,
+  createSectionAnnotation
+} = require('./sections');
 const { findAllDesignsThroughCollaborator } = require('../dao/dao');
 const { createFromTemplate } = require('./templates');
 
@@ -126,11 +138,11 @@ function* getDesignsByUser() {
   });
   const designsWithPermissions = yield Promise.all(
     designs.map(async design => {
-      const designPermissions = await getDesignPermissions({
-        designId: design.id,
-        sessionRole: role,
-        sessionUserId: userId
-      });
+      const designPermissions = await getDesignPermissions(
+        design,
+        role,
+        userId
+      );
       return { ...design, permissions: designPermissions };
     })
   );
@@ -186,11 +198,7 @@ function* getDesignsAndTasksByUser() {
   const designsAndTasks = yield attachTasksToDesigns(designs);
   const designsWithPermissions = yield Promise.all(
     designsAndTasks.map(async design => {
-      const permissions = await getDesignPermissions({
-        designId: design.id,
-        sessionRole: role,
-        sessionUserId: userId
-      });
+      const permissions = await getDesignPermissions(design, role, userId);
       return { ...design, permissions };
     })
   );
@@ -212,11 +220,7 @@ function* getAllDesigns() {
 
   const designsWithPermissions = yield Promise.all(
     designs.map(async design => {
-      const permissions = await getDesignPermissions({
-        designId: design.id,
-        sessionRole: role,
-        sessionUserId: userId
-      });
+      const permissions = await getDesignPermissions(design, role, userId);
       return attachResources(design, userId, permissions);
     })
   );
@@ -290,11 +294,7 @@ function* create() {
   let design = yield createDesign(data).catch(
     filterError(InvalidDataError, err => this.throw(400, err))
   );
-  const designPermissions = yield getDesignPermissions({
-    designId: design.id,
-    sessionRole: role,
-    sessionUserId: userId
-  });
+  const designPermissions = yield getDesignPermissions(design, role, userId);
 
   design = yield attachResources(design, userId, designPermissions);
 
@@ -379,6 +379,60 @@ router.put(
   addDesignEvent
 );
 
+router.get(
+  '/:designId/sections',
+  requireAuth,
+  canAccessDesignInParam,
+  getSections
+);
+router.post(
+  '/:designId/sections',
+  requireAuth,
+  canAccessDesignInParam,
+  createSection
+);
+router.del(
+  '/:designId/sections/:sectionId',
+  requireAuth,
+  canAccessDesignInParam,
+  deleteSectionId
+);
+router.patch(
+  '/:designId/sections/:sectionId',
+  requireAuth,
+  canAccessDesignInParam,
+  canAccessSection,
+  updateSection
+);
+router.get(
+  '/:designId/sections/:sectionId/annotations',
+  requireAuth,
+  canAccessDesignInParam,
+  canAccessSection,
+  getSectionAnnotations
+);
+router.post(
+  '/:designId/sections/:sectionId/annotations',
+  requireAuth,
+  canAccessDesignInParam,
+  canCommentOnDesign,
+  canAccessSection,
+  createSectionAnnotation
+);
+router.get(
+  '/:designId/sections/:sectionId/feature-placements',
+  requireAuth,
+  canAccessDesignInParam,
+  canAccessSection,
+  getSectionFeaturePlacements
+);
+router.put(
+  '/:designId/sections/:sectionId/feature-placements',
+  requireAuth,
+  canAccessDesignInParam,
+  canAccessSection,
+  replaceSectionFeaturePlacements
+);
 router.put('/:designId', requireAuth, canAccessDesignInParam, updateAllNodes);
 router.post('/templates/:templateDesignId', requireAuth, createFromTemplate);
 
