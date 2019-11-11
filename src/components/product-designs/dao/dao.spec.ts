@@ -8,7 +8,8 @@ import {
   findAllDesignsThroughCollaborator,
   findAllWithCostsAndEvents,
   findDesignByAnnotationId,
-  findDesignByTaskId
+  findDesignByTaskId,
+  isOwner
 } from './dao';
 import { del as deleteCanvas } from '../../canvases/dao';
 import * as CollaboratorsDAO from '../../collaborators/dao';
@@ -500,4 +501,20 @@ test('deleteByIds can delete a bunch of designs simultaneously', async (t: tape.
 
   const designs = await findByIds([d1.id, d2.id, d3.id]);
   t.deepEqual(designs, [d2], 'Only returns the only un-deleted design');
+});
+
+test('isOwner can check if the supplied user is the owner of the design', async (t: tape.Test) => {
+  const { user } = await createUser({ withSession: false });
+  const { user: user2 } = await createUser({ withSession: false });
+  const d1 = await generateDesign({ userId: user.id });
+  const d2 = await generateDesign({ userId: user2.id });
+
+  const result1 = await isOwner({ designId: d1.id, userId: user.id });
+  t.true(result1);
+  const result2 = await isOwner({ designId: d1.id, userId: user2.id });
+  t.false(result2);
+  const result3 = await isOwner({ designId: d2.id, userId: user.id });
+  t.false(result3);
+  const result4 = await isOwner({ designId: d2.id, userId: user2.id });
+  t.true(result4);
 });

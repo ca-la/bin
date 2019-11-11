@@ -298,3 +298,44 @@ export async function findAllUnnotifiedCollectionsWithExpiringCostInputs(options
     rows
   );
 }
+
+/**
+ * Determines if the given user is the owner of any parent collection of the design.
+ */
+export async function hasOwnership(options: {
+  designId: string;
+  userId: string;
+  trx?: Knex.Transaction;
+}): Promise<boolean> {
+  const { designId, trx, userId } = options;
+
+  const ownerRows: { created_by: string }[] = await db(TABLE_NAME)
+    .select('collections.created_by AS created_by')
+    .leftJoin(
+      'collection_designs',
+      'collection_designs.collection_id',
+      'collections.id'
+    )
+    .leftJoin(
+      'product_designs',
+      'product_designs.id',
+      'collection_designs.design_id'
+    )
+    .where({
+      'product_designs.id': designId,
+      'product_designs.deleted_at': null,
+      'collections.deleted_at': null
+    })
+    .modify(
+      (query: Knex.QueryBuilder): void => {
+        if (trx) {
+          query.transacting(trx);
+        }
+      }
+    );
+
+  return ownerRows.some(
+    (ownerRow: { created_by: string }): boolean =>
+      ownerRow.created_by === userId
+  );
+}

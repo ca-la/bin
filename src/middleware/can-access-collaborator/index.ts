@@ -53,7 +53,11 @@ async function findPermissionsFromCollectionOrDesign(
       throw new ResourceNotFoundError(`Could not find design ${designId}`);
     }
 
-    return getDesignPermissions(design, role, userId);
+    return getDesignPermissions({
+      designId: design.id,
+      sessionRole: role,
+      sessionUserId: userId
+    });
   }
   return null;
 }

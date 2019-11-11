@@ -23,7 +23,11 @@ export function* canAccessAnnotationInParams(
   if (!design) {
     return this.throw(404, 'Design cannot be found.');
   }
-  this.state.permissions = yield getDesignPermissions(design, role, userId);
+  this.state.permissions = yield getDesignPermissions({
+    designId: design.id,
+    sessionRole: role,
+    sessionUserId: userId
+  });
   const { permissions } = this.state;
 
   this.assert(

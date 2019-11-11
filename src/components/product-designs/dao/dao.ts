@@ -265,6 +265,31 @@ export async function deleteByIds(options: {
   return deleted.length;
 }
 
+export async function isOwner(options: {
+  designId: string;
+  userId: string;
+  trx?: Knex.Transaction;
+}): Promise<boolean> {
+  const { designId, trx, userId } = options;
+  const ownerRow: { user_id: string } | null = await db(TABLE_NAME)
+    .select('user_id')
+    .where({ id: designId, deleted_at: null })
+    .modify(
+      (query: Knex.QueryBuilder): void => {
+        if (trx) {
+          query.transacting(trx);
+        }
+      }
+    )
+    .then((rows: string[]) => first<string>(rows));
+
+  if (!ownerRow) {
+    throw new Error(`Design "${designId}" could not be found.`);
+  }
+
+  return ownerRow.user_id === userId;
+}
+
 module.exports = {
   deleteByIds,
   findAllDesignIdsThroughCollaborator,
@@ -272,5 +297,6 @@ module.exports = {
   findAllWithCostsAndEvents,
   findDesignByAnnotationId,
   findDesignByTaskId,
-  findDesignByBidId
+  findDesignByBidId,
+  isOwner
 };
