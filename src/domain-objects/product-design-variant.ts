@@ -1,5 +1,5 @@
-import DataAdapter from '../../services/data-adapter';
-import { hasProperties } from '../../services/require-properties';
+import DataAdapter from '../services/data-adapter';
+import { hasProperties } from '../services/require-properties';
 
 export default interface ProductDesignVariant {
   colorName: string | null;
@@ -10,7 +10,6 @@ export default interface ProductDesignVariant {
   position: number;
   sizeName: string | null;
   unitsToProduce: number;
-  universalProductCode: string | null;
 }
 
 export interface ProductDesignVariantRow {
@@ -22,7 +21,6 @@ export interface ProductDesignVariantRow {
   position: number;
   size_name: string | null;
   units_to_produce: number;
-  universal_product_code: string | null;
 }
 
 export const dataAdapter = new DataAdapter<
@@ -42,7 +40,6 @@ export function isProductDesignVariantRow(
     'id',
     'position',
     'size_name',
-    'units_to_produce',
-    'universal_product_code'
+    'units_to_produce'
   );
 }

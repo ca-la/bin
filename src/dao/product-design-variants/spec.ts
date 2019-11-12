@@ -4,8 +4,8 @@ import { create as createDesign } from '../../components/product-designs/dao';
 import createUser = require('../../test-helpers/create-user');
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 
-import { dataAdapter } from './domain-object';
-import { getSizes, getTotalUnitsToProduce, replaceForDesign } from './dao';
+import { dataAdapter } from '../../domain-objects/product-design-variant';
+import { getSizes, getTotalUnitsToProduce, replaceForDesign } from './index';
 
 async function createPrerequisites(): Promise<any> {
   const { user } = await createUser({ withSession: false });
@@ -23,8 +23,7 @@ async function createPrerequisites(): Promise<any> {
       id: uuid.v4(),
       position: 0,
       sizeName: 'M',
-      unitsToProduce: 123,
-      universalProductCode: null
+      unitsToProduce: 123
     },
     {
       colorName: 'Red',
@@ -32,8 +31,7 @@ async function createPrerequisites(): Promise<any> {
       id: uuid.v4(),
       position: 1,
       sizeName: 'L',
-      unitsToProduce: 456,
-      universalProductCode: null
+      unitsToProduce: 456
     },
     {
       colorName: 'Red',
@@ -41,8 +39,7 @@ async function createPrerequisites(): Promise<any> {
       id: uuid.v4(),
       position: 2,
       sizeName: 'M',
-      unitsToProduce: 789,
-      universalProductCode: null
+      unitsToProduce: 789
     },
     {
       colorName: 'Red',
@@ -50,8 +47,7 @@ async function createPrerequisites(): Promise<any> {
       id: uuid.v4(),
       position: 3,
       sizeName: 'XL but not actually making any?',
-      unitsToProduce: 0,
-      universalProductCode: null
+      unitsToProduce: 0
     }
   ]);
 
@@ -84,8 +80,7 @@ test('replaceVariants does not delete old ones if creation fails', async (t: Tes
       id: uuid.v4(),
       position: 0,
       sizeName: '5XL',
-      unitsToProduce: 1,
-      universalProductCode: null
+      unitsToProduce: 1
     }
   ])
     .then(() => t.fail('replaceForDesign should not have succeeded'))
@@ -108,8 +103,7 @@ test('replaceVariants works for well formed variants', async (t: Test) => {
       id: uuid.v4(),
       position: 20,
       sizeName: '5XL',
-      unitsToProduce: 1,
-      universalProductCode: null
+      unitsToProduce: 1
     }
   ]);
 

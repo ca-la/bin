@@ -1,7 +1,7 @@
 import * as Knex from 'knex';
 
-import * as VariantsDAO from '../../components/product-design-variants/dao';
-import Variant from '../../components/product-design-variants/domain-object';
+import * as VariantsDAO from '../../dao/product-design-variants';
+import Variant from '../../domain-objects/product-design-variant';
 import prepareForDuplication from './prepare-for-duplication';
 
 /**

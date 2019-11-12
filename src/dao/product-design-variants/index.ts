@@ -9,7 +9,7 @@ import ProductDesignVariant, {
   dataAdapter,
   isProductDesignVariantRow,
   ProductDesignVariantRow
-} from './domain-object';
+} from '../../domain-objects/product-design-variant';
 import first from '../../services/first';
 import { validate, validateEvery } from '../../services/validate-from-db';
 

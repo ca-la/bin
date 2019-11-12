@@ -9,7 +9,7 @@ const ProductDesignOptionsDAO = require('../../dao/product-design-options');
 const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
 const ProductDesignSelectedOptionsDAO = require('../../dao/product-design-selected-options');
 const ProductDesignServicesDAO = require('../../dao/product-design-services');
-const ProductDesignVariantsDAO = require('../../components/product-design-variants/dao');
+const ProductDesignVariantsDAO = require('../../dao/product-design-variants');
 const ProductionPricesDAO = require('../../dao/production-prices');
 const { getServiceBasePrice, NoBucketError } = require('../get-service-price');
 const {

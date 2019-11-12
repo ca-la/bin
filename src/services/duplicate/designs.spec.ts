@@ -12,7 +12,7 @@ import * as ProductDesignStagesDAO from '../../dao/product-design-stages';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as CanvasesDAO from '../../components/canvases/dao';
 import * as ComponentsDAO from '../../components/components/dao';
-import * as VariantsDAO from '../../components/product-design-variants/dao';
+import * as VariantsDAO from '../../dao/product-design-variants';
 
 import { findAndDuplicateDesign } from './designs';
 
@@ -27,8 +27,7 @@ test('findAndDuplicateDesign', async (t: tape.Test) => {
     id: uuid.v4(),
     position: 0,
     sizeName: 'M',
-    unitsToProduce: 123,
-    universalProductCode: null
+    unitsToProduce: 123
   });
 
   const duplicatedDesign = await db.transaction((trx: Knex.Transaction) =>

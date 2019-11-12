@@ -1,7 +1,7 @@
 'use strict';
 
 const createDesign = require('../../components/product-designs/dao').create;
-const replaceVariants = require('../../components/product-design-variants/dao')
+const replaceVariants = require('../../dao/product-design-variants')
   .replaceForDesign;
 const createUser = require('../../test-helpers/create-user');
 const PricingCalculator = require('./index');

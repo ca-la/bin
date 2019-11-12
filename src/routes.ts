@@ -29,7 +29,6 @@ import planRoutes from './components/plans/routes';
 import pricingCostInputs from './components/pricing-cost-inputs/routes';
 import processRoutes from './components/processes/routes';
 import productDesignRoutes = require('./components/product-designs/routes');
-import productDesignVariantRoutes from './components/product-design-variants/routes';
 import promoCodeRoutes from './components/promo-codes/routes';
 import resolveAccountRoutes from './components/resolve-accounts/routes';
 import salesReportsRoutes from './components/sales-reports/routes';
@@ -94,7 +93,6 @@ router.use(
 router.use('/product-design-canvases', canvasRoutes);
 router.use('/product-design-images', assetRoutes);
 router.use('/product-designs', productDesignRoutes);
-router.use('/product-design-variants', productDesignVariantRoutes);
 router.use('/promo-codes', promoCodeRoutes);
 router.use('/resolve-accounts', resolveAccountRoutes);
 router.use('/sales-reports', salesReportsRoutes);

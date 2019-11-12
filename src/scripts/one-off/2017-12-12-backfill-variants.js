@@ -4,7 +4,7 @@ const db = require('../../services/db');
 const Logger = require('../../services/logger');
 const COLORS = require('../../services/colors');
 
-const ProductDesignVariantsDAO = require('../../components/product-design-variants/dao');
+const ProductDesignVariantsDAO = require('../../dao/product-design-variants');
 
 async function backfill() {
   const rows = await db
