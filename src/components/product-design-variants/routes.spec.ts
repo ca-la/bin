@@ -1,11 +1,11 @@
 import * as tape from 'tape';
 import * as uuid from 'node-uuid';
 import createUser = require('../../test-helpers/create-user');
-import { create as createDesign } from '../../components/product-designs/dao';
+import { create as createDesign } from '../product-designs/dao';
 import * as API from '../../test-helpers/http';
 import { sandbox, test } from '../../test-helpers/fresh';
-import * as ProductDesignVariantsDAO from '../../dao/product-design-variants';
-import ProductDesignVariant from '../../domain-objects/product-design-variant';
+import * as ProductDesignVariantsDAO from './dao';
+import ProductDesignVariant from './domain-object';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
 import * as DesignEventsDAO from '../../dao/design-events';
 
@@ -35,7 +35,8 @@ test(`GET ${API_PATH}?designId fetches all variants for a design`, async (t: tap
     id: uuid.v4(),
     position: 0,
     sizeName: 'M',
-    unitsToProduce: 123
+    unitsToProduce: 123,
+    universalProductCode: null
   });
   const variantTwo = await ProductDesignVariantsDAO.create({
     colorName: 'Yellow',
@@ -43,7 +44,8 @@ test(`GET ${API_PATH}?designId fetches all variants for a design`, async (t: tap
     id: uuid.v4(),
     position: 1,
     sizeName: 'M',
-    unitsToProduce: 100
+    unitsToProduce: 100,
+    universalProductCode: null
   });
 
   const [failedResponse] = await API.get(`${API_PATH}/?designId=${design.id}`, {
@@ -112,7 +114,8 @@ test(`PUT ${API_PATH}?designId replaces all variants for a design`, async (t: ta
     id: uuid.v4(),
     position: 0,
     sizeName: 'M',
-    unitsToProduce: 999
+    unitsToProduce: 999,
+    universalProductCode: null
   });
   await ProductDesignVariantsDAO.create({
     colorName: 'Yellow',
@@ -120,7 +123,8 @@ test(`PUT ${API_PATH}?designId replaces all variants for a design`, async (t: ta
     id: uuid.v4(),
     position: 1,
     sizeName: 'M',
-    unitsToProduce: 1
+    unitsToProduce: 1,
+    universalProductCode: null
   });
 
   const variants = [

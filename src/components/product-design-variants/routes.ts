@@ -1,8 +1,8 @@
 import * as Router from 'koa-router';
 import * as Koa from 'koa';
 
-import * as ProductDesignVariantsDAO from '../../dao/product-design-variants';
-import ProductDesignVariant from '../../domain-objects/product-design-variant';
+import * as ProductDesignVariantsDAO from './dao';
+import ProductDesignVariant from './domain-object';
 import requireAuth = require('../../middleware/require-auth');
 import {
   canAccessDesignInQuery,
@@ -20,19 +20,33 @@ interface ProductDesignVariantIO {
   position: number;
   sizeName: string | null;
   unitsToProduce: number;
+  universalProductCode: string | null;
 }
 
 function isProductDesignVariantIO(
   candidate: object
 ): candidate is ProductDesignVariantIO {
-  return hasProperties(
-    candidate,
-    'colorName',
-    'designId',
-    'id',
-    'position',
-    'sizeName',
-    'unitsToProduce'
+  return (
+    hasProperties(
+      candidate,
+      'colorName',
+      'designId',
+      'id',
+      'position',
+      'sizeName',
+      'unitsToProduce',
+      'universalProductCode'
+    ) ||
+    // Legacy variants will not have universalProductCode
+    hasProperties(
+      candidate,
+      'colorName',
+      'designId',
+      'id',
+      'position',
+      'sizeName',
+      'unitsToProduce'
+    )
   );
 }
 
@@ -99,4 +113,4 @@ router.put(
 );
 router.get('/', requireAuth, canAccessDesignInQuery, getVariants);
 
-module.exports = router.routes();
+export default router.routes();
