@@ -67,3 +67,4 @@ export const RESOLVE_API_URL: string;
 export const FIT_PARTNER_SMS_PRODUCT_ID_BLACKLIST: number[];
 
 export const SHORT_ID_SALT: string;
+export const UPC_SALT: string;
