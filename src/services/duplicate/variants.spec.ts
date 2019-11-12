@@ -7,8 +7,8 @@ import { create as createDesign } from '../../components/product-designs/dao';
 import * as db from '../../services/db';
 import { test } from '../../test-helpers/fresh';
 
-import * as VariantsDAO from '../../dao/product-design-variants';
-import Variant from '../../domain-objects/product-design-variant';
+import * as VariantsDAO from '../../components/product-design-variants/dao';
+import Variant from '../../components/product-design-variants/domain-object';
 
 import { findAndDuplicateVariants } from './variants';
 
@@ -49,7 +49,8 @@ test('findAndDuplicateVariants for a design with variants', async (t: tape.Test)
     id: uuid.v4(),
     position: 0,
     sizeName: 'M',
-    unitsToProduce: 123
+    unitsToProduce: 123,
+    universalProductCode: null
   });
   const variantTwo = await VariantsDAO.create({
     colorName: 'Red',
@@ -57,7 +58,8 @@ test('findAndDuplicateVariants for a design with variants', async (t: tape.Test)
     id: uuid.v4(),
     position: 1,
     sizeName: 'L',
-    unitsToProduce: 456
+    unitsToProduce: 456,
+    universalProductCode: null
   });
 
   const duplicatedVariants = await db.transaction(
