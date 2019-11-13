@@ -5,11 +5,11 @@ export function typeGuard<T>(
 ): (
   this: Koa.Application.Context,
   next: () => Promise<any>
-) => IterableIterator<any> {
+) => Iterator<any, any, any> {
   function* middleware(
     this: Koa.Application.Context,
     next: () => Promise<any>
-  ): IterableIterator<any> {
+  ): Iterator<any, any, any> {
     const { body } = this.request;
 
     if (!body || !guardFn(body)) {

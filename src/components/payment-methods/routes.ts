@@ -12,7 +12,7 @@ const router = new Router();
 
 function* getPaymentMethods(
   this: Koa.Application.Context
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   const { userId } = this.query;
   this.assert(userId, 400, 'User ID must be provided');
   canAccessUserResource.call(this, userId);
@@ -32,7 +32,7 @@ function isAddBody(obj: any): obj is AddBody {
 
 function* addPaymentMethod(
   this: Koa.Application.Context
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   const { body } = this.request;
   if (!isAddBody(body)) {
     return this.throw(400, 'Missing required information');

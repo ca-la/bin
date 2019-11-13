@@ -14,7 +14,7 @@ interface GetCreditQuery {
   userId?: string;
 }
 
-function* getCredits(this: Koa.Application.Context): IterableIterator<any> {
+function* getCredits(this: Koa.Application.Context): Iterator<any, any, any> {
   const { userId }: GetCreditQuery = this.query;
 
   if (!userId) {
@@ -44,7 +44,7 @@ function isChangeRequest(data: any): data is ChangeRequest {
   );
 }
 
-function* changeCredit(this: Koa.Application.Context): IterableIterator<any> {
+function* changeCredit(this: Koa.Application.Context): Iterator<any, any, any> {
   const { userId } = this.state;
   const { body } = this.request;
 

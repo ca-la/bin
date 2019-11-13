@@ -15,7 +15,7 @@ interface ManualPaymentRequest {
 
 export default function* createManualPaymentRecord(
   this: Koa.Application.Context<ManualPaymentRequest>
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   const { userId, resolvePaymentId, createdAt } = this.request.body;
   const { invoiceId } = this.params;
 

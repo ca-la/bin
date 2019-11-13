@@ -1,7 +1,3 @@
-type Omit<T, K extends keyof T> = T extends any
-  ? Pick<T, Exclude<keyof T, K>>
-  : never;
-
 interface WithCreatedDate {
   created_at?: Date | string;
   createdAt?: Date;

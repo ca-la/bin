@@ -57,7 +57,7 @@ function isProductDesignVariantsIO(
 
 function* replaceVariants(
   this: Koa.Application.Context
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   const { designId } = this.query;
   const { body } = this.request;
 
@@ -86,7 +86,7 @@ function* replaceVariants(
   }
 }
 
-function* getVariants(this: Koa.Application.Context): IterableIterator<any> {
+function* getVariants(this: Koa.Application.Context): Iterator<any, any, any> {
   const { designId } = this.query;
 
   if (!designId) {

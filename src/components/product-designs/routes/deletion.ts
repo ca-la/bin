@@ -6,7 +6,7 @@ import db = require('../../../services/db');
 
 export function* deleteDesign(
   this: Koa.Application.Context
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   const { designId } = this.params;
 
   yield db.transaction(async (trx: Knex.Transaction) => {
@@ -18,7 +18,7 @@ export function* deleteDesign(
 
 export function* deleteDesigns(
   this: Koa.Application.Context
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   const { designIds } = this.query;
 
   if (!designIds) {

@@ -9,7 +9,7 @@ import { getAllResolveAccountData, hasResolveAccount } from './resolve';
 
 const router = new Router();
 
-function* create(this: Koa.Application.Context): IterableIterator<any> {
+function* create(this: Koa.Application.Context): Iterator<any, any, any> {
   const { body } = this.request;
   if (isResolveAccountRequest(body)) {
     const accountExists = yield hasResolveAccount(body.resolveCustomerId);
@@ -25,7 +25,7 @@ function* create(this: Koa.Application.Context): IterableIterator<any> {
   }
 }
 
-function* getAll(this: Koa.Application.Context): IterableIterator<any> {
+function* getAll(this: Koa.Application.Context): Iterator<any, any, any> {
   const { userId } = this.query;
 
   if (userId) {
@@ -41,7 +41,7 @@ function* getAll(this: Koa.Application.Context): IterableIterator<any> {
   }
 }
 
-function* getById(this: Koa.Application.Context): IterableIterator<any> {
+function* getById(this: Koa.Application.Context): Iterator<any, any, any> {
   const { resolveAccountId } = this.params;
   const account = ResolveAccountsDAO.findById(resolveAccountId);
   if (!account) {

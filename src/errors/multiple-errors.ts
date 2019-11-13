@@ -1,4 +1,4 @@
-export default class MultipleErrors<ErrorType = Error> extends Error {
+export default class MultipleErrors<ErrorType extends Error> extends Error {
   public errors: ErrorType[];
 
   constructor(errors: ErrorType[]) {

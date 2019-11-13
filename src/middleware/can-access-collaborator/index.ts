@@ -80,7 +80,7 @@ export function* attachCollaboratorAndPermissions(
 export function* canAccessViaQueryParameters(
   this: Koa.Application.Context,
   next: () => Promise<any>
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   const { collectionId, designId, designIds } = this.query;
   const { role, userId } = this.state;
   const hasMultipleParameters = [
@@ -125,7 +125,7 @@ export function* canAccessViaQueryParameters(
 export function* canAccessViaDesignOrCollectionInRequestBody(
   this: Koa.Application.Context,
   next: () => Promise<any>
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   if (!isCollaboratorRequest(this.request.body)) {
     return this.throw(
       400,
@@ -161,7 +161,7 @@ export function* canAccessViaDesignOrCollectionInRequestBody(
 export function* canAccessCollaboratorInParam(
   this: Koa.Application.Context,
   next: () => Promise<any>
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   const { collaboratorId } = this.params;
   yield attachCollaboratorAndPermissions.call(this, collaboratorId);
 

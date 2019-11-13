@@ -14,7 +14,7 @@ type DesignWithPermissions = ProductDesign & PermissionsAndRole;
 
 export function* putDesign(
   this: Koa.Application.Context
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   const { collectionId, designId } = this.params;
 
   try {
@@ -30,7 +30,7 @@ export function* putDesign(
 
 export function* putDesigns(
   this: Koa.Application.Context
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   const { collectionId } = this.params;
   const { designIds } = this.query;
 
@@ -58,7 +58,7 @@ export function* putDesigns(
 
 export function* deleteDesign(
   this: Koa.Application.Context
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   const { collectionId, designId } = this.params;
   yield db.transaction(async (trx: Knex.Transaction) => {
     await removeDesigns({ collectionId, designIds: [designId], trx });
@@ -69,7 +69,7 @@ export function* deleteDesign(
 
 export function* deleteDesigns(
   this: Koa.Application.Context
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   const { collectionId } = this.params;
   const { designIds } = this.query;
 
@@ -93,7 +93,7 @@ export function* deleteDesigns(
 
 export function* getCollectionDesigns(
   this: Koa.Application.Context
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   const { collectionId } = this.params;
   const { role, userId } = this.state;
 

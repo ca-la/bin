@@ -16,7 +16,7 @@ function isComponentType(data: string): data is ComponentType {
   );
 }
 
-function* getAll(this: Koa.Application.Context): IterableIterator<any> {
+function* getAll(this: Koa.Application.Context): Iterator<any, any, any> {
   const { componentType } = this.query;
 
   if (componentType) {

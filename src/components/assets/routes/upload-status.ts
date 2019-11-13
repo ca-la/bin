@@ -14,7 +14,7 @@ function isUploadBody(data: object): data is Serialized<UploadStatus> {
 
 export function* uploadStatus(
   this: Koa.Application.Context
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   const { body } = this.request;
   const { assetId } = this.params;
 

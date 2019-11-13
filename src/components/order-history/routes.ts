@@ -8,7 +8,7 @@ const router = new Router();
 
 function* retrieveOrderHistory(
   this: Koa.Application.Context
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   const { userId } = this.state;
   const { limit, offset, type } = this.query;
 

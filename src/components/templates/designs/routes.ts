@@ -15,7 +15,7 @@ const router = new Router();
 
 function* createTemplates(
   this: Koa.Application.Context
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   const { designIds } = this.query;
 
   if (!designIds) {
@@ -40,7 +40,9 @@ function* createTemplates(
   this.body = templatedDesigns;
 }
 
-function* createTemplate(this: Koa.Application.Context): IterableIterator<any> {
+function* createTemplate(
+  this: Koa.Application.Context
+): Iterator<any, any, any> {
   const { designId } = this.params;
 
   const designs = yield createDesignTemplates([designId]).catch(
@@ -63,7 +65,7 @@ function* createTemplate(this: Koa.Application.Context): IterableIterator<any> {
 
 function* removeTemplates(
   this: Koa.Application.Context
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   const { designIds } = this.query;
 
   if (!designIds) {
@@ -82,7 +84,9 @@ function* removeTemplates(
   });
 }
 
-function* removeTemplate(this: Koa.Application.Context): IterableIterator<any> {
+function* removeTemplate(
+  this: Koa.Application.Context
+): Iterator<any, any, any> {
   const { designId } = this.params;
 
   yield db.transaction(async (trx: Knex.Transaction) => {
@@ -101,7 +105,9 @@ interface ListQueryParameters {
   offset?: number;
 }
 
-function* listTemplates(this: Koa.Application.Context): IterableIterator<any> {
+function* listTemplates(
+  this: Koa.Application.Context
+): Iterator<any, any, any> {
   const { limit, offset }: ListQueryParameters = this.query;
 
   yield db.transaction(async (trx: Knex.Transaction) => {

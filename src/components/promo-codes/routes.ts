@@ -8,7 +8,7 @@ import requireAuth = require('../../middleware/require-auth');
 
 const router = new Router();
 
-function* redeemCode(this: Koa.Application.Context): IterableIterator<any> {
+function* redeemCode(this: Koa.Application.Context): Iterator<any, any, any> {
   const { code } = this.params;
 
   const appliedAmountCents = yield applyCode(this.state.userId, code).catch(

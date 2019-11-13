@@ -10,7 +10,7 @@ import requireAuth = require('../../middleware/require-auth');
 
 const router = new Router();
 
-function* create(this: Koa.Application.Context): IterableIterator<any> {
+function* create(this: Koa.Application.Context): Iterator<any, any, any> {
   if (!isDesignStageRequest(this.request.body)) {
     return this.throw(400, 'Invalid request body');
   }
@@ -27,7 +27,7 @@ interface GetListQuery {
   designId?: string;
 }
 
-function* getList(this: Koa.Application.Context): IterableIterator<any> {
+function* getList(this: Koa.Application.Context): Iterator<any, any, any> {
   const query: GetListQuery = this.query;
 
   if (!query.designId) {
@@ -42,7 +42,9 @@ function* getList(this: Koa.Application.Context): IterableIterator<any> {
   this.status = 200;
 }
 
-function* getTitlesList(this: Koa.Application.Context): IterableIterator<any> {
+function* getTitlesList(
+  this: Koa.Application.Context
+): Iterator<any, any, any> {
   const stageTitles: string[] = yield ProductDesignStagesDAO.findAllTitles();
 
   this.body = stageTitles;

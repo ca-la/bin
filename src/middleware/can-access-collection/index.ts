@@ -19,7 +19,7 @@ export function* attachCollectionAndPermissions(
 export function* canAccessCollectionInParam(
   this: Koa.Application.Context,
   next: () => Promise<any>
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   const { collectionId } = this.params;
   yield attachCollectionAndPermissions.call(this, collectionId);
 
@@ -36,7 +36,7 @@ export function* canAccessCollectionInParam(
 export function* canAccessCollectionInRequestBody(
   this: Koa.Application.Context<object & { collectionId: string }>,
   next: () => Promise<any>
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   const { collectionId } = this.request.body;
   yield attachCollectionAndPermissions.call(this, collectionId);
 

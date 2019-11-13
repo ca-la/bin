@@ -18,7 +18,7 @@ const router = new Router();
 
 function* createAnnotationComment(
   this: Koa.Application.Context
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   let comment: Comment | undefined;
   const userId = this.state.userId;
   const body = pick(this.request.body, BASE_COMMENT_PROPERTIES);

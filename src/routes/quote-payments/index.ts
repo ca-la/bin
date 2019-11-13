@@ -53,7 +53,7 @@ const isPayWithMethodRequest = (data: any): data is PayWithMethodRequest => {
 
 function* payQuote(
   this: Koa.Application.Context<PayRequest | PayWithMethodRequest>
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   const { body } = this.request;
   const { isFinanced, isWaived } = this.query;
   const { userId, collection } = this.state;

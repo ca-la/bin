@@ -18,7 +18,7 @@ import {
 
 const router = new Router();
 
-function* findById(this: Koa.Application.Context): IterableIterator<any> {
+function* findById(this: Koa.Application.Context): Iterator<any, any, any> {
   const { assetId } = this.params;
 
   if (assetId) {
@@ -35,7 +35,7 @@ function* findById(this: Koa.Application.Context): IterableIterator<any> {
   }
 }
 
-function* create(this: Koa.Application.Context): IterableIterator<any> {
+function* create(this: Koa.Application.Context): Iterator<any, any, any> {
   const { body } = this.request;
 
   if (body && isSerializedAsset(body)) {
@@ -47,7 +47,7 @@ function* create(this: Koa.Application.Context): IterableIterator<any> {
   }
 }
 
-function* update(this: Koa.Application.Context): IterableIterator<any> {
+function* update(this: Koa.Application.Context): Iterator<any, any, any> {
   const { body } = this.request;
   const { assetId } = this.params;
 
@@ -65,7 +65,7 @@ function* update(this: Koa.Application.Context): IterableIterator<any> {
 
 function* getUploadPolicy(
   this: Koa.Application.Context
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   const { mimeType } = this.query;
   const { assetId } = this.params;
 

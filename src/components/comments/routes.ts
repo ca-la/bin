@@ -13,7 +13,7 @@ interface GetListQuery {
   annotationIds?: string[];
 }
 
-function* getList(this: Koa.Application.Context): IterableIterator<any> {
+function* getList(this: Koa.Application.Context): Iterator<any, any, any> {
   const query: GetListQuery = this.query;
 
   if (!query.annotationIds) {
@@ -37,7 +37,9 @@ interface DeleteCommentQuery {
   taskId?: string;
 }
 
-function* deleteComment(this: Koa.Application.Context): IterableIterator<any> {
+function* deleteComment(
+  this: Koa.Application.Context
+): Iterator<any, any, any> {
   const { userId } = this.state;
   const { annotationId, taskId }: DeleteCommentQuery = this.query;
   const { commentId } = this.params;

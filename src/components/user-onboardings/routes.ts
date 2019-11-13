@@ -7,7 +7,9 @@ import { create, findByUserId } from './dao';
 
 const router = new Router();
 
-function* createOrUpdate(this: Koa.Application.Context): IterableIterator<any> {
+function* createOrUpdate(
+  this: Koa.Application.Context
+): Iterator<any, any, any> {
   const { body } = this.request;
   const { userId } = this.params;
 
@@ -28,7 +30,7 @@ function* createOrUpdate(this: Koa.Application.Context): IterableIterator<any> {
   });
 }
 
-function* getByUserId(this: Koa.Application.Context): IterableIterator<any> {
+function* getByUserId(this: Koa.Application.Context): Iterator<any, any, any> {
   const { userId } = this.params;
 
   if (userId !== this.state.userId && this.state.role !== 'ADMIN') {

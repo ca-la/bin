@@ -29,7 +29,9 @@ function isMonthlyReport(body: any): body is MonthlySalesReport {
   );
 }
 
-function* createMonthly(this: Koa.Application.Context): IterableIterator<any> {
+function* createMonthly(
+  this: Koa.Application.Context
+): Iterator<any, any, any> {
   const { body } = this.request;
 
   if (!isMonthlyReport(body)) {

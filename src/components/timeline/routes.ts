@@ -15,7 +15,7 @@ interface GetListQuery {
   offset?: number;
 }
 
-function* getList(this: Koa.Application.Context): IterableIterator<any> {
+function* getList(this: Koa.Application.Context): Iterator<any, any, any> {
   const query: GetListQuery = this.query;
 
   if (!query.collectionId && !query.userId) {

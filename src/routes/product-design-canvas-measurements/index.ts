@@ -48,7 +48,7 @@ const measurementFromIO = (
 
 function* createMeasurement(
   this: Koa.Application.Context
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   const body = this.request.body;
   if (body && isMeasurement(body)) {
     const measurement = yield MeasurementsDAO.create(
@@ -68,7 +68,7 @@ function* createMeasurement(
 
 function* updateMeasurement(
   this: Koa.Application.Context
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   const body = this.request.body;
   if (body && isMeasurement(body)) {
     const measurement = yield MeasurementsDAO.update(
@@ -95,7 +95,7 @@ function* updateMeasurement(
 
 function* deleteMeasurement(
   this: Koa.Application.Context
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   const measurement = yield MeasurementsDAO.deleteById(
     this.params.measurementId
   ).catch(
@@ -111,7 +111,7 @@ function* deleteMeasurement(
   this.status = 204;
 }
 
-function* getList(this: Koa.Application.Context): IterableIterator<any> {
+function* getList(this: Koa.Application.Context): Iterator<any, any, any> {
   const query: GetListQuery = this.query;
   if (!query.canvasId) {
     return this.throw('Missing canvasId');
@@ -122,7 +122,7 @@ function* getList(this: Koa.Application.Context): IterableIterator<any> {
   this.body = measurements;
 }
 
-function* getLabel(this: Koa.Application.Context): IterableIterator<any> {
+function* getLabel(this: Koa.Application.Context): Iterator<any, any, any> {
   const query: GetListQuery = this.query;
 
   if (!query.canvasId) {

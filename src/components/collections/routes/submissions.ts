@@ -8,7 +8,7 @@ import { determineSubmissionStatus } from '../services/determine-submission-stat
 
 export function* createSubmission(
   this: Koa.Application.Context
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   const { collectionId } = this.params;
   const { userId } = this.state;
 
@@ -37,7 +37,7 @@ export function* createSubmission(
 
 export function* getSubmissionStatus(
   this: Koa.Application.Context
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   const { collectionId } = this.params;
   const submissionStatusByCollection = yield determineSubmissionStatus([
     collectionId

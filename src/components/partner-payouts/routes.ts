@@ -8,7 +8,7 @@ import requireAuth = require('../../middleware/require-auth');
 
 const router = new Router();
 
-function* getLogs(this: Koa.Application.Context): IterableIterator<any> {
+function* getLogs(this: Koa.Application.Context): Iterator<any, any, any> {
   const { userId } = this.state;
   const { payoutAccountId } = this.query;
 

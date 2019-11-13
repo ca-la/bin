@@ -45,7 +45,7 @@ const annotationFromIO = (request: Annotation, userId: string): Annotation => {
 
 function* createAnnotation(
   this: Koa.Application.Context
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   const body = this.request.body;
   if (body && isAnnotation(body)) {
     const annotation = yield create(annotationFromIO(body, this.state.userId));
@@ -58,7 +58,7 @@ function* createAnnotation(
 
 function* updateAnnotation(
   this: Koa.Application.Context
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   const body = this.request.body;
   if (body && isAnnotation(body)) {
     const annotation = yield update(this.params.annotationId, body);
@@ -71,7 +71,7 @@ function* updateAnnotation(
 
 function* deleteAnnotation(
   this: Koa.Application.Context
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   yield deleteById(this.params.annotationId).catch(
     filterError(ResourceNotFoundError, () => {
       this.throw(404, 'Annotation not found');
@@ -81,7 +81,7 @@ function* deleteAnnotation(
   this.status = 204;
 }
 
-function* getList(this: Koa.Application.Context): IterableIterator<any> {
+function* getList(this: Koa.Application.Context): Iterator<any, any, any> {
   const query: GetListQuery = this.query;
   if (!query.canvasId) {
     return this.throw(400, 'Missing canvasId');
@@ -98,7 +98,7 @@ function* getList(this: Koa.Application.Context): IterableIterator<any> {
 
 function* getAnnotationComments(
   this: Koa.Application.Context
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   const comments = yield AnnotationCommentDAO.findByAnnotationId(
     this.params.annotationId
   );

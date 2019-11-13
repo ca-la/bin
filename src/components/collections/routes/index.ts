@@ -44,7 +44,7 @@ interface CollectionWithPermissions extends Collection {
 
 function* createCollection(
   this: Koa.Application.Context
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   const { body } = this.request;
   const { role, userId } = this.state;
   const data = { ...body, deletedAt: null, createdBy: userId };
@@ -91,7 +91,7 @@ function* createCollection(
   }
 }
 
-function* getList(this: Koa.Application.Context): IterableIterator<any> {
+function* getList(this: Koa.Application.Context): Iterator<any, any, any> {
   const { userId, isCosted, isSubmitted, limit, offset, search } = this.query;
   const { role, userId: currentUserId } = this.state;
   const userIdToQuery =
@@ -132,7 +132,7 @@ function* getList(this: Koa.Application.Context): IterableIterator<any> {
 
 function* deleteCollection(
   this: Koa.Application.Context
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   const { collectionId } = this.params;
   const targetCollection = yield CollectionsDAO.findById(collectionId);
   canAccessUserResource.call(this, targetCollection.createdBy);
@@ -141,7 +141,9 @@ function* deleteCollection(
   this.status = 204;
 }
 
-function* getCollection(this: Koa.Application.Context): IterableIterator<any> {
+function* getCollection(
+  this: Koa.Application.Context
+): Iterator<any, any, any> {
   const { collectionId } = this.params;
   const { role, userId } = this.state;
 
@@ -161,7 +163,7 @@ function* getCollection(this: Koa.Application.Context): IterableIterator<any> {
 
 function* updateCollection(
   this: Koa.Application.Context
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   const { collectionId } = this.params;
   const { body } = this.request;
   const { role, userId } = this.state;

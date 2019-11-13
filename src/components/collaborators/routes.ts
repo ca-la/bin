@@ -45,7 +45,7 @@ const isCollaboratorUpdate = (data: object): data is CollaboratorUpdate => {
   return hasProperties(data, 'role');
 };
 
-function* create(this: Koa.Application.Context): IterableIterator<any> {
+function* create(this: Koa.Application.Context): Iterator<any, any, any> {
   if (!CollaboratorsMiddleware.isCollaboratorRequest(this.request.body)) {
     return this.throw(400, 'Request does not match Collaborator');
   }
@@ -81,7 +81,7 @@ function* create(this: Koa.Application.Context): IterableIterator<any> {
   this.body = created;
 }
 
-function* find(this: Koa.Application.Context): IterableIterator<any> {
+function* find(this: Koa.Application.Context): Iterator<any, any, any> {
   const { collectionId, designId, designIds } = this.query;
   const { userId } = this.state;
   let collaborators;
@@ -111,7 +111,7 @@ function* find(this: Koa.Application.Context): IterableIterator<any> {
   this.body = collaborators;
 }
 
-function* update(this: Koa.Application.Context): IterableIterator<any> {
+function* update(this: Koa.Application.Context): Iterator<any, any, any> {
   const { collaborator } = this.state;
   const { body } = this.request;
   if (!collaborator) {
@@ -131,7 +131,7 @@ function* update(this: Koa.Application.Context): IterableIterator<any> {
 
 function* deleteCollaborator(
   this: Koa.Application.Context
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   const { collaborator } = this.state;
 
   if (!collaborator) {

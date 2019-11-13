@@ -36,7 +36,7 @@ function isDesignerSubscription(
 
 function* createDesignerSubscription(
   this: Koa.Application.Context
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   const { body } = this.request;
   if (!body || !isDesignerSubscription(body)) {
     this.throw(400, 'Missing required information');
@@ -89,7 +89,7 @@ function isPartnerSubscription(
 
 function* createPartnerSubscription(
   this: Koa.Application.Context
-): IterableIterator<any> {
+): Iterator<any, any, any> {
   const { body } = this.request;
   if (!body || !isPartnerSubscription(body)) {
     this.throw(400, 'Missing required information');
