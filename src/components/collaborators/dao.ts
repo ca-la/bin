@@ -44,9 +44,9 @@ async function attachUser(
 }
 
 function handleForeignKeyViolation(
-  collectionId: string,
-  designId: string,
-  userId: string,
+  collectionId: string | null | undefined,
+  designId: string | null | undefined,
+  userId: string | null | undefined,
   err: typeof rethrow.ERRORS.ForeignKeyViolation
 ): never {
   if (err.constraint === 'collaborators_collection_id_fkey') {

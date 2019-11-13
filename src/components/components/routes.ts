@@ -15,9 +15,7 @@ const attachUser = (request: any, userId: string): any => {
   };
 };
 
-function* create(
-  this: Koa.Application.Context
-): AsyncIterableIterator<Component> {
+function* create(this: Koa.Application.Context): IterableIterator<any> {
   const { assetLink, ...body } = attachUser(
     this.request.body,
     this.state.userId
@@ -31,9 +29,7 @@ function* create(
   this.body = component;
 }
 
-function* update(
-  this: Koa.Application.Context
-): AsyncIterableIterator<Component> {
+function* update(this: Koa.Application.Context): IterableIterator<any> {
   const { assetLink, ...body } = attachUser(
     this.request.body,
     this.state.userId
@@ -47,7 +43,7 @@ function* update(
   this.body = component;
 }
 
-function* del(this: Koa.Application.Context): AsyncIterableIterator<Component> {
+function* del(this: Koa.Application.Context): IterableIterator<any> {
   const component = yield ComponentsDAO.del(this.params.componentId);
   if (!component) {
     return this.throw('component delete failed', 400);
@@ -55,9 +51,7 @@ function* del(this: Koa.Application.Context): AsyncIterableIterator<Component> {
   this.status = 204;
 }
 
-function* getById(
-  this: Koa.Application.Context
-): AsyncIterableIterator<Component> {
+function* getById(this: Koa.Application.Context): IterableIterator<any> {
   const component: Component = yield ComponentsDAO.findById(
     this.params.componentId
   );
@@ -76,9 +70,7 @@ interface GetListQuery {
   canvas?: string;
 }
 
-function* getList(
-  this: Koa.Application.Context
-): AsyncIterableIterator<Component[] & { assetLink: string }> {
+function* getList(this: Koa.Application.Context): IterableIterator<any> {
   const query: GetListQuery = this.query;
 
   if (!query.canvas) {

@@ -3,7 +3,6 @@ import * as Koa from 'koa';
 
 import requireAuth = require('../../middleware/require-auth');
 
-import Processes from './domain-object';
 import * as ProcessesDAO from './dao';
 import { ComponentType } from '../components/domain-object';
 
@@ -17,9 +16,7 @@ function isComponentType(data: string): data is ComponentType {
   );
 }
 
-function* getAll(
-  this: Koa.Application.Context
-): AsyncIterableIterator<Processes> {
+function* getAll(this: Koa.Application.Context): IterableIterator<any> {
   const { componentType } = this.query;
 
   if (componentType) {

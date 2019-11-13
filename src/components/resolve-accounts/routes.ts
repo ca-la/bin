@@ -3,15 +3,13 @@ import * as Koa from 'koa';
 
 import requireAuth = require('../../middleware/require-auth');
 import requireAdmin = require('../../middleware/require-admin');
-import ResolveAccount, { isResolveAccountRequest } from './domain-object';
+import { isResolveAccountRequest } from './domain-object';
 import * as ResolveAccountsDAO from './dao';
 import { getAllResolveAccountData, hasResolveAccount } from './resolve';
 
 const router = new Router();
 
-function* create(
-  this: Koa.Application.Context
-): AsyncIterableIterator<ResolveAccount> {
+function* create(this: Koa.Application.Context): IterableIterator<any> {
   const { body } = this.request;
   if (isResolveAccountRequest(body)) {
     const accountExists = yield hasResolveAccount(body.resolveCustomerId);
@@ -27,9 +25,7 @@ function* create(
   }
 }
 
-function* getAll(
-  this: Koa.Application.Context
-): AsyncIterableIterator<ResolveAccount[]> {
+function* getAll(this: Koa.Application.Context): IterableIterator<any> {
   const { userId } = this.query;
 
   if (userId) {
@@ -45,9 +41,7 @@ function* getAll(
   }
 }
 
-function* getById(
-  this: Koa.Application.Context
-): AsyncIterableIterator<ResolveAccount> {
+function* getById(this: Koa.Application.Context): IterableIterator<any> {
   const { resolveAccountId } = this.params;
   const account = ResolveAccountsDAO.findById(resolveAccountId);
   if (!account) {

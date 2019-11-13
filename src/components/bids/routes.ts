@@ -69,9 +69,7 @@ function not(predicateFunction: (a: any) => boolean): (a: any) => boolean {
   return (a: any): boolean => !predicateFunction(a);
 }
 
-function* listAllBids(
-  this: Koa.Application.Context
-): AsyncIterableIterator<any> {
+function* listAllBids(this: Koa.Application.Context): IterableIterator<any> {
   const { limit, offset, state }: GetListQuery = this.query;
 
   if (!limit || !offset) {
@@ -86,7 +84,7 @@ function* listAllBids(
 
 function* listBidsByAssignee(
   this: Koa.Application.Context
-): AsyncIterableIterator<any> {
+): IterableIterator<any> {
   const { state, userId, sortBy = 'ACCEPTED' } = this.query;
 
   if (!userId) {
@@ -143,7 +141,7 @@ function* listBidsByAssignee(
   this.status = 200;
 }
 
-function* listBids(this: Koa.Application.Context): AsyncIterableIterator<any> {
+function* listBids(this: Koa.Application.Context): IterableIterator<any> {
   const { userId } = this.query;
   const isAdmin = this.state.role === 'ADMIN';
 
@@ -162,7 +160,7 @@ function* listBids(this: Koa.Application.Context): AsyncIterableIterator<any> {
 
 function* getUnpaidBidsByUserId(
   this: Koa.Application.Context
-): AsyncIterableIterator<any> {
+): IterableIterator<any> {
   const { userId } = this.params;
 
   const bids = yield BidsDAO.findUnpaidByUserId(userId);
@@ -172,7 +170,7 @@ function* getUnpaidBidsByUserId(
 
 function* assignBidToPartner(
   this: Koa.Application.Context
-): AsyncIterableIterator<any> {
+): IterableIterator<any> {
   const { bidId, userId } = this.params;
 
   const bid = yield BidsDAO.findById(bidId);
@@ -247,7 +245,7 @@ function* assignBidToPartner(
 
 function* listBidAssignees(
   this: Koa.Application.Context
-): AsyncIterableIterator<any> {
+): IterableIterator<any> {
   const { bidId } = this.params;
   const assignees = yield UsersDAO.findByBidId(bidId);
 
@@ -257,7 +255,7 @@ function* listBidAssignees(
 
 function* removeBidFromPartner(
   this: Koa.Application.Context
-): AsyncIterableIterator<any> {
+): IterableIterator<any> {
   const { bidId, userId } = this.params;
 
   const bid = yield BidsDAO.findById(bidId);
@@ -301,7 +299,7 @@ interface AcceptDesignBidContext extends Koa.Application.Context {
 
 export function* acceptDesignBid(
   this: AcceptDesignBidContext
-): AsyncIterableIterator<void> {
+): IterableIterator<any> {
   const { bidId } = this.params;
   const { userId } = this.state;
 
@@ -375,7 +373,7 @@ function isRejectionReasons(data: object): data is Unsaved<BidRejection> {
 
 export function* rejectDesignBid(
   this: RejectDesignBidContext
-): AsyncIterableIterator<void> {
+): IterableIterator<any> {
   const { bidId } = this.params;
   const { userId } = this.state;
   const { body } = this.request;
@@ -436,7 +434,7 @@ interface GetByIdContext extends Koa.Application.Context {
   };
 }
 
-function* getById(this: GetByIdContext): AsyncIterableIterator<void> {
+function* getById(this: GetByIdContext): IterableIterator<any> {
   const { bidId } = this.params;
 
   const bid = yield BidsDAO.findById(bidId);
@@ -450,7 +448,7 @@ interface PayOutPartnerContext extends Koa.Application.Context {
   };
 }
 
-function* postPayOut(this: PayOutPartnerContext): AsyncIterableIterator<void> {
+function* postPayOut(this: PayOutPartnerContext): IterableIterator<any> {
   const { bidId } = this.params;
   if (!isUninsertedPartnerPayoutLog(this.request.body)) {
     return this.throw(400, 'Request does not match Payout Log');

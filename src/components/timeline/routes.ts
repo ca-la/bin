@@ -2,7 +2,6 @@ import * as Router from 'koa-router';
 import * as Koa from 'koa';
 
 import requireAuth = require('../../middleware/require-auth');
-import Timeline from './domain-object';
 import * as Service from './service';
 import * as CollectionsDAO from '../collections/dao';
 import { getCollectionPermissions } from '../../services/get-permissions';
@@ -16,9 +15,7 @@ interface GetListQuery {
   offset?: number;
 }
 
-function* getList(
-  this: Koa.Application.Context
-): AsyncIterableIterator<Timeline[]> {
+function* getList(this: Koa.Application.Context): IterableIterator<any> {
   const query: GetListQuery = this.query;
 
   if (!query.collectionId && !query.userId) {

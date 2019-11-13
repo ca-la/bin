@@ -17,9 +17,7 @@ interface GetAllQuery {
   keyBy?: 'id';
 }
 
-function* getAllInclude(
-  this: Koa.Application.Context
-): AsyncIterableIterator<any> {
+function* getAllInclude(this: Koa.Application.Context): IterableIterator<any> {
   const query: GetAllQuery = this.query;
 
   if (!query.designId) {
@@ -42,7 +40,7 @@ function* getAllInclude(
 
 function* getAllByDesignId(
   this: Koa.Application.Context
-): AsyncIterableIterator<any> {
+): IterableIterator<any> {
   const query: GetAllQuery = this.query;
 
   if (!query.designId) {
@@ -54,7 +52,7 @@ function* getAllByDesignId(
   this.body = resources;
 }
 
-function* getAll(this: Koa.Application.Context): AsyncIterableIterator<any> {
+function* getAll(this: Koa.Application.Context): IterableIterator<any> {
   const query: GetAllQuery = this.query;
 
   if (query.include === '*') {

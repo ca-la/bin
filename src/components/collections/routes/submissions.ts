@@ -4,14 +4,11 @@ import * as ProductDesignsDAO from '../../product-designs/dao';
 import * as DesignEventsDAO from '../../../dao/design-events';
 import ProductDesign = require('../../product-designs/domain-objects/product-design');
 import * as CreateNotifications from '../../../services/create-notifications';
-import {
-  CollectionSubmissionStatus,
-  determineSubmissionStatus
-} from '../services/determine-submission-status';
+import { determineSubmissionStatus } from '../services/determine-submission-status';
 
 export function* createSubmission(
   this: Koa.Application.Context
-): AsyncIterableIterator<CollectionSubmissionStatus> {
+): IterableIterator<any> {
   const { collectionId } = this.params;
   const { userId } = this.state;
 
@@ -40,7 +37,7 @@ export function* createSubmission(
 
 export function* getSubmissionStatus(
   this: Koa.Application.Context
-): AsyncIterableIterator<CollectionSubmissionStatus> {
+): IterableIterator<any> {
   const { collectionId } = this.params;
   const submissionStatusByCollection = yield determineSubmissionStatus([
     collectionId

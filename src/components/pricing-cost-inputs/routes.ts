@@ -11,7 +11,7 @@ const router = new Router();
 
 function* createCostInputs(
   this: Koa.Application.Context
-): AsyncIterableIterator<any> {
+): IterableIterator<any> {
   const { body: inputs } = this.request;
   if (!inputs || (inputs && !isUnsavedPricingCostInput(inputs))) {
     this.throw(400, 'Request does not match model');
@@ -36,9 +36,7 @@ function* createCostInputs(
   this.status = 201;
 }
 
-function* getCostInputs(
-  this: Koa.Application.Context
-): AsyncIterableIterator<any> {
+function* getCostInputs(this: Koa.Application.Context): IterableIterator<any> {
   const { designId, showExpired } = this.query;
 
   if (!designId) {

@@ -27,7 +27,7 @@ function isDuplicateDesignsBody(body: any): body is DuplicateDesignsBody {
 
 function* duplicateDesigns(
   this: Koa.Application.Context
-): AsyncIterableIterator<any> {
+): IterableIterator<any> {
   const { body } = this.request;
   let userId = this.state.userId;
 

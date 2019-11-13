@@ -1,6 +1,5 @@
 import * as Koa from 'koa';
 
-import Asset from '../domain-object';
 import * as AssetsDAO from '../dao';
 import { hasOnlyProperties } from '../../../services/require-properties';
 import { Serialized } from '../../../types/serialized';
@@ -15,7 +14,7 @@ function isUploadBody(data: object): data is Serialized<UploadStatus> {
 
 export function* uploadStatus(
   this: Koa.Application.Context
-): AsyncIterableIterator<Asset> {
+): IterableIterator<any> {
   const { body } = this.request;
   const { assetId } = this.params;
 

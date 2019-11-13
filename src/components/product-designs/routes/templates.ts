@@ -6,7 +6,7 @@ import ResourceNotFoundError from '../../../errors/resource-not-found';
 
 export function* createFromTemplate(
   this: Koa.Application.Context
-): AsyncIterableIterator<any> {
+): IterableIterator<any> {
   const { userId } = this.state;
   const { isPhidias } = this.query;
   const { templateDesignId } = this.params;

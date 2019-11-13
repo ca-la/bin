@@ -36,11 +36,13 @@ export function* canViewComponentInQueryParam(
   next: () => Promise<any>
 ): any {
   const { componentId } = this.query;
-  this.assert(
-    componentId,
-    400,
-    'Must provide a componentId in the query parameters!'
-  );
+
+  if (!componentId) {
+    return this.throw(
+      400,
+      'Must provide a componentId in the query parameters!'
+    );
+  }
 
   const componentRoot = yield findRoot.call(this, componentId);
   const rootCanvas = yield findByComponentId(componentRoot.id);

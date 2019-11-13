@@ -14,13 +14,7 @@ interface GetCreditQuery {
   userId?: string;
 }
 
-interface GetCreditResponse {
-  creditAmountCents: number;
-}
-
-function* getCredits(
-  this: Koa.Application.Context
-): AsyncIterableIterator<GetCreditResponse> {
+function* getCredits(this: Koa.Application.Context): IterableIterator<any> {
   const { userId }: GetCreditQuery = this.query;
 
   if (!userId) {
@@ -50,9 +44,7 @@ function isChangeRequest(data: any): data is ChangeRequest {
   );
 }
 
-function* changeCredit(
-  this: Koa.Application.Context
-): AsyncIterableIterator<GetCreditResponse> {
+function* changeCredit(this: Koa.Application.Context): IterableIterator<any> {
   const { userId } = this.state;
   const { body } = this.request;
 

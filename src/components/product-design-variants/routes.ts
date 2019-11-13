@@ -2,7 +2,6 @@ import * as Router from 'koa-router';
 import * as Koa from 'koa';
 
 import * as ProductDesignVariantsDAO from './dao';
-import ProductDesignVariant from './domain-object';
 import requireAuth = require('../../middleware/require-auth');
 import {
   canAccessDesignInQuery,
@@ -58,7 +57,7 @@ function isProductDesignVariantsIO(
 
 function* replaceVariants(
   this: Koa.Application.Context
-): AsyncIterableIterator<ProductDesignVariant[]> {
+): IterableIterator<any> {
   const { designId } = this.query;
   const { body } = this.request;
 
@@ -87,9 +86,7 @@ function* replaceVariants(
   }
 }
 
-function* getVariants(
-  this: Koa.Application.Context
-): AsyncIterableIterator<ProductDesignVariant[]> {
+function* getVariants(this: Koa.Application.Context): IterableIterator<any> {
   const { designId } = this.query;
 
   if (!designId) {

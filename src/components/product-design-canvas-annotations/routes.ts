@@ -10,7 +10,6 @@ import {
   update
 } from './dao';
 import { hasOnlyProperties } from '../../services/require-properties';
-import Comment from '../../components/comments/domain-object';
 import * as AnnotationCommentDAO from '../../components/annotation-comments/dao';
 import ResourceNotFoundError from '../../errors/resource-not-found';
 import requireAuth = require('../../middleware/require-auth');
@@ -46,7 +45,7 @@ const annotationFromIO = (request: Annotation, userId: string): Annotation => {
 
 function* createAnnotation(
   this: Koa.Application.Context
-): AsyncIterableIterator<Annotation> {
+): IterableIterator<any> {
   const body = this.request.body;
   if (body && isAnnotation(body)) {
     const annotation = yield create(annotationFromIO(body, this.state.userId));
@@ -59,7 +58,7 @@ function* createAnnotation(
 
 function* updateAnnotation(
   this: Koa.Application.Context
-): AsyncIterableIterator<Annotation> {
+): IterableIterator<any> {
   const body = this.request.body;
   if (body && isAnnotation(body)) {
     const annotation = yield update(this.params.annotationId, body);
@@ -72,7 +71,7 @@ function* updateAnnotation(
 
 function* deleteAnnotation(
   this: Koa.Application.Context
-): AsyncIterableIterator<Annotation> {
+): IterableIterator<any> {
   yield deleteById(this.params.annotationId).catch(
     filterError(ResourceNotFoundError, () => {
       this.throw(404, 'Annotation not found');
@@ -82,9 +81,7 @@ function* deleteAnnotation(
   this.status = 204;
 }
 
-function* getList(
-  this: Koa.Application.Context
-): AsyncIterableIterator<Annotation> {
+function* getList(this: Koa.Application.Context): IterableIterator<any> {
   const query: GetListQuery = this.query;
   if (!query.canvasId) {
     return this.throw(400, 'Missing canvasId');
@@ -101,7 +98,7 @@ function* getList(
 
 function* getAnnotationComments(
   this: Koa.Application.Context
-): AsyncIterableIterator<Comment[]> {
+): IterableIterator<any> {
   const comments = yield AnnotationCommentDAO.findByAnnotationId(
     this.params.annotationId
   );

@@ -76,9 +76,7 @@ function calculateAmounts(
   return { payNowTotalCents, payLaterTotalCents, timeTotalMs };
 }
 
-function* createQuote(
-  this: Koa.Application.Context
-): AsyncIterableIterator<PricingQuote> {
+function* createQuote(this: Koa.Application.Context): IterableIterator<any> {
   const { body } = this.request;
 
   if (!body || !isCreateRequest(body)) {
@@ -150,9 +148,7 @@ function* createQuote(
   this.status = 201;
 }
 
-function* getQuote(
-  this: Koa.Application.Context
-): AsyncIterableIterator<PricingQuote> {
+function* getQuote(this: Koa.Application.Context): IterableIterator<any> {
   const { quoteId } = this.params;
 
   const quote = yield findById(quoteId);
@@ -162,7 +158,7 @@ function* getQuote(
   this.status = 200;
 }
 
-function* getQuotes(this: Koa.Application.Context): AsyncIterableIterator<any> {
+function* getQuotes(this: Koa.Application.Context): IterableIterator<any> {
   const { designId, units } = this.query;
   const unitsNumber = Number(units);
 
@@ -240,9 +236,7 @@ function hasNullValuesPricingCostInput(
   );
 }
 
-function* previewQuote(
-  this: Koa.Application.Context
-): AsyncIterableIterator<any> {
+function* previewQuote(this: Koa.Application.Context): IterableIterator<any> {
   const { body } = this.request;
 
   if (!isPreviewQuoteBody(body)) {
@@ -305,7 +299,7 @@ function* previewQuote(
 
 function* createBidForQuote(
   this: Koa.Application.Context
-): AsyncIterableIterator<any> {
+): IterableIterator<any> {
   const { quoteId, bidId } = this.params;
   const { body } = this.request;
   const quote: PricingQuote | null = yield findById(quoteId);
@@ -333,7 +327,7 @@ function* createBidForQuote(
 
 function* getBidsForQuote(
   this: Koa.Application.Context
-): AsyncIterableIterator<any> {
+): IterableIterator<any> {
   const { quoteId } = this.params;
   const quote = yield findById(quoteId);
   this.assert(quote, 404);

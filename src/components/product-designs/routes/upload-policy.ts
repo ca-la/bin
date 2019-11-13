@@ -11,7 +11,7 @@ import { generateUploadPolicy } from '../../../services/upload-policy';
 
 function* getDesignUploadPolicy(
   this: Koa.Application.Context
-): AsyncIterableIterator<any> {
+): IterableIterator<any> {
   const { mimeType } = this.query;
 
   if (!mimeType) {
@@ -34,7 +34,7 @@ function* getDesignUploadPolicy(
 
 function* getThumbnailUploadPolicy(
   this: Koa.Application.Context
-): AsyncIterableIterator<any> {
+): IterableIterator<any> {
   const remoteFileName = this.params.sectionId || uuid.v4();
   const { url, fields } = yield AWSService.getThumbnailUploadPolicy(
     AWS_S3_THUMBNAIL_BUCKET_NAME,

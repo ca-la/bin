@@ -8,9 +8,7 @@ import { updateOrCreate as updateOrCreateLayout } from '../../attributes/layout-
 import * as db from '../../../services/db';
 import toDateOrNull from '../../../services/to-date';
 
-function* updateAllNodes(
-  this: Koa.Application.Context
-): AsyncIterableIterator<any> {
+function* updateAllNodes(this: Koa.Application.Context): IterableIterator<any> {
   const { body: design } = this.request;
   const { designId } = this.params;
 

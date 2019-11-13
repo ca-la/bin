@@ -22,9 +22,7 @@ function isCreateOrUpdateRequest(body: any): body is CreateOrUpdateRequest {
 
 const router = new Router();
 
-function* listForUser(
-  this: Koa.Application.Context
-): AsyncIterableIterator<Subscription[]> {
+function* listForUser(this: Koa.Application.Context): IterableIterator<any> {
   const { userId } = this.query;
 
   if (!userId) {
@@ -49,9 +47,7 @@ function* listForUser(
   this.status = 200;
 }
 
-function* create(
-  this: Koa.Application.Context
-): AsyncIterableIterator<Subscription[]> {
+function* create(this: Koa.Application.Context): IterableIterator<any> {
   const { body } = this.request;
   if (!isCreateOrUpdateRequest(body)) {
     return this.throw(400, 'Missing required properties');
@@ -72,9 +68,7 @@ function* create(
   this.status = 201;
 }
 
-function* update(
-  this: Koa.Application.Context
-): AsyncIterableIterator<Subscription[]> {
+function* update(this: Koa.Application.Context): IterableIterator<any> {
   const { body } = this.request;
   if (!isCreateOrUpdateRequest(body)) {
     return this.throw(400, 'Missing required properties');

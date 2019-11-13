@@ -7,9 +7,7 @@ import { taskTypes } from '../tasks/templates';
 
 const router = new Router();
 
-function* listTaskTypes(
-  this: Koa.Application.Context
-): AsyncIterableIterator<any> {
+function* listTaskTypes(this: Koa.Application.Context): IterableIterator<any> {
   const taskTypesList = values(taskTypes);
 
   this.body = taskTypesList;

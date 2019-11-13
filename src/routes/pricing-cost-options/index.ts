@@ -17,9 +17,7 @@ const router = new Router();
 // tslint:disable-next-line:typedef
 const prop = (key: string) => (input: { [k: string]: any }): any => input[key];
 
-function* getOptions(
-  this: Koa.Application.Context
-): AsyncIterableIterator<any> {
+function* getOptions(this: Koa.Application.Context): IterableIterator<any> {
   const processes: Process[] = yield PricingProcessesDAO.findLatest();
   const types: {
     name: ProductType;

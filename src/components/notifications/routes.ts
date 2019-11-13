@@ -14,9 +14,7 @@ interface GetListQuery {
   offset?: number;
 }
 
-function* getList(
-  this: Koa.Application.Context
-): AsyncIterableIterator<NotificationMessage[]> {
+function* getList(this: Koa.Application.Context): IterableIterator<any> {
   const { userId } = this.state;
   const { limit, offset }: GetListQuery = this.query;
 
@@ -38,9 +36,7 @@ function* getList(
   );
 }
 
-function* getUnreadCount(
-  this: Koa.Application.Context
-): AsyncIterableIterator<number[]> {
+function* getUnreadCount(this: Koa.Application.Context): IterableIterator<any> {
   const { userId } = this.state;
 
   const unreadNotificationsCount = yield NotificationsDAO.findUnreadCountByUserId(
@@ -51,7 +47,7 @@ function* getUnreadCount(
   this.body = { unreadNotificationsCount };
 }
 
-function* setRead(this: Koa.Application.Context): AsyncIterableIterator<void> {
+function* setRead(this: Koa.Application.Context): IterableIterator<any> {
   const { notificationIds } = this.query;
   if (notificationIds) {
     const idList = notificationIds.split(',');

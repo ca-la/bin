@@ -38,7 +38,7 @@ interface CreateBody extends UserIO {
  */
 function* createUser(
   this: Koa.Application.Context<CreateBody>
-): AsyncIterableIterator<User> {
+): IterableIterator<any> {
   const {
     name,
     email,
@@ -168,7 +168,7 @@ interface WithPassword {
 }
 function* updatePassword(
   this: Koa.Application.Context<{ password: string }>
-): AsyncIterableIterator<object> {
+): IterableIterator<any> {
   this.assert(
     this.params.userId === this.state.userId,
     403,
@@ -189,7 +189,7 @@ function* updatePassword(
 
 function* acceptDesignerTerms(
   this: Koa.Application.Context
-): AsyncIterableIterator<User> {
+): IterableIterator<any> {
   canAccessUserResource.call(this, this.params.userId);
   const updated = yield UsersDAO.update(this.params.userId, {
     lastAcceptedDesignerTermsAt: new Date()
@@ -209,7 +209,7 @@ function* acceptDesignerTerms(
 
 function* acceptPartnerTerms(
   this: Koa.Application.Context
-): AsyncIterableIterator<User> {
+): IterableIterator<any> {
   canAccessUserResource.call(this, this.params.userId);
 
   const updated = yield UsersDAO.update(this.params.userId, {
@@ -242,7 +242,7 @@ interface CaughtError {
  */
 function* updateUser(
   this: Koa.Application.Context<UserWithNewPassword>
-): AsyncIterableIterator<User> {
+): IterableIterator<any> {
   const isAdmin = this.state.role === ROLES.admin;
   const isCurrentUser = this.params.userId === this.state.userId;
 
@@ -336,9 +336,7 @@ function* updateUser(
   this.body = updated;
 }
 
-function* getAllUsers(
-  this: Koa.Application.Context
-): AsyncIterableIterator<User[]> {
+function* getAllUsers(this: Koa.Application.Context): IterableIterator<any> {
   this.assert(this.state.userId, 401);
   this.assert(this.state.role === ROLES.admin, 403);
 
@@ -353,18 +351,14 @@ function* getAllUsers(
   this.status = 200;
 }
 
-function* getList(
-  this: Koa.Application.Context
-): AsyncIterableIterator<User[]> {
+function* getList(this: Koa.Application.Context): IterableIterator<any> {
   yield getAllUsers;
 }
 
 /**
  * GET /users/:id
  */
-function* getUser(
-  this: Koa.Application.Context
-): AsyncIterableIterator<User[]> {
+function* getUser(this: Koa.Application.Context): IterableIterator<any> {
   this.assert(this.state.role === ROLES.admin, 403);
 
   const user = yield UsersDAO.findById(this.params.userId);
@@ -380,7 +374,7 @@ function* getUser(
  */
 function* getEmailAvailability(
   this: Koa.Application.Context
-): AsyncIterableIterator<User[]> {
+): IterableIterator<any> {
   const { email } = this.params;
 
   const user = yield UsersDAO.findByEmail(email);
@@ -402,7 +396,7 @@ function* getEmailAvailability(
  */
 function* getUnpaidPartners(
   this: Koa.Application.Context
-): AsyncIterableIterator<User[]> {
+): IterableIterator<any> {
   const partners = yield UsersDAO.findAllUnpaidPartners({
     limit: Number(this.query.limit) || 10,
     offset: Number(this.query.offset) || 0,

@@ -1,8 +1,5 @@
 const beginTime = Date.now();
 
-/* tslint:disable:no-var-requires */
-require('dd-trace').init();
-
 import * as Logger from './services/logger';
 Logger.log('Starting CALA API...');
 
@@ -10,15 +7,13 @@ import compress = require('koa-compress');
 import koa = require('koa');
 
 import router from './routes';
-const attachSession = require('./middleware/attach-session');
-const errors = require('./middleware/errors');
-const headers = require('./middleware/headers');
-const jsonBody = require('./middleware/json-body');
-const loggerMiddleware = require('./middleware/logger');
-const options = require('./middleware/options');
-const {
-  default: validatePagination
-} = require('./middleware/validate-pagination');
+import attachSession = require('./middleware/attach-session');
+import errors = require('./middleware/errors');
+import headers = require('./middleware/headers');
+import jsonBody = require('./middleware/json-body');
+import loggerMiddleware = require('./middleware/logger');
+import options = require('./middleware/options');
+import validatePagination from './middleware/validate-pagination';
 
 const app = koa();
 

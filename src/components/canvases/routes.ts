@@ -47,7 +47,7 @@ const attachUser = (request: any, userId: string): any => {
   };
 };
 
-function* create(this: Koa.Application.Context): AsyncIterableIterator<Canvas> {
+function* create(this: Koa.Application.Context): IterableIterator<any> {
   if (Array.isArray(this.request.body)) {
     yield createWithComponents;
   } else {
@@ -55,9 +55,7 @@ function* create(this: Koa.Application.Context): AsyncIterableIterator<Canvas> {
   }
 }
 
-function* createCanvas(
-  this: Koa.Application.Context
-): AsyncIterableIterator<Canvas> {
+function* createCanvas(this: Koa.Application.Context): IterableIterator<any> {
   const body = attachUser(this.request.body, this.state.userId);
   if (!this.request.body || !isSaveableCanvas(body)) {
     return this.throw(400, 'Request does not match Canvas');
@@ -95,7 +93,7 @@ function isCanvasWithComponent(data: any): data is CanvasWithComponent {
 
 function* createWithComponents(
   this: Koa.Application.Context
-): AsyncIterableIterator<Canvas> {
+): IterableIterator<any> {
   const body: Unsaved<CanvasWithComponent>[] = this.request.body as any;
 
   this.assert(body.length >= 1, 400, 'At least one canvas must be provided');
@@ -162,9 +160,7 @@ async function createComponent(
   return EnrichmentService.addAssetLink(created);
 }
 
-function* addComponent(
-  this: Koa.Application.Context
-): AsyncIterableIterator<Canvas> {
+function* addComponent(this: Koa.Application.Context): IterableIterator<any> {
   const { assetLink, ...body } = attachUser(
     this.request.body,
     this.state.userId
@@ -185,7 +181,7 @@ function* addComponent(
   this.body = { ...updatedCanvas, components };
 }
 
-function* update(this: Koa.Application.Context): AsyncIterableIterator<Canvas> {
+function* update(this: Koa.Application.Context): IterableIterator<any> {
   const body = attachUser(this.request.body, this.state.userId);
   if (!this.request.body || !isSaveableCanvas(body)) {
     return this.throw(400, 'Request does not match Canvas');
@@ -208,13 +204,13 @@ function isReorderRequest(data: any[]): data is ReorderRequest[] {
 
 function* reorder(
   this: Koa.Application.Context<ReorderRequest[]>
-): AsyncIterableIterator<Canvas> {
+): IterableIterator<any> {
   const canvases = yield CanvasesDAO.reorder(this.request.body);
   this.status = 200;
   this.body = canvases;
 }
 
-function* del(this: Koa.Application.Context): AsyncIterableIterator<Canvas> {
+function* del(this: Koa.Application.Context): IterableIterator<any> {
   yield CanvasesDAO.del(this.params.canvasId).catch(
     filterError(CanvasNotFoundError, (err: CanvasNotFoundError) => {
       this.throw(404, err);
@@ -223,7 +219,7 @@ function* del(this: Koa.Application.Context): AsyncIterableIterator<Canvas> {
   this.status = 204;
 }
 
-function* getById(this: Koa.Application.Context): AsyncIterableIterator<any> {
+function* getById(this: Koa.Application.Context): IterableIterator<any> {
   const canvas = yield CanvasesDAO.findById(this.params.canvasId);
   this.assert(canvas, 404);
   const components = yield ComponentsDAO.findAllByCanvasId(canvas.id);
@@ -240,7 +236,7 @@ interface GetListQuery {
   designId?: string;
 }
 
-function* getList(this: Koa.Application.Context): AsyncIterableIterator<any[]> {
+function* getList(this: Koa.Application.Context): IterableIterator<any> {
   const query: GetListQuery = this.query;
 
   if (!query.designId) {
@@ -260,9 +256,7 @@ function* getList(this: Koa.Application.Context): AsyncIterableIterator<any[]> {
   this.body = enrichedCanvases;
 }
 
-function* getChangeLog(
-  this: Koa.Application.Context
-): AsyncIterableIterator<any[]> {
+function* getChangeLog(this: Koa.Application.Context): IterableIterator<any> {
   const { canvasId } = this.params;
 
   const changes = yield gatherChanges(canvasId);

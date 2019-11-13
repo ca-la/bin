@@ -13,7 +13,7 @@ const router = new Router();
  */
 function* getAnnotationsAccess(
   this: Koa.Application.Context
-): AsyncIterableIterator<any> {
+): IterableIterator<any> {
   this.status = 200;
 }
 
@@ -27,7 +27,7 @@ interface NotificationAccessQuery {
  */
 function* getNotificationAccess(
   this: Koa.Application.Context
-): AsyncIterableIterator<any> {
+): IterableIterator<any> {
   const { userId } = this.state;
   const { userId: checkUserId }: NotificationAccessQuery = this.query;
 
@@ -45,9 +45,7 @@ function* getNotificationAccess(
  * Checks if the authenticated user has access to the given task.
  * Responds with a 200 if there's a match, otherwise throws a 400.
  */
-function* getTasksAccess(
-  this: Koa.Application.Context
-): AsyncIterableIterator<any> {
+function* getTasksAccess(this: Koa.Application.Context): IterableIterator<any> {
   this.status = 200;
 }
 
@@ -58,7 +56,7 @@ function* getTasksAccess(
  */
 function* getDesignAccess(
   this: Koa.Application.Context
-): AsyncIterableIterator<any> {
+): IterableIterator<any> {
   this.status = 200;
   this.body = this.state.permissions;
 }

@@ -30,9 +30,7 @@ function isComponentRelationship(data: object): data is ComponentRelationship {
   );
 }
 
-function* getList(
-  this: Koa.Application.Context
-): AsyncIterableIterator<ComponentRelationship[]> {
+function* getList(this: Koa.Application.Context): IterableIterator<any> {
   const { componentId } = this.query;
 
   if (componentId) {
@@ -46,9 +44,7 @@ function* getList(
   }
 }
 
-function* getById(
-  this: Koa.Application.Context
-): AsyncIterableIterator<ComponentRelationship> {
+function* getById(this: Koa.Application.Context): IterableIterator<any> {
   const relationship = yield ComponentRelationshipsDAO.findById(
     this.params.relationshipId
   );
@@ -65,7 +61,7 @@ function* getById(
 
 function* create(
   this: Koa.Application.Context<ComponentRelationship>
-): AsyncIterableIterator<ComponentRelationship> {
+): IterableIterator<any> {
   const { body } = this.request;
 
   const componentRelationship = yield ComponentRelationshipsDAO.create(body);
@@ -75,7 +71,7 @@ function* create(
 
 function* update(
   this: Koa.Application.Context<ComponentRelationship>
-): AsyncIterableIterator<ComponentRelationship> {
+): IterableIterator<any> {
   const { body } = this.request;
   const relationship = yield ComponentRelationshipsDAO.update(
     this.params.relationshipId,
@@ -85,7 +81,7 @@ function* update(
   this.body = relationship;
 }
 
-function* del(this: Koa.Application.Context): AsyncIterableIterator<any> {
+function* del(this: Koa.Application.Context): IterableIterator<any> {
   yield ComponentRelationshipsDAO.del(this.params.relationshipId);
   this.status = 204;
 }

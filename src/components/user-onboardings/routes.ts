@@ -2,14 +2,12 @@ import * as Router from 'koa-router';
 import * as Koa from 'koa';
 
 import requireAuth = require('../../middleware/require-auth');
-import UserOnboarding, { isUserOnboarding } from './domain-object';
+import { isUserOnboarding } from './domain-object';
 import { create, findByUserId } from './dao';
 
 const router = new Router();
 
-function* createOrUpdate(
-  this: Koa.Application.Context
-): AsyncIterableIterator<UserOnboarding> {
+function* createOrUpdate(this: Koa.Application.Context): IterableIterator<any> {
   const { body } = this.request;
   const { userId } = this.params;
 
@@ -30,9 +28,7 @@ function* createOrUpdate(
   });
 }
 
-function* getByUserId(
-  this: Koa.Application.Context
-): AsyncIterableIterator<UserOnboarding> {
+function* getByUserId(this: Koa.Application.Context): IterableIterator<any> {
   const { userId } = this.params;
 
   if (userId !== this.state.userId && this.state.role !== 'ADMIN') {

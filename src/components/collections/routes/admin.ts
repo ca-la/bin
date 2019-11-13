@@ -13,7 +13,7 @@ import { commitCostInputs as commitInputs } from '../services/commit-cost-inputs
 
 export function* commitCostInputs(
   this: Koa.Application.Context
-): AsyncIterableIterator<any> {
+): IterableIterator<any> {
   const { collectionId } = this.params;
   const { userId } = this.state;
   yield commitInputs(collectionId, userId);
@@ -22,7 +22,7 @@ export function* commitCostInputs(
 
 export function* createPartnerPairing(
   this: Koa.Application.Context
-): AsyncIterableIterator<any> {
+): IterableIterator<any> {
   const { collectionId } = this.params;
   const { userId } = this.state;
   const collection = yield CollectionsDAO.findById(collectionId);

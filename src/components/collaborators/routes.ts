@@ -4,7 +4,7 @@ import * as Koa from 'koa';
 import addCollaborator from '../../services/add-collaborator';
 import InvalidDataError = require('../../errors/invalid-data');
 import * as CollaboratorsDAO from './dao';
-import Collaborator, { isRole, Roles } from './domain-objects/collaborator';
+import { isRole, Roles } from './domain-objects/collaborator';
 import requireAuth = require('../../middleware/require-auth');
 import { hasProperties } from '../../services/require-properties';
 import * as CollaboratorsMiddleware from '../../middleware/can-access-collaborator';
@@ -45,9 +45,7 @@ const isCollaboratorUpdate = (data: object): data is CollaboratorUpdate => {
   return hasProperties(data, 'role');
 };
 
-function* create(
-  this: Koa.Application.Context
-): AsyncIterableIterator<Collaborator> {
+function* create(this: Koa.Application.Context): IterableIterator<any> {
   if (!CollaboratorsMiddleware.isCollaboratorRequest(this.request.body)) {
     return this.throw(400, 'Request does not match Collaborator');
   }
@@ -83,9 +81,7 @@ function* create(
   this.body = created;
 }
 
-function* find(
-  this: Koa.Application.Context
-): AsyncIterableIterator<Collaborator> {
+function* find(this: Koa.Application.Context): IterableIterator<any> {
   const { collectionId, designId, designIds } = this.query;
   const { userId } = this.state;
   let collaborators;
@@ -115,9 +111,7 @@ function* find(
   this.body = collaborators;
 }
 
-function* update(
-  this: Koa.Application.Context
-): AsyncIterableIterator<Collaborator> {
+function* update(this: Koa.Application.Context): IterableIterator<any> {
   const { collaborator } = this.state;
   const { body } = this.request;
   if (!collaborator) {
@@ -137,7 +131,7 @@ function* update(
 
 function* deleteCollaborator(
   this: Koa.Application.Context
-): AsyncIterableIterator<Collaborator> {
+): IterableIterator<any> {
   const { collaborator } = this.state;
 
   if (!collaborator) {

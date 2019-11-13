@@ -13,7 +13,7 @@ interface NotificationsHealthMetrics {
 
 function* getNotificationsHealth(
   this: Koa.Application.Context
-): AsyncIterableIterator<NotificationsHealthMetrics> {
+): IterableIterator<any> {
   const outstandingNotifications = yield findOutstanding();
   const oldestNotification =
     outstandingNotifications[outstandingNotifications.length - 1];
