@@ -5,7 +5,15 @@ import createUser = require('../../test-helpers/create-user');
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 
 import { dataAdapter } from './domain-object';
-import { getSizes, getTotalUnitsToProduce, replaceForDesign } from './dao';
+import {
+  findByCollectionId,
+  getSizes,
+  getTotalUnitsToProduce,
+  replaceForDesign,
+  update
+} from './dao';
+import generateCollection from '../../test-helpers/factories/collection';
+import { addDesign } from '../../test-helpers/collections';
 
 async function createPrerequisites(): Promise<any> {
   const { user } = await createUser({ withSession: false });
@@ -15,6 +23,8 @@ async function createPrerequisites(): Promise<any> {
     title: 'Plain White Tee',
     userId: user.id
   });
+  const { collection } = await generateCollection();
+  await addDesign(collection.id, design.id);
 
   const variants = await replaceForDesign(design.id, [
     {
@@ -55,7 +65,7 @@ async function createPrerequisites(): Promise<any> {
     }
   ]);
 
-  return { user, design, variants };
+  return { user, design, variants, collection };
 }
 
 test('ProductDesignVariantsDAO.getTotalUnitsToProduce sums units', async (t: Test) => {
@@ -69,6 +79,33 @@ test('ProductDesignVariantsDAO.getSizes returns a list of sizes', async (t: Test
   const { design } = await createPrerequisites();
   const sizes = await getSizes(design.id);
   t.deepEqual(sizes.sort(), ['L', 'M']);
+});
+
+test('ProductDesignVariantsDAO.findByCollectionId returns a list of variants', async (t: Test) => {
+  const { collection, variants } = await createPrerequisites();
+  const foundVariants = await findByCollectionId(collection.id);
+  t.deepEqual(
+    variants,
+    foundVariants,
+    'All variants are returned for collection'
+  );
+});
+
+test('ProductDesignVariantsDAO.update updates a variant', async (t: Test) => {
+  const { variants } = await createPrerequisites();
+  const variant = variants[0];
+  const updated = await update(variant.id, {
+    ...variant,
+    universalProductCode: '123456789012'
+  });
+  t.deepEqual(
+    updated,
+    {
+      ...variant,
+      universalProductCode: '123456789012'
+    },
+    'Variant is updated'
+  );
 });
 
 test('replaceVariants does not delete old ones if creation fails', async (t: Test) => {

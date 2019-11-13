@@ -41,6 +41,34 @@ export async function create(
   );
 }
 
+export async function update(
+  id: string,
+  data: ProductDesignVariant,
+  trx?: Knex.Transaction
+): Promise<ProductDesignVariant> {
+  const rowData = dataAdapter.toDb(data);
+  const updated = await db(TABLE_NAME)
+    .update(rowData, '*')
+    .where({ id })
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
+    .then((rows: ProductDesignVariantRow[]) =>
+      first<ProductDesignVariantRow>(rows)
+    );
+  if (!updated) {
+    throw new Error('Failed to create a product design variant!');
+  }
+  return validate<ProductDesignVariantRow, ProductDesignVariant>(
+    TABLE_NAME,
+    isProductDesignVariantRow,
+    dataAdapter,
+    updated
+  );
+}
+
 export async function findById(
   id: string
 ): Promise<ProductDesignVariant | null> {
@@ -139,6 +167,34 @@ export async function findByDesignId(
   const variants = await db(TABLE_NAME)
     .where({ design_id: designId })
     .orderBy('position', 'asc')
+    .catch(rethrow);
+
+  return validateEvery<ProductDesignVariantRow, ProductDesignVariant>(
+    TABLE_NAME,
+    isProductDesignVariantRow,
+    dataAdapter,
+    variants
+  );
+}
+
+export async function findByCollectionId(
+  collectionId: string,
+  trx?: Knex.Transaction
+): Promise<ProductDesignVariant[]> {
+  const variants = await db(TABLE_NAME)
+    .select('product_design_variants.*')
+    .from(TABLE_NAME)
+    .join(
+      'collection_designs',
+      'collection_designs.design_id',
+      'product_design_variants.design_id'
+    )
+    .where({ 'collection_designs.collection_id': collectionId })
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .catch(rethrow);
 
   return validateEvery<ProductDesignVariantRow, ProductDesignVariant>(

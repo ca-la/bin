@@ -14,6 +14,7 @@ import payInvoiceWithNewPaymentMethod, {
 } from '../../services/payment';
 import { CreateQuotePayload } from '../../services/generate-pricing-quote';
 import { hasProperties } from '../../services/require-properties';
+import createUPCsForCollection from '../../services/create-upcs-for-collection';
 
 const router = new Router();
 
@@ -59,6 +60,8 @@ function* payQuote(
   if (!collection) {
     return this.throw(403, 'Unable to access collection');
   }
+
+  yield createUPCsForCollection(collection.id);
 
   if (isWaived) {
     this.body = yield payWaivedQuote(body.createQuotes, userId, collection);

@@ -22,9 +22,9 @@ export function getChecksum(checkNumber: string): number {
     .split('')
     .reduce((acc: number, char: string, index: number): number => {
       if (index % 2 === 0) {
-        return acc + parseInt(char, 10);
+        return acc + parseInt(char, 10) * 3;
       }
-      return acc + parseInt(char, 10) * 3;
+      return acc + parseInt(char, 10);
     }, 0);
 
   return (10 - (result % 10)) % 10;
