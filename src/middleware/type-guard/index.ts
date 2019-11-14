@@ -1,4 +1,4 @@
-import * as Koa from 'koa';
+import Koa from 'koa';
 
 export function typeGuard<T>(
   guardFn: (data: any) => data is T

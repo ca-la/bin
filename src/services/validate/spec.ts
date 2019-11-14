@@ -1,4 +1,4 @@
-import * as tape from 'tape';
+import tape from 'tape';
 import InvalidDataError = require('../../errors/invalid-data');
 import {
   validateProperties,

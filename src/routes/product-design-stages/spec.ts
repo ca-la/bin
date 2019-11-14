@@ -1,6 +1,6 @@
 import * as designStagesDAO from '../../dao/product-design-stages';
-import * as tape from 'tape';
-import * as uuid from 'node-uuid';
+import tape from 'tape';
+import uuid from 'node-uuid';
 import createUser = require('../../test-helpers/create-user');
 import { authHeader, get, post } from '../../test-helpers/http';
 import { sandbox, test as originalTest } from '../../test-helpers/fresh';

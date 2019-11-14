@@ -1,8 +1,8 @@
 import rethrow = require('pg-rethrow');
 import uuid = require('node-uuid');
-import * as Knex from 'knex';
+import Knex from 'knex';
 
-import db = require('../../services/db');
+import db from '../../services/db';
 import first from '../../services/first';
 import {
   dataAdapter,

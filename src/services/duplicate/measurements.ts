@@ -1,4 +1,4 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 
 import * as MeasurementsDAO from '../../dao/product-design-canvas-measurements';
 import Measurement from '../../domain-objects/product-design-canvas-measurement';

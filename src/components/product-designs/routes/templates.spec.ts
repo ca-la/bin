@@ -1,10 +1,10 @@
-import * as uuid from 'node-uuid';
-import * as Knex from 'knex';
+import uuid from 'node-uuid';
+import Knex from 'knex';
 
 import createUser = require('../../../test-helpers/create-user');
 import { authHeader, post } from '../../../test-helpers/http';
 import { sandbox, test, Test } from '../../../test-helpers/fresh';
-import * as db from '../../../services/db';
+import db from '../../../services/db';
 import createDesign from '../../../services/create-design';
 import { create as createTemplateDesign } from '../../templates/designs/dao';
 import ProductDesign = require('../domain-objects/product-design');

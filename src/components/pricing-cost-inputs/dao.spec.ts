@@ -1,15 +1,15 @@
-import * as uuid from 'node-uuid';
-import * as Knex from 'knex';
+import uuid from 'node-uuid';
+import Knex from 'knex';
 
 import { test, Test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
-import * as ProductDesignsDAO from '../product-designs/dao';
+import ProductDesignsDAO from '../product-designs/dao';
 import * as PricingCostInputsDAO from './dao';
 import PricingCostInput from './domain-object';
 import { omit } from 'lodash';
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
 import generatePricingCostInput from '../../test-helpers/factories/pricing-cost-input';
-import * as db from './../../services/db';
+import db from './../../services/db';
 import createDesign from '../../services/create-design';
 
 test('PricingCostInputsDAO supports creation and retrieval', async (t: Test) => {

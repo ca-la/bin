@@ -1,6 +1,6 @@
-import * as tape from 'tape';
-import * as uuid from 'node-uuid';
-import * as Knex from 'knex';
+import tape from 'tape';
+import uuid from 'node-uuid';
+import Knex from 'knex';
 
 import { findById, findByIds } from './';
 import {
@@ -34,7 +34,7 @@ import generatePricingValues from '../../../test-helpers/factories/pricing-value
 import { addDesign } from '../../../test-helpers/collections';
 import { deleteById } from '../../../test-helpers/designs';
 import { generateDesign } from '../../../test-helpers/factories/product-design';
-import db = require('../../../services/db');
+import db from '../../../services/db';
 
 test('ProductDesignCanvases DAO supports creation/retrieval, enriched with image links', async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });

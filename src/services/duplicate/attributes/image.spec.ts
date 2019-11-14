@@ -1,9 +1,9 @@
-import * as Knex from 'knex';
-import * as uuid from 'node-uuid';
+import Knex from 'knex';
+import uuid from 'node-uuid';
 import { omit } from 'lodash';
 
 import { sandbox, test, Test } from '../../../test-helpers/fresh';
-import * as db from '../../db';
+import db from '../../db';
 import findAndDuplicateImage from './image';
 import generateImageAttribute from '../../../test-helpers/factories/image-attribute';
 import createUser = require('../../../test-helpers/create-user');

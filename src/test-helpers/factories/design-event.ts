@@ -1,10 +1,10 @@
-import * as uuid from 'node-uuid';
+import uuid from 'node-uuid';
 import { create } from '../../dao/design-events';
 import DesignEvent from '../../domain-objects/design-event';
 import { findById as findUserById } from '../../components/users/dao';
 import createUser = require('../create-user');
 import ProductDesign = require('../../components/product-designs/domain-objects/product-design');
-import * as ProductDesignsDAO from '../../components/product-designs/dao';
+import ProductDesignsDAO from '../../components/product-designs/dao';
 
 interface DesignEventWithResources {
   designEvent: DesignEvent;

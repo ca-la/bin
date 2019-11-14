@@ -1,12 +1,12 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 
-import * as DesignsDAO from '../../product-designs/dao';
+import DesignsDAO from '../../product-designs/dao';
 import { createList } from '../designs/dao';
 
 import ProductDesign = require('../../product-designs/domain-objects/product-design');
 import ResourceNotFoundError from '../../../errors/resource-not-found';
 import { TemplateDesign } from '../designs/domain-object';
-import db = require('../../../services/db');
+import db from '../../../services/db';
 
 /**
  * Given a list of designIds, marks each design as a template.

@@ -1,9 +1,9 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 import uuid = require('node-uuid');
 import rethrow = require('pg-rethrow');
 
-import * as ProductDesignsDAO from '../product-designs/dao';
-import db = require('../../services/db');
+import ProductDesignsDAO from '../product-designs/dao';
+import db from '../../services/db';
 import InvalidDataError = require('../../errors/invalid-data');
 import first from '../../services/first';
 import normalizeEmail = require('../../services/normalize-email');

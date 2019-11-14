@@ -1,8 +1,8 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 
-import * as db from '../../services/db';
+import db from '../../services/db';
 import {
   notifyExpired,
   notifyOneWeekFromExpiring,

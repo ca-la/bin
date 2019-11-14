@@ -1,6 +1,6 @@
-import * as tape from 'tape';
-import * as uuid from 'node-uuid';
-import * as sinon from 'sinon';
+import tape from 'tape';
+import uuid from 'node-uuid';
+import sinon from 'sinon';
 
 import createUser = require('../../test-helpers/create-user');
 import { authHeader, del, get, patch, put } from '../../test-helpers/http';

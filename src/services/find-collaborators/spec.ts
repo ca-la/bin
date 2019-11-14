@@ -1,4 +1,4 @@
-import * as uuid from 'node-uuid';
+import uuid from 'node-uuid';
 import CollaboratorsDAO = require('../../components/collaborators/dao');
 import Collection from '../../components/collections/domain-object';
 import * as CollectionsDAO from '../../components/collections/dao';

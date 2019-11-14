@@ -1,9 +1,9 @@
-import * as API from '../../../test-helpers/http';
+import API from '../../../test-helpers/http';
 import { sandbox, test, Test } from '../../../test-helpers/fresh';
 import createUser = require('../../../test-helpers/create-user');
 import * as TemplateDesignsDAO from './dao';
 import InvalidDataError = require('../../../errors/invalid-data');
-import * as DesignsDAO from '../../product-designs/dao';
+import DesignsDAO from '../../product-designs/dao';
 import * as DesignTemplateService from '../services/create-design-template';
 
 const API_PATH = '/templates/designs';

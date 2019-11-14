@@ -1,5 +1,5 @@
-import * as Knex from 'knex';
-import * as rethrow from 'pg-rethrow';
+import Knex from 'knex';
+import rethrow from 'pg-rethrow';
 import { first } from 'lodash';
 
 import {
@@ -8,7 +8,7 @@ import {
   TemplateDesign,
   TemplateDesignRow
 } from './domain-object';
-import * as db from '../../../services/db';
+import db from '../../../services/db';
 import { validate, validateEvery } from '../../../services/validate-from-db';
 import filterError = require('../../../services/filter-error');
 import InvalidDataError = require('../../../errors/invalid-data');

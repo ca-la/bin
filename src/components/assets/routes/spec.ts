@@ -1,5 +1,5 @@
-import * as tape from 'tape';
-import * as uuid from 'node-uuid';
+import tape from 'tape';
+import uuid from 'node-uuid';
 
 import createUser = require('../../../test-helpers/create-user');
 import { authHeader, get, patch, put } from '../../../test-helpers/http';

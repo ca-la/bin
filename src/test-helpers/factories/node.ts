@@ -1,5 +1,5 @@
-import * as uuid from 'node-uuid';
-import * as Knex from 'knex';
+import uuid from 'node-uuid';
+import Knex from 'knex';
 
 import { create, createDesignRoot } from '../../components/nodes/dao';
 import { findById as findUserById } from '../../components/users/dao';

@@ -1,4 +1,4 @@
-import * as tape from 'tape';
+import tape from 'tape';
 
 import createUser = require('../../test-helpers/create-user');
 import { authHeader, get, put } from '../../test-helpers/http';

@@ -1,5 +1,5 @@
-import * as Knex from 'knex';
-import * as db from '../../services/db';
+import Knex from 'knex';
+import db from '../../services/db';
 import { getBuilder as getCollaboratorsBuilder } from '../../components/collaborators/view';
 import { queryWithCollectionMeta as getDesignsBuilder } from '../../components/product-designs/dao/view';
 

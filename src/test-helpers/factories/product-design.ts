@@ -1,5 +1,5 @@
-import * as Knex from 'knex';
-import * as uuid from 'node-uuid';
+import Knex from 'knex';
+import uuid from 'node-uuid';
 
 import createDesign from '../../services/create-design';
 import ProductDesign = require('../../components/product-designs/domain-objects/product-design');

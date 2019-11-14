@@ -1,4 +1,4 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 import CollaboratorsDAO = require('../../components/collaborators/dao');
 import CollectionsDAO = require('../../components/collections/dao');
 import ProductDesignsDAO = require('../../components/product-designs/dao');

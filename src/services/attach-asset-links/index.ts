@@ -2,7 +2,7 @@ import { USER_UPLOADS_BASE_URL, USER_UPLOADS_IMGIX_URL } from '../../config';
 import Component, {
   ComponentType
 } from '../../components/components/domain-object';
-import * as OptionsDAO from '../../dao/product-design-options';
+import OptionsDAO from '../../dao/product-design-options';
 import * as ImagesDAO from '../../components/assets/dao';
 import { isPreviewable } from '../../components/assets/services/is-previewable';
 import { getExtension } from '../../components/assets/services/get-extension';

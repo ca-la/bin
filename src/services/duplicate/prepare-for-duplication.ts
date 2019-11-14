@@ -1,4 +1,4 @@
-import * as uuid from 'node-uuid';
+import uuid from 'node-uuid';
 import { omit } from 'lodash';
 
 interface BaseResource {

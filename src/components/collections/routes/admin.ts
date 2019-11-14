@@ -1,9 +1,9 @@
-import * as Koa from 'koa';
-import * as uuid from 'node-uuid';
-import * as Knex from 'knex';
+import Koa from 'koa';
+import uuid from 'node-uuid';
+import Knex from 'knex';
 
-import * as db from '../../../services/db';
-import * as DesignsDAO from '../../product-designs/dao';
+import db from '../../../services/db';
+import DesignsDAO from '../../product-designs/dao';
 import * as CollectionsDAO from '../dao';
 import * as DesignEventsDAO from '../../../dao/design-events';
 import createDesignTasks from '../../../services/create-design-tasks';

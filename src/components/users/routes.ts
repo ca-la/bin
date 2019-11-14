@@ -1,6 +1,6 @@
-import * as Knex from 'knex';
-import * as Koa from 'koa';
-import * as Router from 'koa-router';
+import Knex from 'knex';
+import Koa from 'koa';
+import Router from 'koa-router';
 import rethrow = require('pg-rethrow');
 
 import * as UsersDAO from './dao';
@@ -11,7 +11,7 @@ import CohortsDAO = require('../../components/cohorts/dao');
 import CohortUsersDAO = require('../../components/cohorts/users/dao');
 import compact = require('../../services/compact');
 import createOrUpdateSubscription from '../subscriptions/create-or-update';
-import db = require('../../services/db');
+import db from '../../services/db';
 import DuplicationService = require('../../services/duplicate');
 import filterError = require('../../services/filter-error');
 import InvalidDataError = require('../../errors/invalid-data');

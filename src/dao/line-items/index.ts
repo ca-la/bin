@@ -1,7 +1,7 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 import rethrow = require('pg-rethrow');
 
-import * as db from '../../services/db';
+import db from '../../services/db';
 import LineItem, {
   dataAdapter,
   dataAdapterMeta,

@@ -1,6 +1,6 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 
-import * as PaymentMethodsDAO from './dao';
+import PaymentMethodsDAO from './dao';
 import PaymentMethod = require('./domain-object');
 import attachSource from '../../services/stripe/attach-source';
 import { findOrCreateCustomerId } from '../../services/stripe';

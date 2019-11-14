@@ -1,4 +1,4 @@
-import * as process from 'process';
+import process from 'process';
 import { CALA_OPS_USER_ID } from '../config';
 import { log, logServerError } from '../services/logger';
 import { green, reset } from '../services/colors';

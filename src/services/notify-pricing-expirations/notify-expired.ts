@@ -1,4 +1,4 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 
 import { findAllUnnotifiedCollectionsWithExpiringCostInputs } from '../../components/collections/dao';
 import { NotificationType } from '../../components/notifications/domain-object';

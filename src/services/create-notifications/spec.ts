@@ -1,6 +1,6 @@
-import * as tape from 'tape';
-import * as uuid from 'node-uuid';
-import * as sinon from 'sinon';
+import tape from 'tape';
+import uuid from 'node-uuid';
+import sinon from 'sinon';
 
 import { sandbox, test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
@@ -15,13 +15,13 @@ import * as CommentsDAO from '../../components/comments/dao';
 import * as TaskCommentsDAO from '../../components/task-comments/dao';
 import * as AnnotationCommentsDAO from '../../components/annotation-comments/dao';
 import * as CollectionsDAO from '../../components/collections/dao';
-import * as DesignsDAO from '../../components/product-designs/dao';
-import * as EmailService from '../../services/email';
+import DesignsDAO from '../../components/product-designs/dao';
+import EmailService from '../../services/email';
 import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 import generateAnnotation from '../../test-helpers/factories/product-design-canvas-annotation';
 import generateCollection from '../../test-helpers/factories/collection';
 import * as SlackService from '../../services/slack';
-import * as Config from '../../config';
+import Config from '../../config';
 import generateMeasurement from '../../test-helpers/factories/product-design-canvas-measurement';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
 import * as NotificationAnnouncer from '../../components/iris/messages/notification';

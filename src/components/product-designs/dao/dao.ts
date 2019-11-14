@@ -1,5 +1,5 @@
-import * as Knex from 'knex';
-import db = require('../../../services/db');
+import Knex from 'knex';
+import db from '../../../services/db';
 import ProductDesign = require('../../../components/product-designs/domain-objects/product-design');
 import limitOrOffset from '../../../services/limit-or-offset';
 import {
@@ -264,13 +264,3 @@ export async function deleteByIds(options: {
 
   return deleted.length;
 }
-
-module.exports = {
-  deleteByIds,
-  findAllDesignIdsThroughCollaborator,
-  findAllDesignsThroughCollaborator,
-  findAllWithCostsAndEvents,
-  findDesignByAnnotationId,
-  findDesignByTaskId,
-  findDesignByBidId
-};

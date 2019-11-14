@@ -1,14 +1,14 @@
-import * as uuid from 'node-uuid';
-import * as Knex from 'knex';
+import uuid from 'node-uuid';
+import Knex from 'knex';
 import { range } from 'lodash';
-import * as rethrow from 'pg-rethrow';
+import rethrow from 'pg-rethrow';
 
 import { FIT_CLIENT_HOST, MAGIC_HOST } from '../config';
 import * as ScansDAO from '../dao/scans';
 import * as FitPartnersDAO from '../dao/fit-partners';
 import FitPartnerCustomer = require('../domain-objects/fit-partner-customer');
 import first from '../services/first';
-import * as db from '../services/db';
+import db from '../services/db';
 import Logger = require('../services/logger');
 
 async function generateScans(): Promise<void> {

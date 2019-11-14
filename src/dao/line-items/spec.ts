@@ -1,6 +1,6 @@
-import * as tape from 'tape';
-import * as Knex from 'knex';
-import * as uuid from 'node-uuid';
+import tape from 'tape';
+import Knex from 'knex';
+import uuid from 'node-uuid';
 import { test } from '../../test-helpers/fresh';
 import {
   create,
@@ -9,7 +9,7 @@ import {
   getLineItemsWithMetaByInvoiceId
 } from './index';
 import { createTrx as createInvoice } from '../invoices';
-import db = require('../../services/db');
+import db from '../../services/db';
 import LineItem from '../../domain-objects/line-item';
 import Invoice = require('../../domain-objects/invoice');
 import {

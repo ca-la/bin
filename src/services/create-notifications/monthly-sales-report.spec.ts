@@ -1,6 +1,6 @@
-import * as uuid from 'node-uuid';
+import uuid from 'node-uuid';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
-import * as EmailService from '../../services/email';
+import EmailService from '../../services/email';
 import * as UsersDAO from '../../components/users/dao';
 
 import { immediatelySendMonthlySalesReport } from './monthly-sales-report';

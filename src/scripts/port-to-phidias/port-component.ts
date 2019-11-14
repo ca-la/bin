@@ -1,4 +1,4 @@
-import * as uuid from 'node-uuid';
+import uuid from 'node-uuid';
 
 import { NodeRow } from '../../components/nodes/domain-objects';
 import { LayoutAttributeRow } from '../../components/attributes/layout-attributes/domain-object';

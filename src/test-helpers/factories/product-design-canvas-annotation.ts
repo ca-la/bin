@@ -1,4 +1,4 @@
-import * as uuid from 'node-uuid';
+import uuid from 'node-uuid';
 import Canvas from '../../components/canvases/domain-object';
 import { findById as findUserById } from '../../components/users/dao';
 import createUser = require('../create-user');

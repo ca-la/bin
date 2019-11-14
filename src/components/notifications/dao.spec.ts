@@ -1,11 +1,11 @@
-import * as Knex from 'knex';
-import * as tape from 'tape';
-import * as uuid from 'node-uuid';
+import Knex from 'knex';
+import tape from 'tape';
+import uuid from 'node-uuid';
 import { sandbox, test } from '../../test-helpers/fresh';
 import * as NotificationsDAO from './dao';
-import * as DesignsDAO from '../product-designs/dao';
+import DesignsDAO from '../product-designs/dao';
 import createUser = require('../../test-helpers/create-user');
-import db = require('../../services/db');
+import db from '../../services/db';
 import { Notification, NotificationType } from './domain-object';
 import generateNotification from '../../test-helpers/factories/notification';
 import generateCollection from '../../test-helpers/factories/collection';

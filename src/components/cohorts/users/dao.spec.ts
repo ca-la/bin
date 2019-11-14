@@ -1,9 +1,9 @@
-import * as uuid from 'node-uuid';
-import * as Knex from 'knex';
+import uuid from 'node-uuid';
+import Knex from 'knex';
 import { sortBy } from 'lodash';
 
 import { test, Test } from '../../../test-helpers/fresh';
-import * as db from '../../../services/db';
+import db from '../../../services/db';
 import createUser = require('../../../test-helpers/create-user');
 
 import * as CohortsDAO from '../dao';

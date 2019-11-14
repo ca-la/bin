@@ -1,10 +1,10 @@
-import * as process from 'process';
+import process from 'process';
 
 import { log, logServerError } from '../services/logger';
 import { green, reset } from '../services/colors';
 import { create } from '../dao/task-events';
 import { TaskEventRow, TaskStatus } from '../domain-objects/task-event';
-import db = require('../services/db');
+import db from '../services/db';
 
 async function run(): Promise<void> {
   const designIds = process.argv.slice(2);

@@ -1,5 +1,5 @@
-import * as tape from 'tape';
-import * as AWS from 'aws-sdk';
+import tape from 'tape';
+import AWS from 'aws-sdk';
 
 import * as S3Service from './s3';
 import { sandbox, test } from '../../test-helpers/fresh';

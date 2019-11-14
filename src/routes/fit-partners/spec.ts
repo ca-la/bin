@@ -1,6 +1,6 @@
 import { cloneDeep, omit } from 'lodash';
 
-import * as Configuration from '../../config';
+import Configuration from '../../config';
 import createUser = require('../../test-helpers/create-user');
 import FitPartnerCustomersDAO = require('../../dao/fit-partner-customers');
 import FitPartnerScanService = require('../../services/fit-partner-scan');

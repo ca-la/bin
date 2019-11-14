@@ -1,6 +1,6 @@
-import db = require('../../services/db');
-import * as Knex from 'knex';
-import * as uuid from 'node-uuid';
+import db from '../../services/db';
+import Knex from 'knex';
+import uuid from 'node-uuid';
 
 import * as InvoicesDAO from '../../dao/invoices';
 import { InvoicePayment } from '../../components/invoice-payments/domain-object';

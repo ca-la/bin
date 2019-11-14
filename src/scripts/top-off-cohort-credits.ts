@@ -1,7 +1,7 @@
-import * as process from 'process';
+import process from 'process';
 
 import * as CreditsDAO from '../components/credits/dao';
-import db = require('../services/db');
+import db from '../services/db';
 import { CALA_OPS_USER_ID } from '../config';
 import { green, reset } from '../services/colors';
 import { log, logServerError } from '../services/logger';

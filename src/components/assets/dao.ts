@@ -1,6 +1,6 @@
-import * as Knex from 'knex';
-import * as rethrow from 'pg-rethrow';
-import * as uuid from 'node-uuid';
+import Knex from 'knex';
+import rethrow from 'pg-rethrow';
+import uuid from 'node-uuid';
 
 import { validate } from '../../services/validate-from-db';
 import Asset, {
@@ -10,7 +10,7 @@ import Asset, {
   toInsertion,
   toPartialInsertion
 } from './domain-object';
-import db = require('../../services/db');
+import db from '../../services/db';
 import first from '../../services/first';
 
 const TABLE_NAME = 'assets';

@@ -1,5 +1,5 @@
-import * as Router from 'koa-router';
-import * as Koa from 'koa';
+import Router from 'koa-router';
+import Koa from 'koa';
 
 import Annotation from './domain-object';
 import {

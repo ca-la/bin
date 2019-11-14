@@ -1,8 +1,8 @@
-import * as uuid from 'node-uuid';
-import * as sinon from 'sinon';
+import uuid from 'node-uuid';
+import sinon from 'sinon';
 import { omit } from 'lodash';
 
-import * as db from '../../services/db';
+import db from '../../services/db';
 import * as DesignEventsDAO from '../../dao/design-events';
 import * as PricingCostInputsDAO from '../../components/pricing-cost-inputs/dao';
 import { BidCreationPayload } from '../../components/bids/domain-object';

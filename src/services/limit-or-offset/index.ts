@@ -1,4 +1,4 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 
 export default function limitOrOffset(
   limit?: number,

@@ -1,8 +1,8 @@
-import * as Knex from 'knex';
-import * as process from 'process';
-import * as uuid from 'node-uuid';
+import Knex from 'knex';
+import process from 'process';
+import uuid from 'node-uuid';
 
-import * as db from '../../services/db';
+import db from '../../services/db';
 import { log } from '../../services/logger';
 import { green, red, reset } from '../../services/colors';
 import {

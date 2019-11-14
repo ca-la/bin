@@ -1,6 +1,6 @@
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import { post } from '../../test-helpers/http';
-import * as MailChimp from '../../services/mailchimp';
+import MailChimp from '../../services/mailchimp';
 import {
   MAILCHIMP_LIST_ID_DESIGNERS,
   MAILCHIMP_LIST_ID_PRODUCTION_PARTNERS

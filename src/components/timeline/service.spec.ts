@@ -1,5 +1,5 @@
-import * as tape from 'tape';
-import * as uuid from 'node-uuid';
+import tape from 'tape';
+import uuid from 'node-uuid';
 
 import * as Service from './service';
 import { authHeader, post } from '../../test-helpers/http';

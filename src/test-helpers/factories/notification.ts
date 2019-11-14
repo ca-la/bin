@@ -1,4 +1,4 @@
-import * as uuid from 'node-uuid';
+import uuid from 'node-uuid';
 
 import { create } from '../../components/notifications/dao';
 import {
@@ -8,7 +8,7 @@ import {
 import { findById as findUserById } from '../../components/users/dao';
 import createUser = require('../create-user');
 import { CollaboratorWithUser } from '../../components/collaborators/domain-objects/collaborator';
-import * as ProductDesignsDAO from '../../components/product-designs/dao';
+import ProductDesignsDAO from '../../components/product-designs/dao';
 import * as CollectionsDAO from '../../components/collections/dao';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import * as AnnotationsDAO from '../../components/product-design-canvas-annotations/dao';

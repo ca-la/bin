@@ -1,4 +1,4 @@
-import * as Koa from 'koa';
+import Koa from 'koa';
 
 import createFromDesignTemplate from '../../templates/services/create-from-design-template';
 import filterError = require('../../../services/filter-error');

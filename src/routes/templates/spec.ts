@@ -1,5 +1,5 @@
 import * as TemplatesDAO from '../../dao/templates';
-import * as tape from 'tape';
+import tape from 'tape';
 import createUser = require('../../test-helpers/create-user');
 import { authHeader, get } from '../../test-helpers/http';
 import { sandbox, test } from '../../test-helpers/fresh';

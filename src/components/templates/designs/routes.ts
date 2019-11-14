@@ -1,8 +1,8 @@
-import * as Router from 'koa-router';
-import * as Koa from 'koa';
-import * as Knex from 'knex';
+import Router from 'koa-router';
+import Koa from 'koa';
+import Knex from 'knex';
 
-import * as db from '../../../services/db';
+import db from '../../../services/db';
 import { getAll, remove, removeList } from './dao';
 import requireAdmin = require('../../../middleware/require-admin');
 import InvalidDataError = require('../../../errors/invalid-data');

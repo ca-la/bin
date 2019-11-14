@@ -1,6 +1,8 @@
 {
   "compilerOptions": {
     "allowJs": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
     "lib": ["es2017"],
     "outDir": "./dist/",
     "sourceMap": true,

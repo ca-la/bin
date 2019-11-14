@@ -1,8 +1,8 @@
-import * as tape from 'tape';
+import tape from 'tape';
 
 import * as SQSService from '../../services/aws/sqs';
 import * as S3Service from '../../services/aws/s3';
-import * as Configuration from '../../config';
+import Configuration from '../../config';
 import { sandbox, test } from '../../test-helpers/fresh';
 import { sendMessage } from './send-message';
 import { RealtimeNotification } from '@cala/ts-lib';

@@ -1,5 +1,5 @@
 import { sandbox } from '../../test-helpers/fresh';
-import * as Sinon from 'sinon';
+import Sinon from 'sinon';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import { CollaboratorWithUserMetaByDesign } from '../../components/collaborators/domain-objects/collaborator-by-design';
 import { Roles } from '../../components/collaborators/domain-objects/collaborator';

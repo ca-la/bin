@@ -1,9 +1,9 @@
-import * as Knex from 'knex';
-import * as uuid from 'node-uuid';
+import Knex from 'knex';
+import uuid from 'node-uuid';
 import { omit } from 'lodash';
 
 import { sandbox, test, Test } from '../../../test-helpers/fresh';
-import * as db from '../../../services/db';
+import db from '../../../services/db';
 import findAndDuplicateMaterial from './material';
 import generateMaterialAttribute from '../../../test-helpers/factories/material-attribute';
 import createUser = require('../../../test-helpers/create-user');

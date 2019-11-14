@@ -1,10 +1,10 @@
-import * as uuid from 'node-uuid';
+import uuid from 'node-uuid';
 
 import * as LineItemsDAO from '../../dao/line-items';
 import LineItem from '../../domain-objects/line-item';
 import * as InvoicesDAO from '../../dao/invoices';
 import generateInvoice from './invoice';
-import * as ProductDesignsDAO from '../../components/product-designs/dao';
+import ProductDesignsDAO from '../../components/product-designs/dao';
 import createUser = require('../create-user');
 import createDesign from '../../services/create-design';
 

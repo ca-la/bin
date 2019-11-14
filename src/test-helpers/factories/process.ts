@@ -1,4 +1,4 @@
-import * as uuid from 'node-uuid';
+import uuid from 'node-uuid';
 import { create } from '../../components/processes/dao';
 import Process from '../../components/processes/domain-object';
 import * as UsersDAO from '../../components/users/dao';

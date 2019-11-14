@@ -1,6 +1,6 @@
 const beginTime = Date.now();
 
-import * as Logger from './services/logger';
+import Logger from './services/logger';
 Logger.log('Starting CALA API...');
 
 import compress = require('koa-compress');

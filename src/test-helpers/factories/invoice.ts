@@ -1,5 +1,5 @@
-import db = require('../../services/db');
-import * as Knex from 'knex';
+import db from '../../services/db';
+import Knex from 'knex';
 
 import Collection from '../../components/collections/domain-object';
 import { findById as findUserById } from '../../components/users/dao';

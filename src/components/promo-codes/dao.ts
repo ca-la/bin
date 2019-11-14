@@ -1,10 +1,10 @@
-import * as Knex from 'knex';
-import * as uuid from 'node-uuid';
+import Knex from 'knex';
+import uuid from 'node-uuid';
 import rethrow = require('pg-rethrow');
 
 import filterError = require('../../services/filter-error');
 import InvalidDataError = require('../../errors/invalid-data');
-import db = require('../../services/db');
+import db from '../../services/db';
 import first from '../../services/first';
 import {
   dataAdapter,

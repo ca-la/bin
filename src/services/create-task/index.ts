@@ -1,5 +1,5 @@
-import * as Knex from 'knex';
-import * as db from '../db';
+import Knex from 'knex';
+import db from '../db';
 import * as TasksDAO from '../../dao/tasks';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as ProductDesignStageTasksDAO from '../../dao/product-design-stage-tasks';

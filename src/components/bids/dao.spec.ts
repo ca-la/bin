@@ -1,4 +1,4 @@
-import * as uuid from 'node-uuid';
+import uuid from 'node-uuid';
 import { omit } from 'lodash';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import generatePricingValues from '../../test-helpers/factories/pricing-values';

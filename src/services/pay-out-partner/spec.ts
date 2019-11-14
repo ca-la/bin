@@ -9,7 +9,7 @@ import generateBid from '../../test-helpers/factories/bid';
 import { addDesign } from '../../test-helpers/collections';
 import { payOutPartner } from '.';
 import uuid = require('node-uuid');
-import * as ProductDesignsDAO from '../../components/product-designs/dao';
+import ProductDesignsDAO from '../../components/product-designs/dao';
 import { findById } from '../../components/bids/dao';
 
 test('payOutPartner', async (t: Test) => {

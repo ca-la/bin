@@ -1,4 +1,4 @@
-import * as uuid from 'node-uuid';
+import uuid from 'node-uuid';
 
 import CollectionsDAO = require('../collections/dao');
 import createUser = require('../../test-helpers/create-user');

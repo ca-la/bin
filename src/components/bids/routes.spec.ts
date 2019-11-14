@@ -1,6 +1,6 @@
-import * as uuid from 'node-uuid';
+import uuid from 'node-uuid';
 import { omit } from 'lodash';
-import * as sinon from 'sinon';
+import sinon from 'sinon';
 
 import DesignEvent from '../../domain-objects/design-event';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
@@ -13,15 +13,15 @@ import * as BidRejectionDAO from '../bid-rejections/dao';
 import * as PricingCostInputsDAO from '../pricing-cost-inputs/dao';
 import * as CollaboratorsDAO from '../collaborators/dao';
 import * as DesignEventsDAO from '../../dao/design-events';
-import * as ProductDesignsDAO from '../product-designs/dao';
+import ProductDesignsDAO from '../product-designs/dao';
 import * as NotificationsService from '../../services/create-notifications';
-import * as PayoutAccountsDAO from '../../dao/partner-payout-accounts';
+import PayoutAccountsDAO from '../../dao/partner-payout-accounts';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
 import generateDesignEvent from '../../test-helpers/factories/design-event';
 import { daysToMs } from '../../services/time-conversion';
 import createDesign from '../../services/create-design';
 import * as Stripe from '../../services/stripe';
-import * as EmailService from '../../services/email';
+import EmailService from '../../services/email';
 import { deleteById } from '../../test-helpers/designs';
 test('GET /bids', async (t: Test) => {
   const admin = await createUser({ role: 'ADMIN' });

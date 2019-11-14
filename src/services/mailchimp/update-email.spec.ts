@@ -1,4 +1,4 @@
-import * as MailChimp from './index';
+import MailChimp from './index';
 import { updateEmail } from './update-email';
 import InvalidDataError = require('../../errors/invalid-data');
 import { sandbox, test, Test } from '../../test-helpers/fresh';

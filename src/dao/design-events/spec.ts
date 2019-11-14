@@ -1,4 +1,4 @@
-import * as uuid from 'node-uuid';
+import uuid from 'node-uuid';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import generateBid from '../../test-helpers/factories/bid';
 import createUser = require('../../test-helpers/create-user');

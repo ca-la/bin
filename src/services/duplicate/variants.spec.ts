@@ -1,10 +1,10 @@
-import * as Knex from 'knex';
-import * as tape from 'tape';
-import * as uuid from 'node-uuid';
+import Knex from 'knex';
+import tape from 'tape';
+import uuid from 'node-uuid';
 
 import createUser = require('../../test-helpers/create-user');
 import { create as createDesign } from '../../components/product-designs/dao';
-import * as db from '../../services/db';
+import db from '../../services/db';
 import { test } from '../../test-helpers/fresh';
 
 import * as VariantsDAO from '../../components/product-design-variants/dao';

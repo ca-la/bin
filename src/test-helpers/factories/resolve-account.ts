@@ -1,4 +1,4 @@
-import * as uuid from 'node-uuid';
+import uuid from 'node-uuid';
 import { create } from '../../components/resolve-accounts/dao';
 import * as UsersDAO from '../../components/users/dao';
 import createUser = require('../create-user');

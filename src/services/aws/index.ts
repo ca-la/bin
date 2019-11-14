@@ -1,12 +1,12 @@
-import * as mime from 'mime-types';
-import * as AWS from 'aws-sdk';
+import mime from 'mime-types';
+import AWS from 'aws-sdk';
 import {
   DeleteObjectOutput,
   GetObjectOutput,
   PresignedPost
 } from 'aws-sdk/clients/s3';
 import { PromiseResult } from 'aws-sdk/lib/request';
-import * as fs from 'fs';
+import fs from 'fs';
 import {
   AWS_ACCESS_KEY,
   AWS_S3_THUMBNAIL_ACCESS_KEY,

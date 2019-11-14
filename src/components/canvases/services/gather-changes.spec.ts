@@ -1,4 +1,4 @@
-import * as tape from 'tape';
+import tape from 'tape';
 
 import { sandbox, test } from '../../../test-helpers/fresh';
 import * as DAO from '../dao';

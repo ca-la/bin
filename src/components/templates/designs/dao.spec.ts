@@ -1,10 +1,10 @@
-import * as Knex from 'knex';
-import * as uuid from 'node-uuid';
+import Knex from 'knex';
+import uuid from 'node-uuid';
 
 import { test, Test } from '../../../test-helpers/fresh';
 import createDesign from '../../../services/create-design';
 import createUser = require('../../../test-helpers/create-user');
-import * as db from '../../../services/db';
+import db from '../../../services/db';
 import {
   create,
   createList,

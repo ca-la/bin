@@ -1,8 +1,8 @@
-import * as Knex from 'knex';
-import * as uuid from 'node-uuid';
+import Knex from 'knex';
+import uuid from 'node-uuid';
 import { omit } from 'lodash';
 
-import * as db from '../../services/db';
+import db from '../../services/db';
 import * as CollaboratorsDAO from './dao';
 import * as CollectionsDAO from '../collections/dao';
 import ProductDesignsDAO = require('../product-designs/dao');

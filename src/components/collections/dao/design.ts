@@ -1,6 +1,6 @@
-import * as Knex from 'knex';
-import * as rethrow from 'pg-rethrow';
-import db = require('../../../services/db');
+import Knex from 'knex';
+import rethrow from 'pg-rethrow';
+import db from '../../../services/db';
 
 const TABLE_COLLECTION_DESIGNS = 'collection_designs';
 

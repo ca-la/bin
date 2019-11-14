@@ -1,6 +1,6 @@
-import * as Knex from 'knex';
-import * as uuid from 'node-uuid';
-import * as db from '../../services/db';
+import Knex from 'knex';
+import uuid from 'node-uuid';
+import db from '../../services/db';
 import { test, Test } from '../../test-helpers/fresh';
 import generateBid from '../../test-helpers/factories/bid';
 import * as BidTaskTypesDAO from './dao';

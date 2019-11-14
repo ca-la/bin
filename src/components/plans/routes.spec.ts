@@ -1,4 +1,4 @@
-import * as uuid from 'node-uuid';
+import uuid from 'node-uuid';
 
 import * as PlansDAO from './dao';
 import { get } from '../../test-helpers/http';

@@ -1,4 +1,4 @@
-import * as tape from 'tape';
+import tape from 'tape';
 
 import EmailService = require('../../../services/email');
 import * as TaskEventsDAO from '../../../dao/task-events';

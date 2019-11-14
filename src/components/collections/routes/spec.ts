@@ -1,13 +1,13 @@
-import * as uuid from 'node-uuid';
-import * as sinon from 'sinon';
-import * as tape from 'tape';
+import uuid from 'node-uuid';
+import sinon from 'sinon';
+import tape from 'tape';
 
 import * as CollectionsDAO from '../dao';
 import * as CollaboratorsDAO from '../../collaborators/dao';
 import createUser = require('../../../test-helpers/create-user');
-import * as ProductDesignsDAO from '../../product-designs/dao';
+import ProductDesignsDAO from '../../product-designs/dao';
 import * as DesignEventsDAO from '../../../dao/design-events';
-import * as API from '../../../test-helpers/http';
+import API from '../../../test-helpers/http';
 import { sandbox, test } from '../../../test-helpers/fresh';
 import * as CreateNotifications from '../../../services/create-notifications';
 import * as DesignTasksService from '../../../services/create-design-tasks';

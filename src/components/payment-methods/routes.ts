@@ -1,11 +1,11 @@
-import * as Router from 'koa-router';
-import * as Koa from 'koa';
-import * as Knex from 'knex';
+import Router from 'koa-router';
+import Koa from 'koa';
+import Knex from 'knex';
 
 import canAccessUserResource = require('../../middleware/can-access-user-resource');
 import PaymentMethods = require('./dao');
 import requireAuth = require('../../middleware/require-auth');
-import db = require('../../services/db');
+import db from '../../services/db';
 import createPaymentMethod from './create-payment-method';
 
 const router = new Router();

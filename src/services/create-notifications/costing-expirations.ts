@@ -1,4 +1,4 @@
-import * as uuid from 'node-uuid';
+import uuid from 'node-uuid';
 
 import { create } from '../../components/notifications/dao';
 import { findById as findUser } from '../../components/users/dao';

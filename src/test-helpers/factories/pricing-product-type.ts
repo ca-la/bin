@@ -1,4 +1,4 @@
-import * as uuid from 'node-uuid';
+import uuid from 'node-uuid';
 import daysToMs from '@cala/ts-lib/dist/time/days-to-ms';
 import PricingProductType from '../../components/pricing-product-types/domain-object';
 import { create } from '../../components/pricing-product-types/dao';

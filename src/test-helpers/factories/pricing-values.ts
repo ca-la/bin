@@ -1,7 +1,7 @@
-import * as knex from 'knex';
+import knex from 'knex';
 import { map } from 'lodash';
-import * as uuid from 'node-uuid';
-import db = require('../../services/db');
+import uuid from 'node-uuid';
+import db from '../../services/db';
 import { Dollars } from '../../services/dollars';
 import sum from '../../services/sum';
 import { PricingConstantRow } from '../../domain-objects/pricing-constant';

@@ -1,4 +1,4 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 import { values } from 'lodash';
 import Collaborator from '../../components/collaborators/domain-objects/collaborator';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';

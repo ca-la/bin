@@ -1,4 +1,4 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 
 import ImageAttribute from '../../../components/attributes/image-attributes/domain-objects';
 import {

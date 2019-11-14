@@ -1,12 +1,12 @@
-import * as process from 'process';
-import * as Knex from 'knex';
+import process from 'process';
+import Knex from 'knex';
 
 import { CALA_OPS_USER_ID } from '../config';
 import { log, logServerError } from '../services/logger';
 import { green, reset } from '../services/colors';
 
 import * as CreditsDAO from '../components/credits/dao';
-import * as db from '../services/db';
+import db from '../services/db';
 
 run()
   .then(() => {

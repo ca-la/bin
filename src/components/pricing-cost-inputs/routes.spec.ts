@@ -1,6 +1,6 @@
 import { omit } from 'lodash';
 
-import * as db from '../../services/db';
+import db from '../../services/db';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import { authHeader, get, post } from '../../test-helpers/http';
 import createUser = require('../../test-helpers/create-user');
@@ -9,7 +9,7 @@ import generatePricingValues from '../../test-helpers/factories/pricing-values';
 import generateProductTypes from '../../services/generate-product-types';
 import { Dollars } from '../../services/dollars';
 import * as PricingCostInputsDAO from './dao';
-import * as ProductDesignsDAO from '../product-designs/dao';
+import ProductDesignsDAO from '../product-designs/dao';
 
 test('POST /pricing-cost-inputs', async (t: Test) => {
   await generatePricingValues();

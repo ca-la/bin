@@ -1,9 +1,9 @@
-import * as Koa from 'koa';
-import * as Router from 'koa-router';
+import Koa from 'koa';
+import Router from 'koa-router';
 import { hasProperties } from '@cala/ts-lib';
 import Knex = require('knex');
 
-import * as db from '../../services/db';
+import db from '../../services/db';
 import MonthlySalesReport from './domain-object';
 import * as ReportsDAO from './dao';
 import requireAdmin = require('../../middleware/require-admin');

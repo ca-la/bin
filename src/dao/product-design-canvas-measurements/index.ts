@@ -1,7 +1,7 @@
 import rethrow = require('pg-rethrow');
-import * as Knex from 'knex';
+import Knex from 'knex';
 
-import * as db from '../../services/db';
+import db from '../../services/db';
 import filterError = require('../../services/filter-error');
 import InvalidDataError = require('../../errors/invalid-data');
 import { pick } from 'lodash';

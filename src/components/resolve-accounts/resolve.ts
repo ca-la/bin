@@ -7,7 +7,7 @@ import ResolveAccount, {
 } from './domain-object';
 import { RESOLVE_API_URL } from '../../config';
 import toDateOrNull from '../../services/to-date';
-import fetch from 'node-fetch';
+import { fetch } from '../../services/fetch';
 import Invoice = require('../../domain-objects/invoice');
 
 export async function hasResolveAccount(

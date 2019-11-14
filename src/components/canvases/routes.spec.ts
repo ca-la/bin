@@ -1,11 +1,11 @@
-import * as tape from 'tape';
-import * as uuid from 'node-uuid';
+import tape from 'tape';
+import uuid from 'node-uuid';
 import { omit } from 'lodash';
 
 import * as ProductDesignCanvasesDAO from './dao';
 import * as ProductDesignImagesDAO from '../assets/dao';
-import * as ProductDesignOptionsDAO from '../../dao/product-design-options';
-import * as ProductDesignsDAO from '../product-designs/dao';
+import ProductDesignOptionsDAO from '../../dao/product-design-options';
+import ProductDesignsDAO from '../product-designs/dao';
 import * as ComponentsDAO from '../components/dao';
 import Component, { ComponentType } from '../components/domain-object';
 

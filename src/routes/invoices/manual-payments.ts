@@ -1,7 +1,7 @@
-import * as Koa from 'koa';
-import * as Knex from 'knex';
+import Koa from 'koa';
+import Knex from 'knex';
 
-import * as db from '../../services/db';
+import db from '../../services/db';
 import * as InvoicesDAO from '../../dao/invoices';
 import * as InvoicePaymentsDAO from '../../components/invoice-payments/dao';
 import InvalidDataError = require('../../errors/invalid-data');

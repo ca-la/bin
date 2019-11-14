@@ -1,8 +1,8 @@
-import * as Knex from 'knex';
-import * as process from 'process';
+import Knex from 'knex';
+import process from 'process';
 
 import * as TaskTemplatesDAO from '../../dao/task-templates';
-import * as db from '../../services/db';
+import db from '../../services/db';
 import { log } from '../../services/logger';
 import { green, red, reset, yellow } from '../../services/colors';
 import TaskTemplate from '../../domain-objects/task-template';

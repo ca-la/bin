@@ -1,9 +1,9 @@
-import * as tape from 'tape';
-import * as uuid from 'node-uuid';
+import tape from 'tape';
+import uuid from 'node-uuid';
 
 import createUser = require('../../test-helpers/create-user');
 import { sandbox, test } from '../../test-helpers/fresh';
-import * as NodeFetch from 'node-fetch';
+import * as Fetch from '../../services/fetch';
 import { getAllResolveAccountData, hasResolveAccount } from './resolve';
 import generateInvoice from '../../test-helpers/factories/invoice';
 
@@ -32,7 +32,7 @@ const fetchResponse = {
 
 test('hasResolveAccount returns if there is a resolve account', async (t: tape.Test) => {
   const fetchStub = sandbox()
-    .stub(NodeFetch, 'default')
+    .stub(Fetch, 'fetch')
     .resolves(fetchResponse);
 
   const id = uuid.v4();
@@ -43,7 +43,7 @@ test('hasResolveAccount returns if there is a resolve account', async (t: tape.T
 
 test('hasResolveAccount returns if there is not a resolve account', async (t: tape.Test) => {
   const fetchStub = sandbox()
-    .stub(NodeFetch, 'default')
+    .stub(Fetch, 'fetch')
     .resolves({ ...fetchResponse, status: 404 });
 
   const id = uuid.v4();
@@ -54,7 +54,7 @@ test('hasResolveAccount returns if there is not a resolve account', async (t: ta
 
 test('hasResolveAccount throws if there is a problem', async (t: tape.Test) => {
   sandbox()
-    .stub(NodeFetch, 'default')
+    .stub(Fetch, 'fetch')
     .resolves({ ...fetchResponse, status: 500 });
 
   const id = uuid.v4();
@@ -68,7 +68,7 @@ test('hasResolveAccount throws if there is a problem', async (t: tape.Test) => {
 
 test('getAllAccountResolveData returns parsed resolve account data', async (t: tape.Test) => {
   const fetchStub = sandbox()
-    .stub(NodeFetch, 'default')
+    .stub(Fetch, 'fetch')
     .resolves(fetchResponse);
 
   const id = uuid.v4();
@@ -89,7 +89,7 @@ test('getAllAccountResolveData returns parsed resolve account data', async (t: t
 
 test('getAllAccountResolveData returns parsed resolve account data', async (t: tape.Test) => {
   const fetchStub = sandbox()
-    .stub(NodeFetch, 'default')
+    .stub(Fetch, 'fetch')
     .resolves(fetchResponse);
 
   const unTrackedSpend = 1000;
@@ -118,7 +118,7 @@ test('getAllAccountResolveData returns parsed resolve account data', async (t: t
 
 test('getAllAccountResolveData returns parsed multiple accounts data', async (t: tape.Test) => {
   const fetchStub = sandbox()
-    .stub(NodeFetch, 'default')
+    .stub(Fetch, 'fetch')
     .resolves(fetchResponse);
 
   const id1 = uuid.v4();
@@ -148,7 +148,7 @@ test('getAllAccountResolveData returns parsed multiple accounts data', async (t:
 
 test('getAllAccountResolveData returns parsed multiple accounts data leaving out errors', async (t: tape.Test) => {
   sandbox()
-    .stub(NodeFetch, 'default')
+    .stub(Fetch, 'fetch')
     .rejects();
 
   const id1 = uuid.v4();

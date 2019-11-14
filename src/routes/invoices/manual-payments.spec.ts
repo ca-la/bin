@@ -1,7 +1,7 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 
 import createUser = require('../../test-helpers/create-user');
-import db = require('../../services/db');
+import db from '../../services/db';
 import { authHeader, post } from '../../test-helpers/http';
 import { test, Test } from '../../test-helpers/fresh';
 import generateInvoice from '../../test-helpers/factories/invoice';

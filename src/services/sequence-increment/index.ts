@@ -1,4 +1,4 @@
-import db = require('../db');
+import db from '../db';
 import rethrow = require('pg-rethrow');
 
 /**

@@ -1,4 +1,4 @@
-import * as tape from 'tape';
+import tape from 'tape';
 
 import * as SendMessageService from '../../send-message';
 import * as MentionDetailsService from '../../../../services/add-at-mention-details';

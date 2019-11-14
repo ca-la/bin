@@ -1,7 +1,7 @@
 /* tslint:disable:no-console */
-import * as process from 'process';
-import * as db from '../services/db';
-import * as knex from 'knex';
+import process from 'process';
+import db from '../services/db';
+import knex from 'knex';
 
 async function main(): Promise<Error | {}> {
   const designId = process.argv[2];

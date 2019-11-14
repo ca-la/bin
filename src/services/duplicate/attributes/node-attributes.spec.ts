@@ -1,10 +1,10 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 import { omit } from 'lodash';
 
 import { sandbox, test, Test } from '../../../test-helpers/fresh';
 
 import findAndDuplicateAttributesForNode from './node-attributes';
-import * as db from '../../../services/db';
+import db from '../../../services/db';
 
 import * as LayoutsDAO from '../../../components/attributes/layout-attributes/dao';
 import * as MaterialsDAO from '../../../components/attributes/material-attributes/dao';

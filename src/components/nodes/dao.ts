@@ -1,8 +1,8 @@
-import * as Knex from 'knex';
-import * as uuid from 'node-uuid';
+import Knex from 'knex';
+import uuid from 'node-uuid';
 
 import Node, { dataAdapter, isNodeRow, NodeRow } from './domain-objects';
-import * as db from '../../services/db';
+import db from '../../services/db';
 import first from '../../services/first';
 import { validate, validateEvery } from '../../services/validate-from-db';
 import { DesignRootNodeRow } from './domain-objects/design-root';

@@ -1,4 +1,4 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 
 export const UP = `
 DROP VIEW invoice_with_payments;

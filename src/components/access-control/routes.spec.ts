@@ -1,7 +1,7 @@
-import * as tape from 'tape';
+import tape from 'tape';
 
 import { test } from '../../test-helpers/fresh';
-import * as API from '../../test-helpers/http';
+import API from '../../test-helpers/http';
 import createUser = require('../../test-helpers/create-user');
 import createDesign from '../../services/create-design';
 import generateCollection from '../../test-helpers/factories/collection';

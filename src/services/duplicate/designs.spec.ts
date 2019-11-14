@@ -1,8 +1,8 @@
-import * as Knex from 'knex';
-import * as tape from 'tape';
-import * as uuid from 'node-uuid';
+import Knex from 'knex';
+import tape from 'tape';
+import uuid from 'node-uuid';
 
-import * as db from '../../services/db';
+import db from '../../services/db';
 import { test } from '../../test-helpers/fresh';
 import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 import createUser = require('../../test-helpers/create-user');

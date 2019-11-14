@@ -1,11 +1,11 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 import {
   BidRejection,
   BidRejectionRow,
   dataAdapter,
   isBidRejectionRow
 } from './domain-object';
-import db = require('../../services/db');
+import db from '../../services/db';
 import { first } from 'lodash';
 import uuid = require('node-uuid');
 import { validate } from '../../services/validate-from-db';

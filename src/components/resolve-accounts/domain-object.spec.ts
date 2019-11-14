@@ -1,4 +1,4 @@
-import * as uuid from 'node-uuid';
+import uuid from 'node-uuid';
 
 import { test, Test } from '../../test-helpers/simple';
 import { isResolveAccountRow, ResolveAccountRow } from './domain-object';

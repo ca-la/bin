@@ -1,5 +1,5 @@
 import * as QuotesDAO from '../../dao/pricing-quotes';
-import * as DesignsDAO from '../product-designs/dao';
+import DesignsDAO from '../product-designs/dao';
 import * as TaskEventsDAO from '../../dao/task-events';
 import {
   PricingQuote,

@@ -1,7 +1,7 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 
-import * as db from '../../services/db';
-import * as tape from 'tape';
+import db from '../../services/db';
+import tape from 'tape';
 import { test } from '../../test-helpers/fresh';
 import * as InvoicePaymentsDAO from './dao';
 import generateInvoice from '../../test-helpers/factories/invoice';

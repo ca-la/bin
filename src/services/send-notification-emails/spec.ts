@@ -1,11 +1,11 @@
-import * as tape from 'tape';
-import * as sinon from 'sinon';
-import * as uuid from 'node-uuid';
+import tape from 'tape';
+import sinon from 'sinon';
+import uuid from 'node-uuid';
 
 import { sandbox, test } from '../../test-helpers/fresh';
 import * as NotificationsDAO from '../../components/notifications/dao';
-import createUser = require('../../test-helpers/create-user');
-import * as EmailService from '../email';
+import createUser from '../../test-helpers/create-user';
+import EmailService from '../email';
 import { sendNotificationEmails } from './index';
 import generateNotification from '../../test-helpers/factories/notification';
 import { NotificationType } from '../../components/notifications/domain-object';

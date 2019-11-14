@@ -1,8 +1,8 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 import { omit } from 'lodash';
 import { constructNodeTree, PhidiasNode } from '@cala/ts-lib/dist/phidias';
 
-import * as DesignsDAO from '../../../components/product-designs/dao';
+import DesignsDAO from '../../../components/product-designs/dao';
 import createDesign from '../../create-design';
 
 import Design = require('../../../components/product-designs/domain-objects/product-design');

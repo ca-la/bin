@@ -1,4 +1,4 @@
-import * as uuid from 'node-uuid';
+import uuid from 'node-uuid';
 
 import TaskEvent, {
   DetailsTask,
@@ -7,7 +7,7 @@ import TaskEvent, {
 import { create, findById } from '../../dao/task-events';
 import { create as createStageTask } from '../../dao/product-design-stage-tasks';
 import * as DesignStagesDAO from '../../dao/product-design-stages';
-import * as DesignsDAO from '../../components/product-designs/dao';
+import DesignsDAO from '../../components/product-designs/dao';
 import ProductDesign = require('../../components/product-designs/domain-objects/product-design');
 import { findById as findUserById } from '../../components/users/dao';
 import { create as createTask } from '../../dao/tasks';

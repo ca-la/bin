@@ -1,5 +1,5 @@
-import * as Router from 'koa-router';
-import * as Koa from 'koa';
+import Router from 'koa-router';
+import Koa from 'koa';
 
 import * as PricingProcessesDAO from '../../dao/pricing-processes';
 import * as PricingProductTypesDAO from '../../components/pricing-product-types/dao';
@@ -40,4 +40,4 @@ function* getOptions(this: Koa.Application.Context): Iterator<any, any, any> {
 
 router.get('/', requireAdmin, getOptions);
 
-module.exports = router.routes();
+export = router.routes();

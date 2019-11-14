@@ -1,7 +1,7 @@
-import * as Knex from 'knex';
-import * as process from 'process';
+import Knex from 'knex';
+import process from 'process';
 
-import * as db from '../../services/db';
+import db from '../../services/db';
 import { log } from '../../services/logger';
 import { green, red, reset } from '../../services/colors';
 import { computeUniqueShortId } from '../../services/short-id';

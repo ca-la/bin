@@ -1,4 +1,4 @@
-import * as fetch from 'node-fetch';
+import * as Fetch from '../../services/fetch';
 
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import attachSource from './attach-source';
@@ -17,7 +17,7 @@ test('attachSource calls the correct api', async (t: Test) => {
   };
 
   const fetchStub = sandbox()
-    .stub(fetch, 'default')
+    .stub(Fetch, 'fetch')
     .resolves(fakeResponse);
   await attachSource({
     customerId: 'cus_123',

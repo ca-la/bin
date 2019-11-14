@@ -1,11 +1,11 @@
-import * as uuid from 'node-uuid';
-import * as tape from 'tape';
+import uuid from 'node-uuid';
+import tape from 'tape';
 
 import { test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
 
 import * as CollectionsDAO from '../../components/collections/dao';
-import * as DesignsDAO from '../../components/product-designs/dao';
+import DesignsDAO from '../../components/product-designs/dao';
 import * as PermissionsService from './index';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
 import generateDesignEvent from '../../test-helpers/factories/design-event';

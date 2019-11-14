@@ -1,6 +1,6 @@
 import { pick } from 'lodash';
-import * as db from '../../services/db';
-import * as Knex from 'knex';
+import db from '../../services/db';
+import Knex from 'knex';
 import Comment, {
   BaseComment,
   baseDataAdapter,

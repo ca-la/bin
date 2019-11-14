@@ -1,4 +1,4 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 import { omit } from 'lodash';
 
 import * as CanvasesDAO from '../../components/canvases/dao';

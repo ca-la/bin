@@ -1,8 +1,8 @@
-import * as tape from 'tape';
-import * as uuid from 'node-uuid';
+import tape from 'tape';
+import uuid from 'node-uuid';
 import createUser = require('../../test-helpers/create-user');
 import { create as createDesign } from '../product-designs/dao';
-import * as API from '../../test-helpers/http';
+import API from '../../test-helpers/http';
 import { sandbox, test } from '../../test-helpers/fresh';
 import * as ProductDesignVariantsDAO from './dao';
 import ProductDesignVariant from './domain-object';

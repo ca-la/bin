@@ -1,6 +1,6 @@
-import * as Router from 'koa-router';
-import * as fs from 'fs';
-import * as path from 'path';
+import Router from 'koa-router';
+import fs from 'fs';
+import path from 'path';
 import { cloneDeep } from 'lodash';
 
 /* application routes */

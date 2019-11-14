@@ -1,9 +1,9 @@
-import * as Knex from 'knex';
-import * as pg from 'pg';
-import * as uuid from 'node-uuid';
-import * as process from 'process';
+import Knex from 'knex';
+import pg from 'pg';
+import uuid from 'node-uuid';
+import process from 'process';
 
-import * as db from '../../services/db';
+import db from '../../services/db';
 import { log } from '../../services/logger';
 import { green, red, reset } from '../../services/colors';
 import { taskTypes } from '../../components/tasks/templates/tasks';

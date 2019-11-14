@@ -1,8 +1,8 @@
-import * as tape from 'tape';
-import * as uuid from 'node-uuid';
+import tape from 'tape';
+import uuid from 'node-uuid';
 
 import { test } from '../../../test-helpers/fresh';
-import * as API from '../../../test-helpers/http';
+import API from '../../../test-helpers/http';
 import createUser = require('../../../test-helpers/create-user');
 import generateAsset from '../../../test-helpers/factories/asset';
 

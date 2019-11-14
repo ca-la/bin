@@ -1,5 +1,5 @@
 import { sandbox, test, Test } from '../../../../test-helpers/fresh';
-import * as DesignsDAO from '../../../product-designs/dao';
+import DesignsDAO from '../../../product-designs/dao';
 import * as CostInputsDAO from '../../../pricing-cost-inputs/dao';
 import * as DesignEventsDAO from '../../../../dao/design-events';
 import * as NotificationsService from '../../../../services/create-notifications';

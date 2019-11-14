@@ -1,4 +1,4 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 
 import * as ComponentsDAO from '../../components/components/dao';
 import Component from '../../components/components/domain-object';

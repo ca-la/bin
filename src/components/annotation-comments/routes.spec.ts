@@ -1,4 +1,4 @@
-import * as uuid from 'node-uuid';
+import uuid from 'node-uuid';
 
 import createUser = require('../../test-helpers/create-user');
 import { authHeader, get, put } from '../../test-helpers/http';

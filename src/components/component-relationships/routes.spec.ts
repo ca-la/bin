@@ -1,5 +1,5 @@
-import * as tape from 'tape';
-import * as uuid from 'node-uuid';
+import tape from 'tape';
+import uuid from 'node-uuid';
 
 import { test } from '../../test-helpers/fresh';
 import generateComponentRelationship from '../../test-helpers/factories/component-relationship';
@@ -7,7 +7,7 @@ import generateComponent from '../../test-helpers/factories/component';
 import generateProcess from '../../test-helpers/factories/process';
 import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 import createUser = require('../../test-helpers/create-user');
-import * as API from '../../test-helpers/http';
+import API from '../../test-helpers/http';
 
 test('GET /component-relationships/?componentId returns a list of relationships', async (t: tape.Test) => {
   const { session, user } = await createUser();

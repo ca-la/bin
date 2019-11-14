@@ -1,4 +1,4 @@
-import * as uuid from 'node-uuid';
+import uuid from 'node-uuid';
 
 import generatePricingValues from './pricing-values';
 import generatePricingQuote from '../../services/generate-pricing-quote';

@@ -33,7 +33,3 @@ export function enqueueSend(
     queueUrl: AWS_NOTIFICATION_SQS_URL
   });
 }
-
-module.exports = {
-  enqueueSend
-};

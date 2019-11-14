@@ -1,6 +1,6 @@
-import * as uuid from 'node-uuid';
+import uuid from 'node-uuid';
 
-import * as db from '../../services/db';
+import db from '../../services/db';
 import ResolveAccount, {
   dataAdapter,
   isResolveAccountRow,

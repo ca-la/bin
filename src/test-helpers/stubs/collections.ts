@@ -1,5 +1,5 @@
 import { sandbox } from '../fresh';
-import * as Sinon from 'sinon';
+import Sinon from 'sinon';
 import * as FetchService from '../../components/collections/services/fetch-with-labels';
 import Collection from '../../components/collections/domain-object';
 

@@ -1,7 +1,7 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 
-import * as API from '../../test-helpers/http';
-import * as db from '../../services/db';
+import API from '../../test-helpers/http';
+import db from '../../services/db';
 import createUser = require('../../test-helpers/create-user');
 import { addCredit } from './dao';
 import { test, Test } from '../../test-helpers/fresh';

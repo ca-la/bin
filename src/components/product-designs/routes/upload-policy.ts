@@ -1,5 +1,5 @@
-import * as Koa from 'koa';
-import * as uuid from 'node-uuid';
+import Koa from 'koa';
+import uuid from 'node-uuid';
 
 import {
   AWS_S3_THUMBNAIL_BUCKET_NAME,
@@ -9,7 +9,7 @@ import {
 import * as AWSService from '../../../services/aws';
 import { generateUploadPolicy } from '../../../services/upload-policy';
 
-function* getDesignUploadPolicy(
+export function* getDesignUploadPolicy(
   this: Koa.Application.Context
 ): Iterator<any, any, any> {
   const { mimeType } = this.query;
@@ -32,7 +32,7 @@ function* getDesignUploadPolicy(
   this.status = 200;
 }
 
-function* getThumbnailUploadPolicy(
+export function* getThumbnailUploadPolicy(
   this: Koa.Application.Context
 ): Iterator<any, any, any> {
   const remoteFileName = this.params.sectionId || uuid.v4();
@@ -49,8 +49,3 @@ function* getThumbnailUploadPolicy(
   };
   this.status = 200;
 }
-
-module.exports = {
-  getDesignUploadPolicy,
-  getThumbnailUploadPolicy
-};

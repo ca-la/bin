@@ -1,8 +1,8 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 import { insecureHash } from '../insecure-hash';
-import * as Logger from '../logger';
+import Logger from '../logger';
 import makeRequest from './make-request';
-import * as PaymentMethodsDAO from '../../components/payment-methods/dao';
+import PaymentMethodsDAO from '../../components/payment-methods/dao';
 import * as UsersDAO from '../../components/users/dao';
 import { STRIPE_SECRET_KEY } from '../../config';
 

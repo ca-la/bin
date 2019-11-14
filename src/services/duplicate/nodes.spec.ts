@@ -1,9 +1,9 @@
-import * as Knex from 'knex';
-import * as uuid from 'node-uuid';
+import Knex from 'knex';
+import uuid from 'node-uuid';
 import { NodeTree } from '@cala/ts-lib/dist/phidias';
 import { omit } from 'lodash';
 
-import * as db from '../db';
+import db from '../db';
 import { test, Test } from '../../test-helpers/fresh';
 
 import { findAndDuplicateNode } from './nodes';

@@ -1,9 +1,9 @@
-import * as process from 'process';
-import * as Knex from 'knex';
+import process from 'process';
+import Knex from 'knex';
 
 import { log, logServerError } from '../../services/logger';
 import { green, reset } from '../../services/colors';
-import * as db from '../../services/db';
+import db from '../../services/db';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 
 const LAUNCH_DATE = new Date(2018, 10, 1);

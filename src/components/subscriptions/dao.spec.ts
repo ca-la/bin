@@ -1,13 +1,13 @@
-import * as tape from 'tape';
-import * as uuid from 'node-uuid';
-import * as Knex from 'knex';
+import tape from 'tape';
+import uuid from 'node-uuid';
+import Knex from 'knex';
 
 import { test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
-import db = require('../../services/db');
+import db from '../../services/db';
 import * as SubscriptionsDAO from './dao';
 import * as PlansDAO from '../plans/dao';
-import * as PaymentMethodsDAO from '../payment-methods/dao';
+import PaymentMethodsDAO from '../payment-methods/dao';
 
 test('SubscriptionsDAO supports creation and retrieval', async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });

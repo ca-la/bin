@@ -1,4 +1,4 @@
-import * as uuid from 'node-uuid';
+import uuid from 'node-uuid';
 
 import ResourceNotFoundError from '../../errors/resource-not-found';
 import createUser = require('../../test-helpers/create-user');

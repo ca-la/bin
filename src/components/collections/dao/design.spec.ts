@@ -1,5 +1,5 @@
-import * as uuid from 'node-uuid';
-import * as Knex from 'knex';
+import uuid from 'node-uuid';
+import Knex from 'knex';
 
 import { test, Test } from '../../../test-helpers/fresh';
 import { addDesigns, moveDesigns, removeDesigns } from './design';
@@ -7,7 +7,7 @@ import createUser = require('../../../test-helpers/create-user');
 import generateCollection from '../../../test-helpers/factories/collection';
 import { generateDesign } from '../../../test-helpers/factories/product-design';
 import { findByCollectionId } from '../../product-designs/dao';
-import db = require('../../../services/db');
+import db from '../../../services/db';
 import ProductDesign = require('../../product-designs/domain-objects/product-design');
 
 test('addDesign, moveDesigns, and removeDesigns', async (t: Test) => {

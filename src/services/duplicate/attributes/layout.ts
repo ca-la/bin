@@ -1,4 +1,4 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 
 import LayoutAttribute from '../../../components/attributes/layout-attributes/domain-object';
 import {

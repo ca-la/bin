@@ -1,8 +1,8 @@
-import * as Knex from 'knex';
-import * as process from 'process';
-import * as rethrow from 'pg-rethrow';
+import Knex from 'knex';
+import process from 'process';
+import rethrow from 'pg-rethrow';
 
-import * as db from '../../services/db';
+import db from '../../services/db';
 import { log } from '../../services/logger';
 import { green, red, reset } from '../../services/colors';
 import { CreateQuotePayload } from '../../services/generate-pricing-quote';

@@ -1,4 +1,4 @@
-import * as uuid from 'node-uuid';
+import uuid from 'node-uuid';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
 import TaskEvent, { TaskStatus } from '../../domain-objects/task-event';

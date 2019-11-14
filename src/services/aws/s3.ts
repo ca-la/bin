@@ -1,5 +1,5 @@
-import * as AWS from 'aws-sdk';
-import * as uuid from 'node-uuid';
+import AWS from 'aws-sdk';
+import uuid from 'node-uuid';
 
 export interface S3UploadParams<T> {
   resource: T;

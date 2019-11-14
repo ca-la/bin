@@ -1,4 +1,4 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 import { NodeTree } from '@cala/ts-lib/dist/phidias';
 
 import { create, createDesignRoot, findById } from '../../components/nodes/dao';

@@ -9,7 +9,7 @@ import InvalidDataError = require('../../errors/invalid-data');
 import * as ComponentsDAO from '../components/dao';
 import ProductDesign = require('../product-designs/domain-objects/product-design');
 import * as UsersDAO from '../../components/users/dao';
-import * as ProductDesignsDAO from '../product-designs/dao';
+import ProductDesignsDAO from '../product-designs/dao';
 import * as CollectionsDAO from '../collections/dao';
 import * as CollaboratorsDAO from '../collaborators/dao';
 import * as TaskEventsDAO from '../../dao/task-events';

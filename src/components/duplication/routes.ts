@@ -1,5 +1,5 @@
-import * as Router from 'koa-router';
-import * as Koa from 'koa';
+import Router from 'koa-router';
+import Koa from 'koa';
 
 import * as UsersDAO from '../../components/users/dao';
 import * as DuplicationService from '../../services/duplicate';

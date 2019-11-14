@@ -1,4 +1,4 @@
-import * as uuid from 'node-uuid';
+import uuid from 'node-uuid';
 import { ERRORS } from 'pg-rethrow';
 
 import { sandbox, test, Test } from '../../../test-helpers/fresh';

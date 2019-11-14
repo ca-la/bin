@@ -1,4 +1,4 @@
-import * as Koa from 'koa';
+import Koa from 'koa';
 
 import * as AssetsDAO from '../dao';
 import { hasOnlyProperties } from '../../../services/require-properties';

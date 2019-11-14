@@ -1,8 +1,8 @@
-import * as Knex from 'knex';
-import * as uuid from 'node-uuid';
+import Knex from 'knex';
+import uuid from 'node-uuid';
 
-import * as db from '../db';
-import * as config from '../../config';
+import db from '../db';
+import config from '../../config';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
 import createCollaborator from '../../test-helpers/factories/collaborator';

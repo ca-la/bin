@@ -1,4 +1,4 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 
 export const PRODUCT_DESIGNS_WITH_METADATA_UP = `
 CREATE VIEW product_designs_with_metadata AS

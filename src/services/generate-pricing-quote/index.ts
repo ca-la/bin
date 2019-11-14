@@ -1,5 +1,5 @@
 import PricingProcess from '../../domain-objects/pricing-process';
-import * as uuid from 'node-uuid';
+import uuid from 'node-uuid';
 import { map, omit } from 'lodash';
 import sum from '../sum';
 import {
@@ -17,7 +17,7 @@ import {
   PricingQuoteRow,
   PricingQuoteValues
 } from '../../domain-objects/pricing-quote';
-import * as Knex from 'knex';
+import Knex from 'knex';
 import * as PricingCostInputsDAO from '../../components/pricing-cost-inputs/dao';
 import * as DesignEventsDAO from '../../dao/design-events';
 import PricingCostInputs from '../../components/pricing-cost-inputs/domain-object';

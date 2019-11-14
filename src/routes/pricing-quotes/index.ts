@@ -1,7 +1,7 @@
 import { omit, sum } from 'lodash';
-import * as Router from 'koa-router';
-import * as Koa from 'koa';
-import * as uuid from 'node-uuid';
+import Router from 'koa-router';
+import Koa from 'koa';
+import uuid from 'node-uuid';
 
 import requireAuth = require('../../middleware/require-auth');
 import * as CollectionsDAO from '../../components/collections/dao';

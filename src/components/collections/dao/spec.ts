@@ -1,9 +1,9 @@
-import * as uuid from 'node-uuid';
-import * as Knex from 'knex';
+import uuid from 'node-uuid';
+import Knex from 'knex';
 
 import * as CollectionsDAO from '.';
 import * as DesignEventsDAO from '../../../dao/design-events';
-import * as ProductDesignsDAO from '../../product-designs/dao';
+import ProductDesignsDAO from '../../product-designs/dao';
 import { sandbox, test, Test } from '../../../test-helpers/fresh';
 import createUser = require('../../../test-helpers/create-user');
 import ProductDesign = require('../../product-designs/domain-objects/product-design');
@@ -13,7 +13,7 @@ import DesignEvent from '../../../domain-objects/design-event';
 import generateCollaborator from '../../../test-helpers/factories/collaborator';
 import generatePricingValues from '../../../test-helpers/factories/pricing-values';
 import generatePricingCostInput from '../../../test-helpers/factories/pricing-cost-input';
-import * as db from '../../../services/db';
+import db from '../../../services/db';
 import { NotificationType } from '../../notifications/domain-object';
 import generateNotification from '../../../test-helpers/factories/notification';
 import * as NotificationAnnouncer from '../../iris/messages/notification';

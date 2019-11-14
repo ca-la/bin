@@ -1,4 +1,4 @@
-import * as Koa from 'koa';
+import Koa from 'koa';
 
 import ComponentRelationship from '../../components/component-relationships/domain-object';
 import * as RelationshipsDAO from '../../components/component-relationships/dao';

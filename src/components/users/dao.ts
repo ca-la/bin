@@ -1,6 +1,6 @@
-import * as uuid from 'node-uuid';
+import uuid from 'node-uuid';
 import rethrow = require('pg-rethrow');
-import * as Knex from 'knex';
+import Knex from 'knex';
 
 import User, {
   baseUser,
@@ -13,7 +13,7 @@ import User, {
   UserRow,
   UserWithPasswordHash
 } from './domain-object';
-import * as db from '../../services/db';
+import db from '../../services/db';
 import first from '../../services/first';
 import InvalidDataError = require('../../errors/invalid-data');
 import normalizeEmail = require('../../services/normalize-email');
@@ -405,19 +405,3 @@ export async function findAllUnpaidPartners({
     partners
   );
 }
-
-module.exports = {
-  ERROR_CODES,
-  completeSmsPreregistration,
-  create,
-  createSmsPreregistration,
-  findAll,
-  findAllUnpaidPartners,
-  findByBidId,
-  findByEmail,
-  findByEmailWithPasswordHash,
-  findById,
-  findByReferralCode,
-  update,
-  updatePassword
-};

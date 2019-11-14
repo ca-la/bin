@@ -1,7 +1,7 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 import { map } from 'lodash';
 
-import * as db from '../../services/db';
+import db from '../../services/db';
 import Logger = require('../../services/logger');
 
 interface WithIds {

@@ -1,10 +1,10 @@
-import * as knex from 'knex';
-import * as process from 'process';
-import * as uuid from 'node-uuid';
+import knex from 'knex';
+import process from 'process';
+import uuid from 'node-uuid';
 import { flatten, map } from 'lodash';
 import { PricingConstantRow } from '../domain-objects/pricing-constant';
 import sum from '../services/sum';
-import * as db from '../services/db';
+import db from '../services/db';
 import { Cents, Dollars } from '../services/dollars';
 import { log } from '../services/logger';
 import { green, red, reset, yellow } from '../services/colors';

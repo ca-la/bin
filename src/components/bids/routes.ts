@@ -1,6 +1,6 @@
-import * as Router from 'koa-router';
-import * as Koa from 'koa';
-import * as uuid from 'node-uuid';
+import Router from 'koa-router';
+import Koa from 'koa';
+import uuid from 'node-uuid';
 
 import Bid, {
   isBidSortByParam,
@@ -13,7 +13,7 @@ import * as UsersDAO from '../../components/users/dao';
 import * as BidRejectionsDAO from '../bid-rejections/dao';
 import * as BidsDAO from './dao';
 import * as PricingQuotesDAO from '../../dao/pricing-quotes';
-import * as ProductDesignsDAO from '../product-designs/dao';
+import ProductDesignsDAO from '../product-designs/dao';
 import * as DesignEventsDAO from '../../dao/design-events';
 import * as CollaboratorsDAO from '../collaborators/dao';
 import requireAdmin = require('../../middleware/require-admin');

@@ -1,5 +1,5 @@
 import { sendNotificationEmails } from '../../services/send-notification-emails';
-import * as Logger from '../../services/logger';
+import Logger from '../../services/logger';
 import '../../services/aws';
 
 sendNotificationEmails()

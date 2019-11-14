@@ -1,6 +1,6 @@
 import { NodeType } from '@cala/ts-lib/dist/phidias';
-import * as Knex from 'knex';
-import * as uuid from 'node-uuid';
+import Knex from 'knex';
+import uuid from 'node-uuid';
 
 import { sandbox, test, Test } from '../../../test-helpers/fresh';
 import { getAllByDesign, getAllByDesignInclude } from './get-all-by-design';
@@ -10,11 +10,11 @@ import * as MaterialsDAO from '../../attributes/material-attributes/dao';
 import { generateDesign } from '../../../test-helpers/factories/product-design';
 import * as ImagesDAO from '../../attributes/image-attributes/dao';
 import generateNode from '../../../test-helpers/factories/node';
-import * as db from '../../../services/db';
+import db from '../../../services/db';
 import createUser = require('../../../test-helpers/create-user');
 import generateAsset from '../../../test-helpers/factories/asset';
 import ImageAttribute from '../../attributes/image-attributes/domain-objects';
-import * as Config from '../../../config';
+import Config from '../../../config';
 
 // tslint:disable-next-line:typedef
 async function setupNodes() {

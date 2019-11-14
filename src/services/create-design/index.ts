@@ -1,5 +1,5 @@
-import * as Knex from 'knex';
-import * as db from '../db';
+import Knex from 'knex';
+import db from '../db';
 
 import CollaboratorsDAO = require('../../components/collaborators/dao');
 import createDesignTasks from '../create-design-tasks';

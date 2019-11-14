@@ -1,11 +1,11 @@
-import * as Router from 'koa-router';
-import * as Koa from 'koa';
-import * as Knex from 'knex';
+import Router from 'koa-router';
+import Koa from 'koa';
+import Knex from 'knex';
 
 import { addCredit, getCreditAmount, removeCredit } from './dao';
 import requireAuth = require('../../middleware/require-auth');
 import requireAdmin = require('../../middleware/require-admin');
-import db = require('../../services/db');
+import db from '../../services/db';
 import { hasProperties } from '@cala/ts-lib';
 
 const router = new Router();

@@ -1,10 +1,10 @@
-import * as uuid from 'node-uuid';
-import * as Knex from 'knex';
+import uuid from 'node-uuid';
+import Knex from 'knex';
 import { omit } from 'lodash';
 
 import { test, Test } from '../../test-helpers/fresh';
 import * as SalesReportsDAO from './dao';
-import * as db from '../../services/db';
+import db from '../../services/db';
 import createUser = require('../../test-helpers/create-user');
 import MonthlySalesReport from './domain-object';
 

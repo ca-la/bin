@@ -1,6 +1,6 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 
-import * as db from '../../services/db';
+import db from '../../services/db';
 import InvalidDataError = require('../../errors/invalid-data');
 import { addCredit } from '../credits/dao';
 import { findByCode, update } from './dao';

@@ -1,4 +1,4 @@
-import * as API from '../../test-helpers/http';
+import API from '../../test-helpers/http';
 import createUser = require('../../test-helpers/create-user');
 import { create as createDesign } from '../product-designs/dao';
 import { test, Test } from '../../test-helpers/fresh';

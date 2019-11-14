@@ -1,4 +1,4 @@
-import * as tape from 'tape';
+import tape from 'tape';
 import { omit } from 'lodash';
 
 import { test } from '../../test-helpers/fresh';

@@ -1,9 +1,9 @@
-import * as uuid from 'node-uuid';
+import uuid from 'node-uuid';
 import { create } from '../../components/canvases/dao';
 import Canvas from '../../components/canvases/domain-object';
 import { findById as findUserById } from '../../components/users/dao';
 import createUser = require('../create-user');
-import * as ProductDesignsDAO from '../../components/product-designs/dao';
+import ProductDesignsDAO from '../../components/product-designs/dao';
 import createDesign from '../../services/create-design';
 import * as ComponentsDAO from '../../components/components/dao';
 import Component from '../../components/components/domain-object';

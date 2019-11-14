@@ -1,7 +1,7 @@
-import * as tape from 'tape';
-import * as Knex from 'knex';
+import tape from 'tape';
+import Knex from 'knex';
 
-import * as db from '../../services/db';
+import db from '../../services/db';
 import { test } from '../../test-helpers/fresh';
 import generateMeasurement from '../../test-helpers/factories/product-design-canvas-measurement';
 

@@ -1,5 +1,5 @@
 import { range } from 'lodash';
-import * as uuid from 'node-uuid';
+import uuid from 'node-uuid';
 import { Cents } from '../dollars';
 import { PricingProcessRow } from '../../domain-objects/pricing-process';
 

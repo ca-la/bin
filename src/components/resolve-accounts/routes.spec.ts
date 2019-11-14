@@ -1,11 +1,11 @@
-import * as tape from 'tape';
-import * as uuid from 'node-uuid';
+import tape from 'tape';
+import uuid from 'node-uuid';
 
 import { sandbox, test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
-import * as API from '../../test-helpers/http';
+import API from '../../test-helpers/http';
 import generateResolveAccount from '../../test-helpers/factories/resolve-account';
-import * as NodeFetch from 'node-fetch';
+import * as NodeFetch from '../../services/fetch';
 import { encodeRawResolveData } from './resolve';
 
 const resolveResponseData = {
@@ -34,7 +34,7 @@ const fetchResponse = {
 test('GET /resolve-accounts?userId= returns all accounts for that user', async (t: tape.Test) => {
   const { session, user } = await createUser();
   const fetchStub = sandbox()
-    .stub(NodeFetch, 'default')
+    .stub(NodeFetch, 'fetch')
     .resolves(fetchResponse);
   const { account: a1 } = await generateResolveAccount({ userId: user.id });
   const { account: a2 } = await generateResolveAccount({ userId: user.id });
@@ -74,7 +74,7 @@ test('POST /resolve-accounts creates a new account with the user and resolve cus
   const { session, user } = await createUser({ role: 'ADMIN' });
   const resolveCustomerId = 'test123';
   const fetchStub = sandbox()
-    .stub(NodeFetch, 'default')
+    .stub(NodeFetch, 'fetch')
     .resolves(fetchResponse);
 
   const [getResponse, getBody] = await API.post('/resolve-accounts', {
@@ -102,7 +102,7 @@ test('POST /resolve-accounts fails to create a new account with invalid resolve 
   const { session, user } = await createUser({ role: 'ADMIN' });
   const resolveCustomerId = 'test123';
   const fetchStub = sandbox()
-    .stub(NodeFetch, 'default')
+    .stub(NodeFetch, 'fetch')
     .resolves({ ...fetchResponse, status: 404 });
 
   const [getResponse] = await API.post('/resolve-accounts', {
@@ -120,7 +120,7 @@ test('POST /resolve-accounts fails to create a new account with resolve down', a
   const { session, user } = await createUser({ role: 'ADMIN' });
   const resolveCustomerId = 'test123';
   const fetchStub = sandbox()
-    .stub(NodeFetch, 'default')
+    .stub(NodeFetch, 'fetch')
     .resolves({ ...fetchResponse, status: 500 });
 
   const [getResponse] = await API.post('/resolve-accounts', {

@@ -1,6 +1,6 @@
-import * as tape from 'tape';
-import * as sinon from 'sinon';
-import * as AWS from 'aws-sdk';
+import tape from 'tape';
+import sinon from 'sinon';
+import AWS from 'aws-sdk';
 
 import * as SQSService from './sqs';
 import { sandbox, test } from '../../test-helpers/fresh';

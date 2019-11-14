@@ -1,11 +1,11 @@
-import * as uuid from 'node-uuid';
+import uuid from 'node-uuid';
 
 import * as NotificationsDAO from '../../components/notifications/dao';
 import * as CanvasesDAO from '../../components/canvases/dao';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import * as StageTasksDAO from '../../dao/product-design-stage-tasks';
 import * as StagesDAO from '../../dao/product-design-stages';
-import * as DesignsDAO from '../../components/product-designs/dao';
+import DesignsDAO from '../../components/product-designs/dao';
 import * as CollectionsDAO from '../../components/collections/dao';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as UsersDAO from '../../components/users/dao';
@@ -19,14 +19,14 @@ import Collaborator, {
   CollaboratorWithUser
 } from '../../components/collaborators/domain-objects/collaborator';
 
-import * as EmailService from '../../services/email';
+import EmailService from '../../services/email';
 import * as SlackService from '../../services/slack';
 
 import {
   isTaskAssigmentNotification,
   TaskAssigmentNotification
 } from '../../components/notifications/models/task-assignment';
-import * as Config from '../../config';
+import Config from '../../config';
 import { createNotificationMessage } from '../../components/notifications/notification-messages';
 import {
   AnnotationCommentCreateNotification,

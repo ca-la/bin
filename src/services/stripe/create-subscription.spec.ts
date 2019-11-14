@@ -1,4 +1,4 @@
-import * as fetch from 'node-fetch';
+import * as Fetch from '../fetch';
 
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import createSubscription from './create-subscription';
@@ -20,7 +20,7 @@ test('createSubscription calls the correct api', async (t: Test) => {
   };
 
   const fetchStub = sandbox()
-    .stub(fetch, 'default')
+    .stub(Fetch, 'fetch')
     .resolves(fakeResponse);
   await createSubscription({
     stripeCustomerId: 'cus_123',
@@ -57,7 +57,7 @@ test('createSubscription fails if marked incomplete', async (t: Test) => {
   };
 
   sandbox()
-    .stub(fetch, 'default')
+    .stub(Fetch, 'fetch')
     .resolves(fakeResponse);
 
   try {

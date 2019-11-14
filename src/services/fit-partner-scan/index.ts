@@ -6,7 +6,7 @@ import FitPartnerCustomersDAO = require('../../dao/fit-partner-customers');
 import FitPartnersDAO = require('../../dao/fit-partners');
 import Scan = require('../../domain-objects/scan');
 import ShopifyClient = require('../shopify');
-import db = require('../../services/db');
+import db from '../../services/db';
 
 type ShopifyMetafieldDefinition = ShopifyClient.ShopifyMetafieldDefinition;
 

@@ -1,5 +1,6 @@
-import fetch, { RequestInit } from 'node-fetch';
+import { RequestInit } from 'node-fetch';
 
+import { fetch } from '../fetch';
 import serializeRequestBody from './serialize-request-body';
 import Logger = require('../logger');
 import { STRIPE_SECRET_KEY } from '../../config';

@@ -1,9 +1,9 @@
-import * as Router from 'koa-router';
-import * as Koa from 'koa';
-import * as Knex from 'knex';
+import Router from 'koa-router';
+import Koa from 'koa';
+import Knex from 'knex';
 import { pick } from 'lodash';
 
-import * as db from '../../services/db';
+import db from '../../services/db';
 import Comment, {
   BASE_COMMENT_PROPERTIES,
   isBaseComment

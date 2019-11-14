@@ -1,8 +1,8 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 import uuid = require('node-uuid');
 
-import * as db from '../../services/db';
-import * as ProductDesignsDAO from '../../components/product-designs/dao';
+import db from '../../services/db';
+import ProductDesignsDAO from '../../components/product-designs/dao';
 import * as InvoicesDAO from '../../dao/invoices';
 import * as LineItemsDAO from '../../dao/line-items';
 import * as UsersDAO from '../../components/users/dao';

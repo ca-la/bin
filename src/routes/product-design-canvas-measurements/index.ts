@@ -1,5 +1,5 @@
-import * as Router from 'koa-router';
-import * as Koa from 'koa';
+import Router from 'koa-router';
+import Koa from 'koa';
 import Measurement from '../../domain-objects/product-design-canvas-measurement';
 import * as MeasurementsDAO from '../../dao/product-design-canvas-measurements';
 import { hasOnlyProperties } from '../../services/require-properties';

@@ -1,5 +1,5 @@
-import * as process from 'process';
-import * as uuid from 'node-uuid';
+import process from 'process';
+import uuid from 'node-uuid';
 import { CALA_OPS_USER_ID } from '../config';
 import { log, logServerError } from '../services/logger';
 import { green, reset } from '../services/colors';

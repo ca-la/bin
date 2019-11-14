@@ -1,5 +1,5 @@
-import * as uuid from 'node-uuid';
-import * as Knex from 'knex';
+import uuid from 'node-uuid';
+import Knex from 'knex';
 
 import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
 import * as ProductDesignStagesDAO from '../../dao/product-design-stages';

@@ -1,5 +1,5 @@
 import { sandbox, test, Test } from '../../test-helpers/fresh';
-import * as API from '../../test-helpers/http';
+import API from '../../test-helpers/http';
 import * as NotificationsDAO from '../notifications/dao';
 import createUser = require('../../test-helpers/create-user');
 

@@ -1,4 +1,4 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 import { omit } from 'lodash';
 import { NodeAttributes } from '../../../components/nodes/services/get-all-by-design';
 

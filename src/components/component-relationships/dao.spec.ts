@@ -1,5 +1,5 @@
-import * as tape from 'tape';
-import * as uuid from 'node-uuid';
+import tape from 'tape';
+import uuid from 'node-uuid';
 
 import * as ComponentsDAO from '../components/dao';
 import * as ComponentRelationshipsDAO from './dao';

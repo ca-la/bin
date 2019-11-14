@@ -2,7 +2,7 @@ import {
   ExpirationResponse,
   notifyPricingExpirations
 } from '../../services/notify-pricing-expirations';
-import * as Logger from '../../services/logger';
+import Logger from '../../services/logger';
 import '../../services/aws';
 
 notifyPricingExpirations()

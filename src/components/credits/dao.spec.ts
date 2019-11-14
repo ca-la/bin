@@ -1,6 +1,6 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 
-import * as db from '../../services/db';
+import db from '../../services/db';
 import createUser = require('../../test-helpers/create-user');
 import { addCredit, getCreditAmount, removeCredit } from './dao';
 import { sandbox, test, Test } from '../../test-helpers/fresh';

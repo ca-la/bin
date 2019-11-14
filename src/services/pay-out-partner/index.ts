@@ -1,6 +1,6 @@
-import * as EmailService from '../email';
+import EmailService from '../email';
 import * as StripeService from '../stripe';
-import * as PartnerPayoutAccountsDAO from '../../dao/partner-payout-accounts';
+import PartnerPayoutAccountsDAO from '../../dao/partner-payout-accounts';
 import { PartnerPayoutLog } from '../../components/partner-payouts/domain-object';
 import InvalidDataError = require('../../errors/invalid-data');
 import { ADMIN_EMAIL } from '../../config';

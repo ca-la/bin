@@ -1,7 +1,7 @@
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 
 import * as NotificationAnnouncer from '../../components/iris/messages/notification';
-import * as Config from '../../config';
+import Config from '../../config';
 import {
   immediatelySendCostingExpiredNotification,
   immediatelySendOneWeekCostingExpirationNotification,
@@ -9,7 +9,7 @@ import {
 } from './costing-expirations';
 import createUser = require('../../test-helpers/create-user');
 import generateCollection from '../../test-helpers/factories/collection';
-import * as EmailService from '../../services/email';
+import EmailService from '../../services/email';
 import pick = require('lodash/pick');
 import { NotificationType } from '../../components/notifications/domain-object';
 

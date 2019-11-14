@@ -1,4 +1,4 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 
 import OptionsDAO = require('../../dao/product-design-options');
 import ProductDesignOption = require('../../domain-objects/product-design-option');

@@ -1,6 +1,6 @@
 import { find, omit, uniqBy } from 'lodash';
-import * as Knex from 'knex';
-import * as db from '../../services/db';
+import Knex from 'knex';
+import db from '../../services/db';
 import {
   isEvery,
   validate,

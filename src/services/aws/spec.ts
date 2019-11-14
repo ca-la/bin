@@ -1,7 +1,7 @@
-import * as tape from 'tape';
-import * as sinon from 'sinon';
-import * as AWS from 'aws-sdk';
-import * as fs from 'fs';
+import tape from 'tape';
+import sinon from 'sinon';
+import AWS from 'aws-sdk';
+import fs from 'fs';
 
 import * as AWSService from './index';
 import { sandbox, test } from '../../test-helpers/fresh';

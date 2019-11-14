@@ -1,8 +1,8 @@
-import * as Router from 'koa-router';
-import * as Koa from 'koa';
-import * as uuid from 'node-uuid';
+import Router from 'koa-router';
+import Koa from 'koa';
+import uuid from 'node-uuid';
 
-import * as ProductDesignsDAO from '../product-designs/dao';
+import ProductDesignsDAO from '../product-designs/dao';
 import * as PricingCostInputsDAO from './dao';
 import requireAdmin = require('../../middleware/require-admin');
 import PricingCostInput, { isUnsavedPricingCostInput } from './domain-object';

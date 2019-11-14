@@ -1,12 +1,12 @@
-import * as Knex from 'knex';
-import * as uuid from 'node-uuid';
+import Knex from 'knex';
+import uuid from 'node-uuid';
 
 import LayoutAttribute, {
   dataAdapter,
   isLayoutAttributeRow,
   LayoutAttributeRow
 } from './domain-object';
-import db = require('../../../services/db');
+import db from '../../../services/db';
 import first from '../../../services/first';
 import { validate, validateEvery } from '../../../services/validate-from-db';
 

@@ -1,8 +1,8 @@
-import * as Koa from 'koa';
-import * as Knex from 'knex';
+import Koa from 'koa';
+import Knex from 'knex';
 
 import { deleteByIds } from '../dao/dao';
-import db = require('../../../services/db');
+import db from '../../../services/db';
 
 export function* deleteDesign(
   this: Koa.Application.Context

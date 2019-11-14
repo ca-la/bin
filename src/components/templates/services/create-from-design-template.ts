@@ -1,6 +1,6 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 
-import * as db from '../../../services/db';
+import db from '../../../services/db';
 import { findByDesignId } from '../designs/dao';
 import findAndDuplicateTemplateDesign from '../../../services/duplicate/templates/designs';
 import ProductDesign = require('../../product-designs/domain-objects/product-design');

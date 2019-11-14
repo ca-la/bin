@@ -1,8 +1,8 @@
 import { chunk, groupBy } from 'lodash';
 import { NotificationMessage } from '@cala/ts-lib';
 
-import * as Logger from '../../services/logger';
-import * as EmailService from '../../services/email';
+import Logger from '../../services/logger';
+import EmailService from '../../services/email';
 import * as NotificationsDAO from '../../components/notifications/dao';
 import * as UsersDAO from '../../components/users/dao';
 import filterError = require('../../services/filter-error');

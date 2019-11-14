@@ -1,7 +1,7 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 
-import * as PaymentMethodsDAO from './dao';
-import db = require('../../services/db');
+import PaymentMethodsDAO from './dao';
+import db from '../../services/db';
 import { test, Test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
 

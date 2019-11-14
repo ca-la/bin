@@ -1,13 +1,13 @@
-import * as readline from 'readline';
-import * as process from 'process';
-import * as fs from 'fs';
-import * as uuid from 'node-uuid';
-import * as meow from 'meow';
-import * as parse from 'csv-parse/lib/sync';
-import * as Knex from 'knex';
+import readline from 'readline';
+import process from 'process';
+import fs from 'fs';
+import uuid from 'node-uuid';
+import meow from 'meow';
+import parse from 'csv-parse/lib/sync';
+import Knex from 'knex';
 import { isEqual, uniqWith } from 'lodash';
 
-import * as db from '../services/db';
+import db from '../services/db';
 import { log } from '../services/logger';
 import { hasOnlyProperties } from '../services/require-properties';
 import { PricingConstantRow } from '../domain-objects/pricing-constant';

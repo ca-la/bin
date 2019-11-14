@@ -1,4 +1,4 @@
-import * as AWS from 'aws-sdk';
+import AWS from 'aws-sdk';
 import { PromiseResult } from 'aws-sdk/lib/request';
 import { SendMessageResult } from 'aws-sdk/clients/sqs';
 

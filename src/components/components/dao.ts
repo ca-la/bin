@@ -1,8 +1,8 @@
-import * as Knex from 'knex';
-import * as uuid from 'node-uuid';
+import Knex from 'knex';
+import uuid from 'node-uuid';
 import { pick } from 'lodash';
 
-import * as db from '../../services/db';
+import db from '../../services/db';
 import Component, {
   ComponentRow,
   dataAdapter,

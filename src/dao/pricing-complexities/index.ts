@@ -1,4 +1,4 @@
-import * as db from '../../services/db';
+import db from '../../services/db';
 import { Complexity } from '../../domain-objects/pricing';
 
 export async function findLatest(): Promise<Complexity[]> {

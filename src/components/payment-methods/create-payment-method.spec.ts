@@ -1,10 +1,10 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 
 import * as attachSource from '../../services/stripe/attach-source';
-import * as PaymentMethodsDAO from './dao';
+import PaymentMethodsDAO from './dao';
 import createPaymentMethod from './create-payment-method';
 import Stripe = require('../../services/stripe');
-import db = require('../../services/db');
+import db from '../../services/db';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 
 test('createPaymentMethod', async (t: Test) => {

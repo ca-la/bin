@@ -1,4 +1,4 @@
-import * as uuid from 'node-uuid';
+import uuid from 'node-uuid';
 
 import * as AnnotationsDAO from '../../components/product-design-canvas-annotations/dao';
 import Annotation from '../../components/product-design-canvas-annotations/domain-object';

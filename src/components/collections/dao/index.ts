@@ -1,5 +1,5 @@
-import * as Knex from 'knex';
-import * as rethrow from 'pg-rethrow';
+import Knex from 'knex';
+import rethrow from 'pg-rethrow';
 import { pick } from 'lodash';
 
 import Collection, {
@@ -12,7 +12,7 @@ import Collection, {
 } from '../domain-object';
 import { CollectionDesignRow } from '../../../domain-objects/collection-design';
 
-import * as db from '../../../services/db';
+import db from '../../../services/db';
 import { validate, validateEvery } from '../../../services/validate-from-db';
 import first from '../../../services/first';
 import limitOrOffset from '../../../services/limit-or-offset';

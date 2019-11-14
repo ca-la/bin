@@ -1,4 +1,4 @@
-import * as uuid from 'node-uuid';
+import uuid from 'node-uuid';
 import { authHeader, get } from '../../test-helpers/http';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import * as GetAllService from './services/get-all-by-design';

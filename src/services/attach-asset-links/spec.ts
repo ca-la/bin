@@ -1,14 +1,14 @@
-import * as tape from 'tape';
-import * as uuid from 'node-uuid';
+import tape from 'tape';
+import uuid from 'node-uuid';
 
-import * as Configuration from '../../config';
+import Configuration from '../../config';
 import { addAssetLink, generatePreviewLinks } from './index';
 import { sandbox, test } from '../../test-helpers/fresh';
 
 import Component, {
   ComponentType
 } from '../../components/components/domain-object';
-import * as OptionsDAO from '../../dao/product-design-options';
+import OptionsDAO from '../../dao/product-design-options';
 import * as ImagesDAO from '../../components/assets/dao';
 
 function stubUrls(): void {

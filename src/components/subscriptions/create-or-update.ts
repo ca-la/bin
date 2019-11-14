@@ -1,5 +1,5 @@
-import * as uuid from 'node-uuid';
-import * as Knex from 'knex';
+import uuid from 'node-uuid';
+import Knex from 'knex';
 
 import * as PlansDAO from '../plans/dao';
 import * as SubscriptionsDAO from './dao';

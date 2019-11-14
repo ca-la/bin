@@ -1,7 +1,7 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 
 import { sandbox, test, Test } from '../../../test-helpers/fresh';
-import * as db from '../../../services/db';
+import db from '../../../services/db';
 import findAndDuplicateTemplateDesign from './designs';
 import * as NodesDAO from '../../../components/nodes/dao';
 import * as NodeDuplicator from '../nodes';

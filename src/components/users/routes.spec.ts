@@ -1,11 +1,11 @@
-import * as Knex from 'knex';
-import * as sinon from 'sinon';
-import * as uuid from 'node-uuid';
+import Knex from 'knex';
+import sinon from 'sinon';
+import uuid from 'node-uuid';
 
 import * as attachSource from '../../services/stripe/attach-source';
 import * as CohortsDAO from '../../components/cohorts/dao';
 import * as CohortUsersDAO from '../../components/cohorts/users/dao';
-import * as Config from '../../config';
+import Config from '../../config';
 import * as createStripeSubscription from '../../services/stripe/create-subscription';
 import * as CreditsDAO from '../../components/credits/dao';
 import * as DuplicationService from '../../services/duplicate';
@@ -14,7 +14,7 @@ import * as PromoCodesDAO from '../../components/promo-codes/dao';
 import * as SubscriptionsDAO from '../../components/subscriptions/dao';
 import * as UsersDAO from './dao';
 import createUser = require('../../test-helpers/create-user');
-import db = require('../../services/db');
+import db from '../../services/db';
 import InvalidDataError = require('../../errors/invalid-data');
 import MailChimp = require('../../services/mailchimp');
 import Stripe = require('../../services/stripe');

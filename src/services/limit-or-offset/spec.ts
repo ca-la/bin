@@ -1,4 +1,4 @@
-import * as sinon from 'sinon';
+import sinon from 'sinon';
 
 import { test, Test } from '../../test-helpers/simple';
 import limitOrOffset from '.';

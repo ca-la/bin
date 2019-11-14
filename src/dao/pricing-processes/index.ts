@@ -1,4 +1,4 @@
-import * as db from '../../services/db';
+import db from '../../services/db';
 import { isProcess, Process } from '../../domain-objects/pricing';
 import DataAdapter from '../../services/data-adapter';
 import { validateEvery } from '../../services/validate-from-db';

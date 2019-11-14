@@ -1,6 +1,6 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 
-import * as db from '../services/db';
+import db from '../services/db';
 import * as ProductDesignStagesDAO from '../dao/product-design-stages';
 import * as TaskTemplatesDAO from '../dao/task-templates';
 import Logger = require('../services/logger');

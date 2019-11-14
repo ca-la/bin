@@ -1,8 +1,8 @@
-import * as Knex from 'knex';
-import * as pg from 'pg';
-import * as process from 'process';
+import Knex from 'knex';
+import pg from 'pg';
+import process from 'process';
 
-import * as db from '../../services/db';
+import db from '../../services/db';
 import { log } from '../../services/logger';
 import { green, red, reset } from '../../services/colors';
 import createDesignTasks from '../../services/create-design-tasks';

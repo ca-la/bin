@@ -1,8 +1,8 @@
-import * as uuid from 'node-uuid';
-import * as Knex from 'knex';
+import uuid from 'node-uuid';
+import Knex from 'knex';
 import rethrow = require('pg-rethrow');
 
-import * as db from '../../services/db';
+import db from '../../services/db';
 import filterError = require('../../services/filter-error');
 import InvalidDataError = require('../../errors/invalid-data');
 import ProductDesignVariant, {

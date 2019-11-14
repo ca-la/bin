@@ -1,14 +1,14 @@
-import * as Koa from 'koa';
-import * as Knex from 'knex';
+import Koa from 'koa';
+import Knex from 'knex';
 
-import * as ProductDesignsDAO from '../../product-designs/dao';
+import ProductDesignsDAO from '../../product-designs/dao';
 import ProductDesign = require('../../product-designs/domain-objects/product-design');
 import {
   getDesignPermissionsAndRole,
   PermissionsAndRole
 } from '../../../services/get-permissions';
 import { moveDesigns, removeDesigns } from '../dao/design';
-import db = require('../../../services/db');
+import db from '../../../services/db';
 
 type DesignWithPermissions = ProductDesign & PermissionsAndRole;
 

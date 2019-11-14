@@ -1,5 +1,5 @@
-import * as uuid from 'node-uuid';
-import * as Knex from 'knex';
+import uuid from 'node-uuid';
+import Knex from 'knex';
 
 import InvalidDataError = require('../../errors/invalid-data');
 import * as UsersDAO from './dao';
@@ -7,10 +7,10 @@ import * as DesignEventsDAO from '../../dao/design-events';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
 import createBid from '../../test-helpers/factories/bid';
-import * as ProductDesignsDAO from '../product-designs/dao';
+import ProductDesignsDAO from '../product-designs/dao';
 import User, { ROLES, UserIO } from './domain-object';
 import { validatePassword } from './services/validate-password';
-import db = require('../../services/db');
+import db from '../../services/db';
 import * as MailChimpFunctions from '../../services/mailchimp/update-email';
 import generateDesignEvent from '../../test-helpers/factories/design-event';
 import PayoutAccountsDAO = require('../../dao/partner-payout-accounts');

@@ -1,12 +1,12 @@
-import * as tape from 'tape';
+import tape from 'tape';
 import { pick } from 'lodash';
 
 import { sandbox, test } from '../../test-helpers/fresh';
 import * as SlackService from '../../services/slack';
 import * as BidRejectionsDAO from '../../components/bid-rejections/dao';
-import * as DesignsDAO from '../../components/product-designs/dao';
+import DesignsDAO from '../../components/product-designs/dao';
 import * as UsersDAO from '../../components/users/dao';
-import * as Config from '../../config';
+import Config from '../../config';
 import createUser = require('../../test-helpers/create-user');
 import { sendPartnerRejectServiceBidNotification } from './index';
 import createDesign from '../create-design';

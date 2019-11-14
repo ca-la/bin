@@ -1,4 +1,4 @@
-import * as Koa from 'koa';
+import Koa from 'koa';
 
 import filterError = require('../../services/filter-error');
 import {
@@ -6,7 +6,7 @@ import {
   Permissions
 } from '../../services/get-permissions';
 import InvalidDataError = require('../../errors/invalid-data');
-import * as ProductDesignsDAO from '../../components/product-designs/dao';
+import ProductDesignsDAO from '../../components/product-designs/dao';
 
 export function* attachDesignPermissions(
   this: Koa.Application.Context,
@@ -181,14 +181,3 @@ export function* canEditDesign(
   );
   yield next;
 }
-
-module.exports = {
-  attachDesignPermissions,
-  canAccessDesignInParam,
-  canAccessDesignInQuery,
-  canAccessDesignsInQuery,
-  canCommentOnDesign,
-  canDeleteDesign,
-  canDeleteDesigns,
-  canEditDesign
-};

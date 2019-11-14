@@ -1,10 +1,10 @@
-import * as Router from 'koa-router';
-import * as Koa from 'koa';
+import Router from 'koa-router';
+import Koa from 'koa';
 
 import * as CanvasesDAO from './dao';
 import requireAuth = require('../../middleware/require-auth');
 import * as ComponentsDAO from '../components/dao';
-import * as ProductDesignOptionsDAO from '../../dao/product-design-options';
+import ProductDesignOptionsDAO from '../../dao/product-design-options';
 import * as ProductDesignImagesDAO from '../assets/dao';
 import Canvas from './domain-object';
 import Component, {

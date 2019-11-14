@@ -1,14 +1,14 @@
 import { isRawDesignData } from '@cala/ts-lib';
-import * as Knex from 'knex';
-import * as Koa from 'koa';
+import Knex from 'knex';
+import Koa from 'koa';
 
 import { updateOrCreate as updateOrCreateNode } from '../../nodes/dao';
 import { updateOrCreate as updateOrCreateAsset } from '../../assets/dao';
 import { updateOrCreate as updateOrCreateLayout } from '../../attributes/layout-attributes/dao';
-import * as db from '../../../services/db';
+import db from '../../../services/db';
 import toDateOrNull from '../../../services/to-date';
 
-function* updateAllNodes(
+export function* updateAllNodes(
   this: Koa.Application.Context
 ): Iterator<any, any, any> {
   const { body: design } = this.request;
@@ -72,7 +72,3 @@ function* updateAllNodes(
   this.body = updated;
   this.status = 200;
 }
-
-module.exports = {
-  updateAllNodes
-};

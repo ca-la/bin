@@ -1,10 +1,10 @@
-import * as uuid from 'node-uuid';
-import * as Knex from 'knex';
+import uuid from 'node-uuid';
+import Knex from 'knex';
 
 import { sandbox, Test, test } from '../../test-helpers/fresh';
 import * as NodesDAO from './dao';
 import createUser = require('../../test-helpers/create-user');
-import * as db from '../../services/db';
+import db from '../../services/db';
 import createDesign from '../../services/create-design';
 
 const testDate = new Date(2019, 3, 20);

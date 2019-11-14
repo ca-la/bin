@@ -1,4 +1,4 @@
-import * as tape from 'tape';
+import tape from 'tape';
 import { test } from '../../test-helpers/simple';
 import generateLabel from './index';
 

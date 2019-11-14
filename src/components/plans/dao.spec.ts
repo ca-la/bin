@@ -1,4 +1,4 @@
-import * as uuid from 'node-uuid';
+import uuid from 'node-uuid';
 
 import * as PlansDAO from './dao';
 import { Plan } from './domain-object';

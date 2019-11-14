@@ -1,6 +1,6 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 import { pick } from 'lodash';
-import * as db from '../../services/db';
+import db from '../../services/db';
 import Annotation, {
   dataAdapter,
   isProductDesignCanvasAnnotationRow as isAnnotationRow,

@@ -1,4 +1,4 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 
 import { getCreditAmount, removeCredit } from './dao';
 import Invoice = require('../../domain-objects/invoice');

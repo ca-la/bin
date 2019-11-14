@@ -1,4 +1,4 @@
-import db = require('../../../services/db');
+import db from '../../../services/db';
 import { compare } from '../../../services/hash';
 import { UserRow } from '../domain-object';
 import { first } from 'lodash';

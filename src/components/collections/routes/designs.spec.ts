@@ -1,9 +1,9 @@
-import * as uuid from 'node-uuid';
+import uuid from 'node-uuid';
 
 import * as CollaboratorsDAO from '../../collaborators/dao';
 import * as CollectionsDAO from '../dao';
-import * as ProductDesignsDAO from '../../product-designs/dao';
-import * as API from '../../../test-helpers/http';
+import ProductDesignsDAO from '../../product-designs/dao';
+import API from '../../../test-helpers/http';
 import { sandbox, test, Test } from '../../../test-helpers/fresh';
 import createUser = require('../../../test-helpers/create-user');
 import generateCollaborator from '../../../test-helpers/factories/collaborator';

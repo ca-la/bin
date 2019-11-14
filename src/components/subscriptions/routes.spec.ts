@@ -1,12 +1,12 @@
-import * as uuid from 'node-uuid';
-import * as Knex from 'knex';
+import uuid from 'node-uuid';
+import Knex from 'knex';
 
 import * as attachSource from '../../services/stripe/attach-source';
 import * as createStripeSubscription from '../../services/stripe/create-subscription';
 import * as PlansDAO from '../plans/dao';
 import * as SubscriptionsDAO from './dao';
 import createUser = require('../../test-helpers/create-user');
-import db = require('../../services/db');
+import db from '../../services/db';
 import PaymentMethodsDAO = require('../payment-methods/dao');
 import Session = require('../../domain-objects/session');
 import Stripe = require('../../services/stripe');

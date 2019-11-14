@@ -1,4 +1,4 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 
 import * as AnnotationsDAO from '../../components/product-design-canvas-annotations/dao';
 import * as AnnotationCommentsDAO from '../../components/annotation-comments/dao';

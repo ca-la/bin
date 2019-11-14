@@ -1,6 +1,6 @@
-import * as Koa from 'koa';
-import * as uuid from 'node-uuid';
-import * as ProductDesignsDAO from '../../product-designs/dao';
+import Koa from 'koa';
+import uuid from 'node-uuid';
+import ProductDesignsDAO from '../../product-designs/dao';
 import * as DesignEventsDAO from '../../../dao/design-events';
 import ProductDesign = require('../../product-designs/domain-objects/product-design');
 import * as CreateNotifications from '../../../services/create-notifications';

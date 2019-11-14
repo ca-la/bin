@@ -1,7 +1,7 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 import rethrow = require('pg-rethrow');
 
-import db = require('../../services/db');
+import db from '../../services/db';
 import Invoice = require('../../domain-objects/invoice');
 import limitOrOffset from '../../services/limit-or-offset';
 

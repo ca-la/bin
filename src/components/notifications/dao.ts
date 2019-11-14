@@ -1,7 +1,7 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 import { omit } from 'lodash';
 
-import * as db from '../../services/db';
+import db from '../../services/db';
 import first from '../../services/first';
 import {
   dataAdapter,

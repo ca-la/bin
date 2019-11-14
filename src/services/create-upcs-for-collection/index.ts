@@ -1,8 +1,8 @@
-import * as Knex from 'knex';
+import Knex from 'knex';
 
 import * as VariantsDAO from '../../components/product-design-variants/dao';
 import { computeUniqueUPC } from '../upc';
-import * as db from '../../services/db';
+import db from '../../services/db';
 
 export default async function createUPCsForCollection(
   collectionId: string
