@@ -1,5 +1,4 @@
 import Router from 'koa-router';
-import Koa from 'koa';
 
 import requireAuth = require('../../middleware/require-auth');
 import {
@@ -52,13 +51,13 @@ const isPayWithMethodRequest = (data: any): data is PayWithMethodRequest => {
 };
 
 function* payQuote(
-  this: Koa.Application.Context<PayRequest | PayWithMethodRequest>
+  this: AuthedContext<PayRequest | PayWithMethodRequest, CollectionsKoaState>
 ): Iterator<any, any, any> {
   const { body } = this.request;
   const { isFinanced, isWaived } = this.query;
   const { userId, collection } = this.state;
   if (!collection) {
-    return this.throw(403, 'Unable to access collection');
+    this.throw(403, 'Unable to access collection');
   }
 
   yield createUPCsForCollection(collection.id);
@@ -79,7 +78,7 @@ function* payQuote(
       collection
     ).catch((err: Error) => this.throw(400, err.message));
   } else {
-    return this.throw('Request must match type');
+    this.throw('Request must match type');
   }
 
   this.status = 201;

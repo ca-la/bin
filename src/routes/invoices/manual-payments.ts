@@ -1,10 +1,9 @@
-import Koa from 'koa';
 import Knex from 'knex';
 
 import db from '../../services/db';
 import * as InvoicesDAO from '../../dao/invoices';
 import * as InvoicePaymentsDAO from '../../components/invoice-payments/dao';
-import InvalidDataError = require('../../errors/invalid-data');
+import InvalidDataError from '../../errors/invalid-data';
 
 interface ManualPaymentRequest {
   userId: string;
@@ -14,7 +13,7 @@ interface ManualPaymentRequest {
 }
 
 export default function* createManualPaymentRecord(
-  this: Koa.Application.Context<ManualPaymentRequest>
+  this: AuthedContext<ManualPaymentRequest>
 ): Iterator<any, any, any> {
   const { userId, resolvePaymentId, createdAt } = this.request.body;
   const { invoiceId } = this.params;

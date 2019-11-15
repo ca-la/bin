@@ -1,5 +1,4 @@
 import Router from 'koa-router';
-import Koa from 'koa';
 
 import * as NotificationsDAO from './dao';
 import requireAuth = require('../../middleware/require-auth');
@@ -14,12 +13,12 @@ interface GetListQuery {
   offset?: number;
 }
 
-function* getList(this: Koa.Application.Context): Iterator<any, any, any> {
+function* getList(this: AuthedContext): Iterator<any, any, any> {
   const { userId } = this.state;
   const { limit, offset }: GetListQuery = this.query;
 
   if ((limit && limit < 0) || (offset && offset < 0)) {
-    return this.throw(400, 'Offset / Limit cannot be negative!');
+    this.throw(400, 'Offset / Limit cannot be negative!');
   }
 
   const notifications = yield NotificationsDAO.findByUserId(userId, {
@@ -36,9 +35,7 @@ function* getList(this: Koa.Application.Context): Iterator<any, any, any> {
   );
 }
 
-function* getUnreadCount(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* getUnreadCount(this: AuthedContext): Iterator<any, any, any> {
   const { userId } = this.state;
 
   const unreadNotificationsCount = yield NotificationsDAO.findUnreadCountByUserId(
@@ -49,7 +46,7 @@ function* getUnreadCount(
   this.body = { unreadNotificationsCount };
 }
 
-function* setRead(this: Koa.Application.Context): Iterator<any, any, any> {
+function* setRead(this: AuthedContext): Iterator<any, any, any> {
   const { notificationIds } = this.query;
   if (notificationIds) {
     const idList = notificationIds.split(',');
@@ -60,7 +57,7 @@ function* setRead(this: Koa.Application.Context): Iterator<any, any, any> {
         (notification.recipientUserId !== null &&
           notification.recipientUserId !== this.state.userId)
       ) {
-        return this.throw(403, 'Access denied for this resource');
+        this.throw(403, 'Access denied for this resource');
       }
     }
     yield NotificationsDAO.markRead(idList);

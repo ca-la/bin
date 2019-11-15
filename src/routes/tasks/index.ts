@@ -1,5 +1,4 @@
 import Router from 'koa-router';
-import Koa from 'koa';
 import { omit, pick } from 'lodash';
 
 import * as TaskEventsDAO from '../../dao/task-events';
@@ -33,6 +32,7 @@ import parseAtMentions, {
   MentionType
 } from '@cala/ts-lib/dist/parsing/comment-mentions';
 import { announceTaskCommentCreation } from '../../components/iris/messages/task-comment';
+import { BaseComment } from '@cala/ts-lib';
 
 const router = new Router();
 
@@ -87,7 +87,7 @@ function isCollaboratorTaskRequest(
 }
 
 function* createTaskWithEvent(
-  this: Koa.Application.Context<IOTask>
+  this: AuthedContext<IOTask>
 ): Iterator<any, any, any> {
   const taskId = this.request.body.id;
   const taskEvent = taskEventFromIO(
@@ -101,7 +101,7 @@ function* createTaskWithEvent(
 }
 
 function* createTaskEvent(
-  this: Koa.Application.Context<IOTask>
+  this: AuthedContext<IOTask>
 ): Iterator<any, any, any> {
   const { userId: sessionUserId } = this.state;
   const body = addDefaultOrdering(this.request.body);
@@ -123,7 +123,7 @@ function* createTaskEvent(
 }
 
 function* createTaskWithEventOnStage(
-  this: Koa.Application.Context<IOTask>
+  this: AuthedContext<IOTask>
 ): Iterator<any, any, any> {
   const taskId = this.request.body.id;
   const stageId = this.params.stageId;
@@ -140,10 +140,10 @@ function* createTaskWithEventOnStage(
   this.status = 201;
 }
 
-function* getTaskEvent(this: Koa.Application.Context): Iterator<any, any, any> {
+function* getTaskEvent(this: AuthedContext): Iterator<any, any, any> {
   const task = yield TaskEventsDAO.findById(this.params.taskId);
   if (!task) {
-    return this.throw(400, 'Task was not found');
+    this.throw(400, 'Task was not found');
   }
 
   this.status = 200;
@@ -151,7 +151,7 @@ function* getTaskEvent(this: Koa.Application.Context): Iterator<any, any, any> {
 }
 
 function* updateTaskAssignment(
-  this: Koa.Application.Context
+  this: AuthedContext<CollaboratorTaskRequest>
 ): Iterator<any, any, any> {
   const { taskId } = this.params;
   const { body } = this.request;
@@ -219,7 +219,7 @@ interface GetListQuery {
   designFilterId?: string;
 }
 
-function* getList(this: Koa.Application.Context): Iterator<any, any, any> {
+function* getList(this: AuthedContext): Iterator<any, any, any> {
   const query: GetListQuery = this.query;
   const {
     collectionId,
@@ -235,7 +235,7 @@ function* getList(this: Koa.Application.Context): Iterator<any, any, any> {
     collectionFilterId
   } = query;
   if (!collectionId && !stageId && !userId && !designId) {
-    return this.throw('Missing collectionId, stageId, or userId');
+    this.throw('Missing collectionId, stageId, or userId');
   }
   let tasks: DetailsTask[] = [];
   if (collectionId) {
@@ -275,7 +275,7 @@ function* getList(this: Koa.Application.Context): Iterator<any, any, any> {
 }
 
 function* createTaskComment(
-  this: Koa.Application.Context
+  this: AuthedContext<BaseComment>
 ): Iterator<any, any, any> {
   const { userId } = this.state;
   const body = omit(this.request.body, 'mentions');
@@ -326,9 +326,7 @@ function* createTaskComment(
   }
 }
 
-function* getTaskComments(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* getTaskComments(this: AuthedContext): Iterator<any, any, any> {
   const comments = yield TaskCommentDAO.findByTaskId(this.params.taskId);
   if (comments) {
     const commentsWithMentions = yield addAtMentionDetails(comments);

@@ -1,5 +1,4 @@
 import Router from 'koa-router';
-import Koa from 'koa';
 
 import * as UsersDAO from '../../components/users/dao';
 import * as DuplicationService from '../../services/duplicate';
@@ -25,30 +24,28 @@ function isDuplicateDesignsBody(body: any): body is DuplicateDesignsBody {
   );
 }
 
-function* duplicateDesigns(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* duplicateDesigns(this: AuthedContext): Iterator<any, any, any> {
   const { body } = this.request;
   let userId = this.state.userId;
 
   if (!isDuplicateDesignsBody(body)) {
-    return this.throw(400, 'Missing design ID list');
+    this.throw(400, 'Missing design ID list');
   }
 
   if (body.userId) {
     if (this.state.role === 'ADMIN' || this.state.userId === body.userId) {
       userId = body.userId;
     } else {
-      return this.throw(403, 'Cannot duplicate designs for other users');
+      this.throw(403, 'Cannot duplicate designs for other users');
     }
   } else if (body.email) {
     if (this.state.role !== 'ADMIN') {
-      return this.throw(403, 'Cannot duplicate designs for other users');
+      this.throw(403, 'Cannot duplicate designs for other users');
     }
 
     const maybeUser = yield UsersDAO.findByEmail(body.email);
     if (!maybeUser) {
-      return this.throw(404, 'User not found');
+      this.throw(404, 'User not found');
     }
 
     userId = maybeUser.id;

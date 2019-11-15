@@ -1,9 +1,8 @@
 import Router from 'koa-router';
-import Koa from 'koa';
 
 import { CALA_OPS_USER_ID } from '../../../config';
 import filterError = require('../../../services/filter-error');
-import InvalidDataError = require('../../../errors/invalid-data');
+import InvalidDataError from '../../../errors/invalid-data';
 
 import {
   canAccessCollectionInParam,
@@ -42,9 +41,7 @@ interface CollectionWithPermissions extends Collection {
   permissions: Permissions;
 }
 
-function* createCollection(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* createCollection(this: AuthedContext): Iterator<any, any, any> {
   const { body } = this.request;
   const { role, userId } = this.state;
   const data = { ...body, deletedAt: null, createdBy: userId };
@@ -91,7 +88,7 @@ function* createCollection(
   }
 }
 
-function* getList(this: Koa.Application.Context): Iterator<any, any, any> {
+function* getList(this: AuthedContext): Iterator<any, any, any> {
   const { userId, isCosted, isSubmitted, limit, offset, search } = this.query;
   const { role, userId: currentUserId } = this.state;
   const userIdToQuery =
@@ -130,9 +127,7 @@ function* getList(this: Koa.Application.Context): Iterator<any, any, any> {
   }
 }
 
-function* deleteCollection(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* deleteCollection(this: AuthedContext): Iterator<any, any, any> {
   const { collectionId } = this.params;
   const targetCollection = yield CollectionsDAO.findById(collectionId);
   canAccessUserResource.call(this, targetCollection.createdBy);
@@ -141,9 +136,7 @@ function* deleteCollection(
   this.status = 204;
 }
 
-function* getCollection(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* getCollection(this: AuthedContext): Iterator<any, any, any> {
   const { collectionId } = this.params;
   const { role, userId } = this.state;
 
@@ -161,9 +154,7 @@ function* getCollection(
   }
 }
 
-function* updateCollection(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* updateCollection(this: AuthedContext): Iterator<any, any, any> {
   const { collectionId } = this.params;
   const { body } = this.request;
   const { role, userId } = this.state;

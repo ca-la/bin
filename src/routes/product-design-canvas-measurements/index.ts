@@ -1,11 +1,10 @@
 import Router from 'koa-router';
-import Koa from 'koa';
 import Measurement from '../../domain-objects/product-design-canvas-measurement';
 import * as MeasurementsDAO from '../../dao/product-design-canvas-measurements';
 import { hasOnlyProperties } from '../../services/require-properties';
 
 import filterError = require('../../services/filter-error');
-import InvalidDataError = require('../../errors/invalid-data');
+import InvalidDataError from '../../errors/invalid-data';
 import requireAuth = require('../../middleware/require-auth');
 import * as NotificationsService from '../../services/create-notifications';
 
@@ -46,9 +45,7 @@ const measurementFromIO = (
   };
 };
 
-function* createMeasurement(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* createMeasurement(this: AuthedContext): Iterator<any, any, any> {
   const body = this.request.body;
   if (body && isMeasurement(body)) {
     const measurement = yield MeasurementsDAO.create(
@@ -66,9 +63,7 @@ function* createMeasurement(
   }
 }
 
-function* updateMeasurement(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* updateMeasurement(this: AuthedContext): Iterator<any, any, any> {
   const body = this.request.body;
   if (body && isMeasurement(body)) {
     const measurement = yield MeasurementsDAO.update(
@@ -93,9 +88,7 @@ function* updateMeasurement(
   }
 }
 
-function* deleteMeasurement(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* deleteMeasurement(this: AuthedContext): Iterator<any, any, any> {
   const measurement = yield MeasurementsDAO.deleteById(
     this.params.measurementId
   ).catch(
@@ -111,10 +104,10 @@ function* deleteMeasurement(
   this.status = 204;
 }
 
-function* getList(this: Koa.Application.Context): Iterator<any, any, any> {
+function* getList(this: AuthedContext): Iterator<any, any, any> {
   const query: GetListQuery = this.query;
   if (!query.canvasId) {
-    return this.throw('Missing canvasId');
+    this.throw('Missing canvasId');
   }
 
   const measurements = yield MeasurementsDAO.findAllByCanvasId(query.canvasId);
@@ -122,11 +115,11 @@ function* getList(this: Koa.Application.Context): Iterator<any, any, any> {
   this.body = measurements;
 }
 
-function* getLabel(this: Koa.Application.Context): Iterator<any, any, any> {
+function* getLabel(this: AuthedContext): Iterator<any, any, any> {
   const query: GetListQuery = this.query;
 
   if (!query.canvasId) {
-    return this.throw('Missing canvasId');
+    this.throw('Missing canvasId');
   }
 
   const label = yield MeasurementsDAO.getLabel(query.canvasId);

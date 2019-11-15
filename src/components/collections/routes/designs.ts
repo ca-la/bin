@@ -1,4 +1,3 @@
-import Koa from 'koa';
 import Knex from 'knex';
 
 import ProductDesignsDAO from '../../product-designs/dao';
@@ -12,9 +11,7 @@ import db from '../../../services/db';
 
 type DesignWithPermissions = ProductDesign & PermissionsAndRole;
 
-export function* putDesign(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+export function* putDesign(this: AuthedContext): Iterator<any, any, any> {
   const { collectionId, designId } = this.params;
 
   try {
@@ -28,20 +25,18 @@ export function* putDesign(
   }
 }
 
-export function* putDesigns(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+export function* putDesigns(this: AuthedContext): Iterator<any, any, any> {
   const { collectionId } = this.params;
   const { designIds } = this.query;
 
   if (!designIds) {
-    return this.throw(400, 'designIds is a required query parameter.');
+    this.throw(400, 'designIds is a required query parameter.');
   }
 
   const designIdList = designIds.split(',');
 
   if (designIdList.length === 0) {
-    return this.throw(400, 'designIds must have at least one design.');
+    this.throw(400, 'designIds must have at least one design.');
   }
 
   try {
@@ -52,13 +47,11 @@ export function* putDesigns(
     this.body = yield ProductDesignsDAO.findByCollectionId(collectionId);
     this.status = 200;
   } catch (error) {
-    return this.throw(500, error.message);
+    this.throw(500, error.message);
   }
 }
 
-export function* deleteDesign(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+export function* deleteDesign(this: AuthedContext): Iterator<any, any, any> {
   const { collectionId, designId } = this.params;
   yield db.transaction(async (trx: Knex.Transaction) => {
     await removeDesigns({ collectionId, designIds: [designId], trx });
@@ -67,20 +60,18 @@ export function* deleteDesign(
   this.status = 200;
 }
 
-export function* deleteDesigns(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+export function* deleteDesigns(this: AuthedContext): Iterator<any, any, any> {
   const { collectionId } = this.params;
   const { designIds } = this.query;
 
   if (!designIds) {
-    return this.throw(400, 'designIds is a required query parameter.');
+    this.throw(400, 'designIds is a required query parameter.');
   }
 
   const designIdList = designIds.split(',');
 
   if (designIdList.length === 0) {
-    return this.throw(400, 'designIds must have at least one design.');
+    this.throw(400, 'designIds must have at least one design.');
   }
 
   yield db.transaction(async (trx: Knex.Transaction) => {
@@ -92,7 +83,7 @@ export function* deleteDesigns(
 }
 
 export function* getCollectionDesigns(
-  this: Koa.Application.Context
+  this: AuthedContext
 ): Iterator<any, any, any> {
   const { collectionId } = this.params;
   const { role, userId } = this.state;

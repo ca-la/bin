@@ -1,11 +1,10 @@
 import Router from 'koa-router';
-import Koa from 'koa';
 import Knex from 'knex';
 
 import db from '../../../services/db';
 import { getAll, remove, removeList } from './dao';
 import requireAdmin = require('../../../middleware/require-admin');
-import InvalidDataError = require('../../../errors/invalid-data');
+import InvalidDataError from '../../../errors/invalid-data';
 import requireAuth = require('../../../middleware/require-auth');
 import { createDesignTemplates } from '../services/create-design-template';
 import ResourceNotFoundError from '../../../errors/resource-not-found';
@@ -13,49 +12,45 @@ import ProductDesign = require('../../product-designs/domain-objects/product-des
 
 const router = new Router();
 
-function* createTemplates(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* createTemplates(this: AuthedContext): Iterator<any, any, any> {
   const { designIds } = this.query;
 
   if (!designIds) {
-    return this.throw(400, 'designIds not defined');
+    this.throw(400, 'designIds not defined');
   }
 
   const templatedDesigns: ProductDesign[] = yield createDesignTemplates(
     designIds.split(',')
   ).catch((error: Error) => {
     if (error instanceof InvalidDataError) {
-      return this.throw(400, error.message);
+      this.throw(400, error.message);
     }
 
     if (error instanceof ResourceNotFoundError) {
-      return this.throw(404, error.message);
+      this.throw(404, error.message);
     }
 
-    return this.throw(500, error.message);
+    this.throw(500, error.message);
   });
 
   this.status = 201;
   this.body = templatedDesigns;
 }
 
-function* createTemplate(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* createTemplate(this: AuthedContext): Iterator<any, any, any> {
   const { designId } = this.params;
 
   const designs = yield createDesignTemplates([designId]).catch(
     (error: Error) => {
       if (error instanceof InvalidDataError) {
-        return this.throw(400, error.message);
+        this.throw(400, error.message);
       }
 
       if (error instanceof ResourceNotFoundError) {
-        return this.throw(404, error.message);
+        this.throw(404, error.message);
       }
 
-      return this.throw(500, error.message);
+      this.throw(500, error.message);
     }
   );
 
@@ -63,38 +58,34 @@ function* createTemplate(
   this.body = designs[0];
 }
 
-function* removeTemplates(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* removeTemplates(this: AuthedContext): Iterator<any, any, any> {
   const { designIds } = this.query;
 
   if (!designIds) {
-    return this.throw(400, 'designIds not defined');
+    this.throw(400, 'designIds not defined');
   }
 
   yield db.transaction(async (trx: Knex.Transaction) => {
     await removeList(designIds.split(','), trx).catch((error: Error) => {
       if (error instanceof InvalidDataError) {
-        return this.throw(404, error.message);
+        this.throw(404, error.message);
       }
-      return this.throw(500, error.message);
+      this.throw(500, error.message);
     });
 
     this.status = 204;
   });
 }
 
-function* removeTemplate(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* removeTemplate(this: AuthedContext): Iterator<any, any, any> {
   const { designId } = this.params;
 
   yield db.transaction(async (trx: Knex.Transaction) => {
     await remove(designId, trx).catch((error: Error) => {
       if (error instanceof InvalidDataError) {
-        return this.throw(404, error.message);
+        this.throw(404, error.message);
       }
-      return this.throw(500, error.message);
+      this.throw(500, error.message);
     });
     this.status = 204;
   });
@@ -105,9 +96,7 @@ interface ListQueryParameters {
   offset?: number;
 }
 
-function* listTemplates(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* listTemplates(this: AuthedContext): Iterator<any, any, any> {
   const { limit, offset }: ListQueryParameters = this.query;
 
   yield db.transaction(async (trx: Knex.Transaction) => {

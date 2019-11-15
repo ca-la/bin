@@ -1,5 +1,4 @@
 import Router from 'koa-router';
-import Koa from 'koa';
 
 import requireAuth = require('../../middleware/require-auth');
 
@@ -16,7 +15,7 @@ function isComponentType(data: string): data is ComponentType {
   );
 }
 
-function* getAll(this: Koa.Application.Context): Iterator<any, any, any> {
+function* getAll(this: AuthedContext): Iterator<any, any, any> {
   const { componentType } = this.query;
 
   if (componentType) {

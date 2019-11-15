@@ -1,5 +1,4 @@
 import Knex from 'knex';
-import Koa from 'koa';
 import Router from 'koa-router';
 import rethrow = require('pg-rethrow');
 
@@ -9,12 +8,12 @@ import canAccessUserResource = require('../../middleware/can-access-user-resourc
 import claimDesignInvitations = require('../../services/claim-design-invitations');
 import CohortsDAO = require('../../components/cohorts/dao');
 import CohortUsersDAO = require('../../components/cohorts/users/dao');
-import compact = require('../../services/compact');
+import compact from '../../services/compact';
 import createOrUpdateSubscription from '../subscriptions/create-or-update';
 import db from '../../services/db';
 import DuplicationService = require('../../services/duplicate');
 import filterError = require('../../services/filter-error');
-import InvalidDataError = require('../../errors/invalid-data');
+import InvalidDataError from '../../errors/invalid-data';
 import MailChimp = require('../../services/mailchimp');
 import MultipleErrors from '../../errors/multiple-errors';
 import requireAuth = require('../../middleware/require-auth');
@@ -36,9 +35,7 @@ interface CreateBody extends UserIO {
 /**
  * POST /users
  */
-function* createUser(
-  this: Koa.Application.Context<CreateBody>
-): Iterator<any, any, any> {
+function* createUser(this: AuthedContext<CreateBody>): Iterator<any, any, any> {
   const {
     name,
     email,
@@ -51,10 +48,10 @@ function* createUser(
   const { cohort, initialDesigns, promoCode } = this.query;
 
   if (!email) {
-    return this.throw(400, 'Email must be provided');
+    this.throw(400, 'Email must be provided');
   }
   if (!name) {
-    return this.throw(400, 'Name must be provided');
+    this.throw(400, 'Name must be provided');
   }
 
   if (REQUIRE_CALA_EMAIL && !email.match(/@ca\.la$/)) {
@@ -167,7 +164,7 @@ interface WithPassword {
   password: string;
 }
 function* updatePassword(
-  this: Koa.Application.Context<{ password: string }>
+  this: AuthedContext<WithPassword>
 ): Iterator<any, any, any> {
   this.assert(
     this.params.userId === this.state.userId,
@@ -187,9 +184,7 @@ function* updatePassword(
   this.body = { ok: true };
 }
 
-function* acceptDesignerTerms(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* acceptDesignerTerms(this: AuthedContext): Iterator<any, any, any> {
   canAccessUserResource.call(this, this.params.userId);
   const updated = yield UsersDAO.update(this.params.userId, {
     lastAcceptedDesignerTermsAt: new Date()
@@ -207,9 +202,7 @@ function* acceptDesignerTerms(
   this.status = 200;
 }
 
-function* acceptPartnerTerms(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* acceptPartnerTerms(this: AuthedContext): Iterator<any, any, any> {
   canAccessUserResource.call(this, this.params.userId);
 
   const updated = yield UsersDAO.update(this.params.userId, {
@@ -241,7 +234,7 @@ interface CaughtError extends Error {
  * PUT /users/:userId
  */
 function* updateUser(
-  this: Koa.Application.Context<UserWithNewPassword>
+  this: AuthedContext<UserWithNewPassword>
 ): Iterator<any, any, any> {
   const isAdmin = this.state.role === ROLES.admin;
   const isCurrentUser = this.params.userId === this.state.userId;
@@ -338,7 +331,7 @@ function* updateUser(
   this.body = updated;
 }
 
-function* getAllUsers(this: Koa.Application.Context): Iterator<any, any, any> {
+function* getAllUsers(this: AuthedContext): Iterator<any, any, any> {
   this.assert(this.state.userId, 401);
   this.assert(this.state.role === ROLES.admin, 403);
 
@@ -353,14 +346,14 @@ function* getAllUsers(this: Koa.Application.Context): Iterator<any, any, any> {
   this.status = 200;
 }
 
-function* getList(this: Koa.Application.Context): Iterator<any, any, any> {
+function* getList(this: AuthedContext): Iterator<any, any, any> {
   yield getAllUsers;
 }
 
 /**
  * GET /users/:id
  */
-function* getUser(this: Koa.Application.Context): Iterator<any, any, any> {
+function* getUser(this: AuthedContext): Iterator<any, any, any> {
   this.assert(this.state.role === ROLES.admin, 403);
 
   const user = yield UsersDAO.findById(this.params.userId);
@@ -374,9 +367,7 @@ function* getUser(this: Koa.Application.Context): Iterator<any, any, any> {
  *
  * Not RESTful. No regrets.
  */
-function* getEmailAvailability(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* getEmailAvailability(this: AuthedContext): Iterator<any, any, any> {
   const { email } = this.params;
 
   const user = yield UsersDAO.findByEmail(email);
@@ -396,9 +387,7 @@ function* getEmailAvailability(
 /**
  * GET /users/email-availability/:email
  */
-function* getUnpaidPartners(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* getUnpaidPartners(this: AuthedContext): Iterator<any, any, any> {
   const partners = yield UsersDAO.findAllUnpaidPartners({
     limit: Number(this.query.limit) || 10,
     offset: Number(this.query.offset) || 0,

@@ -1,5 +1,4 @@
 import Router from 'koa-router';
-import Koa from 'koa';
 
 import * as ComponentsDAO from './dao';
 import Component, { isUnsavedComponent } from './domain-object';
@@ -15,13 +14,13 @@ const attachUser = (request: any, userId: string): any => {
   };
 };
 
-function* create(this: Koa.Application.Context): Iterator<any, any, any> {
+function* create(this: AuthedContext): Iterator<any, any, any> {
   const { assetLink, ...body } = attachUser(
     this.request.body,
     this.state.userId
   );
   if (!this.request.body || !isUnsavedComponent(body)) {
-    return this.throw(400, 'Request does not match Component');
+    this.throw(400, 'Request does not match Component');
   }
 
   const component = yield ComponentsDAO.create(body);
@@ -29,13 +28,13 @@ function* create(this: Koa.Application.Context): Iterator<any, any, any> {
   this.body = component;
 }
 
-function* update(this: Koa.Application.Context): Iterator<any, any, any> {
+function* update(this: AuthedContext): Iterator<any, any, any> {
   const { assetLink, ...body } = attachUser(
     this.request.body,
     this.state.userId
   );
   if (!this.request.body || !isUnsavedComponent(body)) {
-    return this.throw(400, 'Request does not match Component');
+    this.throw(400, 'Request does not match Component');
   }
 
   const component = yield ComponentsDAO.update(this.params.componentId, body);
@@ -43,15 +42,15 @@ function* update(this: Koa.Application.Context): Iterator<any, any, any> {
   this.body = component;
 }
 
-function* del(this: Koa.Application.Context): Iterator<any, any, any> {
+function* del(this: AuthedContext): Iterator<any, any, any> {
   const component = yield ComponentsDAO.del(this.params.componentId);
   if (!component) {
-    return this.throw('component delete failed', 400);
+    this.throw('component delete failed', 400);
   }
   this.status = 204;
 }
 
-function* getById(this: Koa.Application.Context): Iterator<any, any, any> {
+function* getById(this: AuthedContext): Iterator<any, any, any> {
   const component: Component = yield ComponentsDAO.findById(
     this.params.componentId
   );
@@ -70,11 +69,11 @@ interface GetListQuery {
   canvas?: string;
 }
 
-function* getList(this: Koa.Application.Context): Iterator<any, any, any> {
+function* getList(this: AuthedContext): Iterator<any, any, any> {
   const query: GetListQuery = this.query;
 
   if (!query.canvas) {
-    return this.throw(400, 'Missing canvas id');
+    this.throw(400, 'Missing canvas id');
   }
 
   const components = yield ComponentsDAO.findAllByCanvasId(query.canvas);

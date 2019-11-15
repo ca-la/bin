@@ -1,5 +1,4 @@
 import Router from 'koa-router';
-import Koa from 'koa';
 
 import { hasProperties } from '../../services/require-properties';
 import requireAuth = require('../../middleware/require-auth');
@@ -30,7 +29,7 @@ function isComponentRelationship(data: object): data is ComponentRelationship {
   );
 }
 
-function* getList(this: Koa.Application.Context): Iterator<any, any, any> {
+function* getList(this: AuthedContext): Iterator<any, any, any> {
   const { componentId } = this.query;
 
   if (componentId) {
@@ -44,7 +43,7 @@ function* getList(this: Koa.Application.Context): Iterator<any, any, any> {
   }
 }
 
-function* getById(this: Koa.Application.Context): Iterator<any, any, any> {
+function* getById(this: AuthedContext): Iterator<any, any, any> {
   const relationship = yield ComponentRelationshipsDAO.findById(
     this.params.relationshipId
   );
@@ -60,7 +59,7 @@ function* getById(this: Koa.Application.Context): Iterator<any, any, any> {
 }
 
 function* create(
-  this: Koa.Application.Context<ComponentRelationship>
+  this: AuthedContext<ComponentRelationship>
 ): Iterator<any, any, any> {
   const { body } = this.request;
 
@@ -70,7 +69,7 @@ function* create(
 }
 
 function* update(
-  this: Koa.Application.Context<ComponentRelationship>
+  this: AuthedContext<ComponentRelationship>
 ): Iterator<any, any, any> {
   const { body } = this.request;
   const relationship = yield ComponentRelationshipsDAO.update(
@@ -81,7 +80,7 @@ function* update(
   this.body = relationship;
 }
 
-function* del(this: Koa.Application.Context): Iterator<any, any, any> {
+function* del(this: AuthedContext): Iterator<any, any, any> {
   yield ComponentRelationshipsDAO.del(this.params.relationshipId);
   this.status = 204;
 }

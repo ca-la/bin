@@ -1,5 +1,4 @@
 import Router from 'koa-router';
-import Koa from 'koa';
 import Knex from 'knex';
 
 import { addCredit, getCreditAmount, removeCredit } from './dao';
@@ -14,11 +13,11 @@ interface GetCreditQuery {
   userId?: string;
 }
 
-function* getCredits(this: Koa.Application.Context): Iterator<any, any, any> {
+function* getCredits(this: AuthedContext): Iterator<any, any, any> {
   const { userId }: GetCreditQuery = this.query;
 
   if (!userId) {
-    return this.throw(400, 'Missing user ID');
+    this.throw(400, 'Missing user ID');
   }
 
   const creditAmountCents = yield getCreditAmount(userId);
@@ -44,15 +43,12 @@ function isChangeRequest(data: any): data is ChangeRequest {
   );
 }
 
-function* changeCredit(this: Koa.Application.Context): Iterator<any, any, any> {
+function* changeCredit(this: AuthedContext): Iterator<any, any, any> {
   const { userId } = this.state;
   const { body } = this.request;
 
   if (!isChangeRequest(body)) {
-    return this.throw(
-      400,
-      'A credit amount, description, and user id is required.'
-    );
+    this.throw(400, 'A credit amount, description, and user id is required.');
   }
 
   const deserializedAmount = Number(body.creditAmountCents);
@@ -63,7 +59,7 @@ function* changeCredit(this: Koa.Application.Context): Iterator<any, any, any> {
   const futureAmountForUser = deserializedAmount + currentAmountForUser;
 
   if (currentAmountForUser + deserializedAmount < 0) {
-    return this.throw(400, 'A user cannot have negative credit.');
+    this.throw(400, 'A user cannot have negative credit.');
   }
 
   if (deserializedAmount > 0) {

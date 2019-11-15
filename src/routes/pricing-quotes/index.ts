@@ -1,6 +1,5 @@
 import { omit, sum } from 'lodash';
 import Router from 'koa-router';
-import Koa from 'koa';
 import uuid from 'node-uuid';
 
 import requireAuth = require('../../middleware/require-auth');
@@ -11,7 +10,7 @@ import * as UsersDAO from '../../components/users/dao';
 import addMargin from '../../services/add-margin';
 import { BidCreationPayload } from '../../components/bids/domain-object';
 import filterError = require('../../services/filter-error');
-import InvalidDataError = require('../../errors/invalid-data');
+import InvalidDataError from '../../errors/invalid-data';
 import requireAdmin = require('../../middleware/require-admin');
 import * as DesignEventsDAO from '../../dao/design-events';
 import { FINANCING_MARGIN } from '../../config';
@@ -76,12 +75,11 @@ function calculateAmounts(
   return { payNowTotalCents, payLaterTotalCents, timeTotalMs };
 }
 
-function* createQuote(this: Koa.Application.Context): Iterator<any, any, any> {
+function* createQuote(this: AuthedContext): Iterator<any, any, any> {
   const { body } = this.request;
 
   if (!body || !isCreateRequest(body)) {
     this.throw(400, 'Invalid request');
-    return;
   }
 
   const quotes: PricingQuote[] = [];
@@ -98,7 +96,6 @@ function* createQuote(this: Koa.Application.Context): Iterator<any, any, any> {
 
     if (costInputs.length === 0) {
       this.throw(404, 'No costing inputs associated with design ID');
-      return;
     }
 
     const quoteRequest: PricingQuoteRequestWithVersions = {
@@ -148,7 +145,7 @@ function* createQuote(this: Koa.Application.Context): Iterator<any, any, any> {
   this.status = 201;
 }
 
-function* getQuote(this: Koa.Application.Context): Iterator<any, any, any> {
+function* getQuote(this: AuthedContext): Iterator<any, any, any> {
   const { quoteId } = this.params;
 
   const quote = yield findById(quoteId);
@@ -158,7 +155,7 @@ function* getQuote(this: Koa.Application.Context): Iterator<any, any, any> {
   this.status = 200;
 }
 
-function* getQuotes(this: Koa.Application.Context): Iterator<any, any, any> {
+function* getQuotes(this: AuthedContext): Iterator<any, any, any> {
   const { designId, units } = this.query;
   const unitsNumber = Number(units);
 
@@ -173,7 +170,6 @@ function* getQuotes(this: Koa.Application.Context): Iterator<any, any, any> {
 
     if (costInputs.length === 0) {
       this.throw(404, 'No costing inputs associated with design ID');
-      return;
     }
 
     const quoteRequest: PricingQuoteRequestWithVersions = {
@@ -236,7 +232,7 @@ function hasNullValuesPricingCostInput(
   );
 }
 
-function* previewQuote(this: Koa.Application.Context): Iterator<any, any, any> {
+function* previewQuote(this: AuthedContext): Iterator<any, any, any> {
   const { body } = this.request;
 
   if (!isPreviewQuoteBody(body)) {
@@ -244,7 +240,6 @@ function* previewQuote(this: Koa.Application.Context): Iterator<any, any, any> {
       400,
       'units and uncommittedCostInput is required in the request body!'
     );
-    return;
   }
 
   const units = Number(body.units);
@@ -257,7 +252,6 @@ function* previewQuote(this: Koa.Application.Context): Iterator<any, any, any> {
       400,
       'A cost input object and units are required to generate a preview quote!'
     );
-    return;
   }
 
   const quoteRequest: PricingQuoteRequest = omit(
@@ -297,9 +291,7 @@ function* previewQuote(this: Koa.Application.Context): Iterator<any, any, any> {
   this.status = 200;
 }
 
-function* createBidForQuote(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* createBidForQuote(this: AuthedContext): Iterator<any, any, any> {
   const { quoteId, bidId } = this.params;
   const { body } = this.request;
   const quote: PricingQuote | null = yield findById(quoteId);
@@ -325,9 +317,7 @@ function* createBidForQuote(
   }
 }
 
-function* getBidsForQuote(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* getBidsForQuote(this: AuthedContext): Iterator<any, any, any> {
   const { quoteId } = this.params;
   const quote = yield findById(quoteId);
   this.assert(quote, 404);

@@ -1,5 +1,4 @@
 import Knex from 'knex';
-import Koa from 'koa';
 import Router from 'koa-router';
 
 import * as SubscriptionsDAO from './dao';
@@ -22,12 +21,11 @@ function isCreateOrUpdateRequest(body: any): body is CreateOrUpdateRequest {
 
 const router = new Router();
 
-function* listForUser(this: Koa.Application.Context): Iterator<any, any, any> {
+function* listForUser(this: AuthedContext): Iterator<any, any, any> {
   const { userId } = this.query;
 
   if (!userId) {
     this.throw(400, 'User ID is required');
-    return;
   }
 
   canAccessUserResource.call(this, userId);
@@ -47,10 +45,10 @@ function* listForUser(this: Koa.Application.Context): Iterator<any, any, any> {
   this.status = 200;
 }
 
-function* create(this: Koa.Application.Context): Iterator<any, any, any> {
+function* create(this: AuthedContext): Iterator<any, any, any> {
   const { body } = this.request;
   if (!isCreateOrUpdateRequest(body)) {
-    return this.throw(400, 'Missing required properties');
+    this.throw(400, 'Missing required properties');
   }
 
   const { stripeCardToken, planId } = body;
@@ -68,10 +66,10 @@ function* create(this: Koa.Application.Context): Iterator<any, any, any> {
   this.status = 201;
 }
 
-function* update(this: Koa.Application.Context): Iterator<any, any, any> {
+function* update(this: AuthedContext): Iterator<any, any, any> {
   const { body } = this.request;
   if (!isCreateOrUpdateRequest(body)) {
-    return this.throw(400, 'Missing required properties');
+    this.throw(400, 'Missing required properties');
   }
 
   const { subscriptionId } = this.params;

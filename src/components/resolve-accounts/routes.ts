@@ -1,5 +1,4 @@
 import Router from 'koa-router';
-import Koa from 'koa';
 
 import requireAuth = require('../../middleware/require-auth');
 import requireAdmin = require('../../middleware/require-admin');
@@ -9,13 +8,13 @@ import { getAllResolveAccountData, hasResolveAccount } from './resolve';
 
 const router = new Router();
 
-function* create(this: Koa.Application.Context): Iterator<any, any, any> {
+function* create(this: AuthedContext): Iterator<any, any, any> {
   const { body } = this.request;
   if (isResolveAccountRequest(body)) {
     const accountExists = yield hasResolveAccount(body.resolveCustomerId);
 
     if (!accountExists) {
-      return this.throw(404, 'This account does not exist in resolve.');
+      this.throw(404, 'This account does not exist in resolve.');
     }
     const account = yield ResolveAccountsDAO.create(body);
     this.status = 201;
@@ -25,12 +24,12 @@ function* create(this: Koa.Application.Context): Iterator<any, any, any> {
   }
 }
 
-function* getAll(this: Koa.Application.Context): Iterator<any, any, any> {
+function* getAll(this: AuthedContext): Iterator<any, any, any> {
   const { userId } = this.query;
 
   if (userId) {
     if (userId !== this.state.userId && this.state.role !== 'ADMIN') {
-      return this.throw(403, 'Not authorized to view this resource');
+      this.throw(403, 'Not authorized to view this resource');
     }
     const accounts = yield ResolveAccountsDAO.findAllByUserId(userId);
     const accountData = yield getAllResolveAccountData(accounts);
@@ -41,7 +40,7 @@ function* getAll(this: Koa.Application.Context): Iterator<any, any, any> {
   }
 }
 
-function* getById(this: Koa.Application.Context): Iterator<any, any, any> {
+function* getById(this: AuthedContext): Iterator<any, any, any> {
   const { resolveAccountId } = this.params;
   const account = ResolveAccountsDAO.findById(resolveAccountId);
   if (!account) {

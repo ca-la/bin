@@ -1,4 +1,3 @@
-import Koa from 'koa';
 import uuid from 'node-uuid';
 import Knex from 'knex';
 
@@ -12,7 +11,7 @@ import * as NotificationsService from '../../../services/create-notifications';
 import { commitCostInputs as commitInputs } from '../services/commit-cost-inputs';
 
 export function* commitCostInputs(
-  this: Koa.Application.Context
+  this: AuthedContext
 ): Iterator<any, any, any> {
   const { collectionId } = this.params;
   const { userId } = this.state;
@@ -21,20 +20,20 @@ export function* commitCostInputs(
 }
 
 export function* createPartnerPairing(
-  this: Koa.Application.Context
+  this: AuthedContext
 ): Iterator<any, any, any> {
   const { collectionId } = this.params;
   const { userId } = this.state;
   const collection = yield CollectionsDAO.findById(collectionId);
   if (!collection) {
-    return this.throw(404, 'Could not find collection');
+    this.throw(404, 'Could not find collection');
   }
 
   const designs = yield DesignsDAO.findByCollectionId(collectionId);
   const allArePaired = yield isEveryDesignPaired(collectionId);
 
   if (!allArePaired) {
-    return this.throw(409, 'Designs are not all paired');
+    this.throw(409, 'Designs are not all paired');
   }
 
   yield db.transaction(

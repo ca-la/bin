@@ -1,4 +1,3 @@
-import Koa from 'koa';
 import Router from 'koa-router';
 import { hasProperties } from '@cala/ts-lib';
 import Knex = require('knex');
@@ -29,13 +28,11 @@ function isMonthlyReport(body: any): body is MonthlySalesReport {
   );
 }
 
-function* createMonthly(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* createMonthly(this: AuthedContext): Iterator<any, any, any> {
   const { body } = this.request;
 
   if (!isMonthlyReport(body)) {
-    return this.throw(400, 'Missing required properties');
+    this.throw(400, 'Missing required properties');
   }
 
   const report = yield db.transaction(

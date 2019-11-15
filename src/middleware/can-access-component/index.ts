@@ -1,5 +1,3 @@
-import Koa from 'koa';
-
 import ComponentRelationship from '../../components/component-relationships/domain-object';
 import * as RelationshipsDAO from '../../components/component-relationships/dao';
 import { attachDesignPermissions } from '../can-access-design';
@@ -32,16 +30,13 @@ async function getCanvases(
 }
 
 export function* canViewComponentInQueryParam(
-  this: Koa.Application.Context,
+  this: AuthedContext<{}, PermissionsKoaState>,
   next: () => Promise<any>
 ): any {
   const { componentId } = this.query;
 
   if (!componentId) {
-    return this.throw(
-      400,
-      'Must provide a componentId in the query parameters!'
-    );
+    this.throw(400, 'Must provide a componentId in the query parameters!');
   }
 
   const componentRoot = yield findRoot.call(this, componentId);
@@ -64,7 +59,7 @@ export function* canViewComponentInQueryParam(
 }
 
 export function* canEditComponentsInBody(
-  this: Koa.Application.Context<ComponentRelationship>,
+  this: AuthedContext<ComponentRelationship, PermissionsKoaState>,
   next: () => Promise<any>
 ): any {
   const { sourceComponentId, targetComponentId } = this.request.body;
@@ -91,7 +86,7 @@ export function* canEditComponentsInBody(
 }
 
 export function* canEditComponentsInRelationshipParam(
-  this: Koa.Application.Context<ComponentRelationship>,
+  this: AuthedContext<ComponentRelationship, PermissionsKoaState>,
   next: () => Promise<any>
 ): any {
   const { relationshipId } = this.params;

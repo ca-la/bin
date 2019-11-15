@@ -15,7 +15,7 @@ import loggerMiddleware = require('./middleware/logger');
 import options = require('./middleware/options');
 import validatePagination from './middleware/validate-pagination';
 
-const app = koa();
+const app = new koa();
 
 app.use(compress());
 app.use(loggerMiddleware);

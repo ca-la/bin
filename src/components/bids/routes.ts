@@ -1,5 +1,4 @@
 import Router from 'koa-router';
-import Koa from 'koa';
 import uuid from 'node-uuid';
 
 import Bid, {
@@ -69,12 +68,11 @@ function not(predicateFunction: (a: any) => boolean): (a: any) => boolean {
   return (a: any): boolean => !predicateFunction(a);
 }
 
-function* listAllBids(this: Koa.Application.Context): Iterator<any, any, any> {
+function* listAllBids(this: AuthedContext): Iterator<any, any, any> {
   const { limit, offset, state }: GetListQuery = this.query;
 
   if (!limit || !offset) {
     this.throw(400, 'Must specify a limit and offset when fetching all bids!');
-    return;
   }
 
   const bids = yield BidsDAO.findAll({ limit, offset, state });
@@ -82,14 +80,11 @@ function* listAllBids(this: Koa.Application.Context): Iterator<any, any, any> {
   this.status = 200;
 }
 
-function* listBidsByAssignee(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* listBidsByAssignee(this: AuthedContext): Iterator<any, any, any> {
   const { state, userId, sortBy = 'ACCEPTED' } = this.query;
 
   if (!userId) {
     this.throw(400, 'You must specify the user to retrieve bids for');
-    return;
   }
 
   if (!isBidSortByParam(sortBy)) {
@@ -97,7 +92,6 @@ function* listBidsByAssignee(
       400,
       `Invalid sortBy query parameter "${sortBy}". Must be "ACCEPTED" or "DUE".`
     );
-    return;
   }
 
   let bids: Bid[] = [];
@@ -133,7 +127,6 @@ function* listBidsByAssignee(
 
     default:
       this.throw(400, 'Invalid status query');
-      return;
   }
   const ioBids: IOBid[] = yield attachDesignsToBids(bids);
 
@@ -141,7 +134,7 @@ function* listBidsByAssignee(
   this.status = 200;
 }
 
-function* listBids(this: Koa.Application.Context): Iterator<any, any, any> {
+function* listBids(this: AuthedContext): Iterator<any, any, any> {
   const { userId } = this.query;
   const isAdmin = this.state.role === 'ADMIN';
 
@@ -154,13 +147,10 @@ function* listBids(this: Koa.Application.Context): Iterator<any, any, any> {
       403,
       'You must either be an admin or retrieve bids for your own user!'
     );
-    return;
   }
 }
 
-function* getUnpaidBidsByUserId(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* getUnpaidBidsByUserId(this: AuthedContext): Iterator<any, any, any> {
   const { userId } = this.params;
 
   const bids = yield BidsDAO.findUnpaidByUserId(userId);
@@ -168,27 +158,22 @@ function* getUnpaidBidsByUserId(
   this.status = 200;
 }
 
-function* assignBidToPartner(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* assignBidToPartner(this: AuthedContext): Iterator<any, any, any> {
   const { bidId, userId } = this.params;
 
   const bid = yield BidsDAO.findById(bidId);
   if (!bid) {
     this.throw(404, `No Bid found for ID: ${bidId}`);
-    return;
   }
 
   const design = yield ProductDesignsDAO.findByQuoteId(bid.quoteId);
   if (!design) {
     this.throw(404, `No Design found for Quote with ID: ${bid.quoteId}`);
-    return;
   }
 
   const target = yield UsersDAO.findById(userId);
   if (!target) {
     this.throw(404, `No User found for ID: ${userId}`);
-    return;
   }
 
   const hasActive = yield hasActiveBids(bid.quoteId, userId);
@@ -197,7 +182,6 @@ function* assignBidToPartner(
       403,
       `There are active bids for user ${userId} on the design ${design.id}`
     );
-    return;
   }
 
   yield DesignEventsDAO.create({
@@ -243,9 +227,7 @@ function* assignBidToPartner(
   this.status = 204;
 }
 
-function* listBidAssignees(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* listBidAssignees(this: AuthedContext): Iterator<any, any, any> {
   const { bidId } = this.params;
   const assignees = yield UsersDAO.findByBidId(bidId);
 
@@ -253,27 +235,22 @@ function* listBidAssignees(
   this.status = 200;
 }
 
-function* removeBidFromPartner(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* removeBidFromPartner(this: AuthedContext): Iterator<any, any, any> {
   const { bidId, userId } = this.params;
 
   const bid = yield BidsDAO.findById(bidId);
   if (!bid) {
     this.throw(404, `No Bid found for ID: ${bidId}`);
-    return;
   }
 
   const design = yield ProductDesignsDAO.findByQuoteId(bid.quoteId);
   if (!design) {
     this.throw(404, `No Design found for Quote with ID: ${bid.quoteId}`);
-    return;
   }
 
   const target = yield UsersDAO.findById(userId);
   if (!target) {
     this.throw(404, `No User found for ID: ${userId}`);
-    return;
   }
 
   yield DesignEventsDAO.create({
@@ -291,7 +268,7 @@ function* removeBidFromPartner(
   this.status = 204;
 }
 
-interface AcceptDesignBidContext extends Koa.Application.Context {
+interface AcceptDesignBidContext extends AuthedContext {
   params: {
     bidId: string;
   };
@@ -309,7 +286,6 @@ export function* acceptDesignBid(
 
   if (!quote) {
     this.throw(`Quote not found with ID ${bid.quoteId}`);
-    return;
   }
 
   this.assert(quote.designId, 400, 'Quote does not have a design');
@@ -352,7 +328,7 @@ export function* acceptDesignBid(
   this.body = maybeIOBid;
 }
 
-interface RejectDesignBidContext extends Koa.Application.Context {
+interface RejectDesignBidContext extends AuthedContext {
   params: {
     bidId: string;
   };
@@ -384,7 +360,6 @@ export function* rejectDesignBid(
 
   if (!quote) {
     this.throw(`Quote not found with ID ${bid.quoteId}`);
-    return;
   }
 
   this.assert(quote.designId, 400, 'Quote does not have a design');
@@ -401,7 +376,7 @@ export function* rejectDesignBid(
   if (body && isRejectionReasons(body)) {
     yield BidRejectionsDAO.create({ bidId: bid.id, ...body });
   } else {
-    return this.throw('Bid rejection reasons are required', 400);
+    this.throw('Bid rejection reasons are required', 400);
   }
 
   yield DesignEventsDAO.create({
@@ -428,7 +403,7 @@ export function* rejectDesignBid(
   this.status = 204;
 }
 
-interface GetByIdContext extends Koa.Application.Context {
+interface GetByIdContext extends AuthedContext {
   params: {
     bidId: string;
   };
@@ -442,7 +417,7 @@ function* getById(this: GetByIdContext): Iterator<any, any, any> {
   this.status = 200;
 }
 
-interface PayOutPartnerContext extends Koa.Application.Context {
+interface PayOutPartnerContext extends AuthedContext {
   params: {
     bidId: string;
   };
@@ -451,7 +426,7 @@ interface PayOutPartnerContext extends Koa.Application.Context {
 function* postPayOut(this: PayOutPartnerContext): Iterator<any, any, any> {
   const { bidId } = this.params;
   if (!isUninsertedPartnerPayoutLog(this.request.body)) {
-    return this.throw(400, 'Request does not match Payout Log');
+    this.throw(400, 'Request does not match Payout Log');
   }
 
   const { payoutAccountId, isManual, message } = this.request.body;

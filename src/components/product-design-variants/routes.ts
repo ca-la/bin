@@ -1,5 +1,4 @@
 import Router from 'koa-router';
-import Koa from 'koa';
 
 import * as ProductDesignVariantsDAO from './dao';
 import requireAuth = require('../../middleware/require-auth');
@@ -56,19 +55,19 @@ function isProductDesignVariantsIO(
 }
 
 function* replaceVariants(
-  this: Koa.Application.Context
+  this: AuthedContext<ProductDesignVariantIO[], PermissionsKoaState>
 ): Iterator<any, any, any> {
   const { designId } = this.query;
   const { body } = this.request;
 
   if (!designId) {
-    return this.throw(
+    this.throw(
       400,
       'A designId needs to be specified in the query parameters!'
     );
   }
   if (!this.state.permissions || !this.state.permissions.canEditVariants) {
-    return this.throw(
+    this.throw(
       400,
       'These variants are locked! You cannot edit variants after payment.'
     );
@@ -86,7 +85,7 @@ function* replaceVariants(
   }
 }
 
-function* getVariants(this: Koa.Application.Context): Iterator<any, any, any> {
+function* getVariants(this: AuthedContext): Iterator<any, any, any> {
   const { designId } = this.query;
 
   if (!designId) {
@@ -94,7 +93,6 @@ function* getVariants(this: Koa.Application.Context): Iterator<any, any, any> {
       400,
       'A designId needs to be specified in the query parameters!'
     );
-    return;
   }
 
   this.body = yield ProductDesignVariantsDAO.findByDesignId(designId);

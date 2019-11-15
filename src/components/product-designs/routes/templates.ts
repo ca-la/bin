@@ -1,11 +1,9 @@
-import Koa from 'koa';
-
 import createFromDesignTemplate from '../../templates/services/create-from-design-template';
 import filterError = require('../../../services/filter-error');
 import ResourceNotFoundError from '../../../errors/resource-not-found';
 
 export function* createFromTemplate(
-  this: Koa.Application.Context
+  this: AuthedContext
 ): Iterator<any, any, any> {
   const { userId } = this.state;
   const { isPhidias } = this.query;

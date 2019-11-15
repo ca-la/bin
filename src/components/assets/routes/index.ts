@@ -1,5 +1,4 @@
 import Router from 'koa-router';
-import Koa from 'koa';
 
 import * as AssetsDAO from '../dao';
 import requireAuth = require('../../../middleware/require-auth');
@@ -18,14 +17,14 @@ import {
 
 const router = new Router();
 
-function* findById(this: Koa.Application.Context): Iterator<any, any, any> {
+function* findById(this: AuthedContext): Iterator<any, any, any> {
   const { assetId } = this.params;
 
   if (assetId) {
     const asset = yield AssetsDAO.findById(assetId);
 
     if (!asset) {
-      return this.throw(404, `Asset ${assetId} not found.`);
+      this.throw(404, `Asset ${assetId} not found.`);
     }
 
     this.status = 200;
@@ -35,7 +34,7 @@ function* findById(this: Koa.Application.Context): Iterator<any, any, any> {
   }
 }
 
-function* create(this: Koa.Application.Context): Iterator<any, any, any> {
+function* create(this: AuthedContext): Iterator<any, any, any> {
   const { body } = this.request;
 
   if (body && isSerializedAsset(body)) {
@@ -47,7 +46,7 @@ function* create(this: Koa.Application.Context): Iterator<any, any, any> {
   }
 }
 
-function* update(this: Koa.Application.Context): Iterator<any, any, any> {
+function* update(this: AuthedContext): Iterator<any, any, any> {
   const { body } = this.request;
   const { assetId } = this.params;
 
@@ -63,14 +62,12 @@ function* update(this: Koa.Application.Context): Iterator<any, any, any> {
   }
 }
 
-function* getUploadPolicy(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* getUploadPolicy(this: AuthedContext): Iterator<any, any, any> {
   const { mimeType } = this.query;
   const { assetId } = this.params;
 
   if (!mimeType || !assetId) {
-    return this.throw(400, 'A mimeType and a fileId are required.');
+    this.throw(400, 'A mimeType and a fileId are required.');
   }
 
   const uploadPolicy = generateUploadPolicy({

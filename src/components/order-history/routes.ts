@@ -1,14 +1,11 @@
 import Router from 'koa-router';
-import Koa from 'koa';
 
 import requireAuth = require('../../middleware/require-auth');
 import { getOrderHistory } from './services/get-order-history';
 
 const router = new Router();
 
-function* retrieveOrderHistory(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* retrieveOrderHistory(this: AuthedContext): Iterator<any, any, any> {
   const { userId } = this.state;
   const { limit, offset, type } = this.query;
 
@@ -21,7 +18,7 @@ function* retrieveOrderHistory(
     this.body = orders;
     this.status = 200;
   } else {
-    return this.throw(400, 'Must specify a query param "type" of "designs"');
+    this.throw(400, 'Must specify a query param "type" of "designs"');
   }
 }
 

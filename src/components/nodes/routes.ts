@@ -1,5 +1,4 @@
 import Router from 'koa-router';
-import Koa from 'koa';
 import { keyBy } from 'lodash';
 import { PhidiasNode } from '@cala/ts-lib/dist/phidias';
 import requireAuth = require('../../middleware/require-auth');
@@ -17,13 +16,11 @@ interface GetAllQuery {
   keyBy?: 'id';
 }
 
-function* getAllInclude(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* getAllInclude(this: AuthedContext): Iterator<any, any, any> {
   const query: GetAllQuery = this.query;
 
   if (!query.designId) {
-    return this.throw(400, 'Missing design id from query parameters!');
+    this.throw(400, 'Missing design id from query parameters!');
   }
 
   let resources:
@@ -40,13 +37,11 @@ function* getAllInclude(
   this.body = resources;
 }
 
-function* getAllByDesignId(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* getAllByDesignId(this: AuthedContext): Iterator<any, any, any> {
   const query: GetAllQuery = this.query;
 
   if (!query.designId) {
-    return this.throw(400, 'Missing design id from query parameters!');
+    this.throw(400, 'Missing design id from query parameters!');
   }
 
   const resources = yield getAllByDesign(query.designId);
@@ -54,7 +49,7 @@ function* getAllByDesignId(
   this.body = resources;
 }
 
-function* getAll(this: Koa.Application.Context): Iterator<any, any, any> {
+function* getAll(this: AuthedContext): Iterator<any, any, any> {
   const query: GetAllQuery = this.query;
 
   if (query.include === '*') {

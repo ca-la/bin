@@ -1,5 +1,4 @@
 import Router from 'koa-router';
-import Koa from 'koa';
 
 import MailChimp from '../../services/mailchimp';
 import {
@@ -35,12 +34,11 @@ function isDesignerSubscription(
 }
 
 function* createDesignerSubscription(
-  this: Koa.Application.Context
+  this: AuthedContext
 ): Iterator<any, any, any> {
   const { body } = this.request;
   if (!body || !isDesignerSubscription(body)) {
     this.throw(400, 'Missing required information');
-    return;
   }
 
   const {
@@ -88,12 +86,11 @@ function isPartnerSubscription(
 }
 
 function* createPartnerSubscription(
-  this: Koa.Application.Context
+  this: AuthedContext
 ): Iterator<any, any, any> {
   const { body } = this.request;
   if (!body || !isPartnerSubscription(body)) {
     this.throw(400, 'Missing required information');
-    return;
   }
 
   const { email, language, name, source, website } = body;

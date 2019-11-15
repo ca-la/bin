@@ -1,5 +1,5 @@
 declare module 'koa-convert' {
-  import { Application, Middleware } from 'koa';
+  import Application, { Middleware } from 'koa';
 
   type KoaMiddleware = (
     context: Application.Context,

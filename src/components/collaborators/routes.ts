@@ -1,8 +1,7 @@
 import Router from 'koa-router';
-import Koa from 'koa';
 
 import addCollaborator from '../../services/add-collaborator';
-import InvalidDataError = require('../../errors/invalid-data');
+import InvalidDataError from '../../errors/invalid-data';
 import * as CollaboratorsDAO from './dao';
 import { isRole, Roles } from './domain-objects/collaborator';
 import requireAuth = require('../../middleware/require-auth');
@@ -45,9 +44,9 @@ const isCollaboratorUpdate = (data: object): data is CollaboratorUpdate => {
   return hasProperties(data, 'role');
 };
 
-function* create(this: Koa.Application.Context): Iterator<any, any, any> {
+function* create(this: AuthedContext): Iterator<any, any, any> {
   if (!CollaboratorsMiddleware.isCollaboratorRequest(this.request.body)) {
-    return this.throw(400, 'Request does not match Collaborator');
+    this.throw(400, 'Request does not match Collaborator');
   }
   const {
     collectionId,
@@ -58,7 +57,7 @@ function* create(this: Koa.Application.Context): Iterator<any, any, any> {
   } = this.request.body;
 
   if (!userEmail) {
-    return this.throw(400, 'Request does not include email');
+    this.throw(400, 'Request does not include email');
   }
   this.assert(isRole(role), 400, `Unknown role: ${role}`);
 
@@ -81,7 +80,7 @@ function* create(this: Koa.Application.Context): Iterator<any, any, any> {
   this.body = created;
 }
 
-function* find(this: Koa.Application.Context): Iterator<any, any, any> {
+function* find(this: AuthedContext): Iterator<any, any, any> {
   const { collectionId, designId, designIds } = this.query;
   const { userId } = this.state;
   let collaborators;
@@ -111,14 +110,16 @@ function* find(this: Koa.Application.Context): Iterator<any, any, any> {
   this.body = collaborators;
 }
 
-function* update(this: Koa.Application.Context): Iterator<any, any, any> {
+function* update(
+  this: AuthedContext<{}, CollaboratorKoaState>
+): Iterator<any, any, any> {
   const { collaborator } = this.state;
   const { body } = this.request;
   if (!collaborator) {
-    return this.throw(400, 'Could not find Collaborator!');
+    this.throw(400, 'Could not find Collaborator!');
   }
   if (!isCollaboratorUpdate(body)) {
-    return this.throw(400, 'Request does not have a role');
+    this.throw(400, 'Request does not have a role');
   }
   this.assert(isRole(body.role), 400, `Unknown role: ${body.role}`);
 
@@ -130,7 +131,7 @@ function* update(this: Koa.Application.Context): Iterator<any, any, any> {
 }
 
 function* deleteCollaborator(
-  this: Koa.Application.Context
+  this: AuthedContext<{}, CollaboratorKoaState>
 ): Iterator<any, any, any> {
   const { collaborator } = this.state;
 

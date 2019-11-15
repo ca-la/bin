@@ -1,5 +1,4 @@
 import Router from 'koa-router';
-import Koa from 'koa';
 
 import * as ProductDesignStagesDAO from '../../dao/product-design-stages';
 import ProductDesignStage, {
@@ -10,9 +9,9 @@ import requireAuth = require('../../middleware/require-auth');
 
 const router = new Router();
 
-function* create(this: Koa.Application.Context): Iterator<any, any, any> {
+function* create(this: AuthedContext): Iterator<any, any, any> {
   if (!isDesignStageRequest(this.request.body)) {
-    return this.throw(400, 'Invalid request body');
+    this.throw(400, 'Invalid request body');
   }
 
   const body: ProductDesignStageRequest = this.request.body;
@@ -27,11 +26,11 @@ interface GetListQuery {
   designId?: string;
 }
 
-function* getList(this: Koa.Application.Context): Iterator<any, any, any> {
+function* getList(this: AuthedContext): Iterator<any, any, any> {
   const query: GetListQuery = this.query;
 
   if (!query.designId) {
-    return this.throw(400, 'Missing design ID');
+    this.throw(400, 'Missing design ID');
   }
 
   const stages: ProductDesignStage[] = yield ProductDesignStagesDAO.findAllByDesignId(
@@ -42,9 +41,7 @@ function* getList(this: Koa.Application.Context): Iterator<any, any, any> {
   this.status = 200;
 }
 
-function* getTitlesList(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* getTitlesList(this: AuthedContext): Iterator<any, any, any> {
   const stageTitles: string[] = yield ProductDesignStagesDAO.findAllTitles();
 
   this.body = stageTitles;

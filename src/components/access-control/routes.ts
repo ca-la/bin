@@ -1,5 +1,4 @@
 import Router from 'koa-router';
-import Koa from 'koa';
 import requireAuth = require('../../middleware/require-auth');
 import { canAccessAnnotationInParams } from '../../middleware/can-access-annotation';
 import { canAccessTaskInParams } from '../../middleware/can-access-task';
@@ -11,9 +10,7 @@ const router = new Router();
  * Checks if the authenticated user has access to the given task.
  * Responds with a 200 if there's a match, otherwise throws a 400.
  */
-function* getAnnotationsAccess(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* getAnnotationsAccess(this: AuthedContext): Iterator<any, any, any> {
   this.status = 200;
 }
 
@@ -25,14 +22,12 @@ interface NotificationAccessQuery {
  * Checks the state's userId against the query param's userId;
  * Responds with a 200 if there's a match, otherwise throws a 400.
  */
-function* getNotificationAccess(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* getNotificationAccess(this: AuthedContext): Iterator<any, any, any> {
   const { userId } = this.state;
   const { userId: checkUserId }: NotificationAccessQuery = this.query;
 
   if (userId !== checkUserId) {
-    return this.throw(
+    this.throw(
       400,
       "The user id in the query does not match the session's user!"
     );
@@ -45,9 +40,7 @@ function* getNotificationAccess(
  * Checks if the authenticated user has access to the given task.
  * Responds with a 200 if there's a match, otherwise throws a 400.
  */
-function* getTasksAccess(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* getTasksAccess(this: AuthedContext): Iterator<any, any, any> {
   this.status = 200;
 }
 
@@ -57,7 +50,7 @@ function* getTasksAccess(
  * otherwise throws a 400.
  */
 function* getDesignAccess(
-  this: Koa.Application.Context
+  this: AuthedContext<{}, PermissionsKoaState>
 ): Iterator<any, any, any> {
   this.status = 200;
   this.body = this.state.permissions;

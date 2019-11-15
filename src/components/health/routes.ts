@@ -1,5 +1,4 @@
 import Router from 'koa-router';
-import Koa from 'koa';
 
 import { findOutstanding } from '../notifications/dao';
 import requireAdmin = require('../../middleware/require-admin');
@@ -11,9 +10,7 @@ interface NotificationsHealthMetrics {
   outstandingNotifications: number;
 }
 
-function* getNotificationsHealth(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* getNotificationsHealth(this: AuthedContext): Iterator<any, any, any> {
   const outstandingNotifications = yield findOutstanding();
   const oldestNotification =
     outstandingNotifications[outstandingNotifications.length - 1];

@@ -1,7 +1,7 @@
 import Koa from 'koa';
 
 export default function* validatePagination(
-  this: Koa.Application.Context,
+  this: Koa.Context,
   next: () => any
 ): Iterator<any, any, any> {
   if (this.request.method.toLowerCase() !== 'options') {

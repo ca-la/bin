@@ -59,7 +59,7 @@ async function findPermissionsFromCollectionOrDesign(
 }
 
 export function* attachCollaboratorAndPermissions(
-  this: Koa.Application.Context,
+  this: Koa.Context,
   collaboratorId: string
 ): any {
   const { role, userId } = this.state;
@@ -78,7 +78,7 @@ export function* attachCollaboratorAndPermissions(
 }
 
 export function* canAccessViaQueryParameters(
-  this: Koa.Application.Context,
+  this: Koa.Context,
   next: () => Promise<any>
 ): Iterator<any, any, any> {
   const { collectionId, designId, designIds } = this.query;
@@ -123,11 +123,11 @@ export function* canAccessViaQueryParameters(
 }
 
 export function* canAccessViaDesignOrCollectionInRequestBody(
-  this: Koa.Application.Context,
+  this: AuthedContext<CollaboratorRequest, PermissionsKoaState>,
   next: () => Promise<any>
 ): Iterator<any, any, any> {
   if (!isCollaboratorRequest(this.request.body)) {
-    return this.throw(
+    this.throw(
       400,
       'A design or collection id must be specified in the request!'
     );
@@ -159,7 +159,7 @@ export function* canAccessViaDesignOrCollectionInRequestBody(
 }
 
 export function* canAccessCollaboratorInParam(
-  this: Koa.Application.Context,
+  this: Koa.Context,
   next: () => Promise<any>
 ): Iterator<any, any, any> {
   const { collaboratorId } = this.params;
@@ -176,7 +176,7 @@ export function* canAccessCollaboratorInParam(
 }
 
 export function* canEditCollaborators(
-  this: Koa.Application.Context,
+  this: Koa.Context,
   next: () => Promise<any>
 ): any {
   const { permissions } = this.state;

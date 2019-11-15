@@ -1,4 +1,3 @@
-import Koa from 'koa';
 import uuid from 'node-uuid';
 
 import {
@@ -10,15 +9,12 @@ import * as AWSService from '../../../services/aws';
 import { generateUploadPolicy } from '../../../services/upload-policy';
 
 export function* getDesignUploadPolicy(
-  this: Koa.Application.Context
+  this: AuthedContext
 ): Iterator<any, any, any> {
   const { mimeType } = this.query;
 
   if (!mimeType) {
-    return this.throw(
-      400,
-      'A mimeType must be specified in the query parameters!'
-    );
+    this.throw(400, 'A mimeType must be specified in the query parameters!');
   }
 
   const uploadPolicy = generateUploadPolicy({
@@ -33,7 +29,7 @@ export function* getDesignUploadPolicy(
 }
 
 export function* getThumbnailUploadPolicy(
-  this: Koa.Application.Context
+  this: AuthedContext
 ): Iterator<any, any, any> {
   const remoteFileName = this.params.sectionId || uuid.v4();
   const { url, fields } = yield AWSService.getThumbnailUploadPolicy(

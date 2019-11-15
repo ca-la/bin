@@ -1,11 +1,11 @@
 import Router from 'koa-router';
-import Koa from 'koa';
 import Knex from 'knex';
 import { pick } from 'lodash';
 
 import db from '../../services/db';
 import Comment, {
   BASE_COMMENT_PROPERTIES,
+  BaseComment,
   isBaseComment
 } from '../comments/domain-object';
 import * as CommentDAO from '../comments/dao';
@@ -17,7 +17,7 @@ import { announceAnnotationCommentCreation } from '../iris/messages/annotation-c
 const router = new Router();
 
 function* createAnnotationComment(
-  this: Koa.Application.Context
+  this: AuthedContext<BaseComment>
 ): Iterator<any, any, any> {
   let comment: Comment | undefined;
   const userId = this.state.userId;

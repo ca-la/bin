@@ -1,5 +1,4 @@
 import Router from 'koa-router';
-import Koa from 'koa';
 import Knex from 'knex';
 
 import canAccessUserResource = require('../../middleware/can-access-user-resource');
@@ -10,9 +9,7 @@ import createPaymentMethod from './create-payment-method';
 
 const router = new Router();
 
-function* getPaymentMethods(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* getPaymentMethods(this: AuthedContext): Iterator<any, any, any> {
   const { userId } = this.query;
   this.assert(userId, 400, 'User ID must be provided');
   canAccessUserResource.call(this, userId);
@@ -30,12 +27,10 @@ function isAddBody(obj: any): obj is AddBody {
   return typeof obj.stripeCardToken === 'string';
 }
 
-function* addPaymentMethod(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+function* addPaymentMethod(this: AuthedContext): Iterator<any, any, any> {
   const { body } = this.request;
   if (!isAddBody(body)) {
-    return this.throw(400, 'Missing required information');
+    this.throw(400, 'Missing required information');
   }
 
   const { stripeCardToken } = body;

@@ -3,7 +3,7 @@ import CollectionsDAO = require('../../components/collections/dao');
 import { getCollectionPermissions } from '../../services/get-permissions';
 
 export function* attachCollectionAndPermissions(
-  this: Koa.Application.Context,
+  this: Koa.Context,
   collectionId: string
 ): any {
   const { role, userId } = this.state;
@@ -17,7 +17,7 @@ export function* attachCollectionAndPermissions(
 }
 
 export function* canAccessCollectionInParam(
-  this: Koa.Application.Context,
+  this: Koa.Context,
   next: () => Promise<any>
 ): Iterator<any, any, any> {
   const { collectionId } = this.params;
@@ -34,7 +34,7 @@ export function* canAccessCollectionInParam(
 }
 
 export function* canAccessCollectionInRequestBody(
-  this: Koa.Application.Context<object & { collectionId: string }>,
+  this: AuthedContext<{ collectionId: string }, PermissionsKoaState>,
   next: () => Promise<any>
 ): Iterator<any, any, any> {
   const { collectionId } = this.request.body;
@@ -51,7 +51,7 @@ export function* canAccessCollectionInRequestBody(
 }
 
 export function* canDeleteCollection(
-  this: Koa.Application.Context,
+  this: AuthedContext<{}, PermissionsKoaState>,
   next: () => Promise<any>
 ): any {
   const { permissions } = this.state;
@@ -71,7 +71,7 @@ export function* canDeleteCollection(
 }
 
 export function* canEditCollection(
-  this: Koa.Application.Context,
+  this: AuthedContext<{}, PermissionsKoaState>,
   next: () => Promise<any>
 ): any {
   const { permissions } = this.state;
@@ -91,7 +91,7 @@ export function* canEditCollection(
 }
 
 export function* canSubmitCollection(
-  this: Koa.Application.Context,
+  this: AuthedContext<{}, PermissionsKoaState>,
   next: () => Promise<any>
 ): any {
   const { permissions } = this.state;

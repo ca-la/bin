@@ -1,4 +1,3 @@
-import Koa from 'koa';
 import uuid from 'node-uuid';
 import ProductDesignsDAO from '../../product-designs/dao';
 import * as DesignEventsDAO from '../../../dao/design-events';
@@ -7,7 +6,7 @@ import * as CreateNotifications from '../../../services/create-notifications';
 import { determineSubmissionStatus } from '../services/determine-submission-status';
 
 export function* createSubmission(
-  this: Koa.Application.Context
+  this: AuthedContext
 ): Iterator<any, any, any> {
   const { collectionId } = this.params;
   const { userId } = this.state;
@@ -36,7 +35,7 @@ export function* createSubmission(
 }
 
 export function* getSubmissionStatus(
-  this: Koa.Application.Context
+  this: AuthedContext
 ): Iterator<any, any, any> {
   const { collectionId } = this.params;
   const submissionStatusByCollection = yield determineSubmissionStatus([

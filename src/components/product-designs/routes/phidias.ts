@@ -1,6 +1,5 @@
 import { isRawDesignData } from '@cala/ts-lib';
 import Knex from 'knex';
-import Koa from 'koa';
 
 import { updateOrCreate as updateOrCreateNode } from '../../nodes/dao';
 import { updateOrCreate as updateOrCreateAsset } from '../../assets/dao';
@@ -8,18 +7,16 @@ import { updateOrCreate as updateOrCreateLayout } from '../../attributes/layout-
 import db from '../../../services/db';
 import toDateOrNull from '../../../services/to-date';
 
-export function* updateAllNodes(
-  this: Koa.Application.Context
-): Iterator<any, any, any> {
+export function* updateAllNodes(this: AuthedContext): Iterator<any, any, any> {
   const { body: design } = this.request;
   const { designId } = this.params;
 
   if (!design) {
-    return this.throw(400, 'A design body is missing!');
+    this.throw(400, 'A design body is missing!');
   }
 
   if (!isRawDesignData(design)) {
-    return this.throw(400, 'Design body does not match nodes type!');
+    this.throw(400, 'Design body does not match nodes type!');
   }
 
   const updated = yield db.transaction(async (trx: Knex.Transaction) => {

@@ -9,7 +9,7 @@ import InvalidDataError = require('../../errors/invalid-data');
 import ProductDesignsDAO from '../../components/product-designs/dao';
 
 export function* attachDesignPermissions(
-  this: Koa.Application.Context,
+  this: Koa.Context,
   designId: string
 ): any {
   const { role, userId } = this.state;
@@ -25,13 +25,13 @@ export function* attachDesignPermissions(
 }
 
 export function* attachAggregateDesignPermissions(
-  this: Koa.Application.Context,
+  this: Koa.Context,
   designIds: string[]
 ): any {
   const { role, userId } = this.state;
   const designs = yield ProductDesignsDAO.findByIds(designIds).catch(
     filterError(InvalidDataError, (err: InvalidDataError) => {
-      return this.throw(404, err);
+      this.throw(404, err);
     })
   );
 
@@ -62,7 +62,7 @@ export function* attachAggregateDesignPermissions(
 }
 
 export function* canAccessDesignInParam(
-  this: Koa.Application.Context,
+  this: Koa.Context,
   next: () => Promise<any>
 ): any {
   const { designId } = this.params;
@@ -80,12 +80,12 @@ export function* canAccessDesignInParam(
 }
 
 export function* canAccessDesignsInQuery(
-  this: Koa.Application.Context,
+  this: Koa.Context,
   next: () => Promise<any>
 ): any {
   const { designIds } = this.query;
   if (!designIds) {
-    return this.throw(400, 'Must provide designIds in query parameters');
+    this.throw(400, 'Must provide designIds in query parameters');
   }
 
   yield attachAggregateDesignPermissions.call(this, designIds.split(','));
@@ -101,13 +101,13 @@ export function* canAccessDesignsInQuery(
 }
 
 export function* canAccessDesignInQuery(
-  this: Koa.Application.Context,
+  this: Koa.Context,
   next: () => Promise<any>
 ): any {
   const { designId } = this.query;
 
   if (!designId) {
-    return this.throw(400, 'Must provide a designId in query parameters');
+    this.throw(400, 'Must provide a designId in query parameters');
   }
 
   yield attachDesignPermissions.call(this, designId);
@@ -123,7 +123,7 @@ export function* canAccessDesignInQuery(
 }
 
 export function* canCommentOnDesign(
-  this: Koa.Application.Context,
+  this: Koa.Context,
   next: () => Promise<any>
 ): any {
   if (!this.state.permissions) {
@@ -138,7 +138,7 @@ export function* canCommentOnDesign(
 }
 
 export function* canDeleteDesign(
-  this: Koa.Application.Context,
+  this: Koa.Context,
   next: () => Promise<any>
 ): any {
   if (!this.state.permissions) {
@@ -153,7 +153,7 @@ export function* canDeleteDesign(
 }
 
 export function* canDeleteDesigns(
-  this: Koa.Application.Context,
+  this: Koa.Context,
   next: () => Promise<any>
 ): any {
   if (!this.state.permissions) {
@@ -168,7 +168,7 @@ export function* canDeleteDesigns(
 }
 
 export function* canEditDesign(
-  this: Koa.Application.Context,
+  this: Koa.Context,
   next: () => Promise<any>
 ): any {
   if (!this.state.permissions) {

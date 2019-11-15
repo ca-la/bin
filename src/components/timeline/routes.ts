@@ -1,5 +1,4 @@
 import Router from 'koa-router';
-import Koa from 'koa';
 
 import requireAuth = require('../../middleware/require-auth');
 import * as Service from './service';
@@ -15,11 +14,11 @@ interface GetListQuery {
   offset?: number;
 }
 
-function* getList(this: Koa.Application.Context): Iterator<any, any, any> {
+function* getList(this: AuthedContext): Iterator<any, any, any> {
   const query: GetListQuery = this.query;
 
   if (!query.collectionId && !query.userId) {
-    return this.throw(400, 'Missing collection or user id');
+    this.throw(400, 'Missing collection or user id');
   }
   const { limit, offset } = this.query;
 

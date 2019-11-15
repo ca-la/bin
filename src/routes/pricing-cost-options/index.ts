@@ -1,5 +1,4 @@
 import Router from 'koa-router';
-import Koa from 'koa';
 
 import * as PricingProcessesDAO from '../../dao/pricing-processes';
 import * as PricingProductTypesDAO from '../../components/pricing-product-types/dao';
@@ -17,7 +16,7 @@ const router = new Router();
 // tslint:disable-next-line:typedef
 const prop = (key: string) => (input: { [k: string]: any }): any => input[key];
 
-function* getOptions(this: Koa.Application.Context): Iterator<any, any, any> {
+function* getOptions(this: AuthedContext): Iterator<any, any, any> {
   const processes: Process[] = yield PricingProcessesDAO.findLatest();
   const types: {
     name: ProductType;
