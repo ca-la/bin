@@ -80,6 +80,7 @@ const config = {
 
   // API key and password separated by a colon, e.g. 'tok12345:password12345'
   SHOPIFY_STORE_AUTH: process.env.SHOPIFY_STORE_AUTH,
+  SHOPIFY_CALA_APP_AUTH: process.env.SHOPIFY_CALA_APP_AUTH,
 
   TWILIO_SID: process.env.TWILIO_SID,
 
