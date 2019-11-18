@@ -20,6 +20,7 @@ test('StorefrontTokensDAO can save and retrieve stores', async (t: Test) => {
     );
     const created = await StorefrontTokensDAO.create(
       {
+        baseUrl: 'https://some-url',
         createdBy: user.id,
         providerName: ProviderName.SHOPIFY,
         storefrontId: storefront.id,
@@ -31,5 +32,11 @@ test('StorefrontTokensDAO can save and retrieve stores', async (t: Test) => {
 
     t.deepEqual(created, found);
     t.true(found!.createdAt instanceof Date);
+
+    const foundByStorefront = await StorefrontTokensDAO.findByStorefront(
+      storefront.id,
+      trx
+    );
+    t.deepEqual([created], foundByStorefront);
   });
 });

@@ -33,6 +33,7 @@ import productDesignVariantRoutes from './components/product-design-variants/rou
 import promoCodeRoutes from './components/promo-codes/routes';
 import resolveAccountRoutes from './components/resolve-accounts/routes';
 import salesReportsRoutes from './components/sales-reports/routes';
+import storefrontRoutes from './components/storefronts/routes';
 import subscriptionRoutes from './components/subscriptions/routes';
 import templateDesignRoutes from './components/templates/designs/routes';
 import timelineRoutes from './components/timeline/routes';
@@ -98,6 +99,7 @@ router.use('/product-design-variants', productDesignVariantRoutes);
 router.use('/promo-codes', promoCodeRoutes);
 router.use('/resolve-accounts', resolveAccountRoutes);
 router.use('/sales-reports', salesReportsRoutes);
+router.use('/storefronts', storefrontRoutes);
 router.use('/subscriptions', subscriptionRoutes);
 router.use('/templates/designs', templateDesignRoutes);
 router.use('/timelines', timelineRoutes);

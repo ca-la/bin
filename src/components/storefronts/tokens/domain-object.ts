@@ -10,6 +10,7 @@ export default interface StorefrontToken {
   providerName: ProviderName;
   storefrontId: string;
   token: string;
+  baseUrl: string | null;
   createdAt: Date;
   createdBy: string;
   deletedAt: Date | null;
@@ -20,6 +21,7 @@ export interface StorefrontTokenRow {
   provider_name: string;
   storefront_id: string;
   token: string;
+  base_url: string | null;
   created_at: Date;
   created_by: string;
   deleted_at: Date | null;
@@ -43,6 +45,7 @@ export function isStorefrontTokenRow(
     'provider_name',
     'storefront_id',
     'token',
+    'base_url',
     'created_at',
     'created_by',
     'deleted_at'

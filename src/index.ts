@@ -16,6 +16,7 @@ import jsonBody = require('./middleware/json-body');
 import loggerMiddleware = require('./middleware/logger');
 import options = require('./middleware/options');
 import validatePagination from './middleware/validate-pagination';
+import shopifyAuth from './middleware/shopify-auth';
 
 const app = new koa();
 
@@ -27,6 +28,7 @@ app.use(headers);
 app.use(options);
 app.use(attachSession);
 app.use(validatePagination);
+app.use(convert.back(shopifyAuth()));
 
 app.use(router.routes());
 app.use(convert.back(apolloServer.getMiddleware({ path: '/v2' })));

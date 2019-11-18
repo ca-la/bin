@@ -9,7 +9,7 @@ import StorefrontToken, {
   StorefrontTokenRow,
   unsavedDataAdapter
 } from './domain-object';
-import { validate } from '../../../services/validate-from-db';
+import { validate, validateEvery } from '../../../services/validate-from-db';
 
 const TABLE_NAME = 'storefront_integration_tokens';
 
@@ -57,5 +57,25 @@ export async function findById(
     isStorefrontTokenRow,
     dataAdapter,
     storefrontToken
+  );
+}
+
+export async function findByStorefront(
+  storefrontId: string,
+  trx?: Knex.Transaction
+): Promise<StorefrontToken[]> {
+  const storefrontTokens = await db(TABLE_NAME)
+    .where({ storefront_id: storefrontId, deleted_at: null })
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    });
+
+  return validateEvery<StorefrontTokenRow, StorefrontToken>(
+    TABLE_NAME,
+    isStorefrontTokenRow,
+    dataAdapter,
+    storefrontTokens
   );
 }
