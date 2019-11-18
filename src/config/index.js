@@ -30,6 +30,13 @@ const REQUIRE_CALA_EMAIL = {
   [envs.STG]: true
 }[ENV];
 
+const ENABLE_APOLLO_PLAYGROUND = {
+  [envs.DEMO]: false,
+  [envs.LOCAL]: true,
+  [envs.PROD]: false,
+  [envs.STG]: true
+}[ENV];
+
 /**
  * All environment variables are required for API functionality, unless stated
  * otherwise.
@@ -38,6 +45,7 @@ const REQUIRE_CALA_EMAIL = {
  * For live deployments, use `heroku config:set FOO=123 --app cala-api-prod`.
  */
 const config = {
+  ENABLE_APOLLO_PLAYGROUND,
   REQUIRE_CALA_EMAIL,
 
   AWS_SCANPHOTO_BUCKET_NAME: process.env.AWS_SCANPHOTO_BUCKET_NAME,

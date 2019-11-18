@@ -1,3 +1,4 @@
+export const ENABLE_APOLLO_PLAYGROUND: boolean;
 export const REQUIRE_CALA_EMAIL: boolean;
 
 export const AWS_SCANPHOTO_BUCKET_NAME: string;

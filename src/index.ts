@@ -5,8 +5,10 @@ Logger.log('Starting CALA API...');
 
 import compress = require('koa-compress');
 import koa = require('koa');
+import convert = require('koa-convert');
 
 import router from './routes';
+import apolloServer from './apollo/server';
 import attachSession = require('./middleware/attach-session');
 import errors = require('./middleware/errors');
 import headers = require('./middleware/headers');
@@ -27,6 +29,7 @@ app.use(attachSession);
 app.use(validatePagination);
 
 app.use(router.routes());
+app.use(convert.back(apolloServer.getMiddleware({ path: '/v2' })));
 
 const loadTime = Date.now() - beginTime;
 Logger.log(`Loaded ${router.stack.length} routes in ${loadTime}ms`);
