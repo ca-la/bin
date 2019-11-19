@@ -47,7 +47,7 @@ export default function shopifyWrapper(
     ): Promise<void> => {
       const newStorefront = {
         accessToken: ctx.state.shopify.accessToken,
-        baseUrl: `https://${ctx.state.shopify.shop}.myshopify.com`,
+        baseUrl: `https://${ctx.state.shopify.shop}`,
         name: ctx.state.shopify.shop,
         providerName: ProviderName.SHOPIFY
       };
