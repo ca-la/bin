@@ -1,10 +1,10 @@
 import Koa from 'koa';
 import * as nodeFetch from 'node-fetch';
-import shopifyAuth from '@shopify/koa-shopify-auth';
+import shopifyAuth from '@cala/koa-shopify-auth';
 import {
   NextFunction,
   OAuthStartOptions
-} from '@shopify/koa-shopify-auth/src/types';
+} from '@cala/koa-shopify-auth/src/types';
 
 import { addJson } from '../../services/add-json-querystring';
 import { SHOPIFY_CALA_APP_AUTH, STUDIO_HOST } from '../../config';
