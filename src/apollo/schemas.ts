@@ -1,5 +1,6 @@
 import { gql } from 'apollo-server-core';
 import usersSchema from './components/users/schema';
+import sessionsSchema from './components/sessions/schema';
 
 const baseSchema = gql`
   scalar GraphQLDateTime
@@ -7,6 +8,10 @@ const baseSchema = gql`
   type Query {
     _empty: String
   }
+
+  type Mutation {
+    _empty: String
+  }
 `;
 
-export default [baseSchema, usersSchema];
+export default [baseSchema, usersSchema, sessionsSchema];
