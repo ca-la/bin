@@ -50,7 +50,7 @@ test('findAndDuplicateVariants for a design with variants', async (t: tape.Test)
     position: 0,
     sizeName: 'M',
     unitsToProduce: 123,
-    universalProductCode: null
+    universalProductCode: '000000000000'
   });
   const variantTwo = await VariantsDAO.create({
     colorName: 'Red',
@@ -80,6 +80,7 @@ test('findAndDuplicateVariants for a design with variants', async (t: tape.Test)
     dupeOne,
     {
       ...variantOne,
+      universalProductCode: null,
       createdAt: dupeOne.createdAt,
       designId: newDesign.id,
       id: dupeOne.id

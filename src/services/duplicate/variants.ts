@@ -17,7 +17,10 @@ export async function findAndDuplicateVariants(
     variants.map(
       (variant: Variant): Promise<Variant> =>
         VariantsDAO.create(
-          prepareForDuplication(variant, { designId: newDesignId }),
+          prepareForDuplication<Variant>(variant, {
+            designId: newDesignId,
+            universalProductCode: null
+          }),
           trx
         )
     )
