@@ -4,8 +4,8 @@ import * as PlansDAO from './dao';
 
 const router = new Router();
 
-function* getAll(this: AuthedContext): Iterator<any, any, any> {
-  const plans = yield PlansDAO.findAll();
+function* getPublic(this: AuthedContext): Iterator<any, any, any> {
+  const plans = yield PlansDAO.findPublic();
   this.status = 200;
   this.body = plans;
 }
@@ -19,7 +19,7 @@ function* getById(this: AuthedContext): Iterator<any, any, any> {
   this.body = plan;
 }
 
-router.get('/', getAll);
+router.get('/', getPublic);
 router.get('/:planId', getById);
 
 export default router.routes();

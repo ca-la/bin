@@ -12,6 +12,9 @@ export interface Plan {
   stripePlanId: string;
   title: string;
   isDefault: boolean;
+  isPublic: boolean;
+  description: string | null;
+  ordering: number | null;
 }
 
 export interface PlanRow {
@@ -23,6 +26,9 @@ export interface PlanRow {
   stripe_plan_id: string;
   title: string;
   is_default: boolean;
+  is_public: boolean;
+  description: string | null;
+  ordering: number | null;
 }
 
 function encode(row: PlanRow): Plan {
@@ -44,7 +50,10 @@ export function isPlanRow(row: object): row is PlanRow {
     'revenue_share_percentage',
     'stripe_plan_id',
     'title',
-    'is_default'
+    'is_default',
+    'is_public',
+    'description',
+    'ordering'
   );
 }
 
@@ -58,6 +67,9 @@ export function isPlan(data: object): data is Plan {
     'revenueSharePercentage',
     'stripePlanId',
     'title',
-    'isDefault'
+    'isDefault',
+    'isPublic',
+    'description',
+    'ordering'
   );
 }

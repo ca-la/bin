@@ -14,7 +14,10 @@ test('PlansDAO supports creation and retrieval', async (t: Test) => {
     revenueSharePercentage: 12,
     stripePlanId: 'plan_123',
     title: 'A little Bit',
-    isDefault: false
+    isDefault: false,
+    isPublic: false,
+    ordering: null,
+    description: null
   });
 
   await PlansDAO.create({
@@ -24,7 +27,10 @@ test('PlansDAO supports creation and retrieval', async (t: Test) => {
     revenueSharePercentage: 50,
     stripePlanId: 'plan_456',
     title: 'Some More',
-    isDefault: true
+    isDefault: true,
+    isPublic: false,
+    ordering: null,
+    description: null
   });
 
   const p1Found = await PlansDAO.findById(p1id);
@@ -44,6 +50,55 @@ test('PlansDAO supports creation and retrieval', async (t: Test) => {
   t.equal(sorted[1].revenueSharePercentage, 50);
 });
 
+test('PlansDAO.findPublic lists public plans', async (t: Test) => {
+  await PlansDAO.create({
+    id: uuid.v4(),
+    billingInterval: 'MONTHLY',
+    monthlyCostCents: 1234,
+    revenueSharePercentage: 12,
+    stripePlanId: 'plan_123',
+    title: 'Second Public',
+    isDefault: false,
+    isPublic: true,
+    ordering: 2,
+    description: null
+  });
+
+  await PlansDAO.create({
+    id: uuid.v4(),
+    billingInterval: 'MONTHLY',
+    monthlyCostCents: 1234,
+    revenueSharePercentage: 12,
+    stripePlanId: 'plan_123',
+    title: 'First Private',
+    isDefault: false,
+    isPublic: false,
+    ordering: null,
+    description: null
+  });
+
+  await PlansDAO.create({
+    id: uuid.v4(),
+    billingInterval: 'MONTHLY',
+    monthlyCostCents: 4567,
+    revenueSharePercentage: 50,
+    stripePlanId: 'plan_456',
+    title: 'First Public',
+    isDefault: true,
+    isPublic: true,
+    ordering: 1,
+    description: null
+  });
+
+  const plans = await PlansDAO.findPublic();
+
+  t.equal(plans.length, 2, 'finds public plans');
+  t.equal(plans[0].title, 'First Public');
+  t.equal(plans[0].ordering, 1);
+  t.equal(plans[1].title, 'Second Public');
+  t.equal(plans[1].ordering, 2);
+});
+
 test('PlansDAO.findById returns null if not found', async (t: Test) => {
   const plan = await PlansDAO.findById('00000000-0000-0000-0000-000000000000');
   t.equal(plan, null);
@@ -57,7 +112,10 @@ test('PlansDAO prevents creating multiple default plans', async (t: Test) => {
     revenueSharePercentage: 12,
     stripePlanId: 'plan_123',
     title: 'A little Bit',
-    isDefault: true
+    isDefault: true,
+    isPublic: false,
+    ordering: null,
+    description: null
   });
 
   try {
@@ -68,7 +126,10 @@ test('PlansDAO prevents creating multiple default plans', async (t: Test) => {
       revenueSharePercentage: 50,
       stripePlanId: 'plan_456',
       title: 'Some More',
-      isDefault: true
+      isDefault: true,
+      isPublic: false,
+      ordering: null,
+      description: null
     });
     throw new Error("Shouldn't get here");
   } catch (err) {

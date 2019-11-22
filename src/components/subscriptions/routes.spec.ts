@@ -43,7 +43,10 @@ async function setup(): Promise<{
     revenueSharePercentage: 50,
     stripePlanId: 'plan_456',
     title: 'Some More',
-    isDefault: true
+    isDefault: true,
+    isPublic: false,
+    ordering: null,
+    description: null
   });
 
   return { session, user, plan };

@@ -522,7 +522,10 @@ test('POST /users allows subscribing to a plan', async (t: Test) => {
     revenueSharePercentage: 50,
     stripePlanId: 'plan_456',
     title: 'Some More',
-    isDefault: true
+    isDefault: true,
+    isPublic: false,
+    ordering: null,
+    description: null
   });
 
   const [response, body] = await post('/users', {

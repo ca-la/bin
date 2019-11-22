@@ -18,7 +18,10 @@ test('SubscriptionsDAO supports creation and retrieval', async (t: tape.Test) =>
     revenueSharePercentage: 50,
     stripePlanId: 'plan_456',
     title: 'Some More',
-    isDefault: true
+    isDefault: true,
+    isPublic: false,
+    ordering: null,
+    description: null
   });
 
   const paymentMethod = await PaymentMethodsDAO.create({
@@ -57,7 +60,10 @@ test('SubscriptionsDAO supports updating', async (t: tape.Test) => {
     revenueSharePercentage: 50,
     stripePlanId: 'plan_456',
     title: 'Some More',
-    isDefault: true
+    isDefault: true,
+    isPublic: false,
+    ordering: null,
+    description: null
   });
 
   const pm1 = await PaymentMethodsDAO.create({

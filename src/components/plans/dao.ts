@@ -46,6 +46,19 @@ export async function findAll(): Promise<Plan[]> {
   );
 }
 
+export async function findPublic(): Promise<Plan[]> {
+  const result = await db(TABLE_NAME)
+    .where({ is_public: true }, '*')
+    .orderBy('ordering', 'asc');
+
+  return validateEvery<PlanRow, Plan>(
+    TABLE_NAME,
+    isPlanRow,
+    dataAdapter,
+    result
+  );
+}
+
 export async function findById(id: string): Promise<Plan | null> {
   const result = await db(TABLE_NAME)
     .where({ id })

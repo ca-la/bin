@@ -2,18 +2,20 @@ import uuid from 'node-uuid';
 
 import * as PlansDAO from './dao';
 import { get } from '../../test-helpers/http';
-import { Plan } from './domain-object';
 import { test, Test } from '../../test-helpers/fresh';
 
-test('GET /plans lists available plans', async (t: Test) => {
+test('GET /plans lists public plans in order', async (t: Test) => {
   await PlansDAO.create({
     id: uuid.v4(),
     billingInterval: 'MONTHLY',
     monthlyCostCents: 1234,
     revenueSharePercentage: 12,
     stripePlanId: 'plan_123',
-    title: 'A little Bit',
-    isDefault: false
+    title: 'The Second One',
+    isDefault: true,
+    isPublic: true,
+    description: 'The Second One',
+    ordering: 2
   });
 
   await PlansDAO.create({
@@ -22,8 +24,24 @@ test('GET /plans lists available plans', async (t: Test) => {
     monthlyCostCents: 4567,
     revenueSharePercentage: 12,
     stripePlanId: 'plan_456',
-    title: 'Some More',
-    isDefault: true
+    title: 'The Secret One',
+    isDefault: false,
+    isPublic: false,
+    description: 'The Secret One',
+    ordering: null
+  });
+
+  await PlansDAO.create({
+    id: uuid.v4(),
+    billingInterval: 'MONTHLY',
+    monthlyCostCents: 7890,
+    revenueSharePercentage: 12,
+    stripePlanId: 'plan_789',
+    title: 'The First One',
+    isDefault: false,
+    isPublic: true,
+    description: 'The First One',
+    ordering: 1
   });
 
   const [response, body] = await get('/plans');
@@ -31,13 +49,11 @@ test('GET /plans lists available plans', async (t: Test) => {
   t.equal(response.status, 200);
 
   t.equal(body.length, 2);
-  const sorted = body.sort(
-    (a: Plan, b: Plan) => a.monthlyCostCents - b.monthlyCostCents
-  );
-  t.equal(sorted[0].title, 'A little Bit');
-  t.equal(sorted[0].monthlyCostCents, 1234);
-  t.equal(sorted[1].title, 'Some More');
-  t.equal(sorted[1].monthlyCostCents, 4567);
+  t.equal(body[0].title, 'The First One');
+  t.equal(body[0].monthlyCostCents, 7890);
+
+  t.equal(body[1].title, 'The Second One');
+  t.equal(body[1].monthlyCostCents, 1234);
 });
 
 test('GET /plans/:id returns a plan', async (t: Test) => {
@@ -48,7 +64,10 @@ test('GET /plans/:id returns a plan', async (t: Test) => {
     revenueSharePercentage: 12,
     stripePlanId: 'plan_123',
     title: 'A little Bit',
-    isDefault: false
+    isDefault: false,
+    isPublic: false,
+    description: null,
+    ordering: null
   });
 
   const [response, body] = await get(`/plans/${plan.id}`);
@@ -67,7 +86,10 @@ test('GET /plans/:id returns 404 when non-existent', async (t: Test) => {
     revenueSharePercentage: 12,
     stripePlanId: 'plan_123',
     title: 'A little Bit',
-    isDefault: false
+    isDefault: false,
+    isPublic: true,
+    ordering: 1,
+    description: null
   });
 
   const [response, body] = await get(
