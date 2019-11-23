@@ -141,6 +141,12 @@ export async function findMatchingOrCreateInput(
 export async function findVersionValuesForRequest(
   request: PricingQuoteRequestWithVersions
 ): Promise<PricingQuoteValues> {
+  // tslint:disable-next-line: no-console
+  console.log(
+    'findVersionValuesFromRequest:',
+    JSON.stringify(request, null, 2)
+  );
+
   const { units } = request;
   const constant = await findConstants(request.constantsVersion);
   const careLabel = await findCareLabel(units, request.careLabelsVersion);

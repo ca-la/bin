@@ -14,6 +14,7 @@ import payInvoiceWithNewPaymentMethod, {
 import { CreateQuotePayload } from '../../services/generate-pricing-quote';
 import { hasProperties } from '../../services/require-properties';
 import createUPCsForCollection from '../../services/create-upcs-for-collection';
+import { omit } from 'lodash';
 
 const router = new Router();
 
@@ -59,6 +60,12 @@ function* payQuote(
   if (!collection) {
     this.throw(403, 'Unable to access collection');
   }
+
+  // tslint:disable-next-line: no-console
+  console.log(
+    'body:',
+    JSON.stringify(omit(body, 'paymentMethodTokenId'), null, 2)
+  );
 
   yield createUPCsForCollection(collection.id);
 
