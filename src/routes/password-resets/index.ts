@@ -1,11 +1,9 @@
-'use strict';
+import Router from 'koa-router';
 
-const Router = require('koa-router');
-
-const SessionsDAO = require('../../dao/sessions');
-const UsersDAO = require('../../components/users/dao');
-const passwordReset = require('../../emails/password-reset');
-const { sendSynchronouslyDeprecated } = require('../../services/email');
+import SessionsDAO from '../../dao/sessions';
+import * as UsersDAO from '../../components/users/dao';
+import passwordReset from '../../emails/password-reset';
+import { sendSynchronouslyDeprecated } from '../../services/email';
 
 const router = new Router();
 
@@ -16,7 +14,7 @@ const router = new Router();
  * to reset their password.
  * @param {String} email
  */
-function* sendReset() {
+function* sendReset(this: PublicContext): Iterator<any, any, any> {
   const { email } = this.request.body;
 
   if (!email) {
@@ -39,10 +37,9 @@ function* sendReset() {
     emailTemplate
   );
 
-  this.status = 201;
-  this.body = { success: true };
+  this.status = 204;
 }
 
 router.post('/', sendReset);
 
-module.exports = router.routes();
+export = router.routes();
