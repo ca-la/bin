@@ -612,24 +612,6 @@ module.exports = `
     </tbody>
 </table></td>
                             </tr>
-                            <tr>
-                                <td valign="top" id="templateBody"><table border="0" cellpadding="0" cellspacing="0" width="100%" class="mcnImageBlock" style="min-width:100%;">
-    <tbody class="mcnImageBlockOuter">
-            <tr>
-                <td valign="top" style="padding:0px" class="mcnImageBlockInner">
-                    <table align="left" width="100%" border="0" cellpadding="0" cellspacing="0" class="mcnImageContentContainer" style="min-width:100%;">
-                        <tbody><tr>
-                            <td class="mcnImageContent" valign="top" style="padding-right: 0px; padding-left: 0px; padding-top: 0; padding-bottom: 0; text-align:center;">
-                                
-                                    
-                                        <img align="center" alt="Forgot your password?" src="https://gallery.mailchimp.com/a7f72ade53bf76a55050c6c34/images/7fadc15d-d2c8-4262-b542-14d3e5225be9.jpg" width="600" style="max-width:1200px; padding-bottom: 0; display: inline !important; vertical-align: bottom;" class="mcnImage">
-                                    
-                                
-                            </td>
-                        </tr>
-                    </tbody></table>
-                </td>
-            </tr>
     </tbody>
 </table><table border="0" cellpadding="0" cellspacing="0" width="100%" class="mcnImageBlock" style="min-width:100%;">
     <tbody class="mcnImageBlockOuter">
