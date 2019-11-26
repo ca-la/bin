@@ -51,6 +51,26 @@ export async function findForUser(
   );
 }
 
+export async function findActive(
+  userId: string,
+  trx: Knex.Transaction
+): Promise<Subscription[]> {
+  const res = await db(TABLE_NAME)
+    .transacting(trx)
+    .whereRaw(
+      'user_id = ? and (cancelled_at is null or cancelled_at > now())',
+      [userId]
+    )
+    .returning('*');
+
+  return validateEvery<SubscriptionRow, Subscription>(
+    TABLE_NAME,
+    isSubscriptionRow,
+    dataAdapter,
+    res
+  );
+}
+
 export async function update(
   id: string,
   data: Partial<Subscription>,

@@ -51,6 +51,75 @@ test('SubscriptionsDAO supports creation and retrieval', async (t: tape.Test) =>
   });
 });
 
+test('SubscriptionsDAO.findActive lists only active subscriptions', async (t: tape.Test) => {
+  const { user } = await createUser({ withSession: false });
+  const plan = await PlansDAO.create({
+    id: uuid.v4(),
+    billingInterval: 'MONTHLY',
+    monthlyCostCents: 4567,
+    revenueSharePercentage: 50,
+    stripePlanId: 'plan_456',
+    title: 'Some More',
+    isDefault: true,
+    isPublic: false,
+    ordering: null,
+    description: null
+  });
+
+  const paymentMethod = await PaymentMethodsDAO.create({
+    userId: user.id,
+    stripeCustomerId: 'customer1',
+    stripeSourceId: 'source1',
+    lastFourDigits: '1234'
+  });
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await SubscriptionsDAO.create(
+      {
+        id: uuid.v4(),
+        cancelledAt: new Date('2000-01-01'),
+        planId: plan.id,
+        paymentMethodId: paymentMethod.id,
+        stripeSubscriptionId: '123',
+        userId: user.id,
+        isPaymentWaived: false
+      },
+      trx
+    );
+
+    const active1 = await SubscriptionsDAO.create(
+      {
+        id: uuid.v4(),
+        cancelledAt: null,
+        planId: plan.id,
+        paymentMethodId: paymentMethod.id,
+        stripeSubscriptionId: '123',
+        userId: user.id,
+        isPaymentWaived: false
+      },
+      trx
+    );
+
+    const active2 = await SubscriptionsDAO.create(
+      {
+        id: uuid.v4(),
+        cancelledAt: new Date('3000-01-01'),
+        planId: plan.id,
+        paymentMethodId: paymentMethod.id,
+        stripeSubscriptionId: '123',
+        userId: user.id,
+        isPaymentWaived: false
+      },
+      trx
+    );
+
+    const found = await SubscriptionsDAO.findActive(user.id, trx);
+    t.equal(found.length, 2);
+    t.equal(found[0].id, active1.id);
+    t.equal(found[1].id, active2.id);
+  });
+});
+
 test('SubscriptionsDAO supports updating', async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
   const plan = await PlansDAO.create({

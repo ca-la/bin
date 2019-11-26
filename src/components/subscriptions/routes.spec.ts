@@ -1,6 +1,7 @@
 import uuid from 'node-uuid';
 import Knex from 'knex';
 
+import * as attachPlan from './attach-plan';
 import * as attachSource from '../../services/stripe/attach-source';
 import * as createStripeSubscription from '../../services/stripe/create-subscription';
 import * as PlansDAO from '../plans/dao';
@@ -87,6 +88,30 @@ test('GET /subscriptions lists current subscriptions', async (t: Test) => {
   t.equal(body.length, 1);
   t.equal(body[0].id, id);
   t.equal(body[0].plan.title, 'Some More');
+});
+
+test('GET /subscriptions?isActive=true lists active subscriptions', async (t: Test) => {
+  const { user, session } = await createUser();
+
+  const findStub = sandbox()
+    .stub(SubscriptionsDAO, 'findActive')
+    .resolves([{ id: 'sub1' }]);
+  sandbox()
+    .stub(attachPlan, 'default')
+    .callsFake((x: any) => x);
+
+  const [res, body] = await get(
+    `/subscriptions?userId=${user.id}&isActive=true`,
+    {
+      headers: authHeader(session.id)
+    }
+  );
+
+  t.equal(res.status, 200);
+  t.equal(body.length, 1);
+  t.equal(body[0].id, 'sub1');
+  t.equal(findStub.callCount, 1);
+  t.equal(findStub.firstCall.args[0], user.id);
 });
 
 test('POST /subscriptions creates a subscription', async (t: Test) => {

@@ -21,8 +21,8 @@ function isCreateOrUpdateRequest(body: any): body is CreateOrUpdateRequest {
 
 const router = new Router();
 
-function* listForUser(this: AuthedContext): Iterator<any, any, any> {
-  const { userId } = this.query;
+function* getList(this: AuthedContext): Iterator<any, any, any> {
+  const { userId, isActive } = this.query;
 
   if (!userId) {
     this.throw(400, 'User ID is required');
@@ -30,9 +30,18 @@ function* listForUser(this: AuthedContext): Iterator<any, any, any> {
 
   canAccessUserResource.call(this, userId);
 
+  const findOnlyActive = isActive === 'true';
+
   const subscriptionsWithPlans = yield db.transaction(
     async (trx: Knex.Transaction) => {
-      const subscriptions = await SubscriptionsDAO.findForUser(userId, trx);
+      let subscriptions: Subscription[];
+
+      if (findOnlyActive) {
+        subscriptions = await SubscriptionsDAO.findActive(userId, trx);
+      } else {
+        subscriptions = await SubscriptionsDAO.findForUser(userId, trx);
+      }
+
       return await Promise.all(
         subscriptions.map((subscription: Subscription) =>
           attachPlan(subscription)
@@ -89,7 +98,7 @@ function* update(this: AuthedContext): Iterator<any, any, any> {
   this.status = 200;
 }
 
-router.get('/', requireAuth, listForUser);
+router.get('/', requireAuth, getList);
 router.post('/', requireAuth, create);
 router.put('/:subscriptionId', requireAuth, update);
 
