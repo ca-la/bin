@@ -8,7 +8,7 @@ const BCRYPT_ROUNDS = 10;
 /**
  * Create a one-way hash.
  * @param {String} plaintext The string to hash
- * @returns {Promise} Resolves with the hashed string
+ * @returns {Promise<String>} Resolves with the hashed string
  */
 function hash(plaintext) {
   const genSalt = promisify(bcrypt.genSalt.bind(bcrypt));

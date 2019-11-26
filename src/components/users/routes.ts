@@ -35,7 +35,7 @@ interface CreateBody extends UserIO {
 /**
  * POST /users
  */
-function* createUser(this: AuthedContext<CreateBody>): Iterator<any, any, any> {
+function* createUser(this: PublicContext<CreateBody>): Iterator<any, any, any> {
   const {
     name,
     email,
@@ -49,9 +49,6 @@ function* createUser(this: AuthedContext<CreateBody>): Iterator<any, any, any> {
 
   if (!email) {
     this.throw(400, 'Email must be provided');
-  }
-  if (!name) {
-    this.throw(400, 'Name must be provided');
   }
 
   if (REQUIRE_CALA_EMAIL && !email.match(/@ca\.la$/)) {
@@ -76,7 +73,7 @@ function* createUser(this: AuthedContext<CreateBody>): Iterator<any, any, any> {
         referralCode,
         role: ROLES.user
       },
-      { trx }
+      { requirePassword: false, trx }
     ).catch(
       filterError(InvalidDataError, (err: Error) => this.throw(400, err))
     );

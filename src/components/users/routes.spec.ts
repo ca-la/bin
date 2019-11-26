@@ -107,6 +107,20 @@ test('POST /users returns a session instead if requested', async (t: Test) => {
   t.equal(body.user.name, 'Q User');
 });
 
+test('POST /users allow creating a user with no name or password', async (t: Test) => {
+  stubUserDependencies();
+
+  const [response] = await post('/users?returnValue=session', {
+    body: {
+      ...USER_DATA,
+      name: null,
+      password: null
+    }
+  });
+
+  t.equal(response.status, 201);
+});
+
 test('PUT /users/:id/password returns a 401 if unauthenticated', async (t: Test) => {
   const [response, body] = await put('/users/123/password', {
     body: USER_DATA
