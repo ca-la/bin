@@ -447,3 +447,19 @@ test('UsersDAO.findById allows passing in a transaction', async (t: Test) => {
     t.equal(found && found.name, 'Q User');
   });
 });
+
+test('UsersDAO.hasPasswordSet checks to see if a password is set', async (t: Test) => {
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const complete = await UsersDAO.create(USER_DATA, {
+      trx,
+      requirePassword: false
+    });
+    t.true(await UsersDAO.hasPasswordSet(complete.id, trx));
+
+    const incomplete = await UsersDAO.create(
+      { ...USER_DATA, email: 'unique@example.com', password: null },
+      { trx, requirePassword: false }
+    );
+    t.false(await UsersDAO.hasPasswordSet(incomplete.id, trx));
+  });
+});

@@ -1,11 +1,11 @@
-import { escape as escapeHtml } from 'lodash';
+import { escape as escapeOptionalHtml } from 'lodash';
 import {
   BreadCrumb,
   NotificationMessage,
   NotificationMessageActionType
 } from '@cala/ts-lib';
 
-import InvalidDataError = require('../../errors/invalid-data');
+import InvalidDataError from '../../errors/invalid-data';
 import * as ComponentsDAO from '../components/dao';
 import ProductDesign = require('../product-designs/domain-objects/product-design');
 import * as UsersDAO from '../../components/users/dao';
@@ -39,6 +39,10 @@ function findImageUrl(design: ProductDesign): string | null {
     return design.imageLinks[0].thumbnailLink;
   }
   return null;
+}
+
+function escapeHtml(html?: string | null): string {
+  return escapeOptionalHtml(html || '');
 }
 
 async function getDesign(

@@ -115,7 +115,10 @@ export async function findOrCreateCustomerId(
       `Email is required to create stripe customer for User ${user.id}`
     );
   }
-  const customer = await createCustomer({ name: user.name, email: user.email });
+  const customer = await createCustomer({
+    name: user.name || '',
+    email: user.email
+  });
   return customer.id;
 }
 

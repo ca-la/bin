@@ -3,7 +3,7 @@ import { CollaboratorWithUser } from '../../components/collaborators/domain-obje
 export default function getCollaboratorName(
   collaborator: CollaboratorWithUser
 ): string {
-  return collaborator.user
+  return collaborator.user && collaborator.user.name
     ? collaborator.user.name
     : collaborator.userEmail || 'No Name';
 }

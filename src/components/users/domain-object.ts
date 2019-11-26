@@ -31,7 +31,7 @@ export default interface User {
   lastAcceptedDesignerTermsAt: Date | null;
   lastAcceptedPartnerTermsAt: Date | null;
   locale: string;
-  name: string;
+  name: string | null;
   phone: string | null;
   referralCode: string;
   role: Role;
@@ -55,8 +55,8 @@ export const baseUser = {
 
 export interface UserIO extends Partial<Omit<User, 'createdAt' | 'id'>> {
   email: string;
-  name: string;
-  password: string;
+  name: string | null;
+  password: string | null;
 }
 
 export interface UserRow {
@@ -68,7 +68,7 @@ export interface UserRow {
   last_accepted_designer_terms_at: string | null;
   last_accepted_partner_terms_at: string | null;
   locale: string;
-  name: string;
+  name: string | null;
   password_hash: string | null;
   phone: string | null;
   referral_code: string;

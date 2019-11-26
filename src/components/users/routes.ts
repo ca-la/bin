@@ -289,6 +289,16 @@ function* updateUser(
             name: 'InvalidPassword'
           });
         }
+      } else if (newPassword && !currentPassword) {
+        const hasPasswordSet = await UsersDAO.hasPasswordSet(
+          this.state.userId,
+          trx
+        );
+        if (!hasPasswordSet) {
+          await UsersDAO.updatePassword(this.state.userId, newPassword, trx);
+        } else {
+          this.throw(400);
+        }
       }
 
       if (Object.keys(compact(updatedValues)).length === 0) {

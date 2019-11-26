@@ -46,13 +46,13 @@ export async function create(
   data: UserIO,
   options: CreateOptions = {}
 ): Promise<User> {
-  const { email, name, password, phone } = data;
+  const { email, password, phone } = data;
 
   // Allow passing `options.requirePassword = false` to disable the password
   // requirement. This is a very rare case, so intentionally a bit clumsy.
   const requirePassword = options.requirePassword !== false;
 
-  if (!name || (requirePassword && !password)) {
+  if (requirePassword && !password) {
     return Promise.reject(new InvalidDataError('Missing required information'));
   }
 
@@ -232,6 +232,26 @@ export async function findByReferralCode(referralCode: string): Promise<User> {
   return validate<UserRow, User>(TABLE_NAME, isUserRow, dataAdapter, user);
 }
 
+export async function hasPasswordSet(
+  userId: string,
+  trx?: Knex.Transaction
+): Promise<boolean> {
+  const { has_password_set: hasPassword } = await db('users')
+    .first()
+    .select(db.raw('count(*) = 0 as has_password_set'))
+    .where({
+      id: userId,
+      password_hash: null
+    })
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    });
+
+  return hasPassword;
+}
+
 export async function updatePassword(
   userId: string,
   password: string,
@@ -293,6 +313,10 @@ export async function completeSmsPreregistration(
   data: UserIO
 ): Promise<User> {
   const { phone, password } = data;
+
+  if (!password) {
+    throw new InvalidDataError('Password must be set');
+  }
 
   const validatedPhone = validateAndFormatPhoneNumber(phone);
   const passwordHash = await hash(password);

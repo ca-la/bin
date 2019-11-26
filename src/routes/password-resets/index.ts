@@ -14,7 +14,9 @@ const router = new Router();
  * to reset their password.
  * @param {String} email
  */
-function* sendReset(this: PublicContext): Iterator<any, any, any> {
+function* sendReset(
+  this: PublicContext<{ email?: string }>
+): Iterator<any, any, any> {
   const { email } = this.request.body;
 
   if (!email) {

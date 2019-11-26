@@ -11,6 +11,7 @@ import * as CreditsDAO from '../../components/credits/dao';
 import * as DuplicationService from '../../services/duplicate';
 import * as PlansDAO from '../plans/dao';
 import * as PromoCodesDAO from '../../components/promo-codes/dao';
+import * as SessionsDAO from '../../dao/sessions';
 import * as SubscriptionsDAO from '../../components/subscriptions/dao';
 import * as UsersDAO from './dao';
 import createUser = require('../../test-helpers/create-user');
@@ -305,6 +306,46 @@ test('PATCH /users/:id returns error on password update fail', async (t: Test) =
   t.equal(response.status, 400);
   t.true(Array.isArray(body.errors) && body.errors.length === 1);
   t.true(body.errors[0].name === 'InvalidDataError');
+});
+
+test('PATCH /users/:id allows completing a user registration', async (t: Test) => {
+  const incomplete = await UsersDAO.create(
+    {
+      email: 'somebody@example.com',
+      role: 'USER',
+      name: null,
+      password: null,
+      referralCode: 'freebie'
+    },
+    { requirePassword: false }
+  );
+  const session = await SessionsDAO.createForUser(incomplete);
+
+  const [response, body] = await patch(`/users/${incomplete.id}`, {
+    body: {
+      name: 'New Name',
+      newPassword: 'abc123'
+    },
+    headers: authHeader(session.id)
+  });
+
+  t.equal(response.status, 200);
+  t.equal(body.name, 'New Name');
+
+  const alreadyComplete = await createUser();
+
+  const [invalidData] = await patch(`/users/${alreadyComplete.user.id}`, {
+    body: {
+      newPassword: 'pwned'
+    },
+    headers: authHeader(alreadyComplete.session.id)
+  });
+
+  t.equal(
+    invalidData.status,
+    400,
+    'Cannot set password on completed user without currentPassword'
+  );
 });
 
 test('PATCH /users/:id returns multiple errors', async (t: Test) => {
