@@ -294,7 +294,11 @@ function* updateUser(
         if (!hasPasswordSet) {
           await UsersDAO.updatePassword(this.state.userId, newPassword, trx);
         } else {
-          this.throw(400);
+          errors.push({
+            field: 'password',
+            message: 'A password is already set for this account',
+            name: 'PasswordIsAlreadySet'
+          });
         }
       }
 
