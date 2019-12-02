@@ -1,14 +1,15 @@
 import { ResolveAccountData } from '@cala/ts-lib/dist/resolve';
 
 import * as InvoicesDAO from '../../dao/invoices';
+import Invoice = require('../../domain-objects/invoice');
+import toDateOrNull from '../../services/to-date';
+import { fetch } from '../../services/fetch';
+import { logServerError } from '../../services/logger';
+import { RESOLVE_API_URL } from '../../config';
 import ResolveAccount, {
   isRawResolveData,
   RawResolveData
 } from './domain-object';
-import { RESOLVE_API_URL } from '../../config';
-import toDateOrNull from '../../services/to-date';
-import { fetch } from '../../services/fetch';
-import Invoice = require('../../domain-objects/invoice');
 
 export async function hasResolveAccount(
   resolveCustomerId: string
@@ -68,6 +69,9 @@ export async function getResolveAccountData(
   if (data && isRawResolveData(data)) {
     return encodeRawResolveData(data, account, totalUntrackedAmountCents);
   }
+
+  logServerError('Resolve response body:', data);
+
   throw new Error(
     `Could not retrieve Resolve data for customer id ${resolveCustomerId}`
   );
