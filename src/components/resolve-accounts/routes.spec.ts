@@ -2,33 +2,29 @@ import tape from 'tape';
 import uuid from 'node-uuid';
 
 import { sandbox, test } from '../../test-helpers/fresh';
-import createUser = require('../../test-helpers/create-user');
+import createUser from '../../test-helpers/create-user';
 import API from '../../test-helpers/http';
 import generateResolveAccount from '../../test-helpers/factories/resolve-account';
 import * as NodeFetch from '../../services/fetch';
 import { encodeRawResolveData } from './resolve';
 
 const resolveResponseData = {
-  amount_approved: 100000,
-  amount_authorized: 0,
+  approved_at: '2019-03-25T22:50:16.984Z',
   amount_available: 100000,
   amount_balance: 0,
-  approval_pending: false,
-  approval_pending_at: null,
-  approved: true,
-  approved_at: '2019-03-25T22:50:16.984Z',
   business_name: 'Test Buyer account',
-  business_trade_name: null,
-  denied: false,
-  denied_at: null,
-  id: 'idabc123456',
-  last_charged_at: null,
-  merchant_customer_id: 'customer123456'
+  approved: true,
+  amount_approved: 100000
 };
 
 const fetchResponse = {
   json: (): Promise<object> => Promise.resolve(resolveResponseData),
   status: 200
+};
+
+const malformedResponse = {
+  json: (): Promise<object> => Promise.resolve({ foo: 'bar' }),
+  status: 204
 };
 
 test('GET /resolve-accounts?userId= returns all accounts for that user', async (t: tape.Test) => {
@@ -62,12 +58,22 @@ test('GET /resolve-accounts?userId= returns all accounts for that user', async (
   t.equal(
     badResponse.status,
     403,
-    'GET returns 403 where user is not autherized'
+    'GET returns 403 where user is not authorized'
   );
   const [badQueryResponse] = await API.get('/resolve-accounts', {
     headers: API.authHeader(session.id)
   });
   t.equal(badQueryResponse.status, 400, 'GET returns 400 when no query params');
+
+  fetchStub.resolves(malformedResponse);
+  const [malformed] = await API.get(`/resolve-accounts?userId=${user.id}`, {
+    headers: API.authHeader(session.id)
+  });
+  t.equal(
+    malformed.status,
+    500,
+    'GET returns 500 when the response from resolve is not understood'
+  );
 });
 
 test('POST /resolve-accounts creates a new account with the user and resolve customer id', async (t: tape.Test) => {

@@ -1,10 +1,9 @@
 import { ResolveAccountData } from '@cala/ts-lib/dist/resolve';
 
 import * as InvoicesDAO from '../../dao/invoices';
-import Invoice = require('../../domain-objects/invoice');
+import Invoice from '../../domain-objects/invoice';
 import toDateOrNull from '../../services/to-date';
 import { fetch } from '../../services/fetch';
-import { logServerError } from '../../services/logger';
 import { RESOLVE_API_URL } from '../../config';
 import ResolveAccount, {
   isRawResolveData,
@@ -32,10 +31,8 @@ export async function hasResolveAccount(
     return false;
   }
   const data = await response.json();
-  if (data && isRawResolveData(data)) {
-    return true;
-  }
-  return false;
+
+  return isRawResolveData(data);
 }
 
 export async function getResolveAccountData(
@@ -66,15 +63,13 @@ export async function getResolveAccountData(
     0
   );
 
-  if (data && isRawResolveData(data)) {
-    return encodeRawResolveData(data, account, totalUntrackedAmountCents);
+  if (!isRawResolveData(data)) {
+    throw new Error(
+      `Resolve response is malformed. Response keys: ${Object.keys(data)}`
+    );
   }
 
-  logServerError('Resolve response body:', data);
-
-  throw new Error(
-    `Could not retrieve Resolve data for customer id ${resolveCustomerId}`
-  );
+  return encodeRawResolveData(data, account, totalUntrackedAmountCents);
 }
 
 export async function getAllResolveAccountData(

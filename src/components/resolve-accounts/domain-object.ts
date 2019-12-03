@@ -1,3 +1,4 @@
+import { isPlainObject } from 'lodash';
 import DataAdapter from '../../services/data-adapter';
 import { hasProperties } from '../../services/require-properties';
 
@@ -13,21 +14,12 @@ export default interface ResolveAccount extends ResolveAccountRequest {
 }
 
 export interface RawResolveData {
-  id: string;
-  merchant_customer_id: string;
-  business_name: string;
-  business_trade_name: string | null;
-  approved: boolean;
   approved_at: string | null;
-  approval_pending: boolean;
-  approval_pending_at: string | null;
-  denied: boolean;
-  denied_at: string | null;
-  amount_approved: number;
-  amount_authorized: number;
-  amount_balance: number;
   amount_available: number;
-  last_charged_at: Date | null;
+  amount_balance: number;
+  business_name: string;
+  approved: boolean;
+  amount_approved: number;
 }
 
 export interface ResolveAccountRow {
@@ -57,23 +49,17 @@ export function isResolveAccountRow(row: object): row is ResolveAccountRow {
   );
 }
 
-export function isRawResolveData(row: object): row is RawResolveData {
-  return hasProperties(
-    row,
-    'id',
-    'merchant_customer_id',
-    'business_name',
-    'business_trade_name',
-    'approved',
-    'approved_at',
-    'approval_pending',
-    'approval_pending_at',
-    'denied',
-    'denied_at',
-    'amount_approved',
-    'amount_authorized',
-    'amount_balance',
-    'amount_available',
-    'last_charged_at'
+export function isRawResolveData(row: any): row is RawResolveData {
+  return (
+    isPlainObject(row) &&
+    hasProperties(
+      row,
+      'approved_at',
+      'amount_available',
+      'amount_balance',
+      'business_name',
+      'approved',
+      'amount_approved'
+    )
   );
 }
