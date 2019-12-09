@@ -12,11 +12,13 @@ import { Subscription } from './domain-object';
 
 interface CreateOrUpdateRequest {
   planId: string;
-  stripeCardToken: string;
+  stripeCardToken?: string;
+  userId?: string;
+  isPaymentWaived?: boolean;
 }
 
 function isCreateOrUpdateRequest(body: any): body is CreateOrUpdateRequest {
-  return hasProperties(body, 'planId', 'stripeCardToken');
+  return hasProperties(body, 'planId');
 }
 
 const router = new Router();
@@ -55,6 +57,7 @@ function* getList(this: AuthedContext): Iterator<any, any, any> {
 }
 
 function* create(this: AuthedContext): Iterator<any, any, any> {
+  const isAdmin = this.state.role === 'ADMIN';
   const { body } = this.request;
   if (!isCreateOrUpdateRequest(body)) {
     this.throw(400, 'Missing required properties');
@@ -62,11 +65,29 @@ function* create(this: AuthedContext): Iterator<any, any, any> {
 
   const { stripeCardToken, planId } = body;
 
+  if (!isAdmin) {
+    if (body.userId) {
+      this.throw(
+        403,
+        'Subscriptions can only be created for the logged in user'
+      );
+    }
+    if (body.isPaymentWaived) {
+      this.throw(403, 'Payment cannot be waived');
+    }
+    if (!stripeCardToken) {
+      this.throw(400, 'Stripe card token is required');
+    }
+  }
+
+  const userId = isAdmin && body.userId ? body.userId : this.state.userId;
+
   const subscription = yield db.transaction((trx: Knex.Transaction) => {
     return createOrUpdateSubscription({
       stripeCardToken,
       planId,
-      userId: this.state.userId,
+      userId,
+      isPaymentWaived: isAdmin && body.isPaymentWaived,
       trx
     });
   });
@@ -83,7 +104,9 @@ function* update(this: AuthedContext): Iterator<any, any, any> {
 
   const { subscriptionId } = this.params;
   const { stripeCardToken, planId } = body;
-
+  if (!stripeCardToken) {
+    this.throw(400, 'Missing stripe card token');
+  }
   const updated = yield db.transaction((trx: Knex.Transaction) => {
     return createOrUpdateSubscription({
       stripeCardToken,

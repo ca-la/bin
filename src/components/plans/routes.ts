@@ -4,8 +4,18 @@ import * as PlansDAO from './dao';
 
 const router = new Router();
 
-function* getPublic(this: AuthedContext): Iterator<any, any, any> {
-  const plans = yield PlansDAO.findPublic();
+function* getPlans(this: AuthedContext): Iterator<any, any, any> {
+  const { withPrivate } = this.query;
+  const isAdmin = this.state.role === 'ADMIN';
+
+  if (!isAdmin && withPrivate) {
+    this.throw(403, 'Private plans cannot be listed.');
+  }
+
+  const plans = withPrivate
+    ? yield PlansDAO.findAll()
+    : yield PlansDAO.findPublic();
+
   this.status = 200;
   this.body = plans;
 }
@@ -19,7 +29,7 @@ function* getById(this: AuthedContext): Iterator<any, any, any> {
   this.body = plan;
 }
 
-router.get('/', getPublic);
+router.get('/', getPlans);
 router.get('/:planId', getById);
 
 export default router.routes();

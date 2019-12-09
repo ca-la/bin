@@ -10,33 +10,53 @@ import { Subscription } from './domain-object';
 
 interface Options {
   userId: string;
-  stripeCardToken: string;
   planId: string;
+  stripeCardToken?: string;
   subscriptionId?: string;
+  isPaymentWaived?: boolean;
   trx: Knex.Transaction;
 }
 
 export default async function createOrUpdateSubscription(
   options: Options
 ): Promise<Subscription> {
-  const { planId, stripeCardToken, subscriptionId, userId, trx } = options;
-
-  const paymentMethod = await createPaymentMethod({
-    token: stripeCardToken,
+  const {
+    planId,
+    stripeCardToken,
+    subscriptionId,
     userId,
+    isPaymentWaived,
     trx
-  });
+  } = options;
 
   const plan = await PlansDAO.findById(planId);
   if (!plan) {
     throw new InvalidDataError(`Invalid plan ID: ${planId}`);
   }
 
-  const stripeSubscription = await createStripeSubscription({
-    stripeCustomerId: paymentMethod.stripeCustomerId,
-    stripePlanId: plan.stripePlanId,
-    stripeSourceId: paymentMethod.stripeSourceId
-  });
+  let paymentMethod = null;
+  let stripeSubscription = null;
+
+  if (!isPaymentWaived) {
+    if (!stripeCardToken) {
+      throw new InvalidDataError('Missing stripe card token');
+    }
+    paymentMethod = await createPaymentMethod({
+      token: stripeCardToken,
+      userId,
+      trx
+    });
+
+    stripeSubscription = await createStripeSubscription({
+      stripeCustomerId: paymentMethod.stripeCustomerId,
+      stripePlanId: plan.stripePlanId,
+      stripeSourceId: paymentMethod.stripeSourceId
+    });
+  }
+  const stripeSubscriptionId = stripeSubscription
+    ? stripeSubscription.id
+    : null;
+  const paymentMethodId = paymentMethod ? paymentMethod.id : null;
 
   let subscription: Subscription;
 
@@ -44,9 +64,9 @@ export default async function createOrUpdateSubscription(
     subscription = await SubscriptionsDAO.update(
       subscriptionId,
       {
-        paymentMethodId: paymentMethod.id,
+        paymentMethodId,
         planId,
-        stripeSubscriptionId: stripeSubscription.id
+        stripeSubscriptionId
       },
       trx
     );
@@ -55,10 +75,10 @@ export default async function createOrUpdateSubscription(
       {
         cancelledAt: null,
         id: uuid.v4(),
-        isPaymentWaived: false,
-        paymentMethodId: paymentMethod.id,
+        isPaymentWaived: Boolean(isPaymentWaived),
+        paymentMethodId,
         planId,
-        stripeSubscriptionId: stripeSubscription.id,
+        stripeSubscriptionId,
         userId
       },
       trx

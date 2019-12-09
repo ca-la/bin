@@ -130,6 +130,50 @@ test('POST /subscriptions creates a subscription', async (t: Test) => {
   t.notEqual(body.paymentMethodId, null);
 });
 
+test('POST /subscriptions does not allow waiving payment on subscriptions for non-admins', async (t: Test) => {
+  const { plan, session } = await setup();
+
+  const [failedPaymentWaiving] = await post('/subscriptions', {
+    headers: authHeader(session.id),
+    body: {
+      planId: plan.id,
+      stripeCardToken: '123',
+      isPaymentWaived: true
+    }
+  });
+
+  t.equal(failedPaymentWaiving.status, 403);
+
+  const [missingStripeToken] = await post('/subscriptions', {
+    headers: authHeader(session.id),
+    body: {
+      planId: plan.id
+    }
+  });
+  t.equal(missingStripeToken.status, 400);
+});
+
+test('POST /subscriptions allows waiving payment on subscrixptions by admins', async (t: Test) => {
+  const { plan, user } = await setup();
+
+  const { session } = await createUser({ role: 'ADMIN' });
+
+  const [res, body] = await post('/subscriptions', {
+    headers: authHeader(session.id),
+    body: {
+      planId: plan.id,
+      isPaymentWaived: true,
+      userId: user.id
+    }
+  });
+
+  t.equal(res.status, 201);
+  t.equal(body.planId, plan.id);
+  t.equal(body.userId, user.id);
+  t.equal(body.paymentMethodId, null);
+  t.equal(body.isPaymentWaived, true);
+});
+
 test('PUT /subscriptions updates a subscription', async (t: Test) => {
   const { plan, user, session } = await setup();
 

@@ -51,6 +51,42 @@ test('SubscriptionsDAO supports creation and retrieval', async (t: tape.Test) =>
   });
 });
 
+test('SubscriptionsDAO supports waiving payment on a new subscription', async (t: tape.Test) => {
+  const { user } = await createUser({ withSession: false });
+  const plan = await PlansDAO.create({
+    id: uuid.v4(),
+    billingInterval: 'MONTHLY',
+    monthlyCostCents: 4567,
+    revenueSharePercentage: 50,
+    stripePlanId: 'plan_456',
+    title: 'Some More',
+    isDefault: true,
+    isPublic: false,
+    ordering: null,
+    description: null
+  });
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const subscription = await SubscriptionsDAO.create(
+      {
+        id: uuid.v4(),
+        cancelledAt: null,
+        planId: plan.id,
+        paymentMethodId: null,
+        stripeSubscriptionId: null,
+        userId: user.id,
+        isPaymentWaived: true
+      },
+      trx
+    );
+
+    const found = await SubscriptionsDAO.findForUser(user.id, trx);
+    t.equal(found.length, 1);
+    t.equal(found[0].id, subscription.id);
+    t.equal(found[0].isPaymentWaived, true);
+  });
+});
+
 test('SubscriptionsDAO.findActive lists only active subscriptions', async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
   const plan = await PlansDAO.create({
