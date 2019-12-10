@@ -78,13 +78,17 @@ function* createUser(this: PublicContext<CreateBody>): Iterator<any, any, any> {
       filterError(InvalidDataError, (err: Error) => this.throw(400, err))
     );
 
-    if (planId && stripeCardToken) {
+    if (planId) {
       await createOrUpdateSubscription({
         userId: userInTrx.id,
         stripeCardToken,
         planId,
         trx
-      });
+      }).catch(
+        filterError(InvalidDataError, (err: InvalidDataError) =>
+          this.throw(400, err)
+        )
+      );
     }
 
     return userInTrx;

@@ -36,8 +36,8 @@ export default async function createOrUpdateSubscription(
 
   let paymentMethod = null;
   let stripeSubscription = null;
-
-  if (!isPaymentWaived) {
+  const isPlanFree = isPaymentWaived || plan.monthlyCostCents === 0;
+  if (!isPlanFree) {
     if (!stripeCardToken) {
       throw new InvalidDataError('Missing stripe card token');
     }

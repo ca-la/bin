@@ -16,7 +16,13 @@ import { authHeader, get, post, put } from '../../test-helpers/http';
 import { Plan } from '../plans/domain-object';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 
-async function setup(): Promise<{
+interface SetupOptions {
+  planOptions?: Partial<Uninserted<Plan>>;
+}
+
+async function setup(
+  options: SetupOptions = {}
+): Promise<{
   session: Session;
   user: User;
   plan: Plan;
@@ -36,7 +42,7 @@ async function setup(): Promise<{
     .resolves('customerId');
 
   const { session, user } = await createUser();
-
+  const { planOptions } = options;
   const plan = await PlansDAO.create({
     id: uuid.v4(),
     billingInterval: 'MONTHLY',
@@ -47,7 +53,8 @@ async function setup(): Promise<{
     isDefault: true,
     isPublic: false,
     ordering: null,
-    description: null
+    description: null,
+    ...planOptions
   });
 
   return { session, user, plan };
@@ -151,6 +158,25 @@ test('POST /subscriptions does not allow waiving payment on subscriptions for no
     }
   });
   t.equal(missingStripeToken.status, 400);
+});
+
+test('POST /subscriptions allows omitting stripe info if the plan is free', async (t: Test) => {
+  const { plan, session } = await setup({
+    planOptions: {
+      monthlyCostCents: 0
+    }
+  });
+  const [res, body] = await post('/subscriptions', {
+    headers: authHeader(session.id),
+    body: {
+      planId: plan.id
+    }
+  });
+
+  t.equal(res.status, 201);
+  t.equal(body.planId, plan.id);
+  t.equal(body.paymentMethodId, null);
+  t.equal(body.isPaymentWaived, false);
 });
 
 test('POST /subscriptions allows waiving payment on subscrixptions by admins', async (t: Test) => {

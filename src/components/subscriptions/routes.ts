@@ -9,6 +9,8 @@ import db from '../../services/db';
 import requireAuth = require('../../middleware/require-auth');
 import { hasProperties } from '../../services/require-properties';
 import { Subscription } from './domain-object';
+import filterError from '../../services/filter-error';
+import InvalidDataError from '../../errors/invalid-data';
 
 interface CreateOrUpdateRequest {
   planId: string;
@@ -75,9 +77,6 @@ function* create(this: AuthedContext): Iterator<any, any, any> {
     if (body.isPaymentWaived) {
       this.throw(403, 'Payment cannot be waived');
     }
-    if (!stripeCardToken) {
-      this.throw(400, 'Stripe card token is required');
-    }
   }
 
   const userId = isAdmin && body.userId ? body.userId : this.state.userId;
@@ -89,7 +88,11 @@ function* create(this: AuthedContext): Iterator<any, any, any> {
       userId,
       isPaymentWaived: isAdmin && body.isPaymentWaived,
       trx
-    });
+    }).catch(
+      filterError(InvalidDataError, (err: InvalidDataError) =>
+        this.throw(400, err)
+      )
+    );
   });
 
   this.body = yield attachPlan(subscription);
@@ -114,7 +117,11 @@ function* update(this: AuthedContext): Iterator<any, any, any> {
       userId: this.state.userId,
       subscriptionId,
       trx
-    });
+    }).catch(
+      filterError(InvalidDataError, (err: InvalidDataError) =>
+        this.throw(400, err)
+      )
+    );
   });
 
   this.body = updated;
