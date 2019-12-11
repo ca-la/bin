@@ -73,7 +73,7 @@ async function run(): Promise<void> {
         delete from notifications
         where task_id = ANY(?)
         `,
-        [stageId]
+        [taskIds]
       );
 
       await db.raw(
