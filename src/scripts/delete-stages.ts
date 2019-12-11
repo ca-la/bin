@@ -19,6 +19,7 @@ async function run(): Promise<void> {
   // - product_design_stages
   // - collaborator_tasks
   // - tasks
+  // - notifications
   for (const stageId of stageIds) {
     log(`Processing stage ${stageId}...`);
 
@@ -44,6 +45,14 @@ async function run(): Promise<void> {
 
     await db.raw(
       `
+      delete from notifications
+      where stage_id = ?
+      `,
+      [stageId]
+    );
+
+    await db.raw(
+      `
       delete from product_design_stages
       where id = ?
       `,
@@ -53,16 +62,24 @@ async function run(): Promise<void> {
     if (taskIds.length > 0) {
       await db.raw(
         `
-      delete from collaborator_tasks
-      where task_id = ANY(?)
+        delete from collaborator_tasks
+        where task_id = ANY(?)
       `,
         [taskIds]
       );
 
       await db.raw(
         `
-      delete from tasks
-      where id = ANY(?)
+        delete from notifications
+        where task_id = ANY(?)
+        `,
+        [stageId]
+      );
+
+      await db.raw(
+        `
+        delete from tasks
+        where id = ANY(?)
       `,
         [taskIds]
       );
