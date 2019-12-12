@@ -971,6 +971,54 @@ test('Bids DAO supports finding all unpaid bids by user id from after the cutoff
   t.deepEqual(bids, [{ ...bid, acceptedAt: bids[0].acceptedAt }]);
 });
 
+test('Bids DAO does not return unpaid bids the partner has been removed from', async (t: Test) => {
+  sandbox().useFakeTimers(new Date(2020, 2, 1));
+  const { user: designer } = await createUser();
+  const { user: partner } = await createUser({ role: 'PARTNER' });
+
+  const design = await createDesign({
+    productType: 'TEESHIRT',
+    title: 'Plain White Tee',
+    userId: designer.id
+  });
+
+  const { collection } = await generateCollection({ createdBy: designer.id });
+  await addDesign(collection.id, design.id);
+  const { bid, user: admin } = await generateBid({
+    bidOptions: { bidPriceCents: 5678 },
+    designId: design.id
+  });
+
+  await generateDesignEvent({
+    actorId: admin.id,
+    bidId: bid.id,
+    createdAt: new Date(2020, 1, 1),
+    designId: design.id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: partner.id,
+    type: 'BID_DESIGN'
+  });
+  await generateDesignEvent({
+    type: 'ACCEPT_SERVICE_BID',
+    bidId: bid.id,
+    actorId: partner.id,
+    designId: design.id,
+    createdAt: new Date(2020, 1, 1)
+  });
+  await generateDesignEvent({
+    actorId: admin.id,
+    bidId: bid.id,
+    createdAt: new Date(2020, 1, 1),
+    designId: design.id,
+    targetId: partner.id,
+    type: 'REMOVE_PARTNER'
+  });
+
+  const bids = await findUnpaidByUserId(partner.id);
+  t.equal(bids.length, 0);
+});
+
 test('Bids DAO supports finding bid with payout logs by id', async (t: Test) => {
   const { user: designer } = await createUser({ withSession: false });
   const { user: partner } = await createUser({

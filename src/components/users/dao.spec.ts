@@ -418,6 +418,90 @@ test('UsersDAO.findAllUnpaidPartners returns all unpaid partners', async (t: Tes
   t.deepEqual(users, [unpaidPartner]);
 });
 
+test('UsersDAO.findAllUnpaidPartners does not include partners removed from bids', async (t: Test) => {
+  sandbox().useFakeTimers(new Date(2020, 2, 0));
+  const { user: designer } = await createUser();
+  const { user: unpaidPartner } = await createUser({ role: 'PARTNER' });
+
+  const design = await ProductDesignsDAO.create({
+    productType: 'TEESHIRT',
+    title: 'Plain White Tee',
+    userId: designer.id
+  });
+
+  const { collection } = await generateCollection({ createdBy: designer.id });
+  await addDesign(collection.id, design.id);
+  const { bid, user: admin } = await createBid({
+    bidOptions: { bidPriceCents: 1000 },
+    designId: design.id
+  });
+
+  await DesignEventsDAO.create({
+    actorId: admin.id,
+    bidId: bid.id,
+    createdAt: new Date(),
+    designId: design.id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: unpaidPartner.id,
+    type: 'BID_DESIGN'
+  });
+  await generateDesignEvent({
+    type: 'ACCEPT_SERVICE_BID',
+    bidId: bid.id,
+    actorId: unpaidPartner.id,
+    designId: design.id,
+    createdAt: new Date()
+  });
+
+  const { user: designer2 } = await createUser();
+  const { user: paidPartner } = await createUser({ role: 'PARTNER' });
+
+  const design2 = await ProductDesignsDAO.create({
+    productType: 'TEESHIRT',
+    title: 'Plain White Tee',
+    userId: designer2.id
+  });
+  const { collection: collection2 } = await generateCollection({
+    createdBy: designer.id
+  });
+  await addDesign(collection2.id, design2.id);
+  const { bid: bid2, user: admin2 } = await createBid({
+    bidOptions: { bidPriceCents: 1000 },
+    designId: design2.id
+  });
+
+  await DesignEventsDAO.create({
+    actorId: admin2.id,
+    bidId: bid2.id,
+    createdAt: new Date(),
+    designId: design2.id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: paidPartner.id,
+    type: 'BID_DESIGN'
+  });
+  await generateDesignEvent({
+    type: 'ACCEPT_SERVICE_BID',
+    bidId: bid2.id,
+    actorId: paidPartner.id,
+    designId: design2.id,
+    createdAt: new Date()
+  });
+  await generateDesignEvent({
+    type: 'REMOVE_PARTNER',
+    bidId: bid2.id,
+    actorId: admin2.id,
+    targetId: paidPartner.id,
+    designId: design2.id,
+    createdAt: new Date()
+  });
+
+  const users = await UsersDAO.findAllUnpaidPartners({ limit: 20, offset: 0 });
+
+  t.deepEqual(users, [unpaidPartner]);
+});
+
 test('UsersDAO.create allows passing in a transaction', async (t: Test) => {
   let userId;
 
