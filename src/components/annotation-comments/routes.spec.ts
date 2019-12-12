@@ -136,7 +136,8 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
         mentions: {},
         userEmail: user.email,
         userId: user.id,
-        userName: user.name
+        userName: user.name,
+        userRole: user.role
       }
     ],
     'Comment retrieval returns the created comment in an array'
@@ -210,14 +211,16 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
         mentions: {},
         userEmail: user.email,
         userId: user.id,
-        userName: user.name
+        userName: user.name,
+        userRole: user.role
       },
       {
         ...commentWithMentionBody,
         annotationId: annotationResponse[1].id,
         userEmail: user.email,
         userId: user.id,
-        userName: user.name
+        userName: user.name,
+        userRole: user.role
       }
     ],
     'Comment retrieval returns all the comments for the annotation'

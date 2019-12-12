@@ -1,6 +1,6 @@
 import tape from 'tape';
 import uuid from 'node-uuid';
-import createUser = require('../../test-helpers/create-user');
+import createUser from '../../test-helpers/create-user';
 import { authHeader, del, get, post, put } from '../../test-helpers/http';
 import { sandbox, test } from '../../test-helpers/fresh';
 import * as CreateNotifications from '../../services/create-notifications';
@@ -73,11 +73,11 @@ test('DELETE /comment/:id deletes a task comment', async (t: tape.Test) => {
     [
       {
         ...commentBody,
-        collaborators: [],
         mentions: {},
         userEmail: user.email,
         userId: user.id,
-        userName: user.name
+        userName: user.name,
+        userRole: user.role
       }
     ],
     'Comment retrieval returns the created comment in an array'

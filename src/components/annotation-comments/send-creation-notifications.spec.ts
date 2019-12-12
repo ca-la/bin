@@ -1,4 +1,5 @@
 import uuid from 'node-uuid';
+import { Role } from '@cala/ts-lib/dist/users';
 
 import * as AnnotationsDAO from '../../components/product-design-canvas-annotations/dao';
 import Annotation from '../../components/product-design-canvas-annotations/domain-object';
@@ -6,7 +7,7 @@ import Collaborator from '../../components/collaborators/domain-objects/collabor
 import Collection from '../../components/collections/domain-object';
 import sendCreationNotifications from './send-creation-notifications';
 import User from '../../components/users/domain-object';
-import createUser = require('../../test-helpers/create-user');
+import createUser from '../../test-helpers/create-user';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import { create as createDesign } from '../product-designs/dao';
 import * as CreateNotifications from '../../services/create-notifications';
@@ -103,7 +104,8 @@ test('sendCreationNotifications loops through mentions and sends notifications',
     text: `A comment @<${collaborator.id}|collaborator>`,
     userEmail: 'cool@me.me',
     userId: 'purposefully incorrect',
-    userName: 'Somebody cool'
+    userName: 'Somebody cool',
+    userRole: 'USER' as Role
   };
 
   await sendCreationNotifications({
@@ -169,7 +171,8 @@ test('sendCreationNotifications continues processing notifications once it hits 
     }|collaborator> @<${collaborator3.id}|collaborator> how's it going`,
     userEmail: 'cool@example.com',
     userId: '123',
-    userName: 'Somebody cool'
+    userName: 'Somebody cool',
+    userRole: 'USER' as Role
   };
 
   await sendCreationNotifications({
