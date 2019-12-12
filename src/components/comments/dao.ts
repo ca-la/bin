@@ -11,35 +11,9 @@ import Comment, {
   UPDATABLE_COLUMNS
 } from '../../components/comments/domain-object';
 import { validate } from '../../services/validate-from-db';
+import first from '../../services/first';
 
 const TABLE_NAME = 'comments';
-
-export function queryComments(trx?: Knex.Transaction): Knex.QueryBuilder {
-  return db(TABLE_NAME)
-    .select([
-      'comments.*',
-      { user_name: 'users.name' },
-      { user_email: 'users.email' },
-      { user_role: 'users.role' }
-    ])
-    .join('users', 'users.id', 'comments.user_id')
-    .where({ 'comments.deleted_at': null })
-    .orderBy('created_at', 'asc')
-    .modify((query: Knex.QueryBuilder) => {
-      if (trx) {
-        query.transacting(trx);
-      }
-    });
-}
-
-export function queryById(
-  id: string,
-  trx?: Knex.Transaction
-): Knex.QueryBuilder {
-  return queryComments(trx)
-    .where({ 'comments.id': id })
-    .first();
-}
 
 export async function create(
   data: BaseComment,
@@ -49,14 +23,23 @@ export async function create(
     baseDataAdapter.forInsertion(data),
     INSERTABLE_COLUMNS
   );
-  await db(TABLE_NAME)
-    .insert(rowDataForInsertion)
+  await db(TABLE_NAME).insert(rowDataForInsertion);
+  const comment: CommentRow | undefined = await db(TABLE_NAME)
+    .select([
+      'comments.*',
+      { user_name: 'users.name' },
+      { user_email: 'users.email' }
+    ])
+    .join('users', 'users.id', 'comments.user_id')
+    .where({ 'comments.id': data.id, 'comments.deleted_at': null })
+    .orderBy('created_at', 'asc')
+    .limit(1)
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
       }
-    });
-  const comment: CommentRow | undefined = await queryById(data.id, trx);
+    })
+    .then((comments: CommentRow[]) => first(comments));
 
   if (!comment) {
     throw new Error('There was a problem saving the comment');
@@ -70,11 +53,18 @@ export async function create(
   );
 }
 
-export async function findById(
-  id: string,
-  trx?: Knex.Transaction
-): Promise<Comment | null> {
-  const comment: CommentRow | undefined = await queryById(id, trx);
+export async function findById(id: string): Promise<Comment | null> {
+  const comment: CommentRow | undefined = await db(TABLE_NAME)
+    .select([
+      'comments.*',
+      { user_name: 'users.name' },
+      { user_email: 'users.email' }
+    ])
+    .join('users', 'users.id', 'comments.user_id')
+    .where({ 'comments.id': id, 'comments.deleted_at': null })
+    .orderBy('created_at', 'asc')
+    .limit(1)
+    .then((comments: CommentRow[]) => first(comments));
 
   if (!comment) {
     return null;
@@ -88,24 +78,26 @@ export async function findById(
   );
 }
 
-export async function update(
-  data: Comment,
-  trx?: Knex.Transaction
-): Promise<Comment> {
+export async function update(data: Comment): Promise<Comment> {
   const rowDataForUpdate = pick(
     dataAdapter.forInsertion(data),
     UPDATABLE_COLUMNS
   );
   await db(TABLE_NAME)
     .where({ id: data.id, deleted_at: null })
-    .modify((query: Knex.QueryBuilder) => {
-      if (trx) {
-        query.transacting(trx);
-      }
-    })
     .update(rowDataForUpdate);
 
-  const comment: CommentRow | undefined = await queryById(data.id, trx);
+  const comment: CommentRow | undefined = await db(TABLE_NAME)
+    .select([
+      'comments.*',
+      { user_name: 'users.name' },
+      { user_email: 'users.email' }
+    ])
+    .join('users', 'users.id', 'comments.user_id')
+    .where({ 'comments.id': data.id, 'comments.deleted_at': null })
+    .orderBy('created_at', 'asc')
+    .limit(1)
+    .then((comments: CommentRow[]) => first(comments));
 
   if (!comment) {
     throw new Error('There was a problem saving the comment');
@@ -119,17 +111,9 @@ export async function update(
   );
 }
 
-export async function deleteById(
-  id: string,
-  trx?: Knex.Transaction
-): Promise<void> {
+export async function deleteById(id: string): Promise<void> {
   const deletedRows: number = await db(TABLE_NAME)
     .where({ id, deleted_at: null })
-    .modify((query: Knex.QueryBuilder) => {
-      if (trx) {
-        query.transacting(trx);
-      }
-    })
     .update({ deleted_at: new Date().toISOString() });
 
   if (deletedRows === 0) {

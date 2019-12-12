@@ -12,7 +12,7 @@ import * as TasksDAO from '../../dao/tasks';
 import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
 import * as CollectionsDAO from '../../components/collections/dao';
 import * as productDesignStageTasksDAO from '../../dao/product-design-stage-tasks';
-import createUser from '../../test-helpers/create-user';
+import createUser = require('../../test-helpers/create-user');
 import { authHeader, get, post, put } from '../../test-helpers/http';
 import { sandbox, test as originalTest } from '../../test-helpers/fresh';
 import * as CreateNotifications from '../../services/create-notifications';
@@ -599,11 +599,11 @@ test('PUT /tasks/:taskId/comment/:id creates a task comment', async (t: tape.Tes
     [
       {
         ...commentBody,
+        collaborators: [],
         mentions: {},
         userEmail: user.email,
         userId: user.id,
-        userName: user.name,
-        userRole: user.role
+        userName: user.name
       }
     ],
     'Comment retrieval returns the created comment in an array'

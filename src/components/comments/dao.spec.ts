@@ -2,7 +2,7 @@ import tape from 'tape';
 import uuid from 'node-uuid';
 import { test } from '../../test-helpers/fresh';
 import { create, deleteById, findById, update } from './dao';
-import createUser from '../../test-helpers/create-user';
+import createUser = require('../../test-helpers/create-user');
 
 test('Comment DAO supports creation/retrieval', async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
