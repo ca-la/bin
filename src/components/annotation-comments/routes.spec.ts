@@ -1,6 +1,6 @@
 import uuid from 'node-uuid';
 
-import createUser = require('../../test-helpers/create-user');
+import createUser from '../../test-helpers/create-user';
 import { authHeader, get, put } from '../../test-helpers/http';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import { create as createDesign } from '../product-designs/dao';
@@ -132,7 +132,6 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
     [
       {
         ...commentBody,
-        collaborators: [{ cancelledAt: null, id: collaborator.id }],
         annotationId: annotationResponse[1].id,
         mentions: {},
         userEmail: user.email,
@@ -207,7 +206,6 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
     [
       {
         ...commentBody,
-        collaborators: [{ cancelledAt: null, id: collaborator.id }],
         annotationId: annotationResponse[1].id,
         mentions: {},
         userEmail: user.email,
@@ -216,7 +214,6 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
       },
       {
         ...commentWithMentionBody,
-        collaborators: [{ cancelledAt: null, id: collaborator.id }],
         annotationId: annotationResponse[1].id,
         userEmail: user.email,
         userId: user.id,

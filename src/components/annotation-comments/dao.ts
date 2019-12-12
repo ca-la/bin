@@ -14,7 +14,7 @@ import {
   addAtMentionDetailsForComment,
   CommentWithMentions
 } from '../../services/add-at-mention-details';
-import { annotationCommentsView, getCollaboratorForComment } from './view';
+import { annotationCommentsView } from './view';
 
 const TABLE_NAME = 'product_design_canvas_annotation_comments';
 
@@ -48,9 +48,7 @@ export async function create(
 export async function findByAnnotationId(
   annotationId: string
 ): Promise<CommentWithMeta[]> {
-  const comments: CommentWithMetaRow[] = await getCollaboratorForComment(
-    annotationCommentsView()
-  )
+  const comments: CommentWithMetaRow[] = await annotationCommentsView()
     .where({
       annotation_id: annotationId
     })
@@ -71,9 +69,7 @@ interface AnnotationToCommentsWithMentions {
 export async function findByAnnotationIds(
   annotationIds: string[]
 ): Promise<AnnotationToCommentsWithMentions> {
-  const comments: CommentWithMetaRow[] = await getCollaboratorForComment(
-    annotationCommentsView()
-  )
+  const comments: CommentWithMetaRow[] = await annotationCommentsView()
     .whereIn('annotation_id', annotationIds)
     .orderBy('created_at', 'asc');
 

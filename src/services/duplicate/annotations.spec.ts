@@ -66,7 +66,6 @@ test('findAndDuplicateAnnotations', async (t: tape.Test) => {
     c1[0],
     {
       ...comment,
-      collaborators: [{ cancelledAt: null, id: col1.id }],
       annotationId: a1.id,
       createdAt: c1[0].createdAt,
       id: c1[0].id

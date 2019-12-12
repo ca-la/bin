@@ -47,7 +47,6 @@ export function isCommentWithMetaRow(row: object): row is CommentWithMetaRow {
     row,
     'id',
     'annotation_id',
-    'collaborators',
     'created_at',
     'deleted_at',
     'text',

@@ -8,15 +8,10 @@ import {
 } from '../comments/dao';
 import { create, findByAnnotationId, findByAnnotationIds } from './dao';
 import { create as createDesign } from '../product-designs/dao';
-import createUser = require('../../test-helpers/create-user');
+import createUser from '../../test-helpers/create-user';
 import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 import generateAnnotation from '../../test-helpers/factories/product-design-canvas-annotation';
 import generateComment from '../../test-helpers/factories/comment';
-import generateCollaborator from '../../test-helpers/factories/collaborator';
-import * as CollaboratorsDAO from '../collaborators/dao';
-import generateCollection from '../../test-helpers/factories/collection';
-import { addDesign } from '../../test-helpers/collections';
-import { omit } from 'lodash';
 
 test('ProductDesignCanvasAnnotationComment DAO supports creation/retrieval', async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
@@ -81,74 +76,14 @@ test('ProductDesignCanvasAnnotationComment DAO supports creation/retrieval', asy
     [
       {
         ...comment2,
-        annotationId: annotation.id,
-        collaborators: []
+        annotationId: annotation.id
       },
       {
         ...comment1,
-        annotationId: annotation.id,
-        collaborators: []
+        annotationId: annotation.id
       }
     ],
     'Finds comments by annotation'
-  );
-});
-
-test('findByAnnotationId with a cancelled collaborator', async (t: tape.Test) => {
-  const { user } = await createUser({ withSession: false });
-  const { canvas, design } = await generateCanvas({
-    createdBy: user.id
-  });
-  const col1 = await CollaboratorsDAO.findByDesignAndUser(design.id, user.id);
-
-  if (!col1) {
-    throw new Error('Collaborator does not exist!');
-  }
-
-  const { collaborator: col2 } = await generateCollaborator({
-    designId: design.id,
-    userId: user.id
-  });
-  const { annotation: a1 } = await generateAnnotation({
-    canvasId: canvas.id,
-    createdBy: user.id
-  });
-  const { comment: c1 } = await generateComment({
-    userId: user.id
-  });
-  await create({
-    annotationId: a1.id,
-    commentId: c1.id
-  });
-  const deletedCollaborator = await CollaboratorsDAO.deleteById(col2.id);
-
-  const result = await findByAnnotationId(a1.id);
-  t.equal(result.length, 1);
-  t.deepEqual(omit(result[0], 'collaborators'), { ...c1, annotationId: a1.id });
-  t.equal(result[0].collaborators.length, 2);
-  t.deepEqual(result[0].collaborators[0], {
-    id: col1.id,
-    cancelledAt: col1.cancelledAt
-  });
-  t.deepEqual(
-    {
-      ...result[0].collaborators[0],
-      cancelledAt: result[0].collaborators[0].cancelledAt
-    },
-    {
-      id: col1.id,
-      cancelledAt: null
-    }
-  );
-  t.deepEqual(
-    {
-      ...result[0].collaborators[1],
-      cancelledAt: new Date(result[0].collaborators[1].cancelledAt!)
-    },
-    {
-      id: deletedCollaborator.id,
-      cancelledAt: new Date(deletedCollaborator.cancelledAt!)
-    }
   );
 });
 
@@ -192,21 +127,18 @@ test('findByAnnotationIds', async (t: tape.Test) => {
   t.deepEqual(result[annotationOne.id], [
     {
       ...c1,
-      collaborators: [],
       mentions: {},
       userEmail: c1Creator.email,
       userName: c1Creator.name
     },
     {
       ...c2,
-      collaborators: [],
       mentions: {},
       userEmail: c2Creator.email,
       userName: c2Creator.name
     },
     {
       ...c3,
-      collaborators: [],
       mentions: {},
       userEmail: c3Creator.email,
       userName: c3Creator.name
@@ -215,7 +147,6 @@ test('findByAnnotationIds', async (t: tape.Test) => {
   t.deepEqual(result[annotationTwo.id], [
     {
       ...c4,
-      collaborators: [],
       mentions: {},
       userEmail: c4Creator.email,
       userName: c4Creator.name
@@ -237,87 +168,12 @@ test('findByAnnotationIds', async (t: tape.Test) => {
   t.deepEqual(result2[annotationOne.id], [
     {
       ...c1,
-      collaborators: [],
       mentions: {},
       userEmail: c1Creator.email,
       userName: c1Creator.name
     },
     {
       ...c3,
-      collaborators: [],
-      mentions: {},
-      userEmail: c3Creator.email,
-      userName: c3Creator.name
-    }
-  ]);
-});
-
-test('findByAnnotationIds can return collaborator information', async (t: tape.Test) => {
-  const { user } = await createUser({ withSession: false });
-  const { user: user2 } = await createUser({ withSession: false });
-  const { canvas, design } = await generateCanvas({});
-  const { collection } = await generateCollection({ createdBy: user.id });
-  await addDesign(collection.id, design.id);
-
-  const { design: randomDesign } = await generateCanvas({
-    createdBy: user.id
-  });
-
-  const { collaborator: col1 } = await generateCollaborator({
-    designId: design.id,
-    userId: user.id
-  });
-  const { collaborator: col2 } = await generateCollaborator({
-    collectionId: collection.id,
-    userId: user2.id
-  });
-  await generateCollaborator({
-    designId: randomDesign.id,
-    userId: user.id
-  });
-
-  const { annotation: annotationOne } = await generateAnnotation({
-    canvasId: canvas.id,
-    createdBy: user.id
-  });
-
-  const { comment: c1, createdBy: c1Creator } = await generateComment({
-    userId: user.id
-  });
-  const { comment: c2, createdBy: c2Creator } = await generateComment({
-    userId: user2.id
-  });
-  const { comment: c3, createdBy: c3Creator } = await generateComment();
-
-  await create({ annotationId: annotationOne.id, commentId: c1.id });
-  await create({ annotationId: annotationOne.id, commentId: c2.id });
-  await create({ annotationId: annotationOne.id, commentId: c3.id });
-
-  const result = await findByAnnotationIds([annotationOne.id]);
-
-  t.equal(
-    Object.keys(result).length,
-    1,
-    'Returns only the annotations with comments'
-  );
-  t.deepEqual(result[annotationOne.id], [
-    {
-      ...c1,
-      collaborators: [{ cancelledAt: null, id: col1.id }],
-      mentions: {},
-      userEmail: c1Creator.email,
-      userName: c1Creator.name
-    },
-    {
-      ...c2,
-      collaborators: [{ cancelledAt: null, id: col2.id }],
-      mentions: {},
-      userEmail: c2Creator.email,
-      userName: c2Creator.name
-    },
-    {
-      ...c3,
-      collaborators: [],
       mentions: {},
       userEmail: c3Creator.email,
       userName: c3Creator.name
