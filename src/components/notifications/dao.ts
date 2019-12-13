@@ -92,11 +92,17 @@ export async function markRead(
 }
 
 export async function create(
-  data: Uninserted<Notification>
+  data: Uninserted<Notification>,
+  trx?: Knex.Transaction
 ): Promise<Notification> {
   const rowData = dataAdapter.forInsertion(data);
   const created = await db(TABLE_NAME)
     .insert(rowData, '*')
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .then((rows: NotificationRow[]) => first<NotificationRow>(rows));
 
   if (!created) {
@@ -265,7 +271,8 @@ export async function del(id: string): Promise<void> {
  * granular enough changes.
  */
 export async function deleteRecent(
-  data: Uninserted<Notification>
+  data: Uninserted<Notification>,
+  trx?: Knex.Transaction
 ): Promise<number> {
   const rowData = omit(dataAdapter.forInsertion(data), 'id', 'created_at');
 
@@ -276,6 +283,11 @@ export async function deleteRecent(
     .where(rowData)
     .andWhere('created_at', '>', new Date(startingThreshold).toISOString())
     .andWhere({ sent_email_at: null })
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .del();
 
   return deletedRows;

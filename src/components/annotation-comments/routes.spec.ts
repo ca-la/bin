@@ -136,13 +136,14 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
         mentions: {},
         userEmail: user.email,
         userId: user.id,
-        userName: user.name
+        userName: user.name,
+        userRole: user.role
       }
     ],
     'Comment retrieval returns the created comment in an array'
   );
 
-  t.deepEqual(notificationStub.getCall(0).args, [
+  t.deepEqual(notificationStub.getCall(0).args.slice(0, 5), [
     annotationResponse[1].id,
     annotationResponse[1].canvasId,
     commentBody.id,
@@ -159,7 +160,7 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
   );
   t.equal(notificationMentionStub.callCount, 1, 'Mentions notification called');
   t.equal(notificationStub.callCount, 2, 'Comment notification called');
-  t.deepEqual(notificationStub.getCall(1).args, [
+  t.deepEqual(notificationStub.getCall(1).args.slice(0, 5), [
     annotationResponse[1].id,
     annotationResponse[1].canvasId,
     commentWithMentionId,
@@ -186,7 +187,7 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
     'Mentions notification not called'
   );
   t.equal(notificationStub.callCount, 3, 'Comment notification called');
-  t.deepEqual(notificationStub.getCall(2).args, [
+  t.deepEqual(notificationStub.getCall(2).args.slice(0, 5), [
     annotationResponse[1].id,
     annotationResponse[1].canvasId,
     notMadeComment.id,
@@ -210,14 +211,16 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
         mentions: {},
         userEmail: user.email,
         userId: user.id,
-        userName: user.name
+        userName: user.name,
+        userRole: user.role
       },
       {
         ...commentWithMentionBody,
         annotationId: annotationResponse[1].id,
         userEmail: user.email,
         userId: user.id,
-        userName: user.name
+        userName: user.name,
+        userRole: user.role
       }
     ],
     'Comment retrieval returns all the comments for the annotation'

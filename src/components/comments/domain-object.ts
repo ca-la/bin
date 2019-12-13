@@ -1,3 +1,4 @@
+import { Role } from '@cala/ts-lib/dist/users';
 import DataAdapter from '../../services/data-adapter';
 import { hasProperties } from '../../services/require-properties';
 
@@ -28,6 +29,7 @@ export interface BaseComment {
 export default interface Comment extends BaseComment {
   userName: string | null;
   userEmail: string | null;
+  userRole: Role;
 }
 
 export interface BaseCommentRow {
@@ -43,6 +45,7 @@ export interface BaseCommentRow {
 export interface CommentRow extends BaseCommentRow {
   user_name: string | null;
   user_email: string | null;
+  user_role: Role;
 }
 
 export const dataAdapter = new DataAdapter<CommentRow, Comment>();
@@ -72,6 +75,7 @@ export function isCommentRow(row: object): row is CommentRow {
     'user_name',
     'user_email',
     'user_id',
+    'user_role',
     'is_pinned'
   );
 }
@@ -87,7 +91,8 @@ export function isComment(candidate: object): candidate is Comment {
     'text',
     'userId',
     'userName',
-    'userEmail'
+    'userEmail',
+    'userRole'
   );
 }
 

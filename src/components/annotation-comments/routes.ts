@@ -42,11 +42,14 @@ function* createAnnotationComment(
       );
 
       await announceAnnotationCommentCreation(annotationComment, comment);
-      await sendCreationNotifications({
-        actorUserId: this.state.userId,
-        annotationId,
-        comment
-      });
+      await sendCreationNotifications(
+        {
+          actorUserId: this.state.userId,
+          annotationId,
+          comment
+        },
+        trx
+      );
     });
     this.status = 201;
     this.body = comment;

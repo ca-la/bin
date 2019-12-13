@@ -1,25 +1,19 @@
 import Knex from 'knex';
-import db from '../../services/db';
+import { queryComments } from '../comments/dao';
 
 export const ALIASES = {
   collaboratorId: 'collaborators_forcollaboratorsviewraw.id',
   userId: 'users_forcollaboratorsviewraw.id'
 };
 
-export const annotationCommentsView = (): Knex.QueryBuilder =>
-  db
-    .select(
-      'ac.annotation_id AS annotation_id',
-      'c.*',
-      'u.name AS user_name',
-      'u.email AS user_email'
-    )
-    .from('comments as c')
+export const annotationCommentsView = (
+  trx?: Knex.Transaction
+): Knex.QueryBuilder =>
+  queryComments(trx)
+    .select('ac.annotation_id AS annotation_id')
     .leftJoin(
       'product_design_canvas_annotation_comments AS ac',
       'ac.comment_id',
-      'c.id'
+      'comments.id'
     )
-    .leftJoin('users AS u', 'u.id', 'c.user_id')
-    .where({ 'c.deleted_at': null })
     .whereNot({ 'ac.annotation_id': null });

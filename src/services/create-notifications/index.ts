@@ -1,4 +1,5 @@
 import uuid from 'node-uuid';
+import * as Knex from 'knex';
 
 import * as NotificationsDAO from '../../components/notifications/dao';
 import * as CanvasesDAO from '../../components/canvases/dao';
@@ -87,10 +88,11 @@ import {
  * Deletes pre-existing similar notifications and adds in a new one.
  */
 async function replaceNotifications(
-  notification: Uninserted<Notification>
+  notification: Uninserted<Notification>,
+  trx?: Knex.Transaction
 ): Promise<Notification> {
-  await NotificationsDAO.deleteRecent(notification);
-  return await NotificationsDAO.create(notification);
+  await NotificationsDAO.deleteRecent(notification, trx);
+  return await NotificationsDAO.create(notification, trx);
 }
 
 /**
@@ -103,13 +105,19 @@ export async function sendDesignOwnerAnnotationCommentCreateNotification(
   canvasId: string,
   commentId: string,
   actorId: string,
-  mentionedUserIds: string[]
+  mentionedUserIds: string[],
+  trx?: Knex.Transaction
 ): Promise<AnnotationCommentCreateNotification | null> {
-  const canvas = await CanvasesDAO.findById(canvasId);
+  const canvas = await CanvasesDAO.findById(canvasId, trx);
   if (!canvas) {
     throw new Error(`Canvas ${canvasId} does not exist!`);
   }
-  const design = await DesignsDAO.findById(canvas.designId);
+  const design = await DesignsDAO.findById(
+    canvas.designId,
+    undefined,
+    undefined,
+    trx
+  );
   if (!design) {
     throw new Error(`Design ${canvas.designId} does not exist!`);
   }
@@ -124,19 +132,22 @@ export async function sendDesignOwnerAnnotationCommentCreateNotification(
   }
 
   const id = uuid.v4();
-  const notification = await replaceNotifications({
-    ...templateNotification,
-    actorUserId: actorId,
-    annotationId,
-    canvasId: canvas.id,
-    collectionId,
-    commentId,
-    designId: design.id,
-    id,
-    recipientUserId: targetId,
-    sentEmailAt: null,
-    type: NotificationType.ANNOTATION_COMMENT_CREATE
-  });
+  const notification = await replaceNotifications(
+    {
+      ...templateNotification,
+      actorUserId: actorId,
+      annotationId,
+      canvasId: canvas.id,
+      collectionId,
+      commentId,
+      designId: design.id,
+      id,
+      recipientUserId: targetId,
+      sentEmailAt: null,
+      type: NotificationType.ANNOTATION_COMMENT_CREATE
+    },
+    trx
+  );
   return validateTypeWithGuardOrThrow(
     notification,
     isAnnotationCommentCreateNotification,
@@ -155,13 +166,19 @@ export async function sendAnnotationCommentMentionNotification(
   canvasId: string,
   commentId: string,
   actorId: string,
-  recipientUserId: string
+  recipientUserId: string,
+  trx?: Knex.Transaction
 ): Promise<AnnotationCommentMentionNotification | null> {
-  const canvas = await CanvasesDAO.findById(canvasId);
+  const canvas = await CanvasesDAO.findById(canvasId, trx);
   if (!canvas) {
     throw new Error(`Canvas ${canvasId} does not exist!`);
   }
-  const design = await DesignsDAO.findById(canvas.designId);
+  const design = await DesignsDAO.findById(
+    canvas.designId,
+    undefined,
+    undefined,
+    trx
+  );
   if (!design) {
     throw new Error(`Design ${canvas.designId} does not exist!`);
   }
@@ -172,19 +189,22 @@ export async function sendAnnotationCommentMentionNotification(
   }
 
   const id = uuid.v4();
-  const notification = await replaceNotifications({
-    ...templateNotification,
-    actorUserId: actorId,
-    annotationId,
-    canvasId: canvas.id,
-    collectionId,
-    commentId,
-    designId: design.id,
-    id,
-    recipientUserId,
-    sentEmailAt: null,
-    type: NotificationType.ANNOTATION_COMMENT_MENTION
-  });
+  const notification = await replaceNotifications(
+    {
+      ...templateNotification,
+      actorUserId: actorId,
+      annotationId,
+      canvasId: canvas.id,
+      collectionId,
+      commentId,
+      designId: design.id,
+      id,
+      recipientUserId,
+      sentEmailAt: null,
+      type: NotificationType.ANNOTATION_COMMENT_MENTION
+    },
+    trx
+  );
   return validateTypeWithGuardOrThrow(
     notification,
     isAnnotationCommentMentionNotification,
@@ -820,7 +840,7 @@ export async function immediatelySendInviteCollaborator(
     : null;
   const collaborator = (await CollaboratorsDAO.findById(
     invitation.targetCollaboratorId
-  )) as (Collaborator | null);
+  )) as Collaborator | null;
 
   const emailAddress = target
     ? target.email

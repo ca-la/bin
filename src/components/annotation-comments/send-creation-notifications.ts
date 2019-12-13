@@ -1,3 +1,4 @@
+import * as Knex from 'knex';
 import * as AnnotationsDAO from '../../components/product-design-canvas-annotations/dao';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import * as NotificationsService from '../../services/create-notifications';
@@ -14,7 +15,8 @@ interface Options {
 }
 
 export default async function sendCreationNotifications(
-  options: Options
+  options: Options,
+  trx?: Knex.Transaction
 ): Promise<void> {
   const { comment, annotationId, actorUserId } = options;
 
@@ -33,7 +35,9 @@ export default async function sendCreationNotifications(
     }
 
     const collaborator: CollaboratorWithUser | null = await CollaboratorsDAO.findById(
-      mention.id
+      mention.id,
+      false,
+      trx
     );
 
     if (!collaborator) {
@@ -49,7 +53,8 @@ export default async function sendCreationNotifications(
       annotation.canvasId,
       comment.id,
       actorUserId,
-      collaborator.user.id
+      collaborator.user.id,
+      trx
     );
     mentionedUserIds.push(collaborator.user.id);
   }
@@ -59,6 +64,7 @@ export default async function sendCreationNotifications(
     annotation.canvasId,
     comment.id,
     actorUserId,
-    mentionedUserIds
+    mentionedUserIds,
+    trx
   );
 }

@@ -1,4 +1,4 @@
-import Knex from 'knex';
+import * as Knex from 'knex';
 import db from '../../services/db';
 import AnnotationComment, {
   AnnotationCommentRow,
@@ -23,14 +23,14 @@ export async function create(
   trx?: Knex.Transaction
 ): Promise<AnnotationComment> {
   const rowData = dataAdapter.forInsertion(data);
-  const annotationComments: AnnotationCommentRow[] = trx
-    ? await db(TABLE_NAME)
-        .transacting(trx)
-        .insert(rowData)
-        .returning('*')
-    : await db(TABLE_NAME)
-        .insert(rowData)
-        .returning('*');
+  const annotationComments: AnnotationCommentRow[] = await db(TABLE_NAME)
+    .insert(rowData)
+    .returning('*')
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    });
   const annotationComment = annotationComments[0];
 
   if (!annotationComment) {
@@ -46,9 +46,10 @@ export async function create(
 }
 
 export async function findByAnnotationId(
-  annotationId: string
+  annotationId: string,
+  trx?: Knex.Transaction
 ): Promise<CommentWithMeta[]> {
-  const comments: CommentWithMetaRow[] = await annotationCommentsView()
+  const comments: CommentWithMetaRow[] = await annotationCommentsView(trx)
     .where({
       annotation_id: annotationId
     })
@@ -67,9 +68,10 @@ interface AnnotationToCommentsWithMentions {
 }
 
 export async function findByAnnotationIds(
-  annotationIds: string[]
+  annotationIds: string[],
+  trx?: Knex.Transaction
 ): Promise<AnnotationToCommentsWithMentions> {
-  const comments: CommentWithMetaRow[] = await annotationCommentsView()
+  const comments: CommentWithMetaRow[] = await annotationCommentsView(trx)
     .whereIn('annotation_id', annotationIds)
     .orderBy('created_at', 'asc');
 

@@ -136,11 +136,19 @@ export async function del(id: string): Promise<Canvas> {
   );
 }
 
-export async function findById(id: string): Promise<Canvas | null> {
+export async function findById(
+  id: string,
+  trx?: Knex.Transaction
+): Promise<Canvas | null> {
   const canvas = await db(TABLE_NAME)
     .select('*')
     .where({ id, deleted_at: null })
     .limit(1)
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .then((rows: CanvasRow[]) => first<CanvasRow>(rows));
 
   if (!canvas) {

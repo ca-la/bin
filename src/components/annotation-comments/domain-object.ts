@@ -1,10 +1,6 @@
 import DataAdapter from '../../services/data-adapter';
 import { hasProperties } from '../../services/require-properties';
-import Comment, { CommentRow } from '../comments/domain-object';
-import {
-  CollaboratorMeta,
-  CollaboratorMetaRow
-} from '../collaborators/domain-objects/collaborator-meta';
+import Comment, { CommentRow, isCommentRow } from '../comments/domain-object';
 
 export default interface AnnotationComment {
   commentId: string;
@@ -29,12 +25,10 @@ export function isAnnotationCommentRow(
 
 export interface CommentWithMeta extends Comment {
   annotationId: string;
-  collaborators: CollaboratorMeta[];
 }
 
 export interface CommentWithMetaRow extends CommentRow {
   annotation_id: string;
-  collaborators: CollaboratorMetaRow[];
 }
 
 export const withMetaDataAdapter = new DataAdapter<
@@ -43,17 +37,5 @@ export const withMetaDataAdapter = new DataAdapter<
 >();
 
 export function isCommentWithMetaRow(row: object): row is CommentWithMetaRow {
-  return hasProperties(
-    row,
-    'id',
-    'annotation_id',
-    'created_at',
-    'deleted_at',
-    'text',
-    'parent_comment_id',
-    'user_name',
-    'user_email',
-    'user_id',
-    'is_pinned'
-  );
+  return isCommentRow && hasProperties(row, 'annotation_id');
 }
