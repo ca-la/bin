@@ -159,6 +159,7 @@ export function create(bidPayload: BidCreationPayload): Promise<Bid> {
     const { taskTypeIds, ...bid } = bidPayload;
     const rowData = {
       ...omit(dataAdapter.forInsertion(bid), ['completed_at', 'accepted_at']),
+      bid_price_production_only_cents: bid.bidPriceProductionOnlyCents || 0,
       created_at: new Date()
     };
     const createdBid = await db(TABLE_NAME)

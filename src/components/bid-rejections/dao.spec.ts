@@ -1,6 +1,6 @@
 import { test, Test } from '../../test-helpers/fresh';
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
-import createUser = require('../../test-helpers/create-user');
+import createUser from '../../test-helpers/create-user';
 import generatePricingQuote from '../../services/generate-pricing-quote';
 import { BidCreationPayload } from '../bids/domain-object';
 import { daysToMs } from '../../services/time-conversion';
@@ -39,6 +39,7 @@ test('Bid Rejections DAO supports creation and retrieval by Bid ID', async (t: T
   const inputBid: BidCreationPayload = {
     acceptedAt: null,
     bidPriceCents: 100000,
+    bidPriceProductionOnlyCents: 0,
     createdBy: user.id,
     completedAt: null,
     description: 'Full Service',

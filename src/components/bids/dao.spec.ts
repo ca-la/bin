@@ -3,7 +3,7 @@ import { omit } from 'lodash';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
 import generatePricingQuote from '../../services/generate-pricing-quote';
-import createUser = require('../../test-helpers/create-user');
+import createUser from '../../test-helpers/create-user';
 import * as DesignEventsDAO from '../../dao/design-events';
 import { create as createDesign } from '../product-designs/dao';
 
@@ -73,6 +73,7 @@ test('Bids DAO supports creation and retrieval', async (t: Test) => {
   const inputBid: BidCreationPayload = {
     acceptedAt: null,
     bidPriceCents: 100000,
+    bidPriceProductionOnlyCents: 0,
     createdBy: user.id,
     completedAt: null,
     description: 'Full Service',
@@ -142,6 +143,7 @@ test('Bids DAO supports retrieval by quote ID', async (t: Test) => {
   const inputBid: BidCreationPayload = {
     acceptedAt: null,
     bidPriceCents: 100000,
+    bidPriceProductionOnlyCents: 0,
     createdBy: user.id,
     completedAt: null,
     description: 'Full Service',
@@ -201,6 +203,7 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
   const openBid: BidCreationPayload = {
     acceptedAt: null,
     bidPriceCents: 100000,
+    bidPriceProductionOnlyCents: 0,
     createdBy: admin.id,
     completedAt: null,
     description: 'Full Service',
@@ -212,6 +215,7 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
   const rejectedBid: BidCreationPayload = {
     acceptedAt: null,
     bidPriceCents: 100000,
+    bidPriceProductionOnlyCents: 0,
     createdBy: admin.id,
     completedAt: null,
     description: 'Full Service (Rejected)',
@@ -223,6 +227,7 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
   const acceptedBid: BidCreationPayload = {
     acceptedAt: null,
     bidPriceCents: 110000,
+    bidPriceProductionOnlyCents: 0,
     createdBy: admin.id,
     completedAt: null,
     description: 'Full Service (Accepted)',
@@ -1095,6 +1100,7 @@ test('Bids DAO supports finding bid with payout logs by id', async (t: Test) => 
   t.deepEqual(omit(foundBid, 'createdAt'), {
     acceptedAt: null,
     bidPriceCents: 2000,
+    bidPriceProductionOnlyCents: 0,
     completedAt: null,
     dueDate: bid.dueDate,
     createdBy: admin.id,

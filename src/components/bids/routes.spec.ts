@@ -5,7 +5,7 @@ import sinon from 'sinon';
 import DesignEvent from '../../domain-objects/design-event';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import { authHeader, del, get, post, put } from '../../test-helpers/http';
-import createUser = require('../../test-helpers/create-user');
+import createUser from '../../test-helpers/create-user';
 import generateBid from '../../test-helpers/factories/bid';
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
 import * as BidsDAO from './dao';
@@ -41,6 +41,7 @@ test('GET /bids', async (t: Test) => {
   const otherBid = await BidsDAO.create({
     acceptedAt: null,
     bidPriceCents: 100000,
+    bidPriceProductionOnlyCents: 0,
     createdBy: admin.user.id,
     completedAt: null,
     description: 'Full Service',
@@ -120,6 +121,7 @@ test('GET /bids?userId&state=OPEN', async (t: Test) => {
   const otherBid = await BidsDAO.create({
     acceptedAt: null,
     bidPriceCents: 100000,
+    bidPriceProductionOnlyCents: 0,
     createdBy: admin.user.id,
     completedAt: null,
     description: 'Full Service',
@@ -131,6 +133,7 @@ test('GET /bids?userId&state=OPEN', async (t: Test) => {
   const expiredBid = await BidsDAO.create({
     acceptedAt: null,
     bidPriceCents: 100000,
+    bidPriceProductionOnlyCents: 0,
     createdBy: admin.user.id,
     completedAt: null,
     description: 'Full Service',
@@ -192,6 +195,7 @@ test('GET /bids?userId&state=EXPIRED', async (t: Test) => {
   const otherBid = await BidsDAO.create({
     acceptedAt: null,
     bidPriceCents: 100000,
+    bidPriceProductionOnlyCents: 0,
     createdBy: admin.user.id,
     completedAt: null,
     description: 'Full Service',
@@ -206,6 +210,7 @@ test('GET /bids?userId&state=EXPIRED', async (t: Test) => {
   const expiredBid = await BidsDAO.create({
     acceptedAt: null,
     bidPriceCents: 100000,
+    bidPriceProductionOnlyCents: 0,
     createdBy: admin.user.id,
     completedAt: null,
     description: 'Full Service Brah',
@@ -269,6 +274,7 @@ test('GET /bids?userId&state=REJECTED', async (t: Test) => {
   const otherBid = await BidsDAO.create({
     acceptedAt: null,
     bidPriceCents: 100000,
+    bidPriceProductionOnlyCents: 0,
     createdBy: admin.user.id,
     completedAt: null,
     description: 'Full Service',
@@ -327,6 +333,7 @@ test('GET /bids?userId&state=ACCEPTED', async (t: Test) => {
   const otherBid = await BidsDAO.create({
     acceptedAt: null,
     bidPriceCents: 100000,
+    bidPriceProductionOnlyCents: 0,
     createdBy: admin.user.id,
     completedAt: null,
     description: 'Full Service',
@@ -581,6 +588,7 @@ test('Partner pairing: accept', async (t: Test) => {
   const bid = await BidsDAO.create({
     acceptedAt: null,
     bidPriceCents: 20000,
+    bidPriceProductionOnlyCents: 0,
     createdBy: admin.user.id,
     completedAt: null,
     description: 'Do me a favor, please.',
@@ -747,6 +755,7 @@ test('Partner pairing: reject', async (t: Test) => {
   const bid = await BidsDAO.create({
     acceptedAt: null,
     bidPriceCents: 20000,
+    bidPriceProductionOnlyCents: 0,
     createdBy: admin.user.id,
     completedAt: null,
     description: 'Do me a favor, please.',

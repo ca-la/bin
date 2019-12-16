@@ -6,7 +6,7 @@ import db from '../../services/db';
 import * as DesignEventsDAO from '../../dao/design-events';
 import * as PricingCostInputsDAO from '../../components/pricing-cost-inputs/dao';
 import { BidCreationPayload } from '../../components/bids/domain-object';
-import createUser = require('../../test-helpers/create-user');
+import createUser from '../../test-helpers/create-user';
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
 import { authHeader, get, post, put } from '../../test-helpers/http';
 import { create as createDesign } from '../../components/product-designs/dao';
@@ -590,6 +590,7 @@ test('PUT /pricing-quotes/:quoteId/bid/:bidId creates bid', async (t: Test) => {
   const inputBid: BidCreationPayload = {
     acceptedAt: null,
     bidPriceCents: 100000,
+    bidPriceProductionOnlyCents: 0,
     createdBy: user.id,
     completedAt: null,
     description: 'Full Service',
@@ -660,6 +661,7 @@ test('POST /pricing-quotes/:quoteId/bids creates bid', async (t: Test) => {
   const inputBid: Unsaved<BidCreationPayload> = {
     acceptedAt: null,
     bidPriceCents: 100000,
+    bidPriceProductionOnlyCents: 0,
     createdBy: user.id,
     completedAt: null,
     description: 'Full Service',
@@ -730,6 +732,7 @@ test('GET /pricing-quotes/:quoteId/bids returns list of bids for quote', async (
   const inputBid: Unsaved<BidCreationPayload> = {
     acceptedAt: null,
     bidPriceCents: 100000,
+    bidPriceProductionOnlyCents: 0,
     createdBy: user.id,
     completedAt: null,
     description: 'Full Service',
@@ -763,6 +766,7 @@ test('GET /pricing-quotes/:quoteId/bids returns list of bids for quote', async (
   const hasExtras = {
     acceptedAt: null,
     bidPriceCents: 100000,
+    bidPriceProductionOnlyCents: 0,
     createdAt: now,
     createdBy: user.id,
     completedAt: null,

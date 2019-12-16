@@ -7,7 +7,7 @@ import { PricingQuote } from '../../domain-objects/pricing-quote';
 import * as PricingQuotesDAO from '../../dao/pricing-quotes';
 import Bid, { BidCreationPayload } from '../../components/bids/domain-object';
 import { create as createBid } from '../../components/bids/dao';
-import createUser = require('../create-user');
+import createUser from '../create-user';
 import User from '../../components/users/domain-object';
 import { daysToMs } from '../../services/time-conversion';
 
@@ -67,6 +67,7 @@ export default async function generateBid({
   const bid = await createBid({
     acceptedAt: null,
     bidPriceCents: 100000,
+    bidPriceProductionOnlyCents: 0,
     createdBy,
     completedAt: null,
     description: 'Full Service',

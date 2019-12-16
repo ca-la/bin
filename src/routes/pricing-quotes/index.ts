@@ -301,6 +301,7 @@ function* createBidForQuote(this: AuthedContext): Iterator<any, any, any> {
     const bid = yield createBid({
       acceptedAt: null,
       bidPriceCents: body.bidPriceCents,
+      bidPriceProductionOnlyCents: body.bidPriceProductionOnlyCents,
       completedAt: null,
       createdBy: this.state.userId,
       description: body.description,
