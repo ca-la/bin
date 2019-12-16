@@ -1,9 +1,7 @@
 import Router from 'koa-router';
-import Knex from 'knex';
 import { pick } from 'lodash';
 
-import db from '../../services/db';
-import Comment, {
+import {
   BASE_COMMENT_PROPERTIES,
   BaseComment,
   isBaseComment
@@ -19,37 +17,25 @@ const router = new Router();
 function* createAnnotationComment(
   this: AuthedContext<BaseComment>
 ): Iterator<any, any, any> {
-  let comment: Comment | undefined;
   const userId = this.state.userId;
   const body = pick(this.request.body, BASE_COMMENT_PROPERTIES);
   const { annotationId } = this.params;
 
   if (body && isBaseComment(body) && annotationId) {
-    yield db.transaction(async (trx: Knex.Transaction) => {
-      comment = await CommentDAO.create(
-        {
-          ...body,
-          userId
-        },
-        trx
-      );
-      const annotationComment = await AnnotationCommentDAO.create(
-        {
-          annotationId,
-          commentId: comment.id
-        },
-        trx
-      );
+    const comment = yield CommentDAO.create({
+      ...body,
+      userId
+    });
+    const annotationComment = yield AnnotationCommentDAO.create({
+      annotationId,
+      commentId: comment.id
+    });
 
-      await announceAnnotationCommentCreation(annotationComment, comment);
-      await sendCreationNotifications(
-        {
-          actorUserId: this.state.userId,
-          annotationId,
-          comment
-        },
-        trx
-      );
+    yield announceAnnotationCommentCreation(annotationComment, comment);
+    yield sendCreationNotifications({
+      actorUserId: this.state.userId,
+      annotationId,
+      comment
     });
     this.status = 201;
     this.body = comment;

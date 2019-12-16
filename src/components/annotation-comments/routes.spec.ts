@@ -169,33 +169,6 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
   ]);
   t.equal(announcementStub.callCount, 2, 'Announces the comment to Iris');
 
-  notificationStub.rejects(new Error('Notification creation failure'));
-
-  const notMadeComment = { ...commentBody, id: uuid.v4() };
-  const commentNotificationFailure = await put(
-    `${API_PATH}/${annotationResponse[1].id}/comments/${commentId}`,
-    {
-      body: notMadeComment,
-      headers: authHeader(session.id)
-    }
-  );
-  t.equal(commentNotificationFailure[0].status, 500, 'Comment creation fails');
-
-  t.equal(
-    notificationMentionStub.callCount,
-    1,
-    'Mentions notification not called'
-  );
-  t.equal(notificationStub.callCount, 3, 'Comment notification called');
-  t.deepEqual(notificationStub.getCall(2).args.slice(0, 5), [
-    annotationResponse[1].id,
-    annotationResponse[1].canvasId,
-    notMadeComment.id,
-    user.id,
-    []
-  ]);
-  t.equal(announcementStub.callCount, 3, 'Announces the comment to Iris');
-
   const [response, body] = await get(
     `${API_PATH}/${annotationResponse[1].id}/comments`,
     { headers: authHeader(session.id) }
