@@ -256,7 +256,7 @@ test('CollaboratorsDAO.findByDesigns', async (t: Test) => {
 
   const expectedInitialCollaborator = {
     ...dOneCollaborators[0],
-    user: { id: user.id, name: user.name, email: user.email }
+    user: { id: user.id, name: 'Q User', email: user.email, role: 'USER' }
   };
 
   const results = await CollaboratorsDAO.findByDesigns([design.id]);
@@ -331,11 +331,16 @@ test('CollaboratorsDAO.findByDesigns', async (t: Test) => {
 
   const expectedDTwoCollaboratorOne = {
     ...dTwoCollaborators[0],
-    user: { id: user.id, name: user.name, email: user.email }
+    user: { id: user.id, name: 'Q User', email: user.email, role: 'USER' }
   };
   const expectedDTwoCollaboratorTwo = {
     ...collectionCollaborator,
-    user: { id: createdBy.id, name: createdBy.name, email: createdBy.email }
+    user: {
+      id: createdBy.id,
+      name: 'Q User',
+      email: createdBy.email,
+      role: 'USER'
+    }
   };
 
   const resultsThree = await CollaboratorsDAO.findByDesigns([

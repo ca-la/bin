@@ -1,3 +1,5 @@
+import { Role as UserRole } from '@cala/ts-lib/dist/users';
+
 import DataAdapter from '../../../services/data-adapter';
 import { hasProperties } from '../../../services/require-properties';
 import Collaborator, {
@@ -10,6 +12,7 @@ export interface UserMeta {
   id: string;
   email: string;
   name: string;
+  role: UserRole;
 }
 
 export interface CollaboratorWithUserMeta extends Collaborator {
@@ -70,7 +73,8 @@ function encode(
             ? {
                 email: collaborator.user.email,
                 id: collaborator.user.id,
-                name: collaborator.user.name
+                name: collaborator.user.name,
+                role: collaborator.user.role
               }
             : null,
           userEmail: collaborator.user_email,
@@ -111,7 +115,8 @@ function decode(
             ? {
                 email: collaborator.user.email,
                 id: collaborator.user.id,
-                name: collaborator.user.name
+                name: collaborator.user.name,
+                role: collaborator.user.role
               }
             : null,
           user_email: collaborator.userEmail,

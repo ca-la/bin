@@ -274,7 +274,7 @@ LEFT JOIN collection_designs AS cd ON cd.design_id = d.id
 LEFT JOIN (
 	SELECT collaborators.*,
     CASE
-      WHEN u.id IS NOT null THEN jsonb_build_object('name', u.name, 'email', u.email, 'id', u.id)
+      WHEN u.id IS NOT null THEN to_json(u.*)
       ELSE null
     END AS user
 	FROM collaborators
