@@ -29,6 +29,38 @@ WHERE ctfortasksviewraw.task_id = tasksfortasksviewraw.id
   );
 }
 
+export function getMinimal(): Knex.QueryBuilder {
+  return db
+    .select(
+      'task_events.status as status',
+      'task_events.created_at as last_modified_at',
+      'product_designs.id as design_id'
+    )
+    .from('task_events')
+    .join('tasks', 'task_events.task_id', 'tasks.id')
+    .leftJoin(
+      'product_design_stage_tasks',
+      'tasks.id',
+      'product_design_stage_tasks.task_id'
+    )
+    .leftJoin(
+      'product_design_stages',
+      'product_design_stage_tasks.design_stage_id',
+      'product_design_stages.id'
+    )
+    .leftJoin(
+      'product_designs',
+      'product_design_stages.design_id',
+      'product_designs.id'
+    )
+    .where({ 'product_designs.deleted_at': null }).andWhereRaw(`
+      NOT EXISTS (
+        SELECT * from task_events as te2
+         WHERE task_events.task_id = te2.task_id
+           AND te2.created_at > task_events.created_at
+      )`);
+}
+
 export function getBuilder(
   collaboratorsBuilder?: Knex.QueryBuilder
 ): Knex.QueryBuilder {

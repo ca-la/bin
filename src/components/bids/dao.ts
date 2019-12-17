@@ -22,7 +22,7 @@ import limitOrOffset from '../../services/limit-or-offset';
 import { MILLISECONDS_TO_EXPIRE } from './constants';
 import { omit } from 'lodash';
 import * as BidTaskTypesDAO from '../bid-task-types/dao';
-import { getBuilder as getTasksViewBuilder } from '../../dao/task-events/view';
+import { getMinimal as getMinimalTaskViewBuilder } from '../../dao/task-events/view';
 
 // Any payouts to a partner cannot be linked to a bid before this date, as
 // they were linked to an invoice. Having a cut-off date allows the API to
@@ -130,9 +130,8 @@ const selectWithAcceptedAtAndCompletedAt = db.raw(
   ELSE
     null
   END AS accepted_at,
-  (select max(t.last_modified_at)
-  from (:taskView) as t where t.design_id = design_events.design_id) as completed_at`,
-  { taskView: getTasksViewBuilder() }
+  (SELECT MAX(last_modified_at) FROM :taskView AS t where t.design_id = design_events.design_id) AS completed_at`,
+  { taskView: getMinimalTaskViewBuilder() }
 );
 
 const orderBy = (
@@ -515,7 +514,7 @@ export async function findActiveByTargetId(
           group by innertasks.design_id
           having count(innertasks.design_id) = 1)
         `,
-          { taskView: getTasksViewBuilder() }
+          { taskView: getMinimalTaskViewBuilder() }
         )
       )
       .whereIn(
@@ -586,12 +585,13 @@ export async function findCompletedByTargetId(
         and outerquery.design_id in (
           select innertasks.design_id from (
             select distinct on (t.design_id, t.status) t.design_id, t.status
-            from :taskView as t
-          ) as innertasks
+            from :taskView as t) as innertasks
           group by innertasks.design_id
           having count(innertasks.design_id) = 1)
-        `,
-          { taskView: getTasksViewBuilder() }
+`,
+          {
+            taskView: getMinimalTaskViewBuilder()
+          }
         )
       )
       .whereIn(
