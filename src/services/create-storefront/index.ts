@@ -18,22 +18,22 @@ export function createStorefront(
   options: CreateStorefrontOptions
 ): Promise<Storefront> {
   return db.transaction(async (trx: Knex.Transaction) => {
-    const storefront = await StorefrontsDAO.create(
-      {
+    const storefront = await StorefrontsDAO.create({
+      data: {
         createdBy: options.userId,
         name: options.name
       },
       trx
-    );
-    await StorefrontUsersDAO.create(
-      {
+    });
+    await StorefrontUsersDAO.create({
+      data: {
         storefrontId: storefront.id,
         userId: options.userId
       },
       trx
-    );
-    await StorefrontTokensDAO.create(
-      {
+    });
+    await StorefrontTokensDAO.create({
+      data: {
         baseUrl: options.baseUrl,
         createdBy: options.userId,
         providerName: options.providerName,
@@ -41,7 +41,7 @@ export function createStorefront(
         token: options.accessToken
       },
       trx
-    );
+    });
 
     return storefront;
   });

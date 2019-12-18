@@ -13,10 +13,11 @@ import { validate, validateEvery } from '../../../services/validate-from-db';
 
 const TABLE_NAME = 'storefront_integration_tokens';
 
-export async function create(
-  data: Unsaved<StorefrontToken>,
-  trx: Knex.Transaction
-): Promise<StorefrontToken> {
+export async function create(options: {
+  data: Unsaved<StorefrontToken>;
+  trx: Knex.Transaction;
+}): Promise<StorefrontToken> {
+  const { data, trx } = options;
   const rowData = unsavedDataAdapter.forInsertion(data);
   const storefrontToken = await trx(TABLE_NAME)
     .insert({ ...rowData, id: uuid.v4() })
@@ -60,17 +61,15 @@ export async function findById(
   );
 }
 
-export async function findByStorefront(
-  storefrontId: string,
-  trx?: Knex.Transaction
-): Promise<StorefrontToken[]> {
-  const storefrontTokens = await db(TABLE_NAME)
-    .where({ storefront_id: storefrontId, deleted_at: null })
-    .modify((query: Knex.QueryBuilder) => {
-      if (trx) {
-        query.transacting(trx);
-      }
-    });
+export async function findByStorefront(options: {
+  storefrontId: string;
+  trx: Knex.Transaction;
+}): Promise<StorefrontToken[]> {
+  const { storefrontId, trx } = options;
+  const storefrontTokens = await trx(TABLE_NAME).where({
+    storefront_id: storefrontId,
+    deleted_at: null
+  });
 
   return validateEvery<StorefrontTokenRow, StorefrontToken>(
     TABLE_NAME,

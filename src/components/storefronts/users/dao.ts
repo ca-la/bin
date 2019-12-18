@@ -1,5 +1,4 @@
 import * as Knex from 'knex';
-import db from '../../../services/db';
 import first from '../../../services/first';
 import StorefrontUser, {
   dataAdapter,
@@ -10,10 +9,11 @@ import { validate } from '../../../services/validate-from-db';
 
 const TABLE_NAME = 'storefront_users';
 
-export async function create(
-  data: StorefrontUser,
-  trx: Knex.Transaction
-): Promise<StorefrontUser> {
+export async function create(options: {
+  data: StorefrontUser;
+  trx: Knex.Transaction;
+}): Promise<StorefrontUser> {
+  const { data, trx } = options;
   const rowData = dataAdapter.forInsertion(data);
   const storefrontUser = await trx(TABLE_NAME)
     .insert(rowData)
@@ -32,18 +32,14 @@ export async function create(
   );
 }
 
-export async function findByUserAndStorefront(
-  userId: string,
-  storefrontId: string,
-  trx?: Knex.Transaction
-): Promise<StorefrontUser | null> {
-  const storefrontUser = await db(TABLE_NAME)
+export async function findByUserAndStorefront(options: {
+  userId: string;
+  storefrontId: string;
+  trx: Knex.Transaction;
+}): Promise<StorefrontUser | null> {
+  const { userId, storefrontId, trx } = options;
+  const storefrontUser = await trx(TABLE_NAME)
     .where({ user_id: userId, storefront_id: storefrontId })
-    .modify((query: Knex.QueryBuilder) => {
-      if (trx) {
-        query.transacting(trx);
-      }
-    })
     .then((storefrontUsers: StorefrontUserRow[]) => first(storefrontUsers));
 
   if (!storefrontUser) {

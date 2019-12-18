@@ -11,15 +11,15 @@ test('StorefrontTokensDAO can save and retrieve stores', async (t: Test) => {
   const { user } = await createUser({ withSession: false });
 
   await db.transaction(async (trx: Knex.Transaction) => {
-    const storefront = await StorefrontsDAO.create(
-      {
+    const storefront = await StorefrontsDAO.create({
+      data: {
         createdBy: user.id,
         name: 'My Cool Store'
       },
       trx
-    );
-    const created = await StorefrontTokensDAO.create(
-      {
+    });
+    const created = await StorefrontTokensDAO.create({
+      data: {
         baseUrl: 'https://some-url',
         createdBy: user.id,
         providerName: ProviderName.SHOPIFY,
@@ -27,16 +27,16 @@ test('StorefrontTokensDAO can save and retrieve stores', async (t: Test) => {
         token: 'a very secure string'
       },
       trx
-    );
+    });
     const found = await StorefrontTokensDAO.findById(created.id, trx);
 
     t.deepEqual(created, found);
     t.true(found!.createdAt instanceof Date);
 
-    const foundByStorefront = await StorefrontTokensDAO.findByStorefront(
-      storefront.id,
+    const foundByStorefront = await StorefrontTokensDAO.findByStorefront({
+      storefrontId: storefront.id,
       trx
-    );
+    });
     t.deepEqual([created], foundByStorefront);
   });
 });

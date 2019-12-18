@@ -10,25 +10,25 @@ test('StorefrontUsersDAO can save and retrieve store users', async (t: Test) => 
   const { user } = await createUser({ withSession: false });
 
   await db.transaction(async (trx: Knex.Transaction) => {
-    const storefront = await StorefrontsDAO.create(
-      {
+    const storefront = await StorefrontsDAO.create({
+      data: {
         createdBy: user.id,
         name: 'My Cool Store'
       },
       trx
-    );
-    const created = await StorefrontUsersDAO.create(
-      {
+    });
+    const created = await StorefrontUsersDAO.create({
+      data: {
         storefrontId: storefront.id,
         userId: user.id
       },
       trx
-    );
-    const found = await StorefrontUsersDAO.findByUserAndStorefront(
-      user.id,
-      storefront.id,
+    });
+    const found = await StorefrontUsersDAO.findByUserAndStorefront({
+      userId: user.id,
+      storefrontId: storefront.id,
       trx
-    );
+    });
 
     t.deepEqual(created, found);
   });

@@ -4,6 +4,11 @@ import requireAuth = require('../../middleware/require-auth');
 import { hasProperties } from '../../services/require-properties';
 import { createStorefront } from '../../services/create-storefront';
 import { ProviderName } from './tokens/domain-object';
+import requireAdmin = require('../../middleware/require-admin');
+import { findById } from './dao';
+import db from '../../services/db';
+import Knex from 'knex';
+import { findByStorefront } from './tokens/dao';
 
 const router = new Router();
 
@@ -44,6 +49,36 @@ function* createStorefrontResources(
   this.body = storefront;
 }
 
-router.post('/', requireAuth, createStorefrontResources);
+function* getById(this: AuthedContext): Iterator<any, any, any> {
+  const { storefrontId } = this.params;
+  const storefront = yield db.transaction((trx: Knex.Transaction) =>
+    findById({ trx, id: storefrontId })
+  );
 
+  if (!storefront) {
+    this.throw(404, 'Storefront not found');
+  }
+
+  this.status = 200;
+  this.body = storefront;
+}
+
+function* getTokensById(this: AuthedContext): Iterator<any, any, any> {
+  const { storefrontId } = this.params;
+
+  const storefrontTokens = yield db.transaction((trx: Knex.Transaction) =>
+    findByStorefront({ trx, storefrontId })
+  );
+
+  if (storefrontTokens.length === 0) {
+    this.throw(404, 'Storefront tokens not found');
+  }
+
+  this.status = 200;
+  this.body = storefrontTokens;
+}
+
+router.post('/', requireAuth, createStorefrontResources);
+router.get('/:storefrontId', requireAuth, getById);
+router.get('/:storefrontId/tokens', requireAdmin, getTokensById);
 export default router.routes();
