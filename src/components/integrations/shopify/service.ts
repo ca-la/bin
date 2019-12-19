@@ -1,7 +1,7 @@
 import { DesignAndVariantToShopifyIds } from '@cala/ts-lib';
 import { create as createShopifyProduct } from '../../shopify-products/dao';
 import { create as createShopifyVariant } from '../../shopify-variants/dao';
-import * as db from '../../../services/db';
+import db from '../../../services/db';
 import Knex = require('knex');
 import uuid from 'node-uuid';
 

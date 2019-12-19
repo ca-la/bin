@@ -1,6 +1,6 @@
 import Knex from 'knex';
 
-export async function up(knex: Knex): Promise<Knex.SchemaBuilder> {
+export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable(
     'pricing_care_labels',
     (table: Knex.CreateTableBuilder) => {
@@ -25,7 +25,7 @@ export async function up(knex: Knex): Promise<Knex.SchemaBuilder> {
   );
 }
 
-export async function down(knex: Knex): Promise<Knex.SchemaBuilder> {
+export async function down(knex: Knex): Promise<void> {
   await knex.schema.dropTable('pricing_care_labels');
 
   return knex.schema.alterTable(

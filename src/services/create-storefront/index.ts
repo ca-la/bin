@@ -1,5 +1,5 @@
 import * as Knex from 'knex';
-import * as db from '../db';
+import db from '../db';
 import { ProviderName } from '../../components/storefronts/tokens/domain-object';
 import Storefront from '../../components/storefronts/domain-object';
 import * as StorefrontsDAO from '../../components/storefronts/dao';
