@@ -70,3 +70,6 @@ export const FIT_PARTNER_SMS_PRODUCT_ID_BLACKLIST: number[];
 
 export const SHORT_ID_SALT: string;
 export const UPC_SALT: string;
+
+export const AWS_HERMES_SQS_REGION: string;
+export const AWS_HERMES_SQS_URL: string;

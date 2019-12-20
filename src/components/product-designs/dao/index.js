@@ -167,13 +167,18 @@ function findByIds(ids) {
     .then(designs => designs.map(instantiate));
 }
 
-function findByCollectionId(collectionId) {
+function findByCollectionId(collectionId, trx) {
   return queryWithCollectionMeta(db)
     .where({
       'collection_designs.collection_id': collectionId,
       'product_designs.deleted_at': null
     })
     .orderBy('product_designs.created_at', 'DESC')
+    .modify(query => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .catch(rethrow)
     .then(designs => designs.map(instantiate));
 }

@@ -15,6 +15,9 @@ import Stripe = require('../../services/stripe');
 import { authHeader, post } from '../../test-helpers/http';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import { addDesign } from '../../test-helpers/collections';
+import { createStorefront } from '../../services/create-storefront';
+import { ProviderName } from '../../components/storefronts/tokens/domain-object';
+import * as CreateShopifyProducts from '../../services/create-shopify-products';
 
 test('/quote-payments POST generates quotes, payment method, invoice, lineItems, and charges', async (t: Test) => {
   const { user, session } = await createUser();
@@ -482,3 +485,170 @@ test(
     t.deepEquals(invoice, [], 'No invoice exists for design');
   }
 );
+
+test('POST /quote-payments creates shopify products if connected to a storefront', async (t: Test) => {
+  sandbox()
+    .stub(EmailService, 'enqueueSend')
+    .resolves();
+  sandbox()
+    .stub(SlackService, 'enqueueSend')
+    .resolves();
+  sandbox()
+    .stub(Stripe, 'charge')
+    .resolves({ id: 'chargeId' });
+  sandbox()
+    .stub(Stripe, 'findOrCreateCustomerId')
+    .resolves('customerId');
+  sandbox()
+    .stub(attachSource, 'default')
+    .resolves({ id: 'sourceId', last4: '1234' });
+  const createShopifyProductsStub = sandbox()
+    .stub(CreateShopifyProducts, 'createShopifyProductsForCollection')
+    .resolves();
+
+  const { user, session } = await createUser();
+  await createStorefront({
+    userId: user.id,
+    accessToken: 'token-foo',
+    name: 'The Gift Shop',
+    baseUrl: 'gift.shop',
+    providerName: ProviderName.SHOPIFY
+  });
+  const paymentMethodTokenId = uuid.v4();
+
+  const collection = await CollectionsDAO.create({
+    createdAt: new Date(),
+    createdBy: user.id,
+    deletedAt: null,
+    description: 'Initial commit',
+    id: uuid.v4(),
+    title: 'Drop 001/The Early Years'
+  });
+  const design = await ProductDesignsDAO.create({
+    productType: 'A product type',
+    title: 'A design',
+    userId: user.id
+  });
+  await addDesign(collection.id, design.id);
+
+  await generatePricingValues();
+  await PricingCostInputsDAO.create({
+    createdAt: new Date(),
+    deletedAt: null,
+    designId: design.id,
+    expiresAt: null,
+    id: uuid.v4(),
+    materialBudgetCents: 1200,
+    materialCategory: 'BASIC',
+    processes: [
+      {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      },
+      {
+        complexity: '1_COLOR',
+        name: 'SCREEN_PRINTING'
+      }
+    ],
+    productComplexity: 'SIMPLE',
+    productType: 'TEESHIRT'
+  });
+
+  const [postResponse] = await post('/quote-payments', {
+    body: {
+      collectionId: collection.id,
+      createQuotes: [
+        {
+          designId: design.id,
+          units: 300
+        }
+      ],
+      paymentMethodTokenId
+    },
+    headers: authHeader(session.id)
+  });
+
+  t.equal(postResponse.status, 201, 'succesful payment');
+  t.deepEqual(createShopifyProductsStub.firstCall.args, [
+    user.id,
+    collection.id
+  ]);
+});
+
+test('POST /quote-payments still succeeds if creates shopify products fails', async (t: Test) => {
+  sandbox()
+    .stub(EmailService, 'enqueueSend')
+    .resolves();
+  sandbox()
+    .stub(SlackService, 'enqueueSend')
+    .resolves();
+  sandbox()
+    .stub(Stripe, 'charge')
+    .resolves({ id: 'chargeId' });
+  sandbox()
+    .stub(Stripe, 'findOrCreateCustomerId')
+    .resolves('customerId');
+  sandbox()
+    .stub(attachSource, 'default')
+    .resolves({ id: 'sourceId', last4: '1234' });
+
+  const createShopifyProductsStub = sandbox()
+    .stub(CreateShopifyProducts, 'createShopifyProductsForCollection')
+    .resolves(new Error('Unexpect Error'));
+
+  const { user, session } = await createUser();
+  await createStorefront({
+    userId: user.id,
+    accessToken: 'token-foo',
+    name: 'The Gift Shop',
+    baseUrl: 'gift.shop',
+    providerName: ProviderName.SHOPIFY
+  });
+  const paymentMethodTokenId = uuid.v4();
+
+  const collection = await CollectionsDAO.create({
+    createdAt: new Date(),
+    createdBy: user.id,
+    deletedAt: null,
+    description: 'Initial commit',
+    id: uuid.v4(),
+    title: 'Drop 001/The Early Years'
+  });
+  const design = await ProductDesignsDAO.create({
+    productType: 'A product type',
+    title: 'A design',
+    userId: user.id
+  });
+  await addDesign(collection.id, design.id);
+
+  await generatePricingValues();
+  await PricingCostInputsDAO.create({
+    createdAt: new Date(),
+    deletedAt: null,
+    designId: design.id,
+    expiresAt: null,
+    id: uuid.v4(),
+    materialBudgetCents: 1200,
+    materialCategory: 'BASIC',
+    processes: [],
+    productComplexity: 'SIMPLE',
+    productType: 'TEESHIRT'
+  });
+
+  const [postResponse] = await post('/quote-payments', {
+    body: {
+      collectionId: collection.id,
+      createQuotes: [
+        {
+          designId: design.id,
+          units: 300
+        }
+      ],
+      paymentMethodTokenId
+    },
+    headers: authHeader(session.id)
+  });
+
+  t.equal(postResponse.status, 201, 'succesful payment');
+  t.equal(createShopifyProductsStub.callCount, 1);
+});

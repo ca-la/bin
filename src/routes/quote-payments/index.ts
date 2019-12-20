@@ -15,6 +15,8 @@ import { CreateQuotePayload } from '../../services/generate-pricing-quote';
 import { hasProperties } from '../../services/require-properties';
 import createUPCsForCollection from '../../services/create-upcs-for-collection';
 import { omit } from 'lodash';
+import { createShopifyProductsForCollection } from '../../services/create-shopify-products';
+import { logServerError } from '../../services/logger';
 
 const router = new Router();
 
@@ -67,8 +69,6 @@ function* payQuote(
     JSON.stringify(omit(body, 'paymentMethodTokenId'), null, 2)
   );
 
-  yield createUPCsForCollection(collection.id);
-
   if (isWaived) {
     this.body = yield payWaivedQuote(body.createQuotes, userId, collection);
   } else if (!isFinanced && isPayWithMethodRequest(body)) {
@@ -87,6 +87,18 @@ function* payQuote(
   } else {
     this.throw('Request must match type');
   }
+
+  yield createUPCsForCollection(collection.id);
+
+  createShopifyProductsForCollection(userId, collection.id).catch(
+    (err: Error): void =>
+      logServerError(
+        `Create Shopify Products for user ${userId} - Collection ${
+          collection.id
+        }: `,
+        err
+      )
+  );
 
   this.status = 201;
 }

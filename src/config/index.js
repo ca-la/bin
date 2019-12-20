@@ -142,7 +142,10 @@ const config = {
     JSON.parse(process.env.FIT_PARTNER_SMS_PRODUCT_ID_BLACKLIST),
 
   SHORT_ID_SALT: process.env.SHORT_ID_SALT,
-  UPC_SALT: process.env.UPC_SALT
+  UPC_SALT: process.env.UPC_SALT,
+
+  AWS_HERMES_SQS_REGION: process.env.AWS_HERMES_SQS_REGION,
+  AWS_HERMES_SQS_URL: process.env.AWS_HERMES_SQS_URL
 };
 
 Object.keys(config).forEach(key => {
