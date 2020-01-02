@@ -91,20 +91,18 @@ export function* getCollectionDesigns(
   const collectionDesigns = yield ProductDesignsDAO.findByCollectionId(
     collectionId
   );
-  const withRoles = yield Promise.all(
-    collectionDesigns.map(
-      async (design: ProductDesign): Promise<DesignWithPermissions> => {
-        // TODO: switch to `getDesignPermissions` once studio consumes the `permissions` object.
-        const permissions = await getDesignPermissionsAndRole(
-          design,
-          role,
-          userId
-        );
-        return { ...design, ...permissions };
-      }
-    )
-  );
 
-  this.body = withRoles;
+  const designsWithPermissions: DesignWithPermissions[] = [];
+
+  for (const collectionDesign of collectionDesigns) {
+    const permissions = yield getDesignPermissionsAndRole({
+      designId: collectionDesign.id,
+      sessionRole: role,
+      sessionUserId: userId
+    });
+    designsWithPermissions.push({ ...collectionDesign, ...permissions });
+  }
+
+  this.body = designsWithPermissions;
   this.status = 200;
 }

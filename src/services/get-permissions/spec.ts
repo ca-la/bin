@@ -94,7 +94,11 @@ test('#getDesignPermissions', async (t: tape.Test) => {
   });
 
   t.deepEqual(
-    await PermissionsService.getDesignPermissions(design1, session, user.id),
+    await PermissionsService.getDesignPermissions({
+      designId: design1.id,
+      sessionRole: session,
+      sessionUserId: user.id
+    }),
     {
       canComment: true,
       canDelete: true,
@@ -106,7 +110,11 @@ test('#getDesignPermissions', async (t: tape.Test) => {
     'Returns all access permissions for the design the user created.'
   );
   t.deepEqual(
-    await PermissionsService.getDesignPermissions(design5, session, user.id),
+    await PermissionsService.getDesignPermissions({
+      designId: design5.id,
+      sessionRole: session,
+      sessionUserId: user.id
+    }),
     {
       canComment: true,
       canDelete: true,
@@ -118,7 +126,11 @@ test('#getDesignPermissions', async (t: tape.Test) => {
     'Returns non edit variant permissions for the designs that have been paid for.'
   );
   t.deepEqual(
-    await PermissionsService.getDesignPermissions(design1, session2, user2.id),
+    await PermissionsService.getDesignPermissions({
+      designId: design1.id,
+      sessionRole: session2,
+      sessionUserId: user2.id
+    }),
     {
       canComment: false,
       canDelete: false,
@@ -130,7 +142,11 @@ test('#getDesignPermissions', async (t: tape.Test) => {
     'Returns preview permissions for the design the user is a collection-level preview on.'
   );
   t.deepEqual(
-    await PermissionsService.getDesignPermissions(design2, session, user.id),
+    await PermissionsService.getDesignPermissions({
+      designId: design2.id,
+      sessionRole: session,
+      sessionUserId: user.id
+    }),
     {
       canComment: true,
       canDelete: false,
@@ -142,7 +158,11 @@ test('#getDesignPermissions', async (t: tape.Test) => {
     'Returns edit access permissions for the design the user is an edit collaborator on.'
   );
   t.deepEqual(
-    await PermissionsService.getDesignPermissions(design4, session, user.id),
+    await PermissionsService.getDesignPermissions({
+      designId: design4.id,
+      sessionRole: session,
+      sessionUserId: user.id
+    }),
     {
       canComment: true,
       canDelete: false,
@@ -154,7 +174,11 @@ test('#getDesignPermissions', async (t: tape.Test) => {
     'Returns view access permissions for the design the user is a view collaborator on.'
   );
   t.deepEqual(
-    await PermissionsService.getDesignPermissions(design3, session, user.id),
+    await PermissionsService.getDesignPermissions({
+      designId: design3.id,
+      sessionRole: session,
+      sessionUserId: user.id
+    }),
     {
       canComment: false,
       canDelete: false,

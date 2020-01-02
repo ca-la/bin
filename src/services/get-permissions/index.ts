@@ -2,8 +2,8 @@ import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import Collaborator from '../../components/collaborators/domain-objects/collaborator';
 import * as CollectionsDAO from '../../components/collections/dao';
 import * as DesignEventsDAO from '../../dao/design-events';
-import ProductDesign = require('../../components/product-designs/domain-objects/product-design');
 import Collection from '../../components/collections/domain-object';
+import { isOwner as isDesignOwner } from '../../components/product-designs/dao/dao';
 
 export interface Permissions {
   canComment: boolean;
@@ -38,24 +38,26 @@ const ROLE_ORDERING = ['EDIT', 'PARTNER', 'VIEW', 'PREVIEW'];
  * - Having a collaborator connected to either the design or a collection that the design
  *   resides in.
  */
-export async function getDesignPermissionsAndRole(
-  design: ProductDesign,
-  sessionRole: string,
-  sessionUserId: string
-): Promise<PermissionsAndRole> {
-  const isAdmin = sessionRole === 'ADMIN';
-  const isDesignOwner = sessionUserId === design.userId;
+export async function getDesignPermissionsAndRole(options: {
+  designId: string;
+  sessionRole: string;
+  sessionUserId: string;
+}): Promise<PermissionsAndRole> {
+  const { designId, sessionRole, sessionUserId } = options;
 
-  const collections = await CollectionsDAO.findByDesign(design.id);
-  const userCreatedCollection = collections.find(
-    (collection: Collection): boolean => {
-      return collection.createdBy === sessionUserId;
-    }
-  );
-  const isOwner = isDesignOwner || Boolean(userCreatedCollection);
+  const isAdmin = sessionRole === 'ADMIN';
+  const isOwnerOfDesign = await isDesignOwner({
+    designId,
+    userId: sessionUserId
+  });
+  const isOwnerOfCollection = await CollectionsDAO.hasOwnership({
+    designId,
+    userId: sessionUserId
+  });
+  const isOwner = isOwnerOfDesign || isOwnerOfCollection;
 
   const combinedCollaborators = await CollaboratorsDAO.findAllForUserThroughDesign(
-    design.id,
+    designId,
     sessionUserId
   );
   const roles = combinedCollaborators.map(
@@ -80,22 +82,18 @@ export async function getDesignPermissionsAndRole(
         isPreviewer,
         isViewer
       },
-      design.id
+      designId
     ),
     role
   };
 }
 
-export async function getDesignPermissions(
-  design: ProductDesign,
-  sessionRole: string,
-  sessionUserId: string
-): Promise<Permissions> {
-  const designPermissionsAndRole = await getDesignPermissionsAndRole(
-    design,
-    sessionRole,
-    sessionUserId
-  );
+export async function getDesignPermissions(options: {
+  designId: string;
+  sessionRole: string;
+  sessionUserId: string;
+}): Promise<Permissions> {
+  const designPermissionsAndRole = await getDesignPermissionsAndRole(options);
   return { ...designPermissionsAndRole.permissions };
 }
 

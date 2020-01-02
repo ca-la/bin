@@ -1,27 +1,20 @@
 import Koa from 'koa';
 
-import filterError = require('../../services/filter-error');
 import {
   getDesignPermissions,
   Permissions
 } from '../../services/get-permissions';
-import InvalidDataError = require('../../errors/invalid-data');
-import ProductDesignsDAO from '../../components/product-designs/dao';
 
 export function* attachDesignPermissions(
   this: Koa.Context,
   designId: string
 ): any {
   const { role, userId } = this.state;
-  const design = yield ProductDesignsDAO.findById(designId).catch(
-    filterError(InvalidDataError, (err: InvalidDataError) =>
-      this.throw(404, err)
-    )
-  );
-  this.assert(design, 404, 'Design not found');
-
-  this.state.design = design;
-  this.state.permissions = yield getDesignPermissions(design, role, userId);
+  this.state.permissions = yield getDesignPermissions({
+    designId,
+    sessionRole: role,
+    sessionUserId: userId
+  });
 }
 
 export function* attachAggregateDesignPermissions(
@@ -29,11 +22,6 @@ export function* attachAggregateDesignPermissions(
   designIds: string[]
 ): any {
   const { role, userId } = this.state;
-  const designs = yield ProductDesignsDAO.findByIds(designIds).catch(
-    filterError(InvalidDataError, (err: InvalidDataError) => {
-      this.throw(404, err);
-    })
-  );
 
   let aggregatePermissions: Permissions = {
     canComment: true,
@@ -44,8 +32,12 @@ export function* attachAggregateDesignPermissions(
     canView: true
   };
 
-  for (const design of designs) {
-    const permissions = yield getDesignPermissions(design, role, userId);
+  for (const designId of designIds) {
+    const permissions = yield getDesignPermissions({
+      designId,
+      sessionRole: role,
+      sessionUserId: userId
+    });
 
     aggregatePermissions = {
       canComment: aggregatePermissions.canComment && permissions.canComment,
