@@ -1,9 +1,7 @@
 import uuid from 'node-uuid';
+import { TaskEvent, TaskStatus } from '@cala/ts-lib';
 
-import TaskEvent, {
-  DetailsTask,
-  TaskStatus
-} from '../../domain-objects/task-event';
+import { DetailsTask } from '../../domain-objects/task-event';
 import { create, findById } from '../../dao/task-events';
 import { create as createStageTask } from '../../dao/product-design-stage-tasks';
 import * as DesignStagesDAO from '../../dao/product-design-stages';

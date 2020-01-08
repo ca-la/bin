@@ -1,5 +1,6 @@
 import Router from 'koa-router';
 import { omit, pick } from 'lodash';
+import { BaseComment, TaskEvent, TaskStatus } from '@cala/ts-lib';
 
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as CommentDAO from '../../components/comments/dao';
@@ -8,12 +9,11 @@ import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import CollaboratorTask from '../../domain-objects/collaborator-task';
 import createTask from '../../services/create-task';
-import TaskEvent, {
+import {
   DetailsTask,
   DetailsTaskWithAssignees,
   IOTask,
-  taskEventFromIO,
-  TaskStatus
+  taskEventFromIO
 } from '../../domain-objects/task-event';
 import {
   BASE_COMMENT_PROPERTIES,
@@ -32,7 +32,6 @@ import parseAtMentions, {
   MentionType
 } from '@cala/ts-lib/dist/parsing/comment-mentions';
 import { announceTaskCommentCreation } from '../../components/iris/messages/task-comment';
-import { BaseComment } from '@cala/ts-lib';
 
 const router = new Router();
 
@@ -118,8 +117,7 @@ function* createTaskEvent(
     NotificationsService.sendTaskCompletionNotification(taskId, sessionUserId);
   }
 
-  this.body = taskEvent;
-  this.status = 201;
+  this.status = 204;
 }
 
 function* createTaskWithEventOnStage(

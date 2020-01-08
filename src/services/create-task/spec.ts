@@ -1,7 +1,7 @@
 import uuid from 'node-uuid';
+import { TaskEvent, TaskStatus } from '@cala/ts-lib';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
-import TaskEvent, { TaskStatus } from '../../domain-objects/task-event';
 import * as TasksDAO from '../../dao/tasks';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as ProductDesignStagesDAO from '../../dao/product-design-stages';

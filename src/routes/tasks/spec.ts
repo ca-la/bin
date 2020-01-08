@@ -1,11 +1,11 @@
 import tape from 'tape';
 import uuid from 'node-uuid';
+import { TaskStatus } from '@cala/ts-lib';
 
 import User from '../../components/users/domain-object';
 import {
   DetailsTask,
-  DetailsTaskWithAssignees,
-  TaskStatus
+  DetailsTaskWithAssignees
 } from '../../domain-objects/task-event';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as TasksDAO from '../../dao/tasks';
@@ -337,12 +337,11 @@ test('PUT /tasks/:taskId creates TaskEvent successfully', async (t: tape.Test) =
 
   const { task } = await generateTask();
 
-  const [response, body] = await put(`/tasks/${task.id}`, {
+  const [response] = await put(`/tasks/${task.id}`, {
     body: { ...BASE_TASK_EVENT, id: task.id },
     headers: authHeader(session.id)
   });
-  t.equal(response.status, 201);
-  t.equal(body.taskId, task.id);
+  t.equal(response.status, 204);
 });
 
 test('PUT /tasks/:taskId/assignees adds Collaborators to Tasks successfully', async (t: tape.Test) => {

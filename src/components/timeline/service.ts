@@ -1,3 +1,5 @@
+import { TaskStatus } from '@cala/ts-lib';
+
 import * as QuotesDAO from '../../dao/pricing-quotes';
 import DesignsDAO from '../product-designs/dao';
 import * as TaskEventsDAO from '../../dao/task-events';
@@ -8,7 +10,7 @@ import {
 import Timeline from './domain-object';
 import { getTimeBuffer } from '../../services/add-time-buffer';
 import ProductDesign = require('../product-designs/domain-objects/product-design');
-import { DetailsTask, TaskStatus } from '../../domain-objects/task-event';
+import { DetailsTask } from '../../domain-objects/task-event';
 import { findAllDesignsThroughCollaborator } from '../product-designs/dao/dao';
 
 interface StageBreakdown {

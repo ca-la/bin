@@ -1,11 +1,10 @@
 import Knex from 'knex';
+import { TaskEvent } from '@cala/ts-lib';
 import db from '../db';
 import * as TasksDAO from '../../dao/tasks';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as ProductDesignStageTasksDAO from '../../dao/product-design-stage-tasks';
-import TaskEvent, {
-  DetailsTaskWithAssignees
-} from '../../domain-objects/task-event';
+import { DetailsTaskWithAssignees } from '../../domain-objects/task-event';
 
 function createWithTransaction(
   taskId: string,

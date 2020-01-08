@@ -1,5 +1,6 @@
 import tape from 'tape';
 import uuid from 'node-uuid';
+import { TaskStatus } from '@cala/ts-lib';
 
 import { sandbox, test as originalTest } from '../../test-helpers/fresh';
 import {
@@ -34,8 +35,7 @@ import { deleteById as deleteComment } from '../../components/comments/dao';
 import createUser = require('../../test-helpers/create-user');
 import {
   DetailsTask,
-  DetailsTaskWithAssignees,
-  TaskStatus
+  DetailsTaskWithAssignees
 } from '../../domain-objects/task-event';
 import generateTask from '../../test-helpers/factories/task';
 import generateProductDesignStage from '../../test-helpers/factories/product-design-stage';

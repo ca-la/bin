@@ -1,10 +1,10 @@
 import uuid from 'node-uuid';
 import Knex from 'knex';
+import { TaskEvent, TaskStatus } from '@cala/ts-lib';
 
 import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
 import * as ProductDesignStagesDAO from '../../dao/product-design-stages';
 import findTaskTypeCollaborators from '../../services/find-task-type-collaborators';
-import TaskEvent, { TaskStatus } from '../../domain-objects/task-event';
 import { getTemplatesFor } from '../../components/tasks/templates';
 import { TaskTemplate } from '../../components/tasks/templates/task-template';
 import { StageTemplate } from '../../components/tasks/templates/stage-template';

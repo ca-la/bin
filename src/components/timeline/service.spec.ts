@@ -1,5 +1,6 @@
 import tape from 'tape';
 import uuid from 'node-uuid';
+import { TaskStatus } from '@cala/ts-lib';
 
 import * as Service from './service';
 import { authHeader, post } from '../../test-helpers/http';
@@ -14,7 +15,6 @@ import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 import generateComponent from '../../test-helpers/factories/component';
 import generateTask from '../../test-helpers/factories/task';
 import generateProductDesignStage from '../../test-helpers/factories/product-design-stage';
-import { TaskStatus } from '../../domain-objects/task-event';
 import generateAsset from '../../test-helpers/factories/asset';
 import { PricingQuote } from '../../domain-objects/pricing-quote';
 import { moveDesign } from '../../test-helpers/collections';

@@ -1,9 +1,10 @@
 import Knex from 'knex';
 import uuid from 'node-uuid';
 import { omit } from 'lodash';
+import { TaskEvent, TaskStatus } from '@cala/ts-lib';
 
 import db from '../../services/db';
-import TaskEvent, {
+import {
   createDetailsTask,
   dataAdapter,
   DetailsTaskWithAssignees,
@@ -12,8 +13,7 @@ import TaskEvent, {
   DetailTaskWithAssigneesEventRow,
   isDetailTaskWithAssigneeRow,
   isTaskEventRow,
-  TaskEventRow,
-  TaskStatus
+  TaskEventRow
 } from '../../domain-objects/task-event';
 import first from '../../services/first';
 import { validate, validateEvery } from '../../services/validate-from-db';

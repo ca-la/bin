@@ -1,5 +1,6 @@
 import uuid from 'node-uuid';
 import { omit } from 'lodash';
+import { TaskStatus } from '@cala/ts-lib';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
 import generatePricingQuote from '../../services/generate-pricing-quote';
@@ -34,7 +35,7 @@ import PartnerPayoutsDAO = require('../../components/partner-payouts/dao');
 import { PartnerPayoutLog } from '../partner-payouts/domain-object';
 import generateTask from '../../test-helpers/factories/task';
 import generateProductDesignStage from '../../test-helpers/factories/product-design-stage';
-import { taskEventFromIO, TaskStatus } from '../../domain-objects/task-event';
+import { taskEventFromIO } from '../../domain-objects/task-event';
 
 const testDate = new Date(2012, 11, 22);
 

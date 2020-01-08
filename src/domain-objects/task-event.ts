@@ -1,5 +1,6 @@
 import { omit } from 'lodash';
 import uuid = require('node-uuid');
+import { TaskEvent, TaskStatus } from '@cala/ts-lib';
 
 import DataAdapter from '../services/data-adapter';
 import { hasOnlyProperties } from '../services/require-properties';
@@ -13,30 +14,6 @@ import Collaborator, {
   CollaboratorWithUserRow,
   encode as encodeCollaborator
 } from '../components/collaborators/domain-objects/collaborator';
-
-/**
- * @typedef {object} TaskEvent A unit of work to be completed in the developement of a garment
- *
- * @property {string} id The unique row id
- * @property {string} taskId The id of the task
- * @property {Date} createdAt Date when this record was created
- * @property {string} createdBy The userId of the person who created the record
- * @property {string} title The task title
- * @property {TaskEventState} status The current status of the task
- * @property {Date} dueDate The current status of the task
- */
-export default interface TaskEvent {
-  dueDate: Date | null;
-  status: TaskStatus | null;
-  title: string;
-  description: string;
-  createdBy: string | null;
-  taskId: string;
-  createdAt: Date;
-  id: string;
-  designStageId: string | null;
-  ordering: number;
-}
 
 export interface RelatedResourceMeta {
   id: string | null;
@@ -124,13 +101,6 @@ export interface DetailsTask extends Omit<TaskEvent, 'taskId'> {
 
 export interface DetailsTaskWithAssignees extends DetailsTask {
   assignees: CollaboratorWithUser[];
-}
-
-export enum TaskStatus {
-  NOT_STARTED = 'NOT_STARTED',
-  IN_PROGRESS = 'IN_PROGRESS',
-  COMPLETED = 'COMPLETED',
-  DELETED = 'DELETED'
 }
 
 export interface TaskEventRow {
