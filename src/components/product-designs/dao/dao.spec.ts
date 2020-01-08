@@ -22,20 +22,21 @@ import generateComponent from '../../../test-helpers/factories/component';
 import generateCollection from '../../../test-helpers/factories/collection';
 
 import createDesign from '../../../services/create-design';
-import { CollaboratorWithUser } from '../../collaborators/domain-objects/collaborator';
-import generateCollaborator from '../../../test-helpers/factories/collaborator';
+import db from '../../../services/db';
 import generateAnnotation from '../../../test-helpers/factories/product-design-canvas-annotation';
-import generateProductDesignStage from '../../../test-helpers/factories/product-design-stage';
-import generateTask from '../../../test-helpers/factories/task';
 import generateAsset from '../../../test-helpers/factories/asset';
-import omit = require('lodash/omit');
+import generateCollaborator from '../../../test-helpers/factories/collaborator';
 import generateDesignEvent from '../../../test-helpers/factories/design-event';
 import generatePricingCostInput from '../../../test-helpers/factories/pricing-cost-input';
 import generatePricingValues from '../../../test-helpers/factories/pricing-values';
+import generateProductDesignStage from '../../../test-helpers/factories/product-design-stage';
+import generateTask from '../../../test-helpers/factories/task';
+import omit = require('lodash/omit');
+import ResourceNotFoundError from '../../../errors/resource-not-found';
 import { addDesign } from '../../../test-helpers/collections';
+import { CollaboratorWithUser } from '../../collaborators/domain-objects/collaborator';
 import { deleteById } from '../../../test-helpers/designs';
 import { generateDesign } from '../../../test-helpers/factories/product-design';
-import db from '../../../services/db';
 
 test('ProductDesignCanvases DAO supports creation/retrieval, enriched with image links', async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
@@ -517,4 +518,18 @@ test('isOwner can check if the supplied user is the owner of the design', async 
   t.false(result3);
   const result4 = await isOwner({ designId: d2.id, userId: user2.id });
   t.true(result4);
+});
+
+test('isOwner throws a ResourceNotFoundError if design does not exist', async (t: tape.Test) => {
+  const { user } = await createUser({ withSession: false });
+
+  try {
+    await isOwner({
+      designId: '00000000-0000-0000-0000-000000000000',
+      userId: user.id
+    });
+    throw new Error("Shouldn't get here");
+  } catch (err) {
+    t.equal(err instanceof ResourceNotFoundError, true);
+  }
 });

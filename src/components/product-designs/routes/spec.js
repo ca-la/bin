@@ -520,3 +520,15 @@ test('GET /product-designs/:designId/collections returns collections', async t =
     'Returns the same collection'
   );
 });
+
+test('GET /product-designs/:designId returns 404 if not found', async t => {
+  const { session } = await createUser();
+
+  const [response, body] = await get(
+    '/product-designs/00000000-0000-0000-0000-000000000000',
+    { headers: authHeader(session.id) }
+  );
+
+  t.equal(response.status, 404);
+  t.equal(body.message, 'Design not found');
+});

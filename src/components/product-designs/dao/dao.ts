@@ -10,6 +10,7 @@ import {
 } from '../domain-objects/product-designs-new';
 import first from '../../../services/first';
 import { validate, validateEvery } from '../../../services/validate-from-db';
+import ResourceNotFoundError from '../../../errors/resource-not-found';
 import { queryWithCollectionMeta } from './view';
 import {
   isProductDesignRowWithMeta,
@@ -284,7 +285,7 @@ export async function isOwner(options: {
     .then((rows: string[]) => first<string>(rows));
 
   if (!ownerRow) {
-    throw new Error(`Design "${designId}" could not be found.`);
+    throw new ResourceNotFoundError(`Design "${designId}" could not be found.`);
   }
 
   return ownerRow.user_id === userId;

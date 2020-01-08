@@ -4,6 +4,8 @@ import {
   getDesignPermissions,
   Permissions
 } from '../../services/get-permissions';
+import ResourceNotFoundError from '../../errors/resource-not-found';
+import filterError = require('../../services/filter-error');
 
 export function* attachDesignPermissions(
   this: Koa.Context,
@@ -14,7 +16,11 @@ export function* attachDesignPermissions(
     designId,
     sessionRole: role,
     sessionUserId: userId
-  });
+  }).catch(
+    filterError(ResourceNotFoundError, () => {
+      this.throw(404, 'Design not found');
+    })
+  );
 }
 
 export function* attachAggregateDesignPermissions(

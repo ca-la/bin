@@ -213,6 +213,11 @@ function* getDesigns() {
 function* getDesign() {
   const { permissions, userId } = this.state;
   const design = yield ProductDesignsDAO.findById(this.params.designId);
+
+  if (!design) {
+    this.throw(404, 'Design not found');
+  }
+
   const hydratedDesign = yield attachResources(design, userId, permissions);
   this.body = hydratedDesign;
   this.status = 200;
