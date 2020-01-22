@@ -1,12 +1,16 @@
 import uuid from 'node-uuid';
 import sinon from 'sinon';
 import tape from 'tape';
+import Knex from 'knex';
 
 import * as CollectionsDAO from '../dao';
 import * as CollaboratorsDAO from '../../collaborators/dao';
 import createUser = require('../../../test-helpers/create-user');
 import ProductDesignsDAO from '../../product-designs/dao';
 import * as DesignEventsDAO from '../../../dao/design-events';
+import * as SubscriptionsDAO from '../../../components/subscriptions/dao';
+import * as PaymentMethodsDAO from '../../../components/payment-methods/dao';
+import * as PlansDAO from '../../../components/plans/dao';
 import API from '../../../test-helpers/http';
 import { sandbox, test } from '../../../test-helpers/fresh';
 import * as CreateNotifications from '../../../services/create-notifications';
@@ -16,6 +20,7 @@ import Collection from '../domain-object';
 import generateCollaborator from '../../../test-helpers/factories/collaborator';
 import * as SubmissionStatusService from '../services/determine-submission-status';
 import { moveDesign } from '../../../test-helpers/collections';
+import db from '../../../services/db';
 
 test('GET /collections/:id returns a created collection', async (t: tape.Test) => {
   const { session, user } = await createUser();
@@ -316,6 +321,53 @@ test('DELETE /collections/:id', async (t: tape.Test) => {
 test('POST /collections/:id/submissions', async (t: tape.Test) => {
   const owner = await createUser();
   const collaborator = await createUser();
+
+  const plan = await PlansDAO.create({
+    id: uuid.v4(),
+    billingInterval: 'MONTHLY',
+    monthlyCostCents: 4567,
+    revenueSharePercentage: 50,
+    stripePlanId: 'plan_456',
+    title: 'Some More',
+    isDefault: true,
+    isPublic: false,
+    ordering: null,
+    description: null
+  });
+
+  const paymentMethod = await PaymentMethodsDAO.create({
+    userId: owner.user.id,
+    stripeCustomerId: 'customer1',
+    stripeSourceId: 'source1',
+    lastFourDigits: '1234'
+  });
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await SubscriptionsDAO.create(
+      {
+        id: uuid.v4(),
+        cancelledAt: null,
+        planId: plan.id,
+        paymentMethodId: paymentMethod.id,
+        stripeSubscriptionId: '123',
+        userId: owner.user.id,
+        isPaymentWaived: false
+      },
+      trx
+    );
+    await SubscriptionsDAO.create(
+      {
+        id: uuid.v4(),
+        cancelledAt: null,
+        planId: plan.id,
+        paymentMethodId: paymentMethod.id,
+        stripeSubscriptionId: '123',
+        userId: collaborator.user.id,
+        isPaymentWaived: false
+      },
+      trx
+    );
+  });
 
   const collection = await CollectionsDAO.create({
     createdAt: new Date(),

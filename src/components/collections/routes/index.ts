@@ -34,6 +34,7 @@ import {
 } from '../../../services/get-permissions';
 import { commitCostInputs, createPartnerPairing } from './admin';
 import { fetchUncostedWithLabels } from '../services/fetch-with-labels';
+import requireSubscription from '../../../middleware/require-subscription';
 
 const router = new Router();
 
@@ -205,6 +206,7 @@ router.patch(
 router.post(
   '/:collectionId/submissions',
   requireAuth,
+  requireSubscription,
   canAccessCollectionInParam,
   canSubmitCollection,
   createSubmission
