@@ -11,11 +11,12 @@ import db from '../services/db';
 import { log } from '../services/logger';
 import { hasOnlyProperties } from '../services/require-properties';
 import { PricingConstantRow } from '../domain-objects/pricing-constant';
-import { PricingProductTypeRow } from '../domain-objects/pricing-product-type';
+import { PricingProductTypeRow } from '../components/pricing-product-types/domain-object';
 import { PricingCareLabelRow } from '../domain-objects/pricing-care-label';
 import { PricingMarginRow } from '../domain-objects/pricing-margin';
 import { PricingProcessRow } from '../domain-objects/pricing-process';
 import { PricingProcessTimelineRow } from '../components/pricing-process-timeline/domain-object';
+import { PricingProductMaterialRow } from '../domain-objects/pricing-product-material';
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -32,12 +33,15 @@ type RawLabel = Stringly<PricingCareLabelRow>;
 type RawMargin = Stringly<PricingMarginRow>;
 type RawProcess = Stringly<PricingProcessRow>;
 type RawProcessTimeline = Stringly<PricingProcessTimelineRow>;
+type RawMaterial = Stringly<PricingProductMaterialRow>;
 type DomainObject =
   | PricingConstantRow
   | PricingProductTypeRow
   | PricingCareLabelRow
   | PricingMarginRow
-  | PricingProcessRow;
+  | PricingProcessRow
+  | PricingProcessTimelineRow
+  | PricingProductMaterialRow;
 
 // tslint:disable:max-line-length
 const HELP_TEXT = `
@@ -47,7 +51,7 @@ const HELP_TEXT = `
     $ insert-pricing [input csv file]
 
   Options
-  --table, -t      REQUIRED One of: constants, labels, margins, processTimelines, processes, or types
+  --table, -t      REQUIRED One of: constants, labels, margins, processTimelines, processes, types, material
   --quiet, -q      Suppress output
   --force, -f      Do not ask for user confirmation
   --dry-run        Only print the query, do not execute
@@ -81,6 +85,7 @@ interface TableMap {
   constants: string;
   labels: string;
   margins: string;
+  materials: string;
   processTimelines: string;
   processes: string;
   types: string;
@@ -89,6 +94,7 @@ const tableMap: TableMap = {
   constants: 'pricing_constants',
   labels: 'pricing_care_labels',
   margins: 'pricing_margins',
+  materials: 'pricing_product_materials',
   processTimelines: 'pricing_process_timelines',
   processes: 'pricing_processes',
   types: 'pricing_product_types'
@@ -226,6 +232,10 @@ function castFromRaw(
     return raw.map(toProcessTimeline.bind(null, latestVersion));
   }
 
+  if (tableName === 'pricing_product_materials' && isEveryRawMaterial(raw)) {
+    return raw.map(toMaterial.bind(null, latestVersion));
+  }
+
   return null;
 }
 
@@ -282,6 +292,18 @@ function isRawMargin(candidate: object): candidate is RawMargin {
 }
 function isEveryRawMargin(candidate: object[]): candidate is RawMargin[] {
   return candidate.every(isRawMargin);
+}
+
+function isRawMaterial(candidate: object): candidate is RawMaterial {
+  return hasOnlyProperties(
+    candidate,
+    'minimum_units',
+    'category',
+    'unit_cents'
+  );
+}
+function isEveryRawMaterial(candidate: object[]): candidate is RawMaterial[] {
+  return candidate.every(isRawMaterial);
 }
 
 function isRawProcess(candidate: object): candidate is RawProcess {
@@ -379,6 +401,20 @@ function toMargin(latestVersion: number, raw: RawMargin): PricingMarginRow {
     id: uuid.v4(),
     margin: Number(raw.margin),
     minimum_units: parseInt(raw.minimum_units, 10),
+    version: latestVersion + 1
+  };
+}
+
+function toMaterial(
+  latestVersion: number,
+  raw: RawMaterial
+): PricingProductMaterialRow {
+  return {
+    created_at: new Date(),
+    id: uuid.v4(),
+    category: raw.category,
+    minimum_units: parseInt(raw.minimum_units, 10),
+    unit_cents: parseInt(raw.unit_cents, 10),
     version: latestVersion + 1
   };
 }
