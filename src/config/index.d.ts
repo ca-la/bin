@@ -73,3 +73,5 @@ export const UPC_SALT: string;
 
 export const AWS_HERMES_SQS_REGION: string;
 export const AWS_HERMES_SQS_URL: string;
+
+export const SEGMENT_WRITE_KEY: string;

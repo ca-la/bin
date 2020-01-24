@@ -145,7 +145,9 @@ const config = {
   UPC_SALT: process.env.UPC_SALT,
 
   AWS_HERMES_SQS_REGION: process.env.AWS_HERMES_SQS_REGION,
-  AWS_HERMES_SQS_URL: process.env.AWS_HERMES_SQS_URL
+  AWS_HERMES_SQS_URL: process.env.AWS_HERMES_SQS_URL,
+
+  SEGMENT_WRITE_KEY: process.env.SEGMENT_WRITE_KEY
 };
 
 Object.keys(config).forEach(key => {

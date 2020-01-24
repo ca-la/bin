@@ -1,7 +1,7 @@
 'use strict';
 
 const fetch = require('node-fetch');
-const { baseUrl } = require('./boot');
+const { baseUrl } = require('./boot-server');
 
 function parseResponse(res) {
   const contentType = res.headers.get('Content-Type');

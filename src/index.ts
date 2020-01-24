@@ -7,21 +7,23 @@ import compress = require('koa-compress');
 import koa = require('koa');
 import convert = require('koa-convert');
 
-import router from './routes';
 import apolloServer from './apollo/server';
 import attachSession = require('./middleware/attach-session');
 import errors = require('./middleware/errors');
 import headers = require('./middleware/headers');
 import jsonBody = require('./middleware/json-body');
 import loggerMiddleware = require('./middleware/logger');
+import metrics from './middleware/metrics';
 import options = require('./middleware/options');
-import validatePagination from './middleware/validate-pagination';
+import router from './routes';
 import shopifyAuth from './middleware/shopify-auth';
+import validatePagination from './middleware/validate-pagination';
 
 const app = new koa();
 
 app.use(compress());
 app.use(loggerMiddleware);
+app.use(metrics);
 app.use(errors);
 app.use(jsonBody);
 app.use(headers);
