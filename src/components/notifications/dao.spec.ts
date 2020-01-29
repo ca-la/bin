@@ -4,7 +4,7 @@ import uuid from 'node-uuid';
 import { sandbox, test } from '../../test-helpers/fresh';
 import * as NotificationsDAO from './dao';
 import DesignsDAO from '../product-designs/dao';
-import createUser = require('../../test-helpers/create-user');
+import createUser from '../../test-helpers/create-user';
 import db from '../../services/db';
 import { Notification, NotificationType } from './domain-object';
 import generateNotification from '../../test-helpers/factories/notification';
@@ -51,9 +51,11 @@ test('Notifications DAO supports creation', async (t: tape.Test) => {
     type: NotificationType.INVITE_COLLABORATOR
   };
 
-  const inserted = await NotificationsDAO.create(data);
-  const result = await NotificationsDAO.findById(inserted.id);
-  t.deepEqual(result, inserted, 'Returned the inserted notification');
+  return db.transaction(async (trx: Knex.Transaction) => {
+    const inserted = await NotificationsDAO.create(data);
+    const result = await NotificationsDAO.findById(trx, inserted.id);
+    t.deepEqual(result, inserted, 'Returned the inserted notification');
+  });
 });
 
 test('Notifications DAO supports finding by user id', async (t: tape.Test) => {
@@ -88,7 +90,11 @@ test('Notifications DAO supports finding by user id', async (t: tape.Test) => {
     actorUserId: userOne.id,
     type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
   });
-  const { notification: n2 } = await generateNotification({
+  const {
+    notification: n2,
+    collection: col,
+    design: d
+  } = await generateNotification({
     actorUserId: userOne.id,
     collaboratorId: c1.id,
     type: NotificationType.INVITE_COLLABORATOR
@@ -148,26 +154,35 @@ test('Notifications DAO supports finding by user id', async (t: tape.Test) => {
   });
   await CollaboratorsDAO.deleteById(deletedCollaborator.id);
 
-  t.deepEqual(
-    await NotificationsDAO.findByUserId(userTwo.id, { offset: 0, limit: 10 }),
-    [n2],
-    'Returns only the notifications associated with the user (collaborator + user)'
-  );
-  t.deepEqual(
-    await NotificationsDAO.findByUserId(userTwo.id, { offset: 2, limit: 4 }),
-    [],
-    'Returns notifications based off the limit and offset'
-  );
-  t.deepEqual(
-    await NotificationsDAO.findByUserId(userTwo.id, { offset: 6, limit: 3 }),
-    [],
-    'Returns notifications based off the limit and offset (even if they are whack)'
-  );
-  t.deepEqual(
-    await NotificationsDAO.findByUserId(userOne.id, { offset: 0, limit: 10 }),
-    [],
-    'Returns only the notifications associated with the user (collaborator + user)'
-  );
+  return db.transaction(async (trx: Knex.Transaction) => {
+    t.deepEqual(
+      await NotificationsDAO.findByUserId(trx, userTwo.id, {
+        offset: 0,
+        limit: 10
+      }),
+      [
+        {
+          ...n2,
+          actor: userOne,
+          collectionTitle: col.title,
+          commentText: null,
+          componentType: null,
+          designImageIds: [],
+          designTitle: d.title,
+          taskTitle: null
+        }
+      ],
+      'Returns only the notifications associated with the user (collaborator + user)'
+    );
+    t.deepEqual(
+      await NotificationsDAO.findByUserId(trx, userOne.id, {
+        offset: 0,
+        limit: 10
+      }),
+      [],
+      'Returns only the notifications associated with the user (collaborator + user)'
+    );
+  });
 });
 
 test('Notifications DAO supports finding outstanding notifications over 10min old', async (t: tape.Test) => {
@@ -204,15 +219,15 @@ test('Notifications DAO supports finding outstanding notifications over 10min ol
     sentEmailAt: null,
     type: NotificationType.PARTNER_DESIGN_BID
   });
-  await generateNotification({
+  const { notification: delNotification } = await generateNotification({
     actorUserId: user.id,
     createdAt: new Date('2019-04-20'),
-    deletedAt: new Date('2019-06-20'),
     designId: design.id,
     sentEmailAt: null,
     readAt: null,
     type: NotificationType.PARTNER_DESIGN_BID
   });
+  NotificationsDAO.del(delNotification.id);
 
   await db.transaction(async (trx: Knex.Transaction) => {
     const results: any = await NotificationsDAO.findOutstanding(trx);
@@ -282,7 +297,9 @@ test('Notifications DAO supports marking a row as deleted', async (t: tape.Test)
 
   await NotificationsDAO.del(nOne.id);
 
-  const unfound = await NotificationsDAO.findById(nOne.id);
+  const unfound = await db.transaction((trx: Knex.Transaction) =>
+    NotificationsDAO.findById(trx, nOne.id)
+  );
   t.equal(unfound, null, 'A deleted notification is not found');
 });
 
@@ -370,15 +387,17 @@ test('Notifications DAO supports marking read', async (t: tape.Test) => {
     type: NotificationType.INVITE_COLLABORATOR
   };
 
-  const inserted = await NotificationsDAO.create(data);
-  const result = await NotificationsDAO.findById(inserted.id);
-  t.deepEqual(result, inserted, 'Returned the inserted notification');
-  await NotificationsDAO.markRead([inserted.id]);
-  const read = await NotificationsDAO.findById(inserted.id);
-  if (!read) {
-    throw new Error('FindById failed!');
-  }
-  t.notDeepEqual(read.readAt, null, 'readAt is no longer null');
+  return db.transaction(async (trx: Knex.Transaction) => {
+    const inserted = await NotificationsDAO.create(data);
+    const result = await NotificationsDAO.findById(trx, inserted.id);
+    t.deepEqual(result, inserted, 'Returned the inserted notification');
+    await NotificationsDAO.markRead([inserted.id]);
+    const read = await NotificationsDAO.findById(trx, inserted.id);
+    if (!read) {
+      throw new Error('FindById failed!');
+    }
+    t.notDeepEqual(read.readAt, null, 'readAt is no longer null');
+  });
 });
 
 test('Notifications DAO supports finding unread count', async (t: tape.Test) => {

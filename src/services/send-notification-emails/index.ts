@@ -1,20 +1,22 @@
+import Knex from 'knex';
 import { chunk, groupBy } from 'lodash';
 import { NotificationMessage } from '@cala/ts-lib';
 
+import db from '../../services/db';
 import Logger from '../../services/logger';
 import EmailService from '../../services/email';
 import * as NotificationsDAO from '../../components/notifications/dao';
 import * as UsersDAO from '../../components/users/dao';
 import filterError = require('../../services/filter-error');
-import InvalidDataError = require('../../errors/invalid-data');
+import InvalidDataError from '../../errors/invalid-data';
 
-import { Notification } from '../../components/notifications/domain-object';
+import { FullNotification } from '../../components/notifications/domain-object';
 import { createNotificationMessage } from '../../components/notifications/notification-messages';
 
 const QUEUE_LIMIT = 30;
 
 interface NotificationsByRecipient {
-  [recipientId: string]: Notification[];
+  [recipientId: string]: FullNotification[];
 }
 
 /**
@@ -22,7 +24,9 @@ interface NotificationsByRecipient {
  */
 export async function sendNotificationEmails(): Promise<number> {
   let sentMessages = 0;
-  const notifications = await NotificationsDAO.findOutstanding();
+  const notifications = await db.transaction((trx: Knex.Transaction) =>
+    NotificationsDAO.findOutstanding(trx)
+  );
   Logger.log(`Processing ${notifications.length} outstanding notifications`);
 
   const notificationsByRecipient: NotificationsByRecipient = groupBy(

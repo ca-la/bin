@@ -28,33 +28,27 @@ export async function addAtMentionDetailsForComment(
   comment: Comment
 ): Promise<CommentWithMentions> {
   const mentionMatches = parseAtMentions(comment.text);
-  if (mentionMatches.length > 0) {
-    const mentions = await mentionMatches.reduce(
-      async (
-        accPromise: Promise<{ [id: string]: string }>,
-        match: MentionMeta
-      ) => {
-        const acc = await accPromise;
-        if (match.type === MentionType.collaborator) {
-          const collaborator = await CollaboratorsDAO.findById(match.id, true);
-          const name = constructCollaboratorName(collaborator);
-          return {
-            ...acc,
-            [match.id]: name
-          };
-        }
-        return acc;
-      },
-      Promise.resolve({})
-    );
-    return {
-      ...comment,
-      mentions
-    };
-  }
+  const mentions = await mentionMatches.reduce(
+    async (
+      accPromise: Promise<{ [id: string]: string }>,
+      match: MentionMeta
+    ) => {
+      const acc = await accPromise;
+      if (match.type === MentionType.collaborator) {
+        const collaborator = await CollaboratorsDAO.findById(match.id, true);
+        const name = constructCollaboratorName(collaborator);
+        return {
+          ...acc,
+          [match.id]: name
+        };
+      }
+      return acc;
+    },
+    Promise.resolve({})
+  );
   return {
     ...comment,
-    mentions: {}
+    mentions
   };
 }
 
@@ -72,5 +66,29 @@ export default async function addAtMentionDetails(
         return await addAtMentionDetailsForComment(comment);
       }
     )
+  );
+}
+
+export async function getMentionsFromComment(
+  commentText: string
+): Promise<Record<string, string>> {
+  const mentionMatches = parseAtMentions(commentText);
+  return mentionMatches.reduce(
+    async (
+      accPromise: Promise<{ [id: string]: string }>,
+      match: MentionMeta
+    ) => {
+      const acc = await accPromise;
+      if (match.type === MentionType.collaborator) {
+        const collaborator = await CollaboratorsDAO.findById(match.id, true);
+        const name = constructCollaboratorName(collaborator);
+        return {
+          ...acc,
+          [match.id]: name
+        };
+      }
+      return acc;
+    },
+    Promise.resolve({})
   );
 }

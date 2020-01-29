@@ -25,7 +25,7 @@ import * as SlackService from '../../services/slack';
 
 import {
   isTaskAssigmentNotification,
-  TaskAssigmentNotification
+  TaskAssignmentNotification
 } from '../../components/notifications/models/task-assignment';
 import Config from '../../config';
 import { createNotificationMessage } from '../../components/notifications/notification-messages';
@@ -412,7 +412,7 @@ export async function sendTaskAssignmentNotification(
   taskId: string,
   actorId: string,
   collaboratorIds: string[]
-): Promise<TaskAssigmentNotification[]> {
+): Promise<TaskAssignmentNotification[]> {
   const collaborators = await CollaboratorsDAO.findAllByIds(collaboratorIds);
 
   const stageTask = await StageTasksDAO.findByTaskId(taskId);

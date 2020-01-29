@@ -1,8 +1,5 @@
 import { escape as escapeHtml } from 'lodash';
 import { STUDIO_HOST } from '../../config';
-import ProductDesign = require('../product-designs/domain-objects/product-design');
-import Collection from '../collections/domain-object';
-import { DetailsTask } from '../../domain-objects/task-event';
 import { ComponentType } from '../components/domain-object';
 import normalizeTitle from '../../services/normalize-title';
 
@@ -20,36 +17,41 @@ export enum LinkType {
   Collection = 'COLLECTION'
 }
 
+interface Meta {
+  title: string | null;
+  id: string;
+}
+
 export type LinkBase =
   | {
       type: LinkType.DesignAnnotation;
       annotationId: string;
-      design: ProductDesign;
+      design: Meta;
       canvasId: string;
       componentType: ComponentType;
     }
   | {
       type: LinkType.CollectionDesignTask;
-      design: ProductDesign;
-      collection: Collection | null;
-      task: DetailsTask;
+      design: Meta;
+      collection: Meta | null;
+      task: Meta;
     }
   | {
       type: LinkType.CollectionDesign;
-      design: ProductDesign;
-      collection: Collection;
+      design: Meta;
+      collection: Meta;
     }
   | {
       type: LinkType.Design;
-      design: ProductDesign;
+      design: Meta;
     }
   | {
       type: LinkType.PartnerDesign;
-      design: ProductDesign;
+      design: Meta;
     }
   | {
       type: LinkType.Collection;
-      collection: Collection;
+      collection: Meta;
       isCheckout?: boolean;
       isSubmit?: boolean;
     };

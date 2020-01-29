@@ -1,4 +1,8 @@
-import { BaseNotification, BaseNotificationRow } from './base';
+import {
+  BaseFullNotification,
+  BaseNotification,
+  BaseNotificationRow
+} from './base';
 import { NotificationType } from '../domain-object';
 
 type BaseRow = Omit<BaseNotificationRow, 'collection_id' | 'recipient_user_id'>;
@@ -67,4 +71,17 @@ export function isExpiredNotification(
   candidate: any
 ): candidate is ExpiredNotification {
   return candidate.type === NotificationType.COSTING_EXPIRED;
+}
+
+type BaseFull = Omit<
+  BaseFullNotification & ExpiredNotification,
+  'type' | 'collectionTitle'
+>;
+
+export interface FullExpirationNotification extends BaseFull {
+  type:
+    | NotificationType.COSTING_EXPIRATION_ONE_WEEK
+    | NotificationType.COSTING_EXPIRATION_TWO_DAYS
+    | NotificationType.COSTING_EXPIRED;
+  collectionTitle: string;
 }

@@ -1,4 +1,5 @@
 import { NotificationType } from '../domain-object';
+import User from '../../users/domain-object';
 
 /**
  * These base notification types are set to null so that in the notifications that inherit from
@@ -26,6 +27,16 @@ export interface BaseNotificationRow {
   type: NotificationType;
 }
 
+export interface BaseFullNotificationRow {
+  actor: User;
+  comment_text: null;
+  component_type: null;
+  collection_title: null;
+  design_title: null;
+  design_image_ids: string[];
+  task_title: null;
+}
+
 export interface BaseNotification {
   actionDescription: null; // DEPRECATED
   actorUserId: string;
@@ -46,6 +57,16 @@ export interface BaseNotification {
   stageId: null;
   taskId: null;
   type: NotificationType;
+}
+
+export interface BaseFullNotification {
+  actor: User;
+  commentText: null;
+  componentType: null;
+  collectionTitle: null;
+  designTitle: null;
+  designImageIds: string[];
+  taskTitle: null;
 }
 
 export const templateNotification = {

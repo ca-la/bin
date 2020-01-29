@@ -1,7 +1,9 @@
 import tape from 'tape';
 import sinon from 'sinon';
 import uuid from 'node-uuid';
+import Knex from 'knex';
 
+import db from '../db';
 import { sandbox, test } from '../../test-helpers/fresh';
 import * as NotificationsDAO from '../../components/notifications/dao';
 import createUser from '../../test-helpers/create-user';
@@ -40,14 +42,24 @@ test('sendNotificationEmails supports finding outstanding notifications', async 
   sinon.assert.callCount(emailStub, 2);
   t.ok(true, 'Successfully invoked email service on notifications');
 
-  const nOne = await NotificationsDAO.findById(notificationOne.id);
-  const nTwo = await NotificationsDAO.findById(notificationTwo.id);
-  if (nOne && nTwo) {
-    t.notDeepEqual(nOne.sentEmailAt, null, 'Notification was marked as sent.');
-    t.notDeepEqual(nTwo.sentEmailAt, null, 'Notification was marked as sent.');
-  } else {
-    t.fail('Notifications improperly deleted.');
-  }
+  return db.transaction(async (trx: Knex.Transaction) => {
+    const nOne = await NotificationsDAO.findById(trx, notificationOne.id);
+    const nTwo = await NotificationsDAO.findById(trx, notificationTwo.id);
+    if (nOne && nTwo) {
+      t.notDeepEqual(
+        nOne.sentEmailAt,
+        null,
+        'Notification was marked as sent.'
+      );
+      t.notDeepEqual(
+        nTwo.sentEmailAt,
+        null,
+        'Notification was marked as sent.'
+      );
+    } else {
+      t.fail('Notifications improperly deleted.');
+    }
+  });
 });
 
 test('sendNotificationEmails will delete an unsendable notification', async (t: tape.Test) => {
@@ -78,7 +90,9 @@ test('sendNotificationEmails will delete an unsendable notification', async (t: 
   );
   t.deepEqual(createMessageStub.args[0][0], nOne);
 
-  const unfoundNotification = await NotificationsDAO.findById(nOne.id);
+  const unfoundNotification = await db.transaction((trx: Knex.Transaction) =>
+    NotificationsDAO.findById(trx, nOne.id)
+  );
   t.equal(unfoundNotification, null, 'The notification was marked as deleted');
 });
 
@@ -134,14 +148,16 @@ test('sendNotificationEmails gracefully handles failures', async (t: tape.Test) 
 
   t.equal(emailStub.callCount, 2, 'Email service is called twice');
 
-  const nOne = await NotificationsDAO.findById(notificationOne.id);
-  const nTwo = await NotificationsDAO.findById(notificationTwo.id);
-  const nThree = await NotificationsDAO.findById(notificationThree.id);
-  if (!nOne || !nTwo || !nThree) {
-    throw new Error('Notifications were not found in the test database!');
-  }
+  return db.transaction(async (trx: Knex.Transaction) => {
+    const nOne = await NotificationsDAO.findById(trx, notificationOne.id);
+    const nTwo = await NotificationsDAO.findById(trx, notificationTwo.id);
+    const nThree = await NotificationsDAO.findById(trx, notificationThree.id);
+    if (!nOne || !nTwo || !nThree) {
+      throw new Error('Notifications were not found in the test database!');
+    }
 
-  t.equal(nOne.sentEmailAt, null, 'Notification was not marked as sent.');
-  t.equal(nTwo.sentEmailAt, null, 'Notification was not marked as sent.');
-  t.notEqual(nThree.sentEmailAt, null, 'Notification was marked as sent.');
+    t.equal(nOne.sentEmailAt, null, 'Notification was not marked as sent.');
+    t.equal(nTwo.sentEmailAt, null, 'Notification was not marked as sent.');
+    t.notEqual(nThree.sentEmailAt, null, 'Notification was marked as sent.');
+  });
 });

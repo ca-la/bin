@@ -1,5 +1,6 @@
 import Router from 'koa-router';
 
+import db from '../../services/db';
 import { findOutstanding } from '../notifications/dao';
 import requireAdmin = require('../../middleware/require-admin');
 
@@ -11,7 +12,7 @@ interface NotificationsHealthMetrics {
 }
 
 function* getNotificationsHealth(this: AuthedContext): Iterator<any, any, any> {
-  const outstandingNotifications = yield findOutstanding();
+  const outstandingNotifications = yield db.transaction(findOutstanding);
   const oldestNotification =
     outstandingNotifications[outstandingNotifications.length - 1];
   const health: NotificationsHealthMetrics = {

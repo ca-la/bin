@@ -1,4 +1,9 @@
-import { BaseNotification, BaseNotificationRow } from './base';
+import {
+  BaseFullNotification,
+  BaseFullNotificationRow,
+  BaseNotification,
+  BaseNotificationRow
+} from './base';
 import { NotificationType } from '../domain-object';
 
 type BaseRow = Omit<
@@ -10,6 +15,7 @@ type BaseRow = Omit<
   | 'task_id'
   | 'recipient_user_id'
 >;
+
 export interface TaskCompletionNotificationRow extends BaseRow {
   collaborator_id: string;
   collection_id: string | null;
@@ -19,6 +25,18 @@ export interface TaskCompletionNotificationRow extends BaseRow {
   recipient_user_id: string;
   type: NotificationType.TASK_COMPLETION;
 }
+
+type BaseFullRow = Omit<
+  BaseFullNotificationRow & TaskCompletionNotificationRow,
+  'collection_title' | 'design_title' | 'task_title'
+>;
+
+export interface FullTaskCompletionNotificationRow extends BaseFullRow {
+  collection_title: string | null;
+  design_title: string | null;
+  task_title: string;
+}
+
 type Base = Omit<
   BaseNotification,
   | 'collaboratorId'
@@ -28,6 +46,7 @@ type Base = Omit<
   | 'taskId'
   | 'recipientUserId'
 >;
+
 export interface TaskCompletionNotification extends Base {
   collaboratorId: string;
   collectionId: string | null;
@@ -36,6 +55,17 @@ export interface TaskCompletionNotification extends Base {
   taskId: string;
   recipientUserId: string;
   type: NotificationType.TASK_COMPLETION;
+}
+
+type BaseFull = Omit<
+  BaseFullNotification & TaskCompletionNotification,
+  'collectionTitle' | 'designTitle' | 'taskTitle'
+>;
+
+export interface FullTaskCompletionNotification extends BaseFull {
+  collectionTitle: string | null;
+  designTitle: string | null;
+  taskTitle: string;
 }
 
 export function isTaskCompletionNotification(

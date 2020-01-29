@@ -1,137 +1,24 @@
 import tape from 'tape';
+import Knex from 'knex';
 
+import db from '../../services/db';
 import { sandbox, test } from '../../test-helpers/fresh';
-import createUser = require('../../test-helpers/create-user');
+import createUser from '../../test-helpers/create-user';
 
 import * as CollectionsDAO from '../collections/dao';
+import * as TaskEventsDAO from '../../dao/task-events';
 import * as MeasurementsDAO from '../../dao/product-design-canvas-measurements';
+import * as CollaboratorsDAO from '../collaborators/dao';
 import generateNotification from '../../test-helpers/factories/notification';
 import { createNotificationMessage } from './notification-messages';
 import { STUDIO_HOST } from '../../config';
-import { Notification, NotificationType } from './domain-object';
+import { FullNotification, NotificationType } from './domain-object';
 import generateCollection from '../../test-helpers/factories/collection';
 import * as NotificationAnnouncer from '../iris/messages/notification';
 import { deleteById } from '../../test-helpers/designs';
+import { findByUserId } from './dao';
 
-test(
-  'notification messages returns annotation comment create message to the user' +
-    ' if resources exist',
-  async (t: tape.Test) => {
-    sandbox()
-      .stub(NotificationAnnouncer, 'announceNotificationCreation')
-      .resolves({});
-    const userOne = await createUser();
-
-    const { collection } = await generateCollection({
-      createdBy: userOne.user.id,
-      title: 'test'
-    });
-    if (!collection) {
-      throw new Error('Could not create collection');
-    }
-
-    const {
-      notification: annCommCreateDesignNotification,
-      design,
-      actor
-    } = await generateNotification({
-      collectionId: collection.id,
-      recipientUserId: userOne.user.id,
-      type: NotificationType.ANNOTATION_COMMENT_CREATE
-    });
-    const {
-      notification: annCommCreateDesignDeleted,
-      design: annCommCreateDesign
-    } = await generateNotification({
-      actorUserId: userOne.user.id,
-      collectionId: collection.id,
-      type: NotificationType.ANNOTATION_COMMENT_CREATE
-    });
-    await deleteById(annCommCreateDesign.id);
-
-    const annCommCreateMessage = await createNotificationMessage(
-      annCommCreateDesignNotification
-    );
-    if (!annCommCreateMessage) {
-      throw new Error('Did not create message');
-    }
-    t.assert(
-      annCommCreateMessage.html.includes(design.title || 'test'),
-      'message html contains the design title'
-    );
-    t.assert(
-      annCommCreateMessage.actor && annCommCreateMessage.actor.id === actor.id,
-      'message actor is the user'
-    );
-    const { mentions } = annCommCreateMessage.attachments[0];
-    t.assert(
-      mentions && Object.keys(mentions).length === 1,
-      'message attachments contains one mention'
-    );
-    const { collaborators } = annCommCreateMessage.actions[0];
-    t.assert(
-      collaborators.length === 3,
-      'message actions contains three collaborators'
-    );
-    const annCommCreateDeletedMessage = await createNotificationMessage(
-      annCommCreateDesignDeleted
-    );
-    t.assert(
-      annCommCreateDeletedMessage === null,
-      'No message is created for a deleted subresource'
-    );
-  }
-);
-
-test('notification messages returns annotation mention message to the user if resources exist', async (t: tape.Test) => {
-  sandbox()
-    .stub(NotificationAnnouncer, 'announceNotificationCreation')
-    .resolves({});
-  const {
-    notification: annMenNotification,
-    design,
-    actor
-  } = await generateNotification({
-    type: NotificationType.ANNOTATION_COMMENT_MENTION
-  });
-  const {
-    notification: annMenDeleted,
-    design: annMenDesign
-  } = await generateNotification({
-    type: NotificationType.ANNOTATION_COMMENT_MENTION
-  });
-  await deleteById(annMenDesign.id);
-
-  const message = await createNotificationMessage(annMenNotification);
-  if (!message) {
-    throw new Error('Did not create message');
-  }
-  t.assert(
-    message.html.includes(design.title || 'test'),
-    'message html contains the design title'
-  );
-  t.assert(
-    message.actor && message.actor.id === actor.id,
-    'message.actor && message.actor.id is the user'
-  );
-  const { mentions } = message.attachments[0];
-  t.assert(
-    mentions && Object.keys(mentions).length === 1,
-    'message attachments contains one mention'
-  );
-  const { collaborators } = message.actions[0];
-  t.assert(
-    collaborators.length === 2,
-    'message actions contains two collaborators'
-  );
-  const messageDeleted = await createNotificationMessage(annMenDeleted);
-  t.assert(
-    messageDeleted === null,
-    'No message is created for a deleted subresource'
-  );
-});
-
-test('notification messages returns collection submit message to the user if resources exist', async (t: tape.Test) => {
+test('annotation comment notification message', async (t: tape.Test) => {
   sandbox()
     .stub(NotificationAnnouncer, 'announceNotificationCreation')
     .resolves({});
@@ -145,17 +32,127 @@ test('notification messages returns collection submit message to the user if res
     throw new Error('Could not create collection');
   }
 
-  const { notification: collSubNotification } = await generateNotification({
+  const { design, actor, collaborator } = await generateNotification({
+    collectionId: collection.id,
+    recipientUserId: userOne.user.id,
+    type: NotificationType.ANNOTATION_COMMENT_CREATE
+  });
+  await CollaboratorsDAO.update(collaborator.id, {
+    ...collaborator,
+    cancelledAt: new Date()
+  });
+  const { design: annCommCreateDesign } = await generateNotification({
+    recipientUserId: userOne.user.id,
     actorUserId: userOne.user.id,
     collectionId: collection.id,
-    type: NotificationType.COLLECTION_SUBMIT
+    type: NotificationType.ANNOTATION_COMMENT_CREATE
   });
-  const { notification: collSubDeleted } = await generateNotification({
-    actorUserId: userOne.user.id,
-    collectionId: collection.id,
-    type: NotificationType.COLLECTION_SUBMIT
-  });
+  await deleteById(annCommCreateDesign.id);
 
+  const notifications = await db.transaction((trx: Knex.Transaction) =>
+    findByUserId(trx, userOne.user.id, { limit: 20, offset: 0 })
+  );
+
+  t.is(notifications.length, 1);
+  const annCommCreateDesignNotification = notifications[0];
+
+  const annCommCreateMessage = await createNotificationMessage(
+    annCommCreateDesignNotification
+  );
+  if (!annCommCreateMessage) {
+    throw new Error('Did not create message');
+  }
+  t.assert(
+    annCommCreateMessage.html.includes(design.title || 'test'),
+    'message html contains the design title'
+  );
+  t.assert(
+    annCommCreateMessage.actor && annCommCreateMessage.actor.id === actor.id,
+    'message actor is the user'
+  );
+  const { mentions } = annCommCreateMessage.attachments[0];
+  t.is(
+    Object.keys(mentions!).length,
+    1,
+    'message attachments contains one mention'
+  );
+  const { collaborators } = annCommCreateMessage.actions[0];
+  t.is(collaborators.length, 2, 'message actions contains three collaborators');
+});
+
+test('annotation mention notification message', async (t: tape.Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
+  const { design, actor, recipient } = await generateNotification({
+    type: NotificationType.ANNOTATION_COMMENT_MENTION
+  });
+  const { design: annMenDesign } = await generateNotification({
+    recipientUserId: recipient.id,
+    type: NotificationType.ANNOTATION_COMMENT_MENTION
+  });
+  await deleteById(annMenDesign.id);
+
+  const notifications = await db.transaction((trx: Knex.Transaction) =>
+    findByUserId(trx, recipient.id, { limit: 20, offset: 0 })
+  );
+
+  t.is(notifications.length, 1);
+  const annMenNotification = notifications[0];
+
+  const message = await createNotificationMessage(annMenNotification);
+  if (!message) {
+    throw new Error('Did not create message');
+  }
+  t.assert(
+    message.html.includes(design.title || 'test'),
+    'message html contains the design title'
+  );
+  t.assert(message.actor && message.actor.id === actor.id, 'actor is correct');
+  const { mentions } = message.attachments[0];
+  t.assert(
+    mentions && Object.keys(mentions).length === 1,
+    'message attachments contains one mention'
+  );
+  const { collaborators } = message.actions[0];
+  t.assert(
+    collaborators.length === 2,
+    'message actions contains two collaborators'
+  );
+});
+
+test('collection submit notification message', async (t: tape.Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
+  const userOne = await createUser();
+
+  const { collection } = await generateCollection({
+    createdBy: userOne.user.id,
+    title: 'test'
+  });
+  if (!collection) {
+    throw new Error('Could not create collection');
+  }
+
+  const { recipient } = await generateNotification({
+    actorUserId: userOne.user.id,
+    collectionId: collection.id,
+    type: NotificationType.COLLECTION_SUBMIT
+  });
+  const { collection: delCollection } = await generateNotification({
+    actorUserId: userOne.user.id,
+    recipientUserId: recipient.id,
+    type: NotificationType.COLLECTION_SUBMIT
+  });
+  await CollectionsDAO.deleteById(delCollection.id);
+
+  const notifications = await db.transaction((trx: Knex.Transaction) =>
+    findByUserId(trx, recipient.id, { limit: 20, offset: 0 })
+  );
+
+  t.is(notifications.length, 1);
+  const collSubNotification = notifications[0];
   const message = await createNotificationMessage(collSubNotification);
   if (!message) {
     throw new Error('Did not create message');
@@ -174,45 +171,43 @@ test('notification messages returns collection submit message to the user if res
     ) !== -1,
     'message link goes to correct collection'
   );
-  await CollectionsDAO.deleteById(collection.id);
-  const messageDeleted = await createNotificationMessage(collSubDeleted);
-  t.assert(
-    messageDeleted === null,
-    'No message is created for a deleted subresource'
-  );
 });
 
-test('notification messages returns commit cost inputs message to the user if resources exist', async (t: tape.Test) => {
+test('commit cost inputs notification message', async (t: tape.Test) => {
   sandbox()
     .stub(NotificationAnnouncer, 'announceNotificationCreation')
     .resolves({});
   const userOne = await createUser();
-
   const { collection } = await generateCollection({
     createdBy: userOne.user.id,
-    title: 'test'
+    title: 'test collection'
   });
-  if (!collection) {
-    throw new Error('Could not create collection');
-  }
 
-  const { notification: comCosInpNotification } = await generateNotification({
+  const { recipient } = await generateNotification({
     actorUserId: userOne.user.id,
     collectionId: collection.id,
     type: NotificationType.COMMIT_COST_INPUTS
   });
-  const { notification: comCosInpDeleted } = await generateNotification({
+  const { collection: delCollection } = await generateNotification({
     actorUserId: userOne.user.id,
-    collectionId: collection.id,
+    recipientUserId: recipient.id,
     type: NotificationType.COMMIT_COST_INPUTS
   });
+  await CollectionsDAO.deleteById(delCollection.id);
 
+  const notifications = await db.transaction((trx: Knex.Transaction) =>
+    findByUserId(trx, recipient.id, { limit: 20, offset: 0 })
+  );
+
+  t.is(notifications.length, 1);
+  const comCosInpNotification = notifications[0];
   const message = await createNotificationMessage(comCosInpNotification);
   if (!message) {
     throw new Error('Did not create message');
   }
+
   t.assert(
-    message.html.includes(collection.title || 'test'),
+    message.html.includes('test collection'),
     'message html contains the collection title'
   );
   t.assert(
@@ -227,15 +222,9 @@ test('notification messages returns commit cost inputs message to the user if re
     ) !== -1,
     'message link goes to correct collection'
   );
-  await CollectionsDAO.deleteById(collection.id);
-  const messageDeleted = await createNotificationMessage(comCosInpDeleted);
-  t.assert(
-    messageDeleted === null,
-    'No message is created for a deleted subresource'
-  );
 });
 
-test('notification messages returns invite collaborator message to the user if resources exist', async (t: tape.Test) => {
+test('invite collaborator notification message', async (t: tape.Test) => {
   sandbox()
     .stub(NotificationAnnouncer, 'announceNotificationCreation')
     .resolves({});
@@ -243,33 +232,37 @@ test('notification messages returns invite collaborator message to the user if r
 
   const { collection } = await generateCollection({
     createdBy: userOne.user.id,
-    title: 'test'
+    title: 'test collection'
   });
   if (!collection) {
     throw new Error('Could not create collection');
   }
 
-  const { notification: invColNotification } = await generateNotification({
+  const { recipient } = await generateNotification({
     actorUserId: userOne.user.id,
     collectionId: collection.id,
     type: NotificationType.INVITE_COLLABORATOR
   });
-  const {
-    notification: invColDeleted,
-    design: invColDesign
-  } = await generateNotification({
+  const { design: invColDesign } = await generateNotification({
     actorUserId: userOne.user.id,
+    recipientUserId: recipient.id,
     collectionId: collection.id,
     type: NotificationType.INVITE_COLLABORATOR
   });
   await deleteById(invColDesign.id);
 
+  const notifications = await db.transaction((trx: Knex.Transaction) =>
+    findByUserId(trx, recipient.id, { limit: 20, offset: 0 })
+  );
+
+  t.is(notifications.length, 1);
+  const invColNotification = notifications[0];
   const message = await createNotificationMessage(invColNotification);
   if (!message) {
     throw new Error('Did not create message');
   }
   t.assert(
-    message.html.includes(collection.title || 'test'),
+    message.html.includes('test collection'),
     'message html contains the collection title'
   );
   t.assert(
@@ -282,40 +275,27 @@ test('notification messages returns invite collaborator message to the user if r
     ) !== -1,
     'message link goes to correct collection'
   );
-  await CollectionsDAO.deleteById(collection.id);
-  const messageDeleted = await createNotificationMessage(invColDeleted);
-  t.assert(
-    messageDeleted === null,
-    'No message is created for a deleted subresource'
-  );
 });
 
-test('notification messages returns measurement create message to the user if resources exist', async (t: tape.Test) => {
+test('measurement create notification message', async (t: tape.Test) => {
   sandbox()
     .stub(NotificationAnnouncer, 'announceNotificationCreation')
     .resolves({});
-  const {
-    notification: meaCreNotification,
-    design,
-    actor
-  } = await generateNotification({
+  const { design, actor, recipient } = await generateNotification({
     type: NotificationType.MEASUREMENT_CREATE
   });
-  const {
-    notification: meaCreDeleted,
-    measurement: meaCreMeasurement
-  } = await generateNotification({
-    type: NotificationType.MEASUREMENT_CREATE
-  });
-  const {
-    notification: meaCreDesDeleted,
-    design: meaCreDesign
-  } = await generateNotification({
+  const { measurement: meaCreMeasurement } = await generateNotification({
+    recipientUserId: recipient.id,
     type: NotificationType.MEASUREMENT_CREATE
   });
   await MeasurementsDAO.deleteById(meaCreMeasurement.id);
-  await deleteById(meaCreDesign.id);
 
+  const notifications = await db.transaction((trx: Knex.Transaction) =>
+    findByUserId(trx, recipient.id, { limit: 20, offset: 0 })
+  );
+
+  t.is(notifications.length, 1);
+  const meaCreNotification = notifications[0];
   const message = await createNotificationMessage(meaCreNotification);
   if (!message) {
     throw new Error('Did not create message');
@@ -328,78 +308,60 @@ test('notification messages returns measurement create message to the user if re
     message.actor && message.actor.id === actor.id,
     'message.actor && message.actor.id is the user'
   );
-  const messageDeleted = await createNotificationMessage(meaCreDeleted);
-  t.assert(
-    messageDeleted === null,
-    'No message is created for a deleted subresource'
-  );
-  const messageDesDeleted = await createNotificationMessage(meaCreDesDeleted);
-  t.assert(
-    messageDesDeleted === null,
-    'No message is created for a deleted design subresource'
-  );
 });
 
-test(
-  'notification messages returns partner accept service bid message to the user' +
-    ' if resources exist',
-  async (t: tape.Test) => {
-    sandbox()
-      .stub(NotificationAnnouncer, 'announceNotificationCreation')
-      .resolves({});
-    const {
-      notification: parAccSerBidNotification,
-      design,
-      actor
-    } = await generateNotification({
-      type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
-    });
-    const {
-      notification: parAccSerBidDeleted,
-      design: parAccSerBidDesign
-    } = await generateNotification({
-      type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
-    });
-    await deleteById(parAccSerBidDesign.id);
-
-    const message = await createNotificationMessage(parAccSerBidNotification);
-    if (!message) {
-      throw new Error('Did not create message');
-    }
-    t.assert(
-      message.html.includes(design.title),
-      'message html contains the design title'
-    );
-    t.assert(
-      message.actor && message.actor.id === actor.id,
-      'message.actor && message.actor.id is the user'
-    );
-    const messageDeleted = await createNotificationMessage(parAccSerBidDeleted);
-    t.assert(
-      messageDeleted === null,
-      'No message is created for a deleted subresource'
-    );
-  }
-);
-
-test('notification messages returns partner design bid message to the user if resources exist', async (t: tape.Test) => {
+test('partner accept service bid notification message', async (t: tape.Test) => {
   sandbox()
     .stub(NotificationAnnouncer, 'announceNotificationCreation')
     .resolves({});
-  const {
-    notification: parDesBidNotification,
-    actor
-  } = await generateNotification({
+  const { design, actor, recipient } = await generateNotification({
+    type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
+  });
+  const { design: parAccSerBidDesign } = await generateNotification({
+    recipientUserId: recipient.id,
+    type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
+  });
+  await deleteById(parAccSerBidDesign.id);
+
+  const notifications = await db.transaction((trx: Knex.Transaction) =>
+    findByUserId(trx, recipient.id, { limit: 20, offset: 0 })
+  );
+
+  t.is(notifications.length, 1);
+  const parAccSerBidNotification = notifications[0];
+  const message = await createNotificationMessage(parAccSerBidNotification);
+  if (!message) {
+    throw new Error('Did not create message');
+  }
+  t.assert(
+    message.html.includes(design.title),
+    'message html contains the design title'
+  );
+  t.assert(
+    message.actor && message.actor.id === actor.id,
+    'message.actor && message.actor.id is the user'
+  );
+});
+
+test('partner design bid notification message', async (t: tape.Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
+  const { actor, recipient } = await generateNotification({
     type: NotificationType.PARTNER_DESIGN_BID
   });
-  const {
-    notification: parDesBidDeleted,
-    design: parDesBidDesign
-  } = await generateNotification({
+  const { design: parDesBidDesign } = await generateNotification({
+    recipientUserId: recipient.id,
     type: NotificationType.PARTNER_DESIGN_BID
   });
   await deleteById(parDesBidDesign.id);
 
+  const notifications = await db.transaction((trx: Knex.Transaction) =>
+    findByUserId(trx, recipient.id, { limit: 20, offset: 0 })
+  );
+
+  t.is(notifications.length, 1);
+  const parDesBidNotification = notifications[0];
   const message = await createNotificationMessage(parDesBidNotification);
   if (!message) {
     throw new Error('Did not create message');
@@ -412,112 +374,116 @@ test('notification messages returns partner design bid message to the user if re
     message.actor && message.actor.id === actor.id,
     'message.actor && message.actor.id is the user'
   );
-  const messageDeleted = await createNotificationMessage(parDesBidDeleted);
-  t.assert(
-    messageDeleted === null,
-    'No message is created for a deleted subresource'
-  );
 });
 
-test(
-  'notification messages returns partner reject service bid messages to the user' +
-    ' if resources exist',
-  async (t: tape.Test) => {
-    sandbox()
-      .stub(NotificationAnnouncer, 'announceNotificationCreation')
-      .resolves({});
-    const {
-      notification: parRejSerBidNotification,
-      design,
-      actor
-    } = await generateNotification({
-      type: NotificationType.PARTNER_REJECT_SERVICE_BID
-    });
-    const {
-      notification: parRejSerBidDeleted,
-      design: parRejSerBidDesign
-    } = await generateNotification({
-      type: NotificationType.PARTNER_REJECT_SERVICE_BID
-    });
-    await deleteById(parRejSerBidDesign.id);
-
-    const message = await createNotificationMessage(parRejSerBidNotification);
-    if (!message) {
-      throw new Error('Did not create message');
-    }
-    t.assert(
-      message.html.includes(design.title),
-      'message html contains the design title'
-    );
-    t.assert(
-      message.actor && message.actor.id === actor.id,
-      'message.actor && message.actor.id is the user'
-    );
-    const messageDeleted = await createNotificationMessage(parRejSerBidDeleted);
-    t.assert(
-      messageDeleted === null,
-      'No message is created for a deleted subresource'
-    );
-  }
-);
-
-test('notification messages returns task assignment message to the user if resources exist', async (t: tape.Test) => {
+test('partner reject service bid notification message', async (t: tape.Test) => {
   sandbox()
     .stub(NotificationAnnouncer, 'announceNotificationCreation')
     .resolves({});
-  const {
-    notification: tasAsnNotification,
-    task,
-    actor
-  } = await generateNotification({
-    type: NotificationType.TASK_ASSIGNMENT
+  const { design, actor, recipient } = await generateNotification({
+    type: NotificationType.PARTNER_REJECT_SERVICE_BID
   });
-  const {
-    notification: tasAsnDeleted,
-    design: tasAsnDesign
-  } = await generateNotification({
-    type: NotificationType.TASK_ASSIGNMENT
+  const { design: parRejSerBidDesign } = await generateNotification({
+    recipientUserId: recipient.id,
+    type: NotificationType.PARTNER_REJECT_SERVICE_BID
   });
-  await deleteById(tasAsnDesign.id);
+  await deleteById(parRejSerBidDesign.id);
 
-  const message = await createNotificationMessage(tasAsnNotification);
+  const notifications = await db.transaction((trx: Knex.Transaction) =>
+    findByUserId(trx, recipient.id, { limit: 20, offset: 0 })
+  );
+
+  t.is(notifications.length, 1);
+  const parRejSerBidNotification = notifications[0];
+  const message = await createNotificationMessage(parRejSerBidNotification);
   if (!message) {
     throw new Error('Did not create message');
   }
   t.assert(
-    message.html.includes(task.title || 'test'),
-    'message html contains the task title'
+    message.html.includes(design.title),
+    'message html contains the design title'
   );
   t.assert(
     message.actor && message.actor.id === actor.id,
     'message.actor && message.actor.id is the user'
   );
-  const messageDeleted = await createNotificationMessage(tasAsnDeleted);
-  t.assert(
-    messageDeleted === null,
-    'No message is created for a deleted subresource'
-  );
 });
 
-test('notification messages returns task comment create message to the user if resources exist', async (t: tape.Test) => {
+test('task assignment notification message', async (t: tape.Test) => {
+  const testDate = new Date(2012, 11, 25);
+  const clock = sandbox().useFakeTimers(testDate);
   sandbox()
     .stub(NotificationAnnouncer, 'announceNotificationCreation')
     .resolves({});
-  const {
-    notification: tasComCreNotification,
-    task,
-    actor
-  } = await generateNotification({
+  const { task, actor, recipient } = await generateNotification({
+    type: NotificationType.TASK_ASSIGNMENT
+  });
+  await TaskEventsDAO.create({
+    dueDate: task.dueDate,
+    status: task.status,
+    description: task.description,
+    createdBy: task.createdBy,
+    title: 'First change',
+    taskId: task.id,
+    designStageId: task.designStageId,
+    ordering: task.ordering
+  });
+  clock.tick(1000);
+  await TaskEventsDAO.create({
+    dueDate: task.dueDate,
+    status: task.status,
+    description: task.description,
+    createdBy: task.createdBy,
+    title: 'I have changed',
+    taskId: task.id,
+    designStageId: task.designStageId,
+    ordering: task.ordering
+  });
+  const { design: tasAsnDesign } = await generateNotification({
+    recipientUserId: recipient.id,
+    type: NotificationType.TASK_ASSIGNMENT
+  });
+  await deleteById(tasAsnDesign.id);
+
+  const notifications = await db.transaction((trx: Knex.Transaction) =>
+    findByUserId(trx, recipient.id, { limit: 20, offset: 0 })
+  );
+
+  t.is(notifications.length, 1);
+  const tasAsnNotification = notifications[0];
+  const message = await createNotificationMessage(tasAsnNotification);
+  if (!message) {
+    throw new Error('Did not create message');
+  }
+  t.assert(
+    message.html.includes('I have changed'),
+    'message html contains the latest task title'
+  );
+  t.assert(
+    message.actor && message.actor.id === actor.id,
+    'message.actor && message.actor.id is the user'
+  );
+});
+
+test('task comment create notification message', async (t: tape.Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
+  const { task, actor, recipient } = await generateNotification({
     type: NotificationType.TASK_COMMENT_CREATE
   });
-  const {
-    notification: tasComCreDeleted,
-    design: tasComCreDesign
-  } = await generateNotification({
+  const { design: tasComCreDesign } = await generateNotification({
+    recipientUserId: recipient.id,
     type: NotificationType.TASK_COMMENT_CREATE
   });
   await deleteById(tasComCreDesign.id);
 
+  const notifications = await db.transaction((trx: Knex.Transaction) =>
+    findByUserId(trx, recipient.id, { limit: 20, offset: 0 })
+  );
+
+  t.is(notifications.length, 1);
+  const tasComCreNotification = notifications[0];
   const message = await createNotificationMessage(tasComCreNotification);
   if (!message) {
     throw new Error('Did not create message');
@@ -540,32 +506,27 @@ test('notification messages returns task comment create message to the user if r
     collaborators.length === 2,
     'message actions contains two collaborators'
   );
-  const messageDeleted = await createNotificationMessage(tasComCreDeleted);
-  t.assert(
-    messageDeleted === null,
-    'No message is created for a deleted subresource'
-  );
 });
 
-test('notification messages returns task comment mention message to the user if resources exist', async (t: tape.Test) => {
+test('task comment mention notification message', async (t: tape.Test) => {
   sandbox()
     .stub(NotificationAnnouncer, 'announceNotificationCreation')
     .resolves({});
-  const {
-    notification: tasComMenNotification,
-    task,
-    actor
-  } = await generateNotification({
+  const { task, actor, recipient } = await generateNotification({
     type: NotificationType.TASK_COMMENT_MENTION
   });
-  const {
-    notification: tasComMenDeleted,
-    design: tasComMenDesign
-  } = await generateNotification({
+  const { design: tasComMenDesign } = await generateNotification({
+    recipientUserId: recipient.id,
     type: NotificationType.TASK_COMMENT_MENTION
   });
   await deleteById(tasComMenDesign.id);
 
+  const notifications = await db.transaction((trx: Knex.Transaction) =>
+    findByUserId(trx, recipient.id, { limit: 20, offset: 0 })
+  );
+
+  t.is(notifications.length, 1);
+  const tasComMenNotification = notifications[0];
   const message = await createNotificationMessage(tasComMenNotification);
   if (!message) {
     throw new Error('Did not create message');
@@ -588,32 +549,27 @@ test('notification messages returns task comment mention message to the user if 
     collaborators.length === 2,
     'message actions contains two collaborators'
   );
-  const messageDeleted = await createNotificationMessage(tasComMenDeleted);
-  t.assert(
-    messageDeleted === null,
-    'No message is created for a deleted subresource'
-  );
 });
 
-test('notification messages returns task completion message to the user if resources exist', async (t: tape.Test) => {
+test('task completion notification message', async (t: tape.Test) => {
   sandbox()
     .stub(NotificationAnnouncer, 'announceNotificationCreation')
     .resolves({});
-  const {
-    notification: tasComNotification,
-    task,
-    actor
-  } = await generateNotification({
+  const { task, actor, recipient } = await generateNotification({
     type: NotificationType.TASK_COMPLETION
   });
-  const {
-    notification: tasComDeleted,
-    design: tasComDesign
-  } = await generateNotification({
+  const { design: tasComDesign } = await generateNotification({
+    recipientUserId: recipient.id,
     type: NotificationType.TASK_COMPLETION
   });
   await deleteById(tasComDesign.id);
 
+  const notifications = await db.transaction((trx: Knex.Transaction) =>
+    findByUserId(trx, recipient.id, { limit: 20, offset: 0 })
+  );
+
+  t.is(notifications.length, 1);
+  const tasComNotification = notifications[0];
   const message = await createNotificationMessage(tasComNotification);
   if (!message) {
     throw new Error('Did not create message');
@@ -626,32 +582,27 @@ test('notification messages returns task completion message to the user if resou
     message.actor && message.actor.id === actor.id,
     'message.actor && message.actor.id is the user'
   );
-  const messageDeleted = await createNotificationMessage(tasComDeleted);
-  t.assert(
-    messageDeleted === null,
-    'No message is created for a deleted subresource'
-  );
 });
 
-test('notification messages returns partner pairing committed message to the user if resources exist', async (t: tape.Test) => {
+test('partner pairing committed notification message', async (t: tape.Test) => {
   sandbox()
     .stub(NotificationAnnouncer, 'announceNotificationCreation')
     .resolves({});
-  const {
-    notification: parPairNotification,
-    collection,
-    actor
-  } = await generateNotification({
+  const { collection, actor, recipient } = await generateNotification({
     type: NotificationType.PARTNER_PAIRING_COMMITTED
   });
-  const {
-    notification: parPairDeleted,
-    collection: parPairCollection
-  } = await generateNotification({
+  const { collection: parPairCollection } = await generateNotification({
+    recipientUserId: recipient.id,
     type: NotificationType.PARTNER_PAIRING_COMMITTED
   });
   await CollectionsDAO.deleteById(parPairCollection.id);
 
+  const notifications = await db.transaction((trx: Knex.Transaction) =>
+    findByUserId(trx, recipient.id, { limit: 20, offset: 0 })
+  );
+
+  t.is(notifications.length, 1);
+  const parPairNotification = notifications[0];
   const message = await createNotificationMessage(parPairNotification);
   if (!message) {
     throw new Error('Did not create message');
@@ -664,14 +615,9 @@ test('notification messages returns partner pairing committed message to the use
     message.actor && message.actor.id === actor.id,
     'message.actor && message.actor.id is the user'
   );
-  const messageDeleted = await createNotificationMessage(parPairDeleted);
-  t.assert(
-    messageDeleted === null,
-    'No message is created for a deleted subresource'
-  );
 });
 
-test('notification messages supports costing expiration messages', async (t: tape.Test) => {
+test('costing expiration notification messages', async (t: tape.Test) => {
   sandbox()
     .stub(NotificationAnnouncer, 'announceNotificationCreation')
     .resolves({});
@@ -680,13 +626,27 @@ test('notification messages supports costing expiration messages', async (t: tap
     title: 'Testing123'
   });
 
-  // Costing Expired Message
-
-  const { notification: notification1 } = await generateNotification({
+  const { recipient } = await generateNotification({
     collectionId: collection.id,
     type: NotificationType.COSTING_EXPIRED
   });
-  const message1 = await createNotificationMessage(notification1);
+  await generateNotification({
+    collectionId: collection.id,
+    recipientUserId: recipient.id,
+    type: NotificationType.COSTING_EXPIRATION_TWO_DAYS
+  });
+  await generateNotification({
+    collectionId: collection.id,
+    recipientUserId: recipient.id,
+    type: NotificationType.COSTING_EXPIRATION_ONE_WEEK
+  });
+  const notifications = await db.transaction((trx: Knex.Transaction) =>
+    findByUserId(trx, recipient.id, { limit: 20, offset: 0 })
+  );
+
+  // Costing Expired Message
+
+  const message1 = await createNotificationMessage(notifications[2]);
   t.assert(
     message1!.html.includes(collection.title || 'Untitled'),
     'message html contains the collection title'
@@ -700,11 +660,7 @@ test('notification messages supports costing expiration messages', async (t: tap
 
   // Costing Expiration Two Days
 
-  const { notification: notification2 } = await generateNotification({
-    collectionId: collection.id,
-    type: NotificationType.COSTING_EXPIRATION_TWO_DAYS
-  });
-  const message2 = await createNotificationMessage(notification2);
+  const message2 = await createNotificationMessage(notifications[1]);
   t.assert(
     message2!.html.includes(collection.title || 'Untitled'),
     'message html contains the collection title'
@@ -714,11 +670,7 @@ test('notification messages supports costing expiration messages', async (t: tap
 
   // Costing Expiration One Week
 
-  const { notification: notification3 } = await generateNotification({
-    collectionId: collection.id,
-    type: NotificationType.COSTING_EXPIRATION_ONE_WEEK
-  });
-  const message3 = await createNotificationMessage(notification3);
+  const message3 = await createNotificationMessage(notifications[0]);
   t.assert(
     message3!.html.includes(collection.title || 'Untitled'),
     'message html contains the collection title'
@@ -731,31 +683,30 @@ test('unsupported notifications', async (t: tape.Test) => {
   sandbox()
     .stub(NotificationAnnouncer, 'announceNotificationCreation')
     .resolves({});
-  const { notification } = await generateNotification({
-    type: NotificationType.TASK_ASSIGNMENT
-  });
-  const deprecatedNotification: object = {
-    ...notification,
+  const deprecatedNotification = {
+    id: 'deprecated',
     type: 'ANNOTATION_CREATE'
   };
   const message = await createNotificationMessage(
-    deprecatedNotification as Notification
+    deprecatedNotification as FullNotification
   );
   t.equal(message, null, 'A deprecated type returns null');
-  const unsupportedNotification: object = {
-    ...notification,
+  const unsupportedNotification = {
+    id: 'invalid',
     type: 'FOO'
   };
 
   try {
-    await createNotificationMessage(unsupportedNotification as Notification);
+    await createNotificationMessage(
+      unsupportedNotification as FullNotification
+    );
     t.fail(
       'Should not be able to create a notification message for an unsupported type.'
     );
   } catch (e) {
     t.equal(
       e.message,
-      `Unknown notification type found with id ${notification.id} and type FOO`,
+      `Unknown notification type found with id invalid and type FOO`,
       'Throws an error for an unsupported type.'
     );
   }

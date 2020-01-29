@@ -6,6 +6,10 @@ import first from '../../services/first';
 import {
   dataAdapter,
   DEPRECATED_NOTIFICATION_TYPES,
+  fullDataAdapter,
+  FullNotification,
+  FullNotificationRow,
+  isFullNotificationRow,
   isNotificationRow,
   Notification,
   NotificationRow
@@ -19,31 +23,216 @@ interface SearchInterface {
 }
 
 const TABLE_NAME = 'notifications';
-const DELAY_MINUTES = 10;
+export const DELAY_MINUTES = 10;
 
-/**
- * Returns all outstanding notifications (e.g. not sent) with associated objects attached.
- */
-export async function findOutstanding(
-  trx?: Knex.Transaction
-): Promise<Notification[]> {
-  const outstandingNotifications: NotificationRow[] = await db(TABLE_NAME)
-    .select('*')
-    .where({ deleted_at: null, sent_email_at: null, read_at: null })
-    .whereNot({ recipient_user_id: null })
-    .andWhereRaw(`created_at < NOW() - INTERVAL '${DELAY_MINUTES} minutes'`)
+function addActor(query: Knex.QueryBuilder): Knex.QueryBuilder {
+  return query
+    .select(
+      db.raw(`
+  jsonb_build_object(
+    'birthday', au.birthday,
+    'createdAt', au.created_at,
+    'email', au.email,
+    'id', au.id,
+    'lastAcceptedPartnerTermsAt', au.last_accepted_partner_terms_at,
+    'lastAcceptedDesignerTermsAt', au.last_accepted_designer_terms_at,
+    'isSmsPreregistration', au.is_sms_preregistration,
+    'locale', au.locale,
+    'name', au.name,
+    'phone', au.phone,
+    'referralCode', au.referral_code,
+    'role', au.role
+  ) AS actor
+`)
+    )
+    .leftJoin('users AS au', 'au.id', 'n.actor_user_id')
+    .groupBy(['au.id']);
+}
+
+function addComponentType(query: Knex.QueryBuilder): Knex.QueryBuilder {
+  return query
+    .select('comp.type as component_type')
+    .leftJoin('product_design_canvases as can', 'can.id', 'n.canvas_id')
+    .leftJoin('components as comp', 'comp.id', 'can.component_id')
+    .groupBy(['comp.id', 'comp.type'])
+    .whereNull('can.deleted_at');
+}
+
+function addCollectionTitle(query: Knex.QueryBuilder): Knex.QueryBuilder {
+  return query
+    .select('c.title as collection_title')
+    .leftJoin('collections as c', 'c.id', 'n.collection_id')
+    .whereNull('c.deleted_at')
+    .groupBy(['c.id']);
+}
+
+function addDesignTitleAndImage(query: Knex.QueryBuilder): Knex.QueryBuilder {
+  return query
+    .select([
+      'd.title as design_title',
+      db.raw(`
+  coalesce(
+    jsonb_agg(pdi.id) filter (where pdi.id is not null),
+    '[]'
+  ) as design_image_ids
+`)
+    ])
+    .leftJoin('product_designs as d', 'd.id', 'n.design_id')
+    .leftJoin('canvases', 'canvases.design_id', 'd.id')
+    .leftJoin('components', 'components.id', 'canvases.component_id')
+    .leftJoin('product_design_images AS pdi', 'pdi.id', 'components.sketch_id')
+    .where({
+      'd.deleted_at': null,
+      'canvases.deleted_at': null,
+      'canvases.archived_at': null,
+      'components.deleted_at': null,
+      'pdi.deleted_at': null
+    })
+    .groupBy(['d.id']);
+}
+
+function addCommentText(query: Knex.QueryBuilder): Knex.QueryBuilder {
+  return query
+    .select('co.text as comment_text')
+    .leftJoin('comments as co', 'co.id', 'n.comment_id')
+    .groupBy(['co.id'])
+    .whereNull('co.deleted_at');
+}
+
+function addMeasurement(query: Knex.QueryBuilder): Knex.QueryBuilder {
+  return query
+    .leftJoin(
+      'product_design_canvas_measurements as m',
+      'm.id',
+      'n.measurement_id'
+    )
+    .whereNull('m.deleted_at');
+}
+
+function addAnnotation(query: Knex.QueryBuilder): Knex.QueryBuilder {
+  return query
+    .leftJoin(
+      'product_design_canvas_annotations as a',
+      'a.id',
+      'n.annotation_id'
+    )
+    .whereNull('a.deleted_at');
+}
+
+function addTaskTitle(query: Knex.QueryBuilder): Knex.QueryBuilder {
+  return query.select((subquery: Knex.QueryBuilder) =>
+    subquery
+      .select('te.title')
+      .from('task_events as te')
+      .leftJoin('task_events as te2', (join: Knex.JoinClause) =>
+        join
+          .on('te2.task_id', '=', 'te.task_id')
+          .andOn('te2.created_at', '<', 'te.created_at')
+      )
+      .whereRaw('te.task_id = n.task_id')
+      .limit(1)
+      .as('task_title')
+  );
+}
+
+export async function findByUserId(
+  trx: Knex.Transaction,
+  userId: string,
+  options: SearchInterface
+): Promise<FullNotification[]> {
+  const notifications = await trx
+    .select('n.*')
+    .from('notifications as n')
+    .modify(addActor)
+    .modify(addComponentType)
+    .modify(addCollectionTitle)
+    .modify(addDesignTitleAndImage)
+    .modify(addCommentText)
+    .modify(addMeasurement)
+    .modify(addAnnotation)
+    .modify(addTaskTitle)
+    .leftJoin('collaborators as cl', 'cl.id', 'n.collaborator_id')
+    .whereNotIn('n.type', DEPRECATED_NOTIFICATION_TYPES)
+    .andWhereRaw('(cl.cancelled_at is null or cl.cancelled_at > now())')
+    .andWhere((query: Knex.QueryBuilder) =>
+      query
+        .where({ 'n.recipient_user_id': userId })
+        .orWhere({ 'cl.user_id': userId })
+    )
+    .groupBy(['n.id', 'cl.id'])
     .orderBy('created_at', 'desc')
-    .modify((query: Knex.QueryBuilder) => {
-      if (trx) {
-        query.transacting(trx);
-      }
-    });
+    .limit(options.limit)
+    .offset(options.offset);
 
-  return validateEvery<NotificationRow, Notification>(
+  return validateEvery<FullNotificationRow, FullNotification>(
     TABLE_NAME,
-    isNotificationRow,
-    dataAdapter,
-    outstandingNotifications
+    isFullNotificationRow,
+    fullDataAdapter,
+    notifications
+  );
+}
+
+export async function findById(
+  trx: Knex.Transaction,
+  notificationId: string
+): Promise<FullNotification | null> {
+  const notification = await trx
+    .select('n.*')
+    .from('notifications as n')
+    .modify(addActor)
+    .modify(addComponentType)
+    .modify(addCollectionTitle)
+    .modify(addDesignTitleAndImage)
+    .modify(addCommentText)
+    .modify(addMeasurement)
+    .modify(addAnnotation)
+    .modify(addTaskTitle)
+    .leftJoin('collaborators as cl', 'cl.id', 'n.collaborator_id')
+    .whereNotIn('n.type', DEPRECATED_NOTIFICATION_TYPES)
+    .andWhereRaw('(cl.cancelled_at is null or cl.cancelled_at > now())')
+    .andWhere({ 'n.id': notificationId, 'n.deleted_at': null })
+    .groupBy(['n.id', 'cl.id'])
+    .orderBy('created_at', 'desc')
+    .first<FullNotificationRow | null>();
+
+  if (!notification) {
+    return null;
+  }
+
+  return validate<FullNotificationRow, FullNotification>(
+    TABLE_NAME,
+    isFullNotificationRow,
+    fullDataAdapter,
+    notification
+  );
+}
+
+export async function findOutstanding(
+  trx: Knex.Transaction
+): Promise<FullNotification[]> {
+  const notifications = await trx
+    .select('n.*')
+    .from('notifications as n')
+    .modify(addActor)
+    .modify(addComponentType)
+    .modify(addCollectionTitle)
+    .modify(addDesignTitleAndImage)
+    .modify(addCommentText)
+    .modify(addMeasurement)
+    .modify(addAnnotation)
+    .modify(addTaskTitle)
+    .leftJoin('collaborators as cl', 'cl.id', 'n.collaborator_id')
+    .where({ 'n.deleted_at': null, sent_email_at: null, read_at: null })
+    .whereNot({ recipient_user_id: null })
+    .andWhereRaw(`n.created_at < NOW() - INTERVAL '${DELAY_MINUTES} minutes'`)
+    .groupBy(['n.id', 'cl.id'])
+    .orderBy('created_at', 'desc');
+
+  return validateEvery<FullNotificationRow, FullNotification>(
+    TABLE_NAME,
+    isFullNotificationRow,
+    fullDataAdapter,
+    notifications
   );
 }
 
@@ -94,7 +283,7 @@ export async function markRead(
 export async function create(
   data: Uninserted<Notification>,
   trx?: Knex.Transaction
-): Promise<Notification> {
+): Promise<FullNotification> {
   const rowData = dataAdapter.forInsertion(data);
   const created = await db(TABLE_NAME)
     .insert(rowData, '*')
@@ -109,95 +298,26 @@ export async function create(
     throw new Error('Failed to create a notification!');
   }
 
-  const notification = validate<NotificationRow, Notification>(
-    TABLE_NAME,
-    isNotificationRow,
-    dataAdapter,
-    created
-  );
+  let notification;
+
+  if (trx) {
+    notification = await findById(trx, created.id);
+  } else {
+    notification = await db.transaction((newTrx: Knex.Transaction) =>
+      findById(newTrx, created.id)
+    );
+  }
+
+  if (!notification) {
+    throw new Error('Failed to find created notification after persisting!');
+  }
   await announceNotificationCreation(notification);
   return notification;
 }
 
-export async function findById(id: string): Promise<Notification | null> {
-  const notifications: NotificationRow[] = await db(TABLE_NAME)
-    .select('*')
-    .where({ id, deleted_at: null })
-    .limit(1);
-  const notification = notifications[0];
-
-  if (!notification) {
-    return null;
-  }
-
-  return validate<NotificationRow, Notification>(
-    TABLE_NAME,
-    isNotificationRow,
-    dataAdapter,
-    notification
-  );
-}
-
-export async function findByUserId(
-  userId: string,
-  options: SearchInterface
-): Promise<Notification[]> {
-  const notifications: NotificationRow[] = await db(TABLE_NAME)
-    .select('n.*')
-    .from('notifications as n')
-    .joinRaw(
-      `
-    left join product_designs as d
-      on d.id = n.design_id
-    left join collections as c
-      on c.id = n.collection_id
-    left join comments as co
-      on co.id = n.comment_id
-    left join collaborators as cl
-      on cl.id = n.collaborator_id
-    left join product_design_canvas_annotations as a
-      on a.id = n.annotation_id
-    left join product_design_canvases as can
-      on can.id = n.canvas_id
-    left join product_design_canvas_measurements as m
-      on m.id = n.measurement_id
-    `
-    )
-    .whereNotIn('type', DEPRECATED_NOTIFICATION_TYPES)
-    .andWhere({
-      'a.deleted_at': null,
-      'c.deleted_at': null,
-      'can.deleted_at': null,
-      'co.deleted_at': null,
-      'd.deleted_at': null,
-      'm.deleted_at': null,
-      'n.deleted_at': null
-    })
-    .andWhereRaw(
-      `
-      (cl.cancelled_at is null or cl.cancelled_at > now())
-    `
-    )
-    .andWhere((query: Knex.QueryBuilder) =>
-      query
-        .where({ 'n.recipient_user_id': userId })
-        .orWhere({ 'cl.user_id': userId })
-    )
-    .orderBy('created_at', 'desc')
-    .limit(options.limit)
-    .offset(options.offset);
-
-  return validateEvery<NotificationRow, Notification>(
-    TABLE_NAME,
-    isNotificationRow,
-    dataAdapter,
-    notifications
-  );
-}
-
 export async function findUnreadCountByUserId(userId: string): Promise<number> {
-  const notificationRows: NotificationRow[] = await db(TABLE_NAME)
-    .select('n.*')
+  const { notificationCount } = await db(TABLE_NAME)
+    .count('n.id', { as: 'notificationCount' })
     .from('notifications as n')
     .joinRaw(
       `
@@ -237,16 +357,11 @@ export async function findUnreadCountByUserId(userId: string): Promise<number> {
       query
         .where({ 'n.recipient_user_id': userId })
         .orWhere({ 'cl.user_id': userId })
-    );
+    )
+    // .count returns `number | string` due to how big ints are stored
+    .first<{ notificationCount: number | string }>();
 
-  const notifications = validateEvery<NotificationRow, Notification>(
-    TABLE_NAME,
-    isNotificationRow,
-    dataAdapter,
-    notificationRows
-  );
-
-  return notifications.length;
+  return parseInt(notificationCount, 10);
 }
 
 export async function del(id: string): Promise<void> {

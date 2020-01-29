@@ -1,4 +1,4 @@
-import { Notification } from '../../../notifications/domain-object';
+import { FullNotification } from '../../../notifications/domain-object';
 import { RealtimeNotification } from '@cala/ts-lib';
 import { createNotificationMessage } from '../../../notifications/notification-messages';
 import { sendMessage } from '../../send-message';
@@ -7,7 +7,7 @@ import { sendMessage } from '../../send-message';
  * Publishes a notification to the Iris SQS only if the notification has a recipient that is a user.
  */
 export async function announceNotificationCreation(
-  notification: Notification
+  notification: FullNotification
 ): Promise<RealtimeNotification | null> {
   const messageNotification = await createNotificationMessage(notification);
   if (!notification.recipientUserId || !messageNotification) {

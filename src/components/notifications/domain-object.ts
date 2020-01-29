@@ -1,65 +1,94 @@
 import {
-  AnnotationCommentCreateNotification,
-  AnnotationCommentCreateNotificationRow
-} from './models/annotation-comment-create';
-import {
-  CollectionSubmitNotification,
-  CollectionSubmitNotificationRow
-} from './models/collection-submit';
-import {
-  CommitCostInputsNotification,
-  CommitCostInputsNotificationRow
-} from './models/commit-cost-inputs';
-import {
-  InviteCollaboratorNotification,
-  InviteCollaboratorNotificationRow
-} from './models/invite-collaborator';
-import {
-  MeasurementCreateNotification,
-  MeasurementCreateNotificationRow
-} from './models/measurement-create';
-import {
-  PartnerAcceptServiceBidNotification,
-  PartnerAcceptServiceBidNotificationRow
-} from './models/partner-accept-service-bid';
-import {
-  PartnerDesignBidNotification,
-  PartnerDesignBidNotificationRow
-} from './models/partner-design-bid';
-import {
-  PartnerRejectServiceBidNotification,
-  PartnerRejectServiceBidNotificationRow
-} from './models/partner-reject-service-bid';
-import {
-  TaskAssigmentNotification,
-  TaskAssigmentNotificationRow
-} from './models/task-assignment';
-import {
+  FullTaskCommentCreateNotification,
+  FullTaskCommentCreateNotificationRow,
   TaskCommentCreateNotification,
   TaskCommentCreateNotificationRow
 } from './models/task-comment-create';
 import {
+  AnnotationCommentCreateNotification,
+  AnnotationCommentCreateNotificationRow,
+  FullAnnotationCommentCreateNotification,
+  FullAnnotationCommentCreateNotificationRow
+} from './models/annotation-comment-create';
+import {
+  CommitCostInputsNotification,
+  CommitCostInputsNotificationRow,
+  FullCommitCostInputsNotification,
+  FullCommitCostInputsNotificationRow
+} from './models/commit-cost-inputs';
+import {
+  FullInviteCollaboratorNotification,
+  FullInviteCollaboratorNotificationRow,
+  InviteCollaboratorNotification,
+  InviteCollaboratorNotificationRow
+} from './models/invite-collaborator';
+import {
+  FullMeasurementCreateNotification,
+  FullMeasurementCreateNotificationRow,
+  MeasurementCreateNotification,
+  MeasurementCreateNotificationRow
+} from './models/measurement-create';
+import {
+  FullPartnerAcceptServiceBidNotification,
+  FullPartnerAcceptServiceBidNotificationRow,
+  PartnerAcceptServiceBidNotification,
+  PartnerAcceptServiceBidNotificationRow
+} from './models/partner-accept-service-bid';
+import {
+  FullPartnerDesignBidNotification,
+  FullPartnerDesignBidNotificationRow,
+  PartnerDesignBidNotification,
+  PartnerDesignBidNotificationRow
+} from './models/partner-design-bid';
+import {
+  FullPartnerRejectServiceBidNotification,
+  FullPartnerRejectServiceBidNotificationRow,
+  PartnerRejectServiceBidNotification,
+  PartnerRejectServiceBidNotificationRow
+} from './models/partner-reject-service-bid';
+import {
+  FullTaskAssignmentNotification,
+  FullTaskAssignmentNotificationRow,
+  TaskAssignmentNotification,
+  TaskAssignmentNotificationRow
+} from './models/task-assignment';
+import {
+  CollectionSubmitNotification,
+  CollectionSubmitNotificationRow,
+  FullCollectionSubmitNotification,
+  FullCollectionSubmitNotificationRow
+} from './models/collection-submit';
+import {
+  FullTaskCompletionNotification,
+  FullTaskCompletionNotificationRow,
   TaskCompletionNotification,
   TaskCompletionNotificationRow
 } from './models/task-completion';
 import {
+  FullTaskCommentMentionNotification,
+  FullTaskCommentMentionNotificationRow,
   TaskCommentMentionNotification,
   TaskCommentMentionNotificationRow
 } from './models/task-comment-mention';
 import {
   AnnotationCommentMentionNotification,
-  AnnotationCommentMentionNotificationRow
+  AnnotationCommentMentionNotificationRow,
+  FullAnnotationCommentMentionNotification,
+  FullAnnotationCommentMentionNotificationRow
 } from './models/annotation-mention';
 import toDateOrNull, { toDateStringOrNull } from '../../services/to-date';
 import DataAdapter from '../../services/data-adapter';
 import { hasProperties } from '../../services/require-properties';
 import {
+  FullPartnerPairingCommittedNotification,
+  FullPartnerPairingCommittedNotificationRow,
   PartnerPairingCommittedNotification,
   PartnerPairingCommittedNotificationRow
 } from './models/partner-pairing-committed';
 import {
   ExpiredNotification,
   ExpiredNotificationRow,
+  FullExpirationNotification,
   OneWeekExpirationNotification,
   OneWeekExpirationNotificationRow,
   TwoDayExpirationNotification,
@@ -97,13 +126,30 @@ export type Notification =
   | PartnerDesignBidNotification
   | PartnerPairingCommittedNotification
   | PartnerRejectServiceBidNotification
-  | TaskAssigmentNotification
+  | TaskAssignmentNotification
   | TaskCommentCreateNotification
   | TaskCommentMentionNotification
   | TaskCompletionNotification
   | ExpiredNotification
   | OneWeekExpirationNotification
   | TwoDayExpirationNotification;
+
+export type FullNotification =
+  | FullTaskCompletionNotification
+  | FullTaskCommentMentionNotification
+  | FullTaskCommentCreateNotification
+  | FullTaskAssignmentNotification
+  | FullPartnerRejectServiceBidNotification
+  | FullPartnerPairingCommittedNotification
+  | FullPartnerDesignBidNotification
+  | FullPartnerAcceptServiceBidNotification
+  | FullMeasurementCreateNotification
+  | FullInviteCollaboratorNotification
+  | FullCommitCostInputsNotification
+  | FullCollectionSubmitNotification
+  | FullAnnotationCommentMentionNotification
+  | FullAnnotationCommentCreateNotification
+  | FullExpirationNotification;
 
 export type NotificationRow =
   | AnnotationCommentCreateNotificationRow
@@ -116,13 +162,29 @@ export type NotificationRow =
   | PartnerDesignBidNotificationRow
   | PartnerPairingCommittedNotificationRow
   | PartnerRejectServiceBidNotificationRow
-  | TaskAssigmentNotificationRow
+  | TaskAssignmentNotificationRow
   | TaskCommentCreateNotificationRow
   | TaskCommentMentionNotificationRow
   | TaskCompletionNotificationRow
   | ExpiredNotificationRow
   | OneWeekExpirationNotificationRow
   | TwoDayExpirationNotificationRow;
+
+export type FullNotificationRow =
+  | FullTaskCompletionNotificationRow
+  | FullTaskCommentMentionNotificationRow
+  | FullTaskCommentCreateNotificationRow
+  | FullTaskAssignmentNotificationRow
+  | FullPartnerRejectServiceBidNotificationRow
+  | FullPartnerPairingCommittedNotificationRow
+  | FullPartnerDesignBidNotificationRow
+  | FullPartnerAcceptServiceBidNotificationRow
+  | FullMeasurementCreateNotificationRow
+  | FullInviteCollaboratorNotificationRow
+  | FullCommitCostInputsNotificationRow
+  | FullCollectionSubmitNotificationRow
+  | FullAnnotationCommentMentionNotificationRow
+  | FullAnnotationCommentCreateNotificationRow;
 
 type EqualKeys<T> = { [P in keyof T]: any };
 
@@ -219,3 +281,67 @@ export const DEPRECATED_NOTIFICATION_TYPES = [
   'update-section',
   'update-selected-option'
 ];
+
+export function isFullNotificationRow(
+  candidate: object
+): candidate is FullNotificationRow {
+  return (
+    isNotificationRow(candidate) &&
+    hasProperties(
+      candidate,
+      'actor',
+      'comment_text',
+      'component_type',
+      'collection_title',
+      'design_title',
+      'design_image_ids',
+      'task_title'
+    )
+  );
+}
+
+function encodeFull(rowData: FullNotificationRow): FullNotification {
+  const { actor } = rowData;
+  return {
+    actionDescription: rowData.action_description,
+    actor: {
+      ...actor,
+      createdAt: new Date(actor.createdAt),
+      lastAcceptedPartnerTermsAt: actor.lastAcceptedPartnerTermsAt
+        ? new Date(actor.lastAcceptedPartnerTermsAt)
+        : null,
+      lastAcceptedDesignerTermsAt: actor.lastAcceptedDesignerTermsAt
+        ? new Date(actor.lastAcceptedDesignerTermsAt)
+        : null
+    },
+    actorUserId: rowData.actor_user_id,
+    annotationId: rowData.annotation_id,
+    canvasId: rowData.canvas_id,
+    collaboratorId: rowData.collaborator_id,
+    collectionId: rowData.collection_id,
+    collectionTitle: rowData.collection_title,
+    commentText: rowData.comment_text,
+    commentId: rowData.comment_id,
+    componentType: rowData.component_type,
+    createdAt: new Date(rowData.created_at),
+    deletedAt: rowData.deleted_at ? new Date(rowData.deleted_at) : null,
+    designId: rowData.design_id,
+    designImageIds: rowData.design_image_ids,
+    designTitle: rowData.design_title,
+    id: rowData.id,
+    measurementId: rowData.measurement_id,
+    readAt: rowData.read_at ? new Date(rowData.read_at) : null,
+    recipientUserId: rowData.recipient_user_id,
+    sectionId: rowData.section_id,
+    sentEmailAt: rowData.sent_email_at ? new Date(rowData.sent_email_at) : null,
+    stageId: rowData.stage_id,
+    taskId: rowData.task_id,
+    taskTitle: rowData.task_title,
+    type: rowData.type
+  } as FullNotification;
+}
+
+export const fullDataAdapter = new DataAdapter<
+  FullNotificationRow,
+  FullNotification
+>(encodeFull);

@@ -1,12 +1,13 @@
 import tape from 'tape';
 
 import { sandbox, test } from '../../../../test-helpers/fresh';
+import createUser from '../../../../test-helpers/create-user';
 import * as SendMessageService from '../../send-message';
 import * as CreateNotificationService from '../../../notifications/notification-messages';
 import { NotificationType } from '../../../notifications/domain-object';
 import { announceNotificationCreation } from './index';
-import { TaskAssigmentNotification } from '../../../notifications/models/task-assignment';
-import { InviteCollaboratorNotification } from '../../../notifications/models/invite-collaborator';
+import { FullTaskAssignmentNotification } from '../../../notifications/models/task-assignment';
+import { FullInviteCollaboratorNotification } from '../../../notifications/models/invite-collaborator';
 
 test('sendMessage supports sending a message', async (t: tape.Test) => {
   const sendStub = sandbox()
@@ -17,18 +18,25 @@ test('sendMessage supports sending a message', async (t: tape.Test) => {
     .resolves({
       foo: 'bar'
     });
+  const { user: actor } = await createUser({ withSession: false });
 
-  const notification: TaskAssigmentNotification = {
+  const notification: FullTaskAssignmentNotification = {
     actionDescription: null,
-    actorUserId: 'asdf2231',
+    actorUserId: actor.id,
+    actor,
     annotationId: null,
     canvasId: null,
     collaboratorId: 'abddd',
     collectionId: 'collection-adsfafd',
+    collectionTitle: null,
     commentId: null,
+    commentText: null,
+    componentType: null,
     createdAt: new Date('2019-02-02'),
     deletedAt: null,
     designId: 'abc-1222343',
+    designImageIds: [],
+    designTitle: null,
     id: 'abddfad-ddd',
     measurementId: null,
     readAt: null,
@@ -37,6 +45,7 @@ test('sendMessage supports sending a message', async (t: tape.Test) => {
     sentEmailAt: null,
     stageId: '112-333',
     taskId: 'abc-123',
+    taskTitle: 'Some title',
     type: NotificationType.TASK_ASSIGNMENT
   };
   const response = await announceNotificationCreation(notification);
@@ -58,18 +67,25 @@ test('sendMessage can early return if the notification is missing data', async (
   const createStub = sandbox()
     .stub(CreateNotificationService, 'createNotificationMessage')
     .resolves(null);
+  const { user: actor } = await createUser({ withSession: false });
 
-  const notification: TaskAssigmentNotification = {
+  const notification: FullTaskAssignmentNotification = {
     actionDescription: null,
-    actorUserId: 'asdf2231',
+    actorUserId: actor.id,
+    actor,
     annotationId: null,
     canvasId: null,
     collaboratorId: 'abddd',
     collectionId: 'collection-adsfafd',
+    collectionTitle: null,
     commentId: null,
+    commentText: null,
+    componentType: null,
     createdAt: new Date('2019-02-02'),
     deletedAt: null,
     designId: 'abc-1222343',
+    designImageIds: [],
+    designTitle: null,
     id: 'abddfad-ddd',
     measurementId: null,
     readAt: null,
@@ -78,6 +94,7 @@ test('sendMessage can early return if the notification is missing data', async (
     sentEmailAt: null,
     stageId: '112-333',
     taskId: 'abc-123',
+    taskTitle: 'Some title',
     type: NotificationType.TASK_ASSIGNMENT
   };
   const response = await announceNotificationCreation(notification);
@@ -94,18 +111,25 @@ test('sendMessage can early return if the notification is missing data', async (
   const createStub = sandbox()
     .stub(CreateNotificationService, 'createNotificationMessage')
     .resolves({ foo: 'bar' });
+  const { user: actor } = await createUser({ withSession: false });
 
-  const notification: InviteCollaboratorNotification = {
+  const notification: FullInviteCollaboratorNotification = {
     actionDescription: null,
-    actorUserId: 'asdf2231',
+    actorUserId: actor.id,
+    actor,
     annotationId: null,
     canvasId: null,
     collaboratorId: 'abddd',
     collectionId: 'collection-adsfafd',
+    collectionTitle: 'A collection',
     commentId: null,
+    commentText: null,
+    componentType: null,
     createdAt: new Date('2019-02-02'),
     deletedAt: null,
     designId: 'abc-1222343',
+    designImageIds: [],
+    designTitle: 'A design',
     id: 'abddfad-ddd',
     measurementId: null,
     readAt: null,
@@ -114,6 +138,7 @@ test('sendMessage can early return if the notification is missing data', async (
     sentEmailAt: new Date('2019-02-02'),
     stageId: null,
     taskId: null,
+    taskTitle: null,
     type: NotificationType.INVITE_COLLABORATOR
   };
   const response = await announceNotificationCreation(notification);

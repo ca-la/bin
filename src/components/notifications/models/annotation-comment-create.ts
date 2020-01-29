@@ -1,4 +1,9 @@
-import { BaseNotification, BaseNotificationRow } from './base';
+import {
+  BaseFullNotification,
+  BaseFullNotificationRow,
+  BaseNotification,
+  BaseNotificationRow
+} from './base';
 import { NotificationType } from '../domain-object';
 
 type BaseRow = Omit<
@@ -10,6 +15,7 @@ type BaseRow = Omit<
   | 'recipient_user_id'
   | 'annotation_id'
 >;
+
 export interface AnnotationCommentCreateNotificationRow extends BaseRow {
   canvas_id: string;
   collection_id: string | null;
@@ -19,6 +25,20 @@ export interface AnnotationCommentCreateNotificationRow extends BaseRow {
   recipient_user_id: string;
   type: NotificationType.ANNOTATION_COMMENT_CREATE;
 }
+
+type BaseFullRow = Omit<
+  BaseFullNotificationRow & AnnotationCommentCreateNotificationRow,
+  'collection_title' | 'comment_text' | 'design_title' | 'task_title'
+>;
+
+export interface FullAnnotationCommentCreateNotificationRow
+  extends BaseFullRow {
+  collection_title: string | null;
+  comment_text: string;
+  design_title: string | null;
+  task_title: string;
+}
+
 type Base = Omit<
   BaseNotification,
   | 'canvasId'
@@ -28,6 +48,7 @@ type Base = Omit<
   | 'recipientUserId'
   | 'annotationId'
 >;
+
 export interface AnnotationCommentCreateNotification extends Base {
   canvasId: string;
   collectionId: string | null;
@@ -36,6 +57,23 @@ export interface AnnotationCommentCreateNotification extends Base {
   annotationId: string;
   recipientUserId: string;
   type: NotificationType.ANNOTATION_COMMENT_CREATE;
+}
+
+type BaseFull = Omit<
+  BaseFullNotification & AnnotationCommentCreateNotification,
+  | 'collectionTitle'
+  | 'commentText'
+  | 'designTitle'
+  | 'taskTitle'
+  | 'componentType'
+>;
+
+export interface FullAnnotationCommentCreateNotification extends BaseFull {
+  collectionTitle: string | null;
+  commentText: string;
+  componentType: string;
+  designTitle: string | null;
+  taskTitle: string;
 }
 
 export function isAnnotationCommentCreateNotification(

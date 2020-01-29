@@ -1,17 +1,21 @@
-import { BaseNotification, BaseNotificationRow } from './base';
+import {
+  BaseFullNotification,
+  BaseFullNotificationRow,
+  BaseNotification,
+  BaseNotificationRow
+} from './base';
 import { NotificationType } from '../domain-object';
 
 type BaseRow = Omit<
   BaseNotificationRow,
-  | 'actor_user_id'
   | 'collection_id'
   | 'design_id'
   | 'collaborator_id'
   | 'sent_email_at'
   | 'recipient_user_id'
 >;
+
 export interface InviteCollaboratorNotificationRow extends BaseRow {
-  actor_user_id: string;
   collection_id: string | null;
   design_id: string | null;
   collaborator_id: string;
@@ -19,6 +23,17 @@ export interface InviteCollaboratorNotificationRow extends BaseRow {
   recipient_user_id: string | null;
   type: NotificationType.INVITE_COLLABORATOR;
 }
+
+type BaseFullRow = Omit<
+  BaseFullNotificationRow & InviteCollaboratorNotificationRow,
+  'collection_title' | 'design_title'
+>;
+
+export interface FullInviteCollaboratorNotificationRow extends BaseFullRow {
+  collection_title: string | null;
+  design_title: string | null;
+}
+
 type Base = Omit<
   BaseNotification,
   | 'collectionId'
@@ -27,6 +42,7 @@ type Base = Omit<
   | 'sentEmailAt'
   | 'recipientUserId'
 >;
+
 export interface InviteCollaboratorNotification extends Base {
   collectionId: string | null;
   designId: string | null;
@@ -34,6 +50,16 @@ export interface InviteCollaboratorNotification extends Base {
   sentEmailAt: Date;
   recipientUserId: string | null;
   type: NotificationType.INVITE_COLLABORATOR;
+}
+
+type BaseFull = Omit<
+  BaseFullNotification & InviteCollaboratorNotification,
+  'collectionTitle' | 'designTitle'
+>;
+
+export interface FullInviteCollaboratorNotification extends BaseFull {
+  collectionTitle: string | null;
+  designTitle: string | null;
 }
 
 export function isInviteCollaboratorNotification(

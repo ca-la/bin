@@ -1,4 +1,9 @@
-import { BaseNotification, BaseNotificationRow } from './base';
+import {
+  BaseFullNotification,
+  BaseFullNotificationRow,
+  BaseNotification,
+  BaseNotificationRow
+} from './base';
 import { NotificationType } from '../domain-object';
 
 type BaseRow = Omit<
@@ -10,7 +15,8 @@ type BaseRow = Omit<
   | 'task_id'
   | 'recipient_user_id'
 >;
-export interface TaskAssigmentNotificationRow extends BaseRow {
+
+export interface TaskAssignmentNotificationRow extends BaseRow {
   collaborator_id: string;
   collection_id: string | null;
   design_id: string;
@@ -19,6 +25,18 @@ export interface TaskAssigmentNotificationRow extends BaseRow {
   recipient_user_id: string;
   type: NotificationType.TASK_ASSIGNMENT;
 }
+
+type BaseFullRow = Omit<
+  BaseFullNotificationRow & TaskAssignmentNotificationRow,
+  'collection_title' | 'design_title' | 'task_title'
+>;
+
+export interface FullTaskAssignmentNotificationRow extends BaseFullRow {
+  collection_title: string | null;
+  design_title: string | null;
+  task_title: string;
+}
+
 type Base = Omit<
   BaseNotification,
   | 'collaboratorId'
@@ -28,7 +46,8 @@ type Base = Omit<
   | 'taskId'
   | 'recipientUserId'
 >;
-export interface TaskAssigmentNotification extends Base {
+
+export interface TaskAssignmentNotification extends Base {
   collaboratorId: string;
   collectionId: string | null;
   designId: string;
@@ -38,8 +57,19 @@ export interface TaskAssigmentNotification extends Base {
   type: NotificationType.TASK_ASSIGNMENT;
 }
 
+type BaseFull = Omit<
+  BaseFullNotification & TaskAssignmentNotification,
+  'collectionTitle' | 'designTitle' | 'taskTitle'
+>;
+
+export interface FullTaskAssignmentNotification extends BaseFull {
+  collectionTitle: string | null;
+  designTitle: string | null;
+  taskTitle: string;
+}
+
 export function isTaskAssigmentNotification(
   candidate: any
-): candidate is TaskAssigmentNotification {
+): candidate is TaskAssignmentNotification {
   return candidate.type === NotificationType.TASK_ASSIGNMENT;
 }
