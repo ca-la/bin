@@ -98,3 +98,16 @@ export async function removeDesigns(options: {
 
   return rowCount;
 }
+
+export async function removeAllDesigns(
+  trx: Knex.Transaction,
+  collectionId: string
+): Promise<number> {
+  const rowCount = await trx
+    .from(TABLE_COLLECTION_DESIGNS)
+    .where({ collection_id: collectionId })
+    .del()
+    .catch(rethrow);
+
+  return rowCount;
+}

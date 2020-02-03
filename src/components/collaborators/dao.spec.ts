@@ -463,7 +463,9 @@ test('findAllForUserThroughDesign can find all collaborators', async (t: Test) =
 
   t.deepEqual(result, [collaboratorTwo, collaboratorOne]);
 
-  await CollectionsDAO.deleteById(collection.id);
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await CollectionsDAO.deleteById(trx, collection.id);
+  });
 
   const resultTwo = await CollaboratorsDAO.findAllForUserThroughDesign(
     design.id,

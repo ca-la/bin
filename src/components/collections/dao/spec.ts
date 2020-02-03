@@ -5,7 +5,7 @@ import * as CollectionsDAO from '.';
 import * as DesignEventsDAO from '../../../dao/design-events';
 import ProductDesignsDAO from '../../product-designs/dao';
 import { sandbox, test, Test } from '../../../test-helpers/fresh';
-import createUser = require('../../../test-helpers/create-user');
+import createUser from '../../../test-helpers/create-user';
 import ProductDesign = require('../../product-designs/domain-objects/product-design');
 import createDesign from '../../../services/create-design';
 import generateCollection from '../../../test-helpers/factories/collection';
@@ -64,19 +64,22 @@ test('CollectionsDAO#update updates a collection', async (t: Test) => {
 
 test('CollectionsDAO#findById does not find deleted collections', async (t: Test) => {
   const { user } = await createUser({ withSession: false });
-  const createdCollection = await CollectionsDAO.create({
-    createdAt: new Date(),
-    createdBy: user.id,
-    deletedAt: null,
-    description: 'Initial commit',
-    id: uuid.v4(),
-    title: 'Drop 001/The Early Years'
+  return db.transaction(async (trx: Knex.Transaction) => {
+    const createdCollection = await CollectionsDAO.create({
+      createdAt: new Date(),
+      createdBy: user.id,
+      deletedAt: null,
+      description: 'Initial commit',
+      id: uuid.v4(),
+      title: 'Drop 001/The Early Years'
+    });
+    await CollectionsDAO.deleteById(trx, createdCollection.id);
+    const retrievedCollection = await CollectionsDAO.findById(
+      createdCollection.id,
+      trx
+    );
+    t.equal(retrievedCollection, null, 'deleted collection is not returned');
   });
-  await CollectionsDAO.deleteById(createdCollection.id);
-  const retrievedCollection = await CollectionsDAO.findById(
-    createdCollection.id
-  );
-  t.equal(retrievedCollection, null, 'deleted collection is not returned');
 });
 
 test('CollectionsDAO#findByUserId includes referenced user collections', async (t: Test) => {
@@ -175,37 +178,44 @@ test('CollectionsDAO#findByCollaboratorAndUserId finds all collections and searc
     userEmail: null,
     userId: user1.id
   });
-  await CollectionsDAO.deleteById(collection4.id);
 
-  const collections = await CollectionsDAO.findByCollaboratorAndUserId({
-    userId: user1.id
+  return db.transaction(async (trx: Knex.Transaction) => {
+    await CollectionsDAO.deleteById(trx, collection4.id);
+
+    const collections = await CollectionsDAO.findByCollaboratorAndUserId(trx, {
+      userId: user1.id
+    });
+
+    t.deepEqual(
+      collections,
+      [collection2, collection1],
+      'all collections I can access are returned'
+    );
+
+    const searchCollections = await CollectionsDAO.findByCollaboratorAndUserId(
+      trx,
+      {
+        userId: user1.id,
+        search: 'Early yEars'
+      }
+    );
+
+    t.deepEqual(
+      searchCollections,
+      [collection1],
+      'Collections I searched for are returned'
+    );
+
+    const limitedOffsetCollections = await CollectionsDAO.findByCollaboratorAndUserId(
+      trx,
+      {
+        userId: user1.id,
+        limit: 1
+      }
+    );
+
+    t.equal(limitedOffsetCollections.length, 1);
   });
-
-  t.deepEqual(
-    collections,
-    [collection2, collection1],
-    'all collections I can access are returned'
-  );
-
-  const searchCollections = await CollectionsDAO.findByCollaboratorAndUserId({
-    userId: user1.id,
-    search: 'Early yEars'
-  });
-
-  t.deepEqual(
-    searchCollections,
-    [collection1],
-    'Collections I searched for are returned'
-  );
-
-  const limitedOffsetCollections = await CollectionsDAO.findByCollaboratorAndUserId(
-    {
-      userId: user1.id,
-      limit: 1
-    }
-  );
-
-  t.equal(limitedOffsetCollections.length, 1);
 });
 
 test('CollectionsDAO#addDesign adds a design to a collection', async (t: Test) => {
@@ -658,21 +668,19 @@ test('findAllUnnotifiedCollectionsWithExpiringCostInputs filters against expired
   await moveDesign(c1.id, d1.id);
   await moveDesign(c2.id, d2.id);
 
-  await CollectionsDAO.deleteById(c2.id);
+  return db.transaction(async (trx: Knex.Transaction) => {
+    await CollectionsDAO.deleteById(trx, c2.id);
 
-  await db.transaction(
-    async (trx: Knex.Transaction): Promise<void> => {
-      const results = await CollectionsDAO.findAllUnnotifiedCollectionsWithExpiringCostInputs(
-        {
-          time: testDate,
-          boundingHours: 1,
-          notificationType: NotificationType.COSTING_EXPIRED,
-          trx
-        }
-      );
-      t.deepEqual(results, []);
-    }
-  );
+    const results = await CollectionsDAO.findAllUnnotifiedCollectionsWithExpiringCostInputs(
+      {
+        time: testDate,
+        boundingHours: 1,
+        notificationType: NotificationType.COSTING_EXPIRED,
+        trx
+      }
+    );
+    t.deepEqual(results, []);
+  });
 });
 
 test('findAllUnnotifiedCollectionsWithExpiringCostInputs will filter for ones with notifications already sent', async (t: Test) => {

@@ -1,3 +1,4 @@
+import Knex from 'knex';
 import Router from 'koa-router';
 
 import { CALA_OPS_USER_ID } from '../../../config';
@@ -14,6 +15,7 @@ import canAccessUserResource = require('../../../middleware/can-access-user-reso
 import requireAuth = require('../../../middleware/require-auth');
 import requireAdmin = require('../../../middleware/require-admin');
 
+import db from '../../../services/db';
 import * as CollectionsDAO from '../dao';
 import * as CollaboratorsDAO from '../../collaborators/dao';
 import Collection, {
@@ -34,6 +36,7 @@ import {
 } from '../../../services/get-permissions';
 import { commitCostInputs, createPartnerPairing } from './admin';
 import { fetchUncostedWithLabels } from '../services/fetch-with-labels';
+import deleteCollectionAndRemoveDesigns from '../services/delete';
 import requireSubscription from '../../../middleware/require-subscription';
 
 const router = new Router();
@@ -96,23 +99,32 @@ function* getList(this: AuthedContext): Iterator<any, any, any> {
     role === 'ADMIN' ? userId : currentUserId === userId ? currentUserId : null;
 
   if (userIdToQuery) {
-    const collections = yield CollectionsDAO.findByCollaboratorAndUserId({
-      userId: userIdToQuery,
-      limit: Number(limit),
-      offset: Number(offset),
-      search
-    });
-    const collectionsWithPermissions = yield Promise.all(
-      collections.map(
-        async (collection: Collection): Promise<CollectionWithPermissions> => {
-          const permissions = await getCollectionPermissions(
-            collection,
-            role,
-            userIdToQuery
-          );
-          return { ...collection, permissions };
-        }
-      )
+    const collectionsWithPermissions = yield db.transaction(
+      async (trx: Knex.Transaction) => {
+        const collections = await CollectionsDAO.findByCollaboratorAndUserId(
+          trx,
+          {
+            userId: userIdToQuery,
+            limit: Number(limit),
+            offset: Number(offset),
+            search
+          }
+        );
+        return Promise.all(
+          collections.map(
+            async (
+              collection: Collection
+            ): Promise<CollectionWithPermissions> => {
+              const permissions = await getCollectionPermissions(
+                collection,
+                role,
+                userIdToQuery
+              );
+              return { ...collection, permissions };
+            }
+          )
+        );
+      }
     );
     this.body = collectionsWithPermissions;
     this.status = 200;
@@ -133,7 +145,7 @@ function* deleteCollection(this: AuthedContext): Iterator<any, any, any> {
   const targetCollection = yield CollectionsDAO.findById(collectionId);
   canAccessUserResource.call(this, targetCollection.createdBy);
 
-  yield CollectionsDAO.deleteById(collectionId);
+  yield deleteCollectionAndRemoveDesigns(collectionId);
   this.status = 204;
 }
 

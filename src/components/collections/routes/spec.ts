@@ -291,30 +291,57 @@ test('DELETE /collections/:id', async (t: tape.Test) => {
       userId: uuid.v4()
     });
 
-  const [postResponse, postCollection] = await API.post('/collections', {
+  await API.post('/collections', {
     headers: API.authHeader(session.id),
     body: mine
   });
-  const [otherResponse, otherCollection] = await API.post('/collections', {
+  await API.post('/collections', {
     headers: API.authHeader(session2.id),
     body: theirs
   });
-  const [deleteResponse] = await API.del(`/collections/${postCollection.id}`, {
+  const designOne = await ProductDesignsDAO.create({
+    description: 'Generic Shirt',
+    productType: 'TEESHIRT',
+    title: 'T-Shirt One',
+    userId: user.id
+  });
+  const designTwo = await ProductDesignsDAO.create({
+    description: 'Generic Shirt',
+    productType: 'TEESHIRT',
+    title: 'T-Shirt Two',
+    userId: user.id
+  });
+  await moveDesign(mine.id, designOne.id);
+  await moveDesign(mine.id, designTwo.id);
+  const [deleteResponse] = await API.del(`/collections/${mine.id}`, {
     headers: API.authHeader(session.id)
   });
-  const [failureResponse] = await API.del(
-    `/collections/${otherCollection.id}`,
-    { headers: API.authHeader(session.id) }
-  );
+  const [failureResponse] = await API.del(`/collections/${theirs.id}`, {
+    headers: API.authHeader(session.id)
+  });
 
-  t.equal(postResponse.status, 201, 'POST returns "201 Created" status');
   t.equal(deleteResponse.status, 204, 'DELETE returns "204 No Content" status');
-
-  t.equal(otherResponse.status, 201, 'POST returns "201 Created" status');
   t.equal(
     failureResponse.status,
     403,
     'DELETE on unowned collection returns "403 Forbidden" status'
+  );
+
+  const [, draftDesignOne] = await API.get(`/product-designs/${designOne.id}`, {
+    headers: API.authHeader(session.id)
+  });
+  t.deepEqual(
+    draftDesignOne.collectionIds,
+    [],
+    'Collection designs are removed from collection'
+  );
+  const [, draftDesignTwo] = await API.get(`/product-designs/${designTwo.id}`, {
+    headers: API.authHeader(session.id)
+  });
+  t.deepEqual(
+    draftDesignTwo.collectionIds,
+    [],
+    'Collection designs are removed from collection'
   );
 });
 

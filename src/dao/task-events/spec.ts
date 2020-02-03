@@ -1,6 +1,7 @@
 import tape from 'tape';
 import uuid from 'node-uuid';
 import { TaskStatus } from '@cala/ts-lib';
+import Knex from 'knex';
 
 import { sandbox, test as originalTest } from '../../test-helpers/fresh';
 import {
@@ -14,6 +15,7 @@ import {
   findRawById
 } from './index';
 
+import db from '../../services/db';
 import * as StageTemplate from '../../components/tasks/templates';
 import { create as createTask } from '../tasks';
 import { create as createDesignStageTask } from '../product-design-stage-tasks';
@@ -179,7 +181,9 @@ test('Task Events DAO returns tasks inside deleted collections', async (t: tape.
   const { task: inserted } = await generateTask();
   const { user } = await createUser({ withSession: false });
   const { collection } = await generateCollection({ createdBy: user.id });
-  await deleteCollection(collection.id);
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await deleteCollection(trx, collection.id);
+  });
 
   const design = await createDesign({
     userId: user.id,

@@ -13,6 +13,7 @@ import {
 } from './dao';
 import { del as deleteCanvas } from '../../canvases/dao';
 import * as CollaboratorsDAO from '../../collaborators/dao';
+import * as CollectionsDAO from '../../collections/dao';
 import { deleteById as deleteAnnotation } from '../../product-design-canvas-annotations/dao';
 
 import { test } from '../../../test-helpers/fresh';
@@ -214,6 +215,20 @@ test('findAllDesignsThroughCollaborator finds all undeleted designs that the use
     'should match ids'
   );
   t.deepEqual(designsAgain[1].id, designSharedDesign.id, 'should match ids');
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await CollectionsDAO.deleteById(trx, collection.id);
+  });
+
+  const designsYetAgain = await findAllDesignsThroughCollaborator({
+    userId: user.id
+  });
+
+  t.deepEqual(
+    designsYetAgain[0].collectionIds,
+    [],
+    'it excludes deleted collections for design.collectionIds'
+  );
 });
 
 test('findAllDesignsThroughCollaborator finds all designs with a search string', async (t: tape.Test) => {

@@ -110,7 +110,9 @@ test('Notifications DAO supports finding by user id', async (t: tape.Test) => {
     recipientUserId: userTwo.id,
     type: NotificationType.ANNOTATION_COMMENT_CREATE
   });
-  await CollectionsDAO.deleteById(deletedCollection.id);
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await CollectionsDAO.deleteById(trx, deletedCollection.id);
+  });
 
   const { design: deletedDesign } = await generateNotification({
     actorUserId: userOne.id,
@@ -439,7 +441,9 @@ test('Notifications DAO supports finding unread count', async (t: tape.Test) => 
     recipientUserId: userTwo.id,
     type: NotificationType.ANNOTATION_COMMENT_CREATE
   });
-  await CollectionsDAO.deleteById(deletedCollection.id);
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await CollectionsDAO.deleteById(trx, deletedCollection.id);
+  });
 
   const { design: deletedDesign } = await generateNotification({
     actorUserId: userOne.id,

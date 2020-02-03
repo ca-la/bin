@@ -25,10 +25,10 @@ array_remove(array_agg(pdi.id ORDER BY c.ordering ASC), null) AS image_ids
       'product_designs.id',
       'collection_designs.design_id'
     )
-    .leftJoin(
-      'collections',
-      'collections.id',
-      'collection_designs.collection_id'
+    .leftJoin('collections', (join: Knex.JoinClause) =>
+      join
+        .on('collections.id', '=', 'collection_designs.collection_id')
+        .andOnNull('collections.deleted_at')
     )
     .joinRaw(
       `

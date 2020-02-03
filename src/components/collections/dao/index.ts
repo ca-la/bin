@@ -46,8 +46,12 @@ export async function create(data: Collection): Promise<Collection> {
   );
 }
 
-export async function deleteById(id: string): Promise<Collection> {
-  const deleted = await db(TABLE_NAME)
+export async function deleteById(
+  trx: Knex.Transaction,
+  id: string
+): Promise<Collection> {
+  const deleted = await trx
+    .from(TABLE_NAME)
     .where({ deleted_at: null, id })
     .update({ deleted_at: new Date() }, '*')
     .then((rows: CollectionRow[]) => first<CollectionRow>(rows));
@@ -104,13 +108,17 @@ export async function findByUserId(userId: string): Promise<Collection[]> {
   );
 }
 
-export async function findByCollaboratorAndUserId(options: {
-  userId: string;
-  limit?: number;
-  offset?: number;
-  search?: string;
-}): Promise<Collection[]> {
-  const collections: CollectionRow[] = await db(TABLE_NAME)
+export async function findByCollaboratorAndUserId(
+  trx: Knex.Transaction,
+  options: {
+    userId: string;
+    limit?: number;
+    offset?: number;
+    search?: string;
+  }
+): Promise<Collection[]> {
+  const collections: CollectionRow[] = await trx
+    .from(TABLE_NAME)
     .select('collections.*')
     .distinct('collections.id')
     .from(TABLE_NAME)

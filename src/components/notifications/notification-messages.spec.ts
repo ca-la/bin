@@ -145,11 +145,11 @@ test('collection submit notification message', async (t: tape.Test) => {
     recipientUserId: recipient.id,
     type: NotificationType.COLLECTION_SUBMIT
   });
-  await CollectionsDAO.deleteById(delCollection.id);
 
-  const notifications = await db.transaction((trx: Knex.Transaction) =>
-    findByUserId(trx, recipient.id, { limit: 20, offset: 0 })
-  );
+  const notifications = await db.transaction(async (trx: Knex.Transaction) => {
+    await CollectionsDAO.deleteById(trx, delCollection.id);
+    return findByUserId(trx, recipient.id, { limit: 20, offset: 0 });
+  });
 
   t.is(notifications.length, 1);
   const collSubNotification = notifications[0];
@@ -193,11 +193,10 @@ test('commit cost inputs notification message', async (t: tape.Test) => {
     recipientUserId: recipient.id,
     type: NotificationType.COMMIT_COST_INPUTS
   });
-  await CollectionsDAO.deleteById(delCollection.id);
-
-  const notifications = await db.transaction((trx: Knex.Transaction) =>
-    findByUserId(trx, recipient.id, { limit: 20, offset: 0 })
-  );
+  const notifications = await db.transaction(async (trx: Knex.Transaction) => {
+    await CollectionsDAO.deleteById(trx, delCollection.id);
+    return findByUserId(trx, recipient.id, { limit: 20, offset: 0 });
+  });
 
   t.is(notifications.length, 1);
   const comCosInpNotification = notifications[0];
@@ -595,11 +594,11 @@ test('partner pairing committed notification message', async (t: tape.Test) => {
     recipientUserId: recipient.id,
     type: NotificationType.PARTNER_PAIRING_COMMITTED
   });
-  await CollectionsDAO.deleteById(parPairCollection.id);
 
-  const notifications = await db.transaction((trx: Knex.Transaction) =>
-    findByUserId(trx, recipient.id, { limit: 20, offset: 0 })
-  );
+  const notifications = await db.transaction(async (trx: Knex.Transaction) => {
+    await CollectionsDAO.deleteById(trx, parPairCollection.id);
+    return findByUserId(trx, recipient.id, { limit: 20, offset: 0 });
+  });
 
   t.is(notifications.length, 1);
   const parPairNotification = notifications[0];
