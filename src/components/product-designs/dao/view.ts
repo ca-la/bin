@@ -12,8 +12,8 @@ export function queryWithCollectionMeta(
       db.raw(`
 product_designs.*,
 array_to_json(array_remove(
-    array[case when collection_designs.collection_id is not null
-        then jsonb_build_object('id', collection_designs.collection_id, 'title', collections.title)
+    array[case when collections.id is not null
+        then jsonb_build_object('id', collections.id, 'title', collections.title)
     end],
     null
 )) as collections,
@@ -52,11 +52,7 @@ LEFT JOIN (
 ON pdi.id = co.sketch_id
     `
     )
-    .groupBy([
-      'product_designs.id',
-      'collection_designs.collection_id',
-      'collections.title'
-    ])
+    .groupBy(['product_designs.id', 'collections.id', 'collections.title'])
     .orderBy('product_designs.created_at', 'desc')
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {

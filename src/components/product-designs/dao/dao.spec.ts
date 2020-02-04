@@ -79,6 +79,8 @@ test('ProductDesignCanvases DAO supports creation/retrieval, enriched with image
     designId: design.id,
     createdBy: user.id
   });
+  const { collection } = await generateCollection({ createdBy: user.id });
+  await addDesign(collection.id, design.id);
   const result = await findById(design.id);
   if (!result) {
     throw new Error('Design should have been created!');
@@ -108,8 +110,16 @@ test('ProductDesignCanvases DAO supports creation/retrieval, enriched with image
     thumbnailLink.includes(sketch.id),
     'Preview link contains the sketch id for the design'
   );
+  t.deepEqual(
+    result.collectionIds,
+    [collection.id],
+    'Populates collection when added'
+  );
 
   await deleteCanvas(canvas.id);
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await CollectionsDAO.deleteById(trx, collection.id);
+  });
 
   const secondFetch = await findById(design.id);
   if (!secondFetch) {
@@ -124,6 +134,11 @@ test('ProductDesignCanvases DAO supports creation/retrieval, enriched with image
     secondFetch.imageLinks,
     [],
     'If a canvas gets deleted, the image links list should update accordingly.'
+  );
+  t.deepEqual(
+    secondFetch.collectionIds,
+    [],
+    'removes collection id from returned list of ids'
   );
 });
 
@@ -214,6 +229,7 @@ test('findAllDesignsThroughCollaborator finds all undeleted designs that the use
     collectionSharedDesign.id,
     'should match ids'
   );
+  t.deepEqual(designsAgain[0].collectionIds, [collection.id]);
   t.deepEqual(designsAgain[1].id, designSharedDesign.id, 'should match ids');
 
   await db.transaction(async (trx: Knex.Transaction) => {
@@ -224,10 +240,11 @@ test('findAllDesignsThroughCollaborator finds all undeleted designs that the use
     userId: user.id
   });
 
-  t.deepEqual(
-    designsYetAgain[0].collectionIds,
-    [],
-    'it excludes deleted collections for design.collectionIds'
+  t.equal(designsYetAgain.length, 1);
+  t.equals(
+    designsYetAgain[0].id,
+    designSharedDesign.id,
+    'It only returns design shared by design'
   );
 });
 
