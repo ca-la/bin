@@ -6,6 +6,8 @@ import requireAdmin = require('../../middleware/require-admin');
 import * as NonBidDesignCostsDAO from './dao';
 import { NonBidDesignCost } from './domain-object';
 import { hasProperties } from '@cala/ts-lib';
+import filterError from '../../services/filter-error';
+import ResourceNotFoundError from '../../errors/resource-not-found';
 
 const router = new Router();
 
@@ -48,7 +50,7 @@ function* listCosts(this: AuthedContext): Iterator<any, any, any> {
     this.throw(400, 'You must specifiy a design ID');
   }
 
-  const byDesign = yield db.transaction(async (trx: Knex.Transaction) =>
+  const byDesign = yield db.transaction((trx: Knex.Transaction) =>
     NonBidDesignCostsDAO.findByDesign(trx, designId)
   );
 
@@ -56,7 +58,24 @@ function* listCosts(this: AuthedContext): Iterator<any, any, any> {
   this.status = 200;
 }
 
+function* deleteCost(this: AuthedContext): Iterator<any, any, any> {
+  const { costId } = this.params;
+
+  yield db
+    .transaction((trx: Knex.Transaction) =>
+      NonBidDesignCostsDAO.deleteById(trx, costId)
+    )
+    .catch(
+      filterError(ResourceNotFoundError, () => {
+        this.throw(404, 'Non-bid design cost not found');
+      })
+    );
+
+  this.status = 204;
+}
+
 router.post('/', requireAdmin, createCost);
 router.get('/', requireAdmin, listCosts);
+router.del('/:costId', requireAdmin, deleteCost);
 
 export default router.routes();

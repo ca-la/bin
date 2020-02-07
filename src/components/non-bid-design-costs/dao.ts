@@ -9,6 +9,7 @@ import {
 } from './domain-object';
 import { validate, validateEvery } from '../../services/validate-from-db';
 import first from '../../services/first';
+import ResourceNotFoundError from '../../errors/resource-not-found';
 
 const TABLE_NAME = 'non_bid_design_costs';
 
@@ -45,4 +46,20 @@ export async function findByDesign(
     dataAdapter,
     byDesign
   );
+}
+
+export async function deleteById(
+  trx: Knex.Transaction,
+  id: string
+): Promise<void> {
+  const deletedRows: number = await trx
+    .from(TABLE_NAME)
+    .where({ id, deleted_at: null })
+    .update({ deleted_at: new Date().toISOString() });
+
+  if (deletedRows === 0) {
+    throw new ResourceNotFoundError(
+      `Non-bid design cost "${id}" could not be found.`
+    );
+  }
 }

@@ -1,5 +1,7 @@
+import * as uuid from 'node-uuid';
+
 import createUser from '../../test-helpers/create-user';
-import { authHeader, get, post } from '../../test-helpers/http';
+import { authHeader, del, get, post } from '../../test-helpers/http';
 import { test, Test } from '../../test-helpers/fresh';
 import { generateDesign } from '../../test-helpers/factories/product-design';
 import { Category } from './domain-object';
@@ -123,4 +125,57 @@ test('GET /non-bid-design-costs', async (t: Test) => {
     400,
     'rejects requests with no design specified'
   );
+});
+
+test('DELETE /non-bid-design-costs', async (t: Test) => {
+  const admin = await createUser({ role: 'ADMIN' });
+  const designer = await createUser();
+  const design = await generateDesign({ userId: designer.user.id });
+
+  const [, zero] = await post('/non-bid-design-costs', {
+    headers: authHeader(admin.session.id),
+    body: {
+      cents: 10000,
+      category: Category.OTHER,
+      note: 'A note',
+      designId: design.id
+    }
+  });
+
+  const [, one] = await post('/non-bid-design-costs', {
+    headers: authHeader(admin.session.id),
+    body: {
+      cents: 30000,
+      category: Category.BLANKS,
+      note: 'So blank',
+      designId: design.id
+    }
+  });
+
+  const [deleteStatus] = await del(`/non-bid-design-costs/${one.id}`, {
+    headers: authHeader(admin.session.id)
+  });
+
+  t.equal(deleteStatus.status, 204, 'delete succeeds');
+
+  const [deleteAgainStatus] = await del(`/non-bid-design-costs/${one.id}`, {
+    headers: authHeader(admin.session.id)
+  });
+
+  t.equal(deleteAgainStatus.status, 404, 'second delete returns 404');
+
+  const [deleteNotFound] = await del(`/non-bid-design-costs/${uuid.v4()}`, {
+    headers: authHeader(admin.session.id)
+  });
+
+  t.equal(deleteNotFound.status, 404);
+
+  const [, byDesign] = await get(
+    `/non-bid-design-costs?designId=${design.id}`,
+    {
+      headers: authHeader(admin.session.id)
+    }
+  );
+
+  t.deepEqual(byDesign, [zero], 'removes cost from list by design');
 });

@@ -1,4 +1,5 @@
 import Knex from 'knex';
+import * as uuid from 'node-uuid';
 
 import db from '../../services/db';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
@@ -80,5 +81,53 @@ test('NonBidDesignCostsDAO.findByDesign', async (t: Test) => {
 
     t.deepEqual(byDesign, [zero, one], 'finds the costs by design');
     t.deepEqual(byAnotherDesign, [two], 'finds the costs by design');
+
+    await NonBidDesignCostsDAO.deleteById(trx, one.id);
+
+    t.deepEqual(
+      await NonBidDesignCostsDAO.findByDesign(trx, design.id),
+      [zero],
+      'does not return deleted costs'
+    );
+  });
+});
+
+test('NonBidDesignCostsDAO.deleteById', async (t: Test) => {
+  const { user } = await createUser({ withSession: false });
+  const design = await generateDesign({
+    userId: user.id
+  });
+
+  return db.transaction(async (trx: Knex.Transaction) => {
+    const created = await NonBidDesignCostsDAO.create(trx, {
+      createdBy: user.id,
+      cents: 10000,
+      category: Category.OTHER,
+      note: 'A note',
+      designId: design.id
+    });
+
+    try {
+      await NonBidDesignCostsDAO.deleteById(trx, created.id);
+      t.pass('allows deleting costs that were created');
+    } catch {
+      t.fail('should not reject');
+    }
+
+    try {
+      await NonBidDesignCostsDAO.deleteById(trx, created.id);
+      t.fail('should not succeed');
+    } catch {
+      t.pass(
+        'rejects when trying to delete something that has already been deleted'
+      );
+    }
+
+    try {
+      await NonBidDesignCostsDAO.deleteById(trx, uuid.v4());
+      t.fail('should not succeed');
+    } catch {
+      t.pass('rejects when trying to delete something that does not exist');
+    }
   });
 });
