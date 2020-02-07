@@ -33,7 +33,7 @@ export function getChecksum(checkNumber: string): number {
 /**
  * Computes a unique UPC based off a sequence in the database.
  */
-export async function computeUniqueUPC(): Promise<string> {
+export async function computeUniqueUpc(): Promise<string> {
   const hasher = new Hashids(UPC_SALT, HASH_LENGTH, HASH_ALPHABET);
   const increment = await sequenceIncrement(TABLE_NAME);
 

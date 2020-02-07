@@ -8,6 +8,7 @@ import InvalidDataError = require('../../errors/invalid-data');
 import ProductDesignVariant, {
   dataAdapter,
   isProductDesignVariantRow,
+  partialDataAdapter,
   ProductDesignVariantRow
 } from './domain-object';
 import first from '../../services/first';
@@ -43,10 +44,10 @@ export async function create(
 
 export async function update(
   id: string,
-  data: ProductDesignVariant,
+  data: Partial<ProductDesignVariant>,
   trx?: Knex.Transaction
 ): Promise<ProductDesignVariant> {
-  const rowData = dataAdapter.toDb(data);
+  const rowData = partialDataAdapter.toDb(data);
   const updated = await db(TABLE_NAME)
     .update(rowData, '*')
     .where({ id })

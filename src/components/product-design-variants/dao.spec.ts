@@ -95,7 +95,6 @@ test('ProductDesignVariantsDAO.update updates a variant', async (t: Test) => {
   const { variants } = await createPrerequisites();
   const variant = variants[0];
   const updated = await update(variant.id, {
-    ...variant,
     universalProductCode: '123456789012'
   });
   t.deepEqual(

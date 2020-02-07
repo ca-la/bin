@@ -30,6 +30,11 @@ export const dataAdapter = new DataAdapter<
   ProductDesignVariant
 >();
 
+export const partialDataAdapter = new DataAdapter<
+  Partial<ProductDesignVariantRow>,
+  Partial<ProductDesignVariant>
+>();
+
 export function isProductDesignVariantRow(
   candidate: object
 ): candidate is ProductDesignVariantRow {

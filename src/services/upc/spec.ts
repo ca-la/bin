@@ -1,6 +1,6 @@
 import { test, Test } from '../../test-helpers/fresh';
 
-import { computeUniqueUPC } from './index';
+import { computeUniqueUpc } from './index';
 
 function multBy3(num: string): number {
   return parseInt(num, 10) * 3;
@@ -24,11 +24,11 @@ function upcSum(upc: string): number {
   );
 }
 
-test('computeUniqueUPC can create a universal product code', async (t: Test) => {
-  const upc = await computeUniqueUPC();
+test('computeUniqueUpc can create a universal product code', async (t: Test) => {
+  const upc = await computeUniqueUpc();
   t.true(upc.match(/^\d{12}$/), 'Is a valid upc');
 
-  const upc2 = await computeUniqueUPC();
+  const upc2 = await computeUniqueUpc();
   t.notEqual(upc, upc2, "Identifiers don't match.");
   t.equal(upcSum(upc) % 10, 0, 'Checksum satisfies the check digit equation');
   t.equal(

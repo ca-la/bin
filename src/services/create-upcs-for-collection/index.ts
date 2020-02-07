@@ -1,7 +1,7 @@
 import Knex from 'knex';
 
 import * as VariantsDAO from '../../components/product-design-variants/dao';
-import { computeUniqueUPC } from '../upc';
+import { computeUniqueUpc } from '../upc';
 import db from '../../services/db';
 
 export default async function createUPCsForCollection(
@@ -11,13 +11,10 @@ export default async function createUPCsForCollection(
     const variants = await VariantsDAO.findByCollectionId(collectionId, trx);
     const updatedVariants = [];
     for (const variant of variants) {
-      const universalProductCode = await computeUniqueUPC();
+      const universalProductCode = await computeUniqueUpc();
       const updated = await VariantsDAO.update(
         variant.id,
-        {
-          ...variant,
-          universalProductCode
-        },
+        { universalProductCode },
         trx
       );
       updatedVariants.push(updated);
