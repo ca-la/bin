@@ -1,4 +1,5 @@
 import Router from 'koa-router';
+import Knex from 'knex';
 
 import * as CanvasesDAO from './dao';
 import requireAuth = require('../../middleware/require-auth');
@@ -11,6 +12,7 @@ import Component, {
   isUnsavedComponent
 } from '../components/domain-object';
 import * as EnrichmentService from '../../services/attach-asset-links';
+import db from '../../services/db';
 import filterError = require('../../services/filter-error');
 import ProductDesignImage from '../assets/domain-object';
 import ProductDesignOption from '../../domain-objects/product-design-option';
@@ -208,10 +210,12 @@ function* reorder(
 }
 
 function* del(this: AuthedContext): Iterator<any, any, any> {
-  yield CanvasesDAO.del(this.params.canvasId).catch(
-    filterError(CanvasNotFoundError, (err: CanvasNotFoundError) => {
-      this.throw(404, err);
-    })
+  yield db.transaction((trx: Knex.Transaction) =>
+    CanvasesDAO.del(trx, this.params.canvasId).catch(
+      filterError(CanvasNotFoundError, (err: CanvasNotFoundError) => {
+        this.throw(404, err);
+      })
+    )
   );
   this.status = 204;
 }

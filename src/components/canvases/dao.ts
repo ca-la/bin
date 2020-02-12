@@ -118,8 +118,8 @@ export async function reorder(data: ReorderRequest[]): Promise<Canvas[]> {
   );
 }
 
-export async function del(id: string): Promise<Canvas> {
-  const deleted = await db(TABLE_NAME)
+export async function del(trx: Knex.Transaction, id: string): Promise<Canvas> {
+  const deleted = await trx(TABLE_NAME)
     .where({ id, deleted_at: null })
     .update({ deleted_at: new Date() }, '*')
     .then((rows: CanvasRow[]) => first<CanvasRow>(rows));

@@ -1,3 +1,4 @@
+import Knex from 'knex';
 import tape from 'tape';
 import uuid from 'node-uuid';
 import { test } from '../../test-helpers/fresh';
@@ -11,9 +12,10 @@ import {
   reorder,
   update
 } from './dao';
-import createUser = require('../../test-helpers/create-user');
+import createUser from '../../test-helpers/create-user';
 import { create as createDesign } from '../product-designs/dao';
 import generateCanvas from '../../test-helpers/factories/product-design-canvas';
+import db from '../../services/db';
 
 test('ProductDesignCanvases DAO supports creation/retrieval', async (t: tape.Test) => {
   const userData = await createUser();
@@ -181,11 +183,13 @@ test('ProductDesignCanvases DAO supports delete', async (t: tape.Test) => {
     x: 1,
     y: 1
   };
-  const canvas = await create(data);
-  await del(canvas.id);
+  return db.transaction(async (trx: Knex.Transaction) => {
+    const canvas = await create(data, trx);
+    await del(trx, canvas.id);
 
-  const result = await findById(canvas.id);
-  t.equal(result, null);
+    const result = await findById(canvas.id, trx);
+    t.equal(result, null);
+  });
 });
 
 test('ProductDesignCanvases DAO supports retrieval by designId', async (t: tape.Test) => {

@@ -21,6 +21,12 @@ import * as CanvasesDAO from '../canvases/dao';
 import * as CommentsDAO from '../../components/comments/dao';
 import * as MeasurementsDAO from '../../dao/product-design-canvas-measurements';
 import { deleteById } from '../../test-helpers/designs';
+import { deleteByIds } from '../../components/product-designs/dao/dao';
+import generateTask from '../../test-helpers/factories/task';
+import generateProductDesignStage from '../../test-helpers/factories/product-design-stage';
+import generateComment from '../../test-helpers/factories/comment';
+import generateAnnotation from '../../test-helpers/factories/product-design-canvas-annotation';
+import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 
 test('Notifications DAO supports creation', async (t: tape.Test) => {
   sandbox()
@@ -133,7 +139,9 @@ test('Notifications DAO supports finding by user id', async (t: tape.Test) => {
     recipientUserId: userTwo.id,
     type: NotificationType.ANNOTATION_COMMENT_CREATE
   });
-  await CanvasesDAO.del(deletedCanvas.id);
+  await db.transaction((trx: Knex.Transaction) =>
+    CanvasesDAO.del(trx, deletedCanvas.id)
+  );
 
   const { comment: deletedComment } = await generateNotification({
     actorUserId: userOne.id,
@@ -183,6 +191,143 @@ test('Notifications DAO supports finding by user id', async (t: tape.Test) => {
       }),
       [],
       'Returns only the notifications associated with the user (collaborator + user)'
+    );
+  });
+});
+
+test('Notifications DAO correctly filters out notifications for deleted designs', async (t: tape.Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
+  const { user: designer } = await createUser({ withSession: false });
+  const { user: partner } = await createUser({
+    withSession: false,
+    role: 'PARTNER'
+  });
+
+  const { canvas, design: d1 } = await generateCanvas({
+    createdBy: designer.id
+  });
+  const { collaborator: designerCollab } = await generateCollaborator({
+    collectionId: null,
+    designId: d1.id,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
+    userId: designer.id
+  });
+  const { collaborator: partnerCollab } = await generateCollaborator({
+    collectionId: null,
+    designId: d1.id,
+    invitationMessage: '',
+    role: 'PARTNER',
+    userEmail: null,
+    userId: partner.id
+  });
+  const { stage } = await generateProductDesignStage(
+    {
+      designId: d1.id
+    },
+    designer.id
+  );
+
+  const { task } = await generateTask({
+    createdBy: designer.id,
+    designStageId: stage.id
+  });
+
+  const {
+    notification: notificationTaskAssignment
+  } = await generateNotification({
+    actorUserId: designer.id,
+    recipientUserId: partner.id,
+    collaboratorId: partnerCollab.id,
+    collectionId: null,
+    stageId: stage.id,
+    designId: d1.id,
+    taskId: task.id,
+    type: NotificationType.TASK_ASSIGNMENT
+  });
+
+  const {
+    notification: notificationTaskCompletion
+  } = await generateNotification({
+    actorUserId: partner.id,
+    recipientUserId: designer.id,
+    collaboratorId: designerCollab.id,
+    collectionId: null,
+    stageId: stage.id,
+    designId: d1.id,
+    taskId: task.id,
+    type: NotificationType.TASK_COMPLETION
+  });
+
+  const { annotation } = await generateAnnotation({
+    createdBy: designer.id,
+    canvasId: canvas.id
+  });
+  const { comment } = await generateComment({
+    userId: designer.id,
+    userName: designer.name
+  });
+  const {
+    notification: notificationAnnotationCreate
+  } = await generateNotification({
+    type: NotificationType.ANNOTATION_COMMENT_CREATE,
+    commentId: comment.id,
+    annotationId: annotation.id,
+    canvasId: canvas.id,
+    actorUserId: designer.id,
+    recipientUserId: partner.id,
+    designId: d1.id
+  });
+
+  return db.transaction(async (trx: Knex.Transaction) => {
+    t.deepEqual(
+      await NotificationsDAO.findByUserId(trx, partner.id, {
+        offset: 0,
+        limit: 10
+      }),
+      [notificationAnnotationCreate, notificationTaskAssignment],
+      'Returns only the notifications associated with the user (collaborator + user)'
+    );
+    t.deepEqual(
+      await NotificationsDAO.findByUserId(trx, designer.id, {
+        offset: 0,
+        limit: 10
+      }),
+      [notificationTaskCompletion],
+      'Returns only the notifications associated with the user (collaborator + user)'
+    );
+
+    await CanvasesDAO.del(trx, canvas.id);
+
+    t.deepEqual(
+      await NotificationsDAO.findByUserId(trx, partner.id, {
+        offset: 0,
+        limit: 10
+      }),
+      [{ ...notificationTaskAssignment, designImageIds: [] }],
+      'removes the notification associated with the deleted canvas and removes image id'
+    );
+
+    await deleteByIds({ designIds: [d1.id], trx });
+
+    t.deepEqual(
+      await NotificationsDAO.findByUserId(trx, partner.id, {
+        offset: 0,
+        limit: 10
+      }),
+      [],
+      'removes the notifications associated with the deleted design'
+    );
+    t.deepEqual(
+      await NotificationsDAO.findByUserId(trx, designer.id, {
+        offset: 0,
+        limit: 10
+      }),
+      [],
+      'removes the notifications associated with the deleted design'
     );
   });
 });
@@ -464,7 +609,9 @@ test('Notifications DAO supports finding unread count', async (t: tape.Test) => 
     recipientUserId: userTwo.id,
     type: NotificationType.ANNOTATION_COMMENT_CREATE
   });
-  await CanvasesDAO.del(deletedCanvas.id);
+  await db.transaction((trx: Knex.Transaction) =>
+    CanvasesDAO.del(trx, deletedCanvas.id)
+  );
 
   const { comment: deletedComment } = await generateNotification({
     actorUserId: userOne.id,

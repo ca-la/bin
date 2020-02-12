@@ -45,8 +45,7 @@ function addActor(query: Knex.QueryBuilder): Knex.QueryBuilder {
   ) AS actor
 `)
     )
-    .leftJoin('users AS au', 'au.id', 'n.actor_user_id')
-    .groupBy(['au.id']);
+    .leftJoin('users AS au', 'au.id', 'n.actor_user_id');
 }
 
 function addComponentType(query: Knex.QueryBuilder): Knex.QueryBuilder {
@@ -54,7 +53,6 @@ function addComponentType(query: Knex.QueryBuilder): Knex.QueryBuilder {
     .select('comp.type as component_type')
     .leftJoin('product_design_canvases as can', 'can.id', 'n.canvas_id')
     .leftJoin('components as comp', 'comp.id', 'can.component_id')
-    .groupBy(['comp.id', 'comp.type'])
     .whereNull('can.deleted_at');
 }
 
@@ -62,40 +60,57 @@ function addCollectionTitle(query: Knex.QueryBuilder): Knex.QueryBuilder {
   return query
     .select('c.title as collection_title')
     .leftJoin('collections as c', 'c.id', 'n.collection_id')
-    .whereNull('c.deleted_at')
-    .groupBy(['c.id']);
+    .whereNull('c.deleted_at');
 }
 
-function addDesignTitleAndImage(query: Knex.QueryBuilder): Knex.QueryBuilder {
+function addDesignTitle(query: Knex.QueryBuilder): Knex.QueryBuilder {
   return query
-    .select([
-      'd.title as design_title',
-      db.raw(`
-  coalesce(
-    jsonb_agg(pdi.id) filter (where pdi.id is not null),
-    '[]'
-  ) as design_image_ids
-`)
-    ])
+    .select('d.title as design_title')
     .leftJoin('product_designs as d', 'd.id', 'n.design_id')
-    .leftJoin('canvases', 'canvases.design_id', 'd.id')
-    .leftJoin('components', 'components.id', 'canvases.component_id')
-    .leftJoin('product_design_images AS pdi', 'pdi.id', 'components.sketch_id')
-    .where({
-      'd.deleted_at': null,
-      'canvases.deleted_at': null,
-      'canvases.archived_at': null,
-      'components.deleted_at': null,
-      'pdi.deleted_at': null
-    })
-    .groupBy(['d.id']);
+    .whereNull('d.deleted_at');
+}
+
+function addDesignImages(query: Knex.QueryBuilder): Knex.QueryBuilder {
+  return query
+    .select(db.raw(`COALESCE(pdi.image_ids, '[]') as design_image_ids`))
+    .leftJoin(
+      (subquery: Knex.QueryBuilder) =>
+        subquery
+          .select([
+            'pd.id AS design_id',
+            db.raw(
+              `COALESCE(jsonb_agg(assets.id) FILTER (WHERE assets.id IS NOT NULL), '[]') AS image_ids`
+            )
+          ])
+          .from('product_designs as pd')
+          .leftJoin('canvases', (join: Knex.JoinClause) =>
+            join
+              .on('canvases.design_id', '=', 'pd.id')
+              .andOnNull('canvases.deleted_at')
+              .andOnNull('canvases.archived_at')
+          )
+          .leftJoin('components', (join: Knex.JoinClause) =>
+            join
+              .on('components.id', '=', 'canvases.component_id')
+              .andOnNull('components.deleted_at')
+          )
+          .leftJoin('assets', (join: Knex.JoinClause) =>
+            join
+              .on('assets.id', '=', 'components.sketch_id')
+              .andOnNull('assets.deleted_at')
+          )
+          .groupBy('pd.id')
+          .as('pdi'),
+      'pdi.design_id',
+      '=',
+      'n.design_id'
+    );
 }
 
 function addCommentText(query: Knex.QueryBuilder): Knex.QueryBuilder {
   return query
     .select('co.text as comment_text')
     .leftJoin('comments as co', 'co.id', 'n.comment_id')
-    .groupBy(['co.id'])
     .whereNull('co.deleted_at');
 }
 
@@ -146,7 +161,8 @@ export async function findByUserId(
     .modify(addActor)
     .modify(addComponentType)
     .modify(addCollectionTitle)
-    .modify(addDesignTitleAndImage)
+    .modify(addDesignTitle)
+    .modify(addDesignImages)
     .modify(addCommentText)
     .modify(addMeasurement)
     .modify(addAnnotation)
@@ -159,7 +175,6 @@ export async function findByUserId(
         .where({ 'n.recipient_user_id': userId })
         .orWhere({ 'cl.user_id': userId })
     )
-    .groupBy(['n.id', 'cl.id'])
     .orderBy('created_at', 'desc')
     .limit(options.limit)
     .offset(options.offset);
@@ -182,7 +197,8 @@ export async function findById(
     .modify(addActor)
     .modify(addComponentType)
     .modify(addCollectionTitle)
-    .modify(addDesignTitleAndImage)
+    .modify(addDesignTitle)
+    .modify(addDesignImages)
     .modify(addCommentText)
     .modify(addMeasurement)
     .modify(addAnnotation)
@@ -191,7 +207,6 @@ export async function findById(
     .whereNotIn('n.type', DEPRECATED_NOTIFICATION_TYPES)
     .andWhereRaw('(cl.cancelled_at is null or cl.cancelled_at > now())')
     .andWhere({ 'n.id': notificationId, 'n.deleted_at': null })
-    .groupBy(['n.id', 'cl.id'])
     .orderBy('created_at', 'desc')
     .first<FullNotificationRow | null>();
 
@@ -216,7 +231,8 @@ export async function findOutstanding(
     .modify(addActor)
     .modify(addComponentType)
     .modify(addCollectionTitle)
-    .modify(addDesignTitleAndImage)
+    .modify(addDesignTitle)
+    .modify(addDesignImages)
     .modify(addCommentText)
     .modify(addMeasurement)
     .modify(addAnnotation)
@@ -225,7 +241,6 @@ export async function findOutstanding(
     .where({ 'n.deleted_at': null, sent_email_at: null, read_at: null })
     .whereNot({ recipient_user_id: null })
     .andWhereRaw(`n.created_at < NOW() - INTERVAL '${DELAY_MINUTES} minutes'`)
-    .groupBy(['n.id', 'cl.id'])
     .orderBy('created_at', 'desc');
 
   return validateEvery<FullNotificationRow, FullNotification>(

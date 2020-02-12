@@ -17,7 +17,7 @@ import * as CollectionsDAO from '../../collections/dao';
 import { deleteById as deleteAnnotation } from '../../product-design-canvas-annotations/dao';
 
 import { test } from '../../../test-helpers/fresh';
-import createUser = require('../../../test-helpers/create-user');
+import createUser from '../../../test-helpers/create-user';
 import generateCanvas from '../../../test-helpers/factories/product-design-canvas';
 import generateComponent from '../../../test-helpers/factories/component';
 import generateCollection from '../../../test-helpers/factories/collection';
@@ -116,8 +116,8 @@ test('ProductDesignCanvases DAO supports creation/retrieval, enriched with image
     'Populates collection when added'
   );
 
-  await deleteCanvas(canvas.id);
   await db.transaction(async (trx: Knex.Transaction) => {
+    await deleteCanvas(trx, canvas.id);
     await CollectionsDAO.deleteById(trx, collection.id);
   });
 
