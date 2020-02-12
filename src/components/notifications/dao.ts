@@ -172,8 +172,10 @@ export async function findByUserId(
     .andWhereRaw('(cl.cancelled_at is null or cl.cancelled_at > now())')
     .andWhere((query: Knex.QueryBuilder) =>
       query
-        .where({ 'n.recipient_user_id': userId })
-        .orWhere({ 'cl.user_id': userId })
+        .where({
+          'n.recipient_user_id': userId
+        })
+        .orWhere({ 'cl.user_id': userId, 'n.recipient_user_id': null })
     )
     .andWhere({ 'n.deleted_at': null })
     .orderBy('created_at', 'desc')
@@ -371,8 +373,10 @@ export async function findUnreadCountByUserId(userId: string): Promise<number> {
     )
     .andWhere((query: Knex.QueryBuilder) =>
       query
-        .where({ 'n.recipient_user_id': userId })
-        .orWhere({ 'cl.user_id': userId })
+        .where({
+          'n.recipient_user_id': userId
+        })
+        .orWhere({ 'cl.user_id': userId, 'n.recipient_user_id': null })
     )
     // .count returns `number | string` due to how big ints are stored
     .first<{ notificationCount: number | string }>();

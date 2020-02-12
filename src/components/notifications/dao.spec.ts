@@ -102,11 +102,13 @@ test('Notifications DAO supports finding by user id', async (t: tape.Test) => {
     design: d
   } = await generateNotification({
     actorUserId: userOne.id,
+    recipientUserId: c1.userId,
     collaboratorId: c1.id,
     type: NotificationType.INVITE_COLLABORATOR
   });
   await generateNotification({
     actorUserId: userOne.id,
+    recipientUserId: c2.userId,
     collaboratorId: c2.id,
     type: NotificationType.INVITE_COLLABORATOR
   });
