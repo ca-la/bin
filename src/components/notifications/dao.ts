@@ -175,6 +175,7 @@ export async function findByUserId(
         .where({ 'n.recipient_user_id': userId })
         .orWhere({ 'cl.user_id': userId })
     )
+    .andWhere({ 'n.deleted_at': null })
     .orderBy('created_at', 'desc')
     .limit(options.limit)
     .offset(options.offset);

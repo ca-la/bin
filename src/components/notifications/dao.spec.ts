@@ -164,7 +164,7 @@ test('Notifications DAO supports finding by user id', async (t: tape.Test) => {
   });
   await CollaboratorsDAO.deleteById(deletedCollaborator.id);
 
-  return db.transaction(async (trx: Knex.Transaction) => {
+  await db.transaction(async (trx: Knex.Transaction) => {
     t.deepEqual(
       await NotificationsDAO.findByUserId(trx, userTwo.id, {
         offset: 0,
@@ -191,6 +191,19 @@ test('Notifications DAO supports finding by user id', async (t: tape.Test) => {
       }),
       [],
       'Returns only the notifications associated with the user (collaborator + user)'
+    );
+  });
+
+  await NotificationsDAO.del(n2.id);
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    t.deepEqual(
+      await NotificationsDAO.findByUserId(trx, userTwo.id, {
+        offset: 0,
+        limit: 10
+      }),
+      [],
+      'removes deleted notifications'
     );
   });
 });
@@ -374,7 +387,7 @@ test('Notifications DAO supports finding outstanding notifications over 10min ol
     readAt: null,
     type: NotificationType.PARTNER_DESIGN_BID
   });
-  NotificationsDAO.del(delNotification.id);
+  await NotificationsDAO.del(delNotification.id);
 
   await db.transaction(async (trx: Knex.Transaction) => {
     const results: any = await NotificationsDAO.findOutstanding(trx);
