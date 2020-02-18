@@ -6,16 +6,17 @@ import {
   NotificationType
 } from '../../components/notifications/domain-object';
 import { findById as findUserById } from '../../components/users/dao';
-import createUser = require('../create-user');
+import createUser from '../create-user';
 import { CollaboratorWithUser } from '../../components/collaborators/domain-objects/collaborator';
 import ProductDesignsDAO from '../../components/product-designs/dao';
 import * as CollectionsDAO from '../../components/collections/dao';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
+import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
 import * as AnnotationsDAO from '../../components/product-design-canvas-annotations/dao';
 import * as CanvasesDAO from '../../components/canvases/dao';
 import * as CommentsDAO from '../../components/comments/dao';
 import * as MeasurementsDAO from '../../dao/product-design-canvas-measurements';
-import * as StagesDAO from '../../dao/product-design-stages';
+import * as ProductDesignStagesDAO from '../../dao/product-design-stages';
 import * as TasksDAO from '../../dao/task-events';
 import generateCollection from './collection';
 import Collection from '../../components/collections/domain-object';
@@ -133,7 +134,7 @@ export default async function generateNotification(
   }
 
   const { stage } = options.stageId
-    ? { stage: await StagesDAO.findById(options.stageId) }
+    ? { stage: await ProductDesignStagesDAO.findById(options.stageId) }
     : await generateProductDesignStage({ designId: design.id });
   if (!stage) {
     throw new Error('Could not create stage');
@@ -401,4 +402,367 @@ export default async function generateNotification(
       };
     }
   }
+}
+
+interface NotificationsWithResources {
+  users: {
+    admin: User;
+    designer: User;
+    partner: User;
+    other: User;
+  };
+  notifications: Notification[];
+  designs: ProductDesign[];
+  collections: Collection[];
+  collaborators: CollaboratorWithUser[];
+  annotations: ProductDesignCanvasAnnotation[];
+  measurements: ProductDesignCanvasMeasurement[];
+  tasks: DetailsTask[];
+  canvases: Canvas[];
+  stages: ProductDesignStage[];
+  comments: Comment[];
+}
+
+export async function generateNotifications(): Promise<
+  NotificationsWithResources
+> {
+  const { user: admin } = await createUser({
+    role: 'ADMIN',
+    withSession: false
+  });
+  const { user: designer } = await createUser({
+    role: 'USER',
+    withSession: false
+  });
+  const { user: partner } = await createUser({
+    role: 'PARTNER',
+    withSession: false
+  });
+  const { user: other } = await createUser({
+    role: 'USER',
+    withSession: false
+  });
+
+  const designs = [
+    await createDesign({
+      productType: 'T-SHIRT',
+      title: 'Design Zero',
+      userId: designer.id
+    }),
+    await createDesign({
+      productType: 'T-SHIRT',
+      title: 'Design One',
+      userId: designer.id
+    }),
+    await createDesign({
+      productType: 'T-SHIRT',
+      title: 'Design Two',
+      userId: designer.id
+    }),
+    await createDesign({
+      productType: 'T-SHIRT',
+      title: 'Design Three',
+      userId: designer.id
+    }),
+    await createDesign({
+      productType: 'T-SHIRT',
+      title: 'Design Four',
+      userId: other.id
+    }),
+    await createDesign({
+      productType: 'T-SHIRT',
+      title: 'Design Five',
+      userId: other.id
+    })
+  ];
+
+  const collections = [
+    (await generateCollection({
+      title: 'Collection Zero',
+      createdBy: designer.id
+    })).collection,
+    (await generateCollection({
+      title: 'Collection One',
+      createdBy: designer.id
+    })).collection,
+    (await generateCollection({ title: 'Collection Two', createdBy: other.id }))
+      .collection
+  ];
+
+  // Leave one design from each designer in drafts
+  await addDesign(collections[0].id, designs[0].id);
+  await addDesign(collections[0].id, designs[1].id);
+  await addDesign(collections[1].id, designs[2].id);
+  await addDesign(collections[2].id, designs[4].id);
+
+  const collaborators = [
+    await CollaboratorsDAO.findByDesignAndUser(designs[0].id, designer.id),
+    await CollaboratorsDAO.findByDesignAndUser(designs[1].id, designer.id),
+    await CollaboratorsDAO.findByDesignAndUser(designs[2].id, designer.id),
+    await CollaboratorsDAO.findByDesignAndUser(designs[3].id, designer.id),
+    await CollaboratorsDAO.findByDesignAndUser(designs[4].id, other.id),
+    await CollaboratorsDAO.findByDesignAndUser(designs[5].id, other.id),
+    (await generateCollaborator({
+      userId: partner.id,
+      designId: designs[0].id,
+      role: 'PARTNER'
+    })).collaborator,
+    (await generateCollaborator({
+      userId: partner.id,
+      designId: designs[1].id,
+      role: 'PARTNER'
+    })).collaborator,
+    (await generateCollaborator({
+      userId: partner.id,
+      designId: designs[2].id,
+      role: 'PARTNER'
+    })).collaborator
+  ].filter(Boolean) as CollaboratorWithUser[];
+
+  const canvases = [
+    (await generateCanvas({
+      createdBy: designer.id,
+      designId: designs[0].id
+    })).canvas,
+    (await generateCanvas({
+      createdBy: designer.id,
+      designId: designs[1].id
+    })).canvas,
+    (await generateCanvas({
+      createdBy: partner.id,
+      designId: designs[2].id
+    })).canvas
+  ];
+
+  const annotations = [
+    (await generateAnnotation({
+      createdBy: designer.id,
+      canvasId: canvases[0].id
+    })).annotation,
+    (await generateAnnotation({
+      createdBy: designer.id,
+      canvasId: canvases[0].id
+    })).annotation,
+    (await generateAnnotation({
+      createdBy: partner.id,
+      canvasId: canvases[0].id
+    })).annotation,
+    (await generateAnnotation({
+      createdBy: designer.id,
+      canvasId: canvases[1].id
+    })).annotation,
+    (await generateAnnotation({
+      createdBy: partner.id,
+      canvasId: canvases[1].id
+    })).annotation,
+    (await generateAnnotation({
+      createdBy: partner.id,
+      canvasId: canvases[2].id
+    })).annotation
+  ];
+
+  const comments = [
+    (await generateComment({
+      userId: designer.id,
+      text: 'At-mention to the partner @<${collaborators[6].id}|collaborator>'
+    })).comment,
+    (await generateComment({ userId: designer.id, text: 'No at-mention' }))
+      .comment,
+    (await generateComment({
+      userId: partner.id,
+      text: 'At-mention to the designer @<${collaborators[0].id}|collaborator>'
+    })).comment,
+    (await generateComment({
+      userId: designer.id,
+      text: 'At-mention to the partner @<${collaborators[6].id}|collaborator>'
+    })).comment,
+    (await generateComment({ userId: partner.id, text: 'No at-mention' }))
+      .comment,
+    (await generateComment({
+      userId: partner.id,
+      text: 'At-mention to the designer @<${collaborators[0].id}|collaborator>'
+    })).comment
+  ];
+
+  const measurements = [
+    (await generateMeasurement({
+      createdBy: designer.id,
+      canvasId: canvases[0].id,
+      label: 'A'
+    })).measurement,
+    (await generateMeasurement({
+      createdBy: designer.id,
+      canvasId: canvases[0].id,
+      label: 'B'
+    })).measurement
+  ];
+
+  const stages = [
+    ...(await ProductDesignStagesDAO.findAllByDesignId(designs[0].id)),
+    ...(await ProductDesignStagesDAO.findAllByDesignId(designs[1].id)),
+    ...(await ProductDesignStagesDAO.findAllByDesignId(designs[2].id)),
+    ...(await ProductDesignStagesDAO.findAllByDesignId(designs[3].id)),
+    ...(await ProductDesignStagesDAO.findAllByDesignId(designs[4].id)),
+    ...(await ProductDesignStagesDAO.findAllByDesignId(designs[5].id))
+  ];
+
+  const tasks = [
+    (await generateTask({
+      createdBy: designer.id,
+      designStageId: stages[0].id
+    })).task,
+    ...(await TasksDAO.findByStageId(stages[0].id)),
+    ...(await TasksDAO.findByStageId(stages[1].id)),
+    ...(await TasksDAO.findByStageId(stages[2].id)),
+    ...(await TasksDAO.findByStageId(stages[3].id)),
+    ...(await TasksDAO.findByStageId(stages[4].id)),
+    ...(await TasksDAO.findByStageId(stages[5].id))
+  ];
+
+  await CollaboratorTasksDAO.create({
+    taskId: tasks[0].id,
+    collaboratorId: collaborators[6].id
+  });
+
+  const notifications = [
+    (await generateNotification({
+      type: NotificationType.ANNOTATION_COMMENT_CREATE,
+      annotationId: annotations[0].id,
+      canvasId: canvases[0].id,
+      commentId: comments[0].id,
+      designId: designs[0].id,
+      collectionId: collections[0].id,
+      recipientUserId: partner.id
+    })).notification,
+    (await generateNotification({
+      type: NotificationType.ANNOTATION_COMMENT_MENTION,
+      annotationId: annotations[0].id,
+      canvasId: canvases[0].id,
+      commentId: comments[0].id,
+      designId: designs[0].id,
+      collectionId: collections[0].id,
+      recipientUserId: partner.id
+    })).notification,
+    (await generateNotification({
+      type: NotificationType.ANNOTATION_COMMENT_CREATE,
+      annotationId: annotations[1].id,
+      canvasId: canvases[0].id,
+      commentId: comments[1].id,
+      designId: designs[0].id,
+      collectionId: collections[0].id,
+      recipientUserId: partner.id
+    })).notification,
+    (await generateNotification({
+      type: NotificationType.ANNOTATION_COMMENT_CREATE,
+      annotationId: annotations[2].id,
+      canvasId: canvases[0].id,
+      commentId: comments[2].id,
+      designId: designs[0].id,
+      collectionId: collections[0].id,
+      recipientUserId: designer.id
+    })).notification,
+    (await generateNotification({
+      type: NotificationType.ANNOTATION_COMMENT_MENTION,
+      annotationId: annotations[2].id,
+      canvasId: canvases[0].id,
+      commentId: comments[2].id,
+      designId: designs[0].id,
+      collectionId: collections[0].id,
+      recipientUserId: designer.id
+    })).notification,
+    (await generateNotification({
+      type: NotificationType.ANNOTATION_COMMENT_CREATE,
+      annotationId: annotations[3].id,
+      canvasId: canvases[1].id,
+      commentId: comments[3].id,
+      designId: designs[1].id,
+      collectionId: collections[0].id,
+      recipientUserId: partner.id
+    })).notification,
+    (await generateNotification({
+      type: NotificationType.ANNOTATION_COMMENT_MENTION,
+      annotationId: annotations[3].id,
+      canvasId: canvases[1].id,
+      commentId: comments[3].id,
+      designId: designs[1].id,
+      collectionId: collections[0].id,
+      recipientUserId: partner.id
+    })).notification,
+    (await generateNotification({
+      type: NotificationType.ANNOTATION_COMMENT_CREATE,
+      annotationId: annotations[4].id,
+      canvasId: canvases[1].id,
+      commentId: comments[4].id,
+      designId: designs[1].id,
+      collectionId: collections[0].id,
+      recipientUserId: designer.id
+    })).notification,
+    (await generateNotification({
+      type: NotificationType.ANNOTATION_COMMENT_CREATE,
+      annotationId: annotations[5].id,
+      canvasId: canvases[2].id,
+      commentId: comments[5].id,
+      designId: designs[2].id,
+      collectionId: collections[1].id,
+      recipientUserId: designer.id
+    })).notification,
+    (await generateNotification({
+      type: NotificationType.ANNOTATION_COMMENT_MENTION,
+      annotationId: annotations[5].id,
+      canvasId: canvases[2].id,
+      commentId: comments[5].id,
+      designId: designs[2].id,
+      collectionId: collections[1].id,
+      recipientUserId: designer.id
+    })).notification,
+    (await generateNotification({
+      type: NotificationType.MEASUREMENT_CREATE,
+      canvasId: canvases[0].id,
+      collectionId: collections[0].id,
+      designId: designs[0].id,
+      measurementId: measurements[0].id,
+      recipientUserId: partner.id
+    })).notification,
+    (await generateNotification({
+      type: NotificationType.MEASUREMENT_CREATE,
+      canvasId: canvases[0].id,
+      collectionId: collections[0].id,
+      designId: designs[0].id,
+      measurementId: measurements[1].id,
+      recipientUserId: partner.id
+    })).notification,
+    (await generateNotification({
+      type: NotificationType.TASK_ASSIGNMENT,
+      collectionId: collections[0].id,
+      designId: designs[0].id,
+      recipientUserId: partner.id,
+      taskId: tasks[0].id
+    })).notification,
+    (await generateNotification({
+      type: NotificationType.TASK_COMPLETION,
+      collectionId: collections[0].id,
+      designId: designs[0].id,
+      recipientUserId: designer.id,
+      taskId: tasks[0].id
+    })).notification
+  ];
+
+  return {
+    annotations,
+    canvases,
+    collaborators,
+    collections,
+    comments,
+    designs,
+    measurements,
+    notifications,
+    stages,
+    tasks,
+    users: {
+      admin,
+      designer,
+      partner,
+      other
+    }
+  };
 }

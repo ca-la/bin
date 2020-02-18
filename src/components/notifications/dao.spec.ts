@@ -6,8 +6,14 @@ import * as NotificationsDAO from './dao';
 import DesignsDAO from '../product-designs/dao';
 import createUser from '../../test-helpers/create-user';
 import db from '../../services/db';
-import { Notification, NotificationType } from './domain-object';
-import generateNotification from '../../test-helpers/factories/notification';
+import {
+  FullNotification,
+  Notification,
+  NotificationType
+} from './domain-object';
+import generateNotification, {
+  generateNotifications
+} from '../../test-helpers/factories/notification';
 import generateCollection from '../../test-helpers/factories/collection';
 import { InviteCollaboratorNotification } from './models/invite-collaborator';
 import { PartnerAcceptServiceBidNotification } from './models/partner-accept-service-bid';
@@ -649,8 +655,120 @@ test('Notifications DAO supports finding unread count', async (t: tape.Test) => 
   });
   await CollaboratorsDAO.deleteById(deletedCollaborator.id);
 
-  const unreadCount = await NotificationsDAO.findUnreadCountByUserId(
-    userTwo.id
-  );
-  t.deepEqual(unreadCount, 2, 'there are two unread notification');
+  return db.transaction(async (trx: Knex.Transaction) => {
+    const unreadCount = await NotificationsDAO.findUnreadCountByUserId(
+      trx,
+      userTwo.id
+    );
+    t.deepEqual(unreadCount, 2, 'there are two unread notification');
+  });
+});
+
+test('NotificationsDAO.markReadOlderThan', async (t: tape.Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
+  const setup = await generateNotifications();
+  const { designer, partner } = setup.users;
+
+  return await db.transaction(async (trx: Knex.Transaction) => {
+    const unreadCount = await NotificationsDAO.findUnreadCountByUserId(
+      trx,
+      designer.id
+    );
+
+    t.equal(unreadCount, 6, 'base notification count for designer');
+
+    const findUnread = (notification: FullNotification): boolean =>
+      notification.readAt === null;
+    const designerNotificationsBefore = (await NotificationsDAO.findByUserId(
+      trx,
+      designer.id,
+      { limit: 100, offset: 0 }
+    )).filter(findUnread);
+
+    const wrongUserReadCount = await NotificationsDAO.markReadOlderThan(
+      trx,
+      designerNotificationsBefore[2].id,
+      setup.users.other.id
+    );
+    t.equal(
+      wrongUserReadCount,
+      0,
+      'with wrong user sets no notifications as read'
+    );
+    const newlyReadCount = await NotificationsDAO.markReadOlderThan(
+      trx,
+      designerNotificationsBefore[2].id,
+      designer.id
+    );
+    t.equal(
+      newlyReadCount,
+      4,
+      'number of read notifications equals the number of older messages than the cursor id'
+    );
+    const newlyReadCountAgain = await NotificationsDAO.markReadOlderThan(
+      trx,
+      designerNotificationsBefore[2].id,
+      designer.id
+    );
+    t.equal(
+      newlyReadCountAgain,
+      0,
+      'markReadOlderThan can be called multiple times succesfully'
+    );
+
+    const designerNotificationsAfter = (await NotificationsDAO.findByUserId(
+      trx,
+      designer.id,
+      { limit: 100, offset: 0 }
+    )).filter(findUnread);
+
+    t.deepEqual(
+      designerNotificationsBefore.slice(0, 2),
+      designerNotificationsAfter
+    );
+
+    t.equal(
+      await NotificationsDAO.findUnreadCountByUserId(trx, designer.id),
+      2,
+      'notification count before deleting design'
+    );
+    await deleteById(setup.designs[0].id);
+    t.equal(
+      await NotificationsDAO.findUnreadCountByUserId(trx, designer.id),
+      1,
+      'notification count after deleting design'
+    );
+
+    const partnerNotificationsBefore = (await NotificationsDAO.findByUserId(
+      trx,
+      partner.id,
+      {
+        limit: 100,
+        offset: 0
+      }
+    )).filter(findUnread);
+    const partnerNewlyReadCount = await NotificationsDAO.markReadOlderThan(
+      trx,
+      partnerNotificationsBefore[0].id,
+      partner.id
+    );
+
+    t.equal(
+      partnerNotificationsBefore.length,
+      2,
+      'total unread partner notifications before'
+    );
+    t.equal(
+      partnerNewlyReadCount,
+      5,
+      'updates read date for unread notifications even if they would be excluded'
+    );
+    t.equal(
+      await NotificationsDAO.findUnreadCountByUserId(trx, partner.id),
+      0,
+      'total unread partner notifications after'
+    );
+  });
 });

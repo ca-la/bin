@@ -5,7 +5,10 @@ import API from '../../test-helpers/http';
 import createUser = require('../../test-helpers/create-user');
 
 import DesignsDAO from '../product-designs/dao';
-import generateNotification from '../../test-helpers/factories/notification';
+import SessionsDAO from '../../dao/sessions';
+import generateNotification, {
+  generateNotifications
+} from '../../test-helpers/factories/notification';
 import generateCollection from '../../test-helpers/factories/collection';
 import { NotificationMessage } from '@cala/ts-lib';
 import { NotificationType } from './domain-object';
@@ -141,6 +144,64 @@ test(`GET ${API_PATH}/unread returns the number of unread notifications`, async 
     body.unreadNotificationsCount,
     2,
     'Returns the number of unread notifications for the user'
+  );
+});
+
+test(`PUT ${API_PATH}/last-read marks notifications as read`, async (t: tape.Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
+  const setup = await generateNotifications();
+
+  const designerSession = await SessionsDAO.createForUser(
+    setup.users.designer,
+    { role: setup.users.designer.role }
+  );
+
+  const [, notifications] = await API.get(API_PATH, {
+    headers: API.authHeader(designerSession.id)
+  });
+  const [, before] = await API.get(`${API_PATH}/unread`, {
+    headers: API.authHeader(designerSession.id)
+  });
+  t.deepEqual(
+    before.unreadNotificationsCount,
+    6,
+    'number of notifications before marking read'
+  );
+
+  const [mark] = await API.put(`${API_PATH}/last-read`, {
+    headers: API.authHeader(designerSession.id),
+    body: {
+      id: notifications[2].id
+    }
+  });
+  t.equal(mark.status, 204);
+
+  const [, after] = await API.get(`${API_PATH}/unread`, {
+    headers: API.authHeader(designerSession.id)
+  });
+  t.deepEqual(
+    after.unreadNotificationsCount,
+    2,
+    'number of notifications after marking read'
+  );
+
+  const [markOlder] = await API.put(`${API_PATH}/last-read`, {
+    headers: API.authHeader(designerSession.id),
+    body: {
+      id: notifications[5].id
+    }
+  });
+  t.equal(markOlder.status, 204, 'marking older notifications still succeeds');
+
+  const [, afterOlder] = await API.get(`${API_PATH}/unread`, {
+    headers: API.authHeader(designerSession.id)
+  });
+  t.deepEqual(
+    afterOlder.unreadNotificationsCount,
+    2,
+    'marking older notifications does not change server state'
   );
 });
 

@@ -41,8 +41,9 @@ function* getList(this: AuthedContext): Iterator<any, any, any> {
 function* getUnreadCount(this: AuthedContext): Iterator<any, any, any> {
   const { userId } = this.state;
 
-  const unreadNotificationsCount = yield NotificationsDAO.findUnreadCountByUserId(
-    userId
+  const unreadNotificationsCount = yield db.transaction(
+    (trx: Knex.Transaction) =>
+      NotificationsDAO.findUnreadCountByUserId(trx, userId)
   );
 
   this.status = 200;
@@ -73,8 +74,26 @@ function* setRead(this: AuthedContext): Iterator<any, any, any> {
   }
 }
 
+function* setReadOlderThan(
+  this: AuthedContext<{ id: string }>
+): Iterator<any, any, any> {
+  if (!this.request.body.id) {
+    this.throw(400, 'You must indicate the last read notification');
+  }
+
+  yield db.transaction(async (trx: Knex.Transaction) =>
+    NotificationsDAO.markReadOlderThan(
+      trx,
+      this.request.body.id,
+      this.state.userId
+    )
+  );
+
+  this.status = 204;
+}
 router.get('/', requireAuth, getList);
 router.get('/unread', requireAuth, getUnreadCount);
 router.patch('/read', requireAuth, setRead);
+router.put('/last-read', requireAuth, setReadOlderThan);
 
 export default router.routes();

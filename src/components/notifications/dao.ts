@@ -298,6 +298,51 @@ export async function markRead(
   );
 }
 
+export async function markReadOlderThan(
+  trx: Knex.Transaction,
+  notificationId: string,
+  recipientUserId: string
+): Promise<number> {
+  return trx(TABLE_NAME)
+    .whereIn('id', (subquery: Knex.QueryBuilder) => {
+      subquery
+        .select(['n.id'])
+        .from('notifications as n')
+        .leftJoin('collaborators as cl', 'cl.id', 'n.collaborator_id')
+        .whereNotIn('n.type', DEPRECATED_NOTIFICATION_TYPES)
+        .andWhere((query: Knex.QueryBuilder) => {
+          query
+            .where({
+              'n.recipient_user_id': recipientUserId
+            })
+            .orWhere({
+              'n.recipient_user_id': null,
+              'cl.user_id': recipientUserId
+            });
+        })
+        .andWhere({
+          'n.read_at': null,
+          'n.deleted_at': null
+        })
+        .andWhereRaw(
+          `
+(n.created_at, n.id) <= (
+  SELECT n2.created_at, n2.id FROM notifications AS n2
+    LEFT JOIN collaborators AS cl ON cl.id = n2.collaborator_id
+   WHERE n2.id = :notificationId
+     AND (
+           n2.recipient_user_id = :recipientUserId
+             OR (n2.recipient_user_id IS NULL AND cl.user_id = :recipientUserId)
+         )
+)`,
+          { notificationId, recipientUserId }
+        );
+    })
+    .update({
+      read_at: db.fn.now()
+    });
+}
+
 export async function create(
   data: Uninserted<Notification>,
   trx?: Knex.Transaction
@@ -333,8 +378,11 @@ export async function create(
   return notification;
 }
 
-export async function findUnreadCountByUserId(userId: string): Promise<number> {
-  const { notificationCount } = await db(TABLE_NAME)
+export async function findUnreadCountByUserId(
+  trx: Knex.Transaction,
+  userId: string
+): Promise<number> {
+  const { notificationCount } = await trx(TABLE_NAME)
     .count('n.id', { as: 'notificationCount' })
     .from('notifications as n')
     .joinRaw(
@@ -381,7 +429,7 @@ export async function findUnreadCountByUserId(userId: string): Promise<number> {
     // .count returns `number | string` due to how big ints are stored
     .first<{ notificationCount: number | string }>();
 
-  return parseInt(notificationCount, 10);
+  return Number(notificationCount);
 }
 
 export async function del(id: string): Promise<void> {
