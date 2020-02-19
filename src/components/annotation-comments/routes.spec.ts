@@ -138,6 +138,7 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
   );
   t.equal(notificationStub.callCount, 1, 'Comment notification called');
   t.equal(announcementStub.callCount, 1, 'Announces the new comment to Iris');
+  t.equal(addAttachmentLinksStub.callCount, 1, 'Attaches asset links');
 
   const annotationCommentResponse = await get(
     `${API_PATH}/${annotationResponse[1].id}/comments`,
@@ -182,7 +183,7 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
   );
   t.equal(notificationMentionStub.callCount, 1, 'Mentions notification called');
   t.equal(notificationStub.callCount, 2, 'Comment notification called');
-  t.equal(addAttachmentLinksStub.callCount, 1, 'Attaches asset links');
+  t.equal(addAttachmentLinksStub.callCount, 3, 'Attaches asset links');
   t.deepEqual(notificationStub.getCall(1).args.slice(0, 5), [
     annotationResponse[1].id,
     annotationResponse[1].canvasId,

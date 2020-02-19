@@ -14,6 +14,7 @@ import { announceAnnotationCommentCreation } from '../iris/messages/annotation-c
 import db from '../../services/db';
 import Asset from '../assets/domain-object';
 import { createCommentWithAttachments } from '../../services/create-comment-with-attachments';
+import { addAttachmentLinks } from '../../services/add-attachments-links';
 
 const router = new Router();
 
@@ -53,7 +54,7 @@ function* createAnnotationComment(
         trx
       );
       this.status = 201;
-      this.body = comment;
+      this.body = addAttachmentLinks(comment);
     });
   }
   this.throw(400, `Request does not match model: ${Object.keys(body)}`);

@@ -338,7 +338,7 @@ function* createTaskComment(
       );
 
       this.status = 201;
-      this.body = comment;
+      this.body = addAttachmentLinks(comment);
     });
   }
 

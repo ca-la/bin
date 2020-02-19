@@ -655,7 +655,7 @@ test('PUT /tasks/:taskId/comment/:id creates a task comment', async (t: tape.Tes
     1,
     'New task comment is announced to Iris'
   );
-  t.equal(addAttachmentLinksStub.callCount, 1, 'Attaches asset links');
+  t.equal(addAttachmentLinksStub.callCount, 2, 'Attaches asset links');
 });
 
 test('GET list returns all tasks by resource with limit & offset', async (t: tape.Test) => {
