@@ -25,6 +25,8 @@ import generateCollaborator from '../../test-helpers/factories/collaborator';
 import * as AnnounceCommentService from '../../components/iris/messages/task-comment';
 import * as StageTemplate from '../../components/tasks/templates';
 import { addDesign } from '../../test-helpers/collections';
+import * as AddAttachmentLinks from '../../services/add-attachments-links';
+import Comment from '../../components/comments/domain-object';
 
 const beforeEach = (): void => {
   sandbox()
@@ -557,6 +559,7 @@ test('POST /tasks/stage/:stageId creates Task on Stage successfully', async (t: 
 });
 
 test('PUT /tasks/:taskId/comment/:id creates a task comment', async (t: tape.Test) => {
+  sandbox().useFakeTimers();
   const { session, user } = await createUser();
 
   const taskId = uuid.v4();
@@ -566,6 +569,23 @@ test('PUT /tasks/:taskId/comment/:id creates a task comment', async (t: tape.Tes
   const notificationStub = sandbox()
     .stub(CreateNotifications, 'sendTaskCommentCreateNotification')
     .resolves();
+
+  const attachment = {
+    createdAt: new Date().toISOString(),
+    description: null,
+    id: uuid.v4(),
+    mimeType: 'image/jpeg',
+    originalHeightPx: 0,
+    originalWidthPx: 0,
+    title: '',
+    userId: user.id,
+    uploadCompletedAt: new Date().toISOString(),
+    deletedAt: null
+  };
+
+  const addAttachmentLinksStub = sandbox()
+    .stub(AddAttachmentLinks, 'addAttachmentLinks')
+    .callsFake((com: Comment): Comment => com);
 
   await post('/tasks', {
     body: { ...BASE_TASK_EVENT, id: taskId },
@@ -581,30 +601,46 @@ test('PUT /tasks/:taskId/comment/:id creates a task comment', async (t: tape.Tes
     text: 'A comment',
     userEmail: 'cool@me.me',
     userId: 'purposefully incorrect',
-    userName: 'Somebody Cool'
+    userName: 'Somebody Cool',
+    attachments: [attachment]
   };
   const comment = await put(`/tasks/${taskId}/comments/${uuid.v4()}`, {
     body: commentBody,
     headers: authHeader(session.id)
   });
   t.equal(comment[0].status, 201, 'Comment creation succeeds');
-  const taskComment = await get(`/tasks/${taskId}/comments`, {
+  const [response, taskComments] = await get(`/tasks/${taskId}/comments`, {
     headers: authHeader(session.id)
   });
-
-  t.equal(taskComment[0].status, 200, 'Comment retrieval succeeds');
+  t.equal(response.status, 200, 'Comment retrieval succeeds');
   t.deepEqual(
-    taskComment[1],
-    [
-      {
-        ...commentBody,
-        mentions: {},
-        userEmail: user.email,
-        userId: user.id,
-        userName: user.name,
-        userRole: user.role
-      }
-    ],
+    {
+      ...taskComments[0],
+      attachments: [
+        {
+          ...taskComments[0].attachments[0],
+          createdAt: new Date(taskComments[0].attachments[0].createdAt),
+          uploadCompletedAt: new Date(
+            taskComments[0].attachments[0].uploadCompletedAt
+          )
+        }
+      ]
+    },
+    {
+      ...commentBody,
+      mentions: {},
+      userEmail: user.email,
+      userId: user.id,
+      userName: user.name,
+      userRole: user.role,
+      attachments: [
+        {
+          ...attachment,
+          createdAt: new Date(attachment.createdAt),
+          uploadCompletedAt: new Date(attachment.uploadCompletedAt)
+        }
+      ]
+    },
     'Comment retrieval returns the created comment in an array'
   );
 
@@ -619,6 +655,7 @@ test('PUT /tasks/:taskId/comment/:id creates a task comment', async (t: tape.Tes
     1,
     'New task comment is announced to Iris'
   );
+  t.equal(addAttachmentLinksStub.callCount, 1, 'Attaches asset links');
 });
 
 test('GET list returns all tasks by resource with limit & offset', async (t: tape.Test) => {

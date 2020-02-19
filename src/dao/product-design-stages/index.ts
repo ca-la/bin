@@ -74,11 +74,19 @@ export async function createAll(
   );
 }
 
-export async function findById(id: string): Promise<ProductDesignStage | null> {
+export async function findById(
+  id: string,
+  trx?: Knex.Transaction
+): Promise<ProductDesignStage | null> {
   const stages: ProductDesignStageRow[] = await db(TABLE_NAME)
     .select('*')
     .where({ id })
     .orderBy('created_at', 'asc')
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .limit(1);
 
   const stage = stages[0];

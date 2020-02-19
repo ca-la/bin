@@ -15,6 +15,7 @@ import {
   CommentWithMentions
 } from '../../services/add-at-mention-details';
 import { annotationCommentsView } from './view';
+import { addAttachmentLinks } from '../../services/add-attachments-links';
 
 const TABLE_NAME = 'product_design_canvas_annotation_comments';
 
@@ -53,8 +54,8 @@ export async function findByAnnotationId(
     .where({
       annotation_id: annotationId
     })
-    .orderBy('created_at', 'asc');
-
+    .orderBy('created_at', 'asc')
+    .groupBy('ac.annotation_id');
   return validateEvery<CommentWithMetaRow, CommentWithMeta>(
     TABLE_NAME,
     isCommentWithMetaRow,
@@ -73,7 +74,8 @@ export async function findByAnnotationIds(
 ): Promise<AnnotationToCommentsWithMentions> {
   const comments: CommentWithMetaRow[] = await annotationCommentsView(trx)
     .whereIn('annotation_id', annotationIds)
-    .orderBy('created_at', 'asc');
+    .orderBy('created_at', 'asc')
+    .groupBy('ac.annotation_id');
 
   const validatedComments = validateEvery<CommentWithMetaRow, CommentWithMeta>(
     TABLE_NAME,
@@ -85,8 +87,9 @@ export async function findByAnnotationIds(
   const commentsByAnnotation: AnnotationToCommentsWithMentions = {};
   for (const validatedComment of validatedComments) {
     const { annotationId, ...baseComment } = validatedComment;
+    const baseCommentWithAttachments = addAttachmentLinks(baseComment);
     const baseCommentWithMentions = await addAtMentionDetailsForComment(
-      baseComment
+      baseCommentWithAttachments
     );
 
     const values = commentsByAnnotation[annotationId];

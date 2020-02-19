@@ -267,13 +267,18 @@ export async function sendDesignOwnerMeasurementCreateNotification(
  * Creates notifications for each recipient for the task comment create action.
  */
 export async function sendTaskCommentCreateNotification(
-  taskId: string,
-  commentId: string,
-  actorId: string,
-  mentionedUserIds: string[]
+  options: {
+    taskId: string;
+    commentId: string;
+    actorId: string;
+    mentionedUserIds: string[];
+  },
+  trx?: Knex.Transaction
 ): Promise<TaskCommentCreateNotification[]> {
+  const { taskId, commentId, actorId, mentionedUserIds } = options;
   const collaborators = (await CollaboratorsDAO.findByTask(
-    taskId
+    taskId,
+    trx
   )) as Collaborator[];
   const recipients = collaborators.filter(
     (collaborator: Collaborator): boolean => {
@@ -281,7 +286,7 @@ export async function sendTaskCommentCreateNotification(
     }
   ) as Collaborator[];
 
-  const taskEvent = await TaskEventsDAO.findById(taskId);
+  const taskEvent = await TaskEventsDAO.findById(taskId, trx);
   if (!taskEvent) {
     throw new Error(`Could not find a task event with task id: ${taskId}`);
   }
@@ -304,12 +309,12 @@ export async function sendTaskCommentCreateNotification(
     }
   );
 
-  const stageTask = await StageTasksDAO.findByTaskId(taskId);
+  const stageTask = await StageTasksDAO.findByTaskId(taskId, trx);
   if (!stageTask) {
     throw new Error(`Could not find a stage task with task id: ${taskId}`);
   }
 
-  const stage = await StagesDAO.findById(stageTask.designStageId);
+  const stage = await StagesDAO.findById(stageTask.designStageId, trx);
   if (!stage) {
     throw new Error(
       `Could not find a stage with id: ${stageTask.designStageId}`
@@ -324,19 +329,22 @@ export async function sendTaskCommentCreateNotification(
   const notifications = [];
   for (const recipientId of filteredRecipientIds) {
     const id = uuid.v4();
-    const notification = await replaceNotifications({
-      ...templateNotification,
-      actorUserId: actorId,
-      collectionId: design.collectionIds[0] || null,
-      commentId,
-      designId: design.id,
-      id,
-      recipientUserId: recipientId,
-      sentEmailAt: null,
-      stageId: stage.id,
-      taskId,
-      type: NotificationType.TASK_COMMENT_CREATE
-    });
+    const notification = await replaceNotifications(
+      {
+        ...templateNotification,
+        actorUserId: actorId,
+        collectionId: design.collectionIds[0] || null,
+        commentId,
+        designId: design.id,
+        id,
+        recipientUserId: recipientId,
+        sentEmailAt: null,
+        stageId: stage.id,
+        taskId,
+        type: NotificationType.TASK_COMMENT_CREATE
+      },
+      trx
+    );
     const validated = validateTypeWithGuardOrThrow(
       notification,
       isTaskCommentCreateNotification,
@@ -353,26 +361,30 @@ export async function sendTaskCommentCreateNotification(
  * Creates notifications for the user mentioned in a task comment.
  */
 export async function sendTaskCommentMentionNotification(
-  taskId: string,
-  commentId: string,
-  actorId: string,
-  recipientId: string
+  options: {
+    taskId: string;
+    commentId: string;
+    actorId: string;
+    recipientId: string;
+  },
+  trx?: Knex.Transaction
 ): Promise<TaskCommentMentionNotification | null> {
+  const { taskId, commentId, actorId, recipientId } = options;
   if (recipientId === actorId) {
     return null;
   }
 
-  const taskEvent = await TaskEventsDAO.findById(taskId);
+  const taskEvent = await TaskEventsDAO.findById(taskId, trx);
   if (!taskEvent) {
     throw new Error(`Could not find a task event with task id: ${taskId}`);
   }
 
-  const stageTask = await StageTasksDAO.findByTaskId(taskId);
+  const stageTask = await StageTasksDAO.findByTaskId(taskId, trx);
   if (!stageTask) {
     throw new Error(`Could not find a stage task with task id: ${taskId}`);
   }
 
-  const stage = await StagesDAO.findById(stageTask.designStageId);
+  const stage = await StagesDAO.findById(stageTask.designStageId, trx);
   if (!stage) {
     throw new Error(
       `Could not find a stage with id: ${stageTask.designStageId}`
@@ -385,19 +397,22 @@ export async function sendTaskCommentMentionNotification(
   }
 
   const id = uuid.v4();
-  const notification = await replaceNotifications({
-    ...templateNotification,
-    actorUserId: actorId,
-    collectionId: design.collectionIds[0] || null,
-    commentId,
-    designId: design.id,
-    id,
-    recipientUserId: recipientId,
-    sentEmailAt: null,
-    stageId: stage.id,
-    taskId,
-    type: NotificationType.TASK_COMMENT_MENTION
-  });
+  const notification = await replaceNotifications(
+    {
+      ...templateNotification,
+      actorUserId: actorId,
+      collectionId: design.collectionIds[0] || null,
+      commentId,
+      designId: design.id,
+      id,
+      recipientUserId: recipientId,
+      sentEmailAt: null,
+      stageId: stage.id,
+      taskId,
+      type: NotificationType.TASK_COMMENT_MENTION
+    },
+    trx
+  );
   const validated = validateTypeWithGuardOrThrow(
     notification,
     isTaskCommentMentionNotification,

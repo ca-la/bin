@@ -58,7 +58,8 @@ test('DELETE /comment/:id deletes a task comment', async (t: tape.Test) => {
     text: 'A comment',
     userEmail: 'cool@me.me',
     userId: 'purposefully incorrect',
-    userName: 'Somebody Cool'
+    userName: 'Somebody Cool',
+    attachments: []
   };
   const comment = await put(`/tasks/${task[1].taskId}/comments/${uuid.v4()}`, {
     body: commentBody,
@@ -77,7 +78,8 @@ test('DELETE /comment/:id deletes a task comment', async (t: tape.Test) => {
         userEmail: user.email,
         userId: user.id,
         userName: user.name,
-        userRole: user.role
+        userRole: user.role,
+        attachments: []
       }
     ],
     'Comment retrieval returns the created comment in an array'

@@ -14,6 +14,7 @@ import ResourceNotFoundError from '../../errors/resource-not-found';
 import requireAuth = require('../../middleware/require-auth');
 import filterError = require('../../services/filter-error');
 import addAtMentionDetails from '../../services/add-at-mention-details';
+import { addAttachmentLinks } from '../../services/add-attachments-links';
 
 const router = new Router();
 
@@ -95,8 +96,11 @@ function* getAnnotationComments(this: AuthedContext): Iterator<any, any, any> {
   );
   if (comments) {
     const commentsWithMentions = yield addAtMentionDetails(comments);
+    const commentsWithAttachments = commentsWithMentions.map(
+      addAttachmentLinks
+    );
     this.status = 200;
-    this.body = commentsWithMentions;
+    this.body = commentsWithAttachments;
   } else {
     this.throw(404);
   }

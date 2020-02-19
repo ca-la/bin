@@ -58,8 +58,7 @@ export async function findByTaskId(
     .leftJoin('collections', 'collections.id', 'cd.collection_id')
     .where({
       'task_comments.task_id': taskId
-    })
-    .groupBy('comments.id', 'users.name', 'users.email', 'users.role');
+    });
 
   return validateEvery<CommentRow, Comment>(
     TABLE_NAME,

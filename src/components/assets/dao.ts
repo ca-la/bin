@@ -2,7 +2,7 @@ import Knex from 'knex';
 import rethrow from 'pg-rethrow';
 import uuid from 'node-uuid';
 
-import { validate } from '../../services/validate-from-db';
+import { validate, validateEvery } from '../../services/validate-from-db';
 import Asset, {
   AssetRow,
   dataAdapter,
@@ -42,6 +42,22 @@ export async function create(
   }
 
   return validate<AssetRow, Asset>(
+    TABLE_NAME,
+    isAssetRow,
+    dataAdapter,
+    created
+  );
+}
+
+export async function createAll(
+  trx: Knex.Transaction,
+  assets: Asset[]
+): Promise<Asset[]> {
+  const rows = assets.map((asset: Asset) => dataAdapter.forInsertion(asset));
+
+  const created = await trx(TABLE_NAME).insert(rows, '*');
+
+  return validateEvery<AssetRow, Asset>(
     TABLE_NAME,
     isAssetRow,
     dataAdapter,

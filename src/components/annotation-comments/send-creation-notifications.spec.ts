@@ -105,7 +105,8 @@ test('sendCreationNotifications loops through mentions and sends notifications',
     userEmail: 'cool@me.me',
     userId: 'purposefully incorrect',
     userName: 'Somebody cool',
-    userRole: 'USER' as Role
+    userRole: 'USER' as Role,
+    attachments: []
   };
 
   await sendCreationNotifications({
@@ -172,7 +173,8 @@ test('sendCreationNotifications continues processing notifications once it hits 
     userEmail: 'cool@example.com',
     userId: '123',
     userName: 'Somebody cool',
-    userRole: 'USER' as Role
+    userRole: 'USER' as Role,
+    attachments: []
   };
 
   await sendCreationNotifications({

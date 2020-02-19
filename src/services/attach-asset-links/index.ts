@@ -21,6 +21,8 @@ const PREVIEW_CARD_FORMAT = '?fm=jpg&w=560';
 const THUMBNAIL_FORMAT = '?fm=jpg&w=48';
 const DESIGN_PREVIEW_THUMBNAIL = '?fm=jpg&fit=fill&h=104&w=104';
 const DESIGN_PREVIEW_THUMBNAIL_2X = DESIGN_PREVIEW_THUMBNAIL + '&dpr=2';
+const ATTACHMENT_PREVIEW = '?fm=jpg&fit=fill&h=90&w=110';
+const ATTACHMENT_PREVIEW_2X = ATTACHMENT_PREVIEW + '&dpr=2';
 
 function constructAssetLinks(options: {
   id: string;
@@ -159,4 +161,21 @@ export function generateThumbnailLinks(imageIds: string[]): string[] {
       return `${USER_UPLOADS_IMGIX_URL}/${imageId}${THUMBNAIL_FORMAT}`;
     }
   );
+}
+
+export function constructAttachmentAssetLinks(asset: Asset): AssetLinks {
+  const hasPreview = isPreviewable(asset.mimeType);
+  return {
+    assetLink: hasPreview
+      ? `${USER_UPLOADS_IMGIX_URL}/${asset.id}${DESIGN_PREVIEW_TOOL_FORMAT}`
+      : null,
+    downloadLink: `${USER_UPLOADS_BASE_URL}/${asset.id}`,
+    fileType: getExtension(asset.mimeType) || 'Unknown',
+    thumbnailLink: hasPreview
+      ? `${USER_UPLOADS_IMGIX_URL}/${asset.id}${ATTACHMENT_PREVIEW}`
+      : null,
+    thumbnail2xLink: hasPreview
+      ? `${USER_UPLOADS_IMGIX_URL}/${asset.id}${ATTACHMENT_PREVIEW_2X}`
+      : null
+  };
 }

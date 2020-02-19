@@ -1,9 +1,9 @@
 import Router from 'koa-router';
 import { omit, pick } from 'lodash';
 import { BaseComment, TaskEvent, TaskStatus } from '@cala/ts-lib';
+import Knex from 'knex';
 
 import * as TaskEventsDAO from '../../dao/task-events';
-import * as CommentDAO from '../../components/comments/dao';
 import * as TaskCommentDAO from '../../components/task-comments/dao';
 import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
@@ -24,7 +24,6 @@ import {
   hasProperties
 } from '../../services/require-properties';
 import requireAuth = require('../../middleware/require-auth');
-import { CollaboratorWithUser } from '../../components/collaborators/domain-objects/collaborator';
 import * as NotificationsService from '../../services/create-notifications';
 import { typeGuard } from '../../middleware/type-guard';
 import addAtMentionDetails from '../../services/add-at-mention-details';
@@ -32,6 +31,10 @@ import parseAtMentions, {
   MentionType
 } from '@cala/ts-lib/dist/parsing/comment-mentions';
 import { announceTaskCommentCreation } from '../../components/iris/messages/task-comment';
+import { addAttachmentLinks } from '../../services/add-attachments-links';
+import db from '../../services/db';
+import Asset from '../../components/assets/domain-object';
+import { createCommentWithAttachments } from '../../services/create-comment-with-attachments';
 
 const router = new Router();
 
@@ -273,63 +276,87 @@ function* getList(this: AuthedContext): Iterator<any, any, any> {
 }
 
 function* createTaskComment(
-  this: AuthedContext<BaseComment>
+  this: AuthedContext<BaseComment & { attachments: Asset[] }>
 ): Iterator<any, any, any> {
   const { userId } = this.state;
   const body = omit(this.request.body, 'mentions');
   const { taskId } = this.params;
   const filteredBody = pick(body, BASE_COMMENT_PROPERTIES);
-
+  const attachments = this.request.body.attachments || [];
   if (filteredBody && isBaseComment(filteredBody) && taskId) {
-    const comment = yield CommentDAO.create({ ...filteredBody, userId });
-    const taskComment = yield TaskCommentDAO.create({
-      commentId: comment.id,
-      taskId
-    });
-    const mentions = parseAtMentions(filteredBody.text);
-    const mentionedUserIds: string[] = [];
-    for (const mention of mentions) {
-      switch (mention.type) {
-        case MentionType.collaborator: {
-          const collaborator: CollaboratorWithUser = yield CollaboratorsDAO.findById(
-            mention.id
-          );
-          if (collaborator && collaborator.user) {
-            yield NotificationsService.sendTaskCommentMentionNotification(
-              taskId,
-              comment.id,
-              userId,
-              collaborator.user.id
+    return db.transaction(async (trx: Knex.Transaction) => {
+      const comment = await createCommentWithAttachments(trx, {
+        comment: filteredBody,
+        attachments,
+        userId
+      });
+      if (!comment) {
+        throw new Error('Could not retrieve created comment');
+      }
+
+      const taskComment = await TaskCommentDAO.create(
+        {
+          commentId: comment.id,
+          taskId
+        },
+        trx
+      );
+      const mentions = parseAtMentions(filteredBody.text);
+      const mentionedUserIds: string[] = [];
+      for (const mention of mentions) {
+        switch (mention.type) {
+          case MentionType.collaborator: {
+            const collaborator = await CollaboratorsDAO.findById(
+              mention.id,
+              false,
+              trx
             );
-            mentionedUserIds.push(collaborator.user.id);
+            if (collaborator && collaborator.user) {
+              await NotificationsService.sendTaskCommentMentionNotification(
+                {
+                  taskId,
+                  commentId: comment.id,
+                  actorId: userId,
+                  recipientId: collaborator.user.id
+                },
+                trx
+              );
+              mentionedUserIds.push(collaborator.user.id);
+            }
           }
         }
       }
-    }
-    yield announceTaskCommentCreation(taskComment, comment);
-    yield NotificationsService.sendTaskCommentCreateNotification(
-      taskId,
-      comment.id,
-      userId,
-      mentionedUserIds
-    );
+      await announceTaskCommentCreation(taskComment, comment);
+      await NotificationsService.sendTaskCommentCreateNotification(
+        {
+          taskId,
+          commentId: comment.id,
+          actorId: userId,
+          mentionedUserIds
+        },
+        trx
+      );
 
-    this.status = 201;
-    this.body = comment;
-  } else {
-    this.throw(
-      400,
-      `Request does not match task comment model: ${Object.keys(body || {})}`
-    );
+      this.status = 201;
+      this.body = comment;
+    });
   }
+
+  this.throw(
+    400,
+    `Request does not match task comment model: ${Object.keys(body || {})}`
+  );
 }
 
 function* getTaskComments(this: AuthedContext): Iterator<any, any, any> {
   const comments = yield TaskCommentDAO.findByTaskId(this.params.taskId);
   if (comments) {
     const commentsWithMentions = yield addAtMentionDetails(comments);
+    const commentsWithAttachments = commentsWithMentions.map(
+      addAttachmentLinks
+    );
     this.status = 200;
-    this.body = commentsWithMentions;
+    this.body = commentsWithAttachments;
   } else {
     this.throw(404);
   }

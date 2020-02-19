@@ -96,11 +96,17 @@ export async function findById(
 }
 
 export async function findByTaskId(
-  taskId: string
+  taskId: string,
+  trx?: Knex.Transaction
 ): Promise<ProductDesignStageTask | null> {
   const stageTasks: ProductDesignStageTaskRow[] = await db(TABLE_NAME)
     .select('*')
     .where({ task_id: taskId })
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .limit(1);
 
   const stageTask = stageTasks[0];

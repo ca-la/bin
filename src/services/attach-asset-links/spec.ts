@@ -2,7 +2,11 @@ import tape from 'tape';
 import uuid from 'node-uuid';
 
 import Configuration from '../../config';
-import { addAssetLink, generatePreviewLinks } from './index';
+import {
+  addAssetLink,
+  constructAttachmentAssetLinks,
+  generatePreviewLinks
+} from './index';
 import { sandbox, test } from '../../test-helpers/fresh';
 
 import Component, {
@@ -10,6 +14,7 @@ import Component, {
 } from '../../components/components/domain-object';
 import OptionsDAO from '../../dao/product-design-options';
 import * as ImagesDAO from '../../components/assets/dao';
+import Asset from '../../components/assets/domain-object';
 
 function stubUrls(): void {
   sandbox()
@@ -213,5 +218,22 @@ test('addAssetLink returns link when component is of type material', async (t: t
   t.equal(
     enrichedImages[1].previewLink,
     `https://imgix.example.com/${imageIdTwo}?fm=jpg&w=560`
+  );
+});
+
+test('addAssetLink returns link when component is of type material', async (t: tape.Test) => {
+  stubUrls();
+  const imageId = uuid.v4();
+  const attachmentAssetLinks = constructAttachmentAssetLinks({
+    id: imageId,
+    mimeType: 'image/png'
+  } as Asset);
+  t.equal(
+    attachmentAssetLinks.thumbnailLink,
+    `https://imgix.example.com/${imageId}?fm=jpg&fit=fill&h=90&w=110`
+  );
+  t.equal(
+    attachmentAssetLinks.downloadLink,
+    `https://user-uploads.example.com/${imageId}`
   );
 });

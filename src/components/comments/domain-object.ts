@@ -1,6 +1,7 @@
 import { Role } from '@cala/ts-lib/dist/users';
 import DataAdapter from '../../services/data-adapter';
 import { hasProperties } from '../../services/require-properties';
+import Asset from '../assets/domain-object';
 
 /**
  * @typedef {object} Comment User comment
@@ -30,6 +31,7 @@ export default interface Comment extends BaseComment {
   userName: string | null;
   userEmail: string | null;
   userRole: Role;
+  attachments: Asset[];
 }
 
 export interface BaseCommentRow {
@@ -46,6 +48,7 @@ export interface CommentRow extends BaseCommentRow {
   user_name: string | null;
   user_email: string | null;
   user_role: Role;
+  attachments: Asset[];
 }
 
 export const dataAdapter = new DataAdapter<CommentRow, Comment>();
@@ -92,7 +95,8 @@ export function isComment(candidate: object): candidate is Comment {
     'userId',
     'userName',
     'userEmail',
-    'userRole'
+    'userRole',
+    'attachments'
   );
 }
 

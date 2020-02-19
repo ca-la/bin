@@ -22,8 +22,22 @@ export function queryComments(trx?: Knex.Transaction): Knex.QueryBuilder {
       { user_email: 'users.email' },
       { user_role: 'users.role' }
     ])
+    .select(
+      db.raw(`
+      coalesce(
+        jsonb_agg(assets.*) filter (where assets.id is not null),
+        '[]'
+      ) as attachments`)
+    )
     .join('users', 'users.id', 'comments.user_id')
+    .leftJoin(
+      'comment_attachments',
+      'comment_attachments.comment_id',
+      'comments.id'
+    )
+    .leftJoin('assets', 'assets.id', 'comment_attachments.asset_id')
     .where({ 'comments.deleted_at': null })
+    .groupBy('comments.id', 'users.name', 'users.email', 'users.role')
     .orderBy('created_at', 'asc')
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {

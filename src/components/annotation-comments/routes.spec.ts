@@ -5,15 +5,18 @@ import { authHeader, get, put } from '../../test-helpers/http';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import { create as createDesign } from '../product-designs/dao';
 import * as CreateNotifications from '../../services/create-notifications';
+import * as AddAttachmentLinks from '../../services/add-attachments-links';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
 import generateCollection from '../../test-helpers/factories/collection';
 import * as AnnounceCommentService from '../iris/messages/annotation-comment';
 import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 import { addDesign } from '../../test-helpers/collections';
+import Comment from '../comments/domain-object';
 
 const API_PATH = '/product-design-canvas-annotations';
 
 test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async (t: Test) => {
+  sandbox().useFakeTimers();
   const announcementStub = sandbox()
     .stub(AnnounceCommentService, 'announceAnnotationCommentCreation')
     .resolves({});
@@ -59,6 +62,19 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
   const date1 = new Date();
   const date2 = new Date(date1.getTime() + 1000);
 
+  const attachment = {
+    createdAt: date1.toISOString(),
+    description: null,
+    id: uuid.v4(),
+    mimeType: 'image/jpeg',
+    originalHeightPx: 0,
+    originalWidthPx: 0,
+    title: '',
+    userId: user.id,
+    uploadCompletedAt: date1.toISOString(),
+    deletedAt: null
+  };
+
   const commentBody = {
     createdAt: date1.toISOString(),
     deletedAt: null,
@@ -84,7 +100,8 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
     text: `A comment @<${collaborator.id}|collaborator>`,
     userEmail: 'cool@me.me',
     userId: 'purposefully incorrect',
-    userName: 'Somebody cool'
+    userName: 'Somebody cool',
+    attachments: [attachment]
   };
 
   const notificationStub = sandbox()
@@ -97,6 +114,10 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
   const notificationMentionStub = sandbox()
     .stub(CreateNotifications, 'sendAnnotationCommentMentionNotification')
     .resolves();
+
+  const addAttachmentLinksStub = sandbox()
+    .stub(AddAttachmentLinks, 'addAttachmentLinks')
+    .callsFake((comment: Comment): Comment => comment);
 
   const annotationResponse = await put(`${API_PATH}/${annotationId}`, {
     body: annotationData,
@@ -137,7 +158,8 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
         userEmail: user.email,
         userId: user.id,
         userName: user.name,
-        userRole: user.role
+        userRole: user.role,
+        attachments: []
       }
     ],
     'Comment retrieval returns the created comment in an array'
@@ -160,6 +182,7 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
   );
   t.equal(notificationMentionStub.callCount, 1, 'Mentions notification called');
   t.equal(notificationStub.callCount, 2, 'Comment notification called');
+  t.equal(addAttachmentLinksStub.callCount, 1, 'Attaches asset links');
   t.deepEqual(notificationStub.getCall(1).args.slice(0, 5), [
     annotationResponse[1].id,
     annotationResponse[1].canvasId,
@@ -176,7 +199,21 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
   t.equal(response.status, 200);
   t.equal(body.length, 2);
   t.deepEqual(
-    body,
+    [
+      body[0],
+      {
+        ...body[1],
+        attachments: [
+          {
+            ...body[1].attachments[0],
+            createdAt: new Date(body[1].attachments[0].createdAt),
+            uploadCompletedAt: new Date(
+              body[1].attachments[0].uploadCompletedAt
+            )
+          }
+        ]
+      }
+    ],
     [
       {
         ...commentBody,
@@ -185,7 +222,8 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
         userEmail: user.email,
         userId: user.id,
         userName: user.name,
-        userRole: user.role
+        userRole: user.role,
+        attachments: []
       },
       {
         ...commentWithMentionBody,
@@ -193,7 +231,14 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
         userEmail: user.email,
         userId: user.id,
         userName: user.name,
-        userRole: user.role
+        userRole: user.role,
+        attachments: [
+          {
+            ...attachment,
+            createdAt: new Date(attachment.createdAt),
+            uploadCompletedAt: new Date(attachment.uploadCompletedAt)
+          }
+        ]
       }
     ],
     'Comment retrieval returns all the comments for the annotation'

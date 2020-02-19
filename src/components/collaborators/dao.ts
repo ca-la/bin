@@ -322,7 +322,8 @@ export async function findByCollection(
 }
 
 export async function findByTask(
-  taskId: string
+  taskId: string,
+  trx?: Knex.Transaction
 ): Promise<CollaboratorWithUser[]> {
   const collaboratorRows = await getCollaboratorViewBuilder()
     .join(
@@ -331,7 +332,12 @@ export async function findByTask(
       'collaborator_tasks.collaborator_id'
     )
     .where({ 'collaborator_tasks.task_id': taskId })
-    .andWhereRaw('(cancelled_at IS null OR cancelled_at > now())');
+    .andWhereRaw('(cancelled_at IS null OR cancelled_at > now())')
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    });
 
   const collaborators = validateEvery<
     CollaboratorWithUserRow,

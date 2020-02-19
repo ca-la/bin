@@ -336,10 +336,12 @@ test('sendTaskCommentCreateNotification', async (t: tape.Test) => {
   });
 
   const notifications = await NotificationsService.sendTaskCommentCreateNotification(
-    taskOne.id,
-    comment.id,
-    userOne.user.id,
-    []
+    {
+      taskId: taskOne.id,
+      commentId: comment.id,
+      actorId: userOne.user.id,
+      mentionedUserIds: []
+    }
   );
 
   t.equal(
@@ -441,10 +443,12 @@ test('sendTaskCommentMentionNotification', async (t: tape.Test) => {
   });
 
   const notification = await NotificationsService.sendTaskCommentMentionNotification(
-    taskOne.id,
-    comment.id,
-    userOne.user.id,
-    userTwo.user.id
+    {
+      taskId: taskOne.id,
+      commentId: comment.id,
+      actorId: userOne.user.id,
+      recipientId: userTwo.user.id
+    }
   );
 
   if (!notification) {
