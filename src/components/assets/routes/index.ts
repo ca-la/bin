@@ -7,7 +7,8 @@ import { isPartialAsset } from '../domain-object';
 import { generateUploadPolicy } from '../../../services/upload-policy';
 import {
   AWS_USER_UPLOADS_BUCKET_NAME as BUCKET_NAME,
-  AWS_USER_UPLOADS_BUCKET_REGION as BUCKET_REGION
+  AWS_USER_UPLOADS_BUCKET_REGION as BUCKET_REGION,
+  USER_UPLOADS_BASE_URL
 } from '../../../config';
 import {
   deserializeAsset,
@@ -71,6 +72,7 @@ function* getUploadPolicy(this: AuthedContext): Iterator<any, any, any> {
   }
 
   const uploadPolicy = generateUploadPolicy({
+    downloadBaseUrl: USER_UPLOADS_BASE_URL,
     id: assetId,
     mimeType,
     s3Bucket: BUCKET_NAME,

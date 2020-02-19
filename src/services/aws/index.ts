@@ -90,7 +90,7 @@ export async function getDownloadUrl(
 }
 
 /**
- * Get POST upload policy document for product-design-images S3 bucket
+ * Get POST upload policy document for a given S3 bucket
  * URL expires after 60 seconds, and file must be smaller than 500 MB
  *
  * See: https://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-HTTPPOSTConstructPolicy.html

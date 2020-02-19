@@ -4,7 +4,6 @@ import uuid from 'node-uuid';
 import { sandbox, test } from '../../test-helpers/fresh';
 import * as AWSService from '../../services/aws';
 import { generateUploadPolicy } from './index';
-import { USER_UPLOADS_BASE_URL } from '../../config';
 
 test('generateUploadPolicy', async (t: tape.Test) => {
   const uploadPolicyStub = sandbox()
@@ -19,6 +18,7 @@ test('generateUploadPolicy', async (t: tape.Test) => {
   const id = uuid.v4();
   const result = generateUploadPolicy({
     id,
+    downloadBaseUrl: 'https://foo.example',
     mimeType: 'text/csv',
     s3Bucket: 's3-foo',
     s3Region: 's3-bar'
@@ -26,7 +26,7 @@ test('generateUploadPolicy', async (t: tape.Test) => {
   const expected = {
     contentDisposition: `attachment; filename="${id}.csv"`,
     contentType: 'text/csv',
-    downloadUrl: `${USER_UPLOADS_BASE_URL}/${id}`,
+    downloadUrl: `https://foo.example/${id}`,
     formData: { 'x-aws-foo': 'bar' },
     remoteFileName: id,
     uploadUrl: 'https://example.com/foo'

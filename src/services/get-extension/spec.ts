@@ -1,9 +1,7 @@
-import tape from 'tape';
+import { test, Test } from '../../test-helpers/fresh';
+import { getExtension } from './index';
 
-import { test } from '../../../test-helpers/fresh';
-import { getExtension } from './get-extension';
-
-test('getExtension will return an extension for a supported mimeType', async (t: tape.Test) => {
+test('getExtension will return an extension for a supported mimeType', async (t: Test) => {
   t.equal(getExtension('image/png'), 'png');
   t.equal(getExtension('image/jpeg'), 'jpeg');
 

@@ -4,8 +4,8 @@ import Component, {
 } from '../../components/components/domain-object';
 import OptionsDAO from '../../dao/product-design-options';
 import * as ImagesDAO from '../../components/assets/dao';
-import { isPreviewable } from '../../components/assets/services/is-previewable';
-import { getExtension } from '../../components/assets/services/get-extension';
+import { isPreviewable } from '../../services/is-previewable';
+import { getExtension } from '../../services/get-extension';
 import Asset from '../../components/assets/domain-object';
 
 export interface AssetLinks {

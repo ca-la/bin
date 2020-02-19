@@ -75,3 +75,7 @@ export const AWS_HERMES_SQS_REGION: string;
 export const AWS_HERMES_SQS_URL: string;
 
 export const SEGMENT_WRITE_KEY: string;
+
+export const AWS_S3_AVATAR_BUCKET_NAME: string;
+export const AWS_S3_AVATAR_BUCKET_REGION: string;
+export const AVATAR_BASE_URL: string;

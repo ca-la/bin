@@ -3,7 +3,8 @@ import uuid from 'node-uuid';
 import {
   AWS_S3_THUMBNAIL_BUCKET_NAME,
   AWS_USER_UPLOADS_BUCKET_NAME as BUCKET_NAME,
-  AWS_USER_UPLOADS_BUCKET_REGION as BUCKET_REGION
+  AWS_USER_UPLOADS_BUCKET_REGION as BUCKET_REGION,
+  USER_UPLOADS_BASE_URL
 } from '../../../config';
 import * as AWSService from '../../../services/aws';
 import { generateUploadPolicy } from '../../../services/upload-policy';
@@ -18,6 +19,7 @@ export function* getDesignUploadPolicy(
   }
 
   const uploadPolicy = generateUploadPolicy({
+    downloadBaseUrl: USER_UPLOADS_BASE_URL,
     id: this.params.id || uuid.v4(),
     mimeType,
     s3Bucket: BUCKET_NAME,

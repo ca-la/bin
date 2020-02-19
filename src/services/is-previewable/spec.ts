@@ -1,9 +1,7 @@
-import tape from 'tape';
+import { test, Test } from '../../test-helpers/fresh';
+import { isPreviewable } from './index';
 
-import { test } from '../../../test-helpers/fresh';
-import { isPreviewable } from './is-previewable';
-
-test('isPreviewable can determine if a mimeType is previewable', async (t: tape.Test) => {
+test('isPreviewable can determine if a mimeType is previewable', async (t: Test) => {
   t.true(isPreviewable('image/png'));
   t.true(isPreviewable('image/jpeg'));
 

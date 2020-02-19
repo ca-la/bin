@@ -1,6 +1,4 @@
-import tape from 'tape';
-
-import { test } from '../../../test-helpers/fresh';
+import { test, Test } from '../../../test-helpers/fresh';
 import {
   deserializeAsset,
   deserializePartialAsset,
@@ -9,7 +7,7 @@ import {
 import Asset from '../domain-object';
 import { omit } from 'lodash';
 
-test('isSerializedAsset can determine if an object is an asset', async (t: tape.Test) => {
+test('isSerializedAsset can determine if an object is an asset', async (t: Test) => {
   t.false(
     isSerializedAsset({
       foo: 'bar'
@@ -30,7 +28,7 @@ test('isSerializedAsset can determine if an object is an asset', async (t: tape.
   t.true(isSerializedAsset(serialized));
 });
 
-test('deserializeAsset can deserialize an object', async (t: tape.Test) => {
+test('deserializeAsset can deserialize an object', async (t: Test) => {
   const payload: Asset = {
     createdAt: new Date(),
     description: null,
@@ -46,7 +44,7 @@ test('deserializeAsset can deserialize an object', async (t: tape.Test) => {
   t.deepEqual(deserializeAsset(serialized), payload);
 });
 
-test('deserializePartialAsset can deserialize a partial object', async (t: tape.Test) => {
+test('deserializePartialAsset can deserialize a partial object', async (t: Test) => {
   const payload = {
     createdAt: new Date('2019-04-20'),
     uploadCompletedAt: new Date('2019-04-22')

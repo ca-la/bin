@@ -3,7 +3,7 @@ import uuid from 'node-uuid';
 import { NodeRow } from '../../components/nodes/domain-objects';
 import { LayoutAttributeRow } from '../../components/attributes/layout-attributes/domain-object';
 import { EnrichedComponent } from '.';
-import { getExtension } from '../../components/assets/services/get-extension';
+import { getExtension } from '../../services/get-extension';
 import { ImageAttributeRow } from '../../components/attributes/image-attributes/domain-objects';
 import { ACCEPTED_IMAGE_TYPES } from '@cala/ts-lib';
 

@@ -8,6 +8,7 @@ import accessControlRoutes from './components/access-control/routes';
 import annotationCommentRoutes from './components/annotation-comments/routes';
 import annotationRoutes from './components/product-design-canvas-annotations/routes';
 import assetRoutes from './components/assets/routes';
+import avatarRoutes from './components/avatars/routes';
 import bidRoutes from './components/bids/routes';
 import bidTaskTypeRoutes from './components/bid-task-types/routes';
 import canvasRoutes from './components/canvases/routes';
@@ -70,6 +71,7 @@ routeDirectories.forEach(
 
 /* component-based routing */
 router.use('/access-control', accessControlRoutes);
+router.use('/avatars', avatarRoutes);
 router.use('/bid-task-types', bidTaskTypeRoutes);
 router.use('/bids', bidRoutes);
 router.use('/collaborators', collaboratorRoutes);

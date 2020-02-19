@@ -1,15 +1,14 @@
-import tape from 'tape';
 import uuid from 'node-uuid';
 
 import createUser = require('../../../test-helpers/create-user');
 import { authHeader, get, patch, put } from '../../../test-helpers/http';
-import { sandbox, test } from '../../../test-helpers/fresh';
+import { sandbox, test, Test } from '../../../test-helpers/fresh';
 import * as AWSService from '../../../services/aws';
 import * as AssetsDAO from '../dao';
 import { USER_UPLOADS_BASE_URL } from '../../../config';
 import generateAsset from '../../../test-helpers/factories/asset';
 
-test('GET /product-design-images/:assetId returns an asset', async (t: tape.Test) => {
+test('GET /product-design-images/:assetId returns an asset', async (t: Test) => {
   const { session, user } = await createUser();
   const assetId = uuid.v4();
   const { asset } = await generateAsset({ id: assetId, userId: user.id });
@@ -35,7 +34,7 @@ test('GET /product-design-images/:assetId returns an asset', async (t: tape.Test
   t.equal(findStub.callCount, 1, 'Find stub is called only once.');
 });
 
-test('PUT /product-design-images/:assetId creates an asset', async (t: tape.Test) => {
+test('PUT /product-design-images/:assetId creates an asset', async (t: Test) => {
   const { session, user } = await createUser();
   const assetId = uuid.v4();
   const { asset } = await generateAsset({ id: assetId, userId: user.id });
@@ -71,7 +70,7 @@ test('PUT /product-design-images/:assetId creates an asset', async (t: tape.Test
   t.equal(createStub.callCount, 1, 'Create stub is called only once.');
 });
 
-test('PATCH /product-design-images/:assetId updates an asset', async (t: tape.Test) => {
+test('PATCH /product-design-images/:assetId updates an asset', async (t: Test) => {
   const { session, user } = await createUser();
   const assetId = uuid.v4();
   const { asset } = await generateAsset({ id: assetId, userId: user.id });
@@ -109,7 +108,7 @@ test('PATCH /product-design-images/:assetId updates an asset', async (t: tape.Te
   );
 });
 
-test('GET /product-design-images/:assetId/upload-policy returns an upload policy', async (t: tape.Test) => {
+test('GET /product-design-images/:assetId/upload-policy returns an upload policy', async (t: Test) => {
   const { session } = await createUser();
   const assetId = uuid.v4();
 
