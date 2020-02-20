@@ -35,3 +35,33 @@ test('requireSubscription middleware', async (t: tape.Test) => {
     'does not allow an unsubscribed user to checkout'
   );
 });
+
+test('admins can submit collections', async (t: tape.Test) => {
+  const { user } = await createUser();
+  const { session } = await createUser({ role: 'ADMIN' });
+
+  const design = await DesignsDAO.create({
+    productType: 'HOODIE',
+    title: 'Robert Mapplethorpe Hoodie',
+    userId: user.id
+  });
+
+  const { collection } = await generateCollection({
+    createdBy: user.id
+  });
+
+  await addDesign(collection.id, design.id);
+
+  const [validResponse] = await API.post(
+    `/collections/${collection.id}/submissions`,
+    {
+      headers: API.authHeader(session.id)
+    }
+  );
+
+  t.equal(
+    validResponse.status,
+    201,
+    'allows admins without subscriptions to submit'
+  );
+});

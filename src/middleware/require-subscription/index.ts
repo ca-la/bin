@@ -14,6 +14,10 @@ export default function* requireSubscription(
     'Authorization is required to access this resource'
   );
 
+  if (this.state.role === 'ADMIN') {
+    return yield next;
+  }
+
   yield db.transaction(async (trx: Knex.Transaction) => {
     const subscriptions = await findActiveSubscription(this.state.userId, trx);
     this.assert(
@@ -22,6 +26,5 @@ export default function* requireSubscription(
       'A subscription is required to perform this action'
     );
   });
-
   yield next;
 }
