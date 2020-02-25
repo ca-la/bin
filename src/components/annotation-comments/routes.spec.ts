@@ -5,13 +5,12 @@ import { authHeader, get, put } from '../../test-helpers/http';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import { create as createDesign } from '../product-designs/dao';
 import * as CreateNotifications from '../../services/create-notifications';
-import * as AddAttachmentLinks from '../../services/add-attachments-links';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
 import generateCollection from '../../test-helpers/factories/collection';
 import * as AnnounceCommentService from '../iris/messages/annotation-comment';
 import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 import { addDesign } from '../../test-helpers/collections';
-import Comment from '../comments/domain-object';
+import * as AssetLinkAttachment from '../../services/attach-asset-links';
 
 const API_PATH = '/product-design-canvas-annotations';
 
@@ -115,9 +114,11 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
     .stub(CreateNotifications, 'sendAnnotationCommentMentionNotification')
     .resolves();
 
-  const addAttachmentLinksStub = sandbox()
-    .stub(AddAttachmentLinks, 'addAttachmentLinks')
-    .callsFake((comment: Comment): Comment => comment);
+  const attachLinksStub = sandbox()
+    .stub(AssetLinkAttachment, 'constructAttachmentAssetLinks')
+    .returns({
+      downloadLink: 'a-very-download'
+    });
 
   const annotationResponse = await put(`${API_PATH}/${annotationId}`, {
     body: annotationData,
@@ -138,7 +139,6 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
   );
   t.equal(notificationStub.callCount, 1, 'Comment notification called');
   t.equal(announcementStub.callCount, 1, 'Announces the new comment to Iris');
-  t.equal(addAttachmentLinksStub.callCount, 1, 'Attaches asset links');
 
   const annotationCommentResponse = await get(
     `${API_PATH}/${annotationResponse[1].id}/comments`,
@@ -183,7 +183,6 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
   );
   t.equal(notificationMentionStub.callCount, 1, 'Mentions notification called');
   t.equal(notificationStub.callCount, 2, 'Comment notification called');
-  t.equal(addAttachmentLinksStub.callCount, 3, 'Attaches asset links');
   t.deepEqual(notificationStub.getCall(1).args.slice(0, 5), [
     annotationResponse[1].id,
     annotationResponse[1].canvasId,
@@ -192,6 +191,16 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
     [collaborator.user!.id]
   ]);
   t.equal(announcementStub.callCount, 2, 'Announces the comment to Iris');
+  t.equal(
+    attachLinksStub.callCount,
+    1,
+    'Attachment asset links are generated for the created comment'
+  );
+  t.equal(
+    announcementStub.args[1][1].attachments[0].downloadLink,
+    'a-very-download',
+    'Attachments links are attached to the created comment'
+  );
 
   const [response, body] = await get(
     `${API_PATH}/${annotationResponse[1].id}/comments`,
@@ -237,7 +246,8 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
           {
             ...attachment,
             createdAt: new Date(attachment.createdAt),
-            uploadCompletedAt: new Date(attachment.uploadCompletedAt)
+            uploadCompletedAt: new Date(attachment.uploadCompletedAt),
+            downloadLink: 'a-very-download'
           }
         ]
       }

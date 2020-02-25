@@ -1,15 +1,15 @@
 import { RealtimeTaskComment, RealtimeTaskCommentDeletion } from '@cala/ts-lib';
 import { sendMessage } from '../../send-message';
-import Comment from '../../../comments/domain-object';
 import TaskComment from '../../../task-comments/domain-object';
 import addAtMentionDetails from '../../../../services/add-at-mention-details';
+import { CommentWithAttachmentLinks } from '../../../../services/add-attachments-links';
 
 /**
  * Publishes a task comment to the Iris SQS.
  */
 export async function announceTaskCommentCreation(
   taskComment: TaskComment,
-  comment: Comment
+  comment: CommentWithAttachmentLinks
 ): Promise<RealtimeTaskComment> {
   const commentWithMentions = await addAtMentionDetails([comment]);
 

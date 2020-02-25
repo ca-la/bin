@@ -4,15 +4,15 @@ import {
 } from '@cala/ts-lib';
 import { sendMessage } from '../../send-message';
 import AnnotationComment from '../../../annotation-comments/domain-object';
-import Comment from '../../../comments/domain-object';
 import addAtMentionDetails from '../../../../services/add-at-mention-details';
+import { CommentWithAttachmentLinks } from '../../../../services/add-attachments-links';
 
 /**
  * Publishes an annotation comment to the Iris SQS.
  */
 export async function announceAnnotationCommentCreation(
   annotationComment: AnnotationComment,
-  comment: Comment
+  comment: CommentWithAttachmentLinks
 ): Promise<RealtimeAnnotationComment> {
   const commentWithMentions = await addAtMentionDetails([comment]);
 

@@ -26,7 +26,7 @@ import * as AnnounceCommentService from '../../components/iris/messages/task-com
 import * as StageTemplate from '../../components/tasks/templates';
 import { addDesign } from '../../test-helpers/collections';
 import * as AddAttachmentLinks from '../../services/add-attachments-links';
-import Comment from '../../components/comments/domain-object';
+import * as AssetLinkAttachment from '../../services/attach-asset-links';
 
 const beforeEach = (): void => {
   sandbox()
@@ -569,6 +569,11 @@ test('PUT /tasks/:taskId/comment/:id creates a task comment', async (t: tape.Tes
   const notificationStub = sandbox()
     .stub(CreateNotifications, 'sendTaskCommentCreateNotification')
     .resolves();
+  const attachLinksStub = sandbox()
+    .stub(AssetLinkAttachment, 'constructAttachmentAssetLinks')
+    .returns({
+      downloadLink: 'a-very-download'
+    });
 
   const attachment = {
     createdAt: new Date().toISOString(),
@@ -583,9 +588,10 @@ test('PUT /tasks/:taskId/comment/:id creates a task comment', async (t: tape.Tes
     deletedAt: null
   };
 
-  const addAttachmentLinksStub = sandbox()
-    .stub(AddAttachmentLinks, 'addAttachmentLinks')
-    .callsFake((com: Comment): Comment => com);
+  const addAttachmentLinksStub = sandbox().spy(
+    AddAttachmentLinks,
+    'addAttachmentLinks'
+  );
 
   await post('/tasks', {
     body: { ...BASE_TASK_EVENT, id: taskId },
@@ -637,7 +643,8 @@ test('PUT /tasks/:taskId/comment/:id creates a task comment', async (t: tape.Tes
         {
           ...attachment,
           createdAt: new Date(attachment.createdAt),
-          uploadCompletedAt: new Date(attachment.uploadCompletedAt)
+          uploadCompletedAt: new Date(attachment.uploadCompletedAt),
+          downloadLink: 'a-very-download'
         }
       ]
     },
@@ -656,6 +663,16 @@ test('PUT /tasks/:taskId/comment/:id creates a task comment', async (t: tape.Tes
     'New task comment is announced to Iris'
   );
   t.equal(addAttachmentLinksStub.callCount, 2, 'Attaches asset links');
+  t.equal(
+    attachLinksStub.callCount,
+    2,
+    'Attachment asset links are generated for the created comment'
+  );
+  t.equal(
+    announcementStub.args[0][1].attachments[0].downloadLink,
+    'a-very-download',
+    'Attachments links are attached to the created comment'
+  );
 });
 
 test('GET list returns all tasks by resource with limit & offset', async (t: tape.Test) => {

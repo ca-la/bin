@@ -6,6 +6,7 @@ import { sandbox, test } from '../../../../test-helpers/fresh';
 import { announceTaskCommentCreation } from './index';
 import TaskComment from '../../../task-comments/domain-object';
 import generateComment from '../../../../test-helpers/factories/comment';
+import { CommentWithAttachmentLinks } from '../../../../services/add-attachments-links';
 
 test('announceTaskCommentCreation supports sending a message', async (t: tape.Test) => {
   const sendStub = sandbox()
@@ -25,7 +26,10 @@ test('announceTaskCommentCreation supports sending a message', async (t: tape.Te
       }
     ]);
 
-  const response = await announceTaskCommentCreation(tcOne, comment);
+  const response = await announceTaskCommentCreation(
+    tcOne,
+    comment as CommentWithAttachmentLinks
+  );
   t.deepEqual(
     response,
     {

@@ -1,15 +1,19 @@
 import uuid from 'node-uuid';
 import createUser = require('../../test-helpers/create-user');
-import { test, Test } from '../../test-helpers/fresh';
+import { sandbox, test, Test } from '../../test-helpers/fresh';
 import db from '../db';
 import Knex from 'knex';
 import { createCommentWithAttachments } from './index';
 import Asset from '../../components/assets/domain-object';
 import { BaseComment } from '../../components/comments/domain-object';
 import { omit } from 'lodash';
+import * as AssetLinks from '../attach-asset-links';
 
 test('createDesign service creates a collaborator', async (t: Test) => {
   const { user } = await createUser({ withSession: false });
+  sandbox()
+    .stub(AssetLinks, 'constructAttachmentAssetLinks')
+    .returns({ link: 'link-to-something' });
 
   const commentBody: BaseComment = {
     createdAt: new Date(),
@@ -59,7 +63,12 @@ test('createDesign service creates a collaborator', async (t: Test) => {
         userEmail: user.email,
         userRole: user.role,
         userName: user.name,
-        attachments: [omit(attachment, 'createdAt', 'uploadCompletedAt')]
+        attachments: [
+          {
+            ...omit(attachment, 'createdAt', 'uploadCompletedAt'),
+            link: 'link-to-something'
+          }
+        ]
       }
     );
   });

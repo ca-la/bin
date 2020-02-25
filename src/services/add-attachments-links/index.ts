@@ -5,7 +5,7 @@ import {
 } from '../attach-asset-links';
 import Asset from '../../components/assets/domain-object';
 
-interface CommentWithAttachmentLinks extends Comment {
+export interface CommentWithAttachmentLinks extends Comment {
   attachments: (Asset & AssetLinks)[];
 }
 
