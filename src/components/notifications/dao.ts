@@ -115,13 +115,19 @@ function addCommentText(query: Knex.QueryBuilder): Knex.QueryBuilder {
 }
 
 function addHasAttachments(query: Knex.QueryBuilder): Knex.QueryBuilder {
-  return query.select((subquery: Knex.QueryBuilder) =>
-    subquery
-      .select(db.raw(`COUNT('*') > 0`))
-      .from('comment_attachments as ca')
-      .whereRaw('ca.comment_id = n.comment_id')
-      .groupBy('n.comment_id')
-      .as('has_attachments')
+  return query.select(
+    db.raw(`
+    COALESCE((
+      SELECT
+        count('*') > 0
+      FROM
+        comment_attachments AS ca
+      WHERE
+        ca.comment_id = n.comment_id
+      GROUP BY
+        n.comment_id
+    ), false)
+      AS has_attachments`)
   );
 }
 

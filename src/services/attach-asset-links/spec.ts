@@ -230,7 +230,7 @@ test('addAssetLink returns link when component is of type material', async (t: t
   } as Asset);
   t.equal(
     attachmentAssetLinks.thumbnailLink,
-    `https://imgix.example.com/${imageId}?fm=jpg&fit=fill&h=90&w=110`
+    `https://imgix.example.com/${imageId}?fm=jpg&fit=fill&h=106&w=128`
   );
   t.equal(
     attachmentAssetLinks.downloadLink,

@@ -98,7 +98,7 @@ test('annotation comment notification message', async (t: tape.Test) => {
     1,
     'message attachments contains one mention'
   );
-  t.false(hasAttachments, 'Notification does not have attachments');
+  t.is(hasAttachments, false, 'Notification does not have attachments');
   const { collaborators } = annCommCreateMessage.actions[0];
   t.is(collaborators.length, 2, 'message actions contains three collaborators');
 
@@ -168,7 +168,7 @@ test('annotation mention notification message', async (t: tape.Test) => {
     mentions && Object.keys(mentions).length === 1,
     'message attachments contains one mention'
   );
-  t.false(hasAttachments, 'Notification does not have attachments');
+  t.is(hasAttachments, false, 'Notification does not have attachments');
   const { collaborators } = message.actions[0];
   t.assert(
     collaborators.length === 2,
@@ -591,7 +591,7 @@ test('task comment create notification message', async (t: tape.Test) => {
     collaborators.length === 2,
     'message actions contains two collaborators'
   );
-  t.false(hasAttachments, 'Notification does not have attachments');
+  t.is(hasAttachments, false, 'Notification does not have attachments');
 
   const notificationWithAttachment = notifications[0];
   const withAttachmentsMessage = await createNotificationMessage(
@@ -666,7 +666,7 @@ test('task comment mention notification message', async (t: tape.Test) => {
     collaborators.length === 2,
     'message actions contains two collaborators'
   );
-  t.false(hasAttachments, 'Notification does not have attachments');
+  t.is(hasAttachments, false, 'Notification does not have attachments');
 
   const notificationWithAttachment = notifications[0];
   const withAttachmentsMessage = await createNotificationMessage(

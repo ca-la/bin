@@ -21,7 +21,7 @@ const PREVIEW_CARD_FORMAT = '?fm=jpg&w=560';
 const THUMBNAIL_FORMAT = '?fm=jpg&w=48';
 const DESIGN_PREVIEW_THUMBNAIL = '?fm=jpg&fit=fill&h=104&w=104';
 const DESIGN_PREVIEW_THUMBNAIL_2X = DESIGN_PREVIEW_THUMBNAIL + '&dpr=2';
-const ATTACHMENT_PREVIEW = '?fm=jpg&fit=fill&h=90&w=110';
+const ATTACHMENT_PREVIEW = '?fm=jpg&fit=fill&h=106&w=128';
 const ATTACHMENT_PREVIEW_2X = ATTACHMENT_PREVIEW + '&dpr=2';
 
 function constructAssetLinks(options: {
