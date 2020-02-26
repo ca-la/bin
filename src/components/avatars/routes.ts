@@ -3,6 +3,7 @@ import Router from 'koa-router';
 import requireAuth = require('../../middleware/require-auth');
 import { generateUploadPolicy } from '../../services/upload-policy';
 import { isPreviewable } from '../../services/is-previewable';
+import { purgeImage } from '../../services/imgix';
 import {
   AVATAR_BASE_URL,
   AWS_S3_AVATAR_BUCKET_NAME as BUCKET_NAME,
@@ -11,9 +12,7 @@ import {
 
 const router = new Router();
 
-export function* getAvatarUploadPolicy(
-  this: AuthedContext
-): Iterator<any, any, any> {
+function* getAvatarUploadPolicy(this: AuthedContext): Iterator<any, any, any> {
   const { mimeType } = this.query;
 
   if (!mimeType) {
@@ -36,6 +35,13 @@ export function* getAvatarUploadPolicy(
   this.status = 200;
 }
 
+function* postUploadComplete(this: AuthedContext): Iterator<any, any, any> {
+  const url = `${AVATAR_BASE_URL}/${this.state.userId}`;
+  yield purgeImage(url);
+  this.status = 204;
+}
+
 router.get('/upload-policy', requireAuth, getAvatarUploadPolicy);
+router.post('/upload-complete', requireAuth, postUploadComplete);
 
 export default router.routes();

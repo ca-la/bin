@@ -1,8 +1,9 @@
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 
-import createUser = require('../../test-helpers/create-user');
-import { authHeader, get } from '../../test-helpers/http';
 import * as AWSService from '../../services/aws';
+import * as ImgixService from '../../services/imgix';
+import createUser = require('../../test-helpers/create-user');
+import { authHeader, get, post } from '../../test-helpers/http';
 import { AVATAR_BASE_URL } from '../../config';
 
 test('GET /avatars/upload-policy returns an upload policy', async (t: Test) => {
@@ -54,4 +55,20 @@ test('GET /avatars/upload-policy returns 400 for bad mime types', async (t: Test
 
   t.equal(response.status, 400);
   t.deepEqual(body.message, 'File format not supported');
+});
+
+test('POST /avatars/upload-complete purges images', async (t: Test) => {
+  const { session, user } = await createUser();
+
+  const purgeStub = sandbox()
+    .stub(ImgixService, 'purgeImage')
+    .resolves();
+
+  const [response] = await post('/avatars/upload-complete', {
+    headers: authHeader(session.id)
+  });
+
+  t.equal(response.status, 204);
+  t.equal(purgeStub.callCount, 1);
+  t.equal(purgeStub.firstCall.args[0], `${AVATAR_BASE_URL}/${user.id}`);
 });
