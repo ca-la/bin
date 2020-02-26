@@ -295,6 +295,7 @@ export function isFullNotificationRow(
       'collection_title',
       'design_title',
       'design_image_ids',
+      'has_attachments',
       'task_title'
     )
   );
@@ -328,6 +329,7 @@ function encodeFull(rowData: FullNotificationRow): FullNotification {
     designId: rowData.design_id,
     designImageIds: rowData.design_image_ids,
     designTitle: rowData.design_title,
+    hasAttachments: rowData.has_attachments,
     id: rowData.id,
     measurementId: rowData.measurement_id,
     readAt: rowData.read_at ? new Date(rowData.read_at) : null,

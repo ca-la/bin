@@ -146,6 +146,7 @@ export async function createNotificationMessage(
         collectionId,
         commentId,
         commentText,
+        hasAttachments,
         componentType
       } = notification;
       const design = { id: designId, title: notification.designTitle };
@@ -172,7 +173,9 @@ export async function createNotificationMessage(
             collaborators
           }
         ],
-        attachments: [{ text: commentText, url: deepLink, mentions }],
+        attachments: [
+          { text: commentText, url: deepLink, mentions, hasAttachments }
+        ],
         html: `${span(cleanName, 'user-name')} commented on ${htmlLink}`,
         imageUrl: buildImageUrl(notification.designImageIds),
         link: deepLink,
@@ -190,6 +193,7 @@ export async function createNotificationMessage(
         collectionId,
         commentId,
         commentText,
+        hasAttachments,
         componentType
       } = notification;
       const design = { id: designId, title: notification.designTitle };
@@ -216,7 +220,9 @@ export async function createNotificationMessage(
             collaborators
           }
         ],
-        attachments: [{ text: commentText, url: deepLink, mentions }],
+        attachments: [
+          { text: commentText, url: deepLink, mentions, hasAttachments }
+        ],
         html: `${span(cleanName, 'user-name')} mentioned you on ${htmlLink}`,
         imageUrl: buildImageUrl(designImageIds),
         link: deepLink,
@@ -256,7 +262,8 @@ export async function createNotificationMessage(
         collectionId,
         taskId,
         commentId,
-        commentText
+        commentText,
+        hasAttachments
       } = notification;
       const design = { id: designId, title: notification.designTitle };
       const collection = collectionId
@@ -286,7 +293,9 @@ export async function createNotificationMessage(
             collaborators
           }
         ],
-        attachments: [{ text: comment.text, url: deepLink, mentions }],
+        attachments: [
+          { text: comment.text, url: deepLink, mentions, hasAttachments }
+        ],
         html: `${span(
           cleanName,
           'user-name'
@@ -305,7 +314,8 @@ export async function createNotificationMessage(
         collectionId,
         taskId,
         commentId,
-        commentText
+        commentText,
+        hasAttachments
       } = notification;
       const design = { id: designId, title: notification.designTitle };
       const collection = collectionId
@@ -331,7 +341,9 @@ export async function createNotificationMessage(
             collaborators
           }
         ],
-        attachments: [{ text: commentText, url: deepLink, mentions }],
+        attachments: [
+          { text: commentText, url: deepLink, mentions, hasAttachments }
+        ],
         html: `${span(
           cleanName,
           'user-name'

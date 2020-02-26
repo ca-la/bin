@@ -9,6 +9,7 @@ import * as CollectionsDAO from '../collections/dao';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as MeasurementsDAO from '../../dao/product-design-canvas-measurements';
 import * as CollaboratorsDAO from '../collaborators/dao';
+import * as CommentAttachmentDAO from '../comment-attachments/dao';
 import generateNotification from '../../test-helpers/factories/notification';
 import { createNotificationMessage } from './notification-messages';
 import { STUDIO_HOST } from '../../config';
@@ -17,6 +18,7 @@ import generateCollection from '../../test-helpers/factories/collection';
 import * as NotificationAnnouncer from '../iris/messages/notification';
 import { deleteById } from '../../test-helpers/designs';
 import { findByUserId } from './dao';
+import generateAsset from '../../test-helpers/factories/asset';
 
 test('annotation comment notification message', async (t: tape.Test) => {
   sandbox()
@@ -49,12 +51,32 @@ test('annotation comment notification message', async (t: tape.Test) => {
   });
   await deleteById(annCommCreateDesign.id);
 
+  const { comment } = await generateNotification({
+    recipientUserId: userOne.user.id,
+    type: NotificationType.ANNOTATION_COMMENT_CREATE
+  });
+
+  const asset1 = (await generateAsset()).asset;
+  const asset2 = (await generateAsset()).asset;
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await CommentAttachmentDAO.createAll(trx, [
+      {
+        assetId: asset1.id,
+        commentId: comment.id
+      },
+      {
+        assetId: asset2.id,
+        commentId: comment.id
+      }
+    ]);
+  });
+
   const notifications = await db.transaction((trx: Knex.Transaction) =>
     findByUserId(trx, userOne.user.id, { limit: 20, offset: 0 })
   );
 
-  t.is(notifications.length, 1);
-  const annCommCreateDesignNotification = notifications[0];
+  t.is(notifications.length, 2);
+  const annCommCreateDesignNotification = notifications[1];
 
   const annCommCreateMessage = await createNotificationMessage(
     annCommCreateDesignNotification
@@ -70,14 +92,27 @@ test('annotation comment notification message', async (t: tape.Test) => {
     annCommCreateMessage.actor && annCommCreateMessage.actor.id === actor.id,
     'message actor is the user'
   );
-  const { mentions } = annCommCreateMessage.attachments[0];
+  const { mentions, hasAttachments } = annCommCreateMessage.attachments[0];
   t.is(
     Object.keys(mentions!).length,
     1,
     'message attachments contains one mention'
   );
+  t.false(hasAttachments, 'Notification does not have attachments');
   const { collaborators } = annCommCreateMessage.actions[0];
   t.is(collaborators.length, 2, 'message actions contains three collaborators');
+
+  const notificationWithAttachment = notifications[0];
+  const withAttachmentsMessage = await createNotificationMessage(
+    notificationWithAttachment
+  );
+  if (!withAttachmentsMessage) {
+    throw new Error('Did not create message');
+  }
+  t.true(
+    withAttachmentsMessage.attachments[0].hasAttachments,
+    'Notification has attachments'
+  );
 });
 
 test('annotation mention notification message', async (t: tape.Test) => {
@@ -93,12 +128,31 @@ test('annotation mention notification message', async (t: tape.Test) => {
   });
   await deleteById(annMenDesign.id);
 
+  const { comment } = await generateNotification({
+    recipientUserId: recipient.id,
+    type: NotificationType.ANNOTATION_COMMENT_MENTION
+  });
+  const asset1 = (await generateAsset()).asset;
+  const asset2 = (await generateAsset()).asset;
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await CommentAttachmentDAO.createAll(trx, [
+      {
+        assetId: asset1.id,
+        commentId: comment.id
+      },
+      {
+        assetId: asset2.id,
+        commentId: comment.id
+      }
+    ]);
+  });
+
   const notifications = await db.transaction((trx: Knex.Transaction) =>
     findByUserId(trx, recipient.id, { limit: 20, offset: 0 })
   );
 
-  t.is(notifications.length, 1);
-  const annMenNotification = notifications[0];
+  t.is(notifications.length, 2);
+  const annMenNotification = notifications[1];
 
   const message = await createNotificationMessage(annMenNotification);
   if (!message) {
@@ -109,15 +163,28 @@ test('annotation mention notification message', async (t: tape.Test) => {
     'message html contains the design title'
   );
   t.assert(message.actor && message.actor.id === actor.id, 'actor is correct');
-  const { mentions } = message.attachments[0];
+  const { mentions, hasAttachments } = message.attachments[0];
   t.assert(
     mentions && Object.keys(mentions).length === 1,
     'message attachments contains one mention'
   );
+  t.false(hasAttachments, 'Notification does not have attachments');
   const { collaborators } = message.actions[0];
   t.assert(
     collaborators.length === 2,
     'message actions contains two collaborators'
+  );
+
+  const notificationWithAttachment = notifications[0];
+  const withAttachmentsMessage = await createNotificationMessage(
+    notificationWithAttachment
+  );
+  if (!withAttachmentsMessage) {
+    throw new Error('Did not create message');
+  }
+  t.true(
+    withAttachmentsMessage.attachments[0].hasAttachments,
+    'Notification has attachments'
   );
 });
 
@@ -477,12 +544,31 @@ test('task comment create notification message', async (t: tape.Test) => {
   });
   await deleteById(tasComCreDesign.id);
 
+  const { comment } = await generateNotification({
+    recipientUserId: recipient.id,
+    type: NotificationType.TASK_COMMENT_CREATE
+  });
+  const asset1 = (await generateAsset()).asset;
+  const asset2 = (await generateAsset()).asset;
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await CommentAttachmentDAO.createAll(trx, [
+      {
+        assetId: asset1.id,
+        commentId: comment.id
+      },
+      {
+        assetId: asset2.id,
+        commentId: comment.id
+      }
+    ]);
+  });
+
   const notifications = await db.transaction((trx: Knex.Transaction) =>
     findByUserId(trx, recipient.id, { limit: 20, offset: 0 })
   );
 
-  t.is(notifications.length, 1);
-  const tasComCreNotification = notifications[0];
+  t.is(notifications.length, 2);
+  const tasComCreNotification = notifications[1];
   const message = await createNotificationMessage(tasComCreNotification);
   if (!message) {
     throw new Error('Did not create message');
@@ -491,7 +577,7 @@ test('task comment create notification message', async (t: tape.Test) => {
     message.html.includes(task.title || 'test'),
     'message html contains the task title'
   );
-  const { mentions } = message.attachments[0];
+  const { mentions, hasAttachments } = message.attachments[0];
   t.assert(
     mentions && Object.keys(mentions).length === 1,
     'message attachments contains one mention'
@@ -504,6 +590,19 @@ test('task comment create notification message', async (t: tape.Test) => {
   t.assert(
     collaborators.length === 2,
     'message actions contains two collaborators'
+  );
+  t.false(hasAttachments, 'Notification does not have attachments');
+
+  const notificationWithAttachment = notifications[0];
+  const withAttachmentsMessage = await createNotificationMessage(
+    notificationWithAttachment
+  );
+  if (!withAttachmentsMessage) {
+    throw new Error('Did not create message');
+  }
+  t.true(
+    withAttachmentsMessage.attachments[0].hasAttachments,
+    'Notification has attachments'
   );
 });
 
@@ -520,12 +619,31 @@ test('task comment mention notification message', async (t: tape.Test) => {
   });
   await deleteById(tasComMenDesign.id);
 
+  const { comment } = await generateNotification({
+    recipientUserId: recipient.id,
+    type: NotificationType.TASK_COMMENT_MENTION
+  });
+  const asset1 = (await generateAsset()).asset;
+  const asset2 = (await generateAsset()).asset;
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await CommentAttachmentDAO.createAll(trx, [
+      {
+        assetId: asset1.id,
+        commentId: comment.id
+      },
+      {
+        assetId: asset2.id,
+        commentId: comment.id
+      }
+    ]);
+  });
+
   const notifications = await db.transaction((trx: Knex.Transaction) =>
     findByUserId(trx, recipient.id, { limit: 20, offset: 0 })
   );
 
-  t.is(notifications.length, 1);
-  const tasComMenNotification = notifications[0];
+  t.is(notifications.length, 2);
+  const tasComMenNotification = notifications[1];
   const message = await createNotificationMessage(tasComMenNotification);
   if (!message) {
     throw new Error('Did not create message');
@@ -538,7 +656,7 @@ test('task comment mention notification message', async (t: tape.Test) => {
     message.actor && message.actor.id === actor.id,
     'message.actor && message.actor.id is the user'
   );
-  const { mentions } = message.attachments[0];
+  const { mentions, hasAttachments } = message.attachments[0];
   t.assert(
     mentions && Object.keys(mentions).length === 1,
     'message attachments contains one mention'
@@ -547,6 +665,19 @@ test('task comment mention notification message', async (t: tape.Test) => {
   t.assert(
     collaborators.length === 2,
     'message actions contains two collaborators'
+  );
+  t.false(hasAttachments, 'Notification does not have attachments');
+
+  const notificationWithAttachment = notifications[0];
+  const withAttachmentsMessage = await createNotificationMessage(
+    notificationWithAttachment
+  );
+  if (!withAttachmentsMessage) {
+    throw new Error('Did not create message');
+  }
+  t.true(
+    withAttachmentsMessage.attachments[0].hasAttachments,
+    'Notification has attachments'
   );
 });
 

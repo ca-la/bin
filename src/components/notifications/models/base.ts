@@ -34,6 +34,7 @@ export interface BaseFullNotificationRow {
   collection_title: null;
   design_title: null;
   design_image_ids: string[];
+  has_attachments: boolean;
   task_title: null;
 }
 
@@ -66,6 +67,7 @@ export interface BaseFullNotification {
   collectionTitle: null;
   designTitle: null;
   designImageIds: string[];
+  hasAttachments: boolean;
   taskTitle: null;
 }
 

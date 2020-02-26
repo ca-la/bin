@@ -114,6 +114,17 @@ function addCommentText(query: Knex.QueryBuilder): Knex.QueryBuilder {
     .whereNull('co.deleted_at');
 }
 
+function addHasAttachments(query: Knex.QueryBuilder): Knex.QueryBuilder {
+  return query.select((subquery: Knex.QueryBuilder) =>
+    subquery
+      .select(db.raw(`COUNT('*') > 0`))
+      .from('comment_attachments as ca')
+      .whereRaw('ca.comment_id = n.comment_id')
+      .groupBy('n.comment_id')
+      .as('has_attachments')
+  );
+}
+
 function addMeasurement(query: Knex.QueryBuilder): Knex.QueryBuilder {
   return query
     .leftJoin(
@@ -164,6 +175,7 @@ export async function findByUserId(
     .modify(addDesignTitle)
     .modify(addDesignImages)
     .modify(addCommentText)
+    .modify(addHasAttachments)
     .modify(addMeasurement)
     .modify(addAnnotation)
     .modify(addTaskTitle)
@@ -203,6 +215,7 @@ export async function findById(
     .modify(addDesignTitle)
     .modify(addDesignImages)
     .modify(addCommentText)
+    .modify(addHasAttachments)
     .modify(addMeasurement)
     .modify(addAnnotation)
     .modify(addTaskTitle)
@@ -237,6 +250,7 @@ export async function findOutstanding(
     .modify(addDesignTitle)
     .modify(addDesignImages)
     .modify(addCommentText)
+    .modify(addHasAttachments)
     .modify(addMeasurement)
     .modify(addAnnotation)
     .modify(addTaskTitle)
