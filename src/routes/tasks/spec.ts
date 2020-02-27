@@ -566,13 +566,22 @@ test('PUT /tasks/:taskId/comment/:id creates a task comment', async (t: tape.Tes
   const announcementStub = sandbox()
     .stub(AnnounceCommentService, 'announceTaskCommentCreation')
     .resolves({});
-  const notificationStub = sandbox()
+  const notificationCreateStub = sandbox()
     .stub(CreateNotifications, 'sendTaskCommentCreateNotification')
+    .resolves();
+  const notificationMentionStub = sandbox()
+    .stub(CreateNotifications, 'sendTaskCommentMentionNotification')
     .resolves();
   const attachLinksStub = sandbox()
     .stub(AssetLinkAttachment, 'constructAttachmentAssetLinks')
     .returns({
       downloadLink: 'a-very-download'
+    });
+  sandbox()
+    .stub(CollaboratorsDAO, 'findById')
+    .resolves({
+      id: 'ac45855a-862a-46cb-8fde-f3643bc3c433',
+      user: { name: 'Mr. Yo' }
     });
 
   const attachment = {
@@ -604,7 +613,7 @@ test('PUT /tasks/:taskId/comment/:id creates a task comment', async (t: tape.Tes
     isPinned: false,
     mentions: {},
     parentCommentId: null,
-    text: 'A comment',
+    text: '@<ac45855a-862a-46cb-8fde-f3643bc3c433|collaborator> A comment',
     userEmail: 'cool@me.me',
     userId: 'purposefully incorrect',
     userName: 'Somebody Cool',
@@ -634,7 +643,7 @@ test('PUT /tasks/:taskId/comment/:id creates a task comment', async (t: tape.Tes
     },
     {
       ...commentBody,
-      mentions: {},
+      mentions: { 'ac45855a-862a-46cb-8fde-f3643bc3c433': 'Mr. Yo' },
       userEmail: user.email,
       userId: user.id,
       userName: user.name,
@@ -653,9 +662,14 @@ test('PUT /tasks/:taskId/comment/:id creates a task comment', async (t: tape.Tes
 
   // A notification is sent when comments are made
   t.equal(
-    notificationStub.callCount,
+    notificationCreateStub.callCount,
     1,
     'Notification is generated from the comment'
+  );
+  t.equal(
+    notificationMentionStub.callCount,
+    1,
+    'Notification is generated from mention in the comment'
   );
   t.equal(
     announcementStub.callCount,

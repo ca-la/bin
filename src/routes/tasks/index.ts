@@ -26,7 +26,9 @@ import {
 import requireAuth = require('../../middleware/require-auth');
 import * as NotificationsService from '../../services/create-notifications';
 import { typeGuard } from '../../middleware/type-guard';
-import addAtMentionDetails from '../../services/add-at-mention-details';
+import addAtMentionDetails, {
+  constructCollaboratorName
+} from '../../services/add-at-mention-details';
 import parseAtMentions, {
   MentionType
 } from '@cala/ts-lib/dist/parsing/comment-mentions';
@@ -303,6 +305,7 @@ function* createTaskComment(
       );
       const mentions = parseAtMentions(filteredBody.text);
       const mentionedUserIds: string[] = [];
+      const mentionedUsers: { [key: string]: string } = {};
       for (const mention of mentions) {
         switch (mention.type) {
           case MentionType.collaborator: {
@@ -312,6 +315,9 @@ function* createTaskComment(
               trx
             );
             if (collaborator && collaborator.user) {
+              const name = constructCollaboratorName(collaborator);
+              mentionedUsers[collaborator.id] = name;
+
               await NotificationsService.sendTaskCommentMentionNotification(
                 {
                   taskId,
@@ -326,11 +332,13 @@ function* createTaskComment(
           }
         }
       }
-      await announceTaskCommentCreation(taskComment, comment);
+      const commentWithMentions = { ...comment, mentions: mentionedUsers };
+
+      await announceTaskCommentCreation(taskComment, commentWithMentions);
       await NotificationsService.sendTaskCommentCreateNotification(
         {
           taskId,
-          commentId: comment.id,
+          commentId: commentWithMentions.id,
           actorId: userId,
           mentionedUserIds
         },
@@ -338,7 +346,7 @@ function* createTaskComment(
       );
 
       this.status = 201;
-      this.body = comment;
+      this.body = commentWithMentions;
     });
   }
 

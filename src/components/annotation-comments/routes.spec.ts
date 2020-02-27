@@ -174,7 +174,7 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
     []
   ]);
 
-  await put(
+  const [, mentionBody] = await put(
     `${API_PATH}/${annotationResponse[1].id}/comments/${commentWithMentionId}`,
     {
       body: commentWithMentionBody,
@@ -201,6 +201,9 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
     'a-very-download',
     'Attachments links are attached to the created comment'
   );
+  t.deepEqual(mentionBody[0].mentions, {
+    [collaborator.id]: 'Q User'
+  });
 
   const [response, body] = await get(
     `${API_PATH}/${annotationResponse[1].id}/comments`,

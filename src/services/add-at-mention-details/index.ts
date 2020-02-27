@@ -13,7 +13,7 @@ export interface CommentWithMentions extends Comment {
 /**
  * Constructs the name to add to the @mention detail.
  */
-function constructCollaboratorName(
+export function constructCollaboratorName(
   collaborator: CollaboratorWithUser | null
 ): string {
   if (!collaborator) {
