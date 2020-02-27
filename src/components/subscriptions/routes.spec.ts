@@ -12,7 +12,7 @@ import PaymentMethodsDAO = require('../payment-methods/dao');
 import Session = require('../../domain-objects/session');
 import Stripe = require('../../services/stripe');
 import User from '../users/domain-object';
-import { authHeader, get, post, put } from '../../test-helpers/http';
+import { authHeader, get, patch, post, put } from '../../test-helpers/http';
 import { Plan } from '../plans/domain-object';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 
@@ -231,4 +231,50 @@ test('PUT /subscriptions updates a subscription', async (t: Test) => {
 
   t.equal(res.status, 200);
   t.notEqual(body.paymentMethodId, null);
+});
+
+test('PATCH /subscriptions/:id cancels a subscription', async (t: Test) => {
+  const { plan, user, session } = await setup();
+
+  let id;
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const subscription = await SubscriptionsDAO.create(
+      {
+        id: uuid.v4(),
+        cancelledAt: null,
+        planId: plan.id,
+        paymentMethodId: null,
+        stripeSubscriptionId: '123',
+        userId: user.id,
+        isPaymentWaived: false
+      },
+      trx
+    );
+
+    id = subscription.id;
+  });
+
+  const [nonAdminRes] = await patch(`/subscriptions/${id}`, {
+    headers: authHeader(session.id),
+    body: {
+      cancelledAt: new Date(2020, 6, 21).toISOString()
+    }
+  });
+
+  t.equal(nonAdminRes.status, 403, 'Non admins cannot cancel subscriptions');
+
+  const { session: adminSession } = await createUser({ role: 'ADMIN' });
+  const [adminRes, body] = await patch(`/subscriptions/${id}`, {
+    headers: authHeader(adminSession.id),
+    body: {
+      cancelledAt: new Date(2020, 6, 21).toISOString()
+    }
+  });
+
+  t.equal(adminRes.status, 200, 'Admin can cancel subscriptions');
+  t.equal(
+    body.cancelledAt,
+    new Date(2020, 6, 21).toISOString(),
+    'Subscription is cancelledAt the requested time'
+  );
 });

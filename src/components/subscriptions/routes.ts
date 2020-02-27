@@ -11,6 +11,7 @@ import { hasProperties } from '../../services/require-properties';
 import { Subscription } from './domain-object';
 import filterError from '../../services/filter-error';
 import InvalidDataError from '../../errors/invalid-data';
+import requireAdmin from '../../middleware/require-admin';
 
 interface CreateOrUpdateRequest {
   planId: string;
@@ -21,6 +22,10 @@ interface CreateOrUpdateRequest {
 
 function isCreateOrUpdateRequest(body: any): body is CreateOrUpdateRequest {
   return hasProperties(body, 'planId');
+}
+
+function isUpdateRequest(body: any): body is { cancelledAt: Date } {
+  return hasProperties(body, 'cancelledAt');
 }
 
 const router = new Router();
@@ -99,7 +104,7 @@ function* create(this: AuthedContext): Iterator<any, any, any> {
   this.status = 201;
 }
 
-function* update(this: AuthedContext): Iterator<any, any, any> {
+function* createOrUpdate(this: AuthedContext): Iterator<any, any, any> {
   const { body } = this.request;
   if (!isCreateOrUpdateRequest(body)) {
     this.throw(400, 'Missing required properties');
@@ -128,8 +133,31 @@ function* update(this: AuthedContext): Iterator<any, any, any> {
   this.status = 200;
 }
 
+function* update(this: AuthedContext): Iterator<any, any, any> {
+  const { body } = this.request;
+  if (!isUpdateRequest(body)) {
+    this.throw(400, 'Missing required properties');
+  }
+
+  const { subscriptionId } = this.params;
+
+  const updated = yield db.transaction((trx: Knex.Transaction) => {
+    return SubscriptionsDAO.update(
+      subscriptionId,
+      {
+        cancelledAt: new Date(body.cancelledAt)
+      },
+      trx
+    );
+  });
+
+  this.body = updated;
+  this.status = 200;
+}
+
 router.get('/', requireAuth, getList);
 router.post('/', requireAuth, create);
-router.put('/:subscriptionId', requireAuth, update);
+router.put('/:subscriptionId', requireAuth, createOrUpdate);
+router.patch('/:subscriptionId', requireAdmin, update);
 
 export default router.routes();
