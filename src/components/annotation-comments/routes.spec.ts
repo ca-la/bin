@@ -132,6 +132,18 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
     }
   );
   t.equal(commentResponse[0].status, 201, 'Comment creation succeeds');
+  t.deepEqual(
+    commentResponse[1],
+    {
+      ...commentBody,
+      userId: user.id,
+      userName: user.name,
+      userEmail: user.email,
+      userRole: user.role,
+      attachments: []
+    },
+    'returns attachments on create and attaches the real user'
+  );
   t.equal(
     notificationMentionStub.callCount,
     0,
@@ -201,7 +213,7 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
     'a-very-download',
     'Attachments links are attached to the created comment'
   );
-  t.deepEqual(mentionBody[0].mentions, {
+  t.deepEqual(mentionBody.mentions, {
     [collaborator.id]: 'Q User'
   });
 

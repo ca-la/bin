@@ -14,7 +14,10 @@ import { announceAnnotationCommentCreation } from '../iris/messages/annotation-c
 import db from '../../services/db';
 import Asset from '../assets/domain-object';
 import { createCommentWithAttachments } from '../../services/create-comment-with-attachments';
-import addAtMentionDetails from '../../services/add-at-mention-details';
+import {
+  addAtMentionDetailsForComment,
+  CommentWithMentions
+} from '../../services/add-at-mention-details';
 
 const router = new Router();
 
@@ -53,7 +56,9 @@ function* createAnnotationComment(
         },
         trx
       );
-      const commentWithMentions = await addAtMentionDetails([comment]);
+      const commentWithMentions: CommentWithMentions = await addAtMentionDetailsForComment(
+        comment
+      );
 
       this.status = 201;
       this.body = commentWithMentions;
