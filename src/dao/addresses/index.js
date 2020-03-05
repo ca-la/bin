@@ -2,15 +2,19 @@
 
 const uuid = require('node-uuid');
 const rethrow = require('pg-rethrow');
+const omit = require('lodash/omit');
 
 const Address = require('../../domain-objects/address');
 const db = require('../../services/db');
 const first = require('../../services/first').default;
+const compact = require('../../services/compact');
+
 const { validatePropertiesFormatted } = require('../../services/validate');
 
 const instantiate = data => new Address(data);
 const maybeInstantiate = data => (data && new Address(data)) || null;
 
+const { dataMapper } = Address;
 const TABLE_NAME = 'addresses';
 
 function validate(data) {
@@ -28,21 +32,14 @@ function validate(data) {
 function create(data) {
   validate(data);
 
+  const rowData = Object.assign(
+    {},
+    compact(dataMapper.userDataToRowData(data)),
+    { id: uuid.v4() }
+  );
+
   return db(TABLE_NAME)
-    .insert(
-      {
-        id: uuid.v4(),
-        company_name: data.companyName,
-        address_line_1: data.addressLine1,
-        address_line_2: data.addressLine2,
-        city: data.city,
-        region: data.region,
-        post_code: data.postCode,
-        country: data.country,
-        user_id: data.userId
-      },
-      '*'
-    )
+    .insert(rowData, '*')
     .catch(rethrow)
     .then(first)
     .then(instantiate);
@@ -87,8 +84,24 @@ function deleteById(id) {
     .catch(rethrow);
 }
 
+function update(id, data) {
+  return db(TABLE_NAME)
+    .where({
+      id
+    })
+    .update(
+      compact(
+        dataMapper.userDataToRowData(omit(data, 'userId', 'id', 'createdAt'))
+      ),
+      '*'
+    )
+    .then(first)
+    .then(instantiate);
+}
+
 module.exports = {
   create,
+  update,
   deleteById,
   findById,
   validate,

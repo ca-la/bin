@@ -46,3 +46,21 @@ test('AddressesDAO.deleteById deletes an address', async t => {
 
   t.notEqual(deleted.deletedAt, null);
 });
+
+test('AddressesDAO.update updates an address', async t => {
+  const user = await UsersDAO.create(USER_DATA);
+
+  const data = Object.assign({}, ADDRESS_DATA, { userId: user.id });
+
+  const address = await AddressesDAO.create(data);
+
+  const patch = { postCode: '12345' };
+  const expectedAddress = Object.assign({}, ADDRESS_DATA, patch);
+
+  const updated = pick(
+    await AddressesDAO.update(address.id, patch),
+    Object.keys(expectedAddress)
+  );
+
+  t.deepEqual(updated, expectedAddress);
+});
