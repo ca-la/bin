@@ -1,11 +1,11 @@
 import tape from 'tape';
 import uuid from 'node-uuid';
+import { Variant } from '@cala/ts-lib';
 import createUser = require('../../test-helpers/create-user');
 import { create as createDesign } from '../product-designs/dao';
 import API from '../../test-helpers/http';
 import { sandbox, test } from '../../test-helpers/fresh';
 import * as ProductDesignVariantsDAO from './dao';
-import ProductDesignVariant from './domain-object';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
 import * as DesignEventsDAO from '../../dao/design-events';
 
@@ -36,7 +36,9 @@ test(`GET ${API_PATH}?designId fetches all variants for a design`, async (t: tap
     position: 0,
     sizeName: 'M',
     unitsToProduce: 123,
-    universalProductCode: null
+    universalProductCode: null,
+    isSample: false,
+    colorNamePosition: 1
   });
   const variantTwo = await ProductDesignVariantsDAO.create({
     colorName: 'Yellow',
@@ -45,7 +47,9 @@ test(`GET ${API_PATH}?designId fetches all variants for a design`, async (t: tap
     position: 1,
     sizeName: 'M',
     unitsToProduce: 100,
-    universalProductCode: null
+    universalProductCode: null,
+    isSample: false,
+    colorNamePosition: 2
   });
 
   const [failedResponse] = await API.get(`${API_PATH}/?designId=${design.id}`, {
@@ -57,7 +61,7 @@ test(`GET ${API_PATH}?designId fetches all variants for a design`, async (t: tap
     headers: API.authHeader(session.id)
   });
   t.equal(response.status, 200);
-  t.deepEqual(body.map((variant: ProductDesignVariant): string => variant.id), [
+  t.deepEqual(body.map((variant: Variant): string => variant.id), [
     variantOne.id,
     variantTwo.id
   ]);
@@ -70,10 +74,10 @@ test(`GET ${API_PATH}?designId fetches all variants for a design`, async (t: tap
     }
   );
   t.equal(responseTwo.status, 200);
-  t.deepEqual(
-    bodyTwo.map((variant: ProductDesignVariant): string => variant.id),
-    [variantOne.id, variantTwo.id]
-  );
+  t.deepEqual(bodyTwo.map((variant: Variant): string => variant.id), [
+    variantOne.id,
+    variantTwo.id
+  ]);
 });
 
 test(`PUT ${API_PATH}?designId replaces all variants for a design`, async (t: tape.Test) => {
@@ -115,7 +119,9 @@ test(`PUT ${API_PATH}?designId replaces all variants for a design`, async (t: ta
     position: 0,
     sizeName: 'M',
     unitsToProduce: 999,
-    universalProductCode: null
+    universalProductCode: null,
+    isSample: false,
+    colorNamePosition: 1
   });
   await ProductDesignVariantsDAO.create({
     colorName: 'Yellow',
@@ -124,7 +130,9 @@ test(`PUT ${API_PATH}?designId replaces all variants for a design`, async (t: ta
     position: 1,
     sizeName: 'M',
     unitsToProduce: 1,
-    universalProductCode: null
+    universalProductCode: null,
+    isSample: false,
+    colorNamePosition: 2
   });
 
   const variants = [
@@ -162,10 +170,10 @@ test(`PUT ${API_PATH}?designId replaces all variants for a design`, async (t: ta
     }
   );
   t.equal(initialResponse.status, 200);
-  t.deepEqual(
-    initialBody.map((variant: ProductDesignVariant): string => variant.id),
-    [variants[0].id, variants[1].id]
-  );
+  t.deepEqual(initialBody.map((variant: Variant): string => variant.id), [
+    variants[0].id,
+    variants[1].id
+  ]);
 
   const [emptyResponse, emptyBody] = await API.put(
     `${API_PATH}/?designId=${design.id}`,
@@ -185,10 +193,10 @@ test(`PUT ${API_PATH}?designId replaces all variants for a design`, async (t: ta
     }
   );
   t.equal(editorResponse.status, 200);
-  t.deepEqual(
-    editorBody.map((variant: ProductDesignVariant): string => variant.id),
-    [variants[0].id, variants[1].id]
-  );
+  t.deepEqual(editorBody.map((variant: Variant): string => variant.id), [
+    variants[0].id,
+    variants[1].id
+  ]);
 
   // A view collaborator should not have permissions to edit the variants.
   const [viewerResponse] = await API.put(`${API_PATH}/?designId=${design.id}`, {

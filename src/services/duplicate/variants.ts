@@ -1,7 +1,7 @@
 import Knex from 'knex';
+import { Variant } from '@cala/ts-lib';
 
 import * as VariantsDAO from '../../components/product-design-variants/dao';
-import Variant from '../../components/product-design-variants/domain-object';
 import prepareForDuplication from './prepare-for-duplication';
 
 /**

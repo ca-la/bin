@@ -6,6 +6,7 @@ const replaceVariants = require('../../components/product-design-variants/dao')
 const createUser = require('../../test-helpers/create-user');
 const PricingCalculator = require('./index');
 const { test } = require('../../test-helpers/fresh');
+const db = require('../../services/db');
 
 test('PricingCalculator constructs pricing tables', async t => {
   const { user } = await createUser({ withSession: false });
@@ -17,15 +18,16 @@ test('PricingCalculator constructs pricing tables', async t => {
     retailPriceCents: 12345
   });
 
-  await replaceVariants(design.id, [
-    {
-      unitsToProduce: 123,
-      sizeName: 'M',
-      colorName: 'Green',
-      position: 0
-    }
-  ]);
-
+  await db.transaction(async trx => {
+    await replaceVariants(trx, design.id, [
+      {
+        unitsToProduce: 123,
+        sizeName: 'M',
+        colorName: 'Green',
+        position: 0
+      }
+    ]);
+  });
   const calculator = new PricingCalculator(design);
 
   const { finalPricingTable } = await calculator.getAllPricingTables();
@@ -65,15 +67,16 @@ test('PricingCalculator supports overriding pricing tables, and returns class in
     }
   });
 
-  await replaceVariants(design.id, [
-    {
-      unitsToProduce: 123,
-      sizeName: 'M',
-      colorName: 'Green',
-      position: 0
-    }
-  ]);
-
+  await db.transaction(async trx => {
+    await replaceVariants(trx, design.id, [
+      {
+        unitsToProduce: 123,
+        sizeName: 'M',
+        colorName: 'Green',
+        position: 0
+      }
+    ]);
+  });
   const calculator = new PricingCalculator(design);
 
   const { finalPricingTable } = await calculator.getAllPricingTables();

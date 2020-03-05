@@ -1,4 +1,5 @@
 import uuid from 'node-uuid';
+import Knex from 'knex';
 
 import { create as createDesign } from '../../components/product-designs/dao';
 import createUser = require('../../test-helpers/create-user');
@@ -14,6 +15,7 @@ import {
 } from './dao';
 import generateCollection from '../../test-helpers/factories/collection';
 import { addDesign } from '../../test-helpers/collections';
+import db from '../../services/db';
 
 async function createPrerequisites(): Promise<any> {
   const { user } = await createUser({ withSession: false });
@@ -25,47 +27,55 @@ async function createPrerequisites(): Promise<any> {
   });
   const { collection } = await generateCollection();
   await addDesign(collection.id, design.id);
-
-  const variants = await replaceForDesign(design.id, [
-    {
-      colorName: 'Green',
-      designId: design.id,
-      id: uuid.v4(),
-      position: 0,
-      sizeName: 'M',
-      unitsToProduce: 123,
-      universalProductCode: null
-    },
-    {
-      colorName: 'Red',
-      designId: design.id,
-      id: uuid.v4(),
-      position: 1,
-      sizeName: 'L',
-      unitsToProduce: 456,
-      universalProductCode: null
-    },
-    {
-      colorName: 'Red',
-      designId: design.id,
-      id: uuid.v4(),
-      position: 2,
-      sizeName: 'M',
-      unitsToProduce: 789,
-      universalProductCode: null
-    },
-    {
-      colorName: 'Red',
-      designId: design.id,
-      id: uuid.v4(),
-      position: 3,
-      sizeName: 'XL but not actually making any?',
-      unitsToProduce: 0,
-      universalProductCode: null
-    }
-  ]);
-
-  return { user, design, variants, collection };
+  return await db.transaction(async (trx: Knex.Transaction) => {
+    const variants = await replaceForDesign(trx, design.id, [
+      {
+        colorName: 'Green',
+        designId: design.id,
+        id: uuid.v4(),
+        position: 0,
+        sizeName: 'M',
+        unitsToProduce: 123,
+        universalProductCode: null,
+        isSample: false,
+        colorNamePosition: 1
+      },
+      {
+        colorName: 'Red',
+        designId: design.id,
+        id: uuid.v4(),
+        position: 1,
+        sizeName: 'L',
+        unitsToProduce: 456,
+        universalProductCode: null,
+        isSample: false,
+        colorNamePosition: 2
+      },
+      {
+        colorName: 'Red',
+        designId: design.id,
+        id: uuid.v4(),
+        position: 2,
+        sizeName: 'M',
+        unitsToProduce: 789,
+        universalProductCode: null,
+        isSample: false,
+        colorNamePosition: 3
+      },
+      {
+        colorName: 'Red',
+        designId: design.id,
+        id: uuid.v4(),
+        position: 3,
+        sizeName: 'XL but not actually making any?',
+        unitsToProduce: 0,
+        universalProductCode: null,
+        isSample: false,
+        colorNamePosition: 4
+      }
+    ]);
+    return { user, design, variants, collection };
+  });
 }
 
 test('ProductDesignVariantsDAO.getTotalUnitsToProduce sums units', async (t: Test) => {
@@ -113,17 +123,22 @@ test('replaceVariants does not delete old ones if creation fails', async (t: Tes
     .stub(dataAdapter, 'forInsertion')
     .throws(new Error('A deep internal error'));
 
-  await replaceForDesign(design.id, [
-    {
-      colorName: 'Black',
-      designId: design.id,
-      id: uuid.v4(),
-      position: 0,
-      sizeName: '5XL',
-      unitsToProduce: 1,
-      universalProductCode: null
-    }
-  ])
+  await db
+    .transaction(async (trx: Knex.Transaction) => {
+      await replaceForDesign(trx, design.id, [
+        {
+          colorName: 'Black',
+          designId: design.id,
+          id: uuid.v4(),
+          position: 0,
+          sizeName: '5XL',
+          unitsToProduce: 1,
+          universalProductCode: null,
+          isSample: false,
+          colorNamePosition: 0
+        }
+      ]);
+    })
     .then(() => t.fail('replaceForDesign should not have succeeded'))
     .catch((err: Error) => {
       t.equal(err.message, 'A deep internal error');
@@ -135,20 +150,21 @@ test('replaceVariants does not delete old ones if creation fails', async (t: Tes
 
 test('replaceVariants works for well formed variants', async (t: Test) => {
   const { design } = await createPrerequisites();
-
-  const variants = await replaceForDesign(design.id, [
-    {
-      colorName: 'Gold',
-      colorNamePosition: 9,
-      designId: design.id,
-      id: uuid.v4(),
-      position: 20,
-      sizeName: '5XL',
-      unitsToProduce: 1,
-      universalProductCode: null
-    }
-  ]);
-
+  const variants = await db.transaction(async (trx: Knex.Transaction) => {
+    return await replaceForDesign(trx, design.id, [
+      {
+        colorName: 'Gold',
+        colorNamePosition: 9,
+        designId: design.id,
+        id: uuid.v4(),
+        position: 20,
+        sizeName: '5XL',
+        unitsToProduce: 1,
+        universalProductCode: null,
+        isSample: false
+      }
+    ]);
+  });
   t.equal(variants.length, 1, 'Replaces all variants for the new one');
   t.equal(
     variants[0].colorNamePosition,

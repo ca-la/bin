@@ -17,19 +17,21 @@ test('ShopifyVariantsDAO can save and retrieve products', async (t: Test) => {
     userId: user.id
   });
   const variantId = uuid.v4();
-  await replaceForDesign(design.id, [
-    {
-      colorName: 'Green',
-      designId: design.id,
-      id: variantId,
-      position: 0,
-      sizeName: 'M',
-      unitsToProduce: 123,
-      universalProductCode: '123456789012'
-    }
-  ]);
-
   await db.transaction(async (trx: Knex.Transaction) => {
+    await replaceForDesign(trx, design.id, [
+      {
+        colorName: 'Green',
+        designId: design.id,
+        id: variantId,
+        position: 0,
+        sizeName: 'M',
+        unitsToProduce: 123,
+        universalProductCode: '123456789012',
+        isSample: false,
+        colorNamePosition: 0
+      }
+    ]);
+
     const shopifyProduct = await ShopifyProductsDAO.create(
       {
         createdAt: new Date(),

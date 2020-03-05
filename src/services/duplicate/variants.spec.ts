@@ -1,6 +1,7 @@
 import Knex from 'knex';
 import tape from 'tape';
 import uuid from 'node-uuid';
+import { Variant } from '@cala/ts-lib';
 
 import createUser = require('../../test-helpers/create-user');
 import { create as createDesign } from '../../components/product-designs/dao';
@@ -8,7 +9,6 @@ import db from '../../services/db';
 import { test } from '../../test-helpers/fresh';
 
 import * as VariantsDAO from '../../components/product-design-variants/dao';
-import Variant from '../../components/product-design-variants/domain-object';
 
 import { findAndDuplicateVariants } from './variants';
 
@@ -45,21 +45,25 @@ test('findAndDuplicateVariants for a design with variants', async (t: tape.Test)
   });
   const variantOne = await VariantsDAO.create({
     colorName: 'Green',
+    colorNamePosition: 1,
     designId: design.id,
     id: uuid.v4(),
     position: 0,
     sizeName: 'M',
     unitsToProduce: 123,
-    universalProductCode: '000000000000'
+    universalProductCode: '000000000000',
+    isSample: false
   });
   const variantTwo = await VariantsDAO.create({
     colorName: 'Red',
+    colorNamePosition: 2,
     designId: design.id,
     id: uuid.v4(),
     position: 1,
     sizeName: 'L',
     unitsToProduce: 456,
-    universalProductCode: null
+    universalProductCode: null,
+    isSample: false
   });
 
   const duplicatedVariants = await db.transaction(

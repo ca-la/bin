@@ -1,4 +1,5 @@
 import Router from 'koa-router';
+import Knex from 'knex';
 
 import * as ProductDesignVariantsDAO from './dao';
 import requireAuth = require('../../middleware/require-auth');
@@ -7,6 +8,7 @@ import {
   canEditDesign
 } from '../../middleware/can-access-design';
 import { hasProperties } from '../../services/require-properties';
+import db from '../../services/db';
 
 const router = new Router();
 
@@ -19,6 +21,8 @@ interface ProductDesignVariantIO {
   sizeName: string | null;
   unitsToProduce: number;
   universalProductCode: string | null;
+  isSample: boolean;
+  colorNamePosition: number;
 }
 
 function isProductDesignVariantIO(
@@ -74,9 +78,8 @@ function* replaceVariants(
   }
 
   if (Array.isArray(body) && isProductDesignVariantsIO(body)) {
-    const variants = yield ProductDesignVariantsDAO.replaceForDesign(
-      designId,
-      body
+    const variants = yield db.transaction(async (trx: Knex.Transaction) =>
+      ProductDesignVariantsDAO.replaceForDesign(trx, designId, body)
     );
     this.body = variants;
     this.status = 200;

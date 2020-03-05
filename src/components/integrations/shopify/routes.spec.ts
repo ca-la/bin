@@ -1,4 +1,6 @@
 import uuid from 'node-uuid';
+import Knex from 'knex';
+import { omit } from 'lodash';
 
 import { test, Test } from '../../../test-helpers/fresh';
 import createUser from '../../../test-helpers/create-user';
@@ -7,7 +9,7 @@ import * as ShopifyProductsDAO from '../../../components/shopify-products/dao';
 import * as ShopifyVariantsDAO from '../../../components/shopify-variants/dao';
 import createDesign from '../../../services/create-design';
 import { replaceForDesign } from '../../product-design-variants/dao';
-import { omit } from 'lodash';
+import db from '../../../services/db';
 
 test('POST /integrations/shopify/products creates shopify products/variants', async (t: Test) => {
   const { session, user } = await createUser({ role: 'ADMIN' });
@@ -17,18 +19,21 @@ test('POST /integrations/shopify/products creates shopify products/variants', as
     userId: user.id
   });
   const variantId = uuid.v4();
-  await replaceForDesign(design.id, [
-    {
-      colorName: 'Green',
-      designId: design.id,
-      id: variantId,
-      position: 0,
-      sizeName: 'M',
-      unitsToProduce: 123,
-      universalProductCode: '123456789012'
-    }
-  ]);
-
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await replaceForDesign(trx, design.id, [
+      {
+        colorName: 'Green',
+        designId: design.id,
+        id: variantId,
+        position: 0,
+        sizeName: 'M',
+        unitsToProduce: 123,
+        universalProductCode: '123456789012',
+        isSample: false,
+        colorNamePosition: 1
+      }
+    ]);
+  });
   const [response] = await post('/integrations/shopify/products', {
     headers: authHeader(session.id),
     body: {

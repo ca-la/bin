@@ -1,17 +1,6 @@
 import DataAdapter from '../../services/data-adapter';
+import { Variant } from '@cala/ts-lib';
 import { hasProperties } from '../../services/require-properties';
-
-export default interface ProductDesignVariant {
-  colorName: string | null;
-  colorNamePosition?: number;
-  createdAt: Date;
-  designId: string;
-  id: string;
-  position: number;
-  sizeName: string | null;
-  unitsToProduce: number;
-  universalProductCode: string | null;
-}
 
 export interface ProductDesignVariantRow {
   color_name: string | null;
@@ -23,16 +12,14 @@ export interface ProductDesignVariantRow {
   size_name: string | null;
   units_to_produce: number;
   universal_product_code: string | null;
+  is_sample: boolean;
 }
 
-export const dataAdapter = new DataAdapter<
-  ProductDesignVariantRow,
-  ProductDesignVariant
->();
+export const dataAdapter = new DataAdapter<ProductDesignVariantRow, Variant>();
 
 export const partialDataAdapter = new DataAdapter<
   Partial<ProductDesignVariantRow>,
-  Partial<ProductDesignVariant>
+  Partial<Variant>
 >();
 
 export function isProductDesignVariantRow(
@@ -48,6 +35,7 @@ export function isProductDesignVariantRow(
     'position',
     'size_name',
     'units_to_produce',
-    'universal_product_code'
+    'universal_product_code',
+    'is_sample'
   );
 }

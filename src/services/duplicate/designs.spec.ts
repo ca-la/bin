@@ -28,7 +28,9 @@ test('findAndDuplicateDesign', async (t: tape.Test) => {
     position: 0,
     sizeName: 'M',
     unitsToProduce: 123,
-    universalProductCode: null
+    universalProductCode: null,
+    isSample: false,
+    colorNamePosition: 1
   });
 
   const duplicatedDesign = await db.transaction((trx: Knex.Transaction) =>

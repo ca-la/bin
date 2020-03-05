@@ -1,11 +1,12 @@
 import uuid from 'node-uuid';
 import Knex from 'knex';
 import rethrow = require('pg-rethrow');
+import { Variant } from '@cala/ts-lib';
 
 import db from '../../services/db';
 import filterError = require('../../services/filter-error');
 import InvalidDataError = require('../../errors/invalid-data');
-import ProductDesignVariant, {
+import {
   dataAdapter,
   isProductDesignVariantRow,
   partialDataAdapter,
@@ -17,9 +18,9 @@ import { validate, validateEvery } from '../../services/validate-from-db';
 const TABLE_NAME = 'product_design_variants';
 
 export async function create(
-  data: Uninserted<ProductDesignVariant>,
+  data: Uninserted<Variant>,
   trx?: Knex.Transaction
-): Promise<ProductDesignVariant> {
+): Promise<Variant> {
   const rowData = dataAdapter.forInsertion({ ...data });
   const created = await db(TABLE_NAME)
     .insert(rowData, '*')
@@ -34,7 +35,7 @@ export async function create(
   if (!created) {
     throw new Error('Failed to create a product design variant!');
   }
-  return validate<ProductDesignVariantRow, ProductDesignVariant>(
+  return validate<ProductDesignVariantRow, Variant>(
     TABLE_NAME,
     isProductDesignVariantRow,
     dataAdapter,
@@ -44,9 +45,9 @@ export async function create(
 
 export async function update(
   id: string,
-  data: Partial<ProductDesignVariant>,
+  data: Partial<Variant>,
   trx?: Knex.Transaction
-): Promise<ProductDesignVariant> {
+): Promise<Variant> {
   const rowData = partialDataAdapter.toDb(data);
   const updated = await db(TABLE_NAME)
     .update(rowData, '*')
@@ -62,7 +63,7 @@ export async function update(
   if (!updated) {
     throw new Error('Failed to create a product design variant!');
   }
-  return validate<ProductDesignVariantRow, ProductDesignVariant>(
+  return validate<ProductDesignVariantRow, Variant>(
     TABLE_NAME,
     isProductDesignVariantRow,
     dataAdapter,
@@ -70,9 +71,7 @@ export async function update(
   );
 }
 
-export async function findById(
-  id: string
-): Promise<ProductDesignVariant | null> {
+export async function findById(id: string): Promise<Variant | null> {
   const productDesignVariants: ProductDesignVariantRow[] = await db(TABLE_NAME)
     .select('*')
     .where({ id })
@@ -81,7 +80,7 @@ export async function findById(
   if (!productDesignVariant) {
     return null;
   }
-  return validate<ProductDesignVariantRow, ProductDesignVariant>(
+  return validate<ProductDesignVariantRow, Variant>(
     TABLE_NAME,
     isProductDesignVariantRow,
     dataAdapter,
@@ -102,16 +101,14 @@ export async function deleteForDesign(
 export async function createForDesign(
   trx: Knex.Transaction,
   designId: string,
-  variants: Uninserted<ProductDesignVariant>[]
-): Promise<ProductDesignVariant[]> {
+  variants: Uninserted<Variant>[]
+): Promise<Variant[]> {
   if (variants.length === 0) {
     return [];
   }
 
   const rowsForInsertion = variants.map(
-    (
-      data: Uninserted<ProductDesignVariant>
-    ): Uninserted<ProductDesignVariantRow> => {
+    (data: Uninserted<Variant>): Uninserted<ProductDesignVariantRow> => {
       if (!data.colorName && !data.sizeName) {
         throw new InvalidDataError('Color name or size name must be provided');
       }
@@ -142,7 +139,7 @@ export async function createForDesign(
       )
     );
 
-  return validateEvery<ProductDesignVariantRow, ProductDesignVariant>(
+  return validateEvery<ProductDesignVariantRow, Variant>(
     TABLE_NAME,
     isProductDesignVariantRow,
     dataAdapter,
@@ -151,26 +148,21 @@ export async function createForDesign(
 }
 
 export async function replaceForDesign(
+  trx: Knex.Transaction,
   designId: string,
-  variants: Uninserted<ProductDesignVariant>[]
-): Promise<ProductDesignVariant[]> {
-  return db.transaction(
-    async (trx: Knex.Transaction): Promise<ProductDesignVariant[]> => {
-      await deleteForDesign(trx, designId);
-      return createForDesign(trx, designId, variants);
-    }
-  );
+  variants: Uninserted<Variant>[]
+): Promise<Variant[]> {
+  await deleteForDesign(trx, designId);
+  return createForDesign(trx, designId, variants);
 }
 
-export async function findByDesignId(
-  designId: string
-): Promise<ProductDesignVariant[]> {
+export async function findByDesignId(designId: string): Promise<Variant[]> {
   const variants = await db(TABLE_NAME)
     .where({ design_id: designId })
     .orderBy('position', 'asc')
     .catch(rethrow);
 
-  return validateEvery<ProductDesignVariantRow, ProductDesignVariant>(
+  return validateEvery<ProductDesignVariantRow, Variant>(
     TABLE_NAME,
     isProductDesignVariantRow,
     dataAdapter,
@@ -181,7 +173,7 @@ export async function findByDesignId(
 export async function findByCollectionId(
   collectionId: string,
   trx?: Knex.Transaction
-): Promise<ProductDesignVariant[]> {
+): Promise<Variant[]> {
   const variants = await db(TABLE_NAME)
     .select('product_design_variants.*')
     .from(TABLE_NAME)
@@ -198,7 +190,7 @@ export async function findByCollectionId(
     })
     .catch(rethrow);
 
-  return validateEvery<ProductDesignVariantRow, ProductDesignVariant>(
+  return validateEvery<ProductDesignVariantRow, Variant>(
     TABLE_NAME,
     isProductDesignVariantRow,
     dataAdapter,
