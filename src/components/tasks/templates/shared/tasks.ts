@@ -52,11 +52,6 @@ export const specification: TaskTemplate[] = [
     title: 'Confirm your shipping address'
   },
   {
-    description: 'The default sample size is Medium.',
-    taskType: taskTypes.DESIGN,
-    title: 'What size do you want your sample to be?'
-  },
-  {
     description: '',
     taskType: taskTypes.TECHNICAL_DESIGN,
     title: 'Complete technical consulting'
