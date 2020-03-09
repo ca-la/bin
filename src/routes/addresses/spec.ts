@@ -116,6 +116,57 @@ interface TestCase {
 
 const testCases: TestCase[] = [
   {
+    title: 'GET /addresses/:id returns a 404 when called with wrong id',
+    route: {
+      useAuth: true,
+      url: (): string => '/addresses/50efbefe-bf3e-42fe-9dd4-413172158667',
+      method: get
+    },
+    expected: {
+      status: 404,
+      body: (): any => ({ message: 'Not Found' })
+    }
+  },
+  {
+    title: 'GET /addresses/:id returns 401 when called without auth',
+    before: {
+      created: {
+        url: (): string => '/addresses',
+        method: post,
+        body: addressBlank
+      }
+    },
+    route: {
+      url: ({ created }: BeforeData): string => `/addresses/${created!.id}`,
+      method: get
+    },
+    expected: {
+      status: 401,
+      body: (): any => ({
+        message: 'Authorization is required to access this resource'
+      })
+    }
+  },
+  {
+    title: 'GET /addresses/:id returns address',
+    before: {
+      created: {
+        url: (): string => '/addresses',
+        method: post,
+        body: addressBlank
+      }
+    },
+    route: {
+      useAuth: true,
+      url: ({ created }: BeforeData): string => `/addresses/${created!.id}`,
+      method: get
+    },
+    expected: {
+      status: 200,
+      body: ({ created }: BeforeData): any => created
+    }
+  },
+  {
     title: 'PATCH /addresses/:id returns a 404 when called with wrong id',
     route: {
       useAuth: true,
@@ -288,7 +339,9 @@ testCases.forEach(async (testCase: TestCase) => {
       testCase.route.url(beforeData),
       {
         headers: testCase.route.useAuth ? authHeader(session.id) : {},
-        body: { ...testCase.route.body, deletedAt: null }
+        ...(testCase.route.body
+          ? { body: { ...testCase.route.body, deletedAt: null } }
+          : null)
       }
     );
 

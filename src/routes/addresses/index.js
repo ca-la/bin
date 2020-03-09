@@ -27,6 +27,20 @@ function* getList() {
 }
 
 /**
+ * GET /addresses/:id
+ */
+function* getById() {
+  const { addressId } = this.params;
+
+  const address = yield AddressesDAO.findById(addressId);
+  this.assert(address, 404);
+  canAccessUserResource.call(this, address.userId);
+
+  this.body = address;
+  this.status = 200;
+}
+
+/**
  * POST /addresses
  */
 function* createAddress() {
@@ -86,6 +100,7 @@ function* putAddress() {
 }
 
 router.get('/', requireAuth, getList);
+router.get('/:addressId', requireAuth, getById);
 router.post('/', requireAuth, createAddress);
 router.patch('/:addressId', requireAuth, updateAddress);
 router.del('/:addressId', requireAuth, deleteAddress);
