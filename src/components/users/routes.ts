@@ -51,11 +51,11 @@ function* createUser(this: PublicContext<CreateBody>): Iterator<any, any, any> {
     this.throw(400, 'Email must be provided');
   }
 
-  if (REQUIRE_CALA_EMAIL && !email.match(/@ca\.la$/)) {
+  if (REQUIRE_CALA_EMAIL && !email.match(/@((ca\.la)|(calastg\.com))$/)) {
     // tslint:disable-next-line:max-line-length
     this.throw(
       400,
-      'Only @ca.la emails can sign up on this server. Please visit https://app.ca.la to access the live version of Studio'
+      'Only @ca.la or @calastg.com emails can sign up on this server. Please visit https://app.ca.la to access the live version of Studio'
     );
   }
 

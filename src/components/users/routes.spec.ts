@@ -95,6 +95,33 @@ test('POST /users does not allow private values to be set', async (t: Test) => {
 
   t.equal(body.role, 'USER');
 });
+test('POST /users only allows CALA emails on restricted servers ', async (t: Test) => {
+  stubUserDependencies();
+
+  sandbox()
+    .stub(Config, 'REQUIRE_CALA_EMAIL')
+    .value(true);
+
+  const [invalidEmailresponse, invalidEmailBody] = await post('/users', {
+    body: USER_DATA
+  });
+  t.equal(invalidEmailresponse.status, 400, 'status=400');
+  t.true(
+    invalidEmailBody.message.startsWith(
+      'Only @ca.la or @calastg.com emails can'
+    )
+  );
+
+  const [caDotEmailResponce] = await post('/users', {
+    body: { ...USER_DATA, email: 'test@ca.la', phone: '415 580 9926' }
+  });
+  t.equal(caDotEmailResponce.status, 201, 'status=201');
+
+  const [calastgEmailResponce] = await post('/users', {
+    body: { ...USER_DATA, email: 'test@calastg.com' }
+  });
+  t.equal(calastgEmailResponce.status, 201, 'status=201');
+});
 
 test('POST /users returns a session instead if requested', async (t: Test) => {
   stubUserDependencies();
