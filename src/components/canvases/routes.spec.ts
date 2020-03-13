@@ -65,7 +65,7 @@ test('GET /product-design-canvases/?designId=:designId returns a list of Canvase
 
   const data = [
     {
-      components: {},
+      components: [],
       createdAt: '',
       designId: id,
       height: 10,
@@ -119,7 +119,7 @@ test('POST /product-design-canvases returns a Canvas', async (t: tape.Test) => {
     headers: authHeader(session.id)
   });
   t.equal(response.status, 201);
-  t.deepEqual(body, data);
+  t.deepEqual(body, { ...data, components: [] });
 });
 
 test('POST /product-design-canvases returns a Canvas with Components', async (t: tape.Test) => {
@@ -260,7 +260,10 @@ test('PUT /product-design-canvases/:id returns a Canvas', async (t: tape.Test) =
     headers: authHeader(session.id)
   });
   t.equal(response.status, 201);
-  t.deepEqual({ ...body, archivedAt: new Date(body.archivedAt) }, data);
+  t.deepEqual(
+    { ...body, archivedAt: new Date(body.archivedAt) },
+    { ...data, components: [] }
+  );
 });
 
 test('PUT /product-design-canvases/:id creates a canvas, component and image', async (t: tape.Test) => {
@@ -441,19 +444,77 @@ test('PUT /product-design-canvases/:id creates canvas, component, image, and opt
 });
 
 test('PATCH /product-design-canvases/:canvasId returns a Canvas', async (t: tape.Test) => {
-  const { session } = await createUser();
+  const { user, session } = await createUser();
 
-  const id = uuid.v4();
+  const assetLink = {
+    assetLink: 'https://foo.bar/test.png',
+    downloadLink: '',
+    fileType: 'png',
+    thumbnail2xLink: 'https://foo.bar/test-small/2x.png',
+    thumbnailLink: 'https://foo.bar/test-small.png'
+  };
+  sandbox()
+    .stub(EnrichmentService, 'addAssetLink')
+    .callsFake(
+      async (c: Component): Promise<EnrichmentService.EnrichedComponent> => {
+        return {
+          ...c,
+          ...assetLink
+        };
+      }
+    );
+
+  const design = await createDesign({
+    productType: 'TEESHIRT',
+    title: 'Plain White Tee',
+    userId: user.id
+  });
+  const { asset: sketch } = await generateAsset({
+    description: '',
+    id: uuid.v4(),
+    mimeType: 'image/png',
+    originalHeightPx: 0,
+    originalWidthPx: 0,
+    title: '',
+    userId: user.id
+  });
+  const componentId = uuid.v4();
+
+  const image = {
+    createdAt: new Date('2019-05-05'),
+    id: uuid.v4(),
+    mimeType: 'image%2Fpng',
+    originalHeightPx: 192,
+    originalWidthPx: 192,
+    title: 'Michele Lamy',
+    uploadCompletedAt: null,
+    url: 'https://foo.bar/test.png',
+    userId: user.id
+  };
+  const component = {
+    artworkId: null,
+    createdAt: new Date().toISOString(),
+    createdBy: user.id,
+    deletedAt: null,
+    id: componentId,
+    image,
+    materialId: null,
+    parentId: null,
+    sketchId: sketch.id,
+    type: 'Sketch'
+  };
 
   const data = {
-    componentId: null,
-    createdAt: '',
-    designId: id,
-    height: 10,
-    id,
+    componentId,
+    createdAt: new Date().toISOString(),
+    createdBy: user.id,
+    deletedAt: null,
+    designId: design.id,
+    height: 0,
+    id: uuid.v4(),
     ordering: 0,
-    title: 'test',
-    width: 10,
+    title: 'Michele Lamy',
+    width: 0,
     x: 0,
     y: 0
   };
@@ -461,13 +522,29 @@ test('PATCH /product-design-canvases/:canvasId returns a Canvas', async (t: tape
   const updateStub = sandbox()
     .stub(ProductDesignCanvasesDAO, 'update')
     .resolves(data);
+  sandbox()
+    .stub(ComponentsDAO, 'findAllByCanvasId')
+    .resolves([component]);
 
-  const [response, body] = await patch(`/product-design-canvases/${id}`, {
+  const [response, body] = await patch(`/product-design-canvases/${data.id}`, {
     body: data,
     headers: authHeader(session.id)
   });
   t.equal(response.status, 200);
-  t.deepEqual(body, data);
+  t.deepEqual(
+    body,
+    JSON.parse(
+      JSON.stringify({
+        ...data,
+        components: [
+          {
+            ...component,
+            ...assetLink
+          }
+        ]
+      })
+    )
+  );
 
   updateStub.rejects(
     new ProductDesignCanvasesDAO.CanvasNotFoundError('Could not find canvas')
@@ -480,6 +557,20 @@ test('PATCH /product-design-canvases/:canvasId returns a Canvas', async (t: tape
     }
   );
   t.equal(missingCanvasResponse.status, 404);
+});
+
+test('PATCH /product-design-canvases/reorder', async (t: tape.Test) => {
+  const { session } = await createUser();
+
+  sandbox()
+    .stub(ProductDesignCanvasesDAO, 'reorder')
+    .resolves();
+
+  const [response] = await patch(`/product-design-canvases/reorder`, {
+    body: [{ id: '', ordering: 0 }, { id: '', ordering: 1 }],
+    headers: authHeader(session.id)
+  });
+  t.equal(response.status, 204);
 });
 
 test('DELETE /product-design-canvases/:canvasId deletes a Canvas', async (t: tape.Test) => {

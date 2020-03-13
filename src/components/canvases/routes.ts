@@ -64,7 +64,7 @@ function* createCanvas(this: AuthedContext): Iterator<any, any, any> {
 
   const canvas = yield CanvasesDAO.create(body);
   this.status = 201;
-  this.body = canvas;
+  this.body = { ...canvas, components: [] };
 }
 
 type ComponentWithImageAndOption = Component & {
@@ -186,13 +186,23 @@ function* update(this: AuthedContext): Iterator<any, any, any> {
     this.throw(400, 'Request does not match Canvas');
   }
 
-  const canvas = yield CanvasesDAO.update(this.params.canvasId, body).catch(
+  const updatedCanvas = yield CanvasesDAO.update(
+    this.params.canvasId,
+    body
+  ).catch(
     filterError(CanvasNotFoundError, (err: CanvasNotFoundError) => {
       this.throw(404, err);
     })
   );
+  const components = yield ComponentsDAO.findAllByCanvasId(updatedCanvas.id);
+  const enrichedComponents = yield Promise.all(
+    components.map(EnrichmentService.addAssetLink)
+  );
   this.status = 200;
-  this.body = canvas;
+  this.body = {
+    ...updatedCanvas,
+    components: enrichedComponents
+  };
 }
 
 type ReorderRequest = CanvasesDAO.ReorderRequest;
@@ -204,9 +214,8 @@ function isReorderRequest(data: any[]): data is ReorderRequest[] {
 function* reorder(
   this: AuthedContext<ReorderRequest[]>
 ): Iterator<any, any, any> {
-  const canvases = yield CanvasesDAO.reorder(this.request.body);
-  this.status = 200;
-  this.body = canvases;
+  yield CanvasesDAO.reorder(this.request.body);
+  this.status = 204;
 }
 
 function* del(this: AuthedContext): Iterator<any, any, any> {
