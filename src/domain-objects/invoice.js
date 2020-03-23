@@ -17,7 +17,8 @@ const keyNamesByColumnName = {
   is_paid: 'isPaid',
   total_paid: 'totalPaid',
   paid_at: 'paidAt',
-  short_id: 'shortId'
+  short_id: 'shortId',
+  invoice_address_id: 'invoiceAddressId'
 };
 
 const dataMapper = new DataMapper(keyNamesByColumnName);

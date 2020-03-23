@@ -10,6 +10,7 @@ declare class Invoice {
   public collectionId: string | null;
   public isPaid: boolean | null;
   public shortId: string | null;
+  public invoiceAddressId: string | null;
 
   constructor(data: any);
 }
