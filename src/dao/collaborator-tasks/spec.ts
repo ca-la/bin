@@ -1,5 +1,7 @@
 import tape from 'tape';
 import uuid from 'node-uuid';
+import { isEqual } from 'lodash';
+
 import { test } from '../../test-helpers/fresh';
 import {
   create,
@@ -276,9 +278,8 @@ test('CollaboratorTask DAO supports create all', async (t: tape.Test) => {
 
   const returned = await findAllByTaskId(taskOne.id);
 
-  t.deepEqual(
-    new Set(returned),
-    new Set(collaboratorTasks),
+  t.true(
+    isEqual(new Set(returned), new Set(collaboratorTasks)),
     'Returned both collaborator task associations for the given task'
   );
 });

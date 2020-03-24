@@ -1,6 +1,7 @@
 import tape from 'tape';
 import uuid from 'node-uuid';
 import { TaskStatus } from '@cala/ts-lib';
+import { isEqual } from 'lodash';
 
 import User, { Role } from '../../components/users/domain-object';
 import {
@@ -765,13 +766,15 @@ test('PUT /tasks/:taskId/comment/:id creates a task threaded comment and notifie
     3,
     'Notifications are created for all thread participants'
   );
-  t.deepEqual(
-    new Set([
-      notificationReplyStub.args[0][1].recipientId,
-      notificationReplyStub.args[1][1].recipientId,
-      notificationReplyStub.args[2][1].recipientId
-    ]),
-    new Set([parentUser.id, user1.id, user2.id]),
+  t.true(
+    isEqual(
+      new Set([
+        notificationReplyStub.args[0][1].recipientId,
+        notificationReplyStub.args[1][1].recipientId,
+        notificationReplyStub.args[2][1].recipientId
+      ]),
+      new Set([parentUser.id, user1.id, user2.id])
+    ),
     'Parent and thread commenters are notified'
   );
 });

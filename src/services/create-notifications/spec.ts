@@ -2,6 +2,7 @@ import tape from 'tape';
 import uuid from 'node-uuid';
 import sinon from 'sinon';
 import Knex from 'knex';
+import { isEqual } from 'lodash';
 
 import { sandbox, test } from '../../test-helpers/fresh';
 import createUser = require('../../test-helpers/create-user');
@@ -1115,14 +1116,42 @@ test('immediatelySendFullyCostedCollection', async (t: tape.Test) => {
   // A notification is sent for every collaborator.
   sinon.assert.callCount(emailStub, 2);
   t.equal(notifications.length, 2, 'Two notifications are created');
-  t.equal(notifications[0].type, NotificationType.COMMIT_COST_INPUTS);
-  t.equal(notifications[1].type, NotificationType.COMMIT_COST_INPUTS);
-  t.not(notifications[0].sentEmailAt, null, 'Notification is marked as sent');
-  t.not(notifications[1].sentEmailAt, null, 'Notification is marked as sent');
-  t.equal(notifications[0].actorUserId, admin.user.id);
-  t.equal(notifications[1].actorUserId, admin.user.id);
-  t.equal(notifications[0].recipientUserId, userOne.user.id);
-  t.equal(notifications[1].recipientUserId, userTwo.user.id);
+  t.true(
+    isEqual(
+      new Set([
+        {
+          type: notifications[0].type,
+          actorUserId: notifications[0].actorUserId,
+          recipientId: notifications[0].recipientUserId
+        },
+        {
+          type: notifications[1].type,
+          actorUserId: notifications[1].actorUserId,
+          recipientId: notifications[1].recipientUserId
+        }
+      ]),
+      new Set([
+        {
+          type: NotificationType.COMMIT_COST_INPUTS,
+          actorUserId: admin.user.id,
+          recipientId: userOne.user.id
+        },
+        {
+          type: NotificationType.COMMIT_COST_INPUTS,
+          actorUserId: admin.user.id,
+          recipientId: userTwo.user.id
+        }
+      ])
+    )
+  );
+
+  t.false(
+    isEqual(
+      new Set([notifications[0].sentEmailAt, notifications[1].sentEmailAt]),
+      new Set([null, null])
+    ),
+    'Emails are sent immediately'
+  );
 });
 
 test('immediatelySendInviteCollaborator', async (t: tape.Test) => {
