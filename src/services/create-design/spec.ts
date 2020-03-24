@@ -1,8 +1,12 @@
-import CollaboratorsDAO = require('../../components/collaborators/dao');
-import TaskEventsDAO = require('../../dao/task-events');
-import StagesDAO = require('../../dao/product-design-stages');
+import Knex from 'knex';
+
+import * as CollaboratorsDAO from '../../components/collaborators/dao';
+import * as TaskEventsDAO from '../../dao/task-events';
+import * as StagesDAO from '../../dao/product-design-stages';
+import * as ApprovalStepsDAO from '../../components/approval-steps/dao';
 import createDesign from './index';
-import createUser = require('../../test-helpers/create-user');
+import db from '../db';
+import createUser from '../../test-helpers/create-user';
 import { test, Test } from '../../test-helpers/fresh';
 
 test('createDesign service creates a collaborator', async (t: Test) => {
@@ -28,4 +32,9 @@ test('createDesign service creates a collaborator', async (t: Test) => {
 
   const stages = await StagesDAO.findAllByDesignId(design.id);
   t.equal(stages.length, 2, 'There are stages on the new design');
+
+  const approvalSteps = await db.transaction((trx: Knex.Transaction) =>
+    ApprovalStepsDAO.findByDesign(trx, design.id)
+  );
+  t.equal(approvalSteps.length, 5, 'There are steps on the new design');
 });

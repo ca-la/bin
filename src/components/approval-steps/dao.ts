@@ -9,12 +9,12 @@ import ApprovalStep, {
 
 const TABLE_NAME = 'design_approval_steps';
 
-const validateApprovalSteps = (candidate: object[]): ApprovalStep[] =>
+const validateApprovalSteps = (candidate: any[]): ApprovalStep[] =>
   validateEvery<ApprovalStepRow, ApprovalStep>(
     TABLE_NAME,
     isApprovalStepRow,
     dataAdapter,
-    candidate as ApprovalStepRow[]
+    candidate
   );
 
 export async function createAll(

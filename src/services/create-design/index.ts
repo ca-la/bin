@@ -5,6 +5,7 @@ import CollaboratorsDAO = require('../../components/collaborators/dao');
 import createDesignTasks from '../create-design-tasks';
 import ProductDesign = require('../../components/product-designs/domain-objects/product-design');
 import ProductDesignsDAO = require('../../components/product-designs/dao');
+import createApprovalSteps from '../create-approval-steps';
 
 async function createInTransaction(
   data: Unsaved<ProductDesign>,
@@ -26,6 +27,7 @@ async function createInTransaction(
   );
 
   await createDesignTasks(design.id, 'POST_CREATION', trx);
+  await createApprovalSteps(trx, design.id);
 
   return design;
 }
