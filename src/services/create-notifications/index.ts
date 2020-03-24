@@ -83,6 +83,14 @@ import {
   isPartnerPairingCommittedNotification,
   PartnerPairingCommittedNotification
 } from '../../components/notifications/models/partner-pairing-committed';
+import {
+  AnnotationCommentReplyNotification,
+  isAnnotationCommentReplyNotification
+} from '../../components/notifications/models/annotation-reply';
+import {
+  isTaskCommentReplyNotification,
+  TaskCommentReplyNotification
+} from '../../components/notifications/models/task-comment-reply';
 
 /**
  * Deletes pre-existing similar notifications and adds in a new one.
@@ -106,6 +114,7 @@ export async function sendDesignOwnerAnnotationCommentCreateNotification(
   commentId: string,
   actorId: string,
   mentionedUserIds: string[],
+  threadUserIds: string[],
   trx?: Knex.Transaction
 ): Promise<AnnotationCommentCreateNotification | null> {
   const canvas = await CanvasesDAO.findById(canvasId, trx);
@@ -127,7 +136,7 @@ export async function sendDesignOwnerAnnotationCommentCreateNotification(
   if (actorId === targetId) {
     return null;
   }
-  if (mentionedUserIds.includes(targetId)) {
+  if (mentionedUserIds.includes(targetId) || threadUserIds.includes(targetId)) {
     return null;
   }
 
@@ -214,6 +223,51 @@ export async function sendAnnotationCommentMentionNotification(
   );
 }
 
+export async function sendAnnotationCommentReplyNotification(
+  trx: Knex.Transaction,
+  annotationId: string,
+  canvasId: string,
+  designId: string,
+  commentId: string,
+  actorId: string,
+  recipientUserId: string
+): Promise<AnnotationCommentReplyNotification | null> {
+  const design = await DesignsDAO.findById(designId, undefined, undefined, trx);
+  if (!design) {
+    throw new Error(`Design ${designId} does not exist!`);
+  }
+  const collectionId = design.collectionIds[0] || null;
+
+  if (actorId === recipientUserId) {
+    return null;
+  }
+
+  const id = uuid.v4();
+  const notification = await replaceNotifications(
+    {
+      ...templateNotification,
+      actorUserId: actorId,
+      annotationId,
+      canvasId,
+      collectionId,
+      commentId,
+      designId: design.id,
+      id,
+      recipientUserId,
+      sentEmailAt: null,
+      type: NotificationType.ANNOTATION_COMMENT_REPLY
+    },
+    trx
+  );
+  return validateTypeWithGuardOrThrow(
+    notification,
+    isAnnotationCommentReplyNotification,
+    `Could not validate ${
+      NotificationType.ANNOTATION_COMMENT_REPLY
+    } notification type from database with id: ${id}`
+  );
+}
+
 /**
  * Creates a notification for the owner of the design that a measurement has been created.
  * Note: this will only create a notification if the actor is not the owner.
@@ -272,10 +326,17 @@ export async function sendTaskCommentCreateNotification(
     commentId: string;
     actorId: string;
     mentionedUserIds: string[];
+    threadUserIds: string[];
   },
   trx?: Knex.Transaction
 ): Promise<TaskCommentCreateNotification[]> {
-  const { taskId, commentId, actorId, mentionedUserIds } = options;
+  const {
+    taskId,
+    commentId,
+    actorId,
+    mentionedUserIds,
+    threadUserIds
+  } = options;
   const collaborators = (await CollaboratorsDAO.findByTask(
     taskId,
     trx
@@ -304,6 +365,9 @@ export async function sendTaskCommentCreateNotification(
         recipientId !== actorId &&
         !mentionedUserIds.some(
           (mentionedId: string) => mentionedId === recipientId
+        ) &&
+        !threadUserIds.some(
+          (threadUserId: string) => threadUserId === recipientId
         )
       );
     }
@@ -418,6 +482,81 @@ export async function sendTaskCommentMentionNotification(
     isTaskCommentMentionNotification,
     `Could not validate ${
       NotificationType.TASK_COMMENT_MENTION
+    } notification type from database with id: ${id}`
+  );
+  return validated;
+}
+
+/**
+ * Creates notifications for the user mentioned in a task comment.
+ */
+export async function sendTaskCommentReplyNotification(
+  trx: Knex.Transaction,
+  options: {
+    taskId: string;
+    commentId: string;
+    actorId: string;
+    recipientId: string;
+  }
+): Promise<TaskCommentReplyNotification | null> {
+  const { taskId, commentId, actorId, recipientId } = options;
+  if (recipientId === actorId) {
+    return null;
+  }
+
+  const taskEvent = await TaskEventsDAO.findById(taskId, trx);
+  if (!taskEvent) {
+    throw new Error(`Could not find a task event with task id: ${taskId}`);
+  }
+
+  const stageTask = await StageTasksDAO.findByTaskId(taskId, trx);
+  if (!stageTask) {
+    throw new Error(`Could not find a stage task with task id: ${taskId}`);
+  }
+
+  const stage = await StagesDAO.findById(stageTask.designStageId, trx);
+  if (!stage) {
+    throw new Error(
+      `Could not find a stage with id: ${stageTask.designStageId}`
+    );
+  }
+
+  const design = await DesignsDAO.findById(stage.designId);
+  if (!design) {
+    throw new Error(`Could not find a design with id: ${stage.designId}`);
+  }
+
+  const collaborators: CollaboratorWithUser[] = await CollaboratorsDAO.findAllForUserThroughDesign(
+    design.id,
+    recipientId,
+    trx
+  );
+  if (collaborators.length === 0) {
+    return null;
+  }
+
+  const id = uuid.v4();
+  const notification = await replaceNotifications(
+    {
+      ...templateNotification,
+      actorUserId: actorId,
+      collectionId: design.collectionIds[0] || null,
+      commentId,
+      designId: design.id,
+      id,
+      recipientUserId: recipientId,
+      sentEmailAt: null,
+      stageId: stage.id,
+      taskId,
+      type: NotificationType.TASK_COMMENT_REPLY
+    },
+    trx
+  );
+  const validated = validateTypeWithGuardOrThrow(
+    notification,
+    isTaskCommentReplyNotification,
+    `Could not validate ${
+      NotificationType.TASK_COMMENT_REPLY
     } notification type from database with id: ${id}`
   );
   return validated;

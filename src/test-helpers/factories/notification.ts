@@ -207,6 +207,23 @@ export default async function generateNotification(
         notification
       };
     }
+    case NotificationType.ANNOTATION_COMMENT_REPLY: {
+      const notification = await create({
+        ...baseNotification,
+        annotationId: annotation.id,
+        canvasId: canvas.id,
+        collectionId: collection.id,
+        commentId: comment.id,
+        designId: design.id,
+        recipientUserId: base.recipient.id,
+        type: options.type
+      });
+
+      return {
+        ...base,
+        notification
+      };
+    }
     case NotificationType.COLLECTION_SUBMIT: {
       const notification = await create({
         ...baseNotification,
@@ -353,6 +370,23 @@ export default async function generateNotification(
       };
     }
     case NotificationType.TASK_COMMENT_MENTION: {
+      const notification = await create({
+        ...baseNotification,
+        collectionId: collection.id,
+        commentId: comment.id,
+        designId: design.id,
+        recipientUserId: base.recipient.id,
+        stageId: stage.id,
+        taskId: task.id,
+        type: options.type
+      });
+
+      return {
+        ...base,
+        notification
+      };
+    }
+    case NotificationType.TASK_COMMENT_REPLY: {
       const notification = await create({
         ...baseNotification,
         collectionId: collection.id,

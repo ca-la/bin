@@ -94,10 +94,23 @@ import {
   TwoDayExpirationNotification,
   TwoDayExpirationNotificationRow
 } from './models/costing-expiration';
+import {
+  AnnotationCommentReplyNotification,
+  AnnotationCommentReplyNotificationRow,
+  FullAnnotationCommentReplyNotification,
+  FullAnnotationCommentReplyNotificationRow
+} from './models/annotation-reply';
+import {
+  FullTaskCommentReplyNotification,
+  FullTaskCommentReplyNotificationRow,
+  TaskCommentReplyNotification,
+  TaskCommentReplyNotificationRow
+} from './models/task-comment-reply';
 
 export enum NotificationType {
   ANNOTATION_COMMENT_CREATE = 'ANNOTATION_COMMENT_CREATE',
   ANNOTATION_COMMENT_MENTION = 'ANNOTATION_COMMENT_MENTION',
+  ANNOTATION_COMMENT_REPLY = 'ANNOTATION_COMMENT_REPLY',
   COLLECTION_SUBMIT = 'COLLECTION_SUBMIT',
   COMMIT_COST_INPUTS = 'COMMIT_COST_INPUTS',
   INVITE_COLLABORATOR = 'INVITE_COLLABORATOR',
@@ -109,6 +122,7 @@ export enum NotificationType {
   TASK_ASSIGNMENT = 'TASK_ASSIGNMENT',
   TASK_COMMENT_CREATE = 'TASK_COMMENT_CREATE',
   TASK_COMMENT_MENTION = 'TASK_COMMENT_MENTION',
+  TASK_COMMENT_REPLY = 'TASK_COMMENT_REPLY',
   TASK_COMPLETION = 'TASK_COMPLETION',
   COSTING_EXPIRATION_ONE_WEEK = 'COSTING_EXPIRATION_ONE_WEEK',
   COSTING_EXPIRATION_TWO_DAYS = 'COSTING_EXPIRATION_TWO_DAYS',
@@ -118,6 +132,7 @@ export enum NotificationType {
 export type Notification =
   | AnnotationCommentCreateNotification
   | AnnotationCommentMentionNotification
+  | AnnotationCommentReplyNotification
   | CollectionSubmitNotification
   | CommitCostInputsNotification
   | InviteCollaboratorNotification
@@ -129,6 +144,7 @@ export type Notification =
   | TaskAssignmentNotification
   | TaskCommentCreateNotification
   | TaskCommentMentionNotification
+  | TaskCommentReplyNotification
   | TaskCompletionNotification
   | ExpiredNotification
   | OneWeekExpirationNotification
@@ -137,6 +153,7 @@ export type Notification =
 export type FullNotification =
   | FullTaskCompletionNotification
   | FullTaskCommentMentionNotification
+  | FullTaskCommentReplyNotification
   | FullTaskCommentCreateNotification
   | FullTaskAssignmentNotification
   | FullPartnerRejectServiceBidNotification
@@ -148,12 +165,14 @@ export type FullNotification =
   | FullCommitCostInputsNotification
   | FullCollectionSubmitNotification
   | FullAnnotationCommentMentionNotification
+  | FullAnnotationCommentReplyNotification
   | FullAnnotationCommentCreateNotification
   | FullExpirationNotification;
 
 export type NotificationRow =
   | AnnotationCommentCreateNotificationRow
   | AnnotationCommentMentionNotificationRow
+  | AnnotationCommentReplyNotificationRow
   | CollectionSubmitNotificationRow
   | CommitCostInputsNotificationRow
   | InviteCollaboratorNotificationRow
@@ -165,6 +184,7 @@ export type NotificationRow =
   | TaskAssignmentNotificationRow
   | TaskCommentCreateNotificationRow
   | TaskCommentMentionNotificationRow
+  | TaskCommentReplyNotificationRow
   | TaskCompletionNotificationRow
   | ExpiredNotificationRow
   | OneWeekExpirationNotificationRow
@@ -173,6 +193,7 @@ export type NotificationRow =
 export type FullNotificationRow =
   | FullTaskCompletionNotificationRow
   | FullTaskCommentMentionNotificationRow
+  | FullTaskCommentReplyNotificationRow
   | FullTaskCommentCreateNotificationRow
   | FullTaskAssignmentNotificationRow
   | FullPartnerRejectServiceBidNotificationRow
@@ -184,6 +205,7 @@ export type FullNotificationRow =
   | FullCommitCostInputsNotificationRow
   | FullCollectionSubmitNotificationRow
   | FullAnnotationCommentMentionNotificationRow
+  | FullAnnotationCommentReplyNotificationRow
   | FullAnnotationCommentCreateNotificationRow;
 
 type EqualKeys<T> = { [P in keyof T]: any };

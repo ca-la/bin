@@ -10,7 +10,7 @@ import Comment, {
   isCommentRow,
   UPDATABLE_COLUMNS
 } from '../../components/comments/domain-object';
-import { validate } from '../../services/validate-from-db';
+import { validate, validateEvery } from '../../services/validate-from-db';
 
 const TABLE_NAME = 'comments';
 
@@ -99,6 +99,22 @@ export async function findById(
     isCommentRow,
     dataAdapter,
     comment
+  );
+}
+
+export async function findByParentId(
+  trx: Knex.Transaction,
+  parentId: string
+): Promise<Comment[]> {
+  const comments = await queryComments(trx).where({
+    'comments.parent_comment_id': parentId
+  });
+
+  return validateEvery<CommentRow, Comment>(
+    TABLE_NAME,
+    isCommentRow,
+    dataAdapter,
+    comments
   );
 }
 

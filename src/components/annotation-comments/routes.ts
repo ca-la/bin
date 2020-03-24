@@ -48,14 +48,11 @@ function* createAnnotationComment(
       );
 
       await announceAnnotationCommentCreation(annotationComment, comment);
-      await sendCreationNotifications(
-        {
-          actorUserId: this.state.userId,
-          annotationId,
-          comment
-        },
-        trx
-      );
+      await sendCreationNotifications(trx, {
+        actorUserId: this.state.userId,
+        annotationId,
+        comment
+      });
       const commentWithMentions: CommentWithMentions = await addAtMentionDetailsForComment(
         comment
       );

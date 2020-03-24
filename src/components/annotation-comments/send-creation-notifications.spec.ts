@@ -1,5 +1,7 @@
 import uuid from 'node-uuid';
 import { Role } from '@cala/ts-lib/dist/users';
+import Knex from 'knex';
+import Sinon from 'sinon';
 
 import * as AnnotationsDAO from '../../components/product-design-canvas-annotations/dao';
 import Annotation from '../../components/product-design-canvas-annotations/domain-object';
@@ -15,15 +17,20 @@ import generateCollaborator from '../../test-helpers/factories/collaborator';
 import generateCollection from '../../test-helpers/factories/collection';
 import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 import { addDesign } from '../../test-helpers/collections';
+import db from '../../services/db';
+import generateComment from '../../test-helpers/factories/comment';
+import ProductDesign from '../product-designs/domain-objects/product-design';
 
 async function setup(): Promise<{
   annotation: Annotation;
   collection: Collection;
   collaborator: Collaborator;
   collaboratorUser: User;
-  mentionStub: any;
-  ownerStub: any;
+  mentionStub: Sinon.SinonStub;
+  ownerStub: Sinon.SinonStub;
   ownerUser: User;
+  replyStub: Sinon.SinonStub;
+  design: ProductDesign;
 }> {
   const ownerStub = sandbox()
     .stub(
@@ -34,6 +41,10 @@ async function setup(): Promise<{
 
   const mentionStub = sandbox()
     .stub(CreateNotifications, 'sendAnnotationCommentMentionNotification')
+    .resolves();
+
+  const replyStub = sandbox()
+    .stub(CreateNotifications, 'sendAnnotationCommentReplyNotification')
     .resolves();
 
   const { user: ownerUser } = await createUser();
@@ -80,7 +91,9 @@ async function setup(): Promise<{
     collection,
     mentionStub,
     ownerStub,
-    ownerUser
+    ownerUser,
+    replyStub,
+    design
   };
 }
 
@@ -108,11 +121,12 @@ test('sendCreationNotifications loops through mentions and sends notifications',
     userRole: 'USER' as Role,
     attachments: []
   };
-
-  await sendCreationNotifications({
-    actorUserId: ownerUser.id,
-    annotationId: annotation.id,
-    comment
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await sendCreationNotifications(trx, {
+      actorUserId: ownerUser.id,
+      annotationId: annotation.id,
+      comment
+    });
   });
 
   t.equal(ownerStub.callCount, 1);
@@ -134,6 +148,149 @@ test('sendCreationNotifications loops through mentions and sends notifications',
     ownerUser.id,
     collaboratorUser.id
   ]);
+});
+
+test('sendCreationNotifications sends notifications to parent of thread and its participants', async (t: Test) => {
+  const { collaboratorUser, annotation, replyStub, design } = await setup();
+
+  const { comment: parentComment } = await generateComment({
+    userId: collaboratorUser.id
+  });
+
+  const { comment: comment1 } = await generateComment({
+    createdAt: new Date(),
+    deletedAt: null,
+    id: uuid.v4(),
+    isPinned: false,
+    parentCommentId: parentComment.id,
+    text: 'Thats a good point..',
+    userEmail: 'cool@example.com',
+    userName: 'Somebody cool',
+    userRole: 'USER' as Role,
+    attachments: []
+  });
+
+  await generateCollaborator({
+    designId: design.id,
+    userId: comment1.userId
+  });
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await sendCreationNotifications(trx, {
+      actorUserId: comment1.userId,
+      annotationId: annotation.id,
+      comment: comment1
+    });
+  });
+
+  t.equal(replyStub.callCount, 2, 'Creates a reply notification');
+  replyStub.reset();
+
+  const { comment: comment2 } = await generateComment({
+    createdAt: new Date(),
+    deletedAt: null,
+    id: uuid.v4(),
+    isPinned: false,
+    parentCommentId: parentComment.id,
+    text: 'That is not a good point',
+    userEmail: 'uncool@example.com',
+    userName: 'Somebody uncool',
+    userRole: 'USER' as Role,
+    attachments: []
+  });
+
+  await generateCollaborator({
+    designId: design.id,
+    userId: comment2.userId
+  });
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await sendCreationNotifications(trx, {
+      actorUserId: comment2.userId,
+      annotationId: annotation.id,
+      comment: comment2
+    });
+  });
+
+  t.equal(replyStub.callCount, 3, 'Creates a reply notification');
+  replyStub.reset();
+});
+
+test('sendCreationNotifications sends a notification to @mentioned users in a reply thread', async (t: Test) => {
+  const {
+    collaboratorUser,
+    annotation,
+    replyStub,
+    design,
+    mentionStub
+  } = await setup();
+
+  const { comment: parentComment } = await generateComment({
+    userId: collaboratorUser.id
+  });
+
+  const { comment: comment1 } = await generateComment({
+    createdAt: new Date(),
+    deletedAt: null,
+    id: uuid.v4(),
+    isPinned: false,
+    parentCommentId: parentComment.id,
+    text: 'Thats a good point..',
+    userEmail: 'cool@example.com',
+    userName: 'Somebody cool',
+    userRole: 'USER' as Role,
+    attachments: []
+  });
+
+  const { collaborator } = await generateCollaborator({
+    designId: design.id,
+    userId: comment1.userId
+  });
+
+  await db.transaction(async (trx: Knex.Transaction) =>
+    sendCreationNotifications(trx, {
+      actorUserId: comment1.userId,
+      annotationId: annotation.id,
+      comment: comment1
+    })
+  );
+
+  t.equal(replyStub.callCount, 2, 'Creates a reply notification');
+  replyStub.reset();
+
+  const { comment: comment2 } = await generateComment({
+    createdAt: new Date(),
+    deletedAt: null,
+    id: uuid.v4(),
+    isPinned: false,
+    parentCommentId: parentComment.id,
+    text: `A comment @<${collaborator.id}|collaborator>`,
+    userEmail: 'uncool@example.com',
+    userName: 'Somebody uncool',
+    userRole: 'USER' as Role,
+    attachments: []
+  });
+
+  await generateCollaborator({
+    designId: design.id,
+    userId: comment2.userId
+  });
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await sendCreationNotifications(trx, {
+      actorUserId: comment2.userId,
+      annotationId: annotation.id,
+      comment: comment2
+    });
+  });
+
+  t.equal(
+    replyStub.callCount,
+    0,
+    'Does not notify thread participants if @mentioned'
+  );
+  t.equal(mentionStub.callCount, 1);
+  replyStub.reset();
 });
 
 test('sendCreationNotifications continues processing notifications once it hits an unregistered collaborator', async (t: Test) => {
@@ -176,13 +333,13 @@ test('sendCreationNotifications continues processing notifications once it hits 
     userRole: 'USER' as Role,
     attachments: []
   };
-
-  await sendCreationNotifications({
-    actorUserId: ownerUser.id,
-    annotationId: annotation.id,
-    comment
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await sendCreationNotifications(trx, {
+      actorUserId: ownerUser.id,
+      annotationId: annotation.id,
+      comment
+    });
   });
-
   t.equal(mentionStub.callCount, 2);
 
   t.deepEqual(mentionStub.firstCall.args.slice(0, 5), [

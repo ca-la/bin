@@ -231,6 +231,58 @@ export async function createNotificationMessage(
       };
     }
 
+    case NotificationType.ANNOTATION_COMMENT_REPLY: {
+      const {
+        annotationId,
+        canvasId,
+        designId,
+        designImageIds,
+        collectionId,
+        commentId,
+        commentText,
+        hasAttachments,
+        componentType
+      } = notification;
+      const design = { id: designId, title: notification.designTitle };
+      const collaborators = await CollaboratorsDAO.findByDesign(designId);
+      const collection = collectionId
+        ? { id: collectionId, title: notification.collectionTitle }
+        : null;
+      const mentions = await getMentionsFromComment(commentText);
+      const cleanName = escapeHtml(baseNotificationMessage.actor.name);
+      const { deepLink, htmlLink } = getLinks({
+        annotationId,
+        canvasId,
+        componentType: componentType as ComponentType,
+        design,
+        type: LinkType.DesignAnnotation
+      });
+      return {
+        ...baseNotificationMessage,
+        actions: [
+          {
+            type: NotificationMessageActionType.ANNOTATION_COMMENT_REPLY,
+            annotationId,
+            parentCommentId: commentId,
+            collaborators
+          }
+        ],
+        attachments: [
+          { text: commentText, url: deepLink, mentions, hasAttachments }
+        ],
+        html: `${span(
+          cleanName,
+          'user-name'
+        )} has replied to a comment on ${htmlLink}`,
+        imageUrl: buildImageUrl(designImageIds),
+        link: deepLink,
+        location: getLocation({ collection, design }),
+        title: `${cleanName} has replied to a comment on ${normalizeTitle(
+          design
+        )}`
+      };
+    }
+
     case NotificationType.MEASUREMENT_CREATE: {
       const { designId, designImageIds, collectionId } = notification;
       const design = { id: designId, title: notification.designTitle };
@@ -352,6 +404,56 @@ export async function createNotificationMessage(
         link: deepLink,
         location: getLocation({ collection, design }),
         title: `${cleanName} mentioned you on the task ${normalizeTitle(task)}`
+      };
+    }
+
+    case NotificationType.TASK_COMMENT_REPLY: {
+      const {
+        designId,
+        designImageIds,
+        collectionId,
+        taskId,
+        commentId,
+        commentText,
+        hasAttachments
+      } = notification;
+      const design = { id: designId, title: notification.designTitle };
+      const collection = collectionId
+        ? { id: collectionId, title: notification.collectionTitle }
+        : null;
+      const task = { id: taskId, title: notification.taskTitle };
+      const collaborators = await CollaboratorsDAO.findByDesign(designId);
+      const { htmlLink, deepLink } = getLinks({
+        collection,
+        design,
+        task,
+        type: LinkType.CollectionDesignTask
+      });
+      const mentions = await getMentionsFromComment(commentText);
+      const cleanName = escapeHtml(baseNotificationMessage.actor.name);
+      return {
+        ...baseNotificationMessage,
+        actions: [
+          {
+            type: NotificationMessageActionType.TASK_COMMENT_REPLY,
+            taskId,
+            parentCommentId: commentId,
+            collaborators
+          }
+        ],
+        attachments: [
+          { text: commentText, url: deepLink, mentions, hasAttachments }
+        ],
+        html: `${span(
+          cleanName,
+          'user-name'
+        )} has replied to a comment on ${htmlLink}`,
+        imageUrl: buildImageUrl(designImageIds),
+        link: deepLink,
+        location: getLocation({ collection, design }),
+        title: `${cleanName} has replied to a comment on ${normalizeTitle(
+          task
+        )}`
       };
     }
 

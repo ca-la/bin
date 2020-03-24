@@ -2,7 +2,7 @@ import tape from 'tape';
 import uuid from 'node-uuid';
 import { TaskStatus } from '@cala/ts-lib';
 
-import User from '../../components/users/domain-object';
+import User, { Role } from '../../components/users/domain-object';
 import {
   DetailsTask,
   DetailsTaskWithAssignees
@@ -27,6 +27,8 @@ import * as StageTemplate from '../../components/tasks/templates';
 import { addDesign } from '../../test-helpers/collections';
 import * as AddAttachmentLinks from '../../services/add-attachments-links';
 import * as AssetLinkAttachment from '../../services/attach-asset-links';
+import generateComment from '../../test-helpers/factories/comment';
+import { generateDesign } from '../../test-helpers/factories/product-design';
 
 const beforeEach = (): void => {
   sandbox()
@@ -686,6 +688,97 @@ test('PUT /tasks/:taskId/comment/:id creates a task comment', async (t: tape.Tes
     announcementStub.args[0][1].attachments[0].downloadLink,
     'a-very-download',
     'Attachments links are attached to the created comment'
+  );
+});
+
+test('PUT /tasks/:taskId/comment/:id creates a task threaded comment and notifies the parent', async (t: tape.Test) => {
+  sandbox().useFakeTimers();
+  const { session, user: user1 } = await createUser();
+
+  const taskId = uuid.v4();
+  sandbox()
+    .stub(AnnounceCommentService, 'announceTaskCommentCreation')
+    .resolves({});
+  sandbox()
+    .stub(CreateNotifications, 'sendTaskCommentCreateNotification')
+    .resolves();
+  const notificationReplyStub = sandbox()
+    .stub(CreateNotifications, 'sendTaskCommentReplyNotification')
+    .resolves();
+
+  const design = await generateDesign({ userId: user1.id });
+
+  const { user: parentUser } = await createUser();
+
+  await generateCollaborator({
+    designId: design.id,
+    userId: parentUser.id
+  });
+
+  const { comment: parentComment } = await generateComment({
+    userId: parentUser.id
+  });
+
+  const { createdBy: user2 } = await generateComment({
+    createdAt: new Date(),
+    deletedAt: null,
+    id: uuid.v4(),
+    isPinned: false,
+    parentCommentId: parentComment.id,
+    text: 'Thats a good point..',
+    userEmail: 'cool@example.com',
+    userName: 'Somebody cool',
+    userRole: 'USER' as Role,
+    attachments: []
+  });
+
+  await generateCollaborator({
+    designId: design.id,
+    userId: user2.id
+  });
+
+  await post('/tasks', {
+    body: { ...BASE_TASK_EVENT, id: taskId },
+    headers: authHeader(session.id)
+  });
+
+  const commentBody = {
+    createdAt: new Date().toISOString(),
+    deletedAt: null,
+    id: uuid.v4(),
+    isPinned: false,
+    mentions: {},
+    parentCommentId: parentComment.id,
+    text: 'A comment',
+    userEmail: 'cool@me.me',
+    userId: user1.id,
+    userName: 'Somebody Cool',
+    attachments: []
+  };
+  await put(`/tasks/${taskId}/comments/${uuid.v4()}`, {
+    body: commentBody,
+    headers: authHeader(session.id)
+  });
+
+  t.equal(
+    notificationReplyStub.callCount,
+    3,
+    'Notifications are created for all thread participants'
+  );
+  t.equal(
+    notificationReplyStub.args[0][1].recipientId,
+    parentUser.id,
+    'Parent is notified'
+  );
+  t.equal(
+    notificationReplyStub.args[1][1].recipientId,
+    user2.id,
+    'Thread commenter is notified'
+  );
+  t.equal(
+    notificationReplyStub.args[2][1].recipientId,
+    user1.id,
+    'Thread commenter is notified'
   );
 });
 
