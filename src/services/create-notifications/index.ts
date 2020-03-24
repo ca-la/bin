@@ -1,5 +1,6 @@
 import uuid from 'node-uuid';
 import * as Knex from 'knex';
+import { pick } from 'lodash';
 
 import * as NotificationsDAO from '../../components/notifications/dao';
 import * as CanvasesDAO from '../../components/canvases/dao';
@@ -93,13 +94,20 @@ import {
 } from '../../components/notifications/models/task-comment-reply';
 
 /**
- * Deletes pre-existing similar notifications and adds in a new one.
+ * Deletes pre-existing similar notifications and adds in a new one by comparing columns.
+ * To only compare certain columns use an optional mergeList
  */
-async function replaceNotifications(
-  notification: Uninserted<Notification>,
-  trx?: Knex.Transaction
-): Promise<Notification> {
-  await NotificationsDAO.deleteRecent(notification, trx);
+async function replaceNotifications(options: {
+  trx?: Knex.Transaction;
+  notification: Uninserted<Notification>;
+  mergeList?: (keyof Uninserted<Notification>)[];
+}): Promise<Notification> {
+  const { notification, trx, mergeList } = options;
+
+  await NotificationsDAO.deleteRecent(
+    mergeList ? pick(notification, mergeList) : notification,
+    trx
+  );
   return await NotificationsDAO.create(notification, trx);
 }
 
@@ -141,8 +149,8 @@ export async function sendDesignOwnerAnnotationCommentCreateNotification(
   }
 
   const id = uuid.v4();
-  const notification = await replaceNotifications(
-    {
+  const notification = await replaceNotifications({
+    notification: {
       ...templateNotification,
       actorUserId: actorId,
       annotationId,
@@ -156,7 +164,7 @@ export async function sendDesignOwnerAnnotationCommentCreateNotification(
       type: NotificationType.ANNOTATION_COMMENT_CREATE
     },
     trx
-  );
+  });
   return validateTypeWithGuardOrThrow(
     notification,
     isAnnotationCommentCreateNotification,
@@ -198,8 +206,8 @@ export async function sendAnnotationCommentMentionNotification(
   }
 
   const id = uuid.v4();
-  const notification = await replaceNotifications(
-    {
+  const notification = await replaceNotifications({
+    notification: {
       ...templateNotification,
       actorUserId: actorId,
       annotationId,
@@ -213,7 +221,7 @@ export async function sendAnnotationCommentMentionNotification(
       type: NotificationType.ANNOTATION_COMMENT_MENTION
     },
     trx
-  );
+  });
   return validateTypeWithGuardOrThrow(
     notification,
     isAnnotationCommentMentionNotification,
@@ -243,8 +251,9 @@ export async function sendAnnotationCommentReplyNotification(
   }
 
   const id = uuid.v4();
-  const notification = await replaceNotifications(
-    {
+  const notification = await replaceNotifications({
+    trx,
+    notification: {
       ...templateNotification,
       actorUserId: actorId,
       annotationId,
@@ -256,9 +265,8 @@ export async function sendAnnotationCommentReplyNotification(
       recipientUserId,
       sentEmailAt: null,
       type: NotificationType.ANNOTATION_COMMENT_REPLY
-    },
-    trx
-  );
+    }
+  });
   return validateTypeWithGuardOrThrow(
     notification,
     isAnnotationCommentReplyNotification,
@@ -297,16 +305,25 @@ export async function sendDesignOwnerMeasurementCreateNotification(
 
   const id = uuid.v4();
   const notification = await replaceNotifications({
-    ...templateNotification,
-    actorUserId: actorId,
-    canvasId: canvas.id,
-    collectionId,
-    designId: design.id,
-    id,
-    measurementId,
-    recipientUserId: targetId,
-    sentEmailAt: null,
-    type: NotificationType.MEASUREMENT_CREATE
+    notification: {
+      ...templateNotification,
+      actorUserId: actorId,
+      canvasId: canvas.id,
+      collectionId,
+      designId: design.id,
+      id,
+      measurementId,
+      recipientUserId: targetId,
+      sentEmailAt: null,
+      type: NotificationType.MEASUREMENT_CREATE
+    },
+    mergeList: [
+      'actorUserId',
+      'recipientUserId',
+      'sentEmailAt',
+      'designId',
+      'type'
+    ]
   });
   return validateTypeWithGuardOrThrow(
     notification,
@@ -393,8 +410,8 @@ export async function sendTaskCommentCreateNotification(
   const notifications = [];
   for (const recipientId of filteredRecipientIds) {
     const id = uuid.v4();
-    const notification = await replaceNotifications(
-      {
+    const notification = await replaceNotifications({
+      notification: {
         ...templateNotification,
         actorUserId: actorId,
         collectionId: design.collectionIds[0] || null,
@@ -408,7 +425,7 @@ export async function sendTaskCommentCreateNotification(
         type: NotificationType.TASK_COMMENT_CREATE
       },
       trx
-    );
+    });
     const validated = validateTypeWithGuardOrThrow(
       notification,
       isTaskCommentCreateNotification,
@@ -461,8 +478,8 @@ export async function sendTaskCommentMentionNotification(
   }
 
   const id = uuid.v4();
-  const notification = await replaceNotifications(
-    {
+  const notification = await replaceNotifications({
+    notification: {
       ...templateNotification,
       actorUserId: actorId,
       collectionId: design.collectionIds[0] || null,
@@ -476,7 +493,7 @@ export async function sendTaskCommentMentionNotification(
       type: NotificationType.TASK_COMMENT_MENTION
     },
     trx
-  );
+  });
   const validated = validateTypeWithGuardOrThrow(
     notification,
     isTaskCommentMentionNotification,
@@ -536,8 +553,8 @@ export async function sendTaskCommentReplyNotification(
   }
 
   const id = uuid.v4();
-  const notification = await replaceNotifications(
-    {
+  const notification = await replaceNotifications({
+    notification: {
       ...templateNotification,
       actorUserId: actorId,
       collectionId: design.collectionIds[0] || null,
@@ -551,7 +568,7 @@ export async function sendTaskCommentReplyNotification(
       type: NotificationType.TASK_COMMENT_REPLY
     },
     trx
-  );
+  });
   const validated = validateTypeWithGuardOrThrow(
     notification,
     isTaskCommentReplyNotification,
@@ -594,17 +611,19 @@ export async function sendTaskAssignmentNotification(
     }
     const id = uuid.v4();
     const notification = await replaceNotifications({
-      ...templateNotification,
-      actorUserId: actorId,
-      collaboratorId: collaborator.id,
-      collectionId: design.collectionIds[0] || null,
-      designId: design.id,
-      id,
-      recipientUserId: collaborator.user.id,
-      sentEmailAt: null,
-      stageId: stage.id,
-      taskId,
-      type: NotificationType.TASK_ASSIGNMENT
+      notification: {
+        ...templateNotification,
+        actorUserId: actorId,
+        collaboratorId: collaborator.id,
+        collectionId: design.collectionIds[0] || null,
+        designId: design.id,
+        id,
+        recipientUserId: collaborator.user.id,
+        sentEmailAt: null,
+        stageId: stage.id,
+        taskId,
+        type: NotificationType.TASK_ASSIGNMENT
+      }
     });
     const validated = validateTypeWithGuardOrThrow(
       notification,
@@ -656,17 +675,19 @@ export async function sendTaskCompletionNotification(
     }
     const id = uuid.v4();
     const notification = await replaceNotifications({
-      ...templateNotification,
-      actorUserId: actorId,
-      collaboratorId: collaborator.id,
-      collectionId: design.collectionIds[0] || null,
-      designId: design.id,
-      id,
-      recipientUserId: collaborator.user.id,
-      sentEmailAt: null,
-      stageId: stage.id,
-      taskId,
-      type: NotificationType.TASK_COMPLETION
+      notification: {
+        ...templateNotification,
+        actorUserId: actorId,
+        collaboratorId: collaborator.id,
+        collectionId: design.collectionIds[0] || null,
+        designId: design.id,
+        id,
+        recipientUserId: collaborator.user.id,
+        sentEmailAt: null,
+        stageId: stage.id,
+        taskId,
+        type: NotificationType.TASK_COMPLETION
+      }
     });
     const validated = validateTypeWithGuardOrThrow(
       notification,
@@ -778,13 +799,15 @@ export async function sendDesignerSubmitCollection(
 
   const id = uuid.v4();
   const notification = await replaceNotifications({
-    ...templateNotification,
-    actorUserId: actorId,
-    collectionId,
-    id,
-    recipientUserId: Config.CALA_OPS_USER_ID,
-    sentEmailAt: null,
-    type: NotificationType.COLLECTION_SUBMIT
+    notification: {
+      ...templateNotification,
+      actorUserId: actorId,
+      collectionId,
+      id,
+      recipientUserId: Config.CALA_OPS_USER_ID,
+      sentEmailAt: null,
+      type: NotificationType.COLLECTION_SUBMIT
+    }
   });
   return validateTypeWithGuardOrThrow(
     notification,
@@ -882,13 +905,15 @@ export async function sendPartnerDesignBid(
 ): Promise<PartnerDesignBidNotification> {
   const id = uuid.v4();
   const notification = await replaceNotifications({
-    ...templateNotification,
-    actorUserId: actorId,
-    designId,
-    id,
-    recipientUserId: targetId,
-    sentEmailAt: null,
-    type: NotificationType.PARTNER_DESIGN_BID
+    notification: {
+      ...templateNotification,
+      actorUserId: actorId,
+      designId,
+      id,
+      recipientUserId: targetId,
+      sentEmailAt: null,
+      type: NotificationType.PARTNER_DESIGN_BID
+    }
   });
   return validateTypeWithGuardOrThrow(
     notification,

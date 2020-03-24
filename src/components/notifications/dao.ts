@@ -12,7 +12,8 @@ import {
   isFullNotificationRow,
   isNotificationRow,
   Notification,
-  NotificationRow
+  NotificationRow,
+  partialDataAdapter
 } from './domain-object';
 import { validate, validateEvery } from '../../services/validate-from-db';
 import { announceNotificationCreation } from '../iris/messages/notification';
@@ -474,10 +475,14 @@ export async function del(id: string): Promise<void> {
  * granular enough changes.
  */
 export async function deleteRecent(
-  data: Uninserted<Notification>,
+  data: Uninserted<Partial<Notification>>,
   trx?: Knex.Transaction
 ): Promise<number> {
-  const rowData = omit(dataAdapter.forInsertion(data), 'id', 'created_at');
+  const rowData = omit(
+    partialDataAdapter.forInsertion(data),
+    'id',
+    'created_at'
+  );
 
   const now = Date.now();
   // 5 minutes ago

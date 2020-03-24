@@ -8,6 +8,7 @@ import createUser = require('../../test-helpers/create-user');
 import { NotificationType } from '../../components/notifications/domain-object';
 import * as NotificationsService from './index';
 import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
+import * as NotificationsDAO from '../../components/notifications/dao';
 import * as TasksDAO from '../../dao/tasks';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as DesignStagesDAO from '../../dao/product-design-stages';
@@ -345,6 +346,42 @@ test('sendDesignOwnerMeasurementCreateNotification', async (t: tape.Test) => {
   t.equal(measurementId, measurement.id);
   t.equal(recipientUserId, owner.id);
   t.equal(type, NotificationType.MEASUREMENT_CREATE);
+
+  const { measurement: measurement2 } = await generateMeasurement({
+    canvasId: canvas.id
+  });
+
+  await NotificationsService.sendDesignOwnerMeasurementCreateNotification(
+    measurement2.id,
+    canvas.id,
+    user.id
+  );
+
+  const { canvas: canvas2 } = await generateCanvas({
+    createdBy: owner.id,
+    designId: design.id
+  });
+  const { measurement: measurement3 } = await generateMeasurement({
+    canvasId: canvas2.id
+  });
+  await NotificationsService.sendDesignOwnerMeasurementCreateNotification(
+    measurement3.id,
+    canvas.id,
+    user.id
+  );
+
+  const notifications = await db.transaction((trx: Knex.Transaction) => {
+    return NotificationsDAO.findByUserId(trx, owner.id, {
+      limit: 10,
+      offset: 0
+    });
+  });
+
+  t.equal(
+    notifications.length,
+    1,
+    'Only one measurement notification is returned'
+  );
 });
 
 test('sendTaskCommentCreateNotification', async (t: tape.Test) => {
