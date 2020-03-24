@@ -765,20 +765,14 @@ test('PUT /tasks/:taskId/comment/:id creates a task threaded comment and notifie
     3,
     'Notifications are created for all thread participants'
   );
-  t.equal(
-    notificationReplyStub.args[0][1].recipientId,
-    parentUser.id,
-    'Parent is notified'
-  );
-  t.equal(
-    notificationReplyStub.args[1][1].recipientId,
-    user2.id,
-    'Thread commenter is notified'
-  );
-  t.equal(
-    notificationReplyStub.args[2][1].recipientId,
-    user1.id,
-    'Thread commenter is notified'
+  t.deepEqual(
+    new Set([
+      notificationReplyStub.args[0][1].recipientId,
+      notificationReplyStub.args[1][1].recipientId,
+      notificationReplyStub.args[2][1].recipientId
+    ]),
+    new Set([parentUser.id, user1.id, user2.id]),
+    'Parent and thread commenters are notified'
   );
 });
 
