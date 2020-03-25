@@ -15,7 +15,8 @@ const keyNamesByColumnName = {
   region: 'region',
   post_code: 'postCode',
   country: 'country',
-  user_id: 'userId'
+  user_id: 'userId',
+  phone: 'phone'
 };
 
 const dataMapper = new DataMapper(keyNamesByColumnName);
