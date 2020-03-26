@@ -144,10 +144,26 @@ function addMeasurement(query: Knex.QueryBuilder): Knex.QueryBuilder {
 
 function addAnnotation(query: Knex.QueryBuilder): Knex.QueryBuilder {
   return query
+    .select('canvas_assets.id as annotation_image_id')
     .leftJoin(
       'product_design_canvas_annotations as a',
       'a.id',
       'n.annotation_id'
+    )
+    .leftJoin('canvases', (join: Knex.JoinClause) =>
+      join
+        .on('canvases.id', '=', 'a.canvas_id')
+        .andOnNull('canvases.deleted_at')
+    )
+    .leftJoin('components', (join: Knex.JoinClause) =>
+      join
+        .on('components.id', '=', 'canvases.component_id')
+        .andOnNull('components.deleted_at')
+    )
+    .leftJoin('assets as canvas_assets', (join: Knex.JoinClause) =>
+      join
+        .on('canvas_assets.id', '=', 'components.sketch_id')
+        .andOnNull('canvas_assets.deleted_at')
     )
     .whereNull('a.deleted_at');
 }
@@ -168,12 +184,8 @@ function addTaskTitle(query: Knex.QueryBuilder): Knex.QueryBuilder {
   );
 }
 
-export async function findByUserId(
-  trx: Knex.Transaction,
-  userId: string,
-  options: SearchInterface
-): Promise<FullNotification[]> {
-  const notifications = await trx
+function baseQuery(trx: Knex.Transaction): Knex.QueryBuilder {
+  return trx
     .select('n.*')
     .from('notifications as n')
     .modify(addActor)
@@ -185,7 +197,15 @@ export async function findByUserId(
     .modify(addHasAttachments)
     .modify(addMeasurement)
     .modify(addAnnotation)
-    .modify(addTaskTitle)
+    .modify(addTaskTitle);
+}
+
+export async function findByUserId(
+  trx: Knex.Transaction,
+  userId: string,
+  options: SearchInterface
+): Promise<FullNotification[]> {
+  const notifications = await baseQuery(trx)
     .leftJoin('collaborators as cl', 'cl.id', 'n.collaborator_id')
     .whereNotIn('n.type', DEPRECATED_NOTIFICATION_TYPES)
     .andWhereRaw('(cl.cancelled_at is null or cl.cancelled_at > now())')
@@ -213,19 +233,7 @@ export async function findById(
   trx: Knex.Transaction,
   notificationId: string
 ): Promise<FullNotification | null> {
-  const notification = await trx
-    .select('n.*')
-    .from('notifications as n')
-    .modify(addActor)
-    .modify(addComponentType)
-    .modify(addCollectionTitle)
-    .modify(addDesignTitle)
-    .modify(addDesignImages)
-    .modify(addCommentText)
-    .modify(addHasAttachments)
-    .modify(addMeasurement)
-    .modify(addAnnotation)
-    .modify(addTaskTitle)
+  const notification = await baseQuery(trx)
     .leftJoin('collaborators as cl', 'cl.id', 'n.collaborator_id')
     .whereNotIn('n.type', DEPRECATED_NOTIFICATION_TYPES)
     .andWhereRaw('(cl.cancelled_at is null or cl.cancelled_at > now())')
@@ -248,19 +256,7 @@ export async function findById(
 export async function findOutstanding(
   trx: Knex.Transaction
 ): Promise<FullNotification[]> {
-  const notifications = await trx
-    .select('n.*')
-    .from('notifications as n')
-    .modify(addActor)
-    .modify(addComponentType)
-    .modify(addCollectionTitle)
-    .modify(addDesignTitle)
-    .modify(addDesignImages)
-    .modify(addCommentText)
-    .modify(addHasAttachments)
-    .modify(addMeasurement)
-    .modify(addAnnotation)
-    .modify(addTaskTitle)
+  const notifications = await baseQuery(trx)
     .leftJoin('collaborators as cl', 'cl.id', 'n.collaborator_id')
     .where({ 'n.deleted_at': null, sent_email_at: null, read_at: null })
     .whereNot({ recipient_user_id: null })

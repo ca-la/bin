@@ -141,6 +141,7 @@ export async function createNotificationMessage(
     case NotificationType.ANNOTATION_COMMENT_CREATE: {
       const {
         annotationId,
+        annotationImageId,
         canvasId,
         designId,
         collectionId,
@@ -177,7 +178,7 @@ export async function createNotificationMessage(
           { text: commentText, url: deepLink, mentions, hasAttachments }
         ],
         html: `${span(cleanName, 'user-name')} commented on ${htmlLink}`,
-        imageUrl: buildImageUrl(notification.designImageIds),
+        imageUrl: buildImageUrl([annotationImageId]),
         link: deepLink,
         location: getLocation({ collection, design }),
         title: `${cleanName} commented on ${normalizeTitle(design)}`
@@ -187,9 +188,9 @@ export async function createNotificationMessage(
     case NotificationType.ANNOTATION_COMMENT_MENTION: {
       const {
         annotationId,
+        annotationImageId,
         canvasId,
         designId,
-        designImageIds,
         collectionId,
         commentId,
         commentText,
@@ -224,7 +225,7 @@ export async function createNotificationMessage(
           { text: commentText, url: deepLink, mentions, hasAttachments }
         ],
         html: `${span(cleanName, 'user-name')} mentioned you on ${htmlLink}`,
-        imageUrl: buildImageUrl(designImageIds),
+        imageUrl: buildImageUrl([annotationImageId]),
         link: deepLink,
         location: getLocation({ collection, design }),
         title: `${cleanName} mentioned you on ${normalizeTitle(design)}`

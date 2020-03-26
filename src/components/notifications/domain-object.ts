@@ -323,7 +323,8 @@ export function isFullNotificationRow(
       'design_title',
       'design_image_ids',
       'has_attachments',
-      'task_title'
+      'task_title',
+      'annotation_image_id'
     )
   );
 }
@@ -344,6 +345,7 @@ function encodeFull(rowData: FullNotificationRow): FullNotification {
     },
     actorUserId: rowData.actor_user_id,
     annotationId: rowData.annotation_id,
+    annotationImageId: rowData.annotation_image_id,
     canvasId: rowData.canvas_id,
     collaboratorId: rowData.collaborator_id,
     collectionId: rowData.collection_id,

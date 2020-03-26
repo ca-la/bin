@@ -205,7 +205,7 @@ test('addAssetLink returns link when component is of type material', async (t: t
   const enrichedImages = generatePreviewLinks([imageId, imageIdTwo]);
   t.equal(
     enrichedImages[0].thumbnailLink,
-    `https://imgix.example.com/${imageId}?fm=jpg&w=48`
+    `https://imgix.example.com/${imageId}?fm=jpg&w=160`
   );
   t.equal(
     enrichedImages[0].previewLink,
@@ -213,7 +213,7 @@ test('addAssetLink returns link when component is of type material', async (t: t
   );
   t.equal(
     enrichedImages[1].thumbnailLink,
-    `https://imgix.example.com/${imageIdTwo}?fm=jpg&w=48`
+    `https://imgix.example.com/${imageIdTwo}?fm=jpg&w=160`
   );
   t.equal(
     enrichedImages[1].previewLink,

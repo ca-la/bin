@@ -36,6 +36,7 @@ export interface BaseFullNotificationRow {
   design_image_ids: string[];
   has_attachments: boolean;
   task_title: null;
+  annotation_image_id: null;
 }
 
 export interface BaseNotification {
@@ -69,6 +70,7 @@ export interface BaseFullNotification {
   designImageIds: string[];
   hasAttachments: boolean;
   taskTitle: null;
+  annotationImageId: null;
 }
 
 export const templateNotification = {

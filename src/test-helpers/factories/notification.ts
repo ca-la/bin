@@ -2,6 +2,7 @@ import uuid from 'node-uuid';
 
 import { create } from '../../components/notifications/dao';
 import {
+  FullNotification,
   Notification,
   NotificationType
 } from '../../components/notifications/domain-object';
@@ -43,7 +44,7 @@ import { addDesign } from '../collections';
 interface NotificationWithResources {
   actor: User;
   recipient: User;
-  notification: Notification;
+  notification: FullNotification;
   design: ProductDesign;
   collection: Collection;
   collaborator: CollaboratorWithUser;

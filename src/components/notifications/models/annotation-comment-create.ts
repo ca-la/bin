@@ -28,7 +28,11 @@ export interface AnnotationCommentCreateNotificationRow extends BaseRow {
 
 type BaseFullRow = Omit<
   BaseFullNotificationRow & AnnotationCommentCreateNotificationRow,
-  'collection_title' | 'comment_text' | 'design_title' | 'task_title'
+  | 'collection_title'
+  | 'comment_text'
+  | 'design_title'
+  | 'task_title'
+  | 'annotation_image_id'
 >;
 
 export interface FullAnnotationCommentCreateNotificationRow
@@ -37,6 +41,7 @@ export interface FullAnnotationCommentCreateNotificationRow
   comment_text: string;
   design_title: string | null;
   task_title: string;
+  annotation_image_id: string;
 }
 
 type Base = Omit<
@@ -66,6 +71,7 @@ type BaseFull = Omit<
   | 'designTitle'
   | 'taskTitle'
   | 'componentType'
+  | 'annotationImageId'
 >;
 
 export interface FullAnnotationCommentCreateNotification extends BaseFull {
@@ -74,6 +80,7 @@ export interface FullAnnotationCommentCreateNotification extends BaseFull {
   componentType: string;
   designTitle: string | null;
   taskTitle: string;
+  annotationImageId: string;
 }
 
 export function isAnnotationCommentCreateNotification(

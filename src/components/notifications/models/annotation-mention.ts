@@ -28,7 +28,11 @@ export interface AnnotationCommentMentionNotificationRow extends BaseRow {
 
 type BaseFullRow = Omit<
   BaseFullNotificationRow & AnnotationCommentMentionNotificationRow,
-  'collection_title' | 'comment_text' | 'design_title' | 'task_title'
+  | 'collection_title'
+  | 'comment_text'
+  | 'design_title'
+  | 'task_title'
+  | 'annotation_image_id'
 >;
 
 export interface FullAnnotationCommentMentionNotificationRow
@@ -37,6 +41,7 @@ export interface FullAnnotationCommentMentionNotificationRow
   comment_text: string;
   design_title: string | null;
   task_title: string;
+  annotation_image_id: string;
 }
 
 type Base = Omit<
@@ -63,7 +68,11 @@ export interface AnnotationCommentMentionNotification extends Base {
 
 type BaseFull = Omit<
   BaseFullNotification & AnnotationCommentMentionNotification,
-  'collectionTitle' | 'commentText' | 'designTitle' | 'taskTitle'
+  | 'collectionTitle'
+  | 'commentText'
+  | 'designTitle'
+  | 'taskTitle'
+  | 'annotationImageId'
 >;
 
 export interface FullAnnotationCommentMentionNotification extends BaseFull {
@@ -71,6 +80,7 @@ export interface FullAnnotationCommentMentionNotification extends BaseFull {
   commentText: string;
   designTitle: string | null;
   taskTitle: string;
+  annotationImageId: string;
 }
 
 export function isAnnotationCommentMentionNotification(

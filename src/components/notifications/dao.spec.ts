@@ -226,7 +226,7 @@ test('Notifications DAO correctly filters out notifications for deleted designs'
     role: 'PARTNER'
   });
 
-  const { canvas, design: d1 } = await generateCanvas({
+  const { asset, canvas, design: d1 } = await generateCanvas({
     createdBy: designer.id
   });
   const { collaborator: designerCollab } = await generateCollaborator({
@@ -302,6 +302,12 @@ test('Notifications DAO correctly filters out notifications for deleted designs'
     recipientUserId: partner.id,
     designId: d1.id
   });
+
+  t.deepEqual(
+    notificationAnnotationCreate.annotationImageId,
+    asset.id,
+    'Annotation notification returns asset ID'
+  );
 
   return db.transaction(async (trx: Knex.Transaction) => {
     t.deepEqual(

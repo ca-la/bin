@@ -1,8 +1,10 @@
 import uuid from 'node-uuid';
+import Asset from '../../components/assets/domain-object';
 import { create } from '../../components/canvases/dao';
 import Canvas from '../../components/canvases/domain-object';
 import { findById as findUserById } from '../../components/users/dao';
-import createUser = require('../create-user');
+import { findById as findAssetById } from '../../components/assets/dao';
+import createUser from '../create-user';
 import ProductDesignsDAO from '../../components/product-designs/dao';
 import createDesign from '../../services/create-design';
 import * as ComponentsDAO from '../../components/components/dao';
@@ -12,6 +14,7 @@ import generateComponent from './component';
 interface ProductDesignCanvasWithResources {
   canvas: Canvas;
   component: Component;
+  asset: Asset;
   createdBy: any;
   design: any;
 }
@@ -29,13 +32,30 @@ export default async function generateCanvas(
         title: 'Mohair Wool Sweater',
         userId: user.id
       });
-  const { component } = options.componentId
-    ? { component: await ComponentsDAO.findById(options.componentId) }
-    : await generateComponent({ createdBy: user.id });
+  let asset;
+  let component;
+
+  if (options.componentId) {
+    component = await ComponentsDAO.findById(options.componentId);
+    if (component && component.sketchId) {
+      asset = await findAssetById(component.sketchId);
+    }
+  }
+
+  if (!component) {
+    const generated = await generateComponent({ createdBy: user.id });
+    component = generated.component;
+    asset = generated.asset;
+  }
 
   if (!component) {
     throw new Error('Component was unable to be found or created!');
   }
+
+  if (!asset) {
+    throw new Error('Asset was unable to be found or created!');
+  }
+
   if (!design) {
     throw new Error('Design was unable to be found or created!');
   }
@@ -55,6 +75,7 @@ export default async function generateCanvas(
   });
 
   return {
+    asset,
     canvas,
     component,
     createdBy: user,
