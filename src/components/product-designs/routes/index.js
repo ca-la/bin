@@ -8,8 +8,6 @@ const CollaboratorsDAO = require('../../collaborators/dao');
 const CollectionsDAO = require('../../collections/dao');
 const filterError = require('../../../services/filter-error');
 const InvalidDataError = require('../../../errors/invalid-data');
-const MissingPrerequisitesError = require('../../../errors/missing-prerequisites');
-const PricingCalculator = require('../../../services/pricing-table');
 const ProductDesignsDAO = require('../dao');
 const TaskEventsDAO = require('../../../dao/task-events');
 const ProductDesignStagesDAO = require('../../../dao/product-design-stages');
@@ -224,38 +222,6 @@ function* getDesign() {
   this.status = 200;
 }
 
-// DEPRECATED: V1 Endpoint.
-function* getDesignPricing() {
-  const { canViewPricing, canManagePricing } = this.state.permissions;
-
-  if (!canViewPricing) {
-    this.throw(403, "You're not able to view pricing for this garment");
-  }
-
-  const design = yield ProductDesignsDAO.findById(this.params.designId);
-  const calculator = new PricingCalculator(design);
-  const {
-    computedPricingTable,
-    overridePricingTable,
-    finalPricingTable
-  } = yield calculator
-    .getAllPricingTables()
-    .catch(filterError(MissingPrerequisitesError, err => this.throw(400, err)));
-  let finalTable = finalPricingTable;
-
-  if (!canManagePricing && !design.showPricingBreakdown) {
-    finalTable = finalPricingTable.serializeWithoutBreakdown();
-  }
-
-  this.body = {
-    computedPricingTable: canManagePricing ? computedPricingTable : null,
-    overridePricingTable: canManagePricing ? overridePricingTable : null,
-    finalPricingTable: finalTable
-  };
-
-  this.status = 200;
-}
-
 function* getDesignCollections() {
   const collections = yield CollectionsDAO.findByDesign(this.params.designId);
   this.body = collections;
@@ -319,12 +285,6 @@ router.del(
 );
 router.get('/:designId', requireAuth, canAccessDesignInParam, getDesign);
 router.patch('/:designId', requireAuth, canAccessDesignInParam, updateDesign);
-router.get(
-  '/:designId/pricing',
-  requireAuth,
-  canAccessDesignInParam,
-  getDesignPricing
-);
 router.get(
   '/:designId/collections',
   requireAuth,
