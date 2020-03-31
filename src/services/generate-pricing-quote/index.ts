@@ -17,6 +17,7 @@ import {
   PricingQuoteRow,
   PricingQuoteValues
 } from '../../domain-objects/pricing-quote';
+import { Complexity, ProductType } from '../../domain-objects/pricing';
 import Knex from 'knex';
 import * as PricingCostInputsDAO from '../../components/pricing-cost-inputs/dao';
 import * as DesignEventsDAO from '../../dao/design-events';
@@ -86,15 +87,31 @@ function calculateQuote(
   request: PricingQuoteRequest | PricingQuoteRequestWithVersions,
   values: PricingQuoteValues
 ): UnsavedQuote {
+  const SKIP_DEVELOPMENT_COST_COMPLEXITIES: Complexity[] = ['BLANK'];
+  const SKIP_BASE_COST_PRODUCT_TYPES: ProductType[] = ['PACKAGING'];
+
+  const chargeBaseCosts = !SKIP_BASE_COST_PRODUCT_TYPES.includes(
+    request.productType
+  );
+  const chargeDevelopmentCosts = !SKIP_DEVELOPMENT_COST_COMPLEXITIES.includes(
+    request.productComplexity
+  );
+
   const { units } = request;
+
+  const baseCostCents = chargeBaseCosts
+    ? calculateBaseUnitCost(units, values)
+    : 0;
+
   const baseCost = {
-    baseCostCents: calculateBaseUnitCost(units, values),
+    baseCostCents,
     materialCostCents: Math.max(
       calculateMaterialCents(values),
       request.materialBudgetCents || 0
     ),
     processCostCents: calculateProcessCents(units, values)
   };
+
   const {
     creationTimeMs,
     specificationTimeMs,
@@ -107,10 +124,9 @@ function calculateQuote(
   const processTimeMs = values.processTimeline
     ? values.processTimeline.timeMs
     : 0;
-  const developmentCostCents =
-    request.productComplexity !== 'BLANK'
-      ? calculateDevelopmentCosts(units, values, baseCost.materialCostCents)
-      : 0;
+  const developmentCostCents = chargeDevelopmentCosts
+    ? calculateDevelopmentCosts(units, values, baseCost.materialCostCents)
+    : 0;
   const beforeMargin = sum(
     Object.values(baseCost).concat([developmentCostCents])
   );

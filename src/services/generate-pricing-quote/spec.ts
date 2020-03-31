@@ -325,3 +325,120 @@ test('generateUnsavedQuote for blank', async (t: Test) => {
     'calculates total unit cost correctly'
   );
 });
+
+test('generateUnsavedQuote for packaging', async (t: Test) => {
+  const latestValues: PricingQuoteValues = {
+    brandedLabelsAdditionalCents: 5,
+    brandedLabelsMinimumCents: 25500,
+    brandedLabelsMinimumUnits: 1000,
+    careLabel: {
+      createdAt: new Date(),
+      id: uuid.v4(),
+      minimumUnits: 100,
+      unitCents: 5,
+      version: 0
+    },
+    constantId: uuid.v4(),
+    gradingCents: 5000,
+    margin: {
+      createdAt: new Date(),
+      id: uuid.v4(),
+      margin: 12.6,
+      minimumUnits: 100,
+      version: 0
+    },
+    markingCents: 5000,
+    material: {
+      category: 'SPECIFY',
+      createdAt: new Date(),
+      id: uuid.v4(),
+      minimumUnits: 0,
+      unitCents: 0,
+      version: 0
+    },
+    patternRevisionCents: 5000,
+    processTimeline: {
+      createdAt: new Date(),
+      id: uuid.v4(),
+      minimumUnits: 100,
+      timeMs: daysToMs(2),
+      uniqueProcesses: 1,
+      version: 0
+    },
+    processes: [],
+    sample: {
+      complexity: 'BLANK',
+      contrast: 0,
+      createdAt: new Date(),
+      creationTimeMs: daysToMs(0),
+      fulfillmentTimeMs: daysToMs(8),
+      id: uuid.v4(),
+      minimumUnits: 1,
+      name: 'PACKAGING',
+      patternMinimumCents: 0,
+      preProductionTimeMs: daysToMs(7),
+      productionTimeMs: daysToMs(6),
+      samplingTimeMs: daysToMs(5),
+      sourcingTimeMs: daysToMs(4),
+      specificationTimeMs: daysToMs(3),
+      unitCents: 0,
+      version: 0,
+      yield: 1
+    },
+    sampleMinimumCents: 0,
+    technicalDesignCents: 0,
+    type: {
+      complexity: 'BLANK',
+      contrast: 0,
+      createdAt: new Date(),
+      creationTimeMs: daysToMs(0),
+      fulfillmentTimeMs: daysToMs(8),
+      id: uuid.v4(),
+      minimumUnits: 1,
+      name: 'PACKAGING',
+      patternMinimumCents: 0,
+      preProductionTimeMs: daysToMs(7),
+      productionTimeMs: daysToMs(6),
+      samplingTimeMs: daysToMs(5),
+      sourcingTimeMs: daysToMs(4),
+      specificationTimeMs: daysToMs(3),
+      unitCents: 0,
+      version: 0,
+      yield: 1
+    },
+    workingSessionCents: 0
+  };
+
+  sandbox()
+    .stub(PricingQuotesDAO, 'findVersionValuesForRequest')
+    .resolves(latestValues);
+
+  const unsavedQuote = await generateUnsavedQuote({
+    designId: null,
+    materialBudgetCents: 1000,
+    materialCategory: 'BASIC',
+    processes: [],
+    productComplexity: 'BLANK',
+    productType: 'PACKAGING',
+    units: 1,
+    processTimelinesVersion: 0,
+    processesVersion: 0,
+    productMaterialsVersion: 0,
+    productTypeVersion: 0,
+    marginVersion: 0,
+    constantsVersion: 0,
+    careLabelsVersion: 0
+  });
+
+  t.equal(unsavedQuote.baseCostCents, 0, 'calculates base cost correctly');
+  t.equal(
+    unsavedQuote.processCostCents,
+    0,
+    'calculates process cost correctly'
+  );
+  t.equal(
+    unsavedQuote.unitCostCents,
+    1145,
+    'calculates total unit cost correctly'
+  );
+});
