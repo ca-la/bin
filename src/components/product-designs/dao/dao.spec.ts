@@ -8,6 +8,7 @@ import {
   findAllDesignsThroughCollaborator,
   findAllWithCostsAndEvents,
   findDesignByAnnotationId,
+  findDesignByApprovalStepId,
   findDesignByTaskId,
   isOwner
 } from './dao';
@@ -38,6 +39,7 @@ import { addDesign } from '../../../test-helpers/collections';
 import { CollaboratorWithUser } from '../../collaborators/domain-objects/collaborator';
 import { deleteById } from '../../../test-helpers/designs';
 import { generateDesign } from '../../../test-helpers/factories/product-design';
+import generateApprovalStep from '../../../test-helpers/factories/design-approval-step';
 
 test('ProductDesignCanvases DAO supports creation/retrieval, enriched with image links', async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
@@ -362,6 +364,36 @@ test('findDesignByTaskId', async (t: tape.Test) => {
     designTwo,
     null,
     'Returns null if a resource in the chain was deleted'
+  );
+});
+
+test('findDesignByApprovalStepId', async (t: tape.Test) => {
+  const userOne = await createUser({ withSession: false });
+  const { collection: collectionOne } = await generateCollection({
+    createdBy: userOne.user.id
+  });
+  const designOne = await createDesign({
+    productType: 'test',
+    title: 'design',
+    userId: userOne.user.id
+  });
+  await addDesign(collectionOne.id, designOne.id);
+
+  const { approvalStep } = await db.transaction((trx: Knex.Transaction) =>
+    generateApprovalStep(trx, {
+      designId: designOne.id
+    })
+  );
+  const design = await findDesignByApprovalStepId(approvalStep.id);
+
+  if (!design) {
+    throw new Error('Design is not found!');
+  }
+
+  t.equal(
+    designOne.id,
+    design.id,
+    'Returns the design that is a parent to the approval step'
   );
 });
 

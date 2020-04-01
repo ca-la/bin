@@ -1,4 +1,5 @@
 import tape from 'tape';
+import Knex from 'knex';
 
 import { test } from '../../test-helpers/fresh';
 import API from '../../test-helpers/http';
@@ -11,6 +12,8 @@ import generateTask from '../../test-helpers/factories/task';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
 import generateAnnotation from '../../test-helpers/factories/product-design-canvas-annotation';
 import generateCanvas from '../../test-helpers/factories/product-design-canvas';
+import generateApprovalStep from '../../test-helpers/factories/design-approval-step';
+import db from '../../services/db';
 
 const API_PATH = '/access-control';
 
@@ -192,4 +195,53 @@ test(`GET ${API_PATH}/designs checks access`, async (t: tape.Test) => {
     canSubmit: false,
     canView: true
   });
+});
+
+test(`GET ${API_PATH}/approval-steps checks access`, async (t: tape.Test) => {
+  const userOne = await createUser();
+  const userTwo = await createUser();
+
+  const designOne = await createDesign({
+    productType: 'test',
+    title: 'design',
+    userId: userOne.user.id
+  });
+
+  const { collection: collectionOne } = await generateCollection({
+    createdBy: userOne.user.id
+  });
+  await addDesign(collectionOne.id, designOne.id);
+
+  const { approvalStep } = await db.transaction((trx: Knex.Transaction) =>
+    generateApprovalStep(trx, { designId: designOne.id })
+  );
+
+  const [responseOne] = await API.get(
+    `${API_PATH}/approval-steps/${approvalStep.id}`,
+    {
+      headers: API.authHeader(userOne.session.id)
+    }
+  );
+  t.equal(responseOne.status, 200);
+
+  const [responseTwo] = await API.get(
+    `${API_PATH}/approval-steps/${approvalStep.id}`,
+    {
+      headers: API.authHeader(userTwo.session.id)
+    }
+  );
+  t.equal(responseTwo.status, 403);
+
+  await generateCollaborator({
+    collectionId: collectionOne.id,
+    userId: userTwo.user.id,
+    role: 'VIEW'
+  });
+  const [responseThree] = await API.get(
+    `${API_PATH}/approval-steps/${approvalStep.id}`,
+    {
+      headers: API.authHeader(userTwo.session.id)
+    }
+  );
+  t.equal(responseThree.status, 200);
 });

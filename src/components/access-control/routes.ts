@@ -3,6 +3,7 @@ import requireAuth = require('../../middleware/require-auth');
 import { canAccessAnnotationInParams } from '../../middleware/can-access-annotation';
 import { canAccessTaskInParams } from '../../middleware/can-access-task';
 import { canAccessDesignInParam } from '../../middleware/can-access-design';
+import { canAccessApprovalStepInParam } from '../../middleware/can-access-approval-step';
 
 const router = new Router();
 
@@ -45,6 +46,14 @@ function* getTasksAccess(this: AuthedContext): Iterator<any, any, any> {
 }
 
 /**
+ * Checks if the authenticated user has access to the given approval step.
+ * Responds with a 200 if there's a match, otherwise throws a 400.
+ */
+function* getApprovalStepAccess(this: AuthedContext): Iterator<any, any, any> {
+  this.status = 200;
+}
+
+/**
  * Checks if the authenticated user has access to the given design.
  * Responds with a 200 and permissions object if there's a match,
  * otherwise throws a 400.
@@ -74,6 +83,13 @@ router.get(
   requireAuth,
   canAccessDesignInParam,
   getDesignAccess
+);
+
+router.get(
+  '/approval-steps/:approvalStepId',
+  requireAuth,
+  canAccessApprovalStepInParam,
+  getApprovalStepAccess
 );
 
 export default router.routes();

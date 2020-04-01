@@ -154,6 +154,32 @@ AND designs.deleted_at IS null
   );
 }
 
+export async function findDesignByApprovalStepId(
+  approvalStepId: string
+): Promise<ProductDesignData | null> {
+  const row = await db
+    .table(TABLE_NAME)
+    .select('product_designs.*')
+    .join(
+      'design_approval_steps',
+      'design_approval_steps.design_id',
+      'product_designs.id'
+    )
+    .where({ 'design_approval_steps.id': approvalStepId })
+    .first();
+
+  if (!row) {
+    return null;
+  }
+
+  return validate<ProductDesignRow, ProductDesignData>(
+    TABLE_NAME,
+    isProductDesignRow,
+    dataAdapter,
+    row
+  );
+}
+
 export async function findAllWithCostsAndEvents(
   collectionIds: string[],
   trx?: Knex.Transaction
