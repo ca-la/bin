@@ -16,12 +16,10 @@ import { hasProperties } from '../../services/require-properties';
 import createUPCsForCollection from '../../services/create-upcs-for-collection';
 import { createShopifyProductsForCollection } from '../../services/create-shopify-products';
 import { logServerError } from '../../services/logger';
-import { createFromAddress } from '../../dao/invoice-addresses';
 
 const router = new Router();
 
 interface PayRequest {
-  addressId: string;
   createQuotes: CreateQuotePayload[];
   collectionId: string;
 }
@@ -64,33 +62,20 @@ function* payQuote(
     this.throw(403, 'Unable to access collection');
   }
 
-  if (!body.addressId) {
-    this.throw(403, 'Address is required');
-  }
-
-  const invoiceAddress = yield createFromAddress(body.addressId);
-
   if (isWaived) {
-    this.body = yield payWaivedQuote(
-      body.createQuotes,
-      userId,
-      collection,
-      invoiceAddress.id
-    );
+    this.body = yield payWaivedQuote(body.createQuotes, userId, collection);
   } else if (!isFinanced && isPayWithMethodRequest(body)) {
     this.body = yield payInvoiceWithNewPaymentMethod(
       body.createQuotes,
       body.paymentMethodTokenId,
       userId,
-      collection,
-      invoiceAddress.id
+      collection
     ).catch((err: Error) => this.throw(400, err.message));
   } else if (isFinanced) {
     this.body = yield createInvoiceWithoutMethod(
       body.createQuotes,
       userId,
-      collection,
-      invoiceAddress.id
+      collection
     ).catch((err: Error) => this.throw(400, err.message));
   } else {
     this.throw('Request must match type');

@@ -42,7 +42,6 @@ function createInvoice(
   collectionId: string,
   totalCents: number,
   userId: string,
-  invoiceAddressId: string,
   trx: Knex.Transaction
 ): Promise<Invoice> {
   return InvoicesDAO.createTrx(trx, {
@@ -50,8 +49,7 @@ function createInvoice(
     description: `Payment for designs: ${designNames.join(', ')}`,
     title: `Collection: ${collectionName}`,
     totalCents,
-    userId,
-    invoiceAddressId
+    userId
   });
 }
 
@@ -103,8 +101,7 @@ export default async function payInvoiceWithNewPaymentMethod(
   quoteRequests: CreateRequest,
   paymentMethodTokenId: string,
   userId: string,
-  collection: Collection,
-  invoiceAddressId: string
+  collection: Collection
 ): Promise<Invoice> {
   return db.transaction(async (trx: Knex.Transaction) => {
     const paymentMethod = await createPaymentMethod({
@@ -128,7 +125,6 @@ export default async function payInvoiceWithNewPaymentMethod(
       collection.id,
       totalCents,
       userId,
-      invoiceAddressId,
       trx
     );
 
@@ -145,8 +141,7 @@ export default async function payInvoiceWithNewPaymentMethod(
 export async function createInvoiceWithoutMethod(
   quoteRequests: CreateRequest,
   userId: string,
-  collection: Collection,
-  invoiceAddressId: string
+  collection: Collection
 ): Promise<Invoice> {
   return db.transaction(async (trx: Knex.Transaction) => {
     const quotes: PricingQuote[] = await createQuotes(
@@ -169,7 +164,6 @@ export async function createInvoiceWithoutMethod(
       collection.id,
       totalCents,
       userId,
-      invoiceAddressId,
       trx
     );
 
@@ -199,8 +193,7 @@ export async function createInvoiceWithoutMethod(
 export async function payWaivedQuote(
   quoteRequests: CreateRequest,
   userId: string,
-  collection: Collection,
-  invoiceAddressId: string
+  collection: Collection
 ): Promise<Invoice> {
   return db.transaction(async (trx: Knex.Transaction) => {
     const quotes: PricingQuote[] = await createQuotes(
@@ -219,7 +212,6 @@ export async function payWaivedQuote(
       collection.id,
       totalCents,
       userId,
-      invoiceAddressId,
       trx
     );
 

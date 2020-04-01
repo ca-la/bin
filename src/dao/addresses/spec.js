@@ -1,8 +1,10 @@
-import pick from 'lodash/pick';
+'use strict';
 
-import AddressesDAO from './index';
-import { create as createUser } from '../../components/users/dao';
-import { test, Test } from '../../test-helpers/fresh';
+const pick = require('lodash/pick');
+
+const AddressesDAO = require('./index');
+const UsersDAO = require('../../components/users/dao');
+const { test } = require('../../test-helpers/fresh');
 
 const USER_DATA = {
   name: 'Q User',
@@ -21,8 +23,8 @@ const ADDRESS_DATA = Object.freeze({
   country: 'USA'
 });
 
-test('AddressesDAO.create creates a new address', async (t: Test) => {
-  const user = await createUser(USER_DATA);
+test('AddressesDAO.create creates a new address', async t => {
+  const user = await UsersDAO.create(USER_DATA);
 
   const expectedAddress = Object.assign({}, ADDRESS_DATA, {
     userId: user.id
@@ -34,8 +36,8 @@ test('AddressesDAO.create creates a new address', async (t: Test) => {
   t.deepEqual(actualAddress, expectedAddress);
 });
 
-test('AddressesDAO.deleteById deletes an address', async (t: Test) => {
-  const user = await createUser(USER_DATA);
+test('AddressesDAO.deleteById deletes an address', async t => {
+  const user = await UsersDAO.create(USER_DATA);
 
   const data = Object.assign({}, ADDRESS_DATA, { userId: user.id });
 
@@ -45,8 +47,8 @@ test('AddressesDAO.deleteById deletes an address', async (t: Test) => {
   t.notEqual(deleted.deletedAt, null);
 });
 
-test('AddressesDAO.update updates an address', async (t: Test) => {
-  const user = await createUser(USER_DATA);
+test('AddressesDAO.update updates an address', async t => {
+  const user = await UsersDAO.create(USER_DATA);
 
   const data = Object.assign({}, ADDRESS_DATA, { userId: user.id });
 

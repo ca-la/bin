@@ -1,12 +1,9 @@
 import uuid from 'node-uuid';
-import { omit } from 'lodash';
 
 import * as attachSource from '../../services/stripe/attach-source';
 import * as CollectionsDAO from '../../components/collections/dao';
 import * as CreditsDAO from '../../components/credits/dao';
 import * as InvoicesDAO from '../../dao/invoices';
-import { create as createAddress } from '../../dao/addresses';
-import { findByAddressId } from '../../dao/invoice-addresses';
 import * as LineItemsDAO from '../../dao/line-items';
 import * as PricingCostInputsDAO from '../../components/pricing-cost-inputs/dao';
 import ProductDesignsDAO from '../../components/product-designs/dao';
@@ -21,16 +18,6 @@ import { addDesign } from '../../test-helpers/collections';
 import { createStorefront } from '../../services/create-storefront';
 import { ProviderName } from '../../components/storefronts/tokens/domain-object';
 import * as CreateShopifyProducts from '../../services/create-shopify-products';
-
-const ADDRESS_BLANK = {
-  companyName: 'CALA',
-  addressLine1: '42 Wallaby Way',
-  addressLine2: '',
-  city: 'Sydney',
-  region: 'NSW',
-  country: 'AU',
-  postCode: 'RG41 2PE'
-};
 
 test('/quote-payments POST generates quotes, payment method, invoice, lineItems, and charges', async (t: Test) => {
   const { user, session } = await createUser();
@@ -65,10 +52,6 @@ test('/quote-payments POST generates quotes, payment method, invoice, lineItems,
     userId: user.id
   });
   await addDesign(collection.id, design.id);
-  const address = await createAddress({
-    ...ADDRESS_BLANK,
-    userId: user.id
-  });
 
   await generatePricingValues();
   await PricingCostInputsDAO.create({
@@ -102,8 +85,7 @@ test('/quote-payments POST generates quotes, payment method, invoice, lineItems,
           units: 300
         }
       ],
-      paymentMethodTokenId,
-      addressId: address.id
+      paymentMethodTokenId
     },
     headers: authHeader(session.id)
   });
@@ -120,14 +102,6 @@ test('/quote-payments POST generates quotes, payment method, invoice, lineItems,
     collection.id,
     'Invoice has correct collection Id set'
   );
-  const invoiceAddress = await findByAddressId(address.id);
-  t.deepEqual(
-    omit(invoiceAddress, 'id', 'createdAt', 'updatedAt', 'addressId'),
-    omit(address, 'id', 'createdAt', 'updatedAt'),
-    'Invoice address matches the original address'
-  );
-  t.equals(invoiceAddress.addressId, address.id);
-
   const lineItems = await LineItemsDAO.findByInvoiceId(body.id);
   t.equals(lineItems.length, 1, 'Line Item exists for design');
   t.equals(lineItems[0].designId, design.id, 'Line Item has correct design');
@@ -167,10 +141,6 @@ test('/quote-payments POST does not generate quotes, payment method, invoice, li
     userId: user.id
   });
   await addDesign(collection.id, design.id);
-  const address = await createAddress({
-    ...ADDRESS_BLANK,
-    userId: user.id
-  });
 
   await generatePricingValues();
   await PricingCostInputsDAO.create({
@@ -204,8 +174,7 @@ test('/quote-payments POST does not generate quotes, payment method, invoice, li
           units: 300
         }
       ],
-      paymentMethodTokenId,
-      addressId: address.id
+      paymentMethodTokenId
     },
     headers: authHeader(session.id)
   });
@@ -240,10 +209,6 @@ test('/quote-payments?isFinanced=true POST generates quotes, invoice, lineItems'
     userId: user.id
   });
   await addDesign(collection.id, design.id);
-  const address = await createAddress({
-    ...ADDRESS_BLANK,
-    userId: user.id
-  });
 
   await generatePricingValues();
   await PricingCostInputsDAO.create({
@@ -276,8 +241,7 @@ test('/quote-payments?isFinanced=true POST generates quotes, invoice, lineItems'
           designId: design.id,
           units: 300
         }
-      ],
-      addressId: address.id
+      ]
     },
     headers: authHeader(session.id)
   });
@@ -290,15 +254,6 @@ test('/quote-payments?isFinanced=true POST generates quotes, invoice, lineItems'
     collection.id,
     'Invoice has correct collection Id set'
   );
-
-  const invoiceAddress = await findByAddressId(address.id);
-  t.deepEqual(
-    omit(invoiceAddress, 'id', 'createdAt', 'updatedAt', 'addressId'),
-    omit(address, 'id', 'createdAt', 'updatedAt'),
-    'Invoice address matches the original address'
-  );
-  t.equals(invoiceAddress.addressId, address.id);
-
   const lineItems = await LineItemsDAO.findByInvoiceId(body.id);
   t.equals(lineItems.length, 1, 'Line Item exists for design');
   t.equals(lineItems[0].designId, design.id, 'Line Item has correct design');
@@ -327,11 +282,8 @@ test('POST /quote-payments?isWaived=true waives payment', async (t: Test) => {
     title: 'A design',
     userId: user.id
   });
+
   await addDesign(collection.id, design.id);
-  const address = await createAddress({
-    ...ADDRESS_BLANK,
-    userId: user.id
-  });
 
   await generatePricingValues();
 
@@ -373,19 +325,10 @@ test('POST /quote-payments?isWaived=true waives payment', async (t: Test) => {
           designId: design.id,
           units: 300
         }
-      ],
-      addressId: address.id
+      ]
     },
     headers: authHeader(session.id)
   });
-
-  const invoiceAddress = await findByAddressId(address.id);
-  t.deepEqual(
-    omit(invoiceAddress, 'id', 'createdAt', 'updatedAt', 'addressId'),
-    omit(address, 'id', 'createdAt', 'updatedAt'),
-    'Invoice address matches the original address'
-  );
-  t.equals(invoiceAddress.addressId, address.id);
 
   t.equal(postResponse.status, 201, 'successfully creates the invoice');
   t.equals(body.isPaid, true, 'Invoice is paid');
@@ -421,11 +364,6 @@ test('POST /quote-payments?isWaived=true fails if ineligible', async (t: Test) =
 
   await addDesign(collection.id, design.id);
 
-  const address = await createAddress({
-    ...ADDRESS_BLANK,
-    userId: user.id
-  });
-
   await generatePricingValues();
 
   await PricingCostInputsDAO.create({
@@ -458,8 +396,7 @@ test('POST /quote-payments?isWaived=true fails if ineligible', async (t: Test) =
           designId: design.id,
           units: 300
         }
-      ],
-      addressId: address.id
+      ]
     },
     headers: authHeader(session.id)
   });
@@ -504,10 +441,6 @@ test(
       userId: user.id
     });
     await addDesign(collection.id, design.id);
-    const address = await createAddress({
-      ...ADDRESS_BLANK,
-      userId: user.id
-    });
 
     await generatePricingValues();
     await PricingCostInputsDAO.create({
@@ -541,8 +474,7 @@ test(
             units: 300
           }
         ],
-        paymentMethodTokenId,
-        addressId: address.id
+        paymentMethodTokenId
       },
       headers: authHeader(session.id)
     });
@@ -598,10 +530,6 @@ test('POST /quote-payments creates shopify products if connected to a storefront
     userId: user.id
   });
   await addDesign(collection.id, design.id);
-  const address = await createAddress({
-    ...ADDRESS_BLANK,
-    userId: user.id
-  });
 
   await generatePricingValues();
   await PricingCostInputsDAO.create({
@@ -635,8 +563,7 @@ test('POST /quote-payments creates shopify products if connected to a storefront
           units: 300
         }
       ],
-      paymentMethodTokenId,
-      addressId: address.id
+      paymentMethodTokenId
     },
     headers: authHeader(session.id)
   });
@@ -692,10 +619,6 @@ test('POST /quote-payments still succeeds if creates shopify products fails', as
     title: 'A design',
     userId: user.id
   });
-  const address = await createAddress({
-    ...ADDRESS_BLANK,
-    userId: user.id
-  });
   await addDesign(collection.id, design.id);
 
   await generatePricingValues();
@@ -721,8 +644,7 @@ test('POST /quote-payments still succeeds if creates shopify products fails', as
           units: 300
         }
       ],
-      paymentMethodTokenId,
-      addressId: address.id
+      paymentMethodTokenId
     },
     headers: authHeader(session.id)
   });
