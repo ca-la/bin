@@ -19,9 +19,10 @@ const TABLE_NAME = 'pricing_cost_inputs';
 type WithoutProcesses = Omit<PricingCostInputRow, 'processes'>;
 
 export async function create(
+  trx: Knex.Transaction,
   inputs: PricingCostInputWithoutVersions
 ): Promise<PricingCostInput> {
-  const { rows } = await db.raw(`
+  const { rows } = await trx.raw(`
 SELECT (
   SELECT MAX(version) FROM pricing_process_timelines
 ) as process_timelines_version, (
@@ -71,7 +72,7 @@ LIMIT 1;
     },
     ['processes']
   );
-  const inputsCreated: WithoutProcesses | undefined = await db(TABLE_NAME)
+  const inputsCreated: WithoutProcesses | undefined = await trx(TABLE_NAME)
     .insert(rowData)
     .returning('*')
     .then((maybeInputs: WithoutProcesses[]) => first(maybeInputs));
@@ -90,7 +91,7 @@ LIMIT 1;
 
   const processesCreated: Process[] =
     processRowData.length > 0
-      ? await db('pricing_cost_input_processes')
+      ? await trx('pricing_cost_input_processes')
           .insert(processRowData)
           .returning(['name', 'complexity'])
       : [];
@@ -102,9 +103,9 @@ LIMIT 1;
   return validate(TABLE_NAME, isPricingCostInputRow, dataAdapter, created);
 }
 
-async function attachProcesses(
-  inputs: WithoutProcesses
-): Promise<PricingCostInputRow> {
+export async function attachProcesses<
+  T extends { id: string } = WithoutProcesses
+>(inputs: T): Promise<T & { processes: Process[] }> {
   const processes: Process[] = await db('pricing_cost_input_processes')
     .select(['name', 'complexity'])
     .where({ pricing_cost_input_id: inputs.id })

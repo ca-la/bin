@@ -1,8 +1,10 @@
 import uuid from 'node-uuid';
+import Knex from 'knex';
 
 import PricingCostInput, {
   PricingCostInputWithoutVersions
 } from '../../components/pricing-cost-inputs/domain-object';
+import db from '../../services/db';
 import { create } from '../../components/pricing-cost-inputs/dao';
 import ProductDesignsDAO from '../../components/product-designs/dao';
 import createDesign from '../../services/create-design';
@@ -31,19 +33,21 @@ export default async function generatePricingCostInput(
         userId: user.id
       });
 
-  const pricingCostInput = await create({
-    id: uuid.v4(),
-    createdAt: new Date(),
-    deletedAt: null,
-    designId: design!.id,
-    expiresAt: null,
-    productType: 'PANTS',
-    productComplexity: 'COMPLEX',
-    materialCategory: 'SPECIFY',
-    materialBudgetCents: 10000,
-    processes: [],
-    ...options
-  });
+  const pricingCostInput = await db.transaction((trx: Knex.Transaction) =>
+    create(trx, {
+      id: uuid.v4(),
+      createdAt: new Date(),
+      deletedAt: null,
+      designId: design!.id,
+      expiresAt: null,
+      productType: 'PANTS',
+      productComplexity: 'COMPLEX',
+      materialCategory: 'SPECIFY',
+      materialBudgetCents: 10000,
+      processes: [],
+      ...options
+    })
+  );
 
   return { design, pricingCostInput, user };
 }

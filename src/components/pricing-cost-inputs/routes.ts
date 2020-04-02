@@ -1,10 +1,12 @@
 import Router from 'koa-router';
 import uuid from 'node-uuid';
+import db from '../../services/db';
 
 import ProductDesignsDAO from '../product-designs/dao';
 import * as PricingCostInputsDAO from './dao';
 import requireAdmin = require('../../middleware/require-admin');
 import PricingCostInput, { isUnsavedPricingCostInput } from './domain-object';
+import Knex from 'knex';
 
 const router = new Router();
 
@@ -20,14 +22,15 @@ function* createCostInputs(
   if (!design) {
     this.throw(404, `No design found for ID: ${inputs.designId}`);
   }
-
-  const created = yield PricingCostInputsDAO.create({
-    ...inputs,
-    createdAt: new Date(),
-    deletedAt: null,
-    expiresAt: null,
-    id: uuid.v4()
-  });
+  const created = yield db.transaction((trx: Knex.Transaction) =>
+    PricingCostInputsDAO.create(trx, {
+      ...inputs,
+      createdAt: new Date(),
+      deletedAt: null,
+      expiresAt: null,
+      id: uuid.v4()
+    })
+  );
 
   this.body = created;
   this.status = 201;

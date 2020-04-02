@@ -3,6 +3,7 @@ import uuid from 'node-uuid';
 
 import { authHeader, get, post } from '../../test-helpers/http';
 import { test } from '../../test-helpers/fresh';
+import db from '../../services/db';
 import createUser = require('../../test-helpers/create-user');
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
 import * as PricingCostInputsDAO from '../pricing-cost-inputs/dao';
@@ -10,6 +11,7 @@ import { create as createDesign } from '../product-designs/dao';
 import generateCollection from '../../test-helpers/factories/collection';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
 import { moveDesign } from '../../test-helpers/collections';
+import Knex from 'knex';
 
 test('GET /timelines?userId and /timelines?collectionId finds timelines by user id', async (t: tape.Test) => {
   const { user, session } = await createUser();
@@ -23,26 +25,28 @@ test('GET /timelines?userId and /timelines?collectionId finds timelines by user 
   await generateCollaborator({ userId: user.id, designId: design.id });
 
   await generatePricingValues();
-  await PricingCostInputsDAO.create({
-    createdAt: new Date(),
-    deletedAt: null,
-    designId: design.id,
-    expiresAt: null,
-    id: uuid.v4(),
-    materialBudgetCents: 1200,
-    materialCategory: 'BASIC',
-    processes: [
-      {
-        complexity: '1_COLOR',
-        name: 'SCREEN_PRINTING'
-      },
-      {
-        complexity: '1_COLOR',
-        name: 'SCREEN_PRINTING'
-      }
-    ],
-    productComplexity: 'SIMPLE',
-    productType: 'TEESHIRT'
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await PricingCostInputsDAO.create(trx, {
+      createdAt: new Date(),
+      deletedAt: null,
+      designId: design.id,
+      expiresAt: null,
+      id: uuid.v4(),
+      materialBudgetCents: 1200,
+      materialCategory: 'BASIC',
+      processes: [
+        {
+          complexity: '1_COLOR',
+          name: 'SCREEN_PRINTING'
+        },
+        {
+          complexity: '1_COLOR',
+          name: 'SCREEN_PRINTING'
+        }
+      ],
+      productComplexity: 'SIMPLE',
+      productType: 'TEESHIRT'
+    });
   });
   await post('/pricing-quotes', {
     body: [

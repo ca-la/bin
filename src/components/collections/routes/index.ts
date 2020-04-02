@@ -34,8 +34,11 @@ import {
   getCollectionPermissions,
   Permissions
 } from '../../../services/get-permissions';
-import { commitCostInputs, createPartnerPairing } from './admin';
-import { fetchUncostedWithLabels } from '../services/fetch-with-labels';
+import { commitCostInputs, createPartnerPairing, recostInputs } from './admin';
+import {
+  fetchExpiredWithLabels,
+  fetchUncostedWithLabels
+} from '../services/fetch-with-labels';
 import deleteCollectionAndRemoveDesigns from '../services/delete';
 import requireSubscription from '../../../middleware/require-subscription';
 
@@ -93,7 +96,15 @@ function* createCollection(this: AuthedContext): Iterator<any, any, any> {
 }
 
 function* getList(this: AuthedContext): Iterator<any, any, any> {
-  const { userId, isCosted, isSubmitted, limit, offset, search } = this.query;
+  const {
+    userId,
+    isCosted,
+    isSubmitted,
+    isExpired,
+    limit,
+    offset,
+    search
+  } = this.query;
   const { role, userId: currentUserId } = this.state;
   const userIdToQuery =
     role === 'ADMIN' ? userId : currentUserId === userId ? currentUserId : null;
@@ -134,6 +145,9 @@ function* getList(this: AuthedContext): Iterator<any, any, any> {
     isSubmitted === 'true'
   ) {
     this.body = yield fetchUncostedWithLabels();
+    this.status = 200;
+  } else if (role === 'ADMIN' && isExpired === 'true') {
+    this.body = yield fetchExpiredWithLabels();
     this.status = 200;
   } else {
     this.throw(403, 'Unable to match query');
@@ -270,6 +284,12 @@ router.post(
   requireAdmin,
   canAccessCollectionInParam,
   commitCostInputs
+);
+router.post(
+  '/:collectionId/recost',
+  requireAdmin,
+  canAccessCollectionInParam,
+  recostInputs
 );
 router.post(
   '/:collectionId/partner-pairings',

@@ -49,7 +49,9 @@ test('PricingCostInputsDAO supports creation and retrieval', async (t: Test) => 
     careLabelsVersion: 0
   };
 
-  const created = await PricingCostInputsDAO.create(input);
+  const created = await db.transaction((trx: Knex.Transaction) =>
+    PricingCostInputsDAO.create(trx, input)
+  );
 
   t.deepEqual(
     omit(created, 'processes'),
@@ -58,7 +60,6 @@ test('PricingCostInputsDAO supports creation and retrieval', async (t: Test) => 
   t.deepEqual(created.processes.sort(), input.processes.sort());
 
   const retrieved = await PricingCostInputsDAO.findById(input.id);
-
   t.deepEqual(retrieved, { ...created, expiresAt: null });
 });
 
@@ -90,7 +91,9 @@ test('supports creation without processes', async (t: Test) => {
     careLabelsVersion: 0
   };
 
-  const created = await PricingCostInputsDAO.create(input);
+  const created = await db.transaction((trx: Knex.Transaction) =>
+    PricingCostInputsDAO.create(trx, input)
+  );
 
   t.deepEqual(created, { ...input, expiresAt: null, processes: [] });
 });
@@ -187,8 +190,10 @@ test('PricingCostInputsDAO supports retrieval by designID', async (t: Test) => {
     constantsVersion: 0,
     careLabelsVersion: 0
   };
-  await PricingCostInputsDAO.create(input);
-  await PricingCostInputsDAO.create(anotherInput);
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await PricingCostInputsDAO.create(trx, input);
+    await PricingCostInputsDAO.create(trx, anotherInput);
+  });
   const designInputs = await PricingCostInputsDAO.findByDesignId({
     designId: design.id
   });

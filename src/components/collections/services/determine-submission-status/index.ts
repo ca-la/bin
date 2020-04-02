@@ -79,21 +79,27 @@ function determineStatusFromDesigns(
   };
 }
 
+export async function getDesignsMetaByCollection(
+  collectionIds: string[]
+): Promise<DesignsByCollection> {
+  const designsWithMeta = await findAllWithCostsAndEvents(collectionIds);
+  const designsByCollection: DesignsByCollection = {};
+  for (const designWithMeta of designsWithMeta) {
+    const { collectionId } = designWithMeta;
+    const designList = designsByCollection[collectionId] || [];
+    designsByCollection[collectionId] = [...designList, designWithMeta];
+  }
+  return designsByCollection;
+}
+
 /**
  * Determines the submission status for each collection.
  */
 export async function determineSubmissionStatus(
   collectionIds: string[]
 ): Promise<SubmissionStatusByCollection> {
-  const designsWithMeta = await findAllWithCostsAndEvents(collectionIds);
-  const designsByCollection: DesignsByCollection = {};
+  const designsByCollection = await getDesignsMetaByCollection(collectionIds);
   const submissionStatusByCollection: SubmissionStatusByCollection = {};
-
-  for (const designWithMeta of designsWithMeta) {
-    const { collectionId } = designWithMeta;
-    const designList = designsByCollection[collectionId] || [];
-    designsByCollection[collectionId] = [...designList, designWithMeta];
-  }
 
   for (const collectionId of collectionIds) {
     submissionStatusByCollection[collectionId] = determineStatusFromDesigns(

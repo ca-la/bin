@@ -8,13 +8,24 @@ import * as DesignEventsDAO from '../../../dao/design-events';
 import createDesignTasks from '../../../services/create-design-tasks';
 import isEveryDesignPaired from '../../../services/is-every-design-paired';
 import * as NotificationsService from '../../../services/create-notifications';
-import { commitCostInputs as commitInputs } from '../services/commit-cost-inputs';
+import {
+  commitCostInputs as commitInputs,
+  recostInputs as recost
+} from '../services/cost-inputs';
 
 export function* commitCostInputs(
   this: AuthedContext
 ): Iterator<any, any, any> {
   const { collectionId } = this.params;
   const { userId } = this.state;
+  yield commitInputs(collectionId, userId);
+  this.status = 204;
+}
+
+export function* recostInputs(this: AuthedContext): Iterator<any, any, any> {
+  const { collectionId } = this.params;
+  const { userId } = this.state;
+  yield recost(collectionId);
   yield commitInputs(collectionId, userId);
   this.status = 204;
 }

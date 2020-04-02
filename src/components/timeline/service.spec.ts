@@ -1,10 +1,12 @@
 import tape from 'tape';
 import uuid from 'node-uuid';
 import { TaskStatus } from '@cala/ts-lib';
+import Knex from 'knex';
 
 import * as Service from './service';
 import { authHeader, post } from '../../test-helpers/http';
 import { test } from '../../test-helpers/fresh';
+import db from '../../services/db';
 import createUser = require('../../test-helpers/create-user');
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
 import * as PricingCostInputsDAO from '../pricing-cost-inputs/dao';
@@ -37,26 +39,28 @@ test('findByUserId finds timelines by user id with task breakdowns', async (t: t
   });
 
   await generatePricingValues();
-  await PricingCostInputsDAO.create({
-    createdAt: new Date(),
-    deletedAt: null,
-    designId: design.id,
-    expiresAt: null,
-    id: uuid.v4(),
-    materialBudgetCents: 1200,
-    materialCategory: 'BASIC',
-    processes: [
-      {
-        complexity: '1_COLOR',
-        name: 'SCREEN_PRINTING'
-      },
-      {
-        complexity: '1_COLOR',
-        name: 'SCREEN_PRINTING'
-      }
-    ],
-    productComplexity: 'SIMPLE',
-    productType: 'TEESHIRT'
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await PricingCostInputsDAO.create(trx, {
+      createdAt: new Date(),
+      deletedAt: null,
+      designId: design.id,
+      expiresAt: null,
+      id: uuid.v4(),
+      materialBudgetCents: 1200,
+      materialCategory: 'BASIC',
+      processes: [
+        {
+          complexity: '1_COLOR',
+          name: 'SCREEN_PRINTING'
+        },
+        {
+          complexity: '1_COLOR',
+          name: 'SCREEN_PRINTING'
+        }
+      ],
+      productComplexity: 'SIMPLE',
+      productType: 'TEESHIRT'
+    });
   });
   await post('/pricing-quotes', {
     body: [
@@ -141,26 +145,28 @@ test('findByCollectionId finds timelines by collection id and completed stage', 
   await generateTask({ designStageId: stage.id, status: TaskStatus.COMPLETED });
 
   await generatePricingValues();
-  await PricingCostInputsDAO.create({
-    createdAt: new Date(),
-    deletedAt: null,
-    designId: design.id,
-    expiresAt: null,
-    id: uuid.v4(),
-    materialBudgetCents: 1200,
-    materialCategory: 'BASIC',
-    processes: [
-      {
-        complexity: '1_COLOR',
-        name: 'SCREEN_PRINTING'
-      },
-      {
-        complexity: '1_COLOR',
-        name: 'SCREEN_PRINTING'
-      }
-    ],
-    productComplexity: 'SIMPLE',
-    productType: 'TEESHIRT'
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await PricingCostInputsDAO.create(trx, {
+      createdAt: new Date(),
+      deletedAt: null,
+      designId: design.id,
+      expiresAt: null,
+      id: uuid.v4(),
+      materialBudgetCents: 1200,
+      materialCategory: 'BASIC',
+      processes: [
+        {
+          complexity: '1_COLOR',
+          name: 'SCREEN_PRINTING'
+        },
+        {
+          complexity: '1_COLOR',
+          name: 'SCREEN_PRINTING'
+        }
+      ],
+      productComplexity: 'SIMPLE',
+      productType: 'TEESHIRT'
+    });
   });
   await post('/pricing-quotes', {
     body: [

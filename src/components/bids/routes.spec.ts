@@ -4,6 +4,7 @@ import sinon from 'sinon';
 
 import DesignEvent from '../../domain-objects/design-event';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
+import db from '../../services/db';
 import { authHeader, del, get, post, put } from '../../test-helpers/http';
 import createUser from '../../test-helpers/create-user';
 import generateBid from '../../test-helpers/factories/bid';
@@ -23,6 +24,7 @@ import createDesign from '../../services/create-design';
 import * as Stripe from '../../services/stripe';
 import EmailService from '../../services/email';
 import { deleteById } from '../../test-helpers/designs';
+import Knex from 'knex';
 test('GET /bids', async (t: Test) => {
   const admin = await createUser({ role: 'ADMIN' });
   const partner = await createUser({ role: 'PARTNER' });
@@ -562,18 +564,21 @@ test('Partner pairing: accept', async (t: Test) => {
     title: 'Plain White Tee',
     userId: designer.user.id
   });
-  await PricingCostInputsDAO.create({
-    createdAt: new Date(),
-    deletedAt: null,
-    designId: design.id,
-    expiresAt: null,
-    id: uuid.v4(),
-    materialBudgetCents: 1200,
-    materialCategory: 'BASIC',
-    processes: [],
-    productComplexity: 'SIMPLE',
-    productType: 'TEESHIRT'
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await PricingCostInputsDAO.create(trx, {
+      createdAt: new Date(),
+      deletedAt: null,
+      designId: design.id,
+      expiresAt: null,
+      id: uuid.v4(),
+      materialBudgetCents: 1200,
+      materialCategory: 'BASIC',
+      processes: [],
+      productComplexity: 'SIMPLE',
+      productType: 'TEESHIRT'
+    });
   });
+
   const quotesRequest = await post('/pricing-quotes', {
     body: [
       {
@@ -729,17 +734,19 @@ test('Partner pairing: reject', async (t: Test) => {
     title: 'Plain White Tee',
     userId: designer.user.id
   });
-  await PricingCostInputsDAO.create({
-    createdAt: new Date(),
-    deletedAt: null,
-    designId: design.id,
-    expiresAt: null,
-    id: uuid.v4(),
-    materialBudgetCents: 1200,
-    materialCategory: 'BASIC',
-    processes: [],
-    productComplexity: 'SIMPLE',
-    productType: 'TEESHIRT'
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await PricingCostInputsDAO.create(trx, {
+      createdAt: new Date(),
+      deletedAt: null,
+      designId: design.id,
+      expiresAt: null,
+      id: uuid.v4(),
+      materialBudgetCents: 1200,
+      materialCategory: 'BASIC',
+      processes: [],
+      productComplexity: 'SIMPLE',
+      productType: 'TEESHIRT'
+    });
   });
   const quotesRequest = await post('/pricing-quotes', {
     body: [
