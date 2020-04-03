@@ -106,6 +106,12 @@ import {
   TaskCommentReplyNotification,
   TaskCommentReplyNotificationRow
 } from './models/task-comment-reply';
+import {
+  ApprovalStepCommentMentionNotification,
+  ApprovalStepCommentMentionNotificationRow,
+  FullApprovalStepCommentMentionNotification,
+  FullApprovalStepCommentMentionNotificationRow
+} from './models/approval-step-comment-mention';
 
 export enum NotificationType {
   ANNOTATION_COMMENT_CREATE = 'ANNOTATION_COMMENT_CREATE',
@@ -126,7 +132,8 @@ export enum NotificationType {
   TASK_COMPLETION = 'TASK_COMPLETION',
   COSTING_EXPIRATION_ONE_WEEK = 'COSTING_EXPIRATION_ONE_WEEK',
   COSTING_EXPIRATION_TWO_DAYS = 'COSTING_EXPIRATION_TWO_DAYS',
-  COSTING_EXPIRED = 'COSTING_EXPIRED'
+  COSTING_EXPIRED = 'COSTING_EXPIRED',
+  APPROVAL_STEP_COMMENT_MENTION = 'APPROVAL_STEP_COMMENT_MENTION'
 }
 
 export type Notification =
@@ -148,7 +155,8 @@ export type Notification =
   | TaskCompletionNotification
   | ExpiredNotification
   | OneWeekExpirationNotification
-  | TwoDayExpirationNotification;
+  | TwoDayExpirationNotification
+  | ApprovalStepCommentMentionNotification;
 
 export type FullNotification =
   | FullTaskCompletionNotification
@@ -167,7 +175,8 @@ export type FullNotification =
   | FullAnnotationCommentMentionNotification
   | FullAnnotationCommentReplyNotification
   | FullAnnotationCommentCreateNotification
-  | FullExpirationNotification;
+  | FullExpirationNotification
+  | FullApprovalStepCommentMentionNotification;
 
 export type NotificationRow =
   | AnnotationCommentCreateNotificationRow
@@ -188,7 +197,8 @@ export type NotificationRow =
   | TaskCompletionNotificationRow
   | ExpiredNotificationRow
   | OneWeekExpirationNotificationRow
-  | TwoDayExpirationNotificationRow;
+  | TwoDayExpirationNotificationRow
+  | ApprovalStepCommentMentionNotificationRow;
 
 export type FullNotificationRow =
   | FullTaskCompletionNotificationRow
@@ -206,7 +216,8 @@ export type FullNotificationRow =
   | FullCollectionSubmitNotificationRow
   | FullAnnotationCommentMentionNotificationRow
   | FullAnnotationCommentReplyNotificationRow
-  | FullAnnotationCommentCreateNotificationRow;
+  | FullAnnotationCommentCreateNotificationRow
+  | FullApprovalStepCommentMentionNotificationRow;
 
 type EqualKeys<T> = { [P in keyof T]: any };
 
@@ -217,6 +228,7 @@ export function encode(
     actionDescription: row.action_description,
     actorUserId: row.actor_user_id,
     annotationId: row.annotation_id,
+    approvalStepId: row.approval_step_id,
     canvasId: row.canvas_id,
     collaboratorId: row.collaborator_id,
     collectionId: row.collection_id,
@@ -243,6 +255,7 @@ export function decode(
     action_description: data.actionDescription,
     actor_user_id: data.actorUserId,
     annotation_id: data.annotationId,
+    approval_step_id: data.approvalStepId,
     canvas_id: data.canvasId,
     collaborator_id: data.collaboratorId,
     collection_id: data.collectionId,
@@ -274,6 +287,7 @@ export function isNotificationRow(row: object): row is NotificationRow {
     'action_description',
     'actor_user_id',
     'annotation_id',
+    'approval_step_id',
     'canvas_id',
     'collaborator_id',
     'collection_id',
@@ -324,7 +338,8 @@ export function isFullNotificationRow(
       'design_image_ids',
       'has_attachments',
       'task_title',
-      'annotation_image_id'
+      'annotation_image_id',
+      'approval_step_title'
     )
   );
 }
@@ -346,6 +361,8 @@ function encodeFull(rowData: FullNotificationRow): FullNotification {
     actorUserId: rowData.actor_user_id,
     annotationId: rowData.annotation_id,
     annotationImageId: rowData.annotation_image_id,
+    approvalStepId: rowData.approval_step_id,
+    approvalStepTitle: rowData.approval_step_title,
     canvasId: rowData.canvas_id,
     collaboratorId: rowData.collaborator_id,
     collectionId: rowData.collection_id,

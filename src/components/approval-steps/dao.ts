@@ -1,6 +1,6 @@
 import Knex from 'knex';
 
-import { validateEvery } from '../../services/validate-from-db';
+import { validate, validateEvery } from '../../services/validate-from-db';
 import ApprovalStep, {
   ApprovalStepRow,
   dataAdapter,
@@ -39,4 +39,24 @@ export async function findByDesign(
     })
     .orderBy('ordering')
     .then(validateApprovalSteps);
+}
+
+export async function findById(
+  trx: Knex.Transaction,
+  id: string
+): Promise<ApprovalStep | null> {
+  return trx(TABLE_NAME)
+    .select('*')
+    .where({
+      id
+    })
+    .first()
+    .then((candidate: any) =>
+      validate<ApprovalStepRow, ApprovalStep>(
+        TABLE_NAME,
+        isApprovalStepRow,
+        dataAdapter,
+        candidate
+      )
+    );
 }

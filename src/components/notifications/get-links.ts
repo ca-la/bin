@@ -14,7 +14,8 @@ export enum LinkType {
   CollectionDesign = 'COLLECTION_DESIGN',
   Design = 'DESIGN',
   PartnerDesign = 'PARTNER_DESIGN',
-  Collection = 'COLLECTION'
+  Collection = 'COLLECTION',
+  ApprovalStep = 'APPROVAL_STEP'
 }
 
 interface Meta {
@@ -54,9 +55,15 @@ export type LinkBase =
       collection: Meta;
       isCheckout?: boolean;
       isSubmit?: boolean;
+    }
+  | {
+      type: LinkType.ApprovalStep;
+      collection: Meta;
+      design: Meta;
+      approvalStep: Meta;
     };
 
-function constructHtmlLink(deepLink: string, title: string): string {
+export function constructHtmlLink(deepLink: string, title: string): string {
   return `
 <a href="${deepLink}">
   ${escapeHtml(title)}
@@ -139,6 +146,20 @@ export default function getLinks(linkBase: LinkBase): Links {
         collection.id
       }/designs${checkoutParam}${submitParam}`;
       const title = normalizeTitle(collection);
+      return {
+        deepLink,
+        htmlLink: constructHtmlLink(deepLink, title)
+      };
+    }
+
+    case LinkType.ApprovalStep: {
+      const { design, approvalStep, collection } = linkBase;
+
+      const deepLink = `${STUDIO_HOST}/collections/${
+        collection.id
+      }/approval?designId=${design.id}&stepId=${approvalStep.id}`;
+      const title = normalizeTitle(approvalStep);
+
       return {
         deepLink,
         htmlLink: constructHtmlLink(deepLink, title)

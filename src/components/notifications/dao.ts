@@ -184,6 +184,17 @@ function addTaskTitle(query: Knex.QueryBuilder): Knex.QueryBuilder {
   );
 }
 
+function addApprovalStepTitle(query: Knex.QueryBuilder): Knex.QueryBuilder {
+  return query.select((subquery: Knex.QueryBuilder) =>
+    subquery
+      .select('das.title')
+      .from('design_approval_steps as das')
+      .whereRaw('das.id = n.approval_step_id')
+      .limit(1)
+      .as('approval_step_title')
+  );
+}
+
 function baseQuery(trx: Knex.Transaction): Knex.QueryBuilder {
   return trx
     .select('n.*')
@@ -197,7 +208,8 @@ function baseQuery(trx: Knex.Transaction): Knex.QueryBuilder {
     .modify(addHasAttachments)
     .modify(addMeasurement)
     .modify(addAnnotation)
-    .modify(addTaskTitle);
+    .modify(addTaskTitle)
+    .modify(addApprovalStepTitle);
 }
 
 export async function findByUserId(

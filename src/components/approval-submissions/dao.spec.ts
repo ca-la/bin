@@ -1,5 +1,6 @@
 import Knex from 'knex';
 import * as uuid from 'node-uuid';
+import { isEqual } from 'lodash';
 
 import { test, Test } from '../../test-helpers/fresh';
 import { staticProductDesign } from '../../test-helpers/factories/product-design';
@@ -85,6 +86,9 @@ test('ApprovalSubmissionsDAO can create multiple submissions and retrieve by ste
 
     const found = await ApprovalSubmissionsDAO.findByStep(trx, as1.id);
 
-    t.deepEqual(found, [sub1, sub2], 'returns submissions by step');
+    t.true(
+      isEqual(new Set(found), new Set([sub1, sub2])),
+      'returns submissions by step'
+    );
   });
 });

@@ -12,6 +12,7 @@ import * as CollectionsDAO from '../../components/collections/dao';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as UsersDAO from '../../components/users/dao';
 import * as BidRejectionsDAO from '../../components/bid-rejections/dao';
+import * as ApprovalStepDAO from '../../components/approval-steps/dao';
 
 import {
   Notification,
@@ -92,6 +93,10 @@ import {
   isTaskCommentReplyNotification,
   TaskCommentReplyNotification
 } from '../../components/notifications/models/task-comment-reply';
+import {
+  ApprovalStepCommentMentionNotification,
+  isApprovalStepCommentMentionNotification
+} from '../../components/notifications/models/approval-step-comment-mention';
 
 /**
  * Deletes pre-existing similar notifications and adds in a new one by comparing columns.
@@ -699,6 +704,63 @@ export async function sendTaskCompletionNotification(
     notifications.push(validated);
   }
   return notifications;
+}
+
+/**
+ * Creates notifications for the user mentioned in an approval comment.
+ */
+export async function sendApprovalStepCommentMentionNotification(
+  trx: Knex.Transaction,
+  options: {
+    approvalStepId: string;
+    commentId: string;
+    actorId: string;
+    recipientId: string;
+  }
+): Promise<ApprovalStepCommentMentionNotification | null> {
+  const { approvalStepId, commentId, actorId, recipientId } = options;
+  if (recipientId === actorId) {
+    return null;
+  }
+
+  const approvalStep = await ApprovalStepDAO.findById(trx, approvalStepId);
+  if (!approvalStep) {
+    throw new Error(
+      `Could not find a approval step with id: ${approvalStepId}`
+    );
+  }
+
+  const design = await DesignsDAO.findById(approvalStep.designId);
+  if (!design) {
+    throw new Error(
+      `Could not find a design with id: ${approvalStep.designId}`
+    );
+  }
+
+  const id = uuid.v4();
+  const notification = await replaceNotifications({
+    notification: {
+      ...templateNotification,
+      actorUserId: actorId,
+      collectionId: design.collectionIds[0] || null,
+      commentId,
+      designId: design.id,
+      id,
+      recipientUserId: recipientId,
+      sentEmailAt: null,
+      approvalStepId,
+      type: NotificationType.APPROVAL_STEP_COMMENT_MENTION
+    },
+    trx
+  });
+  const validated = validateTypeWithGuardOrThrow(
+    notification,
+    isApprovalStepCommentMentionNotification,
+    `Could not validate ${
+      NotificationType.APPROVAL_STEP_COMMENT_MENTION
+    } notification type from database with id: ${id}`
+  );
+  return validated;
 }
 
 /**

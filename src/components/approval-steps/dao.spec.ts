@@ -61,3 +61,27 @@ test('ApprovalStepsDAO can create multiple steps and retrieve by design', async 
 
   t.deepEqual(found, [as1, as2], 'returns steps by design');
 });
+
+test('ApprovalStepsDAO can retrieve by step id', async (t: Test) => {
+  const { user } = await createUser({ withSession: false });
+  const d1: ProductDesign = await ProductDesignsDAO.create(
+    staticProductDesign({ id: 'd1', userId: user.id })
+  );
+  const as1: ApprovalStep = {
+    state: ApprovalStepState.UNSTARTED,
+    id: uuid.v4(),
+    title: 'Checkout',
+    ordering: 0,
+    designId: d1.id
+  };
+
+  await db.transaction((trx: Knex.Transaction) =>
+    ApprovalStepsDAO.createAll(trx, [as1])
+  );
+
+  const found = await db.transaction((trx: Knex.Transaction) =>
+    ApprovalStepsDAO.findById(trx, as1.id)
+  );
+
+  t.deepEqual(found, as1, 'returns steps by design');
+});

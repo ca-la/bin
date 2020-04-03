@@ -1,4 +1,5 @@
 import uuid from 'node-uuid';
+import Knex from 'knex';
 
 import { create } from '../../components/notifications/dao';
 import {
@@ -19,6 +20,7 @@ import * as CommentsDAO from '../../components/comments/dao';
 import * as MeasurementsDAO from '../../dao/product-design-canvas-measurements';
 import * as ProductDesignStagesDAO from '../../dao/product-design-stages';
 import * as TasksDAO from '../../dao/task-events';
+import * as ApprovalStepDAO from '../../components/approval-steps/dao';
 import generateCollection from './collection';
 import Collection from '../../components/collections/domain-object';
 import User from '../../components/users/domain-object';
@@ -40,6 +42,9 @@ import ProductDesignCanvasMeasurement from '../../domain-objects/product-design-
 import generateCanvas from './product-design-canvas';
 import generateProductDesignStage from './product-design-stage';
 import { addDesign } from '../collections';
+import generateApprovalStep from './design-approval-step';
+import db from '../../services/db';
+import ApprovalStep from '../../components/approval-steps/domain-object';
 
 interface NotificationWithResources {
   actor: User;
@@ -54,6 +59,7 @@ interface NotificationWithResources {
   canvas: Canvas;
   stage: ProductDesignStage;
   comment: Comment;
+  approvalStep: ApprovalStep;
 }
 
 export default async function generateNotification(
@@ -148,9 +154,21 @@ export default async function generateNotification(
     throw new Error('Could not create task');
   }
 
+  const { approvalStep } = await db.transaction(async (trx: Knex.Transaction) =>
+    options.approvalStepId
+      ? {
+          approvalStep: await ApprovalStepDAO.findById(
+            trx,
+            options.approvalStepId
+          )
+        }
+      : await generateApprovalStep(trx, { designId: design.id })
+  );
+
   const base = {
     actor,
     annotation,
+    approvalStep,
     canvas,
     collaborator,
     collection,
@@ -427,6 +445,22 @@ export default async function generateNotification(
       const notification = await create({
         ...baseNotification,
         collectionId: collection.id,
+        recipientUserId: base.recipient.id,
+        type: options.type
+      });
+
+      return {
+        ...base,
+        notification
+      };
+    }
+    case NotificationType.APPROVAL_STEP_COMMENT_MENTION: {
+      const notification = await create({
+        ...baseNotification,
+        collectionId: collection.id,
+        commentId: comment.id,
+        designId: design.id,
+        approvalStepId: approvalStep.id,
         recipientUserId: base.recipient.id,
         type: options.type
       });

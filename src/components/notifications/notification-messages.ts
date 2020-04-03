@@ -13,7 +13,7 @@ import {
   FullNotification,
   NotificationType
 } from './domain-object';
-import getLinks, { LinkType } from './get-links';
+import getLinks, { constructHtmlLink, LinkType } from './get-links';
 import normalizeTitle from '../../services/normalize-title';
 import Comment from '../../components/comments/domain-object';
 import { ComponentType } from '../components/domain-object';
@@ -706,6 +706,64 @@ export async function createNotificationMessage(
         title: `Pricing for ${normalizeTitle(
           collection
         )} will expire in 7 days.`
+      };
+    }
+
+    case NotificationType.APPROVAL_STEP_COMMENT_MENTION: {
+      const {
+        designId,
+        designImageIds,
+        collectionId,
+        commentId,
+        commentText,
+        hasAttachments
+      } = notification;
+      const design = { id: designId, title: notification.designTitle };
+      const collection = {
+        id: collectionId,
+        title: notification.collectionTitle
+      };
+      const approvalStep = {
+        id: notification.approvalStepId,
+        title: notification.approvalStepTitle
+      };
+
+      const collaborators = await CollaboratorsDAO.findByDesign(designId);
+      const { htmlLink: stepHtmlLink, deepLink } = getLinks({
+        collection,
+        design,
+        approvalStep,
+        type: LinkType.ApprovalStep
+      });
+      const designHtmlLink = constructHtmlLink(
+        deepLink,
+        normalizeTitle(design)
+      );
+      const mentions = await getMentionsFromComment(commentText);
+      const cleanName = escapeHtml(baseNotificationMessage.actor.name);
+      return {
+        ...baseNotificationMessage,
+        actions: [
+          {
+            type: NotificationMessageActionType.APPROVAL_STEP_COMMENT_REPLY,
+            approvalStepId: notification.approvalStepId,
+            parentCommentId: commentId,
+            collaborators
+          }
+        ],
+        attachments: [
+          { text: commentText, url: deepLink, mentions, hasAttachments }
+        ],
+        html: `${span(
+          cleanName,
+          'user-name'
+        )} mentioned you on ${stepHtmlLink} for ${designHtmlLink}`,
+        imageUrl: buildImageUrl(designImageIds),
+        link: deepLink,
+        location: getLocation({ collection, design }),
+        title: `${cleanName} mentioned you on ${normalizeTitle(
+          approvalStep
+        )} for ${normalizeTitle(design)}`
       };
     }
 

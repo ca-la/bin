@@ -6,8 +6,7 @@ import Knex from 'knex';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as TaskCommentDAO from '../../components/task-comments/dao';
 import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
-import * as CollaboratorsDAO from '../../components/collaborators/dao';
-import * as CommentsDAO from '../../components/comments/dao';
+import * as NotificationsService from '../../services/create-notifications';
 import CollaboratorTask from '../../domain-objects/collaborator-task';
 import createTask from '../../services/create-task';
 import {
@@ -25,14 +24,11 @@ import {
   hasProperties
 } from '../../services/require-properties';
 import requireAuth = require('../../middleware/require-auth');
-import * as NotificationsService from '../../services/create-notifications';
 import { typeGuard } from '../../middleware/type-guard';
 import addAtMentionDetails, {
-  constructCollaboratorName
+  getCollaboratorsFromCommentMentions,
+  getThreadUserIdsFromCommentThread
 } from '../../services/add-at-mention-details';
-import parseAtMentions, {
-  MentionType
-} from '@cala/ts-lib/dist/parsing/comment-mentions';
 import { announceTaskCommentCreation } from '../../components/iris/messages/task-comment';
 import { addAttachmentLinks } from '../../services/add-attachments-links';
 import db from '../../services/db';
@@ -304,74 +300,41 @@ function* createTaskComment(
         },
         trx
       );
-      const mentions = parseAtMentions(filteredBody.text);
-      const mentionedUserIds: string[] = [];
-      const mentionedUsers: { [key: string]: string } = {};
-      for (const mention of mentions) {
-        switch (mention.type) {
-          case MentionType.collaborator: {
-            const collaborator = await CollaboratorsDAO.findById(
-              mention.id,
-              false,
-              trx
-            );
-            if (collaborator && collaborator.user) {
-              const name = constructCollaboratorName(collaborator);
-              mentionedUsers[collaborator.id] = name;
 
-              await NotificationsService.sendTaskCommentMentionNotification(
-                {
-                  taskId,
-                  commentId: comment.id,
-                  actorId: userId,
-                  recipientId: collaborator.user.id
-                },
-                trx
-              );
-              mentionedUserIds.push(collaborator.user.id);
-            }
-          }
-        }
-      }
-      const commentWithMentions = { ...comment, mentions: mentionedUsers };
+      const {
+        collaboratorNames,
+        mentionedUserIds
+      } = await getCollaboratorsFromCommentMentions(trx, filteredBody.text);
 
-      const threadUserIds: string[] = [];
-      if (comment.parentCommentId && mentions.length === 0) {
-        const parentComment = await CommentsDAO.findById(
-          comment.parentCommentId
+      for (const mentionedUserId of mentionedUserIds) {
+        await NotificationsService.sendTaskCommentMentionNotification(
+          {
+            taskId,
+            commentId: comment.id,
+            actorId: userId,
+            recipientId: mentionedUserId
+          },
+          trx
         );
-        if (!parentComment) {
-          throw new Error(
-            `Could not find parent comment for comment reply ${comment.id}`
-          );
-        }
+      }
 
-        // Notify the parent of the comment
+      const commentWithMentions = { ...comment, mentions: collaboratorNames };
+
+      const threadUserIds: string[] =
+        comment.parentCommentId && mentionedUserIds.length === 0
+          ? await getThreadUserIdsFromCommentThread(
+              trx,
+              comment.parentCommentId
+            )
+          : [];
+
+      for (const threadUserId of threadUserIds) {
         await NotificationsService.sendTaskCommentReplyNotification(trx, {
           taskId,
           commentId: comment.id,
           actorId: userId,
-          recipientId: parentComment.userId
+          recipientId: threadUserId
         });
-        threadUserIds.push(parentComment.userId);
-
-        // Notify the participants in the comment thread
-        const comments = await CommentsDAO.findByParentId(
-          trx,
-          parentComment.id
-        );
-        for (const threadComment of comments) {
-          if (!threadUserIds.includes(threadComment.userId)) {
-            threadUserIds.push(threadComment.userId);
-
-            await NotificationsService.sendTaskCommentReplyNotification(trx, {
-              taskId,
-              commentId: comment.id,
-              actorId: userId,
-              recipientId: threadComment.userId
-            });
-          }
-        }
       }
 
       await announceTaskCommentCreation(taskComment, commentWithMentions);

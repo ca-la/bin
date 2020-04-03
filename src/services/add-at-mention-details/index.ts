@@ -3,7 +3,9 @@ import parseAtMentions, {
   MentionMeta,
   MentionType
 } from '@cala/ts-lib/dist/parsing/comment-mentions';
+import Knex from 'knex';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
+import * as CommentsDAO from '../../components/comments/dao';
 import { CollaboratorWithUser } from '../../components/collaborators/domain-objects/collaborator';
 
 export interface CommentWithMentions extends Comment {
@@ -91,4 +93,65 @@ export async function getMentionsFromComment(
     },
     Promise.resolve({})
   );
+}
+
+export async function getCollaboratorsFromCommentMentions(
+  trx: Knex.Transaction,
+  commentText: string
+): Promise<{
+  collaboratorNames: { [collaboratorId: string]: string };
+  mentionedUserIds: string[];
+}> {
+  const mentions = parseAtMentions(commentText);
+  const collaboratorNames: { [key: string]: string } = {};
+  const mentionedUserIds = [];
+
+  for (const mention of mentions) {
+    switch (mention.type) {
+      case MentionType.collaborator: {
+        const collaborator = await CollaboratorsDAO.findById(
+          mention.id,
+          false,
+          trx
+        );
+
+        if (!collaborator) {
+          throw new Error(`Cannot find mentioned collaborator ${mention.id}`);
+        }
+
+        if (!collaborator.user) {
+          continue;
+        }
+
+        const name = constructCollaboratorName(collaborator);
+        collaboratorNames[collaborator.id] = name;
+        mentionedUserIds.push(collaborator.user.id);
+      }
+    }
+  }
+  return { collaboratorNames, mentionedUserIds };
+}
+
+export async function getThreadUserIdsFromCommentThread(
+  trx: Knex.Transaction,
+  parentCommentId: string
+): Promise<string[]> {
+  const parentComment = await CommentsDAO.findById(parentCommentId);
+  if (!parentComment) {
+    throw new Error(`Could not find comment ${parentCommentId}`);
+  }
+
+  const threadUserIds = [];
+
+  // Notify the parent of the comment
+  threadUserIds.push(parentComment.userId);
+
+  // Notify the participants in the comment thread
+  const comments = await CommentsDAO.findByParentId(trx, parentComment.id);
+  for (const threadComment of comments) {
+    if (!threadUserIds.includes(threadComment.userId)) {
+      threadUserIds.push(threadComment.userId);
+    }
+  }
+  return threadUserIds;
 }

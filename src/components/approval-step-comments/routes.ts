@@ -1,4 +1,4 @@
-import { BaseComment, CommentWithMentions } from '@cala/ts-lib';
+import { BaseComment } from '@cala/ts-lib';
 import { Asset } from '@cala/ts-lib/dist/assets';
 import Knex from 'knex';
 import { pick } from 'lodash';
@@ -11,11 +11,13 @@ import {
 import { createCommentWithAttachments } from '../../services/create-comment-with-attachments';
 import db from '../../services/db';
 import * as ApprovalStepCommentDAO from './dao';
+import * as NotificationsService from '../../services/create-notifications';
 import requireAuth from '../../middleware/require-auth';
 import addAtMentionDetails, {
-  addAtMentionDetailsForComment
+  getCollaboratorsFromCommentMentions
 } from '../../services/add-at-mention-details';
 import { addAttachmentLinks } from '../../services/add-attachments-links';
+import { announceApprovalStepCommentCreation } from '../iris/messages/approval-step-comment';
 
 const router = new Router();
 
@@ -41,13 +43,32 @@ function* createApprovalStepComment(
       throw new Error('Could not retrieve created comment');
     }
 
-    await ApprovalStepCommentDAO.create(trx, {
+    const approvalStepComment = await ApprovalStepCommentDAO.create(trx, {
       approvalStepId,
       commentId: comment.id
     });
 
-    const commentWithMentions: CommentWithMentions = await addAtMentionDetailsForComment(
-      comment
+    const {
+      mentionedUserIds,
+      collaboratorNames
+    } = await getCollaboratorsFromCommentMentions(trx, comment.text);
+
+    for (const mentionedUserId of mentionedUserIds) {
+      await NotificationsService.sendApprovalStepCommentMentionNotification(
+        trx,
+        {
+          approvalStepId,
+          commentId: comment.id,
+          actorId: userId,
+          recipientId: mentionedUserId
+        }
+      );
+    }
+
+    const commentWithMentions = { ...comment, mentions: collaboratorNames };
+    await announceApprovalStepCommentCreation(
+      approvalStepComment,
+      commentWithMentions
     );
 
     this.status = 201;

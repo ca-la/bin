@@ -778,3 +778,25 @@ test('NotificationsDAO.markReadOlderThan', async (t: tape.Test) => {
     );
   });
 });
+
+test('NotificationsDAO.findById returns notifications with approval step titles', async (t: tape.Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
+  const { recipient } = await generateNotification({
+    type: NotificationType.APPROVAL_STEP_COMMENT_MENTION
+  });
+
+  const notifications = await db.transaction((trx: Knex.Transaction) =>
+    NotificationsDAO.findByUserId(trx, recipient.id, {
+      limit: 100,
+      offset: 0
+    })
+  );
+
+  t.equal(
+    notifications[0].approvalStepTitle,
+    'Checkout',
+    'Stage title is returned'
+  );
+});

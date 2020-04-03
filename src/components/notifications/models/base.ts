@@ -9,6 +9,7 @@ export interface BaseNotificationRow {
   action_description: null; // DEPRECATED
   actor_user_id: string;
   annotation_id: null;
+  approval_step_id: null;
   canvas_id: null;
   collaborator_id: null;
   collection_id: null;
@@ -37,12 +38,14 @@ export interface BaseFullNotificationRow {
   has_attachments: boolean;
   task_title: null;
   annotation_image_id: null;
+  approval_step_title: null;
 }
 
 export interface BaseNotification {
   actionDescription: null; // DEPRECATED
   actorUserId: string;
   annotationId: null;
+  approvalStepId: null;
   canvasId: null;
   collaboratorId: null;
   collectionId: null;
@@ -71,11 +74,13 @@ export interface BaseFullNotification {
   hasAttachments: boolean;
   taskTitle: null;
   annotationImageId: null;
+  approvalStepTitle: null;
 }
 
 export const templateNotification = {
   actionDescription: null, // DEPRECATED
   annotationId: null,
+  approvalStepId: null,
   canvasId: null,
   collaboratorId: null,
   collectionId: null,

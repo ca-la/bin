@@ -841,3 +841,82 @@ test('unsupported notifications', async (t: tape.Test) => {
     );
   }
 });
+
+test('approval step mention notification message', async (t: tape.Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
+  const { design, actor, recipient, approvalStep } = await generateNotification(
+    {
+      type: NotificationType.APPROVAL_STEP_COMMENT_MENTION
+    }
+  );
+  const { design: mentionDesign } = await generateNotification({
+    recipientUserId: recipient.id,
+    type: NotificationType.APPROVAL_STEP_COMMENT_MENTION
+  });
+  await deleteById(mentionDesign.id);
+
+  const { comment } = await generateNotification({
+    recipientUserId: recipient.id,
+    type: NotificationType.APPROVAL_STEP_COMMENT_MENTION
+  });
+  const asset1 = (await generateAsset()).asset;
+  const asset2 = (await generateAsset()).asset;
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await CommentAttachmentDAO.createAll(trx, [
+      {
+        assetId: asset1.id,
+        commentId: comment.id
+      },
+      {
+        assetId: asset2.id,
+        commentId: comment.id
+      }
+    ]);
+  });
+
+  const notifications = await db.transaction((trx: Knex.Transaction) =>
+    findByUserId(trx, recipient.id, { limit: 20, offset: 0 })
+  );
+
+  t.is(notifications.length, 2);
+  const annMenNotification = notifications[1];
+
+  const message = await createNotificationMessage(annMenNotification);
+  if (!message) {
+    throw new Error('Did not create message');
+  }
+  t.assert(
+    message.html.includes(design.title),
+    'message html contains the design title'
+  );
+  t.assert(
+    message.html.includes(approvalStep.title),
+    'message html contains the step title'
+  );
+  t.assert(message.actor && message.actor.id === actor.id, 'actor is correct');
+  const { mentions, hasAttachments } = message.attachments[0];
+  t.assert(
+    mentions && Object.keys(mentions).length === 1,
+    'message attachments contains one mention'
+  );
+  t.is(hasAttachments, false, 'Notification does not have attachments');
+  const { collaborators } = message.actions[0];
+  t.assert(
+    collaborators.length === 2,
+    'message actions contains two collaborators'
+  );
+
+  const notificationWithAttachment = notifications[0];
+  const withAttachmentsMessage = await createNotificationMessage(
+    notificationWithAttachment
+  );
+  if (!withAttachmentsMessage) {
+    throw new Error('Did not create message');
+  }
+  t.true(
+    withAttachmentsMessage.attachments[0].hasAttachments,
+    'Notification has attachments'
+  );
+});
