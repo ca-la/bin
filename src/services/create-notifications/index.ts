@@ -1,6 +1,5 @@
 import uuid from 'node-uuid';
 import * as Knex from 'knex';
-import { pick } from 'lodash';
 
 import * as NotificationsDAO from '../../components/notifications/dao';
 import * as CanvasesDAO from '../../components/canvases/dao';
@@ -105,14 +104,10 @@ import {
 async function replaceNotifications(options: {
   trx?: Knex.Transaction;
   notification: Uninserted<Notification>;
-  mergeList?: (keyof Uninserted<Notification>)[];
 }): Promise<Notification> {
-  const { notification, trx, mergeList } = options;
+  const { notification, trx } = options;
 
-  await NotificationsDAO.deleteRecent(
-    mergeList ? pick(notification, mergeList) : notification,
-    trx
-  );
+  await NotificationsDAO.deleteRecent(notification, trx);
   return await NotificationsDAO.create(notification, trx);
 }
 
@@ -321,14 +316,7 @@ export async function sendDesignOwnerMeasurementCreateNotification(
       recipientUserId: targetId,
       sentEmailAt: null,
       type: NotificationType.MEASUREMENT_CREATE
-    },
-    mergeList: [
-      'actorUserId',
-      'recipientUserId',
-      'sentEmailAt',
-      'designId',
-      'type'
-    ]
+    }
   });
   return validateTypeWithGuardOrThrow(
     notification,

@@ -380,8 +380,8 @@ test('sendDesignOwnerMeasurementCreateNotification', async (t: tape.Test) => {
 
   t.equal(
     notifications.length,
-    1,
-    'Only one measurement notification is returned'
+    3,
+    'Three measurement notifications are returned'
   );
 });
 

@@ -276,11 +276,6 @@ export function decode(
 }
 export const dataAdapter = new DataAdapter<NotificationRow, Notification>();
 
-export const partialDataAdapter = new DataAdapter<
-  Partial<NotificationRow>,
-  Partial<Notification>
->();
-
 export function isNotificationRow(row: object): row is NotificationRow {
   return hasProperties(
     row,
