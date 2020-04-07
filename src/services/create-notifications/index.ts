@@ -96,6 +96,14 @@ import {
   ApprovalStepCommentMentionNotification,
   isApprovalStepCommentMentionNotification
 } from '../../components/notifications/models/approval-step-comment-mention';
+import {
+  ApprovalStepCommentReplyNotification,
+  isApprovalStepCommentReplyNotification
+} from '../../components/notifications/models/approval-step-comment-reply';
+import {
+  ApprovalStepCommentCreateNotification,
+  isApprovalStepCommentCreateNotification
+} from '../../components/notifications/models/approval-step-comment-create';
 
 /**
  * Deletes pre-existing similar notifications and adds in a new one by comparing columns.
@@ -749,6 +757,124 @@ export async function sendApprovalStepCommentMentionNotification(
     } notification type from database with id: ${id}`
   );
   return validated;
+}
+
+/**
+ * Creates notifications for to users replied to in an approval comment.
+ */
+export async function sendApprovalStepCommentReplyNotification(
+  trx: Knex.Transaction,
+  options: {
+    approvalStepId: string;
+    commentId: string;
+    actorId: string;
+    recipientId: string;
+  }
+): Promise<ApprovalStepCommentReplyNotification | null> {
+  const { approvalStepId, commentId, actorId, recipientId } = options;
+  if (recipientId === actorId) {
+    return null;
+  }
+
+  const approvalStep = await ApprovalStepDAO.findById(trx, approvalStepId);
+  if (!approvalStep) {
+    throw new Error(
+      `Could not find a approval step with id: ${approvalStepId}`
+    );
+  }
+
+  const design = await DesignsDAO.findById(approvalStep.designId);
+  if (!design) {
+    throw new Error(
+      `Could not find a design with id: ${approvalStep.designId}`
+    );
+  }
+
+  const id = uuid.v4();
+  const notification = await replaceNotifications({
+    notification: {
+      ...templateNotification,
+      actorUserId: actorId,
+      collectionId: design.collectionIds[0] || null,
+      commentId,
+      designId: design.id,
+      id,
+      recipientUserId: recipientId,
+      sentEmailAt: null,
+      approvalStepId,
+      type: NotificationType.APPROVAL_STEP_COMMENT_REPLY
+    },
+    trx
+  });
+  const validated = validateTypeWithGuardOrThrow(
+    notification,
+    isApprovalStepCommentReplyNotification,
+    `Could not validate ${
+      NotificationType.APPROVAL_STEP_COMMENT_REPLY
+    } notification type from database with id: ${id}`
+  );
+  return validated;
+}
+
+/**
+ * Creates a notification for the owner of the design that comment has been created
+ * on an approval step. Note: this will only create a notification if the actor is not
+ * the owner.
+ */
+export async function sendDesignOwnerApprovalStepCommentCreateNotification(
+  trx: Knex.Transaction,
+  approvalStepId: string,
+  commentId: string,
+  actorId: string,
+  mentionedUserIds: string[],
+  threadUserIds: string[]
+): Promise<ApprovalStepCommentCreateNotification | null> {
+  const approvalStep = await ApprovalStepDAO.findById(trx, approvalStepId);
+  if (!approvalStep) {
+    throw new Error(
+      `Could not find a approval step with id: ${approvalStepId}`
+    );
+  }
+
+  const design = await DesignsDAO.findById(approvalStep.designId);
+  if (!design) {
+    throw new Error(
+      `Could not find a design with id: ${approvalStep.designId}`
+    );
+  }
+
+  const targetId = design.userId;
+  const collectionId = design.collectionIds[0] || null;
+  if (actorId === targetId) {
+    return null;
+  }
+  if (mentionedUserIds.includes(targetId) || threadUserIds.includes(targetId)) {
+    return null;
+  }
+
+  const id = uuid.v4();
+  const notification = await replaceNotifications({
+    notification: {
+      ...templateNotification,
+      approvalStepId,
+      actorUserId: actorId,
+      collectionId,
+      commentId,
+      designId: design.id,
+      id,
+      recipientUserId: targetId,
+      sentEmailAt: null,
+      type: NotificationType.APPROVAL_STEP_COMMENT_CREATE
+    },
+    trx
+  });
+  return validateTypeWithGuardOrThrow(
+    notification,
+    isApprovalStepCommentCreateNotification,
+    `Could not validate ${
+      NotificationType.APPROVAL_STEP_COMMENT_CREATE
+    } notification type from database with id: ${id}`
+  );
 }
 
 /**

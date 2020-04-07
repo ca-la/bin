@@ -15,21 +15,21 @@ type BaseRow = Omit<
   | 'recipient_user_id'
 >;
 
-export interface ApprovalStepCommentMentionNotificationRow extends BaseRow {
+export interface ApprovalStepCommentReplyNotificationRow extends BaseRow {
   collection_id: string | null;
   design_id: string;
   approval_step_id: string;
   comment_id: string;
   recipient_user_id: string;
-  type: NotificationType.APPROVAL_STEP_COMMENT_MENTION;
+  type: NotificationType.APPROVAL_STEP_COMMENT_REPLY;
 }
 
 type BaseFullRow = Omit<
-  BaseFullNotificationRow & ApprovalStepCommentMentionNotificationRow,
+  BaseFullNotificationRow & ApprovalStepCommentReplyNotificationRow,
   'collection_title' | 'comment_text' | 'design_title' | 'approval_step_title'
 >;
 
-export interface FullApprovalStepCommentMentionNotificationRow
+export interface FullApprovalStepCommentReplyNotificationRow
   extends BaseFullRow {
   collection_title: string | null;
   comment_text: string;
@@ -46,29 +46,29 @@ type Base = Omit<
   | 'recipientUserId'
 >;
 
-export interface ApprovalStepCommentMentionNotification extends Base {
+export interface ApprovalStepCommentReplyNotification extends Base {
   collectionId: string | null;
   designId: string;
   approvalStepId: string;
   commentId: string;
   recipientUserId: string;
-  type: NotificationType.APPROVAL_STEP_COMMENT_MENTION;
+  type: NotificationType.APPROVAL_STEP_COMMENT_REPLY;
 }
 
 type BaseFull = Omit<
-  BaseFullNotification & ApprovalStepCommentMentionNotification,
+  BaseFullNotification & ApprovalStepCommentReplyNotification,
   'collectionTitle' | 'commentText' | 'designTitle' | 'approvalStepTitle'
 >;
 
-export interface FullApprovalStepCommentMentionNotification extends BaseFull {
+export interface FullApprovalStepCommentReplyNotification extends BaseFull {
   collectionTitle: string | null;
   commentText: string;
   designTitle: string | null;
   approvalStepTitle: string;
 }
 
-export function isApprovalStepCommentMentionNotification(
+export function isApprovalStepCommentReplyNotification(
   candidate: any
-): candidate is ApprovalStepCommentMentionNotification {
-  return candidate.type === NotificationType.APPROVAL_STEP_COMMENT_MENTION;
+): candidate is ApprovalStepCommentReplyNotification {
+  return candidate.type === NotificationType.APPROVAL_STEP_COMMENT_REPLY;
 }

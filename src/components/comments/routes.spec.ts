@@ -5,7 +5,12 @@ import { authHeader, del, get, post, put } from '../../test-helpers/http';
 import { sandbox, test } from '../../test-helpers/fresh';
 import * as CreateNotifications from '../../services/create-notifications';
 import * as AnnotationCommentsDAO from '../../components/annotation-comments/dao';
-import * as AnnounceCommentService from '../../components/iris/messages/task-comment';
+import * as AnnounceTaskCommentService from '../../components/iris/messages/task-comment';
+import * as AnnounceApprovalStepCommentService from '../../components/iris/messages/approval-step-comment';
+import generateComment from '../../test-helpers/factories/comment';
+import generateApprovalStep from '../../test-helpers/factories/design-approval-step';
+import db from '../../services/db';
+import Knex from 'knex';
 
 test('DELETE /comment/:id deletes a task comment', async (t: tape.Test) => {
   const { session, user } = await createUser();
@@ -14,10 +19,10 @@ test('DELETE /comment/:id deletes a task comment', async (t: tape.Test) => {
     .stub(CreateNotifications, 'sendTaskCommentCreateNotification')
     .resolves();
   sandbox()
-    .stub(AnnounceCommentService, 'announceTaskCommentCreation')
+    .stub(AnnounceTaskCommentService, 'announceTaskCommentCreation')
     .resolves({});
   const announceDeleteStub = sandbox()
-    .stub(AnnounceCommentService, 'announceTaskCommentDeletion')
+    .stub(AnnounceTaskCommentService, 'announceTaskCommentDeletion')
     .resolves({});
 
   const task = await post('/tasks', {
@@ -175,4 +180,27 @@ test('GET /comments/?annotationIds= returns comments by annotation even with one
   t.equal(response.status, 400, 'Throws an error');
   t.equal(body.message, 'Missing annotationIds!');
   t.equal(daoStub.callCount, 0, 'Stub is never called');
+});
+
+test('DELETE /comment/:id deletes a approval step comment', async (t: tape.Test) => {
+  const { session, user } = await createUser();
+
+  const { comment } = await generateComment({ userId: user.id });
+  const { approvalStep } = await db.transaction((trx: Knex.Transaction) =>
+    generateApprovalStep(trx)
+  );
+
+  const announceDeleteStub = sandbox()
+    .stub(
+      AnnounceApprovalStepCommentService,
+      'announceApprovalStepCommentDeletion'
+    )
+    .resolves({});
+
+  const deleteRequest = await del(
+    `/comments/${comment.id}?approvalStepId=${approvalStep.id}`,
+    { headers: authHeader(session.id) }
+  );
+  t.equal(deleteRequest[0].status, 204, 'Comment deletion succeeds');
+  t.true(announceDeleteStub.calledOnce);
 });

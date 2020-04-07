@@ -454,6 +454,8 @@ export default async function generateNotification(
         notification
       };
     }
+    case NotificationType.APPROVAL_STEP_COMMENT_CREATE:
+    case NotificationType.APPROVAL_STEP_COMMENT_REPLY:
     case NotificationType.APPROVAL_STEP_COMMENT_MENTION: {
       const notification = await create({
         ...baseNotification,

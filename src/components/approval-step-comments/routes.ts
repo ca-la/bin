@@ -14,7 +14,8 @@ import * as ApprovalStepCommentDAO from './dao';
 import * as NotificationsService from '../../services/create-notifications';
 import requireAuth from '../../middleware/require-auth';
 import addAtMentionDetails, {
-  getCollaboratorsFromCommentMentions
+  getCollaboratorsFromCommentMentions,
+  getThreadUserIdsFromCommentThread
 } from '../../services/add-at-mention-details';
 import { addAttachmentLinks } from '../../services/add-attachments-links';
 import { announceApprovalStepCommentCreation } from '../iris/messages/approval-step-comment';
@@ -64,6 +65,29 @@ function* createApprovalStepComment(
         }
       );
     }
+
+    const threadUserIds: string[] =
+      comment.parentCommentId && mentionedUserIds.length === 0
+        ? await getThreadUserIdsFromCommentThread(trx, comment.parentCommentId)
+        : [];
+
+    for (const threadUserId of threadUserIds) {
+      await NotificationsService.sendApprovalStepCommentReplyNotification(trx, {
+        approvalStepId,
+        commentId: comment.id,
+        actorId: userId,
+        recipientId: threadUserId
+      });
+    }
+
+    await NotificationsService.sendDesignOwnerApprovalStepCommentCreateNotification(
+      trx,
+      approvalStepId,
+      comment.id,
+      userId,
+      mentionedUserIds,
+      threadUserIds
+    );
 
     const commentWithMentions = { ...comment, mentions: collaboratorNames };
     await announceApprovalStepCommentCreation(

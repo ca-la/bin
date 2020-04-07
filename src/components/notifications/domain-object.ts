@@ -112,6 +112,18 @@ import {
   FullApprovalStepCommentMentionNotification,
   FullApprovalStepCommentMentionNotificationRow
 } from './models/approval-step-comment-mention';
+import {
+  ApprovalStepCommentReplyNotification,
+  ApprovalStepCommentReplyNotificationRow,
+  FullApprovalStepCommentReplyNotification,
+  FullApprovalStepCommentReplyNotificationRow
+} from './models/approval-step-comment-reply';
+import {
+  ApprovalStepCommentCreateNotification,
+  ApprovalStepCommentCreateNotificationRow,
+  FullApprovalStepCommentCreateNotification,
+  FullApprovalStepCommentCreateNotificationRow
+} from './models/approval-step-comment-create';
 
 export enum NotificationType {
   ANNOTATION_COMMENT_CREATE = 'ANNOTATION_COMMENT_CREATE',
@@ -133,7 +145,9 @@ export enum NotificationType {
   COSTING_EXPIRATION_ONE_WEEK = 'COSTING_EXPIRATION_ONE_WEEK',
   COSTING_EXPIRATION_TWO_DAYS = 'COSTING_EXPIRATION_TWO_DAYS',
   COSTING_EXPIRED = 'COSTING_EXPIRED',
-  APPROVAL_STEP_COMMENT_MENTION = 'APPROVAL_STEP_COMMENT_MENTION'
+  APPROVAL_STEP_COMMENT_MENTION = 'APPROVAL_STEP_COMMENT_MENTION',
+  APPROVAL_STEP_COMMENT_REPLY = 'APPROVAL_STEP_COMMENT_REPLY',
+  APPROVAL_STEP_COMMENT_CREATE = 'APPROVAL_STEP_COMMENT_CREATE'
 }
 
 export type Notification =
@@ -156,7 +170,9 @@ export type Notification =
   | ExpiredNotification
   | OneWeekExpirationNotification
   | TwoDayExpirationNotification
-  | ApprovalStepCommentMentionNotification;
+  | ApprovalStepCommentMentionNotification
+  | ApprovalStepCommentReplyNotification
+  | ApprovalStepCommentCreateNotification;
 
 export type FullNotification =
   | FullTaskCompletionNotification
@@ -176,7 +192,9 @@ export type FullNotification =
   | FullAnnotationCommentReplyNotification
   | FullAnnotationCommentCreateNotification
   | FullExpirationNotification
-  | FullApprovalStepCommentMentionNotification;
+  | FullApprovalStepCommentMentionNotification
+  | FullApprovalStepCommentReplyNotification
+  | FullApprovalStepCommentCreateNotification;
 
 export type NotificationRow =
   | AnnotationCommentCreateNotificationRow
@@ -198,7 +216,9 @@ export type NotificationRow =
   | ExpiredNotificationRow
   | OneWeekExpirationNotificationRow
   | TwoDayExpirationNotificationRow
-  | ApprovalStepCommentMentionNotificationRow;
+  | ApprovalStepCommentMentionNotificationRow
+  | ApprovalStepCommentReplyNotificationRow
+  | ApprovalStepCommentCreateNotificationRow;
 
 export type FullNotificationRow =
   | FullTaskCompletionNotificationRow
@@ -217,7 +237,9 @@ export type FullNotificationRow =
   | FullAnnotationCommentMentionNotificationRow
   | FullAnnotationCommentReplyNotificationRow
   | FullAnnotationCommentCreateNotificationRow
-  | FullApprovalStepCommentMentionNotificationRow;
+  | FullApprovalStepCommentMentionNotificationRow
+  | FullApprovalStepCommentReplyNotificationRow
+  | FullApprovalStepCommentCreateNotificationRow;
 
 type EqualKeys<T> = { [P in keyof T]: any };
 

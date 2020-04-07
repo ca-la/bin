@@ -5,6 +5,7 @@ import * as CommentDAO from './dao';
 import requireAuth = require('../../middleware/require-auth');
 import { announceAnnotationCommentDeletion } from '../iris/messages/annotation-comment';
 import { announceTaskCommentDeletion } from '../iris/messages/task-comment';
+import { announceApprovalStepCommentDeletion } from '../iris/messages/approval-step-comment';
 
 const router = new Router();
 
@@ -34,11 +35,16 @@ function* getList(this: AuthedContext): Iterator<any, any, any> {
 interface DeleteCommentQuery {
   annotationId?: string;
   taskId?: string;
+  approvalStepId?: string;
 }
 
 function* deleteComment(this: AuthedContext): Iterator<any, any, any> {
   const { userId } = this.state;
-  const { annotationId, taskId }: DeleteCommentQuery = this.query;
+  const {
+    annotationId,
+    taskId,
+    approvalStepId
+  }: DeleteCommentQuery = this.query;
   const { commentId } = this.params;
   const comment = yield CommentDAO.findById(commentId);
 
@@ -54,6 +60,12 @@ function* deleteComment(this: AuthedContext): Iterator<any, any, any> {
     });
   } else if (taskId) {
     yield announceTaskCommentDeletion({ actorId: userId, commentId, taskId });
+  } else if (approvalStepId) {
+    yield announceApprovalStepCommentDeletion({
+      actorId: userId,
+      approvalStepId,
+      commentId
+    });
   }
 
   this.status = 204;
