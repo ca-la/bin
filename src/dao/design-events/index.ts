@@ -1,4 +1,5 @@
 import uuid from 'node-uuid';
+import rethrow from 'pg-rethrow';
 import Knex from 'knex';
 
 import db from '../../services/db';
@@ -8,9 +9,18 @@ import DesignEvent, {
   isDesignEventRow
 } from '../../domain-objects/design-event';
 import first from '../../services/first';
+import filterError = require('../../services/filter-error');
 import { validate, validateEvery } from '../../services/validate-from-db';
 
 const TABLE_NAME = 'design_events';
+
+export class DuplicateAcceptRejectError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.message = message;
+    this.name = 'DuplicateAcceptRejectError';
+  }
+}
 
 export async function create(
   event: DesignEvent,
@@ -29,7 +39,21 @@ export async function create(
         query.transacting(trx);
       }
     })
-    .then((rows: DesignEventRow[]) => first(rows));
+    .then((rows: DesignEventRow[]) => first(rows))
+    .catch(rethrow)
+    .catch(
+      filterError(
+        rethrow.ERRORS.UniqueViolation,
+        (err: typeof rethrow.ERRORS.UniqueViolation) => {
+          if (err.constraint === 'one_accept_or_reject_per_bid') {
+            throw new DuplicateAcceptRejectError(
+              'This bid has already been accepted or rejected'
+            );
+          }
+          throw err;
+        }
+      )
+    );
 
   if (!created) {
     throw new Error('Failed to create DesignEvent');

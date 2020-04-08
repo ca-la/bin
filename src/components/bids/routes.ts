@@ -13,7 +13,10 @@ import * as BidRejectionsDAO from '../bid-rejections/dao';
 import * as BidsDAO from './dao';
 import * as PricingQuotesDAO from '../../dao/pricing-quotes';
 import ProductDesignsDAO from '../product-designs/dao';
-import * as DesignEventsDAO from '../../dao/design-events';
+import {
+  create as createDesignEvent,
+  DuplicateAcceptRejectError
+} from '../../dao/design-events';
 import * as CollaboratorsDAO from '../collaborators/dao';
 import requireAdmin = require('../../middleware/require-admin');
 import requireAuth = require('../../middleware/require-auth');
@@ -25,6 +28,7 @@ import { BidRejection } from '../bid-rejections/domain-object';
 import { hasOnlyProperties } from '../../services/require-properties';
 import { PartnerPayoutLog } from '../partner-payouts/domain-object';
 import { payOutPartner } from '../../services/pay-out-partner';
+import filterError = require('../../services/filter-error');
 
 const router = new Router();
 
@@ -184,7 +188,7 @@ function* assignBidToPartner(this: AuthedContext): Iterator<any, any, any> {
     );
   }
 
-  yield DesignEventsDAO.create({
+  yield createDesignEvent({
     actorId: this.state.userId,
     bidId,
     createdAt: new Date(),
@@ -253,7 +257,7 @@ function* removeBidFromPartner(this: AuthedContext): Iterator<any, any, any> {
     this.throw(404, `No User found for ID: ${userId}`);
   }
 
-  yield DesignEventsDAO.create({
+  yield createDesignEvent({
     actorId: this.state.userId,
     bidId,
     createdAt: new Date(),
@@ -304,7 +308,7 @@ export function* acceptDesignBid(
     this.throw(400, `Design for bid ${bid.id} does not exist!`);
   }
 
-  yield DesignEventsDAO.create({
+  yield createDesignEvent({
     actorId: userId,
     bidId: bid.id,
     createdAt: new Date(),
@@ -313,7 +317,14 @@ export function* acceptDesignBid(
     quoteId: bid.quoteId,
     targetId: null,
     type: 'ACCEPT_SERVICE_BID'
-  });
+  }).catch(
+    filterError(
+      DuplicateAcceptRejectError,
+      (err: DuplicateAcceptRejectError) => {
+        this.throw(400, err.message);
+      }
+    )
+  );
 
   yield CollaboratorsDAO.update(collaborator.id, {
     cancelledAt: null,
@@ -379,7 +390,7 @@ export function* rejectDesignBid(
     this.throw('Bid rejection reasons are required', 400);
   }
 
-  yield DesignEventsDAO.create({
+  yield createDesignEvent({
     actorId: userId,
     bidId: bid.id,
     createdAt: new Date(),

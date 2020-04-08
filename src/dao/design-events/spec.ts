@@ -8,6 +8,7 @@ import { create as createDesign } from '../../components/product-designs/dao';
 import {
   create,
   createAll,
+  DuplicateAcceptRejectError,
   findByDesignId,
   findByTargetId,
   isQuoteCommitted
@@ -226,4 +227,66 @@ test('isQuoteCommitted returns the correct value', async (t: Test) => {
   await create(commitQuoteEvent);
 
   t.true(await isQuoteCommitted(design.id));
+});
+
+test('DesignEventsDAO.create throws if the same bid is accepted twice', async (t: Test) => {
+  const { bid } = await generateBid();
+  const { user: designer } = await createUser();
+  const { user: cala } = await createUser();
+  const { user: partner } = await createUser();
+  const design = await createDesign({
+    previewImageUrls: [],
+    productType: 'A product type',
+    title: 'A design',
+    userId: designer.id
+  });
+  const submitEvent: DesignEvent = {
+    actorId: designer.id,
+    bidId: null,
+    createdAt: new Date(2012, 11, 23),
+    designId: design.id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: cala.id,
+    type: 'SUBMIT_DESIGN'
+  };
+  const bidEvent: DesignEvent = {
+    actorId: cala.id,
+    bidId: bid.id,
+    createdAt: new Date(2012, 11, 24),
+    designId: design.id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: partner.id,
+    type: 'BID_DESIGN'
+  };
+  const acceptBidEvent: DesignEvent = {
+    actorId: partner.id,
+    bidId: bidEvent.bidId,
+    createdAt: new Date(2012, 11, 25),
+    designId: design.id,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: cala.id,
+    type: 'ACCEPT_SERVICE_BID'
+  };
+  await createAll([bidEvent, submitEvent, acceptBidEvent]);
+
+  try {
+    await create({
+      actorId: partner.id,
+      bidId: bidEvent.bidId,
+      createdAt: new Date(2012, 11, 26),
+      designId: design.id,
+      id: uuid.v4(),
+      quoteId: null,
+      targetId: cala.id,
+      type: 'ACCEPT_SERVICE_BID'
+    });
+
+    throw new Error("Shouldn't get here");
+  } catch (err) {
+    t.true(err instanceof DuplicateAcceptRejectError);
+    t.equal(err.message, 'This bid has already been accepted or rejected');
+  }
 });

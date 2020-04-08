@@ -694,6 +694,19 @@ test('Partner pairing: accept', async (t: Test) => {
   );
 
   t.equal(notificationStub.callCount, 1);
+
+  const [duplicateAcceptanceResponse, duplicateAcceptanceBody] = await post(
+    `/bids/${bid.id}/accept`,
+    {
+      headers: authHeader(partner.session.id)
+    }
+  );
+
+  t.equal(duplicateAcceptanceResponse.status, 400);
+  t.equal(
+    duplicateAcceptanceBody.message,
+    'This bid has already been accepted or rejected'
+  );
 });
 
 test('Partner pairing: accept on a deleted design', async (t: Test) => {
@@ -847,6 +860,20 @@ test('Partner pairing: reject', async (t: Test) => {
   t.equal(designCollaborator, null, 'The partner is no longer a collaborator');
 
   t.equal(notificationStub.callCount, 1);
+
+  const [duplicateRejectionResponse, duplicateRejectionBody] = await post(
+    `/bids/${bid.id}/reject`,
+    {
+      headers: authHeader(partner.session.id),
+      body: bidRejection
+    }
+  );
+
+  t.equal(duplicateRejectionResponse.status, 403);
+  t.equal(
+    duplicateRejectionBody.message,
+    'You may only reject a bid you have been assigned to'
+  );
 });
 
 test('GET /bids/:bidId gets a bid by an id', async (t: Test) => {
