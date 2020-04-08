@@ -1,4 +1,5 @@
 import Koa from 'koa';
+import compose from 'koa-compose';
 
 import {
   getDesignPermissions,
@@ -6,6 +7,7 @@ import {
 } from '../../services/get-permissions';
 import ResourceNotFoundError from '../../errors/resource-not-found';
 import filterError = require('../../services/filter-error');
+import { requireQueryParam } from '../require-query-param';
 
 export function* attachDesignPermissions(
   this: Koa.Context,
@@ -59,22 +61,20 @@ export function* attachAggregateDesignPermissions(
   this.state.permissions = aggregatePermissions;
 }
 
-export function* canAccessDesignInParam(
-  this: Koa.Context,
-  next: () => Promise<any>
+export function requireDesignIdBy(
+  designIdFetcher: (this: AuthedContext) => Promise<string>
 ): any {
-  const { designId } = this.params;
-  this.assert(designId, 400, 'Must provide design ID');
-  yield attachDesignPermissions.call(this, designId);
+  return function*(
+    this: AuthedContext<{}, { designId: string }>,
+    next: () => Promise<any>
+  ): Generator<unknown, void, string> {
+    const designId: string = yield designIdFetcher.call(this).catch(() => {
+      this.throw(404, `Cannot find design with ID: ${designId}`);
+    });
+    this.state.designId = designId;
 
-  const { permissions } = this.state;
-  this.assert(
-    permissions && permissions.canView,
-    403,
-    "You don't have permission to view this design"
-  );
-
-  yield next;
+    yield next;
+  };
 }
 
 export function* canAccessDesignsInQuery(
@@ -98,17 +98,11 @@ export function* canAccessDesignsInQuery(
   yield next;
 }
 
-export function* canAccessDesignInQuery(
+export function* canAccessDesignInState(
   this: Koa.Context,
   next: () => Promise<any>
 ): any {
-  const { designId } = this.query;
-
-  if (!designId) {
-    this.throw(400, 'Must provide a designId in query parameters');
-  }
-
-  yield attachDesignPermissions.call(this, designId);
+  yield attachDesignPermissions.call(this, this.state.designId);
 
   const { permissions } = this.state;
   this.assert(
@@ -119,6 +113,21 @@ export function* canAccessDesignInQuery(
 
   yield next;
 }
+
+export const canAccessDesignInParam = compose([
+  requireDesignIdBy(function(this: Koa.Context): Promise<string> {
+    return Promise.resolve(this.params.designId);
+  }),
+  canAccessDesignInState
+]);
+
+export const canAccessDesignInQuery = compose([
+  requireQueryParam<{ designId: string }>('designId'),
+  requireDesignIdBy(function(this: Koa.Context): Promise<string> {
+    return Promise.resolve(this.query.designId);
+  }),
+  canAccessDesignInState
+]);
 
 export function* canCommentOnDesign(
   this: Koa.Context,
