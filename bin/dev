@@ -5,19 +5,14 @@ set -o nounset
 set -o pipefail
 set -o noglob
 
-# Run TypeScript compiler and API server in watch mode
+# Run server with ts-node watching for changes
 # Usage: bin/dev
 
 main() {
-  trap "kill 0" EXIT # Kill children when this process is killed
-
   source bin/lib/loadenv
   loadenv_local
 
-  npx tsc --preserveWatchOutput -w -p . &
-  npx nodemon --delay 2 -w ./dist dist &
-
-  wait
+  npx nodemon -w ./src --exec 'ts-node' ./src
 }
 
 main "$@"
