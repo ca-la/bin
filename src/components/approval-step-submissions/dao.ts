@@ -1,26 +1,28 @@
 import Knex from 'knex';
 
 import { validateEvery } from '../../services/validate-from-db';
-import ApprovalSubmission, {
-  ApprovalSubmissionRow,
+import ApprovalStepSubmission, {
+  ApprovalStepSubmissionRow,
   dataAdapter,
-  isApprovalSubmissionRow
+  isApprovalStepSubmissionRow
 } from './domain-object';
 
 const TABLE_NAME = 'design_approval_submissions';
 
-const validateApprovalSubmissions = (candidate: any[]): ApprovalSubmission[] =>
-  validateEvery<ApprovalSubmissionRow, ApprovalSubmission>(
+const validateApprovalSubmissions = (
+  candidate: any[]
+): ApprovalStepSubmission[] =>
+  validateEvery<ApprovalStepSubmissionRow, ApprovalStepSubmission>(
     TABLE_NAME,
-    isApprovalSubmissionRow,
+    isApprovalStepSubmissionRow,
     dataAdapter,
     candidate
   );
 
 export async function createAll(
   trx: Knex.Transaction,
-  data: ApprovalSubmission[]
-): Promise<ApprovalSubmission[]> {
+  data: ApprovalStepSubmission[]
+): Promise<ApprovalStepSubmission[]> {
   const rowData = data.map(dataAdapter.forInsertion.bind(dataAdapter));
   return trx(TABLE_NAME)
     .insert(rowData)
@@ -31,7 +33,7 @@ export async function createAll(
 export async function findByStep(
   trx: Knex.Transaction,
   stepId: string
-): Promise<ApprovalSubmission[]> {
+): Promise<ApprovalStepSubmission[]> {
   return trx(TABLE_NAME)
     .select('*')
     .where({

@@ -5,11 +5,11 @@ import ApprovalStep, {
   ApprovalStepState
 } from '../../components/approval-steps/domain-object';
 import * as ApprovalStepsDAO from '../../components/approval-steps/dao';
-import ApprovalSubmission, {
-  ApprovalSubmissionArtifactType,
-  ApprovalSubmissionState
-} from '../../components/approval-submissions/domain-object';
-import * as ApprovalSubmissionsDAO from '../../components/approval-submissions/dao';
+import ApprovalStepSubmission, {
+  ApprovalStepSubmissionArtifactType,
+  ApprovalStepSubmissionState
+} from '../../components/approval-step-submissions/domain-object';
+import * as ApprovalStepSubmissionsDAO from '../../components/approval-step-submissions/dao';
 
 export default async function createDesignApproval(
   trx: Knex.Transaction,
@@ -55,22 +55,22 @@ export default async function createDesignApproval(
 
   await ApprovalStepsDAO.createAll(trx, steps);
 
-  const submissions: ApprovalSubmission[] = [
+  const submissions: ApprovalStepSubmission[] = [
     {
       id: uuid.v4(),
-      state: ApprovalSubmissionState.UNSUBMITTED,
-      artifactType: ApprovalSubmissionArtifactType.TECHNICAL_DESIGN,
+      state: ApprovalStepSubmissionState.UNSUBMITTED,
+      artifactType: ApprovalStepSubmissionArtifactType.TECHNICAL_DESIGN,
       createdAt: new Date(),
       stepId: steps[1].id
     },
     {
       id: uuid.v4(),
-      state: ApprovalSubmissionState.UNSUBMITTED,
-      artifactType: ApprovalSubmissionArtifactType.SAMPLE,
+      state: ApprovalStepSubmissionState.UNSUBMITTED,
+      artifactType: ApprovalStepSubmissionArtifactType.SAMPLE,
       createdAt: new Date(),
       stepId: steps[2].id
     }
   ];
 
-  await ApprovalSubmissionsDAO.createAll(trx, submissions);
+  await ApprovalStepSubmissionsDAO.createAll(trx, submissions);
 }

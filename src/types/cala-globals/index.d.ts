@@ -38,17 +38,21 @@ interface WithJsonBody<T extends object | any[]> {
   };
 }
 
-interface AuthedKoaState {
+interface AuthedState {
   userId: string;
   role: string;
   token: string;
 }
 
+interface PermittedState {
+  permissions: import('../../services/get-permissions').Permissions;
+}
+
 type AuthedContext<
   BodyT = {},
-  StateT = AuthedKoaState
+  StateT = AuthedState
 > = import('koa').ParameterizedContext<
-  AuthedKoaState & StateT,
+  AuthedState & StateT,
   WithRouter & WithJsonBody<BodyT>
 >;
 

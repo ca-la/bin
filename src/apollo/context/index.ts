@@ -4,7 +4,7 @@ import { attachSession } from './attach-session';
 export type ContextParams = any;
 
 export interface ProducedContext {
-  session: AuthedKoaState | null;
+  session: AuthedState | null;
 }
 
 async function handleContext({ ctx }: ContextParams): Promise<ProducedContext> {

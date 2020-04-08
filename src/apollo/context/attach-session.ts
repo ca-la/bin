@@ -3,7 +3,7 @@ import SessionsDAO from '../../dao/sessions';
 export async function attachSession(
   authToken: string,
   queryToken?: string
-): Promise<AuthedKoaState | null> {
+): Promise<AuthedState | null> {
   const headerMatches = /^Token (.+)$/.exec(authToken);
   const token = (headerMatches && headerMatches[1]) || queryToken;
 

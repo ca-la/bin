@@ -24,7 +24,6 @@ const {
 const { requireValues } = require('../../../services/require-properties');
 const { getDesignPermissions } = require('../../../services/get-permissions');
 const { deleteDesign, deleteDesigns } = require('./deletion');
-const { getApprovalStepsForDesign } = require('./approval-steps');
 
 const {
   getDesignUploadPolicy,
@@ -321,12 +320,5 @@ router.put(
 
 router.put('/:designId', requireAuth, canAccessDesignInParam, updateAllNodes);
 router.post('/templates/:templateDesignId', requireAuth, createFromTemplate);
-
-router.get(
-  '/:designId/approval-steps',
-  requireAuth,
-  canAccessDesignInParam,
-  getApprovalStepsForDesign
-);
 
 module.exports = router.routes();

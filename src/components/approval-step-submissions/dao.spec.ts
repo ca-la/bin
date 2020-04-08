@@ -13,13 +13,13 @@ import ApprovalStep, {
 } from '../approval-steps/domain-object';
 import * as ApprovalStepsDAO from '../approval-steps/dao';
 
-import ApprovalSubmission, {
-  ApprovalSubmissionArtifactType,
-  ApprovalSubmissionState
+import ApprovalStepSubmission, {
+  ApprovalStepSubmissionArtifactType,
+  ApprovalStepSubmissionState
 } from './domain-object';
-import * as ApprovalSubmissionsDAO from './dao';
+import * as ApprovalStepSubmissionsDAO from './dao';
 
-test('ApprovalSubmissionsDAO can create multiple submissions and retrieve by step', async (t: Test) => {
+test('ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by step', async (t: Test) => {
   const { user } = await createUser({ withSession: false });
   const d1: ProductDesign = await ProductDesignsDAO.create(
     staticProductDesign({ id: 'd1', userId: user.id })
@@ -40,30 +40,30 @@ test('ApprovalSubmissionsDAO can create multiple submissions and retrieve by ste
     designId: d1.id
   };
 
-  const sub1: ApprovalSubmission = {
-    state: ApprovalSubmissionState.UNSUBMITTED,
-    artifactType: ApprovalSubmissionArtifactType.TECHNICAL_DESIGN,
+  const sub1: ApprovalStepSubmission = {
+    state: ApprovalStepSubmissionState.UNSUBMITTED,
+    artifactType: ApprovalStepSubmissionArtifactType.TECHNICAL_DESIGN,
     id: uuid.v4(),
     createdAt: new Date(),
     stepId: as1.id
   };
-  const sub2: ApprovalSubmission = {
-    state: ApprovalSubmissionState.UNSUBMITTED,
-    artifactType: ApprovalSubmissionArtifactType.SAMPLE,
+  const sub2: ApprovalStepSubmission = {
+    state: ApprovalStepSubmissionState.UNSUBMITTED,
+    artifactType: ApprovalStepSubmissionArtifactType.SAMPLE,
     id: uuid.v4(),
     createdAt: new Date(),
     stepId: as1.id
   };
-  const sub3: ApprovalSubmission = {
-    state: ApprovalSubmissionState.UNSUBMITTED,
-    artifactType: ApprovalSubmissionArtifactType.TECHNICAL_DESIGN,
+  const sub3: ApprovalStepSubmission = {
+    state: ApprovalStepSubmissionState.UNSUBMITTED,
+    artifactType: ApprovalStepSubmissionArtifactType.TECHNICAL_DESIGN,
     id: uuid.v4(),
     createdAt: new Date(),
     stepId: as2.id
   };
-  const sub4: ApprovalSubmission = {
-    state: ApprovalSubmissionState.UNSUBMITTED,
-    artifactType: ApprovalSubmissionArtifactType.SAMPLE,
+  const sub4: ApprovalStepSubmission = {
+    state: ApprovalStepSubmissionState.UNSUBMITTED,
+    artifactType: ApprovalStepSubmissionArtifactType.SAMPLE,
     id: uuid.v4(),
     createdAt: new Date(),
     stepId: as2.id
@@ -71,7 +71,7 @@ test('ApprovalSubmissionsDAO can create multiple submissions and retrieve by ste
 
   await db.transaction(async (trx: Knex.Transaction) => {
     await ApprovalStepsDAO.createAll(trx, [as1, as2]);
-    const created = await ApprovalSubmissionsDAO.createAll(trx, [
+    const created = await ApprovalStepSubmissionsDAO.createAll(trx, [
       sub1,
       sub2,
       sub3,
@@ -84,7 +84,7 @@ test('ApprovalSubmissionsDAO can create multiple submissions and retrieve by ste
       'returns inserted submissions'
     );
 
-    const found = await ApprovalSubmissionsDAO.findByStep(trx, as1.id);
+    const found = await ApprovalStepSubmissionsDAO.findByStep(trx, as1.id);
 
     t.true(
       isEqual(new Set(found), new Set([sub1, sub2])),

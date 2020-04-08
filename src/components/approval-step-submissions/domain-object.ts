@@ -1,12 +1,12 @@
 import DataAdapter from '../../services/data-adapter';
 import { hasProperties } from '../../services/require-properties';
 
-export enum ApprovalSubmissionArtifactType {
+export enum ApprovalStepSubmissionArtifactType {
   TECHNICAL_DESIGN = 'TECHNICAL_DESIGN',
   SAMPLE = 'SAMPLE'
 }
 
-export enum ApprovalSubmissionState {
+export enum ApprovalStepSubmissionState {
   UNSUBMITTED = 'UNSUBMITTED',
   SUBMITTED = 'SUBMITTED',
   APPROVED = 'APPROVED',
@@ -14,30 +14,30 @@ export enum ApprovalSubmissionState {
   SKIPPED = 'SKIPPED'
 }
 
-export default interface ApprovalSubmission {
+export default interface ApprovalStepSubmission {
   id: string;
   stepId: string;
   createdAt: Date;
-  artifactType: ApprovalSubmissionArtifactType;
-  state: ApprovalSubmissionState;
+  artifactType: ApprovalStepSubmissionArtifactType;
+  state: ApprovalStepSubmissionState;
 }
 
-export interface ApprovalSubmissionRow {
+export interface ApprovalStepSubmissionRow {
   id: string;
   step_id: string;
   created_at: Date;
-  artifact_type: ApprovalSubmissionArtifactType;
-  state: ApprovalSubmissionState;
+  artifact_type: ApprovalStepSubmissionArtifactType;
+  state: ApprovalStepSubmissionState;
 }
 
 export const dataAdapter = new DataAdapter<
-  ApprovalSubmissionRow,
-  ApprovalSubmission
+  ApprovalStepSubmissionRow,
+  ApprovalStepSubmission
 >();
 
-export function isApprovalSubmissionRow(
+export function isApprovalStepSubmissionRow(
   candidate: any
-): candidate is ApprovalSubmissionRow {
+): candidate is ApprovalStepSubmissionRow {
   return hasProperties(
     candidate,
     'id',
