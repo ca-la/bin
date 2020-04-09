@@ -36,6 +36,7 @@ export default interface DesignEvent {
   designId: string;
   bidId: string | null;
   quoteId: string | null;
+  approvalStepId?: null;
   type: DesignEventTypes;
 }
 

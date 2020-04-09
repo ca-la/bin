@@ -29,6 +29,7 @@ test('Design Events DAO supports creation', async (t: Test) => {
   });
   const inputEvent: DesignEvent = {
     actorId: cala.id,
+    approvalStepId: null,
     bidId: bid.id,
     createdAt: testDate,
     designId: design.id,
@@ -55,6 +56,7 @@ test('Design Events DAO supports creating multiple events at once', async (t: Te
   });
   const submitEvent: DesignEvent = {
     actorId: designer.id,
+    approvalStepId: null,
     bidId: null,
     createdAt: new Date(2012, 11, 23),
     designId: design.id,
@@ -65,6 +67,7 @@ test('Design Events DAO supports creating multiple events at once', async (t: Te
   };
   const bidEvent: DesignEvent = {
     actorId: cala.id,
+    approvalStepId: null,
     bidId: bid.id,
     createdAt: new Date(2012, 11, 24),
     designId: design.id,
@@ -75,6 +78,7 @@ test('Design Events DAO supports creating multiple events at once', async (t: Te
   };
   const acceptBidEvent: DesignEvent = {
     actorId: partner.id,
+    approvalStepId: null,
     bidId: bidEvent.bidId,
     createdAt: new Date(2012, 11, 25),
     designId: design.id,
@@ -102,6 +106,7 @@ test('Design Events DAO supports retrieval by design ID', async (t: Test) => {
   });
   const inputEvent: DesignEvent = {
     actorId: cala.id,
+    approvalStepId: null,
     bidId: bid.id,
     createdAt: testDate,
     designId: design.id,
@@ -131,6 +136,7 @@ test('Design Events DAO supports retrieval by target ID', async (t: Test) => {
   });
   const submitEvent: DesignEvent = {
     actorId: designer.id,
+    approvalStepId: null,
     bidId: null,
     createdAt: new Date(2012, 11, 23),
     designId: design.id,
@@ -141,6 +147,7 @@ test('Design Events DAO supports retrieval by target ID', async (t: Test) => {
   };
   const bidEvent: DesignEvent = {
     actorId: cala.id,
+    approvalStepId: null,
     bidId: bid.id,
     createdAt: new Date(2012, 11, 24),
     designId: design.id,
@@ -151,6 +158,7 @@ test('Design Events DAO supports retrieval by target ID', async (t: Test) => {
   };
   const acceptBidEvent: DesignEvent = {
     actorId: partner.id,
+    approvalStepId: null,
     bidId: bidEvent.bidId,
     createdAt: new Date(2012, 11, 25),
     designId: design.id,

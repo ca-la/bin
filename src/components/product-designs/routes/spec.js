@@ -266,6 +266,7 @@ test('POST /product-designs/:designId/events with multiple events creates them',
       id: uuid.v4(),
       quoteId: null,
       targetId: null,
+      approvalStepId: null,
       type: 'SUBMIT_DESIGN'
     },
     {
@@ -275,6 +276,7 @@ test('POST /product-designs/:designId/events with multiple events creates them',
       id: uuid.v4(),
       quoteId: null,
       targetId: null,
+      approvalStepId: null,
       type: 'SUBMIT_DESIGN'
     }
   ];
@@ -317,6 +319,7 @@ test('POST /product-designs/:designId/events with multiple events with some forb
       designId: design.id,
       id: uuid.v4(),
       targetId: null,
+      approvalStepId: null,
       type: 'SUBMIT_DESIGN'
     },
     {
@@ -326,6 +329,7 @@ test('POST /product-designs/:designId/events with multiple events with some forb
       designId: design.id,
       id: uuid.v4(),
       targetId: null,
+      approvalStepId: null,
       type: 'BID_DESIGN'
     },
     {
@@ -335,6 +339,7 @@ test('POST /product-designs/:designId/events with multiple events with some forb
       designId: design.id,
       id: uuid.v4(),
       targetId: null,
+      approvalStepId: null,
       type: 'ACCEPT_SERVICE_BID'
     }
   ];
@@ -362,6 +367,7 @@ test('PUT /product-designs/:designId/events/:eventId with an event creates it', 
     id: uuid.v4(),
     quoteId: null,
     targetId: null,
+    approvalStepId: null,
     type: 'SUBMIT_DESIGN'
   };
 
