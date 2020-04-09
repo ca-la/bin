@@ -17,6 +17,7 @@ export function* createSubmission(
   for (const design of designs) {
     yield DesignEventsDAO.create({
       actorId: userId,
+      approvalStepId: null,
       bidId: null,
       createdAt: new Date(),
       designId: design.id,

@@ -736,6 +736,7 @@ test('CollaboratorsDAO.findByDesignAndTaskType', async (t: Test) => {
   });
   await DesignEventsDAO.create({
     actorId: partner.user.id,
+    approvalStepId: null,
     bidId: bid.id,
     createdAt: new Date(),
     designId: design.id,

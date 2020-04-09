@@ -53,6 +53,7 @@ export function* createPartnerPairing(
         await DesignEventsDAO.create(
           {
             actorId: userId,
+            approvalStepId: null,
             bidId: null,
             createdAt: new Date(),
             designId: design.id,

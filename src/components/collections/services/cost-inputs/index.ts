@@ -34,6 +34,7 @@ export async function commitCostInputs(
         await DesignEventsDAO.create(
           {
             actorId,
+            approvalStepId: null,
             bidId: null,
             createdAt: new Date(),
             designId: design.id,

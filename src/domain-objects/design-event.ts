@@ -36,7 +36,7 @@ export default interface DesignEvent {
   designId: string;
   bidId: string | null;
   quoteId: string | null;
-  approvalStepId?: null;
+  approvalStepId: string | null;
   type: DesignEventTypes;
 }
 
@@ -48,6 +48,7 @@ export interface DesignEventRow {
   design_id: string;
   bid_id: string | null;
   quote_id: string | null;
+  approval_step_id: string | null;
   type: DesignEventTypes;
 }
 
@@ -63,7 +64,8 @@ export function isDesignEventRow(row: object): row is DesignEventRow {
     'design_id',
     'bid_id',
     'type',
-    'quote_id'
+    'quote_id',
+    'approval_step_id'
   );
 }
 
@@ -77,6 +79,7 @@ export function isDesignEvent(row: object): row is DesignEventRow {
     'designId',
     'bidId',
     'type',
-    'quoteId'
+    'quoteId',
+    'approvalStepId'
   );
 }

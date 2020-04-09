@@ -257,6 +257,7 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
 
   const submitEvent: DesignEvent = {
     actorId: designer.id,
+    approvalStepId: null,
     bidId: null,
     createdAt: new Date(2012, 11, 23),
     designId: design.id,
@@ -268,6 +269,7 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
 
   const bidEvent: DesignEvent = {
     actorId: admin.id,
+    approvalStepId: null,
     bidId: openBid.id,
     createdAt: new Date(2012, 11, 24),
     designId: design.id,
@@ -278,6 +280,7 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
   };
   const bidToOtherEvent: DesignEvent = {
     actorId: admin.id,
+    approvalStepId: null,
     bidId: openBid.id,
     createdAt: new Date(2012, 11, 24),
     designId: design.id,
@@ -288,6 +291,7 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
   };
   const bidDesignToRejectEvent: DesignEvent = {
     actorId: admin.id,
+    approvalStepId: null,
     bidId: rejectedBid.id,
     createdAt: new Date(2012, 11, 24),
     designId: rejectedDesign.id,
@@ -298,6 +302,7 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
   };
   const bidDesignToAcceptEvent: DesignEvent = {
     actorId: admin.id,
+    approvalStepId: null,
     bidId: acceptedBid.id,
     createdAt: new Date(2012, 11, 24),
     designId: design.id,
@@ -309,6 +314,7 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
 
   const rejectDesignEvent: DesignEvent = {
     actorId: partner.id,
+    approvalStepId: null,
     bidId: rejectedBid.id,
     createdAt: new Date(2012, 11, 25),
     designId: rejectedDesign.id,
@@ -319,6 +325,7 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
   };
   const acceptDesignEvent: DesignEvent = {
     actorId: partner.id,
+    approvalStepId: null,
     bidId: acceptedBid.id,
     createdAt: new Date(2012, 11, 27),
     designId: design.id,
@@ -329,6 +336,7 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
   };
   const otherRejectEvent: DesignEvent = {
     actorId: otherPartner.id,
+    approvalStepId: null,
     bidId: openBid.id,
     createdAt: new Date(2012, 11, 23),
     designId: design.id,

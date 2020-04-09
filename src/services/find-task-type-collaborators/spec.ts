@@ -47,7 +47,8 @@ test('findTaskTypeCollaborators', async (t: Test) => {
     targetId: ops.user.id,
     designId: design.id,
     bidId: bid.id,
-    quoteId: quote.id
+    quoteId: quote.id,
+    approvalStepId: null
   });
   await DesignEventsDAO.create({
     id: uuid.v4(),
@@ -57,7 +58,8 @@ test('findTaskTypeCollaborators', async (t: Test) => {
     targetId: ops.user.id,
     designId: design.id,
     bidId: photoBid.id,
-    quoteId: quote.id
+    quoteId: quote.id,
+    approvalStepId: null
   });
 
   const { collaborator: admin } = await createCollaborator({

@@ -431,6 +431,7 @@ test('findSubmittedButUnpaidCollections finds all submitted but unpaid collectio
 
   const submitEvent: DesignEvent = {
     actorId: user2.id,
+    approvalStepId: null,
     bidId: null,
     createdAt: new Date(),
     designId: design1.id,
@@ -441,6 +442,7 @@ test('findSubmittedButUnpaidCollections finds all submitted but unpaid collectio
   };
   const submitEventDeleted: DesignEvent = {
     actorId: user2.id,
+    approvalStepId: null,
     bidId: null,
     createdAt: new Date(),
     designId: designDeleted.id,
@@ -451,6 +453,7 @@ test('findSubmittedButUnpaidCollections finds all submitted but unpaid collectio
   };
   const submitEventDeleted2: DesignEvent = {
     actorId: user2.id,
+    approvalStepId: null,
     bidId: null,
     createdAt: new Date(),
     designId: designDeleted.id,
@@ -461,6 +464,7 @@ test('findSubmittedButUnpaidCollections finds all submitted but unpaid collectio
   };
   const submitEvent2: DesignEvent = {
     actorId: user2.id,
+    approvalStepId: null,
     bidId: null,
     createdAt: new Date(),
     designId: design2.id,
@@ -471,6 +475,7 @@ test('findSubmittedButUnpaidCollections finds all submitted but unpaid collectio
   };
   const submitEvent3: DesignEvent = {
     actorId: user2.id,
+    approvalStepId: null,
     bidId: null,
     createdAt: new Date(2012, 1, 1),
     designId: design3.id,
@@ -481,6 +486,7 @@ test('findSubmittedButUnpaidCollections finds all submitted but unpaid collectio
   };
   const submitEvent4: DesignEvent = {
     actorId: user2.id,
+    approvalStepId: null,
     bidId: null,
     createdAt: new Date(2012, 1, 1),
     designId: design4.id,
@@ -491,6 +497,7 @@ test('findSubmittedButUnpaidCollections finds all submitted but unpaid collectio
   };
   const submitEvent5: DesignEvent = {
     actorId: user2.id,
+    approvalStepId: null,
     bidId: null,
     createdAt: new Date(2012, 1, 1),
     designId: design5.id,
@@ -501,6 +508,7 @@ test('findSubmittedButUnpaidCollections finds all submitted but unpaid collectio
   };
   const paymentEvent1: DesignEvent = {
     actorId: user.id,
+    approvalStepId: null,
     bidId: null,
     createdAt: new Date(),
     designId: design2.id,
@@ -511,6 +519,7 @@ test('findSubmittedButUnpaidCollections finds all submitted but unpaid collectio
   };
   const paymentEvent2: DesignEvent = {
     actorId: user.id,
+    approvalStepId: null,
     bidId: null,
     createdAt: new Date(),
     designId: design3.id,
@@ -521,6 +530,7 @@ test('findSubmittedButUnpaidCollections finds all submitted but unpaid collectio
   };
   const paymentEvent3: DesignEvent = {
     actorId: user.id,
+    approvalStepId: null,
     bidId: null,
     createdAt: new Date(),
     designId: design4.id,
@@ -531,6 +541,7 @@ test('findSubmittedButUnpaidCollections finds all submitted but unpaid collectio
   };
   const paymentEvent4: DesignEvent = {
     actorId: user.id,
+    approvalStepId: null,
     bidId: null,
     createdAt: new Date(),
     designId: design5.id,
@@ -561,6 +572,7 @@ test('findSubmittedButUnpaidCollections finds all submitted but unpaid collectio
 
   await DesignEventsDAO.create({
     actorId: user2.id,
+    approvalStepId: null,
     bidId: null,
     createdAt: new Date(),
     designId: design5.id,

@@ -196,6 +196,7 @@ test('isQuoteCommitted returns the correct value', async (t: Test) => {
     id: uuid.v4(),
     quoteId: null,
     targetId: cala.id,
+    approvalStepId: null,
     type: 'SUBMIT_DESIGN'
   };
   const bidEvent: DesignEvent = {
@@ -206,6 +207,7 @@ test('isQuoteCommitted returns the correct value', async (t: Test) => {
     id: uuid.v4(),
     quoteId: null,
     targetId: partner.id,
+    approvalStepId: null,
     type: 'BID_DESIGN'
   };
   const acceptBidEvent: DesignEvent = {
@@ -216,6 +218,7 @@ test('isQuoteCommitted returns the correct value', async (t: Test) => {
     id: uuid.v4(),
     quoteId: null,
     targetId: cala.id,
+    approvalStepId: null,
     type: 'ACCEPT_SERVICE_BID'
   };
   await createAll([bidEvent, submitEvent, acceptBidEvent]);
@@ -230,6 +233,7 @@ test('isQuoteCommitted returns the correct value', async (t: Test) => {
     id: uuid.v4(),
     quoteId: null,
     targetId: cala.id,
+    approvalStepId: null,
     type: 'COMMIT_QUOTE'
   };
   await create(commitQuoteEvent);
@@ -256,6 +260,7 @@ test('DesignEventsDAO.create throws if the same bid is accepted twice', async (t
     id: uuid.v4(),
     quoteId: null,
     targetId: cala.id,
+    approvalStepId: null,
     type: 'SUBMIT_DESIGN'
   };
   const bidEvent: DesignEvent = {
@@ -266,6 +271,7 @@ test('DesignEventsDAO.create throws if the same bid is accepted twice', async (t
     id: uuid.v4(),
     quoteId: null,
     targetId: partner.id,
+    approvalStepId: null,
     type: 'BID_DESIGN'
   };
   const acceptBidEvent: DesignEvent = {
@@ -276,6 +282,7 @@ test('DesignEventsDAO.create throws if the same bid is accepted twice', async (t
     id: uuid.v4(),
     quoteId: null,
     targetId: cala.id,
+    approvalStepId: null,
     type: 'ACCEPT_SERVICE_BID'
   };
   await createAll([bidEvent, submitEvent, acceptBidEvent]);
@@ -289,6 +296,7 @@ test('DesignEventsDAO.create throws if the same bid is accepted twice', async (t
       id: uuid.v4(),
       quoteId: null,
       targetId: cala.id,
+      approvalStepId: null,
       type: 'ACCEPT_SERVICE_BID'
     });
 

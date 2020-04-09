@@ -301,6 +301,7 @@ test('UsersDAO.findByBidId returns all users on a pricing bid', async (t: Test) 
     id: uuid.v4(),
     quoteId: null,
     targetId: one.id,
+    approvalStepId: null,
     type: 'BID_DESIGN'
   });
   await DesignEventsDAO.create({
@@ -311,6 +312,7 @@ test('UsersDAO.findByBidId returns all users on a pricing bid', async (t: Test) 
     id: uuid.v4(),
     quoteId: null,
     targetId: two.id,
+    approvalStepId: null,
     type: 'BID_DESIGN'
   });
 
@@ -345,6 +347,7 @@ test('UsersDAO.findAllUnpaidPartners returns all unpaid partners', async (t: Tes
     id: uuid.v4(),
     quoteId: null,
     targetId: unpaidPartner.id,
+    approvalStepId: null,
     type: 'BID_DESIGN'
   });
   await generateDesignEvent({
@@ -380,6 +383,7 @@ test('UsersDAO.findAllUnpaidPartners returns all unpaid partners', async (t: Tes
     id: uuid.v4(),
     quoteId: null,
     targetId: paidPartner.id,
+    approvalStepId: null,
     type: 'BID_DESIGN'
   });
   await generateDesignEvent({
@@ -444,6 +448,7 @@ test('UsersDAO.findAllUnpaidPartners does not include partners removed from bids
     id: uuid.v4(),
     quoteId: null,
     targetId: unpaidPartner.id,
+    approvalStepId: null,
     type: 'BID_DESIGN'
   });
   await generateDesignEvent({
@@ -479,6 +484,7 @@ test('UsersDAO.findAllUnpaidPartners does not include partners removed from bids
     id: uuid.v4(),
     quoteId: null,
     targetId: paidPartner.id,
+    approvalStepId: null,
     type: 'BID_DESIGN'
   });
   await generateDesignEvent({

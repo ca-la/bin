@@ -32,6 +32,7 @@ export default async function generateDesignEvent(
 
   const designEvent = await create({
     actorId: actor.id,
+    approvalStepId: null,
     bidId: null,
     createdAt: new Date(2012, 11, 24),
     designId: design.id,

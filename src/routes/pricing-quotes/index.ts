@@ -119,6 +119,7 @@ function* createQuote(this: AuthedContext): Iterator<any, any, any> {
       id: uuid.v4(),
       quoteId: quote.id,
       targetId: null,
+      approvalStepId: null,
       type: 'COMMIT_QUOTE'
     });
   }
