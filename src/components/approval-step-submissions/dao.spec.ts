@@ -19,6 +19,16 @@ import ApprovalStepSubmission, {
 } from './domain-object';
 import * as ApprovalStepSubmissionsDAO from './dao';
 
+const pickKnownFields = (
+  submission: ApprovalStepSubmission
+): ApprovalStepSubmission => ({
+  state: submission.state,
+  artifactType: submission.artifactType,
+  id: submission.id,
+  createdAt: submission.createdAt,
+  stepId: submission.stepId
+});
+
 test('ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by step', async (t: Test) => {
   const { user } = await createUser({ withSession: false });
   const d1: ProductDesign = await ProductDesignsDAO.create(
@@ -79,7 +89,7 @@ test('ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     ]);
 
     t.deepEqual(
-      created,
+      created.map(pickKnownFields),
       [sub1, sub2, sub3, sub4],
       'returns inserted submissions'
     );
@@ -87,7 +97,7 @@ test('ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     const found = await ApprovalStepSubmissionsDAO.findByStep(trx, as1.id);
 
     t.true(
-      isEqual(new Set(found), new Set([sub1, sub2])),
+      isEqual(new Set(found.map(pickKnownFields)), new Set([sub1, sub2])),
       'returns submissions by step'
     );
   });
