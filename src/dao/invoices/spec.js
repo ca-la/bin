@@ -172,7 +172,7 @@ test(
 );
 
 test(
-  'InvoicesDAO.findByUserAndUpaid',
+  'InvoicesDAO.findByUserAndUnpaid',
   async (t, { createdInvoices, users }) => {
     const invoices = await InvoicesDAO.findByUserAndUnpaid(users[0].id);
     t.deepEqual(

@@ -9,6 +9,7 @@ const first = require('../../services/first').default;
 const Invoice = require('../../domain-objects/invoice');
 const { requireValues } = require('../../services/require-properties');
 const { computeUniqueShortId } = require('../../services/short-id');
+const { getInvoicesBuilder } = require('./view');
 
 const instantiate = row => new Invoice(row);
 const maybeInstantiate = data => (data && new Invoice(data)) || null;
@@ -16,10 +17,9 @@ const maybeInstantiate = data => (data && new Invoice(data)) || null;
 const { dataMapper } = Invoice;
 
 const TABLE_NAME = 'invoices';
-const VIEW_NAME = 'invoice_with_payments';
 
 async function findByCollection(collectionId) {
-  return db(VIEW_NAME)
+  return getInvoicesBuilder()
     .where({
       collection_id: collectionId,
       deleted_at: null
@@ -30,9 +30,7 @@ async function findByCollection(collectionId) {
 }
 
 async function findByUser(userId) {
-  return db
-    .select('invoice_with_payments.*')
-    .from(VIEW_NAME)
+  return getInvoicesBuilder()
     .where({
       user_id: userId,
       deleted_at: null
@@ -44,19 +42,19 @@ async function findByUser(userId) {
 
 async function findByUserAndUnpaid(userId) {
   return db
-    .select('invoice_with_payments.*')
-    .from(VIEW_NAME)
+    .select('view.*')
+    .from(getInvoicesBuilder().as('view'))
     .where({
-      user_id: userId,
-      is_paid: false,
-      deleted_at: null
+      'view.user_id': userId,
+      'view.is_paid': false,
+      'view.deleted_at': null
     })
     .then(invoices => invoices.map(instantiate))
     .catch(rethrow);
 }
 
 async function findById(id) {
-  return db(VIEW_NAME)
+  return getInvoicesBuilder()
     .where({ id, deleted_at: null })
     .then(first)
     .then(maybeInstantiate)
@@ -64,7 +62,7 @@ async function findById(id) {
 }
 
 async function findByIdTrx(trx, id) {
-  return db(VIEW_NAME)
+  return getInvoicesBuilder()
     .transacting(trx)
     .where({ id, deleted_at: null })
     .then(first)
@@ -111,8 +109,7 @@ async function deleteById(id) {
     )
     .then(first);
 
-  return db(VIEW_NAME)
-    .select('*')
+  return getInvoicesBuilder()
     .where({ id })
     .then(first)
     .then(maybeInstantiate)

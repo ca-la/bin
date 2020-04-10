@@ -1,11 +1,9 @@
 import Knex from 'knex';
 import rethrow = require('pg-rethrow');
 
-import db from '../../services/db';
 import Invoice = require('../../domain-objects/invoice');
 import limitOrOffset from '../../services/limit-or-offset';
-
-const TABLE_VIEW_NAME = 'invoice_with_payments';
+import { getInvoicesBuilder } from './view';
 
 const instantiate = (row: any): Invoice => {
   return new Invoice(row);
@@ -17,9 +15,7 @@ export async function getInvoicesByUser(options: {
   trx?: Knex.Transaction;
   userId: string;
 }): Promise<Invoice[]> {
-  return db
-    .select('*')
-    .from(TABLE_VIEW_NAME)
+  return getInvoicesBuilder()
     .where({ deleted_at: null, user_id: options.userId })
     .orderBy('created_at', 'desc')
     .modify(limitOrOffset(options.limit, options.offset))

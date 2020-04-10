@@ -9,6 +9,7 @@ declare class Invoice {
   public designStatusId: string | null;
   public collectionId: string | null;
   public isPaid: boolean | null;
+  public totalPaid: number | null;
   public shortId: string | null;
   public invoiceAddressId: string | null;
 
