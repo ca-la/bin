@@ -8,6 +8,7 @@ export const ALIASES = {
   designId: 'designsfortasksviewraw.id',
   stageId: 'stagesfortasksviewraw.id',
   stageTitle: 'stagesfortasksviewraw.title',
+  approvalStepId: 'approvalstepsfortasksviewraw.id',
   taskStatus: 'taskeventsfortasksviewraw.status',
   taskId: 'tasksfortasksviewraw.id'
 };
@@ -61,9 +62,13 @@ export function getMinimal(): Knex.QueryBuilder {
       )`);
 }
 
-export function getBuilder(
-  collaboratorsBuilder?: Knex.QueryBuilder
-): Knex.QueryBuilder {
+export function getBuilder({
+  collaboratorsBuilder,
+  designIdSource = 'stagesfortasksviewraw.design_id'
+}: {
+  collaboratorsBuilder?: Knex.QueryBuilder;
+  designIdSource?: string;
+} = {}): Knex.QueryBuilder {
   return db
     .select(
       'tasksfortasksviewraw.id as id',
@@ -112,11 +117,20 @@ export function getBuilder(
       'stagesfortasksviewraw.id'
     )
     .leftJoin(
+      'design_approval_step_tasks as approvalsteptasksfortasksviewraw',
+      'approvalsteptasksfortasksviewraw.task_id',
+      'tasksfortasksviewraw.id'
+    )
+    .leftJoin(
+      'design_approval_steps as approvalstepsfortasksviewraw',
+      'approvalsteptasksfortasksviewraw.approval_step_id',
+      'approvalstepsfortasksviewraw.id'
+    )
+    .leftJoin(
       db.raw(
         `
     (:designsBuilder) as designsfortasksviewraw
-    on designsfortasksviewraw.id = stagesfortasksviewraw.design_id
-  `,
+    on designsfortasksviewraw.id = ${designIdSource}`,
         {
           designsBuilder: getDesignsBuilder(db)
         }
@@ -168,8 +182,7 @@ export function getBuilder(
     taskeventsfortasksviewraw.status,
     taskeventsfortasksviewraw.due_date,
     stagesfortasksviewraw.id,
-    stagesfortasksviewraw.title,
-    stagesfortasksviewraw.ordering,
+    stagesfortasksviewraw.title,stagesfortasksviewraw.ordering,
     designsfortasksviewraw.id,
     designsfortasksviewraw.title,
     designsfortasksviewraw.created_at,

@@ -264,7 +264,10 @@ export const detailsWithAssigneesAdapter = new DataAdapter<
   DetailsTaskWithAssigneesAdaptedRow
 >(encode);
 
-export type IOTask = DetailsTask & { assignees: Collaborator[] };
+export type IOTask = DetailsTask & {
+  assignees: Collaborator[];
+  approvalStepId?: string;
+};
 
 export const taskEventFromIO = (request: IOTask, userId: string): TaskEvent => {
   const filteredRequest: TaskEvent = omit(
@@ -272,6 +275,7 @@ export const taskEventFromIO = (request: IOTask, userId: string): TaskEvent => {
     'assignees',
     'design',
     'designStage',
+    'approvalStepId',
     'collection',
     'commentCount',
     'lastModifiedAt'

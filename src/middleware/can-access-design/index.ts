@@ -61,11 +61,11 @@ export function* attachAggregateDesignPermissions(
   this.state.permissions = aggregatePermissions;
 }
 
-export function requireDesignIdBy(
-  designIdFetcher: (this: AuthedContext) => Promise<string>
+export function requireDesignIdBy<ContextBodyType>(
+  designIdFetcher: (this: AuthedContext<ContextBodyType>) => Promise<string>
 ): any {
   return function*(
-    this: AuthedContext<{}, { designId: string }>,
+    this: AuthedContext<ContextBodyType, { designId: string }>,
     next: () => Promise<any>
   ): Generator<unknown, void, string> {
     const designId: string = yield designIdFetcher.call(this).catch(() => {

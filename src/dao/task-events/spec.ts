@@ -7,6 +7,7 @@ import { sandbox, test as originalTest } from '../../test-helpers/fresh';
 import {
   create,
   createAll,
+  findByApprovalStepId,
   findByCollectionId,
   findByDesignId,
   findById,
@@ -51,6 +52,11 @@ import generateCollaborator from '../../test-helpers/factories/collaborator';
 import { CollaboratorWithUser } from '../../components/collaborators/domain-objects/collaborator';
 import generateAsset from '../../test-helpers/factories/asset';
 import { addDesign } from '../../test-helpers/collections';
+import ApprovalStep, {
+  ApprovalStepState
+} from '../../components/approval-steps/domain-object';
+import * as ApprovalStepsDAO from '../../components/approval-steps/dao';
+import * as ApprovalStepTaskDAO from '../../components/approval-step-tasks/dao';
 
 const beforeEach = (): void => {
   sandbox()
@@ -931,6 +937,35 @@ test('Task Events DAO supports retrieval by stageId', async (t: tape.Test) => {
 
   const result = await findByStageId(stage.id);
   t.deepEqual(inserted.id, result[0].id, 'Returned inserted task');
+});
+
+test('Task Events DAO supports retrieval by approval step id', async (t: tape.Test) => {
+  const { user } = await createUser({ withSession: false });
+  const design = await createDesign({
+    productType: 'test',
+    title: 'test',
+    userId: user.id
+  });
+  const approvalStep: ApprovalStep = {
+    state: ApprovalStepState.UNSTARTED,
+    id: uuid.v4(),
+    title: 'Checkout',
+    ordering: 0,
+    designId: design.id
+  };
+  await db.transaction((trx: Knex.Transaction) =>
+    ApprovalStepsDAO.createAll(trx, [approvalStep])
+  );
+
+  const { task } = await generateTask();
+  await db.transaction((trx: Knex.Transaction) =>
+    ApprovalStepTaskDAO.create(trx, {
+      taskId: task.id,
+      approvalStepId: approvalStep.id
+    })
+  );
+  const result = await findByApprovalStepId(approvalStep.id);
+  t.deepEqual(task.id, result[0].id, 'Returned inserted task');
 });
 
 test('Task Events DAO supports creating a task with a long description', async (t: tape.Test) => {

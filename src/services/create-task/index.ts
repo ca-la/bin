@@ -4,12 +4,14 @@ import db from '../db';
 import * as TasksDAO from '../../dao/tasks';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as ProductDesignStageTasksDAO from '../../dao/product-design-stage-tasks';
+import * as ApprovalStepTasksDAO from '../../components/approval-step-tasks/dao';
 import { DetailsTaskWithAssignees } from '../../domain-objects/task-event';
 
 function createWithTransaction(
   taskId: string,
   taskEvent: Unsaved<TaskEvent>,
-  stageId?: string
+  stageId?: string,
+  approvalStepId?: string
 ): (trx: Knex.Transaction) => Promise<TaskEvent> {
   return async (trx: Knex.Transaction): Promise<TaskEvent> => {
     await TasksDAO.create(taskId, trx);
@@ -27,6 +29,12 @@ function createWithTransaction(
         trx
       );
     }
+    if (approvalStepId) {
+      await ApprovalStepTasksDAO.create(trx, {
+        approvalStepId,
+        taskId
+      });
+    }
     return task;
   };
 }
@@ -35,9 +43,15 @@ export default async function createTask(
   taskId: string,
   taskEvent: Unsaved<TaskEvent>,
   stageId?: string,
+  approvalStepId?: string,
   trx?: Knex.Transaction
 ): Promise<DetailsTaskWithAssignees> {
-  const create = createWithTransaction(taskId, taskEvent, stageId);
+  const create = createWithTransaction(
+    taskId,
+    taskEvent,
+    stageId,
+    approvalStepId
+  );
   return trx ? create(trx) : db.transaction(create);
 }
 

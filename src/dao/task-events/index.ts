@@ -227,7 +227,9 @@ export async function findByUserId(
     }
   );
   const taskEvents: DetailTaskWithAssigneesEventRow[] = await getTaskViewBuilder(
-    collaboratorsBuilder
+    {
+      collaboratorsBuilder
+    }
   )
     .whereIn(ALIASES.designId, designIds)
     .modify((query: Knex.QueryBuilder) => {
@@ -293,6 +295,31 @@ export async function findByStageId(
 ): Promise<DetailsTaskWithAssignees[]> {
   const taskEvents: DetailTaskWithAssigneesEventRow[] = await getTaskViewBuilder()
     .where({ [ALIASES.stageId]: stageId })
+    .modify(limitOrOffset(limit, offset))
+    .orderByRaw(VIEW_ORDERING);
+
+  return validateEvery<
+    DetailTaskWithAssigneesEventRow,
+    DetailsTaskWithAssigneesAdaptedRow
+  >(
+    TABLE_NAME,
+    isDetailTaskWithAssigneeRow,
+    detailsWithAssigneesAdapter,
+    taskEvents
+  ).map(createDetailsTask);
+}
+
+export async function findByApprovalStepId(
+  approvalStepId: string,
+  limit?: number,
+  offset?: number
+): Promise<DetailsTaskWithAssignees[]> {
+  const taskEvents: DetailTaskWithAssigneesEventRow[] = await getTaskViewBuilder(
+    {
+      designIdSource: 'approvalstepsfortasksviewraw.design_id'
+    }
+  )
+    .where({ [ALIASES.approvalStepId]: approvalStepId })
     .modify(limitOrOffset(limit, offset))
     .orderByRaw(VIEW_ORDERING);
 
