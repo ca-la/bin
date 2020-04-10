@@ -12,7 +12,7 @@ main() {
   source bin/lib/loadenv
   loadenv_local
 
-  npx nodemon -w ./src --exec 'ts-node' ./src
+  npx nodemon -e '[t|j]s'  -w ./src --exec 'ts-node' ./src
 }
 
 main "$@"
