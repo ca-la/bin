@@ -64,10 +64,6 @@ function* payQuote(
     this.throw(403, 'Unable to access collection');
   }
 
-  if (!body.addressId) {
-    this.throw(403, 'Address is required');
-  }
-
   const invoiceAddressId = body.addressId
     ? (yield createFromAddress(body.addressId)).id
     : null;
