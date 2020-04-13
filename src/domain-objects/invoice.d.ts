@@ -1,4 +1,7 @@
+import InvoiceAddress from './invoice-address';
+
 declare class Invoice {
+  public static keyNamesByColumnName: { [key: string]: string };
   public id: string;
   public createdAt: Date | null;
   public userId: string | null;
@@ -12,6 +15,7 @@ declare class Invoice {
   public totalPaid: number | null;
   public shortId: string | null;
   public invoiceAddressId: string | null;
+  public invoiceAddress: InvoiceAddress | null;
 
   constructor(data: any);
 }

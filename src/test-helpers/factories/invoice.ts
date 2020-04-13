@@ -40,7 +40,8 @@ export default async function generateInvoice(
         collectionId: collection.id,
         title: options.title || 'My First Invoice',
         totalCents: options.totalCents || 1234,
-        userId: user.id
+        userId: user.id,
+        invoiceAddressId: options.invoiceAddressId
       });
       return await InvoicesDAO.findByIdTrx(trx, id);
     }

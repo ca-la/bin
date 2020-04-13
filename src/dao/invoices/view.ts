@@ -16,6 +16,7 @@ export function getInvoicesBuilder(): Knex.QueryBuilder {
       'i.design_status_id',
       'i.collection_id',
       'i.short_id',
+      'i.invoice_address_id',
       db.raw('SUM(coalesce(p.total_cents, 0)) AS total_paid'),
       db.raw('SUM(coalesce(p.total_cents, 0)) >= i.total_cents AS is_paid'),
       db.raw('MAX(p.created_at) AS paid_at')

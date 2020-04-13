@@ -40,5 +40,6 @@ class Invoice {
 }
 
 Invoice.dataMapper = dataMapper;
+Invoice.keyNamesByColumnName = keyNamesByColumnName;
 
 module.exports = Invoice;

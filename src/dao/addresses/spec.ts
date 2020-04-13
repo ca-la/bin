@@ -1,10 +1,10 @@
-'use strict';
+import pick from 'lodash/pick';
 
-const pick = require('lodash/pick');
-
-const AddressesDAO = require('./index');
-const UsersDAO = require('../../components/users/dao');
-const { test } = require('../../test-helpers/fresh');
+import AddressesDAO from './index';
+import InvoiceAddressesDAO, { createFromAddress } from '../invoice-addresses';
+import { create as createUser } from '../../components/users/dao';
+import { test, Test } from '../../test-helpers/fresh';
+import generateAddress from '../../test-helpers/factories/address';
 
 const USER_DATA = {
   name: 'Q User',
@@ -23,8 +23,8 @@ const ADDRESS_DATA = Object.freeze({
   country: 'USA'
 });
 
-test('AddressesDAO.create creates a new address', async t => {
-  const user = await UsersDAO.create(USER_DATA);
+test('AddressesDAO.create creates a new address', async (t: Test) => {
+  const user = await createUser(USER_DATA);
 
   const expectedAddress = Object.assign({}, ADDRESS_DATA, {
     userId: user.id
@@ -36,8 +36,8 @@ test('AddressesDAO.create creates a new address', async t => {
   t.deepEqual(actualAddress, expectedAddress);
 });
 
-test('AddressesDAO.deleteById deletes an address', async t => {
-  const user = await UsersDAO.create(USER_DATA);
+test('AddressesDAO.deleteById deletes an address', async (t: Test) => {
+  const user = await createUser(USER_DATA);
 
   const data = Object.assign({}, ADDRESS_DATA, { userId: user.id });
 
@@ -47,8 +47,8 @@ test('AddressesDAO.deleteById deletes an address', async t => {
   t.notEqual(deleted.deletedAt, null);
 });
 
-test('AddressesDAO.update updates an address', async t => {
-  const user = await UsersDAO.create(USER_DATA);
+test('AddressesDAO.update updates an address', async (t: Test) => {
+  const user = await createUser(USER_DATA);
 
   const data = Object.assign({}, ADDRESS_DATA, { userId: user.id });
 
@@ -63,4 +63,19 @@ test('AddressesDAO.update updates an address', async t => {
   );
 
   t.deepEqual(updated, expectedAddress);
+});
+
+test("AddressesDAO.findByUserId doesn't return duplicates", async (t: Test) => {
+  const address = await generateAddress();
+
+  await createFromAddress(address.id);
+  await createFromAddress(address.id);
+
+  const invoiceAddresses = await InvoiceAddressesDAO.findByUserId(
+    address.userId
+  );
+  t.deepEqual(invoiceAddresses.length, 2);
+
+  const addresses = await AddressesDAO.findByUserId(address.userId);
+  t.deepEqual(addresses.length, 1);
 });
