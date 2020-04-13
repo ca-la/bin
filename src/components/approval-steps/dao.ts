@@ -60,3 +60,16 @@ export async function findById(
       )
     );
 }
+
+export async function update(
+  trx: Knex.Transaction,
+  data: ApprovalStep
+): Promise<ApprovalStep> {
+  const { id, ...forUpdate } = dataAdapter.toDb(data);
+
+  await trx(TABLE_NAME)
+    .where({ id })
+    .update(forUpdate);
+
+  return data;
+}

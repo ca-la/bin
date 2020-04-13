@@ -26,7 +26,8 @@ test('GET /design-approval-step-tasks?approvalStepId returns tasks', async (t: t
     id: uuid.v4(),
     title: 'Checkout',
     ordering: 0,
-    designId: design.id
+    designId: design.id,
+    reason: null
   };
   await db.transaction((trx: Knex.Transaction) =>
     ApprovalStepsDAO.createAll(trx, [approvalStep])
@@ -63,7 +64,8 @@ test('POST /design-approval-step-task creates a task', async (t: tape.Test) => {
     id: uuid.v4(),
     title: 'Checkout',
     ordering: 0,
-    designId: design.id
+    designId: design.id,
+    reason: null
   };
   await db.transaction((trx: Knex.Transaction) =>
     ApprovalStepsDAO.createAll(trx, [approvalStep])

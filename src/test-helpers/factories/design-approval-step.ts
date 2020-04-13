@@ -22,11 +22,12 @@ export default async function generateApprovalStep(
   trx: Knex.Transaction,
   options: Partial<ApprovalStep & { createdBy?: string }> = {}
 ): Promise<ApprovalStepWithResources> {
-  const { user } = options.createdBy
-    ? { user: await findUserById(options.createdBy) }
+  const { createdBy, ...step } = options;
+  const { user } = createdBy
+    ? { user: await findUserById(createdBy) }
     : await createUser({ withSession: false });
-  const { design } = options.designId
-    ? { design: await findDesignById(options.designId) }
+  const { design } = step.designId
+    ? { design: await findDesignById(step.designId) }
     : { design: await generateDesign({ userId: user.id }, trx) };
 
   if (!design) {
@@ -35,12 +36,13 @@ export default async function generateApprovalStep(
 
   const [approvalStep] = await ApprovalStepDAO.createAll(trx, [
     {
-      state: ApprovalStepState.CURRENT,
-      ordering: 0,
-      title: 'Checkout',
+      state: step.state || ApprovalStepState.CURRENT,
+      ordering: step.ordering || 0,
+      title: step.title || 'Checkout',
       designId: design.id,
-      id: options.id || uuid.v4()
-    }
+      id: step.id || uuid.v4(),
+      reason: step.reason || null
+    } as ApprovalStep
   ]);
 
   return {

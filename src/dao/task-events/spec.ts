@@ -951,7 +951,8 @@ test('Task Events DAO supports retrieval by approval step id', async (t: tape.Te
     id: uuid.v4(),
     title: 'Checkout',
     ordering: 0,
-    designId: design.id
+    designId: design.id,
+    reason: null
   };
   await db.transaction((trx: Knex.Transaction) =>
     ApprovalStepsDAO.createAll(trx, [approvalStep])
