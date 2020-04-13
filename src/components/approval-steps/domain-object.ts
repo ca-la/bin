@@ -53,7 +53,30 @@ export interface ApprovalStepRow {
   state: string;
 }
 
-export const dataAdapter = new DataAdapter<ApprovalStepRow, ApprovalStep>();
+function encode(row: ApprovalStepRow): ApprovalStep {
+  return {
+    id: row.id,
+    title: row.title,
+    ordering: row.ordering,
+    designId: row.design_id,
+    state: row.state as ApprovalStepState
+  };
+}
+
+function decode(step: ApprovalStep): ApprovalStepRow {
+  return {
+    id: step.id,
+    title: step.title,
+    ordering: step.ordering,
+    design_id: step.designId,
+    state: step.state
+  };
+}
+
+export const dataAdapter = new DataAdapter<ApprovalStepRow, ApprovalStep>(
+  encode,
+  decode
+);
 
 export function isApprovalStepRow(
   candidate: any
