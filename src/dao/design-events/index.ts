@@ -6,7 +6,11 @@ import db from '../../services/db';
 import DesignEvent, {
   dataAdapter,
   DesignEventRow,
-  isDesignEventRow
+  DesignEventWithUserMeta,
+  DesignEventWithUserMetaRow,
+  isDesignEventRow,
+  isDesignEventWithUserMetaRow,
+  withUserMetaDataAdapter
 } from '../../domain-objects/design-event';
 import first from '../../services/first';
 import filterError = require('../../services/filter-error');
@@ -130,5 +134,32 @@ export async function isQuoteCommitted(designId: string): Promise<boolean> {
   const designEvents = await findByDesignId(designId);
   return designEvents.some(
     (event: DesignEvent) => event.type === 'COMMIT_QUOTE'
+  );
+}
+
+export async function findApprovalStepEvents(
+  designId: string,
+  approvalStepId: string
+): Promise<DesignEventWithUserMeta[]> {
+  const designRows = await db(TABLE_NAME)
+    .select([
+      'design_events.*',
+      'actor.name as actor_name',
+      'actor.role as actor_role',
+      'target.name as target_name',
+      'target.role as target_role'
+    ])
+    .join('users as actor', 'actor.id', 'design_events.actor_id')
+    .leftJoin('users as target', 'target.id', 'design_events.target_id')
+    .orderBy('design_events.created_at', 'asc')
+    .whereRaw(
+      `design_id = ? AND (approval_step_id = ? OR approval_step_id IS NULL)`,
+      [designId, approvalStepId]
+    );
+  return validateEvery<DesignEventWithUserMetaRow, DesignEventWithUserMeta>(
+    TABLE_NAME,
+    isDesignEventWithUserMetaRow,
+    withUserMetaDataAdapter,
+    designRows
   );
 }

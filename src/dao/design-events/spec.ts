@@ -1,18 +1,24 @@
 import uuid from 'node-uuid';
+import Knex from 'knex';
+
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import generateBid from '../../test-helpers/factories/bid';
-import createUser = require('../../test-helpers/create-user');
-
+import createUser from '../../test-helpers/create-user';
 import DesignEvent from '../../domain-objects/design-event';
 import { create as createDesign } from '../../components/product-designs/dao';
 import {
   create,
   createAll,
   DuplicateAcceptRejectError,
+  findApprovalStepEvents,
   findByDesignId,
   findByTargetId,
   isQuoteCommitted
 } from './index';
+import db from '../../services/db';
+import generateDesignEvent from '../../test-helpers/factories/design-event';
+import * as ApprovalStepsDAO from '../../components/approval-steps/dao';
+import { generateDesign } from '../../test-helpers/factories/product-design';
 
 const testDate = new Date(2012, 11, 22);
 test('Design Events DAO supports creation', async (t: Test) => {
@@ -305,4 +311,94 @@ test('DesignEventsDAO.create throws if the same bid is accepted twice', async (t
     t.true(err instanceof DuplicateAcceptRejectError);
     t.equal(err.message, 'This bid has already been accepted or rejected');
   }
+});
+
+test('Design Events DAO supports retrieval by design ID and approval step ID', async (t: Test) => {
+  sandbox().useFakeTimers(testDate);
+  const { bid } = await generateBid();
+  const { user: partner } = await createUser();
+  const { user: designer } = await createUser();
+  const { user: cala } = await createUser();
+  const design = await generateDesign({ userId: designer.id });
+
+  const approvalStepId = (await db.transaction(async (trx: Knex.Transaction) =>
+    ApprovalStepsDAO.findByDesign(trx, design.id)
+  ))[0].id;
+
+  await generateDesignEvent({
+    actorId: designer.id,
+    approvalStepId,
+    designId: design.id,
+    type: 'SUBMIT_DESIGN'
+  });
+  await generateDesignEvent({
+    actorId: designer.id,
+    designId: design.id,
+    type: 'COMMIT_QUOTE'
+  });
+  await generateDesignEvent({
+    actorId: cala.id,
+    bidId: bid.id,
+    designId: design.id,
+    quoteId: null,
+    targetId: partner.id,
+    approvalStepId: null,
+    type: 'BID_DESIGN'
+  });
+
+  const events = await findApprovalStepEvents(design.id, approvalStepId);
+  t.equal(events.length, 3);
+  t.deepEqual(
+    {
+      approvalStepId: events[0].approvalStepId,
+      designId: events[0].designId,
+      actorId: events[0].actorId,
+      actorName: events[0].actorName,
+      actorRole: events[0].actorRole
+    },
+    {
+      approvalStepId,
+      designId: design.id,
+      actorId: designer.id,
+      actorName: designer.name,
+      actorRole: designer.role
+    },
+    'actor user info is appended'
+  );
+
+  t.deepEqual(
+    {
+      approvalStepId: events[1].approvalStepId,
+      designId: events[1].designId
+    },
+    {
+      approvalStepId: null,
+      designId: design.id
+    },
+    'returns design events'
+  );
+
+  t.deepEqual(
+    {
+      approvalStepId: events[2].approvalStepId,
+      designId: events[2].designId,
+      actorId: events[2].actorId,
+      actorName: events[2].actorName,
+      actorRole: events[2].actorRole,
+      targetId: events[2].targetId,
+      targetName: events[2].targetName,
+      targetRole: events[2].targetRole
+    },
+    {
+      approvalStepId: null,
+      designId: design.id,
+      actorId: cala.id,
+      actorName: cala.name,
+      actorRole: cala.role,
+      targetId: partner.id,
+      targetName: partner.name,
+      targetRole: partner.role
+    },
+    'actor and target user info is appended'
+  );
 });

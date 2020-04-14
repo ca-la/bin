@@ -1,11 +1,16 @@
 import DataAdapter from '../services/data-adapter';
 import { hasProperties } from '../services/require-properties';
+import { Role } from '../components/users/domain-object';
 
 /**
  * A log entry for a quote and partner assignment event that occured on a design
  */
 
-export type DesignEventTypes = DesignerEvents | CALAEvents | PartnerEvents;
+export type DesignEventTypes =
+  | DesignerEvents
+  | CALAEvents
+  | PartnerEvents
+  | ApprovalEvents;
 
 type DesignerEvents =
   // Send the design to CALA initially for review
@@ -27,6 +32,8 @@ type CALAEvents =
   | 'COMMIT_PARTNER_PAIRING';
 
 type PartnerEvents = 'ACCEPT_SERVICE_BID' | 'REJECT_SERVICE_BID';
+
+type ApprovalEvents = 'REVISION_REQUEST' | 'STEP_APPROVAL' | 'STEP_ASSIGNMENT';
 
 export default interface DesignEvent {
   id: string;
@@ -52,7 +59,26 @@ export interface DesignEventRow {
   type: DesignEventTypes;
 }
 
+export interface DesignEventWithUserMeta extends DesignEvent {
+  actorName: string | null;
+  actorRole: Role;
+  targetName: string | null;
+  targetRole: Role | null;
+}
+
+export interface DesignEventWithUserMetaRow extends DesignEventRow {
+  actor_name: string | null;
+  actor_role: Role;
+  target_name: string | null;
+  target_role: Role | null;
+}
+
 export const dataAdapter = new DataAdapter<DesignEventRow, DesignEvent>();
+
+export const withUserMetaDataAdapter = new DataAdapter<
+  DesignEventWithUserMetaRow,
+  DesignEventWithUserMeta
+>();
 
 export function isDesignEventRow(row: object): row is DesignEventRow {
   return hasProperties(
@@ -69,7 +95,7 @@ export function isDesignEventRow(row: object): row is DesignEventRow {
   );
 }
 
-export function isDesignEvent(row: object): row is DesignEventRow {
+export function isDesignEvent(row: object): row is DesignEvent {
   return hasProperties(
     row,
     'id',
@@ -81,5 +107,23 @@ export function isDesignEvent(row: object): row is DesignEventRow {
     'type',
     'quoteId',
     'approvalStepId'
+  );
+}
+
+export function isDesignEventWithUserMetaRow(
+  row: object
+): row is DesignEventWithUserMetaRow {
+  return (
+    isDesignEventRow(row) &&
+    hasProperties(row, 'actor_name', 'actor_role', 'target_name', 'target_role')
+  );
+}
+
+export function isDesignEventWithUserMeta(
+  row: object
+): row is DesignEventWithUserMeta {
+  return (
+    isDesignEvent(row) &&
+    hasProperties(row, 'actorName', 'actorRole', 'targetName', 'targetRole')
   );
 }
