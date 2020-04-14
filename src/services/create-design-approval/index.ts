@@ -35,7 +35,7 @@ export default async function createDesignApproval(
     {
       id: uuid.v4(),
       state: ApprovalStepState.UNSTARTED,
-      title: 'Prototype',
+      title: 'Sample',
       ordering: 2,
       designId,
       reason: null
@@ -45,14 +45,6 @@ export default async function createDesignApproval(
       state: ApprovalStepState.UNSTARTED,
       title: 'Production',
       ordering: 3,
-      designId,
-      reason: null
-    },
-    {
-      id: uuid.v4(),
-      state: ApprovalStepState.UNSTARTED,
-      title: 'Shipping',
-      ordering: 4,
       designId,
       reason: null
     }

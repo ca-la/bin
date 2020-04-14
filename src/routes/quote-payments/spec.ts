@@ -178,7 +178,6 @@ test('/quote-payments POST generates quotes, payment method, invoice, lineItems,
   t.equals(cutAndSewApprovalSteps[1].state, ApprovalStepState.BLOCKED);
   t.equals(cutAndSewApprovalSteps[2].state, ApprovalStepState.UNSTARTED);
   t.equals(cutAndSewApprovalSteps[3].state, ApprovalStepState.UNSTARTED);
-  t.equals(cutAndSewApprovalSteps[4].state, ApprovalStepState.UNSTARTED);
 
   const blankApprovalSteps = await db.transaction((trx: Knex.Transaction) =>
     ApprovalStepsDAO.findByDesign(trx, d2.id)
@@ -187,7 +186,6 @@ test('/quote-payments POST generates quotes, payment method, invoice, lineItems,
   t.equals(blankApprovalSteps[1].state, ApprovalStepState.SKIP);
   t.equals(blankApprovalSteps[2].state, ApprovalStepState.BLOCKED);
   t.equals(blankApprovalSteps[3].state, ApprovalStepState.UNSTARTED);
-  t.equals(blankApprovalSteps[4].state, ApprovalStepState.UNSTARTED);
 });
 
 test('/quote-payments POST does not generate quotes, payment method, invoice, lineItems on failure', async (t: Test) => {

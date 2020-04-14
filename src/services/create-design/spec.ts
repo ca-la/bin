@@ -37,7 +37,7 @@ test('createDesign service creates a collaborator', async (t: Test) => {
   const approvalSteps = await db.transaction((trx: Knex.Transaction) =>
     ApprovalStepsDAO.findByDesign(trx, design.id)
   );
-  t.equal(approvalSteps.length, 5, 'There are steps on the new design');
+  t.equal(approvalSteps.length, 4, 'There are steps on the new design');
 
   const technicalDesignSubmissions = await db.transaction(
     (trx: Knex.Transaction) =>

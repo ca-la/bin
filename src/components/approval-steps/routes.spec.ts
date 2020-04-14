@@ -18,14 +18,14 @@ test('GET /design-approval-steps?designId=:designId', async (t: Test) => {
   );
 
   t.is(response.status, 200);
-  t.is(body.length, 5);
+  t.is(body.length, 4);
 
   const adminRes = await get(`/design-approval-steps?designId=${d1.id}`, {
     headers: authHeader(admin.session.id)
   });
 
   t.is(adminRes[0].status, 200);
-  t.is(adminRes[1].length, 5);
+  t.is(adminRes[1].length, 4);
 
   const otherRes = await get(`/design-approval-steps?designId=${d1.id}`, {
     headers: authHeader(other.session.id)
