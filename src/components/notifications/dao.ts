@@ -71,40 +71,32 @@ function addDesignTitle(query: Knex.QueryBuilder): Knex.QueryBuilder {
 }
 
 function addDesignImages(query: Knex.QueryBuilder): Knex.QueryBuilder {
-  return query
-    .select(db.raw(`COALESCE(pdi.image_ids, '[]') as design_image_ids`))
-    .leftJoin(
-      (subquery: Knex.QueryBuilder) =>
-        subquery
-          .select([
-            'pd.id AS design_id',
-            db.raw(
-              `COALESCE(jsonb_agg(assets.id) FILTER (WHERE assets.id IS NOT NULL), '[]') AS image_ids`
-            )
-          ])
-          .from('product_designs as pd')
-          .leftJoin('canvases', (join: Knex.JoinClause) =>
-            join
-              .on('canvases.design_id', '=', 'pd.id')
-              .andOnNull('canvases.deleted_at')
-              .andOnNull('canvases.archived_at')
-          )
-          .leftJoin('components', (join: Knex.JoinClause) =>
-            join
-              .on('components.id', '=', 'canvases.component_id')
-              .andOnNull('components.deleted_at')
-          )
-          .leftJoin('assets', (join: Knex.JoinClause) =>
-            join
-              .on('assets.id', '=', 'components.sketch_id')
-              .andOnNull('assets.deleted_at')
-          )
-          .groupBy('pd.id')
-          .as('pdi'),
-      'pdi.design_id',
-      '=',
-      'n.design_id'
-    );
+  return query.select((subquery: Knex.QueryBuilder) =>
+    subquery
+      .select(
+        db.raw(
+          `COALESCE(jsonb_agg(assets.id ORDER BY canvases.ordering), '[]') as design_image_ids`
+        )
+      )
+      .from('canvases')
+      .join('components', (join: Knex.JoinClause) =>
+        join
+          .on('components.id', '=', 'canvases.component_id')
+          .andOnNull('canvases.deleted_at')
+          .andOnNull('canvases.archived_at')
+      )
+      .join('assets', (join: Knex.JoinClause) =>
+        join
+          .on('assets.id', '=', 'components.sketch_id')
+          .andOnNull('assets.deleted_at')
+      )
+      .where({
+        'canvases.deleted_at': null,
+        'canvases.archived_at': null
+      })
+      .andWhereRaw('canvases.design_id = n.design_id')
+      .as('design_image_ids')
+  );
 }
 
 function addCommentText(query: Knex.QueryBuilder): Knex.QueryBuilder {

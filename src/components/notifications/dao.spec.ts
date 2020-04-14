@@ -226,8 +226,14 @@ test('Notifications DAO correctly filters out notifications for deleted designs'
     role: 'PARTNER'
   });
 
-  const { asset, canvas, design: d1 } = await generateCanvas({
-    createdBy: designer.id
+  const { asset: a1, canvas: c1, design: d1 } = await generateCanvas({
+    createdBy: designer.id,
+    ordering: 1
+  });
+  const { asset: a2 } = await generateCanvas({
+    designId: d1.id,
+    createdBy: designer.id,
+    ordering: 0
   });
   const { collaborator: designerCollab } = await generateCollaborator({
     collectionId: null,
@@ -270,6 +276,12 @@ test('Notifications DAO correctly filters out notifications for deleted designs'
     type: NotificationType.TASK_ASSIGNMENT
   });
 
+  t.deepEqual(
+    notificationTaskAssignment.designImageIds,
+    [a2.id, a1.id],
+    'design images in correct order'
+  );
+
   const {
     notification: notificationTaskCompletion
   } = await generateNotification({
@@ -285,7 +297,7 @@ test('Notifications DAO correctly filters out notifications for deleted designs'
 
   const { annotation } = await generateAnnotation({
     createdBy: designer.id,
-    canvasId: canvas.id
+    canvasId: c1.id
   });
   const { comment } = await generateComment({
     userId: designer.id,
@@ -297,7 +309,7 @@ test('Notifications DAO correctly filters out notifications for deleted designs'
     type: NotificationType.ANNOTATION_COMMENT_CREATE,
     commentId: comment.id,
     annotationId: annotation.id,
-    canvasId: canvas.id,
+    canvasId: c1.id,
     actorUserId: designer.id,
     recipientUserId: partner.id,
     designId: d1.id
@@ -305,7 +317,7 @@ test('Notifications DAO correctly filters out notifications for deleted designs'
 
   t.deepEqual(
     notificationAnnotationCreate.annotationImageId,
-    asset.id,
+    a1.id,
     'Annotation notification returns asset ID'
   );
 
@@ -327,14 +339,14 @@ test('Notifications DAO correctly filters out notifications for deleted designs'
       'Returns only the notifications associated with the user (collaborator + user)'
     );
 
-    await CanvasesDAO.del(trx, canvas.id);
+    await CanvasesDAO.del(trx, c1.id);
 
     t.deepEqual(
       await NotificationsDAO.findByUserId(trx, partner.id, {
         offset: 0,
         limit: 10
       }),
-      [{ ...notificationTaskAssignment, designImageIds: [] }],
+      [{ ...notificationTaskAssignment, designImageIds: [a2.id] }],
       'removes the notification associated with the deleted canvas and removes image id'
     );
 
