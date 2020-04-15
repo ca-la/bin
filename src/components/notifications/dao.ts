@@ -87,17 +87,7 @@ function addDesignImages(query: Knex.QueryBuilder): Knex.QueryBuilder {
       )
       .join('assets', (join: Knex.JoinClause) =>
         join
-          .onIn(
-            'assets.id',
-            db.raw(`
-  components.sketch_id,
-  (
-    SELECT preview_image_id FROM product_design_options
-     WHERE product_design_options.id = components.material_id LIMIT 1
-  ),
-  components.artwork_id
-`)
-          )
+          .on('assets.id', '=', 'components.sketch_id')
           .andOnNull('assets.deleted_at')
       )
       .where({

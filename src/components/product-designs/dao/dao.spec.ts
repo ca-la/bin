@@ -64,6 +64,7 @@ test('ProductDesignCanvases DAO supports creation/retrieval, enriched with image
     componentId: component.id,
     createdBy: user.id
   });
+
   const { asset: material } = await generateAsset();
   const mat1 = await ProductDesignOptionsDAO.create({
     id: uuid.v4(),
@@ -87,6 +88,7 @@ test('ProductDesignCanvases DAO supports creation/retrieval, enriched with image
     designId: design.id,
     createdBy: user.id
   });
+
   const { asset: uploading } = await generateAsset({
     description: '',
     id: uuid.v4(),
@@ -114,24 +116,24 @@ test('ProductDesignCanvases DAO supports creation/retrieval, enriched with image
   }
   t.deepEqual(
     result.imageIds,
-    [sketch.id, material.id],
+    [sketch.id],
     'Returns the associated image ids for the design'
   );
   t.equal(
     result.previewImageUrls!.length,
-    2,
+    1,
     'Does not return uploading assets'
   );
   t.ok(
     result.previewImageUrls![0].includes(sketch.id),
     'The preview image urls are the same as the image links'
   );
-  t.ok(
-    result.previewImageUrls![1].includes(material.id),
-    'The preview image urls are the same as the image links'
-  );
 
-  t.equal(result.imageLinks!.length, 2, 'Does not return uploading assets');
+  t.equal(
+    result.imageLinks!.length,
+    1,
+    'Does not return uploading or material assets'
+  );
   const { previewLink, thumbnailLink } = result.imageLinks![0];
   t.ok(
     previewLink.includes(sketch.id),

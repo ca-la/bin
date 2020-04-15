@@ -41,15 +41,48 @@ export default async function generateComponent(
     throw new Error('Asset could not be found');
   }
 
-  const component = await create({
-    artworkId: null,
-    createdBy: user.id,
-    id: options.id || uuid.v4(),
-    materialId: options.materialId || null,
-    parentId: options.parentId || null,
-    sketchId: options.sketchId || asset.id,
-    type: options.type || ComponentType.Sketch
-  });
+  const componentType = options.type || ComponentType.Sketch;
+  let component;
+
+  switch (componentType) {
+    case ComponentType.Sketch:
+      component = await create({
+        artworkId: null,
+        createdBy: user.id,
+        id: options.id || uuid.v4(),
+        materialId: null,
+        parentId: options.parentId || null,
+        sketchId: asset.id,
+        type: ComponentType.Sketch
+      });
+      break;
+
+    case ComponentType.Artwork:
+      component = await create({
+        artworkId: asset.id,
+        createdBy: user.id,
+        id: options.id || uuid.v4(),
+        materialId: null,
+        parentId: options.parentId || null,
+        sketchId: null,
+        type: ComponentType.Sketch
+      });
+      break;
+
+    case ComponentType.Material:
+      component = await create({
+        artworkId: null,
+        createdBy: user.id,
+        id: options.id || uuid.v4(),
+        materialId: options.materialId!,
+        parentId: options.parentId || null,
+        sketchId: null,
+        type: ComponentType.Sketch
+      });
+      break;
+    default:
+      throw new Error('Invalid component type');
+  }
 
   return { asset, component, createdBy: user };
 }
