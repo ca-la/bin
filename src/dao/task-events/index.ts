@@ -19,7 +19,6 @@ import first from '../../services/first';
 import { validate, validateEvery } from '../../services/validate-from-db';
 import { findAllDesignIdsThroughCollaborator } from '../../components/product-designs/dao/dao';
 import limitOrOffset from '../../services/limit-or-offset';
-import * as ApprovalStepTasksDAO from '../../components/approval-step-tasks/dao';
 import {
   ALIASES,
   getAssigneesBuilder,
@@ -107,18 +106,12 @@ export async function createAll(
 }
 
 export async function findById(
-  trx: Knex.Transaction,
-  id: string
+  id: string,
+  trx?: Knex.Transaction
 ): Promise<DetailsTaskWithAssignees | null> {
-  const approvalStepTask = await ApprovalStepTasksDAO.findByTaskId(trx, id);
-
   const taskEvent:
     | DetailTaskWithAssigneesEventRow
-    | undefined = await getTaskViewBuilder({
-    designIdSource: approvalStepTask
-      ? 'approvalstepsfortasksviewraw.design_id'
-      : 'stagesfortasksviewraw.design_id'
-  })
+    | undefined = await getTaskViewBuilder()
     .where({ [ALIASES.taskId]: id })
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {

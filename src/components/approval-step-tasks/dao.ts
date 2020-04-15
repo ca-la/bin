@@ -31,26 +31,3 @@ export async function create(
     approvalStepTask
   );
 }
-
-export async function findByTaskId(
-  trx: Knex.Transaction,
-  taskId: string
-): Promise<ApprovalStepTask | null> {
-  const approvalStepTasks = await trx(TABLE_NAME)
-    .select('*')
-    .where({ task_id: taskId })
-    .limit(1);
-
-  const approvalStepTask = approvalStepTasks[0];
-
-  if (!approvalStepTask) {
-    return null;
-  }
-
-  return validate<ApprovalStepTaskRow, ApprovalStepTask>(
-    TABLE_NAME,
-    isApprovalStepTaskRow,
-    dataAdapter,
-    approvalStepTask
-  );
-}

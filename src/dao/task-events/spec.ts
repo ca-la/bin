@@ -35,12 +35,12 @@ import { create as createTaskComment } from '../../components/task-comments/dao'
 import { del as deleteComponent } from '../../components/components/dao';
 import { deleteById as deleteComment } from '../../components/comments/dao';
 
+import createUser = require('../../test-helpers/create-user');
 import {
   DetailsTask,
   DetailsTaskWithAssignees
 } from '../../domain-objects/task-event';
 import generateTask from '../../test-helpers/factories/task';
-import createUser from '../../test-helpers/create-user';
 import generateProductDesignStage from '../../test-helpers/factories/product-design-stage';
 import generateComment from '../../test-helpers/factories/comment';
 import generateComponent from '../../test-helpers/factories/component';
@@ -116,9 +116,7 @@ test('Task Events DAO supports creation/retrieval', async (t: tape.Test) => {
     title: 'My First Task'
   });
 
-  const result = await db.transaction((trx: Knex.Transaction) =>
-    findById(trx, inserted.taskId)
-  );
+  const result = await findById(inserted.taskId);
   if (!result) {
     throw Error('No Result');
   }
@@ -158,9 +156,7 @@ test('Task Events DAO returns correct number of comments', async (t: tape.Test) 
   await createTaskComment({ commentId: comment2.id, taskId: inserted.id });
   await createTaskComment({ commentId: comment3.id, taskId: inserted.id });
 
-  const result = await db.transaction((trx: Knex.Transaction) =>
-    findById(trx, inserted.id)
-  );
+  const result = await findById(inserted.id);
   if (!result) {
     throw Error('No Result');
   }
@@ -177,9 +173,7 @@ test('Task Events DAO returns tasks even if they have deleted comments', async (
 
   await createTaskComment({ commentId: comment.id, taskId: inserted.id });
 
-  const result = await db.transaction((trx: Knex.Transaction) =>
-    findById(trx, inserted.id)
-  );
+  const result = await findById(inserted.id);
   if (!result) {
     throw Error('No Result');
   }
@@ -212,9 +206,7 @@ test('Task Events DAO returns tasks inside deleted collections', async (t: tape.
 
   await createDesignStageTask({ designStageId: stage.id, taskId: inserted.id });
 
-  const result = await db.transaction((trx: Knex.Transaction) =>
-    findById(trx, inserted.id)
-  );
+  const result = await findById(inserted.id);
   if (!result) {
     throw Error('No Result');
   }
@@ -249,9 +241,7 @@ test('Task Events DAO returns images from the canvases on the design', async (t:
   });
   const { task: inserted } = await generateTask({ designStageId: stage.id });
 
-  const result = await db.transaction((trx: Knex.Transaction) =>
-    findById(trx, inserted.id)
-  );
+  const result = await findById(inserted.id);
   if (!result) {
     throw Error('No Result');
   }
@@ -271,9 +261,7 @@ test('Task Events DAO returns images from the canvases on the design', async (t:
 
   await deleteComponent(component.id);
 
-  const secondResult = await db.transaction((trx: Knex.Transaction) =>
-    findById(trx, inserted.id)
-  );
+  const secondResult = await findById(inserted.id);
   if (!secondResult) {
     throw Error('No Result');
   }
@@ -980,68 +968,6 @@ test('Task Events DAO supports retrieval by approval step id', async (t: tape.Te
   t.deepEqual(task.id, result[0].id, 'Returned inserted task');
 });
 
-test('Task Events DAO findId finds proper design basing on stage', async (t: tape.Test) => {
-  const { user } = await createUser();
-  const design = await createDesign({
-    productType: 'test',
-    title: 'test',
-    userId: user.id
-  });
-  const stage = await createDesignStage({
-    description: '',
-    designId: design.id,
-    ordering: 0,
-    title: 'test'
-  });
-  const { task } = await generateTask({ designStageId: stage.id });
-  await createDesignStageTask({ designStageId: stage.id, taskId: task.id });
-
-  const taskFound = await db.transaction((trx: Knex.Transaction) =>
-    findById(trx, task.id)
-  );
-  t.deepEqual(
-    taskFound && taskFound.design.id,
-    design.id,
-    'Found stage step task with right design id'
-  );
-});
-
-test('Task Events DAO findId finds proper design basing on approval step', async (t: tape.Test) => {
-  const { user } = await createUser({ withSession: false });
-  const design = await createDesign({
-    productType: 'test',
-    title: 'test',
-    userId: user.id
-  });
-  const approvalStep: ApprovalStep = {
-    state: ApprovalStepState.UNSTARTED,
-    id: uuid.v4(),
-    title: 'Checkout',
-    ordering: 0,
-    designId: design.id,
-    reason: null
-  };
-  await db.transaction((trx: Knex.Transaction) =>
-    ApprovalStepsDAO.createAll(trx, [approvalStep])
-  );
-
-  const { task } = await generateTask();
-  await db.transaction((trx: Knex.Transaction) =>
-    ApprovalStepTaskDAO.create(trx, {
-      taskId: task.id,
-      approvalStepId: approvalStep.id
-    })
-  );
-  const taskFound = await db.transaction((trx: Knex.Transaction) =>
-    findById(trx, task.id)
-  );
-  t.deepEqual(
-    taskFound && taskFound.design.id,
-    design.id,
-    'Found approval step task with right design id'
-  );
-});
-
 test('Task Events DAO supports creating a task with a long description', async (t: tape.Test) => {
   const { user } = await createUser();
   const task = await createTask();
@@ -1093,12 +1019,8 @@ test('Task Events DAO supports create all', async (t: tape.Test) => {
     }
   ]);
 
-  const result = await db.transaction((trx: Knex.Transaction) =>
-    findById(trx, inserted[0].taskId)
-  );
-  const result2 = await db.transaction((trx: Knex.Transaction) =>
-    findById(trx, inserted[1].taskId)
-  );
+  const result = await findById(inserted[0].taskId);
+  const result2 = await findById(inserted[1].taskId);
   if (!result || !result2) {
     throw Error('No Result');
   }

@@ -133,17 +133,15 @@ function* createTaskWithEventOnStage(
   );
   yield createTask(taskId, taskEvent, stageId);
 
-  const taskEventWithAssignees: DetailsTaskWithAssignees = yield db.transaction(
-    (trx: Knex.Transaction) => TaskEventsDAO.findById(trx, taskId)
+  const taskEventWithAssignees: DetailsTaskWithAssignees = yield TaskEventsDAO.findById(
+    taskId
   );
   this.body = taskEventWithAssignees;
   this.status = 201;
 }
 
 function* getTaskEvent(this: AuthedContext): Iterator<any, any, any> {
-  const task = yield db.transaction((trx: Knex.Transaction) =>
-    TaskEventsDAO.findById(trx, this.params.taskId)
-  );
+  const task = yield TaskEventsDAO.findById(this.params.taskId);
   if (!task) {
     this.throw(400, 'Task was not found');
   }
@@ -340,13 +338,16 @@ function* createTaskComment(
       }
 
       await announceTaskCommentCreation(taskComment, commentWithMentions);
-      await NotificationsService.sendTaskCommentCreateNotification(trx, {
-        taskId,
-        commentId: commentWithMentions.id,
-        actorId: userId,
-        mentionedUserIds,
-        threadUserIds
-      });
+      await NotificationsService.sendTaskCommentCreateNotification(
+        {
+          taskId,
+          commentId: commentWithMentions.id,
+          actorId: userId,
+          mentionedUserIds,
+          threadUserIds
+        },
+        trx
+      );
 
       this.status = 201;
       this.body = commentWithMentions;

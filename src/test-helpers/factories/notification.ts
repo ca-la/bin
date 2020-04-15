@@ -148,11 +148,7 @@ export default async function generateNotification(
   }
 
   const { task } = options.taskId
-    ? {
-        task: await db.transaction((trx: Knex.Transaction) =>
-          TasksDAO.findById(trx, options.taskId!)
-        )
-      }
+    ? { task: await TasksDAO.findById(options.taskId) }
     : await generateTask({ createdBy: actor.id, designStageId: stage.id });
   if (!task) {
     throw new Error('Could not create task');

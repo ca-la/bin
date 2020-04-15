@@ -46,13 +46,4 @@ test('ApprovalStepTasksDAO can create multiple tasks and retrieve by step', asyn
   t.equal(found.length, 1, 'tasks are returned');
   t.equal(found[0].createdBy, createdBy.id, 'createdBy set to proper user');
   t.equal(found[0].design.id, d1.id, 'includes design');
-
-  await db.transaction(async (trx: Knex.Transaction) => {
-    const stepFound = await ApprovalStepTaskDAO.findByTaskId(trx, task.id);
-    t.equal(
-      stepFound && stepFound.approvalStepId,
-      approvalStep.id,
-      'findByTaskId returns the step with proper id'
-    );
-  });
 });
