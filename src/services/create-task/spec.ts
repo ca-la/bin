@@ -1,3 +1,5 @@
+import Knex from 'knex';
+
 import uuid from 'node-uuid';
 import { TaskEvent, TaskStatus } from '@cala/ts-lib';
 import { sandbox, test, Test } from '../../test-helpers/fresh';
@@ -6,6 +8,7 @@ import * as TasksDAO from '../../dao/tasks';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as ProductDesignStagesDAO from '../../dao/product-design-stages';
 import * as ProductDesignStageTasksDAO from '../../dao/product-design-stage-tasks';
+import db from '../../services/db';
 
 import createTask from './index';
 import createDesign from '../create-design';
@@ -34,7 +37,12 @@ test('createTask with no stage', async (t: Test) => {
 
   t.ok(!stageTasksCreateSpy.called);
   t.equal((await TasksDAO.findById(taskId))!.id, taskId);
-  t.equal((await TaskEventsDAO.findById(taskId))!.id, taskId);
+  t.equal(
+    (await db.transaction((trx: Knex.Transaction) =>
+      TaskEventsDAO.findById(trx, taskId)
+    ))!.id,
+    taskId
+  );
 
   const failedTaskId = uuid.v4();
   const failedTaskEvent = {
@@ -86,7 +94,12 @@ test('createTask with stage', async (t: Test) => {
 
   t.ok(stageTasksCreateSpy.called);
   t.equal((await TasksDAO.findById(taskId))!.id, taskId);
-  t.equal((await TaskEventsDAO.findById(taskId))!.id, taskId);
+  t.equal(
+    (await db.transaction((trx: Knex.Transaction) =>
+      TaskEventsDAO.findById(trx, taskId)
+    ))!.id,
+    taskId
+  );
   t.equal(
     (await ProductDesignStageTasksDAO.findByTaskId(taskId))!.taskId,
     taskId

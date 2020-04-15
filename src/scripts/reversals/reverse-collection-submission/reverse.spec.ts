@@ -36,7 +36,8 @@ test('reverseSubmissionRecords', async (t: tape.Test) => {
     id: uuid.v4(),
     quoteId: null,
     targetId: null,
-    type: 'SUBMIT_DESIGN'
+    type: 'SUBMIT_DESIGN',
+    approvalStepId: null
   });
   const de2 = await DesignEventsDAO.create({
     actorId: admin.id,
@@ -46,7 +47,8 @@ test('reverseSubmissionRecords', async (t: tape.Test) => {
     id: uuid.v4(),
     quoteId: null,
     targetId: null,
-    type: 'COMMIT_COST_INPUTS'
+    type: 'COMMIT_COST_INPUTS',
+    approvalStepId: null
   });
   const de3 = await DesignEventsDAO.create({
     actorId: admin.id,
@@ -56,7 +58,8 @@ test('reverseSubmissionRecords', async (t: tape.Test) => {
     id: uuid.v4(),
     quoteId: null,
     targetId: partner.id,
-    type: 'BID_DESIGN'
+    type: 'BID_DESIGN',
+    approvalStepId: null
   });
 
   const initialEvents = await DesignEventsDAO.findByDesignId(d1.id);
