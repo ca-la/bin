@@ -5,9 +5,11 @@ import Component, {
 } from '../../components/components/domain-object';
 import { findById as findUserById } from '../../components/users/dao';
 import { findById as findAssetById } from '../../components/assets/dao';
+import * as ProductDesignOptionsDAO from '../../dao/product-design-options';
 import createUser = require('../create-user');
 import Asset from '../../components/assets/domain-object';
 import generateAsset from './asset';
+import ProductDesignOption from '../../domain-objects/product-design-option';
 
 interface ComponentWithResources {
   component: Component;
@@ -24,10 +26,16 @@ export default async function generateComponent(
         (response: any): any => response.user
       );
 
-  const assetId =
-    options.sketchId || options.materialId || options.artworkId || null;
+  const assetId = options.sketchId || options.artworkId || null;
   const { asset } = assetId
     ? { asset: await findAssetById(assetId) }
+    : options.materialId
+    ? {
+        asset: await ProductDesignOptionsDAO.findById(options.materialId).then(
+          ({ previewImageId }: ProductDesignOption) =>
+            previewImageId ? findAssetById(previewImageId) : null
+        )
+      }
     : await generateAsset();
   if (!asset) {
     throw new Error('Asset could not be found');

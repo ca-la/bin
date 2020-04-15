@@ -15,6 +15,7 @@ import {
 import { del as deleteCanvas } from '../../canvases/dao';
 import * as CollaboratorsDAO from '../../collaborators/dao';
 import * as CollectionsDAO from '../../collections/dao';
+import * as ProductDesignOptionsDAO from '../../../dao/product-design-options';
 import { deleteById as deleteAnnotation } from '../../product-design-canvas-annotations/dao';
 
 import { test } from '../../../test-helpers/fresh';
@@ -40,6 +41,7 @@ import { CollaboratorWithUser } from '../../collaborators/domain-objects/collabo
 import { deleteById } from '../../../test-helpers/designs';
 import { generateDesign } from '../../../test-helpers/factories/product-design';
 import generateApprovalStep from '../../../test-helpers/factories/design-approval-step';
+import { ComponentType } from '../../components/domain-object';
 
 test('ProductDesignCanvases DAO supports creation/retrieval, enriched with image links', async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
@@ -58,8 +60,31 @@ test('ProductDesignCanvases DAO supports creation/retrieval, enriched with image
     createdBy: user.id,
     sketchId: sketch.id
   });
-  const { canvas, design } = await generateCanvas({
+  const { canvas: can1, design } = await generateCanvas({
     componentId: component.id,
+    createdBy: user.id
+  });
+  const { asset: material } = await generateAsset();
+  const mat1 = await ProductDesignOptionsDAO.create({
+    id: uuid.v4(),
+    isBuiltinOption: true,
+    createdAt: new Date(),
+    type: 'FABRIC',
+    title: 'A material',
+    previewImageId: material.id
+  });
+  const { component: comp1 } = await generateComponent({
+    artworkId: null,
+    sketchId: null,
+    materialId: mat1.id,
+    createdBy: user.id,
+    parentId: null,
+    type: ComponentType.Material,
+    id: uuid.v4()
+  });
+  const { canvas: can2 } = await generateCanvas({
+    componentId: comp1.id,
+    designId: design.id,
     createdBy: user.id
   });
   const { asset: uploading } = await generateAsset({
@@ -89,20 +114,24 @@ test('ProductDesignCanvases DAO supports creation/retrieval, enriched with image
   }
   t.deepEqual(
     result.imageIds,
-    [sketch.id],
+    [sketch.id, material.id],
     'Returns the associated image ids for the design'
   );
   t.equal(
     result.previewImageUrls!.length,
-    1,
+    2,
     'Does not return uploading assets'
   );
   t.ok(
     result.previewImageUrls![0].includes(sketch.id),
     'The preview image urls are the same as the image links'
   );
+  t.ok(
+    result.previewImageUrls![1].includes(material.id),
+    'The preview image urls are the same as the image links'
+  );
 
-  t.equal(result.imageLinks!.length, 1, 'Does not return uploading assets');
+  t.equal(result.imageLinks!.length, 2, 'Does not return uploading assets');
   const { previewLink, thumbnailLink } = result.imageLinks![0];
   t.ok(
     previewLink.includes(sketch.id),
@@ -119,7 +148,8 @@ test('ProductDesignCanvases DAO supports creation/retrieval, enriched with image
   );
 
   await db.transaction(async (trx: Knex.Transaction) => {
-    await deleteCanvas(trx, canvas.id);
+    await deleteCanvas(trx, can1.id);
+    await deleteCanvas(trx, can2.id);
     await CollectionsDAO.deleteById(trx, collection.id);
   });
 

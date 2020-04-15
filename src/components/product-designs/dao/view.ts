@@ -17,7 +17,7 @@ array_to_json(array_remove(
     end],
     null
 )) as collections,
-array_remove(array_agg(pdi.id ORDER BY c.ordering ASC), null) AS image_ids
+array_remove(array_agg(pdi.id ORDER BY c.ordering ASC, c.created_at), null) AS image_ids
     `)
     )
     .leftJoin(
@@ -49,7 +49,14 @@ LEFT JOIN (
    WHERE pdi.deleted_at IS NULL
      AND pdi.upload_completed_at IS NOT NULL
 ) AS pdi
-ON pdi.id = co.sketch_id
+ON pdi.id in (
+  co.sketch_id,
+  (
+    SELECT preview_image_id FROM product_design_options
+     WHERE product_design_options.id = co.material_id LIMIT 1
+  ),
+  co.artwork_id
+)
     `
     )
     .groupBy(['product_designs.id', 'collections.id', 'collections.title'])

@@ -24,8 +24,10 @@ import * as CollectionsDAO from '../collections/dao';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import * as AnnotationsDAO from '../../components/product-design-canvas-annotations/dao';
 import * as CanvasesDAO from '../canvases/dao';
+import * as ComponentsDAO from '../components/dao';
 import * as CommentsDAO from '../../components/comments/dao';
 import * as MeasurementsDAO from '../../dao/product-design-canvas-measurements';
+import * as ProductDesignOptionsDAO from '../../dao/product-design-options';
 import { deleteById } from '../../test-helpers/designs';
 import { deleteByIds } from '../../components/product-designs/dao/dao';
 import generateTask from '../../test-helpers/factories/task';
@@ -33,6 +35,8 @@ import generateProductDesignStage from '../../test-helpers/factories/product-des
 import generateComment from '../../test-helpers/factories/comment';
 import generateAnnotation from '../../test-helpers/factories/product-design-canvas-annotation';
 import generateCanvas from '../../test-helpers/factories/product-design-canvas';
+import { ComponentType } from '../components/domain-object';
+import generateAsset from '../../test-helpers/factories/asset';
 
 test('Notifications DAO supports creation', async (t: tape.Test) => {
   sandbox()
@@ -119,11 +123,41 @@ test('Notifications DAO supports finding by user id', async (t: tape.Test) => {
     type: NotificationType.INVITE_COLLABORATOR
   });
 
-  const { collection: deletedCollection } = await generateNotification({
+  const { asset: a1 } = await generateAsset();
+  const mat1 = await ProductDesignOptionsDAO.create({
+    id: uuid.v4(),
+    isBuiltinOption: true,
+    createdAt: new Date(),
+    type: 'FABRIC',
+    title: 'A material',
+    previewImageId: a1.id
+  });
+  const comp1 = await ComponentsDAO.create({
+    artworkId: null,
+    sketchId: null,
+    materialId: mat1.id,
+    createdBy: userOne.id,
+    parentId: null,
+    type: ComponentType.Material,
+    id: uuid.v4()
+  });
+  const { canvas: can1 } = await generateCanvas({ componentId: comp1.id });
+
+  const {
+    collection: deletedCollection,
+    notification: deletedCollectionNotification
+  } = await generateNotification({
     actorUserId: userOne.id,
     recipientUserId: userTwo.id,
+    canvasId: can1.id,
     type: NotificationType.ANNOTATION_COMMENT_CREATE
   });
+  t.equal(
+    a1.id,
+    deletedCollectionNotification.annotationImageId,
+    'returns image ID for material annotations'
+  );
+
   await db.transaction(async (trx: Knex.Transaction) => {
     await CollectionsDAO.deleteById(trx, deletedCollection.id);
   });

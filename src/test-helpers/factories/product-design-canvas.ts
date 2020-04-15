@@ -8,6 +8,7 @@ import createUser from '../create-user';
 import ProductDesignsDAO from '../../components/product-designs/dao';
 import createDesign from '../../services/create-design';
 import * as ComponentsDAO from '../../components/components/dao';
+import * as ProductDesignOptionsDAO from '../../dao/product-design-options';
 import Component from '../../components/components/domain-object';
 import generateComponent from './component';
 
@@ -39,6 +40,13 @@ export default async function generateCanvas(
     component = await ComponentsDAO.findById(options.componentId);
     if (component && component.sketchId) {
       asset = await findAssetById(component.sketchId);
+    } else if (component && component.artworkId) {
+      asset = await findAssetById(component.artworkId);
+    } else if (component && component.materialId) {
+      const material = await ProductDesignOptionsDAO.findById(
+        component.materialId
+      );
+      asset = await findAssetById(material.previewImageId);
     }
   }
 
@@ -53,7 +61,13 @@ export default async function generateCanvas(
   }
 
   if (!asset) {
-    throw new Error('Asset was unable to be found or created!');
+    throw new Error(
+      `Asset was unable to be found or created! Component: ${JSON.stringify(
+        component,
+        null,
+        2
+      )}`
+    );
   }
 
   if (!design) {
