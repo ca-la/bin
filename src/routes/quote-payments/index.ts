@@ -16,7 +16,6 @@ import { hasProperties } from '../../services/require-properties';
 import createUPCsForCollection from '../../services/create-upcs-for-collection';
 import { createShopifyProductsForCollection } from '../../services/create-shopify-products';
 import { logServerError } from '../../services/logger';
-import { transitionCheckoutState } from '../../services/approval-step-state';
 import { createFromAddress } from '../../dao/invoice-addresses';
 
 const router = new Router();
@@ -95,7 +94,6 @@ function* payQuote(
     this.throw('Request must match type');
   }
 
-  yield transitionCheckoutState(collection.id);
   yield createUPCsForCollection(collection.id);
 
   createShopifyProductsForCollection(userId, collection.id).catch(

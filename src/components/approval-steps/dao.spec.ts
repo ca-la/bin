@@ -25,32 +25,28 @@ test('ApprovalStepsDAO can create multiple steps and retrieve by design', async 
     id: uuid.v4(),
     title: 'Checkout',
     ordering: 0,
-    designId: d1.id,
-    reason: null
+    designId: d1.id
   };
   const as2: ApprovalStep = {
     state: ApprovalStepState.UNSTARTED,
     id: uuid.v4(),
     title: 'Technical Design',
     ordering: 1,
-    designId: d1.id,
-    reason: null
+    designId: d1.id
   };
   const as3: ApprovalStep = {
     state: ApprovalStepState.UNSTARTED,
     id: uuid.v4(),
     title: 'Checkout',
     ordering: 0,
-    designId: d2.id,
-    reason: null
+    designId: d2.id
   };
   const as4: ApprovalStep = {
     state: ApprovalStepState.UNSTARTED,
     id: uuid.v4(),
     title: 'Technical Design',
     ordering: 1,
-    designId: d2.id,
-    reason: null
+    designId: d2.id
   };
 
   const created = await db.transaction((trx: Knex.Transaction) =>
@@ -76,8 +72,7 @@ test('ApprovalStepsDAO can retrieve by step id', async (t: Test) => {
     id: uuid.v4(),
     title: 'Checkout',
     ordering: 0,
-    designId: d1.id,
-    reason: null
+    designId: d1.id
   };
 
   await db.transaction((trx: Knex.Transaction) =>
@@ -89,33 +84,4 @@ test('ApprovalStepsDAO can retrieve by step id', async (t: Test) => {
   );
 
   t.deepEqual(found, as1, 'returns steps by design');
-});
-
-test('ApprovalStepsDAO can update', async (t: Test) => {
-  const { user } = await createUser({ withSession: false });
-  const d1: ProductDesign = await ProductDesignsDAO.create(
-    staticProductDesign({ id: 'd1', userId: user.id })
-  );
-  const as1: ApprovalStep = {
-    state: ApprovalStepState.UNSTARTED,
-    id: uuid.v4(),
-    title: 'Checkout',
-    ordering: 0,
-    designId: d1.id,
-    reason: null
-  };
-
-  await db.transaction(async (trx: Knex.Transaction) => {
-    await ApprovalStepsDAO.createAll(trx, [as1]);
-    const updated = await ApprovalStepsDAO.update(trx, {
-      ...as1,
-      state: ApprovalStepState.CURRENT
-    });
-
-    t.deepEqual(
-      updated,
-      { ...as1, state: ApprovalStepState.CURRENT },
-      'returns updated step'
-    );
-  });
 });

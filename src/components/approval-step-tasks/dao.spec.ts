@@ -27,8 +27,7 @@ test('ApprovalStepTasksDAO can create multiple tasks and retrieve by step', asyn
     id: uuid.v4(),
     title: 'Checkout',
     ordering: 0,
-    designId: d1.id,
-    reason: null
+    designId: d1.id
   };
   await db.transaction((trx: Knex.Transaction) =>
     ApprovalStepsDAO.createAll(trx, [approvalStep])

@@ -40,16 +40,14 @@ test('ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     id: uuid.v4(),
     title: 'Checkout',
     ordering: 0,
-    designId: d1.id,
-    reason: null
+    designId: d1.id
   };
   const as2: ApprovalStep = {
     state: ApprovalStepState.UNSTARTED,
     id: uuid.v4(),
     title: 'Technical Design',
     ordering: 1,
-    designId: d1.id,
-    reason: null
+    designId: d1.id
   };
 
   const sub1: ApprovalStepSubmission = {
