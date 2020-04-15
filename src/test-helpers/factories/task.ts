@@ -1,6 +1,9 @@
 import uuid from 'node-uuid';
 import { TaskEvent, TaskStatus } from '@cala/ts-lib';
 
+import Knex from 'knex';
+
+import db from '../../services/db';
 import { DetailsTask } from '../../domain-objects/task-event';
 import { create, findById } from '../../dao/task-events';
 import { create as createStageTask } from '../../dao/product-design-stage-tasks';
@@ -65,7 +68,9 @@ export default async function generateTask(
     title: options.title || 'My First Task'
   });
 
-  const detailsTask = await findById(created.taskId);
+  const detailsTask = await db.transaction((trx: Knex.Transaction) =>
+    findById(trx, created.taskId)
+  );
 
   if (!detailsTask) {
     throw new Error('Could not create task');

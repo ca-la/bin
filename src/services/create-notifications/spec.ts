@@ -32,6 +32,12 @@ import * as NotificationAnnouncer from '../../components/iris/messages/notificat
 import { addDesign } from '../../test-helpers/collections';
 import db from '../db';
 import generateApprovalStep from '../../test-helpers/factories/design-approval-step';
+import createDesign from '../create-design';
+import ApprovalStep, {
+  ApprovalStepState
+} from '../../components/approval-steps/domain-object';
+import * as ApprovalStepsDAO from '../../components/approval-steps/dao';
+import * as ApprovalStepTaskDAO from '../../components/approval-step-tasks/dao';
 
 test('sendDesignOwnerAnnotationCommentCreateNotification', async (t: tape.Test) => {
   sandbox()
@@ -468,14 +474,14 @@ test('sendTaskCommentCreateNotification', async (t: tape.Test) => {
     taskId: taskOne.id
   });
 
-  const notifications = await NotificationsService.sendTaskCommentCreateNotification(
-    {
+  const notifications = await db.transaction((trx: Knex.Transaction) =>
+    NotificationsService.sendTaskCommentCreateNotification(trx, {
       taskId: taskOne.id,
       commentId: comment.id,
       actorId: userOne.user.id,
       mentionedUserIds: [],
       threadUserIds: []
-    }
+    })
   );
 
   t.equal(
@@ -1395,4 +1401,66 @@ test('sendDesignOwnerAnnotationCommentCreateNotification', async (t: tape.Test) 
   t.equal(designId, design.id);
   t.equal(recipientUserId, owner.id);
   t.equal(type, NotificationType.APPROVAL_STEP_COMMENT_CREATE);
+});
+
+test('findTaskAssets returns proper assets of stage task', async (t: tape.Test) => {
+  const { user } = await createUser({ withSession: false });
+  const design = await createDesign({
+    productType: 'test',
+    title: 'test',
+    userId: user.id
+  });
+  const stage = await DesignStagesDAO.create({
+    description: '',
+    designId: design.id,
+    ordering: 0,
+    title: 'test'
+  });
+  const task = await TasksDAO.create();
+  await DesignStageTasksDAO.create({
+    designStageId: stage.id,
+    taskId: task.id
+  });
+
+  const assets = await db.transaction((trx: Knex.Transaction) =>
+    NotificationsService.findTaskAssets(trx, task.id)
+  );
+  t.equal(assets.design.id, design.id);
+  t.equal(assets.stage.id, stage.id);
+  t.equal(assets.approvalStep, null);
+});
+
+test('findTaskAssets returns proper assets of approval step task', async (t: tape.Test) => {
+  const { user } = await createUser({ withSession: false });
+  const design = await createDesign({
+    productType: 'test',
+    title: 'test',
+    userId: user.id
+  });
+  const approvalStep: ApprovalStep = {
+    state: ApprovalStepState.UNSTARTED,
+    id: uuid.v4(),
+    title: 'Checkout',
+    ordering: 0,
+    designId: design.id,
+    reason: null
+  };
+  await db.transaction((trx: Knex.Transaction) =>
+    ApprovalStepsDAO.createAll(trx, [approvalStep])
+  );
+
+  const task = await TasksDAO.create();
+  await db.transaction((trx: Knex.Transaction) =>
+    ApprovalStepTaskDAO.create(trx, {
+      taskId: task.id,
+      approvalStepId: approvalStep.id
+    })
+  );
+
+  const assets = await db.transaction((trx: Knex.Transaction) =>
+    NotificationsService.findTaskAssets(trx, task.id)
+  );
+  t.equal(assets.design.id, design.id);
+  t.equal(assets.stage, null);
+  t.equal(assets.approvalStep.id, approvalStep.id);
 });

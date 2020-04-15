@@ -1,17 +1,21 @@
 import uuid from 'node-uuid';
 import * as Knex from 'knex';
 
+import db from '../../services/db';
 import * as NotificationsDAO from '../../components/notifications/dao';
 import * as CanvasesDAO from '../../components/canvases/dao';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import * as StageTasksDAO from '../../dao/product-design-stage-tasks';
 import * as StagesDAO from '../../dao/product-design-stages';
 import DesignsDAO from '../../components/product-designs/dao';
+import * as ApprovalStepTasksDAO from '../../components/approval-step-tasks/dao';
+import * as ApprovalStepsDAO from '../../components/approval-steps/dao';
 import * as CollectionsDAO from '../../components/collections/dao';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as UsersDAO from '../../components/users/dao';
 import * as BidRejectionsDAO from '../../components/bid-rejections/dao';
-import * as ApprovalStepDAO from '../../components/approval-steps/dao';
+import ProductDesign from '../../components/product-designs/domain-objects/product-design';
+import ApprovalStep from '../../components/approval-steps/domain-object';
 
 import {
   Notification,
@@ -104,6 +108,7 @@ import {
   ApprovalStepCommentCreateNotification,
   isApprovalStepCommentCreateNotification
 } from '../../components/notifications/models/approval-step-comment-create';
+import ProductDesignStage from '../../domain-objects/product-design-stage';
 
 /**
  * Deletes pre-existing similar notifications and adds in a new one by comparing columns.
@@ -335,18 +340,84 @@ export async function sendDesignOwnerMeasurementCreateNotification(
   );
 }
 
+interface TaskAssets {
+  stage: ProductDesignStage | null;
+  approvalStep: ApprovalStep | null;
+  design: ProductDesign;
+}
+
+export const findTaskAssets = async (
+  trx: Knex.Transaction,
+  taskId: string
+): Promise<TaskAssets> => {
+  const stageTask = await StageTasksDAO.findByTaskId(taskId, trx);
+
+  if (stageTask) {
+    const stage = await StagesDAO.findById(stageTask.designStageId, trx);
+    if (!stage) {
+      throw new Error(
+        `Could not find a stage with id: ${stageTask.designStageId}`
+      );
+    }
+
+    const design = await DesignsDAO.findById(stage.designId);
+    if (!design) {
+      throw new Error(`Could not find a design with id: ${stage.designId}`);
+    }
+    return {
+      approvalStep: null,
+      stage,
+      design
+    };
+  } else {
+    const approvalStepTask = await ApprovalStepTasksDAO.findByTaskId(
+      trx,
+      taskId
+    );
+
+    if (!approvalStepTask) {
+      throw new Error(`The task #${taskId} should have stage or approvalStep`);
+    }
+
+    const approvalStep = await ApprovalStepsDAO.findById(
+      trx,
+      approvalStepTask.approvalStepId
+    );
+    if (!approvalStep) {
+      throw new Error(
+        `Could not find an approvalStep with id: ${
+          approvalStepTask.approvalStepId
+        }`
+      );
+    }
+
+    const design = await DesignsDAO.findById(approvalStep.designId);
+    if (!design) {
+      throw new Error(
+        `Could not find a design with id: ${approvalStep.designId}`
+      );
+    }
+
+    return {
+      approvalStep,
+      stage: null,
+      design
+    };
+  }
+};
+
 /**
  * Creates notifications for each recipient for the task comment create action.
  */
 export async function sendTaskCommentCreateNotification(
+  trx: Knex.Transaction,
   options: {
     taskId: string;
     commentId: string;
     actorId: string;
     mentionedUserIds: string[];
     threadUserIds: string[];
-  },
-  trx?: Knex.Transaction
+  }
 ): Promise<TaskCommentCreateNotification[]> {
   const {
     taskId,
@@ -365,7 +436,7 @@ export async function sendTaskCommentCreateNotification(
     }
   ) as Collaborator[];
 
-  const taskEvent = await TaskEventsDAO.findById(taskId, trx);
+  const taskEvent = await TaskEventsDAO.findById(trx, taskId);
   if (!taskEvent) {
     throw new Error(`Could not find a task event with task id: ${taskId}`);
   }
@@ -391,22 +462,9 @@ export async function sendTaskCommentCreateNotification(
     }
   );
 
-  const stageTask = await StageTasksDAO.findByTaskId(taskId, trx);
-  if (!stageTask) {
-    throw new Error(`Could not find a stage task with task id: ${taskId}`);
-  }
+  const assets = await findTaskAssets(trx, taskId);
 
-  const stage = await StagesDAO.findById(stageTask.designStageId, trx);
-  if (!stage) {
-    throw new Error(
-      `Could not find a stage with id: ${stageTask.designStageId}`
-    );
-  }
-
-  const design = await DesignsDAO.findById(stage.designId);
-  if (!design) {
-    throw new Error(`Could not find a design with id: ${stage.designId}`);
-  }
+  const { design, stage, approvalStep } = assets;
 
   const notifications = [];
   for (const recipientId of filteredRecipientIds) {
@@ -415,13 +473,14 @@ export async function sendTaskCommentCreateNotification(
       notification: {
         ...templateNotification,
         actorUserId: actorId,
-        collectionId: design.collectionIds[0] || null,
+        collectionId: (design.collectionIds && design.collectionIds[0]) || null,
         commentId,
         designId: design.id,
         id,
         recipientUserId: recipientId,
         sentEmailAt: null,
-        stageId: stage.id,
+        stageId: stage ? stage.id : null,
+        approvalStepId: approvalStep ? approvalStep.id : null,
         taskId,
         type: NotificationType.TASK_COMMENT_CREATE
       },
@@ -456,7 +515,11 @@ export async function sendTaskCommentMentionNotification(
     return null;
   }
 
-  const taskEvent = await TaskEventsDAO.findById(taskId, trx);
+  const taskEvent = trx
+    ? await TaskEventsDAO.findById(trx, taskId)
+    : await db.transaction((trxCreated: Knex.Transaction) =>
+        TaskEventsDAO.findById(trxCreated, taskId)
+      );
   if (!taskEvent) {
     throw new Error(`Could not find a task event with task id: ${taskId}`);
   }
@@ -522,7 +585,7 @@ export async function sendTaskCommentReplyNotification(
     return null;
   }
 
-  const taskEvent = await TaskEventsDAO.findById(taskId, trx);
+  const taskEvent = await TaskEventsDAO.findById(trx, taskId);
   if (!taskEvent) {
     throw new Error(`Could not find a task event with task id: ${taskId}`);
   }
@@ -719,7 +782,7 @@ export async function sendApprovalStepCommentMentionNotification(
     return null;
   }
 
-  const approvalStep = await ApprovalStepDAO.findById(trx, approvalStepId);
+  const approvalStep = await ApprovalStepsDAO.findById(trx, approvalStepId);
   if (!approvalStep) {
     throw new Error(
       `Could not find a approval step with id: ${approvalStepId}`
@@ -776,7 +839,7 @@ export async function sendApprovalStepCommentReplyNotification(
     return null;
   }
 
-  const approvalStep = await ApprovalStepDAO.findById(trx, approvalStepId);
+  const approvalStep = await ApprovalStepsDAO.findById(trx, approvalStepId);
   if (!approvalStep) {
     throw new Error(
       `Could not find a approval step with id: ${approvalStepId}`
@@ -829,7 +892,7 @@ export async function sendDesignOwnerApprovalStepCommentCreateNotification(
   mentionedUserIds: string[],
   threadUserIds: string[]
 ): Promise<ApprovalStepCommentCreateNotification | null> {
-  const approvalStep = await ApprovalStepDAO.findById(trx, approvalStepId);
+  const approvalStep = await ApprovalStepsDAO.findById(trx, approvalStepId);
   if (!approvalStep) {
     throw new Error(
       `Could not find a approval step with id: ${approvalStepId}`
