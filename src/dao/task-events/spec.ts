@@ -1019,7 +1019,8 @@ test('Task Events DAO findId finds proper design basing on approval step', async
     id: uuid.v4(),
     title: 'Checkout',
     ordering: 0,
-    designId: design.id
+    designId: design.id,
+    reason: null
   };
   await db.transaction((trx: Knex.Transaction) =>
     ApprovalStepsDAO.createAll(trx, [approvalStep])
