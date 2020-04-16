@@ -25,28 +25,32 @@ test('ApprovalStepsDAO can create multiple steps and retrieve by design', async 
     id: uuid.v4(),
     title: 'Checkout',
     ordering: 0,
-    designId: d1.id
+    designId: d1.id,
+    reason: null
   };
   const as2: ApprovalStep = {
     state: ApprovalStepState.UNSTARTED,
     id: uuid.v4(),
     title: 'Technical Design',
     ordering: 1,
-    designId: d1.id
+    designId: d1.id,
+    reason: null
   };
   const as3: ApprovalStep = {
     state: ApprovalStepState.UNSTARTED,
     id: uuid.v4(),
     title: 'Checkout',
     ordering: 0,
-    designId: d2.id
+    designId: d2.id,
+    reason: null
   };
   const as4: ApprovalStep = {
     state: ApprovalStepState.UNSTARTED,
     id: uuid.v4(),
     title: 'Technical Design',
     ordering: 1,
-    designId: d2.id
+    designId: d2.id,
+    reason: null
   };
 
   const created = await db.transaction((trx: Knex.Transaction) =>
@@ -72,7 +76,8 @@ test('ApprovalStepsDAO can retrieve by step id', async (t: Test) => {
     id: uuid.v4(),
     title: 'Checkout',
     ordering: 0,
-    designId: d1.id
+    designId: d1.id,
+    reason: null
   };
 
   await db.transaction((trx: Knex.Transaction) =>

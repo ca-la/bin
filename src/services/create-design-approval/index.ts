@@ -21,28 +21,32 @@ export default async function createDesignApproval(
       state: ApprovalStepState.CURRENT,
       title: 'Checkout',
       ordering: 0,
-      designId
+      designId,
+      reason: null
     },
     {
       id: uuid.v4(),
-      state: ApprovalStepState.UNSTARTED,
+      state: ApprovalStepState.BLOCKED,
       title: 'Technical Design',
       ordering: 1,
-      designId
+      designId,
+      reason: 'Pending technical partner pairing'
     },
     {
       id: uuid.v4(),
-      state: ApprovalStepState.UNSTARTED,
+      state: ApprovalStepState.BLOCKED,
       title: 'Sample',
       ordering: 2,
-      designId
+      designId,
+      reason: 'Pending production partner pairing'
     },
     {
       id: uuid.v4(),
       state: ApprovalStepState.UNSTARTED,
       title: 'Production',
       ordering: 3,
-      designId
+      designId,
+      reason: null
     }
   ];
 
