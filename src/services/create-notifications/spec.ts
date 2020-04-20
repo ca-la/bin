@@ -5,7 +5,7 @@ import Knex from 'knex';
 import { isEqual } from 'lodash';
 
 import { sandbox, test } from '../../test-helpers/fresh';
-import createUser = require('../../test-helpers/create-user');
+import createUser from '../../test-helpers/create-user';
 import { NotificationType } from '../../components/notifications/domain-object';
 import * as NotificationsService from './index';
 import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
@@ -34,7 +34,8 @@ import db from '../db';
 import generateApprovalStep from '../../test-helpers/factories/design-approval-step';
 import createDesign from '../create-design';
 import ApprovalStep, {
-  ApprovalStepState
+  ApprovalStepState,
+  ApprovalStepType
 } from '../../components/approval-steps/domain-object';
 import * as ApprovalStepsDAO from '../../components/approval-steps/dao';
 import * as ApprovalStepTaskDAO from '../../components/approval-step-tasks/dao';
@@ -1443,7 +1444,8 @@ test('findTaskAssets returns proper assets of approval step task', async (t: tap
     title: 'Checkout',
     ordering: 0,
     designId: design.id,
-    reason: null
+    reason: null,
+    type: ApprovalStepType.CHECKOUT
   };
   await db.transaction((trx: Knex.Transaction) =>
     ApprovalStepsDAO.createAll(trx, [approvalStep])

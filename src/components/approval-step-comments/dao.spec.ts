@@ -8,7 +8,8 @@ import db from '../../services/db';
 import ProductDesign from '../product-designs/domain-objects/product-design';
 
 import ApprovalStep, {
-  ApprovalStepState
+  ApprovalStepState,
+  ApprovalStepType
 } from '../approval-steps/domain-object';
 import * as ApprovalStepsDAO from '../approval-steps/dao';
 import * as ApprovalStepCommentDAO from './dao';
@@ -27,7 +28,8 @@ test('ApprovalStepsDAO can create multiple steps and retrieve by design', async 
     title: 'Checkout',
     ordering: 0,
     designId: d1.id,
-    reason: null
+    reason: null,
+    type: ApprovalStepType.CHECKOUT
   };
   await db.transaction((trx: Knex.Transaction) =>
     ApprovalStepsDAO.createAll(trx, [approvalStep])

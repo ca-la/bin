@@ -9,7 +9,8 @@ test('dataAdpater.parse', async (t: Test) => {
       ordering: 0,
       reason: 'Awaiting something',
       state: 'BLOCKED',
-      title: 'A step'
+      title: 'A step',
+      type: 'CHECKOUT'
     }),
     {
       id: 's1',
@@ -17,7 +18,8 @@ test('dataAdpater.parse', async (t: Test) => {
       ordering: 0,
       reason: 'Awaiting something',
       state: 'BLOCKED',
-      title: 'A step'
+      title: 'A step',
+      type: 'CHECKOUT'
     },
     'parses a valid blocked row'
   );
@@ -30,7 +32,8 @@ test('dataAdpater.parse', async (t: Test) => {
         ordering: 0,
         reason: null,
         state: 'BLOCKED',
-        title: 'A step'
+        title: 'A step',
+        type: 'CHECKOUT'
       }),
     'throws on invalid blocked row'
   );
@@ -42,7 +45,8 @@ test('dataAdpater.parse', async (t: Test) => {
       ordering: 0,
       reason: null,
       state: 'UNSTARTED',
-      title: 'A step'
+      title: 'A step',
+      type: 'CHECKOUT'
     }),
     {
       id: 's1',
@@ -50,7 +54,8 @@ test('dataAdpater.parse', async (t: Test) => {
       ordering: 0,
       reason: null,
       state: 'UNSTARTED',
-      title: 'A step'
+      title: 'A step',
+      type: 'CHECKOUT'
     },
     'parses a valid unstarted row'
   );
@@ -63,7 +68,8 @@ test('dataAdpater.parse', async (t: Test) => {
         ordering: 0,
         reason: 'Should not be here',
         state: 'UNSTARTED',
-        title: 'A step'
+        title: 'A step',
+        type: 'CHECKOUT'
       }),
     'throws on invalid unstarted row'
   );
@@ -75,7 +81,8 @@ test('dataAdpater.parse', async (t: Test) => {
       ordering: 0,
       reason: null,
       state: 'CURRENT',
-      title: 'A step'
+      title: 'A step',
+      type: 'CHECKOUT'
     }),
     {
       id: 's1',
@@ -83,7 +90,8 @@ test('dataAdpater.parse', async (t: Test) => {
       ordering: 0,
       reason: null,
       state: 'CURRENT',
-      title: 'A step'
+      title: 'A step',
+      type: 'CHECKOUT'
     },
     'parses a valid current row'
   );
@@ -96,7 +104,8 @@ test('dataAdpater.parse', async (t: Test) => {
         ordering: 0,
         reason: 'Should not be here',
         state: 'CURRENT',
-        title: 'A step'
+        title: 'A step',
+        type: 'CHECKOUT'
       }),
     'throws on invalid current row'
   );
@@ -108,7 +117,8 @@ test('dataAdpater.parse', async (t: Test) => {
       ordering: 0,
       reason: null,
       state: 'COMPLETED',
-      title: 'A step'
+      title: 'A step',
+      type: 'CHECKOUT'
     }),
     {
       id: 's1',
@@ -116,7 +126,8 @@ test('dataAdpater.parse', async (t: Test) => {
       ordering: 0,
       reason: null,
       state: 'COMPLETED',
-      title: 'A step'
+      title: 'A step',
+      type: 'CHECKOUT'
     },
     'parses a valid completed row'
   );
@@ -129,7 +140,8 @@ test('dataAdpater.parse', async (t: Test) => {
         ordering: 0,
         reason: 'Should not be here',
         state: 'COMPLETED',
-        title: 'A step'
+        title: 'A step',
+        type: 'CHECKOUT'
       }),
     'throws on invalid completed row'
   );
@@ -141,7 +153,8 @@ test('dataAdpater.parse', async (t: Test) => {
       ordering: 0,
       reason: null,
       state: 'SKIP',
-      title: 'A step'
+      title: 'A step',
+      type: 'CHECKOUT'
     }),
     {
       id: 's1',
@@ -149,7 +162,8 @@ test('dataAdpater.parse', async (t: Test) => {
       ordering: 0,
       reason: null,
       state: 'SKIP',
-      title: 'A step'
+      title: 'A step',
+      type: 'CHECKOUT'
     },
     'parses a valid skip row'
   );
@@ -162,7 +176,8 @@ test('dataAdpater.parse', async (t: Test) => {
         ordering: 0,
         reason: 'Should not be here',
         state: 'SKIP',
-        title: 'A step'
+        title: 'A step',
+        type: 'CHECKOUT'
       }),
     'throws on invalid skip row'
   );

@@ -6,6 +6,7 @@ export interface BaseApprovalStep {
   title: string;
   ordering: number;
   designId: string;
+  type: ApprovalStepType;
 }
 
 export enum ApprovalStepState {
@@ -14,6 +15,13 @@ export enum ApprovalStepState {
   CURRENT = 'CURRENT',
   COMPLETED = 'COMPLETED',
   SKIP = 'SKIP'
+}
+
+export enum ApprovalStepType {
+  CHECKOUT = 'CHECKOUT',
+  TECHNICAL_DESIGN = 'TECHNICAL_DESIGN',
+  SAMPLE = 'SAMPLE',
+  PRODUCTION = 'PRODUCTION'
 }
 
 export interface ApprovalBlocked extends BaseApprovalStep {
@@ -57,6 +65,7 @@ export interface ApprovalStepRow {
   design_id: string;
   state: string;
   reason: string | null;
+  type: string;
 }
 
 function encode(row: ApprovalStepRow): ApprovalStep {
@@ -74,7 +83,8 @@ function encode(row: ApprovalStepRow): ApprovalStep {
         ordering: row.ordering,
         designId: row.design_id,
         state: row.state as ApprovalStepState,
-        reason: row.reason
+        reason: row.reason,
+        type: row.type as ApprovalStepType
       } as ApprovalBlocked;
     }
 
@@ -92,7 +102,8 @@ function encode(row: ApprovalStepRow): ApprovalStep {
         ordering: row.ordering,
         designId: row.design_id,
         state: row.state as ApprovalStepState,
-        reason: null
+        reason: null,
+        type: row.type as ApprovalStepType
       } as
         | ApprovalUnstarted
         | ApprovalCurrent
@@ -115,7 +126,8 @@ function decode(step: ApprovalStep): ApprovalStepRow {
     ordering: step.ordering,
     design_id: step.designId,
     state: step.state,
-    reason: step.reason
+    reason: step.reason,
+    type: step.type
   };
 }
 
@@ -133,6 +145,7 @@ export function isApprovalStepRow(
     'title',
     'ordering',
     'design_id',
-    'state'
+    'state',
+    'type'
   );
 }

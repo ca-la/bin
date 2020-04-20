@@ -53,7 +53,8 @@ import { CollaboratorWithUser } from '../../components/collaborators/domain-obje
 import generateAsset from '../../test-helpers/factories/asset';
 import { addDesign } from '../../test-helpers/collections';
 import ApprovalStep, {
-  ApprovalStepState
+  ApprovalStepState,
+  ApprovalStepType
 } from '../../components/approval-steps/domain-object';
 import * as ApprovalStepsDAO from '../../components/approval-steps/dao';
 import * as ApprovalStepTaskDAO from '../../components/approval-step-tasks/dao';
@@ -964,7 +965,8 @@ test('Task Events DAO supports retrieval by approval step id', async (t: tape.Te
     title: 'Checkout',
     ordering: 0,
     designId: design.id,
-    reason: null
+    reason: null,
+    type: ApprovalStepType.CHECKOUT
   };
   await db.transaction((trx: Knex.Transaction) =>
     ApprovalStepsDAO.createAll(trx, [approvalStep])
@@ -1020,7 +1022,8 @@ test('Task Events DAO findId finds proper design basing on approval step', async
     title: 'Checkout',
     ordering: 0,
     designId: design.id,
-    reason: null
+    reason: null,
+    type: ApprovalStepType.CHECKOUT
   };
   await db.transaction((trx: Knex.Transaction) =>
     ApprovalStepsDAO.createAll(trx, [approvalStep])

@@ -9,7 +9,8 @@ import db from '../../services/db';
 import ProductDesign from '../product-designs/domain-objects/product-design';
 import createUser from '../../test-helpers/create-user';
 import ApprovalStep, {
-  ApprovalStepState
+  ApprovalStepState,
+  ApprovalStepType
 } from '../approval-steps/domain-object';
 import * as ApprovalStepsDAO from '../approval-steps/dao';
 
@@ -41,7 +42,8 @@ test('ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     title: 'Checkout',
     ordering: 0,
     designId: d1.id,
-    reason: null
+    reason: null,
+    type: ApprovalStepType.CHECKOUT
   };
   const as2: ApprovalStep = {
     state: ApprovalStepState.UNSTARTED,
@@ -49,7 +51,8 @@ test('ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     title: 'Technical Design',
     ordering: 1,
     designId: d1.id,
-    reason: null
+    reason: null,
+    type: ApprovalStepType.TECHNICAL_DESIGN
   };
 
   const sub1: ApprovalStepSubmission = {

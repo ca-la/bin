@@ -2,7 +2,8 @@ import tape from 'tape';
 import { authHeader, get, post } from '../../test-helpers/http';
 import createUser from '../../test-helpers/create-user';
 import ApprovalStep, {
-  ApprovalStepState
+  ApprovalStepState,
+  ApprovalStepType
 } from '../approval-steps/domain-object';
 import uuid from 'node-uuid';
 import ProductDesignsDAO from '../product-designs/dao';
@@ -31,7 +32,8 @@ test('GET /design-approval-step-comments/:stepId returns comments', async (t: ta
     title: 'Checkout',
     ordering: 0,
     designId: design.id,
-    reason: null
+    reason: null,
+    type: ApprovalStepType.CHECKOUT
   };
   await db.transaction((trx: Knex.Transaction) =>
     ApprovalStepsDAO.createAll(trx, [approvalStep])
@@ -76,7 +78,8 @@ test('POST /design-approval-step-comments/:stepId creates a comment', async (t: 
     title: 'Checkout',
     ordering: 0,
     designId: design.id,
-    reason: null
+    reason: null,
+    type: ApprovalStepType.CHECKOUT
   };
   await db.transaction((trx: Knex.Transaction) =>
     ApprovalStepsDAO.createAll(trx, [approvalStep])
@@ -128,7 +131,8 @@ test('POST /design-approval-step-comments/:stepId sends @mention notifications',
     title: 'Checkout',
     ordering: 0,
     designId: design.id,
-    reason: null
+    reason: null,
+    type: ApprovalStepType.CHECKOUT
   };
   await db.transaction((trx: Knex.Transaction) =>
     ApprovalStepsDAO.createAll(trx, [approvalStep])

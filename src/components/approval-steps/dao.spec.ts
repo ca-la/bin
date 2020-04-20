@@ -7,7 +7,10 @@ import * as ProductDesignsDAO from '../product-designs/dao';
 import db from '../../services/db';
 import ProductDesign from '../product-designs/domain-objects/product-design';
 
-import ApprovalStep, { ApprovalStepState } from './domain-object';
+import ApprovalStep, {
+  ApprovalStepState,
+  ApprovalStepType
+} from './domain-object';
 import * as ApprovalStepsDAO from './dao';
 import createUser from '../../test-helpers/create-user';
 
@@ -26,7 +29,8 @@ test('ApprovalStepsDAO can create multiple steps and retrieve by design', async 
     title: 'Checkout',
     ordering: 0,
     designId: d1.id,
-    reason: null
+    reason: null,
+    type: ApprovalStepType.CHECKOUT
   };
   const as2: ApprovalStep = {
     state: ApprovalStepState.UNSTARTED,
@@ -34,7 +38,8 @@ test('ApprovalStepsDAO can create multiple steps and retrieve by design', async 
     title: 'Technical Design',
     ordering: 1,
     designId: d1.id,
-    reason: null
+    reason: null,
+    type: ApprovalStepType.TECHNICAL_DESIGN
   };
   const as3: ApprovalStep = {
     state: ApprovalStepState.UNSTARTED,
@@ -42,7 +47,8 @@ test('ApprovalStepsDAO can create multiple steps and retrieve by design', async 
     title: 'Checkout',
     ordering: 0,
     designId: d2.id,
-    reason: null
+    reason: null,
+    type: ApprovalStepType.CHECKOUT
   };
   const as4: ApprovalStep = {
     state: ApprovalStepState.UNSTARTED,
@@ -50,7 +56,8 @@ test('ApprovalStepsDAO can create multiple steps and retrieve by design', async 
     title: 'Technical Design',
     ordering: 1,
     designId: d2.id,
-    reason: null
+    reason: null,
+    type: ApprovalStepType.TECHNICAL_DESIGN
   };
 
   const created = await db.transaction((trx: Knex.Transaction) =>
@@ -77,7 +84,8 @@ test('ApprovalStepsDAO can retrieve by step id', async (t: Test) => {
     title: 'Checkout',
     ordering: 0,
     designId: d1.id,
-    reason: null
+    reason: null,
+    type: ApprovalStepType.CHECKOUT
   };
 
   await db.transaction((trx: Knex.Transaction) =>

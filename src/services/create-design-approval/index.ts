@@ -2,7 +2,8 @@ import Knex from 'knex';
 import * as uuid from 'node-uuid';
 
 import ApprovalStep, {
-  ApprovalStepState
+  ApprovalStepState,
+  ApprovalStepType
 } from '../../components/approval-steps/domain-object';
 import * as ApprovalStepsDAO from '../../components/approval-steps/dao';
 import ApprovalStepSubmission, {
@@ -22,7 +23,8 @@ export default async function createDesignApproval(
       title: 'Checkout',
       ordering: 0,
       designId,
-      reason: null
+      reason: null,
+      type: ApprovalStepType.CHECKOUT
     },
     {
       id: uuid.v4(),
@@ -30,7 +32,8 @@ export default async function createDesignApproval(
       title: 'Technical Design',
       ordering: 1,
       designId,
-      reason: 'Pending technical partner pairing'
+      reason: 'Pending technical partner pairing',
+      type: ApprovalStepType.TECHNICAL_DESIGN
     },
     {
       id: uuid.v4(),
@@ -38,7 +41,8 @@ export default async function createDesignApproval(
       title: 'Sample',
       ordering: 2,
       designId,
-      reason: 'Pending production partner pairing'
+      reason: 'Pending production partner pairing',
+      type: ApprovalStepType.SAMPLE
     },
     {
       id: uuid.v4(),
@@ -46,7 +50,8 @@ export default async function createDesignApproval(
       title: 'Production',
       ordering: 3,
       designId,
-      reason: null
+      reason: null,
+      type: ApprovalStepType.PRODUCTION
     }
   ];
 
