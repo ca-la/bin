@@ -146,8 +146,10 @@ export async function findApprovalStepEvents(
       'design_events.*',
       'actor.name as actor_name',
       'actor.role as actor_role',
+      'actor.email as actor_email',
       'target.name as target_name',
-      'target.role as target_role'
+      'target.role as target_role',
+      'target.email as target_email'
     ])
     .join('users as actor', 'actor.id', 'design_events.actor_id')
     .leftJoin('users as target', 'target.id', 'design_events.target_id')

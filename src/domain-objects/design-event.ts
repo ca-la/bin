@@ -62,15 +62,19 @@ export interface DesignEventRow {
 export interface DesignEventWithUserMeta extends DesignEvent {
   actorName: string | null;
   actorRole: Role;
+  actorEmail: string | null;
   targetName: string | null;
   targetRole: Role | null;
+  targetEmail: string | null;
 }
 
 export interface DesignEventWithUserMetaRow extends DesignEventRow {
   actor_name: string | null;
   actor_role: Role;
+  actor_email: string | null;
   target_name: string | null;
   target_role: Role | null;
+  target_email: string | null;
 }
 
 export const dataAdapter = new DataAdapter<DesignEventRow, DesignEvent>();
@@ -115,7 +119,15 @@ export function isDesignEventWithUserMetaRow(
 ): row is DesignEventWithUserMetaRow {
   return (
     isDesignEventRow(row) &&
-    hasProperties(row, 'actor_name', 'actor_role', 'target_name', 'target_role')
+    hasProperties(
+      row,
+      'actor_name',
+      'actor_role',
+      'actor_email',
+      'target_name',
+      'target_role',
+      'target_email'
+    )
   );
 }
 
@@ -124,6 +136,14 @@ export function isDesignEventWithUserMeta(
 ): row is DesignEventWithUserMeta {
   return (
     isDesignEvent(row) &&
-    hasProperties(row, 'actorName', 'actorRole', 'targetName', 'targetRole')
+    hasProperties(
+      row,
+      'actorName',
+      'actorRole',
+      'actorEmail',
+      'targetName',
+      'targetRole',
+      'targetEmail'
+    )
   );
 }

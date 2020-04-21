@@ -93,13 +93,15 @@ test('GET /design-approval-steps/:stepId/stream-items', async (t: Test) => {
       type: body[1].type,
       actorId: body[1].actorId,
       actorName: body[1].actorName,
-      actorRole: body[1].actorRole
+      actorRole: body[1].actorRole,
+      actorEmail: body[1].actorEmail
     },
     {
       type: 'SUBMIT_DESIGN',
       actorId: designer.user.id,
       actorName: 'Q User',
-      actorRole: 'USER'
+      actorRole: 'USER',
+      actorEmail: designer.user.email
     },
     'Submit event returns required information'
   );
@@ -109,13 +111,15 @@ test('GET /design-approval-steps/:stepId/stream-items', async (t: Test) => {
       type: body[3].type,
       actorId: body[3].actorId,
       actorName: body[3].actorName,
-      actorRole: body[3].actorRole
+      actorRole: body[3].actorRole,
+      actorEmail: body[3].actorEmail
     },
     {
       type: 'COMMIT_QUOTE',
       actorId: designer.user.id,
       actorName: 'Q User',
-      actorRole: 'USER'
+      actorRole: 'USER',
+      actorEmail: designer.user.email
     },
     'Checkout event returns required information'
   );

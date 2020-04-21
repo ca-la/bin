@@ -385,9 +385,11 @@ test('Design Events DAO supports retrieval by design ID and approval step ID', a
       actorId: events[2].actorId,
       actorName: events[2].actorName,
       actorRole: events[2].actorRole,
+      actorEmail: events[2].actorEmail,
       targetId: events[2].targetId,
       targetName: events[2].targetName,
-      targetRole: events[2].targetRole
+      targetRole: events[2].targetRole,
+      targetEmail: events[2].targetEmail
     },
     {
       approvalStepId: null,
@@ -395,9 +397,11 @@ test('Design Events DAO supports retrieval by design ID and approval step ID', a
       actorId: cala.id,
       actorName: cala.name,
       actorRole: cala.role,
+      actorEmail: cala.email,
       targetId: partner.id,
       targetName: partner.name,
-      targetRole: partner.role
+      targetRole: partner.role,
+      targetEmail: partner.email
     },
     'actor and target user info is appended'
   );
