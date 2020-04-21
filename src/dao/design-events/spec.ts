@@ -42,7 +42,9 @@ test('Design Events DAO supports creation', async (t: Test) => {
     id: uuid.v4(),
     quoteId: null,
     targetId: partner.id,
-    type: 'BID_DESIGN'
+    type: 'BID_DESIGN',
+    approvalSubmissionId: null,
+    commentId: null
   };
   const designEvent = await create(inputEvent);
 
@@ -69,7 +71,9 @@ test('Design Events DAO supports creating multiple events at once', async (t: Te
     id: uuid.v4(),
     quoteId: null,
     targetId: cala.id,
-    type: 'SUBMIT_DESIGN'
+    type: 'SUBMIT_DESIGN',
+    approvalSubmissionId: null,
+    commentId: null
   };
   const bidEvent: DesignEvent = {
     actorId: cala.id,
@@ -80,7 +84,9 @@ test('Design Events DAO supports creating multiple events at once', async (t: Te
     id: uuid.v4(),
     quoteId: null,
     targetId: partner.id,
-    type: 'BID_DESIGN'
+    type: 'BID_DESIGN',
+    approvalSubmissionId: null,
+    commentId: null
   };
   const acceptBidEvent: DesignEvent = {
     actorId: partner.id,
@@ -91,7 +97,9 @@ test('Design Events DAO supports creating multiple events at once', async (t: Te
     id: uuid.v4(),
     quoteId: null,
     targetId: cala.id,
-    type: 'ACCEPT_SERVICE_BID'
+    type: 'ACCEPT_SERVICE_BID',
+    approvalSubmissionId: null,
+    commentId: null
   };
   const created = await createAll([bidEvent, submitEvent, acceptBidEvent]);
 
@@ -119,7 +127,9 @@ test('Design Events DAO supports retrieval by design ID', async (t: Test) => {
     id: uuid.v4(),
     quoteId: null,
     targetId: partner.id,
-    type: 'BID_DESIGN'
+    type: 'BID_DESIGN',
+    approvalSubmissionId: null,
+    commentId: null
   };
   await create(inputEvent);
   const partnerEvents = await findByTargetId(partner.id);
@@ -149,7 +159,9 @@ test('Design Events DAO supports retrieval by target ID', async (t: Test) => {
     id: uuid.v4(),
     quoteId: null,
     targetId: cala.id,
-    type: 'SUBMIT_DESIGN'
+    type: 'SUBMIT_DESIGN',
+    approvalSubmissionId: null,
+    commentId: null
   };
   const bidEvent: DesignEvent = {
     actorId: cala.id,
@@ -160,7 +172,9 @@ test('Design Events DAO supports retrieval by target ID', async (t: Test) => {
     id: uuid.v4(),
     quoteId: null,
     targetId: partner.id,
-    type: 'BID_DESIGN'
+    type: 'BID_DESIGN',
+    approvalSubmissionId: null,
+    commentId: null
   };
   const acceptBidEvent: DesignEvent = {
     actorId: partner.id,
@@ -171,7 +185,9 @@ test('Design Events DAO supports retrieval by target ID', async (t: Test) => {
     id: uuid.v4(),
     quoteId: null,
     targetId: cala.id,
-    type: 'ACCEPT_SERVICE_BID'
+    type: 'ACCEPT_SERVICE_BID',
+    approvalSubmissionId: null,
+    commentId: null
   };
   await createAll([bidEvent, submitEvent, acceptBidEvent]);
   const designEvents = await findByDesignId(design.id);
@@ -203,7 +219,9 @@ test('isQuoteCommitted returns the correct value', async (t: Test) => {
     quoteId: null,
     targetId: cala.id,
     approvalStepId: null,
-    type: 'SUBMIT_DESIGN'
+    type: 'SUBMIT_DESIGN',
+    approvalSubmissionId: null,
+    commentId: null
   };
   const bidEvent: DesignEvent = {
     actorId: cala.id,
@@ -214,7 +232,9 @@ test('isQuoteCommitted returns the correct value', async (t: Test) => {
     quoteId: null,
     targetId: partner.id,
     approvalStepId: null,
-    type: 'BID_DESIGN'
+    type: 'BID_DESIGN',
+    approvalSubmissionId: null,
+    commentId: null
   };
   const acceptBidEvent: DesignEvent = {
     actorId: partner.id,
@@ -225,7 +245,9 @@ test('isQuoteCommitted returns the correct value', async (t: Test) => {
     quoteId: null,
     targetId: cala.id,
     approvalStepId: null,
-    type: 'ACCEPT_SERVICE_BID'
+    type: 'ACCEPT_SERVICE_BID',
+    approvalSubmissionId: null,
+    commentId: null
   };
   await createAll([bidEvent, submitEvent, acceptBidEvent]);
 
@@ -240,7 +262,9 @@ test('isQuoteCommitted returns the correct value', async (t: Test) => {
     quoteId: null,
     targetId: cala.id,
     approvalStepId: null,
-    type: 'COMMIT_QUOTE'
+    type: 'COMMIT_QUOTE',
+    approvalSubmissionId: null,
+    commentId: null
   };
   await create(commitQuoteEvent);
 
@@ -267,7 +291,9 @@ test('DesignEventsDAO.create throws if the same bid is accepted twice', async (t
     quoteId: null,
     targetId: cala.id,
     approvalStepId: null,
-    type: 'SUBMIT_DESIGN'
+    type: 'SUBMIT_DESIGN',
+    approvalSubmissionId: null,
+    commentId: null
   };
   const bidEvent: DesignEvent = {
     actorId: cala.id,
@@ -278,7 +304,9 @@ test('DesignEventsDAO.create throws if the same bid is accepted twice', async (t
     quoteId: null,
     targetId: partner.id,
     approvalStepId: null,
-    type: 'BID_DESIGN'
+    type: 'BID_DESIGN',
+    approvalSubmissionId: null,
+    commentId: null
   };
   const acceptBidEvent: DesignEvent = {
     actorId: partner.id,
@@ -289,7 +317,9 @@ test('DesignEventsDAO.create throws if the same bid is accepted twice', async (t
     quoteId: null,
     targetId: cala.id,
     approvalStepId: null,
-    type: 'ACCEPT_SERVICE_BID'
+    type: 'ACCEPT_SERVICE_BID',
+    approvalSubmissionId: null,
+    commentId: null
   };
   await createAll([bidEvent, submitEvent, acceptBidEvent]);
 

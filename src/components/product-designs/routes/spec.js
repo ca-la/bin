@@ -267,6 +267,8 @@ test('POST /product-designs/:designId/events with multiple events creates them',
       quoteId: null,
       targetId: null,
       approvalStepId: null,
+      approvalSubmissionId: null,
+      commentId: null,
       type: 'SUBMIT_DESIGN'
     },
     {
@@ -277,6 +279,8 @@ test('POST /product-designs/:designId/events with multiple events creates them',
       quoteId: null,
       targetId: null,
       approvalStepId: null,
+      approvalSubmissionId: null,
+      commentId: null,
       type: 'SUBMIT_DESIGN'
     }
   ];
@@ -368,6 +372,8 @@ test('PUT /product-designs/:designId/events/:eventId with an event creates it', 
     quoteId: null,
     targetId: null,
     approvalStepId: null,
+    approvalSubmissionId: null,
+    commentId: null,
     type: 'SUBMIT_DESIGN'
   };
 

@@ -45,6 +45,8 @@ export default interface DesignEvent {
   quoteId: string | null;
   approvalStepId: string | null;
   type: DesignEventTypes;
+  approvalSubmissionId?: null;
+  commentId?: null;
 }
 
 export interface DesignEventRow {
