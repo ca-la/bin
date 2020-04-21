@@ -63,14 +63,16 @@ export default async function createDesignApproval(
       state: ApprovalStepSubmissionState.UNSUBMITTED,
       artifactType: ApprovalStepSubmissionArtifactType.TECHNICAL_DESIGN,
       createdAt: new Date(),
-      stepId: steps[1].id
+      stepId: steps[1].id,
+      title: 'Technical Design'
     },
     {
       id: uuid.v4(),
       state: ApprovalStepSubmissionState.UNSUBMITTED,
       artifactType: ApprovalStepSubmissionArtifactType.SAMPLE,
       createdAt: new Date(),
-      stepId: steps[2].id
+      stepId: steps[2].id,
+      title: 'Sample'
     }
   ];
 

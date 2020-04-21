@@ -27,7 +27,8 @@ const pickKnownFields = (
   artifactType: submission.artifactType,
   id: submission.id,
   createdAt: submission.createdAt,
-  stepId: submission.stepId
+  stepId: submission.stepId,
+  title: 'Technical Design'
 });
 
 test('ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by step', async (t: Test) => {
@@ -60,28 +61,32 @@ test('ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     artifactType: ApprovalStepSubmissionArtifactType.TECHNICAL_DESIGN,
     id: uuid.v4(),
     createdAt: new Date(),
-    stepId: as1.id
+    stepId: as1.id,
+    title: 'Technical Design'
   };
   const sub2: ApprovalStepSubmission = {
     state: ApprovalStepSubmissionState.UNSUBMITTED,
     artifactType: ApprovalStepSubmissionArtifactType.SAMPLE,
     id: uuid.v4(),
     createdAt: new Date(),
-    stepId: as1.id
+    stepId: as1.id,
+    title: 'Technical Design'
   };
   const sub3: ApprovalStepSubmission = {
     state: ApprovalStepSubmissionState.UNSUBMITTED,
     artifactType: ApprovalStepSubmissionArtifactType.TECHNICAL_DESIGN,
     id: uuid.v4(),
     createdAt: new Date(),
-    stepId: as2.id
+    stepId: as2.id,
+    title: 'Technical Design'
   };
   const sub4: ApprovalStepSubmission = {
     state: ApprovalStepSubmissionState.UNSUBMITTED,
     artifactType: ApprovalStepSubmissionArtifactType.SAMPLE,
     id: uuid.v4(),
     createdAt: new Date(),
-    stepId: as2.id
+    stepId: as2.id,
+    title: 'Technical Design'
   };
 
   await db.transaction(async (trx: Knex.Transaction) => {

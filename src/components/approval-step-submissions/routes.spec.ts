@@ -1,10 +1,15 @@
 import Knex from 'knex';
-import { authHeader, get } from '../../test-helpers/http';
+import uuid from 'node-uuid';
+import { authHeader, get, post } from '../../test-helpers/http';
 import { test, Test } from '../../test-helpers/fresh';
 import createUser from '../../test-helpers/create-user';
 import { generateDesign } from '../../test-helpers/factories/product-design';
 import db from '../../services/db';
 import * as ApprovalStepsDAO from '../approval-steps/dao';
+import {
+  ApprovalStepSubmissionArtifactType,
+  ApprovalStepSubmissionState
+} from './domain-object';
 
 test('GET /design-approval-step-submissions?stepId=:stepId', async (t: Test) => {
   const designer = await createUser();
@@ -46,4 +51,30 @@ test('GET /design-approval-step-submissions?stepId=:stepId', async (t: Test) => 
   );
 
   t.is(otherRes[0].status, 403);
+});
+
+test('POST /design-approval-step-submissions?stepId=:stepId', async (t: Test) => {
+  const designer = await createUser();
+
+  const d1 = await generateDesign({ userId: designer.user.id });
+  const steps = await db.transaction((trx: Knex.Transaction) =>
+    ApprovalStepsDAO.findByDesign(trx, d1.id)
+  );
+  const [response, body] = await post(
+    `/design-approval-step-submissions?stepId=${steps[1].id}`,
+    {
+      headers: authHeader(designer.session.id),
+      body: {
+        id: uuid.v4(),
+        state: ApprovalStepSubmissionState.UNSUBMITTED,
+        artifactType: ApprovalStepSubmissionArtifactType.CUSTOM,
+        title: 'Submarine'
+      }
+    }
+  );
+
+  t.is(response.status, 200);
+  t.is(body.title, 'Submarine');
+  t.is(body.state, 'UNSUBMITTED');
+  t.is(body.stepId, steps[1].id);
 });

@@ -3,7 +3,8 @@ import { hasProperties } from '../../services/require-properties';
 
 export enum ApprovalStepSubmissionArtifactType {
   TECHNICAL_DESIGN = 'TECHNICAL_DESIGN',
-  SAMPLE = 'SAMPLE'
+  SAMPLE = 'SAMPLE',
+  CUSTOM = 'CUSTOM'
 }
 
 export enum ApprovalStepSubmissionState {
@@ -20,6 +21,7 @@ export default interface ApprovalStepSubmission {
   createdAt: Date;
   artifactType: ApprovalStepSubmissionArtifactType;
   state: ApprovalStepSubmissionState;
+  title: string;
 }
 
 export interface ApprovalStepSubmissionRow {
@@ -28,6 +30,7 @@ export interface ApprovalStepSubmissionRow {
   created_at: Date;
   artifact_type: ApprovalStepSubmissionArtifactType;
   state: ApprovalStepSubmissionState;
+  title: string;
 }
 
 export const dataAdapter = new DataAdapter<
@@ -44,6 +47,7 @@ export function isApprovalStepSubmissionRow(
     'step_id',
     'created_at',
     'artifact_type',
-    'state'
+    'state',
+    'title'
   );
 }

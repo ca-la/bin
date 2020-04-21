@@ -10,6 +10,7 @@ import {
   canAccessDesignInState,
   requireDesignIdBy
 } from '../../middleware/can-access-design';
+import ApprovalStepSubmission from './domain-object';
 
 const router = new Router();
 
@@ -34,6 +35,25 @@ export function* getApprovalSubmissionsForStep(
   this.status = 200;
 }
 
+export function* createApprovalSubmission(
+  this: AuthedContext
+): Iterator<any, any, any> {
+  const { stepId }: GetApprovalSubmissionsQuery = this.query;
+
+  const [approvalSubmission] = yield db.transaction(
+    async (trx: Knex.Transaction) => {
+      return ApprovalSubmissionsDAO.createAll(trx, [
+        {
+          ...((this.request.body as unknown) as ApprovalStepSubmission),
+          stepId
+        }
+      ]);
+    }
+  );
+  this.body = approvalSubmission;
+  this.status = 200;
+}
+
 async function getDesignIdFromStep(this: AuthedContext): Promise<string> {
   const { stepId }: GetApprovalSubmissionsQuery = this.query;
 
@@ -55,6 +75,15 @@ router.get(
   requireDesignIdBy(getDesignIdFromStep),
   canAccessDesignInState,
   getApprovalSubmissionsForStep
+);
+
+router.post(
+  '/',
+  requireAuth,
+  requireQueryParam<GetApprovalSubmissionsQuery>('stepId'),
+  requireDesignIdBy(getDesignIdFromStep),
+  canAccessDesignInState,
+  createApprovalSubmission
 );
 
 export default router.routes();
