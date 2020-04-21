@@ -356,17 +356,20 @@ test('Design Events DAO supports retrieval by design ID and approval step ID', a
   ))[0].id;
 
   await generateDesignEvent({
+    createdAt: new Date(2020, 1, 24),
     actorId: designer.id,
     approvalStepId,
     designId: design.id,
     type: 'SUBMIT_DESIGN'
   });
   await generateDesignEvent({
+    createdAt: new Date(2020, 1, 25),
     actorId: designer.id,
     designId: design.id,
     type: 'COMMIT_QUOTE'
   });
   await generateDesignEvent({
+    createdAt: new Date(2020, 1, 26),
     actorId: cala.id,
     bidId: bid.id,
     designId: design.id,
@@ -384,14 +387,16 @@ test('Design Events DAO supports retrieval by design ID and approval step ID', a
       designId: events[0].designId,
       actorId: events[0].actorId,
       actorName: events[0].actorName,
-      actorRole: events[0].actorRole
+      actorRole: events[0].actorRole,
+      type: events[0].type
     },
     {
       approvalStepId,
       designId: design.id,
       actorId: designer.id,
       actorName: designer.name,
-      actorRole: designer.role
+      actorRole: designer.role,
+      type: 'SUBMIT_DESIGN'
     },
     'actor user info is appended'
   );
@@ -399,11 +404,13 @@ test('Design Events DAO supports retrieval by design ID and approval step ID', a
   t.deepEqual(
     {
       approvalStepId: events[1].approvalStepId,
-      designId: events[1].designId
+      designId: events[1].designId,
+      type: events[1].type
     },
     {
       approvalStepId: null,
-      designId: design.id
+      designId: design.id,
+      type: 'COMMIT_QUOTE'
     },
     'returns design events'
   );
@@ -419,7 +426,8 @@ test('Design Events DAO supports retrieval by design ID and approval step ID', a
       targetId: events[2].targetId,
       targetName: events[2].targetName,
       targetRole: events[2].targetRole,
-      targetEmail: events[2].targetEmail
+      targetEmail: events[2].targetEmail,
+      type: events[2].type
     },
     {
       approvalStepId: null,
@@ -431,7 +439,8 @@ test('Design Events DAO supports retrieval by design ID and approval step ID', a
       targetId: partner.id,
       targetName: partner.name,
       targetRole: partner.role,
-      targetEmail: partner.email
+      targetEmail: partner.email,
+      type: 'BID_DESIGN'
     },
     'actor and target user info is appended'
   );
