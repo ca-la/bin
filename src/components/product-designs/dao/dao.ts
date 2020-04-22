@@ -180,11 +180,8 @@ export async function findDesignByApprovalStepId(
   );
 }
 
-export async function findAllWithCostsAndEvents(
-  collectionIds: string[],
-  trx?: Knex.Transaction
-): Promise<ProductDesignDataWithMeta[]> {
-  const rows = await db
+export function queryWithCostsAndEvents(): Knex.QueryBuilder {
+  return db
     .select(
       'd.*',
       'cost_inputs.input_list AS cost_inputs',
@@ -230,8 +227,15 @@ left join (
     .where({
       'd.deleted_at': null
     })
+    .orderBy('d.created_at', 'DESC');
+}
+
+export async function findAllWithCostsAndEvents(
+  collectionIds: string[],
+  trx?: Knex.Transaction
+): Promise<ProductDesignDataWithMeta[]> {
+  const rows = await queryWithCostsAndEvents()
     .whereIn('cd.collection_id', collectionIds)
-    .orderBy('d.created_at', 'DESC')
     .modify(
       (query: Knex.QueryBuilder): void => {
         if (trx) {
