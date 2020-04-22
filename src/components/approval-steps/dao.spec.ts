@@ -98,3 +98,33 @@ test('ApprovalStepsDAO can retrieve by step id', async (t: Test) => {
 
   t.deepEqual(found, as1, 'returns steps by design');
 });
+
+test('ApprovalStepsDAO can update', async (t: Test) => {
+  const { user } = await createUser({ withSession: false });
+  const d1: ProductDesign = await ProductDesignsDAO.create(
+    staticProductDesign({ id: 'd1', userId: user.id })
+  );
+  const as1: ApprovalStep = {
+    state: ApprovalStepState.UNSTARTED,
+    id: uuid.v4(),
+    title: 'Checkout',
+    ordering: 0,
+    designId: d1.id,
+    reason: null,
+    type: ApprovalStepType.CHECKOUT
+  };
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await ApprovalStepsDAO.createAll(trx, [as1]);
+    const updated = await ApprovalStepsDAO.update(trx, {
+      ...as1,
+      state: ApprovalStepState.CURRENT
+    });
+
+    t.deepEqual(
+      updated,
+      { ...as1, state: ApprovalStepState.CURRENT },
+      'returns updated step'
+    );
+  });
+});

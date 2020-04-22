@@ -9,7 +9,7 @@ import { create as createAddress } from '../../dao/addresses';
 import { findByAddressId } from '../../dao/invoice-addresses';
 import * as LineItemsDAO from '../../dao/line-items';
 import * as PricingCostInputsDAO from '../../components/pricing-cost-inputs/dao';
-import ProductDesignsDAO from '../../components/product-designs/dao';
+import * as ApprovalStepsDAO from '../../components/approval-steps/dao';
 import createUser = require('../../test-helpers/create-user');
 import EmailService = require('../../services/email');
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
@@ -23,6 +23,8 @@ import { createStorefront } from '../../services/create-storefront';
 import { ProviderName } from '../../components/storefronts/tokens/domain-object';
 import * as CreateShopifyProducts from '../../services/create-shopify-products';
 import Knex from 'knex';
+import { ApprovalStepState } from '../../components/approval-steps/domain-object';
+import createDesign from '../../services/create-design';
 
 const ADDRESS_BLANK = {
   companyName: 'CALA',
@@ -61,23 +63,29 @@ test('/quote-payments POST generates quotes, payment method, invoice, lineItems,
     id: uuid.v4(),
     title: 'Drop 001/The Early Years'
   });
-  const design = await ProductDesignsDAO.create({
+  const d1 = await createDesign({
     productType: 'A product type',
     title: 'A design',
     userId: user.id
   });
-  await addDesign(collection.id, design.id);
+  const d2 = await createDesign({
+    productType: 'Another product type',
+    title: 'A design',
+    userId: user.id
+  });
+  await addDesign(collection.id, d1.id);
+  await addDesign(collection.id, d2.id);
   const address = await createAddress({
     ...ADDRESS_BLANK,
     userId: user.id
   });
 
   await generatePricingValues();
-  await db.transaction(async (trx: Knex.Transaction) =>
-    PricingCostInputsDAO.create(trx, {
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await PricingCostInputsDAO.create(trx, {
       createdAt: new Date(),
       deletedAt: null,
-      designId: design.id,
+      designId: d1.id,
       expiresAt: null,
       id: uuid.v4(),
       materialBudgetCents: 1200,
@@ -94,16 +102,41 @@ test('/quote-payments POST generates quotes, payment method, invoice, lineItems,
       ],
       productComplexity: 'SIMPLE',
       productType: 'TEESHIRT'
-    })
-  );
+    });
+    await PricingCostInputsDAO.create(trx, {
+      createdAt: new Date(),
+      deletedAt: null,
+      designId: d2.id,
+      expiresAt: null,
+      id: uuid.v4(),
+      materialBudgetCents: 1200,
+      materialCategory: 'BASIC',
+      processes: [
+        {
+          complexity: '1_COLOR',
+          name: 'SCREEN_PRINTING'
+        },
+        {
+          complexity: '1_COLOR',
+          name: 'SCREEN_PRINTING'
+        }
+      ],
+      productComplexity: 'BLANK',
+      productType: 'TEESHIRT'
+    });
+  });
 
   const [postResponse, body] = await post('/quote-payments', {
     body: {
       collectionId: collection.id,
       createQuotes: [
         {
-          designId: design.id,
+          designId: d1.id,
           units: 300
+        },
+        {
+          designId: d2.id,
+          units: 200
         }
       ],
       paymentMethodTokenId,
@@ -133,9 +166,26 @@ test('/quote-payments POST generates quotes, payment method, invoice, lineItems,
   t.equals(invoiceAddress.addressId, address.id);
 
   const lineItems = await LineItemsDAO.findByInvoiceId(body.id);
-  t.equals(lineItems.length, 1, 'Line Item exists for design');
-  t.equals(lineItems[0].designId, design.id, 'Line Item has correct design');
+  t.equals(lineItems.length, 2, 'Line Item exists for designs');
+  t.equals(lineItems[0].designId, d1.id, 'Line Item has correct design');
+  t.equals(lineItems[1].designId, d2.id, 'Line Item has correct design');
   t.assert(stripe.calledOnce, 'Stripe was charged');
+
+  const cutAndSewApprovalSteps = await db.transaction((trx: Knex.Transaction) =>
+    ApprovalStepsDAO.findByDesign(trx, d1.id)
+  );
+  t.equals(cutAndSewApprovalSteps[0].state, ApprovalStepState.COMPLETED);
+  t.equals(cutAndSewApprovalSteps[1].state, ApprovalStepState.BLOCKED);
+  t.equals(cutAndSewApprovalSteps[2].state, ApprovalStepState.BLOCKED);
+  t.equals(cutAndSewApprovalSteps[3].state, ApprovalStepState.UNSTARTED);
+
+  const blankApprovalSteps = await db.transaction((trx: Knex.Transaction) =>
+    ApprovalStepsDAO.findByDesign(trx, d2.id)
+  );
+  t.equals(blankApprovalSteps[0].state, ApprovalStepState.COMPLETED);
+  t.equals(blankApprovalSteps[1].state, ApprovalStepState.SKIP);
+  t.equals(blankApprovalSteps[2].state, ApprovalStepState.BLOCKED);
+  t.equals(blankApprovalSteps[3].state, ApprovalStepState.UNSTARTED);
 });
 
 test('/quote-payments POST does not generate quotes, payment method, invoice, lineItems on failure', async (t: Test) => {
@@ -165,7 +215,7 @@ test('/quote-payments POST does not generate quotes, payment method, invoice, li
     id: uuid.v4(),
     title: 'Drop 001/The Early Years'
   });
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     productType: 'A product type',
     title: 'A design',
     userId: user.id
@@ -240,7 +290,7 @@ test('/quote-payments?isFinanced=true POST generates quotes, invoice, lineItems'
     id: uuid.v4(),
     title: 'Drop 001/The Early Years'
   });
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     productType: 'A product type',
     title: 'A design',
     userId: user.id
@@ -330,7 +380,7 @@ test('POST /quote-payments?isWaived=true waives payment', async (t: Test) => {
     title: 'Drop 001/The Early Years'
   });
 
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     productType: 'A product type',
     title: 'A design',
     userId: user.id
@@ -423,7 +473,7 @@ test('POST /quote-payments?isWaived=true fails if ineligible', async (t: Test) =
     title: 'Drop 001/The Early Years'
   });
 
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     productType: 'A product type',
     title: 'A design',
     userId: user.id
@@ -510,7 +560,7 @@ test(
       id: uuid.v4(),
       title: 'Drop 001/The Early Years'
     });
-    const design = await ProductDesignsDAO.create({
+    const design = await createDesign({
       productType: 'A product type',
       title: 'A design',
       userId: user.id
@@ -606,7 +656,7 @@ test('POST /quote-payments creates shopify products if connected to a storefront
     id: uuid.v4(),
     title: 'Drop 001/The Early Years'
   });
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     productType: 'A product type',
     title: 'A design',
     userId: user.id
@@ -703,7 +753,7 @@ test('POST /quote-payments still succeeds if creates shopify products fails', as
     id: uuid.v4(),
     title: 'Drop 001/The Early Years'
   });
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     productType: 'A product type',
     title: 'A design',
     userId: user.id
