@@ -21,6 +21,8 @@ import * as MeasurementsDAO from '../../dao/product-design-canvas-measurements';
 import * as ProductDesignStagesDAO from '../../dao/product-design-stages';
 import * as TasksDAO from '../../dao/task-events';
 import * as ApprovalStepDAO from '../../components/approval-steps/dao';
+import * as ApprovalSubmissionsDAO from '../../components/approval-step-submissions/dao';
+
 import generateCollection from './collection';
 import Collection from '../../components/collections/domain-object';
 import User from '../../components/users/domain-object';
@@ -43,6 +45,7 @@ import generateCanvas from './product-design-canvas';
 import generateProductDesignStage from './product-design-stage';
 import { addDesign } from '../collections';
 import generateApprovalStep from './design-approval-step';
+import generateApprovalSubmission from './design-approval-submission';
 import db from '../../services/db';
 import ApprovalStep from '../../components/approval-steps/domain-object';
 
@@ -167,6 +170,17 @@ export default async function generateNotification(
           )
         }
       : await generateApprovalStep(trx, { designId: design.id })
+  );
+
+  const { submission } = await db.transaction(async (trx: Knex.Transaction) =>
+    options.approvalSubmissionId
+      ? {
+          submission: await ApprovalSubmissionsDAO.findById(
+            trx,
+            options.approvalSubmissionId
+          )
+        }
+      : await generateApprovalSubmission(trx, { stepId: approvalStep.id })
   );
 
   const base = {
@@ -467,6 +481,22 @@ export default async function generateNotification(
         commentId: comment.id,
         designId: design.id,
         approvalStepId: approvalStep.id,
+        recipientUserId: base.recipient.id,
+        type: options.type
+      });
+
+      return {
+        ...base,
+        notification
+      };
+    }
+    case NotificationType.APPROVAL_STEP_SUBMISSION_ASSIGNMENT: {
+      const notification = await create({
+        ...baseNotification,
+        collectionId: collection.id,
+        designId: design.id,
+        approvalStepId: approvalStep.id,
+        approvalSubmissionId: submission.id,
         recipientUserId: base.recipient.id,
         type: options.type
       });

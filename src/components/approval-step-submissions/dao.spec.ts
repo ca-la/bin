@@ -4,6 +4,9 @@ import { isEqual } from 'lodash';
 
 import { test, Test } from '../../test-helpers/fresh';
 import { staticProductDesign } from '../../test-helpers/factories/product-design';
+import generateApprovalSubmission from '../../test-helpers/factories/design-approval-submission';
+import generateApprovalStep from '../../test-helpers/factories/design-approval-step';
+import generateCollaborator from '../../test-helpers/factories/collaborator';
 import * as ProductDesignsDAO from '../product-designs/dao';
 import db from '../../services/db';
 import ProductDesign from '../product-designs/domain-objects/product-design';
@@ -20,18 +23,7 @@ import ApprovalStepSubmission, {
 } from './domain-object';
 import * as ApprovalStepSubmissionsDAO from './dao';
 
-const pickKnownFields = (
-  submission: ApprovalStepSubmission
-): ApprovalStepSubmission => ({
-  state: submission.state,
-  artifactType: submission.artifactType,
-  id: submission.id,
-  createdAt: submission.createdAt,
-  stepId: submission.stepId,
-  title: 'Technical Design'
-});
-
-test('ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by step', async (t: Test) => {
+test('ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by step and id', async (t: Test) => {
   const { user } = await createUser({ withSession: false });
   const d1: ProductDesign = await ProductDesignsDAO.create(
     staticProductDesign({ id: 'd1', userId: user.id })
@@ -62,6 +54,7 @@ test('ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     id: uuid.v4(),
     createdAt: new Date(),
     stepId: as1.id,
+    collaboratorId: null,
     title: 'Technical Design'
   };
   const sub2: ApprovalStepSubmission = {
@@ -70,6 +63,7 @@ test('ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     id: uuid.v4(),
     createdAt: new Date(),
     stepId: as1.id,
+    collaboratorId: null,
     title: 'Technical Design'
   };
   const sub3: ApprovalStepSubmission = {
@@ -78,6 +72,7 @@ test('ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     id: uuid.v4(),
     createdAt: new Date(),
     stepId: as2.id,
+    collaboratorId: null,
     title: 'Technical Design'
   };
   const sub4: ApprovalStepSubmission = {
@@ -86,6 +81,7 @@ test('ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     id: uuid.v4(),
     createdAt: new Date(),
     stepId: as2.id,
+    collaboratorId: null,
     title: 'Technical Design'
   };
 
@@ -99,16 +95,52 @@ test('ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     ]);
 
     t.deepEqual(
-      created.map(pickKnownFields),
+      created,
       [sub1, sub2, sub3, sub4],
       'returns inserted submissions'
     );
 
-    const found = await ApprovalStepSubmissionsDAO.findByStep(trx, as1.id);
+    const foundByStep = await ApprovalStepSubmissionsDAO.findByStep(
+      trx,
+      as1.id
+    );
 
     t.true(
-      isEqual(new Set(found.map(pickKnownFields)), new Set([sub1, sub2])),
+      isEqual(new Set(foundByStep), new Set([sub1, sub2])),
       'returns submissions by step'
+    );
+
+    const foundById = await ApprovalStepSubmissionsDAO.findById(trx, sub1.id);
+
+    t.true(isEqual(foundById, sub1), 'returns submission by id');
+  });
+});
+
+test('setAssignee sets the collaborator and returns result', async (t: Test) => {
+  const { user } = await createUser({ withSession: false });
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const { approvalStep, design } = await generateApprovalStep(trx);
+    const { submission } = await generateApprovalSubmission(trx, {
+      stepId: approvalStep.id
+    });
+    const { collaborator } = await generateCollaborator(
+      {
+        designId: design.id,
+        userId: user.id
+      },
+      trx
+    );
+    const updated = await ApprovalStepSubmissionsDAO.setAssignee(
+      trx,
+      submission.id,
+      collaborator.id
+    );
+
+    t.isEqual(
+      updated.collaboratorId,
+      collaborator.id,
+      'setAssignee returns patched submission'
     );
   });
 });

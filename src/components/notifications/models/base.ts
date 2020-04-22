@@ -10,6 +10,7 @@ export interface BaseNotificationRow {
   actor_user_id: string;
   annotation_id: null;
   approval_step_id: null;
+  approval_submission_id: null;
   canvas_id: null;
   collaborator_id: null;
   collection_id: null;
@@ -39,6 +40,7 @@ export interface BaseFullNotificationRow {
   task_title: null;
   annotation_image_id: null;
   approval_step_title: null;
+  approval_submission_title: null;
 }
 
 export interface BaseNotification {
@@ -46,6 +48,7 @@ export interface BaseNotification {
   actorUserId: string;
   annotationId: null;
   approvalStepId: null;
+  approvalSubmissionId: null;
   canvasId: null;
   collaboratorId: null;
   collectionId: null;
@@ -75,12 +78,14 @@ export interface BaseFullNotification {
   taskTitle: null;
   annotationImageId: null;
   approvalStepTitle: null;
+  approvalSubmissionTitle: null;
 }
 
 export const templateNotification = {
   actionDescription: null, // DEPRECATED
   annotationId: null,
   approvalStepId: null,
+  approvalSubmissionId: null,
   canvasId: null,
   collaboratorId: null,
   collectionId: null,

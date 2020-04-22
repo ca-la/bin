@@ -28,6 +28,7 @@ import * as SlackService from '../../services/slack';
 import Config from '../../config';
 import generateMeasurement from '../../test-helpers/factories/product-design-canvas-measurement';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
+import { generateDesign } from '../../test-helpers/factories/product-design';
 import * as NotificationAnnouncer from '../../components/iris/messages/notification';
 import { addDesign } from '../../test-helpers/collections';
 import db from '../db';
@@ -39,6 +40,8 @@ import ApprovalStep, {
 } from '../../components/approval-steps/domain-object';
 import * as ApprovalStepsDAO from '../../components/approval-steps/dao';
 import * as ApprovalStepTaskDAO from '../../components/approval-step-tasks/dao';
+import generateApprovalSubmission from '../../test-helpers/factories/design-approval-submission';
+import { ApprovalStepSubmissionArtifactType } from '../../components/approval-step-submissions/domain-object';
 
 test('sendDesignOwnerAnnotationCommentCreateNotification', async (t: tape.Test) => {
   sandbox()
@@ -1465,4 +1468,48 @@ test('findTaskAssets returns proper assets of approval step task', async (t: tap
   t.equal(assets.design.id, design.id);
   t.equal(assets.stage, null);
   t.equal(assets.approvalStep.id, approvalStep.id);
+});
+
+test('sendApprovalSubmissionAssignmentNotification', async (t: tape.Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
+  const { user: actor } = await createUser();
+  const { user } = await createUser();
+  const design = await generateDesign({
+    userId: user.id
+  });
+  const { collaborator } = await generateCollaborator({
+    designId: design.id,
+    invitationMessage: '',
+    role: 'EDIT',
+    userId: user.id
+  });
+
+  const { submission } = await db.transaction(async (trx: Knex.Transaction) =>
+    generateApprovalSubmission(trx, {
+      artifactType: ApprovalStepSubmissionArtifactType.TECHNICAL_DESIGN,
+      collaboratorId: collaborator.id
+    })
+  );
+
+  const notification = await db.transaction(async (trx: Knex.Transaction) =>
+    NotificationsService.sendApprovalSubmissionAssignmentNotification(
+      trx,
+      actor.id,
+      submission,
+      collaborator
+    )
+  );
+
+  t.deepEqual(
+    notification.recipientUserId,
+    collaborator.userId,
+    'Creates a notification for the assignee'
+  );
+  t.deepEqual(
+    notification.type,
+    NotificationType.APPROVAL_STEP_SUBMISSION_ASSIGNMENT,
+    'Creates the correct notification type'
+  );
 });

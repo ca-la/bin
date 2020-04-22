@@ -64,6 +64,7 @@ export default async function createDesignApproval(
       artifactType: ApprovalStepSubmissionArtifactType.TECHNICAL_DESIGN,
       createdAt: new Date(),
       stepId: steps[1].id,
+      collaboratorId: null,
       title: 'Technical Design'
     },
     {
@@ -72,7 +73,8 @@ export default async function createDesignApproval(
       artifactType: ApprovalStepSubmissionArtifactType.SAMPLE,
       createdAt: new Date(),
       stepId: steps[2].id,
-      title: 'Sample'
+      title: 'Sample',
+      collaboratorId: null
     }
   ];
 

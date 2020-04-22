@@ -21,6 +21,7 @@ export default interface ApprovalStepSubmission {
   createdAt: Date;
   artifactType: ApprovalStepSubmissionArtifactType;
   state: ApprovalStepSubmissionState;
+  collaboratorId: string | null;
   title: string;
 }
 
@@ -30,6 +31,7 @@ export interface ApprovalStepSubmissionRow {
   created_at: Date;
   artifact_type: ApprovalStepSubmissionArtifactType;
   state: ApprovalStepSubmissionState;
+  collaborator_id: string | null;
   title: string;
 }
 
@@ -47,6 +49,8 @@ export function isApprovalStepSubmissionRow(
     'step_id',
     'created_at',
     'artifact_type',
+    'state',
+    'collaborator_id',
     'state',
     'title'
   );

@@ -897,6 +897,58 @@ export async function createNotificationMessage(
         )} for ${normalizeTitle(design)}`
       };
     }
+    case NotificationType.APPROVAL_STEP_SUBMISSION_ASSIGNMENT: {
+      const {
+        designId,
+        designImageIds,
+        collectionId,
+        collectionTitle,
+        approvalStepId,
+        approvalStepTitle,
+        approvalSubmissionTitle
+      } = notification;
+
+      if (!collectionId) {
+        return null;
+      }
+
+      const design = { id: designId, title: notification.designTitle };
+      const collection = {
+        id: collectionId,
+        title: collectionTitle
+      };
+      const approvalStep = {
+        id: approvalStepId,
+        title: approvalStepTitle
+      };
+
+      const { deepLink } = getLinks({
+        collection,
+        design,
+        approvalStep,
+        type: LinkType.ApprovalStep
+      });
+      const designHtmlLink = constructHtmlLink(
+        deepLink,
+        normalizeTitle(design)
+      );
+
+      const cleanName = escapeHtml(
+        baseNotificationMessage.actor.name ||
+          baseNotificationMessage.actor.email
+      );
+      return {
+        ...baseNotificationMessage,
+        html: `${span(
+          cleanName,
+          'user-name'
+        )} assigned you to review ${approvalSubmissionTitle} for ${designHtmlLink}`,
+        imageUrl: buildImageUrl(designImageIds),
+        link: deepLink,
+        location: getLocation({ collection, design }),
+        title: `${cleanName} assigned you to review ${approvalSubmissionTitle} for ${designHtmlLink}`
+      };
+    }
 
     default: {
       throw new InvalidDataError(

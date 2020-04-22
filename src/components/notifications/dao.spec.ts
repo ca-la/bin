@@ -29,7 +29,7 @@ import * as CommentsDAO from '../../components/comments/dao';
 import * as MeasurementsDAO from '../../dao/product-design-canvas-measurements';
 import * as ProductDesignOptionsDAO from '../../dao/product-design-options';
 import { deleteById } from '../../test-helpers/designs';
-import { deleteByIds } from '../../components/product-designs/dao/dao';
+import { deleteByIds } from '../product-designs/dao/dao';
 import generateTask from '../../test-helpers/factories/task';
 import generateProductDesignStage from '../../test-helpers/factories/product-design-stage';
 import generateComment from '../../test-helpers/factories/comment';
@@ -37,6 +37,7 @@ import generateAnnotation from '../../test-helpers/factories/product-design-canv
 import generateCanvas from '../../test-helpers/factories/product-design-canvas';
 import { ComponentType } from '../components/domain-object';
 import generateAsset from '../../test-helpers/factories/asset';
+import generateApprovalSubmission from '../../test-helpers/factories/design-approval-submission';
 
 test('Notifications DAO supports creation', async (t: tape.Test) => {
   sandbox()
@@ -844,5 +845,35 @@ test('NotificationsDAO.findById returns notifications with approval step titles'
     notifications[0].approvalStepTitle,
     'Checkout',
     'Stage title is returned'
+  );
+});
+
+test('NotificationsDAO.findById returns notifications with approval submission artifact type', async (t: tape.Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
+
+  const { submission } = await db.transaction(async (trx: Knex.Transaction) =>
+    generateApprovalSubmission(trx, {
+      title: 'Technical design'
+    })
+  );
+
+  const { recipient } = await generateNotification({
+    type: NotificationType.APPROVAL_STEP_SUBMISSION_ASSIGNMENT,
+    approvalSubmissionId: submission.id
+  });
+
+  const notifications = await db.transaction((trx: Knex.Transaction) =>
+    NotificationsDAO.findByUserId(trx, recipient.id, {
+      limit: 100,
+      offset: 0
+    })
+  );
+
+  t.equal(
+    notifications[0].approvalSubmissionTitle,
+    'Technical design',
+    'artifact type is returned'
   );
 });

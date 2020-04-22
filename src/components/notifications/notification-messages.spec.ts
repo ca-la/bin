@@ -19,6 +19,7 @@ import * as NotificationAnnouncer from '../iris/messages/notification';
 import { deleteById } from '../../test-helpers/designs';
 import { findByUserId } from './dao';
 import generateAsset from '../../test-helpers/factories/asset';
+import generateApprovalSubmission from '../../test-helpers/factories/design-approval-submission';
 
 test('annotation comment notification message', async (t: tape.Test) => {
   sandbox()
@@ -1084,5 +1085,42 @@ test('approval comment notification message', async (t: tape.Test) => {
   t.true(
     withAttachmentsMessage.attachments[0].hasAttachments,
     'Notification has attachments'
+  );
+});
+
+test('submission assignment notification message', async (t: tape.Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, 'announceNotificationCreation')
+    .resolves({});
+  const { user } = await createUser();
+
+  const { submission } = await db.transaction(async (trx: Knex.Transaction) =>
+    generateApprovalSubmission(trx, {
+      title: 'Technical design'
+    })
+  );
+
+  const { design } = await generateNotification({
+    recipientUserId: user.id,
+    type: NotificationType.APPROVAL_STEP_SUBMISSION_ASSIGNMENT,
+    approvalSubmissionId: submission.id
+  });
+  const notifications = await db.transaction((trx: Knex.Transaction) =>
+    findByUserId(trx, user.id, { limit: 20, offset: 0 })
+  );
+
+  t.is(notifications.length, 1);
+
+  const message = await createNotificationMessage(notifications[0]);
+  if (!message) {
+    throw new Error('Did not create message');
+  }
+  t.assert(
+    message.html.includes(design.title || 'test'),
+    'message html contains the design title'
+  );
+  t.assert(
+    message.html.includes('Technical design'),
+    'message html contains formatted artifact type'
   );
 });
