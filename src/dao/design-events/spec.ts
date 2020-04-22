@@ -344,7 +344,7 @@ test('DesignEventsDAO.create throws if the same bid is accepted twice', async (t
 });
 
 test('Design Events DAO supports retrieval by design ID and approval step ID', async (t: Test) => {
-  sandbox().useFakeTimers(testDate);
+  const clock = sandbox().useFakeTimers(testDate);
   const { bid } = await generateBid();
   const { user: partner } = await createUser();
   const { user: designer } = await createUser();
@@ -355,21 +355,21 @@ test('Design Events DAO supports retrieval by design ID and approval step ID', a
     ApprovalStepsDAO.findByDesign(trx, design.id)
   ))[0].id;
 
+  clock.setSystemTime(new Date(2020, 1, 24));
   await generateDesignEvent({
-    createdAt: new Date(2020, 1, 24),
     actorId: designer.id,
     approvalStepId,
     designId: design.id,
     type: 'SUBMIT_DESIGN'
   });
+  clock.setSystemTime(new Date(2020, 1, 25));
   await generateDesignEvent({
-    createdAt: new Date(2020, 1, 25),
     actorId: designer.id,
     designId: design.id,
     type: 'COMMIT_QUOTE'
   });
+  clock.setSystemTime(new Date(2020, 1, 26));
   await generateDesignEvent({
-    createdAt: new Date(2020, 1, 26),
     actorId: cala.id,
     bidId: bid.id,
     designId: design.id,
