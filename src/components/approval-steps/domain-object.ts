@@ -136,6 +136,11 @@ export const dataAdapter = new DataAdapter<ApprovalStepRow, ApprovalStep>(
   decode
 );
 
+export const partialDataAdapter = new DataAdapter<
+  Partial<ApprovalStepRow>,
+  Partial<ApprovalStep>
+>();
+
 export function isApprovalStepRow(
   candidate: any
 ): candidate is ApprovalStepRow {

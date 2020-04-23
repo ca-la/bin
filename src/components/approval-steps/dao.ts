@@ -4,7 +4,8 @@ import { validate, validateEvery } from '../../services/validate-from-db';
 import ApprovalStep, {
   ApprovalStepRow,
   dataAdapter,
-  isApprovalStepRow
+  isApprovalStepRow,
+  partialDataAdapter
 } from './domain-object';
 
 const TABLE_NAME = 'design_approval_steps';
@@ -63,13 +64,18 @@ export async function findById(
 
 export async function update(
   trx: Knex.Transaction,
-  data: ApprovalStep
+  data: Partial<ApprovalStep>
 ): Promise<ApprovalStep> {
-  const { id, ...forUpdate } = dataAdapter.toDb(data);
+  const { id, ...forUpdate } = partialDataAdapter.forInsertion(data);
 
-  await trx(TABLE_NAME)
+  const updated = await trx(TABLE_NAME)
     .where({ id })
-    .update(forUpdate);
+    .update(forUpdate, '*')
+    .then(validateApprovalSteps);
 
-  return data;
+  if (updated.length !== 1) {
+    throw new Error('Could not update approval step');
+  }
+
+  return updated[0];
 }

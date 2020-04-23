@@ -1,6 +1,7 @@
 import Knex from 'knex';
 import Router from 'koa-router';
 import { CommentWithResources } from '@cala/ts-lib/dist/comments/domain-object';
+import { omit } from 'lodash';
 
 import * as ApprovalStepsDAO from './dao';
 import * as ApprovalStepCommentDAO from '../approval-step-comments/dao';
@@ -10,11 +11,14 @@ import requireAuth from '../../middleware/require-auth';
 import {
   canAccessDesignInQuery,
   canAccessDesignInState,
+  canEditDesign,
   requireDesignIdBy
 } from '../../middleware/can-access-design';
 import addAtMentionDetails from '../../services/add-at-mention-details';
 import { addAttachmentLinks } from '../../services/add-attachments-links';
 import { DesignEventWithUserMeta } from '../../domain-objects/design-event';
+import ApprovalStep from './domain-object';
+import { transitionState } from '../../services/approval-step-state';
 
 type StreamItem = CommentWithResources | DesignEventWithUserMeta;
 
@@ -38,7 +42,7 @@ function* getApprovalStepsForDesign(
 }
 
 function* getApprovalStepStream(
-  this: AuthedContext & { state: { designId: string } }
+  this: AuthedContext<{}, { designId: string }>
 ): Iterator<any, any, any> {
   const comments = yield db.transaction((trx: Knex.Transaction) =>
     ApprovalStepCommentDAO.findByStepId(trx, this.params.stepId)
@@ -65,6 +69,38 @@ function* getApprovalStepStream(
   this.status = 200;
 }
 
+const ALLOWED_UPDATE_KEYS = ['state'];
+
+function* updateStep(
+  this: AuthedContext<Partial<ApprovalStep>, { designId: string }>
+): Iterator<any, any, any> {
+  const { stepId } = this.params;
+  const { state } = this.request.body;
+  const { designId } = this.state;
+
+  const restKeys = Object.keys(omit(this.request.body, ALLOWED_UPDATE_KEYS));
+  if (restKeys.length > 0) {
+    this.throw(400, `Keys ${restKeys.join(', ')} are not allowed`);
+  }
+
+  const found: ApprovalStep | undefined = yield db.transaction(
+    (trx: Knex.Transaction) => ApprovalStepsDAO.findById(trx, stepId)
+  );
+  if (!found) {
+    this.throw(404, `Could not find approval step with ID ${stepId}`);
+  }
+
+  if (!state) {
+    this.throw(400, 'No valid keys to update');
+  }
+
+  if (found.state !== state) {
+    yield transitionState(stepId, designId, state);
+  }
+
+  this.status = 204;
+}
+
 async function getDesignIdFromStep(this: AuthedContext): Promise<string> {
   const { stepId } = this.params;
 
@@ -86,5 +122,13 @@ router.get(
   requireDesignIdBy(getDesignIdFromStep),
   canAccessDesignInState,
   getApprovalStepStream
+);
+router.patch(
+  '/:stepId',
+  requireAuth,
+  requireDesignIdBy(getDesignIdFromStep),
+  canAccessDesignInState,
+  canEditDesign,
+  updateStep
 );
 export default router.routes();

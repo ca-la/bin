@@ -1,6 +1,6 @@
 import Knex from 'knex';
 
-import { authHeader, get } from '../../test-helpers/http';
+import { authHeader, get, patch } from '../../test-helpers/http';
 import { test, Test } from '../../test-helpers/fresh';
 import createUser from '../../test-helpers/create-user';
 import { generateDesign } from '../../test-helpers/factories/product-design';
@@ -9,6 +9,7 @@ import * as ApprovalStepsDAO from '../approval-steps/dao';
 import db from '../../services/db';
 import generateComment from '../../test-helpers/factories/comment';
 import generateDesignEvent from '../../test-helpers/factories/design-event';
+import { ApprovalStepState } from './domain-object';
 
 test('GET /design-approval-steps?designId=:designId', async (t: Test) => {
   const designer = await createUser();
@@ -132,4 +133,56 @@ test('GET /design-approval-steps/:stepId/stream-items', async (t: Test) => {
     }
   );
   t.equal(unauthRes.status, 403);
+});
+
+test('PATCH /design-approval-steps/:stepId', async (t: Test) => {
+  const designer = await createUser();
+  const admin = await createUser({ role: 'ADMIN' });
+  const other = await createUser();
+
+  const d1 = await generateDesign({ userId: designer.user.id });
+  const steps = await db.transaction(async (trx: Knex.Transaction) => {
+    const currentStepState = await ApprovalStepsDAO.findByDesign(trx, d1.id);
+    await ApprovalStepsDAO.update(trx, {
+      id: currentStepState[1].id,
+      reason: null,
+      state: ApprovalStepState.SKIP
+    });
+    await ApprovalStepsDAO.update(trx, {
+      id: currentStepState[2].id,
+      reason: null,
+      state: ApprovalStepState.UNSTARTED
+    });
+    return ApprovalStepsDAO.findByDesign(trx, d1.id);
+  });
+
+  const [response] = await patch(`/design-approval-steps/${steps[0].id}`, {
+    headers: authHeader(designer.session.id),
+    body: {
+      state: ApprovalStepState.COMPLETED
+    }
+  });
+  t.is(response.status, 204);
+  const afterCompletionSteps = await db.transaction(
+    async (trx: Knex.Transaction) => ApprovalStepsDAO.findByDesign(trx, d1.id)
+  );
+  t.is(afterCompletionSteps[0].state, ApprovalStepState.COMPLETED);
+  t.is(afterCompletionSteps[1].state, ApprovalStepState.SKIP);
+  t.is(afterCompletionSteps[2].state, ApprovalStepState.CURRENT);
+
+  const adminRes = await patch(`/design-approval-steps/${steps[0].id}`, {
+    headers: authHeader(admin.session.id),
+    body: {
+      state: ApprovalStepState.COMPLETED
+    }
+  });
+  t.is(adminRes[0].status, 204);
+
+  const otherRes = await patch(`/design-approval-steps/${steps[0].id}`, {
+    headers: authHeader(other.session.id),
+    body: {
+      state: ApprovalStepState.COMPLETED
+    }
+  });
+  t.is(otherRes[0].status, 403);
 });

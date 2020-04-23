@@ -9,6 +9,41 @@ import ApprovalStep, {
 } from '../../components/approval-steps/domain-object';
 import { findByDesignId as findProductTypeByDesignId } from '../../components/pricing-product-types/dao';
 
+export async function transitionState(
+  stepId: string,
+  designId: string,
+  newState: ApprovalStepState
+): Promise<void> {
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const steps = (await ApprovalStepsDAO.findByDesign(trx, designId)).filter(
+      (step: ApprovalStep): boolean => step.state !== ApprovalStepState.SKIP
+    );
+    const updatedIndex = steps.findIndex(
+      (step: ApprovalStep): boolean => step.id === stepId
+    );
+    if (updatedIndex === -1) {
+      throw new Error(
+        `Step with ID ${stepId} not found for design with ID ${designId}`
+      );
+    }
+
+    await ApprovalStepsDAO.update(trx, { id: stepId, state: newState });
+    const nextStep = steps[updatedIndex + 1];
+
+    if (
+      nextStep &&
+      nextStep.state === ApprovalStepState.UNSTARTED &&
+      newState === ApprovalStepState.COMPLETED
+    ) {
+      await ApprovalStepsDAO.update(trx, {
+        id: nextStep.id,
+        reason: null,
+        state: ApprovalStepState.CURRENT
+      });
+    }
+  });
+}
+
 export async function transitionCheckoutState(
   collectionId: string
 ): Promise<void> {
