@@ -144,3 +144,23 @@ test('setAssignee sets the collaborator and returns result', async (t: Test) => 
     );
   });
 });
+
+test('supports update', async (t: Test) => {
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const { approvalStep } = await generateApprovalStep(trx);
+    const { submission } = await generateApprovalSubmission(trx, {
+      stepId: approvalStep.id,
+      state: ApprovalStepSubmissionState.SUBMITTED
+    });
+    const updated = await ApprovalStepSubmissionsDAO.update(
+      trx,
+      submission.id,
+      { state: ApprovalStepSubmissionState.APPROVED }
+    );
+    t.isEqual(
+      updated.state,
+      ApprovalStepSubmissionState.APPROVED,
+      'state is updated'
+    );
+  });
+});

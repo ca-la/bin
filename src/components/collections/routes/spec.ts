@@ -713,6 +713,7 @@ test('POST /collections/:collectionId/partner-pairings', async (t: tape.Test) =>
       bidId: null,
       quoteId: null,
       approvalStepId: null,
+      approvalSubmissionId: null,
       type: 'ACCEPT_SERVICE_BID'
     },
     {
@@ -723,6 +724,7 @@ test('POST /collections/:collectionId/partner-pairings', async (t: tape.Test) =>
       bidId: null,
       quoteId: null,
       approvalStepId: null,
+      approvalSubmissionId: null,
       type: 'ACCEPT_SERVICE_BID'
     }
   ]);

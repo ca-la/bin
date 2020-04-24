@@ -40,6 +40,11 @@ export const dataAdapter = new DataAdapter<
   ApprovalStepSubmission
 >();
 
+export const partialDataAdapter = new DataAdapter<
+  Partial<ApprovalStepSubmissionRow>,
+  Partial<ApprovalStepSubmission>
+>();
+
 export function isApprovalStepSubmissionRow(
   candidate: any
 ): candidate is ApprovalStepSubmissionRow {

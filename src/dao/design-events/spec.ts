@@ -12,13 +12,19 @@ import {
   DuplicateAcceptRejectError,
   findApprovalStepEvents,
   findByDesignId,
+  findById,
   findByTargetId,
   isQuoteCommitted
 } from './index';
 import db from '../../services/db';
 import generateDesignEvent from '../../test-helpers/factories/design-event';
 import * as ApprovalStepsDAO from '../../components/approval-steps/dao';
+import * as ApprovalSubmissionsDAO from '../../components/approval-step-submissions/dao';
 import { generateDesign } from '../../test-helpers/factories/product-design';
+import {
+  ApprovalStepSubmissionArtifactType,
+  ApprovalStepSubmissionState
+} from '../../components/approval-step-submissions/domain-object';
 
 const testDate = new Date(2012, 11, 22);
 test('Design Events DAO supports creation', async (t: Test) => {
@@ -333,6 +339,7 @@ test('DesignEventsDAO.create throws if the same bid is accepted twice', async (t
       quoteId: null,
       targetId: cala.id,
       approvalStepId: null,
+      approvalSubmissionId: null,
       type: 'ACCEPT_SERVICE_BID'
     });
 
@@ -379,7 +386,10 @@ test('Design Events DAO supports retrieval by design ID and approval step ID', a
     type: 'BID_DESIGN'
   });
 
-  const events = await findApprovalStepEvents(design.id, approvalStepId);
+  const events = await db.transaction(async (trx: Knex.Transaction) =>
+    findApprovalStepEvents(trx, design.id, approvalStepId)
+  );
+
   t.equal(events.length, 3);
   t.deepEqual(
     {
@@ -443,5 +453,75 @@ test('Design Events DAO supports retrieval by design ID and approval step ID', a
       type: 'BID_DESIGN'
     },
     'actor and target user info is appended'
+  );
+});
+
+test('Design Events DAO supports retrieval by Id', async (t: Test) => {
+  sandbox().useFakeTimers(testDate);
+  const { bid } = await generateBid();
+  const { user: designer } = await createUser();
+  const { user: cala } = await createUser();
+  const design = await generateDesign({ userId: designer.id });
+
+  const approvalStepId = (await db.transaction(async (trx: Knex.Transaction) =>
+    ApprovalStepsDAO.findByDesign(trx, design.id)
+  ))[0].id;
+
+  const approvalSubmissionId = (await db.transaction(
+    async (trx: Knex.Transaction) =>
+      ApprovalSubmissionsDAO.createAll(trx, [
+        {
+          id: uuid.v4(),
+          stepId: approvalStepId,
+          createdAt: new Date(),
+          artifactType: ApprovalStepSubmissionArtifactType.CUSTOM,
+          state: ApprovalStepSubmissionState.UNSUBMITTED,
+          collaboratorId: null,
+          title: 'Rubber Ducky'
+        }
+      ])
+  ))[0].id;
+
+  const { designEvent } = await generateDesignEvent({
+    actorId: cala.id,
+    bidId: bid.id,
+    designId: design.id,
+    quoteId: null,
+    targetId: null,
+    approvalStepId,
+    approvalSubmissionId,
+    type: 'STEP_SUMBISSION_APPROVAL'
+  });
+
+  const event = await db.transaction(async (trx: Knex.Transaction) =>
+    findById(trx, designEvent.id)
+  );
+
+  t.deepEqual(
+    {
+      approvalStepId: event.approvalStepId,
+      approvalSubmissionId: event.approvalSubmissionId,
+      designId: event.designId,
+      actorId: event.actorId,
+      actorName: event.actorName,
+      actorRole: event.actorRole,
+      targetId: event.targetId,
+      targetName: event.targetName,
+      targetRole: event.targetRole,
+      submissionTitle: event.submissionTitle
+    },
+    {
+      approvalStepId,
+      approvalSubmissionId,
+      designId: design.id,
+      actorId: cala.id,
+      actorName: cala.name,
+      actorRole: cala.role,
+      targetId: null,
+      targetName: null,
+      targetRole: null,
+      submissionTitle: 'Rubber Ducky'
+    },
+    'meta is appended'
   );
 });

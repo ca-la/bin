@@ -1,7 +1,8 @@
 import Knex from 'knex';
 import Router from 'koa-router';
-
 import uuid from 'node-uuid';
+import { omit } from 'lodash';
+
 import * as ApprovalSubmissionsDAO from './dao';
 import * as ApprovalStepsDAO from '../approval-steps/dao';
 import * as CollaboratorsDAO from '../collaborators/dao';
@@ -16,8 +17,8 @@ import {
 import ApprovalStepSubmission, {
   ApprovalStepSubmissionState
 } from './domain-object';
-import { omit } from 'lodash';
 import * as NotificationsService from '../../services/create-notifications';
+import DesignEvent from '../../domain-objects/design-event';
 
 const router = new Router();
 
@@ -47,6 +48,55 @@ export function* getApprovalSubmissionsForStep(
   });
 
   this.body = found;
+  this.status = 200;
+}
+
+function* approveSubmission(
+  this: AuthedContext<{}, PermittedState & { designId: string; stepId: string }>
+): Iterator<any, any, any> {
+  const { submissionId } = this.params;
+
+  const event = yield db.transaction(async (trx: Knex.Transaction) => {
+    const submission = await ApprovalSubmissionsDAO.findById(trx, submissionId);
+    if (!submission) {
+      this.throw(404, `Submission not found with ID: ${submissionId}`);
+    }
+
+    if (submission.state === ApprovalStepSubmissionState.APPROVED) {
+      this.throw(403, `Submission is already approved ${submissionId}`);
+    }
+
+    await ApprovalSubmissionsDAO.update(trx, submissionId, {
+      state: ApprovalStepSubmissionState.APPROVED
+    });
+
+    const designEvent: DesignEvent = await DesignEventsDAO.create(
+      {
+        actorId: this.state.userId,
+        approvalStepId: this.state.stepId,
+        approvalSubmissionId: submissionId,
+        bidId: null,
+        createdAt: new Date(),
+        designId: this.state.designId,
+        id: uuid.v4(),
+        quoteId: null,
+        targetId: null,
+        type: 'STEP_SUMBISSION_APPROVAL'
+      },
+      trx
+    );
+
+    const designEventWithMeta = await DesignEventsDAO.findById(
+      trx,
+      designEvent.id
+    );
+    if (!designEventWithMeta) {
+      throw new Error('Failed to create approval event');
+    }
+    return designEventWithMeta;
+  });
+
+  this.body = event;
   this.status = 200;
 }
 
@@ -112,6 +162,7 @@ export function* updateApprovalSubmission(
         {
           actorId: userId,
           approvalStepId: this.state.submission.stepId,
+          approvalSubmissionId: null,
           bidId: null,
           createdAt: new Date(),
           designId: this.state.designId,
@@ -178,6 +229,22 @@ function* injectSubmission(
   yield next;
 }
 
+async function getDesignIdFromSubmission(
+  this: AuthedContext<{}, { stepId?: string }>
+): Promise<string> {
+  const { submissionId } = this.params;
+
+  const step = await db.transaction((trx: Knex.Transaction) =>
+    ApprovalStepsDAO.findBySubmissionId(trx, submissionId)
+  );
+
+  if (!step) {
+    this.throw(404, `Step not found with ID: ${submissionId}`);
+  }
+  this.state.stepId = step.id;
+  return step.designId;
+}
+
 router.get(
   '/',
   requireAuth,
@@ -191,6 +258,13 @@ router.get(
   getApprovalSubmissionsForStep
 );
 
+router.put(
+  '/:submissionId/approve',
+  requireAuth,
+  requireDesignIdBy(getDesignIdFromSubmission),
+  canAccessDesignInState,
+  approveSubmission
+);
 router.patch(
   '/:submissionId',
   requireAuth,

@@ -54,6 +54,7 @@ export function* createPartnerPairing(
           {
             actorId: userId,
             approvalStepId: null,
+            approvalSubmissionId: null,
             bidId: null,
             createdAt: new Date(),
             designId: design.id,

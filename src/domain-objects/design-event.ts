@@ -33,7 +33,10 @@ type CALAEvents =
 
 type PartnerEvents = 'ACCEPT_SERVICE_BID' | 'REJECT_SERVICE_BID';
 
-type ApprovalEvents = 'REVISION_REQUEST' | 'STEP_APPROVAL' | 'STEP_ASSIGNMENT';
+type ApprovalEvents =
+  | 'REVISION_REQUEST'
+  | 'STEP_ASSIGNMENT'
+  | 'STEP_SUMBISSION_APPROVAL';
 
 export default interface DesignEvent {
   id: string;
@@ -45,7 +48,7 @@ export default interface DesignEvent {
   quoteId: string | null;
   approvalStepId: string | null;
   type: DesignEventTypes;
-  approvalSubmissionId?: null;
+  approvalSubmissionId: string | null;
   commentId?: null;
 }
 
@@ -61,29 +64,31 @@ export interface DesignEventRow {
   type: DesignEventTypes;
 }
 
-export interface DesignEventWithUserMeta extends DesignEvent {
+export interface DesignEventWithMeta extends DesignEvent {
   actorName: string | null;
   actorRole: Role;
   actorEmail: string | null;
   targetName: string | null;
   targetRole: Role | null;
   targetEmail: string | null;
+  submissionTitle: string | null;
 }
 
-export interface DesignEventWithUserMetaRow extends DesignEventRow {
+export interface DesignEventWithMetaRow extends DesignEventRow {
   actor_name: string | null;
   actor_role: Role;
   actor_email: string | null;
   target_name: string | null;
   target_role: Role | null;
   target_email: string | null;
+  submission_title: string | null;
 }
 
 export const dataAdapter = new DataAdapter<DesignEventRow, DesignEvent>();
 
-export const withUserMetaDataAdapter = new DataAdapter<
-  DesignEventWithUserMetaRow,
-  DesignEventWithUserMeta
+export const withMetaDataAdapter = new DataAdapter<
+  DesignEventWithMetaRow,
+  DesignEventWithMeta
 >();
 
 export function isDesignEventRow(row: object): row is DesignEventRow {
@@ -116,9 +121,9 @@ export function isDesignEvent(row: object): row is DesignEvent {
   );
 }
 
-export function isDesignEventWithUserMetaRow(
+export function isDesignEventWithMetaRow(
   row: object
-): row is DesignEventWithUserMetaRow {
+): row is DesignEventWithMetaRow {
   return (
     isDesignEventRow(row) &&
     hasProperties(
@@ -128,14 +133,13 @@ export function isDesignEventWithUserMetaRow(
       'actor_email',
       'target_name',
       'target_role',
-      'target_email'
+      'target_email',
+      'submission_title'
     )
   );
 }
 
-export function isDesignEventWithUserMeta(
-  row: object
-): row is DesignEventWithUserMeta {
+export function isDesignEventWithMeta(row: object): row is DesignEventWithMeta {
   return (
     isDesignEvent(row) &&
     hasProperties(
@@ -145,7 +149,8 @@ export function isDesignEventWithUserMeta(
       'actorEmail',
       'targetName',
       'targetRole',
-      'targetEmail'
+      'targetEmail',
+      'submissionTitle'
     )
   );
 }

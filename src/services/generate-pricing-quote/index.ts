@@ -305,6 +305,7 @@ export async function generateFromPayloadAndUser(
       {
         actorId: userId,
         approvalStepId: null,
+        approvalSubmissionId: null,
         bidId: null,
         createdAt: new Date(),
         designId,

@@ -113,6 +113,7 @@ function* createQuote(this: AuthedContext): Iterator<any, any, any> {
 
     yield DesignEventsDAO.create({
       actorId: this.state.userId,
+      approvalSubmissionId: null,
       bidId: null,
       createdAt: new Date(),
       designId,

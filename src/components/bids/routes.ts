@@ -191,6 +191,7 @@ function* assignBidToPartner(this: AuthedContext): Iterator<any, any, any> {
   yield createDesignEvent({
     actorId: this.state.userId,
     approvalStepId: null,
+    approvalSubmissionId: null,
     bidId,
     createdAt: new Date(),
     designId: design.id,
@@ -261,6 +262,7 @@ function* removeBidFromPartner(this: AuthedContext): Iterator<any, any, any> {
   yield createDesignEvent({
     actorId: this.state.userId,
     approvalStepId: null,
+    approvalSubmissionId: null,
     bidId,
     createdAt: new Date(),
     designId: design.id,
@@ -313,6 +315,7 @@ export function* acceptDesignBid(
   yield createDesignEvent({
     actorId: userId,
     approvalStepId: null,
+    approvalSubmissionId: null,
     bidId: bid.id,
     createdAt: new Date(),
     designId: quote.designId!,
@@ -396,6 +399,7 @@ export function* rejectDesignBid(
   yield createDesignEvent({
     actorId: userId,
     approvalStepId: null,
+    approvalSubmissionId: null,
     bidId: bid.id,
     createdAt: new Date(),
     designId: quote.designId!,

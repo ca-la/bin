@@ -16,11 +16,11 @@ import {
 } from '../../middleware/can-access-design';
 import addAtMentionDetails from '../../services/add-at-mention-details';
 import { addAttachmentLinks } from '../../services/add-attachments-links';
-import { DesignEventWithUserMeta } from '../../domain-objects/design-event';
+import { DesignEventWithMeta } from '../../domain-objects/design-event';
 import ApprovalStep from './domain-object';
 import { transitionState } from '../../services/approval-step-state';
 
-type StreamItem = CommentWithResources | DesignEventWithUserMeta;
+type StreamItem = CommentWithResources | DesignEventWithMeta;
 
 const router = new Router();
 
@@ -55,9 +55,13 @@ function* getApprovalStepStream(
     comments
   )).map(addAttachmentLinks);
 
-  const events: DesignEventWithUserMeta[] = yield DesignEventsDAO.findApprovalStepEvents(
-    this.state.designId,
-    this.params.stepId
+  const events: DesignEventWithMeta[] = yield db.transaction(
+    (trx: Knex.Transaction) =>
+      DesignEventsDAO.findApprovalStepEvents(
+        trx,
+        this.state.designId,
+        this.params.stepId
+      )
   );
 
   const streamItems: StreamItem[] = [...commentsWithResources, ...events].sort(

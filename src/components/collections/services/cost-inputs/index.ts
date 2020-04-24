@@ -35,6 +35,7 @@ export async function commitCostInputs(
           {
             actorId,
             approvalStepId: null,
+            approvalSubmissionId: null,
             bidId: null,
             createdAt: new Date(),
             designId: design.id,

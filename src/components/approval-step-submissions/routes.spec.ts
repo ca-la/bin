@@ -1,6 +1,6 @@
 import Knex from 'knex';
 import uuid from 'node-uuid';
-import { authHeader, get, patch, post } from '../../test-helpers/http';
+import { authHeader, get, patch, post, put } from '../../test-helpers/http';
 import { test, Test } from '../../test-helpers/fresh';
 import createUser from '../../test-helpers/create-user';
 import { generateDesign } from '../../test-helpers/factories/product-design';
@@ -143,4 +143,59 @@ test('POST /design-approval-step-submissions?stepId=:stepId', async (t: Test) =>
   t.is(body.title, 'Submarine');
   t.is(body.state, 'UNSUBMITTED');
   t.is(body.stepId, steps[1].id);
+});
+
+test('PUT /design-approval-step-submissions/:submissionId/approve', async (t: Test) => {
+  const { user: user1, session: session1 } = await createUser();
+
+  const trx = await db.transaction();
+  const { approvalStep, design } = await generateApprovalStep(trx, {
+    createdBy: user1.id
+  });
+
+  const { submission } = await generateApprovalSubmission(trx, {
+    title: 'Submarine',
+    stepId: approvalStep.id
+  });
+  await trx.commit();
+  const [response, body] = await put(
+    `/design-approval-step-submissions/${submission.id}/approve`,
+    {
+      headers: authHeader(session1.id)
+    }
+  );
+  t.is(response.status, 200);
+  t.deepEqual(
+    {
+      designId: body.designId,
+      type: body.type,
+      approvalStepId: body.approvalStepId,
+      approvalSubmissionId: body.approvalSubmissionId,
+      submissionTitle: body.submissionTitle,
+      actorId: body.actorId,
+      actorName: body.actorName,
+      actorRole: body.actorRole,
+      actorEmail: body.actorEmail
+    },
+    {
+      designId: design.id,
+      type: 'STEP_SUMBISSION_APPROVAL',
+      approvalStepId: approvalStep.id,
+      approvalSubmissionId: submission.id,
+      submissionTitle: 'Submarine',
+      actorId: user1.id,
+      actorName: user1.name,
+      actorRole: 'USER',
+      actorEmail: user1.email
+    },
+    'body is approval event'
+  );
+
+  const [failureResponse] = await put(
+    `/design-approval-step-submissions/${submission.id}/approve`,
+    {
+      headers: authHeader(session1.id)
+    }
+  );
+  t.is(failureResponse.status, 403, 'Could not approve twice');
 });

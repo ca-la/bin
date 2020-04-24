@@ -6,11 +6,11 @@ import db from '../../services/db';
 import DesignEvent, {
   dataAdapter,
   DesignEventRow,
-  DesignEventWithUserMeta,
-  DesignEventWithUserMetaRow,
+  DesignEventWithMeta,
+  DesignEventWithMetaRow,
   isDesignEventRow,
-  isDesignEventWithUserMetaRow,
-  withUserMetaDataAdapter
+  isDesignEventWithMetaRow,
+  withMetaDataAdapter
 } from '../../domain-objects/design-event';
 import first from '../../services/first';
 import filterError = require('../../services/filter-error');
@@ -137,31 +137,65 @@ export async function isQuoteCommitted(designId: string): Promise<boolean> {
   );
 }
 
-export async function findApprovalStepEvents(
-  designId: string,
-  approvalStepId: string
-): Promise<DesignEventWithUserMeta[]> {
-  const designRows = await db(TABLE_NAME)
+function addMeta(query: Knex.QueryBuilder): Knex.QueryBuilder {
+  return query
     .select([
-      'design_events.*',
       'actor.name as actor_name',
       'actor.role as actor_role',
       'actor.email as actor_email',
       'target.name as target_name',
       'target.role as target_role',
-      'target.email as target_email'
+      'target.email as target_email',
+      'design_approval_submissions.title as submission_title'
     ])
     .join('users as actor', 'actor.id', 'design_events.actor_id')
     .leftJoin('users as target', 'target.id', 'design_events.target_id')
+    .leftJoin(
+      'design_approval_submissions',
+      'design_approval_submissions.id',
+      'design_events.approval_submission_id'
+    );
+}
+
+export async function findApprovalStepEvents(
+  trx: Knex.Transaction,
+  designId: string,
+  approvalStepId: string
+): Promise<DesignEventWithMeta[]> {
+  const designRows = await trx(TABLE_NAME)
+    .select('design_events.*')
+    .modify(addMeta)
     .orderBy('design_events.created_at', 'asc')
     .whereRaw(
       `design_id = ? AND (approval_step_id = ? OR approval_step_id IS NULL)`,
       [designId, approvalStepId]
     );
-  return validateEvery<DesignEventWithUserMetaRow, DesignEventWithUserMeta>(
+  return validateEvery<DesignEventWithMetaRow, DesignEventWithMeta>(
     TABLE_NAME,
-    isDesignEventWithUserMetaRow,
-    withUserMetaDataAdapter,
+    isDesignEventWithMetaRow,
+    withMetaDataAdapter,
     designRows
+  );
+}
+
+export async function findById(
+  trx: Knex.Transaction,
+  id: string
+): Promise<DesignEventWithMeta | null> {
+  const designEvent = await trx(TABLE_NAME)
+    .select('design_events.*')
+    .modify(addMeta)
+    .where({ 'design_events.id': id })
+    .first();
+
+  if (!designEvent) {
+    return null;
+  }
+
+  return validate<DesignEventWithMetaRow, DesignEventWithMeta>(
+    TABLE_NAME,
+    isDesignEventWithMetaRow,
+    withMetaDataAdapter,
+    designEvent
   );
 }
