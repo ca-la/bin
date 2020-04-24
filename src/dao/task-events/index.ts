@@ -146,8 +146,11 @@ export async function findById(
   );
 }
 
-export async function findRawById(id: string): Promise<TaskEvent | null> {
-  const taskEvent: TaskEventRow | undefined = await db(TABLE_NAME)
+export async function findRawById(
+  trx: Knex.Transaction,
+  id: string
+): Promise<TaskEvent | null> {
+  const taskEvent: TaskEventRow | undefined = await trx(TABLE_NAME)
     .where({ task_id: id })
     .limit(1)
     .orderBy('created_at', 'desc')

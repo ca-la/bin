@@ -107,18 +107,32 @@ function* createTaskEvent(
   const { userId: sessionUserId } = this.state;
   const body = addDefaultOrdering(this.request.body);
   const taskId = body.id;
-  const previousState: TaskEvent = yield TaskEventsDAO.findRawById(taskId);
-  const taskEvent: {
-    id: string;
-    status: TaskStatus;
-  } = yield TaskEventsDAO.create(taskEventFromIO(body, this.state.userId));
-  const updateDidCompleteTask =
-    taskEvent.status === TaskStatus.COMPLETED &&
-    previousState.status !== TaskStatus.COMPLETED;
-  if (updateDidCompleteTask) {
-    NotificationsService.sendTaskCompletionNotification(taskId, sessionUserId);
-  }
 
+  yield db.transaction(async (trx: Knex.Transaction) => {
+    const previousState: TaskEvent | null = await TaskEventsDAO.findRawById(
+      trx,
+      taskId
+    );
+
+    const taskEvent: {
+      id: string;
+      status: TaskStatus | null;
+    } = await TaskEventsDAO.create(
+      taskEventFromIO(body, this.state.userId),
+      trx
+    );
+    const updateDidCompleteTask =
+      previousState &&
+      previousState.status !== TaskStatus.COMPLETED &&
+      taskEvent.status === TaskStatus.COMPLETED;
+    if (updateDidCompleteTask) {
+      await NotificationsService.sendTaskCompletionNotification(
+        trx,
+        taskId,
+        sessionUserId
+      );
+    }
+  });
   this.status = 204;
 }
 
@@ -160,48 +174,56 @@ function* updateTaskAssignment(
   const { userId: sessionUserId } = this.state;
 
   if (body && isCollaboratorTaskRequest(body)) {
-    const { collaboratorIds } = body;
-    const existingRelationships = yield CollaboratorTasksDAO.findAllByTaskId(
-      taskId
-    );
-
-    const existingCollaboratorIds: string[] = existingRelationships.map(
-      (collaboratorTask: CollaboratorTask) => {
-        return collaboratorTask.collaboratorId;
-      }
-    );
-    const newIds = collaboratorIds.filter((collaboratorId: string) => {
-      return !existingCollaboratorIds.find(
-        (existingId: string) => collaboratorId === existingId
-      );
-    });
-    const existingIdsToDelete = existingCollaboratorIds.filter(
-      (existingId: string) => {
-        return !collaboratorIds.find(
-          (collaboratorId: string) => collaboratorId === existingId
+    const collaboratorTasks = yield db.transaction(
+      async (trx: Knex.Transaction) => {
+        const { collaboratorIds } = body;
+        const existingRelationships = await CollaboratorTasksDAO.findAllByTaskId(
+          trx,
+          taskId
         );
+
+        const existingCollaboratorIds: string[] = existingRelationships.map(
+          (collaboratorTask: CollaboratorTask) => {
+            return collaboratorTask.collaboratorId;
+          }
+        );
+        const newIds = collaboratorIds.filter((collaboratorId: string) => {
+          return !existingCollaboratorIds.find(
+            (existingId: string) => collaboratorId === existingId
+          );
+        });
+        const existingIdsToDelete = existingCollaboratorIds.filter(
+          (existingId: string) => {
+            return !collaboratorIds.find(
+              (collaboratorId: string) => collaboratorId === existingId
+            );
+          }
+        );
+
+        await CollaboratorTasksDAO.deleteAllByCollaboratorIdsAndTaskId(
+          existingIdsToDelete,
+          taskId
+        );
+
+        if (newIds.length > 0) {
+          await CollaboratorTasksDAO.createAllByCollaboratorIdsAndTaskId(
+            newIds,
+            taskId,
+            trx
+          );
+          await NotificationsService.sendTaskAssignmentNotification(
+            trx,
+            taskId,
+            sessionUserId,
+            newIds
+          );
+        }
+
+        return CollaboratorTasksDAO.findAllByTaskId(trx, taskId);
       }
     );
-
-    yield CollaboratorTasksDAO.deleteAllByCollaboratorIdsAndTaskId(
-      existingIdsToDelete,
-      taskId
-    );
-
-    if (newIds.length > 0) {
-      yield CollaboratorTasksDAO.createAllByCollaboratorIdsAndTaskId(
-        newIds,
-        taskId
-      );
-      NotificationsService.sendTaskAssignmentNotification(
-        taskId,
-        sessionUserId,
-        newIds
-      );
-    }
-
     this.status = 200;
-    this.body = yield CollaboratorTasksDAO.findAllByTaskId(taskId);
+    this.body = collaboratorTasks;
   } else {
     this.throw(400, `Request does not match model: ${Object.keys(body)}`);
   }
@@ -309,15 +331,12 @@ function* createTaskComment(
       } = await getCollaboratorsFromCommentMentions(trx, filteredBody.text);
 
       for (const mentionedUserId of mentionedUserIds) {
-        await NotificationsService.sendTaskCommentMentionNotification(
-          {
-            taskId,
-            commentId: comment.id,
-            actorId: userId,
-            recipientId: mentionedUserId
-          },
-          trx
-        );
+        await NotificationsService.sendTaskCommentMentionNotification(trx, {
+          taskId,
+          commentId: comment.id,
+          actorId: userId,
+          recipientId: mentionedUserId
+        });
       }
 
       const commentWithMentions = { ...comment, mentions: collaboratorNames };

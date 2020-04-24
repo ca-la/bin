@@ -1,7 +1,6 @@
 import uuid from 'node-uuid';
 import * as Knex from 'knex';
 
-import db from '../../services/db';
 import * as NotificationsDAO from '../../components/notifications/dao';
 import * as CanvasesDAO from '../../components/canvases/dao';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
@@ -357,7 +356,6 @@ export const findTaskAssets = async (
   taskId: string
 ): Promise<TaskAssets> => {
   const stageTask = await StageTasksDAO.findByTaskId(taskId, trx);
-
   if (stageTask) {
     const stage = await StagesDAO.findById(stageTask.designStageId, trx);
     if (!stage) {
@@ -508,57 +506,34 @@ export async function sendTaskCommentCreateNotification(
  * Creates notifications for the user mentioned in a task comment.
  */
 export async function sendTaskCommentMentionNotification(
+  trx: Knex.Transaction,
   options: {
     taskId: string;
     commentId: string;
     actorId: string;
     recipientId: string;
-  },
-  trx?: Knex.Transaction
+  }
 ): Promise<TaskCommentMentionNotification | null> {
   const { taskId, commentId, actorId, recipientId } = options;
   if (recipientId === actorId) {
     return null;
   }
 
-  const taskEvent = trx
-    ? await TaskEventsDAO.findById(trx, taskId)
-    : await db.transaction((trxCreated: Knex.Transaction) =>
-        TaskEventsDAO.findById(trxCreated, taskId)
-      );
-  if (!taskEvent) {
-    throw new Error(`Could not find a task event with task id: ${taskId}`);
-  }
-
-  const stageTask = await StageTasksDAO.findByTaskId(taskId, trx);
-  if (!stageTask) {
-    throw new Error(`Could not find a stage task with task id: ${taskId}`);
-  }
-
-  const stage = await StagesDAO.findById(stageTask.designStageId, trx);
-  if (!stage) {
-    throw new Error(
-      `Could not find a stage with id: ${stageTask.designStageId}`
-    );
-  }
-
-  const design = await DesignsDAO.findById(stage.designId);
-  if (!design) {
-    throw new Error(`Could not find a design with id: ${stage.designId}`);
-  }
+  const { design, stage, approvalStep } = await findTaskAssets(trx, taskId);
 
   const id = uuid.v4();
   const notification = await replaceNotifications({
     notification: {
       ...templateNotification,
       actorUserId: actorId,
-      collectionId: design.collectionIds[0] || null,
+      collectionId: (design.collectionIds && design.collectionIds[0]) || null,
       commentId,
       designId: design.id,
       id,
       recipientUserId: recipientId,
       sentEmailAt: null,
-      stageId: stage.id,
+      stageId: stage ? stage.id : null,
+      approvalStepId: approvalStep ? approvalStep.id : null,
       taskId,
       type: NotificationType.TASK_COMMENT_MENTION
     },
@@ -591,27 +566,7 @@ export async function sendTaskCommentReplyNotification(
     return null;
   }
 
-  const taskEvent = await TaskEventsDAO.findById(trx, taskId);
-  if (!taskEvent) {
-    throw new Error(`Could not find a task event with task id: ${taskId}`);
-  }
-
-  const stageTask = await StageTasksDAO.findByTaskId(taskId, trx);
-  if (!stageTask) {
-    throw new Error(`Could not find a stage task with task id: ${taskId}`);
-  }
-
-  const stage = await StagesDAO.findById(stageTask.designStageId, trx);
-  if (!stage) {
-    throw new Error(
-      `Could not find a stage with id: ${stageTask.designStageId}`
-    );
-  }
-
-  const design = await DesignsDAO.findById(stage.designId);
-  if (!design) {
-    throw new Error(`Could not find a design with id: ${stage.designId}`);
-  }
+  const { design, stage, approvalStep } = await findTaskAssets(trx, taskId);
 
   const collaborators: CollaboratorWithUser[] = await CollaboratorsDAO.findAllForUserThroughDesign(
     design.id,
@@ -627,13 +582,14 @@ export async function sendTaskCommentReplyNotification(
     notification: {
       ...templateNotification,
       actorUserId: actorId,
-      collectionId: design.collectionIds[0] || null,
+      collectionId: (design.collectionIds && design.collectionIds[0]) || null,
       commentId,
       designId: design.id,
       id,
       recipientUserId: recipientId,
       sentEmailAt: null,
-      stageId: stage.id,
+      stageId: stage ? stage.id : null,
+      approvalStepId: approvalStep ? approvalStep.id : null,
       taskId,
       type: NotificationType.TASK_COMMENT_REPLY
     },
@@ -650,28 +606,16 @@ export async function sendTaskCommentReplyNotification(
 }
 
 export async function sendTaskAssignmentNotification(
+  trx: Knex.Transaction,
   taskId: string,
   actorId: string,
   collaboratorIds: string[]
 ): Promise<TaskAssignmentNotification[]> {
-  const collaborators = await CollaboratorsDAO.findAllByIds(collaboratorIds);
-
-  const stageTask = await StageTasksDAO.findByTaskId(taskId);
-  if (!stageTask) {
-    throw new Error(`Could not find a stage task with task id: ${taskId}`);
-  }
-
-  const stage = await StagesDAO.findById(stageTask.designStageId);
-  if (!stage) {
-    throw new Error(
-      `Could not find a stage with id: ${stageTask.designStageId}`
-    );
-  }
-
-  const design = await DesignsDAO.findById(stage.designId);
-  if (!design) {
-    throw new Error(`Could not find a design with id: ${stage.designId}`);
-  }
+  const collaborators = await CollaboratorsDAO.findAllByIds(
+    trx,
+    collaboratorIds
+  );
+  const { design, stage, approvalStep } = await findTaskAssets(trx, taskId);
 
   const notifications = [];
 
@@ -681,16 +625,18 @@ export async function sendTaskAssignmentNotification(
     }
     const id = uuid.v4();
     const notification = await replaceNotifications({
+      trx,
       notification: {
         ...templateNotification,
         actorUserId: actorId,
         collaboratorId: collaborator.id,
-        collectionId: design.collectionIds[0] || null,
+        collectionId: (design.collectionIds && design.collectionIds[0]) || null,
         designId: design.id,
         id,
         recipientUserId: collaborator.user.id,
         sentEmailAt: null,
-        stageId: stage.id,
+        stageId: stage ? stage.id : null,
+        approvalStepId: approvalStep ? approvalStep.id : null,
         taskId,
         type: NotificationType.TASK_ASSIGNMENT
       }
@@ -709,25 +655,12 @@ export async function sendTaskAssignmentNotification(
 }
 
 export async function sendTaskCompletionNotification(
+  trx: Knex.Transaction,
   taskId: string,
   actorId: string
 ): Promise<TaskCompletionNotification[]> {
-  const stageTask = await StageTasksDAO.findByTaskId(taskId);
-  if (!stageTask) {
-    throw new Error(`Could not find a stage task with task id: ${taskId}`);
-  }
+  const { design, stage, approvalStep } = await findTaskAssets(trx, taskId);
 
-  const stage = await StagesDAO.findById(stageTask.designStageId);
-  if (!stage) {
-    throw new Error(
-      `Could not find a stage with id: ${stageTask.designStageId}`
-    );
-  }
-
-  const design = await DesignsDAO.findById(stage.designId);
-  if (!design) {
-    throw new Error(`Could not find a design with id: ${stage.designId}`);
-  }
   const collaborators: CollaboratorWithUser[] = await CollaboratorsDAO.findByDesign(
     design.id
   );
@@ -749,12 +682,13 @@ export async function sendTaskCompletionNotification(
         ...templateNotification,
         actorUserId: actorId,
         collaboratorId: collaborator.id,
-        collectionId: design.collectionIds[0] || null,
+        collectionId: (design.collectionIds && design.collectionIds[0]) || null,
         designId: design.id,
         id,
         recipientUserId: collaborator.user.id,
         sentEmailAt: null,
-        stageId: stage.id,
+        stageId: stage ? stage.id : null,
+        approvalStepId: approvalStep ? approvalStep.id : null,
         taskId,
         type: NotificationType.TASK_COMPLETION
       }

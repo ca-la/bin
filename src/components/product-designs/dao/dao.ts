@@ -103,7 +103,7 @@ export async function findDesignByAnnotationId(
 ): Promise<ProductDesignData | null> {
   const result = await db.raw(
     `
-SELECT designs.* FROM ${TABLE_NAME} AS designs
+SELECT designs.* FROM product_designs AS designs
 INNER JOIN product_design_canvases AS canvases ON canvases.design_id = designs.id
 INNER JOIN product_design_canvas_annotations AS annotations ON annotations.canvas_id = canvases.id
 WHERE annotations.id = ?
@@ -132,13 +132,15 @@ export async function findDesignByTaskId(
 ): Promise<ProductDesignData | null> {
   const result = await db.raw(
     `
-SELECT designs.* FROM ${TABLE_NAME} AS designs
-INNER JOIN product_design_stages AS stages ON stages.design_id = designs.id
-INNER JOIN product_design_stage_tasks AS tasks ON tasks.design_stage_id = stages.id
-WHERE tasks.task_id = ?
+SELECT designs.* FROM product_designs AS designs
+LEFT JOIN product_design_stages AS stages ON stages.design_id = designs.id
+LEFT JOIN product_design_stage_tasks AS stage_tasks ON stage_tasks.design_stage_id = stages.id
+LEFT JOIN design_approval_steps AS steps ON steps.design_id = designs.id
+LEFT JOIN design_approval_step_tasks AS step_tasks ON step_tasks.approval_step_id = steps.id
+WHERE (stage_tasks.task_id = :taskId OR step_tasks.task_id = :taskId)
 AND designs.deleted_at IS null
   `,
-    [taskId]
+    { taskId }
   );
   const row = first<ProductDesignRow>(result.rows);
 

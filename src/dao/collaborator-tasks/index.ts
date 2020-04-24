@@ -112,9 +112,10 @@ export async function createAllByCollaboratorIdsAndTaskId(
 }
 
 export async function findAllByTaskId(
+  trx: Knex.Transaction,
   taskId: string
 ): Promise<CollaboratorTask[]> {
-  const collaboratorTasks: CollaboratorTaskRow[] = await db(TABLE_NAME)
+  const collaboratorTasks: CollaboratorTaskRow[] = await trx(TABLE_NAME)
     .select('*')
     .where({ task_id: taskId })
     .orderBy('created_at', 'desc');

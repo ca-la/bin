@@ -191,9 +191,10 @@ export async function findById(
 }
 
 export async function findAllByIds(
+  trx: Knex.Transaction,
   collaboratorIds: string[]
 ): Promise<CollaboratorWithUser[]> {
-  const collaboratorRows = await getCollaboratorViewBuilder()
+  const collaboratorRows = await getCollaboratorViewBuilder(trx)
     .whereIn(ALIASES.collaboratorId, collaboratorIds)
     .andWhereRaw('(cancelled_at IS null OR cancelled_at > now())')
     .orderBy('created_at', 'desc');

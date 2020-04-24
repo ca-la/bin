@@ -47,7 +47,9 @@ test('Collaborators DAO can find all collaborators with a list of ids', async (t
   await CollaboratorsDAO.deleteById(c2.id);
 
   t.deepEqual(
-    await CollaboratorsDAO.findAllByIds([c1.id, c2.id]),
+    await db.transaction((trx: Knex.Transaction) =>
+      CollaboratorsDAO.findAllByIds(trx, [c1.id, c2.id])
+    ),
     [c1],
     'Returns all non-deleted collaborators'
   );

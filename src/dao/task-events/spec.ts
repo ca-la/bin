@@ -141,7 +141,9 @@ test('Task Events DAO supports raw retrieval', async (t: tape.Test) => {
   };
   const inserted = await create(taskData);
 
-  const result = await findRawById(inserted.taskId);
+  const result = await db.transaction((trx: Knex.Transaction) =>
+    findRawById(trx, inserted.taskId)
+  );
   if (!result) {
     throw Error('No Result');
   }
@@ -1062,7 +1064,9 @@ test('Task Events DAO supports creating a task with a long description', async (
     title: 'My First Task'
   });
 
-  const inserted = await findRawById(insertedId.taskId);
+  const inserted = await db.transaction((trx: Knex.Transaction) =>
+    findRawById(trx, insertedId.taskId)
+  );
   if (!inserted) {
     throw new Error('Could not find task!');
   }

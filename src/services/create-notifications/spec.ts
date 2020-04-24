@@ -586,13 +586,13 @@ test('sendTaskCommentMentionNotification', async (t: tape.Test) => {
     taskId: taskOne.id
   });
 
-  const notification = await NotificationsService.sendTaskCommentMentionNotification(
-    {
+  const notification = await db.transaction((trx: Knex.Transaction) =>
+    NotificationsService.sendTaskCommentMentionNotification(trx, {
       taskId: taskOne.id,
       commentId: comment.id,
       actorId: userOne.user.id,
       recipientId: userTwo.user.id
-    }
+    })
   );
 
   if (!notification) {
@@ -793,10 +793,13 @@ test('sendTaskAssignmentNotification', async (t: tape.Test) => {
     taskId: taskOne.id
   });
 
-  const notifications = await NotificationsService.sendTaskAssignmentNotification(
-    taskOne.id,
-    userOne.user.id,
-    [collaboratorTwo.id]
+  const notifications = await db.transaction((trx: Knex.Transaction) =>
+    NotificationsService.sendTaskAssignmentNotification(
+      trx,
+      taskOne.id,
+      userOne.user.id,
+      [collaboratorTwo.id]
+    )
   );
 
   t.equal(
@@ -868,10 +871,13 @@ test('sendTaskAssignmentNotification does not send if assigned to self', async (
     taskId: taskOne.id
   });
 
-  const notifications = await NotificationsService.sendTaskAssignmentNotification(
-    taskOne.id,
-    user.id,
-    [collaborator.id]
+  const notifications = await db.transaction((trx: Knex.Transaction) =>
+    NotificationsService.sendTaskAssignmentNotification(
+      trx,
+      taskOne.id,
+      user.id,
+      [collaborator.id]
+    )
   );
 
   t.equal(
@@ -941,10 +947,13 @@ test('sendTaskAssignmentNotification does not send if assigned to collaborator w
     taskId: taskOne.id
   });
 
-  const notifications = await NotificationsService.sendTaskAssignmentNotification(
-    taskOne.id,
-    user.id,
-    [collaborator2.id]
+  const notifications = await db.transaction((trx: Knex.Transaction) =>
+    NotificationsService.sendTaskAssignmentNotification(
+      trx,
+      taskOne.id,
+      user.id,
+      [collaborator2.id]
+    )
   );
 
   t.equal(
@@ -1025,9 +1034,12 @@ test('sendTaskCompletionNotification', async (t: tape.Test) => {
     taskId: taskOne.id
   });
 
-  const notifications = await NotificationsService.sendTaskCompletionNotification(
-    taskOne.id,
-    userTwo.user.id
+  const notifications = await db.transaction((trx: Knex.Transaction) =>
+    NotificationsService.sendTaskCompletionNotification(
+      trx,
+      taskOne.id,
+      userTwo.user.id
+    )
   );
 
   t.equal(

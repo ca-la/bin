@@ -1,6 +1,7 @@
 import tape from 'tape';
 import uuid from 'node-uuid';
 import { isEqual } from 'lodash';
+import Knex from 'knex';
 
 import { test } from '../../test-helpers/fresh';
 import {
@@ -14,7 +15,8 @@ import {
 import { create as createTask } from '../tasks';
 import { create as createCollaborator } from '../../components/collaborators/dao';
 import { create as createCollection } from '../../components/collections/dao';
-import createUser = require('../../test-helpers/create-user');
+import createUser from '../../test-helpers/create-user';
+import db from '../../services/db';
 
 test('CollaboratorTask DAO supports creation/retrieval', async (t: tape.Test) => {
   const userOne = await createUser();
@@ -59,7 +61,9 @@ test('CollaboratorTask DAO supports creation/retrieval', async (t: tape.Test) =>
   });
 
   t.deepEqual(
-    await findAllByTaskId(taskOne.id),
+    await db.transaction((trx: Knex.Transaction) =>
+      findAllByTaskId(trx, taskOne.id)
+    ),
     [collaboratorTwoTaskOne, collaboratorOneTaskOne],
     'Returned both collaborator task associations for the given task'
   );
@@ -226,7 +230,9 @@ test('CollaboratorTask DAO supports multiple simultaneous deletions', async (t: 
     taskOne.id
   );
   t.deepEqual(
-    await findAllByTaskId(taskOne.id),
+    await db.transaction((trx: Knex.Transaction) =>
+      findAllByTaskId(trx, taskOne.id)
+    ),
     [collaboratorTaskTwo],
     'Record is still there.'
   );
@@ -276,7 +282,9 @@ test('CollaboratorTask DAO supports create all', async (t: tape.Test) => {
     }
   ]);
 
-  const returned = await findAllByTaskId(taskOne.id);
+  const returned = await db.transaction((trx: Knex.Transaction) =>
+    findAllByTaskId(trx, taskOne.id)
+  );
 
   t.true(
     isEqual(new Set(returned), new Set(collaboratorTasks)),

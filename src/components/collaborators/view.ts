@@ -6,7 +6,7 @@ export const ALIASES = {
   userId: 'users_forcollaboratorsviewraw.id'
 };
 
-export const getBuilder = (): Knex.QueryBuilder =>
+export const getBuilder = (trx?: Knex.Transaction): Knex.QueryBuilder =>
   db
     .select('collaborators_forcollaboratorsviewraw.*')
     .select(db.raw('to_json(users_forcollaboratorsviewraw.*) as user'))
@@ -15,4 +15,9 @@ export const getBuilder = (): Knex.QueryBuilder =>
       'users AS users_forcollaboratorsviewraw',
       'users_forcollaboratorsviewraw.id',
       'collaborators_forcollaboratorsviewraw.user_id'
-    );
+    )
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    });

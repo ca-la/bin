@@ -390,7 +390,7 @@ test('PUT /tasks/:taskId/assignees adds Collaborators to Tasks successfully', as
   t.equal(responseOne.status, 200);
   t.equal(bodyOne[0].collaboratorId, collaborator.id);
   t.deepEqual(
-    stubNotification.getCall(0).args,
+    stubNotification.getCall(0).args.slice(1),
     [task.id, user.id, [collaborator.id]],
     'It sends a notification to collaborators'
   );
@@ -404,7 +404,7 @@ test('PUT /tasks/:taskId/assignees adds Collaborators to Tasks successfully', as
   t.equal(bodyTwo[0].collaboratorId, secondCollaborator.id);
   t.equal(bodyTwo[1].collaboratorId, collaborator.id);
   t.deepEqual(
-    stubNotification.getCall(0).args,
+    stubNotification.getCall(0).args.slice(1),
     [task.id, user.id, [secondCollaborator.id]],
     'It sends a notification to new collaborators'
   );
@@ -498,12 +498,12 @@ test('PUT /tasks/:taskId when changing status to Completed', async (t: tape.Test
   });
 
   t.deepEqual(
-    completionNotificationStub.getCall(0).args,
+    completionNotificationStub.getCall(0).args.slice(1),
     [task.id, user.id],
     'It sends a completion notification'
   );
   t.deepEqual(
-    assignmentNotificationStub.getCall(0).args,
+    assignmentNotificationStub.getCall(0).args.slice(1),
     [task.id, user.id, [collaborator.id]],
     'It sends a completion notification'
   );

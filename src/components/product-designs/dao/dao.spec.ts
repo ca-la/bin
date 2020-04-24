@@ -17,6 +17,8 @@ import * as CollaboratorsDAO from '../../collaborators/dao';
 import * as CollectionsDAO from '../../collections/dao';
 import * as ProductDesignOptionsDAO from '../../../dao/product-design-options';
 import { deleteById as deleteAnnotation } from '../../product-design-canvas-annotations/dao';
+import { create as createTask } from '../../../dao/tasks';
+import { create as createApprovalTask } from '../../../components/approval-step-tasks/dao';
 
 import { test } from '../../../test-helpers/fresh';
 import createUser from '../../../test-helpers/create-user';
@@ -362,7 +364,7 @@ test('findDesignByAnnotationId', async (t: tape.Test) => {
   );
 });
 
-test('findDesignByTaskId', async (t: tape.Test) => {
+test('findDesignByTaskId stage task', async (t: tape.Test) => {
   const userOne = await createUser({ withSession: false });
   const { collection: collectionOne } = await generateCollection({
     createdBy: userOne.user.id
@@ -392,6 +394,51 @@ test('findDesignByTaskId', async (t: tape.Test) => {
 
   await deleteById(designOne.id);
   const designTwo = await findDesignByTaskId(taskOne.id);
+  t.equal(
+    designTwo,
+    null,
+    'Returns null if a resource in the chain was deleted'
+  );
+});
+
+test('findDesignByTaskId approval step task', async (t: tape.Test) => {
+  const userOne = await createUser({ withSession: false });
+  const { collection: collectionOne } = await generateCollection({
+    createdBy: userOne.user.id
+  });
+  const designOne = await createDesign({
+    productType: 'test',
+    title: 'design',
+    userId: userOne.user.id
+  });
+  await addDesign(collectionOne.id, designOne.id);
+  const { approvalStep } = await db.transaction((trx: Knex.Transaction) =>
+    generateApprovalStep(trx, {
+      designId: designOne.id
+    })
+  );
+
+  const task = await createTask(uuid.v4());
+  await db.transaction((trx: Knex.Transaction) =>
+    createApprovalTask(trx, {
+      taskId: task.id,
+      approvalStepId: approvalStep.id
+    })
+  );
+  const design = await findDesignByTaskId(task.id);
+
+  if (!design) {
+    throw new Error('Design is not found!');
+  }
+
+  t.equal(
+    designOne.id,
+    design.id,
+    'Returns the design that is a parent to the annotation'
+  );
+
+  await deleteById(designOne.id);
+  const designTwo = await findDesignByTaskId(task.id);
   t.equal(
     designTwo,
     null,
