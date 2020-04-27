@@ -146,7 +146,8 @@ function addMeta(query: Knex.QueryBuilder): Knex.QueryBuilder {
       'target.name as target_name',
       'target.role as target_role',
       'target.email as target_email',
-      'design_approval_submissions.title as submission_title'
+      'design_approval_submissions.title as submission_title',
+      'design_approval_steps.title as step_title'
     ])
     .join('users as actor', 'actor.id', 'design_events.actor_id')
     .leftJoin('users as target', 'target.id', 'design_events.target_id')
@@ -154,6 +155,11 @@ function addMeta(query: Knex.QueryBuilder): Knex.QueryBuilder {
       'design_approval_submissions',
       'design_approval_submissions.id',
       'design_events.approval_submission_id'
+    )
+    .leftJoin(
+      'design_approval_steps',
+      'design_approval_steps.id',
+      'design_events.approval_step_id'
     );
 }
 
@@ -167,7 +173,7 @@ export async function findApprovalStepEvents(
     .modify(addMeta)
     .orderBy('design_events.created_at', 'asc')
     .whereRaw(
-      `design_id = ? AND (approval_step_id = ? OR approval_step_id IS NULL)`,
+      `design_events.design_id = ? AND (approval_step_id = ? OR approval_step_id IS NULL)`,
       [designId, approvalStepId]
     );
   return validateEvery<DesignEventWithMetaRow, DesignEventWithMeta>(

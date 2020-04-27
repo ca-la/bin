@@ -73,6 +73,7 @@ export interface DesignEventWithMeta extends DesignEvent {
   targetRole: Role | null;
   targetEmail: string | null;
   submissionTitle: string | null;
+  stepTitle: string | null;
 }
 
 export interface DesignEventWithMetaRow extends DesignEventRow {
@@ -83,6 +84,7 @@ export interface DesignEventWithMetaRow extends DesignEventRow {
   target_role: Role | null;
   target_email: string | null;
   submission_title: string | null;
+  step_title: string | null;
 }
 
 export const dataAdapter = new DataAdapter<DesignEventRow, DesignEvent>();
@@ -135,7 +137,8 @@ export function isDesignEventWithMetaRow(
       'target_name',
       'target_role',
       'target_email',
-      'submission_title'
+      'submission_title',
+      'step_title'
     )
   );
 }
@@ -151,7 +154,8 @@ export function isDesignEventWithMeta(row: object): row is DesignEventWithMeta {
       'targetName',
       'targetRole',
       'targetEmail',
-      'submissionTitle'
+      'submissionTitle',
+      'stepTitle'
     )
   );
 }

@@ -508,7 +508,8 @@ test('Design Events DAO supports retrieval by Id', async (t: Test) => {
       targetId: event.targetId,
       targetName: event.targetName,
       targetRole: event.targetRole,
-      submissionTitle: event.submissionTitle
+      submissionTitle: event.submissionTitle,
+      stepTitle: event.stepTitle
     },
     {
       approvalStepId,
@@ -520,7 +521,8 @@ test('Design Events DAO supports retrieval by Id', async (t: Test) => {
       targetId: null,
       targetName: null,
       targetRole: null,
-      submissionTitle: 'Rubber Ducky'
+      submissionTitle: 'Rubber Ducky',
+      stepTitle: 'Checkout'
     },
     'meta is appended'
   );
