@@ -1,5 +1,6 @@
 reports/
 dist/
+published-types-dist/
 node_modules/
 npm-debug.log
 *.env

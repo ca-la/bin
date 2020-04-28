@@ -1,21 +1,8 @@
 import DataAdapter, { defaultEncoder } from '../../services/data-adapter';
 import { hasProperties } from '../../services/require-properties';
+import { BillingInterval, Plan } from './plan';
 
-type BillingInterval = 'MONTHLY' | 'ANNUALLY';
-
-export interface Plan {
-  id: string;
-  billingInterval: BillingInterval;
-  createdAt: Date;
-  monthlyCostCents: number;
-  revenueSharePercentage: number;
-  stripePlanId: string;
-  title: string;
-  isDefault: boolean;
-  isPublic: boolean;
-  description: string | null;
-  ordering: number | null;
-}
+export { BillingInterval, Plan } from './plan';
 
 export interface PlanRow {
   id: string;

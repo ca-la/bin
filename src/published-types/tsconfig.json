@@ -1,0 +1,20 @@
+{
+  "extends": "../../tsconfig",
+  "include": [
+    "./**/*"
+  ],
+  "exclude": [],
+  "compilerOptions": {
+    "esModuleInterop": false,
+    "module": "ESNext",
+    "allowJs": false,
+    "outDir": "../../published-types-dist",
+    "declaration": true,
+    "typeRoots": [],
+    "types": []
+  },
+  "rootDirs": [
+    "../../",
+    "../../node_modules"
+  ]
+}
