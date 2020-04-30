@@ -8,6 +8,8 @@ import createDesign from '../../../services/create-design';
 import * as DesignEventsDAO from '../../../dao/design-events';
 import { reverseSubmissionRecords } from './reverse';
 import { moveDesign } from '../../../test-helpers/collections';
+import db from '../../../services/db';
+import Knex from 'knex';
 
 test('reverseSubmissionRecords', async (t: tape.Test) => {
   const { user: designer } = await createUser({ withSession: false });
@@ -28,39 +30,49 @@ test('reverseSubmissionRecords', async (t: tape.Test) => {
     userId: designer.id
   });
   await moveDesign(c1.id, d1.id);
-  const de1 = await DesignEventsDAO.create({
-    actorId: designer.id,
-    bidId: null,
-    createdAt: new Date(),
-    designId: d1.id,
-    id: uuid.v4(),
-    quoteId: null,
-    targetId: null,
-    type: 'SUBMIT_DESIGN',
-    approvalStepId: null
-  });
-  const de2 = await DesignEventsDAO.create({
-    actorId: admin.id,
-    bidId: null,
-    createdAt: new Date(),
-    designId: d1.id,
-    id: uuid.v4(),
-    quoteId: null,
-    targetId: null,
-    type: 'COMMIT_COST_INPUTS',
-    approvalStepId: null
-  });
-  const de3 = await DesignEventsDAO.create({
-    actorId: admin.id,
-    bidId: null,
-    createdAt: new Date(),
-    designId: d1.id,
-    id: uuid.v4(),
-    quoteId: null,
-    targetId: partner.id,
-    type: 'BID_DESIGN',
-    approvalStepId: null
-  });
+
+  const de1 = await db.transaction((trx: Knex.Transaction) =>
+    DesignEventsDAO.create(trx, {
+      actorId: designer.id,
+      bidId: null,
+      createdAt: new Date(),
+      designId: d1.id,
+      id: uuid.v4(),
+      quoteId: null,
+      targetId: null,
+      type: 'SUBMIT_DESIGN',
+      approvalStepId: null,
+      approvalSubmissionId: null
+    })
+  );
+  const de2 = await db.transaction((trx: Knex.Transaction) =>
+    DesignEventsDAO.create(trx, {
+      actorId: admin.id,
+      bidId: null,
+      createdAt: new Date(),
+      designId: d1.id,
+      id: uuid.v4(),
+      quoteId: null,
+      targetId: null,
+      type: 'COMMIT_COST_INPUTS',
+      approvalStepId: null,
+      approvalSubmissionId: null
+    })
+  );
+  const de3 = await db.transaction((trx: Knex.Transaction) =>
+    DesignEventsDAO.create(trx, {
+      actorId: admin.id,
+      bidId: null,
+      createdAt: new Date(),
+      designId: d1.id,
+      id: uuid.v4(),
+      quoteId: null,
+      targetId: partner.id,
+      type: 'BID_DESIGN',
+      approvalStepId: null,
+      approvalSubmissionId: null
+    })
+  );
 
   const initialEvents = await DesignEventsDAO.findByDesignId(d1.id);
   t.deepEqual(initialEvents, [de1, de2, de3], 'Contains all events');

@@ -116,7 +116,7 @@ test('ApprovalStepsDAO can update', async (t: Test) => {
 
   await db.transaction(async (trx: Knex.Transaction) => {
     await ApprovalStepsDAO.createAll(trx, [as1]);
-    const updated = await ApprovalStepsDAO.update(trx, {
+    const updated = await ApprovalStepsDAO.update(trx, as1.id, {
       ...as1,
       state: ApprovalStepState.CURRENT
     });

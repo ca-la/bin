@@ -1,4 +1,5 @@
 import Router from 'koa-router';
+import Knex from 'knex';
 import uuid from 'node-uuid';
 
 import Bid, {
@@ -20,6 +21,7 @@ import {
 import * as CollaboratorsDAO from '../collaborators/dao';
 import requireAdmin = require('../../middleware/require-admin');
 import requireAuth = require('../../middleware/require-auth');
+import useTransaction from '../../middleware/use-transaction';
 import * as NotificationsService from '../../services/create-notifications';
 import { isExpired } from './services/is-expired';
 import { hasActiveBids } from './services/has-active-bids';
@@ -29,6 +31,7 @@ import { hasOnlyProperties } from '../../services/require-properties';
 import { PartnerPayoutLog } from '../partner-payouts/domain-object';
 import { payOutPartner } from '../../services/pay-out-partner';
 import filterError = require('../../services/filter-error');
+import db from '../../services/db';
 
 const router = new Router();
 
@@ -187,18 +190,19 @@ function* assignBidToPartner(this: AuthedContext): Iterator<any, any, any> {
       `There are active bids for user ${userId} on the design ${design.id}`
     );
   }
-
-  yield createDesignEvent({
-    actorId: this.state.userId,
-    approvalStepId: null,
-    approvalSubmissionId: null,
-    bidId,
-    createdAt: new Date(),
-    designId: design.id,
-    id: uuid.v4(),
-    quoteId: null,
-    targetId: target.id,
-    type: 'BID_DESIGN'
+  yield db.transaction(async (trx: Knex.Transaction) => {
+    await createDesignEvent(trx, {
+      actorId: this.state.userId,
+      approvalStepId: null,
+      approvalSubmissionId: null,
+      bidId,
+      createdAt: new Date(),
+      designId: design.id,
+      id: uuid.v4(),
+      quoteId: null,
+      targetId: target.id,
+      type: 'BID_DESIGN'
+    });
   });
 
   const maybeCollaborator = yield CollaboratorsDAO.findByDesignAndUser(
@@ -259,17 +263,19 @@ function* removeBidFromPartner(this: AuthedContext): Iterator<any, any, any> {
     this.throw(404, `No User found for ID: ${userId}`);
   }
 
-  yield createDesignEvent({
-    actorId: this.state.userId,
-    approvalStepId: null,
-    approvalSubmissionId: null,
-    bidId,
-    createdAt: new Date(),
-    designId: design.id,
-    id: uuid.v4(),
-    quoteId: null,
-    targetId: target.id,
-    type: 'REMOVE_PARTNER'
+  yield db.transaction(async (trx: Knex.Transaction) => {
+    await createDesignEvent(trx, {
+      actorId: this.state.userId,
+      approvalStepId: null,
+      approvalSubmissionId: null,
+      bidId,
+      createdAt: new Date(),
+      designId: design.id,
+      id: uuid.v4(),
+      quoteId: null,
+      targetId: target.id,
+      type: 'REMOVE_PARTNER'
+    });
   });
 
   yield CollaboratorsDAO.cancelForDesignAndPartner(design.id, target.id);
@@ -283,10 +289,10 @@ interface AcceptDesignBidContext extends AuthedContext {
 }
 
 export function* acceptDesignBid(
-  this: AcceptDesignBidContext
+  this: TrxContext<AcceptDesignBidContext>
 ): Iterator<any, any, any> {
   const { bidId } = this.params;
-  const { userId } = this.state;
+  const { userId, trx } = this.state;
 
   const bid: Bid = yield BidsDAO.findById(bidId);
   this.assert(bid, 404, `Bid not found with ID ${bidId}`);
@@ -312,7 +318,7 @@ export function* acceptDesignBid(
     this.throw(400, `Design for bid ${bid.id} does not exist!`);
   }
 
-  yield createDesignEvent({
+  yield createDesignEvent(trx, {
     actorId: userId,
     approvalStepId: null,
     approvalSubmissionId: null,
@@ -396,17 +402,19 @@ export function* rejectDesignBid(
     this.throw('Bid rejection reasons are required', 400);
   }
 
-  yield createDesignEvent({
-    actorId: userId,
-    approvalStepId: null,
-    approvalSubmissionId: null,
-    bidId: bid.id,
-    createdAt: new Date(),
-    designId: quote.designId!,
-    id: uuid.v4(),
-    quoteId: bid.quoteId,
-    targetId: null,
-    type: 'REJECT_SERVICE_BID'
+  yield db.transaction(async (trx: Knex.Transaction) => {
+    await createDesignEvent(trx, {
+      actorId: userId,
+      approvalStepId: null,
+      approvalSubmissionId: null,
+      bidId: bid.id,
+      createdAt: new Date(),
+      designId: quote.designId!,
+      id: uuid.v4(),
+      quoteId: bid.quoteId,
+      targetId: null,
+      type: 'REJECT_SERVICE_BID'
+    });
   });
 
   if (collaborator.role === 'PREVIEW') {
@@ -472,7 +480,7 @@ router.put('/:bidId/assignees/:userId', requireAdmin, assignBidToPartner);
 router.get('/:bidId/assignees', requireAdmin, listBidAssignees);
 router.del('/:bidId/assignees/:userId', requireAdmin, removeBidFromPartner);
 
-router.post('/:bidId/accept', requireAuth, acceptDesignBid);
+router.post('/:bidId/accept', requireAuth, useTransaction, acceptDesignBid);
 router.post('/:bidId/reject', requireAuth, rejectDesignBid);
 router.post('/:bidId/pay-out-to-partner', requireAdmin, postPayOut);
 

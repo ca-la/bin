@@ -50,21 +50,18 @@ export function* createPartnerPairing(
   yield db.transaction(
     async (trx: Knex.Transaction): Promise<void> => {
       for (const design of designs) {
-        await DesignEventsDAO.create(
-          {
-            actorId: userId,
-            approvalStepId: null,
-            approvalSubmissionId: null,
-            bidId: null,
-            createdAt: new Date(),
-            designId: design.id,
-            id: uuid.v4(),
-            quoteId: null,
-            targetId: null,
-            type: 'COMMIT_PARTNER_PAIRING'
-          },
-          trx
-        );
+        await DesignEventsDAO.create(trx, {
+          actorId: userId,
+          approvalStepId: null,
+          approvalSubmissionId: null,
+          bidId: null,
+          createdAt: new Date(),
+          designId: design.id,
+          id: uuid.v4(),
+          quoteId: null,
+          targetId: null,
+          type: 'COMMIT_PARTNER_PAIRING'
+        });
         await createDesignTasks(design.id, 'POST_APPROVAL', trx);
       }
     }

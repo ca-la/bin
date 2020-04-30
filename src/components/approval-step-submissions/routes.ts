@@ -70,21 +70,18 @@ function* approveSubmission(
       state: ApprovalStepSubmissionState.APPROVED
     });
 
-    const designEvent: DesignEvent = await DesignEventsDAO.create(
-      {
-        actorId: this.state.userId,
-        approvalStepId: this.state.stepId,
-        approvalSubmissionId: submissionId,
-        bidId: null,
-        createdAt: new Date(),
-        designId: this.state.designId,
-        id: uuid.v4(),
-        quoteId: null,
-        targetId: null,
-        type: 'STEP_SUMBISSION_APPROVAL'
-      },
-      trx
-    );
+    const designEvent: DesignEvent = await DesignEventsDAO.create(trx, {
+      actorId: this.state.userId,
+      approvalStepId: this.state.stepId,
+      approvalSubmissionId: submissionId,
+      bidId: null,
+      createdAt: new Date(),
+      designId: this.state.designId,
+      id: uuid.v4(),
+      quoteId: null,
+      targetId: null,
+      type: 'STEP_SUMBISSION_APPROVAL'
+    });
 
     const designEventWithMeta = await DesignEventsDAO.findById(
       trx,
@@ -158,21 +155,18 @@ export function* updateApprovalSubmission(
         submission.id,
         this.request.body.collaboratorId
       );
-      await DesignEventsDAO.create(
-        {
-          actorId: userId,
-          approvalStepId: this.state.submission.stepId,
-          approvalSubmissionId: null,
-          bidId: null,
-          createdAt: new Date(),
-          designId: this.state.designId,
-          id: uuid.v4(),
-          quoteId: null,
-          targetId: collaborator && collaborator.userId,
-          type: 'STEP_ASSIGNMENT'
-        },
-        trx
-      );
+      await DesignEventsDAO.create(trx, {
+        actorId: userId,
+        approvalStepId: this.state.submission.stepId,
+        approvalSubmissionId: null,
+        bidId: null,
+        createdAt: new Date(),
+        designId: this.state.designId,
+        id: uuid.v4(),
+        quoteId: null,
+        targetId: collaborator && collaborator.userId,
+        type: 'STEP_ASSIGNMENT'
+      });
       if (collaborator) {
         await NotificationsService.sendApprovalSubmissionAssignmentNotification(
           trx,

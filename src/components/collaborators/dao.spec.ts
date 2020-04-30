@@ -736,17 +736,19 @@ test('CollaboratorsDAO.findByDesignAndTaskType', async (t: Test) => {
     userEmail: null,
     userId: partner.user.id
   });
-  await DesignEventsDAO.create({
-    actorId: partner.user.id,
-    approvalStepId: null,
-    approvalSubmissionId: null,
-    bidId: bid.id,
-    createdAt: new Date(),
-    designId: design.id,
-    id: uuid.v4(),
-    quoteId: quote.id,
-    targetId: null,
-    type: 'ACCEPT_SERVICE_BID'
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await DesignEventsDAO.create(trx, {
+      actorId: partner.user.id,
+      approvalStepId: null,
+      approvalSubmissionId: null,
+      bidId: bid.id,
+      createdAt: new Date(),
+      designId: design.id,
+      id: uuid.v4(),
+      quoteId: quote.id,
+      targetId: null,
+      type: 'ACCEPT_SERVICE_BID'
+    });
   });
 
   return db.transaction(async (trx: Knex.Transaction) => {

@@ -301,21 +301,18 @@ export async function generateFromPayloadAndUser(
     const quote = await generatePricingQuote(quoteRequest, trx);
     quotes.push(quote);
 
-    await DesignEventsDAO.create(
-      {
-        actorId: userId,
-        approvalStepId: null,
-        approvalSubmissionId: null,
-        bidId: null,
-        createdAt: new Date(),
-        designId,
-        id: uuid.v4(),
-        quoteId: quote.id,
-        targetId: null,
-        type: 'COMMIT_QUOTE'
-      },
-      trx
-    );
+    await DesignEventsDAO.create(trx, {
+      actorId: userId,
+      approvalStepId: null,
+      approvalSubmissionId: null,
+      bidId: null,
+      createdAt: new Date(),
+      designId,
+      id: uuid.v4(),
+      quoteId: quote.id,
+      targetId: null,
+      type: 'COMMIT_QUOTE'
+    });
   }
 
   return quotes;

@@ -52,7 +52,9 @@ test('Design Events DAO supports creation', async (t: Test) => {
     approvalSubmissionId: null,
     commentId: null
   };
-  const designEvent = await create(inputEvent);
+  const designEvent = await db.transaction(async (trx: Knex.Transaction) =>
+    create(trx, inputEvent)
+  );
 
   t.deepEqual(inputEvent, designEvent);
 });
@@ -137,7 +139,9 @@ test('Design Events DAO supports retrieval by design ID', async (t: Test) => {
     approvalSubmissionId: null,
     commentId: null
   };
-  await create(inputEvent);
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await create(trx, inputEvent);
+  });
   const partnerEvents = await findByTargetId(partner.id);
   const designerEvents = await findByTargetId(designer.id);
 
@@ -272,7 +276,9 @@ test('isQuoteCommitted returns the correct value', async (t: Test) => {
     approvalSubmissionId: null,
     commentId: null
   };
-  await create(commitQuoteEvent);
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await create(trx, commitQuoteEvent);
+  });
 
   t.true(await isQuoteCommitted(design.id));
 });
@@ -330,17 +336,19 @@ test('DesignEventsDAO.create throws if the same bid is accepted twice', async (t
   await createAll([bidEvent, submitEvent, acceptBidEvent]);
 
   try {
-    await create({
-      actorId: partner.id,
-      bidId: bidEvent.bidId,
-      createdAt: new Date(2012, 11, 26),
-      designId: design.id,
-      id: uuid.v4(),
-      quoteId: null,
-      targetId: cala.id,
-      approvalStepId: null,
-      approvalSubmissionId: null,
-      type: 'ACCEPT_SERVICE_BID'
+    await db.transaction(async (trx: Knex.Transaction) => {
+      await create(trx, {
+        actorId: partner.id,
+        bidId: bidEvent.bidId,
+        createdAt: new Date(2012, 11, 26),
+        designId: design.id,
+        id: uuid.v4(),
+        quoteId: null,
+        targetId: cala.id,
+        approvalStepId: null,
+        approvalSubmissionId: null,
+        type: 'ACCEPT_SERVICE_BID'
+      });
     });
 
     throw new Error("Shouldn't get here");

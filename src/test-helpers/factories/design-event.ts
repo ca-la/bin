@@ -5,6 +5,8 @@ import { findById as findUserById } from '../../components/users/dao';
 import createUser = require('../create-user');
 import ProductDesign = require('../../components/product-designs/domain-objects/product-design');
 import ProductDesignsDAO from '../../components/product-designs/dao';
+import Knex from 'knex';
+import db from '../../services/db';
 
 interface DesignEventWithResources {
   designEvent: DesignEvent;
@@ -29,20 +31,21 @@ export default async function generateDesignEvent(
   if (!design) {
     throw new Error('Design was unable to be found or created!');
   }
-
-  const designEvent = await create({
-    actorId: actor.id,
-    approvalStepId: null,
-    approvalSubmissionId: null,
-    bidId: null,
-    createdAt: new Date(2012, 11, 24),
-    designId: design.id,
-    id: uuid.v4(),
-    quoteId: null,
-    targetId: null,
-    type: 'SUBMIT_DESIGN',
-    ...options
-  });
+  const designEvent = await db.transaction((trx: Knex.Transaction) =>
+    create(trx, {
+      actorId: actor.id,
+      approvalStepId: null,
+      approvalSubmissionId: null,
+      bidId: null,
+      createdAt: new Date(2012, 11, 24),
+      designId: design.id,
+      id: uuid.v4(),
+      quoteId: null,
+      targetId: null,
+      type: 'SUBMIT_DESIGN',
+      ...options
+    })
+  );
 
   return { actor, designEvent, design };
 }

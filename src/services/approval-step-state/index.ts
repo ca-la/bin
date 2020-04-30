@@ -3,44 +3,39 @@ import Knex from 'knex';
 import db from '../db';
 import * as ProductDesignsDAO from '../../components/product-designs/dao';
 import * as ApprovalStepsDAO from '../../components/approval-steps/dao';
+import * as BidTaskTypesDAO from '../../components/bid-task-types/dao';
+
 import ApprovalStep, {
   ApprovalStepState,
   ApprovalStepType
 } from '../../components/approval-steps/domain-object';
 import { findByDesignId as findProductTypeByDesignId } from '../../components/pricing-product-types/dao';
 
-export async function transitionState(
-  stepId: string,
-  designId: string,
-  newState: ApprovalStepState
+import { taskTypes } from '../../components/tasks/templates';
+
+export async function makeNextStepCurrentIfNeeded(
+  trx: Knex.Transaction,
+  step: ApprovalStep
 ): Promise<void> {
-  await db.transaction(async (trx: Knex.Transaction) => {
-    const steps = (await ApprovalStepsDAO.findByDesign(trx, designId)).filter(
-      (step: ApprovalStep): boolean => step.state !== ApprovalStepState.SKIP
-    );
-    const updatedIndex = steps.findIndex(
-      (step: ApprovalStep): boolean => step.id === stepId
-    );
-    if (updatedIndex === -1) {
-      throw new Error(
-        `Step with ID ${stepId} not found for design with ID ${designId}`
-      );
+  const nextStep = await ApprovalStepsDAO.findOne(
+    trx,
+    { designId: step.designId },
+    (query: Knex.QueryBuilder) => {
+      return query.whereRaw(`ordering > ? and state <> ?`, [
+        step.ordering,
+        ApprovalStepState.SKIP
+      ]);
     }
-
-    await ApprovalStepsDAO.update(trx, { id: stepId, state: newState });
-    const nextStep = steps[updatedIndex + 1];
-
-    if (
-      nextStep &&
-      nextStep.state === ApprovalStepState.UNSTARTED &&
-      newState === ApprovalStepState.COMPLETED
-    ) {
-      await ApprovalStepsDAO.update(trx, {
-        id: nextStep.id,
-        reason: null,
-        state: ApprovalStepState.CURRENT
-      });
-    }
+  );
+  if (!nextStep) {
+    return;
+  }
+  if (nextStep.state !== ApprovalStepState.UNSTARTED) {
+    return;
+  }
+  await ApprovalStepsDAO.update(trx, nextStep.id, {
+    reason: null,
+    state: ApprovalStepState.CURRENT
   });
 }
 
@@ -82,19 +77,80 @@ export async function transitionCheckoutState(
         );
       }
 
-      await ApprovalStepsDAO.update(trx, {
-        ...checkoutStep,
+      await ApprovalStepsDAO.update(trx, checkoutStep.id, {
         reason: null,
         state: ApprovalStepState.COMPLETED
       });
 
       if (isBlank) {
-        await ApprovalStepsDAO.update(trx, {
-          ...technicalDesignStep,
+        await ApprovalStepsDAO.update(trx, technicalDesignStep.id, {
           reason: null,
           state: ApprovalStepState.SKIP
         });
       }
     }
   });
+}
+
+export async function actualizeDesignStepsAfterBidAcceptance(
+  trx: Knex.Transaction,
+  bidId: string,
+  designId: string
+): Promise<void> {
+  const bidTaskTypes = await BidTaskTypesDAO.findByBidId(trx, bidId);
+
+  const approvalSteps = await ApprovalStepsDAO.find(trx, {
+    designId
+  });
+  const newStates = approvalSteps.map((step: ApprovalStep) => step.state);
+
+  for (const bidTaskType of bidTaskTypes) {
+    switch (bidTaskType.taskTypeId) {
+      case taskTypes.TECHNICAL_DESIGN.id: {
+        const index = approvalSteps.findIndex(
+          (step: ApprovalStep) =>
+            step.type === ApprovalStepType.TECHNICAL_DESIGN
+        );
+        if (index > -1 && newStates[index] === ApprovalStepState.BLOCKED) {
+          newStates[index] = ApprovalStepState.UNSTARTED;
+        }
+        break;
+      }
+      case taskTypes.PRODUCTION.id: {
+        const index = approvalSteps.findIndex(
+          (step: ApprovalStep) => step.type === ApprovalStepType.SAMPLE
+        );
+        if (index > -1 && newStates[index] === ApprovalStepState.BLOCKED) {
+          newStates[index] = ApprovalStepState.UNSTARTED;
+        }
+        break;
+      }
+    }
+  }
+  const hasCurrent = newStates.some(
+    (state: ApprovalStepState) => state === ApprovalStepState.CURRENT
+  );
+  if (!hasCurrent) {
+    const firstUnstartedIndex = newStates.findIndex(
+      (state: ApprovalStepState) => state === ApprovalStepState.UNSTARTED
+    );
+    const isPreviousStepCompleted =
+      firstUnstartedIndex - 1 >= 0 &&
+      newStates[firstUnstartedIndex - 1] === ApprovalStepState.COMPLETED;
+    if (firstUnstartedIndex > -1 && isPreviousStepCompleted) {
+      newStates[firstUnstartedIndex] = ApprovalStepState.CURRENT;
+    }
+  }
+
+  // tslint:disable-next-line: no-for-in-array
+  for (const i in newStates) {
+    if (newStates[i] !== approvalSteps[i].state) {
+      await ApprovalStepsDAO.update(trx, approvalSteps[i].id, {
+        // while we don't set BLOCKING state in this function,
+        // we can reset a reason to null
+        reason: null,
+        state: newStates[i]
+      } as Partial<ApprovalStep>);
+    }
+  }
 }

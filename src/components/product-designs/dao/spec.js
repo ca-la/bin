@@ -24,6 +24,7 @@ const { test } = require('../../../test-helpers/fresh');
 const createUser = require('../../../test-helpers/create-user');
 const { moveDesign } = require('../../../test-helpers/collections');
 const { deleteById } = require('../../../test-helpers/designs');
+const db = require('../../../services/db');
 
 test('ProductDesignsDAO.create creates a design', async t => {
   const { user } = await createUser({ withSession: false });
@@ -226,7 +227,10 @@ test('ProductDesignsDAO.findAll with needsQuote query', async t => {
     targetId: null,
     type: 'SUBMIT_DESIGN'
   };
-  await DesignEventsDAO.create(submitEvent);
+
+  await db.transaction(async trx => {
+    await DesignEventsDAO.create(trx, submitEvent);
+  });
 
   const designsNeedQuote = await ProductDesignsDAO.findAll({
     limit: 10,
@@ -244,7 +248,10 @@ test('ProductDesignsDAO.findAll with needsQuote query', async t => {
     targetId: user.id,
     type: 'BID_DESIGN'
   };
-  await DesignEventsDAO.create(bidEvent);
+
+  await db.transaction(async trx => {
+    await DesignEventsDAO.create(trx, bidEvent);
+  });
 
   const needsQuote = await ProductDesignsDAO.findAll({
     limit: 10,

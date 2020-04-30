@@ -8,6 +8,7 @@ import * as ApprovalStepCommentDAO from '../approval-step-comments/dao';
 import * as DesignEventsDAO from '../../dao/design-events';
 import db from '../../services/db';
 import requireAuth from '../../middleware/require-auth';
+import useTransaction from '../../middleware/use-transaction';
 import {
   canAccessDesignInQuery,
   canAccessDesignInState,
@@ -18,7 +19,6 @@ import addAtMentionDetails from '../../services/add-at-mention-details';
 import { addAttachmentLinks } from '../../services/add-attachments-links';
 import { DesignEventWithMeta } from '../../domain-objects/design-event';
 import ApprovalStep from './domain-object';
-import { transitionState } from '../../services/approval-step-state';
 
 type StreamItem = CommentWithResources | DesignEventWithMeta;
 
@@ -76,20 +76,18 @@ function* getApprovalStepStream(
 const ALLOWED_UPDATE_KEYS = ['state'];
 
 function* updateStep(
-  this: AuthedContext<Partial<ApprovalStep>, { designId: string }>
+  this: TrxContext<AuthedContext<Partial<ApprovalStep>, { designId: string }>>
 ): Iterator<any, any, any> {
+  const { trx } = this.state;
   const { stepId } = this.params;
   const { state } = this.request.body;
-  const { designId } = this.state;
 
   const restKeys = Object.keys(omit(this.request.body, ALLOWED_UPDATE_KEYS));
   if (restKeys.length > 0) {
     this.throw(400, `Keys ${restKeys.join(', ')} are not allowed`);
   }
 
-  const found: ApprovalStep | undefined = yield db.transaction(
-    (trx: Knex.Transaction) => ApprovalStepsDAO.findById(trx, stepId)
-  );
+  const found = yield ApprovalStepsDAO.findById(trx, stepId);
   if (!found) {
     this.throw(404, `Could not find approval step with ID ${stepId}`);
   }
@@ -99,7 +97,7 @@ function* updateStep(
   }
 
   if (found.state !== state) {
-    yield transitionState(stepId, designId, state);
+    yield ApprovalStepsDAO.update(trx, stepId, { state });
   }
 
   this.status = 204;
@@ -133,6 +131,7 @@ router.patch(
   requireDesignIdBy(getDesignIdFromStep),
   canAccessDesignInState,
   canEditDesign,
+  useTransaction,
   updateStep
 );
 export default router.routes();

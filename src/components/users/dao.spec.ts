@@ -293,29 +293,31 @@ test('UsersDAO.findByBidId returns all users on a pricing bid', async (t: Test) 
   });
   const { bid, user: admin } = await createBid();
 
-  await DesignEventsDAO.create({
-    actorId: admin.id,
-    bidId: bid.id,
-    createdAt: new Date(),
-    designId: design.id,
-    id: uuid.v4(),
-    quoteId: null,
-    targetId: one.id,
-    approvalStepId: null,
-    approvalSubmissionId: null,
-    type: 'BID_DESIGN'
-  });
-  await DesignEventsDAO.create({
-    actorId: admin.id,
-    bidId: bid.id,
-    createdAt: new Date(),
-    designId: design.id,
-    id: uuid.v4(),
-    quoteId: null,
-    targetId: two.id,
-    approvalStepId: null,
-    approvalSubmissionId: null,
-    type: 'BID_DESIGN'
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await DesignEventsDAO.create(trx, {
+      actorId: admin.id,
+      bidId: bid.id,
+      createdAt: new Date(),
+      designId: design.id,
+      id: uuid.v4(),
+      quoteId: null,
+      targetId: one.id,
+      approvalStepId: null,
+      approvalSubmissionId: null,
+      type: 'BID_DESIGN'
+    });
+    await DesignEventsDAO.create(trx, {
+      actorId: admin.id,
+      bidId: bid.id,
+      createdAt: new Date(),
+      designId: design.id,
+      id: uuid.v4(),
+      quoteId: null,
+      targetId: two.id,
+      approvalStepId: null,
+      approvalSubmissionId: null,
+      type: 'BID_DESIGN'
+    });
   });
 
   const assignees = await UsersDAO.findByBidId(bid.id);
@@ -341,17 +343,19 @@ test('UsersDAO.findAllUnpaidPartners returns all unpaid partners', async (t: Tes
     designId: design.id
   });
 
-  await DesignEventsDAO.create({
-    actorId: admin.id,
-    bidId: bid.id,
-    createdAt: new Date(),
-    designId: design.id,
-    id: uuid.v4(),
-    quoteId: null,
-    targetId: unpaidPartner.id,
-    approvalStepId: null,
-    approvalSubmissionId: null,
-    type: 'BID_DESIGN'
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await DesignEventsDAO.create(trx, {
+      actorId: admin.id,
+      bidId: bid.id,
+      createdAt: new Date(),
+      designId: design.id,
+      id: uuid.v4(),
+      quoteId: null,
+      targetId: unpaidPartner.id,
+      approvalStepId: null,
+      approvalSubmissionId: null,
+      type: 'BID_DESIGN'
+    });
   });
   await generateDesignEvent({
     type: 'ACCEPT_SERVICE_BID',
@@ -378,17 +382,19 @@ test('UsersDAO.findAllUnpaidPartners returns all unpaid partners', async (t: Tes
     designId: design2.id
   });
 
-  await DesignEventsDAO.create({
-    actorId: admin2.id,
-    bidId: bid2.id,
-    createdAt: new Date(),
-    designId: design2.id,
-    id: uuid.v4(),
-    quoteId: null,
-    targetId: paidPartner.id,
-    approvalStepId: null,
-    approvalSubmissionId: null,
-    type: 'BID_DESIGN'
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await DesignEventsDAO.create(trx, {
+      actorId: admin2.id,
+      bidId: bid2.id,
+      createdAt: new Date(),
+      designId: design2.id,
+      id: uuid.v4(),
+      quoteId: null,
+      targetId: paidPartner.id,
+      approvalStepId: null,
+      approvalSubmissionId: null,
+      type: 'BID_DESIGN'
+    });
   });
   await generateDesignEvent({
     type: 'ACCEPT_SERVICE_BID',
@@ -444,17 +450,19 @@ test('UsersDAO.findAllUnpaidPartners does not include partners removed from bids
     designId: design.id
   });
 
-  await DesignEventsDAO.create({
-    actorId: admin.id,
-    bidId: bid.id,
-    createdAt: new Date(),
-    designId: design.id,
-    id: uuid.v4(),
-    quoteId: null,
-    targetId: unpaidPartner.id,
-    approvalStepId: null,
-    approvalSubmissionId: null,
-    type: 'BID_DESIGN'
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await DesignEventsDAO.create(trx, {
+      actorId: admin.id,
+      bidId: bid.id,
+      createdAt: new Date(),
+      designId: design.id,
+      id: uuid.v4(),
+      quoteId: null,
+      targetId: unpaidPartner.id,
+      approvalStepId: null,
+      approvalSubmissionId: null,
+      type: 'BID_DESIGN'
+    });
   });
   await generateDesignEvent({
     type: 'ACCEPT_SERVICE_BID',
@@ -481,17 +489,19 @@ test('UsersDAO.findAllUnpaidPartners does not include partners removed from bids
     designId: design2.id
   });
 
-  await DesignEventsDAO.create({
-    actorId: admin2.id,
-    bidId: bid2.id,
-    createdAt: new Date(),
-    designId: design2.id,
-    id: uuid.v4(),
-    quoteId: null,
-    targetId: paidPartner.id,
-    approvalStepId: null,
-    approvalSubmissionId: null,
-    type: 'BID_DESIGN'
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await DesignEventsDAO.create(trx, {
+      actorId: admin2.id,
+      bidId: bid2.id,
+      createdAt: new Date(),
+      designId: design2.id,
+      id: uuid.v4(),
+      quoteId: null,
+      targetId: paidPartner.id,
+      approvalStepId: null,
+      approvalSubmissionId: null,
+      type: 'BID_DESIGN'
+    });
   });
   await generateDesignEvent({
     type: 'ACCEPT_SERVICE_BID',

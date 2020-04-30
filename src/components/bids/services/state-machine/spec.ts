@@ -59,7 +59,8 @@ test('determineStateFromEvents works for bids that have been accepted', async (t
   });
   const { designEvent: e3 } = await generateDesignEvent({
     createdAt: new Date(),
-    type: 'ACCEPT_SERVICE_BID'
+    type: 'ACCEPT_SERVICE_BID',
+    bidId: bid.id
   });
 
   const result = determineStateFromEvents(bid, [e1, e2, e3]);
@@ -115,7 +116,8 @@ test('determineStateFromEvents works for bids where the partner was removed', as
   });
   const { designEvent: e2 } = await generateDesignEvent({
     createdAt: new Date(),
-    type: 'ACCEPT_SERVICE_BID'
+    type: 'ACCEPT_SERVICE_BID',
+    bidId: bid.id
   });
   const { designEvent: e3 } = await generateDesignEvent({
     createdAt: new Date(),

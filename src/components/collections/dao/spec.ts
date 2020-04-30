@@ -581,17 +581,19 @@ test('findSubmittedButUnpaidCollections finds all submitted but unpaid collectio
 
   await moveDesign(collection5.id, design5.id);
 
-  await DesignEventsDAO.create({
-    actorId: user2.id,
-    approvalStepId: null,
-    approvalSubmissionId: null,
-    bidId: null,
-    createdAt: new Date(),
-    designId: design5.id,
-    id: uuid.v4(),
-    quoteId: null,
-    targetId: user.id,
-    type: 'SUBMIT_DESIGN'
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await DesignEventsDAO.create(trx, {
+      actorId: user2.id,
+      approvalStepId: null,
+      approvalSubmissionId: null,
+      bidId: null,
+      createdAt: new Date(),
+      designId: design5.id,
+      id: uuid.v4(),
+      quoteId: null,
+      targetId: user.id,
+      type: 'SUBMIT_DESIGN'
+    });
   });
 
   await deleteById(designDeleted.id);

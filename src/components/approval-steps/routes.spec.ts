@@ -143,13 +143,11 @@ test('PATCH /design-approval-steps/:stepId', async (t: Test) => {
   const d1 = await generateDesign({ userId: designer.user.id });
   const steps = await db.transaction(async (trx: Knex.Transaction) => {
     const currentStepState = await ApprovalStepsDAO.findByDesign(trx, d1.id);
-    await ApprovalStepsDAO.update(trx, {
-      id: currentStepState[1].id,
+    await ApprovalStepsDAO.update(trx, currentStepState[1].id, {
       reason: null,
       state: ApprovalStepState.SKIP
     });
-    await ApprovalStepsDAO.update(trx, {
-      id: currentStepState[2].id,
+    await ApprovalStepsDAO.update(trx, currentStepState[2].id, {
       reason: null,
       state: ApprovalStepState.UNSTARTED
     });
@@ -168,7 +166,7 @@ test('PATCH /design-approval-steps/:stepId', async (t: Test) => {
   );
   t.is(afterCompletionSteps[0].state, ApprovalStepState.COMPLETED);
   t.is(afterCompletionSteps[1].state, ApprovalStepState.SKIP);
-  t.is(afterCompletionSteps[2].state, ApprovalStepState.CURRENT);
+  t.is(afterCompletionSteps[2].state, ApprovalStepState.CURRENT, 'isCurrent');
 
   const adminRes = await patch(`/design-approval-steps/${steps[0].id}`, {
     headers: authHeader(admin.session.id),

@@ -8,7 +8,7 @@ import BidTaskType, {
   dataAdapter,
   isBidTaskTypeRow
 } from './domain-object';
-import { validate } from '../../services/validate-from-db';
+import { validate, validateEvery } from '../../services/validate-from-db';
 
 const TABLE_NAME = 'bid_task_types';
 
@@ -33,4 +33,20 @@ export async function create(
   }
 
   return validate(TABLE_NAME, isBidTaskTypeRow, dataAdapter, created);
+}
+
+export async function findByBidId(
+  trx: Knex.Transaction,
+  bidId: string
+): Promise<BidTaskType[]> {
+  const rows = await trx(TABLE_NAME)
+    .where({ pricing_bid_id: bidId })
+    .select('*');
+
+  return validateEvery<BidTaskTypeRow, BidTaskType>(
+    TABLE_NAME,
+    isBidTaskTypeRow,
+    dataAdapter,
+    rows
+  );
 }

@@ -64,6 +64,10 @@ type PublicContext<
   WithRouter & WithJsonBody<BodyT>
 >;
 
+type TrxContext<T extends AuthedContext> = T & {
+  state: T['state'] & { trx: import('knex').Transaction };
+};
+
 interface PermissionsKoaState {
   permissions: import('../../services/get-permissions').Permissions;
 }

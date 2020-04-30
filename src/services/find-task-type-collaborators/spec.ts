@@ -39,29 +39,31 @@ test('findTaskTypeCollaborators', async (t: Test) => {
       taskTypeIds: [taskTypes.PRODUCT_PHOTOGRAPHY.id]
     }
   });
-  await DesignEventsDAO.create({
-    id: uuid.v4(),
-    type: 'ACCEPT_SERVICE_BID',
-    createdAt: new Date(),
-    actorId: partner.user.id,
-    targetId: ops.user.id,
-    designId: design.id,
-    bidId: bid.id,
-    quoteId: quote.id,
-    approvalStepId: null,
-    approvalSubmissionId: null
-  });
-  await DesignEventsDAO.create({
-    id: uuid.v4(),
-    type: 'ACCEPT_SERVICE_BID',
-    createdAt: new Date(),
-    actorId: photographer.user.id,
-    targetId: ops.user.id,
-    designId: design.id,
-    bidId: photoBid.id,
-    quoteId: quote.id,
-    approvalStepId: null,
-    approvalSubmissionId: null
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await DesignEventsDAO.create(trx, {
+      id: uuid.v4(),
+      type: 'ACCEPT_SERVICE_BID',
+      createdAt: new Date(),
+      actorId: partner.user.id,
+      targetId: ops.user.id,
+      designId: design.id,
+      bidId: bid.id,
+      quoteId: quote.id,
+      approvalStepId: null,
+      approvalSubmissionId: null
+    });
+    await DesignEventsDAO.create(trx, {
+      id: uuid.v4(),
+      type: 'ACCEPT_SERVICE_BID',
+      createdAt: new Date(),
+      actorId: photographer.user.id,
+      targetId: ops.user.id,
+      designId: design.id,
+      bidId: photoBid.id,
+      quoteId: quote.id,
+      approvalStepId: null,
+      approvalSubmissionId: null
+    });
   });
 
   const { collaborator: admin } = await createCollaborator({

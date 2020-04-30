@@ -3,6 +3,7 @@
 const DesignEventsDAO = require('../../../dao/design-events');
 const NotificationsService = require('../../../services/create-notifications');
 const User = require('../../users/domain-object');
+const db = require('../../../services/db');
 
 function isAllowedEventType(role, event) {
   if (!event || (event && !event.type)) {
@@ -53,7 +54,9 @@ function* addDesignEvent() {
     designId: this.params.designId
   };
 
-  const added = yield DesignEventsDAO.create(eventData);
+  const added = yield db.transaction(async trx =>
+    DesignEventsDAO.create(trx, eventData)
+  );
 
   if (added.type === 'ACCEPT_SERVICE_BID') {
     NotificationsService.sendPartnerAcceptServiceBidNotification(

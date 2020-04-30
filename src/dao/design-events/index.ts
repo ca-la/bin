@@ -15,6 +15,7 @@ import DesignEvent, {
 import first from '../../services/first';
 import filterError = require('../../services/filter-error');
 import { validate, validateEvery } from '../../services/validate-from-db';
+import { CalaEvents, emit } from '../../services/pubsub';
 
 const TABLE_NAME = 'design_events';
 
@@ -27,22 +28,17 @@ export class DuplicateAcceptRejectError extends Error {
 }
 
 export async function create(
-  event: DesignEvent,
-  trx?: Knex.Transaction
+  trx: Knex.Transaction,
+  event: DesignEvent
 ): Promise<DesignEvent> {
   const rowData = {
     ...dataAdapter.forInsertion(event),
     created_at: new Date()
   };
 
-  const created = await db(TABLE_NAME)
+  const created = await trx(TABLE_NAME)
     .insert(rowData)
     .returning('*')
-    .modify((query: Knex.QueryBuilder) => {
-      if (trx) {
-        query.transacting(trx);
-      }
-    })
     .then((rows: DesignEventRow[]) => first(rows))
     .catch(rethrow)
     .catch(
@@ -61,6 +57,18 @@ export async function create(
 
   if (!created) {
     throw new Error('Failed to create DesignEvent');
+  }
+  switch (event.type) {
+    case 'ACCEPT_SERVICE_BID':
+      if (!event.bidId) {
+        throw new Error('bidId is missing');
+      }
+      await emit<CalaEvents.BidAccepted>('bid.accepted', {
+        trx,
+        bidId: event.bidId,
+        designId: event.designId
+      });
+      break;
   }
 
   return validate<DesignEventRow, DesignEvent>(

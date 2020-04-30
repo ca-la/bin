@@ -31,21 +31,18 @@ export async function commitCostInputs(
       await expireCostInputs(designIds, twoWeeksFromNow, trx);
 
       for (const design of designs) {
-        await DesignEventsDAO.create(
-          {
-            actorId,
-            approvalStepId: null,
-            approvalSubmissionId: null,
-            bidId: null,
-            createdAt: new Date(),
-            designId: design.id,
-            id: uuid.v4(),
-            quoteId: null,
-            targetId: design.userId,
-            type: 'COMMIT_COST_INPUTS'
-          },
-          trx
-        );
+        await DesignEventsDAO.create(trx, {
+          actorId,
+          approvalStepId: null,
+          approvalSubmissionId: null,
+          bidId: null,
+          createdAt: new Date(),
+          designId: design.id,
+          id: uuid.v4(),
+          quoteId: null,
+          targetId: design.userId,
+          type: 'COMMIT_COST_INPUTS'
+        });
       }
     }
   );

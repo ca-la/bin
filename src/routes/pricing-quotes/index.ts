@@ -1,3 +1,4 @@
+import Knex from 'knex';
 import { omit, sum } from 'lodash';
 import Router from 'koa-router';
 import uuid from 'node-uuid';
@@ -36,6 +37,7 @@ import generatePricingQuote, {
   UnsavedQuote
 } from '../../services/generate-pricing-quote';
 import addTimeBuffer from '../../services/add-time-buffer';
+import db from '../../services/db';
 
 const router = new Router();
 
@@ -111,17 +113,19 @@ function* createQuote(this: AuthedContext): Iterator<any, any, any> {
 
     quotes.push(quote);
 
-    yield DesignEventsDAO.create({
-      actorId: this.state.userId,
-      approvalSubmissionId: null,
-      bidId: null,
-      createdAt: new Date(),
-      designId,
-      id: uuid.v4(),
-      quoteId: quote.id,
-      targetId: null,
-      approvalStepId: null,
-      type: 'COMMIT_QUOTE'
+    yield db.transaction(async (trx: Knex.Transaction) => {
+      await DesignEventsDAO.create(trx, {
+        actorId: this.state.userId,
+        approvalSubmissionId: null,
+        bidId: null,
+        createdAt: new Date(),
+        designId,
+        id: uuid.v4(),
+        quoteId: quote.id,
+        targetId: null,
+        approvalStepId: null,
+        type: 'COMMIT_QUOTE'
+      });
     });
   }
 
