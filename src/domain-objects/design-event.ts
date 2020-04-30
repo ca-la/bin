@@ -76,6 +76,8 @@ export interface DesignEventWithMeta extends DesignEvent {
   targetEmail: string | null;
   submissionTitle: string | null;
   stepTitle: string | null;
+  taskTypeIds: string[];
+  taskTypeTitles: string[];
 }
 
 export interface DesignEventWithMetaRow extends DesignEventRow {
@@ -87,6 +89,8 @@ export interface DesignEventWithMetaRow extends DesignEventRow {
   target_email: string | null;
   submission_title: string | null;
   step_title: string | null;
+  task_type_ids: string[];
+  task_type_titles: string[];
 }
 
 export const dataAdapter = new DataAdapter<DesignEventRow, DesignEvent>();

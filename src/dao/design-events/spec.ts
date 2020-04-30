@@ -25,6 +25,7 @@ import {
   ApprovalStepSubmissionArtifactType,
   ApprovalStepSubmissionState
 } from '../../components/approval-step-submissions/domain-object';
+import { taskTypes } from '../../components/tasks/templates';
 
 const testDate = new Date(2012, 11, 22);
 test('Design Events DAO supports creation', async (t: Test) => {
@@ -361,7 +362,11 @@ test('DesignEventsDAO.create throws if the same bid is accepted twice', async (t
 
 test('Design Events DAO supports retrieval by design ID and approval step ID', async (t: Test) => {
   const clock = sandbox().useFakeTimers(testDate);
-  const { bid } = await generateBid();
+  const { bid } = await generateBid({
+    bidOptions: {
+      taskTypeIds: [taskTypes.TECHNICAL_DESIGN.id, taskTypes.PRODUCTION.id]
+    }
+  });
   const { user: partner } = await createUser();
   const { user: designer } = await createUser();
   const { user: cala } = await createUser();
@@ -394,12 +399,22 @@ test('Design Events DAO supports retrieval by design ID and approval step ID', a
     approvalStepId: null,
     type: 'BID_DESIGN'
   });
+  clock.setSystemTime(new Date(2020, 1, 27));
+  await generateDesignEvent({
+    actorId: cala.id,
+    bidId: bid.id,
+    designId: design.id,
+    quoteId: null,
+    targetId: partner.id,
+    approvalStepId: null,
+    type: 'ACCEPT_SERVICE_BID'
+  });
 
   const events = await db.transaction(async (trx: Knex.Transaction) =>
     findApprovalStepEvents(trx, design.id, approvalStepId)
   );
 
-  t.equal(events.length, 3);
+  t.equal(events.length, 4);
   t.deepEqual(
     {
       approvalStepId: events[0].approvalStepId,
@@ -446,7 +461,9 @@ test('Design Events DAO supports retrieval by design ID and approval step ID', a
       targetName: events[2].targetName,
       targetRole: events[2].targetRole,
       targetEmail: events[2].targetEmail,
-      type: events[2].type
+      type: events[2].type,
+      taskTypeIds: events[2].taskTypeIds,
+      taskTypeTitles: events[2].taskTypeTitles
     },
     {
       approvalStepId: null,
@@ -459,9 +476,33 @@ test('Design Events DAO supports retrieval by design ID and approval step ID', a
       targetName: partner.name,
       targetRole: partner.role,
       targetEmail: partner.email,
-      type: 'BID_DESIGN'
+      type: 'BID_DESIGN',
+      taskTypeIds: [taskTypes.TECHNICAL_DESIGN.id, taskTypes.PRODUCTION.id],
+      taskTypeTitles: [
+        taskTypes.TECHNICAL_DESIGN.title,
+        taskTypes.PRODUCTION.title
+      ]
     },
-    'actor and target user info is appended'
+    'actor, target user, task type ids and names are appended'
+  );
+
+  t.deepEqual(
+    {
+      approvalStepId: events[3].approvalStepId,
+      type: events[3].type,
+      taskTypeIds: events[2].taskTypeIds,
+      taskTypeTitles: events[2].taskTypeTitles
+    },
+    {
+      approvalStepId: null,
+      type: 'ACCEPT_SERVICE_BID',
+      taskTypeIds: [taskTypes.TECHNICAL_DESIGN.id, taskTypes.PRODUCTION.id],
+      taskTypeTitles: [
+        taskTypes.TECHNICAL_DESIGN.title,
+        taskTypes.PRODUCTION.title
+      ]
+    },
+    'task type ids and names are appended for ACCEPT_SERVICE_BID'
   );
 });
 

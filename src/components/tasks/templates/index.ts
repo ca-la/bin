@@ -15,6 +15,6 @@ export function getTemplatesFor(
   return CutAndSewStageTemplates.getByPhase(phase);
 }
 
-export { TaskType, taskTypes } from './task-types';
+export { TaskType, taskTypes, taskTypesById } from './task-types';
 export { StageTemplate } from './stage-template';
 export { TaskTemplate } from './task-template';

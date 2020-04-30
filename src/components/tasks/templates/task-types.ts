@@ -1,3 +1,4 @@
+import { mapKeys } from 'lodash';
 import { CollaboratorRole } from '../../collaborators/domain-objects/role';
 
 export interface TaskType {
@@ -33,3 +34,8 @@ export const taskTypes: { [key: string]: TaskType } = {
     assigneeRole: CollaboratorRole.PARTNER
   }
 };
+
+export const taskTypesById: { [key: string]: TaskType } = mapKeys(
+  taskTypes,
+  (item: TaskType) => item.id
+);

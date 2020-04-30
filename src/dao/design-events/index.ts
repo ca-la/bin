@@ -15,6 +15,7 @@ import DesignEvent, {
 import first from '../../services/first';
 import filterError = require('../../services/filter-error');
 import { validate, validateEvery } from '../../services/validate-from-db';
+import { taskTypesById } from '../../components/tasks/templates';
 import { CalaEvents, emit } from '../../services/pubsub';
 
 const TABLE_NAME = 'design_events';
@@ -155,7 +156,14 @@ function addMeta(query: Knex.QueryBuilder): Knex.QueryBuilder {
       'target.role as target_role',
       'target.email as target_email',
       'design_approval_submissions.title as submission_title',
-      'design_approval_steps.title as step_title'
+      'design_approval_steps.title as step_title',
+      db.raw(
+        `(
+          SELECT COALESCE(jsonb_agg(task_type_id), '[]')
+          FROM bid_task_types
+          WHERE pricing_bid_id = design_events.bid_id
+        ) AS task_type_ids`
+      )
     ])
     .join('users as actor', 'actor.id', 'design_events.actor_id')
     .leftJoin('users as target', 'target.id', 'design_events.target_id')
@@ -176,14 +184,21 @@ export async function findApprovalStepEvents(
   designId: string,
   approvalStepId: string
 ): Promise<DesignEventWithMeta[]> {
-  const designRows = await trx(TABLE_NAME)
+  const designRows = (await trx(TABLE_NAME)
     .select('design_events.*')
     .modify(addMeta)
     .orderBy('design_events.created_at', 'asc')
     .whereRaw(
       `design_events.design_id = ? AND (approval_step_id = ? OR approval_step_id IS NULL)`,
       [designId, approvalStepId]
-    );
+    )).map((item: DesignEventWithMetaRow) => {
+    return {
+      ...item,
+      task_type_titles: item.task_type_ids.map((typeId: string) =>
+        taskTypesById[typeId] ? taskTypesById[typeId].title : 'Unknown task'
+      )
+    };
+  });
   return validateEvery<DesignEventWithMetaRow, DesignEventWithMeta>(
     TABLE_NAME,
     isDesignEventWithMetaRow,
