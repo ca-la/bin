@@ -40,9 +40,6 @@ function* createApprovalStepComment(
       attachments,
       userId
     });
-    if (!comment) {
-      throw new Error('Could not retrieve created comment');
-    }
 
     const approvalStepComment = await ApprovalStepCommentDAO.create(trx, {
       approvalStepId,

@@ -1,24 +1,33 @@
 import Knex from 'knex';
 import Router from 'koa-router';
 import uuid from 'node-uuid';
-import { omit } from 'lodash';
+import { Asset } from '@cala/ts-lib/dist/assets';
+import { omit, pick } from 'lodash';
 
-import * as ApprovalSubmissionsDAO from './dao';
+import * as ApprovalStepCommentDAO from '../approval-step-comments/dao';
 import * as ApprovalStepsDAO from '../approval-steps/dao';
+import * as ApprovalSubmissionsDAO from './dao';
 import * as CollaboratorsDAO from '../collaborators/dao';
 import * as DesignEventsDAO from '../../dao/design-events';
+import * as NotificationsService from '../../services/create-notifications';
+import ApprovalStepSubmission, {
+  ApprovalStepSubmissionState
+} from './domain-object';
 import db from '../../services/db';
+import DesignEvent from '../../domain-objects/design-event';
 import requireAuth from '../../middleware/require-auth';
-import { requireQueryParam } from '../../middleware/require-query-param';
+import { announceApprovalStepCommentCreation } from '../iris/messages/approval-step-comment';
+import {
+  BASE_COMMENT_PROPERTIES,
+  isBaseComment
+} from '../comments/domain-object';
 import {
   canAccessDesignInState,
   requireDesignIdBy
 } from '../../middleware/can-access-design';
-import ApprovalStepSubmission, {
-  ApprovalStepSubmissionState
-} from './domain-object';
-import * as NotificationsService from '../../services/create-notifications';
-import DesignEvent from '../../domain-objects/design-event';
+import { createCommentWithAttachments } from '../../services/create-comment-with-attachments';
+import { getCollaboratorsFromCommentMentions } from '../../services/add-at-mention-details';
+import { requireQueryParam } from '../../middleware/require-query-param';
 
 const router = new Router();
 
@@ -51,7 +60,7 @@ export function* getApprovalSubmissionsForStep(
   this.status = 200;
 }
 
-function* approveSubmission(
+function* createApproval(
   this: AuthedContext<{}, PermittedState & { designId: string; stepId: string }>
 ): Iterator<any, any, any> {
   const { submissionId } = this.params;
@@ -63,7 +72,7 @@ function* approveSubmission(
     }
 
     if (submission.state === ApprovalStepSubmissionState.APPROVED) {
-      this.throw(403, `Submission is already approved ${submissionId}`);
+      this.throw(409, `Submission is already approved ${submissionId}`);
     }
 
     await ApprovalSubmissionsDAO.update(trx, submissionId, {
@@ -75,6 +84,7 @@ function* approveSubmission(
       approvalStepId: this.state.stepId,
       approvalSubmissionId: submissionId,
       bidId: null,
+      commentId: null,
       createdAt: new Date(),
       designId: this.state.designId,
       id: uuid.v4(),
@@ -160,6 +170,7 @@ export function* updateApprovalSubmission(
         approvalStepId: this.state.submission.stepId,
         approvalSubmissionId: null,
         bidId: null,
+        commentId: null,
         createdAt: new Date(),
         designId: this.state.designId,
         id: uuid.v4(),
@@ -239,6 +250,80 @@ async function getDesignIdFromSubmission(
   return step.designId;
 }
 
+export function* createRevisionRequest(
+  this: AuthedContext<{}, PermittedState & { designId: string; stepId: string }>
+): Iterator<any, any, any> {
+  const userId = this.state.userId;
+  if (!this.request.body.comment) {
+    this.throw(400, 'Missing comment');
+  }
+
+  const commentRequest = pick(
+    this.request.body.comment,
+    BASE_COMMENT_PROPERTIES
+  );
+  const attachments: Asset[] = this.request.body.comment.attachments || [];
+  const { submissionId } = this.params;
+
+  if (!commentRequest || !isBaseComment(commentRequest)) {
+    this.throw(400, 'Invalid comment');
+  }
+
+  yield db.transaction(async (trx: Knex.Transaction) => {
+    const submission = await ApprovalSubmissionsDAO.findById(trx, submissionId);
+
+    if (!submission) {
+      this.throw(404, 'Submission not found');
+    }
+
+    if (submission.state === ApprovalStepSubmissionState.REVISION_REQUESTED) {
+      this.throw(409, 'Submission already has requested revisions');
+    }
+
+    await ApprovalSubmissionsDAO.update(trx, submissionId, {
+      state: ApprovalStepSubmissionState.REVISION_REQUESTED
+    });
+
+    const comment = await createCommentWithAttachments(trx, {
+      comment: commentRequest,
+      attachments,
+      userId
+    });
+
+    const approvalStepComment = await ApprovalStepCommentDAO.create(trx, {
+      approvalStepId: this.state.stepId,
+      commentId: comment.id
+    });
+
+    const { collaboratorNames } = await getCollaboratorsFromCommentMentions(
+      trx,
+      comment.text
+    );
+
+    const commentWithMentions = { ...comment, mentions: collaboratorNames };
+    await announceApprovalStepCommentCreation(
+      approvalStepComment,
+      commentWithMentions
+    );
+
+    await DesignEventsDAO.create(trx, {
+      actorId: this.state.userId,
+      approvalStepId: this.state.stepId,
+      approvalSubmissionId: submissionId,
+      bidId: null,
+      commentId: comment.id,
+      createdAt: new Date(),
+      designId: this.state.designId,
+      id: uuid.v4(),
+      quoteId: null,
+      targetId: null,
+      type: 'REVISION_REQUEST'
+    });
+  });
+
+  this.status = 204;
+}
+
 router.get(
   '/',
   requireAuth,
@@ -252,13 +337,31 @@ router.get(
   getApprovalSubmissionsForStep
 );
 
+router.post(
+  '/:submissionId/revision-requests',
+  requireAuth,
+  requireDesignIdBy(getDesignIdFromSubmission),
+  canAccessDesignInState,
+  createRevisionRequest
+);
+
+router.post(
+  '/:submissionId/approvals',
+  requireAuth,
+  requireDesignIdBy(getDesignIdFromSubmission),
+  canAccessDesignInState,
+  createApproval
+);
+
+// Deprecated; TODO remove after Studio is updated to use the new URL
 router.put(
   '/:submissionId/approve',
   requireAuth,
   requireDesignIdBy(getDesignIdFromSubmission),
   canAccessDesignInState,
-  approveSubmission
+  createApproval
 );
+
 router.patch(
   '/:submissionId',
   requireAuth,

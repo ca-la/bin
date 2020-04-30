@@ -340,6 +340,7 @@ test('DesignEventsDAO.create throws if the same bid is accepted twice', async (t
       await create(trx, {
         actorId: partner.id,
         bidId: bidEvent.bidId,
+        commentId: null,
         createdAt: new Date(2012, 11, 26),
         designId: design.id,
         id: uuid.v4(),

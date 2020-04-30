@@ -43,9 +43,7 @@ test('createDesign service creates a collaborator', async (t: Test) => {
       userId: user.id,
       comment: commentBody
     });
-    if (!comment) {
-      return t.fail('Comment was not found');
-    }
+
     t.deepEqual(
       {
         ...comment,

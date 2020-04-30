@@ -31,12 +31,14 @@ export default async function generateDesignEvent(
   if (!design) {
     throw new Error('Design was unable to be found or created!');
   }
+
   const designEvent = await db.transaction((trx: Knex.Transaction) =>
     create(trx, {
       actorId: actor.id,
       approvalStepId: null,
       approvalSubmissionId: null,
       bidId: null,
+      commentId: null,
       createdAt: new Date(2012, 11, 24),
       designId: design.id,
       id: uuid.v4(),

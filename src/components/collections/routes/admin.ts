@@ -55,6 +55,7 @@ export function* createPartnerPairing(
           approvalStepId: null,
           approvalSubmissionId: null,
           bidId: null,
+          commentId: null,
           createdAt: new Date(),
           designId: design.id,
           id: uuid.v4(),

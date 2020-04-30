@@ -306,6 +306,7 @@ export async function generateFromPayloadAndUser(
       approvalStepId: null,
       approvalSubmissionId: null,
       bidId: null,
+      commentId: null,
       createdAt: new Date(),
       designId,
       id: uuid.v4(),

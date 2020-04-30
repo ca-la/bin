@@ -706,25 +706,27 @@ test('POST /collections/:collectionId/partner-pairings', async (t: tape.Test) =>
 
   await DesignEventsDAO.createAll([
     {
-      id: uuid.v4(),
       actorId: partner.user.id,
-      targetId: null,
-      designId: designOne.id,
-      bidId: null,
-      quoteId: null,
       approvalStepId: null,
       approvalSubmissionId: null,
+      bidId: null,
+      commentId: null,
+      designId: designOne.id,
+      id: uuid.v4(),
+      quoteId: null,
+      targetId: null,
       type: 'ACCEPT_SERVICE_BID'
     },
     {
-      id: uuid.v4(),
       actorId: partner.user.id,
-      targetId: null,
-      designId: designTwo.id,
-      bidId: null,
-      quoteId: null,
       approvalStepId: null,
       approvalSubmissionId: null,
+      bidId: null,
+      commentId: null,
+      designId: designTwo.id,
+      id: uuid.v4(),
+      quoteId: null,
+      targetId: null,
       type: 'ACCEPT_SERVICE_BID'
     }
   ]);

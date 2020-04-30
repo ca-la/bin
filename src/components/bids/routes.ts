@@ -190,12 +190,14 @@ function* assignBidToPartner(this: AuthedContext): Iterator<any, any, any> {
       `There are active bids for user ${userId} on the design ${design.id}`
     );
   }
+
   yield db.transaction(async (trx: Knex.Transaction) => {
     await createDesignEvent(trx, {
       actorId: this.state.userId,
       approvalStepId: null,
       approvalSubmissionId: null,
       bidId,
+      commentId: null,
       createdAt: new Date(),
       designId: design.id,
       id: uuid.v4(),
@@ -269,6 +271,7 @@ function* removeBidFromPartner(this: AuthedContext): Iterator<any, any, any> {
       approvalStepId: null,
       approvalSubmissionId: null,
       bidId,
+      commentId: null,
       createdAt: new Date(),
       designId: design.id,
       id: uuid.v4(),
@@ -323,6 +326,7 @@ export function* acceptDesignBid(
     approvalStepId: null,
     approvalSubmissionId: null,
     bidId: bid.id,
+    commentId: null,
     createdAt: new Date(),
     designId: quote.designId!,
     id: uuid.v4(),
@@ -408,6 +412,7 @@ export function* rejectDesignBid(
       approvalStepId: null,
       approvalSubmissionId: null,
       bidId: bid.id,
+      commentId: null,
       createdAt: new Date(),
       designId: quote.designId!,
       id: uuid.v4(),

@@ -118,6 +118,7 @@ function* createQuote(this: AuthedContext): Iterator<any, any, any> {
         actorId: this.state.userId,
         approvalSubmissionId: null,
         bidId: null,
+        commentId: null,
         createdAt: new Date(),
         designId,
         id: uuid.v4(),

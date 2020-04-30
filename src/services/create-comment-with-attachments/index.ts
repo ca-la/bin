@@ -1,6 +1,5 @@
 import Knex = require('knex');
 import { BaseComment } from '@cala/ts-lib';
-import Comment from '../../components/comments/domain-object';
 import * as CommentsDAO from '../../components/comments/dao';
 import * as AssetsDAO from '../../components/assets/dao';
 import * as CommentAttachmentsDAO from '../../components/comment-attachments/dao';
@@ -18,7 +17,7 @@ export async function createCommentWithAttachments(
     attachments: Asset[];
     userId: string;
   }
-): Promise<CommentWithAttachmentLinks | null> {
+): Promise<CommentWithAttachmentLinks> {
   const { comment: baseComment, attachments, userId } = options;
   const comment = await CommentsDAO.create({ ...baseComment, userId }, trx);
   if (attachments.length === 0) {
@@ -49,8 +48,10 @@ export async function createCommentWithAttachments(
     )
   );
 
-  return CommentsDAO.findById(comment.id, trx).then(
-    (foundComment: Comment | null) =>
-      foundComment ? addAttachmentLinks(foundComment) : null
-  );
+  const foundComment = await CommentsDAO.findById(comment.id, trx);
+  if (!foundComment) {
+    throw new Error(`Could not find newly-created comment ${comment.id}`);
+  }
+
+  return addAttachmentLinks(foundComment);
 }

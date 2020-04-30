@@ -1,7 +1,7 @@
 import Knex from 'knex';
 import uuid from 'node-uuid';
-import { authHeader, get, patch, post, put } from '../../test-helpers/http';
-import { test, Test } from '../../test-helpers/fresh';
+import { authHeader, get, patch, post } from '../../test-helpers/http';
+import { sandbox, test, Test } from '../../test-helpers/fresh';
 import createUser from '../../test-helpers/create-user';
 import { generateDesign } from '../../test-helpers/factories/product-design';
 import db from '../../services/db';
@@ -10,10 +10,12 @@ import {
   ApprovalStepSubmissionArtifactType,
   ApprovalStepSubmissionState
 } from './domain-object';
+import * as AnnounceCommentService from '../iris/messages/approval-step-comment';
+import * as NotificationsDAO from '../notifications/dao';
+import * as DesignEventsDAO from '../../dao/design-events';
 import generateApprovalStep from '../../test-helpers/factories/design-approval-step';
 import generateApprovalSubmission from '../../test-helpers/factories/design-approval-submission';
 import generateCollaborator from '../../test-helpers/factories/collaborator';
-import * as NotificationsDAO from '../notifications/dao';
 
 test('GET /design-approval-step-submissions?stepId=:stepId', async (t: Test) => {
   const designer = await createUser();
@@ -145,7 +147,7 @@ test('POST /design-approval-step-submissions?stepId=:stepId', async (t: Test) =>
   t.is(body.stepId, steps[1].id);
 });
 
-test('PUT /design-approval-step-submissions/:submissionId/approve', async (t: Test) => {
+test('POST /design-approval-step-submissions/:submissionId/approvals', async (t: Test) => {
   const { user: user1, session: session1 } = await createUser();
 
   const trx = await db.transaction();
@@ -158,8 +160,8 @@ test('PUT /design-approval-step-submissions/:submissionId/approve', async (t: Te
     stepId: approvalStep.id
   });
   await trx.commit();
-  const [response, body] = await put(
-    `/design-approval-step-submissions/${submission.id}/approve`,
+  const [response, body] = await post(
+    `/design-approval-step-submissions/${submission.id}/approvals`,
     {
       headers: authHeader(session1.id)
     }
@@ -191,11 +193,77 @@ test('PUT /design-approval-step-submissions/:submissionId/approve', async (t: Te
     'body is approval event'
   );
 
-  const [failureResponse] = await put(
-    `/design-approval-step-submissions/${submission.id}/approve`,
+  const [failureResponse] = await post(
+    `/design-approval-step-submissions/${submission.id}/approvals`,
     {
       headers: authHeader(session1.id)
     }
   );
-  t.is(failureResponse.status, 403, 'Could not approve twice');
+  t.is(failureResponse.status, 409, 'Could not approve twice');
+});
+
+test('POST /design-approval-step-submissions/:submissionId/revision-requests', async (t: Test) => {
+  sandbox()
+    .stub(AnnounceCommentService, 'announceApprovalStepCommentCreation')
+    .resolves({});
+
+  const { user, session } = await createUser();
+
+  const trx = await db.transaction();
+  const { approvalStep, design } = await generateApprovalStep(trx, {
+    createdBy: user.id
+  });
+
+  const { submission } = await generateApprovalSubmission(trx, {
+    title: 'Fizz Buzz',
+    stepId: approvalStep.id,
+    state: ApprovalStepSubmissionState.SUBMITTED
+  });
+  await trx.commit();
+
+  const [response] = await post(
+    `/design-approval-step-submissions/${submission.id}/revision-requests`,
+    {
+      headers: authHeader(session.id),
+      body: {
+        comment: {
+          createdAt: new Date(),
+          deletedAt: null,
+          id: uuid.v4(),
+          isPinned: false,
+          parentCommentId: null,
+          text: 'test comment',
+          userId: user.id
+        }
+      }
+    }
+  );
+
+  t.equal(response.status, 204);
+
+  const events = await DesignEventsDAO.findByDesignId(design.id);
+  t.equal(events.length, 1);
+  t.equal(events[0].type, 'REVISION_REQUEST');
+  t.notEqual(events[0].commentId, null);
+
+  const [duplicateResponse, duplicateBody] = await post(
+    `/design-approval-step-submissions/${submission.id}/revision-requests`,
+    {
+      headers: authHeader(session.id),
+      body: {
+        comment: {
+          createdAt: new Date(),
+          deletedAt: null,
+          id: uuid.v4(),
+          isPinned: false,
+          parentCommentId: null,
+          text: 'test comment',
+          userId: user.id
+        }
+      }
+    }
+  );
+
+  t.equal(duplicateResponse.status, 409);
+  t.equal(duplicateBody.message, 'Submission already has requested revisions');
 });

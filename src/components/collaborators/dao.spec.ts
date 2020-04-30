@@ -742,6 +742,7 @@ test('CollaboratorsDAO.findByDesignAndTaskType', async (t: Test) => {
       approvalStepId: null,
       approvalSubmissionId: null,
       bidId: bid.id,
+      commentId: null,
       createdAt: new Date(),
       designId: design.id,
       id: uuid.v4(),

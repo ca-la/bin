@@ -43,6 +43,7 @@ test('findTaskTypeCollaborators', async (t: Test) => {
     await DesignEventsDAO.create(trx, {
       id: uuid.v4(),
       type: 'ACCEPT_SERVICE_BID',
+      commentId: null,
       createdAt: new Date(),
       actorId: partner.user.id,
       targetId: ops.user.id,
@@ -55,6 +56,7 @@ test('findTaskTypeCollaborators', async (t: Test) => {
     await DesignEventsDAO.create(trx, {
       id: uuid.v4(),
       type: 'ACCEPT_SERVICE_BID',
+      commentId: null,
       createdAt: new Date(),
       actorId: photographer.user.id,
       targetId: ops.user.id,

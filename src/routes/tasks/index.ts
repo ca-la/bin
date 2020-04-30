@@ -313,9 +313,6 @@ function* createTaskComment(
         attachments,
         userId
       });
-      if (!comment) {
-        throw new Error('Could not retrieve created comment');
-      }
 
       const taskComment = await TaskCommentDAO.create(
         {

@@ -50,7 +50,7 @@ export default interface DesignEvent {
   approvalStepId: string | null;
   type: DesignEventTypes;
   approvalSubmissionId: string | null;
-  commentId?: null;
+  commentId: string | null;
 }
 
 export interface DesignEventRow {
@@ -63,6 +63,8 @@ export interface DesignEventRow {
   quote_id: string | null;
   approval_step_id: string | null;
   type: DesignEventTypes;
+  approval_submission_id: string | null;
+  comment_id: string | null;
 }
 
 export interface DesignEventWithMeta extends DesignEvent {
@@ -105,7 +107,9 @@ export function isDesignEventRow(row: object): row is DesignEventRow {
     'bid_id',
     'type',
     'quote_id',
-    'approval_step_id'
+    'approval_step_id',
+    'approval_submission_id',
+    'comment_id'
   );
 }
 
@@ -120,7 +124,9 @@ export function isDesignEvent(row: object): row is DesignEvent {
     'bidId',
     'type',
     'quoteId',
-    'approvalStepId'
+    'approvalStepId',
+    'approvalSubmissionId',
+    'commentId'
   );
 }
 

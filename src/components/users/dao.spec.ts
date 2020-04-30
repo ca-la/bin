@@ -297,6 +297,7 @@ test('UsersDAO.findByBidId returns all users on a pricing bid', async (t: Test) 
     await DesignEventsDAO.create(trx, {
       actorId: admin.id,
       bidId: bid.id,
+      commentId: null,
       createdAt: new Date(),
       designId: design.id,
       id: uuid.v4(),
@@ -309,6 +310,7 @@ test('UsersDAO.findByBidId returns all users on a pricing bid', async (t: Test) 
     await DesignEventsDAO.create(trx, {
       actorId: admin.id,
       bidId: bid.id,
+      commentId: null,
       createdAt: new Date(),
       designId: design.id,
       id: uuid.v4(),
@@ -347,6 +349,7 @@ test('UsersDAO.findAllUnpaidPartners returns all unpaid partners', async (t: Tes
     await DesignEventsDAO.create(trx, {
       actorId: admin.id,
       bidId: bid.id,
+      commentId: null,
       createdAt: new Date(),
       designId: design.id,
       id: uuid.v4(),
@@ -387,6 +390,7 @@ test('UsersDAO.findAllUnpaidPartners returns all unpaid partners', async (t: Tes
       actorId: admin2.id,
       bidId: bid2.id,
       createdAt: new Date(),
+      commentId: null,
       designId: design2.id,
       id: uuid.v4(),
       quoteId: null,
@@ -454,6 +458,7 @@ test('UsersDAO.findAllUnpaidPartners does not include partners removed from bids
     await DesignEventsDAO.create(trx, {
       actorId: admin.id,
       bidId: bid.id,
+      commentId: null,
       createdAt: new Date(),
       designId: design.id,
       id: uuid.v4(),
@@ -493,6 +498,7 @@ test('UsersDAO.findAllUnpaidPartners does not include partners removed from bids
     await DesignEventsDAO.create(trx, {
       actorId: admin2.id,
       bidId: bid2.id,
+      commentId: null,
       createdAt: new Date(),
       designId: design2.id,
       id: uuid.v4(),
