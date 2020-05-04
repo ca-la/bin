@@ -2,13 +2,13 @@ import Knex, { QueryBuilder } from 'knex';
 
 import { omit } from 'lodash';
 import { validate, validateEvery } from '../../services/validate-from-db';
+import { CalaEvents, emit } from '../../services/pubsub';
 import ApprovalStep, {
   ApprovalStepRow,
   dataAdapter,
   isApprovalStepRow,
   partialDataAdapter
 } from './domain-object';
-import { CalaEvents, emit } from '../../services/pubsub';
 
 const TABLE_NAME = 'design_approval_steps';
 
@@ -113,7 +113,7 @@ export async function update(
 
   const oldStep = await findById(trx, id);
   if (!oldStep) {
-    throw new Error('approvalStep nopt found');
+    throw new Error('approvalStep not found');
   }
 
   const updated = await trx(TABLE_NAME)

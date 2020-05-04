@@ -19,6 +19,7 @@ import addAtMentionDetails from '../../services/add-at-mention-details';
 import { addAttachmentLinks } from '../../services/add-attachments-links';
 import { DesignEventWithMeta } from '../../domain-objects/design-event';
 import ApprovalStep from './domain-object';
+import { CalaEvents, emit } from '../../services/pubsub';
 
 type StreamItem = CommentWithResources | DesignEventWithMeta;
 
@@ -97,7 +98,16 @@ function* updateStep(
   }
 
   if (found.state !== state) {
-    yield ApprovalStepsDAO.update(trx, stepId, { state });
+    const step = yield ApprovalStepsDAO.update(trx, stepId, { state });
+    yield emit<CalaEvents.RouteUpdatedApprovalStep>(
+      'route.updated.approvalStep',
+      {
+        trx,
+        afterUpdate: step,
+        beforeUpdate: found,
+        actorId: this.state.userId
+      }
+    );
   }
 
   this.status = 204;

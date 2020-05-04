@@ -1,27 +1,42 @@
-import { listen } from './emitter';
-import { CalaEvents } from './';
 import {
   actualizeDesignStepsAfterBidAcceptance,
-  makeNextStepCurrentIfNeeded
+  handleStepCompletion,
+  handleUserStepCompletion
 } from '../approval-step-state';
 import { ApprovalStepState } from '../../components/approval-steps/domain-object';
 
+import { CalaEvents } from './';
+import { listen } from './emitter';
+
 export function init(): void {
-  listen<CalaEvents.BidAccepted>(
-    'bid.accepted',
-    async (event: CalaEvents.BidAccepted) => {
-      await actualizeDesignStepsAfterBidAcceptance(
-        event.trx,
-        event.bidId,
-        event.designId
-      );
-    }
-  );
-  listen<CalaEvents.ApprovalStepStateChanged>(
+  listen('bid.accepted', async (event: CalaEvents.BidAccepted) => {
+    await actualizeDesignStepsAfterBidAcceptance(
+      event.trx,
+      event.bidId,
+      event.designId
+    );
+  });
+
+  listen(
     'approvalStep.stateChanged',
     async (event: CalaEvents.ApprovalStepStateChanged) => {
-      if (event.approvalStep.state === ApprovalStepState.COMPLETED) {
-        await makeNextStepCurrentIfNeeded(event.trx, event.approvalStep);
+      const { approvalStep, trx } = event;
+
+      if (approvalStep.state === ApprovalStepState.COMPLETED) {
+        await handleStepCompletion(trx, approvalStep);
+      }
+    }
+  );
+
+  listen(
+    'route.updated.approvalStep',
+    async (event: CalaEvents.RouteUpdatedApprovalStep) => {
+      const { afterUpdate, beforeUpdate, actorId, trx } = event;
+
+      if (afterUpdate.state === ApprovalStepState.COMPLETED) {
+        if (beforeUpdate.state === ApprovalStepState.CURRENT) {
+          await handleUserStepCompletion(trx, afterUpdate, actorId);
+        }
       }
     }
   );

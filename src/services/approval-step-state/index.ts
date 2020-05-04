@@ -1,16 +1,16 @@
 import Knex from 'knex';
+import * as uuid from 'node-uuid';
 
 import db from '../db';
 import * as ProductDesignsDAO from '../../components/product-designs/dao';
 import * as ApprovalStepsDAO from '../../components/approval-steps/dao';
 import * as BidTaskTypesDAO from '../../components/bid-task-types/dao';
-
+import * as DesignEventsDAO from '../../dao/design-events';
 import ApprovalStep, {
   ApprovalStepState,
   ApprovalStepType
 } from '../../components/approval-steps/domain-object';
 import { findByDesignId as findProductTypeByDesignId } from '../../components/pricing-product-types/dao';
-
 import { taskTypes } from '../../components/tasks/templates';
 
 export async function makeNextStepCurrentIfNeeded(
@@ -37,6 +37,34 @@ export async function makeNextStepCurrentIfNeeded(
     reason: null,
     state: ApprovalStepState.CURRENT
   });
+}
+
+export async function handleStepCompletion(
+  trx: Knex.Transaction,
+  step: ApprovalStep
+): Promise<void> {
+  await makeNextStepCurrentIfNeeded(trx, step);
+  // TODO: update step completed_at date
+}
+
+export async function handleUserStepCompletion(
+  trx: Knex.Transaction,
+  step: ApprovalStep,
+  actorId: string
+): Promise<void> {
+  await DesignEventsDAO.create(trx, {
+    actorId,
+    approvalStepId: step.id,
+    approvalSubmissionId: null,
+    bidId: null,
+    createdAt: new Date(),
+    designId: step.designId,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: null,
+    type: 'STEP_COMPLETE'
+  });
+  // TODO: Send notification
 }
 
 export async function transitionCheckoutState(

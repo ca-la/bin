@@ -6,10 +6,12 @@ import createUser from '../../test-helpers/create-user';
 import { generateDesign } from '../../test-helpers/factories/product-design';
 import * as ApprovalStepCommentDAO from '../approval-step-comments/dao';
 import * as ApprovalStepsDAO from '../approval-steps/dao';
+import * as DesignEventsDAO from '../../dao/design-events';
 import db from '../../services/db';
 import generateComment from '../../test-helpers/factories/comment';
 import generateDesignEvent from '../../test-helpers/factories/design-event';
 import { ApprovalStepState } from './domain-object';
+import DesignEvent from '../../domain-objects/design-event';
 
 test('GET /design-approval-steps?designId=:designId', async (t: Test) => {
   const designer = await createUser();
@@ -161,12 +163,27 @@ test('PATCH /design-approval-steps/:stepId', async (t: Test) => {
     }
   });
   t.is(response.status, 204);
-  const afterCompletionSteps = await db.transaction(
-    async (trx: Knex.Transaction) => ApprovalStepsDAO.findByDesign(trx, d1.id)
-  );
-  t.is(afterCompletionSteps[0].state, ApprovalStepState.COMPLETED);
-  t.is(afterCompletionSteps[1].state, ApprovalStepState.SKIP);
-  t.is(afterCompletionSteps[2].state, ApprovalStepState.CURRENT, 'isCurrent');
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const afterCompletionSteps = await ApprovalStepsDAO.findByDesign(
+      trx,
+      d1.id
+    );
+    t.is(afterCompletionSteps[0].state, ApprovalStepState.COMPLETED);
+    t.is(afterCompletionSteps[1].state, ApprovalStepState.SKIP);
+    t.is(afterCompletionSteps[2].state, ApprovalStepState.CURRENT, 'isCurrent');
+
+    const afterCompletionEvents = await DesignEventsDAO.findApprovalStepEvents(
+      trx,
+      d1.id,
+      steps[0].id
+    );
+    t.true(
+      afterCompletionEvents.some(
+        (de: DesignEvent): boolean => de.type === 'STEP_COMPLETE'
+      )
+    );
+  });
 
   const adminRes = await patch(`/design-approval-steps/${steps[0].id}`, {
     headers: authHeader(admin.session.id),

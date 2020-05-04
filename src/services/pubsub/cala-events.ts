@@ -6,7 +6,8 @@ import ApprovalStep, {
 export type CalaEventType =
   | 'bid.accepted'
   | 'bid.created'
-  | 'approvalStep.stateChanged';
+  | 'approvalStep.stateChanged'
+  | 'route.updated.approvalStep';
 
 interface CalaEventBase {
   trx: Knex.Transaction;
@@ -29,6 +30,17 @@ export interface ApprovalStepStateChanged extends CalaEventBase {
   oldState: ApprovalStepState;
 }
 
-export type Event = BidAccepted | BidCreated | ApprovalStepStateChanged;
+export interface RouteUpdatedApprovalStep extends CalaEventBase {
+  type: 'route.updated.approvalStep';
+  afterUpdate: ApprovalStep;
+  beforeUpdate: ApprovalStep;
+  actorId: string;
+}
+
+export type Event =
+  | BidAccepted
+  | BidCreated
+  | ApprovalStepStateChanged
+  | RouteUpdatedApprovalStep;
 
 export type Handler<T extends Event> = (event: T) => Promise<any>;

@@ -13,8 +13,9 @@
     "ordered-imports": [
       true,
       {
+        "grouped-imports": true,
         "import-sources-order": "any",
-        "named-imports-order": "case-insensitive"
+        "named-imports-order": "any"
       }
     ],
     "trailing-comma": [false],
