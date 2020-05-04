@@ -18,18 +18,17 @@ const keyNamesByColumnName = {
   user_id: 'userId',
 
   image_ids: 'imageIds',
-
   // string[] - urls of each section preview
   preview_image_urls: 'previewImageUrls',
   collections: 'collections',
   override_pricing_table: 'overridePricingTable',
   computed_pricing_table: 'computedPricingTable',
   retail_price_cents: 'retailPriceCents',
-
   status: 'status',
   due_date: 'dueDate',
   expected_cost_cents: 'expectedCostCents',
-  show_pricing_breakdown: 'showPricingBreakdown'
+  show_pricing_breakdown: 'showPricingBreakdown',
+  current_step_title: 'currentStepTitle'
 };
 
 const dataMapper = new DataMapper(keyNamesByColumnName);

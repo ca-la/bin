@@ -16,6 +16,8 @@ import { del as deleteCanvas } from '../../canvases/dao';
 import * as CollaboratorsDAO from '../../collaborators/dao';
 import * as CollectionsDAO from '../../collections/dao';
 import * as ProductDesignOptionsDAO from '../../../dao/product-design-options';
+import * as ApprovalStepsDAO from '../../approval-steps/dao';
+import { ApprovalStepState } from '../../approval-steps/domain-object';
 import { deleteById as deleteAnnotation } from '../../product-design-canvas-annotations/dao';
 import { create as createTask } from '../../../dao/tasks';
 import { create as createApprovalTask } from '../../../components/approval-step-tasks/dao';
@@ -323,6 +325,75 @@ test('findAllDesignsThroughCollaborator finds all designs with a search string',
     'returns design when searched by design title'
   );
   t.deepEqual(designSearch[0].id, firstDesign.id, 'should match ids');
+});
+
+test('findAllDesignsThroughCollaborator returns dashboard meta', async (t: tape.Test) => {
+  const { user } = await createUser();
+  const { user: notUser } = await createUser();
+
+  const ownDesign = await createDesign({
+    productType: 'test',
+    title: 'design',
+    userId: user.id
+  });
+
+  const collectionSharedDesign = await createDesign({
+    productType: 'test',
+    title: 'design',
+    userId: notUser.id
+  });
+  const { collection } = await generateCollection({ createdBy: notUser.id });
+  await addDesign(collection.id, collectionSharedDesign.id);
+  await generateCollaborator({
+    collectionId: collection.id,
+    designId: null,
+    invitationMessage: '',
+    role: 'EDIT',
+    userEmail: null,
+    userId: user.id
+  });
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const steps = await ApprovalStepsDAO.findByDesign(
+      trx,
+      collectionSharedDesign.id
+    );
+    await ApprovalStepsDAO.update(trx, steps[0].id, {
+      state: ApprovalStepState.COMPLETED
+    });
+    await ApprovalStepsDAO.update(trx, steps[1].id, {
+      reason: null,
+      state: ApprovalStepState.COMPLETED
+    });
+    await ApprovalStepsDAO.update(trx, steps[2].id, {
+      reason: 'Needs salt.',
+      state: ApprovalStepState.BLOCKED
+    });
+  });
+
+  const designs = await findAllDesignsThroughCollaborator({ userId: user.id });
+  t.equal(designs.length, 2);
+  t.deepEqual(
+    {
+      id: designs[0].id,
+      currentStepTitle: designs[0].currentStepTitle
+    },
+    {
+      id: collectionSharedDesign.id,
+      currentStepTitle: 'Technical Design'
+    },
+    'returns the current step'
+  );
+  t.deepEqual(
+    {
+      id: designs[1].id,
+      currentStepTitle: designs[1].currentStepTitle
+    },
+    {
+      id: ownDesign.id,
+      currentStepTitle: 'Checkout'
+    },
+    'returns the current step'
+  );
 });
 
 test('findDesignByAnnotationId', async (t: tape.Test) => {

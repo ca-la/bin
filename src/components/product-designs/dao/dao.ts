@@ -54,6 +54,26 @@ product_designs.id in (
     `,
       [options.userId, options.userId]
     )
+
+    // Dashboard Meta
+    .select(['current_step.title as current_step_title'])
+    .leftJoin(
+      db.raw(
+        `(SELECT DISTINCT ON (design_id)
+            design_id,
+            title
+          FROM
+            design_approval_steps
+          WHERE
+            state in ('CURRENT', 'COMPLETED')
+          ORDER BY
+            design_id,
+            ordering DESC
+          ) AS current_step ON current_step.design_id = product_designs.id`
+      )
+    )
+    .groupBy(['current_step.title', 'current_step.design_id'])
+
     .modify(
       (query: Knex.QueryBuilder): void => {
         if (options.search) {

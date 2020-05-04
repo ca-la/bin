@@ -13,6 +13,7 @@ declare class ProductDesign {
   public collectionIds?: string[];
   public imageIds?: string[];
   public imageLinks?: ThumbnailAndPreviewLinks[];
+  public currentStepTitle?: string;
 
   constructor(data: any);
 }
