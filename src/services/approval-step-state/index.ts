@@ -62,6 +62,7 @@ export async function handleUserStepCompletion(
     id: uuid.v4(),
     quoteId: null,
     targetId: null,
+    commentId: null,
     type: 'STEP_COMPLETE'
   });
   // TODO: Send notification
