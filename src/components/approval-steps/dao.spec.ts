@@ -30,7 +30,10 @@ test('ApprovalStepsDAO can create multiple steps and retrieve by design', async 
     ordering: 0,
     designId: d1.id,
     reason: null,
-    type: ApprovalStepType.CHECKOUT
+    type: ApprovalStepType.CHECKOUT,
+    createdAt: new Date(),
+    startedAt: null,
+    completedAt: null
   };
   const as2: ApprovalStep = {
     state: ApprovalStepState.UNSTARTED,
@@ -39,7 +42,10 @@ test('ApprovalStepsDAO can create multiple steps and retrieve by design', async 
     ordering: 1,
     designId: d1.id,
     reason: null,
-    type: ApprovalStepType.TECHNICAL_DESIGN
+    type: ApprovalStepType.TECHNICAL_DESIGN,
+    createdAt: new Date(),
+    startedAt: null,
+    completedAt: null
   };
   const as3: ApprovalStep = {
     state: ApprovalStepState.UNSTARTED,
@@ -48,7 +54,10 @@ test('ApprovalStepsDAO can create multiple steps and retrieve by design', async 
     ordering: 0,
     designId: d2.id,
     reason: null,
-    type: ApprovalStepType.CHECKOUT
+    type: ApprovalStepType.CHECKOUT,
+    createdAt: new Date(),
+    startedAt: null,
+    completedAt: null
   };
   const as4: ApprovalStep = {
     state: ApprovalStepState.UNSTARTED,
@@ -57,7 +66,10 @@ test('ApprovalStepsDAO can create multiple steps and retrieve by design', async 
     ordering: 1,
     designId: d2.id,
     reason: null,
-    type: ApprovalStepType.TECHNICAL_DESIGN
+    type: ApprovalStepType.TECHNICAL_DESIGN,
+    createdAt: new Date(),
+    startedAt: null,
+    completedAt: null
   };
 
   const created = await db.transaction((trx: Knex.Transaction) =>
@@ -85,7 +97,10 @@ test('ApprovalStepsDAO can retrieve by step id', async (t: Test) => {
     ordering: 0,
     designId: d1.id,
     reason: null,
-    type: ApprovalStepType.CHECKOUT
+    type: ApprovalStepType.CHECKOUT,
+    createdAt: new Date(),
+    startedAt: null,
+    completedAt: null
   };
 
   await db.transaction((trx: Knex.Transaction) =>
@@ -111,20 +126,19 @@ test('ApprovalStepsDAO can update', async (t: Test) => {
     ordering: 0,
     designId: d1.id,
     reason: null,
-    type: ApprovalStepType.CHECKOUT
+    type: ApprovalStepType.CHECKOUT,
+    createdAt: new Date(),
+    startedAt: null,
+    completedAt: null
   };
 
   await db.transaction(async (trx: Knex.Transaction) => {
     await ApprovalStepsDAO.createAll(trx, [as1]);
     const updated = await ApprovalStepsDAO.update(trx, as1.id, {
-      ...as1,
       state: ApprovalStepState.CURRENT
     });
 
-    t.deepEqual(
-      updated,
-      { ...as1, state: ApprovalStepState.CURRENT },
-      'returns updated step'
-    );
+    t.equal(updated.state, ApprovalStepState.CURRENT, 'returns updated step');
+    t.ok(updated.startedAt, 'sets the started at date');
   });
 });

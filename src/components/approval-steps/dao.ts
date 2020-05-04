@@ -7,7 +7,8 @@ import ApprovalStep, {
   ApprovalStepRow,
   dataAdapter,
   isApprovalStepRow,
-  partialDataAdapter
+  partialDataAdapter,
+  ApprovalStepState
 } from './domain-object';
 
 const TABLE_NAME = 'design_approval_steps';
@@ -109,12 +110,25 @@ export async function update(
   id: string,
   patch: Partial<ApprovalStep>
 ): Promise<ApprovalStep> {
-  const patchRow = partialDataAdapter.forInsertion(omit(patch, 'id'));
-
   const oldStep = await findById(trx, id);
   if (!oldStep) {
     throw new Error('approvalStep not found');
   }
+
+  const now = new Date();
+  let completedAt = null;
+  let startedAt = null;
+  if (patch.state === ApprovalStepState.CURRENT) {
+    startedAt = now;
+  }
+  if (patch.state === ApprovalStepState.COMPLETED) {
+    startedAt = oldStep.startedAt || now;
+    completedAt = now;
+  }
+
+  const patchRow = partialDataAdapter.forInsertion(
+    omit({ ...patch, startedAt, completedAt }, 'id')
+  );
 
   const updated = await trx(TABLE_NAME)
     .where({ id })

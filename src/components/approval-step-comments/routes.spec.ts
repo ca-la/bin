@@ -33,7 +33,10 @@ test('GET /design-approval-step-comments/:stepId returns comments', async (t: ta
     ordering: 0,
     designId: design.id,
     reason: null,
-    type: ApprovalStepType.CHECKOUT
+    type: ApprovalStepType.CHECKOUT,
+    createdAt: new Date(),
+    startedAt: null,
+    completedAt: null
   };
   await db.transaction((trx: Knex.Transaction) =>
     ApprovalStepsDAO.createAll(trx, [approvalStep])
@@ -79,7 +82,10 @@ test('POST /design-approval-step-comments/:stepId creates a comment', async (t: 
     ordering: 0,
     designId: design.id,
     reason: null,
-    type: ApprovalStepType.CHECKOUT
+    type: ApprovalStepType.CHECKOUT,
+    createdAt: new Date(),
+    startedAt: null,
+    completedAt: null
   };
   await db.transaction((trx: Knex.Transaction) =>
     ApprovalStepsDAO.createAll(trx, [approvalStep])
@@ -132,7 +138,10 @@ test('POST /design-approval-step-comments/:stepId sends @mention notifications',
     ordering: 0,
     designId: design.id,
     reason: null,
-    type: ApprovalStepType.CHECKOUT
+    type: ApprovalStepType.CHECKOUT,
+    createdAt: new Date(),
+    startedAt: null,
+    completedAt: null
   };
   await db.transaction((trx: Knex.Transaction) =>
     ApprovalStepsDAO.createAll(trx, [approvalStep])

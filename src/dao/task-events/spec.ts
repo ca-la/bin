@@ -968,7 +968,10 @@ test('Task Events DAO supports retrieval by approval step id', async (t: tape.Te
     ordering: 0,
     designId: design.id,
     reason: null,
-    type: ApprovalStepType.CHECKOUT
+    type: ApprovalStepType.CHECKOUT,
+    createdAt: new Date(),
+    startedAt: null,
+    completedAt: null
   };
   await db.transaction((trx: Knex.Transaction) =>
     ApprovalStepsDAO.createAll(trx, [approvalStep])
@@ -1025,7 +1028,10 @@ test('Task Events DAO findId finds proper design basing on approval step', async
     ordering: 0,
     designId: design.id,
     reason: null,
-    type: ApprovalStepType.CHECKOUT
+    type: ApprovalStepType.CHECKOUT,
+    createdAt: new Date(),
+    startedAt: null,
+    completedAt: null
   };
   await db.transaction((trx: Knex.Transaction) =>
     ApprovalStepsDAO.createAll(trx, [approvalStep])

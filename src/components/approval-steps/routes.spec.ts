@@ -173,6 +173,19 @@ test('PATCH /design-approval-steps/:stepId', async (t: Test) => {
     t.is(afterCompletionSteps[1].state, ApprovalStepState.SKIP);
     t.is(afterCompletionSteps[2].state, ApprovalStepState.CURRENT, 'isCurrent');
 
+    t.true(
+      afterCompletionSteps[0].completedAt,
+      'sets completed at date for completed step'
+    );
+    t.true(
+      afterCompletionSteps[0].startedAt,
+      'sets started at date for completed step'
+    );
+    t.true(
+      afterCompletionSteps[2].startedAt,
+      'sets started at date for current step'
+    );
+
     const afterCompletionEvents = await DesignEventsDAO.findApprovalStepEvents(
       trx,
       d1.id,

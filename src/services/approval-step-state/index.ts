@@ -35,7 +35,8 @@ export async function makeNextStepCurrentIfNeeded(
   }
   await ApprovalStepsDAO.update(trx, nextStep.id, {
     reason: null,
-    state: ApprovalStepState.CURRENT
+    state: ApprovalStepState.CURRENT,
+    startedAt: new Date()
   });
 }
 
@@ -44,7 +45,6 @@ export async function handleStepCompletion(
   step: ApprovalStep
 ): Promise<void> {
   await makeNextStepCurrentIfNeeded(trx, step);
-  // TODO: update step completed_at date
 }
 
 export async function handleUserStepCompletion(

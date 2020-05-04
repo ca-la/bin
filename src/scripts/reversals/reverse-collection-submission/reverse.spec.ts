@@ -42,7 +42,8 @@ test('reverseSubmissionRecords', async (t: tape.Test) => {
       targetId: null,
       type: 'SUBMIT_DESIGN',
       approvalStepId: null,
-      approvalSubmissionId: null
+      approvalSubmissionId: null,
+      commentId: null
     })
   );
   const de2 = await db.transaction((trx: Knex.Transaction) =>
@@ -56,7 +57,8 @@ test('reverseSubmissionRecords', async (t: tape.Test) => {
       targetId: null,
       type: 'COMMIT_COST_INPUTS',
       approvalStepId: null,
-      approvalSubmissionId: null
+      approvalSubmissionId: null,
+      commentId: null
     })
   );
   const de3 = await db.transaction((trx: Knex.Transaction) =>
@@ -70,7 +72,8 @@ test('reverseSubmissionRecords', async (t: tape.Test) => {
       targetId: partner.id,
       type: 'BID_DESIGN',
       approvalStepId: null,
-      approvalSubmissionId: null
+      approvalSubmissionId: null,
+      commentId: null
     })
   );
 

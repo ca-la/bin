@@ -2,6 +2,7 @@ import { test, Test } from '../../test-helpers/simple';
 import { dataAdapter } from './domain-object';
 
 test('dataAdpater.parse', async (t: Test) => {
+  const now = new Date();
   t.deepEqual(
     dataAdapter.parse({
       id: 's1',
@@ -10,7 +11,10 @@ test('dataAdpater.parse', async (t: Test) => {
       reason: 'Awaiting something',
       state: 'BLOCKED',
       title: 'A step',
-      type: 'CHECKOUT'
+      type: 'CHECKOUT',
+      created_at: now,
+      started_at: null,
+      completed_at: null
     }),
     {
       id: 's1',
@@ -19,7 +23,10 @@ test('dataAdpater.parse', async (t: Test) => {
       reason: 'Awaiting something',
       state: 'BLOCKED',
       title: 'A step',
-      type: 'CHECKOUT'
+      type: 'CHECKOUT',
+      createdAt: now,
+      startedAt: null,
+      completedAt: null
     },
     'parses a valid blocked row'
   );
@@ -33,7 +40,10 @@ test('dataAdpater.parse', async (t: Test) => {
         reason: null,
         state: 'BLOCKED',
         title: 'A step',
-        type: 'CHECKOUT'
+        type: 'CHECKOUT',
+        created_at: now,
+        started_at: null,
+        completed_at: null
       }),
     'throws on invalid blocked row'
   );
@@ -46,7 +56,10 @@ test('dataAdpater.parse', async (t: Test) => {
       reason: null,
       state: 'UNSTARTED',
       title: 'A step',
-      type: 'CHECKOUT'
+      type: 'CHECKOUT',
+      created_at: now,
+      started_at: null,
+      completed_at: null
     }),
     {
       id: 's1',
@@ -55,7 +68,10 @@ test('dataAdpater.parse', async (t: Test) => {
       reason: null,
       state: 'UNSTARTED',
       title: 'A step',
-      type: 'CHECKOUT'
+      type: 'CHECKOUT',
+      createdAt: now,
+      startedAt: null,
+      completedAt: null
     },
     'parses a valid unstarted row'
   );
@@ -69,7 +85,10 @@ test('dataAdpater.parse', async (t: Test) => {
         reason: 'Should not be here',
         state: 'UNSTARTED',
         title: 'A step',
-        type: 'CHECKOUT'
+        type: 'CHECKOUT',
+        created_at: now,
+        started_at: null,
+        completed_at: null
       }),
     'throws on invalid unstarted row'
   );
@@ -82,7 +101,10 @@ test('dataAdpater.parse', async (t: Test) => {
       reason: null,
       state: 'CURRENT',
       title: 'A step',
-      type: 'CHECKOUT'
+      type: 'CHECKOUT',
+      created_at: now,
+      started_at: now,
+      completed_at: null
     }),
     {
       id: 's1',
@@ -91,7 +113,10 @@ test('dataAdpater.parse', async (t: Test) => {
       reason: null,
       state: 'CURRENT',
       title: 'A step',
-      type: 'CHECKOUT'
+      type: 'CHECKOUT',
+      createdAt: now,
+      startedAt: now,
+      completedAt: null
     },
     'parses a valid current row'
   );
@@ -105,9 +130,29 @@ test('dataAdpater.parse', async (t: Test) => {
         reason: 'Should not be here',
         state: 'CURRENT',
         title: 'A step',
-        type: 'CHECKOUT'
+        type: 'CHECKOUT',
+        created_at: now,
+        started_at: now,
+        completed_at: null
       }),
-    'throws on invalid current row'
+    'throws on invalid reason current row'
+  );
+
+  t.throws(
+    () =>
+      dataAdapter.parse({
+        id: 's1',
+        design_id: 'd1',
+        ordering: 0,
+        reason: null,
+        state: 'CURRENT',
+        title: 'A step',
+        type: 'CHECKOUT',
+        created_at: now,
+        started_at: null,
+        completed_at: null
+      }),
+    'throws on invalid date current row'
   );
 
   t.deepEqual(
@@ -118,7 +163,10 @@ test('dataAdpater.parse', async (t: Test) => {
       reason: null,
       state: 'COMPLETED',
       title: 'A step',
-      type: 'CHECKOUT'
+      type: 'CHECKOUT',
+      created_at: now,
+      started_at: now,
+      completed_at: now
     }),
     {
       id: 's1',
@@ -127,7 +175,10 @@ test('dataAdpater.parse', async (t: Test) => {
       reason: null,
       state: 'COMPLETED',
       title: 'A step',
-      type: 'CHECKOUT'
+      type: 'CHECKOUT',
+      createdAt: now,
+      startedAt: now,
+      completedAt: now
     },
     'parses a valid completed row'
   );
@@ -141,9 +192,29 @@ test('dataAdpater.parse', async (t: Test) => {
         reason: 'Should not be here',
         state: 'COMPLETED',
         title: 'A step',
-        type: 'CHECKOUT'
+        type: 'CHECKOUT',
+        created_at: now,
+        started_at: now,
+        completed_at: now
       }),
-    'throws on invalid completed row'
+    'throws on invalid reason completed row'
+  );
+
+  t.throws(
+    () =>
+      dataAdapter.parse({
+        id: 's1',
+        design_id: 'd1',
+        ordering: 0,
+        reason: null,
+        state: 'COMPLETED',
+        title: 'A step',
+        type: 'CHECKOUT',
+        created_at: now,
+        started_at: now,
+        completed_at: null
+      }),
+    'throws on invalid date completed row'
   );
 
   t.deepEqual(
@@ -154,7 +225,10 @@ test('dataAdpater.parse', async (t: Test) => {
       reason: null,
       state: 'SKIP',
       title: 'A step',
-      type: 'CHECKOUT'
+      type: 'CHECKOUT',
+      created_at: now,
+      started_at: null,
+      completed_at: null
     }),
     {
       id: 's1',
@@ -163,7 +237,10 @@ test('dataAdpater.parse', async (t: Test) => {
       reason: null,
       state: 'SKIP',
       title: 'A step',
-      type: 'CHECKOUT'
+      type: 'CHECKOUT',
+      createdAt: now,
+      startedAt: null,
+      completedAt: null
     },
     'parses a valid skip row'
   );
@@ -177,7 +254,10 @@ test('dataAdpater.parse', async (t: Test) => {
         reason: 'Should not be here',
         state: 'SKIP',
         title: 'A step',
-        type: 'CHECKOUT'
+        type: 'CHECKOUT',
+        created_at: now,
+        started_at: null,
+        completed_at: null
       }),
     'throws on invalid skip row'
   );

@@ -16,6 +16,7 @@ export default async function createDesignApproval(
   trx: Knex.Transaction,
   designId: string
 ): Promise<void> {
+  const now = new Date();
   const steps: ApprovalStep[] = [
     {
       id: uuid.v4(),
@@ -24,7 +25,10 @@ export default async function createDesignApproval(
       ordering: 0,
       designId,
       reason: null,
-      type: ApprovalStepType.CHECKOUT
+      type: ApprovalStepType.CHECKOUT,
+      createdAt: now,
+      startedAt: now,
+      completedAt: null
     },
     {
       id: uuid.v4(),
@@ -33,7 +37,10 @@ export default async function createDesignApproval(
       ordering: 1,
       designId,
       reason: 'Pending technical partner pairing',
-      type: ApprovalStepType.TECHNICAL_DESIGN
+      type: ApprovalStepType.TECHNICAL_DESIGN,
+      createdAt: now,
+      startedAt: null,
+      completedAt: null
     },
     {
       id: uuid.v4(),
@@ -42,7 +49,10 @@ export default async function createDesignApproval(
       ordering: 2,
       designId,
       reason: 'Pending production partner pairing',
-      type: ApprovalStepType.SAMPLE
+      type: ApprovalStepType.SAMPLE,
+      createdAt: now,
+      startedAt: null,
+      completedAt: null
     },
     {
       id: uuid.v4(),
@@ -51,7 +61,10 @@ export default async function createDesignApproval(
       ordering: 3,
       designId,
       reason: null,
-      type: ApprovalStepType.PRODUCTION
+      type: ApprovalStepType.PRODUCTION,
+      createdAt: now,
+      startedAt: null,
+      completedAt: null
     }
   ];
 

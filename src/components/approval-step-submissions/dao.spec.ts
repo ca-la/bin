@@ -36,7 +36,10 @@ test('ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     ordering: 0,
     designId: d1.id,
     reason: null,
-    type: ApprovalStepType.CHECKOUT
+    type: ApprovalStepType.CHECKOUT,
+    createdAt: new Date(),
+    startedAt: null,
+    completedAt: null
   };
   const as2: ApprovalStep = {
     state: ApprovalStepState.UNSTARTED,
@@ -45,7 +48,10 @@ test('ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     ordering: 1,
     designId: d1.id,
     reason: null,
-    type: ApprovalStepType.TECHNICAL_DESIGN
+    type: ApprovalStepType.TECHNICAL_DESIGN,
+    createdAt: new Date(),
+    startedAt: null,
+    completedAt: null
   };
 
   const sub1: ApprovalStepSubmission = {

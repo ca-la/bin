@@ -2,7 +2,9 @@ import Knex from 'knex';
 import uuid from 'node-uuid';
 
 import ApprovalStep, {
-  ApprovalStepState
+  ApprovalStepState,
+  ApprovalStepType,
+  ApprovalUnstarted
 } from '../../components/approval-steps/domain-object';
 import User from '../../components/users/domain-object';
 import ProductDesign from '../../components/product-designs/domain-objects/product-design';
@@ -34,14 +36,23 @@ export default async function generateApprovalStep(
     throw new Error('Canvas was unable to be found or created!');
   }
 
+  const defaultStep: ApprovalUnstarted = {
+    state: ApprovalStepState.UNSTARTED,
+    ordering: 0,
+    title: 'Checkout',
+    designId: design.id,
+    id: uuid.v4(),
+    reason: null,
+    completedAt: null,
+    startedAt: null,
+    createdAt: new Date(),
+    type: ApprovalStepType.CHECKOUT
+  };
+
   const [approvalStep] = await ApprovalStepDAO.createAll(trx, [
     {
-      state: step.state || ApprovalStepState.CURRENT,
-      ordering: step.ordering || 0,
-      title: step.title || 'Checkout',
-      designId: design.id,
-      id: step.id || uuid.v4(),
-      reason: step.reason || null
+      ...defaultStep,
+      ...step
     } as ApprovalStep
   ]);
 
