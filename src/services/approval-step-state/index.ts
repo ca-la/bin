@@ -128,9 +128,12 @@ export async function actualizeDesignStepsAfterBidAcceptance(
 ): Promise<void> {
   const bidTaskTypes = await BidTaskTypesDAO.findByBidId(trx, bidId);
 
-  const approvalSteps = await ApprovalStepsDAO.find(trx, {
-    designId
-  });
+  const approvalSteps = await ApprovalStepsDAO.find(
+    trx,
+    { designId },
+    (query: Knex.QueryBuilder) =>
+      query.whereNot({ state: ApprovalStepState.SKIP })
+  );
   const newStates = approvalSteps.map((step: ApprovalStep) => step.state);
 
   for (const bidTaskType of bidTaskTypes) {

@@ -15,6 +15,7 @@ import { taskTypes } from '../../components/tasks/templates';
 interface TestCase {
   title: string;
   taskTypeIds: string[];
+  isBlank: boolean;
   stepStates: { [key in ApprovalStepType]: ApprovalStepState };
 }
 
@@ -22,6 +23,7 @@ const testCases: TestCase[] = [
   {
     title: 'Technical Design bid',
     taskTypeIds: [taskTypes.TECHNICAL_DESIGN.id],
+    isBlank: false,
     stepStates: {
       [ApprovalStepType.CHECKOUT]: ApprovalStepState.COMPLETED,
       [ApprovalStepType.TECHNICAL_DESIGN]: ApprovalStepState.CURRENT,
@@ -32,6 +34,7 @@ const testCases: TestCase[] = [
   {
     title: 'Production bid',
     taskTypeIds: [taskTypes.PRODUCTION.id],
+    isBlank: false,
     stepStates: {
       [ApprovalStepType.CHECKOUT]: ApprovalStepState.COMPLETED,
       [ApprovalStepType.TECHNICAL_DESIGN]: ApprovalStepState.BLOCKED,
@@ -42,10 +45,22 @@ const testCases: TestCase[] = [
   {
     title: 'Bid with Production and Technical Design tasks',
     taskTypeIds: [taskTypes.PRODUCTION.id, taskTypes.TECHNICAL_DESIGN.id],
+    isBlank: false,
     stepStates: {
       [ApprovalStepType.CHECKOUT]: ApprovalStepState.COMPLETED,
       [ApprovalStepType.TECHNICAL_DESIGN]: ApprovalStepState.CURRENT,
       [ApprovalStepType.SAMPLE]: ApprovalStepState.UNSTARTED,
+      [ApprovalStepType.PRODUCTION]: ApprovalStepState.UNSTARTED
+    }
+  },
+  {
+    title: 'Bid with Production and Technical Design tasks with a blank',
+    taskTypeIds: [taskTypes.PRODUCTION.id, taskTypes.TECHNICAL_DESIGN.id],
+    isBlank: true,
+    stepStates: {
+      [ApprovalStepType.CHECKOUT]: ApprovalStepState.COMPLETED,
+      [ApprovalStepType.TECHNICAL_DESIGN]: ApprovalStepState.SKIP,
+      [ApprovalStepType.SAMPLE]: ApprovalStepState.CURRENT,
       [ApprovalStepType.PRODUCTION]: ApprovalStepState.UNSTARTED
     }
   }
@@ -71,6 +86,16 @@ for (const testCase of testCases) {
       designId: design.id,
       type: ApprovalStepType.CHECKOUT
     });
+    if (testCase.isBlank) {
+      const technicalDesignStep = await ApprovalStepsDAO.findOne(trx, {
+        designId: design.id,
+        type: ApprovalStepType.TECHNICAL_DESIGN
+      });
+      await ApprovalStepsDAO.update(trx, technicalDesignStep.id, {
+        reason: null,
+        state: ApprovalStepState.SKIP
+      });
+    }
     await ApprovalStepsDAO.update(trx, checkoutStep.id, {
       reason: null,
       state: ApprovalStepState.COMPLETED
