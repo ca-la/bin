@@ -121,20 +121,25 @@ export async function update(
     throw new ResourceNotFoundError('Could not find ApprovalStep');
   }
 
-  const now = new Date();
-  let completedAt = null;
-  let startedAt = null;
-  if (patch.state === ApprovalStepState.CURRENT) {
-    startedAt = now;
-  }
-  if (patch.state === ApprovalStepState.COMPLETED) {
-    startedAt = before.startedAt || now;
-    completedAt = now;
-  }
+  let patchRow = partialDataAdapter.forInsertion(omit(patch, 'id'));
+  if (patch.state && patch.state !== before.state) {
+    const now = new Date();
+    let completedAt = null;
+    let startedAt = null;
+    if (patch.state === ApprovalStepState.CURRENT) {
+      startedAt = now;
+    }
+    if (patch.state === ApprovalStepState.COMPLETED) {
+      startedAt = before.startedAt || now;
+      completedAt = now;
+    }
 
-  const patchRow = partialDataAdapter.forInsertion(
-    omit({ ...patch, startedAt, completedAt }, 'id')
-  );
+    patchRow = {
+      ...patchRow,
+      started_at: startedAt,
+      completed_at: completedAt
+    };
+  }
 
   const updated = await trx(TABLE_NAME)
     .where({ id })

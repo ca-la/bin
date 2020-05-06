@@ -16,6 +16,7 @@ import * as ApprovalStepsDAO from './dao';
 import createUser from '../../test-helpers/create-user';
 
 import { init as pubsubInit } from '../../services/pubsub';
+import generateCollaborator from '../../test-helpers/factories/collaborator';
 
 pubsubInit();
 
@@ -229,5 +230,60 @@ test('ApprovalStepsDAO updates state', async (t: Test) => {
       'next step is changed from UNSTARTED to CURRENT'
     );
     t.ok(updated.startedAt, 'sets the started at date');
+  });
+});
+
+test('ApprovalStepsDAO updates collaboratorId', async (t: Test) => {
+  const testDate = new Date(2012, 11, 23);
+  sandbox().useFakeTimers(testDate);
+  const { user } = await createUser({ withSession: false });
+  const d1: ProductDesign = await ProductDesignsDAO.create(
+    staticProductDesign({ id: 'd1', userId: user.id })
+  );
+  const { collaborator } = await generateCollaborator({
+    userId: user.id,
+    designId: d1.id
+  });
+  const as1: ApprovalStep = {
+    state: ApprovalStepState.CURRENT,
+    id: uuid.v4(),
+    title: 'Checkout',
+    ordering: 0,
+    designId: d1.id,
+    reason: null,
+    type: ApprovalStepType.CHECKOUT,
+    collaboratorId: null,
+    createdAt: testDate,
+    startedAt: testDate,
+    completedAt: null
+  };
+  const as2: ApprovalStep = {
+    state: ApprovalStepState.UNSTARTED,
+    id: uuid.v4(),
+    title: 'Technical Design',
+    ordering: 1,
+    designId: d1.id,
+    reason: null,
+    type: ApprovalStepType.TECHNICAL_DESIGN,
+    collaboratorId: null,
+    createdAt: testDate,
+    startedAt: null,
+    completedAt: null
+  };
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await ApprovalStepsDAO.createAll(trx, [as1, as2]);
+    const { updated } = await ApprovalStepsDAO.update(trx, as1.id, {
+      collaboratorId: collaborator.id
+    });
+
+    t.deepEqual(
+      updated,
+      {
+        ...as1,
+        collaboratorId: collaborator.id
+      },
+      'returns updated step'
+    );
   });
 });
