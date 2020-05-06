@@ -76,7 +76,10 @@ function* getApprovalStepStream(
   this.status = 200;
 }
 
-const ALLOWED_UPDATE_KEYS = ['state', 'collaboratorId'];
+const ALLOWED_UPDATE_KEYS: ('state' | 'collaboratorId')[] = [
+  'state',
+  'collaboratorId'
+];
 
 function* updateStep(
   this: TrxContext<AuthedContext<Partial<ApprovalStep>, { designId: string }>>
