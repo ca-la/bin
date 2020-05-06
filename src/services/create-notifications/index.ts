@@ -111,6 +111,10 @@ import {
   ApprovalStepSubmissionAssignmentNotification,
   isApprovalStepSubmissionAssignmentNotification
 } from '../../components/notifications/models/approval-step-submission-assignment';
+import {
+  ApprovalStepAssignmentNotification,
+  isApprovalStepAssignmentNotification
+} from '../../components/notifications/models/approval-step-assignment';
 
 import ProductDesignStage from '../../domain-objects/product-design-stage';
 import ApprovalStepSubmission from '../../components/approval-step-submissions/domain-object';
@@ -1279,6 +1283,58 @@ export async function sendApprovalSubmissionAssignmentNotification(
     isApprovalStepSubmissionAssignmentNotification,
     `Could not validate ${
       NotificationType.APPROVAL_STEP_SUBMISSION_ASSIGNMENT
+    } notification type from database with id: ${id}`
+  );
+  return validated;
+}
+
+export async function sendApprovalStepAssignmentNotification(
+  trx: Knex.Transaction,
+  actorId: string,
+  approvalStep: ApprovalStep
+): Promise<ApprovalStepAssignmentNotification | null> {
+  if (!approvalStep.collaboratorId) {
+    return null;
+  }
+
+  const collaborator = await CollaboratorsDAO.findById(
+    approvalStep.collaboratorId
+  );
+  if (!collaborator || !collaborator.user) {
+    return null;
+  }
+
+  const design = await DesignsDAO.findById(approvalStep.designId);
+  if (!design) {
+    throw new Error(
+      `Could not find a design with id: ${approvalStep.designId}`
+    );
+  }
+
+  const id = uuid.v4();
+  const notification = await replaceNotifications({
+    trx,
+    notification: {
+      ...templateNotification,
+      actorUserId: actorId,
+      collaboratorId: collaborator.id,
+      approvalStepId: approvalStep.id,
+      approvalSubmissionId: null,
+      collectionId: design.collectionIds[0] || null,
+      designId: design.id,
+      id,
+      recipientUserId: collaborator.user.id,
+      sentEmailAt: null,
+      stageId: null,
+      taskId: null,
+      type: NotificationType.APPROVAL_STEP_ASSIGNMENT
+    }
+  });
+  const validated = validateTypeWithGuardOrThrow(
+    notification,
+    isApprovalStepAssignmentNotification,
+    `Could not validate ${
+      NotificationType.APPROVAL_STEP_ASSIGNMENT
     } notification type from database with id: ${id}`
   );
   return validated;

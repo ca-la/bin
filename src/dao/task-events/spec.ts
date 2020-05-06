@@ -969,6 +969,7 @@ test('Task Events DAO supports retrieval by approval step id', async (t: tape.Te
     designId: design.id,
     reason: null,
     type: ApprovalStepType.CHECKOUT,
+    collaboratorId: null,
     createdAt: new Date(),
     startedAt: null,
     completedAt: null
@@ -1029,6 +1030,7 @@ test('Task Events DAO findId finds proper design basing on approval step', async
     designId: design.id,
     reason: null,
     type: ApprovalStepType.CHECKOUT,
+    collaboratorId: null,
     createdAt: new Date(),
     startedAt: null,
     completedAt: null

@@ -26,6 +26,7 @@ export default async function createDesignApproval(
       designId,
       reason: null,
       type: ApprovalStepType.CHECKOUT,
+      collaboratorId: null,
       createdAt: now,
       startedAt: now,
       completedAt: null
@@ -38,6 +39,7 @@ export default async function createDesignApproval(
       designId,
       reason: 'Pending technical partner pairing',
       type: ApprovalStepType.TECHNICAL_DESIGN,
+      collaboratorId: null,
       createdAt: now,
       startedAt: null,
       completedAt: null
@@ -50,6 +52,7 @@ export default async function createDesignApproval(
       designId,
       reason: 'Pending production partner pairing',
       type: ApprovalStepType.SAMPLE,
+      collaboratorId: null,
       createdAt: now,
       startedAt: null,
       completedAt: null
@@ -62,6 +65,7 @@ export default async function createDesignApproval(
       designId,
       reason: null,
       type: ApprovalStepType.PRODUCTION,
+      collaboratorId: null,
       createdAt: now,
       startedAt: null,
       completedAt: null

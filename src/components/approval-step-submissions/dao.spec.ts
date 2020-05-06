@@ -37,6 +37,7 @@ test('ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     designId: d1.id,
     reason: null,
     type: ApprovalStepType.CHECKOUT,
+    collaboratorId: null,
     createdAt: new Date(),
     startedAt: null,
     completedAt: null
@@ -49,6 +50,7 @@ test('ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     designId: d1.id,
     reason: null,
     type: ApprovalStepType.TECHNICAL_DESIGN,
+    collaboratorId: null,
     createdAt: new Date(),
     startedAt: null,
     completedAt: null

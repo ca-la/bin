@@ -34,6 +34,7 @@ test('GET /design-approval-step-comments/:stepId returns comments', async (t: ta
     designId: design.id,
     reason: null,
     type: ApprovalStepType.CHECKOUT,
+    collaboratorId: null,
     createdAt: new Date(),
     startedAt: null,
     completedAt: null
@@ -83,6 +84,7 @@ test('POST /design-approval-step-comments/:stepId creates a comment', async (t: 
     designId: design.id,
     reason: null,
     type: ApprovalStepType.CHECKOUT,
+    collaboratorId: null,
     createdAt: new Date(),
     startedAt: null,
     completedAt: null
@@ -139,6 +141,7 @@ test('POST /design-approval-step-comments/:stepId sends @mention notifications',
     designId: design.id,
     reason: null,
     type: ApprovalStepType.CHECKOUT,
+    collaboratorId: null,
     createdAt: new Date(),
     startedAt: null,
     completedAt: null

@@ -949,6 +949,57 @@ export async function createNotificationMessage(
         title: `${cleanName} assigned you to review ${approvalSubmissionTitle} for ${designHtmlLink}`
       };
     }
+    case NotificationType.APPROVAL_STEP_ASSIGNMENT: {
+      const {
+        designId,
+        designImageIds,
+        collectionId,
+        collectionTitle,
+        approvalStepId,
+        approvalStepTitle
+      } = notification;
+
+      if (!collectionId) {
+        return null;
+      }
+
+      const design = { id: designId, title: notification.designTitle };
+      const collection = {
+        id: collectionId,
+        title: collectionTitle
+      };
+      const approvalStep = {
+        id: approvalStepId,
+        title: approvalStepTitle
+      };
+
+      const { deepLink } = getLinks({
+        collection,
+        design,
+        approvalStep,
+        type: LinkType.ApprovalStep
+      });
+      const designHtmlLink = constructHtmlLink(
+        deepLink,
+        normalizeTitle(design)
+      );
+
+      const cleanName = escapeHtml(
+        baseNotificationMessage.actor.name ||
+          baseNotificationMessage.actor.email
+      );
+      return {
+        ...baseNotificationMessage,
+        html: `${span(
+          cleanName,
+          'user-name'
+        )} has assigned you to ${approvalStepTitle} on ${designHtmlLink}`,
+        imageUrl: buildImageUrl(designImageIds),
+        link: deepLink,
+        location: getLocation({ collection, design }),
+        title: `${cleanName} has assigned you to review ${approvalStepTitle} on ${designHtmlLink}`
+      };
+    }
 
     default: {
       throw new InvalidDataError(

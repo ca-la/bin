@@ -17,7 +17,7 @@ import db from '../../services/db';
 import DesignEvent from '../../domain-objects/design-event';
 import requireAuth from '../../middleware/require-auth';
 import { announceApprovalStepCommentCreation } from '../iris/messages/approval-step-comment';
-import {
+import Comment, {
   BASE_COMMENT_PROPERTIES,
   isBaseComment
 } from '../comments/domain-object';
@@ -176,7 +176,7 @@ export function* updateApprovalSubmission(
         id: uuid.v4(),
         quoteId: null,
         targetId: collaborator && collaborator.userId,
-        type: 'STEP_ASSIGNMENT'
+        type: 'STEP_SUMBISSION_ASSIGNMENT'
       });
       if (collaborator) {
         await NotificationsService.sendApprovalSubmissionAssignmentNotification(
@@ -251,7 +251,10 @@ async function getDesignIdFromSubmission(
 }
 
 export function* createRevisionRequest(
-  this: AuthedContext<{}, PermittedState & { designId: string; stepId: string }>
+  this: AuthedContext<
+    { comment: Comment },
+    PermittedState & { designId: string; stepId: string }
+  >
 ): Iterator<any, any, any> {
   const userId = this.state.userId;
   if (!this.request.body.comment) {

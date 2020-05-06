@@ -46,7 +46,8 @@ export default async function generateApprovalStep(
     completedAt: null,
     startedAt: null,
     createdAt: new Date(),
-    type: ApprovalStepType.CHECKOUT
+    type: ApprovalStepType.CHECKOUT,
+    collaboratorId: null
   };
 
   const [approvalStep] = await ApprovalStepDAO.createAll(trx, [

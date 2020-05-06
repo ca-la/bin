@@ -64,7 +64,7 @@ export async function create(
       if (!event.bidId) {
         throw new Error('bidId is missing');
       }
-      await emit<CalaEvents.BidAccepted>('bid.accepted', {
+      await emit<CalaEvents.DaoAcceptedBid>('dao.accepted.bid', {
         trx,
         bidId: event.bidId,
         designId: event.designId

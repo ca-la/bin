@@ -506,6 +506,21 @@ export default async function generateNotification(
         notification
       };
     }
+    case NotificationType.APPROVAL_STEP_ASSIGNMENT: {
+      const notification = await create({
+        ...baseNotification,
+        collectionId: collection.id,
+        designId: design.id,
+        approvalStepId: approvalStep.id,
+        recipientUserId: base.recipient.id,
+        type: options.type
+      });
+
+      return {
+        ...base,
+        notification
+      };
+    }
   }
 }
 

@@ -1,17 +1,29 @@
 import Knex from 'knex';
 
+import { pick } from 'lodash';
 import { authHeader, get, patch } from '../../test-helpers/http';
 import { test, Test } from '../../test-helpers/fresh';
 import createUser from '../../test-helpers/create-user';
-import { generateDesign } from '../../test-helpers/factories/product-design';
+import {
+  generateDesign,
+  staticProductDesign
+} from '../../test-helpers/factories/product-design';
 import * as ApprovalStepCommentDAO from '../approval-step-comments/dao';
 import * as ApprovalStepsDAO from '../approval-steps/dao';
 import * as DesignEventsDAO from '../../dao/design-events';
 import db from '../../services/db';
 import generateComment from '../../test-helpers/factories/comment';
 import generateDesignEvent from '../../test-helpers/factories/design-event';
-import { ApprovalStepState } from './domain-object';
+import ApprovalStep, {
+  ApprovalStepState,
+  ApprovalStepType
+} from './domain-object';
 import DesignEvent from '../../domain-objects/design-event';
+import ProductDesign from '../product-designs/domain-objects/product-design';
+import * as ProductDesignsDAO from '../product-designs/dao';
+import generateCollaborator from '../../test-helpers/factories/collaborator';
+import * as uuid from 'node-uuid';
+import * as NotificationsDAO from '../notifications/dao';
 
 test('GET /design-approval-steps?designId=:designId', async (t: Test) => {
   const designer = await createUser();
@@ -162,7 +174,7 @@ test('PATCH /design-approval-steps/:stepId', async (t: Test) => {
       state: ApprovalStepState.COMPLETED
     }
   });
-  t.is(response.status, 204);
+  t.is(response.status, 200);
 
   await db.transaction(async (trx: Knex.Transaction) => {
     const afterCompletionSteps = await ApprovalStepsDAO.findByDesign(
@@ -204,7 +216,7 @@ test('PATCH /design-approval-steps/:stepId', async (t: Test) => {
       state: ApprovalStepState.COMPLETED
     }
   });
-  t.is(adminRes[0].status, 204);
+  t.is(adminRes[0].status, 200);
 
   const otherRes = await patch(`/design-approval-steps/${steps[0].id}`, {
     headers: authHeader(other.session.id),
@@ -213,4 +225,106 @@ test('PATCH /design-approval-steps/:stepId', async (t: Test) => {
     }
   });
   t.is(otherRes[0].status, 403);
+});
+
+test('PATCH /design-approval-steps/:stepId updates assignee', async (t: Test) => {
+  const { user: actor, session } = await createUser({ withSession: true });
+  const { user: assignee } = await createUser({ withSession: false });
+
+  const d1: ProductDesign = await ProductDesignsDAO.create(
+    staticProductDesign({ id: 'd1', userId: actor.id })
+  );
+
+  const { collaborator } = await generateCollaborator({
+    userId: assignee.id,
+    designId: d1.id
+  });
+
+  const as1: ApprovalStep = {
+    state: ApprovalStepState.UNSTARTED,
+    id: uuid.v4(),
+    title: 'Checkout',
+    ordering: 0,
+    designId: d1.id,
+    reason: null,
+    type: ApprovalStepType.CHECKOUT,
+    collaboratorId: null,
+    completedAt: null,
+    startedAt: null,
+    createdAt: new Date()
+  };
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await ApprovalStepsDAO.createAll(trx, [as1]);
+  });
+
+  const [response, body] = await patch(`/design-approval-steps/${as1.id}`, {
+    headers: authHeader(session.id),
+    body: {
+      collaboratorId: collaborator.id
+    }
+  });
+  t.is(response.status, 200, 'responds with 200');
+  t.deepEqual(
+    body,
+    JSON.parse(JSON.stringify({ ...as1, collaboratorId: collaborator.id })),
+    'returns updated step'
+  );
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const designEvents = await DesignEventsDAO.findApprovalStepEvents(
+      trx,
+      as1.designId,
+      as1.id
+    );
+    t.is(designEvents.length, 1, 'design event is created');
+    t.deepEqual(
+      pick(
+        designEvents[0],
+        'actorId',
+        'targetId',
+        'designId',
+        'type',
+        'approvalStepId',
+        'stepTitle'
+      ),
+      {
+        actorId: actor.id,
+        targetId: assignee.id,
+        designId: d1.id,
+        type: 'STEP_ASSIGNMENT',
+        approvalStepId: as1.id,
+        stepTitle: as1.title
+      },
+      'design event has proper values'
+    );
+
+    const notifications = await NotificationsDAO.findByUserId(
+      trx,
+      assignee.id,
+      { limit: 10, offset: 0 }
+    );
+    t.is(notifications.length, 1, 'notification is created');
+
+    t.deepEqual(
+      pick(
+        notifications[0],
+        'actorUserId',
+        'approvalStepId',
+        'approvalStepTitle',
+        'collaboratorId',
+        'designId',
+        'type'
+      ),
+      {
+        actorUserId: actor.id,
+        approvalStepId: as1.id,
+        approvalStepTitle: as1.title,
+        collaboratorId: collaborator.id,
+        designId: d1.id,
+        type: 'APPROVAL_STEP_ASSIGNMENT'
+      },
+      'notification has proper values'
+    );
+  });
 });

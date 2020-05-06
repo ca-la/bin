@@ -31,6 +31,7 @@ test('ApprovalStepTasksDAO can create multiple tasks and retrieve by step', asyn
     designId: d1.id,
     reason: null,
     type: ApprovalStepType.CHECKOUT,
+    collaboratorId: null,
     createdAt: new Date(),
     startedAt: null,
     completedAt: null

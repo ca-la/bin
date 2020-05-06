@@ -10,6 +10,7 @@ import ApprovalStep, {
   partialDataAdapter,
   ApprovalStepState
 } from './domain-object';
+import ResourceNotFoundError from '../../errors/resource-not-found';
 
 const TABLE_NAME = 'design_approval_steps';
 
@@ -105,14 +106,19 @@ export async function findById(
   return findOne(trx, { id });
 }
 
+interface ApprovalStepUpdateResult {
+  before: ApprovalStep;
+  updated: ApprovalStep;
+}
+
 export async function update(
   trx: Knex.Transaction,
   id: string,
   patch: Partial<ApprovalStep>
-): Promise<ApprovalStep> {
-  const oldStep = await findById(trx, id);
-  if (!oldStep) {
-    throw new Error('approvalStep not found');
+): Promise<ApprovalStepUpdateResult> {
+  const before = await findById(trx, id);
+  if (!before) {
+    throw new ResourceNotFoundError('Could not find ApprovalStep');
   }
 
   const now = new Date();
@@ -122,7 +128,7 @@ export async function update(
     startedAt = now;
   }
   if (patch.state === ApprovalStepState.COMPLETED) {
-    startedAt = oldStep.startedAt || now;
+    startedAt = before.startedAt || now;
     completedAt = now;
   }
 
@@ -136,20 +142,22 @@ export async function update(
     .then(validateApprovalSteps);
 
   if (updated.length !== 1) {
-    throw new Error('Could not update approval step');
+    throw new Error('Could not update ApprovalStep');
   }
   const approvalStep = updated[0];
-
-  if (oldStep.state !== approvalStep.state) {
-    await emit<CalaEvents.ApprovalStepStateChanged>(
-      'approvalStep.stateChanged',
+  if (before.state !== approvalStep.state) {
+    await emit<CalaEvents.DaoUpdatedApprovalStepState>(
+      'dao.updated.approvalStep.state',
       {
         trx,
-        approvalStep,
-        oldState: oldStep.state
+        updated: approvalStep,
+        before
       }
     );
   }
 
-  return approvalStep;
+  return {
+    before,
+    updated: approvalStep
+  };
 }

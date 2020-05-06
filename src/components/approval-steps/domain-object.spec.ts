@@ -7,6 +7,7 @@ test('dataAdpater.parse', async (t: Test) => {
     dataAdapter.parse({
       id: 's1',
       design_id: 'd1',
+      collaborator_id: 'c1',
       ordering: 0,
       reason: 'Awaiting something',
       state: 'BLOCKED',
@@ -19,6 +20,7 @@ test('dataAdpater.parse', async (t: Test) => {
     {
       id: 's1',
       designId: 'd1',
+      collaboratorId: 'c1',
       ordering: 0,
       reason: 'Awaiting something',
       state: 'BLOCKED',
@@ -36,6 +38,7 @@ test('dataAdpater.parse', async (t: Test) => {
       dataAdapter.parse({
         id: 's1',
         design_id: 'd1',
+        collaborator_id: 'c1',
         ordering: 0,
         reason: null,
         state: 'BLOCKED',
@@ -52,6 +55,7 @@ test('dataAdpater.parse', async (t: Test) => {
     dataAdapter.parse({
       id: 's1',
       design_id: 'd1',
+      collaborator_id: 'c1',
       ordering: 0,
       reason: null,
       state: 'UNSTARTED',
@@ -64,6 +68,7 @@ test('dataAdpater.parse', async (t: Test) => {
     {
       id: 's1',
       designId: 'd1',
+      collaboratorId: 'c1',
       ordering: 0,
       reason: null,
       state: 'UNSTARTED',
@@ -81,6 +86,7 @@ test('dataAdpater.parse', async (t: Test) => {
       dataAdapter.parse({
         id: 's1',
         design_id: 'd1',
+        collaborator_id: 'c1',
         ordering: 0,
         reason: 'Should not be here',
         state: 'UNSTARTED',
@@ -97,6 +103,7 @@ test('dataAdpater.parse', async (t: Test) => {
     dataAdapter.parse({
       id: 's1',
       design_id: 'd1',
+      collaborator_id: 'c1',
       ordering: 0,
       reason: null,
       state: 'CURRENT',
@@ -109,6 +116,7 @@ test('dataAdpater.parse', async (t: Test) => {
     {
       id: 's1',
       designId: 'd1',
+      collaboratorId: 'c1',
       ordering: 0,
       reason: null,
       state: 'CURRENT',
@@ -126,6 +134,7 @@ test('dataAdpater.parse', async (t: Test) => {
       dataAdapter.parse({
         id: 's1',
         design_id: 'd1',
+        collaborator_id: 'c1',
         ordering: 0,
         reason: 'Should not be here',
         state: 'CURRENT',
@@ -143,6 +152,7 @@ test('dataAdpater.parse', async (t: Test) => {
       dataAdapter.parse({
         id: 's1',
         design_id: 'd1',
+        collaborator_id: 'c1',
         ordering: 0,
         reason: null,
         state: 'CURRENT',
@@ -159,6 +169,7 @@ test('dataAdpater.parse', async (t: Test) => {
     dataAdapter.parse({
       id: 's1',
       design_id: 'd1',
+      collaborator_id: 'c1',
       ordering: 0,
       reason: null,
       state: 'COMPLETED',
@@ -171,6 +182,7 @@ test('dataAdpater.parse', async (t: Test) => {
     {
       id: 's1',
       designId: 'd1',
+      collaboratorId: 'c1',
       ordering: 0,
       reason: null,
       state: 'COMPLETED',
@@ -188,6 +200,7 @@ test('dataAdpater.parse', async (t: Test) => {
       dataAdapter.parse({
         id: 's1',
         design_id: 'd1',
+        collaborator_id: 'c1',
         ordering: 0,
         reason: 'Should not be here',
         state: 'COMPLETED',
@@ -205,6 +218,7 @@ test('dataAdpater.parse', async (t: Test) => {
       dataAdapter.parse({
         id: 's1',
         design_id: 'd1',
+        collaborator_id: 'c1',
         ordering: 0,
         reason: null,
         state: 'COMPLETED',
@@ -221,6 +235,7 @@ test('dataAdpater.parse', async (t: Test) => {
     dataAdapter.parse({
       id: 's1',
       design_id: 'd1',
+      collaborator_id: 'c1',
       ordering: 0,
       reason: null,
       state: 'SKIP',
@@ -233,6 +248,7 @@ test('dataAdpater.parse', async (t: Test) => {
     {
       id: 's1',
       designId: 'd1',
+      collaboratorId: 'c1',
       ordering: 0,
       reason: null,
       state: 'SKIP',
@@ -250,6 +266,7 @@ test('dataAdpater.parse', async (t: Test) => {
       dataAdapter.parse({
         id: 's1',
         design_id: 'd1',
+        collaborator_id: 'c1',
         ordering: 0,
         reason: 'Should not be here',
         state: 'SKIP',

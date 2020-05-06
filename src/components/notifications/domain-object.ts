@@ -130,6 +130,12 @@ import {
   FullApprovalStepSubmissionAssignmentNotification,
   FullApprovalStepSubmissionAssignmentNotificationRow
 } from './models/approval-step-submission-assignment';
+import {
+  ApprovalStepAssignmentNotification,
+  ApprovalStepAssignmentNotificationRow,
+  FullApprovalStepAssignmentNotification,
+  FullApprovalStepAssignmentNotificationRow
+} from './models/approval-step-assignment';
 
 export enum NotificationType {
   ANNOTATION_COMMENT_CREATE = 'ANNOTATION_COMMENT_CREATE',
@@ -154,7 +160,8 @@ export enum NotificationType {
   APPROVAL_STEP_COMMENT_MENTION = 'APPROVAL_STEP_COMMENT_MENTION',
   APPROVAL_STEP_COMMENT_REPLY = 'APPROVAL_STEP_COMMENT_REPLY',
   APPROVAL_STEP_COMMENT_CREATE = 'APPROVAL_STEP_COMMENT_CREATE',
-  APPROVAL_STEP_SUBMISSION_ASSIGNMENT = 'APPROVAL_STEP_SUBMISSION_ASSIGNMENT'
+  APPROVAL_STEP_SUBMISSION_ASSIGNMENT = 'APPROVAL_STEP_SUBMISSION_ASSIGNMENT',
+  APPROVAL_STEP_ASSIGNMENT = 'APPROVAL_STEP_ASSIGNMENT'
 }
 
 export type Notification =
@@ -180,7 +187,8 @@ export type Notification =
   | ApprovalStepCommentMentionNotification
   | ApprovalStepCommentReplyNotification
   | ApprovalStepCommentCreateNotification
-  | ApprovalStepSubmissionAssignmentNotification;
+  | ApprovalStepSubmissionAssignmentNotification
+  | ApprovalStepAssignmentNotification;
 
 export type FullNotification =
   | FullTaskCompletionNotification
@@ -203,7 +211,8 @@ export type FullNotification =
   | FullApprovalStepCommentMentionNotification
   | FullApprovalStepCommentReplyNotification
   | FullApprovalStepCommentCreateNotification
-  | FullApprovalStepSubmissionAssignmentNotification;
+  | FullApprovalStepSubmissionAssignmentNotification
+  | FullApprovalStepAssignmentNotification;
 
 export type NotificationRow =
   | AnnotationCommentCreateNotificationRow
@@ -228,7 +237,8 @@ export type NotificationRow =
   | ApprovalStepCommentMentionNotificationRow
   | ApprovalStepCommentReplyNotificationRow
   | ApprovalStepCommentCreateNotificationRow
-  | ApprovalStepSubmissionAssignmentNotificationRow;
+  | ApprovalStepSubmissionAssignmentNotificationRow
+  | ApprovalStepAssignmentNotificationRow;
 
 export type FullNotificationRow =
   | FullTaskCompletionNotificationRow
@@ -250,7 +260,8 @@ export type FullNotificationRow =
   | FullApprovalStepCommentMentionNotificationRow
   | FullApprovalStepCommentReplyNotificationRow
   | FullApprovalStepCommentCreateNotificationRow
-  | FullApprovalStepSubmissionAssignmentNotificationRow;
+  | FullApprovalStepSubmissionAssignmentNotificationRow
+  | FullApprovalStepAssignmentNotificationRow;
 
 type EqualKeys<T> = { [P in keyof T]: any };
 

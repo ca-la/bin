@@ -30,6 +30,7 @@ test('GET /design-approval-step-tasks?approvalStepId returns tasks', async (t: t
     designId: design.id,
     reason: null,
     type: ApprovalStepType.CHECKOUT,
+    collaboratorId: null,
     createdAt: new Date(),
     startedAt: null,
     completedAt: null
@@ -72,6 +73,7 @@ test('POST /design-approval-step-task creates a task', async (t: tape.Test) => {
     designId: design.id,
     reason: null,
     type: ApprovalStepType.CHECKOUT,
+    collaboratorId: null,
     createdAt: new Date(),
     startedAt: null,
     completedAt: null

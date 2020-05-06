@@ -6,6 +6,7 @@ export interface BaseApprovalStep {
   title: string;
   ordering: number;
   designId: string;
+  collaboratorId: string | null;
   type: ApprovalStepType;
   createdAt: Date;
   completedAt: Date | null;
@@ -76,6 +77,7 @@ export interface ApprovalStepRow {
   title: string;
   ordering: number;
   design_id: string;
+  collaborator_id: string | null;
   state: string;
   reason: string | null;
   type: string;
@@ -97,6 +99,7 @@ function encode(row: ApprovalStepRow): ApprovalStep {
         title: row.title,
         ordering: row.ordering,
         designId: row.design_id,
+        collaboratorId: row.collaborator_id,
         state: ApprovalStepState.BLOCKED,
         reason: row.reason,
         type: row.type as ApprovalStepType,
@@ -131,7 +134,8 @@ function encode(row: ApprovalStepRow): ApprovalStep {
         type: row.type as ApprovalStepType,
         createdAt: row.created_at,
         completedAt: row.completed_at,
-        startedAt: row.started_at
+        startedAt: row.started_at,
+        collaboratorId: row.collaborator_id
       };
 
       return step;
@@ -155,7 +159,8 @@ function encode(row: ApprovalStepRow): ApprovalStep {
         type: row.type as ApprovalStepType,
         createdAt: row.created_at,
         completedAt: null,
-        startedAt: row.started_at
+        startedAt: row.started_at,
+        collaboratorId: row.collaborator_id
       };
 
       return step;
@@ -176,7 +181,8 @@ function encode(row: ApprovalStepRow): ApprovalStep {
         type: row.type as ApprovalStepType,
         createdAt: row.created_at,
         completedAt: null,
-        startedAt: null
+        startedAt: null,
+        collaboratorId: row.collaborator_id
       };
 
       return step;
@@ -191,6 +197,7 @@ function encode(row: ApprovalStepRow): ApprovalStep {
         title: row.title,
         ordering: row.ordering,
         designId: row.design_id,
+        collaboratorId: row.collaborator_id,
         state: ApprovalStepState.SKIP,
         reason: null,
         type: row.type as ApprovalStepType,
@@ -216,6 +223,7 @@ function decode(step: ApprovalStep): ApprovalStepRow {
     title: step.title,
     ordering: step.ordering,
     design_id: step.designId,
+    collaborator_id: step.collaboratorId,
     state: step.state,
     reason: step.reason,
     type: step.type,

@@ -1,46 +1,46 @@
 import * as Knex from 'knex';
-import ApprovalStep, {
-  ApprovalStepState
-} from '../../components/approval-steps/domain-object';
+import ApprovalStep from '../../components/approval-steps/domain-object';
 
 export type CalaEventType =
-  | 'bid.accepted'
-  | 'bid.created'
-  | 'approvalStep.stateChanged'
-  | 'route.updated.approvalStep';
+  | 'dao.accepted.bid'
+  | 'dao.updated.approvalStep.state'
+  | 'route.updated.approvalStep'
+  | 'route.updated.approvalStep.collaboratorId';
 
 interface CalaEventBase {
   trx: Knex.Transaction;
   type: CalaEventType;
 }
 
-export interface BidAccepted extends CalaEventBase {
-  type: 'bid.accepted';
+export interface DaoAcceptedBid extends CalaEventBase {
+  type: 'dao.accepted.bid';
   bidId: string;
   designId: string;
-}
-export interface BidCreated extends CalaEventBase {
-  type: 'bid.created';
-  bidId: string;
-}
-
-export interface ApprovalStepStateChanged extends CalaEventBase {
-  type: 'approvalStep.stateChanged';
-  approvalStep: ApprovalStep;
-  oldState: ApprovalStepState;
 }
 
 export interface RouteUpdatedApprovalStep extends CalaEventBase {
   type: 'route.updated.approvalStep';
-  afterUpdate: ApprovalStep;
-  beforeUpdate: ApprovalStep;
+  before: ApprovalStep;
+  updated: ApprovalStep;
   actorId: string;
 }
 
+export interface DaoUpdatedApprovalStepState extends CalaEventBase {
+  type: 'dao.updated.approvalStep.state';
+  before: ApprovalStep;
+  updated: ApprovalStep;
+}
+export interface RouteUpdatedApprovalStepCollaboratorId extends CalaEventBase {
+  type: 'route.updated.approvalStep.collaboratorId';
+  actorId: string;
+  before: ApprovalStep;
+  updated: ApprovalStep;
+}
+
 export type Event =
-  | BidAccepted
-  | BidCreated
-  | ApprovalStepStateChanged
-  | RouteUpdatedApprovalStep;
+  | DaoAcceptedBid
+  | DaoUpdatedApprovalStepState
+  | RouteUpdatedApprovalStep
+  | RouteUpdatedApprovalStepCollaboratorId;
 
 export type Handler<T extends Event> = (event: T) => Promise<any>;

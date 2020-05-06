@@ -32,7 +32,8 @@ test('ApprovalStepsDAO can create multiple steps and retrieve by design', async 
     type: ApprovalStepType.CHECKOUT,
     createdAt: new Date(),
     startedAt: null,
-    completedAt: null
+    completedAt: null,
+    collaboratorId: null
   };
   await db.transaction((trx: Knex.Transaction) =>
     ApprovalStepsDAO.createAll(trx, [approvalStep])

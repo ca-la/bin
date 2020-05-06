@@ -37,6 +37,7 @@ type ApprovalEvents =
   | 'REVISION_REQUEST'
   | 'STEP_ASSIGNMENT'
   | 'STEP_SUMBISSION_APPROVAL'
+  | 'STEP_SUMBISSION_ASSIGNMENT'
   | 'STEP_COMPLETE';
 
 export default interface DesignEvent {
