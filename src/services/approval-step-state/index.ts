@@ -68,6 +68,54 @@ export async function handleUserStepCompletion(
   // TODO: Send notification
 }
 
+async function unstartFormerlyCurrentStep(
+  trx: Knex.Transaction,
+  step: ApprovalStep
+): Promise<void> {
+  const formerCurrent = await ApprovalStepsDAO.findOne(
+    trx,
+    { designId: step.designId, state: ApprovalStepState.CURRENT },
+    (query: Knex.QueryBuilder) => query.whereNot('id', step.id)
+  );
+
+  if (!formerCurrent) {
+    return;
+  }
+
+  await ApprovalStepsDAO.update(trx, formerCurrent.id, {
+    state: ApprovalStepState.UNSTARTED,
+    startedAt: null
+  });
+}
+
+export async function handleStepReopen(
+  trx: Knex.Transaction,
+  step: ApprovalStep
+): Promise<void> {
+  await unstartFormerlyCurrentStep(trx, step);
+}
+
+export async function handleUserStepReopen(
+  trx: Knex.Transaction,
+  step: ApprovalStep,
+  actorId: string
+): Promise<void> {
+  await DesignEventsDAO.create(trx, {
+    actorId,
+    approvalStepId: step.id,
+    approvalSubmissionId: null,
+    bidId: null,
+    createdAt: new Date(),
+    designId: step.designId,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: null,
+    type: 'STEP_REOPEN',
+    commentId: null
+  });
+  // TODO: cause any related notification to not be returned any more
+}
+
 export async function transitionCheckoutState(
   collectionId: string
 ): Promise<void> {

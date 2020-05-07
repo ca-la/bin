@@ -1,7 +1,9 @@
 import {
   actualizeDesignStepsAfterBidAcceptance,
   handleStepCompletion,
-  handleUserStepCompletion
+  handleUserStepCompletion,
+  handleStepReopen,
+  handleUserStepReopen
 } from '../approval-step-state';
 import { ApprovalStepState } from '../../components/approval-steps/domain-object';
 import * as DesignEventsDAO from '../../dao/design-events';
@@ -33,13 +35,21 @@ export function init(): void {
       );
     }
   );
+
   listen<CalaEvents.DaoUpdatedApprovalStepState>(
     'dao.updated.approvalStep.state',
     async (event: CalaEvents.DaoUpdatedApprovalStepState) => {
-      const { updated, trx } = event;
+      const { before, updated, trx } = event;
 
       if (updated.state === ApprovalStepState.COMPLETED) {
         await handleStepCompletion(trx, updated);
+      }
+
+      if (
+        before.state === ApprovalStepState.COMPLETED &&
+        updated.state === ApprovalStepState.CURRENT
+      ) {
+        await handleStepReopen(trx, updated);
       }
     }
   );
@@ -54,8 +64,16 @@ export function init(): void {
           await handleUserStepCompletion(trx, updated, actorId);
         }
       }
+
+      if (
+        before.state === ApprovalStepState.COMPLETED &&
+        updated.state === ApprovalStepState.CURRENT
+      ) {
+        await handleUserStepReopen(trx, updated, actorId);
+      }
     }
   );
+
   listen<CalaEvents.RouteUpdatedApprovalStepCollaboratorId>(
     'route.updated.approvalStep.collaboratorId',
     async (event: CalaEvents.RouteUpdatedApprovalStepCollaboratorId) => {

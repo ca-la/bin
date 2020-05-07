@@ -60,6 +60,7 @@ test('GET /design-approval-steps/:stepId/stream-items', async (t: Test) => {
   const designer = await createUser();
   const d1 = await generateDesign({ userId: designer.user.id });
   let approvalStepId = null;
+  let finalCompleteEventId = null;
   await db.transaction(async (trx: Knex.Transaction) => {
     approvalStepId = (await ApprovalStepsDAO.findByDesign(trx, d1.id))[0].id;
     const { comment: comment1 } = await generateComment({
@@ -93,6 +94,28 @@ test('GET /design-approval-steps/:stepId/stream-items', async (t: Test) => {
       designId: d1.id,
       type: 'COMMIT_QUOTE'
     });
+
+    await generateDesignEvent({
+      actorId: designer.user.id,
+      approvalStepId,
+      designId: d1.id,
+      type: 'STEP_COMPLETE'
+    });
+
+    await generateDesignEvent({
+      actorId: designer.user.id,
+      approvalStepId,
+      designId: d1.id,
+      type: 'STEP_REOPEN'
+    });
+
+    const { designEvent: finalCompleteEvent } = await generateDesignEvent({
+      actorId: designer.user.id,
+      approvalStepId,
+      designId: d1.id,
+      type: 'STEP_COMPLETE'
+    });
+    finalCompleteEventId = finalCompleteEvent.id;
   });
   const [res, body] = await get(
     `/design-approval-steps/${approvalStepId}/stream-items`,
@@ -101,7 +124,7 @@ test('GET /design-approval-steps/:stepId/stream-items', async (t: Test) => {
     }
   );
   t.equal(res.status, 200, 'Returns successfully');
-  t.equal(body.length, 4, 'Returns 4 results');
+  t.equal(body.length, 5, 'Returns 5 results');
   t.equal(body[0].text, 'Going to submit');
   t.deepEqual(
     {
@@ -137,6 +160,25 @@ test('GET /design-approval-steps/:stepId/stream-items', async (t: Test) => {
       actorEmail: designer.user.email
     },
     'Checkout event returns required information'
+  );
+  t.deepEqual(
+    {
+      type: body[4].type,
+      actorId: body[4].actorId,
+      actorName: body[4].actorName,
+      actorRole: body[4].actorRole,
+      actorEmail: body[4].actorEmail,
+      id: body[4].id
+    },
+    {
+      type: 'STEP_COMPLETE',
+      actorId: designer.user.id,
+      actorName: 'Q User',
+      actorRole: 'USER',
+      actorEmail: designer.user.email,
+      id: finalCompleteEventId
+    },
+    'Step completion event returns required information'
   );
 
   const other = await createUser();
@@ -225,6 +267,46 @@ test('PATCH /design-approval-steps/:stepId', async (t: Test) => {
     }
   });
   t.is(otherRes[0].status, 403);
+
+  const [reopenResponse] = await patch(
+    `/design-approval-steps/${steps[0].id}`,
+    {
+      headers: authHeader(designer.session.id),
+      body: {
+        state: ApprovalStepState.CURRENT
+      }
+    }
+  );
+  t.is(reopenResponse.status, 200);
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const afterReopenSteps = await ApprovalStepsDAO.findByDesign(trx, d1.id);
+    t.is(afterReopenSteps[0].state, ApprovalStepState.CURRENT);
+    t.is(afterReopenSteps[1].state, ApprovalStepState.SKIP);
+    t.is(afterReopenSteps[2].state, ApprovalStepState.UNSTARTED);
+
+    t.is(
+      afterReopenSteps[0].completedAt,
+      null,
+      'resets completed at date for completed step'
+    );
+    t.is(
+      afterReopenSteps[2].startedAt,
+      null,
+      'resets started at date for current step'
+    );
+
+    const afterCompletionEvents = await DesignEventsDAO.findApprovalStepEvents(
+      trx,
+      d1.id,
+      steps[0].id
+    );
+    t.true(
+      afterCompletionEvents.some(
+        (de: DesignEvent): boolean => de.type === 'STEP_REOPEN'
+      )
+    );
+  });
 });
 
 test('PATCH /design-approval-steps/:stepId updates assignee', async (t: Test) => {

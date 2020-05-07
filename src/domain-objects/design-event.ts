@@ -38,7 +38,8 @@ type ApprovalEvents =
   | 'STEP_ASSIGNMENT'
   | 'STEP_SUMBISSION_APPROVAL'
   | 'STEP_SUMBISSION_ASSIGNMENT'
-  | 'STEP_COMPLETE';
+  | 'STEP_COMPLETE'
+  | 'STEP_REOPEN';
 
 export default interface DesignEvent {
   id: string;

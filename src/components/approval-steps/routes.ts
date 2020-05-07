@@ -44,11 +44,35 @@ function* getApprovalStepsForDesign(
   this.status = 200;
 }
 
+const SKIP_EVENTS = ['STEP_REOPEN'];
+
+function subtractDesignEventPairs(
+  acc: DesignEventWithMeta[],
+  designEvent: DesignEventWithMeta,
+  index: number,
+  designEvents: DesignEventWithMeta[]
+): DesignEventWithMeta[] {
+  const hasFutureReopen = designEvents
+    .slice(index)
+    .find((future: DesignEventWithMeta) => future.type === 'STEP_REOPEN');
+  if (designEvent.type === 'STEP_COMPLETE' && hasFutureReopen) {
+    return acc;
+  }
+
+  if (SKIP_EVENTS.includes(designEvent.type)) {
+    return acc;
+  }
+
+  return [...acc, designEvent];
+}
+
 function* getApprovalStepStream(
-  this: AuthedContext<{}, { designId: string }>
+  this: TrxContext<AuthedContext<{}, { designId: string }>>
 ): Iterator<any, any, any> {
-  const comments = yield db.transaction((trx: Knex.Transaction) =>
-    ApprovalStepCommentDAO.findByStepId(trx, this.params.stepId)
+  const { trx } = this.state;
+  const comments = yield ApprovalStepCommentDAO.findByStepId(
+    trx,
+    this.params.stepId
   );
   if (!comments) {
     this.throw(404);
@@ -58,14 +82,11 @@ function* getApprovalStepStream(
     comments
   )).map(addAttachmentLinks);
 
-  const events: DesignEventWithMeta[] = yield db.transaction(
-    (trx: Knex.Transaction) =>
-      DesignEventsDAO.findApprovalStepEvents(
-        trx,
-        this.state.designId,
-        this.params.stepId
-      )
-  );
+  const events: DesignEventWithMeta[] = (yield DesignEventsDAO.findApprovalStepEvents(
+    trx,
+    this.state.designId,
+    this.params.stepId
+  )).reduce(subtractDesignEventPairs, []);
 
   const streamItems: StreamItem[] = [...commentsWithResources, ...events].sort(
     (a: StreamItem, b: StreamItem) =>
@@ -155,6 +176,7 @@ router.get(
   requireAuth,
   requireDesignIdBy(getDesignIdFromStep),
   canAccessDesignInState,
+  useTransaction,
   getApprovalStepStream
 );
 router.patch(
