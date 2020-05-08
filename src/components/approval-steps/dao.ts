@@ -52,13 +52,18 @@ export async function findOne(
   trx: Knex.Transaction,
   filter: Partial<ApprovalStep>,
   modifier?: (query: QueryBuilder) => QueryBuilder
-): Promise<ApprovalStep> {
+): Promise<ApprovalStep | null> {
   const basicQuery = trx(TABLE_NAME)
     .select('*')
     .where(partialDataAdapter.toDb(filter))
     .orderBy('ordering')
     .first();
   const row = await (modifier ? basicQuery.modify(modifier) : basicQuery);
+
+  if (!row) {
+    return null;
+  }
+
   return validate<ApprovalStepRow, ApprovalStep>(
     TABLE_NAME,
     isApprovalStepRow,

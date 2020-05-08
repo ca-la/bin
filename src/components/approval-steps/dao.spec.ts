@@ -123,6 +123,12 @@ test('ApprovalStepsDAO can retrieve by step id', async (t: Test) => {
   );
 
   t.deepEqual(found, as1, 'returns steps by design');
+
+  const notFound = await db.transaction((trx: Knex.Transaction) =>
+    ApprovalStepsDAO.findById(trx, uuid.v4())
+  );
+
+  t.equals(notFound, null, 'returns null when query does not find a row');
 });
 
 test('ApprovalStepsDAO updates title', async (t: Test) => {

@@ -91,12 +91,12 @@ for (const testCase of testCases) {
         designId: design.id,
         type: ApprovalStepType.TECHNICAL_DESIGN
       });
-      await ApprovalStepsDAO.update(trx, technicalDesignStep.id, {
+      await ApprovalStepsDAO.update(trx, technicalDesignStep!.id, {
         reason: null,
         state: ApprovalStepState.SKIP
       });
     }
-    await ApprovalStepsDAO.update(trx, checkoutStep.id, {
+    await ApprovalStepsDAO.update(trx, checkoutStep!.id, {
       reason: null,
       state: ApprovalStepState.COMPLETED
     });
