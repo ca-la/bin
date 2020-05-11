@@ -6,11 +6,6 @@ import ApprovalStep, {
   ApprovalStepType
 } from '../../components/approval-steps/domain-object';
 import * as ApprovalStepsDAO from '../../components/approval-steps/dao';
-import ApprovalStepSubmission, {
-  ApprovalStepSubmissionArtifactType,
-  ApprovalStepSubmissionState
-} from '../../components/approval-step-submissions/domain-object';
-import * as ApprovalStepSubmissionsDAO from '../../components/approval-step-submissions/dao';
 
 export default async function createDesignApproval(
   trx: Knex.Transaction,
@@ -73,27 +68,4 @@ export default async function createDesignApproval(
   ];
 
   await ApprovalStepsDAO.createAll(trx, steps);
-
-  const submissions: ApprovalStepSubmission[] = [
-    {
-      id: uuid.v4(),
-      state: ApprovalStepSubmissionState.UNSUBMITTED,
-      artifactType: ApprovalStepSubmissionArtifactType.TECHNICAL_DESIGN,
-      createdAt: new Date(),
-      stepId: steps[1].id,
-      collaboratorId: null,
-      title: 'Technical Design'
-    },
-    {
-      id: uuid.v4(),
-      state: ApprovalStepSubmissionState.UNSUBMITTED,
-      artifactType: ApprovalStepSubmissionArtifactType.SAMPLE,
-      createdAt: new Date(),
-      stepId: steps[2].id,
-      title: 'Sample',
-      collaboratorId: null
-    }
-  ];
-
-  await ApprovalStepSubmissionsDAO.createAll(trx, submissions);
 }

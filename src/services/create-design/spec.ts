@@ -4,7 +4,6 @@ import * as CollaboratorsDAO from '../../components/collaborators/dao';
 import * as TaskEventsDAO from '../../dao/task-events';
 import * as StagesDAO from '../../dao/product-design-stages';
 import * as ApprovalStepsDAO from '../../components/approval-steps/dao';
-import * as ApprovalStepSubmissionsDAO from '../../components/approval-step-submissions/dao';
 import createDesign from './index';
 import db from '../db';
 import createUser from '../../test-helpers/create-user';
@@ -38,19 +37,4 @@ test('createDesign service creates a collaborator', async (t: Test) => {
     ApprovalStepsDAO.findByDesign(trx, design.id)
   );
   t.equal(approvalSteps.length, 4, 'There are steps on the new design');
-
-  const technicalDesignSubmissions = await db.transaction(
-    (trx: Knex.Transaction) =>
-      ApprovalStepSubmissionsDAO.findByStep(trx, approvalSteps[1].id)
-  );
-  t.equal(
-    technicalDesignSubmissions.length,
-    1,
-    'There is a technical design submission'
-  );
-
-  const sampleSubmissions = await db.transaction((trx: Knex.Transaction) =>
-    ApprovalStepSubmissionsDAO.findByStep(trx, approvalSteps[2].id)
-  );
-  t.equal(sampleSubmissions.length, 1, 'There is a sample submission');
 });

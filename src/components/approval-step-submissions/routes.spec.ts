@@ -22,13 +22,22 @@ test('GET /design-approval-step-submissions?stepId=:stepId', async (t: Test) => 
   const admin = await createUser({ role: 'ADMIN' });
   const other = await createUser();
 
-  const d1 = await generateDesign({ userId: designer.user.id });
+  const { approvalStep, submission } = await db.transaction(
+    async (trx: Knex.Transaction) => {
+      const { approvalStep: createdStep } = await generateApprovalStep(trx, {
+        createdBy: designer.user.id
+      });
+      const {
+        submission: createdSubmission
+      } = await generateApprovalSubmission(trx, {
+        stepId: createdStep.id
+      });
 
-  const steps = await db.transaction((trx: Knex.Transaction) =>
-    ApprovalStepsDAO.findByDesign(trx, d1.id)
+      return { approvalStep: createdStep, submission: createdSubmission };
+    }
   );
   const [response, body] = await get(
-    `/design-approval-step-submissions?stepId=${steps[1].id}`,
+    `/design-approval-step-submissions?stepId=${approvalStep.id}`,
     {
       headers: authHeader(designer.session.id)
     }
@@ -36,11 +45,14 @@ test('GET /design-approval-step-submissions?stepId=:stepId', async (t: Test) => 
 
   t.is(response.status, 200);
   t.is(body.length, 1);
-  t.is(body[0].artifactType, 'TECHNICAL_DESIGN');
-  t.is(body[0].state, 'UNSUBMITTED');
+  t.deepEqual(
+    body,
+    JSON.parse(JSON.stringify([submission])),
+    'returns saved submission'
+  );
 
   const adminRes = await get(
-    `/design-approval-step-submissions?stepId=${steps[1].id}`,
+    `/design-approval-step-submissions?stepId=${approvalStep.id}`,
     {
       headers: authHeader(admin.session.id)
     }
@@ -48,9 +60,14 @@ test('GET /design-approval-step-submissions?stepId=:stepId', async (t: Test) => 
 
   t.is(adminRes[0].status, 200);
   t.is(adminRes[1].length, 1);
+  t.deepEqual(
+    adminRes[1],
+    JSON.parse(JSON.stringify([submission])),
+    'returns saved submission'
+  );
 
   const otherRes = await get(
-    `/design-approval-step-submissions?stepId=${steps[1].id}`,
+    `/design-approval-step-submissions?stepId=${approvalStep.id}`,
     {
       headers: authHeader(other.session.id)
     }
