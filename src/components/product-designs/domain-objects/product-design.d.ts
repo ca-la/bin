@@ -13,6 +13,8 @@ declare class ProductDesign {
   public collectionIds?: string[];
   public imageIds?: string[];
   public imageLinks?: ThumbnailAndPreviewLinks[];
+
+  // TODO: Remove this once changes from api#1216 are fully live
   public currentStepTitle?: string;
 
   constructor(data: any);

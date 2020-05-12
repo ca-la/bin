@@ -3,6 +3,7 @@
 const { default: DataMapper } = require('../../../services/data-mapper');
 const formatDateString = require('../../../services/format-date-string');
 const { requireProperties } = require('../../../services/require-properties');
+const ApprovalStep = require('../../approval-steps/domain-object');
 const {
   generatePreviewLinks
 } = require('../../../services/attach-asset-links');
@@ -28,6 +29,9 @@ const keyNamesByColumnName = {
   due_date: 'dueDate',
   expected_cost_cents: 'expectedCostCents',
   show_pricing_breakdown: 'showPricingBreakdown',
+  approval_steps: 'approvalSteps',
+
+  // TODO: Remove this once changes from api#1216 are fully live
   current_step_title: 'currentStepTitle'
 };
 
@@ -55,6 +59,12 @@ class ProductDesign {
       this.dueDate = formatDateString(row.due_date);
     } else {
       this.dueDate = row.due_date;
+    }
+
+    if (row.approval_steps) {
+      this.approvalSteps = row.approval_steps.map(approvalRow =>
+        ApprovalStep.dataAdapter.parse(approvalRow)
+      );
     }
   }
 

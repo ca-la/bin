@@ -95,7 +95,8 @@ test('ProductDesignsDAO.create creates a design', async t => {
       showPricingBreakdown: true,
       status: 'DRAFT',
       collectionIds: [],
-      collections: []
+      collections: [],
+      approvalSteps: null
     },
     'adds the collections and default/nullable values'
   );

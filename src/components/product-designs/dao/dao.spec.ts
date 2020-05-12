@@ -327,7 +327,7 @@ test('findAllDesignsThroughCollaborator finds all designs with a search string',
   t.deepEqual(designSearch[0].id, firstDesign.id, 'should match ids');
 });
 
-test('findAllDesignsThroughCollaborator returns dashboard meta', async (t: tape.Test) => {
+test('findAllDesignsThroughCollaborator returns approval steps', async (t: tape.Test) => {
   const { user } = await createUser();
   const { user: notUser } = await createUser();
 
@@ -372,28 +372,35 @@ test('findAllDesignsThroughCollaborator returns dashboard meta', async (t: tape.
 
   const designs = await findAllDesignsThroughCollaborator({ userId: user.id });
   t.equal(designs.length, 2);
-  t.deepEqual(
-    {
-      id: designs[0].id,
-      currentStepTitle: designs[0].currentStepTitle
-    },
-    {
-      id: collectionSharedDesign.id,
-      currentStepTitle: 'Technical Design'
-    },
-    'returns the current step'
-  );
-  t.deepEqual(
-    {
-      id: designs[1].id,
-      currentStepTitle: designs[1].currentStepTitle
-    },
-    {
-      id: ownDesign.id,
-      currentStepTitle: 'Checkout'
-    },
-    'returns the current step'
-  );
+
+  t.deepEqual(designs[0].id, collectionSharedDesign.id);
+  t.deepEqual(designs[0].approvalSteps!.length, 4);
+  t.deepEqual(designs[0].approvalSteps![1].state, 'COMPLETED');
+  t.deepEqual(designs[0].approvalSteps![2].state, 'BLOCKED');
+
+  t.deepEqual(designs[1].id, ownDesign.id);
+  t.deepEqual(designs[1].approvalSteps!.length, 4);
+  t.deepEqual(designs[1].approvalSteps![0].state, 'CURRENT');
+  t.deepEqual(designs[1].approvalSteps![1].state, 'BLOCKED');
+
+  // TODO: Remove this once changes from api#1216 are fully live
+  t.deepEqual(designs[0].currentStepTitle, 'Technical Design');
+  t.deepEqual(designs[1].currentStepTitle, 'Checkout');
+});
+
+test('findById returns approval steps', async (t: tape.Test) => {
+  const { user } = await createUser();
+
+  const design = await createDesign({
+    productType: 'test',
+    title: 'design',
+    userId: user.id
+  });
+
+  const found = await findById(design.id);
+
+  t.deepEqual(found!.approvalSteps!.length, 4);
+  t.deepEqual(found!.approvalSteps![1].state, 'BLOCKED');
 });
 
 test('findDesignByAnnotationId', async (t: tape.Test) => {

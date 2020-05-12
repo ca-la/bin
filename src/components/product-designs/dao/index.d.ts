@@ -1,5 +1,6 @@
 import Knex from 'knex';
 import ProductDesign = require('../domain-objects/product-design');
+import ProductDesignWithApprovalSteps from '../domain-objects/product-design-with-approval-steps';
 
 type UnsavedDesign = Unsaved<ProductDesign>;
 type UninsertedDesign = Uninserted<ProductDesign>;
@@ -18,7 +19,9 @@ declare namespace ProductDesignsDAO {
     filters?: object | null,
     options?: object | null,
     trx?: Knex.Transaction
-  ): Promise<ProductDesignWithCollectionId | null>;
+  ): Promise<
+    ProductDesignWithCollectionId & ProductDesignWithApprovalSteps | null
+  >;
   function findByIds(ids: string[]): Promise<ProductDesignWithCollectionId[]>;
   function findByCollectionId(
     collectionId: string,

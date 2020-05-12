@@ -28,7 +28,14 @@ export async function findAndDuplicateDesign(
   }
   const duplicatedDesign = await createDesign(
     prepareForDuplication(
-      omit(design, 'collections', 'collectionIds', 'imageIds', 'imageLinks'),
+      omit(
+        design,
+        'collections',
+        'collectionIds',
+        'imageIds',
+        'imageLinks',
+        'approvalSteps'
+      ),
       { userId: newCreatorId }
     ),
     trx

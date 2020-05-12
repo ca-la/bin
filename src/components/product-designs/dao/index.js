@@ -7,6 +7,7 @@ const compact = require('../../../services/compact');
 const db = require('../../../services/db');
 const filterError = require('../../../services/filter-error');
 const first = require('../../../services/first').default;
+const attachApprovalSteps = require('./attach-approval-steps').default;
 const InvalidDataError = require('../../../errors/invalid-data');
 const ProductDesign = require('../domain-objects/product-design');
 const View = require('./view');
@@ -153,6 +154,7 @@ function findById(id, filters, options = {}, trx) {
         currentQuery.transacting(trx);
       }
     })
+    .modify(attachApprovalSteps)
     .then(first)
     .then(maybeInstantiate)
     .catch(rethrow)
