@@ -5,7 +5,7 @@ import uuid from 'node-uuid';
 import meow from 'meow';
 import parse from 'csv-parse/lib/sync';
 import Knex from 'knex';
-import { isEqual, uniqWith } from 'lodash';
+import { isEqual, uniqWith, chunk } from 'lodash';
 
 import db from '../services/db';
 import { log } from '../services/logger';
@@ -17,6 +17,8 @@ import { PricingMarginRow } from '../domain-objects/pricing-margin';
 import { PricingProcessRow } from '../domain-objects/pricing-process';
 import { PricingProcessTimelineRow } from '../components/pricing-process-timeline/domain-object';
 import { PricingProductMaterialRow } from '../domain-objects/pricing-product-material';
+
+const CHUNK_SIZE = 2000;
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -132,9 +134,12 @@ async function main(): Promise<void> {
     throw new Error('Could not properly parse csv into row type');
   }
 
-  const query = buildInsertQuery(tableName, casted);
   if (cli.flags.verbose) {
-    log(query.toString());
+    await db.transaction(async (trx: Knex.Transaction) => {
+      for (const c of chunk(casted, CHUNK_SIZE)) {
+        log(buildInsertQuery(trx, tableName, c).toString());
+      }
+    });
   }
 
   if (cli.flags.dryRun) {
@@ -162,14 +167,20 @@ by typing '${tableName.toUpperCase()}': `
     return;
   }
 
-  const insertResult = await query;
+  let count = 0;
+  await db.transaction(async (trx: Knex.Transaction) => {
+    for (const c of chunk(casted, CHUNK_SIZE)) {
+      log(`Creating ${c.length} ${tableName}`);
+      count += c.length;
+      await buildInsertQuery(trx, tableName, c);
+    }
+    return count;
+  });
 
   if (cli.flags.verbose) {
     log(`${raw.length - deduplicated.length} duplicate rows removed.`);
     log(
-      `Inserted ${JSON.stringify(
-        insertResult.length
-      )} rows at version ${latestVersion + 1}`
+      `Inserted ${JSON.stringify(count)} rows at version ${latestVersion + 1}`
     );
   }
 }
@@ -194,10 +205,11 @@ async function getLatestVersion(tableName: string): Promise<number> {
 }
 
 function buildInsertQuery(
+  trx: Knex.Transaction,
   tableName: string,
   casted: DomainObject[]
 ): Knex.QueryBuilder {
-  return db(tableName).insert(casted, 'id');
+  return trx(tableName).insert(casted, 'id');
 }
 
 function castFromRaw(
