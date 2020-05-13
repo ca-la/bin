@@ -1,4 +1,3 @@
 import * as CalaEvents from './cala-events';
-export { emit } from './emitter';
-export { init } from './subscriptions';
+export { emit, listen } from './emitter';
 export { CalaEvents };

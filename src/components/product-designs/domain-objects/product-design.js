@@ -3,7 +3,8 @@
 const { default: DataMapper } = require('../../../services/data-mapper');
 const formatDateString = require('../../../services/format-date-string');
 const { requireProperties } = require('../../../services/require-properties');
-const ApprovalStep = require('../../approval-steps/domain-object');
+const ApprovalStepAdapter = require('../../approval-steps/adapter').default;
+
 const {
   generatePreviewLinks
 } = require('../../../services/attach-asset-links');
@@ -63,7 +64,7 @@ class ProductDesign {
 
     if (row.approval_steps) {
       this.approvalSteps = row.approval_steps.map(approvalRow =>
-        ApprovalStep.dataAdapter.parse(approvalRow)
+        ApprovalStepAdapter.fromDb(approvalRow)
       );
     }
   }

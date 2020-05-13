@@ -3,7 +3,9 @@ import Address, { dataMapper } from '../../domain-objects/address';
 import rethrow from 'pg-rethrow';
 import db from '../../services/db';
 
-const dao = getAddressesDAO<Address>('addresses', dataMapper, Address);
+export const tableName = 'addresses';
+
+const dao = getAddressesDAO<Address>(tableName, dataMapper, Address);
 
 export function findByUserId(userId: string): Promise<Address[]> {
   return db('addresses')

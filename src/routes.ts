@@ -10,7 +10,8 @@ import annotationRoutes from './components/product-design-canvas-annotations/rou
 import approvalStepCommentRoutes from './components/approval-step-comments/routes';
 import approvalStepTaskRoutes from './components/approval-step-tasks/routes';
 import approvalStepSubmissionRoutes from './components/approval-step-submissions/routes';
-import approvalStepRoutes from './components/approval-steps/routes';
+import approvalStepComponent from './components/approval-steps';
+import { plugComponentRouter } from './services/cala-component/utils';
 import assetRoutes from './components/assets/routes';
 import avatarRoutes from './components/avatars/routes';
 import bidRoutes from './components/bids/routes';
@@ -86,7 +87,9 @@ router.use('/components', componentRoutes);
 router.use('/credits', creditRoutes);
 router.use('/design-approval-step-comments', approvalStepCommentRoutes);
 router.use('/design-approval-step-submissions', approvalStepSubmissionRoutes);
-router.use('/design-approval-steps', approvalStepRoutes);
+
+plugComponentRouter(router, approvalStepComponent.router);
+
 router.use('/design-approval-step-tasks', approvalStepTaskRoutes);
 router.use('/duplication', duplicationRoutes);
 router.use('/health', healthRoutes);

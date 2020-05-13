@@ -18,9 +18,6 @@ import options = require('./middleware/options');
 import router from './routes';
 import shopifyAuth from './middleware/shopify-auth';
 import validatePagination from './middleware/validate-pagination';
-import { init as pubsubInit } from './services/pubsub';
-
-pubsubInit();
 
 const app = new koa();
 

@@ -1,46 +1,52 @@
+import ApprovalStep, { domain, ApprovalStepState } from './types';
 import {
-  actualizeDesignStepsAfterBidAcceptance,
+  DaoUpdated,
+  DaoUpdating,
+  RouteUpdated
+} from '../../services/pubsub/cala-events';
+import {
+  Listeners,
+  buildListeners
+} from '../../services/cala-component/cala-listeners';
+import {
   handleStepCompletion,
   handleUserStepCompletion,
   handleStepReopen,
   handleUserStepReopen
-} from '../approval-step-state';
-import { ApprovalStepState } from '../../components/approval-steps/domain-object';
+} from '../../services/approval-step-state';
+
 import * as DesignEventsDAO from '../../dao/design-events';
 import uuid from 'node-uuid';
-import * as NotificationsService from '../create-notifications';
+import * as NotificationsService from '../../services/create-notifications';
 import * as CollaboratorsDAO from '../../components/collaborators/dao';
 
-// this variable protects from double initialization
-// for separate tests (bin/tt), we init pubsub manually inside the spec.ts files
-// but we don't want to run it twice in case of bin/test
-let isSubscribed = false;
+export const listeners: Listeners<ApprovalStep, typeof domain> = {
+  'dao.updating': async (
+    event: DaoUpdating<ApprovalStep, typeof domain>
+  ): Promise<void> => {
+    const { patch, before } = event;
 
-import { CalaEvents } from './';
-import { listen } from './emitter';
-
-export function init(): void {
-  if (isSubscribed) {
-    return;
-  }
-  isSubscribed = true;
-
-  listen<CalaEvents.DaoAcceptedBid>(
-    'dao.accepted.bid',
-    async (event: CalaEvents.DaoAcceptedBid) => {
-      await actualizeDesignStepsAfterBidAcceptance(
-        event.trx,
-        event.bidId,
-        event.designId
-      );
+    if (patch.state) {
+      const now = new Date();
+      let completedAt = null;
+      let startedAt = null;
+      if (patch.state === ApprovalStepState.CURRENT) {
+        startedAt = now;
+      }
+      if (patch.state === ApprovalStepState.COMPLETED) {
+        startedAt = before.startedAt || now;
+        completedAt = now;
+      }
+      patch.startedAt = startedAt;
+      patch.completedAt = completedAt;
     }
-  );
+  },
 
-  listen<CalaEvents.DaoUpdatedApprovalStepState>(
-    'dao.updated.approvalStep.state',
-    async (event: CalaEvents.DaoUpdatedApprovalStepState) => {
+  'dao.updated.*': {
+    state: async (
+      event: DaoUpdated<ApprovalStep, typeof domain>
+    ): Promise<void> => {
       const { before, updated, trx } = event;
-
       if (updated.state === ApprovalStepState.COMPLETED) {
         await handleStepCompletion(trx, updated);
       }
@@ -52,31 +58,28 @@ export function init(): void {
         await handleStepReopen(trx, updated);
       }
     }
-  );
+  },
 
-  listen(
-    'route.updated.approvalStep',
-    async (event: CalaEvents.RouteUpdatedApprovalStep) => {
+  'route.updated.*': {
+    state: async (
+      event: RouteUpdated<ApprovalStep, typeof domain>
+    ): Promise<void> => {
       const { updated, before, actorId, trx } = event;
-
       if (updated.state === ApprovalStepState.COMPLETED) {
         if (before.state === ApprovalStepState.CURRENT) {
           await handleUserStepCompletion(trx, updated, actorId);
         }
       }
-
       if (
         before.state === ApprovalStepState.COMPLETED &&
         updated.state === ApprovalStepState.CURRENT
       ) {
         await handleUserStepReopen(trx, updated, actorId);
       }
-    }
-  );
-
-  listen<CalaEvents.RouteUpdatedApprovalStepCollaboratorId>(
-    'route.updated.approvalStep.collaboratorId',
-    async (event: CalaEvents.RouteUpdatedApprovalStepCollaboratorId) => {
+    },
+    collaboratorId: async (
+      event: RouteUpdated<ApprovalStep, typeof domain>
+    ): Promise<void> => {
       if (!event.updated.collaboratorId) {
         return;
       }
@@ -108,5 +111,7 @@ export function init(): void {
         event.updated
       );
     }
-  );
-}
+  }
+};
+
+export default buildListeners<ApprovalStep, typeof domain>(domain, listeners);

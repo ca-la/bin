@@ -1,46 +1,35 @@
 import * as Knex from 'knex';
-import ApprovalStep from '../../components/approval-steps/domain-object';
 
-export type CalaEventType =
-  | 'dao.accepted.bid'
-  | 'dao.updated.approvalStep.state'
-  | 'route.updated.approvalStep'
-  | 'route.updated.approvalStep.collaboratorId';
-
-interface CalaEventBase {
+export interface EventBase {
+  type: string;
+  domain: string;
   trx: Knex.Transaction;
-  type: CalaEventType;
 }
 
-export interface DaoAcceptedBid extends CalaEventBase {
-  type: 'dao.accepted.bid';
-  bidId: string;
-  designId: string;
+export interface DaoUpdating<Model, domain extends string> extends EventBase {
+  type: 'dao.updating';
+  domain: domain;
+  before: Model;
+  patch: Partial<Model>;
+}
+export interface DaoUpdated<Model, domain extends string> extends EventBase {
+  type: 'dao.updated';
+  domain: domain;
+  before: Model;
+  updated: Model;
 }
 
-export interface RouteUpdatedApprovalStep extends CalaEventBase {
-  type: 'route.updated.approvalStep';
-  before: ApprovalStep;
-  updated: ApprovalStep;
+export interface RouteUpdated<Model, domain extends string> extends EventBase {
+  type: 'route.updated';
+  domain: domain;
   actorId: string;
+  before: Model;
+  updated: Model;
 }
 
-export interface DaoUpdatedApprovalStepState extends CalaEventBase {
-  type: 'dao.updated.approvalStep.state';
-  before: ApprovalStep;
-  updated: ApprovalStep;
-}
-export interface RouteUpdatedApprovalStepCollaboratorId extends CalaEventBase {
-  type: 'route.updated.approvalStep.collaboratorId';
-  actorId: string;
-  before: ApprovalStep;
-  updated: ApprovalStep;
-}
+export type Event<Model, domain extends string> =
+  | DaoUpdated<Model, domain>
+  | DaoUpdating<Model, domain>
+  | RouteUpdated<Model, domain>;
 
-export type Event =
-  | DaoAcceptedBid
-  | DaoUpdatedApprovalStepState
-  | RouteUpdatedApprovalStep
-  | RouteUpdatedApprovalStepCollaboratorId;
-
-export type Handler<T extends Event> = (event: T) => Promise<any>;
+export type Handler<T extends EventBase> = (event: T) => Promise<any>;

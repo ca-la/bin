@@ -1,5 +1,7 @@
 import { test, Test } from '../../test-helpers/simple';
-import { dataAdapter } from './domain-object';
+import adapter from './adapter';
+
+const { dataAdapter } = adapter;
 
 test('dataAdpater.parse', async (t: Test) => {
   const now = new Date();

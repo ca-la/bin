@@ -124,6 +124,7 @@ test('GET /design-approval-steps/:stepId/stream-items', async (t: Test) => {
     }
   );
   t.equal(res.status, 200, 'Returns successfully');
+
   t.equal(body.length, 5, 'Returns 5 results');
   t.equal(body[0].text, 'Going to submit');
   t.deepEqual(
@@ -207,7 +208,7 @@ test('PATCH /design-approval-steps/:stepId', async (t: Test) => {
       reason: null,
       state: ApprovalStepState.UNSTARTED
     });
-    return ApprovalStepsDAO.findByDesign(trx, d1.id);
+    return ApprovalStepsDAO.find(trx, { designId: d1.id });
   });
 
   const [response] = await patch(`/design-approval-steps/${steps[0].id}`, {
@@ -334,6 +335,108 @@ test('PATCH /design-approval-steps/:stepId updates assignee', async (t: Test) =>
     completedAt: null,
     startedAt: null,
     createdAt: new Date()
+  };
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await ApprovalStepsDAO.createAll(trx, [as1]);
+  });
+
+  const [response, body] = await patch(`/design-approval-steps/${as1.id}`, {
+    headers: authHeader(session.id),
+    body: {
+      collaboratorId: collaborator.id
+    }
+  });
+  t.is(response.status, 200, 'responds with 200');
+  t.deepEqual(
+    body,
+    JSON.parse(JSON.stringify({ ...as1, collaboratorId: collaborator.id })),
+    'returns updated step'
+  );
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const designEvents = await DesignEventsDAO.findApprovalStepEvents(
+      trx,
+      as1.designId,
+      as1.id
+    );
+    t.is(designEvents.length, 1, 'design event is created');
+    t.deepEqual(
+      pick(
+        designEvents[0],
+        'actorId',
+        'targetId',
+        'designId',
+        'type',
+        'approvalStepId',
+        'stepTitle'
+      ),
+      {
+        actorId: actor.id,
+        targetId: assignee.id,
+        designId: d1.id,
+        type: 'STEP_ASSIGNMENT',
+        approvalStepId: as1.id,
+        stepTitle: as1.title
+      },
+      'design event has proper values'
+    );
+
+    const notifications = await NotificationsDAO.findByUserId(
+      trx,
+      assignee.id,
+      { limit: 10, offset: 0 }
+    );
+    t.is(notifications.length, 1, 'notification is created');
+
+    t.deepEqual(
+      pick(
+        notifications[0],
+        'actorUserId',
+        'approvalStepId',
+        'approvalStepTitle',
+        'collaboratorId',
+        'designId',
+        'type'
+      ),
+      {
+        actorUserId: actor.id,
+        approvalStepId: as1.id,
+        approvalStepTitle: as1.title,
+        collaboratorId: collaborator.id,
+        designId: d1.id,
+        type: 'APPROVAL_STEP_ASSIGNMENT'
+      },
+      'notification has proper values'
+    );
+  });
+});
+
+test('PATCH /design-approval-steps/:stepId updates assignee', async (t: Test) => {
+  const { user: actor, session } = await createUser({ withSession: true });
+  const { user: assignee } = await createUser({ withSession: false });
+
+  const d1: ProductDesign = await ProductDesignsDAO.create(
+    staticProductDesign({ id: 'd1', userId: actor.id })
+  );
+
+  const { collaborator } = await generateCollaborator({
+    userId: assignee.id,
+    designId: d1.id
+  });
+
+  const as1: ApprovalStep = {
+    state: ApprovalStepState.UNSTARTED,
+    id: uuid.v4(),
+    title: 'Checkout',
+    ordering: 0,
+    designId: d1.id,
+    reason: null,
+    type: ApprovalStepType.CHECKOUT,
+    collaboratorId: null,
+    createdAt: new Date(),
+    completedAt: null,
+    startedAt: null
   };
 
   await db.transaction(async (trx: Knex.Transaction) => {

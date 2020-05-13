@@ -10,19 +10,24 @@ const getEmitter = (): AsyncEmitter => {
   return emitter;
 };
 
-export async function emit<T extends CalaEvents.Event>(
-  eventType: T['type'],
-  event: Omit<T, 'type'>
+export async function emit<Event extends CalaEvents.EventBase>(
+  type: Event['type'],
+  domain: Event['domain'],
+  event: Omit<Event, 'type' | 'domain'>
 ): Promise<void> {
+  const eventType = `${type}.${domain}`;
   await getEmitter().emit(eventType, {
     ...event,
-    type: eventType
+    type,
+    domain
   });
 }
 
-export function listen<T extends CalaEvents.Event>(
-  eventType: T['type'],
-  handler: CalaEvents.Handler<T>
+export function listen<Event extends CalaEvents.EventBase>(
+  type: Event['type'],
+  domain: Event['domain'],
+  handler: CalaEvents.Handler<Event>
 ): void {
+  const eventType = `${type}.${domain}`;
   getEmitter().on(eventType, handler);
 }

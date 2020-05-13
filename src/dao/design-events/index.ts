@@ -16,7 +16,7 @@ import first from '../../services/first';
 import filterError = require('../../services/filter-error');
 import { validate, validateEvery } from '../../services/validate-from-db';
 import { taskTypesById } from '../../components/tasks/templates';
-import { CalaEvents, emit } from '../../services/pubsub';
+import { actualizeDesignStepsAfterBidAcceptance } from '../../services/approval-step-state';
 
 const TABLE_NAME = 'design_events';
 
@@ -64,11 +64,11 @@ export async function create(
       if (!event.bidId) {
         throw new Error('bidId is missing');
       }
-      await emit<CalaEvents.DaoAcceptedBid>('dao.accepted.bid', {
+      await actualizeDesignStepsAfterBidAcceptance(
         trx,
-        bidId: event.bidId,
-        designId: event.designId
-      });
+        event.bidId,
+        event.designId
+      );
       break;
   }
 
