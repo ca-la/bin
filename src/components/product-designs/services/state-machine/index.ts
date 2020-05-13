@@ -2,7 +2,6 @@ import { Machine, StateMachine } from 'xstate';
 import DesignEvent, {
   DesignEventTypes
 } from '../../../../domain-objects/design-event';
-import { ProductDesignDataWithMeta } from '../../domain-objects/with-meta';
 import { BasePricingCostInput } from '../../../pricing-cost-inputs/domain-object';
 
 export enum DesignState {
@@ -84,17 +83,23 @@ function hasActiveCostInputs(costInputs: BasePricingCostInput[]): boolean {
   );
 }
 
+export interface DesignStateDependencies {
+  costInputs: BasePricingCostInput[];
+  events: DesignEvent[];
+  id: string;
+}
+
 /**
  * Determines the state the design is in based off the associated events and cost information.
  */
-export function determineState(design: ProductDesignDataWithMeta): DesignState {
-  const { costInputs, events } = design;
+export function determineState(design: DesignStateDependencies): DesignState {
+  const { costInputs, events, id: designId } = design;
   const hasCommitted = events.some(
     (event: DesignEvent): boolean => event.type === 'COMMIT_QUOTE'
   );
   const hasActiveCosts = hasActiveCostInputs(costInputs);
 
-  const machine = createDesignMachine(design.id);
+  const machine = createDesignMachine(designId);
   let state = machine.initialState;
 
   for (const event of events) {

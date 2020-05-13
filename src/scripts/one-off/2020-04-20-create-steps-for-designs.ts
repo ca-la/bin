@@ -14,16 +14,23 @@ import ApprovalStep, {
 import * as ApprovalStepsDAO from '../../components/approval-steps/dao';
 import { queryWithCostsAndEvents } from '../../components/product-designs/dao/dao';
 import {
-  isProductDesignRowWithMeta,
-  ProductDesignDataWithMeta,
-  ProductDesignRowWithMeta,
-  withMetaDataAdapter
-} from '../../components/product-designs/domain-objects/with-meta';
-import { validateEvery } from '../../services/validate-from-db';
-import {
   DesignState,
   determineState
 } from '../../components/product-designs/services/state-machine';
+import DesignEvent, {
+  DesignEventRow,
+  dataAdapter as eventDataAdapter
+} from '../../domain-objects/design-event';
+import {
+  BasePricingCostInputRow,
+  baseDataAdapter as costInputDataAdapter,
+  BasePricingCostInput
+} from '../../components/pricing-cost-inputs/domain-object';
+import {
+  dataAdapter as baseDataAdapter,
+  ProductDesignRow,
+  ProductDesignData
+} from '../../components/product-designs/domain-objects/product-designs-new';
 
 const HELP_TEXT = `
 Create steps with correct state from existing designs without steps
@@ -55,7 +62,11 @@ const generatorFromCurrentStep: {
       ordering: 0,
       designId,
       reason: null,
-      type: ApprovalStepType.CHECKOUT
+      type: ApprovalStepType.CHECKOUT,
+      collaboratorId: null,
+      completedAt: null,
+      createdAt: new Date(),
+      startedAt: new Date()
     },
     {
       id: uuid.v4(),
@@ -64,7 +75,11 @@ const generatorFromCurrentStep: {
       ordering: 1,
       designId,
       reason: 'Pending technical partner pairing',
-      type: ApprovalStepType.TECHNICAL_DESIGN
+      type: ApprovalStepType.TECHNICAL_DESIGN,
+      collaboratorId: null,
+      completedAt: null,
+      createdAt: new Date(),
+      startedAt: null
     },
     {
       id: uuid.v4(),
@@ -73,7 +88,11 @@ const generatorFromCurrentStep: {
       ordering: 2,
       designId,
       reason: 'Pending production partner pairing',
-      type: ApprovalStepType.SAMPLE
+      type: ApprovalStepType.SAMPLE,
+      collaboratorId: null,
+      completedAt: null,
+      createdAt: new Date(),
+      startedAt: null
     },
     {
       id: uuid.v4(),
@@ -82,7 +101,11 @@ const generatorFromCurrentStep: {
       ordering: 3,
       designId,
       reason: null,
-      type: ApprovalStepType.PRODUCTION
+      type: ApprovalStepType.PRODUCTION,
+      collaboratorId: null,
+      completedAt: null,
+      createdAt: new Date(),
+      startedAt: null
     }
   ],
   [ApprovalStepType.TECHNICAL_DESIGN]: (designId: string): ApprovalStep[] => [
@@ -93,7 +116,11 @@ const generatorFromCurrentStep: {
       ordering: 0,
       designId,
       reason: null,
-      type: ApprovalStepType.CHECKOUT
+      type: ApprovalStepType.CHECKOUT,
+      collaboratorId: null,
+      completedAt: new Date(),
+      createdAt: new Date(),
+      startedAt: new Date()
     },
     {
       id: uuid.v4(),
@@ -102,7 +129,11 @@ const generatorFromCurrentStep: {
       ordering: 1,
       designId,
       reason: null,
-      type: ApprovalStepType.TECHNICAL_DESIGN
+      type: ApprovalStepType.TECHNICAL_DESIGN,
+      collaboratorId: null,
+      completedAt: null,
+      createdAt: new Date(),
+      startedAt: new Date()
     },
     {
       id: uuid.v4(),
@@ -111,7 +142,11 @@ const generatorFromCurrentStep: {
       ordering: 2,
       designId,
       reason: 'Pending production partner pairing',
-      type: ApprovalStepType.SAMPLE
+      type: ApprovalStepType.SAMPLE,
+      collaboratorId: null,
+      completedAt: null,
+      createdAt: new Date(),
+      startedAt: null
     },
     {
       id: uuid.v4(),
@@ -120,12 +155,21 @@ const generatorFromCurrentStep: {
       ordering: 3,
       designId,
       reason: null,
-      type: ApprovalStepType.PRODUCTION
+      type: ApprovalStepType.PRODUCTION,
+      collaboratorId: null,
+      completedAt: null,
+      createdAt: new Date(),
+      startedAt: null
     }
   ],
   [ApprovalStepType.SAMPLE]: (): ApprovalStep[] => [],
   [ApprovalStepType.PRODUCTION]: (): ApprovalStep[] => []
 };
+
+interface DesignWithInputsAndEvents extends ProductDesignData {
+  costInputs: BasePricingCostInput[];
+  events: DesignEvent[];
+}
 
 async function getDesignsWithCurrentStep(): Promise<
   { id: string; currentStep: ApprovalStepType }[]
@@ -138,14 +182,38 @@ async function getDesignsWithCurrentStep(): Promise<
     )
     .where({ 'design_approval_steps.id': null });
 
-  const designsWithoutSteps = validateEvery<
-    ProductDesignRowWithMeta,
-    ProductDesignDataWithMeta
-  >('product_designs', isProductDesignRowWithMeta, withMetaDataAdapter, rows);
+  const designsWithoutSteps: DesignWithInputsAndEvents[] = rows.map(
+    (
+      row: ProductDesignRow & {
+        cost_inputs: BasePricingCostInputRow[] | null;
+        events: DesignEventRow[] | null;
+      }
+    ) => {
+      const { cost_inputs, events: eventRows, ...baseRow } = row;
+      const events =
+        eventRows === null
+          ? []
+          : eventRows.map((eventRow: DesignEventRow) =>
+              eventDataAdapter.parse(eventRow)
+            );
+      const costInputs =
+        cost_inputs === null
+          ? []
+          : cost_inputs.map((costInputRow: BasePricingCostInputRow) =>
+              costInputDataAdapter.parse(costInputRow)
+            );
+
+      return {
+        ...baseDataAdapter.parse(baseRow),
+        costInputs,
+        events
+      };
+    }
+  );
 
   return designsWithoutSteps.map(
     (
-      design: ProductDesignDataWithMeta
+      design: DesignWithInputsAndEvents
     ): { id: string; currentStep: ApprovalStepType } => {
       const state = determineState(design);
 
