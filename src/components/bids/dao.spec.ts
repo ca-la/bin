@@ -169,7 +169,7 @@ test('Bids DAO supports retrieval by quote ID', async (t: Test) => {
 });
 
 test('Bids DAO supports retrieval of bids by target ID and status', async (t: Test) => {
-  sandbox().useFakeTimers(testDate);
+  const clock = sandbox().useFakeTimers(testDate);
   await generatePricingValues();
   const { user: designer } = await createUser();
   const { user: admin } = await createUser();
@@ -393,6 +393,7 @@ test('Bids DAO supports retrieval of bids by target ID and status', async (t: Te
 
   const acceptedBids = await findAcceptedByTargetId(partner.id, 'ACCEPTED');
   const activeBids = await findActiveByTargetId(partner.id, 'ACCEPTED');
+  clock.tick(1000);
   await createTaskEvent({
     ...omit(
       taskEventFromIO({ ...task, assignees: [] }, partner.id),

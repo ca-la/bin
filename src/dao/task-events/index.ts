@@ -48,11 +48,15 @@ export async function create(
   data: Unsaved<TaskEvent>,
   trx?: Knex.Transaction
 ): Promise<TaskEvent> {
-  const rowData = dataAdapter.forInsertion({
-    ...data,
-    id: uuid.v4(),
-    status: data.status || TaskStatus.NOT_STARTED
-  });
+  const rowData = {
+    ...dataAdapter.forInsertion({
+      ...data,
+      id: uuid.v4()
+    }),
+    status: data.status || TaskStatus.NOT_STARTED,
+    created_at: new Date()
+  };
+
   const created = await db(TABLE_NAME)
     .insert(omit(rowData, ['design_stage_id']), '*')
     .modify((query: Knex.QueryBuilder) => {
