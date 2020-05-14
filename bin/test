@@ -12,13 +12,28 @@ main() {
   source bin/lib/loadenv
 
   loadenv_test
+  reporter_opts="--pessimistic"
+
+  while getopts "v" opt; do
+    case $opt in
+      v)
+        reporter_opts=""
+        ;;
+      *)
+        echo 'Usage: bin/test [-v]'
+        echo 'Options:'
+        echo ' -v Test reporter prints successful tests'
+        exit 1
+        ;;
+    esac
+  done
 
   ci=${CI:-"false"}
   if [ "$ci" == "true" ]; then
     mkdir -p ./reports
     npx tape -r ./dist/test-helpers/setup.js "dist/**/*spec.js" | npx tap-xunit > ./reports/tape.xml
   else
-    node -r ts-node/register --preserve-symlinks $(npm bin)/tape -r ./src/test-helpers/setup.ts "src/**/*spec.[jt]s" | npx tap-difflet --pessimistic
+    node -r ts-node/register --preserve-symlinks $(npm bin)/tape -r ./src/test-helpers/setup.ts "src/**/*spec.[jt]s" | npx tap-difflet $reporter_opts
   fi
 }
 

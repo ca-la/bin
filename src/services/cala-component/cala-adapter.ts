@@ -36,15 +36,12 @@ export function buildAdapter<Model extends object, ModelRow extends object>({
     Partial<Model>
   >();
 
-  const isRow = (item: any): item is ModelRow => {
-    return hasProperties.call(undefined, [
-      dataAdapter.parse(item),
-      ...requiredProperties
-    ]);
+  const isModel = (item: any): item is Model => {
+    return hasProperties(item, ...requiredProperties);
   };
 
-  const isModel = (item: any): item is Model => {
-    return isRow(dataAdapter.toDb(item));
+  const isRow = (item: any): item is ModelRow => {
+    return isModel(dataAdapter.parse(item));
   };
 
   return {

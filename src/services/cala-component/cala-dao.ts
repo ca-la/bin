@@ -33,11 +33,15 @@ export function buildDao<Model, ModelRow extends object>(
   const findById = async (
     trx: Knex.Transaction,
     id: string
-  ): Promise<Model> => {
+  ): Promise<Model | null> => {
     const row = await trx(tableName)
       .select('*')
       .where({ id })
       .first();
+
+    if (!row) {
+      return null;
+    }
 
     return adapter.fromDb(row);
   };
@@ -46,7 +50,7 @@ export function buildDao<Model, ModelRow extends object>(
     trx: Knex.Transaction,
     filter: Partial<Model>,
     modifier?: (query: QueryBuilder) => QueryBuilder
-  ): Promise<Model> => {
+  ): Promise<Model | null> => {
     const basicQuery = trx(tableName)
       .select('*')
       .where(adapter.toDbPartial(filter))
@@ -54,6 +58,10 @@ export function buildDao<Model, ModelRow extends object>(
       .first();
 
     const row = await (modifier ? basicQuery.modify(modifier) : basicQuery);
+
+    if (!row) {
+      return null;
+    }
 
     return adapter.fromDb(row);
   };

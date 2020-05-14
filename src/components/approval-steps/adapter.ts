@@ -160,7 +160,7 @@ function decode(step: ApprovalStep): ApprovalStepRow {
 
 export default buildAdapter<ApprovalStep, ApprovalStepRow>({
   domain,
-  requiredProperties: ['id', 'title', 'ordering', 'design_id', 'state', 'type'],
+  requiredProperties: ['id', 'title', 'ordering', 'designId', 'state', 'type'],
   encodeTransformer: encode,
   decodeTransformer: decode
 });

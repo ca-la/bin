@@ -38,6 +38,7 @@ interface AddressRow {
 }
 
 test('standard cala-dao', async (t: Test) => {
+  sandbox().useFakeTimers(new Date());
   const domain = 'address';
   const adapter = buildAdapter<Address, AddressRow>({
     domain,
@@ -123,19 +124,22 @@ test('standard cala-dao', async (t: Test) => {
         result: [a3, a2, a1]
       }
     ];
-    const trx = await db.transaction();
     for (const testCase of testCases) {
-      const result = await (testCase.modifier
-        ? dao.find(trx, testCase.filter, testCase.modifier)
-        : dao.find(trx, testCase.filter));
-      t.deepEqual(result, testCase.result, `find / ${testCase.title}`);
-      t.deepEqual(
-        emitStub.args,
-        [],
-        `find / ${testCase.title}, no emit() called`
-      );
+      const trx = await db.transaction();
+      try {
+        const result = await (testCase.modifier
+          ? dao.find(trx, testCase.filter, testCase.modifier)
+          : dao.find(trx, testCase.filter));
+        t.deepEqual(result, testCase.result, `find / ${testCase.title}`);
+        t.deepEqual(
+          emitStub.args,
+          [],
+          `find / ${testCase.title}, no emit() called`
+        );
+      } finally {
+        await trx.rollback();
+      }
     }
-    await trx.rollback();
   };
   await describeFind();
 
@@ -143,7 +147,7 @@ test('standard cala-dao', async (t: Test) => {
     interface TestCase {
       title: string;
       filter: Partial<Address>;
-      result: Address | undefined;
+      result: Address | null;
       modifier?: (query: Knex.QueryBuilder) => Knex.QueryBuilder;
     }
     const testCases: TestCase[] = [
@@ -170,7 +174,7 @@ test('standard cala-dao', async (t: Test) => {
       {
         title: 'Zero match',
         filter: { city: 'LA' },
-        result: undefined
+        result: null
       },
       {
         title: 'Apply modifier (sort)',
@@ -180,19 +184,22 @@ test('standard cala-dao', async (t: Test) => {
         result: a3
       }
     ];
-    const trx = await db.transaction();
     for (const testCase of testCases) {
-      const result = await (testCase.modifier
-        ? dao.findOne(trx, testCase.filter, testCase.modifier)
-        : dao.findOne(trx, testCase.filter));
-      t.deepEqual(result, testCase.result, `findOne / ${testCase.title}`);
-      t.deepEqual(
-        emitStub.args,
-        [],
-        `findOne / ${testCase.title}, no emit() called`
-      );
+      const trx = await db.transaction();
+      try {
+        const result = await (testCase.modifier
+          ? dao.findOne(trx, testCase.filter, testCase.modifier)
+          : dao.findOne(trx, testCase.filter));
+        t.deepEqual(result, testCase.result, `findOne / ${testCase.title}`);
+        t.deepEqual(
+          emitStub.args,
+          [],
+          `findOne / ${testCase.title}, no emit() called`
+        );
+      } finally {
+        await trx.rollback();
+      }
     }
-    await trx.rollback();
   };
   await describeFindOne();
 
@@ -200,7 +207,7 @@ test('standard cala-dao', async (t: Test) => {
     interface TestCase {
       title: string;
       id: string;
-      result: Address | undefined;
+      result: Address | null;
     }
     const testCases: TestCase[] = [
       {
@@ -211,20 +218,23 @@ test('standard cala-dao', async (t: Test) => {
       {
         title: 'Non-existing id',
         id: uuid.v4(),
-        result: undefined
+        result: null
       }
     ];
-    const trx = await db.transaction();
     for (const testCase of testCases) {
-      const result = await dao.findById(trx, testCase.id);
-      t.deepEqual(result, testCase.result, `findById / ${testCase.title}`);
-      t.deepEqual(
-        emitStub.args,
-        [],
-        `findById / ${testCase.title}, no emit() called`
-      );
+      const trx = await db.transaction();
+      try {
+        const result = await dao.findById(trx, testCase.id).catch(trx.rollback);
+        t.deepEqual(result, testCase.result, `findById / ${testCase.title}`);
+        t.deepEqual(
+          emitStub.args,
+          [],
+          `findById / ${testCase.title}, no emit() called`
+        );
+      } finally {
+        await trx.rollback();
+      }
     }
-    await trx.rollback();
   };
   await describeFindById();
 
@@ -234,23 +244,26 @@ test('standard cala-dao', async (t: Test) => {
       ...a1,
       id: uuid.v4()
     };
-    const result = await dao.create(trx, a4);
+    try {
+      const result = await dao.create(trx, a4);
 
-    t.deepEqual(
-      omit(result, 'createdAt'),
-      omit(a4, 'createdAt'),
-      `create / returned result`
-    );
+      t.deepEqual(
+        omit(result, 'createdAt'),
+        omit(a4, 'createdAt'),
+        `create / returned result`
+      );
 
-    const found = await dao.findById(trx, a4.id);
-    t.deepEqual(
-      omit(found, 'createdAt'),
-      omit(a4, 'createdAt'),
-      `create / found result`
-    );
+      const found = await dao.findById(trx, a4.id);
+      t.deepEqual(
+        omit(found, 'createdAt'),
+        omit(a4, 'createdAt'),
+        `create / found result`
+      );
 
-    t.deepEqual(emitStub.args, [], `create / no emit() called`);
-    await trx.rollback();
+      t.deepEqual(emitStub.args, [], `create / no emit() called`);
+    } finally {
+      await trx.rollback();
+    }
   };
   await describeCreate();
 
@@ -266,23 +279,28 @@ test('standard cala-dao', async (t: Test) => {
       id: uuid.v4(),
       country: 'Zimbabwe'
     };
-    const result = await dao.createAll(trx, [a4, a5]);
+    try {
+      const result = await dao.createAll(trx, [a4, a5]).catch(trx.rollback);
 
-    t.deepEqual(
-      result.map((item: Address) => omit(item, 'createdAt')),
-      [a4, a5].map((item: Address) => omit(item, 'createdAt')),
-      `createAll / returned result`
-    );
+      t.deepEqual(
+        result.map((item: Address) => omit(item, 'createdAt')),
+        [a4, a5].map((item: Address) => omit(item, 'createdAt')),
+        `createAll / returned result`
+      );
 
-    const found = await dao.find(trx, { country: 'Zimbabwe' });
-    t.deepEqual(
-      found.map((item: Address) => omit(item, 'createdAt')),
-      [a4, a5].map((item: Address) => omit(item, 'createdAt')),
-      `createAll / returned result`
-    );
+      const found = await dao
+        .find(trx, { country: 'Zimbabwe' })
+        .catch(trx.rollback);
+      t.deepEqual(
+        found.map((item: Address) => omit(item, 'createdAt')),
+        [a4, a5].map((item: Address) => omit(item, 'createdAt')),
+        `createAll / returned result`
+      );
 
-    t.deepEqual(emitStub.args, [], `createAll / no emit() called`);
-    await trx.rollback();
+      t.deepEqual(emitStub.args, [], `createAll / no emit() called`);
+    } finally {
+      await trx.rollback();
+    }
   };
   await describeCreateAll();
 
@@ -341,47 +359,50 @@ test('standard cala-dao', async (t: Test) => {
 
     for (const testCase of testCases) {
       const trx = await db.transaction();
-      if (testCase.errorMessage) {
-        try {
-          await dao.update(trx, testCase.id, testCase.patch);
-          t.fail(`update / ${testCase.title} / didn't throw expected error`);
-        } catch (err) {
-          t.is(
-            err.message,
-            testCase.errorMessage,
-            `update / ${testCase.title} / throws expected error`
+      try {
+        if (testCase.errorMessage) {
+          try {
+            await dao.update(trx, testCase.id, testCase.patch);
+            t.fail(`update / ${testCase.title} / didn't throw expected error`);
+          } catch (err) {
+            t.is(
+              err.message,
+              testCase.errorMessage,
+              `update / ${testCase.title} / throws expected error`
+            );
+          }
+        } else {
+          const resultReturned = await dao
+            .update(trx, testCase.id, testCase.patch)
+            .catch(trx.rollback);
+
+          t.deepEqual(
+            resultReturned,
+            { before: testCase.before, updated: testCase.result },
+            `update / ${testCase.title} / returned result`
+          );
+
+          const resultFound = await dao
+            .findById(trx, testCase.id)
+            .catch(trx.rollback);
+          t.deepEqual(
+            resultFound,
+            testCase.result,
+            `update / ${testCase.title} / found result`
           );
         }
-      } else {
-        const resultReturned = await dao.update(
-          trx,
-          testCase.id,
-          testCase.patch
-        );
-
+        testCase.emitCalls.forEach((call: any[]) => {
+          call[2].trx = trx;
+        });
         t.deepEqual(
-          resultReturned,
-          { before: testCase.before, updated: testCase.result },
-          `update / ${testCase.title} / returned result`
+          emitStub.args,
+          testCase.emitCalls,
+          `update / ${testCase.title} / proper emit calls`
         );
-
-        const resultFound = await dao.findById(trx, testCase.id);
-        t.deepEqual(
-          resultFound,
-          testCase.result,
-          `update / ${testCase.title} / found result`
-        );
+        emitStub.resetHistory();
+      } finally {
+        await trx.rollback();
       }
-      testCase.emitCalls.forEach((call: any[]) => {
-        call[2].trx = trx;
-      });
-      t.deepEqual(
-        emitStub.args,
-        testCase.emitCalls,
-        `update / ${testCase.title} / proper emit calls`
-      );
-      emitStub.resetHistory();
-      await trx.rollback();
     }
   };
   await describeUpdate();

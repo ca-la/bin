@@ -43,8 +43,8 @@ export interface CalaDao<Model> {
     trx: Transaction,
     filter: Partial<Model>,
     modifier?: (query: QueryBuilder) => QueryBuilder
-  ) => Promise<Model>;
-  findById: (trx: Transaction, id: string) => Promise<Model>;
+  ) => Promise<Model | null>;
+  findById: (trx: Transaction, id: string) => Promise<Model | null>;
   update: (
     trx: Transaction,
     id: string,
