@@ -12,15 +12,11 @@ main() {
   rm -rf published-types-dist
   npx tsc --build src/published-types/tsconfig.json
 
-  (
-    cd src/published-types
-    npm version --allow-same-version $(node -p "require('../../package.json').version")
-  )
-
   cp src/published-types/package.json published-types-dist
 
   (
     cd published-types-dist
+    npm version --allow-same-version $(node -p "require('../package.json').version")
     npm publish
   )
 }

@@ -1,6 +1,6 @@
 {
   "name": "@cala/api-types",
-  "version": "1.371.0",
+  "version": "X.X.X",
   "description": "Exported types from cala-api",
   "main": "./published-types",
   "author": "CALA <devops@ca.la>",
