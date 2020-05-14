@@ -52,6 +52,23 @@ export async function findByStep(
     .then(validateApprovalSubmissions);
 }
 
+export async function findByDesign(
+  trx: Knex.Transaction,
+  designId: string
+): Promise<ApprovalStepSubmission[]> {
+  return trx(TABLE_NAME)
+    .select('design_approval_submissions.*')
+    .join(
+      'design_approval_steps',
+      'design_approval_steps.id',
+      'design_approval_submissions.step_id'
+    )
+    .where({
+      'design_approval_steps.design_id': designId
+    })
+    .then(validateApprovalSubmissions);
+}
+
 export async function update(
   trx: Knex.Transaction,
   id: string,

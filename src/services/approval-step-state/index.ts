@@ -4,6 +4,7 @@ import * as uuid from 'node-uuid';
 import db from '../db';
 import * as ProductDesignsDAO from '../../components/product-designs/dao';
 import * as ApprovalStepsDAO from '../../components/approval-steps/dao';
+import * as ApprovalStepSubmissionsDAO from '../../components/approval-step-submissions/dao';
 import * as BidTaskTypesDAO from '../../components/bid-task-types/dao';
 import * as DesignEventsDAO from '../../dao/design-events';
 import ApprovalStep, {
@@ -12,6 +13,7 @@ import ApprovalStep, {
 } from '../../components/approval-steps/domain-object';
 import { findByDesignId as findProductTypeByDesignId } from '../../components/pricing-product-types/dao';
 import { taskTypes } from '../../components/tasks/templates';
+import { getDefaultsByDesign } from '../../components/approval-step-submissions/defaults';
 
 export async function makeNextStepCurrentIfNeeded(
   trx: Knex.Transaction,
@@ -40,11 +42,24 @@ export async function makeNextStepCurrentIfNeeded(
   });
 }
 
+export async function createSubmissionsByProductType(
+  trx: Knex.Transaction,
+  step: ApprovalStep
+): Promise<void> {
+  const submissions = await getDefaultsByDesign(trx, step.designId);
+
+  await ApprovalStepSubmissionsDAO.createAll(trx, submissions);
+}
+
 export async function handleStepCompletion(
   trx: Knex.Transaction,
   step: ApprovalStep
 ): Promise<void> {
   await makeNextStepCurrentIfNeeded(trx, step);
+
+  if (step.type === ApprovalStepType.CHECKOUT) {
+    await createSubmissionsByProductType(trx, step);
+  }
 }
 
 export async function handleUserStepCompletion(

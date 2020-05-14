@@ -17,12 +17,13 @@ import * as CollaboratorsDAO from '../../collaborators/dao';
 import * as CollectionsDAO from '../../collections/dao';
 import * as ProductDesignOptionsDAO from '../../../dao/product-design-options';
 import * as ApprovalStepsDAO from '../../approval-steps/dao';
+import * as PricingProductTypesDAO from '../../pricing-product-types/dao';
 import { ApprovalStepState } from '../../approval-steps/domain-object';
 import { deleteById as deleteAnnotation } from '../../product-design-canvas-annotations/dao';
 import { create as createTask } from '../../../dao/tasks';
 import { create as createApprovalTask } from '../../../components/approval-step-tasks/dao';
 
-import { test } from '../../../test-helpers/fresh';
+import { sandbox, test } from '../../../test-helpers/fresh';
 import createUser from '../../../test-helpers/create-user';
 import generateCanvas from '../../../test-helpers/factories/product-design-canvas';
 import generateComponent from '../../../test-helpers/factories/component';
@@ -328,6 +329,11 @@ test('findAllDesignsThroughCollaborator finds all designs with a search string',
 });
 
 test('findAllDesignsThroughCollaborator returns approval steps', async (t: tape.Test) => {
+  sandbox()
+    .stub(PricingProductTypesDAO, 'findByDesignId')
+    .resolves({
+      complexity: 'BLANK'
+    });
   const { user } = await createUser();
   const { user: notUser } = await createUser();
 

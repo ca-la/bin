@@ -121,6 +121,16 @@ test('ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     const foundById = await ApprovalStepSubmissionsDAO.findById(trx, sub1.id);
 
     t.true(isEqual(foundById, sub1), 'returns submission by id');
+
+    const foundByDesign = await ApprovalStepSubmissionsDAO.findByDesign(
+      trx,
+      as1.designId
+    );
+
+    t.true(
+      isEqual(new Set(foundByDesign), new Set([sub1, sub2, sub3, sub4])),
+      'returns submissions by design'
+    );
   });
 });
 

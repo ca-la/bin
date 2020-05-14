@@ -2,7 +2,7 @@ import Knex from 'knex';
 
 import { pick } from 'lodash';
 import { authHeader, get, patch } from '../../test-helpers/http';
-import { test, Test } from '../../test-helpers/fresh';
+import { sandbox, test, Test } from '../../test-helpers/fresh';
 import createUser from '../../test-helpers/create-user';
 import {
   generateDesign,
@@ -11,6 +11,7 @@ import {
 import * as ApprovalStepCommentDAO from '../approval-step-comments/dao';
 import * as ApprovalStepsDAO from '../approval-steps/dao';
 import * as DesignEventsDAO from '../../dao/design-events';
+import * as PricingProductTypesDAO from '../../components/pricing-product-types/dao';
 import db from '../../services/db';
 import generateComment from '../../test-helpers/factories/comment';
 import generateDesignEvent from '../../test-helpers/factories/design-event';
@@ -193,6 +194,11 @@ test('GET /design-approval-steps/:stepId/stream-items', async (t: Test) => {
 });
 
 test('PATCH /design-approval-steps/:stepId', async (t: Test) => {
+  sandbox()
+    .stub(PricingProductTypesDAO, 'findByDesignId')
+    .resolves({
+      complexity: 'BLANK'
+    });
   const designer = await createUser();
   const admin = await createUser({ role: 'ADMIN' });
   const other = await createUser();

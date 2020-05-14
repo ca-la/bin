@@ -10,6 +10,7 @@ import { findByAddressId } from '../../dao/invoice-addresses';
 import * as LineItemsDAO from '../../dao/line-items';
 import * as PricingCostInputsDAO from '../../components/pricing-cost-inputs/dao';
 import * as ApprovalStepsDAO from '../../components/approval-steps/dao';
+import * as ApprovalStepSubmissionsDAO from '../../components/approval-step-submissions/dao';
 import createUser = require('../../test-helpers/create-user');
 import EmailService = require('../../services/email');
 import generatePricingValues from '../../test-helpers/factories/pricing-values';
@@ -171,21 +172,38 @@ test('/quote-payments POST generates quotes, payment method, invoice, lineItems,
   t.equals(lineItems[1].designId, d2.id, 'Line Item has correct design');
   t.assert(stripe.calledOnce, 'Stripe was charged');
 
-  const cutAndSewApprovalSteps = await db.transaction((trx: Knex.Transaction) =>
-    ApprovalStepsDAO.findByDesign(trx, d1.id)
-  );
-  t.equals(cutAndSewApprovalSteps[0].state, ApprovalStepState.COMPLETED);
-  t.equals(cutAndSewApprovalSteps[1].state, ApprovalStepState.BLOCKED);
-  t.equals(cutAndSewApprovalSteps[2].state, ApprovalStepState.BLOCKED);
-  t.equals(cutAndSewApprovalSteps[3].state, ApprovalStepState.UNSTARTED);
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const cutAndSewApprovalSteps = await ApprovalStepsDAO.findByDesign(
+      trx,
+      d1.id
+    );
+    t.equals(cutAndSewApprovalSteps[0].state, ApprovalStepState.COMPLETED);
+    t.equals(cutAndSewApprovalSteps[1].state, ApprovalStepState.BLOCKED);
+    t.equals(cutAndSewApprovalSteps[2].state, ApprovalStepState.BLOCKED);
+    t.equals(cutAndSewApprovalSteps[3].state, ApprovalStepState.UNSTARTED);
 
-  const blankApprovalSteps = await db.transaction((trx: Knex.Transaction) =>
-    ApprovalStepsDAO.findByDesign(trx, d2.id)
-  );
-  t.equals(blankApprovalSteps[0].state, ApprovalStepState.COMPLETED);
-  t.equals(blankApprovalSteps[1].state, ApprovalStepState.SKIP);
-  t.equals(blankApprovalSteps[2].state, ApprovalStepState.BLOCKED);
-  t.equals(blankApprovalSteps[3].state, ApprovalStepState.UNSTARTED);
+    const cutAndSewSubmissions = await ApprovalStepSubmissionsDAO.findByDesign(
+      trx,
+      d1.id
+    );
+    t.is(
+      cutAndSewSubmissions.length,
+      8,
+      'adds cut and sew approval submissions'
+    );
+
+    const blankApprovalSteps = await ApprovalStepsDAO.findByDesign(trx, d2.id);
+    t.equals(blankApprovalSteps[0].state, ApprovalStepState.COMPLETED);
+    t.equals(blankApprovalSteps[1].state, ApprovalStepState.SKIP);
+    t.equals(blankApprovalSteps[2].state, ApprovalStepState.BLOCKED);
+    t.equals(blankApprovalSteps[3].state, ApprovalStepState.UNSTARTED);
+
+    const blankSubmissions = await ApprovalStepSubmissionsDAO.findByDesign(
+      trx,
+      d2.id
+    );
+    t.is(blankSubmissions.length, 5, 'adds blank approval submissions');
+  });
 });
 
 test('/quote-payments POST does not generate quotes, payment method, invoice, lineItems on failure', async (t: Test) => {
