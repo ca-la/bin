@@ -35,7 +35,36 @@ export interface PricingProcessRow {
   created_at: Date;
 }
 
-export const dataAdapter = new DataAdapter<PricingProcessRow, PricingProcess>();
+function encode(row: PricingProcessRow): PricingProcess {
+  return {
+    id: row.id,
+    version: row.version,
+    name: row.name,
+    minimumUnits: row.minimum_units,
+    complexity: row.complexity,
+    setupCents: row.setup_cents,
+    unitCents: row.unit_cents,
+    createdAt: row.created_at
+  };
+}
+
+function decode(data: PricingProcess): PricingProcessRow {
+  return {
+    id: data.id,
+    version: data.version,
+    name: data.name,
+    minimum_units: data.minimumUnits,
+    complexity: data.complexity,
+    setup_cents: data.setupCents,
+    unit_cents: data.unitCents,
+    created_at: data.createdAt
+  };
+}
+
+export const dataAdapter = new DataAdapter<PricingProcessRow, PricingProcess>(
+  encode,
+  decode
+);
 
 export function isPricingProcessRow(row: object): row is PricingProcessRow {
   return hasProperties(
