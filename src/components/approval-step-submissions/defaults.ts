@@ -15,6 +15,7 @@ export async function getDefaultsByDesign(
   trx: Knex.Transaction,
   designId: string
 ): Promise<ApprovalStepSubmission[]> {
+  const now = new Date();
   const productType = await PricingProductTypesDAO.findByDesignId(designId);
   if (!productType) {
     throw new Error(
@@ -26,8 +27,9 @@ export async function getDefaultsByDesign(
     await ApprovalStepsDAO.findByDesign(trx, designId)
   );
 
+  let submissions: ApprovalStepSubmission[] = [];
   if (productType.complexity === 'BLANK') {
-    return [
+    submissions = [
       {
         id: uuid.v4(),
         artifactType: ApprovalStepSubmissionArtifactType.TECHNICAL_DESIGN,
@@ -74,82 +76,87 @@ export async function getDefaultsByDesign(
         title: 'Confirm receipt of final shipment'
       }
     ];
+  } else {
+    submissions = [
+      {
+        id: uuid.v4(),
+        artifactType: ApprovalStepSubmissionArtifactType.TECHNICAL_DESIGN,
+        collaboratorId: null,
+        createdAt: new Date(),
+        state: ApprovalStepSubmissionState.UNSUBMITTED,
+        stepId: stepsByType[ApprovalStepType.TECHNICAL_DESIGN].id,
+        title: 'Review technical design'
+      },
+      {
+        id: uuid.v4(),
+        artifactType: ApprovalStepSubmissionArtifactType.SAMPLE,
+        collaboratorId: null,
+        createdAt: new Date(),
+        state: ApprovalStepSubmissionState.UNSUBMITTED,
+        stepId: stepsByType[ApprovalStepType.SAMPLE].id,
+        title: 'Review material sample'
+      },
+      {
+        id: uuid.v4(),
+        artifactType: ApprovalStepSubmissionArtifactType.SAMPLE,
+        collaboratorId: null,
+        createdAt: new Date(),
+        state: ApprovalStepSubmissionState.UNSUBMITTED,
+        stepId: stepsByType[ApprovalStepType.SAMPLE].id,
+        title: 'Review final sample'
+      },
+      {
+        id: uuid.v4(),
+        artifactType: ApprovalStepSubmissionArtifactType.CUSTOM,
+        collaboratorId: null,
+        createdAt: new Date(),
+        state: ApprovalStepSubmissionState.UNSUBMITTED,
+        stepId: stepsByType[ApprovalStepType.SAMPLE].id,
+        title: 'Review bulk graded specs'
+      },
+      {
+        id: uuid.v4(),
+        artifactType: ApprovalStepSubmissionArtifactType.CUSTOM,
+        collaboratorId: null,
+        createdAt: new Date(),
+        state: ApprovalStepSubmissionState.UNSUBMITTED,
+        stepId: stepsByType[ApprovalStepType.PRODUCTION].id,
+        title: 'Confirm quality inspection'
+      },
+      {
+        id: uuid.v4(),
+        artifactType: ApprovalStepSubmissionArtifactType.CUSTOM,
+        collaboratorId: null,
+        createdAt: new Date(),
+        state: ApprovalStepSubmissionState.UNSUBMITTED,
+        stepId: stepsByType[ApprovalStepType.PRODUCTION].id,
+        title: 'Confirm receipt of TOP and CALA keep samples'
+      },
+      {
+        id: uuid.v4(),
+        artifactType: ApprovalStepSubmissionArtifactType.CUSTOM,
+        collaboratorId: null,
+        createdAt: new Date(),
+        state: ApprovalStepSubmissionState.UNSUBMITTED,
+        stepId: stepsByType[ApprovalStepType.PRODUCTION].id,
+        title: 'Review product photography'
+      },
+      {
+        id: uuid.v4(),
+        artifactType: ApprovalStepSubmissionArtifactType.CUSTOM,
+        collaboratorId: null,
+        createdAt: new Date(),
+        state: ApprovalStepSubmissionState.UNSUBMITTED,
+        stepId: stepsByType[ApprovalStepType.PRODUCTION].id,
+        title: 'Confirm receipt of final shipment'
+      }
+    ];
   }
 
-  return [
-    {
-      id: uuid.v4(),
-      artifactType: ApprovalStepSubmissionArtifactType.TECHNICAL_DESIGN,
-      collaboratorId: null,
-      createdAt: new Date(),
-      state: ApprovalStepSubmissionState.UNSUBMITTED,
-      stepId: stepsByType[ApprovalStepType.TECHNICAL_DESIGN].id,
-      title: 'Review technical design'
-    },
-    {
-      id: uuid.v4(),
-      artifactType: ApprovalStepSubmissionArtifactType.SAMPLE,
-      collaboratorId: null,
-      createdAt: new Date(),
-      state: ApprovalStepSubmissionState.UNSUBMITTED,
-      stepId: stepsByType[ApprovalStepType.SAMPLE].id,
-      title: 'Review material sample'
-    },
-    {
-      id: uuid.v4(),
-      artifactType: ApprovalStepSubmissionArtifactType.SAMPLE,
-      collaboratorId: null,
-      createdAt: new Date(),
-      state: ApprovalStepSubmissionState.UNSUBMITTED,
-      stepId: stepsByType[ApprovalStepType.SAMPLE].id,
-      title: 'Review final sample'
-    },
-    {
-      id: uuid.v4(),
-      artifactType: ApprovalStepSubmissionArtifactType.CUSTOM,
-      collaboratorId: null,
-      createdAt: new Date(),
-      state: ApprovalStepSubmissionState.UNSUBMITTED,
-      stepId: stepsByType[ApprovalStepType.SAMPLE].id,
-      title: 'Review bulk graded specs'
-    },
-    {
-      id: uuid.v4(),
-      artifactType: ApprovalStepSubmissionArtifactType.CUSTOM,
-      collaboratorId: null,
-      createdAt: new Date(),
-      state: ApprovalStepSubmissionState.UNSUBMITTED,
-      stepId: stepsByType[ApprovalStepType.PRODUCTION].id,
-      title: 'Confirm quality inspection'
-    },
-    {
-      id: uuid.v4(),
-      artifactType: ApprovalStepSubmissionArtifactType.CUSTOM,
-      collaboratorId: null,
-      createdAt: new Date(),
-      state: ApprovalStepSubmissionState.UNSUBMITTED,
-      stepId: stepsByType[ApprovalStepType.PRODUCTION].id,
-      title: 'Confirm receipt of TOP and CALA keep samples'
-    },
-    {
-      id: uuid.v4(),
-      artifactType: ApprovalStepSubmissionArtifactType.CUSTOM,
-      collaboratorId: null,
-      createdAt: new Date(),
-      state: ApprovalStepSubmissionState.UNSUBMITTED,
-      stepId: stepsByType[ApprovalStepType.PRODUCTION].id,
-      title: 'Review product photography'
-    },
-    {
-      id: uuid.v4(),
-      artifactType: ApprovalStepSubmissionArtifactType.CUSTOM,
-      collaboratorId: null,
-      createdAt: new Date(),
-      state: ApprovalStepSubmissionState.UNSUBMITTED,
-      stepId: stepsByType[ApprovalStepType.PRODUCTION].id,
-      title: 'Confirm receipt of final shipment'
-    }
-  ];
+  return submissions.map((sub: ApprovalStepSubmission, index: number) => ({
+    ...sub,
+    createdAt: new Date(now.getTime() + index)
+  }));
 }
 
 function buildStepByType(
