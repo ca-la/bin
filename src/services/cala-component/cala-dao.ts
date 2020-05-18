@@ -2,8 +2,13 @@ import Knex, { QueryBuilder, Transaction } from 'knex';
 import { emit } from '../pubsub';
 import { CalaAdapter, CalaDao, UpdateResult } from './types';
 import ResourceNotFoundError from '../../errors/resource-not-found';
-import { DaoUpdating, DaoUpdated } from '../pubsub/cala-events';
+import { DaoCreated, DaoUpdating, DaoUpdated } from '../pubsub/cala-events';
 import first from '../first';
+
+type QueryModifier = (query: QueryBuilder) => QueryBuilder;
+function identity<T>(a: T): T {
+  return a;
+}
 
 interface DaoOptions<ModelRow> {
   orderColumn: keyof ModelRow;
@@ -18,14 +23,13 @@ export function buildDao<Model, ModelRow extends object>(
   const find = async (
     trx: Knex.Transaction,
     filter: Partial<Model>,
-    modifier?: (query: QueryBuilder) => QueryBuilder
+    modifier: QueryModifier = identity
   ): Promise<Model[]> => {
-    const basicQuery = trx(tableName)
+    const rows = await trx(tableName)
       .select('*')
       .where(adapter.toDbPartial(filter))
-      .orderBy(orderColumn);
-
-    const rows = await (modifier ? basicQuery.modify(modifier) : basicQuery);
+      .orderBy(orderColumn)
+      .modify(modifier);
 
     return adapter.fromDbArray(rows);
   };
@@ -49,15 +53,14 @@ export function buildDao<Model, ModelRow extends object>(
   const findOne = async (
     trx: Knex.Transaction,
     filter: Partial<Model>,
-    modifier?: (query: QueryBuilder) => QueryBuilder
+    modifier: QueryModifier = identity
   ): Promise<Model | null> => {
-    const basicQuery = trx(tableName)
+    const row = await trx(tableName)
       .select('*')
       .where(adapter.toDbPartial(filter))
       .orderBy(orderColumn)
-      .first();
-
-    const row = await (modifier ? basicQuery.modify(modifier) : basicQuery);
+      .first()
+      .modify(modifier);
 
     if (!row) {
       return null;
@@ -66,25 +69,59 @@ export function buildDao<Model, ModelRow extends object>(
     return adapter.fromDb(row);
   };
 
-  const create = async (trx: Transaction, blank: Model): Promise<Model> => {
+  const create = async (
+    trx: Transaction,
+    blank: Model,
+    modifier: QueryModifier = identity
+  ): Promise<Model> => {
     const rowData = adapter.forInsertion(blank);
-    const created = await trx(tableName)
+    const createdRow = await trx(tableName)
       .insert(rowData)
       .returning('*')
-      .then((rows: ModelRow[]) => first(rows));
+      .modify(modifier)
+      .then<ModelRow | undefined>(first);
 
-    if (!created) {
+    if (!createdRow) {
       throw new Error(`Failed to create a ${domain}!`);
     }
 
-    return adapter.fromDb(created);
+    const created = adapter.fromDb(createdRow);
+
+    await emit<DaoCreated<Model, typeof domain>>('dao.created', domain, {
+      trx,
+      created
+    });
+
+    return created;
   };
 
   const createAll = async (
     trx: Transaction,
-    blanks: Model[]
+    blanks: Model[],
+    modifier: QueryModifier = identity
   ): Promise<Model[]> => {
-    return Promise.all(blanks.map((blank: Model) => create(trx, blank)));
+    const rowData = blanks.map(adapter.forInsertion.bind(adapter));
+    const createdRows: ModelRow[] = await trx(tableName)
+      .insert(rowData)
+      .returning('*')
+      .modify(modifier);
+
+    if (!createdRows || createdRows.length === 0) {
+      throw new Error(`Failed to create ${domain}!`);
+    }
+
+    const creations = adapter.fromDbArray(createdRows);
+
+    await Promise.all(
+      creations.map((created: Model) =>
+        emit<DaoCreated<Model, typeof domain>>('dao.created', domain, {
+          trx,
+          created
+        })
+      )
+    );
+
+    return creations;
   };
 
   const update = async (

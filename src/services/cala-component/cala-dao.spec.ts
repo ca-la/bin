@@ -138,6 +138,7 @@ test('standard cala-dao', async (t: Test) => {
         );
       } finally {
         await trx.rollback();
+        emitStub.resetHistory();
       }
     }
   };
@@ -198,6 +199,7 @@ test('standard cala-dao', async (t: Test) => {
         );
       } finally {
         await trx.rollback();
+        emitStub.resetHistory();
       }
     }
   };
@@ -233,6 +235,7 @@ test('standard cala-dao', async (t: Test) => {
         );
       } finally {
         await trx.rollback();
+        emitStub.resetHistory();
       }
     }
   };
@@ -260,9 +263,14 @@ test('standard cala-dao', async (t: Test) => {
         `create / found result`
       );
 
-      t.deepEqual(emitStub.args, [], `create / no emit() called`);
+      t.deepEqual(
+        emitStub.args,
+        [['dao.created', 'address', { created: result, trx }]],
+        `create / no emit() called`
+      );
     } finally {
       await trx.rollback();
+      emitStub.resetHistory();
     }
   };
   await describeCreate();
@@ -297,9 +305,17 @@ test('standard cala-dao', async (t: Test) => {
         `createAll / returned result`
       );
 
-      t.deepEqual(emitStub.args, [], `createAll / no emit() called`);
+      t.deepEqual(
+        emitStub.args,
+        [
+          ['dao.created', 'address', { created: result[0], trx }],
+          ['dao.created', 'address', { created: result[1], trx }]
+        ],
+        `createAll / no emit() called`
+      );
     } finally {
       await trx.rollback();
+      emitStub.resetHistory();
     }
   };
   await describeCreateAll();

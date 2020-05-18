@@ -19,6 +19,12 @@ export interface DaoUpdated<Model, domain extends string> extends EventBase {
   updated: Model;
 }
 
+export interface DaoCreated<Model, domain extends string> extends EventBase {
+  type: 'dao.created';
+  domain: domain;
+  created: Model;
+}
+
 export interface RouteUpdated<Model, domain extends string> extends EventBase {
   type: 'route.updated';
   domain: domain;
