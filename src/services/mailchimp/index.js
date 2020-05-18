@@ -44,7 +44,11 @@ function makeRequest(method, path, requestBody) {
       const contentType = response.headers.get('content-type');
       const isJson = /application\/.*json/.test(contentType);
 
-      if (!isJson) {
+      // 2020-05-18 Mailchimp is misreporting the content type as text/html; charset=UTF-8
+      // despite it being JSON
+      const isHtml = /text\/html;/.test(contentType);
+
+      if (!(isJson || isHtml)) {
         return response.text().then(text => {
           logServerError('Mailchimp request: ', method, url, requestBody);
           logServerError('Mailchimp response: ', response.status, text);
