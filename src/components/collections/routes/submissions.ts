@@ -6,6 +6,8 @@ import ProductDesign = require('../../product-designs/domain-objects/product-des
 import * as CreateNotifications from '../../../services/create-notifications';
 import { determineSubmissionStatus } from '../services/determine-submission-status';
 import db from '../../../services/db';
+import ApprovalStepsDAO from '../../approval-steps/dao';
+import ApprovalStep, { ApprovalStepType } from '../../approval-steps/types';
 
 export function* createSubmission(
   this: AuthedContext
@@ -16,11 +18,20 @@ export function* createSubmission(
   const designs: ProductDesign[] = yield ProductDesignsDAO.findByCollectionId(
     collectionId
   );
+
   yield db.transaction(async (trx: Knex.Transaction) => {
     for (const design of designs) {
+      const steps = await ApprovalStepsDAO.findByDesign(trx, design.id);
+      const checkoutStep = steps.find(
+        (step: ApprovalStep) => step.type === ApprovalStepType.CHECKOUT
+      );
+
+      if (!checkoutStep) {
+        this.throw('Could not find checkout step for collection submission');
+      }
       await DesignEventsDAO.create(trx, {
         actorId: userId,
-        approvalStepId: null,
+        approvalStepId: checkoutStep.id,
         approvalSubmissionId: null,
         bidId: null,
         commentId: null,

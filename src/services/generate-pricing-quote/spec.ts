@@ -2,12 +2,24 @@ import uuid from 'node-uuid';
 
 import { sandbox, test, Test } from '../../test-helpers/fresh';
 import * as PricingQuotesDAO from '../../dao/pricing-quotes';
+import * as DesignEventsDAO from '../../dao/design-events';
 import {
   PricingQuoteRequestWithVersions,
   PricingQuoteValues
 } from '../../domain-objects/pricing-quote';
-import generatePricingQuote, { generateUnsavedQuote } from './index';
+import generatePricingQuote, {
+  generateUnsavedQuote,
+  generateFromPayloadAndUser
+} from './index';
 import { daysToMs } from '../time-conversion';
+import db from '../db';
+import Knex from 'knex';
+import createUser from '../../test-helpers/create-user';
+import generatePricingValues from '../../test-helpers/factories/pricing-values';
+import * as PricingCostInputsDAO from '../../components/pricing-cost-inputs/dao';
+import { PricingCostInputWithoutVersions } from '../../components/pricing-cost-inputs/domain-object';
+import generateApprovalStep from '../../test-helpers/factories/design-approval-step';
+import ProductDesignsDAO from '../../components/product-designs/dao';
 
 const quoteRequestOne: PricingQuoteRequestWithVersions = {
   designId: null,
@@ -33,6 +45,19 @@ const quoteRequestOne: PricingQuoteRequestWithVersions = {
   marginVersion: 0,
   constantsVersion: 0,
   careLabelsVersion: 0
+};
+
+const pricingCostInputs: PricingCostInputWithoutVersions = {
+  createdAt: new Date(),
+  deletedAt: null,
+  designId: 'designId',
+  expiresAt: null,
+  id: 'id',
+  materialBudgetCents: 1200,
+  materialCategory: 'BASIC',
+  processes: [],
+  productComplexity: 'SIMPLE',
+  productType: 'TEESHIRT'
 };
 
 test('generateUnsavedQuote failure', async (t: Test) => {
@@ -443,5 +468,68 @@ test('generateUnsavedQuote for packaging', async (t: Test) => {
     unsavedQuote.unitCostCents,
     1145,
     'calculates total unit cost correctly'
+  );
+});
+
+test('generateFromPayloadAndUser uses the checkout step', async (t: Test) => {
+  const { user } = await createUser();
+  await generatePricingValues();
+  const designOne = await ProductDesignsDAO.create({
+    description: 'Generic Shirt',
+    productType: 'TEESHIRT',
+    title: 'T-Shirt One',
+    userId: user.id
+  });
+  const designTwo = await ProductDesignsDAO.create({
+    description: 'Generic Shirt',
+    productType: 'TEESHIRT',
+    title: 'T-Shirt Two',
+    userId: user.id
+  });
+
+  const [approvalStepOne, approvalStepTwo] = await db.transaction(
+    async (trx: Knex.Transaction) => {
+      const { approvalStep: one } = await generateApprovalStep(trx, {
+        designId: designOne.id
+      });
+      const { approvalStep: two } = await generateApprovalStep(trx, {
+        designId: designTwo.id
+      });
+      return [one, two];
+    }
+  );
+
+  const payload = [
+    { designId: designOne.id, units: 10 },
+    { designId: designTwo.id, units: 20 }
+  ];
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await PricingCostInputsDAO.create(trx, {
+      ...pricingCostInputs,
+      id: uuid.v4(),
+      designId: designOne.id
+    });
+    await PricingCostInputsDAO.create(trx, {
+      ...pricingCostInputs,
+      id: uuid.v4(),
+      designId: designTwo.id,
+      productComplexity: 'BLANK'
+    });
+    return generateFromPayloadAndUser(payload, user.id, trx);
+  });
+
+  const designEventOne = await DesignEventsDAO.findByDesignId(designOne.id);
+  const designEventTwo = await DesignEventsDAO.findByDesignId(designTwo.id);
+
+  t.deepEqual(
+    designEventOne[0].approvalStepId,
+    approvalStepOne.id,
+    'Submission is associated with the right step'
+  );
+  t.deepEqual(
+    designEventTwo[0].approvalStepId,
+    approvalStepTwo.id,
+    'Submission is associated with the right step'
   );
 });

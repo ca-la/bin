@@ -24,6 +24,10 @@ import * as DesignEventsDAO from '../../dao/design-events';
 import PricingCostInputs from '../../components/pricing-cost-inputs/domain-object';
 import DataAdapter from '../data-adapter';
 import addMargin from '../add-margin';
+import ApprovalStepsDAO from '../../components/approval-steps/dao';
+import ApprovalStep, {
+  ApprovalStepType
+} from '../../components/approval-steps/types';
 
 export type UnsavedQuote = Omit<
   PricingQuote,
@@ -282,6 +286,15 @@ export async function generateFromPayloadAndUser(
 
     const unitsNumber = Number(units);
 
+    const steps = await ApprovalStepsDAO.findByDesign(trx, designId);
+    const checkoutStep = steps.find(
+      (step: ApprovalStep) => step.type === ApprovalStepType.CHECKOUT
+    );
+
+    if (!checkoutStep) {
+      throw new Error('Could not find checkout step for collection submission');
+    }
+
     const costInputs: PricingCostInputs[] = await PricingCostInputsDAO.findByDesignId(
       {
         designId,
@@ -303,7 +316,7 @@ export async function generateFromPayloadAndUser(
 
     await DesignEventsDAO.create(trx, {
       actorId: userId,
-      approvalStepId: null,
+      approvalStepId: checkoutStep.id,
       approvalSubmissionId: null,
       bidId: null,
       commentId: null,

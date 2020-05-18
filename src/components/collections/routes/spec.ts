@@ -21,6 +21,8 @@ import generateCollaborator from '../../../test-helpers/factories/collaborator';
 import * as SubmissionStatusService from '../services/determine-submission-status';
 import { moveDesign } from '../../../test-helpers/collections';
 import db from '../../../services/db';
+import generateApprovalStep from '../../../test-helpers/factories/design-approval-step';
+import createDesign from '../../../services/create-design';
 
 test('GET /collections/:id returns a created collection', async (t: tape.Test) => {
   const { session, user } = await createUser();
@@ -424,6 +426,19 @@ test('POST /collections/:id/submissions', async (t: tape.Test) => {
     title: 'T-Shirt Two',
     userId: owner.user.id
   });
+
+  const [approvalStepOne, approvalStepTwo] = await db.transaction(
+    async (trx: Knex.Transaction) => {
+      const { approvalStep: one } = await generateApprovalStep(trx, {
+        designId: designOne.id
+      });
+      const { approvalStep: two } = await generateApprovalStep(trx, {
+        designId: designTwo.id
+      });
+      return [one, two];
+    }
+  );
+
   await moveDesign(collection.id, designOne.id);
   await moveDesign(collection.id, designTwo.id);
 
@@ -477,6 +492,16 @@ test('POST /collections/:id/submissions', async (t: tape.Test) => {
     'SUBMIT_DESIGN',
     'Submitted the design to CALA'
   );
+  t.deepEqual(
+    designEventOne[0].approvalStepId,
+    approvalStepOne.id,
+    'Submission is associated with the right step'
+  );
+  t.deepEqual(
+    designEventTwo[0].approvalStepId,
+    approvalStepTwo.id,
+    'Submission is associated with the right step'
+  );
 
   const collaboratorPost = await API.post(
     `/collections/${collection.id}/submissions`,
@@ -501,7 +526,7 @@ test('POST /collections/:id/submissions', async (t: tape.Test) => {
     'Collaborators can submit collections'
   );
 
-  const designThree = await ProductDesignsDAO.create({
+  const designThree = await createDesign({
     description: 'Generic Shirt',
     productType: 'TEESHIRT',
     title: 'T-Shirt Two',

@@ -414,7 +414,7 @@ test('Design Events DAO supports retrieval by design ID and approval step ID', a
     findApprovalStepEvents(trx, design.id, approvalStepId)
   );
 
-  t.equal(events.length, 4);
+  t.equal(events.length, 3);
   t.deepEqual(
     {
       approvalStepId: events[0].approvalStepId,
@@ -452,44 +452,7 @@ test('Design Events DAO supports retrieval by design ID and approval step ID', a
   t.deepEqual(
     {
       approvalStepId: events[2].approvalStepId,
-      designId: events[2].designId,
-      actorId: events[2].actorId,
-      actorName: events[2].actorName,
-      actorRole: events[2].actorRole,
-      actorEmail: events[2].actorEmail,
-      targetId: events[2].targetId,
-      targetName: events[2].targetName,
-      targetRole: events[2].targetRole,
-      targetEmail: events[2].targetEmail,
       type: events[2].type,
-      taskTypeIds: events[2].taskTypeIds,
-      taskTypeTitles: events[2].taskTypeTitles
-    },
-    {
-      approvalStepId: null,
-      designId: design.id,
-      actorId: cala.id,
-      actorName: cala.name,
-      actorRole: cala.role,
-      actorEmail: cala.email,
-      targetId: partner.id,
-      targetName: partner.name,
-      targetRole: partner.role,
-      targetEmail: partner.email,
-      type: 'BID_DESIGN',
-      taskTypeIds: [taskTypes.TECHNICAL_DESIGN.id, taskTypes.PRODUCTION.id],
-      taskTypeTitles: [
-        taskTypes.TECHNICAL_DESIGN.title,
-        taskTypes.PRODUCTION.title
-      ]
-    },
-    'actor, target user, task type ids and names are appended'
-  );
-
-  t.deepEqual(
-    {
-      approvalStepId: events[3].approvalStepId,
-      type: events[3].type,
       taskTypeIds: events[2].taskTypeIds,
       taskTypeTitles: events[2].taskTypeTitles
     },

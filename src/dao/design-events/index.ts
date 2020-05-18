@@ -10,7 +10,8 @@ import DesignEvent, {
   DesignEventWithMetaRow,
   isDesignEventRow,
   isDesignEventWithMetaRow,
-  withMetaDataAdapter
+  withMetaDataAdapter,
+  DesignEventTypes
 } from '../../domain-objects/design-event';
 import first from '../../services/first';
 import filterError = require('../../services/filter-error');
@@ -19,6 +20,18 @@ import { taskTypesById } from '../../components/tasks/templates';
 import { actualizeDesignStepsAfterBidAcceptance } from '../../services/approval-step-state';
 
 const TABLE_NAME = 'design_events';
+
+const ACTIVITY_STREAM_EVENTS: DesignEventTypes[] = [
+  'REVISION_REQUEST',
+  'STEP_ASSIGNMENT',
+  'STEP_SUMBISSION_APPROVAL',
+  'STEP_SUMBISSION_ASSIGNMENT',
+  'STEP_COMPLETE',
+  'STEP_REOPEN',
+  'SUBMIT_DESIGN',
+  'COMMIT_QUOTE',
+  'ACCEPT_SERVICE_BID'
+];
 
 export class DuplicateAcceptRejectError extends Error {
   constructor(message: string) {
@@ -188,6 +201,7 @@ export async function findApprovalStepEvents(
     .select('design_events.*')
     .modify(addMeta)
     .orderBy('design_events.created_at', 'asc')
+    .whereIn('design_events.type', ACTIVITY_STREAM_EVENTS)
     .whereRaw(
       `design_events.design_id = ? AND (approval_step_id = ? OR approval_step_id IS NULL)`,
       [designId, approvalStepId]
