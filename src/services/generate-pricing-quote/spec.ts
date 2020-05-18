@@ -116,6 +116,7 @@ test('generateUnsavedQuote', async (t: Test) => {
         id: uuid.v4(),
         minimumUnits: 2000,
         name: 'SCREEN_PRINTING',
+        displayName: 'screen printing',
         setupCents: 3000,
         unitCents: 50,
         version: 0
@@ -126,6 +127,7 @@ test('generateUnsavedQuote', async (t: Test) => {
         id: uuid.v4(),
         minimumUnits: 2000,
         name: 'SCREEN_PRINTING',
+        displayName: 'screen printing',
         setupCents: 3000,
         unitCents: 50,
         version: 0
@@ -239,6 +241,7 @@ test('generateUnsavedQuote for blank', async (t: Test) => {
         id: uuid.v4(),
         minimumUnits: 100,
         name: 'SCREEN_PRINTING',
+        displayName: 'screen printing',
         setupCents: 6000,
         unitCents: 110,
         version: 0

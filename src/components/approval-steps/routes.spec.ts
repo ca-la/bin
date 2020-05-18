@@ -12,6 +12,7 @@ import * as ApprovalStepCommentDAO from '../approval-step-comments/dao';
 import * as ApprovalStepsDAO from '../approval-steps/dao';
 import * as DesignEventsDAO from '../../dao/design-events';
 import * as PricingProductTypesDAO from '../../components/pricing-product-types/dao';
+import * as PricingQuotesDAO from '../../dao/pricing-quotes';
 import db from '../../services/db';
 import generateComment from '../../test-helpers/factories/comment';
 import generateDesignEvent from '../../test-helpers/factories/design-event';
@@ -199,6 +200,14 @@ test('PATCH /design-approval-steps/:stepId', async (t: Test) => {
     .resolves({
       complexity: 'BLANK'
     });
+  sandbox()
+    .stub(PricingQuotesDAO, 'findByDesignId')
+    .resolves([
+      {
+        processes: []
+      }
+    ]);
+
   const designer = await createUser();
   const admin = await createUser({ role: 'ADMIN' });
   const other = await createUser();

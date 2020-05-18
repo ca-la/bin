@@ -291,7 +291,9 @@ export async function findByDesignId(
   designId: string
 ): Promise<PricingQuote[] | null> {
   const TABLE_NAME = 'pricing_quotes';
-  const quotes: object[] = await db(TABLE_NAME).where({ design_id: designId });
+  const quotes: object[] = await db(TABLE_NAME)
+    .where({ design_id: designId })
+    .orderBy('created_at', 'DESC');
 
   if (!quotes.every(isPricingQuoteRow)) {
     return null;

@@ -30,6 +30,7 @@ export default function generateScreenPrintingProcess(
               id: uuid.v4(),
               minimum_units: units,
               name: 'SCREEN_PRINTING',
+              display_name: 'screen printing',
               setup_cents: colorCount * setup(units),
               unit_cents: base + colorCount * perHit,
               version

@@ -18,6 +18,7 @@ import * as CollectionsDAO from '../../collections/dao';
 import * as ProductDesignOptionsDAO from '../../../dao/product-design-options';
 import * as ApprovalStepsDAO from '../../approval-steps/dao';
 import * as PricingProductTypesDAO from '../../pricing-product-types/dao';
+import * as PricingQuotesDAO from '../../../dao/pricing-quotes';
 import { ApprovalStepState } from '../../approval-steps/domain-object';
 import { deleteById as deleteAnnotation } from '../../product-design-canvas-annotations/dao';
 import { create as createTask } from '../../../dao/tasks';
@@ -334,6 +335,13 @@ test('findAllDesignsThroughCollaborator returns approval steps', async (t: tape.
     .resolves({
       complexity: 'BLANK'
     });
+  sandbox()
+    .stub(PricingQuotesDAO, 'findByDesignId')
+    .resolves([
+      {
+        processes: []
+      }
+    ]);
   const { user } = await createUser();
   const { user: notUser } = await createUser();
 

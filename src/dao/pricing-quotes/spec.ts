@@ -264,6 +264,7 @@ test('PricingQuotes DAO supports finding the latest values', async (t: tape.Test
           complexity: '2_COLORS',
           minimumUnits: 1000,
           name: 'SCREEN_PRINTING',
+          displayName: 'screen printing',
           setupCents: 6000,
           unitCents: 105,
           version: 0

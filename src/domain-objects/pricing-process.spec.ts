@@ -15,7 +15,8 @@ const validRowData: PricingProcessRow = {
   name: 'string',
   setup_cents: 0,
   unit_cents: 0,
-  version: 0
+  version: 0,
+  display_name: 'string'
 };
 const invalidRowData = {
   complexity: 'string',
@@ -32,7 +33,8 @@ const equivalentUserData: PricingProcess = {
   name: 'string',
   setupCents: 0,
   unitCents: 0,
-  version: 0
+  version: 0,
+  displayName: 'string'
 };
 
 test('PricingProcess', async (t: Test): Promise<void> => {

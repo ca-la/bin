@@ -1,18 +1,6 @@
 import DataAdapter from '../services/data-adapter';
 import { hasProperties } from '../services/require-properties';
 
-/**
- * @typedef {object} PricingProcess The processing cost by complexity
- *
- * @property {string} id Primary ID
- * @property {number} version Version number for this set of margins
- * @property {string} name Name of the process
- * @property {number} minimumUnits Minimum number of units in this range
- * @property {string} complexity Complexity level
- * @property {number} setupCents Cost of setup charges
- * @property {number} unitCents Cost per unit
- * @property {Date} createdAt Date when this record was created
- */
 export default interface PricingProcess {
   id: string;
   version: number;
@@ -22,6 +10,7 @@ export default interface PricingProcess {
   setupCents: number;
   unitCents: number;
   createdAt: Date;
+  displayName: string | null;
 }
 
 export interface PricingProcessRow {
@@ -33,6 +22,7 @@ export interface PricingProcessRow {
   setup_cents: number;
   unit_cents: number;
   created_at: Date;
+  display_name: string | null;
 }
 
 function encode(row: PricingProcessRow): PricingProcess {
@@ -40,6 +30,7 @@ function encode(row: PricingProcessRow): PricingProcess {
     id: row.id,
     version: row.version,
     name: row.name,
+    displayName: row.display_name,
     minimumUnits: row.minimum_units,
     complexity: row.complexity,
     setupCents: row.setup_cents,
@@ -53,6 +44,7 @@ function decode(data: PricingProcess): PricingProcessRow {
     id: data.id,
     version: data.version,
     name: data.name,
+    display_name: data.displayName,
     minimum_units: data.minimumUnits,
     complexity: data.complexity,
     setup_cents: data.setupCents,
@@ -76,6 +68,7 @@ export function isPricingProcessRow(row: object): row is PricingProcessRow {
     'complexity',
     'setup_cents',
     'unit_cents',
-    'created_at'
+    'created_at',
+    'display_name'
   );
 }
