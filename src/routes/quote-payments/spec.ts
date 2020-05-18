@@ -194,7 +194,7 @@ test('/quote-payments POST generates quotes, payment method, invoice, lineItems,
 
     const blankApprovalSteps = await ApprovalStepsDAO.findByDesign(trx, d2.id);
     t.equals(blankApprovalSteps[0].state, ApprovalStepState.COMPLETED);
-    t.equals(blankApprovalSteps[1].state, ApprovalStepState.SKIP);
+    t.equals(blankApprovalSteps[1].state, ApprovalStepState.BLOCKED);
     t.equals(blankApprovalSteps[2].state, ApprovalStepState.BLOCKED);
     t.equals(blankApprovalSteps[3].state, ApprovalStepState.UNSTARTED);
 

@@ -52,17 +52,6 @@ const testCases: TestCase[] = [
       [ApprovalStepType.SAMPLE]: ApprovalStepState.UNSTARTED,
       [ApprovalStepType.PRODUCTION]: ApprovalStepState.UNSTARTED
     }
-  },
-  {
-    title: 'Bid with Production and Technical Design tasks with a blank',
-    taskTypeIds: [taskTypes.PRODUCTION.id, taskTypes.TECHNICAL_DESIGN.id],
-    isBlank: true,
-    stepStates: {
-      [ApprovalStepType.CHECKOUT]: ApprovalStepState.COMPLETED,
-      [ApprovalStepType.TECHNICAL_DESIGN]: ApprovalStepState.SKIP,
-      [ApprovalStepType.SAMPLE]: ApprovalStepState.CURRENT,
-      [ApprovalStepType.PRODUCTION]: ApprovalStepState.UNSTARTED
-    }
   }
 ];
 
@@ -86,16 +75,6 @@ for (const testCase of testCases) {
       designId: design.id,
       type: ApprovalStepType.CHECKOUT
     });
-    if (testCase.isBlank) {
-      const technicalDesignStep = await ApprovalStepsDAO.findOne(trx, {
-        designId: design.id,
-        type: ApprovalStepType.TECHNICAL_DESIGN
-      });
-      await ApprovalStepsDAO.update(trx, technicalDesignStep!.id, {
-        reason: null,
-        state: ApprovalStepState.SKIP
-      });
-    }
     await ApprovalStepsDAO.update(trx, checkoutStep!.id, {
       reason: null,
       state: ApprovalStepState.COMPLETED

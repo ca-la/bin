@@ -208,7 +208,7 @@ test('PATCH /design-approval-steps/:stepId', async (t: Test) => {
     const currentStepState = await ApprovalStepsDAO.findByDesign(trx, d1.id);
     await ApprovalStepsDAO.update(trx, currentStepState[1].id, {
       reason: null,
-      state: ApprovalStepState.SKIP
+      state: ApprovalStepState.UNSTARTED
     });
     await ApprovalStepsDAO.update(trx, currentStepState[2].id, {
       reason: null,
@@ -231,8 +231,9 @@ test('PATCH /design-approval-steps/:stepId', async (t: Test) => {
       d1.id
     );
     t.is(afterCompletionSteps[0].state, ApprovalStepState.COMPLETED);
-    t.is(afterCompletionSteps[1].state, ApprovalStepState.SKIP);
-    t.is(afterCompletionSteps[2].state, ApprovalStepState.CURRENT, 'isCurrent');
+    t.is(afterCompletionSteps[1].state, ApprovalStepState.CURRENT);
+    t.is(afterCompletionSteps[2].state, ApprovalStepState.UNSTARTED);
+    t.is(afterCompletionSteps[3].state, ApprovalStepState.UNSTARTED);
 
     t.true(
       afterCompletionSteps[0].completedAt,
@@ -243,7 +244,7 @@ test('PATCH /design-approval-steps/:stepId', async (t: Test) => {
       'sets started at date for completed step'
     );
     t.true(
-      afterCompletionSteps[2].startedAt,
+      afterCompletionSteps[1].startedAt,
       'sets started at date for current step'
     );
 
@@ -289,7 +290,7 @@ test('PATCH /design-approval-steps/:stepId', async (t: Test) => {
   await db.transaction(async (trx: Knex.Transaction) => {
     const afterReopenSteps = await ApprovalStepsDAO.findByDesign(trx, d1.id);
     t.is(afterReopenSteps[0].state, ApprovalStepState.CURRENT);
-    t.is(afterReopenSteps[1].state, ApprovalStepState.SKIP);
+    t.is(afterReopenSteps[1].state, ApprovalStepState.UNSTARTED);
     t.is(afterReopenSteps[2].state, ApprovalStepState.UNSTARTED);
 
     t.is(
@@ -298,7 +299,7 @@ test('PATCH /design-approval-steps/:stepId', async (t: Test) => {
       'resets completed at date for completed step'
     );
     t.is(
-      afterReopenSteps[2].startedAt,
+      afterReopenSteps[1].startedAt,
       null,
       'resets started at date for current step'
     );

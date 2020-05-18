@@ -146,7 +146,6 @@ export async function transitionCheckoutState(
         );
       }
 
-      const isBlank = productType.complexity === 'BLANK';
       const checkoutStep = steps.find(
         (step: ApprovalStep): boolean => step.type === ApprovalStepType.CHECKOUT
       );
@@ -173,13 +172,6 @@ export async function transitionCheckoutState(
         reason: null,
         state: ApprovalStepState.COMPLETED
       });
-
-      if (isBlank) {
-        await ApprovalStepsDAO.update(trx, technicalDesignStep.id, {
-          reason: null,
-          state: ApprovalStepState.SKIP
-        });
-      }
     }
   });
 }
