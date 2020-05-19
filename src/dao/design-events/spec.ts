@@ -51,6 +51,7 @@ test('Design Events DAO supports creation', async (t: Test) => {
     targetId: partner.id,
     type: 'BID_DESIGN',
     approvalSubmissionId: null,
+    taskTypeId: null,
     commentId: null
   };
   const designEvent = await db.transaction(async (trx: Knex.Transaction) =>
@@ -82,6 +83,7 @@ test('Design Events DAO supports creating multiple events at once', async (t: Te
     targetId: cala.id,
     type: 'SUBMIT_DESIGN',
     approvalSubmissionId: null,
+    taskTypeId: null,
     commentId: null
   };
   const bidEvent: DesignEvent = {
@@ -95,6 +97,7 @@ test('Design Events DAO supports creating multiple events at once', async (t: Te
     targetId: partner.id,
     type: 'BID_DESIGN',
     approvalSubmissionId: null,
+    taskTypeId: null,
     commentId: null
   };
   const acceptBidEvent: DesignEvent = {
@@ -108,6 +111,7 @@ test('Design Events DAO supports creating multiple events at once', async (t: Te
     targetId: cala.id,
     type: 'ACCEPT_SERVICE_BID',
     approvalSubmissionId: null,
+    taskTypeId: null,
     commentId: null
   };
   const created = await createAll([bidEvent, submitEvent, acceptBidEvent]);
@@ -138,6 +142,7 @@ test('Design Events DAO supports retrieval by design ID', async (t: Test) => {
     targetId: partner.id,
     type: 'BID_DESIGN',
     approvalSubmissionId: null,
+    taskTypeId: null,
     commentId: null
   };
   await db.transaction(async (trx: Knex.Transaction) => {
@@ -172,6 +177,7 @@ test('Design Events DAO supports retrieval by target ID', async (t: Test) => {
     targetId: cala.id,
     type: 'SUBMIT_DESIGN',
     approvalSubmissionId: null,
+    taskTypeId: null,
     commentId: null
   };
   const bidEvent: DesignEvent = {
@@ -185,6 +191,7 @@ test('Design Events DAO supports retrieval by target ID', async (t: Test) => {
     targetId: partner.id,
     type: 'BID_DESIGN',
     approvalSubmissionId: null,
+    taskTypeId: null,
     commentId: null
   };
   const acceptBidEvent: DesignEvent = {
@@ -198,6 +205,7 @@ test('Design Events DAO supports retrieval by target ID', async (t: Test) => {
     targetId: cala.id,
     type: 'ACCEPT_SERVICE_BID',
     approvalSubmissionId: null,
+    taskTypeId: null,
     commentId: null
   };
   await createAll([bidEvent, submitEvent, acceptBidEvent]);
@@ -232,6 +240,7 @@ test('isQuoteCommitted returns the correct value', async (t: Test) => {
     approvalStepId: null,
     type: 'SUBMIT_DESIGN',
     approvalSubmissionId: null,
+    taskTypeId: null,
     commentId: null
   };
   const bidEvent: DesignEvent = {
@@ -245,6 +254,7 @@ test('isQuoteCommitted returns the correct value', async (t: Test) => {
     approvalStepId: null,
     type: 'BID_DESIGN',
     approvalSubmissionId: null,
+    taskTypeId: null,
     commentId: null
   };
   const acceptBidEvent: DesignEvent = {
@@ -258,6 +268,7 @@ test('isQuoteCommitted returns the correct value', async (t: Test) => {
     approvalStepId: null,
     type: 'ACCEPT_SERVICE_BID',
     approvalSubmissionId: null,
+    taskTypeId: null,
     commentId: null
   };
   await createAll([bidEvent, submitEvent, acceptBidEvent]);
@@ -275,6 +286,7 @@ test('isQuoteCommitted returns the correct value', async (t: Test) => {
     approvalStepId: null,
     type: 'COMMIT_QUOTE',
     approvalSubmissionId: null,
+    taskTypeId: null,
     commentId: null
   };
   await db.transaction(async (trx: Knex.Transaction) => {
@@ -306,6 +318,7 @@ test('DesignEventsDAO.create throws if the same bid is accepted twice', async (t
     approvalStepId: null,
     type: 'SUBMIT_DESIGN',
     approvalSubmissionId: null,
+    taskTypeId: null,
     commentId: null
   };
   const bidEvent: DesignEvent = {
@@ -319,6 +332,7 @@ test('DesignEventsDAO.create throws if the same bid is accepted twice', async (t
     approvalStepId: null,
     type: 'BID_DESIGN',
     approvalSubmissionId: null,
+    taskTypeId: null,
     commentId: null
   };
   const acceptBidEvent: DesignEvent = {
@@ -332,6 +346,7 @@ test('DesignEventsDAO.create throws if the same bid is accepted twice', async (t
     approvalStepId: null,
     type: 'ACCEPT_SERVICE_BID',
     approvalSubmissionId: null,
+    taskTypeId: null,
     commentId: null
   };
   await createAll([bidEvent, submitEvent, acceptBidEvent]);
@@ -349,6 +364,7 @@ test('DesignEventsDAO.create throws if the same bid is accepted twice', async (t
         targetId: cala.id,
         approvalStepId: null,
         approvalSubmissionId: null,
+        taskTypeId: null,
         type: 'ACCEPT_SERVICE_BID'
       });
     });

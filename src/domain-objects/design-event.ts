@@ -53,6 +53,7 @@ export default interface DesignEvent {
   type: DesignEventTypes;
   approvalSubmissionId: string | null;
   commentId: string | null;
+  taskTypeId?: null;
 }
 
 export interface DesignEventRow {
