@@ -32,6 +32,10 @@ interface WithRouter {
   };
 }
 
+interface WithRouterStrict<T> {
+  params: T;
+}
+
 interface WithJsonBody<T extends object | any[]> {
   request: import("koa").Request & {
     body: T;
@@ -50,10 +54,12 @@ interface PermittedState {
 
 type AuthedContext<
   BodyT = {},
-  StateT = AuthedState
+  StateT = AuthedState,
+  Params = null
 > = import("koa").ParameterizedContext<
   AuthedState & StateT,
-  WithRouter & WithJsonBody<BodyT>
+  (Params extends null ? WithRouter : WithRouterStrict<Params>) &
+    WithJsonBody<BodyT>
 >;
 
 type PublicContext<

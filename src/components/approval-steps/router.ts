@@ -94,7 +94,9 @@ const router: CalaRouter = {
         useTransaction,
 
         function* getApprovalStepStream(
-          this: TrxContext<AuthedContext<{}, { designId: string }>>
+          this: TrxContext<
+            AuthedContext<{}, { designId: string }, { id: string }>
+          >
         ): Iterator<any, any, any> {
           const { trx } = this.state;
 
