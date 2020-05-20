@@ -30,6 +30,7 @@ const as: ApprovalStep = {
   createdAt: new Date(),
   startedAt: null,
   completedAt: null,
+  dueAt: null,
 };
 
 test("dao.updating", async (t: Test) => {

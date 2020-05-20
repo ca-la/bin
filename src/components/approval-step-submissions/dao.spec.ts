@@ -41,6 +41,7 @@ test("ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     createdAt: new Date(),
     startedAt: null,
     completedAt: null,
+    dueAt: null,
   };
   const as2: ApprovalStep = {
     state: ApprovalStepState.UNSTARTED,
@@ -54,6 +55,7 @@ test("ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     createdAt: new Date(),
     startedAt: null,
     completedAt: null,
+    dueAt: null,
   };
 
   const sub1: ApprovalStepSubmission = {

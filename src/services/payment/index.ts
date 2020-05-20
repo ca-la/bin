@@ -14,6 +14,7 @@ import spendCredit from "../../components/credits/spend-credit";
 import createPaymentMethod from "../../components/payment-methods/create-payment-method";
 import addMargin from "../../services/add-margin";
 import { PricingQuote } from "../../domain-objects/pricing-quote";
+import { setApprovalStepsDueAtByPricingQuote } from "../../components/approval-steps/service";
 import {
   CreateQuotePayload,
   generateFromPayloadAndUser as createQuotes,
@@ -90,6 +91,17 @@ const getQuoteTotal = (quotes: PricingQuote[]): number => {
     .reduce((total: number, current: number) => total + current, 0);
 };
 
+async function processQuotesAfterInvoice(
+  trx: Knex.Transaction,
+  invoiceId: string,
+  quotes: PricingQuote[]
+): Promise<void> {
+  for (const quote of quotes) {
+    await createLineItem(quote, invoiceId, trx);
+    await setApprovalStepsDueAtByPricingQuote(trx, quote);
+  }
+}
+
 /**
  * This Function enables a user to generate quotes and pay them in one step.
  * It will:
@@ -132,11 +144,7 @@ export default async function payInvoiceWithNewPaymentMethod(
       trx
     );
 
-    await Promise.all(
-      quotes.map((quote: PricingQuote) =>
-        createLineItem(quote, invoice.id, trx)
-      )
-    );
+    await processQuotesAfterInvoice(trx, invoice.id, quotes);
 
     return payInvoice(invoice.id, paymentMethod.id, userId, trx);
   });
@@ -175,11 +183,7 @@ export async function createInvoiceWithoutMethod(
 
     await spendCredit(userId, invoice, trx);
 
-    await Promise.all(
-      quotes.map((quote: PricingQuote) =>
-        createLineItem(quote, invoice.id, trx)
-      )
-    );
+    await processQuotesAfterInvoice(trx, invoice.id, quotes);
 
     const user = await UsersDAO.findById(userId);
     await SlackService.enqueueSend({
@@ -231,11 +235,7 @@ export async function payWaivedQuote(
       );
     }
 
-    Promise.all(
-      quotes.map((quote: PricingQuote) =>
-        createLineItem(quote, invoice.id, trx)
-      )
-    );
+    await processQuotesAfterInvoice(trx, invoice.id, quotes);
 
     await SlackService.enqueueSend({
       channel: "designers",

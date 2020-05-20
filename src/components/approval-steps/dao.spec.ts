@@ -35,6 +35,7 @@ test("ApprovalStepsDAO can create multiple steps and retrieve by design", async 
     createdAt: new Date(),
     startedAt: null,
     completedAt: null,
+    dueAt: null,
   };
   const as2: ApprovalStep = {
     state: ApprovalStepState.UNSTARTED,
@@ -48,6 +49,7 @@ test("ApprovalStepsDAO can create multiple steps and retrieve by design", async 
     createdAt: new Date(),
     startedAt: null,
     completedAt: null,
+    dueAt: null,
   };
   const as3: ApprovalStep = {
     state: ApprovalStepState.UNSTARTED,
@@ -61,6 +63,7 @@ test("ApprovalStepsDAO can create multiple steps and retrieve by design", async 
     createdAt: new Date(),
     startedAt: null,
     completedAt: null,
+    dueAt: null,
   };
   const as4: ApprovalStep = {
     state: ApprovalStepState.UNSTARTED,
@@ -74,6 +77,7 @@ test("ApprovalStepsDAO can create multiple steps and retrieve by design", async 
     createdAt: new Date(),
     startedAt: null,
     completedAt: null,
+    dueAt: null,
   };
 
   const created = await db.transaction((trx: Knex.Transaction) =>
@@ -106,6 +110,7 @@ test("ApprovalStepsDAO can retrieve by step id", async (t: Test) => {
     createdAt: new Date(),
     startedAt: null,
     completedAt: null,
+    dueAt: null,
   };
 
   await db.transaction((trx: Knex.Transaction) =>

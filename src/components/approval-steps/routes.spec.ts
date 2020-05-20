@@ -349,6 +349,7 @@ test("PATCH /design-approval-steps/:stepId updates assignee", async (t: Test) =>
     completedAt: null,
     startedAt: null,
     createdAt: new Date(),
+    dueAt: null,
   };
 
   await db.transaction(async (trx: Knex.Transaction) => {
@@ -451,6 +452,7 @@ test("PATCH /design-approval-steps/:stepId updates assignee", async (t: Test) =>
     createdAt: new Date(),
     completedAt: null,
     startedAt: null,
+    dueAt: null,
   };
 
   await db.transaction(async (trx: Knex.Transaction) => {

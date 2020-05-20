@@ -31,6 +31,7 @@ function encode(row: ApprovalStepRow): ApprovalStep {
         createdAt: row.created_at,
         completedAt: null,
         startedAt: null,
+        dueAt: row.due_at,
       };
 
       return step;
@@ -61,6 +62,7 @@ function encode(row: ApprovalStepRow): ApprovalStep {
         createdAt: row.created_at,
         completedAt: row.completed_at,
         startedAt: row.started_at,
+        dueAt: row.due_at,
       };
 
       return step;
@@ -86,6 +88,7 @@ function encode(row: ApprovalStepRow): ApprovalStep {
         createdAt: row.created_at,
         completedAt: null,
         startedAt: row.started_at,
+        dueAt: row.due_at,
       };
 
       return step;
@@ -108,6 +111,7 @@ function encode(row: ApprovalStepRow): ApprovalStep {
         createdAt: row.created_at,
         completedAt: null,
         startedAt: null,
+        dueAt: row.due_at,
       };
 
       return step;
@@ -129,6 +133,7 @@ function encode(row: ApprovalStepRow): ApprovalStep {
         createdAt: row.created_at,
         completedAt: null,
         startedAt: null,
+        dueAt: row.due_at,
       };
 
       return step;
@@ -155,6 +160,7 @@ function decode(step: ApprovalStep): ApprovalStepRow {
     created_at: step.createdAt,
     completed_at: step.completedAt,
     started_at: step.startedAt,
+    due_at: step.dueAt,
   };
 }
 

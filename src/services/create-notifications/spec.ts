@@ -1463,6 +1463,7 @@ test("findTaskAssets returns proper assets of approval step task", async (t: tap
     createdAt: new Date(),
     startedAt: null,
     completedAt: null,
+    dueAt: null,
   };
   await db.transaction((trx: Knex.Transaction) =>
     ApprovalStepsDAO.createAll(trx, [approvalStep])

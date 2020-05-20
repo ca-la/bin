@@ -34,6 +34,7 @@ test("GET /design-approval-step-tasks?approvalStepId returns tasks", async (t: t
     createdAt: new Date(),
     startedAt: null,
     completedAt: null,
+    dueAt: null,
   };
   await db.transaction((trx: Knex.Transaction) =>
     ApprovalStepsDAO.createAll(trx, [approvalStep])
@@ -77,6 +78,7 @@ test("POST /design-approval-step-task creates a task", async (t: tape.Test) => {
     createdAt: new Date(),
     startedAt: null,
     completedAt: null,
+    dueAt: null,
   };
   await db.transaction((trx: Knex.Transaction) =>
     ApprovalStepsDAO.createAll(trx, [approvalStep])

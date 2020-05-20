@@ -18,6 +18,7 @@ test("dataAdpater.parse", async (t: Test) => {
       created_at: now,
       started_at: null,
       completed_at: null,
+      due_at: null,
     }),
     {
       id: "s1",
@@ -31,6 +32,7 @@ test("dataAdpater.parse", async (t: Test) => {
       createdAt: now,
       startedAt: null,
       completedAt: null,
+      dueAt: null,
     },
     "parses a valid blocked row"
   );
@@ -49,6 +51,7 @@ test("dataAdpater.parse", async (t: Test) => {
         created_at: now,
         started_at: null,
         completed_at: null,
+        due_at: null,
       }),
     "throws on invalid blocked row"
   );
@@ -66,6 +69,7 @@ test("dataAdpater.parse", async (t: Test) => {
       created_at: now,
       started_at: null,
       completed_at: null,
+      due_at: null,
     }),
     {
       id: "s1",
@@ -79,6 +83,7 @@ test("dataAdpater.parse", async (t: Test) => {
       createdAt: now,
       startedAt: null,
       completedAt: null,
+      dueAt: null,
     },
     "parses a valid unstarted row"
   );
@@ -97,6 +102,7 @@ test("dataAdpater.parse", async (t: Test) => {
         created_at: now,
         started_at: null,
         completed_at: null,
+        due_at: null,
       }),
     "throws on invalid unstarted row"
   );
@@ -114,6 +120,7 @@ test("dataAdpater.parse", async (t: Test) => {
       created_at: now,
       started_at: now,
       completed_at: null,
+      due_at: null,
     }),
     {
       id: "s1",
@@ -127,6 +134,7 @@ test("dataAdpater.parse", async (t: Test) => {
       createdAt: now,
       startedAt: now,
       completedAt: null,
+      dueAt: null,
     },
     "parses a valid current row"
   );
@@ -145,6 +153,7 @@ test("dataAdpater.parse", async (t: Test) => {
         created_at: now,
         started_at: now,
         completed_at: null,
+        due_at: null,
       }),
     "throws on invalid reason current row"
   );
@@ -163,6 +172,7 @@ test("dataAdpater.parse", async (t: Test) => {
         created_at: now,
         started_at: null,
         completed_at: null,
+        due_at: null,
       }),
     "throws on invalid date current row"
   );
@@ -180,6 +190,7 @@ test("dataAdpater.parse", async (t: Test) => {
       created_at: now,
       started_at: now,
       completed_at: now,
+      due_at: now,
     }),
     {
       id: "s1",
@@ -193,6 +204,7 @@ test("dataAdpater.parse", async (t: Test) => {
       createdAt: now,
       startedAt: now,
       completedAt: now,
+      dueAt: now,
     },
     "parses a valid completed row"
   );
@@ -211,6 +223,7 @@ test("dataAdpater.parse", async (t: Test) => {
         created_at: now,
         started_at: now,
         completed_at: now,
+        due_at: now,
       }),
     "throws on invalid reason completed row"
   );
@@ -229,6 +242,7 @@ test("dataAdpater.parse", async (t: Test) => {
         created_at: now,
         started_at: now,
         completed_at: null,
+        due_at: null,
       }),
     "throws on invalid date completed row"
   );
@@ -246,6 +260,7 @@ test("dataAdpater.parse", async (t: Test) => {
       created_at: now,
       started_at: null,
       completed_at: null,
+      due_at: null,
     }),
     {
       id: "s1",
@@ -259,6 +274,7 @@ test("dataAdpater.parse", async (t: Test) => {
       createdAt: now,
       startedAt: null,
       completedAt: null,
+      dueAt: null,
     },
     "parses a valid skip row"
   );
@@ -277,6 +293,7 @@ test("dataAdpater.parse", async (t: Test) => {
         created_at: now,
         started_at: null,
         completed_at: null,
+        due_at: null,
       }),
     "throws on invalid skip row"
   );

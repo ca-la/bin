@@ -8,6 +8,7 @@ export interface BaseApprovalStep {
   createdAt: Date;
   completedAt: Date | null;
   startedAt: Date | null;
+  dueAt: Date | null;
 }
 
 export enum ApprovalStepState {
@@ -81,6 +82,7 @@ export interface ApprovalStepRow {
   created_at: Date;
   completed_at: Date | null;
   started_at: Date | null;
+  due_at: Date | null;
 }
 
 export const domain = "ApprovalStep" as "ApprovalStep";

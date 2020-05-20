@@ -25,6 +25,7 @@ export default async function createDesignApproval(
       createdAt: now,
       startedAt: now,
       completedAt: null,
+      dueAt: null,
     },
     {
       id: uuid.v4(),
@@ -38,6 +39,7 @@ export default async function createDesignApproval(
       createdAt: now,
       startedAt: null,
       completedAt: null,
+      dueAt: null,
     },
     {
       id: uuid.v4(),
@@ -51,6 +53,7 @@ export default async function createDesignApproval(
       createdAt: now,
       startedAt: null,
       completedAt: null,
+      dueAt: null,
     },
     {
       id: uuid.v4(),
@@ -64,6 +67,7 @@ export default async function createDesignApproval(
       createdAt: now,
       startedAt: null,
       completedAt: null,
+      dueAt: null,
     },
   ];
 
