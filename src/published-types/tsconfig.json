@@ -6,7 +6,7 @@
   "exclude": [],
   "compilerOptions": {
     "esModuleInterop": false,
-    "module": "ESNext",
+    "module": "commonjs",
     "allowJs": false,
     "outDir": "../../published-types-dist",
     "declaration": true,
