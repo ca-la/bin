@@ -1,4 +1,4 @@
-import Knex from 'knex';
+import Knex from "knex";
 
 export const ANNOTATION_COMMENTS_VIEW_UP = `
 CREATE VIEW annotation_comments_view AS

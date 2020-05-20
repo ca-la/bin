@@ -1,14 +1,14 @@
-import DataAdapter from '../../services/data-adapter';
-import { hasProperties } from '../../services/require-properties';
+import DataAdapter from "../../services/data-adapter";
+import { hasProperties } from "../../services/require-properties";
 import DesignEvent, {
   dataAdapter as eventDataAdapter,
-  DesignEventRow
-} from '../../domain-objects/design-event';
+  DesignEventRow,
+} from "../../domain-objects/design-event";
 import {
   dataAdapter as logDataAdapter,
   PartnerPayoutLog,
-  PartnerPayoutLogRow
-} from '../partner-payouts/domain-object';
+  PartnerPayoutLogRow,
+} from "../partner-payouts/domain-object";
 /**
  * A pricing bid for matching partners to a set of services on a design
  */
@@ -26,7 +26,7 @@ export default interface Bid {
   description?: string;
 }
 
-export type BidCreationPayload = Omit<Bid, 'createdAt'> & {
+export type BidCreationPayload = Omit<Bid, "createdAt"> & {
   acceptedAt: null;
   dueDate: Date;
   taskTypeIds: string[];
@@ -55,7 +55,7 @@ export const encode = (row: BidRow): Bid => ({
   quoteId: row.quote_id,
   bidPriceCents: row.bid_price_cents,
   bidPriceProductionOnlyCents: row.bid_price_production_only_cents,
-  description: row.description
+  description: row.description,
 });
 
 export const decode = (data: Bid): BidRow => ({
@@ -71,7 +71,7 @@ export const decode = (data: Bid): BidRow => ({
     data.bidPriceProductionOnlyCents !== undefined
       ? data.bidPriceProductionOnlyCents
       : 0,
-  description: data.description
+  description: data.description,
 });
 
 export const dataAdapter = new DataAdapter<BidRow, Bid>(encode, decode);
@@ -79,32 +79,32 @@ export const dataAdapter = new DataAdapter<BidRow, Bid>(encode, decode);
 export function isBid(row: object): row is Bid {
   return hasProperties(
     row,
-    'id',
-    'acceptedAt',
-    'createdAt',
-    'createdBy',
-    'completedAt',
-    'dueDate',
-    'quoteId',
-    'bidPriceCents',
-    'bidPriceProductionOnlyCents',
-    'description'
+    "id",
+    "acceptedAt",
+    "createdAt",
+    "createdBy",
+    "completedAt",
+    "dueDate",
+    "quoteId",
+    "bidPriceCents",
+    "bidPriceProductionOnlyCents",
+    "description"
   );
 }
 
 export function isBidRow(row: object): row is BidRow {
   return hasProperties(
     row,
-    'id',
-    'accepted_at',
-    'created_at',
-    'created_by',
-    'completed_at',
-    'due_date',
-    'quote_id',
-    'bid_price_cents',
-    'bid_price_production_only_cents',
-    'description'
+    "id",
+    "accepted_at",
+    "created_at",
+    "created_by",
+    "completed_at",
+    "due_date",
+    "quote_id",
+    "bid_price_cents",
+    "bid_price_production_only_cents",
+    "description"
   );
 }
 
@@ -126,11 +126,11 @@ function withEventEncode(row: BidWithEventsRow): BidWithEvents {
           (event: DesignEventRow): DesignEvent => {
             return {
               ...eventDataAdapter.parse.apply(eventDataAdapter, [event]),
-              createdAt: new Date(event.created_at)
+              createdAt: new Date(event.created_at),
             };
           }
         )
-      : []
+      : [],
   };
 }
 
@@ -140,15 +140,15 @@ export const bidWithEventsDataAdapter = new DataAdapter<
 >(withEventEncode);
 
 export function isBidWithEventsRow(row: object): row is BidWithEventsRow {
-  return isBidRow(row) && hasProperties(row, 'design_events');
+  return isBidRow(row) && hasProperties(row, "design_events");
 }
 
-export type BidSortByParam = 'ACCEPTED' | 'DUE';
+export type BidSortByParam = "ACCEPTED" | "DUE";
 
 export function isBidSortByParam(
   candidate: string | undefined
 ): candidate is BidSortByParam {
-  return candidate === 'ACCEPTED' || candidate === 'DUE';
+  return candidate === "ACCEPTED" || candidate === "DUE";
 }
 
 export interface BidWithPayoutLogsRow extends BidRow {
@@ -164,7 +164,7 @@ export interface BidWithPayoutLogs extends Bid {
 export function isBidWithPaymentLogsRow(
   row: object
 ): row is BidWithPayoutLogsRow {
-  return isBidRow(row) && hasProperties(row, 'partner_payout_logs');
+  return isBidRow(row) && hasProperties(row, "partner_payout_logs");
 }
 
 function withPayoutLogsEncode(row: BidWithPayoutLogsRow): BidWithPayoutLogs {
@@ -178,7 +178,7 @@ function withPayoutLogsEncode(row: BidWithPayoutLogsRow): BidWithPayoutLogs {
             return logDataAdapter.parse(log);
           }
         )
-      : []
+      : [],
   };
 }
 
@@ -189,12 +189,12 @@ export const bidWithPayoutLogsDataAdapter = new DataAdapter<
 
 export function isUninsertedPartnerPayoutLog(
   data: object
-): data is Omit<UninsertedWithoutShortId<PartnerPayoutLog>, 'initiatorUserId'> {
+): data is Omit<UninsertedWithoutShortId<PartnerPayoutLog>, "initiatorUserId"> {
   return hasProperties(
     data,
-    'payoutAmountCents',
-    'message',
-    'isManual',
-    'bidId'
+    "payoutAmountCents",
+    "message",
+    "isManual",
+    "bidId"
   );
 }

@@ -1,19 +1,19 @@
-import { omit } from 'lodash';
-import uuid = require('node-uuid');
-import { TaskEvent, TaskStatus } from '@cala/ts-lib';
+import { omit } from "lodash";
+import uuid = require("node-uuid");
+import { TaskEvent, TaskStatus } from "@cala/ts-lib";
 
-import DataAdapter from '../services/data-adapter';
-import { hasOnlyProperties } from '../services/require-properties';
+import DataAdapter from "../services/data-adapter";
+import { hasOnlyProperties } from "../services/require-properties";
 import {
   generatePreviewLinks,
   generateThumbnailLinks,
-  ThumbnailAndPreviewLinks
-} from '../services/attach-asset-links';
+  ThumbnailAndPreviewLinks,
+} from "../services/attach-asset-links";
 import Collaborator, {
   CollaboratorWithUser,
   CollaboratorWithUserRow,
-  encode as encodeCollaborator
-} from '../components/collaborators/domain-objects/collaborator';
+  encode as encodeCollaborator,
+} from "../components/collaborators/domain-objects/collaborator";
 
 export interface RelatedResourceMeta {
   id: string | null;
@@ -30,7 +30,7 @@ export interface OrderedResourceMeta extends RelatedResourceMeta {
   ordering: number | null;
 }
 
-export interface DetailsTaskAdaptedRow extends Omit<TaskEvent, 'taskId'> {
+export interface DetailsTaskAdaptedRow extends Omit<TaskEvent, "taskId"> {
   designStageOrdering: number | null;
   designStageTitle: string | null;
   designId: string | null;
@@ -71,7 +71,7 @@ export const createDetailsTask = (
     collection: {
       createdAt: collectionCreatedAt ? new Date(collectionCreatedAt) : null,
       id: collectionId,
-      title: collectionTitle
+      title: collectionTitle,
     },
     commentCount: parseInt(commentCount.toString(), 10),
     design: {
@@ -79,19 +79,19 @@ export const createDetailsTask = (
       id: designId,
       previewImageUrls: imageIds ? generateThumbnailLinks(imageIds) : null,
       imageLinks: imageIds ? generatePreviewLinks(imageIds) : null,
-      title: designTitle
+      title: designTitle,
     },
     designStage: {
       createdAt: null,
       id: designStageId,
       ordering: designStageOrdering,
-      title: designStageTitle
+      title: designStageTitle,
     },
-    designStageId
+    designStageId,
   };
 };
 
-export interface DetailsTask extends Omit<TaskEvent, 'taskId'> {
+export interface DetailsTask extends Omit<TaskEvent, "taskId"> {
   designStage: OrderedResourceMeta;
   design: DesignResourceMeta;
   collection: RelatedResourceMeta;
@@ -120,30 +120,30 @@ export const dataAdapter = new DataAdapter<TaskEventRow, TaskEvent>();
 export function isTaskEvent(candidate: object): candidate is TaskEvent {
   return hasOnlyProperties(
     candidate,
-    'id',
-    'taskId',
-    'createdAt',
-    'createdBy',
-    'title',
-    'status',
-    'dueDate',
-    'description',
-    'ordering'
+    "id",
+    "taskId",
+    "createdAt",
+    "createdBy",
+    "title",
+    "status",
+    "dueDate",
+    "description",
+    "ordering"
   );
 }
 
 export function isTaskEventRow(row: object): row is TaskEventRow {
   return hasOnlyProperties(
     row,
-    'id',
-    'task_id',
-    'created_at',
-    'created_by',
-    'title',
-    'status',
-    'due_date',
-    'description',
-    'ordering'
+    "id",
+    "task_id",
+    "created_at",
+    "created_by",
+    "title",
+    "status",
+    "due_date",
+    "description",
+    "ordering"
   );
 }
 
@@ -171,24 +171,24 @@ export function isDetailTaskRow(
 ): candidate is DetailTaskEventRow {
   return hasOnlyProperties(
     candidate,
-    'id',
-    'created_at',
-    'last_modified_at',
-    'created_by',
-    'title',
-    'status',
-    'due_date',
-    'description',
-    'design_stage_id',
-    'design_stage_ordering',
-    'design_stage_title',
-    'design_id',
-    'design_title',
-    'collection_id',
-    'collection_title',
-    'comment_count',
-    'image_ids',
-    'ordering'
+    "id",
+    "created_at",
+    "last_modified_at",
+    "created_by",
+    "title",
+    "status",
+    "due_date",
+    "description",
+    "design_stage_id",
+    "design_stage_ordering",
+    "design_stage_title",
+    "design_id",
+    "design_title",
+    "collection_id",
+    "collection_title",
+    "comment_count",
+    "image_ids",
+    "ordering"
   );
 }
 
@@ -202,27 +202,27 @@ export function isDetailTaskWithAssigneeRow(
 ): candidate is DetailTaskWithAssigneesEventRow {
   return hasOnlyProperties(
     candidate,
-    'assignees',
-    'id',
-    'created_at',
-    'last_modified_at',
-    'created_by',
-    'title',
-    'status',
-    'due_date',
-    'description',
-    'design_stage_id',
-    'design_stage_ordering',
-    'design_stage_title',
-    'design_id',
-    'design_title',
-    'design_created_at',
-    'collection_id',
-    'collection_title',
-    'collection_created_at',
-    'comment_count',
-    'image_ids',
-    'ordering'
+    "assignees",
+    "id",
+    "created_at",
+    "last_modified_at",
+    "created_by",
+    "title",
+    "status",
+    "due_date",
+    "description",
+    "design_stage_id",
+    "design_stage_ordering",
+    "design_stage_title",
+    "design_id",
+    "design_title",
+    "design_created_at",
+    "collection_id",
+    "collection_title",
+    "collection_created_at",
+    "comment_count",
+    "image_ids",
+    "ordering"
   );
 }
 
@@ -255,7 +255,7 @@ const encode = (
     imageIds: data.image_ids,
     ordering: data.ordering,
     status: data.status,
-    title: data.title
+    title: data.title,
   };
 };
 
@@ -272,19 +272,19 @@ export type IOTask = DetailsTask & {
 export const taskEventFromIO = (request: IOTask, userId: string): TaskEvent => {
   const filteredRequest: TaskEvent = omit(
     { ...request, taskId: request.id },
-    'assignees',
-    'design',
-    'designStage',
-    'approvalStepId',
-    'collection',
-    'commentCount',
-    'lastModifiedAt'
+    "assignees",
+    "design",
+    "designStage",
+    "approvalStepId",
+    "collection",
+    "commentCount",
+    "lastModifiedAt"
   );
   return {
     ...filteredRequest,
     createdAt: new Date(),
     createdBy: userId,
     id: uuid.v4(),
-    status: request.status || TaskStatus.NOT_STARTED
+    status: request.status || TaskStatus.NOT_STARTED,
   };
 };

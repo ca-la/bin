@@ -1,5 +1,5 @@
-import DataAdapter from '../services/data-adapter';
-import { hasProperties } from '../services/require-properties';
+import DataAdapter from "../services/data-adapter";
+import { hasProperties } from "../services/require-properties";
 
 export default interface PricingProcess {
   id: string;
@@ -35,7 +35,7 @@ function encode(row: PricingProcessRow): PricingProcess {
     complexity: row.complexity,
     setupCents: row.setup_cents,
     unitCents: row.unit_cents,
-    createdAt: row.created_at
+    createdAt: row.created_at,
   };
 }
 
@@ -49,7 +49,7 @@ function decode(data: PricingProcess): PricingProcessRow {
     complexity: data.complexity,
     setup_cents: data.setupCents,
     unit_cents: data.unitCents,
-    created_at: data.createdAt
+    created_at: data.createdAt,
   };
 }
 
@@ -61,14 +61,14 @@ export const dataAdapter = new DataAdapter<PricingProcessRow, PricingProcess>(
 export function isPricingProcessRow(row: object): row is PricingProcessRow {
   return hasProperties(
     row,
-    'id',
-    'version',
-    'name',
-    'minimum_units',
-    'complexity',
-    'setup_cents',
-    'unit_cents',
-    'created_at',
-    'display_name'
+    "id",
+    "version",
+    "name",
+    "minimum_units",
+    "complexity",
+    "setup_cents",
+    "unit_cents",
+    "created_at",
+    "display_name"
   );
 }

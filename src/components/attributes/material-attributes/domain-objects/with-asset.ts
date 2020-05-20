@@ -1,17 +1,17 @@
-import DataAdapter from '../../../../services/data-adapter';
-import { hasProperties } from '@cala/ts-lib';
+import DataAdapter from "../../../../services/data-adapter";
+import { hasProperties } from "@cala/ts-lib";
 import Asset, {
   AssetRow,
   toData as encodeAsset,
-  toInsertion as decodeAsset
-} from '../../../assets/domain-object';
+  toInsertion as decodeAsset,
+} from "../../../assets/domain-object";
 import MaterialAttribute, {
   decode as decodeMaterial,
   encode as encodeMaterial,
   isMaterialAttribute,
   isMaterialAttributeRow,
-  MaterialAttributeRow
-} from './index';
+  MaterialAttributeRow,
+} from "./index";
 
 export default interface MaterialAttributeWithAsset extends MaterialAttribute {
   asset: Asset;
@@ -28,7 +28,7 @@ function encode(
 
   return {
     ...encodeMaterial(artwork),
-    asset: encodeAsset(asset)
+    asset: encodeAsset(asset),
   };
 }
 
@@ -39,7 +39,7 @@ function decode(
 
   return {
     ...decodeMaterial(artwork),
-    asset: decodeAsset(asset)
+    asset: decodeAsset(asset),
   };
 }
 
@@ -51,11 +51,11 @@ export const dataAdapter = new DataAdapter<
 export function isMaterialAttributeWithAsset(
   obj: object
 ): obj is MaterialAttributeWithAsset {
-  return isMaterialAttribute(obj) && hasProperties(obj, 'asset');
+  return isMaterialAttribute(obj) && hasProperties(obj, "asset");
 }
 
 export function isMaterialAttributeWithAssetRow(
   row: object
 ): row is MaterialAttributeWithAssetRow {
-  return isMaterialAttributeRow(row) && hasProperties(row, 'asset');
+  return isMaterialAttributeRow(row) && hasProperties(row, "asset");
 }

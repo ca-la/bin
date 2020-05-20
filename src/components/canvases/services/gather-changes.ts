@@ -1,4 +1,4 @@
-import { getCreatorMetadata } from '../dao';
+import { getCreatorMetadata } from "../dao";
 
 interface ChangeLog {
   statement: string;
@@ -18,7 +18,7 @@ export async function gatherChanges(canvasId: string): Promise<ChangeLog[]> {
   if (created) {
     changes.push({
       statement: `Created by ${created.createdByName}`,
-      timestamp: created.createdAt
+      timestamp: created.createdAt,
     });
   }
 

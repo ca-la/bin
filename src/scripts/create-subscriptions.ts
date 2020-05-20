@@ -1,16 +1,16 @@
-import * as Knex from 'knex';
-import fs from 'fs';
-import parse from 'csv-parse/lib/sync';
-import uuid from 'node-uuid';
+import * as Knex from "knex";
+import fs from "fs";
+import parse from "csv-parse/lib/sync";
+import uuid from "node-uuid";
 
-import { create as createSubscription } from '../components/subscriptions/dao';
-import { findByEmail } from '../components/users/dao';
-import db from '../services/db';
-import { log, logClientError } from '../services/logger';
+import { create as createSubscription } from "../components/subscriptions/dao";
+import { findByEmail } from "../components/users/dao";
+import db from "../services/db";
+import { log, logClientError } from "../services/logger";
 
 function fail(msg: string): never {
   logClientError(msg);
-  logClientError('All operations will be rolled back.');
+  logClientError("All operations will be rolled back.");
   process.exit(1);
 }
 
@@ -19,11 +19,11 @@ async function run(args: string[]): Promise<void> {
   const csvPath = args[3];
 
   if (!planId || !csvPath) {
-    fail('Usage: create-subscriptions.ts [plan ID] [path to CSV]');
+    fail("Usage: create-subscriptions.ts [plan ID] [path to CSV]");
   }
 
   if (!fs.existsSync(csvPath)) {
-    fail('CSV file not found');
+    fail("CSV file not found");
   }
 
   const csvText = fs.readFileSync(csvPath).toString();
@@ -34,9 +34,9 @@ async function run(args: string[]): Promise<void> {
   await db.transaction(async (trx: Knex.Transaction) => {
     for (const row of rows) {
       const [email] = row;
-      if (typeof email !== 'string') {
+      if (typeof email !== "string") {
         fail(
-          'Potentially malformed CSV. Expecting a single column with no header, containing only email addresses'
+          "Potentially malformed CSV. Expecting a single column with no header, containing only email addresses"
         );
       }
 
@@ -57,7 +57,7 @@ async function run(args: string[]): Promise<void> {
           paymentMethodId: null,
           stripeSubscriptionId: null,
           userId: user.id,
-          isPaymentWaived: true
+          isPaymentWaived: true,
         },
         trx
       );

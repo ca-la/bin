@@ -1,6 +1,6 @@
-import DataAdapter from '../../services/data-adapter';
-import { hasProperties } from '../../services/require-properties';
-import { ComponentType } from '../components/domain-object';
+import DataAdapter from "../../services/data-adapter";
+import { hasProperties } from "../../services/require-properties";
+import { ComponentType } from "../components/domain-object";
 
 /**
  * A way in which two components can be connected.
@@ -30,12 +30,12 @@ export const dataAdapter = new DataAdapter<ProcessRow, Process>();
 export function isProcessRow(row: object): row is ProcessRow {
   return hasProperties(
     row,
-    'component_type',
-    'created_at',
-    'created_by',
-    'deleted_at',
-    'id',
-    'name',
-    'ordering'
+    "component_type",
+    "created_at",
+    "created_by",
+    "deleted_at",
+    "id",
+    "name",
+    "ordering"
   );
 }

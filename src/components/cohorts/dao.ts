@@ -1,16 +1,16 @@
-import uuid from 'node-uuid';
-import Knex from 'knex';
+import uuid from "node-uuid";
+import Knex from "knex";
 
-import db from '../../services/db';
+import db from "../../services/db";
 import Cohort, {
   CohortRow,
   dataAdapter as cohortDataAdapter,
-  isCohortRow
-} from './domain-object';
-import first from '../../services/first';
-import { validate } from '../../services/validate-from-db';
+  isCohortRow,
+} from "./domain-object";
+import first from "../../services/first";
+import { validate } from "../../services/validate-from-db";
 
-const TABLE_NAME = 'cohorts';
+const TABLE_NAME = "cohorts";
 
 export async function create(
   data: MaybeUnsaved<Cohort>,
@@ -18,10 +18,10 @@ export async function create(
 ): Promise<Cohort> {
   const rowData = cohortDataAdapter.forInsertion({
     id: uuid.v4(),
-    ...data
+    ...data,
   });
   const created = await db(TABLE_NAME)
-    .insert(rowData, '*')
+    .insert(rowData, "*")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
@@ -30,7 +30,7 @@ export async function create(
     .then((rows: object[]) => first(rows));
 
   if (!created) {
-    throw new Error('Failed to create cohort!');
+    throw new Error("Failed to create cohort!");
   }
 
   return validate<CohortRow, Cohort>(
@@ -46,7 +46,7 @@ export async function findById(
   trx?: Knex.Transaction
 ): Promise<Cohort | null> {
   const cohort = await db(TABLE_NAME)
-    .select('*')
+    .select("*")
     .where({ id })
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
@@ -68,7 +68,7 @@ export async function findBySlug(
   trx?: Knex.Transaction
 ): Promise<Cohort | null> {
   const cohort = await db(TABLE_NAME)
-    .select('*')
+    .select("*")
     .where({ slug })
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {

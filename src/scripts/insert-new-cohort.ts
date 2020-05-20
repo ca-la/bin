@@ -1,23 +1,21 @@
-import process from 'process';
-import uuid from 'node-uuid';
-import { CALA_OPS_USER_ID } from '../config';
-import { log, logServerError } from '../services/logger';
-import { green, reset } from '../services/colors';
+import process from "process";
+import uuid from "node-uuid";
+import { CALA_OPS_USER_ID } from "../config";
+import { log, logServerError } from "../services/logger";
+import { green, reset } from "../services/colors";
 
-import Cohort from '../components/cohorts/domain-object';
-import * as CohortsDAO from '../components/cohorts/dao';
+import Cohort from "../components/cohorts/domain-object";
+import * as CohortsDAO from "../components/cohorts/dao";
 
 insertNewCohort()
   .then(() => {
     log(`${green}Successfully inserted!`);
     process.exit();
   })
-  .catch(
-    (err: any): void => {
-      logServerError(err);
-      process.exit(1);
-    }
-  );
+  .catch((err: any): void => {
+    logServerError(err);
+    process.exit(1);
+  });
 
 async function insertNewCohort(): Promise<void> {
   const description = process.argv[2];
@@ -25,7 +23,7 @@ async function insertNewCohort(): Promise<void> {
   const title = process.argv[4];
 
   if (!description || !slug || !title) {
-    throw new Error('Usage: insert-new-cohort.ts [description] [slug] [title]');
+    throw new Error("Usage: insert-new-cohort.ts [description] [slug] [title]");
   }
 
   const newCohort: Cohort = {
@@ -34,7 +32,7 @@ async function insertNewCohort(): Promise<void> {
     description,
     id: uuid.v4(),
     slug,
-    title
+    title,
   };
   const inserted = await CohortsDAO.create(newCohort);
 

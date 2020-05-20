@@ -1,4 +1,4 @@
-import * as Knex from 'knex';
+import * as Knex from "knex";
 
 export interface EventBase {
   type: string;
@@ -7,26 +7,26 @@ export interface EventBase {
 }
 
 export interface DaoUpdating<Model, domain extends string> extends EventBase {
-  type: 'dao.updating';
+  type: "dao.updating";
   domain: domain;
   before: Model;
   patch: Partial<Model>;
 }
 export interface DaoUpdated<Model, domain extends string> extends EventBase {
-  type: 'dao.updated';
+  type: "dao.updated";
   domain: domain;
   before: Model;
   updated: Model;
 }
 
 export interface DaoCreated<Model, domain extends string> extends EventBase {
-  type: 'dao.created';
+  type: "dao.created";
   domain: domain;
   created: Model;
 }
 
 export interface RouteUpdated<Model, domain extends string> extends EventBase {
-  type: 'route.updated';
+  type: "route.updated";
   domain: domain;
   actorId: string;
   before: Model;

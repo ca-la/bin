@@ -1,7 +1,7 @@
-import Koa from 'koa';
+import Koa from "koa";
 
-import { getDesignPermissions } from '../../services/get-permissions';
-import { findDesignByAnnotationId } from '../../components/product-designs/dao/dao';
+import { getDesignPermissions } from "../../services/get-permissions";
+import { findDesignByAnnotationId } from "../../components/product-designs/dao/dao";
 
 /**
  * Determines whether or not the current user has access to the supplied annotation.
@@ -14,16 +14,16 @@ export function* canAccessAnnotationInParams(
   const { annotationId } = this.params;
 
   if (!annotationId) {
-    this.throw(400, 'Must provide an annotationId in the query parameters.');
+    this.throw(400, "Must provide an annotationId in the query parameters.");
   }
   const design = yield findDesignByAnnotationId(annotationId);
   if (!design) {
-    this.throw(404, 'Design cannot be found.');
+    this.throw(404, "Design cannot be found.");
   }
   this.state.permissions = yield getDesignPermissions({
     designId: design.id,
     sessionRole: role,
-    sessionUserId: userId
+    sessionUserId: userId,
   });
   const { permissions } = this.state;
 

@@ -1,9 +1,9 @@
-'use strict';
+"use strict";
 
-const test = require('tape');
+const test = require("tape");
 
 // eslint-disable-next-line import/no-unresolved
-const app = require('../index').default;
+const app = require("../index").default;
 
 const port = process.env.TEST_PORT || 9001;
 
@@ -17,5 +17,5 @@ test.onFinish(() => {
 });
 
 module.exports = {
-  baseUrl: `http://localhost:${port}`
+  baseUrl: `http://localhost:${port}`,
 };

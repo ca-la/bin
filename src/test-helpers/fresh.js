@@ -1,53 +1,53 @@
-'use strict';
+"use strict";
 
-const tape = require('tape');
-const sinon = require('sinon');
+const tape = require("tape");
+const sinon = require("sinon");
 
-const db = require('../services/db');
+const db = require("../services/db");
 
 const TABLES = [
-  'addresses',
-  'approved_signups',
-  'bid_task_types',
-  'cohort_users',
-  'cohorts',
-  'collaborators',
-  'design_approval_steps',
-  'design_approval_step_comments',
-  'design_approval_step_tasks',
-  'design_approval_submissions',
-  'design_events',
-  'invoice_payments',
-  'invoices',
-  'plans',
-  'pricing_care_labels',
-  'pricing_constants',
-  'pricing_cost_input_processes',
-  'pricing_cost_inputs',
-  'pricing_inputs',
-  'pricing_margins',
-  'pricing_process_timelines',
-  'pricing_processes',
-  'pricing_product_materials',
-  'pricing_product_types',
-  'pricing_quotes',
-  'product_designs',
-  'product_type_stages',
-  'pushtokens',
-  'scanphotos',
-  'scans',
-  'sessions',
-  'stage_templates',
-  'storefronts',
-  'storefront_users',
-  'storefront_integration_tokens',
-  'subscriptions',
-  'task_events',
-  'task_templates',
-  'tasks',
-  'templates',
-  'unassigned_referral_codes',
-  'users'
+  "addresses",
+  "approved_signups",
+  "bid_task_types",
+  "cohort_users",
+  "cohorts",
+  "collaborators",
+  "design_approval_steps",
+  "design_approval_step_comments",
+  "design_approval_step_tasks",
+  "design_approval_submissions",
+  "design_events",
+  "invoice_payments",
+  "invoices",
+  "plans",
+  "pricing_care_labels",
+  "pricing_constants",
+  "pricing_cost_input_processes",
+  "pricing_cost_inputs",
+  "pricing_inputs",
+  "pricing_margins",
+  "pricing_process_timelines",
+  "pricing_processes",
+  "pricing_product_materials",
+  "pricing_product_types",
+  "pricing_quotes",
+  "product_designs",
+  "product_type_stages",
+  "pushtokens",
+  "scanphotos",
+  "scans",
+  "sessions",
+  "stage_templates",
+  "storefronts",
+  "storefront_users",
+  "storefront_integration_tokens",
+  "subscriptions",
+  "task_events",
+  "task_templates",
+  "tasks",
+  "templates",
+  "unassigned_referral_codes",
+  "users",
 ];
 
 let currentSandbox;
@@ -61,8 +61,8 @@ function afterEach() {
 
   // Very naive 'wipe the database' query.
   // Should be expanded to reset sequences, be more efficient, &etc.
-  const query = TABLES.map(table => `truncate table ${table} cascade;`).join(
-    '\n'
+  const query = TABLES.map((table) => `truncate table ${table} cascade;`).join(
+    "\n"
   );
 
   return db.raw(query);
@@ -74,7 +74,7 @@ tape.onFinish(() => {
 
 // Run a test in a 'fresh' environment; clear DB and any stubs
 function freshTest(description, fn, setup = () => {}, teardown = () => {}) {
-  tape(description, async t => {
+  tape(description, async (t) => {
     const { end } = t;
 
     // Tests should not be able to end themselves early. Using `plan` has the
@@ -135,5 +135,5 @@ module.exports = {
     return currentSandbox;
   },
   test: freshTest,
-  skip
+  skip,
 };

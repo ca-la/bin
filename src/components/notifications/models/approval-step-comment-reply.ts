@@ -2,17 +2,17 @@ import {
   BaseFullNotification,
   BaseFullNotificationRow,
   BaseNotification,
-  BaseNotificationRow
-} from './base';
-import { NotificationType } from '../domain-object';
+  BaseNotificationRow,
+} from "./base";
+import { NotificationType } from "../domain-object";
 
 type BaseRow = Omit<
   BaseNotificationRow,
-  | 'collection_id'
-  | 'design_id'
-  | 'approval_step_id'
-  | 'comment_id'
-  | 'recipient_user_id'
+  | "collection_id"
+  | "design_id"
+  | "approval_step_id"
+  | "comment_id"
+  | "recipient_user_id"
 >;
 
 export interface ApprovalStepCommentReplyNotificationRow extends BaseRow {
@@ -26,7 +26,7 @@ export interface ApprovalStepCommentReplyNotificationRow extends BaseRow {
 
 type BaseFullRow = Omit<
   BaseFullNotificationRow & ApprovalStepCommentReplyNotificationRow,
-  'collection_title' | 'comment_text' | 'design_title' | 'approval_step_title'
+  "collection_title" | "comment_text" | "design_title" | "approval_step_title"
 >;
 
 export interface FullApprovalStepCommentReplyNotificationRow
@@ -39,11 +39,11 @@ export interface FullApprovalStepCommentReplyNotificationRow
 
 type Base = Omit<
   BaseNotification,
-  | 'collectionId'
-  | 'designId'
-  | 'approvalStepId'
-  | 'commentId'
-  | 'recipientUserId'
+  | "collectionId"
+  | "designId"
+  | "approvalStepId"
+  | "commentId"
+  | "recipientUserId"
 >;
 
 export interface ApprovalStepCommentReplyNotification extends Base {
@@ -57,7 +57,7 @@ export interface ApprovalStepCommentReplyNotification extends Base {
 
 type BaseFull = Omit<
   BaseFullNotification & ApprovalStepCommentReplyNotification,
-  'collectionTitle' | 'commentText' | 'designTitle' | 'approvalStepTitle'
+  "collectionTitle" | "commentText" | "designTitle" | "approvalStepTitle"
 >;
 
 export interface FullApprovalStepCommentReplyNotification extends BaseFull {

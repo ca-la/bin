@@ -8,7 +8,7 @@ interface JsonObject {
 
 function getFlattenedKeys(
   obj: JsonObject,
-  prefix: string = '',
+  prefix: string = "",
   depth: number = 0
 ): FlattenedKeys {
   const res: FlattenedKeys = {};
@@ -22,15 +22,15 @@ function getFlattenedKeys(
 
     if (
       value === null ||
-      typeof value === 'string' ||
-      typeof value === 'number' ||
-      typeof value === 'boolean'
+      typeof value === "string" ||
+      typeof value === "number" ||
+      typeof value === "boolean"
     ) {
       res[newPrefix] = encodeURIComponent(value);
       return;
     }
 
-    if (typeof value === 'object') {
+    if (typeof value === "object") {
       Object.assign(res, getFlattenedKeys(value, newPrefix, depth + 1));
       return;
     }
@@ -51,5 +51,5 @@ export default function serializeRequestBody(body: JsonObject): string {
     .map((key: string) => {
       return `${key}=${flattenedKeys[key]}`;
     })
-    .join('&');
+    .join("&");
 }

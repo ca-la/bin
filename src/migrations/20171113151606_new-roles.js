@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 // This is far too complicated for its own good.
 //

@@ -1,9 +1,9 @@
-import ComponentRelationship from '../../components/component-relationships/domain-object';
-import * as RelationshipsDAO from '../../components/component-relationships/dao';
-import { attachDesignPermissions } from '../can-access-design';
-import { findRoot } from '../../components/components/dao';
-import { findByComponentId } from '../../components/canvases/dao';
-import Canvas from '../../components/canvases/domain-object';
+import ComponentRelationship from "../../components/component-relationships/domain-object";
+import * as RelationshipsDAO from "../../components/component-relationships/dao";
+import { attachDesignPermissions } from "../can-access-design";
+import { findRoot } from "../../components/components/dao";
+import { findByComponentId } from "../../components/canvases/dao";
+import Canvas from "../../components/canvases/domain-object";
 
 interface RelationshipCanvases {
   sourceCanvas: Canvas;
@@ -36,7 +36,7 @@ export function* canViewComponentInQueryParam(
   const { componentId } = this.query;
 
   if (!componentId) {
-    this.throw(400, 'Must provide a componentId in the query parameters!');
+    this.throw(400, "Must provide a componentId in the query parameters!");
   }
 
   const componentRoot = yield findRoot.call(this, componentId);

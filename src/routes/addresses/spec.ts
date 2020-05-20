@@ -1,5 +1,5 @@
-import { test, Test } from '../../test-helpers/fresh';
-import createUser from '../../test-helpers/create-user';
+import { test, Test } from "../../test-helpers/fresh";
+import createUser from "../../test-helpers/create-user";
 
 import {
   authHeader,
@@ -7,28 +7,28 @@ import {
   get,
   patch,
   post,
-  put
-} from '../../test-helpers/http';
+  put,
+} from "../../test-helpers/http";
 
-test('GET /addresses returns a 401 when called without auth', async (t: Test) => {
-  const [response, body] = await get('/addresses');
+test("GET /addresses returns a 401 when called without auth", async (t: Test) => {
+  const [response, body] = await get("/addresses");
   t.equal(response.status, 401);
-  t.equal(body.message, 'Authorization is required to access this resource');
+  t.equal(body.message, "Authorization is required to access this resource");
 });
 
-test('GET /addresses returns a 403 when called with someone elses user ID', async (t: Test) => {
+test("GET /addresses returns a 403 when called with someone elses user ID", async (t: Test) => {
   const { session } = await createUser();
-  const [response, body] = await get('/addresses?userId=123', {
-    headers: authHeader(session.id)
+  const [response, body] = await get("/addresses?userId=123", {
+    headers: authHeader(session.id),
   });
   t.equal(response.status, 403);
-  t.equal(body.message, 'You can only request addresses for your own user');
+  t.equal(body.message, "You can only request addresses for your own user");
 });
 
-test('GET /addresses returns a list of addresses', async (t: Test) => {
+test("GET /addresses returns a list of addresses", async (t: Test) => {
   const { user, session, address } = await createUser({ withAddress: true });
   const [response, body] = await get(`/addresses?userId=${user.id}`, {
-    headers: authHeader(session.id)
+    headers: authHeader(session.id),
   });
 
   t.equal(response.status, 200);
@@ -36,55 +36,55 @@ test('GET /addresses returns a list of addresses', async (t: Test) => {
   t.equal(body[0].id, address.id);
 });
 
-test('POST /addresses returns a 401 when called without auth', async (t: Test) => {
+test("POST /addresses returns a 401 when called without auth", async (t: Test) => {
   const [response, body] = await get(`/addresses`);
   t.equal(response.status, 401);
-  t.equal(body.message, 'Authorization is required to access this resource');
+  t.equal(body.message, "Authorization is required to access this resource");
 });
 
-test('POST /addresses returns a 400 when called with missing data', async (t: Test) => {
+test("POST /addresses returns a 400 when called with missing data", async (t: Test) => {
   const { session } = await createUser();
-  const [response, body] = await post('/addresses', {
+  const [response, body] = await post("/addresses", {
     headers: authHeader(session.id),
     body: {
-      companyName: '',
-      addressLine1: '',
-      city: '',
-      region: '',
-      country: '',
-      postCode: ''
-    }
+      companyName: "",
+      addressLine1: "",
+      city: "",
+      region: "",
+      country: "",
+      postCode: "",
+    },
   });
   t.equal(response.status, 400);
-  t.equal(body.message, 'Missing required information: Address Line 1');
+  t.equal(body.message, "Missing required information: Address Line 1");
 });
 
-test('POST /addresses creates and returns an address', async (t: Test) => {
+test("POST /addresses creates and returns an address", async (t: Test) => {
   const { user, session } = await createUser();
-  const [response, body] = await post('/addresses', {
+  const [response, body] = await post("/addresses", {
     headers: authHeader(session.id),
     body: {
-      companyName: 'CALA',
-      addressLine1: '42 Wallaby Way',
-      city: 'Sydney',
-      region: 'NSW',
-      country: 'Australia',
-      postCode: 'RG41 2PE'
-    }
+      companyName: "CALA",
+      addressLine1: "42 Wallaby Way",
+      city: "Sydney",
+      region: "NSW",
+      country: "Australia",
+      postCode: "RG41 2PE",
+    },
   });
 
   t.equal(response.status, 201);
-  t.equal(body.companyName, 'CALA');
+  t.equal(body.companyName, "CALA");
   t.equal(body.userId, user.id);
 });
 
 const addressBlank = {
-  companyName: 'CALA',
-  addressLine1: '42 Wallaby Way',
-  city: 'Sydney',
-  region: 'NSW',
-  country: 'Australia',
-  postCode: 'RG41 2PE'
+  companyName: "CALA",
+  addressLine1: "42 Wallaby Way",
+  city: "Sydney",
+  region: "NSW",
+  country: "Australia",
+  postCode: "RG41 2PE",
 };
 
 type RequestMethod = typeof patch;
@@ -116,206 +116,206 @@ interface TestCase {
 
 const testCases: TestCase[] = [
   {
-    title: 'GET /addresses/:id returns a 404 when called with wrong id',
+    title: "GET /addresses/:id returns a 404 when called with wrong id",
     route: {
       useAuth: true,
-      url: (): string => '/addresses/50efbefe-bf3e-42fe-9dd4-413172158667',
-      method: get
+      url: (): string => "/addresses/50efbefe-bf3e-42fe-9dd4-413172158667",
+      method: get,
     },
     expected: {
       status: 404,
-      body: (): any => ({ message: 'Not Found' })
-    }
+      body: (): any => ({ message: "Not Found" }),
+    },
   },
   {
-    title: 'GET /addresses/:id returns 401 when called without auth',
+    title: "GET /addresses/:id returns 401 when called without auth",
     before: {
       created: {
-        url: (): string => '/addresses',
+        url: (): string => "/addresses",
         method: post,
-        body: addressBlank
-      }
+        body: addressBlank,
+      },
     },
     route: {
       url: ({ created }: BeforeData): string => `/addresses/${created!.id}`,
-      method: get
+      method: get,
     },
     expected: {
       status: 401,
       body: (): any => ({
-        message: 'Authorization is required to access this resource'
-      })
-    }
+        message: "Authorization is required to access this resource",
+      }),
+    },
   },
   {
-    title: 'GET /addresses/:id returns address',
+    title: "GET /addresses/:id returns address",
     before: {
       created: {
-        url: (): string => '/addresses',
+        url: (): string => "/addresses",
         method: post,
-        body: addressBlank
-      }
+        body: addressBlank,
+      },
     },
     route: {
       useAuth: true,
       url: ({ created }: BeforeData): string => `/addresses/${created!.id}`,
-      method: get
+      method: get,
     },
     expected: {
       status: 200,
-      body: ({ created }: BeforeData): any => created
-    }
+      body: ({ created }: BeforeData): any => created,
+    },
   },
   {
-    title: 'PATCH /addresses/:id returns a 404 when called with wrong id',
+    title: "PATCH /addresses/:id returns a 404 when called with wrong id",
     route: {
       useAuth: true,
-      url: (): string => '/addresses/50efbefe-bf3e-42fe-9dd4-413172158667',
+      url: (): string => "/addresses/50efbefe-bf3e-42fe-9dd4-413172158667",
       method: patch,
-      body: { postCode: '123456' }
+      body: { postCode: "123456" },
     },
     expected: {
       status: 404,
-      body: (): any => ({ message: 'Not Found' })
-    }
+      body: (): any => ({ message: "Not Found" }),
+    },
   },
   {
-    title: 'PATCH /addresses/:id returns 401 when called without auth',
+    title: "PATCH /addresses/:id returns 401 when called without auth",
     before: {
       created: {
-        url: (): string => '/addresses',
+        url: (): string => "/addresses",
         method: post,
-        body: addressBlank
-      }
+        body: addressBlank,
+      },
     },
     route: {
       url: ({ created }: BeforeData): string => `/addresses/${created!.id}`,
       method: patch,
-      body: { postCode: '123456' }
+      body: { postCode: "123456" },
     },
     expected: {
       status: 401,
       body: (): any => ({
-        message: 'Authorization is required to access this resource'
-      })
-    }
+        message: "Authorization is required to access this resource",
+      }),
+    },
   },
   {
-    title: 'PATCH /addresses/:id patches and returns address',
+    title: "PATCH /addresses/:id patches and returns address",
     before: {
       created: {
-        url: (): string => '/addresses',
+        url: (): string => "/addresses",
         method: post,
-        body: addressBlank
-      }
+        body: addressBlank,
+      },
     },
     route: {
       useAuth: true,
       url: ({ created }: BeforeData): string => `/addresses/${created.id}`,
       method: patch,
-      body: { postCode: '123456' }
+      body: { postCode: "123456" },
     },
     expected: {
       status: 200,
       body: ({ created }: BeforeData): any =>
-        Object.assign({}, created, { postCode: '123456' })
-    }
+        Object.assign({}, created, { postCode: "123456" }),
+    },
   },
   {
-    title: 'DELETE /addresses/:id returns 401 when called without auth',
+    title: "DELETE /addresses/:id returns 401 when called without auth",
     before: {
       created: {
-        url: (): string => '/addresses',
+        url: (): string => "/addresses",
         method: post,
-        body: addressBlank
-      }
+        body: addressBlank,
+      },
     },
     route: {
       url: ({ created }: BeforeData): string => `/addresses/${created.id}`,
-      method: del
+      method: del,
     },
     expected: {
       status: 401,
       body: (): any => ({
-        message: 'Authorization is required to access this resource'
-      })
-    }
+        message: "Authorization is required to access this resource",
+      }),
+    },
   },
   {
-    title: 'DELETE /addresses/:id returns a 404 when called with wrong id',
+    title: "DELETE /addresses/:id returns a 404 when called with wrong id",
     route: {
       useAuth: true,
-      url: (): string => '/addresses/50efbefe-bf3e-42fe-9dd4-413172158667',
-      method: del
+      url: (): string => "/addresses/50efbefe-bf3e-42fe-9dd4-413172158667",
+      method: del,
     },
     expected: {
       status: 404,
-      body: (): any => ({ message: 'Not Found' })
-    }
+      body: (): any => ({ message: "Not Found" }),
+    },
   },
   {
-    title: 'DELETE /addresses/:id deletes address',
+    title: "DELETE /addresses/:id deletes address",
     before: {
       created: {
-        url: (): string => '/addresses',
+        url: (): string => "/addresses",
         method: post,
-        body: addressBlank
-      }
+        body: addressBlank,
+      },
     },
     route: {
       useAuth: true,
       url: ({ created }: BeforeData): string => `/addresses/${created.id}`,
-      method: del
+      method: del,
     },
     expected: {
       status: 204,
-      body: (): any => ''
-    }
+      body: (): any => "",
+    },
   },
   {
-    title: 'PUT /addresses/:id returns 401 when called without auth',
+    title: "PUT /addresses/:id returns 401 when called without auth",
     before: {
       created: {
-        url: (): string => '/addresses',
+        url: (): string => "/addresses",
         method: post,
-        body: addressBlank
-      }
+        body: addressBlank,
+      },
     },
     route: {
       url: ({ created }: BeforeData): string => `/addresses/${created.id}`,
-      method: put
+      method: put,
     },
     expected: {
       status: 401,
       body: (): any => ({
-        message: 'Authorization is required to access this resource'
-      })
-    }
+        message: "Authorization is required to access this resource",
+      }),
+    },
   },
   {
-    title: 'PUT /addresses/:id restores deleted address',
+    title: "PUT /addresses/:id restores deleted address",
     before: {
       created: {
-        url: (): string => '/addresses',
+        url: (): string => "/addresses",
         method: post,
-        body: addressBlank
+        body: addressBlank,
       },
       deleted: {
         url: ({ created }: BeforeData): string => `/addresses/${created!.id}`,
-        method: del
-      }
+        method: del,
+      },
     },
     route: {
       useAuth: true,
       url: ({ created }: BeforeData): string => `/addresses/${created.id}`,
       method: put,
-      body: addressBlank
+      body: addressBlank,
     },
     expected: {
       status: 200,
-      body: ({ created }: BeforeData): any => created
-    }
-  }
+      body: ({ created }: BeforeData): any => created,
+    },
+  },
 ];
 
 testCases.forEach(async (testCase: TestCase) => {
@@ -330,7 +330,7 @@ testCases.forEach(async (testCase: TestCase) => {
         beforeItem.url(beforeData),
         {
           headers: authHeader(session.id),
-          body: beforeItem.body
+          body: beforeItem.body,
         }
       );
       beforeData[key] = beforeRequestBody;
@@ -341,7 +341,7 @@ testCases.forEach(async (testCase: TestCase) => {
         headers: testCase.route.useAuth ? authHeader(session.id) : {},
         ...(testCase.route.body
           ? { body: { ...testCase.route.body, deletedAt: null } }
-          : null)
+          : null),
       }
     );
 

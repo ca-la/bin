@@ -1,17 +1,17 @@
-import uuid from 'node-uuid';
-import Knex from 'knex';
-import { TaskEvent, TaskStatus } from '@cala/ts-lib';
+import uuid from "node-uuid";
+import Knex from "knex";
+import { TaskEvent, TaskStatus } from "@cala/ts-lib";
 
-import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
-import * as ProductDesignStagesDAO from '../../dao/product-design-stages';
-import findTaskTypeCollaborators from '../../services/find-task-type-collaborators';
-import { getTemplatesFor } from '../../components/tasks/templates';
-import { TaskTemplate } from '../../components/tasks/templates/task-template';
-import { StageTemplate } from '../../components/tasks/templates/stage-template';
-import { DesignPhase } from '../../domain-objects/task-template';
-import { createTasks } from '../create-task';
-import { findByDesignId as findProductTypeByDesignId } from '../../components/pricing-product-types/dao';
-import ProductDesignStage from '../../domain-objects/product-design-stage';
+import * as CollaboratorTasksDAO from "../../dao/collaborator-tasks";
+import * as ProductDesignStagesDAO from "../../dao/product-design-stages";
+import findTaskTypeCollaborators from "../../services/find-task-type-collaborators";
+import { getTemplatesFor } from "../../components/tasks/templates";
+import { TaskTemplate } from "../../components/tasks/templates/task-template";
+import { StageTemplate } from "../../components/tasks/templates/stage-template";
+import { DesignPhase } from "../../domain-objects/task-template";
+import { createTasks } from "../create-task";
+import { findByDesignId as findProductTypeByDesignId } from "../../components/pricing-product-types/dao";
+import ProductDesignStage from "../../domain-objects/product-design-stage";
 
 async function createTasksFromTemplates(
   designId: string,
@@ -39,13 +39,13 @@ async function createTasksFromTemplates(
 
       allTasks.push({
         createdBy: null,
-        description: template.description || '',
+        description: template.description || "",
         designStageId: stageId,
         dueDate: null,
         ordering: i,
         status: TaskStatus.NOT_STARTED,
         taskId,
-        title: template.title
+        title: template.title,
       });
     }
   }
@@ -66,9 +66,9 @@ async function retrieveStageTemplates(
   designId: string,
   designPhase: DesignPhase
 ): Promise<StageTemplate[]> {
-  if (designPhase === 'POST_CREATION') {
+  if (designPhase === "POST_CREATION") {
     // TODO Fix once we can tell upon creation what kind of design this is,
-    return getTemplatesFor('POST_CREATION', 'BLANK');
+    return getTemplatesFor("POST_CREATION", "BLANK");
   }
 
   const productType = await findProductTypeByDesignId(designId);
@@ -91,7 +91,7 @@ async function createStages(
         description: template.description,
         designId,
         ordering: template.ordering,
-        title: template.title
+        title: template.title,
       };
     }
   );

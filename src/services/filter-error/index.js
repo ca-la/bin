@@ -1,6 +1,6 @@
-'use strict';
+"use strict";
 
-const { requireValues } = require('../require-properties');
+const { requireValues } = require("../require-properties");
 
 // A more native-friendly equivalent of http://bluebirdjs.com/docs/api/catch.html#filtered-catch
 //
@@ -14,7 +14,7 @@ const { requireValues } = require('../require-properties');
 function filterError(errorType, handler) {
   requireValues({ errorType, handler });
 
-  return err => {
+  return (err) => {
     if (err instanceof errorType) {
       return handler(err);
     }

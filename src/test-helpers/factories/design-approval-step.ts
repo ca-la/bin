@@ -1,18 +1,18 @@
-import Knex from 'knex';
-import uuid from 'node-uuid';
+import Knex from "knex";
+import uuid from "node-uuid";
 
 import ApprovalStep, {
   ApprovalStepState,
   ApprovalStepType,
-  ApprovalUnstarted
-} from '../../components/approval-steps/domain-object';
-import User from '../../components/users/domain-object';
-import ProductDesign from '../../components/product-designs/domain-objects/product-design';
-import { findById as findUserById } from '../../components/users/dao';
-import createUser from '../create-user';
-import { generateDesign } from './product-design';
-import * as ApprovalStepDAO from '../../components/approval-steps/dao';
-import { findById as findDesignById } from '../../components/product-designs/dao';
+  ApprovalUnstarted,
+} from "../../components/approval-steps/domain-object";
+import User from "../../components/users/domain-object";
+import ProductDesign from "../../components/product-designs/domain-objects/product-design";
+import { findById as findUserById } from "../../components/users/dao";
+import createUser from "../create-user";
+import { generateDesign } from "./product-design";
+import * as ApprovalStepDAO from "../../components/approval-steps/dao";
+import { findById as findDesignById } from "../../components/product-designs/dao";
 
 interface ApprovalStepWithResources {
   approvalStep: ApprovalStep;
@@ -33,13 +33,13 @@ export default async function generateApprovalStep(
     : { design: await generateDesign({ userId: user.id }, trx) };
 
   if (!design) {
-    throw new Error('Canvas was unable to be found or created!');
+    throw new Error("Canvas was unable to be found or created!");
   }
 
   const defaultStep: ApprovalUnstarted = {
     state: ApprovalStepState.UNSTARTED,
     ordering: 0,
-    title: 'Checkout',
+    title: "Checkout",
     designId: design.id,
     id: uuid.v4(),
     reason: null,
@@ -47,19 +47,19 @@ export default async function generateApprovalStep(
     startedAt: null,
     createdAt: new Date(),
     type: ApprovalStepType.CHECKOUT,
-    collaboratorId: null
+    collaboratorId: null,
   };
 
   const [approvalStep] = await ApprovalStepDAO.createAll(trx, [
     {
       ...defaultStep,
-      ...step
-    } as ApprovalStep
+      ...step,
+    } as ApprovalStep,
   ]);
 
   return {
     approvalStep,
     design,
-    createdBy: user
+    createdBy: user,
   };
 }

@@ -1,5 +1,5 @@
-import DataAdapter from '../../services/data-adapter';
-import { hasProperties } from '@cala/ts-lib';
+import DataAdapter from "../../services/data-adapter";
+import { hasProperties } from "@cala/ts-lib";
 
 export interface PartnerPayoutLog {
   id: string;
@@ -38,7 +38,7 @@ export function toData(row: PartnerPayoutLogRow): PartnerPayoutLog {
     initiatorUserId: row.initiator_user_id,
     shortId: row.short_id,
     bidId: row.bid_id,
-    isManual: Boolean(row.is_manual)
+    isManual: Boolean(row.is_manual),
   };
 }
 
@@ -53,7 +53,7 @@ export function toInsertion(data: PartnerPayoutLog): PartnerPayoutLogRow {
     initiator_user_id: data.initiatorUserId,
     short_id: data.shortId,
     bid_id: data.bidId,
-    is_manual: data.isManual.toString()
+    is_manual: data.isManual.toString(),
   };
 }
 
@@ -65,16 +65,16 @@ export const dataAdapter = new DataAdapter<
 export function isPartnerPayoutLogRow(row: any): row is PartnerPayoutLogRow {
   return hasProperties(
     row,
-    'id',
-    'created_at',
-    'invoice_id',
-    'payout_account_id',
-    'payout_amount_cents',
-    'message',
-    'initiator_user_id',
-    'short_id',
-    'bid_id',
-    'is_manual'
+    "id",
+    "created_at",
+    "invoice_id",
+    "payout_account_id",
+    "payout_amount_cents",
+    "message",
+    "initiator_user_id",
+    "short_id",
+    "bid_id",
+    "is_manual"
   );
 }
 
@@ -95,7 +95,7 @@ export function toDataForMeta(
   return {
     collectionId: collection_id,
     collectionTitle: collection_title,
-    ...toData(baseRow)
+    ...toData(baseRow),
   };
 }
 
@@ -106,7 +106,7 @@ export function toInsertionForMeta(
   return {
     collection_id: collectionId,
     collection_title: collectionTitle,
-    ...toInsertion(baseData)
+    ...toInsertion(baseData),
   };
 }
 
@@ -120,15 +120,15 @@ export function isPartnerPayoutLogRowWithMeta(
 ): row is PartnerPayoutLogRowWithMeta {
   return hasProperties(
     row,
-    'id',
-    'collection_id',
-    'collection_title',
-    'created_at',
-    'invoice_id',
-    'payout_account_id',
-    'payout_amount_cents',
-    'message',
-    'initiator_user_id',
-    'short_id'
+    "id",
+    "collection_id",
+    "collection_title",
+    "created_at",
+    "invoice_id",
+    "payout_account_id",
+    "payout_amount_cents",
+    "message",
+    "initiator_user_id",
+    "short_id"
   );
 }

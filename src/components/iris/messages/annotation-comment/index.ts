@@ -1,11 +1,11 @@
 import {
   RealtimeAnnotationComment,
-  RealtimeAnnotationCommentDeletion
-} from '@cala/ts-lib';
-import { sendMessage } from '../../send-message';
-import AnnotationComment from '../../../annotation-comments/domain-object';
-import addAtMentionDetails from '../../../../services/add-at-mention-details';
-import { CommentWithAttachmentLinks } from '../../../../services/add-attachments-links';
+  RealtimeAnnotationCommentDeletion,
+} from "@cala/ts-lib";
+import { sendMessage } from "../../send-message";
+import AnnotationComment from "../../../annotation-comments/domain-object";
+import addAtMentionDetails from "../../../../services/add-at-mention-details";
+import { CommentWithAttachmentLinks } from "../../../../services/add-attachments-links";
 
 /**
  * Publishes an annotation comment to the Iris SQS.
@@ -20,7 +20,7 @@ export async function announceAnnotationCommentCreation(
     actorId: comment.userId,
     annotationId: annotationComment.annotationId,
     resource: commentWithMentions[0],
-    type: 'annotation-comment'
+    type: "annotation-comment",
   };
   await sendMessage(realtimeAnnotationComment);
   return realtimeAnnotationComment;
@@ -40,7 +40,7 @@ export async function announceAnnotationCommentDeletion(options: {
     actorId,
     annotationId,
     resource: { id: commentId },
-    type: 'annotation-comment/delete'
+    type: "annotation-comment/delete",
   };
   await sendMessage(realtimeAnnotationCommentDeletion);
   return realtimeAnnotationCommentDeletion;

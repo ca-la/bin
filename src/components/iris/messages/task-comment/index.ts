@@ -1,8 +1,8 @@
-import { RealtimeTaskComment, RealtimeTaskCommentDeletion } from '@cala/ts-lib';
-import { sendMessage } from '../../send-message';
-import TaskComment from '../../../task-comments/domain-object';
-import addAtMentionDetails from '../../../../services/add-at-mention-details';
-import { CommentWithAttachmentLinks } from '../../../../services/add-attachments-links';
+import { RealtimeTaskComment, RealtimeTaskCommentDeletion } from "@cala/ts-lib";
+import { sendMessage } from "../../send-message";
+import TaskComment from "../../../task-comments/domain-object";
+import addAtMentionDetails from "../../../../services/add-at-mention-details";
+import { CommentWithAttachmentLinks } from "../../../../services/add-attachments-links";
 
 /**
  * Publishes a task comment to the Iris SQS.
@@ -17,7 +17,7 @@ export async function announceTaskCommentCreation(
     actorId: comment.userId,
     resource: commentWithMentions[0],
     taskId: taskComment.taskId,
-    type: 'task-comment'
+    type: "task-comment",
   };
   await sendMessage(realtimeTaskComment);
   return realtimeTaskComment;
@@ -37,7 +37,7 @@ export async function announceTaskCommentDeletion(options: {
     actorId,
     resource: { id: commentId },
     taskId,
-    type: 'task-comment/delete'
+    type: "task-comment/delete",
   };
   await sendMessage(realtimeTaskCommentDeletion);
   return realtimeTaskCommentDeletion;

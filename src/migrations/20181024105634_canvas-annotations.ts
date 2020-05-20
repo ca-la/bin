@@ -1,4 +1,4 @@
-import Knex from 'knex';
+import Knex from "knex";
 
 /* tslint:disable:max-line-length */
 export function up(knex: Knex): Knex.Raw {

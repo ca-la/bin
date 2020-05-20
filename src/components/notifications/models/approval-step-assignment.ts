@@ -2,17 +2,17 @@ import {
   BaseFullNotification,
   BaseFullNotificationRow,
   BaseNotification,
-  BaseNotificationRow
-} from './base';
-import { NotificationType } from '../domain-object';
+  BaseNotificationRow,
+} from "./base";
+import { NotificationType } from "../domain-object";
 
 type BaseRow = Omit<
   BaseNotificationRow,
-  | 'collaborator_id'
-  | 'collection_id'
-  | 'design_id'
-  | 'approval_step_id'
-  | 'recipient_user_id'
+  | "collaborator_id"
+  | "collection_id"
+  | "design_id"
+  | "approval_step_id"
+  | "recipient_user_id"
 >;
 
 export interface ApprovalStepAssignmentNotificationRow extends BaseRow {
@@ -26,7 +26,7 @@ export interface ApprovalStepAssignmentNotificationRow extends BaseRow {
 
 type BaseFullRow = Omit<
   BaseFullNotificationRow & ApprovalStepAssignmentNotificationRow,
-  'collection_title' | 'design_title' | 'approval_step_title'
+  "collection_title" | "design_title" | "approval_step_title"
 >;
 
 export interface FullApprovalStepAssignmentNotificationRow extends BaseFullRow {
@@ -37,7 +37,7 @@ export interface FullApprovalStepAssignmentNotificationRow extends BaseFullRow {
 
 type Base = Omit<
   BaseNotification,
-  'collectionId' | 'designId' | 'approvalStepId' | 'recipientUserId'
+  "collectionId" | "designId" | "approvalStepId" | "recipientUserId"
 >;
 
 export interface ApprovalStepAssignmentNotification extends Base {
@@ -50,7 +50,7 @@ export interface ApprovalStepAssignmentNotification extends Base {
 
 type BaseFull = Omit<
   BaseFullNotification & ApprovalStepAssignmentNotification,
-  'collectionTitle' | 'designTitle' | 'approvalStepTitle'
+  "collectionTitle" | "designTitle" | "approvalStepTitle"
 >;
 
 export interface FullApprovalStepAssignmentNotification extends BaseFull {

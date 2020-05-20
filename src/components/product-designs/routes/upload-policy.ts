@@ -1,13 +1,13 @@
-import uuid from 'node-uuid';
+import uuid from "node-uuid";
 
 import {
   AWS_S3_THUMBNAIL_BUCKET_NAME,
   AWS_USER_UPLOADS_BUCKET_NAME as BUCKET_NAME,
   AWS_USER_UPLOADS_BUCKET_REGION as BUCKET_REGION,
-  USER_UPLOADS_BASE_URL
-} from '../../../config';
-import * as AWSService from '../../../services/aws';
-import { generateUploadPolicy } from '../../../services/upload-policy';
+  USER_UPLOADS_BASE_URL,
+} from "../../../config";
+import * as AWSService from "../../../services/aws";
+import { generateUploadPolicy } from "../../../services/upload-policy";
 
 export function* getDesignUploadPolicy(
   this: AuthedContext
@@ -15,7 +15,7 @@ export function* getDesignUploadPolicy(
   const { mimeType } = this.query;
 
   if (!mimeType) {
-    this.throw(400, 'A mimeType must be specified in the query parameters!');
+    this.throw(400, "A mimeType must be specified in the query parameters!");
   }
 
   const uploadPolicy = generateUploadPolicy({
@@ -23,7 +23,7 @@ export function* getDesignUploadPolicy(
     id: this.params.id || uuid.v4(),
     mimeType,
     s3Bucket: BUCKET_NAME,
-    s3Region: BUCKET_REGION
+    s3Region: BUCKET_REGION,
   });
 
   this.body = uploadPolicy;
@@ -43,7 +43,7 @@ export function* getThumbnailUploadPolicy(
     downloadUrl: `https://${AWS_S3_THUMBNAIL_BUCKET_NAME}.s3.amazonaws.com/${remoteFileName}`,
     formData: fields,
     remoteFileName,
-    uploadUrl: url
+    uploadUrl: url,
   };
   this.status = 200;
 }

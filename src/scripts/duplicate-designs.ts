@@ -1,20 +1,18 @@
-import process from 'process';
+import process from "process";
 
-import { log, logServerError } from '../services/logger';
-import { green, reset } from '../services/colors';
-import { duplicateDesigns } from '../services/duplicate';
+import { log, logServerError } from "../services/logger";
+import { green, reset } from "../services/colors";
+import { duplicateDesigns } from "../services/duplicate";
 
 run()
   .then(() => {
     log(`${green}Successfully duplicated!`);
     process.exit();
   })
-  .catch(
-    (err: any): void => {
-      logServerError(err);
-      process.exit(1);
-    }
-  );
+  .catch((err: any): void => {
+    logServerError(err);
+    process.exit(1);
+  });
 
 async function run(): Promise<void> {
   const userId = process.argv[2];
@@ -22,7 +20,7 @@ async function run(): Promise<void> {
 
   if (!userId || designIds.length < 1) {
     throw new Error(
-      'Usage: duplicate-designs.ts [userId] [designId] [designId2]...'
+      "Usage: duplicate-designs.ts [userId] [designId] [designId2]..."
     );
   }
 

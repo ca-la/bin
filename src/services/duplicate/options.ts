@@ -1,8 +1,8 @@
-import Knex from 'knex';
+import Knex from "knex";
 
-import OptionsDAO = require('../../dao/product-design-options');
-import ProductDesignOption = require('../../domain-objects/product-design-option');
-import prepareForDuplication from './prepare-for-duplication';
+import OptionsDAO = require("../../dao/product-design-options");
+import ProductDesignOption = require("../../domain-objects/product-design-option");
+import prepareForDuplication from "./prepare-for-duplication";
 
 /**
  * Finds and duplicates the given product design option (and associated sub-resources).

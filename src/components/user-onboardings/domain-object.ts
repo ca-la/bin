@@ -1,5 +1,5 @@
-import DataAdapter from '../../services/data-adapter';
-import { hasProperties } from '../../services/require-properties';
+import DataAdapter from "../../services/data-adapter";
+import { hasProperties } from "../../services/require-properties";
 
 export default interface UserOnboarding {
   userId: string;
@@ -22,20 +22,20 @@ export const dataAdapter = new DataAdapter<UserOnboardingRow, UserOnboarding>();
 export function isUserOnboardingRow(row: object): row is UserOnboardingRow {
   return hasProperties(
     row,
-    'user_id',
-    'welcome_modal_viewed_at',
-    'tasks_page_viewed_at',
-    'timeline_page_viewed_at',
-    'partner_dashboard_viewed_at'
+    "user_id",
+    "welcome_modal_viewed_at",
+    "tasks_page_viewed_at",
+    "timeline_page_viewed_at",
+    "partner_dashboard_viewed_at"
   );
 }
 
 export function isUserOnboarding(data: object): data is UserOnboarding {
   return hasProperties(
     data,
-    'welcomeModalViewedAt',
-    'tasksPageViewedAt',
-    'timelinePageViewedAt',
-    'partnerDashboardViewedAt'
+    "welcomeModalViewedAt",
+    "tasksPageViewedAt",
+    "timelinePageViewedAt",
+    "partnerDashboardViewedAt"
   );
 }

@@ -1,13 +1,13 @@
-'use strict';
+"use strict";
 
-const Router = require('koa-router');
+const Router = require("koa-router");
 
-const { sendSMS } = require('../../services/twilio');
+const { sendSMS } = require("../../services/twilio");
 
 const router = new Router();
 
 const DOWNLOAD_MESSAGE =
-  'Welcome to CALA. To download our iPhone app, click here: https://ca.la/ios';
+  "Welcome to CALA. To download our iPhone app, click here: https://ca.la/ios";
 
 function* sendDownloadLink() {
   const { to } = this.request.body;
@@ -18,6 +18,6 @@ function* sendDownloadLink() {
   this.body = { sent: true };
 }
 
-router.post('/', sendDownloadLink);
+router.post("/", sendDownloadLink);
 
 module.exports = router.routes();

@@ -1,11 +1,11 @@
-import Router from 'koa-router';
-import Knex from 'knex';
+import Router from "koa-router";
+import Knex from "knex";
 
-import { addCredit, getCreditAmount, removeCredit } from './dao';
-import requireAuth = require('../../middleware/require-auth');
-import requireAdmin = require('../../middleware/require-admin');
-import db from '../../services/db';
-import { hasProperties } from '@cala/ts-lib';
+import { addCredit, getCreditAmount, removeCredit } from "./dao";
+import requireAuth = require("../../middleware/require-auth");
+import requireAdmin = require("../../middleware/require-admin");
+import db from "../../services/db";
+import { hasProperties } from "@cala/ts-lib";
 
 const router = new Router();
 
@@ -17,7 +17,7 @@ function* getCredits(this: AuthedContext): Iterator<any, any, any> {
   const { userId }: GetCreditQuery = this.query;
 
   if (!userId) {
-    this.throw(400, 'Missing user ID');
+    this.throw(400, "Missing user ID");
   }
 
   const creditAmountCents = yield getCreditAmount(userId);
@@ -36,10 +36,10 @@ interface ChangeRequest {
 function isChangeRequest(data: any): data is ChangeRequest {
   return hasProperties(
     data,
-    'creditAmountCents',
-    'description',
-    'expiresAt',
-    'userId'
+    "creditAmountCents",
+    "description",
+    "expiresAt",
+    "userId"
   );
 }
 
@@ -48,7 +48,7 @@ function* changeCredit(this: AuthedContext): Iterator<any, any, any> {
   const { body } = this.request;
 
   if (!isChangeRequest(body)) {
-    this.throw(400, 'A credit amount, description, and user id is required.');
+    this.throw(400, "A credit amount, description, and user id is required.");
   }
 
   const deserializedAmount = Number(body.creditAmountCents);
@@ -59,7 +59,7 @@ function* changeCredit(this: AuthedContext): Iterator<any, any, any> {
   const futureAmountForUser = deserializedAmount + currentAmountForUser;
 
   if (currentAmountForUser + deserializedAmount < 0) {
-    this.throw(400, 'A user cannot have negative credit.');
+    this.throw(400, "A user cannot have negative credit.");
   }
 
   if (deserializedAmount > 0) {
@@ -68,7 +68,7 @@ function* changeCredit(this: AuthedContext): Iterator<any, any, any> {
       createdBy: userId,
       description: body.description,
       expiresAt: deserializedExpiration,
-      givenTo: body.userId
+      givenTo: body.userId,
     });
     this.status = 200;
     this.body = { creditAmountCents: futureAmountForUser };
@@ -79,7 +79,7 @@ function* changeCredit(this: AuthedContext): Iterator<any, any, any> {
           amountCents: Math.abs(deserializedAmount),
           createdBy: userId,
           description: body.description,
-          givenTo: body.userId
+          givenTo: body.userId,
         },
         trx
       );
@@ -92,7 +92,7 @@ function* changeCredit(this: AuthedContext): Iterator<any, any, any> {
   }
 }
 
-router.get('/', requireAuth, getCredits);
-router.post('/', requireAdmin, changeCredit);
+router.get("/", requireAuth, getCredits);
+router.post("/", requireAdmin, changeCredit);
 
 export default router.routes();

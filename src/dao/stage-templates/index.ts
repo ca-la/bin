@@ -1,31 +1,31 @@
-import uuid from 'node-uuid';
+import uuid from "node-uuid";
 
-import db from '../../services/db';
-import first from '../../services/first';
-import { validate, validateEvery } from '../../services/validate-from-db';
+import db from "../../services/db";
+import first from "../../services/first";
+import { validate, validateEvery } from "../../services/validate-from-db";
 import StageTemplate, {
   dataAdapter,
   isStageTemplateRow,
-  StageTemplateRow
-} from '../../domain-objects/stage-template';
+  StageTemplateRow,
+} from "../../domain-objects/stage-template";
 
-const TABLE_NAME = 'stage_templates';
+const TABLE_NAME = "stage_templates";
 
 export async function create(
   data: Unsaved<StageTemplate>
 ): Promise<StageTemplate> {
   const rowData = dataAdapter.forInsertion({
     ...data,
-    id: uuid.v4()
+    id: uuid.v4(),
   });
 
   const created = await db(TABLE_NAME)
     .insert(rowData)
-    .returning('*')
+    .returning("*")
     .then((rows: StageTemplateRow[]) => first(rows));
 
   if (!created) {
-    throw new Error('Failed to create rows');
+    throw new Error("Failed to create rows");
   }
 
   return validate<StageTemplateRow, StageTemplate>(
@@ -37,9 +37,7 @@ export async function create(
 }
 
 export async function findAll(): Promise<StageTemplate[]> {
-  const templates = await db(TABLE_NAME)
-    .select('*')
-    .orderBy('ordering', 'asc');
+  const templates = await db(TABLE_NAME).select("*").orderBy("ordering", "asc");
 
   return validateEvery<StageTemplateRow, StageTemplate>(
     TABLE_NAME,

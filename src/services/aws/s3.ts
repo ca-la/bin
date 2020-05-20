@@ -1,5 +1,5 @@
-import AWS from 'aws-sdk';
-import uuid from 'node-uuid';
+import AWS from "aws-sdk";
+import uuid from "node-uuid";
 
 export interface S3UploadParams<T> {
   resource: T;
@@ -28,7 +28,7 @@ export async function uploadToS3<T>(
       Bucket: params.bucketName,
       ContentType: params.contentType,
       Key: id,
-      ServerSideEncryption: 'AES256'
+      ServerSideEncryption: "AES256",
     })
     .promise();
 
@@ -38,6 +38,6 @@ export async function uploadToS3<T>(
 
   return {
     bucketName: params.bucketName,
-    remoteFilename: id
+    remoteFilename: id,
   };
 }

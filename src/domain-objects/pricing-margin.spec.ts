@@ -1,47 +1,47 @@
-import { test, Test } from '../test-helpers/fresh';
+import { test, Test } from "../test-helpers/fresh";
 
 import PricingMargin, {
   dataAdapter,
   isPricingMarginRow,
-  PricingMarginRow
-} from './pricing-margin';
+  PricingMarginRow,
+} from "./pricing-margin";
 
 const now = new Date();
 const validRowData: PricingMarginRow = {
   created_at: now,
-  id: 'string',
+  id: "string",
   margin: 0,
   minimum_units: 0,
-  version: 0
+  version: 0,
 };
 const invalidRowData = {
   created_at: now,
-  id: 'string',
+  id: "string",
   minimum_units: 0,
-  version: 0
+  version: 0,
 };
 const equivalentUserData: PricingMargin = {
   createdAt: now,
-  id: 'string',
+  id: "string",
   margin: 0,
   minimumUnits: 0,
-  version: 0
+  version: 0,
 };
 
-test('PricingMargin', async (t: Test): Promise<void> => {
+test("PricingMargin", async (t: Test): Promise<void> => {
   t.deepEqual(
     validRowData,
     dataAdapter.toDb(equivalentUserData),
-    'encode/decode produces an equivalent object'
+    "encode/decode produces an equivalent object"
   );
   t.deepEqual(
     equivalentUserData,
     dataAdapter.parse(validRowData),
-    'has mapped values'
+    "has mapped values"
   );
   t.notOk(
     isPricingMarginRow(invalidRowData),
-    'type guard rejects invalid data'
+    "type guard rejects invalid data"
   );
-  t.ok(isPricingMarginRow(validRowData), 'type guard passes with valid data');
+  t.ok(isPricingMarginRow(validRowData), "type guard passes with valid data");
 });

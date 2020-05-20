@@ -1,12 +1,12 @@
-'use strict';
+"use strict";
 
-const Router = require('koa-router');
+const Router = require("koa-router");
 
-const requireAuth = require('../../middleware/require-auth');
+const requireAuth = require("../../middleware/require-auth");
 const {
-  canAccessDesignInQuery
-} = require('../../middleware/can-access-design');
-const ProductDesignServicesDAO = require('../../dao/product-design-services');
+  canAccessDesignInQuery,
+} = require("../../middleware/can-access-design");
+const ProductDesignServicesDAO = require("../../dao/product-design-services");
 
 const router = new Router();
 
@@ -44,8 +44,8 @@ function* updateService() {
   this.status = 200;
 }
 
-router.put('/', requireAuth, canAccessDesignInQuery, replaceServices);
-router.get('/', requireAuth, canAccessDesignInQuery, getServices);
-router.patch('/:serviceId', requireAuth, updateService);
+router.put("/", requireAuth, canAccessDesignInQuery, replaceServices);
+router.get("/", requireAuth, canAccessDesignInQuery, getServices);
+router.patch("/:serviceId", requireAuth, updateService);
 
 module.exports = router.routes();

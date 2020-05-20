@@ -1,12 +1,12 @@
-'use strict';
+"use strict";
 
-const pick = require('lodash/pick');
+const pick = require("lodash/pick");
 
-const { requireProperties } = require('../services/require-properties');
+const { requireProperties } = require("../services/require-properties");
 
 class ScanPhoto {
   constructor(row) {
-    requireProperties(row, 'id');
+    requireProperties(row, "id");
 
     this.id = row.id;
     this.scanId = row.scan_id;
@@ -23,12 +23,12 @@ class ScanPhoto {
   toJSON() {
     return pick(
       this,
-      'id',
-      'scanId',
-      'createdAt',
-      'calibrationData',
-      'url',
-      'controlPoints'
+      "id",
+      "scanId",
+      "createdAt",
+      "calibrationData",
+      "url",
+      "controlPoints"
     );
   }
 }

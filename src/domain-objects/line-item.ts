@@ -1,8 +1,8 @@
-import DataAdapter from '../services/data-adapter';
+import DataAdapter from "../services/data-adapter";
 import {
   hasOnlyProperties,
-  hasProperties
-} from '../services/require-properties';
+  hasProperties,
+} from "../services/require-properties";
 
 export default interface LineItem {
   id: string;
@@ -29,26 +29,26 @@ export const dataAdapter = new DataAdapter<LineItemRow, LineItem>();
 export function isLineItem(candidate: object): candidate is LineItem {
   return hasOnlyProperties(
     candidate,
-    'id',
-    'createdAt',
-    'title',
-    'description',
-    'designId',
-    'quoteId',
-    'invoiceId'
+    "id",
+    "createdAt",
+    "title",
+    "description",
+    "designId",
+    "quoteId",
+    "invoiceId"
   );
 }
 
 export function isLineItemRow(row: object): row is LineItemRow {
   return hasOnlyProperties(
     row,
-    'id',
-    'created_at',
-    'title',
-    'description',
-    'design_id',
-    'quote_id',
-    'invoice_id'
+    "id",
+    "created_at",
+    "title",
+    "description",
+    "design_id",
+    "quote_id",
+    "invoice_id"
   );
 }
 
@@ -78,35 +78,35 @@ export function isLineItemWithMeta(
 ): candidate is LineItemWithMeta {
   return hasProperties(
     candidate,
-    'id',
-    'createdAt',
-    'title',
-    'description',
-    'designId',
-    'quoteId',
-    'invoiceId',
-    'designTitle',
-    'designCollections',
-    'designImageIds',
-    'quotedUnits',
-    'quotedUnitCostCents'
+    "id",
+    "createdAt",
+    "title",
+    "description",
+    "designId",
+    "quoteId",
+    "invoiceId",
+    "designTitle",
+    "designCollections",
+    "designImageIds",
+    "quotedUnits",
+    "quotedUnitCostCents"
   );
 }
 
 export function isLineItemWithMetaRow(row: object): row is LineItemWithMetaRow {
   return hasProperties(
     row,
-    'id',
-    'created_at',
-    'title',
-    'description',
-    'design_id',
-    'quote_id',
-    'invoice_id',
-    'design_title',
-    'design_collections',
-    'design_image_ids',
-    'quoted_units',
-    'quoted_unit_cost_cents'
+    "id",
+    "created_at",
+    "title",
+    "description",
+    "design_id",
+    "quote_id",
+    "invoice_id",
+    "design_title",
+    "design_collections",
+    "design_image_ids",
+    "quoted_units",
+    "quoted_unit_cost_cents"
   );
 }

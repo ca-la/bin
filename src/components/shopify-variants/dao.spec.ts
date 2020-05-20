@@ -1,35 +1,35 @@
-import * as Knex from 'knex';
-import uuid from 'node-uuid';
+import * as Knex from "knex";
+import uuid from "node-uuid";
 
-import db from '../../services/db';
-import { test, Test } from '../../test-helpers/fresh';
-import * as ShopifyVariantsDAO from './dao';
-import * as ShopifyProductsDAO from '../shopify-products/dao';
-import createUser from '../../test-helpers/create-user';
-import createDesign from '../../services/create-design';
-import { replaceForDesign } from '../product-design-variants/dao';
+import db from "../../services/db";
+import { test, Test } from "../../test-helpers/fresh";
+import * as ShopifyVariantsDAO from "./dao";
+import * as ShopifyProductsDAO from "../shopify-products/dao";
+import createUser from "../../test-helpers/create-user";
+import createDesign from "../../services/create-design";
+import { replaceForDesign } from "../product-design-variants/dao";
 
-test('ShopifyVariantsDAO can save and retrieve products', async (t: Test) => {
+test("ShopifyVariantsDAO can save and retrieve products", async (t: Test) => {
   const { user } = await createUser();
   const design = await createDesign({
-    title: 'test',
-    productType: 'product',
-    userId: user.id
+    title: "test",
+    productType: "product",
+    userId: user.id,
   });
   const variantId = uuid.v4();
   await db.transaction(async (trx: Knex.Transaction) => {
     await replaceForDesign(trx, design.id, [
       {
-        colorName: 'Green',
+        colorName: "Green",
         designId: design.id,
         id: variantId,
         position: 0,
-        sizeName: 'M',
+        sizeName: "M",
         unitsToProduce: 123,
-        universalProductCode: '123456789012',
+        universalProductCode: "123456789012",
         isSample: false,
-        colorNamePosition: 0
-      }
+        colorNamePosition: 0,
+      },
     ]);
 
     const shopifyProduct = await ShopifyProductsDAO.create(
@@ -38,7 +38,7 @@ test('ShopifyVariantsDAO can save and retrieve products', async (t: Test) => {
         deletedAt: null,
         designId: design.id,
         id: uuid.v4(),
-        shopifyId: '12345'
+        shopifyId: "12345",
       },
       trx
     );
@@ -47,9 +47,9 @@ test('ShopifyVariantsDAO can save and retrieve products', async (t: Test) => {
         createdAt: new Date(),
         deletedAt: null,
         id: uuid.v4(),
-        shopifyId: '12345',
+        shopifyId: "12345",
         shopifyProductId: shopifyProduct.id,
-        variantId
+        variantId,
       },
       trx
     );
@@ -59,11 +59,11 @@ test('ShopifyVariantsDAO can save and retrieve products', async (t: Test) => {
       trx
     );
 
-    t.deepEqual(created, found, 'objects are the same by id');
+    t.deepEqual(created, found, "objects are the same by id");
     t.deepEqual(
       [created],
       foundByShopifyId,
-      'objects are the same by shopify id'
+      "objects are the same by shopify id"
     );
     return;
   });

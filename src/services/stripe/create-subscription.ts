@@ -1,5 +1,5 @@
-import InvalidPaymentError = require('../../errors/invalid-payment');
-import makeRequest from './make-request';
+import InvalidPaymentError = require("../../errors/invalid-payment");
+import makeRequest from "./make-request";
 
 interface Options {
   stripePlanId: string;
@@ -9,7 +9,7 @@ interface Options {
 
 interface Response {
   id: string;
-  status: 'active' | 'incomplete';
+  status: "active" | "incomplete";
 }
 
 export default async function createSubscription(
@@ -18,18 +18,18 @@ export default async function createSubscription(
   const { stripePlanId, stripeCustomerId, stripeSourceId } = options;
 
   const subscription = await makeRequest<Response>({
-    method: 'post',
-    path: '/subscriptions',
+    method: "post",
+    path: "/subscriptions",
     data: {
       items: [{ plan: stripePlanId }],
       customer: stripeCustomerId,
-      default_source: stripeSourceId
-    }
+      default_source: stripeSourceId,
+    },
   });
 
-  if (subscription.status !== 'active') {
+  if (subscription.status !== "active") {
     throw new InvalidPaymentError(
-      'Failed to charge card for this subscription'
+      "Failed to charge card for this subscription"
     );
   }
 

@@ -1,13 +1,13 @@
-import { find, omit, uniqBy } from 'lodash';
-import Knex from 'knex';
-import db from '../../services/db';
+import { find, omit, uniqBy } from "lodash";
+import Knex from "knex";
+import db from "../../services/db";
 import {
   isEvery,
   validate,
-  validateEvery
-} from '../../services/validate-from-db';
+  validateEvery,
+} from "../../services/validate-from-db";
 
-import { Process } from '../../domain-objects/pricing';
+import { Process } from "../../domain-objects/pricing";
 import {
   isPricingQuoteRow,
   PricingProcessQuoteRow,
@@ -16,57 +16,57 @@ import {
   PricingQuoteRequest,
   PricingQuoteRequestWithVersions,
   PricingQuoteRow,
-  PricingQuoteValues
-} from '../../domain-objects/pricing-quote';
+  PricingQuoteValues,
+} from "../../domain-objects/pricing-quote";
 import PricingConstant, {
   dataAdapter as constantDataAdapter,
   isPricingConstantRow,
-  PricingConstantRow
-} from '../../domain-objects/pricing-constant';
+  PricingConstantRow,
+} from "../../domain-objects/pricing-constant";
 import PricingProductMaterial, {
   dataAdapter as materialDataAdapter,
   isPricingProductMaterialRow,
-  PricingProductMaterialRow
-} from '../../domain-objects/pricing-product-material';
+  PricingProductMaterialRow,
+} from "../../domain-objects/pricing-product-material";
 import PricingProductType, {
   dataAdapter as typeDataAdapter,
   isPricingProductTypeRow,
-  PricingProductTypeRow
-} from '../../components/pricing-product-types/domain-object';
+  PricingProductTypeRow,
+} from "../../components/pricing-product-types/domain-object";
 import PricingProcess, {
   dataAdapter as processDataAdapter,
   isPricingProcessRow,
-  PricingProcessRow
-} from '../../domain-objects/pricing-process';
+  PricingProcessRow,
+} from "../../domain-objects/pricing-process";
 import PricingMargin, {
   dataAdapter as marginDataAdapter,
   isPricingMarginRow,
-  PricingMarginRow
-} from '../../domain-objects/pricing-margin';
+  PricingMarginRow,
+} from "../../domain-objects/pricing-margin";
 import PricingCareLabel, {
   dataAdapter as careLabelDataAdapter,
   isPricingCareLabelRow,
-  PricingCareLabelRow
-} from '../../domain-objects/pricing-care-label';
-import DataAdapter from '../../services/data-adapter';
-import InvalidDataError = require('../../errors/invalid-data');
-import first from '../../services/first';
+  PricingCareLabelRow,
+} from "../../domain-objects/pricing-care-label";
+import DataAdapter from "../../services/data-adapter";
+import InvalidDataError = require("../../errors/invalid-data");
+import first from "../../services/first";
 import PricingProcessTimeline, {
   dataAdapter as pricingProcessTimelineDataAdapter,
   isPricingProcessTimelineRow,
-  PricingProcessTimelineRow
-} from '../../components/pricing-process-timeline/domain-object';
+  PricingProcessTimelineRow,
+} from "../../components/pricing-process-timeline/domain-object";
 
 type TableName =
-  | 'pricing_care_labels'
-  | 'pricing_constants'
-  | 'pricing_product_materials'
-  | 'pricing_product_types'
-  | 'pricing_processes'
-  | 'pricing_margins'
-  | 'pricing_inputs';
+  | "pricing_care_labels"
+  | "pricing_constants"
+  | "pricing_product_materials"
+  | "pricing_product_types"
+  | "pricing_processes"
+  | "pricing_margins"
+  | "pricing_inputs";
 
-type NormalizedPricingQuote = Omit<PricingQuote, 'processes'>;
+type NormalizedPricingQuote = Omit<PricingQuote, "processes">;
 const encodeNormalizedPricingQuote = (
   row: PricingQuoteRow
 ): NormalizedPricingQuote => ({
@@ -90,7 +90,7 @@ const encodeNormalizedPricingQuote = (
   samplingTimeMs: Number(row.sampling_time_ms),
   productionTimeMs: Number(row.production_time_ms),
   processTimeMs: Number(row.process_time_ms),
-  fulfillmentTimeMs: Number(row.fulfillment_time_ms)
+  fulfillmentTimeMs: Number(row.fulfillment_time_ms),
 });
 
 const normalizedPricingQuoteAdapter = new DataAdapter<
@@ -102,10 +102,10 @@ export async function create(
   quote: Uninserted<PricingQuoteRow>,
   trx?: Knex.Transaction
 ): Promise<NormalizedPricingQuote> {
-  const TABLE_NAME = 'pricing_quotes';
+  const TABLE_NAME = "pricing_quotes";
   const [created]: [object | null] = await db(TABLE_NAME)
-    .insert(omit(quote, ['processes']))
-    .returning('*')
+    .insert(omit(quote, ["processes"]))
+    .returning("*")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
@@ -116,16 +116,16 @@ export async function create(
     return normalizedPricingQuoteAdapter.parse(created);
   }
 
-  throw new Error('There was a problem saving the pricing quote');
+  throw new Error("There was a problem saving the pricing quote");
 }
 
 export async function findMatchingOrCreateInput(
   input: Uninserted<PricingQuoteInputRow>
 ): Promise<PricingQuoteInputRow> {
-  const TABLE_NAME = 'pricing_inputs';
+  const TABLE_NAME = "pricing_inputs";
   const maybeMatch: PricingQuoteInputRow | null = await db(TABLE_NAME)
     .first()
-    .where(omit(input, ['id']));
+    .where(omit(input, ["id"]));
 
   if (maybeMatch) {
     return maybeMatch;
@@ -133,7 +133,7 @@ export async function findMatchingOrCreateInput(
 
   const [created]: [PricingQuoteInputRow] = await db(TABLE_NAME)
     .insert(input)
-    .returning('*');
+    .returning("*");
 
   return created;
 }
@@ -143,7 +143,7 @@ export async function findVersionValuesForRequest(
 ): Promise<PricingQuoteValues> {
   // tslint:disable-next-line: no-console
   console.log(
-    'findVersionValuesFromRequest:',
+    "findVersionValuesFromRequest:",
     JSON.stringify(request, null, 2)
   );
 
@@ -191,7 +191,7 @@ export async function findVersionValuesForRequest(
     processes,
     sample,
     type,
-    ...omit(pricingValues, 'createdAt', 'version')
+    ...omit(pricingValues, "createdAt", "version"),
   };
 }
 
@@ -227,7 +227,7 @@ export async function findLatestValuesForRequest(
     processes,
     sample,
     type,
-    ...omit(pricingValues, 'createdAt', 'version')
+    ...omit(pricingValues, "createdAt", "version"),
   };
 }
 
@@ -235,7 +235,7 @@ export async function createPricingProcesses(
   processRows: Uninserted<PricingProcessQuoteRow>[],
   trx?: Knex.Transaction
 ): Promise<PricingProcess[]> {
-  const TABLE_NAME = 'pricing_quote_processes';
+  const TABLE_NAME = "pricing_quote_processes";
   return Promise.all(
     processRows.map(
       async (
@@ -255,30 +255,28 @@ export async function createPricingProcesses(
 async function attachProcesses(
   quoteRow: PricingQuoteRow
 ): Promise<PricingQuote> {
-  const processes: object[] = await db('pricing_quote_processes')
-    .select('pricing_processes.*')
+  const processes: object[] = await db("pricing_quote_processes")
+    .select("pricing_processes.*")
     .leftJoin(
-      'pricing_processes',
-      'pricing_quote_processes.pricing_process_id',
-      'pricing_processes.id'
+      "pricing_processes",
+      "pricing_quote_processes.pricing_process_id",
+      "pricing_processes.id"
     )
-    .where({ 'pricing_quote_processes.pricing_quote_id': quoteRow.id });
+    .where({ "pricing_quote_processes.pricing_quote_id": quoteRow.id });
 
   return Object.assign(
     {
       processes: isEvery(isPricingProcessRow, processes)
         ? processes.map((p: PricingProcessRow) => processDataAdapter.parse(p))
-        : []
+        : [],
     },
     normalizedPricingQuoteAdapter.parse(quoteRow)
   );
 }
 
 export async function findById(id: string): Promise<PricingQuote | null> {
-  const TABLE_NAME = 'pricing_quotes';
-  const quote: object | null = await db(TABLE_NAME)
-    .first()
-    .where({ id });
+  const TABLE_NAME = "pricing_quotes";
+  const quote: object | null = await db(TABLE_NAME).first().where({ id });
 
   if (!quote || !isPricingQuoteRow(quote)) {
     return null;
@@ -290,10 +288,10 @@ export async function findById(id: string): Promise<PricingQuote | null> {
 export async function findByDesignId(
   designId: string
 ): Promise<PricingQuote[] | null> {
-  const TABLE_NAME = 'pricing_quotes';
+  const TABLE_NAME = "pricing_quotes";
   const quotes: object[] = await db(TABLE_NAME)
     .where({ design_id: designId })
-    .orderBy('created_at', 'DESC');
+    .orderBy("created_at", "DESC");
 
   if (!quotes.every(isPricingQuoteRow)) {
     return null;
@@ -305,8 +303,8 @@ export async function findByDesignId(
 export async function findByDesignIds(
   designIds: string[]
 ): Promise<PricingQuote[] | null> {
-  const TABLE_NAME = 'pricing_quotes';
-  const quotes: object[] = await db(TABLE_NAME).whereIn('design_id', designIds);
+  const TABLE_NAME = "pricing_quotes";
+  const quotes: object[] = await db(TABLE_NAME).whereIn("design_id", designIds);
 
   if (!quotes.every(isPricingQuoteRow)) {
     return null;
@@ -319,13 +317,13 @@ async function findCareLabel(
   units: number,
   version?: number
 ): Promise<PricingCareLabel> {
-  const TABLE_NAME = 'pricing_care_labels';
+  const TABLE_NAME = "pricing_care_labels";
   const careLabelRow: PricingCareLabelRow | null = await findAtVersionOrLatest<
     Promise<PricingCareLabelRow | null>
   >(TABLE_NAME, units, version);
 
   if (!careLabelRow) {
-    throw new InvalidDataError('Pricing care label does not exist!');
+    throw new InvalidDataError("Pricing care label does not exist!");
   }
 
   return validate(
@@ -337,7 +335,7 @@ async function findCareLabel(
 }
 
 async function findConstants(version?: number): Promise<PricingConstant> {
-  const TABLE_NAME = 'pricing_constants';
+  const TABLE_NAME = "pricing_constants";
   const constantRow: PricingConstantRow | null = await db(TABLE_NAME)
     .first()
     .modify((query: Knex.QueryBuilder) => {
@@ -345,10 +343,10 @@ async function findConstants(version?: number): Promise<PricingConstant> {
         query.where({ version });
       }
     })
-    .orderBy('created_at', 'desc');
+    .orderBy("created_at", "desc");
 
   if (!constantRow) {
-    throw new Error('Pricing constant could not be found!');
+    throw new Error("Pricing constant could not be found!");
   }
 
   return validate(
@@ -364,13 +362,13 @@ async function findProductMaterial(
   units: number,
   version?: number
 ): Promise<PricingProductMaterial> {
-  const TABLE_NAME = 'pricing_product_materials';
+  const TABLE_NAME = "pricing_product_materials";
   const materialRow: PricingProductMaterialRow | null = await findAtVersionOrLatest<
     Knex.QueryBuilder
   >(TABLE_NAME, units, version).where({ category });
 
   if (!materialRow) {
-    throw new Error('Pricing product material could not be found!');
+    throw new Error("Pricing product material could not be found!");
   }
 
   return validate(
@@ -387,13 +385,13 @@ async function findProductType(
   units: number,
   version?: number
 ): Promise<PricingProductType> {
-  const TABLE_NAME = 'pricing_product_types';
+  const TABLE_NAME = "pricing_product_types";
   const typeRow: PricingProductTypeRow | null = await findAtVersionOrLatest<
     Knex.QueryBuilder
   >(TABLE_NAME, units, version).where({ name, complexity });
 
   if (!typeRow) {
-    throw new Error('Pricing product type could not be found!');
+    throw new Error("Pricing product type could not be found!");
   }
 
   return validate(
@@ -409,7 +407,7 @@ async function findProcesses(
   units: number,
   version?: number
 ): Promise<PricingProcess[]> {
-  const TABLE_NAME = 'pricing_processes';
+  const TABLE_NAME = "pricing_processes";
   if (processes.length === 0) {
     return [];
   }
@@ -426,22 +424,22 @@ async function findProcesses(
         if (version) {
           modifyQuery.where({ version });
         } else {
-          modifyQuery.whereIn('version', db(TABLE_NAME).max('version'));
+          modifyQuery.whereIn("version", db(TABLE_NAME).max("version"));
         }
       })
       .whereIn(
-        'minimum_units',
+        "minimum_units",
         db(TABLE_NAME)
-          .where('minimum_units', '<=', units)
+          .where("minimum_units", "<=", units)
           .andWhere(process)
           .modify((modifyQuery: Knex.QueryBuilder) => {
             if (version) {
               modifyQuery.where({ version });
             } else {
-              modifyQuery.whereIn('version', db(TABLE_NAME).max('version'));
+              modifyQuery.whereIn("version", db(TABLE_NAME).max("version"));
             }
           })
-          .max('minimum_units')
+          .max("minimum_units")
       );
 
   const query = getProcessQuery(processes[0]);
@@ -463,7 +461,7 @@ Found processes: ${JSON.stringify(processRows, null, 4)}`);
   }
 
   return validateEvery(
-    'pricing_processes',
+    "pricing_processes",
     isPricingProcessRow,
     processDataAdapter,
     processes.map(
@@ -483,7 +481,7 @@ async function findProcessTimeline(
   if (processes.length === 0) {
     return null;
   }
-  const TABLE_NAME = 'pricing_process_timelines';
+  const TABLE_NAME = "pricing_process_timelines";
   const uniqueProcesses = uniqBy(
     processes,
     (process: Process): string => process.name
@@ -491,37 +489,37 @@ async function findProcessTimeline(
 
   const processTimelineRow = await db(TABLE_NAME)
     .select()
-    .where('unique_processes', '<=', uniqueProcesses)
+    .where("unique_processes", "<=", uniqueProcesses)
     .modify((modifyQuery: Knex.QueryBuilder) => {
       if (version) {
         modifyQuery.where({ version });
       } else {
-        modifyQuery.whereIn('version', db(TABLE_NAME).max('version'));
+        modifyQuery.whereIn("version", db(TABLE_NAME).max("version"));
       }
     })
     .whereIn(
-      'unique_processes',
+      "unique_processes",
       db(TABLE_NAME)
-        .where('unique_processes', '<=', uniqueProcesses)
-        .max('unique_processes')
+        .where("unique_processes", "<=", uniqueProcesses)
+        .max("unique_processes")
         .modify((modifyQuery: Knex.QueryBuilder) => {
           if (version) {
             modifyQuery.where({ version });
           } else {
-            modifyQuery.whereIn('version', db(TABLE_NAME).max('version'));
+            modifyQuery.whereIn("version", db(TABLE_NAME).max("version"));
           }
         })
     )
     .whereIn(
-      'minimum_units',
+      "minimum_units",
       db(TABLE_NAME)
-        .where('minimum_units', '<=', units)
-        .max('minimum_units')
+        .where("minimum_units", "<=", units)
+        .max("minimum_units")
         .modify((modifyQuery: Knex.QueryBuilder) => {
           if (version) {
             modifyQuery.where({ version });
           } else {
-            modifyQuery.whereIn('version', db(TABLE_NAME).max('version'));
+            modifyQuery.whereIn("version", db(TABLE_NAME).max("version"));
           }
         })
     )
@@ -545,13 +543,13 @@ async function findMargin(
   units: number,
   version?: number
 ): Promise<PricingMargin> {
-  const TABLE_NAME = 'pricing_margins';
+  const TABLE_NAME = "pricing_margins";
   const marginRow: PricingMarginRow | null = await findAtVersionOrLatest<
     Promise<PricingMarginRow | null>
   >(TABLE_NAME, units, version);
 
   if (!marginRow) {
-    throw new Error('Pricing margin does not exist!');
+    throw new Error("Pricing margin does not exist!");
   }
 
   return validate(TABLE_NAME, isPricingMarginRow, marginDataAdapter, marginRow);
@@ -568,9 +566,9 @@ function findAtVersionOrLatest<T>(
       if (version) {
         modifyQuery.where({ version });
       } else {
-        modifyQuery.whereIn('version', db(from).max('version'));
+        modifyQuery.whereIn("version", db(from).max("version"));
       }
     })
-    .andWhere('minimum_units', '<=', units)
-    .orderBy('minimum_units', 'desc');
+    .andWhere("minimum_units", "<=", units)
+    .orderBy("minimum_units", "desc");
 }

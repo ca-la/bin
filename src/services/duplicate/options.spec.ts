@@ -1,23 +1,23 @@
-import tape from 'tape';
-import uuid from 'node-uuid';
-import Knex from 'knex';
+import tape from "tape";
+import uuid from "node-uuid";
+import Knex from "knex";
 
-import db from '../../services/db';
-import { test } from '../../test-helpers/fresh';
-import createUser = require('../../test-helpers/create-user');
+import db from "../../services/db";
+import { test } from "../../test-helpers/fresh";
+import createUser = require("../../test-helpers/create-user");
 
-import { create as createOption } from '../../dao/product-design-options';
-import { findAndDuplicateOption } from './options';
-import generateAsset from '../../test-helpers/factories/asset';
+import { create as createOption } from "../../dao/product-design-options";
+import { findAndDuplicateOption } from "./options";
+import generateAsset from "../../test-helpers/factories/asset";
 
-test('findAndDuplicateOption without sub-resources', async (t: tape.Test) => {
+test("findAndDuplicateOption without sub-resources", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
   const optionId = uuid.v4();
   const optionData = {
     id: optionId,
-    title: 'some_random_title',
-    type: 'FABRIC',
-    userId: user.id
+    title: "some_random_title",
+    type: "FABRIC",
+    userId: user.id,
   };
   await createOption(optionData);
 
@@ -28,28 +28,28 @@ test('findAndDuplicateOption without sub-resources', async (t: tape.Test) => {
         id: duplicatedOption.id,
         title: duplicatedOption.title,
         type: duplicatedOption.type,
-        userId: duplicatedOption.userId
+        userId: duplicatedOption.userId,
       },
       {
         ...optionData,
-        id: duplicatedOption.id
+        id: duplicatedOption.id,
       },
-      'Duplicating an option returns the same option but with a new id'
+      "Duplicating an option returns the same option but with a new id"
     );
   });
 });
 
-test('findAndDuplicateOption with sub-resources', async (t: tape.Test) => {
+test("findAndDuplicateOption with sub-resources", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
   const imageId = uuid.v4();
   const imageData = {
-    description: '',
+    description: "",
     id: imageId,
-    mimeType: 'image/png',
+    mimeType: "image/png",
     originalHeightPx: 0,
     originalWidthPx: 0,
-    title: '',
-    userId: user.id
+    title: "",
+    userId: user.id,
   };
   await generateAsset(imageData);
 
@@ -57,9 +57,9 @@ test('findAndDuplicateOption with sub-resources', async (t: tape.Test) => {
   const optionData = {
     id: optionId,
     previewImageId: imageId,
-    title: 'some_random_title',
-    type: 'FABRIC',
-    userId: user.id
+    title: "some_random_title",
+    type: "FABRIC",
+    userId: user.id,
   };
   await createOption(optionData);
 
@@ -71,14 +71,14 @@ test('findAndDuplicateOption with sub-resources', async (t: tape.Test) => {
         previewImageId: duplicatedOption.previewImageId,
         title: duplicatedOption.title,
         type: duplicatedOption.type,
-        userId: duplicatedOption.userId
+        userId: duplicatedOption.userId,
       },
       {
         ...optionData,
         id: duplicatedOption.id,
-        previewImageId: imageId
+        previewImageId: imageId,
       },
-      'Duplicating an option returns the same option but with a new id'
+      "Duplicating an option returns the same option but with a new id"
     );
   });
 });

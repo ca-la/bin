@@ -1,9 +1,9 @@
-import { DesignAndVariantToShopifyIds } from '@cala/ts-lib';
-import { create as createShopifyProduct } from '../../shopify-products/dao';
-import { create as createShopifyVariant } from '../../shopify-variants/dao';
-import db from '../../../services/db';
-import Knex = require('knex');
-import uuid from 'node-uuid';
+import { DesignAndVariantToShopifyIds } from "@cala/ts-lib";
+import { create as createShopifyProduct } from "../../shopify-products/dao";
+import { create as createShopifyVariant } from "../../shopify-variants/dao";
+import db from "../../../services/db";
+import Knex = require("knex");
+import uuid from "node-uuid";
 
 export async function create(
   data: DesignAndVariantToShopifyIds
@@ -17,7 +17,7 @@ export async function create(
         deletedAt: null,
         designId,
         id: uuid.v4(),
-        shopifyId
+        shopifyId,
       },
       trx
     );
@@ -29,7 +29,7 @@ export async function create(
           id: uuid.v4(),
           shopifyId: data.variants[variantId],
           shopifyProductId: shopifyProduct.id,
-          variantId
+          variantId,
         },
         trx
       );

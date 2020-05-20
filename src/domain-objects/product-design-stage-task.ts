@@ -1,5 +1,5 @@
-import DataAdapter from '../services/data-adapter';
-import { hasProperties } from '../services/require-properties';
+import DataAdapter from "../services/data-adapter";
+import { hasProperties } from "../services/require-properties";
 
 /**
  * @typedef {object} ProductDesignStageTask A joining row between product-design-stages and tasks
@@ -32,5 +32,5 @@ export const dataAdapter = new DataAdapter<
 export function isDesignStageTaskRow(
   row: object
 ): row is ProductDesignStageTaskRow {
-  return hasProperties(row, 'id', 'task_id', 'created_at', 'design_stage_id');
+  return hasProperties(row, "id", "task_id", "created_at", "design_stage_id");
 }

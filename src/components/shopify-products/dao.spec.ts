@@ -1,18 +1,18 @@
-import * as Knex from 'knex';
+import * as Knex from "knex";
 
-import db from '../../services/db';
-import { test, Test } from '../../test-helpers/fresh';
-import * as ShopifyProductsDAO from './dao';
-import createDesign from '../../services/create-design';
-import createUser from '../../test-helpers/create-user';
-import uuid from 'node-uuid';
+import db from "../../services/db";
+import { test, Test } from "../../test-helpers/fresh";
+import * as ShopifyProductsDAO from "./dao";
+import createDesign from "../../services/create-design";
+import createUser from "../../test-helpers/create-user";
+import uuid from "node-uuid";
 
-test('ShopifyProductsDAO can save and retrieve products', async (t: Test) => {
+test("ShopifyProductsDAO can save and retrieve products", async (t: Test) => {
   const { user } = await createUser();
   const design = await createDesign({
-    title: 'test',
-    productType: 'product',
-    userId: user.id
+    title: "test",
+    productType: "product",
+    userId: user.id,
   });
 
   await db.transaction(async (trx: Knex.Transaction) => {
@@ -22,7 +22,7 @@ test('ShopifyProductsDAO can save and retrieve products', async (t: Test) => {
         deletedAt: null,
         designId: design.id,
         id: uuid.v4(),
-        shopifyId: '12345'
+        shopifyId: "12345",
       },
       trx
     );
@@ -32,11 +32,11 @@ test('ShopifyProductsDAO can save and retrieve products', async (t: Test) => {
       trx
     );
 
-    t.deepEqual(created, found, 'objects are the same by id');
+    t.deepEqual(created, found, "objects are the same by id");
     t.deepEqual(
       [created],
       foundByShopifyId,
-      'objects are the same by shopify id'
+      "objects are the same by shopify id"
     );
     return;
   });

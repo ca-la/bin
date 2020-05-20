@@ -1,6 +1,6 @@
-import { template } from 'lodash';
-import emailHtml from './template';
-import { STUDIO_HOST } from '../../config';
+import { template } from "lodash";
+import emailHtml from "./template";
+import { STUDIO_HOST } from "../../config";
 
 export default function passwordReset(data: {
   sessionId: string;

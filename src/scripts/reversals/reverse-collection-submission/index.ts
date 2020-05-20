@@ -1,5 +1,5 @@
-import Logger = require('../../../services/logger');
-import { reverseSubmissionRecords } from './reverse';
+import Logger = require("../../../services/logger");
+import { reverseSubmissionRecords } from "./reverse";
 
 reverseSubmissionRecords(process.argv[2])
   .then(() => {

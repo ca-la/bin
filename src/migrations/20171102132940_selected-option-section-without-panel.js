@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 exports.up = function up(knex) {
   // In the future we'll be able to make this `not null` but there's

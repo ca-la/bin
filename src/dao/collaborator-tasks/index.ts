@@ -1,35 +1,35 @@
-import Knex from 'knex';
+import Knex from "knex";
 
-import db from '../../services/db';
+import db from "../../services/db";
 import CollaboratorTask, {
   CollaboratorTaskRow,
   dataAdapter,
-  isCollaboratorTaskRow
-} from '../../domain-objects/collaborator-task';
-import first from '../../services/first';
+  isCollaboratorTaskRow,
+} from "../../domain-objects/collaborator-task";
+import first from "../../services/first";
 import Collaborator, {
   CollaboratorWithUser,
   CollaboratorWithUserRow,
   dataWithUserAdapter as collaboratorDataAdapter,
-  isCollaboratorWithUserRow
-} from '../../components/collaborators/domain-objects/collaborator';
-import { validate, validateEvery } from '../../services/validate-from-db';
-import { ALIASES, getBuilder } from '../../components/collaborators/view';
+  isCollaboratorWithUserRow,
+} from "../../components/collaborators/domain-objects/collaborator";
+import { validate, validateEvery } from "../../services/validate-from-db";
+import { ALIASES, getBuilder } from "../../components/collaborators/view";
 
-const TABLE_NAME = 'collaborator_tasks';
+const TABLE_NAME = "collaborator_tasks";
 
 export async function create(
   data: Unsaved<CollaboratorTask>
 ): Promise<CollaboratorTask> {
   const rowData = dataAdapter.forInsertion({
-    ...data
+    ...data,
   });
   const created = await db(TABLE_NAME)
-    .insert(rowData, '*')
+    .insert(rowData, "*")
     .then((rows: CollaboratorTaskRow[]) => first<CollaboratorTaskRow>(rows));
 
   if (!created) {
-    throw new Error('Failed to create rows');
+    throw new Error("Failed to create rows");
   }
 
   return validate<CollaboratorTaskRow, CollaboratorTask>(
@@ -54,18 +54,18 @@ export async function createAll(
       const { taskId, collaborators } = collaboratorTask;
       if (collaborators.length === 0) {
         throw new Error(
-          'At least one collaborator is needed for task assignment'
+          "At least one collaborator is needed for task assignment"
         );
       }
 
       return dataAdapter.forInsertion({
         collaboratorId: collaborators[0].id,
-        taskId
+        taskId,
       });
     }
   );
   const createdRows = await db(TABLE_NAME)
-    .insert(dataRows, '*')
+    .insert(dataRows, "*")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
@@ -86,17 +86,17 @@ export async function createAllByCollaboratorIdsAndTaskId(
   trx?: Knex.Transaction
 ): Promise<CollaboratorTask[]> {
   if (collaboratorIds.length === 0) {
-    throw new Error('At least one collaborator is needed for task assignment');
+    throw new Error("At least one collaborator is needed for task assignment");
   }
 
   const dataRows = collaboratorIds.map((collaboratorId: string) => {
     return dataAdapter.forInsertion({
       collaboratorId,
-      taskId
+      taskId,
     });
   });
   const createdRows: CollaboratorTaskRow[] = await db(TABLE_NAME)
-    .insert(dataRows, '*')
+    .insert(dataRows, "*")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
@@ -116,9 +116,9 @@ export async function findAllByTaskId(
   taskId: string
 ): Promise<CollaboratorTask[]> {
   const collaboratorTasks: CollaboratorTaskRow[] = await trx(TABLE_NAME)
-    .select('*')
+    .select("*")
     .where({ task_id: taskId })
-    .orderBy('created_at', 'desc');
+    .orderBy("created_at", "desc");
 
   return validateEvery<CollaboratorTaskRow, CollaboratorTask>(
     TABLE_NAME,
@@ -133,12 +133,12 @@ export async function findAllCollaboratorsByTaskId(
 ): Promise<Collaborator[]> {
   const collaborators: CollaboratorWithUserRow[] = await getBuilder()
     .innerJoin(
-      'collaborator_tasks',
-      'collaborator_tasks.collaborator_id',
+      "collaborator_tasks",
+      "collaborator_tasks.collaborator_id",
       ALIASES.collaboratorId
     )
-    .where({ 'collaborator_tasks.task_id': taskId })
-    .orderBy('collaborator_tasks.created_at', 'desc');
+    .where({ "collaborator_tasks.task_id": taskId })
+    .orderBy("collaborator_tasks.created_at", "desc");
 
   return validateEvery<CollaboratorWithUserRow, CollaboratorWithUser>(
     TABLE_NAME,
@@ -153,7 +153,7 @@ export async function deleteAllByCollaboratorIdsAndTaskId(
   taskId: string
 ): Promise<number> {
   return await db(TABLE_NAME)
-    .whereIn('collaborator_id', collaboratorIds)
+    .whereIn("collaborator_id", collaboratorIds)
     .where({ task_id: taskId })
     .del();
 }

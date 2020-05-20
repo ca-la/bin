@@ -1,6 +1,6 @@
-import { NodeType } from '@cala/ts-lib/dist/phidias';
-import { hasProperties } from '@cala/ts-lib';
-import DataAdapter from '../../../services/data-adapter';
+import { NodeType } from "@cala/ts-lib/dist/phidias";
+import { hasProperties } from "@cala/ts-lib";
+import DataAdapter from "../../../services/data-adapter";
 
 export default interface Node {
   id: string;
@@ -39,7 +39,7 @@ function encode(row: NodeRow): Node {
     y: Number(row.y),
     ordering: row.ordering,
     title: row.title,
-    type: row.type
+    type: row.type,
   };
 }
 
@@ -54,7 +54,7 @@ function decode(data: Node): NodeRow {
     y: String(data.y),
     ordering: data.ordering,
     title: data.title,
-    type: data.type
+    type: data.type,
   };
 }
 
@@ -63,31 +63,31 @@ export const dataAdapter = new DataAdapter<NodeRow, Node>(encode, decode);
 export function isNode(obj: object): obj is Node {
   return hasProperties(
     obj,
-    'id',
-    'createdAt',
-    'createdBy',
-    'deletedAt',
-    'parentId',
-    'x',
-    'y',
-    'ordering',
-    'title',
-    'type'
+    "id",
+    "createdAt",
+    "createdBy",
+    "deletedAt",
+    "parentId",
+    "x",
+    "y",
+    "ordering",
+    "title",
+    "type"
   );
 }
 
 export function isNodeRow(row: object): row is NodeRow {
   return hasProperties(
     row,
-    'id',
-    'created_at',
-    'created_by',
-    'deleted_at',
-    'parent_id',
-    'x',
-    'y',
-    'ordering',
-    'title',
-    'type'
+    "id",
+    "created_at",
+    "created_by",
+    "deleted_at",
+    "parent_id",
+    "x",
+    "y",
+    "ordering",
+    "title",
+    "type"
   );
 }

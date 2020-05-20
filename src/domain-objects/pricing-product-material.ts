@@ -1,5 +1,5 @@
-import DataAdapter from '../services/data-adapter';
-import { hasProperties } from '../services/require-properties';
+import DataAdapter from "../services/data-adapter";
+import { hasProperties } from "../services/require-properties";
 
 /**
  * @typedef {object} PricingProductMaterial The material cost by category
@@ -39,11 +39,11 @@ export function isPricingProductMaterialRow(
 ): row is PricingProductMaterialRow {
   return hasProperties(
     row,
-    'id',
-    'version',
-    'minimum_units',
-    'category',
-    'unit_cents',
-    'created_at'
+    "id",
+    "version",
+    "minimum_units",
+    "category",
+    "unit_cents",
+    "created_at"
   );
 }

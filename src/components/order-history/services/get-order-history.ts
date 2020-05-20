@@ -1,14 +1,14 @@
 import {
   generatePreviewLinks,
-  ThumbnailAndPreviewLinks
-} from '../../../services/attach-asset-links';
-import { findByInvoiceId as findPaymentsByInvoiceId } from '../../invoice-payments/dao';
-import { InvoicePayment } from '../../invoice-payments/domain-object';
-import { isFinanced } from './is-financed';
-import { getInvoicesByUser } from '../../../dao/invoices/search';
-import { getLineItemsWithMetaByInvoiceId } from '../../../dao/line-items';
-import { LineItemWithMeta } from '../../../domain-objects/line-item';
-import Invoice = require('../../../domain-objects/invoice');
+  ThumbnailAndPreviewLinks,
+} from "../../../services/attach-asset-links";
+import { findByInvoiceId as findPaymentsByInvoiceId } from "../../invoice-payments/dao";
+import { InvoicePayment } from "../../invoice-payments/domain-object";
+import { isFinanced } from "./is-financed";
+import { getInvoicesByUser } from "../../../dao/invoices/search";
+import { getLineItemsWithMetaByInvoiceId } from "../../../dao/line-items";
+import { LineItemWithMeta } from "../../../domain-objects/line-item";
+import Invoice = require("../../../domain-objects/invoice");
 
 export interface InvoiceWithMeta extends Invoice {
   amountCreditApplied: number;
@@ -40,7 +40,7 @@ export async function getOrderHistory(options: {
       (lineItem: LineItemWithMeta): LineItemWithImageLinks => {
         return {
           ...lineItem,
-          imageLinks: generatePreviewLinks(lineItem.designImageIds || [])
+          imageLinks: generatePreviewLinks(lineItem.designImageIds || []),
         };
       }
     );
@@ -68,7 +68,7 @@ export async function getOrderHistory(options: {
       isPayLater,
       lineItems: lineItemsWithImageLinks,
       payments: invoicePayments,
-      totalUnits
+      totalUnits,
     });
   }
 

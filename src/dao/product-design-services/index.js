@@ -1,42 +1,39 @@
-'use strict';
+"use strict";
 
-const uuid = require('node-uuid');
-const rethrow = require('pg-rethrow');
+const uuid = require("node-uuid");
+const rethrow = require("pg-rethrow");
 
-const compact = require('../../services/compact');
-const db = require('../../services/db');
-const filterError = require('../../services/filter-error');
-const first = require('../../services/first').default;
-const InvalidDataError = require('../../errors/invalid-data');
-const ProductDesignService = require('../../domain-objects/product-design-service');
+const compact = require("../../services/compact");
+const db = require("../../services/db");
+const filterError = require("../../services/filter-error");
+const first = require("../../services/first").default;
+const InvalidDataError = require("../../errors/invalid-data");
+const ProductDesignService = require("../../domain-objects/product-design-service");
 
 const { dataMapper } = ProductDesignService;
 
-const TABLE_NAME = 'product_design_services';
+const TABLE_NAME = "product_design_services";
 
-const instantiate = data => new ProductDesignService(data);
-const maybeInstantiate = data =>
+const instantiate = (data) => new ProductDesignService(data);
+const maybeInstantiate = (data) =>
   (data && new ProductDesignService(data)) || null;
 
 function deleteForDesign(trx, designId) {
-  return db(TABLE_NAME)
-    .transacting(trx)
-    .where({ design_id: designId })
-    .del();
+  return db(TABLE_NAME).transacting(trx).where({ design_id: designId }).del();
 }
 
 function createForDesign(trx, designId, services, oldServices) {
-  const rowsData = services.map(data => {
+  const rowsData = services.map((data) => {
     const userData = Object.assign({}, data, {
       id: uuid.v4(),
-      designId
+      designId,
     });
 
     // `oldServices` is the list of previous services, if any.
     // If we had a service in the previous list, which had data that's now
     // missing, fill it in.
     const previousService = oldServices.find(
-      service => service.serviceId === data.serviceId
+      (service) => service.serviceId === data.serviceId
     );
 
     if (previousService) {
@@ -61,20 +58,20 @@ function createForDesign(trx, designId, services, oldServices) {
   return db(TABLE_NAME)
     .transacting(trx)
     .insert(rowsData)
-    .returning('*')
-    .then(inserted => inserted.map(instantiate))
+    .returning("*")
+    .then((inserted) => inserted.map(instantiate))
     .catch(rethrow)
     .catch(
-      filterError(rethrow.ERRORS.NotNullViolation, err => {
-        if (err.column === 'service_id') {
-          throw new InvalidDataError('Service ID must be provided');
+      filterError(rethrow.ERRORS.NotNullViolation, (err) => {
+        if (err.column === "service_id") {
+          throw new InvalidDataError("Service ID must be provided");
         }
       })
     )
     .catch(
-      filterError(rethrow.ERRORS.ForeignKeyViolation, err => {
-        if (err.constraint === 'product_design_services_service_id_fkey') {
-          throw new InvalidDataError('Invalid service ID');
+      filterError(rethrow.ERRORS.ForeignKeyViolation, (err) => {
+        if (err.constraint === "product_design_services_service_id_fkey") {
+          throw new InvalidDataError("Invalid service ID");
         }
         throw err;
       })
@@ -84,17 +81,17 @@ function createForDesign(trx, designId, services, oldServices) {
 function findByDesignId(designId) {
   return db(TABLE_NAME)
     .where({
-      design_id: designId
+      design_id: designId,
     })
-    .orderBy('created_at', 'desc')
+    .orderBy("created_at", "desc")
     .catch(rethrow)
-    .then(services => services.map(instantiate));
+    .then((services) => services.map(instantiate));
 }
 
 async function replaceForDesign(designId, services) {
   const oldServices = await findByDesignId(designId);
 
-  return db.transaction(trx => {
+  return db.transaction((trx) => {
     deleteForDesign(trx, designId)
       .then(() => {
         if (services.length > 0) {
@@ -111,20 +108,20 @@ async function replaceForDesign(designId, services) {
 function findByUserId(userId) {
   return db(TABLE_NAME)
     .where({
-      vendor_user_id: userId
+      vendor_user_id: userId,
     })
-    .orderBy('created_at', 'desc')
+    .orderBy("created_at", "desc")
     .catch(rethrow)
-    .then(services => services.map(instantiate));
+    .then((services) => services.map(instantiate));
 }
 
 function findByDesignAndUser(designId, userId) {
   return db(TABLE_NAME)
     .where({
       vendor_user_id: userId,
-      design_id: designId
+      design_id: designId,
     })
-    .then(services => services.map(instantiate))
+    .then((services) => services.map(instantiate))
     .catch(rethrow);
 }
 
@@ -133,7 +130,7 @@ function update(id, data) {
 
   return db(TABLE_NAME)
     .where({ id })
-    .update(rowData, '*')
+    .update(rowData, "*")
     .then(first)
     .then(maybeInstantiate)
     .catch(rethrow);
@@ -144,5 +141,5 @@ module.exports = {
   findByDesignId,
   findByUserId,
   replaceForDesign,
-  update
+  update,
 };

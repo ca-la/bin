@@ -1,6 +1,6 @@
-import { pick } from 'lodash';
-import db from '../../services/db';
-import Knex from 'knex';
+import { pick } from "lodash";
+import db from "../../services/db";
+import Knex from "knex";
 import Comment, {
   BaseComment,
   baseDataAdapter,
@@ -8,19 +8,19 @@ import Comment, {
   dataAdapter,
   INSERTABLE_COLUMNS,
   isCommentRow,
-  UPDATABLE_COLUMNS
-} from '../../components/comments/domain-object';
-import { validate, validateEvery } from '../../services/validate-from-db';
+  UPDATABLE_COLUMNS,
+} from "../../components/comments/domain-object";
+import { validate, validateEvery } from "../../services/validate-from-db";
 
-const TABLE_NAME = 'comments';
+const TABLE_NAME = "comments";
 
 export function queryComments(trx?: Knex.Transaction): Knex.QueryBuilder {
   return db(TABLE_NAME)
     .select([
-      'comments.*',
-      { user_name: 'users.name' },
-      { user_email: 'users.email' },
-      { user_role: 'users.role' }
+      "comments.*",
+      { user_name: "users.name" },
+      { user_email: "users.email" },
+      { user_role: "users.role" },
     ])
     .select(
       db.raw(`
@@ -29,16 +29,16 @@ export function queryComments(trx?: Knex.Transaction): Knex.QueryBuilder {
         '[]'
       ) as attachments`)
     )
-    .join('users', 'users.id', 'comments.user_id')
+    .join("users", "users.id", "comments.user_id")
     .leftJoin(
-      'comment_attachments',
-      'comment_attachments.comment_id',
-      'comments.id'
+      "comment_attachments",
+      "comment_attachments.comment_id",
+      "comments.id"
     )
-    .leftJoin('assets', 'assets.id', 'comment_attachments.asset_id')
-    .where({ 'comments.deleted_at': null })
-    .groupBy('comments.id', 'users.name', 'users.email', 'users.role')
-    .orderBy('created_at', 'asc')
+    .leftJoin("assets", "assets.id", "comment_attachments.asset_id")
+    .where({ "comments.deleted_at": null })
+    .groupBy("comments.id", "users.name", "users.email", "users.role")
+    .orderBy("created_at", "asc")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
@@ -50,9 +50,7 @@ export function queryById(
   id: string,
   trx?: Knex.Transaction
 ): Knex.QueryBuilder {
-  return queryComments(trx)
-    .where({ 'comments.id': id })
-    .first();
+  return queryComments(trx).where({ "comments.id": id }).first();
 }
 
 export async function create(
@@ -73,7 +71,7 @@ export async function create(
   const comment: CommentRow | undefined = await queryById(data.id, trx);
 
   if (!comment) {
-    throw new Error('There was a problem saving the comment');
+    throw new Error("There was a problem saving the comment");
   }
 
   return validate<CommentRow, Comment>(
@@ -107,7 +105,7 @@ export async function findByParentId(
   parentId: string
 ): Promise<Comment[]> {
   const comments = await queryComments(trx).where({
-    'comments.parent_comment_id': parentId
+    "comments.parent_comment_id": parentId,
   });
 
   return validateEvery<CommentRow, Comment>(
@@ -138,7 +136,7 @@ export async function update(
   const comment: CommentRow | undefined = await queryById(data.id, trx);
 
   if (!comment) {
-    throw new Error('There was a problem saving the comment');
+    throw new Error("There was a problem saving the comment");
   }
 
   return validate<CommentRow, Comment>(

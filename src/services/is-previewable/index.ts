@@ -1,5 +1,5 @@
-import { ACCEPTED_IMAGE_TYPES } from '@cala/ts-lib';
-import { getExtension } from '../get-extension';
+import { ACCEPTED_IMAGE_TYPES } from "@cala/ts-lib";
+import { getExtension } from "../get-extension";
 
 /**
  * Determines whether or not the supplied mimeType is previewable by the app.

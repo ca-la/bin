@@ -1,13 +1,13 @@
-import * as Knex from 'knex';
-import first from '../../../services/first';
+import * as Knex from "knex";
+import first from "../../../services/first";
 import StorefrontUser, {
   dataAdapter,
   isStorefrontUserRow,
-  StorefrontUserRow
-} from './domain-object';
-import { validate } from '../../../services/validate-from-db';
+  StorefrontUserRow,
+} from "./domain-object";
+import { validate } from "../../../services/validate-from-db";
 
-const TABLE_NAME = 'storefront_users';
+const TABLE_NAME = "storefront_users";
 
 export async function create(options: {
   data: StorefrontUser;
@@ -17,11 +17,11 @@ export async function create(options: {
   const rowData = dataAdapter.forInsertion(data);
   const storefrontUser = await trx(TABLE_NAME)
     .insert(rowData)
-    .returning('*')
+    .returning("*")
     .then((storefrontUsers: StorefrontUserRow[]) => first(storefrontUsers));
 
   if (!storefrontUser) {
-    throw new Error('There was a problem saving the StorefrontUser');
+    throw new Error("There was a problem saving the StorefrontUser");
   }
 
   return validate<StorefrontUserRow, StorefrontUser>(

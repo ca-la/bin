@@ -1,18 +1,18 @@
-import Knex from 'knex';
-import Router from 'koa-router';
+import Knex from "knex";
+import Router from "koa-router";
 
-import requireAuth from '../../middleware/require-auth';
-import { findByApprovalStepId } from '../../dao/task-events';
-import { IOTask, taskEventFromIO } from '../../domain-objects/task-event';
-import createTask from '../../services/create-task';
-import { requireQueryParam } from '../../middleware/require-query-param';
+import requireAuth from "../../middleware/require-auth";
+import { findByApprovalStepId } from "../../dao/task-events";
+import { IOTask, taskEventFromIO } from "../../domain-objects/task-event";
+import createTask from "../../services/create-task";
+import { requireQueryParam } from "../../middleware/require-query-param";
 import {
   canAccessDesignInState,
   canEditDesign,
-  requireDesignIdBy
-} from '../../middleware/can-access-design';
-import * as approvalStepDAO from '../approval-steps/dao';
-import db from '../../services/db';
+  requireDesignIdBy,
+} from "../../middleware/can-access-design";
+import * as approvalStepDAO from "../approval-steps/dao";
+import db from "../../services/db";
 
 const router = new Router();
 
@@ -25,7 +25,7 @@ function* createApprovalStepTask(
 ): Iterator<any, any, any> {
   const { approvalStepId } = this.request.body;
   if (!approvalStepId) {
-    this.throw(400, 'approvalStepId is missing');
+    this.throw(400, "approvalStepId is missing");
   }
 
   const taskId = this.request.body.id;
@@ -55,10 +55,10 @@ function* getApprovalStepTasks(this: AuthedContext): Iterator<any, any, any> {
 const fetchDesignByApprovalStepTask = (
   getApprovalStepId: (ctx: AuthedContext<IOTask>) => string
 ): ((this: AuthedContext<any>) => Promise<string>) =>
-  async function(this: AuthedContext<IOTask>): Promise<string> {
+  async function (this: AuthedContext<IOTask>): Promise<string> {
     const approvalStepId = getApprovalStepId(this);
     if (!approvalStepId) {
-      this.throw(400, 'approvalStepId is missing');
+      this.throw(400, "approvalStepId is missing");
     }
     const approvalStep = await db.transaction((trx: Knex.Transaction) =>
       approvalStepDAO.findById(trx, approvalStepId)
@@ -67,9 +67,9 @@ const fetchDesignByApprovalStepTask = (
   };
 
 router.get(
-  '/',
+  "/",
   requireAuth,
-  requireQueryParam<ApprovalStepTaskQuery>('approvalStepId'),
+  requireQueryParam<ApprovalStepTaskQuery>("approvalStepId"),
   requireDesignIdBy<IOTask>(
     fetchDesignByApprovalStepTask(
       (ctx: AuthedContext<IOTask>): string => ctx.query.approvalStepId
@@ -79,17 +79,15 @@ router.get(
   getApprovalStepTasks
 );
 router.post(
-  '/',
+  "/",
   requireAuth,
   requireDesignIdBy<IOTask>(
-    fetchDesignByApprovalStepTask(
-      (ctx: AuthedContext<IOTask>): string => {
-        if (!ctx.request.body.approvalStepId) {
-          ctx.throw(400, 'Missing approvalStepId');
-        }
-        return ctx.request.body.approvalStepId || '';
+    fetchDesignByApprovalStepTask((ctx: AuthedContext<IOTask>): string => {
+      if (!ctx.request.body.approvalStepId) {
+        ctx.throw(400, "Missing approvalStepId");
       }
-    )
+      return ctx.request.body.approvalStepId || "";
+    })
   ),
   canAccessDesignInState,
   canEditDesign,

@@ -1,18 +1,18 @@
-'use strict';
+"use strict";
 
-const uuid = require('node-uuid');
-const rethrow = require('pg-rethrow');
+const uuid = require("node-uuid");
+const rethrow = require("pg-rethrow");
 
-const compact = require('../../services/compact');
-const db = require('../../services/db');
-const first = require('../../services/first').default;
-const ProductDesignEvent = require('../../domain-objects/product-design-event');
+const compact = require("../../services/compact");
+const db = require("../../services/db");
+const first = require("../../services/first").default;
+const ProductDesignEvent = require("../../domain-objects/product-design-event");
 
 const { dataMapper } = ProductDesignEvent;
 
-const instantiate = data => new ProductDesignEvent(data);
+const instantiate = (data) => new ProductDesignEvent(data);
 
-const TABLE_NAME = 'product_design_events';
+const TABLE_NAME = "product_design_events";
 
 async function create(data) {
   const rowData = Object.assign(
@@ -22,7 +22,7 @@ async function create(data) {
   );
 
   return db(TABLE_NAME)
-    .insert(rowData, '*')
+    .insert(rowData, "*")
     .then(first)
     .then(instantiate)
     .catch(rethrow);
@@ -31,14 +31,14 @@ async function create(data) {
 function findByDesignId(designId) {
   return db(TABLE_NAME)
     .where({
-      design_id: designId
+      design_id: designId,
     })
-    .orderBy('created_at', 'desc')
-    .then(events => events.map(instantiate))
+    .orderBy("created_at", "desc")
+    .then((events) => events.map(instantiate))
     .catch(rethrow);
 }
 
 module.exports = {
   create,
-  findByDesignId
+  findByDesignId,
 };

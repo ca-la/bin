@@ -1,27 +1,27 @@
-'use strict';
+"use strict";
 
-const DesignEventsDAO = require('../../../dao/design-events');
-const NotificationsService = require('../../../services/create-notifications');
-const User = require('../../users/domain-object');
-const db = require('../../../services/db');
+const DesignEventsDAO = require("../../../dao/design-events");
+const NotificationsService = require("../../../services/create-notifications");
+const User = require("../../users/domain-object");
+const db = require("../../../services/db");
 
 function isAllowedEventType(role, event) {
   if (!event || (event && !event.type)) {
     return false;
   }
 
-  const DESIGNER_ALLOWED_EVENT_TYPES = ['SUBMIT_DESIGN', 'COMMIT_QUOTE'];
+  const DESIGNER_ALLOWED_EVENT_TYPES = ["SUBMIT_DESIGN", "COMMIT_QUOTE"];
   const PARTNER_ALLOWED_EVENT_TYPES = [
-    'ACCEPT_SERVICE_BID',
-    'REJECT_SERVICE_BID'
+    "ACCEPT_SERVICE_BID",
+    "REJECT_SERVICE_BID",
   ];
   const ADMIN_ALLOWED_EVENT_TYPES = [
     ...DESIGNER_ALLOWED_EVENT_TYPES,
     ...PARTNER_ALLOWED_EVENT_TYPES,
-    'BID_DESIGN',
-    'REJECT_DESIGN',
-    'COMMIT_COST_INPUTS',
-    'REMOVE_PARTNER'
+    "BID_DESIGN",
+    "REJECT_DESIGN",
+    "COMMIT_COST_INPUTS",
+    "REMOVE_PARTNER",
   ];
 
   const isAdmin = role === User.ROLES.admin;
@@ -45,25 +45,25 @@ function* addDesignEvent() {
   this.assert(
     designEvent.id === this.params.eventId,
     400,
-    'ID in route does not match ID in request body'
+    "ID in route does not match ID in request body"
   );
 
   const eventData = {
     ...designEvent,
     actorId: this.state.userId,
-    designId: this.params.designId
+    designId: this.params.designId,
   };
 
-  const added = yield db.transaction(async trx =>
+  const added = yield db.transaction(async (trx) =>
     DesignEventsDAO.create(trx, eventData)
   );
 
-  if (added.type === 'ACCEPT_SERVICE_BID') {
+  if (added.type === "ACCEPT_SERVICE_BID") {
     NotificationsService.sendPartnerAcceptServiceBidNotification(
       this.params.designId,
       this.state.userId
     );
-  } else if (added.type === 'REJECT_SERVICE_BID') {
+  } else if (added.type === "REJECT_SERVICE_BID") {
     NotificationsService.sendPartnerRejectServiceBidNotification(
       this.params.designId,
       this.state.userId
@@ -81,10 +81,10 @@ function* addDesignEvents() {
     403
   );
 
-  const eventData = designEvents.map(event => ({
+  const eventData = designEvents.map((event) => ({
     ...event,
     actorId: this.state.userId,
-    designId: this.params.designId
+    designId: this.params.designId,
   }));
 
   const added = yield DesignEventsDAO.createAll(eventData);
@@ -103,5 +103,5 @@ function* getDesignEvents() {
 module.exports = {
   addDesignEvent,
   addDesignEvents,
-  getDesignEvents
+  getDesignEvents,
 };

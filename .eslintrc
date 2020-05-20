@@ -15,11 +15,12 @@
     "no-underscore-dangle": 0,
     "no-unused-vars": [2, { "varsIgnorePattern": "^_.+$" }],
     "no-await-in-loop": 0,
-    "comma-dangle": [2, "never"],
+    "comma-dangle": 0,
     "operator-linebreak": 0,
     "implicit-arrow-linebreak": 0,
     "no-console": 2,
     "function-paren-newline": 0,
+    "array-bracket-spacing": 0,
     "no-restricted-syntax": [
       "error",
       "ForInStatement",
@@ -28,6 +29,7 @@
     ],
     "eqeqeq": ["error", "always"],
     "arrow-parens": 0,
-    "object-curly-newline": 0
+    "object-curly-newline": 0,
+    "quotes": 0
   }
 }

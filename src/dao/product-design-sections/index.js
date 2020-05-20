@@ -1,25 +1,26 @@
-'use strict';
+"use strict";
 
-const uuid = require('node-uuid');
-const rethrow = require('pg-rethrow');
+const uuid = require("node-uuid");
+const rethrow = require("pg-rethrow");
 
-const compact = require('../../services/compact');
-const db = require('../../services/db');
-const first = require('../../services/first').default;
-const InvalidDataError = require('../../errors/invalid-data');
-const ProductDesignSection = require('../../domain-objects/product-design-section');
+const compact = require("../../services/compact");
+const db = require("../../services/db");
+const first = require("../../services/first").default;
+const InvalidDataError = require("../../errors/invalid-data");
+const ProductDesignSection = require("../../domain-objects/product-design-section");
 
-const instantiate = data => new ProductDesignSection(data);
+const instantiate = (data) => new ProductDesignSection(data);
 
 function create(data) {
   if (
-    data.type === 'FLAT_SKETCH' &&
-    (!data.templateName && !data.customImageId)
+    data.type === "FLAT_SKETCH" &&
+    !data.templateName &&
+    !data.customImageId
   ) {
-    throw new InvalidDataError('Template name or custom image ID required');
+    throw new InvalidDataError("Template name or custom image ID required");
   }
 
-  return db('product_design_sections')
+  return db("product_design_sections")
     .insert(
       {
         template_name: data.templateName,
@@ -30,9 +31,9 @@ function create(data) {
         position: data.position,
         custom_data: data.customData,
         id: uuid.v4(),
-        type: data.type
+        type: data.type,
       },
-      '*'
+      "*"
     )
     .catch(rethrow)
     .then(first)
@@ -40,7 +41,7 @@ function create(data) {
 }
 
 function update(sectionId, data) {
-  return db('product_design_sections')
+  return db("product_design_sections")
     .where({ id: sectionId, deleted_at: null })
     .update(
       compact({
@@ -50,41 +51,41 @@ function update(sectionId, data) {
         custom_data: data.customData,
         panel_data: data.panelData,
         position: data.position,
-        type: data.type
+        type: data.type,
       }),
-      '*'
+      "*"
     )
     .then(first)
     .then(instantiate);
 }
 
 function deleteByIdTrx(trx, id) {
-  return db('product_design_sections')
+  return db("product_design_sections")
     .transacting(trx)
     .where({ id, deleted_at: null })
     .update(
       {
-        deleted_at: new Date()
+        deleted_at: new Date(),
       },
-      '*'
+      "*"
     )
     .then(first)
     .then(instantiate);
 }
 
 function findByDesignId(designId) {
-  return db('product_design_sections')
+  return db("product_design_sections")
     .where({
       design_id: designId,
-      deleted_at: null
+      deleted_at: null,
     })
-    .orderBy('position', 'asc')
+    .orderBy("position", "asc")
     .catch(rethrow)
-    .then(sections => sections.map(instantiate));
+    .then((sections) => sections.map(instantiate));
 }
 
 function findById(id) {
-  return db('product_design_sections')
+  return db("product_design_sections")
     .where({ id, deleted_at: null })
     .catch(rethrow)
     .then(first)
@@ -96,5 +97,5 @@ module.exports = {
   deleteByIdTrx,
   findById,
   update,
-  findByDesignId
+  findByDesignId,
 };

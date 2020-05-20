@@ -1,7 +1,7 @@
-import Koa from 'koa';
+import Koa from "koa";
 
-import { getDesignPermissions } from '../../services/get-permissions';
-import { findDesignByApprovalStepId } from '../../components/product-designs/dao/dao';
+import { getDesignPermissions } from "../../services/get-permissions";
+import { findDesignByApprovalStepId } from "../../components/product-designs/dao/dao";
 
 /**
  * Determines whether or not the current user has access to the supplied approval step.
@@ -16,17 +16,17 @@ export function* canAccessApprovalStepInParam(
   if (!approvalStepId) {
     this.throw(
       400,
-      'Must provide an approval step id in the query parameters.'
+      "Must provide an approval step id in the query parameters."
     );
   }
   const design = yield findDesignByApprovalStepId(approvalStepId);
   if (!design) {
-    this.throw(404, 'Design cannot be found.');
+    this.throw(404, "Design cannot be found.");
   }
   this.state.permissions = yield getDesignPermissions({
     designId: design.id,
     sessionRole: role,
-    sessionUserId: userId
+    sessionUserId: userId,
   });
   const { permissions } = this.state;
 

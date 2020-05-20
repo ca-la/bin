@@ -1,5 +1,5 @@
-import DataAdapter from '../../services/data-adapter';
-import { hasProperties } from '../../services/require-properties';
+import DataAdapter from "../../services/data-adapter";
+import { hasProperties } from "../../services/require-properties";
 
 export default interface CommentAttachment {
   commentId: string;
@@ -19,5 +19,5 @@ export const dataAdapter = new DataAdapter<
 export function isCommentAttachmentRow(
   row: object
 ): row is CommentAttachmentRow {
-  return hasProperties(row, 'comment_id', 'asset_id');
+  return hasProperties(row, "comment_id", "asset_id");
 }

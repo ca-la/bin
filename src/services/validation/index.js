@@ -1,8 +1,8 @@
-'use strict';
+"use strict";
 
-const { PhoneNumberUtil, PhoneNumberFormat } = require('google-libphonenumber');
+const { PhoneNumberUtil, PhoneNumberFormat } = require("google-libphonenumber");
 
-const InvalidDataError = require('../../errors/invalid-data');
+const InvalidDataError = require("../../errors/invalid-data");
 
 function assertTypeIfExists(val, type, message) {
   if (val === undefined || val === null) {
@@ -29,15 +29,15 @@ function assertRangeIfExists(val, min, max, message) {
  * @returns {String} An e164-formatted number, if validation passed
  */
 function validateAndFormatPhoneNumber(number) {
-  const trimmedNumber = number.replace(/[^\d+]/g, '');
+  const trimmedNumber = number.replace(/[^\d+]/g, "");
   let adjustedNumber = trimmedNumber;
 
-  if (trimmedNumber.indexOf('+') === -1 && trimmedNumber.length === 10) {
+  if (trimmedNumber.indexOf("+") === -1 && trimmedNumber.length === 10) {
     // Assume domestic without +1 prefix
     adjustedNumber = `+1${trimmedNumber}`;
   }
 
-  if (trimmedNumber.indexOf('1') === 0 && trimmedNumber.length === 11) {
+  if (trimmedNumber.indexOf("1") === 0 && trimmedNumber.length === 11) {
     // Assume domestic 1-XXX-XXX-XXXX format
     adjustedNumber = `+${trimmedNumber}`;
   }
@@ -69,5 +69,5 @@ module.exports = {
   assertRangeIfExists,
   assertTypeIfExists,
   isValidEmail,
-  validateAndFormatPhoneNumber
+  validateAndFormatPhoneNumber,
 };

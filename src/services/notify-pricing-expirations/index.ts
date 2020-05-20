@@ -1,11 +1,11 @@
-import Knex from 'knex';
+import Knex from "knex";
 
-import db from '../../services/db';
+import db from "../../services/db";
 import {
   notifyExpired,
   notifyOneWeekFromExpiring,
-  notifyTwoDaysFromExpiring
-} from './notify-expired';
+  notifyTwoDaysFromExpiring,
+} from "./notify-expired";
 
 export interface ExpirationResponse {
   justNowCount: number;
@@ -36,6 +36,6 @@ export async function notifyPricingExpirations(): Promise<ExpirationResponse> {
   return {
     justNowCount,
     oneWeekCount,
-    twoDayCount
+    twoDayCount,
   };
 }

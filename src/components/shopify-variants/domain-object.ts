@@ -1,5 +1,5 @@
-import DataAdapter from '../../services/data-adapter';
-import { hasProperties } from '../../services/require-properties';
+import DataAdapter from "../../services/data-adapter";
+import { hasProperties } from "../../services/require-properties";
 
 export interface ShopifyVariant {
   id: string;
@@ -26,10 +26,10 @@ export function isShopifyVariantRow(
 ): candidate is ShopifyVariantRow {
   return hasProperties(
     candidate,
-    'id',
-    'shopify_product_id',
-    'variant_id',
-    'created_at',
-    'deleted_at'
+    "id",
+    "shopify_product_id",
+    "variant_id",
+    "created_at",
+    "deleted_at"
   );
 }

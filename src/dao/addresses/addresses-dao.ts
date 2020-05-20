@@ -1,16 +1,16 @@
-import uuid from 'node-uuid';
-import rethrow from 'pg-rethrow';
-import omit from 'lodash/omit';
+import uuid from "node-uuid";
+import rethrow from "pg-rethrow";
+import omit from "lodash/omit";
 
-import DataMapper from '../../services/data-mapper';
+import DataMapper from "../../services/data-mapper";
 
-import Address from '../../domain-objects/address';
+import Address from "../../domain-objects/address";
 
-import db from '../../services/db';
-import first from '../../services/first';
-import compact from '../../services/compact';
+import db from "../../services/db";
+import first from "../../services/first";
+import compact from "../../services/compact";
 
-import { validatePropertiesFormatted } from '../../services/validate';
+import { validatePropertiesFormatted } from "../../services/validate";
 
 export type AddressesDao<T> = DAO<T> & {
   findByUserId: DaoFindById<T[]>;
@@ -30,11 +30,11 @@ export default function getAddressesDAO<T extends Address>(
 
   function validate(data: any): void {
     const requiredMessages = {
-      addressLine1: 'Address Line 1',
-      city: 'City',
-      region: 'Region',
-      postCode: 'Post Code',
-      country: 'Country'
+      addressLine1: "Address Line 1",
+      city: "City",
+      region: "Region",
+      postCode: "Post Code",
+      country: "Country",
     };
 
     validatePropertiesFormatted(data, requiredMessages);
@@ -50,7 +50,7 @@ export default function getAddressesDAO<T extends Address>(
     );
 
     return db(tableName)
-      .insert(rowData, '*')
+      .insert(rowData, "*")
       .catch(rethrow)
       .then(first)
       .then(instantiate);
@@ -60,9 +60,9 @@ export default function getAddressesDAO<T extends Address>(
     return db(tableName)
       .where({
         user_id: userId,
-        deleted_at: null
+        deleted_at: null,
       })
-      .orderBy('created_at', 'desc')
+      .orderBy("created_at", "desc")
       .catch(rethrow)
       .then((addresses: any[]) => addresses.map(instantiate));
   }
@@ -71,7 +71,7 @@ export default function getAddressesDAO<T extends Address>(
     return db(tableName)
       .where({
         id,
-        deleted_at: null
+        deleted_at: null,
       })
       .then(first)
       .then(maybeInstantiate)
@@ -82,13 +82,13 @@ export default function getAddressesDAO<T extends Address>(
     return db(tableName)
       .where({
         id,
-        deleted_at: null
+        deleted_at: null,
       })
       .update(
         {
-          deleted_at: new Date()
+          deleted_at: new Date(),
         },
-        '*'
+        "*"
       )
       .then(first)
       .then(maybeInstantiate)
@@ -98,13 +98,13 @@ export default function getAddressesDAO<T extends Address>(
   function update(id: string, data: any): Promise<T> {
     return db(tableName)
       .where({
-        id
+        id,
       })
       .update(
         compact(
-          dataMapper.userDataToRowData(omit(data, 'userId', 'id', 'createdAt'))
+          dataMapper.userDataToRowData(omit(data, "userId", "id", "createdAt"))
         ),
-        '*'
+        "*"
       )
       .then(first)
       .then(instantiate);
@@ -118,6 +118,6 @@ export default function getAddressesDAO<T extends Address>(
     deleteById,
     findById,
     validate,
-    findByUserId
+    findByUserId,
   };
 }

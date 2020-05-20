@@ -3,11 +3,11 @@ import {
   MENTION_UUID_LENGTH,
   MENTION_UUID_START,
   mentionRgx,
-  MentionType
-} from '@cala/ts-lib';
+  MentionType,
+} from "@cala/ts-lib";
 
-import { findById as findCollaboratorById } from '../../components/collaborators/dao';
-import getCollaboratorName from '../get-collaborator-name';
+import { findById as findCollaboratorById } from "../../components/collaborators/dao";
+import getCollaboratorName from "../get-collaborator-name";
 
 export default async function parseCommentText(text: string): Promise<string> {
   const matches = text.match(mentionRgx);

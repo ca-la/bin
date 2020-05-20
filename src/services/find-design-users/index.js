@@ -1,11 +1,11 @@
-'use strict';
+"use strict";
 
-const uniqBy = require('lodash/uniqBy');
+const uniqBy = require("lodash/uniqBy");
 
-const CollaboratorsDAO = require('../../components/collaborators/dao');
-const ProductDesignServicesDAO = require('../../dao/product-design-services');
-const ProductDesignsDAO = require('../../components/product-designs/dao');
-const UsersDAO = require('../../components/users/dao');
+const CollaboratorsDAO = require("../../components/collaborators/dao");
+const ProductDesignServicesDAO = require("../../dao/product-design-services");
+const ProductDesignsDAO = require("../../components/product-designs/dao");
+const UsersDAO = require("../../components/users/dao");
 
 /**
  * Find a list of users with access to a design
@@ -26,14 +26,14 @@ async function findDesignUsers(designId) {
 
   const collaborators = await CollaboratorsDAO.findByDesign(designId);
 
-  collaborators.forEach(collaborator => {
+  collaborators.forEach((collaborator) => {
     if (collaborator.user) {
       users.push(collaborator.user);
     }
   });
 
   // Service providers do not see a design prior to it being submitted
-  if (design.status !== 'DRAFT') {
+  if (design.status !== "DRAFT") {
     const services = await ProductDesignServicesDAO.findByDesignId(designId);
 
     for (const service of services) {
@@ -44,7 +44,7 @@ async function findDesignUsers(designId) {
     }
   }
 
-  const uniqueUsers = uniqBy(users, 'id');
+  const uniqueUsers = uniqBy(users, "id");
   return uniqueUsers;
 }
 

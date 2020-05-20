@@ -1,6 +1,6 @@
-import createFromDesignTemplate from '../../templates/services/create-from-design-template';
-import filterError = require('../../../services/filter-error');
-import ResourceNotFoundError from '../../../errors/resource-not-found';
+import createFromDesignTemplate from "../../templates/services/create-from-design-template";
+import filterError = require("../../../services/filter-error");
+import ResourceNotFoundError from "../../../errors/resource-not-found";
 
 export function* createFromTemplate(
   this: AuthedContext
@@ -9,9 +9,9 @@ export function* createFromTemplate(
   const { isPhidias } = this.query;
   const { templateDesignId } = this.params;
   const templateDesign = yield createFromDesignTemplate({
-    isPhidias: isPhidias === 'true',
+    isPhidias: isPhidias === "true",
     newCreatorId: userId,
-    templateDesignId
+    templateDesignId,
   }).catch(
     filterError(ResourceNotFoundError, (err: ResourceNotFoundError) =>
       this.throw(400, err)

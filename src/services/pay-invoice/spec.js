@@ -1,28 +1,26 @@
-'use strict';
+"use strict";
 
-const InvalidDataError = require('../../errors/invalid-data');
-const CreditsDAO = require('../../components/credits/dao');
-const payInvoice = require('./index');
-const SlackService = require('../slack');
-const Stripe = require('../stripe');
+const InvalidDataError = require("../../errors/invalid-data");
+const CreditsDAO = require("../../components/credits/dao");
+const payInvoice = require("./index");
+const SlackService = require("../slack");
+const Stripe = require("../stripe");
 const {
-  createInvoicesWithPayments
-} = require('../../test-helpers/factories/invoice-payments');
-const { test, sandbox } = require('../../test-helpers/fresh');
+  createInvoicesWithPayments,
+} = require("../../test-helpers/factories/invoice-payments");
+const { test, sandbox } = require("../../test-helpers/fresh");
 
-test('payInvoice', async t => {
+test("payInvoice", async (t) => {
   sandbox()
-    .stub(Stripe, 'charge')
-    .returns(Promise.resolve({ id: 'chargeId' }));
-  sandbox()
-    .stub(SlackService, 'enqueueSend')
-    .returns(Promise.resolve());
+    .stub(Stripe, "charge")
+    .returns(Promise.resolve({ id: "chargeId" }));
+  sandbox().stub(SlackService, "enqueueSend").returns(Promise.resolve());
 
   const {
     collections,
     users,
     createdInvoices,
-    paymentMethod
+    paymentMethod,
   } = await createInvoicesWithPayments();
   const unpaidInvoice = createdInvoices[2];
 
@@ -38,55 +36,53 @@ test('payInvoice', async t => {
       sourceId: paymentMethod.stripeSourceId,
       amountCents: unpaidInvoice.totalCents,
       description: unpaidInvoice.title,
-      invoiceId: unpaidInvoice.id
+      invoiceId: unpaidInvoice.id,
     }),
-    'charged via Stripe'
+    "charged via Stripe"
   );
-  t.ok(Stripe.charge.calledOnce, 'only charge once');
+  t.ok(Stripe.charge.calledOnce, "only charge once");
 
   t.ok(
     SlackService.enqueueSend.calledWith({
-      channel: 'designers',
-      templateName: 'designer_payment',
+      channel: "designers",
+      templateName: "designer_payment",
       params: {
         collection: collections[1],
         designer: users[1],
-        paymentAmountCents: unpaidInvoice.totalCents
-      }
+        paymentAmountCents: unpaidInvoice.totalCents,
+      },
     }),
-    'sent Slack notification'
+    "sent Slack notification"
   );
-  t.ok(Stripe.charge.calledOnce, 'only notify once');
+  t.ok(Stripe.charge.calledOnce, "only notify once");
 
-  t.ok(paidInvoice.isPaid, 'paid invoice is paid');
+  t.ok(paidInvoice.isPaid, "paid invoice is paid");
   t.equal(
     paidInvoice.totalPaid,
     unpaidInvoice.totalCents,
-    'total paid is total invoice due'
+    "total paid is total invoice due"
   );
-  t.ok(paidInvoice.paidAt, 'has a last paid at date');
+  t.ok(paidInvoice.paidAt, "has a last paid at date");
 });
 
-test('payInvoice does not charge a $0 amount', async t => {
-  sandbox().stub(Stripe, 'charge');
-  sandbox()
-    .stub(SlackService, 'enqueueSend')
-    .returns(Promise.resolve());
+test("payInvoice does not charge a $0 amount", async (t) => {
+  sandbox().stub(Stripe, "charge");
+  sandbox().stub(SlackService, "enqueueSend").returns(Promise.resolve());
 
   const {
     users,
     createdInvoices,
-    paymentMethod
+    paymentMethod,
   } = await createInvoicesWithPayments();
 
   const unpaidInvoice = createdInvoices[2];
 
   await CreditsDAO.addCredit({
-    description: 'free money',
+    description: "free money",
     amountCents: 1000000,
     createdBy: users[1].id,
     givenTo: users[1].id,
-    expiresAt: null
+    expiresAt: null,
   });
 
   const paidInvoice = await payInvoice(
@@ -95,23 +91,21 @@ test('payInvoice does not charge a $0 amount', async t => {
     users[1].id
   );
 
-  t.equal(Stripe.charge.callCount, 0, 'Stripe is not called');
+  t.equal(Stripe.charge.callCount, 0, "Stripe is not called");
 
-  t.ok(paidInvoice.isPaid, 'paid invoice is paid');
+  t.ok(paidInvoice.isPaid, "paid invoice is paid");
 });
 
-test('payInvoice cannot pay the same invoice twice in parallel', async t => {
+test("payInvoice cannot pay the same invoice twice in parallel", async (t) => {
   sandbox()
-    .stub(Stripe, 'charge')
-    .returns(Promise.resolve({ id: 'chargeId' }));
-  sandbox()
-    .stub(SlackService, 'enqueueSend')
-    .returns(Promise.resolve());
+    .stub(Stripe, "charge")
+    .returns(Promise.resolve({ id: "chargeId" }));
+  sandbox().stub(SlackService, "enqueueSend").returns(Promise.resolve());
 
   const {
     users,
     createdInvoices,
-    paymentMethod
+    paymentMethod,
   } = await createInvoicesWithPayments();
 
   const unpaidInvoice = createdInvoices[2];
@@ -119,12 +113,12 @@ test('payInvoice cannot pay the same invoice twice in parallel', async t => {
   try {
     await Promise.all([
       payInvoice(unpaidInvoice.id, paymentMethod.id, users[1].id),
-      payInvoice(unpaidInvoice.id, paymentMethod.id, users[1].id)
+      payInvoice(unpaidInvoice.id, paymentMethod.id, users[1].id),
     ]);
 
     throw new Error("Shouldn't get here");
   } catch (err) {
     t.ok(err instanceof InvalidDataError);
-    t.equal(err.message, 'This invoice is already paid');
+    t.equal(err.message, "This invoice is already paid");
   }
 });

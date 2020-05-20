@@ -1,8 +1,8 @@
-import Knex from 'knex';
-import { omit } from 'lodash';
+import Knex from "knex";
+import { omit } from "lodash";
 
-import db from '../../services/db';
-import first from '../../services/first';
+import db from "../../services/db";
+import first from "../../services/first";
 import {
   dataAdapter,
   DEPRECATED_NOTIFICATION_TYPES,
@@ -12,17 +12,17 @@ import {
   isFullNotificationRow,
   isNotificationRow,
   Notification,
-  NotificationRow
-} from './domain-object';
-import { validate, validateEvery } from '../../services/validate-from-db';
-import { announceNotificationCreation } from '../iris/messages/notification';
+  NotificationRow,
+} from "./domain-object";
+import { validate, validateEvery } from "../../services/validate-from-db";
+import { announceNotificationCreation } from "../iris/messages/notification";
 
 interface SearchInterface {
   limit: number;
   offset: number;
 }
 
-const TABLE_NAME = 'notifications';
+const TABLE_NAME = "notifications";
 export const DELAY_MINUTES = 10;
 
 function addActor(query: Knex.QueryBuilder): Knex.QueryBuilder {
@@ -45,29 +45,29 @@ function addActor(query: Knex.QueryBuilder): Knex.QueryBuilder {
   ) AS actor
 `)
     )
-    .leftJoin('users AS au', 'au.id', 'n.actor_user_id');
+    .leftJoin("users AS au", "au.id", "n.actor_user_id");
 }
 
 function addComponentType(query: Knex.QueryBuilder): Knex.QueryBuilder {
   return query
-    .select('comp.type as component_type')
-    .leftJoin('product_design_canvases as can', 'can.id', 'n.canvas_id')
-    .leftJoin('components as comp', 'comp.id', 'can.component_id')
-    .whereNull('can.deleted_at');
+    .select("comp.type as component_type")
+    .leftJoin("product_design_canvases as can", "can.id", "n.canvas_id")
+    .leftJoin("components as comp", "comp.id", "can.component_id")
+    .whereNull("can.deleted_at");
 }
 
 function addCollectionTitle(query: Knex.QueryBuilder): Knex.QueryBuilder {
   return query
-    .select('c.title as collection_title')
-    .leftJoin('collections as c', 'c.id', 'n.collection_id')
-    .whereNull('c.deleted_at');
+    .select("c.title as collection_title")
+    .leftJoin("collections as c", "c.id", "n.collection_id")
+    .whereNull("c.deleted_at");
 }
 
 function addDesignTitle(query: Knex.QueryBuilder): Knex.QueryBuilder {
   return query
-    .select('d.title as design_title')
-    .leftJoin('product_designs as d', 'd.id', 'n.design_id')
-    .whereNull('d.deleted_at');
+    .select("d.title as design_title")
+    .leftJoin("product_designs as d", "d.id", "n.design_id")
+    .whereNull("d.deleted_at");
 }
 
 function addDesignImages(query: Knex.QueryBuilder): Knex.QueryBuilder {
@@ -78,32 +78,32 @@ function addDesignImages(query: Knex.QueryBuilder): Knex.QueryBuilder {
           `COALESCE(jsonb_agg(assets.id ORDER BY canvases.ordering), '[]') as design_image_ids`
         )
       )
-      .from('canvases')
-      .join('components', (join: Knex.JoinClause) =>
+      .from("canvases")
+      .join("components", (join: Knex.JoinClause) =>
         join
-          .on('components.id', '=', 'canvases.component_id')
-          .andOnNull('canvases.deleted_at')
-          .andOnNull('canvases.archived_at')
+          .on("components.id", "=", "canvases.component_id")
+          .andOnNull("canvases.deleted_at")
+          .andOnNull("canvases.archived_at")
       )
-      .join('assets', (join: Knex.JoinClause) =>
+      .join("assets", (join: Knex.JoinClause) =>
         join
-          .on('assets.id', '=', 'components.sketch_id')
-          .andOnNull('assets.deleted_at')
+          .on("assets.id", "=", "components.sketch_id")
+          .andOnNull("assets.deleted_at")
       )
       .where({
-        'canvases.deleted_at': null,
-        'canvases.archived_at': null
+        "canvases.deleted_at": null,
+        "canvases.archived_at": null,
       })
-      .andWhereRaw('canvases.design_id = n.design_id')
-      .as('design_image_ids')
+      .andWhereRaw("canvases.design_id = n.design_id")
+      .as("design_image_ids")
   );
 }
 
 function addCommentText(query: Knex.QueryBuilder): Knex.QueryBuilder {
   return query
-    .select('co.text as comment_text')
-    .leftJoin('comments as co', 'co.id', 'n.comment_id')
-    .whereNull('co.deleted_at');
+    .select("co.text as comment_text")
+    .leftJoin("comments as co", "co.id", "n.comment_id")
+    .whereNull("co.deleted_at");
 }
 
 function addHasAttachments(query: Knex.QueryBuilder): Knex.QueryBuilder {
@@ -126,35 +126,35 @@ function addHasAttachments(query: Knex.QueryBuilder): Knex.QueryBuilder {
 function addMeasurement(query: Knex.QueryBuilder): Knex.QueryBuilder {
   return query
     .leftJoin(
-      'product_design_canvas_measurements as m',
-      'm.id',
-      'n.measurement_id'
+      "product_design_canvas_measurements as m",
+      "m.id",
+      "n.measurement_id"
     )
-    .whereNull('m.deleted_at');
+    .whereNull("m.deleted_at");
 }
 
 function addAnnotation(query: Knex.QueryBuilder): Knex.QueryBuilder {
   return query
-    .select('canvas_assets.id as annotation_image_id')
+    .select("canvas_assets.id as annotation_image_id")
     .leftJoin(
-      'product_design_canvas_annotations as a',
-      'a.id',
-      'n.annotation_id'
+      "product_design_canvas_annotations as a",
+      "a.id",
+      "n.annotation_id"
     )
-    .leftJoin('canvases', (join: Knex.JoinClause) =>
+    .leftJoin("canvases", (join: Knex.JoinClause) =>
       join
-        .on('canvases.id', '=', 'a.canvas_id')
-        .andOnNull('canvases.deleted_at')
+        .on("canvases.id", "=", "a.canvas_id")
+        .andOnNull("canvases.deleted_at")
     )
-    .leftJoin('components', (join: Knex.JoinClause) =>
+    .leftJoin("components", (join: Knex.JoinClause) =>
       join
-        .on('components.id', '=', 'canvases.component_id')
-        .andOnNull('components.deleted_at')
+        .on("components.id", "=", "canvases.component_id")
+        .andOnNull("components.deleted_at")
     )
-    .leftJoin('assets as canvas_assets', (join: Knex.JoinClause) =>
+    .leftJoin("assets as canvas_assets", (join: Knex.JoinClause) =>
       join
         .onIn(
-          'canvas_assets.id',
+          "canvas_assets.id",
           db.raw(`
   components.sketch_id,
   (
@@ -164,35 +164,35 @@ function addAnnotation(query: Knex.QueryBuilder): Knex.QueryBuilder {
   components.artwork_id
 `)
         )
-        .andOnNull('canvas_assets.deleted_at')
+        .andOnNull("canvas_assets.deleted_at")
     )
-    .whereNull('a.deleted_at');
+    .whereNull("a.deleted_at");
 }
 
 function addTaskTitle(query: Knex.QueryBuilder): Knex.QueryBuilder {
   return query.select((subquery: Knex.QueryBuilder) =>
     subquery
-      .select('te.title')
-      .from('task_events as te')
-      .leftJoin('task_events as te2', (join: Knex.JoinClause) =>
+      .select("te.title")
+      .from("task_events as te")
+      .leftJoin("task_events as te2", (join: Knex.JoinClause) =>
         join
-          .on('te2.task_id', '=', 'te.task_id')
-          .andOn('te2.created_at', '<', 'te.created_at')
+          .on("te2.task_id", "=", "te.task_id")
+          .andOn("te2.created_at", "<", "te.created_at")
       )
-      .whereRaw('te.task_id = n.task_id')
+      .whereRaw("te.task_id = n.task_id")
       .limit(1)
-      .as('task_title')
+      .as("task_title")
   );
 }
 
 function addApprovalStepTitle(query: Knex.QueryBuilder): Knex.QueryBuilder {
   return query.select((subquery: Knex.QueryBuilder) =>
     subquery
-      .select('das.title')
-      .from('design_approval_steps as das')
-      .whereRaw('das.id = n.approval_step_id')
+      .select("das.title")
+      .from("design_approval_steps as das")
+      .whereRaw("das.id = n.approval_step_id")
       .limit(1)
-      .as('approval_step_title')
+      .as("approval_step_title")
   );
 }
 
@@ -201,18 +201,18 @@ function addApprovalSubmissionTitle(
 ): Knex.QueryBuilder {
   return query.select((subquery: Knex.QueryBuilder) =>
     subquery
-      .select('sub.title')
-      .from('design_approval_submissions as sub')
-      .whereRaw('sub.id = n.approval_submission_id')
+      .select("sub.title")
+      .from("design_approval_submissions as sub")
+      .whereRaw("sub.id = n.approval_submission_id")
       .limit(1)
-      .as('approval_submission_title')
+      .as("approval_submission_title")
   );
 }
 
 function baseQuery(trx: Knex.Transaction): Knex.QueryBuilder {
   return trx
-    .select('n.*')
-    .from('notifications as n')
+    .select("n.*")
+    .from("notifications as n")
     .modify(addActor)
     .modify(addComponentType)
     .modify(addCollectionTitle)
@@ -233,18 +233,18 @@ export async function findByUserId(
   options: SearchInterface
 ): Promise<FullNotification[]> {
   const notifications = await baseQuery(trx)
-    .leftJoin('collaborators as cl', 'cl.id', 'n.collaborator_id')
-    .whereNotIn('n.type', DEPRECATED_NOTIFICATION_TYPES)
-    .andWhereRaw('(cl.cancelled_at is null or cl.cancelled_at > now())')
+    .leftJoin("collaborators as cl", "cl.id", "n.collaborator_id")
+    .whereNotIn("n.type", DEPRECATED_NOTIFICATION_TYPES)
+    .andWhereRaw("(cl.cancelled_at is null or cl.cancelled_at > now())")
     .andWhere((query: Knex.QueryBuilder) =>
       query
         .where({
-          'n.recipient_user_id': userId
+          "n.recipient_user_id": userId,
         })
-        .orWhere({ 'cl.user_id': userId, 'n.recipient_user_id': null })
+        .orWhere({ "cl.user_id": userId, "n.recipient_user_id": null })
     )
-    .andWhere({ 'n.deleted_at': null })
-    .orderBy('created_at', 'desc')
+    .andWhere({ "n.deleted_at": null })
+    .orderBy("created_at", "desc")
     .limit(options.limit)
     .offset(options.offset);
 
@@ -261,11 +261,11 @@ export async function findById(
   notificationId: string
 ): Promise<FullNotification | null> {
   const notification = await baseQuery(trx)
-    .leftJoin('collaborators as cl', 'cl.id', 'n.collaborator_id')
-    .whereNotIn('n.type', DEPRECATED_NOTIFICATION_TYPES)
-    .andWhereRaw('(cl.cancelled_at is null or cl.cancelled_at > now())')
-    .andWhere({ 'n.id': notificationId, 'n.deleted_at': null })
-    .orderBy('created_at', 'desc')
+    .leftJoin("collaborators as cl", "cl.id", "n.collaborator_id")
+    .whereNotIn("n.type", DEPRECATED_NOTIFICATION_TYPES)
+    .andWhereRaw("(cl.cancelled_at is null or cl.cancelled_at > now())")
+    .andWhere({ "n.id": notificationId, "n.deleted_at": null })
+    .orderBy("created_at", "desc")
     .first<FullNotificationRow | null>();
 
   if (!notification) {
@@ -284,11 +284,11 @@ export async function findOutstanding(
   trx: Knex.Transaction
 ): Promise<FullNotification[]> {
   const notifications = await baseQuery(trx)
-    .leftJoin('collaborators as cl', 'cl.id', 'n.collaborator_id')
-    .where({ 'n.deleted_at': null, sent_email_at: null, read_at: null })
+    .leftJoin("collaborators as cl", "cl.id", "n.collaborator_id")
+    .where({ "n.deleted_at": null, sent_email_at: null, read_at: null })
     .whereNot({ recipient_user_id: null })
     .andWhereRaw(`n.created_at < NOW() - INTERVAL '${DELAY_MINUTES} minutes'`)
-    .orderBy('created_at', 'desc');
+    .orderBy("created_at", "desc");
 
   return validateEvery<FullNotificationRow, FullNotification>(
     TABLE_NAME,
@@ -303,9 +303,9 @@ export async function markSent(
   trx?: Knex.Transaction
 ): Promise<Notification[]> {
   const updatedNotifications: NotificationRow[] = await db(TABLE_NAME)
-    .whereIn('id', ids)
+    .whereIn("id", ids)
     .andWhere({ deleted_at: null })
-    .update({ sent_email_at: new Date().toISOString() }, '*')
+    .update({ sent_email_at: new Date().toISOString() }, "*")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
@@ -325,9 +325,9 @@ export async function markRead(
   trx?: Knex.Transaction
 ): Promise<Notification[]> {
   const updatedNotifications: NotificationRow[] = await db(TABLE_NAME)
-    .whereIn('id', ids)
+    .whereIn("id", ids)
     .andWhere({ deleted_at: null })
-    .update({ read_at: new Date().toISOString() }, '*')
+    .update({ read_at: new Date().toISOString() }, "*")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
@@ -348,25 +348,25 @@ export async function markReadOlderThan(
   recipientUserId: string
 ): Promise<number> {
   return trx(TABLE_NAME)
-    .whereIn('id', (subquery: Knex.QueryBuilder) => {
+    .whereIn("id", (subquery: Knex.QueryBuilder) => {
       subquery
-        .select(['n.id'])
-        .from('notifications as n')
-        .leftJoin('collaborators as cl', 'cl.id', 'n.collaborator_id')
-        .whereNotIn('n.type', DEPRECATED_NOTIFICATION_TYPES)
+        .select(["n.id"])
+        .from("notifications as n")
+        .leftJoin("collaborators as cl", "cl.id", "n.collaborator_id")
+        .whereNotIn("n.type", DEPRECATED_NOTIFICATION_TYPES)
         .andWhere((query: Knex.QueryBuilder) => {
           query
             .where({
-              'n.recipient_user_id': recipientUserId
+              "n.recipient_user_id": recipientUserId,
             })
             .orWhere({
-              'n.recipient_user_id': null,
-              'cl.user_id': recipientUserId
+              "n.recipient_user_id": null,
+              "cl.user_id": recipientUserId,
             });
         })
         .andWhere({
-          'n.read_at': null,
-          'n.deleted_at': null
+          "n.read_at": null,
+          "n.deleted_at": null,
         })
         .andWhereRaw(
           `
@@ -383,7 +383,7 @@ export async function markReadOlderThan(
         );
     })
     .update({
-      read_at: db.fn.now()
+      read_at: db.fn.now(),
     });
 }
 
@@ -393,7 +393,7 @@ export async function create(
 ): Promise<FullNotification> {
   const rowData = dataAdapter.forInsertion(data);
   const created = await db(TABLE_NAME)
-    .insert(rowData, '*')
+    .insert(rowData, "*")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
@@ -402,7 +402,7 @@ export async function create(
     .then((rows: NotificationRow[]) => first<NotificationRow>(rows));
 
   if (!created) {
-    throw new Error('Failed to create a notification!');
+    throw new Error("Failed to create a notification!");
   }
 
   let notification;
@@ -416,7 +416,7 @@ export async function create(
   }
 
   if (!notification) {
-    throw new Error('Failed to find created notification after persisting!');
+    throw new Error("Failed to find created notification after persisting!");
   }
   await announceNotificationCreation(notification);
   return notification;
@@ -427,8 +427,8 @@ export async function findUnreadCountByUserId(
   userId: string
 ): Promise<number> {
   const { notificationCount } = await trx(TABLE_NAME)
-    .count('n.id', { as: 'notificationCount' })
-    .from('notifications as n')
+    .count("n.id", { as: "notificationCount" })
+    .from("notifications as n")
     .joinRaw(
       `
     left join product_designs as d
@@ -447,16 +447,16 @@ export async function findUnreadCountByUserId(
       on m.id = n.measurement_id
     `
     )
-    .whereNotIn('type', DEPRECATED_NOTIFICATION_TYPES)
+    .whereNotIn("type", DEPRECATED_NOTIFICATION_TYPES)
     .andWhere({
-      'a.deleted_at': null,
-      'c.deleted_at': null,
-      'can.deleted_at': null,
-      'co.deleted_at': null,
-      'd.deleted_at': null,
-      'm.deleted_at': null,
-      'n.read_at': null,
-      'n.deleted_at': null
+      "a.deleted_at": null,
+      "c.deleted_at": null,
+      "can.deleted_at": null,
+      "co.deleted_at": null,
+      "d.deleted_at": null,
+      "m.deleted_at": null,
+      "n.read_at": null,
+      "n.deleted_at": null,
     })
     .andWhereRaw(
       `
@@ -466,9 +466,9 @@ export async function findUnreadCountByUserId(
     .andWhere((query: Knex.QueryBuilder) =>
       query
         .where({
-          'n.recipient_user_id': userId
+          "n.recipient_user_id": userId,
         })
-        .orWhere({ 'cl.user_id': userId, 'n.recipient_user_id': null })
+        .orWhere({ "cl.user_id": userId, "n.recipient_user_id": null })
     )
     // .count returns `number | string` due to how big ints are stored
     .first<{ notificationCount: number | string }>();
@@ -479,11 +479,11 @@ export async function findUnreadCountByUserId(
 export async function del(id: string): Promise<void> {
   const deleted = await db(TABLE_NAME)
     .where({ id, deleted_at: null })
-    .update({ deleted_at: new Date() }, '*')
+    .update({ deleted_at: new Date() }, "*")
     .then((rows: NotificationRow[]) => first<NotificationRow>(rows));
 
   if (!deleted) {
-    throw new Error('Unable to delete Notification as it was not found.');
+    throw new Error("Unable to delete Notification as it was not found.");
   }
 }
 
@@ -501,14 +501,14 @@ export async function deleteRecent(
   data: Uninserted<Notification>,
   trx?: Knex.Transaction
 ): Promise<number> {
-  const rowData = omit(dataAdapter.forInsertion(data), 'id', 'created_at');
+  const rowData = omit(dataAdapter.forInsertion(data), "id", "created_at");
 
   const now = Date.now();
   // 5 minutes ago
   const startingThreshold = now - 1000 * 60 * 5;
   const deletedRows: number = await db(TABLE_NAME)
     .where(rowData)
-    .andWhere('created_at', '>', new Date(startingThreshold).toISOString())
+    .andWhere("created_at", ">", new Date(startingThreshold).toISOString())
     .andWhere({ sent_email_at: null })
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {

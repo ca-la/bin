@@ -1,4 +1,4 @@
-import { Role } from '../users/types';
+import { Role } from "../users/types";
 
 /**
  * A log entry for a quote and partner assignment event that occured on a design
@@ -12,32 +12,32 @@ export type DesignEventTypes =
 
 type DesignerEvents =
   // Send the design to CALA initially for review
-  | 'SUBMIT_DESIGN'
+  | "SUBMIT_DESIGN"
   // Commit to a certain quantity and price quote
-  | 'COMMIT_QUOTE';
+  | "COMMIT_QUOTE";
 
 type CALAEvents =
   // Send a design to a partner for them to accept/reject
-  | 'BID_DESIGN'
+  | "BID_DESIGN"
   // Indicate that we're unable to support producing this design
-  | 'REJECT_DESIGN'
+  | "REJECT_DESIGN"
   // Indicate that we've set up the cost inputs for this design, so a designer
   // may now review them.
-  | 'COMMIT_COST_INPUTS'
+  | "COMMIT_COST_INPUTS"
   // The opposite of BID_DESIGN; remove a partner
-  | 'REMOVE_PARTNER'
+  | "REMOVE_PARTNER"
   // Indicate if CALA has finalized pairing of a partner(s) to a design.
-  | 'COMMIT_PARTNER_PAIRING';
+  | "COMMIT_PARTNER_PAIRING";
 
-type PartnerEvents = 'ACCEPT_SERVICE_BID' | 'REJECT_SERVICE_BID';
+type PartnerEvents = "ACCEPT_SERVICE_BID" | "REJECT_SERVICE_BID";
 
 type ApprovalEvents =
-  | 'REVISION_REQUEST'
-  | 'STEP_ASSIGNMENT'
-  | 'STEP_SUMBISSION_APPROVAL'
-  | 'STEP_SUMBISSION_ASSIGNMENT'
-  | 'STEP_COMPLETE'
-  | 'STEP_REOPEN';
+  | "REVISION_REQUEST"
+  | "STEP_ASSIGNMENT"
+  | "STEP_SUMBISSION_APPROVAL"
+  | "STEP_SUMBISSION_ASSIGNMENT"
+  | "STEP_COMPLETE"
+  | "STEP_REOPEN";
 
 export default interface DesignEvent {
   id: string;
@@ -93,4 +93,4 @@ export interface DesignEventWithMetaRow extends DesignEventRow {
   task_type_titles: string[];
 }
 
-export const domain = 'DesignEvent' as 'DesignEvent';
+export const domain = "DesignEvent" as "DesignEvent";

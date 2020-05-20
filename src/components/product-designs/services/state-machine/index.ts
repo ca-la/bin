@@ -1,15 +1,15 @@
-import { Machine, StateMachine } from 'xstate';
+import { Machine, StateMachine } from "xstate";
 import DesignEvent, {
-  DesignEventTypes
-} from '../../../../domain-objects/design-event';
-import { BasePricingCostInput } from '../../../pricing-cost-inputs/domain-object';
+  DesignEventTypes,
+} from "../../../../domain-objects/design-event";
+import { BasePricingCostInput } from "../../../pricing-cost-inputs/domain-object";
 
 export enum DesignState {
-  INITIAL = 'INITIAL',
-  SUBMITTED = 'SUBMITTED',
-  COSTED = 'COSTED',
-  CHECKED_OUT = 'CHECKED_OUT',
-  PAIRED = 'PAIRED'
+  INITIAL = "INITIAL",
+  SUBMITTED = "SUBMITTED",
+  COSTED = "COSTED",
+  CHECKED_OUT = "CHECKED_OUT",
+  PAIRED = "PAIRED",
 }
 
 interface DesignMachineStateSchema {
@@ -24,7 +24,7 @@ interface DesignMachineStateSchema {
 
 type DesignMachineEvent =
   | { type: DesignEventTypes }
-  | { type: 'EXPIRE_COST_INPUT' };
+  | { type: "EXPIRE_COST_INPUT" };
 
 interface DesignMachineContext {}
 
@@ -46,41 +46,37 @@ function createDesignMachine(
       [DesignState.INITIAL]: {
         on: {
           SUBMIT_DESIGN: DesignState.SUBMITTED,
-          COMMIT_COST_INPUTS: DesignState.COSTED
-        }
+          COMMIT_COST_INPUTS: DesignState.COSTED,
+        },
       },
       [DesignState.SUBMITTED]: {
         on: {
-          COMMIT_COST_INPUTS: DesignState.COSTED
-        }
+          COMMIT_COST_INPUTS: DesignState.COSTED,
+        },
       },
       [DesignState.COSTED]: {
         on: {
           COMMIT_QUOTE: DesignState.CHECKED_OUT,
-          EXPIRE_COST_INPUT: DesignState.INITIAL
-        }
+          EXPIRE_COST_INPUT: DesignState.INITIAL,
+        },
       },
       [DesignState.CHECKED_OUT]: {
         on: {
-          COMMIT_PARTNER_PAIRING: DesignState.PAIRED
-        }
+          COMMIT_PARTNER_PAIRING: DesignState.PAIRED,
+        },
       },
       [DesignState.PAIRED]: {
-        type: 'final'
-      }
-    }
+        type: "final",
+      },
+    },
   });
 }
 
 function hasActiveCostInputs(costInputs: BasePricingCostInput[]): boolean {
   const now = new Date();
-  return costInputs.some(
-    (costInput: BasePricingCostInput): boolean => {
-      return (
-        costInput.expiresAt === null || new Date(costInput.expiresAt) > now
-      );
-    }
-  );
+  return costInputs.some((costInput: BasePricingCostInput): boolean => {
+    return costInput.expiresAt === null || new Date(costInput.expiresAt) > now;
+  });
 }
 
 export interface DesignStateDependencies {
@@ -95,7 +91,7 @@ export interface DesignStateDependencies {
 export function determineState(design: DesignStateDependencies): DesignState {
   const { costInputs, events, id: designId } = design;
   const hasCommitted = events.some(
-    (event: DesignEvent): boolean => event.type === 'COMMIT_QUOTE'
+    (event: DesignEvent): boolean => event.type === "COMMIT_QUOTE"
   );
   const hasActiveCosts = hasActiveCostInputs(costInputs);
 
@@ -110,7 +106,7 @@ export function determineState(design: DesignStateDependencies): DesignState {
       !hasActiveCosts &&
       !hasCommitted
     ) {
-      state = machine.transition(state, { type: 'EXPIRE_COST_INPUT' });
+      state = machine.transition(state, { type: "EXPIRE_COST_INPUT" });
     }
   }
 

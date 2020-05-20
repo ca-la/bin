@@ -1,9 +1,9 @@
-import Knex from 'knex';
-import uuid from 'node-uuid';
-import { omit } from 'lodash';
-import { TaskEvent, TaskStatus } from '@cala/ts-lib';
+import Knex from "knex";
+import uuid from "node-uuid";
+import { omit } from "lodash";
+import { TaskEvent, TaskStatus } from "@cala/ts-lib";
 
-import db from '../../services/db';
+import db from "../../services/db";
 import {
   createDetailsTask,
   dataAdapter,
@@ -13,24 +13,24 @@ import {
   DetailTaskWithAssigneesEventRow,
   isDetailTaskWithAssigneeRow,
   isTaskEventRow,
-  TaskEventRow
-} from '../../domain-objects/task-event';
-import first from '../../services/first';
-import { validate, validateEvery } from '../../services/validate-from-db';
-import { findAllDesignIdsThroughCollaborator } from '../../components/product-designs/dao/dao';
-import limitOrOffset from '../../services/limit-or-offset';
-import * as ApprovalStepTasksDAO from '../../components/approval-step-tasks/dao';
+  TaskEventRow,
+} from "../../domain-objects/task-event";
+import first from "../../services/first";
+import { validate, validateEvery } from "../../services/validate-from-db";
+import { findAllDesignIdsThroughCollaborator } from "../../components/product-designs/dao/dao";
+import limitOrOffset from "../../services/limit-or-offset";
+import * as ApprovalStepTasksDAO from "../../components/approval-step-tasks/dao";
 import {
   ALIASES,
   getAssigneesBuilder,
-  getBuilder as getTaskViewBuilder
-} from './view';
+  getBuilder as getTaskViewBuilder,
+} from "./view";
 import {
   ALIASES as COLLABORATOR_ALIASES,
-  getBuilder as getCollaboratorsBuilder
-} from '../../components/collaborators/view';
+  getBuilder as getCollaboratorsBuilder,
+} from "../../components/collaborators/view";
 
-const TABLE_NAME = 'task_events';
+const TABLE_NAME = "task_events";
 
 /**
  * This will group tasks in 4 ways:
@@ -42,7 +42,7 @@ const TABLE_NAME = 'task_events';
  * The order is important so that your most recent designs show first
  */
 const VIEW_ORDERING =
-  'design_created_at desc, design_stage_ordering asc, ordering asc';
+  "design_created_at desc, design_stage_ordering asc, ordering asc";
 
 export async function create(
   data: Unsaved<TaskEvent>,
@@ -51,14 +51,14 @@ export async function create(
   const rowData = {
     ...dataAdapter.forInsertion({
       ...data,
-      id: uuid.v4()
+      id: uuid.v4(),
     }),
     status: data.status || TaskStatus.NOT_STARTED,
-    created_at: new Date()
+    created_at: new Date(),
   };
 
   const created = await db(TABLE_NAME)
-    .insert(omit(rowData, ['design_stage_id']), '*')
+    .insert(omit(rowData, ["design_stage_id"]), "*")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
@@ -67,7 +67,7 @@ export async function create(
     .then((rows: TaskEventRow[]) => first<TaskEventRow>(rows));
 
   if (!created) {
-    throw new Error('Failed to create rows');
+    throw new Error("Failed to create rows");
   }
 
   return validate<TaskEventRow, TaskEvent>(
@@ -88,14 +88,14 @@ export async function createAll(
 
   const rowData = data.map((unsavedTask: Unsaved<TaskEvent>) =>
     dataAdapter.forInsertion({
-      ...omit(unsavedTask, 'designStageId'),
+      ...omit(unsavedTask, "designStageId"),
       id: uuid.v4(),
-      status: unsavedTask.status || TaskStatus.NOT_STARTED
+      status: unsavedTask.status || TaskStatus.NOT_STARTED,
     })
   );
 
   const created = await db(TABLE_NAME)
-    .insert(rowData, '*')
+    .insert(rowData, "*")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
@@ -120,8 +120,8 @@ export async function findById(
     | DetailTaskWithAssigneesEventRow
     | undefined = await getTaskViewBuilder({
     designIdSource: approvalStepTask
-      ? 'approvalstepsfortasksviewraw.design_id'
-      : 'stagesfortasksviewraw.design_id'
+      ? "approvalstepsfortasksviewraw.design_id"
+      : "stagesfortasksviewraw.design_id",
   })
     .where({ [ALIASES.taskId]: id })
     .modify((query: Knex.QueryBuilder) => {
@@ -157,7 +157,7 @@ export async function findRawById(
   const taskEvent: TaskEventRow | undefined = await trx(TABLE_NAME)
     .where({ task_id: id })
     .limit(1)
-    .orderBy('created_at', 'desc')
+    .orderBy("created_at", "desc")
     .then((rows: TaskEventRow[]) => first<TaskEventRow>(rows));
 
   if (!taskEvent) {
@@ -215,10 +215,10 @@ export async function findByCollectionId(
 }
 
 export type TaskFilter =
-  | { type: 'STATUS'; value: 'COMPLETED' | 'INCOMPLETE' }
-  | { type: 'DESIGN'; value: string }
-  | { type: 'COLLECTION'; value: '*' | string }
-  | { type: 'STAGE'; value: string };
+  | { type: "STATUS"; value: "COMPLETED" | "INCOMPLETE" }
+  | { type: "DESIGN"; value: string }
+  | { type: "COLLECTION"; value: "*" | string }
+  | { type: "STAGE"; value: string };
 
 export interface TasksListOptions {
   assignFilterUserId?: string;
@@ -242,19 +242,19 @@ export async function findByUserId(
   );
   const taskEvents: DetailTaskWithAssigneesEventRow[] = await getTaskViewBuilder(
     {
-      collaboratorsBuilder
+      collaboratorsBuilder,
     }
   )
     .whereIn(ALIASES.designId, designIds)
     .modify((query: Knex.QueryBuilder) => {
       if (assignFilterUserId) {
-        query.havingRaw('json_array_length((:assigneesBuilder)) > 0', {
-          assigneesBuilder: getAssigneesBuilder(collaboratorsBuilder)
+        query.havingRaw("json_array_length((:assigneesBuilder)) > 0", {
+          assigneesBuilder: getAssigneesBuilder(collaboratorsBuilder),
         });
       }
       if (filters && filters.length > 0) {
-        filters.forEach(
-          (taskFilter: TaskFilter): void => applyFilter(taskFilter, query)
+        filters.forEach((taskFilter: TaskFilter): void =>
+          applyFilter(taskFilter, query)
         );
       }
     })
@@ -274,29 +274,29 @@ export async function findByUserId(
 
 function applyFilter(taskFilter: TaskFilter, query: Knex.QueryBuilder): void {
   switch (taskFilter.type) {
-    case 'STATUS': {
-      if (taskFilter.value === 'COMPLETED') {
+    case "STATUS": {
+      if (taskFilter.value === "COMPLETED") {
         query.where(ALIASES.taskStatus, TaskStatus.COMPLETED);
       }
-      if (taskFilter.value === 'INCOMPLETE') {
+      if (taskFilter.value === "INCOMPLETE") {
         query.whereNot(ALIASES.taskStatus, TaskStatus.COMPLETED);
       }
       break;
     }
-    case 'DESIGN': {
+    case "DESIGN": {
       query.where(ALIASES.designId, taskFilter.value);
       break;
     }
-    case 'COLLECTION': {
-      if (taskFilter.value === '*') {
+    case "COLLECTION": {
+      if (taskFilter.value === "*") {
         query.whereNotNull(ALIASES.collectionId);
       } else {
         query.where(ALIASES.collectionId, taskFilter.value);
       }
       break;
     }
-    case 'STAGE': {
-      query.whereIn(ALIASES.stageTitle, taskFilter.value.split(','));
+    case "STAGE": {
+      query.whereIn(ALIASES.stageTitle, taskFilter.value.split(","));
       break;
     }
   }
@@ -330,7 +330,7 @@ export async function findByApprovalStepId(
 ): Promise<DetailsTaskWithAssignees[]> {
   const taskEvents: DetailTaskWithAssigneesEventRow[] = await getTaskViewBuilder(
     {
-      designIdSource: 'approvalstepsfortasksviewraw.design_id'
+      designIdSource: "approvalstepsfortasksviewraw.design_id",
     }
   )
     .where({ [ALIASES.approvalStepId]: approvalStepId })

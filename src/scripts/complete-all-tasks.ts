@@ -1,23 +1,24 @@
-import process from 'process';
+import process from "process";
 
-import { log, logServerError } from '../services/logger';
-import { green, reset } from '../services/colors';
-import { create } from '../dao/task-events';
-import { TaskEventRow, TaskStatus } from '../domain-objects/task-event';
-import db from '../services/db';
+import { log, logServerError } from "../services/logger";
+import { green, reset } from "../services/colors";
+import { create } from "../dao/task-events";
+import { TaskEventRow, TaskStatus } from "../domain-objects/task-event";
+import db from "../services/db";
 
 async function run(): Promise<void> {
   const designIds = process.argv.slice(2);
 
   if (designIds.length < 1) {
-    throw new Error('Usage: complete-all-tasks.ts [designId] [designId2]...');
+    throw new Error("Usage: complete-all-tasks.ts [designId] [designId2]...");
   }
 
   for (const designId of designIds) {
     log(`Processing design ${designId}...`);
 
-    const latestEvents: TaskEventRow[] = (await db.raw(
-      `
+    const latestEvents: TaskEventRow[] = (
+      await db.raw(
+        `
       select distinct on (events.task_id) events.*
       from product_design_stages as stg
       inner join product_design_stage_tasks as st
@@ -27,8 +28,9 @@ async function run(): Promise<void> {
       where stg.design_id = ?
       order by events.task_id, events.created_at desc;
     `,
-      [designId]
-    )).rows;
+        [designId]
+      )
+    ).rows;
 
     log(`Found ${latestEvents.length} tasks to complete`);
 
@@ -46,7 +48,7 @@ async function run(): Promise<void> {
         taskId: event.task_id,
         createdBy: event.created_by,
         designStageId: null,
-        ordering: event.ordering
+        ordering: event.ordering,
       });
 
       log(`Completed task ${event.task_id}`);
@@ -59,9 +61,7 @@ run()
     log(green, `Complete!`, reset);
     process.exit();
   })
-  .catch(
-    (err: any): void => {
-      logServerError(err);
-      process.exit(1);
-    }
-  );
+  .catch((err: any): void => {
+    logServerError(err);
+    process.exit(1);
+  });

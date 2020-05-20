@@ -1,18 +1,18 @@
-'use strict';
+"use strict";
 
-const rethrow = require('pg-rethrow');
-const uuid = require('node-uuid');
+const rethrow = require("pg-rethrow");
+const uuid = require("node-uuid");
 
-const compact = require('../../services/compact');
-const db = require('../../services/db');
-const first = require('../../services/first').default;
-const FitPartner = require('../../domain-objects/fit-partner');
+const compact = require("../../services/compact");
+const db = require("../../services/db");
+const first = require("../../services/first").default;
+const FitPartner = require("../../domain-objects/fit-partner");
 
-const instantiate = data => new FitPartner(data);
-const maybeInstantiate = data => (data ? instantiate(data) : null);
+const instantiate = (data) => new FitPartner(data);
+const maybeInstantiate = (data) => (data ? instantiate(data) : null);
 
 const { dataMapper } = FitPartner;
-const TABLE_NAME = 'fit_partners';
+const TABLE_NAME = "fit_partners";
 
 function findById(id) {
   return db(TABLE_NAME)
@@ -38,7 +38,7 @@ function create(data) {
   );
 
   return db(TABLE_NAME)
-    .insert(rowData, '*')
+    .insert(rowData, "*")
     .then(first)
     .then(instantiate)
     .catch(rethrow);
@@ -47,5 +47,5 @@ function create(data) {
 module.exports = {
   create,
   findById,
-  findByAdminUserId
+  findByAdminUserId,
 };

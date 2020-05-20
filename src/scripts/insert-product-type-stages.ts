@@ -1,17 +1,17 @@
-import Knex from 'knex';
-import process from 'process';
-import uuid from 'node-uuid';
-import { chunk } from 'lodash';
+import Knex from "knex";
+import process from "process";
+import uuid from "node-uuid";
+import { chunk } from "lodash";
 
-import db from '../services/db';
-import { log } from '../services/logger';
-import { green, red, reset } from '../services/colors';
+import db from "../services/db";
+import { log } from "../services/logger";
+import { green, red, reset } from "../services/colors";
 import {
   POST_APPROVAL_TEMPLATES,
   POST_CREATION_TEMPLATES,
-  StageTemplate
-} from '../components/tasks/templates/stages';
-import { ProductTypeStageRow } from '../components/product-type-stages/domain-object';
+  StageTemplate,
+} from "../components/tasks/templates/stages";
+import { ProductTypeStageRow } from "../components/product-type-stages/domain-object";
 
 const STAGES = [...POST_APPROVAL_TEMPLATES, ...POST_CREATION_TEMPLATES];
 const ALL_STAGES = STAGES.map((template: StageTemplate): string => template.id);
@@ -28,12 +28,10 @@ insertProductTypeStages()
     );
     process.exit();
   })
-  .catch(
-    (error: any): void => {
-      log(`${red}ERROR:\n${reset}`, error);
-      process.exit(1);
-    }
-  );
+  .catch((error: any): void => {
+    log(`${red}ERROR:\n${reset}`, error);
+    process.exit(1);
+  });
 
 /**
  * Fills in the `product_type_stages` table with data from the latest version of
@@ -48,31 +46,29 @@ interface Row {
 
 async function insertProductTypeStages(): Promise<void> {
   return db.transaction(async (trx: Knex.Transaction) => {
-    log('Removing all existing product_type_stages rows');
+    log("Removing all existing product_type_stages rows");
     await trx.raw(`
 TRUNCATE TABLE product_type_stages;
 `);
 
     const pricingProductTypes: Row[] = await trx(
-      'pricing_product_types'
-    ).select('id', 'complexity');
+      "pricing_product_types"
+    ).select("id", "complexity");
     log(
-      `Inserting stage type rows from ${
-        pricingProductTypes.length
-      } product types.`
+      `Inserting stage type rows from ${pricingProductTypes.length} product types.`
     );
 
     const insertions: ProductTypeStageRow[] = [];
     for (const productType of pricingProductTypes) {
       const stageTemplateIds =
-        productType.complexity === 'BLANK' ? BLANKS_STAGES : ALL_STAGES;
+        productType.complexity === "BLANK" ? BLANKS_STAGES : ALL_STAGES;
 
       for (const stageTemplateId of stageTemplateIds) {
         const id = uuid.v4();
         insertions.push({
           id,
           pricing_product_type_id: productType.id,
-          stage_template_id: stageTemplateId
+          stage_template_id: stageTemplateId,
         });
       }
     }
@@ -81,7 +77,7 @@ TRUNCATE TABLE product_type_stages;
 
     for (const c of chunk(insertions, 10000)) {
       log(`Creating ${c.length} ProductTypeStages`);
-      await trx('product_type_stages').insert(c);
+      await trx("product_type_stages").insert(c);
     }
   });
 }

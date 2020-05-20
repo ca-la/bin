@@ -1,17 +1,17 @@
-import * as Knex from 'knex';
-import * as uuid from 'node-uuid';
+import * as Knex from "knex";
+import * as uuid from "node-uuid";
 
-import db from '../../../services/db';
-import first from '../../../services/first';
+import db from "../../../services/db";
+import first from "../../../services/first";
 import StorefrontToken, {
   dataAdapter,
   isStorefrontTokenRow,
   StorefrontTokenRow,
-  unsavedDataAdapter
-} from './domain-object';
-import { validate, validateEvery } from '../../../services/validate-from-db';
+  unsavedDataAdapter,
+} from "./domain-object";
+import { validate, validateEvery } from "../../../services/validate-from-db";
 
-const TABLE_NAME = 'storefront_integration_tokens';
+const TABLE_NAME = "storefront_integration_tokens";
 
 export async function create(options: {
   data: Unsaved<StorefrontToken>;
@@ -21,11 +21,11 @@ export async function create(options: {
   const rowData = unsavedDataAdapter.forInsertion(data);
   const storefrontToken = await trx(TABLE_NAME)
     .insert({ ...rowData, id: uuid.v4() })
-    .returning('*')
+    .returning("*")
     .then((storefrontTokens: StorefrontTokenRow[]) => first(storefrontTokens));
 
   if (!storefrontToken) {
-    throw new Error('There was a problem saving the StorefrontToken');
+    throw new Error("There was a problem saving the StorefrontToken");
   }
 
   return validate<StorefrontTokenRow, StorefrontToken>(
@@ -68,7 +68,7 @@ export async function findByStorefront(options: {
   const { storefrontId, trx } = options;
   const storefrontTokens = await trx(TABLE_NAME).where({
     storefront_id: storefrontId,
-    deleted_at: null
+    deleted_at: null,
   });
 
   return validateEvery<StorefrontTokenRow, StorefrontToken>(

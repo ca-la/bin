@@ -1,17 +1,17 @@
-import tape from 'tape';
-import uuid from 'node-uuid';
-import Knex from 'knex';
+import tape from "tape";
+import uuid from "node-uuid";
+import Knex from "knex";
 
-import db from '../../services/db';
-import { test } from '../../test-helpers/fresh';
-import createUser = require('../../test-helpers/create-user');
+import db from "../../services/db";
+import { test } from "../../test-helpers/fresh";
+import createUser = require("../../test-helpers/create-user");
 
-import { ComponentType } from '../../components/components/domain-object';
-import { create as createComponent } from '../../components/components/dao';
-import { findAndDuplicateComponent } from './components';
-import generateAsset from '../../test-helpers/factories/asset';
+import { ComponentType } from "../../components/components/domain-object";
+import { create as createComponent } from "../../components/components/dao";
+import { findAndDuplicateComponent } from "./components";
+import generateAsset from "../../test-helpers/factories/asset";
 
-test('findAndDuplicateComponent without sub-resources', async (t: tape.Test) => {
+test("findAndDuplicateComponent without sub-resources", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
   const componentId = uuid.v4();
   const componentData = {
@@ -21,7 +21,7 @@ test('findAndDuplicateComponent without sub-resources', async (t: tape.Test) => 
     materialId: null,
     parentId: null,
     sketchId: null,
-    type: ComponentType.Sketch
+    type: ComponentType.Sketch,
   };
   await createComponent(componentData);
 
@@ -39,28 +39,28 @@ test('findAndDuplicateComponent without sub-resources', async (t: tape.Test) => 
         materialId: duplicateComponent.materialId,
         parentId: duplicateComponent.parentId,
         sketchId: duplicateComponent.sketchId,
-        type: duplicateComponent.type
+        type: duplicateComponent.type,
       },
       {
         ...componentData,
-        id: duplicateComponent.id
+        id: duplicateComponent.id,
       },
-      'Duplicating a component returns the same component but with a new id'
+      "Duplicating a component returns the same component but with a new id"
     );
   });
 });
 
-test('findAndDuplicateComponent with sub-resources', async (t: tape.Test) => {
+test("findAndDuplicateComponent with sub-resources", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
   const imageId = uuid.v4();
   const imageData = {
-    description: '',
+    description: "",
     id: imageId,
-    mimeType: 'image/png',
+    mimeType: "image/png",
     originalHeightPx: 0,
     originalWidthPx: 0,
-    title: '',
-    userId: user.id
+    title: "",
+    userId: user.id,
   };
   await generateAsset(imageData);
 
@@ -72,7 +72,7 @@ test('findAndDuplicateComponent with sub-resources', async (t: tape.Test) => {
     materialId: null,
     parentId: null,
     sketchId: imageId,
-    type: ComponentType.Sketch
+    type: ComponentType.Sketch,
   };
   await createComponent(componentData);
 
@@ -90,14 +90,14 @@ test('findAndDuplicateComponent with sub-resources', async (t: tape.Test) => {
         materialId: duplicateComponent.materialId,
         parentId: duplicateComponent.parentId,
         sketchId: duplicateComponent.sketchId,
-        type: duplicateComponent.type
+        type: duplicateComponent.type,
       },
       {
         ...componentData,
         id: duplicateComponent.id,
-        sketchId: duplicateComponent.sketchId
+        sketchId: duplicateComponent.sketchId,
       },
-      'Duplicating a component returns the same component but with a new id'
+      "Duplicating a component returns the same component but with a new id"
     );
   });
 });

@@ -1,32 +1,32 @@
-import uuid from 'node-uuid';
-import Knex from 'knex';
+import uuid from "node-uuid";
+import Knex from "knex";
 
-import { test, Test } from '../../test-helpers/fresh';
-import db from '../../services/db';
-import createUser = require('../../test-helpers/create-user');
+import { test, Test } from "../../test-helpers/fresh";
+import db from "../../services/db";
+import createUser = require("../../test-helpers/create-user");
 
-import * as CohortsDAO from './dao';
+import * as CohortsDAO from "./dao";
 
-test('Cohorts DAO supports creation and retrieval', async (t: Test) => {
+test("Cohorts DAO supports creation and retrieval", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
   const cohortId = uuid.v4();
 
   const created = await CohortsDAO.create({
     createdBy: user.id,
-    description: 'A bunch of delightful designers',
+    description: "A bunch of delightful designers",
     id: cohortId,
-    slug: 'moma-demo-june-2020',
-    title: 'MoMA Demo Participants'
+    slug: "moma-demo-june-2020",
+    title: "MoMA Demo Participants",
   });
 
   const found = await CohortsDAO.findById(cohortId);
-  const foundBySlug = await CohortsDAO.findBySlug('moma-demo-june-2020');
+  const foundBySlug = await CohortsDAO.findBySlug("moma-demo-june-2020");
 
-  t.deepEqual(created, found, 'Persists the cohort');
-  t.deepEqual(created, foundBySlug, 'Is retrievable by slug');
+  t.deepEqual(created, found, "Persists the cohort");
+  t.deepEqual(created, foundBySlug, "Is retrievable by slug");
 });
 
-test('Cohorts DAO supports creation and retrieval in a transaction', async (t: Test) => {
+test("Cohorts DAO supports creation and retrieval in a transaction", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
   const cohortId = uuid.v4();
 
@@ -34,18 +34,18 @@ test('Cohorts DAO supports creation and retrieval in a transaction', async (t: T
     const created = await CohortsDAO.create(
       {
         createdBy: user.id,
-        description: 'A bunch of delightful designers',
+        description: "A bunch of delightful designers",
         id: cohortId,
-        slug: 'moma-demo-june-2020',
-        title: 'MoMA Demo Participants'
+        slug: "moma-demo-june-2020",
+        title: "MoMA Demo Participants",
       },
       trx
     );
 
     const found = await CohortsDAO.findById(cohortId, trx);
-    const foundBySlug = await CohortsDAO.findBySlug('moma-demo-june-2020', trx);
+    const foundBySlug = await CohortsDAO.findBySlug("moma-demo-june-2020", trx);
 
-    t.deepEqual(created, found, 'Persists the cohort');
-    t.deepEqual(created, foundBySlug, 'Is retrievable by slug');
+    t.deepEqual(created, found, "Persists the cohort");
+    t.deepEqual(created, foundBySlug, "Is retrievable by slug");
   });
 });

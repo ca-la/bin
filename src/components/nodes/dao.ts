@@ -1,14 +1,14 @@
-import Knex from 'knex';
-import uuid from 'node-uuid';
+import Knex from "knex";
+import uuid from "node-uuid";
 
-import Node, { dataAdapter, isNodeRow, NodeRow } from './domain-objects';
-import db from '../../services/db';
-import first from '../../services/first';
-import { validate, validateEvery } from '../../services/validate-from-db';
-import { DesignRootNodeRow } from './domain-objects/design-root';
+import Node, { dataAdapter, isNodeRow, NodeRow } from "./domain-objects";
+import db from "../../services/db";
+import first from "../../services/first";
+import { validate, validateEvery } from "../../services/validate-from-db";
+import { DesignRootNodeRow } from "./domain-objects/design-root";
 
-const NODES_TABLE = 'nodes';
-const ROOT_NODES_TABLE = 'design_root_nodes';
+const NODES_TABLE = "nodes";
+const ROOT_NODES_TABLE = "design_root_nodes";
 
 /**
  * Creates a Node.
@@ -26,15 +26,15 @@ export async function create(
     y: node.y,
     ordering: node.ordering,
     title: node.title,
-    type: node.type
+    type: node.type,
   });
   const created = await db(NODES_TABLE)
-    .insert({ ...rowData, created_at: new Date() }, '*')
+    .insert({ ...rowData, created_at: new Date() }, "*")
     .modify((query: Knex.QueryBuilder) => query.transacting(trx))
     .then((rows: NodeRow[]) => first<NodeRow>(rows));
 
   if (!created) {
-    throw new Error('Failed to create a Node!');
+    throw new Error("Failed to create a Node!");
   }
 
   return validate<NodeRow, Node>(NODES_TABLE, isNodeRow, dataAdapter, created);
@@ -55,15 +55,15 @@ export async function createDesignRoot(
       {
         design_id: designId,
         id: uuid.v4(),
-        node_id: node.id
+        node_id: node.id,
       },
-      '*'
+      "*"
     )
     .modify((query: Knex.QueryBuilder) => query.transacting(trx))
     .then((rows: DesignRootNodeRow[]) => first<DesignRootNodeRow>(rows));
 
   if (!rootNode) {
-    throw new Error('Failed to create a root node!');
+    throw new Error("Failed to create a root node!");
   }
 
   return node;
@@ -74,7 +74,7 @@ export async function update(data: Node, trx: Knex.Transaction): Promise<Node> {
   const node = await db(NODES_TABLE)
     // 'deleted_at' is ignored here as the client will set it to mark nodes as deleted in realtime
     .where({ id: data.id })
-    .update(rowData, '*')
+    .update(rowData, "*")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
@@ -83,7 +83,7 @@ export async function update(data: Node, trx: Knex.Transaction): Promise<Node> {
     .then((rows: NodeRow[]) => first<NodeRow>(rows));
 
   if (!node) {
-    throw new Error('Failed to update node!');
+    throw new Error("Failed to update node!");
   }
 
   return validate<NodeRow, Node>(NODES_TABLE, isNodeRow, dataAdapter, node);
@@ -112,7 +112,7 @@ export async function findById(
   trx?: Knex.Transaction
 ): Promise<Node | null> {
   const node: NodeRow | undefined = await db(NODES_TABLE)
-    .select('*')
+    .select("*")
     .where({ deleted_at: null, id: nodeId })
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
@@ -136,14 +136,14 @@ export async function findRootNodesByDesign(
   trx?: Knex.Transaction
 ): Promise<Node[]> {
   const nodes: NodeRow[] = await db(NODES_TABLE)
-    .select('nodes.*')
-    .from('nodes')
-    .leftJoin('design_root_nodes', 'design_root_nodes.node_id', 'nodes.id')
+    .select("nodes.*")
+    .from("nodes")
+    .leftJoin("design_root_nodes", "design_root_nodes.node_id", "nodes.id")
     .where({
-      'design_root_nodes.design_id': designId,
-      'nodes.deleted_at': null
+      "design_root_nodes.design_id": designId,
+      "nodes.deleted_at": null,
     })
-    .orderBy('nodes.ordering', 'ASC')
+    .orderBy("nodes.ordering", "ASC")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);

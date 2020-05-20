@@ -1,5 +1,5 @@
-import DataAdapter from '../../services/data-adapter';
-import { hasProperties } from '../../services/require-properties';
+import DataAdapter from "../../services/data-adapter";
+import { hasProperties } from "../../services/require-properties";
 
 /**
  * A grouping of users
@@ -29,7 +29,7 @@ function decode(row: CohortRow): Cohort {
     description: row.description,
     id: row.id,
     slug: row.slug,
-    title: row.title
+    title: row.title,
   };
 }
 
@@ -40,7 +40,7 @@ function encode(data: Cohort): CohortRow {
     description: data.description,
     id: data.id,
     slug: data.slug,
-    title: data.title
+    title: data.title,
   };
 }
 
@@ -50,7 +50,7 @@ function forInsertion(data: Uninserted<Cohort>): Uninserted<CohortRow> {
     description: data.description,
     id: data.id,
     slug: data.slug,
-    title: data.title
+    title: data.title,
   };
 }
 
@@ -63,23 +63,23 @@ export const dataAdapter = new DataAdapter<CohortRow, Cohort>(
 export function isCohortRow(row: object): row is CohortRow {
   return hasProperties(
     row,
-    'id',
-    'slug',
-    'title',
-    'description',
-    'created_at',
-    'created_by'
+    "id",
+    "slug",
+    "title",
+    "description",
+    "created_at",
+    "created_by"
   );
 }
 
 export function isCohort(data: object): data is Cohort {
   return hasProperties(
     data,
-    'id',
-    'slug',
-    'title',
-    'description',
-    'createdAt',
-    'createdBy'
+    "id",
+    "slug",
+    "title",
+    "description",
+    "createdAt",
+    "createdBy"
   );
 }

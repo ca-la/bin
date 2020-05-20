@@ -1,21 +1,21 @@
-import uuid from 'node-uuid';
-import Knex from 'knex';
-import rethrow = require('pg-rethrow');
-import { Variant } from '@cala/ts-lib';
+import uuid from "node-uuid";
+import Knex from "knex";
+import rethrow = require("pg-rethrow");
+import { Variant } from "@cala/ts-lib";
 
-import db from '../../services/db';
-import filterError = require('../../services/filter-error');
-import InvalidDataError = require('../../errors/invalid-data');
+import db from "../../services/db";
+import filterError = require("../../services/filter-error");
+import InvalidDataError = require("../../errors/invalid-data");
 import {
   dataAdapter,
   isProductDesignVariantRow,
   partialDataAdapter,
-  ProductDesignVariantRow
-} from './domain-object';
-import first from '../../services/first';
-import { validate, validateEvery } from '../../services/validate-from-db';
+  ProductDesignVariantRow,
+} from "./domain-object";
+import first from "../../services/first";
+import { validate, validateEvery } from "../../services/validate-from-db";
 
-const TABLE_NAME = 'product_design_variants';
+const TABLE_NAME = "product_design_variants";
 
 export async function create(
   data: Uninserted<Variant>,
@@ -23,7 +23,7 @@ export async function create(
 ): Promise<Variant> {
   const rowData = dataAdapter.forInsertion({ ...data });
   const created = await db(TABLE_NAME)
-    .insert(rowData, '*')
+    .insert(rowData, "*")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
@@ -33,7 +33,7 @@ export async function create(
       first<ProductDesignVariantRow>(rows)
     );
   if (!created) {
-    throw new Error('Failed to create a product design variant!');
+    throw new Error("Failed to create a product design variant!");
   }
   return validate<ProductDesignVariantRow, Variant>(
     TABLE_NAME,
@@ -50,7 +50,7 @@ export async function update(
 ): Promise<Variant> {
   const rowData = partialDataAdapter.toDb(data);
   const updated = await db(TABLE_NAME)
-    .update(rowData, '*')
+    .update(rowData, "*")
     .where({ id })
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
@@ -61,7 +61,7 @@ export async function update(
       first<ProductDesignVariantRow>(rows)
     );
   if (!updated) {
-    throw new Error('Failed to create a product design variant!');
+    throw new Error("Failed to create a product design variant!");
   }
   return validate<ProductDesignVariantRow, Variant>(
     TABLE_NAME,
@@ -73,7 +73,7 @@ export async function update(
 
 export async function findById(id: string): Promise<Variant | null> {
   const productDesignVariants: ProductDesignVariantRow[] = await db(TABLE_NAME)
-    .select('*')
+    .select("*")
     .where({ id })
     .limit(1);
   const productDesignVariant = productDesignVariants[0];
@@ -110,28 +110,28 @@ export async function createForDesign(
   const rowsForInsertion = variants.map(
     (data: Uninserted<Variant>): Uninserted<ProductDesignVariantRow> => {
       if (!data.colorName && !data.sizeName) {
-        throw new InvalidDataError('Color name or size name must be provided');
+        throw new InvalidDataError("Color name or size name must be provided");
       }
       return dataAdapter.forInsertion({
         ...data,
         designId,
-        id: data.id || uuid.v4()
+        id: data.id || uuid.v4(),
       });
     }
   );
 
   const variantRows: ProductDesignVariantRow[] = await db(TABLE_NAME)
     .transacting(trx)
-    .insert(rowsForInsertion, '*')
-    .orderBy('position', 'asc')
+    .insert(rowsForInsertion, "*")
+    .orderBy("position", "asc")
     .catch(rethrow)
     .catch(
       filterError(
         rethrow.ERRORS.UniqueViolation,
         (err: typeof rethrow.ERRORS.UniqueViolation) => {
-          if (err.constraint === 'product_design_variant_position') {
+          if (err.constraint === "product_design_variant_position") {
             throw new InvalidDataError(
-              'Cannot create two variants with the same position'
+              "Cannot create two variants with the same position"
             );
           }
           throw err;
@@ -159,7 +159,7 @@ export async function replaceForDesign(
 export async function findByDesignId(designId: string): Promise<Variant[]> {
   const variants = await db(TABLE_NAME)
     .where({ design_id: designId })
-    .orderBy('position', 'asc')
+    .orderBy("position", "asc")
     .catch(rethrow);
 
   return validateEvery<ProductDesignVariantRow, Variant>(
@@ -175,14 +175,14 @@ export async function findByCollectionId(
   trx?: Knex.Transaction
 ): Promise<Variant[]> {
   const variants = await db(TABLE_NAME)
-    .select('product_design_variants.*')
+    .select("product_design_variants.*")
     .from(TABLE_NAME)
     .join(
-      'collection_designs',
-      'collection_designs.design_id',
-      'product_design_variants.design_id'
+      "collection_designs",
+      "collection_designs.design_id",
+      "product_design_variants.design_id"
     )
-    .where({ 'collection_designs.collection_id': collectionId })
+    .where({ "collection_designs.collection_id": collectionId })
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
@@ -218,9 +218,9 @@ export async function getSizes(designId: string): Promise<(string | null)[]> {
     size_name: string | null;
   }
   return await db(TABLE_NAME)
-    .distinct('size_name')
+    .distinct("size_name")
     .where({ design_id: designId })
-    .andWhere('units_to_produce', '>', 0)
+    .andWhere("units_to_produce", ">", 0)
     .then((rows: SizeRow[]) =>
       rows.map((row: SizeRow): string | null => row.size_name)
     );

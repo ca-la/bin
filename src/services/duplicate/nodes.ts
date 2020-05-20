@@ -1,11 +1,11 @@
-import Knex from 'knex';
-import { NodeTree } from '@cala/ts-lib/dist/phidias';
+import Knex from "knex";
+import { NodeTree } from "@cala/ts-lib/dist/phidias";
 
-import { create, createDesignRoot, findById } from '../../components/nodes/dao';
-import Node from '../../components/nodes/domain-objects';
+import { create, createDesignRoot, findById } from "../../components/nodes/dao";
+import Node from "../../components/nodes/domain-objects";
 
-import prepareForDuplication from './prepare-for-duplication';
-import findAndDuplicateAttributesForNode from './attributes/node-attributes';
+import prepareForDuplication from "./prepare-for-duplication";
+import findAndDuplicateAttributesForNode from "./attributes/node-attributes";
 
 /**
  * Finds the given node and duplicates it. Does the same with all related nodes and attributes.
@@ -32,7 +32,7 @@ export async function findAndDuplicateNode(options: {
     newParentId,
     nodeId,
     tree,
-    trx
+    trx,
   } = options;
 
   const node = await findById(nodeId, trx);
@@ -44,14 +44,14 @@ export async function findAndDuplicateNode(options: {
 
   if (isRoot && !newDesignId) {
     throw new Error(
-      'Cannot duplicate a root node without a design id specified.'
+      "Cannot duplicate a root node without a design id specified."
     );
   }
 
   // Duplicate the node.
   const preparedNode = prepareForDuplication(node, {
     createdBy: newCreatorId,
-    parentId: newParentId || node.parentId
+    parentId: newParentId || node.parentId,
   });
   const duplicateNode =
     isRoot && newDesignId
@@ -63,7 +63,7 @@ export async function findAndDuplicateNode(options: {
     currentNodeId: node.id,
     newCreatorId,
     newNodeId: duplicateNode.id,
-    trx
+    trx,
   });
 
   // Duplicate all children of the current node recursively.
@@ -74,7 +74,7 @@ export async function findAndDuplicateNode(options: {
       newParentId: duplicateNode.id,
       nodeId: childNodeId,
       tree,
-      trx
+      trx,
     });
   }
 

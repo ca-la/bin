@@ -1,20 +1,20 @@
-import Router from 'koa-router';
+import Router from "koa-router";
 
-import * as AssetsDAO from '../dao';
-import requireAuth = require('../../../middleware/require-auth');
-import { uploadStatus } from './upload-status';
-import { isPartialAsset } from '../domain-object';
-import { generateUploadPolicy } from '../../../services/upload-policy';
+import * as AssetsDAO from "../dao";
+import requireAuth = require("../../../middleware/require-auth");
+import { uploadStatus } from "./upload-status";
+import { isPartialAsset } from "../domain-object";
+import { generateUploadPolicy } from "../../../services/upload-policy";
 import {
   AWS_USER_UPLOADS_BUCKET_NAME as BUCKET_NAME,
   AWS_USER_UPLOADS_BUCKET_REGION as BUCKET_REGION,
-  USER_UPLOADS_BASE_URL
-} from '../../../config';
+  USER_UPLOADS_BASE_URL,
+} from "../../../config";
 import {
   deserializeAsset,
   deserializePartialAsset,
-  isSerializedAsset
-} from '../services/serializer';
+  isSerializedAsset,
+} from "../services/serializer";
 
 const router = new Router();
 
@@ -31,7 +31,7 @@ function* findById(this: AuthedContext): Iterator<any, any, any> {
     this.status = 200;
     this.body = asset;
   } else {
-    this.throw(400, 'An asset id was not provided.');
+    this.throw(400, "An asset id was not provided.");
   }
 }
 
@@ -43,7 +43,7 @@ function* create(this: AuthedContext): Iterator<any, any, any> {
     this.status = 201;
     this.body = asset;
   } else {
-    this.throw(400, 'Cannot create an asset with the supplied object.');
+    this.throw(400, "Cannot create an asset with the supplied object.");
   }
 }
 
@@ -59,7 +59,7 @@ function* update(this: AuthedContext): Iterator<any, any, any> {
     this.status = 200;
     this.body = asset;
   } else {
-    this.throw(400, 'Cannot update an asset with the supplied values.');
+    this.throw(400, "Cannot update an asset with the supplied values.");
   }
 }
 
@@ -68,7 +68,7 @@ function* getUploadPolicy(this: AuthedContext): Iterator<any, any, any> {
   const { assetId } = this.params;
 
   if (!mimeType || !assetId) {
-    this.throw(400, 'A mimeType and a fileId are required.');
+    this.throw(400, "A mimeType and a fileId are required.");
   }
 
   const uploadPolicy = generateUploadPolicy({
@@ -76,17 +76,17 @@ function* getUploadPolicy(this: AuthedContext): Iterator<any, any, any> {
     id: assetId,
     mimeType,
     s3Bucket: BUCKET_NAME,
-    s3Region: BUCKET_REGION
+    s3Region: BUCKET_REGION,
   });
 
   this.body = uploadPolicy;
   this.status = 200;
 }
 
-router.get('/:assetId', requireAuth, findById);
-router.put('/:assetId', requireAuth, create);
-router.patch('/:assetId', requireAuth, update);
-router.get('/:assetId/upload-policy', requireAuth, getUploadPolicy);
-router.put('/:assetId/upload-status', requireAuth, uploadStatus);
+router.get("/:assetId", requireAuth, findById);
+router.put("/:assetId", requireAuth, create);
+router.patch("/:assetId", requireAuth, update);
+router.get("/:assetId/upload-policy", requireAuth, getUploadPolicy);
+router.put("/:assetId/upload-status", requireAuth, uploadStatus);
 
 export default router.routes();

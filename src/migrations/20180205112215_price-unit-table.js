@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 exports.up = function up(knex) {
   // Continuing the trend of introducing enums then remembering all their

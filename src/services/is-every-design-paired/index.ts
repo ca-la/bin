@@ -1,7 +1,7 @@
-import ProductDesignsDAO from '../../components/product-designs/dao';
-import ProductDesign = require('../../components/product-designs/domain-objects/product-design');
-import * as DesignEventsDAO from '../../dao/design-events';
-import DesignEvent from '../../domain-objects/design-event';
+import ProductDesignsDAO from "../../components/product-designs/dao";
+import ProductDesign = require("../../components/product-designs/domain-objects/product-design");
+import * as DesignEventsDAO from "../../dao/design-events";
+import DesignEvent from "../../domain-objects/design-event";
 
 export default async function isEveryDesignPaired(
   collectionId: string
@@ -15,6 +15,6 @@ export default async function isEveryDesignPaired(
   );
 
   return designEvents.every((eventsList: DesignEvent[]) =>
-    eventsList.some((event: DesignEvent) => event.type === 'ACCEPT_SERVICE_BID')
+    eventsList.some((event: DesignEvent) => event.type === "ACCEPT_SERVICE_BID")
   );
 }

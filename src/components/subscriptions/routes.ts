@@ -1,17 +1,17 @@
-import Knex from 'knex';
-import Router from 'koa-router';
+import Knex from "knex";
+import Router from "koa-router";
 
-import * as SubscriptionsDAO from './dao';
-import attachPlan from './attach-plan';
-import canAccessUserResource = require('../../middleware/can-access-user-resource');
-import createOrUpdateSubscription from './create-or-update';
-import db from '../../services/db';
-import requireAuth = require('../../middleware/require-auth');
-import { hasProperties } from '../../services/require-properties';
-import { Subscription } from './domain-object';
-import filterError from '../../services/filter-error';
-import InvalidDataError from '../../errors/invalid-data';
-import requireAdmin from '../../middleware/require-admin';
+import * as SubscriptionsDAO from "./dao";
+import attachPlan from "./attach-plan";
+import canAccessUserResource = require("../../middleware/can-access-user-resource");
+import createOrUpdateSubscription from "./create-or-update";
+import db from "../../services/db";
+import requireAuth = require("../../middleware/require-auth");
+import { hasProperties } from "../../services/require-properties";
+import { Subscription } from "./domain-object";
+import filterError from "../../services/filter-error";
+import InvalidDataError from "../../errors/invalid-data";
+import requireAdmin from "../../middleware/require-admin";
 
 interface CreateOrUpdateRequest {
   planId: string;
@@ -21,11 +21,11 @@ interface CreateOrUpdateRequest {
 }
 
 function isCreateOrUpdateRequest(body: any): body is CreateOrUpdateRequest {
-  return hasProperties(body, 'planId');
+  return hasProperties(body, "planId");
 }
 
 function isUpdateRequest(body: any): body is { cancelledAt: Date } {
-  return hasProperties(body, 'cancelledAt');
+  return hasProperties(body, "cancelledAt");
 }
 
 const router = new Router();
@@ -34,12 +34,12 @@ function* getList(this: AuthedContext): Iterator<any, any, any> {
   const { userId, isActive } = this.query;
 
   if (!userId) {
-    this.throw(400, 'User ID is required');
+    this.throw(400, "User ID is required");
   }
 
   canAccessUserResource.call(this, userId);
 
-  const findOnlyActive = isActive === 'true';
+  const findOnlyActive = isActive === "true";
 
   const subscriptionsWithPlans = yield db.transaction(
     async (trx: Knex.Transaction) => {
@@ -64,10 +64,10 @@ function* getList(this: AuthedContext): Iterator<any, any, any> {
 }
 
 function* create(this: AuthedContext): Iterator<any, any, any> {
-  const isAdmin = this.state.role === 'ADMIN';
+  const isAdmin = this.state.role === "ADMIN";
   const { body } = this.request;
   if (!isCreateOrUpdateRequest(body)) {
-    this.throw(400, 'Missing required properties');
+    this.throw(400, "Missing required properties");
   }
 
   const { stripeCardToken, planId } = body;
@@ -76,11 +76,11 @@ function* create(this: AuthedContext): Iterator<any, any, any> {
     if (body.userId) {
       this.throw(
         403,
-        'Subscriptions can only be created for the logged in user'
+        "Subscriptions can only be created for the logged in user"
       );
     }
     if (body.isPaymentWaived) {
-      this.throw(403, 'Payment cannot be waived');
+      this.throw(403, "Payment cannot be waived");
     }
   }
 
@@ -92,7 +92,7 @@ function* create(this: AuthedContext): Iterator<any, any, any> {
       planId,
       userId,
       isPaymentWaived: isAdmin && body.isPaymentWaived,
-      trx
+      trx,
     }).catch(
       filterError(InvalidDataError, (err: InvalidDataError) =>
         this.throw(400, err)
@@ -107,13 +107,13 @@ function* create(this: AuthedContext): Iterator<any, any, any> {
 function* createOrUpdate(this: AuthedContext): Iterator<any, any, any> {
   const { body } = this.request;
   if (!isCreateOrUpdateRequest(body)) {
-    this.throw(400, 'Missing required properties');
+    this.throw(400, "Missing required properties");
   }
 
   const { subscriptionId } = this.params;
   const { stripeCardToken, planId } = body;
   if (!stripeCardToken) {
-    this.throw(400, 'Missing stripe card token');
+    this.throw(400, "Missing stripe card token");
   }
   const updated = yield db.transaction((trx: Knex.Transaction) => {
     return createOrUpdateSubscription({
@@ -121,7 +121,7 @@ function* createOrUpdate(this: AuthedContext): Iterator<any, any, any> {
       planId,
       userId: this.state.userId,
       subscriptionId,
-      trx
+      trx,
     }).catch(
       filterError(InvalidDataError, (err: InvalidDataError) =>
         this.throw(400, err)
@@ -136,7 +136,7 @@ function* createOrUpdate(this: AuthedContext): Iterator<any, any, any> {
 function* update(this: AuthedContext): Iterator<any, any, any> {
   const { body } = this.request;
   if (!isUpdateRequest(body)) {
-    this.throw(400, 'Missing required properties');
+    this.throw(400, "Missing required properties");
   }
 
   const { subscriptionId } = this.params;
@@ -145,7 +145,7 @@ function* update(this: AuthedContext): Iterator<any, any, any> {
     return SubscriptionsDAO.update(
       subscriptionId,
       {
-        cancelledAt: new Date(body.cancelledAt)
+        cancelledAt: new Date(body.cancelledAt),
       },
       trx
     );
@@ -155,9 +155,9 @@ function* update(this: AuthedContext): Iterator<any, any, any> {
   this.status = 200;
 }
 
-router.get('/', requireAuth, getList);
-router.post('/', requireAuth, create);
-router.put('/:subscriptionId', requireAuth, createOrUpdate);
-router.patch('/:subscriptionId', requireAdmin, update);
+router.get("/", requireAuth, getList);
+router.post("/", requireAuth, create);
+router.put("/:subscriptionId", requireAuth, createOrUpdate);
+router.patch("/:subscriptionId", requireAdmin, update);
 
 export default router.routes();

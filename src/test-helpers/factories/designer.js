@@ -1,6 +1,6 @@
-'use strict';
+"use strict";
 
-const db = require('../../services/db');
+const db = require("../../services/db");
 
 function createDesigners() {
   return db.raw(`
@@ -67,5 +67,5 @@ insert into designerphotos
 }
 
 module.exports = {
-  createDesigners
+  createDesigners,
 };

@@ -1,16 +1,16 @@
-import uuid from 'node-uuid';
-import Knex from 'knex';
+import uuid from "node-uuid";
+import Knex from "knex";
 
 import PricingCostInput, {
-  PricingCostInputWithoutVersions
-} from '../../components/pricing-cost-inputs/domain-object';
-import db from '../../services/db';
-import { create } from '../../components/pricing-cost-inputs/dao';
-import ProductDesignsDAO from '../../components/product-designs/dao';
-import createDesign from '../../services/create-design';
-import { findById as findUserById } from '../../components/users/dao';
-import createUser = require('../create-user');
-import User from '../../components/users/domain-object';
+  PricingCostInputWithoutVersions,
+} from "../../components/pricing-cost-inputs/domain-object";
+import db from "../../services/db";
+import { create } from "../../components/pricing-cost-inputs/dao";
+import ProductDesignsDAO from "../../components/product-designs/dao";
+import createDesign from "../../services/create-design";
+import { findById as findUserById } from "../../components/users/dao";
+import createUser = require("../create-user");
+import User from "../../components/users/domain-object";
 
 interface PricingCostInputWithResources {
   design: any;
@@ -28,9 +28,9 @@ export default async function generatePricingCostInput(
   const design = options.designId
     ? await ProductDesignsDAO.findById(options.designId)
     : await createDesign({
-        productType: 'SWEATER',
-        title: 'Mohair Wool Sweater',
-        userId: user.id
+        productType: "SWEATER",
+        title: "Mohair Wool Sweater",
+        userId: user.id,
       });
 
   const pricingCostInput = await db.transaction((trx: Knex.Transaction) =>
@@ -40,12 +40,12 @@ export default async function generatePricingCostInput(
       deletedAt: null,
       designId: design!.id,
       expiresAt: null,
-      productType: 'PANTS',
-      productComplexity: 'COMPLEX',
-      materialCategory: 'SPECIFY',
+      productType: "PANTS",
+      productComplexity: "COMPLEX",
+      materialCategory: "SPECIFY",
       materialBudgetCents: 10000,
       processes: [],
-      ...options
+      ...options,
     })
   );
 

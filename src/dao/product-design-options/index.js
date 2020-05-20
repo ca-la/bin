@@ -1,28 +1,28 @@
-'use strict';
+"use strict";
 
-const uuid = require('node-uuid');
-const rethrow = require('pg-rethrow');
-const compact = require('../../services/compact');
+const uuid = require("node-uuid");
+const rethrow = require("pg-rethrow");
+const compact = require("../../services/compact");
 
-const db = require('../../services/db');
-const filterError = require('../../services/filter-error');
-const first = require('../../services/first').default;
-const ProductDesignOption = require('../../domain-objects/product-design-option');
+const db = require("../../services/db");
+const filterError = require("../../services/filter-error");
+const first = require("../../services/first").default;
+const ProductDesignOption = require("../../domain-objects/product-design-option");
 
-const instantiate = data => new ProductDesignOption(data);
-const maybeInstantiate = data =>
+const instantiate = (data) => new ProductDesignOption(data);
+const maybeInstantiate = (data) =>
   (data && new ProductDesignOption(data)) || null;
 
 const { dataMapper } = ProductDesignOption;
 
 function create(data, trx) {
   const rowData = Object.assign({}, dataMapper.userDataToRowData(data), {
-    id: data.id || uuid.v4()
+    id: data.id || uuid.v4(),
   });
 
-  return db('product_design_options')
-    .insert(rowData, '*')
-    .modify(query => {
+  return db("product_design_options")
+    .insert(rowData, "*")
+    .modify((query) => {
       if (trx) {
         query.transacting(trx);
       }
@@ -35,15 +35,15 @@ function create(data, trx) {
 function update(optionId, data) {
   const rowData = compact(dataMapper.userDataToRowData(data));
 
-  return db('product_design_options')
+  return db("product_design_options")
     .where({ id: optionId })
-    .update(rowData, '*')
+    .update(rowData, "*")
     .then(first)
     .then(instantiate);
 }
 
 function findById(optionId) {
-  return db('product_design_options')
+  return db("product_design_options")
     .where({ id: optionId })
     .then(first)
     .then(maybeInstantiate)
@@ -55,33 +55,33 @@ function findForUser(userId, queryOptions) {
   const defaultOptions = { limit: null, offset: null, search: null };
   const { limit, offset, search } = Object.assign(defaultOptions, queryOptions);
   if (
-    (limit !== null && typeof limit !== 'number') ||
-    (offset !== null && typeof offset !== 'number')
+    (limit !== null && typeof limit !== "number") ||
+    (offset !== null && typeof offset !== "number")
   ) {
-    throw new Error('Limit and offset must be numbers if provided');
+    throw new Error("Limit and offset must be numbers if provided");
   }
 
-  return db('product_design_options')
+  return db("product_design_options")
     .where({
-      deleted_at: null
+      deleted_at: null,
     })
-    .where(builder => {
+    .where((builder) => {
       builder
         .andWhere({
-          user_id: userId
+          user_id: userId,
         })
         .orWhere({
-          is_builtin_option: true
+          is_builtin_option: true,
         });
 
       if (search) {
-        builder.andWhere(db.raw('title ~* :search', { search }));
+        builder.andWhere(db.raw("title ~* :search", { search }));
       }
     })
     .orderByRaw(
-      'user_id is not null desc, preview_image_id is not null desc, created_at desc, id desc'
+      "user_id is not null desc, preview_image_id is not null desc, created_at desc, id desc"
     )
-    .modify(query => {
+    .modify((query) => {
       if (limit !== null) {
         query.limit(limit);
       }
@@ -90,20 +90,20 @@ function findForUser(userId, queryOptions) {
       }
     })
     .catch(rethrow)
-    .then(options => options.map(instantiate));
+    .then((options) => options.map(instantiate));
 }
 
 function deleteById(id) {
-  return db('product_design_options')
+  return db("product_design_options")
     .where({
       id,
-      deleted_at: null
+      deleted_at: null,
     })
     .update(
       {
-        deleted_at: new Date()
+        deleted_at: new Date(),
       },
-      '*'
+      "*"
     )
     .then(first)
     .then(maybeInstantiate);
@@ -114,5 +114,5 @@ module.exports = {
   update,
   findForUser,
   findById,
-  deleteById
+  deleteById,
 };

@@ -1,20 +1,20 @@
-'use strict';
+"use strict";
 
-const uuid = require('node-uuid');
-const rethrow = require('pg-rethrow');
+const uuid = require("node-uuid");
+const rethrow = require("pg-rethrow");
 
-const compact = require('../../services/compact');
-const db = require('../../services/db');
-const first = require('../../services/first').default;
-const FitPartnerCustomer = require('../../domain-objects/fit-partner-customer');
-const { requireValues } = require('../../services/require-properties');
-const { validateAndFormatPhoneNumber } = require('../../services/validation');
+const compact = require("../../services/compact");
+const db = require("../../services/db");
+const first = require("../../services/first").default;
+const FitPartnerCustomer = require("../../domain-objects/fit-partner-customer");
+const { requireValues } = require("../../services/require-properties");
+const { validateAndFormatPhoneNumber } = require("../../services/validation");
 
-const instantiate = data => new FitPartnerCustomer(data);
-const maybeInstantiate = data => (data ? instantiate(data) : null);
+const instantiate = (data) => new FitPartnerCustomer(data);
+const maybeInstantiate = (data) => (data ? instantiate(data) : null);
 
 const { dataMapper } = FitPartnerCustomer;
-const TABLE_NAME = 'fit_partner_customers';
+const TABLE_NAME = "fit_partner_customers";
 
 function findById(id) {
   return db(TABLE_NAME)
@@ -31,7 +31,7 @@ function findComplexTrx(trx, criteria) {
 
   return db(TABLE_NAME)
     .transacting(trx)
-    .where(rowData, '*')
+    .where(rowData, "*")
     .then(first)
     .then(maybeInstantiate)
     .catch(rethrow);
@@ -48,7 +48,7 @@ function createTrx(trx, data) {
 
   return db(TABLE_NAME)
     .transacting(trx)
-    .insert(rowData, '*')
+    .insert(rowData, "*")
     .then(first)
     .then(instantiate)
     .catch(rethrow);
@@ -58,11 +58,11 @@ async function findOrCreate({ partnerId, shopifyUserId, phone }) {
   requireValues({ partnerId });
   const normalizedPhone = phone ? validateAndFormatPhoneNumber(phone) : null;
 
-  return db.transaction(async trx => {
+  return db.transaction(async (trx) => {
     const found = await findComplexTrx(trx, {
       partnerId,
       shopifyUserId,
-      phone: normalizedPhone
+      phone: normalizedPhone,
     });
     if (found) {
       return found;
@@ -71,7 +71,7 @@ async function findOrCreate({ partnerId, shopifyUserId, phone }) {
     const created = await createTrx(trx, {
       partnerId,
       shopifyUserId,
-      phone: normalizedPhone
+      phone: normalizedPhone,
     });
 
     return created;
@@ -87,7 +87,7 @@ async function claimPhoneRecord({ phone, shopifyUserId }) {
 
   return db(TABLE_NAME)
     .where({ phone: normalizedPhone })
-    .update({ phone: null, shopify_user_id: shopifyUserId }, '*')
+    .update({ phone: null, shopify_user_id: shopifyUserId }, "*")
     .then(first)
     .then(maybeInstantiate)
     .catch(rethrow);
@@ -96,5 +96,5 @@ async function claimPhoneRecord({ phone, shopifyUserId }) {
 module.exports = {
   claimPhoneRecord,
   findById,
-  findOrCreate
+  findOrCreate,
 };

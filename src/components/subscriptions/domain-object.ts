@@ -1,6 +1,6 @@
-import DataAdapter from '../../services/data-adapter';
-import { hasProperties } from '../../services/require-properties';
-import { Plan } from '../plans/domain-object';
+import DataAdapter from "../../services/data-adapter";
+import { hasProperties } from "../../services/require-properties";
+import { Plan } from "../plans/domain-object";
 
 export interface Subscription {
   id: string;
@@ -37,27 +37,27 @@ export const partialDataAdapter = new DataAdapter<
 export function isSubscriptionRow(row: object): row is SubscriptionRow {
   return hasProperties(
     row,
-    'id',
-    'created_at',
-    'cancelled_at',
-    'plan_id',
-    'payment_method_id',
-    'stripe_subscription_id',
-    'user_id',
-    'is_payment_waived'
+    "id",
+    "created_at",
+    "cancelled_at",
+    "plan_id",
+    "payment_method_id",
+    "stripe_subscription_id",
+    "user_id",
+    "is_payment_waived"
   );
 }
 
 export function isSubscription(data: object): data is Subscription {
   return hasProperties(
     data,
-    'id',
-    'createdAt',
-    'cancelledAt',
-    'planId',
-    'paymentMethodId',
-    'stripeSubscriptionId',
-    'userId',
-    'isPaymentWaived'
+    "id",
+    "createdAt",
+    "cancelledAt",
+    "planId",
+    "paymentMethodId",
+    "stripeSubscriptionId",
+    "userId",
+    "isPaymentWaived"
   );
 }

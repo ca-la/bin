@@ -1,21 +1,21 @@
-import Knex from 'knex';
-import uuid from 'node-uuid';
+import Knex from "knex";
+import uuid from "node-uuid";
 
 import MaterialAttribute, {
   dataAdapter,
   isMaterialAttributeRow,
-  MaterialAttributeRow
-} from './domain-objects';
-import db from '../../../services/db';
-import first from '../../../services/first';
-import { validate, validateEvery } from '../../../services/validate-from-db';
+  MaterialAttributeRow,
+} from "./domain-objects";
+import db from "../../../services/db";
+import first from "../../../services/first";
+import { validate, validateEvery } from "../../../services/validate-from-db";
 import MaterialAttributeWithAsset, {
   dataAdapter as dataAdapterWithAsset,
   isMaterialAttributeWithAssetRow,
-  MaterialAttributeWithAssetRow
-} from './domain-objects/with-asset';
+  MaterialAttributeWithAssetRow,
+} from "./domain-objects/with-asset";
 
-const TABLE_NAME = 'material_attributes';
+const TABLE_NAME = "material_attributes";
 
 /**
  * Creates a Material Attribute.
@@ -27,15 +27,15 @@ export async function create(
   const rowData = dataAdapter.forInsertion({
     id: uuid.v4(),
     ...material,
-    deletedAt: null
+    deletedAt: null,
   });
   const created = await db(TABLE_NAME)
-    .insert(rowData, '*')
+    .insert(rowData, "*")
     .modify((query: Knex.QueryBuilder) => query.transacting(trx))
     .then((rows: MaterialAttributeRow[]) => first<MaterialAttributeRow>(rows));
 
   if (!created) {
-    throw new Error('Failed to create a Material Attribute!');
+    throw new Error("Failed to create a Material Attribute!");
   }
 
   return validate<MaterialAttributeRow, MaterialAttribute>(
@@ -54,7 +54,7 @@ export async function findById(
   trx?: Knex.Transaction
 ): Promise<MaterialAttribute | null> {
   const material: MaterialAttributeRow | undefined = await db(TABLE_NAME)
-    .select('*')
+    .select("*")
     .where({ deleted_at: null, id: materialId })
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
@@ -83,11 +83,11 @@ export async function findAllByNodes(
   trx?: Knex.Transaction
 ): Promise<MaterialAttributeWithAsset[]> {
   const materials: MaterialAttributeWithAssetRow[] = await db(TABLE_NAME)
-    .select('material_attributes.*', db.raw('row_to_json(assets.*) as asset'))
-    .leftJoin('assets', 'assets.id', 'material_attributes.asset_id')
-    .whereIn('material_attributes.node_id', nodeIds)
-    .andWhere({ 'material_attributes.deleted_at': null })
-    .orderBy('material_attributes.created_at', 'DESC')
+    .select("material_attributes.*", db.raw("row_to_json(assets.*) as asset"))
+    .leftJoin("assets", "assets.id", "material_attributes.asset_id")
+    .whereIn("material_attributes.node_id", nodeIds)
+    .andWhere({ "material_attributes.deleted_at": null })
+    .orderBy("material_attributes.created_at", "DESC")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);

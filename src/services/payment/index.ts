@@ -1,27 +1,27 @@
-import Knex from 'knex';
-import uuid = require('node-uuid');
+import Knex from "knex";
+import uuid = require("node-uuid");
 
-import db from '../../services/db';
-import ProductDesignsDAO from '../../components/product-designs/dao';
-import * as InvoicesDAO from '../../dao/invoices';
-import * as LineItemsDAO from '../../dao/line-items';
-import * as UsersDAO from '../../components/users/dao';
-import * as SlackService from '../../services/slack';
-import InvalidDataError = require('../../errors/invalid-data');
-import payInvoice = require('../../services/pay-invoice');
-import ProductDesign = require('../../components/product-designs/domain-objects/product-design');
-import spendCredit from '../../components/credits/spend-credit';
-import createPaymentMethod from '../../components/payment-methods/create-payment-method';
-import addMargin from '../../services/add-margin';
-import { PricingQuote } from '../../domain-objects/pricing-quote';
+import db from "../../services/db";
+import ProductDesignsDAO from "../../components/product-designs/dao";
+import * as InvoicesDAO from "../../dao/invoices";
+import * as LineItemsDAO from "../../dao/line-items";
+import * as UsersDAO from "../../components/users/dao";
+import * as SlackService from "../../services/slack";
+import InvalidDataError = require("../../errors/invalid-data");
+import payInvoice = require("../../services/pay-invoice");
+import ProductDesign = require("../../components/product-designs/domain-objects/product-design");
+import spendCredit from "../../components/credits/spend-credit";
+import createPaymentMethod from "../../components/payment-methods/create-payment-method";
+import addMargin from "../../services/add-margin";
+import { PricingQuote } from "../../domain-objects/pricing-quote";
 import {
   CreateQuotePayload,
-  generateFromPayloadAndUser as createQuotes
-} from '../../services/generate-pricing-quote';
-import Collection from '../../components/collections/domain-object';
-import Invoice = require('../../domain-objects/invoice');
-import { FINANCING_MARGIN } from '../../config';
-import LineItem from '../../domain-objects/line-item';
+  generateFromPayloadAndUser as createQuotes,
+} from "../../services/generate-pricing-quote";
+import Collection from "../../components/collections/domain-object";
+import Invoice = require("../../domain-objects/invoice");
+import { FINANCING_MARGIN } from "../../config";
+import LineItem from "../../domain-objects/line-item";
 
 type CreateRequest = CreateQuotePayload[];
 
@@ -30,8 +30,8 @@ export function isCreateRequest(body: any): body is CreateRequest {
     body instanceof Array &&
     body.every(
       (payload: any) =>
-        typeof payload.designId === 'string' &&
-        typeof payload.units === 'number'
+        typeof payload.designId === "string" &&
+        typeof payload.units === "number"
     )
   );
 }
@@ -47,11 +47,11 @@ function createInvoice(
 ): Promise<Invoice> {
   return InvoicesDAO.createTrx(trx, {
     collectionId,
-    description: `Payment for designs: ${designNames.join(', ')}`,
+    description: `Payment for designs: ${designNames.join(", ")}`,
     title: `Collection: ${collectionName}`,
     totalCents,
     userId,
-    invoiceAddressId
+    invoiceAddressId,
   });
 }
 
@@ -63,12 +63,12 @@ function createLineItem(
   return LineItemsDAO.create(
     {
       createdAt: new Date(),
-      description: 'Design Production',
+      description: "Design Production",
       designId: quote.designId,
       id: uuid.v4(),
       invoiceId,
       quoteId: quote.id,
-      title: quote.designId || ''
+      title: quote.designId || "",
     },
     trx
   );
@@ -110,7 +110,7 @@ export default async function payInvoiceWithNewPaymentMethod(
     const paymentMethod = await createPaymentMethod({
       token: paymentMethodTokenId,
       userId,
-      trx
+      trx,
     });
     const quotes: PricingQuote[] = await createQuotes(
       quoteRequests,
@@ -119,7 +119,7 @@ export default async function payInvoiceWithNewPaymentMethod(
     );
 
     const designNames = await getDesignNames(quotes);
-    const collectionName = collection.title || 'Untitled';
+    const collectionName = collection.title || "Untitled";
     const totalCents = getQuoteTotal(quotes);
 
     const invoice = await createInvoice(
@@ -155,7 +155,7 @@ export async function createInvoiceWithoutMethod(
       trx
     );
     const designNames = await getDesignNames(quotes);
-    const collectionName = collection.title || 'Untitled';
+    const collectionName = collection.title || "Untitled";
 
     const totalCentsWithoutFinanceMargin = getQuoteTotal(quotes);
     const totalCents = addMargin(
@@ -183,13 +183,13 @@ export async function createInvoiceWithoutMethod(
 
     const user = await UsersDAO.findById(userId);
     await SlackService.enqueueSend({
-      channel: 'designers',
+      channel: "designers",
       params: {
         collection,
         designer: user,
-        payLaterTotalCents: totalCents
+        payLaterTotalCents: totalCents,
       },
-      templateName: 'designer_pay_later'
+      templateName: "designer_pay_later",
     });
 
     return InvoicesDAO.findByIdTrx(trx, invoice.id);
@@ -209,7 +209,7 @@ export async function payWaivedQuote(
       trx
     );
     const designNames = await getDesignNames(quotes);
-    const collectionName = collection.title || 'Untitled';
+    const collectionName = collection.title || "Untitled";
 
     const totalCents = getQuoteTotal(quotes);
 
@@ -227,7 +227,7 @@ export async function payWaivedQuote(
 
     if (nonCreditPaymentAmount) {
       throw new InvalidDataError(
-        'Cannot waive payment for amounts greater than $0'
+        "Cannot waive payment for amounts greater than $0"
       );
     }
 
@@ -238,13 +238,13 @@ export async function payWaivedQuote(
     );
 
     await SlackService.enqueueSend({
-      channel: 'designers',
+      channel: "designers",
       params: {
         collection,
         designer: await UsersDAO.findById(userId),
-        paymentAmountCents: 0
+        paymentAmountCents: 0,
       },
-      templateName: 'designer_payment'
+      templateName: "designer_payment",
     });
 
     return InvoicesDAO.findByIdTrx(trx, invoice.id);

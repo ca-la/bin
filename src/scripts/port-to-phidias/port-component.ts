@@ -1,13 +1,13 @@
-import uuid from 'node-uuid';
+import uuid from "node-uuid";
 
-import { NodeRow } from '../../components/nodes/domain-objects';
-import { LayoutAttributeRow } from '../../components/attributes/layout-attributes/domain-object';
-import { EnrichedComponent } from '.';
-import { getExtension } from '../../services/get-extension';
-import { ImageAttributeRow } from '../../components/attributes/image-attributes/domain-objects';
-import { ACCEPTED_IMAGE_TYPES } from '@cala/ts-lib';
+import { NodeRow } from "../../components/nodes/domain-objects";
+import { LayoutAttributeRow } from "../../components/attributes/layout-attributes/domain-object";
+import { EnrichedComponent } from ".";
+import { getExtension } from "../../services/get-extension";
+import { ImageAttributeRow } from "../../components/attributes/image-attributes/domain-objects";
+import { ACCEPTED_IMAGE_TYPES } from "@cala/ts-lib";
 
-const VECTOR_FILE_TYPES = ['svg'];
+const VECTOR_FILE_TYPES = ["svg"];
 
 interface Created {
   layoutAttribute: LayoutAttributeRow;
@@ -32,9 +32,7 @@ export default function portComponent(
 
   if (!assetExtension) {
     throw new Error(
-      `Unknown extension "${currentAsset.mime_type}" for Asset ${
-        currentAsset.id
-      }.`
+      `Unknown extension "${currentAsset.mime_type}" for Asset ${currentAsset.id}.`
     );
   }
 
@@ -53,12 +51,12 @@ export default function portComponent(
     created_by: component.created_by,
     deleted_at: null,
     parent_id: component.canvas_id,
-    x: '0',
-    y: '0',
+    x: "0",
+    y: "0",
     ordering: 0,
     title: null,
     // TODO: will need to consider non-previewable asset types as well.
-    type: isVector ? 'VECTOR' : 'IMAGE'
+    type: isVector ? "VECTOR" : "IMAGE",
   };
 
   const imageAttribute: ImageAttributeRow = {
@@ -68,10 +66,10 @@ export default function portComponent(
     deleted_at: null,
     node_id: component.id,
     asset_id: currentAsset.id,
-    x: '0',
-    y: '0',
+    x: "0",
+    y: "0",
     width: currentAsset.original_width_px,
-    height: currentAsset.original_height_px
+    height: currentAsset.original_height_px,
   };
   const layoutAttribute: LayoutAttributeRow = {
     id: uuid.v4(),
@@ -80,7 +78,7 @@ export default function portComponent(
     deleted_at: null,
     node_id: component.id,
     width: currentAsset.original_width_px,
-    height: currentAsset.original_height_px
+    height: currentAsset.original_height_px,
   };
   // The "Frame" for the root node (AKA the ported canvas).
   const layoutAttributeForRoot: LayoutAttributeRow = {
@@ -90,13 +88,13 @@ export default function portComponent(
     deleted_at: null,
     node_id: component.canvas_id,
     width: currentAsset.original_width_px,
-    height: currentAsset.original_height_px
+    height: currentAsset.original_height_px,
   };
 
   return {
     layoutAttribute,
     layoutAttributeForRoot,
     imageAttribute,
-    node
+    node,
   };
 }

@@ -1,23 +1,23 @@
-import Router from 'koa-router';
-import { pick } from 'lodash';
-import Knex from 'knex';
+import Router from "koa-router";
+import { pick } from "lodash";
+import Knex from "knex";
 
 import {
   BASE_COMMENT_PROPERTIES,
   BaseComment,
-  isBaseComment
-} from '../comments/domain-object';
-import * as AnnotationCommentDAO from '../annotation-comments/dao';
-import sendCreationNotifications from './send-creation-notifications';
-import requireAuth = require('../../middleware/require-auth');
-import { announceAnnotationCommentCreation } from '../iris/messages/annotation-comment';
-import db from '../../services/db';
-import Asset from '../assets/domain-object';
-import { createCommentWithAttachments } from '../../services/create-comment-with-attachments';
+  isBaseComment,
+} from "../comments/domain-object";
+import * as AnnotationCommentDAO from "../annotation-comments/dao";
+import sendCreationNotifications from "./send-creation-notifications";
+import requireAuth = require("../../middleware/require-auth");
+import { announceAnnotationCommentCreation } from "../iris/messages/annotation-comment";
+import db from "../../services/db";
+import Asset from "../assets/domain-object";
+import { createCommentWithAttachments } from "../../services/create-comment-with-attachments";
 import {
   addAtMentionDetailsForComment,
-  CommentWithMentions
-} from '../../services/add-at-mention-details';
+  CommentWithMentions,
+} from "../../services/add-at-mention-details";
 
 const router = new Router();
 
@@ -33,13 +33,13 @@ function* createAnnotationComment(
       const comment = await createCommentWithAttachments(trx, {
         comment: body,
         attachments,
-        userId
+        userId,
       });
 
       const annotationComment = await AnnotationCommentDAO.create(
         {
           annotationId,
-          commentId: comment.id
+          commentId: comment.id,
         },
         trx
       );
@@ -48,7 +48,7 @@ function* createAnnotationComment(
       await sendCreationNotifications(trx, {
         actorUserId: this.state.userId,
         annotationId,
-        comment
+        comment,
       });
       const commentWithMentions: CommentWithMentions = await addAtMentionDetailsForComment(
         comment
@@ -61,6 +61,6 @@ function* createAnnotationComment(
   this.throw(400, `Request does not match model: ${Object.keys(body)}`);
 }
 
-router.put('/:commentId', requireAuth, createAnnotationComment);
+router.put("/:commentId", requireAuth, createAnnotationComment);
 
 export default router.routes();

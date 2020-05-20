@@ -10,21 +10,21 @@ interface WithShortId {
 
 type Uninserted<T extends WithCreatedDate> = Omit<
   T,
-  'created_at' | 'createdAt'
+  "created_at" | "createdAt"
 >;
 
 type UninsertedWithoutShortId<T extends WithCreatedDate & WithShortId> = Omit<
   T,
-  'created_at' | 'createdAt' | 'short_id' | 'shortId'
+  "created_at" | "createdAt" | "short_id" | "shortId"
 >;
 
 type Unsaved<
   T extends { createdAt?: Date; id?: string; deletedAt?: Date | null }
-> = Omit<T, 'createdAt' | 'id' | 'deletedAt'>;
+> = Omit<T, "createdAt" | "id" | "deletedAt">;
 
 type MaybeUnsaved<
   T extends { createdAt?: Date; id?: string; deletedAt?: Date | null }
-> = Omit<T, 'createdAt' | 'id' | 'deletedAt'> & { id?: string };
+> = Omit<T, "createdAt" | "id" | "deletedAt"> & { id?: string };
 
 interface WithRouter {
   params: {
@@ -33,7 +33,7 @@ interface WithRouter {
 }
 
 interface WithJsonBody<T extends object | any[]> {
-  request: import('koa').Request & {
+  request: import("koa").Request & {
     body: T;
   };
 }
@@ -45,13 +45,13 @@ interface AuthedState {
 }
 
 interface PermittedState {
-  permissions: import('../../services/get-permissions').Permissions;
+  permissions: import("../../services/get-permissions").Permissions;
 }
 
 type AuthedContext<
   BodyT = {},
   StateT = AuthedState
-> = import('koa').ParameterizedContext<
+> = import("koa").ParameterizedContext<
   AuthedState & StateT,
   WithRouter & WithJsonBody<BodyT>
 >;
@@ -59,23 +59,23 @@ type AuthedContext<
 type PublicContext<
   BodyT = {},
   StateT = {}
-> = import('koa').ParameterizedContext<
+> = import("koa").ParameterizedContext<
   StateT,
   WithRouter & WithJsonBody<BodyT>
 >;
 
 type TrxContext<T extends AuthedContext> = T & {
-  state: T['state'] & { trx: import('knex').Transaction };
+  state: T["state"] & { trx: import("knex").Transaction };
 };
 
 interface PermissionsKoaState {
-  permissions: import('../../services/get-permissions').Permissions;
+  permissions: import("../../services/get-permissions").Permissions;
 }
 
 interface CollectionsKoaState {
-  collection: import('../../components/collections/domain-object').default;
+  collection: import("../../components/collections/domain-object").default;
 }
 
 interface CollaboratorKoaState {
-  collaborator: import('../../components/collaborators/domain-objects/collaborator').default;
+  collaborator: import("../../components/collaborators/domain-objects/collaborator").default;
 }

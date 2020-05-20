@@ -1,18 +1,18 @@
-import uuid from 'node-uuid';
-import Knex from 'knex';
+import uuid from "node-uuid";
+import Knex from "knex";
 
-import db from '../../../../services/db';
-import * as DesignEventsDAO from '../../../../dao/design-events';
-import DesignsDAO from '../../../product-designs/dao';
-import ProductDesign = require('../../../product-designs/domain-objects/product-design');
+import db from "../../../../services/db";
+import * as DesignEventsDAO from "../../../../dao/design-events";
+import DesignsDAO from "../../../product-designs/dao";
+import ProductDesign = require("../../../product-designs/domain-objects/product-design");
 import {
   attachProcesses,
   create as createCostInput,
-  expireCostInputs
-} from '../../../pricing-cost-inputs/dao';
-import { immediatelySendFullyCostedCollection } from '../../../../services/create-notifications';
-import { getDesignsMetaByCollection } from '../determine-submission-status';
-import { BasePricingCostInput } from '../../../pricing-cost-inputs/domain-object';
+  expireCostInputs,
+} from "../../../pricing-cost-inputs/dao";
+import { immediatelySendFullyCostedCollection } from "../../../../services/create-notifications";
+import { getDesignsMetaByCollection } from "../determine-submission-status";
+import { BasePricingCostInput } from "../../../pricing-cost-inputs/domain-object";
 
 /**
  * Commits cost inputs for every design in the given collection.
@@ -42,7 +42,7 @@ export async function commitCostInputs(
           id: uuid.v4(),
           quoteId: null,
           targetId: design.userId,
-          type: 'COMMIT_COST_INPUTS'
+          type: "COMMIT_COST_INPUTS",
         });
       }
     }
@@ -84,7 +84,7 @@ export async function recostInputs(collectionId: string): Promise<void> {
           createdAt: new Date(),
           deletedAt: null,
           expiresAt: null,
-          id: uuid.v4()
+          id: uuid.v4(),
         };
         await createCostInput(trx, newCostInputBlank);
       }

@@ -1,6 +1,6 @@
-import DataAdapter from '../../services/data-adapter';
-import { hasProperties } from '../../services/require-properties';
-import Task, { isTaskRow, TaskRow } from '../../domain-objects/task';
+import DataAdapter from "../../services/data-adapter";
+import { hasProperties } from "../../services/require-properties";
+import Task, { isTaskRow, TaskRow } from "../../domain-objects/task";
 
 export default interface ApprovalStepTask {
   taskId: string;
@@ -18,7 +18,7 @@ export const dataAdapter = new DataAdapter<
 >();
 
 export function isApprovalStepTaskRow(row: object): row is ApprovalStepTaskRow {
-  return hasProperties(row, 'task_id', 'approval_step_id');
+  return hasProperties(row, "task_id", "approval_step_id");
 }
 
 export interface TaskWithMeta extends Task {
@@ -35,5 +35,5 @@ export const withMetaDataAdapter = new DataAdapter<
 >();
 
 export function isTaskWithMetaRow(row: object): row is TaskWithMetaRow {
-  return isTaskRow && hasProperties(row, 'ApprovalStep_id');
+  return isTaskRow && hasProperties(row, "ApprovalStep_id");
 }

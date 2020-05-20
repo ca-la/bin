@@ -1,25 +1,25 @@
-import tape from 'tape';
-import uuid from 'node-uuid';
+import tape from "tape";
+import uuid from "node-uuid";
 
-import { test } from '../../../test-helpers/fresh';
-import API from '../../../test-helpers/http';
-import createUser = require('../../../test-helpers/create-user');
-import generateAsset from '../../../test-helpers/factories/asset';
+import { test } from "../../../test-helpers/fresh";
+import API from "../../../test-helpers/http";
+import createUser = require("../../../test-helpers/create-user");
+import generateAsset from "../../../test-helpers/factories/asset";
 
-const API_PATH = '/product-design-images';
+const API_PATH = "/product-design-images";
 
 test(`PUT ${API_PATH}/upload-status returns an updated image`, async (t: tape.Test) => {
   const userOne = await createUser();
 
   const { asset: sketch } = await generateAsset({
-    description: '',
+    description: "",
     id: uuid.v4(),
-    mimeType: 'image/png',
+    mimeType: "image/png",
     originalHeightPx: 0,
     originalWidthPx: 0,
-    title: '',
+    title: "",
     uploadCompletedAt: null,
-    userId: userOne.user.id
+    userId: userOne.user.id,
   });
   const uploadCompletedAt = new Date().toISOString();
 
@@ -27,13 +27,13 @@ test(`PUT ${API_PATH}/upload-status returns an updated image`, async (t: tape.Te
     `${API_PATH}/${sketch.id}/upload-status`,
     {
       body: { uploadCompletedAt },
-      headers: API.authHeader(userOne.session.id)
+      headers: API.authHeader(userOne.session.id),
     }
   );
   t.equal(response.status, 200);
   t.deepEqual(
     { id: body.id, uploadCompletedAt: body.uploadCompletedAt },
     { id: sketch.id, uploadCompletedAt },
-    'Returns the updated image'
+    "Returns the updated image"
   );
 });

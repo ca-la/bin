@@ -1,10 +1,10 @@
-'use strict';
+"use strict";
 
-const Router = require('koa-router');
+const Router = require("koa-router");
 
-const pkg = require('../../../package.json');
-const db = require('../../services/db');
-const sha256 = require('../../services/insecure-hash').default;
+const pkg = require("../../../package.json");
+const db = require("../../services/db");
+const sha256 = require("../../services/insecure-hash").default;
 
 const router = new Router();
 
@@ -14,7 +14,7 @@ function* getRoot() {
     select name from knex_migrations order by name desc;
   `);
 
-  const names = result.rows.map(row => row.name).join('\n');
+  const names = result.rows.map((row) => row.name).join("\n");
   const migrationListHash = sha256(names);
 
   this.status = 200;
@@ -22,10 +22,10 @@ function* getRoot() {
     name: pkg.name,
     version: pkg.version,
     migrationListHash,
-    status: 'ok'
+    status: "ok",
   };
 }
 
-router.get('/', getRoot);
+router.get("/", getRoot);
 
 module.exports = router.routes();

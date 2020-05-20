@@ -1,16 +1,16 @@
-import { Transaction } from 'knex';
-import process from 'process';
+import { Transaction } from "knex";
+import process from "process";
 
-import { log, logServerError } from '../../services/logger';
-import { blue, format, green, red, yellow } from '../../services/colors';
-import db = require('../../services/db');
-import OptionsDAO from '../../dao/product-design-options';
-import * as AssetsDAO from '../../components/assets/dao';
-import Asset from '../../components/assets/domain-object';
+import { log, logServerError } from "../../services/logger";
+import { blue, format, green, red, yellow } from "../../services/colors";
+import db = require("../../services/db");
+import OptionsDAO from "../../dao/product-design-options";
+import * as AssetsDAO from "../../components/assets/dao";
+import Asset from "../../components/assets/domain-object";
 import Component, {
   ComponentType,
-  dataAdapter as componentDataAdapter
-} from '../../components/components/domain-object';
+  dataAdapter as componentDataAdapter,
+} from "../../components/components/domain-object";
 
 const PIN_WIDTH = 25.45;
 const PIN_HEIGHT = 31.82;
@@ -59,27 +59,29 @@ async function getAsset(component: Component): Promise<Asset | null> {
 }
 
 async function run(): Promise<void> {
-  const isDryRun = process.argv[2] === '--dry-run';
+  const isDryRun = process.argv[2] === "--dry-run";
   log(format(blue, `Dry run? ${isDryRun}`));
 
   await db.transaction(async (trx: Transaction) => {
-    const annotations = await trx('product_design_canvas_annotations').select(
-      '*'
+    const annotations = await trx("product_design_canvas_annotations").select(
+      "*"
     );
     log(format(blue, `Got ${annotations.length} annotations`));
 
     for (const annotation of annotations) {
       log(format(blue, `Working on annotation ${annotation.id}`));
 
-      const componentRow = (await trx.raw(
-        `
+      const componentRow = (
+        await trx.raw(
+          `
         select components.* from product_design_canvas_annotations as an
         join canvases on canvases.id = an.canvas_id
         join components on canvases.component_id = components.id
         where an.id = ?
       `,
-        [annotation.id]
-      )).rows[0];
+          [annotation.id]
+        )
+      ).rows[0];
 
       const component = componentDataAdapter.parse(componentRow);
 
@@ -94,9 +96,7 @@ async function run(): Promise<void> {
       log(
         format(
           blue,
-          `Found asset ${
-            asset.id
-          } with dimensions ${originalWidthPx}x${originalHeightPx}`
+          `Found asset ${asset.id} with dimensions ${originalWidthPx}x${originalHeightPx}`
         )
       );
 
@@ -156,9 +156,7 @@ run()
     log(format(green, `Successfully adjusted!`));
     process.exit();
   })
-  .catch(
-    (err: any): void => {
-      logServerError(err);
-      process.exit(1);
-    }
-  );
+  .catch((err: any): void => {
+    logServerError(err);
+    process.exit(1);
+  });

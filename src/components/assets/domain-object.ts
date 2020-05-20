@@ -1,9 +1,9 @@
-import { Asset } from '@cala/ts-lib/dist/assets';
-import DataAdapter from '../../services/data-adapter';
+import { Asset } from "@cala/ts-lib/dist/assets";
+import DataAdapter from "../../services/data-adapter";
 import {
   hasProperties,
-  hasSomeProperties
-} from '../../services/require-properties';
+  hasSomeProperties,
+} from "../../services/require-properties";
 
 /**
  * TODO: adjust the following columns
@@ -44,7 +44,7 @@ export function toInsertion(data: Asset): AssetRow {
     upload_completed_at: data.uploadCompletedAt
       ? data.uploadCompletedAt.toISOString()
       : null,
-    user_id: data.userId
+    user_id: data.userId,
   };
 }
 
@@ -64,7 +64,7 @@ export function toPartialInsertion(data: Partial<Asset>): Partial<AssetRow> {
     upload_completed_at: data.uploadCompletedAt
       ? data.uploadCompletedAt.toISOString()
       : undefined,
-    user_id: data.userId
+    user_id: data.userId,
   };
 }
 
@@ -80,51 +80,51 @@ export function toData(row: AssetRow): Asset {
     uploadCompletedAt: row.upload_completed_at
       ? new Date(row.upload_completed_at)
       : null,
-    userId: row.user_id
+    userId: row.user_id,
   };
 }
 
 export function isAssetRow(row: any): row is AssetRow {
   return hasProperties(
     row,
-    'created_at',
-    'description',
-    'id',
-    'mime_type',
-    'original_height_px',
-    'original_width_px',
-    'title',
-    'upload_completed_at',
-    'user_id'
+    "created_at",
+    "description",
+    "id",
+    "mime_type",
+    "original_height_px",
+    "original_width_px",
+    "title",
+    "upload_completed_at",
+    "user_id"
   );
 }
 
 export function isAsset(data: any): data is Asset {
   return hasProperties(
     data,
-    'createdAt',
-    'description',
-    'id',
-    'mimeType',
-    'originalHeightPx',
-    'originalWidthPx',
-    'title',
-    'uploadCompletedAt',
-    'userId'
+    "createdAt",
+    "description",
+    "id",
+    "mimeType",
+    "originalHeightPx",
+    "originalWidthPx",
+    "title",
+    "uploadCompletedAt",
+    "userId"
   );
 }
 
 export function isPartialAsset(data: any): data is Partial<Asset> {
   return hasSomeProperties(
     data,
-    'createdAt',
-    'description',
-    'id',
-    'mimeType',
-    'originalHeightPx',
-    'originalWidthPx',
-    'title',
-    'uploadCompletedAt',
-    'userId'
+    "createdAt",
+    "description",
+    "id",
+    "mimeType",
+    "originalHeightPx",
+    "originalWidthPx",
+    "title",
+    "uploadCompletedAt",
+    "userId"
   );
 }

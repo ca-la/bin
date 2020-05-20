@@ -1,21 +1,21 @@
-import * as Knex from 'knex';
-import { ProviderName } from '@cala/ts-lib';
+import * as Knex from "knex";
+import { ProviderName } from "@cala/ts-lib";
 
-import db from '../../services/db';
-import { test, Test } from '../../test-helpers/fresh';
-import createUser = require('../../test-helpers/create-user');
-import * as StorefrontsDAO from './dao';
-import { createStorefront } from '../../services/create-storefront';
+import db from "../../services/db";
+import { test, Test } from "../../test-helpers/fresh";
+import createUser = require("../../test-helpers/create-user");
+import * as StorefrontsDAO from "./dao";
+import { createStorefront } from "../../services/create-storefront";
 
-test('StorefrontsDAO can save and retrieve stores', async (t: Test) => {
+test("StorefrontsDAO can save and retrieve stores", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
   await db.transaction(async (trx: Knex.Transaction) => {
     const created = await StorefrontsDAO.create({
       data: {
         createdBy: user.id,
-        name: 'My Cool Store'
+        name: "My Cool Store",
       },
-      trx
+      trx,
     });
     const found = await StorefrontsDAO.findById({ trx, id: created.id });
 
@@ -23,15 +23,15 @@ test('StorefrontsDAO can save and retrieve stores', async (t: Test) => {
   });
 });
 
-test('StorefrontsDAO can retrieve a store by a user id', async (t: Test) => {
+test("StorefrontsDAO can retrieve a store by a user id", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
 
   const created = await createStorefront({
-    accessToken: 'some-super-secure-access-token',
-    baseUrl: 'https://some-shoppe.myshopify.com',
-    name: 'some-shoppe',
+    accessToken: "some-super-secure-access-token",
+    baseUrl: "https://some-shoppe.myshopify.com",
+    name: "some-shoppe",
     providerName: ProviderName.SHOPIFY,
-    userId: user.id
+    userId: user.id,
   });
 
   await db.transaction(async (trx: Knex.Transaction) => {

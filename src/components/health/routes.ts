@@ -1,8 +1,8 @@
-import Router from 'koa-router';
+import Router from "koa-router";
 
-import db from '../../services/db';
-import { findOutstanding } from '../notifications/dao';
-import requireAdmin = require('../../middleware/require-admin');
+import db from "../../services/db";
+import { findOutstanding } from "../notifications/dao";
+import requireAdmin = require("../../middleware/require-admin");
 
 const router = new Router();
 
@@ -17,13 +17,13 @@ function* getNotificationsHealth(this: AuthedContext): Iterator<any, any, any> {
     outstandingNotifications[outstandingNotifications.length - 1];
   const health: NotificationsHealthMetrics = {
     outstandingNotifications: outstandingNotifications.length,
-    oldestCreatedAt: oldestNotification ? oldestNotification.createdAt : null
+    oldestCreatedAt: oldestNotification ? oldestNotification.createdAt : null,
   };
 
   this.body = health;
   this.status = 200;
 }
 
-router.get('/notifications', requireAdmin, getNotificationsHealth);
+router.get("/notifications", requireAdmin, getNotificationsHealth);
 
 export default router.routes();

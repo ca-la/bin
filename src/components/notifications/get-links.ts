@@ -1,7 +1,7 @@
-import { escape as escapeHtml } from 'lodash';
-import { STUDIO_HOST } from '../../config';
-import { ComponentType } from '../components/domain-object';
-import normalizeTitle from '../../services/normalize-title';
+import { escape as escapeHtml } from "lodash";
+import { STUDIO_HOST } from "../../config";
+import { ComponentType } from "../components/domain-object";
+import normalizeTitle from "../../services/normalize-title";
 
 interface Links {
   deepLink: string;
@@ -9,13 +9,13 @@ interface Links {
 }
 
 export enum LinkType {
-  DesignAnnotation = 'DESIGN_ANNOTATION',
-  CollectionDesignTask = 'COLLECTION_DESIGN_TASK',
-  CollectionDesign = 'COLLECTION_DESIGN',
-  Design = 'DESIGN',
-  PartnerDesign = 'PARTNER_DESIGN',
-  Collection = 'COLLECTION',
-  ApprovalStep = 'APPROVAL_STEP'
+  DesignAnnotation = "DESIGN_ANNOTATION",
+  CollectionDesignTask = "COLLECTION_DESIGN_TASK",
+  CollectionDesign = "COLLECTION_DESIGN",
+  Design = "DESIGN",
+  PartnerDesign = "PARTNER_DESIGN",
+  Collection = "COLLECTION",
+  ApprovalStep = "APPROVAL_STEP",
 }
 
 interface Meta {
@@ -76,43 +76,37 @@ export default function getLinks(linkBase: LinkBase): Links {
       const { annotationId, canvasId, componentType, design } = linkBase;
       const tab =
         componentType === ComponentType.Artwork
-          ? 'tab=artwork&'
+          ? "tab=artwork&"
           : componentType === ComponentType.Material
-          ? 'tab=materials&'
-          : '';
+          ? "tab=materials&"
+          : "";
       // tslint:disable-next-line:max-line-length
-      const deepLink = `${STUDIO_HOST}/designs?${tab}previewDesignId=${
-        design.id
-      }&canvasId=${canvasId}&annotationId=${annotationId}`;
+      const deepLink = `${STUDIO_HOST}/designs?${tab}previewDesignId=${design.id}&canvasId=${canvasId}&annotationId=${annotationId}`;
       const title = normalizeTitle(design);
       return {
         deepLink,
-        htmlLink: constructHtmlLink(deepLink, title)
+        htmlLink: constructHtmlLink(deepLink, title),
       };
     }
 
     case LinkType.CollectionDesignTask: {
       const { design, task } = linkBase;
-      const deepLink = `${STUDIO_HOST}/tasks?taskId=${task.id}&designId=${
-        design.id
-      }`;
+      const deepLink = `${STUDIO_HOST}/tasks?taskId=${task.id}&designId=${design.id}`;
       const title = normalizeTitle(task);
       return {
         deepLink,
-        htmlLink: constructHtmlLink(deepLink, title)
+        htmlLink: constructHtmlLink(deepLink, title),
       };
     }
 
     case LinkType.CollectionDesign: {
       const { collection, design } = linkBase;
       // tslint:disable-next-line:max-line-length
-      const deepLink = `${STUDIO_HOST}/collections/${
-        collection.id
-      }/designs?previewDesignId=${design.id}`;
+      const deepLink = `${STUDIO_HOST}/collections/${collection.id}/designs?previewDesignId=${design.id}`;
       const title = normalizeTitle(design);
       return {
         deepLink,
-        htmlLink: constructHtmlLink(deepLink, title)
+        htmlLink: constructHtmlLink(deepLink, title),
       };
     }
 
@@ -122,7 +116,7 @@ export default function getLinks(linkBase: LinkBase): Links {
       const title = normalizeTitle(design);
       return {
         deepLink,
-        htmlLink: constructHtmlLink(deepLink, title)
+        htmlLink: constructHtmlLink(deepLink, title),
       };
     }
 
@@ -132,41 +126,37 @@ export default function getLinks(linkBase: LinkBase): Links {
       const title = normalizeTitle(design);
       return {
         deepLink,
-        htmlLink: constructHtmlLink(deepLink, title)
+        htmlLink: constructHtmlLink(deepLink, title),
       };
     }
 
     case LinkType.Collection: {
       const { collection, isCheckout, isSubmit } = linkBase;
-      const checkoutParam = isCheckout ? '?isCheckout=true' : '';
-      const submitParam = isSubmit ? '?isSubmit=true' : '';
+      const checkoutParam = isCheckout ? "?isCheckout=true" : "";
+      const submitParam = isSubmit ? "?isSubmit=true" : "";
 
       // tslint:disable-next-line:max-line-length
-      const deepLink = `${STUDIO_HOST}/collections/${
-        collection.id
-      }/designs${checkoutParam}${submitParam}`;
+      const deepLink = `${STUDIO_HOST}/collections/${collection.id}/designs${checkoutParam}${submitParam}`;
       const title = normalizeTitle(collection);
       return {
         deepLink,
-        htmlLink: constructHtmlLink(deepLink, title)
+        htmlLink: constructHtmlLink(deepLink, title),
       };
     }
 
     case LinkType.ApprovalStep: {
       const { design, approvalStep, collection } = linkBase;
 
-      const deepLink = `${STUDIO_HOST}/collections/${
-        collection.id
-      }/approval?designId=${design.id}&stepId=${approvalStep.id}`;
+      const deepLink = `${STUDIO_HOST}/collections/${collection.id}/approval?designId=${design.id}&stepId=${approvalStep.id}`;
       const title = normalizeTitle(approvalStep);
 
       return {
         deepLink,
-        htmlLink: constructHtmlLink(deepLink, title)
+        htmlLink: constructHtmlLink(deepLink, title),
       };
     }
 
     default:
-      throw new Error('Neither a collection or design was specified!');
+      throw new Error("Neither a collection or design was specified!");
   }
 }

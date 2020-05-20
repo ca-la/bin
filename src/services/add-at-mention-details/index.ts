@@ -1,12 +1,12 @@
-import Comment from '../../components/comments/domain-object';
+import Comment from "../../components/comments/domain-object";
 import parseAtMentions, {
   MentionMeta,
-  MentionType
-} from '@cala/ts-lib/dist/parsing/comment-mentions';
-import Knex from 'knex';
-import * as CollaboratorsDAO from '../../components/collaborators/dao';
-import * as CommentsDAO from '../../components/comments/dao';
-import { CollaboratorWithUser } from '../../components/collaborators/domain-objects/collaborator';
+  MentionType,
+} from "@cala/ts-lib/dist/parsing/comment-mentions";
+import Knex from "knex";
+import * as CollaboratorsDAO from "../../components/collaborators/dao";
+import * as CommentsDAO from "../../components/comments/dao";
+import { CollaboratorWithUser } from "../../components/collaborators/domain-objects/collaborator";
 
 export interface CommentWithMentions extends Comment {
   mentions: { [id: string]: string };
@@ -19,11 +19,11 @@ export function constructCollaboratorName(
   collaborator: CollaboratorWithUser | null
 ): string {
   if (!collaborator) {
-    return 'Unknown';
+    return "Unknown";
   }
 
   const { user, userEmail } = collaborator;
-  return (user && user.name) || userEmail || 'Unknown';
+  return (user && user.name) || userEmail || "Unknown";
 }
 
 export async function addAtMentionDetailsForComment(
@@ -41,7 +41,7 @@ export async function addAtMentionDetailsForComment(
         const name = constructCollaboratorName(collaborator);
         return {
           ...acc,
-          [match.id]: name
+          [match.id]: name,
         };
       }
       return acc;
@@ -50,7 +50,7 @@ export async function addAtMentionDetailsForComment(
   );
   return {
     ...comment,
-    mentions
+    mentions,
   };
 }
 
@@ -86,7 +86,7 @@ export async function getMentionsFromComment(
         const name = constructCollaboratorName(collaborator);
         return {
           ...acc,
-          [match.id]: name
+          [match.id]: name,
         };
       }
       return acc;

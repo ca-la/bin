@@ -1,4 +1,4 @@
-import mime from 'mime-types';
+import mime from "mime-types";
 
 export function generateFilename(name: string, mimeType: string): string {
   const fileExtension = mime.extension(mimeType);

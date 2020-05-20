@@ -1,10 +1,10 @@
-import Koa from 'koa';
+import Koa from "koa";
 
 export default function* validatePagination(
   this: Koa.Context,
   next: () => any
 ): Iterator<any, any, any> {
-  if (this.request.method.toLowerCase() !== 'options') {
+  if (this.request.method.toLowerCase() !== "options") {
     if (this.query.offset) {
       this.assert(Number(this.query.offset) >= 0, 400);
     }

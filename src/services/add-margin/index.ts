@@ -6,7 +6,7 @@
  */
 export default function addMargin(base: number, margin: number): number {
   if (margin >= 1) {
-    throw new TypeError('Cannot add a margin greater than 100%');
+    throw new TypeError("Cannot add a margin greater than 100%");
   }
 
   return Math.ceil(base / (1 - margin));

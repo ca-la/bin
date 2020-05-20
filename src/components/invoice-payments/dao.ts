@@ -1,23 +1,23 @@
-import rethrow = require('pg-rethrow');
-import uuid = require('node-uuid');
-import Knex from 'knex';
+import rethrow = require("pg-rethrow");
+import uuid = require("node-uuid");
+import Knex from "knex";
 
-import db from '../../services/db';
-import first from '../../services/first';
+import db from "../../services/db";
+import first from "../../services/first";
 import {
   dataAdapter,
   InvoicePayment,
   InvoicePaymentRow,
   isInvoicePaymentRow,
-  MaybeSavedInvoicePayment
-} from './domain-object';
-import { validate, validateEvery } from '../../services/validate-from-db';
+  MaybeSavedInvoicePayment,
+} from "./domain-object";
+import { validate, validateEvery } from "../../services/validate-from-db";
 
-const TABLE_NAME = 'invoice_payments';
+const TABLE_NAME = "invoice_payments";
 
 export async function findById(id: string): Promise<InvoicePayment | null> {
   const invoicePaymentRow = await db(TABLE_NAME)
-    .select('*')
+    .select("*")
     .where({ id, deleted_at: null })
     .limit(1)
     .then((rows: InvoicePaymentRow[]) => first<InvoicePaymentRow>(rows))
@@ -39,9 +39,9 @@ export async function findByInvoiceId(
   invoiceId: string
 ): Promise<InvoicePayment[]> {
   const invoicePaymentRows = await db(TABLE_NAME)
-    .select('*')
+    .select("*")
     .where({ invoice_id: invoiceId, deleted_at: null })
-    .orderBy('created_at', 'DESC')
+    .orderBy("created_at", "DESC")
     .catch(rethrow);
 
   return validateEvery<InvoicePaymentRow, InvoicePayment>(
@@ -64,17 +64,17 @@ export async function createTrx(
     rumbleshipPurchaseHash: null,
     stripeChargeId: null,
     ...data,
-    deletedAt: null
+    deletedAt: null,
   });
 
   const created = await db(TABLE_NAME)
     .transacting(trx)
-    .insert(rowData, '*')
+    .insert(rowData, "*")
     .then((rows: InvoicePaymentRow[]) => first<InvoicePaymentRow>(rows))
     .catch(rethrow);
 
   if (!created) {
-    throw new Error('Failed to create invoice payment row');
+    throw new Error("Failed to create invoice payment row");
   }
 
   return validate<InvoicePaymentRow, InvoicePayment>(

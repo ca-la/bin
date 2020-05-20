@@ -1,23 +1,23 @@
-'use strict';
+"use strict";
 
-const Router = require('koa-router');
+const Router = require("koa-router");
 
-const filterError = require('../../services/filter-error');
-const formDataBody = require('../../middleware/form-data-body');
-const InvalidDataError = require('../../errors/invalid-data');
-const Logger = require('../../services/logger');
-const SessionsDAO = require('../../dao/sessions');
-const ShopifyClient = require('../../services/shopify');
-const ShopifyNotFoundError = require('../../errors/shopify-not-found');
-const UsersDAO = require('../../components/users/dao');
-const { buildSMSResponseMarkup } = require('../../services/twilio');
-const { SITE_HOST } = require('../../config');
+const filterError = require("../../services/filter-error");
+const formDataBody = require("../../middleware/form-data-body");
+const InvalidDataError = require("../../errors/invalid-data");
+const Logger = require("../../services/logger");
+const SessionsDAO = require("../../dao/sessions");
+const ShopifyClient = require("../../services/shopify");
+const ShopifyNotFoundError = require("../../errors/shopify-not-found");
+const UsersDAO = require("../../components/users/dao");
+const { buildSMSResponseMarkup } = require("../../services/twilio");
+const { SITE_HOST } = require("../../config");
 
 const router = new Router();
 const shopify = new ShopifyClient(ShopifyClient.CALA_STORE_CREDENTIALS);
 
 const existingAccountMsg = buildSMSResponseMarkup(
-  'Looks like you already have an account. Follow the link in the previous message to complete your registration.'
+  "Looks like you already have an account. Follow the link in the previous message to complete your registration."
 );
 
 /**
@@ -33,17 +33,17 @@ function* postIncomingPreRegistration() {
   const fromNumber = this.request.formDataBody.From;
   const messageBody = this.request.formDataBody.Body;
 
-  const nameParts = messageBody.trim().split(' ');
+  const nameParts = messageBody.trim().split(" ");
 
   if (nameParts.length !== 2) {
     this.body = buildSMSResponseMarkup(
-      'To sign up for CALA, reply to this message with your first and last name.'
+      "To sign up for CALA, reply to this message with your first and last name."
     );
     return;
   }
 
   this.status = 200;
-  this.set('content-type', 'text/xml');
+  this.set("content-type", "text/xml");
 
   const shopifyCustomer = yield shopify
     .getCustomerByPhone(fromNumber)
@@ -58,12 +58,12 @@ function* postIncomingPreRegistration() {
   try {
     user = yield UsersDAO.createSmsPreregistration({
       phone: fromNumber,
-      name: messageBody
+      name: messageBody,
     });
 
     yield shopify.createCustomer({
       name: messageBody,
-      phone: fromNumber
+      phone: fromNumber,
     });
   } catch (err) {
     if (err instanceof InvalidDataError) {
@@ -77,7 +77,7 @@ function* postIncomingPreRegistration() {
     } else {
       Logger.logServerError(err);
       this.body = buildSMSResponseMarkup(
-        'Error signing up. Please email us at hi@ca.la for assistance'
+        "Error signing up. Please email us at hi@ca.la for assistance"
       );
     }
 
@@ -90,14 +90,12 @@ function* postIncomingPreRegistration() {
   const URL = `${SITE_HOST}/sms-signup/${session.id}`;
 
   this.body = buildSMSResponseMarkup(
-    `Hi ${
-      nameParts[0]
-    }, Welcome to CALA. Click the following link to complete your profile. ${URL}`
+    `Hi ${nameParts[0]}, Welcome to CALA. Click the following link to complete your profile. ${URL}`
   );
 }
 
 router.post(
-  '/incoming-preregistration-sms',
+  "/incoming-preregistration-sms",
   formDataBody,
   postIncomingPreRegistration
 );

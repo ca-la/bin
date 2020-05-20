@@ -1,9 +1,9 @@
-import Router from 'koa-router';
+import Router from "koa-router";
 
-import requireAuth = require('../../middleware/require-auth');
+import requireAuth = require("../../middleware/require-auth");
 
-import * as ProcessesDAO from './dao';
-import { ComponentType } from '../components/domain-object';
+import * as ProcessesDAO from "./dao";
+import { ComponentType } from "../components/domain-object";
 
 const router = new Router();
 
@@ -35,6 +35,6 @@ function* getAll(this: AuthedContext): Iterator<any, any, any> {
   }
 }
 
-router.get('/', requireAuth, getAll);
+router.get("/", requireAuth, getAll);
 
 export default router.routes();

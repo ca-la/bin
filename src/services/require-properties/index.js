@@ -1,9 +1,9 @@
-'use strict';
+"use strict";
 
-const Logger = require('../../services/logger');
+const Logger = require("../../services/logger");
 
 function isEmptyString(val) {
-  return typeof val === 'string' && val.trim() === '';
+  return typeof val === "string" && val.trim() === "";
 }
 
 function exists(val) {
@@ -21,20 +21,20 @@ function exists(val) {
  */
 function requireProperties(obj, ...props) {
   if (!obj) {
-    Logger.logServerError('Object: ', obj);
-    throw new Error('requireProperties was called on a falsy object');
+    Logger.logServerError("Object: ", obj);
+    throw new Error("requireProperties was called on a falsy object");
   }
 
   const missingProps = [];
 
-  props.forEach(prop => {
+  props.forEach((prop) => {
     if (!exists(obj[prop])) {
       missingProps.push(prop);
     }
   });
 
   if (missingProps.length > 0) {
-    throw new Error(`Missing required properties: ${missingProps.join(', ')}`);
+    throw new Error(`Missing required properties: ${missingProps.join(", ")}`);
   }
 }
 
@@ -51,10 +51,10 @@ function requireProperties(obj, ...props) {
  */
 function requirePropertiesFormatted(data, messages) {
   if (!data) {
-    throw new Error('Missing required information');
+    throw new Error("Missing required information");
   }
 
-  Object.keys(messages).forEach(key => {
+  Object.keys(messages).forEach((key) => {
     if (!exists(data[key])) {
       throw new Error(`Missing required information: ${messages[key]}`);
     }
@@ -90,7 +90,7 @@ function assert(value, message) {
  *   - will return false
  */
 function hasSomeProperties(data, ...props) {
-  return Object.keys(data).every(key => props.includes(key));
+  return Object.keys(data).every((key) => props.includes(key));
 }
 
 /**
@@ -106,7 +106,7 @@ function hasSomeProperties(data, ...props) {
  *   - will return true
  */
 function hasProperties(data, ...props) {
-  return props.every(prop => data[prop] !== undefined);
+  return props.every((prop) => data[prop] !== undefined);
 }
 
 /**
@@ -134,5 +134,5 @@ module.exports = {
   requireValues,
   hasSomeProperties,
   hasProperties,
-  hasOnlyProperties
+  hasOnlyProperties,
 };

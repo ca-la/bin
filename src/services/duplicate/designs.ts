@@ -1,16 +1,16 @@
-import Knex from 'knex';
-import { omit } from 'lodash';
+import Knex from "knex";
+import { omit } from "lodash";
 
-import * as CanvasesDAO from '../../components/canvases/dao';
-import DesignsDAO = require('../../components/product-designs/dao');
-import createDesign from '../create-design';
+import * as CanvasesDAO from "../../components/canvases/dao";
+import DesignsDAO = require("../../components/product-designs/dao");
+import createDesign from "../create-design";
 
-import Canvas from '../../components/canvases/domain-object';
-import Design = require('../../components/product-designs/domain-objects/product-design');
-import prepareForDuplication from './prepare-for-duplication';
-import ResourceNotFoundError from '../../errors/resource-not-found';
-import { findAndDuplicateCanvas } from './canvases';
-import { findAndDuplicateVariants } from './variants';
+import Canvas from "../../components/canvases/domain-object";
+import Design = require("../../components/product-designs/domain-objects/product-design");
+import prepareForDuplication from "./prepare-for-duplication";
+import ResourceNotFoundError from "../../errors/resource-not-found";
+import { findAndDuplicateCanvas } from "./canvases";
+import { findAndDuplicateVariants } from "./variants";
 
 /**
  * Finds the given design and duplicates it. Does the same with all related sub-resources.
@@ -30,11 +30,11 @@ export async function findAndDuplicateDesign(
     prepareForDuplication(
       omit(
         design,
-        'collections',
-        'collectionIds',
-        'imageIds',
-        'imageLinks',
-        'approvalSteps'
+        "collections",
+        "collectionIds",
+        "imageIds",
+        "imageLinks",
+        "approvalSteps"
       ),
       { userId: newCreatorId }
     ),

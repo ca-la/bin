@@ -1,13 +1,13 @@
-import DataAdapter from '../../../services/data-adapter';
-import { hasProperties } from '../../../services/require-properties';
-import toDateOrNull from '../../../services/to-date';
-import User, { encode as encodeUser, UserRow } from '../../users/domain-object';
+import DataAdapter from "../../../services/data-adapter";
+import { hasProperties } from "../../../services/require-properties";
+import toDateOrNull from "../../../services/to-date";
+import User, { encode as encodeUser, UserRow } from "../../users/domain-object";
 
 export const UPDATABLE_PROPERTIES = [
-  'cancelled_at',
-  'user_email',
-  'user_id',
-  'role'
+  "cancelled_at",
+  "user_email",
+  "user_id",
+  "role",
 ];
 
 export default interface Collaborator {
@@ -44,9 +44,9 @@ export interface CollaboratorWithUserRow extends CollaboratorRow {
   user: UserRow | null;
 }
 
-export type Roles = 'EDIT' | 'VIEW' | 'PARTNER' | 'PREVIEW';
+export type Roles = "EDIT" | "VIEW" | "PARTNER" | "PREVIEW";
 export function isRole(role: string): role is Roles {
-  const roles = ['EDIT', 'VIEW', 'PARTNER', 'PREVIEW'];
+  const roles = ["EDIT", "VIEW", "PARTNER", "PREVIEW"];
   if (roles.includes(role)) {
     return true;
   }
@@ -69,7 +69,7 @@ export const encode = (data: CollaboratorWithUserRow): CollaboratorWithUser => {
     role: data.role as Roles,
     user,
     userEmail: data.user_email,
-    userId: data.user_id
+    userId: data.user_id,
   };
 };
 
@@ -86,16 +86,16 @@ export const partialDataAdapter = new DataAdapter<
 export function isCollaboratorRow(row: object): row is CollaboratorRow {
   return hasProperties(
     row,
-    'id',
-    'collection_id',
-    'design_id',
-    'user_id',
-    'user_email',
-    'invitation_message',
-    'role',
-    'created_at',
-    'deleted_at',
-    'cancelled_at'
+    "id",
+    "collection_id",
+    "design_id",
+    "user_id",
+    "user_email",
+    "invitation_message",
+    "role",
+    "created_at",
+    "deleted_at",
+    "cancelled_at"
   );
 }
 
@@ -104,15 +104,15 @@ export function isCollaboratorWithUserRow(
 ): row is CollaboratorWithUserRow {
   return hasProperties(
     row,
-    'id',
-    'collection_id',
-    'design_id',
-    'user_id',
-    'user_email',
-    'invitation_message',
-    'role',
-    'created_at',
-    'deleted_at',
-    'user'
+    "id",
+    "collection_id",
+    "design_id",
+    "user_id",
+    "user_email",
+    "invitation_message",
+    "role",
+    "created_at",
+    "deleted_at",
+    "user"
   );
 }

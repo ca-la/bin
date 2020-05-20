@@ -1,17 +1,17 @@
-import Knex from 'knex';
-import { chunk, groupBy } from 'lodash';
-import { NotificationMessage } from '@cala/ts-lib';
+import Knex from "knex";
+import { chunk, groupBy } from "lodash";
+import { NotificationMessage } from "@cala/ts-lib";
 
-import db from '../../services/db';
-import Logger from '../../services/logger';
-import EmailService from '../../services/email';
-import * as NotificationsDAO from '../../components/notifications/dao';
-import * as UsersDAO from '../../components/users/dao';
-import filterError = require('../../services/filter-error');
-import InvalidDataError from '../../errors/invalid-data';
+import db from "../../services/db";
+import Logger from "../../services/logger";
+import EmailService from "../../services/email";
+import * as NotificationsDAO from "../../components/notifications/dao";
+import * as UsersDAO from "../../components/users/dao";
+import filterError = require("../../services/filter-error");
+import InvalidDataError from "../../errors/invalid-data";
 
-import { FullNotification } from '../../components/notifications/domain-object';
-import { createNotificationMessage } from '../../components/notifications/notification-messages';
+import { FullNotification } from "../../components/notifications/domain-object";
+import { createNotificationMessage } from "../../components/notifications/notification-messages";
 
 const QUEUE_LIMIT = 30;
 
@@ -31,7 +31,7 @@ export async function sendNotificationEmails(): Promise<number> {
 
   const notificationsByRecipient: NotificationsByRecipient = groupBy(
     notifications,
-    'recipientUserId'
+    "recipientUserId"
   );
   const recipients = Object.keys(notificationsByRecipient);
 
@@ -68,22 +68,20 @@ export async function sendNotificationEmails(): Promise<number> {
         (notification: NotificationMessage): string => notification.id
       );
       Logger.log(`
-Enqueuing an email with ${notificationList.length} notifications for user ${
-        recipient.id
-      }.
+Enqueuing an email with ${notificationList.length} notifications for user ${recipient.id}.
       `);
 
       try {
         await EmailService.enqueueSend({
           params: { notifications: notificationList },
-          templateName: 'batch_notification',
-          to: recipient.email
+          templateName: "batch_notification",
+          to: recipient.email,
         });
         sentMessages += notificationList.length;
       } catch (e) {
-        const messageCopy = 'Failed to send to SQS the following notifications';
+        const messageCopy = "Failed to send to SQS the following notifications";
         Logger.logServerError(e);
-        throw new Error(`${messageCopy}: ${notificationListIds.join(', ')}`);
+        throw new Error(`${messageCopy}: ${notificationListIds.join(", ")}`);
       }
 
       await NotificationsDAO.markSent(notificationListIds);

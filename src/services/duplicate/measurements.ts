@@ -1,8 +1,8 @@
-import Knex from 'knex';
+import Knex from "knex";
 
-import * as MeasurementsDAO from '../../dao/product-design-canvas-measurements';
-import Measurement from '../../domain-objects/product-design-canvas-measurement';
-import prepareForDuplication from './prepare-for-duplication';
+import * as MeasurementsDAO from "../../dao/product-design-canvas-measurements";
+import Measurement from "../../domain-objects/product-design-canvas-measurement";
+import prepareForDuplication from "./prepare-for-duplication";
 
 /**
  * Finds all measurements for the given canvas and creates duplicates.

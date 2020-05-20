@@ -1,5 +1,5 @@
-import DataAdapter from '../services/data-adapter';
-import { hasProperties } from '../services/require-properties';
+import DataAdapter from "../services/data-adapter";
+import { hasProperties } from "../services/require-properties";
 
 /**
  * @typedef {object} CollaboratorTask A joining row between collaborators and tasks
@@ -27,5 +27,5 @@ export const dataAdapter = new DataAdapter<
 >();
 
 export function isCollaboratorTaskRow(row: object): row is CollaboratorTaskRow {
-  return hasProperties(row, 'created_at', 'task_id', 'collaborator_id');
+  return hasProperties(row, "created_at", "task_id", "collaborator_id");
 }

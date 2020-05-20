@@ -5,5 +5,5 @@ interface MightHaveTitle {
 export default function normalizeTitle(
   resource?: MightHaveTitle | null
 ): string {
-  return (resource && resource.title) || 'Untitled';
+  return (resource && resource.title) || "Untitled";
 }

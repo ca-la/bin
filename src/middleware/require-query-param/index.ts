@@ -1,5 +1,5 @@
 export function requireQueryParam<T>(param: keyof T): any {
-  return function*(
+  return function* (
     this: AuthedContext,
     next: () => Promise<any>
   ): Generator<any, any, any> {

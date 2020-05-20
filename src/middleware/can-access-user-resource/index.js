@@ -1,6 +1,6 @@
-'use strict';
+"use strict";
 
-const User = require('../../components/users/domain-object');
+const User = require("../../components/users/domain-object");
 
 // A simple psuedo-middleware for determining if a user is either the owner of a
 // resource, or an admin who can access something anyway.
@@ -14,7 +14,7 @@ const User = require('../../components/users/domain-object');
 // }
 function canAccessUserResource(ownerUserId) {
   if (!ownerUserId) {
-    throw new Error('Must pass ownerUserId to canAccessUserResource');
+    throw new Error("Must pass ownerUserId to canAccessUserResource");
   }
 
   const isAdmin = this.state.role === User.ROLES.admin;

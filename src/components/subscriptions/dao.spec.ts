@@ -1,34 +1,34 @@
-import tape from 'tape';
-import uuid from 'node-uuid';
-import Knex from 'knex';
+import tape from "tape";
+import uuid from "node-uuid";
+import Knex from "knex";
 
-import { test } from '../../test-helpers/fresh';
-import createUser = require('../../test-helpers/create-user');
-import db from '../../services/db';
-import * as SubscriptionsDAO from './dao';
-import * as PlansDAO from '../plans/dao';
-import PaymentMethodsDAO from '../payment-methods/dao';
+import { test } from "../../test-helpers/fresh";
+import createUser = require("../../test-helpers/create-user");
+import db from "../../services/db";
+import * as SubscriptionsDAO from "./dao";
+import * as PlansDAO from "../plans/dao";
+import PaymentMethodsDAO from "../payment-methods/dao";
 
-test('SubscriptionsDAO supports creation and retrieval', async (t: tape.Test) => {
+test("SubscriptionsDAO supports creation and retrieval", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
   const plan = await PlansDAO.create({
     id: uuid.v4(),
-    billingInterval: 'MONTHLY',
+    billingInterval: "MONTHLY",
     monthlyCostCents: 4567,
     revenueSharePercentage: 50,
-    stripePlanId: 'plan_456',
-    title: 'Some More',
+    stripePlanId: "plan_456",
+    title: "Some More",
     isDefault: true,
     isPublic: false,
     ordering: null,
-    description: null
+    description: null,
   });
 
   const paymentMethod = await PaymentMethodsDAO.create({
     userId: user.id,
-    stripeCustomerId: 'customer1',
-    stripeSourceId: 'source1',
-    lastFourDigits: '1234'
+    stripeCustomerId: "customer1",
+    stripeSourceId: "source1",
+    lastFourDigits: "1234",
   });
 
   await db.transaction(async (trx: Knex.Transaction) => {
@@ -38,9 +38,9 @@ test('SubscriptionsDAO supports creation and retrieval', async (t: tape.Test) =>
         cancelledAt: null,
         planId: plan.id,
         paymentMethodId: paymentMethod.id,
-        stripeSubscriptionId: '123',
+        stripeSubscriptionId: "123",
         userId: user.id,
-        isPaymentWaived: false
+        isPaymentWaived: false,
       },
       trx
     );
@@ -51,19 +51,19 @@ test('SubscriptionsDAO supports creation and retrieval', async (t: tape.Test) =>
   });
 });
 
-test('SubscriptionsDAO supports waiving payment on a new subscription', async (t: tape.Test) => {
+test("SubscriptionsDAO supports waiving payment on a new subscription", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
   const plan = await PlansDAO.create({
     id: uuid.v4(),
-    billingInterval: 'MONTHLY',
+    billingInterval: "MONTHLY",
     monthlyCostCents: 4567,
     revenueSharePercentage: 50,
-    stripePlanId: 'plan_456',
-    title: 'Some More',
+    stripePlanId: "plan_456",
+    title: "Some More",
     isDefault: true,
     isPublic: false,
     ordering: null,
-    description: null
+    description: null,
   });
 
   await db.transaction(async (trx: Knex.Transaction) => {
@@ -75,7 +75,7 @@ test('SubscriptionsDAO supports waiving payment on a new subscription', async (t
         paymentMethodId: null,
         stripeSubscriptionId: null,
         userId: user.id,
-        isPaymentWaived: true
+        isPaymentWaived: true,
       },
       trx
     );
@@ -87,38 +87,38 @@ test('SubscriptionsDAO supports waiving payment on a new subscription', async (t
   });
 });
 
-test('SubscriptionsDAO.findActive lists only active subscriptions', async (t: tape.Test) => {
+test("SubscriptionsDAO.findActive lists only active subscriptions", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
   const plan = await PlansDAO.create({
     id: uuid.v4(),
-    billingInterval: 'MONTHLY',
+    billingInterval: "MONTHLY",
     monthlyCostCents: 4567,
     revenueSharePercentage: 50,
-    stripePlanId: 'plan_456',
-    title: 'Some More',
+    stripePlanId: "plan_456",
+    title: "Some More",
     isDefault: true,
     isPublic: false,
     ordering: null,
-    description: null
+    description: null,
   });
 
   const paymentMethod = await PaymentMethodsDAO.create({
     userId: user.id,
-    stripeCustomerId: 'customer1',
-    stripeSourceId: 'source1',
-    lastFourDigits: '1234'
+    stripeCustomerId: "customer1",
+    stripeSourceId: "source1",
+    lastFourDigits: "1234",
   });
 
   await db.transaction(async (trx: Knex.Transaction) => {
     await SubscriptionsDAO.create(
       {
         id: uuid.v4(),
-        cancelledAt: new Date('2000-01-01'),
+        cancelledAt: new Date("2000-01-01"),
         planId: plan.id,
         paymentMethodId: paymentMethod.id,
-        stripeSubscriptionId: '123',
+        stripeSubscriptionId: "123",
         userId: user.id,
-        isPaymentWaived: false
+        isPaymentWaived: false,
       },
       trx
     );
@@ -129,9 +129,9 @@ test('SubscriptionsDAO.findActive lists only active subscriptions', async (t: ta
         cancelledAt: null,
         planId: plan.id,
         paymentMethodId: paymentMethod.id,
-        stripeSubscriptionId: '123',
+        stripeSubscriptionId: "123",
         userId: user.id,
-        isPaymentWaived: false
+        isPaymentWaived: false,
       },
       trx
     );
@@ -139,12 +139,12 @@ test('SubscriptionsDAO.findActive lists only active subscriptions', async (t: ta
     const active2 = await SubscriptionsDAO.create(
       {
         id: uuid.v4(),
-        cancelledAt: new Date('3000-01-01'),
+        cancelledAt: new Date("3000-01-01"),
         planId: plan.id,
         paymentMethodId: paymentMethod.id,
-        stripeSubscriptionId: '123',
+        stripeSubscriptionId: "123",
         userId: user.id,
-        isPaymentWaived: false
+        isPaymentWaived: false,
       },
       trx
     );
@@ -156,33 +156,33 @@ test('SubscriptionsDAO.findActive lists only active subscriptions', async (t: ta
   });
 });
 
-test('SubscriptionsDAO supports updating', async (t: tape.Test) => {
+test("SubscriptionsDAO supports updating", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
   const plan = await PlansDAO.create({
     id: uuid.v4(),
-    billingInterval: 'MONTHLY',
+    billingInterval: "MONTHLY",
     monthlyCostCents: 4567,
     revenueSharePercentage: 50,
-    stripePlanId: 'plan_456',
-    title: 'Some More',
+    stripePlanId: "plan_456",
+    title: "Some More",
     isDefault: true,
     isPublic: false,
     ordering: null,
-    description: null
+    description: null,
   });
 
   const pm1 = await PaymentMethodsDAO.create({
     userId: user.id,
-    stripeCustomerId: 'customer1',
-    stripeSourceId: 'source1',
-    lastFourDigits: '1234'
+    stripeCustomerId: "customer1",
+    stripeSourceId: "source1",
+    lastFourDigits: "1234",
   });
 
   const pm2 = await PaymentMethodsDAO.create({
     userId: user.id,
-    stripeCustomerId: 'customer1',
-    stripeSourceId: 'source1',
-    lastFourDigits: '1234'
+    stripeCustomerId: "customer1",
+    stripeSourceId: "source1",
+    lastFourDigits: "1234",
   });
 
   await db.transaction(async (trx: Knex.Transaction) => {
@@ -192,9 +192,9 @@ test('SubscriptionsDAO supports updating', async (t: tape.Test) => {
         cancelledAt: null,
         planId: plan.id,
         paymentMethodId: pm1.id,
-        stripeSubscriptionId: '123',
+        stripeSubscriptionId: "123",
         userId: user.id,
-        isPaymentWaived: false
+        isPaymentWaived: false,
       },
       trx
     );
@@ -202,7 +202,7 @@ test('SubscriptionsDAO supports updating', async (t: tape.Test) => {
     const updated = await SubscriptionsDAO.update(
       subscription.id,
       {
-        paymentMethodId: pm2.id
+        paymentMethodId: pm2.id,
       },
       trx
     );

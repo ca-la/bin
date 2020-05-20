@@ -1,19 +1,19 @@
-import Knex from 'knex';
+import Knex from "knex";
 
 import ApprovalStepComment, {
   ApprovalStepCommentRow,
   dataAdapter,
-  isApprovalStepCommentRow
-} from './domain-object';
-import { validate, validateEvery } from '../../services/validate-from-db';
+  isApprovalStepCommentRow,
+} from "./domain-object";
+import { validate, validateEvery } from "../../services/validate-from-db";
 import Comment, {
   CommentRow,
   dataAdapter as commentDataAdapter,
-  isCommentRow
-} from '../comments/domain-object';
-import { queryComments } from '../comments/dao';
+  isCommentRow,
+} from "../comments/domain-object";
+import { queryComments } from "../comments/dao";
 
-const TABLE_NAME = 'design_approval_step_comments';
+const TABLE_NAME = "design_approval_step_comments";
 
 export async function create(
   trx: Knex.Transaction,
@@ -22,12 +22,12 @@ export async function create(
   const rowData = dataAdapter.forInsertion(data);
   const approvalStepComments: ApprovalStepCommentRow[] = await trx(TABLE_NAME)
     .insert(rowData)
-    .returning('*');
+    .returning("*");
 
   const approvalStepComment = approvalStepComments[0];
 
   if (!approvalStepComment) {
-    throw new Error('There was a problem saving the comment');
+    throw new Error("There was a problem saving the comment");
   }
 
   return validate<ApprovalStepCommentRow, ApprovalStepComment>(
@@ -44,12 +44,12 @@ export async function findByStepId(
 ): Promise<Comment[]> {
   const comments: CommentRow[] = await queryComments(trx)
     .join(
-      'design_approval_step_comments',
-      'design_approval_step_comments.comment_id',
-      'comments.id'
+      "design_approval_step_comments",
+      "design_approval_step_comments.comment_id",
+      "comments.id"
     )
     .where({
-      'design_approval_step_comments.approval_step_id': stepId
+      "design_approval_step_comments.approval_step_id": stepId,
     });
 
   return validateEvery<CommentRow, Comment>(

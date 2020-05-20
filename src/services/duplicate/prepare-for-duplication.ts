@@ -1,5 +1,5 @@
-import uuid from 'node-uuid';
-import { omit } from 'lodash';
+import uuid from "node-uuid";
+import { omit } from "lodash";
 
 interface BaseResource {
   createdAt?: Date;
@@ -14,5 +14,5 @@ export default function prepareForDuplication<T extends BaseResource>(
   additionalFields?: Partial<T>
 ): T {
   const newFields = Object.assign({}, { id: uuid.v4() }, additionalFields);
-  return omit(Object.assign({}, resource, newFields), 'createdAt');
+  return omit(Object.assign({}, resource, newFields), "createdAt");
 }

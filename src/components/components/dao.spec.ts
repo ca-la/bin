@@ -1,36 +1,36 @@
-import uuid from 'node-uuid';
-import tape from 'tape';
-import { omit } from 'lodash';
+import uuid from "node-uuid";
+import tape from "tape";
+import { omit } from "lodash";
 
-import { test } from '../../test-helpers/fresh';
+import { test } from "../../test-helpers/fresh";
 import {
   create,
   del,
   findAllByCanvasId,
   findById,
   findRoot,
-  update
-} from './dao';
-import { ComponentType } from './domain-object';
-import { create as createDesign } from '../product-designs/dao';
-import createUser = require('../../test-helpers/create-user');
-import generateComponent from '../../test-helpers/factories/component';
-import generateCanvas from '../../test-helpers/factories/product-design-canvas';
-import generateAsset from '../../test-helpers/factories/asset';
+  update,
+} from "./dao";
+import { ComponentType } from "./domain-object";
+import { create as createDesign } from "../product-designs/dao";
+import createUser = require("../../test-helpers/create-user");
+import generateComponent from "../../test-helpers/factories/component";
+import generateCanvas from "../../test-helpers/factories/product-design-canvas";
+import generateAsset from "../../test-helpers/factories/asset";
 
-test('Components DAO supports creation/retrieval', async (t: tape.Test) => {
+test("Components DAO supports creation/retrieval", async (t: tape.Test) => {
   const userData = await createUser();
   const userId = userData.user.id;
   const id = uuid.v4();
   const sketchId = uuid.v4();
   const imageData = {
-    description: '',
+    description: "",
     id: sketchId,
-    mimeType: 'image/png',
+    mimeType: "image/png",
     originalHeightPx: 0,
     originalWidthPx: 0,
-    title: '',
-    userId
+    title: "",
+    userId,
   };
   const data = {
     artworkId: null,
@@ -41,49 +41,49 @@ test('Components DAO supports creation/retrieval', async (t: tape.Test) => {
     materialId: null,
     parentId: null,
     sketchId,
-    type: ComponentType.Sketch
+    type: ComponentType.Sketch,
   };
   await generateAsset(imageData);
   const inserted = await create(data);
 
   const result = await findById(id);
-  t.deepEqual(result, inserted, 'Returned inserted component');
+  t.deepEqual(result, inserted, "Returned inserted component");
 
   const secondComponent = {
     artworkId: null,
-    assetLink: 'https://abc.xyz/example.jpg',
+    assetLink: "https://abc.xyz/example.jpg",
     createdAt: new Date(),
     createdBy: userId,
     deletedAt: null,
-    downloadLink: 'https://xyz.foo/bar.png',
-    foo: 'bar',
+    downloadLink: "https://xyz.foo/bar.png",
+    foo: "bar",
     id: uuid.v4(),
     materialId: null,
     parentId: null,
     sketchId,
-    type: ComponentType.Sketch
+    type: ComponentType.Sketch,
   };
   const secondInsert = await create(secondComponent);
   t.deepEqual(
     secondInsert,
-    omit(secondComponent, 'assetLink', 'downloadLink', 'foo'),
-    'Inserts only the properties supported by the database'
+    omit(secondComponent, "assetLink", "downloadLink", "foo"),
+    "Inserts only the properties supported by the database"
   );
 });
 
-test('Components DAO supports update', async (t: tape.Test) => {
+test("Components DAO supports update", async (t: tape.Test) => {
   const userData = await createUser();
   const userId = userData.user.id;
   const componentId = uuid.v4();
   const sketchId = uuid.v4();
   const imageData = {
-    description: '',
+    description: "",
     id: sketchId,
-    mimeType: 'image/png',
+    mimeType: "image/png",
     originalHeightPx: 0,
     originalWidthPx: 0,
-    title: '',
-    userId
+    title: "",
+    userId,
   };
   const data = {
     artworkId: null,
@@ -94,33 +94,33 @@ test('Components DAO supports update', async (t: tape.Test) => {
     materialId: null,
     parentId: null,
     sketchId,
-    type: ComponentType.Sketch
+    type: ComponentType.Sketch,
   };
   await generateAsset(imageData);
   const { id, createdAt, deletedAt, ...first } = await create(data);
   const inserted = await update(componentId, {
     ...first,
-    type: ComponentType.Artwork
+    type: ComponentType.Artwork,
   });
 
   const result = await findById(componentId);
-  t.deepEqual(result, inserted, 'Returned inserted component');
-  t.equal(result && result.type, ComponentType.Artwork, 'Title was updated');
+  t.deepEqual(result, inserted, "Returned inserted component");
+  t.equal(result && result.type, ComponentType.Artwork, "Title was updated");
 
   const updatedComponent = {
     ...inserted,
-    downloadLink: 'https://xyz.fm/foo.jpg',
-    foo: 'bar'
+    downloadLink: "https://xyz.fm/foo.jpg",
+    foo: "bar",
   };
   const secondUpdate = await update(componentId, updatedComponent);
   t.deepEqual(
     secondUpdate,
     inserted,
-    'Updates only the properties supported by the database'
+    "Updates only the properties supported by the database"
   );
 });
 
-test('Components DAO supports delete', async (t: tape.Test) => {
+test("Components DAO supports delete", async (t: tape.Test) => {
   const userData = await createUser();
   const userId = userData.user.id;
   const id = uuid.v4();
@@ -133,7 +133,7 @@ test('Components DAO supports delete', async (t: tape.Test) => {
     materialId: null,
     parentId: null,
     sketchId: null,
-    type: ComponentType.Sketch
+    type: ComponentType.Sketch,
   };
   await create(data);
   await del(id);
@@ -141,24 +141,24 @@ test('Components DAO supports delete', async (t: tape.Test) => {
   t.equal(result, null);
 });
 
-test('Components DAO supports retrieval by canvasId', async (t: tape.Test) => {
+test("Components DAO supports retrieval by canvasId", async (t: tape.Test) => {
   const userData = await createUser();
   const userId = userData.user.id;
   const id = uuid.v4();
   const sketchId = uuid.v4();
   const design = await createDesign({
-    productType: 'TEESHIRT',
-    title: 'Plain White Tee',
-    userId
+    productType: "TEESHIRT",
+    title: "Plain White Tee",
+    userId,
   });
   const imageData = {
-    description: '',
+    description: "",
     id: sketchId,
-    mimeType: 'image/png',
+    mimeType: "image/png",
     originalHeightPx: 0,
     originalWidthPx: 0,
-    title: '',
-    userId
+    title: "",
+    userId,
   };
   const canvasData = {
     componentId: id,
@@ -166,10 +166,10 @@ test('Components DAO supports retrieval by canvasId', async (t: tape.Test) => {
     designId: design.id,
     height: 2,
     ordering: 0,
-    title: 'test',
+    title: "test",
     width: 2,
     x: 1,
-    y: 1
+    y: 1,
   };
   const data = {
     artworkId: null,
@@ -180,28 +180,28 @@ test('Components DAO supports retrieval by canvasId', async (t: tape.Test) => {
     materialId: null,
     parentId: null,
     sketchId,
-    type: ComponentType.Sketch
+    type: ComponentType.Sketch,
   };
   await generateAsset(imageData);
   const inserted = await create(data);
   const { canvas } = await generateCanvas(canvasData);
 
   const result = await findAllByCanvasId(canvas.id);
-  t.deepEqual(result[0], inserted, 'Returned inserted component');
+  t.deepEqual(result[0], inserted, "Returned inserted component");
 });
 
-test('Components DAO can get the root component', async (t: tape.Test) => {
+test("Components DAO can get the root component", async (t: tape.Test) => {
   const { component } = await generateComponent({});
   const root = await findRoot(component.id);
-  t.deepEqual(component, root, 'Returns itself if it is the root.');
+  t.deepEqual(component, root, "Returns itself if it is the root.");
 
   const { component: childComponentOne } = await generateComponent({
-    parentId: component.id
+    parentId: component.id,
   });
   const { component: childComponentTwo } = await generateComponent({
-    parentId: childComponentOne.id
+    parentId: childComponentOne.id,
   });
 
   const rootTwo = await findRoot(childComponentTwo.id);
-  t.deepEqual(component, rootTwo, 'Returns the true root for the child');
+  t.deepEqual(component, rootTwo, "Returns the true root for the child");
 });

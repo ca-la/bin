@@ -1,5 +1,5 @@
-import DataAdapter from '../../services/data-adapter';
-import { hasProperties } from '../../services/require-properties';
+import DataAdapter from "../../services/data-adapter";
+import { hasProperties } from "../../services/require-properties";
 
 export default interface Storefront {
   id: string;
@@ -26,10 +26,10 @@ export const unsavedDataAdapter = new DataAdapter<
 export function isStorefrontRow(candidate: any): candidate is StorefrontRow {
   return hasProperties(
     candidate,
-    'id',
-    'name',
-    'created_at',
-    'deleted_at',
-    'created_by'
+    "id",
+    "name",
+    "created_at",
+    "deleted_at",
+    "created_by"
   );
 }

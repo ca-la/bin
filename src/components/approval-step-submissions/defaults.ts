@@ -1,19 +1,19 @@
-import Knex from 'knex';
-import * as uuid from 'node-uuid';
-import { uniqBy } from 'lodash';
+import Knex from "knex";
+import * as uuid from "node-uuid";
+import { uniqBy } from "lodash";
 
-import * as ApprovalStepsDAO from '../approval-steps/dao';
-import * as PricingProductTypesDAO from '../pricing-product-types/dao';
-import * as PricingQuotesDAO from '../../dao/pricing-quotes';
+import * as ApprovalStepsDAO from "../approval-steps/dao";
+import * as PricingProductTypesDAO from "../pricing-product-types/dao";
+import * as PricingQuotesDAO from "../../dao/pricing-quotes";
 import ApprovalStepSubmission, {
   ApprovalStepSubmissionState,
-  ApprovalStepSubmissionArtifactType
-} from './domain-object';
+  ApprovalStepSubmissionArtifactType,
+} from "./domain-object";
 import ApprovalStep, {
-  ApprovalStepType
-} from '../approval-steps/domain-object';
-import { Complexity } from '../../domain-objects/pricing';
-import PricingProcess from '../../domain-objects/pricing-process';
+  ApprovalStepType,
+} from "../approval-steps/domain-object";
+import { Complexity } from "../../domain-objects/pricing";
+import PricingProcess from "../../domain-objects/pricing-process";
 
 type ApprovalStepByType = Record<ApprovalStepType, ApprovalStep>;
 type SubmissionOption = Partial<ApprovalStepSubmission> & {
@@ -35,7 +35,7 @@ function getProcessSubmissions(
   return uniqBy<PricingProcess>(processes, getDisplayOrFallbackName).map(
     (process: PricingProcess) => ({
       stepId: stepsByType[ApprovalStepType.SAMPLE].id,
-      title: `Review ${getDisplayOrFallbackName(process)} trial`
+      title: `Review ${getDisplayOrFallbackName(process)} trial`,
     })
   );
 }
@@ -45,30 +45,30 @@ function getComplexitySubmissions(
   complexity: Complexity
 ): SubmissionOption[] {
   switch (complexity) {
-    case 'BLANK': {
+    case "BLANK": {
       return [
         {
           artifactType: ApprovalStepSubmissionArtifactType.TECHNICAL_DESIGN,
           stepId: stepsByType[ApprovalStepType.TECHNICAL_DESIGN].id,
-          title: 'Review technical design'
+          title: "Review technical design",
         },
         {
           artifactType: ApprovalStepSubmissionArtifactType.SAMPLE,
           stepId: stepsByType[ApprovalStepType.SAMPLE].id,
-          title: 'Review sample photo'
+          title: "Review sample photo",
         },
         {
           stepId: stepsByType[ApprovalStepType.PRODUCTION].id,
-          title: 'Confirm receipt of TOP and CALA keep samples'
+          title: "Confirm receipt of TOP and CALA keep samples",
         },
         {
           stepId: stepsByType[ApprovalStepType.PRODUCTION].id,
-          title: 'Review product photography'
+          title: "Review product photography",
         },
         {
           stepId: stepsByType[ApprovalStepType.PRODUCTION].id,
-          title: 'Confirm receipt of final shipment'
-        }
+          title: "Confirm receipt of final shipment",
+        },
       ];
     }
 
@@ -77,38 +77,38 @@ function getComplexitySubmissions(
         {
           artifactType: ApprovalStepSubmissionArtifactType.TECHNICAL_DESIGN,
           stepId: stepsByType[ApprovalStepType.TECHNICAL_DESIGN].id,
-          title: 'Review technical design'
+          title: "Review technical design",
         },
         {
           artifactType: ApprovalStepSubmissionArtifactType.SAMPLE,
           stepId: stepsByType[ApprovalStepType.SAMPLE].id,
-          title: 'Review material sample'
+          title: "Review material sample",
         },
         {
           artifactType: ApprovalStepSubmissionArtifactType.SAMPLE,
           stepId: stepsByType[ApprovalStepType.SAMPLE].id,
-          title: 'Review final sample'
+          title: "Review final sample",
         },
         {
           stepId: stepsByType[ApprovalStepType.SAMPLE].id,
-          title: 'Review bulk graded specs'
+          title: "Review bulk graded specs",
         },
         {
           stepId: stepsByType[ApprovalStepType.PRODUCTION].id,
-          title: 'Confirm quality inspection'
+          title: "Confirm quality inspection",
         },
         {
           stepId: stepsByType[ApprovalStepType.PRODUCTION].id,
-          title: 'Confirm receipt of TOP and CALA keep samples'
+          title: "Confirm receipt of TOP and CALA keep samples",
         },
         {
           stepId: stepsByType[ApprovalStepType.PRODUCTION].id,
-          title: 'Review product photography'
+          title: "Review product photography",
         },
         {
           stepId: stepsByType[ApprovalStepType.PRODUCTION].id,
-          title: 'Confirm receipt of final shipment'
-        }
+          title: "Confirm receipt of final shipment",
+        },
       ];
     }
   }
@@ -139,14 +139,14 @@ export async function getDefaultsByDesign(
 
   return [
     ...getComplexitySubmissions(stepsByType, productType.complexity),
-    ...getProcessSubmissions(stepsByType, latestQuote.processes)
+    ...getProcessSubmissions(stepsByType, latestQuote.processes),
   ].map((sub: SubmissionOption, index: number) => ({
     id: uuid.v4(),
     artifactType: ApprovalStepSubmissionArtifactType.CUSTOM,
     collaboratorId: null,
     state: ApprovalStepSubmissionState.UNSUBMITTED,
     ...sub,
-    createdAt: new Date(now.getTime() + index)
+    createdAt: new Date(now.getTime() + index),
   }));
 }
 
@@ -160,13 +160,13 @@ function buildStepByType(steps: ApprovalStep[]): ApprovalStepByType {
   const production = steps.find(byType(ApprovalStepType.PRODUCTION));
 
   if (!checkout || !technicalDesign || !sample || !production) {
-    throw new Error('Missing step type');
+    throw new Error("Missing step type");
   }
 
   return {
     [ApprovalStepType.CHECKOUT]: checkout,
     [ApprovalStepType.TECHNICAL_DESIGN]: technicalDesign,
     [ApprovalStepType.SAMPLE]: sample,
-    [ApprovalStepType.PRODUCTION]: production
+    [ApprovalStepType.PRODUCTION]: production,
   };
 }

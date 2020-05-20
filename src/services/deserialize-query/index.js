@@ -1,6 +1,6 @@
-'use strict';
+"use strict";
 
-const { reduce } = require('lodash');
+const { reduce } = require("lodash");
 
 /**
  * Query string parameter values are always parsed as strings. This function
@@ -34,11 +34,11 @@ module.exports = function deserializeQuery(defaults, serialize, check, input) {
       const serializer = serialize[key];
       let transformed = prop;
 
-      if (typeof serializer === 'function') {
+      if (typeof serializer === "function") {
         const checker = check[key];
         const candidate = serializer(prop);
 
-        if (typeof checker === 'function') {
+        if (typeof checker === "function") {
           transformed = checker(candidate) ? candidate : defaults[key];
         } else {
           transformed = candidate;

@@ -1,20 +1,20 @@
-import Router from 'koa-router';
+import Router from "koa-router";
 
-import Annotation from './domain-object';
+import Annotation from "./domain-object";
 import {
   create,
   deleteById,
   findAllByCanvasId,
   findAllWithCommentsByCanvasId,
-  update
-} from './dao';
-import { hasOnlyProperties } from '../../services/require-properties';
-import * as AnnotationCommentDAO from '../../components/annotation-comments/dao';
-import ResourceNotFoundError from '../../errors/resource-not-found';
-import requireAuth = require('../../middleware/require-auth');
-import filterError = require('../../services/filter-error');
-import addAtMentionDetails from '../../services/add-at-mention-details';
-import { addAttachmentLinks } from '../../services/add-attachments-links';
+  update,
+} from "./dao";
+import { hasOnlyProperties } from "../../services/require-properties";
+import * as AnnotationCommentDAO from "../../components/annotation-comments/dao";
+import ResourceNotFoundError from "../../errors/resource-not-found";
+import requireAuth = require("../../middleware/require-auth");
+import filterError = require("../../services/filter-error");
+import addAtMentionDetails from "../../services/add-at-mention-details";
+import { addAttachmentLinks } from "../../services/add-attachments-links";
 
 const router = new Router();
 
@@ -26,20 +26,20 @@ interface GetListQuery {
 function isAnnotation(candidate: object): candidate is Annotation {
   return hasOnlyProperties(
     candidate,
-    'canvasId',
-    'createdAt',
-    'createdBy',
-    'deletedAt',
-    'id',
-    'x',
-    'y'
+    "canvasId",
+    "createdAt",
+    "createdBy",
+    "deletedAt",
+    "id",
+    "x",
+    "y"
   );
 }
 
 const annotationFromIO = (request: Annotation, userId: string): Annotation => {
   return {
     ...request,
-    createdBy: userId
+    createdBy: userId,
   };
 };
 
@@ -50,7 +50,7 @@ function* createAnnotation(this: AuthedContext): Iterator<any, any, any> {
     this.status = 201;
     this.body = annotation;
   } else {
-    this.throw(400, 'Request does not match Canvas');
+    this.throw(400, "Request does not match Canvas");
   }
 }
 
@@ -61,14 +61,14 @@ function* updateAnnotation(this: AuthedContext): Iterator<any, any, any> {
     this.status = 200;
     this.body = annotation;
   } else {
-    this.throw(400, 'Request does not match ProductDesignCanvasAnnotation');
+    this.throw(400, "Request does not match ProductDesignCanvasAnnotation");
   }
 }
 
 function* deleteAnnotation(this: AuthedContext): Iterator<any, any, any> {
   yield deleteById(this.params.annotationId).catch(
     filterError(ResourceNotFoundError, () => {
-      this.throw(404, 'Annotation not found');
+      this.throw(404, "Annotation not found");
     })
   );
 
@@ -78,11 +78,11 @@ function* deleteAnnotation(this: AuthedContext): Iterator<any, any, any> {
 function* getList(this: AuthedContext): Iterator<any, any, any> {
   const query: GetListQuery = this.query;
   if (!query.canvasId) {
-    this.throw(400, 'Missing canvasId');
+    this.throw(400, "Missing canvasId");
   }
 
   const annotations =
-    query.hasComments !== 'true'
+    query.hasComments !== "true"
       ? yield findAllByCanvasId(query.canvasId)
       : yield findAllWithCommentsByCanvasId(query.canvasId);
 
@@ -106,11 +106,11 @@ function* getAnnotationComments(this: AuthedContext): Iterator<any, any, any> {
   }
 }
 
-router.get('/', requireAuth, getList);
-router.put('/:annotationId', requireAuth, createAnnotation);
-router.patch('/:annotationId', requireAuth, updateAnnotation);
-router.del('/:annotationId', requireAuth, deleteAnnotation);
+router.get("/", requireAuth, getList);
+router.put("/:annotationId", requireAuth, createAnnotation);
+router.patch("/:annotationId", requireAuth, updateAnnotation);
+router.del("/:annotationId", requireAuth, deleteAnnotation);
 
-router.get('/:annotationId/comments', requireAuth, getAnnotationComments);
+router.get("/:annotationId/comments", requireAuth, getAnnotationComments);
 
 export default router.routes();

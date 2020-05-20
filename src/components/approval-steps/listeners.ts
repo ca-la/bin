@@ -1,27 +1,27 @@
-import ApprovalStep, { domain, ApprovalStepState } from './types';
+import ApprovalStep, { domain, ApprovalStepState } from "./types";
 import {
   DaoUpdated,
   DaoUpdating,
-  RouteUpdated
-} from '../../services/pubsub/cala-events';
+  RouteUpdated,
+} from "../../services/pubsub/cala-events";
 import {
   Listeners,
-  buildListeners
-} from '../../services/cala-component/cala-listeners';
+  buildListeners,
+} from "../../services/cala-component/cala-listeners";
 import {
   handleStepCompletion,
   handleUserStepCompletion,
   handleStepReopen,
-  handleUserStepReopen
-} from '../../services/approval-step-state';
+  handleUserStepReopen,
+} from "../../services/approval-step-state";
 
-import * as DesignEventsDAO from '../../dao/design-events';
-import uuid from 'node-uuid';
-import * as NotificationsService from '../../services/create-notifications';
-import * as CollaboratorsDAO from '../../components/collaborators/dao';
+import * as DesignEventsDAO from "../../dao/design-events";
+import uuid from "node-uuid";
+import * as NotificationsService from "../../services/create-notifications";
+import * as CollaboratorsDAO from "../../components/collaborators/dao";
 
 export const listeners: Listeners<ApprovalStep, typeof domain> = {
-  'dao.updating': async (
+  "dao.updating": async (
     event: DaoUpdating<ApprovalStep, typeof domain>
   ): Promise<void> => {
     const { patch, before } = event;
@@ -42,7 +42,7 @@ export const listeners: Listeners<ApprovalStep, typeof domain> = {
     }
   },
 
-  'dao.updated.*': {
+  "dao.updated.*": {
     state: async (
       event: DaoUpdated<ApprovalStep, typeof domain>
     ): Promise<void> => {
@@ -57,10 +57,10 @@ export const listeners: Listeners<ApprovalStep, typeof domain> = {
       ) {
         await handleStepReopen(trx, updated);
       }
-    }
+    },
   },
 
-  'route.updated.*': {
+  "route.updated.*": {
     state: async (
       event: RouteUpdated<ApprovalStep, typeof domain>
     ): Promise<void> => {
@@ -102,7 +102,7 @@ export const listeners: Listeners<ApprovalStep, typeof domain> = {
         id: uuid.v4(),
         quoteId: null,
         targetId: collaborator.user.id,
-        type: 'STEP_ASSIGNMENT'
+        type: "STEP_ASSIGNMENT",
       });
 
       await NotificationsService.sendApprovalStepAssignmentNotification(
@@ -110,8 +110,8 @@ export const listeners: Listeners<ApprovalStep, typeof domain> = {
         event.actorId,
         event.updated
       );
-    }
-  }
+    },
+  },
 };
 
 export default buildListeners<ApprovalStep, typeof domain>(domain, listeners);

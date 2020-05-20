@@ -1,5 +1,5 @@
-import { NotificationType } from '../domain-object';
-import User from '../../users/domain-object';
+import { NotificationType } from "../domain-object";
+import User from "../../users/domain-object";
 
 /**
  * These base notification types are set to null so that in the notifications that inherit from
@@ -98,5 +98,5 @@ export const templateNotification = {
   sectionId: null, // DEPRECATED
   sentEmailAt: null,
   stageId: null,
-  taskId: null
+  taskId: null,
 };

@@ -1,28 +1,28 @@
-import { Transaction } from 'knex';
-import { buildDao } from '../../services/cala-component/cala-dao';
-import adapter from './adapter';
-import ApprovalStep, { ApprovalStepRow, domain } from './types';
-import './listeners';
+import { Transaction } from "knex";
+import { buildDao } from "../../services/cala-component/cala-dao";
+import adapter from "./adapter";
+import ApprovalStep, { ApprovalStepRow, domain } from "./types";
+import "./listeners";
 
-const tableName = 'design_approval_steps';
+const tableName = "design_approval_steps";
 
 const dao = {
   ...buildDao<ApprovalStep, ApprovalStepRow>(domain, tableName, adapter, {
-    orderColumn: 'ordering'
+    orderColumn: "ordering",
   }),
   async findBySubmissionId(
     trx: Transaction,
     id: string
   ): Promise<ApprovalStep | null> {
     return trx(tableName)
-      .select('design_approval_steps.*')
+      .select("design_approval_steps.*")
       .join(
-        'design_approval_submissions',
-        'design_approval_submissions.step_id',
-        'design_approval_steps.id'
+        "design_approval_submissions",
+        "design_approval_submissions.step_id",
+        "design_approval_steps.id"
       )
       .where({
-        'design_approval_submissions.id': id
+        "design_approval_submissions.id": id,
       })
       .first()
       .then((candidate: any) => adapter.fromDb(candidate));
@@ -32,7 +32,7 @@ const dao = {
     designId: string
   ): Promise<ApprovalStep[]> {
     return dao.find(trx, { designId });
-  }
+  },
 };
 
 export default dao;
@@ -43,5 +43,5 @@ export const {
   findBySubmissionId,
   findOne,
   findByDesign,
-  update
+  update,
 } = dao;

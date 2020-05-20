@@ -1,12 +1,12 @@
-import uuid from 'node-uuid';
-import Knex from 'knex';
+import uuid from "node-uuid";
+import Knex from "knex";
 
-import * as PlansDAO from '../plans/dao';
-import * as SubscriptionsDAO from './dao';
-import createStripeSubscription from '../../services/stripe/create-subscription';
-import createPaymentMethod from '../payment-methods/create-payment-method';
-import InvalidDataError = require('../../errors/invalid-data');
-import { Subscription } from './domain-object';
+import * as PlansDAO from "../plans/dao";
+import * as SubscriptionsDAO from "./dao";
+import createStripeSubscription from "../../services/stripe/create-subscription";
+import createPaymentMethod from "../payment-methods/create-payment-method";
+import InvalidDataError = require("../../errors/invalid-data");
+import { Subscription } from "./domain-object";
 
 interface Options {
   userId: string;
@@ -26,7 +26,7 @@ export default async function createOrUpdateSubscription(
     subscriptionId,
     userId,
     isPaymentWaived,
-    trx
+    trx,
   } = options;
 
   const plan = await PlansDAO.findById(planId);
@@ -39,18 +39,18 @@ export default async function createOrUpdateSubscription(
   const isPlanFree = isPaymentWaived || plan.monthlyCostCents === 0;
   if (!isPlanFree) {
     if (!stripeCardToken) {
-      throw new InvalidDataError('Missing stripe card token');
+      throw new InvalidDataError("Missing stripe card token");
     }
     paymentMethod = await createPaymentMethod({
       token: stripeCardToken,
       userId,
-      trx
+      trx,
     });
 
     stripeSubscription = await createStripeSubscription({
       stripeCustomerId: paymentMethod.stripeCustomerId,
       stripePlanId: plan.stripePlanId,
-      stripeSourceId: paymentMethod.stripeSourceId
+      stripeSourceId: paymentMethod.stripeSourceId,
     });
   }
   const stripeSubscriptionId = stripeSubscription
@@ -66,7 +66,7 @@ export default async function createOrUpdateSubscription(
       {
         paymentMethodId,
         planId,
-        stripeSubscriptionId
+        stripeSubscriptionId,
       },
       trx
     );
@@ -79,7 +79,7 @@ export default async function createOrUpdateSubscription(
         paymentMethodId,
         planId,
         stripeSubscriptionId,
-        userId
+        userId,
       },
       trx
     );

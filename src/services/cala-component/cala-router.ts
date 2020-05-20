@@ -1,16 +1,16 @@
-import { Middleware } from 'koa-router';
-import { Transaction } from 'knex';
-import { difference, omit, pick } from 'lodash';
-import { CalaRouter, CalaRoutes, CalaDao } from './types';
+import { Middleware } from "koa-router";
+import { Transaction } from "knex";
+import { difference, omit, pick } from "lodash";
+import { CalaRouter, CalaRoutes, CalaDao } from "./types";
 
-import db from '../db';
-import useTransaction from '../../middleware/use-transaction';
-import ResourceNotFoundError from '../../errors/resource-not-found';
-import { emit } from '../pubsub';
-import filterError from '../../services/filter-error';
-import { RouteUpdated } from '../pubsub/cala-events';
+import db from "../db";
+import useTransaction from "../../middleware/use-transaction";
+import ResourceNotFoundError from "../../errors/resource-not-found";
+import { emit } from "../pubsub";
+import filterError from "../../services/filter-error";
+import { RouteUpdated } from "../pubsub/cala-events";
 
-type StandardRoute = 'find' | 'update';
+type StandardRoute = "find" | "update";
 
 interface SpecificOptions<Model> {
   update: {
@@ -28,7 +28,7 @@ interface RouterOptions<Model> {
     {
       [key in StandardRoute]: {
         middleware: Middleware[];
-      } & SpecificOptions<Model>[key]
+      } & SpecificOptions<Model>[key];
     }
   >;
 }
@@ -44,27 +44,29 @@ export function buildRouter<Model>(
     routes: pickRoutes.reduce<CalaRoutes>(
       (routes: CalaRoutes, routeName: string) => {
         switch (routeName) {
-          case 'find': {
+          case "find": {
             const allowedFilterAttributes =
               (routeOptions.find &&
                 routeOptions.find.allowedFilterAttributes) ||
               [];
             const isFilter = (filter: any): filter is Partial<Model> => {
               return (
-                difference(Object.keys(filter), (allowedFilterAttributes ||
-                  []) as string[]).length === 0
+                difference(
+                  Object.keys(filter),
+                  (allowedFilterAttributes || []) as string[]
+                ).length === 0
               );
             };
-            if (!routes['/']) {
-              routes['/'] = {};
+            if (!routes["/"]) {
+              routes["/"] = {};
             }
-            routes['/'].get = [
+            routes["/"].get = [
               ...((routeOptions.find && routeOptions.find.middleware) || []),
               function* find(
                 this: AuthedContext<{}, PermittedState>
               ): Iterator<any, any, any> {
                 if (!isFilter(this.query)) {
-                  this.throw(400, 'Disallowed filter properties');
+                  this.throw(400, "Disallowed filter properties");
                 }
                 const found = yield db.transaction(async (trx: Transaction) => {
                   return dao.find(trx, this.query);
@@ -72,15 +74,15 @@ export function buildRouter<Model>(
 
                 this.body = found;
                 this.status = 200;
-              }
+              },
             ];
             break;
           }
-          case 'update':
-            if (!routes['/:id']) {
-              routes['/:id'] = {};
+          case "update":
+            if (!routes["/:id"]) {
+              routes["/:id"] = {};
             }
-            routes['/:id'].patch = [
+            routes["/:id"].patch = [
               useTransaction,
               ...((routeOptions.update && routeOptions.update.middleware) ||
                 []),
@@ -96,7 +98,7 @@ export function buildRouter<Model>(
                   [];
                 const patch = pick(this.request.body, allowedAttributes);
                 if (Object.keys(patch).length === 0) {
-                  this.throw(400, 'No valid keys to update');
+                  this.throw(400, "No valid keys to update");
                 }
 
                 const restKeys = Object.keys(
@@ -105,7 +107,7 @@ export function buildRouter<Model>(
                 if (restKeys.length > 0) {
                   this.throw(
                     400,
-                    `Keys ${restKeys.join(', ')} are not allowed`
+                    `Keys ${restKeys.join(", ")} are not allowed`
                   );
                 }
 
@@ -120,13 +122,13 @@ export function buildRouter<Model>(
                     )
                   );
                 yield emit<RouteUpdated<Model, typeof domain>>(
-                  'route.updated',
+                  "route.updated",
                   domain,
                   {
                     actorId,
                     trx,
                     before,
-                    updated
+                    updated,
                   }
                 );
 
@@ -139,13 +141,13 @@ export function buildRouter<Model>(
                   this.status = 200;
                   this.body = updated;
                 }
-              }
+              },
             ];
             break;
         }
         return routes;
       },
       {}
-    )
+    ),
   };
 }

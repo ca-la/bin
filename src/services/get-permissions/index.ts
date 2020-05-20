@@ -1,9 +1,9 @@
-import * as CollaboratorsDAO from '../../components/collaborators/dao';
-import Collaborator from '../../components/collaborators/domain-objects/collaborator';
-import * as CollectionsDAO from '../../components/collections/dao';
-import * as DesignEventsDAO from '../../dao/design-events';
-import Collection from '../../components/collections/domain-object';
-import { isOwner as isDesignOwner } from '../../components/product-designs/dao/dao';
+import * as CollaboratorsDAO from "../../components/collaborators/dao";
+import Collaborator from "../../components/collaborators/domain-objects/collaborator";
+import * as CollectionsDAO from "../../components/collections/dao";
+import * as DesignEventsDAO from "../../dao/design-events";
+import Collection from "../../components/collections/domain-object";
+import { isOwner as isDesignOwner } from "../../components/product-designs/dao/dao";
 
 export interface Permissions {
   canComment: boolean;
@@ -28,7 +28,7 @@ interface LocalRoles {
   isViewer: boolean;
 }
 
-const ROLE_ORDERING = ['EDIT', 'PARTNER', 'VIEW', 'PREVIEW'];
+const ROLE_ORDERING = ["EDIT", "PARTNER", "VIEW", "PREVIEW"];
 
 /**
  * Given a design and a session, returns the permissions for the session on the design.
@@ -45,14 +45,14 @@ export async function getDesignPermissionsAndRole(options: {
 }): Promise<PermissionsAndRole> {
   const { designId, sessionRole, sessionUserId } = options;
 
-  const isAdmin = sessionRole === 'ADMIN';
+  const isAdmin = sessionRole === "ADMIN";
   const isOwnerOfDesign = await isDesignOwner({
     designId,
-    userId: sessionUserId
+    userId: sessionUserId,
   });
   const isOwnerOfCollection = await CollectionsDAO.hasOwnership({
     designId,
-    userId: sessionUserId
+    userId: sessionUserId,
   });
   const isOwner = isOwnerOfDesign || isOwnerOfCollection;
 
@@ -67,10 +67,10 @@ export async function getDesignPermissionsAndRole(options: {
   );
   const role = findMostPermissiveRole(roles);
 
-  const isEditor = role === 'EDIT';
-  const isPartner = role === 'PARTNER';
-  const isPreviewer = role === 'PREVIEW';
-  const isViewer = role === 'VIEW';
+  const isEditor = role === "EDIT";
+  const isPartner = role === "PARTNER";
+  const isPreviewer = role === "PREVIEW";
+  const isViewer = role === "VIEW";
 
   return {
     permissions: await getPermissionsFromRoleAndDesignId(
@@ -80,11 +80,11 @@ export async function getDesignPermissionsAndRole(options: {
         isOwner,
         isPartner,
         isPreviewer,
-        isViewer
+        isViewer,
       },
       designId
     ),
-    role
+    role,
   };
 }
 
@@ -107,19 +107,17 @@ export async function getCollectionPermissions(
     sessionUserId
   );
   const role = findMostPermissiveRole(
-    collaborators.map(
-      (collaborator: Collaborator): string => {
-        return collaborator.role;
-      }
-    )
+    collaborators.map((collaborator: Collaborator): string => {
+      return collaborator.role;
+    })
   );
 
   const isOwner = sessionUserId === collection.createdBy;
-  const isAdmin = sessionRole === 'ADMIN';
-  const isEditor = role === 'EDIT';
-  const isPartner = role === 'PARTNER';
-  const isPreviewer = role === 'PREVIEW';
-  const isViewer = role === 'VIEW';
+  const isAdmin = sessionRole === "ADMIN";
+  const isEditor = role === "EDIT";
+  const isPartner = role === "PARTNER";
+  const isPreviewer = role === "PREVIEW";
+  const isViewer = role === "VIEW";
 
   return getPermissionsFromRoleAndDesignId({
     isAdmin,
@@ -127,7 +125,7 @@ export async function getCollectionPermissions(
     isOwner,
     isPartner,
     isPreviewer,
-    isViewer
+    isViewer,
   });
 }
 
@@ -142,7 +140,7 @@ async function getPermissionsFromRoleAndDesignId(
       canEdit: true,
       canEditVariants: true,
       canSubmit: true,
-      canView: true
+      canView: true,
     };
   }
 
@@ -159,7 +157,7 @@ async function getPermissionsFromRoleAndDesignId(
         canEdit: true,
         canEditVariants,
         canSubmit: true,
-        canView: true
+        canView: true,
       };
     }
 
@@ -170,7 +168,7 @@ async function getPermissionsFromRoleAndDesignId(
         canEdit: true,
         canEditVariants,
         canSubmit: true,
-        canView: true
+        canView: true,
       };
     }
   }
@@ -182,7 +180,7 @@ async function getPermissionsFromRoleAndDesignId(
       canEdit: true,
       canEditVariants: false,
       canSubmit: false,
-      canView: true
+      canView: true,
     };
   }
 
@@ -193,7 +191,7 @@ async function getPermissionsFromRoleAndDesignId(
       canEdit: false,
       canEditVariants: false,
       canSubmit: false,
-      canView: true
+      canView: true,
     };
   }
 
@@ -204,7 +202,7 @@ async function getPermissionsFromRoleAndDesignId(
       canEdit: false,
       canEditVariants: false,
       canSubmit: false,
-      canView: true
+      canView: true,
     };
   }
 
@@ -214,7 +212,7 @@ async function getPermissionsFromRoleAndDesignId(
     canEdit: false,
     canEditVariants: false,
     canSubmit: false,
-    canView: false
+    canView: false,
   };
 }
 

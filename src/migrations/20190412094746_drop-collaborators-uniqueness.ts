@@ -1,4 +1,4 @@
-import Knex from 'knex';
+import Knex from "knex";
 export function up(knex: Knex): Knex.Raw {
   return knex.raw(`
 DROP INDEX collaborators_unique_id;

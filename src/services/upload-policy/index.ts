@@ -1,5 +1,5 @@
-import { generateFilename } from '../generate-filename';
-import * as AWSService from '../../services/aws';
+import { generateFilename } from "../generate-filename";
+import * as AWSService from "../../services/aws";
 
 export interface UploadPolicy {
   contentDisposition: string;
@@ -43,6 +43,6 @@ export function generateUploadPolicy(options: Options): UploadPolicy {
     downloadUrl: `${options.downloadBaseUrl}/${remoteFileName}`,
     formData: fields,
     remoteFileName,
-    uploadUrl: url
+    uploadUrl: url,
   };
 }

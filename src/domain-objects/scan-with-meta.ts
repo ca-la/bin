@@ -1,4 +1,4 @@
-import DataAdapter from '../services/data-adapter';
+import DataAdapter from "../services/data-adapter";
 
 interface Measurements {
   calculatedValues?: {
@@ -13,7 +13,7 @@ export interface ScanWithMeta {
   isComplete: boolean;
   isStarted: boolean;
   measurements: Measurements;
-  type: 'PHOTO' | 'HUMANSOLUTIONS';
+  type: "PHOTO" | "HUMANSOLUTIONS";
   userId: string | null;
   fitPartnerCustomerId: string;
   shopifyUserId: string | null;
@@ -27,7 +27,7 @@ export interface ScanWithMetaRow {
   is_complete: string;
   is_started: string;
   measurements: Measurements;
-  type: 'PHOTO' | 'HUMANSOLUTIONS';
+  type: "PHOTO" | "HUMANSOLUTIONS";
   user_id: string | null;
   fit_partner_customer_id: string;
   shopify_user_id: string | null;

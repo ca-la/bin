@@ -1,36 +1,36 @@
-import Knex from 'knex';
-import uuid from 'node-uuid';
-import { authHeader, get, patch, post } from '../../test-helpers/http';
-import { sandbox, test, Test } from '../../test-helpers/fresh';
-import createUser from '../../test-helpers/create-user';
-import { generateDesign } from '../../test-helpers/factories/product-design';
-import db from '../../services/db';
-import * as ApprovalStepsDAO from '../approval-steps/dao';
+import Knex from "knex";
+import uuid from "node-uuid";
+import { authHeader, get, patch, post } from "../../test-helpers/http";
+import { sandbox, test, Test } from "../../test-helpers/fresh";
+import createUser from "../../test-helpers/create-user";
+import { generateDesign } from "../../test-helpers/factories/product-design";
+import db from "../../services/db";
+import * as ApprovalStepsDAO from "../approval-steps/dao";
 import {
   ApprovalStepSubmissionArtifactType,
-  ApprovalStepSubmissionState
-} from './domain-object';
-import * as AnnounceCommentService from '../iris/messages/approval-step-comment';
-import * as NotificationsDAO from '../notifications/dao';
-import * as DesignEventsDAO from '../../dao/design-events';
-import generateApprovalStep from '../../test-helpers/factories/design-approval-step';
-import generateApprovalSubmission from '../../test-helpers/factories/design-approval-submission';
-import generateCollaborator from '../../test-helpers/factories/collaborator';
+  ApprovalStepSubmissionState,
+} from "./domain-object";
+import * as AnnounceCommentService from "../iris/messages/approval-step-comment";
+import * as NotificationsDAO from "../notifications/dao";
+import * as DesignEventsDAO from "../../dao/design-events";
+import generateApprovalStep from "../../test-helpers/factories/design-approval-step";
+import generateApprovalSubmission from "../../test-helpers/factories/design-approval-submission";
+import generateCollaborator from "../../test-helpers/factories/collaborator";
 
-test('GET /design-approval-step-submissions?stepId=:stepId', async (t: Test) => {
+test("GET /design-approval-step-submissions?stepId=:stepId", async (t: Test) => {
   const designer = await createUser();
-  const admin = await createUser({ role: 'ADMIN' });
+  const admin = await createUser({ role: "ADMIN" });
   const other = await createUser();
 
   const { approvalStep, submission } = await db.transaction(
     async (trx: Knex.Transaction) => {
       const { approvalStep: createdStep } = await generateApprovalStep(trx, {
-        createdBy: designer.user.id
+        createdBy: designer.user.id,
       });
       const {
-        submission: createdSubmission
+        submission: createdSubmission,
       } = await generateApprovalSubmission(trx, {
-        stepId: createdStep.id
+        stepId: createdStep.id,
       });
 
       return { approvalStep: createdStep, submission: createdSubmission };
@@ -39,7 +39,7 @@ test('GET /design-approval-step-submissions?stepId=:stepId', async (t: Test) => 
   const [response, body] = await get(
     `/design-approval-step-submissions?stepId=${approvalStep.id}`,
     {
-      headers: authHeader(designer.session.id)
+      headers: authHeader(designer.session.id),
     }
   );
 
@@ -48,13 +48,13 @@ test('GET /design-approval-step-submissions?stepId=:stepId', async (t: Test) => 
   t.deepEqual(
     body,
     JSON.parse(JSON.stringify([submission])),
-    'returns saved submission'
+    "returns saved submission"
   );
 
   const adminRes = await get(
     `/design-approval-step-submissions?stepId=${approvalStep.id}`,
     {
-      headers: authHeader(admin.session.id)
+      headers: authHeader(admin.session.id),
     }
   );
 
@@ -63,44 +63,44 @@ test('GET /design-approval-step-submissions?stepId=:stepId', async (t: Test) => 
   t.deepEqual(
     adminRes[1],
     JSON.parse(JSON.stringify([submission])),
-    'returns saved submission'
+    "returns saved submission"
   );
 
   const otherRes = await get(
     `/design-approval-step-submissions?stepId=${approvalStep.id}`,
     {
-      headers: authHeader(other.session.id)
+      headers: authHeader(other.session.id),
     }
   );
 
   t.is(otherRes[0].status, 403);
 });
 
-test('PATCH /design-approval-step-submissions/:submissionId with collaboratorId', async (t: Test) => {
+test("PATCH /design-approval-step-submissions/:submissionId with collaboratorId", async (t: Test) => {
   const { user: user1, session: session1 } = await createUser();
   const { user: user2, session: session2 } = await createUser();
 
   const trx = await db.transaction();
   const { approvalStep, design } = await generateApprovalStep(trx, {
-    createdBy: user1.id
+    createdBy: user1.id,
   });
   const { collaborator: collaborator1 } = await generateCollaborator(
     {
       designId: design.id,
-      userId: user1.id
+      userId: user1.id,
     },
     trx
   );
   const { collaborator: collaborator2 } = await generateCollaborator(
     {
       designId: (await generateDesign({ userId: user2.id })).id,
-      userId: user2.id
+      userId: user2.id,
     },
     trx
   );
 
   const { submission } = await generateApprovalSubmission(trx, {
-    stepId: approvalStep.id
+    stepId: approvalStep.id,
   });
   await trx.commit();
 
@@ -109,8 +109,8 @@ test('PATCH /design-approval-step-submissions/:submissionId with collaboratorId'
     {
       headers: authHeader(session1.id),
       body: {
-        collaboratorId: collaborator1.id
-      }
+        collaboratorId: collaborator1.id,
+      },
     }
   );
   t.is(response.status, 200);
@@ -119,7 +119,7 @@ test('PATCH /design-approval-step-submissions/:submissionId with collaboratorId'
   await db.transaction(async (trx2: Knex.Transaction) => {
     const notifications = await NotificationsDAO.findByUserId(trx2, user1.id, {
       limit: 10,
-      offset: 0
+      offset: 0,
     });
     t.is(notifications.length, 1);
     t.is(notifications[0].approvalSubmissionId, submission.id);
@@ -130,15 +130,15 @@ test('PATCH /design-approval-step-submissions/:submissionId with collaboratorId'
     {
       headers: authHeader(session2.id),
       body: {
-        collaboratorId: collaborator2.id
-      }
+        collaboratorId: collaborator2.id,
+      },
     }
   );
 
   t.is(otherRes[0].status, 403);
 });
 
-test('POST /design-approval-step-submissions?stepId=:stepId', async (t: Test) => {
+test("POST /design-approval-step-submissions?stepId=:stepId", async (t: Test) => {
   const designer = await createUser();
 
   const d1 = await generateDesign({ userId: designer.user.id });
@@ -153,34 +153,34 @@ test('POST /design-approval-step-submissions?stepId=:stepId', async (t: Test) =>
         id: uuid.v4(),
         state: ApprovalStepSubmissionState.UNSUBMITTED,
         artifactType: ApprovalStepSubmissionArtifactType.CUSTOM,
-        title: 'Submarine'
-      }
+        title: "Submarine",
+      },
     }
   );
 
   t.is(response.status, 200);
-  t.is(body.title, 'Submarine');
-  t.is(body.state, 'UNSUBMITTED');
+  t.is(body.title, "Submarine");
+  t.is(body.state, "UNSUBMITTED");
   t.is(body.stepId, steps[1].id);
 });
 
-test('POST /design-approval-step-submissions/:submissionId/approvals', async (t: Test) => {
+test("POST /design-approval-step-submissions/:submissionId/approvals", async (t: Test) => {
   const { user: user1, session: session1 } = await createUser();
 
   const trx = await db.transaction();
   const { approvalStep, design } = await generateApprovalStep(trx, {
-    createdBy: user1.id
+    createdBy: user1.id,
   });
 
   const { submission } = await generateApprovalSubmission(trx, {
-    title: 'Submarine',
-    stepId: approvalStep.id
+    title: "Submarine",
+    stepId: approvalStep.id,
   });
   await trx.commit();
   const [response, body] = await post(
     `/design-approval-step-submissions/${submission.id}/approvals`,
     {
-      headers: authHeader(session1.id)
+      headers: authHeader(session1.id),
     }
   );
   t.is(response.status, 200);
@@ -194,47 +194,47 @@ test('POST /design-approval-step-submissions/:submissionId/approvals', async (t:
       actorId: body.actorId,
       actorName: body.actorName,
       actorRole: body.actorRole,
-      actorEmail: body.actorEmail
+      actorEmail: body.actorEmail,
     },
     {
       designId: design.id,
-      type: 'STEP_SUMBISSION_APPROVAL',
+      type: "STEP_SUMBISSION_APPROVAL",
       approvalStepId: approvalStep.id,
       approvalSubmissionId: submission.id,
-      submissionTitle: 'Submarine',
+      submissionTitle: "Submarine",
       actorId: user1.id,
       actorName: user1.name,
-      actorRole: 'USER',
-      actorEmail: user1.email
+      actorRole: "USER",
+      actorEmail: user1.email,
     },
-    'body is approval event'
+    "body is approval event"
   );
 
   const [failureResponse] = await post(
     `/design-approval-step-submissions/${submission.id}/approvals`,
     {
-      headers: authHeader(session1.id)
+      headers: authHeader(session1.id),
     }
   );
-  t.is(failureResponse.status, 409, 'Could not approve twice');
+  t.is(failureResponse.status, 409, "Could not approve twice");
 });
 
-test('POST /design-approval-step-submissions/:submissionId/revision-requests', async (t: Test) => {
+test("POST /design-approval-step-submissions/:submissionId/revision-requests", async (t: Test) => {
   sandbox()
-    .stub(AnnounceCommentService, 'announceApprovalStepCommentCreation')
+    .stub(AnnounceCommentService, "announceApprovalStepCommentCreation")
     .resolves({});
 
   const { user, session } = await createUser();
 
   const trx = await db.transaction();
   const { approvalStep, design } = await generateApprovalStep(trx, {
-    createdBy: user.id
+    createdBy: user.id,
   });
 
   const { submission } = await generateApprovalSubmission(trx, {
-    title: 'Fizz Buzz',
+    title: "Fizz Buzz",
     stepId: approvalStep.id,
-    state: ApprovalStepSubmissionState.SUBMITTED
+    state: ApprovalStepSubmissionState.SUBMITTED,
   });
   await trx.commit();
 
@@ -249,10 +249,10 @@ test('POST /design-approval-step-submissions/:submissionId/revision-requests', a
           id: uuid.v4(),
           isPinned: false,
           parentCommentId: null,
-          text: 'test comment',
-          userId: user.id
-        }
-      }
+          text: "test comment",
+          userId: user.id,
+        },
+      },
     }
   );
 
@@ -260,7 +260,7 @@ test('POST /design-approval-step-submissions/:submissionId/revision-requests', a
 
   const events = await DesignEventsDAO.findByDesignId(design.id);
   t.equal(events.length, 1);
-  t.equal(events[0].type, 'REVISION_REQUEST');
+  t.equal(events[0].type, "REVISION_REQUEST");
   t.notEqual(events[0].commentId, null);
 
   const [duplicateResponse, duplicateBody] = await post(
@@ -274,13 +274,13 @@ test('POST /design-approval-step-submissions/:submissionId/revision-requests', a
           id: uuid.v4(),
           isPinned: false,
           parentCommentId: null,
-          text: 'test comment',
-          userId: user.id
-        }
-      }
+          text: "test comment",
+          userId: user.id,
+        },
+      },
     }
   );
 
   t.equal(duplicateResponse.status, 409);
-  t.equal(duplicateBody.message, 'Submission already has requested revisions');
+  t.equal(duplicateBody.message, "Submission already has requested revisions");
 });

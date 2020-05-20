@@ -1,5 +1,5 @@
-import DataAdapter from '../services/data-adapter';
-import { hasProperties } from '../services/require-properties';
+import DataAdapter from "../services/data-adapter";
+import { hasProperties } from "../services/require-properties";
 
 /**
  * @typedef {object} PricingCareLabel Care label costs
@@ -34,10 +34,10 @@ export const dataAdapter = new DataAdapter<
 export function isPricingCareLabelRow(row: object): row is PricingCareLabelRow {
   return hasProperties(
     row,
-    'id',
-    'version',
-    'minimum_units',
-    'unit_cents',
-    'created_at'
+    "id",
+    "version",
+    "minimum_units",
+    "unit_cents",
+    "created_at"
   );
 }

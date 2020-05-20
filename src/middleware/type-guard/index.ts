@@ -8,7 +8,7 @@ export function typeGuard<T>(
     const { body } = this.request;
 
     if (!body || !guardFn(body)) {
-      this.throw(400, 'Request does not match type.');
+      this.throw(400, "Request does not match type.");
     }
 
     yield next;

@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 /**
  * @returns {String} yyyy-mm-dd
@@ -8,7 +8,7 @@ function formatDateString(date) {
   const paddedMonth = `00${date.getUTCMonth() + 1}`.slice(-2);
   const paddedDay = `00${date.getUTCDate()}`.slice(-2);
 
-  return [paddedYear, paddedMonth, paddedDay].join('-');
+  return [paddedYear, paddedMonth, paddedDay].join("-");
 }
 
 module.exports = formatDateString;

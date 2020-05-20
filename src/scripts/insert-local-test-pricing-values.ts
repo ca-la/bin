@@ -1,22 +1,22 @@
-import knex from 'knex';
-import process from 'process';
-import uuid from 'node-uuid';
-import { flatten, map } from 'lodash';
-import { PricingConstantRow } from '../domain-objects/pricing-constant';
-import sum from '../services/sum';
-import db from '../services/db';
-import { Cents, Dollars } from '../services/dollars';
-import { log } from '../services/logger';
-import { green, red, reset, yellow } from '../services/colors';
-import generateScreenPrintingProcess from '../services/generate-screen-printing-processes';
-import generateProductTypes from '../services/generate-product-types';
-import { PricingProductMaterialRow } from '../domain-objects/pricing-product-material';
-import { PricingMarginRow } from '../domain-objects/pricing-margin';
-import { PricingCareLabelRow } from '../domain-objects/pricing-care-label';
-import { PricingProcessRow } from '../domain-objects/pricing-process';
-import { PricingProductTypeRow } from '../domain-objects/pricing-product-type';
-import { PricingProcessTimelineRow } from '../components/pricing-process-timeline/domain-object';
-import { daysToMs } from '../services/time-conversion';
+import knex from "knex";
+import process from "process";
+import uuid from "node-uuid";
+import { flatten, map } from "lodash";
+import { PricingConstantRow } from "../domain-objects/pricing-constant";
+import sum from "../services/sum";
+import db from "../services/db";
+import { Cents, Dollars } from "../services/dollars";
+import { log } from "../services/logger";
+import { green, red, reset, yellow } from "../services/colors";
+import generateScreenPrintingProcess from "../services/generate-screen-printing-processes";
+import generateProductTypes from "../services/generate-product-types";
+import { PricingProductMaterialRow } from "../domain-objects/pricing-product-material";
+import { PricingMarginRow } from "../domain-objects/pricing-margin";
+import { PricingCareLabelRow } from "../domain-objects/pricing-care-label";
+import { PricingProcessRow } from "../domain-objects/pricing-process";
+import { PricingProductTypeRow } from "../domain-objects/pricing-product-type";
+import { PricingProcessTimelineRow } from "../components/pricing-process-timeline/domain-object";
+import { daysToMs } from "../services/time-conversion";
 
 // BUMP THIS BETWEEN EVERY RUN
 const version = 3;
@@ -26,12 +26,10 @@ intialPricingValues()
     log(`${green}Successfully inserted!`);
     process.exit();
   })
-  .catch(
-    (err: any): void => {
-      log(`${red}ERROR:\n${reset}`, err);
-      process.exit(1);
-    }
-  );
+  .catch((err: any): void => {
+    log(`${red}ERROR:\n${reset}`, err);
+    process.exit(1);
+  });
 
 async function intialPricingValues(): Promise<void> {
   const pricingProcessesScreenPrinting: Uninserted<
@@ -46,505 +44,505 @@ async function intialPricingValues(): Promise<void> {
       [500, 70],
       [1000, 55],
       [1500, 40],
-      [2000, 25]
+      [2000, 25],
     ],
     version
   );
   const pricingProcessesEmbroidery: Uninserted<PricingProcessRow>[] = [
     {
-      complexity: 'SMALL',
+      complexity: "SMALL",
       id: uuid.v4(),
       minimum_units: 1,
-      name: 'EMBROIDERY',
+      name: "EMBROIDERY",
       setup_cents: Dollars(200),
       unit_cents: Dollars(5),
-      version
+      version,
     },
     {
-      complexity: 'MEDIUM',
+      complexity: "MEDIUM",
       id: uuid.v4(),
       minimum_units: 1,
-      name: 'EMBROIDERY',
+      name: "EMBROIDERY",
       setup_cents: Dollars(200),
       unit_cents: Dollars(10),
-      version
+      version,
     },
     {
-      complexity: 'LARGE',
+      complexity: "LARGE",
       id: uuid.v4(),
       minimum_units: 1,
-      name: 'EMBROIDERY',
+      name: "EMBROIDERY",
       setup_cents: Dollars(200),
       unit_cents: Dollars(20),
-      version
+      version,
     },
     {
-      complexity: 'SMALL',
+      complexity: "SMALL",
       id: uuid.v4(),
       minimum_units: 25,
-      name: 'EMBROIDERY',
+      name: "EMBROIDERY",
       setup_cents: Dollars(50),
       unit_cents: Dollars(5),
-      version
+      version,
     },
     {
-      complexity: 'MEDIUM',
+      complexity: "MEDIUM",
       id: uuid.v4(),
       minimum_units: 25,
-      name: 'EMBROIDERY',
+      name: "EMBROIDERY",
       setup_cents: Dollars(50),
       unit_cents: Dollars(10),
-      version
+      version,
     },
     {
-      complexity: 'LARGE',
+      complexity: "LARGE",
       id: uuid.v4(),
       minimum_units: 25,
-      name: 'EMBROIDERY',
+      name: "EMBROIDERY",
       setup_cents: Dollars(50),
       unit_cents: Dollars(15),
-      version
+      version,
     },
     {
-      complexity: 'SMALL',
+      complexity: "SMALL",
       id: uuid.v4(),
       minimum_units: 50,
-      name: 'EMBROIDERY',
+      name: "EMBROIDERY",
       setup_cents: Dollars(50),
       unit_cents: Dollars(5),
-      version
+      version,
     },
     {
-      complexity: 'MEDIUM',
+      complexity: "MEDIUM",
       id: uuid.v4(),
       minimum_units: 50,
-      name: 'EMBROIDERY',
+      name: "EMBROIDERY",
       setup_cents: Dollars(50),
       unit_cents: Dollars(9),
-      version
+      version,
     },
     {
-      complexity: 'LARGE',
+      complexity: "LARGE",
       id: uuid.v4(),
       minimum_units: 50,
-      name: 'EMBROIDERY',
+      name: "EMBROIDERY",
       setup_cents: Dollars(50),
       unit_cents: Dollars(14),
-      version
+      version,
     },
     {
-      complexity: 'SMALL',
+      complexity: "SMALL",
       id: uuid.v4(),
       minimum_units: 250,
-      name: 'EMBROIDERY',
+      name: "EMBROIDERY",
       setup_cents: Dollars(50),
       unit_cents: Dollars(5),
-      version
+      version,
     },
     {
-      complexity: 'MEDIUM',
+      complexity: "MEDIUM",
       id: uuid.v4(),
       minimum_units: 250,
-      name: 'EMBROIDERY',
+      name: "EMBROIDERY",
       setup_cents: Dollars(50),
       unit_cents: Dollars(8),
-      version
+      version,
     },
     {
-      complexity: 'LARGE',
+      complexity: "LARGE",
       id: uuid.v4(),
       minimum_units: 250,
-      name: 'EMBROIDERY',
+      name: "EMBROIDERY",
       setup_cents: Dollars(50),
       unit_cents: Dollars(13),
-      version
+      version,
     },
     {
-      complexity: 'SMALL',
+      complexity: "SMALL",
       id: uuid.v4(),
       minimum_units: 500,
-      name: 'EMBROIDERY',
+      name: "EMBROIDERY",
       setup_cents: Dollars(35),
       unit_cents: Dollars(1),
-      version
+      version,
     },
     {
-      complexity: 'MEDIUM',
+      complexity: "MEDIUM",
       id: uuid.v4(),
       minimum_units: 500,
-      name: 'EMBROIDERY',
+      name: "EMBROIDERY",
       setup_cents: Dollars(35),
       unit_cents: Dollars(3),
-      version
+      version,
     },
     {
-      complexity: 'LARGE',
+      complexity: "LARGE",
       id: uuid.v4(),
       minimum_units: 500,
-      name: 'EMBROIDERY',
+      name: "EMBROIDERY",
       setup_cents: Dollars(70),
       unit_cents: Dollars(5),
-      version
+      version,
     },
     {
-      complexity: 'SMALL',
+      complexity: "SMALL",
       id: uuid.v4(),
       minimum_units: 1200,
-      name: 'EMBROIDERY',
+      name: "EMBROIDERY",
       setup_cents: Dollars(35),
       unit_cents: Dollars(1),
-      version
+      version,
     },
     {
-      complexity: 'MEDIUM',
+      complexity: "MEDIUM",
       id: uuid.v4(),
       minimum_units: 1200,
-      name: 'EMBROIDERY',
+      name: "EMBROIDERY",
       setup_cents: Dollars(35),
       unit_cents: Dollars(3),
-      version
+      version,
     },
     {
-      complexity: 'LARGE',
+      complexity: "LARGE",
       id: uuid.v4(),
       minimum_units: 1200,
-      name: 'EMBROIDERY',
+      name: "EMBROIDERY",
       setup_cents: Dollars(70),
       unit_cents: Dollars(3.5),
-      version
-    }
+      version,
+    },
   ];
   const pricingProcessesWash: Uninserted<PricingProcessRow>[] = [
     {
-      complexity: 'SIMPLE',
+      complexity: "SIMPLE",
       id: uuid.v4(),
       minimum_units: 1,
-      name: 'WASH',
+      name: "WASH",
       setup_cents: Dollars(35),
       unit_cents: Dollars(2),
-      version
+      version,
     },
     {
-      complexity: 'MEDIUM',
+      complexity: "MEDIUM",
       id: uuid.v4(),
       minimum_units: 1,
-      name: 'WASH',
+      name: "WASH",
       setup_cents: Dollars(35),
       unit_cents: Dollars(7),
-      version
+      version,
     },
     {
-      complexity: 'COMPLEX',
+      complexity: "COMPLEX",
       id: uuid.v4(),
       minimum_units: 1,
-      name: 'WASH',
+      name: "WASH",
       setup_cents: Dollars(35),
       unit_cents: Dollars(13),
-      version
+      version,
     },
     {
-      complexity: 'SIMPLE',
+      complexity: "SIMPLE",
       id: uuid.v4(),
       minimum_units: 25,
-      name: 'WASH',
+      name: "WASH",
       setup_cents: Dollars(35),
       unit_cents: Dollars(1.5),
-      version
+      version,
     },
     {
-      complexity: 'MEDIUM',
+      complexity: "MEDIUM",
       id: uuid.v4(),
       minimum_units: 25,
-      name: 'WASH',
+      name: "WASH",
       setup_cents: Dollars(35),
       unit_cents: Dollars(6),
-      version
+      version,
     },
     {
-      complexity: 'COMPLEX',
+      complexity: "COMPLEX",
       id: uuid.v4(),
       minimum_units: 25,
-      name: 'WASH',
+      name: "WASH",
       setup_cents: Dollars(35),
       unit_cents: Dollars(11),
-      version
+      version,
     },
     {
-      complexity: 'SIMPLE',
+      complexity: "SIMPLE",
       id: uuid.v4(),
       minimum_units: 1000,
-      name: 'WASH',
+      name: "WASH",
       setup_cents: 0,
       unit_cents: Dollars(1.5),
-      version
+      version,
     },
     {
-      complexity: 'MEDIUM',
+      complexity: "MEDIUM",
       id: uuid.v4(),
       minimum_units: 1000,
-      name: 'WASH',
+      name: "WASH",
       setup_cents: 0,
       unit_cents: Dollars(6),
-      version
+      version,
     },
     {
-      complexity: 'COMPLEX',
+      complexity: "COMPLEX",
       id: uuid.v4(),
       minimum_units: 1000,
-      name: 'WASH',
+      name: "WASH",
       setup_cents: 0,
       unit_cents: Dollars(11),
-      version
-    }
+      version,
+    },
   ];
   const pricingProcessesDye: Uninserted<PricingProcessRow>[] = [
     {
-      complexity: 'SIMPLE',
+      complexity: "SIMPLE",
       id: uuid.v4(),
       minimum_units: 1,
-      name: 'DYE',
+      name: "DYE",
       setup_cents: Dollars(35),
       unit_cents: Dollars(0.5),
-      version
+      version,
     },
     {
-      complexity: 'MEDIUM',
+      complexity: "MEDIUM",
       id: uuid.v4(),
       minimum_units: 1,
-      name: 'DYE',
+      name: "DYE",
       setup_cents: Dollars(35),
       unit_cents: Dollars(2.25),
-      version
+      version,
     },
     {
-      complexity: 'COMPLEX',
+      complexity: "COMPLEX",
       id: uuid.v4(),
       minimum_units: 1,
-      name: 'DYE',
+      name: "DYE",
       setup_cents: Dollars(35),
       unit_cents: Dollars(4),
-      version
+      version,
     },
     {
-      complexity: 'SIMPLE',
+      complexity: "SIMPLE",
       id: uuid.v4(),
       minimum_units: 25,
-      name: 'DYE',
+      name: "DYE",
       setup_cents: 0,
       unit_cents: Dollars(0.5),
-      version
+      version,
     },
     {
-      complexity: 'MEDIUM',
+      complexity: "MEDIUM",
       id: uuid.v4(),
       minimum_units: 25,
-      name: 'DYE',
+      name: "DYE",
       setup_cents: 0,
       unit_cents: Dollars(2.25),
-      version
+      version,
     },
     {
-      complexity: 'COMPLEX',
+      complexity: "COMPLEX",
       id: uuid.v4(),
       minimum_units: 25,
-      name: 'DYE',
+      name: "DYE",
       setup_cents: 0,
       unit_cents: Dollars(4),
-      version
+      version,
     },
     {
-      complexity: 'SIMPLE',
+      complexity: "SIMPLE",
       id: uuid.v4(),
       minimum_units: 1000,
-      name: 'DYE',
+      name: "DYE",
       setup_cents: 0,
       unit_cents: Dollars(0.25),
-      version
+      version,
     },
     {
-      complexity: 'MEDIUM',
+      complexity: "MEDIUM",
       id: uuid.v4(),
       minimum_units: 1000,
-      name: 'DYE',
+      name: "DYE",
       setup_cents: 0,
       unit_cents: Dollars(1.5),
-      version
+      version,
     },
     {
-      complexity: 'COMPLEX',
+      complexity: "COMPLEX",
       id: uuid.v4(),
       minimum_units: 1000,
-      name: 'DYE',
+      name: "DYE",
       setup_cents: 0,
       unit_cents: Dollars(2),
-      version
-    }
+      version,
+    },
   ];
   const pricingProcessesDistress: Uninserted<PricingProcessRow>[] = [
     {
-      complexity: 'SIMPLE',
+      complexity: "SIMPLE",
       id: uuid.v4(),
       minimum_units: 1,
-      name: 'DISTRESS',
+      name: "DISTRESS",
       setup_cents: Dollars(35),
       unit_cents: Dollars(1.5),
-      version
+      version,
     },
     {
-      complexity: 'MEDIUM',
+      complexity: "MEDIUM",
       id: uuid.v4(),
       minimum_units: 1,
-      name: 'DISTRESS',
+      name: "DISTRESS",
       setup_cents: Dollars(35),
       unit_cents: Dollars(6),
-      version
+      version,
     },
     {
-      complexity: 'COMPLEX',
+      complexity: "COMPLEX",
       id: uuid.v4(),
       minimum_units: 1,
-      name: 'DISTRESS',
+      name: "DISTRESS",
       setup_cents: Dollars(35),
       unit_cents: Dollars(11),
-      version
+      version,
     },
     {
-      complexity: 'SIMPLE',
+      complexity: "SIMPLE",
       id: uuid.v4(),
       minimum_units: 25,
-      name: 'DISTRESS',
+      name: "DISTRESS",
       setup_cents: 0,
       unit_cents: Dollars(1.5),
-      version
+      version,
     },
     {
-      complexity: 'MEDIUM',
+      complexity: "MEDIUM",
       id: uuid.v4(),
       minimum_units: 25,
-      name: 'DISTRESS',
+      name: "DISTRESS",
       setup_cents: 0,
       unit_cents: Dollars(6),
-      version
+      version,
     },
     {
-      complexity: 'COMPLEX',
+      complexity: "COMPLEX",
       id: uuid.v4(),
       minimum_units: 25,
-      name: 'DISTRESS',
+      name: "DISTRESS",
       setup_cents: 0,
       unit_cents: Dollars(11),
-      version
+      version,
     },
     {
-      complexity: 'SIMPLE',
+      complexity: "SIMPLE",
       id: uuid.v4(),
       minimum_units: 1000,
-      name: 'DISTRESS',
+      name: "DISTRESS",
       setup_cents: 0,
       unit_cents: Dollars(0.75),
-      version
+      version,
     },
     {
-      complexity: 'MEDIUM',
+      complexity: "MEDIUM",
       id: uuid.v4(),
       minimum_units: 1000,
-      name: 'DISTRESS',
+      name: "DISTRESS",
       setup_cents: 0,
       unit_cents: Dollars(3),
-      version
+      version,
     },
     {
-      complexity: 'COMPLEX',
+      complexity: "COMPLEX",
       id: uuid.v4(),
       minimum_units: 1000,
-      name: 'DISTRESS',
+      name: "DISTRESS",
       setup_cents: 0,
       unit_cents: Dollars(5.5),
-      version
-    }
+      version,
+    },
   ];
   const pricingProcessesEmbellish: Uninserted<PricingProcessRow>[] = [
     {
-      complexity: 'SIMPLE',
+      complexity: "SIMPLE",
       id: uuid.v4(),
       minimum_units: 1,
-      name: 'EMBELLISH',
+      name: "EMBELLISH",
       setup_cents: Dollars(35),
       unit_cents: Dollars(1.5),
-      version
+      version,
     },
     {
-      complexity: 'MEDIUM',
+      complexity: "MEDIUM",
       id: uuid.v4(),
       minimum_units: 1,
-      name: 'EMBELLISH',
+      name: "EMBELLISH",
       setup_cents: Dollars(35),
       unit_cents: Dollars(6),
-      version
+      version,
     },
     {
-      complexity: 'COMPLEX',
+      complexity: "COMPLEX",
       id: uuid.v4(),
       minimum_units: 1,
-      name: 'EMBELLISH',
+      name: "EMBELLISH",
       setup_cents: Dollars(35),
       unit_cents: Dollars(11),
-      version
+      version,
     },
     {
-      complexity: 'SIMPLE',
+      complexity: "SIMPLE",
       id: uuid.v4(),
       minimum_units: 25,
-      name: 'EMBELLISH',
+      name: "EMBELLISH",
       setup_cents: 0,
       unit_cents: Dollars(1.5),
-      version
+      version,
     },
     {
-      complexity: 'MEDIUM',
+      complexity: "MEDIUM",
       id: uuid.v4(),
       minimum_units: 25,
-      name: 'EMBELLISH',
+      name: "EMBELLISH",
       setup_cents: 0,
       unit_cents: Dollars(6),
-      version
+      version,
     },
     {
-      complexity: 'COMPLEX',
+      complexity: "COMPLEX",
       id: uuid.v4(),
       minimum_units: 25,
-      name: 'EMBELLISH',
+      name: "EMBELLISH",
       setup_cents: 0,
       unit_cents: Dollars(11),
-      version
+      version,
     },
     {
-      complexity: 'SIMPLE',
+      complexity: "SIMPLE",
       id: uuid.v4(),
       minimum_units: 1000,
-      name: 'EMBELLISH',
+      name: "EMBELLISH",
       setup_cents: 0,
       unit_cents: Dollars(0.75),
-      version
+      version,
     },
     {
-      complexity: 'MEDIUM',
+      complexity: "MEDIUM",
       id: uuid.v4(),
       minimum_units: 1000,
-      name: 'EMBELLISH',
+      name: "EMBELLISH",
       setup_cents: 0,
       unit_cents: Dollars(3),
-      version
+      version,
     },
     {
-      complexity: 'COMPLEX',
+      complexity: "COMPLEX",
       id: uuid.v4(),
       minimum_units: 1000,
-      name: 'EMBELLISH',
+      name: "EMBELLISH",
       setup_cents: 0,
       unit_cents: Dollars(5.5),
-      version
-    }
+      version,
+    },
   ];
 
   const contrast: [number, number, number, number] = [0.15, 0.5, 1, 0];
@@ -555,226 +553,226 @@ async function intialPricingValues(): Promise<void> {
       contrast,
       typeMediumCents: Dollars(45),
       typeMediumDays: 1,
-      typeName: 'BACKPACK',
+      typeName: "BACKPACK",
       typeYield,
-      version
+      version,
     }),
     generateProductTypes({
       contrast,
       typeMediumCents: Dollars(75),
       typeMediumDays: 1,
-      typeName: 'TOPCOAT',
+      typeName: "TOPCOAT",
       typeYield,
-      version
+      version,
     }),
     generateProductTypes({
       contrast,
       typeMediumCents: Dollars(15),
       typeMediumDays: 1,
-      typeName: 'SUNGLASSES',
+      typeName: "SUNGLASSES",
       typeYield,
-      version
+      version,
     }),
     generateProductTypes({
       contrast,
       typeMediumCents: Dollars(12),
       typeMediumDays: 1,
-      typeName: 'TEESHIRT',
+      typeName: "TEESHIRT",
       typeYield,
-      version
+      version,
     }),
     generateProductTypes({
       contrast,
       typeMediumCents: Dollars(15),
       typeMediumDays: 1,
-      typeName: 'BLOUSE',
+      typeName: "BLOUSE",
       typeYield,
-      version
+      version,
     }),
     generateProductTypes({
       contrast,
       typeMediumCents: Dollars(56),
       typeMediumDays: 1,
-      typeName: 'BLAZER',
+      typeName: "BLAZER",
       typeYield,
-      version
+      version,
     }),
     generateProductTypes({
       contrast,
       typeMediumCents: Dollars(24),
       typeMediumDays: 1,
-      typeName: 'DRESS',
+      typeName: "DRESS",
       typeYield,
-      version
+      version,
     }),
     generateProductTypes({
       contrast,
       typeMediumCents: Dollars(25),
       typeMediumDays: 1,
-      typeName: 'SHORTS',
+      typeName: "SHORTS",
       typeYield,
-      version
+      version,
     }),
     generateProductTypes({
       contrast,
       typeMediumCents: Dollars(29.5),
       typeMediumDays: 1,
-      typeName: 'PANTS',
+      typeName: "PANTS",
       typeYield,
-      version
+      version,
     }),
     generateProductTypes({
       contrast,
       typeMediumCents: Dollars(19.5),
       typeMediumDays: 1,
-      typeName: 'SKIRT',
+      typeName: "SKIRT",
       typeYield,
-      version
+      version,
     }),
     generateProductTypes({
       contrast,
       typeMediumCents: Dollars(40),
       typeMediumDays: 1,
-      typeName: 'LONG SKIRT',
+      typeName: "LONG SKIRT",
       typeYield,
-      version
+      version,
     }),
     generateProductTypes({
       contrast,
       typeMediumCents: Dollars(65),
       typeMediumDays: 1,
-      typeName: 'COAT',
+      typeName: "COAT",
       typeYield,
-      version
+      version,
     }),
     generateProductTypes({
       contrast,
       typeMediumCents: Dollars(12),
       typeMediumDays: 1,
-      typeName: 'LONGSLEEVE TEESHIRT',
+      typeName: "LONGSLEEVE TEESHIRT",
       typeYield,
-      version
+      version,
     }),
     generateProductTypes({
       contrast,
       typeMediumCents: Dollars(20),
       typeMediumDays: 1,
-      typeName: 'DRESS SHIRT',
+      typeName: "DRESS SHIRT",
       typeYield,
-      version
+      version,
     }),
     generateProductTypes({
       contrast,
       typeMediumCents: Dollars(15),
       typeMediumDays: 1,
-      typeName: 'SHORTSLEEVE DRESS SHIRT',
+      typeName: "SHORTSLEEVE DRESS SHIRT",
       typeYield,
-      version
+      version,
     }),
     generateProductTypes({
       contrast,
       typeMediumCents: Dollars(15),
       typeMediumDays: 1,
-      typeName: 'SWEATSHIRT',
+      typeName: "SWEATSHIRT",
       typeYield,
-      version
+      version,
     }),
     generateProductTypes({
       contrast,
       typeMediumCents: Dollars(25),
       typeMediumDays: 1,
-      typeName: 'HOODED SWEATSHIRT',
+      typeName: "HOODED SWEATSHIRT",
       typeYield,
-      version
+      version,
     }),
     generateProductTypes({
       contrast,
       typeMediumCents: Dollars(10),
       typeMediumDays: 1,
-      typeName: 'UNDERWEAR',
+      typeName: "UNDERWEAR",
       typeYield,
-      version
+      version,
     }),
     generateProductTypes({
       contrast,
       typeMediumCents: Dollars(45),
       typeMediumDays: 1,
-      typeName: 'JACKET',
+      typeName: "JACKET",
       typeYield,
-      version
+      version,
     }),
     generateProductTypes({
       contrast,
       typeMediumCents: Dollars(38),
       typeMediumDays: 1,
-      typeName: 'SWEATER',
+      typeName: "SWEATER",
       typeYield,
-      version
+      version,
     }),
     generateProductTypes({
       contrast,
       typeMediumCents: Dollars(75),
       typeMediumDays: 1,
-      typeName: 'SPORT COAT',
+      typeName: "SPORT COAT",
       typeYield,
-      version
+      version,
     }),
     generateProductTypes({
       contrast,
       typeMediumCents: Dollars(35),
       typeMediumDays: 1,
-      typeName: 'BATHROBE',
+      typeName: "BATHROBE",
       typeYield,
-      version
+      version,
     }),
     generateProductTypes({
       contrast,
       typeMediumCents: Dollars(25),
       typeMediumDays: 1,
-      typeName: 'TIE',
+      typeName: "TIE",
       typeYield,
-      version
+      version,
     }),
     generateProductTypes({
       contrast,
       typeMediumCents: Dollars(20),
       typeMediumDays: 1,
-      typeName: 'PURSE',
+      typeName: "PURSE",
       typeYield,
-      version
+      version,
     }),
     generateProductTypes({
       contrast,
       typeMediumCents: Dollars(30),
       typeMediumDays: 1,
-      typeName: 'WALLET',
+      typeName: "WALLET",
       typeYield,
-      version
+      version,
     }),
     generateProductTypes({
       contrast,
       typeMediumCents: Dollars(30),
       typeMediumDays: 1,
-      typeName: 'SMALL BAG',
+      typeName: "SMALL BAG",
       typeYield,
-      version
+      version,
     }),
     generateProductTypes({
       contrast,
       typeMediumCents: Dollars(73),
       typeMediumDays: 1,
-      typeName: 'LARGE BAG',
+      typeName: "LARGE BAG",
       typeYield,
-      version
+      version,
     }),
     generateProductTypes({
       contrast,
       typeMediumCents: Dollars(5),
       typeMediumDays: 1,
-      typeName: 'TANK TOP',
+      typeName: "TANK TOP",
       typeYield,
-      version
-    })
+      version,
+    }),
   ]);
   const createCareLabel = (
     units: number,
@@ -783,7 +781,7 @@ async function intialPricingValues(): Promise<void> {
     id: uuid.v4(),
     minimum_units: units,
     unit_cents: cents,
-    version
+    version,
   });
   const pricingCareLabels: Uninserted<PricingCareLabelRow>[] = [
     createCareLabel(1, 36),
@@ -797,135 +795,135 @@ async function intialPricingValues(): Promise<void> {
     createCareLabel(1500, 11),
     createCareLabel(2000, 9),
     createCareLabel(3000, 7),
-    createCareLabel(4000, 5)
+    createCareLabel(4000, 5),
   ];
   const pricingMargins: Uninserted<PricingMarginRow>[] = [
     {
       id: uuid.v4(),
       margin: 15,
       minimum_units: 1,
-      version
+      version,
     },
     {
       id: uuid.v4(),
       margin: 14,
       minimum_units: 50,
-      version
+      version,
     },
     {
       id: uuid.v4(),
       margin: 12.6,
       minimum_units: 100,
-      version
+      version,
     },
     {
       id: uuid.v4(),
       margin: 12,
       minimum_units: 150,
-      version
+      version,
     },
     {
       id: uuid.v4(),
       margin: 11.4,
       minimum_units: 200,
-      version
+      version,
     },
     {
       id: uuid.v4(),
       margin: 10.8,
       minimum_units: 250,
-      version
+      version,
     },
     {
       id: uuid.v4(),
       margin: 10.3,
       minimum_units: 300,
-      version
+      version,
     },
     {
       id: uuid.v4(),
       margin: 9.8,
       minimum_units: 400,
-      version
+      version,
     },
     {
       id: uuid.v4(),
       margin: 9.3,
       minimum_units: 500,
-      version
+      version,
     },
     {
       id: uuid.v4(),
       margin: 8.8,
       minimum_units: 750,
-      version
+      version,
     },
     {
       id: uuid.v4(),
       margin: 8.4,
       minimum_units: 1000,
-      version
+      version,
     },
     {
       id: uuid.v4(),
       margin: 8,
       minimum_units: 1250,
-      version
+      version,
     },
     {
       id: uuid.v4(),
       margin: 7.6,
       minimum_units: 1500,
-      version
+      version,
     },
     {
       id: uuid.v4(),
       margin: 7.2,
       minimum_units: 1750,
-      version
+      version,
     },
     {
       id: uuid.v4(),
       margin: 6.8,
       minimum_units: 2000,
-      version
+      version,
     },
     {
       id: uuid.v4(),
       margin: 6.5,
       minimum_units: 2500,
-      version
+      version,
     },
     {
       id: uuid.v4(),
       margin: 6.2,
       minimum_units: 3000,
-      version
+      version,
     },
     {
       id: uuid.v4(),
       margin: 5.9,
       minimum_units: 3500,
-      version
+      version,
     },
     {
       id: uuid.v4(),
       margin: 5.6,
       minimum_units: 4000,
-      version
+      version,
     },
     {
       id: uuid.v4(),
       margin: 5.3,
       minimum_units: 4500,
-      version
+      version,
     },
     {
       id: uuid.v4(),
       margin: 5,
       minimum_units: 5000,
-      version
-    }
+      version,
+    },
   ];
   const pricingConstants: Uninserted<PricingConstantRow>[] = [
     {
@@ -939,73 +937,73 @@ async function intialPricingValues(): Promise<void> {
       sample_minimum_cents: Dollars(75),
       technical_design_cents: Dollars(50),
       version,
-      working_session_cents: Dollars(25)
-    }
+      working_session_cents: Dollars(25),
+    },
   ];
   const pricingMaterials: Uninserted<PricingProductMaterialRow>[] = [
     {
-      category: 'BASIC',
+      category: "BASIC",
       id: uuid.v4(),
       minimum_units: 1,
       unit_cents: Dollars(3),
-      version
+      version,
     },
     {
-      category: 'STANDARD',
+      category: "STANDARD",
       id: uuid.v4(),
       minimum_units: 1,
       unit_cents: Dollars(8),
-      version
+      version,
     },
     {
-      category: 'LUXE',
+      category: "LUXE",
       id: uuid.v4(),
       minimum_units: 1,
       unit_cents: Dollars(13),
-      version
+      version,
     },
     {
-      category: 'ULTRA_LUXE',
+      category: "ULTRA_LUXE",
       id: uuid.v4(),
       minimum_units: 1,
       unit_cents: Dollars(20),
-      version
+      version,
     },
     {
-      category: 'SPECIFY',
+      category: "SPECIFY",
       id: uuid.v4(),
       minimum_units: 1,
       unit_cents: Dollars(0),
-      version
+      version,
     },
     {
-      category: 'BASIC',
+      category: "BASIC",
       id: uuid.v4(),
       minimum_units: 500,
       unit_cents: Dollars(2),
-      version
+      version,
     },
     {
-      category: 'STANDARD',
+      category: "STANDARD",
       id: uuid.v4(),
       minimum_units: 500,
       unit_cents: Dollars(6),
-      version
+      version,
     },
     {
-      category: 'LUXE',
+      category: "LUXE",
       id: uuid.v4(),
       minimum_units: 500,
       unit_cents: Dollars(10),
-      version
+      version,
     },
     {
-      category: 'ULTRA_LUXE',
+      category: "ULTRA_LUXE",
       id: uuid.v4(),
       minimum_units: 500,
       unit_cents: Dollars(15),
-      version
-    }
+      version,
+    },
   ];
   const pricingProcessTimelines: Uninserted<PricingProcessTimelineRow>[] = [
     {
@@ -1013,29 +1011,29 @@ async function intialPricingValues(): Promise<void> {
       minimum_units: 1,
       time_ms: daysToMs(3).toString(),
       unique_processes: 1,
-      version
+      version,
     },
     {
       id: uuid.v4(),
       minimum_units: 100,
       time_ms: daysToMs(5).toString(),
       unique_processes: 1,
-      version
+      version,
     },
     {
       id: uuid.v4(),
       minimum_units: 1,
       time_ms: daysToMs(6).toString(),
       unique_processes: 2,
-      version
+      version,
     },
     {
       id: uuid.v4(),
       minimum_units: 100,
       time_ms: daysToMs(8).toString(),
       unique_processes: 2,
-      version
-    }
+      version,
+    },
   ];
   const expectedCount = sum([
     pricingProductTypes.length,
@@ -1049,7 +1047,7 @@ async function intialPricingValues(): Promise<void> {
     pricingCareLabels.length,
     pricingConstants.length,
     pricingMargins.length,
-    pricingMaterials.length
+    pricingMaterials.length,
   ]);
 
   log(
@@ -1060,23 +1058,23 @@ async function intialPricingValues(): Promise<void> {
     const inserted: any[] = [
       await trx
         .insert(pricingProcessesScreenPrinting)
-        .into('pricing_processes'),
-      await trx.insert(pricingProcessesEmbroidery).into('pricing_processes'),
-      await trx.insert(pricingProcessesWash).into('pricing_processes'),
-      await trx.insert(pricingProcessesDye).into('pricing_processes'),
-      await trx.insert(pricingProcessesDistress).into('pricing_processes'),
-      await trx.insert(pricingProcessesEmbellish).into('pricing_processes'),
+        .into("pricing_processes"),
+      await trx.insert(pricingProcessesEmbroidery).into("pricing_processes"),
+      await trx.insert(pricingProcessesWash).into("pricing_processes"),
+      await trx.insert(pricingProcessesDye).into("pricing_processes"),
+      await trx.insert(pricingProcessesDistress).into("pricing_processes"),
+      await trx.insert(pricingProcessesEmbellish).into("pricing_processes"),
       await trx
         .insert(pricingProcessTimelines)
-        .into('pricing_process_timelines'),
-      await trx.insert(pricingConstants).into('pricing_constants'),
-      await trx.insert(pricingCareLabels).into('pricing_care_labels'),
-      await trx.insert(pricingMargins).into('pricing_margins'),
-      await trx.insert(pricingMaterials).into('pricing_product_materials'),
-      await trx.insert(pricingProductTypes).into('pricing_product_types')
+        .into("pricing_process_timelines"),
+      await trx.insert(pricingConstants).into("pricing_constants"),
+      await trx.insert(pricingCareLabels).into("pricing_care_labels"),
+      await trx.insert(pricingMargins).into("pricing_margins"),
+      await trx.insert(pricingMaterials).into("pricing_product_materials"),
+      await trx.insert(pricingProductTypes).into("pricing_product_types"),
     ];
 
-    const rowCount = sum(map(inserted, 'rowCount'));
+    const rowCount = sum(map(inserted, "rowCount"));
 
     if (rowCount !== expectedCount) {
       return trx.rollback(`

@@ -1,12 +1,12 @@
-import { USER_UPLOADS_BASE_URL, USER_UPLOADS_IMGIX_URL } from '../../config';
+import { USER_UPLOADS_BASE_URL, USER_UPLOADS_IMGIX_URL } from "../../config";
 import Component, {
-  ComponentType
-} from '../../components/components/domain-object';
-import OptionsDAO from '../../dao/product-design-options';
-import * as ImagesDAO from '../../components/assets/dao';
-import { isPreviewable } from '../../services/is-previewable';
-import { getExtension } from '../../services/get-extension';
-import Asset from '../../components/assets/domain-object';
+  ComponentType,
+} from "../../components/components/domain-object";
+import OptionsDAO from "../../dao/product-design-options";
+import * as ImagesDAO from "../../components/assets/dao";
+import { isPreviewable } from "../../services/is-previewable";
+import { getExtension } from "../../services/get-extension";
+import Asset from "../../components/assets/domain-object";
 
 export interface AssetLinks {
   assetLink: string | null;
@@ -16,13 +16,13 @@ export interface AssetLinks {
   thumbnailLink: string | null;
 }
 
-const DESIGN_PREVIEW_TOOL_FORMAT = '?fm=jpg&fit=max';
-const PREVIEW_CARD_FORMAT = '?fm=jpg&w=560';
-const THUMBNAIL_FORMAT = '?fm=jpg&w=160';
-const DESIGN_PREVIEW_THUMBNAIL = '?fm=jpg&fit=fill&h=104&w=104';
-const DESIGN_PREVIEW_THUMBNAIL_2X = DESIGN_PREVIEW_THUMBNAIL + '&dpr=2';
-const ATTACHMENT_PREVIEW = '?fm=jpg&fit=fill&h=106&w=128';
-const ATTACHMENT_PREVIEW_2X = ATTACHMENT_PREVIEW + '&dpr=2';
+const DESIGN_PREVIEW_TOOL_FORMAT = "?fm=jpg&fit=max";
+const PREVIEW_CARD_FORMAT = "?fm=jpg&w=560";
+const THUMBNAIL_FORMAT = "?fm=jpg&w=160";
+const DESIGN_PREVIEW_THUMBNAIL = "?fm=jpg&fit=fill&h=104&w=104";
+const DESIGN_PREVIEW_THUMBNAIL_2X = DESIGN_PREVIEW_THUMBNAIL + "&dpr=2";
+const ATTACHMENT_PREVIEW = "?fm=jpg&fit=fill&h=106&w=128";
+const ATTACHMENT_PREVIEW_2X = ATTACHMENT_PREVIEW + "&dpr=2";
 
 function constructAssetLinks(options: {
   id: string;
@@ -34,13 +34,13 @@ function constructAssetLinks(options: {
       ? `${USER_UPLOADS_IMGIX_URL}/${options.id}${DESIGN_PREVIEW_TOOL_FORMAT}`
       : null,
     downloadLink: `${USER_UPLOADS_BASE_URL}/${options.id}`,
-    fileType: getExtension(options.mimeType) || 'Unknown',
+    fileType: getExtension(options.mimeType) || "Unknown",
     thumbnailLink: hasPreview
       ? `${USER_UPLOADS_IMGIX_URL}/${options.id}${DESIGN_PREVIEW_THUMBNAIL}`
       : null,
     thumbnail2xLink: hasPreview
       ? `${USER_UPLOADS_IMGIX_URL}/${options.id}${DESIGN_PREVIEW_THUMBNAIL_2X}`
-      : null
+      : null,
   };
 }
 
@@ -69,7 +69,7 @@ async function getLink(component: Component): Promise<AssetLinks> {
 
       return constructAssetLinks({
         id: artworkImage.id,
-        mimeType: artworkImage.mimeType
+        mimeType: artworkImage.mimeType,
       });
     }
 
@@ -85,7 +85,7 @@ async function getLink(component: Component): Promise<AssetLinks> {
 
       return constructAssetLinks({
         id: sketchImage.id,
-        mimeType: sketchImage.mimeType
+        mimeType: sketchImage.mimeType,
       });
     }
 
@@ -98,17 +98,17 @@ async function getLink(component: Component): Promise<AssetLinks> {
 
       return constructAssetLinks({
         id: materialImage.id,
-        mimeType: materialImage.mimeType
+        mimeType: materialImage.mimeType,
       });
     }
   }
 
   return {
     assetLink: null,
-    downloadLink: '',
-    fileType: '',
+    downloadLink: "",
+    fileType: "",
     thumbnail2xLink: null,
-    thumbnailLink: null
+    thumbnailLink: null,
   };
 }
 
@@ -144,7 +144,7 @@ export function generatePreviewLinks(
     (imageId: string): ThumbnailAndPreviewLinks => {
       return {
         previewLink: `${USER_UPLOADS_IMGIX_URL}/${imageId}${PREVIEW_CARD_FORMAT}`,
-        thumbnailLink: `${USER_UPLOADS_IMGIX_URL}/${imageId}${THUMBNAIL_FORMAT}`
+        thumbnailLink: `${USER_UPLOADS_IMGIX_URL}/${imageId}${THUMBNAIL_FORMAT}`,
       };
     }
   );
@@ -156,11 +156,9 @@ export function generatePreviewLinks(
  * - thumbnail: a 48px wide png image (intended for dropdown menus).
  */
 export function generateThumbnailLinks(imageIds: string[]): string[] {
-  return imageIds.map(
-    (imageId: string): string => {
-      return `${USER_UPLOADS_IMGIX_URL}/${imageId}${THUMBNAIL_FORMAT}`;
-    }
-  );
+  return imageIds.map((imageId: string): string => {
+    return `${USER_UPLOADS_IMGIX_URL}/${imageId}${THUMBNAIL_FORMAT}`;
+  });
 }
 
 export function constructAttachmentAssetLinks(asset: Asset): AssetLinks {
@@ -170,12 +168,12 @@ export function constructAttachmentAssetLinks(asset: Asset): AssetLinks {
       ? `${USER_UPLOADS_IMGIX_URL}/${asset.id}${DESIGN_PREVIEW_TOOL_FORMAT}`
       : null,
     downloadLink: `${USER_UPLOADS_BASE_URL}/${asset.id}`,
-    fileType: getExtension(asset.mimeType) || 'Unknown',
+    fileType: getExtension(asset.mimeType) || "Unknown",
     thumbnailLink: hasPreview
       ? `${USER_UPLOADS_IMGIX_URL}/${asset.id}${ATTACHMENT_PREVIEW}`
       : null,
     thumbnail2xLink: hasPreview
       ? `${USER_UPLOADS_IMGIX_URL}/${asset.id}${ATTACHMENT_PREVIEW_2X}`
-      : null
+      : null,
   };
 }

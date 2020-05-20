@@ -1,36 +1,36 @@
-import Knex from 'knex';
-import process from 'process';
-import { chunk } from 'lodash';
-import meow from 'meow';
-import uuid from 'node-uuid';
+import Knex from "knex";
+import process from "process";
+import { chunk } from "lodash";
+import meow from "meow";
+import uuid from "node-uuid";
 
-import { log, logServerError } from '../../services/logger';
-import { format, green } from '../../services/colors';
-import db from '../../services/db';
+import { log, logServerError } from "../../services/logger";
+import { format, green } from "../../services/colors";
+import db from "../../services/db";
 import ApprovalStep, {
   ApprovalStepState,
-  ApprovalStepType
-} from '../../components/approval-steps/domain-object';
-import * as ApprovalStepsDAO from '../../components/approval-steps/dao';
-import { queryWithCostsAndEvents } from '../../components/product-designs/dao/dao';
+  ApprovalStepType,
+} from "../../components/approval-steps/domain-object";
+import * as ApprovalStepsDAO from "../../components/approval-steps/dao";
+import { queryWithCostsAndEvents } from "../../components/product-designs/dao/dao";
 import {
   DesignState,
-  determineState
-} from '../../components/product-designs/services/state-machine';
+  determineState,
+} from "../../components/product-designs/services/state-machine";
 import DesignEvent, {
   DesignEventRow,
-  dataAdapter as eventDataAdapter
-} from '../../domain-objects/design-event';
+  dataAdapter as eventDataAdapter,
+} from "../../domain-objects/design-event";
 import {
   BasePricingCostInputRow,
   baseDataAdapter as costInputDataAdapter,
-  BasePricingCostInput
-} from '../../components/pricing-cost-inputs/domain-object';
+  BasePricingCostInput,
+} from "../../components/pricing-cost-inputs/domain-object";
 import {
   dataAdapter as baseDataAdapter,
   ProductDesignRow,
-  ProductDesignData
-} from '../../components/product-designs/domain-objects/product-designs-new';
+  ProductDesignData,
+} from "../../components/product-designs/domain-objects/product-designs-new";
 
 const HELP_TEXT = `
 Create steps with correct state from existing designs without steps
@@ -46,19 +46,19 @@ const cli = meow(HELP_TEXT, {
   flags: {
     dryRun: {
       default: false,
-      type: 'boolean'
-    }
-  }
+      type: "boolean",
+    },
+  },
 });
 
 const generatorFromCurrentStep: {
-  [StepType in ApprovalStepType]: (designId: string) => ApprovalStep[]
+  [StepType in ApprovalStepType]: (designId: string) => ApprovalStep[];
 } = {
   [ApprovalStepType.CHECKOUT]: (designId: string): ApprovalStep[] => [
     {
       id: uuid.v4(),
       state: ApprovalStepState.CURRENT,
-      title: 'Checkout',
+      title: "Checkout",
       ordering: 0,
       designId,
       reason: null,
@@ -66,38 +66,38 @@ const generatorFromCurrentStep: {
       collaboratorId: null,
       completedAt: null,
       createdAt: new Date(),
-      startedAt: new Date()
+      startedAt: new Date(),
     },
     {
       id: uuid.v4(),
       state: ApprovalStepState.BLOCKED,
-      title: 'Technical Design',
+      title: "Technical Design",
       ordering: 1,
       designId,
-      reason: 'Pending partner pairing',
+      reason: "Pending partner pairing",
       type: ApprovalStepType.TECHNICAL_DESIGN,
       collaboratorId: null,
       completedAt: null,
       createdAt: new Date(),
-      startedAt: null
+      startedAt: null,
     },
     {
       id: uuid.v4(),
       state: ApprovalStepState.BLOCKED,
-      title: 'Sample',
+      title: "Sample",
       ordering: 2,
       designId,
-      reason: 'Pending partner pairing',
+      reason: "Pending partner pairing",
       type: ApprovalStepType.SAMPLE,
       collaboratorId: null,
       completedAt: null,
       createdAt: new Date(),
-      startedAt: null
+      startedAt: null,
     },
     {
       id: uuid.v4(),
       state: ApprovalStepState.UNSTARTED,
-      title: 'Production',
+      title: "Production",
       ordering: 3,
       designId,
       reason: null,
@@ -105,14 +105,14 @@ const generatorFromCurrentStep: {
       collaboratorId: null,
       completedAt: null,
       createdAt: new Date(),
-      startedAt: null
-    }
+      startedAt: null,
+    },
   ],
   [ApprovalStepType.TECHNICAL_DESIGN]: (designId: string): ApprovalStep[] => [
     {
       id: uuid.v4(),
       state: ApprovalStepState.COMPLETED,
-      title: 'Checkout',
+      title: "Checkout",
       ordering: 0,
       designId,
       reason: null,
@@ -120,12 +120,12 @@ const generatorFromCurrentStep: {
       collaboratorId: null,
       completedAt: new Date(),
       createdAt: new Date(),
-      startedAt: new Date()
+      startedAt: new Date(),
     },
     {
       id: uuid.v4(),
       state: ApprovalStepState.CURRENT,
-      title: 'Technical Design',
+      title: "Technical Design",
       ordering: 1,
       designId,
       reason: null,
@@ -133,25 +133,25 @@ const generatorFromCurrentStep: {
       collaboratorId: null,
       completedAt: null,
       createdAt: new Date(),
-      startedAt: new Date()
+      startedAt: new Date(),
     },
     {
       id: uuid.v4(),
       state: ApprovalStepState.BLOCKED,
-      title: 'Sample',
+      title: "Sample",
       ordering: 2,
       designId,
-      reason: 'Pending partner pairing',
+      reason: "Pending partner pairing",
       type: ApprovalStepType.SAMPLE,
       collaboratorId: null,
       completedAt: null,
       createdAt: new Date(),
-      startedAt: null
+      startedAt: null,
     },
     {
       id: uuid.v4(),
       state: ApprovalStepState.UNSTARTED,
-      title: 'Production',
+      title: "Production",
       ordering: 3,
       designId,
       reason: null,
@@ -159,11 +159,11 @@ const generatorFromCurrentStep: {
       collaboratorId: null,
       completedAt: null,
       createdAt: new Date(),
-      startedAt: null
-    }
+      startedAt: null,
+    },
   ],
   [ApprovalStepType.SAMPLE]: (): ApprovalStep[] => [],
-  [ApprovalStepType.PRODUCTION]: (): ApprovalStep[] => []
+  [ApprovalStepType.PRODUCTION]: (): ApprovalStep[] => [],
 };
 
 interface DesignWithInputsAndEvents extends ProductDesignData {
@@ -176,11 +176,11 @@ async function getDesignsWithCurrentStep(): Promise<
 > {
   const rows = await queryWithCostsAndEvents()
     .leftJoin(
-      'design_approval_steps',
-      'design_approval_steps.design_id',
-      'd.id'
+      "design_approval_steps",
+      "design_approval_steps.design_id",
+      "d.id"
     )
-    .where({ 'design_approval_steps.id': null });
+    .where({ "design_approval_steps.id": null });
 
   const designsWithoutSteps: DesignWithInputsAndEvents[] = rows.map(
     (
@@ -206,39 +206,38 @@ async function getDesignsWithCurrentStep(): Promise<
       return {
         ...baseDataAdapter.parse(baseRow),
         costInputs,
-        events
+        events,
       };
     }
   );
 
-  return designsWithoutSteps.map(
-    (
-      design: DesignWithInputsAndEvents
-    ): { id: string; currentStep: ApprovalStepType } => {
-      const state = determineState(design);
+  return designsWithoutSteps.map((design: DesignWithInputsAndEvents): {
+    id: string;
+    currentStep: ApprovalStepType;
+  } => {
+    const state = determineState(design);
 
-      switch (state) {
-        case DesignState.INITIAL:
-        case DesignState.SUBMITTED:
-        case DesignState.COSTED: {
-          log(`${design.title || 'Untitled'} -> CHECKOUT`);
-          return {
-            id: design.id,
-            currentStep: ApprovalStepType.CHECKOUT
-          };
-        }
+    switch (state) {
+      case DesignState.INITIAL:
+      case DesignState.SUBMITTED:
+      case DesignState.COSTED: {
+        log(`${design.title || "Untitled"} -> CHECKOUT`);
+        return {
+          id: design.id,
+          currentStep: ApprovalStepType.CHECKOUT,
+        };
+      }
 
-        case DesignState.CHECKED_OUT:
-        case DesignState.PAIRED: {
-          log(`${design.title || 'Untitled'} -> TECHNICAL_DESIGN`);
-          return {
-            id: design.id,
-            currentStep: ApprovalStepType.TECHNICAL_DESIGN
-          };
-        }
+      case DesignState.CHECKED_OUT:
+      case DesignState.PAIRED: {
+        log(`${design.title || "Untitled"} -> TECHNICAL_DESIGN`);
+        return {
+          id: design.id,
+          currentStep: ApprovalStepType.TECHNICAL_DESIGN,
+        };
       }
     }
-  );
+  });
 }
 
 async function main(): Promise<string> {
@@ -250,13 +249,11 @@ async function main(): Promise<string> {
   }
 
   log(
-    `Inserting a total of ${stepsToInsert.length} steps for ${
-      designsWithCurrentStep.length
-    } designs`
+    `Inserting a total of ${stepsToInsert.length} steps for ${designsWithCurrentStep.length} designs`
   );
 
   if (cli.flags.dryRun) {
-    return 'Dry run, no rows inserted';
+    return "Dry run, no rows inserted";
   }
 
   await db.transaction(async (trx: Knex.Transaction) => {
@@ -265,7 +262,7 @@ async function main(): Promise<string> {
     }
   });
 
-  return format(green, 'Success!');
+  return format(green, "Success!");
 }
 
 main()

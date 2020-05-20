@@ -1,29 +1,29 @@
-'use strict';
+"use strict";
 
-const uuid = require('node-uuid');
-const rethrow = require('pg-rethrow');
+const uuid = require("node-uuid");
+const rethrow = require("pg-rethrow");
 
-const db = require('../../services/db');
-const first = require('../../services/first').default;
-const ProductDesignSectionAnnotation = require('../../domain-objects/product-design-section-annotation');
+const db = require("../../services/db");
+const first = require("../../services/first").default;
+const ProductDesignSectionAnnotation = require("../../domain-objects/product-design-section-annotation");
 
-const instantiate = data => new ProductDesignSectionAnnotation(data);
+const instantiate = (data) => new ProductDesignSectionAnnotation(data);
 
 function deleteById(id) {
-  return db('product_design_section_annotations')
+  return db("product_design_section_annotations")
     .where({ id, deleted_at: null })
     .update(
       {
-        deleted_at: new Date()
+        deleted_at: new Date(),
       },
-      '*'
+      "*"
     )
     .then(first)
     .then(instantiate);
 }
 
 function createForSection(sectionId, data) {
-  return db('product_design_section_annotations')
+  return db("product_design_section_annotations")
     .insert(
       {
         id: uuid.v4(),
@@ -32,9 +32,9 @@ function createForSection(sectionId, data) {
         y: data.y,
         text: data.text,
         in_reply_to_id: data.inReplyToId,
-        user_id: data.userId
+        user_id: data.userId,
       },
-      '*'
+      "*"
     )
     .catch(rethrow)
     .then(first)
@@ -42,7 +42,7 @@ function createForSection(sectionId, data) {
 }
 
 function findById(id) {
-  return db('product_design_section_annotations')
+  return db("product_design_section_annotations")
     .where({ id, deleted_at: null })
     .catch(rethrow)
     .then(first)
@@ -50,21 +50,21 @@ function findById(id) {
 }
 
 function findBySectionId(sectionId) {
-  return db('product_design_section_annotations')
+  return db("product_design_section_annotations")
     .where({ section_id: sectionId, deleted_at: null })
-    .orderBy('created_at', 'asc')
+    .orderBy("created_at", "asc")
     .catch(rethrow)
-    .then(annotations => annotations.map(instantiate));
+    .then((annotations) => annotations.map(instantiate));
 }
 
 function update(id, data) {
-  return db('product_design_section_annotations')
+  return db("product_design_section_annotations")
     .where({ id, deleted_at: null })
     .update(
       {
-        text: data.text
+        text: data.text,
       },
-      '*'
+      "*"
     )
     .then(first)
     .then(instantiate);
@@ -75,5 +75,5 @@ module.exports = {
   findById,
   createForSection,
   findBySectionId,
-  update
+  update,
 };

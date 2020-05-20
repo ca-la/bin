@@ -1,24 +1,24 @@
-import Knex from 'knex';
-import uuid from 'node-uuid';
-import rethrow = require('pg-rethrow');
+import Knex from "knex";
+import uuid from "node-uuid";
+import rethrow = require("pg-rethrow");
 
-import filterError = require('../../services/filter-error');
-import InvalidDataError = require('../../errors/invalid-data');
-import db from '../../services/db';
-import first from '../../services/first';
+import filterError = require("../../services/filter-error");
+import InvalidDataError = require("../../errors/invalid-data");
+import db from "../../services/db";
+import first from "../../services/first";
 import {
   dataAdapter,
   isPromoCodeRow,
   PromoCode,
-  PromoCodeRow
-} from './domain-object';
-import { validate } from '../../services/validate-from-db';
+  PromoCodeRow,
+} from "./domain-object";
+import { validate } from "../../services/validate-from-db";
 
-const TABLE_NAME = 'promo_codes';
+const TABLE_NAME = "promo_codes";
 
 export async function findByCode(code: string): Promise<PromoCode | null> {
   const row = await db(TABLE_NAME)
-    .select('*')
+    .select("*")
     .whereRaw(
       `
       lower(code) = lower(?)
@@ -46,19 +46,19 @@ export async function create(
 ): Promise<PromoCode> {
   const rowData = dataAdapter.forInsertion({
     id: uuid.v4(),
-    ...data
+    ...data,
   });
 
   const created = await db(TABLE_NAME)
-    .insert(rowData, '*')
+    .insert(rowData, "*")
     .then((rows: PromoCodeRow[]) => first<PromoCodeRow>(rows))
     .catch(rethrow)
     .catch(
       filterError(
         rethrow.ERRORS.UniqueViolation,
         (err: typeof rethrow.ERRORS.UniqueViolation) => {
-          if (err.constraint === 'promo_code_unique') {
-            throw new InvalidDataError('Promo code already exists');
+          if (err.constraint === "promo_code_unique") {
+            throw new InvalidDataError("Promo code already exists");
           }
           throw err;
         }
@@ -66,7 +66,7 @@ export async function create(
     );
 
   if (!created) {
-    throw new Error('Failed to create promo code row');
+    throw new Error("Failed to create promo code row");
   }
 
   return validate<PromoCodeRow, PromoCode>(
@@ -83,7 +83,7 @@ export async function update(
   trx?: Knex.Transaction
 ): Promise<PromoCode | null> {
   const rowData = {
-    code_expires_at: data.codeExpiresAt && data.codeExpiresAt.toISOString()
+    code_expires_at: data.codeExpiresAt && data.codeExpiresAt.toISOString(),
   };
 
   const updated = await db(TABLE_NAME)
@@ -93,7 +93,7 @@ export async function update(
       }
     })
     .where({ id: promoCodeId })
-    .update(rowData, '*')
+    .update(rowData, "*")
     .then((rows: PromoCodeRow[]) => first<PromoCodeRow>(rows));
 
   if (!updated) {

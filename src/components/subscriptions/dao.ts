@@ -1,18 +1,18 @@
-import uuid from 'node-uuid';
-import Knex from 'knex';
+import uuid from "node-uuid";
+import Knex from "knex";
 
-import db from '../../services/db';
-import first from '../../services/first';
+import db from "../../services/db";
+import first from "../../services/first";
 import {
   dataAdapter,
   isSubscriptionRow,
   partialDataAdapter,
   Subscription,
-  SubscriptionRow
-} from './domain-object';
-import { validate, validateEvery } from '../../services/validate-from-db';
+  SubscriptionRow,
+} from "./domain-object";
+import { validate, validateEvery } from "../../services/validate-from-db";
 
-const TABLE_NAME = 'subscriptions';
+const TABLE_NAME = "subscriptions";
 
 export async function create(
   data: Uninserted<Subscription>,
@@ -20,11 +20,11 @@ export async function create(
 ): Promise<Subscription> {
   const rowData = dataAdapter.forInsertion({
     ...data,
-    id: uuid.v4()
+    id: uuid.v4(),
   });
 
   const res = await trx(TABLE_NAME)
-    .insert(rowData, '*')
+    .insert(rowData, "*")
     .then((rows: SubscriptionRow[]) => first(rows));
 
   return validate<SubscriptionRow, Subscription>(
@@ -41,7 +41,7 @@ export async function findForUser(
 ): Promise<Subscription[]> {
   const res = await db(TABLE_NAME)
     .transacting(trx)
-    .where({ user_id: userId }, '*');
+    .where({ user_id: userId }, "*");
 
   return validateEvery<SubscriptionRow, Subscription>(
     TABLE_NAME,
@@ -58,10 +58,10 @@ export async function findActive(
   const res = await db(TABLE_NAME)
     .transacting(trx)
     .whereRaw(
-      'user_id = ? and (cancelled_at is null or cancelled_at > now())',
+      "user_id = ? and (cancelled_at is null or cancelled_at > now())",
       [userId]
     )
-    .returning('*');
+    .returning("*");
 
   return validateEvery<SubscriptionRow, Subscription>(
     TABLE_NAME,
@@ -80,7 +80,7 @@ export async function update(
 
   const res = await trx(TABLE_NAME)
     .where({ id })
-    .update(rowData, '*')
+    .update(rowData, "*")
     .then((rows: SubscriptionRow[]) => first(rows));
 
   return validate<SubscriptionRow, Subscription>(

@@ -1,8 +1,8 @@
-import Knex from 'knex';
+import Knex from "knex";
 
-import { getCreditAmount, removeCredit } from './dao';
-import Invoice = require('../../domain-objects/invoice');
-import * as InvoicePaymentsDAO from '../invoice-payments/dao';
+import { getCreditAmount, removeCredit } from "./dao";
+import Invoice = require("../../domain-objects/invoice");
+import * as InvoicePaymentsDAO from "../invoice-payments/dao";
 
 interface SpentResult {
   creditPaymentAmount: number;
@@ -28,7 +28,7 @@ export default async function spendCredit(
       resolvePaymentId: null,
       rumbleshipPurchaseHash: null,
       stripeChargeId: null,
-      totalCents: creditPaymentAmount
+      totalCents: creditPaymentAmount,
     });
 
     await removeCredit(
@@ -36,7 +36,7 @@ export default async function spendCredit(
         amountCents: creditPaymentAmount,
         createdBy: userId,
         description: `Spent credits on invoice ${invoice.id}`,
-        givenTo: userId
+        givenTo: userId,
       },
       trx
     );
@@ -44,6 +44,6 @@ export default async function spendCredit(
 
   return {
     creditPaymentAmount,
-    nonCreditPaymentAmount
+    nonCreditPaymentAmount,
   };
 }

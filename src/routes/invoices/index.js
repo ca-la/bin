@@ -1,23 +1,23 @@
-'use strict';
+"use strict";
 
-const Router = require('koa-router');
+const Router = require("koa-router");
 
-const canAccessUserResource = require('../../middleware/can-access-user-resource');
-const createManualPaymentRecord = require('./manual-payments').default;
-const InvoicesDAO = require('../../dao/invoices');
-const requireAdmin = require('../../middleware/require-admin');
-const User = require('../../components/users/domain-object');
+const canAccessUserResource = require("../../middleware/can-access-user-resource");
+const createManualPaymentRecord = require("./manual-payments").default;
+const InvoicesDAO = require("../../dao/invoices");
+const requireAdmin = require("../../middleware/require-admin");
+const User = require("../../components/users/domain-object");
 
 const router = new Router();
 
-const InvalidDataError = require('../../errors/invalid-data');
-const PartnerPayoutAccountsDAO = require('../../dao/partner-payout-accounts');
-const PartnerPayoutLogsDAO = require('../../components/partner-payouts/dao');
-const UsersDAO = require('../../components/users/dao');
-const EmailService = require('../../services/email');
-const { requireValues } = require('../../services/require-properties');
-const StripeService = require('../../services/stripe');
-const { ADMIN_EMAIL } = require('../../config');
+const InvalidDataError = require("../../errors/invalid-data");
+const PartnerPayoutAccountsDAO = require("../../dao/partner-payout-accounts");
+const PartnerPayoutLogsDAO = require("../../components/partner-payouts/dao");
+const UsersDAO = require("../../components/users/dao");
+const EmailService = require("../../services/email");
+const { requireValues } = require("../../services/require-properties");
+const StripeService = require("../../services/stripe");
+const { ADMIN_EMAIL } = require("../../config");
 
 function assert(val, message) {
   if (!val) {
@@ -38,7 +38,7 @@ function* getInvoices() {
     this.assert(isAdmin, 403);
     invoices = yield InvoicesDAO.findByCollection(collectionId);
   } else {
-    this.throw(400, 'User ID or collection ID is required');
+    this.throw(400, "User ID or collection ID is required");
   }
 
   this.body = invoices;
@@ -73,13 +73,13 @@ async function payOutPartner({
   invoiceId,
   message,
   payoutAccountId,
-  payoutAmountCents
+  payoutAmountCents,
 }) {
   requireValues({
     invoiceId,
     payoutAccountId,
     payoutAmountCents,
-    message
+    message,
   });
 
   const invoice = await InvoicesDAO.findById(invoiceId);
@@ -104,7 +104,7 @@ async function payOutPartner({
     amountCents: payoutAmountCents,
     description,
     invoiceId,
-    bidId: null
+    bidId: null,
   });
 
   await PartnerPayoutLogsDAO.create({
@@ -114,47 +114,47 @@ async function payOutPartner({
     payoutAccountId,
     payoutAmountCents,
     bidId: null,
-    isManual: false
+    isManual: false,
   });
 
   // TODO: convert to `single_notification` template and construct a NotificationMessage.
   await EmailService.enqueueSend({
     to: vendorUser.email,
     cc: ADMIN_EMAIL,
-    templateName: 'partner_payout',
+    templateName: "partner_payout",
     params: {
       payoutAmountCents,
-      message
-    }
+      message,
+    },
   });
 }
 
 function* postPayOut() {
   const { invoiceId } = this.params;
   const { message, payoutAccountId, payoutAmountCents } = this.request.body;
-  this.assert(message, 400, 'Missing message');
-  this.assert(payoutAccountId, 400, 'Missing payout account ID');
-  this.assert(payoutAmountCents, 400, 'Missing payout amount');
+  this.assert(message, 400, "Missing message");
+  this.assert(payoutAccountId, 400, "Missing payout account ID");
+  this.assert(payoutAmountCents, 400, "Missing payout amount");
 
   yield payOutPartner({
     initiatorUserId: this.state.userId,
     invoiceId,
     payoutAccountId,
     payoutAmountCents,
-    message
+    message,
   });
 
   this.status = 204;
 }
 
-router.get('/', getInvoices);
-router.get('/:invoiceId', requireAdmin, getInvoice);
-router.del('/:invoiceId', requireAdmin, deleteInvoice);
+router.get("/", getInvoices);
+router.get("/:invoiceId", requireAdmin, getInvoice);
+router.del("/:invoiceId", requireAdmin, deleteInvoice);
 router.post(
-  '/:invoiceId/manual-payments',
+  "/:invoiceId/manual-payments",
   requireAdmin,
   createManualPaymentRecord
 );
-router.post('/:invoiceId/pay-out-to-partner', requireAdmin, postPayOut);
+router.post("/:invoiceId/pay-out-to-partner", requireAdmin, postPayOut);
 
 module.exports = router.routes();

@@ -1,10 +1,10 @@
-'use strict';
+"use strict";
 
-const Router = require('koa-router');
+const Router = require("koa-router");
 
-const canAccessFeaturePlacement = require('../../middleware/can-access-feature-placement');
-const ProductDesignFeaturePlacementsDAO = require('../../dao/product-design-feature-placements');
-const requireAuth = require('../../middleware/require-auth');
+const canAccessFeaturePlacement = require("../../middleware/can-access-feature-placement");
+const ProductDesignFeaturePlacementsDAO = require("../../dao/product-design-feature-placements");
+const requireAuth = require("../../middleware/require-auth");
 
 const router = new Router();
 
@@ -14,7 +14,7 @@ function* deleteFeature() {
 }
 
 router.del(
-  '/:featureId',
+  "/:featureId",
   requireAuth,
   canAccessFeaturePlacement,
   deleteFeature

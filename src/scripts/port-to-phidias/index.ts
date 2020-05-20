@@ -1,19 +1,19 @@
-import Knex from 'knex';
-import process from 'process';
-import uuid from 'node-uuid';
-import { chunk } from 'lodash';
+import Knex from "knex";
+import process from "process";
+import uuid from "node-uuid";
+import { chunk } from "lodash";
 
-import db from '../../services/db';
-import { log } from '../../services/logger';
-import { green, red, reset } from '../../services/colors';
-import { CanvasRow } from '../../components/canvases/domain-object';
-import { NodeRow } from '../../components/nodes/domain-objects';
-import { DesignRootNodeRow } from '../../components/nodes/domain-objects/design-root';
-import { ComponentRow } from '../../components/components/domain-object';
-import { AssetRow } from '../../components/assets/domain-object';
-import { LayoutAttributeRow } from '../../components/attributes/layout-attributes/domain-object';
-import portComponent from './port-component';
-import { ImageAttributeRow } from '../../components/attributes/image-attributes/domain-objects';
+import db from "../../services/db";
+import { log } from "../../services/logger";
+import { green, red, reset } from "../../services/colors";
+import { CanvasRow } from "../../components/canvases/domain-object";
+import { NodeRow } from "../../components/nodes/domain-objects";
+import { DesignRootNodeRow } from "../../components/nodes/domain-objects/design-root";
+import { ComponentRow } from "../../components/components/domain-object";
+import { AssetRow } from "../../components/assets/domain-object";
+import { LayoutAttributeRow } from "../../components/attributes/layout-attributes/domain-object";
+import portComponent from "./port-component";
+import { ImageAttributeRow } from "../../components/attributes/image-attributes/domain-objects";
 
 export type EnrichedComponent = ComponentRow & {
   canvas_id: string;
@@ -27,12 +27,10 @@ portToPhidias()
     log(`${green}Successfully moved all canvases and components to nodes.`);
     process.exit();
   })
-  .catch(
-    (error: any): void => {
-      log(`${red}ERROR:\n${reset}`, error);
-      process.exit(1);
-    }
-  );
+  .catch((error: any): void => {
+    log(`${red}ERROR:\n${reset}`, error);
+    process.exit(1);
+  });
 
 /**
  * Ports canvases and components into nodes, root nodes, and various attributes.
@@ -40,7 +38,7 @@ portToPhidias()
 
 async function portToPhidias(): Promise<void> {
   return db.transaction(async (trx: Knex.Transaction) => {
-    log('Removing all existing nodes');
+    log("Removing all existing nodes");
     await trx.raw(`
 TRUNCATE TABLE layout_attributes CASCADE;
 TRUNCATE TABLE material_attributes CASCADE;
@@ -49,21 +47,21 @@ TRUNCATE TABLE design_root_nodes CASCADE;
 TRUNCATE TABLE nodes CASCADE;
     `);
 
-    const canvases: CanvasRow[] = await trx('canvases')
-      .select('*')
+    const canvases: CanvasRow[] = await trx("canvases")
+      .select("*")
       .where({ deleted_at: null });
     log(`Porting ${canvases.length} canvases to DesignRootNodes.`);
     await portCanvases(canvases, trx);
 
-    const components: EnrichedComponent[] = await trx('components')
+    const components: EnrichedComponent[] = await trx("components")
       .select(
-        'components.*',
-        'canvases.id AS canvas_id',
-        db.raw('row_to_json(artwork_assets.*) as artwork_asset'),
-        db.raw('row_to_json(material_assets.*) as material_asset'),
-        db.raw('row_to_json(sketch_assets.*) as sketch_asset')
+        "components.*",
+        "canvases.id AS canvas_id",
+        db.raw("row_to_json(artwork_assets.*) as artwork_asset"),
+        db.raw("row_to_json(material_assets.*) as material_asset"),
+        db.raw("row_to_json(sketch_assets.*) as sketch_asset")
       )
-      .from('components')
+      .from("components")
       .joinRaw(`LEFT JOIN canvases ON canvases.component_id = components.id`)
       .joinRaw(
         `LEFT JOIN assets AS artwork_assets ON artwork_assets.id = components.artwork_id`
@@ -77,9 +75,9 @@ TRUNCATE TABLE nodes CASCADE;
       .joinRaw(
         `LEFT JOIN assets AS material_assets ON material_assets.id = options.preview_image_id`
       )
-      .where({ 'components.deleted_at': null })
+      .where({ "components.deleted_at": null })
       .whereIn(
-        'components.id',
+        "components.id",
         canvases.reduce((acc: string[], canvas: CanvasRow): string[] => {
           return canvas.component_id ? [...acc, canvas.component_id] : acc;
         }, [])
@@ -109,24 +107,24 @@ async function portCanvases(
       y: String(canvas.y),
       ordering: canvas.ordering || 0,
       title: canvas.title,
-      type: 'FRAME'
+      type: "FRAME",
     });
     rootNodeInsertions.push({
       id: uuid.v4(),
       node_id: canvas.id,
-      design_id: canvas.design_id
+      design_id: canvas.design_id,
     });
   }
 
   log(`Preparing ${nodeInsertions.length} Nodes for insertion`);
   for (const c of chunk(nodeInsertions, 1000)) {
     log(`Creating ${c.length} Nodes`);
-    await trx('nodes').insert(c);
+    await trx("nodes").insert(c);
   }
   log(`Preparing ${rootNodeInsertions.length} DesignRootNodes for insertion`);
   for (const c of chunk(rootNodeInsertions, 1000)) {
     log(`Creating ${c.length} DesignRootNodes`);
-    await trx('design_root_nodes').insert(c);
+    await trx("design_root_nodes").insert(c);
   }
 }
 
@@ -153,18 +151,18 @@ async function portComponents(
   log(`Preparing ${nodeInsertions.length} Nodes for insertion`);
   for (const c of chunk(nodeInsertions, 1000)) {
     log(`Creating ${c.length} Nodes`);
-    await trx('nodes').insert(c);
+    await trx("nodes").insert(c);
   }
 
   log(`Preparing ${imageInsertions.length} ImageAttributes for insertion`);
   for (const c of chunk(imageInsertions, 1000)) {
     log(`Creating ${c.length} ImageAttributes`);
-    await trx('image_attributes').insert(c);
+    await trx("image_attributes").insert(c);
   }
 
   log(`Preparing ${layoutInsertions.length} LayoutAttributes for insertion`);
   for (const c of chunk(layoutInsertions, 1000)) {
     log(`Creating ${c.length} LayoutAttributes`);
-    await trx('layout_attributes').insert(c);
+    await trx("layout_attributes").insert(c);
   }
 }

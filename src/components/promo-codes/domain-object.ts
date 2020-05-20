@@ -1,5 +1,5 @@
-import DataAdapter from '../../services/data-adapter';
-import { hasProperties } from '../../services/require-properties';
+import DataAdapter from "../../services/data-adapter";
+import { hasProperties } from "../../services/require-properties";
 
 export interface PromoCodeRow {
   code: string;
@@ -34,7 +34,7 @@ function decode(row: PromoCodeRow): PromoCode {
     creditExpiresAt:
       row.credit_expires_at === null ? null : new Date(row.credit_expires_at),
     id: row.id,
-    isSingleUse: row.is_single_use
+    isSingleUse: row.is_single_use,
   };
 }
 
@@ -47,14 +47,14 @@ function forInsertion(data: Uninserted<PromoCode>): Uninserted<PromoCodeRow> {
     credit_expires_at:
       data.creditExpiresAt && data.creditExpiresAt.toISOString(),
     id: data.id,
-    is_single_use: data.isSingleUse
+    is_single_use: data.isSingleUse,
   };
 }
 
 function encode(data: PromoCode): PromoCodeRow {
   return {
     ...forInsertion(data),
-    created_at: data.createdAt.toISOString()
+    created_at: data.createdAt.toISOString(),
   };
 }
 
@@ -67,25 +67,25 @@ export const dataAdapter = new DataAdapter<PromoCodeRow, PromoCode>(
 export function isPromoCodeRow(row: object): row is PromoCodeRow {
   return hasProperties(
     row,
-    'id',
-    'created_at',
-    'created_by',
-    'credit_amount_cents',
-    'code_expires_at',
-    'credit_expires_at',
-    'is_single_use'
+    "id",
+    "created_at",
+    "created_by",
+    "credit_amount_cents",
+    "code_expires_at",
+    "credit_expires_at",
+    "is_single_use"
   );
 }
 
 export function isPromoCode(row: object): row is PromoCode {
   return hasProperties(
     row,
-    'id',
-    'createdAt',
-    'createdBy',
-    'creditAmountCents',
-    'codeExpiresAt',
-    'creditExpiresAt',
-    'isSingleUse'
+    "id",
+    "createdAt",
+    "createdBy",
+    "creditAmountCents",
+    "codeExpiresAt",
+    "creditExpiresAt",
+    "isSingleUse"
   );
 }

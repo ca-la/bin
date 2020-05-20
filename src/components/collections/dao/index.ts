@@ -1,6 +1,6 @@
-import Knex from 'knex';
-import rethrow from 'pg-rethrow';
-import { pick } from 'lodash';
+import Knex from "knex";
+import rethrow from "pg-rethrow";
+import { pick } from "lodash";
 
 import Collection, {
   CollectionRow,
@@ -8,34 +8,34 @@ import Collection, {
   INSERTABLE_PROPERTIES,
   isCollectionRow,
   partialDataAdapter,
-  UPDATABLE_PROPERTIES
-} from '../domain-object';
-import { CollectionDesignRow } from '../../../domain-objects/collection-design';
+  UPDATABLE_PROPERTIES,
+} from "../domain-object";
+import { CollectionDesignRow } from "../../../domain-objects/collection-design";
 
-import db from '../../../services/db';
-import { validate, validateEvery } from '../../../services/validate-from-db';
-import first from '../../../services/first';
-import limitOrOffset from '../../../services/limit-or-offset';
-import { ExpirationNotification } from '../../notifications/models/costing-expiration';
+import db from "../../../services/db";
+import { validate, validateEvery } from "../../../services/validate-from-db";
+import first from "../../../services/first";
+import limitOrOffset from "../../../services/limit-or-offset";
+import { ExpirationNotification } from "../../notifications/models/costing-expiration";
 import {
   dataAdapter as metaDataApapter,
   isMetaCollectionRow,
   MetaCollection,
-  MetaCollectionRow
-} from '../meta-domain-object';
+  MetaCollectionRow,
+} from "../meta-domain-object";
 
-export const TABLE_NAME = 'collections';
+export const TABLE_NAME = "collections";
 
 export async function create(data: Collection): Promise<Collection> {
   const rowData = pick(dataAdapter.forInsertion(data), INSERTABLE_PROPERTIES);
 
   const created = await db(TABLE_NAME)
-    .insert(rowData, '*')
+    .insert(rowData, "*")
     .then((rows: CollectionRow[]) => first<CollectionRow>(rows))
     .catch(rethrow);
 
   if (!created) {
-    throw new Error('Failed to create a collection');
+    throw new Error("Failed to create a collection");
   }
 
   return validate<CollectionRow, Collection>(
@@ -53,7 +53,7 @@ export async function deleteById(
   const deleted = await trx
     .from(TABLE_NAME)
     .where({ deleted_at: null, id })
-    .update({ deleted_at: new Date() }, '*')
+    .update({ deleted_at: new Date() }, "*")
     .then((rows: CollectionRow[]) => first<CollectionRow>(rows));
 
   if (!deleted) {
@@ -78,7 +78,7 @@ export async function update(
   );
   const updated = await db(TABLE_NAME)
     .where({ deleted_at: null, id })
-    .update(rowData, '*')
+    .update(rowData, "*")
     .then((rows: CollectionRow[]) => first<CollectionRow>(rows))
     .catch(rethrow);
 
@@ -97,7 +97,7 @@ export async function update(
 export async function findByUserId(userId: string): Promise<Collection[]> {
   const collections: CollectionRow[] = await db(TABLE_NAME)
     .where({ created_by: userId, deleted_at: null })
-    .orderBy('created_at', 'desc')
+    .orderBy("created_at", "desc")
     .catch(rethrow);
 
   return validateEvery<CollectionRow, Collection>(
@@ -119,20 +119,18 @@ export async function findByCollaboratorAndUserId(
 ): Promise<Collection[]> {
   const collections: CollectionRow[] = await trx
     .from(TABLE_NAME)
-    .select('collections.*')
-    .distinct('collections.id')
+    .select("collections.*")
+    .distinct("collections.id")
     .from(TABLE_NAME)
-    .join('collaborators', 'collaborators.collection_id', 'collections.id')
-    .modify(
-      (query: Knex.QueryBuilder): void => {
-        if (options.search) {
-          query.where(db.raw('(collections.title ~* ?)', options.search));
-        }
+    .join("collaborators", "collaborators.collection_id", "collections.id")
+    .modify((query: Knex.QueryBuilder): void => {
+      if (options.search) {
+        query.where(db.raw("(collections.title ~* ?)", options.search));
       }
-    )
+    })
     .where({
-      'collaborators.user_id': options.userId,
-      'collections.deleted_at': null
+      "collaborators.user_id": options.userId,
+      "collections.deleted_at": null,
     })
     .whereRaw(
       `
@@ -141,7 +139,7 @@ export async function findByCollaboratorAndUserId(
       options.userId
     )
     .modify(limitOrOffset(options.limit, options.offset))
-    .orderBy('collections.created_at', 'desc')
+    .orderBy("collections.created_at", "desc")
     .catch(rethrow);
 
   return validateEvery<CollectionRow, Collection>(
@@ -183,7 +181,7 @@ export async function findByDesign(
   trx?: Knex.Transaction
 ): Promise<Collection[]> {
   const collectionDesigns: CollectionDesignRow[] = await db(
-    'collection_designs'
+    "collection_designs"
   )
     .where({ design_id: designId })
     .modify((query: Knex.QueryBuilder) => {
@@ -213,8 +211,8 @@ export async function findSubmittedButUnpaidCollections(): Promise<
   Collection[]
 > {
   const collections: CollectionRow[] = await db(TABLE_NAME)
-    .select('collections.*')
-    .distinct('collections.id')
+    .select("collections.*")
+    .distinct("collections.id")
     .from(TABLE_NAME)
     .joinRaw(
       `
@@ -239,8 +237,8 @@ JOIN (
   ON de.design_id = cd.design_id
     `
     )
-    .where({ 'collections.deleted_at': null })
-    .orderBy('collections.id');
+    .where({ "collections.deleted_at": null })
+    .orderBy("collections.id");
 
   return validateEvery<CollectionRow, Collection>(
     TABLE_NAME,
@@ -270,32 +268,32 @@ export async function findAllUnnotifiedCollectionsWithExpiringCostInputs(options
   upperBound.setHours(time.getHours() + boundingHours);
 
   const rows: MetaCollectionRow[] = await db(TABLE_NAME)
-    .distinct('collections.id AS id')
-    .select('collections.created_by AS created_by')
-    .from('pricing_cost_inputs AS pci')
+    .distinct("collections.id AS id")
+    .select("collections.created_by AS created_by")
+    .from("pricing_cost_inputs AS pci")
     .leftJoin(
-      'collection_designs',
-      'collection_designs.design_id',
-      'pci.design_id'
+      "collection_designs",
+      "collection_designs.design_id",
+      "pci.design_id"
     )
     .leftJoin(
-      'collections',
-      'collections.id',
-      'collection_designs.collection_id'
+      "collections",
+      "collections.id",
+      "collection_designs.collection_id"
     )
-    .leftJoin('notifications', 'notifications.collection_id', 'collections.id')
+    .leftJoin("notifications", "notifications.collection_id", "collections.id")
     .where({
-      'pci.deleted_at': null,
-      'collections.deleted_at': null
+      "pci.deleted_at": null,
+      "collections.deleted_at": null,
     })
-    .whereBetween('pci.expires_at', [lowerBound, upperBound])
+    .whereBetween("pci.expires_at", [lowerBound, upperBound])
     .whereNotIn(
-      'collections.id',
+      "collections.id",
       trx
-        .distinct('c2.id')
-        .from('collections AS c2')
-        .leftJoin('notifications', 'notifications.collection_id', 'c2.id')
-        .where({ 'notifications.type': notificationType })
+        .distinct("c2.id")
+        .from("collections AS c2")
+        .leftJoin("notifications", "notifications.collection_id", "c2.id")
+        .where({ "notifications.type": notificationType })
     )
     .transacting(trx);
 
@@ -318,29 +316,27 @@ export async function hasOwnership(options: {
   const { designId, trx, userId } = options;
 
   const ownerRows: { created_by: string }[] = await db(TABLE_NAME)
-    .select('collections.created_by AS created_by')
+    .select("collections.created_by AS created_by")
     .leftJoin(
-      'collection_designs',
-      'collection_designs.collection_id',
-      'collections.id'
+      "collection_designs",
+      "collection_designs.collection_id",
+      "collections.id"
     )
     .leftJoin(
-      'product_designs',
-      'product_designs.id',
-      'collection_designs.design_id'
+      "product_designs",
+      "product_designs.id",
+      "collection_designs.design_id"
     )
     .where({
-      'product_designs.id': designId,
-      'product_designs.deleted_at': null,
-      'collections.deleted_at': null
+      "product_designs.id": designId,
+      "product_designs.deleted_at": null,
+      "collections.deleted_at": null,
     })
-    .modify(
-      (query: Knex.QueryBuilder): void => {
-        if (trx) {
-          query.transacting(trx);
-        }
+    .modify((query: Knex.QueryBuilder): void => {
+      if (trx) {
+        query.transacting(trx);
       }
-    );
+    });
 
   return ownerRows.some(
     (ownerRow: { created_by: string }): boolean =>

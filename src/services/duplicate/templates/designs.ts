@@ -1,19 +1,19 @@
-import Knex from 'knex';
-import { omit } from 'lodash';
-import { constructNodeTree, PhidiasNode } from '@cala/ts-lib/dist/phidias';
+import Knex from "knex";
+import { omit } from "lodash";
+import { constructNodeTree, PhidiasNode } from "@cala/ts-lib/dist/phidias";
 
-import DesignsDAO from '../../../components/product-designs/dao';
-import createDesign from '../../create-design';
+import DesignsDAO from "../../../components/product-designs/dao";
+import createDesign from "../../create-design";
 
-import Design = require('../../../components/product-designs/domain-objects/product-design');
-import prepareForDuplication from '../prepare-for-duplication';
-import ResourceNotFoundError from '../../../errors/resource-not-found';
+import Design = require("../../../components/product-designs/domain-objects/product-design");
+import prepareForDuplication from "../prepare-for-duplication";
+import ResourceNotFoundError from "../../../errors/resource-not-found";
 import {
   findNodeTrees,
-  findRootNodesByDesign
-} from '../../../components/nodes/dao';
-import { findAndDuplicateNode } from '../nodes';
-import Node from '../../../components/nodes/domain-objects';
+  findRootNodesByDesign,
+} from "../../../components/nodes/dao";
+import { findAndDuplicateNode } from "../nodes";
+import Node from "../../../components/nodes/domain-objects";
 
 /**
  * Finds the given template design and duplicates it. Does the same with all related
@@ -35,11 +35,11 @@ export default async function findAndDuplicateTemplateDesign(
     prepareForDuplication(
       omit(
         design,
-        'collections',
-        'collectionIds',
-        'imageIds',
-        'imageLinks',
-        'approvalSteps'
+        "collections",
+        "collectionIds",
+        "imageIds",
+        "imageLinks",
+        "approvalSteps"
       ),
       { userId: newCreatorId }
     ),
@@ -48,11 +48,9 @@ export default async function findAndDuplicateTemplateDesign(
 
   const rootNodes = await findRootNodesByDesign(designId, trx);
   const allNodes = await findNodeTrees(
-    rootNodes.map(
-      (rootNode: Node): string => {
-        return rootNode.id;
-      }
-    ),
+    rootNodes.map((rootNode: Node): string => {
+      return rootNode.id;
+    }),
     trx
   );
 
@@ -66,7 +64,7 @@ export default async function findAndDuplicateTemplateDesign(
       newDesignId: duplicatedDesign.id,
       nodeId: rootNode.id,
       tree,
-      trx
+      trx,
     });
   }
 

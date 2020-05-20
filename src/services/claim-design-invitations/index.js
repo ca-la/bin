@@ -1,6 +1,6 @@
-'use strict';
+"use strict";
 
-const CollaboratorsDAO = require('../../components/collaborators/dao');
+const CollaboratorsDAO = require("../../components/collaborators/dao");
 
 /**
  * Find any outstanding product design collaboration invitations for a new user,
@@ -12,10 +12,10 @@ async function claimDesignInvitations(userEmail, userId) {
   const invitations = await CollaboratorsDAO.findUnclaimedByEmail(userEmail);
 
   await Promise.all(
-    invitations.map(invitation =>
+    invitations.map((invitation) =>
       CollaboratorsDAO.update(invitation.id, {
         userEmail: null,
-        userId
+        userId,
       })
     )
   );

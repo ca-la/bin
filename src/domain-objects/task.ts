@@ -1,5 +1,5 @@
-import DataAdapter from '../services/data-adapter';
-import { hasProperties } from '../services/require-properties';
+import DataAdapter from "../services/data-adapter";
+import { hasProperties } from "../services/require-properties";
 
 /**
  * @typedef {object} Task A unit of work to be completed in the development of a garment
@@ -21,5 +21,5 @@ export interface TaskRow {
 export const dataAdapter = new DataAdapter<TaskRow, Task>();
 
 export function isTaskRow(row: object): row is TaskRow {
-  return hasProperties(row, 'id', 'created_at');
+  return hasProperties(row, "id", "created_at");
 }

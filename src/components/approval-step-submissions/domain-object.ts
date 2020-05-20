@@ -1,18 +1,18 @@
-import DataAdapter from '../../services/data-adapter';
-import { hasProperties } from '../../services/require-properties';
+import DataAdapter from "../../services/data-adapter";
+import { hasProperties } from "../../services/require-properties";
 
 export enum ApprovalStepSubmissionArtifactType {
-  TECHNICAL_DESIGN = 'TECHNICAL_DESIGN',
-  SAMPLE = 'SAMPLE',
-  CUSTOM = 'CUSTOM'
+  TECHNICAL_DESIGN = "TECHNICAL_DESIGN",
+  SAMPLE = "SAMPLE",
+  CUSTOM = "CUSTOM",
 }
 
 export enum ApprovalStepSubmissionState {
-  UNSUBMITTED = 'UNSUBMITTED',
-  SUBMITTED = 'SUBMITTED',
-  APPROVED = 'APPROVED',
-  REVISION_REQUESTED = 'REVISION_REQUESTED',
-  SKIPPED = 'SKIPPED'
+  UNSUBMITTED = "UNSUBMITTED",
+  SUBMITTED = "SUBMITTED",
+  APPROVED = "APPROVED",
+  REVISION_REQUESTED = "REVISION_REQUESTED",
+  SKIPPED = "SKIPPED",
 }
 
 export default interface ApprovalStepSubmission {
@@ -50,13 +50,13 @@ export function isApprovalStepSubmissionRow(
 ): candidate is ApprovalStepSubmissionRow {
   return hasProperties(
     candidate,
-    'id',
-    'step_id',
-    'created_at',
-    'artifact_type',
-    'state',
-    'collaborator_id',
-    'state',
-    'title'
+    "id",
+    "step_id",
+    "created_at",
+    "artifact_type",
+    "state",
+    "collaborator_id",
+    "state",
+    "title"
   );
 }

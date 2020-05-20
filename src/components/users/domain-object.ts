@@ -1,12 +1,12 @@
-import DataAdapter from '../../services/data-adapter';
-import { hasProperties } from '../../services/require-properties';
+import DataAdapter from "../../services/data-adapter";
+import { hasProperties } from "../../services/require-properties";
 import toDateOrNull, {
   toDateStringOrNull,
-  toDateStringOrUndefined
-} from '../../services/to-date';
-import User, { UserRow, UserWithPasswordHash, UserIO } from './types';
+  toDateStringOrUndefined,
+} from "../../services/to-date";
+import User, { UserRow, UserWithPasswordHash, UserIO } from "./types";
 
-export * from './types';
+export * from "./types";
 
 export default User;
 
@@ -25,7 +25,7 @@ export function partialDecode(data: Partial<User>): Partial<UserRow> {
     name: data.name,
     phone: data.phone,
     referral_code: data.referralCode,
-    role: data.role
+    role: data.role,
   };
 }
 
@@ -47,7 +47,7 @@ export function passwordHashDecode(data: UserWithPasswordHash): UserRow {
     password_hash: data.passwordHash,
     phone: data.phone,
     referral_code: data.referralCode,
-    role: data.role
+    role: data.role,
   };
 }
 
@@ -69,7 +69,7 @@ export function passwordHashEncode(row: UserRow): UserWithPasswordHash {
     passwordHash: row.password_hash,
     phone: row.phone,
     referralCode: row.referral_code,
-    role: row.role
+    role: row.role,
   };
 }
 
@@ -90,7 +90,7 @@ export function encode(row: UserRow): User {
     name: row.name,
     phone: row.phone,
     referralCode: row.referral_code,
-    role: row.role
+    role: row.role,
   };
 }
 
@@ -109,19 +109,19 @@ export const partialDataAdapter = new DataAdapter<
 export function isUserRow(row: object): row is UserRow {
   return hasProperties(
     row,
-    'created_at',
-    'email',
-    'id',
-    'is_sms_preregistration',
-    'locale',
-    'name',
-    'password_hash',
-    'phone',
-    'referral_code',
-    'role'
+    "created_at",
+    "email",
+    "id",
+    "is_sms_preregistration",
+    "locale",
+    "name",
+    "password_hash",
+    "phone",
+    "referral_code",
+    "role"
   );
 }
 
 export function isUserIO(data: object): data is UserIO {
-  return hasProperties(data, 'email', 'name', 'password', 'phone');
+  return hasProperties(data, "email", "name", "password", "phone");
 }

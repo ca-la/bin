@@ -1,11 +1,11 @@
-import Knex from 'knex';
-import * as uuid from 'node-uuid';
+import Knex from "knex";
+import * as uuid from "node-uuid";
 
 import ApprovalStep, {
   ApprovalStepState,
-  ApprovalStepType
-} from '../../components/approval-steps/domain-object';
-import * as ApprovalStepsDAO from '../../components/approval-steps/dao';
+  ApprovalStepType,
+} from "../../components/approval-steps/domain-object";
+import * as ApprovalStepsDAO from "../../components/approval-steps/dao";
 
 export default async function createDesignApproval(
   trx: Knex.Transaction,
@@ -16,7 +16,7 @@ export default async function createDesignApproval(
     {
       id: uuid.v4(),
       state: ApprovalStepState.CURRENT,
-      title: 'Checkout',
+      title: "Checkout",
       ordering: 0,
       designId,
       reason: null,
@@ -24,38 +24,38 @@ export default async function createDesignApproval(
       collaboratorId: null,
       createdAt: now,
       startedAt: now,
-      completedAt: null
+      completedAt: null,
     },
     {
       id: uuid.v4(),
       state: ApprovalStepState.BLOCKED,
-      title: 'Technical Design',
+      title: "Technical Design",
       ordering: 1,
       designId,
-      reason: 'Pending partner pairing',
+      reason: "Pending partner pairing",
       type: ApprovalStepType.TECHNICAL_DESIGN,
       collaboratorId: null,
       createdAt: now,
       startedAt: null,
-      completedAt: null
+      completedAt: null,
     },
     {
       id: uuid.v4(),
       state: ApprovalStepState.BLOCKED,
-      title: 'Sample',
+      title: "Sample",
       ordering: 2,
       designId,
-      reason: 'Pending partner pairing',
+      reason: "Pending partner pairing",
       type: ApprovalStepType.SAMPLE,
       collaboratorId: null,
       createdAt: now,
       startedAt: null,
-      completedAt: null
+      completedAt: null,
     },
     {
       id: uuid.v4(),
       state: ApprovalStepState.UNSTARTED,
-      title: 'Production',
+      title: "Production",
       ordering: 3,
       designId,
       reason: null,
@@ -63,8 +63,8 @@ export default async function createDesignApproval(
       collaboratorId: null,
       createdAt: now,
       startedAt: null,
-      completedAt: null
-    }
+      completedAt: null,
+    },
   ];
 
   await ApprovalStepsDAO.createAll(trx, steps);

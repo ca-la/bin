@@ -1,15 +1,15 @@
-'use strict';
+"use strict";
 
-const ScansDAO = require('../../dao/scans');
-const canAccessUserResource = require('../can-access-user-resource');
+const ScansDAO = require("../../dao/scans");
+const canAccessUserResource = require("../can-access-user-resource");
 
 function* canAccessScanId(scanId) {
   if (!scanId) {
-    throw new Error('Must pass scanId to canAccessScan');
+    throw new Error("Must pass scanId to canAccessScan");
   }
 
   const scan = yield ScansDAO.findById(scanId);
-  this.assert(scan, 404, 'Scan not found');
+  this.assert(scan, 404, "Scan not found");
 
   this.state.scan = scan;
 
@@ -27,5 +27,5 @@ function* canAccessScanInParam(next) {
 
 module.exports = {
   canAccessScanId,
-  canAccessScanInParam
+  canAccessScanInParam,
 };

@@ -1,31 +1,29 @@
-import process from 'process';
-import Knex from 'knex';
+import process from "process";
+import Knex from "knex";
 
-import { CALA_OPS_USER_ID } from '../config';
-import { log, logServerError } from '../services/logger';
-import { green, reset } from '../services/colors';
+import { CALA_OPS_USER_ID } from "../config";
+import { log, logServerError } from "../services/logger";
+import { green, reset } from "../services/colors";
 
-import * as CreditsDAO from '../components/credits/dao';
-import db from '../services/db';
+import * as CreditsDAO from "../components/credits/dao";
+import db from "../services/db";
 
 run()
   .then(() => {
     log(`${green}Successfully removed credit!`);
     process.exit();
   })
-  .catch(
-    (err: any): void => {
-      logServerError(err);
-      process.exit(1);
-    }
-  );
+  .catch((err: any): void => {
+    logServerError(err);
+    process.exit(1);
+  });
 
 async function run(): Promise<void> {
   const userId = process.argv[2];
   const creditAmountString = process.argv[3];
 
   if (!userId || !creditAmountString) {
-    throw new Error('Usage: remove-credit.ts [userId] [amount in cents]');
+    throw new Error("Usage: remove-credit.ts [userId] [amount in cents]");
   }
 
   await db.transaction(async (trx: Knex.Transaction) => {
@@ -33,8 +31,8 @@ async function run(): Promise<void> {
       {
         amountCents: Number(creditAmountString),
         createdBy: CALA_OPS_USER_ID,
-        description: 'Manual reduction of credit',
-        givenTo: userId
+        description: "Manual reduction of credit",
+        givenTo: userId,
       },
       trx
     );

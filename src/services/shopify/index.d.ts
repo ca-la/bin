@@ -9,7 +9,7 @@ declare namespace ShopifyClient {
     id: string;
     key: string;
     value: string;
-    value_type: 'string';
+    value_type: "string";
     namespace: string;
   }
 }

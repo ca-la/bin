@@ -1,29 +1,29 @@
-import uuid from 'node-uuid';
-import Knex from 'knex';
+import uuid from "node-uuid";
+import Knex from "knex";
 
-import db from '../../services/db';
+import db from "../../services/db";
 import Canvas, {
   CanvasRow,
   dataAdapter,
   isCanvasRow,
-  partialDataAdapter
-} from './domain-object';
-import first from '../../services/first';
-import { validate, validateEvery } from '../../services/validate-from-db';
+  partialDataAdapter,
+} from "./domain-object";
+import first from "../../services/first";
+import { validate, validateEvery } from "../../services/validate-from-db";
 import {
   creatorDataAdapter,
   CreatorMetadata,
   CreatorMetadataRow,
-  isCreatorMetadataRow
-} from './domain-object/creator-metadata';
+  isCreatorMetadataRow,
+} from "./domain-object/creator-metadata";
 
-const TABLE_NAME = 'canvases';
+const TABLE_NAME = "canvases";
 
 export class CanvasNotFoundError extends Error {
   constructor(message: string) {
     super(message);
     this.message = message;
-    this.name = 'CanvasNotFoundError';
+    this.name = "CanvasNotFoundError";
   }
 }
 
@@ -34,10 +34,10 @@ export async function create(
   const rowData = dataAdapter.forInsertion({
     id: uuid.v4(),
     ...data,
-    deletedAt: null
+    deletedAt: null,
   });
   const created = await db(TABLE_NAME)
-    .insert(rowData, '*')
+    .insert(rowData, "*")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
@@ -46,7 +46,7 @@ export async function create(
     .then((rows: CanvasRow[]) => first<CanvasRow>(rows));
 
   if (!created) {
-    throw new Error('Failed to create rows');
+    throw new Error("Failed to create rows");
   }
 
   return validate<CanvasRow, Canvas>(
@@ -64,11 +64,11 @@ export async function update(
   const rowData = dataAdapter.forInsertion({
     ...data,
     deletedAt: null,
-    id
+    id,
   });
   const updated = await db(TABLE_NAME)
     .where({ id, deleted_at: null })
-    .update(rowData, '*')
+    .update(rowData, "*")
     .then((rows: CanvasRow[]) => first<CanvasRow>(rows));
 
   if (!updated) {
@@ -95,15 +95,15 @@ export async function reorder(data: ReorderRequest[]): Promise<Canvas[]> {
       data.map(async (reorderReq: ReorderRequest) => {
         const { id, ordering } = reorderReq;
         const rowData = partialDataAdapter.forInsertion({
-          ordering
+          ordering,
         });
         const row = await db(TABLE_NAME)
-          .update(rowData, '*')
+          .update(rowData, "*")
           .where({ id })
           .transacting(trx)
           .then((rows: CanvasRow[]) => first<CanvasRow>(rows));
         if (!row) {
-          throw new Error('Row could not be updated');
+          throw new Error("Row could not be updated");
         }
         return row;
       })
@@ -121,7 +121,7 @@ export async function reorder(data: ReorderRequest[]): Promise<Canvas[]> {
 export async function del(trx: Knex.Transaction, id: string): Promise<Canvas> {
   const deleted = await trx(TABLE_NAME)
     .where({ id, deleted_at: null })
-    .update({ deleted_at: new Date() }, '*')
+    .update({ deleted_at: new Date() }, "*")
     .then((rows: CanvasRow[]) => first<CanvasRow>(rows));
 
   if (!deleted) {
@@ -141,7 +141,7 @@ export async function findById(
   trx?: Knex.Transaction
 ): Promise<Canvas | null> {
   const canvas = await db(TABLE_NAME)
-    .select('*')
+    .select("*")
     .where({ id, deleted_at: null })
     .limit(1)
     .modify((query: Knex.QueryBuilder) => {
@@ -165,9 +165,9 @@ export async function findById(
 
 export async function findAllByDesignId(id: string): Promise<Canvas[]> {
   const canvases: CanvasRow[] = await db(TABLE_NAME)
-    .select('*')
+    .select("*")
     .where({ design_id: id, deleted_at: null })
-    .orderBy('ordering');
+    .orderBy("ordering");
 
   return validateEvery<CanvasRow, Canvas>(
     TABLE_NAME,
@@ -181,7 +181,7 @@ export async function findByComponentId(
   componentId: string
 ): Promise<Canvas | null> {
   const canvas = await db(TABLE_NAME)
-    .select('*')
+    .select("*")
     .where({ component_id: componentId, deleted_at: null })
     .limit(1)
     .then((rows: CanvasRow[]) => first<CanvasRow>(rows));
@@ -203,12 +203,12 @@ export async function getCreatorMetadata(
 ): Promise<CreatorMetadata | null> {
   const creatorRow = await db(TABLE_NAME)
     .select(
-      'users.name AS created_by_name',
-      'canvases.created_at AS created_at',
-      'canvases.id AS canvas_id'
+      "users.name AS created_by_name",
+      "canvases.created_at AS created_at",
+      "canvases.id AS canvas_id"
     )
-    .leftJoin('users', 'users.id', 'canvases.created_by')
-    .where({ 'canvases.id': canvasId })
+    .leftJoin("users", "users.id", "canvases.created_by")
+    .where({ "canvases.id": canvasId })
     .then((rows: CreatorMetadataRow[]) => {
       return first<CreatorMetadataRow>(rows);
     });

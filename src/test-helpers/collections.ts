@@ -1,10 +1,10 @@
 import {
   addDesigns,
   moveDesigns,
-  removeDesigns
-} from '../components/collections/dao/design';
-import ProductDesignsDAO = require('../components/product-designs/dao');
-import ProductDesign = require('../components/product-designs/domain-objects/product-design');
+  removeDesigns,
+} from "../components/collections/dao/design";
+import ProductDesignsDAO = require("../components/product-designs/dao");
+import ProductDesign = require("../components/product-designs/domain-objects/product-design");
 
 export async function addDesign(
   collectionId: string,

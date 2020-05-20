@@ -1,10 +1,10 @@
-import Router from 'koa-router';
+import Router from "koa-router";
 
-import * as UsersDAO from '../../components/users/dao';
-import * as DuplicationService from '../../services/duplicate';
-import filterError = require('../../services/filter-error');
-import requireAuth = require('../../middleware/require-auth');
-import ResourceNotFoundError from '../../errors/resource-not-found';
+import * as UsersDAO from "../../components/users/dao";
+import * as DuplicationService from "../../services/duplicate";
+import filterError = require("../../services/filter-error");
+import requireAuth = require("../../middleware/require-auth");
+import ResourceNotFoundError from "../../errors/resource-not-found";
 
 const router = new Router();
 
@@ -18,9 +18,9 @@ function isDuplicateDesignsBody(body: any): body is DuplicateDesignsBody {
   return (
     body.designIds &&
     Array.isArray(body.designIds) &&
-    body.designIds.every((id: any) => typeof id === 'string') &&
-    (!body.userId || (body.userId && typeof body.userId === 'string')) &&
-    (!body.email || (body.email && typeof body.email === 'string'))
+    body.designIds.every((id: any) => typeof id === "string") &&
+    (!body.userId || (body.userId && typeof body.userId === "string")) &&
+    (!body.email || (body.email && typeof body.email === "string"))
   );
 }
 
@@ -29,23 +29,23 @@ function* duplicateDesigns(this: AuthedContext): Iterator<any, any, any> {
   let userId = this.state.userId;
 
   if (!isDuplicateDesignsBody(body)) {
-    this.throw(400, 'Missing design ID list');
+    this.throw(400, "Missing design ID list");
   }
 
   if (body.userId) {
-    if (this.state.role === 'ADMIN' || this.state.userId === body.userId) {
+    if (this.state.role === "ADMIN" || this.state.userId === body.userId) {
       userId = body.userId;
     } else {
-      this.throw(403, 'Cannot duplicate designs for other users');
+      this.throw(403, "Cannot duplicate designs for other users");
     }
   } else if (body.email) {
-    if (this.state.role !== 'ADMIN') {
-      this.throw(403, 'Cannot duplicate designs for other users');
+    if (this.state.role !== "ADMIN") {
+      this.throw(403, "Cannot duplicate designs for other users");
     }
 
     const maybeUser = yield UsersDAO.findByEmail(body.email);
     if (!maybeUser) {
-      this.throw(404, 'User not found');
+      this.throw(404, "User not found");
     }
 
     userId = maybeUser.id;
@@ -65,6 +65,6 @@ function* duplicateDesigns(this: AuthedContext): Iterator<any, any, any> {
 }
 
 // Intentionally not checking ownership permissions - TODO reconsider security model
-router.post('/designs', requireAuth, duplicateDesigns);
+router.post("/designs", requireAuth, duplicateDesigns);
 
 export default router.routes();

@@ -1,17 +1,17 @@
-import { TaskStatus } from '@cala/ts-lib';
+import { TaskStatus } from "@cala/ts-lib";
 
-import * as QuotesDAO from '../../dao/pricing-quotes';
-import DesignsDAO from '../product-designs/dao';
-import * as TaskEventsDAO from '../../dao/task-events';
+import * as QuotesDAO from "../../dao/pricing-quotes";
+import DesignsDAO from "../product-designs/dao";
+import * as TaskEventsDAO from "../../dao/task-events";
 import {
   PricingQuote,
-  PricingQuoteCalculated
-} from '../../domain-objects/pricing-quote';
-import Timeline from './domain-object';
-import { getTimeBuffer } from '../../services/add-time-buffer';
-import ProductDesign = require('../product-designs/domain-objects/product-design');
-import { DetailsTask } from '../../domain-objects/task-event';
-import { findAllDesignsThroughCollaborator } from '../product-designs/dao/dao';
+  PricingQuoteCalculated,
+} from "../../domain-objects/pricing-quote";
+import Timeline from "./domain-object";
+import { getTimeBuffer } from "../../services/add-time-buffer";
+import ProductDesign = require("../product-designs/domain-objects/product-design");
+import { DetailsTask } from "../../domain-objects/task-event";
+import { findAllDesignsThroughCollaborator } from "../product-designs/dao/dao";
 
 interface StageBreakdown {
   id: string;
@@ -101,7 +101,7 @@ function createStageBreakdown(
       completedAt: null,
       time: 0,
       totalTasks: 1,
-      completedTasks: task.status === TaskStatus.COMPLETED ? 1 : 0
+      completedTasks: task.status === TaskStatus.COMPLETED ? 1 : 0,
     };
   }
 }
@@ -150,22 +150,22 @@ async function getStageBreakdownsByDesignId(
 
 function getStageTime(stage: StageBreakdown, quote: TimelineQuote): number {
   switch (stage.title) {
-    case 'Creation': {
+    case "Creation": {
       return quote.creationTimeMs;
     }
-    case 'Specification': {
+    case "Specification": {
       return quote.specificationTimeMs;
     }
-    case 'Sourcing': {
+    case "Sourcing": {
       return quote.sourcingTimeMs;
     }
-    case 'Sampling': {
+    case "Sampling": {
       return quote.samplingTimeMs;
     }
-    case 'Pre-Production': {
+    case "Pre-Production": {
       return quote.preProductionTimeMs;
     }
-    case 'Production': {
+    case "Production": {
       return (
         quote.productionTimeMs + quote.processTimeMs + quote.fulfillmentTimeMs
       );
@@ -227,7 +227,7 @@ export async function formatTimelines(
     const quote = designQuotes[designId].quote;
 
     if (!design) {
-      throw new Error('Design not in list of designs!');
+      throw new Error("Design not in list of designs!");
     }
     const stageBreakdowns = await getStageBreakdownsByDesignId(designId);
     const stageOrNulls: (StageBreakdown | null)[] = stageBreakdowns.map(
@@ -246,7 +246,7 @@ export async function formatTimelines(
       design: {
         id: design.id,
         title: design.title,
-        imageLinks: design.imageLinks || []
+        imageLinks: design.imageLinks || [],
       },
       collections: design.collections,
       startDate: quote.createdAt,
@@ -258,7 +258,7 @@ export async function formatTimelines(
       preProductionTimeMs: quote.preProductionTimeMs,
       productionTimeMs:
         quote.productionTimeMs + quote.processTimeMs + quote.fulfillmentTimeMs,
-      bufferTimeMs: getTimeBuffer(quote)
+      bufferTimeMs: getTimeBuffer(quote),
     });
   }
 
@@ -289,7 +289,7 @@ export async function findAllByUserId(
   const designs = await findAllDesignsThroughCollaborator({
     userId,
     limit,
-    offset
+    offset,
   });
   const designIds = designs.map((design: ProductDesign): string => design.id);
   const initialEstimates:

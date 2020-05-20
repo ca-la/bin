@@ -1,46 +1,46 @@
-import Knex from 'knex';
-import Router from 'koa-router';
+import Knex from "knex";
+import Router from "koa-router";
 
-import { CALA_OPS_USER_ID } from '../../../config';
-import filterError = require('../../../services/filter-error');
-import InvalidDataError from '../../../errors/invalid-data';
+import { CALA_OPS_USER_ID } from "../../../config";
+import filterError = require("../../../services/filter-error");
+import InvalidDataError from "../../../errors/invalid-data";
 
 import {
   canAccessCollectionInParam,
   canDeleteCollection,
   canEditCollection,
-  canSubmitCollection
-} from '../../../middleware/can-access-collection';
-import canAccessUserResource = require('../../../middleware/can-access-user-resource');
-import requireAuth = require('../../../middleware/require-auth');
-import requireAdmin = require('../../../middleware/require-admin');
+  canSubmitCollection,
+} from "../../../middleware/can-access-collection";
+import canAccessUserResource = require("../../../middleware/can-access-user-resource");
+import requireAuth = require("../../../middleware/require-auth");
+import requireAdmin = require("../../../middleware/require-admin");
 
-import db from '../../../services/db';
-import * as CollectionsDAO from '../dao';
-import * as CollaboratorsDAO from '../../collaborators/dao';
+import db from "../../../services/db";
+import * as CollectionsDAO from "../dao";
+import * as CollaboratorsDAO from "../../collaborators/dao";
 import Collection, {
   isCollection,
-  isPartialCollection
-} from '../domain-object';
-import { createSubmission, getSubmissionStatus } from './submissions';
+  isPartialCollection,
+} from "../domain-object";
+import { createSubmission, getSubmissionStatus } from "./submissions";
 import {
   deleteDesign,
   deleteDesigns,
   getCollectionDesigns,
   putDesign,
-  putDesigns
-} from './designs';
+  putDesigns,
+} from "./designs";
 import {
   getCollectionPermissions,
-  Permissions
-} from '../../../services/get-permissions';
-import { commitCostInputs, createPartnerPairing, recostInputs } from './admin';
+  Permissions,
+} from "../../../services/get-permissions";
+import { commitCostInputs, createPartnerPairing, recostInputs } from "./admin";
 import {
   fetchExpiredWithLabels,
-  fetchUncostedWithLabels
-} from '../services/fetch-with-labels';
-import deleteCollectionAndRemoveDesigns from '../services/delete';
-import requireSubscription from '../../../middleware/require-subscription';
+  fetchUncostedWithLabels,
+} from "../services/fetch-with-labels";
+import deleteCollectionAndRemoveDesigns from "../services/delete";
+import requireSubscription from "../../../middleware/require-subscription";
 
 const router = new Router();
 
@@ -61,26 +61,26 @@ function* createCollection(this: AuthedContext): Iterator<any, any, any> {
     );
 
     if (!CALA_OPS_USER_ID) {
-      throw new Error('Cala Ops user not set!');
+      throw new Error("Cala Ops user not set!");
     }
 
     yield CollaboratorsDAO.create({
       cancelledAt: null,
       collectionId: collection.id,
       designId: null,
-      invitationMessage: '',
-      role: 'EDIT',
+      invitationMessage: "",
+      role: "EDIT",
       userEmail: null,
-      userId
+      userId,
     });
     yield CollaboratorsDAO.create({
       cancelledAt: null,
       collectionId: collection.id,
       designId: null,
-      invitationMessage: '',
-      role: 'EDIT',
+      invitationMessage: "",
+      role: "EDIT",
       userEmail: null,
-      userId: CALA_OPS_USER_ID
+      userId: CALA_OPS_USER_ID,
     });
     const permissions = yield getCollectionPermissions(
       collection,
@@ -91,7 +91,7 @@ function* createCollection(this: AuthedContext): Iterator<any, any, any> {
     this.body = { ...collection, permissions };
     this.status = 201;
   } else {
-    this.throw(400, 'Request does not match Collection');
+    this.throw(400, "Request does not match Collection");
   }
 }
 
@@ -103,11 +103,11 @@ function* getList(this: AuthedContext): Iterator<any, any, any> {
     isExpired,
     limit,
     offset,
-    search
+    search,
   } = this.query;
   const { role, userId: currentUserId } = this.state;
   const userIdToQuery =
-    role === 'ADMIN' ? userId : currentUserId === userId ? currentUserId : null;
+    role === "ADMIN" ? userId : currentUserId === userId ? currentUserId : null;
 
   if (userIdToQuery) {
     const collectionsWithPermissions = yield db.transaction(
@@ -118,7 +118,7 @@ function* getList(this: AuthedContext): Iterator<any, any, any> {
             userId: userIdToQuery,
             limit: Number(limit),
             offset: Number(offset),
-            search
+            search,
           }
         );
         return Promise.all(
@@ -140,17 +140,17 @@ function* getList(this: AuthedContext): Iterator<any, any, any> {
     this.body = collectionsWithPermissions;
     this.status = 200;
   } else if (
-    role === 'ADMIN' &&
-    isCosted === 'false' &&
-    isSubmitted === 'true'
+    role === "ADMIN" &&
+    isCosted === "false" &&
+    isSubmitted === "true"
   ) {
     this.body = yield fetchUncostedWithLabels();
     this.status = 200;
-  } else if (role === 'ADMIN' && isExpired === 'true') {
+  } else if (role === "ADMIN" && isExpired === "true") {
     this.body = yield fetchExpiredWithLabels();
     this.status = 200;
   } else {
-    this.throw(403, 'Unable to match query');
+    this.throw(403, "Unable to match query");
   }
 }
 
@@ -177,7 +177,7 @@ function* getCollection(this: AuthedContext): Iterator<any, any, any> {
     this.body = { ...collection, permissions };
     this.status = 200;
   } else {
-    this.throw(400, 'CollectionId is required!');
+    this.throw(400, "CollectionId is required!");
   }
 }
 
@@ -201,28 +201,28 @@ function* updateCollection(this: AuthedContext): Iterator<any, any, any> {
     this.body = { ...collection, permissions };
     this.status = 200;
   } else {
-    this.throw(400, 'Request to update does not match Collection');
+    this.throw(400, "Request to update does not match Collection");
   }
 }
 
-router.post('/', requireAuth, createCollection);
-router.get('/', requireAuth, getList);
+router.post("/", requireAuth, createCollection);
+router.get("/", requireAuth, getList);
 
 router.del(
-  '/:collectionId',
+  "/:collectionId",
   requireAuth,
   canAccessCollectionInParam,
   canDeleteCollection,
   deleteCollection
 );
 router.get(
-  '/:collectionId',
+  "/:collectionId",
   requireAuth,
   canAccessCollectionInParam,
   getCollection
 );
 router.patch(
-  '/:collectionId',
+  "/:collectionId",
   requireAuth,
   canAccessCollectionInParam,
   canEditCollection,
@@ -230,7 +230,7 @@ router.patch(
 );
 
 router.post(
-  '/:collectionId/submissions',
+  "/:collectionId/submissions",
   requireAuth,
   requireSubscription,
   canAccessCollectionInParam,
@@ -238,7 +238,7 @@ router.post(
   createSubmission
 );
 router.get(
-  '/:collectionId/submissions',
+  "/:collectionId/submissions",
   requireAuth,
   canAccessCollectionInParam,
   getSubmissionStatus
@@ -247,32 +247,32 @@ router.get(
 // Moving Designs
 
 router.get(
-  '/:collectionId/designs',
+  "/:collectionId/designs",
   requireAuth,
   canAccessCollectionInParam,
   getCollectionDesigns
 );
 router.put(
-  '/:collectionId/designs',
+  "/:collectionId/designs",
   requireAuth,
   canAccessCollectionInParam,
   putDesigns
 );
 router.del(
-  '/:collectionId/designs',
+  "/:collectionId/designs",
   requireAuth,
   canAccessCollectionInParam,
   deleteDesigns
 );
 router.del(
-  '/:collectionId/designs/:designId',
+  "/:collectionId/designs/:designId",
   requireAuth,
   canAccessCollectionInParam,
   canEditCollection,
   deleteDesign
 );
 router.put(
-  '/:collectionId/designs/:designId',
+  "/:collectionId/designs/:designId",
   requireAuth,
   canAccessCollectionInParam,
   canEditCollection,
@@ -280,19 +280,19 @@ router.put(
 );
 
 router.post(
-  '/:collectionId/cost-inputs',
+  "/:collectionId/cost-inputs",
   requireAdmin,
   canAccessCollectionInParam,
   commitCostInputs
 );
 router.post(
-  '/:collectionId/recost',
+  "/:collectionId/recost",
   requireAdmin,
   canAccessCollectionInParam,
   recostInputs
 );
 router.post(
-  '/:collectionId/partner-pairings',
+  "/:collectionId/partner-pairings",
   requireAdmin,
   canAccessCollectionInParam,
   createPartnerPairing

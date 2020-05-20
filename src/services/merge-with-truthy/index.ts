@@ -1,4 +1,4 @@
-import { mergeWith } from 'lodash';
+import { mergeWith } from "lodash";
 
 export function mergeWithTruthy<T extends object>(target: T, source: T): T {
   return mergeWith(

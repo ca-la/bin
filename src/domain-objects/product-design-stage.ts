@@ -1,5 +1,5 @@
-import DataAdapter from '../services/data-adapter';
-import { hasProperties } from '../services/require-properties';
+import DataAdapter from "../services/data-adapter";
+import { hasProperties } from "../services/require-properties";
 
 /**
  * @typedef {object} Task A unit of work to be completed in the developement of a garment
@@ -40,16 +40,16 @@ export const dataAdapter = new DataAdapter<
 export function isDesignStageRequest(
   candidate: object
 ): candidate is ProductDesignStageRequest {
-  return hasProperties(candidate, 'designId', 'title', 'ordering');
+  return hasProperties(candidate, "designId", "title", "ordering");
 }
 
 export function isDesignStageRow(row: object): row is ProductDesignStageRow {
   return hasProperties(
     row,
-    'id',
-    'design_id',
-    'created_at',
-    'title',
-    'ordering'
+    "id",
+    "design_id",
+    "created_at",
+    "title",
+    "ordering"
   );
 }

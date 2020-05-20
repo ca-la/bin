@@ -1,7 +1,7 @@
-import uuid from 'node-uuid';
-import { Cents, Dollars } from '../../services/dollars';
-import { PricingProductTypeRow } from '../../components/pricing-product-types/domain-object';
-import { daysToMs } from '../time-conversion';
+import uuid from "node-uuid";
+import { Cents, Dollars } from "../../services/dollars";
+import { PricingProductTypeRow } from "../../components/pricing-product-types/domain-object";
+import { daysToMs } from "../time-conversion";
 
 // [units, priceMultiplier, timeMultiplier]
 const currentUnitsAndMultiplier: [number, number, number][] = [
@@ -20,7 +20,7 @@ const currentUnitsAndMultiplier: [number, number, number][] = [
   [750, 0.5, 1.25],
   [1250, 0.5, 1.8],
   [1500, 0.25, 1.8],
-  [2000, 0.25, 1.9]
+  [2000, 0.25, 1.9],
 ];
 
 const baseCreationDays = 0;
@@ -34,7 +34,7 @@ const timeComplexityMultiple = {
   blank: 0.3,
   complex: 1.25,
   medium: 1,
-  simple: 0.5
+  simple: 0.5,
 };
 
 interface ProductTypeGeneratorArgs {
@@ -55,7 +55,7 @@ export default function generateProductTypes(
     typeName,
     typeYield,
     contrast,
-    version
+    version,
   } = args;
   return currentUnitsAndMultiplier.reduce(
     (
@@ -64,7 +64,7 @@ export default function generateProductTypes(
     ): Uninserted<PricingProductTypeRow>[] =>
       acc.concat([
         {
-          complexity: 'SIMPLE',
+          complexity: "SIMPLE",
           contrast: contrast[0],
           creation_time_ms: daysToMs(baseCreationDays).toString(),
           fulfillment_time_ms: daysToMs(baseFulfillmentDays).toString(),
@@ -89,10 +89,10 @@ export default function generateProductTypes(
           ).toString(),
           unit_cents: Math.ceil(typeMediumCents * 0.75 * unitMultiplier),
           version,
-          yield: typeYield
+          yield: typeYield,
         },
         {
-          complexity: 'MEDIUM',
+          complexity: "MEDIUM",
           contrast: contrast[1],
           creation_time_ms: daysToMs(baseCreationDays).toString(),
           fulfillment_time_ms: daysToMs(baseFulfillmentDays).toString(),
@@ -117,10 +117,10 @@ export default function generateProductTypes(
           ).toString(),
           unit_cents: Math.ceil(typeMediumCents * 1 * unitMultiplier),
           version,
-          yield: typeYield
+          yield: typeYield,
         },
         {
-          complexity: 'COMPLEX',
+          complexity: "COMPLEX",
           contrast: contrast[2],
           creation_time_ms: daysToMs(baseCreationDays).toString(),
           fulfillment_time_ms: daysToMs(baseFulfillmentDays).toString(),
@@ -145,10 +145,10 @@ export default function generateProductTypes(
           ).toString(),
           unit_cents: Math.ceil(typeMediumCents * 1.75 * unitMultiplier),
           version,
-          yield: typeYield
+          yield: typeYield,
         },
         {
-          complexity: 'BLANK',
+          complexity: "BLANK",
           contrast: contrast[3],
           creation_time_ms: daysToMs(baseCreationDays).toString(),
           fulfillment_time_ms: daysToMs(baseSpecificationDays).toString(),
@@ -162,15 +162,15 @@ export default function generateProductTypes(
           production_time_ms: daysToMs(
             typeMediumDays * timeComplexityMultiple.blank * timeMultiplier
           ).toString(),
-          sampling_time_ms: '0',
-          sourcing_time_ms: '0',
+          sampling_time_ms: "0",
+          sourcing_time_ms: "0",
           specification_time_ms: (
             daysToMs(baseSpecificationDays) * timeComplexityMultiple.blank
           ).toString(),
           unit_cents: 0,
           version,
-          yield: typeYield
-        }
+          yield: typeYield,
+        },
       ]),
     []
   );

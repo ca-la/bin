@@ -1,12 +1,12 @@
-import Knex from 'knex';
-import { insecureHash } from '../insecure-hash';
-import Logger from '../logger';
-import makeRequest from './make-request';
-import PaymentMethodsDAO from '../../components/payment-methods/dao';
-import * as UsersDAO from '../../components/users/dao';
-import { STRIPE_SECRET_KEY } from '../../config';
+import Knex from "knex";
+import { insecureHash } from "../insecure-hash";
+import Logger from "../logger";
+import makeRequest from "./make-request";
+import PaymentMethodsDAO from "../../components/payment-methods/dao";
+import * as UsersDAO from "../../components/users/dao";
+import { STRIPE_SECRET_KEY } from "../../config";
 
-const STRIPE_CONNECT_API_BASE = 'https://connect.stripe.com';
+const STRIPE_CONNECT_API_BASE = "https://connect.stripe.com";
 
 interface StripeChargeOptions {
   customerId: string;
@@ -29,17 +29,17 @@ export async function charge(options: StripeChargeOptions): Promise<object> {
   );
 
   return makeRequest({
-    method: 'post',
-    path: '/charges',
+    method: "post",
+    path: "/charges",
     data: {
       amount: amountCents,
-      currency: 'usd',
+      currency: "usd",
       source: sourceId,
       description,
       customer: customerId,
-      transfer_group: invoiceId
+      transfer_group: invoiceId,
     },
-    idempotencyKey
+    idempotencyKey,
   });
 }
 
@@ -63,33 +63,33 @@ export async function sendTransfer(
   );
 
   return makeRequest({
-    method: 'post',
-    path: '/transfers',
+    method: "post",
+    path: "/transfers",
     data: {
       amount: amountCents,
-      currency: 'usd',
+      currency: "usd",
       destination,
       description,
-      transfer_group: bidId || invoiceId
+      transfer_group: bidId || invoiceId,
     },
-    idempotencyKey
+    idempotencyKey,
   });
 }
 
 async function createCustomer({
   email,
-  name
+  name,
 }: {
   email: string;
   name: string;
 }): Promise<{ id: string }> {
   return makeRequest<{ id: string }>({
-    method: 'post',
-    path: '/customers',
+    method: "post",
+    path: "/customers",
     data: {
       email,
-      description: name
-    }
+      description: name,
+    },
   });
 }
 
@@ -116,8 +116,8 @@ export async function findOrCreateCustomerId(
     );
   }
   const customer = await createCustomer({
-    name: user.name || '',
-    email: user.email
+    name: user.name || "",
+    email: user.email,
   });
   return customer.id;
 }
@@ -128,32 +128,32 @@ export async function createConnectAccount(
 ): Promise<object> {
   return makeRequest({
     apiBase: STRIPE_CONNECT_API_BASE,
-    method: 'post',
-    path: '/oauth/token',
+    method: "post",
+    path: "/oauth/token",
     data: {
       client_secret: STRIPE_SECRET_KEY,
-      grant_type: 'authorization_code',
-      code: authorizationCode
-    }
+      grant_type: "authorization_code",
+      code: authorizationCode,
+    },
   });
 }
 
 export async function createLoginLink(accountId: string): Promise<string> {
   try {
     const response = await makeRequest<{ url: string }>({
-      method: 'post',
-      path: `/accounts/${accountId}/login_links`
+      method: "post",
+      path: `/accounts/${accountId}/login_links`,
     });
 
     if (!response || !response.url) {
       Logger.log(response);
-      throw new Error('Could not parse Stripe login URL from response');
+      throw new Error("Could not parse Stripe login URL from response");
     }
 
     return response.url;
   } catch (err) {
-    if (err.message.indexOf('not an Express account') > -1) {
-      return 'https://dashboard.stripe.com/';
+    if (err.message.indexOf("not an Express account") > -1) {
+      return "https://dashboard.stripe.com/";
     }
 
     throw err;

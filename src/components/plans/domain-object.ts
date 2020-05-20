@@ -1,8 +1,8 @@
-import DataAdapter, { defaultEncoder } from '../../services/data-adapter';
-import { hasProperties } from '../../services/require-properties';
-import { BillingInterval, Plan } from './plan';
+import DataAdapter, { defaultEncoder } from "../../services/data-adapter";
+import { hasProperties } from "../../services/require-properties";
+import { BillingInterval, Plan } from "./plan";
 
-export { BillingInterval, Plan } from './plan';
+export { BillingInterval, Plan } from "./plan";
 
 export interface PlanRow {
   id: string;
@@ -21,7 +21,7 @@ export interface PlanRow {
 function encode(row: PlanRow): Plan {
   return {
     ...defaultEncoder<PlanRow, Plan>(row),
-    monthlyCostCents: Number(row.monthly_cost_cents)
+    monthlyCostCents: Number(row.monthly_cost_cents),
   };
 }
 
@@ -30,33 +30,33 @@ export const dataAdapter = new DataAdapter<PlanRow, Plan>(encode);
 export function isPlanRow(row: object): row is PlanRow {
   return hasProperties(
     row,
-    'id',
-    'billing_interval',
-    'created_at',
-    'monthly_cost_cents',
-    'revenue_share_percentage',
-    'stripe_plan_id',
-    'title',
-    'is_default',
-    'is_public',
-    'description',
-    'ordering'
+    "id",
+    "billing_interval",
+    "created_at",
+    "monthly_cost_cents",
+    "revenue_share_percentage",
+    "stripe_plan_id",
+    "title",
+    "is_default",
+    "is_public",
+    "description",
+    "ordering"
   );
 }
 
 export function isPlan(data: object): data is Plan {
   return hasProperties(
     data,
-    'id',
-    'billingInterval',
-    'createdAt',
-    'monthlyCostCents',
-    'revenueSharePercentage',
-    'stripePlanId',
-    'title',
-    'isDefault',
-    'isPublic',
-    'description',
-    'ordering'
+    "id",
+    "billingInterval",
+    "createdAt",
+    "monthlyCostCents",
+    "revenueSharePercentage",
+    "stripePlanId",
+    "title",
+    "isDefault",
+    "isPublic",
+    "description",
+    "ordering"
   );
 }

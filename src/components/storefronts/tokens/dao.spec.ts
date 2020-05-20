@@ -1,32 +1,32 @@
-import * as Knex from 'knex';
+import * as Knex from "knex";
 
-import db from '../../../services/db';
-import { test, Test } from '../../../test-helpers/fresh';
-import createUser from '../../../test-helpers/create-user';
-import { ProviderName } from './domain-object';
-import * as StorefrontsDAO from '../dao';
-import * as StorefrontTokensDAO from './dao';
+import db from "../../../services/db";
+import { test, Test } from "../../../test-helpers/fresh";
+import createUser from "../../../test-helpers/create-user";
+import { ProviderName } from "./domain-object";
+import * as StorefrontsDAO from "../dao";
+import * as StorefrontTokensDAO from "./dao";
 
-test('StorefrontTokensDAO can save and retrieve stores', async (t: Test) => {
+test("StorefrontTokensDAO can save and retrieve stores", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
 
   await db.transaction(async (trx: Knex.Transaction) => {
     const storefront = await StorefrontsDAO.create({
       data: {
         createdBy: user.id,
-        name: 'My Cool Store'
+        name: "My Cool Store",
       },
-      trx
+      trx,
     });
     const created = await StorefrontTokensDAO.create({
       data: {
-        baseUrl: 'https://some-url',
+        baseUrl: "https://some-url",
         createdBy: user.id,
         providerName: ProviderName.SHOPIFY,
         storefrontId: storefront.id,
-        token: 'a very secure string'
+        token: "a very secure string",
       },
-      trx
+      trx,
     });
     const found = await StorefrontTokensDAO.findById(created.id, trx);
 
@@ -35,7 +35,7 @@ test('StorefrontTokensDAO can save and retrieve stores', async (t: Test) => {
 
     const foundByStorefront = await StorefrontTokensDAO.findByStorefront({
       storefrontId: storefront.id,
-      trx
+      trx,
     });
     t.deepEqual([created], foundByStorefront);
   });

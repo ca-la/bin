@@ -1,19 +1,19 @@
-import Knex from 'knex';
-import { queryComments } from '../comments/dao';
+import Knex from "knex";
+import { queryComments } from "../comments/dao";
 
 export const ALIASES = {
-  collaboratorId: 'collaborators_forcollaboratorsviewraw.id',
-  userId: 'users_forcollaboratorsviewraw.id'
+  collaboratorId: "collaborators_forcollaboratorsviewraw.id",
+  userId: "users_forcollaboratorsviewraw.id",
 };
 
 export const annotationCommentsView = (
   trx?: Knex.Transaction
 ): Knex.QueryBuilder =>
   queryComments(trx)
-    .select('ac.annotation_id AS annotation_id')
+    .select("ac.annotation_id AS annotation_id")
     .leftJoin(
-      'product_design_canvas_annotation_comments AS ac',
-      'ac.comment_id',
-      'comments.id'
+      "product_design_canvas_annotation_comments AS ac",
+      "ac.comment_id",
+      "comments.id"
     )
-    .whereNot({ 'ac.annotation_id': null });
+    .whereNot({ "ac.annotation_id": null });

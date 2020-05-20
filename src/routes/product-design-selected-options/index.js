@@ -1,29 +1,29 @@
-'use strict';
+"use strict";
 
-const Router = require('koa-router');
-const pick = require('lodash/pick');
+const Router = require("koa-router");
+const pick = require("lodash/pick");
 
-const filterError = require('../../services/filter-error');
-const InvalidDataError = require('../../errors/invalid-data');
-const ProductDesignSelectedOptionsDAO = require('../../dao/product-design-selected-options');
-const requireAuth = require('../../middleware/require-auth');
+const filterError = require("../../services/filter-error");
+const InvalidDataError = require("../../errors/invalid-data");
+const ProductDesignSelectedOptionsDAO = require("../../dao/product-design-selected-options");
+const requireAuth = require("../../middleware/require-auth");
 const {
-  attachDesignPermissions
-} = require('../../middleware/can-access-design');
+  attachDesignPermissions,
+} = require("../../middleware/can-access-design");
 
 const router = new Router();
 
 const ALLOWED_ATTRS = [
-  'designId',
-  'panelId',
-  'sectionId',
-  'optionId',
-  'unitsRequiredPerGarment',
-  'fabricDyeProcessName',
-  'fabricDyeProcessColor',
-  'fabricWashProcessName',
-  'fabricCustomProcessNames',
-  'garmentComponentName'
+  "designId",
+  "panelId",
+  "sectionId",
+  "optionId",
+  "unitsRequiredPerGarment",
+  "fabricDyeProcessName",
+  "fabricDyeProcessColor",
+  "fabricWashProcessName",
+  "fabricCustomProcessNames",
+  "garmentComponentName",
 ];
 
 function* canAccessSelectedOption(next) {
@@ -44,7 +44,7 @@ function* create() {
 
   const option = yield ProductDesignSelectedOptionsDAO.create(
     allowedAttrs
-  ).catch(filterError(InvalidDataError, err => this.throw(404, err)));
+  ).catch(filterError(InvalidDataError, (err) => this.throw(404, err)));
 
   this.body = option;
   this.status = 201;
@@ -52,7 +52,7 @@ function* create() {
 
 function* getByDesign() {
   const { designId } = this.query;
-  this.assert(designId, 403, 'Design ID required');
+  this.assert(designId, 403, "Design ID required");
 
   yield attachDesignPermissions.call(this, designId);
 
@@ -80,14 +80,14 @@ function* update() {
   this.status = 200;
 }
 
-router.post('/', requireAuth, create);
-router.get('/', requireAuth, getByDesign);
+router.post("/", requireAuth, create);
+router.get("/", requireAuth, getByDesign);
 router.del(
-  '/:optionId',
+  "/:optionId",
   requireAuth,
   canAccessSelectedOption,
   deleteSelectedOption
 );
-router.patch('/:optionId', requireAuth, canAccessSelectedOption, update);
+router.patch("/:optionId", requireAuth, canAccessSelectedOption, update);
 
 module.exports = router.routes();

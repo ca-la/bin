@@ -1,29 +1,29 @@
-import Knex from 'knex';
-import Router from 'koa-router';
-import rethrow = require('pg-rethrow');
+import Knex from "knex";
+import Router from "koa-router";
+import rethrow = require("pg-rethrow");
 
-import * as UsersDAO from './dao';
-import applyCode from '../../components/promo-codes/apply-code';
-import canAccessUserResource = require('../../middleware/can-access-user-resource');
-import claimDesignInvitations = require('../../services/claim-design-invitations');
-import CohortsDAO = require('../../components/cohorts/dao');
-import CohortUsersDAO = require('../../components/cohorts/users/dao');
-import compact from '../../services/compact';
-import createOrUpdateSubscription from '../subscriptions/create-or-update';
-import db from '../../services/db';
-import DuplicationService = require('../../services/duplicate');
-import filterError = require('../../services/filter-error');
-import InvalidDataError from '../../errors/invalid-data';
-import MailChimp = require('../../services/mailchimp');
-import MultipleErrors from '../../errors/multiple-errors';
-import requireAuth = require('../../middleware/require-auth');
-import SessionsDAO = require('../../dao/sessions');
-import User, { Role, ROLES, UserIO } from './domain-object';
-import { DEFAULT_DESIGN_IDS, REQUIRE_CALA_EMAIL } from '../../config';
-import { hasProperties } from '../../services/require-properties';
-import { isValidEmail } from '../../services/validation';
-import { logServerError } from '../../services/logger';
-import { validatePassword } from './services/validate-password';
+import * as UsersDAO from "./dao";
+import applyCode from "../../components/promo-codes/apply-code";
+import canAccessUserResource = require("../../middleware/can-access-user-resource");
+import claimDesignInvitations = require("../../services/claim-design-invitations");
+import CohortsDAO = require("../../components/cohorts/dao");
+import CohortUsersDAO = require("../../components/cohorts/users/dao");
+import compact from "../../services/compact";
+import createOrUpdateSubscription from "../subscriptions/create-or-update";
+import db from "../../services/db";
+import DuplicationService = require("../../services/duplicate");
+import filterError = require("../../services/filter-error");
+import InvalidDataError from "../../errors/invalid-data";
+import MailChimp = require("../../services/mailchimp");
+import MultipleErrors from "../../errors/multiple-errors";
+import requireAuth = require("../../middleware/require-auth");
+import SessionsDAO = require("../../dao/sessions");
+import User, { Role, ROLES, UserIO } from "./domain-object";
+import { DEFAULT_DESIGN_IDS, REQUIRE_CALA_EMAIL } from "../../config";
+import { hasProperties } from "../../services/require-properties";
+import { isValidEmail } from "../../services/validation";
+import { logServerError } from "../../services/logger";
+import { validatePassword } from "./services/validate-password";
 
 const router = new Router();
 
@@ -43,23 +43,23 @@ function* createUser(this: PublicContext<CreateBody>): Iterator<any, any, any> {
     phone,
     lastAcceptedDesignerTermsAt,
     planId,
-    stripeCardToken
+    stripeCardToken,
   } = this.request.body;
   const { cohort, initialDesigns, promoCode } = this.query;
 
   if (!email) {
-    this.throw(400, 'Email must be provided');
+    this.throw(400, "Email must be provided");
   }
 
   if (REQUIRE_CALA_EMAIL && !email.match(/@((ca\.la)|(calastg\.com))$/)) {
     // tslint:disable-next-line:max-line-length
     this.throw(
       400,
-      'Only @ca.la or @calastg.com emails can sign up on this server. Please visit https://app.ca.la to access the live version of Studio'
+      "Only @ca.la or @calastg.com emails can sign up on this server. Please visit https://app.ca.la to access the live version of Studio"
     );
   }
 
-  const referralCode = 'n/a';
+  const referralCode = "n/a";
 
   // TODO: Move all other resource creations into transaction
   const user = yield db.transaction(async (trx: Knex.Transaction) => {
@@ -71,7 +71,7 @@ function* createUser(this: PublicContext<CreateBody>): Iterator<any, any, any> {
         password,
         phone,
         referralCode,
-        role: ROLES.user
+        role: ROLES.user,
       },
       { requirePassword: false, trx }
     ).catch(
@@ -83,7 +83,7 @@ function* createUser(this: PublicContext<CreateBody>): Iterator<any, any, any> {
         userId: userInTrx.id,
         stripeCardToken,
         planId,
-        trx
+        trx,
       }).catch(
         filterError(InvalidDataError, (err: InvalidDataError) =>
           this.throw(400, err)
@@ -101,7 +101,7 @@ function* createUser(this: PublicContext<CreateBody>): Iterator<any, any, any> {
     if (targetCohort) {
       yield CohortUsersDAO.create({
         cohortId: targetCohort.id,
-        userId: user.id
+        userId: user.id,
       });
     }
   }
@@ -119,7 +119,7 @@ function* createUser(this: PublicContext<CreateBody>): Iterator<any, any, any> {
       cohort: targetCohort && targetCohort.slug,
       email,
       name,
-      referralCode
+      referralCode,
     });
   } catch (err) {
     // Not rethrowing since this shouldn't be fatal... but if we ever see this
@@ -139,7 +139,7 @@ function* createUser(this: PublicContext<CreateBody>): Iterator<any, any, any> {
   } else {
     // This will start off the user with any number of 'default' designs that
     // will automatically show in their drafts when they first log in.
-    const defaultDesignIds = DEFAULT_DESIGN_IDS.split(',');
+    const defaultDesignIds = DEFAULT_DESIGN_IDS.split(",");
     yield DuplicationService.duplicateDesigns(user.id, defaultDesignIds);
   }
 
@@ -147,7 +147,7 @@ function* createUser(this: PublicContext<CreateBody>): Iterator<any, any, any> {
   // attached user) rather than just a user.
   // Not the most RESTful thing in the world... but much nicer from a client
   // perspective.
-  if (this.query.returnValue === 'session') {
+  if (this.query.returnValue === "session") {
     const session = yield SessionsDAO.createForUser(user);
     this.body = session;
   } else {
@@ -170,13 +170,13 @@ function* updatePassword(
   this.assert(
     this.params.userId === this.state.userId,
     403,
-    'You can only update your own user'
+    "You can only update your own user"
   );
   const { body } = this.request;
   const hasPassword = (data: object): data is WithPassword => {
-    return hasProperties(data, 'password');
+    return hasProperties(data, "password");
   };
-  this.assert(hasPassword(body), 400, 'Must include a password');
+  this.assert(hasPassword(body), 400, "Must include a password");
 
   const { password } = body;
   yield UsersDAO.updatePassword(this.params.userId, password);
@@ -188,12 +188,12 @@ function* updatePassword(
 function* acceptDesignerTerms(this: AuthedContext): Iterator<any, any, any> {
   canAccessUserResource.call(this, this.params.userId);
   const updated = yield UsersDAO.update(this.params.userId, {
-    lastAcceptedDesignerTermsAt: new Date()
+    lastAcceptedDesignerTermsAt: new Date(),
   });
 
-  if (this.query.returnValue === 'session') {
+  if (this.query.returnValue === "session") {
     const session = yield SessionsDAO.createForUser(updated, {
-      role: this.state.role
+      role: this.state.role,
     });
     this.body = session;
   } else {
@@ -207,12 +207,12 @@ function* acceptPartnerTerms(this: AuthedContext): Iterator<any, any, any> {
   canAccessUserResource.call(this, this.params.userId);
 
   const updated = yield UsersDAO.update(this.params.userId, {
-    lastAcceptedPartnerTermsAt: new Date()
+    lastAcceptedPartnerTermsAt: new Date(),
   });
 
-  if (this.query.returnValue === 'session') {
+  if (this.query.returnValue === "session") {
     const session = yield SessionsDAO.createForUser(updated, {
-      role: this.state.role
+      role: this.state.role,
     });
     this.body = session;
   } else {
@@ -243,7 +243,7 @@ function* updateUser(
   this.assert(
     isAdmin || isCurrentUser,
     403,
-    'You can only update your own user'
+    "You can only update your own user"
   );
   const { body } = this.request;
   const {
@@ -253,7 +253,7 @@ function* updateUser(
     email,
     role,
     newPassword,
-    currentPassword
+    currentPassword,
   } = body;
 
   if (isAdmin && role) {
@@ -265,12 +265,12 @@ function* updateUser(
     email,
     locale,
     name,
-    phone
+    phone,
   };
 
   if (isAdmin) {
     Object.assign(updatedValues, {
-      role
+      role,
     });
   }
 
@@ -285,9 +285,9 @@ function* updateUser(
           await UsersDAO.updatePassword(this.params.userId, newPassword, trx);
         } else {
           errors.push({
-            field: 'password',
-            message: 'Invalid password',
-            name: 'InvalidPassword'
+            field: "password",
+            message: "Invalid password",
+            name: "InvalidPassword",
           });
         }
       } else if (newPassword && !currentPassword) {
@@ -299,9 +299,9 @@ function* updateUser(
           await UsersDAO.updatePassword(this.state.userId, newPassword, trx);
         } else {
           errors.push({
-            field: 'password',
-            message: 'A password is already set for this account',
-            name: 'PasswordIsAlreadySet'
+            field: "password",
+            message: "A password is already set for this account",
+            name: "PasswordIsAlreadySet",
           });
         }
       }
@@ -317,11 +317,11 @@ function* updateUser(
             rethrow.ERRORS.UniqueViolation,
             (err: Error & { constraint: string }) => {
               switch (err.constraint) {
-                case 'users_unique_email':
+                case "users_unique_email":
                   errors.push({
-                    field: 'email',
-                    message: 'Invalid email',
-                    name: 'InvalidEmail'
+                    field: "email",
+                    message: "Invalid email",
+                    name: "InvalidEmail",
                   });
                   break;
                 default:
@@ -331,11 +331,9 @@ function* updateUser(
           )
         );
     })
-    .catch(
-      (err: Error): void => {
-        errors.push(err);
-      }
-    );
+    .catch((err: Error): void => {
+      errors.push(err);
+    });
 
   if (errors.length > 0) {
     const error = new MultipleErrors<Error | CaughtError>(errors);
@@ -354,7 +352,7 @@ function* getAllUsers(this: AuthedContext): Iterator<any, any, any> {
     limit: Number(this.query.limit) || 10,
     offset: Number(this.query.offset) || 0,
     role: this.query.role as Role,
-    search: this.query.search
+    search: this.query.search,
   });
 
   this.body = users;
@@ -372,7 +370,7 @@ function* getUser(this: AuthedContext): Iterator<any, any, any> {
   this.assert(this.state.role === ROLES.admin, 403);
 
   const user = yield UsersDAO.findById(this.params.userId);
-  this.assert(user, 404, 'User not found');
+  this.assert(user, 404, "User not found");
   this.body = user;
   this.status = 200;
 }
@@ -393,7 +391,7 @@ function* getEmailAvailability(this: AuthedContext): Iterator<any, any, any> {
   this.body = {
     available: isValid && !isTaken,
     isTaken,
-    isValid
+    isValid,
   };
 
   this.status = 200;
@@ -407,7 +405,7 @@ function* getUnpaidPartners(this: AuthedContext): Iterator<any, any, any> {
     limit: Number(this.query.limit) || 10,
     offset: Number(this.query.offset) || 0,
     role: this.query.role as Role,
-    search: this.query.search
+    search: this.query.search,
   });
 
   this.body = partners;
@@ -415,15 +413,15 @@ function* getUnpaidPartners(this: AuthedContext): Iterator<any, any, any> {
   this.status = 200;
 }
 
-router.get('/', getList);
-router.get('/:userId', requireAuth, getUser);
-router.get('/email-availability/:email', getEmailAvailability);
-router.get('/unpaid-partners', getUnpaidPartners);
-router.post('/', createUser);
-router.post('/:userId/accept-designer-terms', requireAuth, acceptDesignerTerms);
-router.post('/:userId/accept-partner-terms', requireAuth, acceptPartnerTerms);
-router.put('/:userId', requireAuth, updateUser); // TODO: deprecate
-router.put('/:userId/password', requireAuth, updatePassword);
-router.patch('/:userId', requireAuth, updateUser);
+router.get("/", getList);
+router.get("/:userId", requireAuth, getUser);
+router.get("/email-availability/:email", getEmailAvailability);
+router.get("/unpaid-partners", getUnpaidPartners);
+router.post("/", createUser);
+router.post("/:userId/accept-designer-terms", requireAuth, acceptDesignerTerms);
+router.post("/:userId/accept-partner-terms", requireAuth, acceptPartnerTerms);
+router.put("/:userId", requireAuth, updateUser); // TODO: deprecate
+router.put("/:userId/password", requireAuth, updatePassword);
+router.patch("/:userId", requireAuth, updateUser);
 
 export default router.routes();

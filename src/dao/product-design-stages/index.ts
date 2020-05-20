@@ -1,17 +1,17 @@
-import Knex from 'knex';
-import uuid from 'node-uuid';
-import { QueryResult } from 'pg';
+import Knex from "knex";
+import uuid from "node-uuid";
+import { QueryResult } from "pg";
 
-import db from '../../services/db';
+import db from "../../services/db";
 import ProductDesignStage, {
   dataAdapter,
   isDesignStageRow,
-  ProductDesignStageRow
-} from '../../domain-objects/product-design-stage';
-import first from '../../services/first';
-import { validate, validateEvery } from '../../services/validate-from-db';
+  ProductDesignStageRow,
+} from "../../domain-objects/product-design-stage";
+import first from "../../services/first";
+import { validate, validateEvery } from "../../services/validate-from-db";
 
-const TABLE_NAME = 'product_design_stages';
+const TABLE_NAME = "product_design_stages";
 
 export async function create(
   data: Unsaved<ProductDesignStage>,
@@ -19,10 +19,10 @@ export async function create(
 ): Promise<ProductDesignStage> {
   const rowData = dataAdapter.forInsertion({
     ...data,
-    id: uuid.v4()
+    id: uuid.v4(),
   });
   const created = await db(TABLE_NAME)
-    .insert(rowData, '*')
+    .insert(rowData, "*")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
@@ -33,7 +33,7 @@ export async function create(
     );
 
   if (!created) {
-    throw new Error('Failed to create rows');
+    throw new Error("Failed to create rows");
   }
 
   return validate<ProductDesignStageRow, ProductDesignStage>(
@@ -55,11 +55,11 @@ export async function createAll(
   const rowData = data.map((datum: Unsaved<ProductDesignStage>) =>
     dataAdapter.forInsertion({
       ...datum,
-      id: uuid.v4()
+      id: uuid.v4(),
     })
   );
   const created = await db(TABLE_NAME)
-    .insert(rowData, '*')
+    .insert(rowData, "*")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
@@ -79,9 +79,9 @@ export async function findById(
   trx?: Knex.Transaction
 ): Promise<ProductDesignStage | null> {
   const stages: ProductDesignStageRow[] = await db(TABLE_NAME)
-    .select('*')
+    .select("*")
     .where({ id })
-    .orderBy('created_at', 'asc')
+    .orderBy("created_at", "asc")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
@@ -106,9 +106,9 @@ export async function findAllByDesignId(
   designId: string
 ): Promise<ProductDesignStage[]> {
   const stages: ProductDesignStageRow[] = await db(TABLE_NAME)
-    .select('*')
+    .select("*")
     .where({ design_id: designId })
-    .orderBy('ordering', 'asc');
+    .orderBy("ordering", "asc");
 
   return validateEvery<ProductDesignStageRow, ProductDesignStage>(
     TABLE_NAME,

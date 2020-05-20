@@ -1,32 +1,32 @@
-import readline from 'readline';
-import process from 'process';
-import fs from 'fs';
-import uuid from 'node-uuid';
-import meow from 'meow';
-import parse from 'csv-parse/lib/sync';
-import Knex from 'knex';
-import { isEqual, uniqWith, chunk } from 'lodash';
+import readline from "readline";
+import process from "process";
+import fs from "fs";
+import uuid from "node-uuid";
+import meow from "meow";
+import parse from "csv-parse/lib/sync";
+import Knex from "knex";
+import { isEqual, uniqWith, chunk } from "lodash";
 
-import db from '../services/db';
-import { log } from '../services/logger';
-import { hasOnlyProperties } from '../services/require-properties';
-import { PricingConstantRow } from '../domain-objects/pricing-constant';
-import { PricingProductTypeRow } from '../components/pricing-product-types/domain-object';
-import { PricingCareLabelRow } from '../domain-objects/pricing-care-label';
-import { PricingMarginRow } from '../domain-objects/pricing-margin';
-import { PricingProcessRow } from '../domain-objects/pricing-process';
-import { PricingProcessTimelineRow } from '../components/pricing-process-timeline/domain-object';
-import { PricingProductMaterialRow } from '../domain-objects/pricing-product-material';
+import db from "../services/db";
+import { log } from "../services/logger";
+import { hasOnlyProperties } from "../services/require-properties";
+import { PricingConstantRow } from "../domain-objects/pricing-constant";
+import { PricingProductTypeRow } from "../components/pricing-product-types/domain-object";
+import { PricingCareLabelRow } from "../domain-objects/pricing-care-label";
+import { PricingMarginRow } from "../domain-objects/pricing-margin";
+import { PricingProcessRow } from "../domain-objects/pricing-process";
+import { PricingProcessTimelineRow } from "../components/pricing-process-timeline/domain-object";
+import { PricingProductMaterialRow } from "../domain-objects/pricing-product-material";
 
 const CHUNK_SIZE = 2000;
 
 const rl = readline.createInterface({
   input: process.stdin,
-  output: process.stdout
+  output: process.stdout,
 });
 
 type Stringly<T extends { id: any; created_at: any; version: any }> = {
-  [P in keyof Omit<T, 'id' | 'created_at' | 'version'>]: string
+  [P in keyof Omit<T, "id" | "created_at" | "version">]: string;
 };
 
 type RawConstants = Stringly<PricingConstantRow>;
@@ -64,23 +64,23 @@ const cli = meow(HELP_TEXT, {
   flags: {
     dryRun: {
       default: false,
-      type: 'boolean'
+      type: "boolean",
     },
     force: {
-      alias: 'f',
+      alias: "f",
       default: false,
-      type: 'boolean'
+      type: "boolean",
     },
     table: {
-      alias: 't',
-      type: 'string'
+      alias: "t",
+      type: "string",
     },
     verbose: {
-      alias: 'v',
+      alias: "v",
       default: true,
-      type: 'boolean'
-    }
-  }
+      type: "boolean",
+    },
+  },
 });
 
 interface TableMap {
@@ -93,13 +93,13 @@ interface TableMap {
   types: string;
 }
 const tableMap: TableMap = {
-  constants: 'pricing_constants',
-  labels: 'pricing_care_labels',
-  margins: 'pricing_margins',
-  materials: 'pricing_product_materials',
-  processTimelines: 'pricing_process_timelines',
-  processes: 'pricing_processes',
-  types: 'pricing_product_types'
+  constants: "pricing_constants",
+  labels: "pricing_care_labels",
+  margins: "pricing_margins",
+  materials: "pricing_product_materials",
+  processTimelines: "pricing_process_timelines",
+  processes: "pricing_processes",
+  types: "pricing_product_types",
 };
 
 type TableKey = keyof TableMap;
@@ -120,7 +120,7 @@ async function main(): Promise<void> {
     throw new Error(`You must pass in a valid table name.\n${HELP_TEXT}`);
   }
   if (!fs.existsSync(cli.input[0])) {
-    throw new Error('Input file not found');
+    throw new Error("Input file not found");
   }
 
   const csvText = fs.readFileSync(cli.input[0]).toString();
@@ -131,7 +131,7 @@ async function main(): Promise<void> {
   const casted = castFromRaw(tableName, latestVersion, deduplicated);
 
   if (!casted) {
-    throw new Error('Could not properly parse csv into row type');
+    throw new Error("Could not properly parse csv into row type");
   }
 
   if (cli.flags.verbose) {
@@ -189,17 +189,13 @@ function ask(
   readlineInterface: readline.ReadLine,
   question: string
 ): Promise<string> {
-  return new Promise(
-    (resolve: (value: string) => void): void => {
-      readlineInterface.question(question, resolve);
-    }
-  );
+  return new Promise((resolve: (value: string) => void): void => {
+    readlineInterface.question(question, resolve);
+  });
 }
 
 async function getLatestVersion(tableName: string): Promise<number> {
-  const row = await db(tableName)
-    .max('version')
-    .first();
+  const row = await db(tableName).max("version").first();
 
   return row.max !== null ? row.max : -1;
 }
@@ -209,7 +205,7 @@ function buildInsertQuery(
   tableName: string,
   casted: DomainObject[]
 ): Knex.QueryBuilder {
-  return trx(tableName).insert(casted, 'id');
+  return trx(tableName).insert(casted, "id");
 }
 
 function castFromRaw(
@@ -217,34 +213,34 @@ function castFromRaw(
   latestVersion: number,
   raw: object[]
 ): DomainObject[] | null {
-  if (tableName === 'pricing_constants' && isEveryRawConstants(raw)) {
+  if (tableName === "pricing_constants" && isEveryRawConstants(raw)) {
     return raw.map(toConstants.bind(null, latestVersion));
   }
 
-  if (tableName === 'pricing_product_types' && isEveryRawType(raw)) {
+  if (tableName === "pricing_product_types" && isEveryRawType(raw)) {
     return raw.map(toType.bind(null, latestVersion));
   }
 
-  if (tableName === 'pricing_care_labels' && isEveryRawLabel(raw)) {
+  if (tableName === "pricing_care_labels" && isEveryRawLabel(raw)) {
     return raw.map(toLabel.bind(null, latestVersion));
   }
 
-  if (tableName === 'pricing_margins' && isEveryRawMargin(raw)) {
+  if (tableName === "pricing_margins" && isEveryRawMargin(raw)) {
     return raw.map(toMargin.bind(null, latestVersion));
   }
 
-  if (tableName === 'pricing_processes' && isEveryRawProcess(raw)) {
+  if (tableName === "pricing_processes" && isEveryRawProcess(raw)) {
     return raw.map(toProcess.bind(null, latestVersion));
   }
 
   if (
-    tableName === 'pricing_process_timelines' &&
+    tableName === "pricing_process_timelines" &&
     isEveryRawProcessTimeline(raw)
   ) {
     return raw.map(toProcessTimeline.bind(null, latestVersion));
   }
 
-  if (tableName === 'pricing_product_materials' && isEveryRawMaterial(raw)) {
+  if (tableName === "pricing_product_materials" && isEveryRawMaterial(raw)) {
     return raw.map(toMaterial.bind(null, latestVersion));
   }
 
@@ -254,15 +250,15 @@ function castFromRaw(
 function isRawConstants(candidate: object): candidate is RawConstants {
   return hasOnlyProperties(
     candidate,
-    'branded_labels_additional_cents',
-    'branded_labels_minimum_cents',
-    'branded_labels_minimum_units',
-    'grading_cents',
-    'marking_cents',
-    'pattern_revision_cents',
-    'sample_minimum_cents',
-    'technical_design_cents',
-    'working_session_cents'
+    "branded_labels_additional_cents",
+    "branded_labels_minimum_cents",
+    "branded_labels_minimum_units",
+    "grading_cents",
+    "marking_cents",
+    "pattern_revision_cents",
+    "sample_minimum_cents",
+    "technical_design_cents",
+    "working_session_cents"
   );
 }
 function isEveryRawConstants(candidate: object[]): candidate is RawConstants[] {
@@ -272,20 +268,20 @@ function isEveryRawConstants(candidate: object[]): candidate is RawConstants[] {
 function isRawType(candidate: object): candidate is RawType {
   return hasOnlyProperties(
     candidate,
-    'minimum_units',
-    'name',
-    'pattern_minimum_cents',
-    'complexity',
-    'unit_cents',
-    'yield',
-    'contrast',
-    'creation_time_ms',
-    'specification_time_ms',
-    'sourcing_time_ms',
-    'sampling_time_ms',
-    'pre_production_time_ms',
-    'production_time_ms',
-    'fulfillment_time_ms'
+    "minimum_units",
+    "name",
+    "pattern_minimum_cents",
+    "complexity",
+    "unit_cents",
+    "yield",
+    "contrast",
+    "creation_time_ms",
+    "specification_time_ms",
+    "sourcing_time_ms",
+    "sampling_time_ms",
+    "pre_production_time_ms",
+    "production_time_ms",
+    "fulfillment_time_ms"
   );
 }
 function isEveryRawType(candidate: object[]): candidate is RawType[] {
@@ -293,14 +289,14 @@ function isEveryRawType(candidate: object[]): candidate is RawType[] {
 }
 
 function isRawLabel(candidate: object): candidate is RawLabel {
-  return hasOnlyProperties(candidate, 'minimum_units', 'unit_cents');
+  return hasOnlyProperties(candidate, "minimum_units", "unit_cents");
 }
 function isEveryRawLabel(candidate: object[]): candidate is RawLabel[] {
   return candidate.every(isRawLabel);
 }
 
 function isRawMargin(candidate: object): candidate is RawMargin {
-  return hasOnlyProperties(candidate, 'minimum_units', 'margin');
+  return hasOnlyProperties(candidate, "minimum_units", "margin");
 }
 function isEveryRawMargin(candidate: object[]): candidate is RawMargin[] {
   return candidate.every(isRawMargin);
@@ -309,9 +305,9 @@ function isEveryRawMargin(candidate: object[]): candidate is RawMargin[] {
 function isRawMaterial(candidate: object): candidate is RawMaterial {
   return hasOnlyProperties(
     candidate,
-    'minimum_units',
-    'category',
-    'unit_cents'
+    "minimum_units",
+    "category",
+    "unit_cents"
   );
 }
 function isEveryRawMaterial(candidate: object[]): candidate is RawMaterial[] {
@@ -321,11 +317,11 @@ function isEveryRawMaterial(candidate: object[]): candidate is RawMaterial[] {
 function isRawProcess(candidate: object): candidate is RawProcess {
   return hasOnlyProperties(
     candidate,
-    'name',
-    'minimum_units',
-    'complexity',
-    'setup_cents',
-    'unit_cents'
+    "name",
+    "minimum_units",
+    "complexity",
+    "setup_cents",
+    "unit_cents"
   );
 }
 function isEveryRawProcess(candidate: object[]): candidate is RawProcess[] {
@@ -335,9 +331,9 @@ function isEveryRawProcess(candidate: object[]): candidate is RawProcess[] {
 function isRawProcessTimeline(candidate: object): candidate is RawProcess {
   return hasOnlyProperties(
     candidate,
-    'minimum_units',
-    'unique_processes',
-    'time_ms'
+    "minimum_units",
+    "unique_processes",
+    "time_ms"
   );
 }
 function isEveryRawProcessTimeline(
@@ -371,7 +367,7 @@ function toConstants(
     sample_minimum_cents: parseInt(raw.sample_minimum_cents, 10),
     technical_design_cents: parseInt(raw.technical_design_cents, 10),
     version: latestVersion + 1,
-    working_session_cents: parseInt(raw.working_session_cents, 10)
+    working_session_cents: parseInt(raw.working_session_cents, 10),
   };
 }
 
@@ -393,7 +389,7 @@ function toType(latestVersion: number, raw: RawType): PricingProductTypeRow {
     specification_time_ms: raw.specification_time_ms,
     unit_cents: parseInt(raw.unit_cents, 10),
     version: latestVersion + 1,
-    yield: parseInt(raw.yield, 10)
+    yield: parseInt(raw.yield, 10),
   };
 }
 
@@ -403,7 +399,7 @@ function toLabel(latestVersion: number, raw: RawLabel): PricingCareLabelRow {
     id: uuid.v4(),
     minimum_units: parseInt(raw.minimum_units, 10),
     unit_cents: parseInt(raw.unit_cents, 10),
-    version: latestVersion + 1
+    version: latestVersion + 1,
   };
 }
 
@@ -413,7 +409,7 @@ function toMargin(latestVersion: number, raw: RawMargin): PricingMarginRow {
     id: uuid.v4(),
     margin: Number(raw.margin),
     minimum_units: parseInt(raw.minimum_units, 10),
-    version: latestVersion + 1
+    version: latestVersion + 1,
   };
 }
 
@@ -427,7 +423,7 @@ function toMaterial(
     category: raw.category,
     minimum_units: parseInt(raw.minimum_units, 10),
     unit_cents: parseInt(raw.unit_cents, 10),
-    version: latestVersion + 1
+    version: latestVersion + 1,
   };
 }
 
@@ -440,7 +436,7 @@ function toProcess(latestVersion: number, raw: RawProcess): PricingProcessRow {
     name: raw.name,
     setup_cents: Number(raw.setup_cents),
     unit_cents: Number(raw.unit_cents),
-    version: latestVersion + 1
+    version: latestVersion + 1,
   };
 }
 
@@ -454,6 +450,6 @@ function toProcessTimeline(
     minimum_units: Number(raw.minimum_units),
     time_ms: raw.time_ms,
     unique_processes: Number(raw.unique_processes),
-    version: latestVersion + 1
+    version: latestVersion + 1,
   };
 }

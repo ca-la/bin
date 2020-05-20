@@ -1,19 +1,19 @@
-import Knex from 'knex';
-import * as uuid from 'node-uuid';
+import Knex from "knex";
+import * as uuid from "node-uuid";
 
-import db from '../db';
-import * as ProductDesignsDAO from '../../components/product-designs/dao';
-import * as ApprovalStepsDAO from '../../components/approval-steps/dao';
-import * as ApprovalStepSubmissionsDAO from '../../components/approval-step-submissions/dao';
-import * as BidTaskTypesDAO from '../../components/bid-task-types/dao';
-import * as DesignEventsDAO from '../../dao/design-events';
+import db from "../db";
+import * as ProductDesignsDAO from "../../components/product-designs/dao";
+import * as ApprovalStepsDAO from "../../components/approval-steps/dao";
+import * as ApprovalStepSubmissionsDAO from "../../components/approval-step-submissions/dao";
+import * as BidTaskTypesDAO from "../../components/bid-task-types/dao";
+import * as DesignEventsDAO from "../../dao/design-events";
 import ApprovalStep, {
   ApprovalStepState,
-  ApprovalStepType
-} from '../../components/approval-steps/domain-object';
-import { findByDesignId as findProductTypeByDesignId } from '../../components/pricing-product-types/dao';
-import { taskTypes } from '../../components/tasks/templates';
-import { getDefaultsByDesign } from '../../components/approval-step-submissions/defaults';
+  ApprovalStepType,
+} from "../../components/approval-steps/domain-object";
+import { findByDesignId as findProductTypeByDesignId } from "../../components/pricing-product-types/dao";
+import { taskTypes } from "../../components/tasks/templates";
+import { getDefaultsByDesign } from "../../components/approval-step-submissions/defaults";
 
 export async function makeNextStepCurrentIfNeeded(
   trx: Knex.Transaction,
@@ -25,7 +25,7 @@ export async function makeNextStepCurrentIfNeeded(
     (query: Knex.QueryBuilder) => {
       return query.whereRaw(`ordering > ? and state <> ?`, [
         step.ordering,
-        ApprovalStepState.SKIP
+        ApprovalStepState.SKIP,
       ]);
     }
   );
@@ -38,7 +38,7 @@ export async function makeNextStepCurrentIfNeeded(
   await ApprovalStepsDAO.update(trx, nextStep.id, {
     reason: null,
     state: ApprovalStepState.CURRENT,
-    startedAt: new Date()
+    startedAt: new Date(),
   });
 }
 
@@ -77,8 +77,8 @@ export async function handleUserStepCompletion(
     id: uuid.v4(),
     quoteId: null,
     targetId: null,
-    type: 'STEP_COMPLETE',
-    commentId: null
+    type: "STEP_COMPLETE",
+    commentId: null,
   });
   // TODO: Send notification
 }
@@ -90,7 +90,7 @@ async function unstartFormerlyCurrentStep(
   const formerCurrent = await ApprovalStepsDAO.findOne(
     trx,
     { designId: step.designId, state: ApprovalStepState.CURRENT },
-    (query: Knex.QueryBuilder) => query.whereNot('id', step.id)
+    (query: Knex.QueryBuilder) => query.whereNot("id", step.id)
   );
 
   if (!formerCurrent) {
@@ -99,7 +99,7 @@ async function unstartFormerlyCurrentStep(
 
   await ApprovalStepsDAO.update(trx, formerCurrent.id, {
     state: ApprovalStepState.UNSTARTED,
-    startedAt: null
+    startedAt: null,
   });
 }
 
@@ -125,8 +125,8 @@ export async function handleUserStepReopen(
     id: uuid.v4(),
     quoteId: null,
     targetId: null,
-    type: 'STEP_REOPEN',
-    commentId: null
+    type: "STEP_REOPEN",
+    commentId: null,
   });
   // TODO: cause any related notification to not be returned any more
 }
@@ -162,15 +162,13 @@ export async function transitionCheckoutState(
 
       if (!technicalDesignStep) {
         throw new Error(
-          `Unable to find technical design approval step for design "${
-            design.id
-          }"`
+          `Unable to find technical design approval step for design "${design.id}"`
         );
       }
 
       await ApprovalStepsDAO.update(trx, checkoutStep.id, {
         reason: null,
-        state: ApprovalStepState.COMPLETED
+        state: ApprovalStepState.COMPLETED,
       });
     }
   });
@@ -236,7 +234,7 @@ export async function actualizeDesignStepsAfterBidAcceptance(
         // while we don't set BLOCKING state in this function,
         // we can reset a reason to null
         reason: null,
-        state: newStates[i]
+        state: newStates[i],
       } as Partial<ApprovalStep>);
     }
   }

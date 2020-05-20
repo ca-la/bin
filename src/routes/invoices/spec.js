@@ -1,39 +1,39 @@
-'use strict';
+"use strict";
 
-const uuid = require('node-uuid');
-const createUser = require('../../test-helpers/create-user');
-const db = require('../../services/db');
-const InvoicesDAO = require('../../dao/invoices');
-const generateCollection = require('../../test-helpers/factories/collection')
+const uuid = require("node-uuid");
+const createUser = require("../../test-helpers/create-user");
+const db = require("../../services/db");
+const InvoicesDAO = require("../../dao/invoices");
+const generateCollection = require("../../test-helpers/factories/collection")
   .default;
-const { authHeader, get, post } = require('../../test-helpers/http');
-const EmailService = require('../../services/email');
-const StripeService = require('../../services/stripe');
-const ProductDesignsDAO = require('../../components/product-designs/dao');
-const PartnerPayoutLogsDAO = require('../../components/partner-payouts/dao');
-const PartnerPayoutAccountsDAO = require('../../dao/partner-payout-accounts');
-const { sandbox, test } = require('../../test-helpers/fresh');
-const generateInvoice = require('../../test-helpers/factories/invoice').default;
-const { addDesign } = require('../../test-helpers/collections');
+const { authHeader, get, post } = require("../../test-helpers/http");
+const EmailService = require("../../services/email");
+const StripeService = require("../../services/stripe");
+const ProductDesignsDAO = require("../../components/product-designs/dao");
+const PartnerPayoutLogsDAO = require("../../components/partner-payouts/dao");
+const PartnerPayoutAccountsDAO = require("../../dao/partner-payout-accounts");
+const { sandbox, test } = require("../../test-helpers/fresh");
+const generateInvoice = require("../../test-helpers/factories/invoice").default;
+const { addDesign } = require("../../test-helpers/collections");
 
-test('GET /invoices allows admins to list invoices for a collection', async t => {
+test("GET /invoices allows admins to list invoices for a collection", async (t) => {
   const { user } = await createUser({ withSession: false });
-  const { session: adminSession } = await createUser({ role: 'ADMIN' });
+  const { session: adminSession } = await createUser({ role: "ADMIN" });
 
   const { collection } = await generateCollection({ userId: user.id });
 
-  await db.transaction(async trx => {
+  await db.transaction(async (trx) => {
     await InvoicesDAO.createTrx(trx, {
       collectionId: collection.id,
       totalCents: 1234,
-      title: 'My First Invoice'
+      title: "My First Invoice",
     });
   });
 
   const [response, body] = await get(
     `/invoices?collectionId=${collection.id}`,
     {
-      headers: authHeader(adminSession.id)
+      headers: authHeader(adminSession.id),
     }
   );
 
@@ -43,22 +43,22 @@ test('GET /invoices allows admins to list invoices for a collection', async t =>
   t.equal(body[0].totalCents, 1234);
 });
 
-test('GET /invoices lists invoices belonging to a given user', async t => {
+test("GET /invoices lists invoices belonging to a given user", async (t) => {
   const { session, user } = await createUser();
 
   const { collection } = await generateCollection({ userId: user.id });
 
-  await db.transaction(async trx => {
+  await db.transaction(async (trx) => {
     await InvoicesDAO.createTrx(trx, {
       userId: user.id,
       collectionId: collection.id,
       totalCents: 1234,
-      title: 'My First Invoice'
+      title: "My First Invoice",
     });
   });
 
   const [response, body] = await get(`/invoices?userId=${user.id}`, {
-    headers: authHeader(session.id)
+    headers: authHeader(session.id),
   });
 
   t.equal(response.status, 200);
@@ -67,45 +67,41 @@ test('GET /invoices lists invoices belonging to a given user', async t => {
   t.equal(body[0].totalCents, 1234);
 });
 
-test('payout an invoice', async t => {
-  const emailStub = sandbox()
-    .stub(EmailService, 'enqueueSend')
-    .resolves();
-  sandbox()
-    .stub(StripeService, 'sendTransfer')
-    .resolves();
+test("payout an invoice", async (t) => {
+  const emailStub = sandbox().stub(EmailService, "enqueueSend").resolves();
+  sandbox().stub(StripeService, "sendTransfer").resolves();
 
   const { session } = await createUser({
-    role: 'ADMIN'
+    role: "ADMIN",
   });
   const { user: regularUser } = await createUser({ withSession: false });
   const { user: partnerUser } = await createUser({
-    role: 'PARTNER',
-    withSession: false
+    role: "PARTNER",
+    withSession: false,
   });
 
   const design = await ProductDesignsDAO.create({
-    productType: 'TEESHIRT',
-    title: 'Plain White Tee',
-    userId: regularUser.id
+    productType: "TEESHIRT",
+    title: "Plain White Tee",
+    userId: regularUser.id,
   });
 
   const { collection } = await generateCollection({
-    createdBy: regularUser.id
+    createdBy: regularUser.id,
   });
   await addDesign(collection.id, design.id);
 
   const { invoice } = await generateInvoice({
     collectionId: collection.id,
-    userId: regularUser.id
+    userId: regularUser.id,
   });
 
   const payoutAccount = await PartnerPayoutAccountsDAO.create({
-    stripeAccessToken: '123',
-    stripePublishableKey: '123',
-    stripeRefreshToken: '123',
-    stripeUserId: '123',
-    userId: partnerUser.id
+    stripeAccessToken: "123",
+    stripePublishableKey: "123",
+    stripeRefreshToken: "123",
+    stripeUserId: "123",
+    userId: partnerUser.id,
   });
 
   const [response] = await post(`/invoices/${invoice.id}/pay-out-to-partner`, {
@@ -113,10 +109,10 @@ test('payout an invoice', async t => {
     body: {
       id: uuid.v4(),
       invoiceId: invoice.id,
-      message: 'Nice job!',
+      message: "Nice job!",
       payoutAccountId: payoutAccount.id,
-      payoutAmountCents: 222
-    }
+      payoutAmountCents: 222,
+    },
   });
   t.equal(response.status, 204);
 

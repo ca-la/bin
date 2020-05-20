@@ -1,123 +1,123 @@
-import uuid from 'node-uuid';
-import * as Knex from 'knex';
+import uuid from "node-uuid";
+import * as Knex from "knex";
 
-import * as NotificationsDAO from '../../components/notifications/dao';
-import * as CanvasesDAO from '../../components/canvases/dao';
-import * as CollaboratorsDAO from '../../components/collaborators/dao';
-import * as StageTasksDAO from '../../dao/product-design-stage-tasks';
-import * as StagesDAO from '../../dao/product-design-stages';
-import DesignsDAO from '../../components/product-designs/dao';
-import * as ApprovalStepTasksDAO from '../../components/approval-step-tasks/dao';
-import * as ApprovalStepsDAO from '../../components/approval-steps/dao';
-import * as CollectionsDAO from '../../components/collections/dao';
-import * as TaskEventsDAO from '../../dao/task-events';
-import * as UsersDAO from '../../components/users/dao';
-import * as BidRejectionsDAO from '../../components/bid-rejections/dao';
-import ProductDesign from '../../components/product-designs/domain-objects/product-design';
-import ApprovalStep from '../../components/approval-steps/domain-object';
+import * as NotificationsDAO from "../../components/notifications/dao";
+import * as CanvasesDAO from "../../components/canvases/dao";
+import * as CollaboratorsDAO from "../../components/collaborators/dao";
+import * as StageTasksDAO from "../../dao/product-design-stage-tasks";
+import * as StagesDAO from "../../dao/product-design-stages";
+import DesignsDAO from "../../components/product-designs/dao";
+import * as ApprovalStepTasksDAO from "../../components/approval-step-tasks/dao";
+import * as ApprovalStepsDAO from "../../components/approval-steps/dao";
+import * as CollectionsDAO from "../../components/collections/dao";
+import * as TaskEventsDAO from "../../dao/task-events";
+import * as UsersDAO from "../../components/users/dao";
+import * as BidRejectionsDAO from "../../components/bid-rejections/dao";
+import ProductDesign from "../../components/product-designs/domain-objects/product-design";
+import ApprovalStep from "../../components/approval-steps/domain-object";
 
 import {
   Notification,
-  NotificationType
-} from '../../components/notifications/domain-object';
+  NotificationType,
+} from "../../components/notifications/domain-object";
 import Collaborator, {
-  CollaboratorWithUser
-} from '../../components/collaborators/domain-objects/collaborator';
+  CollaboratorWithUser,
+} from "../../components/collaborators/domain-objects/collaborator";
 
-import EmailService from '../../services/email';
-import * as SlackService from '../../services/slack';
+import EmailService from "../../services/email";
+import * as SlackService from "../../services/slack";
 
 import {
   isTaskAssigmentNotification,
-  TaskAssignmentNotification
-} from '../../components/notifications/models/task-assignment';
-import Config from '../../config';
-import { createNotificationMessage } from '../../components/notifications/notification-messages';
+  TaskAssignmentNotification,
+} from "../../components/notifications/models/task-assignment";
+import Config from "../../config";
+import { createNotificationMessage } from "../../components/notifications/notification-messages";
 import {
   AnnotationCommentCreateNotification,
-  isAnnotationCommentCreateNotification
-} from '../../components/notifications/models/annotation-comment-create';
-import { validateTypeWithGuardOrThrow } from '../validate';
+  isAnnotationCommentCreateNotification,
+} from "../../components/notifications/models/annotation-comment-create";
+import { validateTypeWithGuardOrThrow } from "../validate";
 import {
   isMeasurementCreateNotification,
-  MeasurementCreateNotification
-} from '../../components/notifications/models/measurement-create';
+  MeasurementCreateNotification,
+} from "../../components/notifications/models/measurement-create";
 import {
   isTaskCommentCreateNotification,
-  TaskCommentCreateNotification
-} from '../../components/notifications/models/task-comment-create';
-import { templateNotification } from '../../components/notifications/models/base';
+  TaskCommentCreateNotification,
+} from "../../components/notifications/models/task-comment-create";
+import { templateNotification } from "../../components/notifications/models/base";
 import {
   isTaskCompletionNotification,
-  TaskCompletionNotification
-} from '../../components/notifications/models/task-completion';
+  TaskCompletionNotification,
+} from "../../components/notifications/models/task-completion";
 import {
   isPartnerAcceptServiceBidNotification,
-  PartnerAcceptServiceBidNotification
-} from '../../components/notifications/models/partner-accept-service-bid';
+  PartnerAcceptServiceBidNotification,
+} from "../../components/notifications/models/partner-accept-service-bid";
 import {
   CollectionSubmitNotification,
-  isCollectionSubmitNotification
-} from '../../components/notifications/models/collection-submit';
+  isCollectionSubmitNotification,
+} from "../../components/notifications/models/collection-submit";
 import {
   isPartnerRejectServiceBidNotification,
-  PartnerRejectServiceBidNotification
-} from '../../components/notifications/models/partner-reject-service-bid';
+  PartnerRejectServiceBidNotification,
+} from "../../components/notifications/models/partner-reject-service-bid";
 import {
   CommitCostInputsNotification,
-  isCommitCostInputsNotification
-} from '../../components/notifications/models/commit-cost-inputs';
+  isCommitCostInputsNotification,
+} from "../../components/notifications/models/commit-cost-inputs";
 import {
   isPartnerDesignBidNotification,
-  PartnerDesignBidNotification
-} from '../../components/notifications/models/partner-design-bid';
+  PartnerDesignBidNotification,
+} from "../../components/notifications/models/partner-design-bid";
 import {
   InviteCollaboratorNotification,
-  isInviteCollaboratorNotification
-} from '../../components/notifications/models/invite-collaborator';
+  isInviteCollaboratorNotification,
+} from "../../components/notifications/models/invite-collaborator";
 import {
   isTaskCommentMentionNotification,
-  TaskCommentMentionNotification
-} from '../../components/notifications/models/task-comment-mention';
+  TaskCommentMentionNotification,
+} from "../../components/notifications/models/task-comment-mention";
 import {
   AnnotationCommentMentionNotification,
-  isAnnotationCommentMentionNotification
-} from '../../components/notifications/models/annotation-mention';
+  isAnnotationCommentMentionNotification,
+} from "../../components/notifications/models/annotation-mention";
 import {
   isPartnerPairingCommittedNotification,
-  PartnerPairingCommittedNotification
-} from '../../components/notifications/models/partner-pairing-committed';
+  PartnerPairingCommittedNotification,
+} from "../../components/notifications/models/partner-pairing-committed";
 import {
   AnnotationCommentReplyNotification,
-  isAnnotationCommentReplyNotification
-} from '../../components/notifications/models/annotation-reply';
+  isAnnotationCommentReplyNotification,
+} from "../../components/notifications/models/annotation-reply";
 import {
   isTaskCommentReplyNotification,
-  TaskCommentReplyNotification
-} from '../../components/notifications/models/task-comment-reply';
+  TaskCommentReplyNotification,
+} from "../../components/notifications/models/task-comment-reply";
 import {
   ApprovalStepCommentMentionNotification,
-  isApprovalStepCommentMentionNotification
-} from '../../components/notifications/models/approval-step-comment-mention';
+  isApprovalStepCommentMentionNotification,
+} from "../../components/notifications/models/approval-step-comment-mention";
 import {
   ApprovalStepCommentReplyNotification,
-  isApprovalStepCommentReplyNotification
-} from '../../components/notifications/models/approval-step-comment-reply';
+  isApprovalStepCommentReplyNotification,
+} from "../../components/notifications/models/approval-step-comment-reply";
 import {
   ApprovalStepCommentCreateNotification,
-  isApprovalStepCommentCreateNotification
-} from '../../components/notifications/models/approval-step-comment-create';
+  isApprovalStepCommentCreateNotification,
+} from "../../components/notifications/models/approval-step-comment-create";
 import {
   ApprovalStepSubmissionAssignmentNotification,
-  isApprovalStepSubmissionAssignmentNotification
-} from '../../components/notifications/models/approval-step-submission-assignment';
+  isApprovalStepSubmissionAssignmentNotification,
+} from "../../components/notifications/models/approval-step-submission-assignment";
 import {
   ApprovalStepAssignmentNotification,
-  isApprovalStepAssignmentNotification
-} from '../../components/notifications/models/approval-step-assignment';
+  isApprovalStepAssignmentNotification,
+} from "../../components/notifications/models/approval-step-assignment";
 
-import ProductDesignStage from '../../domain-objects/product-design-stage';
-import ApprovalStepSubmission from '../../components/approval-step-submissions/domain-object';
+import ProductDesignStage from "../../domain-objects/product-design-stage";
+import ApprovalStepSubmission from "../../components/approval-step-submissions/domain-object";
 
 /**
  * Deletes pre-existing similar notifications and adds in a new one by comparing columns.
@@ -183,16 +183,14 @@ export async function sendDesignOwnerAnnotationCommentCreateNotification(
       id,
       recipientUserId: targetId,
       sentEmailAt: null,
-      type: NotificationType.ANNOTATION_COMMENT_CREATE
+      type: NotificationType.ANNOTATION_COMMENT_CREATE,
     },
-    trx
+    trx,
   });
   return validateTypeWithGuardOrThrow(
     notification,
     isAnnotationCommentCreateNotification,
-    `Could not validate ${
-      NotificationType.ANNOTATION_COMMENT_CREATE
-    } notification type from database with id: ${id}`
+    `Could not validate ${NotificationType.ANNOTATION_COMMENT_CREATE} notification type from database with id: ${id}`
   );
 }
 
@@ -240,16 +238,14 @@ export async function sendAnnotationCommentMentionNotification(
       id,
       recipientUserId,
       sentEmailAt: null,
-      type: NotificationType.ANNOTATION_COMMENT_MENTION
+      type: NotificationType.ANNOTATION_COMMENT_MENTION,
     },
-    trx
+    trx,
   });
   return validateTypeWithGuardOrThrow(
     notification,
     isAnnotationCommentMentionNotification,
-    `Could not validate ${
-      NotificationType.ANNOTATION_COMMENT_MENTION
-    } notification type from database with id: ${id}`
+    `Could not validate ${NotificationType.ANNOTATION_COMMENT_MENTION} notification type from database with id: ${id}`
   );
 }
 
@@ -286,15 +282,13 @@ export async function sendAnnotationCommentReplyNotification(
       id,
       recipientUserId,
       sentEmailAt: null,
-      type: NotificationType.ANNOTATION_COMMENT_REPLY
-    }
+      type: NotificationType.ANNOTATION_COMMENT_REPLY,
+    },
   });
   return validateTypeWithGuardOrThrow(
     notification,
     isAnnotationCommentReplyNotification,
-    `Could not validate ${
-      NotificationType.ANNOTATION_COMMENT_REPLY
-    } notification type from database with id: ${id}`
+    `Could not validate ${NotificationType.ANNOTATION_COMMENT_REPLY} notification type from database with id: ${id}`
   );
 }
 
@@ -337,15 +331,13 @@ export async function sendDesignOwnerMeasurementCreateNotification(
       measurementId,
       recipientUserId: targetId,
       sentEmailAt: null,
-      type: NotificationType.MEASUREMENT_CREATE
-    }
+      type: NotificationType.MEASUREMENT_CREATE,
+    },
   });
   return validateTypeWithGuardOrThrow(
     notification,
     isMeasurementCreateNotification,
-    `Could not validate ${
-      NotificationType.MEASUREMENT_CREATE
-    } notification type from database with id: ${id}`
+    `Could not validate ${NotificationType.MEASUREMENT_CREATE} notification type from database with id: ${id}`
   );
 }
 
@@ -375,7 +367,7 @@ export const findTaskAssets = async (
     return {
       approvalStep: null,
       stage,
-      design
+      design,
     };
   } else {
     const approvalStepTask = await ApprovalStepTasksDAO.findByTaskId(
@@ -393,9 +385,7 @@ export const findTaskAssets = async (
     );
     if (!approvalStep) {
       throw new Error(
-        `Could not find an approvalStep with id: ${
-          approvalStepTask.approvalStepId
-        }`
+        `Could not find an approvalStep with id: ${approvalStepTask.approvalStepId}`
       );
     }
 
@@ -409,7 +399,7 @@ export const findTaskAssets = async (
     return {
       approvalStep,
       stage: null,
-      design
+      design,
     };
   }
 };
@@ -432,7 +422,7 @@ export async function sendTaskCommentCreateNotification(
     commentId,
     actorId,
     mentionedUserIds,
-    threadUserIds
+    threadUserIds,
   } = options;
   const collaborators = (await CollaboratorsDAO.findByTask(
     taskId,
@@ -451,7 +441,7 @@ export async function sendTaskCommentCreateNotification(
 
   const collaboratorUserIds: string[] = recipients
     .filter((collaborator: Collaborator) => Boolean(collaborator.userId))
-    .map((collaborator: Collaborator): string => collaborator.userId || '');
+    .map((collaborator: Collaborator): string => collaborator.userId || "");
 
   const recipientIds: string[] = taskEvent.createdBy
     ? [...collaboratorUserIds, taskEvent.createdBy]
@@ -490,16 +480,14 @@ export async function sendTaskCommentCreateNotification(
         stageId: stage ? stage.id : null,
         approvalStepId: approvalStep ? approvalStep.id : null,
         taskId,
-        type: NotificationType.TASK_COMMENT_CREATE
+        type: NotificationType.TASK_COMMENT_CREATE,
       },
-      trx
+      trx,
     });
     const validated = validateTypeWithGuardOrThrow(
       notification,
       isTaskCommentCreateNotification,
-      `Could not validate ${
-        NotificationType.TASK_COMMENT_CREATE
-      } notification type from database with id: ${id}`
+      `Could not validate ${NotificationType.TASK_COMMENT_CREATE} notification type from database with id: ${id}`
     );
     notifications.push(validated);
   }
@@ -539,16 +527,14 @@ export async function sendTaskCommentMentionNotification(
       stageId: stage ? stage.id : null,
       approvalStepId: approvalStep ? approvalStep.id : null,
       taskId,
-      type: NotificationType.TASK_COMMENT_MENTION
+      type: NotificationType.TASK_COMMENT_MENTION,
     },
-    trx
+    trx,
   });
   const validated = validateTypeWithGuardOrThrow(
     notification,
     isTaskCommentMentionNotification,
-    `Could not validate ${
-      NotificationType.TASK_COMMENT_MENTION
-    } notification type from database with id: ${id}`
+    `Could not validate ${NotificationType.TASK_COMMENT_MENTION} notification type from database with id: ${id}`
   );
   return validated;
 }
@@ -595,16 +581,14 @@ export async function sendTaskCommentReplyNotification(
       stageId: stage ? stage.id : null,
       approvalStepId: approvalStep ? approvalStep.id : null,
       taskId,
-      type: NotificationType.TASK_COMMENT_REPLY
+      type: NotificationType.TASK_COMMENT_REPLY,
     },
-    trx
+    trx,
   });
   const validated = validateTypeWithGuardOrThrow(
     notification,
     isTaskCommentReplyNotification,
-    `Could not validate ${
-      NotificationType.TASK_COMMENT_REPLY
-    } notification type from database with id: ${id}`
+    `Could not validate ${NotificationType.TASK_COMMENT_REPLY} notification type from database with id: ${id}`
   );
   return validated;
 }
@@ -642,15 +626,13 @@ export async function sendTaskAssignmentNotification(
         stageId: stage ? stage.id : null,
         approvalStepId: approvalStep ? approvalStep.id : null,
         taskId,
-        type: NotificationType.TASK_ASSIGNMENT
-      }
+        type: NotificationType.TASK_ASSIGNMENT,
+      },
     });
     const validated = validateTypeWithGuardOrThrow(
       notification,
       isTaskAssigmentNotification,
-      `Could not validate ${
-        NotificationType.TASK_ASSIGNMENT
-      } notification type from database with id: ${id}`
+      `Could not validate ${NotificationType.TASK_ASSIGNMENT} notification type from database with id: ${id}`
     );
     notifications.push(validated);
   }
@@ -694,15 +676,13 @@ export async function sendTaskCompletionNotification(
         stageId: stage ? stage.id : null,
         approvalStepId: approvalStep ? approvalStep.id : null,
         taskId,
-        type: NotificationType.TASK_COMPLETION
-      }
+        type: NotificationType.TASK_COMPLETION,
+      },
     });
     const validated = validateTypeWithGuardOrThrow(
       notification,
       isTaskCompletionNotification,
-      `Could not validate ${
-        NotificationType.TASK_COMPLETION
-      } notification type from database with id: ${id}`
+      `Could not validate ${NotificationType.TASK_COMPLETION} notification type from database with id: ${id}`
     );
     notifications.push(validated);
   }
@@ -752,16 +732,14 @@ export async function sendApprovalStepCommentMentionNotification(
       recipientUserId: recipientId,
       sentEmailAt: null,
       approvalStepId,
-      type: NotificationType.APPROVAL_STEP_COMMENT_MENTION
+      type: NotificationType.APPROVAL_STEP_COMMENT_MENTION,
     },
-    trx
+    trx,
   });
   const validated = validateTypeWithGuardOrThrow(
     notification,
     isApprovalStepCommentMentionNotification,
-    `Could not validate ${
-      NotificationType.APPROVAL_STEP_COMMENT_MENTION
-    } notification type from database with id: ${id}`
+    `Could not validate ${NotificationType.APPROVAL_STEP_COMMENT_MENTION} notification type from database with id: ${id}`
   );
   return validated;
 }
@@ -809,16 +787,14 @@ export async function sendApprovalStepCommentReplyNotification(
       recipientUserId: recipientId,
       sentEmailAt: null,
       approvalStepId,
-      type: NotificationType.APPROVAL_STEP_COMMENT_REPLY
+      type: NotificationType.APPROVAL_STEP_COMMENT_REPLY,
     },
-    trx
+    trx,
   });
   const validated = validateTypeWithGuardOrThrow(
     notification,
     isApprovalStepCommentReplyNotification,
-    `Could not validate ${
-      NotificationType.APPROVAL_STEP_COMMENT_REPLY
-    } notification type from database with id: ${id}`
+    `Could not validate ${NotificationType.APPROVAL_STEP_COMMENT_REPLY} notification type from database with id: ${id}`
   );
   return validated;
 }
@@ -871,16 +847,14 @@ export async function sendDesignOwnerApprovalStepCommentCreateNotification(
       id,
       recipientUserId: targetId,
       sentEmailAt: null,
-      type: NotificationType.APPROVAL_STEP_COMMENT_CREATE
+      type: NotificationType.APPROVAL_STEP_COMMENT_CREATE,
     },
-    trx
+    trx,
   });
   return validateTypeWithGuardOrThrow(
     notification,
     isApprovalStepCommentCreateNotification,
-    `Could not validate ${
-      NotificationType.APPROVAL_STEP_COMMENT_CREATE
-    } notification type from database with id: ${id}`
+    `Could not validate ${NotificationType.APPROVAL_STEP_COMMENT_CREATE} notification type from database with id: ${id}`
   );
 }
 
@@ -899,24 +873,22 @@ export async function sendPartnerAcceptServiceBidNotification(
     id,
     recipientUserId: Config.CALA_OPS_USER_ID,
     sentEmailAt: null,
-    type: NotificationType.PARTNER_ACCEPT_SERVICE_BID
+    type: NotificationType.PARTNER_ACCEPT_SERVICE_BID,
   });
 
   SlackService.enqueueSend({
-    channel: 'partners',
+    channel: "partners",
     params: {
       design: await DesignsDAO.findById(designId),
-      partner: await UsersDAO.findById(actorId)
+      partner: await UsersDAO.findById(actorId),
     },
-    templateName: 'partner_accept_bid'
+    templateName: "partner_accept_bid",
   });
 
   const validated = validateTypeWithGuardOrThrow(
     notification,
     isPartnerAcceptServiceBidNotification,
-    `Could not validate ${
-      NotificationType.PARTNER_ACCEPT_SERVICE_BID
-    } notification type from database with id: ${id}`
+    `Could not validate ${NotificationType.PARTNER_ACCEPT_SERVICE_BID} notification type from database with id: ${id}`
   );
 
   return validated;
@@ -940,24 +912,22 @@ export async function sendPartnerRejectServiceBidNotification(params: {
     id,
     recipientUserId: Config.CALA_OPS_USER_ID,
     sentEmailAt: null,
-    type: NotificationType.PARTNER_REJECT_SERVICE_BID
+    type: NotificationType.PARTNER_REJECT_SERVICE_BID,
   });
   SlackService.enqueueSend({
-    channel: 'partners',
+    channel: "partners",
     params: {
       bidRejection: await BidRejectionsDAO.findByBidId(bidId),
       design: await DesignsDAO.findById(designId),
-      partner: await UsersDAO.findById(actorId)
+      partner: await UsersDAO.findById(actorId),
     },
-    templateName: 'partner_reject_bid'
+    templateName: "partner_reject_bid",
   });
 
   const validated = validateTypeWithGuardOrThrow(
     notification,
     isPartnerRejectServiceBidNotification,
-    `Could not validate ${
-      NotificationType.PARTNER_REJECT_SERVICE_BID
-    } notification type from database with id: ${id}`
+    `Could not validate ${NotificationType.PARTNER_REJECT_SERVICE_BID} notification type from database with id: ${id}`
   );
 
   return validated;
@@ -972,12 +942,12 @@ export async function sendDesignerSubmitCollection(
   actorId: string
 ): Promise<CollectionSubmitNotification> {
   SlackService.enqueueSend({
-    channel: 'designers',
+    channel: "designers",
     params: {
       collection: await CollectionsDAO.findById(collectionId),
-      designer: await UsersDAO.findById(actorId)
+      designer: await UsersDAO.findById(actorId),
     },
-    templateName: 'collection_submission'
+    templateName: "collection_submission",
   });
 
   const id = uuid.v4();
@@ -989,15 +959,13 @@ export async function sendDesignerSubmitCollection(
       id,
       recipientUserId: Config.CALA_OPS_USER_ID,
       sentEmailAt: null,
-      type: NotificationType.COLLECTION_SUBMIT
-    }
+      type: NotificationType.COLLECTION_SUBMIT,
+    },
   });
   return validateTypeWithGuardOrThrow(
     notification,
     isCollectionSubmitNotification,
-    `Could not validate ${
-      NotificationType.COLLECTION_SUBMIT
-    } notification type from database with id: ${id}`
+    `Could not validate ${NotificationType.COLLECTION_SUBMIT} notification type from database with id: ${id}`
   );
 }
 
@@ -1023,7 +991,7 @@ export async function immediatelySendFullyCostedCollection(
   const collaborators = await CollaboratorsDAO.findByCollection(collectionId);
   const recipients = collaborators.filter(
     (collaborator: Collaborator): boolean => {
-      return collaborator.role === 'EDIT' && Boolean(collaborator.userId);
+      return collaborator.role === "EDIT" && Boolean(collaborator.userId);
     }
   );
 
@@ -1033,7 +1001,7 @@ export async function immediatelySendFullyCostedCollection(
         recipient: Collaborator
       ): Promise<CommitCostInputsNotification> => {
         if (!recipient.userId) {
-          throw new Error('User id not on collaborator!');
+          throw new Error("User id not on collaborator!");
         }
         const user = await UsersDAO.findById(recipient.userId);
         if (!user) {
@@ -1048,28 +1016,26 @@ export async function immediatelySendFullyCostedCollection(
           id,
           recipientUserId: user.id,
           sentEmailAt: new Date(),
-          type: NotificationType.COMMIT_COST_INPUTS
+          type: NotificationType.COMMIT_COST_INPUTS,
         });
         const notificationMessage = await createNotificationMessage(
           notification
         );
         if (!notificationMessage) {
-          throw new Error('Could not create notification message');
+          throw new Error("Could not create notification message");
         }
         await EmailService.enqueueSend({
           params: {
             collection,
-            notification: notificationMessage
+            notification: notificationMessage,
           },
-          templateName: 'single_notification',
-          to: user.email
+          templateName: "single_notification",
+          to: user.email,
         });
         const validated = validateTypeWithGuardOrThrow(
           notification,
           isCommitCostInputsNotification,
-          `Could not validate ${
-            NotificationType.COMMIT_COST_INPUTS
-          } notification type from database with id: ${id}`
+          `Could not validate ${NotificationType.COMMIT_COST_INPUTS} notification type from database with id: ${id}`
         );
 
         return validated;
@@ -1095,15 +1061,13 @@ export async function sendPartnerDesignBid(
       id,
       recipientUserId: targetId,
       sentEmailAt: null,
-      type: NotificationType.PARTNER_DESIGN_BID
-    }
+      type: NotificationType.PARTNER_DESIGN_BID,
+    },
   });
   return validateTypeWithGuardOrThrow(
     notification,
     isPartnerDesignBidNotification,
-    `Could not validate ${
-      NotificationType.PARTNER_DESIGN_BID
-    } notification type from database with id: ${id}`
+    `Could not validate ${NotificationType.PARTNER_DESIGN_BID} notification type from database with id: ${id}`
   );
 }
 
@@ -1127,38 +1091,36 @@ export async function immediatelySendPartnerPairingCommitted(
     id,
     recipientUserId: options.targetUserId,
     sentEmailAt: new Date(),
-    type: NotificationType.PARTNER_PAIRING_COMMITTED
+    type: NotificationType.PARTNER_PAIRING_COMMITTED,
   });
 
   const collection = await CollectionsDAO.findById(options.collectionId);
 
   const target = await UsersDAO.findById(options.targetUserId);
   if (!target) {
-    throw new Error('Could not find target user');
+    throw new Error("Could not find target user");
   }
 
   const emailAddress = target.email;
 
   const notificationMessage = await createNotificationMessage(notification);
   if (!notificationMessage) {
-    throw new Error('Could not create notification message');
+    throw new Error("Could not create notification message");
   }
 
   await EmailService.enqueueSend({
     params: {
       collection,
-      notification: notificationMessage
+      notification: notificationMessage,
     },
-    templateName: 'single_notification',
-    to: emailAddress
+    templateName: "single_notification",
+    to: emailAddress,
   });
 
   const validated = validateTypeWithGuardOrThrow(
     notification,
     isPartnerPairingCommittedNotification,
-    `Could not validate ${
-      NotificationType.INVITE_COLLABORATOR
-    } notification type from database with id: ${id}`
+    `Could not validate ${NotificationType.INVITE_COLLABORATOR} notification type from database with id: ${id}`
   );
 
   return validated;
@@ -1188,7 +1150,7 @@ export async function immediatelySendInviteCollaborator(
     id,
     recipientUserId: invitation.targetUserId,
     sentEmailAt: new Date(),
-    type: NotificationType.INVITE_COLLABORATOR
+    type: NotificationType.INVITE_COLLABORATOR,
   });
 
   const collection = invitation.collectionId
@@ -1208,28 +1170,26 @@ export async function immediatelySendInviteCollaborator(
     ? target.email
     : collaborator
     ? collaborator.userEmail
-    : new Error('No one is specified to send an email to!');
+    : new Error("No one is specified to send an email to!");
 
   const notificationMessage = await createNotificationMessage(notification);
   if (!notificationMessage) {
-    throw new Error('Could not create notification message');
+    throw new Error("Could not create notification message");
   }
   await EmailService.enqueueSend({
     params: {
       collection,
       design,
-      notification: notificationMessage
+      notification: notificationMessage,
     },
-    templateName: 'single_notification',
-    to: emailAddress
+    templateName: "single_notification",
+    to: emailAddress,
   });
 
   const validated = validateTypeWithGuardOrThrow(
     notification,
     isInviteCollaboratorNotification,
-    `Could not validate ${
-      NotificationType.INVITE_COLLABORATOR
-    } notification type from database with id: ${id}`
+    `Could not validate ${NotificationType.INVITE_COLLABORATOR} notification type from database with id: ${id}`
   );
 
   return validated;
@@ -1275,15 +1235,13 @@ export async function sendApprovalSubmissionAssignmentNotification(
       sentEmailAt: null,
       stageId: null,
       taskId: null,
-      type: NotificationType.APPROVAL_STEP_SUBMISSION_ASSIGNMENT
-    }
+      type: NotificationType.APPROVAL_STEP_SUBMISSION_ASSIGNMENT,
+    },
   });
   const validated = validateTypeWithGuardOrThrow(
     notification,
     isApprovalStepSubmissionAssignmentNotification,
-    `Could not validate ${
-      NotificationType.APPROVAL_STEP_SUBMISSION_ASSIGNMENT
-    } notification type from database with id: ${id}`
+    `Could not validate ${NotificationType.APPROVAL_STEP_SUBMISSION_ASSIGNMENT} notification type from database with id: ${id}`
   );
   return validated;
 }
@@ -1327,15 +1285,13 @@ export async function sendApprovalStepAssignmentNotification(
       sentEmailAt: null,
       stageId: null,
       taskId: null,
-      type: NotificationType.APPROVAL_STEP_ASSIGNMENT
-    }
+      type: NotificationType.APPROVAL_STEP_ASSIGNMENT,
+    },
   });
   const validated = validateTypeWithGuardOrThrow(
     notification,
     isApprovalStepAssignmentNotification,
-    `Could not validate ${
-      NotificationType.APPROVAL_STEP_ASSIGNMENT
-    } notification type from database with id: ${id}`
+    `Could not validate ${NotificationType.APPROVAL_STEP_ASSIGNMENT} notification type from database with id: ${id}`
   );
   return validated;
 }

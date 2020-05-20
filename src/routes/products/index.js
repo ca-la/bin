@@ -1,6 +1,6 @@
-'use strict';
+"use strict";
 
-const Router = require('koa-router');
+const Router = require("koa-router");
 
 const router = new Router();
 
@@ -12,6 +12,6 @@ function* getProducts() {
   );
 }
 
-router.get('/', getProducts);
+router.get("/", getProducts);
 
 module.exports = router.routes();

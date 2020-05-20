@@ -1,23 +1,23 @@
-'use strict';
+"use strict";
 
-const rethrow = require('pg-rethrow');
-const uuid = require('node-uuid');
-const _ = require('lodash');
+const rethrow = require("pg-rethrow");
+const uuid = require("node-uuid");
+const _ = require("lodash");
 
-const db = require('../../services/db');
-const filterError = require('../../services/filter-error');
-const first = require('../../services/first').default;
-const InvalidDataError = require('../../errors/invalid-data');
-const Session = require('../../domain-objects/session');
-const UnauthorizedRoleError = require('../../errors/unauthorized-role');
-const UsersDAO = require('../../components/users/dao');
-const { compare } = require('../../services/hash');
+const db = require("../../services/db");
+const filterError = require("../../services/filter-error");
+const first = require("../../services/first").default;
+const InvalidDataError = require("../../errors/invalid-data");
+const Session = require("../../domain-objects/session");
+const UnauthorizedRoleError = require("../../errors/unauthorized-role");
+const UsersDAO = require("../../components/users/dao");
+const { compare } = require("../../services/hash");
 const {
-  ALLOWED_SESSION_ROLES
-} = require('../../components/users/domain-object');
+  ALLOWED_SESSION_ROLES,
+} = require("../../components/users/domain-object");
 
-const instantiate = data => new Session(data);
-const maybeInstantiate = data => (data ? instantiate(data) : null);
+const instantiate = (data) => new Session(data);
+const maybeInstantiate = (data) => (data ? instantiate(data) : null);
 
 function ensureCanAssumeRole(user, role) {
   const allowedRoles = ALLOWED_SESSION_ROLES[user.role];
@@ -30,7 +30,7 @@ function ensureCanAssumeRole(user, role) {
 function getSessionExpirationByRole(role) {
   let expiresAt = null;
 
-  if (role === 'ADMIN') {
+  if (role === "ADMIN") {
     const now = new Date().getTime();
     expiresAt = new Date(now + 3 * 24 * 60 * 60 * 1000);
   }
@@ -46,19 +46,19 @@ function createForUser(user, additionalData = {}) {
 
   ensureCanAssumeRole(user, role);
 
-  return db('sessions')
+  return db("sessions")
     .insert(
       {
         id: uuid.v4(),
         user_id: user.id,
         expires_at: additionalData.expiresAt,
-        role
+        role,
       },
-      '*'
+      "*"
     )
     .then(first)
     .then(instantiate)
-    .then(session => {
+    .then((session) => {
       session.setUser(user);
       return session;
     });
@@ -68,28 +68,28 @@ function create(data) {
   const { email, password, role, expiresAt } = data;
 
   if (!email || !password) {
-    return Promise.reject(new InvalidDataError('Missing required information'));
+    return Promise.reject(new InvalidDataError("Missing required information"));
   }
 
   let user;
 
   return UsersDAO.findByEmailWithPasswordHash(email)
-    .then(_user => {
+    .then((_user) => {
       user = _user;
 
       if (!user) {
-        throw new InvalidDataError('No user found with this email address');
+        throw new InvalidDataError("No user found with this email address");
       }
 
       if (!user.passwordHash) {
         throw new InvalidDataError(
-          'It looks like you donʼt have a password yet. To create one, use the Forgot Password link.'
+          "It looks like you donʼt have a password yet. To create one, use the Forgot Password link."
         );
       }
 
       return compare(password, user.passwordHash);
     })
-    .then(match => {
+    .then((match) => {
       if (!match) {
         throw new InvalidDataError(`Incorrect password for ${email}`);
       }
@@ -101,11 +101,11 @@ function create(data) {
       if (expiresAt !== null && !expiresAt) {
         expiresOrComputed = getSessionExpirationByRole(role);
       }
-      user = _.omit(user, 'passwordHash');
+      user = _.omit(user, "passwordHash");
 
       return createForUser(user, {
         expiresAt: expiresOrComputed,
-        role: role || user.role
+        role: role || user.role,
       });
     });
 }
@@ -118,13 +118,13 @@ function create(data) {
 function findById(id, shouldAttachUser = false) {
   const now = new Date().toISOString();
 
-  return db('sessions')
-    .whereRaw('id = ? and (expires_at is null or expires_at > ?)', [id, now])
+  return db("sessions")
+    .whereRaw("id = ? and (expires_at is null or expires_at > ?)", [id, now])
     .then(first)
     .then(maybeInstantiate)
-    .then(session => {
+    .then((session) => {
       if (session && shouldAttachUser) {
-        return UsersDAO.findById(session.userId).then(user => {
+        return UsersDAO.findById(session.userId).then((user) => {
           session.setUser(user);
           return session;
         });
@@ -143,15 +143,11 @@ function findById(id, shouldAttachUser = false) {
 }
 
 function deleteByUserId(userId) {
-  return db('sessions')
-    .where({ user_id: userId })
-    .del();
+  return db("sessions").where({ user_id: userId }).del();
 }
 
 function deleteById(id) {
-  return db('sessions')
-    .where({ id })
-    .del();
+  return db("sessions").where({ id }).del();
 }
 
 module.exports = {
@@ -159,5 +155,5 @@ module.exports = {
   createForUser,
   deleteByUserId,
   deleteById,
-  findById
+  findById,
 };

@@ -1,16 +1,16 @@
-import Knex from 'knex';
+import Knex from "knex";
 import {
   BidRejection,
   BidRejectionRow,
   dataAdapter,
-  isBidRejectionRow
-} from './domain-object';
-import db from '../../services/db';
-import { first } from 'lodash';
-import uuid = require('node-uuid');
-import { validate } from '../../services/validate-from-db';
+  isBidRejectionRow,
+} from "./domain-object";
+import db from "../../services/db";
+import { first } from "lodash";
+import uuid = require("node-uuid");
+import { validate } from "../../services/validate-from-db";
 
-const TABLE_NAME = 'bid_rejections';
+const TABLE_NAME = "bid_rejections";
 
 export async function create(
   data: Unsaved<BidRejection>,
@@ -18,10 +18,10 @@ export async function create(
 ): Promise<BidRejection> {
   const rowData = dataAdapter.forInsertion({
     id: uuid.v4(),
-    ...data
+    ...data,
   });
   const created = await db(TABLE_NAME)
-    .insert(rowData, '*')
+    .insert(rowData, "*")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
@@ -30,7 +30,7 @@ export async function create(
     .then((rows: object[]) => first(rows));
 
   if (!created) {
-    throw new Error('Failed to create bid rejection reasons.');
+    throw new Error("Failed to create bid rejection reasons.");
   }
 
   return validate<BidRejectionRow, BidRejection>(
@@ -43,7 +43,7 @@ export async function create(
 
 export async function findByBidId(bidId: string): Promise<BidRejection | null> {
   const bidRejection: BidRejectionRow | undefined = await db(TABLE_NAME)
-    .select('*')
+    .select("*")
     .where({ bid_id: bidId })
     .then((bidRejections: BidRejectionRow[]) => first(bidRejections));
 

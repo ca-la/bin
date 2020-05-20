@@ -1,4 +1,4 @@
-export type BillingInterval = 'MONTHLY' | 'ANNUALLY';
+export type BillingInterval = "MONTHLY" | "ANNUALLY";
 
 export interface Plan {
   id: string;

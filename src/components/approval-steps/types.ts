@@ -11,18 +11,18 @@ export interface BaseApprovalStep {
 }
 
 export enum ApprovalStepState {
-  BLOCKED = 'BLOCKED',
-  UNSTARTED = 'UNSTARTED',
-  CURRENT = 'CURRENT',
-  COMPLETED = 'COMPLETED',
-  SKIP = 'SKIP'
+  BLOCKED = "BLOCKED",
+  UNSTARTED = "UNSTARTED",
+  CURRENT = "CURRENT",
+  COMPLETED = "COMPLETED",
+  SKIP = "SKIP",
 }
 
 export enum ApprovalStepType {
-  CHECKOUT = 'CHECKOUT',
-  TECHNICAL_DESIGN = 'TECHNICAL_DESIGN',
-  SAMPLE = 'SAMPLE',
-  PRODUCTION = 'PRODUCTION'
+  CHECKOUT = "CHECKOUT",
+  TECHNICAL_DESIGN = "TECHNICAL_DESIGN",
+  SAMPLE = "SAMPLE",
+  PRODUCTION = "PRODUCTION",
 }
 
 export interface ApprovalBlocked extends BaseApprovalStep {
@@ -83,4 +83,4 @@ export interface ApprovalStepRow {
   started_at: Date | null;
 }
 
-export const domain = 'ApprovalStep' as 'ApprovalStep';
+export const domain = "ApprovalStep" as "ApprovalStep";

@@ -2,18 +2,18 @@ import {
   BaseFullNotification,
   BaseFullNotificationRow,
   BaseNotification,
-  BaseNotificationRow
-} from './base';
-import { NotificationType } from '../domain-object';
+  BaseNotificationRow,
+} from "./base";
+import { NotificationType } from "../domain-object";
 
 type BaseRow = Omit<
   BaseNotificationRow,
-  | 'collection_id'
-  | 'design_id'
-  | 'stage_id'
-  | 'task_id'
-  | 'comment_id'
-  | 'recipient_user_id'
+  | "collection_id"
+  | "design_id"
+  | "stage_id"
+  | "task_id"
+  | "comment_id"
+  | "recipient_user_id"
 >;
 
 export interface TaskCommentMentionNotificationRow extends BaseRow {
@@ -28,7 +28,7 @@ export interface TaskCommentMentionNotificationRow extends BaseRow {
 
 type BaseFullRow = Omit<
   BaseFullNotificationRow & TaskCommentMentionNotificationRow,
-  'collection_title' | 'comment_text' | 'design_title' | 'task_title'
+  "collection_title" | "comment_text" | "design_title" | "task_title"
 >;
 
 export interface FullTaskCommentMentionNotificationRow extends BaseFullRow {
@@ -40,12 +40,12 @@ export interface FullTaskCommentMentionNotificationRow extends BaseFullRow {
 
 type Base = Omit<
   BaseNotification,
-  | 'collectionId'
-  | 'designId'
-  | 'stageId'
-  | 'taskId'
-  | 'commentId'
-  | 'recipientUserId'
+  | "collectionId"
+  | "designId"
+  | "stageId"
+  | "taskId"
+  | "commentId"
+  | "recipientUserId"
 >;
 
 export interface TaskCommentMentionNotification extends Base {
@@ -60,7 +60,7 @@ export interface TaskCommentMentionNotification extends Base {
 
 type BaseFull = Omit<
   BaseFullNotification & TaskCommentMentionNotification,
-  'collectionTitle' | 'commentText' | 'designTitle' | 'taskTitle'
+  "collectionTitle" | "commentText" | "designTitle" | "taskTitle"
 >;
 
 export interface FullTaskCommentMentionNotification extends BaseFull {

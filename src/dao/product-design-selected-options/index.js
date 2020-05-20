@@ -1,26 +1,26 @@
-'use strict';
+"use strict";
 
-const uuid = require('node-uuid');
-const rethrow = require('pg-rethrow');
-const compact = require('../../services/compact');
-const db = require('../../services/db');
-const filterError = require('../../services/filter-error');
-const first = require('../../services/first').default;
-const ProductDesignSelectedOption = require('../../domain-objects/product-design-selected-option');
+const uuid = require("node-uuid");
+const rethrow = require("pg-rethrow");
+const compact = require("../../services/compact");
+const db = require("../../services/db");
+const filterError = require("../../services/filter-error");
+const first = require("../../services/first").default;
+const ProductDesignSelectedOption = require("../../domain-objects/product-design-selected-option");
 
-const instantiate = data => new ProductDesignSelectedOption(data);
-const maybeInstantiate = data =>
+const instantiate = (data) => new ProductDesignSelectedOption(data);
+const maybeInstantiate = (data) =>
   (data && new ProductDesignSelectedOption(data)) || null;
 
 const { dataMapper } = ProductDesignSelectedOption;
 
 function create(data) {
   const rowData = Object.assign({}, dataMapper.userDataToRowData(data), {
-    id: uuid.v4()
+    id: uuid.v4(),
   });
 
-  return db('product_design_selected_options')
-    .insert(rowData, '*')
+  return db("product_design_selected_options")
+    .insert(rowData, "*")
     .catch(rethrow)
     .then(first)
     .then(instantiate);
@@ -29,29 +29,29 @@ function create(data) {
 function update(optionId, data) {
   const rowData = compact(dataMapper.userDataToRowData(data));
 
-  return db('product_design_selected_options')
+  return db("product_design_selected_options")
     .where({ id: optionId })
-    .update(rowData, '*')
+    .update(rowData, "*")
     .then(first)
     .then(instantiate);
 }
 
 function findByDesignId(designId) {
-  return db('product_design_selected_options')
+  return db("product_design_selected_options")
     .where({
       deleted_at: null,
-      design_id: designId
+      design_id: designId,
     })
-    .orderBy('created_at', 'desc')
+    .orderBy("created_at", "desc")
     .catch(rethrow)
-    .then(options => options.map(instantiate));
+    .then((options) => options.map(instantiate));
 }
 
 function findById(id) {
-  return db('product_design_selected_options')
+  return db("product_design_selected_options")
     .where({
       id,
-      deleted_at: null
+      deleted_at: null,
     })
     .catch(rethrow)
     .then(first)
@@ -60,35 +60,35 @@ function findById(id) {
 }
 
 function deleteById(id) {
-  return db('product_design_selected_options')
+  return db("product_design_selected_options")
     .where({
       id,
-      deleted_at: null
+      deleted_at: null,
     })
     .update(
       {
-        deleted_at: new Date()
+        deleted_at: new Date(),
       },
-      '*'
+      "*"
     )
     .then(first)
     .then(instantiate);
 }
 
 function deleteForSectionTrx(trx, sectionId) {
-  return db('product_design_selected_options')
+  return db("product_design_selected_options")
     .transacting(trx)
     .where({
       section_id: sectionId,
-      deleted_at: null
+      deleted_at: null,
     })
     .update(
       {
-        deleted_at: new Date()
+        deleted_at: new Date(),
       },
-      '*'
+      "*"
     )
-    .then(options => options.map(instantiate));
+    .then((options) => options.map(instantiate));
 }
 
 module.exports = {
@@ -97,5 +97,5 @@ module.exports = {
   deleteForSectionTrx,
   findByDesignId,
   findById,
-  update
+  update,
 };

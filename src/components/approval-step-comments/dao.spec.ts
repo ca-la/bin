@@ -1,31 +1,31 @@
-import Knex from 'knex';
-import * as uuid from 'node-uuid';
+import Knex from "knex";
+import * as uuid from "node-uuid";
 
-import { test, Test } from '../../test-helpers/fresh';
-import { staticProductDesign } from '../../test-helpers/factories/product-design';
-import * as ProductDesignsDAO from '../product-designs/dao';
-import db from '../../services/db';
-import ProductDesign from '../product-designs/domain-objects/product-design';
+import { test, Test } from "../../test-helpers/fresh";
+import { staticProductDesign } from "../../test-helpers/factories/product-design";
+import * as ProductDesignsDAO from "../product-designs/dao";
+import db from "../../services/db";
+import ProductDesign from "../product-designs/domain-objects/product-design";
 
 import ApprovalStep, {
   ApprovalStepState,
-  ApprovalStepType
-} from '../approval-steps/domain-object';
-import * as ApprovalStepsDAO from '../approval-steps/dao';
-import * as ApprovalStepCommentDAO from './dao';
-import createUser from '../../test-helpers/create-user';
-import generateComment from '../../test-helpers/factories/comment';
+  ApprovalStepType,
+} from "../approval-steps/domain-object";
+import * as ApprovalStepsDAO from "../approval-steps/dao";
+import * as ApprovalStepCommentDAO from "./dao";
+import createUser from "../../test-helpers/create-user";
+import generateComment from "../../test-helpers/factories/comment";
 
-test('ApprovalStepsDAO can create multiple steps and retrieve by design', async (t: Test) => {
+test("ApprovalStepsDAO can create multiple steps and retrieve by design", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
   const d1: ProductDesign = await ProductDesignsDAO.create(
-    staticProductDesign({ id: 'd1', userId: user.id })
+    staticProductDesign({ id: "d1", userId: user.id })
   );
 
   const approvalStep: ApprovalStep = {
     state: ApprovalStepState.UNSTARTED,
     id: uuid.v4(),
-    title: 'Checkout',
+    title: "Checkout",
     ordering: 0,
     designId: d1.id,
     reason: null,
@@ -33,7 +33,7 @@ test('ApprovalStepsDAO can create multiple steps and retrieve by design', async 
     createdAt: new Date(),
     startedAt: null,
     completedAt: null,
-    collaboratorId: null
+    collaboratorId: null,
   };
   await db.transaction((trx: Knex.Transaction) =>
     ApprovalStepsDAO.createAll(trx, [approvalStep])
@@ -43,7 +43,7 @@ test('ApprovalStepsDAO can create multiple steps and retrieve by design', async 
   await db.transaction((trx: Knex.Transaction) =>
     ApprovalStepCommentDAO.create(trx, {
       commentId: comment.id,
-      approvalStepId: approvalStep.id
+      approvalStepId: approvalStep.id,
     })
   );
 
@@ -51,6 +51,6 @@ test('ApprovalStepsDAO can create multiple steps and retrieve by design', async 
     ApprovalStepCommentDAO.findByStepId(trx, approvalStep.id)
   );
 
-  t.equal(found.length, 1, 'comments are returned');
+  t.equal(found.length, 1, "comments are returned");
   t.equal(found[0].userId, commenter.id);
 });

@@ -1,23 +1,23 @@
-'use strict';
+"use strict";
 
-const Router = require('koa-router');
-const multer = require('koa-multer');
+const Router = require("koa-router");
+const multer = require("koa-multer");
 
-const canAccessUserResource = require('../../middleware/can-access-user-resource');
-const filterError = require('../../services/filter-error');
-const FitPartnerScanService = require('../../services/fit-partner-scan');
-const getScanPhotoUrl = require('../../services/get-scan-photo-url');
-const InvalidDataError = require('../../errors/invalid-data');
-const requireAuth = require('../../middleware/require-auth');
-const ScanPhotosDAO = require('../../dao/scan-photos');
-const ScansDAO = require('../../dao/scans');
-const User = require('../../components/users/domain-object');
-const UserAttributesService = require('../../services/user-attributes');
-const validateMeasurements = require('../../services/validate-measurements');
-const { AWS_SCANPHOTO_BUCKET_NAME } = require('../../config');
-const { canAccessScanInParam } = require('../../middleware/can-access-scan');
-const { logServerError } = require('../../services/logger');
-const { uploadFile, deleteFile } = require('../../services/aws');
+const canAccessUserResource = require("../../middleware/can-access-user-resource");
+const filterError = require("../../services/filter-error");
+const FitPartnerScanService = require("../../services/fit-partner-scan");
+const getScanPhotoUrl = require("../../services/get-scan-photo-url");
+const InvalidDataError = require("../../errors/invalid-data");
+const requireAuth = require("../../middleware/require-auth");
+const ScanPhotosDAO = require("../../dao/scan-photos");
+const ScansDAO = require("../../dao/scans");
+const User = require("../../components/users/domain-object");
+const UserAttributesService = require("../../services/user-attributes");
+const validateMeasurements = require("../../services/validate-measurements");
+const { AWS_SCANPHOTO_BUCKET_NAME } = require("../../config");
+const { canAccessScanInParam } = require("../../middleware/can-access-scan");
+const { logServerError } = require("../../services/logger");
+const { uploadFile, deleteFile } = require("../../services/aws");
 
 const router = new Router();
 
@@ -27,15 +27,15 @@ function* createScan() {
   const scan = yield ScansDAO.create({
     type,
     userId: this.state.userId,
-    isComplete
-  }).catch(filterError(InvalidDataError, err => this.throw(400, err)));
+    isComplete,
+  }).catch(filterError(InvalidDataError, (err) => this.throw(400, err)));
 
   if (this.state.userId && isComplete) {
     try {
       yield UserAttributesService.recordScan(this.state.userId);
     } catch (err) {
       logServerError(
-        'Could not save scan status in Mailchimp for user',
+        "Could not save scan status in Mailchimp for user",
         this.state.userId
       );
       logServerError(err);
@@ -51,7 +51,7 @@ function* deleteScan() {
   const deletedPhotos = yield ScanPhotosDAO.deleteByScanId(this.params.scanId);
 
   yield Promise.all(
-    deletedPhotos.map(photo => {
+    deletedPhotos.map((photo) => {
       return deleteFile(AWS_SCANPHOTO_BUCKET_NAME, `${photo.id}.jpg`);
     })
   );
@@ -62,11 +62,11 @@ function* deleteScan() {
 
 function* createScanPhoto() {
   const data = this.req.files.image;
-  this.assert(data, 400, 'Image must be uploaded as `image`');
+  this.assert(data, 400, "Image must be uploaded as `image`");
   this.assert(
-    data.mimetype === 'image/jpeg',
+    data.mimetype === "image/jpeg",
     400,
-    'Only photos can be uploaded'
+    "Only photos can be uploaded"
   );
 
   const localPath = data.path;
@@ -75,7 +75,7 @@ function* createScanPhoto() {
   // memory before sending to S3. TODO figure out streaming, offload this to
   // Lambda or something, or let clients upload direct to S3.
   const photo = yield ScanPhotosDAO.create({
-    scanId: this.params.scanId
+    scanId: this.params.scanId,
   });
 
   const fileName = `${photo.id}.jpg`;
@@ -84,7 +84,7 @@ function* createScanPhoto() {
     fileName,
     localPath,
     data.mimetype,
-    'authenticated-read'
+    "authenticated-read"
   );
 
   photo.setUrl(getScanPhotoUrl(this, photo.id));
@@ -94,7 +94,7 @@ function* createScanPhoto() {
 }
 
 function* updateScan() {
-  this.assert(this.request.body, 400, 'New data must be provided');
+  this.assert(this.request.body, 400, "New data must be provided");
 
   const { isComplete, isStarted, measurements } = this.request.body;
 
@@ -105,7 +105,7 @@ function* updateScan() {
       yield UserAttributesService.recordScan(this.state.userId);
     } catch (err) {
       logServerError(
-        'Could not save scan status in Mailchimp for user',
+        "Could not save scan status in Mailchimp for user",
         this.state.userId
       );
       logServerError(err);
@@ -115,7 +115,7 @@ function* updateScan() {
   const updated = yield ScansDAO.updateOneById(this.params.scanId, {
     isComplete,
     isStarted,
-    measurements
+    measurements,
   });
 
   // Scan is owned by a 3rd party CALA fit customer, potentially update details
@@ -156,12 +156,12 @@ function* getAllScans() {
   if (this.state.role === User.ROLES.admin) {
     scans = yield ScansDAO.findAll({
       limit: Number(this.query.limit) || 10,
-      offset: Number(this.query.offset) || 0
+      offset: Number(this.query.offset) || 0,
     });
   } else if (this.state.role === User.ROLES.fitPartner) {
     scans = yield ScansDAO.findByFitPartner(this.state.userId, {
       limit: Number(this.query.limit) || 10,
-      offset: Number(this.query.offset) || 0
+      offset: Number(this.query.offset) || 0,
     });
   } else {
     this.throw(403);
@@ -189,18 +189,18 @@ function* claimScan() {
   this.assert(
     !this.state.scan.userId,
     400,
-    'This scan has already been claimed'
+    "This scan has already been claimed"
   );
 
   const updated = yield ScansDAO.updateOneById(this.params.scanId, {
-    userId: this.state.userId
+    userId: this.state.userId,
   });
 
   try {
     yield UserAttributesService.recordScan(this.state.userId);
   } catch (err) {
     logServerError(
-      'Could not save scan status in Mailchimp for user',
+      "Could not save scan status in Mailchimp for user",
       this.state.userId
     );
     logServerError(err);
@@ -216,7 +216,7 @@ function* claimScan() {
 function* getScanPhotos() {
   const photos = yield ScanPhotosDAO.findByScanId(this.params.scanId);
 
-  photos.forEach(photo => photo.setUrl(getScanPhotoUrl(this, photo.id)));
+  photos.forEach((photo) => photo.setUrl(getScanPhotoUrl(this, photo.id)));
 
   this.body = photos;
   this.status = 200;
@@ -228,14 +228,14 @@ function* getScan() {
   this.status = 200;
 }
 
-router.del('/:scanId', canAccessScanInParam, deleteScan);
-router.get('/', requireAuth, getList);
-router.get('/:scanId', canAccessScanInParam, getScan);
-router.get('/:scanId/photos', canAccessScanInParam, getScanPhotos);
-router.patch('/:scanId', canAccessScanInParam, updateScan);
-router.post('/', createScan);
-router.post('/:scanId/claim', canAccessScanInParam, claimScan);
-router.post('/:scanId/photos', canAccessScanInParam, multer(), createScanPhoto);
-router.put('/:scanId', canAccessScanInParam, updateScan); // TODO: deprecate
+router.del("/:scanId", canAccessScanInParam, deleteScan);
+router.get("/", requireAuth, getList);
+router.get("/:scanId", canAccessScanInParam, getScan);
+router.get("/:scanId/photos", canAccessScanInParam, getScanPhotos);
+router.patch("/:scanId", canAccessScanInParam, updateScan);
+router.post("/", createScan);
+router.post("/:scanId/claim", canAccessScanInParam, claimScan);
+router.post("/:scanId/photos", canAccessScanInParam, multer(), createScanPhoto);
+router.put("/:scanId", canAccessScanInParam, updateScan); // TODO: deprecate
 
 module.exports = router.routes();

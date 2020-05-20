@@ -1,11 +1,11 @@
-import Router from 'koa-router';
+import Router from "koa-router";
 
-import * as AnnotationCommentsDAO from '../../components/annotation-comments/dao';
-import * as CommentDAO from './dao';
-import requireAuth = require('../../middleware/require-auth');
-import { announceAnnotationCommentDeletion } from '../iris/messages/annotation-comment';
-import { announceTaskCommentDeletion } from '../iris/messages/task-comment';
-import { announceApprovalStepCommentDeletion } from '../iris/messages/approval-step-comment';
+import * as AnnotationCommentsDAO from "../../components/annotation-comments/dao";
+import * as CommentDAO from "./dao";
+import requireAuth = require("../../middleware/require-auth");
+import { announceAnnotationCommentDeletion } from "../iris/messages/annotation-comment";
+import { announceTaskCommentDeletion } from "../iris/messages/task-comment";
+import { announceApprovalStepCommentDeletion } from "../iris/messages/approval-step-comment";
 
 const router = new Router();
 
@@ -17,7 +17,7 @@ function* getList(this: AuthedContext): Iterator<any, any, any> {
   const query: GetListQuery = this.query;
 
   if (!query.annotationIds) {
-    this.throw(400, 'Missing annotationIds!');
+    this.throw(400, "Missing annotationIds!");
   }
 
   const idList = Array.isArray(query.annotationIds)
@@ -43,7 +43,7 @@ function* deleteComment(this: AuthedContext): Iterator<any, any, any> {
   const {
     annotationId,
     taskId,
-    approvalStepId
+    approvalStepId,
   }: DeleteCommentQuery = this.query;
   const { commentId } = this.params;
   const comment = yield CommentDAO.findById(commentId);
@@ -56,7 +56,7 @@ function* deleteComment(this: AuthedContext): Iterator<any, any, any> {
     yield announceAnnotationCommentDeletion({
       actorId: userId,
       annotationId,
-      commentId
+      commentId,
     });
   } else if (taskId) {
     yield announceTaskCommentDeletion({ actorId: userId, commentId, taskId });
@@ -64,14 +64,14 @@ function* deleteComment(this: AuthedContext): Iterator<any, any, any> {
     yield announceApprovalStepCommentDeletion({
       actorId: userId,
       approvalStepId,
-      commentId
+      commentId,
     });
   }
 
   this.status = 204;
 }
 
-router.get('/', requireAuth, getList);
-router.del('/:commentId', requireAuth, deleteComment);
+router.get("/", requireAuth, getList);
+router.del("/:commentId", requireAuth, deleteComment);
 
 export default router.routes();

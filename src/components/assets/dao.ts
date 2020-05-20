@@ -1,19 +1,19 @@
-import Knex from 'knex';
-import rethrow from 'pg-rethrow';
-import uuid from 'node-uuid';
+import Knex from "knex";
+import rethrow from "pg-rethrow";
+import uuid from "node-uuid";
 
-import { validate, validateEvery } from '../../services/validate-from-db';
+import { validate, validateEvery } from "../../services/validate-from-db";
 import Asset, {
   AssetRow,
   dataAdapter,
   isAssetRow,
   toInsertion,
-  toPartialInsertion
-} from './domain-object';
-import db from '../../services/db';
-import first from '../../services/first';
+  toPartialInsertion,
+} from "./domain-object";
+import db from "../../services/db";
+import first from "../../services/first";
 
-const TABLE_NAME = 'assets';
+const TABLE_NAME = "assets";
 
 export async function create(
   asset: Asset | MaybeUnsaved<Asset>,
@@ -22,7 +22,7 @@ export async function create(
   const row = toInsertion({
     id: uuid.v4(),
     createdAt: new Date(),
-    ...asset
+    ...asset,
   });
 
   const created = await db(TABLE_NAME)
@@ -32,13 +32,13 @@ export async function create(
         query.transacting(trx);
       }
     })
-    .returning('*')
+    .returning("*")
     .then((rows: AssetRow[]) => {
       return first(rows);
     });
 
   if (!created) {
-    throw new Error('Failed to create an Asset');
+    throw new Error("Failed to create an Asset");
   }
 
   return validate<AssetRow, Asset>(
@@ -55,7 +55,7 @@ export async function createAll(
 ): Promise<Asset[]> {
   const rows = assets.map((asset: Asset) => dataAdapter.forInsertion(asset));
 
-  const created = await trx(TABLE_NAME).insert(rows, '*');
+  const created = await trx(TABLE_NAME).insert(rows, "*");
 
   return validateEvery<AssetRow, Asset>(
     TABLE_NAME,
@@ -67,7 +67,7 @@ export async function createAll(
 
 export async function findById(assetId: string): Promise<Asset | null> {
   const found = await db(TABLE_NAME)
-    .where({ id: assetId }, '*')
+    .where({ id: assetId }, "*")
     .catch(rethrow)
     .then((rows: AssetRow[]) => first(rows));
 
@@ -87,7 +87,7 @@ export async function update(
 
   const updated = await db(TABLE_NAME)
     .where({ id })
-    .update(row, '*')
+    .update(row, "*")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
@@ -96,7 +96,7 @@ export async function update(
     .then((rows: AssetRow[]) => first<AssetRow>(rows));
 
   if (!updated) {
-    throw new Error('There was a problem updating the Asset');
+    throw new Error("There was a problem updating the Asset");
   }
 
   return validate<AssetRow, Asset>(

@@ -1,12 +1,12 @@
-import Knex from 'knex';
+import Knex from "knex";
 
-import DesignsDAO from '../../product-designs/dao';
-import { createList } from '../designs/dao';
+import DesignsDAO from "../../product-designs/dao";
+import { createList } from "../designs/dao";
 
-import ProductDesign = require('../../product-designs/domain-objects/product-design');
-import ResourceNotFoundError from '../../../errors/resource-not-found';
-import { TemplateDesign } from '../designs/domain-object';
-import db from '../../../services/db';
+import ProductDesign = require("../../product-designs/domain-objects/product-design");
+import ResourceNotFoundError from "../../../errors/resource-not-found";
+import { TemplateDesign } from "../designs/domain-object";
+import db from "../../../services/db";
 
 /**
  * Given a list of designIds, marks each design as a template.
@@ -18,7 +18,7 @@ export async function createDesignTemplates(
     const templateDesigns = designIds.map(
       (designId: string): TemplateDesign => {
         return {
-          designId
+          designId,
         };
       }
     );

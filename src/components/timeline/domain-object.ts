@@ -1,4 +1,4 @@
-import { ThumbnailAndPreviewLinks } from '../../services/attach-asset-links';
+import { ThumbnailAndPreviewLinks } from "../../services/attach-asset-links";
 
 export default interface Timeline {
   designId: string;

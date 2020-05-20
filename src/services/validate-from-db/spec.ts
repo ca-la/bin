@@ -1,7 +1,7 @@
-import DataAdapter from '../../services/data-adapter';
-import { test, Test } from '../../test-helpers/simple';
+import DataAdapter from "../../services/data-adapter";
+import { test, Test } from "../../test-helpers/simple";
 
-import { validate, validateEvery } from './index';
+import { validate, validateEvery } from "./index";
 
 interface Product {
   id: string;
@@ -15,56 +15,56 @@ class MyCustomError extends Error {
   constructor(message: string) {
     super(message);
     this.message = message;
-    this.name = 'MyCustomError';
+    this.name = "MyCustomError";
   }
 }
 
 function isProductRow(a: any): a is ProductRow {
   let isValid = false;
   try {
-    isValid = typeof a.id === 'string';
+    isValid = typeof a.id === "string";
   } catch (e) {
-    throw new MyCustomError('Oh no!');
+    throw new MyCustomError("Oh no!");
   }
   return isValid;
 }
 
 const productAdapter = new DataAdapter<ProductRow, Product>();
-const table = 'products';
+const table = "products";
 
-test('#validate, with valid data', (t: Test) => {
+test("#validate, with valid data", (t: Test) => {
   const row: ProductRow = {
-    id: 'aProduct'
+    id: "aProduct",
   };
 
   t.doesNotThrow(() => validate(table, isProductRow, productAdapter, row));
 });
 
-test('#validate, with invalid data', (t: Test) => {
+test("#validate, with invalid data", (t: Test) => {
   const invalid = ({
-    id: 42
+    id: 42,
   } as any) as ProductRow;
 
   t.throws(() => validate(table, isProductRow, productAdapter, invalid), Error);
 });
 
-test('#validate, with null', (t: Test) => {
+test("#validate, with null", (t: Test) => {
   t.throws(
     () => validate(table, isProductRow, productAdapter, null),
     MyCustomError
   );
 });
 
-test('#validate, with undefined', (t: Test) => {
+test("#validate, with undefined", (t: Test) => {
   t.throws(
     () => validate(table, isProductRow, productAdapter, undefined),
     MyCustomError
   );
 });
 
-test('#validateEvery, with valid data', (t: Test) => {
+test("#validateEvery, with valid data", (t: Test) => {
   const row: ProductRow = {
-    id: 'aProduct'
+    id: "aProduct",
   };
 
   t.doesNotThrow(() =>
@@ -72,9 +72,9 @@ test('#validateEvery, with valid data', (t: Test) => {
   );
 });
 
-test('#validateEvery, with invalid data', (t: Test) => {
+test("#validateEvery, with invalid data", (t: Test) => {
   const invalid = ({
-    id: 42
+    id: 42,
   } as any) as ProductRow;
 
   t.throws(
@@ -83,24 +83,24 @@ test('#validateEvery, with invalid data', (t: Test) => {
   );
 });
 
-test('#validateEvery, with null', (t: Test) => {
+test("#validateEvery, with null", (t: Test) => {
   t.throws(
     () => validateEvery(table, isProductRow, productAdapter, null),
     Error
   );
 });
 
-test('#validateEvery, with undefined', (t: Test) => {
+test("#validateEvery, with undefined", (t: Test) => {
   t.throws(() => validateEvery(table, isProductRow, productAdapter, undefined));
 });
 
-test('#validateEvery, with a mixed array', (t: Test) => {
+test("#validateEvery, with a mixed array", (t: Test) => {
   const row: ProductRow = {
-    id: 'aProduct'
+    id: "aProduct",
   };
 
   const invalid = ({
-    id: 42
+    id: 42,
   } as any) as ProductRow;
 
   t.throws(
@@ -109,10 +109,10 @@ test('#validateEvery, with a mixed array', (t: Test) => {
         invalid,
         row,
         null,
-        undefined
+        undefined,
       ]),
     Error,
-    'throws with first error'
+    "throws with first error"
   );
   t.throws(
     () =>
@@ -120,9 +120,9 @@ test('#validateEvery, with a mixed array', (t: Test) => {
         null,
         invalid,
         row,
-        undefined
+        undefined,
       ]),
     MyCustomError,
-    'throws with first error'
+    "throws with first error"
   );
 });

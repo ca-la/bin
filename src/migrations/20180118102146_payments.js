@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 exports.up = function up(knex) {
   // Tentatively - a user will have multiple payment_methods records - one for

@@ -1,7 +1,7 @@
-'use strict';
+"use strict";
 
 const defaultResponse = {
-  message: 'An unknown error occurred'
+  message: "An unknown error occurred",
 };
 
 class StripeError extends Error {
@@ -14,7 +14,7 @@ class StripeError extends Error {
     this.declineCode = response.decline_code;
     this.param = response.param;
 
-    this.name = 'StripeError';
+    this.name = "StripeError";
   }
 }
 

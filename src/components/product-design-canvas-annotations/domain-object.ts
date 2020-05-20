@@ -1,5 +1,5 @@
-import DataAdapter from '../../services/data-adapter';
-import { hasProperties } from '../../services/require-properties';
+import DataAdapter from "../../services/data-adapter";
+import { hasProperties } from "../../services/require-properties";
 
 export default interface ProductDesignCanvasAnnotation {
   canvasId: string;
@@ -21,7 +21,7 @@ export interface ProductDesignCanvasAnnotationRow {
   y: number;
 }
 
-export const UPDATABLE_PROPERTIES = ['canvas_id', 'x', 'y'];
+export const UPDATABLE_PROPERTIES = ["canvas_id", "x", "y"];
 
 export function parseNumerics(
   annotation: ProductDesignCanvasAnnotation
@@ -29,7 +29,7 @@ export function parseNumerics(
   return {
     ...annotation,
     x: Number(annotation.x),
-    y: Number(annotation.y)
+    y: Number(annotation.y),
   };
 }
 
@@ -49,12 +49,12 @@ export function isProductDesignCanvasAnnotationRow(
 ): row is ProductDesignCanvasAnnotationRow {
   return hasProperties(
     row,
-    'canvas_id',
-    'created_at',
-    'created_by',
-    'deleted_at',
-    'id',
-    'x',
-    'y'
+    "canvas_id",
+    "created_at",
+    "created_by",
+    "deleted_at",
+    "id",
+    "x",
+    "y"
   );
 }

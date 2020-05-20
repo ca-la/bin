@@ -1,15 +1,15 @@
-import uuid from 'node-uuid';
-import { create } from '../../components/components/dao';
+import uuid from "node-uuid";
+import { create } from "../../components/components/dao";
 import Component, {
-  ComponentType
-} from '../../components/components/domain-object';
-import { findById as findUserById } from '../../components/users/dao';
-import { findById as findAssetById } from '../../components/assets/dao';
-import * as ProductDesignOptionsDAO from '../../dao/product-design-options';
-import createUser = require('../create-user');
-import Asset from '../../components/assets/domain-object';
-import generateAsset from './asset';
-import ProductDesignOption from '../../domain-objects/product-design-option';
+  ComponentType,
+} from "../../components/components/domain-object";
+import { findById as findUserById } from "../../components/users/dao";
+import { findById as findAssetById } from "../../components/assets/dao";
+import * as ProductDesignOptionsDAO from "../../dao/product-design-options";
+import createUser = require("../create-user");
+import Asset from "../../components/assets/domain-object";
+import generateAsset from "./asset";
+import ProductDesignOption from "../../domain-objects/product-design-option";
 
 interface ComponentWithResources {
   component: Component;
@@ -31,14 +31,15 @@ export default async function generateComponent(
     ? { asset: await findAssetById(assetId) }
     : options.materialId
     ? {
-        asset: await ProductDesignOptionsDAO.findById(options.materialId).then(
-          ({ previewImageId }: ProductDesignOption) =>
-            previewImageId ? findAssetById(previewImageId) : null
-        )
+        asset: await ProductDesignOptionsDAO.findById(
+          options.materialId
+        ).then(({ previewImageId }: ProductDesignOption) =>
+          previewImageId ? findAssetById(previewImageId) : null
+        ),
       }
     : await generateAsset();
   if (!asset) {
-    throw new Error('Asset could not be found');
+    throw new Error("Asset could not be found");
   }
 
   const componentType = options.type || ComponentType.Sketch;
@@ -53,7 +54,7 @@ export default async function generateComponent(
         materialId: null,
         parentId: options.parentId || null,
         sketchId: asset.id,
-        type: ComponentType.Sketch
+        type: ComponentType.Sketch,
       });
       break;
 
@@ -65,7 +66,7 @@ export default async function generateComponent(
         materialId: null,
         parentId: options.parentId || null,
         sketchId: null,
-        type: ComponentType.Sketch
+        type: ComponentType.Sketch,
       });
       break;
 
@@ -77,11 +78,11 @@ export default async function generateComponent(
         materialId: options.materialId!,
         parentId: options.parentId || null,
         sketchId: null,
-        type: ComponentType.Sketch
+        type: ComponentType.Sketch,
       });
       break;
     default:
-      throw new Error('Invalid component type');
+      throw new Error("Invalid component type");
   }
 
   return { asset, component, createdBy: user };

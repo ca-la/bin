@@ -1,16 +1,16 @@
-import Router from 'koa-router';
+import Router from "koa-router";
 
-import * as PricingProcessesDAO from '../../dao/pricing-processes';
-import * as PricingProductTypesDAO from '../../components/pricing-product-types/dao';
-import * as PricingComplexitiesDAO from '../../dao/pricing-complexities';
-import * as PricingMaterialCategoriesDAO from '../../dao/pricing-material-categories';
-import requireAdmin = require('../../middleware/require-admin');
+import * as PricingProcessesDAO from "../../dao/pricing-processes";
+import * as PricingProductTypesDAO from "../../components/pricing-product-types/dao";
+import * as PricingComplexitiesDAO from "../../dao/pricing-complexities";
+import * as PricingMaterialCategoriesDAO from "../../dao/pricing-material-categories";
+import requireAdmin = require("../../middleware/require-admin");
 import {
   Complexity,
   MaterialCategory,
   Process,
-  ProductType
-} from '../../domain-objects/pricing';
+  ProductType,
+} from "../../domain-objects/pricing";
 
 const router = new Router();
 // tslint:disable-next-line:typedef
@@ -29,14 +29,14 @@ function* getOptions(this: AuthedContext): Iterator<any, any, any> {
   }[] = yield PricingMaterialCategoriesDAO.findLatest();
 
   this.body = {
-    complexities: complexities.map(prop('complexity')),
-    materialCategories: materialCategories.map(prop('category')),
+    complexities: complexities.map(prop("complexity")),
+    materialCategories: materialCategories.map(prop("category")),
     processes,
-    types: types.map(prop('name'))
+    types: types.map(prop("name")),
   };
   this.status = 200;
 }
 
-router.get('/', requireAdmin, getOptions);
+router.get("/", requireAdmin, getOptions);
 
 export = router.routes();

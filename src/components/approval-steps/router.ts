@@ -1,24 +1,24 @@
-import { buildRouter } from '../../services/cala-component/cala-router';
-import dao from './dao';
-import ApprovalStep, { domain } from './types';
-import db from '../../services/db';
-import requireAuth from '../../middleware/require-auth';
-import Knex from 'knex';
-import ApprovalStepsDAO from '../approval-steps/dao';
-import useTransaction from '../../middleware/use-transaction';
+import { buildRouter } from "../../services/cala-component/cala-router";
+import dao from "./dao";
+import ApprovalStep, { domain } from "./types";
+import db from "../../services/db";
+import requireAuth from "../../middleware/require-auth";
+import Knex from "knex";
+import ApprovalStepsDAO from "../approval-steps/dao";
+import useTransaction from "../../middleware/use-transaction";
 import {
   canAccessDesignInQuery,
   canAccessDesignInState,
   canEditDesign,
-  requireDesignIdBy
-} from '../../middleware/can-access-design';
-import * as ApprovalStepCommentDAO from '../approval-step-comments/dao';
-import { CommentWithResources } from '@cala/ts-lib';
-import addAtMentionDetails from '../../services/add-at-mention-details';
-import { addAttachmentLinks } from '../../services/add-attachments-links';
-import { DesignEventWithMeta } from '../../domain-objects/design-event';
-import * as DesignEventsDAO from '../../dao/design-events';
-import { CalaRouter } from '../../services/cala-component/types';
+  requireDesignIdBy,
+} from "../../middleware/can-access-design";
+import * as ApprovalStepCommentDAO from "../approval-step-comments/dao";
+import { CommentWithResources } from "@cala/ts-lib";
+import addAtMentionDetails from "../../services/add-at-mention-details";
+import { addAttachmentLinks } from "../../services/add-attachments-links";
+import { DesignEventWithMeta } from "../../domain-objects/design-event";
+import * as DesignEventsDAO from "../../dao/design-events";
+import { CalaRouter } from "../../services/cala-component/types";
 
 type StreamItem = CommentWithResources | DesignEventWithMeta;
 
@@ -38,29 +38,29 @@ async function getDesignIdFromStep(this: AuthedContext): Promise<string> {
 
 const standardRouter = buildRouter<ApprovalStep>(
   domain,
-  '/design-approval-steps',
+  "/design-approval-steps",
   dao,
   {
-    pickRoutes: ['find', 'update'],
+    pickRoutes: ["find", "update"],
     routeOptions: {
       find: {
-        allowedFilterAttributes: ['designId'],
-        middleware: [requireAuth, canAccessDesignInQuery]
+        allowedFilterAttributes: ["designId"],
+        middleware: [requireAuth, canAccessDesignInQuery],
       },
       update: {
         middleware: [
           requireAuth,
           requireDesignIdBy(getDesignIdFromStep),
           canAccessDesignInState,
-          canEditDesign
+          canEditDesign,
         ],
-        allowedAttributes: ['collaboratorId', 'state']
-      }
-    }
+        allowedAttributes: ["collaboratorId", "state"],
+      },
+    },
   }
 );
 
-const SKIP_EVENTS = ['STEP_REOPEN'];
+const SKIP_EVENTS = ["STEP_REOPEN"];
 
 function subtractDesignEventPairs(
   acc: DesignEventWithMeta[],
@@ -70,8 +70,8 @@ function subtractDesignEventPairs(
 ): DesignEventWithMeta[] {
   const hasFutureReopen = designEvents
     .slice(index)
-    .find((future: DesignEventWithMeta) => future.type === 'STEP_REOPEN');
-  if (designEvent.type === 'STEP_COMPLETE' && hasFutureReopen) {
+    .find((future: DesignEventWithMeta) => future.type === "STEP_REOPEN");
+  if (designEvent.type === "STEP_COMPLETE" && hasFutureReopen) {
     return acc;
   }
 
@@ -86,7 +86,7 @@ const router: CalaRouter = {
   ...standardRouter,
   routes: {
     ...standardRouter.routes,
-    '/:id/stream-items': {
+    "/:id/stream-items": {
       get: [
         requireAuth,
         requireDesignIdBy(getDesignIdFromStep),
@@ -118,7 +118,7 @@ const router: CalaRouter = {
 
           const streamItems: StreamItem[] = [
             ...commentsWithResources,
-            ...events
+            ...events,
           ].sort(
             (a: StreamItem, b: StreamItem) =>
               a.createdAt.getTime() - b.createdAt.getTime()
@@ -126,10 +126,10 @@ const router: CalaRouter = {
 
           this.body = streamItems;
           this.status = 200;
-        }
-      ]
-    }
-  }
+        },
+      ],
+    },
+  },
 };
 
 export default router;

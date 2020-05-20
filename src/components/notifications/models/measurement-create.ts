@@ -2,17 +2,17 @@ import {
   BaseFullNotification,
   BaseFullNotificationRow,
   BaseNotification,
-  BaseNotificationRow
-} from './base';
-import { NotificationType } from '../domain-object';
+  BaseNotificationRow,
+} from "./base";
+import { NotificationType } from "../domain-object";
 
 type BaseRow = Omit<
   BaseNotificationRow,
-  | 'canvas_id'
-  | 'collection_id'
-  | 'design_id'
-  | 'recipient_user_id'
-  | 'measurement_id'
+  | "canvas_id"
+  | "collection_id"
+  | "design_id"
+  | "recipient_user_id"
+  | "measurement_id"
 >;
 
 export interface MeasurementCreateNotificationRow extends BaseRow {
@@ -26,7 +26,7 @@ export interface MeasurementCreateNotificationRow extends BaseRow {
 
 type BaseFullRow = Omit<
   BaseFullNotificationRow & MeasurementCreateNotificationRow,
-  'collection_title' | 'component_type' | 'design_title'
+  "collection_title" | "component_type" | "design_title"
 >;
 
 export interface FullMeasurementCreateNotificationRow extends BaseFullRow {
@@ -37,7 +37,7 @@ export interface FullMeasurementCreateNotificationRow extends BaseFullRow {
 
 type Base = Omit<
   BaseNotification,
-  'canvasId' | 'collectionId' | 'designId' | 'recipientUserId' | 'measurementId'
+  "canvasId" | "collectionId" | "designId" | "recipientUserId" | "measurementId"
 >;
 
 export interface MeasurementCreateNotification extends Base {
@@ -51,7 +51,7 @@ export interface MeasurementCreateNotification extends Base {
 
 type BaseFull = Omit<
   BaseFullNotification & MeasurementCreateNotification,
-  'collectionTitle' | 'componentType' | 'designTitle'
+  "collectionTitle" | "componentType" | "designTitle"
 >;
 
 export interface FullMeasurementCreateNotification extends BaseFull {

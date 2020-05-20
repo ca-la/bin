@@ -1,7 +1,7 @@
-import Knex from 'knex';
+import Knex from "knex";
 
-import { deleteByIds } from '../dao/dao';
-import db from '../../../services/db';
+import { deleteByIds } from "../dao/dao";
+import db from "../../../services/db";
 
 export function* deleteDesign(this: AuthedContext): Iterator<any, any, any> {
   const { designId } = this.params;
@@ -21,7 +21,7 @@ export function* deleteDesigns(this: AuthedContext): Iterator<any, any, any> {
   }
 
   yield db.transaction(async (trx: Knex.Transaction) => {
-    await deleteByIds({ designIds: designIds.split(','), trx });
+    await deleteByIds({ designIds: designIds.split(","), trx });
   });
 
   this.status = 204;

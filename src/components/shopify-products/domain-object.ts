@@ -1,5 +1,5 @@
-import DataAdapter from '../../services/data-adapter';
-import { hasProperties } from '../../services/require-properties';
+import DataAdapter from "../../services/data-adapter";
+import { hasProperties } from "../../services/require-properties";
 
 export interface ShopifyProduct {
   id: string;
@@ -24,10 +24,10 @@ export function isShopifyProductRow(
 ): candidate is ShopifyProductRow {
   return hasProperties(
     candidate,
-    'id',
-    'shopify_id',
-    'design_id',
-    'created_at',
-    'deleted_at'
+    "id",
+    "shopify_id",
+    "design_id",
+    "created_at",
+    "deleted_at"
   );
 }

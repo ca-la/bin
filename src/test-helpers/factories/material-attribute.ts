@@ -1,20 +1,20 @@
-import uuid from 'node-uuid';
-import Knex from 'knex';
+import uuid from "node-uuid";
+import Knex from "knex";
 
-import { findById as findUserById } from '../../components/users/dao';
-import createUser = require('../create-user');
-import User from '../../components/users/domain-object';
+import { findById as findUserById } from "../../components/users/dao";
+import createUser = require("../create-user");
+import User from "../../components/users/domain-object";
 
-import { create } from '../../components/attributes/material-attributes/dao';
-import MaterialAttribute from '../../components/attributes/material-attributes/domain-objects';
+import { create } from "../../components/attributes/material-attributes/dao";
+import MaterialAttribute from "../../components/attributes/material-attributes/domain-objects";
 
-import Node from '../../components/nodes/domain-objects';
-import { findById as findNode } from '../../components/nodes/dao';
-import generateNode from './node';
+import Node from "../../components/nodes/domain-objects";
+import { findById as findNode } from "../../components/nodes/dao";
+import generateNode from "./node";
 
-import Asset from '../../components/assets/domain-object';
-import { findById as findAsset } from '../../components/assets/dao';
-import generateAsset from './asset';
+import Asset from "../../components/assets/domain-object";
+import { findById as findAsset } from "../../components/assets/dao";
+import generateAsset from "./asset";
 
 export default async function generateMaterialAttribute(
   options: Partial<MaterialAttribute> = {},
@@ -36,27 +36,27 @@ export default async function generateMaterialAttribute(
     : await generateAsset({});
 
   if (!asset) {
-    throw new Error('Could not get an asset.');
+    throw new Error("Could not get an asset.");
   }
 
   if (!node) {
-    throw new Error('Could not get a node.');
+    throw new Error("Could not get a node.");
   }
 
   if (!user) {
-    throw new Error('Could not get user.');
+    throw new Error("Could not get user.");
   }
 
   const materialData: MaterialAttribute = {
     assetId: asset.id,
-    createdAt: new Date('2019-04-20'),
+    createdAt: new Date("2019-04-20"),
     createdBy: user.id,
     deletedAt: null,
     id: uuid.v4(),
     height: 0,
     nodeId: node.id,
     width: 0,
-    ...options
+    ...options,
   };
   const material = await create(materialData, trx);
 
@@ -64,6 +64,6 @@ export default async function generateMaterialAttribute(
     asset,
     createdBy: user,
     material,
-    node
+    node,
   };
 }

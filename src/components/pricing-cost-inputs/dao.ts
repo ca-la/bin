@@ -1,22 +1,22 @@
-import uuid from 'node-uuid';
-import Knex from 'knex';
-import { omit } from 'lodash';
+import uuid from "node-uuid";
+import Knex from "knex";
+import { omit } from "lodash";
 
-import db from '../../services/db';
-import first from '../../services/first';
-import { validate, validateEvery } from '../../services/validate-from-db';
-import { Process } from '../../domain-objects/pricing';
+import db from "../../services/db";
+import first from "../../services/first";
+import { validate, validateEvery } from "../../services/validate-from-db";
+import { Process } from "../../domain-objects/pricing";
 import PricingCostInput, {
   dataAdapter,
   dataAdapterWithoutVersions,
   isPricingCostInputRow,
   PricingCostInputRow,
-  PricingCostInputWithoutVersions
-} from './domain-object';
+  PricingCostInputWithoutVersions,
+} from "./domain-object";
 
-const TABLE_NAME = 'pricing_cost_inputs';
+const TABLE_NAME = "pricing_cost_inputs";
 
-type WithoutProcesses = Omit<PricingCostInputRow, 'processes'>;
+type WithoutProcesses = Omit<PricingCostInputRow, "processes">;
 
 export async function create(
   trx: Knex.Transaction,
@@ -44,7 +44,7 @@ LIMIT 1;
   `);
 
   if (!rows[0]) {
-    throw new Error('No pricing inputs found!');
+    throw new Error("No pricing inputs found!");
   }
 
   const [
@@ -55,8 +55,8 @@ LIMIT 1;
       product_type_version,
       margin_version,
       constants_version,
-      processes_version
-    }
+      processes_version,
+    },
   ] = rows;
   const rowData = omit(
     {
@@ -68,36 +68,36 @@ LIMIT 1;
       product_materials_version,
       product_type_version,
       margin_version,
-      constants_version
+      constants_version,
     },
-    ['processes']
+    ["processes"]
   );
   const inputsCreated: WithoutProcesses | undefined = await trx(TABLE_NAME)
     .insert(rowData)
-    .returning('*')
+    .returning("*")
     .then((maybeInputs: WithoutProcesses[]) => first(maybeInputs));
 
   if (!inputsCreated) {
-    throw new Error('Failed to create rows');
+    throw new Error("Failed to create rows");
   }
 
   const processRowData = inputs.processes.map((process: Process) => {
     return {
       id: uuid.v4(),
       pricing_cost_input_id: inputsCreated.id,
-      ...process
+      ...process,
     };
   });
 
   const processesCreated: Process[] =
     processRowData.length > 0
-      ? await trx('pricing_cost_input_processes')
+      ? await trx("pricing_cost_input_processes")
           .insert(processRowData)
-          .returning(['name', 'complexity'])
+          .returning(["name", "complexity"])
       : [];
   const created = {
     ...inputsCreated,
-    processes: processesCreated
+    processes: processesCreated,
   };
 
   return validate(TABLE_NAME, isPricingCostInputRow, dataAdapter, created);
@@ -106,22 +106,22 @@ LIMIT 1;
 export async function attachProcesses<
   T extends { id: string } = WithoutProcesses
 >(inputs: T): Promise<T & { processes: Process[] }> {
-  const processes: Process[] = await db('pricing_cost_input_processes')
-    .select(['name', 'complexity'])
+  const processes: Process[] = await db("pricing_cost_input_processes")
+    .select(["name", "complexity"])
     .where({ pricing_cost_input_id: inputs.id })
-    .orderBy('name', 'desc');
+    .orderBy("name", "desc");
 
   return {
     ...inputs,
-    processes
+    processes,
   };
 }
 
 export async function findById(id: string): Promise<PricingCostInput | null> {
   const withoutProcesses: WithoutProcesses | null = await db(TABLE_NAME)
-    .select('*')
+    .select("*")
     .where({ id, deleted_at: null })
-    .andWhereRaw('(expires_at IS null OR expires_at > now())')
+    .andWhereRaw("(expires_at IS null OR expires_at > now())")
     .first();
 
   if (!withoutProcesses) {
@@ -141,15 +141,15 @@ export async function findByDesignId(options: {
   const { designId, showExpired, trx } = options;
 
   const withoutProcesses: WithoutProcesses[] = await db(TABLE_NAME)
-    .select('*')
+    .select("*")
     .where({ design_id: designId, deleted_at: null })
-    .orderBy('created_at', 'DESC')
+    .orderBy("created_at", "DESC")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
       }
       if (!showExpired) {
-        query.andWhereRaw('(expires_at IS null OR expires_at > now())');
+        query.andWhereRaw("(expires_at IS null OR expires_at > now())");
       }
     });
   const inputs: PricingCostInputRow[] = [];
@@ -172,8 +172,8 @@ export async function expireCostInputs(
 ): Promise<PricingCostInput[]> {
   const costInputs: WithoutProcesses[] = await db(TABLE_NAME)
     .where({ deleted_at: null, expires_at: null })
-    .whereIn('design_id', designIds)
-    .update({ expires_at: expiresAt }, '*')
+    .whereIn("design_id", designIds)
+    .update({ expires_at: expiresAt }, "*")
     .transacting(trx);
 
   const inputs: PricingCostInputRow[] = [];

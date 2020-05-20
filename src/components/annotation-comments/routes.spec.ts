@@ -1,23 +1,23 @@
-import uuid from 'node-uuid';
+import uuid from "node-uuid";
 
-import createUser from '../../test-helpers/create-user';
-import { authHeader, get, put } from '../../test-helpers/http';
-import { sandbox, test, Test } from '../../test-helpers/fresh';
-import { create as createDesign } from '../product-designs/dao';
-import * as CreateNotifications from '../../services/create-notifications';
-import generateCollaborator from '../../test-helpers/factories/collaborator';
-import generateCollection from '../../test-helpers/factories/collection';
-import * as AnnounceCommentService from '../iris/messages/annotation-comment';
-import generateCanvas from '../../test-helpers/factories/product-design-canvas';
-import { addDesign } from '../../test-helpers/collections';
-import * as AssetLinkAttachment from '../../services/attach-asset-links';
+import createUser from "../../test-helpers/create-user";
+import { authHeader, get, put } from "../../test-helpers/http";
+import { sandbox, test, Test } from "../../test-helpers/fresh";
+import { create as createDesign } from "../product-designs/dao";
+import * as CreateNotifications from "../../services/create-notifications";
+import generateCollaborator from "../../test-helpers/factories/collaborator";
+import generateCollection from "../../test-helpers/factories/collection";
+import * as AnnounceCommentService from "../iris/messages/annotation-comment";
+import generateCanvas from "../../test-helpers/factories/product-design-canvas";
+import { addDesign } from "../../test-helpers/collections";
+import * as AssetLinkAttachment from "../../services/attach-asset-links";
 
-const API_PATH = '/product-design-canvas-annotations';
+const API_PATH = "/product-design-canvas-annotations";
 
 test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async (t: Test) => {
   sandbox().useFakeTimers();
   const announcementStub = sandbox()
-    .stub(AnnounceCommentService, 'announceAnnotationCommentCreation')
+    .stub(AnnounceCommentService, "announceAnnotationCommentCreation")
     .resolves({});
   const { session, user } = await createUser();
 
@@ -28,13 +28,13 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
   const { collection } = await generateCollection({ createdBy: user.id });
   const { collaborator } = await generateCollaborator({
     collectionId: collection.id,
-    userId: user.id
+    userId: user.id,
   });
 
   const design = await createDesign({
-    productType: 'TEESHIRT',
-    title: 'Green Tee',
-    userId: user.id
+    productType: "TEESHIRT",
+    title: "Green Tee",
+    userId: user.id,
   });
   await addDesign(collection.id, design.id);
 
@@ -44,19 +44,19 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
     designId: design.id,
     height: 200,
     ordering: 0,
-    title: 'My Green Tee',
+    title: "My Green Tee",
     width: 200,
     x: 0,
-    y: 0
+    y: 0,
   });
   const annotationData = {
     canvasId: designCanvas.id,
     createdAt: new Date(),
-    createdBy: 'me',
+    createdBy: "me",
     deletedAt: null,
     id: annotationId,
     x: 1,
-    y: 1
+    y: 1,
   };
   const date1 = new Date();
   const date2 = new Date(date1.getTime() + 1000);
@@ -65,13 +65,13 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
     createdAt: date1.toISOString(),
     description: null,
     id: uuid.v4(),
-    mimeType: 'image/jpeg',
+    mimeType: "image/jpeg",
     originalHeightPx: 0,
     originalWidthPx: 0,
-    title: '',
+    title: "",
     userId: user.id,
     uploadCompletedAt: date1.toISOString(),
-    deletedAt: null
+    deletedAt: null,
   };
 
   const commentBody = {
@@ -81,10 +81,10 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
     isPinned: false,
     mentions: {},
     parentCommentId: null,
-    text: 'A comment',
-    userEmail: 'cool@me.me',
-    userId: 'purposefully incorrect',
-    userName: 'Somebody cool'
+    text: "A comment",
+    userEmail: "cool@me.me",
+    userId: "purposefully incorrect",
+    userName: "Somebody cool",
   };
 
   const commentWithMentionBody = {
@@ -93,45 +93,45 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
     id: commentWithMentionId,
     isPinned: false,
     mentions: {
-      [collaborator.id]: user.name
+      [collaborator.id]: user.name,
     },
     parentCommentId: null,
     text: `A comment @<${collaborator.id}|collaborator>`,
-    userEmail: 'cool@me.me',
-    userId: 'purposefully incorrect',
-    userName: 'Somebody cool',
-    attachments: [attachment]
+    userEmail: "cool@me.me",
+    userId: "purposefully incorrect",
+    userName: "Somebody cool",
+    attachments: [attachment],
   };
 
   const notificationStub = sandbox()
     .stub(
       CreateNotifications,
-      'sendDesignOwnerAnnotationCommentCreateNotification'
+      "sendDesignOwnerAnnotationCommentCreateNotification"
     )
     .resolves();
 
   const notificationMentionStub = sandbox()
-    .stub(CreateNotifications, 'sendAnnotationCommentMentionNotification')
+    .stub(CreateNotifications, "sendAnnotationCommentMentionNotification")
     .resolves();
 
   const attachLinksStub = sandbox()
-    .stub(AssetLinkAttachment, 'constructAttachmentAssetLinks')
+    .stub(AssetLinkAttachment, "constructAttachmentAssetLinks")
     .returns({
-      downloadLink: 'a-very-download'
+      downloadLink: "a-very-download",
     });
 
   const annotationResponse = await put(`${API_PATH}/${annotationId}`, {
     body: annotationData,
-    headers: authHeader(session.id)
+    headers: authHeader(session.id),
   });
   const commentResponse = await put(
     `${API_PATH}/${annotationResponse[1].id}/comments/${commentId}`,
     {
       body: commentBody,
-      headers: authHeader(session.id)
+      headers: authHeader(session.id),
     }
   );
-  t.equal(commentResponse[0].status, 201, 'Comment creation succeeds');
+  t.equal(commentResponse[0].status, 201, "Comment creation succeeds");
   t.deepEqual(
     commentResponse[1],
     {
@@ -140,17 +140,17 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
       userName: user.name,
       userEmail: user.email,
       userRole: user.role,
-      attachments: []
+      attachments: [],
     },
-    'returns attachments on create and attaches the real user'
+    "returns attachments on create and attaches the real user"
   );
   t.equal(
     notificationMentionStub.callCount,
     0,
-    'Mentions notification not called'
+    "Mentions notification not called"
   );
-  t.equal(notificationStub.callCount, 1, 'Comment notification called');
-  t.equal(announcementStub.callCount, 1, 'Announces the new comment to Iris');
+  t.equal(notificationStub.callCount, 1, "Comment notification called");
+  t.equal(announcementStub.callCount, 1, "Announces the new comment to Iris");
 
   const annotationCommentResponse = await get(
     `${API_PATH}/${annotationResponse[1].id}/comments`,
@@ -159,7 +159,7 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
   t.equal(
     annotationCommentResponse[0].status,
     200,
-    'Comment retrieval succeeds'
+    "Comment retrieval succeeds"
   );
   t.deepEqual(
     annotationCommentResponse[1],
@@ -172,10 +172,10 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
         userId: user.id,
         userName: user.name,
         userRole: user.role,
-        attachments: []
-      }
+        attachments: [],
+      },
     ],
-    'Comment retrieval returns the created comment in an array'
+    "Comment retrieval returns the created comment in an array"
   );
 
   t.deepEqual(notificationStub.getCall(0).args.slice(0, 5), [
@@ -183,43 +183,45 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
     annotationResponse[1].canvasId,
     commentBody.id,
     user.id,
-    []
+    [],
   ]);
 
   const [, mentionBody] = await put(
     `${API_PATH}/${annotationResponse[1].id}/comments/${commentWithMentionId}`,
     {
       body: commentWithMentionBody,
-      headers: authHeader(session.id)
+      headers: authHeader(session.id),
     }
   );
-  t.equal(notificationMentionStub.callCount, 1, 'Mentions notification called');
-  t.equal(notificationStub.callCount, 2, 'Comment notification called');
+  t.equal(notificationMentionStub.callCount, 1, "Mentions notification called");
+  t.equal(notificationStub.callCount, 2, "Comment notification called");
   t.deepEqual(notificationStub.getCall(1).args.slice(0, 5), [
     annotationResponse[1].id,
     annotationResponse[1].canvasId,
     commentWithMentionId,
     user.id,
-    [collaborator.user!.id]
+    [collaborator.user!.id],
   ]);
-  t.equal(announcementStub.callCount, 2, 'Announces the comment to Iris');
+  t.equal(announcementStub.callCount, 2, "Announces the comment to Iris");
   t.equal(
     attachLinksStub.callCount,
     1,
-    'Attachment asset links are generated for the created comment'
+    "Attachment asset links are generated for the created comment"
   );
   t.equal(
     announcementStub.args[1][1].attachments[0].downloadLink,
-    'a-very-download',
-    'Attachments links are attached to the created comment'
+    "a-very-download",
+    "Attachments links are attached to the created comment"
   );
   t.deepEqual(mentionBody.mentions, {
-    [collaborator.id]: 'Q User'
+    [collaborator.id]: "Q User",
   });
 
   const [response, body] = await get(
     `${API_PATH}/${annotationResponse[1].id}/comments`,
-    { headers: authHeader(session.id) }
+    {
+      headers: authHeader(session.id),
+    }
   );
   t.equal(response.status, 200);
   t.equal(body.length, 2);
@@ -234,10 +236,10 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
             createdAt: new Date(body[1].attachments[0].createdAt),
             uploadCompletedAt: new Date(
               body[1].attachments[0].uploadCompletedAt
-            )
-          }
-        ]
-      }
+            ),
+          },
+        ],
+      },
     ],
     [
       {
@@ -248,7 +250,7 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
         userId: user.id,
         userName: user.name,
         userRole: user.role,
-        attachments: []
+        attachments: [],
       },
       {
         ...commentWithMentionBody,
@@ -262,11 +264,11 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
             ...attachment,
             createdAt: new Date(attachment.createdAt),
             uploadCompletedAt: new Date(attachment.uploadCompletedAt),
-            downloadLink: 'a-very-download'
-          }
-        ]
-      }
+            downloadLink: "a-very-download",
+          },
+        ],
+      },
     ],
-    'Comment retrieval returns all the comments for the annotation'
+    "Comment retrieval returns all the comments for the annotation"
   );
 });

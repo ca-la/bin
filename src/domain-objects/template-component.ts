@@ -1,5 +1,5 @@
-import DataAdapter from '../services/data-adapter';
-import { hasProperties } from '../services/require-properties';
+import DataAdapter from "../services/data-adapter";
+import { hasProperties } from "../services/require-properties";
 
 /**
  * @typedef {object} TemplateComponent A component representing the "head" of a
@@ -33,5 +33,5 @@ export const dataAdapter = new DataAdapter<
 export function isTemplateComponentRow(
   row: object
 ): row is TemplateComponentRow {
-  return hasProperties(row, 'id', 'created_at', 'template_id', 'component_id');
+  return hasProperties(row, "id", "created_at", "template_id", "component_id");
 }

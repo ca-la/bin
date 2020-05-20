@@ -1,5 +1,5 @@
-import DataAdapter from '../../../../services/data-adapter';
-import { hasProperties } from '@cala/ts-lib';
+import DataAdapter from "../../../../services/data-adapter";
+import { hasProperties } from "@cala/ts-lib";
 
 export default interface ImageAttribute {
   createdAt: Date;
@@ -38,7 +38,7 @@ export function encode(row: ImageAttributeRow): ImageAttribute {
     nodeId: row.node_id,
     width: Number(row.width),
     x: Number(row.x),
-    y: Number(row.y)
+    y: Number(row.y),
   };
 }
 
@@ -53,7 +53,7 @@ export function decode(data: ImageAttribute): ImageAttributeRow {
     node_id: data.nodeId,
     width: String(data.width),
     x: String(data.x),
-    y: String(data.y)
+    y: String(data.y),
   };
 }
 
@@ -65,31 +65,31 @@ export const dataAdapter = new DataAdapter<ImageAttributeRow, ImageAttribute>(
 export function isImageAttribute(obj: object): obj is ImageAttribute {
   return hasProperties(
     obj,
-    'assetId',
-    'createdAt',
-    'createdBy',
-    'deletedAt',
-    'id',
-    'height',
-    'nodeId',
-    'width',
-    'x',
-    'y'
+    "assetId",
+    "createdAt",
+    "createdBy",
+    "deletedAt",
+    "id",
+    "height",
+    "nodeId",
+    "width",
+    "x",
+    "y"
   );
 }
 
 export function isImageAttributeRow(row: object): row is ImageAttributeRow {
   return hasProperties(
     row,
-    'asset_id',
-    'created_at',
-    'created_by',
-    'deleted_at',
-    'id',
-    'height',
-    'node_id',
-    'width',
-    'x',
-    'y'
+    "asset_id",
+    "created_at",
+    "created_by",
+    "deleted_at",
+    "id",
+    "height",
+    "node_id",
+    "width",
+    "x",
+    "y"
   );
 }

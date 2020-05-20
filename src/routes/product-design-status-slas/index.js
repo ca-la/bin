@@ -1,12 +1,12 @@
-'use strict';
+"use strict";
 
-const Router = require('koa-router');
+const Router = require("koa-router");
 
-const requireAuth = require('../../middleware/require-auth');
+const requireAuth = require("../../middleware/require-auth");
 const {
-  canAccessDesignInQuery
-} = require('../../middleware/can-access-design');
-const ProductDesignStatusSlasDAO = require('../../dao/product-design-status-slas');
+  canAccessDesignInQuery,
+} = require("../../middleware/can-access-design");
+const ProductDesignStatusSlasDAO = require("../../dao/product-design-status-slas");
 
 const router = new Router();
 
@@ -26,7 +26,7 @@ function* getSlas() {
   this.status = 200;
 }
 
-router.put('/', requireAuth, canAccessDesignInQuery, replaceSlas);
-router.get('/', requireAuth, canAccessDesignInQuery, getSlas);
+router.put("/", requireAuth, canAccessDesignInQuery, replaceSlas);
+router.get("/", requireAuth, canAccessDesignInQuery, getSlas);
 
 module.exports = router.routes();

@@ -1,6 +1,6 @@
-import { ProducedContext } from '../../context';
-import * as SessionsDAO from '../../../dao/sessions';
-import Session from '../../../domain-objects/session';
+import { ProducedContext } from "../../context";
+import * as SessionsDAO from "../../../dao/sessions";
+import Session from "../../../domain-objects/session";
 
 async function login(
   _1: any,
@@ -22,7 +22,7 @@ async function login(
     email,
     expiresAt,
     password,
-    role
+    role,
   });
 
   return session;
@@ -30,8 +30,8 @@ async function login(
 
 const resolver = {
   Mutation: {
-    login
-  }
+    login,
+  },
 };
 
 export default resolver;

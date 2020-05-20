@@ -1,6 +1,6 @@
-import { isPlainObject } from 'lodash';
-import DataAdapter from '../../services/data-adapter';
-import { hasProperties } from '../../services/require-properties';
+import { isPlainObject } from "lodash";
+import DataAdapter from "../../services/data-adapter";
+import { hasProperties } from "../../services/require-properties";
 
 export interface ResolveAccountRequest {
   resolveCustomerId: string;
@@ -35,17 +35,17 @@ export const dataAdapter = new DataAdapter<ResolveAccountRow, ResolveAccount>();
 export function isResolveAccountRequest(
   row: object
 ): row is ResolveAccountRequest {
-  return hasProperties(row, 'resolveCustomerId', 'userId');
+  return hasProperties(row, "resolveCustomerId", "userId");
 }
 
 export function isResolveAccountRow(row: object): row is ResolveAccountRow {
   return hasProperties(
     row,
-    'created_at',
-    'deleted_at',
-    'id',
-    'resolve_customer_id',
-    'user_id'
+    "created_at",
+    "deleted_at",
+    "id",
+    "resolve_customer_id",
+    "user_id"
   );
 }
 
@@ -54,12 +54,12 @@ export function isRawResolveData(row: any): row is RawResolveData {
     isPlainObject(row) &&
     hasProperties(
       row,
-      'approved_at',
-      'amount_available',
-      'amount_balance',
-      'business_name',
-      'approved',
-      'amount_approved'
+      "approved_at",
+      "amount_available",
+      "amount_balance",
+      "business_name",
+      "approved",
+      "amount_approved"
     )
   );
 }

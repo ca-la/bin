@@ -1,29 +1,29 @@
-import uuid from 'node-uuid';
+import uuid from "node-uuid";
 
-import db from '../../services/db';
+import db from "../../services/db";
 import Process, {
   dataAdapter,
   isProcessRow,
-  ProcessRow
-} from './domain-object';
-import first from '../../services/first';
-import { validate, validateEvery } from '../../services/validate-from-db';
-import { ComponentType } from '../components/domain-object';
+  ProcessRow,
+} from "./domain-object";
+import first from "../../services/first";
+import { validate, validateEvery } from "../../services/validate-from-db";
+import { ComponentType } from "../components/domain-object";
 
-const TABLE_NAME = 'processes';
+const TABLE_NAME = "processes";
 
 export async function create(data: MaybeUnsaved<Process>): Promise<Process> {
   const rowData = dataAdapter.forInsertion({
     id: uuid.v4(),
     ...data,
-    deletedAt: null
+    deletedAt: null,
   });
   const created = await db(TABLE_NAME)
-    .insert(rowData, '*')
+    .insert(rowData, "*")
     .then((rows: ProcessRow[]) => first<ProcessRow>(rows));
 
   if (!created) {
-    throw new Error('Failed to create a process!');
+    throw new Error("Failed to create a process!");
   }
 
   return validate<ProcessRow, Process>(
@@ -36,7 +36,7 @@ export async function create(data: MaybeUnsaved<Process>): Promise<Process> {
 
 export async function findById(id: string): Promise<Process | null> {
   const process = await db(TABLE_NAME)
-    .select('*')
+    .select("*")
     .where({ id, deleted_at: null })
     .limit(1)
     .then((rows: ProcessRow[]) => first<ProcessRow>(rows));
@@ -58,10 +58,10 @@ export async function findById(id: string): Promise<Process | null> {
  */
 export async function findAll(): Promise<Process[]> {
   const processes = await db(TABLE_NAME)
-    .select('*')
+    .select("*")
     .where({ deleted_at: null })
-    .orderBy('component_type', 'asc')
-    .orderBy('ordering', 'asc');
+    .orderBy("component_type", "asc")
+    .orderBy("ordering", "asc");
 
   return validateEvery<ProcessRow, Process>(
     TABLE_NAME,
@@ -78,9 +78,9 @@ export async function findAllByComponentType(
   type: ComponentType
 ): Promise<Process[]> {
   const processes = await db(TABLE_NAME)
-    .select('*')
+    .select("*")
     .where({ component_type: type, deleted_at: null })
-    .orderBy('ordering', 'asc');
+    .orderBy("ordering", "asc");
 
   return validateEvery<ProcessRow, Process>(
     TABLE_NAME,

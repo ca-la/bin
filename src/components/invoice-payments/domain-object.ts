@@ -1,5 +1,5 @@
-import DataAdapter from '../../services/data-adapter';
-import { hasProperties } from '../../services/require-properties';
+import DataAdapter from "../../services/data-adapter";
+import { hasProperties } from "../../services/require-properties";
 
 export interface InvoicePaymentRow {
   id: string;
@@ -50,7 +50,7 @@ export type InvoicePayment =
   | ResolvePayment
   | CreditPayment;
 
-type MaybeSaved<T extends InvoicePaymentBase> = Omit<T, 'createdAt' | 'id'> & {
+type MaybeSaved<T extends InvoicePaymentBase> = Omit<T, "createdAt" | "id"> & {
   createdAt?: Date;
   id?: string;
 };
@@ -66,31 +66,31 @@ export const dataAdapter = new DataAdapter<InvoicePaymentRow, InvoicePayment>();
 export function isInvoicePaymentRow(row: object): row is InvoicePaymentRow {
   return hasProperties(
     row,
-    'id',
-    'created_at',
-    'deleted_at',
-    'invoice_id',
-    'total_cents',
-    'payment_method_id',
-    'stripe_charge_id',
-    'rumbleship_purchase_hash',
-    'resolve_payment_id',
-    'credit_user_id'
+    "id",
+    "created_at",
+    "deleted_at",
+    "invoice_id",
+    "total_cents",
+    "payment_method_id",
+    "stripe_charge_id",
+    "rumbleship_purchase_hash",
+    "resolve_payment_id",
+    "credit_user_id"
   );
 }
 
 export function isInvoicePayment(row: object): row is InvoicePayment {
   return hasProperties(
     row,
-    'id',
-    'createdAt',
-    'deletedAt',
-    'invoiceId',
-    'totalCents',
-    'paymentMethodId',
-    'stripeChargeId',
-    'rumbleshipPurchaseHash',
-    'resolvePaymentId',
-    'creditsUsedCents'
+    "id",
+    "createdAt",
+    "deletedAt",
+    "invoiceId",
+    "totalCents",
+    "paymentMethodId",
+    "stripeChargeId",
+    "rumbleshipPurchaseHash",
+    "resolvePaymentId",
+    "creditsUsedCents"
   );
 }

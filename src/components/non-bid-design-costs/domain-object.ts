@@ -1,15 +1,15 @@
-import DataAdapter from '../../services/data-adapter';
-import { hasProperties } from '../../services/require-properties';
+import DataAdapter from "../../services/data-adapter";
+import { hasProperties } from "../../services/require-properties";
 
 export enum Category {
-  BLANKS = 'BLANKS',
-  UNCAPPED_DEVELOPMENT = 'UNCAPPED_DEVELOPMENT',
-  LABELS = 'LABELS',
-  REFERENCE_SAMPLES = 'REFERENCE_SAMPLES',
-  MATERIALS = 'MATERIALS',
-  FINISHING = 'FINISHING',
-  CUSTOM_PACKAGING = 'CUSTOM_PACKAGING',
-  OTHER = 'OTHER'
+  BLANKS = "BLANKS",
+  UNCAPPED_DEVELOPMENT = "UNCAPPED_DEVELOPMENT",
+  LABELS = "LABELS",
+  REFERENCE_SAMPLES = "REFERENCE_SAMPLES",
+  MATERIALS = "MATERIALS",
+  FINISHING = "FINISHING",
+  CUSTOM_PACKAGING = "CUSTOM_PACKAGING",
+  OTHER = "OTHER",
 }
 
 export interface NonBidDesignCost {
@@ -43,7 +43,7 @@ function encode(row: NonBidDesignCostRow): NonBidDesignCost {
     category: row.category,
     note: row.note,
     designId: row.design_id,
-    cents: Number(row.cents)
+    cents: Number(row.cents),
   };
 }
 
@@ -54,13 +54,13 @@ export function isNonBidDesignCostRow(
 ): candidate is NonBidDesignCostRow {
   return hasProperties(
     candidate,
-    'id',
-    'created_at',
-    'deleted_at',
-    'created_by',
-    'category',
-    'note',
-    'design_id',
-    'cents'
+    "id",
+    "created_at",
+    "deleted_at",
+    "created_by",
+    "category",
+    "note",
+    "design_id",
+    "cents"
   );
 }

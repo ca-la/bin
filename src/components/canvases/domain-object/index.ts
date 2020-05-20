@@ -1,5 +1,5 @@
-import DataAdapter from '../../../services/data-adapter';
-import { hasProperties } from '../../../services/require-properties';
+import DataAdapter from "../../../services/data-adapter";
+import { hasProperties } from "../../../services/require-properties";
 
 /**
  * @typedef {object} Canvas A canvas in a design space holding a view to a design
@@ -63,7 +63,7 @@ function encodeCanvasRow(row: CanvasRow): Canvas {
     y: Number(row.y),
     deletedAt: row.deleted_at ? new Date(row.deleted_at) : null,
     ordering: row.ordering,
-    archivedAt: row.archived_at ? new Date(row.archived_at) : null
+    archivedAt: row.archived_at ? new Date(row.archived_at) : null,
   };
 }
 
@@ -81,7 +81,7 @@ function decodeCanvas(data: Canvas): CanvasRow {
     y: data.y,
     deleted_at: data.deletedAt ? data.deletedAt.toISOString() : null,
     ordering: data.ordering,
-    archived_at: data.archivedAt ? data.archivedAt.toISOString() : null
+    archived_at: data.archivedAt ? data.archivedAt.toISOString() : null,
   };
 }
 
@@ -97,50 +97,50 @@ export const partialDataAdapter = new DataAdapter<
 export function isUnsavedCanvas(obj: object): obj is Unsaved<Canvas> {
   return hasProperties(
     obj,
-    'createdBy',
-    'designId',
-    'componentId',
-    'title',
-    'width',
-    'height',
-    'ordering',
-    'x',
-    'y'
+    "createdBy",
+    "designId",
+    "componentId",
+    "title",
+    "width",
+    "height",
+    "ordering",
+    "x",
+    "y"
   );
 }
 
 export function isCanvas(obj: object): obj is Canvas {
   return hasProperties(
     obj,
-    'id',
-    'createdAt',
-    'createdBy',
-    'designId',
-    'componentId',
-    'title',
-    'width',
-    'height',
-    'x',
-    'y',
-    'deletedAt',
-    'archivedAt'
+    "id",
+    "createdAt",
+    "createdBy",
+    "designId",
+    "componentId",
+    "title",
+    "width",
+    "height",
+    "x",
+    "y",
+    "deletedAt",
+    "archivedAt"
   );
 }
 
 export function isCanvasRow(row: object): row is CanvasRow {
   return hasProperties(
     row,
-    'id',
-    'design_id',
-    'created_at',
-    'created_by',
-    'component_id',
-    'title',
-    'width',
-    'height',
-    'x',
-    'y',
-    'deleted_at',
-    'archived_at'
+    "id",
+    "design_id",
+    "created_at",
+    "created_by",
+    "component_id",
+    "title",
+    "width",
+    "height",
+    "x",
+    "y",
+    "deleted_at",
+    "archived_at"
   );
 }

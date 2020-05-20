@@ -1,5 +1,5 @@
-import { Subscription, SubscriptionWithPlan } from './domain-object';
-import * as PlansDAO from '../plans/dao';
+import { Subscription, SubscriptionWithPlan } from "./domain-object";
+import * as PlansDAO from "../plans/dao";
 
 export default async function atttachPlan(
   subscription: Subscription
@@ -8,14 +8,12 @@ export default async function atttachPlan(
 
   if (!plan) {
     throw new Error(
-      `Subscription ${subscription.id} has an invalid Plan ID: ${
-        subscription.planId
-      }`
+      `Subscription ${subscription.id} has an invalid Plan ID: ${subscription.planId}`
     );
   }
 
   return {
     ...subscription,
-    plan
+    plan,
   };
 }

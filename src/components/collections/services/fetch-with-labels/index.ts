@@ -1,11 +1,11 @@
-import Collection from '../../domain-object';
-import { findSubmittedButUnpaidCollections } from '../../dao';
+import Collection from "../../domain-object";
+import { findSubmittedButUnpaidCollections } from "../../dao";
 import {
   determineSubmissionStatus,
-  getDesignsMetaByCollection
-} from '../determine-submission-status';
-import { ProductDesignDataWithMeta } from '../../../product-designs/domain-objects/with-meta';
-import { BasePricingCostInput } from '../../../pricing-cost-inputs/domain-object';
+  getDesignsMetaByCollection,
+} from "../determine-submission-status";
+import { ProductDesignDataWithMeta } from "../../../product-designs/domain-objects/with-meta";
+import { BasePricingCostInput } from "../../../pricing-cost-inputs/domain-object";
 
 interface CollectionWithLabels extends Collection {
   label: string;
@@ -27,7 +27,7 @@ export async function fetchUncostedWithLabels(): Promise<
     const status = collectionStatuses[collection.id];
 
     if (status.isSubmitted && !status.isCosted) {
-      labelledCollections.push({ ...collection, label: 'Needs Costing' });
+      labelledCollections.push({ ...collection, label: "Needs Costing" });
     }
   }
 
@@ -54,17 +54,18 @@ export async function fetchExpiredWithLabels(): Promise<
     if (hasDesignWithNoInputs) {
       continue;
     }
-    const hasNotExpiredInput = designsByCollection[collection.id].some(
-      (design: ProductDesignDataWithMeta) =>
-        design.costInputs.some(
-          (costInput: BasePricingCostInput) =>
-            costInput.expiresAt && new Date(costInput.expiresAt) > new Date()
-        )
+    const hasNotExpiredInput = designsByCollection[
+      collection.id
+    ].some((design: ProductDesignDataWithMeta) =>
+      design.costInputs.some(
+        (costInput: BasePricingCostInput) =>
+          costInput.expiresAt && new Date(costInput.expiresAt) > new Date()
+      )
     );
     if (hasNotExpiredInput) {
       continue;
     }
-    labelledCollections.push({ ...collection, label: 'Expired' });
+    labelledCollections.push({ ...collection, label: "Expired" });
   }
 
   return labelledCollections;

@@ -1,11 +1,11 @@
-import Knex from 'knex';
+import Knex from "knex";
 
-import LayoutAttribute from '../../../components/attributes/layout-attributes/domain-object';
+import LayoutAttribute from "../../../components/attributes/layout-attributes/domain-object";
 import {
   create,
-  findById
-} from '../../../components/attributes/layout-attributes/dao';
-import prepareForDuplication from '../prepare-for-duplication';
+  findById,
+} from "../../../components/attributes/layout-attributes/dao";
+import prepareForDuplication from "../prepare-for-duplication";
 
 /**
  * Creates a duplicate instance of the given Layout Attribute.
@@ -22,7 +22,7 @@ export default async function findAndDuplicateLayout(options: {
     currentLayoutId,
     newCreatorId,
     newNodeId,
-    trx
+    trx,
   } = options;
 
   const layout = currentLayout
@@ -35,7 +35,7 @@ export default async function findAndDuplicateLayout(options: {
 
   const preparedLayout = prepareForDuplication(layout, {
     createdBy: newCreatorId,
-    nodeId: newNodeId
+    nodeId: newNodeId,
   });
 
   return create(preparedLayout, trx);

@@ -1,4 +1,4 @@
-import Knex from 'knex';
+import Knex from "knex";
 
 export const DETAIL_TASKS_UP = `
 DROP VIEW detail_tasks;

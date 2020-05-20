@@ -1,18 +1,18 @@
-import Knex from 'knex';
-import uuid from 'node-uuid';
-import { NodeTree } from '@cala/ts-lib/dist/phidias';
-import { omit } from 'lodash';
+import Knex from "knex";
+import uuid from "node-uuid";
+import { NodeTree } from "@cala/ts-lib/dist/phidias";
+import { omit } from "lodash";
 
-import db from '../db';
-import { test, Test } from '../../test-helpers/fresh';
+import db from "../db";
+import { test, Test } from "../../test-helpers/fresh";
 
-import { findAndDuplicateNode } from './nodes';
-import Node from '../../components/nodes/domain-objects';
-import { findNodeTrees } from '../../components/nodes/dao';
-import generateNode from '../../test-helpers/factories/node';
-import createUser = require('../../test-helpers/create-user');
+import { findAndDuplicateNode } from "./nodes";
+import Node from "../../components/nodes/domain-objects";
+import { findNodeTrees } from "../../components/nodes/dao";
+import generateNode from "../../test-helpers/factories/node";
+import createUser = require("../../test-helpers/create-user");
 
-test('findAndDuplicateNode()', async (t: Test) => {
+test("findAndDuplicateNode()", async (t: Test) => {
   const { user: duplicator } = await createUser({ withSession: false });
 
   const a = uuid.v4();
@@ -31,7 +31,7 @@ test('findAndDuplicateNode()', async (t: Test) => {
     [a]: [b, c],
     [b]: [d],
     [c]: [],
-    [d]: []
+    [d]: [],
   };
 
   await db.transaction(async (trx: Knex.Transaction) => {
@@ -39,22 +39,22 @@ test('findAndDuplicateNode()', async (t: Test) => {
       {
         id: a,
         ordering: 0,
-        title: 'A',
+        title: "A",
         x: 100,
-        y: 105
+        y: 105,
       },
       trx
     );
     const { node: nodeB } = await generateNode(
-      { id: b, parentId: a, ordering: 0, title: 'B' },
+      { id: b, parentId: a, ordering: 0, title: "B" },
       trx
     );
     const { node: nodeC } = await generateNode(
-      { id: c, parentId: a, ordering: 1, title: 'C' },
+      { id: c, parentId: a, ordering: 1, title: "C" },
       trx
     );
     const { node: nodeD } = await generateNode(
-      { id: d, parentId: b, ordering: 0, title: 'D' },
+      { id: d, parentId: b, ordering: 0, title: "D" },
       trx
     );
 
@@ -63,36 +63,36 @@ test('findAndDuplicateNode()', async (t: Test) => {
       newCreatorId: duplicator.id,
       nodeId: a,
       tree,
-      trx
+      trx,
     });
 
     const expectedA = { ...nodeA, createdBy: duplicator.id };
     const expectedB = {
       ...nodeB,
       createdBy: duplicator.id,
-      parentId: result.id
+      parentId: result.id,
     };
     const expectedC = {
       ...nodeC,
       createdBy: duplicator.id,
-      parentId: result.id
+      parentId: result.id,
     };
     const expectedD = {
       ...nodeD,
-      createdBy: duplicator.id
+      createdBy: duplicator.id,
     };
 
     t.deepEqual(
-      omit(result, 'id', 'createdAt'),
-      omit(expectedA, 'id', 'createdAt'),
-      'Returns a duplicated version of the root node.'
+      omit(result, "id", "createdAt"),
+      omit(expectedA, "id", "createdAt"),
+      "Returns a duplicated version of the root node."
     );
 
     const duplicatedNodes = await findNodeTrees([result.id], trx);
     t.equal(
       duplicatedNodes.length,
       4,
-      'Returns the three descendants and the root node.'
+      "Returns the three descendants and the root node."
     );
 
     const directChildResults = duplicatedNodes.filter(
@@ -101,26 +101,26 @@ test('findAndDuplicateNode()', async (t: Test) => {
     t.equal(
       directChildResults.length,
       2,
-      'Returns the duplicates for B and C.'
+      "Returns the duplicates for B and C."
     );
     t.deepEqual(
-      omit(directChildResults[0], 'id', 'createdAt'),
-      omit(expectedB, 'id', 'createdAt'),
-      'The first child element is the B duplicate.'
+      omit(directChildResults[0], "id", "createdAt"),
+      omit(expectedB, "id", "createdAt"),
+      "The first child element is the B duplicate."
     );
     t.deepEqual(
-      omit(directChildResults[1], 'id', 'createdAt'),
-      omit(expectedC, 'id', 'createdAt'),
-      'The second child element is the C duplicate.'
+      omit(directChildResults[1], "id", "createdAt"),
+      omit(expectedC, "id", "createdAt"),
+      "The second child element is the C duplicate."
     );
 
     const dChildResult = duplicatedNodes.find(
       (node: Node): boolean => node.parentId === directChildResults[0].id
     );
     t.deepEqual(
-      omit(dChildResult, 'id', 'createdAt', 'parentId'),
-      omit(expectedD, 'id', 'createdAt', 'parentId'),
-      'The D duplicate is pointing towards the B duplicate.'
+      omit(dChildResult, "id", "createdAt", "parentId"),
+      omit(expectedD, "id", "createdAt", "parentId"),
+      "The D duplicate is pointing towards the B duplicate."
     );
   });
 });

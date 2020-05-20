@@ -1,47 +1,47 @@
-'use strict';
+"use strict";
 
-const FitPartnerCustomersDAO = require('../../dao/fit-partner-customers');
-const FitPartnersDAO = require('../../dao/fit-partners');
-const FitPartnerScanService = require('../../services/fit-partner-scan');
-const createUser = require('../../test-helpers/create-user');
-const Scan = require('../../domain-objects/scan');
-const ScanPhotosDAO = require('../../dao/scan-photos');
-const ScansDAO = require('../../dao/scans');
-const UserAttributesService = require('../../services/user-attributes');
-const { get, post, put, authHeader } = require('../../test-helpers/http');
-const { group, sandbox } = require('../../test-helpers/fresh');
+const FitPartnerCustomersDAO = require("../../dao/fit-partner-customers");
+const FitPartnersDAO = require("../../dao/fit-partners");
+const FitPartnerScanService = require("../../services/fit-partner-scan");
+const createUser = require("../../test-helpers/create-user");
+const Scan = require("../../domain-objects/scan");
+const ScanPhotosDAO = require("../../dao/scan-photos");
+const ScansDAO = require("../../dao/scans");
+const UserAttributesService = require("../../services/user-attributes");
+const { get, post, put, authHeader } = require("../../test-helpers/http");
+const { group, sandbox } = require("../../test-helpers/fresh");
 
 function beforeEach() {
   sandbox()
-    .stub(UserAttributesService, 'recordScan')
+    .stub(UserAttributesService, "recordScan")
     .returns(Promise.resolve());
 }
 
 const test = group(beforeEach);
 
-test('POST /scans returns a 400 if missing data', t => {
+test("POST /scans returns a 400 if missing data", (t) => {
   return createUser()
     .then(({ session }) => {
-      return post('/scans', {
+      return post("/scans", {
         body: {},
-        headers: authHeader(session.id)
+        headers: authHeader(session.id),
       });
     })
     .then(([response, body]) => {
       t.equal(response.status, 400);
-      t.equal(body.message, 'Scan type must be provided');
+      t.equal(body.message, "Scan type must be provided");
     });
 });
 
-test('POST /scans returns a 201 on success', t => {
+test("POST /scans returns a 201 on success", (t) => {
   let userId;
   return createUser()
     .then(({ user, session }) => {
       userId = user.id;
 
-      return post('/scans', {
-        body: { type: 'PHOTO' },
-        headers: authHeader(session.id)
+      return post("/scans", {
+        body: { type: "PHOTO" },
+        headers: authHeader(session.id),
       });
     })
     .then(([response, body]) => {
@@ -51,18 +51,18 @@ test('POST /scans returns a 201 on success', t => {
     });
 });
 
-test('POST /scans allows specifying isComplete', t => {
+test("POST /scans allows specifying isComplete", (t) => {
   let userId;
   return createUser()
     .then(({ user, session }) => {
       userId = user.id;
 
-      return post('/scans', {
+      return post("/scans", {
         body: {
-          type: 'PHOTO',
-          isComplete: true
+          type: "PHOTO",
+          isComplete: true,
         },
-        headers: authHeader(session.id)
+        headers: authHeader(session.id),
       });
     })
     .then(([response, body]) => {
@@ -72,9 +72,9 @@ test('POST /scans allows specifying isComplete', t => {
     });
 });
 
-test('POST /scans can create an anonymous scan', t => {
-  return post('/scans', {
-    body: { type: 'PHOTO' }
+test("POST /scans can create an anonymous scan", (t) => {
+  return post("/scans", {
+    body: { type: "PHOTO" },
   }).then(([response, body]) => {
     t.equal(response.status, 201);
     t.equal(body.userId, null);
@@ -82,18 +82,18 @@ test('POST /scans can create an anonymous scan', t => {
   });
 });
 
-test('GET /scans returns a 401 when called without a user ID', t => {
-  return get('/scans').then(([response, body]) => {
+test("GET /scans returns a 401 when called without a user ID", (t) => {
+  return get("/scans").then(([response, body]) => {
     t.equal(response.status, 401);
-    t.equal(body.message, 'Authorization is required to access this resource');
+    t.equal(body.message, "Authorization is required to access this resource");
   });
 });
 
-test('GET /scans returns a 403 when called with someone elses user ID', t => {
+test("GET /scans returns a 403 when called with someone elses user ID", (t) => {
   return createUser()
     .then(({ session }) => {
-      return get('/scans?userId=123', {
-        headers: authHeader(session.id)
+      return get("/scans?userId=123", {
+        headers: authHeader(session.id),
       });
     })
     .then(([response]) => {
@@ -101,7 +101,7 @@ test('GET /scans returns a 403 when called with someone elses user ID', t => {
     });
 });
 
-test('GET /scans returns a list of your own scans', t => {
+test("GET /scans returns a list of your own scans", (t) => {
   let userId;
   let sessionId;
   let scanId;
@@ -113,13 +113,13 @@ test('GET /scans returns a list of your own scans', t => {
 
       return ScansDAO.create({
         type: ScansDAO.SCAN_TYPES.photo,
-        userId: user.id
+        userId: user.id,
       });
     })
-    .then(scan => {
+    .then((scan) => {
       scanId = scan.id;
       return get(`/scans?userId=${userId}`, {
-        headers: authHeader(sessionId)
+        headers: authHeader(sessionId),
       });
     })
     .then(([response, body]) => {
@@ -129,39 +129,39 @@ test('GET /scans returns a list of your own scans', t => {
     });
 });
 
-test('GET /scans returns a list of all scans when admin', async t => {
+test("GET /scans returns a list of all scans when admin", async (t) => {
   sandbox()
-    .stub(ScansDAO, 'findAll')
-    .returns(Promise.resolve([new Scan({ id: '1234' })]));
+    .stub(ScansDAO, "findAll")
+    .returns(Promise.resolve([new Scan({ id: "1234" })]));
 
-  const { session } = await createUser({ role: 'ADMIN' });
+  const { session } = await createUser({ role: "ADMIN" });
 
-  const [response, body] = await get('/scans', {
-    headers: authHeader(session.id)
+  const [response, body] = await get("/scans", {
+    headers: authHeader(session.id),
   });
 
   t.equal(response.status, 200);
   t.equal(body.length, 1);
-  t.equal(body[0].id, '1234');
+  t.equal(body[0].id, "1234");
 });
 
-test('GET /scans returns a list of fit partner scans when signed in as a fit partner', async t => {
+test("GET /scans returns a list of fit partner scans when signed in as a fit partner", async (t) => {
   sandbox()
-    .stub(ScansDAO, 'findByFitPartner')
-    .returns(Promise.resolve([new Scan({ id: '5678' })]));
+    .stub(ScansDAO, "findByFitPartner")
+    .returns(Promise.resolve([new Scan({ id: "5678" })]));
 
-  const { session } = await createUser({ role: 'FIT_PARTNER' });
+  const { session } = await createUser({ role: "FIT_PARTNER" });
 
-  const [response, body] = await get('/scans', {
-    headers: authHeader(session.id)
+  const [response, body] = await get("/scans", {
+    headers: authHeader(session.id),
   });
 
   t.equal(response.status, 200);
   t.equal(body.length, 1);
-  t.equal(body[0].id, '5678');
+  t.equal(body[0].id, "5678");
 });
 
-test('POST /scans/:id/claim returns a 400 if the scan is claimed', t => {
+test("POST /scans/:id/claim returns a 400 if the scan is claimed", (t) => {
   let sessionId;
 
   return createUser()
@@ -169,21 +169,21 @@ test('POST /scans/:id/claim returns a 400 if the scan is claimed', t => {
       sessionId = session.id;
       return ScansDAO.create({
         type: ScansDAO.SCAN_TYPES.photo,
-        userId: user.id
+        userId: user.id,
       });
     })
-    .then(scan => {
+    .then((scan) => {
       return post(`/scans/${scan.id}/claim`, {
-        headers: authHeader(sessionId)
+        headers: authHeader(sessionId),
       });
     })
     .then(([response, body]) => {
       t.equal(response.status, 400);
-      t.equal(body.message, 'This scan has already been claimed');
+      t.equal(body.message, "This scan has already been claimed");
     });
 });
 
-test('POST /scans/:id/claim claims and returns a scan', t => {
+test("POST /scans/:id/claim claims and returns a scan", (t) => {
   let sessionId;
   let userId;
 
@@ -192,12 +192,12 @@ test('POST /scans/:id/claim claims and returns a scan', t => {
       userId = user.id;
       sessionId = session.id;
       return ScansDAO.create({
-        type: ScansDAO.SCAN_TYPES.photo
+        type: ScansDAO.SCAN_TYPES.photo,
       });
     })
-    .then(scan => {
+    .then((scan) => {
       return post(`/scans/${scan.id}/claim`, {
-        headers: authHeader(sessionId)
+        headers: authHeader(sessionId),
       });
     })
     .then(([response, body]) => {
@@ -206,31 +206,31 @@ test('POST /scans/:id/claim claims and returns a scan', t => {
     });
 });
 
-test('GET /scans/:id/photos returns a list of photos to an admin', t => {
+test("GET /scans/:id/photos returns a list of photos to an admin", (t) => {
   let sessionId;
   let scanId;
   let photoId;
 
-  return createUser({ role: 'ADMIN' })
+  return createUser({ role: "ADMIN" })
     .then(({ user, session }) => {
       sessionId = session.id;
 
       return ScansDAO.create({
         type: ScansDAO.SCAN_TYPES.photo,
-        userId: user.id
+        userId: user.id,
       });
     })
-    .then(scan => {
+    .then((scan) => {
       scanId = scan.id;
       return ScanPhotosDAO.create({
-        scanId
+        scanId,
       });
     })
-    .then(photo => {
+    .then((photo) => {
       photoId = photo.id;
 
       return get(`/scans/${scanId}/photos`, {
-        headers: authHeader(sessionId)
+        headers: authHeader(sessionId),
       });
     })
     .then(([response, body]) => {
@@ -240,7 +240,7 @@ test('GET /scans/:id/photos returns a list of photos to an admin', t => {
     });
 });
 
-test('GET /scans/:id/photos returns a list of photos to the scan owner', t => {
+test("GET /scans/:id/photos returns a list of photos to the scan owner", (t) => {
   let sessionId;
   let scanId;
   let photoId;
@@ -251,20 +251,20 @@ test('GET /scans/:id/photos returns a list of photos to the scan owner', t => {
 
       return ScansDAO.create({
         type: ScansDAO.SCAN_TYPES.photo,
-        userId: user.id
+        userId: user.id,
       });
     })
-    .then(scan => {
+    .then((scan) => {
       scanId = scan.id;
       return ScanPhotosDAO.create({
-        scanId
+        scanId,
       });
     })
-    .then(photo => {
+    .then((photo) => {
       photoId = photo.id;
 
       return get(`/scans/${scanId}/photos`, {
-        headers: authHeader(sessionId)
+        headers: authHeader(sessionId),
       });
     })
     .then(([response, body]) => {
@@ -274,11 +274,11 @@ test('GET /scans/:id/photos returns a list of photos to the scan owner', t => {
     });
 });
 
-test('GET /scans/:id/photos returns 404 if scan not found', t => {
+test("GET /scans/:id/photos returns 404 if scan not found", (t) => {
   return createUser()
     .then(({ session }) => {
-      return get('/scans/5f8deaa3-f35f-4759-ac00-a54c8ece1f67/photos', {
-        headers: authHeader(session.id)
+      return get("/scans/5f8deaa3-f35f-4759-ac00-a54c8ece1f67/photos", {
+        headers: authHeader(session.id),
       });
     })
     .then(([response]) => {
@@ -286,7 +286,7 @@ test('GET /scans/:id/photos returns 404 if scan not found', t => {
     });
 });
 
-test('GET /scans/:id/photos returns 403 if unauthorized', t => {
+test("GET /scans/:id/photos returns 403 if unauthorized", (t) => {
   let otherSessionId;
 
   return Promise.all([createUser(), createUser()])
@@ -295,60 +295,60 @@ test('GET /scans/:id/photos returns 403 if unauthorized', t => {
 
       return ScansDAO.create({
         type: ScansDAO.SCAN_TYPES.photo,
-        userId: owner.user.id
+        userId: owner.user.id,
       });
     })
-    .then(scan => {
+    .then((scan) => {
       return get(`/scans/${scan.id}/photos`, {
-        headers: authHeader(otherSessionId)
+        headers: authHeader(otherSessionId),
       });
     })
     .then(([response, body]) => {
       t.equal(response.status, 403);
-      t.equal(body.message, 'Forbidden');
+      t.equal(body.message, "Forbidden");
     });
 });
 
-test('GET /scans/:id returns a scan', t => {
+test("GET /scans/:id returns a scan", (t) => {
   let sessionId;
 
-  return createUser({ role: 'ADMIN' })
+  return createUser({ role: "ADMIN" })
     .then(({ user, session }) => {
       sessionId = session.id;
 
       return ScansDAO.create({
         type: ScansDAO.SCAN_TYPES.photo,
-        userId: user.id
+        userId: user.id,
       });
     })
-    .then(scan => {
+    .then((scan) => {
       return get(`/scans/${scan.id}`, {
-        headers: authHeader(sessionId)
+        headers: authHeader(sessionId),
       });
     })
     .then(([response, body]) => {
       t.equal(response.status, 200);
-      t.equal(body.type, 'PHOTO');
+      t.equal(body.type, "PHOTO");
     });
 });
 
-test('PUT /scans/:id allows a scan to be started', async t => {
+test("PUT /scans/:id allows a scan to be started", async (t) => {
   const { session } = await createUser();
   const scan = await ScansDAO.create({
     type: ScansDAO.SCAN_TYPES.photo,
     isComplete: false,
-    measurements: null
+    measurements: null,
   });
 
   const [response, body] = await put(`/scans/${scan.id}`, {
     body: { isStarted: true },
-    headers: authHeader(session.id)
+    headers: authHeader(session.id),
   });
   t.equal(response.status, 200);
   t.equal(body.isStarted, true);
 });
 
-test('PUT /scans/:id allows a scan to be completed', t => {
+test("PUT /scans/:id allows a scan to be completed", (t) => {
   let sessionId;
   return createUser()
     .then(({ session }) => {
@@ -356,16 +356,16 @@ test('PUT /scans/:id allows a scan to be completed', t => {
       return ScansDAO.create({
         type: ScansDAO.SCAN_TYPES.photo,
         isComplete: false,
-        measurements: null
+        measurements: null,
       });
     })
-    .then(scan => {
+    .then((scan) => {
       return put(`/scans/${scan.id}`, {
         body: {
           isComplete: true,
-          measurements: { length: 10 }
+          measurements: { length: 10 },
         },
-        headers: authHeader(sessionId)
+        headers: authHeader(sessionId),
       });
     })
     .then(([response, body]) => {
@@ -375,19 +375,19 @@ test('PUT /scans/:id allows a scan to be completed', t => {
     });
 });
 
-test('PUT /scans/:id saves to Shopify if measurements were updateed', async t => {
+test("PUT /scans/:id saves to Shopify if measurements were updateed", async (t) => {
   const saveStub = sandbox()
-    .stub(FitPartnerScanService, 'saveCalculatedValues')
+    .stub(FitPartnerScanService, "saveCalculatedValues")
     .returns(Promise.resolve());
   const partner = await FitPartnersDAO.create({
-    shopifyAppApiKey: '123',
-    shopifyAppPassword: '123',
-    shopifyHostname: 'example.com'
+    shopifyAppApiKey: "123",
+    shopifyAppPassword: "123",
+    shopifyHostname: "example.com",
   });
 
   const customer = await FitPartnerCustomersDAO.findOrCreate({
     partnerId: partner.id,
-    shopifyUserId: 'shopify-user-123'
+    shopifyUserId: "shopify-user-123",
   });
 
   const { session } = await createUser();
@@ -396,44 +396,44 @@ test('PUT /scans/:id saves to Shopify if measurements were updateed', async t =>
     type: ScansDAO.SCAN_TYPES.photo,
     isComplete: false,
     measurements: null,
-    fitPartnerCustomerId: customer.id
+    fitPartnerCustomerId: customer.id,
   });
 
   await put(`/scans/${scan.id}`, {
     body: {
       measurements: {
         calculatedValues: {
-          length: 10
-        }
-      }
+          length: 10,
+        },
+      },
     },
-    headers: authHeader(session.id)
+    headers: authHeader(session.id),
   });
 
   t.equal(saveStub.callCount, 1);
   t.equal(saveStub.firstCall.args[0].id, scan.id);
 });
 
-test('PUT /scans/:id disallows invalid measurements', t => {
+test("PUT /scans/:id disallows invalid measurements", (t) => {
   let sessionId;
   return createUser()
     .then(({ session }) => {
       sessionId = session.id;
       return ScansDAO.create({
-        type: ScansDAO.SCAN_TYPES.photo
+        type: ScansDAO.SCAN_TYPES.photo,
       });
     })
-    .then(scan => {
+    .then((scan) => {
       return put(`/scans/${scan.id}`, {
         body: {
           isComplete: true,
-          measurements: { weightLbs: 9999 }
+          measurements: { weightLbs: 9999 },
         },
-        headers: authHeader(sessionId)
+        headers: authHeader(sessionId),
       });
     })
     .then(([response, body]) => {
       t.equal(response.status, 400);
-      t.equal(body.message, 'Invalid weight value');
+      t.equal(body.message, "Invalid weight value");
     });
 });

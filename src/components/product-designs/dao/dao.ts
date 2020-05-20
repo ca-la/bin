@@ -1,27 +1,27 @@
-import Knex from 'knex';
-import db from '../../../services/db';
-import ProductDesign = require('../../../components/product-designs/domain-objects/product-design');
-import ProductDesignWithApprovalSteps from '../domain-objects/product-design-with-approval-steps';
-import limitOrOffset from '../../../services/limit-or-offset';
+import Knex from "knex";
+import db from "../../../services/db";
+import ProductDesign = require("../../../components/product-designs/domain-objects/product-design");
+import ProductDesignWithApprovalSteps from "../domain-objects/product-design-with-approval-steps";
+import limitOrOffset from "../../../services/limit-or-offset";
 import {
   dataAdapter,
   isProductDesignRow,
   ProductDesignData,
-  ProductDesignRow
-} from '../domain-objects/product-designs-new';
-import first from '../../../services/first';
-import { validate, validateEvery } from '../../../services/validate-from-db';
-import attachApprovalSteps from './attach-approval-steps';
-import ResourceNotFoundError from '../../../errors/resource-not-found';
-import { queryWithCollectionMeta } from './view';
+  ProductDesignRow,
+} from "../domain-objects/product-designs-new";
+import first from "../../../services/first";
+import { validate, validateEvery } from "../../../services/validate-from-db";
+import attachApprovalSteps from "./attach-approval-steps";
+import ResourceNotFoundError from "../../../errors/resource-not-found";
+import { queryWithCollectionMeta } from "./view";
 import {
   isProductDesignRowWithMeta,
   ProductDesignDataWithMeta,
   ProductDesignRowWithMeta,
-  withMetaDataAdapter
-} from '../domain-objects/with-meta';
+  withMetaDataAdapter,
+} from "../domain-objects/with-meta";
 
-export const TABLE_NAME = 'product_designs';
+export const TABLE_NAME = "product_designs";
 
 /**
  * Find all designs that the user is a collaborator on.
@@ -59,7 +59,7 @@ product_designs.id in (
     .modify(attachApprovalSteps)
 
     // TODO: Remove this once changes from api#1216 are fully live
-    .select(['current_step.title as current_step_title'])
+    .select(["current_step.title as current_step_title"])
     .leftJoin(
       db.raw(
         `(SELECT DISTINCT ON (design_id)
@@ -75,19 +75,17 @@ product_designs.id in (
           ) AS current_step ON current_step.design_id = product_designs.id`
       )
     )
-    .groupBy(['current_step.title', 'current_step.design_id'])
+    .groupBy(["current_step.title", "current_step.design_id"])
 
-    .modify(
-      (query: Knex.QueryBuilder): void => {
-        if (options.search) {
-          query.andWhere(
-            db.raw('(product_designs.title ~* :search)', {
-              search: options.search
-            })
-          );
-        }
+    .modify((query: Knex.QueryBuilder): void => {
+      if (options.search) {
+        query.andWhere(
+          db.raw("(product_designs.title ~* :search)", {
+            search: options.search,
+          })
+        );
       }
-    )
+    })
     .modify(limitOrOffset(options.limit, options.offset));
 
   return result.map((row: any): ProductDesign => new ProductDesign(row));
@@ -184,13 +182,13 @@ export async function findDesignByApprovalStepId(
 ): Promise<ProductDesignData | null> {
   const row = await db
     .table(TABLE_NAME)
-    .select('product_designs.*')
+    .select("product_designs.*")
     .join(
-      'design_approval_steps',
-      'design_approval_steps.design_id',
-      'product_designs.id'
+      "design_approval_steps",
+      "design_approval_steps.design_id",
+      "product_designs.id"
     )
-    .where({ 'design_approval_steps.id': approvalStepId })
+    .where({ "design_approval_steps.id": approvalStepId })
     .first();
 
   if (!row) {
@@ -208,11 +206,11 @@ export async function findDesignByApprovalStepId(
 export function queryWithCostsAndEvents(): Knex.QueryBuilder {
   return db
     .select([
-      'd.*',
-      'cost_inputs.input_list AS cost_inputs',
-      'events.event_list AS events'
+      "d.*",
+      "cost_inputs.input_list AS cost_inputs",
+      "events.event_list AS events",
     ])
-    .from('product_designs AS d')
+    .from("product_designs AS d")
     .joinRaw(
       `
 left join (
@@ -248,9 +246,9 @@ left join (
     `
     )
     .where({
-      'd.deleted_at': null
+      "d.deleted_at": null,
     })
-    .orderBy('d.created_at', 'DESC');
+    .orderBy("d.created_at", "DESC");
 }
 
 export async function findAllWithCostsAndEvents(
@@ -258,16 +256,14 @@ export async function findAllWithCostsAndEvents(
   trx?: Knex.Transaction
 ): Promise<ProductDesignDataWithMeta[]> {
   const rows = await queryWithCostsAndEvents()
-    .select('cd.collection_id AS collection_id')
-    .joinRaw('INNER JOIN collection_designs AS cd ON cd.design_id = d.id')
-    .whereIn('cd.collection_id', collectionIds)
-    .modify(
-      (query: Knex.QueryBuilder): void => {
-        if (trx) {
-          query.transacting(trx);
-        }
+    .select("cd.collection_id AS collection_id")
+    .joinRaw("INNER JOIN collection_designs AS cd ON cd.design_id = d.id")
+    .whereIn("cd.collection_id", collectionIds)
+    .modify((query: Knex.QueryBuilder): void => {
+      if (trx) {
+        query.transacting(trx);
       }
-    );
+    });
 
   return validateEvery<ProductDesignRowWithMeta, ProductDesignDataWithMeta>(
     TABLE_NAME,
@@ -281,10 +277,10 @@ export async function findDesignByBidId(
   bidId: string
 ): Promise<ProductDesignData | null> {
   const result = await db(TABLE_NAME)
-    .select('product_designs.*')
-    .join('pricing_quotes', 'pricing_quotes.design_id', 'product_designs.id')
-    .join('pricing_bids', 'pricing_bids.quote_id', 'pricing_quotes.id')
-    .where({ 'pricing_bids.id': bidId, 'product_designs.deleted_at': null });
+    .select("product_designs.*")
+    .join("pricing_quotes", "pricing_quotes.design_id", "product_designs.id")
+    .join("pricing_bids", "pricing_bids.quote_id", "pricing_quotes.id")
+    .where({ "pricing_bids.id": bidId, "product_designs.deleted_at": null });
   const row = first<ProductDesignRow>(result);
   if (!row) {
     return null;
@@ -304,14 +300,12 @@ export async function deleteByIds(options: {
 }): Promise<number> {
   const { designIds, trx } = options;
 
-  const deleted = await trx(TABLE_NAME)
-    .whereIn('id', designIds)
-    .update(
-      {
-        deleted_at: new Date()
-      },
-      'id'
-    );
+  const deleted = await trx(TABLE_NAME).whereIn("id", designIds).update(
+    {
+      deleted_at: new Date(),
+    },
+    "id"
+  );
   if (deleted.length !== designIds.length) {
     throw new Error(
       `Only deleted ${deleted.length} out of an expected ${designIds.length}.`
@@ -328,15 +322,13 @@ export async function isOwner(options: {
 }): Promise<boolean> {
   const { designId, trx, userId } = options;
   const ownerRow: { user_id: string } | null = await db(TABLE_NAME)
-    .select('user_id')
+    .select("user_id")
     .where({ id: designId, deleted_at: null })
-    .modify(
-      (query: Knex.QueryBuilder): void => {
-        if (trx) {
-          query.transacting(trx);
-        }
+    .modify((query: Knex.QueryBuilder): void => {
+      if (trx) {
+        query.transacting(trx);
       }
-    )
+    })
     .then((rows: string[]) => first<string>(rows));
 
   if (!ownerRow) {

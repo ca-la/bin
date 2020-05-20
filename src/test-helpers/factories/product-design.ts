@@ -1,8 +1,8 @@
-import Knex from 'knex';
-import uuid from 'node-uuid';
+import Knex from "knex";
+import uuid from "node-uuid";
 
-import createDesign from '../../services/create-design';
-import ProductDesign = require('../../components/product-designs/domain-objects/product-design');
+import createDesign from "../../services/create-design";
+import ProductDesign = require("../../components/product-designs/domain-objects/product-design");
 
 export function generateDesign(
   options: Partial<ProductDesign>,
@@ -19,10 +19,10 @@ export function staticProductDesign(
 ): ProductDesign {
   return {
     id: uuid.v4(),
-    createdAt: new Date('2019-04-20'),
-    productType: 'SHIRT',
-    title: 'My Shirt',
-    userId: 'user-one',
-    ...options
+    createdAt: new Date("2019-04-20"),
+    productType: "SHIRT",
+    title: "My Shirt",
+    userId: "user-one",
+    ...options,
   };
 }

@@ -1,13 +1,13 @@
-import Koa from 'koa';
-import compose from 'koa-compose';
+import Koa from "koa";
+import compose from "koa-compose";
 
 import {
   getDesignPermissions,
-  Permissions
-} from '../../services/get-permissions';
-import ResourceNotFoundError from '../../errors/resource-not-found';
-import filterError = require('../../services/filter-error');
-import { requireQueryParam } from '../require-query-param';
+  Permissions,
+} from "../../services/get-permissions";
+import ResourceNotFoundError from "../../errors/resource-not-found";
+import filterError = require("../../services/filter-error");
+import { requireQueryParam } from "../require-query-param";
 
 export function* attachDesignPermissions(
   this: Koa.Context,
@@ -17,10 +17,10 @@ export function* attachDesignPermissions(
   this.state.permissions = yield getDesignPermissions({
     designId,
     sessionRole: role,
-    sessionUserId: userId
+    sessionUserId: userId,
   }).catch(
     filterError(ResourceNotFoundError, () => {
-      this.throw(404, 'Design not found');
+      this.throw(404, "Design not found");
     })
   );
 }
@@ -37,14 +37,14 @@ export function* attachAggregateDesignPermissions(
     canEdit: true,
     canEditVariants: true,
     canSubmit: true,
-    canView: true
+    canView: true,
   };
 
   for (const designId of designIds) {
     const permissions = yield getDesignPermissions({
       designId,
       sessionRole: role,
-      sessionUserId: userId
+      sessionUserId: userId,
     });
 
     aggregatePermissions = {
@@ -54,7 +54,7 @@ export function* attachAggregateDesignPermissions(
       canEditVariants:
         aggregatePermissions.canEditVariants && permissions.canEditVariants,
       canSubmit: aggregatePermissions.canSubmit && permissions.canSubmit,
-      canView: aggregatePermissions.canView && permissions.canView
+      canView: aggregatePermissions.canView && permissions.canView,
     };
   }
 
@@ -66,7 +66,7 @@ export function requireDesignIdBy<ContextBodyType, StateType = {}>(
     this: AuthedContext<ContextBodyType, StateType>
   ) => Promise<string>
 ): any {
-  return function*(
+  return function* (
     this: AuthedContext<ContextBodyType, StateType & { designId: string }>,
     next: () => Promise<any>
   ): Generator<unknown, void, string> {
@@ -85,10 +85,10 @@ export function* canAccessDesignsInQuery(
 ): any {
   const { designIds } = this.query;
   if (!designIds) {
-    this.throw(400, 'Must provide designIds in query parameters');
+    this.throw(400, "Must provide designIds in query parameters");
   }
 
-  yield attachAggregateDesignPermissions.call(this, designIds.split(','));
+  yield attachAggregateDesignPermissions.call(this, designIds.split(","));
 
   const { permissions } = this.state;
   this.assert(
@@ -117,18 +117,18 @@ export function* canAccessDesignInState(
 }
 
 export const canAccessDesignInParam = compose([
-  requireDesignIdBy(function(this: Koa.Context): Promise<string> {
+  requireDesignIdBy(function (this: Koa.Context): Promise<string> {
     return Promise.resolve(this.params.designId);
   }),
-  canAccessDesignInState
+  canAccessDesignInState,
 ]);
 
 export const canAccessDesignInQuery = compose([
-  requireQueryParam<{ designId: string }>('designId'),
-  requireDesignIdBy(function(this: Koa.Context): Promise<string> {
+  requireQueryParam<{ designId: string }>("designId"),
+  requireDesignIdBy(function (this: Koa.Context): Promise<string> {
     return Promise.resolve(this.query.designId);
   }),
-  canAccessDesignInState
+  canAccessDesignInState,
 ]);
 
 export function* canCommentOnDesign(
@@ -136,7 +136,7 @@ export function* canCommentOnDesign(
   next: () => Promise<any>
 ): any {
   if (!this.state.permissions) {
-    throw new Error('canCommentOnDesign must be chained from canAccessDesign');
+    throw new Error("canCommentOnDesign must be chained from canAccessDesign");
   }
   this.assert(
     this.state.permissions.canComment,
@@ -151,7 +151,7 @@ export function* canDeleteDesign(
   next: () => Promise<any>
 ): any {
   if (!this.state.permissions) {
-    throw new Error('canDeleteDesign must be chained from canAccessDesign');
+    throw new Error("canDeleteDesign must be chained from canAccessDesign");
   }
   this.assert(
     this.state.permissions.canDelete,
@@ -166,7 +166,7 @@ export function* canDeleteDesigns(
   next: () => Promise<any>
 ): any {
   if (!this.state.permissions) {
-    throw new Error('canDeleteDesigns must be chained from canAccessDesigns');
+    throw new Error("canDeleteDesigns must be chained from canAccessDesigns");
   }
   this.assert(
     this.state.permissions.canDelete,
@@ -181,7 +181,7 @@ export function* canEditDesign(
   next: () => Promise<any>
 ): any {
   if (!this.state.permissions) {
-    throw new Error('canEditDesign must be chained from canAccessDesign');
+    throw new Error("canEditDesign must be chained from canAccessDesign");
   }
   this.assert(
     this.state.permissions.canEdit,

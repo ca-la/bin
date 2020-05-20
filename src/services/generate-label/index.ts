@@ -1,4 +1,4 @@
-const DEFAULT_LABELS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+const DEFAULT_LABELS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
 export default function generateLabel(index: number): string {
   const label = DEFAULT_LABELS[index % DEFAULT_LABELS.length];

@@ -1,4 +1,4 @@
-import { InvoicePayment } from '../../invoice-payments/domain-object';
+import { InvoicePayment } from "../../invoice-payments/domain-object";
 
 /**
  * Determines whether financing was used to pay the invoice.

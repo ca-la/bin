@@ -1,10 +1,10 @@
-'use strict';
+"use strict";
 
-const { requireProperties } = require('../services/require-properties');
+const { requireProperties } = require("../services/require-properties");
 
 class ProductDesignSectionAnnotation {
   constructor(row) {
-    requireProperties(row, 'id');
+    requireProperties(row, "id");
 
     this.id = row.id;
     this.createdAt = new Date(row.created_at);

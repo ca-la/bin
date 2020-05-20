@@ -1,15 +1,15 @@
-import Knex from 'knex';
+import Knex from "knex";
 
-import db from '../../../services/db';
+import db from "../../../services/db";
 import CohortUser, {
   CohortUserRow,
   dataAdapter,
-  isCohortUserRow
-} from './domain-object';
-import first from '../../../services/first';
-import { validate, validateEvery } from '../../../services/validate-from-db';
+  isCohortUserRow,
+} from "./domain-object";
+import first from "../../../services/first";
+import { validate, validateEvery } from "../../../services/validate-from-db";
 
-const TABLE_NAME = 'cohort_users';
+const TABLE_NAME = "cohort_users";
 
 export async function create(
   data: CohortUser,
@@ -17,7 +17,7 @@ export async function create(
 ): Promise<CohortUser> {
   const rowData = dataAdapter.forInsertion(data);
   const created = await db(TABLE_NAME)
-    .insert(rowData, '*')
+    .insert(rowData, "*")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
@@ -26,7 +26,7 @@ export async function create(
     .then((rows: object[]) => first(rows));
 
   if (!created) {
-    throw new Error('Failed to create cohort user!');
+    throw new Error("Failed to create cohort user!");
   }
 
   return validate<CohortUserRow, CohortUser>(
@@ -42,7 +42,7 @@ export async function findAllByCohort(
   trx?: Knex.Transaction
 ): Promise<CohortUser[]> {
   const cohortUsers = await db(TABLE_NAME)
-    .select('*')
+    .select("*")
     .where({ cohort_id: cohortId })
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
@@ -63,7 +63,7 @@ export async function findAllByUser(
   trx?: Knex.Transaction
 ): Promise<CohortUser[]> {
   const cohortUsers = await db(TABLE_NAME)
-    .select('*')
+    .select("*")
     .where({ user_id: userId })
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {

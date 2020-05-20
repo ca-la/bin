@@ -1,31 +1,31 @@
-import Router from 'koa-router';
+import Router from "koa-router";
 
-import { hasProperties } from '../../services/require-properties';
-import requireAuth = require('../../middleware/require-auth');
+import { hasProperties } from "../../services/require-properties";
+import requireAuth = require("../../middleware/require-auth");
 
-import ComponentRelationship from './domain-object';
-import * as ComponentRelationshipsDAO from './dao';
-import { typeGuard } from '../../middleware/type-guard';
+import ComponentRelationship from "./domain-object";
+import * as ComponentRelationshipsDAO from "./dao";
+import { typeGuard } from "../../middleware/type-guard";
 import {
   canEditComponentsInBody,
   canEditComponentsInRelationshipParam,
-  canViewComponentInQueryParam
-} from '../../middleware/can-access-component';
+  canViewComponentInQueryParam,
+} from "../../middleware/can-access-component";
 
 const router = new Router();
 
 function isComponentRelationship(data: object): data is ComponentRelationship {
   return hasProperties(
     data,
-    'createdAt',
-    'createdBy',
-    'deletedAt',
-    'id',
-    'processId',
-    'relativeX',
-    'relativeY',
-    'sourceComponentId',
-    'targetComponentId'
+    "createdAt",
+    "createdBy",
+    "deletedAt",
+    "id",
+    "processId",
+    "relativeX",
+    "relativeY",
+    "sourceComponentId",
+    "targetComponentId"
   );
 }
 
@@ -39,7 +39,7 @@ function* getList(this: AuthedContext): Iterator<any, any, any> {
     this.status = 200;
     this.body = relationships;
   } else {
-    this.throw(400, 'A componentId must be passed into the query parameters!');
+    this.throw(400, "A componentId must be passed into the query parameters!");
   }
 }
 
@@ -85,24 +85,24 @@ function* del(this: AuthedContext): Iterator<any, any, any> {
   this.status = 204;
 }
 
-router.get('/', requireAuth, canViewComponentInQueryParam, getList);
-router.get('/:relationshipId', requireAuth, getById);
+router.get("/", requireAuth, canViewComponentInQueryParam, getList);
+router.get("/:relationshipId", requireAuth, getById);
 router.put(
-  '/:relationshipId',
+  "/:relationshipId",
   requireAuth,
   typeGuard<ComponentRelationship>(isComponentRelationship),
   canEditComponentsInBody,
   create
 );
 router.patch(
-  '/:relationshipId',
+  "/:relationshipId",
   requireAuth,
   typeGuard<ComponentRelationship>(isComponentRelationship),
   canEditComponentsInRelationshipParam,
   update
 );
 router.del(
-  '/:relationshipId',
+  "/:relationshipId",
   requireAuth,
   canEditComponentsInRelationshipParam,
   del

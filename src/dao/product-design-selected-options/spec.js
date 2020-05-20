@@ -1,13 +1,13 @@
-'use strict';
+"use strict";
 
-const pick = require('lodash/pick');
-const { create } = require('./index');
+const pick = require("lodash/pick");
+const { create } = require("./index");
 
-const createDesign = require('../../components/product-designs/dao').create;
-const createOption = require('../product-design-options').create;
-const createSection = require('../product-design-sections').create;
-const createUser = require('../../test-helpers/create-user');
-const { test } = require('../../test-helpers/fresh');
+const createDesign = require("../../components/product-designs/dao").create;
+const createOption = require("../product-design-options").create;
+const createSection = require("../product-design-sections").create;
+const createUser = require("../../test-helpers/create-user");
+const { test } = require("../../test-helpers/fresh");
 
 function createPrerequisites() {
   let option;
@@ -18,30 +18,30 @@ function createPrerequisites() {
       return Promise.all([
         createOption({
           userId: user.id,
-          title: 'No Image',
-          type: 'FABRIC'
+          title: "No Image",
+          type: "FABRIC",
         }),
         createDesign({
-          title: 'Plain White Tee',
-          productType: 'TEESHIRT',
-          userId: user.id
-        })
+          title: "Plain White Tee",
+          productType: "TEESHIRT",
+          userId: user.id,
+        }),
       ]);
     })
     .then(([_option, _design]) => {
       option = _option;
       design = _design;
       return createSection({
-        templateName: 'gfoobar',
+        templateName: "gfoobar",
         designId: design.id,
-        position: 0
+        position: 0,
       });
     })
-    .then(section => {
+    .then((section) => {
       return { option, design, section };
     });
 }
-test('ProductDesignSelectedOptionsDAO.create creates and returns a selected option', t => {
+test("ProductDesignSelectedOptionsDAO.create creates and returns a selected option", (t) => {
   let data;
 
   return createPrerequisites()
@@ -50,18 +50,18 @@ test('ProductDesignSelectedOptionsDAO.create creates and returns a selected opti
         designId: design.id,
         optionId: option.id,
         sectionId: section.id,
-        panelId: 'panel123',
+        panelId: "panel123",
         unitsRequiredPerGarment: 123,
-        fabricDyeProcessName: 'dipdye',
-        fabricDyeProcessColor: 'red',
-        fabricWashProcessName: 'distressed',
-        fabricCustomProcessNames: ['put it in a box', 'a big box'],
-        garmentComponentName: 'self'
+        fabricDyeProcessName: "dipdye",
+        fabricDyeProcessColor: "red",
+        fabricWashProcessName: "distressed",
+        fabricCustomProcessNames: ["put it in a box", "a big box"],
+        garmentComponentName: "self",
       };
 
       return create(data);
     })
-    .then(selectedOption => {
+    .then((selectedOption) => {
       t.deepEqual(pick(selectedOption, Object.keys(data)), data);
     });
 });

@@ -1,11 +1,11 @@
-import { findAllWithCostsAndEvents } from '../../../product-designs/dao/dao';
+import { findAllWithCostsAndEvents } from "../../../product-designs/dao/dao";
 import {
   DesignState,
-  determineState
-} from '../../../product-designs/services/state-machine';
-import { ProductDesignDataWithMeta } from '../../../product-designs/domain-objects/with-meta';
-import { determineEarliestExpiration } from '../../../pricing-cost-inputs/services/determine-earliest-expiration';
-import { BasePricingCostInput } from '../../../pricing-cost-inputs/domain-object';
+  determineState,
+} from "../../../product-designs/services/state-machine";
+import { ProductDesignDataWithMeta } from "../../../product-designs/domain-objects/with-meta";
+import { determineEarliestExpiration } from "../../../pricing-cost-inputs/services/determine-earliest-expiration";
+import { BasePricingCostInput } from "../../../pricing-cost-inputs/domain-object";
 
 export interface CollectionSubmissionStatus {
   collectionId: string;
@@ -36,26 +36,21 @@ function determineStatusFromDesigns(
   const isPaired = designStates.every(
     (state: DesignState): boolean => state === DesignState.PAIRED
   );
-  const isQuoted = designStates.every(
-    (state: DesignState): boolean =>
-      [DesignState.PAIRED, DesignState.CHECKED_OUT].includes(state)
+  const isQuoted = designStates.every((state: DesignState): boolean =>
+    [DesignState.PAIRED, DesignState.CHECKED_OUT].includes(state)
   );
-  const isCosted = designStates.every(
-    (state: DesignState): boolean =>
-      [
-        DesignState.PAIRED,
-        DesignState.CHECKED_OUT,
-        DesignState.COSTED
-      ].includes(state)
+  const isCosted = designStates.every((state: DesignState): boolean =>
+    [DesignState.PAIRED, DesignState.CHECKED_OUT, DesignState.COSTED].includes(
+      state
+    )
   );
-  const isSubmitted = designStates.every(
-    (state: DesignState): boolean =>
-      [
-        DesignState.PAIRED,
-        DesignState.CHECKED_OUT,
-        DesignState.COSTED,
-        DesignState.SUBMITTED
-      ].includes(state)
+  const isSubmitted = designStates.every((state: DesignState): boolean =>
+    [
+      DesignState.PAIRED,
+      DesignState.CHECKED_OUT,
+      DesignState.COSTED,
+      DesignState.SUBMITTED,
+    ].includes(state)
   );
   const pricingExpiresAt = determineEarliestExpiration(
     designs.reduce(
@@ -75,7 +70,7 @@ function determineStatusFromDesigns(
     isCosted: hasDesigns && isCosted,
     isQuoted: hasDesigns && isQuoted,
     isPaired: hasDesigns && isPaired,
-    pricingExpiresAt
+    pricingExpiresAt,
   };
 }
 

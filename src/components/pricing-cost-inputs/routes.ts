@@ -1,12 +1,12 @@
-import Router from 'koa-router';
-import uuid from 'node-uuid';
-import db from '../../services/db';
+import Router from "koa-router";
+import uuid from "node-uuid";
+import db from "../../services/db";
 
-import ProductDesignsDAO from '../product-designs/dao';
-import * as PricingCostInputsDAO from './dao';
-import requireAdmin = require('../../middleware/require-admin');
-import PricingCostInput, { isUnsavedPricingCostInput } from './domain-object';
-import Knex from 'knex';
+import ProductDesignsDAO from "../product-designs/dao";
+import * as PricingCostInputsDAO from "./dao";
+import requireAdmin = require("../../middleware/require-admin");
+import PricingCostInput, { isUnsavedPricingCostInput } from "./domain-object";
+import Knex from "knex";
 
 const router = new Router();
 
@@ -15,7 +15,7 @@ function* createCostInputs(
 ): Iterator<any, any, any> {
   const { body: inputs } = this.request;
   if (!inputs || (inputs && !isUnsavedPricingCostInput(inputs))) {
-    this.throw(400, 'Request does not match model');
+    this.throw(400, "Request does not match model");
   }
 
   const design = yield ProductDesignsDAO.findById(inputs.designId);
@@ -28,7 +28,7 @@ function* createCostInputs(
       createdAt: new Date(),
       deletedAt: null,
       expiresAt: null,
-      id: uuid.v4()
+      id: uuid.v4(),
     })
   );
 
@@ -42,7 +42,7 @@ function* getCostInputs(this: AuthedContext): Iterator<any, any, any> {
   if (!designId) {
     this.throw(
       400,
-      'You must provide a design ID when getting list of Cost Inputs'
+      "You must provide a design ID when getting list of Cost Inputs"
     );
   }
 
@@ -54,7 +54,7 @@ function* getCostInputs(this: AuthedContext): Iterator<any, any, any> {
   const designInputs: PricingCostInput[] = yield PricingCostInputsDAO.findByDesignId(
     {
       designId,
-      showExpired: showExpired === 'true'
+      showExpired: showExpired === "true",
     }
   );
 
@@ -62,7 +62,7 @@ function* getCostInputs(this: AuthedContext): Iterator<any, any, any> {
   this.status = 200;
 }
 
-router.post('/', requireAdmin, createCostInputs);
-router.get('/', requireAdmin, getCostInputs);
+router.post("/", requireAdmin, createCostInputs);
+router.get("/", requireAdmin, getCostInputs);
 
 export default router.routes();

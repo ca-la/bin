@@ -1,18 +1,18 @@
-import Knex from 'knex';
-import uuid from 'node-uuid';
+import Knex from "knex";
+import uuid from "node-uuid";
 
-import db from '../../services/db';
-import first from '../../services/first';
-import { validate, validateEvery } from '../../services/validate-from-db';
+import db from "../../services/db";
+import first from "../../services/first";
+import { validate, validateEvery } from "../../services/validate-from-db";
 import TaskTemplate, {
   dataAdapter,
   DesignPhase,
   isTaskTemplateRow,
   partialDataAdapter,
-  TaskTemplateRow
-} from '../../domain-objects/task-template';
+  TaskTemplateRow,
+} from "../../domain-objects/task-template";
 
-const TABLE_NAME = 'task_templates';
+const TABLE_NAME = "task_templates";
 
 export async function create(
   data: Unsaved<TaskTemplate>,
@@ -20,12 +20,12 @@ export async function create(
 ): Promise<TaskTemplate> {
   const rowData = dataAdapter.forInsertion({
     ...data,
-    id: uuid.v4()
+    id: uuid.v4(),
   });
 
   const created = await db(TABLE_NAME)
     .insert(rowData)
-    .returning('*')
+    .returning("*")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
@@ -34,7 +34,7 @@ export async function create(
     .then((rows: TaskTemplateRow[]) => first<TaskTemplateRow>(rows));
 
   if (!created) {
-    throw new Error('Failed to create rows');
+    throw new Error("Failed to create rows");
   }
 
   return validate<TaskTemplateRow, TaskTemplate>(
@@ -53,7 +53,7 @@ export async function update(
   const rowData = partialDataAdapter.forInsertion(data);
   const created = await db(TABLE_NAME)
     .update(rowData)
-    .returning('*')
+    .returning("*")
     .where({ id: templateId })
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
@@ -63,7 +63,7 @@ export async function update(
     .then((rows: TaskTemplateRow[]) => first<TaskTemplateRow>(rows));
 
   if (!created) {
-    throw new Error('Failed to create rows');
+    throw new Error("Failed to create rows");
   }
 
   return validate<TaskTemplateRow, TaskTemplate>(
@@ -85,7 +85,7 @@ export async function findByPhase(
         query.transacting(trx);
       }
     })
-    .orderBy('ordering', 'asc');
+    .orderBy("ordering", "asc");
 
   return validateEvery<TaskTemplateRow, TaskTemplate>(
     TABLE_NAME,
@@ -100,19 +100,19 @@ export async function findByStageTitle(
   trx?: Knex.Transaction
 ): Promise<TaskTemplate[]> {
   const templates = await db(TABLE_NAME)
-    .select('task_templates.*')
+    .select("task_templates.*")
     .leftJoin(
-      'stage_templates',
-      'stage_templates.id',
-      'task_templates.stage_template_id'
+      "stage_templates",
+      "stage_templates.id",
+      "task_templates.stage_template_id"
     )
-    .where({ 'stage_templates.title': stageTitle })
+    .where({ "stage_templates.title": stageTitle })
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
       }
     })
-    .orderBy('task_templates.ordering', 'asc');
+    .orderBy("task_templates.ordering", "asc");
 
   return validateEvery<TaskTemplateRow, TaskTemplate>(
     TABLE_NAME,

@@ -1,9 +1,9 @@
-import Router from 'koa-router';
+import Router from "koa-router";
 
-import applyCode from './apply-code';
-import filterError = require('../../services/filter-error');
-import InvalidDataError from '../../errors/invalid-data';
-import requireAuth = require('../../middleware/require-auth');
+import applyCode from "./apply-code";
+import filterError = require("../../services/filter-error");
+import InvalidDataError from "../../errors/invalid-data";
+import requireAuth = require("../../middleware/require-auth");
 
 const router = new Router();
 
@@ -18,6 +18,6 @@ function* redeemCode(this: AuthedContext): Iterator<any, any, any> {
   this.status = 200;
 }
 
-router.post('/:code/redeem', requireAuth, redeemCode);
+router.post("/:code/redeem", requireAuth, redeemCode);
 
 export default router.routes();

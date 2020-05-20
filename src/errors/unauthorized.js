@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 /**
  * HTTP 401 Unauthorized
@@ -11,7 +11,7 @@ class UnauthorizedError extends Error {
     this.status = 403;
     this.code = code;
     this.message = message;
-    this.name = 'UnauthorizedError';
+    this.name = "UnauthorizedError";
   }
 }
 

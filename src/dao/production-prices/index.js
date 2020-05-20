@@ -1,19 +1,19 @@
-'use strict';
+"use strict";
 
-const uuid = require('node-uuid');
-const rethrow = require('pg-rethrow');
+const uuid = require("node-uuid");
+const rethrow = require("pg-rethrow");
 
-const db = require('../../services/db');
-const filterError = require('../../services/filter-error');
-const InvalidDataError = require('../../errors/invalid-data');
-const ProductionPrice = require('../../domain-objects/production-price');
-const { requireValues } = require('../../services/require-properties');
+const db = require("../../services/db");
+const filterError = require("../../services/filter-error");
+const InvalidDataError = require("../../errors/invalid-data");
+const ProductionPrice = require("../../domain-objects/production-price");
+const { requireValues } = require("../../services/require-properties");
 
 const { dataMapper } = ProductionPrice;
 
-const instantiate = data => new ProductionPrice(data);
+const instantiate = (data) => new ProductionPrice(data);
 
-const TABLE_NAME = 'production_prices';
+const TABLE_NAME = "production_prices";
 
 function deleteForVendorAndService(trx, vendorUserId, serviceId) {
   requireValues({ trx, vendorUserId, serviceId });
@@ -22,7 +22,7 @@ function deleteForVendorAndService(trx, vendorUserId, serviceId) {
     .transacting(trx)
     .where({
       service_id: serviceId,
-      vendor_user_id: vendorUserId
+      vendor_user_id: vendorUserId,
     })
     .del();
 }
@@ -32,45 +32,45 @@ function createForVendorAndService(trx, vendorUserId, serviceId, prices) {
     trx,
     vendorUserId,
     serviceId,
-    prices
+    prices,
   });
 
-  const rowData = prices.map(data => {
+  const rowData = prices.map((data) => {
     return Object.assign({}, dataMapper.userDataToRowData(data), {
       id: uuid.v4(),
       service_id: serviceId,
-      vendor_user_id: vendorUserId
+      vendor_user_id: vendorUserId,
     });
   });
 
   return db(TABLE_NAME)
     .transacting(trx)
     .insert(rowData)
-    .returning('*')
-    .then(inserted => {
+    .returning("*")
+    .then((inserted) => {
       return inserted
         .map(instantiate)
         .sort((a, b) => a.minimumUnits - b.minimumUnits);
     })
     .catch(rethrow)
     .catch(
-      filterError(rethrow.ERRORS.NotNullViolation, err => {
+      filterError(rethrow.ERRORS.NotNullViolation, (err) => {
         switch (err.column) {
-          case 'minimum_units':
-            throw new InvalidDataError('Minimum units must be provided');
-          case 'complexity_level':
-            throw new InvalidDataError('Complexity level must be provided');
-          case 'price_cents':
-            throw new InvalidDataError('Price must be provided');
+          case "minimum_units":
+            throw new InvalidDataError("Minimum units must be provided");
+          case "complexity_level":
+            throw new InvalidDataError("Complexity level must be provided");
+          case "price_cents":
+            throw new InvalidDataError("Price must be provided");
           default:
             throw err;
         }
       })
     )
     .catch(
-      filterError(rethrow.ERRORS.ForeignKeyViolation, err => {
-        if (err.constraint === 'production_prices_service_id_fkey') {
-          throw new InvalidDataError('Invalid service ID');
+      filterError(rethrow.ERRORS.ForeignKeyViolation, (err) => {
+        if (err.constraint === "production_prices_service_id_fkey") {
+          throw new InvalidDataError("Invalid service ID");
         }
         throw err;
       })
@@ -80,7 +80,7 @@ function createForVendorAndService(trx, vendorUserId, serviceId, prices) {
 function replaceForVendorAndService(vendorUserId, serviceId, prices) {
   requireValues({ vendorUserId, serviceId, prices });
 
-  return db.transaction(trx => {
+  return db.transaction((trx) => {
     deleteForVendorAndService(trx, vendorUserId, serviceId)
       .then(() => {
         if (prices.length > 0) {
@@ -102,14 +102,14 @@ function replaceForVendorAndService(vendorUserId, serviceId, prices) {
 function findByVendor(vendorUserId) {
   return db(TABLE_NAME)
     .where({
-      vendor_user_id: vendorUserId
+      vendor_user_id: vendorUserId,
     })
-    .orderBy('minimum_units', 'asc')
-    .then(prices => prices.map(instantiate))
+    .orderBy("minimum_units", "asc")
+    .then((prices) => prices.map(instantiate))
     .catch(rethrow)
     .catch(
       filterError(rethrow.ERRORS.InvalidTextRepresentation, () => {
-        throw new InvalidDataError('Invalid User ID');
+        throw new InvalidDataError("Invalid User ID");
       })
     );
 }
@@ -118,14 +118,14 @@ function findByVendorAndService(vendorUserId, serviceId) {
   return db(TABLE_NAME)
     .where({
       vendor_user_id: vendorUserId,
-      service_id: serviceId
+      service_id: serviceId,
     })
-    .orderBy('minimum_units', 'asc')
-    .then(prices => prices.map(instantiate))
+    .orderBy("minimum_units", "asc")
+    .then((prices) => prices.map(instantiate))
     .catch(rethrow)
     .catch(
       filterError(rethrow.ERRORS.InvalidTextRepresentation, () => {
-        throw new InvalidDataError('Invalid ID');
+        throw new InvalidDataError("Invalid ID");
       })
     );
 }
@@ -133,5 +133,5 @@ function findByVendorAndService(vendorUserId, serviceId) {
 module.exports = {
   findByVendor,
   findByVendorAndService,
-  replaceForVendorAndService
+  replaceForVendorAndService,
 };

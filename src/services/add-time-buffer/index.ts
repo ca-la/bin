@@ -1,5 +1,5 @@
-import { PricingQuote } from '../../domain-objects/pricing-quote';
-import { sum } from 'lodash';
+import { PricingQuote } from "../../domain-objects/pricing-quote";
+import { sum } from "lodash";
 
 const BUFFER_PERCENT = 0.15;
 
@@ -23,7 +23,7 @@ export function getTimeBuffer(quote: PricingQuote): number {
     quote.preProductionTimeMs,
     quote.processTimeMs,
     quote.productionTimeMs,
-    quote.fulfillmentTimeMs
+    quote.fulfillmentTimeMs,
   ]);
   return Math.round(
     timeTotalMsWithoutBuffer / (1 - BUFFER_PERCENT) - timeTotalMsWithoutBuffer

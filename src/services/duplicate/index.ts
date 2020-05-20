@@ -1,8 +1,8 @@
-import Knex from 'knex';
-import db from '../../services/db';
+import Knex from "knex";
+import db from "../../services/db";
 
-import Design = require('../../components/product-designs/domain-objects/product-design');
-import { findAndDuplicateDesign } from './designs';
+import Design = require("../../components/product-designs/domain-objects/product-design");
+import { findAndDuplicateDesign } from "./designs";
 
 /**
  * Duplicates all the supplied designs for the given user.

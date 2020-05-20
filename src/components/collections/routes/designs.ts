@@ -1,13 +1,13 @@
-import Knex from 'knex';
+import Knex from "knex";
 
-import ProductDesignsDAO from '../../product-designs/dao';
-import ProductDesign = require('../../product-designs/domain-objects/product-design');
+import ProductDesignsDAO from "../../product-designs/dao";
+import ProductDesign = require("../../product-designs/domain-objects/product-design");
 import {
   getDesignPermissionsAndRole,
-  PermissionsAndRole
-} from '../../../services/get-permissions';
-import { moveDesigns, removeDesigns } from '../dao/design';
-import db from '../../../services/db';
+  PermissionsAndRole,
+} from "../../../services/get-permissions";
+import { moveDesigns, removeDesigns } from "../dao/design";
+import db from "../../../services/db";
 
 type DesignWithPermissions = ProductDesign & PermissionsAndRole;
 
@@ -30,13 +30,13 @@ export function* putDesigns(this: AuthedContext): Iterator<any, any, any> {
   const { designIds } = this.query;
 
   if (!designIds) {
-    this.throw(400, 'designIds is a required query parameter.');
+    this.throw(400, "designIds is a required query parameter.");
   }
 
-  const designIdList = designIds.split(',');
+  const designIdList = designIds.split(",");
 
   if (designIdList.length === 0) {
-    this.throw(400, 'designIds must have at least one design.');
+    this.throw(400, "designIds must have at least one design.");
   }
 
   try {
@@ -65,13 +65,13 @@ export function* deleteDesigns(this: AuthedContext): Iterator<any, any, any> {
   const { designIds } = this.query;
 
   if (!designIds) {
-    this.throw(400, 'designIds is a required query parameter.');
+    this.throw(400, "designIds is a required query parameter.");
   }
 
-  const designIdList = designIds.split(',');
+  const designIdList = designIds.split(",");
 
   if (designIdList.length === 0) {
-    this.throw(400, 'designIds must have at least one design.');
+    this.throw(400, "designIds must have at least one design.");
   }
 
   yield db.transaction(async (trx: Knex.Transaction) => {
@@ -98,7 +98,7 @@ export function* getCollectionDesigns(
     const permissions = yield getDesignPermissionsAndRole({
       designId: collectionDesign.id,
       sessionRole: role,
-      sessionUserId: userId
+      sessionUserId: userId,
     });
     designsWithPermissions.push({ ...collectionDesign, ...permissions });
   }

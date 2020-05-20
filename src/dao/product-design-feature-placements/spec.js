@@ -1,12 +1,12 @@
-'use strict';
+"use strict";
 
-const pick = require('lodash/pick');
-const createUser = require('../../test-helpers/create-user');
-const ProductDesignFeaturePlacementsDAO = require('./index');
-const generateAsset = require('../../test-helpers/factories/asset').default;
-const ProductDesignsDAO = require('../../components/product-designs/dao');
-const ProductDesignSectionsDAO = require('../product-design-sections');
-const { test } = require('../../test-helpers/fresh');
+const pick = require("lodash/pick");
+const createUser = require("../../test-helpers/create-user");
+const ProductDesignFeaturePlacementsDAO = require("./index");
+const generateAsset = require("../../test-helpers/factories/asset").default;
+const ProductDesignsDAO = require("../../components/product-designs/dao");
+const ProductDesignSectionsDAO = require("../product-design-sections");
+const { test } = require("../../test-helpers/fresh");
 
 function getPlacementData(imageId, iteration = 0) {
   return [
@@ -20,8 +20,8 @@ function getPlacementData(imageId, iteration = 0) {
       productionHeightCm: 10,
       productionWidthCm: 10,
       width: iteration + 106,
-      type: 'IMAGE',
-      processName: 'Embroidery'
+      type: "IMAGE",
+      processName: "Embroidery",
     },
     {
       x: iteration + 201,
@@ -33,55 +33,58 @@ function getPlacementData(imageId, iteration = 0) {
       width: iteration + 206,
       productionHeightCm: 10,
       productionWidthCm: 10,
-      type: 'IMAGE',
-      processName: 'Embroidery'
-    }
+      type: "IMAGE",
+      processName: "Embroidery",
+    },
   ];
 }
 
-test('ProductDesignFeaturePlacementsDAO.replaceForSection creates pathData placements', t => {
+test("ProductDesignFeaturePlacementsDAO.replaceForSection creates pathData placements", (t) => {
   let sectionId;
 
   const pathPlacement = {
     x: 12,
     y: 13,
     pathData: {
-      points: [{ x: 1, y: 2 }, { x: 1000, y: 1200 }]
+      points: [
+        { x: 1, y: 2 },
+        { x: 1000, y: 1200 },
+      ],
     },
     zIndex: 14,
     rotation: 15,
     height: 16,
     width: 17,
-    type: 'PATH'
+    type: "PATH",
   };
 
   return createUser({ withSession: false })
     .then(({ user }) => {
       return ProductDesignsDAO.create({
-        title: 'Plain White Tee',
-        productType: 'TEESHIRT',
-        userId: user.id
+        title: "Plain White Tee",
+        productType: "TEESHIRT",
+        userId: user.id,
       });
     })
-    .then(design => {
+    .then((design) => {
       return ProductDesignSectionsDAO.create({
         designId: design.id,
-        templateName: 'okok',
-        position: 0
+        templateName: "okok",
+        position: 0,
       });
     })
-    .then(section => {
+    .then((section) => {
       sectionId = section.id;
       return ProductDesignFeaturePlacementsDAO.replaceForSection(sectionId, [
-        pathPlacement
+        pathPlacement,
       ]);
     })
-    .then(placements => {
+    .then((placements) => {
       t.deepEqual(placements[0].pathData, pathPlacement.pathData);
     });
 });
 
-test('ProductDesignFeaturePlacementsDAO.replaceForSection creates and updates placements', t => {
+test("ProductDesignFeaturePlacementsDAO.replaceForSection creates and updates placements", (t) => {
   let imageId;
   let sectionId;
 
@@ -94,13 +97,13 @@ test('ProductDesignFeaturePlacementsDAO.replaceForSection creates and updates pl
           userId: user.id,
           originalWidthPx: 1024,
           originalHeightPx: 768,
-          mimeType: 'image/jpeg'
+          mimeType: "image/jpeg",
         }),
         ProductDesignsDAO.create({
-          title: 'Plain White Tee',
-          productType: 'TEESHIRT',
-          userId: user.id
-        })
+          title: "Plain White Tee",
+          productType: "TEESHIRT",
+          userId: user.id,
+        }),
       ]);
     })
     .then(([assets, design]) => {
@@ -109,11 +112,11 @@ test('ProductDesignFeaturePlacementsDAO.replaceForSection creates and updates pl
       secondPlacementData = getPlacementData(imageId, 100);
       return ProductDesignSectionsDAO.create({
         designId: design.id,
-        templateName: 'okok',
-        position: 0
+        templateName: "okok",
+        position: 0,
       });
     })
-    .then(section => {
+    .then((section) => {
       sectionId = section.id;
       return ProductDesignFeaturePlacementsDAO.replaceForSection(
         sectionId,
@@ -123,7 +126,7 @@ test('ProductDesignFeaturePlacementsDAO.replaceForSection creates and updates pl
     .then(() => {
       return ProductDesignFeaturePlacementsDAO.findBySectionId(sectionId);
     })
-    .then(placements => {
+    .then((placements) => {
       t.equal(placements.length, 2);
       t.equal(placements[0].sectionId, sectionId);
       t.equal(placements[1].sectionId, sectionId);
@@ -144,7 +147,7 @@ test('ProductDesignFeaturePlacementsDAO.replaceForSection creates and updates pl
     .then(() => {
       return ProductDesignFeaturePlacementsDAO.findBySectionId(sectionId);
     })
-    .then(placements => {
+    .then((placements) => {
       t.equal(placements.length, 2);
       t.equal(placements[0].sectionId, sectionId);
       t.equal(placements[1].sectionId, sectionId);

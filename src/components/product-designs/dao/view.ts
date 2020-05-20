@@ -1,7 +1,7 @@
-import db from '../../../services/db';
-import Knex from 'knex';
+import db from "../../../services/db";
+import Knex from "knex";
 
-const TABLE_NAME = 'product_designs';
+const TABLE_NAME = "product_designs";
 
 export function queryWithCollectionMeta(
   dbInstance: Knex,
@@ -21,14 +21,14 @@ array_remove(array_agg(pdi.id ORDER BY c.ordering ASC), null) AS image_ids
     `)
     )
     .leftJoin(
-      'collection_designs',
-      'product_designs.id',
-      'collection_designs.design_id'
+      "collection_designs",
+      "product_designs.id",
+      "collection_designs.design_id"
     )
-    .leftJoin('collections', (join: Knex.JoinClause) =>
+    .leftJoin("collections", (join: Knex.JoinClause) =>
       join
-        .on('collections.id', '=', 'collection_designs.collection_id')
-        .andOnNull('collections.deleted_at')
+        .on("collections.id", "=", "collection_designs.collection_id")
+        .andOnNull("collections.deleted_at")
     )
     .joinRaw(
       `
@@ -52,8 +52,8 @@ LEFT JOIN (
 ON pdi.id = co.sketch_id
     `
     )
-    .groupBy(['product_designs.id', 'collections.id', 'collections.title'])
-    .orderBy('product_designs.created_at', 'desc')
+    .groupBy(["product_designs.id", "collections.id", "collections.title"])
+    .orderBy("product_designs.created_at", "desc")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);

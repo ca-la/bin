@@ -1,12 +1,12 @@
-'use strict';
+"use strict";
 
-const { requireValues } = require('../require-properties');
+const { requireValues } = require("../require-properties");
 
 class NoBucketError extends Error {
   constructor(message) {
     super(message);
     this.message = message;
-    this.name = 'NoBucketError';
+    this.name = "NoBucketError";
   }
 }
 
@@ -17,20 +17,20 @@ function getServiceBasePrice({
   productionPrices,
   serviceId,
   unitsToProduce,
-  complexityLevel
+  complexityLevel,
 }) {
   requireValues({
     productionPrices,
     serviceId,
     unitsToProduce,
-    complexityLevel
+    complexityLevel,
   });
 
   // The list of buckets sorted high -> low by the minimum units, so the first
   // bucket we hit that's *lower* than the units to produce is the one we want
   const buckets = productionPrices
     .filter(
-      price =>
+      (price) =>
         price.serviceId === serviceId &&
         price.complexityLevel === complexityLevel
     )
@@ -49,5 +49,5 @@ function getServiceBasePrice({
 
 module.exports = {
   getServiceBasePrice,
-  NoBucketError
+  NoBucketError,
 };

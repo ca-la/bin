@@ -1,6 +1,6 @@
-import { findAllByQuoteAndUserId } from '../../dao';
-import { BidWithEvents } from '../../domain-object';
-import { BidState, determineStateFromEvents } from '../state-machine';
+import { findAllByQuoteAndUserId } from "../../dao";
+import { BidWithEvents } from "../../domain-object";
+import { BidState, determineStateFromEvents } from "../state-machine";
 
 export function isActiveBid(bidWithEvent: BidWithEvents): boolean {
   const { designEvents, ...bid } = bidWithEvent;

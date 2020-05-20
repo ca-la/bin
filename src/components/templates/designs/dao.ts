@@ -1,27 +1,27 @@
-import Knex from 'knex';
-import rethrow from 'pg-rethrow';
-import { first } from 'lodash';
+import Knex from "knex";
+import rethrow from "pg-rethrow";
+import { first } from "lodash";
 
 import {
   dataAdapter,
   isTemplateDesignRow,
   TemplateDesign,
-  TemplateDesignRow
-} from './domain-object';
-import db from '../../../services/db';
-import { validate, validateEvery } from '../../../services/validate-from-db';
-import filterError = require('../../../services/filter-error');
-import InvalidDataError = require('../../../errors/invalid-data');
-import { queryWithCollectionMeta } from '../../product-designs/dao/view';
-import ProductDesign = require('../../product-designs/domain-objects/product-design');
+  TemplateDesignRow,
+} from "./domain-object";
+import db from "../../../services/db";
+import { validate, validateEvery } from "../../../services/validate-from-db";
+import filterError = require("../../../services/filter-error");
+import InvalidDataError = require("../../../errors/invalid-data");
+import { queryWithCollectionMeta } from "../../product-designs/dao/view";
+import ProductDesign = require("../../product-designs/domain-objects/product-design");
 
-const TABLE_NAME = 'template_designs';
+const TABLE_NAME = "template_designs";
 
 function onNoDesignError(designId: string): typeof filterError {
   return filterError(
     rethrow.ERRORS.ForeignKeyViolation,
     (error: typeof rethrow.ERRORS.ForeignKeyViolation) => {
-      if (error.constraint === 'template_designs_design_id_fkey') {
+      if (error.constraint === "template_designs_design_id_fkey") {
         throw new InvalidDataError(`Design ${designId} does not exist.`);
       }
 
@@ -34,7 +34,7 @@ function onDuplicateDesignError(designId: string): typeof filterError {
   return filterError(
     rethrow.ERRORS.UniqueViolation,
     (error: typeof rethrow.ERRORS.UniqueViolation) => {
-      if (error.constraint === 'unique_design') {
+      if (error.constraint === "unique_design") {
         throw new InvalidDataError(`Design ${designId} is already a template.`);
       }
 
@@ -51,7 +51,7 @@ export async function createList(
     dataAdapter.forInsertion(data)
   );
   const createdRows = await db(TABLE_NAME)
-    .insert(insertionData, '*')
+    .insert(insertionData, "*")
     .transacting(trx)
     .catch(rethrow);
 
@@ -69,7 +69,7 @@ export async function create(
 ): Promise<TemplateDesign> {
   const insertionData = dataAdapter.forInsertion(data);
   const created = await db(TABLE_NAME)
-    .insert(insertionData, '*')
+    .insert(insertionData, "*")
     .transacting(trx)
     .then((rows: TemplateDesignRow[]) => first<TemplateDesignRow>(rows))
     .catch(rethrow)
@@ -77,7 +77,7 @@ export async function create(
     .catch(onDuplicateDesignError(data.designId));
 
   if (!created) {
-    throw new Error('Failed to create a TemplateDesign.');
+    throw new Error("Failed to create a TemplateDesign.");
   }
 
   return validate<TemplateDesignRow, TemplateDesign>(
@@ -93,7 +93,7 @@ export async function removeList(
   trx: Knex.Transaction
 ): Promise<number> {
   return db(TABLE_NAME)
-    .whereIn('design_id', designIds)
+    .whereIn("design_id", designIds)
     .delete()
     .transacting(trx);
 }
@@ -117,16 +117,14 @@ export async function findByDesignId(
   trx?: Knex.Transaction
 ): Promise<TemplateDesign | null> {
   const templates = await db(TABLE_NAME)
-    .select('*')
+    .select("*")
     .where({ design_id: designId })
     .limit(1)
-    .modify(
-      (query: Knex.QueryBuilder): void => {
-        if (trx) {
-          query.transacting(trx);
-        }
+    .modify((query: Knex.QueryBuilder): void => {
+      if (trx) {
+        query.transacting(trx);
       }
-    )
+    })
     .catch(rethrow)
     .catch(onNoDesignError(designId));
 
@@ -152,18 +150,17 @@ export async function getAll(
   options: ListOptions
 ): Promise<ProductDesign[]> {
   return db(TABLE_NAME)
-    .select('product_designs.*')
+    .select("product_designs.*")
     .innerJoin(
-      queryWithCollectionMeta(db).as('product_designs'),
-      'product_designs.id',
-      'template_designs.design_id'
+      queryWithCollectionMeta(db).as("product_designs"),
+      "product_designs.id",
+      "template_designs.design_id"
     )
     .limit(options.limit)
     .offset(options.offset)
-    .orderBy('product_designs.created_at', 'DESC')
+    .orderBy("product_designs.created_at", "DESC")
     .transacting(trx)
-    .then(
-      (rows: any): ProductDesign[] =>
-        rows.map((row: any) => new ProductDesign(row))
+    .then((rows: any): ProductDesign[] =>
+      rows.map((row: any) => new ProductDesign(row))
     );
 }

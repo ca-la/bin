@@ -1,12 +1,12 @@
-'use strict';
+"use strict";
 
-const Router = require('koa-router');
+const Router = require("koa-router");
 
-const AddressesDAO = require('../../dao/addresses');
-const canAccessUserResource = require('../../middleware/can-access-user-resource');
-const filterError = require('../../services/filter-error');
-const InvalidDataError = require('../../errors/invalid-data');
-const requireAuth = require('../../middleware/require-auth');
+const AddressesDAO = require("../../dao/addresses");
+const canAccessUserResource = require("../../middleware/can-access-user-resource");
+const filterError = require("../../services/filter-error");
+const InvalidDataError = require("../../errors/invalid-data");
+const requireAuth = require("../../middleware/require-auth");
 
 const router = new Router();
 
@@ -17,7 +17,7 @@ function* getList() {
   this.assert(
     this.query.userId === this.state.userId,
     403,
-    'You can only request addresses for your own user'
+    "You can only request addresses for your own user"
   );
 
   const addresses = yield AddressesDAO.findByUserId(this.query.userId);
@@ -45,11 +45,11 @@ function* getById() {
  */
 function* createAddress() {
   const addressData = Object.assign({}, this.request.body, {
-    userId: this.state.userId
+    userId: this.state.userId,
   });
 
   const address = yield AddressesDAO.create(addressData).catch(
-    filterError(InvalidDataError, err => this.throw(400, err))
+    filterError(InvalidDataError, (err) => this.throw(400, err))
   );
 
   this.status = 201;
@@ -61,7 +61,7 @@ function* createAddress() {
  */
 function* updateAddress() {
   const { addressId } = this.params;
-  this.assert(this.request.body, 400, 'New data must be provided');
+  this.assert(this.request.body, 400, "New data must be provided");
 
   const address = yield AddressesDAO.findById(addressId);
   this.assert(address, 404);
@@ -99,11 +99,11 @@ function* putAddress() {
   this.status = 200;
 }
 
-router.get('/', requireAuth, getList);
-router.get('/:addressId', requireAuth, getById);
-router.post('/', requireAuth, createAddress);
-router.patch('/:addressId', requireAuth, updateAddress);
-router.del('/:addressId', requireAuth, deleteAddress);
-router.put('/:addressId', requireAuth, putAddress);
+router.get("/", requireAuth, getList);
+router.get("/:addressId", requireAuth, getById);
+router.post("/", requireAuth, createAddress);
+router.patch("/:addressId", requireAuth, updateAddress);
+router.del("/:addressId", requireAuth, deleteAddress);
+router.put("/:addressId", requireAuth, putAddress);
 
 module.exports = router.routes();

@@ -1,6 +1,6 @@
-import Koa from 'koa';
-import CollectionsDAO = require('../../components/collections/dao');
-import { getCollectionPermissions } from '../../services/get-permissions';
+import Koa from "koa";
+import CollectionsDAO = require("../../components/collections/dao");
+import { getCollectionPermissions } from "../../services/get-permissions";
 
 export function* attachCollectionAndPermissions(
   this: Koa.Context,
@@ -9,7 +9,7 @@ export function* attachCollectionAndPermissions(
   const { role, userId } = this.state;
 
   const collection = yield CollectionsDAO.findById(collectionId);
-  this.assert(collection, 404, 'Collection not found');
+  this.assert(collection, 404, "Collection not found");
   const permissions = yield getCollectionPermissions(collection, role, userId);
 
   this.state.collection = collection;
@@ -57,7 +57,7 @@ export function* canDeleteCollection(
   const { permissions } = this.state;
   if (!permissions) {
     throw new Error(
-      'canDeleteCollection must be chained with canAccessCollectionInParam'
+      "canDeleteCollection must be chained with canAccessCollectionInParam"
     );
   }
 
@@ -77,7 +77,7 @@ export function* canEditCollection(
   const { permissions } = this.state;
   if (!permissions) {
     throw new Error(
-      'canEditCollection must be chained with canAccessCollectionInParam'
+      "canEditCollection must be chained with canAccessCollectionInParam"
     );
   }
 
@@ -97,7 +97,7 @@ export function* canSubmitCollection(
   const { permissions } = this.state;
   if (!permissions) {
     throw new Error(
-      'canSubmitCollection must be chained with canAccessCollectionInParam'
+      "canSubmitCollection must be chained with canAccessCollectionInParam"
     );
   }
 

@@ -1,5 +1,5 @@
-import AsyncEmitter from 'promise-events';
-import { CalaEvents } from './';
+import AsyncEmitter from "promise-events";
+import { CalaEvents } from "./";
 
 let emitter: AsyncEmitter | null = null;
 
@@ -11,21 +11,21 @@ const getEmitter = (): AsyncEmitter => {
 };
 
 export async function emit<Event extends CalaEvents.EventBase>(
-  type: Event['type'],
-  domain: Event['domain'],
-  event: Omit<Event, 'type' | 'domain'>
+  type: Event["type"],
+  domain: Event["domain"],
+  event: Omit<Event, "type" | "domain">
 ): Promise<void> {
   const eventType = `${type}.${domain}`;
   await getEmitter().emit(eventType, {
     ...event,
     type,
-    domain
+    domain,
   });
 }
 
 export function listen<Event extends CalaEvents.EventBase>(
-  type: Event['type'],
-  domain: Event['domain'],
+  type: Event["type"],
+  domain: Event["domain"],
   handler: CalaEvents.Handler<Event>
 ): void {
   const eventType = `${type}.${domain}`;

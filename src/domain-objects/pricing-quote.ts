@@ -1,13 +1,13 @@
-import { Complexity, MaterialCategory, Process, ProductType } from './pricing';
-import PricingConstant from './pricing-constant';
-import PricingProductMaterial from './pricing-product-material';
-import PricingProductType from '../components/pricing-product-types/domain-object';
-import PricingProcess from './pricing-process';
-import { hasProperties } from '../services/require-properties';
-import DataAdapter from '../services/data-adapter';
-import PricingMargin from './pricing-margin';
-import PricingCareLabel from './pricing-care-label';
-import PricingProcessTimeline from '../components/pricing-process-timeline/domain-object';
+import { Complexity, MaterialCategory, Process, ProductType } from "./pricing";
+import PricingConstant from "./pricing-constant";
+import PricingProductMaterial from "./pricing-product-material";
+import PricingProductType from "../components/pricing-product-types/domain-object";
+import PricingProcess from "./pricing-process";
+import { hasProperties } from "../services/require-properties";
+import DataAdapter from "../services/data-adapter";
+import PricingMargin from "./pricing-margin";
+import PricingCareLabel from "./pricing-care-label";
+import PricingProcessTimeline from "../components/pricing-process-timeline/domain-object";
 
 export interface BasePricingQuoteRequest {
   productType: ProductType;
@@ -99,7 +99,7 @@ export interface PricingQuoteInputRow {
 }
 
 export interface PricingQuoteValues
-  extends Omit<PricingConstant, 'id' | 'createdAt' | 'version'> {
+  extends Omit<PricingConstant, "id" | "createdAt" | "version"> {
   constantId: string;
   material: PricingProductMaterial;
   type: PricingProductType;
@@ -117,40 +117,40 @@ export function isPricingQuoteRequest(
 ): candidate is PricingQuoteRequest {
   return hasProperties(
     candidate,
-    'productType',
-    'productComplexity',
-    'materialCategory',
-    'materialBudgetCents',
-    'processes',
-    'units',
-    'designId'
+    "productType",
+    "productComplexity",
+    "materialCategory",
+    "materialBudgetCents",
+    "processes",
+    "units",
+    "designId"
   );
 }
 
 export function isPricingQuote(candidate: object): candidate is PricingQuote {
   return hasProperties(
     candidate,
-    'id',
-    'pricingQuoteInputId',
-    'createdAt',
-    'productType',
-    'productComplexity',
-    'materialCategory',
-    'materialBudgetCents',
-    'processes',
-    'units',
-    'baseCostCents',
-    'materialCostCents',
-    'processCostCents',
-    'unitCostCents',
-    'designId',
-    'creationTimeMs',
-    'specificationTimeMs',
-    'sourcingTimeMs',
-    'samplingTimeMs',
-    'pre_productionTimeMs',
-    'productionTimeMs',
-    'fulfillmentTimeMs'
+    "id",
+    "pricingQuoteInputId",
+    "createdAt",
+    "productType",
+    "productComplexity",
+    "materialCategory",
+    "materialBudgetCents",
+    "processes",
+    "units",
+    "baseCostCents",
+    "materialCostCents",
+    "processCostCents",
+    "unitCostCents",
+    "designId",
+    "creationTimeMs",
+    "specificationTimeMs",
+    "sourcingTimeMs",
+    "samplingTimeMs",
+    "pre_productionTimeMs",
+    "productionTimeMs",
+    "fulfillmentTimeMs"
   );
 }
 
@@ -159,25 +159,25 @@ export function isPricingQuoteRow(
 ): candidate is PricingQuoteRow {
   return hasProperties(
     candidate,
-    'id',
-    'pricing_quote_input_id',
-    'created_at',
-    'product_type',
-    'product_complexity',
-    'material_category',
-    'material_budget_cents',
-    'units',
-    'base_cost_cents',
-    'material_cost_cents',
-    'process_cost_cents',
-    'unit_cost_cents',
-    'design_id',
-    'creation_time_ms',
-    'specification_time_ms',
-    'sourcing_time_ms',
-    'sampling_time_ms',
-    'pre_production_time_ms',
-    'production_time_ms',
-    'fulfillment_time_ms'
+    "id",
+    "pricing_quote_input_id",
+    "created_at",
+    "product_type",
+    "product_complexity",
+    "material_category",
+    "material_budget_cents",
+    "units",
+    "base_cost_cents",
+    "material_cost_cents",
+    "process_cost_cents",
+    "unit_cost_cents",
+    "design_id",
+    "creation_time_ms",
+    "specification_time_ms",
+    "sourcing_time_ms",
+    "sampling_time_ms",
+    "pre_production_time_ms",
+    "production_time_ms",
+    "fulfillment_time_ms"
   );
 }

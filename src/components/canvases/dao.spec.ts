@@ -1,7 +1,7 @@
-import Knex from 'knex';
-import tape from 'tape';
-import uuid from 'node-uuid';
-import { test } from '../../test-helpers/fresh';
+import Knex from "knex";
+import tape from "tape";
+import uuid from "node-uuid";
+import { test } from "../../test-helpers/fresh";
 import {
   create,
   del,
@@ -10,20 +10,20 @@ import {
   findById,
   getCreatorMetadata,
   reorder,
-  update
-} from './dao';
-import createUser from '../../test-helpers/create-user';
-import { create as createDesign } from '../product-designs/dao';
-import generateCanvas from '../../test-helpers/factories/product-design-canvas';
-import db from '../../services/db';
+  update,
+} from "./dao";
+import createUser from "../../test-helpers/create-user";
+import { create as createDesign } from "../product-designs/dao";
+import generateCanvas from "../../test-helpers/factories/product-design-canvas";
+import db from "../../services/db";
 
-test('ProductDesignCanvases DAO supports creation/retrieval', async (t: tape.Test) => {
+test("ProductDesignCanvases DAO supports creation/retrieval", async (t: tape.Test) => {
   const userData = await createUser();
   const userId = userData.user.id;
   const design = await createDesign({
-    productType: 'TEESHIRT',
-    title: 'Plain White Tee',
-    userId
+    productType: "TEESHIRT",
+    title: "Plain White Tee",
+    userId,
   });
 
   const data = {
@@ -33,23 +33,23 @@ test('ProductDesignCanvases DAO supports creation/retrieval', async (t: tape.Tes
     designId: design.id,
     height: 2,
     ordering: 0,
-    title: 'test',
+    title: "test",
     width: 2,
     x: 1,
-    y: 1
+    y: 1,
   };
   const inserted = await create(data);
   const result = await findById(inserted.id);
-  t.deepEqual(result, inserted, 'Returned inserted task');
+  t.deepEqual(result, inserted, "Returned inserted task");
 });
 
-test('ProductDesignCanvases DAO supports creation/retrieval without ordering', async (t: tape.Test) => {
+test("ProductDesignCanvases DAO supports creation/retrieval without ordering", async (t: tape.Test) => {
   const userData = await createUser();
   const userId = userData.user.id;
   const design = await createDesign({
-    productType: 'TEESHIRT',
-    title: 'Plain White Tee',
-    userId
+    productType: "TEESHIRT",
+    title: "Plain White Tee",
+    userId,
   });
 
   const data = {
@@ -58,24 +58,24 @@ test('ProductDesignCanvases DAO supports creation/retrieval without ordering', a
     createdBy: userId,
     designId: design.id,
     height: 2,
-    title: 'test',
+    title: "test",
     width: 2,
     x: 1,
-    y: 1
+    y: 1,
   };
   const inserted = await create(data);
 
   const result = await findById(inserted.id);
-  t.deepEqual(result, { ...inserted, ordering: 0 }, 'Returned inserted task');
+  t.deepEqual(result, { ...inserted, ordering: 0 }, "Returned inserted task");
 });
 
-test('ProductDesignCanvases DAO supports update', async (t: tape.Test) => {
+test("ProductDesignCanvases DAO supports update", async (t: tape.Test) => {
   const userData = await createUser();
   const userId = userData.user.id;
   const design = await createDesign({
-    productType: 'TEESHIRT',
-    title: 'Plain White Tee',
-    userId
+    productType: "TEESHIRT",
+    title: "Plain White Tee",
+    userId,
   });
 
   const data = {
@@ -85,41 +85,41 @@ test('ProductDesignCanvases DAO supports update', async (t: tape.Test) => {
     designId: design.id,
     height: 2,
     ordering: 0,
-    title: 'test',
+    title: "test",
     width: 2,
     x: 1,
-    y: 1
+    y: 1,
   };
   const { id, createdAt, deletedAt, ...canvas } = await create(data);
   const inserted = await update(id, {
     ...canvas,
-    title: 'updated',
-    archivedAt: new Date('2019-01-01')
+    title: "updated",
+    archivedAt: new Date("2019-01-01"),
   });
 
   const result = await findById(inserted.id);
   if (!result) {
-    return t.fail('no result');
+    return t.fail("no result");
   }
-  t.deepEqual(result, inserted, 'Returned inserted canvas');
-  t.equal(result.title, 'updated', 'Title was updated');
+  t.deepEqual(result, inserted, "Returned inserted canvas");
+  t.equal(result.title, "updated", "Title was updated");
   if (!inserted.archivedAt) {
-    return t.fail('expected an archivedAt date!');
+    return t.fail("expected an archivedAt date!");
   }
   t.deepEqual(
     new Date(inserted.archivedAt),
-    new Date('2019-01-01'),
-    'Returns the same date'
+    new Date("2019-01-01"),
+    "Returns the same date"
   );
 });
 
-test('ProductDesignCanvases DAO supports reorder', async (t: tape.Test) => {
+test("ProductDesignCanvases DAO supports reorder", async (t: tape.Test) => {
   const userData = await createUser();
   const userId = userData.user.id;
   const design = await createDesign({
-    productType: 'TEESHIRT',
-    title: 'Plain White Tee',
-    userId
+    productType: "TEESHIRT",
+    title: "Plain White Tee",
+    userId,
   });
 
   const data = {
@@ -129,10 +129,10 @@ test('ProductDesignCanvases DAO supports reorder', async (t: tape.Test) => {
     designId: design.id,
     height: 2,
     ordering: 0,
-    title: 'test',
+    title: "test",
     width: 2,
     x: 1,
-    y: 1
+    y: 1,
   };
   const data2 = {
     archivedAt: null,
@@ -141,34 +141,34 @@ test('ProductDesignCanvases DAO supports reorder', async (t: tape.Test) => {
     designId: design.id,
     height: 2,
     ordering: 1,
-    title: 'test',
+    title: "test",
     width: 2,
     x: 1,
-    y: 1
+    y: 1,
   };
   const canvas = await create(data);
   const canvas2 = await create(data2);
   const inserted = await reorder([
     { id: canvas2.id, ordering: 0 },
-    { id: canvas.id, ordering: 1 }
+    { id: canvas.id, ordering: 1 },
   ]);
 
   const result = await findAllByDesignId(design.id);
   if (!result) {
-    return t.fail('no result');
+    return t.fail("no result");
   }
-  t.deepEqual(result, inserted, 'Returned inserted canvases');
-  t.deepEqual(result[1].id, canvas.id, 'First canvas is correct');
-  t.equal(result[1].ordering, 1, 'Canvas has new ordering');
+  t.deepEqual(result, inserted, "Returned inserted canvases");
+  t.deepEqual(result[1].id, canvas.id, "First canvas is correct");
+  t.equal(result[1].ordering, 1, "Canvas has new ordering");
 });
 
-test('ProductDesignCanvases DAO supports delete', async (t: tape.Test) => {
+test("ProductDesignCanvases DAO supports delete", async (t: tape.Test) => {
   const userData = await createUser();
   const userId = userData.user.id;
   const design = await createDesign({
-    productType: 'TEESHIRT',
-    title: 'Plain White Tee',
-    userId
+    productType: "TEESHIRT",
+    title: "Plain White Tee",
+    userId,
   });
 
   const data = {
@@ -178,10 +178,10 @@ test('ProductDesignCanvases DAO supports delete', async (t: tape.Test) => {
     designId: design.id,
     height: 2,
     ordering: 0,
-    title: 'test',
+    title: "test",
     width: 2,
     x: 1,
-    y: 1
+    y: 1,
   };
   return db.transaction(async (trx: Knex.Transaction) => {
     const canvas = await create(data, trx);
@@ -192,13 +192,13 @@ test('ProductDesignCanvases DAO supports delete', async (t: tape.Test) => {
   });
 });
 
-test('ProductDesignCanvases DAO supports retrieval by designId', async (t: tape.Test) => {
+test("ProductDesignCanvases DAO supports retrieval by designId", async (t: tape.Test) => {
   const userData = await createUser();
   const userId = userData.user.id;
   const design = await createDesign({
-    productType: 'TEESHIRT',
-    title: 'Plain White Tee',
-    userId
+    productType: "TEESHIRT",
+    title: "Plain White Tee",
+    userId,
   });
 
   const data = {
@@ -208,28 +208,28 @@ test('ProductDesignCanvases DAO supports retrieval by designId', async (t: tape.
     designId: design.id,
     height: 2,
     ordering: 0,
-    title: 'test',
+    title: "test",
     width: 2,
     x: 1,
-    y: 1
+    y: 1,
   };
   const inserted = await create(data);
 
   const result = await findAllByDesignId(design.id);
-  t.deepEqual(result[0], inserted, 'Returned inserted task');
+  t.deepEqual(result[0], inserted, "Returned inserted task");
 });
 
-test('ProductDesignCanvases DAO supports retrieval by componentId', async (t: tape.Test) => {
+test("ProductDesignCanvases DAO supports retrieval by componentId", async (t: tape.Test) => {
   const { canvas, component } = await generateCanvas({});
   const foundCanvas = await findByComponentId(component.id);
   t.deepEqual(
     canvas,
     foundCanvas,
-    'Returns the canvas associated with the given component'
+    "Returns the canvas associated with the given component"
   );
 });
 
-test('getCreatorMetadata', async (t: tape.Test) => {
+test("getCreatorMetadata", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
   const { canvas } = await generateCanvas({ createdBy: user.id });
   const randomId = uuid.v4();
@@ -239,7 +239,7 @@ test('getCreatorMetadata', async (t: tape.Test) => {
   t.deepEqual(creator, {
     canvasId: canvas.id,
     createdAt: canvas.createdAt,
-    createdByName: user.name
+    createdByName: user.name,
   });
 
   const empty = await getCreatorMetadata(randomId);

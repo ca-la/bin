@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 exports.up = function up(knex) {
   // This is becoming gnarly to maintain, so getting rid of it for now. If we

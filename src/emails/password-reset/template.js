@@ -1,6 +1,6 @@
 /* eslint-disable no-tabs */
 
-'use strict';
+"use strict";
 
 module.exports = `
 <!doctype html>

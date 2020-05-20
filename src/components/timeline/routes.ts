@@ -1,9 +1,9 @@
-import Router from 'koa-router';
+import Router from "koa-router";
 
-import requireAuth = require('../../middleware/require-auth');
-import * as Service from './service';
-import * as CollectionsDAO from '../collections/dao';
-import { getCollectionPermissions } from '../../services/get-permissions';
+import requireAuth = require("../../middleware/require-auth");
+import * as Service from "./service";
+import * as CollectionsDAO from "../collections/dao";
+import { getCollectionPermissions } from "../../services/get-permissions";
 
 const router = new Router();
 
@@ -18,7 +18,7 @@ function* getList(this: AuthedContext): Iterator<any, any, any> {
   const query: GetListQuery = this.query;
 
   if (!query.collectionId && !query.userId) {
-    this.throw(400, 'Missing collection or user id');
+    this.throw(400, "Missing collection or user id");
   }
   const { limit, offset } = this.query;
 
@@ -48,6 +48,6 @@ function* getList(this: AuthedContext): Iterator<any, any, any> {
   }
 }
 
-router.get('/', requireAuth, getList);
+router.get("/", requireAuth, getList);
 
 export default router.routes();

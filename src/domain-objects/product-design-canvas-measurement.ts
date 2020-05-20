@@ -1,5 +1,5 @@
-import DataAdapter from '../services/data-adapter';
-import { hasProperties } from '../services/require-properties';
+import DataAdapter from "../services/data-adapter";
+import { hasProperties } from "../services/require-properties";
 
 export default interface ProductDesignCanvasMeasurement {
   id: string;
@@ -32,14 +32,14 @@ export interface ProductDesignCanvasMeasurementRow {
 }
 
 export const UPDATABLE_PROPERTIES = [
-  'canvas_id',
-  'ending_x',
-  'ending_y',
-  'label',
-  'measurement',
-  'name',
-  'starting_x',
-  'starting_y'
+  "canvas_id",
+  "ending_x",
+  "ending_y",
+  "label",
+  "measurement",
+  "name",
+  "starting_x",
+  "starting_y",
 ];
 
 export function parseNumerics(
@@ -50,7 +50,7 @@ export function parseNumerics(
     endingX: Number(measurement.endingX),
     endingY: Number(measurement.endingY),
     startingX: Number(measurement.startingX),
-    startingY: Number(measurement.startingY)
+    startingY: Number(measurement.startingY),
   };
 }
 
@@ -70,17 +70,17 @@ export function isProductDesignCanvasMeasurementRow(
 ): row is ProductDesignCanvasMeasurementRow {
   return hasProperties(
     row,
-    'id',
-    'created_at',
-    'canvas_id',
-    'created_by',
-    'deleted_at',
-    'label',
-    'measurement',
-    'name',
-    'starting_x',
-    'starting_y',
-    'ending_x',
-    'ending_y'
+    "id",
+    "created_at",
+    "canvas_id",
+    "created_by",
+    "deleted_at",
+    "label",
+    "measurement",
+    "name",
+    "starting_x",
+    "starting_y",
+    "ending_x",
+    "ending_y"
   );
 }

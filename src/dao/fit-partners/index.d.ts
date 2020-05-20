@@ -1,4 +1,4 @@
-import FitPartner from '../../domain-objects/fit-partner';
+import FitPartner from "../../domain-objects/fit-partner";
 
 type UnsavedPartner = Unsaved<FitPartner>;
 

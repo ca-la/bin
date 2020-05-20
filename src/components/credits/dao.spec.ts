@@ -1,11 +1,11 @@
-import Knex from 'knex';
+import Knex from "knex";
 
-import db from '../../services/db';
-import createUser = require('../../test-helpers/create-user');
-import { addCredit, getCreditAmount, removeCredit } from './dao';
-import { sandbox, test, Test } from '../../test-helpers/fresh';
+import db from "../../services/db";
+import createUser = require("../../test-helpers/create-user");
+import { addCredit, getCreditAmount, removeCredit } from "./dao";
+import { sandbox, test, Test } from "../../test-helpers/fresh";
 
-test('CreditsDAO supports adding & removing credits', async (t: Test) => {
+test("CreditsDAO supports adding & removing credits", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
   const { user: otherUser } = await createUser({ withSession: false });
 
@@ -14,9 +14,9 @@ test('CreditsDAO supports adding & removing credits', async (t: Test) => {
       {
         amountCents: 12300,
         createdBy: otherUser.id,
-        description: 'For being a good customer',
+        description: "For being a good customer",
         expiresAt: null,
-        givenTo: user.id
+        givenTo: user.id,
       },
       trx
     );
@@ -25,9 +25,9 @@ test('CreditsDAO supports adding & removing credits', async (t: Test) => {
       {
         amountCents: 999,
         createdBy: user.id,
-        description: 'thanks you too',
+        description: "thanks you too",
         expiresAt: null,
-        givenTo: otherUser.id
+        givenTo: otherUser.id,
       },
       trx
     );
@@ -36,8 +36,8 @@ test('CreditsDAO supports adding & removing credits', async (t: Test) => {
       {
         amountCents: 300,
         createdBy: user.id,
-        description: 'spending some money',
-        givenTo: user.id
+        description: "spending some money",
+        givenTo: user.id,
       },
       trx
     );
@@ -47,7 +47,7 @@ test('CreditsDAO supports adding & removing credits', async (t: Test) => {
   t.equal(amount, 12000);
 });
 
-test('CreditsDAO prevents you from removing more than available credits', async (t: Test) => {
+test("CreditsDAO prevents you from removing more than available credits", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
 
   try {
@@ -56,9 +56,9 @@ test('CreditsDAO prevents you from removing more than available credits', async 
         {
           amountCents: 123,
           createdBy: user.id,
-          description: 'For being a good customer',
+          description: "For being a good customer",
           expiresAt: null,
-          givenTo: user.id
+          givenTo: user.id,
         },
         trx
       );
@@ -67,20 +67,18 @@ test('CreditsDAO prevents you from removing more than available credits', async 
         {
           amountCents: 223,
           createdBy: user.id,
-          description: 'spending some money',
-          givenTo: user.id
+          description: "spending some money",
+          givenTo: user.id,
         },
         trx
       );
     });
-    t.fail('Should not have completed transaction');
+    t.fail("Should not have completed transaction");
   } catch (err) {
     // tslint:disable-next-line:max-line-length
     t.equal(
       err.message,
-      `Cannot remove 223 cents of credit from user ${
-        user.id
-      }; they only have 123 available`
+      `Cannot remove 223 cents of credit from user ${user.id}; they only have 123 available`
     );
   }
 
@@ -88,7 +86,7 @@ test('CreditsDAO prevents you from removing more than available credits', async 
   t.equal(amount, 0);
 });
 
-test('CreditsDAO prevents you from removing with 0 credits', async (t: Test) => {
+test("CreditsDAO prevents you from removing with 0 credits", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
 
   try {
@@ -97,20 +95,18 @@ test('CreditsDAO prevents you from removing with 0 credits', async (t: Test) => 
         {
           amountCents: 100,
           createdBy: user.id,
-          description: 'spending some money',
-          givenTo: user.id
+          description: "spending some money",
+          givenTo: user.id,
         },
         trx
       );
     });
-    t.fail('Should not have completed transaction');
+    t.fail("Should not have completed transaction");
   } catch (err) {
     // tslint:disable-next-line:max-line-length
     t.equal(
       err.message,
-      `Cannot remove 100 cents of credit from user ${
-        user.id
-      }; they only have 0 available`
+      `Cannot remove 100 cents of credit from user ${user.id}; they only have 0 available`
     );
   }
 
@@ -118,15 +114,15 @@ test('CreditsDAO prevents you from removing with 0 credits', async (t: Test) => 
   t.equal(amount, 0);
 });
 
-test('CreditsDAO prevents you from spending the same credits twice in parallel', async (t: Test) => {
+test("CreditsDAO prevents you from spending the same credits twice in parallel", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
 
   await addCredit({
     amountCents: 500,
     createdBy: user.id,
-    description: 'For being a good customer',
+    description: "For being a good customer",
     expiresAt: null,
-    givenTo: user.id
+    givenTo: user.id,
   });
 
   try {
@@ -136,8 +132,8 @@ test('CreditsDAO prevents you from spending the same credits twice in parallel',
           {
             amountCents: 400,
             createdBy: user.id,
-            description: 'spending some money',
-            givenTo: user.id
+            description: "spending some money",
+            givenTo: user.id,
           },
           trx
         );
@@ -147,22 +143,20 @@ test('CreditsDAO prevents you from spending the same credits twice in parallel',
           {
             amountCents: 400,
             createdBy: user.id,
-            description: 'spending some money',
-            givenTo: user.id
+            description: "spending some money",
+            givenTo: user.id,
           },
           trx
         );
-      })
+      }),
     ]);
 
-    t.fail('Should not have completed transaction');
+    t.fail("Should not have completed transaction");
   } catch (err) {
     // tslint:disable-next-line:max-line-length
     t.equal(
       err.message,
-      `Cannot remove 400 cents of credit from user ${
-        user.id
-      }; they only have 100 available`
+      `Cannot remove 400 cents of credit from user ${user.id}; they only have 100 available`
     );
   }
 
@@ -170,7 +164,7 @@ test('CreditsDAO prevents you from spending the same credits twice in parallel',
   t.equal(amount, 100);
 });
 
-test('CreditsDAO supports credit expiration', async (t: Test) => {
+test("CreditsDAO supports credit expiration", async (t: Test) => {
   const clock = sandbox().useFakeTimers();
 
   const { user } = await createUser({ withSession: false });
@@ -181,9 +175,9 @@ test('CreditsDAO supports credit expiration', async (t: Test) => {
       {
         amountCents: 99,
         createdBy: user.id,
-        description: 'Cool',
+        description: "Cool",
         expiresAt: null,
-        givenTo: user.id
+        givenTo: user.id,
       },
       trx
     );
@@ -193,9 +187,9 @@ test('CreditsDAO supports credit expiration', async (t: Test) => {
       {
         amountCents: 500,
         createdBy: user.id,
-        description: 'Cool',
+        description: "Cool",
         expiresAt: new Date(Date.now() - 1),
-        givenTo: user.id
+        givenTo: user.id,
       },
       trx
     );
@@ -205,9 +199,9 @@ test('CreditsDAO supports credit expiration', async (t: Test) => {
       {
         amountCents: 1000,
         createdBy: user.id,
-        description: 'Cooler',
+        description: "Cooler",
         expiresAt: new Date(Date.now() + 1000),
-        givenTo: user.id
+        givenTo: user.id,
       },
       trx
     );
@@ -217,8 +211,8 @@ test('CreditsDAO supports credit expiration', async (t: Test) => {
       {
         amountCents: 200,
         createdBy: user.id,
-        description: 'spending some money',
-        givenTo: user.id
+        description: "spending some money",
+        givenTo: user.id,
       },
       trx
     );
@@ -234,7 +228,7 @@ test('CreditsDAO supports credit expiration', async (t: Test) => {
   t.equal(await getCreditAmount(user.id), 99);
 });
 
-test('CreditsDAO subtracts from the soonest-expiring credits first', async (t: Test) => {
+test("CreditsDAO subtracts from the soonest-expiring credits first", async (t: Test) => {
   // Sets up a timeline like so:
   //
   //           |---------------------------------------| Credit A ($20)
@@ -260,9 +254,9 @@ test('CreditsDAO subtracts from the soonest-expiring credits first', async (t: T
       {
         amountCents: 2000,
         createdBy: user.id,
-        description: 'Credit A',
+        description: "Credit A",
         expiresAt: new Date(Date.now() + 4000),
-        givenTo: user.id
+        givenTo: user.id,
       },
       trx
     );
@@ -277,9 +271,9 @@ test('CreditsDAO subtracts from the soonest-expiring credits first', async (t: T
       {
         amountCents: 3300,
         createdBy: user.id,
-        description: 'Credit B',
+        description: "Credit B",
         expiresAt: new Date(Date.now() + 2000),
-        givenTo: user.id
+        givenTo: user.id,
       },
       trx
     );
@@ -294,8 +288,8 @@ test('CreditsDAO subtracts from the soonest-expiring credits first', async (t: T
       {
         amountCents: 4000,
         createdBy: user.id,
-        description: 'Spending',
-        givenTo: user.id
+        description: "Spending",
+        givenTo: user.id,
       },
       trx
     );

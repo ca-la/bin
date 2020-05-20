@@ -1,11 +1,11 @@
-import { CalaAdapter } from './types';
+import { CalaAdapter } from "./types";
 import DataAdapter, {
   DataTransformer,
   defaultDecoder,
-  defaultEncoder
-} from '../data-adapter';
-import { validate, validateEvery } from '../validate-from-db';
-import { hasProperties } from '../require-properties';
+  defaultEncoder,
+} from "../data-adapter";
+import { validate, validateEvery } from "../validate-from-db";
+import { hasProperties } from "../require-properties";
 
 interface AdapterOptions<Model, ModelRow extends object> {
   domain: string;
@@ -23,7 +23,7 @@ export function buildAdapter<Model extends object, ModelRow extends object>({
   encodeTransformer = defaultEncoder,
   decodeTransformer = defaultDecoder,
   insertionTransformer = defaultDecoder,
-  requiredProperties
+  requiredProperties,
 }: AdapterOptions<Model, ModelRow>): CalaAdapter<Model, ModelRow> {
   const dataAdapter = new DataAdapter<ModelRow, Model>(
     encodeTransformer,
@@ -71,6 +71,6 @@ export function buildAdapter<Model extends object, ModelRow extends object>({
     },
     fromDbArray: (items: ModelRow[]): Model[] => {
       return validateEvery<ModelRow, Model>(domain, isRow, dataAdapter, items);
-    }
+    },
   };
 }

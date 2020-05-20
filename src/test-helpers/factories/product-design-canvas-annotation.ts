@@ -1,12 +1,12 @@
-import uuid from 'node-uuid';
-import Canvas from '../../components/canvases/domain-object';
-import { findById as findUserById } from '../../components/users/dao';
-import createUser = require('../create-user');
-import * as CanvasesDAO from '../../components/canvases/dao';
-import Annotation from '../../components/product-design-canvas-annotations/domain-object';
-import { create } from '../../components/product-design-canvas-annotations/dao';
-import generateCanvas from './product-design-canvas';
-import User from '../../components/users/domain-object';
+import uuid from "node-uuid";
+import Canvas from "../../components/canvases/domain-object";
+import { findById as findUserById } from "../../components/users/dao";
+import createUser = require("../create-user");
+import * as CanvasesDAO from "../../components/canvases/dao";
+import Annotation from "../../components/product-design-canvas-annotations/domain-object";
+import { create } from "../../components/product-design-canvas-annotations/dao";
+import generateCanvas from "./product-design-canvas";
+import User from "../../components/users/domain-object";
 
 interface AnnotationWithResources {
   annotation: Annotation;
@@ -25,7 +25,7 @@ export default async function generateAnnotation(
     : await generateCanvas({ createdBy: user.id });
 
   if (!canvas) {
-    throw new Error('Canvas was unable to be found or created!');
+    throw new Error("Canvas was unable to be found or created!");
   }
 
   const annotation = await create({
@@ -34,12 +34,12 @@ export default async function generateAnnotation(
     deletedAt: null,
     id: options.id || uuid.v4(),
     x: options.x || 0,
-    y: options.y || 0
+    y: options.y || 0,
   });
 
   return {
     annotation,
     canvas,
-    createdBy: user
+    createdBy: user,
   };
 }

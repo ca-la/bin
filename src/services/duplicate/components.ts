@@ -1,9 +1,9 @@
-import Knex from 'knex';
+import Knex from "knex";
 
-import * as ComponentsDAO from '../../components/components/dao';
-import Component from '../../components/components/domain-object';
-import prepareForDuplication from './prepare-for-duplication';
-import { findAndDuplicateOption } from './options';
+import * as ComponentsDAO from "../../components/components/dao";
+import Component from "../../components/components/domain-object";
+import prepareForDuplication from "./prepare-for-duplication";
+import { findAndDuplicateOption } from "./options";
 
 /**
  * Finds and duplicates the given component (and associated sub-resources).
@@ -36,7 +36,7 @@ export async function findAndDuplicateComponent(
   return ComponentsDAO.create(
     prepareForDuplication(component, {
       ...additionalFields,
-      parentId: newParentId
+      parentId: newParentId,
     }),
     trx
   );

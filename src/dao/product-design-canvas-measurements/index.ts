@@ -1,23 +1,23 @@
-import rethrow = require('pg-rethrow');
-import Knex from 'knex';
+import rethrow = require("pg-rethrow");
+import Knex from "knex";
 
-import db from '../../services/db';
-import filterError = require('../../services/filter-error');
-import InvalidDataError = require('../../errors/invalid-data');
-import { pick } from 'lodash';
+import db from "../../services/db";
+import filterError = require("../../services/filter-error");
+import InvalidDataError = require("../../errors/invalid-data");
+import { pick } from "lodash";
 import Measurement, {
   dataAdapter,
   isProductDesignCanvasMeasurementRow as isMeasurementRow,
   parseNumerics,
   parseNumericsList,
   ProductDesignCanvasMeasurementRow as MeasurementRow,
-  UPDATABLE_PROPERTIES
-} from '../../domain-objects/product-design-canvas-measurement';
-import first from '../../services/first';
-import { validate, validateEvery } from '../../services/validate-from-db';
-import generateLabel from '../../services/generate-label';
+  UPDATABLE_PROPERTIES,
+} from "../../domain-objects/product-design-canvas-measurement";
+import first from "../../services/first";
+import { validate, validateEvery } from "../../services/validate-from-db";
+import generateLabel from "../../services/generate-label";
 
-const TABLE_NAME = 'product_design_canvas_measurements';
+const TABLE_NAME = "product_design_canvas_measurements";
 
 interface CountRow {
   count: number;
@@ -27,7 +27,7 @@ export class MeasurementNotFoundError extends Error {
   constructor(message: string) {
     super(message);
     this.message = message;
-    this.name = 'MeasurementNotFoundError';
+    this.name = "MeasurementNotFoundError";
   }
 }
 
@@ -35,7 +35,7 @@ function handleForeignKeyViolation(
   canvasId: string,
   err: typeof rethrow.ERRORS.ForeignKeyViolation
 ): never {
-  if (err.constraint === 'product_design_canvas_measurements_canvas_id_fkey') {
+  if (err.constraint === "product_design_canvas_measurements_canvas_id_fkey") {
     throw new InvalidDataError(`Invalid canvas ID: ${canvasId}`);
   }
 
@@ -48,10 +48,10 @@ export async function create(
 ): Promise<Measurement> {
   const rowData = dataAdapter.forInsertion({
     ...data,
-    deletedAt: null
+    deletedAt: null,
   });
   const created = await db(TABLE_NAME)
-    .insert(rowData, '*')
+    .insert(rowData, "*")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
@@ -67,7 +67,7 @@ export async function create(
     );
 
   if (!created) {
-    throw new Error('Failed to create a measurement');
+    throw new Error("Failed to create a measurement");
   }
 
   return parseNumerics(
@@ -82,7 +82,7 @@ export async function create(
 
 export async function findById(id: string): Promise<Measurement | null> {
   const measurements: MeasurementRow[] = await db(TABLE_NAME)
-    .select('*')
+    .select("*")
     .where({ id, deleted_at: null })
     .limit(1);
 
@@ -109,7 +109,7 @@ export async function update(
 
   const updated = await db(TABLE_NAME)
     .where({ id, deleted_at: null })
-    .update(rowData, '*')
+    .update(rowData, "*")
     .then((rows: MeasurementRow[]) => first<MeasurementRow>(rows))
     .catch(rethrow)
     .catch(
@@ -120,7 +120,7 @@ export async function update(
     );
 
   if (!updated) {
-    throw new MeasurementNotFoundError('Measurement not found');
+    throw new MeasurementNotFoundError("Measurement not found");
   }
 
   return parseNumerics(
@@ -136,11 +136,11 @@ export async function update(
 export async function deleteById(id: string): Promise<Measurement> {
   const deleted = await db(TABLE_NAME)
     .where({ id, deleted_at: null })
-    .update({ deleted_at: new Date() }, '*')
+    .update({ deleted_at: new Date() }, "*")
     .then((rows: MeasurementRow[]) => first<MeasurementRow>(rows));
 
   if (!deleted) {
-    throw new MeasurementNotFoundError('Measurement not found');
+    throw new MeasurementNotFoundError("Measurement not found");
   }
 
   return parseNumerics(
@@ -157,9 +157,9 @@ export async function findAllByCanvasId(
   canvasId: string
 ): Promise<Measurement[]> {
   const measurements: MeasurementRow[] = await db(TABLE_NAME)
-    .select('*')
+    .select("*")
     .where({ canvas_id: canvasId, deleted_at: null })
-    .orderBy('created_at', 'desc');
+    .orderBy("created_at", "desc");
   return parseNumericsList(
     validateEvery<MeasurementRow, Measurement>(
       TABLE_NAME,
@@ -172,7 +172,7 @@ export async function findAllByCanvasId(
 
 export async function getLabel(canvasId: string): Promise<string> {
   const measurementCount = await db(TABLE_NAME)
-    .count('*')
+    .count("*")
     .where({ canvas_id: canvasId })
     .then((rows: CountRow[]) => first<CountRow>(rows));
   if (!measurementCount) {

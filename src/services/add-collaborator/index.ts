@@ -1,16 +1,16 @@
-import { escape as escapeHtml } from 'lodash';
+import { escape as escapeHtml } from "lodash";
 
-import CollaboratorsDAO = require('../../components/collaborators/dao');
-import InvalidDataError = require('../../errors/invalid-data');
-import normalizeEmail = require('../normalize-email');
-import UsersDAO = require('../../components/users/dao');
-import Validation = require('../../services/validation');
-import * as NotificationsService from '../../services/create-notifications';
-import User from '../../components/users/domain-object';
+import CollaboratorsDAO = require("../../components/collaborators/dao");
+import InvalidDataError = require("../../errors/invalid-data");
+import normalizeEmail = require("../normalize-email");
+import UsersDAO = require("../../components/users/dao");
+import Validation = require("../../services/validation");
+import * as NotificationsService from "../../services/create-notifications";
+import User from "../../components/users/domain-object";
 import {
   CollaboratorWithUser,
-  Roles
-} from '../../components/collaborators/domain-objects/collaborator';
+  Roles,
+} from "../../components/collaborators/domain-objects/collaborator";
 
 /**
  * Add a collaborator to a design. If a user exists with this email, adds them
@@ -35,29 +35,29 @@ export default async function addCollaborator(
   const { email, inviterUserId, role, unsafeInvitationMessage } = options;
 
   if (!Validation.isValidEmail(email)) {
-    throw new InvalidDataError('Invalid email address');
+    throw new InvalidDataError("Invalid email address");
   }
 
   const normalizedEmail = normalizeEmail(email);
-  const user = (await UsersDAO.findByEmail(normalizedEmail)) as (User | null);
-  const inviter = (await UsersDAO.findById(inviterUserId)) as (User | null);
+  const user = (await UsersDAO.findByEmail(normalizedEmail)) as User | null;
+  const inviter = (await UsersDAO.findById(inviterUserId)) as User | null;
 
   if (!inviter) {
-    throw new Error('Inviter is not specified!');
+    throw new Error("Inviter is not specified!");
   }
 
   const escapedMessage = escapeHtml(unsafeInvitationMessage);
-  const invitationMessage = escapedMessage || 'Check out CALA!';
+  const invitationMessage = escapedMessage || "Check out CALA!";
 
   const collaborator = user
     ? await CollaboratorsDAO.create({
         cancelledAt: null,
         collectionId: options.collectionId || null,
         designId: options.designId || null,
-        invitationMessage: '',
+        invitationMessage: "",
         role,
         userEmail: null,
-        userId: user.id
+        userId: user.id,
       })
     : await CollaboratorsDAO.create({
         cancelledAt: null,
@@ -66,7 +66,7 @@ export default async function addCollaborator(
         invitationMessage,
         role,
         userEmail: normalizedEmail,
-        userId: null
+        userId: null,
       });
 
   NotificationsService.immediatelySendInviteCollaborator({
@@ -74,7 +74,7 @@ export default async function addCollaborator(
     collectionId: options.collectionId || null,
     designId: options.designId || null,
     targetCollaboratorId: collaborator.id,
-    targetUserId: collaborator.userId || null
+    targetUserId: collaborator.userId || null,
   });
 
   return collaborator;

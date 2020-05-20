@@ -1,10 +1,10 @@
-export type Role = 'ADMIN' | 'FIT_PARTNER' | 'PARTNER' | 'USER';
+export type Role = "ADMIN" | "FIT_PARTNER" | "PARTNER" | "USER";
 
 export const ROLES: { [id: string]: Role } = {
-  admin: 'ADMIN',
-  fitPartner: 'FIT_PARTNER',
-  partner: 'PARTNER',
-  user: 'USER'
+  admin: "ADMIN",
+  fitPartner: "FIT_PARTNER",
+  partner: "PARTNER",
+  user: "USER",
 };
 
 export const ALLOWED_SESSION_ROLES: { [id: string]: Role[] } = {
@@ -12,7 +12,7 @@ export const ALLOWED_SESSION_ROLES: { [id: string]: Role[] } = {
   [ROLES.user]: [ROLES.user],
   // Important: Partners cannot log in as a regular user!
   [ROLES.partner]: [ROLES.partner],
-  [ROLES.fitPartner]: [ROLES.user, ROLES.fitPartner]
+  [ROLES.fitPartner]: [ROLES.user, ROLES.fitPartner],
 };
 
 export default interface User {
@@ -40,13 +40,13 @@ export const baseUser = {
   isSmsPreregistration: false,
   lastAcceptedDesignerTermsAt: null,
   lastAcceptedPartnerTermsAt: null,
-  locale: 'en',
+  locale: "en",
   phone: null,
-  referralCode: 'n/a',
-  role: ROLES.user
+  referralCode: "n/a",
+  role: ROLES.user,
 };
 
-export interface UserIO extends Partial<Omit<User, 'createdAt' | 'id'>> {
+export interface UserIO extends Partial<Omit<User, "createdAt" | "id">> {
   email: string;
   name: string | null;
   password: string | null;

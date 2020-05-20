@@ -1,11 +1,11 @@
-import Router from 'koa-router';
+import Router from "koa-router";
 
-import MailChimp from '../../services/mailchimp';
+import MailChimp from "../../services/mailchimp";
 import {
   MAILCHIMP_LIST_ID_DESIGNERS,
-  MAILCHIMP_LIST_ID_PRODUCTION_PARTNERS
-} from '../../config';
-import { hasProperties } from '../../services/require-properties';
+  MAILCHIMP_LIST_ID_PRODUCTION_PARTNERS,
+} from "../../config";
+import { hasProperties } from "../../services/require-properties";
 
 const router = new Router();
 
@@ -24,12 +24,12 @@ function isDesignerSubscription(
 ): candidate is DesignerSubscription {
   return hasProperties(
     candidate,
-    'brandInstagram',
-    'email',
-    'firstName',
-    'language',
-    'lastName',
-    'source'
+    "brandInstagram",
+    "email",
+    "firstName",
+    "language",
+    "lastName",
+    "source"
   );
 }
 
@@ -38,7 +38,7 @@ function* createDesignerSubscription(
 ): Iterator<any, any, any> {
   const { body } = this.request;
   if (!body || !isDesignerSubscription(body)) {
-    this.throw(400, 'Missing required information');
+    this.throw(400, "Missing required information");
   }
 
   const {
@@ -48,7 +48,7 @@ function* createDesignerSubscription(
     howManyUnitsPerStyle,
     language,
     lastName,
-    source
+    source,
   } = body;
 
   try {
@@ -59,7 +59,7 @@ function* createDesignerSubscription(
       LANGUAGE: language,
       LNAME: lastName,
       MANAPPR: undefined,
-      SOURCE: source
+      SOURCE: source,
     });
   } catch (error) {
     this.throw(400, error.message);
@@ -67,7 +67,7 @@ function* createDesignerSubscription(
 
   this.status = 201;
   this.body = {
-    success: true
+    success: true,
   };
 }
 
@@ -82,7 +82,7 @@ interface PartnerSubscription {
 function isPartnerSubscription(
   candidate: object
 ): candidate is PartnerSubscription {
-  return hasProperties(candidate, 'email', 'language', 'name', 'source');
+  return hasProperties(candidate, "email", "language", "name", "source");
 }
 
 function* createPartnerSubscription(
@@ -90,7 +90,7 @@ function* createPartnerSubscription(
 ): Iterator<any, any, any> {
   const { body } = this.request;
   if (!body || !isPartnerSubscription(body)) {
-    this.throw(400, 'Missing required information');
+    this.throw(400, "Missing required information");
   }
 
   const { email, language, name, source, website } = body;
@@ -103,7 +103,7 @@ function* createPartnerSubscription(
         LANGUAGE: language,
         NAME: name,
         SOURCE: source,
-        WEB: website
+        WEB: website,
       }
     );
   } catch (error) {
@@ -114,7 +114,7 @@ function* createPartnerSubscription(
   this.body = { success: true };
 }
 
-router.post('/designers', createDesignerSubscription);
-router.post('/production-partners', createPartnerSubscription);
+router.post("/designers", createDesignerSubscription);
+router.post("/production-partners", createPartnerSubscription);
 
 export default router.routes();

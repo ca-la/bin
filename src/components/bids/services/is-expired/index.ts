@@ -1,5 +1,5 @@
-import Bid from '../../domain-object';
-import { MILLISECONDS_TO_EXPIRE } from '../../constants';
+import Bid from "../../domain-object";
+import { MILLISECONDS_TO_EXPIRE } from "../../constants";
 
 export function isExpired(bid: Bid): boolean {
   const expiration = new Date(

@@ -1,16 +1,16 @@
-import * as Knex from 'knex';
+import * as Knex from "knex";
 
 import {
   dataAdapter,
   isShopifyVariantRow,
   ShopifyVariant,
-  ShopifyVariantRow
-} from './domain-object';
-import first from '../../services/first';
-import { validate, validateEvery } from '../../services/validate-from-db';
-import db from '../../services/db';
+  ShopifyVariantRow,
+} from "./domain-object";
+import first from "../../services/first";
+import { validate, validateEvery } from "../../services/validate-from-db";
+import db from "../../services/db";
 
-const TABLE_NAME = 'shopify_variants';
+const TABLE_NAME = "shopify_variants";
 
 export async function create(
   data: ShopifyVariant,
@@ -19,7 +19,7 @@ export async function create(
   const rowData = dataAdapter.forInsertion(data);
   const shopifyVariant = await db(TABLE_NAME)
     .insert(rowData)
-    .returning('*')
+    .returning("*")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
@@ -28,7 +28,7 @@ export async function create(
     .then((shopifyVariants: ShopifyVariantRow[]) => first(shopifyVariants));
 
   if (!shopifyVariant) {
-    throw new Error('There was a problem saving the ShopifyVariant');
+    throw new Error("There was a problem saving the ShopifyVariant");
   }
 
   return validate<ShopifyVariantRow, ShopifyVariant>(

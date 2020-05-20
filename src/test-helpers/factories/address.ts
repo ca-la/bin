@@ -1,20 +1,20 @@
-import uuid from 'node-uuid';
+import uuid from "node-uuid";
 
-import { create } from '../../dao/addresses';
-import Address from '../../domain-objects/address';
+import { create } from "../../dao/addresses";
+import Address from "../../domain-objects/address";
 
-import { findById as findUserById } from '../../components/users/dao';
-import createUser = require('../create-user');
-import User from '../../components/users/domain-object';
+import { findById as findUserById } from "../../components/users/dao";
+import createUser = require("../create-user");
+import User from "../../components/users/domain-object";
 
 const mockAddress: Partial<Address> = {
-  companyName: 'CALA',
-  addressLine1: '42 Wallaby Way',
-  addressLine2: '',
-  city: 'Sydney',
-  region: 'NSW',
-  country: 'AU',
-  postCode: 'RG41 2PE'
+  companyName: "CALA",
+  addressLine1: "42 Wallaby Way",
+  addressLine2: "",
+  city: "Sydney",
+  region: "NSW",
+  country: "AU",
+  postCode: "RG41 2PE",
 };
 
 export default async function generateAddress(
@@ -25,7 +25,7 @@ export default async function generateAddress(
     : await createUser({ withSession: false });
 
   if (!user) {
-    throw new Error('Could not get user');
+    throw new Error("Could not get user");
   }
 
   return create({
@@ -34,6 +34,6 @@ export default async function generateAddress(
     userId: user.id,
     createdAt: options.createdAt || new Date(),
     deletedAt: options.deletedAt || null,
-    id: options.id || uuid.v4()
+    id: options.id || uuid.v4(),
   });
 }

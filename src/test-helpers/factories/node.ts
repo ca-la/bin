@@ -1,11 +1,11 @@
-import uuid from 'node-uuid';
-import Knex from 'knex';
+import uuid from "node-uuid";
+import Knex from "knex";
 
-import { create, createDesignRoot } from '../../components/nodes/dao';
-import { findById as findUserById } from '../../components/users/dao';
-import createUser = require('../create-user');
-import User from '../../components/users/domain-object';
-import Node from '../../components/nodes/domain-objects';
+import { create, createDesignRoot } from "../../components/nodes/dao";
+import { findById as findUserById } from "../../components/users/dao";
+import createUser = require("../create-user");
+import User from "../../components/users/domain-object";
+import Node from "../../components/nodes/domain-objects";
 
 export default async function generateNode(
   options: Partial<Node> = {},
@@ -17,7 +17,7 @@ export default async function generateNode(
     : await createUser({ withSession: false });
 
   if (!user) {
-    throw new Error('Could not get user');
+    throw new Error("Could not get user");
   }
 
   const node =
@@ -31,7 +31,7 @@ export default async function generateNode(
 
   return {
     node,
-    createdBy: user
+    createdBy: user,
   };
 }
 
@@ -41,7 +41,7 @@ export default async function generateNode(
 export function staticNode(options?: Partial<Node>): Node {
   return {
     id: uuid.v4(),
-    createdAt: new Date('2019-04-20'),
+    createdAt: new Date("2019-04-20"),
     createdBy: uuid.v4(),
     deletedAt: null,
     parentId: null,
@@ -50,6 +50,6 @@ export function staticNode(options?: Partial<Node>): Node {
     ordering: 0,
     title: null,
     type: null,
-    ...options
+    ...options,
   };
 }

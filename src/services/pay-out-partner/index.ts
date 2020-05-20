@@ -1,13 +1,13 @@
-import EmailService from '../email';
-import * as StripeService from '../stripe';
-import PartnerPayoutAccountsDAO from '../../dao/partner-payout-accounts';
-import { PartnerPayoutLog } from '../../components/partner-payouts/domain-object';
-import InvalidDataError = require('../../errors/invalid-data');
-import { ADMIN_EMAIL } from '../../config';
-import { findById as findUserById } from '../../components/users/dao';
-import { create as createPartnerPayoutLog } from '../../components/partner-payouts/dao';
-import { findById as findBidById } from '../../components/bids/dao';
-import { findDesignByBidId } from '../../components/product-designs/dao/dao';
+import EmailService from "../email";
+import * as StripeService from "../stripe";
+import PartnerPayoutAccountsDAO from "../../dao/partner-payout-accounts";
+import { PartnerPayoutLog } from "../../components/partner-payouts/domain-object";
+import InvalidDataError = require("../../errors/invalid-data");
+import { ADMIN_EMAIL } from "../../config";
+import { findById as findUserById } from "../../components/users/dao";
+import { create as createPartnerPayoutLog } from "../../components/partner-payouts/dao";
+import { findById as findBidById } from "../../components/bids/dao";
+import { findDesignByBidId } from "../../components/product-designs/dao/dao";
 
 /**
  * Pay out a partner for some portion of their work, and send them an email
@@ -20,7 +20,7 @@ export async function payOutPartner(
 ): Promise<void> {
   const { bidId, payoutAccountId, payoutAmountCents, message, isManual } = log;
   if (!bidId) {
-    throw new InvalidDataError('');
+    throw new InvalidDataError("");
   }
 
   const bid = await findBidById(bidId);
@@ -57,7 +57,7 @@ export async function payOutPartner(
       amountCents: payoutAmountCents,
       description,
       bidId,
-      invoiceId: null
+      invoiceId: null,
     });
   }
 
@@ -68,11 +68,11 @@ export async function payOutPartner(
     await EmailService.enqueueSend({
       to: vendorUser.email,
       cc: ADMIN_EMAIL,
-      templateName: 'partner_payout',
+      templateName: "partner_payout",
       params: {
         payoutAmountCents,
-        message
-      }
+        message,
+      },
     });
   }
 }

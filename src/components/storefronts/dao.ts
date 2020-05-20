@@ -1,16 +1,16 @@
-import * as uuid from 'node-uuid';
-import * as Knex from 'knex';
-import db from '../../services/db';
-import first from '../../services/first';
+import * as uuid from "node-uuid";
+import * as Knex from "knex";
+import db from "../../services/db";
+import first from "../../services/first";
 import Storefront, {
   dataAdapter,
   isStorefrontRow,
   StorefrontRow,
-  unsavedDataAdapter
-} from './domain-object';
-import { validate } from '../../services/validate-from-db';
+  unsavedDataAdapter,
+} from "./domain-object";
+import { validate } from "../../services/validate-from-db";
 
-const TABLE_NAME = 'storefronts';
+const TABLE_NAME = "storefronts";
 
 export async function create(options: {
   trx: Knex.Transaction;
@@ -20,11 +20,11 @@ export async function create(options: {
   const rowData = unsavedDataAdapter.forInsertion(data);
   const storefront = await trx(TABLE_NAME)
     .insert({ ...rowData, id: uuid.v4() })
-    .returning('*')
+    .returning("*")
     .then((storefronts: StorefrontRow[]) => first(storefronts));
 
   if (!storefront) {
-    throw new Error('There was a problem saving the Storefront');
+    throw new Error("There was a problem saving the Storefront");
   }
 
   return validate<StorefrontRow, Storefront>(
@@ -67,11 +67,11 @@ export async function findByUserId(options: {
 }): Promise<Storefront | null> {
   const { trx, userId } = options;
   const storefront = await trx(TABLE_NAME)
-    .select('storefronts.*')
+    .select("storefronts.*")
     .join(
-      'storefront_users',
-      'storefronts.id',
-      'storefront_users.storefront_id'
+      "storefront_users",
+      "storefronts.id",
+      "storefront_users.storefront_id"
     )
     .where({ user_id: userId, deleted_at: null })
     .then((storefronts: StorefrontRow[]) => first(storefronts));

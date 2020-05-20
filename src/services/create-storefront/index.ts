@@ -1,10 +1,10 @@
-import * as Knex from 'knex';
-import db from '../db';
-import { ProviderName } from '../../components/storefronts/tokens/domain-object';
-import Storefront from '../../components/storefronts/domain-object';
-import * as StorefrontsDAO from '../../components/storefronts/dao';
-import * as StorefrontTokensDAO from '../../components/storefronts/tokens/dao';
-import * as StorefrontUsersDAO from '../../components/storefronts/users/dao';
+import * as Knex from "knex";
+import db from "../db";
+import { ProviderName } from "../../components/storefronts/tokens/domain-object";
+import Storefront from "../../components/storefronts/domain-object";
+import * as StorefrontsDAO from "../../components/storefronts/dao";
+import * as StorefrontTokensDAO from "../../components/storefronts/tokens/dao";
+import * as StorefrontUsersDAO from "../../components/storefronts/users/dao";
 
 interface CreateStorefrontOptions {
   accessToken: string;
@@ -21,16 +21,16 @@ export function createStorefront(
     const storefront = await StorefrontsDAO.create({
       data: {
         createdBy: options.userId,
-        name: options.name
+        name: options.name,
       },
-      trx
+      trx,
     });
     await StorefrontUsersDAO.create({
       data: {
         storefrontId: storefront.id,
-        userId: options.userId
+        userId: options.userId,
       },
-      trx
+      trx,
     });
     await StorefrontTokensDAO.create({
       data: {
@@ -38,9 +38,9 @@ export function createStorefront(
         createdBy: options.userId,
         providerName: options.providerName,
         storefrontId: storefront.id,
-        token: options.accessToken
+        token: options.accessToken,
       },
-      trx
+      trx,
     });
 
     return storefront;

@@ -1,16 +1,16 @@
-import uuid from 'node-uuid';
-import Knex from 'knex';
+import uuid from "node-uuid";
+import Knex from "knex";
 
-import db from '../../services/db';
+import db from "../../services/db";
 import ComponentRelationship, {
   ComponentRelationshipRow,
   dataAdapter,
-  isComponentRelationshipRow
-} from './domain-object';
-import first from '../../services/first';
-import { validate, validateEvery } from '../../services/validate-from-db';
+  isComponentRelationshipRow,
+} from "./domain-object";
+import first from "../../services/first";
+import { validate, validateEvery } from "../../services/validate-from-db";
 
-const TABLE_NAME = 'component_relationships';
+const TABLE_NAME = "component_relationships";
 
 export async function create(
   data: MaybeUnsaved<ComponentRelationship>
@@ -18,16 +18,16 @@ export async function create(
   const rowData = dataAdapter.forInsertion({
     id: uuid.v4(),
     ...data,
-    deletedAt: null
+    deletedAt: null,
   });
   const created = await db(TABLE_NAME)
-    .insert(rowData, '*')
+    .insert(rowData, "*")
     .then((rows: ComponentRelationshipRow[]) =>
       first<ComponentRelationshipRow>(rows)
     );
 
   if (!created) {
-    throw new Error('Failed to create a component relationship!');
+    throw new Error("Failed to create a component relationship!");
   }
 
   return validate<ComponentRelationshipRow, ComponentRelationship>(
@@ -45,11 +45,11 @@ export async function update(
   const rowData = dataAdapter.forInsertion({
     ...data,
     deletedAt: null,
-    id
+    id,
   });
   const updated = await db(TABLE_NAME)
     .where({ id, deleted_at: null })
-    .update(rowData, '*')
+    .update(rowData, "*")
     .then((rows: ComponentRelationshipRow[]) =>
       first<ComponentRelationshipRow>(rows)
     );
@@ -85,15 +85,13 @@ export async function findAllByComponent(
   componentId: string
 ): Promise<ComponentRelationship[]> {
   const relationships = await db(TABLE_NAME)
-    .where(
-      (builder: Knex.QueryBuilder): void => {
-        builder
-          .where({ source_component_id: componentId })
-          .orWhere({ target_component_id: componentId });
-      }
-    )
+    .where((builder: Knex.QueryBuilder): void => {
+      builder
+        .where({ source_component_id: componentId })
+        .orWhere({ target_component_id: componentId });
+    })
     .andWhere({ deleted_at: null })
-    .orderBy('created_at', 'asc');
+    .orderBy("created_at", "asc");
 
   return validateEvery<ComponentRelationshipRow, ComponentRelationship>(
     TABLE_NAME,
@@ -107,7 +105,7 @@ export async function findById(
   id: string
 ): Promise<ComponentRelationship | null> {
   const componentRelationship = await db(TABLE_NAME)
-    .select('*')
+    .select("*")
     .where({ id, deleted_at: null })
     .limit(1)
     .then((rows: ComponentRelationshipRow[]) =>

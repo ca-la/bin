@@ -1,24 +1,24 @@
-import Knex from 'knex';
-import tape from 'tape';
-import uuid from 'node-uuid';
-import { Variant } from '@cala/ts-lib';
+import Knex from "knex";
+import tape from "tape";
+import uuid from "node-uuid";
+import { Variant } from "@cala/ts-lib";
 
-import createUser = require('../../test-helpers/create-user');
-import { create as createDesign } from '../../components/product-designs/dao';
-import db from '../../services/db';
-import { test } from '../../test-helpers/fresh';
+import createUser = require("../../test-helpers/create-user");
+import { create as createDesign } from "../../components/product-designs/dao";
+import db from "../../services/db";
+import { test } from "../../test-helpers/fresh";
 
-import * as VariantsDAO from '../../components/product-design-variants/dao';
+import * as VariantsDAO from "../../components/product-design-variants/dao";
 
-import { findAndDuplicateVariants } from './variants';
+import { findAndDuplicateVariants } from "./variants";
 
-test('findAndDuplicateVariants for a design with no variants', async (t: tape.Test) => {
+test("findAndDuplicateVariants for a design with no variants", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
 
   const design = await createDesign({
-    productType: 'TEESHIRT',
-    title: 'Plain White Tee',
-    userId: user.id
+    productType: "TEESHIRT",
+    title: "Plain White Tee",
+    userId: user.id,
   });
 
   const duplicatedVariants = await db.transaction(
@@ -27,43 +27,43 @@ test('findAndDuplicateVariants for a design with no variants', async (t: tape.Te
     }
   );
 
-  t.equal(duplicatedVariants.length, 0, 'no variants were duplicated.');
+  t.equal(duplicatedVariants.length, 0, "no variants were duplicated.");
 });
 
-test('findAndDuplicateVariants for a design with variants', async (t: tape.Test) => {
+test("findAndDuplicateVariants for a design with variants", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
 
   const design = await createDesign({
-    productType: 'TEESHIRT',
-    title: 'Plain White Tee',
-    userId: user.id
+    productType: "TEESHIRT",
+    title: "Plain White Tee",
+    userId: user.id,
   });
   const newDesign = await createDesign({
-    productType: 'TEESHIRT',
-    title: 'Black Striped Oversize Tee',
-    userId: user.id
+    productType: "TEESHIRT",
+    title: "Black Striped Oversize Tee",
+    userId: user.id,
   });
   const variantOne = await VariantsDAO.create({
-    colorName: 'Green',
+    colorName: "Green",
     colorNamePosition: 1,
     designId: design.id,
     id: uuid.v4(),
     position: 0,
-    sizeName: 'M',
+    sizeName: "M",
     unitsToProduce: 123,
-    universalProductCode: '000000000000',
-    isSample: false
+    universalProductCode: "000000000000",
+    isSample: false,
   });
   const variantTwo = await VariantsDAO.create({
-    colorName: 'Red',
+    colorName: "Red",
     colorNamePosition: 2,
     designId: design.id,
     id: uuid.v4(),
     position: 1,
-    sizeName: 'L',
+    sizeName: "L",
     unitsToProduce: 456,
     universalProductCode: null,
-    isSample: false
+    isSample: false,
   });
 
   const duplicatedVariants = await db.transaction(
@@ -78,7 +78,7 @@ test('findAndDuplicateVariants for a design with variants', async (t: tape.Test)
     }
   );
 
-  t.equal(sortedDupes.length, 2, 'Should return two duplicate variants');
+  t.equal(sortedDupes.length, 2, "Should return two duplicate variants");
   const dupeOne = sortedDupes[0];
   t.deepEqual(
     dupeOne,
@@ -87,9 +87,9 @@ test('findAndDuplicateVariants for a design with variants', async (t: tape.Test)
       universalProductCode: null,
       createdAt: dupeOne.createdAt,
       designId: newDesign.id,
-      id: dupeOne.id
+      id: dupeOne.id,
     },
-    'Returns a duplicate of the first variant pointing to the new design'
+    "Returns a duplicate of the first variant pointing to the new design"
   );
   const dupeTwo = sortedDupes[1];
   t.deepEqual(
@@ -98,8 +98,8 @@ test('findAndDuplicateVariants for a design with variants', async (t: tape.Test)
       ...variantTwo,
       createdAt: dupeTwo.createdAt,
       designId: newDesign.id,
-      id: dupeTwo.id
+      id: dupeTwo.id,
     },
-    'Returns a duplicate of the second variant pointing to the new design'
+    "Returns a duplicate of the second variant pointing to the new design"
   );
 });

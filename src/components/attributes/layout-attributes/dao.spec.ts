@@ -1,14 +1,14 @@
-import tape from 'tape';
-import uuid from 'node-uuid';
-import Knex from 'knex';
+import tape from "tape";
+import uuid from "node-uuid";
+import Knex from "knex";
 
-import { test } from '../../../test-helpers/fresh';
-import createUser = require('../../../test-helpers/create-user');
-import db from '../../../services/db';
-import generateNode from '../../../test-helpers/factories/node';
-import * as LayoutsDAO from './dao';
-import Node from '../../../components/nodes/domain-objects';
-import { PhidiasLayout } from '@cala/ts-lib/dist/phidias';
+import { test } from "../../../test-helpers/fresh";
+import createUser = require("../../../test-helpers/create-user");
+import db from "../../../services/db";
+import generateNode from "../../../test-helpers/factories/node";
+import * as LayoutsDAO from "./dao";
+import Node from "../../../components/nodes/domain-objects";
+import { PhidiasLayout } from "@cala/ts-lib/dist/phidias";
 
 async function setup(
   trx: Knex.Transaction
@@ -21,40 +21,40 @@ async function setup(
   const { node: node2 } = await generateNode({ createdBy: user.id }, trx);
   const { node: node3 } = await generateNode({ createdBy: user.id }, trx);
   const layout1Data = {
-    createdAt: new Date('2019-04-20'),
+    createdAt: new Date("2019-04-20"),
     createdBy: user.id,
     deletedAt: null,
     id: uuid.v4(),
     height: 1000,
     nodeId: node1.id,
-    width: 1000
+    width: 1000,
   };
   const layout2Data = {
-    createdAt: new Date('2019-04-20'),
+    createdAt: new Date("2019-04-20"),
     createdBy: user.id,
     deletedAt: null,
     id: uuid.v4(),
     height: 1000,
     nodeId: node3.id,
-    width: 1000
+    width: 1000,
   };
   const layout3Data = {
-    createdAt: new Date('2019-04-20'),
+    createdAt: new Date("2019-04-20"),
     createdBy: user.id,
     deletedAt: null,
     id: uuid.v4(),
     height: 1000,
     nodeId: node3.id,
-    width: 1000
+    width: 1000,
   };
 
   return {
     nodes: [node1, node2, node3],
-    layouts: [layout1Data, layout2Data, layout3Data]
+    layouts: [layout1Data, layout2Data, layout3Data],
   };
 }
 
-test('LayoutAttributesDAO supports creation and retrieval', async (t: tape.Test) => {
+test("LayoutAttributesDAO supports creation and retrieval", async (t: tape.Test) => {
   await db.transaction(async (trx: Knex.Transaction) => {
     const { nodes, layouts } = await setup(trx);
 
@@ -67,16 +67,16 @@ test('LayoutAttributesDAO supports creation and retrieval', async (t: tape.Test)
       trx
     );
 
-    t.deepEqual(created, layouts[0], 'Successfully saves with the data');
+    t.deepEqual(created, layouts[0], "Successfully saves with the data");
     t.deepEqual(
       foundAll,
       layouts,
-      'Returns all layouts with the asset attached.'
+      "Returns all layouts with the asset attached."
     );
   });
 });
 
-test('LayoutAttributesDAO supports upsert', async (t: tape.Test) => {
+test("LayoutAttributesDAO supports upsert", async (t: tape.Test) => {
   await db.transaction(async (trx: Knex.Transaction) => {
     const { layouts } = await setup(trx);
 
@@ -87,17 +87,17 @@ test('LayoutAttributesDAO supports upsert', async (t: tape.Test) => {
     await LayoutsDAO.updateOrCreate({ ...layouts[0], width: 100 }, trx);
 
     const foundWithUpdates = await LayoutsDAO.findById(layouts[0].id, trx);
-    t.equal(layouts[0].id, foundWithUpdates!.id, 'Keeps the same ID');
-    t.equal(foundWithUpdates!.width, 100, 'Updates the new value');
+    t.equal(layouts[0].id, foundWithUpdates!.id, "Keeps the same ID");
+    t.equal(foundWithUpdates!.width, 100, "Updates the new value");
     t.equal(
       layouts[0].height,
       foundWithUpdates!.height,
-      'Keeps the other values'
+      "Keeps the other values"
     );
   });
 });
 
-test('LayoutAttributesDAO supports update', async (t: tape.Test) => {
+test("LayoutAttributesDAO supports update", async (t: tape.Test) => {
   await db.transaction(async (trx: Knex.Transaction) => {
     const { layouts } = await setup(trx);
 
@@ -110,6 +110,6 @@ test('LayoutAttributesDAO supports update', async (t: tape.Test) => {
       layouts[0].id,
       trx
     );
-    t.equal(foundWithFurtherUpdates!.height, 100, 'Updates the new value');
+    t.equal(foundWithFurtherUpdates!.height, 100, "Updates the new value");
   });
 });

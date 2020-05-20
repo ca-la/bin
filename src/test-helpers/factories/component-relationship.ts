@@ -1,14 +1,14 @@
-import uuid from 'node-uuid';
-import { create } from '../../components/component-relationships/dao';
-import { findById as findUserById } from '../../components/users/dao';
-import { findById as findComponentById } from '../../components/components/dao';
-import { findById as findProcessById } from '../../components/processes/dao';
-import ComponentRelationship from '../../components/component-relationships/domain-object';
-import createUser = require('../create-user');
-import generateProcess from './process';
-import generateComponent from './component';
-import Process from '../../components/processes/domain-object';
-import Component from '../../components/components/domain-object';
+import uuid from "node-uuid";
+import { create } from "../../components/component-relationships/dao";
+import { findById as findUserById } from "../../components/users/dao";
+import { findById as findComponentById } from "../../components/components/dao";
+import { findById as findProcessById } from "../../components/processes/dao";
+import ComponentRelationship from "../../components/component-relationships/domain-object";
+import createUser = require("../create-user");
+import generateProcess from "./process";
+import generateComponent from "./component";
+import Process from "../../components/processes/domain-object";
+import Component from "../../components/components/domain-object";
 
 interface ComponentRelationshipWithResources {
   componentRelationship: ComponentRelationship;
@@ -51,7 +51,7 @@ export default async function generateComponentRelationship(
     relativeX: options.relativeX || 0,
     relativeY: options.relativeY || 0,
     sourceComponentId: sourceComponent.id,
-    targetComponentId: targetComponent.id
+    targetComponentId: targetComponent.id,
   });
 
   return {
@@ -59,6 +59,6 @@ export default async function generateComponentRelationship(
     createdBy: user,
     process,
     sourceComponent,
-    targetComponent
+    targetComponent,
   };
 }

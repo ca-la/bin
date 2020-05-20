@@ -1,5 +1,5 @@
-import DataAdapter from '../../../services/data-adapter';
-import { hasProperties } from '../../../services/require-properties';
+import DataAdapter from "../../../services/data-adapter";
+import { hasProperties } from "../../../services/require-properties";
 
 export default interface StorefrontUser {
   storefrontId: string;
@@ -16,5 +16,5 @@ export const dataAdapter = new DataAdapter<StorefrontUserRow, StorefrontUser>();
 export function isStorefrontUserRow(
   candidate: any
 ): candidate is StorefrontUserRow {
-  return hasProperties(candidate, 'storefront_id', 'user_id');
+  return hasProperties(candidate, "storefront_id", "user_id");
 }

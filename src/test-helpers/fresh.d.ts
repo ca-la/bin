@@ -1,5 +1,5 @@
-import tape from 'tape';
-import sinon from 'sinon';
+import tape from "tape";
+import sinon from "sinon";
 
 type Function0 = () => void;
 

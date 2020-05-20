@@ -1,6 +1,6 @@
-import { gql } from 'apollo-server-core';
-import usersSchema from './components/users/schema';
-import sessionsSchema from './components/sessions/schema';
+import { gql } from "apollo-server-core";
+import usersSchema from "./components/users/schema";
+import sessionsSchema from "./components/sessions/schema";
 
 const baseSchema = gql`
   scalar GraphQLDateTime

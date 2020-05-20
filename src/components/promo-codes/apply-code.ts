@@ -1,9 +1,9 @@
-import Knex from 'knex';
+import Knex from "knex";
 
-import db from '../../services/db';
-import InvalidDataError = require('../../errors/invalid-data');
-import { addCredit } from '../credits/dao';
-import { findByCode, update } from './dao';
+import db from "../../services/db";
+import InvalidDataError = require("../../errors/invalid-data");
+import { addCredit } from "../credits/dao";
+import { findByCode, update } from "./dao";
 
 type CreditedAmountCents = number;
 
@@ -25,7 +25,7 @@ export default async function applyCode(
           createdBy: userId,
           description: `Promo code applied: ${code}`,
           expiresAt: promoCode.creditExpiresAt,
-          givenTo: userId
+          givenTo: userId,
         },
         trx
       );
@@ -34,7 +34,7 @@ export default async function applyCode(
         await update(
           promoCode.id,
           {
-            codeExpiresAt: new Date()
+            codeExpiresAt: new Date(),
           },
           trx
         );

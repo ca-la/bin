@@ -1,7 +1,7 @@
-'use strict';
+"use strict";
 
-const fetch = require('node-fetch');
-const Router = require('koa-router');
+const fetch = require("node-fetch");
+const Router = require("koa-router");
 
 const router = new Router();
 
@@ -32,6 +32,6 @@ function* getFeed() {
   this.body = json;
 }
 
-router.get('/:handle', getFeed);
+router.get("/:handle", getFeed);
 
 module.exports = router.routes();

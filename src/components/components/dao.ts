@@ -1,28 +1,28 @@
-import Knex from 'knex';
-import uuid from 'node-uuid';
-import { pick } from 'lodash';
+import Knex from "knex";
+import uuid from "node-uuid";
+import { pick } from "lodash";
 
-import db from '../../services/db';
+import db from "../../services/db";
 import Component, {
   ComponentRow,
   dataAdapter,
-  isComponentRow
-} from './domain-object';
-import first from '../../services/first';
-import { validate, validateEvery } from '../../services/validate-from-db';
+  isComponentRow,
+} from "./domain-object";
+import first from "../../services/first";
+import { validate, validateEvery } from "../../services/validate-from-db";
 
-const TABLE_NAME = 'components';
+const TABLE_NAME = "components";
 
 const INSERTABLE_PROPERTIES = [
-  'id',
-  'parent_id',
-  'created_at',
-  'created_by',
-  'deleted_at',
-  'type',
-  'material_id',
-  'artwork_id',
-  'sketch_id'
+  "id",
+  "parent_id",
+  "created_at",
+  "created_by",
+  "deleted_at",
+  "type",
+  "material_id",
+  "artwork_id",
+  "sketch_id",
 ];
 
 export async function create(
@@ -33,13 +33,13 @@ export async function create(
     dataAdapter.forInsertion({
       id: uuid.v4(),
       ...data,
-      deletedAt: null
+      deletedAt: null,
     }),
     INSERTABLE_PROPERTIES
   );
 
   const created = await db(TABLE_NAME)
-    .insert(rowData, '*')
+    .insert(rowData, "*")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
@@ -48,7 +48,7 @@ export async function create(
     .then((rows: ComponentRow[]) => first<ComponentRow>(rows));
 
   if (!created) {
-    throw new Error('Failed to create rows');
+    throw new Error("Failed to create rows");
   }
 
   return validate<ComponentRow, Component>(
@@ -67,17 +67,17 @@ export async function update(
     dataAdapter.forInsertion({
       ...data,
       deletedAt: null,
-      id
+      id,
     }),
     INSERTABLE_PROPERTIES
   );
   const updated = await db(TABLE_NAME)
     .where({ id, deleted_at: null })
-    .update(rowData, '*')
+    .update(rowData, "*")
     .then((rows: ComponentRow[]) => first<ComponentRow>(rows));
 
   if (!updated) {
-    throw new Error('Failed to update rows');
+    throw new Error("Failed to update rows");
   }
 
   return validate<ComponentRow, Component>(
@@ -91,11 +91,11 @@ export async function update(
 export async function del(id: string): Promise<Component> {
   const deleted = await db(TABLE_NAME)
     .where({ id, deleted_at: null })
-    .update({ deleted_at: new Date() }, '*')
+    .update({ deleted_at: new Date() }, "*")
     .then((rows: ComponentRow[]) => first<ComponentRow>(rows));
 
   if (!deleted) {
-    throw new Error('Failed to delete rows');
+    throw new Error("Failed to delete rows");
   }
 
   return validate<ComponentRow, Component>(
@@ -108,7 +108,7 @@ export async function del(id: string): Promise<Component> {
 
 export async function findById(id: string): Promise<Component | null> {
   const component = await db(TABLE_NAME)
-    .select('*')
+    .select("*")
     .where({ id, deleted_at: null })
     .limit(1)
     .then((rows: ComponentRow[]) => first<ComponentRow>(rows));
@@ -127,14 +127,14 @@ export async function findById(id: string): Promise<Component | null> {
 
 export async function findAllByCanvasId(id: string): Promise<Component[]> {
   const components: ComponentRow[] = await db(TABLE_NAME)
-    .select('components.*')
+    .select("components.*")
     .from(TABLE_NAME)
     .innerJoin(
-      'product_design_canvases',
-      'components.id',
-      'product_design_canvases.component_id'
+      "product_design_canvases",
+      "components.id",
+      "product_design_canvases.component_id"
     )
-    .where({ 'product_design_canvases.id': id, 'components.deleted_at': null });
+    .where({ "product_design_canvases.id": id, "components.deleted_at": null });
 
   return validateEvery<ComponentRow, Component>(
     TABLE_NAME,

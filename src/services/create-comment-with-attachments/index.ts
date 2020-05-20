@@ -1,14 +1,14 @@
-import Knex = require('knex');
-import { BaseComment } from '@cala/ts-lib';
-import * as CommentsDAO from '../../components/comments/dao';
-import * as AssetsDAO from '../../components/assets/dao';
-import * as CommentAttachmentsDAO from '../../components/comment-attachments/dao';
-import CommentAttachment from '../../components/comment-attachments/domain-object';
-import Asset from '../../components/assets/domain-object';
+import Knex = require("knex");
+import { BaseComment } from "@cala/ts-lib";
+import * as CommentsDAO from "../../components/comments/dao";
+import * as AssetsDAO from "../../components/assets/dao";
+import * as CommentAttachmentsDAO from "../../components/comment-attachments/dao";
+import CommentAttachment from "../../components/comment-attachments/domain-object";
+import Asset from "../../components/assets/domain-object";
 import {
   addAttachmentLinks,
-  CommentWithAttachmentLinks
-} from '../add-attachments-links';
+  CommentWithAttachmentLinks,
+} from "../add-attachments-links";
 
 export async function createCommentWithAttachments(
   trx: Knex.Transaction,
@@ -31,7 +31,7 @@ export async function createCommentWithAttachments(
         createdAt: new Date(),
         uploadCompletedAt: attachment.uploadCompletedAt
           ? new Date(attachment.uploadCompletedAt)
-          : null
+          : null,
       };
     })
   );
@@ -42,7 +42,7 @@ export async function createCommentWithAttachments(
       (attachment: Asset): CommentAttachment => {
         return {
           assetId: attachment.id,
-          commentId: comment.id
+          commentId: comment.id,
         };
       }
     )

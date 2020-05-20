@@ -1,4 +1,4 @@
-import tape from 'tape';
+import tape from "tape";
 
 export type Test = tape.Test;
 

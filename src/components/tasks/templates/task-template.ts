@@ -1,4 +1,4 @@
-import { TaskType } from './task-types';
+import { TaskType } from "./task-types";
 
 export interface TaskTemplate {
   taskType: TaskType;

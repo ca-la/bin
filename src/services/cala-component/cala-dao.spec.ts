@@ -1,14 +1,14 @@
-import Knex from 'knex';
-import uuid from 'node-uuid';
+import Knex from "knex";
+import uuid from "node-uuid";
 
-import { buildDao } from './cala-dao';
-import { buildAdapter } from './cala-adapter';
-import { sandbox, test, Test } from '../../test-helpers/fresh';
-import { tableName } from '../../dao/addresses';
-import generateAddress from '../../test-helpers/factories/address';
-import * as PubSub from '../../services/pubsub';
-import db from '../../services/db';
-import { omit } from 'lodash';
+import { buildDao } from "./cala-dao";
+import { buildAdapter } from "./cala-adapter";
+import { sandbox, test, Test } from "../../test-helpers/fresh";
+import { tableName } from "../../dao/addresses";
+import generateAddress from "../../test-helpers/factories/address";
+import * as PubSub from "../../services/pubsub";
+import db from "../../services/db";
+import { omit } from "lodash";
 
 interface Address {
   id: string;
@@ -37,44 +37,44 @@ interface AddressRow {
   country: string;
 }
 
-test('standard cala-dao', async (t: Test) => {
+test("standard cala-dao", async (t: Test) => {
   sandbox().useFakeTimers(new Date());
-  const domain = 'address';
+  const domain = "address";
   const adapter = buildAdapter<Address, AddressRow>({
     domain,
     requiredProperties: [
-      'userId',
-      'addressLine1',
-      'city',
-      'region',
-      'postCode',
-      'country'
-    ]
+      "userId",
+      "addressLine1",
+      "city",
+      "region",
+      "postCode",
+      "country",
+    ],
   });
   const dao = buildDao<Address, AddressRow>(domain, tableName, adapter, {
-    orderColumn: 'created_at'
+    orderColumn: "created_at",
   });
 
   const a1: Address = await generateAddress({
-    country: 'USA',
-    city: 'NY',
-    companyName: 'Cala',
-    postCode: '1'
+    country: "USA",
+    city: "NY",
+    companyName: "Cala",
+    postCode: "1",
   });
   const a2: Address = await generateAddress({
-    country: 'USA',
-    city: 'SF',
-    companyName: 'Cala',
-    postCode: '2'
+    country: "USA",
+    city: "SF",
+    companyName: "Cala",
+    postCode: "2",
   });
   const a3: Address = await generateAddress({
-    country: 'USA',
-    city: 'SF',
-    companyName: 'Apple',
-    postCode: '3'
+    country: "USA",
+    city: "SF",
+    companyName: "Apple",
+    postCode: "3",
   });
 
-  const emitStub = sandbox().stub(PubSub, 'emit');
+  const emitStub = sandbox().stub(PubSub, "emit");
 
   const describeFind = async (): Promise<void> => {
     interface TestCase {
@@ -85,44 +85,44 @@ test('standard cala-dao', async (t: Test) => {
     }
     const testCases: TestCase[] = [
       {
-        title: 'Empty filter',
+        title: "Empty filter",
         filter: {},
-        result: [a1, a2, a3]
+        result: [a1, a2, a3],
       },
       {
-        title: 'One',
+        title: "One",
         filter: { companyName: a3.companyName },
-        result: [a3]
+        result: [a3],
       },
       {
-        title: 'Some by companyName',
+        title: "Some by companyName",
         filter: { companyName: a1.companyName },
-        result: [a1, a2]
+        result: [a1, a2],
       },
       {
-        title: 'Some by city',
+        title: "Some by city",
         filter: { city: a2.city },
-        result: [a2, a3]
+        result: [a2, a3],
       },
       {
-        title: 'Empty result',
-        filter: { city: 'LA' },
-        result: []
+        title: "Empty result",
+        filter: { city: "LA" },
+        result: [],
       },
       {
-        title: 'Apply modifier',
+        title: "Apply modifier",
         filter: { country: a1.country },
         modifier: (query: Knex.QueryBuilder): Knex.QueryBuilder =>
           query.offset(1).limit(1),
-        result: [a2]
+        result: [a2],
       },
       {
-        title: 'Apply modifier (sort)',
+        title: "Apply modifier (sort)",
         filter: { country: a1.country },
         modifier: (query: Knex.QueryBuilder): Knex.QueryBuilder =>
-          query.clearOrder().orderBy('post_code', 'DESC'),
-        result: [a3, a2, a1]
-      }
+          query.clearOrder().orderBy("post_code", "DESC"),
+        result: [a3, a2, a1],
+      },
     ];
     for (const testCase of testCases) {
       const trx = await db.transaction();
@@ -153,37 +153,37 @@ test('standard cala-dao', async (t: Test) => {
     }
     const testCases: TestCase[] = [
       {
-        title: 'Empty filter',
+        title: "Empty filter",
         filter: {},
-        result: a1
+        result: a1,
       },
       {
-        title: 'Single match',
+        title: "Single match",
         filter: { companyName: a3.companyName },
-        result: a3
+        result: a3,
       },
       {
-        title: 'Multiple match',
+        title: "Multiple match",
         filter: { companyName: a1.companyName },
-        result: a1
+        result: a1,
       },
       {
-        title: 'Single match by complex filter',
+        title: "Single match by complex filter",
         filter: { companyName: a1.companyName, city: a2.city },
-        result: a2
+        result: a2,
       },
       {
-        title: 'Zero match',
-        filter: { city: 'LA' },
-        result: null
+        title: "Zero match",
+        filter: { city: "LA" },
+        result: null,
       },
       {
-        title: 'Apply modifier (sort)',
+        title: "Apply modifier (sort)",
         filter: { country: a1.country },
         modifier: (query: Knex.QueryBuilder): Knex.QueryBuilder =>
-          query.clearOrder().orderBy('post_code', 'desc'),
-        result: a3
-      }
+          query.clearOrder().orderBy("post_code", "desc"),
+        result: a3,
+      },
     ];
     for (const testCase of testCases) {
       const trx = await db.transaction();
@@ -213,15 +213,15 @@ test('standard cala-dao', async (t: Test) => {
     }
     const testCases: TestCase[] = [
       {
-        title: 'Existing id',
+        title: "Existing id",
         id: a3.id,
-        result: a3
+        result: a3,
       },
       {
-        title: 'Non-existing id',
+        title: "Non-existing id",
         id: uuid.v4(),
-        result: null
-      }
+        result: null,
+      },
     ];
     for (const testCase of testCases) {
       const trx = await db.transaction();
@@ -245,27 +245,27 @@ test('standard cala-dao', async (t: Test) => {
     const trx = await db.transaction();
     const a4 = {
       ...a1,
-      id: uuid.v4()
+      id: uuid.v4(),
     };
     try {
       const result = await dao.create(trx, a4);
 
       t.deepEqual(
-        omit(result, 'createdAt'),
-        omit(a4, 'createdAt'),
+        omit(result, "createdAt"),
+        omit(a4, "createdAt"),
         `create / returned result`
       );
 
       const found = await dao.findById(trx, a4.id);
       t.deepEqual(
-        omit(found, 'createdAt'),
-        omit(a4, 'createdAt'),
+        omit(found, "createdAt"),
+        omit(a4, "createdAt"),
         `create / found result`
       );
 
       t.deepEqual(
         emitStub.args,
-        [['dao.created', 'address', { created: result, trx }]],
+        [["dao.created", "address", { created: result, trx }]],
         `create / no emit() called`
       );
     } finally {
@@ -280,36 +280,36 @@ test('standard cala-dao', async (t: Test) => {
     const a4 = {
       ...a1,
       id: uuid.v4(),
-      country: 'Zimbabwe'
+      country: "Zimbabwe",
     };
     const a5 = {
       ...a2,
       id: uuid.v4(),
-      country: 'Zimbabwe'
+      country: "Zimbabwe",
     };
     try {
       const result = await dao.createAll(trx, [a4, a5]).catch(trx.rollback);
 
       t.deepEqual(
-        result.map((item: Address) => omit(item, 'createdAt')),
-        [a4, a5].map((item: Address) => omit(item, 'createdAt')),
+        result.map((item: Address) => omit(item, "createdAt")),
+        [a4, a5].map((item: Address) => omit(item, "createdAt")),
         `createAll / returned result`
       );
 
       const found = await dao
-        .find(trx, { country: 'Zimbabwe' })
+        .find(trx, { country: "Zimbabwe" })
         .catch(trx.rollback);
       t.deepEqual(
-        found.map((item: Address) => omit(item, 'createdAt')),
-        [a4, a5].map((item: Address) => omit(item, 'createdAt')),
+        found.map((item: Address) => omit(item, "createdAt")),
+        [a4, a5].map((item: Address) => omit(item, "createdAt")),
         `createAll / returned result`
       );
 
       t.deepEqual(
         emitStub.args,
         [
-          ['dao.created', 'address', { created: result[0], trx }],
-          ['dao.created', 'address', { created: result[1], trx }]
+          ["dao.created", "address", { created: result[0], trx }],
+          ["dao.created", "address", { created: result[1], trx }],
         ],
         `createAll / no emit() called`
       );
@@ -333,44 +333,44 @@ test('standard cala-dao', async (t: Test) => {
     const wrongId = uuid.v4();
     const testCases: TestCase[] = [
       {
-        title: 'Simple',
+        title: "Simple",
         id: a1.id,
-        patch: { city: 'LA' },
+        patch: { city: "LA" },
         before: a1,
-        result: { ...a1, city: 'LA' },
+        result: { ...a1, city: "LA" },
         emitCalls: [
           [
-            'dao.updating',
-            'address',
+            "dao.updating",
+            "address",
             {
               before: a1,
-              patch: { city: 'LA' }
-            }
+              patch: { city: "LA" },
+            },
           ],
           [
-            'dao.updated',
-            'address',
+            "dao.updated",
+            "address",
             {
               before: a1,
-              updated: { ...a1, city: 'LA' }
-            }
-          ]
-        ]
+              updated: { ...a1, city: "LA" },
+            },
+          ],
+        ],
       },
       {
-        title: 'Not found',
+        title: "Not found",
         id: wrongId,
-        patch: { city: 'LA' },
+        patch: { city: "LA" },
         errorMessage: `Could not find ${tableName} #${wrongId}`,
-        emitCalls: []
+        emitCalls: [],
       },
       {
-        title: 'Patch with id',
+        title: "Patch with id",
         id: a1.id,
-        patch: { city: 'LA', id: wrongId },
+        patch: { city: "LA", id: wrongId },
         errorMessage: `Patch should not contain id!`,
-        emitCalls: []
-      }
+        emitCalls: [],
+      },
     ];
 
     for (const testCase of testCases) {

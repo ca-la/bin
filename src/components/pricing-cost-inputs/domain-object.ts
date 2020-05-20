@@ -2,10 +2,10 @@ import {
   Complexity,
   MaterialCategory,
   Process,
-  ProductType
-} from '../../domain-objects/pricing';
-import { hasProperties } from '../../services/require-properties';
-import DataAdapter from '../../services/data-adapter';
+  ProductType,
+} from "../../domain-objects/pricing";
+import { hasProperties } from "../../services/require-properties";
+import DataAdapter from "../../services/data-adapter";
 
 export interface BasePricingCostInput {
   id: string;
@@ -82,12 +82,12 @@ export function isUnsavedPricingCostInput(
 ): candidate is Unsaved<PricingCostInputWithoutVersions> {
   return hasProperties(
     candidate,
-    'productType',
-    'productComplexity',
-    'materialCategory',
-    'materialBudgetCents',
-    'processes',
-    'designId'
+    "productType",
+    "productComplexity",
+    "materialCategory",
+    "materialBudgetCents",
+    "processes",
+    "designId"
   );
 }
 
@@ -96,23 +96,23 @@ export function isPricingCostInput(
 ): candidate is PricingCostInput {
   return hasProperties(
     candidate,
-    'id',
-    'createdAt',
-    'deletedAt',
-    'expiresAt',
-    'productType',
-    'productComplexity',
-    'materialCategory',
-    'materialBudgetCents',
-    'processes',
-    'designId',
-    'processesVersion',
-    'productTypeVersion',
-    'constantsVersion',
-    'marginVersion',
-    'productMaterialsVersion',
-    'careLabelsVersion',
-    'processTimelinesVersion'
+    "id",
+    "createdAt",
+    "deletedAt",
+    "expiresAt",
+    "productType",
+    "productComplexity",
+    "materialCategory",
+    "materialBudgetCents",
+    "processes",
+    "designId",
+    "processesVersion",
+    "productTypeVersion",
+    "constantsVersion",
+    "marginVersion",
+    "productMaterialsVersion",
+    "careLabelsVersion",
+    "processTimelinesVersion"
   );
 }
 
@@ -121,22 +121,22 @@ export function isPricingCostInputRow(
 ): candidate is PricingCostInputRow {
   return hasProperties(
     candidate,
-    'id',
-    'created_at',
-    'deleted_at',
-    'expires_at',
-    'product_type',
-    'product_complexity',
-    'material_category',
-    'material_budget_cents',
-    'processes',
-    'design_id',
-    'processes_version',
-    'constants_version',
-    'margin_version',
-    'product_materials_version',
-    'care_labels_version',
-    'process_timelines_version',
-    'product_type_version'
+    "id",
+    "created_at",
+    "deleted_at",
+    "expires_at",
+    "product_type",
+    "product_complexity",
+    "material_category",
+    "material_budget_cents",
+    "processes",
+    "design_id",
+    "processes_version",
+    "constants_version",
+    "margin_version",
+    "product_materials_version",
+    "care_labels_version",
+    "process_timelines_version",
+    "product_type_version"
   );
 }

@@ -1,9 +1,9 @@
-import Knex from 'knex';
+import Knex from "knex";
 
-import PaymentMethodsDAO from './dao';
-import PaymentMethod = require('./domain-object');
-import attachSource from '../../services/stripe/attach-source';
-import { findOrCreateCustomerId } from '../../services/stripe';
+import PaymentMethodsDAO from "./dao";
+import PaymentMethod = require("./domain-object");
+import attachSource from "../../services/stripe/attach-source";
+import { findOrCreateCustomerId } from "../../services/stripe";
 interface Options {
   token: string;
   userId: string;
@@ -18,7 +18,7 @@ export default async function createPaymentMethod(
   const stripeCustomerId = await findOrCreateCustomerId(userId, trx);
   const source = await attachSource({
     cardToken: token,
-    customerId: stripeCustomerId
+    customerId: stripeCustomerId,
   });
 
   const method = await PaymentMethodsDAO.create(
@@ -26,13 +26,13 @@ export default async function createPaymentMethod(
       lastFourDigits: source.last4,
       stripeCustomerId,
       stripeSourceId: source.id,
-      userId
+      userId,
     },
     trx
   );
 
   if (!method) {
-    throw new Error('Unable to create payment method');
+    throw new Error("Unable to create payment method");
   }
 
   return method;

@@ -1,20 +1,20 @@
-import Knex from 'knex';
+import Knex from "knex";
 
-import { sandbox, test, Test } from '../../test-helpers/fresh';
+import { sandbox, test, Test } from "../../test-helpers/fresh";
 
-import db from '../../services/db';
+import db from "../../services/db";
 import {
   notifyExpired,
   notifyOneWeekFromExpiring,
-  notifyTwoDaysFromExpiring
-} from './notify-expired';
-import * as StatusService from '../../components/collections/services/determine-submission-status';
-import * as CollectionsDAO from '../../components/collections/dao';
-import * as NotificationService from '../create-notifications/costing-expirations';
+  notifyTwoDaysFromExpiring,
+} from "./notify-expired";
+import * as StatusService from "../../components/collections/services/determine-submission-status";
+import * as CollectionsDAO from "../../components/collections/dao";
+import * as NotificationService from "../create-notifications/costing-expirations";
 
-test('notifyExpired works on the base case', async (t: Test) => {
+test("notifyExpired works on the base case", async (t: Test) => {
   const findAllStub = sandbox()
-    .stub(CollectionsDAO, 'findAllUnnotifiedCollectionsWithExpiringCostInputs')
+    .stub(CollectionsDAO, "findAllUnnotifiedCollectionsWithExpiringCostInputs")
     .resolves([]);
 
   await db.transaction(
@@ -26,31 +26,31 @@ test('notifyExpired works on the base case', async (t: Test) => {
   );
 });
 
-test('notifyExpired works on the +1 case', async (t: Test) => {
+test("notifyExpired works on the +1 case", async (t: Test) => {
   const findAllStub = sandbox()
-    .stub(CollectionsDAO, 'findAllUnnotifiedCollectionsWithExpiringCostInputs')
+    .stub(CollectionsDAO, "findAllUnnotifiedCollectionsWithExpiringCostInputs")
     .resolves([
-      { createdBy: 'user-one', id: 'collection-one' },
-      { createdBy: 'user-two', id: 'collection-two' }
+      { createdBy: "user-one", id: "collection-one" },
+      { createdBy: "user-two", id: "collection-two" },
     ]);
   const determineStub = sandbox()
-    .stub(StatusService, 'determineSubmissionStatus')
+    .stub(StatusService, "determineSubmissionStatus")
     .resolves({
-      'collection-one': {
+      "collection-one": {
         isSubmitted: false,
         isCosted: false,
         isQuoted: false,
-        isPaired: false
+        isPaired: false,
       },
-      'collection-two': {
+      "collection-two": {
         isSubmitted: true,
         isCosted: true,
         isQuoted: true,
-        isPaired: false
-      }
+        isPaired: false,
+      },
     });
   const notifyStub = sandbox()
-    .stub(NotificationService, 'immediatelySendCostingExpiredNotification')
+    .stub(NotificationService, "immediatelySendCostingExpiredNotification")
     .resolves();
 
   await db.transaction(
@@ -61,21 +61,21 @@ test('notifyExpired works on the +1 case', async (t: Test) => {
       t.equal(findAllStub.callCount, 1);
       t.equal(determineStub.callCount, 1);
       t.deepEqual(determineStub.args[0][0], [
-        'collection-one',
-        'collection-two'
+        "collection-one",
+        "collection-two",
       ]);
       t.equal(notifyStub.callCount, 1);
       t.deepEqual(notifyStub.args[0][0], {
-        collectionId: 'collection-one',
-        recipientUserId: 'user-one'
+        collectionId: "collection-one",
+        recipientUserId: "user-one",
       });
     }
   );
 });
 
-test('notifyOneWeekFromExpiring works on the base case', async (t: Test) => {
+test("notifyOneWeekFromExpiring works on the base case", async (t: Test) => {
   const findAllStub = sandbox()
-    .stub(CollectionsDAO, 'findAllUnnotifiedCollectionsWithExpiringCostInputs')
+    .stub(CollectionsDAO, "findAllUnnotifiedCollectionsWithExpiringCostInputs")
     .resolves([]);
 
   await db.transaction(
@@ -87,33 +87,33 @@ test('notifyOneWeekFromExpiring works on the base case', async (t: Test) => {
   );
 });
 
-test('notifyOneWeekFromExpiring works on the +1 case', async (t: Test) => {
+test("notifyOneWeekFromExpiring works on the +1 case", async (t: Test) => {
   const findAllStub = sandbox()
-    .stub(CollectionsDAO, 'findAllUnnotifiedCollectionsWithExpiringCostInputs')
+    .stub(CollectionsDAO, "findAllUnnotifiedCollectionsWithExpiringCostInputs")
     .resolves([
-      { createdBy: 'user-one', id: 'collection-one' },
-      { createdBy: 'user-two', id: 'collection-two' }
+      { createdBy: "user-one", id: "collection-one" },
+      { createdBy: "user-two", id: "collection-two" },
     ]);
   const determineStub = sandbox()
-    .stub(StatusService, 'determineSubmissionStatus')
+    .stub(StatusService, "determineSubmissionStatus")
     .resolves({
-      'collection-one': {
+      "collection-one": {
         isSubmitted: true,
         isCosted: true,
         isQuoted: false,
-        isPaired: false
+        isPaired: false,
       },
-      'collection-two': {
+      "collection-two": {
         isSubmitted: true,
         isCosted: true,
         isQuoted: false,
-        isPaired: false
-      }
+        isPaired: false,
+      },
     });
   const notifyStub = sandbox()
     .stub(
       NotificationService,
-      'immediatelySendOneWeekCostingExpirationNotification'
+      "immediatelySendOneWeekCostingExpirationNotification"
     )
     .resolves();
 
@@ -125,17 +125,17 @@ test('notifyOneWeekFromExpiring works on the +1 case', async (t: Test) => {
       t.equal(findAllStub.callCount, 1);
       t.equal(determineStub.callCount, 1);
       t.deepEqual(determineStub.args[0][0], [
-        'collection-one',
-        'collection-two'
+        "collection-one",
+        "collection-two",
       ]);
       t.equal(notifyStub.callCount, 2);
     }
   );
 });
 
-test('notifyTwoDaysFromExpiring works on the base case', async (t: Test) => {
+test("notifyTwoDaysFromExpiring works on the base case", async (t: Test) => {
   const findAllStub = sandbox()
-    .stub(CollectionsDAO, 'findAllUnnotifiedCollectionsWithExpiringCostInputs')
+    .stub(CollectionsDAO, "findAllUnnotifiedCollectionsWithExpiringCostInputs")
     .resolves([]);
 
   await db.transaction(
@@ -147,40 +147,40 @@ test('notifyTwoDaysFromExpiring works on the base case', async (t: Test) => {
   );
 });
 
-test('notifyTwoDaysFromExpiring works on the +1 case', async (t: Test) => {
+test("notifyTwoDaysFromExpiring works on the +1 case", async (t: Test) => {
   const findAllStub = sandbox()
-    .stub(CollectionsDAO, 'findAllUnnotifiedCollectionsWithExpiringCostInputs')
+    .stub(CollectionsDAO, "findAllUnnotifiedCollectionsWithExpiringCostInputs")
     .resolves([
-      { createdBy: 'user-one', id: 'collection-one' },
-      { createdBy: 'user-two', id: 'collection-two' },
-      { createdBy: 'user-three', id: 'collection-three' }
+      { createdBy: "user-one", id: "collection-one" },
+      { createdBy: "user-two", id: "collection-two" },
+      { createdBy: "user-three", id: "collection-three" },
     ]);
   const determineStub = sandbox()
-    .stub(StatusService, 'determineSubmissionStatus')
+    .stub(StatusService, "determineSubmissionStatus")
     .resolves({
-      'collection-one': {
+      "collection-one": {
         isSubmitted: true,
         isCosted: true,
         isQuoted: false,
-        isPaired: false
+        isPaired: false,
       },
-      'collection-two': {
+      "collection-two": {
         isSubmitted: true,
         isCosted: true,
         isQuoted: false,
-        isPaired: false
+        isPaired: false,
       },
-      'collection-three': {
+      "collection-three": {
         isSubmitted: true,
         isCosted: true,
         isQuoted: false,
-        isPaired: false
-      }
+        isPaired: false,
+      },
     });
   const notifyStub = sandbox()
     .stub(
       NotificationService,
-      'immediatelySendTwoDayCostingExpirationNotification'
+      "immediatelySendTwoDayCostingExpirationNotification"
     )
     .resolves();
 
@@ -192,9 +192,9 @@ test('notifyTwoDaysFromExpiring works on the +1 case', async (t: Test) => {
       t.equal(findAllStub.callCount, 1);
       t.equal(determineStub.callCount, 1);
       t.deepEqual(determineStub.args[0][0], [
-        'collection-one',
-        'collection-two',
-        'collection-three'
+        "collection-one",
+        "collection-two",
+        "collection-three",
       ]);
       t.equal(notifyStub.callCount, 3);
     }

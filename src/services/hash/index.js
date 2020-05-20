@@ -1,7 +1,7 @@
-'use strict';
+"use strict";
 
-const { promisify } = require('util');
-const bcrypt = require('bcrypt');
+const { promisify } = require("util");
+const bcrypt = require("bcrypt");
 
 const BCRYPT_ROUNDS = 10;
 
@@ -14,7 +14,7 @@ function hash(plaintext) {
   const genSalt = promisify(bcrypt.genSalt.bind(bcrypt));
   const hashFn = promisify(bcrypt.hash.bind(bcrypt));
 
-  return genSalt(BCRYPT_ROUNDS).then(salt => hashFn(plaintext, salt));
+  return genSalt(BCRYPT_ROUNDS).then((salt) => hashFn(plaintext, salt));
 }
 
 /**
@@ -30,5 +30,5 @@ function compare(plaintext, bcryptHash) {
 
 module.exports = {
   hash,
-  compare
+  compare,
 };

@@ -1,4 +1,4 @@
-import { isEqual } from 'lodash';
+import { isEqual } from "lodash";
 
 // https://stackoverflow.com/a/40610459/990783
 interface Arg {

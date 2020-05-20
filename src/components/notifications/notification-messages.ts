@@ -1,24 +1,24 @@
-import { escape as escapeOptionalHtml } from 'lodash';
+import { escape as escapeOptionalHtml } from "lodash";
 import {
   BreadCrumb,
   NotificationMessage,
-  NotificationMessageActionType
-} from '@cala/ts-lib';
+  NotificationMessageActionType,
+} from "@cala/ts-lib";
 
-import InvalidDataError from '../../errors/invalid-data';
-import * as CollaboratorsDAO from '../collaborators/dao';
-import * as CommentsDAO from '../../components/comments/dao';
+import InvalidDataError from "../../errors/invalid-data";
+import * as CollaboratorsDAO from "../collaborators/dao";
+import * as CommentsDAO from "../../components/comments/dao";
 import {
   DEPRECATED_NOTIFICATION_TYPES,
   FullNotification,
-  NotificationType
-} from './domain-object';
-import getLinks, { constructHtmlLink, LinkType } from './get-links';
-import normalizeTitle from '../../services/normalize-title';
-import Comment from '../../components/comments/domain-object';
-import { ComponentType } from '../components/domain-object';
-import { getMentionsFromComment } from '../../services/add-at-mention-details';
-import { generatePreviewLinks } from '../../services/attach-asset-links';
+  NotificationType,
+} from "./domain-object";
+import getLinks, { constructHtmlLink, LinkType } from "./get-links";
+import normalizeTitle from "../../services/normalize-title";
+import Comment from "../../components/comments/domain-object";
+import { ComponentType } from "../components/domain-object";
+import { getMentionsFromComment } from "../../services/add-at-mention-details";
+import { generatePreviewLinks } from "../../services/attach-asset-links";
 
 function span(text: string, className?: string): string {
   return `<span class='${className}'>${text}</span>`;
@@ -31,12 +31,12 @@ function buildImageUrl(imageIds: string[]): string | null {
 }
 
 function escapeHtml(html?: string | null): string {
-  return escapeOptionalHtml(html || '');
+  return escapeOptionalHtml(html || "");
 }
 
 function getLocation({
   collection,
-  design
+  design,
 }: {
   collection: { title: string | null; id: string } | null;
   design: { title: string | null; id: string } | null;
@@ -45,14 +45,14 @@ function getLocation({
   if (collection) {
     const { deepLink: collectionLink } = getLinks({
       collection,
-      type: LinkType.Collection
+      type: LinkType.Collection,
     });
     location.push({ text: normalizeTitle(collection), url: collectionLink });
   }
   if (design) {
     const { deepLink: designLink } = getLinks({
       design,
-      type: LinkType.Design
+      type: LinkType.Design,
     });
     location.push({ text: normalizeTitle(design), url: designLink });
   }
@@ -72,7 +72,7 @@ export async function createNotificationMessage(
     attachments: [],
     createdAt: notification.createdAt,
     id: notification.id,
-    readAt: notification.readAt
+    readAt: notification.readAt,
   };
 
   switch (notification.type) {
@@ -86,11 +86,11 @@ export async function createNotificationMessage(
       const collectionMeta = notification.collectionId
         ? {
             title: notification.collectionTitle,
-            id: notification.collectionId
+            id: notification.collectionId,
           }
         : null;
       const resourceName = normalizeTitle({
-        title: notification.designTitle || notification.collectionTitle
+        title: notification.designTitle || notification.collectionTitle,
       });
       const cleanName = escapeHtml(notification.actor.name);
       const partialMessage = {
@@ -98,40 +98,40 @@ export async function createNotificationMessage(
         imageUrl: buildImageUrl(notification.designImageIds),
         location: getLocation({
           collection: collectionMeta,
-          design: designMeta
+          design: designMeta,
         }),
-        title: `${cleanName} invited you to collaborate on ${resourceName}`
+        title: `${cleanName} invited you to collaborate on ${resourceName}`,
       };
 
       if (collectionMeta) {
         const { htmlLink, deepLink } = getLinks({
           collection: collectionMeta,
-          type: LinkType.Collection
+          type: LinkType.Collection,
         });
 
         return {
           ...partialMessage,
           html: `${span(
             cleanName,
-            'user-name'
+            "user-name"
           )} invited you to collaborate on ${htmlLink}`,
-          link: deepLink
+          link: deepLink,
         };
       }
 
       if (designMeta) {
         const { htmlLink, deepLink } = getLinks({
           design: designMeta,
-          type: LinkType.Design
+          type: LinkType.Design,
         });
 
         return {
           ...partialMessage,
           html: `${span(
             cleanName,
-            'user-name'
+            "user-name"
           )} invited you to collaborate on ${htmlLink}`,
-          link: deepLink
+          link: deepLink,
         };
       }
 
@@ -148,7 +148,7 @@ export async function createNotificationMessage(
         commentId,
         commentText,
         hasAttachments,
-        componentType
+        componentType,
       } = notification;
       const design = { id: designId, title: notification.designTitle };
       const collaborators = await CollaboratorsDAO.findByDesign(designId);
@@ -162,7 +162,7 @@ export async function createNotificationMessage(
         canvasId,
         componentType: componentType as ComponentType,
         design,
-        type: LinkType.DesignAnnotation
+        type: LinkType.DesignAnnotation,
       });
       return {
         ...baseNotificationMessage,
@@ -171,17 +171,17 @@ export async function createNotificationMessage(
             type: NotificationMessageActionType.ANNOTATION_COMMENT_REPLY,
             annotationId,
             parentCommentId: commentId,
-            collaborators
-          }
+            collaborators,
+          },
         ],
         attachments: [
-          { text: commentText, url: deepLink, mentions, hasAttachments }
+          { text: commentText, url: deepLink, mentions, hasAttachments },
         ],
-        html: `${span(cleanName, 'user-name')} commented on ${htmlLink}`,
+        html: `${span(cleanName, "user-name")} commented on ${htmlLink}`,
         imageUrl: buildImageUrl([annotationImageId]),
         link: deepLink,
         location: getLocation({ collection, design }),
-        title: `${cleanName} commented on ${normalizeTitle(design)}`
+        title: `${cleanName} commented on ${normalizeTitle(design)}`,
       };
     }
 
@@ -195,7 +195,7 @@ export async function createNotificationMessage(
         commentId,
         commentText,
         hasAttachments,
-        componentType
+        componentType,
       } = notification;
       const design = { id: designId, title: notification.designTitle };
       const collaborators = await CollaboratorsDAO.findByDesign(designId);
@@ -209,7 +209,7 @@ export async function createNotificationMessage(
         canvasId,
         componentType: componentType as ComponentType,
         design,
-        type: LinkType.DesignAnnotation
+        type: LinkType.DesignAnnotation,
       });
       return {
         ...baseNotificationMessage,
@@ -218,17 +218,17 @@ export async function createNotificationMessage(
             type: NotificationMessageActionType.ANNOTATION_COMMENT_REPLY,
             annotationId,
             parentCommentId: commentId,
-            collaborators
-          }
+            collaborators,
+          },
         ],
         attachments: [
-          { text: commentText, url: deepLink, mentions, hasAttachments }
+          { text: commentText, url: deepLink, mentions, hasAttachments },
         ],
-        html: `${span(cleanName, 'user-name')} mentioned you on ${htmlLink}`,
+        html: `${span(cleanName, "user-name")} mentioned you on ${htmlLink}`,
         imageUrl: buildImageUrl([annotationImageId]),
         link: deepLink,
         location: getLocation({ collection, design }),
-        title: `${cleanName} mentioned you on ${normalizeTitle(design)}`
+        title: `${cleanName} mentioned you on ${normalizeTitle(design)}`,
       };
     }
 
@@ -242,7 +242,7 @@ export async function createNotificationMessage(
         commentId,
         commentText,
         hasAttachments,
-        componentType
+        componentType,
       } = notification;
       const design = { id: designId, title: notification.designTitle };
       const collaborators = await CollaboratorsDAO.findByDesign(designId);
@@ -256,7 +256,7 @@ export async function createNotificationMessage(
         canvasId,
         componentType: componentType as ComponentType,
         design,
-        type: LinkType.DesignAnnotation
+        type: LinkType.DesignAnnotation,
       });
       return {
         ...baseNotificationMessage,
@@ -265,22 +265,22 @@ export async function createNotificationMessage(
             type: NotificationMessageActionType.ANNOTATION_COMMENT_REPLY,
             annotationId,
             parentCommentId: commentId,
-            collaborators
-          }
+            collaborators,
+          },
         ],
         attachments: [
-          { text: commentText, url: deepLink, mentions, hasAttachments }
+          { text: commentText, url: deepLink, mentions, hasAttachments },
         ],
         html: `${span(
           cleanName,
-          'user-name'
+          "user-name"
         )} has replied to a comment on ${htmlLink}`,
         imageUrl: buildImageUrl(designImageIds),
         link: deepLink,
         location: getLocation({ collection, design }),
         title: `${cleanName} has replied to a comment on ${normalizeTitle(
           design
-        )}`
+        )}`,
       };
     }
 
@@ -292,19 +292,19 @@ export async function createNotificationMessage(
         : null;
       const { htmlLink, deepLink } = getLinks({
         design,
-        type: LinkType.Design
+        type: LinkType.Design,
       });
       const cleanName = escapeHtml(baseNotificationMessage.actor.name);
       return {
         ...baseNotificationMessage,
         html: `${span(
           cleanName,
-          'user-name'
+          "user-name"
         )} added a measurement to ${htmlLink}`,
         imageUrl: buildImageUrl(designImageIds),
         link: deepLink,
         location: getLocation({ collection, design }),
-        title: `${cleanName} added a measurement to ${normalizeTitle(design)}`
+        title: `${cleanName} added a measurement to ${normalizeTitle(design)}`,
       };
     }
 
@@ -316,7 +316,7 @@ export async function createNotificationMessage(
         taskId,
         commentId,
         commentText,
-        hasAttachments
+        hasAttachments,
       } = notification;
       const design = { id: designId, title: notification.designTitle };
       const collection = collectionId
@@ -328,7 +328,7 @@ export async function createNotificationMessage(
         collection,
         design,
         task,
-        type: LinkType.CollectionDesignTask
+        type: LinkType.CollectionDesignTask,
       });
       const comment: Comment | null = await CommentsDAO.findById(commentId);
       if (!comment) {
@@ -343,20 +343,20 @@ export async function createNotificationMessage(
             type: NotificationMessageActionType.TASK_COMMENT_REPLY,
             taskId,
             parentCommentId: commentId,
-            collaborators
-          }
+            collaborators,
+          },
         ],
         attachments: [
-          { text: comment.text, url: deepLink, mentions, hasAttachments }
+          { text: comment.text, url: deepLink, mentions, hasAttachments },
         ],
         html: `${span(
           cleanName,
-          'user-name'
+          "user-name"
         )} commented on your task ${htmlLink}`,
         imageUrl: buildImageUrl(designImageIds),
         link: deepLink,
         location: getLocation({ collection, design }),
-        title: `${cleanName} commented on your task ${normalizeTitle(task)}`
+        title: `${cleanName} commented on your task ${normalizeTitle(task)}`,
       };
     }
 
@@ -368,7 +368,7 @@ export async function createNotificationMessage(
         taskId,
         commentId,
         commentText,
-        hasAttachments
+        hasAttachments,
       } = notification;
       const design = { id: designId, title: notification.designTitle };
       const collection = collectionId
@@ -380,7 +380,7 @@ export async function createNotificationMessage(
         collection,
         design,
         task,
-        type: LinkType.CollectionDesignTask
+        type: LinkType.CollectionDesignTask,
       });
       const mentions = await getMentionsFromComment(commentText);
       const cleanName = escapeHtml(baseNotificationMessage.actor.name);
@@ -391,20 +391,20 @@ export async function createNotificationMessage(
             type: NotificationMessageActionType.TASK_COMMENT_REPLY,
             taskId,
             parentCommentId: commentId,
-            collaborators
-          }
+            collaborators,
+          },
         ],
         attachments: [
-          { text: commentText, url: deepLink, mentions, hasAttachments }
+          { text: commentText, url: deepLink, mentions, hasAttachments },
         ],
         html: `${span(
           cleanName,
-          'user-name'
+          "user-name"
         )} mentioned you on the task ${htmlLink}`,
         imageUrl: buildImageUrl(designImageIds),
         link: deepLink,
         location: getLocation({ collection, design }),
-        title: `${cleanName} mentioned you on the task ${normalizeTitle(task)}`
+        title: `${cleanName} mentioned you on the task ${normalizeTitle(task)}`,
       };
     }
 
@@ -416,7 +416,7 @@ export async function createNotificationMessage(
         taskId,
         commentId,
         commentText,
-        hasAttachments
+        hasAttachments,
       } = notification;
       const design = { id: designId, title: notification.designTitle };
       const collection = collectionId
@@ -428,7 +428,7 @@ export async function createNotificationMessage(
         collection,
         design,
         task,
-        type: LinkType.CollectionDesignTask
+        type: LinkType.CollectionDesignTask,
       });
       const mentions = await getMentionsFromComment(commentText);
       const cleanName = escapeHtml(baseNotificationMessage.actor.name);
@@ -439,22 +439,22 @@ export async function createNotificationMessage(
             type: NotificationMessageActionType.TASK_COMMENT_REPLY,
             taskId,
             parentCommentId: commentId,
-            collaborators
-          }
+            collaborators,
+          },
         ],
         attachments: [
-          { text: commentText, url: deepLink, mentions, hasAttachments }
+          { text: commentText, url: deepLink, mentions, hasAttachments },
         ],
         html: `${span(
           cleanName,
-          'user-name'
+          "user-name"
         )} has replied to a comment on ${htmlLink}`,
         imageUrl: buildImageUrl(designImageIds),
         link: deepLink,
         location: getLocation({ collection, design }),
         title: `${cleanName} has replied to a comment on ${normalizeTitle(
           task
-        )}`
+        )}`,
       };
     }
 
@@ -469,19 +469,19 @@ export async function createNotificationMessage(
         collection,
         design,
         task,
-        type: LinkType.CollectionDesignTask
+        type: LinkType.CollectionDesignTask,
       });
       const cleanName = escapeHtml(baseNotificationMessage.actor.name);
       return {
         ...baseNotificationMessage,
         html: `${span(
           cleanName,
-          'user-name'
+          "user-name"
         )} assigned you the task ${htmlLink}`,
         imageUrl: buildImageUrl(designImageIds),
         link: deepLink,
         location: getLocation({ collection, design }),
-        title: `${cleanName} assigned you the task ${normalizeTitle(task)}`
+        title: `${cleanName} assigned you the task ${normalizeTitle(task)}`,
       };
     }
 
@@ -496,16 +496,16 @@ export async function createNotificationMessage(
         collection,
         design,
         task,
-        type: LinkType.CollectionDesignTask
+        type: LinkType.CollectionDesignTask,
       });
       const cleanName = escapeHtml(baseNotificationMessage.actor.name);
       return {
         ...baseNotificationMessage,
-        html: `${span(cleanName, 'user-name')} completed the task ${htmlLink}`,
+        html: `${span(cleanName, "user-name")} completed the task ${htmlLink}`,
         imageUrl: buildImageUrl(designImageIds),
         link: deepLink,
         location: getLocation({ collection, design }),
-        title: `${cleanName} completed the task ${normalizeTitle(task)}`
+        title: `${cleanName} completed the task ${normalizeTitle(task)}`,
       };
     }
 
@@ -514,21 +514,21 @@ export async function createNotificationMessage(
       const design = { id: designId, title: notification.designTitle };
       const { htmlLink, deepLink } = getLinks({
         design,
-        type: LinkType.Design
+        type: LinkType.Design,
       });
       const cleanName = escapeHtml(baseNotificationMessage.actor.name);
       return {
         ...baseNotificationMessage,
         html: `${span(
           cleanName,
-          'user-name'
+          "user-name"
         )} accepted the service bid for ${htmlLink}`,
         imageUrl: null,
         link: deepLink,
         location: getLocation({ collection: null, design }),
         title: `${cleanName} accepted the service bid for ${normalizeTitle(
           design
-        )}`
+        )}`,
       };
     }
 
@@ -537,7 +537,7 @@ export async function createNotificationMessage(
       const design = { id: designId, title: notification.designTitle };
       const { deepLink } = getLinks({
         design,
-        type: LinkType.PartnerDesign
+        type: LinkType.PartnerDesign,
       });
       return {
         ...baseNotificationMessage,
@@ -545,7 +545,7 @@ export async function createNotificationMessage(
         imageUrl: null,
         link: deepLink,
         location: getLocation({ collection: null, design }),
-        title: 'You have a new project to review'
+        title: "You have a new project to review",
       };
     }
 
@@ -554,21 +554,21 @@ export async function createNotificationMessage(
       const design = { id: designId, title: notification.designTitle };
       const { htmlLink, deepLink } = getLinks({
         design,
-        type: LinkType.Design
+        type: LinkType.Design,
       });
       const cleanName = escapeHtml(baseNotificationMessage.actor.name);
       return {
         ...baseNotificationMessage,
         html: `${span(
           cleanName,
-          'user-name'
+          "user-name"
         )} rejected the service bid for ${htmlLink}`,
         imageUrl: null,
         link: deepLink,
         location: getLocation({ collection: null, design }),
         title: `${cleanName} rejected the service bid for ${normalizeTitle(
           design
-        )}`
+        )}`,
       };
     }
 
@@ -576,11 +576,11 @@ export async function createNotificationMessage(
       const { collectionId } = notification;
       const collection = {
         id: collectionId,
-        title: notification.collectionTitle
+        title: notification.collectionTitle,
       };
       const { htmlLink, deepLink } = getLinks({
         collection,
-        type: LinkType.Collection
+        type: LinkType.Collection,
       });
       return {
         ...baseNotificationMessage,
@@ -590,7 +590,7 @@ export async function createNotificationMessage(
         location: [],
         title: `Your collection, ${normalizeTitle(
           collection
-        )} has been paired with all partners! 🙌`
+        )} has been paired with all partners! 🙌`,
       };
     }
 
@@ -598,14 +598,14 @@ export async function createNotificationMessage(
       const { collectionId } = notification;
       const collection = {
         id: collectionId,
-        title: notification.collectionTitle
+        title: notification.collectionTitle,
       };
       if (!collection) {
         return null;
       }
       const { htmlLink, deepLink } = getLinks({
         collection,
-        type: LinkType.Collection
+        type: LinkType.Collection,
       });
       return {
         ...baseNotificationMessage,
@@ -615,7 +615,7 @@ export async function createNotificationMessage(
         location: [],
         title: `${normalizeTitle(
           collection
-        )} has been submitted, and will be review by our team`
+        )} has been submitted, and will be review by our team`,
       };
     }
 
@@ -623,12 +623,12 @@ export async function createNotificationMessage(
       const { collectionId } = notification;
       const collection = {
         id: collectionId,
-        title: notification.collectionTitle
+        title: notification.collectionTitle,
       };
       const { htmlLink, deepLink } = getLinks({
         collection,
         isCheckout: true,
-        type: LinkType.Collection
+        type: LinkType.Collection,
       });
       return {
         ...baseNotificationMessage,
@@ -638,7 +638,7 @@ export async function createNotificationMessage(
         location: [],
         title: `${normalizeTitle(
           collection
-        )} has been reviewed and is now ready for checkout`
+        )} has been reviewed and is now ready for checkout`,
       };
     }
 
@@ -646,12 +646,12 @@ export async function createNotificationMessage(
       const { collectionId } = notification;
       const collection = {
         id: collectionId,
-        title: notification.collectionTitle
+        title: notification.collectionTitle,
       };
       const { htmlLink, deepLink } = getLinks({
         collection,
         isSubmit: true,
-        type: LinkType.Collection
+        type: LinkType.Collection,
       });
       return {
         ...baseNotificationMessage,
@@ -659,7 +659,7 @@ export async function createNotificationMessage(
         imageUrl: null,
         link: deepLink,
         location: [],
-        title: `Pricing for ${normalizeTitle(collection)} has expired.`
+        title: `Pricing for ${normalizeTitle(collection)} has expired.`,
       };
     }
 
@@ -667,12 +667,12 @@ export async function createNotificationMessage(
       const { collectionId } = notification;
       const collection = {
         id: collectionId,
-        title: notification.collectionTitle
+        title: notification.collectionTitle,
       };
       const { htmlLink, deepLink } = getLinks({
         collection,
         isCheckout: true,
-        type: LinkType.Collection
+        type: LinkType.Collection,
       });
       return {
         ...baseNotificationMessage,
@@ -682,7 +682,7 @@ export async function createNotificationMessage(
         location: [],
         title: `Pricing for ${normalizeTitle(
           collection
-        )} will expire in 48 hours.`
+        )} will expire in 48 hours.`,
       };
     }
 
@@ -690,12 +690,12 @@ export async function createNotificationMessage(
       const { collectionId } = notification;
       const collection = {
         id: collectionId,
-        title: notification.collectionTitle
+        title: notification.collectionTitle,
       };
       const { htmlLink, deepLink } = getLinks({
         collection,
         isCheckout: true,
-        type: LinkType.Collection
+        type: LinkType.Collection,
       });
       return {
         ...baseNotificationMessage,
@@ -705,7 +705,7 @@ export async function createNotificationMessage(
         location: [],
         title: `Pricing for ${normalizeTitle(
           collection
-        )} will expire in 7 days.`
+        )} will expire in 7 days.`,
       };
     }
 
@@ -716,7 +716,7 @@ export async function createNotificationMessage(
         collectionId,
         commentId,
         commentText,
-        hasAttachments
+        hasAttachments,
       } = notification;
 
       if (!collectionId) {
@@ -726,11 +726,11 @@ export async function createNotificationMessage(
       const design = { id: designId, title: notification.designTitle };
       const collection = {
         id: collectionId,
-        title: notification.collectionTitle
+        title: notification.collectionTitle,
       };
       const approvalStep = {
         id: notification.approvalStepId,
-        title: notification.approvalStepTitle
+        title: notification.approvalStepTitle,
       };
 
       const collaborators = await CollaboratorsDAO.findByDesign(designId);
@@ -738,7 +738,7 @@ export async function createNotificationMessage(
         collection,
         design,
         approvalStep,
-        type: LinkType.ApprovalStep
+        type: LinkType.ApprovalStep,
       });
       const designHtmlLink = constructHtmlLink(
         deepLink,
@@ -753,22 +753,22 @@ export async function createNotificationMessage(
             type: NotificationMessageActionType.APPROVAL_STEP_COMMENT_REPLY,
             approvalStepId: notification.approvalStepId,
             parentCommentId: commentId,
-            collaborators
-          }
+            collaborators,
+          },
         ],
         attachments: [
-          { text: commentText, url: deepLink, mentions, hasAttachments }
+          { text: commentText, url: deepLink, mentions, hasAttachments },
         ],
         html: `${span(
           cleanName,
-          'user-name'
+          "user-name"
         )} mentioned you on ${stepHtmlLink} for ${designHtmlLink}`,
         imageUrl: buildImageUrl(designImageIds),
         link: deepLink,
         location: getLocation({ collection, design }),
         title: `${cleanName} mentioned you on ${normalizeTitle(
           approvalStep
-        )} for ${normalizeTitle(design)}`
+        )} for ${normalizeTitle(design)}`,
       };
     }
 
@@ -779,7 +779,7 @@ export async function createNotificationMessage(
         collectionId,
         commentId,
         commentText,
-        hasAttachments
+        hasAttachments,
       } = notification;
 
       if (!collectionId) {
@@ -789,11 +789,11 @@ export async function createNotificationMessage(
       const design = { id: designId, title: notification.designTitle };
       const collection = {
         id: collectionId,
-        title: notification.collectionTitle
+        title: notification.collectionTitle,
       };
       const approvalStep = {
         id: notification.approvalStepId,
-        title: notification.approvalStepTitle
+        title: notification.approvalStepTitle,
       };
 
       const collaborators = await CollaboratorsDAO.findByDesign(designId);
@@ -801,7 +801,7 @@ export async function createNotificationMessage(
         collection,
         design,
         approvalStep,
-        type: LinkType.ApprovalStep
+        type: LinkType.ApprovalStep,
       });
       const designHtmlLink = constructHtmlLink(
         deepLink,
@@ -816,22 +816,22 @@ export async function createNotificationMessage(
             type: NotificationMessageActionType.APPROVAL_STEP_COMMENT_REPLY,
             approvalStepId: notification.approvalStepId,
             parentCommentId: commentId,
-            collaborators
-          }
+            collaborators,
+          },
         ],
         attachments: [
-          { text: commentText, url: deepLink, mentions, hasAttachments }
+          { text: commentText, url: deepLink, mentions, hasAttachments },
         ],
         html: `${span(
           cleanName,
-          'user-name'
+          "user-name"
         )} replied to a comment on ${stepHtmlLink} for ${designHtmlLink}`,
         imageUrl: buildImageUrl(designImageIds),
         link: deepLink,
         location: getLocation({ collection, design }),
         title: `${cleanName} replied to a comment on ${normalizeTitle(
           approvalStep
-        )} for ${normalizeTitle(design)}`
+        )} for ${normalizeTitle(design)}`,
       };
     }
 
@@ -842,7 +842,7 @@ export async function createNotificationMessage(
         collectionId,
         commentId,
         commentText,
-        hasAttachments
+        hasAttachments,
       } = notification;
 
       if (!collectionId) {
@@ -852,11 +852,11 @@ export async function createNotificationMessage(
       const design = { id: designId, title: notification.designTitle };
       const collection = {
         id: collectionId,
-        title: notification.collectionTitle
+        title: notification.collectionTitle,
       };
       const approvalStep = {
         id: notification.approvalStepId,
-        title: notification.approvalStepTitle
+        title: notification.approvalStepTitle,
       };
 
       const collaborators = await CollaboratorsDAO.findByDesign(designId);
@@ -864,7 +864,7 @@ export async function createNotificationMessage(
         collection,
         design,
         approvalStep,
-        type: LinkType.ApprovalStep
+        type: LinkType.ApprovalStep,
       });
       const designHtmlLink = constructHtmlLink(
         deepLink,
@@ -879,22 +879,22 @@ export async function createNotificationMessage(
             type: NotificationMessageActionType.APPROVAL_STEP_COMMENT_REPLY,
             approvalStepId: notification.approvalStepId,
             parentCommentId: commentId,
-            collaborators
-          }
+            collaborators,
+          },
         ],
         attachments: [
-          { text: commentText, url: deepLink, mentions, hasAttachments }
+          { text: commentText, url: deepLink, mentions, hasAttachments },
         ],
         html: `${span(
           cleanName,
-          'user-name'
+          "user-name"
         )} commented on ${stepHtmlLink} for ${designHtmlLink}`,
         imageUrl: buildImageUrl(designImageIds),
         link: deepLink,
         location: getLocation({ collection, design }),
         title: `${cleanName} commented on ${normalizeTitle(
           approvalStep
-        )} for ${normalizeTitle(design)}`
+        )} for ${normalizeTitle(design)}`,
       };
     }
     case NotificationType.APPROVAL_STEP_SUBMISSION_ASSIGNMENT: {
@@ -905,7 +905,7 @@ export async function createNotificationMessage(
         collectionTitle,
         approvalStepId,
         approvalStepTitle,
-        approvalSubmissionTitle
+        approvalSubmissionTitle,
       } = notification;
 
       if (!collectionId) {
@@ -915,18 +915,18 @@ export async function createNotificationMessage(
       const design = { id: designId, title: notification.designTitle };
       const collection = {
         id: collectionId,
-        title: collectionTitle
+        title: collectionTitle,
       };
       const approvalStep = {
         id: approvalStepId,
-        title: approvalStepTitle
+        title: approvalStepTitle,
       };
 
       const { deepLink } = getLinks({
         collection,
         design,
         approvalStep,
-        type: LinkType.ApprovalStep
+        type: LinkType.ApprovalStep,
       });
       const designHtmlLink = constructHtmlLink(
         deepLink,
@@ -941,12 +941,12 @@ export async function createNotificationMessage(
         ...baseNotificationMessage,
         html: `${span(
           cleanName,
-          'user-name'
+          "user-name"
         )} assigned you to review ${approvalSubmissionTitle} for ${designHtmlLink}`,
         imageUrl: buildImageUrl(designImageIds),
         link: deepLink,
         location: getLocation({ collection, design }),
-        title: `${cleanName} assigned you to review ${approvalSubmissionTitle} for ${designHtmlLink}`
+        title: `${cleanName} assigned you to review ${approvalSubmissionTitle} for ${designHtmlLink}`,
       };
     }
     case NotificationType.APPROVAL_STEP_ASSIGNMENT: {
@@ -956,7 +956,7 @@ export async function createNotificationMessage(
         collectionId,
         collectionTitle,
         approvalStepId,
-        approvalStepTitle
+        approvalStepTitle,
       } = notification;
 
       if (!collectionId) {
@@ -966,18 +966,18 @@ export async function createNotificationMessage(
       const design = { id: designId, title: notification.designTitle };
       const collection = {
         id: collectionId,
-        title: collectionTitle
+        title: collectionTitle,
       };
       const approvalStep = {
         id: approvalStepId,
-        title: approvalStepTitle
+        title: approvalStepTitle,
       };
 
       const { deepLink } = getLinks({
         collection,
         design,
         approvalStep,
-        type: LinkType.ApprovalStep
+        type: LinkType.ApprovalStep,
       });
       const designHtmlLink = constructHtmlLink(
         deepLink,
@@ -992,12 +992,12 @@ export async function createNotificationMessage(
         ...baseNotificationMessage,
         html: `${span(
           cleanName,
-          'user-name'
+          "user-name"
         )} has assigned you to ${approvalStepTitle} on ${designHtmlLink}`,
         imageUrl: buildImageUrl(designImageIds),
         link: deepLink,
         location: getLocation({ collection, design }),
-        title: `${cleanName} has assigned you to review ${approvalStepTitle} on ${designHtmlLink}`
+        title: `${cleanName} has assigned you to review ${approvalStepTitle} on ${designHtmlLink}`,
       };
     }
 

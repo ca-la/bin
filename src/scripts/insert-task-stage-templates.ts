@@ -1,615 +1,615 @@
-import Knex from 'knex';
-import process from 'process';
-import uuid from 'node-uuid';
+import Knex from "knex";
+import process from "process";
+import uuid from "node-uuid";
 
-import db from '../services/db';
-import { log } from '../services/logger';
-import { green, red, reset, yellow } from '../services/colors';
+import db from "../services/db";
+import { log } from "../services/logger";
+import { green, red, reset, yellow } from "../services/colors";
 
 import StageTemplate, {
-  dataAdapter as stageDataAdapter
-} from '../domain-objects/stage-template';
+  dataAdapter as stageDataAdapter,
+} from "../domain-objects/stage-template";
 import TaskTemplate, {
-  dataAdapter as taskDataAdapter
-} from '../domain-objects/task-template';
+  dataAdapter as taskDataAdapter,
+} from "../domain-objects/task-template";
 
 /*tslint:disable:max-line-length*/
 const stages: StageTemplate[] = [
   {
     description:
-      'Creation is the first phase of every project. Add as much detail as you can in the form of references, sketches, annotations, and measurements about your design, materials, and artwork.',
+      "Creation is the first phase of every project. Add as much detail as you can in the form of references, sketches, annotations, and measurements about your design, materials, and artwork.",
     id: uuid.v4(),
     ordering: 0,
-    title: 'Creation'
+    title: "Creation",
   },
   {
     description:
-      'The Specification phase is where things get technical. During this phase you finalize the technical details–measurements, materials, and process–of your design.',
+      "The Specification phase is where things get technical. During this phase you finalize the technical details–measurements, materials, and process–of your design.",
     id: uuid.v4(),
     ordering: 1,
-    title: 'Specification'
+    title: "Specification",
   },
   {
     description:
-      'Sourcing is where things start to get fun. Partners will ship you physical material options for approval based on your material, and artwork specifications.',
+      "Sourcing is where things start to get fun. Partners will ship you physical material options for approval based on your material, and artwork specifications.",
     id: uuid.v4(),
     ordering: 2,
-    title: 'Sourcing'
+    title: "Sourcing",
   },
   {
     description:
-      'The Sampling phase is where your design comes to life. Partners take all your specifications and approvals from previous phases and turn it into a physical sample for you to approve.',
+      "The Sampling phase is where your design comes to life. Partners take all your specifications and approvals from previous phases and turn it into a physical sample for you to approve.",
     id: uuid.v4(),
     ordering: 3,
-    title: 'Sampling'
+    title: "Sampling",
   },
   {
     description:
-      'Pre-production comes after final approval of the sample. This preparation phase ensures production is smooth and without delay.',
+      "Pre-production comes after final approval of the sample. This preparation phase ensures production is smooth and without delay.",
     id: uuid.v4(),
     ordering: 4,
-    title: 'Pre-Production'
+    title: "Pre-Production",
   },
   {
     description:
-      'The Production phase. During this phase your full order is produced, quality checked and prepared for shipment.',
+      "The Production phase. During this phase your full order is produced, quality checked and prepared for shipment.",
     id: uuid.v4(),
     ordering: 5,
-    title: 'Production'
+    title: "Production",
   },
   {
     description:
-      'Fulfillment is the final phase. Your products are shipped either directly to you or to a fulfillment partner who will warehouse, pack and ship orders to your customers directly.',
+      "Fulfillment is the final phase. Your products are shipped either directly to you or to a fulfillment partner who will warehouse, pack and ship orders to your customers directly.",
     id: uuid.v4(),
     ordering: 6,
-    title: 'Fulfillment'
-  }
+    title: "Fulfillment",
+  },
 ];
 
 const tasks: TaskTemplate[] = [
   {
-    assigneeRole: 'DESIGNER',
+    assigneeRole: "DESIGNER",
     description: "It's OK if this is a rough idea",
-    designPhase: 'POST_CREATION',
+    designPhase: "POST_CREATION",
     id: uuid.v4(),
     ordering: 0,
     stageTemplateId: stages[0].id,
-    title: 'Add your sketch'
+    title: "Add your sketch",
   },
   {
-    assigneeRole: 'DESIGNER',
+    assigneeRole: "DESIGNER",
     description:
       "Let us know what you're thinking for style, fit, fabric, and trim details",
-    designPhase: 'POST_CREATION',
+    designPhase: "POST_CREATION",
     id: uuid.v4(),
     ordering: 1,
     stageTemplateId: stages[0].id,
-    title: 'Add your reference images'
+    title: "Add your reference images",
   },
   {
-    assigneeRole: 'DESIGNER',
+    assigneeRole: "DESIGNER",
     description:
-      'If you have specific fabric & trim preferences, let us know (type, weight, content, color, print, or wash)',
-    designPhase: 'POST_CREATION',
+      "If you have specific fabric & trim preferences, let us know (type, weight, content, color, print, or wash)",
+    designPhase: "POST_CREATION",
     id: uuid.v4(),
     ordering: 2,
     stageTemplateId: stages[0].id,
-    title: 'Add your materials'
+    title: "Add your materials",
   },
   {
-    assigneeRole: 'DESIGNER',
+    assigneeRole: "DESIGNER",
     description:
-      'Send over your references for fit, fabric, color, wash, etc. ',
-    designPhase: 'POST_APPROVAL',
+      "Send over your references for fit, fabric, color, wash, etc. ",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 2,
     stageTemplateId: stages[2].id,
-    title: 'Send your reference samples'
+    title: "Send your reference samples",
   },
   {
-    assigneeRole: 'PARTNER',
-    description: 'Let us know you recieved the samples for this design',
-    designPhase: 'POST_APPROVAL',
+    assigneeRole: "PARTNER",
+    description: "Let us know you recieved the samples for this design",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 3,
     stageTemplateId: stages[2].id,
-    title: 'Confirm receipt of reference samples'
+    title: "Confirm receipt of reference samples",
   },
   {
-    assigneeRole: 'CALA',
-    description: 'For reference materials',
-    designPhase: 'POST_APPROVAL',
+    assigneeRole: "CALA",
+    description: "For reference materials",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 0,
     stageTemplateId: stages[2].id,
-    title: 'Create shipping label'
+    title: "Create shipping label",
   },
   {
-    assigneeRole: 'PARTNER',
-    description: 'Set the due date for when the pattern sample will be done',
-    designPhase: 'POST_APPROVAL',
+    assigneeRole: "PARTNER",
+    description: "Set the due date for when the pattern sample will be done",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 0,
     stageTemplateId: stages[3].id,
-    title: 'Create pattern'
+    title: "Create pattern",
   },
   {
-    assigneeRole: 'PARTNER',
-    description: 'Set the due date for when the sample will be done',
-    designPhase: 'POST_APPROVAL',
+    assigneeRole: "PARTNER",
+    description: "Set the due date for when the sample will be done",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 1,
     stageTemplateId: stages[3].id,
-    title: 'Create sample'
+    title: "Create sample",
   },
   {
-    assigneeRole: 'PARTNER',
+    assigneeRole: "PARTNER",
     description:
-      'Capture and upload the front, back, and details on dress form or mannequin',
-    designPhase: 'POST_APPROVAL',
+      "Capture and upload the front, back, and details on dress form or mannequin",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 2,
     stageTemplateId: stages[3].id,
-    title: 'Add photo of completed sample'
+    title: "Add photo of completed sample",
   },
   {
-    assigneeRole: 'CALA',
-    description: 'Make the shipping label for the sample',
-    designPhase: 'POST_APPROVAL',
+    assigneeRole: "CALA",
+    description: "Make the shipping label for the sample",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 3,
     stageTemplateId: stages[3].id,
-    title: 'Create shipping label'
+    title: "Create shipping label",
   },
   {
-    assigneeRole: 'PARTNER',
-    description: 'Confirm the sample was sent',
-    designPhase: 'POST_APPROVAL',
+    assigneeRole: "PARTNER",
+    description: "Confirm the sample was sent",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 4,
     stageTemplateId: stages[3].id,
-    title: 'Send the sample'
+    title: "Send the sample",
   },
   {
-    assigneeRole: 'DESIGNER',
+    assigneeRole: "DESIGNER",
     description:
-      'Tell us how the sample fits. Request changes or approve this sample.',
-    designPhase: 'POST_APPROVAL',
+      "Tell us how the sample fits. Request changes or approve this sample.",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 5,
     stageTemplateId: stages[3].id,
-    title: 'Approve fit of your sample'
+    title: "Approve fit of your sample",
   },
   {
-    assigneeRole: 'DESIGNER',
+    assigneeRole: "DESIGNER",
     description:
-      'Are the materials what you were expecting? Request changes or approve this sample',
-    designPhase: 'POST_APPROVAL',
+      "Are the materials what you were expecting? Request changes or approve this sample",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 6,
     stageTemplateId: stages[3].id,
-    title: "Approve sample's materials"
+    title: "Approve sample's materials",
   },
   {
-    assigneeRole: 'DESIGNER',
+    assigneeRole: "DESIGNER",
     description:
-      'Is the art placed correctly? Does anything look off? Request changes or approve this sample.',
-    designPhase: 'POST_APPROVAL',
+      "Is the art placed correctly? Does anything look off? Request changes or approve this sample.",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 7,
     stageTemplateId: stages[3].id,
-    title: "Approve sample's artwork"
+    title: "Approve sample's artwork",
   },
   {
-    assigneeRole: 'PARTNER',
+    assigneeRole: "PARTNER",
     description:
-      'Make sure you understand all specifications and quantities required for production completion',
-    designPhase: 'POST_APPROVAL',
+      "Make sure you understand all specifications and quantities required for production completion",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 9,
     stageTemplateId: stages[3].id,
-    title: 'Confirm final specs and quantities for production'
+    title: "Confirm final specs and quantities for production",
   },
   {
-    assigneeRole: 'PARTNER',
+    assigneeRole: "PARTNER",
     description:
-      'Tell us how much a fully packed product weighs, so we can calculate shipping',
-    designPhase: 'POST_APPROVAL',
+      "Tell us how much a fully packed product weighs, so we can calculate shipping",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 0,
     stageTemplateId: stages[4].id,
-    title: 'Add final packaged product weight'
+    title: "Add final packaged product weight",
   },
   {
-    assigneeRole: 'PARTNER',
-    description: 'Tell us the per-item tax rate and code for each product',
-    designPhase: 'POST_APPROVAL',
+    assigneeRole: "PARTNER",
+    description: "Tell us the per-item tax rate and code for each product",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 1,
     stageTemplateId: stages[4].id,
-    title: 'Add import tax rate for garment'
+    title: "Add import tax rate for garment",
   },
   {
-    assigneeRole: 'PARTNER',
+    assigneeRole: "PARTNER",
     description:
-      'Add images and annotate details of options for fabric, trim, processes and artwork',
-    designPhase: 'POST_APPROVAL',
+      "Add images and annotate details of options for fabric, trim, processes and artwork",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 4,
     stageTemplateId: stages[2].id,
-    title: 'Add material options for designer review'
+    title: "Add material options for designer review",
   },
   {
-    assigneeRole: 'DESIGNER',
+    assigneeRole: "DESIGNER",
     description:
-      'Tell us any specific measurements and placement for details, trims, or artwork.',
-    designPhase: 'POST_APPROVAL',
+      "Tell us any specific measurements and placement for details, trims, or artwork.",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 0,
     stageTemplateId: stages[1].id,
-    title: 'Add your measurements'
+    title: "Add your measurements",
   },
   {
-    assigneeRole: 'DESIGNER',
+    assigneeRole: "DESIGNER",
     description:
-      'Feel free to markup a sketch to help us understand your vision.',
-    designPhase: 'POST_APPROVAL',
+      "Feel free to markup a sketch to help us understand your vision.",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 1,
     stageTemplateId: stages[1].id,
-    title: 'Add your annotations with construction details'
+    title: "Add your annotations with construction details",
   },
   {
-    assigneeRole: 'DESIGNER',
+    assigneeRole: "DESIGNER",
     description:
-      'Give us your files for prints or patterns (SVG or AI preferred; but we can work with anything).',
-    designPhase: 'POST_APPROVAL',
+      "Give us your files for prints or patterns (SVG or AI preferred; but we can work with anything).",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 2,
     stageTemplateId: stages[1].id,
-    title: 'Upload your artwork '
+    title: "Upload your artwork ",
   },
   {
-    assigneeRole: 'DESIGNER',
+    assigneeRole: "DESIGNER",
     description:
-      'Add a sketch or annotation detailing where you want your brand and/or care labels.',
-    designPhase: 'POST_APPROVAL',
+      "Add a sketch or annotation detailing where you want your brand and/or care labels.",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 3,
     stageTemplateId: stages[1].id,
-    title: 'Add your label placement details'
+    title: "Add your label placement details",
   },
   {
-    assigneeRole: 'DESIGNER',
+    assigneeRole: "DESIGNER",
     description:
-      'Let us know how you want your customer to receive your product.',
-    designPhase: 'POST_APPROVAL',
+      "Let us know how you want your customer to receive your product.",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 4,
     stageTemplateId: stages[1].id,
-    title: 'Add your packaging details'
+    title: "Add your packaging details",
   },
   {
-    assigneeRole: 'DESIGNER',
-    description: 'This is where we will send your samples.',
-    designPhase: 'POST_APPROVAL',
+    assigneeRole: "DESIGNER",
+    description: "This is where we will send your samples.",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 5,
     stageTemplateId: stages[1].id,
-    title: 'Confirm your shipping address'
+    title: "Confirm your shipping address",
   },
   {
-    assigneeRole: 'DESIGNER',
+    assigneeRole: "DESIGNER",
     description:
-      'After this approval, the design cannot change. Production will move forward and cannot be canceled.',
-    designPhase: 'POST_APPROVAL',
+      "After this approval, the design cannot change. Production will move forward and cannot be canceled.",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 8,
     stageTemplateId: stages[3].id,
-    title: 'Final Sample Approval'
+    title: "Final Sample Approval",
   },
   {
-    assigneeRole: 'DESIGNER',
+    assigneeRole: "DESIGNER",
     description:
       "Review materials, processes, and artwork options and approve. If it looks good we'll send you a physical version.",
-    designPhase: 'POST_APPROVAL',
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 5,
     stageTemplateId: stages[2].id,
-    title: 'Review options and provide feedback'
+    title: "Review options and provide feedback",
   },
   {
-    assigneeRole: 'CALA',
-    description: 'For material options for the designer to review',
-    designPhase: 'POST_APPROVAL',
+    assigneeRole: "CALA",
+    description: "For material options for the designer to review",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 6,
     stageTemplateId: stages[2].id,
-    title: 'Create shipping label'
+    title: "Create shipping label",
   },
   {
-    assigneeRole: 'PARTNER',
+    assigneeRole: "PARTNER",
     description: "Confirm that the designer's materials were shipped",
-    designPhase: 'POST_APPROVAL',
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 7,
     stageTemplateId: stages[2].id,
-    title: 'Send material options to designer for review'
+    title: "Send material options to designer for review",
   },
   {
-    assigneeRole: 'PARTNER',
+    assigneeRole: "PARTNER",
     description:
       "Create an 'Approve' task for each item the designer needs to approve",
-    designPhase: 'POST_APPROVAL',
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 8,
     stageTemplateId: stages[2].id,
-    title: 'Create approval tasks for each sourced item'
+    title: "Create approval tasks for each sourced item",
   },
   {
-    assigneeRole: 'DESIGNER',
+    assigneeRole: "DESIGNER",
     description:
-      'Be sure to review and approval all materials, processes, and artwork options for the sample',
-    designPhase: 'POST_APPROVAL',
+      "Be sure to review and approval all materials, processes, and artwork options for the sample",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 9,
     stageTemplateId: stages[2].id,
-    title: 'Complete all approvals'
+    title: "Complete all approvals",
   },
   {
-    assigneeRole: 'DESIGNER',
-    description: 'The default size is Medium',
-    designPhase: 'POST_APPROVAL',
+    assigneeRole: "DESIGNER",
+    description: "The default size is Medium",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 10,
     stageTemplateId: stages[2].id,
-    title: 'What size do you want your sample to be?'
+    title: "What size do you want your sample to be?",
   },
   {
-    assigneeRole: 'PARTNER',
-    description: 'Place order for all materials needed for the sample',
-    designPhase: 'POST_APPROVAL',
+    assigneeRole: "PARTNER",
+    description: "Place order for all materials needed for the sample",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 11,
     stageTemplateId: stages[2].id,
-    title: 'Purchase materials for sample'
+    title: "Purchase materials for sample",
   },
   {
-    assigneeRole: 'CALA',
-    description: 'Make the shipping label for the return of reference items',
-    designPhase: 'POST_APPROVAL',
+    assigneeRole: "CALA",
+    description: "Make the shipping label for the return of reference items",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 2,
     stageTemplateId: stages[4].id,
-    title: 'Create shipping label '
+    title: "Create shipping label ",
   },
   {
-    assigneeRole: 'PARTNER',
+    assigneeRole: "PARTNER",
     description: "Send back the Designer's reference items",
-    designPhase: 'POST_APPROVAL',
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 3,
     stageTemplateId: stages[4].id,
-    title: 'Return reference items'
+    title: "Return reference items",
   },
   {
-    assigneeRole: 'PARTNER',
+    assigneeRole: "PARTNER",
     description:
       "Confirm that you've completed the grading process – if necessary",
-    designPhase: 'POST_APPROVAL',
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 4,
     stageTemplateId: stages[4].id,
-    title: 'Grading complete'
+    title: "Grading complete",
   },
   {
-    assigneeRole: 'PARTNER',
+    assigneeRole: "PARTNER",
     description:
-      'Add the date you expect the materials to arrive and be ready for production',
-    designPhase: 'POST_APPROVAL',
+      "Add the date you expect the materials to arrive and be ready for production",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 5,
     stageTemplateId: stages[4].id,
-    title: 'Purchase raw materials for production'
+    title: "Purchase raw materials for production",
   },
   {
-    assigneeRole: 'PARTNER',
+    assigneeRole: "PARTNER",
     description:
-      'Make sure you account for all fabric, trims, labels, and packaging',
-    designPhase: 'POST_APPROVAL',
+      "Make sure you account for all fabric, trims, labels, and packaging",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 6,
     stageTemplateId: stages[4].id,
-    title: 'Confirm receipt of all production materials'
+    title: "Confirm receipt of all production materials",
   },
   {
-    assigneeRole: 'PARTNER',
+    assigneeRole: "PARTNER",
     description:
-      'Barcode stickers should be placed on outside of final packaging once products are complete',
-    designPhase: 'POST_APPROVAL',
+      "Barcode stickers should be placed on outside of final packaging once products are complete",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 7,
     stageTemplateId: stages[4].id,
-    title: 'Print barcode stickers'
+    title: "Print barcode stickers",
   },
   {
-    assigneeRole: 'PARTNER',
+    assigneeRole: "PARTNER",
     description:
-      'Set the due date of this task for when production will be done',
-    designPhase: 'POST_APPROVAL',
+      "Set the due date of this task for when production will be done",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 8,
     stageTemplateId: stages[4].id,
-    title: 'Determine production completetion date'
+    title: "Determine production completetion date",
   },
   {
-    assigneeRole: 'DESIGNER',
+    assigneeRole: "DESIGNER",
     description:
       "This is where we'll send your completed order if you're not using our fulfillment service",
-    designPhase: 'POST_APPROVAL',
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 9,
     stageTemplateId: stages[4].id,
-    title: 'Confirm final delivery address'
+    title: "Confirm final delivery address",
   },
   {
-    assigneeRole: 'CALA',
-    description: 'HTS codes, quantities, cost. ',
-    designPhase: 'POST_APPROVAL',
+    assigneeRole: "CALA",
+    description: "HTS codes, quantities, cost. ",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 10,
     stageTemplateId: stages[4].id,
-    title: 'Generate commecial invoice'
+    title: "Generate commecial invoice",
   },
   {
-    assigneeRole: 'CALA',
-    description: 'Style names, SKUs, barcodes, quantity per cartons',
-    designPhase: 'POST_APPROVAL',
+    assigneeRole: "CALA",
+    description: "Style names, SKUs, barcodes, quantity per cartons",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 11,
     stageTemplateId: stages[4].id,
-    title: 'Generate production packing list'
+    title: "Generate production packing list",
   },
   {
-    assigneeRole: 'PARTNER',
+    assigneeRole: "PARTNER",
     description: "Confirm that you've completed the quality report",
-    designPhase: 'POST_APPROVAL',
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 0,
     stageTemplateId: stages[5].id,
-    title: 'Submit quality report'
+    title: "Submit quality report",
   },
   {
-    assigneeRole: 'CALA',
-    description: 'Make sure everything is ready for shipment',
-    designPhase: 'POST_APPROVAL',
+    assigneeRole: "CALA",
+    description: "Make sure everything is ready for shipment",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 1,
     stageTemplateId: stages[5].id,
-    title: 'Complete QA inspection'
+    title: "Complete QA inspection",
   },
   {
-    assigneeRole: 'PARTNER',
+    assigneeRole: "PARTNER",
     description:
-      'Confirm that garment is properly inspected and meets quality criteria',
-    designPhase: 'POST_APPROVAL',
+      "Confirm that garment is properly inspected and meets quality criteria",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 2,
     stageTemplateId: stages[5].id,
-    title: 'Final inspection'
+    title: "Final inspection",
   },
   {
-    assigneeRole: 'PARTNER',
+    assigneeRole: "PARTNER",
     description:
-      'All shipped units must match the quantities confirmed for production',
-    designPhase: 'POST_APPROVAL',
+      "All shipped units must match the quantities confirmed for production",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 3,
     stageTemplateId: stages[5].id,
-    title: 'Confirm packing list'
+    title: "Confirm packing list",
   },
   {
-    assigneeRole: 'PARTNER',
-    description: 'Put garment in garment bags and place barcode stickers',
-    designPhase: 'POST_APPROVAL',
+    assigneeRole: "PARTNER",
+    description: "Put garment in garment bags and place barcode stickers",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 4,
     stageTemplateId: stages[5].id,
-    title: 'Complete product packing'
+    title: "Complete product packing",
   },
   {
-    assigneeRole: 'PARTNER',
-    description: 'Confirm that barcode stickers are properly placed',
-    designPhase: 'POST_APPROVAL',
+    assigneeRole: "PARTNER",
+    description: "Confirm that barcode stickers are properly placed",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 5,
     stageTemplateId: stages[5].id,
-    title: 'Barcode stickers applied'
+    title: "Barcode stickers applied",
   },
   {
-    assigneeRole: 'PARTNER',
+    assigneeRole: "PARTNER",
     description:
-      'Let us know when the shipment is ready. Give at least 72 hours notice.',
-    designPhase: 'POST_APPROVAL',
+      "Let us know when the shipment is ready. Give at least 72 hours notice.",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 6,
     stageTemplateId: stages[5].id,
-    title: 'Notify CALA when shipment is ready'
+    title: "Notify CALA when shipment is ready",
   },
   {
-    assigneeRole: 'CALA',
-    description: 'Send forwarder the commercial invoice and packing list',
-    designPhase: 'POST_APPROVAL',
+    assigneeRole: "CALA",
+    description: "Send forwarder the commercial invoice and packing list",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 7,
     stageTemplateId: stages[5].id,
-    title: 'Notify freight forwarder'
+    title: "Notify freight forwarder",
   },
   {
-    assigneeRole: 'PARTNER',
-    description: 'Tell us your estimated delivery date',
-    designPhase: 'POST_APPROVAL',
+    assigneeRole: "PARTNER",
+    description: "Tell us your estimated delivery date",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 8,
     stageTemplateId: stages[5].id,
-    title: 'Confirm goods have been shipped'
+    title: "Confirm goods have been shipped",
   },
   {
-    assigneeRole: 'DESIGNER',
-    description: 'Let us know that you received your order',
-    designPhase: 'POST_APPROVAL',
+    assigneeRole: "DESIGNER",
+    description: "Let us know that you received your order",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 9,
     stageTemplateId: stages[5].id,
-    title: 'Confirm receipt of products'
+    title: "Confirm receipt of products",
   },
   {
-    assigneeRole: 'CALA',
-    description: 'Create Bill of Lading ',
-    designPhase: 'POST_APPROVAL',
+    assigneeRole: "CALA",
+    description: "Create Bill of Lading ",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 0,
     stageTemplateId: stages[6].id,
-    title: 'BOL generated'
+    title: "BOL generated",
   },
   {
-    assigneeRole: 'CALA',
-    description: 'Confirm that Bill of Lading was sent to fulfillment',
-    designPhase: 'POST_APPROVAL',
+    assigneeRole: "CALA",
+    description: "Confirm that Bill of Lading was sent to fulfillment",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 1,
     stageTemplateId: stages[6].id,
-    title: 'BOL uploaded to fulfillment partner'
+    title: "BOL uploaded to fulfillment partner",
   },
   {
-    assigneeRole: 'CALA',
-    description: 'Let us know that you received your order',
-    designPhase: 'POST_APPROVAL',
+    assigneeRole: "CALA",
+    description: "Let us know that you received your order",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 2,
     stageTemplateId: stages[6].id,
-    title: 'Confirm products received'
+    title: "Confirm products received",
   },
   {
-    assigneeRole: 'CALA',
+    assigneeRole: "CALA",
     description:
-      'Let us know that everything is ready for consumers to purchase.',
-    designPhase: 'POST_APPROVAL',
+      "Let us know that everything is ready for consumers to purchase.",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 3,
     stageTemplateId: stages[6].id,
-    title: 'Confirm inventory is online and ready'
+    title: "Confirm inventory is online and ready",
   },
   {
-    assigneeRole: 'PARTNER',
+    assigneeRole: "PARTNER",
     description:
-      'Review material specifications and submissions. Request further info if something is missing.',
-    designPhase: 'POST_APPROVAL',
+      "Review material specifications and submissions. Request further info if something is missing.",
+    designPhase: "POST_APPROVAL",
     id: uuid.v4(),
     ordering: 1,
     stageTemplateId: stages[2].id,
-    title: 'Review material specifications'
-  }
+    title: "Review material specifications",
+  },
 ];
 /*tslint:enable:max-line-length*/
 
@@ -618,12 +618,10 @@ insertTaskAndStageTemplates()
     log(`${green}Successfully inserted!`);
     process.exit();
   })
-  .catch(
-    (err: any): void => {
-      log(`${red}ERROR:\n${reset}`, err);
-      process.exit(1);
-    }
-  );
+  .catch((err: any): void => {
+    log(`${red}ERROR:\n${reset}`, err);
+    process.exit(1);
+  });
 
 async function insertTaskAndStageTemplates(): Promise<void> {
   const expectedCount = stages.length + tasks.length;
@@ -631,10 +629,10 @@ async function insertTaskAndStageTemplates(): Promise<void> {
   return db.transaction(async (trx: Knex.Transaction) => {
     const stagesInserted = await trx
       .insert(stages.map(stageDataAdapter.forInsertion.bind(stageDataAdapter)))
-      .into('stage_templates');
+      .into("stage_templates");
     const tasksInserted = await trx
       .insert(tasks.map(taskDataAdapter.forInsertion.bind(taskDataAdapter)))
-      .into('task_templates');
+      .into("task_templates");
     const rowCount = stagesInserted.rowCount + tasksInserted.rowCount;
 
     if (rowCount !== expectedCount) {

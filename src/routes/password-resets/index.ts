@@ -1,9 +1,9 @@
-import Router from 'koa-router';
+import Router from "koa-router";
 
-import SessionsDAO from '../../dao/sessions';
-import * as UsersDAO from '../../components/users/dao';
-import passwordReset from '../../emails/password-reset';
-import { sendSynchronouslyDeprecated } from '../../services/email';
+import SessionsDAO from "../../dao/sessions";
+import * as UsersDAO from "../../components/users/dao";
+import passwordReset from "../../emails/password-reset";
+import { sendSynchronouslyDeprecated } from "../../services/email";
 
 const router = new Router();
 
@@ -20,28 +20,28 @@ function* sendReset(
   const { email } = this.request.body;
 
   if (!email) {
-    this.throw(400, 'Missing required information');
+    this.throw(400, "Missing required information");
   }
 
   const user = yield UsersDAO.findByEmail(email);
-  this.assert(user, 400, 'User not found');
+  this.assert(user, 400, "User not found");
 
   const session = yield SessionsDAO.createForUser(user);
 
   const emailTemplate = passwordReset({
     sessionId: session.id,
-    name: user.name
+    name: user.name,
   });
 
   yield sendSynchronouslyDeprecated(
     user.email,
-    'CALA Password Reset',
+    "CALA Password Reset",
     emailTemplate
   );
 
   this.status = 204;
 }
 
-router.post('/', sendReset);
+router.post("/", sendReset);
 
 export = router.routes();

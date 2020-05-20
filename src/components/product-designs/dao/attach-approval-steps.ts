@@ -1,12 +1,12 @@
-import Knex from 'knex';
+import Knex from "knex";
 
-import db from '../../../services/db';
+import db from "../../../services/db";
 
 export default function attachApprovalSteps(
   query: Knex.QueryBuilder
 ): Knex.QueryBuilder {
   return query
-    .select(['step_result.approval_steps as approval_steps'])
+    .select(["step_result.approval_steps as approval_steps"])
     .leftJoin(
       db.raw(`
     (
@@ -20,5 +20,5 @@ export default function attachApprovalSteps(
     on step_result.design_id = product_designs.id
       `)
     )
-    .groupBy(['step_result.design_id', 'step_result.approval_steps']);
+    .groupBy(["step_result.design_id", "step_result.approval_steps"]);
 }

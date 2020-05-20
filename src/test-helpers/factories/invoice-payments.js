@@ -1,19 +1,19 @@
-'use strict';
+"use strict";
 
-const db = require('../../services/db');
-const createUser = require('../create-user');
-const generateCollection = require('./collection').default;
-const PaymentMethodsDAO = require('../../components/payment-methods/dao');
-const InvoicesDAO = require('../../dao/invoices');
-const InvoicePaymentsDAO = require('../../components/invoice-payments/dao');
+const db = require("../../services/db");
+const createUser = require("../create-user");
+const generateCollection = require("./collection").default;
+const PaymentMethodsDAO = require("../../components/payment-methods/dao");
+const InvoicesDAO = require("../../dao/invoices");
+const InvoicePaymentsDAO = require("../../components/invoice-payments/dao");
 
 async function createInvoicesWithPayments() {
   const { user } = await createUser({ withSession: false });
   const paymentMethod = await PaymentMethodsDAO.create({
     userId: user.id,
-    stripeCustomerId: 'stripe-test-user',
-    stripeSourceId: 'stripe-test-source',
-    lastFourDigits: 1111
+    stripeCustomerId: "stripe-test-user",
+    stripeSourceId: "stripe-test-source",
+    lastFourDigits: 1111,
   });
   const { collection } = await generateCollection();
   const { collection: collection2 } = await generateCollection();
@@ -23,33 +23,33 @@ async function createInvoicesWithPayments() {
   let createdInvoices;
   let createdPayments;
 
-  await db.transaction(async trx => {
+  await db.transaction(async (trx) => {
     createdInvoices = await Promise.all([
       InvoicesDAO.createTrx(trx, {
         collectionId: collection.id,
         totalCents: 1234,
-        title: 'My Development Invoice'
+        title: "My Development Invoice",
       }),
       InvoicesDAO.createTrx(trx, {
         collectionId: collection.id,
         totalCents: 4321,
-        title: 'My Pre-production Invoice'
+        title: "My Pre-production Invoice",
       }),
       InvoicesDAO.createTrx(trx, {
         collectionId: collection2.id,
         totalCents: 3214,
-        title: 'My Development Invoice'
+        title: "My Development Invoice",
       }),
       InvoicesDAO.createTrx(trx, {
         collectionId: collection2.id,
         totalCents: 3214,
-        title: 'My Development Invoice'
+        title: "My Development Invoice",
       }),
       InvoicesDAO.createTrx(trx, {
         collectionId: collection2.id,
         totalCents: 3214,
-        title: 'My Development Invoice'
-      })
+        title: "My Development Invoice",
+      }),
     ]);
 
     createdPayments = await Promise.all([
@@ -57,14 +57,14 @@ async function createInvoicesWithPayments() {
         invoiceId: createdInvoices[0].id,
         totalCents: createdInvoices[0].totalCents,
         paymentMethodId: paymentMethod.id,
-        stripeChargeId: 'test-stripe-charge'
+        stripeChargeId: "test-stripe-charge",
       }),
       InvoicePaymentsDAO.createTrx(trx, {
         invoiceId: createdInvoices[1].id,
         totalCents: 100,
         paymentMethodId: paymentMethod.id,
-        stripeChargeId: 'test-stripe-charge-2'
-      })
+        stripeChargeId: "test-stripe-charge-2",
+      }),
     ]);
   });
 
@@ -73,7 +73,7 @@ async function createInvoicesWithPayments() {
     collections: [collection, collection2],
     paymentMethod,
     createdInvoices,
-    createdPayments
+    createdPayments,
   };
 }
 
@@ -81,9 +81,9 @@ async function createInvoicesWithOverPayments() {
   const { user } = await createUser({ withSession: false });
   const paymentMethod = await PaymentMethodsDAO.create({
     userId: user.id,
-    stripeCustomerId: 'stripe-test-user',
-    stripeSourceId: 'stripe-test-source',
-    lastFourDigits: 1111
+    stripeCustomerId: "stripe-test-user",
+    stripeSourceId: "stripe-test-source",
+    lastFourDigits: 1111,
   });
   const { collection } = await generateCollection();
   const { collection: collection2 } = await generateCollection();
@@ -93,33 +93,33 @@ async function createInvoicesWithOverPayments() {
   let createdInvoices;
   let createdPayments;
 
-  await db.transaction(async trx => {
+  await db.transaction(async (trx) => {
     createdInvoices = await Promise.all([
       InvoicesDAO.createTrx(trx, {
         collectionId: collection.id,
         totalCents: 1234,
-        title: 'My Development Invoice'
+        title: "My Development Invoice",
       }),
       InvoicesDAO.createTrx(trx, {
         collectionId: collection.id,
         totalCents: 4321,
-        title: 'My Pre-production Invoice'
+        title: "My Pre-production Invoice",
       }),
       InvoicesDAO.createTrx(trx, {
         collectionId: collection2.id,
         totalCents: 3214,
-        title: 'My Development Invoice'
+        title: "My Development Invoice",
       }),
       InvoicesDAO.createTrx(trx, {
         collectionId: collection2.id,
         totalCents: 3214,
-        title: 'My Development Invoice'
+        title: "My Development Invoice",
       }),
       InvoicesDAO.createTrx(trx, {
         collectionId: collection2.id,
         totalCents: 3214,
-        title: 'My Development Invoice'
-      })
+        title: "My Development Invoice",
+      }),
     ]);
 
     createdPayments = await Promise.all([
@@ -127,14 +127,14 @@ async function createInvoicesWithOverPayments() {
         invoiceId: createdInvoices[0].id,
         totalCents: createdInvoices[0].totalCents + 1000,
         paymentMethodId: paymentMethod.id,
-        stripeChargeId: 'test-stripe-charge'
+        stripeChargeId: "test-stripe-charge",
       }),
       InvoicePaymentsDAO.createTrx(trx, {
         invoiceId: createdInvoices[1].id,
         totalCents: 100,
         paymentMethodId: paymentMethod.id,
-        stripeChargeId: 'test-stripe-charge-2'
-      })
+        stripeChargeId: "test-stripe-charge-2",
+      }),
     ]);
   });
 
@@ -143,11 +143,11 @@ async function createInvoicesWithOverPayments() {
     collections: [collection, collection2],
     paymentMethod,
     createdInvoices,
-    createdPayments
+    createdPayments,
   };
 }
 
 module.exports = {
   createInvoicesWithPayments,
-  createInvoicesWithOverPayments
+  createInvoicesWithOverPayments,
 };

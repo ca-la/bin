@@ -1,10 +1,10 @@
-import process from 'process';
+import process from "process";
 
-import * as CreditsDAO from '../components/credits/dao';
-import db from '../services/db';
-import { CALA_OPS_USER_ID } from '../config';
-import { green, reset } from '../services/colors';
-import { log, logServerError } from '../services/logger';
+import * as CreditsDAO from "../components/credits/dao";
+import db from "../services/db";
+import { CALA_OPS_USER_ID } from "../config";
+import { green, reset } from "../services/colors";
+import { log, logServerError } from "../services/logger";
 
 // Brings the credit amount of users in a given cohort all up to a minimum
 // level.
@@ -18,12 +18,10 @@ run()
     log(`${green}Successfully credited users!`);
     process.exit();
   })
-  .catch(
-    (err: any): void => {
-      logServerError(err);
-      process.exit(1);
-    }
-  );
+  .catch((err: any): void => {
+    logServerError(err);
+    process.exit(1);
+  });
 
 async function run(): Promise<void> {
   const cohortId = process.argv[2];
@@ -31,16 +29,17 @@ async function run(): Promise<void> {
 
   if (!cohortId || !creditAmountString) {
     throw new Error(
-      'Usage: top-off-cohort-credits.ts [cohortId] [amount in cents]'
+      "Usage: top-off-cohort-credits.ts [cohortId] [amount in cents]"
     );
   }
 
   const creditAmountCents = Number(creditAmountString);
 
-  const { rows: cohortUsers } = await db.raw(
-    'select * from cohort_users where cohort_id = ?',
-    [cohortId]
-  );
+  const {
+    rows: cohortUsers,
+  } = await db.raw("select * from cohort_users where cohort_id = ?", [
+    cohortId,
+  ]);
 
   log(green, `Found ${cohortUsers.length} users in cohort ${cohortId}`, reset);
 
@@ -58,13 +57,13 @@ async function run(): Promise<void> {
       await CreditsDAO.addCredit({
         amountCents: amountToAdd,
         createdBy: CALA_OPS_USER_ID,
-        description: 'Manual credit grant',
+        description: "Manual credit grant",
         expiresAt: null,
-        givenTo: userId
+        givenTo: userId,
       });
-      log(green, 'Done!', reset);
+      log(green, "Done!", reset);
     } else {
-      log(green, 'No more credits needed, skipping', reset);
+      log(green, "No more credits needed, skipping", reset);
     }
   }
 }

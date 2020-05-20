@@ -1,10 +1,10 @@
-import Knex from 'knex';
-import uuid from 'node-uuid';
-import { sortedIndexBy } from 'lodash';
+import Knex from "knex";
+import uuid from "node-uuid";
+import { sortedIndexBy } from "lodash";
 
-import db from '../../services/db';
+import db from "../../services/db";
 
-const TABLE_NAME = 'credit_transactions';
+const TABLE_NAME = "credit_transactions";
 
 interface CreditOptions {
   description: string;
@@ -52,9 +52,9 @@ export async function addCredit(
         description: options.description,
         expires_at: options.expiresAt,
         given_to: options.givenTo,
-        id: uuid.v4()
+        id: uuid.v4(),
       },
-      '*'
+      "*"
     )
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
@@ -89,9 +89,8 @@ export async function removeCredit(
 
   if (amountCents > availableAmount) {
     throw new Error(
-      `Cannot remove ${amountCents} cents of credit from user ${
-        options.givenTo
-      }; ` + `they only have ${availableAmount} available`
+      `Cannot remove ${amountCents} cents of credit from user ${options.givenTo}; ` +
+        `they only have ${availableAmount} available`
     );
   }
 
@@ -103,9 +102,9 @@ export async function removeCredit(
         credit_delta_cents: -1 * amountCents,
         description: options.description,
         given_to: options.givenTo,
-        id: uuid.v4()
+        id: uuid.v4(),
       },
-      '*'
+      "*"
     )
     .transacting(trx);
 }
@@ -116,7 +115,7 @@ export async function getCreditAmount(
 ): Promise<number> {
   const records = await db(TABLE_NAME)
     .where({ given_to: userId })
-    .orderBy('created_at', 'asc')
+    .orderBy("created_at", "asc")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);

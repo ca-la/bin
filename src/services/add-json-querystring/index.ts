@@ -1,4 +1,4 @@
-import qs from 'querystring';
+import qs from "querystring";
 
 export function addJson<T extends object>(
   queryKey: string,

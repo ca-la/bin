@@ -1,15 +1,15 @@
-import Knex from 'knex';
-import { first } from 'lodash';
+import Knex from "knex";
+import { first } from "lodash";
 
-import db from '../../services/db';
+import db from "../../services/db";
 import MonthlySalesReport, {
   dataAdapter,
   isMonthlySalesReportRow,
-  MonthlySalesReportRow
-} from './domain-object';
-import { validate } from '../../services/validate-from-db';
+  MonthlySalesReportRow,
+} from "./domain-object";
+import { validate } from "../../services/validate-from-db";
 
-const TABLE_NAME = 'monthly_sales_reports';
+const TABLE_NAME = "monthly_sales_reports";
 
 export async function create(
   data: Uninserted<MonthlySalesReport>,
@@ -18,7 +18,7 @@ export async function create(
   const rowData = dataAdapter.forInsertion(data);
 
   const result = await trx(TABLE_NAME)
-    .insert(rowData, '*')
+    .insert(rowData, "*")
     .then((rows: MonthlySalesReportRow[]) => first(rows));
 
   return validate<MonthlySalesReportRow, MonthlySalesReport>(

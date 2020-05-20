@@ -1,29 +1,29 @@
-'use strict';
+"use strict";
 
-const Router = require('koa-router');
-const pick = require('lodash/pick');
+const Router = require("koa-router");
+const pick = require("lodash/pick");
 
-const filterError = require('../../services/filter-error');
-const deserializeQuery = require('../../services/deserialize-query');
-const InvalidDataError = require('../../errors/invalid-data');
-const ProductDesignImagesDAO = require('../../components/assets/dao');
-const ProductDesignOptionsDAO = require('../../dao/product-design-options');
-const requireAuth = require('../../middleware/require-auth');
+const filterError = require("../../services/filter-error");
+const deserializeQuery = require("../../services/deserialize-query");
+const InvalidDataError = require("../../errors/invalid-data");
+const ProductDesignImagesDAO = require("../../components/assets/dao");
+const ProductDesignOptionsDAO = require("../../dao/product-design-options");
+const requireAuth = require("../../middleware/require-auth");
 
 const router = new Router();
 
 const ALLOWED_ATTRS = [
-  'patternImageId',
-  'perMeterCostCents',
-  'preferredLengthUnit',
-  'preferredWeightUnit',
-  'previewImageId',
-  'sku',
-  'title',
-  'type',
-  'unitCostCents',
-  'vendorName',
-  'weightGsm'
+  "patternImageId",
+  "perMeterCostCents",
+  "preferredLengthUnit",
+  "preferredWeightUnit",
+  "previewImageId",
+  "sku",
+  "title",
+  "type",
+  "unitCostCents",
+  "vendorName",
+  "weightGsm",
 ];
 
 function attachImages(option) {
@@ -32,13 +32,13 @@ function attachImages(option) {
   if (option.previewImageId) {
     attaching = attaching
       .then(() => ProductDesignImagesDAO.findById(option.previewImageId))
-      .then(previewImage => option.setPreviewImage(previewImage));
+      .then((previewImage) => option.setPreviewImage(previewImage));
   }
 
   if (option.patternImageId) {
     attaching = attaching
       .then(() => ProductDesignImagesDAO.findById(option.patternImageId))
-      .then(patternImage => option.setPatternImage(patternImage));
+      .then((patternImage) => option.setPatternImage(patternImage));
   }
 
   return attaching.then(() => option);
@@ -47,7 +47,7 @@ function attachImages(option) {
 function* canModifyOption(next) {
   const option = yield ProductDesignOptionsDAO.findById(
     this.params.optionId
-  ).catch(filterError(InvalidDataError, err => this.throw(404, err)));
+  ).catch(filterError(InvalidDataError, (err) => this.throw(404, err)));
 
   this.assert(option, 404);
 
@@ -59,14 +59,14 @@ function* canModifyOption(next) {
 }
 
 function* create() {
-  const allowedAttrs = pick(this.request.body, ALLOWED_ATTRS, 'id');
+  const allowedAttrs = pick(this.request.body, ALLOWED_ATTRS, "id");
 
   const attrs = Object.assign({}, allowedAttrs, {
-    userId: this.state.userId
+    userId: this.state.userId,
   });
 
   const option = yield ProductDesignOptionsDAO.create(attrs).catch(
-    filterError(InvalidDataError, err => this.throw(404, err))
+    filterError(InvalidDataError, (err) => this.throw(404, err))
   );
 
   this.body = yield attachImages(option);
@@ -80,13 +80,13 @@ function* getList() {
       { limit: null, offset: null, search: null },
       { limit: Number, offset: Number },
       {
-        limit: n => !Number.isNaN(n),
-        offset: n => !Number.isNaN(n)
+        limit: (n) => !Number.isNaN(n),
+        offset: (n) => !Number.isNaN(n),
       },
       {
         limit: this.query.limit,
         offset: this.query.offset,
-        search: this.query.search
+        search: this.query.search,
       }
     )
   );
@@ -121,10 +121,10 @@ function* update() {
   this.status = 200;
 }
 
-router.post('/', requireAuth, create);
-router.get('/', requireAuth, getList);
-router.get('/:optionId', requireAuth, getById);
-router.del('/:optionId', requireAuth, canModifyOption, deleteOption);
-router.patch('/:optionId', requireAuth, canModifyOption, update);
+router.post("/", requireAuth, create);
+router.get("/", requireAuth, getList);
+router.get("/:optionId", requireAuth, getById);
+router.del("/:optionId", requireAuth, canModifyOption, deleteOption);
+router.patch("/:optionId", requireAuth, canModifyOption, update);
 
 module.exports = router.routes();

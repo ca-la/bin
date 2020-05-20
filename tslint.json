@@ -18,6 +18,7 @@
         "named-imports-order": "any"
       }
     ],
+    "space-before-function-paren": [false],
     "trailing-comma": [false],
     "variable-name": [
       true,

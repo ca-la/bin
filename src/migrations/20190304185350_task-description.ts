@@ -1,4 +1,4 @@
-import Knex from 'knex';
+import Knex from "knex";
 
 // Copied almost verbatim from `20190129170809_add-image-ids-to-detail-tasks.ts`,
 // but updated to use the correct `images` table instead of the old

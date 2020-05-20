@@ -1,37 +1,37 @@
-import PricingProcess from '../../domain-objects/pricing-process';
-import uuid from 'node-uuid';
-import { map, omit } from 'lodash';
-import sum from '../sum';
+import PricingProcess from "../../domain-objects/pricing-process";
+import uuid from "node-uuid";
+import { map, omit } from "lodash";
+import sum from "../sum";
 import {
   create,
   createPricingProcesses,
   findLatestValuesForRequest,
   findMatchingOrCreateInput,
-  findVersionValuesForRequest
-} from '../../dao/pricing-quotes';
+  findVersionValuesForRequest,
+} from "../../dao/pricing-quotes";
 import {
   PricingProcessQuoteRow,
   PricingQuote,
   PricingQuoteRequest,
   PricingQuoteRequestWithVersions,
   PricingQuoteRow,
-  PricingQuoteValues
-} from '../../domain-objects/pricing-quote';
-import { Complexity, ProductType } from '../../domain-objects/pricing';
-import Knex from 'knex';
-import * as PricingCostInputsDAO from '../../components/pricing-cost-inputs/dao';
-import * as DesignEventsDAO from '../../dao/design-events';
-import PricingCostInputs from '../../components/pricing-cost-inputs/domain-object';
-import DataAdapter from '../data-adapter';
-import addMargin from '../add-margin';
-import ApprovalStepsDAO from '../../components/approval-steps/dao';
+  PricingQuoteValues,
+} from "../../domain-objects/pricing-quote";
+import { Complexity, ProductType } from "../../domain-objects/pricing";
+import Knex from "knex";
+import * as PricingCostInputsDAO from "../../components/pricing-cost-inputs/dao";
+import * as DesignEventsDAO from "../../dao/design-events";
+import PricingCostInputs from "../../components/pricing-cost-inputs/domain-object";
+import DataAdapter from "../data-adapter";
+import addMargin from "../add-margin";
+import ApprovalStepsDAO from "../../components/approval-steps/dao";
 import ApprovalStep, {
-  ApprovalStepType
-} from '../../components/approval-steps/types';
+  ApprovalStepType,
+} from "../../components/approval-steps/types";
 
 export type UnsavedQuote = Omit<
   PricingQuote,
-  'id' | 'createdAt' | 'pricingQuoteInputId' | 'processes'
+  "id" | "createdAt" | "pricingQuoteInputId" | "processes"
 >;
 
 export async function generateUnsavedQuote(
@@ -78,7 +78,7 @@ async function getQuoteInput(values: PricingQuoteValues): Promise<string> {
     pricing_process_timeline_id:
       values.processTimeline && values.processTimeline.id,
     product_material_id: values.material.id,
-    product_type_id: values.type.id
+    product_type_id: values.type.id,
   };
   const pricingQuoteInputRow = await findMatchingOrCreateInput(
     pricingQuoteInput
@@ -91,8 +91,8 @@ function calculateQuote(
   request: PricingQuoteRequest | PricingQuoteRequestWithVersions,
   values: PricingQuoteValues
 ): UnsavedQuote {
-  const SKIP_DEVELOPMENT_COST_COMPLEXITIES: Complexity[] = ['BLANK'];
-  const SKIP_BASE_COST_PRODUCT_TYPES: ProductType[] = ['PACKAGING'];
+  const SKIP_DEVELOPMENT_COST_COMPLEXITIES: Complexity[] = ["BLANK"];
+  const SKIP_BASE_COST_PRODUCT_TYPES: ProductType[] = ["PACKAGING"];
 
   const chargeBaseCosts = !SKIP_BASE_COST_PRODUCT_TYPES.includes(
     request.productType
@@ -113,7 +113,7 @@ function calculateQuote(
       calculateMaterialCents(values),
       request.materialBudgetCents || 0
     ),
-    processCostCents: calculateProcessCents(units, values)
+    processCostCents: calculateProcessCents(units, values),
   };
 
   const {
@@ -123,7 +123,7 @@ function calculateQuote(
     samplingTimeMs,
     preProductionTimeMs,
     productionTimeMs,
-    fulfillmentTimeMs
+    fulfillmentTimeMs,
   } = values.type;
   const processTimeMs = values.processTimeline
     ? values.processTimeline.timeMs
@@ -136,15 +136,15 @@ function calculateQuote(
   );
   const unitCostCents = addMargin(beforeMargin, values.margin.margin / 100);
   const filteredRequest = omit(request, [
-    'processes',
-    'processesVersion',
-    'processTimelinesVersion',
-    'productTypeVersion',
-    'productMaterialsVersion',
-    'constantsVersion',
-    'careLabelsVersion',
-    'marginVersion'
-  ]) as Omit<PricingQuoteRequest, 'processes'>;
+    "processes",
+    "processesVersion",
+    "processTimelinesVersion",
+    "productTypeVersion",
+    "productMaterialsVersion",
+    "constantsVersion",
+    "careLabelsVersion",
+    "marginVersion",
+  ]) as Omit<PricingQuoteRequest, "processes">;
 
   return {
     ...filteredRequest,
@@ -157,7 +157,7 @@ function calculateQuote(
     samplingTimeMs,
     sourcingTimeMs,
     specificationTimeMs,
-    unitCostCents
+    unitCostCents,
   };
 }
 
@@ -171,13 +171,13 @@ function calculateQuoteAndProcesses(
 } {
   const adapter = new DataAdapter<
     PricingQuoteRow,
-    Omit<PricingQuote, 'processes'>
+    Omit<PricingQuote, "processes">
   >();
   const quote: Uninserted<PricingQuoteRow> = adapter.forInsertion(
     Object.assign(
       {
         id: uuid.v4(),
-        pricingQuoteInputId
+        pricingQuoteInputId,
       },
       calculateQuote(request, values)
     )
@@ -196,7 +196,7 @@ function toPricingProcessQuoteRow(
   return {
     id: uuid.v4(),
     pricing_process_id: process.id,
-    pricing_quote_id: quote.id
+    pricing_quote_id: quote.id,
   };
 }
 
@@ -216,7 +216,7 @@ function calculateBaseUnitCost(
       values.brandedLabelsMinimumCents / units,
       brandedLabelAdditionalCents / units,
       values.careLabel.unitCents,
-      values.technicalDesignCents / units
+      values.technicalDesignCents / units,
     ])
   );
 }
@@ -227,7 +227,7 @@ function calculateMaterialCents(values: PricingQuoteValues): number {
   return Math.ceil(
     sum([
       categoryCents * values.type.yield,
-      categoryCents * values.type.contrast
+      categoryCents * values.type.contrast,
     ])
   );
 }
@@ -244,7 +244,7 @@ function calculateProcessCents(
           (process: PricingProcess): number => process.setupCents / units
         )
       ),
-      sum(map(values.processes, 'unitCents'))
+      sum(map(values.processes, "unitCents")),
     ])
   );
 }
@@ -264,7 +264,7 @@ function calculateDevelopmentCosts(
     values.gradingCents,
     values.markingCents,
     sampleCents,
-    patternCents
+    patternCents,
   ]);
 
   return Math.ceil(developmentCents / units);
@@ -292,23 +292,23 @@ export async function generateFromPayloadAndUser(
     );
 
     if (!checkoutStep) {
-      throw new Error('Could not find checkout step for collection submission');
+      throw new Error("Could not find checkout step for collection submission");
     }
 
     const costInputs: PricingCostInputs[] = await PricingCostInputsDAO.findByDesignId(
       {
         designId,
-        trx
+        trx,
       }
     );
 
     if (costInputs.length === 0) {
-      throw new Error('No costing inputs associated with design ID');
+      throw new Error("No costing inputs associated with design ID");
     }
 
     const quoteRequest: PricingQuoteRequestWithVersions = {
-      ...omit(costInputs[0], ['id', 'createdAt', 'deletedAt', 'expiresAt']),
-      units: unitsNumber
+      ...omit(costInputs[0], ["id", "createdAt", "deletedAt", "expiresAt"]),
+      units: unitsNumber,
     };
 
     const quote = await generatePricingQuote(quoteRequest, trx);
@@ -325,7 +325,7 @@ export async function generateFromPayloadAndUser(
       id: uuid.v4(),
       quoteId: quote.id,
       targetId: null,
-      type: 'COMMIT_QUOTE'
+      type: "COMMIT_QUOTE",
     });
   }
 

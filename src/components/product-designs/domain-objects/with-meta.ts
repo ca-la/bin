@@ -2,19 +2,19 @@ import {
   dataAdapter as baseDataAdapter,
   isProductDesignRow,
   ProductDesignData,
-  ProductDesignRow
-} from './product-designs-new';
+  ProductDesignRow,
+} from "./product-designs-new";
 import DesignEvent, {
   dataAdapter as eventDataAdapter,
-  DesignEventRow
-} from '../../../domain-objects/design-event';
+  DesignEventRow,
+} from "../../../domain-objects/design-event";
 import {
   baseDataAdapter as costInputDataAdapter,
   BasePricingCostInput,
-  BasePricingCostInputRow
-} from '../../pricing-cost-inputs/domain-object';
-import DataAdapter from '../../../services/data-adapter';
-import { hasProperties } from '@cala/ts-lib';
+  BasePricingCostInputRow,
+} from "../../pricing-cost-inputs/domain-object";
+import DataAdapter from "../../../services/data-adapter";
+import { hasProperties } from "@cala/ts-lib";
 
 export interface ProductDesignDataWithMeta extends ProductDesignData {
   collectionId: string;
@@ -47,7 +47,7 @@ const encode = (row: ProductDesignRowWithMeta): ProductDesignDataWithMeta => {
     ...baseDataAdapter.parse(baseRow),
     collectionId: row.collection_id,
     costInputs,
-    events
+    events,
   };
 };
 
@@ -61,6 +61,6 @@ export function isProductDesignRowWithMeta(
 ): row is ProductDesignRowWithMeta {
   return (
     isProductDesignRow(row) &&
-    hasProperties(row, 'collection_id', 'cost_inputs', 'events')
+    hasProperties(row, "collection_id", "cost_inputs", "events")
   );
 }

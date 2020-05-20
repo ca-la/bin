@@ -1,5 +1,5 @@
-import Knex from 'knex';
-import { DETAIL_TASKS_UP as DETAIL_TASKS_DOWN } from './20190129125138_add-stage-ordering';
+import Knex from "knex";
+import { DETAIL_TASKS_UP as DETAIL_TASKS_DOWN } from "./20190129125138_add-stage-ordering";
 
 export const DETAIL_TASKS_UP = `
 DROP VIEW detail_tasks;

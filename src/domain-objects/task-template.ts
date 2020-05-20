@@ -1,11 +1,11 @@
-import DataAdapter from '../services/data-adapter';
-import { hasProperties } from '../services/require-properties';
+import DataAdapter from "../services/data-adapter";
+import { hasProperties } from "../services/require-properties";
 
-import { CollaboratorRole } from '../services/find-collaborators';
+import { CollaboratorRole } from "../services/find-collaborators";
 
 export const DESIGN_PHASES = {
-  POST_APPROVAL: 'POST_APPROVAL',
-  POST_CREATION: 'POST_CREATION'
+  POST_APPROVAL: "POST_APPROVAL",
+  POST_CREATION: "POST_CREATION",
 };
 
 export type DesignPhase = keyof typeof DESIGN_PHASES;
@@ -39,12 +39,12 @@ export const partialDataAdapter = new DataAdapter<
 export function isTaskTemplateRow(row: object): row is TaskTemplateRow {
   return hasProperties(
     row,
-    'id',
-    'stage_template_id',
-    'assignee_role',
-    'design_phase',
-    'title',
-    'description',
-    'ordering'
+    "id",
+    "stage_template_id",
+    "assignee_role",
+    "design_phase",
+    "title",
+    "description",
+    "ordering"
   );
 }

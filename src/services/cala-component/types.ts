@@ -1,8 +1,8 @@
-import { Transaction, QueryBuilder } from 'knex';
-import { Middleware } from 'koa-router';
-import DataAdapter from '../data-adapter';
+import { Transaction, QueryBuilder } from "knex";
+import { Middleware } from "koa-router";
+import DataAdapter from "../data-adapter";
 
-export type HTTPMethod = 'get' | 'put' | 'patch' | 'post' | 'delete';
+export type HTTPMethod = "get" | "put" | "patch" | "post" | "delete";
 
 export type CalaUrlRoutes = Partial<Record<HTTPMethod, Middleware[]>>;
 

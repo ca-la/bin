@@ -1,59 +1,59 @@
-'use strict';
+"use strict";
 
-const pick = require('lodash/pick');
-const Router = require('koa-router');
+const pick = require("lodash/pick");
+const Router = require("koa-router");
 
-const canAccessUserResource = require('../../../middleware/can-access-user-resource');
-const CollaboratorsDAO = require('../../collaborators/dao');
-const CollectionsDAO = require('../../collections/dao');
-const filterError = require('../../../services/filter-error');
-const InvalidDataError = require('../../../errors/invalid-data');
-const ProductDesignsDAO = require('../dao');
-const TaskEventsDAO = require('../../../dao/task-events');
-const ProductDesignStagesDAO = require('../../../dao/product-design-stages');
-const requireAuth = require('../../../middleware/require-auth');
-const createDesign = require('../../../services/create-design').default;
-const User = require('../../users/domain-object');
-const UsersDAO = require('../../users/dao');
+const canAccessUserResource = require("../../../middleware/can-access-user-resource");
+const CollaboratorsDAO = require("../../collaborators/dao");
+const CollectionsDAO = require("../../collections/dao");
+const filterError = require("../../../services/filter-error");
+const InvalidDataError = require("../../../errors/invalid-data");
+const ProductDesignsDAO = require("../dao");
+const TaskEventsDAO = require("../../../dao/task-events");
+const ProductDesignStagesDAO = require("../../../dao/product-design-stages");
+const requireAuth = require("../../../middleware/require-auth");
+const createDesign = require("../../../services/create-design").default;
+const User = require("../../users/domain-object");
+const UsersDAO = require("../../users/dao");
 const {
   canAccessDesignInParam,
   canAccessDesignsInQuery,
   canDeleteDesign,
-  canDeleteDesigns
-} = require('../../../middleware/can-access-design');
-const { requireValues } = require('../../../services/require-properties');
-const { getDesignPermissions } = require('../../../services/get-permissions');
-const { deleteDesign, deleteDesigns } = require('./deletion');
+  canDeleteDesigns,
+} = require("../../../middleware/can-access-design");
+const { requireValues } = require("../../../services/require-properties");
+const { getDesignPermissions } = require("../../../services/get-permissions");
+const { deleteDesign, deleteDesigns } = require("./deletion");
 
 const {
   getDesignUploadPolicy,
-  getThumbnailUploadPolicy
-} = require('./upload-policy');
+  getThumbnailUploadPolicy,
+} = require("./upload-policy");
 const {
   addDesignEvent,
   addDesignEvents,
-  getDesignEvents
-} = require('./events');
-const { updateAllNodes } = require('./phidias');
-const { findAllDesignsThroughCollaborator } = require('../dao/dao');
-const { createFromTemplate } = require('./templates');
+  getDesignEvents,
+} = require("./events");
+const { updateAllNodes } = require("./phidias");
+const { findAllDesignsThroughCollaborator } = require("../dao/dao");
+const { createFromTemplate } = require("./templates");
 
 const router = new Router();
 
 const ALLOWED_DESIGN_PARAMS = [
-  'description',
-  'previewImageUrls',
-  'metadata',
-  'productType',
-  'title',
-  'retailPriceCents',
-  'dueDate',
-  'expectedCostCents'
+  "description",
+  "previewImageUrls",
+  "metadata",
+  "productType",
+  "title",
+  "retailPriceCents",
+  "dueDate",
+  "expectedCostCents",
 ];
 const ADMIN_ALLOWED_DESIGN_PARAMS = [
   ...ALLOWED_DESIGN_PARAMS,
-  'overridePricingTable',
-  'showPricingBreakdown'
+  "overridePricingTable",
+  "showPricingBreakdown",
 ];
 
 async function attachDesignOwner(design) {
@@ -93,14 +93,14 @@ function* getDesignsByUser() {
     userId: this.query.userId,
     limit: this.query.limit,
     offset: this.query.offset,
-    search: this.query.search
+    search: this.query.search,
   });
   const designsWithPermissions = yield Promise.all(
-    designs.map(async design => {
+    designs.map(async (design) => {
       const designPermissions = await getDesignPermissions({
         designId: design.id,
         sessionRole: role,
-        sessionUserId: userId
+        sessionUserId: userId,
       });
       return { ...design, permissions: designPermissions };
     })
@@ -114,7 +114,7 @@ function* attachAssignees(task) {
   const ioFromTaskEvent = (taskEvent, assignees) => {
     return {
       ...taskEvent,
-      assignees
+      assignees,
     };
   };
   const assignees = yield CollaboratorsDAO.findByTask(task.id);
@@ -126,7 +126,7 @@ function* attachTasks(stage) {
   const tasksAndAssignees = yield tasks.map(attachAssignees);
   return {
     ...stage,
-    tasks: tasksAndAssignees
+    tasks: tasksAndAssignees,
   };
 }
 
@@ -135,7 +135,7 @@ function* attachStages(design) {
   const stagesAndTasks = yield stages.map(attachTasks);
   return {
     ...design,
-    stages: stagesAndTasks
+    stages: stagesAndTasks,
   };
 }
 
@@ -149,18 +149,18 @@ function* getDesignsAndTasksByUser() {
   canAccessUserResource.call(this, this.query.userId);
 
   const designs = yield findAllDesignsThroughCollaborator({
-    userId: this.query.userId
+    userId: this.query.userId,
   });
 
   // TODO: this could end up making 100s of queries to the db, this could be improved by using
   //       one large JOIN
   const designsAndTasks = yield attachTasksToDesigns(designs);
   const designsWithPermissions = yield Promise.all(
-    designsAndTasks.map(async design => {
+    designsAndTasks.map(async (design) => {
       const permissions = await getDesignPermissions({
         designId: design.id,
         sessionRole: role,
-        sessionUserId: userId
+        sessionUserId: userId,
       });
       return { ...design, permissions };
     })
@@ -178,15 +178,15 @@ function* getAllDesigns() {
     limit: Number(this.query.limit) || 10,
     offset: Number(this.query.offset) || 0,
     search: this.query.search,
-    needsQuote: Boolean(this.query.needsQuote)
+    needsQuote: Boolean(this.query.needsQuote),
   });
 
   const designsWithPermissions = yield Promise.all(
-    designs.map(async design => {
+    designs.map(async (design) => {
       const permissions = await getDesignPermissions({
         designId: design.id,
         sessionRole: role,
-        sessionUserId: userId
+        sessionUserId: userId,
       });
       return attachResources(design, userId, permissions);
     })
@@ -213,7 +213,7 @@ function* getDesign() {
   const design = yield ProductDesignsDAO.findById(this.params.designId);
 
   if (!design) {
-    this.throw(404, 'Design not found');
+    this.throw(404, "Design not found");
   }
 
   const hydratedDesign = yield attachResources(design, userId, permissions);
@@ -233,12 +233,12 @@ function* create() {
   const data = { ...userData, userId };
 
   let design = yield createDesign(data).catch(
-    filterError(InvalidDataError, err => this.throw(400, err))
+    filterError(InvalidDataError, (err) => this.throw(400, err))
   );
   const designPermissions = yield getDesignPermissions({
     designId: design.id,
     sessionRole: role,
-    sessionUserId: userId
+    sessionUserId: userId,
   });
 
   design = yield attachResources(design, userId, designPermissions);
@@ -258,7 +258,7 @@ function* updateDesign() {
   const data = pick(this.request.body, allowedParams);
 
   let updated = yield ProductDesignsDAO.update(designId, data).catch(
-    filterError(InvalidDataError, err => this.throw(400, err))
+    filterError(InvalidDataError, (err) => this.throw(400, err))
   );
   updated = yield attachResources(updated, userId, permissions);
 
@@ -266,59 +266,59 @@ function* updateDesign() {
   this.status = 200;
 }
 
-router.post('/', requireAuth, create);
-router.get('/', requireAuth, getDesigns);
+router.post("/", requireAuth, create);
+router.get("/", requireAuth, getDesigns);
 router.del(
-  '/',
+  "/",
   requireAuth,
   canAccessDesignsInQuery,
   canDeleteDesigns,
   deleteDesigns
 );
 router.del(
-  '/:designId',
+  "/:designId",
   requireAuth,
   canAccessDesignInParam,
   canDeleteDesign,
   deleteDesign
 );
-router.get('/:designId', requireAuth, canAccessDesignInParam, getDesign);
-router.patch('/:designId', requireAuth, canAccessDesignInParam, updateDesign);
+router.get("/:designId", requireAuth, canAccessDesignInParam, getDesign);
+router.patch("/:designId", requireAuth, canAccessDesignInParam, updateDesign);
 router.get(
-  '/:designId/collections',
+  "/:designId/collections",
   requireAuth,
   canAccessDesignInParam,
   getDesignCollections
 );
 
 router.get(
-  '/:designId/upload-policy/:sectionId',
+  "/:designId/upload-policy/:sectionId",
   requireAuth,
   canAccessDesignInParam,
   getThumbnailUploadPolicy
 );
-router.get('/upload-policy/:id', requireAuth, getDesignUploadPolicy);
+router.get("/upload-policy/:id", requireAuth, getDesignUploadPolicy);
 
 router.get(
-  '/:designId/events',
+  "/:designId/events",
   requireAuth,
   canAccessDesignInParam,
   getDesignEvents
 );
 router.post(
-  '/:designId/events',
+  "/:designId/events",
   requireAuth,
   canAccessDesignInParam,
   addDesignEvents
 );
 router.put(
-  '/:designId/events/:eventId',
+  "/:designId/events/:eventId",
   requireAuth,
   canAccessDesignInParam,
   addDesignEvent
 );
 
-router.put('/:designId', requireAuth, canAccessDesignInParam, updateAllNodes);
-router.post('/templates/:templateDesignId', requireAuth, createFromTemplate);
+router.put("/:designId", requireAuth, canAccessDesignInParam, updateAllNodes);
+router.post("/templates/:templateDesignId", requireAuth, createFromTemplate);
 
 module.exports = router.routes();

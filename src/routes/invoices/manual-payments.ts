@@ -1,9 +1,9 @@
-import Knex from 'knex';
+import Knex from "knex";
 
-import db from '../../services/db';
-import * as InvoicesDAO from '../../dao/invoices';
-import * as InvoicePaymentsDAO from '../../components/invoice-payments/dao';
-import InvalidDataError from '../../errors/invalid-data';
+import db from "../../services/db";
+import * as InvoicesDAO from "../../dao/invoices";
+import * as InvoicePaymentsDAO from "../../components/invoice-payments/dao";
+import InvalidDataError from "../../errors/invalid-data";
 
 interface ManualPaymentRequest {
   userId: string;
@@ -18,19 +18,19 @@ export default function* createManualPaymentRecord(
   const { userId, resolvePaymentId, createdAt } = this.request.body;
   const { invoiceId } = this.params;
 
-  this.assert(userId, 400, 'Missing user ID');
-  this.assert(resolvePaymentId, 400, 'Missing resolve payment ID');
-  this.assert(invoiceId, 400, 'Missing invoice ID');
+  this.assert(userId, 400, "Missing user ID");
+  this.assert(resolvePaymentId, 400, "Missing resolve payment ID");
+  this.assert(invoiceId, 400, "Missing invoice ID");
 
   this.body = yield db.transaction(async (trx: Knex.Transaction) => {
     await db
-      .raw('select * from invoices where id = ? for update', [invoiceId])
+      .raw("select * from invoices where id = ? for update", [invoiceId])
       .transacting(trx);
 
     const invoice = await InvoicesDAO.findByIdTrx(trx, invoiceId);
 
     if (invoice.isPaid) {
-      throw new InvalidDataError('This invoice is already paid');
+      throw new InvalidDataError("This invoice is already paid");
     }
 
     const totalCents: number = Number(
@@ -47,7 +47,7 @@ export default function* createManualPaymentRecord(
       resolvePaymentId,
       rumbleshipPurchaseHash: null,
       stripeChargeId: null,
-      totalCents
+      totalCents,
     });
   });
 

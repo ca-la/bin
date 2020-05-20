@@ -1,7 +1,7 @@
-import { range } from 'lodash';
-import uuid from 'node-uuid';
-import { Cents } from '../dollars';
-import { PricingProcessRow } from '../../domain-objects/pricing-process';
+import { range } from "lodash";
+import uuid from "node-uuid";
+import { Cents } from "../dollars";
+import { PricingProcessRow } from "../../domain-objects/pricing-process";
 
 type UninsertedPricingProcessRow = Uninserted<PricingProcessRow>;
 /**
@@ -26,14 +26,14 @@ export default function generateScreenPrintingProcess(
           ): UninsertedPricingProcessRow[] => {
             return rowsForUnits.concat({
               complexity:
-                '' + colorCount + '_COLOR' + (colorCount > 1 ? 'S' : ''),
+                "" + colorCount + "_COLOR" + (colorCount > 1 ? "S" : ""),
               id: uuid.v4(),
               minimum_units: units,
-              name: 'SCREEN_PRINTING',
-              display_name: 'screen printing',
+              name: "SCREEN_PRINTING",
+              display_name: "screen printing",
               setup_cents: colorCount * setup(units),
               unit_cents: base + colorCount * perHit,
-              version
+              version,
             });
           },
           []

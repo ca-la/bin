@@ -1,6 +1,6 @@
-import { Complexity } from '../../domain-objects/pricing';
-import DataAdapter from '../../services/data-adapter';
-import { hasProperties } from '../../services/require-properties';
+import { Complexity } from "../../domain-objects/pricing";
+import DataAdapter from "../../services/data-adapter";
+import { hasProperties } from "../../services/require-properties";
 
 /**
  * @typedef {object} PricingProductType The cost by type of product and
@@ -76,7 +76,7 @@ const encode = (row: PricingProductTypeRow): PricingProductType => {
     specificationTimeMs: parseInt(row.specification_time_ms, 10),
     unitCents: row.unit_cents,
     version: row.version,
-    yield: row.yield
+    yield: row.yield,
   };
 };
 
@@ -98,7 +98,7 @@ const decode = (data: PricingProductType): PricingProductTypeRow => {
     specification_time_ms: data.specificationTimeMs.toString(),
     unit_cents: data.unitCents,
     version: data.version,
-    yield: data.yield
+    yield: data.yield,
   };
 };
 
@@ -112,22 +112,22 @@ export function isPricingProductTypeRow(
 ): row is PricingProductTypeRow {
   return hasProperties(
     row,
-    'id',
-    'version',
-    'minimum_units',
-    'name',
-    'pattern_minimum_cents',
-    'complexity',
-    'unit_cents',
-    'yield',
-    'contrast',
-    'created_at',
-    'creation_time_ms',
-    'specification_time_ms',
-    'sourcing_time_ms',
-    'sampling_time_ms',
-    'pre_production_time_ms',
-    'production_time_ms',
-    'fulfillment_time_ms'
+    "id",
+    "version",
+    "minimum_units",
+    "name",
+    "pattern_minimum_cents",
+    "complexity",
+    "unit_cents",
+    "yield",
+    "contrast",
+    "created_at",
+    "creation_time_ms",
+    "specification_time_ms",
+    "sourcing_time_ms",
+    "sampling_time_ms",
+    "pre_production_time_ms",
+    "production_time_ms",
+    "fulfillment_time_ms"
   );
 }

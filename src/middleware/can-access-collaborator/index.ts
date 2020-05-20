@@ -1,31 +1,31 @@
-import Koa from 'koa';
+import Koa from "koa";
 
-import * as CollaboratorsDAO from '../../components/collaborators/dao';
-import * as CollectionsDAO from '../../components/collections/dao';
-import DesignsDAO from '../../components/product-designs/dao';
-import Collaborator from '../../components/collaborators/domain-objects/collaborator';
-import filterError = require('../../services/filter-error');
-import ResourceNotFoundError from '../../errors/resource-not-found';
+import * as CollaboratorsDAO from "../../components/collaborators/dao";
+import * as CollectionsDAO from "../../components/collections/dao";
+import DesignsDAO from "../../components/product-designs/dao";
+import Collaborator from "../../components/collaborators/domain-objects/collaborator";
+import filterError = require("../../services/filter-error");
+import ResourceNotFoundError from "../../errors/resource-not-found";
 import {
   getCollectionPermissions,
   getDesignPermissions,
-  Permissions
-} from '../../services/get-permissions';
-import { hasProperties } from '../../services/require-properties';
+  Permissions,
+} from "../../services/get-permissions";
+import { hasProperties } from "../../services/require-properties";
 
 export type CollaboratorRequest = Pick<
   Collaborator,
-  'role' | 'userEmail' | 'invitationMessage'
+  "role" | "userEmail" | "invitationMessage"
 > & { collectionId?: string; designId?: string };
 
 export function isCollaboratorRequest(
   data: object
 ): data is CollaboratorRequest {
   const keys = Object.keys(data);
-  if (!keys.includes('collectionId') && !keys.includes('designId')) {
+  if (!keys.includes("collectionId") && !keys.includes("designId")) {
     return false;
   }
-  return hasProperties(data, 'role', 'userEmail');
+  return hasProperties(data, "role", "userEmail");
 }
 
 async function findPermissionsFromCollectionOrDesign(
@@ -35,7 +35,7 @@ async function findPermissionsFromCollectionOrDesign(
   designId: string | undefined
 ): Promise<Permissions | null> {
   if (collectionId && designId) {
-    throw new Error('Must pass collectionId or designId, not both');
+    throw new Error("Must pass collectionId or designId, not both");
   }
 
   if (collectionId) {
@@ -56,7 +56,7 @@ async function findPermissionsFromCollectionOrDesign(
     return getDesignPermissions({
       designId: design.id,
       sessionRole: role,
-      sessionUserId: userId
+      sessionUserId: userId,
     });
   }
   return null;
@@ -69,7 +69,7 @@ export function* attachCollaboratorAndPermissions(
   const { role, userId } = this.state;
 
   const collaborator = yield CollaboratorsDAO.findById(collaboratorId);
-  this.assert(collaborator, 404, 'Collaborator not found');
+  this.assert(collaborator, 404, "Collaborator not found");
 
   const permissions = yield findPermissionsFromCollectionOrDesign(
     role,
@@ -90,13 +90,13 @@ export function* canAccessViaQueryParameters(
   const hasMultipleParameters = [
     Boolean(collectionId),
     Boolean(designId),
-    Boolean(designIds)
+    Boolean(designIds),
   ].reduce((accumulator: number, doesExist: boolean): number => {
     return accumulator + (doesExist ? 1 : 0);
   }, 0);
 
   if (hasMultipleParameters > 1) {
-    this.throw(400, 'Must pass only one query parameter at a time!');
+    this.throw(400, "Must pass only one query parameter at a time!");
   }
 
   if (collectionId || designId) {
@@ -122,7 +122,7 @@ export function* canAccessViaQueryParameters(
     // Explicitly skip this step so that the `next` layer is forced to implement security.
     yield next;
   } else {
-    this.throw(400, 'Must pass in at least one query parameter!');
+    this.throw(400, "Must pass in at least one query parameter!");
   }
 }
 
@@ -133,12 +133,12 @@ export function* canAccessViaDesignOrCollectionInRequestBody(
   if (!isCollaboratorRequest(this.request.body)) {
     this.throw(
       400,
-      'A design or collection id must be specified in the request!'
+      "A design or collection id must be specified in the request!"
     );
   }
   const { collectionId, designId } = this.request.body;
   if (collectionId && designId) {
-    this.throw(400, 'Must pass exactly one of collection ID / design ID');
+    this.throw(400, "Must pass exactly one of collection ID / design ID");
   }
 
   const { role, userId } = this.state;
@@ -186,7 +186,7 @@ export function* canEditCollaborators(
   const { permissions } = this.state;
   if (!permissions) {
     throw new Error(
-      'canEditCollaborators must be chained with middleware that attaches permissions!'
+      "canEditCollaborators must be chained with middleware that attaches permissions!"
     );
   }
 

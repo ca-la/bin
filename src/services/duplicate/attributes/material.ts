@@ -1,11 +1,11 @@
-import Knex from 'knex';
+import Knex from "knex";
 
-import MaterialAttribute from '../../../components/attributes/material-attributes/domain-objects';
+import MaterialAttribute from "../../../components/attributes/material-attributes/domain-objects";
 import {
   create,
-  findById
-} from '../../../components/attributes/material-attributes/dao';
-import prepareForDuplication from '../prepare-for-duplication';
+  findById,
+} from "../../../components/attributes/material-attributes/dao";
+import prepareForDuplication from "../prepare-for-duplication";
 
 /**
  * Creates a duplicate instance of the given Material Attribute.
@@ -22,7 +22,7 @@ export default async function findAndDuplicateMaterial(options: {
     currentMaterialId,
     newCreatorId,
     newNodeId,
-    trx
+    trx,
   } = options;
 
   const material = currentMaterial
@@ -35,7 +35,7 @@ export default async function findAndDuplicateMaterial(options: {
 
   const preparedMaterial = prepareForDuplication(material, {
     createdBy: newCreatorId,
-    nodeId: newNodeId
+    nodeId: newNodeId,
   });
 
   return create(preparedMaterial, trx);

@@ -1,17 +1,17 @@
-import Router from 'koa-router';
-import Knex from 'knex';
+import Router from "koa-router";
+import Knex from "knex";
 
-import canAccessUserResource = require('../../middleware/can-access-user-resource');
-import PaymentMethods = require('./dao');
-import requireAuth = require('../../middleware/require-auth');
-import db from '../../services/db';
-import createPaymentMethod from './create-payment-method';
+import canAccessUserResource = require("../../middleware/can-access-user-resource");
+import PaymentMethods = require("./dao");
+import requireAuth = require("../../middleware/require-auth");
+import db from "../../services/db";
+import createPaymentMethod from "./create-payment-method";
 
 const router = new Router();
 
 function* getPaymentMethods(this: AuthedContext): Iterator<any, any, any> {
   const { userId } = this.query;
-  this.assert(userId, 400, 'User ID must be provided');
+  this.assert(userId, 400, "User ID must be provided");
   canAccessUserResource.call(this, userId);
 
   const methods = yield PaymentMethods.findByUserId(userId);
@@ -24,13 +24,13 @@ interface AddBody {
 }
 
 function isAddBody(obj: any): obj is AddBody {
-  return typeof obj.stripeCardToken === 'string';
+  return typeof obj.stripeCardToken === "string";
 }
 
 function* addPaymentMethod(this: AuthedContext): Iterator<any, any, any> {
   const { body } = this.request;
   if (!isAddBody(body)) {
-    this.throw(400, 'Missing required information');
+    this.throw(400, "Missing required information");
   }
 
   const { stripeCardToken } = body;
@@ -40,7 +40,7 @@ function* addPaymentMethod(this: AuthedContext): Iterator<any, any, any> {
     const method = await createPaymentMethod({
       token: stripeCardToken,
       userId,
-      trx
+      trx,
     });
 
     this.body = method;
@@ -48,7 +48,7 @@ function* addPaymentMethod(this: AuthedContext): Iterator<any, any, any> {
   });
 }
 
-router.get('/', requireAuth, getPaymentMethods);
-router.post('/', requireAuth, addPaymentMethod);
+router.get("/", requireAuth, getPaymentMethods);
+router.post("/", requireAuth, addPaymentMethod);
 
 export default router.routes();

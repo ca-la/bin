@@ -1,6 +1,6 @@
-import { findById } from '../../../components/users/dao';
-import { ProducedContext } from '../../context';
-import requireAdmin from '../../authorization/require-admin.ts';
+import { findById } from "../../../components/users/dao";
+import { ProducedContext } from "../../context";
+import requireAdmin from "../../authorization/require-admin.ts";
 
 async function findUserById(
   _: any,
@@ -20,8 +20,8 @@ async function findUserById(
 
 const resolver = {
   Query: {
-    user: findUserById
-  }
+    user: findUserById,
+  },
 };
 
 export default resolver;

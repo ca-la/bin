@@ -1,15 +1,15 @@
-import { RealtimeMessage } from '@cala/ts-lib';
-import { uploadToS3 } from '../../services/aws/s3';
-import { enqueueMessage } from '../../services/aws/sqs';
+import { RealtimeMessage } from "@cala/ts-lib";
+import { uploadToS3 } from "../../services/aws/s3";
+import { enqueueMessage } from "../../services/aws/sqs";
 import {
   AWS_IRIS_S3_BUCKET,
   AWS_IRIS_SQS_REGION,
-  AWS_IRIS_SQS_URL
-} from '../../config';
+  AWS_IRIS_SQS_URL,
+} from "../../config";
 
 function getResourceId(resource: RealtimeMessage): string {
   switch (resource.type) {
-    case 'design-nodes/update': {
+    case "design-nodes/update": {
       return resource.designId;
     }
     default: {
@@ -24,18 +24,18 @@ function getResourceId(resource: RealtimeMessage): string {
  */
 export async function sendMessage(resource: RealtimeMessage): Promise<void> {
   const uploadResponse = await uploadToS3({
-    acl: 'authenticated-read',
+    acl: "authenticated-read",
     bucketName: AWS_IRIS_S3_BUCKET,
-    contentType: 'application/json',
-    resource: JSON.stringify(resource)
+    contentType: "application/json",
+    resource: JSON.stringify(resource),
   });
 
   await enqueueMessage({
     deduplicationId: `${resource.type}-${getResourceId(resource)}`,
     messageGroupId: resource.type,
-    messageType: 'realtime-message',
+    messageType: "realtime-message",
     payload: uploadResponse,
     queueRegion: AWS_IRIS_SQS_REGION,
-    queueUrl: AWS_IRIS_SQS_URL
+    queueUrl: AWS_IRIS_SQS_URL,
   });
 }

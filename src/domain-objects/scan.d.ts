@@ -11,7 +11,7 @@ declare class Scan {
   public isComplete: boolean;
   public isStarted: boolean;
   public measurements?: Measurements;
-  public type: 'PHOTO' | 'HUMANSOLUTIONS';
+  public type: "PHOTO" | "HUMANSOLUTIONS";
   public userId?: string;
   public fitPartnerCustomerId?: string;
 

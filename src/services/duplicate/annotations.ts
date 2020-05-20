@@ -1,11 +1,11 @@
-import Knex from 'knex';
+import Knex from "knex";
 
-import * as AnnotationsDAO from '../../components/product-design-canvas-annotations/dao';
-import * as AnnotationCommentsDAO from '../../components/annotation-comments/dao';
-import * as CommentsDAO from '../../components/comments/dao';
-import Annotation from '../../components/product-design-canvas-annotations/domain-object';
-import prepareForDuplication from './prepare-for-duplication';
-import Comment from '../../components/comments/domain-object';
+import * as AnnotationsDAO from "../../components/product-design-canvas-annotations/dao";
+import * as AnnotationCommentsDAO from "../../components/annotation-comments/dao";
+import * as CommentsDAO from "../../components/comments/dao";
+import Annotation from "../../components/product-design-canvas-annotations/domain-object";
+import prepareForDuplication from "./prepare-for-duplication";
+import Comment from "../../components/comments/domain-object";
 
 /**
  * Finds all comments associated with the given annotation, creates duplicates, and associates
@@ -28,7 +28,7 @@ async function findAndDuplicateAnnotationComments(
       await AnnotationCommentsDAO.create(
         {
           annotationId: newAnnotationId,
-          commentId: duplicateComment.id
+          commentId: duplicateComment.id,
         },
         trx
       );

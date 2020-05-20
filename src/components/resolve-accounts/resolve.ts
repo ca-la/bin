@@ -1,30 +1,28 @@
-import { ResolveAccountData } from '@cala/ts-lib/dist/resolve';
+import { ResolveAccountData } from "@cala/ts-lib/dist/resolve";
 
-import * as InvoicesDAO from '../../dao/invoices';
-import Invoice from '../../domain-objects/invoice';
-import toDateOrNull from '../../services/to-date';
-import { fetch } from '../../services/fetch';
-import { RESOLVE_API_URL } from '../../config';
+import * as InvoicesDAO from "../../dao/invoices";
+import Invoice from "../../domain-objects/invoice";
+import toDateOrNull from "../../services/to-date";
+import { fetch } from "../../services/fetch";
+import { RESOLVE_API_URL } from "../../config";
 import ResolveAccount, {
   isRawResolveData,
-  RawResolveData
-} from './domain-object';
+  RawResolveData,
+} from "./domain-object";
 
 export async function hasResolveAccount(
   resolveCustomerId: string
 ): Promise<boolean> {
   const url = `${RESOLVE_API_URL}/customers/${resolveCustomerId}`;
   const headers = {
-    Accept: 'application/json',
-    'Content-Type': 'application/json'
+    Accept: "application/json",
+    "Content-Type": "application/json",
   };
 
   const response = await fetch(url, { headers });
   if (response.status >= 500) {
     throw new Error(
-      `GET request to resolve failed: ${response.status}: ${
-        response.statusText
-      }`
+      `GET request to resolve failed: ${response.status}: ${response.statusText}`
     );
   }
   if (response.status < 200 || response.status >= 400) {
@@ -41,16 +39,14 @@ export async function getResolveAccountData(
   const { resolveCustomerId } = account;
   const url = `${RESOLVE_API_URL}/customers/${resolveCustomerId}`;
   const headers = {
-    Accept: 'application/json',
-    'Content-Type': 'application/json'
+    Accept: "application/json",
+    "Content-Type": "application/json",
   };
 
   const response = await fetch(url, { headers });
   if (response.status < 200 || response.status >= 400) {
     throw new Error(
-      `GET request to resolve failed: ${response.status}: ${
-        response.statusText
-      }`
+      `GET request to resolve failed: ${response.status}: ${response.statusText}`
     );
   }
   const data = await response.json();
@@ -99,6 +95,6 @@ export function encodeRawResolveData(
     customerId: account.resolveCustomerId,
     id: account.id,
     isApproved: rawData.approved,
-    totalAmountCents: rawData.amount_approved * 100
+    totalAmountCents: rawData.amount_approved * 100,
   };
 }

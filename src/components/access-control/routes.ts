@@ -1,9 +1,9 @@
-import Router from 'koa-router';
-import requireAuth = require('../../middleware/require-auth');
-import { canAccessAnnotationInParams } from '../../middleware/can-access-annotation';
-import { canAccessTaskInParams } from '../../middleware/can-access-task';
-import { canAccessDesignInParam } from '../../middleware/can-access-design';
-import { canAccessApprovalStepInParam } from '../../middleware/can-access-approval-step';
+import Router from "koa-router";
+import requireAuth = require("../../middleware/require-auth");
+import { canAccessAnnotationInParams } from "../../middleware/can-access-annotation";
+import { canAccessTaskInParams } from "../../middleware/can-access-task";
+import { canAccessDesignInParam } from "../../middleware/can-access-design";
+import { canAccessApprovalStepInParam } from "../../middleware/can-access-approval-step";
 
 const router = new Router();
 
@@ -65,28 +65,28 @@ function* getDesignAccess(
   this.body = this.state.permissions;
 }
 
-router.get('/notifications', requireAuth, getNotificationAccess);
+router.get("/notifications", requireAuth, getNotificationAccess);
 router.get(
-  '/annotations/:annotationId',
+  "/annotations/:annotationId",
   requireAuth,
   canAccessAnnotationInParams,
   getAnnotationsAccess
 );
 router.get(
-  '/tasks/:taskId',
+  "/tasks/:taskId",
   requireAuth,
   canAccessTaskInParams,
   getTasksAccess
 );
 router.get(
-  '/designs/:designId',
+  "/designs/:designId",
   requireAuth,
   canAccessDesignInParam,
   getDesignAccess
 );
 
 router.get(
-  '/approval-steps/:approvalStepId',
+  "/approval-steps/:approvalStepId",
   requireAuth,
   canAccessApprovalStepInParam,
   getApprovalStepAccess

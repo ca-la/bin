@@ -1,21 +1,21 @@
-import uuid from 'node-uuid';
-import { TaskEvent, TaskStatus } from '@cala/ts-lib';
+import uuid from "node-uuid";
+import { TaskEvent, TaskStatus } from "@cala/ts-lib";
 
-import Knex from 'knex';
+import Knex from "knex";
 
-import db from '../../services/db';
-import { DetailsTask } from '../../domain-objects/task-event';
-import { create, findById } from '../../dao/task-events';
-import { create as createStageTask } from '../../dao/product-design-stage-tasks';
-import * as DesignStagesDAO from '../../dao/product-design-stages';
-import DesignsDAO from '../../components/product-designs/dao';
-import ProductDesign = require('../../components/product-designs/domain-objects/product-design');
-import { findById as findUserById } from '../../components/users/dao';
-import { create as createTask } from '../../dao/tasks';
-import createUser = require('../create-user');
-import User from '../../components/users/domain-object';
-import generateProductDesignStage from './product-design-stage';
-import ProductDesignStage from '../../domain-objects/product-design-stage';
+import db from "../../services/db";
+import { DetailsTask } from "../../domain-objects/task-event";
+import { create, findById } from "../../dao/task-events";
+import { create as createStageTask } from "../../dao/product-design-stage-tasks";
+import * as DesignStagesDAO from "../../dao/product-design-stages";
+import DesignsDAO from "../../components/product-designs/dao";
+import ProductDesign = require("../../components/product-designs/domain-objects/product-design");
+import { findById as findUserById } from "../../components/users/dao";
+import { create as createTask } from "../../dao/tasks";
+import createUser = require("../create-user");
+import User from "../../components/users/domain-object";
+import generateProductDesignStage from "./product-design-stage";
+import ProductDesignStage from "../../domain-objects/product-design-stage";
 
 export default async function generateTask(
   options: Partial<TaskEvent> = {}
@@ -35,7 +35,7 @@ export default async function generateTask(
   if (options.designStageId) {
     stage = await DesignStagesDAO.findById(options.designStageId);
     if (!stage) {
-      throw new Error('Could not find stage');
+      throw new Error("Could not find stage");
     }
     design = await DesignsDAO.findById(stage.designId);
   } else {
@@ -45,27 +45,27 @@ export default async function generateTask(
   }
 
   if (!stage) {
-    throw new Error('Could not create stage');
+    throw new Error("Could not create stage");
   }
 
   if (!design) {
-    throw new Error('Could not create design');
+    throw new Error("Could not create design");
   }
 
   await createStageTask({
     designStageId: stage.id,
-    taskId: task.id
+    taskId: task.id,
   });
 
   const created = await create({
     createdBy: user.id,
-    description: options.description || '',
+    description: options.description || "",
     designStageId: options.designStageId || null,
     dueDate: options.dueDate || null,
     ordering: options.ordering || 0,
     status: options.status || TaskStatus.NOT_STARTED,
     taskId: task.id,
-    title: options.title || 'My First Task'
+    title: options.title || "My First Task",
   });
 
   const detailsTask = await db.transaction((trx: Knex.Transaction) =>
@@ -73,13 +73,13 @@ export default async function generateTask(
   );
 
   if (!detailsTask) {
-    throw new Error('Could not create task');
+    throw new Error("Could not create task");
   }
 
   return {
     createdBy: user,
     design,
     stage,
-    task: detailsTask
+    task: detailsTask,
   };
 }

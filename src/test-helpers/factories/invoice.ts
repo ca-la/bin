@@ -1,14 +1,14 @@
-import db from '../../services/db';
-import Knex from 'knex';
+import db from "../../services/db";
+import Knex from "knex";
 
-import Collection from '../../components/collections/domain-object';
-import { findById as findUserById } from '../../components/users/dao';
-import * as CollectionsDAO from '../../components/collections/dao';
-import * as InvoicesDAO from '../../dao/invoices';
-import createUser = require('../create-user');
-import Invoice = require('../../domain-objects/invoice');
-import generateCollection from './collection';
-import User from '../../components/users/domain-object';
+import Collection from "../../components/collections/domain-object";
+import { findById as findUserById } from "../../components/users/dao";
+import * as CollectionsDAO from "../../components/collections/dao";
+import * as InvoicesDAO from "../../dao/invoices";
+import createUser = require("../create-user");
+import Invoice = require("../../domain-objects/invoice");
+import generateCollection from "./collection";
+import User from "../../components/users/domain-object";
 
 interface InvoiceWithResources {
   collection: Collection;
@@ -24,7 +24,7 @@ export default async function generateInvoice(
     : await createUser({ withSession: false });
 
   if (!user) {
-    throw new Error('Could not get user');
+    throw new Error("Could not get user");
   }
 
   const maybeCollection = options.collectionId
@@ -38,10 +38,10 @@ export default async function generateInvoice(
     async (trx: Knex.Transaction): Promise<Invoice> => {
       const { id } = await InvoicesDAO.createTrx(trx, {
         collectionId: collection.id,
-        title: options.title || 'My First Invoice',
+        title: options.title || "My First Invoice",
         totalCents: options.totalCents || 1234,
         userId: user.id,
-        invoiceAddressId: options.invoiceAddressId
+        invoiceAddressId: options.invoiceAddressId,
       });
       return await InvoicesDAO.findByIdTrx(trx, id);
     }

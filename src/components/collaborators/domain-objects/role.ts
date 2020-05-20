@@ -1,5 +1,5 @@
 export enum CollaboratorRole {
-  CALA = 'CALA',
-  DESIGNER = 'DESIGNER',
-  PARTNER = 'PARTNER'
+  CALA = "CALA",
+  DESIGNER = "DESIGNER",
+  PARTNER = "PARTNER",
 }

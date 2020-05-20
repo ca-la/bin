@@ -1,32 +1,32 @@
-import tape from 'tape';
-import { omit } from 'lodash';
+import tape from "tape";
+import { omit } from "lodash";
 
-import { test } from '../../test-helpers/fresh';
-import * as PricingQuotesDAO from './index';
-import generatePricingValues from '../../test-helpers/factories/pricing-values';
+import { test } from "../../test-helpers/fresh";
+import * as PricingQuotesDAO from "./index";
+import generatePricingValues from "../../test-helpers/factories/pricing-values";
 import {
   Complexity,
   MaterialCategory,
-  ProductType
-} from '../../domain-objects/pricing';
+  ProductType,
+} from "../../domain-objects/pricing";
 
-test('PricingQuotes DAO with no data', async (t: tape.Test) => {
+test("PricingQuotes DAO with no data", async (t: tape.Test) => {
   try {
     await PricingQuotesDAO.findLatestValuesForRequest({
       designId: null,
-      materialCategory: 'SPECIFY',
+      materialCategory: "SPECIFY",
       processes: [],
-      productComplexity: 'COMPLEX',
-      productType: 'BLAZER',
-      units: 1000
+      productComplexity: "COMPLEX",
+      productType: "BLAZER",
+      units: 1000,
     });
-    t.fail('Should not have succeeded');
+    t.fail("Should not have succeeded");
   } catch {
-    t.ok('Finding latest values fails');
+    t.ok("Finding latest values fails");
   }
 });
 
-test('PricingQuotes DAO supports finding the latest values', async (t: tape.Test) => {
+test("PricingQuotes DAO supports finding the latest values", async (t: tape.Test) => {
   // generate a bunch of values in the test db.
   await generatePricingValues();
 
@@ -35,14 +35,14 @@ test('PricingQuotes DAO supports finding the latest values', async (t: tape.Test
   try {
     await PricingQuotesDAO.findLatestValuesForRequest({
       designId: null,
-      materialCategory: 'BASIC',
+      materialCategory: "BASIC",
       processes: [],
-      productComplexity: 'SIMPLE',
-      productType: 'LONG_JOHNS' as ProductType,
-      units: 1000
+      productComplexity: "SIMPLE",
+      productType: "LONG_JOHNS" as ProductType,
+      units: 1000,
     });
   } catch (error) {
-    t.equal(error.message, 'Pricing product type could not be found!');
+    t.equal(error.message, "Pricing product type could not be found!");
   }
 
   // complexity failure
@@ -50,14 +50,14 @@ test('PricingQuotes DAO supports finding the latest values', async (t: tape.Test
   try {
     await PricingQuotesDAO.findLatestValuesForRequest({
       designId: null,
-      materialCategory: 'BASIC',
+      materialCategory: "BASIC",
       processes: [],
-      productComplexity: 'SIMPLE FOO' as Complexity,
-      productType: 'TEESHIRT',
-      units: 1000
+      productComplexity: "SIMPLE FOO" as Complexity,
+      productType: "TEESHIRT",
+      units: 1000,
     });
   } catch (error) {
-    t.equal(error.message, 'Pricing product type could not be found!');
+    t.equal(error.message, "Pricing product type could not be found!");
   }
 
   // material failure
@@ -65,25 +65,25 @@ test('PricingQuotes DAO supports finding the latest values', async (t: tape.Test
   try {
     await PricingQuotesDAO.findLatestValuesForRequest({
       designId: null,
-      materialCategory: 'BASIC FOO' as MaterialCategory,
+      materialCategory: "BASIC FOO" as MaterialCategory,
       processes: [],
-      productComplexity: 'SIMPLE',
-      productType: 'TEESHIRT',
-      units: 1000
+      productComplexity: "SIMPLE",
+      productType: "TEESHIRT",
+      units: 1000,
     });
   } catch (error) {
-    t.equal(error.message, 'Pricing product material could not be found!');
+    t.equal(error.message, "Pricing product material could not be found!");
   }
 
   // success
 
   const latestValueRequest = await PricingQuotesDAO.findLatestValuesForRequest({
     designId: null,
-    materialCategory: 'BASIC',
+    materialCategory: "BASIC",
     processes: [],
-    productComplexity: 'SIMPLE',
-    productType: 'TEESHIRT',
-    units: 1000
+    productComplexity: "SIMPLE",
+    productType: "TEESHIRT",
+    units: 1000,
   });
 
   t.deepEqual(
@@ -91,22 +91,22 @@ test('PricingQuotes DAO supports finding the latest values', async (t: tape.Test
       {
         ...latestValueRequest,
         careLabel: {
-          ...omit(latestValueRequest.careLabel, 'createdAt', 'id')
+          ...omit(latestValueRequest.careLabel, "createdAt", "id"),
         },
         margin: {
-          ...omit(latestValueRequest.margin, 'createdAt', 'id')
+          ...omit(latestValueRequest.margin, "createdAt", "id"),
         },
         material: {
-          ...omit(latestValueRequest.material, 'createdAt', 'id')
+          ...omit(latestValueRequest.material, "createdAt", "id"),
         },
         sample: {
-          ...omit(latestValueRequest.sample, 'createdAt', 'id')
+          ...omit(latestValueRequest.sample, "createdAt", "id"),
         },
         type: {
-          ...omit(latestValueRequest.type, 'createdAt', 'id')
-        }
+          ...omit(latestValueRequest.type, "createdAt", "id"),
+        },
       },
-      'constantId'
+      "constantId"
     ),
     {
       brandedLabelsAdditionalCents: 5,
@@ -115,31 +115,31 @@ test('PricingQuotes DAO supports finding the latest values', async (t: tape.Test
       careLabel: {
         minimumUnits: 1000,
         unitCents: 12,
-        version: 0
+        version: 0,
       },
       gradingCents: 5000,
       margin: {
-        margin: '8',
+        margin: "8",
         minimumUnits: 1000,
-        version: 0
+        version: 0,
       },
       markingCents: 5000,
       material: {
-        category: 'BASIC',
+        category: "BASIC",
         minimumUnits: 500,
         unitCents: 400,
-        version: 0
+        version: 0,
       },
       patternRevisionCents: 5000,
       processTimeline: null,
       processes: [],
       sample: {
-        complexity: 'SIMPLE',
-        contrast: '0.15',
+        complexity: "SIMPLE",
+        contrast: "0.15",
         creationTimeMs: 0,
         fulfillmentTimeMs: 259200000,
         minimumUnits: 1,
-        name: 'TEESHIRT',
+        name: "TEESHIRT",
         patternMinimumCents: 10000,
         preProductionTimeMs: 129600000,
         productionTimeMs: 21600000,
@@ -148,17 +148,17 @@ test('PricingQuotes DAO supports finding the latest values', async (t: tape.Test
         specificationTimeMs: 129600000,
         unitCents: 15000,
         version: 0,
-        yield: '1.5'
+        yield: "1.5",
       },
       sampleMinimumCents: 7500,
       technicalDesignCents: 5000,
       type: {
-        complexity: 'SIMPLE',
-        contrast: '0.15',
+        complexity: "SIMPLE",
+        contrast: "0.15",
         creationTimeMs: 0,
         fulfillmentTimeMs: 259200000,
         minimumUnits: 750,
-        name: 'TEESHIRT',
+        name: "TEESHIRT",
         patternMinimumCents: 10000,
         preProductionTimeMs: 129600000,
         productionTimeMs: 270000000,
@@ -167,11 +167,11 @@ test('PricingQuotes DAO supports finding the latest values', async (t: tape.Test
         specificationTimeMs: 129600000,
         unitCents: 750,
         version: 0,
-        yield: '1.5'
+        yield: "1.5",
       },
-      workingSessionCents: 2500
+      workingSessionCents: 2500,
     },
-    'Returns the latest values for a request'
+    "Returns the latest values for a request"
   );
 
   // success with processes
@@ -179,16 +179,16 @@ test('PricingQuotes DAO supports finding the latest values', async (t: tape.Test
   const latestValueRequestWithProcesses = await PricingQuotesDAO.findLatestValuesForRequest(
     {
       designId: null,
-      materialCategory: 'BASIC',
+      materialCategory: "BASIC",
       processes: [
         {
-          complexity: '2_COLORS',
-          name: 'SCREEN_PRINTING'
-        }
+          complexity: "2_COLORS",
+          name: "SCREEN_PRINTING",
+        },
       ],
-      productComplexity: 'SIMPLE',
-      productType: 'TEESHIRT',
-      units: 1000
+      productComplexity: "SIMPLE",
+      productType: "TEESHIRT",
+      units: 1000,
     }
   );
 
@@ -197,38 +197,38 @@ test('PricingQuotes DAO supports finding the latest values', async (t: tape.Test
       {
         ...latestValueRequestWithProcesses,
         careLabel: {
-          ...omit(latestValueRequestWithProcesses.careLabel, 'createdAt', 'id')
+          ...omit(latestValueRequestWithProcesses.careLabel, "createdAt", "id"),
         },
         margin: {
-          ...omit(latestValueRequestWithProcesses.margin, 'createdAt', 'id')
+          ...omit(latestValueRequestWithProcesses.margin, "createdAt", "id"),
         },
         material: {
-          ...omit(latestValueRequestWithProcesses.material, 'createdAt', 'id')
+          ...omit(latestValueRequestWithProcesses.material, "createdAt", "id"),
         },
         processTimeline: {
           ...omit(
             latestValueRequestWithProcesses.processTimeline,
-            'createdAt',
-            'id'
-          )
+            "createdAt",
+            "id"
+          ),
         },
         processes: [
           {
             ...omit(
               latestValueRequestWithProcesses.processes[0],
-              'createdAt',
-              'id'
-            )
-          }
+              "createdAt",
+              "id"
+            ),
+          },
         ],
         sample: {
-          ...omit(latestValueRequestWithProcesses.sample, 'createdAt', 'id')
+          ...omit(latestValueRequestWithProcesses.sample, "createdAt", "id"),
         },
         type: {
-          ...omit(latestValueRequestWithProcesses.type, 'createdAt', 'id')
-        }
+          ...omit(latestValueRequestWithProcesses.type, "createdAt", "id"),
+        },
       },
-      'constantId'
+      "constantId"
     ),
     {
       brandedLabelsAdditionalCents: 5,
@@ -237,46 +237,46 @@ test('PricingQuotes DAO supports finding the latest values', async (t: tape.Test
       careLabel: {
         minimumUnits: 1000,
         unitCents: 12,
-        version: 0
+        version: 0,
       },
       gradingCents: 5000,
       margin: {
-        margin: '8',
+        margin: "8",
         minimumUnits: 1000,
-        version: 0
+        version: 0,
       },
       markingCents: 5000,
       material: {
-        category: 'BASIC',
+        category: "BASIC",
         minimumUnits: 500,
         unitCents: 400,
-        version: 0
+        version: 0,
       },
       patternRevisionCents: 5000,
       processTimeline: {
         minimumUnits: 50,
         timeMs: 86400000,
         uniqueProcesses: 1,
-        version: 0
+        version: 0,
       },
       processes: [
         {
-          complexity: '2_COLORS',
+          complexity: "2_COLORS",
           minimumUnits: 1000,
-          name: 'SCREEN_PRINTING',
-          displayName: 'screen printing',
+          name: "SCREEN_PRINTING",
+          displayName: "screen printing",
           setupCents: 6000,
           unitCents: 105,
-          version: 0
-        }
+          version: 0,
+        },
       ],
       sample: {
-        complexity: 'SIMPLE',
-        contrast: '0.15',
+        complexity: "SIMPLE",
+        contrast: "0.15",
         creationTimeMs: 0,
         fulfillmentTimeMs: 259200000,
         minimumUnits: 1,
-        name: 'TEESHIRT',
+        name: "TEESHIRT",
         patternMinimumCents: 10000,
         preProductionTimeMs: 129600000,
         productionTimeMs: 21600000,
@@ -285,17 +285,17 @@ test('PricingQuotes DAO supports finding the latest values', async (t: tape.Test
         specificationTimeMs: 129600000,
         unitCents: 15000,
         version: 0,
-        yield: '1.5'
+        yield: "1.5",
       },
       sampleMinimumCents: 7500,
       technicalDesignCents: 5000,
       type: {
-        complexity: 'SIMPLE',
-        contrast: '0.15',
+        complexity: "SIMPLE",
+        contrast: "0.15",
         creationTimeMs: 0,
         fulfillmentTimeMs: 259200000,
         minimumUnits: 750,
-        name: 'TEESHIRT',
+        name: "TEESHIRT",
         patternMinimumCents: 10000,
         preProductionTimeMs: 129600000,
         productionTimeMs: 270000000,
@@ -304,10 +304,10 @@ test('PricingQuotes DAO supports finding the latest values', async (t: tape.Test
         specificationTimeMs: 129600000,
         unitCents: 750,
         version: 0,
-        yield: '1.5'
+        yield: "1.5",
       },
-      workingSessionCents: 2500
+      workingSessionCents: 2500,
     },
-    'Returns the latest values for a request'
+    "Returns the latest values for a request"
   );
 });

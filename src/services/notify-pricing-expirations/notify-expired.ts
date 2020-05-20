@@ -1,14 +1,14 @@
-import Knex from 'knex';
+import Knex from "knex";
 
-import { findAllUnnotifiedCollectionsWithExpiringCostInputs } from '../../components/collections/dao';
-import { NotificationType } from '../../components/notifications/domain-object';
-import { determineSubmissionStatus } from '../../components/collections/services/determine-submission-status';
+import { findAllUnnotifiedCollectionsWithExpiringCostInputs } from "../../components/collections/dao";
+import { NotificationType } from "../../components/notifications/domain-object";
+import { determineSubmissionStatus } from "../../components/collections/services/determine-submission-status";
 import {
   immediatelySendCostingExpiredNotification,
   immediatelySendOneWeekCostingExpirationNotification,
-  immediatelySendTwoDayCostingExpirationNotification
-} from '../create-notifications/costing-expirations';
-import { MetaCollection } from '../../components/collections/meta-domain-object';
+  immediatelySendTwoDayCostingExpirationNotification,
+} from "../create-notifications/costing-expirations";
+import { MetaCollection } from "../../components/collections/meta-domain-object";
 
 /**
  * Notify the collection owners whose pricing just expired (and have not checked out).
@@ -21,7 +21,7 @@ export async function notifyExpired(trx: Knex.Transaction): Promise<number> {
       time: oneHourAgo,
       boundingHours: 1,
       notificationType: NotificationType.COSTING_EXPIRED,
-      trx
+      trx,
     }
   );
   const submissionStatuses = await determineSubmissionStatus(
@@ -42,7 +42,7 @@ export async function notifyExpired(trx: Knex.Transaction): Promise<number> {
   for (const collectionToNotify of collectionsToNotify) {
     await immediatelySendCostingExpiredNotification({
       collectionId: collectionToNotify.id,
-      recipientUserId: collectionToNotify.createdBy
+      recipientUserId: collectionToNotify.createdBy,
     });
   }
 
@@ -62,7 +62,7 @@ export async function notifyOneWeekFromExpiring(
       time: oneWeekFromNow,
       boundingHours: 1,
       notificationType: NotificationType.COSTING_EXPIRATION_ONE_WEEK,
-      trx
+      trx,
     }
   );
   const submissionStatuses = await determineSubmissionStatus(
@@ -83,7 +83,7 @@ export async function notifyOneWeekFromExpiring(
   for (const collectionToNotify of collectionsToNotify) {
     await immediatelySendOneWeekCostingExpirationNotification({
       collectionId: collectionToNotify.id,
-      recipientUserId: collectionToNotify.createdBy
+      recipientUserId: collectionToNotify.createdBy,
     });
   }
 
@@ -103,7 +103,7 @@ export async function notifyTwoDaysFromExpiring(
       time: twoDaysFromNow,
       boundingHours: 1,
       notificationType: NotificationType.COSTING_EXPIRATION_TWO_DAYS,
-      trx
+      trx,
     }
   );
   const submissionStatuses = await determineSubmissionStatus(
@@ -124,7 +124,7 @@ export async function notifyTwoDaysFromExpiring(
   for (const collectionToNotify of collectionsToNotify) {
     await immediatelySendTwoDayCostingExpirationNotification({
       collectionId: collectionToNotify.id,
-      recipientUserId: collectionToNotify.createdBy
+      recipientUserId: collectionToNotify.createdBy,
     });
   }
 

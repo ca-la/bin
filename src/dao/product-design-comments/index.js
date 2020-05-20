@@ -1,20 +1,20 @@
-'use strict';
+"use strict";
 
-const rethrow = require('pg-rethrow');
-const uuid = require('node-uuid');
+const rethrow = require("pg-rethrow");
+const uuid = require("node-uuid");
 
-const compact = require('../../services/compact');
-const db = require('../../services/db');
-const first = require('../../services/first').default;
-const ProductDesignComment = require('../../domain-objects/product-design-comment');
+const compact = require("../../services/compact");
+const db = require("../../services/db");
+const first = require("../../services/first").default;
+const ProductDesignComment = require("../../domain-objects/product-design-comment");
 
-const instantiate = row => new ProductDesignComment(row);
-const maybeInstantiate = data =>
+const instantiate = (row) => new ProductDesignComment(row);
+const maybeInstantiate = (data) =>
   (data && new ProductDesignComment(data)) || null;
 
 const { dataMapper } = ProductDesignComment;
 
-const TABLE_NAME = 'product_design_comments';
+const TABLE_NAME = "product_design_comments";
 
 async function findByDesign(designId) {
   const result = await db
@@ -45,7 +45,7 @@ async function create(data) {
   );
 
   return db(TABLE_NAME)
-    .insert(rowData, '*')
+    .insert(rowData, "*")
     .then(first)
     .then(instantiate)
     .catch(rethrow);
@@ -56,7 +56,7 @@ async function update(id, data) {
 
   return db(TABLE_NAME)
     .where({ id, deleted_at: null })
-    .update(rowData, '*')
+    .update(rowData, "*")
     .then(first)
     .then(maybeInstantiate)
     .catch(rethrow);
@@ -75,9 +75,9 @@ async function deleteById(id) {
     .where({ id, deleted_at: null })
     .update(
       {
-        deleted_at: new Date().toISOString()
+        deleted_at: new Date().toISOString(),
       },
-      '*'
+      "*"
     )
     .then(first)
     .then(maybeInstantiate)
@@ -89,5 +89,5 @@ module.exports = {
   deleteById,
   findByDesign,
   findById,
-  update
+  update,
 };

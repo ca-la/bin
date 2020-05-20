@@ -1,51 +1,51 @@
-import { test, Test } from '../test-helpers/fresh';
+import { test, Test } from "../test-helpers/fresh";
 
 import PricingProductMaterial, {
   dataAdapter,
   isPricingProductMaterialRow,
-  PricingProductMaterialRow
-} from './pricing-product-material';
+  PricingProductMaterialRow,
+} from "./pricing-product-material";
 
 const now = new Date();
 const validRowData: PricingProductMaterialRow = {
-  category: 'string',
+  category: "string",
   created_at: now,
-  id: 'string',
+  id: "string",
   minimum_units: 0,
   unit_cents: 0,
-  version: 0
+  version: 0,
 };
 const invalidRowData = {
-  category: 'string',
+  category: "string",
   created_at: now,
-  version: 0
+  version: 0,
 };
 const equivalentUserData: PricingProductMaterial = {
-  category: 'string',
+  category: "string",
   createdAt: now,
-  id: 'string',
+  id: "string",
   minimumUnits: 0,
   unitCents: 0,
-  version: 0
+  version: 0,
 };
 
-test('PricingProductMaterial', async (t: Test): Promise<void> => {
+test("PricingProductMaterial", async (t: Test): Promise<void> => {
   t.deepEqual(
     validRowData,
     dataAdapter.toDb(equivalentUserData),
-    'encode/decode produces an equivalent object'
+    "encode/decode produces an equivalent object"
   );
   t.deepEqual(
     equivalentUserData,
     dataAdapter.parse(validRowData),
-    'has mapped values'
+    "has mapped values"
   );
   t.notOk(
     isPricingProductMaterialRow(invalidRowData),
-    'type guard rejects invalid data'
+    "type guard rejects invalid data"
   );
   t.ok(
     isPricingProductMaterialRow(validRowData),
-    'type guard passes with valid data'
+    "type guard passes with valid data"
   );
 });

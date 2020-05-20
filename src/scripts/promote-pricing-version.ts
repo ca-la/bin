@@ -1,9 +1,9 @@
-import Knex from 'knex';
-import uuid from 'node-uuid';
-import meow from 'meow';
+import Knex from "knex";
+import uuid from "node-uuid";
+import meow from "meow";
 
-import db from '../services/db';
-import { log } from '../services/logger';
+import db from "../services/db";
+import { log } from "../services/logger";
 
 const HELP_TEXT = `
   Promote a specific version of a pricing table to be the latest version
@@ -18,24 +18,20 @@ const HELP_TEXT = `
 const cli = meow(HELP_TEXT, {
   flags: {
     table: {
-      alias: 't',
-      type: 'string'
-    }
-  }
+      alias: "t",
+      type: "string",
+    },
+  },
 });
 
 async function findMaxVersion(tableName: string): Promise<number> {
-  const { max }: { max: number } = await db(tableName)
-    .max('version')
-    .first();
+  const { max }: { max: number } = await db(tableName).max("version").first();
 
   return max;
 }
 
 function findAtVersion<T>(tableName: string, version: number): Promise<T[]> {
-  return db(tableName)
-    .select()
-    .where({ version });
+  return db(tableName).select().where({ version });
 }
 
 async function promoteVersion<T>(
@@ -49,12 +45,10 @@ async function promoteVersion<T>(
     ...row,
     id: uuid.v4(),
     created_at: new Date(),
-    version: currentVersion + 1
+    version: currentVersion + 1,
   }));
 
-  return trx(tableName)
-    .insert(toInsert)
-    .returning('*');
+  return trx(tableName).insert(toInsert).returning("*");
 }
 
 interface TableMap {
@@ -67,13 +61,13 @@ interface TableMap {
   types: string;
 }
 const tableMap: TableMap = {
-  constants: 'pricing_constants',
-  labels: 'pricing_care_labels',
-  margins: 'pricing_margins',
-  materials: 'pricing_product_materials',
-  processTimelines: 'pricing_process_timelines',
-  processes: 'pricing_processes',
-  types: 'pricing_product_types'
+  constants: "pricing_constants",
+  labels: "pricing_care_labels",
+  margins: "pricing_margins",
+  materials: "pricing_product_materials",
+  processTimelines: "pricing_process_timelines",
+  processes: "pricing_processes",
+  types: "pricing_product_types",
 };
 
 type TableKey = keyof TableMap;

@@ -1,5 +1,5 @@
-import DataAdapter from '../../services/data-adapter';
-import { hasProperties } from '../../services/require-properties';
+import DataAdapter from "../../services/data-adapter";
+import { hasProperties } from "../../services/require-properties";
 
 /**
  * A relationship between two components which are connected via a process.
@@ -38,14 +38,14 @@ export function isComponentRelationshipRow(
 ): row is ComponentRelationshipRow {
   return hasProperties(
     row,
-    'created_at',
-    'created_by',
-    'deleted_at',
-    'id',
-    'process_id',
-    'relative_x',
-    'relative_y',
-    'source_component_id',
-    'target_component_id'
+    "created_at",
+    "created_by",
+    "deleted_at",
+    "id",
+    "process_id",
+    "relative_x",
+    "relative_y",
+    "source_component_id",
+    "target_component_id"
   );
 }

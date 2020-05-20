@@ -1,38 +1,38 @@
-import uuid from 'node-uuid';
-import { ERRORS } from 'pg-rethrow';
+import uuid from "node-uuid";
+import { ERRORS } from "pg-rethrow";
 
-import { sandbox, test, Test } from '../../../test-helpers/fresh';
-import { authHeader, put } from '../../../test-helpers/http';
-import * as NodesDAO from '../../nodes/dao';
-import * as AssetsDAO from '../../assets/dao';
-import * as LayoutsDAO from '../../attributes/layout-attributes/dao';
-import createUser = require('../../../test-helpers/create-user');
-import createDesign from '../../../services/create-design';
+import { sandbox, test, Test } from "../../../test-helpers/fresh";
+import { authHeader, put } from "../../../test-helpers/http";
+import * as NodesDAO from "../../nodes/dao";
+import * as AssetsDAO from "../../assets/dao";
+import * as LayoutsDAO from "../../attributes/layout-attributes/dao";
+import createUser = require("../../../test-helpers/create-user");
+import createDesign from "../../../services/create-design";
 
 // This is a heavy type that would require a lot of noise, but the
 // type-inference works here, so going to disable the linting rule
 // tslint:disable-next-line:typedef
 async function generateAllData() {
-  const admin = await createUser({ role: 'ADMIN' });
-  const designer = await createUser({ role: 'USER' });
-  const otherAdmin = await createUser({ role: 'ADMIN' });
+  const admin = await createUser({ role: "ADMIN" });
+  const designer = await createUser({ role: "USER" });
+  const otherAdmin = await createUser({ role: "ADMIN" });
 
   const design = await createDesign({
-    productType: '',
-    title: 'test',
-    userId: admin.user.id
+    productType: "",
+    title: "test",
+    userId: admin.user.id,
   });
   const nodeId = uuid.v4();
   const asset = {
     createdAt: new Date(),
     description: null,
     id: uuid.v4(),
-    mimeType: 'image/jpeg',
+    mimeType: "image/jpeg",
     originalHeightPx: 0,
     originalWidthPx: 0,
-    title: '',
+    title: "",
     uploadCompletedAt: null,
-    userId: admin.user.id
+    userId: admin.user.id,
   };
   const dimension = {
     createdAt: new Date(),
@@ -41,7 +41,7 @@ async function generateAllData() {
     id: uuid.v4(),
     height: 500,
     nodeId,
-    width: 200
+    width: 200,
   };
   const node = {
     id: nodeId,
@@ -51,7 +51,7 @@ async function generateAllData() {
     x: 0,
     y: 0,
     ordering: 0,
-    title: null
+    title: null,
   };
 
   return {
@@ -61,11 +61,11 @@ async function generateAllData() {
     design,
     asset,
     dimension,
-    node
+    node,
   };
 }
 
-test('updateAllNodes updates all nodes', async (t: Test) => {
+test("updateAllNodes updates all nodes", async (t: Test) => {
   const {
     admin,
     designer,
@@ -73,7 +73,7 @@ test('updateAllNodes updates all nodes', async (t: Test) => {
     asset,
     design,
     dimension,
-    node
+    node,
   } = await generateAllData();
 
   const body = {
@@ -82,14 +82,14 @@ test('updateAllNodes updates all nodes', async (t: Test) => {
       artworks: [],
       dimensions: [dimension],
       materials: [],
-      sketches: []
+      sketches: [],
     },
-    nodes: [node]
+    nodes: [node],
   };
 
   const [response, responseBody] = await put(`/product-designs/${design.id}`, {
     body,
-    headers: authHeader(admin.session.id)
+    headers: authHeader(admin.session.id),
   });
   t.deepEqual(
     responseBody,
@@ -98,44 +98,40 @@ test('updateAllNodes updates all nodes', async (t: Test) => {
       attributes: {
         artworks: [],
         dimensions: [
-          { ...dimension, createdAt: dimension.createdAt.toISOString() }
+          { ...dimension, createdAt: dimension.createdAt.toISOString() },
         ],
         materials: [],
-        sketches: []
+        sketches: [],
       },
       nodes: [
-        { ...node, createdAt: responseBody.nodes[0].createdAt, type: null }
-      ]
+        { ...node, createdAt: responseBody.nodes[0].createdAt, type: null },
+      ],
     },
-    'body matches expected shape'
+    "body matches expected shape"
   );
-  t.equal(response.status, 200, 'Response is 200');
+  t.equal(response.status, 200, "Response is 200");
 
   const [response2] = await put(`/product-designs/${design.id}`, {
     body,
-    headers: authHeader(designer.session.id)
+    headers: authHeader(designer.session.id),
   });
-  t.equal(response2.status, 403, 'Response is 403');
+  t.equal(response2.status, 403, "Response is 403");
 
   const [response3] = await put(`/product-designs/${design.id}`, {
     body,
-    headers: authHeader(otherAdmin.session.id)
+    headers: authHeader(otherAdmin.session.id),
   });
-  t.equal(response3.status, 200, 'Response is 200');
+  t.equal(response3.status, 200, "Response is 200");
 });
 
-test('updateAllNodes returns an error if any of the updates fail', async (t: Test) => {
+test("updateAllNodes returns an error if any of the updates fail", async (t: Test) => {
   const { admin, asset, design, dimension, node } = await generateAllData();
 
   sandbox()
-    .stub(LayoutsDAO, 'updateOrCreate')
+    .stub(LayoutsDAO, "updateOrCreate")
     .rejects(new ERRORS.InvalidTextRepresentation());
-  sandbox()
-    .stub(AssetsDAO, 'updateOrCreate')
-    .resolves(asset);
-  sandbox()
-    .stub(NodesDAO, 'updateOrCreate')
-    .resolves(node);
+  sandbox().stub(AssetsDAO, "updateOrCreate").resolves(asset);
+  sandbox().stub(NodesDAO, "updateOrCreate").resolves(node);
 
   const body = {
     assets: [asset],
@@ -143,14 +139,14 @@ test('updateAllNodes returns an error if any of the updates fail', async (t: Tes
       artworks: [],
       dimensions: [dimension],
       materials: [],
-      sketches: []
+      sketches: [],
     },
-    nodes: [node]
+    nodes: [node],
   };
 
   const [response] = await put(`/product-designs/${design.id}`, {
     body,
-    headers: authHeader(admin.session.id)
+    headers: authHeader(admin.session.id),
   });
-  t.equal(response.status, 500, 'Response is 500');
+  t.equal(response.status, 500, "Response is 500");
 });

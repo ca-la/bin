@@ -1,16 +1,16 @@
-import { chunk } from 'lodash';
-import { Transaction } from 'knex';
+import { chunk } from "lodash";
+import { Transaction } from "knex";
 
-import FitPartnerCustomer = require('../../domain-objects/fit-partner-customer');
-import FitPartnerCustomersDAO = require('../../dao/fit-partner-customers');
-import FitPartnersDAO = require('../../dao/fit-partners');
-import Scan = require('../../domain-objects/scan');
-import ShopifyClient = require('../shopify');
-import db from '../../services/db';
+import FitPartnerCustomer = require("../../domain-objects/fit-partner-customer");
+import FitPartnerCustomersDAO = require("../../dao/fit-partner-customers");
+import FitPartnersDAO = require("../../dao/fit-partners");
+import Scan = require("../../domain-objects/scan");
+import ShopifyClient = require("../shopify");
+import db from "../../services/db";
 
 type ShopifyMetafieldDefinition = ShopifyClient.ShopifyMetafieldDefinition;
 
-type UnsavedMetafield = Omit<ShopifyMetafieldDefinition, 'id'>;
+type UnsavedMetafield = Omit<ShopifyMetafieldDefinition, "id">;
 
 // We can store any arbitrary data in Shopify metafields
 interface Data {
@@ -26,9 +26,9 @@ function constructMetafields(data: Data): UnsavedMetafield[] {
 
     fields.push({
       key: truncatedKey,
-      namespace: 'cala-fit',
+      namespace: "cala-fit",
       value: String(data[key]),
-      value_type: 'string'
+      value_type: "string",
     });
   });
 
@@ -56,7 +56,7 @@ async function updateMetafields(
     // https://github.com/DefinitelyTyped/DefinitelyTyped/issues/28679 — TODO
     // remove when fixed
     await (db.raw(
-      'select * from fit_partner_customers where shopify_user_id = ? for update',
+      "select * from fit_partner_customers where shopify_user_id = ? for update",
       [customerId]
     ) as any).transacting(trx);
 
@@ -116,7 +116,7 @@ async function getShopifyClient(
   const shopify = new ShopifyClient({
     appApiKey: partner.shopifyAppApiKey,
     appPassword: partner.shopifyAppPassword,
-    storeBase: partner.shopifyHostname
+    storeBase: partner.shopifyHostname,
   });
 
   return { shopify, customer };
@@ -130,8 +130,8 @@ export async function markComplete(scan: Scan): Promise<void> {
   }
 
   await updateMetafields(shopify, customer.shopifyUserId, {
-    'scan-complete': true,
-    'scan-id': scan.id
+    "scan-complete": true,
+    "scan-id": scan.id,
   });
 }
 
@@ -176,10 +176,10 @@ export async function saveFittingUrl(
   const shopify = new ShopifyClient({
     appApiKey: partner.shopifyAppApiKey,
     appPassword: partner.shopifyAppPassword,
-    storeBase: partner.shopifyHostname
+    storeBase: partner.shopifyHostname,
   });
 
   await updateMetafields(shopify, customer.shopifyUserId, {
-    'latest-fitting-url': fittingUrl
+    "latest-fitting-url": fittingUrl,
   });
 }

@@ -1,16 +1,16 @@
-import Router from 'koa-router';
+import Router from "koa-router";
 
-import addCollaborator from '../../services/add-collaborator';
-import InvalidDataError from '../../errors/invalid-data';
-import * as CollaboratorsDAO from './dao';
-import { isRole, Roles } from './domain-objects/collaborator';
-import requireAuth = require('../../middleware/require-auth');
-import { hasProperties } from '../../services/require-properties';
-import * as CollaboratorsMiddleware from '../../middleware/can-access-collaborator';
+import addCollaborator from "../../services/add-collaborator";
+import InvalidDataError from "../../errors/invalid-data";
+import * as CollaboratorsDAO from "./dao";
+import { isRole, Roles } from "./domain-objects/collaborator";
+import requireAuth = require("../../middleware/require-auth");
+import { hasProperties } from "../../services/require-properties";
+import * as CollaboratorsMiddleware from "../../middleware/can-access-collaborator";
 import {
   CollaboratorWithUserMeta,
-  CollaboratorWithUserMetaByDesign
-} from './domain-objects/collaborator-by-design';
+  CollaboratorWithUserMetaByDesign,
+} from "./domain-objects/collaborator-by-design";
 
 const router = new Router();
 
@@ -41,23 +41,23 @@ function isCollaboratorOnAllDesigns(
 }
 
 const isCollaboratorUpdate = (data: object): data is CollaboratorUpdate => {
-  return hasProperties(data, 'role');
+  return hasProperties(data, "role");
 };
 
 function* create(this: AuthedContext): Iterator<any, any, any> {
   if (!CollaboratorsMiddleware.isCollaboratorRequest(this.request.body)) {
-    this.throw(400, 'Request does not match Collaborator');
+    this.throw(400, "Request does not match Collaborator");
   }
   const {
     collectionId,
     designId,
     invitationMessage,
     role,
-    userEmail
+    userEmail,
   } = this.request.body;
 
   if (!userEmail) {
-    this.throw(400, 'Request does not include email');
+    this.throw(400, "Request does not include email");
   }
   this.assert(isRole(role), 400, `Unknown role: ${role}`);
 
@@ -67,7 +67,7 @@ function* create(this: AuthedContext): Iterator<any, any, any> {
     email: userEmail,
     inviterUserId: this.state.userId,
     role,
-    unsafeInvitationMessage: invitationMessage
+    unsafeInvitationMessage: invitationMessage,
   }).catch((err: Error) => {
     if (err instanceof InvalidDataError) {
       this.throw(400, err);
@@ -90,20 +90,20 @@ function* find(this: AuthedContext): Iterator<any, any, any> {
   } else if (collectionId) {
     collaborators = yield CollaboratorsDAO.findByCollection(collectionId);
   } else if (designIds) {
-    const idList = designIds.split(',');
+    const idList = designIds.split(",");
     const collaboratorsByDesign = yield CollaboratorsDAO.findByDesigns(idList);
     const hasAccess = isCollaboratorOnAllDesigns(userId, collaboratorsByDesign);
 
     if (!hasAccess) {
       this.throw(
         403,
-        'You are not allowed to view collaborators for the given designs!'
+        "You are not allowed to view collaborators for the given designs!"
       );
     }
 
     collaborators = collaboratorsByDesign;
   } else {
-    this.throw(400, 'Design or collection IDs must be specified');
+    this.throw(400, "Design or collection IDs must be specified");
   }
 
   this.status = 200;
@@ -116,15 +116,15 @@ function* update(
   const { collaborator } = this.state;
   const { body } = this.request;
   if (!collaborator) {
-    this.throw(400, 'Could not find Collaborator!');
+    this.throw(400, "Could not find Collaborator!");
   }
   if (!isCollaboratorUpdate(body)) {
-    this.throw(400, 'Request does not have a role');
+    this.throw(400, "Request does not have a role");
   }
   this.assert(isRole(body.role), 400, `Unknown role: ${body.role}`);
 
   const updated = yield CollaboratorsDAO.update(collaborator.id, {
-    role: body.role
+    role: body.role,
   });
   this.status = 200;
   this.body = updated;
@@ -136,7 +136,7 @@ function* deleteCollaborator(
   const { collaborator } = this.state;
 
   if (!collaborator) {
-    this.throw(404, 'Could not find Collaborator!');
+    this.throw(404, "Could not find Collaborator!");
   } else {
     yield CollaboratorsDAO.deleteById(collaborator.id);
     this.status = 204;
@@ -144,27 +144,27 @@ function* deleteCollaborator(
 }
 
 router.post(
-  '/',
+  "/",
   requireAuth,
   CollaboratorsMiddleware.canAccessViaDesignOrCollectionInRequestBody,
   CollaboratorsMiddleware.canEditCollaborators,
   create
 );
 router.get(
-  '/',
+  "/",
   requireAuth,
   CollaboratorsMiddleware.canAccessViaQueryParameters,
   find
 );
 router.patch(
-  '/:collaboratorId',
+  "/:collaboratorId",
   requireAuth,
   CollaboratorsMiddleware.canAccessCollaboratorInParam,
   CollaboratorsMiddleware.canEditCollaborators,
   update
 );
 router.del(
-  '/:collaboratorId',
+  "/:collaboratorId",
   requireAuth,
   CollaboratorsMiddleware.canAccessCollaboratorInParam,
   CollaboratorsMiddleware.canEditCollaborators,

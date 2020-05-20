@@ -1,4 +1,4 @@
-import FitPartnerCustomer = require('../../domain-objects/fit-partner-customer');
+import FitPartnerCustomer = require("../../domain-objects/fit-partner-customer");
 
 interface PhoneCustomer {
   partnerId: string;

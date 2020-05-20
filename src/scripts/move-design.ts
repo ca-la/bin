@@ -1,7 +1,7 @@
 /* tslint:disable:no-console */
-import process from 'process';
-import db from '../services/db';
-import knex from 'knex';
+import process from "process";
+import db from "../services/db";
+import knex from "knex";
 
 async function main(): Promise<Error | {}> {
   const designId = process.argv[2];
@@ -11,9 +11,7 @@ async function main(): Promise<Error | {}> {
   if (!designId || !oldUserId || !userId) {
     return Promise.reject(
       new Error(
-        `Usage: move-design.ts [design ID] [old user ID] [user ID]\nArguments: ${
-          process.argv
-        }`
+        `Usage: move-design.ts [design ID] [old user ID] [user ID]\nArguments: ${process.argv}`
       )
     );
   }
@@ -21,34 +19,34 @@ async function main(): Promise<Error | {}> {
   return db.transaction(
     async (trx: knex.Transaction): Promise<any> => {
       try {
-        console.log('\nUpdating: product_designs');
-        const designs = await db('product_designs')
+        console.log("\nUpdating: product_designs");
+        const designs = await db("product_designs")
           .update({ user_id: userId })
           .where({ id: designId })
-          .returning('*')
+          .returning("*")
           .transacting(trx);
         console.log(designs);
-        console.log('='.repeat(20));
+        console.log("=".repeat(20));
 
-        console.log('\nUpdating: collaborators');
-        const collaborators = await db('collaborators')
+        console.log("\nUpdating: collaborators");
+        const collaborators = await db("collaborators")
           .delete()
           .where({ design_id: designId, user_id: userId })
-          .returning('*')
+          .returning("*")
           .transacting(trx);
         console.log(collaborators);
-        console.log('='.repeat(20));
+        console.log("=".repeat(20));
 
-        console.log('\nUpdating: product_design_events');
-        const events = await db('product_design_events')
+        console.log("\nUpdating: product_design_events");
+        const events = await db("product_design_events")
           .update({ owner_user_id: userId })
           .where({ design_id: designId, owner_user_id: oldUserId })
-          .returning('*')
+          .returning("*")
           .transacting(trx);
         console.log(events);
-        console.log('='.repeat(20));
+        console.log("=".repeat(20));
 
-        console.log('\nUpdating: product_design_options');
+        console.log("\nUpdating: product_design_options");
         const options = await (db.raw(
           `
 update product_design_options as o
@@ -61,9 +59,9 @@ returning *;
           [userId, designId]
         ) as any).transacting(trx);
         console.log(options.rows);
-        console.log('='.repeat(20));
+        console.log("=".repeat(20));
 
-        console.log('\nUpdating: product_design_images');
+        console.log("\nUpdating: product_design_images");
         const images = await (db.raw(
           `
 update product_design_images set user_id = ?

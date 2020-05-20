@@ -1,6 +1,6 @@
-import DataAdapter from '../../services/data-adapter';
-import { hasProperties } from '../../services/require-properties';
-import Comment, { CommentRow, isCommentRow } from '../comments/domain-object';
+import DataAdapter from "../../services/data-adapter";
+import { hasProperties } from "../../services/require-properties";
+import Comment, { CommentRow, isCommentRow } from "../comments/domain-object";
 
 export default interface ApprovalStepComment {
   commentId: string;
@@ -20,7 +20,7 @@ export const dataAdapter = new DataAdapter<
 export function isApprovalStepCommentRow(
   row: object
 ): row is ApprovalStepCommentRow {
-  return hasProperties(row, 'comment_id', 'approval_step_id');
+  return hasProperties(row, "comment_id", "approval_step_id");
 }
 
 export interface CommentWithMeta extends Comment {
@@ -37,5 +37,5 @@ export const withMetaDataAdapter = new DataAdapter<
 >();
 
 export function isCommentWithMetaRow(row: object): row is CommentWithMetaRow {
-  return isCommentRow && hasProperties(row, 'ApprovalStep_id');
+  return isCommentRow && hasProperties(row, "ApprovalStep_id");
 }

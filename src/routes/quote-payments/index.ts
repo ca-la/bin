@@ -1,23 +1,23 @@
-import Router from 'koa-router';
+import Router from "koa-router";
 
-import requireAuth = require('../../middleware/require-auth');
+import requireAuth = require("../../middleware/require-auth");
 import {
   canAccessCollectionInRequestBody,
-  canSubmitCollection
-} from '../../middleware/can-access-collection';
-import { typeGuard } from '../../middleware/type-guard';
+  canSubmitCollection,
+} from "../../middleware/can-access-collection";
+import { typeGuard } from "../../middleware/type-guard";
 import payInvoiceWithNewPaymentMethod, {
   createInvoiceWithoutMethod,
   isCreateRequest,
-  payWaivedQuote
-} from '../../services/payment';
-import { CreateQuotePayload } from '../../services/generate-pricing-quote';
-import { hasProperties } from '../../services/require-properties';
-import createUPCsForCollection from '../../services/create-upcs-for-collection';
-import { createShopifyProductsForCollection } from '../../services/create-shopify-products';
-import { logServerError } from '../../services/logger';
-import { transitionCheckoutState } from '../../services/approval-step-state';
-import { createFromAddress } from '../../dao/invoice-addresses';
+  payWaivedQuote,
+} from "../../services/payment";
+import { CreateQuotePayload } from "../../services/generate-pricing-quote";
+import { hasProperties } from "../../services/require-properties";
+import createUPCsForCollection from "../../services/create-upcs-for-collection";
+import { createShopifyProductsForCollection } from "../../services/create-shopify-products";
+import { logServerError } from "../../services/logger";
+import { transitionCheckoutState } from "../../services/approval-step-state";
+import { createFromAddress } from "../../dao/invoice-addresses";
 
 const router = new Router();
 
@@ -33,12 +33,12 @@ interface PayWithMethodRequest extends PayRequest {
 
 const isPayRequest = (data: any): data is PayRequest | PayWithMethodRequest => {
   return (
-    (hasProperties(data, 'createQuotes', 'collectionId') ||
+    (hasProperties(data, "createQuotes", "collectionId") ||
       hasProperties(
         data,
-        'paymentMethodTokenId',
-        'createQuotes',
-        'collectionId'
+        "paymentMethodTokenId",
+        "createQuotes",
+        "collectionId"
       )) &&
     isCreateRequest(data.createQuotes)
   );
@@ -48,9 +48,9 @@ const isPayWithMethodRequest = (data: any): data is PayWithMethodRequest => {
   return (
     hasProperties(
       data,
-      'paymentMethodTokenId',
-      'createQuotes',
-      'collectionId'
+      "paymentMethodTokenId",
+      "createQuotes",
+      "collectionId"
     ) && isCreateRequest(data.createQuotes)
   );
 };
@@ -62,7 +62,7 @@ function* payQuote(
   const { isFinanced, isWaived } = this.query;
   const { userId, collection } = this.state;
   if (!collection) {
-    this.throw(403, 'Unable to access collection');
+    this.throw(403, "Unable to access collection");
   }
 
   const invoiceAddressId = body.addressId
@@ -92,27 +92,27 @@ function* payQuote(
       invoiceAddressId
     ).catch((err: Error) => this.throw(400, err.message));
   } else {
-    this.throw('Request must match type');
+    this.throw("Request must match type");
   }
 
   yield transitionCheckoutState(collection.id);
   yield createUPCsForCollection(collection.id);
 
-  createShopifyProductsForCollection(userId, collection.id).catch(
-    (err: Error): void =>
-      logServerError(
-        `Create Shopify Products for user ${userId} - Collection ${
-          collection.id
-        }: `,
-        err
-      )
+  createShopifyProductsForCollection(
+    userId,
+    collection.id
+  ).catch((err: Error): void =>
+    logServerError(
+      `Create Shopify Products for user ${userId} - Collection ${collection.id}: `,
+      err
+    )
   );
 
   this.status = 201;
 }
 
 router.post(
-  '/',
+  "/",
   requireAuth,
   canAccessCollectionInRequestBody,
   canSubmitCollection,

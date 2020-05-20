@@ -1,24 +1,24 @@
-import { BaseComment } from '@cala/ts-lib';
-import { Asset } from '@cala/ts-lib/dist/assets';
-import Knex from 'knex';
-import { pick } from 'lodash';
-import Router from 'koa-router';
+import { BaseComment } from "@cala/ts-lib";
+import { Asset } from "@cala/ts-lib/dist/assets";
+import Knex from "knex";
+import { pick } from "lodash";
+import Router from "koa-router";
 
 import {
   BASE_COMMENT_PROPERTIES,
-  isBaseComment
-} from '../comments/domain-object';
-import { createCommentWithAttachments } from '../../services/create-comment-with-attachments';
-import db from '../../services/db';
-import * as ApprovalStepCommentDAO from './dao';
-import * as NotificationsService from '../../services/create-notifications';
-import requireAuth from '../../middleware/require-auth';
+  isBaseComment,
+} from "../comments/domain-object";
+import { createCommentWithAttachments } from "../../services/create-comment-with-attachments";
+import db from "../../services/db";
+import * as ApprovalStepCommentDAO from "./dao";
+import * as NotificationsService from "../../services/create-notifications";
+import requireAuth from "../../middleware/require-auth";
 import addAtMentionDetails, {
   getCollaboratorsFromCommentMentions,
-  getThreadUserIdsFromCommentThread
-} from '../../services/add-at-mention-details';
-import { addAttachmentLinks } from '../../services/add-attachments-links';
-import { announceApprovalStepCommentCreation } from '../iris/messages/approval-step-comment';
+  getThreadUserIdsFromCommentThread,
+} from "../../services/add-at-mention-details";
+import { addAttachmentLinks } from "../../services/add-attachments-links";
+import { announceApprovalStepCommentCreation } from "../iris/messages/approval-step-comment";
 
 const router = new Router();
 
@@ -38,17 +38,17 @@ function* createApprovalStepComment(
     const comment = await createCommentWithAttachments(trx, {
       comment: body,
       attachments,
-      userId
+      userId,
     });
 
     const approvalStepComment = await ApprovalStepCommentDAO.create(trx, {
       approvalStepId,
-      commentId: comment.id
+      commentId: comment.id,
     });
 
     const {
       mentionedUserIds,
-      collaboratorNames
+      collaboratorNames,
     } = await getCollaboratorsFromCommentMentions(trx, comment.text);
 
     for (const mentionedUserId of mentionedUserIds) {
@@ -58,7 +58,7 @@ function* createApprovalStepComment(
           approvalStepId,
           commentId: comment.id,
           actorId: userId,
-          recipientId: mentionedUserId
+          recipientId: mentionedUserId,
         }
       );
     }
@@ -73,7 +73,7 @@ function* createApprovalStepComment(
         approvalStepId,
         commentId: comment.id,
         actorId: userId,
-        recipientId: threadUserId
+        recipientId: threadUserId,
       });
     }
 
@@ -113,7 +113,7 @@ function* getApprovalStepComments(
   this.body = commentsWithAttachments;
 }
 
-router.get('/:approvalStepId', requireAuth, getApprovalStepComments);
-router.post('/:approvalStepId', requireAuth, createApprovalStepComment);
+router.get("/:approvalStepId", requireAuth, getApprovalStepComments);
+router.post("/:approvalStepId", requireAuth, createApprovalStepComment);
 
 export default router.routes();

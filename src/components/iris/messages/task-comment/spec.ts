@@ -1,29 +1,29 @@
-import tape from 'tape';
+import tape from "tape";
 
-import * as SendMessageService from '../../send-message';
-import * as MentionDetailsService from '../../../../services/add-at-mention-details';
-import { sandbox, test } from '../../../../test-helpers/fresh';
-import { announceTaskCommentCreation } from './index';
-import TaskComment from '../../../task-comments/domain-object';
-import generateComment from '../../../../test-helpers/factories/comment';
-import { CommentWithAttachmentLinks } from '../../../../services/add-attachments-links';
+import * as SendMessageService from "../../send-message";
+import * as MentionDetailsService from "../../../../services/add-at-mention-details";
+import { sandbox, test } from "../../../../test-helpers/fresh";
+import { announceTaskCommentCreation } from "./index";
+import TaskComment from "../../../task-comments/domain-object";
+import generateComment from "../../../../test-helpers/factories/comment";
+import { CommentWithAttachmentLinks } from "../../../../services/add-attachments-links";
 
-test('announceTaskCommentCreation supports sending a message', async (t: tape.Test) => {
+test("announceTaskCommentCreation supports sending a message", async (t: tape.Test) => {
   const sendStub = sandbox()
-    .stub(SendMessageService, 'sendMessage')
+    .stub(SendMessageService, "sendMessage")
     .resolves({});
   const { comment } = await generateComment();
   const tcOne: TaskComment = {
     commentId: comment.id,
-    taskId: 'task-one'
+    taskId: "task-one",
   };
   const mentionStub = sandbox()
-    .stub(MentionDetailsService, 'default')
+    .stub(MentionDetailsService, "default")
     .resolves([
       {
         ...comment,
-        mentions: {}
-      }
+        mentions: {},
+      },
     ]);
 
   const response = await announceTaskCommentCreation(
@@ -35,10 +35,10 @@ test('announceTaskCommentCreation supports sending a message', async (t: tape.Te
     {
       actorId: comment.userId,
       resource: { ...comment, mentions: {} },
-      taskId: 'task-one',
-      type: 'task-comment'
+      taskId: "task-one",
+      type: "task-comment",
     },
-    'Returns the realtime message that was sent'
+    "Returns the realtime message that was sent"
   );
   t.true(sendStub.calledOnce);
   t.true(mentionStub.calledOnce);

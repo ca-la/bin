@@ -1,11 +1,11 @@
-import Knex from 'knex';
-import { TaskEvent } from '@cala/ts-lib';
-import db from '../db';
-import * as TasksDAO from '../../dao/tasks';
-import * as TaskEventsDAO from '../../dao/task-events';
-import * as ProductDesignStageTasksDAO from '../../dao/product-design-stage-tasks';
-import * as ApprovalStepTasksDAO from '../../components/approval-step-tasks/dao';
-import { DetailsTaskWithAssignees } from '../../domain-objects/task-event';
+import Knex from "knex";
+import { TaskEvent } from "@cala/ts-lib";
+import db from "../db";
+import * as TasksDAO from "../../dao/tasks";
+import * as TaskEventsDAO from "../../dao/task-events";
+import * as ProductDesignStageTasksDAO from "../../dao/product-design-stage-tasks";
+import * as ApprovalStepTasksDAO from "../../components/approval-step-tasks/dao";
+import { DetailsTaskWithAssignees } from "../../domain-objects/task-event";
 
 function createWithTransaction(
   taskId: string,
@@ -17,14 +17,14 @@ function createWithTransaction(
     await TasksDAO.create(taskId, trx);
     const task = await TaskEventsDAO.create(taskEvent, trx);
     if (!task) {
-      throw new Error('Could not create task!');
+      throw new Error("Could not create task!");
     }
 
     if (stageId) {
       await ProductDesignStageTasksDAO.create(
         {
           designStageId: stageId,
-          taskId
+          taskId,
         },
         trx
       );
@@ -32,7 +32,7 @@ function createWithTransaction(
     if (approvalStepId) {
       await ApprovalStepTasksDAO.create(trx, {
         approvalStepId,
-        taskId
+        taskId,
       });
     }
     return task;
@@ -62,7 +62,7 @@ export async function createTasks(
   const taskIds = tasks.map((task: Unsaved<TaskEvent>) => task.taskId);
   const stageTasks = tasks.map((task: Unsaved<TaskEvent>) => ({
     designStageId: task.designStageId as string,
-    taskId: task.taskId
+    taskId: task.taskId,
   }));
   await TasksDAO.createAll(taskIds, trx);
   const taskEvents = await TaskEventsDAO.createAll(tasks, trx);

@@ -1,8 +1,8 @@
-import Koa from 'koa';
+import Koa from "koa";
 
-import { findActive as findActiveSubscription } from '../../components/subscriptions/dao';
-import Knex from 'knex';
-import db from '../../services/db';
+import { findActive as findActiveSubscription } from "../../components/subscriptions/dao";
+import Knex from "knex";
+import db from "../../services/db";
 
 export default function* requireSubscription(
   this: Koa.Context,
@@ -11,10 +11,10 @@ export default function* requireSubscription(
   this.assert(
     this.state.userId,
     401,
-    'Authorization is required to access this resource'
+    "Authorization is required to access this resource"
   );
 
-  if (this.state.role === 'ADMIN') {
+  if (this.state.role === "ADMIN") {
     return yield next;
   }
 
@@ -23,7 +23,7 @@ export default function* requireSubscription(
     this.assert(
       subscriptions.length > 0,
       402,
-      'A subscription is required to perform this action'
+      "A subscription is required to perform this action"
     );
   });
   yield next;

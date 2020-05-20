@@ -1,22 +1,22 @@
-'use strict';
+"use strict";
 
-const InvalidDataError = require('../../errors/invalid-data');
-const UsersDAO = require('../../components/users/dao');
-const { updateUser } = require('../mailchimp');
+const InvalidDataError = require("../../errors/invalid-data");
+const UsersDAO = require("../../components/users/dao");
+const { updateUser } = require("../mailchimp");
 
 function recordScan(userId) {
-  return UsersDAO.findById(userId).then(user => {
+  return UsersDAO.findById(userId).then((user) => {
     if (!user) {
       throw new InvalidDataError(`User not found: ${userId}`);
     }
 
     return updateUser({
       email: user.email,
-      hasScan: true
+      hasScan: true,
     });
   });
 }
 
 module.exports = {
-  recordScan
+  recordScan,
 };

@@ -1,5 +1,5 @@
-export { Plan } from '../components/plans/plan';
+export { Plan } from "../components/plans/plan";
 export {
   RealtimeDesignEventCreated,
-  isRealtimeDesignEventCreated
-} from '../components/design-events/realtime';
+  isRealtimeDesignEventCreated,
+} from "../components/design-events/realtime";

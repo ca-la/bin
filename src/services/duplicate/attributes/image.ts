@@ -1,11 +1,11 @@
-import Knex from 'knex';
+import Knex from "knex";
 
-import ImageAttribute from '../../../components/attributes/image-attributes/domain-objects';
+import ImageAttribute from "../../../components/attributes/image-attributes/domain-objects";
 import {
   create,
-  findById
-} from '../../../components/attributes/image-attributes/dao';
-import prepareForDuplication from '../prepare-for-duplication';
+  findById,
+} from "../../../components/attributes/image-attributes/dao";
+import prepareForDuplication from "../prepare-for-duplication";
 
 /**
  * Creates a duplicate instance of the given Image Attribute.
@@ -22,7 +22,7 @@ export default async function findAndDuplicateImage(options: {
     currentImageId,
     newCreatorId,
     newNodeId,
-    trx
+    trx,
   } = options;
 
   const image = currentImage
@@ -35,7 +35,7 @@ export default async function findAndDuplicateImage(options: {
 
   const preparedImage = prepareForDuplication(image, {
     createdBy: newCreatorId,
-    nodeId: newNodeId
+    nodeId: newNodeId,
   });
 
   return create(preparedImage, trx);

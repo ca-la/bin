@@ -1,10 +1,10 @@
-'use strict';
+"use strict";
 
 const envs = Object.freeze({
-  DEMO: Symbol('demo'),
-  LOCAL: Symbol('local'),
-  PROD: Symbol('prod'),
-  STG: Symbol('stg')
+  DEMO: Symbol("demo"),
+  LOCAL: Symbol("local"),
+  PROD: Symbol("prod"),
+  STG: Symbol("stg"),
 });
 
 const ENV = envs[process.env.DEPLOYMENT_NAME] || envs.LOCAL;
@@ -13,28 +13,28 @@ const MINIMUM_SCAN_PITCH_RADIANS = {
   [envs.DEMO]: 1.35,
   [envs.LOCAL]: 1.35,
   [envs.PROD]: 1.35,
-  [envs.STG]: 1.35
+  [envs.STG]: 1.35,
 }[ENV];
 
 const ADMIN_EMAIL = {
-  [envs.DEMO]: 'hi@ca.la',
-  [envs.LOCAL]: 'devops@ca.la',
-  [envs.PROD]: 'hi@ca.la',
-  [envs.STG]: 'hi@ca.la'
+  [envs.DEMO]: "hi@ca.la",
+  [envs.LOCAL]: "devops@ca.la",
+  [envs.PROD]: "hi@ca.la",
+  [envs.STG]: "hi@ca.la",
 }[ENV];
 
 const REQUIRE_CALA_EMAIL = {
   [envs.DEMO]: true,
   [envs.LOCAL]: false,
   [envs.PROD]: false,
-  [envs.STG]: true
+  [envs.STG]: true,
 }[ENV];
 
 const ENABLE_APOLLO_PLAYGROUND = {
   [envs.DEMO]: false,
   [envs.LOCAL]: true,
   [envs.PROD]: false,
-  [envs.STG]: true
+  [envs.STG]: true,
 }[ENV];
 
 /**
@@ -119,7 +119,7 @@ const config = {
 
   FINANCING_MARGIN: 0.06,
 
-  LOG_ALL_QUERIES: process.env.LOG_ALL_QUERIES === 'true',
+  LOG_ALL_QUERIES: process.env.LOG_ALL_QUERIES === "true",
 
   ADMIN_EMAIL,
 
@@ -152,12 +152,12 @@ const config = {
   AWS_S3_AVATAR_BUCKET_NAME: process.env.AWS_S3_AVATAR_BUCKET_NAME,
   AWS_S3_AVATAR_BUCKET_REGION: process.env.AWS_S3_AVATAR_BUCKET_REGION,
   AVATAR_BASE_URL: process.env.AVATAR_BASE_URL,
-  IMGIX_API_KEY: process.env.IMGIX_API_KEY
+  IMGIX_API_KEY: process.env.IMGIX_API_KEY,
 };
 
-Object.keys(config).forEach(key => {
+Object.keys(config).forEach((key) => {
   const value = config[key];
-  if (value === undefined || value === '') {
+  if (value === undefined || value === "") {
     throw new Error(`Missing config value: ${key}`);
   }
 });

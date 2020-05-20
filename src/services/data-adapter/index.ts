@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import * as _ from "lodash";
 
 export type KeyTransformer = (a: string) => string;
 export type DataTransformer<A, B> = (a: A) => B;
@@ -42,15 +42,13 @@ export function defaultDecoder<A, B>(source: A): B {
 
 function transformKeys(keyTransformer: KeyTransformer, source: any): any {
   if (_.isArray(source)) {
-    return source.map(
-      (value: any): any => {
-        if (_.isArray(value) || _.isObject(value)) {
-          return transformKeys(keyTransformer, value);
-        }
-
-        return value;
+    return source.map((value: any): any => {
+      if (_.isArray(value) || _.isObject(value)) {
+        return transformKeys(keyTransformer, value);
       }
-    );
+
+      return value;
+    });
   }
 
   if (_.isObject(source)) {
@@ -79,6 +77,6 @@ export function camelize(snakeCase: string): string {
 export function snakify(camelCase: string): string {
   return camelCase.replace(
     /([a-z0-9][A-Z0-9])/g,
-    (m: string) => m[0] + '_' + m[1].toLowerCase()
+    (m: string) => m[0] + "_" + m[1].toLowerCase()
   );
 }

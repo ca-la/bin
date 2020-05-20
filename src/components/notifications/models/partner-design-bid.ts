@@ -2,11 +2,11 @@ import {
   BaseFullNotification,
   BaseFullNotificationRow,
   BaseNotification,
-  BaseNotificationRow
-} from './base';
-import { NotificationType } from '../domain-object';
+  BaseNotificationRow,
+} from "./base";
+import { NotificationType } from "../domain-object";
 
-type BaseRow = Omit<BaseNotificationRow, 'design_id' | 'recipient_user_id'>;
+type BaseRow = Omit<BaseNotificationRow, "design_id" | "recipient_user_id">;
 
 export interface PartnerDesignBidNotificationRow extends BaseRow {
   design_id: string;
@@ -16,14 +16,14 @@ export interface PartnerDesignBidNotificationRow extends BaseRow {
 
 type BaseFullRow = Omit<
   BaseFullNotificationRow & PartnerDesignBidNotificationRow,
-  'design_title'
+  "design_title"
 >;
 
 export interface FullPartnerDesignBidNotificationRow extends BaseFullRow {
   design_title: string | null;
 }
 
-type Base = Omit<BaseNotification, 'designId' | 'recipientUserId'>;
+type Base = Omit<BaseNotification, "designId" | "recipientUserId">;
 
 export interface PartnerDesignBidNotification extends Base {
   designId: string;
@@ -33,7 +33,7 @@ export interface PartnerDesignBidNotification extends Base {
 
 type BaseFull = Omit<
   BaseFullNotification & PartnerDesignBidNotification,
-  'designTitle'
+  "designTitle"
 >;
 
 export interface FullPartnerDesignBidNotification extends BaseFull {

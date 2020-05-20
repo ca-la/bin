@@ -2,13 +2,13 @@ import {
   BaseFullNotification,
   BaseFullNotificationRow,
   BaseNotification,
-  BaseNotificationRow
-} from './base';
-import { NotificationType } from '../domain-object';
+  BaseNotificationRow,
+} from "./base";
+import { NotificationType } from "../domain-object";
 
 type BaseRow = Omit<
   BaseNotificationRow,
-  'collection_id' | 'sent_email_at' | 'recipient_user_id'
+  "collection_id" | "sent_email_at" | "recipient_user_id"
 >;
 
 export interface PartnerPairingCommittedNotificationRow extends BaseRow {
@@ -20,7 +20,7 @@ export interface PartnerPairingCommittedNotificationRow extends BaseRow {
 
 type BaseFullRow = Omit<
   BaseFullNotificationRow & PartnerPairingCommittedNotificationRow,
-  'collection_title'
+  "collection_title"
 >;
 
 export interface FullPartnerPairingCommittedNotificationRow
@@ -30,7 +30,7 @@ export interface FullPartnerPairingCommittedNotificationRow
 
 type Base = Omit<
   BaseNotification,
-  'collectionId' | 'sentEmailAt' | 'recipientUserId'
+  "collectionId" | "sentEmailAt" | "recipientUserId"
 >;
 
 export interface PartnerPairingCommittedNotification extends Base {
@@ -42,7 +42,7 @@ export interface PartnerPairingCommittedNotification extends Base {
 
 type BaseFull = Omit<
   BaseFullNotification & PartnerPairingCommittedNotification,
-  'collectionTitle'
+  "collectionTitle"
 >;
 
 export interface FullPartnerPairingCommittedNotification extends BaseFull {

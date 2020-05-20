@@ -1,16 +1,16 @@
-import Knex from 'knex';
-import uuid from 'node-uuid';
-import { omit } from 'lodash';
+import Knex from "knex";
+import uuid from "node-uuid";
+import { omit } from "lodash";
 
-import { sandbox, test, Test } from '../../../test-helpers/fresh';
-import db from '../../db';
-import findAndDuplicateImage from './image';
-import generateImageAttribute from '../../../test-helpers/factories/image-attribute';
-import createUser = require('../../../test-helpers/create-user');
-import generateNode from '../../../test-helpers/factories/node';
-import * as ImagesDAO from '../../../components/attributes/image-attributes/dao';
+import { sandbox, test, Test } from "../../../test-helpers/fresh";
+import db from "../../db";
+import findAndDuplicateImage from "./image";
+import generateImageAttribute from "../../../test-helpers/factories/image-attribute";
+import createUser = require("../../../test-helpers/create-user");
+import generateNode from "../../../test-helpers/factories/node";
+import * as ImagesDAO from "../../../components/attributes/image-attributes/dao";
 
-test('findAndDuplicateImage() failure case', async (t: Test) => {
+test("findAndDuplicateImage() failure case", async (t: Test) => {
   const s1 = uuid.v4();
   const userId = uuid.v4();
   const nodeId = uuid.v4();
@@ -22,9 +22,9 @@ test('findAndDuplicateImage() failure case', async (t: Test) => {
           currentImageId: s1,
           newCreatorId: userId,
           newNodeId: nodeId,
-          trx
+          trx,
         });
-        t.fail('Should not get here.');
+        t.fail("Should not get here.");
       } catch (error) {
         t.equal(error.message, `Image attribute ${s1} not found.`);
       }
@@ -32,8 +32,8 @@ test('findAndDuplicateImage() failure case', async (t: Test) => {
   );
 });
 
-test('findAndDuplicateImage() standard case', async (t: Test) => {
-  const findStub = sandbox().spy(ImagesDAO, 'findById');
+test("findAndDuplicateImage() standard case", async (t: Test) => {
+  const findStub = sandbox().spy(ImagesDAO, "findById");
   const { user: newUser } = await createUser({ withSession: false });
   const s1 = uuid.v4();
   const n2 = uuid.v4();
@@ -47,31 +47,31 @@ test('findAndDuplicateImage() standard case', async (t: Test) => {
         currentImageId: s1,
         newCreatorId: newUser.id,
         newNodeId: n2,
-        trx
+        trx,
       });
 
       t.notEqual(result.id, image.id);
       t.notEqual(result.createdAt, image.createdAt);
       t.deepEqual(
-        omit(result, 'id', 'createdAt'),
+        omit(result, "id", "createdAt"),
         omit(
           {
             ...image,
             nodeId: n2,
-            createdBy: newUser.id
+            createdBy: newUser.id,
           },
-          'id',
-          'createdAt'
+          "id",
+          "createdAt"
         )
       );
 
-      t.equal(findStub.callCount, 1, 'The findById function is called once.');
+      t.equal(findStub.callCount, 1, "The findById function is called once.");
     }
   );
 });
 
-test('findAndDuplicateImage() with a image object passed in', async (t: Test) => {
-  const findStub = sandbox().spy(ImagesDAO, 'findById');
+test("findAndDuplicateImage() with a image object passed in", async (t: Test) => {
+  const findStub = sandbox().spy(ImagesDAO, "findById");
   const { user: newUser } = await createUser({ withSession: false });
   const s1 = uuid.v4();
   const n2 = uuid.v4();
@@ -86,25 +86,25 @@ test('findAndDuplicateImage() with a image object passed in', async (t: Test) =>
         currentImageId: s1,
         newCreatorId: newUser.id,
         newNodeId: n2,
-        trx
+        trx,
       });
 
       t.notEqual(result.id, image.id);
       t.notEqual(result.createdAt, image.createdAt);
       t.deepEqual(
-        omit(result, 'id', 'createdAt'),
+        omit(result, "id", "createdAt"),
         omit(
           {
             ...image,
             nodeId: n2,
-            createdBy: newUser.id
+            createdBy: newUser.id,
           },
-          'id',
-          'createdAt'
+          "id",
+          "createdAt"
         )
       );
 
-      t.equal(findStub.callCount, 0, 'The findById function is never called.');
+      t.equal(findStub.callCount, 0, "The findById function is never called.");
     }
   );
 });

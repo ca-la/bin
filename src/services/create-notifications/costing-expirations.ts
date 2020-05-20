@@ -1,20 +1,20 @@
-import uuid from 'node-uuid';
+import uuid from "node-uuid";
 
-import { create } from '../../components/notifications/dao';
-import { findById as findUser } from '../../components/users/dao';
+import { create } from "../../components/notifications/dao";
+import { findById as findUser } from "../../components/users/dao";
 import {
   ExpiredNotification,
   isExpiredNotification,
   isOneWeekExpirationNotification,
   isTwoDayExpirationNotification,
   OneWeekExpirationNotification,
-  TwoDayExpirationNotification
-} from '../../components/notifications/models/costing-expiration';
-import { templateNotification } from '../../components/notifications/models/base';
-import { NotificationType } from '../../components/notifications/domain-object';
-import { CALA_OPS_USER_ID } from '../../config';
-import { validateTypeWithGuardOrThrow } from '../validate';
-import sendNotification from '../send-notification-emails/immediate-send';
+  TwoDayExpirationNotification,
+} from "../../components/notifications/models/costing-expiration";
+import { templateNotification } from "../../components/notifications/models/base";
+import { NotificationType } from "../../components/notifications/domain-object";
+import { CALA_OPS_USER_ID } from "../../config";
+import { validateTypeWithGuardOrThrow } from "../validate";
+import sendNotification from "../send-notification-emails/immediate-send";
 
 /**
  * Immediately sends a notification about the costing expiring in one week for the given collection.
@@ -37,7 +37,7 @@ export async function immediatelySendOneWeekCostingExpirationNotification(option
     id: uuid.v4(),
     recipientUserId,
     sentEmailAt: new Date(),
-    type: NotificationType.COSTING_EXPIRATION_ONE_WEEK
+    type: NotificationType.COSTING_EXPIRATION_ONE_WEEK,
   });
 
   await sendNotification(notification, recipientUser);
@@ -45,9 +45,7 @@ export async function immediatelySendOneWeekCostingExpirationNotification(option
   return validateTypeWithGuardOrThrow(
     notification,
     isOneWeekExpirationNotification,
-    `Could not validate ${
-      NotificationType.COSTING_EXPIRATION_ONE_WEEK
-    } notification type from database with id: ${notification.id}`
+    `Could not validate ${NotificationType.COSTING_EXPIRATION_ONE_WEEK} notification type from database with id: ${notification.id}`
   );
 }
 
@@ -72,7 +70,7 @@ export async function immediatelySendTwoDayCostingExpirationNotification(options
     id: uuid.v4(),
     recipientUserId,
     sentEmailAt: new Date(),
-    type: NotificationType.COSTING_EXPIRATION_TWO_DAYS
+    type: NotificationType.COSTING_EXPIRATION_TWO_DAYS,
   });
 
   await sendNotification(notification, recipientUser);
@@ -80,9 +78,7 @@ export async function immediatelySendTwoDayCostingExpirationNotification(options
   return validateTypeWithGuardOrThrow(
     notification,
     isTwoDayExpirationNotification,
-    `Could not validate ${
-      NotificationType.COSTING_EXPIRATION_TWO_DAYS
-    } notification type from database with id: ${notification.id}`
+    `Could not validate ${NotificationType.COSTING_EXPIRATION_TWO_DAYS} notification type from database with id: ${notification.id}`
   );
 }
 
@@ -107,7 +103,7 @@ export async function immediatelySendCostingExpiredNotification(options: {
     id: uuid.v4(),
     recipientUserId,
     sentEmailAt: new Date(),
-    type: NotificationType.COSTING_EXPIRED
+    type: NotificationType.COSTING_EXPIRED,
   });
 
   await sendNotification(notification, recipientUser);
@@ -115,8 +111,6 @@ export async function immediatelySendCostingExpiredNotification(options: {
   return validateTypeWithGuardOrThrow(
     notification,
     isExpiredNotification,
-    `Could not validate ${
-      NotificationType.COSTING_EXPIRED
-    } notification type from database with id: ${notification.id}`
+    `Could not validate ${NotificationType.COSTING_EXPIRED} notification type from database with id: ${notification.id}`
   );
 }

@@ -1,5 +1,5 @@
-import DataAdapter from '../../../services/data-adapter';
-import { hasProperties } from '@cala/ts-lib';
+import DataAdapter from "../../../services/data-adapter";
+import { hasProperties } from "@cala/ts-lib";
 
 export interface CreatorMetadata {
   canvasId: string;
@@ -17,7 +17,7 @@ function encode(row: CreatorMetadataRow): CreatorMetadata {
   return {
     canvasId: row.canvas_id,
     createdAt: new Date(row.created_at),
-    createdByName: row.created_by_name
+    createdByName: row.created_by_name,
   };
 }
 
@@ -25,7 +25,7 @@ function decode(data: CreatorMetadata): CreatorMetadataRow {
   return {
     canvas_id: data.canvasId,
     created_at: data.createdAt.toISOString(),
-    created_by_name: data.createdByName
+    created_by_name: data.createdByName,
   };
 }
 
@@ -35,5 +35,5 @@ export const creatorDataAdapter = new DataAdapter<
 >(encode, decode);
 
 export function isCreatorMetadataRow(row: object): row is CreatorMetadataRow {
-  return hasProperties(row, 'canvas_id', 'created_at', 'created_by_name');
+  return hasProperties(row, "canvas_id", "created_at", "created_by_name");
 }

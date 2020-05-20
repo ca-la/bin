@@ -1,4 +1,4 @@
-import InvoiceAddress from './invoice-address';
+import InvoiceAddress from "./invoice-address";
 
 declare class Invoice {
   public static keyNamesByColumnName: { [key: string]: string };

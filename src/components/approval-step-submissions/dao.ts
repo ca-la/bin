@@ -1,14 +1,14 @@
-import Knex from 'knex';
+import Knex from "knex";
 
-import { validate, validateEvery } from '../../services/validate-from-db';
+import { validate, validateEvery } from "../../services/validate-from-db";
 import ApprovalStepSubmission, {
   ApprovalStepSubmissionRow,
   dataAdapter,
   isApprovalStepSubmissionRow,
-  partialDataAdapter
-} from './domain-object';
+  partialDataAdapter,
+} from "./domain-object";
 
-const TABLE_NAME = 'design_approval_submissions';
+const TABLE_NAME = "design_approval_submissions";
 
 const validateApprovalSubmission = (candidate: any): ApprovalStepSubmission =>
   validate<ApprovalStepSubmissionRow, ApprovalStepSubmission>(
@@ -35,7 +35,7 @@ export async function createAll(
   const rowData = data.map(dataAdapter.forInsertion.bind(dataAdapter));
   return trx(TABLE_NAME)
     .insert(rowData)
-    .returning('*')
+    .returning("*")
     .then(validateApprovalSubmissions);
 }
 
@@ -44,11 +44,11 @@ export async function findByStep(
   stepId: string
 ): Promise<ApprovalStepSubmission[]> {
   return trx(TABLE_NAME)
-    .select('*')
+    .select("*")
     .where({
-      step_id: stepId
+      step_id: stepId,
     })
-    .orderBy('created_at', 'asc')
+    .orderBy("created_at", "asc")
     .then(validateApprovalSubmissions);
 }
 
@@ -57,14 +57,14 @@ export async function findByDesign(
   designId: string
 ): Promise<ApprovalStepSubmission[]> {
   return trx(TABLE_NAME)
-    .select('design_approval_submissions.*')
+    .select("design_approval_submissions.*")
     .join(
-      'design_approval_steps',
-      'design_approval_steps.id',
-      'design_approval_submissions.step_id'
+      "design_approval_steps",
+      "design_approval_steps.id",
+      "design_approval_submissions.step_id"
     )
     .where({
-      'design_approval_steps.design_id': designId
+      "design_approval_steps.design_id": designId,
     })
     .then(validateApprovalSubmissions);
 }
@@ -76,9 +76,7 @@ export async function update(
 ): Promise<ApprovalStepSubmission> {
   const rowData = partialDataAdapter.forInsertion(data);
 
-  const rows = await trx(TABLE_NAME)
-    .where({ id })
-    .update(rowData, '*');
+  const rows = await trx(TABLE_NAME).where({ id }).update(rowData, "*");
 
   return validate<ApprovalStepSubmissionRow, ApprovalStepSubmission>(
     TABLE_NAME,
@@ -93,9 +91,9 @@ export async function findById(
   submissionId: string
 ): Promise<ApprovalStepSubmission | null> {
   return trx(TABLE_NAME)
-    .first('*')
+    .first("*")
     .where({
-      id: submissionId
+      id: submissionId,
     })
     .then(validateApprovalSubmission);
 }
@@ -109,14 +107,14 @@ export async function setAssignee(
     .where({ id: submissionId })
     .update(
       {
-        collaborator_id: collaboratorId
+        collaborator_id: collaboratorId,
       },
-      '*'
+      "*"
     )
     .then(validateApprovalSubmissions);
 
   if (subs.length === 0) {
-    throw new Error('Wrong submission id');
+    throw new Error("Wrong submission id");
   }
 
   return subs[0];

@@ -1,4 +1,4 @@
-declare module 'pg-rethrow' {
+declare module "pg-rethrow" {
   export = Rethrow;
 
   function Rethrow(err: object | Error): never;

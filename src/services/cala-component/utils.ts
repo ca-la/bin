@@ -1,6 +1,6 @@
-import { forEach } from 'lodash';
-import Router, { Middleware } from 'koa-router';
-import { CalaRouter, CalaUrlRoutes } from './types';
+import { forEach } from "lodash";
+import Router, { Middleware } from "koa-router";
+import { CalaRouter, CalaUrlRoutes } from "./types";
 
 export function plugComponentRouter(
   baseRouter: Router,
@@ -17,19 +17,19 @@ export function plugComponentRouter(
         return;
       }
       switch (method) {
-        case 'get':
+        case "get":
           componentRouter.get(url, ...middleware);
           break;
-        case 'post':
+        case "post":
           componentRouter.post(url, ...middleware);
           break;
-        case 'put':
+        case "put":
           componentRouter.put(url, ...middleware);
           break;
-        case 'patch':
+        case "patch":
           componentRouter.patch(url, ...middleware);
           break;
-        case 'del':
+        case "del":
           componentRouter.del(url, ...middleware);
           break;
       }

@@ -1,8 +1,8 @@
-import { requireProperties } from '../require-properties';
-import InvalidDataError = require('../../errors/invalid-data');
+import { requireProperties } from "../require-properties";
+import InvalidDataError = require("../../errors/invalid-data");
 
 function isEmptyString(val: any): boolean {
-  return typeof val === 'string' && val.trim() === '';
+  return typeof val === "string" && val.trim() === "";
 }
 
 function exists(val: any): boolean {
@@ -13,11 +13,11 @@ export function validateProperties(obj: object, ...props: string[]): void {
   try {
     requireProperties(obj, ...props);
   } catch (err) {
-    if (err.message === 'requireProperties was called on a falsy object') {
+    if (err.message === "requireProperties was called on a falsy object") {
       throw new InvalidDataError(
-        'validateProperties was called on a falsy object'
+        "validateProperties was called on a falsy object"
       );
-    } else if (err.message.search('Missing required properties: ') > -1) {
+    } else if (err.message.search("Missing required properties: ") > -1) {
       throw new InvalidDataError(err.message);
     }
   }
@@ -32,18 +32,16 @@ export function validatePropertiesFormatted(
   messages: { [key: string]: string }
 ): void {
   if (!data) {
-    throw new InvalidDataError('Missing required information');
+    throw new InvalidDataError("Missing required information");
   }
 
-  Object.keys(messages).forEach(
-    (key: string): void => {
-      if (!exists(data[key])) {
-        throw new InvalidDataError(
-          `Missing required information: ${messages[key]}`
-        );
-      }
+  Object.keys(messages).forEach((key: string): void => {
+    if (!exists(data[key])) {
+      throw new InvalidDataError(
+        `Missing required information: ${messages[key]}`
+      );
     }
-  );
+  });
 }
 
 export function validateTypeWithGuardOrThrow<T extends object>(

@@ -1,15 +1,15 @@
-import process from 'process';
+import process from "process";
 
-import { log, logServerError } from '../services/logger';
-import { green, reset } from '../services/colors';
-import db from '../services/db';
+import { log, logServerError } from "../services/logger";
+import { green, reset } from "../services/colors";
+import db from "../services/db";
 
 async function run(): Promise<void> {
   const stageIds = process.argv.slice(2);
 
   if (stageIds.length < 1) {
     throw new Error(
-      'Usage: delete-stages.ts [designStageId] [designStageId2]...'
+      "Usage: delete-stages.ts [designStageId] [designStageId2]..."
     );
   }
 
@@ -23,8 +23,9 @@ async function run(): Promise<void> {
   for (const stageId of stageIds) {
     log(`Processing stage ${stageId}...`);
 
-    const taskIds: string[] = (await db.raw(
-      `
+    const taskIds: string[] = (
+      await db.raw(
+        `
       delete from task_events
       using product_design_stage_tasks
       where
@@ -32,8 +33,9 @@ async function run(): Promise<void> {
         AND product_design_stage_tasks.design_stage_id = ?
       returning task_events.task_id as id;
     `,
-      [stageId]
-    )).rows.map((row: { id: string }) => row.id);
+        [stageId]
+      )
+    ).rows.map((row: { id: string }) => row.id);
 
     await db.raw(
       `
@@ -92,9 +94,7 @@ run()
     log(green, `Complete!`, reset);
     process.exit();
   })
-  .catch(
-    (err: any): void => {
-      logServerError(err);
-      process.exit(1);
-    }
-  );
+  .catch((err: any): void => {
+    logServerError(err);
+    process.exit(1);
+  });

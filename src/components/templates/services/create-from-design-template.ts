@@ -1,11 +1,11 @@
-import Knex from 'knex';
+import Knex from "knex";
 
-import db from '../../../services/db';
-import { findByDesignId } from '../designs/dao';
-import findAndDuplicateTemplateDesign from '../../../services/duplicate/templates/designs';
-import ProductDesign = require('../../product-designs/domain-objects/product-design');
-import ResourceNotFoundError from '../../../errors/resource-not-found';
-import { findAndDuplicateDesign } from '../../../services/duplicate/designs';
+import db from "../../../services/db";
+import { findByDesignId } from "../designs/dao";
+import findAndDuplicateTemplateDesign from "../../../services/duplicate/templates/designs";
+import ProductDesign = require("../../product-designs/domain-objects/product-design");
+import ResourceNotFoundError from "../../../errors/resource-not-found";
+import { findAndDuplicateDesign } from "../../../services/duplicate/designs";
 
 /**
  * Creates a new design from a template design. Depending on if this is

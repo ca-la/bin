@@ -1,15 +1,15 @@
-import tape from 'tape';
-import Knex from 'knex';
-import { omit } from 'lodash';
+import tape from "tape";
+import Knex from "knex";
+import { omit } from "lodash";
 
-import db from '../../services/db';
-import { test } from '../../test-helpers/fresh';
-import generateCanvas from '../../test-helpers/factories/product-design-canvas';
+import db from "../../services/db";
+import { test } from "../../test-helpers/fresh";
+import generateCanvas from "../../test-helpers/factories/product-design-canvas";
 
-import { findById as findComponent } from '../../components/components/dao';
-import { findAndDuplicateCanvas } from './canvases';
+import { findById as findComponent } from "../../components/components/dao";
+import { findAndDuplicateCanvas } from "./canvases";
 
-test('findAndDuplicateCanvas', async (t: tape.Test) => {
+test("findAndDuplicateCanvas", async (t: tape.Test) => {
   const { canvas, component } = await generateCanvas({});
 
   const duplicatedCanvas = await db.transaction(
@@ -19,11 +19,11 @@ test('findAndDuplicateCanvas', async (t: tape.Test) => {
   );
 
   if (!duplicatedCanvas) {
-    throw new Error('Duplicated canvas was not created!');
+    throw new Error("Duplicated canvas was not created!");
   }
 
   if (!duplicatedCanvas.componentId) {
-    throw new Error('Canvas has no component!');
+    throw new Error("Canvas has no component!");
   }
   const duplicatedComponent = await findComponent(duplicatedCanvas.componentId);
   if (!duplicatedComponent) {
@@ -33,28 +33,28 @@ test('findAndDuplicateCanvas', async (t: tape.Test) => {
   }
 
   t.deepEqual(
-    omit(duplicatedCanvas, 'createdAt'),
+    omit(duplicatedCanvas, "createdAt"),
     omit(
       {
         ...canvas,
         componentId: duplicatedCanvas.componentId,
-        id: duplicatedCanvas.id
+        id: duplicatedCanvas.id,
       },
-      'createdAt'
+      "createdAt"
     ),
-    'Duplicating a canvas returns the same canvas but with a new id and component id'
+    "Duplicating a canvas returns the same canvas but with a new id and component id"
   );
 
   t.deepEqual(
-    omit(duplicatedComponent, 'createdAt'),
+    omit(duplicatedComponent, "createdAt"),
     omit(
       {
         ...component,
         id: duplicatedComponent.id,
-        parentId: null
+        parentId: null,
       },
-      'createdAt'
+      "createdAt"
     ),
-    'The associated components are duplicated with the canvas.'
+    "The associated components are duplicated with the canvas."
   );
 });

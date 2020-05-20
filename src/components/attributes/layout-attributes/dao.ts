@@ -1,16 +1,16 @@
-import Knex from 'knex';
-import uuid from 'node-uuid';
+import Knex from "knex";
+import uuid from "node-uuid";
 
 import LayoutAttribute, {
   dataAdapter,
   isLayoutAttributeRow,
-  LayoutAttributeRow
-} from './domain-object';
-import db from '../../../services/db';
-import first from '../../../services/first';
-import { validate, validateEvery } from '../../../services/validate-from-db';
+  LayoutAttributeRow,
+} from "./domain-object";
+import db from "../../../services/db";
+import first from "../../../services/first";
+import { validate, validateEvery } from "../../../services/validate-from-db";
 
-const TABLE_NAME = 'layout_attributes';
+const TABLE_NAME = "layout_attributes";
 
 /**
  * Creates an Layout Attribute.
@@ -22,15 +22,15 @@ export async function create(
   const rowData = dataAdapter.forInsertion({
     id: uuid.v4(),
     ...layout,
-    deletedAt: null
+    deletedAt: null,
   });
   const created = await db(TABLE_NAME)
-    .insert(rowData, '*')
+    .insert(rowData, "*")
     .transacting(trx)
     .then((rows: LayoutAttributeRow[]) => first<LayoutAttributeRow>(rows));
 
   if (!created) {
-    throw new Error('Failed to create an Layout Attribute!');
+    throw new Error("Failed to create an Layout Attribute!");
   }
 
   return validate<LayoutAttributeRow, LayoutAttribute>(
@@ -49,7 +49,7 @@ export async function findById(
   trx?: Knex.Transaction
 ): Promise<LayoutAttribute | null> {
   const layout: LayoutAttributeRow | undefined = await db(TABLE_NAME)
-    .select('*')
+    .select("*")
     .where({ deleted_at: null, id: layoutId })
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
@@ -78,10 +78,10 @@ export async function findAllByNodes(
   trx?: Knex.Transaction
 ): Promise<LayoutAttribute[]> {
   const layouts: LayoutAttributeRow[] = await db(TABLE_NAME)
-    .select('layout_attributes.*')
-    .whereIn('layout_attributes.node_id', nodeIds)
-    .andWhere({ 'layout_attributes.deleted_at': null })
-    .orderBy('layout_attributes.created_at', 'DESC')
+    .select("layout_attributes.*")
+    .whereIn("layout_attributes.node_id", nodeIds)
+    .andWhere({ "layout_attributes.deleted_at": null })
+    .orderBy("layout_attributes.created_at", "DESC")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
@@ -106,13 +106,13 @@ export async function update(
 ): Promise<LayoutAttribute> {
   const rowData = dataAdapter.forInsertion(layout);
   const updated = await db(TABLE_NAME)
-    .update(rowData, '*')
+    .update(rowData, "*")
     .where({ id })
     .transacting(trx)
     .then((rows: LayoutAttributeRow[]) => first<LayoutAttributeRow>(rows));
 
   if (!updated) {
-    throw new Error('Failed to create an Layout Attribute!');
+    throw new Error("Failed to create an Layout Attribute!");
   }
 
   return validate<LayoutAttributeRow, LayoutAttribute>(

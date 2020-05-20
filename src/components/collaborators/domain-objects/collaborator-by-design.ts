@@ -1,12 +1,12 @@
-import { Role as UserRole } from '@cala/ts-lib/dist/users';
+import { Role as UserRole } from "@cala/ts-lib/dist/users";
 
-import DataAdapter from '../../../services/data-adapter';
-import { hasProperties } from '../../../services/require-properties';
+import DataAdapter from "../../../services/data-adapter";
+import { hasProperties } from "../../../services/require-properties";
 import Collaborator, {
   CollaboratorRow,
   isCollaboratorRow,
-  isRole
-} from './collaborator';
+  isRole,
+} from "./collaborator";
 
 export interface UserMeta {
   id: string;
@@ -37,7 +37,7 @@ export function isCollaboratorWithUserMetaByDesignRow(
   row: any
 ): row is CollaboratorWithUserMetaByDesignRow {
   return (
-    hasProperties(row, 'design_id', 'collaborators') &&
+    hasProperties(row, "design_id", "collaborators") &&
     row.collaborators.reduce((acc: boolean, collaborator: any): boolean => {
       return acc && isCollaboratorRow(collaborator);
     }, true)
@@ -74,15 +74,15 @@ function encode(
                 email: collaborator.user.email,
                 id: collaborator.user.id,
                 name: collaborator.user.name,
-                role: collaborator.user.role
+                role: collaborator.user.role,
               }
             : null,
           userEmail: collaborator.user_email,
-          userId: collaborator.user_id
+          userId: collaborator.user_id,
         };
       }
     ),
-    designId: row.design_id
+    designId: row.design_id,
   };
 }
 
@@ -116,15 +116,15 @@ function decode(
                 email: collaborator.user.email,
                 id: collaborator.user.id,
                 name: collaborator.user.name,
-                role: collaborator.user.role
+                role: collaborator.user.role,
               }
             : null,
           user_email: collaborator.userEmail,
-          user_id: collaborator.userId
+          user_id: collaborator.userId,
         };
       }
     ),
-    design_id: data.designId
+    design_id: data.designId,
   };
 }
 

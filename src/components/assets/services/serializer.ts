@@ -1,19 +1,19 @@
-import { Serialized } from '../../../types/serialized';
-import Asset from '../domain-object';
-import { hasProperties } from '@cala/ts-lib';
+import { Serialized } from "../../../types/serialized";
+import Asset from "../domain-object";
+import { hasProperties } from "@cala/ts-lib";
 
 export function isSerializedAsset(data: any): data is Serialized<Asset> {
   return hasProperties(
     data,
-    'createdAt',
-    'description',
-    'id',
-    'mimeType',
-    'originalHeightPx',
-    'originalWidthPx',
-    'title',
-    'uploadCompletedAt',
-    'userId'
+    "createdAt",
+    "description",
+    "id",
+    "mimeType",
+    "originalHeightPx",
+    "originalWidthPx",
+    "title",
+    "uploadCompletedAt",
+    "userId"
   );
 }
 
@@ -23,7 +23,7 @@ export function deserializeAsset(data: Serialized<Asset>): Asset {
     createdAt: new Date(data.createdAt),
     uploadCompletedAt: data.uploadCompletedAt
       ? new Date(data.uploadCompletedAt)
-      : null
+      : null,
   };
 }
 
@@ -34,7 +34,7 @@ export function deserializePartialAsset(
   if (data.createdAt) {
     deserialized = {
       ...deserialized,
-      createdAt: new Date(data.createdAt)
+      createdAt: new Date(data.createdAt),
     };
   }
 
@@ -43,12 +43,12 @@ export function deserializePartialAsset(
       ...deserialized,
       uploadCompletedAt: data.uploadCompletedAt
         ? new Date(data.uploadCompletedAt)
-        : null
+        : null,
     };
   }
 
   return {
     ...data,
-    ...deserialized
+    ...deserialized,
   };
 }

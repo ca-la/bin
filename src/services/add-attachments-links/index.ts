@@ -1,9 +1,9 @@
-import Comment from '../../components/comments/domain-object';
+import Comment from "../../components/comments/domain-object";
 import {
   AssetLinks,
-  constructAttachmentAssetLinks
-} from '../attach-asset-links';
-import Asset from '../../components/assets/domain-object';
+  constructAttachmentAssetLinks,
+} from "../attach-asset-links";
+import Asset from "../../components/assets/domain-object";
 
 export interface CommentWithAttachmentLinks extends Comment {
   attachments: (Asset & AssetLinks)[];
@@ -20,8 +20,8 @@ export function addAttachmentLinks(
     attachments: comment.attachments.map((attachment: Asset) => {
       return {
         ...attachment,
-        ...constructAttachmentAssetLinks(attachment)
+        ...constructAttachmentAssetLinks(attachment),
       };
-    })
+    }),
   };
 }

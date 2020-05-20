@@ -1,4 +1,4 @@
-import { buildAdapter } from '../../services/cala-component/cala-adapter';
+import { buildAdapter } from "../../services/cala-component/cala-adapter";
 import ApprovalStep, {
   domain,
   ApprovalStepRow,
@@ -8,8 +8,8 @@ import ApprovalStep, {
   ApprovalSkip,
   ApprovalStepState,
   ApprovalStepType,
-  ApprovalUnstarted
-} from './types';
+  ApprovalUnstarted,
+} from "./types";
 
 function encode(row: ApprovalStepRow): ApprovalStep {
   switch (row.state as ApprovalStepState) {
@@ -30,7 +30,7 @@ function encode(row: ApprovalStepRow): ApprovalStep {
         type: row.type as ApprovalStepType,
         createdAt: row.created_at,
         completedAt: null,
-        startedAt: null
+        startedAt: null,
       };
 
       return step;
@@ -60,7 +60,7 @@ function encode(row: ApprovalStepRow): ApprovalStep {
         type: row.type as ApprovalStepType,
         createdAt: row.created_at,
         completedAt: row.completed_at,
-        startedAt: row.started_at
+        startedAt: row.started_at,
       };
 
       return step;
@@ -85,7 +85,7 @@ function encode(row: ApprovalStepRow): ApprovalStep {
         type: row.type as ApprovalStepType,
         createdAt: row.created_at,
         completedAt: null,
-        startedAt: row.started_at
+        startedAt: row.started_at,
       };
 
       return step;
@@ -107,7 +107,7 @@ function encode(row: ApprovalStepRow): ApprovalStep {
         type: row.type as ApprovalStepType,
         createdAt: row.created_at,
         completedAt: null,
-        startedAt: null
+        startedAt: null,
       };
 
       return step;
@@ -128,7 +128,7 @@ function encode(row: ApprovalStepRow): ApprovalStep {
         type: row.type as ApprovalStepType,
         createdAt: row.created_at,
         completedAt: null,
-        startedAt: null
+        startedAt: null,
       };
 
       return step;
@@ -154,13 +154,13 @@ function decode(step: ApprovalStep): ApprovalStepRow {
     type: step.type,
     created_at: step.createdAt,
     completed_at: step.completedAt,
-    started_at: step.startedAt
+    started_at: step.startedAt,
   };
 }
 
 export default buildAdapter<ApprovalStep, ApprovalStepRow>({
   domain,
-  requiredProperties: ['id', 'title', 'ordering', 'designId', 'state', 'type'],
+  requiredProperties: ["id", "title", "ordering", "designId", "state", "type"],
   encodeTransformer: encode,
-  decodeTransformer: decode
+  decodeTransformer: decode,
 });

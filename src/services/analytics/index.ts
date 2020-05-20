@@ -1,12 +1,12 @@
-import { fetch } from '../fetch';
-import { SEGMENT_WRITE_KEY } from '../../config';
+import { fetch } from "../fetch";
+import { SEGMENT_WRITE_KEY } from "../../config";
 
-const API_BASE = 'https://api.segment.io/v1';
+const API_BASE = "https://api.segment.io/v1";
 
-type Method = 'POST' | 'PUT' | 'GET' | 'PATCH' | 'DELETE';
+type Method = "POST" | "PUT" | "GET" | "PATCH" | "DELETE";
 
 const SEGMENT_CREDENTIALS = Buffer.from(`${SEGMENT_WRITE_KEY}:`).toString(
-  'base64'
+  "base64"
 );
 
 async function makeRequest(
@@ -17,9 +17,9 @@ async function makeRequest(
   const response = await fetch(`${API_BASE}${path}`, {
     method,
     headers: {
-      Authorization: `Basic ${SEGMENT_CREDENTIALS}`
+      Authorization: `Basic ${SEGMENT_CREDENTIALS}`,
     },
-    body: payload ? JSON.stringify(payload) : undefined
+    body: payload ? JSON.stringify(payload) : undefined,
   });
 
   const json = await response.json();
@@ -47,13 +47,13 @@ export async function trackEvent({
   eventName,
   payload,
   userId,
-  anonymousId
+  anonymousId,
 }: TrackUser | TrackAnonymous): Promise<void> {
-  await makeRequest('POST', '/track', {
+  await makeRequest("POST", "/track", {
     event: eventName,
     properties: payload,
     userId,
-    anonymousId
+    anonymousId,
   });
 }
 
@@ -64,11 +64,11 @@ export async function trackMetric(
   return trackEvent({
     eventName: `[Metric] ${metricName}`,
     payload: {
-      value: metricValue
+      value: metricValue,
     },
     // We don't pass through a user ID, since application/performance metrics
     // are only useful in aggregate, and are a separate category of events than
     // e.g. user-funnel things.
-    anonymousId: 'cala-api'
+    anonymousId: "cala-api",
   });
 }

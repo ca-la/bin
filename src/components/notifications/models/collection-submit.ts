@@ -2,11 +2,11 @@ import {
   BaseFullNotification,
   BaseFullNotificationRow,
   BaseNotification,
-  BaseNotificationRow
-} from './base';
-import { NotificationType } from '../domain-object';
+  BaseNotificationRow,
+} from "./base";
+import { NotificationType } from "../domain-object";
 
-type BaseRow = Omit<BaseNotificationRow, 'collection_id' | 'recipient_user_id'>;
+type BaseRow = Omit<BaseNotificationRow, "collection_id" | "recipient_user_id">;
 
 export interface CollectionSubmitNotificationRow extends BaseRow {
   collection_id: string;
@@ -16,14 +16,14 @@ export interface CollectionSubmitNotificationRow extends BaseRow {
 
 type BaseFullRow = Omit<
   BaseFullNotificationRow & CollectionSubmitNotificationRow,
-  'collection_title'
+  "collection_title"
 >;
 
 export interface FullCollectionSubmitNotificationRow extends BaseFullRow {
   collection_title: string | null;
 }
 
-type Base = Omit<BaseNotification, 'collectionId' | 'recipientUserId'>;
+type Base = Omit<BaseNotification, "collectionId" | "recipientUserId">;
 
 export interface CollectionSubmitNotification extends Base {
   collectionId: string;
@@ -33,7 +33,7 @@ export interface CollectionSubmitNotification extends Base {
 
 type BaseFull = Omit<
   BaseFullNotification & CollectionSubmitNotification,
-  'collectionTitle'
+  "collectionTitle"
 >;
 
 export interface FullCollectionSubmitNotification extends BaseFull {

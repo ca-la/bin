@@ -1,16 +1,16 @@
-import Knex from 'knex';
-import { omit } from 'lodash';
-import { NodeAttributes } from '../../../components/nodes/services/get-all-by-design';
+import Knex from "knex";
+import { omit } from "lodash";
+import { NodeAttributes } from "../../../components/nodes/services/get-all-by-design";
 
-import { findAllByNodes as findAllLayouts } from '../../../components/attributes/layout-attributes/dao';
-import { findAllByNodes as findAllMaterials } from '../../../components/attributes/material-attributes/dao';
-import { findAllByNodes as findAllImages } from '../../../components/attributes/image-attributes/dao';
-import findAndDuplicateLayout from './layout';
-import findAndDuplicateMaterial from './material';
-import findAndDuplicateImage from './image';
-import LayoutAttribute from '../../../components/attributes/layout-attributes/domain-object';
-import MaterialAttribute from '../../../components/attributes/material-attributes/domain-objects';
-import ImageAttribute from '../../../components/attributes/image-attributes/domain-objects';
+import { findAllByNodes as findAllLayouts } from "../../../components/attributes/layout-attributes/dao";
+import { findAllByNodes as findAllMaterials } from "../../../components/attributes/material-attributes/dao";
+import { findAllByNodes as findAllImages } from "../../../components/attributes/image-attributes/dao";
+import findAndDuplicateLayout from "./layout";
+import findAndDuplicateMaterial from "./material";
+import findAndDuplicateImage from "./image";
+import LayoutAttribute from "../../../components/attributes/layout-attributes/domain-object";
+import MaterialAttribute from "../../../components/attributes/material-attributes/domain-objects";
+import ImageAttribute from "../../../components/attributes/image-attributes/domain-objects";
 
 /**
  * Duplicates all attributes related to the given node.
@@ -37,29 +37,29 @@ export default async function findAndDuplicateAttributesForNode(options: {
       currentLayoutId: layout.id,
       newCreatorId,
       newNodeId,
-      trx
+      trx,
     });
     duplicateLayouts.push(duplicateLayout);
   }
 
   for (const material of materials) {
     const duplicateMaterial = await findAndDuplicateMaterial({
-      currentMaterial: omit(material, 'asset'),
+      currentMaterial: omit(material, "asset"),
       currentMaterialId: material.id,
       newCreatorId,
       newNodeId,
-      trx
+      trx,
     });
     duplicateMaterials.push(duplicateMaterial);
   }
 
   for (const image of images) {
     const duplicateImage = await findAndDuplicateImage({
-      currentImage: omit(image, 'asset'),
+      currentImage: omit(image, "asset"),
       currentImageId: image.id,
       newCreatorId,
       newNodeId,
-      trx
+      trx,
     });
     duplicateImages.push(duplicateImage);
   }
@@ -68,6 +68,6 @@ export default async function findAndDuplicateAttributesForNode(options: {
     artworks: [],
     dimensions: duplicateLayouts,
     materials: duplicateMaterials,
-    sketches: duplicateImages
+    sketches: duplicateImages,
   };
 }

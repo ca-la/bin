@@ -1,15 +1,15 @@
-import uuid from 'node-uuid';
+import uuid from "node-uuid";
 
-import db from '../../services/db';
+import db from "../../services/db";
 import ResolveAccount, {
   dataAdapter,
   isResolveAccountRow,
-  ResolveAccountRow
-} from './domain-object';
-import first from '../../services/first';
-import { validate, validateEvery } from '../../services/validate-from-db';
+  ResolveAccountRow,
+} from "./domain-object";
+import first from "../../services/first";
+import { validate, validateEvery } from "../../services/validate-from-db";
 
-const TABLE_NAME = 'resolve_accounts';
+const TABLE_NAME = "resolve_accounts";
 
 export async function create(
   data: MaybeUnsaved<ResolveAccount>
@@ -17,14 +17,14 @@ export async function create(
   const rowData = dataAdapter.forInsertion({
     id: uuid.v4(),
     ...data,
-    deletedAt: null
+    deletedAt: null,
   });
   const created = await db(TABLE_NAME)
-    .insert(rowData, '*')
+    .insert(rowData, "*")
     .then((rows: ResolveAccountRow[]) => first<ResolveAccountRow>(rows));
 
   if (!created) {
-    throw new Error('Failed to create a process!');
+    throw new Error("Failed to create a process!");
   }
 
   return validate<ResolveAccountRow, ResolveAccount>(
@@ -37,7 +37,7 @@ export async function create(
 
 export async function findById(id: string): Promise<ResolveAccount | null> {
   const process = await db(TABLE_NAME)
-    .select('*')
+    .select("*")
     .where({ id, deleted_at: null })
     .then((rows: ResolveAccountRow[]) => first<ResolveAccountRow>(rows));
 
@@ -57,7 +57,7 @@ export async function findAllByUserId(
   userId: string
 ): Promise<ResolveAccount[]> {
   const processes = await db(TABLE_NAME)
-    .select('*')
+    .select("*")
     .where({ user_id: userId, deleted_at: null });
 
   return validateEvery<ResolveAccountRow, ResolveAccount>(

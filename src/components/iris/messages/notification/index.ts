@@ -1,7 +1,7 @@
-import { FullNotification } from '../../../notifications/domain-object';
-import { RealtimeNotification } from '@cala/ts-lib';
-import { createNotificationMessage } from '../../../notifications/notification-messages';
-import { sendMessage } from '../../send-message';
+import { FullNotification } from "../../../notifications/domain-object";
+import { RealtimeNotification } from "@cala/ts-lib";
+import { createNotificationMessage } from "../../../notifications/notification-messages";
+import { sendMessage } from "../../send-message";
 
 /**
  * Publishes a notification to the Iris SQS only if the notification has a recipient that is a user.
@@ -18,7 +18,7 @@ export async function announceNotificationCreation(
     actorId: notification.actorUserId,
     resource: messageNotification,
     targetId: notification.recipientUserId,
-    type: 'notification'
+    type: "notification",
   };
   await sendMessage(realtimeNotification);
   return realtimeNotification;

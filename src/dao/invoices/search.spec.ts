@@ -1,11 +1,11 @@
-import { test, Test } from '../../test-helpers/fresh';
-import { getInvoicesByUser } from './search';
-import createUser = require('../../test-helpers/create-user');
-import generateInvoice from '../../test-helpers/factories/invoice';
-import generateAddress from '../../test-helpers/factories/address';
-import { createFromAddress } from '../invoice-addresses';
+import { test, Test } from "../../test-helpers/fresh";
+import { getInvoicesByUser } from "./search";
+import createUser = require("../../test-helpers/create-user");
+import generateInvoice from "../../test-helpers/factories/invoice";
+import generateAddress from "../../test-helpers/factories/address";
+import { createFromAddress } from "../invoice-addresses";
 
-test('getInvoicesByUser returns a list of undeleted invoices', async (t: Test) => {
+test("getInvoicesByUser returns a list of undeleted invoices", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
   await generateInvoice();
 
@@ -14,13 +14,16 @@ test('getInvoicesByUser returns a list of undeleted invoices', async (t: Test) =
   const { invoice: invoice1 } = await generateInvoice({ userId: user.id });
   const { invoice: invoice2 } = await generateInvoice({
     userId: user.id,
-    invoiceAddressId: invoiceAddress.id
+    invoiceAddressId: invoiceAddress.id,
   });
   const result = await getInvoicesByUser({ userId: user.id });
 
   t.deepEqual(
     result,
-    [{ ...invoice2, invoiceAddress }, { ...invoice1, invoiceAddress: null }],
-    'Returns a list of invoices for the user'
+    [
+      { ...invoice2, invoiceAddress },
+      { ...invoice1, invoiceAddress: null },
+    ],
+    "Returns a list of invoices for the user"
   );
 });

@@ -1,15 +1,15 @@
-'use strict';
+"use strict";
 
-const Router = require('koa-router');
+const Router = require("koa-router");
 
-const canAccessUserResource = require('../../middleware/can-access-user-resource');
-const ProductDesignCommentsDAO = require('../../dao/product-design-comments');
-const ProductDesignSectionsDAO = require('../../dao/product-design-sections');
-const requireAuth = require('../../middleware/require-auth');
-const UsersDAO = require('../../components/users/dao');
+const canAccessUserResource = require("../../middleware/can-access-user-resource");
+const ProductDesignCommentsDAO = require("../../dao/product-design-comments");
+const ProductDesignSectionsDAO = require("../../dao/product-design-sections");
+const requireAuth = require("../../middleware/require-auth");
+const UsersDAO = require("../../components/users/dao");
 const {
-  attachDesignPermissions
-} = require('../../middleware/can-access-design');
+  attachDesignPermissions,
+} = require("../../middleware/can-access-design");
 
 const router = new Router();
 
@@ -23,7 +23,7 @@ async function attachUser(comment) {
 
 function* getByDesign() {
   const { designId } = this.query;
-  this.assert(designId, 403, 'Design ID required');
+  this.assert(designId, 403, "Design ID required");
 
   yield attachDesignPermissions.call(this, designId);
 
@@ -54,7 +54,7 @@ function* update() {
 
   const keysToUpdate = Object.keys(body);
 
-  if (keysToUpdate.length === 1 && keysToUpdate[0] === 'isPinned') {
+  if (keysToUpdate.length === 1 && keysToUpdate[0] === "isPinned") {
     // Only trying to pin/unpin a comment, no need for auth check.
   } else {
     canAccessUserResource.call(this, comment.userId);
@@ -73,10 +73,10 @@ function* update() {
 function* create() {
   const { parentCommentId, sectionId, text } = this.request.body;
 
-  this.assert(text, 400, 'Comment text cannot be empty');
+  this.assert(text, 400, "Comment text cannot be empty");
 
   const section = yield ProductDesignSectionsDAO.findById(sectionId);
-  this.assert(section, 400, 'Invalid section ID');
+  this.assert(section, 400, "Invalid section ID");
 
   yield attachDesignPermissions.call(this, section.designId);
 
@@ -84,7 +84,7 @@ function* create() {
     parentCommentId,
     sectionId,
     text,
-    userId: this.state.userId
+    userId: this.state.userId,
   });
 
   const withUser = yield attachUser(created);
@@ -93,9 +93,9 @@ function* create() {
   this.status = 201;
 }
 
-router.get('/', requireAuth, getByDesign);
-router.post('/', requireAuth, create);
-router.del('/:commentId', requireAuth, deleteComment);
-router.patch('/:commentId', requireAuth, update);
+router.get("/", requireAuth, getByDesign);
+router.post("/", requireAuth, create);
+router.del("/:commentId", requireAuth, deleteComment);
+router.patch("/:commentId", requireAuth, update);
 
 module.exports = router.routes();

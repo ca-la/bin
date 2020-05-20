@@ -1,26 +1,26 @@
-'use strict';
+"use strict";
 
-const uuid = require('node-uuid');
+const uuid = require("node-uuid");
 
-const ProductDesignOptionsDAO = require('../../dao/product-design-options');
-const createUser = require('../../test-helpers/create-user');
-const { authHeader, del, post } = require('../../test-helpers/http');
-const { test } = require('../../test-helpers/fresh');
+const ProductDesignOptionsDAO = require("../../dao/product-design-options");
+const createUser = require("../../test-helpers/create-user");
+const { authHeader, del, post } = require("../../test-helpers/http");
+const { test } = require("../../test-helpers/fresh");
 
-test('POST /product-design-options/', t => {
+test("POST /product-design-options/", (t) => {
   let sessionId;
   return createUser()
     .then(({ user, session }) => {
       sessionId = session.id;
 
       const productDesignOptions = {
-        type: 'test',
-        title: 'test',
-        userId: user.id
+        type: "test",
+        title: "test",
+        userId: user.id,
       };
-      return post('/product-design-options/', {
+      return post("/product-design-options/", {
         headers: authHeader(sessionId),
-        body: productDesignOptions
+        body: productDesignOptions,
       });
     })
     .then(([response]) => {
@@ -28,7 +28,7 @@ test('POST /product-design-options/', t => {
     });
 });
 
-test('DELETE /product-design-options/:id', t => {
+test("DELETE /product-design-options/:id", (t) => {
   let sessionId;
   return createUser()
     .then(({ user, session }) => {
@@ -36,15 +36,15 @@ test('DELETE /product-design-options/:id', t => {
 
       const productDesignOptions = {
         isBuiltinOption: true,
-        type: 'test',
-        title: 'test',
-        userId: user.id
+        type: "test",
+        title: "test",
+        userId: user.id,
       };
       return ProductDesignOptionsDAO.create(productDesignOptions);
     })
     .then(({ id }) => {
       return del(`/product-design-options/${id}`, {
-        headers: authHeader(sessionId)
+        headers: authHeader(sessionId),
       });
     })
     .then(([response]) => {
@@ -52,7 +52,7 @@ test('DELETE /product-design-options/:id', t => {
     });
 });
 
-test('DELETE /product-design-options/:id on bad id returns 404', t => {
+test("DELETE /product-design-options/:id on bad id returns 404", (t) => {
   let sessionId;
   return createUser()
     .then(({ user, session }) => {
@@ -60,16 +60,16 @@ test('DELETE /product-design-options/:id on bad id returns 404', t => {
 
       const productDesignOptions = {
         isBuiltinOption: true,
-        type: 'test',
-        title: 'test',
-        userId: user.id
+        type: "test",
+        title: "test",
+        userId: user.id,
       };
       return ProductDesignOptionsDAO.create(productDesignOptions);
     })
     .then(() => {
       const fakeId = uuid.v4();
       return del(`/product-design-options/${fakeId}`, {
-        headers: authHeader(sessionId)
+        headers: authHeader(sessionId),
       });
     })
     .then(([response]) => {
@@ -77,7 +77,7 @@ test('DELETE /product-design-options/:id on bad id returns 404', t => {
     });
 });
 
-test('DELETE /product-design-options/:id on deleted id returns 404', t => {
+test("DELETE /product-design-options/:id on deleted id returns 404", (t) => {
   let sessionId;
   let optionsId;
 
@@ -87,21 +87,21 @@ test('DELETE /product-design-options/:id on deleted id returns 404', t => {
 
       const productDesignOptions = {
         isBuiltinOption: true,
-        type: 'test',
-        title: 'test',
-        userId: user.id
+        type: "test",
+        title: "test",
+        userId: user.id,
       };
       return ProductDesignOptionsDAO.create(productDesignOptions);
     })
     .then(({ id }) => {
       optionsId = id;
       return del(`/product-design-options/${optionsId}`, {
-        headers: authHeader(sessionId)
+        headers: authHeader(sessionId),
       });
     })
     .then(() => {
       return del(`/product-design-options/${optionsId}`, {
-        headers: authHeader(sessionId)
+        headers: authHeader(sessionId),
       });
     })
     .then(([response]) => {

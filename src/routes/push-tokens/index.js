@@ -1,7 +1,7 @@
-'use strict';
+"use strict";
 
-const Router = require('koa-router');
-const PushTokensDAO = require('../../dao/push-tokens');
+const Router = require("koa-router");
+const PushTokensDAO = require("../../dao/push-tokens");
 
 const router = new Router();
 
@@ -11,7 +11,7 @@ function* createToken() {
   const token = yield PushTokensDAO.create({
     apnsDeviceToken,
     userId,
-    anonymousId
+    anonymousId,
   });
 
   this.body = token;
@@ -27,7 +27,7 @@ function* createAlias() {
   this.status = 201;
 }
 
-router.post('/', createToken);
-router.post('/alias', createAlias);
+router.post("/", createToken);
+router.post("/alias", createAlias);
 
 module.exports = router.routes();

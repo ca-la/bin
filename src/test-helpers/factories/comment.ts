@@ -1,10 +1,10 @@
-import uuid from 'node-uuid';
+import uuid from "node-uuid";
 
-import { create } from '../../components/comments/dao';
-import { findById as findUserById } from '../../components/users/dao';
-import createUser = require('../create-user');
-import User from '../../components/users/domain-object';
-import Comment from '../../components/comments/domain-object';
+import { create } from "../../components/comments/dao";
+import { findById as findUserById } from "../../components/users/dao";
+import createUser = require("../create-user");
+import User from "../../components/users/domain-object";
+import Comment from "../../components/comments/domain-object";
 
 export default async function generateComment(
   options: Partial<Comment> = {}
@@ -14,7 +14,7 @@ export default async function generateComment(
     : await createUser({ withSession: false });
 
   if (!user) {
-    throw new Error('Could not get user');
+    throw new Error("Could not get user");
   }
 
   const comment = await create({
@@ -23,12 +23,12 @@ export default async function generateComment(
     id: options.id || uuid.v4(),
     isPinned: options.isPinned || false,
     parentCommentId: options.parentCommentId || null,
-    text: options.text || 'test comment',
-    userId: user.id
+    text: options.text || "test comment",
+    userId: user.id,
   });
 
   return {
     comment,
-    createdBy: user
+    createdBy: user,
   };
 }

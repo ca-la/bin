@@ -1,5 +1,5 @@
-import DataAdapter from '../../services/data-adapter';
-import { hasProperties } from '../../services/require-properties';
+import DataAdapter from "../../services/data-adapter";
+import { hasProperties } from "../../services/require-properties";
 
 export default interface PricingProcessTimeline {
   id: string;
@@ -26,7 +26,7 @@ const encode = (row: PricingProcessTimelineRow): PricingProcessTimeline => {
     minimumUnits: row.minimum_units,
     timeMs: parseInt(row.time_ms, 10),
     uniqueProcesses: row.unique_processes,
-    version: row.version
+    version: row.version,
   };
 };
 
@@ -37,7 +37,7 @@ const decode = (data: PricingProcessTimeline): PricingProcessTimelineRow => {
     minimum_units: data.minimumUnits,
     time_ms: data.timeMs.toString(),
     unique_processes: data.uniqueProcesses,
-    version: data.version
+    version: data.version,
   };
 };
 
@@ -51,11 +51,11 @@ export function isPricingProcessTimelineRow(
 ): row is PricingProcessTimelineRow {
   return hasProperties(
     row,
-    'id',
-    'version',
-    'minimum_units',
-    'unique_processes',
-    'time_ms',
-    'created_at'
+    "id",
+    "version",
+    "minimum_units",
+    "unique_processes",
+    "time_ms",
+    "created_at"
   );
 }

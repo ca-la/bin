@@ -1,12 +1,12 @@
-'use strict';
+"use strict";
 
-const { create, updateOneById, findByScanId } = require('./index');
+const { create, updateOneById, findByScanId } = require("./index");
 
-const ScansDAO = require('../scans');
-const { test } = require('../../test-helpers/fresh');
-const createUser = require('../../test-helpers/create-user');
+const ScansDAO = require("../scans");
+const { test } = require("../../test-helpers/fresh");
+const createUser = require("../../test-helpers/create-user");
 
-test('ScanPhotosDAO.findByScanId orders by creation time', t => {
+test("ScanPhotosDAO.findByScanId orders by creation time", (t) => {
   let scanId;
   let firstId;
   let secondId;
@@ -15,56 +15,56 @@ test('ScanPhotosDAO.findByScanId orders by creation time', t => {
     .then(({ user }) => {
       return ScansDAO.create({
         userId: user.id,
-        type: ScansDAO.SCAN_TYPES.photo
+        type: ScansDAO.SCAN_TYPES.photo,
       });
     })
-    .then(scan => {
+    .then((scan) => {
       scanId = scan.id;
       return create({ scanId });
     })
-    .then(scanPhoto => {
+    .then((scanPhoto) => {
       firstId = scanPhoto.id;
       return create({ scanId });
     })
-    .then(scanPhoto => {
+    .then((scanPhoto) => {
       secondId = scanPhoto.id;
       return updateOneById(firstId, {
-        calibrationData: {}
+        calibrationData: {},
       });
     })
     .then(() => {
       return findByScanId(scanId);
     })
-    .then(photos => {
+    .then((photos) => {
       t.equal(photos[0].id, firstId);
       t.equal(photos[1].id, secondId);
     });
 });
 
-test('ScanPhotosDAO.updateOneById updates a photo', t => {
+test("ScanPhotosDAO.updateOneById updates a photo", (t) => {
   return createUser({ withSession: false })
     .then(({ user }) => {
       return ScansDAO.create({
         userId: user.id,
-        type: ScansDAO.SCAN_TYPES.photo
+        type: ScansDAO.SCAN_TYPES.photo,
       });
     })
-    .then(scan => {
+    .then((scan) => {
       return create({
-        scanId: scan.id
+        scanId: scan.id,
       });
     })
-    .then(scanPhoto => {
+    .then((scanPhoto) => {
       return updateOneById(scanPhoto.id, {
         controlPoints: {
-          ok: { x: 1, y: 2 }
+          ok: { x: 1, y: 2 },
         },
         calibrationData: {
-          tilt: 100
-        }
+          tilt: 100,
+        },
       });
     })
-    .then(updated => {
+    .then((updated) => {
       t.deepEqual(updated.controlPoints, { ok: { x: 1, y: 2 } });
       t.deepEqual(updated.calibrationData, { tilt: 100 });
     });

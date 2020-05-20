@@ -1,15 +1,15 @@
-import uuid from 'node-uuid';
+import uuid from "node-uuid";
 
-import generatePricingValues from './pricing-values';
-import generatePricingQuote from '../../services/generate-pricing-quote';
+import generatePricingValues from "./pricing-values";
+import generatePricingQuote from "../../services/generate-pricing-quote";
 
-import { PricingQuote } from '../../domain-objects/pricing-quote';
-import * as PricingQuotesDAO from '../../dao/pricing-quotes';
-import Bid, { BidCreationPayload } from '../../components/bids/domain-object';
-import { create as createBid } from '../../components/bids/dao';
-import createUser from '../create-user';
-import User from '../../components/users/domain-object';
-import { daysToMs } from '../../services/time-conversion';
+import { PricingQuote } from "../../domain-objects/pricing-quote";
+import * as PricingQuotesDAO from "../../dao/pricing-quotes";
+import Bid, { BidCreationPayload } from "../../components/bids/domain-object";
+import { create as createBid } from "../../components/bids/dao";
+import createUser from "../create-user";
+import User from "../../components/users/domain-object";
+import { daysToMs } from "../../services/time-conversion";
 
 interface BidInterface {
   user: User;
@@ -30,7 +30,7 @@ export default async function generateBid({
   designId = null,
   quoteId = null,
   generatePricing = true,
-  userId = null
+  userId = null,
 }: Partial<GenerateBidInputs> = {}): Promise<BidInterface> {
   if (generatePricing) {
     await generatePricingValues();
@@ -44,10 +44,10 @@ export default async function generateBid({
     : await generatePricingQuote({
         designId: designId || null,
         materialBudgetCents: 1200,
-        materialCategory: 'BASIC',
+        materialCategory: "BASIC",
         processes: [],
-        productComplexity: 'SIMPLE',
-        productType: 'TEESHIRT',
+        productComplexity: "SIMPLE",
+        productType: "TEESHIRT",
         units: 200,
         processTimelinesVersion: 0,
         processesVersion: 0,
@@ -55,11 +55,11 @@ export default async function generateBid({
         productTypeVersion: 0,
         marginVersion: 0,
         constantsVersion: 0,
-        careLabelsVersion: 0
+        careLabelsVersion: 0,
       });
 
   if (!quote) {
-    throw new Error('Could not find or create quote for new pricing bid');
+    throw new Error("Could not find or create quote for new pricing bid");
   }
 
   const createdAt = new Date();
@@ -70,12 +70,12 @@ export default async function generateBid({
     bidPriceProductionOnlyCents: 0,
     createdBy,
     completedAt: null,
-    description: 'Full Service',
+    description: "Full Service",
     dueDate,
     id: uuid.v4(),
     quoteId: quote.id,
     taskTypeIds: [],
-    ...bidOptions
+    ...bidOptions,
   });
 
   return { bid, quote, user };

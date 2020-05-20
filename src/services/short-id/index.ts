@@ -1,10 +1,10 @@
-import Hashids from 'hashids';
+import Hashids from "hashids";
 
-import { SHORT_ID_SALT } from '../../config';
-import sequenceIncrement from '../sequence-increment';
+import { SHORT_ID_SALT } from "../../config";
+import sequenceIncrement from "../sequence-increment";
 
 const MIN_HASH_LENGTH = 8;
-const TABLE_NAME = 'short_id_increment';
+const TABLE_NAME = "short_id_increment";
 
 /**
  * Computes a unique short id based off a sequence in the database.

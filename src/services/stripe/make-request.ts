@@ -1,23 +1,23 @@
-import { RequestInit } from 'node-fetch';
+import { RequestInit } from "node-fetch";
 
-import { fetch } from '../fetch';
-import serializeRequestBody from './serialize-request-body';
-import Logger = require('../logger');
-import { STRIPE_SECRET_KEY } from '../../config';
-import InvalidPaymentError = require('../../errors/invalid-payment');
-import StripeError = require('../../errors/stripe');
+import { fetch } from "../fetch";
+import serializeRequestBody from "./serialize-request-body";
+import Logger = require("../logger");
+import { STRIPE_SECRET_KEY } from "../../config";
+import InvalidPaymentError = require("../../errors/invalid-payment");
+import StripeError = require("../../errors/stripe");
 
-const STRIPE_API_BASE = 'https://api.stripe.com/v1';
+const STRIPE_API_BASE = "https://api.stripe.com/v1";
 
 interface RequestOptions {
-  method: 'post' | 'get';
+  method: "post" | "get";
   path: string;
   data?: object;
   idempotencyKey?: string;
   apiBase?: string;
 }
 
-const CREDENTIALS = Buffer.from(`${STRIPE_SECRET_KEY}:`).toString('base64');
+const CREDENTIALS = Buffer.from(`${STRIPE_SECRET_KEY}:`).toString("base64");
 
 interface WithHeaders {
   headers: {
@@ -30,7 +30,7 @@ export default async function makeRequest<ResponseType = object>(
 ): Promise<ResponseType> {
   const { method, path, data, idempotencyKey, apiBase } = requestOptions;
   if (!method || !path) {
-    throw new Error('Missing required values');
+    throw new Error("Missing required values");
   }
 
   const base = apiBase || STRIPE_API_BASE;
@@ -39,27 +39,27 @@ export default async function makeRequest<ResponseType = object>(
   const options: RequestInit & WithHeaders = {
     method,
     headers: {
-      Authorization: `Basic ${CREDENTIALS}`
-    }
+      Authorization: `Basic ${CREDENTIALS}`,
+    },
   };
 
   if (data) {
-    options.headers['Content-Type'] = 'application/x-www-form-urlencoded';
+    options.headers["Content-Type"] = "application/x-www-form-urlencoded";
     options.body = serializeRequestBody(data);
   }
 
   if (idempotencyKey) {
-    options.headers['Idempotency-Key'] = idempotencyKey;
+    options.headers["Idempotency-Key"] = idempotencyKey;
   }
 
   const response = await fetch(url, options);
-  const contentType = response.headers.get('content-type');
+  const contentType = response.headers.get("content-type");
   const isJson = contentType && /application\/.*json/.test(contentType);
 
   if (!isJson) {
     const text = await response.text();
-    Logger.logServerError('Stripe request: ', method, url);
-    Logger.logServerError('Stripe response: ', response.status, text);
+    Logger.logServerError("Stripe request: ", method, url);
+    Logger.logServerError("Stripe response: ", response.status, text);
     throw new Error(`Unexpected Stripe response type: ${contentType}`);
   }
 
@@ -70,7 +70,7 @@ export default async function makeRequest<ResponseType = object>(
       return json;
     case 402:
       throw new InvalidPaymentError(
-        (json.error && json.error.message) || 'Your payment method was declined'
+        (json.error && json.error.message) || "Your payment method was declined"
       );
     default:
       throw new StripeError(json.error);

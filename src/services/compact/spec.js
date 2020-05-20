@@ -1,26 +1,26 @@
-'use strict';
+"use strict";
 
-const { test } = require('../../test-helpers/simple');
-const compact = require('./index');
+const { test } = require("../../test-helpers/simple");
+const compact = require("./index");
 
-test('compact compacts objects', async t => {
+test("compact compacts objects", async (t) => {
   const input = {
     a: 123,
-    b: 'something',
+    b: "something",
     c: false,
     d: null,
     e: undefined,
     f: 0,
     g: [],
-    h: undefined
+    h: undefined,
   };
 
   t.deepEqual(compact(input), {
     a: 123,
-    b: 'something',
+    b: "something",
     c: false,
     d: null,
     f: 0,
-    g: []
+    g: [],
   });
 });

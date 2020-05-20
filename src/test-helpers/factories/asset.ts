@@ -1,10 +1,10 @@
-import uuid from 'node-uuid';
+import uuid from "node-uuid";
 
-import { create } from '../../components/assets/dao';
-import { findById as findUserById } from '../../components/users/dao';
-import createUser = require('../create-user');
-import User from '../../components/users/domain-object';
-import Asset from '../../components/assets/domain-object';
+import { create } from "../../components/assets/dao";
+import { findById as findUserById } from "../../components/users/dao";
+import createUser = require("../create-user");
+import User from "../../components/users/domain-object";
+import Asset from "../../components/assets/domain-object";
 
 export default async function generateAsset(
   options: Partial<Asset> = {}
@@ -14,19 +14,19 @@ export default async function generateAsset(
     : await createUser({ withSession: false });
 
   if (!user) {
-    throw new Error('Could not get user');
+    throw new Error("Could not get user");
   }
 
   const asset = await create(
     staticAsset({
       userId: user.id,
-      ...options
+      ...options,
     })
   );
 
   return {
     asset,
-    createdBy: user
+    createdBy: user,
   };
 }
 
@@ -38,12 +38,12 @@ export function staticAsset(options?: Partial<Asset>): Asset {
     createdAt: new Date(),
     description: null,
     id: uuid.v4(),
-    mimeType: 'image/jpeg',
+    mimeType: "image/jpeg",
     originalHeightPx: 0,
     originalWidthPx: 0,
-    title: '',
+    title: "",
     uploadCompletedAt: new Date(),
     userId: uuid.v4(),
-    ...options
+    ...options,
   };
 }

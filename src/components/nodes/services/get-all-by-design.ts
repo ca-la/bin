@@ -1,32 +1,32 @@
-import { groupBy } from 'lodash';
+import { groupBy } from "lodash";
 import {
   PhidiasImage,
   PhidiasLayout,
-  PhidiasNode
-} from '@cala/ts-lib/dist/phidias';
+  PhidiasNode,
+} from "@cala/ts-lib/dist/phidias";
 import {
   DEPRECATED_NullNode,
   FrameNode,
   ImageNode,
-  VectorNode
-} from '@cala/ts-lib/dist/phidias/node';
+  VectorNode,
+} from "@cala/ts-lib/dist/phidias/node";
 
-import Node from '../domain-objects';
-import MaterialAttribute from '../../attributes/material-attributes/domain-objects';
-import ImageAttribute from '../../attributes/image-attributes/domain-objects';
-import Asset from '../../assets/domain-object';
-import MaterialAttributeWithAsset from '../../attributes/material-attributes/domain-objects/with-asset';
-import ImageAttributeWithAsset from '../../attributes/image-attributes/domain-objects/with-asset';
-import { findNodeTrees, findRootNodesByDesign } from '../dao';
-import { findAllByNodes as findAllMaterials } from '../../attributes/material-attributes/dao';
-import { findAllByNodes as findAllLayouts } from '../../attributes/layout-attributes/dao';
-import { findAllByNodes as findAllImages } from '../../attributes/image-attributes/dao';
+import Node from "../domain-objects";
+import MaterialAttribute from "../../attributes/material-attributes/domain-objects";
+import ImageAttribute from "../../attributes/image-attributes/domain-objects";
+import Asset from "../../assets/domain-object";
+import MaterialAttributeWithAsset from "../../attributes/material-attributes/domain-objects/with-asset";
+import ImageAttributeWithAsset from "../../attributes/image-attributes/domain-objects/with-asset";
+import { findNodeTrees, findRootNodesByDesign } from "../dao";
+import { findAllByNodes as findAllMaterials } from "../../attributes/material-attributes/dao";
+import { findAllByNodes as findAllLayouts } from "../../attributes/layout-attributes/dao";
+import { findAllByNodes as findAllImages } from "../../attributes/image-attributes/dao";
 
 import {
   AssetLinks,
-  getLinksForAsset
-} from '../../../services/attach-asset-links';
-import LayoutAttribute from '../../attributes/layout-attributes/domain-object';
+  getLinksForAsset,
+} from "../../../services/attach-asset-links";
+import LayoutAttribute from "../../attributes/layout-attributes/domain-object";
 
 interface AssetWithLinks extends Asset {
   assetLinks: AssetLinks | null;
@@ -82,7 +82,7 @@ export async function getAllByDesign(designId: string): Promise<NodeResources> {
     (asset: Asset): AssetWithLinks => {
       return {
         ...asset,
-        assetLinks: getLinksForAsset(asset)
+        assetLinks: getLinksForAsset(asset),
       };
     }
   );
@@ -93,9 +93,9 @@ export async function getAllByDesign(designId: string): Promise<NodeResources> {
       artworks: [],
       materials: plainMaterials,
       sketches: plainImages,
-      dimensions: layouts
+      dimensions: layouts,
     },
-    nodes: allNodes
+    nodes: allNodes,
   };
 }
 
@@ -105,20 +105,20 @@ function isIntermediateNullNode(node: Node): node is DEPRECATED_NullNode {
 
 function isIntermediateFrameNode(
   node: Node
-): node is Omit<FrameNode, 'layout'> {
-  return node.type === 'FRAME';
+): node is Omit<FrameNode, "layout"> {
+  return node.type === "FRAME";
 }
 
 function isIntermediateImageNode(
   node: Node
-): node is Omit<ImageNode, 'layout' | 'image'> {
-  return node.type === 'IMAGE';
+): node is Omit<ImageNode, "layout" | "image"> {
+  return node.type === "IMAGE";
 }
 
 function isIntermediateVectorNode(
   node: Node
-): node is Omit<VectorNode, 'layout' | 'image'> {
-  return node.type === 'VECTOR';
+): node is Omit<VectorNode, "layout" | "image"> {
+  return node.type === "VECTOR";
 }
 
 interface NodeAttributeMap {
@@ -139,7 +139,7 @@ function denormalizeNode(
     if (isIntermediateFrameNode(node) && layout) {
       return {
         ...node,
-        layout
+        layout,
       };
     }
     if (
@@ -150,12 +150,12 @@ function denormalizeNode(
       return {
         ...node,
         layout,
-        image
+        image,
       };
     }
 
     throw new TypeError(
-      'Node type is unknown, or required attributes are missing'
+      "Node type is unknown, or required attributes are missing"
     );
   };
 }
@@ -169,8 +169,8 @@ export async function getAllByDesignInclude(
   );
   const allNodeIds = allNodes.map((node: Node): string => node.id);
 
-  const images = groupBy(await findAllImages(allNodeIds), 'nodeId');
-  const layouts = groupBy(await findAllLayouts(allNodeIds), 'nodeId');
+  const images = groupBy(await findAllImages(allNodeIds), "nodeId");
+  const layouts = groupBy(await findAllLayouts(allNodeIds), "nodeId");
   const nodeAttributeMap: NodeAttributeMap = allNodes.reduce(
     (acc: NodeAttributeMap, node: Node): NodeAttributeMap => {
       const imagesForNode = images[node.id];
@@ -179,8 +179,8 @@ export async function getAllByDesignInclude(
         ...acc,
         [node.id]: {
           layout: layoutsForNode ? layoutsForNode[0] : null,
-          image: imagesForNode ? imagesForNode[0] : null
-        }
+          image: imagesForNode ? imagesForNode[0] : null,
+        },
       };
     },
     {}

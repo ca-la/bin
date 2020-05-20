@@ -1,24 +1,24 @@
-import uuid from 'node-uuid';
-import Knex from 'knex';
+import uuid from "node-uuid";
+import Knex from "knex";
 
-import { test, Test } from '../../test-helpers/fresh';
-import createUser = require('../../test-helpers/create-user');
-import ProductDesignsDAO from '../product-designs/dao';
-import * as PricingCostInputsDAO from './dao';
-import PricingCostInput from './domain-object';
-import { omit } from 'lodash';
-import generatePricingValues from '../../test-helpers/factories/pricing-values';
-import generatePricingCostInput from '../../test-helpers/factories/pricing-cost-input';
-import db from './../../services/db';
-import createDesign from '../../services/create-design';
+import { test, Test } from "../../test-helpers/fresh";
+import createUser = require("../../test-helpers/create-user");
+import ProductDesignsDAO from "../product-designs/dao";
+import * as PricingCostInputsDAO from "./dao";
+import PricingCostInput from "./domain-object";
+import { omit } from "lodash";
+import generatePricingValues from "../../test-helpers/factories/pricing-values";
+import generatePricingCostInput from "../../test-helpers/factories/pricing-cost-input";
+import db from "./../../services/db";
+import createDesign from "../../services/create-design";
 
-test('PricingCostInputsDAO supports creation and retrieval', async (t: Test) => {
+test("PricingCostInputsDAO supports creation and retrieval", async (t: Test) => {
   await generatePricingValues();
   const { user } = await createUser();
   const design = await ProductDesignsDAO.create({
-    productType: 'DRESS',
-    title: 'A design',
-    userId: user.id
+    productType: "DRESS",
+    title: "A design",
+    userId: user.id,
   });
   const input: PricingCostInput = {
     createdAt: new Date(),
@@ -27,26 +27,26 @@ test('PricingCostInputsDAO supports creation and retrieval', async (t: Test) => 
     expiresAt: null,
     id: uuid.v4(),
     materialBudgetCents: 12000,
-    materialCategory: 'STANDARD',
+    materialCategory: "STANDARD",
     processes: [
       {
-        complexity: '1_COLOR',
-        name: 'SCREEN_PRINTING'
+        complexity: "1_COLOR",
+        name: "SCREEN_PRINTING",
       },
       {
-        complexity: 'SMALL',
-        name: 'EMBROIDERY'
-      }
+        complexity: "SMALL",
+        name: "EMBROIDERY",
+      },
     ],
-    productComplexity: 'MEDIUM',
-    productType: 'DRESS',
+    productComplexity: "MEDIUM",
+    productType: "DRESS",
     processTimelinesVersion: 0,
     processesVersion: 0,
     productMaterialsVersion: 0,
     productTypeVersion: 0,
     marginVersion: 0,
     constantsVersion: 0,
-    careLabelsVersion: 0
+    careLabelsVersion: 0,
   };
 
   const created = await db.transaction((trx: Knex.Transaction) =>
@@ -54,8 +54,8 @@ test('PricingCostInputsDAO supports creation and retrieval', async (t: Test) => 
   );
 
   t.deepEqual(
-    omit(created, 'processes'),
-    omit({ ...input, expiresAt: null }, 'processes')
+    omit(created, "processes"),
+    omit({ ...input, expiresAt: null }, "processes")
   );
   t.deepEqual(created.processes.sort(), input.processes.sort());
 
@@ -63,13 +63,13 @@ test('PricingCostInputsDAO supports creation and retrieval', async (t: Test) => 
   t.deepEqual(retrieved, { ...created, expiresAt: null });
 });
 
-test('supports creation without processes', async (t: Test) => {
+test("supports creation without processes", async (t: Test) => {
   await generatePricingValues();
   const { user } = await createUser();
   const design = await ProductDesignsDAO.create({
-    productType: 'DRESS',
-    title: 'A design',
-    userId: user.id
+    productType: "DRESS",
+    title: "A design",
+    userId: user.id,
   });
   const input: PricingCostInput = {
     createdAt: new Date(),
@@ -78,17 +78,17 @@ test('supports creation without processes', async (t: Test) => {
     expiresAt: null,
     id: uuid.v4(),
     materialBudgetCents: 12000,
-    materialCategory: 'STANDARD',
+    materialCategory: "STANDARD",
     processes: [],
-    productComplexity: 'MEDIUM',
-    productType: 'DRESS',
+    productComplexity: "MEDIUM",
+    productType: "DRESS",
     processTimelinesVersion: 0,
     processesVersion: 0,
     productMaterialsVersion: 0,
     productTypeVersion: 0,
     marginVersion: 0,
     constantsVersion: 0,
-    careLabelsVersion: 0
+    careLabelsVersion: 0,
   };
 
   const created = await db.transaction((trx: Knex.Transaction) =>
@@ -98,23 +98,23 @@ test('supports creation without processes', async (t: Test) => {
   t.deepEqual(created, { ...input, expiresAt: null, processes: [] });
 });
 
-test('findById does not return expired cost inputs', async (t: Test) => {
+test("findById does not return expired cost inputs", async (t: Test) => {
   await generatePricingValues();
   const { user: u1 } = await createUser({ withSession: false });
   const design1 = await createDesign({
-    productType: 'PANTALOONES',
-    title: 'I ripped my Pants',
-    userId: u1.id
+    productType: "PANTALOONES",
+    title: "I ripped my Pants",
+    userId: u1.id,
   });
   const nextWeek = new Date();
   nextWeek.setDate(nextWeek.getDate() + 7);
   const { pricingCostInput: ci1 } = await generatePricingCostInput({
     designId: design1.id,
-    expiresAt: new Date('2019-04-20')
+    expiresAt: new Date("2019-04-20"),
   });
   const { pricingCostInput: ci2 } = await generatePricingCostInput({
     designId: design1.id,
-    expiresAt: nextWeek
+    expiresAt: nextWeek,
   });
 
   const result = await PricingCostInputsDAO.findById(ci1.id);
@@ -123,16 +123,16 @@ test('findById does not return expired cost inputs', async (t: Test) => {
   t.deepEqual(result2, { ...ci2, processes: [] });
 });
 
-test('PricingCostInputsDAO supports retrieval by designID', async (t: Test) => {
+test("PricingCostInputsDAO supports retrieval by designID", async (t: Test) => {
   await generatePricingValues();
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
 
   const { user } = await createUser();
   const design = await ProductDesignsDAO.create({
-    productType: 'DRESS',
-    title: 'A design',
-    userId: user.id
+    productType: "DRESS",
+    title: "A design",
+    userId: user.id,
   });
   const input: PricingCostInput = {
     createdAt: yesterday,
@@ -141,26 +141,26 @@ test('PricingCostInputsDAO supports retrieval by designID', async (t: Test) => {
     expiresAt: null,
     id: uuid.v4(),
     materialBudgetCents: 12000,
-    materialCategory: 'STANDARD',
+    materialCategory: "STANDARD",
     processes: [
       {
-        complexity: '1_COLOR',
-        name: 'SCREEN_PRINTING'
+        complexity: "1_COLOR",
+        name: "SCREEN_PRINTING",
       },
       {
-        complexity: 'SMALL',
-        name: 'EMBROIDERY'
-      }
+        complexity: "SMALL",
+        name: "EMBROIDERY",
+      },
     ],
-    productComplexity: 'MEDIUM',
-    productType: 'DRESS',
+    productComplexity: "MEDIUM",
+    productType: "DRESS",
     processTimelinesVersion: 0,
     processesVersion: 0,
     productMaterialsVersion: 0,
     productTypeVersion: 0,
     marginVersion: 0,
     constantsVersion: 0,
-    careLabelsVersion: 0
+    careLabelsVersion: 0,
   };
   const anotherInput: PricingCostInput = {
     createdAt: new Date(),
@@ -169,84 +169,87 @@ test('PricingCostInputsDAO supports retrieval by designID', async (t: Test) => {
     expiresAt: null,
     id: uuid.v4(),
     materialBudgetCents: 12500,
-    materialCategory: 'SPECIFY',
+    materialCategory: "SPECIFY",
     processes: [
       {
-        complexity: '1_COLOR',
-        name: 'SCREEN_PRINTING'
+        complexity: "1_COLOR",
+        name: "SCREEN_PRINTING",
       },
       {
-        complexity: 'SMALL',
-        name: 'EMBROIDERY'
-      }
+        complexity: "SMALL",
+        name: "EMBROIDERY",
+      },
     ],
-    productComplexity: 'MEDIUM',
-    productType: 'DRESS',
+    productComplexity: "MEDIUM",
+    productType: "DRESS",
     processTimelinesVersion: 0,
     processesVersion: 0,
     productMaterialsVersion: 0,
     productTypeVersion: 0,
     marginVersion: 0,
     constantsVersion: 0,
-    careLabelsVersion: 0
+    careLabelsVersion: 0,
   };
   await db.transaction(async (trx: Knex.Transaction) => {
     await PricingCostInputsDAO.create(trx, input);
     await PricingCostInputsDAO.create(trx, anotherInput);
   });
   const designInputs = await PricingCostInputsDAO.findByDesignId({
-    designId: design.id
+    designId: design.id,
   });
 
   t.deepEqual(designInputs, [
     { ...anotherInput, expiresAt: null },
-    { ...input, expiresAt: null }
+    { ...input, expiresAt: null },
   ]);
 });
 
-test('findByDesignId can filter expired cost inputs', async (t: Test) => {
+test("findByDesignId can filter expired cost inputs", async (t: Test) => {
   await generatePricingValues();
   const { user: u1 } = await createUser({ withSession: false });
   const design1 = await createDesign({
-    productType: 'PANTALOONES',
-    title: 'I ripped my Pants',
-    userId: u1.id
+    productType: "PANTALOONES",
+    title: "I ripped my Pants",
+    userId: u1.id,
   });
   const nextWeek = new Date();
   nextWeek.setDate(nextWeek.getDate() + 7);
   const { pricingCostInput: ci1 } = await generatePricingCostInput({
     designId: design1.id,
-    expiresAt: new Date('2019-04-20')
+    expiresAt: new Date("2019-04-20"),
   });
   const { pricingCostInput: ci2 } = await generatePricingCostInput({
     designId: design1.id,
-    expiresAt: nextWeek
+    expiresAt: nextWeek,
   });
 
   const result = await PricingCostInputsDAO.findByDesignId({
-    designId: design1.id
+    designId: design1.id,
   });
   t.deepEqual(result, [{ ...ci2, processes: [] }]);
 
   const result2 = await PricingCostInputsDAO.findByDesignId({
     designId: design1.id,
-    showExpired: true
+    showExpired: true,
   });
-  t.deepEqual(result2, [{ ...ci2, processes: [] }, { ...ci1, processes: [] }]);
+  t.deepEqual(result2, [
+    { ...ci2, processes: [] },
+    { ...ci1, processes: [] },
+  ]);
 });
 
-test('expireCostInputs can expire rows with the associated designs', async (t: Test) => {
+test("expireCostInputs can expire rows with the associated designs", async (t: Test) => {
   await generatePricingValues();
 
   const {
     design: d1,
-    pricingCostInput: ci1
+    pricingCostInput: ci1,
   } = await generatePricingCostInput();
   const {
     design: d2,
-    pricingCostInput: ci2
+    pricingCostInput: ci2,
   } = await generatePricingCostInput();
-  const date = new Date('2019-04-20');
+  const date = new Date("2019-04-20");
 
   await db.transaction(
     async (trx: Knex.Transaction): Promise<void> => {
@@ -264,11 +267,9 @@ test('expireCostInputs can expire rows with the associated designs', async (t: T
           return new Date(result.expiresAt!);
         }
       );
-      const resultIds = results.map(
-        (result: PricingCostInput): string => {
-          return result.id;
-        }
-      );
+      const resultIds = results.map((result: PricingCostInput): string => {
+        return result.id;
+      });
 
       t.deepEqual(resultIds.sort(), [ci1.id, ci2.id].sort());
       t.deepEqual(resultExpirations, [date, date]);
@@ -276,23 +277,23 @@ test('expireCostInputs can expire rows with the associated designs', async (t: T
   );
 });
 
-test('expireCostInputs does not expire rows that are already expired', async (t: Test) => {
+test("expireCostInputs does not expire rows that are already expired", async (t: Test) => {
   await generatePricingValues();
 
   const {
     design: d1,
-    pricingCostInput: ci1
+    pricingCostInput: ci1,
   } = await generatePricingCostInput();
   const {
     design: d2,
-    pricingCostInput: ci2
+    pricingCostInput: ci2,
   } = await generatePricingCostInput();
-  const priorExpiration = new Date('2019-04-10');
+  const priorExpiration = new Date("2019-04-10");
   const { pricingCostInput: ci3 } = await generatePricingCostInput({
     designId: d2.id,
-    expiresAt: priorExpiration
+    expiresAt: priorExpiration,
   });
-  const date = new Date('2019-04-20');
+  const date = new Date("2019-04-20");
 
   await db.transaction(
     async (trx: Knex.Transaction): Promise<void> => {
@@ -311,11 +312,9 @@ test('expireCostInputs does not expire rows that are already expired', async (t:
           return new Date(result.expiresAt!);
         }
       );
-      const resultIds = results.map(
-        (result: PricingCostInput): string => {
-          return result.id;
-        }
-      );
+      const resultIds = results.map((result: PricingCostInput): string => {
+        return result.id;
+      });
 
       t.deepEqual(resultIds.sort(), [ci1.id, ci2.id].sort());
       t.deepEqual(resultExpirations, [date, date]);

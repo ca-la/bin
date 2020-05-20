@@ -1,17 +1,17 @@
-import uuid from 'node-uuid';
-import Knex from 'knex';
+import uuid from "node-uuid";
+import Knex from "knex";
 
-import db from '../../../services/db';
-import DesignsDAO from '../../product-designs/dao';
-import * as CollectionsDAO from '../dao';
-import * as DesignEventsDAO from '../../../dao/design-events';
-import createDesignTasks from '../../../services/create-design-tasks';
-import isEveryDesignPaired from '../../../services/is-every-design-paired';
-import * as NotificationsService from '../../../services/create-notifications';
+import db from "../../../services/db";
+import DesignsDAO from "../../product-designs/dao";
+import * as CollectionsDAO from "../dao";
+import * as DesignEventsDAO from "../../../dao/design-events";
+import createDesignTasks from "../../../services/create-design-tasks";
+import isEveryDesignPaired from "../../../services/is-every-design-paired";
+import * as NotificationsService from "../../../services/create-notifications";
 import {
   commitCostInputs as commitInputs,
-  recostInputs as recost
-} from '../services/cost-inputs';
+  recostInputs as recost,
+} from "../services/cost-inputs";
 
 export function* commitCostInputs(
   this: AuthedContext
@@ -37,14 +37,14 @@ export function* createPartnerPairing(
   const { userId } = this.state;
   const collection = yield CollectionsDAO.findById(collectionId);
   if (!collection) {
-    this.throw(404, 'Could not find collection');
+    this.throw(404, "Could not find collection");
   }
 
   const designs = yield DesignsDAO.findByCollectionId(collectionId);
   const allArePaired = yield isEveryDesignPaired(collectionId);
 
   if (!allArePaired) {
-    this.throw(409, 'Designs are not all paired');
+    this.throw(409, "Designs are not all paired");
   }
 
   yield db.transaction(
@@ -61,9 +61,9 @@ export function* createPartnerPairing(
           id: uuid.v4(),
           quoteId: null,
           targetId: null,
-          type: 'COMMIT_PARTNER_PAIRING'
+          type: "COMMIT_PARTNER_PAIRING",
         });
-        await createDesignTasks(design.id, 'POST_APPROVAL', trx);
+        await createDesignTasks(design.id, "POST_APPROVAL", trx);
       }
     }
   );
@@ -71,7 +71,7 @@ export function* createPartnerPairing(
   yield NotificationsService.immediatelySendPartnerPairingCommitted({
     actorId: userId,
     collectionId,
-    targetUserId: collection.createdBy
+    targetUserId: collection.createdBy,
   });
 
   this.status = 204;

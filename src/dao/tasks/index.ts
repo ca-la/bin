@@ -1,15 +1,15 @@
-import uuid from 'node-uuid';
-import Knex from 'knex';
-import db from '../../services/db';
+import uuid from "node-uuid";
+import Knex from "knex";
+import db from "../../services/db";
 import Task, {
   dataAdapter,
   isTaskRow,
-  TaskRow
-} from '../../domain-objects/task';
-import first from '../../services/first';
-import { validate, validateEvery } from '../../services/validate-from-db';
+  TaskRow,
+} from "../../domain-objects/task";
+import first from "../../services/first";
+import { validate, validateEvery } from "../../services/validate-from-db";
 
-const TABLE_NAME = 'tasks';
+const TABLE_NAME = "tasks";
 
 export async function create(
   id: string = uuid.v4(),
@@ -17,7 +17,7 @@ export async function create(
 ): Promise<Task> {
   const rowData = dataAdapter.forInsertion({ id });
   const created = await db(TABLE_NAME)
-    .insert(rowData, '*')
+    .insert(rowData, "*")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
@@ -26,7 +26,7 @@ export async function create(
     .then((rows: TaskRow[]) => first<TaskRow>(rows));
 
   if (!created) {
-    throw new Error('Failed to create rows');
+    throw new Error("Failed to create rows");
   }
 
   return validate<TaskRow, Task>(TABLE_NAME, isTaskRow, dataAdapter, created);
@@ -42,7 +42,7 @@ export async function createAll(
 
   const rowData = ids.map((id: string) => dataAdapter.forInsertion({ id }));
   const created = await db(TABLE_NAME)
-    .insert(rowData, '*')
+    .insert(rowData, "*")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
@@ -59,7 +59,7 @@ export async function createAll(
 
 export async function findById(id: string): Promise<Task | null> {
   const tasks: TaskRow[] = await db(TABLE_NAME)
-    .select('*')
+    .select("*")
     .where({ id })
     .limit(1);
 

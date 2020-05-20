@@ -1,14 +1,14 @@
-import Koa from 'koa';
-import * as nodeFetch from 'node-fetch';
-import shopifyAuth from '@cala/koa-shopify-auth';
+import Koa from "koa";
+import * as nodeFetch from "node-fetch";
+import shopifyAuth from "@cala/koa-shopify-auth";
 import {
   NextFunction,
-  OAuthStartOptions
-} from '@cala/koa-shopify-auth/src/types';
+  OAuthStartOptions,
+} from "@cala/koa-shopify-auth/src/types";
 
-import { addJson } from '../../services/add-json-querystring';
-import { SHOPIFY_CALA_APP_AUTH, STUDIO_HOST } from '../../config';
-import { ProviderName } from '../../components/storefronts/tokens/domain-object';
+import { addJson } from "../../services/add-json-querystring";
+import { SHOPIFY_CALA_APP_AUTH, STUDIO_HOST } from "../../config";
+import { ProviderName } from "../../components/storefronts/tokens/domain-object";
 
 declare global {
   namespace NodeJS {
@@ -32,13 +32,13 @@ global.Response = nodeFetch.Response;
 export default function shopifyWrapper(
   options: Partial<OAuthStartOptions> = {}
 ): (ctx: Koa.Context, next: NextFunction) => Promise<void> {
-  const [apiKey, secret] = SHOPIFY_CALA_APP_AUTH.split(':');
+  const [apiKey, secret] = SHOPIFY_CALA_APP_AUTH.split(":");
   return shopifyAuth({
-    prefix: '/oauth/shopify',
+    prefix: "/oauth/shopify",
     secret,
     apiKey,
-    accessMode: 'offline',
-    scopes: ['write_products', 'write_inventory'],
+    accessMode: "offline",
+    scopes: ["write_products", "write_inventory"],
     afterAuth: async (
       ctx: PublicContext<
         {},
@@ -49,11 +49,11 @@ export default function shopifyWrapper(
         accessToken: ctx.state.shopify.accessToken,
         baseUrl: `https://${ctx.state.shopify.shop}`,
         name: ctx.state.shopify.shop,
-        providerName: ProviderName.SHOPIFY
+        providerName: ProviderName.SHOPIFY,
       };
-      const query = addJson('shopifyAuth', newStorefront);
+      const query = addJson("shopifyAuth", newStorefront);
       ctx.redirect(`${STUDIO_HOST}?${query}`);
     },
-    ...options
+    ...options,
   });
 }

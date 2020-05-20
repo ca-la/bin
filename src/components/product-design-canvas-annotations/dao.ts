@@ -1,19 +1,19 @@
-import Knex from 'knex';
-import { pick } from 'lodash';
-import db from '../../services/db';
+import Knex from "knex";
+import { pick } from "lodash";
+import db from "../../services/db";
 import Annotation, {
   dataAdapter,
   isProductDesignCanvasAnnotationRow as isAnnotationRow,
   parseNumerics,
   parseNumericsList,
   ProductDesignCanvasAnnotationRow as AnnotationRow,
-  UPDATABLE_PROPERTIES
-} from './domain-object';
-import ResourceNotFoundError from '../../errors/resource-not-found';
-import first from '../../services/first';
-import { validate, validateEvery } from '../../services/validate-from-db';
+  UPDATABLE_PROPERTIES,
+} from "./domain-object";
+import ResourceNotFoundError from "../../errors/resource-not-found";
+import first from "../../services/first";
+import { validate, validateEvery } from "../../services/validate-from-db";
 
-const TABLE_NAME = 'product_design_canvas_annotations';
+const TABLE_NAME = "product_design_canvas_annotations";
 
 export async function create(
   data: Uninserted<Annotation>,
@@ -21,11 +21,11 @@ export async function create(
 ): Promise<Annotation> {
   const rowData = dataAdapter.forInsertion({
     ...data,
-    deletedAt: null
+    deletedAt: null,
   });
 
   const created = await db(TABLE_NAME)
-    .insert(rowData, '*')
+    .insert(rowData, "*")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
@@ -34,7 +34,7 @@ export async function create(
     .then((rows: AnnotationRow[]) => first<AnnotationRow>(rows));
 
   if (!created) {
-    throw new Error('Failed to create a annotation');
+    throw new Error("Failed to create a annotation");
   }
 
   return parseNumerics(
@@ -49,7 +49,7 @@ export async function create(
 
 export async function findById(id: string): Promise<Annotation | null> {
   const annotations: AnnotationRow[] = await db(TABLE_NAME)
-    .select('*')
+    .select("*")
     .where({ id, deleted_at: null })
     .limit(1);
 
@@ -76,11 +76,11 @@ export async function update(
   const rowData = pick(dataAdapter.forInsertion(data), UPDATABLE_PROPERTIES);
   const updated = await db(TABLE_NAME)
     .where({ id, deleted_at: null })
-    .update(rowData, '*')
+    .update(rowData, "*")
     .then((rows: AnnotationRow[]) => first<AnnotationRow>(rows));
 
   if (!updated) {
-    throw new Error('Failed to update row');
+    throw new Error("Failed to update row");
   }
 
   return parseNumerics(
@@ -96,11 +96,11 @@ export async function update(
 export async function deleteById(id: string): Promise<Annotation> {
   const deleted = await db(TABLE_NAME)
     .where({ id, deleted_at: null })
-    .update({ deleted_at: new Date() }, '*')
+    .update({ deleted_at: new Date() }, "*")
     .then((rows: AnnotationRow[]) => first<AnnotationRow>(rows));
 
   if (!deleted) {
-    throw new ResourceNotFoundError('Failed to delete row');
+    throw new ResourceNotFoundError("Failed to delete row");
   }
 
   return parseNumerics(
@@ -117,9 +117,9 @@ export async function findAllByCanvasId(
   canvasId: string
 ): Promise<Annotation[]> {
   const annotations: AnnotationRow[] = await db(TABLE_NAME)
-    .select('*')
+    .select("*")
     .where({ canvas_id: canvasId, deleted_at: null })
-    .orderBy('created_at', 'desc');
+    .orderBy("created_at", "desc");
 
   return parseNumericsList(
     validateEvery<AnnotationRow, Annotation>(
@@ -135,17 +135,17 @@ export async function findAllWithCommentsByCanvasId(
   canvasId: string
 ): Promise<Annotation[]> {
   const annotations: AnnotationRow[] = await db(TABLE_NAME)
-    .distinct('product_design_canvas_annotations.id')
-    .select('product_design_canvas_annotations.*')
+    .distinct("product_design_canvas_annotations.id")
+    .select("product_design_canvas_annotations.*")
     .join(
-      'product_design_canvas_annotation_comments',
-      'product_design_canvas_annotation_comments.annotation_id',
-      'product_design_canvas_annotations.id'
+      "product_design_canvas_annotation_comments",
+      "product_design_canvas_annotation_comments.annotation_id",
+      "product_design_canvas_annotations.id"
     )
     .join(
-      'comments',
-      'comments.id',
-      'product_design_canvas_annotation_comments.comment_id'
+      "comments",
+      "comments.id",
+      "product_design_canvas_annotation_comments.comment_id"
     )
     .whereRaw(
       `
@@ -155,7 +155,7 @@ AND comments.deleted_at IS null
     `,
       [canvasId]
     )
-    .orderBy('product_design_canvas_annotations.created_at', 'desc');
+    .orderBy("product_design_canvas_annotations.created_at", "desc");
 
   return parseNumericsList(
     validateEvery<AnnotationRow, Annotation>(

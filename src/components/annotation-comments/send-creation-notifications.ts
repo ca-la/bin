@@ -1,13 +1,13 @@
-import * as Knex from 'knex';
+import * as Knex from "knex";
 
-import * as AnnotationsDAO from '../../components/product-design-canvas-annotations/dao';
-import * as CanvasesDAO from '../../components/canvases/dao';
-import * as NotificationsService from '../../services/create-notifications';
-import Comment from '../comments/domain-object';
+import * as AnnotationsDAO from "../../components/product-design-canvas-annotations/dao";
+import * as CanvasesDAO from "../../components/canvases/dao";
+import * as NotificationsService from "../../services/create-notifications";
+import Comment from "../comments/domain-object";
 import {
   getCollaboratorsFromCommentMentions,
-  getThreadUserIdsFromCommentThread
-} from '../../services/add-at-mention-details';
+  getThreadUserIdsFromCommentThread,
+} from "../../services/add-at-mention-details";
 
 interface Options {
   comment: Comment;

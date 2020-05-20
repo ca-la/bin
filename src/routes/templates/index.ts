@@ -1,7 +1,7 @@
-import Router from 'koa-router';
+import Router from "koa-router";
 
-import * as TemplatesDAO from '../../dao/templates';
-import requireAuth = require('../../middleware/require-auth');
+import * as TemplatesDAO from "../../dao/templates";
+import requireAuth = require("../../middleware/require-auth");
 
 const router = new Router();
 
@@ -12,6 +12,6 @@ function* getList(this: AuthedContext): Iterator<any, any, any> {
   this.body = templates;
 }
 
-router.get('/', requireAuth, getList);
+router.get("/", requireAuth, getList);
 
 export = router.routes();

@@ -1,17 +1,17 @@
-import { Machine, StateMachine } from 'xstate';
-import Bid from '../../domain-object';
+import { Machine, StateMachine } from "xstate";
+import Bid from "../../domain-object";
 import DesignEvent, {
-  DesignEventTypes
-} from '../../../../domain-objects/design-event';
-import { isExpired } from '../is-expired';
+  DesignEventTypes,
+} from "../../../../domain-objects/design-event";
+import { isExpired } from "../is-expired";
 
 export enum BidState {
-  ACCEPTED = 'ACCEPTED',
-  EXPIRED = 'EXPIRED',
-  INITIAL = 'INITIAL',
-  OPEN = 'OPEN',
-  REJECTED = 'REJECTED',
-  REMOVED = 'REMOVED'
+  ACCEPTED = "ACCEPTED",
+  EXPIRED = "EXPIRED",
+  INITIAL = "INITIAL",
+  OPEN = "OPEN",
+  REJECTED = "REJECTED",
+  REMOVED = "REMOVED",
 }
 
 interface BidMachineStateSchema {
@@ -25,7 +25,7 @@ interface BidMachineStateSchema {
   };
 }
 
-type BidMachineEvent = { type: DesignEventTypes } | { type: 'EXPIRE_BID' };
+type BidMachineEvent = { type: DesignEventTypes } | { type: "EXPIRE_BID" };
 
 interface BidMachineContext {}
 
@@ -39,32 +39,32 @@ function createBidMachine(
       [BidState.INITIAL]: {
         on: {
           BID_DESIGN: BidState.OPEN,
-          EXPIRE_BID: BidState.EXPIRED
-        }
+          EXPIRE_BID: BidState.EXPIRED,
+        },
       },
       [BidState.OPEN]: {
         on: {
           ACCEPT_SERVICE_BID: BidState.ACCEPTED,
           EXPIRE_BID: BidState.EXPIRED,
           REJECT_SERVICE_BID: BidState.REJECTED,
-          REMOVE_PARTNER: BidState.REMOVED
-        }
+          REMOVE_PARTNER: BidState.REMOVED,
+        },
       },
       [BidState.ACCEPTED]: {
         on: {
-          REMOVE_PARTNER: 'REMOVED'
-        }
+          REMOVE_PARTNER: "REMOVED",
+        },
       },
       [BidState.EXPIRED]: {
-        type: 'final'
+        type: "final",
       },
       [BidState.REMOVED]: {
-        type: 'final'
+        type: "final",
       },
       [BidState.REJECTED]: {
-        type: 'final'
-      }
-    }
+        type: "final",
+      },
+    },
   });
 }
 
@@ -80,7 +80,7 @@ export function determineStateFromEvents(
   }
 
   if (isExpired(bid)) {
-    state = machine.transition(state, 'EXPIRE_BID');
+    state = machine.transition(state, "EXPIRE_BID");
   }
 
   return state.value as BidState;

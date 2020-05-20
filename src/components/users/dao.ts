@@ -1,6 +1,6 @@
-import uuid from 'node-uuid';
-import rethrow = require('pg-rethrow');
-import Knex from 'knex';
+import uuid from "node-uuid";
+import rethrow = require("pg-rethrow");
+import Knex from "knex";
 
 import User, {
   baseUser,
@@ -11,28 +11,28 @@ import User, {
   Role,
   UserIO,
   UserRow,
-  UserWithPasswordHash
-} from './domain-object';
-import db from '../../services/db';
-import first from '../../services/first';
-import InvalidDataError = require('../../errors/invalid-data');
-import normalizeEmail = require('../../services/normalize-email');
-import UnassignedReferralCodesDAO = require('../../dao/unassigned-referral-codes');
-import filterError = require('../../services/filter-error');
-import { hash } from '../../services/hash';
+  UserWithPasswordHash,
+} from "./domain-object";
+import db from "../../services/db";
+import first from "../../services/first";
+import InvalidDataError = require("../../errors/invalid-data");
+import normalizeEmail = require("../../services/normalize-email");
+import UnassignedReferralCodesDAO = require("../../dao/unassigned-referral-codes");
+import filterError = require("../../services/filter-error");
+import { hash } from "../../services/hash";
 import {
   isValidEmail,
-  validateAndFormatPhoneNumber
-} from '../../services/validation';
-import { validate, validateEvery } from '../../services/validate-from-db';
-import limitOrOffset from '../../services/limit-or-offset';
-import { omit } from 'lodash';
-import { updateEmail } from '../../services/mailchimp/update-email';
-import { BID_CUTOFF_DATE } from '../bids/dao';
+  validateAndFormatPhoneNumber,
+} from "../../services/validation";
+import { validate, validateEvery } from "../../services/validate-from-db";
+import limitOrOffset from "../../services/limit-or-offset";
+import { omit } from "lodash";
+import { updateEmail } from "../../services/mailchimp/update-email";
+import { BID_CUTOFF_DATE } from "../bids/dao";
 
 const ERROR_CODES = {
-  emailTaken: Symbol('Email taken'),
-  phoneTaken: Symbol('Phone taken')
+  emailTaken: Symbol("Email taken"),
+  phoneTaken: Symbol("Phone taken"),
 };
 
 interface CreateOptions {
@@ -40,7 +40,7 @@ interface CreateOptions {
   trx?: Knex.Transaction;
 }
 
-const TABLE_NAME = 'users';
+const TABLE_NAME = "users";
 
 export async function create(
   data: UserIO,
@@ -53,17 +53,17 @@ export async function create(
   const requirePassword = options.requirePassword !== false;
 
   if (requirePassword && !password) {
-    return Promise.reject(new InvalidDataError('Missing required information'));
+    return Promise.reject(new InvalidDataError("Missing required information"));
   }
 
   if (!email && !phone) {
     return Promise.reject(
-      new InvalidDataError('Either phone or email must be provided')
+      new InvalidDataError("Either phone or email must be provided")
     );
   }
 
   if (email && !isValidEmail(email)) {
-    return Promise.reject(new InvalidDataError('Invalid email'));
+    return Promise.reject(new InvalidDataError("Invalid email"));
   }
 
   const validatedPhone = phone ? validateAndFormatPhoneNumber(phone) : null;
@@ -74,30 +74,30 @@ export async function create(
   const rowData = DANGEROUS_PASSWORD_HASH_DATA_ADAPTER.forInsertion({
     ...baseUser,
     id: uuid.v4(),
-    ...omit(data, 'password'),
+    ...omit(data, "password"),
     email: email ? normalizeEmail(email) : null,
     passwordHash,
     phone: validatedPhone,
-    referralCode
+    referralCode,
   });
 
   const connection = options.trx || db;
   const user: UserRow = await connection(TABLE_NAME)
-    .insert(rowData, '*')
+    .insert(rowData, "*")
     .catch(rethrow)
     .catch(
       filterError(
         rethrow.ERRORS.UniqueViolation,
         (err: Error & { constraint: string }) => {
           switch (err.constraint) {
-            case 'users_unique_email':
+            case "users_unique_email":
               throw new InvalidDataError(
-                'Email is already taken',
+                "Email is already taken",
                 ERROR_CODES.emailTaken
               );
-            case 'users_unique_phone':
+            case "users_unique_phone":
               throw new InvalidDataError(
-                'Phone number is already taken',
+                "Phone number is already taken",
                 ERROR_CODES.phoneTaken
               );
             default:
@@ -113,11 +113,11 @@ export async function create(
 
 export function createSmsPreregistration(data: UserIO): Promise<User> {
   const userData = Object.assign({}, data, {
-    isSmsPreregistration: true
+    isSmsPreregistration: true,
   });
 
   return create(userData, {
-    requirePassword: false
+    requirePassword: false,
   });
 }
 
@@ -126,7 +126,7 @@ export async function findById(
   trx?: Knex.Transaction
 ): Promise<User | null> {
   if (!id) {
-    throw new Error('Missing user ID');
+    throw new Error("Missing user ID");
   }
 
   const connection = trx || db;
@@ -153,19 +153,19 @@ export async function findAll({
   limit,
   offset,
   search,
-  role
+  role,
 }: FindAllOptions = {}): Promise<User[]> {
   if ((!limit && limit !== 0) || (!offset && offset !== 0)) {
-    throw new Error('Limit and offset must be provided to find all users');
+    throw new Error("Limit and offset must be provided to find all users");
   }
 
   const users = await db(TABLE_NAME)
-    .select('*')
-    .orderBy('created_at', 'desc')
+    .select("*")
+    .orderBy("created_at", "desc")
     .modify((query: Knex.QueryBuilder) => {
       if (search) {
         query.andWhere(
-          db.raw('(name ~* :search or email ~* :search)', { search })
+          db.raw("(name ~* :search or email ~* :search)", { search })
         );
       }
 
@@ -177,7 +177,7 @@ export async function findAll({
     .catch(rethrow)
     .catch(
       filterError(rethrow.ERRORS.InvalidRegularExpression, () => {
-        throw new InvalidDataError('Search contained invalid characters');
+        throw new InvalidDataError("Search contained invalid characters");
       })
     );
 
@@ -192,8 +192,8 @@ export async function findAll({
 function getByEmailBuilder(email: string): Knex.QueryBuilder {
   const normalized = normalizeEmail(email);
 
-  return db('users')
-    .whereRaw('lower(users.email) = lower(?)', [normalized])
+  return db("users")
+    .whereRaw("lower(users.email) = lower(?)", [normalized])
     .then((users: UserRow[]) => first<UserRow>(users));
 }
 
@@ -225,8 +225,8 @@ export async function findByEmailWithPasswordHash(
 }
 
 export async function findByReferralCode(referralCode: string): Promise<User> {
-  const user = await db('users')
-    .whereRaw('lower(referral_code) = ?', referralCode.toLowerCase())
+  const user = await db("users")
+    .whereRaw("lower(referral_code) = ?", referralCode.toLowerCase())
     .then((users: UserRow[]) => first<UserRow>(users));
 
   return validate<UserRow, User>(TABLE_NAME, isUserRow, dataAdapter, user);
@@ -236,12 +236,12 @@ export async function hasPasswordSet(
   userId: string,
   trx?: Knex.Transaction
 ): Promise<boolean> {
-  const { has_password_set: hasPassword } = await db('users')
+  const { has_password_set: hasPassword } = await db("users")
     .first()
-    .select(db.raw('count(*) = 0 as has_password_set'))
+    .select(db.raw("count(*) = 0 as has_password_set"))
     .where({
       id: userId,
-      password_hash: null
+      password_hash: null,
     })
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
@@ -259,9 +259,9 @@ export async function updatePassword(
 ): Promise<User> {
   const passwordHash = await hash(password);
 
-  const user = await db('users')
+  const user = await db("users")
     .where({ id: userId })
-    .update({ password_hash: passwordHash }, '*')
+    .update({ password_hash: passwordHash }, "*")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
@@ -270,7 +270,7 @@ export async function updatePassword(
     .then((users: UserRow[]) => first<UserRow>(users));
 
   if (!user) {
-    throw new Error('Failed to update Password');
+    throw new Error("Failed to update Password");
   }
 
   return validate<UserRow, User>(TABLE_NAME, isUserRow, dataAdapter, user);
@@ -284,16 +284,16 @@ export async function update(
   let previousEmail;
   if (data.email) {
     if (!isValidEmail(data.email)) {
-      return Promise.reject(new InvalidDataError('Invalid email'));
+      return Promise.reject(new InvalidDataError("Invalid email"));
     }
     const beforeUpdate = await findById(userId);
     previousEmail = beforeUpdate ? beforeUpdate.email : null;
   }
   const rowData = partialDataAdapter.forInsertion(data);
 
-  const user = await db('users')
+  const user = await db("users")
     .where({ id: userId })
-    .update(rowData, '*')
+    .update(rowData, "*")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
@@ -315,23 +315,23 @@ export async function completeSmsPreregistration(
   const { phone, password } = data;
 
   if (!password) {
-    throw new InvalidDataError('Password must be set');
+    throw new InvalidDataError("Password must be set");
   }
 
   const validatedPhone = validateAndFormatPhoneNumber(phone);
   const passwordHash = await hash(password);
   const rowData = DANGEROUS_PASSWORD_HASH_DATA_ADAPTER.forInsertion({
     ...baseUser,
-    ...omit(data, 'password'),
+    ...omit(data, "password"),
     id: userId,
     isSmsPreregistration: false,
     passwordHash,
-    phone: validatedPhone
+    phone: validatedPhone,
   });
 
-  const user = await db('users')
+  const user = await db("users")
     .where({ id: userId })
-    .update(rowData, '*')
+    .update(rowData, "*")
     .then((users: UserRow[]) => first<UserRow>(users))
     .catch(rethrow)
     .catch(
@@ -339,14 +339,14 @@ export async function completeSmsPreregistration(
         rethrow.ERRORS.UniqueViolation,
         (err: Error & { constraint: string }) => {
           switch (err.constraint) {
-            case 'users_unique_email':
+            case "users_unique_email":
               throw new InvalidDataError(
-                'Email is already taken',
+                "Email is already taken",
                 ERROR_CODES.emailTaken
               );
-            case 'users_unique_phone':
+            case "users_unique_phone":
               throw new InvalidDataError(
-                'Phone number is already taken',
+                "Phone number is already taken",
                 ERROR_CODES.phoneTaken
               );
             default:
@@ -357,32 +357,32 @@ export async function completeSmsPreregistration(
     );
 
   if (!user) {
-    throw new Error('Unable to update user');
+    throw new Error("Unable to update user");
   }
 
   return validate<UserRow, User>(TABLE_NAME, isUserRow, dataAdapter, user);
 }
 
 export async function findByBidId(bidId: string): Promise<User[]> {
-  const users = await db('design_events')
-    .select('users.*')
-    .join('pricing_bids', (join: Knex.JoinClause) => {
+  const users = await db("design_events")
+    .select("users.*")
+    .join("pricing_bids", (join: Knex.JoinClause) => {
       join
-        .on('design_events.bid_id', '=', 'pricing_bids.id')
-        .andOnIn('design_events.type', ['BID_DESIGN']);
+        .on("design_events.bid_id", "=", "pricing_bids.id")
+        .andOnIn("design_events.type", ["BID_DESIGN"]);
     })
     .whereNotIn(
-      'design_events.target_id',
+      "design_events.target_id",
       db
-        .select('design_events.target_id')
-        .from('design_events')
-        .where({ 'design_events.bid_id': bidId })
-        .whereIn('design_events.type', ['REMOVE_PARTNER'])
+        .select("design_events.target_id")
+        .from("design_events")
+        .where({ "design_events.bid_id": bidId })
+        .whereIn("design_events.type", ["REMOVE_PARTNER"])
     )
-    .join('users', 'users.id', 'design_events.target_id')
-    .where({ 'pricing_bids.id': bidId })
-    .groupBy(['users.id', 'users.created_at'])
-    .orderBy('users.created_at');
+    .join("users", "users.id", "design_events.target_id")
+    .where({ "pricing_bids.id": bidId })
+    .groupBy(["users.id", "users.created_at"])
+    .orderBy("users.created_at");
 
   return validateEvery<UserRow, User>(
     TABLE_NAME,
@@ -394,35 +394,35 @@ export async function findByBidId(bidId: string): Promise<User[]> {
 
 export async function findAllUnpaidPartners({
   limit,
-  offset
+  offset,
 }: FindAllOptions = {}): Promise<User[]> {
   if ((!limit && limit !== 0) || (!offset && offset !== 0)) {
     throw new Error(
-      'Limit and offset must be provided to find all unpaid partners'
+      "Limit and offset must be provided to find all unpaid partners"
     );
   }
 
   const partners = await db(TABLE_NAME)
     .distinct()
-    .select('users.*')
-    .join('design_events as de', 'users.id', 'de.actor_id')
-    .join('pricing_bids as b', 'de.bid_id', 'b.id')
-    .leftJoin('partner_payout_logs as l', 'b.id', 'l.bid_id')
-    .where({ 'de.type': 'ACCEPT_SERVICE_BID' })
-    .andWhere('de.created_at', '>', new Date(BID_CUTOFF_DATE))
+    .select("users.*")
+    .join("design_events as de", "users.id", "de.actor_id")
+    .join("pricing_bids as b", "de.bid_id", "b.id")
+    .leftJoin("partner_payout_logs as l", "b.id", "l.bid_id")
+    .where({ "de.type": "ACCEPT_SERVICE_BID" })
+    .andWhere("de.created_at", ">", new Date(BID_CUTOFF_DATE))
     .whereNotIn(
-      'b.id',
+      "b.id",
       db.raw("SELECT bid_id from design_events where type = 'REMOVE_PARTNER'")
     )
     .modify(limitOrOffset(limit, offset))
-    .groupBy(['b.id', 'users.id', 'b.bid_price_cents'])
+    .groupBy(["b.id", "users.id", "b.bid_price_cents"])
     .having(
-      db.raw('b.bid_price_cents > coalesce(sum(l.payout_amount_cents), 0)')
+      db.raw("b.bid_price_cents > coalesce(sum(l.payout_amount_cents), 0)")
     )
     .catch(rethrow)
     .catch(
       filterError(rethrow.ERRORS.InvalidRegularExpression, () => {
-        throw new InvalidDataError('Search contained invalid characters');
+        throw new InvalidDataError("Search contained invalid characters");
       })
     );
 

@@ -1,39 +1,39 @@
-import Router from 'koa-router';
-import { omit, pick } from 'lodash';
-import { BaseComment, TaskEvent, TaskStatus } from '@cala/ts-lib';
-import Knex from 'knex';
+import Router from "koa-router";
+import { omit, pick } from "lodash";
+import { BaseComment, TaskEvent, TaskStatus } from "@cala/ts-lib";
+import Knex from "knex";
 
-import * as TaskEventsDAO from '../../dao/task-events';
-import * as TaskCommentDAO from '../../components/task-comments/dao';
-import * as CollaboratorTasksDAO from '../../dao/collaborator-tasks';
-import * as NotificationsService from '../../services/create-notifications';
-import CollaboratorTask from '../../domain-objects/collaborator-task';
-import createTask from '../../services/create-task';
+import * as TaskEventsDAO from "../../dao/task-events";
+import * as TaskCommentDAO from "../../components/task-comments/dao";
+import * as CollaboratorTasksDAO from "../../dao/collaborator-tasks";
+import * as NotificationsService from "../../services/create-notifications";
+import CollaboratorTask from "../../domain-objects/collaborator-task";
+import createTask from "../../services/create-task";
 import {
   DetailsTask,
   DetailsTaskWithAssignees,
   IOTask,
-  taskEventFromIO
-} from '../../domain-objects/task-event';
+  taskEventFromIO,
+} from "../../domain-objects/task-event";
 import {
   BASE_COMMENT_PROPERTIES,
-  isBaseComment
-} from '../../components/comments/domain-object';
+  isBaseComment,
+} from "../../components/comments/domain-object";
 import {
   hasOnlyProperties,
-  hasProperties
-} from '../../services/require-properties';
-import requireAuth = require('../../middleware/require-auth');
-import { typeGuard } from '../../middleware/type-guard';
+  hasProperties,
+} from "../../services/require-properties";
+import requireAuth = require("../../middleware/require-auth");
+import { typeGuard } from "../../middleware/type-guard";
 import addAtMentionDetails, {
   getCollaboratorsFromCommentMentions,
-  getThreadUserIdsFromCommentThread
-} from '../../services/add-at-mention-details';
-import { announceTaskCommentCreation } from '../../components/iris/messages/task-comment';
-import { addAttachmentLinks } from '../../services/add-attachments-links';
-import db from '../../services/db';
-import Asset from '../../components/assets/domain-object';
-import { createCommentWithAttachments } from '../../services/create-comment-with-attachments';
+  getThreadUserIdsFromCommentThread,
+} from "../../services/add-at-mention-details";
+import { announceTaskCommentCreation } from "../../components/iris/messages/task-comment";
+import { addAttachmentLinks } from "../../services/add-attachments-links";
+import db from "../../services/db";
+import Asset from "../../components/assets/domain-object";
+import { createCommentWithAttachments } from "../../services/create-comment-with-attachments";
 
 const router = new Router();
 
@@ -49,34 +49,34 @@ function isIOTask(candidate: object): candidate is IOTask {
   return (
     hasOnlyProperties(
       candidate,
-      'dueDate',
-      'status',
-      'title',
-      'description',
-      'createdBy',
-      'createdAt',
-      'id',
-      'designStageId',
-      'assignees',
-      'ordering',
-      'design',
-      'designStage',
-      'collection',
-      'commentCount',
-      'lastModifiedAt'
+      "dueDate",
+      "status",
+      "title",
+      "description",
+      "createdBy",
+      "createdAt",
+      "id",
+      "designStageId",
+      "assignees",
+      "ordering",
+      "design",
+      "designStage",
+      "collection",
+      "commentCount",
+      "lastModifiedAt"
     ) || // TODO: Remove this check once studio is using new model for tasks and passes
     hasProperties(
       candidate,
-      'dueDate',
-      'status',
-      'title',
-      'description',
-      'createdBy',
-      'createdAt',
-      'id',
-      'designStageId',
-      'assignees',
-      'ordering'
+      "dueDate",
+      "status",
+      "title",
+      "description",
+      "createdBy",
+      "createdAt",
+      "id",
+      "designStageId",
+      "assignees",
+      "ordering"
     )
   );
 }
@@ -84,7 +84,7 @@ function isIOTask(candidate: object): candidate is IOTask {
 function isCollaboratorTaskRequest(
   candidate: object
 ): candidate is CollaboratorTaskRequest {
-  return hasOnlyProperties(candidate, 'collaboratorIds');
+  return hasOnlyProperties(candidate, "collaboratorIds");
 }
 
 function* createTaskWithEvent(
@@ -159,7 +159,7 @@ function* getTaskEvent(this: AuthedContext): Iterator<any, any, any> {
     TaskEventsDAO.findById(trx, this.params.taskId)
   );
   if (!task) {
-    this.throw(400, 'Task was not found');
+    this.throw(400, "Task was not found");
   }
 
   this.status = 200;
@@ -256,10 +256,10 @@ function* getList(this: AuthedContext): Iterator<any, any, any> {
     limit,
     offset,
     statusFilter,
-    collectionFilterId
+    collectionFilterId,
   } = query;
   if (!collectionId && !stageId && !userId && !designId) {
-    this.throw('Missing collectionId, stageId, or userId');
+    this.throw("Missing collectionId, stageId, or userId");
   }
   let tasks: DetailsTask[] = [];
   if (collectionId) {
@@ -271,17 +271,17 @@ function* getList(this: AuthedContext): Iterator<any, any, any> {
   } else if (userId) {
     const filters: TaskEventsDAO.TaskFilter[] = [];
     if (stageFilter) {
-      filters.push({ type: 'STAGE', value: stageFilter });
+      filters.push({ type: "STAGE", value: stageFilter });
     }
     if (collectionFilterId) {
-      filters.push({ type: 'COLLECTION', value: collectionFilterId });
+      filters.push({ type: "COLLECTION", value: collectionFilterId });
     }
     if (designFilterId) {
-      filters.push({ type: 'DESIGN', value: designFilterId });
+      filters.push({ type: "DESIGN", value: designFilterId });
     }
     if (statusFilter) {
-      if (statusFilter === 'COMPLETED' || statusFilter === 'INCOMPLETE') {
-        filters.push({ type: 'STATUS', value: statusFilter });
+      if (statusFilter === "COMPLETED" || statusFilter === "INCOMPLETE") {
+        filters.push({ type: "STATUS", value: statusFilter });
       } else {
         throw new Error(`Invalid status filter "${statusFilter}".`);
       }
@@ -290,7 +290,7 @@ function* getList(this: AuthedContext): Iterator<any, any, any> {
       assignFilterUserId,
       limit,
       offset,
-      filters
+      filters,
     });
   }
 
@@ -302,7 +302,7 @@ function* createTaskComment(
   this: AuthedContext<BaseComment & { attachments: Asset[] }>
 ): Iterator<any, any, any> {
   const { userId } = this.state;
-  const body = omit(this.request.body, 'mentions');
+  const body = omit(this.request.body, "mentions");
   const { taskId } = this.params;
   const filteredBody = pick(body, BASE_COMMENT_PROPERTIES);
   const attachments = this.request.body.attachments || [];
@@ -311,20 +311,20 @@ function* createTaskComment(
       const comment = await createCommentWithAttachments(trx, {
         comment: filteredBody,
         attachments,
-        userId
+        userId,
       });
 
       const taskComment = await TaskCommentDAO.create(
         {
           commentId: comment.id,
-          taskId
+          taskId,
         },
         trx
       );
 
       const {
         collaboratorNames,
-        mentionedUserIds
+        mentionedUserIds,
       } = await getCollaboratorsFromCommentMentions(trx, filteredBody.text);
 
       for (const mentionedUserId of mentionedUserIds) {
@@ -332,7 +332,7 @@ function* createTaskComment(
           taskId,
           commentId: comment.id,
           actorId: userId,
-          recipientId: mentionedUserId
+          recipientId: mentionedUserId,
         });
       }
 
@@ -351,7 +351,7 @@ function* createTaskComment(
           taskId,
           commentId: comment.id,
           actorId: userId,
-          recipientId: threadUserId
+          recipientId: threadUserId,
         });
       }
 
@@ -361,7 +361,7 @@ function* createTaskComment(
         commentId: commentWithMentions.id,
         actorId: userId,
         mentionedUserIds,
-        threadUserIds
+        threadUserIds,
       });
 
       this.status = 201;
@@ -389,20 +389,20 @@ function* getTaskComments(this: AuthedContext): Iterator<any, any, any> {
   }
 }
 
-router.post('/', requireAuth, typeGuard<IOTask>(isIOTask), createTaskWithEvent);
+router.post("/", requireAuth, typeGuard<IOTask>(isIOTask), createTaskWithEvent);
 router.put(
-  '/:taskId',
+  "/:taskId",
   requireAuth,
   typeGuard<IOTask>(isIOTask),
   createTaskEvent
 );
-router.put('/:taskId/assignees', requireAuth, updateTaskAssignment);
-router.post('/stage/:stageId', requireAuth, createTaskWithEventOnStage);
+router.put("/:taskId/assignees", requireAuth, updateTaskAssignment);
+router.post("/stage/:stageId", requireAuth, createTaskWithEventOnStage);
 
-router.get('/', requireAuth, getList);
-router.get('/:taskId', requireAuth, getTaskEvent);
+router.get("/", requireAuth, getList);
+router.get("/:taskId", requireAuth, getTaskEvent);
 
-router.put('/:taskId/comments/:commentId', requireAuth, createTaskComment);
-router.get('/:taskId/comments', requireAuth, getTaskComments);
+router.put("/:taskId/comments/:commentId", requireAuth, createTaskComment);
+router.get("/:taskId/comments", requireAuth, getTaskComments);
 
 export = router.routes();

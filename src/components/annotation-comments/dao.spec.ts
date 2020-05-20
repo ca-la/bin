@@ -1,28 +1,28 @@
-import tape from 'tape';
-import uuid from 'node-uuid';
-import { test } from '../../test-helpers/fresh';
-import { create as createAnnotation } from '../product-design-canvas-annotations/dao';
+import tape from "tape";
+import uuid from "node-uuid";
+import { test } from "../../test-helpers/fresh";
+import { create as createAnnotation } from "../product-design-canvas-annotations/dao";
 import {
   create as createComment,
-  deleteById as deleteComment
-} from '../comments/dao';
-import { create, findByAnnotationId, findByAnnotationIds } from './dao';
-import { create as createDesign } from '../product-designs/dao';
-import createUser from '../../test-helpers/create-user';
-import generateCanvas from '../../test-helpers/factories/product-design-canvas';
-import generateAnnotation from '../../test-helpers/factories/product-design-canvas-annotation';
-import generateComment from '../../test-helpers/factories/comment';
+  deleteById as deleteComment,
+} from "../comments/dao";
+import { create, findByAnnotationId, findByAnnotationIds } from "./dao";
+import { create as createDesign } from "../product-designs/dao";
+import createUser from "../../test-helpers/create-user";
+import generateCanvas from "../../test-helpers/factories/product-design-canvas";
+import generateAnnotation from "../../test-helpers/factories/product-design-canvas-annotation";
+import generateComment from "../../test-helpers/factories/comment";
 
-test('ProductDesignCanvasAnnotationComment DAO supports creation/retrieval', async (t: tape.Test) => {
+test("ProductDesignCanvasAnnotationComment DAO supports creation/retrieval", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
   const now = new Date();
   const yesterday = new Date(now);
   yesterday.setDate(now.getDate() - 1);
 
   const design = await createDesign({
-    productType: 'TEESHIRT',
-    title: 'Green Tee',
-    userId: user.id
+    productType: "TEESHIRT",
+    title: "Green Tee",
+    userId: user.id,
   });
   const { canvas: designCanvas } = await generateCanvas({
     componentId: null,
@@ -30,10 +30,10 @@ test('ProductDesignCanvasAnnotationComment DAO supports creation/retrieval', asy
     designId: design.id,
     height: 200,
     ordering: 0,
-    title: 'My Green Tee',
+    title: "My Green Tee",
     width: 200,
     x: 0,
-    y: 0
+    y: 0,
   });
   const annotation = await createAnnotation({
     canvasId: designCanvas.id,
@@ -41,7 +41,7 @@ test('ProductDesignCanvasAnnotationComment DAO supports creation/retrieval', asy
     deletedAt: null,
     id: uuid.v4(),
     x: 20,
-    y: 10
+    y: 10,
   });
   const comment1 = await createComment({
     createdAt: now,
@@ -49,8 +49,8 @@ test('ProductDesignCanvasAnnotationComment DAO supports creation/retrieval', asy
     id: uuid.v4(),
     isPinned: false,
     parentCommentId: null,
-    text: 'A comment',
-    userId: user.id
+    text: "A comment",
+    userId: user.id,
   });
   const comment2 = await createComment({
     createdAt: yesterday,
@@ -58,16 +58,16 @@ test('ProductDesignCanvasAnnotationComment DAO supports creation/retrieval', asy
     id: uuid.v4(),
     isPinned: false,
     parentCommentId: null,
-    text: 'A comment',
-    userId: user.id
+    text: "A comment",
+    userId: user.id,
   });
   await create({
     annotationId: annotation.id,
-    commentId: comment1.id
+    commentId: comment1.id,
   });
   await create({
     annotationId: annotation.id,
-    commentId: comment2.id
+    commentId: comment2.id,
   });
 
   const result = await findByAnnotationId(annotation.id);
@@ -76,31 +76,31 @@ test('ProductDesignCanvasAnnotationComment DAO supports creation/retrieval', asy
     [
       {
         ...comment2,
-        annotationId: annotation.id
+        annotationId: annotation.id,
       },
       {
         ...comment1,
-        annotationId: annotation.id
-      }
+        annotationId: annotation.id,
+      },
     ],
-    'Finds comments by annotation'
+    "Finds comments by annotation"
   );
 });
 
-test('findByAnnotationIds', async (t: tape.Test) => {
+test("findByAnnotationIds", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
   const { canvas } = await generateCanvas({ createdBy: user.id });
   const { annotation: annotationOne } = await generateAnnotation({
     canvasId: canvas.id,
-    createdBy: user.id
+    createdBy: user.id,
   });
   const { annotation: annotationTwo } = await generateAnnotation({
     canvasId: canvas.id,
-    createdBy: user.id
+    createdBy: user.id,
   });
   const { annotation: annotationThree } = await generateAnnotation({
     canvasId: canvas.id,
-    createdBy: user.id
+    createdBy: user.id,
   });
 
   const { comment: c1, createdBy: c1Creator } = await generateComment();
@@ -116,67 +116,67 @@ test('findByAnnotationIds', async (t: tape.Test) => {
   const result = await findByAnnotationIds([
     annotationOne.id,
     annotationTwo.id,
-    annotationThree.id
+    annotationThree.id,
   ]);
 
   t.equal(
     Object.keys(result).length,
     2,
-    'Returns only the annotations with comments'
+    "Returns only the annotations with comments"
   );
   t.deepEqual(result[annotationOne.id], [
     {
       ...c1,
       mentions: {},
       userEmail: c1Creator.email,
-      userName: c1Creator.name
+      userName: c1Creator.name,
     },
     {
       ...c2,
       mentions: {},
       userEmail: c2Creator.email,
-      userName: c2Creator.name
+      userName: c2Creator.name,
     },
     {
       ...c3,
       mentions: {},
       userEmail: c3Creator.email,
-      userName: c3Creator.name
-    }
+      userName: c3Creator.name,
+    },
   ]);
   t.deepEqual(result[annotationTwo.id], [
     {
       ...c4,
       mentions: {},
       userEmail: c4Creator.email,
-      userName: c4Creator.name
-    }
+      userName: c4Creator.name,
+    },
   ]);
 
   // deleting a comment should remove it from the list of comments.
   await deleteComment(c2.id);
   const result2 = await findByAnnotationIds([
     annotationOne.id,
-    annotationThree.id
+    annotationThree.id,
   ]);
 
   t.equal(
     Object.keys(result2).length,
     1,
-    'Returns annotations with undeleted comments'
+    "Returns annotations with undeleted comments"
   );
   t.deepEqual(result2[annotationOne.id], [
     {
       ...c1,
       mentions: {},
       userEmail: c1Creator.email,
-      userName: c1Creator.name
+      userName: c1Creator.name,
     },
     {
       ...c3,
       mentions: {},
       userEmail: c3Creator.email,
-      userName: c3Creator.name
-    }
+      userName: c3Creator.name,
+    },
   ]);
 });

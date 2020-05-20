@@ -1,5 +1,5 @@
-import { ContextFunction } from 'apollo-server-core';
-import { attachSession } from './attach-session';
+import { ContextFunction } from "apollo-server-core";
+import { attachSession } from "./attach-session";
 
 export type ContextParams = any;
 

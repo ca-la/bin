@@ -1,5 +1,5 @@
-declare module 'koa-router' {
-  import Koa from 'koa';
+declare module "koa-router" {
+  import Koa from "koa";
 
   namespace Router {
     export interface RouterOptions {

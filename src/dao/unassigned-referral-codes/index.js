@@ -1,6 +1,6 @@
-'use strict';
+"use strict";
 
-const db = require('../../services/db');
+const db = require("../../services/db");
 
 /**
  * Retrieve an unassigned referral code, then delete it so that nobody else can
@@ -19,15 +19,15 @@ delete from unassigned_referral_codes
   returning *;
 `
     )
-    .then(responses => {
+    .then((responses) => {
       const { rows } = responses[1];
       if (!rows) {
-        throw new Error('No response received from delete query');
+        throw new Error("No response received from delete query");
       }
 
       if (rows.length < 1) {
         throw new Error(
-          'No more unused referral codes found! Create more in Shopify then add them to the database!'
+          "No more unused referral codes found! Create more in Shopify then add them to the database!"
         );
       }
 
@@ -36,5 +36,5 @@ delete from unassigned_referral_codes
 }
 
 module.exports = {
-  get
+  get,
 };

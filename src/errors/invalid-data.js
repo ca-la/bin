@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 /**
  * User-provided data was missing or invalid.
@@ -9,7 +9,7 @@ class InvalidDataError extends Error {
     this.status = 400;
     this.code = code;
     this.message = message;
-    this.name = 'InvalidDataError';
+    this.name = "InvalidDataError";
   }
 }
 

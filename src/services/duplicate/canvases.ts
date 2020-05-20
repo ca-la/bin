@@ -1,15 +1,15 @@
-import Knex from 'knex';
+import Knex from "knex";
 
-import * as ComponentsDAO from '../../components/components/dao';
-import * as CanvasesDAO from '../../components/canvases/dao';
+import * as ComponentsDAO from "../../components/components/dao";
+import * as CanvasesDAO from "../../components/canvases/dao";
 
-import Component from '../../components/components/domain-object';
-import Canvas from '../../components/canvases/domain-object';
+import Component from "../../components/components/domain-object";
+import Canvas from "../../components/canvases/domain-object";
 
-import { findAndDuplicateComponent } from './components';
-import prepareForDuplication from './prepare-for-duplication';
-import { findAndDuplicateMeasurements } from './measurements';
-import { findAndDuplicateAnnotations } from './annotations';
+import { findAndDuplicateComponent } from "./components";
+import prepareForDuplication from "./prepare-for-duplication";
+import { findAndDuplicateMeasurements } from "./measurements";
+import { findAndDuplicateAnnotations } from "./annotations";
 
 /**
  * Finds the given canvas and duplicates it. Does the same with all related components.
@@ -52,7 +52,7 @@ export async function findAndDuplicateCanvas(
   const duplicateCanvas = await CanvasesDAO.create(
     prepareForDuplication(canvas, {
       componentId: rootComponentId,
-      designId: newDesignId
+      designId: newDesignId,
     }),
     trx
   );
@@ -60,7 +60,7 @@ export async function findAndDuplicateCanvas(
   // Duplicate Annotations, Measurements.
   await Promise.all([
     findAndDuplicateMeasurements(canvasId, duplicateCanvas.id, trx),
-    findAndDuplicateAnnotations(canvasId, duplicateCanvas.id, trx)
+    findAndDuplicateAnnotations(canvasId, duplicateCanvas.id, trx),
   ]);
 
   return duplicateCanvas;

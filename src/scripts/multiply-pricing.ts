@@ -1,17 +1,17 @@
-import Knex from 'knex';
-import uuid from 'node-uuid';
-import db from '../services/db';
-import { log } from '../services/logger';
-import { PricingConstantRow } from '../domain-objects/pricing-constant';
-import { PricingCareLabelRow } from '../domain-objects/pricing-care-label';
-import { PricingProductMaterialRow } from '../domain-objects/pricing-product-material';
-import { PricingProcessRow } from '../domain-objects/pricing-process';
-import { PricingProductTypeRow } from '../components/pricing-product-types/domain-object';
+import Knex from "knex";
+import uuid from "node-uuid";
+import db from "../services/db";
+import { log } from "../services/logger";
+import { PricingConstantRow } from "../domain-objects/pricing-constant";
+import { PricingCareLabelRow } from "../domain-objects/pricing-care-label";
+import { PricingProductMaterialRow } from "../domain-objects/pricing-product-material";
+import { PricingProcessRow } from "../domain-objects/pricing-process";
+import { PricingProductTypeRow } from "../components/pricing-product-types/domain-object";
 
 function findLatest<T>(tableName: string): Promise<T[]> {
   return db(tableName)
     .select()
-    .whereIn('version', db(tableName).max('version'));
+    .whereIn("version", db(tableName).max("version"));
 }
 
 async function updateConstants(
@@ -40,13 +40,11 @@ async function updateConstants(
         constant.branded_labels_additional_cents * factor
       ),
       created_at: new Date(),
-      version: constant.version + 1
+      version: constant.version + 1,
     })
   );
 
-  return trx('pricing_constants')
-    .insert(toInsert)
-    .returning('*');
+  return trx("pricing_constants").insert(toInsert).returning("*");
 }
 
 async function updateCareLabels(
@@ -60,13 +58,11 @@ async function updateCareLabels(
       version: careLabel.version + 1,
       minimum_units: careLabel.minimum_units,
       unit_cents: Math.ceil(careLabel.unit_cents * factor),
-      created_at: new Date()
+      created_at: new Date(),
     })
   );
 
-  return trx('pricing_care_labels')
-    .insert(toInsert)
-    .returning('*');
+  return trx("pricing_care_labels").insert(toInsert).returning("*");
 }
 
 async function updateProductMaterials(
@@ -81,13 +77,11 @@ async function updateProductMaterials(
       minimum_units: material.minimum_units,
       unit_cents: Math.ceil(material.unit_cents * factor),
       category: material.category,
-      created_at: new Date()
+      created_at: new Date(),
     })
   );
 
-  return trx('pricing_product_materials')
-    .insert(toInsert)
-    .returning('*');
+  return trx("pricing_product_materials").insert(toInsert).returning("*");
 }
 
 async function updateProductTypes(
@@ -113,13 +107,11 @@ async function updateProductTypes(
       sampling_time_ms: type.sampling_time_ms,
       pre_production_time_ms: type.pre_production_time_ms,
       production_time_ms: type.production_time_ms,
-      fulfillment_time_ms: type.fulfillment_time_ms
+      fulfillment_time_ms: type.fulfillment_time_ms,
     })
   );
 
-  return trx('pricing_product_types')
-    .insert(toInsert)
-    .returning('*');
+  return trx("pricing_product_types").insert(toInsert).returning("*");
 }
 
 async function updateProcesses(
@@ -136,45 +128,43 @@ async function updateProcesses(
       complexity: process.complexity,
       setup_cents: Math.ceil(process.setup_cents * factor),
       name: process.name,
-      created_at: new Date()
+      created_at: new Date(),
     })
   );
 
-  return trx('pricing_processes')
-    .insert(toInsert)
-    .returning('*');
+  return trx("pricing_processes").insert(toInsert).returning("*");
 }
 
 async function main(): Promise<void> {
   const factor = Number(process.argv[2]);
 
   if (Number.isNaN(factor)) {
-    throw new TypeError('Usage: multiply-pricing.ts factor');
+    throw new TypeError("Usage: multiply-pricing.ts factor");
   }
 
-  const constants = await findLatest<PricingConstantRow>('pricing_constants');
+  const constants = await findLatest<PricingConstantRow>("pricing_constants");
   const careLabels = await findLatest<PricingCareLabelRow>(
-    'pricing_care_labels'
+    "pricing_care_labels"
   );
   const materials = await findLatest<PricingProductMaterialRow>(
-    'pricing_product_materials'
+    "pricing_product_materials"
   );
   const types = await findLatest<PricingProductTypeRow>(
-    'pricing_product_types'
+    "pricing_product_types"
   );
-  const processes = await findLatest<PricingProcessRow>('pricing_processes');
+  const processes = await findLatest<PricingProcessRow>("pricing_processes");
 
   return db.transaction(async (trx: Knex.Transaction) => {
-    log('Inserting to pricing_constants');
+    log("Inserting to pricing_constants");
     const updatedConstants = await updateConstants(trx, constants, factor);
     log(JSON.stringify(updatedConstants, null, 2));
     log(` - ${updatedConstants.length} row(s) inserted`);
 
-    log('Inserting to pricing_care_labels');
+    log("Inserting to pricing_care_labels");
     const updatedCareLabels = await updateCareLabels(trx, careLabels, factor);
     log(` - ${updatedCareLabels.length} row(s) inserted`);
 
-    log('Inserting to pricing_product_materials');
+    log("Inserting to pricing_product_materials");
     const updatedMaterials = await updateProductMaterials(
       trx,
       materials,
@@ -182,11 +172,11 @@ async function main(): Promise<void> {
     );
     log(` - ${updatedMaterials.length} row(s) inserted`);
 
-    log('Inserting to pricing_product_types');
+    log("Inserting to pricing_product_types");
     const updatedTypes = await updateProductTypes(trx, types, factor);
     log(` - ${updatedTypes.length} row(s) inserted`);
 
-    log('Inserting to pricing_processes');
+    log("Inserting to pricing_processes");
     const updatedProcesses = await updateProcesses(trx, processes, factor);
     log(` - ${updatedProcesses.length} row(s) inserted`);
   });

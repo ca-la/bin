@@ -1,5 +1,5 @@
-import DataAdapter from '../services/data-adapter';
-import { hasProperties } from '../services/require-properties';
+import DataAdapter from "../services/data-adapter";
+import { hasProperties } from "../services/require-properties";
 
 /**
  * @typedef {object} PricingMargin The margin-per-unit-range mapping
@@ -32,10 +32,10 @@ export const dataAdapter = new DataAdapter<PricingMarginRow, PricingMargin>();
 export function isPricingMarginRow(row: object): row is PricingMarginRow {
   return hasProperties(
     row,
-    'id',
-    'version',
-    'minimum_units',
-    'margin',
-    'created_at'
+    "id",
+    "version",
+    "minimum_units",
+    "margin",
+    "created_at"
   );
 }

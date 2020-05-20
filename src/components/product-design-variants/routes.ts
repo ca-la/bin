@@ -1,14 +1,14 @@
-import Router from 'koa-router';
-import Knex from 'knex';
+import Router from "koa-router";
+import Knex from "knex";
 
-import * as ProductDesignVariantsDAO from './dao';
-import requireAuth = require('../../middleware/require-auth');
+import * as ProductDesignVariantsDAO from "./dao";
+import requireAuth = require("../../middleware/require-auth");
 import {
   canAccessDesignInQuery,
-  canEditDesign
-} from '../../middleware/can-access-design';
-import { hasProperties } from '../../services/require-properties';
-import db from '../../services/db';
+  canEditDesign,
+} from "../../middleware/can-access-design";
+import { hasProperties } from "../../services/require-properties";
+import db from "../../services/db";
 
 const router = new Router();
 
@@ -31,23 +31,23 @@ function isProductDesignVariantIO(
   return (
     hasProperties(
       candidate,
-      'colorName',
-      'designId',
-      'id',
-      'position',
-      'sizeName',
-      'unitsToProduce',
-      'universalProductCode'
+      "colorName",
+      "designId",
+      "id",
+      "position",
+      "sizeName",
+      "unitsToProduce",
+      "universalProductCode"
     ) ||
     // Legacy variants will not have universalProductCode
     hasProperties(
       candidate,
-      'colorName',
-      'designId',
-      'id',
-      'position',
-      'sizeName',
-      'unitsToProduce'
+      "colorName",
+      "designId",
+      "id",
+      "position",
+      "sizeName",
+      "unitsToProduce"
     )
   );
 }
@@ -67,13 +67,13 @@ function* replaceVariants(
   if (!designId) {
     this.throw(
       400,
-      'A designId needs to be specified in the query parameters!'
+      "A designId needs to be specified in the query parameters!"
     );
   }
   if (!this.state.permissions || !this.state.permissions.canEditVariants) {
     this.throw(
       400,
-      'These variants are locked! You cannot edit variants after payment.'
+      "These variants are locked! You cannot edit variants after payment."
     );
   }
 
@@ -84,7 +84,7 @@ function* replaceVariants(
     this.body = variants;
     this.status = 200;
   } else {
-    this.throw(400, 'Request does not match product design variants');
+    this.throw(400, "Request does not match product design variants");
   }
 }
 
@@ -94,7 +94,7 @@ function* getVariants(this: AuthedContext): Iterator<any, any, any> {
   if (!designId) {
     this.throw(
       400,
-      'A designId needs to be specified in the query parameters!'
+      "A designId needs to be specified in the query parameters!"
     );
   }
 
@@ -103,12 +103,12 @@ function* getVariants(this: AuthedContext): Iterator<any, any, any> {
 }
 
 router.put(
-  '/',
+  "/",
   requireAuth,
   canAccessDesignInQuery,
   canEditDesign,
   replaceVariants
 );
-router.get('/', requireAuth, canAccessDesignInQuery, getVariants);
+router.get("/", requireAuth, canAccessDesignInQuery, getVariants);
 
 export default router.routes();

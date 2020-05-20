@@ -2,18 +2,18 @@ import {
   BaseFullNotification,
   BaseFullNotificationRow,
   BaseNotification,
-  BaseNotificationRow
-} from './base';
-import { NotificationType } from '../domain-object';
+  BaseNotificationRow,
+} from "./base";
+import { NotificationType } from "../domain-object";
 
 type BaseRow = Omit<
   BaseNotificationRow,
-  | 'canvas_id'
-  | 'collection_id'
-  | 'comment_id'
-  | 'design_id'
-  | 'recipient_user_id'
-  | 'annotation_id'
+  | "canvas_id"
+  | "collection_id"
+  | "comment_id"
+  | "design_id"
+  | "recipient_user_id"
+  | "annotation_id"
 >;
 
 export interface AnnotationCommentMentionNotificationRow extends BaseRow {
@@ -28,11 +28,11 @@ export interface AnnotationCommentMentionNotificationRow extends BaseRow {
 
 type BaseFullRow = Omit<
   BaseFullNotificationRow & AnnotationCommentMentionNotificationRow,
-  | 'collection_title'
-  | 'comment_text'
-  | 'design_title'
-  | 'task_title'
-  | 'annotation_image_id'
+  | "collection_title"
+  | "comment_text"
+  | "design_title"
+  | "task_title"
+  | "annotation_image_id"
 >;
 
 export interface FullAnnotationCommentMentionNotificationRow
@@ -46,13 +46,13 @@ export interface FullAnnotationCommentMentionNotificationRow
 
 type Base = Omit<
   BaseNotification,
-  | 'canvasId'
-  | 'collectionId'
-  | 'commentId'
-  | 'designId'
-  | 'recipientUserId'
-  | 'annotationId'
-  | 'componentType'
+  | "canvasId"
+  | "collectionId"
+  | "commentId"
+  | "designId"
+  | "recipientUserId"
+  | "annotationId"
+  | "componentType"
 >;
 
 export interface AnnotationCommentMentionNotification extends Base {
@@ -68,11 +68,11 @@ export interface AnnotationCommentMentionNotification extends Base {
 
 type BaseFull = Omit<
   BaseFullNotification & AnnotationCommentMentionNotification,
-  | 'collectionTitle'
-  | 'commentText'
-  | 'designTitle'
-  | 'taskTitle'
-  | 'annotationImageId'
+  | "collectionTitle"
+  | "commentText"
+  | "designTitle"
+  | "taskTitle"
+  | "annotationImageId"
 >;
 
 export interface FullAnnotationCommentMentionNotification extends BaseFull {

@@ -1,10 +1,10 @@
-import Knex from 'knex';
+import Knex from "knex";
 
-import db from '../services/db';
-import * as ProductDesignStagesDAO from '../dao/product-design-stages';
-import * as TaskTemplatesDAO from '../dao/task-templates';
-import Logger = require('../services/logger');
-import { createTasksFromTemplates } from '../services/create-design-tasks';
+import db from "../services/db";
+import * as ProductDesignStagesDAO from "../dao/product-design-stages";
+import * as TaskTemplatesDAO from "../dao/task-templates";
+import Logger = require("../services/logger");
+import { createTasksFromTemplates } from "../services/create-design-tasks";
 
 async function createTasks(): Promise<void> {
   const designId = process.argv[2];
@@ -12,7 +12,7 @@ async function createTasks(): Promise<void> {
 
   if (!designId || !stageTitle) {
     throw new Error(
-      'Usage: insert-tasks-by-stage.ts [design ID] [stage title]'
+      "Usage: insert-tasks-by-stage.ts [design ID] [stage title]"
     );
   }
 

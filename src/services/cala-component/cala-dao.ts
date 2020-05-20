@@ -1,9 +1,9 @@
-import Knex, { QueryBuilder, Transaction } from 'knex';
-import { emit } from '../pubsub';
-import { CalaAdapter, CalaDao, UpdateResult } from './types';
-import ResourceNotFoundError from '../../errors/resource-not-found';
-import { DaoCreated, DaoUpdating, DaoUpdated } from '../pubsub/cala-events';
-import first from '../first';
+import Knex, { QueryBuilder, Transaction } from "knex";
+import { emit } from "../pubsub";
+import { CalaAdapter, CalaDao, UpdateResult } from "./types";
+import ResourceNotFoundError from "../../errors/resource-not-found";
+import { DaoCreated, DaoUpdating, DaoUpdated } from "../pubsub/cala-events";
+import first from "../first";
 
 type QueryModifier = (query: QueryBuilder) => QueryBuilder;
 function identity<T>(a: T): T {
@@ -26,7 +26,7 @@ export function buildDao<Model, ModelRow extends object>(
     modifier: QueryModifier = identity
   ): Promise<Model[]> => {
     const rows = await trx(tableName)
-      .select('*')
+      .select("*")
       .where(adapter.toDbPartial(filter))
       .orderBy(orderColumn)
       .modify(modifier);
@@ -38,10 +38,7 @@ export function buildDao<Model, ModelRow extends object>(
     trx: Knex.Transaction,
     id: string
   ): Promise<Model | null> => {
-    const row = await trx(tableName)
-      .select('*')
-      .where({ id })
-      .first();
+    const row = await trx(tableName).select("*").where({ id }).first();
 
     if (!row) {
       return null;
@@ -56,7 +53,7 @@ export function buildDao<Model, ModelRow extends object>(
     modifier: QueryModifier = identity
   ): Promise<Model | null> => {
     const row = await trx(tableName)
-      .select('*')
+      .select("*")
       .where(adapter.toDbPartial(filter))
       .orderBy(orderColumn)
       .first()
@@ -77,7 +74,7 @@ export function buildDao<Model, ModelRow extends object>(
     const rowData = adapter.forInsertion(blank);
     const createdRow = await trx(tableName)
       .insert(rowData)
-      .returning('*')
+      .returning("*")
       .modify(modifier)
       .then<ModelRow | undefined>(first);
 
@@ -87,9 +84,9 @@ export function buildDao<Model, ModelRow extends object>(
 
     const created = adapter.fromDb(createdRow);
 
-    await emit<DaoCreated<Model, typeof domain>>('dao.created', domain, {
+    await emit<DaoCreated<Model, typeof domain>>("dao.created", domain, {
       trx,
-      created
+      created,
     });
 
     return created;
@@ -103,7 +100,7 @@ export function buildDao<Model, ModelRow extends object>(
     const rowData = blanks.map(adapter.forInsertion.bind(adapter));
     const createdRows: ModelRow[] = await trx(tableName)
       .insert(rowData)
-      .returning('*')
+      .returning("*")
       .modify(modifier);
 
     if (!createdRows || createdRows.length === 0) {
@@ -114,9 +111,9 @@ export function buildDao<Model, ModelRow extends object>(
 
     await Promise.all(
       creations.map((created: Model) =>
-        emit<DaoCreated<Model, typeof domain>>('dao.created', domain, {
+        emit<DaoCreated<Model, typeof domain>>("dao.created", domain, {
           trx,
-          created
+          created,
         })
       )
     );
@@ -133,20 +130,20 @@ export function buildDao<Model, ModelRow extends object>(
     if (!before) {
       throw new ResourceNotFoundError(`Could not find ${tableName} #${id}`);
     }
-    if (patch.hasOwnProperty('id')) {
-      throw new Error('Patch should not contain id!');
+    if (patch.hasOwnProperty("id")) {
+      throw new Error("Patch should not contain id!");
     }
 
-    await emit<DaoUpdating<Model, typeof domain>>('dao.updating', domain, {
+    await emit<DaoUpdating<Model, typeof domain>>("dao.updating", domain, {
       trx,
       before,
-      patch
+      patch,
     });
 
     const patchRow = adapter.toDbPartial(patch);
     const listOfUpdated = await trx(tableName)
       .where({ id })
-      .update(patchRow, '*')
+      .update(patchRow, "*")
       .then(adapter.fromDbArray.bind(adapter));
 
     if (listOfUpdated.length !== 1) {
@@ -154,15 +151,15 @@ export function buildDao<Model, ModelRow extends object>(
     }
     const updated = listOfUpdated[0];
 
-    await emit<DaoUpdated<Model, typeof domain>>('dao.updated', domain, {
+    await emit<DaoUpdated<Model, typeof domain>>("dao.updated", domain, {
       trx,
       before,
-      updated
+      updated,
     });
 
     return {
       before,
-      updated
+      updated,
     };
   };
 
@@ -172,6 +169,6 @@ export function buildDao<Model, ModelRow extends object>(
     findById,
     update,
     create,
-    createAll
+    createAll,
   };
 }

@@ -2,18 +2,18 @@ import {
   BaseFullNotification,
   BaseFullNotificationRow,
   BaseNotification,
-  BaseNotificationRow
-} from './base';
-import { NotificationType } from '../domain-object';
+  BaseNotificationRow,
+} from "./base";
+import { NotificationType } from "../domain-object";
 
 type BaseRow = Omit<
   BaseNotificationRow,
-  | 'collaborator_id'
-  | 'collection_id'
-  | 'design_id'
-  | 'approval_step_id'
-  | 'approval_submission_id'
-  | 'recipient_user_id'
+  | "collaborator_id"
+  | "collection_id"
+  | "design_id"
+  | "approval_step_id"
+  | "approval_submission_id"
+  | "recipient_user_id"
 >;
 
 export interface ApprovalStepSubmissionAssignmentNotificationRow
@@ -29,10 +29,10 @@ export interface ApprovalStepSubmissionAssignmentNotificationRow
 
 type BaseFullRow = Omit<
   BaseFullNotificationRow & ApprovalStepSubmissionAssignmentNotificationRow,
-  | 'collection_title'
-  | 'design_title'
-  | 'approval_step_title'
-  | 'approval_submission_title'
+  | "collection_title"
+  | "design_title"
+  | "approval_step_title"
+  | "approval_submission_title"
 >;
 
 export interface FullApprovalStepSubmissionAssignmentNotificationRow
@@ -45,11 +45,11 @@ export interface FullApprovalStepSubmissionAssignmentNotificationRow
 
 type Base = Omit<
   BaseNotification,
-  | 'collectionId'
-  | 'designId'
-  | 'approvalStepId'
-  | 'approvalSubmissionId'
-  | 'recipientUserId'
+  | "collectionId"
+  | "designId"
+  | "approvalStepId"
+  | "approvalSubmissionId"
+  | "recipientUserId"
 >;
 
 export interface ApprovalStepSubmissionAssignmentNotification extends Base {
@@ -63,10 +63,10 @@ export interface ApprovalStepSubmissionAssignmentNotification extends Base {
 
 type BaseFull = Omit<
   BaseFullNotification & ApprovalStepSubmissionAssignmentNotification,
-  | 'collectionTitle'
-  | 'designTitle'
-  | 'approvalStepTitle'
-  | 'approvalSubmissionTitle'
+  | "collectionTitle"
+  | "designTitle"
+  | "approvalStepTitle"
+  | "approvalSubmissionTitle"
 >;
 
 export interface FullApprovalStepSubmissionAssignmentNotification

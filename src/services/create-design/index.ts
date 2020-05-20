@@ -1,11 +1,11 @@
-import Knex from 'knex';
-import db from '../db';
+import Knex from "knex";
+import db from "../db";
 
-import CollaboratorsDAO = require('../../components/collaborators/dao');
-import createDesignTasks from '../create-design-tasks';
-import ProductDesign = require('../../components/product-designs/domain-objects/product-design');
-import ProductDesignsDAO = require('../../components/product-designs/dao');
-import createDesignApproval from '../create-design-approval';
+import CollaboratorsDAO = require("../../components/collaborators/dao");
+import createDesignTasks from "../create-design-tasks";
+import ProductDesign = require("../../components/product-designs/domain-objects/product-design");
+import ProductDesignsDAO = require("../../components/product-designs/dao");
+import createDesignApproval from "../create-design-approval";
 
 async function createInTransaction(
   data: Unsaved<ProductDesign>,
@@ -18,15 +18,15 @@ async function createInTransaction(
       cancelledAt: null,
       collectionId: null,
       designId: design.id,
-      invitationMessage: '',
-      role: 'EDIT',
+      invitationMessage: "",
+      role: "EDIT",
       userEmail: null,
-      userId: design.userId
+      userId: design.userId,
     },
     trx
   );
 
-  await createDesignTasks(design.id, 'POST_CREATION', trx);
+  await createDesignTasks(design.id, "POST_CREATION", trx);
   await createDesignApproval(trx, design.id);
 
   return design;

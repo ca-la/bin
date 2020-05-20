@@ -1,12 +1,12 @@
-import Knex from 'knex';
-import uuid from 'node-uuid';
+import Knex from "knex";
+import uuid from "node-uuid";
 
 import ApprovalStepSubmission, {
   ApprovalStepSubmissionArtifactType,
-  ApprovalStepSubmissionState
-} from '../../components/approval-step-submissions/domain-object';
-import generateApprovalStep from './design-approval-step';
-import * as ApprovalStepSubmissionsDAO from '../../components/approval-step-submissions/dao';
+  ApprovalStepSubmissionState,
+} from "../../components/approval-step-submissions/domain-object";
+import generateApprovalStep from "./design-approval-step";
+import * as ApprovalStepSubmissionsDAO from "../../components/approval-step-submissions/dao";
 
 interface ApprovalStepSubmissionWithResources {
   submission: ApprovalStepSubmission;
@@ -27,11 +27,11 @@ export default async function generateApprovalSubmission(
       artifactType:
         options.artifactType ||
         ApprovalStepSubmissionArtifactType.TECHNICAL_DESIGN,
-      stepId
-    } as ApprovalStepSubmission
+      stepId,
+    } as ApprovalStepSubmission,
   ]);
 
   return {
-    submission
+    submission,
   };
 }

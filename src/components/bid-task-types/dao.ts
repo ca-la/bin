@@ -1,16 +1,16 @@
-import Knex from 'knex';
-import uuid from 'node-uuid';
+import Knex from "knex";
+import uuid from "node-uuid";
 
-import db from '../../services/db';
-import first from '../../services/first';
+import db from "../../services/db";
+import first from "../../services/first";
 import BidTaskType, {
   BidTaskTypeRow,
   dataAdapter,
-  isBidTaskTypeRow
-} from './domain-object';
-import { validate, validateEvery } from '../../services/validate-from-db';
+  isBidTaskTypeRow,
+} from "./domain-object";
+import { validate, validateEvery } from "../../services/validate-from-db";
 
-const TABLE_NAME = 'bid_task_types';
+const TABLE_NAME = "bid_task_types";
 
 export async function create(
   bidTaskType: Unsaved<BidTaskType>,
@@ -18,11 +18,11 @@ export async function create(
 ): Promise<BidTaskType> {
   const rowData = dataAdapter.forInsertion({
     ...bidTaskType,
-    id: uuid.v4()
+    id: uuid.v4(),
   });
 
   const created = await db(TABLE_NAME)
-    .insert(rowData, '*')
+    .insert(rowData, "*")
     .transacting(trx)
     .then((rows: BidTaskTypeRow[]) => first(rows));
 
@@ -41,7 +41,7 @@ export async function findByBidId(
 ): Promise<BidTaskType[]> {
   const rows = await trx(TABLE_NAME)
     .where({ pricing_bid_id: bidId })
-    .select('*');
+    .select("*");
 
   return validateEvery<BidTaskTypeRow, BidTaskType>(
     TABLE_NAME,

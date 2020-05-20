@@ -1,5 +1,5 @@
-import * as Knex from 'knex';
-import db from '../../services/db';
+import * as Knex from "knex";
+import db from "../../services/db";
 import AnnotationComment, {
   AnnotationCommentRow,
   CommentWithMeta,
@@ -7,17 +7,17 @@ import AnnotationComment, {
   dataAdapter,
   isAnnotationCommentRow,
   isCommentWithMetaRow,
-  withMetaDataAdapter as commentWithMetaAdapter
-} from './domain-object';
-import { validate, validateEvery } from '../../services/validate-from-db';
+  withMetaDataAdapter as commentWithMetaAdapter,
+} from "./domain-object";
+import { validate, validateEvery } from "../../services/validate-from-db";
 import {
   addAtMentionDetailsForComment,
-  CommentWithMentions
-} from '../../services/add-at-mention-details';
-import { annotationCommentsView } from './view';
-import { addAttachmentLinks } from '../../services/add-attachments-links';
+  CommentWithMentions,
+} from "../../services/add-at-mention-details";
+import { annotationCommentsView } from "./view";
+import { addAttachmentLinks } from "../../services/add-attachments-links";
 
-const TABLE_NAME = 'product_design_canvas_annotation_comments';
+const TABLE_NAME = "product_design_canvas_annotation_comments";
 
 export async function create(
   data: AnnotationComment,
@@ -26,7 +26,7 @@ export async function create(
   const rowData = dataAdapter.forInsertion(data);
   const annotationComments: AnnotationCommentRow[] = await db(TABLE_NAME)
     .insert(rowData)
-    .returning('*')
+    .returning("*")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
@@ -35,7 +35,7 @@ export async function create(
   const annotationComment = annotationComments[0];
 
   if (!annotationComment) {
-    throw new Error('There was a problem saving the comment');
+    throw new Error("There was a problem saving the comment");
   }
 
   return validate<AnnotationCommentRow, AnnotationComment>(
@@ -52,10 +52,10 @@ export async function findByAnnotationId(
 ): Promise<CommentWithMeta[]> {
   const comments: CommentWithMetaRow[] = await annotationCommentsView(trx)
     .where({
-      annotation_id: annotationId
+      annotation_id: annotationId,
     })
-    .orderBy('created_at', 'asc')
-    .groupBy('ac.annotation_id');
+    .orderBy("created_at", "asc")
+    .groupBy("ac.annotation_id");
   return validateEvery<CommentWithMetaRow, CommentWithMeta>(
     TABLE_NAME,
     isCommentWithMetaRow,
@@ -73,9 +73,9 @@ export async function findByAnnotationIds(
   trx?: Knex.Transaction
 ): Promise<AnnotationToCommentsWithMentions> {
   const comments: CommentWithMetaRow[] = await annotationCommentsView(trx)
-    .whereIn('annotation_id', annotationIds)
-    .orderBy('created_at', 'asc')
-    .groupBy('ac.annotation_id');
+    .whereIn("annotation_id", annotationIds)
+    .orderBy("created_at", "asc")
+    .groupBy("ac.annotation_id");
 
   const validatedComments = validateEvery<CommentWithMetaRow, CommentWithMeta>(
     TABLE_NAME,

@@ -1,7 +1,7 @@
-'use strict';
+"use strict";
 
 function* options(next) {
-  if (this.method !== 'OPTIONS') {
+  if (this.method !== "OPTIONS") {
     return yield next;
   }
 

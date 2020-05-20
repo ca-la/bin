@@ -1,9 +1,9 @@
-import uuid from 'node-uuid';
-import { create } from '../../components/resolve-accounts/dao';
-import * as UsersDAO from '../../components/users/dao';
-import createUser = require('../create-user');
-import ResolveAccount from '../../components/resolve-accounts/domain-object';
-import User from '../../components/users/domain-object';
+import uuid from "node-uuid";
+import { create } from "../../components/resolve-accounts/dao";
+import * as UsersDAO from "../../components/users/dao";
+import createUser = require("../create-user");
+import ResolveAccount from "../../components/resolve-accounts/domain-object";
+import User from "../../components/users/domain-object";
 
 interface ResolveAccountWithResources {
   user: User;
@@ -20,13 +20,13 @@ export default async function generateResolveAccount(
       );
 
   if (!user) {
-    throw new Error('Could not get User');
+    throw new Error("Could not get User");
   }
 
   const account = await create({
     id: options.id || uuid.v4(),
-    resolveCustomerId: options.resolveCustomerId || '123456',
-    userId: user.id
+    resolveCustomerId: options.resolveCustomerId || "123456",
+    userId: user.id,
   });
 
   return { user, account };

@@ -1,15 +1,15 @@
-import getAddressesDAO from '../addresses/addresses-dao';
-import AddressesDAO from '../addresses';
-import omit from 'lodash/omit';
-import db from '../../services/db';
+import getAddressesDAO from "../addresses/addresses-dao";
+import AddressesDAO from "../addresses";
+import omit from "lodash/omit";
+import db from "../../services/db";
 
 import InvoiceAddress, {
-  dataMapper
-} from '../../domain-objects/invoice-address';
-import first from '../../services/first';
-import rethrow from 'pg-rethrow';
+  dataMapper,
+} from "../../domain-objects/invoice-address";
+import first from "../../services/first";
+import rethrow from "pg-rethrow";
 
-const TABLE_NAME = 'invoice_addresses';
+const TABLE_NAME = "invoice_addresses";
 
 const dao = getAddressesDAO<InvoiceAddress>(
   TABLE_NAME,
@@ -22,8 +22,8 @@ export const createFromAddress = async (
 ): Promise<InvoiceAddress> => {
   const address = await AddressesDAO.findById(addressId);
   return dao.create({
-    ...omit(address, 'id'),
-    addressId: address.id
+    ...omit(address, "id"),
+    addressId: address.id,
   });
 };
 
@@ -33,7 +33,7 @@ export const findByAddressId = async (
   return db(TABLE_NAME)
     .where({
       address_id: addressId,
-      deleted_at: null
+      deleted_at: null,
     })
     .then(first)
     .then(dao.maybeInstantiate)
@@ -46,7 +46,7 @@ export const {
   deleteById,
   findById,
   validate,
-  findByUserId
+  findByUserId,
 } = dao;
 
 export default dao;

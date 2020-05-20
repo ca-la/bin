@@ -1,5 +1,5 @@
-import DataAdapter from '../services/data-adapter';
-import { hasProperties } from '../services/require-properties';
+import DataAdapter from "../services/data-adapter";
+import { hasProperties } from "../services/require-properties";
 
 /**
  * @typedef {object} PublicUser a partial object of the User object.
@@ -20,5 +20,5 @@ export interface PublicUserRow {
 export const dataAdapter = new DataAdapter<PublicUserRow, PublicUser>();
 
 export function isPublicUserRow(row: object): row is PublicUserRow {
-  return hasProperties(row, 'id', 'name', 'referral_code');
+  return hasProperties(row, "id", "name", "referral_code");
 }

@@ -1,17 +1,17 @@
-import uuid from 'node-uuid';
-import Knex from 'knex';
+import uuid from "node-uuid";
+import Knex from "knex";
 
-import db from '../../services/db';
-import { ProductType } from '../../domain-objects/pricing';
+import db from "../../services/db";
+import { ProductType } from "../../domain-objects/pricing";
 import PricingProductType, {
   dataAdapter,
   isPricingProductTypeRow,
-  PricingProductTypeRow
-} from './domain-object';
-import first from '../../services/first';
-import { validate } from '../../services/validate-from-db';
+  PricingProductTypeRow,
+} from "./domain-object";
+import first from "../../services/first";
+import { validate } from "../../services/validate-from-db";
 
-const TABLE_NAME = 'pricing_product_types';
+const TABLE_NAME = "pricing_product_types";
 
 export async function create(
   type: MaybeUnsaved<PricingProductType>,
@@ -19,7 +19,7 @@ export async function create(
 ): Promise<PricingProductType> {
   const row = dataAdapter.forInsertion({
     id: uuid.v4(),
-    ...type
+    ...type,
   });
 
   const created = await db(TABLE_NAME)
@@ -29,13 +29,13 @@ export async function create(
         query.transacting(trx);
       }
     })
-    .returning('*')
+    .returning("*")
     .then((rows: PricingProductTypeRow[]) => {
       return first(rows);
     });
 
   if (!created) {
-    throw new Error('Failed to create a PricingProductType!');
+    throw new Error("Failed to create a PricingProductType!");
   }
 
   return validate<PricingProductTypeRow, PricingProductType>(
@@ -48,10 +48,10 @@ export async function create(
 
 export async function findLatest(): Promise<ProductType[]> {
   const types = await db(TABLE_NAME)
-    .select(['name'])
-    .whereIn('version', db(TABLE_NAME).max('version'))
-    .groupBy(['name'])
-    .orderBy('name');
+    .select(["name"])
+    .whereIn("version", db(TABLE_NAME).max("version"))
+    .groupBy(["name"])
+    .orderBy("name");
 
   return types;
 }
@@ -60,19 +60,19 @@ export async function findByDesignId(
   designId: string
 ): Promise<PricingProductType | null> {
   const result = await db(TABLE_NAME)
-    .select('pricing_product_types.*')
+    .select("pricing_product_types.*")
     .innerJoin(
-      'pricing_inputs',
-      'pricing_inputs.product_type_id',
-      'pricing_product_types.id'
+      "pricing_inputs",
+      "pricing_inputs.product_type_id",
+      "pricing_product_types.id"
     )
     .innerJoin(
-      'pricing_quotes',
-      'pricing_quotes.pricing_quote_input_id',
-      'pricing_inputs.id'
+      "pricing_quotes",
+      "pricing_quotes.pricing_quote_input_id",
+      "pricing_inputs.id"
     )
-    .where({ 'pricing_quotes.design_id': designId })
-    .orderBy('pricing_quotes.created_at', 'DESC')
+    .where({ "pricing_quotes.design_id": designId })
+    .orderBy("pricing_quotes.created_at", "DESC")
     .then((rows: PricingProductTypeRow[]) => {
       return first(rows);
     });

@@ -1,5 +1,5 @@
-import DataAdapter, { defaultEncoder } from '../../services/data-adapter';
-import { hasProperties } from '../../services/require-properties';
+import DataAdapter, { defaultEncoder } from "../../services/data-adapter";
+import { hasProperties } from "../../services/require-properties";
 
 export default interface MonthlySalesReport {
   id: string;
@@ -42,7 +42,7 @@ function encode(row: MonthlySalesReportRow): MonthlySalesReport {
     fulfillmentCostCents: Number(row.fulfillment_cost_cents),
     paidToDesignerCents: Number(row.paid_to_designer_cents),
     revenueCents: Number(row.revenue_cents),
-    revenueSharePercentage: Number(row.revenue_share_percentage)
+    revenueSharePercentage: Number(row.revenue_share_percentage),
   };
 }
 
@@ -56,17 +56,17 @@ export function isMonthlySalesReportRow(
 ): row is MonthlySalesReportRow {
   return hasProperties(
     row,
-    'id',
-    'created_at',
-    'created_by',
-    'designer_id',
-    'available_credit_cents',
-    'cost_of_returned_goods_cents',
-    'financing_balance_cents',
-    'financing_principal_paid_cents',
-    'fulfillment_cost_cents',
-    'paid_to_designer_cents',
-    'revenue_cents',
-    'revenue_share_percentage'
+    "id",
+    "created_at",
+    "created_by",
+    "designer_id",
+    "available_credit_cents",
+    "cost_of_returned_goods_cents",
+    "financing_balance_cents",
+    "financing_principal_paid_cents",
+    "fulfillment_cost_cents",
+    "paid_to_designer_cents",
+    "revenue_cents",
+    "revenue_share_percentage"
   );
 }

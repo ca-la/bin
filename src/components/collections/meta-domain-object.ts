@@ -1,5 +1,5 @@
-import DataAdapter from '../../services/data-adapter';
-import { hasProperties } from '../../services/require-properties';
+import DataAdapter from "../../services/data-adapter";
+import { hasProperties } from "../../services/require-properties";
 
 export interface MetaCollectionRow {
   id: string;
@@ -14,5 +14,5 @@ export interface MetaCollection {
 export const dataAdapter = new DataAdapter<MetaCollectionRow, MetaCollection>();
 
 export function isMetaCollectionRow(row: object): row is MetaCollectionRow {
-  return hasProperties(row, 'id', 'created_by');
+  return hasProperties(row, "id", "created_by");
 }

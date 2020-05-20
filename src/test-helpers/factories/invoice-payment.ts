@@ -1,12 +1,12 @@
-import db from '../../services/db';
-import Knex from 'knex';
-import uuid from 'node-uuid';
+import db from "../../services/db";
+import Knex from "knex";
+import uuid from "node-uuid";
 
-import * as InvoicesDAO from '../../dao/invoices';
-import { InvoicePayment } from '../../components/invoice-payments/domain-object';
-import * as InvoicePaymentsDAO from '../../components/invoice-payments/dao';
-import Invoice = require('../../domain-objects/invoice');
-import generateInvoice from './invoice';
+import * as InvoicesDAO from "../../dao/invoices";
+import { InvoicePayment } from "../../components/invoice-payments/domain-object";
+import * as InvoicePaymentsDAO from "../../components/invoice-payments/dao";
+import Invoice = require("../../domain-objects/invoice");
+import generateInvoice from "./invoice";
 
 interface InvoiceWithResources {
   invoice: Invoice;
@@ -33,7 +33,7 @@ export default async function generateInvoicePayment(
         rumbleshipPurchaseHash: null,
         resolvePaymentId: null,
         totalCents: 1000,
-        ...options
+        ...options,
       } as InvoicePayment);
     }
   );

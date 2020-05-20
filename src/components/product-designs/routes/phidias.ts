@@ -1,22 +1,22 @@
-import { isRawDesignData } from '@cala/ts-lib';
-import Knex from 'knex';
+import { isRawDesignData } from "@cala/ts-lib";
+import Knex from "knex";
 
-import { updateOrCreate as updateOrCreateNode } from '../../nodes/dao';
-import { updateOrCreate as updateOrCreateAsset } from '../../assets/dao';
-import { updateOrCreate as updateOrCreateLayout } from '../../attributes/layout-attributes/dao';
-import db from '../../../services/db';
-import toDateOrNull from '../../../services/to-date';
+import { updateOrCreate as updateOrCreateNode } from "../../nodes/dao";
+import { updateOrCreate as updateOrCreateAsset } from "../../assets/dao";
+import { updateOrCreate as updateOrCreateLayout } from "../../attributes/layout-attributes/dao";
+import db from "../../../services/db";
+import toDateOrNull from "../../../services/to-date";
 
 export function* updateAllNodes(this: AuthedContext): Iterator<any, any, any> {
   const { body: design } = this.request;
   const { designId } = this.params;
 
   if (!design) {
-    this.throw(400, 'A design body is missing!');
+    this.throw(400, "A design body is missing!");
   }
 
   if (!isRawDesignData(design)) {
-    this.throw(400, 'Design body does not match nodes type!');
+    this.throw(400, "Design body does not match nodes type!");
   }
 
   const updated = yield db.transaction(async (trx: Knex.Transaction) => {
@@ -30,7 +30,7 @@ export function* updateAllNodes(this: AuthedContext): Iterator<any, any, any> {
         ...node,
         createdAt: new Date(node.createdAt || new Date()),
         deletedAt: toDateOrNull(node.deletedAt),
-        type: null
+        type: null,
       };
       const newNode = await updateOrCreateNode(designId, updateableNode, trx);
       newNodes.push(newNode);
@@ -40,7 +40,7 @@ export function* updateAllNodes(this: AuthedContext): Iterator<any, any, any> {
       const updateableLayout = {
         ...layout,
         createdAt: new Date(layout.createdAt),
-        deletedAt: toDateOrNull(layout.deletedAt)
+        deletedAt: toDateOrNull(layout.deletedAt),
       };
       const newLayout = await updateOrCreateLayout(updateableLayout, trx);
       newLayouts.push(newLayout);
@@ -50,7 +50,7 @@ export function* updateAllNodes(this: AuthedContext): Iterator<any, any, any> {
       const updateableAsset = {
         ...asset,
         createdAt: new Date(asset.createdAt),
-        uploadCompletedAt: toDateOrNull(asset.uploadCompletedAt)
+        uploadCompletedAt: toDateOrNull(asset.uploadCompletedAt),
       };
       const newAsset = await updateOrCreateAsset(updateableAsset, trx);
       newAssets.push(newAsset);
@@ -60,9 +60,9 @@ export function* updateAllNodes(this: AuthedContext): Iterator<any, any, any> {
       assets: newAssets,
       attributes: {
         ...attributes,
-        dimensions: newLayouts
+        dimensions: newLayouts,
       },
-      nodes: newNodes
+      nodes: newNodes,
     };
   });
 

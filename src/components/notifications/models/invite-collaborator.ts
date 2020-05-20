@@ -2,17 +2,17 @@ import {
   BaseFullNotification,
   BaseFullNotificationRow,
   BaseNotification,
-  BaseNotificationRow
-} from './base';
-import { NotificationType } from '../domain-object';
+  BaseNotificationRow,
+} from "./base";
+import { NotificationType } from "../domain-object";
 
 type BaseRow = Omit<
   BaseNotificationRow,
-  | 'collection_id'
-  | 'design_id'
-  | 'collaborator_id'
-  | 'sent_email_at'
-  | 'recipient_user_id'
+  | "collection_id"
+  | "design_id"
+  | "collaborator_id"
+  | "sent_email_at"
+  | "recipient_user_id"
 >;
 
 export interface InviteCollaboratorNotificationRow extends BaseRow {
@@ -26,7 +26,7 @@ export interface InviteCollaboratorNotificationRow extends BaseRow {
 
 type BaseFullRow = Omit<
   BaseFullNotificationRow & InviteCollaboratorNotificationRow,
-  'collection_title' | 'design_title'
+  "collection_title" | "design_title"
 >;
 
 export interface FullInviteCollaboratorNotificationRow extends BaseFullRow {
@@ -36,11 +36,11 @@ export interface FullInviteCollaboratorNotificationRow extends BaseFullRow {
 
 type Base = Omit<
   BaseNotification,
-  | 'collectionId'
-  | 'designId'
-  | 'collaboratorId'
-  | 'sentEmailAt'
-  | 'recipientUserId'
+  | "collectionId"
+  | "designId"
+  | "collaboratorId"
+  | "sentEmailAt"
+  | "recipientUserId"
 >;
 
 export interface InviteCollaboratorNotification extends Base {
@@ -54,7 +54,7 @@ export interface InviteCollaboratorNotification extends Base {
 
 type BaseFull = Omit<
   BaseFullNotification & InviteCollaboratorNotification,
-  'collectionTitle' | 'designTitle'
+  "collectionTitle" | "designTitle"
 >;
 
 export interface FullInviteCollaboratorNotification extends BaseFull {

@@ -1,5 +1,5 @@
-import DataAdapter from '../services/data-adapter';
-import { hasProperties } from '../services/require-properties';
+import DataAdapter from "../services/data-adapter";
+import { hasProperties } from "../services/require-properties";
 
 /**
  * @typedef {object} PricingConstant The constant values that are not calculated
@@ -53,16 +53,16 @@ export const dataAdapter = new DataAdapter<
 export function isPricingConstantRow(row: object): row is PricingConstantRow {
   return hasProperties(
     row,
-    'id',
-    'working_session_cents',
-    'technical_design_cents',
-    'pattern_revision_cents',
-    'grading_cents',
-    'marking_cents',
-    'sample_minimum_cents',
-    'branded_labels_minimum_cents',
-    'branded_labels_minimum_units',
-    'branded_labels_additional_cents',
-    'created_at'
+    "id",
+    "working_session_cents",
+    "technical_design_cents",
+    "pattern_revision_cents",
+    "grading_cents",
+    "marking_cents",
+    "sample_minimum_cents",
+    "branded_labels_minimum_cents",
+    "branded_labels_minimum_units",
+    "branded_labels_additional_cents",
+    "created_at"
   );
 }

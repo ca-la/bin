@@ -1,12 +1,12 @@
-import uuid from 'node-uuid';
-import { create } from '../../dao/design-events';
-import DesignEvent from '../../domain-objects/design-event';
-import { findById as findUserById } from '../../components/users/dao';
-import createUser = require('../create-user');
-import ProductDesign = require('../../components/product-designs/domain-objects/product-design');
-import ProductDesignsDAO from '../../components/product-designs/dao';
-import Knex from 'knex';
-import db from '../../services/db';
+import uuid from "node-uuid";
+import { create } from "../../dao/design-events";
+import DesignEvent from "../../domain-objects/design-event";
+import { findById as findUserById } from "../../components/users/dao";
+import createUser = require("../create-user");
+import ProductDesign = require("../../components/product-designs/domain-objects/product-design");
+import ProductDesignsDAO from "../../components/product-designs/dao";
+import Knex from "knex";
+import db from "../../services/db";
 
 interface DesignEventWithResources {
   designEvent: DesignEvent;
@@ -23,13 +23,13 @@ export default async function generateDesignEvent(
   const design = options.designId
     ? await ProductDesignsDAO.findById(options.designId)
     : await ProductDesignsDAO.create({
-        productType: 'SWEATER',
-        title: 'Mohair Wool Sweater',
-        userId: actor.id
+        productType: "SWEATER",
+        title: "Mohair Wool Sweater",
+        userId: actor.id,
       });
 
   if (!design) {
-    throw new Error('Design was unable to be found or created!');
+    throw new Error("Design was unable to be found or created!");
   }
 
   const designEvent = await db.transaction((trx: Knex.Transaction) =>
@@ -44,8 +44,8 @@ export default async function generateDesignEvent(
       id: uuid.v4(),
       quoteId: null,
       targetId: null,
-      type: 'SUBMIT_DESIGN',
-      ...options
+      type: "SUBMIT_DESIGN",
+      ...options,
     })
   );
 

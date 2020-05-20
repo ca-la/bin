@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 /**
  * HTTP 403 Forbidden
@@ -11,7 +11,7 @@ class ForbiddenError extends Error {
     this.status = 403;
     this.code = code;
     this.message = message;
-    this.name = 'ForbiddenError';
+    this.name = "ForbiddenError";
   }
 }
 

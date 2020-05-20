@@ -1,14 +1,14 @@
-import uuid from 'node-uuid';
-import { formatCentsToDollars, NotificationMessage } from '@cala/ts-lib';
+import uuid from "node-uuid";
+import { formatCentsToDollars, NotificationMessage } from "@cala/ts-lib";
 
-import MonthlySalesReport from '../../components/sales-reports/domain-object';
-import { findById as findUser } from '../../components/users/dao';
-import EmailService from '../../services/email';
-import { STUDIO_HOST } from '../../config';
+import MonthlySalesReport from "../../components/sales-reports/domain-object";
+import { findById as findUser } from "../../components/users/dao";
+import EmailService from "../../services/email";
+import { STUDIO_HOST } from "../../config";
 
-const LEFT_STYLE = 'text-align:left;width:50%;padding-right:4px;';
+const LEFT_STYLE = "text-align:left;width:50%;padding-right:4px;";
 const RIGHT_STYLE =
-  'text-align:right;font-weight:bold;width:50%;padding-left:4px;';
+  "text-align:right;font-weight:bold;width:50%;padding-left:4px;";
 
 function constructRow(label: string, value: string): string {
   return `
@@ -46,20 +46,20 @@ export async function immediatelySendMonthlySalesReport(
 
   const message: NotificationMessage = {
     id: uuid.v4(),
-    title: 'Monthly Sales Report',
+    title: "Monthly Sales Report",
     html: `
       <table style='margin:auto;'>
         <tbody>
           ${constructRow(
-            'Available Credit',
+            "Available Credit",
             formatCentsToDollars(salesReport.availableCreditCents)
           )}
           ${constructRow(
-            'Financing Balance',
+            "Financing Balance",
             formatCentsToDollars(salesReport.financingBalanceCents)
           )}
           ${constructRow(
-            'CALA Revenue Share',
+            "CALA Revenue Share",
             `${salesReport.revenueSharePercentage}%`
           )}
         </tbody>
@@ -67,23 +67,23 @@ export async function immediatelySendMonthlySalesReport(
         <tbody>
           ${SPACER}
           ${constructRow(
-            'Revenue',
+            "Revenue",
             formatCentsToDollars(salesReport.revenueCents)
           )}
           ${constructRow(
-            'Revenue Shared with CALA',
+            "Revenue Shared with CALA",
             `${formatCentsToDollars(calaRevShareCents)}`
           )}
           ${constructRow(
-            'Financing Principal Paid',
+            "Financing Principal Paid",
             formatCentsToDollars(salesReport.financingPrincipalPaidCents)
           )}
           ${constructRow(
-            'Fulfillment Cost',
+            "Fulfillment Cost",
             formatCentsToDollars(salesReport.fulfillmentCostCents)
           )}
           ${constructRow(
-            'Cost of Returned Goods',
+            "Cost of Returned Goods",
             formatCentsToDollars(salesReport.costOfReturnedGoodsCents)
           )}
         </tbody>
@@ -91,7 +91,7 @@ export async function immediatelySendMonthlySalesReport(
         <tbody>
           ${SPACER}
           ${constructRow(
-            'Paid Out To You',
+            "Paid Out To You",
             formatCentsToDollars(salesReport.paidToDesignerCents)
           )}
         </tbody>
@@ -104,15 +104,15 @@ export async function immediatelySendMonthlySalesReport(
     imageUrl: null,
     location: [],
     attachments: [],
-    actions: []
+    actions: [],
   };
 
   await EmailService.enqueueSend({
     params: {
-      notification: message
+      notification: message,
     },
-    templateName: 'single_notification',
-    to: recipientUser.email
+    templateName: "single_notification",
+    to: recipientUser.email,
   });
 
   return message;

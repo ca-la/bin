@@ -1,17 +1,17 @@
-import Knex from 'knex';
-import * as uuid from 'node-uuid';
+import Knex from "knex";
+import * as uuid from "node-uuid";
 
 import {
   dataAdapter,
   isNonBidDesignCostRow,
   NonBidDesignCost,
-  NonBidDesignCostRow
-} from './domain-object';
-import { validate, validateEvery } from '../../services/validate-from-db';
-import first from '../../services/first';
-import ResourceNotFoundError from '../../errors/resource-not-found';
+  NonBidDesignCostRow,
+} from "./domain-object";
+import { validate, validateEvery } from "../../services/validate-from-db";
+import first from "../../services/first";
+import ResourceNotFoundError from "../../errors/resource-not-found";
 
-const TABLE_NAME = 'non_bid_design_costs';
+const TABLE_NAME = "non_bid_design_costs";
 
 export async function create(
   trx: Knex.Transaction,
@@ -20,11 +20,11 @@ export async function create(
   const toInsert = dataAdapter.forInsertion({
     ...data,
     deletedAt: null,
-    id: uuid.v4()
+    id: uuid.v4(),
   });
   const created: NonBidDesignCostRow = await trx(TABLE_NAME)
     .insert(toInsert)
-    .returning('*')
+    .returning("*")
     .then(first);
 
   return validate(TABLE_NAME, isNonBidDesignCostRow, dataAdapter, created);
@@ -38,7 +38,7 @@ export async function findByDesign(
     .from(TABLE_NAME)
     .select()
     .where({ design_id: designId, deleted_at: null })
-    .orderBy('created_at');
+    .orderBy("created_at");
 
   return validateEvery(
     TABLE_NAME,

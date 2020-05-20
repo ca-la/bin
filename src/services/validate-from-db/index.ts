@@ -1,4 +1,4 @@
-import DataAdapter from '../data-adapter';
+import DataAdapter from "../data-adapter";
 
 export function validate<RowData extends object, UserData>(
   table: string,
@@ -22,7 +22,7 @@ export function validateEvery<RowData extends object, UserData>(
   data?: (RowData | null | undefined)[] | null
 ): UserData[] {
   if (!data) {
-    throw new Error('Validator was passed a falsy value');
+    throw new Error("Validator was passed a falsy value");
   }
 
   return data.map((d: RowData | null | undefined) =>

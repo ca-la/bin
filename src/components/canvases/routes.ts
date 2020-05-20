@@ -1,27 +1,27 @@
-import Router from 'koa-router';
-import Knex from 'knex';
+import Router from "koa-router";
+import Knex from "knex";
 
-import * as CanvasesDAO from './dao';
-import requireAuth = require('../../middleware/require-auth');
-import * as ComponentsDAO from '../components/dao';
-import ProductDesignOptionsDAO from '../../dao/product-design-options';
-import * as ProductDesignImagesDAO from '../assets/dao';
-import Canvas from './domain-object';
+import * as CanvasesDAO from "./dao";
+import requireAuth = require("../../middleware/require-auth");
+import * as ComponentsDAO from "../components/dao";
+import ProductDesignOptionsDAO from "../../dao/product-design-options";
+import * as ProductDesignImagesDAO from "../assets/dao";
+import Canvas from "./domain-object";
 import Component, {
   ComponentType,
-  isUnsavedComponent
-} from '../components/domain-object';
-import * as EnrichmentService from '../../services/attach-asset-links';
-import db from '../../services/db';
-import filterError = require('../../services/filter-error');
-import ProductDesignImage from '../assets/domain-object';
-import ProductDesignOption from '../../domain-objects/product-design-option';
-import { hasProperties } from '../../services/require-properties';
-import { omit } from 'lodash';
-import { typeGuard } from '../../middleware/type-guard';
-import { gatherChanges } from './services/gather-changes';
-import { deserializeAsset } from '../assets/services/serializer';
-import { Serialized } from '../../types/serialized';
+  isUnsavedComponent,
+} from "../components/domain-object";
+import * as EnrichmentService from "../../services/attach-asset-links";
+import db from "../../services/db";
+import filterError = require("../../services/filter-error");
+import ProductDesignImage from "../assets/domain-object";
+import ProductDesignOption from "../../domain-objects/product-design-option";
+import { hasProperties } from "../../services/require-properties";
+import { omit } from "lodash";
+import { typeGuard } from "../../middleware/type-guard";
+import { gatherChanges } from "./services/gather-changes";
+import { deserializeAsset } from "../assets/services/serializer";
+import { Serialized } from "../../types/serialized";
 
 const router = new Router();
 
@@ -31,20 +31,20 @@ const { CanvasNotFoundError } = CanvasesDAO;
 function isSaveableCanvas(obj: any): obj is MaybeUnsaved<Canvas> {
   return hasProperties(
     obj,
-    'createdBy',
-    'designId',
-    'title',
-    'width',
-    'height',
-    'x',
-    'y'
+    "createdBy",
+    "designId",
+    "title",
+    "width",
+    "height",
+    "x",
+    "y"
   );
 }
 
 const attachUser = (request: any, userId: string): any => {
   return {
     ...request,
-    createdBy: userId
+    createdBy: userId,
   };
 };
 
@@ -59,7 +59,7 @@ function* create(this: AuthedContext): Iterator<any, any, any> {
 function* createCanvas(this: AuthedContext): Iterator<any, any, any> {
   const body = attachUser(this.request.body, this.state.userId);
   if (!this.request.body || !isSaveableCanvas(body)) {
-    this.throw(400, 'Request does not match Canvas');
+    this.throw(400, "Request does not match Canvas");
   }
 
   const canvas = yield CanvasesDAO.create(body);
@@ -81,12 +81,12 @@ type CanvasWithEnrichedComponents = Canvas & {
 };
 
 function isCanvasWithComponent(data: any): data is CanvasWithComponent {
-  const isCanvasInstance = isSaveableCanvas(omit(data, 'components'));
+  const isCanvasInstance = isSaveableCanvas(omit(data, "components"));
   const isComponents = data.components.every((component: any) =>
     isUnsavedComponent(component)
   );
   const isImages = data.components.every((component: any) =>
-    hasProperties(component.image, 'userId', 'mimeType', 'id')
+    hasProperties(component.image, "userId", "mimeType", "id")
   );
 
   return isCanvasInstance && isComponents && isImages;
@@ -95,7 +95,7 @@ function isCanvasWithComponent(data: any): data is CanvasWithComponent {
 function* createWithComponents(this: AuthedContext): Iterator<any, any, any> {
   const body: Unsaved<CanvasWithComponent>[] = this.request.body as any;
 
-  this.assert(body.length >= 1, 400, 'At least one canvas must be provided');
+  this.assert(body.length >= 1, 400, "At least one canvas must be provided");
 
   const canvases: CanvasWithEnrichedComponents[] = yield Promise.all(
     body.map(async (data: Unsaved<CanvasWithComponent>) =>
@@ -104,7 +104,7 @@ function* createWithComponents(this: AuthedContext): Iterator<any, any, any> {
   );
 
   if (canvases.length < 1) {
-    throw new Error('No canvases were succesfully created');
+    throw new Error("No canvases were succesfully created");
   }
 
   this.status = 201;
@@ -116,7 +116,7 @@ async function createCanvasAndComponents(
   data: Unsaved<CanvasWithComponent>
 ): Promise<Canvas & { components: EnrichmentService.EnrichedComponent[] }> {
   if (!data || !isCanvasWithComponent(data)) {
-    throw new Error('Request does not match Schema');
+    throw new Error("Request does not match Schema");
   }
 
   const enrichedComponents = await Promise.all(
@@ -128,10 +128,10 @@ async function createCanvasAndComponents(
       }
     )
   );
-  const canvasWithUser = attachUser(omit(data, 'components'), userId);
+  const canvasWithUser = attachUser(omit(data, "components"), userId);
   const createdCanvas = await CanvasesDAO.create({
     ...canvasWithUser,
-    deletedAt: null
+    deletedAt: null,
   });
 
   return { ...createdCanvas, components: enrichedComponents };
@@ -145,13 +145,13 @@ async function createComponent(
   const deserializedImgae = deserializeAsset(image);
   await ProductDesignImagesDAO.create({
     ...deserializedImgae,
-    userId
+    userId,
   });
 
   if (component.type === ComponentType.Material) {
     await ProductDesignOptionsDAO.create({
       ...component.option,
-      deletedAt: null
+      deletedAt: null,
     });
   }
 
@@ -165,7 +165,7 @@ function* addComponent(this: AuthedContext): Iterator<any, any, any> {
     this.state.userId
   );
   if (!this.request.body || !isUnsavedComponent(body)) {
-    this.throw(400, 'Request does not match Canvas');
+    this.throw(400, "Request does not match Canvas");
   }
 
   const component = yield ComponentsDAO.create(body);
@@ -173,7 +173,7 @@ function* addComponent(this: AuthedContext): Iterator<any, any, any> {
 
   const updatedCanvas = yield CanvasesDAO.update(this.params.canvasId, {
     ...canvas,
-    componentId: component.id
+    componentId: component.id,
   });
   const components = yield ComponentsDAO.findAllByCanvasId(canvas.id);
   this.status = 200;
@@ -183,7 +183,7 @@ function* addComponent(this: AuthedContext): Iterator<any, any, any> {
 function* update(this: AuthedContext): Iterator<any, any, any> {
   const body = attachUser(this.request.body, this.state.userId);
   if (!this.request.body || !isSaveableCanvas(body)) {
-    this.throw(400, 'Request does not match Canvas');
+    this.throw(400, "Request does not match Canvas");
   }
 
   const updatedCanvas = yield CanvasesDAO.update(
@@ -201,14 +201,14 @@ function* update(this: AuthedContext): Iterator<any, any, any> {
   this.status = 200;
   this.body = {
     ...updatedCanvas,
-    components: enrichedComponents
+    components: enrichedComponents,
   };
 }
 
 type ReorderRequest = CanvasesDAO.ReorderRequest;
 
 function isReorderRequest(data: any[]): data is ReorderRequest[] {
-  return data.every((value: any) => hasProperties(value, 'id', 'ordering'));
+  return data.every((value: any) => hasProperties(value, "id", "ordering"));
 }
 
 function* reorder(
@@ -250,7 +250,7 @@ function* getList(this: AuthedContext): Iterator<any, any, any> {
   const query: GetListQuery = this.query;
 
   if (!query.designId) {
-    this.throw(400, 'Missing designId');
+    this.throw(400, "Missing designId");
   }
 
   const canvases = yield CanvasesDAO.findAllByDesignId(query.designId);
@@ -274,21 +274,21 @@ function* getChangeLog(this: AuthedContext): Iterator<any, any, any> {
   this.body = changes;
 }
 
-router.post('/', requireAuth, create);
-router.put('/:canvasId', requireAuth, create);
-router.patch('/:canvasId', requireAuth, update);
+router.post("/", requireAuth, create);
+router.put("/:canvasId", requireAuth, create);
+router.patch("/:canvasId", requireAuth, update);
 router.patch(
-  '/reorder',
+  "/reorder",
   requireAuth,
   typeGuard<ReorderRequest[]>(isReorderRequest),
   reorder
 );
 
-router.put('/:canvasId/component/:componentId', requireAuth, addComponent);
-router.del('/:canvasId', requireAuth, del);
+router.put("/:canvasId/component/:componentId", requireAuth, addComponent);
+router.del("/:canvasId", requireAuth, del);
 
-router.get('/', requireAuth, getList);
-router.get('/:canvasId', requireAuth, getById);
-router.get('/:canvasId/changes', requireAuth, getChangeLog);
+router.get("/", requireAuth, getList);
+router.get("/:canvasId", requireAuth, getById);
+router.get("/:canvasId/changes", requireAuth, getChangeLog);
 
 export default router.routes();

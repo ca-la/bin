@@ -1,36 +1,36 @@
-import Knex from 'knex';
-import tape from 'tape';
-import uuid from 'node-uuid';
+import Knex from "knex";
+import tape from "tape";
+import uuid from "node-uuid";
 
-import db from '../../services/db';
-import { test } from '../../test-helpers/fresh';
-import generateCanvas from '../../test-helpers/factories/product-design-canvas';
-import createUser = require('../../test-helpers/create-user');
+import db from "../../services/db";
+import { test } from "../../test-helpers/fresh";
+import generateCanvas from "../../test-helpers/factories/product-design-canvas";
+import createUser = require("../../test-helpers/create-user");
 
-import * as CollaboratorsDAO from '../../components/collaborators/dao';
-import * as ProductDesignStagesDAO from '../../dao/product-design-stages';
-import * as TaskEventsDAO from '../../dao/task-events';
-import * as CanvasesDAO from '../../components/canvases/dao';
-import * as ComponentsDAO from '../../components/components/dao';
-import * as VariantsDAO from '../../components/product-design-variants/dao';
+import * as CollaboratorsDAO from "../../components/collaborators/dao";
+import * as ProductDesignStagesDAO from "../../dao/product-design-stages";
+import * as TaskEventsDAO from "../../dao/task-events";
+import * as CanvasesDAO from "../../components/canvases/dao";
+import * as ComponentsDAO from "../../components/components/dao";
+import * as VariantsDAO from "../../components/product-design-variants/dao";
 
-import { findAndDuplicateDesign } from './designs';
+import { findAndDuplicateDesign } from "./designs";
 
-test('findAndDuplicateDesign', async (t: tape.Test) => {
+test("findAndDuplicateDesign", async (t: tape.Test) => {
   const { user: duplicatingUser } = await createUser({ withSession: false });
   // generate a design with a canvas with a component.
   const { component, canvas, design } = await generateCanvas({});
   // generate a variant for the design.
   const variantOne = await VariantsDAO.create({
-    colorName: 'Green',
+    colorName: "Green",
     designId: design.id,
     id: uuid.v4(),
     position: 0,
-    sizeName: 'M',
+    sizeName: "M",
     unitsToProduce: 123,
     universalProductCode: null,
     isSample: false,
-    colorNamePosition: 1
+    colorNamePosition: 1,
   });
 
   const duplicatedDesign = await db.transaction((trx: Knex.Transaction) =>
@@ -43,9 +43,9 @@ test('findAndDuplicateDesign', async (t: tape.Test) => {
       ...design,
       createdAt: duplicatedDesign.createdAt,
       id: duplicatedDesign.id,
-      userId: duplicatingUser.id
+      userId: duplicatingUser.id,
     },
-    'Returns the same design but with a new id and created at timestamp'
+    "Returns the same design but with a new id and created at timestamp"
   );
 
   const duplicateVariants = await VariantsDAO.findByDesignId(
@@ -59,9 +59,9 @@ test('findAndDuplicateDesign', async (t: tape.Test) => {
       ...variantOne,
       createdAt: variantDupeOne.createdAt,
       designId: duplicatedDesign.id,
-      id: variantDupeOne.id
+      id: variantDupeOne.id,
     },
-    'A variant duplicate was generated that is based off the original design variant'
+    "A variant duplicate was generated that is based off the original design variant"
   );
 
   const duplicateCollaborators = await CollaboratorsDAO.findByDesign(
@@ -88,7 +88,7 @@ test('findAndDuplicateDesign', async (t: tape.Test) => {
   const duplicateCanvases = await CanvasesDAO.findAllByDesignId(
     duplicatedDesign.id
   );
-  t.equal(duplicateCanvases.length, 1, 'only has one duplicate canvas');
+  t.equal(duplicateCanvases.length, 1, "only has one duplicate canvas");
   const duplicateCanvas = duplicateCanvases[0];
   t.deepEqual(
     duplicateCanvas,
@@ -97,22 +97,22 @@ test('findAndDuplicateDesign', async (t: tape.Test) => {
       componentId: duplicateCanvas.componentId,
       createdAt: duplicateCanvas.createdAt,
       designId: duplicatedDesign.id,
-      id: duplicateCanvas.id
+      id: duplicateCanvas.id,
     },
-    'Has an associated canvas that is the same as the original but w/ new associations'
+    "Has an associated canvas that is the same as the original but w/ new associations"
   );
 
   const duplicateComponents = await ComponentsDAO.findAllByCanvasId(
     duplicateCanvas.id
   );
-  t.equal(duplicateComponents.length, 1, 'only has one duplicate component');
+  t.equal(duplicateComponents.length, 1, "only has one duplicate component");
   t.deepEqual(
     duplicateComponents[0],
     {
       ...component,
       createdAt: duplicateComponents[0].createdAt,
-      id: duplicateCanvas.componentId
+      id: duplicateCanvas.componentId,
     },
-    'Has an associated component that is the same as the original but w/ new associations'
+    "Has an associated component that is the same as the original but w/ new associations"
   );
 });

@@ -1,31 +1,31 @@
-import mime from 'mime-types';
-import AWS from 'aws-sdk';
+import mime from "mime-types";
+import AWS from "aws-sdk";
 import {
   DeleteObjectOutput,
   GetObjectOutput,
-  PresignedPost
-} from 'aws-sdk/clients/s3';
-import { PromiseResult } from 'aws-sdk/lib/request';
-import fs from 'fs';
+  PresignedPost,
+} from "aws-sdk/clients/s3";
+import { PromiseResult } from "aws-sdk/lib/request";
+import fs from "fs";
 import {
   AWS_ACCESS_KEY,
   AWS_S3_THUMBNAIL_ACCESS_KEY,
   AWS_S3_THUMBNAIL_BUCKET_REGION,
   AWS_S3_THUMBNAIL_SECRET_KEY,
-  AWS_SECRET_KEY
-} from '../../config';
+  AWS_SECRET_KEY,
+} from "../../config";
 
 AWS.config.update({
   accessKeyId: AWS_ACCESS_KEY,
-  secretAccessKey: AWS_SECRET_KEY
+  secretAccessKey: AWS_SECRET_KEY,
 });
 
 export async function uploadFile(
   bucketName: string,
   remoteFileName: string,
   localFileName: string,
-  contentType: string = 'binary/octet-stream',
-  acl: string = 'authenticated-read'
+  contentType: string = "binary/octet-stream",
+  acl: string = "authenticated-read"
 ): Promise<string> {
   const s3 = new AWS.S3();
   const buffer = fs.readFileSync(localFileName);
@@ -37,7 +37,7 @@ export async function uploadFile(
       Bucket: bucketName,
       ContentType: contentType,
       Key: remoteFileName,
-      ServerSideEncryption: 'AES256'
+      ServerSideEncryption: "AES256",
     })
     .promise();
 
@@ -56,7 +56,7 @@ export async function deleteFile(
   return s3
     .deleteObject({
       Bucket: bucketName,
-      Key: remoteFileName
+      Key: remoteFileName,
     })
     .promise();
 }
@@ -69,7 +69,7 @@ export async function getFile(
   return s3
     .getObject({
       Bucket: bucketName,
-      Key: remoteFileName
+      Key: remoteFileName,
     })
     .promise();
 }
@@ -80,12 +80,12 @@ export async function getDownloadUrl(
 ): Promise<string> {
   const s3 = new AWS.S3();
   const file = await getFile(bucketName, remoteFileName);
-  const extension = mime.extension(file.ContentType || '');
+  const extension = mime.extension(file.ContentType || "");
 
-  return s3.getSignedUrl('getObject', {
+  return s3.getSignedUrl("getObject", {
     Bucket: bucketName,
     Key: remoteFileName,
-    ResponseContentDisposition: `attachment; filename="${remoteFileName}.${extension}"`
+    ResponseContentDisposition: `attachment; filename="${remoteFileName}.${extension}"`,
   });
 }
 
@@ -100,7 +100,7 @@ export function getUploadPolicy(
   region: string,
   remoteFileName: string,
   contentDisposition: string,
-  contentType: string = 'binary/octet-stream'
+  contentType: string = "binary/octet-stream"
 ): PresignedPost {
   const s3 = new AWS.S3({ region });
   const FILE_LIMIT = 500 * 1024 ** 2;
@@ -108,13 +108,13 @@ export function getUploadPolicy(
   return s3.createPresignedPost({
     Bucket: bucketName,
     Conditions: [
-      { acl: 'public-read' },
+      { acl: "public-read" },
       { key: remoteFileName },
-      ['eq', '$content-disposition', contentDisposition],
-      ['eq', '$content-type', contentType],
-      ['content-length-range', 0, FILE_LIMIT]
+      ["eq", "$content-disposition", contentDisposition],
+      ["eq", "$content-type", contentType],
+      ["content-length-range", 0, FILE_LIMIT],
     ],
-    Expires: 60
+    Expires: 60,
   });
 }
 
@@ -129,28 +129,28 @@ export function getThumbnailUploadPolicy(
   remoteFileName: string
 ): PresignedPost {
   if (!AWS_S3_THUMBNAIL_ACCESS_KEY) {
-    throw new Error('AWS_S3_THUMBNAIL_ACCESS_KEY not set as an env variable!');
+    throw new Error("AWS_S3_THUMBNAIL_ACCESS_KEY not set as an env variable!");
   }
   if (!AWS_S3_THUMBNAIL_SECRET_KEY) {
-    throw new Error('AWS_S3_THUMBNAIL_SECRET_KEY not set as an env variable!');
+    throw new Error("AWS_S3_THUMBNAIL_SECRET_KEY not set as an env variable!");
   }
 
   const s3 = new AWS.S3({
     credentials: new AWS.Credentials({
       accessKeyId: AWS_S3_THUMBNAIL_ACCESS_KEY,
-      secretAccessKey: AWS_S3_THUMBNAIL_SECRET_KEY
+      secretAccessKey: AWS_S3_THUMBNAIL_SECRET_KEY,
     }),
-    region: AWS_S3_THUMBNAIL_BUCKET_REGION
+    region: AWS_S3_THUMBNAIL_BUCKET_REGION,
   });
   const TEN_MB = 10 * 1024 ** 2;
 
   return s3.createPresignedPost({
     Bucket: bucketName,
     Conditions: [
-      { acl: 'public-read' },
+      { acl: "public-read" },
       { key: remoteFileName },
-      ['content-length-range', 0, TEN_MB]
+      ["content-length-range", 0, TEN_MB],
     ],
-    Expires: 60
+    Expires: 60,
   });
 }

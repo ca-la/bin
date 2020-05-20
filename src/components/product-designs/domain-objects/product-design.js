@@ -1,59 +1,59 @@
-'use strict';
+"use strict";
 
-const { default: DataMapper } = require('../../../services/data-mapper');
-const formatDateString = require('../../../services/format-date-string');
-const { requireProperties } = require('../../../services/require-properties');
-const ApprovalStepAdapter = require('../../approval-steps/adapter').default;
+const { default: DataMapper } = require("../../../services/data-mapper");
+const formatDateString = require("../../../services/format-date-string");
+const { requireProperties } = require("../../../services/require-properties");
+const ApprovalStepAdapter = require("../../approval-steps/adapter").default;
 
 const {
-  generatePreviewLinks
-} = require('../../../services/attach-asset-links');
+  generatePreviewLinks,
+} = require("../../../services/attach-asset-links");
 
 const keyNamesByColumnName = {
-  id: 'id',
-  created_at: 'createdAt',
-  deleted_at: 'deletedAt',
-  product_type: 'productType',
-  title: 'title',
-  description: 'description',
-  metadata: 'metadata',
-  user_id: 'userId',
+  id: "id",
+  created_at: "createdAt",
+  deleted_at: "deletedAt",
+  product_type: "productType",
+  title: "title",
+  description: "description",
+  metadata: "metadata",
+  user_id: "userId",
 
-  image_ids: 'imageIds',
+  image_ids: "imageIds",
   // string[] - urls of each section preview
-  preview_image_urls: 'previewImageUrls',
-  collections: 'collections',
-  override_pricing_table: 'overridePricingTable',
-  computed_pricing_table: 'computedPricingTable',
-  retail_price_cents: 'retailPriceCents',
-  status: 'status',
-  due_date: 'dueDate',
-  expected_cost_cents: 'expectedCostCents',
-  show_pricing_breakdown: 'showPricingBreakdown',
-  approval_steps: 'approvalSteps',
+  preview_image_urls: "previewImageUrls",
+  collections: "collections",
+  override_pricing_table: "overridePricingTable",
+  computed_pricing_table: "computedPricingTable",
+  retail_price_cents: "retailPriceCents",
+  status: "status",
+  due_date: "dueDate",
+  expected_cost_cents: "expectedCostCents",
+  show_pricing_breakdown: "showPricingBreakdown",
+  approval_steps: "approvalSteps",
 
   // TODO: Remove this once changes from api#1216 are fully live
-  current_step_title: 'currentStepTitle'
+  current_step_title: "currentStepTitle",
 };
 
 const dataMapper = new DataMapper(keyNamesByColumnName);
 
 class ProductDesign {
   constructor(row) {
-    requireProperties(row, 'id');
+    requireProperties(row, "id");
 
     const data = dataMapper.rowDataToUserData(row);
     const imageLinks = generatePreviewLinks(data.imageIds);
-    const previewImageUrls = imageLinks.map(imageLink => {
+    const previewImageUrls = imageLinks.map((imageLink) => {
       return imageLink.previewLink;
     });
 
     Object.assign(this, data, {
-      collectionIds: data.collections.map(collection => collection.id),
+      collectionIds: data.collections.map((collection) => collection.id),
       createdAt: new Date(row.created_at),
       deletedAt: row.deleted_at && new Date(row.deleted_at),
       imageLinks,
-      previewImageUrls
+      previewImageUrls,
     });
 
     if (row.due_date instanceof Date) {
@@ -63,7 +63,7 @@ class ProductDesign {
     }
 
     if (row.approval_steps) {
-      this.approvalSteps = row.approval_steps.map(approvalRow =>
+      this.approvalSteps = row.approval_steps.map((approvalRow) =>
         ApprovalStepAdapter.fromDb(approvalRow)
       );
     }

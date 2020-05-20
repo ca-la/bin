@@ -1,4 +1,4 @@
-import SessionsDAO from '../../dao/sessions';
+import SessionsDAO from "../../dao/sessions";
 
 export async function attachSession(
   authToken: string,
@@ -20,6 +20,6 @@ export async function attachSession(
   return {
     token,
     role: session.role,
-    userId: session.userId
+    userId: session.userId,
   };
 }

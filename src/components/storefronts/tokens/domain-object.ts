@@ -1,8 +1,8 @@
-import DataAdapter from '../../../services/data-adapter';
-import { hasProperties } from '../../../services/require-properties';
+import DataAdapter from "../../../services/data-adapter";
+import { hasProperties } from "../../../services/require-properties";
 
 export enum ProviderName {
-  SHOPIFY = 'shopify'
+  SHOPIFY = "shopify",
 }
 
 export default interface StorefrontToken {
@@ -41,13 +41,13 @@ export function isStorefrontTokenRow(
 ): candidate is StorefrontTokenRow {
   return hasProperties(
     candidate,
-    'id',
-    'provider_name',
-    'storefront_id',
-    'token',
-    'base_url',
-    'created_at',
-    'created_by',
-    'deleted_at'
+    "id",
+    "provider_name",
+    "storefront_id",
+    "token",
+    "base_url",
+    "created_at",
+    "created_by",
+    "deleted_at"
   );
 }

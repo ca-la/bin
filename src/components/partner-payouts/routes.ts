@@ -1,9 +1,9 @@
-import Router from 'koa-router';
+import Router from "koa-router";
 
-import canAccessUserResource = require('../../middleware/can-access-user-resource');
-import PartnerPayoutAccounts = require('../../dao/partner-payout-accounts');
-import * as PartnerPayoutLogs from './dao';
-import requireAuth = require('../../middleware/require-auth');
+import canAccessUserResource = require("../../middleware/can-access-user-resource");
+import PartnerPayoutAccounts = require("../../dao/partner-payout-accounts");
+import * as PartnerPayoutLogs from "./dao";
+import requireAuth = require("../../middleware/require-auth");
 
 const router = new Router();
 
@@ -13,7 +13,7 @@ function* getLogs(this: AuthedContext): Iterator<any, any, any> {
 
   if (payoutAccountId) {
     const account = yield PartnerPayoutAccounts.findById(payoutAccountId);
-    this.assert(account, 400, 'Invalid account ID');
+    this.assert(account, 400, "Invalid account ID");
     canAccessUserResource.call(this, account.userId);
 
     const logs = yield PartnerPayoutLogs.findByPayoutAccountId(payoutAccountId);
@@ -26,6 +26,6 @@ function* getLogs(this: AuthedContext): Iterator<any, any, any> {
   }
 }
 
-router.get('/', requireAuth, getLogs);
+router.get("/", requireAuth, getLogs);
 
 export default router.routes();

@@ -1,6 +1,6 @@
-import DataAdapter from '../services/data-adapter';
-import { hasProperties } from '../services/require-properties';
-import { Role } from '../components/users/domain-object';
+import DataAdapter from "../services/data-adapter";
+import { hasProperties } from "../services/require-properties";
+import { Role } from "../components/users/domain-object";
 
 /**
  * A log entry for a quote and partner assignment event that occured on a design
@@ -14,32 +14,32 @@ export type DesignEventTypes =
 
 type DesignerEvents =
   // Send the design to CALA initially for review
-  | 'SUBMIT_DESIGN'
+  | "SUBMIT_DESIGN"
   // Commit to a certain quantity and price quote
-  | 'COMMIT_QUOTE';
+  | "COMMIT_QUOTE";
 
 type CALAEvents =
   // Send a design to a partner for them to accept/reject
-  | 'BID_DESIGN'
+  | "BID_DESIGN"
   // Indicate that we're unable to support producing this design
-  | 'REJECT_DESIGN'
+  | "REJECT_DESIGN"
   // Indicate that we've set up the cost inputs for this design, so a designer
   // may now review them.
-  | 'COMMIT_COST_INPUTS'
+  | "COMMIT_COST_INPUTS"
   // The opposite of BID_DESIGN; remove a partner
-  | 'REMOVE_PARTNER'
+  | "REMOVE_PARTNER"
   // Indicate if CALA has finalized pairing of a partner(s) to a design.
-  | 'COMMIT_PARTNER_PAIRING';
+  | "COMMIT_PARTNER_PAIRING";
 
-type PartnerEvents = 'ACCEPT_SERVICE_BID' | 'REJECT_SERVICE_BID';
+type PartnerEvents = "ACCEPT_SERVICE_BID" | "REJECT_SERVICE_BID";
 
 type ApprovalEvents =
-  | 'REVISION_REQUEST'
-  | 'STEP_ASSIGNMENT'
-  | 'STEP_SUMBISSION_APPROVAL'
-  | 'STEP_SUMBISSION_ASSIGNMENT'
-  | 'STEP_COMPLETE'
-  | 'STEP_REOPEN';
+  | "REVISION_REQUEST"
+  | "STEP_ASSIGNMENT"
+  | "STEP_SUMBISSION_APPROVAL"
+  | "STEP_SUMBISSION_ASSIGNMENT"
+  | "STEP_COMPLETE"
+  | "STEP_REOPEN";
 
 export default interface DesignEvent {
   id: string;
@@ -106,34 +106,34 @@ export const withMetaDataAdapter = new DataAdapter<
 export function isDesignEventRow(row: object): row is DesignEventRow {
   return hasProperties(
     row,
-    'id',
-    'created_at',
-    'actor_id',
-    'target_id',
-    'design_id',
-    'bid_id',
-    'type',
-    'quote_id',
-    'approval_step_id',
-    'approval_submission_id',
-    'comment_id'
+    "id",
+    "created_at",
+    "actor_id",
+    "target_id",
+    "design_id",
+    "bid_id",
+    "type",
+    "quote_id",
+    "approval_step_id",
+    "approval_submission_id",
+    "comment_id"
   );
 }
 
 export function isDesignEvent(row: object): row is DesignEvent {
   return hasProperties(
     row,
-    'id',
-    'createdAt',
-    'actorId',
-    'targetId',
-    'designId',
-    'bidId',
-    'type',
-    'quoteId',
-    'approvalStepId',
-    'approvalSubmissionId',
-    'commentId'
+    "id",
+    "createdAt",
+    "actorId",
+    "targetId",
+    "designId",
+    "bidId",
+    "type",
+    "quoteId",
+    "approvalStepId",
+    "approvalSubmissionId",
+    "commentId"
   );
 }
 
@@ -144,14 +144,14 @@ export function isDesignEventWithMetaRow(
     isDesignEventRow(row) &&
     hasProperties(
       row,
-      'actor_name',
-      'actor_role',
-      'actor_email',
-      'target_name',
-      'target_role',
-      'target_email',
-      'submission_title',
-      'step_title'
+      "actor_name",
+      "actor_role",
+      "actor_email",
+      "target_name",
+      "target_role",
+      "target_email",
+      "submission_title",
+      "step_title"
     )
   );
 }
@@ -161,14 +161,14 @@ export function isDesignEventWithMeta(row: object): row is DesignEventWithMeta {
     isDesignEvent(row) &&
     hasProperties(
       row,
-      'actorName',
-      'actorRole',
-      'actorEmail',
-      'targetName',
-      'targetRole',
-      'targetEmail',
-      'submissionTitle',
-      'stepTitle'
+      "actorName",
+      "actorRole",
+      "actorEmail",
+      "targetName",
+      "targetRole",
+      "targetEmail",
+      "submissionTitle",
+      "stepTitle"
     )
   );
 }

@@ -1,9 +1,9 @@
-import uuid from 'node-uuid';
-import { create } from '../../components/processes/dao';
-import Process from '../../components/processes/domain-object';
-import * as UsersDAO from '../../components/users/dao';
-import createUser = require('../create-user');
-import { ComponentType } from '../../components/components/domain-object';
+import uuid from "node-uuid";
+import { create } from "../../components/processes/dao";
+import Process from "../../components/processes/domain-object";
+import * as UsersDAO from "../../components/users/dao";
+import createUser = require("../create-user");
+import { ComponentType } from "../../components/components/domain-object";
 
 interface ProcessWithResources {
   createdBy: any;
@@ -22,8 +22,8 @@ export default async function generateProcess(
     componentType: options.componentType || ComponentType.Sketch,
     createdBy: user.id,
     id: options.id || uuid.v4(),
-    name: options.name || 'Dye Sublimation',
-    ordering: options.ordering || 0
+    name: options.name || "Dye Sublimation",
+    ordering: options.ordering || 0,
   });
 
   return { createdBy: user, process };
