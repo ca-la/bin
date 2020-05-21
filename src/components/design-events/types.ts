@@ -76,8 +76,8 @@ export interface DesignEventWithMeta extends DesignEvent {
   targetEmail: string | null;
   submissionTitle: string | null;
   stepTitle: string | null;
-  taskTypeId: string;
-  taskTypeTitle: string;
+  taskTypeId: string | null;
+  taskTypeTitle: string | null;
 }
 
 export interface DesignEventWithMetaRow extends DesignEventRow {
@@ -89,8 +89,8 @@ export interface DesignEventWithMetaRow extends DesignEventRow {
   target_email: string | null;
   submission_title: string | null;
   step_title: string | null;
-  task_type_id: string;
-  task_type_title: string;
+  task_type_id: string | null;
+  task_type_title: string | null;
 }
 
 export const domain = "DesignEvent" as "DesignEvent";
