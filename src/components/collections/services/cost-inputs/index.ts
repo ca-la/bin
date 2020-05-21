@@ -42,6 +42,7 @@ export async function commitCostInputs(
           id: uuid.v4(),
           quoteId: null,
           targetId: design.userId,
+          taskTypeId: null,
           type: "COMMIT_COST_INPUTS",
         });
       }

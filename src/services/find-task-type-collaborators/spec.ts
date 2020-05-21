@@ -49,6 +49,7 @@ test("findTaskTypeCollaborators", async (t: Test) => {
       bidId: bid.id,
       quoteId: quote.id,
       approvalStepId: null,
+      taskTypeId: null,
       approvalSubmissionId: null,
     });
     await DesignEventsDAO.create(trx, {
@@ -62,6 +63,7 @@ test("findTaskTypeCollaborators", async (t: Test) => {
       bidId: photoBid.id,
       quoteId: quote.id,
       approvalStepId: null,
+      taskTypeId: null,
       approvalSubmissionId: null,
     });
   });

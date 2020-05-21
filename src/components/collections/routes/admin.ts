@@ -61,6 +61,7 @@ export function* createPartnerPairing(
           id: uuid.v4(),
           quoteId: null,
           targetId: null,
+          taskTypeId: null,
           type: "COMMIT_PARTNER_PAIRING",
         });
         await createDesignTasks(design.id, "POST_APPROVAL", trx);

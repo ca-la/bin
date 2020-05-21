@@ -14,6 +14,7 @@ import ApprovalStep, {
 import { findByDesignId as findProductTypeByDesignId } from "../../components/pricing-product-types/dao";
 import { taskTypes } from "../../components/tasks/templates";
 import { getDefaultsByDesign } from "../../components/approval-step-submissions/defaults";
+import DesignEvent from "../../domain-objects/design-event";
 
 export async function makeNextStepCurrentIfNeeded(
   trx: Knex.Transaction,
@@ -78,6 +79,7 @@ export async function handleUserStepCompletion(
     quoteId: null,
     targetId: null,
     type: "STEP_COMPLETE",
+    taskTypeId: null,
     commentId: null,
   });
   // TODO: Send notification
@@ -126,6 +128,7 @@ export async function handleUserStepReopen(
     quoteId: null,
     targetId: null,
     type: "STEP_REOPEN",
+    taskTypeId: null,
     commentId: null,
   });
   // TODO: cause any related notification to not be returned any more
@@ -176,9 +179,12 @@ export async function transitionCheckoutState(
 
 export async function actualizeDesignStepsAfterBidAcceptance(
   trx: Knex.Transaction,
-  bidId: string,
-  designId: string
+  event: DesignEvent
 ): Promise<void> {
+  const { bidId, actorId, designId, quoteId } = event;
+  if (!bidId) {
+    throw new Error("bidId is missing");
+  }
   const bidTaskTypes = await BidTaskTypesDAO.findByBidId(trx, bidId);
 
   const approvalSteps = await ApprovalStepsDAO.find(
@@ -189,6 +195,18 @@ export async function actualizeDesignStepsAfterBidAcceptance(
   );
   const newStates = approvalSteps.map((step: ApprovalStep) => step.state);
 
+  const baseDesignEvent: Unsaved<DesignEvent> = {
+    actorId,
+    approvalSubmissionId: null,
+    bidId,
+    commentId: null,
+    designId,
+    quoteId,
+    targetId: null,
+    type: "STEP_PARTNER_PAIRING",
+    taskTypeId: null,
+    approvalStepId: null,
+  };
   for (const bidTaskType of bidTaskTypes) {
     switch (bidTaskType.taskTypeId) {
       case taskTypes.TECHNICAL_DESIGN.id: {
@@ -198,6 +216,13 @@ export async function actualizeDesignStepsAfterBidAcceptance(
         );
         if (index > -1 && newStates[index] === ApprovalStepState.BLOCKED) {
           newStates[index] = ApprovalStepState.UNSTARTED;
+          await DesignEventsDAO.create(trx, {
+            ...baseDesignEvent,
+            id: uuid.v4(),
+            createdAt: new Date(),
+            taskTypeId: bidTaskType.taskTypeId,
+            approvalStepId: approvalSteps[index].id,
+          });
         }
         break;
       }
@@ -207,6 +232,13 @@ export async function actualizeDesignStepsAfterBidAcceptance(
         );
         if (index > -1 && newStates[index] === ApprovalStepState.BLOCKED) {
           newStates[index] = ApprovalStepState.UNSTARTED;
+          await DesignEventsDAO.create(trx, {
+            ...baseDesignEvent,
+            id: uuid.v4(),
+            createdAt: new Date(),
+            taskTypeId: bidTaskType.taskTypeId,
+            approvalStepId: approvalSteps[index].id,
+          });
         }
         break;
       }

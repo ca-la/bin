@@ -736,6 +736,7 @@ test("POST /collections/:collectionId/partner-pairings", async (t: tape.Test) =>
       id: uuid.v4(),
       quoteId: null,
       targetId: null,
+      taskTypeId: null,
       type: "ACCEPT_SERVICE_BID",
     },
     {
@@ -748,6 +749,7 @@ test("POST /collections/:collectionId/partner-pairings", async (t: tape.Test) =>
       id: uuid.v4(),
       quoteId: null,
       targetId: null,
+      taskTypeId: null,
       type: "ACCEPT_SERVICE_BID",
     },
   ]);

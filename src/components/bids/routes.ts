@@ -205,6 +205,7 @@ function* assignBidToPartner(this: AuthedContext): Iterator<any, any, any> {
       id: uuid.v4(),
       quoteId: null,
       targetId: target.id,
+      taskTypeId: null,
       type: "BID_DESIGN",
     });
   });
@@ -279,6 +280,7 @@ function* removeBidFromPartner(this: AuthedContext): Iterator<any, any, any> {
       id: uuid.v4(),
       quoteId: null,
       targetId: target.id,
+      taskTypeId: null,
       type: "REMOVE_PARTNER",
     });
   });
@@ -334,6 +336,7 @@ export function* acceptDesignBid(
     id: uuid.v4(),
     quoteId: bid.quoteId,
     targetId: null,
+    taskTypeId: null,
     type: "ACCEPT_SERVICE_BID",
   }).catch(
     filterError(
@@ -420,6 +423,7 @@ export function* rejectDesignBid(
       id: uuid.v4(),
       quoteId: bid.quoteId,
       targetId: null,
+      taskTypeId: null,
       type: "REJECT_SERVICE_BID",
     });
   });

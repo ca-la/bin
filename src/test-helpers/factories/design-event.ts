@@ -44,6 +44,7 @@ export default async function generateDesignEvent(
       id: uuid.v4(),
       quoteId: null,
       targetId: null,
+      taskTypeId: null,
       type: "SUBMIT_DESIGN",
       ...options,
     })

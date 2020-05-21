@@ -90,6 +90,7 @@ function* createApproval(
       id: uuid.v4(),
       quoteId: null,
       targetId: null,
+      taskTypeId: null,
       type: "STEP_SUMBISSION_APPROVAL",
     });
 
@@ -176,6 +177,7 @@ export function* updateApprovalSubmission(
         id: uuid.v4(),
         quoteId: null,
         targetId: collaborator && collaborator.userId,
+        taskTypeId: null,
         type: "STEP_SUMBISSION_ASSIGNMENT",
       });
       if (collaborator) {
@@ -320,6 +322,7 @@ export function* createRevisionRequest(
       id: uuid.v4(),
       quoteId: null,
       targetId: null,
+      taskTypeId: null,
       type: "REVISION_REQUEST",
     });
   });

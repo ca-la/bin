@@ -125,6 +125,7 @@ function* createQuote(this: AuthedContext): Iterator<any, any, any> {
         quoteId: quote.id,
         targetId: null,
         approvalStepId: null,
+        taskTypeId: null,
         type: "COMMIT_QUOTE",
       });
     });

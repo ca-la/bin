@@ -1,9 +1,10 @@
-import { test, Test } from "../../test-helpers/fresh";
+import { test, Test, sandbox } from "../../test-helpers/fresh";
 import { generateDesign } from "../../test-helpers/factories/product-design";
 import generateBid from "../../test-helpers/factories/bid";
 import { actualizeDesignStepsAfterBidAcceptance } from "./";
 import db from "../../services/db";
 import createUser from "../../test-helpers/create-user";
+import uuid from "node-uuid";
 
 import ApprovalStep, {
   ApprovalStepState,
@@ -11,12 +12,15 @@ import ApprovalStep, {
 } from "../../components/approval-steps/domain-object";
 import * as ApprovalStepsDAO from "../../components/approval-steps/dao";
 import { taskTypes } from "../../components/tasks/templates";
+import DesignEvent from "../../domain-objects/design-event";
+import * as DesignEventsDAO from "../../dao/design-events";
 
 interface TestCase {
   title: string;
   taskTypeIds: string[];
   isBlank: boolean;
   stepStates: { [key in ApprovalStepType]: ApprovalStepState };
+  createdDesignEvents: Partial<DesignEvent>[];
 }
 
 const testCases: TestCase[] = [
@@ -30,6 +34,12 @@ const testCases: TestCase[] = [
       [ApprovalStepType.SAMPLE]: ApprovalStepState.BLOCKED,
       [ApprovalStepType.PRODUCTION]: ApprovalStepState.UNSTARTED,
     },
+    createdDesignEvents: [
+      {
+        taskTypeId: taskTypes.TECHNICAL_DESIGN.id,
+        type: "STEP_PARTNER_PAIRING",
+      },
+    ],
   },
   {
     title: "Production bid",
@@ -41,6 +51,12 @@ const testCases: TestCase[] = [
       [ApprovalStepType.SAMPLE]: ApprovalStepState.UNSTARTED,
       [ApprovalStepType.PRODUCTION]: ApprovalStepState.UNSTARTED,
     },
+    createdDesignEvents: [
+      {
+        taskTypeId: taskTypes.PRODUCTION.id,
+        type: "STEP_PARTNER_PAIRING",
+      },
+    ],
   },
   {
     title: "Bid with Production and Technical Design tasks",
@@ -52,6 +68,16 @@ const testCases: TestCase[] = [
       [ApprovalStepType.SAMPLE]: ApprovalStepState.UNSTARTED,
       [ApprovalStepType.PRODUCTION]: ApprovalStepState.UNSTARTED,
     },
+    createdDesignEvents: [
+      {
+        taskTypeId: taskTypes.PRODUCTION.id,
+        type: "STEP_PARTNER_PAIRING",
+      },
+      {
+        taskTypeId: taskTypes.TECHNICAL_DESIGN.id,
+        type: "STEP_PARTNER_PAIRING",
+      },
+    ],
   },
 ];
 
@@ -67,6 +93,8 @@ for (const testCase of testCases) {
       },
       designId: design.id,
     });
+    const createDesignEventStub = sandbox().stub(DesignEventsDAO, "create");
+
     const trx = await db.transaction();
 
     // Completing checkout step
@@ -80,7 +108,22 @@ for (const testCase of testCases) {
       state: ApprovalStepState.COMPLETED,
     });
 
-    await actualizeDesignStepsAfterBidAcceptance(trx, bid.id, design.id);
+    const event: DesignEvent = {
+      actorId: user.id,
+      approvalSubmissionId: null,
+      bidId: bid.id,
+      commentId: null,
+      createdAt: new Date(),
+      designId: design.id,
+      id: uuid.v4(),
+      quoteId: null,
+      targetId: null,
+      type: "STEP_PARTNER_PAIRING",
+      taskTypeId: null,
+      approvalStepId: null,
+    };
+
+    await actualizeDesignStepsAfterBidAcceptance(trx, event);
     const approvalSteps: ApprovalStep[] = await ApprovalStepsDAO.findByDesign(
       trx,
       design.id
@@ -94,6 +137,23 @@ for (const testCase of testCases) {
         }`
       );
     }
+    const createdEvents = createDesignEventStub.args.reduce(
+      (acc: Partial<DesignEvent>[], arg: any) => {
+        acc.push({
+          taskTypeId: arg[1].taskTypeId,
+          type: arg[1].type,
+        });
+        return acc;
+      },
+      []
+    );
+    t.deepEqual(
+      createdEvents,
+      testCase.createdDesignEvents,
+      `${testCase.title}: creates design events`
+    );
+
+    createDesignEventStub.restore();
     await trx.rollback();
   });
 }

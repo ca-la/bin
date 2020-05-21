@@ -388,6 +388,7 @@ test("route.updated.collaboratorId", async (t: Test) => {
             designId: as.designId,
             quoteId: null,
             targetId: "u1",
+            taskTypeId: null,
             type: "STEP_ASSIGNMENT",
           },
         ],

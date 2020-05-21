@@ -43,6 +43,7 @@ test("reverseSubmissionRecords", async (t: tape.Test) => {
       type: "SUBMIT_DESIGN",
       approvalStepId: null,
       approvalSubmissionId: null,
+      taskTypeId: null,
       commentId: null,
     })
   );
@@ -58,6 +59,7 @@ test("reverseSubmissionRecords", async (t: tape.Test) => {
       type: "COMMIT_COST_INPUTS",
       approvalStepId: null,
       approvalSubmissionId: null,
+      taskTypeId: null,
       commentId: null,
     })
   );
@@ -73,6 +75,7 @@ test("reverseSubmissionRecords", async (t: tape.Test) => {
       type: "BID_DESIGN",
       approvalStepId: null,
       approvalSubmissionId: null,
+      taskTypeId: null,
       commentId: null,
     })
   );

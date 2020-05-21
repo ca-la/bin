@@ -27,10 +27,10 @@ const ACTIVITY_STREAM_EVENTS: DesignEventTypes[] = [
   "STEP_SUMBISSION_APPROVAL",
   "STEP_SUMBISSION_ASSIGNMENT",
   "STEP_COMPLETE",
+  "STEP_PARTNER_PAIRING",
   "STEP_REOPEN",
   "SUBMIT_DESIGN",
   "COMMIT_QUOTE",
-  "ACCEPT_SERVICE_BID",
 ];
 
 export class DuplicateAcceptRejectError extends Error {
@@ -74,14 +74,7 @@ export async function create(
   }
   switch (event.type) {
     case "ACCEPT_SERVICE_BID":
-      if (!event.bidId) {
-        throw new Error("bidId is missing");
-      }
-      await actualizeDesignStepsAfterBidAcceptance(
-        trx,
-        event.bidId,
-        event.designId
-      );
+      await actualizeDesignStepsAfterBidAcceptance(trx, event);
       break;
   }
 
@@ -168,13 +161,6 @@ function addMeta(query: Knex.QueryBuilder): Knex.QueryBuilder {
       "target.email as target_email",
       "design_approval_submissions.title as submission_title",
       "design_approval_steps.title as step_title",
-      db.raw(
-        `(
-          SELECT COALESCE(jsonb_agg(task_type_id), '[]')
-          FROM bid_task_types
-          WHERE pricing_bid_id = design_events.bid_id
-        ) AS task_type_ids`
-      ),
     ])
     .join("users as actor", "actor.id", "design_events.actor_id")
     .leftJoin("users as target", "target.id", "design_events.target_id")
@@ -208,9 +194,10 @@ export async function findApprovalStepEvents(
   ).map((item: DesignEventWithMetaRow) => {
     return {
       ...item,
-      task_type_titles: item.task_type_ids.map((typeId: string) =>
-        taskTypesById[typeId] ? taskTypesById[typeId].title : "Unknown task"
-      ),
+      task_type_title:
+        item.task_type_id && taskTypesById[item.task_type_id]
+          ? taskTypesById[item.task_type_id].title
+          : null,
     };
   });
   return validateEvery<DesignEventWithMetaRow, DesignEventWithMeta>(

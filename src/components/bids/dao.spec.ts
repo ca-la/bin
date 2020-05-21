@@ -266,6 +266,7 @@ test("Bids DAO supports retrieval of bids by target ID and status", async (t: Te
     id: uuid.v4(),
     quoteId: null,
     targetId: null,
+    taskTypeId: null,
     type: "SUBMIT_DESIGN",
   };
 
@@ -280,6 +281,7 @@ test("Bids DAO supports retrieval of bids by target ID and status", async (t: Te
     id: uuid.v4(),
     quoteId: null,
     targetId: partner.id,
+    taskTypeId: null,
     type: "BID_DESIGN",
   };
   const bidToOtherEvent: DesignEvent = {
@@ -293,6 +295,7 @@ test("Bids DAO supports retrieval of bids by target ID and status", async (t: Te
     id: uuid.v4(),
     quoteId: null,
     targetId: otherPartner.id,
+    taskTypeId: null,
     type: "BID_DESIGN",
   };
   const bidDesignToRejectEvent: DesignEvent = {
@@ -306,6 +309,7 @@ test("Bids DAO supports retrieval of bids by target ID and status", async (t: Te
     id: uuid.v4(),
     quoteId: null,
     targetId: partner.id,
+    taskTypeId: null,
     type: "BID_DESIGN",
   };
   const bidDesignToAcceptEvent: DesignEvent = {
@@ -319,6 +323,7 @@ test("Bids DAO supports retrieval of bids by target ID and status", async (t: Te
     id: uuid.v4(),
     quoteId: null,
     targetId: partner.id,
+    taskTypeId: null,
     type: "BID_DESIGN",
   };
 
@@ -333,6 +338,7 @@ test("Bids DAO supports retrieval of bids by target ID and status", async (t: Te
     id: uuid.v4(),
     quoteId: null,
     targetId: null,
+    taskTypeId: null,
     type: "REJECT_SERVICE_BID",
   };
   const acceptDesignEvent: DesignEvent = {
@@ -346,6 +352,7 @@ test("Bids DAO supports retrieval of bids by target ID and status", async (t: Te
     id: uuid.v4(),
     quoteId: null,
     targetId: null,
+    taskTypeId: null,
     type: "ACCEPT_SERVICE_BID",
   };
   const otherRejectEvent: DesignEvent = {
@@ -359,6 +366,7 @@ test("Bids DAO supports retrieval of bids by target ID and status", async (t: Te
     id: uuid.v4(),
     quoteId: null,
     targetId: null,
+    taskTypeId: null,
     type: "REJECT_SERVICE_BID",
   };
 

@@ -325,6 +325,7 @@ export async function generateFromPayloadAndUser(
       id: uuid.v4(),
       quoteId: quote.id,
       targetId: null,
+      taskTypeId: null,
       type: "COMMIT_QUOTE",
     });
   }

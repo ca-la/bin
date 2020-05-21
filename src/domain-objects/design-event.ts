@@ -39,7 +39,8 @@ type ApprovalEvents =
   | "STEP_SUMBISSION_APPROVAL"
   | "STEP_SUMBISSION_ASSIGNMENT"
   | "STEP_COMPLETE"
-  | "STEP_REOPEN";
+  | "STEP_REOPEN"
+  | "STEP_PARTNER_PAIRING";
 
 export default interface DesignEvent {
   id: string;
@@ -53,7 +54,7 @@ export default interface DesignEvent {
   type: DesignEventTypes;
   approvalSubmissionId: string | null;
   commentId: string | null;
-  taskTypeId?: null;
+  taskTypeId: string | null;
 }
 
 export interface DesignEventRow {
@@ -68,6 +69,7 @@ export interface DesignEventRow {
   type: DesignEventTypes;
   approval_submission_id: string | null;
   comment_id: string | null;
+  task_type_id: string | null;
 }
 
 export interface DesignEventWithMeta extends DesignEvent {
@@ -79,8 +81,8 @@ export interface DesignEventWithMeta extends DesignEvent {
   targetEmail: string | null;
   submissionTitle: string | null;
   stepTitle: string | null;
-  taskTypeIds: string[];
-  taskTypeTitles: string[];
+  taskTypeId: string | null;
+  taskTypeTitle: string | null;
 }
 
 export interface DesignEventWithMetaRow extends DesignEventRow {
@@ -92,8 +94,8 @@ export interface DesignEventWithMetaRow extends DesignEventRow {
   target_email: string | null;
   submission_title: string | null;
   step_title: string | null;
-  task_type_ids: string[];
-  task_type_titles: string[];
+  task_type_id: string | null;
+  task_type_title: string | null;
 }
 
 export const dataAdapter = new DataAdapter<DesignEventRow, DesignEvent>();

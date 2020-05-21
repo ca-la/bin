@@ -440,6 +440,7 @@ test("findSubmittedButUnpaidCollections finds all submitted but unpaid collectio
     id: uuid.v4(),
     quoteId: null,
     targetId: user.id,
+    taskTypeId: null,
     type: "SUBMIT_DESIGN",
   };
   const submitEventDeleted: DesignEvent = {
@@ -453,6 +454,7 @@ test("findSubmittedButUnpaidCollections finds all submitted but unpaid collectio
     id: uuid.v4(),
     quoteId: null,
     targetId: user.id,
+    taskTypeId: null,
     type: "SUBMIT_DESIGN",
   };
   const submitEventDeleted2: DesignEvent = {
@@ -466,6 +468,7 @@ test("findSubmittedButUnpaidCollections finds all submitted but unpaid collectio
     id: uuid.v4(),
     quoteId: null,
     targetId: user.id,
+    taskTypeId: null,
     type: "SUBMIT_DESIGN",
   };
   const submitEvent2: DesignEvent = {
@@ -479,6 +482,7 @@ test("findSubmittedButUnpaidCollections finds all submitted but unpaid collectio
     id: uuid.v4(),
     quoteId: null,
     targetId: user.id,
+    taskTypeId: null,
     type: "SUBMIT_DESIGN",
   };
   const submitEvent3: DesignEvent = {
@@ -492,6 +496,7 @@ test("findSubmittedButUnpaidCollections finds all submitted but unpaid collectio
     id: uuid.v4(),
     quoteId: null,
     targetId: user.id,
+    taskTypeId: null,
     type: "SUBMIT_DESIGN",
   };
   const submitEvent4: DesignEvent = {
@@ -505,6 +510,7 @@ test("findSubmittedButUnpaidCollections finds all submitted but unpaid collectio
     id: uuid.v4(),
     quoteId: null,
     targetId: user.id,
+    taskTypeId: null,
     type: "SUBMIT_DESIGN",
   };
   const submitEvent5: DesignEvent = {
@@ -518,6 +524,7 @@ test("findSubmittedButUnpaidCollections finds all submitted but unpaid collectio
     id: uuid.v4(),
     quoteId: null,
     targetId: user.id,
+    taskTypeId: null,
     type: "SUBMIT_DESIGN",
   };
   const paymentEvent1: DesignEvent = {
@@ -531,6 +538,7 @@ test("findSubmittedButUnpaidCollections finds all submitted but unpaid collectio
     id: uuid.v4(),
     quoteId: null,
     targetId: user2.id,
+    taskTypeId: null,
     type: "COMMIT_QUOTE",
   };
   const paymentEvent2: DesignEvent = {
@@ -544,6 +552,7 @@ test("findSubmittedButUnpaidCollections finds all submitted but unpaid collectio
     id: uuid.v4(),
     quoteId: null,
     targetId: user2.id,
+    taskTypeId: null,
     type: "COMMIT_QUOTE",
   };
   const paymentEvent3: DesignEvent = {
@@ -557,6 +566,7 @@ test("findSubmittedButUnpaidCollections finds all submitted but unpaid collectio
     id: uuid.v4(),
     quoteId: null,
     targetId: user2.id,
+    taskTypeId: null,
     type: "COMMIT_QUOTE",
   };
   const paymentEvent4: DesignEvent = {
@@ -570,6 +580,7 @@ test("findSubmittedButUnpaidCollections finds all submitted but unpaid collectio
     id: uuid.v4(),
     quoteId: null,
     targetId: user2.id,
+    taskTypeId: null,
     type: "COMMIT_QUOTE",
   };
 
@@ -604,6 +615,7 @@ test("findSubmittedButUnpaidCollections finds all submitted but unpaid collectio
       id: uuid.v4(),
       quoteId: null,
       targetId: user.id,
+      taskTypeId: null,
       type: "SUBMIT_DESIGN",
     });
   });

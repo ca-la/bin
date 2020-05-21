@@ -305,6 +305,7 @@ test("UsersDAO.findByBidId returns all users on a pricing bid", async (t: Test) 
       targetId: one.id,
       approvalStepId: null,
       approvalSubmissionId: null,
+      taskTypeId: null,
       type: "BID_DESIGN",
     });
     await DesignEventsDAO.create(trx, {
@@ -318,6 +319,7 @@ test("UsersDAO.findByBidId returns all users on a pricing bid", async (t: Test) 
       targetId: two.id,
       approvalStepId: null,
       approvalSubmissionId: null,
+      taskTypeId: null,
       type: "BID_DESIGN",
     });
   });
@@ -357,6 +359,7 @@ test("UsersDAO.findAllUnpaidPartners returns all unpaid partners", async (t: Tes
       targetId: unpaidPartner.id,
       approvalStepId: null,
       approvalSubmissionId: null,
+      taskTypeId: null,
       type: "BID_DESIGN",
     });
   });
@@ -397,6 +400,7 @@ test("UsersDAO.findAllUnpaidPartners returns all unpaid partners", async (t: Tes
       targetId: paidPartner.id,
       approvalStepId: null,
       approvalSubmissionId: null,
+      taskTypeId: null,
       type: "BID_DESIGN",
     });
   });
@@ -466,6 +470,7 @@ test("UsersDAO.findAllUnpaidPartners does not include partners removed from bids
       targetId: unpaidPartner.id,
       approvalStepId: null,
       approvalSubmissionId: null,
+      taskTypeId: null,
       type: "BID_DESIGN",
     });
   });
@@ -506,6 +511,7 @@ test("UsersDAO.findAllUnpaidPartners does not include partners removed from bids
       targetId: paidPartner.id,
       approvalStepId: null,
       approvalSubmissionId: null,
+      taskTypeId: null,
       type: "BID_DESIGN",
     });
   });

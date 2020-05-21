@@ -748,6 +748,7 @@ test("CollaboratorsDAO.findByDesignAndTaskType", async (t: Test) => {
       id: uuid.v4(),
       quoteId: quote.id,
       targetId: null,
+      taskTypeId: null,
       type: "ACCEPT_SERVICE_BID",
     });
   });

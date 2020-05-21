@@ -388,16 +388,16 @@ test("Design Events DAO supports retrieval by design ID and approval step ID", a
   const { user: cala } = await createUser();
   const design = await generateDesign({ userId: designer.id });
 
-  const approvalStepId = (
-    await db.transaction(async (trx: Knex.Transaction) =>
-      ApprovalStepsDAO.findByDesign(trx, design.id)
-    )
-  )[0].id;
+  const steps = await db.transaction(async (trx: Knex.Transaction) =>
+    ApprovalStepsDAO.findByDesign(trx, design.id)
+  );
+  const checkoutStepId = steps[0].id;
+  const technicalDesignStepId = steps[1].id;
 
   clock.setSystemTime(new Date(2020, 1, 24));
   await generateDesignEvent({
     actorId: designer.id,
-    approvalStepId,
+    approvalStepId: checkoutStepId,
     designId: design.id,
     type: "SUBMIT_DESIGN",
   });
@@ -405,6 +405,7 @@ test("Design Events DAO supports retrieval by design ID and approval step ID", a
   await generateDesignEvent({
     actorId: designer.id,
     designId: design.id,
+    approvalStepId: checkoutStepId,
     type: "COMMIT_QUOTE",
   });
   clock.setSystemTime(new Date(2020, 1, 26));
@@ -428,22 +429,22 @@ test("Design Events DAO supports retrieval by design ID and approval step ID", a
     type: "ACCEPT_SERVICE_BID",
   });
 
-  const events = await db.transaction(async (trx: Knex.Transaction) =>
-    findApprovalStepEvents(trx, design.id, approvalStepId)
+  const checkoutEvents = await db.transaction(async (trx: Knex.Transaction) =>
+    findApprovalStepEvents(trx, design.id, checkoutStepId)
   );
 
-  t.equal(events.length, 3);
+  t.equal(checkoutEvents.length, 2);
   t.deepEqual(
     {
-      approvalStepId: events[0].approvalStepId,
-      designId: events[0].designId,
-      actorId: events[0].actorId,
-      actorName: events[0].actorName,
-      actorRole: events[0].actorRole,
-      type: events[0].type,
+      approvalStepId: checkoutEvents[0].approvalStepId,
+      designId: checkoutEvents[0].designId,
+      actorId: checkoutEvents[0].actorId,
+      actorName: checkoutEvents[0].actorName,
+      actorRole: checkoutEvents[0].actorRole,
+      type: checkoutEvents[0].type,
     },
     {
-      approvalStepId,
+      approvalStepId: checkoutStepId,
       designId: design.id,
       actorId: designer.id,
       actorName: designer.name,
@@ -455,35 +456,39 @@ test("Design Events DAO supports retrieval by design ID and approval step ID", a
 
   t.deepEqual(
     {
-      approvalStepId: events[1].approvalStepId,
-      designId: events[1].designId,
-      type: events[1].type,
+      approvalStepId: checkoutEvents[1].approvalStepId,
+      designId: checkoutEvents[1].designId,
+      type: checkoutEvents[1].type,
     },
     {
-      approvalStepId: null,
+      approvalStepId: checkoutStepId,
       designId: design.id,
       type: "COMMIT_QUOTE",
     },
     "returns design events"
   );
 
+  const technicalDesignEvents = await db.transaction(
+    async (trx: Knex.Transaction) =>
+      findApprovalStepEvents(trx, design.id, technicalDesignStepId)
+  );
+  t.equal(technicalDesignEvents.length, 1);
   t.deepEqual(
     {
-      approvalStepId: events[2].approvalStepId,
-      type: events[2].type,
-      taskTypeIds: events[2].taskTypeIds,
-      taskTypeTitles: events[2].taskTypeTitles,
+      approvalStepId: technicalDesignEvents[0].approvalStepId,
+      designId: technicalDesignEvents[0].designId,
+      taskTypeId: technicalDesignEvents[0].taskTypeId,
+      taskTypeTitle: technicalDesignEvents[0].taskTypeTitle,
+      type: technicalDesignEvents[0].type,
     },
     {
-      approvalStepId: null,
-      type: "ACCEPT_SERVICE_BID",
-      taskTypeIds: [taskTypes.TECHNICAL_DESIGN.id, taskTypes.PRODUCTION.id],
-      taskTypeTitles: [
-        taskTypes.TECHNICAL_DESIGN.title,
-        taskTypes.PRODUCTION.title,
-      ],
+      approvalStepId: technicalDesignStepId,
+      designId: design.id,
+      type: "STEP_PARTNER_PAIRING",
+      taskTypeId: "e0dcffd3-9352-47d8-85a2-851cfb6ac437",
+      taskTypeTitle: "Technical Design",
     },
-    "task type ids and names are appended for ACCEPT_SERVICE_BID"
+    "bid task type info is appeneded"
   );
 });
 

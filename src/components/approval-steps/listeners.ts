@@ -102,6 +102,7 @@ export const listeners: Listeners<ApprovalStep, typeof domain> = {
         id: uuid.v4(),
         quoteId: null,
         targetId: collaborator.user.id,
+        taskTypeId: null,
         type: "STEP_ASSIGNMENT",
       });
 
