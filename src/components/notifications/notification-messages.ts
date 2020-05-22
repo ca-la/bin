@@ -19,22 +19,39 @@ import Comment from "../../components/comments/domain-object";
 import { ComponentType } from "../components/domain-object";
 import { getMentionsFromComment } from "../../services/add-at-mention-details";
 import { generatePreviewLinks } from "../../services/attach-asset-links";
+import User from "../../components/users/domain-object";
 
-function span(text: string, className?: string): string {
+const messageBuilders: Partial<Record<
+  NotificationType,
+  NotificationMessageBuilder
+>> = {};
+
+export type NotificationMessageBuilder = (
+  notification: FullNotification
+) => Promise<NotificationMessage | null>;
+
+export function registerMessageBuilder(
+  type: NotificationType,
+  builder: NotificationMessageBuilder
+): void {
+  messageBuilders[type] = builder;
+}
+
+export function span(text: string, className?: string): string {
   return `<span class='${className}'>${text}</span>`;
 }
 
-function buildImageUrl(imageIds: string[]): string | null {
+export function buildImageUrl(imageIds: string[]): string | null {
   const imageLinks = generatePreviewLinks(imageIds);
 
   return imageLinks.length > 0 ? imageLinks[0].thumbnailLink : null;
 }
 
-function escapeHtml(html?: string | null): string {
+export function escapeHtml(html?: string | null): string {
   return escapeOptionalHtml(html || "");
 }
 
-function getLocation({
+export function getLocation({
   collection,
   design,
 }: {
@@ -59,14 +76,15 @@ function getLocation({
   return location;
 }
 
-export async function createNotificationMessage(
-  notification: FullNotification
-): Promise<NotificationMessage | null> {
-  if (DEPRECATED_NOTIFICATION_TYPES.includes(notification.type)) {
-    return null;
-  }
+type BaseMessage = Pick<
+  NotificationMessage,
+  "actions" | "attachments" | "createdAt" | "id" | "readAt"
+> & {
+  actor: User;
+};
 
-  const baseNotificationMessage = {
+export function createBaseMessage(notification: FullNotification): BaseMessage {
+  return {
     actions: [],
     actor: notification.actor,
     attachments: [],
@@ -74,6 +92,79 @@ export async function createNotificationMessage(
     id: notification.id,
     readAt: notification.readAt,
   };
+}
+
+interface ApprovalBaseWithAssets {
+  base: Omit<NotificationMessage, "html" | "title">;
+  actorName: string;
+  designHtmlLink: string;
+}
+
+export function getApprovalBaseWithAssets(
+  notification: FullNotification
+): ApprovalBaseWithAssets | null {
+  const {
+    designId,
+    designTitle,
+    designImageIds,
+    collectionId,
+    collectionTitle,
+    approvalStepId,
+    approvalStepTitle,
+  } = notification;
+
+  if (!collectionId || !approvalStepId || !designId) {
+    return null;
+  }
+
+  const design = { id: designId, title: designTitle };
+  const collection = {
+    id: collectionId,
+    title: collectionTitle,
+  };
+  const approvalStep = {
+    id: approvalStepId,
+    title: approvalStepTitle,
+  };
+
+  const { deepLink } = getLinks({
+    collection,
+    design,
+    approvalStep,
+    type: LinkType.ApprovalStep,
+  });
+  const designHtmlLink = constructHtmlLink(deepLink, normalizeTitle(design));
+
+  const baseMessage = createBaseMessage(notification);
+  const actorName = escapeHtml(
+    baseMessage.actor.name || baseMessage.actor.email
+  );
+
+  return {
+    base: {
+      ...baseMessage,
+      imageUrl: buildImageUrl(designImageIds),
+      link: deepLink,
+      location: getLocation({ collection, design }),
+    },
+    actorName,
+    designHtmlLink,
+  };
+}
+
+export async function createNotificationMessage(
+  notification: FullNotification
+): Promise<NotificationMessage | null> {
+  if (DEPRECATED_NOTIFICATION_TYPES.includes(notification.type)) {
+    return null;
+  }
+
+  const builder = messageBuilders[notification.type as NotificationType];
+  if (builder) {
+    return builder(notification);
+  }
+
+  const baseNotificationMessage = createBaseMessage(notification);
 
   switch (notification.type) {
     case NotificationType.INVITE_COLLABORATOR: {
@@ -897,110 +988,6 @@ export async function createNotificationMessage(
         )} for ${normalizeTitle(design)}`,
       };
     }
-    case NotificationType.APPROVAL_STEP_SUBMISSION_ASSIGNMENT: {
-      const {
-        designId,
-        designImageIds,
-        collectionId,
-        collectionTitle,
-        approvalStepId,
-        approvalStepTitle,
-        approvalSubmissionTitle,
-      } = notification;
-
-      if (!collectionId) {
-        return null;
-      }
-
-      const design = { id: designId, title: notification.designTitle };
-      const collection = {
-        id: collectionId,
-        title: collectionTitle,
-      };
-      const approvalStep = {
-        id: approvalStepId,
-        title: approvalStepTitle,
-      };
-
-      const { deepLink } = getLinks({
-        collection,
-        design,
-        approvalStep,
-        type: LinkType.ApprovalStep,
-      });
-      const designHtmlLink = constructHtmlLink(
-        deepLink,
-        normalizeTitle(design)
-      );
-
-      const cleanName = escapeHtml(
-        baseNotificationMessage.actor.name ||
-          baseNotificationMessage.actor.email
-      );
-      return {
-        ...baseNotificationMessage,
-        html: `${span(
-          cleanName,
-          "user-name"
-        )} assigned you to review ${approvalSubmissionTitle} for ${designHtmlLink}`,
-        imageUrl: buildImageUrl(designImageIds),
-        link: deepLink,
-        location: getLocation({ collection, design }),
-        title: `${cleanName} assigned you to review ${approvalSubmissionTitle} for ${designHtmlLink}`,
-      };
-    }
-    case NotificationType.APPROVAL_STEP_ASSIGNMENT: {
-      const {
-        designId,
-        designImageIds,
-        collectionId,
-        collectionTitle,
-        approvalStepId,
-        approvalStepTitle,
-      } = notification;
-
-      if (!collectionId) {
-        return null;
-      }
-
-      const design = { id: designId, title: notification.designTitle };
-      const collection = {
-        id: collectionId,
-        title: collectionTitle,
-      };
-      const approvalStep = {
-        id: approvalStepId,
-        title: approvalStepTitle,
-      };
-
-      const { deepLink } = getLinks({
-        collection,
-        design,
-        approvalStep,
-        type: LinkType.ApprovalStep,
-      });
-      const designHtmlLink = constructHtmlLink(
-        deepLink,
-        normalizeTitle(design)
-      );
-
-      const cleanName = escapeHtml(
-        baseNotificationMessage.actor.name ||
-          baseNotificationMessage.actor.email
-      );
-      return {
-        ...baseNotificationMessage,
-        html: `${span(
-          cleanName,
-          "user-name"
-        )} has assigned you to ${approvalStepTitle} on ${designHtmlLink}`,
-        imageUrl: buildImageUrl(designImageIds),
-        link: deepLink,
-        location: getLocation({ collection, design }),
-        title: `${cleanName} has assigned you to review ${approvalStepTitle} on ${designHtmlLink}`,
-      };
-    }
-
     default: {
       throw new InvalidDataError(
         `Unknown notification type found with id ${notification!.id} and type ${

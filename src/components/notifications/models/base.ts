@@ -22,11 +22,37 @@ export interface BaseNotificationRow {
   measurement_id: null;
   read_at: string | null;
   recipient_user_id: null;
+  recipient_collaborator_id: null;
   section_id: null; // DEPRECATED
   sent_email_at: string | null;
   stage_id: null;
   task_id: null;
   type: NotificationType;
+}
+
+export interface RowKeyMapping {
+  action_description: "actionDescription";
+  actor_user_id: "actorUserId";
+  annotation_id: "annotationId";
+  approval_step_id: "approvalStepId";
+  approval_submission_id: "approvalSubmissionId";
+  canvas_id: "canvasId";
+  collaborator_id: "collaboratorId";
+  collection_id: "collectionId";
+  comment_id: "commentId";
+  created_at: "createdAt";
+  deleted_at: "deletedAt";
+  design_id: "designId";
+  id: "id";
+  measurement_id: "measurementId";
+  read_at: "readAt";
+  recipient_user_id: "recipientUserId";
+  recipient_collaborator_id: "recipientCollaboratorId";
+  section_id: "sectionId"; // DEPRECATED
+  sent_email_at: "sentEmailAt";
+  stage_id: "stageId";
+  task_id: "taskId";
+  type: "type";
 }
 
 export interface BaseFullNotificationRow {
@@ -60,10 +86,36 @@ export interface BaseNotification {
   measurementId: null;
   readAt: Date | null;
   recipientUserId: null;
+  recipientCollaboratorId: null;
   sectionId: null; // DEPRECATED
   sentEmailAt: Date | null;
   stageId: null;
   taskId: null;
+  type: NotificationType;
+}
+
+export interface StrictNotification {
+  actionDescription: string; // DEPRECATED
+  actorUserId: string;
+  annotationId: string;
+  approvalStepId: string;
+  approvalSubmissionId: string;
+  canvasId: string;
+  collaboratorId: string;
+  collectionId: string;
+  commentId: string;
+  createdAt: Date;
+  deletedAt: Date | null;
+  designId: string;
+  id: string;
+  measurementId: string;
+  readAt: Date | null;
+  recipientUserId: string;
+  recipientCollaboratorId: string;
+  sectionId: string; // DEPRECATED
+  sentEmailAt: Date | null;
+  stageId: string;
+  taskId: string;
   type: NotificationType;
 }
 
@@ -95,6 +147,7 @@ export const templateNotification = {
   measurementId: null,
   readAt: null,
   recipientUserId: null,
+  recipientCollaboratorId: null,
   sectionId: null, // DEPRECATED
   sentEmailAt: null,
   stageId: null,

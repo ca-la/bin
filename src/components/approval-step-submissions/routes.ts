@@ -9,7 +9,6 @@ import * as ApprovalStepsDAO from "../approval-steps/dao";
 import * as ApprovalSubmissionsDAO from "./dao";
 import * as CollaboratorsDAO from "../collaborators/dao";
 import * as DesignEventsDAO from "../../dao/design-events";
-import * as NotificationsService from "../../services/create-notifications";
 import ApprovalStepSubmission, {
   ApprovalStepSubmissionState,
 } from "./domain-object";
@@ -28,6 +27,10 @@ import {
 import { createCommentWithAttachments } from "../../services/create-comment-with-attachments";
 import { getCollaboratorsFromCommentMentions } from "../../services/add-at-mention-details";
 import { requireQueryParam } from "../../middleware/require-query-param";
+import notifications from "./notifications";
+import { NotificationType } from "../notifications/domain-object";
+import DesignsDAO from "../product-designs/dao";
+import useTransaction from "../../middleware/use-transaction";
 
 const router = new Router();
 
@@ -61,50 +64,91 @@ export function* getApprovalSubmissionsForStep(
 }
 
 function* createApproval(
-  this: AuthedContext<{}, PermittedState & { designId: string; stepId: string }>
+  this: TrxContext<
+    AuthedContext<{}, PermittedState & { designId: string; stepId: string }>
+  >
 ): Iterator<any, any, any> {
   const { submissionId } = this.params;
+  const { trx } = this.state;
 
-  const event = yield db.transaction(async (trx: Knex.Transaction) => {
-    const submission = await ApprovalSubmissionsDAO.findById(trx, submissionId);
-    if (!submission) {
-      this.throw(404, `Submission not found with ID: ${submissionId}`);
-    }
+  const submission = yield ApprovalSubmissionsDAO.findById(trx, submissionId);
+  if (!submission) {
+    this.throw(404, `Submission not found with ID: ${submissionId}`);
+  }
 
-    if (submission.state === ApprovalStepSubmissionState.APPROVED) {
-      this.throw(409, `Submission is already approved ${submissionId}`);
-    }
+  if (submission.state === ApprovalStepSubmissionState.APPROVED) {
+    this.throw(409, `Submission is already approved ${submissionId}`);
+  }
 
-    await ApprovalSubmissionsDAO.update(trx, submissionId, {
-      state: ApprovalStepSubmissionState.APPROVED,
-    });
-
-    const designEvent: DesignEvent = await DesignEventsDAO.create(trx, {
-      actorId: this.state.userId,
-      approvalStepId: this.state.stepId,
-      approvalSubmissionId: submissionId,
-      bidId: null,
-      commentId: null,
-      createdAt: new Date(),
-      designId: this.state.designId,
-      id: uuid.v4(),
-      quoteId: null,
-      targetId: null,
-      taskTypeId: null,
-      type: "STEP_SUMBISSION_APPROVAL",
-    });
-
-    const designEventWithMeta = await DesignEventsDAO.findById(
-      trx,
-      designEvent.id
-    );
-    if (!designEventWithMeta) {
-      throw new Error("Failed to create approval event");
-    }
-    return designEventWithMeta;
+  yield ApprovalSubmissionsDAO.update(trx, submissionId, {
+    state: ApprovalStepSubmissionState.APPROVED,
   });
 
-  this.body = event;
+  const designEvent: DesignEvent = yield DesignEventsDAO.create(trx, {
+    actorId: this.state.userId,
+    approvalStepId: this.state.stepId,
+    approvalSubmissionId: submissionId,
+    bidId: null,
+    commentId: null,
+    createdAt: new Date(),
+    designId: this.state.designId,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: null,
+    taskTypeId: null,
+    type: "STEP_SUMBISSION_APPROVAL",
+  });
+
+  const designEventWithMeta = yield DesignEventsDAO.findById(
+    trx,
+    designEvent.id
+  );
+  if (!designEventWithMeta) {
+    throw new Error("Failed to create approval event");
+  }
+  const design = yield DesignsDAO.findById(this.state.designId);
+  if (!design) {
+    throw new Error(`Could not find a design with id: ${this.state.designId}`);
+  }
+
+  const collaborator = submission.collaboratorId
+    ? yield CollaboratorsDAO.findById(submission.collaboratorId)
+    : null;
+
+  if (collaborator) {
+    yield notifications[
+      NotificationType.APPROVAL_STEP_SUBMISSION_APPROVAL
+    ].send(
+      trx,
+      this.state.userId,
+      {
+        recipientUserId: collaborator.userId,
+        recipientCollaboratorId: collaborator.id,
+      },
+      {
+        approvalStepId: submission.stepId,
+        approvalSubmissionId: submission.id,
+        designId: this.state.designId,
+        collectionId: design.collectionIds[0] || null,
+      }
+    );
+  }
+  yield notifications[NotificationType.APPROVAL_STEP_SUBMISSION_APPROVAL].send(
+    trx,
+    this.state.userId,
+    {
+      recipientUserId: design.userId,
+      recipientCollaboratorId: null,
+    },
+    {
+      approvalStepId: submission.stepId,
+      approvalSubmissionId: submission.id,
+      designId: this.state.designId,
+      collectionId: design.collectionIds[0] || null,
+    }
+  );
+
+  this.body = designEventWithMeta;
   this.status = 200;
 }
 
@@ -181,11 +225,28 @@ export function* updateApprovalSubmission(
         type: "STEP_SUMBISSION_ASSIGNMENT",
       });
       if (collaborator) {
-        await NotificationsService.sendApprovalSubmissionAssignmentNotification(
+        const design = await DesignsDAO.findById(this.state.designId);
+        if (!design) {
+          throw new Error(
+            `Could not find a design with id: ${this.state.designId}`
+          );
+        }
+        await notifications[
+          NotificationType.APPROVAL_STEP_SUBMISSION_ASSIGNMENT
+        ].send(
           trx,
           userId,
-          updatedSubmission,
-          collaborator
+          {
+            recipientUserId: collaborator.userId,
+            recipientCollaboratorId: collaborator.id,
+          },
+          {
+            approvalStepId: updatedSubmission.stepId,
+            approvalSubmissionId: updatedSubmission.id,
+            designId: this.state.designId,
+            collectionId: design.collectionIds[0] || null,
+            collaboratorId: collaborator.id,
+          }
         );
       }
       this.body = updatedSubmission;
@@ -253,12 +314,14 @@ async function getDesignIdFromSubmission(
 }
 
 export function* createRevisionRequest(
-  this: AuthedContext<
-    { comment: Comment },
-    PermittedState & { designId: string; stepId: string }
+  this: TrxContext<
+    AuthedContext<
+      { comment: Comment },
+      PermittedState & { designId: string; stepId: string }
+    >
   >
 ): Iterator<any, any, any> {
-  const userId = this.state.userId;
+  const { trx, userId } = this.state;
   if (!this.request.body.comment) {
     this.throw(400, "Missing comment");
   }
@@ -274,58 +337,84 @@ export function* createRevisionRequest(
     this.throw(400, "Invalid comment");
   }
 
-  yield db.transaction(async (trx: Knex.Transaction) => {
-    const submission = await ApprovalSubmissionsDAO.findById(trx, submissionId);
+  const submission = yield ApprovalSubmissionsDAO.findById(trx, submissionId);
 
-    if (!submission) {
-      this.throw(404, "Submission not found");
-    }
+  if (!submission) {
+    this.throw(404, "Submission not found");
+  }
 
-    if (submission.state === ApprovalStepSubmissionState.REVISION_REQUESTED) {
-      this.throw(409, "Submission already has requested revisions");
-    }
+  if (submission.state === ApprovalStepSubmissionState.REVISION_REQUESTED) {
+    this.throw(409, "Submission already has requested revisions");
+  }
 
-    await ApprovalSubmissionsDAO.update(trx, submissionId, {
-      state: ApprovalStepSubmissionState.REVISION_REQUESTED,
-    });
-
-    const comment = await createCommentWithAttachments(trx, {
-      comment: commentRequest,
-      attachments,
-      userId,
-    });
-
-    const approvalStepComment = await ApprovalStepCommentDAO.create(trx, {
-      approvalStepId: this.state.stepId,
-      commentId: comment.id,
-    });
-
-    const { collaboratorNames } = await getCollaboratorsFromCommentMentions(
-      trx,
-      comment.text
-    );
-
-    const commentWithMentions = { ...comment, mentions: collaboratorNames };
-    await announceApprovalStepCommentCreation(
-      approvalStepComment,
-      commentWithMentions
-    );
-
-    await DesignEventsDAO.create(trx, {
-      actorId: this.state.userId,
-      approvalStepId: this.state.stepId,
-      approvalSubmissionId: submissionId,
-      bidId: null,
-      commentId: comment.id,
-      createdAt: new Date(),
-      designId: this.state.designId,
-      id: uuid.v4(),
-      quoteId: null,
-      targetId: null,
-      taskTypeId: null,
-      type: "REVISION_REQUEST",
-    });
+  yield ApprovalSubmissionsDAO.update(trx, submissionId, {
+    state: ApprovalStepSubmissionState.REVISION_REQUESTED,
   });
+
+  const comment = yield createCommentWithAttachments(trx, {
+    comment: commentRequest,
+    attachments,
+    userId,
+  });
+
+  const approvalStepComment = yield ApprovalStepCommentDAO.create(trx, {
+    approvalStepId: this.state.stepId,
+    commentId: comment.id,
+  });
+
+  const { collaboratorNames } = yield getCollaboratorsFromCommentMentions(
+    trx,
+    comment.text
+  );
+
+  const commentWithMentions = { ...comment, mentions: collaboratorNames };
+  yield announceApprovalStepCommentCreation(
+    approvalStepComment,
+    commentWithMentions
+  );
+
+  yield DesignEventsDAO.create(trx, {
+    actorId: this.state.userId,
+    approvalStepId: this.state.stepId,
+    approvalSubmissionId: submissionId,
+    bidId: null,
+    commentId: comment.id,
+    createdAt: new Date(),
+    designId: this.state.designId,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: null,
+    taskTypeId: null,
+    type: "REVISION_REQUEST",
+  });
+
+  const design = yield DesignsDAO.findById(this.state.designId);
+  if (!design) {
+    throw new Error(`Could not find a design with id: ${this.state.designId}`);
+  }
+
+  const collaborator = submission.collaboratorId
+    ? yield CollaboratorsDAO.findById(submission.collaboratorId)
+    : null;
+
+  if (collaborator) {
+    yield notifications[
+      NotificationType.APPROVAL_STEP_SUBMISSION_REVISION_REQUEST
+    ].send(
+      trx,
+      this.state.userId,
+      {
+        recipientUserId: collaborator.userId,
+        recipientCollaboratorId: collaborator.id,
+      },
+      {
+        approvalStepId: submission.stepId,
+        approvalSubmissionId: submission.id,
+        designId: this.state.designId,
+        collectionId: design.collectionIds[0] || null,
+      }
+    );
+  }
 
   this.status = 204;
 }
@@ -348,6 +437,7 @@ router.post(
   requireAuth,
   requireDesignIdBy(getDesignIdFromSubmission),
   canAccessDesignInState,
+  useTransaction,
   createRevisionRequest
 );
 
@@ -356,6 +446,7 @@ router.post(
   requireAuth,
   requireDesignIdBy(getDesignIdFromSubmission),
   canAccessDesignInState,
+  useTransaction,
   createApproval
 );
 
@@ -365,6 +456,7 @@ router.put(
   requireAuth,
   requireDesignIdBy(getDesignIdFromSubmission),
   canAccessDesignInState,
+  useTransaction,
   createApproval
 );
 

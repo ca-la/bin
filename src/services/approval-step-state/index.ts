@@ -14,6 +14,9 @@ import ApprovalStep, {
 import { findByDesignId as findProductTypeByDesignId } from "../../components/pricing-product-types/dao";
 import { taskTypes } from "../../components/tasks/templates";
 import { getDefaultsByDesign } from "../../components/approval-step-submissions/defaults";
+import notifications from "../../components/approval-steps/notifications";
+import { NotificationType } from "../../components/notifications/domain-object";
+import * as CollaboratorsDAO from "../../components/collaborators/dao";
 import DesignEvent from "../../domain-objects/design-event";
 
 export async function makeNextStepCurrentIfNeeded(
@@ -82,7 +85,44 @@ export async function handleUserStepCompletion(
     taskTypeId: null,
     commentId: null,
   });
-  // TODO: Send notification
+
+  const design = await ProductDesignsDAO.findById(step.designId);
+  if (!design) {
+    throw new Error(`Could not find a design with id: ${step.designId}`);
+  }
+
+  await notifications[NotificationType.APPROVAL_STEP_COMPLETION].send(
+    trx,
+    actorId,
+    {
+      recipientUserId: design.userId,
+      recipientCollaboratorId: null,
+    },
+    {
+      approvalStepId: step.id,
+      designId: design.id,
+      collectionId: design.collectionIds[0] || null,
+    }
+  );
+
+  if (step.collaboratorId) {
+    const collaborator = await CollaboratorsDAO.findById(step.collaboratorId);
+    if (collaborator) {
+      await notifications[NotificationType.APPROVAL_STEP_COMPLETION].send(
+        trx,
+        actorId,
+        {
+          recipientUserId: collaborator.userId,
+          recipientCollaboratorId: collaborator.id,
+        },
+        {
+          approvalStepId: step.id,
+          designId: design.id,
+          collectionId: design.collectionIds[0] || null,
+        }
+      );
+    }
+  }
 }
 
 async function unstartFormerlyCurrentStep(

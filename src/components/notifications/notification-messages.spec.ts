@@ -1122,31 +1122,3 @@ test("submission assignment notification message", async (t: tape.Test) => {
     "message html contains submission title"
   );
 });
-
-test("approval step assignment notification message", async (t: tape.Test) => {
-  sandbox()
-    .stub(NotificationAnnouncer, "announceNotificationCreation")
-    .resolves({});
-
-  const { design, recipient, approvalStep } = await generateNotification({
-    type: NotificationType.APPROVAL_STEP_ASSIGNMENT,
-  });
-
-  const notifications = await db.transaction((trx: Knex.Transaction) =>
-    findByUserId(trx, recipient.id, { limit: 20, offset: 0 })
-  );
-
-  t.is(notifications.length, 1);
-  const message = await createNotificationMessage(notifications[0]);
-  if (!message) {
-    throw new Error("Did not create message");
-  }
-  t.assert(
-    message.html.includes(design.title || "test"),
-    "message html contains the design title"
-  );
-  t.assert(
-    message.html.includes(approvalStep.title),
-    "message html contains formatted approval step title"
-  );
-});

@@ -2,7 +2,6 @@ import { Transaction } from "knex";
 import { buildDao } from "../../services/cala-component/cala-dao";
 import adapter from "./adapter";
 import ApprovalStep, { ApprovalStepRow, domain } from "./types";
-import "./listeners";
 
 const tableName = "design_approval_steps";
 

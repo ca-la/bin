@@ -1,9 +1,12 @@
 import { Transaction, QueryBuilder } from "knex";
 import { Middleware } from "koa-router";
 import DataAdapter from "../data-adapter";
+import {
+  NotificationsLayer,
+  NotificationsLayerSchema,
+} from "./cala-notifications";
 
 export type HTTPMethod = "get" | "put" | "patch" | "post" | "delete";
-
 export type CalaUrlRoutes = Partial<Record<HTTPMethod, Middleware[]>>;
 
 export interface CalaRoutes {
@@ -54,9 +57,16 @@ export interface CalaDao<Model> {
   createAll: (trx: Transaction, blanks: Model[]) => Promise<Model[]>;
 }
 
-export interface CalaComponent<Model extends object, ModelRow extends object> {
-  adapter: CalaAdapter<Model, ModelRow>;
-  dao: CalaDao<Model>;
-  router: CalaRouter;
-  listeners: void;
+export { NotificationsLayer };
+
+export interface CalaComponent<
+  Model extends object,
+  ModelRow extends object,
+  LayerSchema extends NotificationsLayerSchema
+> {
+  adapter?: CalaAdapter<Model, ModelRow>;
+  dao?: CalaDao<Model>;
+  router?: CalaRouter;
+  listeners?: void;
+  notifications: NotificationsLayer<LayerSchema>;
 }

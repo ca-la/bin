@@ -16,7 +16,9 @@ import { listeners } from "./listeners";
 import * as ApprovalStepStateService from "../../services/approval-step-state";
 import * as CollaboratorsDAO from "../collaborators/dao";
 import * as DesignEventsDAO from "../../dao/design-events";
-import * as NotificationsService from "../../services/create-notifications";
+import DesignsDAO from "../product-designs/dao";
+import { NotificationType } from "../notifications/domain-object";
+import NotificationsLayer from "./notifications";
 
 const as: ApprovalStep = {
   state: ApprovalStepState.UNSTARTED,
@@ -294,6 +296,7 @@ test("route.updated.collaboratorId", async (t: Test) => {
   const trx = await db.transaction();
   interface TestCase {
     title: string;
+    error?: string;
     before: ApprovalStep;
     updated: ApprovalStep;
     findCollaboratorArgs: any[][];
@@ -312,7 +315,24 @@ test("route.updated.collaboratorId", async (t: Test) => {
         designId: "d2",
       },
       findCollaboratorArgs: [],
-      createDesignEventArgs: [],
+      createDesignEventArgs: [
+        [
+          trx,
+          {
+            actorId,
+            commentId: null,
+            approvalStepId: as.id,
+            approvalSubmissionId: null,
+            bidId: null,
+            createdAt: now,
+            designId: "d2",
+            quoteId: null,
+            targetId: null,
+            taskTypeId: null,
+            type: "STEP_ASSIGNMENT",
+          },
+        ],
+      ],
       sendNotificationArgs: [],
     },
     {
@@ -326,30 +346,53 @@ test("route.updated.collaboratorId", async (t: Test) => {
         collaboratorId: null,
       },
       findCollaboratorArgs: [],
-      createDesignEventArgs: [],
-      sendNotificationArgs: [],
-    },
-    {
-      title: "Update with collaborator not containing user",
-      before: as,
-      updated: {
-        ...as,
-        collaboratorId: "c1",
-      },
-      findCollaboratorArgs: [["c1"]],
-      findCollaboratorResult: {},
-      createDesignEventArgs: [],
+      createDesignEventArgs: [
+        [
+          trx,
+          {
+            actorId,
+            commentId: null,
+            approvalStepId: as.id,
+            approvalSubmissionId: null,
+            bidId: null,
+            createdAt: now,
+            designId: as.designId,
+            quoteId: null,
+            targetId: null,
+            taskTypeId: null,
+            type: "STEP_ASSIGNMENT",
+          },
+        ],
+      ],
       sendNotificationArgs: [],
     },
     {
       title: "Update with collaborator not found",
+      error: "Wrong collaboratorId: c1",
       before: as,
       updated: {
         ...as,
         collaboratorId: "c1",
       },
       findCollaboratorArgs: [["c1"]],
-      createDesignEventArgs: [],
+      createDesignEventArgs: [
+        [
+          trx,
+          {
+            actorId,
+            commentId: null,
+            approvalStepId: as.id,
+            approvalSubmissionId: null,
+            bidId: null,
+            createdAt: now,
+            designId: as.designId,
+            quoteId: null,
+            targetId: null,
+            taskTypeId: null,
+            type: "STEP_ASSIGNMENT",
+          },
+        ],
+      ],
       sendNotificationArgs: [],
     },
     {
@@ -360,9 +403,44 @@ test("route.updated.collaboratorId", async (t: Test) => {
         collaboratorId: "c1",
       },
       findCollaboratorArgs: [["c1"]],
-      findCollaboratorResult: {},
-      createDesignEventArgs: [],
-      sendNotificationArgs: [],
+      findCollaboratorResult: {
+        id: "c1",
+        userId: null,
+      },
+      createDesignEventArgs: [
+        [
+          trx,
+          {
+            actorId,
+            commentId: null,
+            approvalStepId: as.id,
+            approvalSubmissionId: null,
+            bidId: null,
+            createdAt: now,
+            designId: as.designId,
+            quoteId: null,
+            targetId: null,
+            taskTypeId: null,
+            type: "STEP_ASSIGNMENT",
+          },
+        ],
+      ],
+      sendNotificationArgs: [
+        [
+          trx,
+          actorId,
+          {
+            recipientUserId: null,
+            recipientCollaboratorId: "c1",
+          },
+          {
+            designId: as.designId,
+            approvalStepId: as.id,
+            collectionId: "c1",
+            collaboratorId: "c1",
+          },
+        ],
+      ],
     },
     {
       title: "Update with collaborator containing user",
@@ -373,6 +451,8 @@ test("route.updated.collaboratorId", async (t: Test) => {
       },
       findCollaboratorArgs: [["c1"]],
       findCollaboratorResult: {
+        id: "c1",
+        userId: "u1",
         user: { id: "u1" },
       },
       createDesignEventArgs: [
@@ -398,21 +478,35 @@ test("route.updated.collaboratorId", async (t: Test) => {
           trx,
           actorId,
           {
-            ...as,
+            recipientUserId: "u1",
+            recipientCollaboratorId: "c1",
+          },
+          {
+            designId: as.designId,
+            approvalStepId: as.id,
+            collectionId: "c1",
             collaboratorId: "c1",
           },
         ],
       ],
     },
   ];
+
+  sandbox()
+    .stub(DesignsDAO, "findById")
+    .returns({
+      id: as.designId,
+      collectionIds: ["c1"],
+    });
+
   for (const testCase of testCases) {
     const findCollaboratorStub = sandbox()
       .stub(CollaboratorsDAO, "findById")
       .returns(testCase.findCollaboratorResult);
     const createDesignEventStub = sandbox().stub(DesignEventsDAO, "create");
     const sendNotificationStub = sandbox().stub(
-      NotificationsService,
-      "sendApprovalStepAssignmentNotification"
+      NotificationsLayer[NotificationType.APPROVAL_STEP_ASSIGNMENT],
+      "send"
     );
 
     const event: RouteUpdated<ApprovalStep, typeof domain> = {
@@ -430,25 +524,41 @@ test("route.updated.collaboratorId", async (t: Test) => {
       throw new Error("route.updated.*.collaboratorId is empty");
     }
 
-    await listeners["route.updated.*"].collaboratorId(event);
-    t.deepEqual(
-      findCollaboratorStub.args,
-      testCase.findCollaboratorArgs,
-      `${testCase.title}: find collaborator`
-    );
-    t.deepEqual(
-      createDesignEventStub.args.map((callArgs: any[]) => [
-        callArgs[0],
-        omit(callArgs[1], "id"),
-      ]),
-      testCase.createDesignEventArgs,
-      `${testCase.title}: create design event`
-    );
-    t.deepEqual(
-      sendNotificationStub.args,
-      testCase.sendNotificationArgs,
-      `${testCase.title}: send notification`
-    );
+    let error: Error | null = null;
+    try {
+      await listeners["route.updated.*"].collaboratorId(event);
+    } catch (err) {
+      error = err;
+    }
+    if (testCase.error) {
+      t.is(
+        error && error.message,
+        testCase.error,
+        `${testCase.title}: throws the error`
+      );
+    } else {
+      if (error) {
+        throw error;
+      }
+      t.deepEqual(
+        findCollaboratorStub.args,
+        testCase.findCollaboratorArgs,
+        `${testCase.title}: find collaborator`
+      );
+      t.deepEqual(
+        createDesignEventStub.args.map((callArgs: any[]) => [
+          callArgs[0],
+          omit(callArgs[1], "id"),
+        ]),
+        testCase.createDesignEventArgs,
+        `${testCase.title}: create design event`
+      );
+      t.deepEqual(
+        sendNotificationStub.args,
+        testCase.sendNotificationArgs,
+        `${testCase.title}: send notification`
+      );
+    }
 
     findCollaboratorStub.restore();
     createDesignEventStub.restore();

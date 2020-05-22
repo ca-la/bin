@@ -16,6 +16,7 @@ import * as DesignEventsDAO from "../../dao/design-events";
 import generateApprovalStep from "../../test-helpers/factories/design-approval-step";
 import generateApprovalSubmission from "../../test-helpers/factories/design-approval-submission";
 import generateCollaborator from "../../test-helpers/factories/collaborator";
+import { NotificationType } from "../notifications/domain-object";
 
 test("GET /design-approval-step-submissions?stepId=:stepId", async (t: Test) => {
   const designer = await createUser();
@@ -79,6 +80,7 @@ test("GET /design-approval-step-submissions?stepId=:stepId", async (t: Test) => 
 test("PATCH /design-approval-step-submissions/:submissionId with collaboratorId", async (t: Test) => {
   const { user: user1, session: session1 } = await createUser();
   const { user: user2, session: session2 } = await createUser();
+  const { user: user3 } = await createUser();
 
   const trx = await db.transaction();
   const { approvalStep, design } = await generateApprovalStep(trx, {
@@ -95,6 +97,13 @@ test("PATCH /design-approval-step-submissions/:submissionId with collaboratorId"
     {
       designId: (await generateDesign({ userId: user2.id })).id,
       userId: user2.id,
+    },
+    trx
+  );
+  const { collaborator: collaborator3 } = await generateCollaborator(
+    {
+      designId: design.id,
+      userId: user3.id,
     },
     trx
   );
@@ -118,6 +127,25 @@ test("PATCH /design-approval-step-submissions/:submissionId with collaboratorId"
 
   await db.transaction(async (trx2: Knex.Transaction) => {
     const notifications = await NotificationsDAO.findByUserId(trx2, user1.id, {
+      limit: 10,
+      offset: 0,
+    });
+    t.is(notifications.length, 0);
+  });
+  const [response2, body2] = await patch(
+    `/design-approval-step-submissions/${submission.id}`,
+    {
+      headers: authHeader(session1.id),
+      body: {
+        collaboratorId: collaborator3.id,
+      },
+    }
+  );
+  t.is(response2.status, 200);
+  t.is(body2.collaboratorId, collaborator3.id);
+
+  await db.transaction(async (trx2: Knex.Transaction) => {
+    const notifications = await NotificationsDAO.findByUserId(trx2, user3.id, {
       limit: 10,
       offset: 0,
     });
@@ -165,16 +193,29 @@ test("POST /design-approval-step-submissions?stepId=:stepId", async (t: Test) =>
 });
 
 test("POST /design-approval-step-submissions/:submissionId/approvals", async (t: Test) => {
-  const { user: user1, session: session1 } = await createUser();
+  const { session: session1, user: actor } = await createUser({
+    role: "ADMIN",
+  });
+  const { user: user1 } = await createUser();
+  const { user: user2 } = await createUser();
 
   const trx = await db.transaction();
   const { approvalStep, design } = await generateApprovalStep(trx, {
     createdBy: user1.id,
   });
 
+  const { collaborator } = await generateCollaborator(
+    {
+      designId: design.id,
+      userId: user2.id,
+    },
+    trx
+  );
+
   const { submission } = await generateApprovalSubmission(trx, {
     title: "Submarine",
     stepId: approvalStep.id,
+    collaboratorId: collaborator.id,
   });
   await trx.commit();
   const [response, body] = await post(
@@ -202,13 +243,47 @@ test("POST /design-approval-step-submissions/:submissionId/approvals", async (t:
       approvalStepId: approvalStep.id,
       approvalSubmissionId: submission.id,
       submissionTitle: "Submarine",
-      actorId: user1.id,
-      actorName: user1.name,
-      actorRole: "USER",
-      actorEmail: user1.email,
+      actorId: actor.id,
+      actorName: actor.name,
+      actorRole: "ADMIN",
+      actorEmail: actor.email,
     },
     "body is approval event"
   );
+
+  const trx2 = await db.transaction();
+  try {
+    const collaboratorNotifications = await NotificationsDAO.findByUserId(
+      trx2,
+      user2.id,
+      {
+        limit: 10,
+        offset: 0,
+      }
+    );
+    t.is(collaboratorNotifications.length, 1);
+    t.is(collaboratorNotifications[0].approvalSubmissionId, submission.id);
+    t.is(
+      collaboratorNotifications[0].type,
+      NotificationType.APPROVAL_STEP_SUBMISSION_APPROVAL
+    );
+    const designerNotifications = await NotificationsDAO.findByUserId(
+      trx2,
+      user1.id,
+      {
+        limit: 10,
+        offset: 0,
+      }
+    );
+    t.is(designerNotifications.length, 1);
+    t.is(designerNotifications[0].approvalSubmissionId, submission.id);
+    t.is(
+      designerNotifications[0].type,
+      NotificationType.APPROVAL_STEP_SUBMISSION_APPROVAL
+    );
+  } finally {
+    await trx2.rollback();
+  }
 
   const [failureResponse] = await post(
     `/design-approval-step-submissions/${submission.id}/approvals`,
@@ -224,6 +299,7 @@ test("POST /design-approval-step-submissions/:submissionId/revision-requests", a
     .stub(AnnounceCommentService, "announceApprovalStepCommentCreation")
     .resolves({});
 
+  const { user: collaboratorUser } = await createUser();
   const { user, session } = await createUser();
 
   const trx = await db.transaction();
@@ -231,10 +307,19 @@ test("POST /design-approval-step-submissions/:submissionId/revision-requests", a
     createdBy: user.id,
   });
 
+  const { collaborator } = await generateCollaborator(
+    {
+      designId: design.id,
+      userId: collaboratorUser.id,
+    },
+    trx
+  );
+
   const { submission } = await generateApprovalSubmission(trx, {
     title: "Fizz Buzz",
     stepId: approvalStep.id,
     state: ApprovalStepSubmissionState.SUBMITTED,
+    collaboratorId: collaborator.id,
   });
   await trx.commit();
 
@@ -250,7 +335,7 @@ test("POST /design-approval-step-submissions/:submissionId/revision-requests", a
           isPinned: false,
           parentCommentId: null,
           text: "test comment",
-          userId: user.id,
+          userId: collaboratorUser.id,
         },
       },
     }
@@ -262,6 +347,26 @@ test("POST /design-approval-step-submissions/:submissionId/revision-requests", a
   t.equal(events.length, 1);
   t.equal(events[0].type, "REVISION_REQUEST");
   t.notEqual(events[0].commentId, null);
+
+  const trx2 = await db.transaction();
+  try {
+    const collaboratorNotifications = await NotificationsDAO.findByUserId(
+      trx2,
+      collaboratorUser.id,
+      {
+        limit: 10,
+        offset: 0,
+      }
+    );
+    t.is(collaboratorNotifications.length, 1);
+    t.is(collaboratorNotifications[0].approvalSubmissionId, submission.id);
+    t.is(
+      collaboratorNotifications[0].type,
+      NotificationType.APPROVAL_STEP_SUBMISSION_REVISION_REQUEST
+    );
+  } finally {
+    await trx2.rollback();
+  }
 
   const [duplicateResponse, duplicateBody] = await post(
     `/design-approval-step-submissions/${submission.id}/revision-requests`,

@@ -124,18 +124,7 @@ import {
   FullApprovalStepCommentCreateNotification,
   FullApprovalStepCommentCreateNotificationRow,
 } from "./models/approval-step-comment-create";
-import {
-  ApprovalStepSubmissionAssignmentNotification,
-  ApprovalStepSubmissionAssignmentNotificationRow,
-  FullApprovalStepSubmissionAssignmentNotification,
-  FullApprovalStepSubmissionAssignmentNotificationRow,
-} from "./models/approval-step-submission-assignment";
-import {
-  ApprovalStepAssignmentNotification,
-  ApprovalStepAssignmentNotificationRow,
-  FullApprovalStepAssignmentNotification,
-  FullApprovalStepAssignmentNotificationRow,
-} from "./models/approval-step-assignment";
+import { CalaNotificationsUnion } from "../cala-components";
 
 export enum NotificationType {
   ANNOTATION_COMMENT_CREATE = "ANNOTATION_COMMENT_CREATE",
@@ -160,8 +149,12 @@ export enum NotificationType {
   APPROVAL_STEP_COMMENT_MENTION = "APPROVAL_STEP_COMMENT_MENTION",
   APPROVAL_STEP_COMMENT_REPLY = "APPROVAL_STEP_COMMENT_REPLY",
   APPROVAL_STEP_COMMENT_CREATE = "APPROVAL_STEP_COMMENT_CREATE",
-  APPROVAL_STEP_SUBMISSION_ASSIGNMENT = "APPROVAL_STEP_SUBMISSION_ASSIGNMENT",
   APPROVAL_STEP_ASSIGNMENT = "APPROVAL_STEP_ASSIGNMENT",
+  APPROVAL_STEP_COMPLETION = "APPROVAL_STEP_COMPLETION",
+  APPROVAL_STEP_SUBMISSION_ASSIGNMENT = "APPROVAL_STEP_SUBMISSION_ASSIGNMENT",
+  APPROVAL_STEP_SUBMISSION_APPROVAL = "APPROVAL_STEP_SUBMISSION_APPROVAL",
+  APPROVAL_STEP_SUBMISSION_REVISION_REQUEST = "APPROVAL_STEP_SUBMISSION_REVISION_REQUEST",
+  APPROVAL_STEP_SUBMISSION_REREVIEW_REQUEST = "APPROVAL_STEP_SUBMISSION_REREVIEW_REQUEST",
 }
 
 export type Notification =
@@ -187,8 +180,7 @@ export type Notification =
   | ApprovalStepCommentMentionNotification
   | ApprovalStepCommentReplyNotification
   | ApprovalStepCommentCreateNotification
-  | ApprovalStepSubmissionAssignmentNotification
-  | ApprovalStepAssignmentNotification;
+  | CalaNotificationsUnion;
 
 export type FullNotification =
   | FullTaskCompletionNotification
@@ -210,9 +202,7 @@ export type FullNotification =
   | FullExpirationNotification
   | FullApprovalStepCommentMentionNotification
   | FullApprovalStepCommentReplyNotification
-  | FullApprovalStepCommentCreateNotification
-  | FullApprovalStepSubmissionAssignmentNotification
-  | FullApprovalStepAssignmentNotification;
+  | FullApprovalStepCommentCreateNotification;
 
 export type NotificationRow =
   | AnnotationCommentCreateNotificationRow
@@ -236,9 +226,7 @@ export type NotificationRow =
   | TwoDayExpirationNotificationRow
   | ApprovalStepCommentMentionNotificationRow
   | ApprovalStepCommentReplyNotificationRow
-  | ApprovalStepCommentCreateNotificationRow
-  | ApprovalStepSubmissionAssignmentNotificationRow
-  | ApprovalStepAssignmentNotificationRow;
+  | ApprovalStepCommentCreateNotificationRow;
 
 export type FullNotificationRow =
   | FullTaskCompletionNotificationRow
@@ -259,9 +247,7 @@ export type FullNotificationRow =
   | FullAnnotationCommentCreateNotificationRow
   | FullApprovalStepCommentMentionNotificationRow
   | FullApprovalStepCommentReplyNotificationRow
-  | FullApprovalStepCommentCreateNotificationRow
-  | FullApprovalStepSubmissionAssignmentNotificationRow
-  | FullApprovalStepAssignmentNotificationRow;
+  | FullApprovalStepCommentCreateNotificationRow;
 
 type EqualKeys<T> = { [P in keyof T]: any };
 
@@ -285,6 +271,7 @@ export function encode(
     measurementId: row.measurement_id,
     readAt: row.read_at,
     recipientUserId: row.recipient_user_id,
+    recipientCollaboratorId: row.recipient_collaborator_id,
     sectionId: row.section_id,
     sentEmailAt: toDateOrNull(row.sent_email_at),
     stageId: row.stage_id,
@@ -313,6 +300,7 @@ export function decode(
     measurement_id: data.measurementId,
     read_at: toDateStringOrNull(data.readAt),
     recipient_user_id: data.recipientUserId,
+    recipient_collaborator_id: data.recipientCollaboratorId,
     section_id: data.sectionId,
     sent_email_at: toDateStringOrNull(data.sentEmailAt),
     stage_id: data.stageId,

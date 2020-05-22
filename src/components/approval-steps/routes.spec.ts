@@ -26,6 +26,10 @@ import * as ProductDesignsDAO from "../product-designs/dao";
 import generateCollaborator from "../../test-helpers/factories/collaborator";
 import * as uuid from "node-uuid";
 import * as NotificationsDAO from "../notifications/dao";
+// Making sure we always have listeners and notification layers included
+// This makes sense only for separate tests running, since in other cases listeners are included anyway
+import "./listeners";
+import "../cala-components";
 
 test("GET /design-approval-steps?designId=:designId", async (t: Test) => {
   const designer = await createUser();

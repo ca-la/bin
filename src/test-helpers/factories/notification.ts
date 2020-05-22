@@ -490,7 +490,10 @@ export default async function generateNotification(
         notification,
       };
     }
-    case NotificationType.APPROVAL_STEP_SUBMISSION_ASSIGNMENT: {
+    case NotificationType.APPROVAL_STEP_SUBMISSION_ASSIGNMENT:
+    case NotificationType.APPROVAL_STEP_SUBMISSION_APPROVAL:
+    case NotificationType.APPROVAL_STEP_SUBMISSION_REVISION_REQUEST:
+    case NotificationType.APPROVAL_STEP_SUBMISSION_REREVIEW_REQUEST: {
       const notification = await create({
         ...baseNotification,
         collectionId: collection.id,
@@ -506,7 +509,8 @@ export default async function generateNotification(
         notification,
       };
     }
-    case NotificationType.APPROVAL_STEP_ASSIGNMENT: {
+    case NotificationType.APPROVAL_STEP_ASSIGNMENT:
+    case NotificationType.APPROVAL_STEP_COMPLETION: {
       const notification = await create({
         ...baseNotification,
         collectionId: collection.id,

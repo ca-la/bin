@@ -1,5 +1,5 @@
-import { buildRouter } from "../../services/cala-component/cala-router";
 import dao from "./dao";
+import { buildRouter } from "../../services/cala-component/cala-router";
 import ApprovalStep, { domain } from "./types";
 import db from "../../services/db";
 import requireAuth from "../../middleware/require-auth";
@@ -28,7 +28,6 @@ async function getDesignIdFromStep(this: AuthedContext): Promise<string> {
   const step = await db.transaction((trx: Knex.Transaction) =>
     ApprovalStepsDAO.findById(trx, id)
   );
-
   if (!step) {
     this.throw(404, `Step not found with ID: ${id}`);
   }

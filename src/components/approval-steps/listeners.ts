@@ -17,8 +17,10 @@ import {
 
 import * as DesignEventsDAO from "../../dao/design-events";
 import uuid from "node-uuid";
-import * as NotificationsService from "../../services/create-notifications";
 import * as CollaboratorsDAO from "../../components/collaborators/dao";
+import DesignsDAO from "../product-designs/dao";
+import { NotificationType } from "../notifications/domain-object";
+import notifications from "./notifications";
 
 export const listeners: Listeners<ApprovalStep, typeof domain> = {
   "dao.updating": async (
@@ -80,15 +82,14 @@ export const listeners: Listeners<ApprovalStep, typeof domain> = {
     collaboratorId: async (
       event: RouteUpdated<ApprovalStep, typeof domain>
     ): Promise<void> => {
-      if (!event.updated.collaboratorId) {
-        return;
-      }
+      const collaborator = event.updated.collaboratorId
+        ? await CollaboratorsDAO.findById(event.updated.collaboratorId)
+        : null;
 
-      const collaborator = await CollaboratorsDAO.findById(
-        event.updated.collaboratorId
-      );
-      if (!collaborator || !collaborator.user) {
-        return;
+      if (event.updated.collaboratorId && !collaborator) {
+        throw new Error(
+          `Wrong collaboratorId: ${event.updated.collaboratorId}`
+        );
       }
 
       await DesignEventsDAO.create(event.trx, {
@@ -101,15 +102,36 @@ export const listeners: Listeners<ApprovalStep, typeof domain> = {
         designId: event.updated.designId,
         id: uuid.v4(),
         quoteId: null,
-        targetId: collaborator.user.id,
+        targetId: (collaborator && collaborator.userId) || null,
         taskTypeId: null,
         type: "STEP_ASSIGNMENT",
       });
 
-      await NotificationsService.sendApprovalStepAssignmentNotification(
+      if (!collaborator) {
+        return;
+      }
+
+      const approvalStep = event.updated;
+
+      const design = await DesignsDAO.findById(approvalStep.designId);
+      if (!design) {
+        throw new Error(
+          `Could not find a design with id: ${approvalStep.designId}`
+        );
+      }
+      await notifications[NotificationType.APPROVAL_STEP_ASSIGNMENT].send(
         event.trx,
         event.actorId,
-        event.updated
+        {
+          recipientCollaboratorId: collaborator.id,
+          recipientUserId: collaborator.userId,
+        },
+        {
+          approvalStepId: approvalStep.id,
+          designId: design.id,
+          collectionId: design.collectionIds[0] || null,
+          collaboratorId: collaborator.id,
+        }
       );
     },
   },

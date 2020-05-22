@@ -16,6 +16,7 @@ import loggerMiddleware = require("./middleware/logger");
 import metrics from "./middleware/metrics";
 import options = require("./middleware/options");
 import router from "./routes";
+import "./components/cala-components";
 import shopifyAuth from "./middleware/shopify-auth";
 import validatePagination from "./middleware/validate-pagination";
 

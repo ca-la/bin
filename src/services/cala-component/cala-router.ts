@@ -110,7 +110,6 @@ export function buildRouter<Model>(
                     `Keys ${restKeys.join(", ")} are not allowed`
                   );
                 }
-
                 const { before, updated } = yield dao
                   .update(trx, id, patch)
                   .catch(

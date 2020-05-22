@@ -86,7 +86,9 @@ router.use("/credits", creditRoutes);
 router.use("/design-approval-step-comments", approvalStepCommentRoutes);
 router.use("/design-approval-step-submissions", approvalStepSubmissionRoutes);
 
-plugComponentRouter(router, approvalStepComponent.router);
+if (approvalStepComponent.router) {
+  plugComponentRouter(router, approvalStepComponent.router);
+}
 
 router.use("/design-approval-step-tasks", approvalStepTaskRoutes);
 router.use("/duplication", duplicationRoutes);
