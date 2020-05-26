@@ -29,11 +29,6 @@ const {
   getDesignUploadPolicy,
   getThumbnailUploadPolicy,
 } = require("./upload-policy");
-const {
-  addDesignEvent,
-  addDesignEvents,
-  getDesignEvents,
-} = require("./events");
 const { updateAllNodes } = require("./phidias");
 const { findAllDesignsThroughCollaborator } = require("../dao/dao");
 const { createFromTemplate } = require("./templates");
@@ -298,25 +293,6 @@ router.get(
   getThumbnailUploadPolicy
 );
 router.get("/upload-policy/:id", requireAuth, getDesignUploadPolicy);
-
-router.get(
-  "/:designId/events",
-  requireAuth,
-  canAccessDesignInParam,
-  getDesignEvents
-);
-router.post(
-  "/:designId/events",
-  requireAuth,
-  canAccessDesignInParam,
-  addDesignEvents
-);
-router.put(
-  "/:designId/events/:eventId",
-  requireAuth,
-  canAccessDesignInParam,
-  addDesignEvent
-);
 
 router.put("/:designId", requireAuth, canAccessDesignInParam, updateAllNodes);
 router.post("/templates/:templateDesignId", requireAuth, createFromTemplate);
