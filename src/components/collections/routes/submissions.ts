@@ -1,7 +1,7 @@
 import Knex from "knex";
 import uuid from "node-uuid";
 import ProductDesignsDAO from "../../product-designs/dao";
-import DesignEventsDAO from "../../design-events/dao";
+import * as DesignEventsDAO from "../../../dao/design-events";
 import ProductDesign = require("../../product-designs/domain-objects/product-design");
 import * as CreateNotifications from "../../../services/create-notifications";
 import { determineSubmissionStatus } from "../services/determine-submission-status";

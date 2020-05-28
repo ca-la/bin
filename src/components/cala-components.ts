@@ -1,17 +1,12 @@
 import ApprovalSteps from "./approval-steps";
 import ApprovalSubmissions from "./approval-step-submissions";
-import DesignEvents from "./design-events";
 import { NotificationType } from "./notifications/domain-object";
 import {
   registerMessageBuilder,
   NotificationMessageBuilder,
 } from "./notifications/notification-messages";
 
-export const calaComponents = [
-  ApprovalSteps,
-  ApprovalSubmissions,
-  DesignEvents,
-];
+export const calaComponents = [ApprovalSteps, ApprovalSubmissions];
 
 type AllComponentsUnion = typeof calaComponents[number];
 type AllNotificationLayersUnion = Extract<

@@ -4,7 +4,7 @@ import DesignsDAO from "../../../product-designs/dao";
 import * as DetermineSubmissionStatus from "../determine-submission-status";
 
 import * as CostInputsDAO from "../../../pricing-cost-inputs/dao";
-import DesignEventsDAO from "../../../design-events/dao";
+import * as DesignEventsDAO from "../../../../dao/design-events";
 import * as NotificationsService from "../../../../services/create-notifications";
 import { commitCostInputs, recostInputs } from ".";
 

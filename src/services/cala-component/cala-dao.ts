@@ -5,74 +5,40 @@ import ResourceNotFoundError from "../../errors/resource-not-found";
 import { DaoCreated, DaoUpdating, DaoUpdated } from "../pubsub/cala-events";
 import first from "../first";
 
-export type QueryModifier = (query: QueryBuilder) => QueryBuilder;
-export function identity<T>(a: T): T {
+type QueryModifier = (query: QueryBuilder) => QueryBuilder;
+function identity<T>(a: T): T {
   return a;
 }
 
 interface DaoOptions<ModelRow> {
   orderColumn: keyof ModelRow;
-  orderDirection?: "ASC" | "DESC";
-  queryModifier?: QueryModifier;
-  insertModifier?: QueryModifier;
 }
 
-interface Identifiable {
-  id: string;
-}
-
-export function buildDao<
-  Model extends Identifiable,
-  ModelRow extends Identifiable
->(
+export function buildDao<Model, ModelRow extends object>(
   domain: string,
   tableName: string,
   adapter: CalaAdapter<Model, ModelRow>,
-  {
-    orderColumn,
-    orderDirection = "ASC",
-    queryModifier = identity,
-    insertModifier = identity,
-  }: DaoOptions<ModelRow>
+  { orderColumn }: DaoOptions<ModelRow>
 ): CalaDao<Model> {
-  const namespacedSplatSelect = `${tableName}.*`;
-  const namespacedOrderColumn = `${tableName}.${orderColumn}`;
-  const getNamespacedFilter = (filter: Partial<Model>): object => {
-    const transformed: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(adapter.toDbPartial(filter))) {
-      transformed[`${tableName}.${key}`] = value;
-    }
-
-    return transformed;
-  };
-
   const find = async (
     trx: Knex.Transaction,
     filter: Partial<Model>,
-    modifier: QueryModifier = queryModifier
+    modifier: QueryModifier = identity
   ): Promise<Model[]> => {
-    const namespacedFilter = getNamespacedFilter(filter);
-
     const rows = await trx(tableName)
-      .select(namespacedSplatSelect)
-      .where(namespacedFilter)
-      .orderBy(namespacedOrderColumn, orderDirection)
+      .select("*")
+      .where(adapter.toDbPartial(filter))
+      .orderBy(orderColumn)
       .modify(modifier);
 
     return adapter.fromDbArray(rows);
   };
 
-  const findOne = async (
+  const findById = async (
     trx: Knex.Transaction,
-    filter: Partial<Model>,
-    modifier: QueryModifier = queryModifier
+    id: string
   ): Promise<Model | null> => {
-    const row = await trx(tableName)
-      .select(namespacedSplatSelect)
-      .where(getNamespacedFilter(filter))
-      .orderBy(`${tableName}.${orderColumn}`, orderDirection)
-      .first()
-      .modify(modifier);
+    const row = await trx(tableName).select("*").where({ id }).first();
 
     if (!row) {
       return null;
@@ -81,16 +47,17 @@ export function buildDao<
     return adapter.fromDb(row);
   };
 
-  const findById = async (
+  const findOne = async (
     trx: Knex.Transaction,
-    id: string,
-    modifier: QueryModifier = queryModifier
+    filter: Partial<Model>,
+    modifier: QueryModifier = identity
   ): Promise<Model | null> => {
     const row = await trx(tableName)
-      .select(namespacedSplatSelect)
-      .where(getNamespacedFilter({ id } as Partial<Model>))
-      .modify(modifier)
-      .first();
+      .select("*")
+      .where(adapter.toDbPartial(filter))
+      .orderBy(orderColumn)
+      .first()
+      .modify(modifier);
 
     if (!row) {
       return null;
@@ -102,7 +69,7 @@ export function buildDao<
   const create = async (
     trx: Transaction,
     blank: Model,
-    modifier: QueryModifier = insertModifier
+    modifier: QueryModifier = identity
   ): Promise<Model> => {
     const rowData = adapter.forInsertion(blank);
     const createdRow = await trx(tableName)
@@ -128,7 +95,7 @@ export function buildDao<
   const createAll = async (
     trx: Transaction,
     blanks: Model[],
-    modifier: QueryModifier = insertModifier
+    modifier: QueryModifier = identity
   ): Promise<Model[]> => {
     const rowData = blanks.map(adapter.forInsertion.bind(adapter));
     const createdRows: ModelRow[] = await trx(tableName)

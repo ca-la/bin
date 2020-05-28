@@ -3,7 +3,7 @@ import Knex from "knex";
 
 import InvalidDataError = require("../../errors/invalid-data");
 import * as UsersDAO from "./dao";
-import DesignEventsDAO from "../design-events/dao";
+import * as DesignEventsDAO from "../../dao/design-events";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import createUser = require("../../test-helpers/create-user");
 import createBid from "../../test-helpers/factories/bid";

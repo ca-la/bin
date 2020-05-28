@@ -2,7 +2,7 @@ import uuid from "node-uuid";
 import Knex from "knex";
 
 import db from "../../../../services/db";
-import DesignEventsDAO from "../../../design-events/dao";
+import * as DesignEventsDAO from "../../../../dao/design-events";
 import DesignsDAO from "../../../product-designs/dao";
 import ProductDesign = require("../../../product-designs/domain-objects/product-design");
 import {

@@ -3,9 +3,9 @@ import tape from "tape";
 
 import { test } from "../../../test-helpers/fresh";
 import generateCollection from "../../../test-helpers/factories/collection";
-import createUser from "../../../test-helpers/create-user";
+import createUser = require("../../../test-helpers/create-user");
 import createDesign from "../../../services/create-design";
-import DesignEventsDAO from "../../../components/design-events/dao";
+import * as DesignEventsDAO from "../../../dao/design-events";
 import { reverseSubmissionRecords } from "./reverse";
 import { moveDesign } from "../../../test-helpers/collections";
 import db from "../../../services/db";
@@ -30,9 +30,9 @@ test("reverseSubmissionRecords", async (t: tape.Test) => {
     userId: designer.id,
   });
   await moveDesign(c1.id, d1.id);
-  const trx = await db.transaction();
-  try {
-    const de1 = await DesignEventsDAO.create(trx, {
+
+  const de1 = await db.transaction((trx: Knex.Transaction) =>
+    DesignEventsDAO.create(trx, {
       actorId: designer.id,
       bidId: null,
       createdAt: new Date(),
@@ -45,8 +45,10 @@ test("reverseSubmissionRecords", async (t: tape.Test) => {
       approvalSubmissionId: null,
       taskTypeId: null,
       commentId: null,
-    });
-    const de2 = await DesignEventsDAO.create(trx, {
+    })
+  );
+  const de2 = await db.transaction((trx: Knex.Transaction) =>
+    DesignEventsDAO.create(trx, {
       actorId: admin.id,
       bidId: null,
       createdAt: new Date(),
@@ -59,8 +61,10 @@ test("reverseSubmissionRecords", async (t: tape.Test) => {
       approvalSubmissionId: null,
       taskTypeId: null,
       commentId: null,
-    });
-    const de3 = await DesignEventsDAO.create(trx, {
+    })
+  );
+  const de3 = await db.transaction((trx: Knex.Transaction) =>
+    DesignEventsDAO.create(trx, {
       actorId: admin.id,
       bidId: null,
       createdAt: new Date(),
@@ -73,22 +77,20 @@ test("reverseSubmissionRecords", async (t: tape.Test) => {
       approvalSubmissionId: null,
       taskTypeId: null,
       commentId: null,
-    });
+    })
+  );
 
-    const initialEvents = await DesignEventsDAO.find(trx, { designId: d1.id });
-    t.deepEqual(initialEvents, [de1, de2, de3], "Contains all events");
+  const initialEvents = await DesignEventsDAO.findByDesignId(d1.id);
+  t.deepEqual(initialEvents, [de1, de2, de3], "Contains all events");
 
-    await reverseSubmissionRecords(c1.id);
+  await reverseSubmissionRecords(c1.id);
 
-    const result = await DesignEventsDAO.find(trx, { designId: d1.id });
-    t.deepEqual(
-      result,
-      [de3],
-      "Successfully removes only the costing and submission events"
-    );
-  } finally {
-    trx.rollback();
-  }
+  const result = await DesignEventsDAO.findByDesignId(d1.id);
+  t.deepEqual(
+    result,
+    [de3],
+    "Successfully removes only the costing and submission events"
+  );
 });
 
 test("reverseSubmissionRecords on an empty collection", async (t: tape.Test) => {
@@ -110,8 +112,6 @@ test("reverseSubmissionRecords on an empty collection", async (t: tape.Test) => 
     t.equal(error.message, `No design events found for collection ${c1.id}`);
   }
 
-  const result = await db.transaction((trx: Knex.Transaction) =>
-    DesignEventsDAO.find(trx, { designId: d1.id })
-  );
+  const result = await DesignEventsDAO.findByDesignId(d1.id);
   t.deepEqual(result, [], "Has no design events");
 });

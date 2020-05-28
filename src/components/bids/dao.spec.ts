@@ -1,14 +1,11 @@
 import uuid from "node-uuid";
 import { omit } from "lodash";
 import { TaskStatus } from "@cala/ts-lib";
-import Knex from "knex";
-
-import db from "../../services/db";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import generatePricingValues from "../../test-helpers/factories/pricing-values";
 import generatePricingQuote from "../../services/generate-pricing-quote";
 import createUser from "../../test-helpers/create-user";
-import DesignEventsDAO from "../design-events/dao";
+import * as DesignEventsDAO from "../../dao/design-events";
 import { create as createDesign } from "../product-designs/dao";
 
 import { BidCreationPayload } from "./domain-object";
@@ -25,7 +22,7 @@ import {
   findRejectedByTargetId,
   findUnpaidByUserId,
 } from "./dao";
-import DesignEvent from "../design-events/types";
+import DesignEvent from "../../domain-objects/design-event";
 import generateBid from "../../test-helpers/factories/bid";
 import generateDesignEvent from "../../test-helpers/factories/design-event";
 import { daysToMs } from "../../services/time-conversion";
@@ -376,18 +373,16 @@ test("Bids DAO supports retrieval of bids by target ID and status", async (t: Te
   await create({ ...openBid, acceptedAt: null, taskTypeIds: [] });
   await create({ ...rejectedBid, acceptedAt: null, taskTypeIds: [] });
   await create({ ...acceptedBid, acceptedAt: null, taskTypeIds: [] });
-  await db.transaction((trx: Knex.Transaction) =>
-    DesignEventsDAO.createAll(trx, [
-      submitEvent,
-      bidEvent,
-      bidToOtherEvent,
-      otherRejectEvent,
-      bidDesignToRejectEvent,
-      bidDesignToAcceptEvent,
-      rejectDesignEvent,
-      acceptDesignEvent,
-    ])
-  );
+  await DesignEventsDAO.createAll([
+    submitEvent,
+    bidEvent,
+    bidToOtherEvent,
+    otherRejectEvent,
+    bidDesignToRejectEvent,
+    bidDesignToAcceptEvent,
+    rejectDesignEvent,
+    acceptDesignEvent,
+  ]);
 
   const openBids = await findOpenByTargetId(partner.id, "ACCEPTED");
   const otherBids = await findOpenByTargetId(otherPartner.id, "ACCEPTED");
@@ -603,25 +598,25 @@ test("findAcceptedByTargetId", async (t: Test) => {
   });
 
   const acceptDate1 = new Date(testDate.getTime() + daysToMs(1));
+  sandbox().useFakeTimers(acceptDate1);
   await generateDesignEvent({
     actorId: partner.id,
     bidId: b4.id,
     type: "ACCEPT_SERVICE_BID",
-    createdAt: acceptDate1,
   });
   const acceptDate2 = new Date(testDate.getTime() + daysToMs(2));
+  sandbox().useFakeTimers(acceptDate2);
   await generateDesignEvent({
     actorId: partner.id,
     bidId: b2.id,
     type: "ACCEPT_SERVICE_BID",
-    createdAt: acceptDate2,
   });
   const acceptDate3 = new Date(testDate.getTime() + daysToMs(12));
+  sandbox().useFakeTimers(acceptDate3);
   await generateDesignEvent({
     actorId: partner.id,
     bidId: b3.id,
     type: "ACCEPT_SERVICE_BID",
-    createdAt: acceptDate3,
   });
 
   const acceptedBids = await findAcceptedByTargetId(partner.id, "ACCEPTED");
@@ -882,19 +877,19 @@ test("Bids DAO supports finding by quote and user id with events", async (t: Tes
   await generateBid({ generatePricing: false });
 
   const acceptDate1 = new Date(testDate.getTime() + daysToMs(1));
+  sandbox().useFakeTimers(acceptDate1);
   const { designEvent: de2 } = await generateDesignEvent({
     actorId: partner.id,
     bidId: openBid1.id,
     type: "ACCEPT_SERVICE_BID",
-    createdAt: acceptDate1,
   });
 
   const acceptDate2 = new Date(testDate.getTime() + daysToMs(3));
+  sandbox().useFakeTimers(acceptDate2);
   const { designEvent: de4 } = await generateDesignEvent({
     actorId: partner.id,
     bidId: openBid3.id,
     type: "ACCEPT_SERVICE_BID",
-    createdAt: acceptDate2,
   });
 
   const result = await findAllByQuoteAndUserId(quote.id, partner.id);

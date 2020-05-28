@@ -3,7 +3,7 @@ import sinon from "sinon";
 import { omit } from "lodash";
 import Knex from "knex";
 
-import DesignEventsDAO from "../../components/design-events/dao";
+import * as DesignEventsDAO from "../../dao/design-events";
 import * as PricingCostInputsDAO from "../../components/pricing-cost-inputs/dao";
 import { BidCreationPayload } from "../../components/bids/domain-object";
 import createUser from "../../test-helpers/create-user";
@@ -182,9 +182,7 @@ test("POST /pricing-quotes creates commit event", async (t: Test) => {
     headers: authHeader(session.id),
   });
 
-  const events = await db.transaction((trx: Knex.Transaction) =>
-    DesignEventsDAO.find(trx, { designId: design.id })
-  );
+  const events = await DesignEventsDAO.findByDesignId(design.id);
   t.equal(events.length, 1);
   t.equal(events[0].type, "COMMIT_QUOTE");
 

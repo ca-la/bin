@@ -1,9 +1,7 @@
-import Knex from "knex";
-
 import * as CollaboratorsDAO from "../../components/collaborators/dao";
 import Collaborator from "../../components/collaborators/domain-objects/collaborator";
 import * as CollectionsDAO from "../../components/collections/dao";
-import DesignEventsDAO from "../../components/design-events/dao";
+import * as DesignEventsDAO from "../../dao/design-events";
 import Collection from "../../components/collections/domain-object";
 import { isOwner as isDesignOwner } from "../../components/product-designs/dao/dao";
 
@@ -40,26 +38,21 @@ const ROLE_ORDERING = ["EDIT", "PARTNER", "VIEW", "PREVIEW"];
  * - Having a collaborator connected to either the design or a collection that the design
  *   resides in.
  */
-export async function getDesignPermissionsAndRole(
-  trx: Knex.Transaction,
-  options: {
-    designId: string;
-    sessionRole: string;
-    sessionUserId: string;
-  }
-): Promise<PermissionsAndRole> {
+export async function getDesignPermissionsAndRole(options: {
+  designId: string;
+  sessionRole: string;
+  sessionUserId: string;
+}): Promise<PermissionsAndRole> {
   const { designId, sessionRole, sessionUserId } = options;
 
   const isAdmin = sessionRole === "ADMIN";
   const isOwnerOfDesign = await isDesignOwner({
     designId,
     userId: sessionUserId,
-    trx,
   });
   const isOwnerOfCollection = await CollectionsDAO.hasOwnership({
     designId,
     userId: sessionUserId,
-    trx,
   });
   const isOwner = isOwnerOfDesign || isOwnerOfCollection;
 
@@ -81,7 +74,6 @@ export async function getDesignPermissionsAndRole(
 
   return {
     permissions: await getPermissionsFromRoleAndDesignId(
-      trx,
       {
         isAdmin,
         isEditor,
@@ -96,23 +88,16 @@ export async function getDesignPermissionsAndRole(
   };
 }
 
-export async function getDesignPermissions(
-  trx: Knex.Transaction,
-  options: {
-    designId: string;
-    sessionRole: string;
-    sessionUserId: string;
-  }
-): Promise<Permissions> {
-  const designPermissionsAndRole = await getDesignPermissionsAndRole(
-    trx,
-    options
-  );
+export async function getDesignPermissions(options: {
+  designId: string;
+  sessionRole: string;
+  sessionUserId: string;
+}): Promise<Permissions> {
+  const designPermissionsAndRole = await getDesignPermissionsAndRole(options);
   return { ...designPermissionsAndRole.permissions };
 }
 
 export async function getCollectionPermissions(
-  trx: Knex.Transaction,
   collection: Collection,
   sessionRole: string,
   sessionUserId: string
@@ -134,7 +119,7 @@ export async function getCollectionPermissions(
   const isPreviewer = role === "PREVIEW";
   const isViewer = role === "VIEW";
 
-  return getPermissionsFromRoleAndDesignId(trx, {
+  return getPermissionsFromRoleAndDesignId({
     isAdmin,
     isEditor,
     isOwner,
@@ -145,7 +130,6 @@ export async function getCollectionPermissions(
 }
 
 async function getPermissionsFromRoleAndDesignId(
-  trx: Knex.Transaction,
   roles: LocalRoles,
   designId?: string
 ): Promise<Permissions> {
@@ -162,7 +146,7 @@ async function getPermissionsFromRoleAndDesignId(
 
   if (roles.isOwner || roles.isEditor) {
     const isQuoteCommitted = designId
-      ? await DesignEventsDAO.isQuoteCommitted(trx, designId)
+      ? await DesignEventsDAO.isQuoteCommitted(designId)
       : true;
     const canEditVariants = !isQuoteCommitted;
 

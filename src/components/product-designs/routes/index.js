@@ -3,7 +3,6 @@
 const pick = require("lodash/pick");
 const Router = require("koa-router");
 
-const db = require("../../../services/db");
 const canAccessUserResource = require("../../../middleware/can-access-user-resource");
 const CollaboratorsDAO = require("../../collaborators/dao");
 const CollectionsDAO = require("../../collections/dao");
@@ -13,7 +12,6 @@ const ProductDesignsDAO = require("../dao");
 const TaskEventsDAO = require("../../../dao/task-events");
 const ProductDesignStagesDAO = require("../../../dao/product-design-stages");
 const requireAuth = require("../../../middleware/require-auth");
-const useTransaction = require("../../../middleware/use-transaction").default;
 const createDesign = require("../../../services/create-design").default;
 const User = require("../../users/domain-object");
 const UsersDAO = require("../../users/dao");
@@ -84,7 +82,7 @@ async function attachResources(design, requestorId, permissions) {
 }
 
 function* getDesignsByUser() {
-  const { role, trx, userId } = this.state;
+  const { role, userId } = this.state;
   canAccessUserResource.call(this, this.query.userId);
   const designs = yield findAllDesignsThroughCollaborator({
     userId: this.query.userId,
@@ -94,7 +92,7 @@ function* getDesignsByUser() {
   });
   const designsWithPermissions = yield Promise.all(
     designs.map(async (design) => {
-      const designPermissions = await getDesignPermissions(trx, {
+      const designPermissions = await getDesignPermissions({
         designId: design.id,
         sessionRole: role,
         sessionUserId: userId,
@@ -152,18 +150,16 @@ function* getDesignsAndTasksByUser() {
   // TODO: this could end up making 100s of queries to the db, this could be improved by using
   //       one large JOIN
   const designsAndTasks = yield attachTasksToDesigns(designs);
-  const designsWithPermissions = [];
-
-  yield db.transaction(async (trx) => {
-    for (const design of designsAndTasks) {
-      const permissions = await getDesignPermissions(trx, {
+  const designsWithPermissions = yield Promise.all(
+    designsAndTasks.map(async (design) => {
+      const permissions = await getDesignPermissions({
         designId: design.id,
         sessionRole: role,
         sessionUserId: userId,
       });
-      designsWithPermissions.push({ ...design, permissions });
-    }
-  });
+      return { ...design, permissions };
+    })
+  );
 
   this.body = designsWithPermissions;
   this.status = 200;
@@ -180,20 +176,16 @@ function* getAllDesigns() {
     needsQuote: Boolean(this.query.needsQuote),
   });
 
-  const designsWithPermissions = [];
-
-  yield db.transaction(async (trx) => {
-    for (const design of designs) {
-      const permissions = await getDesignPermissions(trx, {
+  const designsWithPermissions = yield Promise.all(
+    designs.map(async (design) => {
+      const permissions = await getDesignPermissions({
         designId: design.id,
         sessionRole: role,
         sessionUserId: userId,
       });
-      designsWithPermissions.push(
-        await attachResources(design, userId, permissions)
-      );
-    }
-  });
+      return attachResources(design, userId, permissions);
+    })
+  );
 
   this.body = designsWithPermissions;
   this.status = 200;
@@ -238,13 +230,11 @@ function* create() {
   let design = yield createDesign(data).catch(
     filterError(InvalidDataError, (err) => this.throw(400, err))
   );
-  const designPermissions = yield db.transaction((trx) =>
-    getDesignPermissions(trx, {
-      designId: design.id,
-      sessionRole: role,
-      sessionUserId: userId,
-    })
-  );
+  const designPermissions = yield getDesignPermissions({
+    designId: design.id,
+    sessionRole: role,
+    sessionUserId: userId,
+  });
 
   design = yield attachResources(design, userId, designPermissions);
 
@@ -272,7 +262,7 @@ function* updateDesign() {
 }
 
 router.post("/", requireAuth, create);
-router.get("/", useTransaction, requireAuth, getDesigns);
+router.get("/", requireAuth, getDesigns);
 router.del(
   "/",
   requireAuth,

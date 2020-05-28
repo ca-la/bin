@@ -10,7 +10,7 @@ import {
 } from "../../test-helpers/factories/product-design";
 import * as ApprovalStepCommentDAO from "../approval-step-comments/dao";
 import * as ApprovalStepsDAO from "../approval-steps/dao";
-import DesignEventsDAO from "../design-events/dao";
+import * as DesignEventsDAO from "../../dao/design-events";
 import * as PricingProductTypesDAO from "../../components/pricing-product-types/dao";
 import * as PricingQuotesDAO from "../../dao/pricing-quotes";
 import db from "../../services/db";
@@ -20,7 +20,7 @@ import ApprovalStep, {
   ApprovalStepState,
   ApprovalStepType,
 } from "./domain-object";
-import DesignEvent from "../design-events/types";
+import DesignEvent from "../../domain-objects/design-event";
 import ProductDesign from "../product-designs/domain-objects/product-design";
 import * as ProductDesignsDAO from "../product-designs/dao";
 import generateCollaborator from "../../test-helpers/factories/collaborator";
@@ -83,7 +83,6 @@ test("GET /design-approval-steps/:stepId/stream-items", async (t: Test) => {
       approvalStepId,
       designId: d1.id,
       type: "SUBMIT_DESIGN",
-      createdAt: new Date(),
     });
 
     const { comment: comment2 } = await generateComment({
@@ -100,7 +99,6 @@ test("GET /design-approval-steps/:stepId/stream-items", async (t: Test) => {
       approvalStepId,
       designId: d1.id,
       type: "COMMIT_QUOTE",
-      createdAt: new Date(),
     });
 
     await generateDesignEvent({
@@ -108,7 +106,6 @@ test("GET /design-approval-steps/:stepId/stream-items", async (t: Test) => {
       approvalStepId,
       designId: d1.id,
       type: "STEP_COMPLETE",
-      createdAt: new Date(),
     });
 
     await generateDesignEvent({
@@ -116,7 +113,6 @@ test("GET /design-approval-steps/:stepId/stream-items", async (t: Test) => {
       approvalStepId,
       designId: d1.id,
       type: "STEP_REOPEN",
-      createdAt: new Date(),
     });
 
     const { designEvent: finalCompleteEvent } = await generateDesignEvent({
@@ -124,7 +120,6 @@ test("GET /design-approval-steps/:stepId/stream-items", async (t: Test) => {
       approvalStepId,
       designId: d1.id,
       type: "STEP_COMPLETE",
-      createdAt: new Date(),
     });
     finalCompleteEventId = finalCompleteEvent.id;
   });

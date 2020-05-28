@@ -2,7 +2,7 @@ import uuid from "node-uuid";
 import { omit } from "lodash";
 import sinon from "sinon";
 
-import DesignEvent from "../design-events/types";
+import DesignEvent from "../../domain-objects/design-event";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import db from "../../services/db";
 import { authHeader, del, get, post, put } from "../../test-helpers/http";
@@ -13,7 +13,7 @@ import * as BidsDAO from "./dao";
 import * as BidRejectionDAO from "../bid-rejections/dao";
 import * as PricingCostInputsDAO from "../pricing-cost-inputs/dao";
 import * as CollaboratorsDAO from "../collaborators/dao";
-import DesignEventsDAO from "../design-events/dao";
+import * as DesignEventsDAO from "../../dao/design-events";
 import ProductDesignsDAO from "../product-designs/dao";
 import * as NotificationsService from "../../services/create-notifications";
 import PayoutAccountsDAO from "../../dao/partner-payout-accounts";
@@ -557,9 +557,7 @@ test("DELETE /bids/:bidId/assignees/:userId", async (t: Test) => {
     "Removes the partner collaborator for the design"
   );
 
-  const events = await db.transaction((trx: Knex.Transaction) =>
-    DesignEventsDAO.find(trx, { designId: design.id })
-  );
+  const events = await DesignEventsDAO.findByDesignId(design.id);
 
   t.equal(events.length, 2, "Returns two events for the design");
   t.equal(events[0].type, "BID_DESIGN");
@@ -641,9 +639,7 @@ test("Partner pairing: accept", async (t: Test) => {
     headers: authHeader(partner.session.id),
   });
 
-  const designEvents = await db.transaction((trx: Knex.Transaction) =>
-    DesignEventsDAO.find(trx, { designId: design.id })
-  );
+  const designEvents = await DesignEventsDAO.findByDesignId(design.id);
 
   t.equal(
     response.status,
@@ -833,9 +829,7 @@ test("Partner pairing: reject", async (t: Test) => {
     body: bidRejection,
   });
 
-  const designEvents = await db.transaction((trx: Knex.Transaction) =>
-    DesignEventsDAO.find(trx, { designId: design.id })
-  );
+  const designEvents = await DesignEventsDAO.findByDesignId(design.id);
   const createdRejection = await BidRejectionDAO.findByBidId(bid.id);
 
   t.equal(response.status, 204);

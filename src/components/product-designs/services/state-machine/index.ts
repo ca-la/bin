@@ -1,5 +1,7 @@
 import { Machine, StateMachine } from "xstate";
-import DesignEvent, { DesignEventTypes } from "../../../design-events/types";
+import DesignEvent, {
+  DesignEventTypes,
+} from "../../../../domain-objects/design-event";
 import { BasePricingCostInput } from "../../../pricing-cost-inputs/domain-object";
 
 export enum DesignState {

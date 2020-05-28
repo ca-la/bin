@@ -1,4 +1,6 @@
-import { Role } from "../users/types";
+import DataAdapter from "../services/data-adapter";
+import { hasProperties } from "../services/require-properties";
+import { Role } from "../components/users/domain-object";
 
 /**
  * A log entry for a quote and partner assignment event that occured on a design
@@ -52,6 +54,7 @@ export default interface DesignEvent {
   type: DesignEventTypes;
   approvalSubmissionId: string | null;
   commentId: string | null;
+  taskTypeId: string | null;
 }
 
 export interface DesignEventRow {
@@ -66,6 +69,7 @@ export interface DesignEventRow {
   type: DesignEventTypes;
   approval_submission_id: string | null;
   comment_id: string | null;
+  task_type_id: string | null;
 }
 
 export interface DesignEventWithMeta extends DesignEvent {
@@ -94,4 +98,79 @@ export interface DesignEventWithMetaRow extends DesignEventRow {
   task_type_title: string | null;
 }
 
-export const domain = "DesignEvent" as "DesignEvent";
+export const dataAdapter = new DataAdapter<DesignEventRow, DesignEvent>();
+
+export const withMetaDataAdapter = new DataAdapter<
+  DesignEventWithMetaRow,
+  DesignEventWithMeta
+>();
+
+export function isDesignEventRow(row: object): row is DesignEventRow {
+  return hasProperties(
+    row,
+    "id",
+    "created_at",
+    "actor_id",
+    "target_id",
+    "design_id",
+    "bid_id",
+    "type",
+    "quote_id",
+    "approval_step_id",
+    "approval_submission_id",
+    "comment_id"
+  );
+}
+
+export function isDesignEvent(row: object): row is DesignEvent {
+  return hasProperties(
+    row,
+    "id",
+    "createdAt",
+    "actorId",
+    "targetId",
+    "designId",
+    "bidId",
+    "type",
+    "quoteId",
+    "approvalStepId",
+    "approvalSubmissionId",
+    "commentId"
+  );
+}
+
+export function isDesignEventWithMetaRow(
+  row: object
+): row is DesignEventWithMetaRow {
+  return (
+    isDesignEventRow(row) &&
+    hasProperties(
+      row,
+      "actor_name",
+      "actor_role",
+      "actor_email",
+      "target_name",
+      "target_role",
+      "target_email",
+      "submission_title",
+      "step_title"
+    )
+  );
+}
+
+export function isDesignEventWithMeta(row: object): row is DesignEventWithMeta {
+  return (
+    isDesignEvent(row) &&
+    hasProperties(
+      row,
+      "actorName",
+      "actorRole",
+      "actorEmail",
+      "targetName",
+      "targetRole",
+      "targetEmail",
+      "submissionTitle",
+      "stepTitle"
+    )
+  );
+}

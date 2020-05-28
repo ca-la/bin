@@ -1,3 +1,4 @@
+import Knex from "knex";
 import Router from "koa-router";
 
 import { CALA_OPS_USER_ID } from "../../../config";
@@ -13,8 +14,8 @@ import {
 import canAccessUserResource = require("../../../middleware/can-access-user-resource");
 import requireAuth = require("../../../middleware/require-auth");
 import requireAdmin = require("../../../middleware/require-admin");
-import useTransaction from "../../../middleware/use-transaction";
 
+import db from "../../../services/db";
 import * as CollectionsDAO from "../dao";
 import * as CollaboratorsDAO from "../../collaborators/dao";
 import Collection, {
@@ -47,11 +48,9 @@ interface CollectionWithPermissions extends Collection {
   permissions: Permissions;
 }
 
-function* createCollection(
-  this: TrxContext<AuthedContext>
-): Iterator<any, any, any> {
+function* createCollection(this: AuthedContext): Iterator<any, any, any> {
   const { body } = this.request;
-  const { role, trx, userId } = this.state;
+  const { role, userId } = this.state;
   const data = { ...body, deletedAt: null, createdBy: userId };
 
   if (data && isCollection(data)) {
@@ -65,32 +64,25 @@ function* createCollection(
       throw new Error("Cala Ops user not set!");
     }
 
-    yield CollaboratorsDAO.create(
-      {
-        cancelledAt: null,
-        collectionId: collection.id,
-        designId: null,
-        invitationMessage: "",
-        role: "EDIT",
-        userEmail: null,
-        userId,
-      },
-      trx
-    );
-    yield CollaboratorsDAO.create(
-      {
-        cancelledAt: null,
-        collectionId: collection.id,
-        designId: null,
-        invitationMessage: "",
-        role: "EDIT",
-        userEmail: null,
-        userId: CALA_OPS_USER_ID,
-      },
-      trx
-    );
+    yield CollaboratorsDAO.create({
+      cancelledAt: null,
+      collectionId: collection.id,
+      designId: null,
+      invitationMessage: "",
+      role: "EDIT",
+      userEmail: null,
+      userId,
+    });
+    yield CollaboratorsDAO.create({
+      cancelledAt: null,
+      collectionId: collection.id,
+      designId: null,
+      invitationMessage: "",
+      role: "EDIT",
+      userEmail: null,
+      userId: CALA_OPS_USER_ID,
+    });
     const permissions = yield getCollectionPermissions(
-      trx,
       collection,
       role,
       userId
@@ -103,7 +95,7 @@ function* createCollection(
   }
 }
 
-function* getList(this: TrxContext<AuthedContext>): Iterator<any, any, any> {
+function* getList(this: AuthedContext): Iterator<any, any, any> {
   const {
     userId,
     isCosted,
@@ -113,32 +105,39 @@ function* getList(this: TrxContext<AuthedContext>): Iterator<any, any, any> {
     offset,
     search,
   } = this.query;
-  const { role, trx, userId: currentUserId } = this.state;
+  const { role, userId: currentUserId } = this.state;
   const userIdToQuery =
     role === "ADMIN" ? userId : currentUserId === userId ? currentUserId : null;
 
   if (userIdToQuery) {
-    const collections = yield CollectionsDAO.findByCollaboratorAndUserId(trx, {
-      userId: userIdToQuery,
-      limit: Number(limit),
-      offset: Number(offset),
-      search,
-    });
-
-    const withPermissions: CollectionWithPermissions[] = [];
-
-    for (const collection of collections) {
-      withPermissions.push({
-        ...collection,
-        permissions: yield getCollectionPermissions(
+    const collectionsWithPermissions = yield db.transaction(
+      async (trx: Knex.Transaction) => {
+        const collections = await CollectionsDAO.findByCollaboratorAndUserId(
           trx,
-          collection,
-          role,
-          userIdToQuery
-        ),
-      });
-    }
-    this.body = withPermissions;
+          {
+            userId: userIdToQuery,
+            limit: Number(limit),
+            offset: Number(offset),
+            search,
+          }
+        );
+        return Promise.all(
+          collections.map(
+            async (
+              collection: Collection
+            ): Promise<CollectionWithPermissions> => {
+              const permissions = await getCollectionPermissions(
+                collection,
+                role,
+                userIdToQuery
+              );
+              return { ...collection, permissions };
+            }
+          )
+        );
+      }
+    );
+    this.body = collectionsWithPermissions;
     this.status = 200;
   } else if (
     role === "ADMIN" &&
@@ -164,16 +163,13 @@ function* deleteCollection(this: AuthedContext): Iterator<any, any, any> {
   this.status = 204;
 }
 
-function* getCollection(
-  this: TrxContext<AuthedContext>
-): Iterator<any, any, any> {
+function* getCollection(this: AuthedContext): Iterator<any, any, any> {
   const { collectionId } = this.params;
-  const { role, trx, userId } = this.state;
+  const { role, userId } = this.state;
 
   if (collectionId) {
     const collection = yield CollectionsDAO.findById(collectionId);
     const permissions = yield getCollectionPermissions(
-      trx,
       collection,
       role,
       userId
@@ -185,12 +181,10 @@ function* getCollection(
   }
 }
 
-function* updateCollection(
-  this: TrxContext<AuthedContext>
-): Iterator<any, any, any> {
+function* updateCollection(this: AuthedContext): Iterator<any, any, any> {
   const { collectionId } = this.params;
   const { body } = this.request;
-  const { role, trx, userId } = this.state;
+  const { role, userId } = this.state;
 
   if (body && isPartialCollection(body)) {
     const collection = yield CollectionsDAO.update(collectionId, body).catch(
@@ -199,7 +193,6 @@ function* updateCollection(
       )
     );
     const permissions = yield getCollectionPermissions(
-      trx,
       collection,
       role,
       userId
@@ -212,8 +205,8 @@ function* updateCollection(
   }
 }
 
-router.post("/", requireAuth, useTransaction, createCollection);
-router.get("/", requireAuth, useTransaction, getList);
+router.post("/", requireAuth, createCollection);
+router.get("/", requireAuth, getList);
 
 router.del(
   "/:collectionId",
@@ -226,7 +219,6 @@ router.get(
   "/:collectionId",
   requireAuth,
   canAccessCollectionInParam,
-  useTransaction,
   getCollection
 );
 router.patch(
@@ -234,7 +226,6 @@ router.patch(
   requireAuth,
   canAccessCollectionInParam,
   canEditCollection,
-  useTransaction,
   updateCollection
 );
 

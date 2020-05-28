@@ -1,13 +1,13 @@
 import tape from "tape";
 import uuid from "node-uuid";
 import { Variant } from "@cala/ts-lib";
-import createUser from "../../test-helpers/create-user";
+import createUser = require("../../test-helpers/create-user");
 import { create as createDesign } from "../product-designs/dao";
 import API from "../../test-helpers/http";
 import { sandbox, test } from "../../test-helpers/fresh";
 import * as ProductDesignVariantsDAO from "./dao";
 import generateCollaborator from "../../test-helpers/factories/collaborator";
-import DesignEventsDAO from "../design-events/dao";
+import * as DesignEventsDAO from "../../dao/design-events";
 
 const API_PATH = "/product-design-variants";
 

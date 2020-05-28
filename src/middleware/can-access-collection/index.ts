@@ -1,7 +1,4 @@
 import Koa from "koa";
-import Knex from "knex";
-
-import db from "../../services/db";
 import CollectionsDAO = require("../../components/collections/dao");
 import { getCollectionPermissions } from "../../services/get-permissions";
 
@@ -13,9 +10,7 @@ export function* attachCollectionAndPermissions(
 
   const collection = yield CollectionsDAO.findById(collectionId);
   this.assert(collection, 404, "Collection not found");
-  const permissions = yield db.transaction((trx: Knex.Transaction) =>
-    getCollectionPermissions(trx, collection, role, userId)
-  );
+  const permissions = yield getCollectionPermissions(collection, role, userId);
 
   this.state.collection = collection;
   this.state.permissions = permissions;

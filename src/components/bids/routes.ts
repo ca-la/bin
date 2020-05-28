@@ -14,8 +14,10 @@ import * as BidRejectionsDAO from "../bid-rejections/dao";
 import * as BidsDAO from "./dao";
 import * as PricingQuotesDAO from "../../dao/pricing-quotes";
 import ProductDesignsDAO from "../product-designs/dao";
-import { create as createDesignEvent } from "../design-events/dao";
-import { DuplicateAcceptRejectError } from "../design-events/errors";
+import {
+  create as createDesignEvent,
+  DuplicateAcceptRejectError,
+} from "../../dao/design-events";
 import * as CollaboratorsDAO from "../collaborators/dao";
 import requireAdmin = require("../../middleware/require-admin");
 import requireAuth = require("../../middleware/require-auth");

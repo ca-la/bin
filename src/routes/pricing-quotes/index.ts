@@ -13,7 +13,7 @@ import { BidCreationPayload } from "../../components/bids/domain-object";
 import filterError = require("../../services/filter-error");
 import InvalidDataError from "../../errors/invalid-data";
 import requireAdmin = require("../../middleware/require-admin");
-import DesignEventsDAO from "../../components/design-events/dao";
+import * as DesignEventsDAO from "../../dao/design-events";
 import { FINANCING_MARGIN } from "../../config";
 import { findByDesignId, findById } from "../../dao/pricing-quotes";
 import { hasProperties } from "../../services/require-properties";

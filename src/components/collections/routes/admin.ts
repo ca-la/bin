@@ -4,7 +4,7 @@ import Knex from "knex";
 import db from "../../../services/db";
 import DesignsDAO from "../../product-designs/dao";
 import * as CollectionsDAO from "../dao";
-import DesignEventsDAO from "../../design-events/dao";
+import * as DesignEventsDAO from "../../../dao/design-events";
 import createDesignTasks from "../../../services/create-design-tasks";
 import isEveryDesignPaired from "../../../services/is-every-design-paired";
 import * as NotificationsService from "../../../services/create-notifications";
@@ -41,14 +41,14 @@ export function* createPartnerPairing(
   }
 
   const designs = yield DesignsDAO.findByCollectionId(collectionId);
+  const allArePaired = yield isEveryDesignPaired(collectionId);
+
+  if (!allArePaired) {
+    this.throw(409, "Designs are not all paired");
+  }
+
   yield db.transaction(
     async (trx: Knex.Transaction): Promise<void> => {
-      const allArePaired = await isEveryDesignPaired(trx, collectionId);
-
-      if (!allArePaired) {
-        this.throw(409, "Designs are not all paired");
-      }
-
       for (const design of designs) {
         await DesignEventsDAO.create(trx, {
           actorId: userId,

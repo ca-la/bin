@@ -16,8 +16,8 @@ import * as ApprovalStepCommentDAO from "../approval-step-comments/dao";
 import { CommentWithResources } from "@cala/ts-lib";
 import addAtMentionDetails from "../../services/add-at-mention-details";
 import { addAttachmentLinks } from "../../services/add-attachments-links";
-import { DesignEventWithMeta } from "../design-events/types";
-import DesignEventsDAO from "../design-events/dao";
+import { DesignEventWithMeta } from "../../domain-objects/design-event";
+import * as DesignEventsDAO from "../../dao/design-events";
 import { CalaRouter } from "../../services/cala-component/types";
 
 type StreamItem = CommentWithResources | DesignEventWithMeta;
