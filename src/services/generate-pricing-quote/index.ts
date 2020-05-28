@@ -20,7 +20,7 @@ import {
 import { Complexity, ProductType } from "../../domain-objects/pricing";
 import Knex from "knex";
 import * as PricingCostInputsDAO from "../../components/pricing-cost-inputs/dao";
-import * as DesignEventsDAO from "../../dao/design-events";
+import DesignEventsDAO from "../../components/design-events/dao";
 import PricingCostInputs from "../../components/pricing-cost-inputs/domain-object";
 import DataAdapter from "../data-adapter";
 import addMargin from "../add-margin";

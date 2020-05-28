@@ -1,8 +1,8 @@
 import uuid from "node-uuid";
-import { create } from "../../dao/design-events";
-import DesignEvent from "../../domain-objects/design-event";
+import { create } from "../../components/design-events/dao";
+import DesignEvent from "../../components/design-events/types";
 import { findById as findUserById } from "../../components/users/dao";
-import createUser = require("../create-user");
+import createUser from "../create-user";
 import ProductDesign = require("../../components/product-designs/domain-objects/product-design");
 import ProductDesignsDAO from "../../components/product-designs/dao";
 import Knex from "knex";
@@ -39,7 +39,7 @@ export default async function generateDesignEvent(
       approvalSubmissionId: null,
       bidId: null,
       commentId: null,
-      createdAt: new Date(2012, 11, 24),
+      createdAt: new Date(),
       designId: design.id,
       id: uuid.v4(),
       quoteId: null,

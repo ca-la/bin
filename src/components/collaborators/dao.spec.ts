@@ -6,7 +6,7 @@ import db from "../../services/db";
 import * as CollaboratorsDAO from "./dao";
 import * as CollectionsDAO from "../collections/dao";
 import ProductDesignsDAO = require("../product-designs/dao");
-import * as DesignEventsDAO from "../../dao/design-events";
+import DesignEventsDAO from "../design-events/dao";
 
 import createUser = require("../../test-helpers/create-user");
 import { test, Test } from "../../test-helpers/fresh";

@@ -1,8 +1,6 @@
 import { Machine, StateMachine } from "xstate";
 import Bid from "../../domain-object";
-import DesignEvent, {
-  DesignEventTypes,
-} from "../../../../domain-objects/design-event";
+import DesignEvent, { DesignEventTypes } from "../../../design-events/types";
 import { isExpired } from "../is-expired";
 
 export enum BidState {

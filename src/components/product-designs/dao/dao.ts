@@ -329,7 +329,7 @@ export async function isOwner(options: {
         query.transacting(trx);
       }
     })
-    .then((rows: string[]) => first<string>(rows));
+    .first();
 
   if (!ownerRow) {
     throw new ResourceNotFoundError(`Design "${designId}" could not be found.`);

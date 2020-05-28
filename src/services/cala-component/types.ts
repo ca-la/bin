@@ -62,11 +62,11 @@ export { NotificationsLayer };
 export interface CalaComponent<
   Model extends object,
   ModelRow extends object,
-  LayerSchema extends NotificationsLayerSchema
+  NotificationSchema extends NotificationsLayerSchema = {}
 > {
   adapter?: CalaAdapter<Model, ModelRow>;
   dao?: CalaDao<Model>;
   router?: CalaRouter;
   listeners?: void;
-  notifications: NotificationsLayer<LayerSchema>;
+  notifications: NotificationsLayer<NotificationSchema>;
 }

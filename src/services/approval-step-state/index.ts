@@ -6,7 +6,7 @@ import * as ProductDesignsDAO from "../../components/product-designs/dao";
 import * as ApprovalStepsDAO from "../../components/approval-steps/dao";
 import * as ApprovalStepSubmissionsDAO from "../../components/approval-step-submissions/dao";
 import * as BidTaskTypesDAO from "../../components/bid-task-types/dao";
-import * as DesignEventsDAO from "../../dao/design-events";
+import DesignEventsDAO from "../../components/design-events/dao";
 import ApprovalStep, {
   ApprovalStepState,
   ApprovalStepType,
@@ -17,7 +17,7 @@ import { getDefaultsByDesign } from "../../components/approval-step-submissions/
 import notifications from "../../components/approval-steps/notifications";
 import { NotificationType } from "../../components/notifications/domain-object";
 import * as CollaboratorsDAO from "../../components/collaborators/dao";
-import DesignEvent from "../../domain-objects/design-event";
+import DesignEvent from "../../components/design-events/types";
 
 export async function makeNextStepCurrentIfNeeded(
   trx: Knex.Transaction,

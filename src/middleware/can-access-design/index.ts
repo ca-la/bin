@@ -1,6 +1,8 @@
 import Koa from "koa";
 import compose from "koa-compose";
+import Knex from "knex";
 
+import db from "../../services/db";
 import {
   getDesignPermissions,
   Permissions,
@@ -14,15 +16,19 @@ export function* attachDesignPermissions(
   designId: string
 ): any {
   const { role, userId } = this.state;
-  this.state.permissions = yield getDesignPermissions({
-    designId,
-    sessionRole: role,
-    sessionUserId: userId,
-  }).catch(
-    filterError(ResourceNotFoundError, () => {
-      this.throw(404, "Design not found");
-    })
-  );
+  this.state.permissions = yield db
+    .transaction((trx: Knex.Transaction) =>
+      getDesignPermissions(trx, {
+        designId,
+        sessionRole: role,
+        sessionUserId: userId,
+      })
+    )
+    .catch(
+      filterError(ResourceNotFoundError, () => {
+        this.throw(404, "Design not found");
+      })
+    );
 }
 
 export function* attachAggregateDesignPermissions(
@@ -41,11 +47,13 @@ export function* attachAggregateDesignPermissions(
   };
 
   for (const designId of designIds) {
-    const permissions = yield getDesignPermissions({
-      designId,
-      sessionRole: role,
-      sessionUserId: userId,
-    });
+    const permissions = yield db.transaction((trx: Knex.Transaction) =>
+      getDesignPermissions(trx, {
+        designId,
+        sessionRole: role,
+        sessionUserId: userId,
+      })
+    );
 
     aggregatePermissions = {
       canComment: aggregatePermissions.canComment && permissions.canComment,

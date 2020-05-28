@@ -1,5 +1,7 @@
 import Koa from "koa";
+import Knex from "knex";
 
+import db from "../../services/db";
 import * as CollaboratorsDAO from "../../components/collaborators/dao";
 import * as CollectionsDAO from "../../components/collections/dao";
 import DesignsDAO from "../../components/product-designs/dao";
@@ -28,7 +30,7 @@ export function isCollaboratorRequest(
   return hasProperties(data, "role", "userEmail");
 }
 
-async function findPermissionsFromCollectionOrDesign(
+function findPermissionsFromCollectionOrDesign(
   role: string,
   userId: string,
   collectionId: string | undefined,
@@ -38,28 +40,35 @@ async function findPermissionsFromCollectionOrDesign(
     throw new Error("Must pass collectionId or designId, not both");
   }
 
-  if (collectionId) {
-    const collection = await CollectionsDAO.findById(collectionId);
-    if (!collection) {
-      throw new ResourceNotFoundError(
-        `Could not find collection ${collectionId}`
+  return db.transaction(async (trx: Knex.Transaction) => {
+    if (collectionId) {
+      const collection = await CollectionsDAO.findById(collectionId, trx);
+      if (!collection) {
+        throw new ResourceNotFoundError(
+          `Could not find collection ${collectionId}`
+        );
+      }
+      return getCollectionPermissions(trx, collection, role, userId);
+    }
+    if (designId) {
+      const design = await DesignsDAO.findById(
+        designId,
+        undefined,
+        undefined,
+        trx
       );
-    }
-    return getCollectionPermissions(collection, role, userId);
-  }
-  if (designId) {
-    const design = await DesignsDAO.findById(designId);
-    if (!design) {
-      throw new ResourceNotFoundError(`Could not find design ${designId}`);
-    }
+      if (!design) {
+        throw new ResourceNotFoundError(`Could not find design ${designId}`);
+      }
 
-    return getDesignPermissions({
-      designId: design.id,
-      sessionRole: role,
-      sessionUserId: userId,
-    });
-  }
-  return null;
+      return getDesignPermissions(trx, {
+        designId: design.id,
+        sessionRole: role,
+        sessionUserId: userId,
+      });
+    }
+    return null;
+  });
 }
 
 export function* attachCollaboratorAndPermissions(

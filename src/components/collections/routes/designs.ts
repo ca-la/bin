@@ -94,14 +94,16 @@ export function* getCollectionDesigns(
 
   const designsWithPermissions: DesignWithPermissions[] = [];
 
-  for (const collectionDesign of collectionDesigns) {
-    const permissions = yield getDesignPermissionsAndRole({
-      designId: collectionDesign.id,
-      sessionRole: role,
-      sessionUserId: userId,
-    });
-    designsWithPermissions.push({ ...collectionDesign, ...permissions });
-  }
+  yield db.transaction(async (trx: Knex.Transaction) => {
+    for (const collectionDesign of collectionDesigns) {
+      const permissions = await getDesignPermissionsAndRole(trx, {
+        designId: collectionDesign.id,
+        sessionRole: role,
+        sessionUserId: userId,
+      });
+      designsWithPermissions.push({ ...collectionDesign, ...permissions });
+    }
+  });
 
   this.body = designsWithPermissions;
   this.status = 200;

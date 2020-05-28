@@ -1,5 +1,7 @@
 import Koa from "koa";
+import Knex from "knex";
 
+import db from "../../services/db";
 import { getDesignPermissions } from "../../services/get-permissions";
 import { findDesignByAnnotationId } from "../../components/product-designs/dao/dao";
 
@@ -20,11 +22,13 @@ export function* canAccessAnnotationInParams(
   if (!design) {
     this.throw(404, "Design cannot be found.");
   }
-  this.state.permissions = yield getDesignPermissions({
-    designId: design.id,
-    sessionRole: role,
-    sessionUserId: userId,
-  });
+  this.state.permissions = yield db.transaction((trx: Knex.Transaction) =>
+    getDesignPermissions(trx, {
+      designId: design.id,
+      sessionRole: role,
+      sessionUserId: userId,
+    })
+  );
   const { permissions } = this.state;
 
   this.assert(

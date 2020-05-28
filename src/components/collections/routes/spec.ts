@@ -5,9 +5,9 @@ import Knex from "knex";
 
 import * as CollectionsDAO from "../dao";
 import * as CollaboratorsDAO from "../../collaborators/dao";
-import createUser = require("../../../test-helpers/create-user");
+import createUser from "../../../test-helpers/create-user";
 import ProductDesignsDAO from "../../product-designs/dao";
-import * as DesignEventsDAO from "../../../dao/design-events";
+import DesignEventsDAO from "../../design-events/dao";
 import * as SubscriptionsDAO from "../../../components/subscriptions/dao";
 import * as PaymentMethodsDAO from "../../../components/payment-methods/dao";
 import * as PlansDAO from "../../../components/plans/dao";
@@ -23,6 +23,7 @@ import { moveDesign } from "../../../test-helpers/collections";
 import db from "../../../services/db";
 import generateApprovalStep from "../../../test-helpers/factories/design-approval-step";
 import createDesign from "../../../services/create-design";
+import { DesignEventTypes } from "../../design-events/types";
 
 test("GET /collections/:id returns a created collection", async (t: tape.Test) => {
   const { session, user } = await createUser();
@@ -460,8 +461,13 @@ test("POST /collections/:id/submissions", async (t: tape.Test) => {
     }
   );
 
-  const designEventOne = await DesignEventsDAO.findByDesignId(designOne.id);
-  const designEventTwo = await DesignEventsDAO.findByDesignId(designTwo.id);
+  const [
+    designOneEvents,
+    designTwoEvents,
+  ] = await db.transaction(async (trx: Knex.Transaction) => [
+    await DesignEventsDAO.find(trx, { designId: designOne.id }),
+    await DesignEventsDAO.find(trx, { designId: designTwo.id }),
+  ]);
 
   sinon.assert.callCount(notificationStub, 1);
 
@@ -479,22 +485,22 @@ test("POST /collections/:id/submissions", async (t: tape.Test) => {
     "Returns current submission status"
   );
   t.deepEqual(
-    designEventOne[0].type,
+    designOneEvents[0].type,
     "SUBMIT_DESIGN",
     "Submitted the design to CALA"
   );
   t.deepEqual(
-    designEventTwo[0].type,
+    designTwoEvents[0].type,
     "SUBMIT_DESIGN",
     "Submitted the design to CALA"
   );
   t.deepEqual(
-    designEventOne[0].approvalStepId,
+    designOneEvents[0].approvalStepId,
     approvalStepOne.id,
     "Submission is associated with the right step"
   );
   t.deepEqual(
-    designEventTwo[0].approvalStepId,
+    designTwoEvents[0].approvalStepId,
     approvalStepTwo.id,
     "Submission is associated with the right step"
   );
@@ -676,14 +682,20 @@ test("POST /collections/:collectionId/cost-inputs", async (t: tape.Test) => {
 
   sinon.assert.called(notificationStub);
 
-  const designOneEvents = await DesignEventsDAO.findByDesignId(designOne.id);
+  const [
+    designOneEvents,
+    designTwoEvents,
+  ] = await db.transaction(async (trx: Knex.Transaction) => [
+    await DesignEventsDAO.find(trx, { designId: designOne.id }),
+    await DesignEventsDAO.find(trx, { designId: designTwo.id }),
+  ]);
+
   t.equal(designOneEvents.length, 1, "Creates one design event for the design");
   t.equal(
     designOneEvents[0].type,
     "COMMIT_COST_INPUTS",
     "Creates a cost input event"
   );
-  const designTwoEvents = await DesignEventsDAO.findByDesignId(designTwo.id);
   t.equal(designTwoEvents.length, 1, "Creates one design event for the design");
   t.equal(
     designTwoEvents[0].type,
@@ -725,34 +737,38 @@ test("POST /collections/:collectionId/partner-pairings", async (t: tape.Test) =>
   await moveDesign(collectionOne.id, designOne.id);
   await moveDesign(collectionOne.id, designTwo.id);
 
-  await DesignEventsDAO.createAll([
-    {
-      actorId: partner.user.id,
-      approvalStepId: null,
-      approvalSubmissionId: null,
-      bidId: null,
-      commentId: null,
-      designId: designOne.id,
-      id: uuid.v4(),
-      quoteId: null,
-      targetId: null,
-      taskTypeId: null,
-      type: "ACCEPT_SERVICE_BID",
-    },
-    {
-      actorId: partner.user.id,
-      approvalStepId: null,
-      approvalSubmissionId: null,
-      bidId: null,
-      commentId: null,
-      designId: designTwo.id,
-      id: uuid.v4(),
-      quoteId: null,
-      targetId: null,
-      taskTypeId: null,
-      type: "ACCEPT_SERVICE_BID",
-    },
-  ]);
+  await db.transaction((trx: Knex.Transaction) =>
+    DesignEventsDAO.createAll(trx, [
+      {
+        actorId: partner.user.id,
+        approvalStepId: null,
+        approvalSubmissionId: null,
+        bidId: null,
+        commentId: null,
+        createdAt: new Date(),
+        designId: designOne.id,
+        id: uuid.v4(),
+        quoteId: null,
+        targetId: null,
+        type: "ACCEPT_SERVICE_BID" as DesignEventTypes,
+        taskTypeId: null,
+      },
+      {
+        actorId: partner.user.id,
+        approvalStepId: null,
+        approvalSubmissionId: null,
+        bidId: null,
+        commentId: null,
+        createdAt: new Date(),
+        designId: designTwo.id,
+        id: uuid.v4(),
+        quoteId: null,
+        targetId: null,
+        type: "ACCEPT_SERVICE_BID" as DesignEventTypes,
+        taskTypeId: null,
+      },
+    ])
+  );
 
   const failedPartnerPairing = await API.post(
     `/collections/${collectionOne.id}/partner-pairings`,
@@ -771,14 +787,20 @@ test("POST /collections/:collectionId/partner-pairings", async (t: tape.Test) =>
     "Partner pairing notification is created"
   );
 
-  const designOneEvents = await DesignEventsDAO.findByDesignId(designOne.id);
+  const [
+    designOneEvents,
+    designTwoEvents,
+  ] = await db.transaction(async (trx: Knex.Transaction) => [
+    await DesignEventsDAO.find(trx, { designId: designOne.id }),
+    await DesignEventsDAO.find(trx, { designId: designTwo.id }),
+  ]);
+
   t.equal(designOneEvents.length, 2, "Creates one design event for the design");
   t.equal(
     designOneEvents[1].type,
     "COMMIT_PARTNER_PAIRING",
     "Creates a partner pairing event"
   );
-  const designTwoEvents = await DesignEventsDAO.findByDesignId(designTwo.id);
   t.equal(designTwoEvents.length, 2, "Creates one design event for the design");
   t.equal(
     designTwoEvents[1].type,
