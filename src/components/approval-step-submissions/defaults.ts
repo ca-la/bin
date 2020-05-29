@@ -5,6 +5,7 @@ import { uniqBy } from "lodash";
 import * as ApprovalStepsDAO from "../approval-steps/dao";
 import * as PricingProductTypesDAO from "../pricing-product-types/dao";
 import * as PricingQuotesDAO from "../../dao/pricing-quotes";
+import PricingProductType from "../pricing-product-types/domain-object";
 import ApprovalStepSubmission, {
   ApprovalStepSubmissionState,
   ApprovalStepSubmissionArtifactType,
@@ -38,6 +39,53 @@ function getProcessSubmissions(
       title: `Review ${getDisplayOrFallbackName(process)} trial`,
     })
   );
+}
+
+function getProductSubmissions(
+  stepsByType: ApprovalStepByType,
+  productType: PricingProductType
+): SubmissionOption[] {
+  switch (productType.name) {
+    case "OTHER - NOVELTY LABELS":
+    case "OTHER - PACKAGING":
+      return [
+        {
+          stepId: stepsByType[ApprovalStepType.TECHNICAL_DESIGN].id,
+          title: "Review artwork proof",
+        },
+        {
+          stepId: stepsByType[ApprovalStepType.SAMPLE].id,
+          title: "Review final sample",
+        },
+        {
+          stepId: stepsByType[ApprovalStepType.PRODUCTION].id,
+          title: "Confirm receipt of final shipment",
+        },
+      ];
+
+    case "OTHER - HANGTAGS":
+      return [
+        {
+          stepId: stepsByType[ApprovalStepType.TECHNICAL_DESIGN].id,
+          title: "Review artwork proof",
+        },
+        {
+          stepId: stepsByType[ApprovalStepType.SAMPLE].id,
+          title: "Review material options",
+        },
+        {
+          stepId: stepsByType[ApprovalStepType.SAMPLE].id,
+          title: "Review final sample",
+        },
+        {
+          stepId: stepsByType[ApprovalStepType.PRODUCTION].id,
+          title: "Confirm receipt of final shipment",
+        },
+      ];
+
+    default:
+      return getComplexitySubmissions(stepsByType, productType.complexity);
+  }
 }
 
 function getComplexitySubmissions(
@@ -138,7 +186,7 @@ export async function getDefaultsByDesign(
   );
 
   return [
-    ...getComplexitySubmissions(stepsByType, productType.complexity),
+    ...getProductSubmissions(stepsByType, productType),
     ...getProcessSubmissions(stepsByType, latestQuote.processes),
   ].map((sub: SubmissionOption, index: number) => ({
     id: uuid.v4(),

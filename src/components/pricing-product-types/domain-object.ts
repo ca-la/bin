@@ -1,4 +1,4 @@
-import { Complexity } from "../../domain-objects/pricing";
+import { Complexity, ProductType } from "../../domain-objects/pricing";
 import DataAdapter from "../../services/data-adapter";
 import { hasProperties } from "../../services/require-properties";
 
@@ -22,7 +22,7 @@ export default interface PricingProductType {
   id: string;
   version: number;
   minimumUnits: number;
-  name: string;
+  name: ProductType;
   patternMinimumCents: number;
   complexity: Complexity;
   unitCents: number;
@@ -42,7 +42,7 @@ export interface PricingProductTypeRow {
   id: string;
   version: number;
   minimum_units: number;
-  name: string;
+  name: ProductType;
   pattern_minimum_cents: number;
   complexity: string;
   unit_cents: number;

@@ -1,6 +1,7 @@
 import uuid from "node-uuid";
 import { Cents, Dollars } from "../../services/dollars";
 import { PricingProductTypeRow } from "../../components/pricing-product-types/domain-object";
+import { ProductType } from "../../domain-objects/pricing";
 import { daysToMs } from "../time-conversion";
 
 // [units, priceMultiplier, timeMultiplier]
@@ -38,7 +39,7 @@ const timeComplexityMultiple = {
 };
 
 interface ProductTypeGeneratorArgs {
-  typeName: string;
+  typeName: ProductType;
   typeMediumCents: Cents;
   typeMediumDays: number;
   typeYield: number;
