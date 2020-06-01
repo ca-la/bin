@@ -33,14 +33,15 @@ const TIMING_SOURCES: Record<ApprovalStepType, PricingQuoteTimeKeys[]> = {
 
 export async function setApprovalStepsDueAtByPricingQuote(
   trx: Knex.Transaction,
-  quote: PricingQuote
+  quote: PricingQuote,
+  baseDate: Date = new Date()
 ): Promise<void> {
+  const baseDateMs = baseDate.getTime();
   if (!quote.designId) {
     return;
   }
   const steps = await find(trx, { designId: quote.designId });
 
-  const now = new Date();
   for (const step of steps) {
     if (!TIMING_SOURCES[step.type]) {
       continue;
@@ -52,7 +53,7 @@ export async function setApprovalStepsDueAtByPricingQuote(
       0
     );
     await update(trx, step.id, {
-      dueAt: new Date(now.getTime() + offsetMs),
+      dueAt: new Date(baseDateMs + offsetMs),
     });
   }
 }
