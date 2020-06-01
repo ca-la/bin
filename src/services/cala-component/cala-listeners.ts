@@ -1,4 +1,5 @@
 import {
+  DaoCreated,
   DaoUpdated,
   DaoUpdating,
   RouteUpdated,
@@ -9,6 +10,7 @@ import { getObjectDiff } from "../utils";
 import { pick } from "lodash";
 
 export type Listeners<Model, domain extends string> = Partial<{
+  "dao.created": Handler<DaoCreated<Model, domain>>;
   "dao.updating": Handler<DaoUpdating<Model, domain>>;
   "dao.updated.*": Partial<
     Record<keyof Model, Handler<DaoUpdated<Model, domain>>>
@@ -54,6 +56,13 @@ export function buildListeners<Model, domain extends string>(
       }
     }
   );
+  if (listeners["dao.created"]) {
+    listen<DaoCreated<Model, domain>>(
+      "dao.created",
+      domain as domain,
+      listeners["dao.created"]
+    );
+  }
   if (listeners["route.updated"]) {
     listen<RouteUpdated<Model, domain>>(
       "route.updated",

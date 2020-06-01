@@ -25,6 +25,7 @@ import * as Stripe from "../../services/stripe";
 import EmailService from "../../services/email";
 import { deleteById } from "../../test-helpers/designs";
 import Knex from "knex";
+import { taskTypes } from "../tasks/templates/task-types";
 test("GET /bids", async (t: Test) => {
   const admin = await createUser({ role: "ADMIN" });
   const partner = await createUser({ role: "PARTNER" });
@@ -573,7 +574,8 @@ test("Partner pairing: accept", async (t: Test) => {
   const admin = await createUser({ role: "ADMIN" });
   const designer = await createUser();
   const partner = await createUser({ role: "PARTNER" });
-  const design = await ProductDesignsDAO.create({
+  const other = await createUser({ role: "USER" });
+  const design = await createDesign({
     productType: "TEESHIRT",
     title: "Plain White Tee",
     userId: designer.user.id,
@@ -614,7 +616,7 @@ test("Partner pairing: accept", async (t: Test) => {
     dueDate,
     id: uuid.v4(),
     quoteId: quotesRequest[1][0].id,
-    taskTypeIds: [],
+    taskTypeIds: [taskTypes.TECHNICAL_DESIGN.id, taskTypes.PRODUCTION.id],
   });
   await put(`/bids/${bid.id}/assignees/${partner.user.id}`, {
     headers: authHeader(admin.session.id),
@@ -629,7 +631,7 @@ test("Partner pairing: accept", async (t: Test) => {
   t.equal(missingBidResponse.status, 404, "Unknown bid returns 404");
 
   const [unauthorizedBidResponse] = await post(`/bids/${bid.id}/accept`, {
-    headers: authHeader(designer.session.id),
+    headers: authHeader(other.session.id),
   });
   t.equal(
     unauthorizedBidResponse.status,
@@ -686,6 +688,16 @@ test("Partner pairing: accept", async (t: Test) => {
         actorId: partner.user.id,
         designId: design.id,
         type: "ACCEPT_SERVICE_BID",
+      },
+      {
+        actorId: partner.user.id,
+        designId: design.id,
+        type: "STEP_PARTNER_PAIRING",
+      },
+      {
+        actorId: partner.user.id,
+        designId: design.id,
+        type: "STEP_PARTNER_PAIRING",
       },
     ],
     "Adds an acceptance event"
