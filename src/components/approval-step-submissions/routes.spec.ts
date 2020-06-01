@@ -21,6 +21,7 @@ import User from "../users/types";
 import { CollaboratorWithUser } from "../collaborators/domain-objects/collaborator";
 import ProductDesign from "../product-designs/domain-objects/product-design";
 import Session from "../../domain-objects/session";
+import { DesignEventWithMeta } from "../../published-types";
 
 async function setupSubmission(): Promise<{
   approvalStep: ApprovalStep;
@@ -161,6 +162,21 @@ test("PATCH /design-approval-step-submissions/:submissionId with collaboratorId"
   t.is(response2.status, 200);
   t.is(body2.collaboratorId, collaborator3.id);
 
+  const events = await db.transaction(async (trx: Knex.Transaction) =>
+    DesignEventsDAO.findApprovalStepEvents(trx, design.id, submission.stepId)
+  );
+
+  const assignmentEvent = events.find(
+    (e: DesignEventWithMeta) => e.type === "STEP_SUMBISSION_ASSIGNMENT"
+  );
+  if (!assignmentEvent) {
+    return t.fail("Could not find design event for review assignment");
+  }
+  t.is(
+    assignmentEvent.approvalSubmissionId,
+    submission.id,
+    "Submission event has an approvalSubmissionId"
+  );
   await db.transaction(async (trx: Knex.Transaction) => {
     const notifications = await NotificationsDAO.findByUserId(trx, user3.id, {
       limit: 10,

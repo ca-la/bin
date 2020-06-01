@@ -213,7 +213,7 @@ export function* updateApprovalSubmission(
       await DesignEventsDAO.create(trx, {
         actorId: userId,
         approvalStepId: this.state.submission.stepId,
-        approvalSubmissionId: null,
+        approvalSubmissionId: submission.id,
         bidId: null,
         commentId: null,
         createdAt: new Date(),
