@@ -128,6 +128,14 @@ function getComplexitySubmissions(
           title: "Review technical design",
         },
         {
+          stepId: stepsByType[ApprovalStepType.TECHNICAL_DESIGN].id,
+          title: "Review main label placement and size",
+        },
+        {
+          stepId: stepsByType[ApprovalStepType.TECHNICAL_DESIGN].id,
+          title: "Review care label content and country of origin",
+        },
+        {
           artifactType: ApprovalStepSubmissionArtifactType.SAMPLE,
           stepId: stepsByType[ApprovalStepType.SAMPLE].id,
           title: "Review material sample",

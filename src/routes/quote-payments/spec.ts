@@ -180,7 +180,7 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
     );
     t.is(
       cutAndSewSubmissions.length,
-      9,
+      11,
       "adds cut and sew approval submissions"
     );
 
