@@ -323,6 +323,7 @@ function isRawProcess(candidate: object): candidate is RawProcess {
   return hasOnlyProperties(
     candidate,
     "name",
+    "display_name",
     "minimum_units",
     "complexity",
     "setup_cents",
@@ -446,6 +447,7 @@ function toProcess(latestVersion: number, raw: RawProcess): PricingProcessRow {
     setup_cents: Number(raw.setup_cents),
     unit_cents: Number(raw.unit_cents),
     version: latestVersion + 1,
+    display_name: raw.display_name,
   };
 }
 
