@@ -8,15 +8,16 @@ import Knex from "knex";
 import { isEqual, uniqWith, chunk } from "lodash";
 
 import db from "../services/db";
-import { log } from "../services/logger";
 import { hasOnlyProperties } from "../services/require-properties";
-import { PricingConstantRow } from "../domain-objects/pricing-constant";
-import { PricingProductTypeRow } from "../components/pricing-product-types/domain-object";
+import { log } from "../services/logger";
 import { PricingCareLabelRow } from "../domain-objects/pricing-care-label";
+import { PricingConstantRow } from "../domain-objects/pricing-constant";
 import { PricingMarginRow } from "../domain-objects/pricing-margin";
 import { PricingProcessRow } from "../domain-objects/pricing-process";
 import { PricingProcessTimelineRow } from "../components/pricing-process-timeline/domain-object";
 import { PricingProductMaterialRow } from "../domain-objects/pricing-product-material";
+import { PricingProductTypeRow } from "../components/pricing-product-types/domain-object";
+import { ProductType, validProductTypes } from "../domain-objects/pricing";
 
 const CHUNK_SIZE = 2000;
 
@@ -106,6 +107,10 @@ type TableKey = keyof TableMap;
 
 function isTableKey(candidate: any): candidate is TableKey {
   return Object.keys(tableMap).includes(candidate);
+}
+
+function isProductType(candidate: string): candidate is ProductType {
+  return validProductTypes.indexOf(candidate as ProductType) > -1;
 }
 
 main()
@@ -372,6 +377,10 @@ function toConstants(
 }
 
 function toType(latestVersion: number, raw: RawType): PricingProductTypeRow {
+  if (!isProductType(raw.name)) {
+    throw new Error(`${raw.name} is not a valid product type`);
+  }
+
   return {
     complexity: raw.complexity,
     contrast: parseInt(raw.contrast, 10),

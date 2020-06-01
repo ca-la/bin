@@ -48,7 +48,7 @@ export function isProcess(candidate: object): candidate is Process {
   return hasProperties(candidate, "name", "complexity");
 }
 
-const validProductTypes = [
+export const validProductTypes = [
   "ACCESSORIES - BACKPACK",
   "ACCESSORIES - BANDANNA",
   "ACCESSORIES - BASEBALL CAP",
