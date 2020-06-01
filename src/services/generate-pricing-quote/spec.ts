@@ -2,7 +2,7 @@ import uuid from "node-uuid";
 
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import * as PricingQuotesDAO from "../../dao/pricing-quotes";
-import * as DesignEventsDAO from "../../dao/design-events";
+import DesignEventsDAO from "../../components/design-events/dao";
 import {
   PricingQuoteRequestWithVersions,
   PricingQuoteValues,
@@ -515,16 +515,21 @@ test("generateFromPayloadAndUser uses the checkout step", async (t: Test) => {
     return generateFromPayloadAndUser(payload, user.id, trx);
   });
 
-  const designEventOne = await DesignEventsDAO.findByDesignId(designOne.id);
-  const designEventTwo = await DesignEventsDAO.findByDesignId(designTwo.id);
+  const [
+    designOneEvents,
+    designTwoEvents,
+  ] = await db.transaction(async (trx: Knex.Transaction) => [
+    await DesignEventsDAO.find(trx, { designId: designOne.id }),
+    await DesignEventsDAO.find(trx, { designId: designTwo.id }),
+  ]);
 
   t.deepEqual(
-    designEventOne[0].approvalStepId,
+    designOneEvents[0].approvalStepId,
     approvalStepOne.id,
     "Submission is associated with the right step"
   );
   t.deepEqual(
-    designEventTwo[0].approvalStepId,
+    designTwoEvents[0].approvalStepId,
     approvalStepTwo.id,
     "Submission is associated with the right step"
   );

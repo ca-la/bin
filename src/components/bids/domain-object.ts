@@ -1,9 +1,7 @@
 import DataAdapter from "../../services/data-adapter";
 import { hasProperties } from "../../services/require-properties";
-import DesignEvent, {
-  dataAdapter as eventDataAdapter,
-  DesignEventRow,
-} from "../../domain-objects/design-event";
+import DesignEvent, { DesignEventRow } from "../design-events/types";
+import eventDataAdapter from "../design-events/adapter";
 import {
   dataAdapter as logDataAdapter,
   PartnerPayoutLog,
@@ -125,7 +123,7 @@ function withEventEncode(row: BidWithEventsRow): BidWithEvents {
       ? design_events.map(
           (event: DesignEventRow): DesignEvent => {
             return {
-              ...eventDataAdapter.parse.apply(eventDataAdapter, [event]),
+              ...eventDataAdapter.fromDb.apply(eventDataAdapter, [event]),
               createdAt: new Date(event.created_at),
             };
           }

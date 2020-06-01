@@ -1,7 +1,7 @@
 import * as CollaboratorsDAO from "../../components/collaborators/dao";
 import Collaborator from "../../components/collaborators/domain-objects/collaborator";
 import * as CollectionsDAO from "../../components/collections/dao";
-import * as DesignEventsDAO from "../../dao/design-events";
+import { isQuoteCommitted } from "../../components/design-events/service";
 import Collection from "../../components/collections/domain-object";
 import { isOwner as isDesignOwner } from "../../components/product-designs/dao/dao";
 
@@ -145,10 +145,10 @@ async function getPermissionsFromRoleAndDesignId(
   }
 
   if (roles.isOwner || roles.isEditor) {
-    const isQuoteCommitted = designId
-      ? await DesignEventsDAO.isQuoteCommitted(designId)
+    const isQuoteCommittedForDesign = designId
+      ? await isQuoteCommitted(null, designId)
       : true;
-    const canEditVariants = !isQuoteCommitted;
+    const canEditVariants = !isQuoteCommittedForDesign;
 
     if (roles.isOwner) {
       return {

@@ -3,9 +3,10 @@
 const uuid = require("node-uuid");
 const { omit } = require("lodash");
 
+const db = require("../../../services/db");
 const CollectionsDAO = require("../../collections/dao");
 const createUser = require("../../../test-helpers/create-user");
-const DesignEventsDAO = require("../../../dao/design-events");
+const DesignEventsDAO = require("../../../components/design-events/dao");
 const ProductDesignsDAO = require("../dao");
 const EmailService = require("../../../services/email");
 const { authHeader, get, patch, post } = require("../../../test-helpers/http");
@@ -179,7 +180,7 @@ test("GET /product-designs allows fetching designs await quotes", async (t) => {
       type: "BID_DESIGN",
     },
   ];
-  await DesignEventsDAO.createAll(events);
+  await db.transaction((trx) => DesignEventsDAO.createAll(trx, events));
 
   const [response, needsQuote] = await get(
     "/product-designs?limit=20&offset=0&needsQuote=true",

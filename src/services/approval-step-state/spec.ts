@@ -12,8 +12,8 @@ import ApprovalStep, {
 } from "../../components/approval-steps/domain-object";
 import * as ApprovalStepsDAO from "../../components/approval-steps/dao";
 import { taskTypes } from "../../components/tasks/templates";
-import DesignEvent from "../../domain-objects/design-event";
-import * as DesignEventsDAO from "../../dao/design-events";
+import DesignEvent from "../../components/design-events/types";
+import DesignEventsDAO from "../../components/design-events/dao";
 
 interface TestCase {
   title: string;

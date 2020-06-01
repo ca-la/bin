@@ -8,12 +8,12 @@ import * as ApprovalStepCommentDAO from "../approval-step-comments/dao";
 import * as ApprovalStepsDAO from "../approval-steps/dao";
 import * as ApprovalSubmissionsDAO from "./dao";
 import * as CollaboratorsDAO from "../collaborators/dao";
-import * as DesignEventsDAO from "../../dao/design-events";
+import DesignEventsDAO from "../design-events/dao";
 import ApprovalStepSubmission, {
   ApprovalStepSubmissionState,
 } from "./domain-object";
 import db from "../../services/db";
-import DesignEvent from "../../domain-objects/design-event";
+import DesignEvent from "../design-events/types";
 import requireAuth from "../../middleware/require-auth";
 import { announceApprovalStepCommentCreation } from "../iris/messages/approval-step-comment";
 import Comment, {
@@ -95,8 +95,8 @@ function* createApproval(
     id: uuid.v4(),
     quoteId: null,
     targetId: null,
-    taskTypeId: null,
     type: "STEP_SUMBISSION_APPROVAL",
+    taskTypeId: null,
   });
 
   const designEventWithMeta = yield DesignEventsDAO.findById(
@@ -221,8 +221,8 @@ export function* updateApprovalSubmission(
         id: uuid.v4(),
         quoteId: null,
         targetId: collaborator && collaborator.userId,
-        taskTypeId: null,
         type: "STEP_SUMBISSION_ASSIGNMENT",
+        taskTypeId: null,
       });
       if (collaborator) {
         const design = await DesignsDAO.findById(this.state.designId);
@@ -384,8 +384,8 @@ export function* createRevisionRequest(
     id: uuid.v4(),
     quoteId: null,
     targetId: null,
-    taskTypeId: null,
     type: "REVISION_REQUEST",
+    taskTypeId: null,
   });
 
   const design = yield DesignsDAO.findById(this.state.designId);

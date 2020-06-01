@@ -15,7 +15,7 @@ import {
 import { listeners } from "./listeners";
 import * as ApprovalStepStateService from "../../services/approval-step-state";
 import * as CollaboratorsDAO from "../collaborators/dao";
-import * as DesignEventsDAO from "../../dao/design-events";
+import DesignEventsDAO from "../design-events/dao";
 import DesignsDAO from "../product-designs/dao";
 import { NotificationType } from "../notifications/domain-object";
 import NotificationsLayer from "./notifications";

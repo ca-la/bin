@@ -1,20 +1,19 @@
+import { hasProperties } from "@cala/ts-lib";
+
 import {
   dataAdapter as baseDataAdapter,
   isProductDesignRow,
   ProductDesignData,
   ProductDesignRow,
 } from "./product-designs-new";
-import DesignEvent, {
-  dataAdapter as eventDataAdapter,
-  DesignEventRow,
-} from "../../../domain-objects/design-event";
+import DesignEvent, { DesignEventRow } from "../../design-events/types";
+import eventDataAdapter from "../../design-events/adapter";
 import {
   baseDataAdapter as costInputDataAdapter,
   BasePricingCostInput,
   BasePricingCostInputRow,
 } from "../../pricing-cost-inputs/domain-object";
 import DataAdapter from "../../../services/data-adapter";
-import { hasProperties } from "@cala/ts-lib";
 
 export interface ProductDesignDataWithMeta extends ProductDesignData {
   collectionId: string;
@@ -31,11 +30,7 @@ export interface ProductDesignRowWithMeta extends ProductDesignRow {
 const encode = (row: ProductDesignRowWithMeta): ProductDesignDataWithMeta => {
   const { cost_inputs, events: eventRows, ...baseRow } = row;
   const events =
-    eventRows === null
-      ? []
-      : eventRows.map((eventRow: DesignEventRow) =>
-          eventDataAdapter.parse(eventRow)
-        );
+    eventRows === null ? [] : eventDataAdapter.fromDbArray(eventRows);
   const costInputs =
     cost_inputs === null
       ? []

@@ -1,5 +1,4 @@
 import Koa from "koa";
-
 import { getDesignPermissions } from "../../services/get-permissions";
 import { findDesignByAnnotationId } from "../../components/product-designs/dao/dao";
 

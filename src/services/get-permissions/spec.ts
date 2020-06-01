@@ -2,7 +2,7 @@ import uuid from "node-uuid";
 import tape from "tape";
 
 import { test } from "../../test-helpers/fresh";
-import createUser = require("../../test-helpers/create-user");
+import createUser from "../../test-helpers/create-user";
 
 import * as CollectionsDAO from "../../components/collections/dao";
 import DesignsDAO from "../../components/product-designs/dao";
@@ -96,7 +96,7 @@ test("#getDesignPermissions", async (t: tape.Test) => {
   t.deepEqual(
     await PermissionsService.getDesignPermissions({
       designId: design1.id,
-      sessionRole: session,
+      sessionRole: session.role,
       sessionUserId: user.id,
     }),
     {
@@ -112,7 +112,7 @@ test("#getDesignPermissions", async (t: tape.Test) => {
   t.deepEqual(
     await PermissionsService.getDesignPermissions({
       designId: design5.id,
-      sessionRole: session,
+      sessionRole: session.role,
       sessionUserId: user.id,
     }),
     {
@@ -128,7 +128,7 @@ test("#getDesignPermissions", async (t: tape.Test) => {
   t.deepEqual(
     await PermissionsService.getDesignPermissions({
       designId: design1.id,
-      sessionRole: session2,
+      sessionRole: session2.role,
       sessionUserId: user2.id,
     }),
     {
@@ -144,7 +144,7 @@ test("#getDesignPermissions", async (t: tape.Test) => {
   t.deepEqual(
     await PermissionsService.getDesignPermissions({
       designId: design2.id,
-      sessionRole: session,
+      sessionRole: session.role,
       sessionUserId: user.id,
     }),
     {
@@ -160,7 +160,7 @@ test("#getDesignPermissions", async (t: tape.Test) => {
   t.deepEqual(
     await PermissionsService.getDesignPermissions({
       designId: design4.id,
-      sessionRole: session,
+      sessionRole: session.role,
       sessionUserId: user.id,
     }),
     {
@@ -176,7 +176,7 @@ test("#getDesignPermissions", async (t: tape.Test) => {
   t.deepEqual(
     await PermissionsService.getDesignPermissions({
       designId: design3.id,
-      sessionRole: session,
+      sessionRole: session.role,
       sessionUserId: user.id,
     }),
     {

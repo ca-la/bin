@@ -19,7 +19,7 @@ const {
   default: generatePricingValues,
 } = require("../../../test-helpers/factories/pricing-values");
 const CollectionsDAO = require("../../collections/dao");
-const DesignEventsDAO = require("../../../dao/design-events");
+const DesignEventsDAO = require("../../../components/design-events/dao");
 const { test } = require("../../../test-helpers/fresh");
 const createUser = require("../../../test-helpers/create-user");
 const { moveDesign } = require("../../../test-helpers/collections");

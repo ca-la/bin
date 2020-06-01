@@ -1,4 +1,5 @@
 import Koa from "koa";
+
 import CollectionsDAO = require("../../components/collections/dao");
 import { getCollectionPermissions } from "../../services/get-permissions";
 

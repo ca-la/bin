@@ -10,6 +10,24 @@ import { sandbox, test } from "../../../test-helpers/fresh";
 import createUser = require("../../../test-helpers/create-user");
 import createDesign from "../../../services/create-design";
 
+test("GET /product-designs allows getting designs", async (t: tape.Test) => {
+  const { user, session } = await createUser({ role: "USER" });
+  sandbox().stub(EmailService, "enqueueSend").returns(Promise.resolve());
+
+  const design = await createDesign({
+    productType: "SHIRT",
+    title: "Designer Silk Shirt",
+    userId: user.id,
+  });
+
+  const [response, body] = await get(`/product-designs?userId=${user.id}`, {
+    headers: authHeader(session.id),
+  });
+
+  t.equal(response.status, 200);
+  t.equal(body[0].id, design.id);
+});
+
 test("GET /product-designs allows getting tasks", async (t: tape.Test) => {
   const { user, session } = await createUser({ role: "ADMIN" });
   sandbox().stub(EmailService, "enqueueSend").returns(Promise.resolve());

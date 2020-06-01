@@ -1,13 +1,13 @@
 import tape from "tape";
 import uuid from "node-uuid";
 import { Variant } from "@cala/ts-lib";
-import createUser = require("../../test-helpers/create-user");
+import createUser from "../../test-helpers/create-user";
 import { create as createDesign } from "../product-designs/dao";
 import API from "../../test-helpers/http";
 import { sandbox, test } from "../../test-helpers/fresh";
 import * as ProductDesignVariantsDAO from "./dao";
 import generateCollaborator from "../../test-helpers/factories/collaborator";
-import * as DesignEventsDAO from "../../dao/design-events";
+import * as DesignEventsService from "../design-events/service";
 
 const API_PATH = "/product-design-variants";
 
@@ -88,7 +88,7 @@ test(`PUT ${API_PATH}?designId replaces all variants for a design`, async (t: ta
   const admin = await createUser({ role: "ADMIN" });
 
   const isQuoteCommittedStub = sandbox()
-    .stub(DesignEventsDAO, "isQuoteCommitted")
+    .stub(DesignEventsService, "isQuoteCommitted")
     .resolves(false);
 
   const design = await createDesign({

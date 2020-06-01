@@ -2,14 +2,14 @@ import uuid from "node-uuid";
 import Knex from "knex";
 
 import * as CollectionsDAO from ".";
-import * as DesignEventsDAO from "../../../dao/design-events";
+import DesignEventsDAO from "../../design-events/dao";
 import ProductDesignsDAO from "../../product-designs/dao";
 import { sandbox, test, Test } from "../../../test-helpers/fresh";
 import createUser from "../../../test-helpers/create-user";
 import ProductDesign = require("../../product-designs/domain-objects/product-design");
 import createDesign from "../../../services/create-design";
 import generateCollection from "../../../test-helpers/factories/collection";
-import DesignEvent from "../../../domain-objects/design-event";
+import DesignEvent from "../../design-events/types";
 import generateCollaborator from "../../../test-helpers/factories/collaborator";
 import generatePricingValues from "../../../test-helpers/factories/pricing-values";
 import generatePricingCostInput from "../../../test-helpers/factories/pricing-cost-input";
@@ -584,22 +584,23 @@ test("findSubmittedButUnpaidCollections finds all submitted but unpaid collectio
     type: "COMMIT_QUOTE",
   };
 
-  await DesignEventsDAO.createAll([
-    submitEvent,
-    submitEventDeleted,
-    submitEventDeleted2,
-    submitEvent2,
-    submitEvent3,
-    submitEvent4,
-    submitEvent5,
-  ]);
-
-  await DesignEventsDAO.createAll([
-    paymentEvent1,
-    paymentEvent2,
-    paymentEvent3,
-    paymentEvent4,
-  ]);
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await DesignEventsDAO.createAll(trx, [
+      submitEvent,
+      submitEventDeleted,
+      submitEventDeleted2,
+      submitEvent2,
+      submitEvent3,
+      submitEvent4,
+      submitEvent5,
+    ]);
+    await DesignEventsDAO.createAll(trx, [
+      paymentEvent1,
+      paymentEvent2,
+      paymentEvent3,
+      paymentEvent4,
+    ]);
+  });
 
   await moveDesign(collection5.id, design5.id);
 

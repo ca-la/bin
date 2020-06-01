@@ -15,7 +15,7 @@ import {
   handleUserStepReopen,
 } from "../../services/approval-step-state";
 
-import * as DesignEventsDAO from "../../dao/design-events";
+import DesignEventsDAO from "../design-events/dao";
 import uuid from "node-uuid";
 import * as CollaboratorsDAO from "../../components/collaborators/dao";
 import DesignsDAO from "../product-designs/dao";

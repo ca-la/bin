@@ -150,16 +150,16 @@ function* getDesignsAndTasksByUser() {
   // TODO: this could end up making 100s of queries to the db, this could be improved by using
   //       one large JOIN
   const designsAndTasks = yield attachTasksToDesigns(designs);
-  const designsWithPermissions = yield Promise.all(
-    designsAndTasks.map(async (design) => {
-      const permissions = await getDesignPermissions({
-        designId: design.id,
-        sessionRole: role,
-        sessionUserId: userId,
-      });
-      return { ...design, permissions };
-    })
-  );
+  const designsWithPermissions = [];
+
+  for (const design of designsAndTasks) {
+    const permissions = yield getDesignPermissions({
+      designId: design.id,
+      sessionRole: role,
+      sessionUserId: userId,
+    });
+    designsWithPermissions.push({ ...design, permissions });
+  }
 
   this.body = designsWithPermissions;
   this.status = 200;
@@ -176,16 +176,18 @@ function* getAllDesigns() {
     needsQuote: Boolean(this.query.needsQuote),
   });
 
-  const designsWithPermissions = yield Promise.all(
-    designs.map(async (design) => {
-      const permissions = await getDesignPermissions({
-        designId: design.id,
-        sessionRole: role,
-        sessionUserId: userId,
-      });
-      return attachResources(design, userId, permissions);
-    })
-  );
+  const designsWithPermissions = [];
+
+  for (const design of designs) {
+    const permissions = yield getDesignPermissions({
+      designId: design.id,
+      sessionRole: role,
+      sessionUserId: userId,
+    });
+    designsWithPermissions.push(
+      yield attachResources(design, userId, permissions)
+    );
+  }
 
   this.body = designsWithPermissions;
   this.status = 200;

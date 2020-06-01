@@ -52,6 +52,7 @@ export default interface DesignEvent {
   type: DesignEventTypes;
   approvalSubmissionId: string | null;
   commentId: string | null;
+  taskTypeId: string | null;
 }
 
 export interface DesignEventRow {
@@ -66,6 +67,7 @@ export interface DesignEventRow {
   type: DesignEventTypes;
   approval_submission_id: string | null;
   comment_id: string | null;
+  task_type_id: string | null;
 }
 
 export interface DesignEventWithMeta extends DesignEvent {
