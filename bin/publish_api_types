@@ -7,8 +7,11 @@ set -o noglob
 
 # Builds and publishes the `@cala/api-types` package from the exports of
 # `src/published-types`.
-
+#
+# Usage: bin/publish_api_types [--prerelease]
 main() {
+  prerelease_flag=${1:-""}
+
   rm -rf published-types-dist
   npx tsc --build src/published-types/tsconfig.json
 
@@ -17,7 +20,14 @@ main() {
   (
     cd published-types-dist
     npm version --allow-same-version $(node -p "require('../package.json').version")
-    npm publish
+
+    if [[ "$prerelease_flag" == "--prerelease" ]]; then
+      git_hash=$(git rev-parse --verify HEAD --short=8)
+      npm version prerelease --preid $git_hash
+      npm publish --tag next
+    else
+      npm publish
+    fi
   )
 }
 
