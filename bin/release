@@ -19,6 +19,7 @@ main() {
   case "$semver" in
     patch|minor|major)
       npx cala-release "$semver"
+      bin/publish_api_types
       ;;
     *)
       usage_fail

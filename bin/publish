@@ -46,14 +46,12 @@ main() {
     staging)
       echo 'Deploying to Staging:'
       git push https://heroku:$HEROKU_API_KEY@git.heroku.com/cala-api-stg.git deploy-branch:master -f
-      bin/publish_api_types --prerelease
       ;;
     production)
       echo 'Deploying to Production:'
       git push https://heroku:$HEROKU_API_KEY@git.heroku.com/cala-api-prod.git deploy-branch:master -f
       echo 'Deploying to Demo:'
       git push https://heroku:$HEROKU_API_KEY@git.heroku.com/cala-api-demo.git deploy-branch:master -f
-      bin/publish_api_types
       ;;
     *)
       usage_fail
