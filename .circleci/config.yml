@@ -20,7 +20,6 @@ jobs:
           keys:
           - v3-dependencies-{{ checksum "package-lock.json" }}
 
-      - run: echo "//registry.npmjs.org/:_authToken=\${NPM_TOKEN}" > .npmrc
       - run: npm ci
 
       - save_cache:
