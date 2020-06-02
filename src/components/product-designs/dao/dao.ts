@@ -31,6 +31,7 @@ export async function findAllDesignsThroughCollaborator(options: {
   limit?: number;
   offset?: number;
   search?: string;
+  sortBy?: string;
 }): Promise<ProductDesignWithApprovalSteps[]> {
   const result = await queryWithCollectionMeta(db)
     .whereRaw(
@@ -86,7 +87,13 @@ product_designs.id in (
         );
       }
     })
-    .modify(limitOrOffset(options.limit, options.offset));
+    .modify(limitOrOffset(options.limit, options.offset))
+    .modify((query: Knex.QueryBuilder): void => {
+      if (options.sortBy) {
+        const [column, direction] = options.sortBy.split(":");
+        query.clearOrder().orderBy(column, direction || "asc");
+      }
+    });
 
   return result.map((row: any): ProductDesign => new ProductDesign(row));
 }

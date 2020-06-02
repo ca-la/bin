@@ -89,6 +89,7 @@ function* getDesignsByUser() {
     limit: this.query.limit,
     offset: this.query.offset,
     search: this.query.search,
+    sortBy: this.query.sortBy,
   });
   const designsWithPermissions = yield Promise.all(
     designs.map(async (design) => {

@@ -48,6 +48,7 @@ import { deleteById } from "../../../test-helpers/designs";
 import { generateDesign } from "../../../test-helpers/factories/product-design";
 import generateApprovalStep from "../../../test-helpers/factories/design-approval-step";
 import { ComponentType } from "../../components/domain-object";
+import ProductDesignWithApprovalSteps from "../domain-objects/product-design-with-approval-steps";
 
 test("ProductDesignCanvases DAO supports creation/retrieval, enriched with image links", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
@@ -398,6 +399,107 @@ test("findAllDesignsThroughCollaborator returns approval steps", async (t: tape.
   // TODO: Remove this once changes from api#1216 are fully live
   t.deepEqual(designs[0].currentStepTitle, "Technical Design");
   t.deepEqual(designs[1].currentStepTitle, "Checkout");
+});
+
+test("findAllDesignsThroughCollaborator respects limit, offset, sortBy", async (t: tape.Test) => {
+  const { user } = await createUser();
+
+  const d1 = await createDesign({
+    productType: "test",
+    title: "C",
+    userId: user.id,
+  });
+  const d2 = await createDesign({
+    productType: "test",
+    title: "A",
+    userId: user.id,
+  });
+  const d3 = await createDesign({
+    productType: "test",
+    title: "B",
+    userId: user.id,
+  });
+
+  const { collection: c1 } = await generateCollection({
+    createdBy: user.id,
+    title: "A",
+  });
+  const { collection: c2 } = await generateCollection({
+    createdBy: user.id,
+    title: "B",
+  });
+  await addDesign(c1.id, d3.id);
+  await addDesign(c2.id, d1.id);
+
+  type Options = Partial<{
+    sortBy: string;
+    limit: number;
+    offset: number;
+  }>;
+  interface TestCase {
+    options: Options;
+    resultIds: string[];
+  }
+
+  const testCases: TestCase[] = [
+    {
+      options: {
+        sortBy: "product_designs.created_at:asc",
+      },
+      resultIds: [d1.id, d2.id, d3.id],
+    },
+    {
+      options: {
+        sortBy: "product_designs.title:asc",
+      },
+      resultIds: [d2.id, d3.id, d1.id],
+    },
+    {
+      options: {
+        sortBy: "product_designs.title:desc",
+      },
+      resultIds: [d1.id, d3.id, d2.id],
+    },
+    {
+      options: {
+        sortBy: "collections.title:asc",
+      },
+      resultIds: [d3.id, d1.id, d2.id],
+    },
+    {
+      options: {
+        sortBy: "collections.title:desc",
+      },
+      resultIds: [d2.id, d1.id, d3.id],
+    },
+    {
+      options: {
+        sortBy: "collections.title:desc",
+        limit: 2,
+      },
+      resultIds: [d2.id, d1.id],
+    },
+    {
+      options: {
+        sortBy: "collections.title:desc",
+        limit: 5,
+        offset: 1,
+      },
+      resultIds: [d1.id, d3.id],
+    },
+  ];
+
+  for (const testCase of testCases) {
+    const allDesigns = await findAllDesignsThroughCollaborator({
+      userId: user.id,
+      ...testCase.options,
+    });
+    t.deepEqual(
+      allDesigns.map((design: ProductDesignWithApprovalSteps) => design.id),
+      testCase.resultIds,
+      JSON.stringify(testCase.options)
+    );
+  }
 });
 
 test("findById returns approval steps", async (t: tape.Test) => {
