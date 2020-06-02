@@ -31,7 +31,7 @@ import * as AssetLinkAttachment from "../../services/attach-asset-links";
 import generateComment from "../../test-helpers/factories/comment";
 import { generateDesign } from "../../test-helpers/factories/product-design";
 
-const beforeEach = (): void => {
+const beforeEach = async (): Promise<void> => {
   sandbox().stub(StageTemplate, "getTemplatesFor").returns([]);
 };
 

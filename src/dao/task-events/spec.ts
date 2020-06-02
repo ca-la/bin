@@ -59,7 +59,7 @@ import ApprovalStep, {
 import * as ApprovalStepsDAO from "../../components/approval-steps/dao";
 import * as ApprovalStepTaskDAO from "../../components/approval-step-tasks/dao";
 
-const beforeEach = (): void => {
+const beforeEach = async (): Promise<void> => {
   sandbox().stub(StageTemplate, "getTemplatesFor").returns([]);
 };
 

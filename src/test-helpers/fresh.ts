@@ -1,9 +1,10 @@
-"use strict";
+import Knex from "knex";
+import tape, { Test } from "tape";
+export { Test } from "tape";
+import sinon from "sinon";
+import AWS from "aws-sdk";
 
-const tape = require("tape");
-const sinon = require("sinon");
-
-const db = require("../services/db");
+import db from "../services/db";
 
 const TABLES = [
   "addresses",
@@ -50,20 +51,25 @@ const TABLES = [
   "users",
 ];
 
-let currentSandbox;
+let currentSandbox: sinon.SinonSandbox;
 
-function beforeEach() {
+function beforeEach(): void {
   currentSandbox = sinon.createSandbox();
+  currentSandbox.stub(AWS, "SQS").returns({
+    sendMessage: currentSandbox.stub().returns({
+      promise: (): Promise<void> => Promise.resolve(),
+    }),
+  });
 }
 
-function afterEach() {
+function afterEach(): Knex.QueryBuilder {
   currentSandbox.restore();
 
   // Very naive 'wipe the database' query.
   // Should be expanded to reset sequences, be more efficient, &etc.
-  const query = TABLES.map((table) => `truncate table ${table} cascade;`).join(
-    "\n"
-  );
+  const query = TABLES.map(
+    (table: string): string => `truncate table ${table} cascade;`
+  ).join("\n");
 
   return db.raw(query);
 }
@@ -73,20 +79,35 @@ tape.onFinish(() => {
 });
 
 // Run a test in a 'fresh' environment; clear DB and any stubs
-function freshTest(description, fn, setup = () => {}, teardown = () => {}) {
-  tape(description, async (t) => {
+export function test(
+  description: string,
+  fn: (t: Test, context: any | null) => Promise<any>,
+  setup: () => Promise<unknown> = async (): Promise<void> => {
+    return;
+  },
+  teardown: (context: any | null) => Promise<unknown> = async (): Promise<
+    void
+  > => {
+    return;
+  }
+): void {
+  tape(description, async (t: Test) => {
     const { end } = t;
 
     // Tests should not be able to end themselves early. Using `plan` has the
     // nasty side effect that the rest of the test will continue running even
     // though the test runner moves onto the next test as soon as the plan is
     // hit.
-    t.end = null; // eslint-disable-line no-param-reassign
-    t.plan = null; // eslint-disable-line no-param-reassign
+    t.end = (): void => {
+      throw new Error("t.end not supported");
+    };
+    t.plan = (): void => {
+      throw new Error("t.plan no supported");
+    };
 
     beforeEach();
 
-    let context = null;
+    let context: any | null = null;
 
     try {
       context = await setup();
@@ -95,18 +116,17 @@ function freshTest(description, fn, setup = () => {}, teardown = () => {}) {
       const testPromise = fn(t, context);
 
       if (!testPromise || !testPromise.then) {
-        const err = Error(`
-        All tests must return promises.
+        t.fail(`
+All tests must return promises.
 
-        Try writing your test using async/await; it'll probably be clearer too!
-      `);
-        t.fail(err);
+Try writing your test using async/await; it'll probably be clearer too!
+`);
       }
 
       await testPromise;
     } catch (err) {
       t.fail(err);
-      console.log(err.stack); // eslint-disable-line no-console
+      console.log(err.stack); // tslint:disable-line no-console
     }
 
     await teardown(context);
@@ -116,24 +136,41 @@ function freshTest(description, fn, setup = () => {}, teardown = () => {}) {
   });
 }
 
-function skip() {
-  /* noop */
+export function skip(): void {
+  return;
 }
 
 /**
  * Create a new test block which runs a given setup/teardown for each test
  */
-function group(setup, teardown) {
-  return (description, fn) => {
-    return freshTest(description, fn, setup, teardown);
+export function group(
+  setup: () => Promise<unknown> = async (): Promise<void> => {
+    return;
+  },
+  teardown: (context: any | null) => Promise<unknown> = async (): Promise<
+    void
+  > => {
+    return;
+  }
+): (
+  description: string,
+  fn: (t: Test, context: any | null) => Promise<any>
+) => void {
+  return (
+    description: string,
+    fn: (t: Test, context: any | null) => Promise<any>
+  ): void => {
+    return test(description, fn, setup, teardown);
   };
 }
 
-module.exports = {
+export function sandbox(): sinon.SinonSandbox {
+  return currentSandbox;
+}
+
+export default {
   group,
-  sandbox() {
-    return currentSandbox;
-  },
-  test: freshTest,
+  sandbox,
+  test,
   skip,
 };

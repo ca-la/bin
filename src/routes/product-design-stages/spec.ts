@@ -7,7 +7,7 @@ import { sandbox, test as originalTest } from "../../test-helpers/fresh";
 import generateProductDesignStage from "../../test-helpers/factories/product-design-stage";
 import * as StageTemplate from "../../components/tasks/templates";
 
-const beforeEach = (): void => {
+const beforeEach = async (): Promise<void> => {
   sandbox().stub(StageTemplate, "getTemplatesFor").returns([]);
 };
 
