@@ -122,3 +122,4 @@ export interface DesignEventWithMetaRow extends DesignEventRow {
 }
 
 export const domain = "DesignEvent" as "DesignEvent";
+export const withMetaDomain = "DesignEventWithMeta" as "DesignEventWithMeta";

@@ -36,9 +36,9 @@ test("POST /collections/:id/recost creates new not expired costings", async (t: 
     moreThanTwoWeeksBeforeNow.getDate() - 14 - 1
   );
 
-  sandbox().useFakeTimers(moreThanTwoWeeksBeforeNow);
+  const clock = sandbox().useFakeTimers(moreThanTwoWeeksBeforeNow);
   await commitCostInputs(c1.id, user.id);
-  sandbox().restore();
+  clock.restore();
   for (const d of designs) {
     t.equal(
       (await findByDesignId({ designId: d.id, showExpired: false })).length,

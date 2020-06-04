@@ -305,6 +305,8 @@ export async function actualizeDesignStepsAfterBidAcceptance(
       await ApprovalStepsDAO.update(trx, approvalSteps[i].id, {
         // while we don't set BLOCKING state in this function,
         // we can reset a reason to null
+        startedAt:
+          newStates[i] === ApprovalStepState.CURRENT ? new Date() : null,
         reason: null,
         state: newStates[i],
       } as Partial<ApprovalStep>);

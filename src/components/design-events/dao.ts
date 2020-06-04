@@ -8,6 +8,7 @@ import DesignEvent, {
   domain,
   DesignEventWithMeta,
   DesignEventWithMetaRow,
+  withMetaDomain,
   ACTIVITY_STREAM_EVENTS,
 } from "./types";
 import { DuplicateAcceptRejectError } from "./errors";
@@ -50,7 +51,7 @@ function addMeta(query: Knex.QueryBuilder): Knex.QueryBuilder {
 
 const withMetaDao = {
   ...buildDao<DesignEventWithMeta, DesignEventWithMetaRow>(
-    domain,
+    withMetaDomain,
     TABLE_NAME,
     withMetaAdapter,
     {

@@ -5,6 +5,7 @@ import * as S3Service from "./s3";
 import { sandbox, test } from "../../test-helpers/fresh";
 
 test("AWS Service supports enqueuing a message", async (t: tape.Test) => {
+  sandbox().restore();
   const awsStub = sandbox()
     .stub(AWS, "S3")
     .returns({

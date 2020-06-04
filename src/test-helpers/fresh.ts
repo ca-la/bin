@@ -55,6 +55,14 @@ let currentSandbox: sinon.SinonSandbox;
 
 function beforeEach(): void {
   currentSandbox = sinon.createSandbox();
+  currentSandbox.stub(AWS, "S3").returns({
+    putObject: currentSandbox.stub().returns({
+      promise: (): Promise<object> =>
+        Promise.resolve({
+          $response: {},
+        }),
+    }),
+  });
   currentSandbox.stub(AWS, "SQS").returns({
     sendMessage: currentSandbox.stub().returns({
       promise: (): Promise<void> => Promise.resolve(),
