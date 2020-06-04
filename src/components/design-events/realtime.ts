@@ -1,4 +1,8 @@
-import { DesignEventWithMeta } from "./types";
+import {
+  DesignEventWithMeta,
+  ActivityStreamEventType,
+  ACTIVITY_STREAM_EVENTS,
+} from "./types";
 
 export interface RealtimeDesignEventCreated {
   actorId: string;
@@ -28,4 +32,29 @@ export function realtimeDesignEventCreated(
     resource: designEvent,
     type: "design-event/created",
   };
+}
+
+interface ActivityStreamDesignEvent extends DesignEventWithMeta {
+  type: ActivityStreamEventType;
+}
+
+export interface RealtimeActivityStreamDesignEventCreated
+  extends RealtimeDesignEventCreated {
+  actorId: string;
+  approvalStepId: string;
+  resource: ActivityStreamDesignEvent;
+  type: "design-event/created";
+}
+
+export function isRealtimeActivityStreamDesignEventCreated(
+  data: any
+): data is RealtimeActivityStreamDesignEventCreated {
+  return (
+    "actorId" in data &&
+    "approvalStepId" in data &&
+    "resource" in data &&
+    "type" in data &&
+    data.type === "stream-item/created" &&
+    ACTIVITY_STREAM_EVENTS.includes(data.resource.type)
+  );
 }

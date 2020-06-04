@@ -40,6 +40,31 @@ type ApprovalEvents =
   | "STEP_REOPEN"
   | "STEP_PARTNER_PAIRING";
 
+export type ActivityStreamEventType = Extract<
+  | "REVISION_REQUEST"
+  | "STEP_ASSIGNMENT"
+  | "STEP_SUMBISSION_APPROVAL"
+  | "STEP_SUMBISSION_ASSIGNMENT"
+  | "STEP_COMPLETE"
+  | "STEP_PARTNER_PAIRING"
+  | "STEP_REOPEN"
+  | "SUBMIT_DESIGN"
+  | "COMMIT_QUOTE",
+  DesignEventTypes
+>;
+
+export const ACTIVITY_STREAM_EVENTS: ActivityStreamEventType[] = [
+  "REVISION_REQUEST",
+  "STEP_ASSIGNMENT",
+  "STEP_SUMBISSION_APPROVAL",
+  "STEP_SUMBISSION_ASSIGNMENT",
+  "STEP_COMPLETE",
+  "STEP_PARTNER_PAIRING",
+  "STEP_REOPEN",
+  "SUBMIT_DESIGN",
+  "COMMIT_QUOTE",
+];
+
 export default interface DesignEvent {
   id: string;
   createdAt: Date;

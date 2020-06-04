@@ -8,7 +8,7 @@ import DesignEvent, {
   domain,
   DesignEventWithMeta,
   DesignEventWithMetaRow,
-  DesignEventTypes,
+  ACTIVITY_STREAM_EVENTS,
 } from "./types";
 import { DuplicateAcceptRejectError } from "./errors";
 import { taskTypesById } from "../tasks/templates";
@@ -47,18 +47,6 @@ function addMeta(query: Knex.QueryBuilder): Knex.QueryBuilder {
       "design_events.approval_step_id"
     );
 }
-
-const ACTIVITY_STREAM_EVENTS: DesignEventTypes[] = [
-  "REVISION_REQUEST",
-  "STEP_ASSIGNMENT",
-  "STEP_SUMBISSION_APPROVAL",
-  "STEP_SUMBISSION_ASSIGNMENT",
-  "STEP_COMPLETE",
-  "STEP_PARTNER_PAIRING",
-  "STEP_REOPEN",
-  "SUBMIT_DESIGN",
-  "COMMIT_QUOTE",
-];
 
 const withMetaDao = {
   ...buildDao<DesignEventWithMeta, DesignEventWithMetaRow>(
