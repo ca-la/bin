@@ -117,7 +117,9 @@ export function buildDao<
 
     const created = adapter.fromDb(createdRow);
 
-    await emit<DaoCreated<Model, typeof domain>>("dao.created", domain, {
+    await emit<Model, DaoCreated<Model, typeof domain>>({
+      type: "dao.created",
+      domain,
       trx,
       created,
     });
@@ -144,7 +146,9 @@ export function buildDao<
 
     await Promise.all(
       creations.map((created: Model) =>
-        emit<DaoCreated<Model, typeof domain>>("dao.created", domain, {
+        emit<Model, DaoCreated<Model, typeof domain>>({
+          type: "dao.created",
+          domain,
           trx,
           created,
         })
@@ -167,7 +171,9 @@ export function buildDao<
       throw new Error("Patch should not contain id!");
     }
 
-    await emit<DaoUpdating<Model, typeof domain>>("dao.updating", domain, {
+    await emit<Model, DaoUpdating<Model, typeof domain>>({
+      type: "dao.updating",
+      domain,
       trx,
       before,
       patch,
@@ -184,7 +190,9 @@ export function buildDao<
     }
     const updated = listOfUpdated[0];
 
-    await emit<DaoUpdated<Model, typeof domain>>("dao.updated", domain, {
+    await emit<Model, DaoUpdated<Model, typeof domain>>({
+      type: "dao.updated",
+      domain,
       trx,
       before,
       updated,

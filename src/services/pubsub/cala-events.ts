@@ -12,6 +12,7 @@ export interface DaoUpdating<Model, domain extends string> extends EventBase {
   before: Model;
   patch: Partial<Model>;
 }
+
 export interface DaoUpdated<Model, domain extends string> extends EventBase {
   type: "dao.updated";
   domain: domain;
@@ -34,8 +35,13 @@ export interface RouteUpdated<Model, domain extends string> extends EventBase {
 }
 
 export type Event<Model, domain extends string> =
+  | DaoCreated<Model, domain>
   | DaoUpdated<Model, domain>
   | DaoUpdating<Model, domain>
   | RouteUpdated<Model, domain>;
 
-export type Handler<T extends EventBase> = (event: T) => Promise<any>;
+export type Handler<
+  Model,
+  Domain extends string,
+  T extends Event<Model, Domain>
+> = (event: T) => Promise<any>;

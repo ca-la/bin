@@ -338,7 +338,7 @@ test(
 
         t.deepEqual(
           emitStub.args,
-          [["dao.created", "Widget", { created: result, trx }]],
+          [[{ type: "dao.created", domain: "Widget", created: result, trx }]],
           `create / no emit() called`
         );
       } finally {
@@ -388,8 +388,22 @@ test(
         t.deepEqual(
           emitStub.args,
           [
-            ["dao.created", "Widget", { created: result[0], trx }],
-            ["dao.created", "Widget", { created: result[1], trx }],
+            [
+              {
+                type: "dao.created",
+                domain: "Widget",
+                created: result[0],
+                trx,
+              },
+            ],
+            [
+              {
+                type: "dao.created",
+                domain: "Widget",
+                created: result[1],
+                trx,
+              },
+            ],
           ],
           `createAll / no emit() called`
         );
@@ -422,17 +436,17 @@ test(
           findResult: { ...widget1, title: "Renamed" },
           emitCalls: [
             [
-              "dao.updating",
-              "Widget",
               {
+                type: "dao.updating",
+                domain: "Widget",
                 before: widget1,
                 patch: { title: "Renamed" },
               },
             ],
             [
-              "dao.updated",
-              "Widget",
               {
+                type: "dao.updated",
+                domain: "Widget",
                 before: widget1,
                 updated: { ...omit(widget1, "partTitle"), title: "Renamed" },
               },
@@ -492,7 +506,7 @@ test(
             );
           }
           testCase.emitCalls.forEach((call: any[]) => {
-            call[2].trx = trx;
+            call[0].trx = trx;
           });
           t.deepEqual(
             emitStub.args,

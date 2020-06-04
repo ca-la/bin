@@ -9,71 +9,51 @@ import { listen } from "../pubsub";
 import { getObjectDiff } from "../utils";
 import { pick } from "lodash";
 
-export type Listeners<Model, domain extends string> = Partial<{
-  "dao.created": Handler<DaoCreated<Model, domain>>;
-  "dao.updating": Handler<DaoUpdating<Model, domain>>;
+export type Listeners<Model, Domain extends string> = Partial<{
+  "dao.created": Handler<Model, Domain, DaoCreated<Model, Domain>>;
+  "dao.updating": Handler<Model, Domain, DaoUpdating<Model, Domain>>;
   "dao.updated.*": Partial<
-    Record<keyof Model, Handler<DaoUpdated<Model, domain>>>
+    Record<keyof Model, Handler<Model, Domain, DaoUpdated<Model, Domain>>>
   >;
-  "dao.updated": Handler<DaoUpdated<Model, domain>>;
+  "dao.updated": Handler<Model, Domain, DaoUpdated<Model, Domain>>;
   "route.updated.*": Partial<
-    Record<keyof Model, Handler<RouteUpdated<Model, domain>>>
+    Record<keyof Model, Handler<Model, Domain, RouteUpdated<Model, Domain>>>
   >;
-  "route.updated": Handler<RouteUpdated<Model, domain>>;
+  "route.updated": Handler<Model, Domain, RouteUpdated<Model, Domain>>;
 }>;
 
-export function buildListeners<Model, domain extends string>(
-  domain: string,
-  listeners: Listeners<Model, domain>
+export function buildListeners<Model, Domain extends string>(
+  domain: Domain,
+  listeners: Listeners<Model, Domain>
 ): void {
   if (listeners["dao.updating"]) {
-    listen<DaoUpdating<Model, domain>>(
-      "dao.updating",
-      domain as domain,
-      listeners["dao.updating"]
-    );
+    listen("dao.updating", domain, listeners["dao.updating"]);
   }
   if (listeners["dao.updated"]) {
-    listen<DaoUpdated<Model, domain>>(
-      "dao.updated",
-      domain as domain,
-      listeners["dao.updated"]
-    );
+    listen("dao.updated", domain, listeners["dao.updated"]);
   }
-  listen<DaoUpdated<Model, domain>>(
-    "dao.updated",
-    domain as domain,
-    async (event: DaoUpdated<Model, domain>) => {
-      const diffKeys = getObjectDiff<Model>(event.updated, event.before);
-      if (listeners["dao.updated.*"] && diffKeys.length > 0) {
-        const listenersToCall = pick(listeners["dao.updated.*"], diffKeys);
-        for (const key of diffKeys) {
-          const handler = listenersToCall[key];
-          if (handler) {
-            await handler(event);
-          }
+  listen("dao.updated", domain, async (event: DaoUpdated<Model, Domain>) => {
+    const diffKeys = getObjectDiff<Model>(event.updated, event.before);
+    if (listeners["dao.updated.*"] && diffKeys.length > 0) {
+      const listenersToCall = pick(listeners["dao.updated.*"], diffKeys);
+      for (const key of diffKeys) {
+        const handler = listenersToCall[key];
+        if (handler) {
+          await handler(event);
         }
       }
     }
-  );
+  });
   if (listeners["dao.created"]) {
-    listen<DaoCreated<Model, domain>>(
-      "dao.created",
-      domain as domain,
-      listeners["dao.created"]
-    );
+    listen("dao.created", domain, listeners["dao.created"]);
   }
   if (listeners["route.updated"]) {
-    listen<RouteUpdated<Model, domain>>(
-      "route.updated",
-      domain as domain,
-      listeners["route.updated"]
-    );
+    listen("route.updated", domain, listeners["route.updated"]);
   }
-  listen<RouteUpdated<Model, domain>>(
+  listen(
     "route.updated",
-    domain as domain,
-    async (event: RouteUpdated<Model, domain>) => {
+    domain,
+    async (event: RouteUpdated<Model, Domain>) => {
       const diffKeys = getObjectDiff<Model>(event.updated, event.before);
       if (listeners["route.updated.*"] && diffKeys.length > 0) {
         const listenersToCall = pick(listeners["route.updated.*"], diffKeys);

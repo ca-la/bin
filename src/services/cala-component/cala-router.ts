@@ -120,16 +120,14 @@ export function buildRouter<Model>(
                       }
                     )
                   );
-                yield emit<RouteUpdated<Model, typeof domain>>(
-                  "route.updated",
+                yield emit<Model, RouteUpdated<Model, typeof domain>>({
+                  type: "route.updated",
                   domain,
-                  {
-                    actorId,
-                    trx,
-                    before,
-                    updated,
-                  }
-                );
+                  actorId,
+                  trx,
+                  before,
+                  updated,
+                });
 
                 if (
                   routeOptions.update &&
