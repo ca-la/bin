@@ -54,7 +54,7 @@ export function isRealtimeActivityStreamDesignEventCreated(
     "approvalStepId" in data &&
     "resource" in data &&
     "type" in data &&
-    data.type === "stream-item/created" &&
+    data.type === "design-event/created" &&
     ACTIVITY_STREAM_EVENTS.includes(data.resource.type)
   );
 }
