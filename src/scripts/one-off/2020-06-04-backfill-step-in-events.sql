@@ -16,5 +16,5 @@ FROM
   checkout_steps
 WHERE
   design_events.design_id = checkout_steps.design_id
-  AND TYPE IN ('COMMIT_QUOTE', 'SUBMIT_QUOTE', 'COMMIT_COST_INPUTS');
+  AND TYPE IN ('COMMIT_QUOTE', 'SUBMIT_DESIGN', 'COMMIT_COST_INPUTS');
 

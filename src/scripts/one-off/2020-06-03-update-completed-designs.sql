@@ -19,6 +19,11 @@ UPDATE
   design_approval_steps
 SET
   state = 'COMPLETED',
+  started_at = CASE WHEN design_approval_steps.started_at IS NULL THEN
+    now()
+  ELSE
+    design_approval_steps.started_at
+  END,
   reason = NULL,
   completed_at = CASE WHEN design_approval_steps.completed_at IS NULL THEN
     task_status.completed_at
