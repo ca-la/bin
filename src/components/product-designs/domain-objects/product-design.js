@@ -31,6 +31,7 @@ const keyNamesByColumnName = {
   expected_cost_cents: "expectedCostCents",
   show_pricing_breakdown: "showPricingBreakdown",
   approval_steps: "approvalSteps",
+  progress: "progress",
 
   // TODO: Remove this once changes from api#1216 are fully live
   current_step_title: "currentStepTitle",

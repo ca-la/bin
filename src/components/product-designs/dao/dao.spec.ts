@@ -330,7 +330,7 @@ test("findAllDesignsThroughCollaborator finds all designs with a search string",
   t.deepEqual(designSearch[0].id, firstDesign.id, "should match ids");
 });
 
-test("findAllDesignsThroughCollaborator returns approval steps", async (t: tape.Test) => {
+test("findAllDesignsThroughCollaborator returns approval steps and progress", async (t: tape.Test) => {
   sandbox().stub(PricingProductTypesDAO, "findByDesignId").resolves({
     complexity: "BLANK",
   });
@@ -372,21 +372,23 @@ test("findAllDesignsThroughCollaborator returns approval steps", async (t: tape.
     );
     await ApprovalStepsDAO.update(trx, steps[0].id, {
       state: ApprovalStepState.COMPLETED,
+      completedAt: new Date(),
     });
     await ApprovalStepsDAO.update(trx, steps[1].id, {
       reason: null,
       state: ApprovalStepState.COMPLETED,
+      startedAt: new Date(),
+      completedAt: new Date(),
     });
     await ApprovalStepsDAO.update(trx, steps[2].id, {
       reason: "Needs salt.",
       state: ApprovalStepState.BLOCKED,
     });
   });
-
   const designs = await findAllDesignsThroughCollaborator({ userId: user.id });
   t.equal(designs.length, 2);
-
   t.deepEqual(designs[0].id, collectionSharedDesign.id);
+  t.deepEqual(Number(designs[0].progress), 0.5, "has progress");
   t.deepEqual(designs[0].approvalSteps!.length, 4);
   t.deepEqual(designs[0].approvalSteps![1].state, "COMPLETED");
   t.deepEqual(designs[0].approvalSteps![2].state, "BLOCKED");

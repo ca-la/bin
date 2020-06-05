@@ -34,7 +34,8 @@ export async function findAndDuplicateDesign(
         "collectionIds",
         "imageIds",
         "imageLinks",
-        "approvalSteps"
+        "approvalSteps",
+        "progress"
       ),
       { userId: newCreatorId }
     ),

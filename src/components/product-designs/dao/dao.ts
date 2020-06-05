@@ -94,7 +94,6 @@ product_designs.id in (
         query.clearOrder().orderBy(column, direction || "asc");
       }
     });
-
   return result.map((row: any): ProductDesign => new ProductDesign(row));
 }
 
