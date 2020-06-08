@@ -1,20 +1,31 @@
 import { omit } from "lodash";
+import Knex from "knex";
+
 import { sandbox, test, Test } from "../../../../test-helpers/fresh";
 import DesignsDAO from "../../../product-designs/dao";
 import * as DetermineSubmissionStatus from "../determine-submission-status";
-
 import * as CostInputsDAO from "../../../pricing-cost-inputs/dao";
 import DesignEventsDAO from "../../../design-events/dao";
 import * as NotificationsService from "../../../../services/create-notifications";
 import { commitCostInputs, recostInputs } from ".";
+import { generateDesign } from "../../../../test-helpers/factories/product-design";
+import db from "../../../../services/db";
+import createUser from "../../../../test-helpers/create-user";
+import ApprovalStepsDAO from "../../../approval-steps/dao";
+import ApprovalStep, { ApprovalStepType } from "../../../approval-steps/types";
 
 test("commitCostInputs commits cost inputs", async (t: Test) => {
+  const { user } = await createUser();
+  const designOne = await generateDesign({ userId: user.id });
+  const designTwo = await generateDesign({ userId: user.id });
+  const designThree = await generateDesign({ userId: user.id });
+
   const findByCollectionStub = sandbox()
     .stub(DesignsDAO, "findByCollectionId")
     .resolves([
-      { id: "design-one" },
-      { id: "design-two" },
-      { id: "design-three" },
+      { id: designOne.id },
+      { id: designTwo.id },
+      { id: designThree.id },
     ]);
   const expireStub = sandbox()
     .stub(CostInputsDAO, "expireCostInputs")
@@ -36,7 +47,7 @@ test("commitCostInputs commits cost inputs", async (t: Test) => {
   t.equal(expireStub.callCount, 1);
   t.deepEqual(
     expireStub.args[0][0],
-    ["design-one", "design-two", "design-three"],
+    [designOne.id, designTwo.id, designThree.id],
     "Passes through all the designs in the collection"
   );
   t.deepEqual(
@@ -45,6 +56,23 @@ test("commitCostInputs commits cost inputs", async (t: Test) => {
     "Uses the time two weeks from now"
   );
 
+  const checkoutStep = await db.transaction(async (trx: Knex.Transaction) => {
+    const steps = await ApprovalStepsDAO.findByDesign(trx, designOne.id);
+    return steps.find(
+      (step: ApprovalStep) => step.type === ApprovalStepType.CHECKOUT
+    );
+  });
+
+  t.equal(
+    createEventStub.firstCall.args[1].type,
+    "COMMIT_COST_INPUTS",
+    "Creates a COMMIT_COST_INPUTS event"
+  );
+  t.equal(
+    createEventStub.firstCall.args[1].approvalStepId,
+    checkoutStep.id,
+    "Costing is associated with the right step"
+  );
   t.equal(createEventStub.callCount, 3);
   t.equal(notificationStub.callCount, 1);
 

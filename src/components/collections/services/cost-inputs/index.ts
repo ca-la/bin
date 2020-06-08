@@ -5,6 +5,8 @@ import db from "../../../../services/db";
 import DesignEventsDAO from "../../../design-events/dao";
 import DesignsDAO from "../../../product-designs/dao";
 import ProductDesign = require("../../../product-designs/domain-objects/product-design");
+import ApprovalStepsDAO from "../../../approval-steps/dao";
+import ApprovalStep, { ApprovalStepType } from "../../../approval-steps/types";
 import {
   attachProcesses,
   create as createCostInput,
@@ -13,7 +15,6 @@ import {
 import { immediatelySendFullyCostedCollection } from "../../../../services/create-notifications";
 import { getDesignsMetaByCollection } from "../determine-submission-status";
 import { BasePricingCostInput } from "../../../pricing-cost-inputs/domain-object";
-
 /**
  * Commits cost inputs for every design in the given collection.
  */
@@ -31,9 +32,20 @@ export async function commitCostInputs(
       await expireCostInputs(designIds, twoWeeksFromNow, trx);
 
       for (const design of designs) {
+        const steps = await ApprovalStepsDAO.findByDesign(trx, design.id);
+        const checkoutStep = steps.find(
+          (step: ApprovalStep) => step.type === ApprovalStepType.CHECKOUT
+        );
+
+        if (!checkoutStep) {
+          throw new Error(
+            `Could not find checkout step for design ${design.id} while commiting costing`
+          );
+        }
+
         await DesignEventsDAO.create(trx, {
           actorId,
-          approvalStepId: null,
+          approvalStepId: checkoutStep.id,
           approvalSubmissionId: null,
           bidId: null,
           commentId: null,

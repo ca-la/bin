@@ -28,6 +28,7 @@ import createDesign from "../../../services/create-design";
 import DesignEvent, { DesignEventTypes } from "../../design-events/types";
 import { taskTypes } from "../../tasks/templates/task-types";
 import generatePricingValues from "../../../test-helpers/factories/pricing-values";
+import { generateDesign } from "../../../test-helpers/factories/product-design";
 
 test("GET /collections/:id returns a created collection", async (t: tape.Test) => {
   const { session, user } = await createUser();
@@ -653,13 +654,13 @@ test("POST /collections/:collectionId/cost-inputs", async (t: tape.Test) => {
     id: uuid.v4(),
     title: "Yohji Yamamoto SS19",
   });
-  const designOne = await ProductDesignsDAO.create({
+  const designOne = await generateDesign({
     description: "Oversize Placket Shirt",
     productType: "SHIRT",
     title: "Cozy Shirt",
     userId: designer.user.id,
   });
-  const designTwo = await ProductDesignsDAO.create({
+  const designTwo = await generateDesign({
     description: "Gabardine Wool Pant",
     productType: "PANT",
     title: "Balloon Pants",
