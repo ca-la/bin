@@ -95,7 +95,7 @@ function* createApproval(
     id: uuid.v4(),
     quoteId: null,
     targetId: null,
-    type: "STEP_SUMBISSION_APPROVAL",
+    type: "STEP_SUBMISSION_APPROVAL",
     taskTypeId: null,
   });
 
@@ -134,6 +134,78 @@ function* createApproval(
     );
   }
   yield notifications[NotificationType.APPROVAL_STEP_SUBMISSION_APPROVAL].send(
+    trx,
+    this.state.userId,
+    {
+      recipientUserId: design.userId,
+      recipientCollaboratorId: null,
+    },
+    {
+      approvalStepId: submission.stepId,
+      approvalSubmissionId: submission.id,
+      designId: this.state.designId,
+      collectionId: design.collectionIds[0] || null,
+    }
+  );
+
+  this.body = designEventWithMeta;
+  this.status = 200;
+}
+
+function* createReReviewRequest(
+  this: TrxContext<
+    AuthedContext<{}, PermittedState & { designId: string; stepId: string }>
+  >
+): Iterator<any, any, any> {
+  const { submissionId } = this.params;
+  const { trx } = this.state;
+
+  const submission = yield ApprovalSubmissionsDAO.findById(trx, submissionId);
+  if (!submission) {
+    this.throw(404, `Submission not found with ID: ${submissionId}`);
+  }
+
+  if (submission.state !== ApprovalStepSubmissionState.REVISION_REQUESTED) {
+    this.throw(
+      409,
+      `Submission #${submissionId} should have REVISION_REQUESTED state`
+    );
+  }
+
+  yield ApprovalSubmissionsDAO.update(trx, submissionId, {
+    state: ApprovalStepSubmissionState.SUBMITTED,
+  });
+
+  const designEvent: DesignEvent = yield DesignEventsDAO.create(trx, {
+    actorId: this.state.userId,
+    approvalStepId: this.state.stepId,
+    approvalSubmissionId: submissionId,
+    bidId: null,
+    commentId: null,
+    createdAt: new Date(),
+    designId: this.state.designId,
+    id: uuid.v4(),
+    quoteId: null,
+    targetId: null,
+    type: "STEP_SUBMISSION_RE_REVIEW_REQUEST",
+    taskTypeId: null,
+  });
+
+  const designEventWithMeta = yield DesignEventsDAO.findById(
+    trx,
+    designEvent.id
+  );
+  if (!designEventWithMeta) {
+    throw new Error("Failed to create re-review request event");
+  }
+  const design = yield DesignsDAO.findById(this.state.designId);
+  if (!design) {
+    throw new Error(`Could not find a design with id: ${this.state.designId}`);
+  }
+
+  yield notifications[
+    NotificationType.APPROVAL_STEP_SUBMISSION_REREVIEW_REQUEST
+  ].send(
     trx,
     this.state.userId,
     {
@@ -221,7 +293,7 @@ export function* updateApprovalSubmission(
         id: uuid.v4(),
         quoteId: null,
         targetId: collaborator && collaborator.userId,
-        type: "STEP_SUMBISSION_ASSIGNMENT",
+        type: "STEP_SUBMISSION_ASSIGNMENT",
         taskTypeId: null,
       });
       if (collaborator) {
@@ -450,14 +522,13 @@ router.post(
   createApproval
 );
 
-// Deprecated; TODO remove after Studio is updated to use the new URL
-router.put(
-  "/:submissionId/approve",
+router.post(
+  "/:submissionId/re-review-requests",
   requireAuth,
   requireDesignIdBy(getDesignIdFromSubmission),
   canAccessDesignInState,
   useTransaction,
-  createApproval
+  createReReviewRequest
 );
 
 router.patch(

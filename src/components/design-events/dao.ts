@@ -93,7 +93,7 @@ const dao = {
     designId: string,
     approvalStepId: string
   ): Promise<DesignEventWithMeta[]> => {
-    const designRows = (
+    const designEventRows = (
       await trx(TABLE_NAME)
         .select("design_events.*")
         .modify(addMeta)
@@ -112,7 +112,7 @@ const dao = {
             : null,
       };
     });
-    return withMetaAdapter.fromDbArray(designRows);
+    return withMetaAdapter.fromDbArray(designEventRows);
   },
 };
 

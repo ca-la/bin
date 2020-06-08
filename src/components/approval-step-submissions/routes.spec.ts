@@ -23,10 +23,13 @@ import ProductDesign from "../product-designs/domain-objects/product-design";
 import Session from "../../domain-objects/session";
 import { DesignEventWithMeta } from "../../published-types";
 
-async function setupSubmission(): Promise<{
+async function setupSubmission(
+  approvalSubmission: Partial<ApprovalStepSubmission> = {}
+): Promise<{
   approvalStep: ApprovalStep;
   designer: { user: User; session: Session };
   collaborator: CollaboratorWithUser;
+  collaboratorSession: Session;
   design: ProductDesign;
   submission: ApprovalStepSubmission;
 }> {
@@ -50,6 +53,7 @@ async function setupSubmission(): Promise<{
       title: "Submarine",
       stepId: approvalStep.id,
       collaboratorId: collaborator.id,
+      ...approvalSubmission,
     });
 
     await trx.commit();
@@ -58,6 +62,7 @@ async function setupSubmission(): Promise<{
       approvalStep,
       designer,
       collaborator,
+      collaboratorSession: collab.session,
       design,
       submission,
     };
@@ -167,7 +172,7 @@ test("PATCH /design-approval-step-submissions/:submissionId with collaboratorId"
   );
 
   const assignmentEvent = events.find(
-    (e: DesignEventWithMeta) => e.type === "STEP_SUMBISSION_ASSIGNMENT"
+    (e: DesignEventWithMeta) => e.type === "STEP_SUBMISSION_ASSIGNMENT"
   );
   if (!assignmentEvent) {
     return t.fail("Could not find design event for review assignment");
@@ -252,7 +257,7 @@ test("POST /design-approval-step-submissions/:submissionId/approvals", async (t:
     },
     {
       designId: design.id,
-      type: "STEP_SUMBISSION_APPROVAL",
+      type: "STEP_SUBMISSION_APPROVAL",
       approvalStepId: approvalStep.id,
       approvalSubmissionId: submission.id,
       submissionTitle: "Submarine",
@@ -381,4 +386,88 @@ test("POST /design-approval-step-submissions/:submissionId/revision-requests", a
 
   t.equal(duplicateResponse.status, 409);
   t.equal(duplicateBody.message, "Submission already has requested revisions");
+});
+
+test("POST /design-approval-step-submissions/:submissionId/re-review-requests", async (t: Test) => {
+  const {
+    approvalStep,
+    design,
+    designer,
+    collaborator,
+    collaboratorSession,
+    submission,
+  } = await setupSubmission({
+    state: ApprovalStepSubmissionState.REVISION_REQUESTED,
+  });
+  const [response, body] = await post(
+    `/design-approval-step-submissions/${submission.id}/re-review-requests`,
+    {
+      headers: authHeader(collaboratorSession.id),
+    }
+  );
+  t.is(response.status, 200);
+  t.deepEqual(
+    {
+      designId: body.designId,
+      type: body.type,
+      approvalStepId: body.approvalStepId,
+      approvalSubmissionId: body.approvalSubmissionId,
+      submissionTitle: body.submissionTitle,
+      actorId: body.actorId,
+      actorName: body.actorName,
+      actorRole: body.actorRole,
+      actorEmail: body.actorEmail,
+    },
+    {
+      designId: design.id,
+      type: "STEP_SUBMISSION_RE_REVIEW_REQUEST",
+      approvalStepId: approvalStep.id,
+      approvalSubmissionId: submission.id,
+      submissionTitle: "Submarine",
+      actorId: collaborator.user!.id,
+      actorName: collaborator.user!.name,
+      actorRole: "USER",
+      actorEmail: collaborator.user!.email,
+    },
+    "body is approval event"
+  );
+
+  const [failureResponse] = await post(
+    `/design-approval-step-submissions/${submission.id}/re-review-requests`,
+    {
+      headers: authHeader(collaboratorSession.id),
+    }
+  );
+  t.is(failureResponse.status, 409, "Could not re-request review twice");
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const collaboratorNotifications = await NotificationsDAO.findByUserId(
+      trx,
+      collaborator.userId!,
+      {
+        limit: 10,
+        offset: 0,
+      }
+    );
+    t.is(
+      collaboratorNotifications.length,
+      0,
+      "does not send a notification to the actor"
+    );
+
+    const designerNotifications = await NotificationsDAO.findByUserId(
+      trx,
+      designer.user.id,
+      {
+        limit: 10,
+        offset: 0,
+      }
+    );
+    t.is(designerNotifications.length, 1);
+    t.is(designerNotifications[0].approvalSubmissionId, submission.id);
+    t.is(
+      designerNotifications[0].type,
+      NotificationType.APPROVAL_STEP_SUBMISSION_REREVIEW_REQUEST
+    );
+  });
 });
