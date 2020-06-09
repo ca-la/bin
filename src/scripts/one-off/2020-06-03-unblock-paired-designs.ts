@@ -35,7 +35,9 @@ async function main(): Promise<string> {
     type: "ACCEPT_SERVICE_BID",
   });
 
-  for (const event of bidAcceptanceEvents) {
+  for (let i = 0; i < bidAcceptanceEvents.length; i = i + 1) {
+    const event = bidAcceptanceEvents[i];
+    log(`[${i + 1}/${bidAcceptanceEvents.length}] Design ${event.designId}`);
     await actualizeDesignStepsAfterBidAcceptance(trx, event);
   }
 

@@ -70,7 +70,9 @@ async function main(): Promise<string> {
   try {
     const checkoutSteps = await getCheckoutSteps(trx);
     designCount = checkoutSteps.length;
-    for (const step of checkoutSteps) {
+    for (let i = 0; i < checkoutSteps.length; i = i + 1) {
+      const step = checkoutSteps[i];
+      log(`[${i + 1}/${checkoutSteps.length}] Design ${step.designId}`);
       await createSubmissionsByProductType(trx, step);
     }
     const submissionCountAfter = await trx.raw(
