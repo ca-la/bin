@@ -102,6 +102,21 @@ test("ApprovalSteps notifications", async (t: Test) => {
         design.id,
       ],
     },
+    {
+      title: "APPROVAL_STEP_PAIRING",
+      type: NotificationType.APPROVAL_STEP_PAIRING,
+      notification: {
+        collectionId: collection.id,
+        designId: design.id,
+        approvalStepId: approvalStep.id,
+      },
+      parts: [
+        actor.name,
+        " has been assigned to ",
+        approvalStep.title,
+        design.id,
+      ],
+    },
   ];
   for (const testCase of testCases) {
     const trx = await db.transaction();

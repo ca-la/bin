@@ -20,6 +20,10 @@ export interface NotificationLayerSchema {
     required: "designId" | "approvalStepId";
     optional: "collectionId";
   };
+  [NotificationType.APPROVAL_STEP_PAIRING]: {
+    required: "designId" | "approvalStepId";
+    optional: "collectionId";
+  };
 }
 
 const layer: NotificationsLayer<NotificationLayerSchema> = {
@@ -62,6 +66,27 @@ const layer: NotificationsLayer<NotificationLayerSchema> = {
           notification.approvalStepTitle
         } on ${assets.designHtmlLink}`,
         title: `${assets.actorName} completed ${notification.approvalStepTitle} on ${assets.designHtmlLink}`,
+      };
+    }
+  ),
+  APPROVAL_STEP_PAIRING: buildNotificationComponent<
+    NotificationType.APPROVAL_STEP_PAIRING,
+    NotificationLayerSchema[NotificationType.APPROVAL_STEP_COMPLETION]["required"],
+    NotificationLayerSchema[NotificationType.APPROVAL_STEP_COMPLETION]["optional"]
+  >(
+    NotificationType.APPROVAL_STEP_PAIRING,
+    async (notification: FullNotification) => {
+      const assets = getApprovalBaseWithAssets(notification);
+      if (!assets) {
+        return null;
+      }
+
+      return {
+        ...assets.base,
+        html: `${span(assets.actorName, "user-name")} has been assigned to ${
+          assets.stepHtmlLink
+        }`,
+        title: `${assets.actorName} has been assigned to ${assets.stepHtmlLink}`,
       };
     }
   ),

@@ -52,7 +52,7 @@ const layer: NotificationsLayer<NotificationLayerSchema> = {
         html: `${span(assets.actorName, "user-name")} assigned you to review ${
           notification.approvalSubmissionTitle
         } for ${assets.designHtmlLink}`,
-        title: `${assets.actorName} assigned you to review ${notification.approvalSubmissionTitle} for ${assets.designHtmlLink}`,
+        title: `${assets.actorName} assigned you to review ${assets.submissionHtmlLink}`,
       };
     }
   ),
@@ -71,9 +71,9 @@ const layer: NotificationsLayer<NotificationLayerSchema> = {
       return {
         ...assets.base,
         html: `${span(assets.actorName, "user-name")} approved ${
-          notification.approvalSubmissionTitle
-        } (${notification.approvalStepTitle}) on ${assets.designHtmlLink}`,
-        title: `${assets.actorName} approved ${notification.approvalSubmissionTitle} (${notification.approvalStepTitle}) on ${assets.designHtmlLink}`,
+          assets.submissionHtmlLink
+        }`,
+        title: `${assets.actorName} approved ${assets.submissionHtmlLink}`,
       };
     }
   ),
@@ -92,9 +92,9 @@ const layer: NotificationsLayer<NotificationLayerSchema> = {
       return {
         ...assets.base,
         html: `${span(assets.actorName, "user-name")} requested revisions to ${
-          notification.approvalSubmissionTitle
-        } (${notification.approvalStepTitle}) on ${assets.designHtmlLink}`,
-        title: `${assets.actorName} requested revisions to ${notification.approvalSubmissionTitle} (${notification.approvalStepTitle}) on ${assets.designHtmlLink}`,
+          assets.submissionHtmlLink
+        }`,
+        title: `${assets.actorName} requested revisions to ${assets.submissionHtmlLink}`,
       };
     }
   ),
@@ -112,10 +112,10 @@ const layer: NotificationsLayer<NotificationLayerSchema> = {
 
       return {
         ...assets.base,
-        html: `${span(assets.actorName, "user-name")} requested re-review on ${
-          notification.approvalSubmissionTitle
-        } (${notification.approvalStepTitle}) on ${assets.designHtmlLink}`,
-        title: `${assets.actorName} requested re-review on ${notification.approvalSubmissionTitle} (${notification.approvalStepTitle}) on ${assets.designHtmlLink}`,
+        html: `${span(assets.actorName, "user-name")} requested re-review of ${
+          assets.submissionHtmlLink
+        }`,
+        title: `${assets.actorName} requested re-review of ${assets.submissionHtmlLink}`,
       };
     }
   ),

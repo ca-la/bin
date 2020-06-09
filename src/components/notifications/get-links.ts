@@ -58,7 +58,6 @@ export type LinkBase =
     }
   | {
       type: LinkType.ApprovalStep;
-      collection: Meta;
       design: Meta;
       approvalStep: Meta;
     };
@@ -145,9 +144,9 @@ export default function getLinks(linkBase: LinkBase): Links {
     }
 
     case LinkType.ApprovalStep: {
-      const { design, approvalStep, collection } = linkBase;
+      const { design, approvalStep } = linkBase;
 
-      const deepLink = `${STUDIO_HOST}/collections/${collection.id}/reviews?designId=${design.id}&stepId=${approvalStep.id}`;
+      const deepLink = `${STUDIO_HOST}/dashboard?designId=${design.id}&stepId=${approvalStep.id}`;
       const title = normalizeTitle(approvalStep);
 
       return {

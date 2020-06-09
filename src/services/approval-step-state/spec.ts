@@ -15,6 +15,8 @@ import * as ApprovalStepsDAO from "../../components/approval-steps/dao";
 import { taskTypes } from "../../components/tasks/templates";
 import DesignEvent from "../../components/design-events/types";
 import DesignEventsDAO from "../../components/design-events/dao";
+import NotificationsLayer from "../../components/approval-steps/notifications";
+import { NotificationType } from "../../components/notifications/domain-object";
 
 interface TestCase {
   title: string;
@@ -22,6 +24,7 @@ interface TestCase {
   isBlank: boolean;
   stepStates: { [key in ApprovalStepType]: ApprovalStepState };
   createdDesignEvents: Partial<DesignEvent>[];
+  sendNotificationCallCount: number;
 }
 
 const testCases: TestCase[] = [
@@ -41,6 +44,7 @@ const testCases: TestCase[] = [
         type: "STEP_PARTNER_PAIRING",
       },
     ],
+    sendNotificationCallCount: 1,
   },
   {
     title: "Production bid",
@@ -58,6 +62,7 @@ const testCases: TestCase[] = [
         type: "STEP_PARTNER_PAIRING",
       },
     ],
+    sendNotificationCallCount: 1,
   },
   {
     title: "Bid with Production and Technical Design tasks",
@@ -79,6 +84,7 @@ const testCases: TestCase[] = [
         type: "STEP_PARTNER_PAIRING",
       },
     ],
+    sendNotificationCallCount: 2,
   },
 ];
 
@@ -95,7 +101,10 @@ for (const testCase of testCases) {
       designId: design.id,
     });
     const createDesignEventStub = sandbox().stub(DesignEventsDAO, "create");
-
+    const sendNotificationStub = sandbox().stub(
+      NotificationsLayer[NotificationType.APPROVAL_STEP_PAIRING],
+      "send"
+    );
     const trx = await db.transaction();
     try {
       // Completing checkout step
@@ -153,6 +162,11 @@ for (const testCase of testCases) {
         createdEvents,
         testCase.createdDesignEvents,
         `${testCase.title}: creates design events`
+      );
+      t.deepEqual(
+        sendNotificationStub.callCount,
+        testCase.sendNotificationCallCount,
+        `${testCase.title}: send notification`
       );
     } finally {
       await trx.rollback();

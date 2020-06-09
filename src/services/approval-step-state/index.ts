@@ -226,7 +226,15 @@ export async function actualizeDesignStepsAfterBidAcceptance(
     throw new Error("bidId is missing");
   }
   const bidTaskTypes = await BidTaskTypesDAO.findByBidId(trx, bidId);
-
+  const design = await ProductDesignsDAO.findById(
+    designId,
+    undefined,
+    undefined,
+    trx
+  );
+  if (!design) {
+    throw new Error(`Could not find design ${designId}`);
+  }
   const approvalSteps = await ApprovalStepsDAO.find(
     trx,
     { designId },
@@ -263,6 +271,19 @@ export async function actualizeDesignStepsAfterBidAcceptance(
             taskTypeId: bidTaskType.taskTypeId,
             approvalStepId: approvalSteps[index].id,
           });
+          await notifications[NotificationType.APPROVAL_STEP_PAIRING].send(
+            trx,
+            event.actorId,
+            {
+              recipientCollaboratorId: null,
+              recipientUserId: design.userId,
+            },
+            {
+              approvalStepId: approvalSteps[index].id,
+              designId,
+              collectionId: design.collectionIds[0] || null,
+            }
+          );
         }
         break;
       }
@@ -279,6 +300,19 @@ export async function actualizeDesignStepsAfterBidAcceptance(
             taskTypeId: bidTaskType.taskTypeId,
             approvalStepId: approvalSteps[index].id,
           });
+          await notifications[NotificationType.APPROVAL_STEP_PAIRING].send(
+            trx,
+            event.actorId,
+            {
+              recipientCollaboratorId: null,
+              recipientUserId: design.userId,
+            },
+            {
+              approvalStepId: approvalSteps[index].id,
+              designId,
+              collectionId: design.collectionIds[0] || null,
+            }
+          );
         }
         break;
       }

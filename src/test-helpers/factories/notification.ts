@@ -509,6 +509,7 @@ export default async function generateNotification(
         notification,
       };
     }
+    case NotificationType.APPROVAL_STEP_PAIRING:
     case NotificationType.APPROVAL_STEP_ASSIGNMENT:
     case NotificationType.APPROVAL_STEP_COMPLETION: {
       const notification = await create({

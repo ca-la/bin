@@ -98,6 +98,8 @@ interface ApprovalBaseWithAssets {
   base: Omit<NotificationMessage, "html" | "title">;
   actorName: string;
   designHtmlLink: string;
+  stepHtmlLink: string;
+  submissionHtmlLink: string;
 }
 
 export function getApprovalBaseWithAssets(
@@ -111,30 +113,44 @@ export function getApprovalBaseWithAssets(
     collectionTitle,
     approvalStepId,
     approvalStepTitle,
+    approvalSubmissionId,
+    approvalSubmissionTitle,
   } = notification;
 
-  if (!collectionId || !approvalStepId || !designId) {
+  if (!approvalStepId || !designId) {
     return null;
   }
 
   const design = { id: designId, title: designTitle };
-  const collection = {
-    id: collectionId,
-    title: collectionTitle,
-  };
+  const collection = collectionId
+    ? {
+        id: collectionId,
+        title: collectionTitle,
+      }
+    : null;
   const approvalStep = {
     id: approvalStepId,
     title: approvalStepTitle,
   };
+  const approvalSubmission = {
+    id: approvalSubmissionId,
+    title: approvalSubmissionTitle,
+  };
 
   const { deepLink } = getLinks({
-    collection,
     design,
     approvalStep,
     type: LinkType.ApprovalStep,
   });
   const designHtmlLink = constructHtmlLink(deepLink, normalizeTitle(design));
-
+  const stepHtmlLink = constructHtmlLink(
+    deepLink,
+    normalizeTitle(approvalStep)
+  );
+  const submissionHtmlLink = constructHtmlLink(
+    deepLink,
+    normalizeTitle(approvalSubmission)
+  );
   const baseMessage = createBaseMessage(notification);
   const actorName = escapeHtml(
     baseMessage.actor.name || baseMessage.actor.email
@@ -149,6 +165,8 @@ export function getApprovalBaseWithAssets(
     },
     actorName,
     designHtmlLink,
+    stepHtmlLink,
+    submissionHtmlLink,
   };
 }
 
@@ -826,7 +844,6 @@ export async function createNotificationMessage(
 
       const collaborators = await CollaboratorsDAO.findByDesign(designId);
       const { htmlLink: stepHtmlLink, deepLink } = getLinks({
-        collection,
         design,
         approvalStep,
         type: LinkType.ApprovalStep,
@@ -889,7 +906,6 @@ export async function createNotificationMessage(
 
       const collaborators = await CollaboratorsDAO.findByDesign(designId);
       const { htmlLink: stepHtmlLink, deepLink } = getLinks({
-        collection,
         design,
         approvalStep,
         type: LinkType.ApprovalStep,
@@ -952,7 +968,6 @@ export async function createNotificationMessage(
 
       const collaborators = await CollaboratorsDAO.findByDesign(designId);
       const { htmlLink: stepHtmlLink, deepLink } = getLinks({
-        collection,
         design,
         approvalStep,
         type: LinkType.ApprovalStep,

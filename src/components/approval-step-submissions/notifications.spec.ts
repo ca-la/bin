@@ -34,6 +34,7 @@ const prepareAssets = async (): Promise<{
     const { design, approvalStep } = await generateApprovalStep(prepareTrx);
     const { submission } = await generateApprovalSubmission(prepareTrx, {
       stepId: approvalStep.id,
+      title: "Review X",
     });
     const { collection } = await generateCollection({ createdBy: actor.id });
     await addDesigns({
@@ -105,14 +106,7 @@ test("ApprovalSubmissions notifications", async (t: Test) => {
         approvalStepId: approvalStep.id,
         approvalSubmissionId: submission.id,
       },
-      parts: [
-        actor.name,
-        " approved ",
-        `(${approvalStep.title})`,
-        submission.title,
-        design.title,
-        design.id,
-      ],
+      parts: [actor.name, " approved ", submission.title],
     },
     {
       title: "APPROVAL_STEP_SUBMISSION_REVISION_REQUEST",
@@ -123,14 +117,7 @@ test("ApprovalSubmissions notifications", async (t: Test) => {
         approvalStepId: approvalStep.id,
         approvalSubmissionId: submission.id,
       },
-      parts: [
-        actor.name,
-        " requested revisions to ",
-        `(${approvalStep.title})`,
-        submission.title,
-        design.title,
-        design.id,
-      ],
+      parts: [actor.name, " requested revisions to ", submission.title],
     },
     {
       title: "APPROVAL_STEP_SUBMISSION_REREVIEW_REQUEST",
@@ -141,14 +128,7 @@ test("ApprovalSubmissions notifications", async (t: Test) => {
         approvalStepId: approvalStep.id,
         approvalSubmissionId: submission.id,
       },
-      parts: [
-        actor.name,
-        " requested re-review on ",
-        `(${approvalStep.title})`,
-        submission.title,
-        design.title,
-        design.id,
-      ],
+      parts: [actor.name, " requested re-review of ", submission.title],
     },
   ];
   for (const testCase of testCases) {
