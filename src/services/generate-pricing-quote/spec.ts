@@ -398,7 +398,7 @@ test("generateUnsavedQuote for packaging", async (t: Test) => {
       fulfillmentTimeMs: daysToMs(8),
       id: uuid.v4(),
       minimumUnits: 1,
-      name: "PACKAGING",
+      name: "OTHER - PACKAGING",
       patternMinimumCents: 0,
       preProductionTimeMs: daysToMs(7),
       productionTimeMs: daysToMs(6),

@@ -92,7 +92,10 @@ function calculateQuote(
   values: PricingQuoteValues
 ): UnsavedQuote {
   const SKIP_DEVELOPMENT_COST_COMPLEXITIES: Complexity[] = ["BLANK"];
-  const SKIP_BASE_COST_PRODUCT_TYPES: ProductType[] = ["PACKAGING"];
+  const SKIP_BASE_COST_PRODUCT_TYPES: ProductType[] = [
+    "PACKAGING",
+    "OTHER - PACKAGING",
+  ];
 
   const chargeBaseCosts = !SKIP_BASE_COST_PRODUCT_TYPES.includes(
     request.productType
