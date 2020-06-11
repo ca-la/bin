@@ -6,15 +6,7 @@ import {
 import { ProductDesignDataWithMeta } from "../../../product-designs/domain-objects/with-meta";
 import { determineEarliestExpiration } from "../../../pricing-cost-inputs/services/determine-earliest-expiration";
 import { BasePricingCostInput } from "../../../pricing-cost-inputs/domain-object";
-
-export interface CollectionSubmissionStatus {
-  collectionId: string;
-  isSubmitted: boolean;
-  isCosted: boolean;
-  isQuoted: boolean;
-  isPaired: boolean;
-  pricingExpiresAt: Date | null;
-}
+import { CollectionSubmissionStatus } from "../../types";
 
 export interface SubmissionStatusByCollection {
   [collectionId: string]: CollectionSubmissionStatus;

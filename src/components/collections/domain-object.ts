@@ -4,6 +4,10 @@ import {
   hasProperties,
   hasSomeProperties,
 } from "../../services/require-properties";
+import { Collection, CollectionRow as Row } from "./types";
+
+export default Collection;
+export type CollectionRow = Row;
 
 export const UPDATABLE_PROPERTIES = ["description", "title"];
 
@@ -13,24 +17,6 @@ export const INSERTABLE_PROPERTIES = [
   "id",
   "title",
 ];
-
-export default interface Collection {
-  createdAt: Date;
-  createdBy: string;
-  deletedAt: Date | null;
-  description: string | null;
-  id: string;
-  title: string | null;
-}
-
-export interface CollectionRow {
-  created_at: Date;
-  created_by: string;
-  deleted_at: Date | null;
-  description: string | null;
-  id: string;
-  title: string | null;
-}
 
 export const dataAdapter = new DataAdapter<CollectionRow, Collection>();
 export const partialDataAdapter = new DataAdapter<
