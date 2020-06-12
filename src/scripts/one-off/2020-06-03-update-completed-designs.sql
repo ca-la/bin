@@ -12,6 +12,7 @@ WITH task_status AS (
   WHERE
     task_events.title ILIKE 'confirm order has shipped'
     OR task_events.title ILIKE 'confirm product has been shipped'
+    OR task_events.title ILIKE 'confirm goods have been shipped'
   ORDER BY
     product_designs.id,
     task_events.created_at DESC)
