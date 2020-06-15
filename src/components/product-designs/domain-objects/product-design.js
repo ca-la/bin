@@ -32,6 +32,8 @@ const keyNamesByColumnName = {
   show_pricing_breakdown: "showPricingBreakdown",
   approval_steps: "approvalSteps",
   progress: "progress",
+  first_step_created_at: "firstStepCreatedAt",
+  last_step_due_at: "lastStepDueAt",
 
   // TODO: Remove this once changes from api#1216 are fully live
   current_step_title: "currentStepTitle",

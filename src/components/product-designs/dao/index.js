@@ -2,6 +2,7 @@
 
 const uuid = require("node-uuid");
 const rethrow = require("pg-rethrow");
+const { omit } = require("lodash");
 
 const compact = require("../../../services/compact");
 const db = require("../../../services/db");
@@ -146,19 +147,25 @@ function findById(id, filters, options = {}, trx) {
   if (options.includeDeleted !== true) {
     query["product_designs.deleted_at"] = null;
   }
-
-  return queryWithCollectionMeta(db)
-    .where(query)
-    .modify((currentQuery) => {
-      if (trx) {
-        currentQuery.transacting(trx);
-      }
-    })
-    .modify(attachApprovalSteps)
-    .then(first)
-    .then(maybeInstantiate)
-    .catch(rethrow)
-    .catch(filterError(rethrow.ERRORS.InvalidTextRepresentation, () => null));
+  return (
+    queryWithCollectionMeta(db)
+      .where(query)
+      .modify((currentQuery) => {
+        if (trx) {
+          currentQuery.transacting(trx);
+        }
+      })
+      .modify(attachApprovalSteps)
+      .then(first)
+      // we need current_step_ordering for sorting, but don't want it to be a part of domain object
+      .then((data) => {
+        return data
+          ? maybeInstantiate(omit(data, "current_step_ordering"))
+          : null;
+      })
+      .catch(rethrow)
+      .catch(filterError(rethrow.ERRORS.InvalidTextRepresentation, () => null))
+  );
 }
 
 function findByIds(ids) {

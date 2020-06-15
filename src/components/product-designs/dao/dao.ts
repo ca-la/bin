@@ -1,4 +1,5 @@
 import Knex from "knex";
+import { omit } from "lodash";
 import db from "../../../services/db";
 import ProductDesign = require("../../../components/product-designs/domain-objects/product-design");
 import ProductDesignWithApprovalSteps from "../domain-objects/product-design-with-approval-steps";
@@ -94,7 +95,11 @@ product_designs.id in (
         query.clearOrder().orderBy(column, direction || "asc");
       }
     });
-  return result.map((row: any): ProductDesign => new ProductDesign(row));
+  // we need current_step_ordering for sorting, but don't want it to be a part of domain object
+  return result.map(
+    (row: any): ProductDesign =>
+      new ProductDesign(omit(row, "current_step_ordering"))
+  );
 }
 
 export async function findAllDesignIdsThroughCollaborator(

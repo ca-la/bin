@@ -330,7 +330,9 @@ test("findAllDesignsThroughCollaborator finds all designs with a search string",
   t.deepEqual(designSearch[0].id, firstDesign.id, "should match ids");
 });
 
-test("findAllDesignsThroughCollaborator returns approval steps and progress", async (t: tape.Test) => {
+test("findAllDesignsThroughCollaborator returns approval steps, progress and related fields", async (t: tape.Test) => {
+  const testDate = new Date(2012, 11, 22);
+  sandbox().useFakeTimers(testDate);
   sandbox().stub(PricingProductTypesDAO, "findByDesignId").resolves({
     complexity: "BLANK",
   });
@@ -383,12 +385,22 @@ test("findAllDesignsThroughCollaborator returns approval steps and progress", as
     await ApprovalStepsDAO.update(trx, steps[2].id, {
       reason: "Needs salt.",
       state: ApprovalStepState.BLOCKED,
+      dueAt: new Date(),
+    });
+    await ApprovalStepsDAO.update(trx, steps[3].id, {
+      dueAt: new Date(),
     });
   });
   const designs = await findAllDesignsThroughCollaborator({ userId: user.id });
   t.equal(designs.length, 2);
   t.deepEqual(designs[0].id, collectionSharedDesign.id);
   t.deepEqual(Number(designs[0].progress), 0.5, "has progress");
+  t.deepEqual(
+    designs[0].firstStepCreatedAt,
+    testDate,
+    "has firstStepStartedAt"
+  );
+  t.deepEqual(designs[0].lastStepDueAt, testDate, "has lastStepDueAt");
   t.deepEqual(designs[0].approvalSteps!.length, 4);
   t.deepEqual(designs[0].approvalSteps![1].state, "COMPLETED");
   t.deepEqual(designs[0].approvalSteps![2].state, "BLOCKED");

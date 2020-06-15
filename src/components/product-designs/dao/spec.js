@@ -98,6 +98,8 @@ test("ProductDesignsDAO.create creates a design", async (t) => {
       collections: [],
       approvalSteps: null,
       progress: null,
+      firstStepCreatedAt: null,
+      lastStepDueAt: null,
     },
     "adds the collections and default/nullable values"
   );

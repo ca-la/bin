@@ -40,7 +40,9 @@ export default async function findAndDuplicateTemplateDesign(
         "imageIds",
         "imageLinks",
         "approvalSteps",
-        "progress"
+        "progress",
+        "firstStepCreatedAt",
+        "lastStepDueAt"
       ),
       { userId: newCreatorId }
     ),
