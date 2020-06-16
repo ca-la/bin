@@ -12,7 +12,6 @@ import {
   create as createCostInput,
   expireCostInputs,
 } from "../../../pricing-cost-inputs/dao";
-import { immediatelySendFullyCostedCollection } from "../../../../services/create-notifications";
 import { getDesignsMetaByCollection } from "../determine-submission-status";
 import { BasePricingCostInput } from "../../../pricing-cost-inputs/domain-object";
 /**
@@ -60,8 +59,6 @@ export async function commitCostInputs(
       }
     }
   );
-
-  await immediatelySendFullyCostedCollection(collectionId, actorId);
 }
 
 /**

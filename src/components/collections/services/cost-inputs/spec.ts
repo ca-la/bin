@@ -6,7 +6,6 @@ import DesignsDAO from "../../../product-designs/dao";
 import * as DetermineSubmissionStatus from "../determine-submission-status";
 import * as CostInputsDAO from "../../../pricing-cost-inputs/dao";
 import DesignEventsDAO from "../../../design-events/dao";
-import * as NotificationsService from "../../../../services/create-notifications";
 import { commitCostInputs, recostInputs } from ".";
 import { generateDesign } from "../../../../test-helpers/factories/product-design";
 import db from "../../../../services/db";
@@ -31,9 +30,6 @@ test("commitCostInputs commits cost inputs", async (t: Test) => {
     .stub(CostInputsDAO, "expireCostInputs")
     .resolves();
   const createEventStub = sandbox().stub(DesignEventsDAO, "create").resolves();
-  const notificationStub = sandbox()
-    .stub(NotificationsService, "immediatelySendFullyCostedCollection")
-    .resolves();
 
   const testDate = new Date("2019-04-20");
   const futureDate = new Date("2019-05-04");
@@ -74,7 +70,6 @@ test("commitCostInputs commits cost inputs", async (t: Test) => {
     "Costing is associated with the right step"
   );
   t.equal(createEventStub.callCount, 3);
-  t.equal(notificationStub.callCount, 1);
 
   clock.reset();
 });
