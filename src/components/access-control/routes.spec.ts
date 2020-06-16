@@ -245,3 +245,48 @@ test(`GET ${API_PATH}/approval-steps checks access`, async (t: tape.Test) => {
   );
   t.equal(responseThree.status, 200);
 });
+
+test(`GET ${API_PATH}/collections checks access`, async (t: tape.Test) => {
+  const userOne = await createUser();
+  const userTwo = await createUser();
+
+  const designOne = await createDesign({
+    productType: "test",
+    title: "design",
+    userId: userOne.user.id,
+  });
+
+  const { collection: collectionOne } = await generateCollection({
+    createdBy: userOne.user.id,
+  });
+  await addDesign(collectionOne.id, designOne.id);
+
+  const [responseOne] = await API.get(
+    `${API_PATH}/collections/${collectionOne.id}`,
+    {
+      headers: API.authHeader(userOne.session.id),
+    }
+  );
+  t.equal(responseOne.status, 200);
+
+  const [responseTwo] = await API.get(
+    `${API_PATH}/collections/${collectionOne.id}`,
+    {
+      headers: API.authHeader(userTwo.session.id),
+    }
+  );
+  t.equal(responseTwo.status, 403);
+
+  await generateCollaborator({
+    collectionId: collectionOne.id,
+    userId: userTwo.user.id,
+    role: "VIEW",
+  });
+  const [responseThree] = await API.get(
+    `${API_PATH}/collections/${collectionOne.id}`,
+    {
+      headers: API.authHeader(userTwo.session.id),
+    }
+  );
+  t.equal(responseThree.status, 200);
+});

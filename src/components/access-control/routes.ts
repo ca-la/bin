@@ -4,6 +4,7 @@ import { canAccessAnnotationInParams } from "../../middleware/can-access-annotat
 import { canAccessTaskInParams } from "../../middleware/can-access-task";
 import { canAccessDesignInParam } from "../../middleware/can-access-design";
 import { canAccessApprovalStepInParam } from "../../middleware/can-access-approval-step";
+import { canAccessCollectionInParam } from "../../middleware/can-access-collection";
 
 const router = new Router();
 
@@ -65,6 +66,13 @@ function* getDesignAccess(
   this.body = this.state.permissions;
 }
 
+function* getCollectionAccess(
+  this: AuthedContext<{}, PermissionsKoaState>
+): Iterator<any, any, any> {
+  this.status = 200;
+  this.body = this.state.permissions;
+}
+
 router.get("/notifications", requireAuth, getNotificationAccess);
 router.get(
   "/annotations/:annotationId",
@@ -83,6 +91,12 @@ router.get(
   requireAuth,
   canAccessDesignInParam,
   getDesignAccess
+);
+router.get(
+  "/collections/:collectionId",
+  requireAuth,
+  canAccessCollectionInParam,
+  getCollectionAccess
 );
 
 router.get(
