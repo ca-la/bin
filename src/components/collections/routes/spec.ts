@@ -6,7 +6,6 @@ import Knex from "knex";
 import * as CollectionsDAO from "../dao";
 import * as CollaboratorsDAO from "../../collaborators/dao";
 import * as BidsDAO from "../../bids/dao";
-import * as PricingCostInputsDAO from "../../pricing-cost-inputs/dao";
 import createUser from "../../../test-helpers/create-user";
 import ProductDesignsDAO from "../../product-designs/dao";
 import DesignEventsDAO from "../../design-events/dao";
@@ -27,8 +26,8 @@ import generateApprovalStep from "../../../test-helpers/factories/design-approva
 import createDesign from "../../../services/create-design";
 import DesignEvent, { DesignEventTypes } from "../../design-events/types";
 import { taskTypes } from "../../tasks/templates/task-types";
-import generatePricingValues from "../../../test-helpers/factories/pricing-values";
 import { generateDesign } from "../../../test-helpers/factories/product-design";
+import { checkout } from "../../../test-helpers/checkout-collection";
 
 test("GET /collections/:id returns a created collection", async (t: tape.Test) => {
   const { session, user } = await createUser();
@@ -710,82 +709,18 @@ test("POST /collections/:collectionId/cost-inputs", async (t: tape.Test) => {
 });
 
 test("POST /collections/:collectionId/partner-pairings", async (t: tape.Test) => {
-  await generatePricingValues();
-  const designer = await createUser();
-  const admin = await createUser({ role: "ADMIN" });
-  const partner = await createUser({ role: "PARTNER" });
-
   const createDesignTasksStub = sandbox().stub(DesignTasksService, "default");
   const createNotificationsStub = sandbox()
     .stub(CreateNotifications, "immediatelySendPartnerPairingCommitted")
     .resolves();
 
-  const collectionOne = await CollectionsDAO.create({
-    createdAt: new Date(),
-    createdBy: designer.user.id,
-    deletedAt: null,
-    description: null,
-    id: uuid.v4(),
-    title: "Yohji Yamamoto SS19",
-  });
-  const designOne = await createDesign({
-    description: "Oversize Placket Shirt",
-    productType: "SHIRT",
-    title: "Cozy Shirt",
-    userId: designer.user.id,
-  });
-  const designTwo = await createDesign({
-    description: "Gabardine Wool Pant",
-    productType: "PANT",
-    title: "Balloon Pants",
-    userId: designer.user.id,
-  });
-  await moveDesign(collectionOne.id, designOne.id);
-  await moveDesign(collectionOne.id, designTwo.id);
-  await db.transaction(async (trx: Knex.Transaction) => {
-    await PricingCostInputsDAO.create(trx, {
-      createdAt: new Date(),
-      deletedAt: null,
-      designId: designOne.id,
-      expiresAt: null,
-      id: uuid.v4(),
-      materialBudgetCents: 1200,
-      materialCategory: "BASIC",
-      processes: [],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
-    });
-    await PricingCostInputsDAO.create(trx, {
-      createdAt: new Date(),
-      deletedAt: null,
-      designId: designTwo.id,
-      expiresAt: null,
-      id: uuid.v4(),
-      materialBudgetCents: 1200,
-      materialCategory: "BASIC",
-      processes: [],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
-    });
-  });
-  const [, designOneQuotes] = await API.post("/pricing-quotes", {
-    body: [
-      {
-        designId: designOne.id,
-        units: 300,
-      },
-    ],
-    headers: API.authHeader(designer.session.id),
-  });
-  const [, designTwoQuotes] = await API.post("/pricing-quotes", {
-    body: [
-      {
-        designId: designTwo.id,
-        units: 300,
-      },
-    ],
-    headers: API.authHeader(designer.session.id),
-  });
+  const partner = await createUser({ role: "PARTNER" });
+  const {
+    user: { admin, designer },
+    collection,
+    quotes,
+    collectionDesigns,
+  } = await checkout();
   const bidOne = await BidsDAO.create({
     acceptedAt: null,
     bidPriceCents: 20000,
@@ -795,7 +730,7 @@ test("POST /collections/:collectionId/partner-pairings", async (t: tape.Test) =>
     description: "Do me a favor, please.",
     dueDate: new Date(),
     id: uuid.v4(),
-    quoteId: designOneQuotes[0].id,
+    quoteId: quotes[0].id,
     taskTypeIds: [taskTypes.TECHNICAL_DESIGN.id, taskTypes.PRODUCTION.id],
   });
   const bidTwo = await BidsDAO.create({
@@ -807,7 +742,7 @@ test("POST /collections/:collectionId/partner-pairings", async (t: tape.Test) =>
     description: "Do me a favor, please.",
     dueDate: new Date(),
     id: uuid.v4(),
-    quoteId: designTwoQuotes[0].id,
+    quoteId: quotes[0].id,
     taskTypeIds: [taskTypes.TECHNICAL_DESIGN.id, taskTypes.PRODUCTION.id],
   });
   await API.put(`/bids/${bidOne.id}/assignees/${partner.user.id}`, {
@@ -826,7 +761,7 @@ test("POST /collections/:collectionId/partner-pairings", async (t: tape.Test) =>
         bidId: bidOne.id,
         commentId: null,
         createdAt: new Date(),
-        designId: designOne.id,
+        designId: collectionDesigns[0].id,
         id: uuid.v4(),
         quoteId: null,
         targetId: null,
@@ -840,7 +775,7 @@ test("POST /collections/:collectionId/partner-pairings", async (t: tape.Test) =>
         bidId: bidTwo.id,
         commentId: null,
         createdAt: new Date(),
-        designId: designTwo.id,
+        designId: collectionDesigns[1].id,
         id: uuid.v4(),
         quoteId: null,
         targetId: null,
@@ -851,20 +786,20 @@ test("POST /collections/:collectionId/partner-pairings", async (t: tape.Test) =>
   );
 
   const failedPartnerPairing = await API.post(
-    `/collections/${collectionOne.id}/partner-pairings`,
+    `/collections/${collection.id}/partner-pairings`,
     { headers: API.authHeader(designer.session.id) }
   );
   t.equal(failedPartnerPairing[0].status, 403);
 
   t.is(
     createDesignTasksStub.callCount,
-    2,
+    4,
     "Initial design task creation count"
   );
   createDesignTasksStub.resetHistory();
 
   const partnerPairing = await API.post(
-    `/collections/${collectionOne.id}/partner-pairings`,
+    `/collections/${collection.id}/partner-pairings`,
     { headers: API.authHeader(admin.session.id) }
   );
   t.equal(partnerPairing[0].status, 204, "Partner pairing should give 204");
@@ -878,8 +813,8 @@ test("POST /collections/:collectionId/partner-pairings", async (t: tape.Test) =>
     designOneEvents,
     designTwoEvents,
   ] = await db.transaction(async (trx: Knex.Transaction) => [
-    await DesignEventsDAO.find(trx, { designId: designOne.id }),
-    await DesignEventsDAO.find(trx, { designId: designTwo.id }),
+    await DesignEventsDAO.find(trx, { designId: collectionDesigns[0].id }),
+    await DesignEventsDAO.find(trx, { designId: collectionDesigns[0].id }),
   ]);
 
   t.ok(

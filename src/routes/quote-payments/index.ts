@@ -55,6 +55,27 @@ const isPayWithMethodRequest = (data: any): data is PayWithMethodRequest => {
   );
 };
 
+async function handleQuotePayment(
+  userId: string,
+  collectionId: string
+): Promise<void> {
+  // TODO: move slack effect here
+  //       can we just use the invoice to send the notification instead of
+  //       having to send it from within the payment flow?
+  // TODO: add realtime message for updating collection status
+  await transitionCheckoutState(collectionId);
+  await createUPCsForCollection(collectionId);
+  await createShopifyProductsForCollection(
+    userId,
+    collectionId
+  ).catch((err: Error): void =>
+    logServerError(
+      `Create Shopify Products for user ${userId} - Collection ${collectionId}: `,
+      err
+    )
+  );
+}
+
 function* payQuote(
   this: AuthedContext<PayRequest | PayWithMethodRequest, CollectionsKoaState>
 ): Iterator<any, any, any> {
@@ -95,18 +116,7 @@ function* payQuote(
     this.throw("Request must match type");
   }
 
-  yield transitionCheckoutState(collection.id);
-  yield createUPCsForCollection(collection.id);
-
-  createShopifyProductsForCollection(
-    userId,
-    collection.id
-  ).catch((err: Error): void =>
-    logServerError(
-      `Create Shopify Products for user ${userId} - Collection ${collection.id}: `,
-      err
-    )
-  );
+  yield handleQuotePayment(userId, collection.id);
 
   this.status = 201;
 }

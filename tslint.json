@@ -30,9 +30,7 @@
       true,
       "parameter",
       "arrow-parameter",
-      "property-declaration",
-      "call-signature",
-      "arrow-call-signature"
+      "property-declaration"
     ],
     "object-shorthand-properties-first": [false],
     "no-empty-interface": [false],

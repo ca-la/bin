@@ -1,10 +1,6 @@
 import uuid from "node-uuid";
-import sinon from "sinon";
 import { omit } from "lodash";
-import Knex from "knex";
 
-import DesignEventsDAO from "../../components/design-events/dao";
-import * as PricingCostInputsDAO from "../../components/pricing-cost-inputs/dao";
 import { BidCreationPayload } from "../../components/bids/domain-object";
 import createUser from "../../test-helpers/create-user";
 import generatePricingValues from "../../test-helpers/factories/pricing-values";
@@ -12,314 +8,48 @@ import { authHeader, get, post, put } from "../../test-helpers/http";
 import { create as createDesign } from "../../components/product-designs/dao";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import db from "../../services/db";
-import generateCollection from "../../test-helpers/factories/collection";
-import * as SlackService from "../../services/slack";
 import PricingCostInput, {
   PricingCostInputWithoutVersions,
 } from "../../components/pricing-cost-inputs/domain-object";
 import { daysToMs } from "../../services/time-conversion";
 import generateProductTypes from "../../services/generate-product-types";
 import { Dollars } from "../../services/dollars";
-import { moveDesign } from "../../test-helpers/collections";
-
-test("/pricing-quotes POST -> GET quote fails with malformed inputs", async (t: Test) => {
-  const { user, session } = await createUser();
-  const design = await createDesign({
-    productType: "A product type",
-    title: "A design",
-    userId: user.id,
-  });
-  await generatePricingValues();
-  await db.transaction(async (trx: Knex.Transaction) => {
-    await PricingCostInputsDAO.create(trx, {
-      createdAt: new Date(),
-      deletedAt: null,
-      designId: design.id,
-      expiresAt: null,
-      id: uuid.v4(),
-      materialBudgetCents: 1200,
-      materialCategory: "BASIC",
-      processes: [
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-      ],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
-    });
-  });
-  await db("pricing_constants").del();
-
-  const [failedResponse] = await post("/pricing-quotes", {
-    body: [
-      {
-        designId: design.id,
-        units: 300,
-      },
-    ],
-    headers: authHeader(session.id),
-  });
-
-  t.equal(failedResponse.status, 500, "fails to create the quote");
-});
-
-test("/pricing-quotes POST -> GET quote from original version", async (t: Test) => {
-  const { user, session } = await createUser();
-  const design = await createDesign({
-    productType: "A product type",
-    title: "A design",
-    userId: user.id,
-  });
-
-  await generatePricingValues();
-  await db.transaction(async (trx: Knex.Transaction) => {
-    await PricingCostInputsDAO.create(trx, {
-      createdAt: new Date(),
-      deletedAt: null,
-      designId: design.id,
-      expiresAt: null,
-      id: uuid.v4(),
-      materialBudgetCents: 1200,
-      materialCategory: "BASIC",
-      processes: [
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-      ],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
-    });
-  });
-  const [postResponse, createdQuotes] = await post("/pricing-quotes", {
-    body: [
-      {
-        designId: design.id,
-        units: 300,
-      },
-    ],
-    headers: authHeader(session.id),
-  });
-
-  t.equal(postResponse.status, 201, "successfully creates the quote");
-
-  const pricingProductTypeTee = generateProductTypes({
-    contrast: [0.15, 0.5, 1, 0],
-    typeMediumCents: Dollars(30),
-    typeMediumDays: 10,
-    typeName: "TEESHIRT",
-    typeYield: 1.5,
-    version: 1,
-  });
-  await db.insert(pricingProductTypeTee).into("pricing_product_types");
-
-  const [getResponse, retrievedQuote] = await get(
-    `/pricing-quotes/${createdQuotes[0].id}`
-  );
-
-  t.equal(getResponse.status, 200, "successfully retrieves saved quote");
-  t.deepEquals(
-    createdQuotes[0],
-    retrievedQuote,
-    "retrieved quote is identical to saved quote"
-  );
-});
-
-test("POST /pricing-quotes creates commit event", async (t: Test) => {
-  const { user, session } = await createUser();
-  await generatePricingValues();
-
-  const { collection } = await generateCollection({ createdBy: user.id });
-  const design = await createDesign({
-    productType: "A product type",
-    title: "A design",
-    userId: user.id,
-  });
-  await moveDesign(collection.id, design.id);
-
-  await db.transaction(async (trx: Knex.Transaction) => {
-    await PricingCostInputsDAO.create(trx, {
-      createdAt: new Date(),
-      deletedAt: null,
-      designId: design.id,
-      expiresAt: null,
-      id: uuid.v4(),
-      materialBudgetCents: 1200,
-      materialCategory: "BASIC",
-      processes: [
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-      ],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
-    });
-  });
-
-  const slackStub = sandbox().stub(SlackService, "enqueueSend").resolves();
-
-  await post("/pricing-quotes", {
-    body: [
-      {
-        designId: design.id,
-        units: 300,
-      },
-    ],
-    headers: authHeader(session.id),
-  });
-
-  const events = await db.transaction((trx: Knex.Transaction) =>
-    DesignEventsDAO.find(trx, { designId: design.id })
-  );
-  t.equal(events.length, 1);
-  t.equal(events[0].type, "COMMIT_QUOTE");
-
-  // Sends a slack notification
-  sinon.assert.callCount(slackStub, 1);
-});
+import { checkout } from "../../test-helpers/checkout-collection";
 
 test("/pricing-quotes?designId retrieves the set of quotes for a design", async (t: Test) => {
-  const { user, session } = await createUser({ role: "ADMIN" });
+  const {
+    collectionDesigns: [design],
+    quotes,
+    user: { admin },
+  } = await checkout();
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
-
-  const design = await createDesign({
-    productType: "A product type",
-    title: "A design",
-    userId: user.id,
-  });
-  const otherDesign = await createDesign({
-    productType: "A different product type",
-    title: "A different design",
-    userId: user.id,
-  });
-  await generatePricingValues();
-  await db.transaction(async (trx: Knex.Transaction) => {
-    await PricingCostInputsDAO.create(trx, {
-      createdAt: yesterday,
-      deletedAt: null,
-      designId: design.id,
-      expiresAt: null,
-      id: uuid.v4(),
-      materialBudgetCents: 1200,
-      materialCategory: "BASIC",
-      processes: [
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-      ],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
-    });
-    await PricingCostInputsDAO.create(trx, {
-      createdAt: new Date(),
-      deletedAt: null,
-      designId: otherDesign.id,
-      expiresAt: null,
-      id: uuid.v4(),
-      materialBudgetCents: 1200,
-      materialCategory: "BASIC",
-      processes: [
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-      ],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
-    });
-  });
-
-  const [, created] = await post("/pricing-quotes", {
-    body: [
-      {
-        designId: design.id,
-        units: 300,
-      },
-    ],
-    headers: authHeader(session.id),
-  });
-
-  await post("/pricing-quotes", {
-    body: [
-      {
-        designId: otherDesign.id,
-        units: 300,
-      },
-    ],
-    headers: authHeader(session.id),
-  });
 
   const [getResponse, designQuotes] = await get(
     `/pricing-quotes?designId=${design.id}`,
     {
-      headers: authHeader(session.id),
+      headers: authHeader(admin.session.id),
     }
   );
 
   t.equal(getResponse.status, 200);
   t.deepEquals(
     designQuotes,
-    [created[0]],
+    [JSON.parse(JSON.stringify(quotes[0]))],
     "Retrieves only the quote associated with this design"
   );
 });
 
 test("GET /pricing-quotes?designId&units returns unsaved quote", async (t: Test) => {
-  await generatePricingValues();
-  const { user, session } = await createUser();
-  const design = await createDesign({
-    productType: "A product type",
-    title: "A design",
-    userId: user.id,
-  });
-  await db.transaction(async (trx: Knex.Transaction) => {
-    await PricingCostInputsDAO.create(trx, {
-      createdAt: new Date(),
-      deletedAt: null,
-      designId: design.id,
-      expiresAt: null,
-      id: uuid.v4(),
-      materialBudgetCents: 1200,
-      materialCategory: "BASIC",
-      processes: [
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-      ],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
-    });
-  });
+  const {
+    user: { designer },
+    collectionDesigns: [design],
+  } = await checkout();
 
   const [response, unsavedQuote] = await get(
     `/pricing-quotes?designId=${design.id}&units=100`,
     {
-      headers: authHeader(session.id),
+      headers: authHeader(designer.session.id),
     }
   );
 
@@ -334,41 +64,15 @@ test("GET /pricing-quotes?designId&units returns unsaved quote", async (t: Test)
 });
 
 test("GET /pricing-quotes?designId&units with very large quantity", async (t: Test) => {
-  await generatePricingValues();
-  const { user, session } = await createUser();
-  const design = await createDesign({
-    productType: "A product type",
-    title: "A design",
-    userId: user.id,
-  });
-  await db.transaction(async (trx: Knex.Transaction) => {
-    await PricingCostInputsDAO.create(trx, {
-      createdAt: new Date(),
-      deletedAt: null,
-      designId: design.id,
-      expiresAt: null,
-      id: uuid.v4(),
-      materialBudgetCents: 1200,
-      materialCategory: "BASIC",
-      processes: [
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-      ],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
-    });
-  });
+  const {
+    user: { designer },
+    collectionDesigns: [design],
+  } = await checkout();
 
   const [response, unsavedQuote] = await get(
     `/pricing-quotes?designId=${design.id}&units=100000`,
     {
-      headers: authHeader(session.id),
+      headers: authHeader(designer.session.id),
     }
   );
 
@@ -567,59 +271,21 @@ test("POST /pricing-quotes/preview requires units and a cost input", async (t: T
 test("PUT /pricing-quotes/:quoteId/bid/:bidId creates bid", async (t: Test) => {
   const now = new Date(2012, 11, 22);
   sandbox().useFakeTimers(now);
-  await generatePricingValues();
-  const { user, session } = await createUser({ role: "ADMIN" });
-  const design = await createDesign({
-    productType: "A product type",
-    title: "A design",
-    userId: user.id,
-  });
-  await db.transaction(async (trx: Knex.Transaction) => {
-    await PricingCostInputsDAO.create(trx, {
-      createdAt: new Date(),
-      deletedAt: null,
-      designId: design.id,
-      expiresAt: null,
-      id: uuid.v4(),
-      materialBudgetCents: 1200,
-      materialCategory: "BASIC",
-      processes: [
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-      ],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
-    });
-  });
-
-  const [, createdQuotes] = await post("/pricing-quotes", {
-    body: [
-      {
-        designId: design.id,
-        units: 200,
-      },
-    ],
-    headers: authHeader(session.id),
-  });
+  const {
+    quotes: [quote],
+    user: { admin },
+  } = await checkout();
 
   const inputBid: BidCreationPayload = {
     acceptedAt: null,
     bidPriceCents: 100000,
     bidPriceProductionOnlyCents: 0,
-    createdBy: user.id,
+    createdBy: admin.user.id,
     completedAt: null,
     description: "Full Service",
-    dueDate: new Date(
-      new Date(createdQuotes[0].createdAt).getTime() + daysToMs(10)
-    ),
+    dueDate: new Date(new Date(quote.createdAt).getTime() + daysToMs(10)),
     id: uuid.v4(),
-    quoteId: createdQuotes[0].id,
+    quoteId: quote.id,
     taskTypeIds: [],
   };
 
@@ -627,7 +293,7 @@ test("PUT /pricing-quotes/:quoteId/bid/:bidId creates bid", async (t: Test) => {
     `/pricing-quotes/${inputBid.quoteId}/bids/${inputBid.id}`,
     {
       body: { ...inputBid, taskTypeIds: [] },
-      headers: authHeader(session.id),
+      headers: authHeader(admin.session.id),
     }
   );
 
@@ -640,56 +306,20 @@ test("PUT /pricing-quotes/:quoteId/bid/:bidId creates bid", async (t: Test) => {
 });
 
 test("POST /pricing-quotes/:quoteId/bids creates bid", async (t: Test) => {
-  await generatePricingValues();
-  const { user, session } = await createUser({ role: "ADMIN" });
-  const design = await createDesign({
-    productType: "A product type",
-    title: "A design",
-    userId: user.id,
-  });
-  await db.transaction(async (trx: Knex.Transaction) => {
-    await PricingCostInputsDAO.create(trx, {
-      createdAt: new Date(),
-      deletedAt: null,
-      designId: design.id,
-      expiresAt: null,
-      id: uuid.v4(),
-      materialBudgetCents: 1200,
-      materialCategory: "BASIC",
-      processes: [
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-      ],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
-    });
-  });
-
-  const [, createdQuotes] = await post("/pricing-quotes", {
-    body: [
-      {
-        designId: design.id,
-        units: 200,
-      },
-    ],
-    headers: authHeader(session.id),
-  });
+  const {
+    user: { admin },
+    quotes: [quote],
+  } = await checkout();
 
   const inputBid: Unsaved<BidCreationPayload> = {
     acceptedAt: null,
     bidPriceCents: 100000,
     bidPriceProductionOnlyCents: 0,
-    createdBy: user.id,
+    createdBy: admin.user.id,
     completedAt: null,
     description: "Full Service",
     dueDate: new Date(new Date(2012, 11, 22).getTime() + daysToMs(10)),
-    quoteId: createdQuotes[0].id,
+    quoteId: quote.id,
     taskTypeIds: [],
   };
 
@@ -697,7 +327,7 @@ test("POST /pricing-quotes/:quoteId/bids creates bid", async (t: Test) => {
     `/pricing-quotes/${inputBid.quoteId}/bids`,
     {
       body: { ...inputBid, createdAt: new Date(2012, 11, 22), taskTypeIds: [] },
-      headers: authHeader(session.id),
+      headers: authHeader(admin.session.id),
     }
   );
 
@@ -713,69 +343,31 @@ test("POST /pricing-quotes/:quoteId/bids creates bid", async (t: Test) => {
 test("GET /pricing-quotes/:quoteId/bids returns list of bids for quote", async (t: Test) => {
   const now = new Date(2012, 11, 22);
   sandbox().useFakeTimers(now);
-  await generatePricingValues();
-  const { user, session } = await createUser({ role: "ADMIN" });
-  const design = await createDesign({
-    productType: "A product type",
-    title: "A design",
-    userId: user.id,
-  });
-  await db.transaction(async (trx: Knex.Transaction) => {
-    await PricingCostInputsDAO.create(trx, {
-      createdAt: new Date(),
-      deletedAt: null,
-      designId: design.id,
-      expiresAt: null,
-      id: uuid.v4(),
-      materialBudgetCents: 1200,
-      materialCategory: "BASIC",
-      processes: [
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-      ],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
-    });
-  });
-
-  const [, createdQuotes] = await post("/pricing-quotes", {
-    body: [
-      {
-        designId: design.id,
-        units: 200,
-      },
-    ],
-    headers: authHeader(session.id),
-  });
+  const {
+    user: { admin },
+    quotes: [quote],
+  } = await checkout();
 
   const inputBid: Unsaved<BidCreationPayload> = {
     acceptedAt: null,
     bidPriceCents: 100000,
     bidPriceProductionOnlyCents: 0,
-    createdBy: user.id,
+    createdBy: admin.user.id,
     completedAt: null,
     description: "Full Service",
-    dueDate: new Date(
-      new Date(createdQuotes[0].createdAt).getTime() + daysToMs(10)
-    ),
-    quoteId: createdQuotes[0].id,
+    dueDate: new Date(new Date(quote.createdAt).getTime() + daysToMs(10)),
+    quoteId: quote.id,
     taskTypeIds: [],
   };
 
   await post(`/pricing-quotes/${inputBid.quoteId}/bids`, {
     body: inputBid,
-    headers: authHeader(session.id),
+    headers: authHeader(admin.session.id),
   });
 
   const [response, bids] = await get(
     `/pricing-quotes/${inputBid.quoteId}/bids`,
-    { headers: authHeader(session.id) }
+    { headers: authHeader(admin.session.id) }
   );
 
   t.equal(response.status, 200);
@@ -793,27 +385,27 @@ test("GET /pricing-quotes/:quoteId/bids returns list of bids for quote", async (
     bidPriceCents: 100000,
     bidPriceProductionOnlyCents: 0,
     createdAt: now,
-    createdBy: user.id,
+    createdBy: admin.user.id,
     completedAt: null,
     description: "Full Service",
     dueDate: new Date(
-      new Date(createdQuotes[0].createdAt).getTime() + daysToMs(10)
-    ),
+      new Date(quote.createdAt).getTime() + daysToMs(10)
+    ).toISOString(),
     id: uuid.v4(),
-    quoteId: createdQuotes[0].id,
+    quoteId: quote.id,
     taskTypeIds: [],
     XXXXXTRA: "Boom!",
   };
 
   await post(`/pricing-quotes/${inputBid.quoteId}/bids`, {
     body: hasExtras,
-    headers: authHeader(session.id),
+    headers: authHeader(admin.session.id),
   });
 
   const [withExtrasResponse, withExtrasBids] = await get(
     `/pricing-quotes/${inputBid.quoteId}/bids`,
     {
-      headers: authHeader(session.id),
+      headers: authHeader(admin.session.id),
     }
   );
 

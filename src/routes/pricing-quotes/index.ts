@@ -1,23 +1,17 @@
-import Knex from "knex";
 import { omit, sum } from "lodash";
 import Router from "koa-router";
 import uuid from "node-uuid";
 
 import requireAuth = require("../../middleware/require-auth");
-import * as CollectionsDAO from "../../components/collections/dao";
 import * as PricingCostInputsDAO from "../../components/pricing-cost-inputs/dao";
-import * as SlackService from "../../services/slack";
-import * as UsersDAO from "../../components/users/dao";
 import addMargin from "../../services/add-margin";
 import { BidCreationPayload } from "../../components/bids/domain-object";
 import filterError = require("../../services/filter-error");
 import InvalidDataError from "../../errors/invalid-data";
 import requireAdmin = require("../../middleware/require-admin");
-import DesignEventsDAO from "../../components/design-events/dao";
 import { FINANCING_MARGIN } from "../../config";
 import { findByDesignId, findById } from "../../dao/pricing-quotes";
 import { hasProperties } from "../../services/require-properties";
-import { isCreateRequest } from "../../services/payment";
 import {
   create as createBid,
   findByQuoteId as findBidsByQuoteId,
@@ -31,13 +25,12 @@ import {
   PricingQuoteRequest,
   PricingQuoteRequestWithVersions,
 } from "../../domain-objects/pricing-quote";
-import generatePricingQuote, {
+import {
   generateUnsavedQuote,
   generateUnsavedQuoteWithoutVersions,
   UnsavedQuote,
 } from "../../services/generate-pricing-quote";
 import addTimeBuffer from "../../services/add-time-buffer";
-import db from "../../services/db";
 
 const router = new Router();
 
@@ -75,82 +68,6 @@ function calculateAmounts(
   ]);
   const timeTotalMs = addTimeBuffer(timeTotalMsWithoutBuffer);
   return { payNowTotalCents, payLaterTotalCents, timeTotalMs };
-}
-
-function* createQuote(this: AuthedContext): Iterator<any, any, any> {
-  const { body } = this.request;
-
-  if (!body || !isCreateRequest(body)) {
-    this.throw(400, "Invalid request");
-  }
-
-  const quotes: PricingQuote[] = [];
-
-  for (const payload of body) {
-    const { designId, units } = payload;
-
-    const unitsNumber = Number(units);
-    const costInputs: PricingCostInput[] = yield PricingCostInputsDAO.findByDesignId(
-      {
-        designId,
-      }
-    );
-
-    if (costInputs.length === 0) {
-      this.throw(404, "No costing inputs associated with design ID");
-    }
-
-    const quoteRequest: PricingQuoteRequestWithVersions = {
-      ...omit(costInputs[0], ["id", "createdAt", "deletedAt", "expiresAt"]),
-      units: unitsNumber,
-    };
-
-    const quote = yield generatePricingQuote(quoteRequest).catch(
-      filterError(InvalidDataError, (err: InvalidDataError) =>
-        this.throw(500, err)
-      )
-    );
-
-    quotes.push(quote);
-
-    yield db.transaction(async (trx: Knex.Transaction) => {
-      await DesignEventsDAO.create(trx, {
-        actorId: this.state.userId,
-        approvalSubmissionId: null,
-        bidId: null,
-        commentId: null,
-        createdAt: new Date(),
-        designId,
-        id: uuid.v4(),
-        quoteId: quote.id,
-        targetId: null,
-        approvalStepId: null,
-        taskTypeId: null,
-        type: "COMMIT_QUOTE",
-      });
-    });
-  }
-
-  const collections = yield CollectionsDAO.findByDesign(body[0].designId);
-  const user = yield UsersDAO.findById(this.state.userId);
-  const payLaterTotalCents = quotes.reduce(
-    (acc: number, quote: PricingQuote): number => {
-      return acc + calculateAmounts(quote).payLaterTotalCents;
-    },
-    0
-  );
-  SlackService.enqueueSend({
-    channel: "designers",
-    params: {
-      collection: collections[0],
-      designer: user,
-      payLaterTotalCents,
-    },
-    templateName: "designer_pay_later",
-  });
-
-  this.body = quotes;
-  this.status = 201;
 }
 
 function* getQuote(this: AuthedContext): Iterator<any, any, any> {
@@ -337,7 +254,6 @@ function* getBidsForQuote(this: AuthedContext): Iterator<any, any, any> {
   this.status = 200;
 }
 
-router.post("/", requireAuth, createQuote);
 router.get("/", requireAuth, getQuotes);
 router.get("/:quoteId", getQuote);
 

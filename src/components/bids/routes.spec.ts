@@ -8,10 +8,8 @@ import db from "../../services/db";
 import { authHeader, del, get, post, put } from "../../test-helpers/http";
 import createUser from "../../test-helpers/create-user";
 import generateBid from "../../test-helpers/factories/bid";
-import generatePricingValues from "../../test-helpers/factories/pricing-values";
 import * as BidsDAO from "./dao";
 import * as BidRejectionDAO from "../bid-rejections/dao";
-import * as PricingCostInputsDAO from "../pricing-cost-inputs/dao";
 import * as CollaboratorsDAO from "../collaborators/dao";
 import DesignEventsDAO from "../design-events/dao";
 import ProductDesignsDAO from "../product-designs/dao";
@@ -26,6 +24,7 @@ import EmailService from "../../services/email";
 import { deleteById } from "../../test-helpers/designs";
 import Knex from "knex";
 import { taskTypes } from "../tasks/templates/task-types";
+import { checkout } from "../../test-helpers/checkout-collection";
 test("GET /bids", async (t: Test) => {
   const admin = await createUser({ role: "ADMIN" });
   const partner = await createUser({ role: "PARTNER" });
@@ -570,40 +569,13 @@ test("DELETE /bids/:bidId/assignees/:userId", async (t: Test) => {
 });
 
 test("Partner pairing: accept", async (t: Test) => {
-  await generatePricingValues();
-  const admin = await createUser({ role: "ADMIN" });
-  const designer = await createUser();
+  const {
+    user: { admin },
+    collectionDesigns: [design],
+    quotes: [quote],
+  } = await checkout();
   const partner = await createUser({ role: "PARTNER" });
   const other = await createUser({ role: "USER" });
-  const design = await createDesign({
-    productType: "TEESHIRT",
-    title: "Plain White Tee",
-    userId: designer.user.id,
-  });
-  await db.transaction(async (trx: Knex.Transaction) => {
-    await PricingCostInputsDAO.create(trx, {
-      createdAt: new Date(),
-      deletedAt: null,
-      designId: design.id,
-      expiresAt: null,
-      id: uuid.v4(),
-      materialBudgetCents: 1200,
-      materialCategory: "BASIC",
-      processes: [],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
-    });
-  });
-
-  const quotesRequest = await post("/pricing-quotes", {
-    body: [
-      {
-        designId: design.id,
-        units: 300,
-      },
-    ],
-    headers: authHeader(admin.session.id),
-  });
   const createdAt = new Date();
   const dueDate = new Date(createdAt.getTime() + daysToMs(10));
   const bid = await BidsDAO.create({
@@ -615,7 +587,7 @@ test("Partner pairing: accept", async (t: Test) => {
     description: "Do me a favor, please.",
     dueDate,
     id: uuid.v4(),
-    quoteId: quotesRequest[1][0].id,
+    quoteId: quote.id,
     taskTypeIds: [taskTypes.TECHNICAL_DESIGN.id, taskTypes.PRODUCTION.id],
   });
   await put(`/bids/${bid.id}/assignees/${partner.user.id}`, {
@@ -677,11 +649,6 @@ test("Partner pairing: accept", async (t: Test) => {
       {
         actorId: admin.user.id,
         designId: design.id,
-        type: "COMMIT_QUOTE",
-      },
-      {
-        actorId: admin.user.id,
-        designId: design.id,
         type: "BID_DESIGN",
       },
       {
@@ -736,14 +703,11 @@ test("Partner pairing: accept", async (t: Test) => {
 });
 
 test("Partner pairing: accept on a deleted design", async (t: Test) => {
-  const admin = await createUser({ role: "ADMIN" });
-  const designer = await createUser({ withSession: false });
+  const {
+    user: { admin },
+    collectionDesigns: [design],
+  } = await checkout();
   const partner = await createUser({ role: "PARTNER" });
-  const design = await ProductDesignsDAO.create({
-    productType: "SOCKS",
-    title: "Off-White Socks",
-    userId: designer.user.id,
-  });
   const { bid } = await generateBid({
     designId: design.id,
     generatePricing: true,
@@ -764,38 +728,13 @@ test("Partner pairing: accept on a deleted design", async (t: Test) => {
 });
 
 test("Partner pairing: reject", async (t: Test) => {
-  await generatePricingValues();
-  const admin = await createUser({ role: "ADMIN" });
-  const designer = await createUser();
+  const {
+    user: { admin },
+    collectionDesigns: [design],
+    quotes: [quote],
+  } = await checkout();
+  const other = await createUser({ role: "PARTNER" });
   const partner = await createUser({ role: "PARTNER" });
-  const design = await ProductDesignsDAO.create({
-    productType: "TEESHIRT",
-    title: "Plain White Tee",
-    userId: designer.user.id,
-  });
-  await db.transaction(async (trx: Knex.Transaction) => {
-    await PricingCostInputsDAO.create(trx, {
-      createdAt: new Date(),
-      deletedAt: null,
-      designId: design.id,
-      expiresAt: null,
-      id: uuid.v4(),
-      materialBudgetCents: 1200,
-      materialCategory: "BASIC",
-      processes: [],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
-    });
-  });
-  const quotesRequest = await post("/pricing-quotes", {
-    body: [
-      {
-        designId: design.id,
-        units: 300,
-      },
-    ],
-    headers: authHeader(admin.session.id),
-  });
   const createdAt = new Date();
   const dueDate = new Date(createdAt.getTime() + daysToMs(10));
   const bid = await BidsDAO.create({
@@ -807,7 +746,7 @@ test("Partner pairing: reject", async (t: Test) => {
     description: "Do me a favor, please.",
     dueDate,
     id: uuid.v4(),
-    quoteId: quotesRequest[1][0].id,
+    quoteId: quote.id,
     taskTypeIds: [],
   });
   const bidRejection = {
@@ -832,7 +771,7 @@ test("Partner pairing: reject", async (t: Test) => {
   t.equal(missingBidResponse.status, 404, "Unknown bid returns 404");
 
   const [unauthorizedBidResponse] = await post(`/bids/${bid.id}/reject`, {
-    headers: authHeader(designer.session.id),
+    headers: authHeader(other.session.id),
   });
   t.equal(
     unauthorizedBidResponse.status,
@@ -858,11 +797,6 @@ test("Partner pairing: reject", async (t: Test) => {
       type: event.type,
     })),
     [
-      {
-        actorId: admin.user.id,
-        designId: design.id,
-        type: "COMMIT_QUOTE",
-      },
       {
         actorId: admin.user.id,
         designId: design.id,

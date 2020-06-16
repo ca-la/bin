@@ -701,7 +701,7 @@ test("POST /quote-payments still succeeds if creates shopify products fails", as
 
   const createShopifyProductsStub = sandbox()
     .stub(CreateShopifyProducts, "createShopifyProductsForCollection")
-    .resolves(new Error("Unexpect Error"));
+    .rejects(new Error("Unexpected Error"));
 
   const { user, session } = await createUser();
   await createStorefront({
