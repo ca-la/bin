@@ -8,7 +8,9 @@ import {
   immediatelySendOneWeekCostingExpirationNotification,
   immediatelySendTwoDayCostingExpirationNotification,
 } from "../create-notifications/costing-expirations";
+import * as IrisService from "../../components/iris/send-message";
 import { MetaCollection } from "../../components/collections/meta-domain-object";
+import { realtimeCollectionStatusUpdated } from "../../components/collections/realtime";
 
 /**
  * Notify the collection owners whose pricing just expired (and have not checked out).
@@ -44,6 +46,9 @@ export async function notifyExpired(trx: Knex.Transaction): Promise<number> {
       collectionId: collectionToNotify.id,
       recipientUserId: collectionToNotify.createdBy,
     });
+    await IrisService.sendMessage(
+      realtimeCollectionStatusUpdated(submissionStatuses[collectionToNotify.id])
+    );
   }
 
   return collectionsToNotify.length;

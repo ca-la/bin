@@ -11,6 +11,7 @@ import {
 import * as StatusService from "../../components/collections/services/determine-submission-status";
 import * as CollectionsDAO from "../../components/collections/dao";
 import * as NotificationService from "../create-notifications/costing-expirations";
+import * as IrisService from "../../components/iris/send-message";
 
 test("notifyExpired works on the base case", async (t: Test) => {
   const findAllStub = sandbox()
@@ -52,6 +53,7 @@ test("notifyExpired works on the +1 case", async (t: Test) => {
   const notifyStub = sandbox()
     .stub(NotificationService, "immediatelySendCostingExpiredNotification")
     .resolves();
+  const irisStub = sandbox().stub(IrisService, "sendMessage").resolves();
 
   await db.transaction(
     async (trx: Knex.Transaction): Promise<void> => {
@@ -69,6 +71,7 @@ test("notifyExpired works on the +1 case", async (t: Test) => {
         collectionId: "collection-one",
         recipientUserId: "user-one",
       });
+      t.equal(irisStub.callCount, 1);
     }
   );
 });
