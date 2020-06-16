@@ -28,6 +28,7 @@ import DesignEvent, { DesignEventTypes } from "../../design-events/types";
 import { taskTypes } from "../../tasks/templates/task-types";
 import { generateDesign } from "../../../test-helpers/factories/product-design";
 import { checkout } from "../../../test-helpers/checkout-collection";
+import * as IrisService from "../../iris/send-message";
 
 test("GET /collections/:id returns a created collection", async (t: tape.Test) => {
   const { session, user } = await createUser();
@@ -446,6 +447,7 @@ test("POST /collections/:id/submissions", async (t: tape.Test) => {
   const notificationStub = sandbox()
     .stub(CreateNotifications, "sendDesignerSubmitCollection")
     .resolves();
+  const irisStub = sandbox().stub(IrisService, "sendMessage").resolves();
 
   const serviceId = uuid.v4();
   const [response, body] = await API.post(
@@ -473,7 +475,10 @@ test("POST /collections/:id/submissions", async (t: tape.Test) => {
     await DesignEventsDAO.find(trx, { designId: designTwo.id }),
   ]);
 
-  sinon.assert.callCount(notificationStub, 1);
+  t.equals(notificationStub.callCount, 1, "Calls notification stub once");
+  t.equals(irisStub.args[0][0].resource.type, "SUBMIT_DESIGN");
+  t.equals(irisStub.args[1][0].resource.type, "SUBMIT_DESIGN");
+  t.equals(irisStub.args[2][0].type, "collection/status-updated");
 
   t.deepEqual(response.status, 201, "Successfully posts");
   t.deepEqual(

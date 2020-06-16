@@ -1,7 +1,8 @@
 import tape from "tape";
-import { test } from "../../test-helpers/fresh";
-import createUser = require("../../test-helpers/create-user");
+import { test, sandbox } from "../../test-helpers/fresh";
+import createUser from "../../test-helpers/create-user";
 import API from "../../test-helpers/http";
+import config from "../../config";
 import generateCollection from "../../test-helpers/factories/collection";
 import { addDesign } from "../../test-helpers/collections";
 import createDesign from "../../services/create-design";
@@ -38,7 +39,8 @@ test("requireSubscription middleware", async (t: tape.Test) => {
 
 test("admins can submit collections", async (t: tape.Test) => {
   const { user } = await createUser();
-  const { session } = await createUser({ role: "ADMIN" });
+  const ops = await createUser({ role: "ADMIN" });
+  sandbox().stub(config, "CALA_OPS_USER_ID").value(ops.user.id);
 
   const design = await createDesign({
     productType: "HOODIE",
@@ -55,7 +57,7 @@ test("admins can submit collections", async (t: tape.Test) => {
   const [validResponse] = await API.post(
     `/collections/${collection.id}/submissions`,
     {
-      headers: API.authHeader(session.id),
+      headers: API.authHeader(ops.session.id),
     }
   );
 

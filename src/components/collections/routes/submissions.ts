@@ -8,6 +8,20 @@ import { determineSubmissionStatus } from "../services/determine-submission-stat
 import db from "../../../services/db";
 import ApprovalStepsDAO from "../../approval-steps/dao";
 import ApprovalStep, { ApprovalStepType } from "../../approval-steps/types";
+import * as IrisService from "../../iris/send-message";
+import { CollectionSubmissionStatus } from "../types";
+import { realtimeCollectionStatusUpdated } from "../realtime";
+
+async function handleSubmit(
+  collectionId: string,
+  userId: string,
+  collectionStatus: CollectionSubmissionStatus
+): Promise<void> {
+  await CreateNotifications.sendDesignerSubmitCollection(collectionId, userId);
+  await IrisService.sendMessage(
+    realtimeCollectionStatusUpdated(collectionStatus)
+  );
+}
 
 export function* createSubmission(
   this: AuthedContext
@@ -45,12 +59,14 @@ export function* createSubmission(
       });
     }
   });
-  CreateNotifications.sendDesignerSubmitCollection(collectionId, userId);
   const submissionStatusByCollection = yield determineSubmissionStatus([
     collectionId,
   ]);
+  const collectionStatus = submissionStatusByCollection[collectionId];
+  yield handleSubmit(collectionId, userId, collectionStatus);
+
   this.status = 201;
-  this.body = submissionStatusByCollection[collectionId];
+  this.body = collectionStatus;
 }
 
 export function* getSubmissionStatus(
