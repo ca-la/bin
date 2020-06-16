@@ -11,7 +11,7 @@ import * as LineItemsDAO from "../../dao/line-items";
 import * as PricingCostInputsDAO from "../../components/pricing-cost-inputs/dao";
 import * as ApprovalStepsDAO from "../../components/approval-steps/dao";
 import * as ApprovalStepSubmissionsDAO from "../../components/approval-step-submissions/dao";
-import createUser = require("../../test-helpers/create-user");
+import createUser from "../../test-helpers/create-user";
 import EmailService = require("../../services/email");
 import generatePricingValues from "../../test-helpers/factories/pricing-values";
 import SlackService = require("../../services/slack");
@@ -26,6 +26,7 @@ import * as CreateShopifyProducts from "../../services/create-shopify-products";
 import Knex from "knex";
 import { ApprovalStepState } from "../../components/approval-steps/domain-object";
 import createDesign from "../../services/create-design";
+import * as IrisService from "../../components/iris/send-message";
 
 const ADDRESS_BLANK = {
   companyName: "CALA",
@@ -46,6 +47,7 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
     .resolves({ id: "sourceId", last4: "1234" });
   sandbox().stub(EmailService, "enqueueSend").resolves();
   sandbox().stub(SlackService, "enqueueSend").resolves();
+  const irisStub = sandbox().stub(IrisService, "sendMessage").resolves();
   const paymentMethodTokenId = uuid.v4();
 
   const collection = await CollectionsDAO.create({
@@ -163,6 +165,21 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
   t.equals(lineItems[0].designId, d1.id, "Line Item has correct design");
   t.equals(lineItems[1].designId, d2.id, "Line Item has correct design");
   t.assert(stripe.calledOnce, "Stripe was charged");
+  t.equals(
+    irisStub.args[0][0].resource.type,
+    "COMMIT_QUOTE",
+    "Realtime message emitted for design checkout"
+  );
+  t.equals(
+    irisStub.args[1][0].resource.type,
+    "COMMIT_QUOTE",
+    "Realtime message emitted for design checkout"
+  );
+  t.equals(
+    irisStub.args[2][0].type,
+    "collection/status-updated",
+    "Realtime message emitted for collection status"
+  );
 
   await db.transaction(async (trx: Knex.Transaction) => {
     const cutAndSewApprovalSteps = await ApprovalStepsDAO.findByDesign(

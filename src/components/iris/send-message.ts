@@ -7,13 +7,20 @@ import {
   AWS_IRIS_SQS_URL,
 } from "../../config";
 import { RealtimeDesignEventCreated } from "../design-events/realtime";
+import { RealtimeCollectionStatusUpdated } from "../collections/realtime";
 
-type AllRealtimeMessage = RealtimeMessage | RealtimeDesignEventCreated;
+type AllRealtimeMessage =
+  | RealtimeMessage
+  | RealtimeDesignEventCreated
+  | RealtimeCollectionStatusUpdated;
 
 function getResourceId(resource: AllRealtimeMessage): string {
   switch (resource.type) {
     case "design-nodes/update": {
       return resource.designId;
+    }
+    case "collection/status-updated": {
+      return resource.collectionId;
     }
     default: {
       return resource.resource.id;

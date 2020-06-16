@@ -16,3 +16,13 @@ export function isRealtimeCollectionStatusUpdated(
     data.type === "collection/status-updated"
   );
 }
+
+export function realtimeCollectionStatusUpdated(
+  submissionStatus: CollectionSubmissionStatus
+): RealtimeCollectionStatusUpdated {
+  return {
+    type: "collection/status-updated",
+    collectionId: submissionStatus.collectionId,
+    resource: submissionStatus,
+  };
+}

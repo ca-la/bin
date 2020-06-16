@@ -18,6 +18,9 @@ import { createShopifyProductsForCollection } from "../../services/create-shopif
 import { logServerError } from "../../services/logger";
 import { transitionCheckoutState } from "../../services/approval-step-state";
 import { createFromAddress } from "../../dao/invoice-addresses";
+import * as IrisService from "../../components/iris/send-message";
+import { determineSubmissionStatus } from "../../components/collections/services/determine-submission-status";
+import { realtimeCollectionStatusUpdated } from "../../components/collections/realtime";
 
 const router = new Router();
 
@@ -55,6 +58,20 @@ const isPayWithMethodRequest = (data: any): data is PayWithMethodRequest => {
   );
 };
 
+async function sendCollectionStatusUpdated(
+  collectionId: string
+): Promise<void> {
+  const statusByCollectionId = await determineSubmissionStatus([collectionId]);
+  const collectionStatus = statusByCollectionId[collectionId];
+  if (!collectionStatus) {
+    throw new Error(`Could not get the status for collection ${collectionId}`);
+  }
+
+  await IrisService.sendMessage(
+    realtimeCollectionStatusUpdated(collectionStatus)
+  );
+}
+
 async function handleQuotePayment(
   userId: string,
   collectionId: string
@@ -62,7 +79,6 @@ async function handleQuotePayment(
   // TODO: move slack effect here
   //       can we just use the invoice to send the notification instead of
   //       having to send it from within the payment flow?
-  // TODO: add realtime message for updating collection status
   await transitionCheckoutState(collectionId);
   await createUPCsForCollection(collectionId);
   await createShopifyProductsForCollection(
@@ -74,6 +90,7 @@ async function handleQuotePayment(
       err
     )
   );
+  await sendCollectionStatusUpdated(collectionId);
 }
 
 function* payQuote(
