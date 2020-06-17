@@ -10,6 +10,7 @@
     "allowJs": false,
     "outDir": "../../published-types-dist",
     "declaration": true,
+    "target": "es5",
     "typeRoots": [],
     "types": []
   },
