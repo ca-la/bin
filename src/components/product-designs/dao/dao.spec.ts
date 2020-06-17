@@ -1,6 +1,7 @@
 import tape from "tape";
 import uuid from "node-uuid";
 import Knex from "knex";
+import { isEqual } from "lodash";
 
 import { findById, findByIds } from "./";
 import {
@@ -409,10 +410,6 @@ test("findAllDesignsThroughCollaborator returns approval steps, progress and rel
   t.deepEqual(designs[1].approvalSteps!.length, 4);
   t.deepEqual(designs[1].approvalSteps![0].state, "CURRENT");
   t.deepEqual(designs[1].approvalSteps![1].state, "BLOCKED");
-
-  // TODO: Remove this once changes from api#1216 are fully live
-  t.deepEqual(designs[0].currentStepTitle, "Technical Design");
-  t.deepEqual(designs[1].currentStepTitle, "Checkout");
 });
 
 test("findAllDesignsThroughCollaborator respects limit, offset, sortBy", async (t: tape.Test) => {
@@ -514,6 +511,64 @@ test("findAllDesignsThroughCollaborator respects limit, offset, sortBy", async (
       JSON.stringify(testCase.options)
     );
   }
+});
+
+test("findAllDesignsThroughCollaborator filters by collection", async (t: tape.Test) => {
+  const { user } = await createUser();
+
+  const firstDesign = await createDesign({
+    productType: "test",
+    title: "first design",
+    userId: user.id,
+  });
+  const secondDesign = await createDesign({
+    productType: "test",
+    title: "second design",
+    userId: user.id,
+  });
+  await createDesign({
+    productType: "test",
+    title: "third design",
+    userId: user.id,
+  });
+
+  const { collection: collectionOne } = await generateCollection({
+    createdBy: user.id,
+    title: "Collection 1",
+  });
+  await addDesign(collectionOne.id, firstDesign.id);
+  const { collection: collectionTwo } = await generateCollection({
+    createdBy: user.id,
+    title: "Collection 2",
+  });
+  await addDesign(collectionTwo.id, secondDesign.id);
+
+  const allCollectionDesigns = await findAllDesignsThroughCollaborator({
+    userId: user.id,
+    filters: [{ type: "COLLECTION", value: "*" }],
+  });
+  t.equal(allCollectionDesigns.length, 2, "returns all designs in collections");
+  t.true(
+    isEqual(
+      new Set(
+        allCollectionDesigns.map(
+          (design: ProductDesignWithApprovalSteps) => design.id
+        )
+      ),
+      new Set([firstDesign.id, secondDesign.id])
+    )
+  );
+
+  const collectionSearch = await findAllDesignsThroughCollaborator({
+    userId: user.id,
+    filters: [{ type: "COLLECTION", value: collectionOne.id }],
+  });
+  t.equal(
+    collectionSearch.length,
+    1,
+    "returns design when filtered by collection id"
+  );
+  t.deepEqual(collectionSearch[0].id, firstDesign.id, "should match ids");
 });
 
 test("findById returns approval steps", async (t: tape.Test) => {

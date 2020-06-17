@@ -24,6 +24,11 @@ import {
 
 export const TABLE_NAME = "product_designs";
 
+export interface DesignFilter {
+  type: "COLLECTION";
+  value: "*" | string;
+}
+
 /**
  * Find all designs that the user is a collaborator on.
  */
@@ -33,6 +38,7 @@ export async function findAllDesignsThroughCollaborator(options: {
   offset?: number;
   search?: string;
   sortBy?: string;
+  filters?: DesignFilter[];
 }): Promise<ProductDesignWithApprovalSteps[]> {
   const result = await queryWithCollectionMeta(db)
     .whereRaw(
@@ -59,26 +65,13 @@ product_designs.id in (
       [options.userId, options.userId]
     )
     .modify(attachApprovalSteps)
-
-    // TODO: Remove this once changes from api#1216 are fully live
-    .select(["current_step.title as current_step_title"])
-    .leftJoin(
-      db.raw(
-        `(SELECT DISTINCT ON (design_id)
-            design_id,
-            title
-          FROM
-            design_approval_steps
-          WHERE
-            state in ('CURRENT', 'COMPLETED')
-          ORDER BY
-            design_id,
-            ordering DESC
-          ) AS current_step ON current_step.design_id = product_designs.id`
-      )
-    )
-    .groupBy(["current_step.title", "current_step.design_id"])
-
+    .modify((query: Knex.QueryBuilder) => {
+      if (options.filters && options.filters.length > 0) {
+        options.filters.forEach((designFilter: DesignFilter): void =>
+          applyFilter(designFilter, query)
+        );
+      }
+    })
     .modify((query: Knex.QueryBuilder): void => {
       if (options.search) {
         query.andWhere(
@@ -100,6 +93,22 @@ product_designs.id in (
     (row: any): ProductDesign =>
       new ProductDesign(omit(row, "current_step_ordering"))
   );
+}
+
+function applyFilter(
+  designFilter: DesignFilter,
+  query: Knex.QueryBuilder
+): void {
+  switch (designFilter.type) {
+    case "COLLECTION": {
+      if (designFilter.value === "*") {
+        query.whereNotNull("collection_designs.collection_id");
+      } else {
+        query.where({ "collection_designs.collection_id": designFilter.value });
+      }
+      break;
+    }
+  }
 }
 
 export async function findAllDesignIdsThroughCollaborator(

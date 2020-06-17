@@ -4,6 +4,7 @@ import EmailService = require("../../../services/email");
 import * as TaskEventsDAO from "../../../dao/task-events";
 import * as CollaboratorsDAO from "../../collaborators/dao";
 import * as ProductDesignStagesDAO from "../../../dao/product-design-stages";
+import * as ProductDesignsDAO from "../dao/dao";
 
 import { authHeader, get } from "../../../test-helpers/http";
 import { sandbox, test } from "../../../test-helpers/fresh";
@@ -71,4 +72,26 @@ test("GET /product-designs?search with malformed RegExp throws 400", async (t: t
 
   t.equal(response.status, 400);
   t.deepEqual(body, { message: "Search contained invalid characters" });
+});
+
+test("GET /product-designs allows filtering by collection", async (t: tape.Test) => {
+  const { user, session } = await createUser({ role: "USER" });
+
+  const getDesignsStub = sandbox()
+    .stub(ProductDesignsDAO, "findAllDesignsThroughCollaborator")
+    .resolves([]);
+
+  const [response] = await get(
+    `/product-designs?userId=${user.id}&collectionFilterId=*`,
+    {
+      headers: authHeader(session.id),
+    }
+  );
+  t.equal(response.status, 200);
+  t.deepEqual(getDesignsStub.args[0][0].filters, [
+    {
+      type: "COLLECTION",
+      value: "*",
+    },
+  ]);
 });

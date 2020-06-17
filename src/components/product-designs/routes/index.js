@@ -9,6 +9,7 @@ const CollectionsDAO = require("../../collections/dao");
 const filterError = require("../../../services/filter-error");
 const InvalidDataError = require("../../../errors/invalid-data");
 const ProductDesignsDAO = require("../dao");
+const ProductDesignsDaoTs = require("../dao/dao");
 const TaskEventsDAO = require("../../../dao/task-events");
 const ProductDesignStagesDAO = require("../../../dao/product-design-stages");
 const requireAuth = require("../../../middleware/require-auth");
@@ -84,12 +85,17 @@ async function attachResources(design, requestorId, permissions) {
 function* getDesignsByUser() {
   const { role, userId } = this.state;
   canAccessUserResource.call(this, this.query.userId);
-  const designs = yield findAllDesignsThroughCollaborator({
+  const filters = [];
+  if (this.query.collectionFilterId) {
+    filters.push({ type: "COLLECTION", value: this.query.collectionFilterId });
+  }
+  const designs = yield ProductDesignsDaoTs.findAllDesignsThroughCollaborator({
     userId: this.query.userId,
     limit: this.query.limit,
     offset: this.query.offset,
     search: this.query.search,
     sortBy: this.query.sortBy,
+    filters,
   });
   const designsWithPermissions = yield Promise.all(
     designs.map(async (design) => {
