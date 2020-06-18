@@ -14,20 +14,6 @@ type AllRealtimeMessage =
   | RealtimeDesignEventCreated
   | RealtimeCollectionStatusUpdated;
 
-function getResourceId(resource: AllRealtimeMessage): string {
-  switch (resource.type) {
-    case "design-nodes/update": {
-      return resource.designId;
-    }
-    case "collection/status-updated": {
-      return resource.collectionId;
-    }
-    default: {
-      return resource.resource.id;
-    }
-  }
-}
-
 /**
  * Uploads a realtime resource to s3 then enqueues into SQS.
  * @param resource A realtime resource
@@ -41,7 +27,7 @@ export async function sendMessage(resource: AllRealtimeMessage): Promise<void> {
   });
 
   await enqueueMessage({
-    deduplicationId: `${resource.type}-${getResourceId(resource)}`,
+    deduplicationId: `${uploadResponse.bucketName}-${uploadResponse.remoteFilename}`,
     messageGroupId: resource.type,
     messageType: "realtime-message",
     payload: uploadResponse,

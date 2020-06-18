@@ -62,7 +62,7 @@ test("sendMessage supports sending a message", async (t: tape.Test) => {
   );
 
   t.deepEqual(sqsStub.args[0][0], {
-    deduplicationId: `notification-${notification.id}`,
+    deduplicationId: `iris-foo-abc-123`,
     messageGroupId: "notification",
     messageType: "realtime-message",
     payload: {
