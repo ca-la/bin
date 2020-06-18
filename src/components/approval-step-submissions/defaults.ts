@@ -111,10 +111,6 @@ function getComplexitySubmissions(
         },
         {
           stepId: stepsByType[ApprovalStepType.PRODUCTION].id,
-          title: "Review product photography",
-        },
-        {
-          stepId: stepsByType[ApprovalStepType.PRODUCTION].id,
           title: "Confirm receipt of final shipment",
         },
       ];
@@ -156,10 +152,6 @@ function getComplexitySubmissions(
         {
           stepId: stepsByType[ApprovalStepType.PRODUCTION].id,
           title: "Confirm receipt of TOP and CALA keep samples",
-        },
-        {
-          stepId: stepsByType[ApprovalStepType.PRODUCTION].id,
-          title: "Review product photography",
         },
         {
           stepId: stepsByType[ApprovalStepType.PRODUCTION].id,

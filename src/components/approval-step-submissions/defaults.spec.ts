@@ -141,11 +141,11 @@ test("approvalStepSubmissions defaults creates the right number of submissions f
   await db.transaction(async (trx: Knex.Transaction) => {
     [productType, pricingQuote] = createProductType("BACKPACK", "MEDIUM");
     const backpackDefaults = await getDefaultsByDesign(trx, "designid");
-    t.equal(backpackDefaults.length, 10);
+    t.equal(backpackDefaults.length, 9);
 
     [productType, pricingQuote] = createProductType("BACKPACK", "BLANK");
     const blankDefaults = await getDefaultsByDesign(trx, "designid");
-    t.equal(blankDefaults.length, 5);
+    t.equal(blankDefaults.length, 4);
 
     [productType, pricingQuote] = createProductType(
       "OTHER - NOVELTY LABELS",

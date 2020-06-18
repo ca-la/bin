@@ -197,7 +197,7 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
     );
     t.is(
       cutAndSewSubmissions.length,
-      11,
+      10,
       "adds cut and sew approval submissions"
     );
 
@@ -211,7 +211,7 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
       trx,
       d2.id
     );
-    t.is(blankSubmissions.length, 6, "adds blank approval submissions");
+    t.is(blankSubmissions.length, 5, "adds blank approval submissions");
   });
 });
 
