@@ -41,6 +41,7 @@ import productDesignVariantRoutes from "./components/product-design-variants/rou
 import promoCodeRoutes from "./components/promo-codes/routes";
 import resolveAccountRoutes from "./components/resolve-accounts/routes";
 import salesReportsRoutes from "./components/sales-reports/routes";
+import shipmentTrackingComponent from "./components/shipment-trackings";
 import storefrontRoutes from "./components/storefronts/routes";
 import subscriptionRoutes from "./components/subscriptions/routes";
 import templateDesignRoutes from "./components/templates/designs/routes";
@@ -85,11 +86,6 @@ router.use("/components", componentRoutes);
 router.use("/credits", creditRoutes);
 router.use("/design-approval-step-comments", approvalStepCommentRoutes);
 router.use("/design-approval-step-submissions", approvalStepSubmissionRoutes);
-
-if (approvalStepComponent.router) {
-  plugComponentRouter(router, approvalStepComponent.router);
-}
-
 router.use("/design-approval-step-tasks", approvalStepTaskRoutes);
 router.use("/duplication", duplicationRoutes);
 router.use("/health", healthRoutes);
@@ -122,5 +118,10 @@ router.use("/templates/designs", templateDesignRoutes);
 router.use("/timelines", timelineRoutes);
 router.use("/users", userRoutes);
 router.use("/user-onboardings", userOnboardingRoutes);
+
+if (approvalStepComponent.router) {
+  plugComponentRouter(router, approvalStepComponent.router);
+}
+plugComponentRouter(router, shipmentTrackingComponent.router);
 
 export default router;

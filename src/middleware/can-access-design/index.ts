@@ -70,9 +70,11 @@ export function requireDesignIdBy<ContextBodyType, StateType = {}>(
     this: AuthedContext<ContextBodyType, StateType & { designId: string }>,
     next: () => Promise<any>
   ): Generator<unknown, void, string> {
-    const designId: string = yield designIdFetcher.call(this).catch(() => {
-      this.throw(404, `Cannot find design with ID: ${designId}`);
-    });
+    const designId: string = yield designIdFetcher
+      .call(this)
+      .catch((err: Error) => {
+        this.throw(404, err.message);
+      });
     this.state.designId = designId;
 
     yield next;
