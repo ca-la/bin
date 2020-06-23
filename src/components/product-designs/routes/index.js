@@ -95,6 +95,7 @@ function* getDesignsByUser() {
     offset: this.query.offset,
     search: this.query.search,
     sortBy: this.query.sortBy,
+    role,
     filters,
   });
   const designsWithPermissions = yield Promise.all(
@@ -213,8 +214,11 @@ function* getDesigns() {
 }
 
 function* getDesign() {
-  const { permissions, userId } = this.state;
-  const design = yield ProductDesignsDAO.findById(this.params.designId);
+  const { permissions, userId, role } = this.state;
+  const design = yield ProductDesignsDAO.findById(
+    this.params.designId,
+    ...(role === "PARTNER" ? [undefined, { bidUserId: userId }] : [])
+  );
 
   if (!design) {
     this.throw(404, "Design not found");

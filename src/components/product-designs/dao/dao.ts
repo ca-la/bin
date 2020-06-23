@@ -21,6 +21,8 @@ import {
   ProductDesignRowWithMeta,
   withMetaDataAdapter,
 } from "../domain-objects/with-meta";
+import { Role } from "../../users/types";
+import attachBidId from "./attach-bid-id";
 
 export const TABLE_NAME = "product_designs";
 
@@ -34,6 +36,7 @@ export interface DesignFilter {
  */
 export async function findAllDesignsThroughCollaborator(options: {
   userId: string;
+  role?: Role;
   limit?: number;
   offset?: number;
   search?: string;
@@ -86,6 +89,11 @@ product_designs.id in (
       if (options.sortBy) {
         const [column, direction] = options.sortBy.split(":");
         query.clearOrder().orderBy(column, direction || "asc");
+      }
+    })
+    .modify((query: Knex.QueryBuilder): void => {
+      if (options.role === "PARTNER") {
+        attachBidId(query, options.userId);
       }
     });
   // we need current_step_ordering for sorting, but don't want it to be a part of domain object

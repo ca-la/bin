@@ -50,6 +50,7 @@ import { generateDesign } from "../../../test-helpers/factories/product-design";
 import generateApprovalStep from "../../../test-helpers/factories/design-approval-step";
 import { ComponentType } from "../../components/domain-object";
 import ProductDesignWithApprovalSteps from "../domain-objects/product-design-with-approval-steps";
+import generateBid from "../../../test-helpers/factories/bid";
 
 test("ProductDesignCanvases DAO supports creation/retrieval, enriched with image links", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
@@ -936,4 +937,140 @@ test("isOwner throws a ResourceNotFoundError if design does not exist", async (t
   } catch (err) {
     t.equal(err instanceof ResourceNotFoundError, true);
   }
+});
+
+test("findById attached bidId for partners", async (t: tape.Test) => {
+  const { user } = await createUser({ withSession: false });
+  const { user: partner } = await createUser({
+    withSession: false,
+    role: "PARTNER",
+  });
+  const design = await generateDesign({ userId: user.id });
+  const {
+    bid: partnerRemovedBid,
+    quote: partnerRemovedQuote,
+  } = await generateBid({
+    designId: design.id,
+    userId: partner.id,
+  });
+
+  await generateDesignEvent({
+    actorId: partner.id,
+    designId: design.id,
+    type: "ACCEPT_SERVICE_BID",
+    bidId: partnerRemovedBid.id,
+    quoteId: partnerRemovedQuote.id,
+  });
+  await generateDesignEvent({
+    actorId: user.id,
+    targetId: partner.id,
+    designId: design.id,
+    type: "REMOVE_PARTNER",
+    bidId: partnerRemovedBid.id,
+    quoteId: partnerRemovedQuote.id,
+  });
+  const foundPartnerRemovedDesign = await findById(design.id, null, {
+    bidUserId: partner.id,
+  });
+  if (!foundPartnerRemovedDesign) {
+    throw new Error("Cannot find Design!");
+  }
+  t.equal(
+    foundPartnerRemovedDesign.bidId,
+    null,
+    "Retrieves null for bid Id with removed partner"
+  );
+
+  const { bid, quote } = await generateBid({
+    designId: design.id,
+    userId: partner.id,
+  });
+  await generateDesignEvent({
+    actorId: partner.id,
+    designId: design.id,
+    type: "ACCEPT_SERVICE_BID",
+    bidId: bid.id,
+    quoteId: quote.id,
+  });
+
+  const foundPairedDesign = await findById(design.id, null, {
+    bidUserId: partner.id,
+  });
+  if (!foundPairedDesign) {
+    throw new Error("Cannot find Design!");
+  }
+  t.equal(foundPairedDesign.bidId, bid.id, "Retrieves the correct bid id");
+});
+
+test("findAllDesignsThroughCollaborator attaches bid id", async (t: tape.Test) => {
+  const { user } = await createUser({ withSession: false });
+  const { user: partner } = await createUser({
+    withSession: false,
+    role: "PARTNER",
+  });
+  const design = await generateDesign({ userId: user.id });
+  const {
+    bid: partnerRemovedBid,
+    quote: partnerRemovedQuote,
+  } = await generateBid({
+    designId: design.id,
+    userId: partner.id,
+  });
+  await generateCollaborator({
+    collectionId: null,
+    designId: design.id,
+    invitationMessage: "",
+    role: "EDIT",
+    userEmail: null,
+    userId: partner.id,
+  });
+
+  await generateDesignEvent({
+    actorId: partner.id,
+    designId: design.id,
+    type: "ACCEPT_SERVICE_BID",
+    bidId: partnerRemovedBid.id,
+    quoteId: partnerRemovedQuote.id,
+  });
+  await generateDesignEvent({
+    actorId: user.id,
+    targetId: partner.id,
+    designId: design.id,
+    type: "REMOVE_PARTNER",
+    bidId: partnerRemovedBid.id,
+    quoteId: partnerRemovedQuote.id,
+  });
+  const [foundPartnerRemovedDesign] = await findAllDesignsThroughCollaborator({
+    userId: partner.id,
+    role: "PARTNER",
+  });
+  if (!foundPartnerRemovedDesign) {
+    throw new Error("Cannot find Design!");
+  }
+  t.equal(
+    foundPartnerRemovedDesign.bidId,
+    null,
+    "Retrieves null for bid Id with removed partner"
+  );
+
+  const { bid, quote } = await generateBid({
+    designId: design.id,
+    userId: partner.id,
+  });
+  await generateDesignEvent({
+    actorId: partner.id,
+    designId: design.id,
+    type: "ACCEPT_SERVICE_BID",
+    bidId: bid.id,
+    quoteId: quote.id,
+  });
+
+  const [foundPairedDesign] = await findAllDesignsThroughCollaborator({
+    userId: partner.id,
+    role: "PARTNER",
+  });
+  if (!foundPairedDesign) {
+    throw new Error("Cannot find Design!");
+  }
+  t.equal(foundPairedDesign.bidId, bid.id, "Retrieves the correct bid id");
 });

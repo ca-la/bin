@@ -9,6 +9,7 @@ const db = require("../../../services/db");
 const filterError = require("../../../services/filter-error");
 const first = require("../../../services/first").default;
 const attachApprovalSteps = require("./attach-approval-steps").default;
+const attachBidId = require("./attach-bid-id").default;
 const InvalidDataError = require("../../../errors/invalid-data");
 const ProductDesign = require("../domain-objects/product-design");
 const View = require("./view");
@@ -156,6 +157,11 @@ function findById(id, filters, options = {}, trx) {
         }
       })
       .modify(attachApprovalSteps)
+      .modify((q) => {
+        if (options.bidUserId) {
+          attachBidId(q, options.bidUserId);
+        }
+      })
       .then(first)
       // we need current_step_ordering for sorting, but don't want it to be a part of domain object
       .then((data) => {

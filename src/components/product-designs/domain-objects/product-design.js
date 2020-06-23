@@ -34,9 +34,7 @@ const keyNamesByColumnName = {
   progress: "progress",
   first_step_created_at: "firstStepCreatedAt",
   last_step_due_at: "lastStepDueAt",
-
-  // TODO: Remove this once changes from api#1216 are fully live
-  current_step_title: "currentStepTitle",
+  bid_id: "bidId",
 };
 
 const dataMapper = new DataMapper(keyNamesByColumnName);
