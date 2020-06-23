@@ -25,6 +25,7 @@ import { deleteById } from "../../test-helpers/designs";
 import Knex from "knex";
 import { taskTypes } from "../tasks/templates/task-types";
 import { checkout } from "../../test-helpers/checkout-collection";
+import PartnerPayoutAccount from "../../domain-objects/partner-payout-account";
 test("GET /bids", async (t: Test) => {
   const admin = await createUser({ role: "ADMIN" });
   const partner = await createUser({ role: "PARTNER" });
@@ -836,12 +837,49 @@ test("Partner pairing: reject", async (t: Test) => {
   );
 });
 
-test("GET /bids/:bidId gets a bid by an id", async (t: Test) => {
+test("GET /bids/:bidId gets a bid by an id for admins", async (t: Test) => {
   const admin = await createUser({ role: "ADMIN" });
-  const getBidByIdStub = sandbox().stub(BidsDAO, "findById");
+  const getBidByIdStub = sandbox().stub(BidsDAO, "findById").resolves({});
   await get(`/bids/a-real-bid-id`, {
     headers: authHeader(admin.session.id),
   });
+  t.equal(getBidByIdStub.callCount, 1);
+  t.deepEqual(getBidByIdStub.args[0], ["a-real-bid-id"]);
+
+  const partner = await createUser({ role: "PARTNER" });
+  const [failedResponsePartner] = await get(`/bids/a-real-bid-id`, {
+    headers: authHeader(partner.session.id),
+  });
+  t.equal(failedResponsePartner.status, 403, "Only admins have full access");
+
+  const user = await createUser({ role: "USER" });
+  const [failedResponseUser] = await get(`/bids/a-real-bid-id`, {
+    headers: authHeader(user.session.id),
+  });
+  t.equal(failedResponseUser.status, 403, "Only admins have full access");
+});
+
+test("GET /bids/:bidId gets a bid by an id for the partner assigned", async (t: Test) => {
+  const { user: partner, session } = await createUser({ role: "PARTNER" });
+  const getBidByIdStub = sandbox().stub(BidsDAO, "findById").resolves({
+    id: "a-real-bid-id",
+    acceptedAt: new Date(),
+    createdAt: new Date(),
+    createdBy: "a-real-ops-user",
+    completedAt: null,
+    dueDate: new Date(),
+    quoteId: "quote-id",
+    bidPriceCents: 1000,
+    bidPriceProductionOnlyCents: 0,
+    description: "",
+    partnerUserId: partner.id,
+    partnerPayoutLogs: [],
+  });
+
+  const [response] = await get(`/bids/a-real-bid-id`, {
+    headers: authHeader(session.id),
+  });
+  t.equal(response.status, 200, "Returns bid to the assigned partner");
   t.equal(getBidByIdStub.callCount, 1);
   t.deepEqual(getBidByIdStub.args[0], ["a-real-bid-id"]);
 });
@@ -858,7 +896,7 @@ test("POST /bids/:bidId/pay-out-to-partner", async (t: Test) => {
     withSession: false,
   });
 
-  const payoutAccount = await PayoutAccountsDAO.create({
+  const payoutAccount: PartnerPayoutAccount = await PayoutAccountsDAO.create({
     id: uuid.v4(),
     createdAt: new Date(),
     deletedAt: null,

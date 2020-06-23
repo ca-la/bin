@@ -404,7 +404,7 @@ export function* rejectDesignBid(
   );
 
   if (body && isRejectionReasons(body)) {
-    yield BidRejectionsDAO.create({ bidId: bid.id, ...body });
+    yield BidRejectionsDAO.create({ ...body, bidId: bid.id });
   } else {
     this.throw("Bid rejection reasons are required", 400);
   }
@@ -447,10 +447,17 @@ interface GetByIdContext extends AuthedContext {
 
 function* getById(this: GetByIdContext): Iterator<any, any, any> {
   const { bidId } = this.params;
-
   const bid = yield BidsDAO.findById(bidId);
-  this.body = bid;
-  this.status = 200;
+  const { role, userId } = this.state;
+  if (
+    this.state.role === "ADMIN" ||
+    (role === "PARTNER" && bid.partnerUserId === userId)
+  ) {
+    this.body = bid;
+    this.status = 200;
+  } else {
+    this.throw(403);
+  }
 }
 
 interface PayOutPartnerContext extends AuthedContext {
@@ -484,7 +491,7 @@ function* postPayOut(this: PayOutPartnerContext): Iterator<any, any, any> {
 router.get("/", requireAuth, listBids);
 router.get("/unpaid/:userId", requireAdmin, getUnpaidBidsByUserId);
 
-router.get("/:bidId", requireAdmin, getById);
+router.get("/:bidId", requireAuth, getById);
 router.put("/:bidId/assignees/:userId", requireAdmin, assignBidToPartner);
 router.get("/:bidId/assignees", requireAdmin, listBidAssignees);
 router.del("/:bidId/assignees/:userId", requireAdmin, removeBidFromPartner);
