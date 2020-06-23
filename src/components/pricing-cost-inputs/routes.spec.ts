@@ -3,18 +3,23 @@ import { omit } from "lodash";
 import db from "../../services/db";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import { authHeader, get, post } from "../../test-helpers/http";
-import createUser = require("../../test-helpers/create-user");
+import createUser from "../../test-helpers/create-user";
 import PricingCostInput from "./domain-object";
 import generatePricingValues from "../../test-helpers/factories/pricing-values";
 import generateProductTypes from "../../services/generate-product-types";
 import { Dollars } from "../../services/dollars";
 import * as PricingCostInputsDAO from "./dao";
 import ProductDesignsDAO from "../product-designs/dao";
+import * as ApprovalStepStateService from "../../services/approval-step-state";
+import createDesign from "../../services/create-design";
 
 test("POST /pricing-cost-inputs", async (t: Test) => {
+  const updateTechStub = sandbox()
+    .stub(ApprovalStepStateService, "updateTechnicalDesignStepForDesign")
+    .resolves();
   await generatePricingValues();
   const { user, session } = await createUser({ role: "ADMIN" });
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     productType: "DRESS",
     title: "A beautiful dress",
     userId: user.id,
@@ -25,6 +30,7 @@ test("POST /pricing-cost-inputs", async (t: Test) => {
     expiresAt: null,
     materialBudgetCents: 12000,
     materialCategory: "STANDARD",
+    needsTechnicalDesigner: true,
     processes: [
       {
         complexity: "1_COLOR",
@@ -52,16 +58,24 @@ test("POST /pricing-cost-inputs", async (t: Test) => {
   });
 
   t.equal(response.status, 201);
-  t.deepEqual(omit(costInputs, ["createdAt", "id", "deletedAt"]), {
-    ...input,
-    expiresAt: null,
-  });
+  t.deepEqual(
+    omit(costInputs, ["createdAt", "id", "deletedAt"]),
+    omit(
+      {
+        ...input,
+        expiresAt: null,
+      },
+      ["needsTechnicalDesigner"]
+    )
+  );
+  t.equal(updateTechStub.args[0][1], design.id);
+  t.equal(updateTechStub.args[0][2], true);
 });
 
 test("GET /pricing-cost-inputs?designId gets the original versions", async (t: Test) => {
   await generatePricingValues();
   const { user, session } = await createUser({ role: "ADMIN" });
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     productType: "DRESS",
     title: "A beautiful dress",
     userId: user.id,

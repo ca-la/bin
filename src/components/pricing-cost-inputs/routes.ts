@@ -7,6 +7,7 @@ import * as PricingCostInputsDAO from "./dao";
 import requireAdmin = require("../../middleware/require-admin");
 import PricingCostInput, { isUnsavedPricingCostInput } from "./domain-object";
 import Knex from "knex";
+import { updateTechnicalDesignStepForDesign } from "../../services/approval-step-state";
 
 const router = new Router();
 
@@ -14,23 +15,38 @@ function* createCostInputs(
   this: AuthedContext<Unsaved<PricingCostInput>>
 ): Iterator<any, any, any> {
   const { body: inputs } = this.request;
-  if (!inputs || (inputs && !isUnsavedPricingCostInput(inputs))) {
+  if (!inputs) {
+    this.throw(400, "Must include a request body");
+  }
+
+  if (!isUnsavedPricingCostInput(inputs)) {
     this.throw(400, "Request does not match model");
   }
 
-  const design = yield ProductDesignsDAO.findById(inputs.designId);
-  if (!design) {
-    this.throw(404, `No design found for ID: ${inputs.designId}`);
-  }
-  const created = yield db.transaction((trx: Knex.Transaction) =>
-    PricingCostInputsDAO.create(trx, {
-      ...inputs,
+  const created = yield db.transaction(async (trx: Knex.Transaction) => {
+    const design = await ProductDesignsDAO.findById(
+      inputs.designId,
+      undefined,
+      undefined,
+      trx
+    );
+    if (!design) {
+      this.throw(404, `No design found for ID: ${inputs.designId}`);
+    }
+    const { needsTechnicalDesigner, ...unsavedInputs } = inputs;
+    await updateTechnicalDesignStepForDesign(
+      trx,
+      design.id,
+      needsTechnicalDesigner
+    );
+    return PricingCostInputsDAO.create(trx, {
+      ...unsavedInputs,
       createdAt: new Date(),
       deletedAt: null,
       expiresAt: null,
       id: uuid.v4(),
-    })
-  );
+    });
+  });
 
   this.body = created;
   this.status = 201;

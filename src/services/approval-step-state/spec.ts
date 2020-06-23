@@ -3,7 +3,6 @@ import uuid from "node-uuid";
 import { test, Test, sandbox } from "../../test-helpers/fresh";
 import { generateDesign } from "../../test-helpers/factories/product-design";
 import generateBid from "../../test-helpers/factories/bid";
-import { actualizeDesignStepsAfterBidAcceptance } from "./";
 import db from "../../services/db";
 import createUser from "../../test-helpers/create-user";
 
@@ -17,6 +16,11 @@ import DesignEvent from "../../components/design-events/types";
 import DesignEventsDAO from "../../components/design-events/dao";
 import NotificationsLayer from "../../components/approval-steps/notifications";
 import { NotificationType } from "../../components/notifications/domain-object";
+
+import {
+  actualizeDesignStepsAfterBidAcceptance,
+  updateTechnicalDesignStepForDesign,
+} from "./";
 
 interface TestCase {
   title: string;
@@ -174,3 +178,75 @@ for (const testCase of testCases) {
     }
   });
 }
+
+test("updateTechnicalDesignStepForDesign", async (t: Test) => {
+  const stepsStub = sandbox().stub(ApprovalStepsDAO, "findOne");
+  const updateStub = sandbox().stub(ApprovalStepsDAO, "update");
+
+  const trx = await db.transaction();
+
+  try {
+    stepsStub.resolves({ state: ApprovalStepState.UNSTARTED });
+    await updateTechnicalDesignStepForDesign(trx, "a-design-id", false);
+
+    t.equal(updateStub.callCount, 0, "no tech design, not blocked");
+    updateStub.resetHistory();
+
+    stepsStub.resolves({
+      state: ApprovalStepState.UNSTARTED,
+      id: "technical-design-step",
+    });
+    await updateTechnicalDesignStepForDesign(trx, "a-design-id", true);
+
+    t.equal(
+      updateStub.args[0][1],
+      "technical-design-step",
+      "tech design, not blocked"
+    );
+    t.deepEqual(
+      updateStub.args[0][2],
+      {
+        startedAt: null,
+        reason: "Awaiting partner pairing",
+        state: ApprovalStepState.BLOCKED,
+      },
+      "tech design, not blocked"
+    );
+    updateStub.resetHistory();
+
+    stepsStub.resolves({
+      state: ApprovalStepState.BLOCKED,
+      id: "technical-design-step",
+    });
+    await updateTechnicalDesignStepForDesign(trx, "a-design-id", false);
+
+    t.equal(
+      updateStub.args[0][1],
+      "technical-design-step",
+      "no tech design, blocked"
+    );
+    t.deepEqual(
+      updateStub.args[0][2],
+      {
+        startedAt: null,
+        reason: null,
+        state: ApprovalStepState.UNSTARTED,
+      },
+      "no tech design, blocked"
+    );
+    updateStub.resetHistory();
+
+    stepsStub.resolves({
+      state: ApprovalStepState.BLOCKED,
+      id: "technical-design-step",
+    });
+    await updateTechnicalDesignStepForDesign(trx, "a-design-id", true);
+
+    t.equal(updateStub.callCount, 0, "tech design, blocked");
+    updateStub.resetHistory();
+  } catch (e) {
+    t.fail(e);
+  } finally {
+    await trx.rollback();
+  }
+});

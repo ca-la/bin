@@ -347,3 +347,38 @@ export async function actualizeDesignStepsAfterBidAcceptance(
     }
   }
 }
+
+export async function updateTechnicalDesignStepForDesign(
+  trx: Knex.Transaction,
+  designId: string,
+  needsTechnicalDesigner: boolean = false
+): Promise<void> {
+  const technicalDesignStep = await ApprovalStepsDAO.findOne(trx, {
+    designId,
+    type: ApprovalStepType.TECHNICAL_DESIGN,
+  });
+
+  if (!technicalDesignStep) {
+    throw new Error(
+      `Could not find technical design step for design with ID: ${designId}`
+    );
+  }
+
+  if (needsTechnicalDesigner) {
+    if (technicalDesignStep.state === ApprovalStepState.UNSTARTED) {
+      await ApprovalStepsDAO.update(trx, technicalDesignStep.id, {
+        startedAt: null,
+        reason: "Awaiting partner pairing",
+        state: ApprovalStepState.BLOCKED,
+      });
+    }
+  } else {
+    if (technicalDesignStep.state === ApprovalStepState.BLOCKED) {
+      await ApprovalStepsDAO.update(trx, technicalDesignStep.id, {
+        startedAt: null,
+        reason: null,
+        state: ApprovalStepState.UNSTARTED,
+      });
+    }
+  }
+}

@@ -21,6 +21,7 @@ export interface BasePricingCostInput {
 
 export interface PricingCostInputWithoutVersions extends BasePricingCostInput {
   processes: Process[];
+  needsTechnicalDesigner?: boolean;
 }
 
 export default interface PricingCostInput
