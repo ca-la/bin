@@ -1,11 +1,15 @@
 import Router from "koa-router";
 import Knex from "knex";
+import { omit } from "lodash";
 
 import * as NotificationsDAO from "./dao";
 import db from "../../services/db";
 import requireAuth = require("../../middleware/require-auth");
 import { createNotificationMessage } from "./notification-messages";
-import { NotificationMessage } from "@cala/ts-lib";
+import useTransaction from "../../middleware/use-transaction";
+import { NotificationMessage } from "./types";
+
+const ALLOWED_UPDATE_KEYS = ["archivedAt"];
 
 const router = new Router();
 
@@ -91,9 +95,33 @@ function* setReadOlderThan(
 
   this.status = 204;
 }
+
+function* update(this: TrxContext<AuthedContext>): Iterator<any, any, any> {
+  const { trx, userId } = this.state;
+  const { notificationId } = this.params;
+
+  const notification = yield NotificationsDAO.findById(trx, notificationId);
+  if (!notification) {
+    this.throw(404, "Notification not found");
+  }
+  if (notification.recipientUserId !== userId) {
+    this.throw(403, "Access denied for this resource");
+  }
+
+  const restKeys = omit(this.request.body, ALLOWED_UPDATE_KEYS);
+  if (Object.keys(restKeys).length > 0) {
+    this.throw(400, `Keys ${Object.keys(restKeys).join(", ")} are not allowed`);
+  }
+
+  yield NotificationsDAO.update(trx, notificationId, this.request.body);
+
+  this.status = 204;
+}
+
 router.get("/", requireAuth, getList);
 router.get("/unread", requireAuth, getUnreadCount);
 router.patch("/read", requireAuth, setRead);
+router.patch("/:notificationId", requireAuth, useTransaction, update);
 router.put("/last-read", requireAuth, setReadOlderThan);
 
 export default router.routes();

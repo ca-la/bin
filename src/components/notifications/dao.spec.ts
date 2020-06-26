@@ -877,3 +877,21 @@ test("NotificationsDAO.findById returns notifications with approval submission a
     "artifact type is returned"
   );
 });
+
+test("NotificationsDAO.update updates a notification", async (t: tape.Test) => {
+  const notification = await generateNotification({
+    type: NotificationType.COSTING_EXPIRED,
+    archivedAt: null,
+  });
+  const testTime = new Date(2020, 1, 24);
+
+  const updated = await db.transaction((trx: Knex.Transaction) =>
+    NotificationsDAO.update(trx, notification.id, { archivedAt: testTime })
+  );
+
+  t.equal(
+    updated.archivedAt!.getTime(),
+    testTime.getTime(),
+    "Updates a column"
+  );
+});

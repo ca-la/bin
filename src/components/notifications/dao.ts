@@ -13,6 +13,7 @@ import {
   isNotificationRow,
   Notification,
   NotificationRow,
+  partialDataAdapter,
 } from "./domain-object";
 import { validate, validateEvery } from "../../services/validate-from-db";
 import { announceNotificationCreation } from "../iris/messages/notification";
@@ -518,4 +519,21 @@ export async function deleteRecent(
     .del();
 
   return deletedRows;
+}
+
+export async function update(
+  trx: Knex.Transaction,
+  id: string,
+  data: Partial<Notification>
+): Promise<Notification> {
+  const rowData = partialDataAdapter.forInsertion(data);
+
+  const rows = await trx(TABLE_NAME).where({ id }).update(rowData, "*");
+
+  return validate<NotificationRow, Notification>(
+    TABLE_NAME,
+    isNotificationRow,
+    dataAdapter,
+    rows[0]
+  );
 }

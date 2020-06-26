@@ -1,9 +1,4 @@
 import { escape as escapeOptionalHtml } from "lodash";
-import {
-  BreadCrumb,
-  NotificationMessage,
-  NotificationMessageActionType,
-} from "@cala/ts-lib";
 
 import InvalidDataError from "../../errors/invalid-data";
 import * as CollaboratorsDAO from "../collaborators/dao";
@@ -20,6 +15,11 @@ import { ComponentType } from "../components/domain-object";
 import { getMentionsFromComment } from "../../services/add-at-mention-details";
 import { generatePreviewLinks } from "../../services/attach-asset-links";
 import User from "../../components/users/domain-object";
+import {
+  BreadCrumb,
+  NotificationMessage,
+  NotificationMessageActionType,
+} from "./types";
 
 const messageBuilders: Partial<Record<
   NotificationType,

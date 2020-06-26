@@ -261,6 +261,7 @@ export function encode(
     annotationId: row.annotation_id,
     approvalStepId: row.approval_step_id,
     approvalSubmissionId: row.approval_submission_id,
+    archivedAt: row.archived_at,
     canvasId: row.canvas_id,
     collaboratorId: row.collaborator_id,
     collectionId: row.collection_id,
@@ -290,6 +291,7 @@ export function decode(
     annotation_id: data.annotationId,
     approval_step_id: data.approvalStepId,
     approval_submission_id: data.approvalSubmissionId,
+    archived_at: data.archivedAt,
     canvas_id: data.canvasId,
     collaborator_id: data.collaboratorId,
     collection_id: data.collectionId,
@@ -310,6 +312,10 @@ export function decode(
   };
 }
 export const dataAdapter = new DataAdapter<NotificationRow, Notification>();
+export const partialDataAdapter = new DataAdapter<
+  Partial<NotificationRow>,
+  Partial<Notification>
+>();
 
 export function isNotificationRow(row: object): row is NotificationRow {
   return hasProperties(

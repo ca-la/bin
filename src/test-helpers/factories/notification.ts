@@ -63,6 +63,7 @@ interface NotificationWithResources {
   stage: ProductDesignStage;
   comment: Comment;
   approvalStep: ApprovalStep;
+  id: string;
 }
 
 export default async function generateNotification(
@@ -172,6 +173,10 @@ export default async function generateNotification(
       : await generateApprovalStep(trx, { designId: design.id })
   );
 
+  if (!approvalStep) {
+    throw new Error("Could not find approvalStepId");
+  }
+
   const { submission } = await db.transaction(async (trx: Knex.Transaction) =>
     options.approvalSubmissionId
       ? {
@@ -183,7 +188,12 @@ export default async function generateNotification(
       : await generateApprovalSubmission(trx, { stepId: approvalStep.id })
   );
 
+  if (!submission) {
+    throw new Error("Could not find submission");
+  }
+
   const base = {
+    id,
     actor,
     annotation,
     approvalStep,

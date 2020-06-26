@@ -5,15 +5,17 @@ import API from "../../test-helpers/http";
 import createUser = require("../../test-helpers/create-user");
 
 import DesignsDAO from "../product-designs/dao";
+import * as NotificationsDAO from "../notifications/dao";
 import SessionsDAO from "../../dao/sessions";
 import generateNotification, {
   generateNotifications,
 } from "../../test-helpers/factories/notification";
 import generateCollection from "../../test-helpers/factories/collection";
-import { NotificationMessage } from "@cala/ts-lib";
 import { NotificationType } from "./domain-object";
 import generateCollaborator from "../../test-helpers/factories/collaborator";
 import * as NotificationAnnouncer from "../iris/messages/notification";
+import { NotificationMessage } from "./types";
+import { templateNotification } from "./models/base";
 
 const API_PATH = "/notifications";
 
@@ -313,4 +315,71 @@ test(`PATCH ${API_PATH}/read returns 403 for wrong user`, async (t: tape.Test) =
     }
   );
   t.equal(response2.status, 403, "Access is denied");
+});
+
+test(`PATCH ${API_PATH}/:notificationId updates a notification`, async (t: tape.Test) => {
+  const user = await createUser();
+  const notification = {
+    ...templateNotification,
+    id: "not-id",
+    recipientUserId: user.user.id,
+    type: NotificationType.PARTNER_ACCEPT_SERVICE_BID,
+  };
+
+  sandbox()
+    .stub(NotificationAnnouncer, "announceNotificationCreation")
+    .resolves({});
+  sandbox().stub(NotificationsDAO, "findById").resolves(notification);
+  sandbox().stub(NotificationsDAO, "update").resolves(notification);
+
+  const [response] = await API.patch(`${API_PATH}/${notification.id}`, {
+    headers: API.authHeader(user.session.id),
+    body: { archivedAt: new Date() },
+  });
+  t.equal(response.status, 204, "Request is successful");
+});
+
+test(`PATCH ${API_PATH}/:notificationId only allows specific fields`, async (t: tape.Test) => {
+  const user = await createUser();
+  const notification = {
+    ...templateNotification,
+    id: "not-id",
+    recipientUserId: user.user.id,
+    type: NotificationType.PARTNER_ACCEPT_SERVICE_BID,
+  };
+
+  sandbox()
+    .stub(NotificationAnnouncer, "announceNotificationCreation")
+    .resolves({});
+  sandbox().stub(NotificationsDAO, "findById").resolves(notification);
+  sandbox().stub(NotificationsDAO, "update").resolves(notification);
+
+  const [response] = await API.patch(`${API_PATH}/${notification.id}`, {
+    headers: API.authHeader(user.session.id),
+    body: { archivedAt: new Date(), deletedAt: new Date() },
+  });
+  t.equal(response.status, 400, "Request is denied");
+});
+
+test(`PATCH ${API_PATH}/:notificationId returns 403 for wrong user`, async (t: tape.Test) => {
+  const userOne = await createUser();
+  const userTwo = await createUser();
+  const notification = {
+    ...templateNotification,
+    id: "not-id",
+    actorUserId: userTwo.user.id,
+    recipientUserId: userOne.user.id,
+    type: NotificationType.PARTNER_ACCEPT_SERVICE_BID,
+  };
+
+  sandbox()
+    .stub(NotificationAnnouncer, "announceNotificationCreation")
+    .resolves({});
+  sandbox().stub(NotificationsDAO, "findById").resolves(notification);
+  sandbox().stub(NotificationsDAO, "update").resolves(notification);
+
+  const [response] = await API.patch(`${API_PATH}/${notification.id}`, {
+    headers: API.authHeader(userTwo.session.id),
+  });
+  t.equal(response.status, 403, "Access is denied");
 });

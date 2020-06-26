@@ -1,10 +1,11 @@
 import uuid from "node-uuid";
-import { formatCentsToDollars, NotificationMessage } from "@cala/ts-lib";
+import { formatCentsToDollars } from "@cala/ts-lib";
 
 import MonthlySalesReport from "../../components/sales-reports/domain-object";
 import { findById as findUser } from "../../components/users/dao";
 import EmailService from "../../services/email";
 import { STUDIO_HOST } from "../../config";
+import { NotificationMessage } from "../../components/notifications/types";
 
 const LEFT_STYLE = "text-align:left;width:50%;padding-right:4px;";
 const RIGHT_STYLE =

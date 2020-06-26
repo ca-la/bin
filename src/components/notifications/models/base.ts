@@ -11,6 +11,7 @@ export interface BaseNotificationRow {
   annotation_id: null;
   approval_step_id: null;
   approval_submission_id: null;
+  archived_at: string | null;
   canvas_id: null;
   collaborator_id: null;
   collection_id: null;
@@ -36,6 +37,7 @@ export interface RowKeyMapping {
   annotation_id: "annotationId";
   approval_step_id: "approvalStepId";
   approval_submission_id: "approvalSubmissionId";
+  archived_at: "archivedAt";
   canvas_id: "canvasId";
   collaborator_id: "collaboratorId";
   collection_id: "collectionId";
@@ -75,6 +77,7 @@ export interface BaseNotification {
   annotationId: null;
   approvalStepId: null;
   approvalSubmissionId: null;
+  archivedAt: Date | null;
   canvasId: null;
   collaboratorId: null;
   collectionId: null;
@@ -100,6 +103,7 @@ export interface StrictNotification {
   annotationId: string;
   approvalStepId: string;
   approvalSubmissionId: string;
+  archivedAt: Date | null;
   canvasId: string;
   collaboratorId: string;
   collectionId: string;
@@ -138,6 +142,7 @@ export const templateNotification = {
   annotationId: null,
   approvalStepId: null,
   approvalSubmissionId: null,
+  archivedAt: null,
   canvasId: null,
   collaboratorId: null,
   collectionId: null,

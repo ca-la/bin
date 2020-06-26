@@ -1,6 +1,5 @@
 import Knex from "knex";
 import { chunk, groupBy } from "lodash";
-import { NotificationMessage } from "@cala/ts-lib";
 
 import db from "../../services/db";
 import Logger from "../../services/logger";
@@ -12,6 +11,7 @@ import InvalidDataError from "../../errors/invalid-data";
 
 import { FullNotification } from "../../components/notifications/domain-object";
 import { createNotificationMessage } from "../../components/notifications/notification-messages";
+import { NotificationMessage } from "../../components/notifications/types";
 
 const QUEUE_LIMIT = 30;
 
