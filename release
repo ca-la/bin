@@ -21,8 +21,8 @@ main() {
     exit 1
   fi
 
-  if [[ $(git rev-parse --abbrev-ref HEAD) != 'master' ]] ; then
-    echo 'Cannot release from a branch other than master'
+  if [[ $(git rev-parse --abbrev-ref HEAD) != 'main' ]] ; then
+    echo 'Cannot release from a branch other than main'
     exit 1
   fi
 
@@ -38,18 +38,18 @@ main() {
 
   preauth_pgp_signature
 
-  git pull --ff-only origin master
+  git pull --ff-only origin main
 
   npm version $release_type
 
-  git push origin master --follow-tags
+  git push origin main --follow-tags
 
   git checkout -B production
   git pull --ff-only origin production
-  git merge --ff-only master
+  git merge --ff-only main
   git push origin production
 
-  git checkout master
+  git checkout main
 }
 
 main "$@"
