@@ -1,5 +1,5 @@
 import * as CollaboratorsDAO from "../../components/collaborators/dao";
-import Collaborator from "../../components/collaborators/domain-objects/collaborator";
+import Collaborator from "../../components/collaborators/types";
 import * as CollectionsDAO from "../../components/collections/dao";
 import { isQuoteCommitted } from "../../components/design-events/service";
 import Collection from "../../components/collections/domain-object";

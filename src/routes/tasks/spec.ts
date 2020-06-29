@@ -17,7 +17,7 @@ import createUser from "../../test-helpers/create-user";
 import { authHeader, get, post, put } from "../../test-helpers/http";
 import { sandbox, test as originalTest } from "../../test-helpers/fresh";
 import * as CreateNotifications from "../../services/create-notifications";
-import Collaborator from "../../components/collaborators/domain-objects/collaborator";
+import Collaborator from "../../components/collaborators/types";
 import * as CollaboratorsDAO from "../../components/collaborators/dao";
 import generateTask from "../../test-helpers/factories/task";
 import createDesign from "../../services/create-design";

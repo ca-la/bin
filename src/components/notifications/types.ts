@@ -1,5 +1,5 @@
-import User from "../users/domain-object";
-import { Collaborator } from "@cala/ts-lib";
+import User from "../users/types";
+import { CollaboratorWithUser } from "../collaborators/types";
 
 export interface BreadCrumb {
   text: string;
@@ -29,7 +29,7 @@ export interface NotificationMessageActionBase {
 
 interface CommentActionBase extends NotificationMessageActionBase {
   parentCommentId: string;
-  collaborators: Collaborator[];
+  collaborators: CollaboratorWithUser[];
 }
 
 interface TaskCommentReplyAction extends CommentActionBase {

@@ -13,7 +13,7 @@ import { test, Test } from "../../test-helpers/fresh";
 import createDesign from "../../services/create-design";
 import generateCollaborator from "../../test-helpers/factories/collaborator";
 import generateCollection from "../../test-helpers/factories/collection";
-import Collaborator from "./domain-objects/collaborator";
+import Collaborator from "./types";
 import generateBid from "../../test-helpers/factories/bid";
 import { taskTypes } from "../tasks/templates";
 import { addDesign, removeDesign } from "../../test-helpers/collections";

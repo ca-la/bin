@@ -9,7 +9,7 @@ import {
 } from "../../components/notifications/domain-object";
 import { findById as findUserById } from "../../components/users/dao";
 import createUser from "../create-user";
-import { CollaboratorWithUser } from "../../components/collaborators/domain-objects/collaborator";
+import { CollaboratorWithUser } from "../../components/collaborators/types";
 import ProductDesignsDAO from "../../components/product-designs/dao";
 import * as CollectionsDAO from "../../components/collections/dao";
 import * as CollaboratorsDAO from "../../components/collaborators/dao";

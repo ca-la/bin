@@ -1,7 +1,7 @@
 import { create } from "../../components/collaborators/dao";
 import Collaborator, {
   CollaboratorWithUser,
-} from "../../components/collaborators/domain-objects/collaborator";
+} from "../../components/collaborators/types";
 import Knex from "knex";
 
 interface CollaboratorWithResources {

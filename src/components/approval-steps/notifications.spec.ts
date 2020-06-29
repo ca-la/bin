@@ -9,7 +9,7 @@ import { NotificationType } from "../notifications/domain-object";
 import { findByUserId } from "../notifications/dao";
 import createUser from "../../test-helpers/create-user";
 import generateCollaborator from "../../test-helpers/factories/collaborator";
-import { CollaboratorWithUser } from "../collaborators/domain-objects/collaborator";
+import { CollaboratorWithUser } from "../collaborators/types";
 import ApprovalStep from "./domain-object";
 import ProductDesign from "../product-designs/domain-objects/product-design";
 import Collection from "../collections/domain-object";

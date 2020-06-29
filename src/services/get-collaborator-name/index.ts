@@ -1,4 +1,4 @@
-import { CollaboratorWithUser } from "../../components/collaborators/domain-objects/collaborator";
+import { CollaboratorWithUser } from "../../components/collaborators/types";
 
 export default function getCollaboratorName(
   collaborator: CollaboratorWithUser

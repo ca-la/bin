@@ -6,7 +6,7 @@ import Bid, {
   isBidSortByParam,
   isUninsertedPartnerPayoutLog,
 } from "./domain-object";
-import Collaborator from "../collaborators/domain-objects/collaborator";
+import Collaborator from "../collaborators/types";
 import ProductDesign = require("../product-designs/domain-objects/product-design");
 import { PricingQuote } from "../../domain-objects/pricing-quote";
 import * as UsersDAO from "../../components/users/dao";

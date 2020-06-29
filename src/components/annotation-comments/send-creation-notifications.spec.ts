@@ -5,7 +5,7 @@ import Sinon from "sinon";
 
 import * as AnnotationsDAO from "../../components/product-design-canvas-annotations/dao";
 import Annotation from "../../components/product-design-canvas-annotations/domain-object";
-import Collaborator from "../../components/collaborators/domain-objects/collaborator";
+import Collaborator from "../../components/collaborators/types";
 import Collection from "../../components/collections/domain-object";
 import sendCreationNotifications from "./send-creation-notifications";
 import User from "../../components/users/domain-object";

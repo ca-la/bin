@@ -2,7 +2,7 @@ import { sandbox } from "../../test-helpers/fresh";
 import Sinon from "sinon";
 import * as CollaboratorsDAO from "../../components/collaborators/dao";
 import { CollaboratorWithUserMetaByDesign } from "../../components/collaborators/domain-objects/collaborator-by-design";
-import { Roles } from "../../components/collaborators/domain-objects/collaborator";
+import { Roles } from "../../components/collaborators/types";
 
 export const stubFindByDesigns = (
   userId: string

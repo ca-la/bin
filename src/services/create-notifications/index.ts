@@ -22,7 +22,7 @@ import {
 } from "../../components/notifications/domain-object";
 import Collaborator, {
   CollaboratorWithUser,
-} from "../../components/collaborators/domain-objects/collaborator";
+} from "../../components/collaborators/types";
 
 import EmailService from "../../services/email";
 import * as SlackService from "../../services/slack";

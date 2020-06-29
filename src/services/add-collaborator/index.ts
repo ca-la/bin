@@ -10,7 +10,7 @@ import User from "../../components/users/domain-object";
 import {
   CollaboratorWithUser,
   Roles,
-} from "../../components/collaborators/domain-objects/collaborator";
+} from "../../components/collaborators/types";
 
 /**
  * Add a collaborator to a design. If a user exists with this email, adds them

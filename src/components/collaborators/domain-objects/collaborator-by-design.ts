@@ -2,11 +2,8 @@ import { Role as UserRole } from "@cala/ts-lib/dist/users";
 
 import DataAdapter from "../../../services/data-adapter";
 import { hasProperties } from "../../../services/require-properties";
-import Collaborator, {
-  CollaboratorRow,
-  isCollaboratorRow,
-  isRole,
-} from "./collaborator";
+import { isCollaboratorRow } from "./collaborator";
+import Collaborator, { CollaboratorRow, isRole } from "../types";
 
 export interface UserMeta {
   id: string;

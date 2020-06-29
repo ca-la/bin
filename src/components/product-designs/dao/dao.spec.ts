@@ -44,7 +44,7 @@ import generateTask from "../../../test-helpers/factories/task";
 import omit = require("lodash/omit");
 import ResourceNotFoundError from "../../../errors/resource-not-found";
 import { addDesign } from "../../../test-helpers/collections";
-import { CollaboratorWithUser } from "../../collaborators/domain-objects/collaborator";
+import { CollaboratorWithUser } from "../../collaborators/types";
 import { deleteById } from "../../../test-helpers/designs";
 import { generateDesign } from "../../../test-helpers/factories/product-design";
 import generateApprovalStep from "../../../test-helpers/factories/design-approval-step";

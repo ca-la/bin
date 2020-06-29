@@ -18,7 +18,7 @@ import generateCollaborator from "../../test-helpers/factories/collaborator";
 import { NotificationType } from "../notifications/domain-object";
 import ApprovalStep from "../approval-steps/types";
 import User from "../users/types";
-import { CollaboratorWithUser } from "../collaborators/domain-objects/collaborator";
+import { CollaboratorWithUser } from "../../components/collaborators/types";
 import ProductDesign from "../product-designs/domain-objects/product-design";
 import Session from "../../domain-objects/session";
 import { DesignEventWithMeta } from "../../published-types";

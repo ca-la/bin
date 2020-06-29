@@ -6,7 +6,7 @@ import parseAtMentions, {
 import Knex from "knex";
 import * as CollaboratorsDAO from "../../components/collaborators/dao";
 import * as CommentsDAO from "../../components/comments/dao";
-import { CollaboratorWithUser } from "../../components/collaborators/domain-objects/collaborator";
+import { CollaboratorWithUser } from "../../components/collaborators/types";
 
 export interface CommentWithMentions extends Comment {
   mentions: { [id: string]: string };

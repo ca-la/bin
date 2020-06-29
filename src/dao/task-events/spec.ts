@@ -49,7 +49,7 @@ import generateCanvas from "../../test-helpers/factories/product-design-canvas";
 import createDesign from "../../services/create-design";
 import generateCollection from "../../test-helpers/factories/collection";
 import generateCollaborator from "../../test-helpers/factories/collaborator";
-import { CollaboratorWithUser } from "../../components/collaborators/domain-objects/collaborator";
+import { CollaboratorWithUser } from "../../components/collaborators/types";
 import generateAsset from "../../test-helpers/factories/asset";
 import { addDesign } from "../../test-helpers/collections";
 import ApprovalStep, {

@@ -14,7 +14,7 @@ import ProductDesignsDAO = require("../../components/product-designs/dao");
 import User from "../../components/users/domain-object";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import createCollaborator from "../../test-helpers/factories/collaborator";
-import Collaborator from "../../components/collaborators/domain-objects/collaborator";
+import Collaborator from "../../components/collaborators/types";
 import { getTemplatesFor, taskTypes } from "../../components/tasks/templates";
 import { moveDesign } from "../../test-helpers/collections";
 

@@ -11,7 +11,7 @@ import { findByUserId } from "../notifications/dao";
 import createUser from "../../test-helpers/create-user";
 import generateCollaborator from "../../test-helpers/factories/collaborator";
 import generateApprovalSubmission from "../../test-helpers/factories/design-approval-submission";
-import { CollaboratorWithUser } from "../collaborators/domain-objects/collaborator";
+import { CollaboratorWithUser } from "../../components/collaborators/types";
 import ApprovalStep from "../approval-steps/domain-object";
 import ProductDesign from "../product-designs/domain-objects/product-design";
 import Collection from "../collections/domain-object";

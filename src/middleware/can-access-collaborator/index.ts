@@ -3,7 +3,7 @@ import Koa from "koa";
 import * as CollaboratorsDAO from "../../components/collaborators/dao";
 import * as CollectionsDAO from "../../components/collections/dao";
 import DesignsDAO from "../../components/product-designs/dao";
-import Collaborator from "../../components/collaborators/domain-objects/collaborator";
+import Collaborator from "../../components/collaborators/types";
 import filterError = require("../../services/filter-error");
 import ResourceNotFoundError from "../../errors/resource-not-found";
 import {

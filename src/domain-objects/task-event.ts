@@ -9,11 +9,11 @@ import {
   generateThumbnailLinks,
   ThumbnailAndPreviewLinks,
 } from "../services/attach-asset-links";
+import { encode as encodeCollaborator } from "../components/collaborators/domain-objects/collaborator";
 import Collaborator, {
   CollaboratorWithUser,
   CollaboratorWithUserRow,
-  encode as encodeCollaborator,
-} from "../components/collaborators/domain-objects/collaborator";
+} from "../components/collaborators/types";
 
 export interface RelatedResourceMeta {
   id: string | null;

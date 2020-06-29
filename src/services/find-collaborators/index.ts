@@ -3,7 +3,7 @@ import CollaboratorsDAO = require("../../components/collaborators/dao");
 import CollectionsDAO = require("../../components/collections/dao");
 import ProductDesignsDAO = require("../../components/product-designs/dao");
 import { CALA_OPS_USER_ID } from "../../config";
-import Collaborator from "../../components/collaborators/domain-objects/collaborator";
+import Collaborator from "../../components/collaborators/types";
 
 export const COLLABORATOR_ROLES = {
   CALA: "CALA",

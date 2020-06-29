@@ -83,5 +83,5 @@ interface CollectionsKoaState {
 }
 
 interface CollaboratorKoaState {
-  collaborator: import("../../components/collaborators/domain-objects/collaborator").default;
+  collaborator: import("../../components/collaborators/types").default;
 }

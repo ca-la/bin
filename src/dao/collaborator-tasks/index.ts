@@ -7,14 +7,16 @@ import CollaboratorTask, {
   isCollaboratorTaskRow,
 } from "../../domain-objects/collaborator-task";
 import first from "../../services/first";
-import Collaborator, {
-  CollaboratorWithUser,
-  CollaboratorWithUserRow,
+import {
   dataWithUserAdapter as collaboratorDataAdapter,
   isCollaboratorWithUserRow,
 } from "../../components/collaborators/domain-objects/collaborator";
 import { validate, validateEvery } from "../../services/validate-from-db";
 import { ALIASES, getBuilder } from "../../components/collaborators/view";
+import Collaborator, {
+  CollaboratorWithUserRow,
+  CollaboratorWithUser,
+} from "../../components/collaborators/types";
 
 const TABLE_NAME = "collaborator_tasks";
 

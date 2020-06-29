@@ -1,6 +1,6 @@
 import Knex from "knex";
 import { values } from "lodash";
-import Collaborator from "../../components/collaborators/domain-objects/collaborator";
+import Collaborator from "../../components/collaborators/types";
 import * as CollaboratorsDAO from "../../components/collaborators/dao";
 import ProductDesignsDAO = require("../../components/product-designs/dao");
 import { CALA_OPS_USER_ID } from "../../config";

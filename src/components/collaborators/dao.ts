@@ -8,10 +8,7 @@ import InvalidDataError = require("../../errors/invalid-data");
 import first from "../../services/first";
 import normalizeEmail = require("../../services/normalize-email");
 import filterError = require("../../services/filter-error");
-import Collaborator, {
-  CollaboratorRow,
-  CollaboratorWithUser,
-  CollaboratorWithUserRow,
+import {
   dataAdapter,
   dataWithUserAdapter,
   isCollaboratorRow,
@@ -29,6 +26,11 @@ import * as UsersDAO from "../../components/users/dao";
 import { validate, validateEvery } from "../../services/validate-from-db";
 import { pick, uniqBy } from "lodash";
 import { ALIASES, getBuilder as getCollaboratorViewBuilder } from "./view";
+import Collaborator, {
+  CollaboratorWithUser,
+  CollaboratorRow,
+  CollaboratorWithUserRow,
+} from "./types";
 
 const TABLE_NAME = "collaborators";
 

@@ -3,7 +3,8 @@ import Router from "koa-router";
 import addCollaborator from "../../services/add-collaborator";
 import InvalidDataError from "../../errors/invalid-data";
 import * as CollaboratorsDAO from "./dao";
-import { isRole, Roles } from "./domain-objects/collaborator";
+import { Roles, isRole } from "./types";
+
 import requireAuth = require("../../middleware/require-auth");
 import { hasProperties } from "../../services/require-properties";
 import * as CollaboratorsMiddleware from "../../middleware/can-access-collaborator";
