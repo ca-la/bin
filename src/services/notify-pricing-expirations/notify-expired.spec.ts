@@ -12,6 +12,10 @@ import * as StatusService from "../../components/collections/services/determine-
 import * as CollectionsDAO from "../../components/collections/dao";
 import * as NotificationService from "../create-notifications/costing-expirations";
 import * as IrisService from "../../components/iris/send-message";
+import * as ApprovalStepsDAO from "../../components/approval-steps/dao";
+import ProductDesignsDAO from "../../components/product-designs/dao";
+import * as DesignEventsDAO from "../../components/design-events/dao";
+import { ApprovalStepType } from "../../components/approval-steps/types";
 
 test("notifyExpired works on the base case", async (t: Test) => {
   const findAllStub = sandbox()
@@ -54,6 +58,24 @@ test("notifyExpired works on the +1 case", async (t: Test) => {
     .stub(NotificationService, "immediatelySendCostingExpiredNotification")
     .resolves();
   const irisStub = sandbox().stub(IrisService, "sendMessage").resolves();
+  sandbox()
+    .stub(ProductDesignsDAO, "findByCollectionId")
+    .resolves([
+      {
+        id: "design-one",
+      },
+    ]);
+  sandbox()
+    .stub(ApprovalStepsDAO, "findByDesign")
+    .resolves([
+      {
+        id: "step-one",
+        type: ApprovalStepType.CHECKOUT,
+      },
+    ]);
+  const createDesignEventStub = sandbox()
+    .stub(DesignEventsDAO, "create")
+    .resolves();
 
   await db.transaction(
     async (trx: Knex.Transaction): Promise<void> => {
@@ -72,6 +94,22 @@ test("notifyExpired works on the +1 case", async (t: Test) => {
         recipientUserId: "user-one",
       });
       t.equal(irisStub.callCount, 1);
+
+      t.equal(createDesignEventStub.callCount, 1);
+      const eventStubArgs = createDesignEventStub.args[0][1];
+      t.deepEqual(
+        {
+          designId: eventStubArgs.designId,
+          approvalStepId: eventStubArgs.approvalStepId,
+          type: eventStubArgs.type,
+        },
+        {
+          designId: "design-one",
+          approvalStepId: "step-one",
+          type: "COSTING_EXPIRATION",
+        },
+        "Created design event has the correct values"
+      );
     }
   );
 });

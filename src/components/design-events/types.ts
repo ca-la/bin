@@ -27,7 +27,9 @@ type CALAEvents =
   // The opposite of BID_DESIGN; remove a partner
   | "REMOVE_PARTNER"
   // Indicate if CALA has finalized pairing of a partner(s) to a design.
-  | "COMMIT_PARTNER_PAIRING";
+  | "COMMIT_PARTNER_PAIRING"
+  // Cost inputs have expired
+  | "COSTING_EXPIRATION";
 
 type PartnerEvents = "ACCEPT_SERVICE_BID" | "REJECT_SERVICE_BID";
 

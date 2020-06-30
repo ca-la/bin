@@ -1,4 +1,5 @@
 import Knex from "knex";
+import uuid from "node-uuid";
 
 import { findAllUnnotifiedCollectionsWithExpiringCostInputs } from "../../components/collections/dao";
 import { NotificationType } from "../../components/notifications/domain-object";
@@ -11,6 +12,44 @@ import {
 import * as IrisService from "../../components/iris/send-message";
 import { MetaCollection } from "../../components/collections/meta-domain-object";
 import { realtimeCollectionStatusUpdated } from "../../components/collections/realtime";
+import { CALA_OPS_USER_ID } from "../../config";
+import ApprovalStep, {
+  ApprovalStepType,
+} from "../../components/approval-steps/types";
+import * as ApprovalStepsDAO from "../../components/approval-steps/dao";
+import ProductDesignsDAO from "../../components/product-designs/dao";
+import * as DesignEventsDAO from "../../components/design-events/dao";
+
+async function createDesignEvents(
+  trx: Knex.Transaction,
+  collectionId: string
+): Promise<void> {
+  const designs = await ProductDesignsDAO.findByCollectionId(collectionId);
+  for (const design of designs) {
+    const steps = await ApprovalStepsDAO.findByDesign(trx, design.id);
+    const checkoutStep = steps.find(
+      (step: ApprovalStep) => step.type === ApprovalStepType.CHECKOUT
+    );
+
+    if (!checkoutStep) {
+      throw new Error("Could not find checkout step for collection submission");
+    }
+    await DesignEventsDAO.create(trx, {
+      actorId: CALA_OPS_USER_ID,
+      approvalStepId: checkoutStep.id,
+      approvalSubmissionId: null,
+      bidId: null,
+      commentId: null,
+      createdAt: new Date(),
+      designId: design.id,
+      id: uuid.v4(),
+      quoteId: null,
+      targetId: null,
+      taskTypeId: null,
+      type: "COSTING_EXPIRATION",
+    });
+  }
+}
 
 /**
  * Notify the collection owners whose pricing just expired (and have not checked out).
@@ -42,6 +81,7 @@ export async function notifyExpired(trx: Knex.Transaction): Promise<number> {
   );
 
   for (const collectionToNotify of collectionsToNotify) {
+    await createDesignEvents(trx, collectionToNotify.id);
     await immediatelySendCostingExpiredNotification({
       collectionId: collectionToNotify.id,
       recipientUserId: collectionToNotify.createdBy,
