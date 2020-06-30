@@ -46,7 +46,7 @@ fail_elegantly() {
   exit 1
 }
 
-main() {
+run() {
   pre 'Dumping initial data... '
   pg_dump -c $DATABASE_URL > $initial_data_path
   post
@@ -80,4 +80,4 @@ main() {
   diff $initial_schema_path $after_rollback_schema_path
 }
 
-main "$@"
+run "$@"

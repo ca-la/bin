@@ -10,7 +10,7 @@ preauth_pgp_signature() {
   fi
 }
 
-main() {
+run() {
   release_type=${1:-other}
 
   if [[ $release_type != 'major' ]] &&
@@ -52,4 +52,4 @@ main() {
   git checkout main
 }
 
-main "$@"
+run "$@"

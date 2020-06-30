@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-main() {
+run() {
   commented_code=$(git grep -IEn '^\s*\/\/.+;\s*$' || true)
 
   if [[ $commented_code ]] ; then
@@ -12,4 +12,4 @@ main() {
   fi
 }
 
-main "$@"
+run "$@"
