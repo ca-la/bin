@@ -1,28 +1,42 @@
+import Knex from "knex";
 import createUser from "../../test-helpers/create-user";
-import { authHeader, get } from "../../test-helpers/http";
+import { authHeader, get, post } from "../../test-helpers/http";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 
+import * as ShipmentTrackingService from "./service";
 import * as PermissionsService from "../../services/get-permissions";
+import { Courier as AftershipCourier } from "../integrations/aftership/types";
 import * as ApprovalStepsDAO from "../approval-steps/dao";
-import ShipmentTrackingsDAO from "./dao";
-import { Courier } from "./types";
+import * as ShipmentTrackingsDAO from "./dao";
+import { ShipmentTracking } from "./types";
 
 async function setup() {
   const designer = await createUser();
-  const admin = await createUser({ role: "ADMIN" });
 
   return {
     users: {
       designer,
-      admin,
     },
     stubs: {
-      stepsStub: sandbox().stub(ApprovalStepsDAO, "findById"),
-      trackingsStub: sandbox().stub(ShipmentTrackingsDAO, "find"),
-      permissionsStub: sandbox().stub(
-        PermissionsService,
-        "getDesignPermissions"
-      ),
+      stepsStub: sandbox().stub(ApprovalStepsDAO, "findById").resolves({
+        id: "an-approval-step-id",
+        designId: "a-design-id",
+      }),
+      findStub: sandbox().stub(ShipmentTrackingsDAO, "find"),
+      createStub: sandbox().stub(ShipmentTrackingsDAO, "create"),
+      permissionsStub: sandbox()
+        .stub(PermissionsService, "getDesignPermissions")
+        .resolves({
+          canComment: true,
+          canDelete: true,
+          canEdit: true,
+          canEditVariants: false,
+          canSubmit: true,
+          canView: true,
+        }),
+      trackingLinkStub: sandbox()
+        .stub(ShipmentTrackingService, "buildTrackingLink")
+        .resolves("https://example.com/tracking/an-aftership-tracking-id"),
     },
   };
 }
@@ -33,22 +47,10 @@ test("GET /shipment-trackings?approvalStepId", async (t: Test) => {
     stubs,
   } = await setup();
 
-  stubs.stepsStub.resolves({
-    id: "an-approval-step-id",
-    designId: "a-design-id",
-  });
-  stubs.permissionsStub.resolves({
-    canComment: true,
-    canDelete: true,
-    canEdit: true,
-    canEditVariants: false,
-    canSubmit: true,
-    canView: true,
-  });
-  stubs.trackingsStub.resolves([
+  stubs.findStub.resolves([
     {
       id: "a-shipment-tracking-id",
-      courier: Courier.USPS,
+      courier: AftershipCourier.USPS,
       trackingId: "aTRACKINGid",
       description: null,
       approvalStepId: "an approval step id",
@@ -56,7 +58,7 @@ test("GET /shipment-trackings?approvalStepId", async (t: Test) => {
     },
     {
       id: "another-shipment-tracking-id",
-      courier: Courier.USPS,
+      courier: AftershipCourier.USPS,
       trackingId: "anotherTRACKINGid",
       description: null,
       approvalStepId: "an-approval-step-id",
@@ -108,4 +110,43 @@ test("GET /shipment-trackings?approvalStepId", async (t: Test) => {
   });
 
   t.is(missingQuery.status, 400, "missing approvalStepId query parameter");
+});
+
+test("POST /shipment-trackings", async (t: Test) => {
+  const {
+    users: { designer },
+    stubs,
+  } = await setup();
+  const now = new Date();
+  const tracking: Unsaved<ShipmentTracking> = {
+    courier: AftershipCourier.USPS,
+    trackingId: "a-tracking-id",
+    description: null,
+    approvalStepId: "an-approval-step-id",
+  };
+
+  stubs.createStub.callsFake(
+    async (_: Knex.Transaction, data: Unsaved<ShipmentTracking>) => ({
+      ...data,
+      id: "a-shipment-tracking-id",
+      createdAt: now,
+    })
+  );
+
+  const [response, body] = await post("/shipment-trackings", {
+    body: tracking,
+    headers: authHeader(designer.session.id),
+  });
+
+  t.equal(response.status, 201, "succesful creation");
+  t.deepEqual(
+    body,
+    {
+      ...tracking,
+      id: "a-shipment-tracking-id",
+      createdAt: now.toISOString(),
+      trackingLink: "https://example.com/tracking/an-aftership-tracking-id",
+    },
+    "returns created tracking with link, id, and date"
+  );
 });

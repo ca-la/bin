@@ -1,10 +1,11 @@
 import { test, Test } from "../../test-helpers/simple";
-import { isShipmentTrackingRow, ShipmentTrackingRow, Courier } from "./types";
+import { Courier as AftershipCourier } from "../integrations/aftership/types";
+import { isShipmentTrackingRow, ShipmentTrackingRow } from "./types";
 
 const valid: ShipmentTrackingRow = {
   id: "shipment tracking id",
   approval_step_id: "approval step id",
-  courier: Courier.USPS,
+  courier: AftershipCourier.USPS,
   created_at: new Date(),
   description: "a shipment tracking description",
   tracking_id: "aTRACKINGnumber123",

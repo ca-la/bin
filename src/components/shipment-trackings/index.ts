@@ -20,9 +20,7 @@ interface ShipmentTrackingComponent
 const component: ShipmentTrackingComponent = {
   adapter,
   dao,
-  router: {
-    ...router,
-  },
+  router,
   notifications: {},
 };
 

@@ -1,4 +1,5 @@
 import Knex from "knex";
+import uuid from "node-uuid";
 import { buildRouter } from "../../services/cala-component/cala-router";
 import requireAuth = require("../../middleware/require-auth");
 import {
@@ -9,12 +10,14 @@ import db from "../../services/db";
 import * as ApprovalStepsDAO from "../approval-steps/dao";
 
 import { ShipmentTracking, domain } from "./types";
-import dao from "./dao";
+import * as ShipmentTrackingsDAO from "./dao";
 import { requireQueryParam } from "../../middleware/require-query-param";
+import { hasProperties } from "../../services/require-properties";
+import { CalaRouter } from "../../services/cala-component/types";
+import useTransaction from "../../middleware/use-transaction";
+import { buildTrackingLink } from "./service";
 
-async function getDesignIdFromStep(this: AuthedContext): Promise<string> {
-  const { approvalStepId } = this.query;
-
+async function getDesignIdFromStep(approvalStepId: string): Promise<string> {
   const step = await db.transaction((trx: Knex.Transaction) =>
     ApprovalStepsDAO.findById(trx, approvalStepId)
   );
@@ -25,19 +28,25 @@ async function getDesignIdFromStep(this: AuthedContext): Promise<string> {
   return step.designId;
 }
 
-const standardRouter = buildRouter<ShipmentTracking>(
+const { prefix, routes } = buildRouter<ShipmentTracking>(
   domain,
   "/shipment-trackings",
-  dao,
+  ShipmentTrackingsDAO,
   {
     pickRoutes: ["find"],
     routeOptions: {
       find: {
-        allowedFilterAttributes: ["approvalStepId"],
+        allowedFilterAttributes: [
+          "approvalStepId",
+        ] as (keyof ShipmentTracking)[],
         middleware: [
           requireAuth,
           requireQueryParam("approvalStepId"),
-          requireDesignIdBy(getDesignIdFromStep),
+          requireDesignIdBy(function getDesignIdFromQuery(
+            this: AuthedContext
+          ): Promise<string> {
+            return getDesignIdFromStep(this.query.approvalStepId);
+          }),
           canAccessDesignInState,
         ],
       },
@@ -45,4 +54,53 @@ const standardRouter = buildRouter<ShipmentTracking>(
   }
 );
 
-export default standardRouter;
+function* create(this: TrxContext<AuthedContext<Unsaved<ShipmentTracking>>>) {
+  const { trx } = this.state;
+  const { body } = this.request;
+
+  if (
+    !hasProperties(
+      body,
+      "courier",
+      "trackingId",
+      "description",
+      "approvalStepId"
+    )
+  ) {
+    this.throw(400, "Request body does not match model");
+  }
+
+  const created: ShipmentTracking = yield ShipmentTrackingsDAO.create(trx, {
+    ...body,
+    id: uuid.v4(),
+    createdAt: new Date(),
+  });
+
+  const trackingLink = yield buildTrackingLink(trx, created.id);
+
+  this.status = 201;
+  this.body = { ...created, trackingLink };
+}
+
+const router: CalaRouter = {
+  prefix,
+  routes: {
+    ...routes,
+    "/": {
+      ...routes["/"],
+      post: [
+        useTransaction,
+        requireAuth,
+        requireDesignIdBy(function getDesignIdFromBody(
+          this: AuthedContext<Unsaved<ShipmentTracking>>
+        ): Promise<string> {
+          return getDesignIdFromStep(this.request.body.approvalStepId);
+        }),
+        canAccessDesignInState,
+        create,
+      ],
+    },
+  },
+};
+
+export default router;

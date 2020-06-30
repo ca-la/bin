@@ -153,6 +153,9 @@ const config = {
   AWS_S3_AVATAR_BUCKET_REGION: process.env.AWS_S3_AVATAR_BUCKET_REGION,
   AVATAR_BASE_URL: process.env.AVATAR_BASE_URL,
   IMGIX_API_KEY: process.env.IMGIX_API_KEY,
+
+  AFTERSHIP_CUSTOM_DOMAIN: process.env.AFTERSHIP_CUSTOM_DOMAIN,
+  AFTERSHIP_API_KEY: process.env.AFTERSHIP_API_KEY,
 };
 
 Object.keys(config).forEach((key) => {

@@ -1,9 +1,6 @@
-export enum Courier {
-  USPS = "usps",
-  UPS = "ups",
-  FEDEX = "fedex",
-  DHL = "dhl",
-}
+import { Courier as AftershipCourier } from "../integrations/aftership/types";
+
+export type Courier = AftershipCourier;
 
 export interface ShipmentTracking {
   id: string;
@@ -44,7 +41,7 @@ export function isShipmentTrackingRow(
     return false;
   }
 
-  const courierMatch = new Set(Object.values(Courier)).has(
+  const courierMatch = new Set([...Object.values(AftershipCourier)]).has(
     (candidate as Keyset<ShipmentTrackingRow>).courier as Courier
   );
 
