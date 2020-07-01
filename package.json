@@ -21,8 +21,8 @@
   },
   "scripts": {
     "lint": "eslint -c ./.eslintrc ./validate-deployment-readiness",
-    "release-minor": "npm run lint && npm version minor && git push origin master --tags && npm publish",
-    "release-patch": "npm run lint && npm version patch && git push origin master --tags && npm publish"
+    "release-minor": "npm run lint && npm version minor && git push origin main --tags && npm publish",
+    "release-patch": "npm run lint && npm version patch && git push origin main --tags && npm publish"
   },
   "author": "CALA <devops@ca.la>",
   "license": "MIT",
