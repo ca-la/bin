@@ -87,7 +87,7 @@ ${JSON.stringify(responseJson, null, 2)}`));
   });
 }
 
-async function main() {
+async function run() {
   const [_executor, _script, target, migrationPath] = process.argv;
 
   if (!target || !migrationPath) {
@@ -122,7 +122,7 @@ async function main() {
   }
 }
 
-main()
+run()
   .then(() => process.exit(0))
   .catch((err) => {
     console.error(err);
