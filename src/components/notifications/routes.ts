@@ -78,24 +78,6 @@ function* setRead(this: AuthedContext): Iterator<any, any, any> {
   }
 }
 
-function* setReadOlderThan(
-  this: AuthedContext<{ id: string }>
-): Iterator<any, any, any> {
-  if (!this.request.body.id) {
-    this.throw(400, "You must indicate the last read notification");
-  }
-
-  yield db.transaction(async (trx: Knex.Transaction) =>
-    NotificationsDAO.markReadOlderThan(
-      trx,
-      this.request.body.id,
-      this.state.userId
-    )
-  );
-
-  this.status = 204;
-}
-
 function* update(this: TrxContext<AuthedContext>): Iterator<any, any, any> {
   const { trx, userId } = this.state;
   const { notificationId } = this.params;
@@ -118,10 +100,26 @@ function* update(this: TrxContext<AuthedContext>): Iterator<any, any, any> {
   this.status = 204;
 }
 
+function* setArchiveOlderThan(
+  this: TrxContext<AuthedContext<{ id: string }>>
+): Iterator<any, any, any> {
+  const { trx } = this.state;
+  if (!this.request.body.id) {
+    this.throw(400, "You must indicate the last archived notification");
+  }
+
+  yield NotificationsDAO.archiveOlderThan(
+    trx,
+    this.request.body.id,
+    this.state.userId
+  );
+
+  this.status = 204;
+}
+
 router.get("/", requireAuth, getList);
 router.get("/unread", requireAuth, getUnreadCount);
 router.patch("/read", requireAuth, setRead);
 router.patch("/:notificationId", requireAuth, useTransaction, update);
-router.put("/last-read", requireAuth, setReadOlderThan);
-
+router.put("/archive", requireAuth, useTransaction, setArchiveOlderThan);
 export default router.routes();

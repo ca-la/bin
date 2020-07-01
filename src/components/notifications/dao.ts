@@ -245,6 +245,7 @@ export async function findByUserId(
         .orWhere({ "cl.user_id": userId, "n.recipient_user_id": null })
     )
     .andWhere({ "n.deleted_at": null })
+    .andWhere({ "n.archived_at": null })
     .orderBy("created_at", "desc")
     .limit(options.limit)
     .offset(options.offset);
@@ -343,7 +344,7 @@ export async function markRead(
   );
 }
 
-export async function markReadOlderThan(
+export async function archiveOlderThan(
   trx: Knex.Transaction,
   notificationId: string,
   recipientUserId: string
@@ -366,7 +367,7 @@ export async function markReadOlderThan(
             });
         })
         .andWhere({
-          "n.read_at": null,
+          "n.archived_at": null,
           "n.deleted_at": null,
         })
         .andWhereRaw(
@@ -384,7 +385,7 @@ export async function markReadOlderThan(
         );
     })
     .update({
-      read_at: db.fn.now(),
+      archived_at: db.fn.now(),
     });
 }
 

@@ -6,11 +6,7 @@ import * as NotificationsDAO from "./dao";
 import DesignsDAO from "../product-designs/dao";
 import createUser from "../../test-helpers/create-user";
 import db from "../../services/db";
-import {
-  FullNotification,
-  Notification,
-  NotificationType,
-} from "./domain-object";
+import { Notification, NotificationType } from "./domain-object";
 import generateNotification, {
   generateNotifications,
 } from "../../test-helpers/factories/notification";
@@ -717,7 +713,7 @@ test("Notifications DAO supports finding unread count", async (t: tape.Test) => 
   });
 });
 
-test("NotificationsDAO.markReadOlderThan", async (t: tape.Test) => {
+test("NotificationsDAO.archiveOlderThan", async (t: tape.Test) => {
   sandbox()
     .stub(NotificationAnnouncer, "announceNotificationCreation")
     .resolves({});
@@ -725,59 +721,69 @@ test("NotificationsDAO.markReadOlderThan", async (t: tape.Test) => {
   const { designer, partner } = setup.users;
 
   return await db.transaction(async (trx: Knex.Transaction) => {
-    const unreadCount = await NotificationsDAO.findUnreadCountByUserId(
+    const notificationsStart = await NotificationsDAO.findByUserId(
       trx,
-      designer.id
-    );
-
-    t.equal(unreadCount, 6, "base notification count for designer");
-
-    const findUnread = (notification: FullNotification): boolean =>
-      notification.readAt === null;
-    const designerNotificationsBefore = (
-      await NotificationsDAO.findByUserId(trx, designer.id, {
+      designer.id,
+      {
         limit: 100,
         offset: 0,
-      })
-    ).filter(findUnread);
+      }
+    );
 
-    const wrongUserReadCount = await NotificationsDAO.markReadOlderThan(
+    t.equal(
+      notificationsStart.length,
+      6,
+      "base notification count for designer"
+    );
+
+    const designerNotificationsBefore = await NotificationsDAO.findByUserId(
+      trx,
+      designer.id,
+      {
+        limit: 100,
+        offset: 0,
+      }
+    );
+
+    const wrongUserArchivedCount = await NotificationsDAO.archiveOlderThan(
       trx,
       designerNotificationsBefore[2].id,
       setup.users.other.id
     );
     t.equal(
-      wrongUserReadCount,
+      wrongUserArchivedCount,
       0,
-      "with wrong user sets no notifications as read"
+      "with wrong user sets no notifications as archived"
     );
-    const newlyReadCount = await NotificationsDAO.markReadOlderThan(
+    const newlyArchivedCount = await NotificationsDAO.archiveOlderThan(
       trx,
       designerNotificationsBefore[2].id,
       designer.id
     );
     t.equal(
-      newlyReadCount,
+      newlyArchivedCount,
       4,
-      "number of read notifications equals the number of older messages than the cursor id"
+      "number of archived notifications equals the number of older messages than the cursor id"
     );
-    const newlyReadCountAgain = await NotificationsDAO.markReadOlderThan(
+    const newlyArchivedCountAgain = await NotificationsDAO.archiveOlderThan(
       trx,
       designerNotificationsBefore[2].id,
       designer.id
     );
     t.equal(
-      newlyReadCountAgain,
+      newlyArchivedCountAgain,
       0,
-      "markReadOlderThan can be called multiple times succesfully"
+      "archiveOlderThan can be called multiple times succesfully"
     );
 
-    const designerNotificationsAfter = (
-      await NotificationsDAO.findByUserId(trx, designer.id, {
+    const designerNotificationsAfter = await NotificationsDAO.findByUserId(
+      trx,
+      designer.id,
+      {
         limit: 100,
         offset: 0,
-      })
-    ).filter(findUnread);
+      }
+    );
 
     t.deepEqual(
       designerNotificationsBefore.slice(0, 2),
@@ -786,23 +792,25 @@ test("NotificationsDAO.markReadOlderThan", async (t: tape.Test) => {
 
     t.equal(
       await NotificationsDAO.findUnreadCountByUserId(trx, designer.id),
-      2,
+      6,
       "notification count before deleting design"
     );
     await deleteById(setup.designs[0].id);
     t.equal(
       await NotificationsDAO.findUnreadCountByUserId(trx, designer.id),
-      1,
+      3,
       "notification count after deleting design"
     );
 
-    const partnerNotificationsBefore = (
-      await NotificationsDAO.findByUserId(trx, partner.id, {
+    const partnerNotificationsBefore = await NotificationsDAO.findByUserId(
+      trx,
+      partner.id,
+      {
         limit: 100,
         offset: 0,
-      })
-    ).filter(findUnread);
-    const partnerNewlyReadCount = await NotificationsDAO.markReadOlderThan(
+      }
+    );
+    const partnerNewlyArchivedCount = await NotificationsDAO.archiveOlderThan(
       trx,
       partnerNotificationsBefore[0].id,
       partner.id
@@ -811,17 +819,25 @@ test("NotificationsDAO.markReadOlderThan", async (t: tape.Test) => {
     t.equal(
       partnerNotificationsBefore.length,
       2,
-      "total unread partner notifications before"
+      "total unarchived partner notifications before"
     );
     t.equal(
-      partnerNewlyReadCount,
+      partnerNewlyArchivedCount,
       5,
-      "updates read date for unread notifications even if they would be excluded"
+      "updates archived date for un notifications even if they would be excluded"
+    );
+    const partnerNotificationsAfter = await NotificationsDAO.findByUserId(
+      trx,
+      partner.id,
+      {
+        limit: 100,
+        offset: 0,
+      }
     );
     t.equal(
-      await NotificationsDAO.findUnreadCountByUserId(trx, partner.id),
+      partnerNotificationsAfter.length,
       0,
-      "total unread partner notifications after"
+      "total unarchived partner notifications after"
     );
   });
 });

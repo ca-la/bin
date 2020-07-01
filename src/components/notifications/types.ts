@@ -64,4 +64,5 @@ export interface NotificationMessage {
   location: BreadCrumb[];
   attachments: NotificationMessageAttachment[];
   actions: NotificationMessageAction[];
+  archivedAt: Date | null;
 }

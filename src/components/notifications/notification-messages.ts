@@ -78,7 +78,7 @@ export function getLocation({
 
 type BaseMessage = Pick<
   NotificationMessage,
-  "actions" | "attachments" | "createdAt" | "id" | "readAt"
+  "actions" | "attachments" | "createdAt" | "id" | "readAt" | "archivedAt"
 > & {
   actor: User;
 };
@@ -91,6 +91,7 @@ export function createBaseMessage(notification: FullNotification): BaseMessage {
     createdAt: notification.createdAt,
     id: notification.id,
     readAt: notification.readAt,
+    archivedAt: notification.archivedAt,
   };
 }
 

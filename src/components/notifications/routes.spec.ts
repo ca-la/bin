@@ -149,7 +149,7 @@ test(`GET ${API_PATH}/unread returns the number of unread notifications`, async 
   );
 });
 
-test(`PUT ${API_PATH}/last-read marks notifications as read`, async (t: tape.Test) => {
+test(`PUT ${API_PATH}/archive marks notifications as archived`, async (t: tape.Test) => {
   sandbox()
     .stub(NotificationAnnouncer, "announceNotificationCreation")
     .resolves({});
@@ -163,16 +163,16 @@ test(`PUT ${API_PATH}/last-read marks notifications as read`, async (t: tape.Tes
   const [, notifications] = await API.get(API_PATH, {
     headers: API.authHeader(designerSession.id),
   });
-  const [, before] = await API.get(`${API_PATH}/unread`, {
+  const [, before] = await API.get(`${API_PATH}`, {
     headers: API.authHeader(designerSession.id),
   });
   t.deepEqual(
-    before.unreadNotificationsCount,
+    before.length,
     6,
-    "number of notifications before marking read"
+    "number of notifications before marking archived"
   );
 
-  const [mark] = await API.put(`${API_PATH}/last-read`, {
+  const [mark] = await API.put(`${API_PATH}/archive`, {
     headers: API.authHeader(designerSession.id),
     body: {
       id: notifications[2].id,
@@ -180,30 +180,30 @@ test(`PUT ${API_PATH}/last-read marks notifications as read`, async (t: tape.Tes
   });
   t.equal(mark.status, 204);
 
-  const [, after] = await API.get(`${API_PATH}/unread`, {
+  const [, after] = await API.get(`${API_PATH}`, {
     headers: API.authHeader(designerSession.id),
   });
-  t.deepEqual(
-    after.unreadNotificationsCount,
-    2,
-    "number of notifications after marking read"
-  );
+  t.deepEqual(after.length, 2, "number of notifications after archiving");
 
-  const [markOlder] = await API.put(`${API_PATH}/last-read`, {
+  const [markOlder] = await API.put(`${API_PATH}/archive`, {
     headers: API.authHeader(designerSession.id),
     body: {
       id: notifications[5].id,
     },
   });
-  t.equal(markOlder.status, 204, "marking older notifications still succeeds");
+  t.equal(
+    markOlder.status,
+    204,
+    "archiving older notifications still succeeds"
+  );
 
-  const [, afterOlder] = await API.get(`${API_PATH}/unread`, {
+  const [, afterOlder] = await API.get(`${API_PATH}`, {
     headers: API.authHeader(designerSession.id),
   });
   t.deepEqual(
-    afterOlder.unreadNotificationsCount,
+    afterOlder.length,
     2,
-    "marking older notifications does not change server state"
+    "archiving older notifications does not change server state"
   );
 });
 
