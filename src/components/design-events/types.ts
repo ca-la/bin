@@ -54,7 +54,8 @@ export type ActivityStreamEventType = Extract<
   | "STEP_REOPEN"
   | "SUBMIT_DESIGN"
   | "COMMIT_QUOTE"
-  | "COMMIT_COST_INPUTS",
+  | "COMMIT_COST_INPUTS"
+  | "COSTING_EXPIRATION",
   DesignEventTypes
 >;
 
@@ -70,6 +71,7 @@ export const ACTIVITY_STREAM_EVENTS: ActivityStreamEventType[] = [
   "SUBMIT_DESIGN",
   "COMMIT_QUOTE",
   "COMMIT_COST_INPUTS",
+  "COSTING_EXPIRATION",
 ];
 
 export default interface DesignEvent {
