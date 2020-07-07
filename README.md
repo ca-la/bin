@@ -52,11 +52,11 @@ $ bin/run <environment> src/scripts/<TARGET SCRIPT FILENAME>
 
 ## Deployment
 
-The `master` and `production` branches are automatically deployed by CircleCI:
+The `main` and `production` branches are automatically deployed by CircleCI:
 
 Branch | Heroku App | URL | Build Status
 ------ | ---------- | --- | ------------
-`master` | `cala-api-stg` | https://api-stg.ca.la | [![CircleCI](https://circleci.com/gh/ca-la/api/tree/master.svg?style=svg&circle-token=3608566fd37aaa8e46dabc26eb91799152d5b834)](https://circleci.com/gh/ca-la/api/tree/master)
+`main` | `cala-api-stg` | https://api-stg.ca.la | [![CircleCI](https://circleci.com/gh/ca-la/api/tree/main.svg?style=svg&circle-token=3608566fd37aaa8e46dabc26eb91799152d5b834)](https://circleci.com/gh/ca-la/api/tree/main)
 `production` | `cala-api-prod` | https://api.ca.la | [![CircleCI](https://circleci.com/gh/ca-la/api/tree/production.svg?style=svg&circle-token=3608566fd37aaa8e46dabc26eb91799152d5b834)](https://circleci.com/gh/ca-la/api/tree/production)
 
 To tag off and release a new version to production, run the release script:

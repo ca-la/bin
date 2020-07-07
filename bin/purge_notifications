@@ -8,7 +8,7 @@ set -o noglob
 # Purges all unsent/unread notifications
 # Usage: bin/purge_notifications <local|built>
 
-main() {
+run() {
   source bin/lib/loadenv
 
   host=${1:-""}
@@ -28,4 +28,4 @@ main() {
   esac
 }
 
-main "$@"
+run "$@"

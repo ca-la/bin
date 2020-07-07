@@ -1,4 +1,4 @@
-#!/bin/bash
+runbin/bash
 
 set -o errexit
 set -o nounset
@@ -8,7 +8,7 @@ set -o noglob
 # Create a new migration file
 # Usage: bin/create_migration <migration name>
 
-main() {
+run() {
   name=${1:-""}
 
   if [[ "$name" == "" ]]; then
@@ -30,4 +30,4 @@ main() {
   fi
 }
 
-main "$@"
+run "$@"

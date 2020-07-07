@@ -8,8 +8,8 @@ set -o noglob
 # Describe the purpose of this script
 # Usage: bin/script-name [optional] <required>
 
-main() {
+run() {
   # Code here
 }
 
-main "$@"
+run "$@"

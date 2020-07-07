@@ -8,11 +8,11 @@ set -o noglob
 # Run a single test
 # Usage: bin/tt <path-to-spec>
 
-main() {
+run() {
   source bin/lib/loadenv
   loadenv_test
 
   npx ts-node -r ./src/test-helpers/setup.ts $1 | npx tap-spec
 }
 
-main "$@"
+run "$@"

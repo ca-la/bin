@@ -11,7 +11,7 @@ set -o noglob
 source bin/lib/loadenv
 source bin/lib/confirm
 
-main() {
+run() {
   host=${1:-""}
   shift
 
@@ -59,4 +59,4 @@ main() {
   esac
 }
 
-main "$@"
+run "$@"

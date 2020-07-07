@@ -8,11 +8,11 @@ set -o noglob
 # Run tests with coverage report
 # Usage: bin/coverage
 
-main() {
+run() {
   source bin/lib/loadenv
   loadenv_test
 
   npx nyc tape "dist/**/*spec.js" | npx tap-spec
 }
 
-main "$@"
+run "$@"

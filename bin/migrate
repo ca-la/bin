@@ -27,8 +27,8 @@ usage_fail() {
 }
 
 live_migration_preflight() {
-  if [[ $(git rev-parse --abbrev-ref HEAD) != "master" ]] ; then
-    echo 'Cannot migrate from a branch other than master'
+  if [[ $(git rev-parse --abbrev-ref HEAD) != "main" ]] ; then
+    echo 'Cannot migrate from a branch other than main'
     exit 1
   fi
 
@@ -37,14 +37,14 @@ live_migration_preflight() {
     exit 1
   fi
 
-  if [[ $(git cherry -v origin/master) != "" ]]; then
+  if [[ $(git cherry -v origin/main) != "" ]]; then
     echo 'Cannot migrate with unpushed commits'
     exit 1
   fi
 
 }
 
-main() {
+run() {
   host=${1:-""}
   rollback_flag=${2:-""}
   skip_build=${SKIP_BUILD:-"false"}
@@ -115,4 +115,4 @@ main() {
   esac
 }
 
-main "$@"
+run "$@"

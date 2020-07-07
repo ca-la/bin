@@ -8,7 +8,7 @@ set -o noglob
 # Creates a new script from the script template
 # Usage: bin/create_script <script name>
 
-main() {
+run() {
   name=${1:-""}
 
   if [ "name" == "" ]; then
@@ -29,4 +29,4 @@ main() {
   fi
 }
 
-main "$@"
+run "$@"

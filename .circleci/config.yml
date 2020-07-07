@@ -40,7 +40,7 @@ jobs:
             git config --global user.email "devops@ca.la"
             git config --global user.name "CALA Machine User"
 
-            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+            if [ "${CIRCLE_BRANCH}" == "main" ]; then
               bin/publish staging
             elif [ "${CIRCLE_BRANCH}" == "production" ]; then
               bin/publish production

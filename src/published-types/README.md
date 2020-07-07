@@ -1,7 +1,7 @@
 # published-types
 
 Any exports from `index.ts` will become available in the `@cala/api-types`
-package on npm on every API master build run.
+package on npm on every API `main` build run.
 
 ## Caveats
 

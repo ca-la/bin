@@ -13,7 +13,7 @@ usage_fail() {
   exit 1
 }
 
-main() {
+run() {
   semver=${1:-""}
 
   case "$semver" in
@@ -26,4 +26,4 @@ main() {
   esac
 }
 
-main "$@"
+run "$@"

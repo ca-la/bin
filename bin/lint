@@ -8,7 +8,7 @@ set -o noglob
 # Run code format checking and linting
 # Usage: bin/lint
 
-main() {
+run() {
   ci=${CI:-"false"}
 
   if [[ "$ci" == "true" ]]
@@ -24,4 +24,4 @@ main() {
   npx cala-lint-commented-code
 }
 
-main "$@"
+run "$@"

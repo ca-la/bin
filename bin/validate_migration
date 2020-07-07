@@ -8,7 +8,7 @@ set -o noglob
 # Validate migration to ensure migrate -> rollback produces the original schema
 # Usage: bin/validate_migration
 
-main() {
+run() {
   source bin/lib/loadenv
   source bin/lib/clean
   source bin/lib/build
@@ -20,4 +20,4 @@ main() {
   npx cala-validate-migration
 }
 
-main "$@"
+run "$@"

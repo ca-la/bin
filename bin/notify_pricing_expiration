@@ -8,7 +8,7 @@ set -o noglob
 # Sends cost input expiration notifications to all applicable collection owners.
 # Usage: bin/notify_pricing_expiration <local|built>
 
-main() {
+run() {
   source bin/lib/loadenv
 
   host=${1:-""}
@@ -28,4 +28,4 @@ main() {
   esac
 }
 
-main "$@"
+run "$@"

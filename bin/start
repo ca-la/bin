@@ -8,7 +8,7 @@ set -o noglob
 # Start up node API server
 # Usage: bin/start
 
-main() {
+run() {
   source bin/lib/loadenv
   loadenv_local
 
@@ -20,4 +20,4 @@ main() {
   node dist
 }
 
-main "$@"
+run "$@"

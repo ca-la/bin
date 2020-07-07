@@ -8,11 +8,11 @@ set -o noglob
 # Run node REPL with local environment loaded
 # Usage: bin/console
 
-main() {
+run() {
   source bin/lib/loadenv
   loadenv_local
 
   node
 }
 
-main "$@"
+run "$@"

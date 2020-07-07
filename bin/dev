@@ -8,11 +8,11 @@ set -o noglob
 # Run server with ts-node watching for changes
 # Usage: bin/dev
 
-main() {
+run() {
   source bin/lib/loadenv
   loadenv_local
 
   npx nodemon -e '[t|j]s'  -w ./src --exec 'ts-node' ./src
 }
 
-main "$@"
+run "$@"

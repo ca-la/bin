@@ -9,7 +9,7 @@ set -o noglob
 # `src/published-types`.
 #
 # Usage: bin/publish_api_types [--prerelease]
-main() {
+run() {
   prerelease_flag=${1:-""}
 
   rm -rf published-types-dist
@@ -31,4 +31,4 @@ main() {
   )
 }
 
-main "$@"
+run "$@"

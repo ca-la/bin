@@ -31,10 +31,10 @@ preflight() {
 }
 
 postflight() {
-  git checkout master
+  git checkout main
 }
 
-main() {
+run() {
   host=${1:-""}
   if [[ "$host" != "staging" && "$host" != "production" ]]; then
     usage_fail
@@ -63,4 +63,4 @@ main() {
   postflight
 }
 
-main "$@"
+run "$@"
