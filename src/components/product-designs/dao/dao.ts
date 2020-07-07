@@ -23,13 +23,26 @@ import {
 } from "../domain-objects/with-meta";
 import { Role } from "../../users/types";
 import attachBidId from "./attach-bid-id";
+import {
+  ApprovalStepState,
+  ApprovalStepType,
+} from "../../approval-steps/types";
 
 export const TABLE_NAME = "product_designs";
 
-export interface DesignFilter {
-  type: "COLLECTION";
-  value: "*" | string;
-}
+export type DesignFilter =
+  | {
+      type: "COLLECTION";
+      value: "*" | string;
+    }
+  | {
+      type: "STEP";
+      value: ApprovalStepType;
+    }
+  | {
+      type: "STAGE";
+      value: "COMPLETED" | "INCOMPLETE" | "CHECKED_OUT";
+    };
 
 /**
  * Find all designs that the user is a collaborator on.
@@ -96,7 +109,9 @@ product_designs.id in (
         attachBidId(query, options.userId);
       }
     });
-  // we need current_step_ordering for sorting, but don't want it to be a part of domain object
+
+  // those fields are needed for sorting only
+  // but we don't want them to be a part of domain object
   return result.map(
     (row: any): ProductDesign =>
       new ProductDesign(omit(row, "current_step_ordering"))
@@ -116,6 +131,51 @@ function applyFilter(
       }
       break;
     }
+    case "STEP":
+      query.whereRaw(
+        db.raw(
+          `(
+            select type
+            from design_approval_steps as s
+            where s.state = ? AND s.design_id = product_designs.id
+            limit 1
+          ) = ?`,
+          [ApprovalStepState.CURRENT, designFilter.value]
+        )
+      );
+      break;
+    case "STAGE":
+      const stepsNotCompleted = db.raw(
+        `
+        select count(*)
+        from design_approval_steps as s
+        where s.state <> ? AND s.design_id = product_designs.id
+        limit 1`,
+        [ApprovalStepState.COMPLETED]
+      );
+
+      switch (designFilter.value) {
+        case "COMPLETED":
+          query.whereRaw(db.raw(`(?) = 0`, [stepsNotCompleted]));
+          break;
+        case "INCOMPLETE":
+          query.whereRaw(db.raw(`(?) > 0`, [stepsNotCompleted]));
+          break;
+        case "CHECKED_OUT":
+          query.whereRaw(
+            db.raw(
+              `(
+                select state
+                from design_approval_steps as s
+                where s.type = ? AND s.design_id = product_designs.id
+                limit 1
+              ) = ?`,
+              [ApprovalStepType.CHECKOUT, ApprovalStepState.COMPLETED]
+            )
+          );
+          break;
+      }
+      break;
   }
 }
 

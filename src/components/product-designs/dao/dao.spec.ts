@@ -20,7 +20,11 @@ import * as ProductDesignOptionsDAO from "../../../dao/product-design-options";
 import * as ApprovalStepsDAO from "../../approval-steps/dao";
 import * as PricingProductTypesDAO from "../../pricing-product-types/dao";
 import * as PricingQuotesDAO from "../../../dao/pricing-quotes";
-import { ApprovalStepState } from "../../approval-steps/domain-object";
+import {
+  ApprovalStepState,
+  ApprovalStepType,
+  ApprovalStepRow,
+} from "../../approval-steps/types";
 import { deleteById as deleteAnnotation } from "../../product-design-canvas-annotations/dao";
 import { create as createTask } from "../../../dao/tasks";
 import { create as createApprovalTask } from "../../../components/approval-step-tasks/dao";
@@ -570,6 +574,254 @@ test("findAllDesignsThroughCollaborator filters by collection", async (t: tape.T
     "returns design when filtered by collection id"
   );
   t.deepEqual(collectionSearch[0].id, firstDesign.id, "should match ids");
+});
+
+test("findAllDesignsThroughCollaborator filters by current step", async (t: tape.Test) => {
+  const { user } = await createUser();
+  const d1 = await createDesign({
+    productType: "test",
+    title: "first design",
+    userId: user.id,
+  });
+  const d2 = await createDesign({
+    productType: "test",
+    title: "second design",
+    userId: user.id,
+  });
+
+  const testCases = [
+    {
+      title: "checkout",
+      d1Step: ApprovalStepType.TECHNICAL_DESIGN,
+      d2Step: ApprovalStepType.CHECKOUT,
+      filterStep: ApprovalStepType.CHECKOUT,
+      expectedId: d2.id,
+    },
+    {
+      title: "technical design",
+      d1Step: ApprovalStepType.TECHNICAL_DESIGN,
+      d2Step: ApprovalStepType.CHECKOUT,
+      filterStep: ApprovalStepType.TECHNICAL_DESIGN,
+      expectedId: d1.id,
+    },
+    {
+      title: "sample",
+      d1Step: ApprovalStepType.TECHNICAL_DESIGN,
+      d2Step: ApprovalStepType.SAMPLE,
+      filterStep: ApprovalStepType.SAMPLE,
+      expectedId: d2.id,
+    },
+    {
+      title: "production",
+      d1Step: ApprovalStepType.TECHNICAL_DESIGN,
+      d2Step: ApprovalStepType.PRODUCTION,
+      filterStep: ApprovalStepType.PRODUCTION,
+      expectedId: d2.id,
+    },
+  ];
+
+  const allTypes = [
+    ApprovalStepType.CHECKOUT,
+    ApprovalStepType.TECHNICAL_DESIGN,
+    ApprovalStepType.SAMPLE,
+    ApprovalStepType.PRODUCTION,
+  ];
+
+  for (const testCase of testCases) {
+    for (const type of allTypes) {
+      await db.transaction(async (trx: Knex.Transaction) => {
+        const d1Step = await ApprovalStepsDAO.findOne(trx, {
+          type,
+          designId: d1.id,
+        });
+        const d2Step = await ApprovalStepsDAO.findOne(trx, {
+          type,
+          designId: d2.id,
+        });
+        if (!d1Step || !d2Step) {
+          throw new Error(`Could't find a step ${type} for generated design`);
+        }
+        await ApprovalStepsDAO.update(
+          trx,
+          d1Step.id,
+          type === testCase.d1Step
+            ? {
+                state: ApprovalStepState.CURRENT,
+                startedAt: new Date(),
+                reason: null,
+              }
+            : {
+                state: ApprovalStepState.UNSTARTED,
+                startedAt: null,
+                reason: null,
+              }
+        );
+        await ApprovalStepsDAO.update(
+          trx,
+          d2Step.id,
+          type === testCase.d2Step
+            ? {
+                state: ApprovalStepState.CURRENT,
+                startedAt: new Date(),
+                reason: null,
+              }
+            : {
+                state: ApprovalStepState.UNSTARTED,
+                startedAt: null,
+                reason: null,
+              }
+        );
+      });
+    }
+
+    const designs = await findAllDesignsThroughCollaborator({
+      userId: user.id,
+      filters: [{ type: "STEP", value: testCase.filterStep }],
+    });
+    t.deepEqual(
+      designs.map((d: ProductDesignWithApprovalSteps) => d.id),
+      [testCase.expectedId],
+      testCase.title
+    );
+  }
+});
+
+test("findAllDesignsThroughCollaborator filters by stage", async (t: tape.Test) => {
+  const { user } = await createUser();
+
+  const d1 = await createDesign({
+    productType: "test",
+    title: "first design",
+    userId: user.id,
+  });
+  const d2 = await createDesign({
+    productType: "test",
+    title: "second design",
+    userId: user.id,
+  });
+
+  interface TestCase {
+    title: string;
+    designId: string;
+    stepPatches: Partial<Record<ApprovalStepType, Partial<ApprovalStepRow>>>;
+    filterStage: "COMPLETED" | "INCOMPLETE" | "CHECKED_OUT";
+    expectedId: string;
+  }
+
+  const testCases: TestCase[] = [
+    {
+      title: "completed",
+      designId: d2.id,
+      stepPatches: {
+        [ApprovalStepType.CHECKOUT]: {
+          completed_at: new Date(),
+          started_at: new Date(),
+          reason: null,
+          state: ApprovalStepState.COMPLETED,
+        },
+        [ApprovalStepType.TECHNICAL_DESIGN]: {
+          completed_at: new Date(),
+          started_at: new Date(),
+          reason: null,
+          state: ApprovalStepState.COMPLETED,
+        },
+        [ApprovalStepType.SAMPLE]: {
+          completed_at: new Date(),
+          started_at: new Date(),
+          reason: null,
+          state: ApprovalStepState.COMPLETED,
+        },
+        [ApprovalStepType.PRODUCTION]: {
+          completed_at: new Date(),
+          started_at: new Date(),
+          reason: null,
+          state: ApprovalStepState.COMPLETED,
+        },
+      },
+      filterStage: "COMPLETED",
+      expectedId: d2.id,
+    },
+    {
+      title: "incomplete",
+      designId: d2.id,
+      stepPatches: {
+        [ApprovalStepType.CHECKOUT]: {
+          completed_at: new Date(),
+          started_at: new Date(),
+          reason: null,
+          state: ApprovalStepState.COMPLETED,
+        },
+        [ApprovalStepType.TECHNICAL_DESIGN]: {
+          completed_at: new Date(),
+          started_at: new Date(),
+          reason: null,
+          state: ApprovalStepState.COMPLETED,
+        },
+        [ApprovalStepType.SAMPLE]: {
+          completed_at: new Date(),
+          started_at: new Date(),
+          reason: null,
+          state: ApprovalStepState.COMPLETED,
+        },
+        [ApprovalStepType.PRODUCTION]: {
+          completed_at: new Date(),
+          started_at: new Date(),
+          reason: null,
+          state: ApprovalStepState.COMPLETED,
+        },
+      },
+      filterStage: "INCOMPLETE",
+      expectedId: d1.id,
+    },
+    {
+      title: "checked_out",
+      designId: d2.id,
+      stepPatches: {
+        [ApprovalStepType.CHECKOUT]: {
+          completed_at: new Date(),
+          started_at: new Date(),
+          reason: null,
+          state: ApprovalStepState.COMPLETED,
+        },
+      },
+      filterStage: "CHECKED_OUT",
+      expectedId: d2.id,
+    },
+  ];
+
+  for (const testCase of testCases) {
+    await db.transaction(async (trx: Knex.Transaction) => {
+      const types = Object.keys(
+        testCase.stepPatches
+      ) as (keyof typeof testCase.stepPatches)[];
+      for (const type of types) {
+        const patch = testCase.stepPatches[type];
+        if (!patch) {
+          continue;
+        }
+        const step = await ApprovalStepsDAO.findOne(trx, {
+          type,
+          designId: testCase.designId,
+        });
+        if (!step) {
+          throw new Error(`Could't find a step ${type} for generated design`);
+        }
+        await trx(ApprovalStepsDAO.tableName)
+          .where({ id: step.id })
+          .update(patch);
+      }
+    });
+
+    const designs = await findAllDesignsThroughCollaborator({
+      userId: user.id,
+      filters: [{ type: "STAGE", value: testCase.filterStage }],
+    });
+    t.deepEqual(
+      designs.map((d: ProductDesignWithApprovalSteps) => d.id),
+      [testCase.expectedId],
+      testCase.title
+    );
+  }
 });
 
 test("findById returns approval steps", async (t: tape.Test) => {

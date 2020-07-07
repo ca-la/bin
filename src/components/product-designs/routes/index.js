@@ -89,6 +89,12 @@ function* getDesignsByUser() {
   if (this.query.collectionFilterId) {
     filters.push({ type: "COLLECTION", value: this.query.collectionFilterId });
   }
+  if (this.query.currentStepType) {
+    filters.push({ type: "STEP", value: this.query.currentStepType });
+  }
+  if (this.query.stageType) {
+    filters.push({ type: "STAGE", value: this.query.stageType });
+  }
   const designs = yield ProductDesignsDaoTs.findAllDesignsThroughCollaborator({
     userId: this.query.userId,
     limit: this.query.limit,

@@ -3,7 +3,7 @@ import { buildDao } from "../../services/cala-component/cala-dao";
 import adapter from "./adapter";
 import ApprovalStep, { ApprovalStepRow, domain } from "./types";
 
-const tableName = "design_approval_steps";
+export const tableName = "design_approval_steps";
 
 const dao = {
   ...buildDao<ApprovalStep, ApprovalStepRow>(domain, tableName, adapter, {
