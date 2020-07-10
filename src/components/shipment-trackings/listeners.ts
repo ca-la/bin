@@ -1,4 +1,7 @@
-import { Listeners } from "../../services/cala-component/cala-listeners";
+import {
+  Listeners,
+  buildListeners,
+} from "../../services/cala-component/cala-listeners";
 import { DaoCreated } from "../../services/pubsub/cala-events";
 
 import Aftership from "../integrations/aftership/service";
@@ -9,6 +12,11 @@ export const listeners: Listeners<ShipmentTracking, typeof domain> = {
     event: DaoCreated<ShipmentTracking, typeof domain>
   ): Promise<void> => {
     const { trx, created } = event;
-    await Aftership.createTracking(trx, created.courier, created.id);
+    await Aftership.createTracking(trx, created);
   },
 };
+
+export default buildListeners<ShipmentTracking, typeof domain>(
+  domain,
+  listeners
+);

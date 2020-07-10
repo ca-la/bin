@@ -3,9 +3,8 @@ import createUser from "../../test-helpers/create-user";
 import { authHeader, get, post } from "../../test-helpers/http";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 
-import * as ShipmentTrackingService from "./service";
+import AftershipService from "../integrations/aftership/service";
 import * as PermissionsService from "../../services/get-permissions";
-import { Courier as AftershipCourier } from "../integrations/aftership/types";
 import * as ApprovalStepsDAO from "../approval-steps/dao";
 import * as ShipmentTrackingsDAO from "./dao";
 import { ShipmentTracking } from "./types";
@@ -34,9 +33,9 @@ async function setup() {
           canSubmit: true,
           canView: true,
         }),
-      trackingLinkStub: sandbox()
-        .stub(ShipmentTrackingService, "buildTrackingLink")
-        .resolves("https://example.com/tracking/an-aftership-tracking-id"),
+      aftershipCouriersStub: sandbox()
+        .stub(AftershipService, "getMatchingCouriers")
+        .resolves([{ slug: "usps", name: "United States Postal Service" }]),
     },
   };
 }
@@ -50,7 +49,7 @@ test("GET /shipment-trackings?approvalStepId", async (t: Test) => {
   stubs.findStub.resolves([
     {
       id: "a-shipment-tracking-id",
-      courier: AftershipCourier.USPS,
+      courier: "usps",
       trackingId: "aTRACKINGid",
       description: null,
       approvalStepId: "an approval step id",
@@ -58,7 +57,7 @@ test("GET /shipment-trackings?approvalStepId", async (t: Test) => {
     },
     {
       id: "another-shipment-tracking-id",
-      courier: AftershipCourier.USPS,
+      courier: "usps",
       trackingId: "anotherTRACKINGid",
       description: null,
       approvalStepId: "an-approval-step-id",
@@ -112,6 +111,38 @@ test("GET /shipment-trackings?approvalStepId", async (t: Test) => {
   t.is(missingQuery.status, 400, "missing approvalStepId query parameter");
 });
 
+test("GET /shipment-trackings/couriers?shipmentTrackingId", async (t: Test) => {
+  const {
+    users: { designer },
+    stubs,
+  } = await setup();
+
+  const [response, body] = await get(
+    "/shipment-trackings/couriers?shipmentTrackingId=a-shipment-tracking-id",
+    {
+      headers: authHeader(designer.session.id),
+    }
+  );
+
+  t.is(response.status, 200, "successful response");
+  t.deepEqual(
+    body,
+    [{ slug: "usps", name: "United States Postal Service" }],
+    "returns couriers"
+  );
+  t.deepEqual(
+    stubs.aftershipCouriersStub.args,
+    [["a-shipment-tracking-id"]],
+    "calls service with tracking ID"
+  );
+
+  const [missingQuery] = await get("/shipment-trackings/couriers", {
+    headers: authHeader(designer.session.id),
+  });
+
+  t.is(missingQuery.status, 400, "missing approvalStepId query parameter");
+});
+
 test("POST /shipment-trackings", async (t: Test) => {
   const {
     users: { designer },
@@ -119,7 +150,7 @@ test("POST /shipment-trackings", async (t: Test) => {
   } = await setup();
   const now = new Date();
   const tracking: Unsaved<ShipmentTracking> = {
-    courier: AftershipCourier.USPS,
+    courier: "usps",
     trackingId: "a-tracking-id",
     description: null,
     approvalStepId: "an-approval-step-id",
@@ -145,7 +176,7 @@ test("POST /shipment-trackings", async (t: Test) => {
       ...tracking,
       id: "a-shipment-tracking-id",
       createdAt: now.toISOString(),
-      trackingLink: "https://example.com/tracking/an-aftership-tracking-id",
+      trackingLink: "https://cala.aftership.com/a-tracking-id",
     },
     "returns created tracking with link, id, and date"
   );

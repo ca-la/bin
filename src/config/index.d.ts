@@ -81,5 +81,4 @@ export const AWS_S3_AVATAR_BUCKET_REGION: string;
 export const AVATAR_BASE_URL: string;
 export const IMGIX_API_KEY: string;
 
-export const AFTERSHIP_CUSTOM_DOMAIN: string;
 export const AFTERSHIP_API_KEY: string;

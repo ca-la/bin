@@ -1,10 +1,6 @@
-import { Courier as AftershipCourier } from "../integrations/aftership/types";
-
-export type Courier = AftershipCourier;
-
 export interface ShipmentTracking {
   id: string;
-  courier: Courier;
+  courier: string;
   trackingId: string;
   description: string | null;
   approvalStepId: string;
@@ -13,7 +9,7 @@ export interface ShipmentTracking {
 
 export interface ShipmentTrackingRow {
   id: string;
-  courier: Courier;
+  courier: string;
   tracking_id: string;
   description: string | null;
   approval_step_id: string;
@@ -22,13 +18,11 @@ export interface ShipmentTrackingRow {
 
 export const domain = "ShipmentTracking" as "ShipmentTracking";
 
-type Keyset<T> = { [P in keyof T]: unknown };
-
 export function isShipmentTrackingRow(
   candidate: object
 ): candidate is ShipmentTrackingRow {
   const keyset = new Set(Object.keys(candidate));
-  const keysetMatch = [
+  return [
     "id",
     "courier",
     "tracking_id",
@@ -36,14 +30,4 @@ export function isShipmentTrackingRow(
     "approval_step_id",
     "created_at",
   ].every((key: string) => keyset.has(key));
-
-  if (!keysetMatch) {
-    return false;
-  }
-
-  const courierMatch = new Set([...Object.values(AftershipCourier)]).has(
-    (candidate as Keyset<ShipmentTrackingRow>).courier as Courier
-  );
-
-  return courierMatch;
 }

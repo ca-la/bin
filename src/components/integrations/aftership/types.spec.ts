@@ -1,15 +1,6 @@
 import { test, Test } from "../../../test-helpers/simple";
 
-import {
-  isCourier,
-  fromJson,
-  isAftershipTrackingCreateResponse,
-} from "./types";
-
-test("isCourier", async (t: Test) => {
-  t.true(isCourier("usps"), "with valid Aftership courier slug");
-  t.false(isCourier("not a valid courier"), "with invalid courier slug");
-});
+import { fromJson, isAftershipTrackingCreateResponse } from "./types";
 
 test("fromJson", async (t: Test) => {
   const validCreated = {
@@ -45,6 +36,7 @@ test("isAftershipTrackingCreateResponse", async (t: Test) => {
   const valid = {
     tracking: {
       id: "an-aftership-tracking-id",
+      tracking_number: "a-courier-tracking-id",
     },
   };
   const invalid = {

@@ -1,18 +1,16 @@
-import Knex from "knex";
-import { AFTERSHIP_CUSTOM_DOMAIN } from "../../config";
-import * as AftershipTrackingsDAO from "../aftership-trackings/dao";
+import { ShipmentTracking } from "./types";
+
+const AFTERSHIP_CUSTOM_DOMAIN = "https://cala.aftership.com";
 
 function getAftershipTrackingLink(id: string): string {
   return `${AFTERSHIP_CUSTOM_DOMAIN}/${id}`;
 }
 
-export async function buildTrackingLink(
-  trx: Knex.Transaction,
-  shipmentTrackingId: string
-): Promise<string | null> {
-  const tracking = await AftershipTrackingsDAO.findOne(trx, {
-    shipmentTrackingId,
-  });
-
-  return tracking && getAftershipTrackingLink(tracking.id);
+export function attachTrackingLink(
+  shipmentTracking: ShipmentTracking
+): ShipmentTracking & { trackingLink: string } {
+  return {
+    ...shipmentTracking,
+    trackingLink: getAftershipTrackingLink(shipmentTracking.trackingId),
+  };
 }

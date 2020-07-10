@@ -1,19 +1,21 @@
 import { test, Test } from "../../test-helpers/simple";
-import { Courier as AftershipCourier } from "../integrations/aftership/types";
 import { isShipmentTrackingRow, ShipmentTrackingRow } from "./types";
 
 const valid: ShipmentTrackingRow = {
   id: "shipment tracking id",
   approval_step_id: "approval step id",
-  courier: AftershipCourier.USPS,
+  courier: "some cool courier",
   created_at: new Date(),
   description: "a shipment tracking description",
   tracking_id: "aTRACKINGnumber123",
 };
 
 const invalid = {
-  ...valid,
-  courier: "unknown courier",
+  id: "shipment tracking id",
+  approval_step_id: "approval step id",
+  created_at: new Date(),
+  description: "a shipment tracking description",
+  tracking_id: "aTRACKINGnumber123",
 };
 
 test("isShipmentTrackingRow", async (t: Test) => {

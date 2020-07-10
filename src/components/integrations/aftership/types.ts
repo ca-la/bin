@@ -1,14 +1,3 @@
-export enum Courier {
-  USPS = "usps",
-  UPS = "ups",
-  FEDEX = "fedex",
-  DHL = "dhl",
-}
-
-export function isCourier(candidate: string): candidate is Courier {
-  return (Object.values(Courier) as string[]).includes(candidate);
-}
-
 interface Success {
   code: 200;
 }
@@ -41,6 +30,12 @@ function isAftershipResponse(
   return Boolean(candidate) && "meta" in candidate && "data" in candidate;
 }
 
+enum AftershipResponseCodes {
+  SUCCESS = 200,
+  CREATED = 201,
+  ALREADY_EXISTS = 4003,
+}
+
 export function fromJson(body: any): AftershipResponse {
   if (!isAftershipResponse(body)) {
     throw new TypeError("Body is not in expected Aftership envelope format");
@@ -50,7 +45,7 @@ export function fromJson(body: any): AftershipResponse {
     meta: { code },
   } = body;
 
-  if (code === 200 || code === 201) {
+  if (Object.values(AftershipResponseCodes).includes(code)) {
     return body as AftershipResponseSuccess;
   }
 
@@ -60,6 +55,7 @@ export function fromJson(body: any): AftershipResponse {
 interface AftershipTrackingCreateResponse {
   tracking: {
     id: string;
+    tracking_number: string;
   };
 }
 
@@ -69,6 +65,23 @@ export function isAftershipTrackingCreateResponse(
   return (
     Boolean(candidate) &&
     "tracking" in candidate &&
-    "id" in (candidate as { tracking: object }).tracking
+    "id" in (candidate as { tracking: object }).tracking &&
+    "tracking_number" in (candidate as { tracking: object }).tracking
   );
+}
+
+export interface Courier {
+  slug: string;
+  name: string;
+}
+
+interface AftershipCourierListResponse {
+  total: number;
+  couriers: Courier[];
+}
+
+export function isAftershipCourierListResponse(
+  candidate: object
+): candidate is AftershipCourierListResponse {
+  return Boolean(candidate) && "total" in candidate && "couriers" in candidate;
 }

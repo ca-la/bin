@@ -154,7 +154,6 @@ const config = {
   AVATAR_BASE_URL: process.env.AVATAR_BASE_URL,
   IMGIX_API_KEY: process.env.IMGIX_API_KEY,
 
-  AFTERSHIP_CUSTOM_DOMAIN: process.env.AFTERSHIP_CUSTOM_DOMAIN,
   AFTERSHIP_API_KEY: process.env.AFTERSHIP_API_KEY,
 };
 
