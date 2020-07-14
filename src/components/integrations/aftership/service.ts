@@ -27,22 +27,27 @@ async function createTracking(
   shipmentTracking: ShipmentTracking
 ): Promise<AftershipTracking> {
   const { courier, trackingId, id: shipmentTrackingId } = shipmentTracking;
+  const requestBody = {
+    tracking: {
+      slug: courier,
+      tracking_number: trackingId,
+    },
+  };
 
   const [, body] = await fetcher({
     method: "post",
     path: "/trackings",
-    data: {
-      tracking: {
-        slug: courier,
-        tracking_number: trackingId,
-      },
-    },
+    data: requestBody,
   });
 
   const { data } = fromJson(body);
 
   if (!isAftershipTrackingCreateResponse(data)) {
-    throw new Error("Aftership did not respond with a valid tracking object");
+    throw new Error(
+      `Aftership did not respond with a valid tracking object
+Request: ${JSON.stringify(requestBody, null, 2)}
+Response: ${JSON.stringify(body, null, 2)}`
+    );
   }
 
   return AftershipTrackingsDAO.create(trx, {
@@ -55,20 +60,25 @@ async function createTracking(
 async function getMatchingCouriers(
   shipmentTrackingId: string
 ): Promise<Courier[]> {
+  const requestBody = {
+    tracking: {
+      tracking_number: shipmentTrackingId,
+    },
+  };
   const [, body] = await fetcher({
     method: "post",
     path: "/couriers/detect",
-    data: {
-      tracking: {
-        tracking_number: shipmentTrackingId,
-      },
-    },
+    data: requestBody,
   });
 
   const { data } = fromJson(body);
 
   if (!isAftershipCourierListResponse(data)) {
-    throw new Error("Aftership did not respond with a valid list of couriers");
+    throw new Error(
+      `Aftership did not respond with a valid list of couriers
+Request: ${JSON.stringify(requestBody, null, 2)}
+Response: ${JSON.stringify(body, null, 2)}`
+    );
   }
 
   return data.couriers.map((courier: Courier) => ({
