@@ -325,6 +325,7 @@ export function isNotificationRow(row: object): row is NotificationRow {
     "annotation_id",
     "approval_step_id",
     "approval_submission_id",
+    "archived_at",
     "canvas_id",
     "collaborator_id",
     "collection_id",
@@ -358,6 +359,21 @@ export const DEPRECATED_NOTIFICATION_TYPES = [
   "update-feature-placement",
   "update-section",
   "update-selected-option",
+];
+
+export const INBOX_NOTIFICATION_TYPES = [
+  "ANNOTATION_COMMENT_MENTION",
+  "ANNOTATION_COMMENT_REPLY",
+  "PARTNER_DESIGN_BID",
+  "TASK_ASSIGNMENT",
+  "TASK_COMMENT_MENTION",
+  "TASK_COMMENT_REPLY",
+  "APPROVAL_STEP_COMMENT_MENTION",
+  "APPROVAL_STEP_COMMENT_REPLY",
+  "APPROVAL_STEP_ASSIGNMENT",
+  "APPROVAL_STEP_SUBMISSION_ASSIGNMENT",
+  "APPROVAL_STEP_SUBMISSION_REVISION_REQUEST",
+  "APPROVAL_STEP_SUBMISSION_REREVIEW_REQUEST",
 ];
 
 export function isFullNotificationRow(
@@ -402,6 +418,7 @@ function encodeFull(rowData: FullNotificationRow): FullNotification {
     approvalSubmissionId: rowData.approval_submission_id,
     approvalStepTitle: rowData.approval_step_title,
     approvalSubmissionTitle: rowData.approval_submission_title,
+    archivedAt: rowData.archived_at,
     canvasId: rowData.canvas_id,
     collaboratorId: rowData.collaborator_id,
     collectionId: rowData.collection_id,

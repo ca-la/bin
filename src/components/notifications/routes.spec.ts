@@ -6,7 +6,7 @@ import createUser = require("../../test-helpers/create-user");
 
 import DesignsDAO from "../product-designs/dao";
 import * as NotificationsDAO from "../notifications/dao";
-import SessionsDAO from "../../dao/sessions";
+import * as SessionsDAO from "../../dao/sessions";
 import generateNotification, {
   generateNotifications,
 } from "../../test-helpers/factories/notification";
@@ -16,6 +16,7 @@ import generateCollaborator from "../../test-helpers/factories/collaborator";
 import * as NotificationAnnouncer from "../iris/messages/notification";
 import { NotificationMessage } from "./types";
 import { templateNotification } from "./models/base";
+import * as NotificationMessages from "./notification-messages";
 
 const API_PATH = "/notifications";
 
@@ -180,7 +181,7 @@ test(`PUT ${API_PATH}/archive marks notifications as archived`, async (t: tape.T
   });
   t.equal(mark.status, 204);
 
-  const [, after] = await API.get(`${API_PATH}`, {
+  const [, after] = await API.get(`${API_PATH}?filter=UNARCHIVED`, {
     headers: API.authHeader(designerSession.id),
   });
   t.deepEqual(after.length, 2, "number of notifications after archiving");
@@ -197,7 +198,7 @@ test(`PUT ${API_PATH}/archive marks notifications as archived`, async (t: tape.T
     "archiving older notifications still succeeds"
   );
 
-  const [, afterOlder] = await API.get(`${API_PATH}`, {
+  const [, afterOlder] = await API.get(`${API_PATH}?filter=UNARCHIVED`, {
     headers: API.authHeader(designerSession.id),
   });
   t.deepEqual(
@@ -382,4 +383,36 @@ test(`PATCH ${API_PATH}/:notificationId returns 403 for wrong user`, async (t: t
     headers: API.authHeader(userTwo.session.id),
   });
   t.equal(response.status, 403, "Access is denied");
+});
+
+test(`GET ${API_PATH} filter`, async (t: tape.Test) => {
+  const userOne = await createUser();
+
+  const notification = {
+    ...templateNotification,
+    id: "not-id",
+    actorUserId: null,
+    recipientUserId: userOne.user.id,
+    type: NotificationType.PARTNER_ACCEPT_SERVICE_BID,
+  };
+
+  sandbox().stub(NotificationsDAO, "findByUserId").resolves([notification]);
+  sandbox()
+    .stub(NotificationMessages, "createNotificationMessage")
+    .resolves(notification);
+
+  const [responseUnarchived] = await API.get(`${API_PATH}?filter=UNARCHIVED`, {
+    headers: API.authHeader(userOne.session.id),
+  });
+  t.equal(responseUnarchived.status, 200, "valid filter succeeds");
+
+  const [responseArchived] = await API.get(`${API_PATH}?filter=ARCHIVED`, {
+    headers: API.authHeader(userOne.session.id),
+  });
+  t.equal(responseArchived.status, 200, "valid filter succeeds");
+
+  const [responseUnknown] = await API.get(`${API_PATH}?filter=READ`, {
+    headers: API.authHeader(userOne.session.id),
+  });
+  t.equal(responseUnknown.status, 400, "Invalid filter fails");
 });

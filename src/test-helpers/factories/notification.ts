@@ -217,6 +217,7 @@ export default async function generateNotification(
     readAt: options.readAt || null,
     recipientUserId: recipient.id,
     sentEmailAt: options.sentEmailAt || null,
+    archivedAt: options.archivedAt || null,
   } as any;
 
   switch (options.type) {

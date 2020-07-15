@@ -14,13 +14,21 @@ import {
   Notification,
   NotificationRow,
   partialDataAdapter,
+  INBOX_NOTIFICATION_TYPES,
 } from "./domain-object";
 import { validate, validateEvery } from "../../services/validate-from-db";
 import { announceNotificationCreation } from "../iris/messages/notification";
 
+export enum NotificationFilter {
+  UNARCHIVED = "UNARCHIVED",
+  ARCHIVED = "ARCHIVED",
+  INBOX = "INBOX",
+}
+
 interface SearchInterface {
   limit: number;
   offset: number;
+  filter?: NotificationFilter;
 }
 
 const TABLE_NAME = "notifications";
@@ -245,7 +253,28 @@ export async function findByUserId(
         .orWhere({ "cl.user_id": userId, "n.recipient_user_id": null })
     )
     .andWhere({ "n.deleted_at": null })
-    .andWhere({ "n.archived_at": null })
+    .modify((query: Knex.QueryBuilder) => {
+      if (options.filter) {
+        switch (options.filter) {
+          case NotificationFilter.ARCHIVED: {
+            query.andWhere(db.raw("n.archived_at IS NOT NULL"));
+            return;
+          }
+          case NotificationFilter.UNARCHIVED: {
+            query.andWhere({ "n.archived_at": null });
+            return;
+          }
+          case NotificationFilter.INBOX: {
+            query
+              .andWhere({ "n.archived_at": null })
+              .whereIn("n.type", INBOX_NOTIFICATION_TYPES);
+            return;
+          }
+          default:
+            throw new Error("Unknown filter");
+        }
+      }
+    })
     .orderBy("created_at", "desc")
     .limit(options.limit)
     .offset(options.offset);

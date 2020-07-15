@@ -16,20 +16,29 @@ const router = new Router();
 interface GetListQuery {
   limit?: number;
   offset?: number;
+  filter?: NotificationsDAO.NotificationFilter;
 }
 
 function* getList(this: AuthedContext): Iterator<any, any, any> {
   const { userId } = this.state;
-  const { limit, offset }: GetListQuery = this.query;
+  const { limit, offset, filter }: GetListQuery = this.query;
 
   if ((limit && limit < 0) || (offset && offset < 0)) {
     this.throw(400, "Offset / Limit cannot be negative!");
+  }
+
+  if (
+    filter &&
+    !Object.values(NotificationsDAO.NotificationFilter).includes(filter)
+  ) {
+    this.throw(400, "Unknown filter");
   }
 
   const notifications = yield db.transaction((trx: Knex.Transaction) =>
     NotificationsDAO.findByUserId(trx, userId, {
       limit: limit || 20,
       offset: offset || 0,
+      filter,
     })
   );
   const messages: (NotificationMessage | null)[] = yield Promise.all(

@@ -742,6 +742,7 @@ test("NotificationsDAO.archiveOlderThan", async (t: tape.Test) => {
       {
         limit: 100,
         offset: 0,
+        filter: NotificationsDAO.NotificationFilter.UNARCHIVED,
       }
     );
 
@@ -782,6 +783,7 @@ test("NotificationsDAO.archiveOlderThan", async (t: tape.Test) => {
       {
         limit: 100,
         offset: 0,
+        filter: NotificationsDAO.NotificationFilter.UNARCHIVED,
       }
     );
 
@@ -808,6 +810,7 @@ test("NotificationsDAO.archiveOlderThan", async (t: tape.Test) => {
       {
         limit: 100,
         offset: 0,
+        filter: NotificationsDAO.NotificationFilter.UNARCHIVED,
       }
     );
     const partnerNewlyArchivedCount = await NotificationsDAO.archiveOlderThan(
@@ -832,6 +835,7 @@ test("NotificationsDAO.archiveOlderThan", async (t: tape.Test) => {
       {
         limit: 100,
         offset: 0,
+        filter: NotificationsDAO.NotificationFilter.UNARCHIVED,
       }
     );
     t.equal(
@@ -910,4 +914,76 @@ test("NotificationsDAO.update updates a notification", async (t: tape.Test) => {
     testTime.getTime(),
     "Updates a column"
   );
+});
+
+test("Notifications DAO filters notifications", async (t: tape.Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, "announceNotificationCreation")
+    .resolves({});
+  const { user: userOne } = await createUser({ withSession: false });
+  const { user: userTwo } = await createUser({ withSession: false });
+
+  const unarchivedNotification = await generateNotification({
+    actorUserId: userOne.id,
+    recipientUserId: userTwo.id,
+    type: NotificationType.ANNOTATION_COMMENT_REPLY,
+    archivedAt: null,
+  });
+
+  const archivedNotification = await generateNotification({
+    actorUserId: userOne.id,
+    recipientUserId: userTwo.id,
+    sentEmailAt: new Date(),
+    type: NotificationType.INVITE_COLLABORATOR,
+    archivedAt: new Date(),
+  });
+
+  return db.transaction(async (trx: Knex.Transaction) => {
+    const archivedNotifications = await NotificationsDAO.findByUserId(
+      trx,
+      userTwo.id,
+      {
+        offset: 0,
+        limit: 10,
+        filter: NotificationsDAO.NotificationFilter.ARCHIVED,
+      }
+    );
+
+    t.deepEqual(
+      archivedNotifications,
+      [archivedNotification.notification],
+      "Returns archived notifications"
+    );
+
+    const inboxNotifications = await NotificationsDAO.findByUserId(
+      trx,
+      userTwo.id,
+      {
+        offset: 0,
+        limit: 10,
+        filter: NotificationsDAO.NotificationFilter.INBOX,
+      }
+    );
+
+    t.deepEqual(
+      inboxNotifications,
+      [unarchivedNotification.notification],
+      "Returns inbox notifications"
+    );
+
+    const unarchivedNotifications = await NotificationsDAO.findByUserId(
+      trx,
+      userTwo.id,
+      {
+        offset: 0,
+        limit: 10,
+        filter: NotificationsDAO.NotificationFilter.UNARCHIVED,
+      }
+    );
+    t.deepEqual(
+      unarchivedNotifications,
+      [unarchivedNotification.notification],
+      "Returns unarchived notifications"
+    );
+  });
 });
