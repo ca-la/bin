@@ -65,4 +65,11 @@ export interface NotificationMessage {
   attachments: NotificationMessageAttachment[];
   actions: NotificationMessageAction[];
   archivedAt: Date | null;
+  matchedFilters: NotificationFilter[];
+}
+
+export enum NotificationFilter {
+  UNARCHIVED = "UNARCHIVED",
+  ARCHIVED = "ARCHIVED",
+  INBOX = "INBOX",
 }

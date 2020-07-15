@@ -107,6 +107,7 @@ export async function immediatelySendMonthlySalesReport(
     attachments: [],
     actions: [],
     archivedAt: null,
+    matchedFilters: [],
   };
 
   await EmailService.enqueueSend({

@@ -18,12 +18,7 @@ import {
 } from "./domain-object";
 import { validate, validateEvery } from "../../services/validate-from-db";
 import { announceNotificationCreation } from "../iris/messages/notification";
-
-export enum NotificationFilter {
-  UNARCHIVED = "UNARCHIVED",
-  ARCHIVED = "ARCHIVED",
-  INBOX = "INBOX",
-}
+import { NotificationFilter } from "./types";
 
 interface SearchInterface {
   limit: number;

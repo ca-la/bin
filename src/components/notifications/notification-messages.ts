@@ -20,6 +20,7 @@ import {
   NotificationMessage,
   NotificationMessageActionType,
 } from "./types";
+import { getMatchingFilters } from "../../services/get-matching-filters";
 
 const messageBuilders: Partial<Record<
   NotificationType,
@@ -78,7 +79,13 @@ export function getLocation({
 
 type BaseMessage = Pick<
   NotificationMessage,
-  "actions" | "attachments" | "createdAt" | "id" | "readAt" | "archivedAt"
+  | "actions"
+  | "attachments"
+  | "createdAt"
+  | "id"
+  | "readAt"
+  | "archivedAt"
+  | "matchedFilters"
 > & {
   actor: User;
 };
@@ -92,6 +99,7 @@ export function createBaseMessage(notification: FullNotification): BaseMessage {
     id: notification.id,
     readAt: notification.readAt,
     archivedAt: notification.archivedAt,
+    matchedFilters: getMatchingFilters(notification),
   };
 }
 

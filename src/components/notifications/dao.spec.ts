@@ -34,6 +34,7 @@ import generateCanvas from "../../test-helpers/factories/product-design-canvas";
 import { ComponentType } from "../components/domain-object";
 import generateAsset from "../../test-helpers/factories/asset";
 import generateApprovalSubmission from "../../test-helpers/factories/design-approval-submission";
+import { NotificationFilter } from "./types";
 
 test("Notifications DAO supports creation", async (t: tape.Test) => {
   sandbox()
@@ -742,7 +743,7 @@ test("NotificationsDAO.archiveOlderThan", async (t: tape.Test) => {
       {
         limit: 100,
         offset: 0,
-        filter: NotificationsDAO.NotificationFilter.UNARCHIVED,
+        filter: NotificationFilter.UNARCHIVED,
       }
     );
 
@@ -783,7 +784,7 @@ test("NotificationsDAO.archiveOlderThan", async (t: tape.Test) => {
       {
         limit: 100,
         offset: 0,
-        filter: NotificationsDAO.NotificationFilter.UNARCHIVED,
+        filter: NotificationFilter.UNARCHIVED,
       }
     );
 
@@ -810,7 +811,7 @@ test("NotificationsDAO.archiveOlderThan", async (t: tape.Test) => {
       {
         limit: 100,
         offset: 0,
-        filter: NotificationsDAO.NotificationFilter.UNARCHIVED,
+        filter: NotificationFilter.UNARCHIVED,
       }
     );
     const partnerNewlyArchivedCount = await NotificationsDAO.archiveOlderThan(
@@ -835,7 +836,7 @@ test("NotificationsDAO.archiveOlderThan", async (t: tape.Test) => {
       {
         limit: 100,
         offset: 0,
-        filter: NotificationsDAO.NotificationFilter.UNARCHIVED,
+        filter: NotificationFilter.UNARCHIVED,
       }
     );
     t.equal(
@@ -945,7 +946,7 @@ test("Notifications DAO filters notifications", async (t: tape.Test) => {
       {
         offset: 0,
         limit: 10,
-        filter: NotificationsDAO.NotificationFilter.ARCHIVED,
+        filter: NotificationFilter.ARCHIVED,
       }
     );
 
@@ -961,7 +962,7 @@ test("Notifications DAO filters notifications", async (t: tape.Test) => {
       {
         offset: 0,
         limit: 10,
-        filter: NotificationsDAO.NotificationFilter.INBOX,
+        filter: NotificationFilter.INBOX,
       }
     );
 
@@ -977,7 +978,7 @@ test("Notifications DAO filters notifications", async (t: tape.Test) => {
       {
         offset: 0,
         limit: 10,
-        filter: NotificationsDAO.NotificationFilter.UNARCHIVED,
+        filter: NotificationFilter.UNARCHIVED,
       }
     );
     t.deepEqual(

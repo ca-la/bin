@@ -7,7 +7,7 @@ import db from "../../services/db";
 import requireAuth = require("../../middleware/require-auth");
 import { createNotificationMessage } from "./notification-messages";
 import useTransaction from "../../middleware/use-transaction";
-import { NotificationMessage } from "./types";
+import { NotificationMessage, NotificationFilter } from "./types";
 
 const ALLOWED_UPDATE_KEYS = ["archivedAt"];
 
@@ -16,7 +16,7 @@ const router = new Router();
 interface GetListQuery {
   limit?: number;
   offset?: number;
-  filter?: NotificationsDAO.NotificationFilter;
+  filter?: NotificationFilter;
 }
 
 function* getList(this: AuthedContext): Iterator<any, any, any> {
@@ -27,10 +27,7 @@ function* getList(this: AuthedContext): Iterator<any, any, any> {
     this.throw(400, "Offset / Limit cannot be negative!");
   }
 
-  if (
-    filter &&
-    !Object.values(NotificationsDAO.NotificationFilter).includes(filter)
-  ) {
+  if (filter && !Object.values(NotificationFilter).includes(filter)) {
     this.throw(400, "Unknown filter");
   }
 
