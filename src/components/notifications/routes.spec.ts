@@ -416,3 +416,42 @@ test(`GET ${API_PATH} filter`, async (t: tape.Test) => {
   });
   t.equal(responseUnknown.status, 400, "Invalid filter fails");
 });
+
+test(`PUT ${API_PATH}/archive inboxOnly `, async (t: tape.Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, "announceNotificationCreation")
+    .resolves({});
+  const archiveStub = sandbox()
+    .stub(NotificationsDAO, "archiveOlderThan")
+    .yields();
+  const setup = await generateNotifications();
+
+  const designerSession = await SessionsDAO.createForUser(
+    setup.users.designer,
+    { role: setup.users.designer.role }
+  );
+
+  await API.put(`${API_PATH}/archive?inboxOnly=true`, {
+    headers: API.authHeader(designerSession.id),
+    body: {
+      id: "a-real-id",
+    },
+  });
+  await API.put(`${API_PATH}/archive?inboxOnly=false`, {
+    headers: API.authHeader(designerSession.id),
+    body: {
+      id: "a-real-id",
+    },
+  });
+
+  t.deepEqual(archiveStub.args[0][1], {
+    notificationId: "a-real-id",
+    onlyArchiveInbox: true,
+    recipientUserId: designerSession.userId,
+  });
+  t.deepEqual(archiveStub.args[1][1], {
+    notificationId: "a-real-id",
+    onlyArchiveInbox: false,
+    recipientUserId: designerSession.userId,
+  });
+});

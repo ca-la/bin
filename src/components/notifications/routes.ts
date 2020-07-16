@@ -114,12 +114,12 @@ function* setArchiveOlderThan(
     this.throw(400, "You must indicate the last archived notification");
   }
 
-  const { inboxOnly }: { inboxOnly?: boolean } = this.query;
+  const { inboxOnly }: { inboxOnly?: string } = this.query;
 
   yield NotificationsDAO.archiveOlderThan(trx, {
     notificationId: this.request.body.id,
     recipientUserId: this.state.userId,
-    onlyArchiveInbox: Boolean(inboxOnly),
+    onlyArchiveInbox: Boolean(inboxOnly === "true"),
   });
 
   this.status = 204;
