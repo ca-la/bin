@@ -749,19 +749,22 @@ test("NotificationsDAO.archiveOlderThan", async (t: tape.Test) => {
 
     const wrongUserArchivedCount = await NotificationsDAO.archiveOlderThan(
       trx,
-      designerNotificationsBefore[2].id,
-      setup.users.other.id
+      {
+        notificationId: designerNotificationsBefore[2].id,
+        recipientUserId: setup.users.other.id,
+        onlyArchiveInbox: false,
+      }
     );
     t.equal(
       wrongUserArchivedCount,
       0,
       "with wrong user sets no notifications as archived"
     );
-    const newlyArchivedCount = await NotificationsDAO.archiveOlderThan(
-      trx,
-      designerNotificationsBefore[2].id,
-      designer.id
-    );
+    const newlyArchivedCount = await NotificationsDAO.archiveOlderThan(trx, {
+      notificationId: designerNotificationsBefore[2].id,
+      recipientUserId: designer.id,
+      onlyArchiveInbox: false,
+    });
     t.equal(
       newlyArchivedCount,
       4,
@@ -769,8 +772,11 @@ test("NotificationsDAO.archiveOlderThan", async (t: tape.Test) => {
     );
     const newlyArchivedCountAgain = await NotificationsDAO.archiveOlderThan(
       trx,
-      designerNotificationsBefore[2].id,
-      designer.id
+      {
+        notificationId: designerNotificationsBefore[2].id,
+        recipientUserId: designer.id,
+        onlyArchiveInbox: false,
+      }
     );
     t.equal(
       newlyArchivedCountAgain,
@@ -816,8 +822,11 @@ test("NotificationsDAO.archiveOlderThan", async (t: tape.Test) => {
     );
     const partnerNewlyArchivedCount = await NotificationsDAO.archiveOlderThan(
       trx,
-      partnerNotificationsBefore[0].id,
-      partner.id
+      {
+        notificationId: partnerNotificationsBefore[0].id,
+        recipientUserId: partner.id,
+        onlyArchiveInbox: false,
+      }
     );
 
     t.equal(
@@ -985,6 +994,74 @@ test("Notifications DAO filters notifications", async (t: tape.Test) => {
       unarchivedNotifications,
       [unarchivedNotification.notification],
       "Returns unarchived notifications"
+    );
+  });
+});
+
+test("NotificationsDAO.archiveOlderThan onlyArchiveInbox", async (t: tape.Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, "announceNotificationCreation")
+    .resolves({});
+  const setup = await generateNotifications();
+
+  const { designer } = setup.users;
+  return await db.transaction(async (trx: Knex.Transaction) => {
+    const inboxNotificationsBefore = await NotificationsDAO.findByUserId(
+      trx,
+      designer.id,
+      {
+        limit: 100,
+        offset: 0,
+        filter: NotificationFilter.INBOX,
+      }
+    );
+    t.equal(inboxNotificationsBefore.length, 2, "base inbox count");
+
+    const unarchivedNotificationsBefore = await NotificationsDAO.findByUserId(
+      trx,
+      designer.id,
+      {
+        limit: 100,
+        offset: 0,
+        filter: NotificationFilter.UNARCHIVED,
+      }
+    );
+    t.equal(unarchivedNotificationsBefore.length, 6, "base unarchived count");
+
+    await NotificationsDAO.archiveOlderThan(trx, {
+      notificationId: inboxNotificationsBefore[0].id,
+      recipientUserId: designer.id,
+      onlyArchiveInbox: true,
+    });
+
+    const inboxNotificationsAfter = await NotificationsDAO.findByUserId(
+      trx,
+      designer.id,
+      {
+        limit: 100,
+        offset: 0,
+        filter: NotificationFilter.INBOX,
+      }
+    );
+    t.equal(
+      inboxNotificationsAfter.length,
+      0,
+      "archives all inbox notifications"
+    );
+
+    const unarchivedNotificationsAfter = await NotificationsDAO.findByUserId(
+      trx,
+      designer.id,
+      {
+        limit: 100,
+        offset: 0,
+        filter: NotificationFilter.UNARCHIVED,
+      }
+    );
+    t.equal(
+      unarchivedNotificationsAfter.length,
+      unarchivedNotificationsBefore.length - inboxNotificationsBefore.length,
+      "only arcives inbox notifications"
     );
   });
 });

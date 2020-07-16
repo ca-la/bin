@@ -368,11 +368,18 @@ export async function markRead(
   );
 }
 
+interface ArchiveOptions {
+  notificationId: string;
+  recipientUserId: string;
+  onlyArchiveInbox: boolean;
+}
+
 export async function archiveOlderThan(
   trx: Knex.Transaction,
-  notificationId: string,
-  recipientUserId: string
+  options: ArchiveOptions
 ): Promise<number> {
+  const { recipientUserId, notificationId, onlyArchiveInbox } = options;
+
   return trx(TABLE_NAME)
     .whereIn("id", (subquery: Knex.QueryBuilder) => {
       subquery
@@ -406,7 +413,12 @@ export async function archiveOlderThan(
          )
 )`,
           { notificationId, recipientUserId }
-        );
+        )
+        .modify((query: Knex.QueryBuilder) => {
+          if (onlyArchiveInbox) {
+            query.whereIn("n.type", INBOX_NOTIFICATION_TYPES);
+          }
+        });
     })
     .update({
       archived_at: db.fn.now(),
