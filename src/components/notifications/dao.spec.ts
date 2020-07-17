@@ -801,13 +801,13 @@ test("NotificationsDAO.archiveOlderThan", async (t: tape.Test) => {
 
     t.equal(
       await NotificationsDAO.findUnreadCountByUserId(trx, designer.id),
-      6,
+      2,
       "notification count before deleting design"
     );
     await deleteById(setup.designs[0].id);
     t.equal(
       await NotificationsDAO.findUnreadCountByUserId(trx, designer.id),
-      3,
+      1,
       "notification count after deleting design"
     );
 
@@ -1062,6 +1062,61 @@ test("NotificationsDAO.archiveOlderThan onlyArchiveInbox", async (t: tape.Test) 
       unarchivedNotificationsAfter.length,
       unarchivedNotificationsBefore.length - inboxNotificationsBefore.length,
       "only arcives inbox notifications"
+    );
+  });
+});
+
+test("NotificationsDAO.archiveOlderThan marks unread notifications as read", async (t: tape.Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, "announceNotificationCreation")
+    .resolves({});
+  const setup = await generateNotifications();
+  const readTime = new Date(2020, 1, 27);
+
+  const { designer } = setup.users;
+  return await db.transaction(async (trx: Knex.Transaction) => {
+    const notificationsBefore = await NotificationsDAO.findByUserId(
+      trx,
+      designer.id,
+      {
+        limit: 100,
+        offset: 0,
+        filter: NotificationFilter.INBOX,
+      }
+    );
+
+    await NotificationsDAO.update(trx, notificationsBefore[0].id, {
+      readAt: readTime,
+    });
+    await NotificationsDAO.update(trx, notificationsBefore[1].id, {
+      readAt: null,
+    });
+
+    await NotificationsDAO.archiveOlderThan(trx, {
+      notificationId: notificationsBefore[0].id,
+      recipientUserId: designer.id,
+      onlyArchiveInbox: true,
+    });
+
+    const notificationsAfter = await NotificationsDAO.findByUserId(
+      trx,
+      designer.id,
+      {
+        limit: 100,
+        offset: 0,
+        filter: NotificationFilter.ARCHIVED,
+      }
+    );
+
+    t.deepEqual(
+      notificationsAfter[0].readAt,
+      readTime,
+      "Leaves read notifications as read"
+    );
+    t.isNotEqual(
+      notificationsAfter[1].readAt,
+      null,
+      "Marks unread notifications as read"
     );
   });
 });

@@ -421,7 +421,18 @@ export async function archiveOlderThan(
         });
     })
     .update({
-      archived_at: db.fn.now(),
+      archived_at: db.raw(`
+        CASE WHEN archived_at IS NULL THEN
+          now()
+        ELSE
+          archived_at
+        END`),
+      read_at: db.raw(`
+        CASE WHEN read_at IS NULL THEN
+          now()
+        ELSE
+          read_at
+        END`),
     });
 }
 
