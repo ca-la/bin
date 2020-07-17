@@ -2,6 +2,8 @@ import uuid from "node-uuid";
 
 import * as CollaboratorsDAO from "../../collaborators/dao";
 import * as CollectionsDAO from "../dao";
+import * as CollectionDesignsDAO from "../dao/design";
+import SessionsDAO from "../../../dao/sessions";
 import ProductDesignsDAO from "../../product-designs/dao";
 import API from "../../../test-helpers/http";
 import { sandbox, test, Test } from "../../../test-helpers/fresh";
@@ -121,113 +123,175 @@ test("PUT + DEL /collections/:id/designs without designs", async (t: Test) => {
   t.equal(body2.message, "designIds is a required query parameter.");
 });
 
-test("PUT /collections/:id/designs/:id", async (t: Test) => {
-  const { user, session } = await createUser();
-  sandbox().stub(CollaboratorsDAO, "create").resolves({
-    collectionId: uuid.v4(),
-    id: uuid.v4(),
+test("PUT /collections/:id/designs?designIds", async (t: Test) => {
+  const collection = {
+    id: "a-collection-id",
+    createdBy: "a-user-id",
+  };
+  const ownerCollaborator = {
+    userId: "a-user-id",
     role: "EDIT",
-    userId: uuid.v4(),
+  };
+  const partnerCollaborator = {
+    userId: "a-partner-id",
+    role: "PARTNER",
+  };
+  const sessionStub = sandbox().stub(SessionsDAO, "findById").resolves({
+    role: "USER",
+    userId: "a-user-id",
   });
+  sandbox().stub(CollectionsDAO, "findById").resolves(collection);
+  const collaboratorStub = sandbox()
+    .stub(CollaboratorsDAO, "findByCollectionAndUser")
+    .resolves([ownerCollaborator]);
+  sandbox().stub(CollectionDesignsDAO, "moveDesigns").resolves(1);
+  sandbox()
+    .stub(ProductDesignsDAO, "findByCollectionId")
+    .resolves([{ id: "another-design-id" }]);
 
-  const collection = await API.post("/collections", {
-    body: {
-      createdAt: new Date(),
-      createdBy: user.id,
-      deletedAt: null,
-      description: "Initial commit",
-      id: uuid.v4(),
-      title: "Drop 001/The Early Years",
-    },
-    headers: API.authHeader(session.id),
-  });
-  const otherCollection = await API.post("/collections", {
-    body: {
-      createdAt: new Date(),
-      createdBy: user.id,
-      deletedAt: null,
-      description: "Ewoks",
-      id: uuid.v4(),
-      title: "Drop 002/Empire Strikes Back",
-    },
-    headers: API.authHeader(session.id),
-  });
-  const design = await API.post("/product-designs", {
-    body: {
-      description: "Black, bold, beautiful",
-      title: "Vader Mask",
-      userId: user.id,
-    },
-    headers: API.authHeader(session.id),
-  });
-  const collectionDesigns = await API.put(
-    `/collections/${collection[1].id}/designs/${design[1].id}`,
-    { headers: API.authHeader(session.id) }
+  const ownerRequest = await API.put(
+    `/collections/${collection.id}/designs?designIds=a-design-id`,
+    { headers: { Authorization: "Token a-session-id" } }
   );
 
-  t.equal(
-    collectionDesigns[1][0].id,
-    design[1].id,
-    "adds design to collection and returns all designs for collection"
+  t.equal(ownerRequest[0].status, 200);
+  t.deepEqual(
+    ownerRequest[1],
+    [{ id: "another-design-id" }],
+    "request returns designs in collection"
   );
 
-  const designInOtherCollection = await API.put(
-    `/collections/${otherCollection[1].id}/designs/${design[1].id}`,
-    { headers: API.authHeader(session.id) }
+  sessionStub.resolves({ role: "PARTNER", userId: "a-partner-id" });
+  collaboratorStub.resolves([partnerCollaborator]);
+  const partnerRequest = await API.put(
+    `/collections/${collection.id}/designs?designIds=a-design-id`,
+    { headers: { Authorization: "Token a-session-id" } }
   );
-  t.equal(
-    designInOtherCollection[1][0].id,
-    design[1].id,
-    "adding a design to a second collection moves it there"
+
+  t.equal(partnerRequest[0].status, 403);
+
+  sessionStub.resolves({ role: "ADMIN", userId: "an-admin-id" });
+  collaboratorStub.resolves([]);
+  const adminRequest = await API.put(
+    `/collections/${collection.id}/designs?designIds=a-design-id`,
+    { headers: { Authorization: "Token a-session-id" } }
   );
+
+  t.equal(adminRequest[0].status, 200);
+});
+
+test("PUT /collections/:id/designs/:id", async (t: Test) => {
+  const collection = {
+    id: "a-collection-id",
+    createdBy: "a-user-id",
+  };
+  const ownerCollaborator = {
+    userId: "a-user-id",
+    role: "EDIT",
+  };
+  const partnerCollaborator = {
+    userId: "a-partner-id",
+    role: "PARTNER",
+  };
+  const sessionStub = sandbox().stub(SessionsDAO, "findById").resolves({
+    role: "USER",
+    userId: "a-user-id",
+  });
+  sandbox().stub(CollectionsDAO, "findById").resolves(collection);
+  const collaboratorStub = sandbox()
+    .stub(CollaboratorsDAO, "findByCollectionAndUser")
+    .resolves([ownerCollaborator]);
+  sandbox().stub(CollectionDesignsDAO, "moveDesigns").resolves(1);
+  sandbox()
+    .stub(ProductDesignsDAO, "findByCollectionId")
+    .resolves([{ id: "another-design-id" }]);
+
+  const ownerRequest = await API.put(
+    `/collections/${collection.id}/designs/a-design-id`,
+    { headers: { Authorization: "Token a-session-id" } }
+  );
+
+  t.equal(ownerRequest[0].status, 200);
+  t.deepEqual(
+    ownerRequest[1],
+    [{ id: "another-design-id" }],
+    "request returns designs in collection"
+  );
+
+  sessionStub.resolves({ role: "PARTNER", userId: "a-partner-id" });
+  collaboratorStub.resolves([partnerCollaborator]);
+  const partnerRequest = await API.put(
+    `/collections/${collection.id}/designs/a-design-id`,
+    { headers: { Authorization: "Token a-session-id" } }
+  );
+
+  t.equal(partnerRequest[0].status, 403);
+
+  sessionStub.resolves({ role: "ADMIN", userId: "an-admin-id" });
+  collaboratorStub.resolves([]);
+  const adminRequest = await API.put(
+    `/collections/${collection.id}/designs/a-design-id`,
+    { headers: { Authorization: "Token a-session-id" } }
+  );
+
+  t.equal(adminRequest[0].status, 200);
 });
 
 test("DELETE /collections/:id/designs/:id", async (t: Test) => {
-  const { user, session } = await createUser();
-  const { session: session2 } = await createUser();
-
-  sandbox().stub(CollaboratorsDAO, "create").resolves({
-    collectionId: uuid.v4(),
-    id: uuid.v4(),
+  const collection = {
+    id: "a-collection-id",
+    createdBy: "a-user-id",
+  };
+  const ownerCollaborator = {
+    userId: "a-user-id",
     role: "EDIT",
-    userId: uuid.v4(),
+  };
+  const partnerCollaborator = {
+    userId: "a-partner-id",
+    role: "PARTNER",
+  };
+  const sessionStub = sandbox().stub(SessionsDAO, "findById").resolves({
+    role: "USER",
+    userId: "a-user-id",
   });
+  sandbox().stub(CollectionsDAO, "findById").resolves(collection);
+  const collaboratorStub = sandbox()
+    .stub(CollaboratorsDAO, "findByCollectionAndUser")
+    .resolves([ownerCollaborator]);
+  sandbox().stub(CollectionDesignsDAO, "removeDesigns").resolves(1);
+  sandbox()
+    .stub(ProductDesignsDAO, "findByCollectionId")
+    .resolves([{ id: "another-design-id" }]);
 
-  const collection = await API.post("/collections", {
-    body: {
-      createdAt: new Date(),
-      createdBy: user.id,
-      deletedAt: null,
-      description: "Initial commit",
-      id: uuid.v4(),
-      title: "Drop 001/The Early Years",
-    },
-    headers: API.authHeader(session.id),
-  });
-  const design = await API.post("/product-designs", {
-    body: {
-      description: "Black, bold, beautiful",
-      title: "Vader Mask",
-      userId: user.id,
-    },
-    headers: API.authHeader(session.id),
-  });
-  await API.put(`/collections/${collection[1].id}/designs/${design[1].id}`, {
-    headers: API.authHeader(session.id),
-  });
-
-  const failedResponse = await API.del(
-    `/collections/${collection[1].id}/designs/${design[1].id}`,
-    { headers: API.authHeader(session2.id) }
-  );
-  t.equal(failedResponse[0].status, 403, "Only the owner can delete a design");
-
-  const collectionDesigns = await API.del(
-    `/collections/${collection[1].id}/designs/${design[1].id}`,
-    { headers: API.authHeader(session.id) }
+  const ownerRequest = await API.del(
+    `/collections/${collection.id}/designs/a-design-id`,
+    { headers: { Authorization: "Token a-session-id" } }
   );
 
-  t.deepEqual(collectionDesigns[1], [], "removes design from collection");
+  t.equal(ownerRequest[0].status, 200);
+  t.deepEqual(
+    ownerRequest[1],
+    [{ id: "another-design-id" }],
+    "request returns designs in collection"
+  );
+
+  sessionStub.resolves({ role: "PARTNER", userId: "a-partner-id" });
+  collaboratorStub.resolves([partnerCollaborator]);
+  const partnerRequest = await API.del(
+    `/collections/${collection.id}/designs/a-design-id`,
+    { headers: { Authorization: "Token a-session-id" } }
+  );
+
+  t.equal(partnerRequest[0].status, 403);
+
+  sessionStub.resolves({ role: "ADMIN", userId: "an-admin-id" });
+  collaboratorStub.resolves([]);
+  const adminRequest = await API.del(
+    `/collections/${collection.id}/designs/a-design-id`,
+    { headers: { Authorization: "Token a-session-id" } }
+  );
+
+  t.equal(adminRequest[0].status, 200);
 });
 
 test("GET /collections/:id/designs", async (t: Test) => {

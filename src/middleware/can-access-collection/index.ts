@@ -71,6 +71,8 @@ export function* canDeleteCollection(
   yield next;
 }
 
+export const canMoveCollectionDesigns = canDeleteCollection;
+
 export function* canEditCollection(
   this: AuthedContext<{}, PermissionsKoaState>,
   next: () => Promise<any>

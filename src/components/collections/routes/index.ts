@@ -8,6 +8,7 @@ import {
   canAccessCollectionInParam,
   canDeleteCollection,
   canEditCollection,
+  canMoveCollectionDesigns,
   canSubmitCollection,
 } from "../../../middleware/can-access-collection";
 import canAccessUserResource = require("../../../middleware/can-access-user-resource");
@@ -255,6 +256,8 @@ router.put(
   "/:collectionId/designs",
   requireAuth,
   canAccessCollectionInParam,
+  canEditCollection,
+  canMoveCollectionDesigns,
   putDesigns
 );
 router.del(
@@ -268,6 +271,7 @@ router.del(
   requireAuth,
   canAccessCollectionInParam,
   canEditCollection,
+  canMoveCollectionDesigns,
   deleteDesign
 );
 router.put(
@@ -275,6 +279,7 @@ router.put(
   requireAuth,
   canAccessCollectionInParam,
   canEditCollection,
+  canMoveCollectionDesigns,
   putDesign
 );
 
