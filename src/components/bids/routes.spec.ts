@@ -963,7 +963,6 @@ test("POST /bids/:bidId/pay-out-to-partner", async (t: Test) => {
   const [successfulPayout] = await post(`/bids/${bid.id}/pay-out-to-partner`, {
     headers: authHeader(admin.session.id),
     body: {
-      stripeSourceType: "financing",
       payoutAccountId: payoutAccount.id,
       message: "Money 4 u",
       bidId: bid.id,
@@ -973,12 +972,10 @@ test("POST /bids/:bidId/pay-out-to-partner", async (t: Test) => {
   });
   t.equal(successfulPayout.status, 204, "Payout succeeds");
   t.equal(sendTransferStub.callCount, 1);
-  t.equal(sendTransferStub.firstCall.args[0].sourceType, "financing");
   t.equal(enqueueSendStub.callCount, 1);
 
   enqueueSendStub.reset();
   sendTransferStub.reset();
-
   const [manualPayout] = await post(`/bids/${bid.id}/pay-out-to-partner`, {
     headers: authHeader(admin.session.id),
     body: {

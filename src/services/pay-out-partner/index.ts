@@ -16,8 +16,7 @@ import { findDesignByBidId } from "../../components/product-designs/dao/dao";
  * the invoice amount
  */
 export async function payOutPartner(
-  log: UninsertedWithoutShortId<PartnerPayoutLog>,
-  stripeSource?: string
+  log: UninsertedWithoutShortId<PartnerPayoutLog>
 ): Promise<void> {
   const { bidId, payoutAccountId, payoutAmountCents, message, isManual } = log;
   if (!bidId) {
@@ -58,7 +57,6 @@ export async function payOutPartner(
       amountCents: payoutAmountCents,
       description,
       bidId,
-      sourceType: stripeSource,
       invoiceId: null,
     });
   }
