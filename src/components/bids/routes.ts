@@ -1,11 +1,9 @@
 import Router from "koa-router";
 import Knex from "knex";
 import uuid from "node-uuid";
+import { omit } from "lodash";
 
-import Bid, {
-  isBidSortByParam,
-  isUninsertedPartnerPayoutLog,
-} from "./domain-object";
+import Bid, { isBidSortByParam } from "./domain-object";
 import Collaborator from "../collaborators/types";
 import ProductDesign = require("../product-designs/domain-objects/product-design");
 import { PricingQuote } from "../../domain-objects/pricing-quote";
@@ -25,7 +23,10 @@ import { isExpired } from "./services/is-expired";
 import { hasActiveBids } from "./services/has-active-bids";
 import { MILLISECONDS_TO_EXPIRE } from "./constants";
 import { BidRejection } from "../bid-rejections/domain-object";
-import { hasOnlyProperties } from "../../services/require-properties";
+import {
+  hasProperties,
+  hasOnlyProperties,
+} from "../../services/require-properties";
 import { PartnerPayoutLog } from "../partner-payouts/domain-object";
 import { payOutPartner } from "../../services/pay-out-partner";
 import filterError = require("../../services/filter-error");
@@ -466,24 +467,48 @@ interface PayOutPartnerContext extends AuthedContext {
   };
 }
 
+type UninsertedPayoutLog = Omit<
+  UninsertedWithoutShortId<PartnerPayoutLog>,
+  "initiatorUserId"
+>;
+
+interface PayoutRequest extends UninsertedPayoutLog {
+  stripeSourceType?: string;
+}
+
+export function isPayoutRequest(data: object): data is PayoutRequest {
+  return hasProperties(
+    data,
+    "payoutAmountCents",
+    "message",
+    "isManual",
+    "bidId"
+  );
+}
+
 function* postPayOut(this: PayOutPartnerContext): Iterator<any, any, any> {
   const { bidId } = this.params;
-  if (!isUninsertedPartnerPayoutLog(this.request.body)) {
-    this.throw(400, "Request does not match Payout Log");
+  if (!isPayoutRequest(this.request.body)) {
+    this.throw(400, "Request does not match Payout Request");
   }
 
-  const { payoutAccountId, isManual, message } = this.request.body;
+  const {
+    payoutAccountId,
+    isManual,
+    message,
+    stripeSourceType,
+  } = this.request.body;
   this.assert(message, 400, "Message is required");
   if (!isManual) {
     this.assert(payoutAccountId, 400, "Missing payout account ID");
   }
   const payoutLog: UninsertedWithoutShortId<PartnerPayoutLog> = {
-    ...this.request.body,
+    ...omit(this.request.body, "stripeSourceType"),
     bidId,
     initiatorUserId: this.state.userId,
   };
 
-  yield payOutPartner(payoutLog);
+  yield payOutPartner(payoutLog, stripeSourceType);
 
   this.status = 204;
 }

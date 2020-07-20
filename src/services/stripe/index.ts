@@ -49,6 +49,7 @@ interface StripeTransferOptions {
   description: string;
   bidId: string | null;
   invoiceId: string | null;
+  sourceType?: string;
 }
 
 export async function sendTransfer(
@@ -71,6 +72,7 @@ export async function sendTransfer(
       destination,
       description,
       transfer_group: bidId || invoiceId,
+      source_type: options.sourceType,
     },
     idempotencyKey,
   });
@@ -158,4 +160,36 @@ export async function createLoginLink(accountId: string): Promise<string> {
 
     throw err;
   }
+}
+
+// Stripe accounts can contain balances in one or more arbitrarily-named
+// "accounts"
+// Keys are account name, values are an integer number of cents.
+interface Balances {
+  [account: string]: number;
+}
+
+interface BalanceResponse {
+  object: "balance";
+  available: [
+    {
+      amount: number;
+      currency: string;
+      source_types: Balances;
+    }
+  ];
+}
+
+export async function getBalances(): Promise<Balances> {
+  const response = await makeRequest<BalanceResponse>({
+    method: "get",
+    path: `/balance`,
+  });
+
+  if (!response.available || !response.available[0]) {
+    Logger.logServerError("Stripe response: ", response);
+    throw new Error("Malformed Balance response");
+  }
+
+  return response.available[0].source_types;
 }

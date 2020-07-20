@@ -184,15 +184,3 @@ export const bidWithPayoutLogsDataAdapter = new DataAdapter<
   BidWithPayoutLogsRow,
   BidWithPayoutLogs
 >(withPayoutLogsEncode);
-
-export function isUninsertedPartnerPayoutLog(
-  data: object
-): data is Omit<UninsertedWithoutShortId<PartnerPayoutLog>, "initiatorUserId"> {
-  return hasProperties(
-    data,
-    "payoutAmountCents",
-    "message",
-    "isManual",
-    "bidId"
-  );
-}
