@@ -1,4 +1,6 @@
-import serializeRequestBody from "./serialize-request-body";
+import serializeRequestBody, {
+  StripeDataObject,
+} from "./serialize-request-body";
 import { STRIPE_SECRET_KEY } from "../../config";
 import InvalidPaymentError = require("../../errors/invalid-payment");
 import StripeError = require("../../errors/stripe");
@@ -16,7 +18,7 @@ interface GetRequest {
 interface PostRequest {
   method: "post";
   path: string;
-  data?: object;
+  data?: StripeDataObject;
   idempotencyKey?: string;
   additionalHeaders?: Record<string, string>;
   apiBase?: string;

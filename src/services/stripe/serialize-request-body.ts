@@ -2,12 +2,19 @@ interface FlattenedKeys {
   [key: string]: string;
 }
 
-interface JsonObject {
-  [key: string]: any;
+export interface StripeDataObject {
+  [key: string]:
+    | null
+    | undefined
+    | string
+    | number
+    | boolean
+    | StripeDataObject
+    | StripeDataObject[];
 }
 
 function getFlattenedKeys(
-  obj: JsonObject,
+  obj: StripeDataObject,
   prefix: string = "",
   depth: number = 0
 ): FlattenedKeys {
@@ -20,22 +27,33 @@ function getFlattenedKeys(
     const newPrefix =
       depth === 0 ? `${prefix}${encoded}` : `${prefix}[${encoded}]`;
 
-    if (
-      value === null ||
-      typeof value === "string" ||
-      typeof value === "number" ||
-      typeof value === "boolean"
-    ) {
-      res[newPrefix] = encodeURIComponent(value);
+    if (value === null) {
+      res[newPrefix] = "null";
       return;
     }
 
-    if (typeof value === "object") {
-      Object.assign(res, getFlattenedKeys(value, newPrefix, depth + 1));
+    if (value === undefined) {
       return;
     }
 
-    throw new Error(`Unexpected value for serialization: ${value}`);
+    switch (typeof value) {
+      case "string":
+      case "number":
+      case "boolean": {
+        res[newPrefix] = encodeURIComponent(value);
+        return;
+      }
+      case "object": {
+        Object.assign(
+          res,
+          getFlattenedKeys(value as StripeDataObject, newPrefix, depth + 1)
+        );
+        return;
+      }
+      default: {
+        throw new Error(`Unexpected value for serialization: ${value}`);
+      }
+    }
   });
 
   return res;
@@ -45,7 +63,7 @@ function getFlattenedKeys(
 // in the format the Stripe API expects; flat parameters are URL-encoded as
 // usual, but nested arrays and objects use a readable `foo[0][bar]=value`
 // syntax.
-export default function serializeRequestBody(body: JsonObject): string {
+export default function serializeRequestBody(body: StripeDataObject): string {
   const flattenedKeys = getFlattenedKeys(body);
   return Object.keys(flattenedKeys)
     .map((key: string) => {

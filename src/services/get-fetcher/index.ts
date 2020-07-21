@@ -29,7 +29,7 @@ type Fetcher<T> = (options: RequestOptions) => Promise<[number, T]>;
 interface FetcherOptions {
   apiBase: string;
   headerBase: Record<string, string>;
-  serializer: (input: object) => RequestInit["body"];
+  serializer: (input: any) => RequestInit["body"];
 }
 
 export function getFetcher(fetcherOptions: FetcherOptions): Fetcher<any> {
