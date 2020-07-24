@@ -164,7 +164,7 @@ async function getPermissionsFromRoleAndDesignId(
     if (roles.isEditor) {
       return {
         canComment: true,
-        canDelete: false,
+        canDelete: true,
         canEdit: true,
         canEditVariants,
         canSubmit: true,

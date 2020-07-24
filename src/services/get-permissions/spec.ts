@@ -149,7 +149,7 @@ test("#getDesignPermissions", async (t: tape.Test) => {
     }),
     {
       canComment: true,
-      canDelete: false,
+      canDelete: true,
       canEdit: true,
       canEditVariants: true,
       canSubmit: true,
@@ -309,7 +309,7 @@ test("#getCollectionPermissions", async (t: tape.Test) => {
     ),
     {
       canComment: true,
-      canDelete: false,
+      canDelete: true,
       canEdit: true,
       canEditVariants: false,
       canSubmit: true,
