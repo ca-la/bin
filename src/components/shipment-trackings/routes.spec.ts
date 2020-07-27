@@ -187,7 +187,7 @@ test("POST /shipment-trackings", async (t: Test) => {
       ...tracking,
       id: "a-shipment-tracking-id",
       createdAt: now.toISOString(),
-      trackingLink: "https://cala.aftership.com/a-tracking-id",
+      trackingLink: "https://track.ca.la/a-tracking-id",
     },
     "returns created tracking with link, id, and date"
   );

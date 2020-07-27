@@ -1,6 +1,6 @@
 import { ShipmentTracking } from "./types";
 
-const AFTERSHIP_CUSTOM_DOMAIN = "https://cala.aftership.com";
+const AFTERSHIP_CUSTOM_DOMAIN = "https://track.ca.la";
 
 function getAftershipTrackingLink(id: string): string {
   return `${AFTERSHIP_CUSTOM_DOMAIN}/${id}`;
