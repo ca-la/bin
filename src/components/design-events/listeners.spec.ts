@@ -1,7 +1,11 @@
 import uuid from "node-uuid";
 import Knex from "knex";
 import { sandbox, test, Test } from "../../test-helpers/simple";
-import DesignEvent, { DesignEventWithMeta, DesignEventTypes } from "./types";
+import DesignEvent, {
+  DesignEventWithMeta,
+  DesignEventTypes,
+  templateDesignEvent,
+} from "./types";
 import * as IrisService from "../iris/send-message";
 import * as ApprovalStepStateService from "../../services/approval-step-state";
 
@@ -19,21 +23,16 @@ interface Setup {
 
 function setup(eventType: DesignEventTypes): Setup {
   const created: DesignEvent = {
+    ...templateDesignEvent,
     actorId: uuid.v4(),
-    approvalStepId: null,
-    approvalSubmissionId: null,
-    bidId: null,
-    commentId: null,
     createdAt: new Date(),
     designId: uuid.v4(),
     id: uuid.v4(),
-    quoteId: null,
-    targetId: null,
-    taskTypeId: null,
     type: eventType,
   };
   const createdWithMeta: DesignEventWithMeta = {
     ...created,
+    ...templateDesignEvent,
     actorEmail: "anemail@example.com",
     actorName: "An Email",
     actorRole: "USER",
@@ -43,6 +42,7 @@ function setup(eventType: DesignEventTypes): Setup {
     targetName: null,
     targetRole: null,
     taskTypeTitle: null,
+    shipmentTrackingDescription: null,
   };
 
   const trxStub = ({} as unknown) as Knex.Transaction;

@@ -9,7 +9,7 @@ import createUser from "../../../test-helpers/create-user";
 import ProductDesign = require("../../product-designs/domain-objects/product-design");
 import createDesign from "../../../services/create-design";
 import generateCollection from "../../../test-helpers/factories/collection";
-import DesignEvent from "../../design-events/types";
+import DesignEvent, { templateDesignEvent } from "../../design-events/types";
 import generateCollaborator from "../../../test-helpers/factories/collaborator";
 import generatePricingValues from "../../../test-helpers/factories/pricing-values";
 import generatePricingCostInput from "../../../test-helpers/factories/pricing-cost-input";
@@ -430,157 +430,102 @@ test("findSubmittedButUnpaidCollections finds all submitted but unpaid collectio
   await addDesign(collection4.id, design5.id);
 
   const submitEvent: DesignEvent = {
+    ...templateDesignEvent,
     actorId: user2.id,
-    approvalStepId: null,
-    approvalSubmissionId: null,
-    bidId: null,
-    commentId: null,
     createdAt: new Date(),
     designId: design1.id,
     id: uuid.v4(),
-    quoteId: null,
     targetId: user.id,
-    taskTypeId: null,
     type: "SUBMIT_DESIGN",
   };
   const submitEventDeleted: DesignEvent = {
+    ...templateDesignEvent,
     actorId: user2.id,
-    approvalStepId: null,
-    approvalSubmissionId: null,
-    bidId: null,
-    commentId: null,
     createdAt: new Date(),
     designId: designDeleted.id,
     id: uuid.v4(),
-    quoteId: null,
     targetId: user.id,
-    taskTypeId: null,
     type: "SUBMIT_DESIGN",
   };
   const submitEventDeleted2: DesignEvent = {
+    ...templateDesignEvent,
     actorId: user2.id,
-    approvalStepId: null,
-    approvalSubmissionId: null,
-    bidId: null,
-    commentId: null,
     createdAt: new Date(),
     designId: designDeleted.id,
     id: uuid.v4(),
-    quoteId: null,
     targetId: user.id,
-    taskTypeId: null,
     type: "SUBMIT_DESIGN",
   };
   const submitEvent2: DesignEvent = {
+    ...templateDesignEvent,
     actorId: user2.id,
-    approvalStepId: null,
-    approvalSubmissionId: null,
-    bidId: null,
-    commentId: null,
     createdAt: new Date(),
     designId: design2.id,
     id: uuid.v4(),
-    quoteId: null,
     targetId: user.id,
-    taskTypeId: null,
     type: "SUBMIT_DESIGN",
   };
   const submitEvent3: DesignEvent = {
+    ...templateDesignEvent,
     actorId: user2.id,
-    approvalStepId: null,
-    approvalSubmissionId: null,
-    bidId: null,
-    commentId: null,
     createdAt: new Date(2012, 1, 1),
     designId: design3.id,
     id: uuid.v4(),
-    quoteId: null,
     targetId: user.id,
-    taskTypeId: null,
     type: "SUBMIT_DESIGN",
   };
   const submitEvent4: DesignEvent = {
+    ...templateDesignEvent,
     actorId: user2.id,
-    approvalStepId: null,
-    approvalSubmissionId: null,
-    bidId: null,
-    commentId: null,
     createdAt: new Date(2012, 1, 1),
     designId: design4.id,
     id: uuid.v4(),
-    quoteId: null,
     targetId: user.id,
-    taskTypeId: null,
     type: "SUBMIT_DESIGN",
   };
   const submitEvent5: DesignEvent = {
+    ...templateDesignEvent,
     actorId: user2.id,
-    approvalStepId: null,
-    approvalSubmissionId: null,
-    bidId: null,
-    commentId: null,
     createdAt: new Date(2012, 1, 1),
     designId: design5.id,
     id: uuid.v4(),
-    quoteId: null,
     targetId: user.id,
-    taskTypeId: null,
     type: "SUBMIT_DESIGN",
   };
   const paymentEvent1: DesignEvent = {
+    ...templateDesignEvent,
     actorId: user.id,
-    approvalStepId: null,
-    approvalSubmissionId: null,
-    bidId: null,
-    commentId: null,
     createdAt: new Date(),
     designId: design2.id,
     id: uuid.v4(),
-    quoteId: null,
     targetId: user2.id,
-    taskTypeId: null,
     type: "COMMIT_QUOTE",
   };
   const paymentEvent2: DesignEvent = {
+    ...templateDesignEvent,
     actorId: user.id,
-    approvalStepId: null,
-    approvalSubmissionId: null,
-    bidId: null,
-    commentId: null,
     createdAt: new Date(),
     designId: design3.id,
     id: uuid.v4(),
-    quoteId: null,
     targetId: user2.id,
-    taskTypeId: null,
     type: "COMMIT_QUOTE",
   };
   const paymentEvent3: DesignEvent = {
+    ...templateDesignEvent,
     actorId: user.id,
-    approvalStepId: null,
-    approvalSubmissionId: null,
-    bidId: null,
-    commentId: null,
     createdAt: new Date(),
     designId: design4.id,
     id: uuid.v4(),
-    quoteId: null,
     targetId: user2.id,
-    taskTypeId: null,
     type: "COMMIT_QUOTE",
   };
   const paymentEvent4: DesignEvent = {
+    ...templateDesignEvent,
     actorId: user.id,
-    approvalStepId: null,
-    approvalSubmissionId: null,
-    bidId: null,
-    commentId: null,
     createdAt: new Date(),
     designId: design5.id,
     id: uuid.v4(),
-    quoteId: null,
     targetId: user2.id,
-    taskTypeId: null,
     type: "COMMIT_QUOTE",
   };
 
@@ -606,17 +551,12 @@ test("findSubmittedButUnpaidCollections finds all submitted but unpaid collectio
 
   await db.transaction(async (trx: Knex.Transaction) => {
     await DesignEventsDAO.create(trx, {
+      ...templateDesignEvent,
       actorId: user2.id,
-      approvalStepId: null,
-      approvalSubmissionId: null,
-      bidId: null,
-      commentId: null,
       createdAt: new Date(),
       designId: design5.id,
       id: uuid.v4(),
-      quoteId: null,
       targetId: user.id,
-      taskTypeId: null,
       type: "SUBMIT_DESIGN",
     });
   });

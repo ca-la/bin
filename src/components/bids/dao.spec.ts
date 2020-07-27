@@ -25,7 +25,7 @@ import {
   findRejectedByTargetId,
   findUnpaidByUserId,
 } from "./dao";
-import DesignEvent from "../design-events/types";
+import DesignEvent, { templateDesignEvent } from "../design-events/types";
 import generateBid from "../../test-helpers/factories/bid";
 import generateDesignEvent from "../../test-helpers/factories/design-event";
 import { daysToMs } from "../../services/time-conversion";
@@ -259,117 +259,80 @@ test("Bids DAO supports retrieval of bids by target ID and status", async (t: Te
   });
 
   const submitEvent: DesignEvent = {
+    ...templateDesignEvent,
     actorId: designer.id,
-    approvalStepId: null,
-    approvalSubmissionId: null,
-    bidId: null,
-    commentId: null,
     createdAt: new Date(2012, 11, 23),
     designId: design.id,
     id: uuid.v4(),
-    quoteId: null,
-    targetId: null,
-    taskTypeId: null,
     type: "SUBMIT_DESIGN",
   };
 
   const bidEvent: DesignEvent = {
+    ...templateDesignEvent,
     actorId: admin.id,
-    approvalStepId: null,
-    approvalSubmissionId: null,
     bidId: openBid.id,
-    commentId: null,
     createdAt: new Date(2012, 11, 24),
     designId: design.id,
     id: uuid.v4(),
-    quoteId: null,
     targetId: partner.id,
-    taskTypeId: null,
     type: "BID_DESIGN",
   };
   const bidToOtherEvent: DesignEvent = {
+    ...templateDesignEvent,
     actorId: admin.id,
-    approvalStepId: null,
-    approvalSubmissionId: null,
     bidId: openBid.id,
-    commentId: null,
     createdAt: new Date(2012, 11, 24),
     designId: design.id,
     id: uuid.v4(),
-    quoteId: null,
     targetId: otherPartner.id,
-    taskTypeId: null,
     type: "BID_DESIGN",
   };
   const bidDesignToRejectEvent: DesignEvent = {
+    ...templateDesignEvent,
     actorId: admin.id,
-    approvalStepId: null,
-    approvalSubmissionId: null,
     bidId: rejectedBid.id,
-    commentId: null,
     createdAt: new Date(2012, 11, 24),
     designId: rejectedDesign.id,
     id: uuid.v4(),
-    quoteId: null,
     targetId: partner.id,
-    taskTypeId: null,
     type: "BID_DESIGN",
   };
   const bidDesignToAcceptEvent: DesignEvent = {
+    ...templateDesignEvent,
     actorId: admin.id,
-    approvalStepId: null,
-    approvalSubmissionId: null,
     bidId: acceptedBid.id,
-    commentId: null,
     createdAt: new Date(2012, 11, 24),
     designId: design.id,
     id: uuid.v4(),
-    quoteId: null,
     targetId: partner.id,
-    taskTypeId: null,
     type: "BID_DESIGN",
   };
 
   const rejectDesignEvent: DesignEvent = {
+    ...templateDesignEvent,
     actorId: partner.id,
-    approvalStepId: null,
-    approvalSubmissionId: null,
     bidId: rejectedBid.id,
-    commentId: null,
     createdAt: new Date(2012, 11, 25),
     designId: rejectedDesign.id,
     id: uuid.v4(),
-    quoteId: null,
-    targetId: null,
-    taskTypeId: null,
     type: "REJECT_SERVICE_BID",
   };
   const acceptDesignEvent: DesignEvent = {
+    ...templateDesignEvent,
     actorId: partner.id,
-    approvalStepId: null,
-    approvalSubmissionId: null,
     bidId: acceptedBid.id,
-    commentId: null,
     createdAt: new Date(2012, 11, 27),
     designId: design.id,
     id: uuid.v4(),
-    quoteId: null,
-    targetId: null,
-    taskTypeId: null,
     type: "ACCEPT_SERVICE_BID",
   };
   const otherRejectEvent: DesignEvent = {
+    ...templateDesignEvent,
     actorId: otherPartner.id,
-    approvalStepId: null,
-    approvalSubmissionId: null,
     bidId: openBid.id,
-    commentId: null,
     createdAt: new Date(2012, 11, 23),
     designId: design.id,
     id: uuid.v4(),
-    quoteId: null,
-    targetId: null,
-    taskTypeId: null,
     type: "REJECT_SERVICE_BID",
   };
 

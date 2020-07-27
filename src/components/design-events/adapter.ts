@@ -20,6 +20,7 @@ export default buildAdapter<DesignEvent, DesignEventRow>({
     "approvalStepId",
     "approvalSubmissionId",
     "commentId",
+    "shipmentTrackingId",
   ],
 });
 
@@ -48,5 +49,7 @@ export const withMetaAdapter = buildAdapter<
     "targetEmail",
     "submissionTitle",
     "stepTitle",
+    "shipmentTrackingId",
+    "shipmentTrackingDescription",
   ],
 });

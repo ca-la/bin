@@ -11,6 +11,7 @@ import ApprovalStep, { ApprovalStepType } from "../../approval-steps/types";
 import * as IrisService from "../../iris/send-message";
 import { CollectionSubmissionStatus } from "../types";
 import { realtimeCollectionStatusUpdated } from "../realtime";
+import { templateDesignEvent } from "../../design-events/types";
 
 async function handleSubmit(
   collectionId: string,
@@ -44,17 +45,12 @@ export function* createSubmission(
         this.throw("Could not find checkout step for collection submission");
       }
       await DesignEventsDAO.create(trx, {
+        ...templateDesignEvent,
         actorId: userId,
         approvalStepId: checkoutStep.id,
-        approvalSubmissionId: null,
-        bidId: null,
-        commentId: null,
         createdAt: new Date(),
         designId: design.id,
         id: uuid.v4(),
-        quoteId: null,
-        targetId: null,
-        taskTypeId: null,
         type: "SUBMIT_DESIGN",
       });
     }

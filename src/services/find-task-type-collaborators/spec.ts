@@ -12,6 +12,7 @@ import DesignEventsDAO from "../../components/design-events/dao";
 import findTaskTypeCollaborators from ".";
 import { taskTypes } from "../../components/tasks/templates";
 import { CollaboratorRole } from "../../components/collaborators/domain-objects/role";
+import { templateDesignEvent } from "../../components/design-events/types";
 
 test("findTaskTypeCollaborators", async (t: Test) => {
   const ops = await createUser({ role: "ADMIN", withSession: false });
@@ -39,32 +40,26 @@ test("findTaskTypeCollaborators", async (t: Test) => {
   });
   await db.transaction(async (trx: Knex.Transaction) => {
     await DesignEventsDAO.create(trx, {
+      ...templateDesignEvent,
       id: uuid.v4(),
       type: "ACCEPT_SERVICE_BID",
-      commentId: null,
       createdAt: new Date(),
       actorId: partner.user.id,
       targetId: ops.user.id,
       designId: design.id,
       bidId: bid.id,
       quoteId: quote.id,
-      approvalStepId: null,
-      taskTypeId: null,
-      approvalSubmissionId: null,
     });
     await DesignEventsDAO.create(trx, {
+      ...templateDesignEvent,
       id: uuid.v4(),
       type: "ACCEPT_SERVICE_BID",
-      commentId: null,
       createdAt: new Date(),
       actorId: photographer.user.id,
       targetId: ops.user.id,
       designId: design.id,
       bidId: photoBid.id,
       quoteId: quote.id,
-      approvalStepId: null,
-      taskTypeId: null,
-      approvalSubmissionId: null,
     });
   });
 

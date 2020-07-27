@@ -11,12 +11,15 @@ import * as ApprovalStepsDAO from "../approval-steps/dao";
 
 import { ShipmentTracking } from "./types";
 import * as ShipmentTrackingsDAO from "./dao";
+import * as DesignEventsDAO from "../design-events/dao";
 import { requireQueryParam } from "../../middleware/require-query-param";
 import { hasProperties } from "../../services/require-properties";
 import { CalaRouter } from "../../services/cala-component/types";
 import useTransaction from "../../middleware/use-transaction";
 import Aftership from "../integrations/aftership/service";
 import { attachTrackingLink } from "./service";
+import { templateDesignEvent } from "../design-events/types";
+import ProductDesignsDAO from "../product-designs/dao";
 
 async function getDesignIdFromStep(approvalStepId: string): Promise<string> {
   const step = await db.transaction((trx: Knex.Transaction) =>
@@ -39,7 +42,11 @@ function* listByApprovalStepId(this: TrxContext<AuthedContext>) {
   this.status = 200;
 }
 
-function* create(this: TrxContext<AuthedContext<Unsaved<ShipmentTracking>>>) {
+function* create(
+  this: TrxContext<
+    AuthedContext<Unsaved<ShipmentTracking>, { designId: string }>
+  >
+) {
   const { trx } = this.state;
   const { body } = this.request;
 
@@ -54,11 +61,23 @@ function* create(this: TrxContext<AuthedContext<Unsaved<ShipmentTracking>>>) {
   ) {
     this.throw(400, "Request body does not match model");
   }
+  const design = yield ProductDesignsDAO.findById(this.state.designId);
 
   const created: ShipmentTracking = yield ShipmentTrackingsDAO.create(trx, {
     ...body,
     id: uuid.v4(),
     createdAt: new Date(),
+  });
+
+  yield DesignEventsDAO.create(trx, {
+    ...templateDesignEvent,
+    id: uuid.v4(),
+    designId: design.id,
+    approvalStepId: created.approvalStepId,
+    createdAt: new Date(),
+    actorId: this.state.userId,
+    shipmentTrackingId: created.id,
+    type: "TRACKING_CREATION",
   });
 
   this.status = 201;

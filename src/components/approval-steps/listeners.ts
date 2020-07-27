@@ -21,6 +21,7 @@ import * as CollaboratorsDAO from "../../components/collaborators/dao";
 import DesignsDAO from "../product-designs/dao";
 import { NotificationType } from "../notifications/domain-object";
 import notifications from "./notifications";
+import { templateDesignEvent } from "../design-events/types";
 
 export const listeners: Listeners<ApprovalStep, typeof domain> = {
   "dao.updating": async (
@@ -93,17 +94,13 @@ export const listeners: Listeners<ApprovalStep, typeof domain> = {
       }
 
       await DesignEventsDAO.create(event.trx, {
+        ...templateDesignEvent,
         actorId: event.actorId,
-        commentId: null,
         approvalStepId: event.updated.id,
-        approvalSubmissionId: null,
-        bidId: null,
         createdAt: new Date(),
         designId: event.updated.designId,
         id: uuid.v4(),
-        quoteId: null,
         targetId: (collaborator && collaborator.userId) || null,
-        taskTypeId: null,
         type: "STEP_ASSIGNMENT",
       });
 

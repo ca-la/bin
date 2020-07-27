@@ -17,6 +17,7 @@ import Collaborator from "./types";
 import generateBid from "../../test-helpers/factories/bid";
 import { taskTypes } from "../tasks/templates";
 import { addDesign, removeDesign } from "../../test-helpers/collections";
+import { templateDesignEvent } from "../design-events/types";
 
 test("Collaborators DAO can find all collaborators with a list of ids", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
@@ -738,17 +739,13 @@ test("CollaboratorsDAO.findByDesignAndTaskType", async (t: Test) => {
   });
   await db.transaction(async (trx: Knex.Transaction) => {
     await DesignEventsDAO.create(trx, {
+      ...templateDesignEvent,
       actorId: partner.user.id,
-      approvalStepId: null,
-      approvalSubmissionId: null,
       bidId: bid.id,
-      commentId: null,
       createdAt: new Date(),
       designId: design.id,
       id: uuid.v4(),
       quoteId: quote.id,
-      targetId: null,
-      taskTypeId: null,
       type: "ACCEPT_SERVICE_BID",
     });
   });

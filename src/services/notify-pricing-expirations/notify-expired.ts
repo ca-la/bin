@@ -19,6 +19,7 @@ import ApprovalStep, {
 import * as ApprovalStepsDAO from "../../components/approval-steps/dao";
 import ProductDesignsDAO from "../../components/product-designs/dao";
 import * as DesignEventsDAO from "../../components/design-events/dao";
+import { templateDesignEvent } from "../../components/design-events/types";
 
 async function createDesignEvents(
   trx: Knex.Transaction,
@@ -35,17 +36,12 @@ async function createDesignEvents(
       throw new Error("Could not find checkout step for collection submission");
     }
     await DesignEventsDAO.create(trx, {
+      ...templateDesignEvent,
       actorId: CALA_OPS_USER_ID,
       approvalStepId: checkoutStep.id,
-      approvalSubmissionId: null,
-      bidId: null,
-      commentId: null,
       createdAt: new Date(),
       designId: design.id,
       id: uuid.v4(),
-      quoteId: null,
-      targetId: null,
-      taskTypeId: null,
       type: "COSTING_EXPIRATION",
     });
   }

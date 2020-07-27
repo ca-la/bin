@@ -31,6 +31,7 @@ import { PartnerPayoutLog } from "../partner-payouts/domain-object";
 import { payOutPartner } from "../../services/pay-out-partner";
 import filterError = require("../../services/filter-error");
 import db from "../../services/db";
+import { templateDesignEvent } from "../design-events/types";
 
 const router = new Router();
 
@@ -194,17 +195,13 @@ function* assignBidToPartner(this: AuthedContext): Iterator<any, any, any> {
 
   yield db.transaction(async (trx: Knex.Transaction) => {
     await createDesignEvent(trx, {
+      ...templateDesignEvent,
       actorId: this.state.userId,
-      approvalStepId: null,
-      approvalSubmissionId: null,
       bidId,
-      commentId: null,
       createdAt: new Date(),
       designId: design.id,
       id: uuid.v4(),
-      quoteId: null,
       targetId: target.id,
-      taskTypeId: null,
       type: "BID_DESIGN",
     });
   });
@@ -269,17 +266,13 @@ function* removeBidFromPartner(this: AuthedContext): Iterator<any, any, any> {
 
   yield db.transaction(async (trx: Knex.Transaction) => {
     await createDesignEvent(trx, {
+      ...templateDesignEvent,
       actorId: this.state.userId,
-      approvalStepId: null,
-      approvalSubmissionId: null,
       bidId,
-      commentId: null,
       createdAt: new Date(),
       designId: design.id,
       id: uuid.v4(),
-      quoteId: null,
       targetId: target.id,
-      taskTypeId: null,
       type: "REMOVE_PARTNER",
     });
   });
@@ -325,17 +318,13 @@ export function* acceptDesignBid(
   }
 
   yield createDesignEvent(trx, {
+    ...templateDesignEvent,
     actorId: userId,
-    approvalStepId: null,
-    approvalSubmissionId: null,
     bidId: bid.id,
-    commentId: null,
     createdAt: new Date(),
     designId: quote.designId!,
     id: uuid.v4(),
     quoteId: bid.quoteId,
-    targetId: null,
-    taskTypeId: null,
     type: "ACCEPT_SERVICE_BID",
   }).catch(
     filterError(
@@ -412,17 +401,13 @@ export function* rejectDesignBid(
 
   yield db.transaction(async (trx: Knex.Transaction) => {
     await createDesignEvent(trx, {
+      ...templateDesignEvent,
       actorId: userId,
-      approvalStepId: null,
-      approvalSubmissionId: null,
       bidId: bid.id,
-      commentId: null,
       createdAt: new Date(),
       designId: quote.designId!,
       id: uuid.v4(),
       quoteId: bid.quoteId,
-      targetId: null,
-      taskTypeId: null,
       type: "REJECT_SERVICE_BID",
     });
   });

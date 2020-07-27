@@ -6,8 +6,12 @@ import { sandbox, test, Test } from "../../test-helpers/fresh";
 import AftershipService from "../integrations/aftership/service";
 import * as PermissionsService from "../../services/get-permissions";
 import * as ApprovalStepsDAO from "../approval-steps/dao";
+import * as DesignEventsDAO from "../design-events/dao";
 import * as ShipmentTrackingsDAO from "./dao";
+import ProductDesignsDAO from "../product-designs/dao";
 import { ShipmentTracking } from "./types";
+import { templateDesignEvent } from "../design-events/types";
+import { omit } from "lodash";
 
 async function setup() {
   const designer = await createUser();
@@ -36,6 +40,13 @@ async function setup() {
       aftershipCouriersStub: sandbox()
         .stub(AftershipService, "getMatchingCouriers")
         .resolves([{ slug: "usps", name: "United States Postal Service" }]),
+      findDesignStub: sandbox().stub(ProductDesignsDAO, "findById").resolves({
+        id: "a-design-id",
+        collectionIds: [],
+      }),
+      createDesignEventStub: sandbox()
+        .stub(DesignEventsDAO, "create")
+        .resolves(),
     },
   };
 }
@@ -179,5 +190,18 @@ test("POST /shipment-trackings", async (t: Test) => {
       trackingLink: "https://cala.aftership.com/a-tracking-id",
     },
     "returns created tracking with link, id, and date"
+  );
+
+  t.deepEqual(
+    omit(stubs.createDesignEventStub.args[0][1], "id", "createdAt"),
+    {
+      ...templateDesignEvent,
+      actorId: designer.user.id,
+      approvalStepId: "an-approval-step-id",
+      designId: "a-design-id",
+      shipmentTrackingId: "a-shipment-tracking-id",
+      type: "TRACKING_CREATION",
+    },
+    "creates a design event"
   );
 });

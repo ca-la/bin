@@ -17,7 +17,9 @@ import { getDefaultsByDesign } from "../../components/approval-step-submissions/
 import notifications from "../../components/approval-steps/notifications";
 import { NotificationType } from "../../components/notifications/domain-object";
 import * as CollaboratorsDAO from "../../components/collaborators/dao";
-import DesignEvent from "../../components/design-events/types";
+import DesignEvent, {
+  templateDesignEvent,
+} from "../../components/design-events/types";
 
 export async function makeNextStepCurrentIfNeeded(
   trx: Knex.Transaction,
@@ -72,18 +74,13 @@ export async function handleUserStepCompletion(
   actorId: string
 ): Promise<void> {
   await DesignEventsDAO.create(trx, {
+    ...templateDesignEvent,
     actorId,
     approvalStepId: step.id,
-    approvalSubmissionId: null,
-    bidId: null,
     createdAt: new Date(),
     designId: step.designId,
     id: uuid.v4(),
-    quoteId: null,
-    targetId: null,
     type: "STEP_COMPLETE",
-    taskTypeId: null,
-    commentId: null,
   });
 
   const design = await ProductDesignsDAO.findById(step.designId);
@@ -158,18 +155,13 @@ export async function handleUserStepReopen(
   actorId: string
 ): Promise<void> {
   await DesignEventsDAO.create(trx, {
+    ...templateDesignEvent,
     actorId,
     approvalStepId: step.id,
-    approvalSubmissionId: null,
-    bidId: null,
     createdAt: new Date(),
     designId: step.designId,
     id: uuid.v4(),
-    quoteId: null,
-    targetId: null,
     type: "STEP_REOPEN",
-    taskTypeId: null,
-    commentId: null,
   });
   // TODO: cause any related notification to not be returned any more
 }
@@ -244,16 +236,12 @@ export async function actualizeDesignStepsAfterBidAcceptance(
   const newStates = approvalSteps.map((step: ApprovalStep) => step.state);
 
   const baseDesignEvent: Unsaved<DesignEvent> = {
+    ...templateDesignEvent,
     actorId,
-    approvalSubmissionId: null,
     bidId,
-    commentId: null,
     designId,
     quoteId,
-    targetId: null,
     type: "STEP_PARTNER_PAIRING",
-    taskTypeId: null,
-    approvalStepId: null,
   };
   for (const bidTaskType of bidTaskTypes) {
     switch (bidTaskType.taskTypeId) {

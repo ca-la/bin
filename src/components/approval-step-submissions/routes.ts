@@ -13,7 +13,7 @@ import ApprovalStepSubmission, {
   ApprovalStepSubmissionState,
 } from "./domain-object";
 import db from "../../services/db";
-import DesignEvent from "../design-events/types";
+import DesignEvent, { templateDesignEvent } from "../design-events/types";
 import requireAuth from "../../middleware/require-auth";
 import { announceApprovalStepCommentCreation } from "../iris/messages/approval-step-comment";
 import Comment, {
@@ -85,18 +85,14 @@ function* createApproval(
   });
 
   const designEvent: DesignEvent = yield DesignEventsDAO.create(trx, {
+    ...templateDesignEvent,
     actorId: this.state.userId,
     approvalStepId: this.state.stepId,
     approvalSubmissionId: submissionId,
-    bidId: null,
-    commentId: null,
     createdAt: new Date(),
     designId: this.state.designId,
     id: uuid.v4(),
-    quoteId: null,
-    targetId: null,
     type: "STEP_SUBMISSION_APPROVAL",
-    taskTypeId: null,
   });
 
   const designEventWithMeta = yield DesignEventsDAO.findById(
@@ -177,18 +173,14 @@ function* createReReviewRequest(
   });
 
   const designEvent: DesignEvent = yield DesignEventsDAO.create(trx, {
+    ...templateDesignEvent,
     actorId: this.state.userId,
     approvalStepId: this.state.stepId,
     approvalSubmissionId: submissionId,
-    bidId: null,
-    commentId: null,
     createdAt: new Date(),
     designId: this.state.designId,
     id: uuid.v4(),
-    quoteId: null,
-    targetId: null,
     type: "STEP_SUBMISSION_RE_REVIEW_REQUEST",
-    taskTypeId: null,
   });
 
   const designEventWithMeta = yield DesignEventsDAO.findById(
@@ -283,18 +275,15 @@ export function* updateApprovalSubmission(
         this.request.body.collaboratorId
       );
       await DesignEventsDAO.create(trx, {
+        ...templateDesignEvent,
         actorId: userId,
         approvalStepId: this.state.submission.stepId,
         approvalSubmissionId: submission.id,
-        bidId: null,
-        commentId: null,
         createdAt: new Date(),
         designId: this.state.designId,
         id: uuid.v4(),
-        quoteId: null,
         targetId: collaborator && collaborator.userId,
         type: "STEP_SUBMISSION_ASSIGNMENT",
-        taskTypeId: null,
       });
       if (collaborator) {
         const design = await DesignsDAO.findById(this.state.designId);
@@ -446,18 +435,15 @@ export function* createRevisionRequest(
   );
 
   yield DesignEventsDAO.create(trx, {
+    ...templateDesignEvent,
     actorId: this.state.userId,
     approvalStepId: this.state.stepId,
     approvalSubmissionId: submissionId,
-    bidId: null,
     commentId: comment.id,
     createdAt: new Date(),
     designId: this.state.designId,
     id: uuid.v4(),
-    quoteId: null,
-    targetId: null,
     type: "REVISION_REQUEST",
-    taskTypeId: null,
   });
 
   const design = yield DesignsDAO.findById(this.state.designId);

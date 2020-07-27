@@ -14,6 +14,7 @@ import {
 } from "../../../pricing-cost-inputs/dao";
 import { getDesignsMetaByCollection } from "../determine-submission-status";
 import { BasePricingCostInput } from "../../../pricing-cost-inputs/domain-object";
+import { templateDesignEvent } from "../../../design-events/types";
 /**
  * Commits cost inputs for every design in the given collection.
  */
@@ -43,17 +44,13 @@ export async function commitCostInputs(
         }
 
         await DesignEventsDAO.create(trx, {
+          ...templateDesignEvent,
           actorId,
           approvalStepId: checkoutStep.id,
-          approvalSubmissionId: null,
-          bidId: null,
-          commentId: null,
           createdAt: new Date(),
           designId: design.id,
           id: uuid.v4(),
-          quoteId: null,
           targetId: design.userId,
-          taskTypeId: null,
           type: "COMMIT_COST_INPUTS",
         });
       }

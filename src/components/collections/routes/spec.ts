@@ -24,7 +24,10 @@ import { moveDesign } from "../../../test-helpers/collections";
 import db from "../../../services/db";
 import generateApprovalStep from "../../../test-helpers/factories/design-approval-step";
 import createDesign from "../../../services/create-design";
-import DesignEvent, { DesignEventTypes } from "../../design-events/types";
+import DesignEvent, {
+  DesignEventTypes,
+  templateDesignEvent,
+} from "../../design-events/types";
 import { taskTypes } from "../../tasks/templates/task-types";
 import { generateDesign } from "../../../test-helpers/factories/product-design";
 import { checkout } from "../../../test-helpers/checkout-collection";
@@ -760,32 +763,22 @@ test("POST /collections/:collectionId/partner-pairings", async (t: tape.Test) =>
   await db.transaction((trx: Knex.Transaction) =>
     DesignEventsDAO.createAll(trx, [
       {
+        ...templateDesignEvent,
         actorId: partner.user.id,
-        approvalStepId: null,
-        approvalSubmissionId: null,
         bidId: bidOne.id,
-        commentId: null,
         createdAt: new Date(),
         designId: collectionDesigns[0].id,
         id: uuid.v4(),
-        quoteId: null,
-        targetId: null,
         type: "ACCEPT_SERVICE_BID" as DesignEventTypes,
-        taskTypeId: null,
       },
       {
+        ...templateDesignEvent,
         actorId: partner.user.id,
-        approvalStepId: null,
-        approvalSubmissionId: null,
         bidId: bidTwo.id,
-        commentId: null,
         createdAt: new Date(),
         designId: collectionDesigns[1].id,
         id: uuid.v4(),
-        quoteId: null,
-        targetId: null,
         type: "ACCEPT_SERVICE_BID" as DesignEventTypes,
-        taskTypeId: null,
       },
     ])
   );

@@ -8,7 +8,8 @@ export type DesignEventTypes =
   | DesignerEvents
   | CALAEvents
   | PartnerEvents
-  | ApprovalEvents;
+  | ApprovalEvents
+  | ShipmentTrackingEvents;
 
 type DesignerEvents =
   // Send the design to CALA initially for review
@@ -32,6 +33,11 @@ type CALAEvents =
   | "COSTING_EXPIRATION";
 
 type PartnerEvents = "ACCEPT_SERVICE_BID" | "REJECT_SERVICE_BID";
+
+type ShipmentTrackingEvents =
+  | "TRACKING_CREATION"
+  | "TRACKING_DELIVERY"
+  | "TRACKING_EXCEPTION";
 
 type ApprovalEvents =
   | "REVISION_REQUEST"
@@ -87,6 +93,7 @@ export default interface DesignEvent {
   approvalSubmissionId: string | null;
   commentId: string | null;
   taskTypeId: string | null;
+  shipmentTrackingId: string | null;
 }
 
 export interface DesignEventRow {
@@ -102,6 +109,7 @@ export interface DesignEventRow {
   approval_submission_id: string | null;
   comment_id: string | null;
   task_type_id: string | null;
+  shipment_tracking_id: string | null;
 }
 
 export interface DesignEventWithMeta extends DesignEvent {
@@ -115,6 +123,7 @@ export interface DesignEventWithMeta extends DesignEvent {
   stepTitle: string | null;
   taskTypeId: string | null;
   taskTypeTitle: string | null;
+  shipmentTrackingDescription: string | null;
 }
 
 export interface DesignEventWithMetaRow extends DesignEventRow {
@@ -128,7 +137,19 @@ export interface DesignEventWithMetaRow extends DesignEventRow {
   step_title: string | null;
   task_type_id: string | null;
   task_type_title: string | null;
+  shipment_tracking_description: string | null;
 }
+
+export const templateDesignEvent = {
+  targetId: null,
+  bidId: null,
+  quoteId: null,
+  approvalStepId: null,
+  approvalSubmissionId: null,
+  commentId: null,
+  taskTypeId: null,
+  shipmentTrackingId: null,
+};
 
 export const domain = "DesignEvent" as "DesignEvent";
 export const withMetaDomain = "DesignEventWithMeta" as "DesignEventWithMeta";

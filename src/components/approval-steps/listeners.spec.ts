@@ -19,6 +19,7 @@ import DesignEventsDAO from "../design-events/dao";
 import DesignsDAO from "../product-designs/dao";
 import { NotificationType } from "../notifications/domain-object";
 import NotificationsLayer from "./notifications";
+import { templateDesignEvent } from "../design-events/types";
 
 const as: ApprovalStep = {
   state: ApprovalStepState.UNSTARTED,
@@ -319,16 +320,11 @@ test("route.updated.collaboratorId", async (t: Test) => {
         [
           trx,
           {
+            ...templateDesignEvent,
             actorId,
-            commentId: null,
             approvalStepId: as.id,
-            approvalSubmissionId: null,
-            bidId: null,
             createdAt: now,
             designId: "d2",
-            quoteId: null,
-            targetId: null,
-            taskTypeId: null,
             type: "STEP_ASSIGNMENT",
           },
         ],
@@ -350,16 +346,11 @@ test("route.updated.collaboratorId", async (t: Test) => {
         [
           trx,
           {
+            ...templateDesignEvent,
             actorId,
-            commentId: null,
             approvalStepId: as.id,
-            approvalSubmissionId: null,
-            bidId: null,
             createdAt: now,
             designId: as.designId,
-            quoteId: null,
-            targetId: null,
-            taskTypeId: null,
             type: "STEP_ASSIGNMENT",
           },
         ],
@@ -379,16 +370,11 @@ test("route.updated.collaboratorId", async (t: Test) => {
         [
           trx,
           {
+            ...templateDesignEvent,
             actorId,
-            commentId: null,
             approvalStepId: as.id,
-            approvalSubmissionId: null,
-            bidId: null,
             createdAt: now,
             designId: as.designId,
-            quoteId: null,
-            targetId: null,
-            taskTypeId: null,
             type: "STEP_ASSIGNMENT",
           },
         ],
@@ -411,16 +397,11 @@ test("route.updated.collaboratorId", async (t: Test) => {
         [
           trx,
           {
+            ...templateDesignEvent,
             actorId,
-            commentId: null,
             approvalStepId: as.id,
-            approvalSubmissionId: null,
-            bidId: null,
             createdAt: now,
             designId: as.designId,
-            quoteId: null,
-            targetId: null,
-            taskTypeId: null,
             type: "STEP_ASSIGNMENT",
           },
         ],
@@ -459,16 +440,12 @@ test("route.updated.collaboratorId", async (t: Test) => {
         [
           trx,
           {
+            ...templateDesignEvent,
             actorId,
-            commentId: null,
             approvalStepId: as.id,
-            approvalSubmissionId: null,
-            bidId: null,
             createdAt: now,
             designId: as.designId,
-            quoteId: null,
             targetId: "u1",
-            taskTypeId: null,
             type: "STEP_ASSIGNMENT",
           },
         ],

@@ -1,6 +1,8 @@
 import uuid from "node-uuid";
 import { create } from "../../components/design-events/dao";
-import DesignEvent from "../../components/design-events/types";
+import DesignEvent, {
+  templateDesignEvent,
+} from "../../components/design-events/types";
 import { findById as findUserById } from "../../components/users/dao";
 import createUser from "../create-user";
 import ProductDesign = require("../../components/product-designs/domain-objects/product-design");
@@ -34,17 +36,11 @@ export default async function generateDesignEvent(
 
   const designEvent = await db.transaction((trx: Knex.Transaction) =>
     create(trx, {
-      actorId: actor.id,
-      approvalStepId: null,
-      approvalSubmissionId: null,
-      bidId: null,
-      commentId: null,
+      ...templateDesignEvent,
       createdAt: new Date(),
+      actorId: actor.id,
       designId: design.id,
       id: uuid.v4(),
-      quoteId: null,
-      targetId: null,
-      taskTypeId: null,
       type: "SUBMIT_DESIGN",
       ...options,
     })

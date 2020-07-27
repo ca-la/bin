@@ -17,6 +17,7 @@ import PayoutAccountsDAO = require("../../dao/partner-payout-accounts");
 import PartnerPayoutsDAO = require("../../components/partner-payouts/dao");
 import generateCollection from "../../test-helpers/factories/collection";
 import { addDesign } from "../../test-helpers/collections";
+import { templateDesignEvent } from "../design-events/types";
 
 const USER_DATA: UserIO = Object.freeze({
   email: "USER@example.com",
@@ -295,31 +296,23 @@ test("UsersDAO.findByBidId returns all users on a pricing bid", async (t: Test) 
 
   await db.transaction(async (trx: Knex.Transaction) => {
     await DesignEventsDAO.create(trx, {
+      ...templateDesignEvent,
       actorId: admin.id,
       bidId: bid.id,
-      commentId: null,
       createdAt: new Date(),
       designId: design.id,
       id: uuid.v4(),
-      quoteId: null,
       targetId: one.id,
-      approvalStepId: null,
-      approvalSubmissionId: null,
-      taskTypeId: null,
       type: "BID_DESIGN",
     });
     await DesignEventsDAO.create(trx, {
+      ...templateDesignEvent,
       actorId: admin.id,
       bidId: bid.id,
-      commentId: null,
       createdAt: new Date(),
       designId: design.id,
       id: uuid.v4(),
-      quoteId: null,
       targetId: two.id,
-      approvalStepId: null,
-      approvalSubmissionId: null,
-      taskTypeId: null,
       type: "BID_DESIGN",
     });
   });
@@ -349,17 +342,13 @@ test("UsersDAO.findAllUnpaidPartners returns all unpaid partners", async (t: Tes
 
   await db.transaction(async (trx: Knex.Transaction) => {
     await DesignEventsDAO.create(trx, {
+      ...templateDesignEvent,
       actorId: admin.id,
       bidId: bid.id,
-      commentId: null,
       createdAt: new Date(),
       designId: design.id,
       id: uuid.v4(),
-      quoteId: null,
       targetId: unpaidPartner.id,
-      approvalStepId: null,
-      approvalSubmissionId: null,
-      taskTypeId: null,
       type: "BID_DESIGN",
     });
   });
@@ -390,17 +379,13 @@ test("UsersDAO.findAllUnpaidPartners returns all unpaid partners", async (t: Tes
 
   await db.transaction(async (trx: Knex.Transaction) => {
     await DesignEventsDAO.create(trx, {
+      ...templateDesignEvent,
       actorId: admin2.id,
       bidId: bid2.id,
       createdAt: new Date(),
-      commentId: null,
       designId: design2.id,
       id: uuid.v4(),
-      quoteId: null,
       targetId: paidPartner.id,
-      approvalStepId: null,
-      approvalSubmissionId: null,
-      taskTypeId: null,
       type: "BID_DESIGN",
     });
   });
@@ -460,17 +445,13 @@ test("UsersDAO.findAllUnpaidPartners does not include partners removed from bids
 
   await db.transaction(async (trx: Knex.Transaction) => {
     await DesignEventsDAO.create(trx, {
+      ...templateDesignEvent,
       actorId: admin.id,
       bidId: bid.id,
-      commentId: null,
       createdAt: new Date(),
       designId: design.id,
       id: uuid.v4(),
-      quoteId: null,
       targetId: unpaidPartner.id,
-      approvalStepId: null,
-      approvalSubmissionId: null,
-      taskTypeId: null,
       type: "BID_DESIGN",
     });
   });
@@ -501,17 +482,13 @@ test("UsersDAO.findAllUnpaidPartners does not include partners removed from bids
 
   await db.transaction(async (trx: Knex.Transaction) => {
     await DesignEventsDAO.create(trx, {
+      ...templateDesignEvent,
       actorId: admin2.id,
       bidId: bid2.id,
-      commentId: null,
       createdAt: new Date(),
       designId: design2.id,
       id: uuid.v4(),
-      quoteId: null,
       targetId: paidPartner.id,
-      approvalStepId: null,
-      approvalSubmissionId: null,
-      taskTypeId: null,
       type: "BID_DESIGN",
     });
   });

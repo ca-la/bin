@@ -12,7 +12,9 @@ import ApprovalStep, {
 } from "../../components/approval-steps/domain-object";
 import * as ApprovalStepsDAO from "../../components/approval-steps/dao";
 import { taskTypes } from "../../components/tasks/templates";
-import DesignEvent from "../../components/design-events/types";
+import DesignEvent, {
+  templateDesignEvent,
+} from "../../components/design-events/types";
 import DesignEventsDAO from "../../components/design-events/dao";
 import NotificationsLayer from "../../components/approval-steps/notifications";
 import { NotificationType } from "../../components/notifications/domain-object";
@@ -124,18 +126,13 @@ for (const testCase of testCases) {
       });
 
       const event: DesignEvent = {
+        ...templateDesignEvent,
         actorId: user.id,
-        approvalSubmissionId: null,
         bidId: bid.id,
-        commentId: null,
         createdAt: new Date(),
         designId: design.id,
         id: uuid.v4(),
-        quoteId: null,
-        targetId: null,
         type: "STEP_PARTNER_PAIRING",
-        taskTypeId: null,
-        approvalStepId: null,
       };
 
       await actualizeDesignStepsAfterBidAcceptance(trx, event);

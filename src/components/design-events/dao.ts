@@ -34,6 +34,7 @@ function addMeta(query: Knex.QueryBuilder): Knex.QueryBuilder {
       "target.email as target_email",
       "design_approval_submissions.title as submission_title",
       "design_approval_steps.title as step_title",
+      "shipment_trackings.description as shipment_tracking_description",
     ])
     .join("users as actor", "actor.id", "design_events.actor_id")
     .leftJoin("users as target", "target.id", "design_events.target_id")
@@ -46,6 +47,11 @@ function addMeta(query: Knex.QueryBuilder): Knex.QueryBuilder {
       "design_approval_steps",
       "design_approval_steps.id",
       "design_events.approval_step_id"
+    )
+    .leftJoin(
+      "shipment_trackings",
+      "shipment_trackings.id",
+      "design_events.shipment_tracking_id"
     );
 }
 
@@ -100,7 +106,11 @@ const dao = {
         .orderBy("design_events.created_at", "asc")
         .whereIn("design_events.type", ACTIVITY_STREAM_EVENTS)
         .whereRaw(
-          `design_events.design_id = ? AND (approval_step_id = ? OR approval_step_id IS NULL)`,
+          `design_events.design_id = ?
+          AND (
+            design_events.approval_step_id = ?
+            OR design_events.approval_step_id IS NULL
+          )`,
           [designId, approvalStepId]
         )
     ).map((item: DesignEventWithMetaRow) => {

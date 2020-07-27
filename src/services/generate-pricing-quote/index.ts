@@ -28,6 +28,7 @@ import ApprovalStepsDAO from "../../components/approval-steps/dao";
 import ApprovalStep, {
   ApprovalStepType,
 } from "../../components/approval-steps/types";
+import { templateDesignEvent } from "../../components/design-events/types";
 
 export type UnsavedQuote = Omit<
   PricingQuote,
@@ -318,17 +319,13 @@ export async function generateFromPayloadAndUser(
     quotes.push(quote);
 
     await DesignEventsDAO.create(trx, {
+      ...templateDesignEvent,
       actorId: userId,
       approvalStepId: checkoutStep.id,
-      approvalSubmissionId: null,
-      bidId: null,
-      commentId: null,
       createdAt: new Date(),
       designId,
       id: uuid.v4(),
       quoteId: quote.id,
-      targetId: null,
-      taskTypeId: null,
       type: "COMMIT_QUOTE",
     });
   }

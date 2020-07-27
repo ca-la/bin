@@ -15,6 +15,7 @@ import {
 import * as IrisService from "../../iris/send-message";
 import { realtimeCollectionStatusUpdated } from "../realtime";
 import { determineSubmissionStatus } from "../services/determine-submission-status";
+import { templateDesignEvent } from "../../design-events/types";
 
 async function sendCollectionStatusUpdated(
   collectionId: string
@@ -81,17 +82,11 @@ export function* createPartnerPairing(
 
       for (const design of designs) {
         await DesignEventsDAO.create(trx, {
+          ...templateDesignEvent,
           actorId: userId,
-          approvalStepId: null,
-          approvalSubmissionId: null,
-          bidId: null,
-          commentId: null,
           createdAt: new Date(),
           designId: design.id,
           id: uuid.v4(),
-          quoteId: null,
-          targetId: null,
-          taskTypeId: null,
           type: "COMMIT_PARTNER_PAIRING",
         });
         await createDesignTasks(design.id, "POST_APPROVAL", trx);
