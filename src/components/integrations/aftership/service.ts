@@ -7,6 +7,8 @@ import {
   isAftershipTrackingCreateResponse,
   Courier,
   isAftershipCourierListResponse,
+  DeliveryStatus,
+  isAftershipTrackingGetResponse,
 } from "./types";
 import { getFetcher } from "../../../services/get-fetcher";
 import { AFTERSHIP_API_KEY } from "../../../config";
@@ -87,9 +89,40 @@ Response: ${JSON.stringify(body, null, 2)}`
   }));
 }
 
+async function getDeliveryStatus(
+  courier: string,
+  trackingId: string
+): Promise<DeliveryStatus> {
+  const [, body] = await fetcher({
+    method: "get",
+    path: `/trackings/${courier}/${trackingId}`,
+  });
+
+  const { data } = fromJson(body);
+
+  if (!isAftershipTrackingGetResponse(data)) {
+    throw new Error(`Aftership did not response with a valid tracking object
+Response: ${JSON.stringify(body, null, 2)}`);
+  }
+
+  const {
+    tag,
+    expected_delivery: expectedDelivery,
+    shipment_delivery_date: deliveryDate,
+  } = data.tracking;
+
+  return {
+    tag,
+    expectedDelivery:
+      expectedDelivery !== null ? new Date(expectedDelivery) : null,
+    deliveryDate: deliveryDate !== null ? new Date(deliveryDate) : null,
+  };
+}
+
 export const AFTERSHIP_SECRET_TOKEN = "e4ebfe72-3780-4e93-b3e4-6117a0f4333c";
 
 export default {
   createTracking,
   getMatchingCouriers,
+  getDeliveryStatus,
 };

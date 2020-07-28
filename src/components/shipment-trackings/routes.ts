@@ -20,9 +20,12 @@ import useTransaction from "../../middleware/use-transaction";
 import Aftership, {
   AFTERSHIP_SECRET_TOKEN,
 } from "../integrations/aftership/service";
-import { attachTrackingLink } from "./service";
+import { attachTrackingLink, attachDeliveryStatus } from "./service";
 import { templateDesignEvent } from "../design-events/types";
 import ProductDesignsDAO from "../product-designs/dao";
+
+const attachMeta = (shipmentTracking: ShipmentTracking) =>
+  attachDeliveryStatus(attachTrackingLink(shipmentTracking));
 
 async function getDesignIdFromStep(approvalStepId: string): Promise<string> {
   const step = await db.transaction((trx: Knex.Transaction) =>
@@ -41,7 +44,12 @@ function* listByApprovalStepId(this: TrxContext<AuthedContext>) {
 
   const found = yield ShipmentTrackingsDAO.find(trx, { approvalStepId });
 
-  this.body = found.map(attachTrackingLink);
+  const withMeta = [];
+  for (const tracking of found) {
+    withMeta.push(yield attachMeta(tracking));
+  }
+
+  this.body = withMeta;
   this.status = 200;
 }
 
@@ -84,7 +92,7 @@ function* create(
   });
 
   this.status = 201;
-  this.body = attachTrackingLink(created);
+  this.body = yield attachMeta(created);
 }
 
 function* getCouriers(this: AuthedContext) {

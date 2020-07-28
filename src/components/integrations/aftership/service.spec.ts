@@ -142,3 +142,64 @@ test("Aftership.getMatchingCouriers", async (t: Test) => {
     "calls the correct Aftership endpoint"
   );
 });
+
+test("Aftership.getDeliveryStatus", async (t: Test) => {
+  const testDate = new Date(2012, 11, 23);
+  sandbox().useFakeTimers(testDate);
+
+  const fetchStub = sandbox()
+    .stub(FetchService, "fetch")
+    .resolves({
+      headers: {
+        get() {
+          return "application/json";
+        },
+      },
+      status: 200,
+      async json() {
+        return {
+          meta: {
+            code: 200,
+          },
+          data: {
+            tracking: {
+              tag: "Delivered",
+              expected_delivery: "2012-12-25T12:00:00",
+              shipment_delivery_date: "2012-12-26T06:00:00",
+            },
+          },
+        };
+      },
+    });
+
+  const deliveryStatus = await Aftership.getDeliveryStatus(
+    "a_courier",
+    "a-shipment-tracking-id"
+  );
+
+  t.deepEqual(
+    deliveryStatus,
+    {
+      tag: "Delivered",
+      expectedDelivery: new Date("2012-12-25T12:00:00"),
+      deliveryDate: new Date("2012-12-26T06:00:00"),
+    },
+    "returns the delivery status correctly formatted"
+  );
+
+  t.deepEqual(
+    fetchStub.args,
+    [
+      [
+        "https://api.aftership.com/v4/trackings/a_courier/a-shipment-tracking-id",
+        {
+          headers: {
+            "aftership-api-key": AFTERSHIP_API_KEY,
+          },
+          method: "get",
+        },
+      ],
+    ],
+    "calls the correct Aftership endpoint"
+  );
+});

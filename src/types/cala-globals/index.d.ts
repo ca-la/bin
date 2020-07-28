@@ -85,3 +85,7 @@ interface CollectionsKoaState {
 interface CollaboratorKoaState {
   collaborator: import("../../components/collaborators/types").default;
 }
+
+type UnknownObject = Record<string, any>;
+
+type EmptyObject = Record<string, never>;

@@ -14,18 +14,18 @@ interface Failure {
 
 interface AftershipResponseSuccess {
   meta: Success | Created;
-  data: object;
+  data: UnknownObject;
 }
 
 interface AftershipResponseFailure {
   meta: Failure;
-  data: {};
+  data: EmptyObject;
 }
 
 type AftershipResponse = AftershipResponseSuccess | AftershipResponseFailure;
 
 function isAftershipResponse(
-  candidate: object
+  candidate: UnknownObject
 ): candidate is AftershipResponse {
   return Boolean(candidate) && "meta" in candidate && "data" in candidate;
 }
@@ -60,13 +60,13 @@ interface AftershipTrackingCreateResponse {
 }
 
 export function isAftershipTrackingCreateResponse(
-  candidate: object
+  candidate: UnknownObject
 ): candidate is AftershipTrackingCreateResponse {
   return (
     Boolean(candidate) &&
     "tracking" in candidate &&
-    "id" in (candidate as { tracking: object }).tracking &&
-    "tracking_number" in (candidate as { tracking: object }).tracking
+    "id" in (candidate as { tracking: UnknownObject }).tracking &&
+    "tracking_number" in (candidate as { tracking: UnknownObject }).tracking
   );
 }
 
@@ -81,7 +81,34 @@ interface AftershipCourierListResponse {
 }
 
 export function isAftershipCourierListResponse(
-  candidate: object
+  candidate: UnknownObject
 ): candidate is AftershipCourierListResponse {
   return Boolean(candidate) && "total" in candidate && "couriers" in candidate;
+}
+
+export interface DeliveryStatus {
+  tag: string;
+  expectedDelivery: Date | null;
+  deliveryDate: Date | null;
+}
+
+interface AftershipTrackingGetResponse {
+  tracking: {
+    tag: string;
+    expected_delivery: string | null;
+    shipment_delivery_date: string | null;
+  };
+}
+
+export function isAftershipTrackingGetResponse(
+  candidate: UnknownObject
+): candidate is AftershipTrackingGetResponse {
+  return (
+    Boolean(candidate) &&
+    "tracking" in candidate &&
+    "tag" in (candidate as { tracking: UnknownObject }).tracking &&
+    "shipment_delivery_date" in
+      (candidate as { tracking: UnknownObject }).tracking &&
+    "expected_delivery" in (candidate as { tracking: UnknownObject }).tracking
+  );
 }

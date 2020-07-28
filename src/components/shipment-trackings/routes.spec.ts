@@ -1,8 +1,8 @@
 import Knex from "knex";
-import createUser from "../../test-helpers/create-user";
 import { authHeader, get, post } from "../../test-helpers/http";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 
+import SessionsDAO from "../../dao/sessions";
 import AftershipService, {
   AFTERSHIP_SECRET_TOKEN,
 } from "../integrations/aftership/service";
@@ -15,49 +15,48 @@ import { ShipmentTracking } from "./types";
 import { templateDesignEvent } from "../design-events/types";
 import { omit } from "lodash";
 
-async function setup() {
-  const designer = await createUser();
-
+function setup() {
   return {
-    users: {
-      designer,
-    },
-    stubs: {
-      stepsStub: sandbox().stub(ApprovalStepsDAO, "findById").resolves({
-        id: "an-approval-step-id",
-        designId: "a-design-id",
+    sessionsStub: sandbox().stub(SessionsDAO, "findById").resolves({
+      role: "USER",
+      userId: "a-user-id",
+    }),
+    stepsStub: sandbox().stub(ApprovalStepsDAO, "findById").resolves({
+      id: "an-approval-step-id",
+      designId: "a-design-id",
+    }),
+    findStub: sandbox().stub(ShipmentTrackingsDAO, "find"),
+    createStub: sandbox().stub(ShipmentTrackingsDAO, "create"),
+    permissionsStub: sandbox()
+      .stub(PermissionsService, "getDesignPermissions")
+      .resolves({
+        canComment: true,
+        canDelete: true,
+        canEdit: true,
+        canEditVariants: false,
+        canSubmit: true,
+        canView: true,
       }),
-      findStub: sandbox().stub(ShipmentTrackingsDAO, "find"),
-      createStub: sandbox().stub(ShipmentTrackingsDAO, "create"),
-      permissionsStub: sandbox()
-        .stub(PermissionsService, "getDesignPermissions")
-        .resolves({
-          canComment: true,
-          canDelete: true,
-          canEdit: true,
-          canEditVariants: false,
-          canSubmit: true,
-          canView: true,
-        }),
-      aftershipCouriersStub: sandbox()
-        .stub(AftershipService, "getMatchingCouriers")
-        .resolves([{ slug: "usps", name: "United States Postal Service" }]),
-      findDesignStub: sandbox().stub(ProductDesignsDAO, "findById").resolves({
-        id: "a-design-id",
-        collectionIds: [],
+    aftershipCouriersStub: sandbox()
+      .stub(AftershipService, "getMatchingCouriers")
+      .resolves([{ slug: "usps", name: "United States Postal Service" }]),
+    aftershipGetStub: sandbox()
+      .stub(AftershipService, "getDeliveryStatus")
+      .resolves({
+        tag: "Delivered",
+        expectedDelivery: new Date(),
+        deliveryDate: new Date(),
       }),
-      createDesignEventStub: sandbox()
-        .stub(DesignEventsDAO, "create")
-        .resolves(),
-    },
+    findDesignStub: sandbox().stub(ProductDesignsDAO, "findById").resolves({
+      id: "a-design-id",
+      collectionIds: [],
+    }),
+    createDesignEventStub: sandbox().stub(DesignEventsDAO, "create").resolves(),
   };
 }
 
 test("GET /shipment-trackings?approvalStepId", async (t: Test) => {
-  const {
-    users: { designer },
-    stubs,
-  } = await setup();
+  const stubs = setup();
 
   stubs.findStub.resolves([
     {
@@ -81,7 +80,7 @@ test("GET /shipment-trackings?approvalStepId", async (t: Test) => {
   const [response, body] = await get(
     "/shipment-trackings?approvalStepId=an-approval-step-id",
     {
-      headers: authHeader(designer.session.id),
+      headers: authHeader("a session token"),
     }
   );
 
@@ -100,7 +99,7 @@ test("GET /shipment-trackings?approvalStepId", async (t: Test) => {
   const [notPermitted] = await get(
     "/shipment-trackings?approvalStepId=an-approval-step-id",
     {
-      headers: authHeader(designer.session.id),
+      headers: authHeader("a session token"),
     }
   );
 
@@ -111,29 +110,26 @@ test("GET /shipment-trackings?approvalStepId", async (t: Test) => {
   const [stepNotFound] = await get(
     "/shipment-trackings?approvalStepId=an-approval-step-id",
     {
-      headers: authHeader(designer.session.id),
+      headers: authHeader("a session token"),
     }
   );
 
   t.is(stepNotFound.status, 404, "step not found");
 
   const [missingQuery] = await get("/shipment-trackings", {
-    headers: authHeader(designer.session.id),
+    headers: authHeader("a session token"),
   });
 
   t.is(missingQuery.status, 400, "missing approvalStepId query parameter");
 });
 
 test("GET /shipment-trackings/couriers?shipmentTrackingId", async (t: Test) => {
-  const {
-    users: { designer },
-    stubs,
-  } = await setup();
+  const stubs = setup();
 
   const [response, body] = await get(
     "/shipment-trackings/couriers?shipmentTrackingId=a-shipment-tracking-id",
     {
-      headers: authHeader(designer.session.id),
+      headers: authHeader("a session token"),
     }
   );
 
@@ -150,18 +146,16 @@ test("GET /shipment-trackings/couriers?shipmentTrackingId", async (t: Test) => {
   );
 
   const [missingQuery] = await get("/shipment-trackings/couriers", {
-    headers: authHeader(designer.session.id),
+    headers: authHeader("a session token"),
   });
 
   t.is(missingQuery.status, 400, "missing approvalStepId query parameter");
 });
 
 test("POST /shipment-trackings", async (t: Test) => {
-  const {
-    users: { designer },
-    stubs,
-  } = await setup();
   const now = new Date();
+  sandbox().useFakeTimers(now);
+  const stubs = setup();
   const tracking: Unsaved<ShipmentTracking> = {
     courier: "usps",
     trackingId: "a-tracking-id",
@@ -179,7 +173,7 @@ test("POST /shipment-trackings", async (t: Test) => {
 
   const [response, body] = await post("/shipment-trackings", {
     body: tracking,
-    headers: authHeader(designer.session.id),
+    headers: authHeader("a session token"),
   });
 
   t.equal(response.status, 201, "succesful creation");
@@ -190,15 +184,20 @@ test("POST /shipment-trackings", async (t: Test) => {
       id: "a-shipment-tracking-id",
       createdAt: now.toISOString(),
       trackingLink: "https://track.ca.la/a-tracking-id",
+      deliveryStatus: {
+        tag: "Delivered",
+        expectedDelivery: now.toISOString(),
+        deliveryDate: now.toISOString(),
+      },
     },
-    "returns created tracking with link, id, and date"
+    "returns created tracking with all meta attached"
   );
 
   t.deepEqual(
     omit(stubs.createDesignEventStub.args[0][1], "id", "createdAt"),
     {
       ...templateDesignEvent,
-      actorId: designer.user.id,
+      actorId: "a-user-id",
       approvalStepId: "an-approval-step-id",
       designId: "a-design-id",
       shipmentTrackingId: "a-shipment-tracking-id",
