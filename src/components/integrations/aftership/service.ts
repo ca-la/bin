@@ -7,12 +7,14 @@ import {
   isAftershipTrackingCreateResponse,
   Courier,
   isAftershipCourierListResponse,
-  DeliveryStatus,
   isAftershipTrackingGetResponse,
 } from "./types";
 import { getFetcher } from "../../../services/get-fetcher";
 import { AFTERSHIP_API_KEY } from "../../../config";
-import { ShipmentTracking } from "../../shipment-trackings/types";
+import {
+  ShipmentTracking,
+  DeliveryStatus,
+} from "../../shipment-trackings/types";
 
 const AFTERSHIP_BASE_URL = "https://api.aftership.com/v4";
 

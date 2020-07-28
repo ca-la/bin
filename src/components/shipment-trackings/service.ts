@@ -1,5 +1,4 @@
-import { ShipmentTracking } from "./types";
-import { DeliveryStatus } from "../integrations/aftership/types";
+import { DeliveryStatus, ShipmentTracking } from "./types";
 import Aftership from "../integrations/aftership/service";
 
 const AFTERSHIP_CUSTOM_DOMAIN = "https://track.ca.la";

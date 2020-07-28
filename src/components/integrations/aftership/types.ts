@@ -86,12 +86,6 @@ export function isAftershipCourierListResponse(
   return Boolean(candidate) && "total" in candidate && "couriers" in candidate;
 }
 
-export interface DeliveryStatus {
-  tag: string;
-  expectedDelivery: Date | null;
-  deliveryDate: Date | null;
-}
-
 interface AftershipTrackingGetResponse {
   tracking: {
     tag: string;

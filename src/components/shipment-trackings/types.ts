@@ -31,3 +31,9 @@ export function isShipmentTrackingRow(
     "created_at",
   ].every((key: string) => keyset.has(key));
 }
+
+export interface DeliveryStatus {
+  tag: string;
+  expectedDelivery: Date | null;
+  deliveryDate: Date | null;
+}

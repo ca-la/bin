@@ -11,3 +11,4 @@ export * from "../components/collections/types";
 export * from "../components/notifications/types";
 export * from "../components/users/types";
 export * from "../components/collaborators/types";
+export * from "../components/shipment-trackings/types";
