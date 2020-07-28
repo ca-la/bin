@@ -87,6 +87,8 @@ Response: ${JSON.stringify(body, null, 2)}`
   }));
 }
 
+export const AFTERSHIP_SECRET_TOKEN = "e4ebfe72-3780-4e93-b3e4-6117a0f4333c";
+
 export default {
   createTracking,
   getMatchingCouriers,

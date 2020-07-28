@@ -1,5 +1,6 @@
 import Knex from "knex";
 import uuid from "node-uuid";
+import Koa from "koa";
 
 import requireAuth = require("../../middleware/require-auth");
 import {
@@ -16,7 +17,9 @@ import { requireQueryParam } from "../../middleware/require-query-param";
 import { hasProperties } from "../../services/require-properties";
 import { CalaRouter } from "../../services/cala-component/types";
 import useTransaction from "../../middleware/use-transaction";
-import Aftership from "../integrations/aftership/service";
+import Aftership, {
+  AFTERSHIP_SECRET_TOKEN,
+} from "../integrations/aftership/service";
 import { attachTrackingLink } from "./service";
 import { templateDesignEvent } from "../design-events/types";
 import ProductDesignsDAO from "../product-designs/dao";
@@ -95,6 +98,21 @@ function* getCouriers(this: AuthedContext) {
   this.body = matchingCouriers;
 }
 
+function* receiveShipmentTracking(this: Koa.ParameterizedContext) {
+  const { aftershipToken } = this.request.query;
+
+  this.assert(
+    aftershipToken === AFTERSHIP_SECRET_TOKEN,
+    403,
+    "Only Aftership webhook is allowed to POST to this endpoint"
+  );
+
+  // TODO: Create appropriate notification
+  // TODO: Create appropriate activity stream item
+
+  this.status = 204;
+}
+
 const router: CalaRouter = {
   prefix: "/shipment-trackings",
   routes: {
@@ -125,6 +143,9 @@ const router: CalaRouter = {
     },
     "/couriers": {
       get: [requireAuth, requireQueryParam("shipmentTrackingId"), getCouriers],
+    },
+    "/updates": {
+      post: [requireQueryParam("aftershipToken"), receiveShipmentTracking],
     },
   },
 };

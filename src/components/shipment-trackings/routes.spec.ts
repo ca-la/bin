@@ -3,7 +3,9 @@ import createUser from "../../test-helpers/create-user";
 import { authHeader, get, post } from "../../test-helpers/http";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 
-import AftershipService from "../integrations/aftership/service";
+import AftershipService, {
+  AFTERSHIP_SECRET_TOKEN,
+} from "../integrations/aftership/service";
 import * as PermissionsService from "../../services/get-permissions";
 import * as ApprovalStepsDAO from "../approval-steps/dao";
 import * as DesignEventsDAO from "../design-events/dao";
@@ -204,4 +206,23 @@ test("POST /shipment-trackings", async (t: Test) => {
     },
     "creates a design event"
   );
+});
+
+test("POST /shipment-trackings/updates", async (t: Test) => {
+  const [response] = await post(
+    `/shipment-trackings/updates?aftershipToken=${AFTERSHIP_SECRET_TOKEN}`
+  );
+  t.equal(response.status, 204, "with correct token responds succesfully");
+
+  const [missingParam] = await post("/shipment-trackings/updates");
+  t.equal(
+    missingParam.status,
+    400,
+    "aftershipToken query parameter is required"
+  );
+
+  const [wrongToken] = await post(
+    "/shipment-trackings/updates?aftershipToken=wrong"
+  );
+  t.equal(wrongToken.status, 403, "token must match expected value");
 });
