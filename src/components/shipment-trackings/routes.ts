@@ -9,7 +9,8 @@ import {
 } from "../../middleware/can-access-design";
 import db from "../../services/db";
 import * as ApprovalStepsDAO from "../approval-steps/dao";
-
+import ProductDesignsDAO from "../product-designs/dao";
+import * as CollaboratorsDAO from "../collaborators/dao";
 import { ShipmentTracking } from "./types";
 import * as ShipmentTrackingsDAO from "./dao";
 import * as DesignEventsDAO from "../design-events/dao";
@@ -22,7 +23,9 @@ import Aftership, {
 } from "../integrations/aftership/service";
 import { attachTrackingLink, attachDeliveryStatus } from "./service";
 import { templateDesignEvent } from "../design-events/types";
-import ProductDesignsDAO from "../product-designs/dao";
+
+import notifications from "./notifications";
+import { NotificationType } from "../notifications/domain-object";
 
 const attachMeta = (shipmentTracking: ShipmentTracking) =>
   attachDeliveryStatus(attachTrackingLink(shipmentTracking));
@@ -80,6 +83,25 @@ function* create(
     createdAt: new Date(),
   });
 
+  const collaborator = yield CollaboratorsDAO.findByDesignAndUser(
+    design.id,
+    design.userId
+  );
+
+  yield notifications[NotificationType.SHIPMENT_TRACKING_CREATE].send(
+    trx,
+    this.state.userId,
+    {
+      recipientUserId: design.userId,
+      recipientCollaboratorId: collaborator.id,
+    },
+    {
+      designId: design.id,
+      collectionId: design.collectionIds[0] || null,
+      shipmentTrackingId: created.id,
+      approvalStepId: created.approvalStepId,
+    }
+  );
   yield DesignEventsDAO.create(trx, {
     ...templateDesignEvent,
     id: uuid.v4(),

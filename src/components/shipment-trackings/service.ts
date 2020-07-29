@@ -3,7 +3,7 @@ import Aftership from "../integrations/aftership/service";
 
 const AFTERSHIP_CUSTOM_DOMAIN = "https://track.ca.la";
 
-function getAftershipTrackingLink(id: string): string {
+export function getAftershipTrackingLink(id: string): string {
   return `${AFTERSHIP_CUSTOM_DOMAIN}/${id}`;
 }
 

@@ -9,20 +9,24 @@ import {
   CalaDao,
   CalaRouter,
 } from "../../services/cala-component/types";
+import notifications, { NotificationLayerSchema } from "./notifications";
 
 interface ShipmentTrackingComponent
-  extends CalaComponent<ShipmentTracking, ShipmentTrackingRow, {}> {
+  extends CalaComponent<
+    ShipmentTracking,
+    ShipmentTrackingRow,
+    NotificationLayerSchema
+  > {
   adapter: CalaAdapter<ShipmentTracking, ShipmentTrackingRow>;
   dao: CalaDao<ShipmentTracking>;
   router: CalaRouter;
-  notifications: {};
 }
 
 const component: ShipmentTrackingComponent = {
   adapter,
   dao,
   router,
-  notifications: {},
+  notifications,
   listeners,
 };
 

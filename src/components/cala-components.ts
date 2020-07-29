@@ -1,5 +1,6 @@
 import ApprovalSteps from "./approval-steps";
 import ApprovalSubmissions from "./approval-step-submissions";
+import ShipmentTrackings from "./shipment-trackings";
 import DesignEvents from "./design-events";
 import { NotificationType } from "./notifications/domain-object";
 import {
@@ -10,6 +11,7 @@ import {
 export const calaComponents = [
   ApprovalSteps,
   ApprovalSubmissions,
+  ShipmentTrackings,
   DesignEvents,
 ];
 
@@ -25,7 +27,8 @@ type ExtractComponent<
 
 type AllNotificationsUnion = Extract<
   | ExtractComponent<typeof ApprovalSubmissions>["notificationSample"]
-  | ExtractComponent<typeof ApprovalSteps>["notificationSample"],
+  | ExtractComponent<typeof ApprovalSteps>["notificationSample"]
+  | ExtractComponent<typeof ShipmentTrackings>["notificationSample"],
   object
 >;
 

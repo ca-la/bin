@@ -125,6 +125,7 @@ import {
   FullApprovalStepCommentCreateNotificationRow,
 } from "./models/approval-step-comment-create";
 import { CalaNotificationsUnion } from "../cala-components";
+import { FullShipmentTrackingCreateNotification } from "../shipment-trackings/notifications";
 
 export enum NotificationType {
   ANNOTATION_COMMENT_CREATE = "ANNOTATION_COMMENT_CREATE",
@@ -156,6 +157,7 @@ export enum NotificationType {
   APPROVAL_STEP_SUBMISSION_APPROVAL = "APPROVAL_STEP_SUBMISSION_APPROVAL",
   APPROVAL_STEP_SUBMISSION_REVISION_REQUEST = "APPROVAL_STEP_SUBMISSION_REVISION_REQUEST",
   APPROVAL_STEP_SUBMISSION_REREVIEW_REQUEST = "APPROVAL_STEP_SUBMISSION_REREVIEW_REQUEST",
+  SHIPMENT_TRACKING_CREATE = "SHIPMENT_TRACKING_CREATE",
 }
 
 export type Notification =
@@ -203,7 +205,8 @@ export type FullNotification =
   | FullExpirationNotification
   | FullApprovalStepCommentMentionNotification
   | FullApprovalStepCommentReplyNotification
-  | FullApprovalStepCommentCreateNotification;
+  | FullApprovalStepCommentCreateNotification
+  | FullShipmentTrackingCreateNotification;
 
 export type NotificationRow =
   | AnnotationCommentCreateNotificationRow
@@ -276,6 +279,7 @@ export function encode(
     recipientCollaboratorId: row.recipient_collaborator_id,
     sectionId: row.section_id,
     sentEmailAt: toDateOrNull(row.sent_email_at),
+    shipmentTrackingId: row.shipment_tracking_id,
     stageId: row.stage_id,
     taskId: row.task_id,
     type: row.type,
@@ -306,6 +310,7 @@ export function decode(
     recipient_collaborator_id: data.recipientCollaboratorId,
     section_id: data.sectionId,
     sent_email_at: toDateStringOrNull(data.sentEmailAt),
+    shipment_tracking_id: data.shipmentTrackingId,
     stage_id: data.stageId,
     task_id: data.taskId,
     type: data.type,
@@ -438,6 +443,9 @@ function encodeFull(rowData: FullNotificationRow): FullNotification {
     recipientUserId: rowData.recipient_user_id,
     sectionId: rowData.section_id,
     sentEmailAt: rowData.sent_email_at ? new Date(rowData.sent_email_at) : null,
+    shipmentTrackingDescription: rowData.shipment_tracking_description,
+    shipmentTrackingId: rowData.shipment_tracking_id,
+    trackingId: rowData.tracking_id,
     stageId: rowData.stage_id,
     taskId: rowData.task_id,
     taskTitle: rowData.task_title,

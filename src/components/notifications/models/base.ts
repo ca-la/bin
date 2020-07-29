@@ -26,6 +26,7 @@ export interface BaseNotificationRow {
   recipient_collaborator_id: null;
   section_id: null; // DEPRECATED
   sent_email_at: string | null;
+  shipment_tracking_id: null;
   stage_id: null;
   task_id: null;
   type: NotificationType;
@@ -52,6 +53,7 @@ export interface RowKeyMapping {
   recipient_collaborator_id: "recipientCollaboratorId";
   section_id: "sectionId"; // DEPRECATED
   sent_email_at: "sentEmailAt";
+  shipment_tracking_id: "shipmentTrackingId";
   stage_id: "stageId";
   task_id: "taskId";
   type: "type";
@@ -69,6 +71,8 @@ export interface BaseFullNotificationRow {
   annotation_image_id: null;
   approval_step_title: null;
   approval_submission_title: null;
+  shipment_tracking_description: null;
+  tracking_id: null;
 }
 
 export interface BaseNotification {
@@ -92,6 +96,7 @@ export interface BaseNotification {
   recipientCollaboratorId: null;
   sectionId: null; // DEPRECATED
   sentEmailAt: Date | null;
+  shipmentTrackingId: null;
   stageId: null;
   taskId: null;
   type: NotificationType;
@@ -118,6 +123,7 @@ export interface StrictNotification {
   recipientCollaboratorId: string;
   sectionId: string; // DEPRECATED
   sentEmailAt: Date | null;
+  shipmentTrackingId: string;
   stageId: string;
   taskId: string;
   type: NotificationType;
@@ -135,6 +141,8 @@ export interface BaseFullNotification {
   annotationImageId: null;
   approvalStepTitle: null;
   approvalSubmissionTitle: null;
+  shipmentTrackingDescription: null;
+  trackingId: null;
 }
 
 export const templateNotification = {
@@ -155,6 +163,7 @@ export const templateNotification = {
   recipientCollaboratorId: null,
   sectionId: null, // DEPRECATED
   sentEmailAt: null,
+  shipmentTrackingId: null,
   stageId: null,
   taskId: null,
 };

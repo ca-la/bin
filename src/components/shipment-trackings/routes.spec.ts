@@ -1,19 +1,21 @@
 import Knex from "knex";
 import { authHeader, get, post } from "../../test-helpers/http";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
-
+import { omit } from "lodash";
 import SessionsDAO from "../../dao/sessions";
 import AftershipService, {
   AFTERSHIP_SECRET_TOKEN,
 } from "../integrations/aftership/service";
 import * as PermissionsService from "../../services/get-permissions";
 import * as ApprovalStepsDAO from "../approval-steps/dao";
+import ProductDesignsDAO from "../product-designs/dao";
+import * as CollaboratorsDAO from "../collaborators/dao";
 import * as DesignEventsDAO from "../design-events/dao";
 import * as ShipmentTrackingsDAO from "./dao";
-import ProductDesignsDAO from "../product-designs/dao";
 import { ShipmentTracking } from "./types";
+import NotificationsLayer from "./notifications";
+import { NotificationType } from "../notifications/domain-object";
 import { templateDesignEvent } from "../design-events/types";
-import { omit } from "lodash";
 
 function setup() {
   return {
@@ -37,6 +39,15 @@ function setup() {
         canSubmit: true,
         canView: true,
       }),
+    findCollaboratorStub: sandbox()
+      .stub(CollaboratorsDAO, "findByDesignAndUser")
+      .resolves({ id: "a-collabo-id" }),
+    notificationsSendStub: sandbox()
+      .stub(
+        NotificationsLayer[NotificationType.SHIPMENT_TRACKING_CREATE],
+        "send"
+      )
+      .resolves(),
     aftershipCouriersStub: sandbox()
       .stub(AftershipService, "getMatchingCouriers")
       .resolves([{ slug: "usps", name: "United States Postal Service" }]),
@@ -205,6 +216,7 @@ test("POST /shipment-trackings", async (t: Test) => {
     },
     "creates a design event"
   );
+  t.equal(stubs.notificationsSendStub.callCount, 1, "creates a notification");
 });
 
 test("POST /shipment-trackings/updates", async (t: Test) => {

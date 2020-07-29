@@ -48,6 +48,7 @@ import generateApprovalStep from "./design-approval-step";
 import generateApprovalSubmission from "./design-approval-submission";
 import db from "../../services/db";
 import ApprovalStep from "../../components/approval-steps/domain-object";
+import generateShipmentTracking from "./shipment-tracking";
 
 interface NotificationWithResources {
   actor: User;
@@ -191,7 +192,6 @@ export default async function generateNotification(
   if (!submission) {
     throw new Error("Could not find submission");
   }
-
   const base = {
     id,
     actor,
@@ -530,6 +530,28 @@ export default async function generateNotification(
         approvalStepId: approvalStep.id,
         recipientUserId: base.recipient.id,
         type: options.type,
+      });
+
+      return {
+        ...base,
+        notification,
+      };
+    }
+    case NotificationType.SHIPMENT_TRACKING_CREATE: {
+      const tracking = await db.transaction(async (trx: Knex.Transaction) =>
+        generateShipmentTracking(trx, {
+          approvalStepId: approvalStep.id,
+        })
+      );
+      const notification = await create({
+        ...baseNotification,
+        collectionId: collection.id,
+        designId: design.id,
+        approvalStepId: approvalStep.id,
+        recipientUserId: base.recipient.id,
+        type: options.type,
+        shipmentTrackingId: tracking.id,
+        shipmentTrackingDesciption: tracking.description,
       });
 
       return {

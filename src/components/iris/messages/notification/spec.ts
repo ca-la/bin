@@ -51,9 +51,12 @@ test("sendMessage supports sending a message", async (t: tape.Test) => {
     recipientCollaboratorId: null,
     sectionId: null,
     sentEmailAt: null,
+    shipmentTrackingId: null,
+    shipmentTrackingDescription: null,
     stageId: "112-333",
     taskId: "abc-123",
     taskTitle: "Some title",
+    trackingId: null,
     type: NotificationType.TASK_ASSIGNMENT,
   };
   const response = await announceNotificationCreation(notification);
@@ -108,9 +111,12 @@ test("sendMessage can early return if the notification is missing data", async (
     recipientCollaboratorId: null,
     sectionId: null,
     sentEmailAt: null,
+    shipmentTrackingId: null,
+    shipmentTrackingDescription: null,
     stageId: "112-333",
     taskId: "abc-123",
     taskTitle: "Some title",
+    trackingId: null,
     type: NotificationType.TASK_ASSIGNMENT,
   };
   const response = await announceNotificationCreation(notification);
@@ -160,9 +166,12 @@ test("sendMessage can early return if the notification is missing data", async (
     recipientCollaboratorId: null,
     sectionId: null,
     sentEmailAt: new Date("2019-02-02"),
+    shipmentTrackingId: null,
+    shipmentTrackingDescription: null,
     stageId: null,
     taskId: null,
     taskTitle: null,
+    trackingId: null,
     type: NotificationType.INVITE_COLLABORATOR,
   };
   const response = await announceNotificationCreation(notification);
