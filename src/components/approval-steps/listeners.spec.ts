@@ -20,6 +20,7 @@ import DesignsDAO from "../product-designs/dao";
 import { NotificationType } from "../notifications/domain-object";
 import NotificationsLayer from "./notifications";
 import { templateDesignEvent } from "../design-events/types";
+import * as IrisService from "../iris/send-message";
 
 const as: ApprovalStep = {
   state: ApprovalStepState.UNSTARTED,
@@ -121,6 +122,8 @@ test("dao.updated.state", async (t: Test) => {
     ApprovalStepStateService,
     "handleStepCompletion"
   );
+  const irisStub = sandbox().stub(IrisService, "sendMessage").resolves();
+
   const now = new Date();
   sandbox().useFakeTimers(now);
 
@@ -129,6 +132,7 @@ test("dao.updated.state", async (t: Test) => {
     title: string;
     updated: ApprovalStep;
     calls: any[][];
+    statesUpdated: number;
   }
   const testCases: TestCase[] = [
     {
@@ -138,6 +142,7 @@ test("dao.updated.state", async (t: Test) => {
         designId: "d2",
       },
       calls: [],
+      statesUpdated: 0,
     },
     {
       title: "Update with state !== COMPLETED",
@@ -147,6 +152,7 @@ test("dao.updated.state", async (t: Test) => {
         reason: "",
       },
       calls: [],
+      statesUpdated: 1,
     },
     {
       title: "Update with state === COMPLETED",
@@ -167,6 +173,7 @@ test("dao.updated.state", async (t: Test) => {
           },
         ],
       ],
+      statesUpdated: 2,
     },
   ];
   for (const testCase of testCases) {
@@ -184,6 +191,11 @@ test("dao.updated.state", async (t: Test) => {
     handleStepCompletionStub.resetHistory();
     await listeners["dao.updated.*"].state(event);
     t.deepEqual(handleStepCompletionStub.args, testCase.calls, testCase.title);
+    t.equal(
+      irisStub.callCount,
+      testCase.statesUpdated,
+      "Updates via realtime on state change"
+    );
   }
   await trx.rollback();
 });

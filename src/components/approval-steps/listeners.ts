@@ -21,6 +21,8 @@ import * as CollaboratorsDAO from "../../components/collaborators/dao";
 import DesignsDAO from "../product-designs/dao";
 import { NotificationType } from "../notifications/domain-object";
 import notifications from "./notifications";
+import * as IrisService from "../../components/iris/send-message";
+import { realtimeApprovalStepUpdated } from "./realtime";
 import { templateDesignEvent } from "../design-events/types";
 
 export const listeners: Listeners<ApprovalStep, typeof domain> = {
@@ -59,6 +61,10 @@ export const listeners: Listeners<ApprovalStep, typeof domain> = {
         updated.state === ApprovalStepState.CURRENT
       ) {
         await handleStepReopen(trx, updated);
+      }
+
+      if (before.state !== updated.state) {
+        await IrisService.sendMessage(realtimeApprovalStepUpdated(updated));
       }
     },
   },

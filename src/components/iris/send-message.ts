@@ -8,11 +8,13 @@ import {
 } from "../../config";
 import { RealtimeDesignEventCreated } from "../design-events/realtime";
 import { RealtimeCollectionStatusUpdated } from "../collections/realtime";
+import { RealtimeApprovalStepUpdated } from "../approval-steps/realtime";
 
 type AllRealtimeMessage =
   | RealtimeMessage
   | RealtimeDesignEventCreated
-  | RealtimeCollectionStatusUpdated;
+  | RealtimeCollectionStatusUpdated
+  | RealtimeApprovalStepUpdated;
 
 /**
  * Uploads a realtime resource to s3 then enqueues into SQS.

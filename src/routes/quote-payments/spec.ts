@@ -24,7 +24,10 @@ import { createStorefront } from "../../services/create-storefront";
 import { ProviderName } from "../../components/storefronts/tokens/domain-object";
 import * as CreateShopifyProducts from "../../services/create-shopify-products";
 import Knex from "knex";
-import { ApprovalStepState } from "../../components/approval-steps/domain-object";
+import {
+  ApprovalStepState,
+  ApprovalStepType,
+} from "../../components/approval-steps/domain-object";
 import createDesign from "../../services/create-design";
 import * as IrisService from "../../components/iris/send-message";
 
@@ -177,10 +180,29 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
   );
   t.equals(
     irisStub.args[2][0].type,
+    "approval-step/updated",
+    "Realtime message emitted for approval step status"
+  );
+  t.equals(
+    irisStub.args[2][0].resource.type,
+    ApprovalStepType.CHECKOUT,
+    "Realtime checkout step is updated - design 1"
+  );
+  t.equals(
+    irisStub.args[3][0].type,
+    "approval-step/updated",
+    "Realtime message emitted for approval step status"
+  );
+  t.equals(
+    irisStub.args[3][0].resource.type,
+    ApprovalStepType.CHECKOUT,
+    "Realtime checkout step is updated - design 2"
+  );
+  t.equals(
+    irisStub.args[4][0].type,
     "collection/status-updated",
     "Realtime message emitted for collection status"
   );
-
   await db.transaction(async (trx: Knex.Transaction) => {
     const cutAndSewApprovalSteps = await ApprovalStepsDAO.findByDesign(
       trx,
