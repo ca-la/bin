@@ -9,7 +9,7 @@ import PricingProductType from "../pricing-product-types/domain-object";
 import ApprovalStepSubmission, {
   ApprovalStepSubmissionState,
   ApprovalStepSubmissionArtifactType,
-} from "./domain-object";
+} from "./types";
 import ApprovalStep, {
   ApprovalStepType,
 } from "../approval-steps/domain-object";

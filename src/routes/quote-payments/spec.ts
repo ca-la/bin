@@ -24,10 +24,7 @@ import { createStorefront } from "../../services/create-storefront";
 import { ProviderName } from "../../components/storefronts/tokens/domain-object";
 import * as CreateShopifyProducts from "../../services/create-shopify-products";
 import Knex from "knex";
-import {
-  ApprovalStepState,
-  ApprovalStepType,
-} from "../../components/approval-steps/domain-object";
+import { ApprovalStepState } from "../../components/approval-steps/domain-object";
 import createDesign from "../../services/create-design";
 import * as IrisService from "../../components/iris/send-message";
 
@@ -168,40 +165,30 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
   t.equals(lineItems[0].designId, d1.id, "Line Item has correct design");
   t.equals(lineItems[1].designId, d2.id, "Line Item has correct design");
   t.assert(stripe.calledOnce, "Stripe was charged");
-  t.equals(
-    irisStub.args[0][0].resource.type,
-    "COMMIT_QUOTE",
+
+  const realtimeDesignEvents = irisStub.args.filter(
+    (arg: any) => arg[0].type === "design-event/created"
+  );
+  const realtimeStepUpdates = irisStub.args.filter(
+    (arg: any) => arg[0].type === "approval-step/updated"
+  );
+  const realtimeCollectionStatus = irisStub.args.filter(
+    (arg: any) => arg[0].type === "collection/status-updated"
+  );
+  t.deepEquals(
+    realtimeDesignEvents.map((message: any) => message[0].resource.type),
+    ["COMMIT_QUOTE", "COMMIT_QUOTE"],
     "Realtime message emitted for design checkout"
   );
   t.equals(
-    irisStub.args[1][0].resource.type,
-    "COMMIT_QUOTE",
-    "Realtime message emitted for design checkout"
-  );
-  t.equals(
-    irisStub.args[2][0].type,
-    "approval-step/updated",
+    realtimeStepUpdates.length,
+    2,
     "Realtime message emitted for approval step status"
   );
   t.equals(
-    irisStub.args[2][0].resource.type,
-    ApprovalStepType.CHECKOUT,
-    "Realtime checkout step is updated - design 1"
-  );
-  t.equals(
-    irisStub.args[3][0].type,
-    "approval-step/updated",
+    realtimeCollectionStatus.length,
+    1,
     "Realtime message emitted for approval step status"
-  );
-  t.equals(
-    irisStub.args[3][0].resource.type,
-    ApprovalStepType.CHECKOUT,
-    "Realtime checkout step is updated - design 2"
-  );
-  t.equals(
-    irisStub.args[4][0].type,
-    "collection/status-updated",
-    "Realtime message emitted for collection status"
   );
   await db.transaction(async (trx: Knex.Transaction) => {
     const cutAndSewApprovalSteps = await ApprovalStepsDAO.findByDesign(

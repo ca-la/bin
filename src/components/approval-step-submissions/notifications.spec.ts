@@ -15,7 +15,7 @@ import { CollaboratorWithUser } from "../../components/collaborators/types";
 import ApprovalStep from "../approval-steps/domain-object";
 import ProductDesign from "../product-designs/domain-objects/product-design";
 import Collection from "../collections/domain-object";
-import ApprovalStepSubmission from "./domain-object";
+import ApprovalStepSubmission from "./types";
 
 const prepareAssets = async (): Promise<{
   actor: any;

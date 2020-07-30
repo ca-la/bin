@@ -1,5 +1,6 @@
 import tape from "tape";
 import Knex from "knex";
+import { isEqual } from "lodash";
 
 import db from "../../services/db";
 import * as SQSService from "../../services/aws/sqs";
@@ -35,6 +36,9 @@ test("sendMessage supports sending a message", async (t: tape.Test) => {
   const fullNotification = await db.transaction((trx: Knex.Transaction) =>
     findById(trx, notification.id)
   );
+  if (!fullNotification) {
+    throw new Error("Could not find notification");
+  }
   const notificationMessage = await createNotificationMessage(fullNotification);
 
   if (!notificationMessage || !notification.recipientUserId) {
@@ -51,25 +55,29 @@ test("sendMessage supports sending a message", async (t: tape.Test) => {
   };
   await sendMessage(realtimeNotification);
 
-  t.true(
-    s3Stub.calledOnceWith({
+  const s3Upload: any = s3Stub.args.find((arg: any) =>
+    isEqual(arg[0], {
       acl: "authenticated-read",
       bucketName: "iris-s3-foo",
       contentType: "application/json",
       resource: JSON.stringify(realtimeNotification),
-    }),
-    "Called with the expected arguments"
+    })
   );
 
-  t.deepEqual(sqsStub.args[0][0], {
-    deduplicationId: `iris-foo-abc-123`,
-    messageGroupId: "notification",
-    messageType: "realtime-message",
-    payload: {
-      bucketName: "iris-foo",
-      remoteFilename: "abc-123",
-    },
-    queueRegion: "iris-sqs-region-biz",
-    queueUrl: "iris-sqs-url-bar",
-  });
+  const sqsMessage: any = sqsStub.args.find((arg: any) =>
+    isEqual(arg[0], {
+      deduplicationId: `iris-foo-abc-123`,
+      messageGroupId: "notification",
+      messageType: "realtime-message",
+      payload: {
+        bucketName: "iris-foo",
+        remoteFilename: "abc-123",
+      },
+      queueRegion: "iris-sqs-region-biz",
+      queueUrl: "iris-sqs-url-bar",
+    })
+  );
+
+  t.true(Boolean(s3Upload), "Called with the expected arguments");
+  t.true(Boolean(sqsMessage), "Sends to SQS");
 });

@@ -8,7 +8,7 @@ import * as ApprovalStepsDAO from "../approval-steps/dao";
 import ApprovalStepSubmission, {
   ApprovalStepSubmissionArtifactType,
   ApprovalStepSubmissionState,
-} from "./domain-object";
+} from "./types";
 import * as AnnounceCommentService from "../iris/messages/approval-step-comment";
 import * as NotificationsDAO from "../notifications/dao";
 import DesignEventsDAO from "../design-events/dao";

@@ -8,12 +8,18 @@ import {
 } from "../../config";
 import { RealtimeDesignEventCreated } from "../design-events/realtime";
 import { RealtimeCollectionStatusUpdated } from "../collections/realtime";
+import {
+  RealtimeApprovalSubmissionUpdated,
+  RealtimeApprovalSubmissionCreated,
+} from "../approval-step-submissions/realtime";
 import { RealtimeApprovalStepUpdated } from "../approval-steps/realtime";
 
 type AllRealtimeMessage =
   | RealtimeMessage
   | RealtimeDesignEventCreated
   | RealtimeCollectionStatusUpdated
+  | RealtimeApprovalSubmissionUpdated
+  | RealtimeApprovalSubmissionCreated
   | RealtimeApprovalStepUpdated;
 
 /**

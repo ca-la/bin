@@ -9,9 +9,7 @@ import * as ApprovalStepsDAO from "../approval-steps/dao";
 import * as ApprovalSubmissionsDAO from "./dao";
 import * as CollaboratorsDAO from "../collaborators/dao";
 import DesignEventsDAO from "../design-events/dao";
-import ApprovalStepSubmission, {
-  ApprovalStepSubmissionState,
-} from "./domain-object";
+import ApprovalStepSubmission, { ApprovalStepSubmissionState } from "./types";
 import db from "../../services/db";
 import DesignEvent, { templateDesignEvent } from "../design-events/types";
 import requireAuth from "../../middleware/require-auth";

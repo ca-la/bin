@@ -4,7 +4,7 @@ import uuid from "node-uuid";
 import ApprovalStepSubmission, {
   ApprovalStepSubmissionArtifactType,
   ApprovalStepSubmissionState,
-} from "../../components/approval-step-submissions/domain-object";
+} from "../../components/approval-step-submissions/types";
 import generateApprovalStep from "./design-approval-step";
 import * as ApprovalStepSubmissionsDAO from "../../components/approval-step-submissions/dao";
 

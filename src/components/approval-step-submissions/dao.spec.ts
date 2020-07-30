@@ -20,7 +20,7 @@ import * as ApprovalStepsDAO from "../approval-steps/dao";
 import ApprovalStepSubmission, {
   ApprovalStepSubmissionArtifactType,
   ApprovalStepSubmissionState,
-} from "./domain-object";
+} from "./types";
 import * as ApprovalStepSubmissionsDAO from "./dao";
 
 test("ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by step and id", async (t: Test) => {
@@ -161,26 +161,6 @@ test("setAssignee sets the collaborator and returns result", async (t: Test) => 
       updated.collaboratorId,
       collaborator.id,
       "setAssignee returns patched submission"
-    );
-  });
-});
-
-test("supports update", async (t: Test) => {
-  await db.transaction(async (trx: Knex.Transaction) => {
-    const { approvalStep } = await generateApprovalStep(trx);
-    const { submission } = await generateApprovalSubmission(trx, {
-      stepId: approvalStep.id,
-      state: ApprovalStepSubmissionState.SUBMITTED,
-    });
-    const updated = await ApprovalStepSubmissionsDAO.update(
-      trx,
-      submission.id,
-      { state: ApprovalStepSubmissionState.APPROVED }
-    );
-    t.isEqual(
-      updated.state,
-      ApprovalStepSubmissionState.APPROVED,
-      "state is updated"
     );
   });
 });

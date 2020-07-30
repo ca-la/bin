@@ -1,6 +1,3 @@
-import DataAdapter from "../../services/data-adapter";
-import { hasProperties } from "../../services/require-properties";
-
 export enum ApprovalStepSubmissionArtifactType {
   TECHNICAL_DESIGN = "TECHNICAL_DESIGN",
   SAMPLE = "SAMPLE",
@@ -35,28 +32,4 @@ export interface ApprovalStepSubmissionRow {
   title: string;
 }
 
-export const dataAdapter = new DataAdapter<
-  ApprovalStepSubmissionRow,
-  ApprovalStepSubmission
->();
-
-export const partialDataAdapter = new DataAdapter<
-  Partial<ApprovalStepSubmissionRow>,
-  Partial<ApprovalStepSubmission>
->();
-
-export function isApprovalStepSubmissionRow(
-  candidate: any
-): candidate is ApprovalStepSubmissionRow {
-  return hasProperties(
-    candidate,
-    "id",
-    "step_id",
-    "created_at",
-    "artifact_type",
-    "state",
-    "collaborator_id",
-    "state",
-    "title"
-  );
-}
+export const domain = "ApprovalStepSubmission" as "ApprovalStepSubmission";
