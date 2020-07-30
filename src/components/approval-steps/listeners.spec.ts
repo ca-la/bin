@@ -3,7 +3,7 @@ import db from "../../services/db";
 import ApprovalStep, {
   ApprovalStepState,
   ApprovalStepType,
-  domain,
+  approvalStepDomain,
 } from "./types";
 import * as uuid from "node-uuid";
 import { omit } from "lodash";
@@ -104,9 +104,9 @@ test("dao.updating", async (t: Test) => {
     if (!listeners["dao.updating"]) {
       throw new Error("dao.updating listener is empty");
     }
-    const event: DaoUpdating<ApprovalStep, typeof domain> = {
+    const event: DaoUpdating<ApprovalStep, typeof approvalStepDomain> = {
       type: "dao.updating",
-      domain,
+      domain: approvalStepDomain,
       trx,
       before: testCase.before,
       patch: testCase.patch,
@@ -177,10 +177,10 @@ test("dao.updated.state", async (t: Test) => {
     },
   ];
   for (const testCase of testCases) {
-    const event: DaoUpdated<ApprovalStep, typeof domain> = {
+    const event: DaoUpdated<ApprovalStep, typeof approvalStepDomain> = {
       trx,
       type: "dao.updated",
-      domain,
+      domain: approvalStepDomain,
       before: as,
       updated: testCase.updated,
     };
@@ -279,11 +279,11 @@ test("route.updated.state", async (t: Test) => {
     },
   ];
   for (const testCase of testCases) {
-    const event: RouteUpdated<ApprovalStep, typeof domain> = {
+    const event: RouteUpdated<ApprovalStep, typeof approvalStepDomain> = {
       type: "route.updated",
       trx,
       actorId,
-      domain,
+      domain: approvalStepDomain,
       before: testCase.before,
       updated: testCase.updated,
     };
@@ -498,11 +498,11 @@ test("route.updated.collaboratorId", async (t: Test) => {
       "send"
     );
 
-    const event: RouteUpdated<ApprovalStep, typeof domain> = {
+    const event: RouteUpdated<ApprovalStep, typeof approvalStepDomain> = {
       type: "route.updated",
       trx,
       actorId,
-      domain,
+      domain: approvalStepDomain,
       before: testCase.before,
       updated: testCase.updated,
     };

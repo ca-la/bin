@@ -1,6 +1,6 @@
 import dao from "./dao";
 import { buildRouter } from "../../services/cala-component/cala-router";
-import ApprovalStep, { domain } from "./types";
+import ApprovalStep, { approvalStepDomain } from "./types";
 import db from "../../services/db";
 import requireAuth from "../../middleware/require-auth";
 import Knex from "knex";
@@ -36,7 +36,7 @@ async function getDesignIdFromStep(this: AuthedContext): Promise<string> {
 }
 
 const standardRouter = buildRouter<ApprovalStep>(
-  domain,
+  approvalStepDomain,
   "/design-approval-steps",
   dao,
   {

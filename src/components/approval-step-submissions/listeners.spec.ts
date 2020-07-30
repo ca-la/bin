@@ -3,7 +3,7 @@ import db from "../../services/db";
 import * as IrisService from "../iris/send-message";
 import { DaoUpdated, DaoCreated } from "../../services/pubsub/cala-events";
 import ApprovalStepSubmission, {
-  domain,
+  approvalStepSubmissionDomain,
   ApprovalStepSubmissionArtifactType,
   ApprovalStepSubmissionState,
 } from "./types";
@@ -27,10 +27,13 @@ test("dao.updated.state", async (t: Test) => {
 
   const trx = await db.transaction();
 
-  const event: DaoUpdated<ApprovalStepSubmission, typeof domain> = {
+  const event: DaoUpdated<
+    ApprovalStepSubmission,
+    typeof approvalStepSubmissionDomain
+  > = {
     trx,
     type: "dao.updated",
-    domain,
+    domain: approvalStepSubmissionDomain,
     before: submission,
     updated: { ...submission, state: ApprovalStepSubmissionState.SUBMITTED },
   };
@@ -68,10 +71,13 @@ test("dao.created", async (t: Test) => {
 
   const trx = await db.transaction();
 
-  const event: DaoCreated<ApprovalStepSubmission, typeof domain> = {
+  const event: DaoCreated<
+    ApprovalStepSubmission,
+    typeof approvalStepSubmissionDomain
+  > = {
     trx,
     type: "dao.created",
-    domain,
+    domain: approvalStepSubmissionDomain,
     created: submission,
   };
 

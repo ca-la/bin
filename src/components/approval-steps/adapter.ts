@@ -1,6 +1,6 @@
 import { buildAdapter } from "../../services/cala-component/cala-adapter";
 import ApprovalStep, {
-  domain,
+  approvalStepDomain,
   ApprovalStepRow,
   ApprovalBlocked,
   ApprovalCompleted,
@@ -165,7 +165,7 @@ function decode(step: ApprovalStep): ApprovalStepRow {
 }
 
 export default buildAdapter<ApprovalStep, ApprovalStepRow>({
-  domain,
+  domain: approvalStepDomain,
   requiredProperties: ["id", "title", "ordering", "designId", "state", "type"],
   encodeTransformer: encode,
   decodeTransformer: decode,

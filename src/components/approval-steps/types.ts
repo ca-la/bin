@@ -85,4 +85,4 @@ export interface ApprovalStepRow {
   due_at: Date | null;
 }
 
-export const domain = "ApprovalStep" as "ApprovalStep";
+export const approvalStepDomain = "ApprovalStep" as "ApprovalStep";

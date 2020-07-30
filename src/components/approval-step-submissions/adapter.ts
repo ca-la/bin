@@ -1,11 +1,11 @@
 import ApprovalStepSubmission, {
   ApprovalStepSubmissionRow,
-  domain,
+  approvalStepSubmissionDomain,
 } from "./types";
 import { buildAdapter } from "../../services/cala-component/cala-adapter";
 
 export default buildAdapter<ApprovalStepSubmission, ApprovalStepSubmissionRow>({
-  domain,
+  domain: approvalStepSubmissionDomain,
   requiredProperties: [
     "id",
     "stepId",

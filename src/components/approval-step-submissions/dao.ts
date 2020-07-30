@@ -2,7 +2,7 @@ import Knex from "knex";
 
 import ApprovalStepSubmission, {
   ApprovalStepSubmissionRow,
-  domain,
+  approvalStepSubmissionDomain,
 } from "./types";
 import { buildDao } from "../../services/cala-component/cala-dao";
 import adapter from "./adapter";
@@ -10,7 +10,7 @@ import adapter from "./adapter";
 const TABLE_NAME = "design_approval_submissions";
 
 const standardDao = buildDao<ApprovalStepSubmission, ApprovalStepSubmissionRow>(
-  domain,
+  approvalStepSubmissionDomain,
   TABLE_NAME,
   adapter,
   {

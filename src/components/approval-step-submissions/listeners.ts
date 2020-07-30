@@ -9,16 +9,25 @@ import {
   realtimeApprovalSubmissionUpdated,
   realtimeApprovalSubmissionCreated,
 } from "./realtime";
-import ApprovalStepSubmission, { domain } from "./types";
+import ApprovalStepSubmission, { approvalStepSubmissionDomain } from "./types";
 
-export const listeners: Listeners<ApprovalStepSubmission, typeof domain> = {
+export const listeners: Listeners<
+  ApprovalStepSubmission,
+  typeof approvalStepSubmissionDomain
+> = {
   "dao.created": (
-    event: DaoCreated<ApprovalStepSubmission, typeof domain>
+    event: DaoCreated<
+      ApprovalStepSubmission,
+      typeof approvalStepSubmissionDomain
+    >
   ): Promise<void> =>
     IrisService.sendMessage(realtimeApprovalSubmissionCreated(event.created)),
   "dao.updated.*": {
     state: async (
-      event: DaoUpdated<ApprovalStepSubmission, typeof domain>
+      event: DaoUpdated<
+        ApprovalStepSubmission,
+        typeof approvalStepSubmissionDomain
+      >
     ): Promise<void> => {
       const { before, updated } = event;
       if (before.state !== updated.state) {
@@ -30,7 +39,7 @@ export const listeners: Listeners<ApprovalStepSubmission, typeof domain> = {
   },
 };
 
-export default buildListeners<ApprovalStepSubmission, typeof domain>(
-  domain,
-  listeners
-);
+export default buildListeners<
+  ApprovalStepSubmission,
+  typeof approvalStepSubmissionDomain
+>(approvalStepSubmissionDomain, listeners);

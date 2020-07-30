@@ -1,4 +1,4 @@
-import ApprovalStep, { domain, ApprovalStepState } from "./types";
+import ApprovalStep, { approvalStepDomain, ApprovalStepState } from "./types";
 import {
   DaoUpdated,
   DaoUpdating,
@@ -25,9 +25,9 @@ import * as IrisService from "../../components/iris/send-message";
 import { realtimeApprovalStepUpdated } from "./realtime";
 import { templateDesignEvent } from "../design-events/types";
 
-export const listeners: Listeners<ApprovalStep, typeof domain> = {
+export const listeners: Listeners<ApprovalStep, typeof approvalStepDomain> = {
   "dao.updating": async (
-    event: DaoUpdating<ApprovalStep, typeof domain>
+    event: DaoUpdating<ApprovalStep, typeof approvalStepDomain>
   ): Promise<void> => {
     const { patch, before } = event;
 
@@ -49,7 +49,7 @@ export const listeners: Listeners<ApprovalStep, typeof domain> = {
 
   "dao.updated.*": {
     state: async (
-      event: DaoUpdated<ApprovalStep, typeof domain>
+      event: DaoUpdated<ApprovalStep, typeof approvalStepDomain>
     ): Promise<void> => {
       const { before, updated, trx } = event;
       if (updated.state === ApprovalStepState.COMPLETED) {
@@ -71,7 +71,7 @@ export const listeners: Listeners<ApprovalStep, typeof domain> = {
 
   "route.updated.*": {
     state: async (
-      event: RouteUpdated<ApprovalStep, typeof domain>
+      event: RouteUpdated<ApprovalStep, typeof approvalStepDomain>
     ): Promise<void> => {
       const { updated, before, actorId, trx } = event;
       if (updated.state === ApprovalStepState.COMPLETED) {
@@ -87,7 +87,7 @@ export const listeners: Listeners<ApprovalStep, typeof domain> = {
       }
     },
     collaboratorId: async (
-      event: RouteUpdated<ApprovalStep, typeof domain>
+      event: RouteUpdated<ApprovalStep, typeof approvalStepDomain>
     ): Promise<void> => {
       const collaborator = event.updated.collaboratorId
         ? await CollaboratorsDAO.findById(event.updated.collaboratorId)
@@ -140,4 +140,7 @@ export const listeners: Listeners<ApprovalStep, typeof domain> = {
   },
 };
 
-export default buildListeners<ApprovalStep, typeof domain>(domain, listeners);
+export default buildListeners<ApprovalStep, typeof approvalStepDomain>(
+  approvalStepDomain,
+  listeners
+);

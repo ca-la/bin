@@ -32,4 +32,4 @@ export interface ApprovalStepSubmissionRow {
   title: string;
 }
 
-export const domain = "ApprovalStepSubmission" as "ApprovalStepSubmission";
+export const approvalStepSubmissionDomain = "ApprovalStepSubmission" as "ApprovalStepSubmission";

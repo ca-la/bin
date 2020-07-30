@@ -1,14 +1,19 @@
 import { Transaction } from "knex";
 import { buildDao } from "../../services/cala-component/cala-dao";
 import adapter from "./adapter";
-import ApprovalStep, { ApprovalStepRow, domain } from "./types";
+import ApprovalStep, { ApprovalStepRow, approvalStepDomain } from "./types";
 
 export const tableName = "design_approval_steps";
 
 const dao = {
-  ...buildDao<ApprovalStep, ApprovalStepRow>(domain, tableName, adapter, {
-    orderColumn: "ordering",
-  }),
+  ...buildDao<ApprovalStep, ApprovalStepRow>(
+    approvalStepDomain,
+    tableName,
+    adapter,
+    {
+      orderColumn: "ordering",
+    }
+  ),
   async findBySubmissionId(
     trx: Transaction,
     id: string
