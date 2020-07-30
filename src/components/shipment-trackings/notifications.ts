@@ -95,6 +95,7 @@ function getTrackingBaseWithAssets(
     design,
     approvalStep,
     type: LinkType.ShipmentTracking,
+    shipmentTrackingId,
   });
 
   const trackingHtmlLink = shipmentTrackingDescription

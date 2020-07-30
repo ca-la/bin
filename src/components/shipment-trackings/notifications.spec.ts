@@ -68,7 +68,7 @@ const prepareAssets = async (): Promise<{
   }
 };
 
-test("ApprovalSteps notifications", async (t: Test) => {
+test("Shipment Tracking notifications", async (t: Test) => {
   sandbox()
     .stub(NotificationAnnouncer, "announceNotificationCreation")
     .resolves({});
@@ -101,6 +101,7 @@ test("ApprovalSteps notifications", async (t: Test) => {
         ": ",
         shipmentTracking.trackingId,
       ],
+      url: `/dashboard?designId=${design.id}&stepId=${approvalStep.id}&showTracking=view&trackingId=${shipmentTracking.id}`,
     },
   ];
   for (const testCase of testCases) {
@@ -138,6 +139,7 @@ test("ApprovalSteps notifications", async (t: Test) => {
         true,
         `${testCase.title} / notification attachment message contains expected parts`
       );
+      t.true(message && message.attachments[0].url.includes(testCase.url));
     } finally {
       await trx.rollback();
     }

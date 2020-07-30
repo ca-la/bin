@@ -66,6 +66,7 @@ export type LinkBase =
       type: LinkType.ShipmentTracking;
       design: Meta;
       approvalStep: Meta;
+      shipmentTrackingId: string;
     };
 
 export function constructHtmlLink(deepLink: string, title: string): string {
@@ -162,9 +163,9 @@ export default function getLinks(linkBase: LinkBase): Links {
     }
 
     case LinkType.ShipmentTracking: {
-      const { design, approvalStep } = linkBase;
+      const { design, approvalStep, shipmentTrackingId } = linkBase;
 
-      const deepLink = `${STUDIO_HOST}/dashboard?designId=${design.id}&stepId=${approvalStep.id}&showTracking=view`;
+      const deepLink = `${STUDIO_HOST}/dashboard?designId=${design.id}&stepId=${approvalStep.id}&showTracking=view&trackingId=${shipmentTrackingId}`;
       const title = normalizeTitle(design);
 
       return {
