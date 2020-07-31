@@ -35,7 +35,11 @@ test("dao.updated.state", async (t: Test) => {
     type: "dao.updated",
     domain: approvalStepSubmissionDomain,
     before: submission,
-    updated: { ...submission, state: ApprovalStepSubmissionState.SUBMITTED },
+    updated: {
+      ...submission,
+      state: ApprovalStepSubmissionState.SUBMITTED,
+      collaboratorId: "collabo-id",
+    },
   };
 
   if (!listeners["dao.updated.*"] || !listeners["dao.updated.*"].state) {
@@ -54,7 +58,7 @@ test("dao.updated.state", async (t: Test) => {
         createdAt: now,
         artifactType: "CUSTOM",
         state: ApprovalStepSubmissionState.SUBMITTED,
-        collaboratorId: null,
+        collaboratorId: "collabo-id",
         title: "Garment Sample",
       },
       approvalStepId: "step-1",

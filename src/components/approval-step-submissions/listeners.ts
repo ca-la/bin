@@ -28,14 +28,8 @@ export const listeners: Listeners<
         ApprovalStepSubmission,
         typeof approvalStepSubmissionDomain
       >
-    ): Promise<void> => {
-      const { before, updated } = event;
-      if (before.state !== updated.state) {
-        await IrisService.sendMessage(
-          realtimeApprovalSubmissionUpdated(updated)
-        );
-      }
-    },
+    ): Promise<void> =>
+      IrisService.sendMessage(realtimeApprovalSubmissionUpdated(event.updated)),
   },
 };
 
