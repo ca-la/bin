@@ -52,61 +52,11 @@ export function fromJson(body: any): AftershipResponse {
   return body as AftershipResponseFailure;
 }
 
-export interface AftershipCheckpoint {
-  created_at: string;
-  slug: string;
-  checkpoint_time?: string;
-  location?: string | null;
-  city?: string | null;
-  state?: string | null;
-  country_iso3?: string | null;
-  message?: string | null;
-  tag: string;
-  subtag: string;
-  raw_tag?: string | null;
-}
-
-export function isAftershipCheckpoint(
-  candidate: UnknownObject
-): candidate is AftershipCheckpoint {
-  if (!candidate) {
-    return false;
-  }
-
-  const keyset = new Set(Object.keys(candidate));
-  return ["created_at", "slug", "tag", "subtag"].every(keyset.has.bind(keyset));
-}
-
-export interface AftershipTracking {
-  id: string;
-  tracking_number: string;
-  tag: string;
-  expected_delivery: string | null;
-  shipment_delivery_date: string | null;
-  checkpoints: AftershipCheckpoint[];
-}
-
-export function isAftershipTracking(
-  candidate: UnknownObject
-): candidate is AftershipTracking {
-  if (!candidate) {
-    return false;
-  }
-
-  const keyset = new Set(Object.keys(candidate));
-  const keysetMatch = [
-    "id",
-    "tracking_number",
-    "tag",
-    "shipment_delivery_date",
-    "expected_delivery",
-    "checkpoints",
-  ].every(keyset.has.bind(keyset));
-  return keysetMatch && candidate.checkpoints.every(isAftershipCheckpoint);
-}
-
 interface AftershipTrackingCreateResponse {
-  tracking: AftershipTracking;
+  tracking: {
+    id: string;
+    tracking_number: string;
+  };
 }
 
 export function isAftershipTrackingCreateResponse(
@@ -115,7 +65,8 @@ export function isAftershipTrackingCreateResponse(
   return (
     Boolean(candidate) &&
     "tracking" in candidate &&
-    isAftershipTracking(candidate.tracking)
+    "id" in (candidate as { tracking: UnknownObject }).tracking &&
+    "tracking_number" in (candidate as { tracking: UnknownObject }).tracking
   );
 }
 
@@ -136,7 +87,11 @@ export function isAftershipCourierListResponse(
 }
 
 interface AftershipTrackingGetResponse {
-  tracking: AftershipTracking;
+  tracking: {
+    tag: string;
+    expected_delivery: string | null;
+    shipment_delivery_date: string | null;
+  };
 }
 
 export function isAftershipTrackingGetResponse(
@@ -145,20 +100,9 @@ export function isAftershipTrackingGetResponse(
   return (
     Boolean(candidate) &&
     "tracking" in candidate &&
-    isAftershipTracking(candidate.tracking)
-  );
-}
-
-interface AftershipWebhookRequestBody {
-  msg: AftershipTracking;
-}
-
-export function isAftershipWebhookRequestBody(
-  candidate: UnknownObject
-): candidate is AftershipWebhookRequestBody {
-  return (
-    Boolean(candidate) &&
-    "msg" in candidate &&
-    isAftershipTracking(candidate.msg)
+    "tag" in (candidate as { tracking: UnknownObject }).tracking &&
+    "shipment_delivery_date" in
+      (candidate as { tracking: UnknownObject }).tracking &&
+    "expected_delivery" in (candidate as { tracking: UnknownObject }).tracking
   );
 }

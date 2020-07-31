@@ -70,7 +70,7 @@ type PublicContext<
   WithRouter & WithJsonBody<BodyT>
 >;
 
-type TrxContext<T extends import("koa").ParameterizedContext> = T & {
+type TrxContext<T extends AuthedContext> = T & {
   state: T["state"] & { trx: import("knex").Transaction };
 };
 

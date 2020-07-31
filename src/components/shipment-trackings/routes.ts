@@ -1,5 +1,6 @@
 import Knex from "knex";
 import uuid from "node-uuid";
+import Koa from "koa";
 
 import requireAuth = require("../../middleware/require-auth");
 import {
@@ -10,6 +11,8 @@ import db from "../../services/db";
 import * as ApprovalStepsDAO from "../approval-steps/dao";
 import ProductDesignsDAO from "../product-designs/dao";
 import * as CollaboratorsDAO from "../collaborators/dao";
+import { ShipmentTracking } from "./types";
+import * as ShipmentTrackingsDAO from "./dao";
 import * as DesignEventsDAO from "../design-events/dao";
 import { requireQueryParam } from "../../middleware/require-query-param";
 import { hasProperties } from "../../services/require-properties";
@@ -18,17 +21,11 @@ import useTransaction from "../../middleware/use-transaction";
 import Aftership, {
   AFTERSHIP_SECRET_TOKEN,
 } from "../integrations/aftership/service";
+import { attachTrackingLink, attachDeliveryStatus } from "./service";
 import { templateDesignEvent } from "../design-events/types";
+
 import notifications from "./notifications";
 import { NotificationType } from "../notifications/domain-object";
-
-import { ShipmentTracking } from "./types";
-import * as ShipmentTrackingsDAO from "./dao";
-import {
-  attachTrackingLink,
-  attachDeliveryStatus,
-  handleTrackingUpdate,
-} from "./service";
 
 const attachMeta = (shipmentTracking: ShipmentTracking) =>
   attachDeliveryStatus(attachTrackingLink(shipmentTracking));
@@ -131,8 +128,7 @@ function* getCouriers(this: AuthedContext) {
   this.body = matchingCouriers;
 }
 
-function* receiveShipmentTracking(this: TrxContext<PublicContext>) {
-  const { trx } = this.state;
+function* receiveShipmentTracking(this: Koa.ParameterizedContext) {
   const { aftershipToken } = this.request.query;
 
   this.assert(
@@ -141,12 +137,8 @@ function* receiveShipmentTracking(this: TrxContext<PublicContext>) {
     "Only Aftership webhook is allowed to POST to this endpoint"
   );
 
-  const { shipmentTrackingId, events } = yield Aftership.parseWebhookData(
-    trx,
-    this.request.body
-  );
-
-  yield handleTrackingUpdate(trx, shipmentTrackingId, events);
+  // TODO: Create appropriate notification
+  // TODO: Create appropriate activity stream item
 
   this.status = 204;
 }
@@ -183,11 +175,7 @@ const router: CalaRouter = {
       get: [requireAuth, requireQueryParam("shipmentTrackingId"), getCouriers],
     },
     "/updates": {
-      post: [
-        useTransaction,
-        requireQueryParam("aftershipToken"),
-        receiveShipmentTracking,
-      ],
+      post: [requireQueryParam("aftershipToken"), receiveShipmentTracking],
     },
   },
 };
