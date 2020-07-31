@@ -1,5 +1,9 @@
+import Knex from "knex";
 import { DeliveryStatus, ShipmentTracking } from "./types";
 import Aftership from "../integrations/aftership/service";
+import { ShipmentTrackingEvent } from "../shipment-tracking-events/types";
+import * as ShipmentTrackingEventsDAO from "../shipment-tracking-events/dao";
+import ShipmentTrackingEventService from "../shipment-tracking-events/service";
 
 const AFTERSHIP_CUSTOM_DOMAIN = "https://track.ca.la";
 
@@ -26,4 +30,22 @@ export async function attachDeliveryStatus(
       shipmentTracking.trackingId
     ),
   };
+}
+
+export async function handleTrackingUpdate(
+  trx: Knex.Transaction,
+  shipmentTrackingId: string,
+  events: ShipmentTrackingEvent[]
+): Promise<void> {
+  const newEvents = await ShipmentTrackingEventService.diff(
+    trx,
+    shipmentTrackingId,
+    events
+  );
+
+  if (newEvents.length > 0) {
+    await ShipmentTrackingEventsDAO.createAll(trx, newEvents);
+    // TODO: Create appropriate notification
+    // TODO: Create appropriate activity stream item
+  }
 }

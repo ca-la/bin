@@ -1,11 +1,14 @@
 import Knex from "knex";
+import uuid from "node-uuid";
+import { omit } from "lodash";
+
 import { authHeader, get, post } from "../../test-helpers/http";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
-import { omit } from "lodash";
 import SessionsDAO from "../../dao/sessions";
 import AftershipService, {
   AFTERSHIP_SECRET_TOKEN,
 } from "../integrations/aftership/service";
+import db from "../../services/db";
 import * as PermissionsService from "../../services/get-permissions";
 import * as ApprovalStepsDAO from "../approval-steps/dao";
 import ProductDesignsDAO from "../product-designs/dao";
@@ -16,6 +19,13 @@ import { ShipmentTracking } from "./types";
 import NotificationsLayer from "./notifications";
 import { NotificationType } from "../notifications/domain-object";
 import { templateDesignEvent } from "../design-events/types";
+import ShipmentTrackingEventService from "../shipment-tracking-events/service";
+import * as ShipmentTrackingEventsDAO from "../shipment-tracking-events/dao";
+import createUser from "../../test-helpers/create-user";
+import createDesign from "../../services/create-design";
+import { staticProductDesign } from "../../test-helpers/factories/product-design";
+import { ApprovalStepType } from "../approval-steps/types";
+import * as AftershipTrackingsDAO from "../aftership-trackings/dao";
 
 function setup() {
   return {
@@ -220,6 +230,12 @@ test("POST /shipment-trackings", async (t: Test) => {
 });
 
 test("POST /shipment-trackings/updates", async (t: Test) => {
+  sandbox().stub(AftershipService, "parseWebhookData").resolves({
+    events: [],
+    shipmentTrackingId: "a-shipment-tracking-id",
+  });
+  sandbox().stub(ShipmentTrackingEventService, "diff").resolves([]);
+  sandbox().stub(ShipmentTrackingEventsDAO, "createAll").resolves([]);
   const [response] = await post(
     `/shipment-trackings/updates?aftershipToken=${AFTERSHIP_SECRET_TOKEN}`
   );
@@ -236,4 +252,171 @@ test("POST /shipment-trackings/updates", async (t: Test) => {
     "/shipment-trackings/updates?aftershipToken=wrong"
   );
   t.equal(wrongToken.status, 403, "token must match expected value");
+});
+
+test("POST /shipment-trackings/updates end-to-end", async (t: Test) => {
+  const { user } = await createUser({ withSession: false });
+  const e1 = {
+    id: uuid.v4(),
+    country: null,
+    courier: "usps",
+    courierTag: null,
+    courierTimestamp: null,
+    createdAt: new Date(2012, 11, 23),
+    location: null,
+    message: null,
+    subtag: "Pending_001",
+    tag: "Pending",
+  };
+  const e2 = {
+    country: null,
+    courier: "usps",
+    courierTag: null,
+    courierTimestamp: null,
+    createdAt: new Date(2012, 11, 25),
+    location: null,
+    message: null,
+    subtag: "InTransit_003",
+    tag: "InTransit",
+  };
+
+  const { shipmentTracking, aftershipTracking } = await db.transaction(
+    async (trx: Knex.Transaction) => {
+      const d1 = await createDesign(
+        staticProductDesign({ id: "d1", userId: user.id }),
+        trx
+      );
+      const checkoutStep = await ApprovalStepsDAO.findOne(trx, {
+        designId: d1.id,
+        type: ApprovalStepType.CHECKOUT,
+      });
+
+      if (!checkoutStep) {
+        throw new Error("Could not find checkout step for created design");
+      }
+
+      sandbox().stub(AftershipService, "createTracking").resolves();
+
+      const tracking = await ShipmentTrackingsDAO.create(trx, {
+        approvalStepId: checkoutStep.id,
+        courier: "usps",
+        createdAt: new Date(2012, 11, 23),
+        description: "First",
+        id: uuid.v4(),
+        trackingId: "first-tracking-id",
+      });
+
+      await ShipmentTrackingEventsDAO.createAll(trx, [
+        { ...e1, shipmentTrackingId: tracking.id },
+      ]);
+
+      return {
+        shipmentTracking: tracking,
+        aftershipTracking: await AftershipTrackingsDAO.create(trx, {
+          createdAt: new Date(2012, 11, 23),
+          id: uuid.v4(),
+          shipmentTrackingId: tracking.id,
+        }),
+      };
+    }
+  );
+
+  await post(
+    `/shipment-trackings/updates?aftershipToken=${AFTERSHIP_SECRET_TOKEN}`,
+    {
+      body: {
+        msg: {
+          id: aftershipTracking.id,
+          tracking_number: "a-courier-tracking-number",
+          tag: "InTransit",
+          expected_delivery: null,
+          shipment_delivery_date: null,
+          checkpoints: [
+            {
+              created_at: new Date(2012, 11, 23),
+              slug: "usps",
+              tag: "Pending",
+              subtag: "Pending_001",
+            },
+            {
+              created_at: new Date(2012, 11, 25),
+              slug: "usps",
+              tag: "InTransit",
+              subtag: "InTransit_003",
+            },
+          ],
+        },
+      },
+    }
+  );
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const all = await ShipmentTrackingEventsDAO.find(trx, {
+      shipmentTrackingId: shipmentTracking.id,
+    });
+    t.deepEqual(
+      all,
+      [
+        { ...e1, shipmentTrackingId: shipmentTracking.id },
+        { ...e2, shipmentTrackingId: shipmentTracking.id, id: all[1].id },
+      ],
+      "adds new event with an id"
+    );
+    const latest = await ShipmentTrackingEventsDAO.findLatestByShipmentTracking(
+      trx,
+      shipmentTracking.id
+    );
+    t.deepEqual(
+      latest,
+      {
+        ...e2,
+        id: latest!.id,
+        shipmentTrackingId: shipmentTracking.id,
+      },
+      "new event is now the latest event"
+    );
+  });
+
+  await post(
+    `/shipment-trackings/updates?aftershipToken=${AFTERSHIP_SECRET_TOKEN}`,
+    {
+      body: {
+        msg: {
+          id: aftershipTracking.id,
+          tracking_number: "a-courier-tracking-number",
+          tag: "InTransit",
+          expected_delivery: new Date(2012, 11, 27),
+          shipment_delivery_date: null,
+          checkpoints: [
+            {
+              created_at: new Date(2012, 11, 23),
+              slug: "usps",
+              tag: "Pending",
+              subtag: "Pending_001",
+            },
+            {
+              created_at: new Date(2012, 11, 25),
+              slug: "usps",
+              tag: "InTransit",
+              subtag: "InTransit_003",
+            },
+          ],
+        },
+      },
+    }
+  );
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const all = await ShipmentTrackingEventsDAO.find(trx, {
+      shipmentTrackingId: shipmentTracking.id,
+    });
+    t.deepEqual(
+      all,
+      [
+        { ...e1, shipmentTrackingId: shipmentTracking.id },
+        { ...e2, shipmentTrackingId: shipmentTracking.id, id: all[1].id },
+      ],
+      "does not add any new events if same checkpoints come in the update"
+    );
+  });
 });
