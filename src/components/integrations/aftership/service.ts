@@ -1,6 +1,9 @@
 import Knex from "knex";
+import uuid from "node-uuid";
 
 import * as AftershipTrackingsDAO from "../../aftership-trackings/dao";
+import * as ShipmentTrackingEventsDAO from "../../shipment-tracking-events/dao";
+import * as ShipmentTrackingsDAO from "../../shipment-trackings/dao";
 import { AftershipTracking } from "../../aftership-trackings/types";
 import {
   fromJson,
@@ -8,6 +11,9 @@ import {
   Courier,
   isAftershipCourierListResponse,
   isAftershipTrackingGetResponse,
+  AftershipCheckpoint,
+  isAftershipWebhookRequestBody,
+  isAftershipTrackingCreateDuplicateResponse,
 } from "./types";
 import { getFetcher } from "../../../services/get-fetcher";
 import { AFTERSHIP_API_KEY } from "../../../config";
@@ -15,6 +21,7 @@ import {
   ShipmentTracking,
   DeliveryStatus,
 } from "../../shipment-trackings/types";
+import { ShipmentTrackingEvent } from "../../shipment-tracking-events/types";
 
 const AFTERSHIP_BASE_URL = "https://api.aftership.com/v4";
 
@@ -44,13 +51,28 @@ async function createTracking(
     data: requestBody,
   });
 
-  const { data } = fromJson(body);
+  const response = fromJson(body);
 
-  if (!isAftershipTrackingCreateResponse(data)) {
+  let data = null;
+  if (isAftershipTrackingCreateDuplicateResponse(response)) {
+    const getResponse = await getTracking(courier, trackingId);
+    data = getResponse;
+  } else if (isAftershipTrackingCreateResponse(response.data)) {
+    data = response.data;
+  } else {
     throw new Error(
       `Aftership did not respond with a valid tracking object
 Request: ${JSON.stringify(requestBody, null, 2)}
 Response: ${JSON.stringify(body, null, 2)}`
+    );
+  }
+
+  if (data.tracking.checkpoints.length > 0) {
+    await ShipmentTrackingEventsDAO.createAll(
+      trx,
+      data.tracking.checkpoints.map((checkpoint: AftershipCheckpoint) =>
+        checkpointToEvent(shipmentTrackingId, checkpoint)
+      )
     );
   }
 
@@ -91,10 +113,7 @@ Response: ${JSON.stringify(body, null, 2)}`
   }));
 }
 
-async function getDeliveryStatus(
-  courier: string,
-  trackingId: string
-): Promise<DeliveryStatus> {
+async function getTracking(courier: string, trackingId: string) {
   const [, body] = await fetcher({
     method: "get",
     path: `/trackings/${courier}/${trackingId}`,
@@ -107,6 +126,14 @@ async function getDeliveryStatus(
 Response: ${JSON.stringify(body, null, 2)}`);
   }
 
+  return data;
+}
+
+async function getDeliveryStatus(
+  courier: string,
+  trackingId: string
+): Promise<DeliveryStatus> {
+  const data = await getTracking(courier, trackingId);
   const {
     tag,
     expected_delivery: expectedDelivery,
@@ -121,10 +148,55 @@ Response: ${JSON.stringify(body, null, 2)}`);
   };
 }
 
+function checkpointToEvent(
+  shipmentTrackingId: string,
+  checkpoint: AftershipCheckpoint
+): ShipmentTrackingEvent {
+  return {
+    shipmentTrackingId,
+    id: uuid.v4(),
+    country: checkpoint.country_iso3 || null,
+    courier: checkpoint.slug,
+    courierTag: checkpoint.raw_tag || null,
+    courierTimestamp: checkpoint.checkpoint_time || null,
+    createdAt: new Date(checkpoint.created_at),
+    location: checkpoint.location || null,
+    message: checkpoint.message || null,
+    subtag: checkpoint.subtag,
+    tag: checkpoint.tag,
+  };
+}
+
+async function parseWebhookData(trx: Knex.Transaction, body?: UnknownObject) {
+  if (!body || !isAftershipWebhookRequestBody(body)) {
+    throw new Error(`Expecting Aftership webhook body, but got ${body}`);
+  }
+
+  const shipmentTrackings = await ShipmentTrackingsDAO.findByAftershipTracking(
+    trx,
+    body.msg.id
+  );
+
+  if (shipmentTrackings.length === 0) {
+    throw new Error(
+      `Could not find ShipmentTracking for Aftership shipment with ID ${body.msg.id}`
+    );
+  }
+
+  return shipmentTrackings.map((shipmentTracking: ShipmentTracking) => ({
+    events: body.msg.checkpoints.map(
+      checkpointToEvent.bind(null, shipmentTracking.id)
+    ),
+    shipmentTrackingId: shipmentTracking.id,
+  }));
+}
+
 export const AFTERSHIP_SECRET_TOKEN = "e4ebfe72-3780-4e93-b3e4-6117a0f4333c";
 
 export default {
   createTracking,
   getMatchingCouriers,
   getDeliveryStatus,
+  checkpointToEvent,
+  parseWebhookData,
 };
