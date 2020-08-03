@@ -61,7 +61,7 @@ test("ShipmentTrackingEventsDAO.findLatestByShipmentTracking", async (t: Test) =
         country: null,
         courier: "usps",
         courierTag: null,
-        courierTimestamp: null,
+        courierTimestamp: "2012-12-23",
         createdAt: new Date(2012, 11, 23),
         id: uuid.v4(),
         location: null,
@@ -74,7 +74,7 @@ test("ShipmentTrackingEventsDAO.findLatestByShipmentTracking", async (t: Test) =
         country: null,
         courier: "usps",
         courierTag: null,
-        courierTimestamp: null,
+        courierTimestamp: "2012-12-24",
         createdAt: new Date(2012, 11, 24),
         id: uuid.v4(),
         location: null,
@@ -92,7 +92,11 @@ test("ShipmentTrackingEventsDAO.findLatestByShipmentTracking", async (t: Test) =
       shipmentTracking.id
     );
 
-    t.deepEqual(latest, events[1], "Returns latest event");
+    t.deepEqual(
+      latest,
+      { ...events[1], courierTimestamp: new Date(2012, 11, 24) },
+      "Returns latest event"
+    );
   } finally {
     await trx.rollback();
   }

@@ -266,7 +266,7 @@ test("POST /shipment-trackings/updates end-to-end", async (t: Test) => {
     country: null,
     courier: "usps",
     courierTag: null,
-    courierTimestamp: null,
+    courierTimestamp: "2012-12-23",
     createdAt: new Date(2012, 11, 23),
     location: null,
     message: null,
@@ -277,7 +277,7 @@ test("POST /shipment-trackings/updates end-to-end", async (t: Test) => {
     country: null,
     courier: "usps",
     courierTag: null,
-    courierTimestamp: null,
+    courierTimestamp: "2012-12-25",
     createdAt: new Date(2012, 11, 25),
     location: null,
     message: null,
@@ -358,12 +358,14 @@ test("POST /shipment-trackings/updates end-to-end", async (t: Test) => {
               slug: "usps",
               tag: "Pending",
               subtag: "Pending_001",
+              checkpoint_time: "2012-12-23",
             },
             {
               created_at: new Date(2012, 11, 25),
               slug: "usps",
               tag: "InTransit",
               subtag: "InTransit_003",
+              checkpoint_time: "2012-12-25",
             },
           ],
         },
@@ -378,8 +380,17 @@ test("POST /shipment-trackings/updates end-to-end", async (t: Test) => {
     t.deepEqual(
       all,
       [
-        { ...e1, shipmentTrackingId: shipmentTracking.id },
-        { ...e2, shipmentTrackingId: shipmentTracking.id, id: all[1].id },
+        {
+          ...e1,
+          shipmentTrackingId: shipmentTracking.id,
+          courierTimestamp: new Date(2012, 11, 23),
+        },
+        {
+          ...e2,
+          shipmentTrackingId: shipmentTracking.id,
+          id: all[1].id,
+          courierTimestamp: new Date(2012, 11, 25),
+        },
       ],
       "adds new event with an id"
     );
@@ -393,6 +404,7 @@ test("POST /shipment-trackings/updates end-to-end", async (t: Test) => {
         ...e2,
         id: latest!.id,
         shipmentTrackingId: shipmentTracking.id,
+        courierTimestamp: new Date(2012, 11, 25),
       },
       "new event is now the latest event"
     );
@@ -434,8 +446,17 @@ test("POST /shipment-trackings/updates end-to-end", async (t: Test) => {
     t.deepEqual(
       all,
       [
-        { ...e1, shipmentTrackingId: shipmentTracking.id },
-        { ...e2, shipmentTrackingId: shipmentTracking.id, id: all[1].id },
+        {
+          ...e1,
+          shipmentTrackingId: shipmentTracking.id,
+          courierTimestamp: new Date(2012, 11, 23),
+        },
+        {
+          ...e2,
+          shipmentTrackingId: shipmentTracking.id,
+          id: all[1].id,
+          courierTimestamp: new Date(2012, 11, 25),
+        },
       ],
       "does not add any new events if same checkpoints come in the update"
     );
