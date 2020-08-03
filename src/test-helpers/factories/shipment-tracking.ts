@@ -13,13 +13,15 @@ export default async function generateShipmentTracking(
     options.approvalStepId || (await generateApprovalStep(trx)).approvalStep.id;
 
   const tracking = await ShipmentTrackingsDAO.create(trx, {
-    ...options,
-    id: options.id || uuid.v4(),
-    courier: options.courier || "usps",
-    trackingId: options.trackingId || "usps-123",
-    description: options.description || "Garment sample",
+    id: uuid.v4(),
+    courier: "usps",
+    trackingId: "usps-123",
+    description: "Garment sample",
     approvalStepId: stepId,
-    createdAt: options.createdAt || new Date(),
+    createdAt: new Date(),
+    deliveryDate: null,
+    expectedDelivery: null,
+    ...options,
   });
 
   return tracking;

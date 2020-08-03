@@ -72,7 +72,10 @@ test("Shipment Tracking notifications", async (t: Test) => {
   sandbox()
     .stub(NotificationAnnouncer, "announceNotificationCreation")
     .resolves({});
-  sandbox().stub(Aftership, "createTracking");
+  sandbox().stub(Aftership, "createTracking").resolves({
+    aftershipTracking: {},
+    updates: [],
+  });
 
   const {
     actor,

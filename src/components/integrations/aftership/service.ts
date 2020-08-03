@@ -2,9 +2,7 @@ import Knex from "knex";
 import uuid from "node-uuid";
 
 import * as AftershipTrackingsDAO from "../../aftership-trackings/dao";
-import * as ShipmentTrackingEventsDAO from "../../shipment-tracking-events/dao";
 import * as ShipmentTrackingsDAO from "../../shipment-trackings/dao";
-import { AftershipTracking } from "../../aftership-trackings/types";
 import {
   fromJson,
   isAftershipTrackingCreateResponse,
@@ -14,6 +12,7 @@ import {
   AftershipCheckpoint,
   isAftershipWebhookRequestBody,
   isAftershipTrackingCreateDuplicateResponse,
+  AftershipTrackingObject,
 } from "./types";
 import { getFetcher } from "../../../services/get-fetcher";
 import { AFTERSHIP_API_KEY } from "../../../config";
@@ -36,7 +35,7 @@ const fetcher = getFetcher({
 async function createTracking(
   trx: Knex.Transaction,
   shipmentTracking: ShipmentTracking
-): Promise<AftershipTracking> {
+) {
   const { courier, trackingId, id: shipmentTrackingId } = shipmentTracking;
   const requestBody = {
     tracking: {
@@ -67,20 +66,21 @@ Response: ${JSON.stringify(body, null, 2)}`
     );
   }
 
-  if (data.tracking.checkpoints.length > 0) {
-    await ShipmentTrackingEventsDAO.createAll(
-      trx,
-      data.tracking.checkpoints.map((checkpoint: AftershipCheckpoint) =>
-        checkpointToEvent(shipmentTrackingId, checkpoint)
-      )
-    );
-  }
-
-  return AftershipTrackingsDAO.create(trx, {
+  const aftershipTracking = await AftershipTrackingsDAO.create(trx, {
     createdAt: new Date(),
     id: data.tracking.id,
     shipmentTrackingId,
   });
+
+  const updates = await trackingUpdatesFromAftershipTrackingObject(
+    trx,
+    data.tracking
+  );
+
+  return {
+    aftershipTracking,
+    updates,
+  };
 }
 
 async function getMatchingCouriers(
@@ -167,28 +167,48 @@ function checkpointToEvent(
   };
 }
 
+export interface TrackingUpdate {
+  shipmentTrackingId: string;
+  expectedDelivery: Date | null;
+  deliveryDate: Date | null;
+  events: ShipmentTrackingEvent[];
+}
+
+async function trackingUpdatesFromAftershipTrackingObject(
+  trx: Knex.Transaction,
+  tracking: AftershipTrackingObject
+): Promise<TrackingUpdate[]> {
+  const shipmentTrackings = await ShipmentTrackingsDAO.findByAftershipTracking(
+    trx,
+    tracking.id
+  );
+
+  if (shipmentTrackings.length === 0) {
+    throw new Error(
+      `Could not find ShipmentTracking for Aftership shipment with ID ${tracking.id}`
+    );
+  }
+
+  return shipmentTrackings.map((shipmentTracking: ShipmentTracking) => ({
+    expectedDelivery: tracking.expected_delivery
+      ? new Date(tracking.expected_delivery)
+      : null,
+    deliveryDate: tracking.shipment_delivery_date
+      ? new Date(tracking.shipment_delivery_date)
+      : null,
+    events: tracking.checkpoints.map(
+      checkpointToEvent.bind(null, shipmentTracking.id)
+    ),
+    shipmentTrackingId: shipmentTracking.id,
+  }));
+}
+
 async function parseWebhookData(trx: Knex.Transaction, body?: UnknownObject) {
   if (!body || !isAftershipWebhookRequestBody(body)) {
     throw new Error(`Expecting Aftership webhook body, but got ${body}`);
   }
 
-  const shipmentTrackings = await ShipmentTrackingsDAO.findByAftershipTracking(
-    trx,
-    body.msg.id
-  );
-
-  if (shipmentTrackings.length === 0) {
-    throw new Error(
-      `Could not find ShipmentTracking for Aftership shipment with ID ${body.msg.id}`
-    );
-  }
-
-  return shipmentTrackings.map((shipmentTracking: ShipmentTracking) => ({
-    events: body.msg.checkpoints.map(
-      checkpointToEvent.bind(null, shipmentTracking.id)
-    ),
-    shipmentTrackingId: shipmentTracking.id,
-  }));
+  return trackingUpdatesFromAftershipTrackingObject(trx, body.msg);
 }
 
 export const AFTERSHIP_SECRET_TOKEN = "e4ebfe72-3780-4e93-b3e4-6117a0f4333c";

@@ -22,6 +22,10 @@ function createTrackingSetup() {
   const createTrackingStub = sandbox()
     .stub(AftershipTrackingsDAO, "create")
     .returnsArg(1);
+  const findTrackingStub = sandbox()
+    .stub(ShipmentTrackingsDAO, "findByAftershipTracking")
+    .resolves([{ id: "a-shipment-tracking-id" }]);
+  sandbox().stub(ShipmentTrackingsDAO, "update").resolves();
   const id = uuid.v4();
   sandbox().stub(uuid, "v4").returns(id);
 
@@ -31,17 +35,12 @@ function createTrackingSetup() {
     createEventsStub,
     createTrackingStub,
     id,
+    findTrackingStub,
   };
 }
 
 test("Aftership.createTracking with new tracking ID", async (t: Test) => {
-  const {
-    testDate,
-    fetchStub,
-    createEventsStub,
-    createTrackingStub,
-    id,
-  } = createTrackingSetup();
+  const { testDate, fetchStub, createTrackingStub, id } = createTrackingSetup();
 
   const trx = await db.transaction();
   try {
@@ -77,13 +76,16 @@ test("Aftership.createTracking with new tracking ID", async (t: Test) => {
         };
       },
     });
-    const tracking = await Aftership.createTracking(trx, {
+
+    const { aftershipTracking, updates } = await Aftership.createTracking(trx, {
       approvalStepId: "an-approval-step-id",
       courier: "usps",
       createdAt: new Date(),
       description: null,
       id: "a-shipment-tracking-id",
       trackingId: "a-courier-tracking-id",
+      deliveryDate: null,
+      expectedDelivery: null,
     });
 
     t.deepEqual(
@@ -98,28 +100,9 @@ test("Aftership.createTracking with new tracking ID", async (t: Test) => {
       ],
       "calls AftershipTrackingsDAO.create with the correct data"
     );
-    t.deepEqual(createEventsStub.args, [
-      [
-        trx,
-        [
-          {
-            shipmentTrackingId: "a-shipment-tracking-id",
-            id,
-            createdAt: testDate,
-            courier: "usps",
-            tag: "InTransit",
-            subtag: "InTransit_001",
-            location: null,
-            country: null,
-            message: null,
-            courierTimestamp: null,
-            courierTag: null,
-          },
-        ],
-      ],
-    ]);
+
     t.deepEqual(
-      tracking,
+      aftershipTracking,
       {
         id: "an-aftership-tracking-id",
         createdAt: testDate,
@@ -127,19 +110,40 @@ test("Aftership.createTracking with new tracking ID", async (t: Test) => {
       },
       "returns the created AftershipTracking object"
     );
+
+    t.deepEqual(
+      updates,
+      [
+        {
+          shipmentTrackingId: "a-shipment-tracking-id",
+          events: [
+            {
+              country: null,
+              courier: "usps",
+              courierTag: null,
+              courierTimestamp: null,
+              createdAt: testDate,
+              id,
+              location: null,
+              message: null,
+              shipmentTrackingId: "a-shipment-tracking-id",
+              subtag: "InTransit_001",
+              tag: "InTransit",
+            },
+          ],
+          expectedDelivery: null,
+          deliveryDate: null,
+        },
+      ],
+      "returns the TrackingUpdates"
+    );
   } finally {
     await trx.rollback();
   }
 });
 
 test("Aftership.createTracking with duplicate tracking ID", async (t: Test) => {
-  const {
-    testDate,
-    fetchStub,
-    createEventsStub,
-    createTrackingStub,
-    id,
-  } = createTrackingSetup();
+  const { testDate, fetchStub, createTrackingStub, id } = createTrackingSetup();
 
   const trx = await db.transaction();
   try {
@@ -195,13 +199,15 @@ test("Aftership.createTracking with duplicate tracking ID", async (t: Test) => {
         };
       },
     });
-    const tracking = await Aftership.createTracking(trx, {
+    const { aftershipTracking, updates } = await Aftership.createTracking(trx, {
       approvalStepId: "an-approval-step-id",
       courier: "usps",
       createdAt: new Date(),
       description: null,
       id: "a-shipment-tracking-id",
       trackingId: "a-courier-tracking-id",
+      deliveryDate: null,
+      expectedDelivery: null,
     });
 
     t.deepEqual(
@@ -216,34 +222,42 @@ test("Aftership.createTracking with duplicate tracking ID", async (t: Test) => {
       ],
       "calls AftershipTrackingsDAO.create with the correct data"
     );
-    t.deepEqual(createEventsStub.args, [
-      [
-        trx,
-        [
-          {
-            shipmentTrackingId: "a-shipment-tracking-id",
-            id,
-            createdAt: testDate,
-            courier: "usps",
-            tag: "InTransit",
-            subtag: "InTransit_001",
-            location: null,
-            country: null,
-            message: null,
-            courierTimestamp: null,
-            courierTag: null,
-          },
-        ],
-      ],
-    ]);
+
     t.deepEqual(
-      tracking,
+      aftershipTracking,
       {
         id: "an-aftership-tracking-id",
         createdAt: testDate,
         shipmentTrackingId: "a-shipment-tracking-id",
       },
       "returns the created AftershipTracking object"
+    );
+
+    t.deepEqual(
+      updates,
+      [
+        {
+          shipmentTrackingId: "a-shipment-tracking-id",
+          events: [
+            {
+              country: null,
+              courier: "usps",
+              courierTag: null,
+              courierTimestamp: null,
+              createdAt: testDate,
+              id,
+              location: null,
+              message: null,
+              shipmentTrackingId: "a-shipment-tracking-id",
+              subtag: "InTransit_001",
+              tag: "InTransit",
+            },
+          ],
+          expectedDelivery: null,
+          deliveryDate: null,
+        },
+      ],
+      "returns the TrackingUpdates"
     );
   } finally {
     await trx.rollback();
@@ -507,6 +521,8 @@ test("Aftership.parseWebhookData", async (t: Test) => {
               courierTag: null,
             },
           ],
+          expectedDelivery: new Date("2012-12-25T12:00:00"),
+          deliveryDate: new Date("2012-12-26T06:00:00"),
           shipmentTrackingId: shipmentTracking.id,
         },
       ],

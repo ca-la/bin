@@ -6,7 +6,7 @@ import {
   isAftershipTrackingGetResponse,
   isAftershipCheckpoint,
   isAftershipCourierListResponse,
-  isAftershipTracking,
+  isAftershipTrackingObject,
   isAftershipWebhookRequestBody,
   isAftershipTrackingCreateDuplicateResponse,
 } from "./types";
@@ -88,8 +88,8 @@ test("isAftershipTracking", async (t: Test) => {
   };
   const invalid = { failMe: null };
 
-  t.true(isAftershipTracking(valid), "valid");
-  t.false(isAftershipTracking(invalid), "invalid");
+  t.true(isAftershipTrackingObject(valid), "valid");
+  t.false(isAftershipTrackingObject(invalid), "invalid");
 });
 
 test("isAftershipTrackingCreateResponse", async (t: Test) => {

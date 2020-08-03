@@ -182,6 +182,8 @@ test("POST /shipment-trackings", async (t: Test) => {
     trackingId: "a-tracking-id",
     description: null,
     approvalStepId: "an-approval-step-id",
+    deliveryDate: null,
+    expectedDelivery: null,
   };
 
   stubs.createStub.callsFake(
@@ -238,6 +240,7 @@ test("POST /shipment-trackings/updates", async (t: Test) => {
         shipmentTrackingId: "a-shipment-tracking-id",
       },
     ]);
+  sandbox().stub(ShipmentTrackingsDAO, "update").resolves();
   sandbox().stub(ShipmentTrackingEventService, "diff").resolves([]);
   sandbox().stub(ShipmentTrackingEventsDAO, "createAll").resolves([]);
   const [response] = await post(
@@ -299,15 +302,31 @@ test("POST /shipment-trackings/updates end-to-end", async (t: Test) => {
         throw new Error("Could not find checkout step for created design");
       }
 
-      sandbox().stub(AftershipService, "createTracking").resolves();
+      const shipmentTrackingId = uuid.v4();
+
+      sandbox()
+        .stub(AftershipService, "createTracking")
+        .resolves({
+          aftershipTracking: {},
+          updates: [
+            {
+              shipmentTrackingId,
+              expectedDelivery: null,
+              deliveryDate: null,
+              events: [],
+            },
+          ],
+        });
 
       const tracking = await ShipmentTrackingsDAO.create(trx, {
         approvalStepId: checkoutStep.id,
         courier: "usps",
         createdAt: new Date(2012, 11, 23),
         description: "First",
-        id: uuid.v4(),
+        id: shipmentTrackingId,
         trackingId: "first-tracking-id",
+        deliveryDate: null,
+        expectedDelivery: null,
       });
 
       await ShipmentTrackingEventsDAO.createAll(trx, [

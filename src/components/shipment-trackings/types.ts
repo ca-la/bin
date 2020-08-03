@@ -5,6 +5,8 @@ export interface ShipmentTracking {
   description: string | null;
   approvalStepId: string;
   createdAt: Date;
+  expectedDelivery: Date | null;
+  deliveryDate: Date | null;
 }
 
 export interface ShipmentTrackingRow {
@@ -14,6 +16,8 @@ export interface ShipmentTrackingRow {
   description: string | null;
   approval_step_id: string;
   created_at: Date;
+  expected_delivery: Date | null;
+  delivery_date: Date | null;
 }
 
 export const domain = "ShipmentTracking" as "ShipmentTracking";
@@ -29,6 +33,8 @@ export function isShipmentTrackingRow(
     "description",
     "approval_step_id",
     "created_at",
+    "expected_delivery",
+    "delivery_date",
   ].every((key: string) => keyset.has(key));
 }
 

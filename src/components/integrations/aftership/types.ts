@@ -77,7 +77,7 @@ export function isAftershipCheckpoint(
   return ["created_at", "slug", "tag", "subtag"].every(keyset.has.bind(keyset));
 }
 
-export interface AftershipTracking {
+export interface AftershipTrackingObject {
   id: string;
   tracking_number: string;
   tag: string;
@@ -86,9 +86,9 @@ export interface AftershipTracking {
   checkpoints: AftershipCheckpoint[];
 }
 
-export function isAftershipTracking(
+export function isAftershipTrackingObject(
   candidate: UnknownObject
-): candidate is AftershipTracking {
+): candidate is AftershipTrackingObject {
   if (!candidate) {
     return false;
   }
@@ -106,7 +106,7 @@ export function isAftershipTracking(
 }
 
 interface AftershipTrackingCreateResponse {
-  tracking: AftershipTracking;
+  tracking: AftershipTrackingObject;
 }
 
 export function isAftershipTrackingCreateResponse(
@@ -115,7 +115,7 @@ export function isAftershipTrackingCreateResponse(
   return (
     Boolean(candidate) &&
     "tracking" in candidate &&
-    isAftershipTracking(candidate.tracking)
+    isAftershipTrackingObject(candidate.tracking)
   );
 }
 
@@ -157,7 +157,7 @@ export function isAftershipCourierListResponse(
 }
 
 interface AftershipTrackingGetResponse {
-  tracking: AftershipTracking;
+  tracking: AftershipTrackingObject;
 }
 
 export function isAftershipTrackingGetResponse(
@@ -166,12 +166,12 @@ export function isAftershipTrackingGetResponse(
   return (
     Boolean(candidate) &&
     "tracking" in candidate &&
-    isAftershipTracking(candidate.tracking)
+    isAftershipTrackingObject(candidate.tracking)
   );
 }
 
 interface AftershipWebhookRequestBody {
-  msg: AftershipTracking;
+  msg: AftershipTrackingObject;
 }
 
 export function isAftershipWebhookRequestBody(
@@ -180,6 +180,6 @@ export function isAftershipWebhookRequestBody(
   return (
     Boolean(candidate) &&
     "msg" in candidate &&
-    isAftershipTracking(candidate.msg)
+    isAftershipTrackingObject(candidate.msg)
   );
 }

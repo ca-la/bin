@@ -27,7 +27,7 @@ import * as ShipmentTrackingsDAO from "./dao";
 import {
   attachTrackingLink,
   attachDeliveryStatus,
-  handleTrackingUpdate,
+  handleTrackingUpdates,
 } from "./service";
 
 const attachMeta = (shipmentTracking: ShipmentTracking) =>
@@ -143,7 +143,7 @@ function* receiveShipmentTracking(this: TrxContext<PublicContext>) {
 
   const updates = yield Aftership.parseWebhookData(trx, this.request.body);
 
-  yield handleTrackingUpdate(trx, updates);
+  yield handleTrackingUpdates(trx, updates);
 
   this.status = 204;
 }

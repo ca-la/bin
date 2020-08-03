@@ -9,6 +9,8 @@ function encode(row: ShipmentTrackingRow): ShipmentTracking {
     description: row.description,
     id: row.id,
     trackingId: row.tracking_id,
+    deliveryDate: row.delivery_date,
+    expectedDelivery: row.expected_delivery,
   };
 }
 
@@ -20,6 +22,8 @@ function decode(data: ShipmentTracking): ShipmentTrackingRow {
     description: data.description,
     id: data.id,
     tracking_id: data.trackingId,
+    delivery_date: data.deliveryDate,
+    expected_delivery: data.expectedDelivery,
   };
 }
 
@@ -32,6 +36,8 @@ export default buildAdapter({
     "description",
     "id",
     "trackingId",
+    "expectedDelivery",
+    "deliveryDate",
   ],
   encodeTransformer: encode,
   decodeTransformer: decode,

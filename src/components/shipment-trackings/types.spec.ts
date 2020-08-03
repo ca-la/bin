@@ -8,6 +8,8 @@ const valid: ShipmentTrackingRow = {
   created_at: new Date(),
   description: "a shipment tracking description",
   tracking_id: "aTRACKINGnumber123",
+  delivery_date: null,
+  expected_delivery: null,
 };
 
 const invalid = {

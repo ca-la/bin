@@ -29,7 +29,10 @@ async function setup(trx: Knex.Transaction) {
     throw new Error("Could not find checkout step for created design");
   }
 
-  sandbox().stub(Aftership, "createTracking").resolves();
+  sandbox().stub(Aftership, "createTracking").resolves({
+    aftershipTracking: {},
+    updates: [],
+  });
 
   const shipmentTrackings = await Promise.all([
     ShipmentTrackingsDAO.create(trx, {
@@ -39,6 +42,8 @@ async function setup(trx: Knex.Transaction) {
       description: "First",
       id: uuid.v4(),
       trackingId: "first-tracking-id",
+      deliveryDate: null,
+      expectedDelivery: null,
     }),
     ShipmentTrackingsDAO.create(trx, {
       approvalStepId: checkoutStep.id,
@@ -47,6 +52,8 @@ async function setup(trx: Knex.Transaction) {
       description: "First (duplicate)",
       id: uuid.v4(),
       trackingId: "first-tracking-id",
+      deliveryDate: null,
+      expectedDelivery: null,
     }),
   ]);
 
@@ -70,6 +77,8 @@ async function setup(trx: Knex.Transaction) {
     description: "Other",
     id: uuid.v4(),
     trackingId: "other-tracking-id",
+    deliveryDate: null,
+    expectedDelivery: null,
   });
   await AftershipTrackingsDAO.create(trx, {
     createdAt: new Date(2012, 11, 23),
