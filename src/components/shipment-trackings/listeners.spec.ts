@@ -1,7 +1,7 @@
 import Knex from "knex";
 import { sandbox, test, Test } from "../../test-helpers/simple";
 import { ShipmentTracking } from "./types";
-import Aftership from "../integrations/aftership/service";
+import * as Aftership from "../integrations/aftership/service";
 import { ShipmentTrackingEvent } from "../shipment-tracking-events/types";
 import * as ShipmentTrackingService from "./service";
 

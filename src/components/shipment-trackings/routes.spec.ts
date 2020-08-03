@@ -5,9 +5,7 @@ import { omit } from "lodash";
 import { authHeader, get, post } from "../../test-helpers/http";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import SessionsDAO from "../../dao/sessions";
-import AftershipService, {
-  AFTERSHIP_SECRET_TOKEN,
-} from "../integrations/aftership/service";
+import * as AftershipService from "../integrations/aftership/service";
 import db from "../../services/db";
 import * as PermissionsService from "../../services/get-permissions";
 import * as ApprovalStepsDAO from "../approval-steps/dao";
@@ -244,7 +242,7 @@ test("POST /shipment-trackings/updates", async (t: Test) => {
   sandbox().stub(ShipmentTrackingEventService, "diff").resolves([]);
   sandbox().stub(ShipmentTrackingEventsDAO, "createAll").resolves([]);
   const [response] = await post(
-    `/shipment-trackings/updates?aftershipToken=${AFTERSHIP_SECRET_TOKEN}`
+    `/shipment-trackings/updates?aftershipToken=${AftershipService.AFTERSHIP_SECRET_TOKEN}`
   );
   t.equal(response.status, 204, "with correct token responds succesfully");
 
@@ -345,7 +343,7 @@ test("POST /shipment-trackings/updates end-to-end", async (t: Test) => {
   );
 
   await post(
-    `/shipment-trackings/updates?aftershipToken=${AFTERSHIP_SECRET_TOKEN}`,
+    `/shipment-trackings/updates?aftershipToken=${AftershipService.AFTERSHIP_SECRET_TOKEN}`,
     {
       body: {
         msg: {
@@ -401,7 +399,7 @@ test("POST /shipment-trackings/updates end-to-end", async (t: Test) => {
   });
 
   await post(
-    `/shipment-trackings/updates?aftershipToken=${AFTERSHIP_SECRET_TOKEN}`,
+    `/shipment-trackings/updates?aftershipToken=${AftershipService.AFTERSHIP_SECRET_TOKEN}`,
     {
       body: {
         msg: {

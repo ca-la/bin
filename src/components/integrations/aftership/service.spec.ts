@@ -1,5 +1,4 @@
 import uuid from "node-uuid";
-import { omit } from "lodash";
 import { sandbox, test, Test } from "../../../test-helpers/fresh";
 import db from "../../../services/db";
 import { AFTERSHIP_API_KEY } from "../../../config";
@@ -8,8 +7,9 @@ import * as AftershipTrackingsDAO from "../../aftership-trackings/dao";
 import * as ShipmentTrackingEventsDAO from "../../shipment-tracking-events/dao";
 import * as ShipmentTrackingsDAO from "../../shipment-trackings/dao";
 
-import Aftership from "./service";
-import { AftershipCheckpoint } from "./types";
+import * as Aftership from "./service";
+import { AftershipTrackingObject } from "./types";
+import { ShipmentTracking } from "../../shipment-trackings/types";
 
 function createTrackingSetup() {
   const testDate = new Date(2012, 11, 23);
@@ -404,66 +404,6 @@ test("Aftership.getDeliveryStatus", async (t: Test) => {
   );
 });
 
-test("Aftership.checkpointToEvent", async (t: Test) => {
-  const now = new Date();
-  const sparseCheckpoint: AftershipCheckpoint = {
-    created_at: now.toISOString(),
-    slug: "usps",
-    subtag: "Pending_001",
-    tag: "Pending",
-  };
-  const fullCheckpoint: AftershipCheckpoint = {
-    ...sparseCheckpoint,
-    checkpoint_time: now.toISOString(),
-    city: "Atlanta",
-    country_iso3: "USA",
-    location: "Atlanta, GA, USA",
-    message: "Courier has not yet received the package",
-    raw_tag: "S0ME_TH1NG",
-    state: "GA",
-  };
-
-  t.deepEqual(
-    omit(
-      Aftership.checkpointToEvent("a-shipment-tracking-id", sparseCheckpoint),
-      "id"
-    ),
-    {
-      shipmentTrackingId: "a-shipment-tracking-id",
-      createdAt: now,
-      courier: "usps",
-      tag: "Pending",
-      subtag: "Pending_001",
-      location: null,
-      country: null,
-      message: null,
-      courierTimestamp: null,
-      courierTag: null,
-    },
-    "maps a sparse AftershipCheckpoint object to ShipmentTrackingEvent"
-  );
-
-  t.deepEqual(
-    omit(
-      Aftership.checkpointToEvent("a-shipment-tracking-id", fullCheckpoint),
-      "id"
-    ),
-    {
-      shipmentTrackingId: "a-shipment-tracking-id",
-      createdAt: now,
-      courier: "usps",
-      tag: "Pending",
-      subtag: "Pending_001",
-      location: "Atlanta, GA, USA",
-      country: "USA",
-      message: "Courier has not yet received the package",
-      courierTimestamp: now.toISOString(),
-      courierTag: "S0ME_TH1NG",
-    },
-    "maps a full AftershipCheckpoint object to ShipmentTrackingEvent"
-  );
-});
-
 test("Aftership.parseWebhookData", async (t: Test) => {
   const id = uuid.v4();
   sandbox().stub(uuid, "v4").returns(id);
@@ -547,4 +487,59 @@ test("Aftership.parseWebhookData", async (t: Test) => {
   } finally {
     await trx.rollback();
   }
+});
+
+test("Aftership.generateTrackingUpdate", async (t: Test) => {
+  const testDate = new Date(2012, 11, 23);
+  const id = uuid.v4();
+  sandbox().stub(uuid, "v4").returns(id);
+  const aftershipTracking: AftershipTrackingObject = {
+    id: "an-aftership-tracking-id",
+    tracking_number: "an-aftership-tracking-number",
+    tag: "InTransit",
+    shipment_delivery_date: null,
+    expected_delivery: "2012-12-24T09:23",
+    checkpoints: [
+      {
+        created_at: testDate.toISOString(),
+        slug: "usps",
+        tag: "InTransit",
+        subtag: "InTransit_001",
+      },
+    ],
+  };
+  const shipmentTracking: ShipmentTracking = {
+    approvalStepId: "an-approval-step-id",
+    courier: "usps",
+    createdAt: testDate,
+    deliveryDate: null,
+    description: "A shipment",
+    expectedDelivery: null,
+    id: "a-shipment-tracking-id",
+    trackingId: "a-courier-tracking-id",
+  };
+
+  t.deepEqual(
+    Aftership.generateTrackingUpdate(aftershipTracking, shipmentTracking),
+    {
+      shipmentTrackingId: "a-shipment-tracking-id",
+      expectedDelivery: new Date("2012-12-24T09:23"),
+      deliveryDate: null,
+      events: [
+        {
+          country: null,
+          courier: "usps",
+          courierTag: null,
+          courierTimestamp: null,
+          createdAt: testDate,
+          id,
+          location: null,
+          message: null,
+          shipmentTrackingId: "a-shipment-tracking-id",
+          subtag: "InTransit_001",
+          tag: "InTransit",
+        },
+      ],
+    }
+  );
 });

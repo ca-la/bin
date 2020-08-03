@@ -15,9 +15,7 @@ import { requireQueryParam } from "../../middleware/require-query-param";
 import { hasProperties } from "../../services/require-properties";
 import { CalaRouter } from "../../services/cala-component/types";
 import useTransaction from "../../middleware/use-transaction";
-import Aftership, {
-  AFTERSHIP_SECRET_TOKEN,
-} from "../integrations/aftership/service";
+import * as Aftership from "../integrations/aftership/service";
 import { templateDesignEvent } from "../design-events/types";
 import notifications from "./notifications";
 import { NotificationType } from "../notifications/domain-object";
@@ -136,7 +134,7 @@ function* receiveShipmentTracking(this: TrxContext<PublicContext>) {
   const { aftershipToken } = this.request.query;
 
   this.assert(
-    aftershipToken === AFTERSHIP_SECRET_TOKEN,
+    aftershipToken === Aftership.AFTERSHIP_SECRET_TOKEN,
     403,
     "Only Aftership webhook is allowed to POST to this endpoint"
   );

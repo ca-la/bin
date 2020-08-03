@@ -9,7 +9,7 @@ import createDesign from "../../services/create-design";
 import ApprovalStepsDAO from "../approval-steps/dao";
 import { ApprovalStepType } from "../approval-steps/types";
 import ShipmentTrackingsDAO from "../shipment-trackings/dao";
-import Aftership from "../integrations/aftership/service";
+import * as Aftership from "../integrations/aftership/service";
 
 import ShipmentTrackingEventsDAO from "./dao";
 import { ShipmentTrackingEvent } from "./types";

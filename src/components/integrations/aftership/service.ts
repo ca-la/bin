@@ -32,7 +32,7 @@ const fetcher = getFetcher({
   serializer: JSON.stringify.bind(JSON),
 });
 
-async function createTracking(
+export async function createTracking(
   trx: Knex.Transaction,
   shipmentTracking: ShipmentTracking
 ) {
@@ -72,10 +72,7 @@ Response: ${JSON.stringify(body, null, 2)}`
     shipmentTrackingId,
   });
 
-  const updates = await trackingUpdatesFromAftershipTrackingObject(
-    trx,
-    data.tracking
-  );
+  const updates = [generateTrackingUpdate(data.tracking, shipmentTracking)];
 
   return {
     aftershipTracking,
@@ -83,7 +80,7 @@ Response: ${JSON.stringify(body, null, 2)}`
   };
 }
 
-async function getMatchingCouriers(
+export async function getMatchingCouriers(
   shipmentTrackingId: string
 ): Promise<Courier[]> {
   const requestBody = {
@@ -113,7 +110,7 @@ Response: ${JSON.stringify(body, null, 2)}`
   }));
 }
 
-async function getTracking(courier: string, trackingId: string) {
+export async function getTracking(courier: string, trackingId: string) {
   const [, body] = await fetcher({
     method: "get",
     path: `/trackings/${courier}/${trackingId}`,
@@ -129,7 +126,7 @@ Response: ${JSON.stringify(body, null, 2)}`);
   return data;
 }
 
-async function getDeliveryStatus(
+export async function getDeliveryStatus(
   courier: string,
   trackingId: string
 ): Promise<DeliveryStatus> {
@@ -174,49 +171,44 @@ export interface TrackingUpdate {
   events: ShipmentTrackingEvent[];
 }
 
-async function trackingUpdatesFromAftershipTrackingObject(
-  trx: Knex.Transaction,
-  tracking: AftershipTrackingObject
-): Promise<TrackingUpdate[]> {
-  const shipmentTrackings = await ShipmentTrackingsDAO.findByAftershipTracking(
-    trx,
-    tracking.id
-  );
-
-  if (shipmentTrackings.length === 0) {
-    throw new Error(
-      `Could not find ShipmentTracking for Aftership shipment with ID ${tracking.id}`
-    );
-  }
-
-  return shipmentTrackings.map((shipmentTracking: ShipmentTracking) => ({
-    expectedDelivery: tracking.expected_delivery
-      ? new Date(tracking.expected_delivery)
+export function generateTrackingUpdate(
+  aftershipTracking: AftershipTrackingObject,
+  shipmentTracking: ShipmentTracking
+): TrackingUpdate {
+  return {
+    expectedDelivery: aftershipTracking.expected_delivery
+      ? new Date(aftershipTracking.expected_delivery)
       : null,
-    deliveryDate: tracking.shipment_delivery_date
-      ? new Date(tracking.shipment_delivery_date)
+    deliveryDate: aftershipTracking.shipment_delivery_date
+      ? new Date(aftershipTracking.shipment_delivery_date)
       : null,
-    events: tracking.checkpoints.map(
+    events: aftershipTracking.checkpoints.map(
       checkpointToEvent.bind(null, shipmentTracking.id)
     ),
     shipmentTrackingId: shipmentTracking.id,
-  }));
+  };
 }
 
-async function parseWebhookData(trx: Knex.Transaction, body?: UnknownObject) {
+export async function parseWebhookData(
+  trx: Knex.Transaction,
+  body?: UnknownObject
+) {
   if (!body || !isAftershipWebhookRequestBody(body)) {
     throw new Error(`Expecting Aftership webhook body, but got ${body}`);
   }
 
-  return trackingUpdatesFromAftershipTrackingObject(trx, body.msg);
+  const shipmentTrackings = await ShipmentTrackingsDAO.findByAftershipTracking(
+    trx,
+    body.msg.id
+  );
+
+  if (shipmentTrackings.length === 0) {
+    throw new Error(
+      `Could not find ShipmentTracking for Aftership shipment with ID ${body.msg.id}`
+    );
+  }
+
+  return shipmentTrackings.map(generateTrackingUpdate.bind(null, body.msg));
 }
 
 export const AFTERSHIP_SECRET_TOKEN = "e4ebfe72-3780-4e93-b3e4-6117a0f4333c";
-
-export default {
-  createTracking,
-  getMatchingCouriers,
-  getDeliveryStatus,
-  checkpointToEvent,
-  parseWebhookData,
-};

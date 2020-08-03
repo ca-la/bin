@@ -15,7 +15,7 @@ import { CollaboratorWithUser } from "../collaborators/types";
 import ProductDesign from "../product-designs/domain-objects/product-design";
 import Collection from "../collections/domain-object";
 import ApprovalStep from "../approval-steps/types";
-import Aftership from "../integrations/aftership/service";
+import * as Aftership from "../integrations/aftership/service";
 import { ShipmentTracking } from "./types";
 import generateShipmentTracking from "../../test-helpers/factories/shipment-tracking";
 

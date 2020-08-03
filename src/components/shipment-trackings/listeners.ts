@@ -4,7 +4,7 @@ import {
 } from "../../services/cala-component/cala-listeners";
 import { DaoCreated } from "../../services/pubsub/cala-events";
 
-import Aftership from "../integrations/aftership/service";
+import * as Aftership from "../integrations/aftership/service";
 import { ShipmentTracking, domain } from "./types";
 import { handleTrackingUpdates } from "./service";
 

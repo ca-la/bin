@@ -1,6 +1,6 @@
 import Knex from "knex";
 import { DeliveryStatus, ShipmentTracking } from "./types";
-import Aftership, { TrackingUpdate } from "../integrations/aftership/service";
+import * as Aftership from "../integrations/aftership/service";
 import * as ShipmentTrackingEventsDAO from "../shipment-tracking-events/dao";
 import * as ShipmentTrackingsDAO from "./dao";
 import ShipmentTrackingEventService from "../shipment-tracking-events/service";
@@ -34,7 +34,7 @@ export async function attachDeliveryStatus(
 
 export async function handleTrackingUpdates(
   trx: Knex.Transaction,
-  updates: TrackingUpdate[]
+  updates: Aftership.TrackingUpdate[]
 ): Promise<void> {
   for (const {
     shipmentTrackingId,
