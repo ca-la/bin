@@ -21,6 +21,7 @@ import {
   DeliveryStatus,
 } from "../../shipment-trackings/types";
 import { ShipmentTrackingEvent } from "../../shipment-tracking-events/types";
+import ResourceNotFoundError from "../../../errors/resource-not-found";
 
 const AFTERSHIP_BASE_URL = "https://api.aftership.com/v4";
 
@@ -139,9 +140,8 @@ export async function getDeliveryStatus(
 
   return {
     tag,
-    expectedDelivery:
-      expectedDelivery !== null ? new Date(expectedDelivery) : null,
-    deliveryDate: deliveryDate !== null ? new Date(deliveryDate) : null,
+    expectedDelivery: expectedDelivery ? new Date(expectedDelivery) : null,
+    deliveryDate: deliveryDate ? new Date(deliveryDate) : null,
   };
 }
 
@@ -194,7 +194,13 @@ export async function parseWebhookData(
   body?: UnknownObject
 ) {
   if (!body || !isAftershipWebhookRequestBody(body)) {
-    throw new Error(`Expecting Aftership webhook body, but got ${body}`);
+    throw new Error(
+      `Expecting Aftership webhook body, but got ${JSON.stringify(
+        body,
+        null,
+        2
+      )}`
+    );
   }
 
   const shipmentTrackings = await ShipmentTrackingsDAO.findByAftershipTracking(
@@ -203,7 +209,7 @@ export async function parseWebhookData(
   );
 
   if (shipmentTrackings.length === 0) {
-    throw new Error(
+    throw new ResourceNotFoundError(
       `Could not find ShipmentTracking for Aftership shipment with ID ${body.msg.id}`
     );
   }

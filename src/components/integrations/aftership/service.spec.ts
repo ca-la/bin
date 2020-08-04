@@ -10,6 +10,7 @@ import * as ShipmentTrackingsDAO from "../../shipment-trackings/dao";
 import * as Aftership from "./service";
 import { AftershipTrackingObject } from "./types";
 import { ShipmentTracking } from "../../shipment-trackings/types";
+import ResourceNotFoundError from "../../../errors/resource-not-found";
 
 function createTrackingSetup() {
   const testDate = new Date(2012, 11, 23);
@@ -474,7 +475,11 @@ test("Aftership.parseWebhookData", async (t: Test) => {
     try {
       await Aftership.parseWebhookData(trx, validBody);
       t.fail("should not succeed");
-    } catch (_) {
+    } catch (err) {
+      t.true(
+        err instanceof ResourceNotFoundError,
+        "uses correct custom error type"
+      );
       t.pass("fails when no shipment tracking matches");
     }
 

@@ -1,6 +1,7 @@
 import Knex from "knex";
 import uuid from "node-uuid";
 
+import Logger from "../../services/logger";
 import requireAuth = require("../../middleware/require-auth");
 import {
   requireDesignIdBy,
@@ -27,6 +28,8 @@ import {
   attachDeliveryStatus,
   handleTrackingUpdates,
 } from "./service";
+import filterError from "../../services/filter-error";
+import ResourceNotFoundError from "../../errors/resource-not-found";
 
 const attachMeta = (shipmentTracking: ShipmentTracking) =>
   attachDeliveryStatus(attachTrackingLink(shipmentTracking));
@@ -139,9 +142,19 @@ function* receiveShipmentTracking(this: TrxContext<PublicContext>) {
     "Only Aftership webhook is allowed to POST to this endpoint"
   );
 
-  const updates = yield Aftership.parseWebhookData(trx, this.request.body);
-
-  yield handleTrackingUpdates(trx, updates);
+  yield Aftership.parseWebhookData(trx, this.request.body)
+    .then((updates: Aftership.TrackingUpdate[]) =>
+      handleTrackingUpdates(trx, updates)
+    )
+    .catch(
+      filterError(ResourceNotFoundError, (err: ResourceNotFoundError) => {
+        Logger.logServerError(
+          "Aftership webhook attempting to update unknown ShipmentTracking",
+          err.message,
+          JSON.stringify(this.request.body, null, 2)
+        );
+      })
+    );
 
   this.status = 204;
 }

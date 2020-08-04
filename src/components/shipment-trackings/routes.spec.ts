@@ -351,7 +351,6 @@ test("POST /shipment-trackings/updates end-to-end", async (t: Test) => {
           tracking_number: "a-courier-tracking-number",
           tag: "InTransit",
           expected_delivery: null,
-          shipment_delivery_date: null,
           checkpoints: [
             {
               created_at: new Date(2012, 11, 23),
@@ -419,7 +418,6 @@ test("POST /shipment-trackings/updates end-to-end", async (t: Test) => {
           tracking_number: "a-courier-tracking-number",
           tag: "InTransit",
           expected_delivery: new Date(2012, 11, 27),
-          shipment_delivery_date: null,
           checkpoints: [
             {
               created_at: new Date(2012, 11, 23),

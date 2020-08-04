@@ -81,8 +81,8 @@ export interface AftershipTrackingObject {
   id: string;
   tracking_number: string;
   tag: string;
-  expected_delivery: string | null;
-  shipment_delivery_date: string | null;
+  expected_delivery?: string | null;
+  shipment_delivery_date?: string | null;
   checkpoints: AftershipCheckpoint[];
 }
 
@@ -94,14 +94,9 @@ export function isAftershipTrackingObject(
   }
 
   const keyset = new Set(Object.keys(candidate));
-  const keysetMatch = [
-    "id",
-    "tracking_number",
-    "tag",
-    "shipment_delivery_date",
-    "expected_delivery",
-    "checkpoints",
-  ].every(keyset.has.bind(keyset));
+  const keysetMatch = ["id", "tracking_number", "tag", "checkpoints"].every(
+    keyset.has.bind(keyset)
+  );
   return keysetMatch && candidate.checkpoints.every(isAftershipCheckpoint);
 }
 

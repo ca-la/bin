@@ -166,7 +166,6 @@ test("isAftershipWebhookRequestBody", async (t: Test) => {
       tracking_number: "a-courier-tracking-id",
       tag: "Pending",
       expected_delivery: null,
-      shipment_delivery_date: null,
       checkpoints: [
         {
           created_at: new Date().toISOString(),
