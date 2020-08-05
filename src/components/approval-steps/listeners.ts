@@ -62,12 +62,13 @@ export const listeners: Listeners<ApprovalStep, typeof approvalStepDomain> = {
       ) {
         await handleStepReopen(trx, updated);
       }
-
-      if (before.state !== updated.state) {
-        await IrisService.sendMessage(realtimeApprovalStepUpdated(updated));
-      }
     },
   },
+
+  "dao.updated": (
+    event: DaoUpdated<ApprovalStep, typeof approvalStepDomain>
+  ): Promise<void> =>
+    IrisService.sendMessage(realtimeApprovalStepUpdated(event.updated)),
 
   "route.updated.*": {
     state: async (

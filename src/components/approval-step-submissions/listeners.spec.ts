@@ -42,11 +42,11 @@ test("dao.updated.state", async (t: Test) => {
     },
   };
 
-  if (!listeners["dao.updated.*"] || !listeners["dao.updated.*"].state) {
-    throw new Error("dao.updated.*.state is empty");
+  if (!listeners["dao.updated"]) {
+    throw new Error("dao.updated is empty");
   }
 
-  await listeners["dao.updated.*"].state(event);
+  await listeners["dao.updated"](event);
 
   t.deepEquals(
     irisStub.args[0][0],

@@ -180,9 +180,10 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
     ["COMMIT_QUOTE", "COMMIT_QUOTE"],
     "Realtime message emitted for design checkout"
   );
+  // (4 steps receiving due dates * 2 designs) + 2 CHECKOUT STEPS being COMPLETED
   t.equals(
     realtimeStepUpdates.length,
-    2,
+    10,
     "Realtime message emitted for approval step status"
   );
   t.equals(

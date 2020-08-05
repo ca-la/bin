@@ -13,7 +13,6 @@ import ApprovalStepSubmission, { ApprovalStepSubmissionState } from "./types";
 import db from "../../services/db";
 import DesignEvent, { templateDesignEvent } from "../design-events/types";
 import requireAuth from "../../middleware/require-auth";
-import { announceApprovalStepCommentCreation } from "../iris/messages/approval-step-comment";
 import Comment, {
   BASE_COMMENT_PROPERTIES,
   isBaseComment,
@@ -29,6 +28,8 @@ import notifications from "./notifications";
 import { NotificationType } from "../notifications/domain-object";
 import DesignsDAO from "../product-designs/dao";
 import useTransaction from "../../middleware/use-transaction";
+import * as IrisService from "../../components/iris/send-message";
+import { realtimeApprovalSubmissionRevisionRequest } from "./realtime";
 
 const router = new Router();
 
@@ -267,10 +268,12 @@ export function* updateApprovalSubmission(
       const collaborator = this.request.body.collaboratorId
         ? await CollaboratorsDAO.findById(this.request.body.collaboratorId)
         : null;
-      const updatedSubmission = await ApprovalSubmissionsDAO.setAssignee(
+      const { updated } = await ApprovalSubmissionsDAO.update(
         trx,
         submission.id,
-        this.request.body.collaboratorId
+        {
+          collaboratorId: this.request.body.collaboratorId,
+        }
       );
       await DesignEventsDAO.create(trx, {
         ...templateDesignEvent,
@@ -300,15 +303,15 @@ export function* updateApprovalSubmission(
             recipientCollaboratorId: collaborator.id,
           },
           {
-            approvalStepId: updatedSubmission.stepId,
-            approvalSubmissionId: updatedSubmission.id,
+            approvalStepId: updated.stepId,
+            approvalSubmissionId: updated.id,
             designId: this.state.designId,
             collectionId: design.collectionIds[0] || null,
             collaboratorId: collaborator.id,
           }
         );
       }
-      this.body = updatedSubmission;
+      this.body = updated;
     });
   } else {
     // todo: put state change logic here
@@ -406,7 +409,7 @@ export function* createRevisionRequest(
     this.throw(409, "Submission already has requested revisions");
   }
 
-  yield ApprovalSubmissionsDAO.update(trx, submissionId, {
+  const { updated } = yield ApprovalSubmissionsDAO.update(trx, submissionId, {
     state: ApprovalStepSubmissionState.REVISION_REQUESTED,
   });
 
@@ -416,7 +419,7 @@ export function* createRevisionRequest(
     userId,
   });
 
-  const approvalStepComment = yield ApprovalStepCommentDAO.create(trx, {
+  yield ApprovalStepCommentDAO.create(trx, {
     approvalStepId: this.state.stepId,
     commentId: comment.id,
   });
@@ -427,12 +430,8 @@ export function* createRevisionRequest(
   );
 
   const commentWithMentions = { ...comment, mentions: collaboratorNames };
-  yield announceApprovalStepCommentCreation(
-    approvalStepComment,
-    commentWithMentions
-  );
 
-  yield DesignEventsDAO.create(trx, {
+  const event = yield DesignEventsDAO.create(trx, {
     ...templateDesignEvent,
     actorId: this.state.userId,
     approvalStepId: this.state.stepId,
@@ -443,6 +442,14 @@ export function* createRevisionRequest(
     id: uuid.v4(),
     type: "REVISION_REQUEST",
   });
+
+  IrisService.sendMessage(
+    realtimeApprovalSubmissionRevisionRequest({
+      comment: commentWithMentions,
+      event,
+      approvalStepId: updated.stepId,
+    })
+  );
 
   const design = yield DesignsDAO.findById(this.state.designId);
   if (!design) {

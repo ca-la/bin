@@ -9,7 +9,6 @@ import ApprovalStepSubmission, {
   ApprovalStepSubmissionArtifactType,
   ApprovalStepSubmissionState,
 } from "./types";
-import * as AnnounceCommentService from "../iris/messages/approval-step-comment";
 import * as NotificationsDAO from "../notifications/dao";
 import DesignEventsDAO from "../design-events/dao";
 import generateApprovalStep from "../../test-helpers/factories/design-approval-step";
@@ -22,6 +21,9 @@ import { CollaboratorWithUser } from "../../components/collaborators/types";
 import ProductDesign from "../product-designs/domain-objects/product-design";
 import Session from "../../domain-objects/session";
 import { DesignEventWithMeta } from "../../published-types";
+import * as IrisService from "../iris/send-message";
+import { templateDesignEvent } from "../design-events/types";
+import { omit } from "lodash";
 
 async function setupSubmission(
   approvalSubmission: Partial<ApprovalStepSubmission> = {}
@@ -310,10 +312,10 @@ test("POST /design-approval-step-submissions/:submissionId/approvals", async (t:
 });
 
 test("POST /design-approval-step-submissions/:submissionId/revision-requests", async (t: Test) => {
-  sandbox()
-    .stub(AnnounceCommentService, "announceApprovalStepCommentCreation")
-    .resolves({});
+  const irisStub = sandbox().stub(IrisService, "sendMessage").resolves();
 
+  const now = new Date();
+  sandbox().useFakeTimers(now);
   const {
     design,
     designer,
@@ -321,20 +323,22 @@ test("POST /design-approval-step-submissions/:submissionId/revision-requests", a
     submission,
   } = await setupSubmission();
 
+  const comment = {
+    createdAt: now,
+    deletedAt: null,
+    id: uuid.v4(),
+    isPinned: false,
+    parentCommentId: null,
+    text: "test comment",
+    userId: designer.user.id,
+  };
+
   const [response] = await post(
     `/design-approval-step-submissions/${submission.id}/revision-requests`,
     {
       headers: authHeader(designer.session.id),
       body: {
-        comment: {
-          createdAt: new Date(),
-          deletedAt: null,
-          id: uuid.v4(),
-          isPinned: false,
-          parentCommentId: null,
-          text: "test comment",
-          userId: collaborator.userId,
-        },
+        comment,
       },
     }
   );
@@ -361,6 +365,43 @@ test("POST /design-approval-step-submissions/:submissionId/revision-requests", a
     t.is(
       collaboratorNotifications[0].type,
       NotificationType.APPROVAL_STEP_SUBMISSION_REVISION_REQUEST
+    );
+    const fullComment = {
+      ...comment,
+      attachments: [],
+      mentions: {},
+      userEmail: designer.user.email,
+      userName: designer.user.name,
+      userRole: "USER",
+    };
+    t.deepEquals(
+      irisStub.args.map((call: any) => call[0].type),
+      [
+        "approval-step-submission/created",
+        "approval-step-submission/updated",
+        "approval-step-submission/revision-request",
+        "notification",
+      ],
+      "Sends realtime messages"
+    );
+    t.deepEquals(
+      irisStub.args[2][0].resource.comment,
+      fullComment,
+      "Realtime message has a comment"
+    );
+    t.deepEquals(
+      omit(irisStub.args[2][0].resource.event, "id"),
+      {
+        ...templateDesignEvent,
+        actorId: designer.user.id,
+        approvalStepId: submission.stepId,
+        approvalSubmissionId: submission.id,
+        commentId: comment.id,
+        createdAt: now,
+        designId: design.id,
+        type: "REVISION_REQUEST",
+      },
+      "Realtime message has an event"
     );
   } finally {
     await trx.rollback();

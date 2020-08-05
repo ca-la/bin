@@ -1,4 +1,6 @@
+import { CommentWithMentions } from "@cala/ts-lib";
 import ApprovalStepSubmission from "./types";
+import DesignEvent from "../design-events/types";
 
 export interface RealtimeApprovalSubmissionUpdated {
   resource: ApprovalStepSubmission;
@@ -49,5 +51,40 @@ export function realtimeApprovalSubmissionCreated(
     type: "approval-step-submission/created",
     resource: submission,
     approvalStepId: submission.stepId,
+  };
+}
+
+export interface RealtimeApprovalSubmissionRevisionRequest {
+  resource: {
+    event: DesignEvent;
+    comment: CommentWithMentions;
+  };
+  approvalStepId: string;
+  type: "approval-step-submission/revision-request";
+}
+
+export function isRealtimeApprovalSubmissionRevisionRequest(
+  data: any
+): data is RealtimeApprovalSubmissionRevisionRequest {
+  return (
+    "approvalStepId" in data &&
+    "type" in data &&
+    data.type === "approval-step-submission/revision-request"
+  );
+}
+
+export function realtimeApprovalSubmissionRevisionRequest({
+  approvalStepId,
+  event,
+  comment,
+}: {
+  approvalStepId: string;
+  event: DesignEvent;
+  comment: CommentWithMentions;
+}): RealtimeApprovalSubmissionRevisionRequest {
+  return {
+    type: "approval-step-submission/revision-request",
+    resource: { event, comment },
+    approvalStepId,
   };
 }

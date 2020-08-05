@@ -4,9 +4,6 @@ import { isEqual } from "lodash";
 
 import { test, Test } from "../../test-helpers/fresh";
 import { staticProductDesign } from "../../test-helpers/factories/product-design";
-import generateApprovalSubmission from "../../test-helpers/factories/design-approval-submission";
-import generateApprovalStep from "../../test-helpers/factories/design-approval-step";
-import generateCollaborator from "../../test-helpers/factories/collaborator";
 import * as ProductDesignsDAO from "../product-designs/dao";
 import db from "../../services/db";
 import ProductDesign from "../product-designs/domain-objects/product-design";
@@ -132,35 +129,6 @@ test("ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     t.true(
       isEqual(new Set(foundByDesign), new Set([sub1, sub2, sub3, sub4])),
       "returns submissions by design"
-    );
-  });
-});
-
-test("setAssignee sets the collaborator and returns result", async (t: Test) => {
-  const { user } = await createUser({ withSession: false });
-
-  await db.transaction(async (trx: Knex.Transaction) => {
-    const { approvalStep, design } = await generateApprovalStep(trx);
-    const { submission } = await generateApprovalSubmission(trx, {
-      stepId: approvalStep.id,
-    });
-    const { collaborator } = await generateCollaborator(
-      {
-        designId: design.id,
-        userId: user.id,
-      },
-      trx
-    );
-    const updated = await ApprovalStepSubmissionsDAO.setAssignee(
-      trx,
-      submission.id,
-      collaborator.id
-    );
-
-    t.isEqual(
-      updated.collaboratorId,
-      collaborator.id,
-      "setAssignee returns patched submission"
     );
   });
 });

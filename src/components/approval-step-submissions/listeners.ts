@@ -22,15 +22,13 @@ export const listeners: Listeners<
     >
   ): Promise<void> =>
     IrisService.sendMessage(realtimeApprovalSubmissionCreated(event.created)),
-  "dao.updated.*": {
-    state: async (
-      event: DaoUpdated<
-        ApprovalStepSubmission,
-        typeof approvalStepSubmissionDomain
-      >
-    ): Promise<void> =>
-      IrisService.sendMessage(realtimeApprovalSubmissionUpdated(event.updated)),
-  },
+  "dao.updated": (
+    event: DaoUpdated<
+      ApprovalStepSubmission,
+      typeof approvalStepSubmissionDomain
+    >
+  ): Promise<void> =>
+    IrisService.sendMessage(realtimeApprovalSubmissionUpdated(event.updated)),
 };
 
 export default buildListeners<

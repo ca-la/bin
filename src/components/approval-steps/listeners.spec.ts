@@ -100,21 +100,60 @@ test("dao.updating", async (t: Test) => {
   ];
 
   const trx = await db.transaction();
-  for (const testCase of testCases) {
-    if (!listeners["dao.updating"]) {
-      throw new Error("dao.updating listener is empty");
+  try {
+    for (const testCase of testCases) {
+      if (!listeners["dao.updating"]) {
+        throw new Error("dao.updating listener is empty");
+      }
+      const event: DaoUpdating<ApprovalStep, typeof approvalStepDomain> = {
+        type: "dao.updating",
+        domain: approvalStepDomain,
+        trx,
+        before: testCase.before,
+        patch: testCase.patch,
+      };
+      await listeners["dao.updating"](event);
+      t.deepEqual(event.patch, testCase.updatedPatch, testCase.title);
     }
-    const event: DaoUpdating<ApprovalStep, typeof approvalStepDomain> = {
-      type: "dao.updating",
-      domain: approvalStepDomain,
-      trx,
-      before: testCase.before,
-      patch: testCase.patch,
-    };
-    await listeners["dao.updating"](event);
-    t.deepEqual(event.patch, testCase.updatedPatch, testCase.title);
+  } finally {
+    await trx.rollback();
   }
-  await trx.rollback();
+});
+
+test("dao.updated", async (t: Test) => {
+  const irisStub = sandbox().stub(IrisService, "sendMessage").resolves();
+  const now = new Date();
+  sandbox().useFakeTimers(now);
+
+  const trx = await db.transaction();
+  try {
+    const event: DaoUpdated<ApprovalStep, typeof approvalStepDomain> = {
+      trx,
+      type: "dao.updated",
+      domain: approvalStepDomain,
+      before: as,
+      updated: {
+        ...as,
+        collaboratorId: "collab-id",
+      },
+    };
+    if (!listeners["dao.updated"]) {
+      throw new Error("dao.updated is empty");
+    }
+
+    await listeners["dao.updated"](event);
+    t.equal(irisStub.callCount, 1, "Updates via realtime on state change");
+    t.deepEqual(
+      irisStub.args[0][0].resource,
+      {
+        ...as,
+        collaboratorId: "collab-id",
+      },
+      "sends a message with the updated spec"
+    );
+  } finally {
+    await trx.rollback();
+  }
 });
 
 test("dao.updated.state", async (t: Test) => {
@@ -122,7 +161,6 @@ test("dao.updated.state", async (t: Test) => {
     ApprovalStepStateService,
     "handleStepCompletion"
   );
-  const irisStub = sandbox().stub(IrisService, "sendMessage").resolves();
 
   const now = new Date();
   sandbox().useFakeTimers(now);
@@ -132,7 +170,6 @@ test("dao.updated.state", async (t: Test) => {
     title: string;
     updated: ApprovalStep;
     calls: any[][];
-    statesUpdated: number;
   }
   const testCases: TestCase[] = [
     {
@@ -142,7 +179,6 @@ test("dao.updated.state", async (t: Test) => {
         designId: "d2",
       },
       calls: [],
-      statesUpdated: 0,
     },
     {
       title: "Update with state !== COMPLETED",
@@ -152,7 +188,6 @@ test("dao.updated.state", async (t: Test) => {
         reason: "",
       },
       calls: [],
-      statesUpdated: 1,
     },
     {
       title: "Update with state === COMPLETED",
@@ -173,31 +208,32 @@ test("dao.updated.state", async (t: Test) => {
           },
         ],
       ],
-      statesUpdated: 2,
     },
   ];
-  for (const testCase of testCases) {
-    const event: DaoUpdated<ApprovalStep, typeof approvalStepDomain> = {
-      trx,
-      type: "dao.updated",
-      domain: approvalStepDomain,
-      before: as,
-      updated: testCase.updated,
-    };
-    if (!listeners["dao.updated.*"] || !listeners["dao.updated.*"].state) {
-      throw new Error("dao.updated.*.state is empty");
-    }
+  try {
+    for (const testCase of testCases) {
+      const event: DaoUpdated<ApprovalStep, typeof approvalStepDomain> = {
+        trx,
+        type: "dao.updated",
+        domain: approvalStepDomain,
+        before: as,
+        updated: testCase.updated,
+      };
+      if (!listeners["dao.updated.*"] || !listeners["dao.updated.*"].state) {
+        throw new Error("dao.updated.*.state is empty");
+      }
 
-    handleStepCompletionStub.resetHistory();
-    await listeners["dao.updated.*"].state(event);
-    t.deepEqual(handleStepCompletionStub.args, testCase.calls, testCase.title);
-    t.equal(
-      irisStub.callCount,
-      testCase.statesUpdated,
-      "Updates via realtime on state change"
-    );
+      handleStepCompletionStub.resetHistory();
+      await listeners["dao.updated.*"].state(event);
+      t.deepEqual(
+        handleStepCompletionStub.args,
+        testCase.calls,
+        testCase.title
+      );
+    }
+  } finally {
+    await trx.rollback();
   }
-  await trx.rollback();
 });
 
 test("route.updated.state", async (t: Test) => {
@@ -278,28 +314,34 @@ test("route.updated.state", async (t: Test) => {
       ],
     },
   ];
-  for (const testCase of testCases) {
-    const event: RouteUpdated<ApprovalStep, typeof approvalStepDomain> = {
-      type: "route.updated",
-      trx,
-      actorId,
-      domain: approvalStepDomain,
-      before: testCase.before,
-      updated: testCase.updated,
-    };
-    if (!listeners["route.updated.*"] || !listeners["route.updated.*"].state) {
-      throw new Error("route.updated.*.state is empty");
-    }
+  try {
+    for (const testCase of testCases) {
+      const event: RouteUpdated<ApprovalStep, typeof approvalStepDomain> = {
+        type: "route.updated",
+        trx,
+        actorId,
+        domain: approvalStepDomain,
+        before: testCase.before,
+        updated: testCase.updated,
+      };
+      if (
+        !listeners["route.updated.*"] ||
+        !listeners["route.updated.*"].state
+      ) {
+        throw new Error("route.updated.*.state is empty");
+      }
 
-    handleUserStepCompletionStub.resetHistory();
-    await listeners["route.updated.*"].state(event);
-    t.deepEqual(
-      handleUserStepCompletionStub.args,
-      testCase.calls,
-      testCase.title
-    );
+      handleUserStepCompletionStub.resetHistory();
+      await listeners["route.updated.*"].state(event);
+      t.deepEqual(
+        handleUserStepCompletionStub.args,
+        testCase.calls,
+        testCase.title
+      );
+    }
+  } finally {
+    await trx.rollback();
   }
-  await trx.rollback();
 });
 
 test("route.updated.collaboratorId", async (t: Test) => {
@@ -487,72 +529,73 @@ test("route.updated.collaboratorId", async (t: Test) => {
       id: as.designId,
       collectionIds: ["c1"],
     });
-
-  for (const testCase of testCases) {
-    const findCollaboratorStub = sandbox()
-      .stub(CollaboratorsDAO, "findById")
-      .returns(testCase.findCollaboratorResult);
-    const createDesignEventStub = sandbox().stub(DesignEventsDAO, "create");
-    const sendNotificationStub = sandbox().stub(
-      NotificationsLayer[NotificationType.APPROVAL_STEP_ASSIGNMENT],
-      "send"
-    );
-
-    const event: RouteUpdated<ApprovalStep, typeof approvalStepDomain> = {
-      type: "route.updated",
-      trx,
-      actorId,
-      domain: approvalStepDomain,
-      before: testCase.before,
-      updated: testCase.updated,
-    };
-    if (
-      !listeners["route.updated.*"] ||
-      !listeners["route.updated.*"].collaboratorId
-    ) {
-      throw new Error("route.updated.*.collaboratorId is empty");
-    }
-
-    let error: Error | null = null;
-    try {
-      await listeners["route.updated.*"].collaboratorId(event);
-    } catch (err) {
-      error = err;
-    }
-    if (testCase.error) {
-      t.is(
-        error && error.message,
-        testCase.error,
-        `${testCase.title}: throws the error`
+  try {
+    for (const testCase of testCases) {
+      const findCollaboratorStub = sandbox()
+        .stub(CollaboratorsDAO, "findById")
+        .returns(testCase.findCollaboratorResult);
+      const createDesignEventStub = sandbox().stub(DesignEventsDAO, "create");
+      const sendNotificationStub = sandbox().stub(
+        NotificationsLayer[NotificationType.APPROVAL_STEP_ASSIGNMENT],
+        "send"
       );
-    } else {
-      if (error) {
-        throw error;
+
+      const event: RouteUpdated<ApprovalStep, typeof approvalStepDomain> = {
+        type: "route.updated",
+        trx,
+        actorId,
+        domain: approvalStepDomain,
+        before: testCase.before,
+        updated: testCase.updated,
+      };
+      if (
+        !listeners["route.updated.*"] ||
+        !listeners["route.updated.*"].collaboratorId
+      ) {
+        throw new Error("route.updated.*.collaboratorId is empty");
       }
-      t.deepEqual(
-        findCollaboratorStub.args,
-        testCase.findCollaboratorArgs,
-        `${testCase.title}: find collaborator`
-      );
-      t.deepEqual(
-        createDesignEventStub.args.map((callArgs: any[]) => [
-          callArgs[0],
-          omit(callArgs[1], "id"),
-        ]),
-        testCase.createDesignEventArgs,
-        `${testCase.title}: create design event`
-      );
-      t.deepEqual(
-        sendNotificationStub.args,
-        testCase.sendNotificationArgs,
-        `${testCase.title}: send notification`
-      );
+
+      let error: Error | null = null;
+      try {
+        await listeners["route.updated.*"].collaboratorId(event);
+      } catch (err) {
+        error = err;
+      }
+      if (testCase.error) {
+        t.is(
+          error && error.message,
+          testCase.error,
+          `${testCase.title}: throws the error`
+        );
+      } else {
+        if (error) {
+          throw error;
+        }
+        t.deepEqual(
+          findCollaboratorStub.args,
+          testCase.findCollaboratorArgs,
+          `${testCase.title}: find collaborator`
+        );
+        t.deepEqual(
+          createDesignEventStub.args.map((callArgs: any[]) => [
+            callArgs[0],
+            omit(callArgs[1], "id"),
+          ]),
+          testCase.createDesignEventArgs,
+          `${testCase.title}: create design event`
+        );
+        t.deepEqual(
+          sendNotificationStub.args,
+          testCase.sendNotificationArgs,
+          `${testCase.title}: send notification`
+        );
+      }
+
+      findCollaboratorStub.restore();
+      createDesignEventStub.restore();
+      sendNotificationStub.restore();
     }
-
-    findCollaboratorStub.restore();
-    createDesignEventStub.restore();
-    sendNotificationStub.restore();
+  } finally {
+    await trx.rollback();
   }
-
-  await trx.rollback();
 });

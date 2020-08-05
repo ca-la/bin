@@ -1,4 +1,4 @@
-import DesignEvent, { domain } from "./types";
+import DesignEvent, { domain, DesignEventTypes } from "./types";
 import { findById } from "./dao";
 import {
   Listeners,
@@ -8,6 +8,8 @@ import { DaoCreated } from "../../services/pubsub/cala-events";
 import { realtimeDesignEventCreated } from "./realtime";
 import { sendMessage } from "../iris/send-message";
 import { actualizeDesignStepsAfterBidAcceptance } from "../../services/approval-step-state";
+
+const REALTIME_EVENT_BLOCK_LIST: DesignEventTypes[] = ["REVISION_REQUEST"];
 
 export const listeners: Listeners<DesignEvent, typeof domain> = {
   "dao.created": async (
@@ -19,10 +21,15 @@ export const listeners: Listeners<DesignEvent, typeof domain> = {
     if (!withMeta) {
       throw new Error(`Could not find DesignEvent with id ${created.id}`);
     }
-    await sendMessage(realtimeDesignEventCreated(withMeta));
+    switch (created.type) {
+      case "ACCEPT_SERVICE_BID": {
+        await actualizeDesignStepsAfterBidAcceptance(trx, created);
+        break;
+      }
+    }
 
-    if (created.type === "ACCEPT_SERVICE_BID") {
-      await actualizeDesignStepsAfterBidAcceptance(trx, created);
+    if (!REALTIME_EVENT_BLOCK_LIST.includes(created.type)) {
+      await sendMessage(realtimeDesignEventCreated(withMeta));
     }
   },
 };

@@ -140,3 +140,19 @@ test("DesignEvent listener: COMMIT_PARTNER_PAIRING", async (t: Test) => {
   );
   t.false(actualizeStepsStub.called, "does not actualize approval step state");
 });
+
+test("DesignEvent listener: REVISION_REQUEST", async (t: Test) => {
+  const { created, trxStub, sendMessageStub, actualizeStepsStub } = setup(
+    "REVISION_REQUEST"
+  );
+
+  await listeners["dao.created"]!({
+    domain: "DesignEvent",
+    type: "dao.created",
+    trx: trxStub,
+    created,
+  });
+
+  t.false(sendMessageStub.called, "does not send a realtime message");
+  t.false(actualizeStepsStub.called, "does not actualize approval step state");
+});

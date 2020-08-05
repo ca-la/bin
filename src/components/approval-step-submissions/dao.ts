@@ -37,17 +37,6 @@ export const dao = {
         })
     );
   },
-  async setAssignee(
-    trx: Knex.Transaction,
-    submissionId: string,
-    collaboratorId: string
-  ): Promise<ApprovalStepSubmission> {
-    const sub = await standardDao.update(trx, submissionId, {
-      collaboratorId,
-    });
-
-    return sub.updated;
-  },
   async findByStep(
     trx: Knex.Transaction,
     stepId: string
@@ -64,6 +53,5 @@ export const {
   findOne,
   update,
   findByDesign,
-  setAssignee,
   findByStep,
 } = dao;
