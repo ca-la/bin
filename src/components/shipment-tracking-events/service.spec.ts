@@ -2,7 +2,7 @@ import { sandbox, test, Test } from "../../test-helpers/fresh";
 import db from "../../services/db";
 
 import * as ShipmentTrackingEventsDAO from "./dao";
-import * as ShipmentTrackingEventService from "./service";
+import ShipmentTrackingEventService from "./service";
 import { ShipmentTrackingEvent } from "./types";
 
 const e1: ShipmentTrackingEvent = {
@@ -10,7 +10,7 @@ const e1: ShipmentTrackingEvent = {
   country: null,
   courier: "usps",
   courierTag: null,
-  courierTimestamp: new Date(2012, 11, 23),
+  courierTimestamp: null,
   id: "e1",
   location: null,
   message: null,
@@ -20,7 +20,7 @@ const e1: ShipmentTrackingEvent = {
 };
 const e2: ShipmentTrackingEvent = {
   ...e1,
-  courierTimestamp: new Date(2012, 11, 24),
+  createdAt: new Date(2012, 11, 24),
   id: "e2",
   subtag: "InTransit_001",
   tag: "InTransit",
@@ -28,7 +28,7 @@ const e2: ShipmentTrackingEvent = {
 
 const e3: ShipmentTrackingEvent = {
   ...e1,
-  courierTimestamp: new Date(2012, 11, 26),
+  createdAt: new Date(2012, 11, 26),
   id: "e3",
   subtag: "Delivered_001",
   tag: "Delivered",
@@ -36,9 +36,12 @@ const e3: ShipmentTrackingEvent = {
 
 test("ShipmentTrackingEventService.diff", async (t: Test) => {
   const trx = await db.transaction();
-  const findStub = sandbox().stub(ShipmentTrackingEventsDAO, "find");
+  const findLatestStub = sandbox().stub(
+    ShipmentTrackingEventsDAO,
+    "findLatestByShipmentTracking"
+  );
   try {
-    findStub.resolves([]);
+    findLatestStub.resolves(null);
 
     t.deepEqual(
       await ShipmentTrackingEventService.diff(trx, "a-shipment-tracking-id", [
@@ -49,7 +52,7 @@ test("ShipmentTrackingEventService.diff", async (t: Test) => {
       [e1, e2, e3]
     );
 
-    findStub.resolves([e1]);
+    findLatestStub.resolves(e1);
     t.deepEqual(
       await ShipmentTrackingEventService.diff(trx, "a-shipment-tracking-id", [
         e1,
@@ -59,7 +62,7 @@ test("ShipmentTrackingEventService.diff", async (t: Test) => {
       [e2, e3]
     );
 
-    findStub.resolves([e1, e2, e3]);
+    findLatestStub.resolves(e3);
     t.deepEqual(
       await ShipmentTrackingEventService.diff(trx, "a-shipment-tracking-id", [
         e1,

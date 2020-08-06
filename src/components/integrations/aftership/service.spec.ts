@@ -70,7 +70,6 @@ test("Aftership.createTracking with new tracking ID", async (t: Test) => {
                   slug: "usps",
                   tag: "InTransit",
                   subtag: "InTransit_001",
-                  checkpoint_time: "2012-12-23T00:00",
                 },
               ],
             },
@@ -123,7 +122,7 @@ test("Aftership.createTracking with new tracking ID", async (t: Test) => {
               country: null,
               courier: "usps",
               courierTag: null,
-              courierTimestamp: testDate,
+              courierTimestamp: null,
               createdAt: testDate,
               id,
               location: null,
@@ -194,7 +193,6 @@ test("Aftership.createTracking with duplicate tracking ID", async (t: Test) => {
                   slug: "usps",
                   tag: "InTransit",
                   subtag: "InTransit_001",
-                  checkpoint_time: "2012-12-23T00:00",
                 },
               ],
             },
@@ -246,7 +244,7 @@ test("Aftership.createTracking with duplicate tracking ID", async (t: Test) => {
               country: null,
               courier: "usps",
               courierTag: null,
-              courierTimestamp: testDate,
+              courierTimestamp: null,
               createdAt: testDate,
               id,
               location: null,
@@ -336,6 +334,77 @@ test("Aftership.getMatchingCouriers", async (t: Test) => {
   );
 });
 
+test("Aftership.getDeliveryStatus", async (t: Test) => {
+  const testDate = new Date(2012, 11, 23);
+  sandbox().useFakeTimers(testDate);
+
+  const fetchStub = sandbox()
+    .stub(FetchService, "fetch")
+    .resolves({
+      headers: {
+        get() {
+          return "application/json";
+        },
+      },
+      status: 200,
+      async json() {
+        return {
+          meta: {
+            code: 200,
+          },
+          data: {
+            tracking: {
+              id: "an-aftership-tracking-id",
+              tracking_number: "an-aftership-tracking-number",
+              tag: "Delivered",
+              expected_delivery: "2012-12-25T12:00:00",
+              shipment_delivery_date: "2012-12-26T06:00:00",
+              checkpoints: [
+                {
+                  created_at: testDate.toISOString(),
+                  slug: "usps",
+                  tag: "InTransit",
+                  subtag: "InTransit_001",
+                },
+              ],
+            },
+          },
+        };
+      },
+    });
+
+  const deliveryStatus = await Aftership.getDeliveryStatus(
+    "a_courier",
+    "a-shipment-tracking-id"
+  );
+
+  t.deepEqual(
+    deliveryStatus,
+    {
+      tag: "Delivered",
+      expectedDelivery: new Date("2012-12-25T12:00:00"),
+      deliveryDate: new Date("2012-12-26T06:00:00"),
+    },
+    "returns the delivery status correctly formatted"
+  );
+
+  t.deepEqual(
+    fetchStub.args,
+    [
+      [
+        "https://api.aftership.com/v4/trackings/a_courier/a-shipment-tracking-id",
+        {
+          headers: {
+            "aftership-api-key": AFTERSHIP_API_KEY,
+          },
+          method: "get",
+        },
+      ],
+    ],
+    "calls the correct Aftership endpoint"
+  );
+});
+
 test("Aftership.parseWebhookData", async (t: Test) => {
   const id = uuid.v4();
   sandbox().stub(uuid, "v4").returns(id);
@@ -365,7 +434,6 @@ test("Aftership.parseWebhookData", async (t: Test) => {
           slug: "usps",
           tag: "InTransit",
           subtag: "InTransit_001",
-          checkpoint_time: "2012-12-23T00:00",
         },
       ],
     },
@@ -390,7 +458,7 @@ test("Aftership.parseWebhookData", async (t: Test) => {
               location: null,
               country: null,
               message: null,
-              courierTimestamp: new Date(2012, 11, 23),
+              courierTimestamp: null,
               courierTag: null,
             },
           ],
@@ -442,7 +510,6 @@ test("Aftership.generateTrackingUpdate", async (t: Test) => {
         slug: "usps",
         tag: "InTransit",
         subtag: "InTransit_001",
-        checkpoint_time: testDate.toISOString(),
       },
     ],
   };
@@ -468,7 +535,7 @@ test("Aftership.generateTrackingUpdate", async (t: Test) => {
           country: null,
           courier: "usps",
           courierTag: null,
-          courierTimestamp: testDate,
+          courierTimestamp: null,
           createdAt: testDate,
           id,
           location: null,

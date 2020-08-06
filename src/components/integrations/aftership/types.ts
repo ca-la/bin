@@ -55,7 +55,7 @@ export function fromJson(body: any): AftershipResponse {
 export interface AftershipCheckpoint {
   created_at: string;
   slug: string;
-  checkpoint_time: string;
+  checkpoint_time?: string;
   location?: string | null;
   city?: string | null;
   state?: string | null;
@@ -74,9 +74,7 @@ export function isAftershipCheckpoint(
   }
 
   const keyset = new Set(Object.keys(candidate));
-  return ["created_at", "slug", "tag", "subtag", "checkpoint_time"].every(
-    keyset.has.bind(keyset)
-  );
+  return ["created_at", "slug", "tag", "subtag"].every(keyset.has.bind(keyset));
 }
 
 export interface AftershipTrackingObject {

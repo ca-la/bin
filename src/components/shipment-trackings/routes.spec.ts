@@ -17,7 +17,7 @@ import { ShipmentTracking } from "./types";
 import NotificationsLayer from "./notifications";
 import { NotificationType } from "../notifications/domain-object";
 import { templateDesignEvent } from "../design-events/types";
-import * as ShipmentTrackingEventService from "../shipment-tracking-events/service";
+import ShipmentTrackingEventService from "../shipment-tracking-events/service";
 import * as ShipmentTrackingEventsDAO from "../shipment-tracking-events/dao";
 import createUser from "../../test-helpers/create-user";
 import createDesign from "../../services/create-design";
@@ -59,15 +59,18 @@ function setup() {
     aftershipCouriersStub: sandbox()
       .stub(AftershipService, "getMatchingCouriers")
       .resolves([{ slug: "usps", name: "United States Postal Service" }]),
+    aftershipGetStub: sandbox()
+      .stub(AftershipService, "getDeliveryStatus")
+      .resolves({
+        tag: "Delivered",
+        expectedDelivery: new Date(),
+        deliveryDate: new Date(),
+      }),
     findDesignStub: sandbox().stub(ProductDesignsDAO, "findById").resolves({
       id: "a-design-id",
       collectionIds: [],
     }),
     createDesignEventStub: sandbox().stub(DesignEventsDAO, "create").resolves(),
-    trackingEventsStub: sandbox().stub(
-      ShipmentTrackingEventsDAO,
-      "findLatestByShipmentTracking"
-    ),
   };
 }
 
@@ -92,19 +95,6 @@ test("GET /shipment-trackings?approvalStepId", async (t: Test) => {
       createdAt: new Date(),
     },
   ]);
-  stubs.trackingEventsStub.resolves({
-    id: "a-shipment-tracking-event-id",
-    shipmentTrackingId: "a-shipment-tracking-id",
-    createdAt: new Date(),
-    courier: "usps",
-    tag: "Pending",
-    subtag: "Pending_001",
-    location: null,
-    country: null,
-    message: null,
-    courierTimestamp: null,
-    courierTag: null,
-  });
 
   const [response, body] = await get(
     "/shipment-trackings?approvalStepId=an-approval-step-id",
@@ -190,8 +180,8 @@ test("POST /shipment-trackings", async (t: Test) => {
     trackingId: "a-tracking-id",
     description: null,
     approvalStepId: "an-approval-step-id",
-    deliveryDate: now,
-    expectedDelivery: now,
+    deliveryDate: null,
+    expectedDelivery: null,
   };
 
   stubs.createStub.callsFake(
@@ -201,19 +191,6 @@ test("POST /shipment-trackings", async (t: Test) => {
       createdAt: now,
     })
   );
-  stubs.trackingEventsStub.resolves({
-    id: "a-shipment-tracking-event-id",
-    shipmentTrackingId: "a-shipment-tracking-id",
-    createdAt: new Date(),
-    courier: "usps",
-    tag: "Delivered",
-    subtag: "Delivered_001",
-    location: null,
-    country: null,
-    message: null,
-    courierTimestamp: null,
-    courierTag: null,
-  });
 
   const [response, body] = await post("/shipment-trackings", {
     body: tracking,
@@ -225,8 +202,6 @@ test("POST /shipment-trackings", async (t: Test) => {
     body,
     {
       ...tracking,
-      deliveryDate: now.toISOString(),
-      expectedDelivery: now.toISOString(),
       id: "a-shipment-tracking-id",
       createdAt: now.toISOString(),
       trackingLink: "https://track.ca.la/a-tracking-id",
@@ -291,7 +266,7 @@ test("POST /shipment-trackings/updates end-to-end", async (t: Test) => {
     country: null,
     courier: "usps",
     courierTag: null,
-    courierTimestamp: new Date(2012, 11, 23),
+    courierTimestamp: "2012-12-23",
     createdAt: new Date(2012, 11, 23),
     location: null,
     message: null,
@@ -302,8 +277,8 @@ test("POST /shipment-trackings/updates end-to-end", async (t: Test) => {
     country: null,
     courier: "usps",
     courierTag: null,
-    courierTimestamp: new Date(2012, 11, 25),
-    createdAt: new Date(2012, 11, 23),
+    courierTimestamp: "2012-12-25",
+    createdAt: new Date(2012, 11, 25),
     location: null,
     message: null,
     subtag: "InTransit_003",
@@ -382,14 +357,14 @@ test("POST /shipment-trackings/updates end-to-end", async (t: Test) => {
               slug: "usps",
               tag: "Pending",
               subtag: "Pending_001",
-              checkpoint_time: "2012-12-23T00:00",
+              checkpoint_time: "2012-12-23",
             },
             {
-              created_at: new Date(2012, 11, 23),
+              created_at: new Date(2012, 11, 25),
               slug: "usps",
               tag: "InTransit",
               subtag: "InTransit_003",
-              checkpoint_time: "2012-12-25T00:00",
+              checkpoint_time: "2012-12-25",
             },
           ],
         },
@@ -407,11 +382,13 @@ test("POST /shipment-trackings/updates end-to-end", async (t: Test) => {
         {
           ...e1,
           shipmentTrackingId: shipmentTracking.id,
+          courierTimestamp: new Date(2012, 11, 23),
         },
         {
           ...e2,
           shipmentTrackingId: shipmentTracking.id,
           id: all[1].id,
+          courierTimestamp: new Date(2012, 11, 25),
         },
       ],
       "adds new event with an id"
@@ -426,6 +403,7 @@ test("POST /shipment-trackings/updates end-to-end", async (t: Test) => {
         ...e2,
         id: latest!.id,
         shipmentTrackingId: shipmentTracking.id,
+        courierTimestamp: new Date(2012, 11, 25),
       },
       "new event is now the latest event"
     );
@@ -446,14 +424,12 @@ test("POST /shipment-trackings/updates end-to-end", async (t: Test) => {
               slug: "usps",
               tag: "Pending",
               subtag: "Pending_001",
-              checkpoint_time: "2012-12-23",
             },
             {
               created_at: new Date(2012, 11, 25),
               slug: "usps",
               tag: "InTransit",
               subtag: "InTransit_003",
-              checkpoint_time: "2012-12-25",
             },
           ],
         },

@@ -8,7 +8,7 @@ export interface ShipmentTrackingEvent {
   location: string | null;
   country: string | null;
   message: string | null;
-  courierTimestamp: Date;
+  courierTimestamp: string | null;
   courierTag: string | null;
 }
 
@@ -22,7 +22,7 @@ export interface ShipmentTrackingEventRow {
   location: string | null;
   country: string | null;
   message: string | null;
-  courier_timestamp: Date;
+  courier_timestamp: string | null;
   courier_tag: string | null;
 }
 

@@ -23,7 +23,7 @@ function setup() {
     country: null,
     courier: "usps",
     courierTag: null,
-    courierTimestamp: new Date(2012, 11, 23),
+    courierTimestamp: null,
     createdAt: new Date(2012, 11, 23),
     id: "e1",
     location: null,
@@ -38,7 +38,7 @@ function setup() {
     id: "e2",
     subtag: "InTransit_001",
     tag: "InTransit",
-    courierTimestamp: new Date(2012, 11, 24),
+    createdAt: new Date(2012, 11, 24),
   };
 
   return {

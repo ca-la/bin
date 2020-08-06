@@ -3,7 +3,7 @@ import { DeliveryStatus, ShipmentTracking } from "./types";
 import * as Aftership from "../integrations/aftership/service";
 import * as ShipmentTrackingEventsDAO from "../shipment-tracking-events/dao";
 import * as ShipmentTrackingsDAO from "./dao";
-import * as ShipmentTrackingEventService from "../shipment-tracking-events/service";
+import ShipmentTrackingEventService from "../shipment-tracking-events/service";
 
 const AFTERSHIP_CUSTOM_DOMAIN = "https://track.ca.la";
 
@@ -21,20 +21,14 @@ export function attachTrackingLink(
 }
 
 export async function attachDeliveryStatus(
-  trx: Knex.Transaction,
   shipmentTracking: ShipmentTracking
 ): Promise<ShipmentTracking & { deliveryStatus: DeliveryStatus }> {
-  const latestEvent = await ShipmentTrackingEventsDAO.findLatestByShipmentTracking(
-    trx,
-    shipmentTracking.id
-  );
   return {
     ...shipmentTracking,
-    deliveryStatus: {
-      tag: latestEvent ? latestEvent.tag : "Pending",
-      expectedDelivery: shipmentTracking.expectedDelivery,
-      deliveryDate: shipmentTracking.deliveryDate,
-    },
+    deliveryStatus: await Aftership.getDeliveryStatus(
+      shipmentTracking.courier,
+      shipmentTracking.trackingId
+    ),
   };
 }
 

@@ -58,10 +58,10 @@ test("isAftershipCheckpoint", async (t: Test) => {
     slug: "usps",
     tag: "Pending",
     subtag: "Pending_001",
-    checkpoint_time: "2012-12-23",
   };
   const full = {
     ...sparse,
+    checkpoint_time: "2012-12-23",
     location: "Barcelona, Catalonia",
     city: null,
     state: null,
@@ -106,7 +106,6 @@ test("isAftershipTrackingCreateResponse", async (t: Test) => {
           slug: "usps",
           tag: "Pending",
           subtag: "Pending_001",
-          checkpoint_time: "2012-12-23",
         },
       ],
     },
@@ -173,7 +172,6 @@ test("isAftershipWebhookRequestBody", async (t: Test) => {
           slug: "usps",
           tag: "Pending",
           subtag: "Pending_001",
-          checkpoint_time: "2012-12-23",
         },
       ],
     },
