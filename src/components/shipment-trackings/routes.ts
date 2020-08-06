@@ -31,8 +31,10 @@ import {
 import filterError from "../../services/filter-error";
 import ResourceNotFoundError from "../../errors/resource-not-found";
 
-const attachMeta = (shipmentTracking: ShipmentTracking) =>
-  attachDeliveryStatus(attachTrackingLink(shipmentTracking));
+const attachMeta = (
+  trx: Knex.Transaction,
+  shipmentTracking: ShipmentTracking
+) => attachDeliveryStatus(trx, attachTrackingLink(shipmentTracking));
 
 async function getDesignIdFromStep(approvalStepId: string): Promise<string> {
   const step = await db.transaction((trx: Knex.Transaction) =>
@@ -53,7 +55,7 @@ function* listByApprovalStepId(this: TrxContext<AuthedContext>) {
 
   const withMeta = [];
   for (const tracking of found) {
-    withMeta.push(yield attachMeta(tracking));
+    withMeta.push(yield attachMeta(trx, tracking));
   }
 
   this.body = withMeta;
@@ -118,7 +120,7 @@ function* create(
   });
 
   this.status = 201;
-  this.body = yield attachMeta(created);
+  this.body = yield attachMeta(trx, created);
 }
 
 function* getCouriers(this: AuthedContext) {

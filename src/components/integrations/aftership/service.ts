@@ -16,10 +16,7 @@ import {
 } from "./types";
 import { getFetcher } from "../../../services/get-fetcher";
 import { AFTERSHIP_API_KEY } from "../../../config";
-import {
-  ShipmentTracking,
-  DeliveryStatus,
-} from "../../shipment-trackings/types";
+import { ShipmentTracking } from "../../shipment-trackings/types";
 import { ShipmentTrackingEvent } from "../../shipment-tracking-events/types";
 import ResourceNotFoundError from "../../../errors/resource-not-found";
 
@@ -127,24 +124,6 @@ Response: ${JSON.stringify(body, null, 2)}`);
   return data;
 }
 
-export async function getDeliveryStatus(
-  courier: string,
-  trackingId: string
-): Promise<DeliveryStatus> {
-  const data = await getTracking(courier, trackingId);
-  const {
-    tag,
-    expected_delivery: expectedDelivery,
-    shipment_delivery_date: deliveryDate,
-  } = data.tracking;
-
-  return {
-    tag,
-    expectedDelivery: expectedDelivery ? new Date(expectedDelivery) : null,
-    deliveryDate: deliveryDate ? new Date(deliveryDate) : null,
-  };
-}
-
 function checkpointToEvent(
   shipmentTrackingId: string,
   checkpoint: AftershipCheckpoint
@@ -155,7 +134,7 @@ function checkpointToEvent(
     country: checkpoint.country_iso3 || null,
     courier: checkpoint.slug,
     courierTag: checkpoint.raw_tag || null,
-    courierTimestamp: checkpoint.checkpoint_time || null,
+    courierTimestamp: new Date(checkpoint.checkpoint_time),
     createdAt: new Date(checkpoint.created_at),
     location: checkpoint.location || null,
     message: checkpoint.message || null,
