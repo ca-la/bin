@@ -1,6 +1,7 @@
 import { CommentWithMentions } from "@cala/ts-lib";
 import ApprovalStepSubmission from "./types";
-import DesignEvent from "../design-events/types";
+import DesignEvent, { DesignEventWithMeta } from "../design-events/types";
+import { Serialized } from "../../types/serialized";
 
 export interface RealtimeApprovalSubmissionUpdated {
   resource: ApprovalStepSubmission;
@@ -10,7 +11,7 @@ export interface RealtimeApprovalSubmissionUpdated {
 
 export function isRealtimeApprovalSubmissionUpdated(
   data: any
-): data is RealtimeApprovalSubmissionUpdated {
+): data is Serialized<RealtimeApprovalSubmissionUpdated> {
   return (
     "approvalStepId" in data &&
     "type" in data &&
@@ -36,7 +37,7 @@ export interface RealtimeApprovalSubmissionCreated {
 
 export function isRealtimeApprovalSubmissionCreated(
   data: any
-): data is RealtimeApprovalSubmissionCreated {
+): data is Serialized<RealtimeApprovalSubmissionCreated> {
   return (
     "approvalStepId" in data &&
     "type" in data &&
@@ -65,7 +66,7 @@ export interface RealtimeApprovalSubmissionRevisionRequest {
 
 export function isRealtimeApprovalSubmissionRevisionRequest(
   data: any
-): data is RealtimeApprovalSubmissionRevisionRequest {
+): data is Serialized<RealtimeApprovalSubmissionRevisionRequest> {
   return (
     "approvalStepId" in data &&
     "type" in data &&
@@ -79,7 +80,7 @@ export function realtimeApprovalSubmissionRevisionRequest({
   comment,
 }: {
   approvalStepId: string;
-  event: DesignEvent;
+  event: DesignEventWithMeta;
   comment: CommentWithMentions;
 }): RealtimeApprovalSubmissionRevisionRequest {
   return {

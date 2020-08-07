@@ -1,4 +1,5 @@
 import ApprovalStep from "./types";
+import { Serialized } from "../../types/serialized";
 
 export interface RealtimeApprovalStepUpdated {
   resource: ApprovalStep;
@@ -8,7 +9,7 @@ export interface RealtimeApprovalStepUpdated {
 
 export function isRealtimeApprovalStepUpdated(
   data: any
-): data is RealtimeApprovalStepUpdated {
+): data is Serialized<RealtimeApprovalStepUpdated> {
   return (
     "approvalStepId" in data &&
     "type" in data &&
