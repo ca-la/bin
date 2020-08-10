@@ -6,7 +6,6 @@ export interface AssetLinks {
   thumbnailLink: string | null;
 }
 export interface Asset {
-  assetLinks?: AssetLinks | null;
   createdAt: Date;
   description: string | null;
   id: string;

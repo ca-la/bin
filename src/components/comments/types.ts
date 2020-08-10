@@ -41,5 +41,5 @@ export interface CommentWithMentions extends Comment {
   };
 }
 export interface CommentWithResources extends CommentWithMentions {
-  attachments: (Asset & AssetLinks)[];
+  attachments: (Asset & Partial<AssetLinks>)[];
 }
