@@ -14,7 +14,7 @@ import Component, {
 import * as EnrichmentService from "../../services/attach-asset-links";
 import db from "../../services/db";
 import filterError = require("../../services/filter-error");
-import ProductDesignImage from "../assets/domain-object";
+import ProductDesignImage from "../assets/types";
 import ProductDesignOption from "../../domain-objects/product-design-option";
 import { hasProperties } from "../../services/require-properties";
 import { omit } from "lodash";

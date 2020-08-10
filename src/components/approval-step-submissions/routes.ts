@@ -13,7 +13,7 @@ import ApprovalStepSubmission, { ApprovalStepSubmissionState } from "./types";
 import db from "../../services/db";
 import DesignEvent, { templateDesignEvent } from "../design-events/types";
 import requireAuth from "../../middleware/require-auth";
-import Comment, {
+import {
   BASE_COMMENT_PROPERTIES,
   isBaseComment,
 } from "../comments/domain-object";
@@ -30,6 +30,7 @@ import DesignsDAO from "../product-designs/dao";
 import useTransaction from "../../middleware/use-transaction";
 import * as IrisService from "../../components/iris/send-message";
 import { realtimeApprovalSubmissionRevisionRequest } from "./realtime";
+import Comment from "../comments/types";
 
 const router = new Router();
 

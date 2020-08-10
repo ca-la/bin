@@ -10,7 +10,7 @@ import {
 } from "./domain-object";
 import getLinks, { constructHtmlLink, LinkType } from "./get-links";
 import normalizeTitle from "../../services/normalize-title";
-import Comment from "../../components/comments/domain-object";
+import Comment from "../../components/comments/types";
 import { ComponentType } from "../components/domain-object";
 import { getMentionsFromComment } from "../../services/add-at-mention-details";
 import { generatePreviewLinks } from "../../services/attach-asset-links";

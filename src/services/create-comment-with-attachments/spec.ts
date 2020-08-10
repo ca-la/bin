@@ -4,10 +4,10 @@ import { sandbox, test, Test } from "../../test-helpers/fresh";
 import db from "../db";
 import Knex from "knex";
 import { createCommentWithAttachments } from "./index";
-import Asset from "../../components/assets/domain-object";
-import { BaseComment } from "../../components/comments/domain-object";
 import { omit } from "lodash";
 import * as AssetLinks from "../attach-asset-links";
+import { BaseComment } from "../../components/comments/types";
+import Asset from "../../components/assets/types";
 
 test("createDesign service creates a collaborator", async (t: Test) => {
   const { user } = await createUser({ withSession: false });

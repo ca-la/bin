@@ -4,7 +4,7 @@ import * as CommentsDAO from "../../components/comments/dao";
 import * as AssetsDAO from "../../components/assets/dao";
 import * as CommentAttachmentsDAO from "../../components/comment-attachments/dao";
 import CommentAttachment from "../../components/comment-attachments/domain-object";
-import Asset from "../../components/assets/domain-object";
+import Asset from "../../components/assets/types";
 import {
   addAttachmentLinks,
   CommentWithAttachmentLinks,

@@ -3,7 +3,7 @@ import * as Knex from "knex";
 import * as AnnotationsDAO from "../../components/product-design-canvas-annotations/dao";
 import * as CanvasesDAO from "../../components/canvases/dao";
 import * as NotificationsService from "../../services/create-notifications";
-import Comment from "../comments/domain-object";
+import Comment from "../comments/types";
 import {
   getCollaboratorsFromCommentMentions,
   getThreadUserIdsFromCommentThread,

@@ -1,6 +1,7 @@
 import DataAdapter from "../../services/data-adapter";
 import { hasProperties } from "../../services/require-properties";
-import Comment, { CommentRow, isCommentRow } from "../comments/domain-object";
+import { isCommentRow } from "../comments/domain-object";
+import Comment, { CommentRow } from "../comments/types";
 
 export default interface AnnotationComment {
   commentId: string;

@@ -4,7 +4,7 @@ import { create } from "../../components/comments/dao";
 import { findById as findUserById } from "../../components/users/dao";
 import createUser = require("../create-user");
 import User from "../../components/users/domain-object";
-import Comment from "../../components/comments/domain-object";
+import Comment from "../../components/comments/types";
 
 export default async function generateComment(
   options: Partial<Comment> = {}

@@ -6,12 +6,12 @@ import ApprovalStepComment, {
   isApprovalStepCommentRow,
 } from "./domain-object";
 import { validate, validateEvery } from "../../services/validate-from-db";
-import Comment, {
-  CommentRow,
+import {
   dataAdapter as commentDataAdapter,
   isCommentRow,
 } from "../comments/domain-object";
 import { queryComments } from "../comments/dao";
+import Comment, { CommentRow } from "../comments/types";
 
 const TABLE_NAME = "design_approval_step_comments";
 

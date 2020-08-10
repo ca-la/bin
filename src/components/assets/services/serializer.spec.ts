@@ -4,7 +4,7 @@ import {
   deserializePartialAsset,
   isSerializedAsset,
 } from "./serializer";
-import Asset from "../domain-object";
+import Asset from "../types";
 import { omit } from "lodash";
 
 test("isSerializedAsset can determine if an object is an asset", async (t: Test) => {

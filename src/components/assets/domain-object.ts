@@ -4,28 +4,7 @@ import {
   hasProperties,
   hasSomeProperties,
 } from "../../services/require-properties";
-
-/**
- * TODO: adjust the following columns
- * - Drop `description`.
- * - Drop `deleted_at`.
- * - Change `user_id` to `created_by` and make it required.
- * - Pull out `original_height_px` and `original_width_px` into an Image Metadata table.
- */
-
-export default Asset;
-
-export interface AssetRow {
-  created_at: string;
-  description: string | null;
-  id: string;
-  mime_type: string;
-  original_height_px: string;
-  original_width_px: string;
-  title: string | null;
-  upload_completed_at: string | null;
-  user_id: string | null;
-}
+import { AssetRow } from "./types";
 
 export const dataAdapter = new DataAdapter<AssetRow, Asset>(
   toData,

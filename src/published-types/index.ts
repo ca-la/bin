@@ -17,3 +17,5 @@ export * from "../components/approval-step-submissions/types";
 export * from "../components/approval-steps/realtime";
 export * from "../components/approval-step-submissions/realtime";
 export * from "../types/serialized";
+export * from "../components/assets/types";
+export * from "../components/comments/types";

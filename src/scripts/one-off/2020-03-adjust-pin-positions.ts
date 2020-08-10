@@ -6,7 +6,7 @@ import { blue, format, green, red, yellow } from "../../services/colors";
 import db = require("../../services/db");
 import OptionsDAO from "../../dao/product-design-options";
 import * as AssetsDAO from "../../components/assets/dao";
-import Asset from "../../components/assets/domain-object";
+import Asset from "../../components/assets/types";
 import Component, {
   ComponentType,
   dataAdapter as componentDataAdapter,

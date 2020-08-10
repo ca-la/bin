@@ -3,8 +3,7 @@ import rethrow from "pg-rethrow";
 import uuid from "node-uuid";
 
 import { validate, validateEvery } from "../../services/validate-from-db";
-import Asset, {
-  AssetRow,
+import {
   dataAdapter,
   isAssetRow,
   toInsertion,
@@ -12,6 +11,7 @@ import Asset, {
 } from "./domain-object";
 import db from "../../services/db";
 import first from "../../services/first";
+import Asset, { AssetRow } from "./types";
 
 const TABLE_NAME = "assets";
 

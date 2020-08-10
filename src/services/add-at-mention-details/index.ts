@@ -1,4 +1,4 @@
-import Comment from "../../components/comments/domain-object";
+import Comment from "../../components/comments/types";
 import parseAtMentions, {
   MentionMeta,
   MentionType,

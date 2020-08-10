@@ -1,8 +1,7 @@
 import Knex from "knex";
 import db from "../../services/db";
 import { queryComments } from "../comments/dao";
-import Comment, {
-  CommentRow,
+import {
   dataAdapter as commentDataAdapter,
   isCommentRow,
 } from "../comments/domain-object";
@@ -12,6 +11,7 @@ import TaskComment, {
   TaskCommentRow,
 } from "./domain-object";
 import { validate, validateEvery } from "../../services/validate-from-db";
+import Comment, { CommentRow } from "../comments/types";
 
 const TABLE_NAME = "task_comments";
 

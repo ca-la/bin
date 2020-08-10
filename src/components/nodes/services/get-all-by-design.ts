@@ -14,7 +14,7 @@ import {
 import Node from "../domain-objects";
 import MaterialAttribute from "../../attributes/material-attributes/domain-objects";
 import ImageAttribute from "../../attributes/image-attributes/domain-objects";
-import Asset from "../../assets/domain-object";
+import Asset from "../../assets/types";
 import MaterialAttributeWithAsset from "../../attributes/material-attributes/domain-objects/with-asset";
 import ImageAttributeWithAsset from "../../attributes/image-attributes/domain-objects/with-asset";
 import { findNodeTrees, findRootNodesByDesign } from "../dao";

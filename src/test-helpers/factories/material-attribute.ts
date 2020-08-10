@@ -12,7 +12,7 @@ import Node from "../../components/nodes/domain-objects";
 import { findById as findNode } from "../../components/nodes/dao";
 import generateNode from "./node";
 
-import Asset from "../../components/assets/domain-object";
+import Asset from "../../components/assets/types";
 import { findById as findAsset } from "../../components/assets/dao";
 import generateAsset from "./asset";
 

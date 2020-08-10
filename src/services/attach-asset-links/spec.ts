@@ -14,7 +14,7 @@ import Component, {
 } from "../../components/components/domain-object";
 import OptionsDAO from "../../dao/product-design-options";
 import * as ImagesDAO from "../../components/assets/dao";
-import Asset from "../../components/assets/domain-object";
+import Asset from "../../components/assets/types";
 
 function stubUrls(): void {
   sandbox()

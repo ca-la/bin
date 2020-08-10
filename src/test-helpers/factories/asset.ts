@@ -4,7 +4,7 @@ import { create } from "../../components/assets/dao";
 import { findById as findUserById } from "../../components/users/dao";
 import createUser = require("../create-user");
 import User from "../../components/users/domain-object";
-import Asset from "../../components/assets/domain-object";
+import Asset from "../../components/assets/types";
 
 export default async function generateAsset(
   options: Partial<Asset> = {}

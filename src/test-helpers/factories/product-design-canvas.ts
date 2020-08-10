@@ -1,5 +1,5 @@
 import uuid from "node-uuid";
-import Asset from "../../components/assets/domain-object";
+import Asset from "../../components/assets/types";
 import { create } from "../../components/canvases/dao";
 import Canvas from "../../components/canvases/domain-object";
 import { findById as findUserById } from "../../components/users/dao";

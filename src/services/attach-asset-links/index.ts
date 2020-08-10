@@ -6,7 +6,7 @@ import OptionsDAO from "../../dao/product-design-options";
 import * as ImagesDAO from "../../components/assets/dao";
 import { isPreviewable } from "../../services/is-previewable";
 import { getExtension } from "../../services/get-extension";
-import Asset from "../../components/assets/domain-object";
+import Asset from "../../components/assets/types";
 
 export interface AssetLinks {
   assetLink: string | null;

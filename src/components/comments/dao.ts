@@ -1,16 +1,15 @@
 import { pick } from "lodash";
 import db from "../../services/db";
 import Knex from "knex";
-import Comment, {
-  BaseComment,
+import {
   baseDataAdapter,
-  CommentRow,
   dataAdapter,
   INSERTABLE_COLUMNS,
   isCommentRow,
   UPDATABLE_COLUMNS,
 } from "../../components/comments/domain-object";
 import { validate, validateEvery } from "../../services/validate-from-db";
+import Comment, { CommentRow, BaseComment } from "./types";
 
 const TABLE_NAME = "comments";
 

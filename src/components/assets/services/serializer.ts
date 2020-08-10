@@ -1,5 +1,5 @@
 import { Serialized } from "../../../types/serialized";
-import Asset from "../domain-object";
+import Asset from "../types";
 import { hasProperties } from "@cala/ts-lib";
 
 export function isSerializedAsset(data: any): data is Serialized<Asset> {

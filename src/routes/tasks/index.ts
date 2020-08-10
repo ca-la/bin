@@ -32,7 +32,7 @@ import addAtMentionDetails, {
 import { announceTaskCommentCreation } from "../../components/iris/messages/task-comment";
 import { addAttachmentLinks } from "../../services/add-attachments-links";
 import db from "../../services/db";
-import Asset from "../../components/assets/domain-object";
+import Asset from "../../components/assets/types";
 import { createCommentWithAttachments } from "../../services/create-comment-with-attachments";
 
 const router = new Router();

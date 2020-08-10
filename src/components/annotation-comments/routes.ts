@@ -4,7 +4,6 @@ import Knex from "knex";
 
 import {
   BASE_COMMENT_PROPERTIES,
-  BaseComment,
   isBaseComment,
 } from "../comments/domain-object";
 import * as AnnotationCommentDAO from "../annotation-comments/dao";
@@ -12,12 +11,13 @@ import sendCreationNotifications from "./send-creation-notifications";
 import requireAuth = require("../../middleware/require-auth");
 import { announceAnnotationCommentCreation } from "../iris/messages/annotation-comment";
 import db from "../../services/db";
-import Asset from "../assets/domain-object";
+import Asset from "../assets/types";
 import { createCommentWithAttachments } from "../../services/create-comment-with-attachments";
 import {
   addAtMentionDetailsForComment,
   CommentWithMentions,
 } from "../../services/add-at-mention-details";
+import { BaseComment } from "../comments/types";
 
 const router = new Router();
 

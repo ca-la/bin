@@ -1,7 +1,6 @@
 import DataAdapter from "../../../../services/data-adapter";
 import { hasProperties } from "@cala/ts-lib";
-import Asset, {
-  AssetRow,
+import {
   toData as encodeAsset,
   toInsertion as decodeAsset,
 } from "../../../assets/domain-object";
@@ -12,6 +11,7 @@ import MaterialAttribute, {
   isMaterialAttributeRow,
   MaterialAttributeRow,
 } from "./index";
+import { Asset, AssetRow } from "../../../assets/types";
 
 export default interface MaterialAttributeWithAsset extends MaterialAttribute {
   asset: Asset;

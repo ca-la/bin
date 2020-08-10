@@ -33,7 +33,7 @@ import ProductDesignCanvasAnnotation from "../../components/product-design-canva
 import { DetailsTask } from "../../domain-objects/task-event";
 import Canvas from "../../components/canvases/domain-object";
 import ProductDesignStage from "../../domain-objects/product-design-stage";
-import Comment from "../../components/comments/domain-object";
+import Comment from "../../components/comments/types";
 import createDesign from "../../services/create-design";
 import generateAnnotation from "./product-design-canvas-annotation";
 import generateComment from "./comment";
