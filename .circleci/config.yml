@@ -6,7 +6,7 @@ jobs:
 
     docker:
       - image: circleci/node:10.15.0
-      - image: postgres:10.6
+      - image: circleci/postgres:10.6-alpine-ram
         environment:
           POSTGRES_USER: ubuntu
           POSTGRES_DB: circle_test
