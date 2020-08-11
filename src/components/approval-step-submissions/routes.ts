@@ -444,10 +444,12 @@ export function* createRevisionRequest(
     type: "REVISION_REQUEST",
   });
 
+  const eventWithMeta = yield DesignEventsDAO.findById(trx, event.id);
+
   IrisService.sendMessage(
     realtimeApprovalSubmissionRevisionRequest({
       comment: commentWithMentions,
-      event,
+      event: eventWithMeta,
       approvalStepId: updated.stepId,
     })
   );

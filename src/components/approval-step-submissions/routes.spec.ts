@@ -389,17 +389,27 @@ test("POST /design-approval-step-submissions/:submissionId/revision-requests", a
       fullComment,
       "Realtime message has a comment"
     );
+
     t.deepEquals(
       omit(irisStub.args[2][0].resource.event, "id"),
       {
         ...templateDesignEvent,
+        actorEmail: designer.user.email,
         actorId: designer.user.id,
+        actorName: designer.user.name,
+        actorRole: designer.user.role,
         approvalStepId: submission.stepId,
         approvalSubmissionId: submission.id,
         commentId: comment.id,
         createdAt: now,
         designId: design.id,
         type: "REVISION_REQUEST",
+        shipmentTrackingDescription: null,
+        stepTitle: "Checkout",
+        targetEmail: null,
+        targetName: null,
+        targetRole: null,
+        submissionTitle: submission.title,
       },
       "Realtime message has an event"
     );
