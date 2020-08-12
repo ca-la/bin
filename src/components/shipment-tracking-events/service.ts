@@ -3,25 +3,18 @@ import Knex from "knex";
 import * as ShipmentTrackingEventsDAO from "./dao";
 import { ShipmentTrackingEvent } from "./types";
 
-async function diff(
+export async function diff(
   trx: Knex.Transaction,
   shipmentTrackingId: string,
   otherEvents: ShipmentTrackingEvent[]
 ): Promise<ShipmentTrackingEvent[]> {
-  const newestEvent = await ShipmentTrackingEventsDAO.findLatestByShipmentTracking(
-    trx,
-    shipmentTrackingId
-  );
+  const existingEvents = await ShipmentTrackingEventsDAO.find(trx, {
+    shipmentTrackingId,
+  });
 
-  if (!newestEvent) {
+  if (existingEvents.length === 0) {
     return otherEvents;
   }
 
-  return otherEvents.filter(
-    (event: ShipmentTrackingEvent) => event.createdAt > newestEvent.createdAt
-  );
+  return otherEvents.slice(existingEvents.length);
 }
-
-export default {
-  diff,
-};

@@ -14,7 +14,7 @@ const standardDao = buildDao<ShipmentTrackingEvent, ShipmentTrackingEventRow>(
   tableName,
   adapter,
   {
-    orderColumn: "created_at",
+    orderColumn: "courier_timestamp",
   }
 );
 
@@ -28,7 +28,7 @@ const dao = {
       trx,
       { shipmentTrackingId },
       (query: Knex.QueryBuilder) =>
-        query.clearOrder().orderBy("created_at", "desc")
+        query.clearOrder().orderBy("courier_timestamp", "desc")
     );
   },
 };
