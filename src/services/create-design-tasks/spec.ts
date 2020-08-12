@@ -68,7 +68,7 @@ test("createDesignTasks creates POST_CREATION tasks", async (t: Test) => {
   sandbox()
     .stub(FindTaskTypeCollaborators, "default")
     .resolves({
-      [taskTypes.CALA.id]: [collaborator],
+      [taskTypes.CALA.id]: [],
       [taskTypes.DESIGN.id]: [collaborator],
       [taskTypes.PRODUCTION.id]: [collaborator],
       [taskTypes.TECHNICAL_DESIGN.id]: [collaborator],

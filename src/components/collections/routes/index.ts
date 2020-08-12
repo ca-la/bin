@@ -1,6 +1,5 @@
 import Router from "koa-router";
 
-import { CALA_OPS_USER_ID } from "../../../config";
 import filterError = require("../../../services/filter-error");
 import InvalidDataError from "../../../errors/invalid-data";
 
@@ -62,10 +61,6 @@ function* createCollection(
       )
     );
 
-    if (!CALA_OPS_USER_ID) {
-      throw new Error("Cala Ops user not set!");
-    }
-
     yield CollaboratorsDAO.create(
       {
         cancelledAt: null,
@@ -75,18 +70,6 @@ function* createCollection(
         role: "EDIT",
         userEmail: null,
         userId,
-      },
-      trx
-    );
-    yield CollaboratorsDAO.create(
-      {
-        cancelledAt: null,
-        collectionId: collection.id,
-        designId: null,
-        invitationMessage: "",
-        role: "EDIT",
-        userEmail: null,
-        userId: CALA_OPS_USER_ID,
       },
       trx
     );
