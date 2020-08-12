@@ -59,6 +59,7 @@ function setup() {
     aftershipCouriersStub: sandbox()
       .stub(AftershipService, "getMatchingCouriers")
       .resolves([{ slug: "usps", name: "United States Postal Service" }]),
+    aftershipTrackingStub: sandbox().stub(AftershipService, "getTracking"),
     findDesignStub: sandbox().stub(ProductDesignsDAO, "findById").resolves({
       id: "a-design-id",
       collectionIds: [],
@@ -92,18 +93,23 @@ test("GET /shipment-trackings?approvalStepId", async (t: Test) => {
       createdAt: new Date(),
     },
   ]);
-  stubs.trackingEventsStub.resolves({
-    id: "a-shipment-tracking-event-id",
-    shipmentTrackingId: "a-shipment-tracking-id",
-    createdAt: new Date(),
-    courier: "usps",
-    tag: "Pending",
-    subtag: "Pending_001",
-    location: null,
-    country: null,
-    message: null,
-    courierTimestamp: null,
-    courierTag: null,
+  stubs.aftershipTrackingStub.resolves({
+    tracking: {
+      tracking_number: "a-shipment-tracking-id",
+      id: "an-aftership-tracking-id",
+      tag: "Delivered",
+      expected_delivery: "2012-12-23T00:00:00Z",
+      shipment_delivery_date: "2012-12-23T00:00:00Z",
+      checkpoints: [
+        {
+          created_at: "2012-12-22T00:00:00Z",
+          slug: "usps",
+          tag: "Delivered",
+          subtag: "Delivered_001",
+          checkpoint_time: "2012-12-23T00:00",
+        },
+      ],
+    },
   });
 
   const [response, body] = await get(
@@ -201,18 +207,23 @@ test("POST /shipment-trackings", async (t: Test) => {
       createdAt: now,
     })
   );
-  stubs.trackingEventsStub.resolves({
-    id: "a-shipment-tracking-event-id",
-    shipmentTrackingId: "a-shipment-tracking-id",
-    createdAt: new Date(),
-    courier: "usps",
-    tag: "Delivered",
-    subtag: "Delivered_001",
-    location: null,
-    country: null,
-    message: null,
-    courierTimestamp: null,
-    courierTag: null,
+  stubs.aftershipTrackingStub.resolves({
+    tracking: {
+      tracking_number: "a-shipment-tracking-id",
+      id: "an-aftership-tracking-id",
+      tag: "Delivered",
+      expected_delivery: now.toISOString(),
+      shipment_delivery_date: now.toISOString(),
+      checkpoints: [
+        {
+          created_at: "2012-12-22T00:00:00Z",
+          slug: "usps",
+          tag: "Delivered",
+          subtag: "Delivered_001",
+          checkpoint_time: "2012-12-23T00:00",
+        },
+      ],
+    },
   });
 
   const [response, body] = await post("/shipment-trackings", {

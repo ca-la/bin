@@ -21,17 +21,18 @@ export function attachTrackingLink(
 }
 
 export async function attachDeliveryStatus(
-  trx: Knex.Transaction,
+  _: Knex.Transaction,
   shipmentTracking: ShipmentTracking
 ): Promise<ShipmentTracking & { deliveryStatus: DeliveryStatus }> {
-  const latestEvent = await ShipmentTrackingEventsDAO.findLatestByShipmentTracking(
-    trx,
-    shipmentTracking.id
+  const { tracking } = await Aftership.getTracking(
+    shipmentTracking.courier,
+    shipmentTracking.trackingId
   );
+
   return {
     ...shipmentTracking,
     deliveryStatus: {
-      tag: latestEvent ? latestEvent.tag : "Pending",
+      tag: tracking ? tracking.tag : "Pending",
       expectedDelivery: shipmentTracking.expectedDelivery,
       deliveryDate: shipmentTracking.deliveryDate,
     },
