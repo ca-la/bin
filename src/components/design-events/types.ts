@@ -125,6 +125,7 @@ export interface DesignEventWithMeta extends DesignEvent {
   taskTypeId: string | null;
   taskTypeTitle: string | null;
   shipmentTrackingDescription: string | null;
+  shipmentTrackingEventTag: string | null;
   shipmentTrackingEventSubtag: string | null;
 }
 
@@ -140,6 +141,7 @@ export interface DesignEventWithMetaRow extends DesignEventRow {
   task_type_id: string | null;
   task_type_title: string | null;
   shipment_tracking_description: string | null;
+  shipment_tracking_event_tag: string | null;
   shipment_tracking_event_subtag: string | null;
 }
 
@@ -167,6 +169,7 @@ export const templateDesignEventWithMeta = {
   taskTypeId: null,
   taskTypeTitle: null,
   shipmentTrackingDescription: null,
+  shipmentTrackingEventTag: null,
   shipmentTrackingEventSubtag: null,
 };
 
