@@ -410,6 +410,7 @@ test("POST /design-approval-step-submissions/:submissionId/revision-requests", a
         targetName: null,
         targetRole: null,
         submissionTitle: submission.title,
+        taskTypeTitle: null,
       },
       "Realtime message has an event"
     );
