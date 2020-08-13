@@ -22,7 +22,7 @@ import ProductDesign from "../product-designs/domain-objects/product-design";
 import Session from "../../domain-objects/session";
 import { DesignEventWithMeta } from "../../published-types";
 import * as IrisService from "../iris/send-message";
-import { templateDesignEvent } from "../design-events/types";
+import { templateDesignEventWithMeta } from "../design-events/types";
 import { omit } from "lodash";
 
 async function setupSubmission(
@@ -393,7 +393,7 @@ test("POST /design-approval-step-submissions/:submissionId/revision-requests", a
     t.deepEquals(
       omit(irisStub.args[2][0].resource.event, "id"),
       {
-        ...templateDesignEvent,
+        ...templateDesignEventWithMeta,
         actorEmail: designer.user.email,
         actorId: designer.user.id,
         actorName: designer.user.name,
@@ -404,13 +404,8 @@ test("POST /design-approval-step-submissions/:submissionId/revision-requests", a
         createdAt: now,
         designId: design.id,
         type: "REVISION_REQUEST",
-        shipmentTrackingDescription: null,
         stepTitle: "Checkout",
-        targetEmail: null,
-        targetName: null,
-        targetRole: null,
         submissionTitle: submission.title,
-        taskTypeTitle: null,
       },
       "Realtime message has an event"
     );

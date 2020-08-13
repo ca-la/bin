@@ -5,6 +5,7 @@ import DesignEvent, {
   DesignEventWithMeta,
   DesignEventTypes,
   templateDesignEvent,
+  templateDesignEventWithMeta,
 } from "./types";
 import * as IrisService from "../iris/send-message";
 import * as ApprovalStepStateService from "../../services/approval-step-state";
@@ -32,17 +33,10 @@ function setup(eventType: DesignEventTypes): Setup {
   };
   const createdWithMeta: DesignEventWithMeta = {
     ...created,
-    ...templateDesignEvent,
+    ...templateDesignEventWithMeta,
     actorEmail: "anemail@example.com",
     actorName: "An Email",
     actorRole: "USER",
-    stepTitle: null,
-    submissionTitle: null,
-    targetEmail: null,
-    targetName: null,
-    targetRole: null,
-    taskTypeTitle: null,
-    shipmentTrackingDescription: null,
   };
 
   const trxStub = ({} as unknown) as Knex.Transaction;

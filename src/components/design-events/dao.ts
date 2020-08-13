@@ -35,6 +35,7 @@ function addMeta(query: Knex.QueryBuilder): Knex.QueryBuilder {
       "design_approval_submissions.title as submission_title",
       "design_approval_steps.title as step_title",
       "shipment_trackings.description as shipment_tracking_description",
+      "shipment_tracking_events.subtag as shipment_tracking_event_subtag",
     ])
     .join("users as actor", "actor.id", "design_events.actor_id")
     .leftJoin("users as target", "target.id", "design_events.target_id")
@@ -52,6 +53,11 @@ function addMeta(query: Knex.QueryBuilder): Knex.QueryBuilder {
       "shipment_trackings",
       "shipment_trackings.id",
       "design_events.shipment_tracking_id"
+    )
+    .leftJoin(
+      "shipment_tracking_events",
+      "shipment_tracking_events.id",
+      "design_events.shipment_tracking_event_id"
     );
 }
 

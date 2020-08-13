@@ -21,6 +21,7 @@ export default buildAdapter<DesignEvent, DesignEventRow>({
     "approvalSubmissionId",
     "commentId",
     "shipmentTrackingId",
+    "shipmentTrackingEventId",
   ],
 });
 
@@ -45,8 +46,10 @@ function withMetaEncode(row: DesignEventWithMetaRow): DesignEventWithMeta {
     targetEmail: row.target_email,
     submissionTitle: row.submission_title,
     stepTitle: row.step_title,
-    shipmentTrackingId: row.shipment_tracking_id,
     shipmentTrackingDescription: row.shipment_tracking_description,
+    shipmentTrackingEventId: row.shipment_tracking_event_id,
+    shipmentTrackingEventSubtag: row.shipment_tracking_event_subtag,
+    shipmentTrackingId: row.shipment_tracking_id,
     taskTypeId: row.task_type_id,
     taskTypeTitle: null,
   };
@@ -79,6 +82,8 @@ export const withMetaAdapter = buildAdapter<
     "stepTitle",
     "shipmentTrackingId",
     "shipmentTrackingDescription",
+    "shipmentTrackingEventId",
+    "shipmentTrackingEventSubtag",
   ],
   encodeTransformer: withMetaEncode,
 });
