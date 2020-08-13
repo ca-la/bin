@@ -425,3 +425,40 @@ export async function isOwner(options: {
 
   return ownerRow.user_id === userId;
 }
+
+export async function getTitleAndOwnerByShipmentTracking(
+  trx: Knex.Transaction,
+  shipmentTrackingId: string
+) {
+  const row = await trx(TABLE_NAME)
+    .select([
+      "product_designs.id as design_id",
+      "product_designs.title as design_title",
+      "users.name as designer_name",
+    ])
+    .join("users", "users.id", "product_designs.user_id")
+    .join(
+      "design_approval_steps",
+      "design_approval_steps.design_id",
+      "product_designs.id"
+    )
+    .join(
+      "shipment_trackings",
+      "shipment_trackings.approval_step_id",
+      "design_approval_steps.id"
+    )
+    .where({
+      "shipment_trackings.id": shipmentTrackingId,
+    })
+    .first();
+
+  if (!row) {
+    return null;
+  }
+
+  return {
+    designId: row.design_id,
+    designTitle: row.design_title || "Untitled",
+    designerName: row.designer_name || "Anonymous",
+  };
+}

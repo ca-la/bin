@@ -13,12 +13,13 @@ type TemplateName =
   | "designer_pay_later"
   | "designer_payment"
   | "partner_accept_bid"
-  | "partner_reject_bid";
+  | "partner_reject_bid"
+  | "shipment_exception";
 
 export interface SlackBody {
   channel: string;
   templateName: TemplateName;
-  params: object;
+  params: Record<string, any>;
 }
 
 export function enqueueSend(

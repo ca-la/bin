@@ -12,6 +12,7 @@ import {
   findDesignByApprovalStepId,
   findDesignByTaskId,
   isOwner,
+  getTitleAndOwnerByShipmentTracking,
 } from "./dao";
 import { del as deleteCanvas } from "../../canvases/dao";
 import * as CollaboratorsDAO from "../../collaborators/dao";
@@ -20,6 +21,7 @@ import * as ProductDesignOptionsDAO from "../../../dao/product-design-options";
 import * as ApprovalStepsDAO from "../../approval-steps/dao";
 import * as PricingProductTypesDAO from "../../pricing-product-types/dao";
 import * as PricingQuotesDAO from "../../../dao/pricing-quotes";
+import * as ShipmentTrackingsDAO from "../../shipment-trackings/dao";
 import {
   ApprovalStepState,
   ApprovalStepType,
@@ -50,11 +52,15 @@ import ResourceNotFoundError from "../../../errors/resource-not-found";
 import { addDesign } from "../../../test-helpers/collections";
 import { CollaboratorWithUser } from "../../collaborators/types";
 import { deleteById } from "../../../test-helpers/designs";
-import { generateDesign } from "../../../test-helpers/factories/product-design";
+import {
+  generateDesign,
+  staticProductDesign,
+} from "../../../test-helpers/factories/product-design";
 import generateApprovalStep from "../../../test-helpers/factories/design-approval-step";
 import { ComponentType } from "../../components/domain-object";
 import ProductDesignWithApprovalSteps from "../domain-objects/product-design-with-approval-steps";
 import generateBid from "../../../test-helpers/factories/bid";
+import * as Aftership from "../../../components/integrations/aftership/service";
 
 test("ProductDesignCanvases DAO supports creation/retrieval, enriched with image links", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
@@ -1325,4 +1331,61 @@ test("findAllDesignsThroughCollaborator attaches bid id", async (t: tape.Test) =
     throw new Error("Cannot find Design!");
   }
   t.equal(foundPairedDesign.bidId, bid.id, "Retrieves the correct bid id");
+});
+
+test("getTitleAndOwnerByShipmentTracking", async (t: tape.Test) => {
+  const { user } = await createUser({ withSession: false });
+
+  const trx = await db.transaction();
+  try {
+    const d1 = await createDesign(
+      staticProductDesign({
+        userId: user.id,
+        title: "A great title",
+      }),
+      trx
+    );
+    const checkoutStep = await ApprovalStepsDAO.findOne(trx, {
+      designId: d1.id,
+      type: ApprovalStepType.CHECKOUT,
+    });
+
+    if (!checkoutStep) {
+      throw new Error("Could not find checkout step for created design");
+    }
+
+    sandbox().stub(Aftership, "createTracking").resolves({
+      aftershipTracking: {},
+      updates: [],
+    });
+
+    const shipmentTracking = await ShipmentTrackingsDAO.create(trx, {
+      approvalStepId: checkoutStep.id,
+      courier: "usps",
+      createdAt: new Date(2012, 11, 23),
+      description: "First",
+      id: uuid.v4(),
+      trackingId: "first-tracking-id",
+      deliveryDate: null,
+      expectedDelivery: null,
+    });
+
+    t.deepEqual(
+      await getTitleAndOwnerByShipmentTracking(trx, shipmentTracking.id),
+      {
+        designId: d1.id,
+        designTitle: "A great title",
+        designerName: user.name,
+      },
+      "returns design title and designer name"
+    );
+
+    t.deepEqual(
+      await getTitleAndOwnerByShipmentTracking(trx, uuid.v4()),
+      null,
+      "returns null for a miss"
+    );
+  } finally {
+    await trx.rollback();
+  }
 });

@@ -24,6 +24,8 @@ import createDesign from "../../services/create-design";
 import { staticProductDesign } from "../../test-helpers/factories/product-design";
 import { ApprovalStepType } from "../approval-steps/types";
 import * as AftershipTrackingsDAO from "../aftership-trackings/dao";
+import * as SlackService from "../../services/slack";
+import { STUDIO_HOST } from "../../config";
 
 function setup() {
   return {
@@ -274,7 +276,7 @@ test("POST /shipment-trackings/updates", async (t: Test) => {
         shipmentTrackingId: "a-shipment-tracking-id",
       },
     ]);
-  sandbox().stub(ShipmentTrackingsDAO, "update").resolves();
+  sandbox().stub(ShipmentTrackingsDAO, "update").resolves({ updated: {} });
   sandbox().stub(ShipmentTrackingEventService, "diff").resolves([]);
   sandbox().stub(ShipmentTrackingEventsDAO, "createAll").resolves([]);
   const [response] = await post(
@@ -320,63 +322,83 @@ test("POST /shipment-trackings/updates end-to-end", async (t: Test) => {
     subtag: "InTransit_003",
     tag: "InTransit",
   };
+  const e3 = {
+    country: null,
+    courier: "usps",
+    courierTag: null,
+    courierTimestamp: new Date(2012, 11, 27),
+    createdAt: new Date(2012, 11, 27),
+    location: null,
+    message: null,
+    subtag: "Exception_001",
+    tag: "Exception",
+  };
 
-  const { shipmentTracking, aftershipTracking } = await db.transaction(
-    async (trx: Knex.Transaction) => {
-      const d1 = await createDesign(
-        staticProductDesign({ id: "d1", userId: user.id }),
-        trx
-      );
-      const checkoutStep = await ApprovalStepsDAO.findOne(trx, {
-        designId: d1.id,
-        type: ApprovalStepType.CHECKOUT,
-      });
+  const {
+    shipmentTracking,
+    aftershipTracking,
+    design,
+    approvalStep,
+  } = await db.transaction(async (trx: Knex.Transaction) => {
+    const d1 = await createDesign(
+      staticProductDesign({
+        id: "d1",
+        userId: user.id,
+        title: "A design title",
+      }),
+      trx
+    );
+    const checkoutStep = await ApprovalStepsDAO.findOne(trx, {
+      designId: d1.id,
+      type: ApprovalStepType.CHECKOUT,
+    });
 
-      if (!checkoutStep) {
-        throw new Error("Could not find checkout step for created design");
-      }
-
-      const shipmentTrackingId = uuid.v4();
-
-      sandbox()
-        .stub(AftershipService, "createTracking")
-        .resolves({
-          aftershipTracking: {},
-          updates: [
-            {
-              shipmentTrackingId,
-              expectedDelivery: null,
-              deliveryDate: null,
-              events: [],
-            },
-          ],
-        });
-
-      const tracking = await ShipmentTrackingsDAO.create(trx, {
-        approvalStepId: checkoutStep.id,
-        courier: "usps",
-        createdAt: new Date(2012, 11, 23),
-        description: "First",
-        id: shipmentTrackingId,
-        trackingId: "first-tracking-id",
-        deliveryDate: null,
-        expectedDelivery: null,
-      });
-
-      await ShipmentTrackingEventsDAO.createAll(trx, [
-        { ...e1, shipmentTrackingId: tracking.id },
-      ]);
-
-      return {
-        shipmentTracking: tracking,
-        aftershipTracking: await AftershipTrackingsDAO.create(trx, {
-          createdAt: new Date(2012, 11, 23),
-          id: uuid.v4(),
-          shipmentTrackingId: tracking.id,
-        }),
-      };
+    if (!checkoutStep) {
+      throw new Error("Could not find checkout step for created design");
     }
-  );
+
+    const shipmentTrackingId = uuid.v4();
+
+    sandbox()
+      .stub(AftershipService, "createTracking")
+      .resolves({
+        aftershipTracking: {},
+        updates: [
+          {
+            shipmentTrackingId,
+            expectedDelivery: null,
+            deliveryDate: null,
+            events: [],
+          },
+        ],
+      });
+
+    const tracking = await ShipmentTrackingsDAO.create(trx, {
+      approvalStepId: checkoutStep.id,
+      courier: "usps",
+      createdAt: new Date(2012, 11, 23),
+      description: "First",
+      id: shipmentTrackingId,
+      trackingId: "first-tracking-id",
+      deliveryDate: null,
+      expectedDelivery: null,
+    });
+
+    await ShipmentTrackingEventsDAO.createAll(trx, [
+      { ...e1, shipmentTrackingId: tracking.id },
+    ]);
+
+    return {
+      shipmentTracking: tracking,
+      aftershipTracking: await AftershipTrackingsDAO.create(trx, {
+        createdAt: new Date(2012, 11, 23),
+        id: uuid.v4(),
+        shipmentTrackingId: tracking.id,
+      }),
+      design: d1,
+      approvalStep: checkoutStep,
+    };
+  });
 
   await post(
     `/shipment-trackings/updates?aftershipToken=${AftershipService.AFTERSHIP_SECRET_TOKEN}`,
@@ -457,14 +479,14 @@ test("POST /shipment-trackings/updates end-to-end", async (t: Test) => {
               slug: "usps",
               tag: "Pending",
               subtag: "Pending_001",
-              checkpoint_time: "2012-12-23",
+              checkpoint_time: "2012-12-23T00:00",
             },
             {
               created_at: new Date(2012, 11, 25),
               slug: "usps",
               tag: "InTransit",
               subtag: "InTransit_003",
-              checkpoint_time: "2012-12-25",
+              checkpoint_time: "2012-12-25T00:00",
             },
           ],
         },
@@ -492,6 +514,91 @@ test("POST /shipment-trackings/updates end-to-end", async (t: Test) => {
         },
       ],
       "does not add any new events if same checkpoints come in the update"
+    );
+  });
+
+  const slackStub = sandbox().stub(SlackService, "enqueueSend").resolves();
+  await post(
+    `/shipment-trackings/updates?aftershipToken=${AftershipService.AFTERSHIP_SECRET_TOKEN}`,
+    {
+      body: {
+        msg: {
+          id: aftershipTracking.id,
+          tracking_number: "a-courier-tracking-number",
+          tag: "InTransit",
+          expected_delivery: new Date(2012, 11, 27),
+          checkpoints: [
+            {
+              created_at: new Date(2012, 11, 23),
+              slug: "usps",
+              tag: "Pending",
+              subtag: "Pending_001",
+              checkpoint_time: "2012-12-23T00:00",
+            },
+            {
+              created_at: new Date(2012, 11, 25),
+              slug: "usps",
+              tag: "InTransit",
+              subtag: "InTransit_003",
+              checkpoint_time: "2012-12-25T00:00",
+            },
+            {
+              created_at: new Date(2012, 11, 27),
+              slug: "usps",
+              tag: "Exception",
+              subtag: "Exception_001",
+              checkpoint_time: "2012-12-27T00:00",
+            },
+          ],
+        },
+      },
+    }
+  );
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const all = await ShipmentTrackingEventsDAO.find(trx, {
+      shipmentTrackingId: shipmentTracking.id,
+    });
+    t.deepEqual(
+      all,
+      [
+        {
+          ...e1,
+          shipmentTrackingId: shipmentTracking.id,
+        },
+        {
+          ...e2,
+          shipmentTrackingId: shipmentTracking.id,
+          id: all[1].id,
+        },
+        {
+          ...e3,
+          shipmentTrackingId: shipmentTracking.id,
+          id: all[2].id,
+        },
+      ],
+      "Adds new event"
+    );
+
+    t.deepEqual(
+      slackStub.args,
+      [
+        [
+          {
+            channel: "shipment-tracking",
+            params: {
+              designTitle: design.title,
+              designerName: user.name,
+              message: null,
+              designLink: `${STUDIO_HOST}/dashboard?designId=${design.id}&stepId=${approvalStep.id}&showTracking=view&trackingId=${shipmentTracking.id}`,
+              trackingLink: "https://track.ca.la/first-tracking-id",
+              trackingDescription: shipmentTracking.description,
+            },
+            templateName: "shipment_exception",
+          },
+        ],
+      ],
+      "sends a Slack message on exception"
     );
   });
 });
