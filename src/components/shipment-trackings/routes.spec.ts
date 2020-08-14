@@ -25,7 +25,7 @@ import { staticProductDesign } from "../../test-helpers/factories/product-design
 import { ApprovalStepType } from "../approval-steps/types";
 import * as AftershipTrackingsDAO from "../aftership-trackings/dao";
 import * as SlackService from "../../services/slack";
-import { STUDIO_HOST } from "../../config";
+import { STUDIO_HOST, CALA_OPS_USER_ID } from "../../config";
 
 function setup() {
   return {
@@ -279,6 +279,7 @@ test("POST /shipment-trackings/updates", async (t: Test) => {
   sandbox().stub(ShipmentTrackingsDAO, "update").resolves({ updated: {} });
   sandbox().stub(ShipmentTrackingEventService, "diff").resolves([]);
   sandbox().stub(ShipmentTrackingEventsDAO, "createAll").resolves([]);
+
   const [response] = await post(
     `/shipment-trackings/updates?aftershipToken=${AftershipService.AFTERSHIP_SECRET_TOKEN}`
   );
@@ -333,6 +334,12 @@ test("POST /shipment-trackings/updates end-to-end", async (t: Test) => {
     subtag: "Exception_001",
     tag: "Exception",
   };
+  const notificationSendStub = sandbox()
+    .stub(NotificationsLayer[NotificationType.SHIPMENT_TRACKING_UPDATE], "send")
+    .resolves();
+  const createDesignEventStub = sandbox()
+    .stub(DesignEventsDAO, "create")
+    .resolves();
 
   const {
     shipmentTracking,
@@ -461,6 +468,36 @@ test("POST /shipment-trackings/updates end-to-end", async (t: Test) => {
         shipmentTrackingId: shipmentTracking.id,
       },
       "new event is now the latest event"
+    );
+    t.is(notificationSendStub.callCount, 1, "Creates a notification");
+    t.is(
+      notificationSendStub.args[0][2].recipientUserId,
+      user.id,
+      "Sends it to the designer"
+    );
+    t.deepEqual(
+      notificationSendStub.args[0][3],
+      {
+        approvalStepId: approvalStep.id,
+        designId: design.id,
+        collectionId: null,
+        shipmentTrackingId: shipmentTracking.id,
+        shipmentTrackingEventId: latest!.id,
+      },
+      "Creates a notification with the correct arguments"
+    );
+    t.deepEqual(
+      omit(createDesignEventStub.args[0][1], "id", "createdAt"),
+      {
+        ...templateDesignEvent,
+        designId: design.id,
+        approvalStepId: shipmentTracking.approvalStepId,
+        actorId: CALA_OPS_USER_ID,
+        shipmentTrackingId: shipmentTracking.id,
+        shipmentTrackingEventId: latest!.id,
+        type: "TRACKING_UPDATE",
+      },
+      "Creates an event with the correct arguments"
     );
   });
 

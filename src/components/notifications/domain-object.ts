@@ -125,7 +125,10 @@ import {
   FullApprovalStepCommentCreateNotificationRow,
 } from "./models/approval-step-comment-create";
 import { CalaNotificationsUnion } from "../cala-components";
-import { FullShipmentTrackingCreateNotification } from "../shipment-trackings/notifications";
+import {
+  FullShipmentTrackingCreateNotification,
+  FullShipmentTrackingUpdateNotification,
+} from "../shipment-trackings/notifications";
 
 export enum NotificationType {
   ANNOTATION_COMMENT_CREATE = "ANNOTATION_COMMENT_CREATE",
@@ -158,6 +161,7 @@ export enum NotificationType {
   APPROVAL_STEP_SUBMISSION_REVISION_REQUEST = "APPROVAL_STEP_SUBMISSION_REVISION_REQUEST",
   APPROVAL_STEP_SUBMISSION_REREVIEW_REQUEST = "APPROVAL_STEP_SUBMISSION_REREVIEW_REQUEST",
   SHIPMENT_TRACKING_CREATE = "SHIPMENT_TRACKING_CREATE",
+  SHIPMENT_TRACKING_UPDATE = "SHIPMENT_TRACKING_UPDATE",
 }
 
 export type Notification =
@@ -206,7 +210,8 @@ export type FullNotification =
   | FullApprovalStepCommentMentionNotification
   | FullApprovalStepCommentReplyNotification
   | FullApprovalStepCommentCreateNotification
-  | FullShipmentTrackingCreateNotification;
+  | FullShipmentTrackingCreateNotification
+  | FullShipmentTrackingUpdateNotification;
 
 export type NotificationRow =
   | AnnotationCommentCreateNotificationRow
@@ -279,6 +284,7 @@ export function encode(
     recipientCollaboratorId: row.recipient_collaborator_id,
     sectionId: row.section_id,
     sentEmailAt: toDateOrNull(row.sent_email_at),
+    shipmentTrackingEventId: row.shipment_tracking_event_id,
     shipmentTrackingId: row.shipment_tracking_id,
     stageId: row.stage_id,
     taskId: row.task_id,
@@ -310,6 +316,7 @@ export function decode(
     recipient_collaborator_id: data.recipientCollaboratorId,
     section_id: data.sectionId,
     sent_email_at: toDateStringOrNull(data.sentEmailAt),
+    shipment_tracking_event_id: data.shipmentTrackingEventId,
     shipment_tracking_id: data.shipmentTrackingId,
     stage_id: data.stageId,
     task_id: data.taskId,
@@ -445,6 +452,8 @@ function encodeFull(rowData: FullNotificationRow): FullNotification {
     sentEmailAt: rowData.sent_email_at ? new Date(rowData.sent_email_at) : null,
     shipmentTrackingDescription: rowData.shipment_tracking_description,
     shipmentTrackingId: rowData.shipment_tracking_id,
+    trackingEventTag: rowData.tracking_event_tag,
+    trackingEventSubtag: rowData.tracking_event_subtag,
     trackingId: rowData.tracking_id,
     stageId: rowData.stage_id,
     taskId: rowData.task_id,

@@ -1376,6 +1376,8 @@ test("getTitleAndOwnerByShipmentTracking", async (t: tape.Test) => {
         designId: d1.id,
         designTitle: "A great title",
         designerName: user.name,
+        designerId: user.id,
+        collectionId: null,
       },
       "returns design title and designer name"
     );

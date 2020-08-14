@@ -435,6 +435,8 @@ export async function getTitleAndOwnerByShipmentTracking(
       "product_designs.id as design_id",
       "product_designs.title as design_title",
       "users.name as designer_name",
+      "product_designs.user_id as designer_id",
+      "collection_designs.collection_id as collection_id",
     ])
     .join("users", "users.id", "product_designs.user_id")
     .join(
@@ -446,6 +448,11 @@ export async function getTitleAndOwnerByShipmentTracking(
       "shipment_trackings",
       "shipment_trackings.approval_step_id",
       "design_approval_steps.id"
+    )
+    .leftJoin(
+      "collection_designs",
+      "collection_designs.design_id",
+      "product_designs.id"
     )
     .where({
       "shipment_trackings.id": shipmentTrackingId,
@@ -460,5 +467,7 @@ export async function getTitleAndOwnerByShipmentTracking(
     designId: row.design_id,
     designTitle: row.design_title || "Untitled",
     designerName: row.designer_name || "Anonymous",
+    designerId: row.designer_id,
+    collectionId: row.collection_id,
   };
 }

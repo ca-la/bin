@@ -237,6 +237,28 @@ function addTrackingId(query: Knex.QueryBuilder): Knex.QueryBuilder {
   );
 }
 
+function addTrackignEventTag(query: Knex.QueryBuilder): Knex.QueryBuilder {
+  return query.select((subquery: Knex.QueryBuilder) =>
+    subquery
+      .select("shipment_tracking_events.tag")
+      .from("shipment_tracking_events")
+      .whereRaw("shipment_tracking_events.id = n.shipment_tracking_event_id")
+      .limit(1)
+      .as("tracking_event_tag")
+  );
+}
+
+function addTrackignEventSubtag(query: Knex.QueryBuilder): Knex.QueryBuilder {
+  return query.select((subquery: Knex.QueryBuilder) =>
+    subquery
+      .select("shipment_tracking_events.subtag")
+      .from("shipment_tracking_events")
+      .whereRaw("shipment_tracking_events.id = n.shipment_tracking_event_id")
+      .limit(1)
+      .as("tracking_event_subtag")
+  );
+}
+
 function baseQuery(trx: Knex.Transaction): Knex.QueryBuilder {
   return trx
     .select("n.*")
@@ -254,7 +276,9 @@ function baseQuery(trx: Knex.Transaction): Knex.QueryBuilder {
     .modify(addApprovalStepTitle)
     .modify(addApprovalSubmissionTitle)
     .modify(addShipmentTrackingDescription)
-    .modify(addTrackingId);
+    .modify(addTrackingId)
+    .modify(addTrackignEventTag)
+    .modify(addTrackignEventSubtag);
 }
 
 export async function findByUserId(

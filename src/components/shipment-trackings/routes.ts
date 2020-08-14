@@ -27,6 +27,7 @@ import {
   attachTrackingLink,
   attachDeliveryStatus,
   handleTrackingUpdates,
+  createNotificationsAndEvents,
 } from "./service";
 import filterError from "../../services/filter-error";
 import ResourceNotFoundError from "../../errors/resource-not-found";
@@ -144,7 +145,10 @@ function* receiveShipmentTracking(this: TrxContext<PublicContext>) {
     "Only Aftership webhook is allowed to POST to this endpoint"
   );
 
-  yield Aftership.parseWebhookData(trx, this.request.body)
+  const updatedShipmentTrackings: ShipmentTracking[] = yield Aftership.parseWebhookData(
+    trx,
+    this.request.body
+  )
     .then((updates: Aftership.TrackingUpdate[]) =>
       handleTrackingUpdates(trx, updates)
     )
@@ -157,6 +161,8 @@ function* receiveShipmentTracking(this: TrxContext<PublicContext>) {
         );
       })
     );
+
+  yield createNotificationsAndEvents(trx, updatedShipmentTrackings);
 
   this.status = 204;
 }

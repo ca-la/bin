@@ -59,7 +59,8 @@ export type ActivityStreamEventType = Extract<
   | "COMMIT_QUOTE"
   | "COMMIT_COST_INPUTS"
   | "COSTING_EXPIRATION"
-  | "TRACKING_CREATION",
+  | "TRACKING_CREATION"
+  | "TRACKING_UPDATE",
   DesignEventTypes
 >;
 
@@ -77,6 +78,7 @@ export const ACTIVITY_STREAM_EVENTS: ActivityStreamEventType[] = [
   "COMMIT_COST_INPUTS",
   "COSTING_EXPIRATION",
   "TRACKING_CREATION",
+  "TRACKING_UPDATE",
 ];
 
 export default interface DesignEvent {

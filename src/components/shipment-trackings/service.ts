@@ -1,14 +1,20 @@
 import Knex from "knex";
+import uuid from "node-uuid";
 import Logger from "../../services/logger";
 import { DeliveryStatus, ShipmentTracking } from "./types";
+import notifications from "./notifications";
 import * as Aftership from "../integrations/aftership/service";
 import * as ShipmentTrackingEventsDAO from "../shipment-tracking-events/dao";
 import * as ShipmentTrackingsDAO from "./dao";
 import * as ShipmentTrackingEventService from "../shipment-tracking-events/service";
+import * as DesignEventsDAO from "../design-events/dao";
+import { NotificationType } from "../notifications/domain-object";
+import { CALA_OPS_USER_ID } from "../../config";
 import { enqueueSend } from "../../services/slack";
 import { ShipmentTrackingEvent } from "../shipment-tracking-events/types";
 import getLinks, { LinkType } from "../notifications/get-links";
 import { getTitleAndOwnerByShipmentTracking } from "../product-designs/dao/dao";
+import { templateDesignEvent } from "../design-events/types";
 
 const AFTERSHIP_CUSTOM_DOMAIN = "https://track.ca.la";
 
@@ -47,7 +53,8 @@ export async function attachDeliveryStatus(
 export async function handleTrackingUpdates(
   trx: Knex.Transaction,
   updates: Aftership.TrackingUpdate[]
-): Promise<void> {
+): Promise<ShipmentTracking[]> {
+  const updatedShipmentTrackings: ShipmentTracking[] = [];
   for (const {
     shipmentTrackingId,
     expectedDelivery,
@@ -74,6 +81,7 @@ export async function handleTrackingUpdates(
       const lastException = newEvents
         .filter((event: ShipmentTrackingEvent) => event.tag === "Exception")
         .slice(-1)[0];
+      updatedShipmentTrackings.push(updated);
 
       if (lastException) {
         try {
@@ -85,8 +93,65 @@ export async function handleTrackingUpdates(
           );
         }
       }
-      // TODO: Create appropriate notification
-      // TODO: Create appropriate activity stream item
+    }
+  }
+  return updatedShipmentTrackings;
+}
+
+export async function createNotificationsAndEvents(
+  trx: Knex.Transaction,
+  shipmentTrackings: ShipmentTracking[]
+): Promise<void> {
+  const notififiedDesigners: string[] = [];
+  for (const shipmentTracking of shipmentTrackings) {
+    const latestEvent = await ShipmentTrackingEventsDAO.findLatestByShipmentTracking(
+      trx,
+      shipmentTracking.id
+    );
+    if (!latestEvent) {
+      throw new Error("Could not find latest tracking event");
+    }
+    const designMeta = await getTitleAndOwnerByShipmentTracking(
+      trx,
+      shipmentTracking.id
+    );
+
+    if (!designMeta) {
+      throw new Error(
+        `Could not find the design for shipment ${shipmentTracking.id}`
+      );
+    }
+
+    const { designId, designerId, collectionId } = designMeta;
+
+    if (!notififiedDesigners.includes(designerId)) {
+      notififiedDesigners.push(designerId);
+      await notifications[NotificationType.SHIPMENT_TRACKING_UPDATE].send(
+        trx,
+        CALA_OPS_USER_ID,
+        {
+          recipientUserId: designerId,
+          recipientCollaboratorId: null,
+        },
+        {
+          approvalStepId: shipmentTracking.approvalStepId,
+          designId,
+          collectionId,
+          shipmentTrackingId: shipmentTracking.id,
+          shipmentTrackingEventId: latestEvent.id,
+        }
+      );
+      await DesignEventsDAO.create(trx, {
+        ...templateDesignEvent,
+        id: uuid.v4(),
+        designId,
+        approvalStepId: shipmentTracking.approvalStepId,
+        createdAt: new Date(),
+        actorId: CALA_OPS_USER_ID,
+        shipmentTrackingId: shipmentTracking.id,
+        shipmentTrackingEventId: latestEvent.id,
+        type: "TRACKING_UPDATE",
+      });
     }
   }
 }

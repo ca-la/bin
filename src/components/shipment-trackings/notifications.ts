@@ -29,6 +29,7 @@ type BaseFull = Omit<
   | "collectionId"
   | "designId"
   | "approvalStepId"
+  | "shipmentTrackingEventId"
   | "shipmentTrackingId"
   | "recipientUserId"
 > &
@@ -37,6 +38,8 @@ type BaseFull = Omit<
     | "collectionTitle"
     | "designTitle"
     | "shipmentTrackingDescription"
+    | "trackingEventTag"
+    | "trackingEventSubtag"
     | "trackingId"
     | "approvalStepTitle"
   >;
@@ -45,12 +48,32 @@ export interface FullShipmentTrackingCreateNotification extends BaseFull {
   collectionId: string | null;
   designId: string;
   approvalStepId: string;
+  shipmentTrackingEventId: null;
   shipmentTrackingId: string;
   recipientUserId: string;
   type: NotificationType.SHIPMENT_TRACKING_CREATE;
   collectionTitle: string | null;
   designTitle: string | null;
-  shipmentTrackingDescription: string | null;
+  shipmentTrackingDescription: string;
+  trackingId: string;
+  approvalStepTitle: string | null;
+  trackingEventTag: null;
+  trackingEventSubtag: null;
+}
+
+export interface FullShipmentTrackingUpdateNotification extends BaseFull {
+  collectionId: string | null;
+  designId: string;
+  approvalStepId: string;
+  shipmentTrackingEventId: string;
+  shipmentTrackingId: string;
+  recipientUserId: string;
+  type: NotificationType.SHIPMENT_TRACKING_UPDATE;
+  collectionTitle: string | null;
+  designTitle: string | null;
+  shipmentTrackingDescription: string;
+  trackingEventTag: string;
+  trackingEventSubtag: string;
   trackingId: string;
   approvalStepTitle: string | null;
 }
@@ -121,9 +144,158 @@ function getTrackingBaseWithAssets(
   };
 }
 
+const SUBTAG_MESSSAGES: { [subtag: string]: string } = {
+  Delivered_001: "Shipment delivered successfully",
+  Delivered_002: "Package picked up by the customer",
+  Delivered_003: "Package delivered to and signed by the customer",
+  Delivered_004:
+    "Package delivered to the customer and cash collected on delivery",
+  AvailableForPickup_001:
+    "The package arrived at a pickup point near you and is available for pickup",
+  Exception_001:
+    "Delivery of the package failed due to some shipping exception",
+  Exception_002: "Delivery of the package failed as the customer relocated",
+  Exception_003:
+    "Delivery of the package failed as the recipient refused to take the package due to some reason",
+  Exception_004:
+    "Package delayed due to some issues during the customs clearance",
+  Exception_005: "Package delayed due to some unforeseen reasons",
+  Exception_006:
+    "The package being held due to pending payment from the customer's end",
+  Exception_007: "Package not delivered due to incorrect recipient address",
+  Exception_008:
+    "Package available for the pickup but not collected by the customer",
+  Exception_009:
+    "Package rejected by the carrier due to noncompliance with its guidelines",
+  Exception_010: "The package returned to the original sender",
+  Exception_011: "The package returned to the sender",
+  Exception_012: "Shipment damaged",
+  Exception_013: "Delivery of the package failed as it got lost",
+  AttemptFail_001:
+    "The delivery of the package failed due to some reason. Courier usually leaves a notice and will try to deliver again",
+  AttemptFail_002: "Recipient not available at the given address",
+  AttemptFail_003: "Business is closed at the time of delivery",
+  InTransit_001: "Shipment on the way",
+  InTransit_002: "Shipment accepted by the carrier",
+  InTransit_003: "Shipment arrived at a hub or sorting center",
+  InTransit_004: "International shipment arrived at the destination country",
+  InTransit_005: "Customs clearance completed",
+  InTransit_006: "Package handed over to customs for clearance",
+  InTransit_007: "Package departed from the facility",
+  InTransit_008: "Problem resolved and shipment in transit",
+  InTransit_009: "Shipment forwarded to a different delivery address",
+  InfoReceived_001:
+    "The carrier received a request from the shipper and is about to pick up the shipment",
+  OutForDelivery_001: "The package is out for delivery",
+  OutForDelivery_003: "The customer is contacted before the final delivery",
+  OutForDelivery_004: "A delivery appointment is scheduled",
+  Pending_001:
+    "No information available on the carrier website or the tracking number is yet to be tracked",
+  Expired_001: "No tracking information of the shipment, from last 30 days",
+};
+
+function getNotificationFromTag(
+  tag: string,
+  trackingTitle: string,
+  deepLink: string
+): {
+  html: string;
+  title: string;
+} {
+  const trackingHtmlLink = constructHtmlLink(deepLink, trackingTitle);
+
+  switch (tag) {
+    case "Pending":
+      return {
+        title: `Tracking for ${trackingTitle} is Pending`,
+        html: `Tracking for ${trackingHtmlLink} is ${constructHtmlLink(
+          deepLink,
+          "Pending"
+        )}`,
+      };
+
+    case "InfoReceived":
+      return {
+        title: `Tracking info for ${trackingTitle} has been received.`,
+        html: `Tracking info for ${trackingHtmlLink} has been received.`,
+      };
+
+    case "InTransit":
+      return {
+        title: `${trackingTitle} is in Transit`,
+        html: `${trackingHtmlLink} is in ${constructHtmlLink(
+          deepLink,
+          "Transit"
+        )}`,
+      };
+
+    case "OutForDelivery":
+      return {
+        title: `${trackingTitle} is Out for Delivery`,
+        html: `${trackingHtmlLink} is ${constructHtmlLink(
+          deepLink,
+          "Out for Delivery"
+        )}`,
+      };
+
+    case "AvailableForPickup":
+      return {
+        title: `${trackingTitle} is Available for Pickup`,
+        html: `${trackingHtmlLink} is ${constructHtmlLink(
+          deepLink,
+          "Available for Pickup"
+        )}`,
+      };
+
+    case "Delivered":
+      return {
+        title: `${trackingTitle} was Delivered`,
+        html: `${trackingHtmlLink} was ${constructHtmlLink(
+          deepLink,
+          "Delivered"
+        )}`,
+      };
+
+    case "AttemptFail":
+      return {
+        title: `Delivery attempt for ${trackingTitle} failed.`,
+        html: `Delivery attempt for ${trackingHtmlLink} failed.`,
+      };
+
+    case "Exception":
+      return {
+        title: `Delivery for ${trackingTitle} has an Exception`,
+        html: `Delivery for ${trackingHtmlLink} has an ${constructHtmlLink(
+          deepLink,
+          "Exception"
+        )}`,
+      };
+
+    case "Expired":
+      return {
+        title: `Tracking for ${trackingTitle} has Expired`,
+        html: `Tracking for ${trackingHtmlLink} has ${constructHtmlLink(
+          deepLink,
+          "Expired"
+        )}`,
+      };
+
+    default:
+      throw new Error(`Tag "${tag}" is not supported`);
+  }
+}
+
 export interface NotificationLayerSchema {
   [NotificationType.SHIPMENT_TRACKING_CREATE]: {
     required: "designId" | "shipmentTrackingId" | "approvalStepId";
+    optional: "collectionId";
+  };
+  [NotificationType.SHIPMENT_TRACKING_UPDATE]: {
+    required:
+      | "designId"
+      | "shipmentTrackingId"
+      | "approvalStepId"
+      | "shipmentTrackingEventId";
     optional: "collectionId";
   };
 }
@@ -149,15 +321,60 @@ const layer: NotificationsLayer<NotificationLayerSchema> = {
           actorName,
           "user-name"
         )} added tracking to ${designHtmlLink}`,
-        title: `${actorName} added tracking to ${designHtmlLink}`,
+        title: `${actorName} added tracking to ${notification.designTitle}`,
         attachments: [
           {
-            text: `${
-              notification.shipmentTrackingDescription
-                ? `${notification.shipmentTrackingDescription}: `
-                : ""
-            }${notification.trackingId}`,
+            text: `${notification.shipmentTrackingDescription} · ${notification.trackingId}`,
             url: assets.deepLink,
+          },
+        ],
+      };
+    }
+  ),
+  SHIPMENT_TRACKING_UPDATE: buildNotificationComponent<
+    NotificationType.SHIPMENT_TRACKING_UPDATE,
+    NotificationLayerSchema[NotificationType.SHIPMENT_TRACKING_UPDATE]["required"],
+    NotificationLayerSchema[NotificationType.SHIPMENT_TRACKING_UPDATE]["optional"]
+  >(
+    NotificationType.SHIPMENT_TRACKING_UPDATE,
+    async (notification: FullNotification) => {
+      const {
+        trackingEventTag,
+        trackingEventSubtag,
+        shipmentTrackingDescription,
+        trackingId,
+      } = notification;
+      if (
+        !trackingEventTag ||
+        !trackingEventSubtag ||
+        !shipmentTrackingDescription ||
+        !trackingId
+      ) {
+        throw new Error("Notification is mising required properties");
+      }
+
+      if (!SUBTAG_MESSSAGES[trackingEventSubtag]) {
+        throw new Error(`Subtag "${trackingEventSubtag}" is not supported`);
+      }
+
+      const assets = getTrackingBaseWithAssets(notification);
+      if (!assets) {
+        return null;
+      }
+
+      const { base, deepLink } = assets;
+
+      return {
+        ...base,
+        ...getNotificationFromTag(
+          trackingEventTag,
+          shipmentTrackingDescription,
+          deepLink
+        ),
+        attachments: [
+          {
+            text: SUBTAG_MESSSAGES[trackingEventSubtag],
+            url: deepLink,
           },
         ],
       };

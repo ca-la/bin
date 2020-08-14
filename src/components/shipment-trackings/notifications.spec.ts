@@ -18,6 +18,8 @@ import ApprovalStep from "../approval-steps/types";
 import * as Aftership from "../integrations/aftership/service";
 import { ShipmentTracking } from "./types";
 import generateShipmentTracking from "../../test-helpers/factories/shipment-tracking";
+import generateShipmentTrackingEvent from "../../test-helpers/factories/shipment-tracking-event";
+import { ShipmentTrackingEvent } from "../shipment-tracking-events/types";
 
 const prepareAssets = async (): Promise<{
   actor: any;
@@ -27,6 +29,7 @@ const prepareAssets = async (): Promise<{
   design: ProductDesign;
   collection: Collection;
   shipmentTracking: ShipmentTracking;
+  shipmentTrackingEvent: ShipmentTrackingEvent;
 }> => {
   const prepareTrx = await db.transaction();
   try {
@@ -42,6 +45,13 @@ const prepareAssets = async (): Promise<{
       createdAt: new Date(),
       description: "Garment samples",
     });
+    const shipmentTrackingEvent = await generateShipmentTrackingEvent(
+      prepareTrx,
+      {
+        shipmentTrackingId: shipmentTracking.id,
+      }
+    );
+
     await addDesigns({
       collectionId: collection.id,
       designIds: [design.id],
@@ -61,6 +71,7 @@ const prepareAssets = async (): Promise<{
       approvalStep,
       collection,
       shipmentTracking,
+      shipmentTrackingEvent,
     };
   } catch (err) {
     await prepareTrx.rollback();
@@ -85,6 +96,7 @@ test("Shipment Tracking notifications", async (t: Test) => {
     approvalStep,
     collection,
     shipmentTracking,
+    shipmentTrackingEvent,
   } = await prepareAssets();
 
   const testCases = [
@@ -101,8 +113,25 @@ test("Shipment Tracking notifications", async (t: Test) => {
       parts: [actor.name, " added tracking to ", design.title],
       attachmentParts: [
         shipmentTracking.description,
-        ": ",
+        " · ",
         shipmentTracking.trackingId,
+      ],
+      url: `/dashboard?designId=${design.id}&stepId=${approvalStep.id}&showTracking=view&trackingId=${shipmentTracking.id}`,
+    },
+    {
+      title: "SHIPMENT_TRACKING_UPDATE",
+      type: NotificationType.SHIPMENT_TRACKING_UPDATE,
+      notification: {
+        collectionId: collection.id,
+        collaboratorId: collaborator.id,
+        designId: design.id,
+        approvalStepId: approvalStep.id,
+        shipmentTrackingId: shipmentTracking.id,
+        shipmentTrackingEventId: shipmentTrackingEvent.id,
+      },
+      parts: ["Tracking for ", shipmentTracking.description, "is", "Pending"],
+      attachmentParts: [
+        "No information available on the carrier website or the tracking number is yet to be tracked",
       ],
       url: `/dashboard?designId=${design.id}&stepId=${approvalStep.id}&showTracking=view&trackingId=${shipmentTracking.id}`,
     },
@@ -142,7 +171,10 @@ test("Shipment Tracking notifications", async (t: Test) => {
         true,
         `${testCase.title} / notification attachment message contains expected parts`
       );
-      t.true(message && message.attachments[0].url.includes(testCase.url));
+      t.true(
+        message && message.attachments[0].url.includes(testCase.url),
+        `${testCase.title} / notification attachment message has url`
+      );
     } finally {
       await trx.rollback();
     }

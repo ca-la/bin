@@ -49,6 +49,8 @@ import generateApprovalSubmission from "./design-approval-submission";
 import db from "../../services/db";
 import ApprovalStep from "../../components/approval-steps/domain-object";
 import generateShipmentTracking from "./shipment-tracking";
+import generateShipmentTrackingEvent from "./shipment-tracking-event";
+import { ShipmentTrackingEvent } from "../../components/shipment-tracking-events/types";
 
 interface NotificationWithResources {
   actor: User;
@@ -552,6 +554,41 @@ export default async function generateNotification(
         type: options.type,
         shipmentTrackingId: tracking.id,
         shipmentTrackingDesciption: tracking.description,
+      });
+
+      return {
+        ...base,
+        notification,
+      };
+    }
+
+    case NotificationType.SHIPMENT_TRACKING_UPDATE: {
+      const { tracking, event } = await db.transaction(
+        async (trx: Knex.Transaction) => {
+          const t = await generateShipmentTracking(trx, {
+            approvalStepId: approvalStep.id,
+          });
+          const e: ShipmentTrackingEvent = await generateShipmentTrackingEvent(
+            trx,
+            {
+              shipmentTrackingId: tracking.id,
+            }
+          );
+          return { tracking: t, event: e };
+        }
+      );
+      const notification = await create({
+        ...baseNotification,
+        collectionId: collection.id,
+        designId: design.id,
+        approvalStepId: approvalStep.id,
+        recipientUserId: base.recipient.id,
+        type: options.type,
+        shipmentTrackingId: tracking.id,
+        shipmentTrackingDesciption: tracking.description,
+        shipmentTrackingEventId: event.id,
+        trackingEventTag: event.tag,
+        trackingEventSubtag: event.subtag,
       });
 
       return {
