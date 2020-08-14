@@ -639,3 +639,42 @@ test("POST /shipment-trackings/updates end-to-end", async (t: Test) => {
     );
   });
 });
+
+test("POST /shipment-trackings/updates tracking not found", async (t: Test) => {
+  const notificationSendStub = sandbox()
+    .stub(NotificationsLayer[NotificationType.SHIPMENT_TRACKING_UPDATE], "send")
+    .resolves();
+  const createDesignEventStub = sandbox()
+    .stub(DesignEventsDAO, "create")
+    .resolves();
+
+  const [response] = await post(
+    `/shipment-trackings/updates?aftershipToken=${AftershipService.AFTERSHIP_SECRET_TOKEN}`,
+    {
+      body: {
+        msg: {
+          id: "an-unknown-id",
+          tracking_number: "a-courier-tracking-number",
+          tag: "InTransit",
+          expected_delivery: null,
+          checkpoints: [
+            {
+              created_at: new Date(2012, 11, 23),
+              slug: "usps",
+              tag: "Pending",
+              subtag: "Pending_001",
+              checkpoint_time: "2012-12-23T00:00",
+            },
+          ],
+        },
+      },
+    }
+  );
+  t.is(
+    response.status,
+    204,
+    "Does not return an error status when nothing is found"
+  );
+  t.is(notificationSendStub.callCount, 0, "Does not create any notifications");
+  t.is(createDesignEventStub.callCount, 0, "Does not create any events");
+});
