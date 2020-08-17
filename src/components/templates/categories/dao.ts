@@ -2,7 +2,7 @@ import { buildDao } from "../../../services/cala-component/cala-dao";
 import { TemplateCategory, TemplateCategoryRow } from "./types";
 import adapter from "./adapter";
 
-const dao = buildDao<TemplateCategory, TemplateCategoryRow>(
+export default buildDao<TemplateCategory, TemplateCategoryRow>(
   "TemplateCategory",
   "template_categories",
   adapter,
@@ -10,5 +10,3 @@ const dao = buildDao<TemplateCategory, TemplateCategoryRow>(
     orderColumn: "ordering",
   }
 );
-
-export default dao;
