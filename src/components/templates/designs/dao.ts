@@ -1,6 +1,5 @@
 import Knex from "knex";
 import rethrow from "pg-rethrow";
-import { first } from "lodash";
 
 import {
   dataAdapter,
@@ -30,19 +29,6 @@ function onNoDesignError(designId: string): typeof filterError {
   );
 }
 
-function onDuplicateDesignError(designId: string): typeof filterError {
-  return filterError(
-    rethrow.ERRORS.UniqueViolation,
-    (error: typeof rethrow.ERRORS.UniqueViolation) => {
-      if (error.constraint === "unique_design") {
-        throw new InvalidDataError(`Design ${designId} is already a template.`);
-      }
-
-      throw error;
-    }
-  );
-}
-
 export async function createList(
   dataList: TemplateDesign[],
   trx: Knex.Transaction
@@ -60,31 +46,6 @@ export async function createList(
     isTemplateDesignRow,
     dataAdapter,
     createdRows
-  );
-}
-
-export async function create(
-  data: TemplateDesign,
-  trx: Knex.Transaction
-): Promise<TemplateDesign> {
-  const insertionData = dataAdapter.forInsertion(data);
-  const created = await db(TABLE_NAME)
-    .insert(insertionData, "*")
-    .transacting(trx)
-    .then((rows: TemplateDesignRow[]) => first<TemplateDesignRow>(rows))
-    .catch(rethrow)
-    .catch(onNoDesignError(data.designId))
-    .catch(onDuplicateDesignError(data.designId));
-
-  if (!created) {
-    throw new Error("Failed to create a TemplateDesign.");
-  }
-
-  return validate<TemplateDesignRow, TemplateDesign>(
-    TABLE_NAME,
-    isTemplateDesignRow,
-    dataAdapter,
-    created
   );
 }
 

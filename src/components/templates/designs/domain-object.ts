@@ -9,7 +9,22 @@ export interface TemplateDesignRow {
   design_id: string;
 }
 
-export const dataAdapter = new DataAdapter<TemplateDesignRow, TemplateDesign>();
+function encode(row: TemplateDesignRow): TemplateDesign {
+  return {
+    designId: row.design_id,
+  };
+}
+
+function decode(data: TemplateDesign): TemplateDesignRow {
+  return {
+    design_id: data.designId,
+  };
+}
+
+export const dataAdapter = new DataAdapter<TemplateDesignRow, TemplateDesign>(
+  encode,
+  decode
+);
 
 export function isTemplateDesign(
   candidate: object

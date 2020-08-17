@@ -6,7 +6,7 @@ import { authHeader, post } from "../../../test-helpers/http";
 import { sandbox, test, Test } from "../../../test-helpers/fresh";
 import db from "../../../services/db";
 import createDesign from "../../../services/create-design";
-import { create as createTemplateDesign } from "../../templates/designs/dao";
+import { createList as createTemplateDesigns } from "../../templates/designs/dao";
 import ProductDesign = require("../domain-objects/product-design");
 import { omit } from "lodash";
 import generateNode, { staticNode } from "../../../test-helpers/factories/node";
@@ -61,7 +61,7 @@ test("POST /product-designs/templates/:templateDesignId returns a duplicate prev
         },
         trx
       );
-      await createTemplateDesign({ designId: newDesign.id }, trx);
+      await createTemplateDesigns([{ designId: newDesign.id }], trx);
       return newDesign;
     }
   );
@@ -109,7 +109,7 @@ test("POST /product-designs/templates/:templateDesignId?isPhidias=true returns a
         },
         trx
       );
-      await createTemplateDesign({ designId: newDesign.id }, trx);
+      await createTemplateDesigns([{ designId: newDesign.id }], trx);
       const root = await createDesignRoot(rootNode, newDesign.id, trx);
       const { node: n1 } = await generateNode(
         { parentId: root.id, title: "node-1" },

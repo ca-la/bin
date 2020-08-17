@@ -33,16 +33,12 @@ test(`PUT ${API_PATH}/:designId with an admin account`, async (t: Test) => {
 
 test(`PUT ${API_PATH}/:designId without an admin account`, async (t: Test) => {
   const user = await createUser({ role: "USER" });
-  const createStub = sandbox().stub(TemplateDesignsDAO, "create").resolves({
-    designId: "design-one",
-  });
 
   const [response] = await API.put("/templates/designs/design-one", {
     headers: API.authHeader(user.session.id),
   });
 
   t.equal(response.status, 403);
-  t.equal(createStub.callCount, 0);
 });
 
 test(`PUT ${API_PATH}/:designId fails with a known error`, async (t: Test) => {
