@@ -92,18 +92,27 @@ function* removeTemplate(this: AuthedContext): Iterator<any, any, any> {
 }
 
 interface ListQueryParameters {
-  limit?: number;
-  offset?: number;
+  limit?: string;
+  offset?: string;
+  templateCategoryIds?: string;
 }
 
 function* listTemplates(this: AuthedContext): Iterator<any, any, any> {
-  const { limit, offset }: ListQueryParameters = this.query;
+  const {
+    limit,
+    offset,
+    templateCategoryIds,
+  }: ListQueryParameters = this.query;
+
+  const categoryIds = templateCategoryIds ? templateCategoryIds.split(",") : [];
+  const limitInt = limit ? parseInt(limit, 10) : 20;
+  const offsetInt = offset ? parseInt(offset, 10) : 0;
 
   yield db.transaction(async (trx: Knex.Transaction) => {
     const templates = await getAll(trx, {
-      limit: Number(limit) || 20,
-      offset: Number(offset) || 0,
-      templateCategoryIds: [],
+      limit: limitInt,
+      offset: offsetInt,
+      templateCategoryIds: categoryIds,
     });
     this.status = 200;
     this.body = templates;

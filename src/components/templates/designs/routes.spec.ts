@@ -97,9 +97,7 @@ test(`PUT ${API_PATH}?designIds= with an admin account`, async (t: Test) => {
 
 test(`DEL ${API_PATH}/:designId with an admin account`, async (t: Test) => {
   const admin = await createUser({ role: "ADMIN" });
-  const removeStub = sandbox().stub(TemplateDesignsDAO, "remove").resolves({
-    designId: "design-one",
-  });
+  const removeStub = sandbox().stub(TemplateDesignsDAO, "remove").resolves(1);
 
   const [response] = await API.del("/templates/designs/design-one", {
     headers: API.authHeader(admin.session.id),
@@ -155,7 +153,7 @@ test(`DEL ${API_PATH}?designIds= with an admin account`, async (t: Test) => {
 
 test(`GET ${API_PATH}/ with a user account`, async (t: Test) => {
   const user = await createUser({ role: "USER" });
-  const removeStub = sandbox()
+  const getAllStub = sandbox()
     .stub(TemplateDesignsDAO, "getAll")
     .resolves([d1, d2]);
 
@@ -165,8 +163,8 @@ test(`GET ${API_PATH}/ with a user account`, async (t: Test) => {
 
   t.equal(response.status, 200);
   t.deepEqual(body, [d1, d2]);
-  t.equal(removeStub.callCount, 1);
-  t.deepEqual(removeStub.args[0][1], {
+  t.equal(getAllStub.callCount, 1);
+  t.deepEqual(getAllStub.args[0][1], {
     limit: 20,
     offset: 0,
     templateCategoryIds: [],
@@ -175,12 +173,12 @@ test(`GET ${API_PATH}/ with a user account`, async (t: Test) => {
 
 test(`GET ${API_PATH}/ with query parameters`, async (t: Test) => {
   const user = await createUser({ role: "USER" });
-  const removeStub = sandbox()
+  const getAllStub = sandbox()
     .stub(TemplateDesignsDAO, "getAll")
     .resolves([d1, d2]);
 
   const [response, body] = await API.get(
-    "/templates/designs?limit=5&offset=20",
+    "/templates/designs?limit=5&offset=20&templateCategoryIds=a,b,c",
     {
       headers: API.authHeader(user.session.id),
     }
@@ -188,10 +186,10 @@ test(`GET ${API_PATH}/ with query parameters`, async (t: Test) => {
 
   t.equal(response.status, 200);
   t.deepEqual(body, [d1, d2]);
-  t.equal(removeStub.callCount, 1);
-  t.deepEqual(removeStub.args[0][1], {
+  t.equal(getAllStub.callCount, 1);
+  t.deepEqual(getAllStub.args[0][1], {
     limit: 5,
     offset: 20,
-    templateCategoryIds: [],
+    templateCategoryIds: ["a", "b", "c"],
   });
 });

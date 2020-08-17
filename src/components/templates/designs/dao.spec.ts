@@ -5,6 +5,7 @@ import { test, Test } from "../../../test-helpers/fresh";
 import createDesign from "../../../services/create-design";
 import createUser from "../../../test-helpers/create-user";
 import db from "../../../services/db";
+import TemplateCategoriesDAO from "../categories/dao";
 import { createList, findByDesignId, getAll, remove, removeList } from "./dao";
 
 test("createList() + removeList()", async (t: Test) => {
@@ -122,11 +123,16 @@ test("getAll()", async (t: Test) => {
   });
 
   await db.transaction(async (trx: Knex.Transaction) => {
+    const category = await TemplateCategoriesDAO.create(trx, {
+      id: uuid.v4(),
+      title: "A category",
+      ordering: 0,
+    });
     await createList(
       [
-        { designId: design1.id, templateCategoryId: null },
+        { designId: design1.id, templateCategoryId: category.id },
         { designId: design2.id, templateCategoryId: null },
-        { designId: design3.id, templateCategoryId: null },
+        { designId: design3.id, templateCategoryId: category.id },
       ],
       trx
     );
@@ -138,30 +144,19 @@ test("getAll()", async (t: Test) => {
     });
     t.deepEqual(
       results,
-      [design3, design2, design1],
+      [design2],
       "Returns the list in order of when each design was made"
     );
 
-    const results2 = await getAll(trx, {
-      limit: 10,
-      offset: 2,
-      templateCategoryIds: [],
+    const byCategory = await getAll(trx, {
+      limit: 20,
+      offset: 0,
+      templateCategoryIds: [category.id],
     });
     t.deepEqual(
-      results2,
-      [design1],
-      "Returns the list using the given offset and limit"
-    );
-
-    const results3 = await getAll(trx, {
-      limit: 1,
-      offset: 1,
-      templateCategoryIds: [],
-    });
-    t.deepEqual(
-      results3,
-      [design2],
-      "Returns a single element list using the given offset and limit"
+      byCategory,
+      [design3, design1],
+      "Returns templates in a certain category"
     );
   });
 });
