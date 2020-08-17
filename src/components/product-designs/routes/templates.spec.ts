@@ -1,7 +1,7 @@
 import uuid from "node-uuid";
 import Knex from "knex";
 
-import createUser = require("../../../test-helpers/create-user");
+import createUser from "../../../test-helpers/create-user";
 import { authHeader, post } from "../../../test-helpers/http";
 import { sandbox, test, Test } from "../../../test-helpers/fresh";
 import db from "../../../services/db";
@@ -61,7 +61,10 @@ test("POST /product-designs/templates/:templateDesignId returns a duplicate prev
         },
         trx
       );
-      await createTemplateDesigns([{ designId: newDesign.id }], trx);
+      await createTemplateDesigns(
+        [{ designId: newDesign.id, templateCategoryId: null }],
+        trx
+      );
       return newDesign;
     }
   );
@@ -109,7 +112,10 @@ test("POST /product-designs/templates/:templateDesignId?isPhidias=true returns a
         },
         trx
       );
-      await createTemplateDesigns([{ designId: newDesign.id }], trx);
+      await createTemplateDesigns(
+        [{ designId: newDesign.id, templateCategoryId: null }],
+        trx
+      );
       const root = await createDesignRoot(rootNode, newDesign.id, trx);
       const { node: n1 } = await generateNode(
         { parentId: root.id, title: "node-1" },

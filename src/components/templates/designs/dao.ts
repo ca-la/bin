@@ -10,7 +10,7 @@ import {
 import db from "../../../services/db";
 import { validate, validateEvery } from "../../../services/validate-from-db";
 import filterError = require("../../../services/filter-error");
-import InvalidDataError = require("../../../errors/invalid-data");
+import InvalidDataError from "../../../errors/invalid-data";
 import { queryWithCollectionMeta } from "../../product-designs/dao/view";
 import ProductDesign = require("../../product-designs/domain-objects/product-design");
 
@@ -104,6 +104,7 @@ export async function findByDesignId(
 interface ListOptions {
   limit: number;
   offset: number;
+  templateCategoryIds: string[];
 }
 
 export async function getAll(
@@ -117,6 +118,15 @@ export async function getAll(
       "product_designs.id",
       "template_designs.design_id"
     )
+    .modify((query: Knex.QueryBuilder) => {
+      if (options.templateCategoryIds.length > 0) {
+        return query.whereIn(
+          "template_designs.template_category_id",
+          options.templateCategoryIds
+        );
+      }
+      return query.whereNull("template_designs.template_category_id");
+    })
     .limit(options.limit)
     .offset(options.offset)
     .orderBy("product_designs.created_at", "DESC")

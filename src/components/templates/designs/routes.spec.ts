@@ -5,8 +5,12 @@ import * as TemplateDesignsDAO from "./dao";
 import InvalidDataError = require("../../../errors/invalid-data");
 import DesignsDAO from "../../product-designs/dao";
 import * as DesignTemplateService from "../services/create-design-template";
+import { staticProductDesign } from "../../../test-helpers/factories/product-design";
 
 const API_PATH = "/templates/designs";
+
+const d1 = JSON.parse(JSON.stringify(staticProductDesign()));
+const d2 = JSON.parse(JSON.stringify(staticProductDesign()));
 
 test(`PUT ${API_PATH}/:designId with an admin account`, async (t: Test) => {
   const admin = await createUser({ role: "ADMIN" });
@@ -15,18 +19,17 @@ test(`PUT ${API_PATH}/:designId with an admin account`, async (t: Test) => {
     .resolves([
       {
         designId: "design-one",
+        templateCategoryId: null,
       },
     ]);
-  const findStub = sandbox()
-    .stub(DesignsDAO, "findByIds")
-    .resolves([{ id: "design-one" }]);
+  const findStub = sandbox().stub(DesignsDAO, "findByIds").resolves([d1]);
 
   const [response, body] = await API.put("/templates/designs/design-one", {
     headers: API.authHeader(admin.session.id),
   });
 
   t.equal(response.status, 201);
-  t.deepEqual(body, { id: "design-one" });
+  t.deepEqual(body, d1);
   t.equal(createStub.callCount, 1);
   t.equal(findStub.callCount, 1);
 });
@@ -78,11 +81,7 @@ test(`PUT ${API_PATH}?designIds= with an admin account`, async (t: Test) => {
   const admin = await createUser({ role: "ADMIN" });
   const createStub = sandbox()
     .stub(DesignTemplateService, "createDesignTemplates")
-    .callsFake(async (designIds: string[]) => {
-      return designIds.map((designId: string) => {
-        return { id: designId };
-      });
-    });
+    .resolves([d1, d2]);
 
   const [response, body] = await API.put(
     "/templates/designs?designIds=design-one,design-two",
@@ -92,7 +91,7 @@ test(`PUT ${API_PATH}?designIds= with an admin account`, async (t: Test) => {
   );
 
   t.equal(response.status, 201);
-  t.deepEqual(body, [{ id: "design-one" }, { id: "design-two" }]);
+  t.deepEqual(body, [d1, d2]);
   t.equal(createStub.callCount, 1);
 });
 
@@ -112,9 +111,7 @@ test(`DEL ${API_PATH}/:designId with an admin account`, async (t: Test) => {
 
 test(`DEL ${API_PATH}/:designId without an admin account`, async (t: Test) => {
   const user = await createUser({ role: "USER" });
-  const removeStub = sandbox().stub(TemplateDesignsDAO, "remove").resolves({
-    designId: "design-one",
-  });
+  const removeStub = sandbox().stub(TemplateDesignsDAO, "remove").resolves(1);
 
   const [response] = await API.del("/templates/designs/design-one", {
     headers: API.authHeader(user.session.id),
@@ -143,7 +140,7 @@ test(`DEL ${API_PATH}?designIds= with an admin account`, async (t: Test) => {
   const admin = await createUser({ role: "ADMIN" });
   const removeListStub = sandbox()
     .stub(TemplateDesignsDAO, "removeList")
-    .resolves();
+    .resolves(2);
 
   const [response] = await API.del(
     "/templates/designs?designIds=design-one,design-two",
@@ -160,37 +157,27 @@ test(`GET ${API_PATH}/ with a user account`, async (t: Test) => {
   const user = await createUser({ role: "USER" });
   const removeStub = sandbox()
     .stub(TemplateDesignsDAO, "getAll")
-    .resolves([
-      {
-        designId: "design-one",
-      },
-      {
-        designId: "design-two",
-      },
-    ]);
+    .resolves([d1, d2]);
 
   const [response, body] = await API.get("/templates/designs", {
     headers: API.authHeader(user.session.id),
   });
 
   t.equal(response.status, 200);
-  t.deepEqual(body, [{ designId: "design-one" }, { designId: "design-two" }]);
+  t.deepEqual(body, [d1, d2]);
   t.equal(removeStub.callCount, 1);
-  t.deepEqual(removeStub.args[0][1], { limit: 20, offset: 0 });
+  t.deepEqual(removeStub.args[0][1], {
+    limit: 20,
+    offset: 0,
+    templateCategoryIds: [],
+  });
 });
 
 test(`GET ${API_PATH}/ with query parameters`, async (t: Test) => {
   const user = await createUser({ role: "USER" });
   const removeStub = sandbox()
     .stub(TemplateDesignsDAO, "getAll")
-    .resolves([
-      {
-        designId: "design-one",
-      },
-      {
-        designId: "design-two",
-      },
-    ]);
+    .resolves([d1, d2]);
 
   const [response, body] = await API.get(
     "/templates/designs?limit=5&offset=20",
@@ -200,7 +187,11 @@ test(`GET ${API_PATH}/ with query parameters`, async (t: Test) => {
   );
 
   t.equal(response.status, 200);
-  t.deepEqual(body, [{ designId: "design-one" }, { designId: "design-two" }]);
+  t.deepEqual(body, [d1, d2]);
   t.equal(removeStub.callCount, 1);
-  t.deepEqual(removeStub.args[0][1], { limit: 5, offset: 20 });
+  t.deepEqual(removeStub.args[0][1], {
+    limit: 5,
+    offset: 20,
+    templateCategoryIds: [],
+  });
 });

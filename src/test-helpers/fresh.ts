@@ -47,6 +47,8 @@ const TABLES = [
   "task_templates",
   "tasks",
   "templates",
+  "template_categories",
+  "template_designs",
   "unassigned_referral_codes",
   "users",
 ];

@@ -45,6 +45,7 @@ import shipmentTrackingComponent from "./components/shipment-trackings";
 import storefrontRoutes from "./components/storefronts/routes";
 import subscriptionRoutes from "./components/subscriptions/routes";
 import templateDesignRoutes from "./components/templates/designs/routes";
+import templateCategoryComponent from "./components/templates/categories";
 import timelineRoutes from "./components/timeline/routes";
 import userRoutes from "./components/users/routes";
 import userOnboardingRoutes from "./components/user-onboardings/routes";
@@ -123,5 +124,6 @@ if (approvalStepComponent.router) {
   plugComponentRouter(router, approvalStepComponent.router);
 }
 plugComponentRouter(router, shipmentTrackingComponent.router);
+plugComponentRouter(router, templateCategoryComponent.router);
 
 export default router;

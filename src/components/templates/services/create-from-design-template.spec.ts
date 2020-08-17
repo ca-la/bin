@@ -37,6 +37,7 @@ test("createFromDesignTemplate() non-empty case for phidias", async (t: Test) =>
   const d2 = "32cce3a1-928b-4634-985b-f3f08236ac56";
   const templateDesign1: TemplateDesign = {
     designId: d1,
+    templateCategoryId: null,
   };
   const duplicatedDesign1 = staticProductDesign({
     id: d2,
@@ -73,6 +74,7 @@ test("createFromDesignTemplate() non-empty case for preview tool", async (t: Tes
   const d2 = "32cce3a1-928b-4634-985b-f3f08236ac56";
   const templateDesign1: TemplateDesign = {
     designId: d1,
+    templateCategoryId: null,
   };
   const duplicatedDesign1 = staticProductDesign({
     id: d2,

@@ -12,13 +12,15 @@ import db from "../../../services/db";
  * Given a list of designIds, marks each design as a template.
  */
 export async function createDesignTemplates(
-  designIds: string[]
+  designIds: string[],
+  templateCategoryId: string | null = null
 ): Promise<ProductDesign[]> {
   return db.transaction(async (trx: Knex.Transaction) => {
     const templateDesigns = designIds.map(
       (designId: string): TemplateDesign => {
         return {
           designId,
+          templateCategoryId,
         };
       }
     );

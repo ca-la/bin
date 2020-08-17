@@ -48,7 +48,7 @@ export function buildDao<
 
   const find = async (
     trx: Knex.Transaction,
-    filter: Partial<Model>,
+    filter: Partial<Model> = {},
     modifier: QueryModifier = queryModifier
   ): Promise<Model[]> => {
     const namespacedFilter = getNamespacedFilter(filter);

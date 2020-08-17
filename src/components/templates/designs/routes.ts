@@ -103,6 +103,7 @@ function* listTemplates(this: AuthedContext): Iterator<any, any, any> {
     const templates = await getAll(trx, {
       limit: Number(limit) || 20,
       offset: Number(offset) || 0,
+      templateCategoryIds: [],
     });
     this.status = 200;
     this.body = templates;

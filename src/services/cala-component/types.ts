@@ -39,7 +39,7 @@ export interface UpdateResult<Model> {
 export interface CalaDao<Model> {
   find: (
     trx: Transaction,
-    filter: Partial<Model>,
+    filter?: Partial<Model>,
     modifier?: (query: QueryBuilder) => QueryBuilder
   ) => Promise<Model[]>;
   findOne: (

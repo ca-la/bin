@@ -3,7 +3,7 @@ import uuid from "node-uuid";
 
 import { test, Test } from "../../../test-helpers/fresh";
 import createDesign from "../../../services/create-design";
-import createUser = require("../../../test-helpers/create-user");
+import createUser from "../../../test-helpers/create-user";
 import db from "../../../services/db";
 import { createList, findByDesignId, getAll, remove, removeList } from "./dao";
 
@@ -23,10 +23,16 @@ test("createList() + removeList()", async (t: Test) => {
   // Can mark designs as a template.
   await db.transaction(async (trx: Knex.Transaction) => {
     const result = await createList(
-      [{ designId: design1.id }, { designId: design2.id }],
+      [
+        { designId: design1.id, templateCategoryId: null },
+        { designId: design2.id, templateCategoryId: null },
+      ],
       trx
     );
-    t.deepEqual(result, [{ designId: design1.id }, { designId: design2.id }]);
+    t.deepEqual(result, [
+      { designId: design1.id, templateCategoryId: null },
+      { designId: design2.id, templateCategoryId: null },
+    ]);
   });
 
   // Can remove designs marked as a template.
@@ -49,10 +55,14 @@ test("findByDesignId()", async (t: Test) => {
 
   // Can find a design that was marked as a template.
   await db.transaction(async (trx: Knex.Transaction) => {
-    await createList([{ designId: design.id }], trx);
+    await createList([{ designId: design.id, templateCategoryId: null }], trx);
 
     const result2 = await findByDesignId(design.id, trx);
-    t.deepEqual(result2, { designId: design.id }, "Returns the inserted row");
+    t.deepEqual(
+      result2,
+      { designId: design.id, templateCategoryId: null },
+      "Returns the inserted row"
+    );
   });
 });
 
@@ -66,7 +76,7 @@ test("remove()", async (t: Test) => {
 
   // deleting something that isn't there
   await db.transaction(async (trx: Knex.Transaction) => {
-    await createList([{ designId: design.id }], trx);
+    await createList([{ designId: design.id, templateCategoryId: null }], trx);
     const nonexistent = uuid.v4();
     try {
       await remove(nonexistent, trx);
@@ -79,7 +89,11 @@ test("remove()", async (t: Test) => {
   // can remove a template.
   await db.transaction(async (trx: Knex.Transaction) => {
     await remove(design.id, trx);
-    const results = await getAll(trx, { limit: 10, offset: 0 });
+    const results = await getAll(trx, {
+      limit: 10,
+      offset: 0,
+      templateCategoryIds: [],
+    });
     t.deepEqual(results, [], "There are no templates in the list.");
   });
 });
@@ -110,28 +124,40 @@ test("getAll()", async (t: Test) => {
   await db.transaction(async (trx: Knex.Transaction) => {
     await createList(
       [
-        { designId: design1.id },
-        { designId: design2.id },
-        { designId: design3.id },
+        { designId: design1.id, templateCategoryId: null },
+        { designId: design2.id, templateCategoryId: null },
+        { designId: design3.id, templateCategoryId: null },
       ],
       trx
     );
 
-    const results = await getAll(trx, { limit: 10, offset: 0 });
+    const results = await getAll(trx, {
+      limit: 10,
+      offset: 0,
+      templateCategoryIds: [],
+    });
     t.deepEqual(
       results,
       [design3, design2, design1],
       "Returns the list in order of when each design was made"
     );
 
-    const results2 = await getAll(trx, { limit: 10, offset: 2 });
+    const results2 = await getAll(trx, {
+      limit: 10,
+      offset: 2,
+      templateCategoryIds: [],
+    });
     t.deepEqual(
       results2,
       [design1],
       "Returns the list using the given offset and limit"
     );
 
-    const results3 = await getAll(trx, { limit: 1, offset: 1 });
+    const results3 = await getAll(trx, {
+      limit: 1,
+      offset: 1,
+      templateCategoryIds: [],
+    });
     t.deepEqual(
       results3,
       [design2],
