@@ -3,7 +3,6 @@
 const Router = require("koa-router");
 
 const canAccessUserResource = require("../../middleware/can-access-user-resource");
-const createManualPaymentRecord = require("./manual-payments").default;
 const InvoicesDAO = require("../../dao/invoices");
 const requireAdmin = require("../../middleware/require-admin");
 const User = require("../../components/users/domain-object");
@@ -150,11 +149,6 @@ function* postPayOut() {
 router.get("/", getInvoices);
 router.get("/:invoiceId", requireAdmin, getInvoice);
 router.del("/:invoiceId", requireAdmin, deleteInvoice);
-router.post(
-  "/:invoiceId/manual-payments",
-  requireAdmin,
-  createManualPaymentRecord
-);
 router.post("/:invoiceId/pay-out-to-partner", requireAdmin, postPayOut);
 
 module.exports = router.routes();

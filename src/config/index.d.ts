@@ -64,8 +64,6 @@ export const USER_UPLOADS_IMGIX_URL: string;
 
 export const DEFAULT_DESIGN_IDS: string;
 
-export const RESOLVE_API_URL: string;
-
 export const FIT_PARTNER_SMS_PRODUCT_ID_BLACKLIST: number[];
 
 export const SHORT_ID_SALT: string;
