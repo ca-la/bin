@@ -19,3 +19,4 @@ export * from "../components/approval-step-submissions/realtime";
 export * from "../types/serialized";
 export * from "../components/assets/types";
 export * from "../components/comments/types";
+export * from "../components/templates/categories/types";
