@@ -120,12 +120,11 @@ export async function getAll(
     )
     .modify((query: Knex.QueryBuilder) => {
       if (options.templateCategoryIds.length > 0) {
-        return query.whereIn(
+        query.whereIn(
           "template_designs.template_category_id",
           options.templateCategoryIds
         );
       }
-      return query.whereNull("template_designs.template_category_id");
     })
     .limit(options.limit)
     .offset(options.offset)

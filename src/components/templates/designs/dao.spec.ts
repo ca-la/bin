@@ -142,11 +142,7 @@ test("getAll()", async (t: Test) => {
       offset: 0,
       templateCategoryIds: [],
     });
-    t.deepEqual(
-      results,
-      [design2],
-      "Returns the list in order of when each design was made"
-    );
+    t.deepEqual(results, [design3, design2, design1], "Returns all templates");
 
     const byCategory = await getAll(trx, {
       limit: 20,
