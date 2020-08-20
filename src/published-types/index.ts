@@ -20,3 +20,4 @@ export * from "../types/serialized";
 export * from "../components/assets/types";
 export * from "../components/comments/types";
 export * from "../components/templates/categories/types";
+export * from "../components/teams/types";
