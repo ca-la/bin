@@ -1,5 +1,5 @@
 import { Serialized } from "../../types/serialized";
-import { ShipmentTracking } from "./types";
+import { ShipmentTracking, DeliveryStatus } from "./types";
 import {
   RealtimeMessage,
   isRealtimeMessage,
@@ -8,7 +8,10 @@ import {
 import { buildChannelName } from "../iris/build-channel";
 
 export interface RealtimeShipmentTrackingUpdated extends RealtimeMessage {
-  resource: ShipmentTracking;
+  resource: ShipmentTracking & {
+    deliveryStatus: DeliveryStatus;
+    trackingLink: string;
+  };
   type: RealtimeMessageType.shipmentTrackingUpdated;
 }
 
@@ -22,7 +25,10 @@ export function isRealtimeShipmentTrackingUpdated(
 }
 
 export function realtimeShipmentTrackingUpdated(
-  shipmentTracking: ShipmentTracking
+  shipmentTracking: ShipmentTracking & {
+    deliveryStatus: DeliveryStatus;
+    trackingLink: string;
+  }
 ): RealtimeShipmentTrackingUpdated {
   return {
     type: RealtimeMessageType.shipmentTrackingUpdated,
@@ -34,7 +40,10 @@ export function realtimeShipmentTrackingUpdated(
 }
 
 export interface RealtimeShipmentTrackingCreated extends RealtimeMessage {
-  resource: ShipmentTracking;
+  resource: ShipmentTracking & {
+    deliveryStatus: DeliveryStatus;
+    trackingLink: string;
+  };
   type: RealtimeMessageType.shipmentTrackingCreated;
 }
 
@@ -48,7 +57,10 @@ export function isRealtimeShipmentTrackingCreated(
 }
 
 export function realtimeShipmentTrackingCreated(
-  shipmentTracking: ShipmentTracking
+  shipmentTracking: ShipmentTracking & {
+    deliveryStatus: DeliveryStatus;
+    trackingLink: string;
+  }
 ): RealtimeShipmentTrackingCreated {
   return {
     type: RealtimeMessageType.shipmentTrackingCreated,

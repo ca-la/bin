@@ -50,10 +50,15 @@ export async function attachDeliveryStatus(
   };
 }
 
-export const attachMeta = (
+export const attachMeta = async (
   trx: Knex.Transaction,
   shipmentTracking: ShipmentTracking
-) => attachDeliveryStatus(trx, attachTrackingLink(shipmentTracking));
+) => {
+  return {
+    ...attachTrackingLink(shipmentTracking),
+    ...(await attachDeliveryStatus(trx, shipmentTracking)),
+  };
+};
 
 export async function handleTrackingUpdates(
   trx: Knex.Transaction,
