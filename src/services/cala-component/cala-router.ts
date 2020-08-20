@@ -8,9 +8,9 @@ import useTransaction from "../../middleware/use-transaction";
 import ResourceNotFoundError from "../../errors/resource-not-found";
 import { emit } from "../pubsub";
 import filterError from "../../services/filter-error";
-import { RouteUpdated } from "../pubsub/cala-events";
+import { RouteCreated, RouteUpdated } from "../pubsub/cala-events";
 
-type StandardRoute = "find" | "update";
+type StandardRoute = "find" | "update" | "create";
 
 interface SpecificOptions<Model> {
   update: {
@@ -19,6 +19,9 @@ interface SpecificOptions<Model> {
   };
   find: {
     allowedFilterAttributes?: (keyof Model)[];
+  };
+  create: {
+    getModelFromBody: (model: Record<string, any>) => Model;
   };
 }
 
@@ -74,6 +77,44 @@ export function buildRouter<Model>(
 
                 this.body = found;
                 this.status = 200;
+              },
+            ];
+            break;
+          }
+          case "create": {
+            if (!routes["/"]) {
+              routes["/"] = {};
+            }
+            routes["/"].post = [
+              useTransaction,
+              ...((routeOptions.create && routeOptions.create.middleware) ||
+                []),
+              function* create(
+                this: TrxContext<AuthedContext<Model, PermittedState>>
+              ): Iterator<any, any, any> {
+                const { trx, userId: actorId } = this.state;
+                const { body } = this.request;
+
+                let toCreate = body;
+                if (routeOptions.create) {
+                  try {
+                    toCreate = routeOptions.create.getModelFromBody(body);
+                  } catch (err) {
+                    this.throw(400, err);
+                  }
+                }
+
+                const created = yield dao.create(trx, toCreate as Model);
+                yield emit<Model, RouteCreated<Model, typeof domain>>({
+                  type: "route.created",
+                  domain,
+                  actorId,
+                  trx,
+                  created,
+                });
+
+                this.status = 201;
+                this.body = created;
               },
             ];
             break;

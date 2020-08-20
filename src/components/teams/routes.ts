@@ -1,33 +1,27 @@
 import uuid from "node-uuid";
 
 import requireAuth from "../../middleware/require-auth";
-import useTransaction from "../../middleware/use-transaction";
 
 import TeamsDAO from "./dao";
-import { isUnsavedTeam } from "./types";
+import { isUnsavedTeam, Team } from "./types";
+import { buildRouter } from "../../services/cala-component/cala-router";
 
-function* createTeam(this: TrxContext<AuthedContext>) {
-  const { trx } = this.state;
-  const { body } = this.request;
-
-  if (!isUnsavedTeam(body)) {
-    this.throw(400, "You must provide a title for the new team");
-  }
-
-  this.body = yield TeamsDAO.create(trx, {
-    id: uuid.v4(),
-    title: body.title,
-    createdAt: new Date(),
-    deletedAt: null,
-  });
-  this.status = 201;
-}
-
-export default {
-  prefix: "/teams",
-  routes: {
-    "/": {
-      post: [useTransaction, requireAuth, createTeam],
+export default buildRouter("Team" as const, "/teams", TeamsDAO, {
+  pickRoutes: ["create"],
+  routeOptions: {
+    create: {
+      middleware: [requireAuth],
+      getModelFromBody: (body: Record<string, any>): Team => {
+        if (!isUnsavedTeam(body)) {
+          throw new Error("You must provide a title for the new team");
+        }
+        return {
+          id: uuid.v4(),
+          title: body.title,
+          createdAt: new Date(),
+          deletedAt: null,
+        };
+      },
     },
   },
-};
+});
