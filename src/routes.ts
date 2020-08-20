@@ -44,6 +44,7 @@ import shipmentTrackingComponent from "./components/shipment-trackings";
 import storefrontRoutes from "./components/storefronts/routes";
 import subscriptionRoutes from "./components/subscriptions/routes";
 import teamComponent from "./components/teams";
+import teamUserComponent from "./components/team-users";
 import templateDesignRoutes from "./components/templates/designs/routes";
 import templateCategoryComponent from "./components/templates/categories";
 import timelineRoutes from "./components/timeline/routes";
@@ -125,5 +126,6 @@ if (approvalStepComponent.router) {
 plugComponentRouter(router, shipmentTrackingComponent.router);
 plugComponentRouter(router, templateCategoryComponent.router);
 plugComponentRouter(router, teamComponent.router);
+plugComponentRouter(router, teamUserComponent.router);
 
 export default router;
