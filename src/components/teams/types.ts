@@ -14,7 +14,7 @@ export interface TeamRow {
 
 export function isUnsavedTeam(
   candidate: Record<string, any>
-): candidate is Unsaved<Team> {
+): candidate is Omit<Team, "id" | "createdAt" | "deletedAt"> {
   const keyset = new Set(Object.keys(candidate));
 
   return ["title"].every(keyset.has.bind(keyset));
