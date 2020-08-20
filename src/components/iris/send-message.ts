@@ -14,6 +14,7 @@ import {
   RealtimeApprovalSubmissionRevisionRequest,
 } from "../approval-step-submissions/realtime";
 import { RealtimeApprovalStepUpdated } from "../approval-steps/realtime";
+import { RealtimeMessage as GenericRealtimeMessage } from "./types";
 
 type AllRealtimeMessage =
   | RealtimeMessage
@@ -22,7 +23,8 @@ type AllRealtimeMessage =
   | RealtimeApprovalSubmissionUpdated
   | RealtimeApprovalSubmissionCreated
   | RealtimeApprovalSubmissionRevisionRequest
-  | RealtimeApprovalStepUpdated;
+  | RealtimeApprovalStepUpdated
+  | GenericRealtimeMessage;
 
 /**
  * Uploads a realtime resource to s3 then enqueues into SQS.

@@ -3,9 +3,11 @@ import { sandbox, test, Test } from "../../test-helpers/simple";
 import { ShipmentTracking } from "./types";
 import * as Aftership from "../integrations/aftership/service";
 import { ShipmentTrackingEvent } from "../shipment-tracking-events/types";
+import * as IrisService from "../iris/send-message";
 import * as ShipmentTrackingService from "./service";
 
 import { listeners } from "./listeners";
+import { RealtimeMessageType } from "../iris/types";
 
 function setup() {
   const created: ShipmentTracking = {
@@ -45,8 +47,25 @@ function setup() {
     created,
     events: [e1, e2],
     stubs: {
-      aftershipStub: sandbox()
+      aftershipCreateStub: sandbox()
         .stub(Aftership, "createTracking")
+        .resolves({
+          aftershipTracking: {
+            id: "an-aftership-tracking-id",
+            shipmentTrackingId: "a-shipment-tracking-id",
+            createdAt: new Date(2012, 11, 23),
+          },
+          updates: [
+            {
+              expectedDelivery: null,
+              deliveryDate: null,
+              events: [e1, e2],
+              shipmentTrackingId: "a-shipment-tracking-id",
+            },
+          ],
+        }),
+      aftershipGetStub: sandbox()
+        .stub(Aftership, "getTracking")
         .resolves({
           aftershipTracking: {
             id: "an-aftership-tracking-id",
@@ -65,6 +84,7 @@ function setup() {
       handleUpdatesStub: sandbox()
         .stub(ShipmentTrackingService, "handleTrackingUpdates")
         .resolves(),
+      irisStub: sandbox().stub(IrisService, "sendMessage"),
       trxStub: (sandbox().stub() as unknown) as Knex.Transaction,
     },
   };
@@ -81,7 +101,7 @@ test("ShipmentTracking listener: dao.created", async (t: Test) => {
   });
 
   t.deepEqual(
-    stubs.aftershipStub.args,
+    stubs.aftershipCreateStub.args,
     [[stubs.trxStub, created]],
     "creates an Aftership tracking object"
   );
@@ -102,5 +122,53 @@ test("ShipmentTracking listener: dao.created", async (t: Test) => {
       ],
     ],
     "calls updates handler"
+  );
+  t.true(stubs.irisStub.callCount, "Sends a realtime message");
+  t.deepEqual(
+    stubs.irisStub.args[0][0],
+    {
+      type: RealtimeMessageType.shipmentTrackingCreated,
+      channels: [`approval-steps/${created.approvalStepId}`],
+      resource: {
+        ...created,
+        deliveryStatus: {
+          deliveryDate: null,
+          expectedDelivery: null,
+          tag: "Pending",
+        },
+        trackingLink: "https://track.ca.la/a-tracking-id",
+      },
+    },
+    "Message has the correct parts"
+  );
+});
+
+test("ShipmentTracking listener: dao.updated", async (t: Test) => {
+  const { created, stubs } = setup();
+
+  await listeners["dao.updated"]!({
+    domain: "ShipmentTracking",
+    type: "dao.updated",
+    trx: stubs.trxStub,
+    updated: created,
+    before: created,
+  });
+  t.true(stubs.irisStub.callCount, "Sends a realtime message");
+  t.deepEqual(
+    stubs.irisStub.args[0][0],
+    {
+      type: RealtimeMessageType.shipmentTrackingUpdated,
+      channels: [`approval-steps/${created.approvalStepId}`],
+      resource: {
+        ...created,
+        deliveryStatus: {
+          deliveryDate: null,
+          expectedDelivery: null,
+          tag: "Pending",
+        },
+        trackingLink: "https://track.ca.la/a-tracking-id",
+      },
+    },
+    "Message has the correct parts"
   );
 });

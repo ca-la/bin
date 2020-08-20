@@ -87,6 +87,10 @@ test("Shipment Tracking notifications", async (t: Test) => {
     aftershipTracking: {},
     updates: [],
   });
+  sandbox().stub(Aftership, "getTracking").resolves({
+    aftershipTracking: {},
+    updates: [],
+  });
 
   const {
     actor,

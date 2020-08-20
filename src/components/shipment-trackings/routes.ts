@@ -24,18 +24,12 @@ import { NotificationType } from "../notifications/domain-object";
 import { ShipmentTracking } from "./types";
 import * as ShipmentTrackingsDAO from "./dao";
 import {
-  attachTrackingLink,
-  attachDeliveryStatus,
   handleTrackingUpdates,
   createNotificationsAndEvents,
+  attachMeta,
 } from "./service";
 import filterError from "../../services/filter-error";
 import ResourceNotFoundError from "../../errors/resource-not-found";
-
-const attachMeta = (
-  trx: Knex.Transaction,
-  shipmentTracking: ShipmentTracking
-) => attachDeliveryStatus(trx, attachTrackingLink(shipmentTracking));
 
 async function getDesignIdFromStep(approvalStepId: string): Promise<string> {
   const step = await db.transaction((trx: Knex.Transaction) =>

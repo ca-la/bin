@@ -34,6 +34,10 @@ async function setup(trx: Knex.Transaction) {
     aftershipTracking: {},
     updates: [],
   });
+  sandbox().stub(Aftership, "getTracking").resolves({
+    aftershipTracking: {},
+    updates: [],
+  });
 
   const shipmentTracking = await ShipmentTrackingsDAO.create(trx, {
     approvalStepId: checkoutStep.id,

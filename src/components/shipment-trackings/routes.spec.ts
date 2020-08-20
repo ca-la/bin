@@ -380,6 +380,20 @@ test("POST /shipment-trackings/updates end-to-end", async (t: Test) => {
         ],
       });
 
+    sandbox()
+      .stub(AftershipService, "getTracking")
+      .resolves({
+        aftershipTracking: {},
+        updates: [
+          {
+            shipmentTrackingId,
+            expectedDelivery: null,
+            deliveryDate: null,
+            events: [],
+          },
+        ],
+      });
+
     const tracking = await ShipmentTrackingsDAO.create(trx, {
       approvalStepId: checkoutStep.id,
       courier: "usps",
