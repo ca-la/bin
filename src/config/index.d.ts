@@ -80,3 +80,6 @@ export const AVATAR_BASE_URL: string;
 export const IMGIX_API_KEY: string;
 
 export const AFTERSHIP_API_KEY: string;
+
+export const COMMERCE_HOST: string;
+export const COMMERCE_TOKEN: string;

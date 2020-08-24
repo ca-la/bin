@@ -153,6 +153,9 @@ const config = {
   IMGIX_API_KEY: process.env.IMGIX_API_KEY,
 
   AFTERSHIP_API_KEY: process.env.AFTERSHIP_API_KEY,
+
+  COMMERCE_HOST: process.env.COMMERCE_HOST,
+  COMMERCE_TOKEN: process.env.COMMERCE_TOKEN,
 };
 
 Object.keys(config).forEach((key) => {
