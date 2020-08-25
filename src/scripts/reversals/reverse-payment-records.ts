@@ -1,8 +1,14 @@
 import Knex from "knex";
 import { map } from "lodash";
+import uuid from "node-uuid";
 
 import db from "../../services/db";
 import Logger = require("../../services/logger");
+import ApprovalStepDAO from "../../components/approval-steps/dao";
+import DesignEventsDAO from "../../components/design-events/dao";
+import { ApprovalStepState, ApprovalStepType } from "../../published-types";
+import { templateDesignEvent } from "../../components/design-events/types";
+import { CALA_OPS_USER_ID } from "../../config";
 
 interface WithIds {
   id: string;
@@ -71,6 +77,45 @@ async function reversePaymentRecords(): Promise<void> {
 
     if (!isRowsOfIds(designEvents)) {
       throw new Error(`No design events found for collection ${collectionId}`);
+    }
+
+    const steps = await db
+      .select("*")
+      .from("design_approval_steps")
+      .join(
+        "collection_designs",
+        "collection_designs.design_id",
+        "design_approval_steps.design_id"
+      )
+      .where({ "collection_designs.collection_id": collectionId })
+      .whereNot({ state: ApprovalStepState.SKIP });
+
+    for (const step of steps) {
+      await DesignEventsDAO.create(trx, {
+        ...templateDesignEvent,
+        actorId: CALA_OPS_USER_ID,
+        approvalStepId: step.id,
+        createdAt: new Date(),
+        designId: step.design_id,
+        id: uuid.v4(),
+        type: "STEP_REOPEN",
+      });
+
+      if (step.type === ApprovalStepType.CHECKOUT) {
+        await ApprovalStepDAO.update(trx, step.id, {
+          state: ApprovalStepState.CURRENT,
+          completedAt: null,
+        });
+      } else {
+        await ApprovalStepDAO.update(trx, step.id, {
+          state:
+            step.state === ApprovalStepState.BLOCKED
+              ? ApprovalStepState.BLOCKED
+              : ApprovalStepState.UNSTARTED,
+          completedAt: null,
+          startedAt: null,
+        });
+      }
     }
 
     const invoicePayments = await db
