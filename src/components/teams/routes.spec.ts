@@ -4,6 +4,7 @@ import { authHeader, post } from "../../test-helpers/http";
 
 import SessionsDAO from "../../dao/sessions";
 import TeamsDAO from "./dao";
+import TeamUsersDAO from "../team-users/dao";
 import { Team } from "./types";
 
 function setup() {
@@ -22,6 +23,7 @@ function setup() {
       userId: "a-user-id",
     }),
     createStub: sandbox().stub(TeamsDAO, "create").resolves(t1),
+    createUserStub: sandbox().stub(TeamUsersDAO, "create").resolves(),
     teams: [t1],
     now,
   };

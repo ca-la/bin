@@ -8,6 +8,7 @@ import {
 import adapter from "./adapter";
 import dao from "./dao";
 import router from "./routes";
+import listeners from "./listeners";
 import { Team, TeamRow } from "./types";
 
 interface TeamComponent extends CalaComponent<Team, TeamRow> {
@@ -21,6 +22,7 @@ const component: TeamComponent = {
   dao,
   router,
   notifications: {},
+  listeners,
 };
 
 export default component;

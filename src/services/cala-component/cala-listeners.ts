@@ -4,6 +4,7 @@ import {
   DaoUpdating,
   RouteUpdated,
   Handler,
+  RouteCreated,
 } from "../pubsub/cala-events";
 import { listen } from "../pubsub";
 import { getObjectDiff } from "../utils";
@@ -19,6 +20,7 @@ export type Listeners<Model, Domain extends string> = Partial<{
   "route.updated.*": Partial<
     Record<keyof Model, Handler<Model, Domain, RouteUpdated<Model, Domain>>>
   >;
+  "route.created": Handler<Model, Domain, RouteCreated<Model, Domain>>;
   "route.updated": Handler<Model, Domain, RouteUpdated<Model, Domain>>;
 }>;
 
@@ -46,6 +48,9 @@ export function buildListeners<Model, Domain extends string>(
   });
   if (listeners["dao.created"]) {
     listen("dao.created", domain, listeners["dao.created"]);
+  }
+  if (listeners["route.created"]) {
+    listen("route.created", domain, listeners["route.created"]);
   }
   if (listeners["route.updated"]) {
     listen("route.updated", domain, listeners["route.updated"]);
