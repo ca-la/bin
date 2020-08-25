@@ -1,10 +1,10 @@
 import uuid from "node-uuid";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
-import { authHeader, post } from "../../test-helpers/http";
+import { authHeader, get, post } from "../../test-helpers/http";
 
 import SessionsDAO from "../../dao/sessions";
-import TeamsDAO from "./dao";
 import TeamUsersDAO from "../team-users/dao";
+import TeamsDAO from "./dao";
 import { Team } from "./types";
 
 function setup() {
@@ -24,6 +24,7 @@ function setup() {
     }),
     createStub: sandbox().stub(TeamsDAO, "create").resolves(t1),
     createUserStub: sandbox().stub(TeamUsersDAO, "create").resolves(),
+    findByUserStub: sandbox().stub(TeamsDAO, "findByUser").resolves([t1]),
     teams: [t1],
     now,
   };
@@ -74,4 +75,37 @@ test("POST /teams", async (t: Test) => {
   });
 
   t.equal(unauthenticated.status, 401, "Does not allow unauthenticated users");
+});
+
+test("GET /teams", async (t: Test) => {
+  const {
+    findByUserStub,
+    teams: [t1],
+  } = setup();
+
+  const [response, body] = await get("/teams?userId=a-user-id", {
+    headers: authHeader("a-session-id"),
+  });
+
+  t.deepEqual(
+    findByUserStub.args[0][1],
+    "a-user-id",
+    "gets teams by correct user"
+  );
+  t.equal(response.status, 200, "responds successfully");
+  t.deepEqual(body, [JSON.parse(JSON.stringify(t1))]);
+
+  const [unauthorized] = await get("/teams?userId=not-me", {
+    headers: authHeader("a-session-id"),
+  });
+  t.deepEqual(
+    unauthorized.status,
+    403,
+    "Does not allow users to query by other users"
+  );
+
+  const [missingQueryParam] = await get("/teams", {
+    headers: authHeader("a-session-id"),
+  });
+  t.deepEqual(missingQueryParam.status, 400, "Requires the userId query param");
 });
