@@ -1,18 +1,19 @@
 import Knex from "knex";
 import uuid = require("node-uuid");
+import rethrow = require("pg-rethrow");
 
-import db from "../../services/db";
-import ProductDesignsDAO from "../../components/product-designs/dao";
 import * as InvoicesDAO from "../../dao/invoices";
 import * as LineItemsDAO from "../../dao/line-items";
-import * as UsersDAO from "../../components/users/dao";
 import * as SlackService from "../../services/slack";
+import * as UsersDAO from "../../components/users/dao";
+import db from "../../services/db";
+import filterError = require("../../services/filter-error");
 import InvalidDataError = require("../../errors/invalid-data");
 import payInvoice = require("../../services/pay-invoice");
 import ProductDesign = require("../../components/product-designs/domain-objects/product-design");
+import ProductDesignsDAO from "../../components/product-designs/dao";
 import spendCredit from "../../components/credits/spend-credit";
 import createPaymentMethod from "../../components/payment-methods/create-payment-method";
-import addMargin from "../../services/add-margin";
 import { PricingQuote } from "../../domain-objects/pricing-quote";
 import { setApprovalStepsDueAtByPricingQuote } from "../../components/approval-steps/service";
 import {
@@ -21,8 +22,8 @@ import {
 } from "../../services/generate-pricing-quote";
 import Collection from "../../components/collections/domain-object";
 import Invoice = require("../../domain-objects/invoice");
-import { FINANCING_MARGIN } from "../../config";
 import LineItem from "../../domain-objects/line-item";
+import createDesignPaymentLocks from "./create-design-payment-locks";
 
 type CreateRequest = CreateQuotePayload[];
 
@@ -72,7 +73,21 @@ function createLineItem(
       title: quote.designId || "",
     },
     trx
-  );
+  )
+    .catch(rethrow)
+    .catch(
+      filterError(
+        rethrow.ERRORS.UniqueViolation,
+        (err: typeof rethrow.ERRORS.UniqueViolation) => {
+          if (err.constraint === "one_line_item_per_design") {
+            throw new InvalidDataError(
+              `Design ${quote.designId} has already been paid for`
+            );
+          }
+          throw err;
+        }
+      )
+    );
 }
 
 const getDesignNames = async (quotes: PricingQuote[]): Promise<string[]> => {
@@ -119,6 +134,8 @@ export default async function payInvoiceWithNewPaymentMethod(
   invoiceAddressId: string | null
 ): Promise<Invoice> {
   return db.transaction(async (trx: Knex.Transaction) => {
+    await createDesignPaymentLocks(trx, quoteRequests);
+
     const paymentMethod = await createPaymentMethod({
       token: paymentMethodTokenId,
       userId,
@@ -150,56 +167,6 @@ export default async function payInvoiceWithNewPaymentMethod(
   });
 }
 
-export async function createInvoiceWithoutMethod(
-  quoteRequests: CreateRequest,
-  userId: string,
-  collection: Collection,
-  invoiceAddressId: string | null
-): Promise<Invoice> {
-  return db.transaction(async (trx: Knex.Transaction) => {
-    const quotes: PricingQuote[] = await createQuotes(
-      quoteRequests,
-      userId,
-      trx
-    );
-    const designNames = await getDesignNames(quotes);
-    const collectionName = collection.title || "Untitled";
-
-    const totalCentsWithoutFinanceMargin = getQuoteTotal(quotes);
-    const totalCents = addMargin(
-      totalCentsWithoutFinanceMargin,
-      FINANCING_MARGIN
-    );
-
-    const invoice = await createInvoice(
-      designNames,
-      collectionName,
-      collection.id,
-      totalCents,
-      userId,
-      invoiceAddressId,
-      trx
-    );
-
-    await spendCredit(userId, invoice, trx);
-
-    await processQuotesAfterInvoice(trx, invoice.id, quotes);
-
-    const user = await UsersDAO.findById(userId);
-    await SlackService.enqueueSend({
-      channel: "designers",
-      params: {
-        collection,
-        designer: user,
-        payLaterTotalCents: totalCents,
-      },
-      templateName: "designer_pay_later",
-    });
-
-    return InvoicesDAO.findByIdTrx(trx, invoice.id);
-  });
-}
-
 export async function payWaivedQuote(
   quoteRequests: CreateRequest,
   userId: string,
@@ -207,6 +174,8 @@ export async function payWaivedQuote(
   invoiceAddressId: string | null
 ): Promise<Invoice> {
   return db.transaction(async (trx: Knex.Transaction) => {
+    await createDesignPaymentLocks(trx, quoteRequests);
+
     const quotes: PricingQuote[] = await createQuotes(
       quoteRequests,
       userId,

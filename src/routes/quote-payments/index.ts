@@ -1,5 +1,8 @@
 import Router from "koa-router";
 
+import filterError from "../../services/filter-error";
+import InvalidDataError from "../../errors/invalid-data";
+import StripeError from "../../errors/stripe";
 import requireAuth = require("../../middleware/require-auth");
 import {
   canAccessCollectionInRequestBody,
@@ -7,7 +10,6 @@ import {
 } from "../../middleware/can-access-collection";
 import { typeGuard } from "../../middleware/type-guard";
 import payInvoiceWithNewPaymentMethod, {
-  createInvoiceWithoutMethod,
   isCreateRequest,
   payWaivedQuote,
 } from "../../services/payment";
@@ -97,7 +99,7 @@ function* payQuote(
   this: AuthedContext<PayRequest | PayWithMethodRequest, CollectionsKoaState>
 ): Iterator<any, any, any> {
   const { body } = this.request;
-  const { isFinanced, isWaived } = this.query;
+  const { isWaived } = this.query;
   const { userId, collection } = this.state;
   if (!collection) {
     this.throw(403, "Unable to access collection");
@@ -113,22 +115,24 @@ function* payQuote(
       userId,
       collection,
       invoiceAddressId
+    ).catch(
+      filterError(InvalidDataError, (err: InvalidDataError) =>
+        this.throw(400, err.message)
+      )
     );
-  } else if (!isFinanced && isPayWithMethodRequest(body)) {
+  } else if (isPayWithMethodRequest(body)) {
     this.body = yield payInvoiceWithNewPaymentMethod(
       body.createQuotes,
       body.paymentMethodTokenId,
       userId,
       collection,
       invoiceAddressId
-    ).catch((err: Error) => this.throw(400, err.message));
-  } else if (isFinanced) {
-    this.body = yield createInvoiceWithoutMethod(
-      body.createQuotes,
-      userId,
-      collection,
-      invoiceAddressId
-    ).catch((err: Error) => this.throw(400, err.message));
+    ).catch((err: Error) => {
+      if (err instanceof InvalidDataError || err instanceof StripeError) {
+        this.throw(400, err.message);
+      }
+      throw err;
+    });
   } else {
     this.throw("Request must match type");
   }

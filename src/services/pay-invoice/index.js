@@ -86,14 +86,9 @@ async function transactInvoice(invoiceId, paymentMethodId, userId, trx) {
 }
 
 async function payInvoice(invoiceId, paymentMethodId, userId, trx) {
-  requireValues({ invoiceId, paymentMethodId, userId });
+  requireValues({ invoiceId, paymentMethodId, userId, trx });
 
-  if (trx) {
-    return transactInvoice(invoiceId, paymentMethodId, userId, trx);
-  }
-  return db.transaction(async (freshTrx) => {
-    return transactInvoice(invoiceId, paymentMethodId, userId, freshTrx);
-  });
+  return transactInvoice(invoiceId, paymentMethodId, userId, trx);
 }
 
 module.exports = payInvoice;
