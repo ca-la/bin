@@ -44,11 +44,17 @@ test("LineItems DAO supports creation/retrieval", async (t: tape.Test) => {
   if (!invoice) {
     return t.fail();
   }
+  const { user } = await createUser({ withSession: false });
+  const design = await createDesign({
+    productType: "TEESHIRT",
+    title: "Plain White Tee",
+    userId: user.id,
+  });
 
   const data: LineItem = {
     createdAt: new Date(),
     description: "test",
-    designId: null,
+    designId: design.id,
     id,
     invoiceId: invoice.id,
     quoteId: null,
@@ -76,11 +82,22 @@ test("LineItems DAO supports retrieval by invoice id", async (t: tape.Test) => {
   if (!invoice) {
     return t.fail();
   }
+  const { user } = await createUser({ withSession: false });
+  const design1 = await createDesign({
+    productType: "TEESHIRT",
+    title: "Plain White Tee",
+    userId: user.id,
+  });
+  const design2 = await createDesign({
+    productType: "TEESHIRT",
+    title: "Plain White Tee",
+    userId: user.id,
+  });
 
   const data: LineItem = {
     createdAt: new Date(),
     description: "test",
-    designId: null,
+    designId: design1.id,
     id,
     invoiceId: invoice.id,
     quoteId: null,
@@ -89,7 +106,7 @@ test("LineItems DAO supports retrieval by invoice id", async (t: tape.Test) => {
   const data2: LineItem = {
     createdAt: new Date(),
     description: "test2",
-    designId: null,
+    designId: design2.id,
     id: id2,
     invoiceId: invoice.id,
     quoteId: null,
