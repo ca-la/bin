@@ -89,7 +89,10 @@ export async function handleTrackingUpdates(
     if (newEvents.length > 0) {
       await ShipmentTrackingEventsDAO.createAll(trx, newEvents);
       const lastException = newEvents
-        .filter((event: ShipmentTrackingEvent) => event.tag === "Exception")
+        .filter(
+          (event: ShipmentTrackingEvent) =>
+            event.tag === "Exception" || event.tag === "AttemptFail"
+        )
         .slice(-1)[0];
       updatedShipmentTrackings.push(updated);
 

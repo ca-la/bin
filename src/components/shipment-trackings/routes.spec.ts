@@ -14,6 +14,7 @@ import * as CollaboratorsDAO from "../collaborators/dao";
 import * as DesignEventsDAO from "../design-events/dao";
 import * as ShipmentTrackingsDAO from "./dao";
 import { ShipmentTracking } from "./types";
+import { ShipmentTrackingEvent } from "../shipment-tracking-events/types";
 import NotificationsLayer from "./notifications";
 import { NotificationType } from "../notifications/domain-object";
 import { templateDesignEvent } from "../design-events/types";
@@ -331,8 +332,8 @@ test("POST /shipment-trackings/updates end-to-end", async (t: Test) => {
     createdAt: new Date(2012, 11, 27),
     location: null,
     message: null,
-    subtag: "Exception_001",
-    tag: "Exception",
+    subtag: "AttemptFail_001",
+    tag: "AttemptFail",
   };
   const notificationSendStub = sandbox()
     .stub(NotificationsLayer[NotificationType.SHIPMENT_TRACKING_UPDATE], "send")
@@ -406,7 +407,7 @@ test("POST /shipment-trackings/updates end-to-end", async (t: Test) => {
     });
 
     await ShipmentTrackingEventsDAO.createAll(trx, [
-      { ...e1, shipmentTrackingId: tracking.id },
+      { ...e1, shipmentTrackingId: tracking.id } as ShipmentTrackingEvent,
     ]);
 
     return {
@@ -596,8 +597,8 @@ test("POST /shipment-trackings/updates end-to-end", async (t: Test) => {
             {
               created_at: new Date(2012, 11, 27),
               slug: "usps",
-              tag: "Exception",
-              subtag: "Exception_001",
+              tag: "AttemptFail",
+              subtag: "AttemptFail_001",
               checkpoint_time: "2012-12-27T00:00",
             },
           ],
@@ -649,7 +650,7 @@ test("POST /shipment-trackings/updates end-to-end", async (t: Test) => {
           },
         ],
       ],
-      "sends a Slack message on exception"
+      "sends a Slack message on exception or failed attempt"
     );
   });
 });

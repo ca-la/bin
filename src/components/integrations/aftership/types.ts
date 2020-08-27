@@ -52,6 +52,17 @@ export function fromJson(body: any): AftershipResponse {
   return body as AftershipResponseFailure;
 }
 
+export type ShipmentTrackingTag =
+  | "Pending"
+  | "InfoReceived"
+  | "InTransit"
+  | "OutForDelivery"
+  | "AttemptFail"
+  | "Delivered"
+  | "AvailableForPickup"
+  | "Exception"
+  | "Expired";
+
 export interface AftershipCheckpoint {
   created_at: string;
   slug: string;
@@ -61,7 +72,7 @@ export interface AftershipCheckpoint {
   state?: string | null;
   country_iso3?: string | null;
   message?: string | null;
-  tag: string;
+  tag: ShipmentTrackingTag;
   subtag: string;
   raw_tag?: string | null;
 }

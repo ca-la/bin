@@ -1,9 +1,11 @@
+import { ShipmentTrackingTag } from "../integrations/aftership/types";
+
 export interface ShipmentTrackingEvent {
   id: string;
   shipmentTrackingId: string;
   createdAt: Date;
   courier: string;
-  tag: string;
+  tag: ShipmentTrackingTag;
   subtag: string;
   location: string | null;
   country: string | null;
@@ -17,7 +19,7 @@ export interface ShipmentTrackingEventRow {
   shipment_tracking_id: string;
   created_at: Date;
   courier: string;
-  tag: string;
+  tag: ShipmentTrackingTag;
   subtag: string;
   location: string | null;
   country: string | null;
