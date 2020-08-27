@@ -2,9 +2,11 @@ import uuid from "node-uuid";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import { authHeader, post } from "../../test-helpers/http";
 
+import * as UsersDAO from "../users/dao";
 import SessionsDAO from "../../dao/sessions";
 import TeamUsersDAO from "./dao";
 import { Role, TeamUser } from "./types";
+import ResourceNotFoundError from "../../errors/resource-not-found";
 
 function setup() {
   const now = new Date();
@@ -21,6 +23,9 @@ function setup() {
       role: "USER",
       userId: "a-user-id",
     }),
+    findUserStub: sandbox().stub(UsersDAO, "findByEmail").resolves({
+      id: "a-user-id",
+    }),
     createStub: sandbox().stub(TeamUsersDAO, "create").resolves(tu1),
     teamUsers: [tu1],
     now,
@@ -31,6 +36,7 @@ test("POST /team-users", async (t: Test) => {
   const {
     createStub,
     sessionsStub,
+    findUserStub,
     teamUsers: [tu1],
   } = setup();
 
@@ -38,7 +44,7 @@ test("POST /team-users", async (t: Test) => {
     headers: authHeader("a-session-id"),
     body: {
       teamId: "a-team-id",
-      userId: "a-user-id",
+      userEmail: "teammate@example.com",
       role: "ADMIN",
     },
   });
@@ -47,7 +53,7 @@ test("POST /team-users", async (t: Test) => {
   t.deepEqual(
     body,
     JSON.parse(JSON.stringify(tu1)),
-    "returns the created team from the DAO"
+    "returns the created team user from the DAO"
   );
   t.deepEqual(
     createStub.args[0][1],
@@ -59,7 +65,7 @@ test("POST /team-users", async (t: Test) => {
     headers: authHeader("a-session-id"),
     body: {
       teamId: "a-team-id",
-      userId: "a-user-id",
+      userEmail: "teammate@example.com",
       role: "NOT A VALID ROLE!",
     },
   });
@@ -72,10 +78,34 @@ test("POST /team-users", async (t: Test) => {
     headers: authHeader("a-session-id"),
     body: {
       teamId: "a-team-id",
-      userId: "a-user-id",
+      userEmail: "teammate@example.com",
       role: "ADMIN",
     },
   });
 
   t.equal(unauthenticated.status, 401, "Does not allow unauthenticated users");
+
+  sessionsStub.resolves({
+    role: "USER",
+    userId: "a-user-id",
+  });
+  findUserStub.rejects(
+    new ResourceNotFoundError(
+      "Could not find user with email: teammate@example.com"
+    )
+  );
+  const [missingUser] = await post("/team-users", {
+    headers: authHeader("a-session-id"),
+    body: {
+      teamId: "a-team-id",
+      userEmail: "teammate@example.com",
+      role: "EDITOR",
+    },
+  });
+
+  t.equal(
+    missingUser.status,
+    404,
+    "Returns not found response when user is missing"
+  );
 });

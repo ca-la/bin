@@ -23,3 +23,9 @@ export * from "../components/comments/types";
 export * from "../components/templates/categories/types";
 export * from "../components/iris/types";
 export * from "../components/teams/types";
+export {
+  Role as TeamUserRole,
+  TeamUser,
+  UnsavedTeamUser,
+  isUnsavedTeamUser,
+} from "../components/team-users/types";

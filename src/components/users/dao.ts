@@ -189,16 +189,27 @@ export async function findAll({
   );
 }
 
-function getByEmailBuilder(email: string): Knex.QueryBuilder {
+function getByEmailBuilder(
+  email: string,
+  trx?: Knex.Transaction
+): Knex.QueryBuilder {
   const normalized = normalizeEmail(email);
 
   return db("users")
     .whereRaw("lower(users.email) = lower(?)", [normalized])
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .then((users: UserRow[]) => first<UserRow>(users));
 }
 
-export async function findByEmail(email: string): Promise<User | null> {
-  const user = await getByEmailBuilder(email);
+export async function findByEmail(
+  email: string,
+  trx?: Knex.Transaction
+): Promise<User | null> {
+  const user = await getByEmailBuilder(email, trx);
 
   if (!user) {
     return null;

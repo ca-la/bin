@@ -9,6 +9,7 @@ import ResourceNotFoundError from "../../errors/resource-not-found";
 import { emit } from "../pubsub";
 import filterError from "../../services/filter-error";
 import { RouteCreated, RouteUpdated } from "../pubsub/cala-events";
+import InvalidDataError from "../../errors/invalid-data";
 
 type StandardRoute = "find" | "update" | "create";
 
@@ -21,7 +22,10 @@ interface SpecificOptions<Model> {
     allowedFilterAttributes?: (keyof Model)[];
   };
   create: {
-    getModelFromBody: (model: Record<string, any>) => Model;
+    getModelFromBody: (
+      trx: Transaction,
+      model: Record<string, any>
+    ) => Promise<Model>;
   };
 }
 
@@ -97,11 +101,24 @@ export function buildRouter<Model>(
 
                 let toCreate = body;
                 if (routeOptions.create) {
-                  try {
-                    toCreate = routeOptions.create.getModelFromBody(body);
-                  } catch (err) {
-                    this.throw(400, err);
-                  }
+                  toCreate = yield routeOptions.create
+                    .getModelFromBody(trx, body)
+                    .catch(
+                      filterError(
+                        InvalidDataError,
+                        (error: InvalidDataError) => {
+                          this.throw(400, error.message);
+                        }
+                      )
+                    )
+                    .catch(
+                      filterError(
+                        ResourceNotFoundError,
+                        (error: ResourceNotFoundError) => {
+                          this.throw(404, error.message);
+                        }
+                      )
+                    );
                 }
 
                 const created = yield dao.create(trx, toCreate as Model);

@@ -18,14 +18,20 @@ export interface TeamUserRow {
   role: Role;
 }
 
+export interface UnsavedTeamUser {
+  teamId: string;
+  userEmail: string;
+  role: Role;
+}
+
 export function isUnsavedTeamUser(
   candidate: Record<string, any>
-): candidate is Omit<TeamUser, "id" | "createdAt" | "deletedAt"> {
+): candidate is UnsavedTeamUser {
   const keyset = new Set(Object.keys(candidate));
   const roleset = new Set(Object.values(Role));
 
   return (
-    ["teamId", "userId", "role"].every(keyset.has.bind(keyset)) &&
+    ["teamId", "userEmail", "role"].every(keyset.has.bind(keyset)) &&
     roleset.has(candidate.role)
   );
 }

@@ -1,22 +1,31 @@
 import uuid from "node-uuid";
+import Knex from "knex";
 
 import requireAuth from "../../middleware/require-auth";
 
-import TeamsDAO from "./dao";
-import { isUnsavedTeam, Team } from "./types";
 import { buildRouter } from "../../services/cala-component/cala-router";
 import useTransaction from "../../middleware/use-transaction";
 import { requireQueryParam } from "../../middleware/require-query-param";
+import InvalidDataError from "../../errors/invalid-data";
+
+import TeamsDAO from "./dao";
+import { isUnsavedTeam, Team } from "./types";
 
 const standardRouter = buildRouter("Team" as const, "/teams", TeamsDAO, {
   pickRoutes: ["create"],
   routeOptions: {
     create: {
       middleware: [requireAuth],
-      getModelFromBody: (body: Record<string, any>): Team => {
+      getModelFromBody: async (
+        _: Knex.Transaction,
+        body: Record<string, any>
+      ): Promise<Team> => {
         if (!isUnsavedTeam(body)) {
-          throw new Error("You must provide a title for the new team");
+          throw new InvalidDataError(
+            "You must provide a title for the new team"
+          );
         }
+
         return {
           id: uuid.v4(),
           title: body.title,
