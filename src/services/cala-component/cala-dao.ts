@@ -49,7 +49,7 @@ export function buildDao<
   const find = async (
     trx: Knex.Transaction,
     filter: Partial<Model> = {},
-    modifier: QueryModifier = queryModifier
+    modifier: QueryModifier = identity
   ): Promise<Model[]> => {
     const namespacedFilter = getNamespacedFilter(filter);
 
@@ -57,6 +57,7 @@ export function buildDao<
       .select(namespacedSplatSelect)
       .where(namespacedFilter)
       .orderBy(namespacedOrderColumn, orderDirection)
+      .modify(queryModifier)
       .modify(modifier);
 
     return adapter.fromDbArray(rows);
@@ -65,13 +66,14 @@ export function buildDao<
   const findOne = async (
     trx: Knex.Transaction,
     filter: Partial<Model>,
-    modifier: QueryModifier = queryModifier
+    modifier: QueryModifier = identity
   ): Promise<Model | null> => {
     const row = await trx(tableName)
       .select(namespacedSplatSelect)
       .where(getNamespacedFilter(filter))
       .orderBy(`${tableName}.${orderColumn}`, orderDirection)
       .first()
+      .modify(queryModifier)
       .modify(modifier);
 
     if (!row) {
@@ -84,11 +86,12 @@ export function buildDao<
   const findById = async (
     trx: Knex.Transaction,
     id: string,
-    modifier: QueryModifier = queryModifier
+    modifier: QueryModifier = identity
   ): Promise<Model | null> => {
     const row = await trx(tableName)
       .select(namespacedSplatSelect)
       .where(getNamespacedFilter({ id } as Partial<Model>))
+      .modify(queryModifier)
       .modify(modifier)
       .first();
 
@@ -102,12 +105,13 @@ export function buildDao<
   const create = async (
     trx: Transaction,
     blank: Model,
-    modifier: QueryModifier = insertModifier
+    modifier: QueryModifier = identity
   ): Promise<Model> => {
     const rowData = adapter.forInsertion(blank);
     const createdRow = await trx(tableName)
       .insert(rowData)
       .returning("*")
+      .modify(insertModifier)
       .modify(modifier)
       .then<ModelRow | undefined>(first);
 
@@ -130,12 +134,13 @@ export function buildDao<
   const createAll = async (
     trx: Transaction,
     blanks: Model[],
-    modifier: QueryModifier = insertModifier
+    modifier: QueryModifier = identity
   ): Promise<Model[]> => {
     const rowData = blanks.map(adapter.forInsertion.bind(adapter));
     const createdRows: ModelRow[] = await trx(tableName)
       .insert(rowData)
       .returning("*")
+      .modify(insertModifier)
       .modify(modifier);
 
     if (!createdRows || createdRows.length === 0) {

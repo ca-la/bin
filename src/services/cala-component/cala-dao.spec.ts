@@ -150,6 +150,7 @@ test(
     });
 
     const emitStub = sandbox().stub(PubSub, "emit");
+    const modifierStub = sandbox().stub();
 
     const describeFind = async (): Promise<void> => {
       interface TestCase {
@@ -183,7 +184,7 @@ test(
           title: "Apply modifier",
           filter: { title: "Widget" },
           modifier: (query: Knex.QueryBuilder): Knex.QueryBuilder =>
-            query.modify(addMeta).offset(1).limit(1),
+            query.modify(modifierStub).offset(1).limit(1),
           result: [widget2],
         },
         {
@@ -191,7 +192,7 @@ test(
           filter: { title: "Widget" },
           modifier: (query: Knex.QueryBuilder): Knex.QueryBuilder =>
             query
-              .modify(addMeta)
+              .modify(modifierStub)
               .clearOrder()
               .orderBy("test_table_widget_parts.title", "DESC"),
           result: [widget2, widget1],
@@ -209,9 +210,15 @@ test(
             [],
             `find / ${testCase.title}, no emit() called`
           );
+          t.equal(
+            modifierStub.called,
+            Boolean(testCase.modifier),
+            `find / ${testCase.title}, calls modifier`
+          );
         } finally {
           await trx.rollback();
           emitStub.resetHistory();
+          modifierStub.resetHistory();
         }
       }
     };
@@ -250,7 +257,7 @@ test(
           filter: { title: "Widget" },
           modifier: (query: Knex.QueryBuilder): Knex.QueryBuilder =>
             query
-              .modify(addMeta)
+              .modify(modifierStub)
               .clearOrder()
               .orderBy("test_table_widget_parts.title", "DESC"),
           result: widget2,
@@ -268,9 +275,15 @@ test(
             [],
             `findOne / ${testCase.title}, no emit() called`
           );
+          t.equal(
+            modifierStub.called,
+            Boolean(testCase.modifier),
+            `find / ${testCase.title}, calls modifier`
+          );
         } finally {
           await trx.rollback();
           emitStub.resetHistory();
+          modifierStub.resetHistory();
         }
       }
     };
