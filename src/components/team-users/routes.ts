@@ -1,45 +1,43 @@
-import uuid from "node-uuid";
-import Knex from "knex";
-
+import useTransaction from "../../middleware/use-transaction";
 import requireAuth from "../../middleware/require-auth";
-import { buildRouter } from "../../services/cala-component/cala-router";
 
+import filterError from "../../services/filter-error";
+import UnauthorizedError from "../../errors/unauthorized";
 import ResourceNotFoundError from "../../errors/resource-not-found";
 import InvalidDataError from "../../errors/invalid-data";
-import { findByEmail as findUserByEmail } from "../users/dao";
-import TeamUsersDAO from "./dao";
-import { isUnsavedTeamUser, TeamUser } from "./types";
 
-export default buildRouter("TeamUser" as const, "/team-users", TeamUsersDAO, {
-  pickRoutes: ["create"],
-  routeOptions: {
-    create: {
-      middleware: [requireAuth],
-      async getModelFromBody(
-        trx: Knex.Transaction,
-        body: Record<string, any>
-      ): Promise<TeamUser> {
-        if (!isUnsavedTeamUser(body)) {
-          throw new InvalidDataError(
-            "You must provide the following data: teamId, userEmail, role"
-          );
-        }
+import { isUnsavedTeamUser } from "./types";
+import { createTeamUser } from "./service";
 
-        const user = await findUserByEmail(body.userEmail, trx);
+function* create(this: TrxContext<AuthedContext>) {
+  const { body } = this.request;
+  const { trx, userId } = this.state;
 
-        if (!user) {
-          throw new ResourceNotFoundError(
-            `Could not find user with email: ${body.userEmail}`
-          );
-        }
+  if (!isUnsavedTeamUser(body)) {
+    throw new InvalidDataError(
+      "You must provide the following data: teamId, userEmail, role"
+    );
+  }
 
-        return {
-          id: uuid.v4(),
-          teamId: body.teamId,
-          userId: user.id,
-          role: body.role,
-        };
-      },
+  this.body = yield createTeamUser(trx, userId, body)
+    .catch(
+      filterError(UnauthorizedError, (error: UnauthorizedError) => {
+        this.throw(403, error.message);
+      })
+    )
+    .catch(
+      filterError(ResourceNotFoundError, (error: ResourceNotFoundError) => {
+        this.throw(404, error.message);
+      })
+    );
+  this.status = 201;
+}
+
+export default {
+  prefix: "/team-users",
+  routes: {
+    "/": {
+      post: [useTransaction, requireAuth, create],
     },
   },
-});
+};
