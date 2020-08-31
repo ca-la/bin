@@ -4,38 +4,41 @@ import { authHeader, get, post } from "../../test-helpers/http";
 
 import SessionsDAO from "../../dao/sessions";
 import TeamUsersDAO from "../team-users/dao";
-import TeamsDAO from "./dao";
-import { Team } from "./types";
+import { Role as TeamUserRole } from "../team-users/types";
+import TeamsDAO, { rawDao as RawTeamsDAO } from "./dao";
+import { TeamDb } from "./types";
+import createUser from "../../test-helpers/create-user";
+
+const now = new Date(2012, 11, 23);
+const t1: TeamDb = {
+  id: "a-team-id",
+  title: "A team",
+  createdAt: now,
+  deletedAt: null,
+};
 
 function setup() {
-  const now = new Date();
   sandbox().useFakeTimers(now);
   sandbox().stub(uuid, "v4").returns("a-team-id");
-  const t1: Team = {
-    id: "a-team-id",
-    title: "A team",
-    createdAt: now,
-    deletedAt: null,
-  };
   return {
     sessionsStub: sandbox().stub(SessionsDAO, "findById").resolves({
       role: "USER",
       userId: "a-user-id",
     }),
-    createStub: sandbox().stub(TeamsDAO, "create").resolves(t1),
+    createStub: sandbox().stub(RawTeamsDAO, "create").resolves(t1),
     createUserStub: sandbox().stub(TeamUsersDAO, "create").resolves(),
-    findByUserStub: sandbox().stub(TeamsDAO, "findByUser").resolves([t1]),
-    teams: [t1],
+    findStub: sandbox()
+      .stub(TeamsDAO, "find")
+      .resolves([{ ...t1, role: TeamUserRole.ADMIN }]),
+    findByIdStub: sandbox()
+      .stub(TeamsDAO, "findById")
+      .resolves({ ...t1, role: TeamUserRole.ADMIN }),
     now,
   };
 }
 
 test("POST /teams", async (t: Test) => {
-  const {
-    createStub,
-    sessionsStub,
-    teams: [t1],
-  } = setup();
+  const { createStub, sessionsStub } = setup();
 
   const [response, body] = await post("/teams", {
     headers: authHeader("a-session-id"),
@@ -47,7 +50,7 @@ test("POST /teams", async (t: Test) => {
   t.equal(response.status, 201);
   t.deepEqual(
     body,
-    JSON.parse(JSON.stringify(t1)),
+    JSON.parse(JSON.stringify({ ...t1, role: TeamUserRole.ADMIN })),
     "returns the created team from the DAO"
   );
   t.deepEqual(
@@ -78,22 +81,16 @@ test("POST /teams", async (t: Test) => {
 });
 
 test("GET /teams", async (t: Test) => {
-  const {
-    findByUserStub,
-    teams: [t1],
-  } = setup();
+  const { sessionsStub } = setup();
 
   const [response, body] = await get("/teams?userId=a-user-id", {
     headers: authHeader("a-session-id"),
   });
 
-  t.deepEqual(
-    findByUserStub.args[0][1],
-    "a-user-id",
-    "gets teams by correct user"
-  );
   t.equal(response.status, 200, "responds successfully");
-  t.deepEqual(body, [JSON.parse(JSON.stringify(t1))]);
+  t.deepEqual(body, [
+    JSON.parse(JSON.stringify({ ...t1, role: TeamUserRole.ADMIN })),
+  ]);
 
   const [unauthorized] = await get("/teams?userId=not-me", {
     headers: authHeader("a-session-id"),
@@ -108,4 +105,48 @@ test("GET /teams", async (t: Test) => {
     headers: authHeader("a-session-id"),
   });
   t.deepEqual(missingQueryParam.status, 400, "Requires the userId query param");
+
+  sessionsStub.resolves(null);
+  const [unauthenticated] = await get("/teams?userId=a-user-id", {
+    headers: authHeader("a-session-id"),
+  });
+
+  t.equal(unauthenticated.status, 401, "Does not allow unauthenticated users");
+});
+
+test("POST -> GET /teams end-to-end", async (t: Test) => {
+  const designer = await createUser();
+  const another = await createUser();
+
+  const postResponse = await post("/teams", {
+    headers: authHeader(designer.session.id),
+    body: {
+      title: t1.title,
+    },
+  });
+
+  t.equal(postResponse[0].status, 201, "returns correct status code");
+  t.equal(postResponse[1].title, t1.title, "sets title");
+  t.equal(
+    postResponse[1].role,
+    TeamUserRole.ADMIN,
+    "returns your role on the team"
+  );
+
+  const getResponse = await get(`/teams?userId=${designer.user.id}`, {
+    headers: authHeader(designer.session.id),
+  });
+
+  t.equal(getResponse[0].status, 200, "returns correct status code");
+  t.deepEqual(
+    getResponse[1],
+    [postResponse[1]],
+    "shows created team in list of teams"
+  );
+
+  const notFound = await get(`/teams?userId=${another.user.id}`, {
+    headers: authHeader(another.session.id),
+  });
+
+  t.deepEqual(notFound[1], [], "does not show team for a different user");
 });

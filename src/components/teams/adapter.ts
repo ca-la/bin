@@ -1,7 +1,7 @@
 import { buildAdapter } from "../../services/cala-component/cala-adapter";
-import { TeamRow, Team } from "./types";
+import { TeamDbRow, TeamDb, TeamRow, Team } from "./types";
 
-function encode(row: TeamRow): Team {
+function rawEncode(row: TeamDbRow): TeamDb {
   return {
     id: row.id,
     title: row.title,
@@ -10,7 +10,7 @@ function encode(row: TeamRow): Team {
   };
 }
 
-function decode(data: Team): TeamRow {
+function rawDecode(data: TeamDb): TeamDbRow {
   return {
     id: data.id,
     title: data.title,
@@ -19,9 +19,30 @@ function decode(data: Team): TeamRow {
   };
 }
 
+function encode(row: TeamRow): Team {
+  return {
+    ...rawEncode(row),
+    role: row.role,
+  };
+}
+
+function decode(data: Team): TeamRow {
+  return {
+    ...rawDecode(data),
+    role: data.role,
+  };
+}
+
+export const rawAdapter = buildAdapter({
+  domain: "Team",
+  encodeTransformer: rawEncode,
+  decodeTransformer: rawDecode,
+  requiredProperties: ["id", "title", "createdAt", "deletedAt"],
+});
+
 export default buildAdapter({
   domain: "Team",
   encodeTransformer: encode,
   decodeTransformer: decode,
-  requiredProperties: ["id", "title", "createdAt", "deletedAt"],
+  requiredProperties: ["id", "title", "createdAt", "deletedAt", "role"],
 });

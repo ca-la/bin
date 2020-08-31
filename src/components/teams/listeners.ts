@@ -7,13 +7,13 @@ import {
 
 import TeamUsersDAO from "../team-users/dao";
 import { Role } from "../team-users/types";
-import { Team } from "./types";
+import { TeamDb } from "./types";
 
 const domain = "Team" as const;
 
-export const listeners: Listeners<Team, typeof domain> = {
+export const listeners: Listeners<TeamDb, typeof domain> = {
   "route.created": async (
-    event: RouteCreated<Team, typeof domain>
+    event: RouteCreated<TeamDb, typeof domain>
   ): Promise<void> => {
     const { trx, actorId, created } = event;
     await TeamUsersDAO.create(trx, {
@@ -25,4 +25,4 @@ export const listeners: Listeners<Team, typeof domain> = {
   },
 };
 
-export default buildListeners<Team, typeof domain>(domain, listeners);
+export default buildListeners<TeamDb, typeof domain>(domain, listeners);

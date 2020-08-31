@@ -2,14 +2,14 @@ import Knex from "knex";
 import uuid from "node-uuid";
 
 import { sandbox, test, Test } from "../../test-helpers/fresh";
-import { Team } from "./types";
+import { TeamDb } from "./types";
 import { TeamUser, Role } from "../team-users/types";
 import TeamUsersDAO from "../team-users/dao";
 
 import { listeners } from "./listeners";
 
 function setup() {
-  const created: Team = {
+  const created: TeamDb = {
     id: "a-team-id",
     title: "A team name",
     createdAt: new Date(),
