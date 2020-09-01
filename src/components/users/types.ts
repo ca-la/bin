@@ -15,7 +15,7 @@ export const ALLOWED_SESSION_ROLES: { [id: string]: Role[] } = {
   [ROLES.fitPartner]: [ROLES.user, ROLES.fitPartner],
 };
 
-export default interface User {
+export interface User {
   birthday: string | null;
   createdAt: Date;
   email: string | null;
@@ -29,6 +29,8 @@ export default interface User {
   referralCode: string;
   role: Role;
 }
+
+export default User;
 
 export interface UserWithPasswordHash extends User {
   passwordHash: string | null;
