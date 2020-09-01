@@ -1,24 +1,33 @@
 import uuid from "node-uuid";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
-import { authHeader, post } from "../../test-helpers/http";
+import { authHeader, get, post } from "../../test-helpers/http";
+import createUser from "../../test-helpers/create-user";
 
+import db from "../../services/db";
 import * as UsersDAO from "../users/dao";
+import { baseUser } from "../users/domain-object";
 import SessionsDAO from "../../dao/sessions";
-import TeamUsersDAO from "./dao";
-import { Role, TeamUser } from "./types";
+import { rawDao as RawTeamsDAO } from "../teams/dao";
+import TeamUsersDAO, { rawDao as RawTeamUsersDAO } from "./dao";
+import { Role, TeamUser, TeamUserDb } from "./types";
 import ResourceNotFoundError from "../../errors/resource-not-found";
 import { TeamUserRole } from "../../published-types";
 
+const now = new Date();
+const tuDb1: TeamUserDb = {
+  id: "a-team-user-id",
+  teamId: "a-team-id",
+  userId: "a-user-id",
+  role: Role.ADMIN,
+};
+const tu1: TeamUser = {
+  ...tuDb1,
+  user: { ...baseUser, createdAt: now, id: "a-user-id", name: "A User" },
+};
+
 function setup() {
-  const now = new Date();
   sandbox().useFakeTimers(now);
   sandbox().stub(uuid, "v4").returns("a-team-user-id");
-  const tu1: TeamUser = {
-    id: "a-team-user-id",
-    teamId: "a-team-id",
-    userId: "a-user-id",
-    role: Role.ADMIN,
-  };
   return {
     sessionsStub: sandbox().stub(SessionsDAO, "findById").resolves({
       role: "USER",
@@ -30,17 +39,16 @@ function setup() {
     findActorTeamUserStub: sandbox().stub(TeamUsersDAO, "findOne").resolves({
       role: TeamUserRole.ADMIN,
     }),
-    createStub: sandbox().stub(TeamUsersDAO, "create").resolves(tu1),
-    teamUsers: [tu1],
-    now,
+    findTeamMembersStub: sandbox().stub(TeamUsersDAO, "find").resolves([tu1]),
+    createStub: sandbox().stub(RawTeamUsersDAO, "create").resolves(tuDb1),
+    findCreatedTeamUserStub: sandbox()
+      .stub(TeamUsersDAO, "findById")
+      .resolves(tu1),
   };
 }
 
 test("POST /team-users: valid", async (t: Test) => {
-  const {
-    createStub,
-    teamUsers: [tu1],
-  } = setup();
+  const { createStub } = setup();
 
   const [response, body] = await post("/team-users", {
     headers: authHeader("a-session-id"),
@@ -59,7 +67,7 @@ test("POST /team-users: valid", async (t: Test) => {
   );
   t.deepEqual(
     createStub.args[0][1],
-    tu1,
+    tuDb1,
     "calls create with the correct values"
   );
 });
@@ -166,5 +174,116 @@ test("POST /team-users: forbidden", async (t: Test) => {
     editorMakesAdmin.status,
     403,
     "Returns Forbidden status when you're an editor trying to make an admin"
+  );
+});
+
+test("GET /team-users?teamId: valid", async (t: Test) => {
+  const { findTeamMembersStub } = setup();
+  const [response, body] = await get("/team-users?teamId=a-team-id", {
+    headers: authHeader("a-session-id"),
+  });
+
+  t.equal(response.status, 200, "Responds with success");
+  t.deepEqual(body, [JSON.parse(JSON.stringify(tu1))], "Returns TeamUser");
+  t.deepEqual(
+    findTeamMembersStub.args[0][1],
+    { teamId: "a-team-id" },
+    "Gets members by team"
+  );
+});
+
+test("GET /team-users?teamId: unauthenticated", async (t: Test) => {
+  const { sessionsStub } = setup();
+  sessionsStub.resolves(null);
+  const [unauthenticated] = await get("/team-users?teamId=a-team-id", {
+    headers: authHeader("a-session-id"),
+  });
+
+  t.equal(unauthenticated.status, 401, "Responds with unauthenticated");
+});
+
+test("GET /team-users?teamId: missing query param", async (t: Test) => {
+  setup();
+  const [unauthenticated] = await get("/team-users", {
+    headers: authHeader("a-session-id"),
+  });
+
+  t.equal(unauthenticated.status, 400, "Responds with invalid");
+});
+
+test("GET /team-users?teamId: forbidden", async (t: Test) => {
+  const { findActorTeamUserStub } = setup();
+  findActorTeamUserStub.resolves(null);
+  const [forbidden] = await get("/team-users", {
+    headers: authHeader("a-session-id"),
+  });
+
+  t.equal(forbidden.status, 403, "Responds with forbidden");
+});
+
+test("/team-users end-to-end", async (t: Test) => {
+  const teamAdmin = await createUser();
+  const teamMember = await createUser();
+  const notAMember = await createUser();
+
+  const trx = await db.transaction();
+  const teamId = uuid.v4();
+
+  try {
+    await RawTeamsDAO.create(trx, {
+      id: teamId,
+      title: "Test Team",
+      createdAt: now,
+      deletedAt: null,
+    });
+    await RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      role: Role.ADMIN,
+      teamId,
+      userId: teamAdmin.user.id,
+    });
+  } catch (err) {
+    await trx.rollback();
+    t.fail(err.message);
+  }
+  await trx.commit();
+
+  const [, viewer] = await post("/team-users", {
+    headers: authHeader(teamAdmin.session.id),
+    body: {
+      teamId,
+      userEmail: teamMember.user.email,
+      role: Role.VIEWER,
+    },
+  });
+
+  t.deepEqual(
+    viewer.user,
+    JSON.parse(JSON.stringify(teamMember.user)),
+    "Returns TeamUser with User"
+  );
+
+  const [, teamMembers] = await get(`/team-users?teamId=${teamId}`, {
+    headers: authHeader(teamAdmin.session.id),
+  });
+
+  for (const member of teamMembers) {
+    const memberUser =
+      teamAdmin.user.id === member.user.id ? teamAdmin.user : teamMember.user;
+    t.deepEqual(
+      JSON.parse(JSON.stringify(memberUser)),
+      member.user,
+      "attaches the correct user"
+    );
+  }
+
+  const [unauthorized] = await get(`/team-users?teamId=${teamId}`, {
+    headers: authHeader(notAMember.session.id),
+  });
+
+  t.equal(
+    unauthorized.status,
+    403,
+    "Does not allow non-members to list team members"
   );
 });

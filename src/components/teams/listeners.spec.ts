@@ -3,8 +3,8 @@ import uuid from "node-uuid";
 
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import { TeamDb } from "./types";
-import { TeamUser, Role } from "../team-users/types";
-import TeamUsersDAO from "../team-users/dao";
+import { TeamUserDb, Role } from "../team-users/types";
+import { rawDao as RawTeamUsersDAO } from "../team-users/dao";
 
 import { listeners } from "./listeners";
 
@@ -16,7 +16,7 @@ function setup() {
     deletedAt: null,
   };
 
-  const admin: TeamUser = {
+  const admin: TeamUserDb = {
     id: "a-team-user-id",
     teamId: "a-team-id",
     userId: "a-user-id",
@@ -29,7 +29,7 @@ function setup() {
     stubs: {
       uuidStub: sandbox().stub(uuid, "v4").returns("a-team-user-id"),
       createTeamUserStub: sandbox()
-        .stub(TeamUsersDAO, "create")
+        .stub(RawTeamUsersDAO, "create")
         .resolves(admin),
       trxStub: (sandbox().stub() as unknown) as Knex.Transaction,
     },

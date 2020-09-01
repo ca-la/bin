@@ -3,7 +3,7 @@ import { sandbox, test, Test } from "../../test-helpers/fresh";
 import { authHeader, get, post } from "../../test-helpers/http";
 
 import SessionsDAO from "../../dao/sessions";
-import TeamUsersDAO from "../team-users/dao";
+import TeamUsersDAO, { rawDao as RawTeamUsersDAO } from "../team-users/dao";
 import { Role as TeamUserRole } from "../team-users/types";
 import TeamsDAO, { rawDao as RawTeamsDAO } from "./dao";
 import { TeamDb } from "./types";
@@ -26,7 +26,10 @@ function setup() {
       userId: "a-user-id",
     }),
     createStub: sandbox().stub(RawTeamsDAO, "create").resolves(t1),
-    createUserStub: sandbox().stub(TeamUsersDAO, "create").resolves(),
+    createUserStub: sandbox().stub(RawTeamUsersDAO, "create").resolves(),
+    findCreatedTeamUserStub: sandbox()
+      .stub(TeamUsersDAO, "findById")
+      .resolves(),
     findStub: sandbox()
       .stub(TeamsDAO, "find")
       .resolves([{ ...t1, role: TeamUserRole.ADMIN }]),

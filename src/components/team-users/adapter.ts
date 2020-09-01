@@ -1,7 +1,8 @@
 import { buildAdapter } from "../../services/cala-component/cala-adapter";
-import { TeamUser, TeamUserRow } from "./types";
+import { dataAdapter as userAdapter } from "../users/domain-object";
+import { TeamUserDb, TeamUserDbRow, TeamUserRow, TeamUser } from "./types";
 
-function encode(row: TeamUserRow): TeamUser {
+function rawEncode(row: TeamUserDbRow): TeamUserDb {
   return {
     id: row.id,
     userId: row.user_id,
@@ -10,7 +11,14 @@ function encode(row: TeamUserRow): TeamUser {
   };
 }
 
-function decode(data: TeamUser): TeamUserRow {
+function encode(row: TeamUserRow): TeamUser {
+  return {
+    ...rawEncode(row),
+    user: userAdapter.parse(row.user),
+  };
+}
+
+function rawDecode(data: TeamUserDb): TeamUserDbRow {
   return {
     id: data.id,
     user_id: data.userId,
@@ -19,9 +27,23 @@ function decode(data: TeamUser): TeamUserRow {
   };
 }
 
+function decode(data: TeamUser): TeamUserRow {
+  return {
+    ...rawDecode(data),
+    user: userAdapter.toDb(data.user),
+  };
+}
+
+export const rawAdapter = buildAdapter({
+  domain: "TeamUserDb" as const,
+  encodeTransformer: rawEncode,
+  decodeTransformer: rawDecode,
+  requiredProperties: ["id", "teamId", "userId", "role"],
+});
+
 export default buildAdapter({
   domain: "TeamUser" as const,
   encodeTransformer: encode,
   decodeTransformer: decode,
-  requiredProperties: ["id", "teamId", "userId", "role"],
+  requiredProperties: ["id", "teamId", "userId", "role", "user"],
 });

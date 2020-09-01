@@ -1,21 +1,31 @@
+import User, { UserRow } from "../users/types";
+
 export enum Role {
   ADMIN = "ADMIN",
   EDITOR = "EDITOR",
   VIEWER = "VIEWER",
 }
 
-export interface TeamUser {
+export interface TeamUserDb {
   id: string;
   teamId: string;
   userId: string;
   role: Role;
 }
 
-export interface TeamUserRow {
+export interface TeamUserDbRow {
   id: string;
   team_id: string;
   user_id: string;
   role: Role;
+}
+
+export interface TeamUser extends TeamUserDb {
+  user: User;
+}
+
+export interface TeamUserRow extends TeamUserDbRow {
+  user: UserRow;
 }
 
 export interface UnsavedTeamUser {

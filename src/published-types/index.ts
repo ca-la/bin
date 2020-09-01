@@ -26,6 +26,7 @@ export * from "../components/teams/types";
 export {
   Role as TeamUserRole,
   TeamUser,
+  TeamUserDb,
   UnsavedTeamUser,
   isUnsavedTeamUser,
 } from "../components/team-users/types";

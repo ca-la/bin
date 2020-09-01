@@ -1,24 +1,13 @@
-import {
-  CalaComponent,
-  CalaAdapter,
-  CalaDao,
-  CalaRouter,
-} from "../../services/cala-component/types";
+import { CalaComponent, CalaRouter } from "../../services/cala-component/types";
 
-import adapter from "./adapter";
-import dao from "./dao";
 import router from "./routes";
-import { TeamUser, TeamUserRow } from "./types";
+import { TeamUserDb, TeamUserDbRow } from "./types";
 
-interface TeamUserComponent extends CalaComponent<TeamUser, TeamUserRow> {
-  adapter: CalaAdapter<TeamUser, TeamUserRow>;
-  dao: CalaDao<TeamUser>;
+interface TeamUserComponent extends CalaComponent<TeamUserDb, TeamUserDbRow> {
   router: CalaRouter;
 }
 
 const component: TeamUserComponent = {
-  adapter,
-  dao,
   router,
   notifications: {},
 };

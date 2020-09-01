@@ -5,7 +5,7 @@ import {
   buildListeners,
 } from "../../services/cala-component/cala-listeners";
 
-import TeamUsersDAO from "../team-users/dao";
+import { rawDao as RawTeamUsersDAO } from "../team-users/dao";
 import { Role } from "../team-users/types";
 import { TeamDb } from "./types";
 
@@ -16,7 +16,7 @@ export const listeners: Listeners<TeamDb, typeof domain> = {
     event: RouteCreated<TeamDb, typeof domain>
   ): Promise<void> => {
     const { trx, actorId, created } = event;
-    await TeamUsersDAO.create(trx, {
+    await RawTeamUsersDAO.create(trx, {
       teamId: created.id,
       userId: actorId,
       id: uuid.v4(),
