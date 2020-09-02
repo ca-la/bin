@@ -58,6 +58,7 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
     deletedAt: null,
     description: "Initial commit",
     id: uuid.v4(),
+    teamId: null,
     title: "Drop 001/The Early Years",
   });
   const d1 = await createDesign({
@@ -246,6 +247,7 @@ test("/quote-payments POST does not generate quotes, payment method, invoice, li
     deletedAt: null,
     description: "Initial commit",
     id: uuid.v4(),
+    teamId: null,
     title: "Drop 001/The Early Years",
   });
   const design = await createDesign({
@@ -317,6 +319,7 @@ test("POST /quote-payments?isWaived=true waives payment", async (t: Test) => {
     deletedAt: null,
     description: "Initial commit",
     id: uuid.v4(),
+    teamId: null,
     title: "Drop 001/The Early Years",
   });
 
@@ -406,6 +409,7 @@ test("POST /quote-payments?isWaived=true fails if ineligible", async (t: Test) =
     deletedAt: null,
     description: "Initial commit",
     id: uuid.v4(),
+    teamId: null,
     title: "Drop 001/The Early Years",
   });
 
@@ -488,6 +492,7 @@ test(
       deletedAt: null,
       description: "Initial commit",
       id: uuid.v4(),
+      teamId: null,
       title: "Drop 001/The Early Years",
     });
     const design = await createDesign({
@@ -576,6 +581,7 @@ test("POST /quote-payments creates shopify products if connected to a storefront
     deletedAt: null,
     description: "Initial commit",
     id: uuid.v4(),
+    teamId: null,
     title: "Drop 001/The Early Years",
   });
   const design = await createDesign({
@@ -665,6 +671,7 @@ test("POST /quote-payments still succeeds if creates shopify products fails", as
     deletedAt: null,
     description: "Initial commit",
     id: uuid.v4(),
+    teamId: null,
     title: "Drop 001/The Early Years",
   });
   const design = await createDesign({
@@ -737,6 +744,7 @@ test("POST /quote-payments does not allow parallel requests to succeed", async (
     deletedAt: null,
     description: "Initial commit",
     id: uuid.v4(),
+    teamId: null,
     title: "Drop 001/The Early Years",
   });
   const d1 = await createDesign({
@@ -867,6 +875,7 @@ test("POST /quote-payments does not allow consecutive requests to succeed", asyn
     deletedAt: null,
     description: "Initial commit",
     id: uuid.v4(),
+    teamId: null,
     title: "Drop 001/The Early Years",
   });
   const d1 = await createDesign({

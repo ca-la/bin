@@ -20,6 +20,7 @@ export async function checkout() {
     deletedAt: null,
     description: "Initial commit",
     id: uuid.v4(),
+    teamId: null,
     title: "Drop 001/The Early Years",
   });
 

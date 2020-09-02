@@ -21,6 +21,7 @@ test("#getDesignPermissions", async (t: tape.Test) => {
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "C1",
   });
   const collection2 = await CollectionsDAO.create({
@@ -29,6 +30,7 @@ test("#getDesignPermissions", async (t: tape.Test) => {
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "C2",
   });
 
@@ -202,6 +204,7 @@ test("#getCollectionPermissions", async (t: tape.Test) => {
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "C1",
   });
   const collection2 = await CollectionsDAO.create({
@@ -210,6 +213,7 @@ test("#getCollectionPermissions", async (t: tape.Test) => {
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "C2",
   });
   const collection3 = await CollectionsDAO.create({
@@ -218,6 +222,7 @@ test("#getCollectionPermissions", async (t: tape.Test) => {
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "C3",
   });
   const collection4 = await CollectionsDAO.create({
@@ -226,6 +231,7 @@ test("#getCollectionPermissions", async (t: tape.Test) => {
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "C4",
   });
   await generateCollaborator({

@@ -1,6 +1,6 @@
 import uuid from "node-uuid";
 import CollaboratorsDAO = require("../../components/collaborators/dao");
-import Collection from "../../components/collections/domain-object";
+import CollectionDb from "../../components/collections/domain-object";
 import * as CollectionsDAO from "../../components/collections/dao";
 import createUser = require("../../test-helpers/create-user");
 import findCollaboratorsByRole from "./index";
@@ -13,7 +13,7 @@ import generateCollaborator from "../../test-helpers/factories/collaborator";
 import { moveDesign } from "../../test-helpers/collections";
 
 async function createResources(): Promise<{
-  collection: Collection;
+  collection: CollectionDb;
   user: User;
   design: ProductDesign;
 }> {
@@ -24,6 +24,7 @@ async function createResources(): Promise<{
     deletedAt: null,
     description: "We out here",
     id: uuid.v4(),
+    teamId: null,
     title: "Season 1",
   });
 

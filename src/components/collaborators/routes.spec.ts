@@ -71,6 +71,7 @@ test("POST /collaborators allows adding collaborators on a collection", async (t
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "AW19",
   });
 
@@ -99,6 +100,7 @@ test("PATCH /collaborators allows updating collaborators on a collection", async
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "AW19",
   });
 
@@ -196,6 +198,7 @@ test("POST /collaborators throws 400 with unknown role", async (t: Test) => {
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "AW19",
   });
 
@@ -236,6 +239,7 @@ test("GET /collaborators allows querying by collection ID", async (t: Test) => {
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "AW19",
   });
 
@@ -368,6 +372,7 @@ test("GET /collaborators requires access to the resource you want to access", as
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "AW19",
   });
 

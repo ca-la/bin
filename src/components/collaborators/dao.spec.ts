@@ -74,6 +74,7 @@ test("CollaboratorsDAO.findByDesign returns design and collection collaborators"
     deletedAt: null,
     description: "",
     id: uuid.v4(),
+    teamId: null,
     title: "AW19",
   });
 
@@ -200,6 +201,7 @@ test("CollaboratorsDAO.findByDesign returns collection collaborators", async (t:
     deletedAt: null,
     description: "",
     id: uuid.v4(),
+    teamId: null,
     title: "AW19",
   });
 
@@ -228,6 +230,7 @@ test("CollaboratorsDAO.findByCollection returns collaborators", async (t: Test) 
     deletedAt: null,
     description: "Initial commit",
     id: uuid.v4(),
+    teamId: null,
     title: "Drop 001/The Early Years",
   });
 
@@ -382,6 +385,7 @@ test("CollaboratorsDAO.findByCollectionAndUser returns collaborators", async (t:
     deletedAt: null,
     description: "Initial commit",
     id: uuid.v4(),
+    teamId: null,
     title: "Drop 001/The Early Years",
   });
 

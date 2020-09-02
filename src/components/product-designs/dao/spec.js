@@ -184,6 +184,7 @@ test("ProductDesignsDAO.findByCollectionId", async (t) => {
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "AW19",
   });
   const design = await ProductDesignsDAO.create({

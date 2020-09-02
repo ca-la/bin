@@ -1,6 +1,6 @@
 import createCollection from "./collection";
 import ProductDesignsDAO = require("../../components/product-designs/dao");
-import Collection from "../../components/collections/domain-object";
+import CollectionDb from "../../components/collections/domain-object";
 import { findById as findUserById } from "../../components/users/dao";
 import createUser = require("../create-user");
 import User from "../../components/users/domain-object";
@@ -8,7 +8,7 @@ import ProductDesign = require("../../components/product-designs/domain-objects/
 import { moveDesign } from "../collections";
 
 interface CollectionWithResources {
-  collection: Collection;
+  collection: CollectionDb;
   design: ProductDesign;
   user: User;
 }

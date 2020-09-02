@@ -27,6 +27,7 @@ test("CollaboratorTask DAO supports creation/retrieval", async (t: tape.Test) =>
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "FW19",
   });
 
@@ -83,6 +84,7 @@ test("CollaboratorTask DAO does not allow non-unique creation", async (t: tape.T
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "FW19",
   });
 
@@ -121,6 +123,7 @@ test("CollaboratorTask DAO supports multiple simultaneous creations", async (t: 
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "FW19",
   });
 
@@ -172,6 +175,7 @@ test("CollaboratorTask DAO supports multiple simultaneous deletions", async (t: 
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "FW19",
   });
 
@@ -248,6 +252,7 @@ test("CollaboratorTask DAO supports create all", async (t: tape.Test) => {
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "FW19",
   });
 

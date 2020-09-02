@@ -17,10 +17,8 @@ import useTransaction from "../../../middleware/use-transaction";
 
 import * as CollectionsDAO from "../dao";
 import * as CollaboratorsDAO from "../../collaborators/dao";
-import Collection, {
-  isCollection,
-  isPartialCollection,
-} from "../domain-object";
+import { isPartialCollection } from "../domain-object";
+import { Collection, CollectionDb } from "../types";
 import { createSubmission, getSubmissionStatus } from "./submissions";
 import {
   deleteDesign,
@@ -29,10 +27,7 @@ import {
   putDesign,
   putDesigns,
 } from "./designs";
-import {
-  getCollectionPermissions,
-  Permissions,
-} from "../../../services/get-permissions";
+import { getCollectionPermissions } from "../../../services/get-permissions";
 import { commitCostInputs, createPartnerPairing, recostInputs } from "./admin";
 import {
   fetchExpiredWithLabels,
@@ -43,8 +38,22 @@ import requireSubscription from "../../../middleware/require-subscription";
 
 const router = new Router();
 
-interface CollectionWithPermissions extends Collection {
-  permissions: Permissions;
+interface CreateCollectionRequest {
+  createdAt: string;
+  description: string;
+  id: string;
+  title: string;
+  teamId?: string | null;
+}
+
+function isCreateCollectionRequest(
+  candidate: Record<string, any>
+): candidate is CreateCollectionRequest {
+  const keyset = new Set(Object.keys(candidate));
+
+  return ["createdAt", "description", "id", "title"].every(
+    keyset.has.bind(keyset)
+  );
 }
 
 function* createCollection(
@@ -52,38 +61,43 @@ function* createCollection(
 ): Iterator<any, any, any> {
   const { body } = this.request;
   const { role, trx, userId } = this.state;
-  const data = { ...body, deletedAt: null, createdBy: userId };
 
-  if (data && isCollection(data)) {
-    const collection = yield CollectionsDAO.create(data).catch(
-      filterError(InvalidDataError, (err: InvalidDataError) =>
-        this.throw(400, err)
-      )
-    );
-
-    yield CollaboratorsDAO.create(
-      {
-        cancelledAt: null,
-        collectionId: collection.id,
-        designId: null,
-        invitationMessage: "",
-        role: "EDIT",
-        userEmail: null,
-        userId,
-      },
-      trx
-    );
-    const permissions = yield getCollectionPermissions(
-      collection,
-      role,
-      userId
-    );
-
-    this.body = { ...collection, permissions };
-    this.status = 201;
-  } else {
-    this.throw(400, "Request does not match Collection");
+  if (!isCreateCollectionRequest(body)) {
+    this.throw(400, "Request does not match expected Collection type");
   }
+
+  const data: CollectionDb = {
+    deletedAt: null,
+    createdBy: userId,
+    teamId: body.teamId || null,
+    createdAt: new Date(body.createdAt),
+    description: body.description,
+    id: body.id,
+    title: body.title,
+  };
+
+  const collection = yield CollectionsDAO.create(data).catch(
+    filterError(InvalidDataError, (err: InvalidDataError) =>
+      this.throw(400, err)
+    )
+  );
+
+  yield CollaboratorsDAO.create(
+    {
+      cancelledAt: null,
+      collectionId: collection.id,
+      designId: null,
+      invitationMessage: "",
+      role: "EDIT",
+      userEmail: null,
+      userId,
+    },
+    trx
+  );
+  const permissions = yield getCollectionPermissions(collection, role, userId);
+
+  this.body = { ...collection, permissions };
+  this.status = 201;
 }
 
 function* getList(this: TrxContext<AuthedContext>): Iterator<any, any, any> {
@@ -108,7 +122,7 @@ function* getList(this: TrxContext<AuthedContext>): Iterator<any, any, any> {
       search,
     });
 
-    const withPermissions: CollectionWithPermissions[] = [];
+    const withPermissions: Collection[] = [];
 
     for (const collection of collections) {
       withPermissions.push({

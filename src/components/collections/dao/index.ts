@@ -2,14 +2,14 @@ import Knex from "knex";
 import rethrow from "pg-rethrow";
 import { pick } from "lodash";
 
-import Collection, {
-  CollectionRow,
+import {
   dataAdapter,
   INSERTABLE_PROPERTIES,
   isCollectionRow,
   partialDataAdapter,
   UPDATABLE_PROPERTIES,
 } from "../domain-object";
+import { CollectionDb, CollectionDbRow } from "../types";
 import { CollectionDesignRow } from "../../../domain-objects/collection-design";
 
 import db from "../../../services/db";
@@ -26,19 +26,19 @@ import {
 
 export const TABLE_NAME = "collections";
 
-export async function create(data: Collection): Promise<Collection> {
+export async function create(data: CollectionDb): Promise<CollectionDb> {
   const rowData = pick(dataAdapter.forInsertion(data), INSERTABLE_PROPERTIES);
 
   const created = await db(TABLE_NAME)
     .insert(rowData, "*")
-    .then((rows: CollectionRow[]) => first<CollectionRow>(rows))
+    .then((rows: CollectionDbRow[]) => first<CollectionDbRow>(rows))
     .catch(rethrow);
 
   if (!created) {
     throw new Error("Failed to create a collection");
   }
 
-  return validate<CollectionRow, Collection>(
+  return validate<CollectionDbRow, CollectionDb>(
     TABLE_NAME,
     isCollectionRow,
     dataAdapter,
@@ -49,18 +49,18 @@ export async function create(data: Collection): Promise<Collection> {
 export async function deleteById(
   trx: Knex.Transaction,
   id: string
-): Promise<Collection> {
+): Promise<CollectionDb> {
   const deleted = await trx
     .from(TABLE_NAME)
     .where({ deleted_at: null, id })
     .update({ deleted_at: new Date() }, "*")
-    .then((rows: CollectionRow[]) => first<CollectionRow>(rows));
+    .then((rows: CollectionDbRow[]) => first<CollectionDbRow>(rows));
 
   if (!deleted) {
     throw new Error(`Failed to delete collection ${id}`);
   }
 
-  return validate<CollectionRow, Collection>(
+  return validate<CollectionDbRow, CollectionDb>(
     TABLE_NAME,
     isCollectionRow,
     dataAdapter,
@@ -70,8 +70,8 @@ export async function deleteById(
 
 export async function update(
   id: string,
-  data: Partial<Collection>
-): Promise<Collection> {
+  data: Partial<CollectionDb>
+): Promise<CollectionDb> {
   const rowData = pick(
     partialDataAdapter.forInsertion(data),
     UPDATABLE_PROPERTIES
@@ -79,14 +79,14 @@ export async function update(
   const updated = await db(TABLE_NAME)
     .where({ deleted_at: null, id })
     .update(rowData, "*")
-    .then((rows: CollectionRow[]) => first<CollectionRow>(rows))
+    .then((rows: CollectionDbRow[]) => first<CollectionDbRow>(rows))
     .catch(rethrow);
 
   if (!updated) {
     throw new Error(`Failed to update collection ${id}`);
   }
 
-  return validate<CollectionRow, Collection>(
+  return validate<CollectionDbRow, CollectionDb>(
     TABLE_NAME,
     isCollectionRow,
     dataAdapter,
@@ -94,13 +94,13 @@ export async function update(
   );
 }
 
-export async function findByUserId(userId: string): Promise<Collection[]> {
-  const collections: CollectionRow[] = await db(TABLE_NAME)
+export async function findByUserId(userId: string): Promise<CollectionDb[]> {
+  const collections: CollectionDbRow[] = await db(TABLE_NAME)
     .where({ created_by: userId, deleted_at: null })
     .orderBy("created_at", "desc")
     .catch(rethrow);
 
-  return validateEvery<CollectionRow, Collection>(
+  return validateEvery<CollectionDbRow, CollectionDb>(
     TABLE_NAME,
     isCollectionRow,
     dataAdapter,
@@ -116,8 +116,8 @@ export async function findByCollaboratorAndUserId(
     offset?: number;
     search?: string;
   }
-): Promise<Collection[]> {
-  const collections: CollectionRow[] = await trx
+): Promise<CollectionDb[]> {
+  const collections: CollectionDbRow[] = await trx
     .from(TABLE_NAME)
     .select("collections.*")
     .distinct("collections.id")
@@ -142,7 +142,7 @@ export async function findByCollaboratorAndUserId(
     .orderBy("collections.created_at", "desc")
     .catch(rethrow);
 
-  return validateEvery<CollectionRow, Collection>(
+  return validateEvery<CollectionDbRow, CollectionDb>(
     TABLE_NAME,
     isCollectionRow,
     dataAdapter,
@@ -153,7 +153,7 @@ export async function findByCollaboratorAndUserId(
 export async function findById(
   id: string,
   trx?: Knex.Transaction
-): Promise<Collection | null> {
+): Promise<CollectionDb | null> {
   const collection = await db(TABLE_NAME)
     .where({ id, deleted_at: null })
     .modify((query: Knex.QueryBuilder) => {
@@ -161,14 +161,14 @@ export async function findById(
         query.transacting(trx);
       }
     })
-    .then((rows: CollectionRow[]) => first<CollectionRow>(rows))
+    .then((rows: CollectionDbRow[]) => first<CollectionDbRow>(rows))
     .catch(rethrow);
 
   if (!collection) {
     return null;
   }
 
-  return validate<CollectionRow, Collection>(
+  return validate<CollectionDbRow, CollectionDb>(
     TABLE_NAME,
     isCollectionRow,
     dataAdapter,
@@ -179,7 +179,7 @@ export async function findById(
 export async function findByDesign(
   designId: string,
   trx?: Knex.Transaction
-): Promise<Collection[]> {
+): Promise<CollectionDb[]> {
   const collectionDesigns: CollectionDesignRow[] = await db(
     "collection_designs"
   )
@@ -191,15 +191,15 @@ export async function findByDesign(
     });
   const maybeCollections = await Promise.all(
     collectionDesigns.map(
-      (collectionDesign: CollectionDesignRow): Promise<Collection | null> =>
+      (collectionDesign: CollectionDesignRow): Promise<CollectionDb | null> =>
         findById(collectionDesign.collection_id, trx)
     )
   );
   const collections = maybeCollections.filter(
-    (maybeCollection: Collection | null): boolean => {
+    (maybeCollection: CollectionDb | null): boolean => {
       return maybeCollection !== null;
     }
-  ) as Collection[];
+  ) as CollectionDb[];
 
   return collections;
 }
@@ -208,9 +208,9 @@ export async function findByDesign(
  * Finds all submitted but unpaid for collections
  */
 export async function findSubmittedButUnpaidCollections(): Promise<
-  Collection[]
+  CollectionDb[]
 > {
-  const collections: CollectionRow[] = await db(TABLE_NAME)
+  const collections: CollectionDbRow[] = await db(TABLE_NAME)
     .select("collections.*")
     .distinct("collections.id")
     .from(TABLE_NAME)
@@ -240,7 +240,7 @@ JOIN (
     .where({ "collections.deleted_at": null })
     .orderBy("collections.id");
 
-  return validateEvery<CollectionRow, Collection>(
+  return validateEvery<CollectionDbRow, CollectionDb>(
     TABLE_NAME,
     isCollectionRow,
     dataAdapter,

@@ -9,15 +9,16 @@ import * as BidsDAO from "../../bids/dao";
 import createUser from "../../../test-helpers/create-user";
 import ProductDesignsDAO from "../../product-designs/dao";
 import DesignEventsDAO from "../../design-events/dao";
-import * as SubscriptionsDAO from "../../../components/subscriptions/dao";
-import * as PaymentMethodsDAO from "../../../components/payment-methods/dao";
-import * as PlansDAO from "../../../components/plans/dao";
+import * as SubscriptionsDAO from "../../subscriptions/dao";
+import * as PaymentMethodsDAO from "../../payment-methods/dao";
+import * as PlansDAO from "../../plans/dao";
+import { rawDao as RawTeamsDAO } from "../../teams/dao";
 import API from "../../../test-helpers/http";
 import { sandbox, test } from "../../../test-helpers/fresh";
 import * as CreateNotifications from "../../../services/create-notifications";
 import * as DesignTasksService from "../../../services/create-design-tasks";
 import { stubFetchUncostedWithLabels } from "../../../test-helpers/stubs/collections";
-import Collection from "../domain-object";
+import CollectionDb from "../domain-object";
 import generateCollaborator from "../../../test-helpers/factories/collaborator";
 import * as SubmissionStatusService from "../services/determine-submission-status";
 import { moveDesign } from "../../../test-helpers/collections";
@@ -76,6 +77,50 @@ test("POST /collections/ without a full object can create a collection", async (
     createdAt: new Date(),
     description: "Initial commit",
     id: uuid.v4(),
+    title: "Drop 001/The Early Years",
+  };
+  sandbox().stub(CollaboratorsDAO, "create").resolves({
+    collectionId: uuid.v4(),
+    id: uuid.v4(),
+    role: "EDIT",
+    userId: uuid.v4(),
+  });
+
+  const [postResponse, postCollection] = await API.post("/collections", {
+    headers: API.authHeader(session.id),
+    body,
+  });
+  const [getResponse, getCollection] = await API.get(
+    `/collections/${postCollection.id}`,
+    {
+      headers: API.authHeader(session.id),
+    }
+  );
+
+  t.equal(postResponse.status, 201, 'POST returns "201 Created" status');
+  t.equal(getResponse.status, 200, 'GET returns "200 OK" status');
+  t.deepEqual(
+    postCollection,
+    getCollection,
+    "return from POST is identical to GET"
+  );
+});
+
+test("POST /collections with a teamId", async (t: tape.Test) => {
+  const { session } = await createUser();
+  const team = await db.transaction((trx: Knex.Transaction) =>
+    RawTeamsDAO.create(trx, {
+      id: uuid.v4(),
+      title: "A team",
+      createdAt: new Date(),
+      deletedAt: null,
+    })
+  );
+  const body = {
+    createdAt: new Date(),
+    description: "Initial commit",
+    id: uuid.v4(),
+    teamId: team.id,
     title: "Drop 001/The Early Years",
   };
   sandbox().stub(CollaboratorsDAO, "create").resolves({
@@ -197,6 +242,7 @@ test("GET /collections", async (t: tape.Test) => {
     deletedAt: null,
     description: "Initial commit",
     id: uuid.v4(),
+    teamId: null,
     title: "Drop 001/The Early Years",
   });
   const collection2 = await CollectionsDAO.create({
@@ -205,6 +251,7 @@ test("GET /collections", async (t: tape.Test) => {
     deletedAt: null,
     description: "Another collection",
     id: uuid.v4(),
+    teamId: null,
     title: "Drop 002",
   });
   await generateCollaborator({
@@ -409,6 +456,7 @@ test("POST /collections/:id/submissions", async (t: tape.Test) => {
     deletedAt: null,
     description: "Initial commit",
     id: uuid.v4(),
+    teamId: null,
     title: "Drop 001/The Early Years",
   });
   await generateCollaborator({
@@ -589,6 +637,7 @@ test("GET /collections/:collectionId/submissions", async (t: tape.Test) => {
     deletedAt: null,
     description: "Initial commit",
     id: collectionId,
+    teamId: null,
     title: "Drop 001/The Early Years",
   });
 
@@ -659,6 +708,7 @@ test("POST /collections/:collectionId/cost-inputs", async (t: tape.Test) => {
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "Yohji Yamamoto SS19",
   });
   const designOne = await generateDesign({
@@ -840,6 +890,7 @@ test("POST /collections/:collectionId/partner-pairings", async (t: tape.Test) =>
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "Yohji Yamamoto FW19",
   });
   const designThree = await createDesign({
@@ -878,7 +929,7 @@ test("GET /collections?isSubmitted=true&isCosted=false returns collections with 
 
   t.equal(responseOk.status, 200, 'GET returns "200 OK" status');
   t.equal(bodyOk.length, 2, "2 collections are returned");
-  const newTimeBody = bodyOk.map((el: Collection) => ({
+  const newTimeBody = bodyOk.map((el: CollectionDb) => ({
     ...el,
     createdAt: new Date(el.createdAt),
   }));

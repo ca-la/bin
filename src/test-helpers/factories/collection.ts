@@ -1,16 +1,16 @@
 import uuid from "node-uuid";
 import { create } from "../../components/collections/dao";
-import Collection from "../../components/collections/domain-object";
+import CollectionDb from "../../components/collections/domain-object";
 import { findById as findUserById } from "../../components/users/dao";
 import createUser = require("../create-user");
 
 interface CollectionWithResources {
-  collection: Collection;
+  collection: CollectionDb;
   createdBy: any;
 }
 
 export default async function generateCollection(
-  options: Partial<Collection> = {}
+  options: Partial<CollectionDb> = {}
 ): Promise<CollectionWithResources> {
   const { user } = options.createdBy
     ? { user: await findUserById(options.createdBy) }
@@ -22,6 +22,7 @@ export default async function generateCollection(
     deletedAt: options.deletedAt || null,
     description: options.description || null,
     id: options.id || uuid.v4(),
+    teamId: options.teamId || null,
     title: options.title || null,
   });
 

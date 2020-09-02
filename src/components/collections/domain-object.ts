@@ -4,49 +4,55 @@ import {
   hasProperties,
   hasSomeProperties,
 } from "../../services/require-properties";
-import { Collection, CollectionRow as Row } from "./types";
+import { CollectionDb, CollectionDbRow as Row } from "./types";
 
-export default Collection;
+export default CollectionDb;
 export type CollectionRow = Row;
 
-export const UPDATABLE_PROPERTIES = ["description", "title"];
-
-export const INSERTABLE_PROPERTIES = [
-  "created_by",
+export const UPDATABLE_PROPERTIES: (keyof CollectionRow)[] = [
   "description",
-  "id",
   "title",
 ];
 
-function encode(row: CollectionRow): Collection {
+export const INSERTABLE_PROPERTIES: (keyof CollectionRow)[] = [
+  "created_by",
+  "description",
+  "id",
+  "team_id",
+  "title",
+];
+
+function encode(row: CollectionRow): CollectionDb {
   return {
     createdAt: row.created_at,
     createdBy: row.created_by,
     deletedAt: row.deleted_at,
     description: row.description,
     id: row.id,
+    teamId: row.team_id,
     title: row.title,
   };
 }
 
-function decode(data: Collection): CollectionRow {
+function decode(data: CollectionDb): CollectionRow {
   return {
     created_at: data.createdAt,
     created_by: data.createdBy,
     deleted_at: data.deletedAt,
     description: data.description,
     id: data.id,
+    team_id: data.teamId,
     title: data.title,
   };
 }
 
-export const dataAdapter = new DataAdapter<CollectionRow, Collection>(
+export const dataAdapter = new DataAdapter<CollectionRow, CollectionDb>(
   encode,
   decode
 );
 export const partialDataAdapter = new DataAdapter<
   Partial<CollectionRow>,
-  Partial<Collection>
+  Partial<CollectionDb>
 >();
 
 export function isCollectionRow(row: object): row is CollectionRow {
@@ -57,11 +63,12 @@ export function isCollectionRow(row: object): row is CollectionRow {
     "deleted_at",
     "description",
     "id",
+    "team_id",
     "title"
   );
 }
 
-export function isCollection(candidate: object): candidate is Collection {
+export function isCollection(candidate: object): candidate is CollectionDb {
   return hasOnlyProperties(
     candidate,
     "createdAt",
@@ -69,13 +76,14 @@ export function isCollection(candidate: object): candidate is Collection {
     "deletedAt",
     "description",
     "id",
+    "teamId",
     "title"
   );
 }
 
 export function isPartialCollection(
   candidate: object
-): candidate is Partial<Collection> {
+): candidate is Partial<CollectionDb> {
   return hasSomeProperties(
     candidate,
     "createdAt",
@@ -83,6 +91,7 @@ export function isPartialCollection(
     "deletedAt",
     "description",
     "id",
+    "teamId",
     "title"
   );
 }

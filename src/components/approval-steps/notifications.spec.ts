@@ -12,7 +12,7 @@ import generateCollaborator from "../../test-helpers/factories/collaborator";
 import { CollaboratorWithUser } from "../collaborators/types";
 import ApprovalStep from "./domain-object";
 import ProductDesign from "../product-designs/domain-objects/product-design";
-import Collection from "../collections/domain-object";
+import CollectionDb from "../collections/domain-object";
 
 const prepareAssets = async (): Promise<{
   actor: any;
@@ -20,7 +20,7 @@ const prepareAssets = async (): Promise<{
   collaborator: CollaboratorWithUser;
   approvalStep: ApprovalStep;
   design: ProductDesign;
-  collection: Collection;
+  collection: CollectionDb;
 }> => {
   const prepareTrx = await db.transaction();
   try {

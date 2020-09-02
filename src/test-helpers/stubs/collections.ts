@@ -1,10 +1,10 @@
 import { sandbox } from "../fresh";
 import Sinon from "sinon";
 import * as FetchService from "../../components/collections/services/fetch-with-labels";
-import Collection from "../../components/collections/domain-object";
+import CollectionDb from "../../components/collections/domain-object";
 
 export const stubFetchUncostedWithLabels = (): {
-  collections: Collection[];
+  collections: CollectionDb[];
   stub: Sinon.SinonStub;
 } => {
   const collections = [
@@ -14,6 +14,7 @@ export const stubFetchUncostedWithLabels = (): {
       deletedAt: null,
       description: "",
       id: "48b54194-257f-42a3-a6a2-31e91862a463",
+      teamId: null,
       title: "unsubmitted test collection",
       label: "Needs Costing",
     },
@@ -23,6 +24,7 @@ export const stubFetchUncostedWithLabels = (): {
       deletedAt: null,
       description: "",
       id: "4e92fdf8-fc6c-4d33-96f6-ba325d9ab5e8",
+      teamId: null,
       title: "jhadfkjhas",
       label: "Needs Costing",
     },

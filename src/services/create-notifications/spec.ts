@@ -407,6 +407,7 @@ test("sendTaskCommentCreateNotification", async (t: tape.Test) => {
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "AW19",
   });
   const design = await DesignsDAO.create({
@@ -515,6 +516,7 @@ test("sendTaskCommentMentionNotification", async (t: tape.Test) => {
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "AW19",
   });
   const design = await DesignsDAO.create({
@@ -621,6 +623,7 @@ test("sendTaskCommentReplyNotification", async (t: tape.Test) => {
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "AW19",
   });
   const design = await DesignsDAO.create({
@@ -740,6 +743,7 @@ test("sendTaskAssignmentNotification", async (t: tape.Test) => {
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "AW19",
   });
   const design = await DesignsDAO.create({
@@ -825,6 +829,7 @@ test("sendTaskAssignmentNotification does not send if assigned to self", async (
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "AW19",
   });
   const design = await DesignsDAO.create({
@@ -893,6 +898,7 @@ test("sendTaskAssignmentNotification does not send if assigned to collaborator w
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "AW19",
   });
   const design = await DesignsDAO.create({
@@ -973,6 +979,7 @@ test("sendTaskCompletionNotification", async (t: tape.Test) => {
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "AW19",
   });
   const design = await DesignsDAO.create({
@@ -1096,6 +1103,7 @@ test("immediatelySendFullyCostedCollection", async (t: tape.Test) => {
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "AW19",
   });
   await generateCollaborator({
@@ -1184,6 +1192,7 @@ test("immediatelySendInviteCollaborator", async (t: tape.Test) => {
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "AW19",
   });
   const { collaborator: collaboratorOne } = await generateCollaborator({

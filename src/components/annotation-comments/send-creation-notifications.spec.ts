@@ -6,7 +6,7 @@ import Sinon from "sinon";
 import * as AnnotationsDAO from "../../components/product-design-canvas-annotations/dao";
 import Annotation from "../../components/product-design-canvas-annotations/domain-object";
 import Collaborator from "../../components/collaborators/types";
-import Collection from "../../components/collections/domain-object";
+import CollectionDb from "../../components/collections/domain-object";
 import sendCreationNotifications from "./send-creation-notifications";
 import User from "../../components/users/domain-object";
 import createUser from "../../test-helpers/create-user";
@@ -23,7 +23,7 @@ import ProductDesign from "../product-designs/domain-objects/product-design";
 
 async function setup(): Promise<{
   annotation: Annotation;
-  collection: Collection;
+  collection: CollectionDb;
   collaborator: Collaborator;
   collaboratorUser: User;
   mentionStub: Sinon.SinonStub;

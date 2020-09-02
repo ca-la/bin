@@ -29,6 +29,7 @@ test("createShopifyProductsForCollection creates a Hermes message for each desig
     deletedAt: null,
     description: "Initial commit",
     id: uuid.v4(),
+    teamId: null,
     title: "Drop 001/The Early Years",
   });
   const design = await ProductDesignsDAO.create({

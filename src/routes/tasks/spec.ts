@@ -247,6 +247,7 @@ test("GET /tasks?userId=:userId returns all tasks for a user", async (t: tape.Te
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "FW19",
   });
   const design = await createDesign({
@@ -353,6 +354,7 @@ test("PUT /tasks/:taskId/assignees adds Collaborators to Tasks successfully", as
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "FW19",
   });
 
@@ -437,6 +439,7 @@ test("PUT /tasks/:taskId when changing status to Completed", async (t: tape.Test
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "FW19",
   });
 
@@ -777,6 +780,7 @@ test("GET list returns all tasks by resource with limit & offset", async (t: tap
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "FW19",
   });
   const design = await createDesign({

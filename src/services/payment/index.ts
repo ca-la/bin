@@ -20,7 +20,7 @@ import {
   CreateQuotePayload,
   generateFromPayloadAndUser as createQuotes,
 } from "../../services/generate-pricing-quote";
-import Collection from "../../components/collections/domain-object";
+import CollectionDb from "../../components/collections/domain-object";
 import Invoice = require("../../domain-objects/invoice");
 import LineItem from "../../domain-objects/line-item";
 import createDesignPaymentLocks from "./create-design-payment-locks";
@@ -130,7 +130,7 @@ export default async function payInvoiceWithNewPaymentMethod(
   quoteRequests: CreateRequest,
   paymentMethodTokenId: string,
   userId: string,
-  collection: Collection,
+  collection: CollectionDb,
   invoiceAddressId: string | null
 ): Promise<Invoice> {
   return db.transaction(async (trx: Knex.Transaction) => {
@@ -170,7 +170,7 @@ export default async function payInvoiceWithNewPaymentMethod(
 export async function payWaivedQuote(
   quoteRequests: CreateRequest,
   userId: string,
-  collection: Collection,
+  collection: CollectionDb,
   invoiceAddressId: string | null
 ): Promise<Invoice> {
   return db.transaction(async (trx: Knex.Transaction) => {

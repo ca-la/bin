@@ -5,7 +5,7 @@ import * as ProductDesignStagesDAO from "../../dao/product-design-stages";
 import * as CollaboratorTasksDAO from "../../dao/collaborator-tasks";
 import * as CreateTaskService from "../create-task";
 import * as FindTaskTypeCollaborators from "../find-task-type-collaborators";
-import Collection from "../../components/collections/domain-object";
+import CollectionDb from "../../components/collections/domain-object";
 import * as CollectionsDAO from "../../components/collections/dao";
 import createDesignTasks from "./index";
 import createUser = require("../../test-helpers/create-user");
@@ -21,7 +21,7 @@ import { moveDesign } from "../../test-helpers/collections";
 async function createResources(): Promise<{
   user: User;
   design: ProductDesign;
-  collection: Collection;
+  collection: CollectionDb;
   collaborator: Collaborator;
 }> {
   const designer = await createUser({ withSession: false });
@@ -31,6 +31,7 @@ async function createResources(): Promise<{
     deletedAt: null,
     description: "We out here",
     id: uuid.v4(),
+    teamId: null,
     title: "Season 1",
   });
 

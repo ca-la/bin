@@ -33,6 +33,7 @@ test("CollectionsDAO#create creates a collection", async (t: Test) => {
     deletedAt: null,
     description: "Initial commit",
     id: uuid.v4(),
+    teamId: null,
     title: "Drop 001/The Early Years",
   });
 
@@ -51,6 +52,7 @@ test("CollectionsDAO#update updates a collection", async (t: Test) => {
     deletedAt: null,
     description: "Initial commit",
     id: uuid.v4(),
+    teamId: null,
     title: "Drop 001/The Early Years",
   });
 
@@ -71,6 +73,7 @@ test("CollectionsDAO#findById does not find deleted collections", async (t: Test
       deletedAt: null,
       description: "Initial commit",
       id: uuid.v4(),
+      teamId: null,
       title: "Drop 001/The Early Years",
     });
     await CollectionsDAO.deleteById(trx, createdCollection.id);
@@ -95,6 +98,7 @@ test("CollectionsDAO#findByUserId includes referenced user collections", async (
     deletedAt: null,
     description: "Initial commit",
     id: id1,
+    teamId: null,
     title: "Drop 001/The Early Years",
   });
   await CollectionsDAO.create({
@@ -103,6 +107,7 @@ test("CollectionsDAO#findByUserId includes referenced user collections", async (
     deletedAt: null,
     description: "Another collection",
     id: id2,
+    teamId: null,
     title: "Drop 002",
   });
   const retrievedCollection = await CollectionsDAO.findByUserId(user1.id);
@@ -124,6 +129,7 @@ test("CollectionsDAO#findByCollaboratorAndUserId finds all collections and searc
     deletedAt: null,
     description: "Initial commit",
     id: id1,
+    teamId: null,
     title: "Drop 001/The Early Years",
   });
   const collection2 = await CollectionsDAO.create({
@@ -132,6 +138,7 @@ test("CollectionsDAO#findByCollaboratorAndUserId finds all collections and searc
     deletedAt: null,
     description: "Another collection",
     id: id2,
+    teamId: null,
     title: "Drop 002",
   });
   const collection3 = await CollectionsDAO.create({
@@ -140,6 +147,7 @@ test("CollectionsDAO#findByCollaboratorAndUserId finds all collections and searc
     deletedAt: null,
     description: "gucci gang gucci gang gucci gang",
     id: id3,
+    teamId: null,
     title: "Drop 003",
   });
   const { collection: collection4 } = await generateCollection({
@@ -226,6 +234,7 @@ test("CollectionsDAO#addDesign adds a design to a collection", async (t: Test) =
     deletedAt: null,
     description: "Initial commit",
     id: uuid.v4(),
+    teamId: null,
     title: "Drop 001/The Early Years",
   });
   const createdDesigns = await Promise.all([
@@ -269,6 +278,7 @@ test("CollectionsDAO#moveDesign moves designs to different collections", async (
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "Raf Raf Raf",
   });
   const createdCollectionTwo = await CollectionsDAO.create({
@@ -277,6 +287,7 @@ test("CollectionsDAO#moveDesign moves designs to different collections", async (
     deletedAt: null,
     description: "2CoolForSkool",
     id: uuid.v4(),
+    teamId: null,
     title: "Hypebeast",
   });
   const createdDesign = await ProductDesignsDAO.create({
@@ -317,6 +328,7 @@ test("CollectionsDAO#removeDesign removes a design from a collection", async (t:
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "Raf Raf Raf",
   });
   const createdDesign = await ProductDesignsDAO.create({

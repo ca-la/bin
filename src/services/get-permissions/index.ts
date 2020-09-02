@@ -2,7 +2,7 @@ import * as CollaboratorsDAO from "../../components/collaborators/dao";
 import Collaborator from "../../components/collaborators/types";
 import * as CollectionsDAO from "../../components/collections/dao";
 import { isQuoteCommitted } from "../../components/design-events/service";
-import Collection from "../../components/collections/domain-object";
+import CollectionDb from "../../components/collections/domain-object";
 import { isOwner as isDesignOwner } from "../../components/product-designs/dao/dao";
 
 export interface Permissions {
@@ -98,7 +98,7 @@ export async function getDesignPermissions(options: {
 }
 
 export async function getCollectionPermissions(
-  collection: Collection,
+  collection: CollectionDb,
   sessionRole: string,
   sessionUserId: string
 ): Promise<Permissions> {

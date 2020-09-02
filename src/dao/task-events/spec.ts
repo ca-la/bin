@@ -444,6 +444,7 @@ test("Task Events DAO supports retrieval by collectionId", async (t: tape.Test) 
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: null,
   });
   await addDesign(collection.id, design.id);
@@ -546,6 +547,7 @@ test("Task Events DAO supports retrieval by userId on shared collection", async 
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "FW19",
   });
 
@@ -589,6 +591,7 @@ test("Task Events DAO supports retrieval by userId on shared collection", async 
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "FW19",
   });
 
@@ -723,6 +726,7 @@ test("Task Events DAO supports retrieval by with collection id filter", async (t
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "FW19",
   });
   const design1 = await createDesign({
@@ -745,6 +749,7 @@ test("Task Events DAO supports retrieval by with collection id filter", async (t
     deletedAt: null,
     description: null,
     id: uuid.v4(),
+    teamId: null,
     title: "FW19",
   });
   const design2 = await createDesign({

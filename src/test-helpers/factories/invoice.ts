@@ -1,7 +1,7 @@
 import db from "../../services/db";
 import Knex from "knex";
 
-import Collection from "../../components/collections/domain-object";
+import CollectionDb from "../../components/collections/domain-object";
 import { findById as findUserById } from "../../components/users/dao";
 import * as CollectionsDAO from "../../components/collections/dao";
 import * as InvoicesDAO from "../../dao/invoices";
@@ -11,7 +11,7 @@ import generateCollection from "./collection";
 import User from "../../components/users/domain-object";
 
 interface InvoiceWithResources {
-  collection: Collection;
+  collection: CollectionDb;
   userId: any;
   invoice: Invoice;
 }

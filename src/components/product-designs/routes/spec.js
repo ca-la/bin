@@ -257,6 +257,7 @@ test("GET /product-designs/:designId/collections returns collections", async (t)
     deletedAt: null,
     description: "Cool Collection",
     id: uuid.v4(),
+    teamId: null,
     title: "Virgil Drop",
   });
   const design = await ProductDesignsDAO.create({

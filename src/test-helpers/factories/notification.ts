@@ -24,7 +24,7 @@ import * as ApprovalStepDAO from "../../components/approval-steps/dao";
 import * as ApprovalSubmissionsDAO from "../../components/approval-step-submissions/dao";
 
 import generateCollection from "./collection";
-import Collection from "../../components/collections/domain-object";
+import CollectionDb from "../../components/collections/domain-object";
 import User from "../../components/users/domain-object";
 import ProductDesign = require("../../components/product-designs/domain-objects/product-design");
 import { templateNotification } from "../../components/notifications/models/base";
@@ -57,7 +57,7 @@ interface NotificationWithResources {
   recipient: User;
   notification: FullNotification;
   design: ProductDesign;
-  collection: Collection;
+  collection: CollectionDb;
   collaborator: CollaboratorWithUser;
   annotation: ProductDesignCanvasAnnotation;
   measurement: ProductDesignCanvasMeasurement;
@@ -608,7 +608,7 @@ interface NotificationsWithResources {
   };
   notifications: Notification[];
   designs: ProductDesign[];
-  collections: Collection[];
+  collections: CollectionDb[];
   collaborators: CollaboratorWithUser[];
   annotations: ProductDesignCanvasAnnotation[];
   measurements: ProductDesignCanvasMeasurement[];

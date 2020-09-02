@@ -1,4 +1,4 @@
-import Collection from "../../domain-object";
+import CollectionDb from "../../domain-object";
 import { findSubmittedButUnpaidCollections } from "../../dao";
 import {
   determineSubmissionStatus,
@@ -7,7 +7,7 @@ import {
 import { ProductDesignDataWithMeta } from "../../../product-designs/domain-objects/with-meta";
 import { BasePricingCostInput } from "../../../pricing-cost-inputs/domain-object";
 
-interface CollectionWithLabels extends Collection {
+interface CollectionWithLabels extends CollectionDb {
   label: string;
 }
 
@@ -20,7 +20,7 @@ export async function fetchUncostedWithLabels(): Promise<
   const collections = await findSubmittedButUnpaidCollections();
   const labelledCollections: CollectionWithLabels[] = [];
   const collectionStatuses = await determineSubmissionStatus(
-    collections.map((collection: Collection): string => collection.id)
+    collections.map((collection: CollectionDb): string => collection.id)
   );
 
   for (const collection of collections) {
@@ -44,7 +44,7 @@ export async function fetchExpiredWithLabels(): Promise<
   const labelledCollections: CollectionWithLabels[] = [];
 
   const designsByCollection = await getDesignsMetaByCollection(
-    collections.map((collection: Collection): string => collection.id)
+    collections.map((collection: CollectionDb): string => collection.id)
   );
 
   for (const collection of collections) {
