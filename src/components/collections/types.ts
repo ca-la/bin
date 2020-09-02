@@ -1,4 +1,4 @@
-import { Permissions } from "../../services/get-permissions";
+import { Permissions } from "../permissions/types";
 
 export interface CollectionDb {
   createdAt: Date;

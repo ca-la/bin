@@ -4,15 +4,8 @@ import * as CollectionsDAO from "../../components/collections/dao";
 import { isQuoteCommitted } from "../../components/design-events/service";
 import CollectionDb from "../../components/collections/domain-object";
 import { isOwner as isDesignOwner } from "../../components/product-designs/dao/dao";
-
-export interface Permissions {
-  canComment: boolean;
-  canDelete: boolean;
-  canEdit: boolean;
-  canEditVariants: boolean;
-  canSubmit: boolean;
-  canView: boolean;
-}
+import { Permissions } from "../../components/permissions/types";
+export { Permissions } from "../../components/permissions/types";
 
 export interface PermissionsAndRole {
   permissions: Permissions;
