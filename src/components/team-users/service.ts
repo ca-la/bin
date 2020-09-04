@@ -17,14 +17,18 @@ const allowedRolesMap: Record<TeamUserRole, TeamUserRole[]> = {
   [TeamUserRole.VIEWER]: [],
 };
 
-export function requireTeamRoles(roles: TeamUserRole[]) {
+export function requireTeamRoles(
+  roles: TeamUserRole[],
+  getTeamId: (context: TrxContext<AuthedContext<any>>) => Promise<string>
+) {
   return function* (
-    this: TrxContext<AuthedContext<{}, { actorTeamRole?: TeamUserRole }>>,
+    this: TrxContext<AuthedContext<any, { actorTeamRole?: TeamUserRole }>>,
     next: () => Promise<any>
   ) {
     const { trx, userId } = this.state;
 
-    const actorTeamUser = yield TeamUsersDAO.findOne(trx, { userId });
+    const teamId = yield getTeamId(this);
+    const actorTeamUser = yield TeamUsersDAO.findOne(trx, { teamId, userId });
 
     if (!actorTeamUser) {
       this.throw(

@@ -214,7 +214,7 @@ test("GET /team-users?teamId: missing query param", async (t: Test) => {
 test("GET /team-users?teamId: forbidden", async (t: Test) => {
   const { findActorTeamUserStub } = setup();
   findActorTeamUserStub.resolves(null);
-  const [forbidden] = await get("/team-users", {
+  const [forbidden] = await get("/team-users?teamId=a-team-id", {
     headers: authHeader("a-session-id"),
   });
 
@@ -230,6 +230,19 @@ test("/team-users end-to-end", async (t: Test) => {
   const teamId = uuid.v4();
 
   try {
+    const unusedTeam = await RawTeamsDAO.create(trx, {
+      id: uuid.v4(),
+      title: "Test Team",
+      createdAt: now,
+      deletedAt: null,
+    });
+    await RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      role: Role.VIEWER,
+      teamId: unusedTeam.id,
+      userId: teamAdmin.user.id,
+    });
+
     await RawTeamsDAO.create(trx, {
       id: teamId,
       title: "Test Team",

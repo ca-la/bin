@@ -1,10 +1,11 @@
 import useTransaction from "../../middleware/use-transaction";
 import requireAuth from "../../middleware/require-auth";
+import { requireQueryParam } from "../../middleware/require-query-param";
+import { typeGuard } from "../../middleware/type-guard";
 
 import filterError from "../../services/filter-error";
 import UnauthorizedError from "../../errors/unauthorized";
 import ResourceNotFoundError from "../../errors/resource-not-found";
-import InvalidDataError from "../../errors/invalid-data";
 
 import {
   isUnsavedTeamUser,
@@ -13,7 +14,6 @@ import {
 } from "./types";
 import { createTeamUser, requireTeamRoles } from "./service";
 import TeamUsersDAO from "./dao";
-import { requireQueryParam } from "../../middleware/require-query-param";
 
 function* create(
   this: TrxContext<
@@ -22,12 +22,6 @@ function* create(
 ) {
   const { body } = this.request;
   const { trx, actorTeamRole } = this.state;
-
-  if (!isUnsavedTeamUser(body)) {
-    throw new InvalidDataError(
-      "You must provide the following data: teamId, userEmail, role"
-    );
-  }
 
   this.body = yield createTeamUser(trx, actorTeamRole, body)
     .catch(
@@ -58,14 +52,22 @@ export default {
       post: [
         useTransaction,
         requireAuth,
-        requireTeamRoles([TeamUserRole.ADMIN, TeamUserRole.EDITOR]),
+        typeGuard(isUnsavedTeamUser),
+        requireTeamRoles(
+          [TeamUserRole.ADMIN, TeamUserRole.EDITOR],
+          async (context: AuthedContext<{ teamId: string }>) =>
+            context.request.body.teamId
+        ),
         create,
       ],
       get: [
         useTransaction,
         requireAuth,
-        requireTeamRoles(Object.values(TeamUserRole)),
         requireQueryParam("teamId"),
+        requireTeamRoles(
+          Object.values(TeamUserRole),
+          async (context: AuthedContext) => context.query.teamId
+        ),
         getList,
       ],
     },
