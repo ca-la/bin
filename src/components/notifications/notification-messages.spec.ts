@@ -520,10 +520,7 @@ test("task assignment notification message", async (t: tape.Test) => {
   if (!message) {
     throw new Error("Did not create message");
   }
-  t.assert(
-    message.html.includes("I have changed"),
-    "message html contains the latest task title"
-  );
+
   t.assert(
     message.actor && message.actor.id === actor.id,
     "message.actor && message.actor.id is the user"
