@@ -1123,14 +1123,7 @@ test("findAllWithCostsAndEvents +1 case", async (t: tape.Test) => {
     "Returns the newest design event last"
   );
   t.equal(results[0].costInputs.length, 1, "Returns a single cost input");
-  t.deepEqual(
-    {
-      ...results[0].costInputs[0],
-      createdAt: new Date(results[0].costInputs[0].createdAt),
-    },
-    omit(ci1, "processes"),
-    "Returns the first cost input"
-  );
+  t.equal(results[0].costInputs[0].id, ci1.id, "Returns the first cost input");
 
   // Second Item
   t.deepEqual(

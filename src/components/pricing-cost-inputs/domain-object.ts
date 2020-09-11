@@ -40,7 +40,7 @@ export interface BasePricingCostInputRow {
   created_at: Date;
   deleted_at: Date | null;
   design_id: string;
-  expires_at: string | null;
+  expires_at: Date | null;
   product_type: ProductType;
   product_complexity: Complexity;
   material_category: MaterialCategory;
@@ -63,20 +63,92 @@ export interface PricingCostInputRow
   product_type_version: number;
 }
 
+function encodeBase(row: BasePricingCostInputRow): BasePricingCostInput {
+  return {
+    createdAt: row.created_at,
+    deletedAt: row.deleted_at,
+    designId: row.design_id,
+    expiresAt: row.expires_at,
+    id: row.id,
+    materialBudgetCents: row.material_budget_cents,
+    materialCategory: row.material_category,
+    productComplexity: row.product_complexity,
+    productType: row.product_type,
+  };
+}
+
+function decodeBase(data: BasePricingCostInput): BasePricingCostInputRow {
+  return {
+    created_at: data.createdAt,
+    deleted_at: data.deletedAt,
+    design_id: data.designId,
+    expires_at: data.expiresAt,
+    id: data.id,
+    material_budget_cents: data.materialBudgetCents,
+    material_category: data.materialCategory,
+    product_complexity: data.productComplexity,
+    product_type: data.productType,
+  };
+}
+
+function encodeWithoutVersions(
+  row: PricingCostInputRowWithoutVersions
+): PricingCostInputWithoutVersions {
+  return {
+    ...encodeBase(row),
+    processes: row.processes,
+  };
+}
+
+function decodeWithoutVersions(
+  data: PricingCostInputWithoutVersions
+): PricingCostInputRowWithoutVersions {
+  return {
+    ...decodeBase(data),
+    processes: data.processes,
+  };
+}
+
+function encode(row: PricingCostInputRow): PricingCostInput {
+  return {
+    ...encodeWithoutVersions(row),
+    careLabelsVersion: row.care_labels_version,
+    constantsVersion: row.constants_version,
+    marginVersion: row.margin_version,
+    processTimelinesVersion: row.process_timelines_version,
+    processesVersion: row.processes_version,
+    productMaterialsVersion: row.product_materials_version,
+    productTypeVersion: row.product_type_version,
+  };
+}
+
+function decode(data: PricingCostInput): PricingCostInputRow {
+  return {
+    ...decodeWithoutVersions(data),
+    care_labels_version: data.careLabelsVersion,
+    constants_version: data.constantsVersion,
+    margin_version: data.marginVersion,
+    process_timelines_version: data.processTimelinesVersion,
+    processes_version: data.processesVersion,
+    product_materials_version: data.productMaterialsVersion,
+    product_type_version: data.productTypeVersion,
+  };
+}
+
 export const dataAdapter = new DataAdapter<
   PricingCostInputRow,
   PricingCostInput
->();
+>(encode, decode);
 
 export const dataAdapterWithoutVersions = new DataAdapter<
   PricingCostInputRowWithoutVersions,
   PricingCostInputWithoutVersions
->();
+>(encodeWithoutVersions, decodeWithoutVersions);
 
 export const baseDataAdapter = new DataAdapter<
   BasePricingCostInputRow,
   BasePricingCostInput
->();
+>(encodeBase, decodeBase);
 
 export function isUnsavedPricingCostInput(
   candidate: object
