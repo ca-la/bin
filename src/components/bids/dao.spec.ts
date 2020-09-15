@@ -75,6 +75,7 @@ test("Bids DAO supports creation and retrieval", async (t: Test) => {
     careLabelsVersion: 0,
   });
   const inputBid: BidCreationPayload = {
+    revenueShareBasisPoints: 10,
     acceptedAt: null,
     bidPriceCents: 100000,
     bidPriceProductionOnlyCents: 0,
@@ -145,6 +146,7 @@ test("Bids DAO supports retrieval by quote ID", async (t: Test) => {
     careLabelsVersion: 0,
   });
   const inputBid: BidCreationPayload = {
+    revenueShareBasisPoints: 20,
     acceptedAt: null,
     bidPriceCents: 100000,
     bidPriceProductionOnlyCents: 0,
@@ -205,6 +207,7 @@ test("Bids DAO supports retrieval of bids by target ID and status", async (t: Te
     careLabelsVersion: 0,
   });
   const openBid: BidCreationPayload = {
+    revenueShareBasisPoints: 10,
     acceptedAt: null,
     bidPriceCents: 100000,
     bidPriceProductionOnlyCents: 0,
@@ -217,6 +220,7 @@ test("Bids DAO supports retrieval of bids by target ID and status", async (t: Te
     taskTypeIds: [],
   };
   const rejectedBid: BidCreationPayload = {
+    revenueShareBasisPoints: 20,
     acceptedAt: null,
     bidPriceCents: 100000,
     bidPriceProductionOnlyCents: 0,
@@ -229,6 +233,7 @@ test("Bids DAO supports retrieval of bids by target ID and status", async (t: Te
     taskTypeIds: [],
   };
   const acceptedBid: BidCreationPayload = {
+    revenueShareBasisPoints: 0,
     acceptedAt: null,
     bidPriceCents: 110000,
     bidPriceProductionOnlyCents: 0,
@@ -1111,6 +1116,7 @@ test("Bids DAO supports finding bid with payout logs by id", async (t: Test) => 
     partnerPayoutLogs: [payout1, payout2],
     partnerUserId: partner.id,
     quoteId: quote.id,
+    revenueShareBasisPoints: 0,
   });
 });
 

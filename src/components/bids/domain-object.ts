@@ -20,6 +20,7 @@ export default interface Bid {
   dueDate: Date | null;
   quoteId: string;
   bidPriceCents: number;
+  revenueShareBasisPoints: number;
   bidPriceProductionOnlyCents?: number;
   description?: string;
 }
@@ -39,6 +40,7 @@ export interface BidRow {
   due_date: string | null;
   quote_id: string;
   bid_price_cents: number;
+  revenue_share_basis_points: number;
   bid_price_production_only_cents: number;
   description?: string;
 }
@@ -54,6 +56,7 @@ export const encode = (row: BidRow): Bid => ({
   bidPriceCents: row.bid_price_cents,
   bidPriceProductionOnlyCents: row.bid_price_production_only_cents,
   description: row.description,
+  revenueShareBasisPoints: row.revenue_share_basis_points,
 });
 
 export const decode = (data: Bid): BidRow => ({
@@ -70,6 +73,7 @@ export const decode = (data: Bid): BidRow => ({
       ? data.bidPriceProductionOnlyCents
       : 0,
   description: data.description,
+  revenue_share_basis_points: data.revenueShareBasisPoints,
 });
 
 export const dataAdapter = new DataAdapter<BidRow, Bid>(encode, decode);
@@ -86,7 +90,8 @@ export function isBid(row: object): row is Bid {
     "quoteId",
     "bidPriceCents",
     "bidPriceProductionOnlyCents",
-    "description"
+    "description",
+    "revenueShareBasisPoints"
   );
 }
 
@@ -102,7 +107,8 @@ export function isBidRow(row: object): row is BidRow {
     "quote_id",
     "bid_price_cents",
     "bid_price_production_only_cents",
-    "description"
+    "description",
+    "revenue_share_basis_points"
   );
 }
 

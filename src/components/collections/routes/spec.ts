@@ -780,6 +780,7 @@ test("POST /collections/:collectionId/partner-pairings", async (t: tape.Test) =>
     collectionDesigns,
   } = await checkout();
   const bidOne = await BidsDAO.create({
+    revenueShareBasisPoints: 0,
     acceptedAt: null,
     bidPriceCents: 20000,
     bidPriceProductionOnlyCents: 0,
@@ -792,6 +793,7 @@ test("POST /collections/:collectionId/partner-pairings", async (t: tape.Test) =>
     taskTypeIds: [taskTypes.TECHNICAL_DESIGN.id, taskTypes.PRODUCTION.id],
   });
   const bidTwo = await BidsDAO.create({
+    revenueShareBasisPoints: 0,
     acceptedAt: null,
     bidPriceCents: 20000,
     bidPriceProductionOnlyCents: 0,

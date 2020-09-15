@@ -47,6 +47,7 @@ test("Bid Rejections DAO supports creation and retrieval by Bid ID", async (t: T
     id: uuid.v4(),
     quoteId: quote.id,
     taskTypeIds: [],
+    revenueShareBasisPoints: 0,
   };
   await createBid({ ...inputBid, acceptedAt: null, taskTypeIds: [] });
 

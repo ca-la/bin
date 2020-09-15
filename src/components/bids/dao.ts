@@ -236,7 +236,7 @@ function findAllByState(
       "design_events.created_at",
     ])
     .orderBy("pricing_bids.id")
-    .orderBy("pricing_bids.created_at", "DESC");
+    .orderBy("pricing_bids.created_at", "desc");
 }
 
 export async function findAll(modifiers: {
@@ -498,8 +498,11 @@ export async function findActiveByTargetId(
         select
           outerquery.design_id
         from (
-          select distinct on (t.design_id, t.status) t.design_id as design_id, t.status as status
-          from :taskView as t) as outerquery
+          select distinct on (t.design_id, t.status)
+            t.design_id as design_id,
+            t.status as status
+          from :taskView as t
+        ) as outerquery
         where outerquery.status = 'COMPLETED'
         and outerquery.design_id in (
           select innertasks.design_id from (
@@ -530,7 +533,7 @@ export async function findActiveByTargetId(
         "design_events.created_at",
       ])
       .orderBy("pricing_bids.id")
-      .orderBy("pricing_bids.created_at", "asc")
+      .orderBy("pricing_bids.created_at", "desc")
   );
 
   return validateEvery<BidRow, Bid>(
@@ -574,13 +577,17 @@ export async function findCompletedByTargetId(
         select
           outerquery.design_id
         from (
-          select distinct on (t.design_id, t.status) t.design_id as design_id, t.status as status
-          from :taskView as t) as outerquery
+          select distinct on (t.design_id, t.status)
+            t.design_id as design_id,
+            t.status as status
+          from :taskView as t
+        ) as outerquery
         where outerquery.status = 'COMPLETED'
         and outerquery.design_id in (
           select innertasks.design_id from (
             select distinct on (t.design_id, t.status) t.design_id, t.status
-            from :taskView as t) as innertasks
+            from :taskView as t
+          ) as innertasks
           group by innertasks.design_id
           having count(innertasks.design_id) = 1)
 `,
@@ -608,7 +615,7 @@ export async function findCompletedByTargetId(
         "design_events.design_id",
       ])
       .orderBy("pricing_bids.id")
-      .orderBy("pricing_bids.created_at", "asc")
+      .orderBy("pricing_bids.created_at", "desc")
   );
 
   return validateEvery<BidRow, Bid>(

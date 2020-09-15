@@ -43,7 +43,8 @@ function isBidRequest(candidate: object): candidate is BidRequest {
     "bidPriceCents",
     "description",
     "dueDate",
-    "taskTypeIds"
+    "taskTypeIds",
+    "revenueShareBasisPoints"
   );
 }
 
@@ -234,6 +235,7 @@ function* createBidForQuote(this: AuthedContext): Iterator<any, any, any> {
       id: bidId || uuid.v4(),
       quoteId: body.quoteId,
       taskTypeIds: body.taskTypeIds,
+      revenueShareBasisPoints: body.revenueShareBasisPoints,
     });
 
     this.body = bid;

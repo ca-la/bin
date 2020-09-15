@@ -287,6 +287,7 @@ test("PUT /pricing-quotes/:quoteId/bid/:bidId creates bid", async (t: Test) => {
     id: uuid.v4(),
     quoteId: quote.id,
     taskTypeIds: [],
+    revenueShareBasisPoints: 20,
   };
 
   const [putResponse, createdBid] = await put(
@@ -321,6 +322,7 @@ test("POST /pricing-quotes/:quoteId/bids creates bid", async (t: Test) => {
     dueDate: new Date(new Date(2012, 11, 22).getTime() + daysToMs(10)),
     quoteId: quote.id,
     taskTypeIds: [],
+    revenueShareBasisPoints: 0,
   };
 
   const [postResponse, createdBid] = await post(
@@ -341,8 +343,6 @@ test("POST /pricing-quotes/:quoteId/bids creates bid", async (t: Test) => {
 });
 
 test("GET /pricing-quotes/:quoteId/bids returns list of bids for quote", async (t: Test) => {
-  const now = new Date(2012, 11, 22);
-  sandbox().useFakeTimers(now);
   const {
     user: { admin },
     quotes: [quote],
@@ -358,7 +358,10 @@ test("GET /pricing-quotes/:quoteId/bids returns list of bids for quote", async (
     dueDate: new Date(new Date(quote.createdAt).getTime() + daysToMs(10)),
     quoteId: quote.id,
     taskTypeIds: [],
+    revenueShareBasisPoints: 0,
   };
+
+  const clock = sandbox().useFakeTimers(new Date(2020, 1, 2));
 
   await post(`/pricing-quotes/${inputBid.quoteId}/bids`, {
     body: inputBid,
@@ -384,7 +387,6 @@ test("GET /pricing-quotes/:quoteId/bids returns list of bids for quote", async (
     acceptedAt: null,
     bidPriceCents: 100000,
     bidPriceProductionOnlyCents: 0,
-    createdAt: now,
     createdBy: admin.user.id,
     completedAt: null,
     description: "Full Service",
@@ -394,8 +396,11 @@ test("GET /pricing-quotes/:quoteId/bids returns list of bids for quote", async (
     id: uuid.v4(),
     quoteId: quote.id,
     taskTypeIds: [],
+    revenueShareBasisPoints: 20,
     XXXXXTRA: "Boom!",
   };
+
+  clock.setSystemTime(new Date(2020, 2, 1));
 
   await post(`/pricing-quotes/${inputBid.quoteId}/bids`, {
     body: hasExtras,
@@ -409,11 +414,16 @@ test("GET /pricing-quotes/:quoteId/bids returns list of bids for quote", async (
     }
   );
 
+  const sortedBids = withExtrasBids.sort(
+    (a: any, b: any) =>
+      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  );
+
   t.equal(withExtrasResponse.status, 200);
-  t.deepEqual(withExtrasBids[1], {
+  t.deepEqual(sortedBids[1], {
     ...omit(hasExtras, ["XXXXXTRA", "taskTypeIds"]),
-    id: withExtrasBids[1].id,
-    createdAt: withExtrasBids[1].createdAt,
+    id: sortedBids[1].id,
+    createdAt: sortedBids[1].createdAt,
     dueDate: inputBid.dueDate!.toISOString(),
   });
 });

@@ -75,6 +75,7 @@ export default async function generateBid({
     id: uuid.v4(),
     quoteId: quote.id,
     taskTypeIds: [],
+    revenueShareBasisPoints: 0,
     ...bidOptions,
   });
 
