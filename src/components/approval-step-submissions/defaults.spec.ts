@@ -104,6 +104,7 @@ function createProductType(
     processes: [],
     baseCostCents: 0,
     materialCostCents: 0,
+    materialBudgetCents: 0,
     processCostCents: 0,
     unitCostCents: 0,
     creationTimeMs: 0,

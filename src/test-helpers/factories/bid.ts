@@ -10,6 +10,8 @@ import { create as createBid } from "../../components/bids/dao";
 import createUser from "../create-user";
 import User from "../../components/users/domain-object";
 import { daysToMs } from "../../services/time-conversion";
+import ProductDesignsDAO from "../../components/product-designs/dao";
+import { generateDesign } from "./product-design";
 
 interface BidInterface {
   user: User;
@@ -20,14 +22,14 @@ interface BidInterface {
 interface GenerateBidInputs {
   bidOptions?: Partial<BidCreationPayload>;
   quoteId: string | null;
-  designId: string | null;
+  designId: string;
   generatePricing?: boolean;
   userId: string | null;
 }
 
 export default async function generateBid({
   bidOptions = {},
-  designId = null,
+  designId,
   quoteId = null,
   generatePricing = true,
   userId = null,
@@ -37,26 +39,41 @@ export default async function generateBid({
   }
   const { user } = await createUser();
 
+  let design;
+  const found = designId ? await ProductDesignsDAO.findById(designId) : null;
+  if (found) {
+    design = found;
+  } else {
+    design = await generateDesign({ userId: user.id });
+  }
+
   const createdBy = userId || user.id;
 
   const quote = quoteId
     ? await PricingQuotesDAO.findById(quoteId)
-    : await generatePricingQuote({
-        designId: designId || null,
-        materialBudgetCents: 1200,
-        materialCategory: "BASIC",
-        processes: [],
-        productComplexity: "SIMPLE",
-        productType: "TEESHIRT",
-        units: 200,
-        processTimelinesVersion: 0,
-        processesVersion: 0,
-        productMaterialsVersion: 0,
-        productTypeVersion: 0,
-        marginVersion: 0,
-        constantsVersion: 0,
-        careLabelsVersion: 0,
-      });
+    : await generatePricingQuote(
+        {
+          createdAt: new Date(),
+          deletedAt: null,
+          expiresAt: null,
+          id: uuid.v4(),
+          minimumOrderQuantity: 1,
+          designId: design.id,
+          materialBudgetCents: 1200,
+          materialCategory: "BASIC",
+          processes: [],
+          productComplexity: "SIMPLE",
+          productType: "TEESHIRT",
+          processTimelinesVersion: 0,
+          processesVersion: 0,
+          productMaterialsVersion: 0,
+          productTypeVersion: 0,
+          marginVersion: 0,
+          constantsVersion: 0,
+          careLabelsVersion: 0,
+        },
+        200
+      );
 
   if (!quote) {
     throw new Error("Could not find or create quote for new pricing bid");

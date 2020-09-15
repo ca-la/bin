@@ -5,7 +5,7 @@ import {
   getDesignsMetaByCollection,
 } from "../determine-submission-status";
 import { ProductDesignDataWithMeta } from "../../../product-designs/domain-objects/with-meta";
-import { BasePricingCostInput } from "../../../pricing-cost-inputs/domain-object";
+import { PricingCostInputDb } from "../../../pricing-cost-inputs/domain-object";
 
 interface CollectionWithLabels extends CollectionDb {
   label: string;
@@ -58,7 +58,7 @@ export async function fetchExpiredWithLabels(): Promise<
       collection.id
     ].some((design: ProductDesignDataWithMeta) =>
       design.costInputs.some(
-        (costInput: BasePricingCostInput) =>
+        (costInput: PricingCostInputDb) =>
           costInput.expiresAt && new Date(costInput.expiresAt) > new Date()
       )
     );

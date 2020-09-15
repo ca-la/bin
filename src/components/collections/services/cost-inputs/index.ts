@@ -13,7 +13,7 @@ import {
   expireCostInputs,
 } from "../../../pricing-cost-inputs/dao";
 import { getDesignsMetaByCollection } from "../determine-submission-status";
-import { BasePricingCostInput } from "../../../pricing-cost-inputs/domain-object";
+import { PricingCostInputDb } from "../../../pricing-cost-inputs/domain-object";
 import { templateDesignEvent } from "../../../design-events/types";
 /**
  * Commits cost inputs for every design in the given collection.
@@ -68,10 +68,10 @@ export async function recostInputs(collectionId: string): Promise<void> {
   await db.transaction(
     async (trx: Knex.Transaction): Promise<void> => {
       for (const design of designs) {
-        const costInput = design.costInputs.reduce<BasePricingCostInput | null>(
+        const costInput = design.costInputs.reduce<PricingCostInputDb | null>(
           (
-            latestCost: BasePricingCostInput | null,
-            currentCost: BasePricingCostInput
+            latestCost: PricingCostInputDb | null,
+            currentCost: PricingCostInputDb
           ) => {
             if (
               !latestCost ||
@@ -87,7 +87,7 @@ export async function recostInputs(collectionId: string): Promise<void> {
           continue;
         }
         const newCostInputBlank = {
-          ...(await attachProcesses<BasePricingCostInput>(costInput)),
+          ...(await attachProcesses<PricingCostInputDb>(costInput)),
           createdAt: new Date(),
           deletedAt: null,
           expiresAt: null,

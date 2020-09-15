@@ -1,6 +1,8 @@
-import PricingProcess from "../../domain-objects/pricing-process";
+import Knex from "knex";
 import uuid from "node-uuid";
-import { map, omit } from "lodash";
+import { map } from "lodash";
+
+import PricingProcess from "../../domain-objects/pricing-process";
 import sum from "../sum";
 import {
   create,
@@ -12,14 +14,15 @@ import {
 import {
   PricingProcessQuoteRow,
   PricingQuote,
-  PricingQuoteRequest,
-  PricingQuoteRequestWithVersions,
   PricingQuoteRow,
   PricingQuoteValues,
 } from "../../domain-objects/pricing-quote";
 import { Complexity, ProductType } from "../../domain-objects/pricing";
-import Knex from "knex";
 import * as PricingCostInputsDAO from "../../components/pricing-cost-inputs/dao";
+import {
+  PricingCostInput,
+  UncomittedCostInput,
+} from "../../components/pricing-cost-inputs/types";
 import DesignEventsDAO from "../../components/design-events/dao";
 import PricingCostInputs from "../../components/pricing-cost-inputs/domain-object";
 import DataAdapter from "../data-adapter";
@@ -36,30 +39,34 @@ export type UnsavedQuote = Omit<
 >;
 
 export async function generateUnsavedQuote(
-  request: PricingQuoteRequestWithVersions
+  costInput: PricingCostInput,
+  units: number
 ): Promise<UnsavedQuote> {
-  const quoteValues = await findVersionValuesForRequest(request);
+  const quoteValues = await findVersionValuesForRequest(costInput, units);
 
-  return calculateQuote(request, quoteValues);
+  return calculateQuote(costInput, units, quoteValues);
 }
 
 export async function generateUnsavedQuoteWithoutVersions(
-  request: PricingQuoteRequest
+  costInput: UncomittedCostInput,
+  units: number
 ): Promise<UnsavedQuote> {
-  const quoteValues = await findLatestValuesForRequest(request);
+  const quoteValues = await findLatestValuesForRequest(costInput, units);
 
-  return calculateQuote(request, quoteValues);
+  return calculateQuote(costInput, units, quoteValues);
 }
 
 export default async function generatePricingQuote(
-  request: PricingQuoteRequestWithVersions,
+  costInput: PricingCostInput,
+  units: number,
   trx?: Knex.Transaction
 ): Promise<PricingQuote> {
-  const quoteValues = await findVersionValuesForRequest(request);
+  const quoteValues = await findVersionValuesForRequest(costInput, units);
 
   const pricingQuoteInputId = await getQuoteInput(quoteValues);
   const { quote, processes } = calculateQuoteAndProcesses(
-    request,
+    costInput,
+    units,
     quoteValues,
     pricingQuoteInputId
   );
@@ -89,7 +96,8 @@ async function getQuoteInput(values: PricingQuoteValues): Promise<string> {
 }
 
 function calculateQuote(
-  request: PricingQuoteRequest | PricingQuoteRequestWithVersions,
+  costInput: UncomittedCostInput,
+  units: number,
   values: PricingQuoteValues
 ): UnsavedQuote {
   const SKIP_DEVELOPMENT_COST_COMPLEXITIES: Complexity[] = ["BLANK"];
@@ -99,13 +107,11 @@ function calculateQuote(
   ];
 
   const chargeBaseCosts = !SKIP_BASE_COST_PRODUCT_TYPES.includes(
-    request.productType
+    costInput.productType
   );
   const chargeDevelopmentCosts = !SKIP_DEVELOPMENT_COST_COMPLEXITIES.includes(
-    request.productComplexity
+    costInput.productComplexity
   );
-
-  const { units } = request;
 
   const baseCostCents = chargeBaseCosts
     ? calculateBaseUnitCost(units, values)
@@ -115,7 +121,7 @@ function calculateQuote(
     baseCostCents,
     materialCostCents: Math.max(
       calculateMaterialCents(values),
-      request.materialBudgetCents || 0
+      costInput.materialBudgetCents || 0
     ),
     processCostCents: calculateProcessCents(units, values),
   };
@@ -139,20 +145,15 @@ function calculateQuote(
     Object.values(baseCost).concat([developmentCostCents])
   );
   const unitCostCents = addMargin(beforeMargin, values.margin.margin / 100);
-  const filteredRequest = omit(request, [
-    "processes",
-    "processesVersion",
-    "processTimelinesVersion",
-    "productTypeVersion",
-    "productMaterialsVersion",
-    "constantsVersion",
-    "careLabelsVersion",
-    "marginVersion",
-  ]) as Omit<PricingQuoteRequest, "processes">;
 
   return {
-    ...filteredRequest,
     ...baseCost,
+    designId: costInput.designId,
+    materialBudgetCents: costInput.materialBudgetCents,
+    materialCategory: costInput.materialCategory,
+    productComplexity: costInput.productComplexity,
+    productType: costInput.productType,
+    units,
     creationTimeMs,
     fulfillmentTimeMs,
     preProductionTimeMs,
@@ -166,7 +167,8 @@ function calculateQuote(
 }
 
 function calculateQuoteAndProcesses(
-  request: PricingQuoteRequest,
+  costInput: PricingCostInput,
+  units: number,
   values: PricingQuoteValues,
   pricingQuoteInputId: string
 ): {
@@ -183,7 +185,7 @@ function calculateQuoteAndProcesses(
         id: uuid.v4(),
         pricingQuoteInputId,
       },
-      calculateQuote(request, values)
+      calculateQuote(costInput, units, values)
     )
   );
   const processes: Uninserted<PricingProcessQuoteRow>[] = values.processes.map(
@@ -310,12 +312,7 @@ export async function generateFromPayloadAndUser(
       throw new Error("No costing inputs associated with design ID");
     }
 
-    const quoteRequest: PricingQuoteRequestWithVersions = {
-      ...omit(costInputs[0], ["id", "createdAt", "deletedAt", "expiresAt"]),
-      units: unitsNumber,
-    };
-
-    const quote = await generatePricingQuote(quoteRequest, trx);
+    const quote = await generatePricingQuote(costInputs[0], unitsNumber, trx);
     quotes.push(quote);
 
     await DesignEventsDAO.create(trx, {

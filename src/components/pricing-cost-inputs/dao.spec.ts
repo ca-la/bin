@@ -2,7 +2,7 @@ import uuid from "node-uuid";
 import Knex from "knex";
 
 import { test, Test } from "../../test-helpers/fresh";
-import createUser = require("../../test-helpers/create-user");
+import createUser from "../../test-helpers/create-user";
 import ProductDesignsDAO from "../product-designs/dao";
 import * as PricingCostInputsDAO from "./dao";
 import PricingCostInput from "./domain-object";
@@ -28,6 +28,7 @@ test("PricingCostInputsDAO supports creation and retrieval", async (t: Test) => 
     id: uuid.v4(),
     materialBudgetCents: 12000,
     materialCategory: "STANDARD",
+    minimumOrderQuantity: 200,
     processes: [
       {
         complexity: "1_COLOR",
@@ -79,6 +80,7 @@ test("supports creation without processes", async (t: Test) => {
     id: uuid.v4(),
     materialBudgetCents: 12000,
     materialCategory: "STANDARD",
+    minimumOrderQuantity: 200,
     processes: [],
     productComplexity: "MEDIUM",
     productType: "DRESS",
@@ -142,6 +144,7 @@ test("PricingCostInputsDAO supports retrieval by designID", async (t: Test) => {
     id: uuid.v4(),
     materialBudgetCents: 12000,
     materialCategory: "STANDARD",
+    minimumOrderQuantity: 200,
     processes: [
       {
         complexity: "1_COLOR",
@@ -170,6 +173,7 @@ test("PricingCostInputsDAO supports retrieval by designID", async (t: Test) => {
     id: uuid.v4(),
     materialBudgetCents: 12500,
     materialCategory: "SPECIFY",
+    minimumOrderQuantity: 200,
     processes: [
       {
         complexity: "1_COLOR",
