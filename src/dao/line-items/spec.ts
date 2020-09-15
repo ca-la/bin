@@ -12,10 +12,13 @@ import { createTrx as createInvoice } from "../invoices";
 import db from "../../services/db";
 import LineItem from "../../domain-objects/line-item";
 import Invoice = require("../../domain-objects/invoice");
-import { PricingQuote } from "../../domain-objects/pricing-quote";
+import {
+  PricingQuote,
+  PricingQuoteRequestWithVersions,
+} from "../../domain-objects/pricing-quote";
 import generatePricingValues from "../../test-helpers/factories/pricing-values";
 import generatePricingQuote from "../../services/generate-pricing-quote";
-import createUser from "../../test-helpers/create-user";
+import createUser = require("../../test-helpers/create-user");
 import generateInvoice from "../../test-helpers/factories/invoice";
 import createDesign from "../../services/create-design";
 import generateCollection from "../../test-helpers/factories/collection";
@@ -24,7 +27,6 @@ import generateAsset from "../../test-helpers/factories/asset";
 import generateComponent from "../../test-helpers/factories/component";
 import generateCanvas from "../../test-helpers/factories/product-design-canvas";
 import generateLineItem from "../../test-helpers/factories/line-item";
-import { generateDesign } from "../../test-helpers/factories/product-design";
 
 test("LineItems DAO supports creation/retrieval", async (t: tape.Test) => {
   const id = uuid.v4();
@@ -123,41 +125,33 @@ async function createQuote(
     await generatePricingValues();
   }
 
-  const { user } = await createUser({ withSession: false });
-  const design = await generateDesign({ userId: user.id });
+  const quoteRequestOne: PricingQuoteRequestWithVersions = {
+    designId: null,
+    materialBudgetCents: 1200,
+    materialCategory: "BASIC",
+    processes: [
+      {
+        complexity: "1_COLOR",
+        name: "SCREEN_PRINTING",
+      },
+      {
+        complexity: "1_COLOR",
+        name: "SCREEN_PRINTING",
+      },
+    ],
+    productComplexity: "SIMPLE",
+    productType: "TEESHIRT",
+    units: 100000,
+    processTimelinesVersion: 0,
+    processesVersion: 0,
+    productMaterialsVersion: 0,
+    productTypeVersion: 0,
+    marginVersion: 0,
+    constantsVersion: 0,
+    careLabelsVersion: 0,
+  };
 
-  return generatePricingQuote(
-    {
-      createdAt: new Date(),
-      deletedAt: null,
-      expiresAt: null,
-      id: uuid.v4(),
-      minimumOrderQuantity: 1,
-      designId: design.id,
-      materialBudgetCents: 1200,
-      materialCategory: "BASIC",
-      processes: [
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-      ],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
-      processTimelinesVersion: 0,
-      processesVersion: 0,
-      productMaterialsVersion: 0,
-      productTypeVersion: 0,
-      marginVersion: 0,
-      constantsVersion: 0,
-      careLabelsVersion: 0,
-    },
-    100000
-  );
+  return generatePricingQuote(quoteRequestOne);
 }
 
 test("getLineItemsWithMetaByInvoiceId retrieves all line items with meta for an invoice", async (t: tape.Test) => {

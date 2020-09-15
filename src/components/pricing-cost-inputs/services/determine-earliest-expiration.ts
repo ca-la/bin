@@ -1,4 +1,4 @@
-import { PricingCostInputDb } from "../domain-object";
+import { BasePricingCostInput } from "../domain-object";
 
 /**
  * From a list of cost inputs, determines which one expires earliest.
@@ -8,10 +8,10 @@ import { PricingCostInputDb } from "../domain-object";
  *  - Returns the soonest expiration date (or null if none expire).
  */
 export function determineEarliestExpiration(
-  costInputs: PricingCostInputDb[]
+  costInputs: BasePricingCostInput[]
 ): Date | null {
   return costInputs
-    .filter((costInput: PricingCostInputDb): boolean => {
+    .filter((costInput: BasePricingCostInput): boolean => {
       return costInput.expiresAt === null
         ? true
         : new Date(costInput.expiresAt) > new Date();
@@ -19,7 +19,7 @@ export function determineEarliestExpiration(
     .reduce(
       (
         previousValue: Date | null,
-        currentValue: PricingCostInputDb
+        currentValue: BasePricingCostInput
       ): Date | null => {
         if (currentValue.expiresAt && !previousValue) {
           return new Date(currentValue.expiresAt);

@@ -9,21 +9,21 @@ import {
 import DesignEvent, { DesignEventRow } from "../../design-events/types";
 import eventDataAdapter from "../../design-events/adapter";
 import {
-  dbDataAdapter as costInputDataAdapter,
-  PricingCostInputDb,
-  PricingCostInputDbRow,
+  baseDataAdapter as costInputDataAdapter,
+  BasePricingCostInput,
+  BasePricingCostInputRow,
 } from "../../pricing-cost-inputs/domain-object";
 import DataAdapter from "../../../services/data-adapter";
 
 export interface ProductDesignDataWithMeta extends ProductDesignData {
   collectionId: string;
-  costInputs: PricingCostInputDb[];
+  costInputs: BasePricingCostInput[];
   events: DesignEvent[];
 }
 
 export interface ProductDesignRowWithMeta extends ProductDesignRow {
   collection_id: string;
-  cost_inputs: PricingCostInputDbRow[] | null;
+  cost_inputs: BasePricingCostInputRow[] | null;
   events: DesignEventRow[] | null;
 }
 
@@ -34,7 +34,7 @@ const encode = (row: ProductDesignRowWithMeta): ProductDesignDataWithMeta => {
   const costInputs =
     cost_inputs === null
       ? []
-      : cost_inputs.map((costInputRow: PricingCostInputDbRow) =>
+      : cost_inputs.map((costInputRow: BasePricingCostInputRow) =>
           costInputDataAdapter.parse(costInputRow)
         );
 

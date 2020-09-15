@@ -1,13 +1,13 @@
-import Knex from "knex";
 import Router from "koa-router";
 import uuid from "node-uuid";
-
 import db from "../../services/db";
-import requireAdmin = require("../../middleware/require-admin");
+
 import ProductDesignsDAO from "../product-designs/dao";
-import { updateTechnicalDesignStepForDesign } from "../../services/approval-step-state";
 import * as PricingCostInputsDAO from "./dao";
-import { isCreatePricingCostInputRequest, PricingCostInput } from "./types";
+import requireAdmin = require("../../middleware/require-admin");
+import PricingCostInput, { isUnsavedPricingCostInput } from "./domain-object";
+import Knex from "knex";
+import { updateTechnicalDesignStepForDesign } from "../../services/approval-step-state";
 
 const router = new Router();
 
@@ -19,7 +19,7 @@ function* createCostInputs(
     this.throw(400, "Must include a request body");
   }
 
-  if (!isCreatePricingCostInputRequest(inputs)) {
+  if (!isUnsavedPricingCostInput(inputs)) {
     this.throw(400, "Request does not match model");
   }
 
@@ -40,17 +40,11 @@ function* createCostInputs(
       needsTechnicalDesigner
     );
     return PricingCostInputsDAO.create(trx, {
+      ...unsavedInputs,
       createdAt: new Date(),
       deletedAt: null,
-      designId: unsavedInputs.designId,
       expiresAt: null,
       id: uuid.v4(),
-      materialBudgetCents: unsavedInputs.materialBudgetCents,
-      materialCategory: unsavedInputs.materialCategory,
-      minimumOrderQuantity: unsavedInputs.minimumOrderQuantity,
-      processes: unsavedInputs.processes,
-      productComplexity: unsavedInputs.productComplexity,
-      productType: unsavedInputs.productType,
     });
   });
 
