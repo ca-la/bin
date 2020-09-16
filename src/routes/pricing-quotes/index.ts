@@ -1,4 +1,4 @@
-import { omit, sum } from "lodash";
+import { sum } from "lodash";
 import Router from "koa-router";
 import uuid from "node-uuid";
 
@@ -8,6 +8,7 @@ import addMargin from "../../services/add-margin";
 import { BidCreationPayload } from "../../components/bids/domain-object";
 import filterError = require("../../services/filter-error");
 import InvalidDataError from "../../errors/invalid-data";
+import ResourceNotFoundError from "../../errors/resource-not-found";
 import requireAdmin = require("../../middleware/require-admin");
 import { FINANCING_MARGIN } from "../../config";
 import { findByDesignId, findById } from "../../dao/pricing-quotes";
@@ -16,21 +17,18 @@ import {
   create as createBid,
   findByQuoteId as findBidsByQuoteId,
 } from "../../components/bids/dao";
-import PricingCostInput, {
-  isUnsavedPricingCostInput,
-  PricingCostInputWithoutVersions,
-} from "../../components/pricing-cost-inputs/domain-object";
-import {
-  PricingQuote,
-  PricingQuoteRequest,
-  PricingQuoteRequestWithVersions,
-} from "../../domain-objects/pricing-quote";
+import PricingCostInput from "../../components/pricing-cost-inputs/domain-object";
+import { PricingQuote } from "../../domain-objects/pricing-quote";
 import {
   generateUnsavedQuote,
   generateUnsavedQuoteWithoutVersions,
   UnsavedQuote,
 } from "../../services/generate-pricing-quote";
 import addTimeBuffer from "../../services/add-time-buffer";
+import {
+  CreatePricingCostInputRequest,
+  isCreatePricingCostInputRequest,
+} from "../../components/pricing-cost-inputs/types";
 
 const router = new Router();
 
@@ -98,14 +96,14 @@ function* getQuotes(this: AuthedContext): Iterator<any, any, any> {
       this.throw(404, "No costing inputs associated with design ID");
     }
 
-    const quoteRequest: PricingQuoteRequestWithVersions = {
-      ...omit(costInputs[0], ["id", "createdAt", "deletedAt", "expiresAt"]),
-      units: unitsNumber,
-    };
+    const latestInput = costInputs[0];
 
-    const unsavedQuote = yield generateUnsavedQuote(quoteRequest).catch(
-      filterError(InvalidDataError, (err: InvalidDataError) =>
-        this.throw(500, err)
+    const unsavedQuote = yield generateUnsavedQuote(
+      latestInput,
+      unitsNumber
+    ).catch(
+      filterError(ResourceNotFoundError, (err: InvalidDataError) =>
+        this.throw(400, err.message)
       )
     );
 
@@ -121,6 +119,7 @@ function* getQuotes(this: AuthedContext): Iterator<any, any, any> {
       payNowTotalCents,
       timeTotalMs,
       units: unsavedQuote.units,
+      minimumOrderQuantity: latestInput.minimumOrderQuantity,
     };
     this.status = 200;
   } else {
@@ -136,26 +135,23 @@ function* getQuotes(this: AuthedContext): Iterator<any, any, any> {
 }
 
 interface PreviewQuoteBody {
-  units: string;
-  uncommittedCostInput: object;
+  units: number;
+  uncommittedCostInput: CreatePricingCostInputRequest;
 }
 
-function isPreviewQuoteBody(candidate: object): candidate is PreviewQuoteBody {
-  return hasProperties(candidate, "units", "uncommittedCostInput");
-}
-
-type Nullable<T> = { [P in keyof T]: T[P] | null };
-
-function hasNullValuesPricingCostInput(
-  candidate: Nullable<Unsaved<PricingCostInputWithoutVersions>>
-): boolean {
-  return (
-    candidate.productType === null ||
-    candidate.productComplexity === null ||
-    candidate.materialCategory === null ||
-    candidate.processes === null ||
-    candidate.designId === null
+function isPreviewQuoteBody(
+  candidate: Record<string, any>
+): candidate is PreviewQuoteBody {
+  const keyset = new Set(Object.keys(candidate));
+  const keysetMatch = ["units", "uncommittedCostInput"].every(
+    keyset.has.bind(keyset)
   );
+
+  if (!keysetMatch) {
+    return false;
+  }
+
+  return isCreatePricingCostInputRequest(candidate.uncommittedCostInput);
 }
 
 function* previewQuote(this: AuthedContext): Iterator<any, any, any> {
@@ -168,36 +164,14 @@ function* previewQuote(this: AuthedContext): Iterator<any, any, any> {
     );
   }
 
-  const units = Number(body.units);
-  if (
-    !isUnsavedPricingCostInput(body.uncommittedCostInput) ||
-    !units ||
-    hasNullValuesPricingCostInput(body.uncommittedCostInput)
-  ) {
-    this.throw(
-      400,
-      "A cost input object and units are required to generate a preview quote!"
-    );
-  }
-
-  const quoteRequest: PricingQuoteRequest = omit(
-    {
-      ...omit(body.uncommittedCostInput, [
-        "id",
-        "createdAt",
-        "deletedAt",
-        "expiresAt",
-      ]),
-      units,
-    },
-    "expiresAt"
-  );
+  const { units, uncommittedCostInput } = body;
 
   const unsavedQuote = yield generateUnsavedQuoteWithoutVersions(
-    quoteRequest
+    uncommittedCostInput,
+    units
   ).catch(
-    filterError(InvalidDataError, (err: InvalidDataError) =>
-      this.throw(500, err)
+    filterError(ResourceNotFoundError, (err: InvalidDataError) =>
+      this.throw(400, err.message)
     )
   );
 

@@ -1,6 +1,5 @@
 import uuid from "node-uuid";
 import { omit } from "lodash";
-import { TaskStatus } from "@cala/ts-lib";
 import Knex from "knex";
 
 import db from "../../services/db";
@@ -9,7 +8,7 @@ import generatePricingValues from "../../test-helpers/factories/pricing-values";
 import generatePricingQuote from "../../services/generate-pricing-quote";
 import createUser from "../../test-helpers/create-user";
 import DesignEventsDAO from "../design-events/dao";
-import { create as createDesign } from "../product-designs/dao";
+import { generateDesign } from "../../test-helpers/factories/product-design";
 
 import { BidCreationPayload } from "./domain-object";
 import {
@@ -20,7 +19,6 @@ import {
   findAllByQuoteAndUserId,
   findById,
   findByQuoteId,
-  findCompletedByTargetId,
   findOpenByTargetId,
   findRejectedByTargetId,
   findUnpaidByUserId,
@@ -31,14 +29,10 @@ import generateDesignEvent from "../../test-helpers/factories/design-event";
 import { daysToMs } from "../../services/time-conversion";
 import * as BidTaskTypesDAO from "../bid-task-types/dao";
 import { addDesign } from "../../test-helpers/collections";
-import { create as createTaskEvent } from "../../dao/task-events";
 import generateCollection from "../../test-helpers/factories/collection";
 import PayoutAccountsDAO = require("../../dao/partner-payout-accounts");
 import PartnerPayoutsDAO = require("../../components/partner-payouts/dao");
 import { PartnerPayoutLog } from "../partner-payouts/domain-object";
-import generateTask from "../../test-helpers/factories/task";
-import generateProductDesignStage from "../../test-helpers/factories/product-design-stage";
-import { taskEventFromIO } from "../../domain-objects/task-event";
 
 const testDate = new Date(2012, 11, 22);
 
@@ -49,31 +43,39 @@ test("Bids DAO supports creation and retrieval", async (t: Test) => {
     .resolves({});
   await generatePricingValues();
   const { user } = await createUser();
-  const quote = await generatePricingQuote({
-    designId: null,
-    materialBudgetCents: 1200,
-    materialCategory: "BASIC",
-    processes: [
-      {
-        complexity: "1_COLOR",
-        name: "SCREEN_PRINTING",
-      },
-      {
-        complexity: "1_COLOR",
-        name: "SCREEN_PRINTING",
-      },
-    ],
-    productComplexity: "SIMPLE",
-    productType: "TEESHIRT",
-    units: 200,
-    processTimelinesVersion: 0,
-    processesVersion: 0,
-    productMaterialsVersion: 0,
-    productTypeVersion: 0,
-    marginVersion: 0,
-    constantsVersion: 0,
-    careLabelsVersion: 0,
-  });
+  const design = await generateDesign({ userId: user.id });
+  const quote = await generatePricingQuote(
+    {
+      createdAt: testDate,
+      deletedAt: null,
+      expiresAt: null,
+      id: uuid.v4(),
+      minimumOrderQuantity: 1,
+      designId: design.id,
+      materialBudgetCents: 1200,
+      materialCategory: "BASIC",
+      processes: [
+        {
+          complexity: "1_COLOR",
+          name: "SCREEN_PRINTING",
+        },
+        {
+          complexity: "1_COLOR",
+          name: "SCREEN_PRINTING",
+        },
+      ],
+      productComplexity: "SIMPLE",
+      productType: "TEESHIRT",
+      processTimelinesVersion: 0,
+      processesVersion: 0,
+      productMaterialsVersion: 0,
+      productTypeVersion: 0,
+      marginVersion: 0,
+      constantsVersion: 0,
+      careLabelsVersion: 0,
+    },
+    200
+  );
   const inputBid: BidCreationPayload = {
     revenueShareBasisPoints: 10,
     acceptedAt: null,
@@ -120,31 +122,39 @@ test("Bids DAO supports retrieval by quote ID", async (t: Test) => {
   sandbox().useFakeTimers(testDate);
   await generatePricingValues();
   const { user } = await createUser();
-  const quote = await generatePricingQuote({
-    designId: null,
-    materialBudgetCents: 1200,
-    materialCategory: "BASIC",
-    processes: [
-      {
-        complexity: "1_COLOR",
-        name: "SCREEN_PRINTING",
-      },
-      {
-        complexity: "1_COLOR",
-        name: "SCREEN_PRINTING",
-      },
-    ],
-    productComplexity: "SIMPLE",
-    productType: "TEESHIRT",
-    units: 200,
-    processTimelinesVersion: 0,
-    processesVersion: 0,
-    productMaterialsVersion: 0,
-    productTypeVersion: 0,
-    marginVersion: 0,
-    constantsVersion: 0,
-    careLabelsVersion: 0,
-  });
+  const design = await generateDesign({ userId: user.id });
+  const quote = await generatePricingQuote(
+    {
+      createdAt: testDate,
+      deletedAt: null,
+      expiresAt: null,
+      id: uuid.v4(),
+      minimumOrderQuantity: 1,
+      designId: design.id,
+      materialBudgetCents: 1200,
+      materialCategory: "BASIC",
+      processes: [
+        {
+          complexity: "1_COLOR",
+          name: "SCREEN_PRINTING",
+        },
+        {
+          complexity: "1_COLOR",
+          name: "SCREEN_PRINTING",
+        },
+      ],
+      productComplexity: "SIMPLE",
+      productType: "TEESHIRT",
+      processTimelinesVersion: 0,
+      processesVersion: 0,
+      productMaterialsVersion: 0,
+      productTypeVersion: 0,
+      marginVersion: 0,
+      constantsVersion: 0,
+      careLabelsVersion: 0,
+    },
+    200
+  );
   const inputBid: BidCreationPayload = {
     revenueShareBasisPoints: 20,
     acceptedAt: null,
@@ -180,32 +190,42 @@ test("Bids DAO supports retrieval of bids by target ID and status", async (t: Te
   const { user: admin } = await createUser();
   const { user: partner } = await createUser();
   const { user: otherPartner } = await createUser();
-
-  const quote = await generatePricingQuote({
-    designId: null,
-    materialBudgetCents: 1200,
-    materialCategory: "BASIC",
-    processes: [
-      {
-        complexity: "1_COLOR",
-        name: "SCREEN_PRINTING",
-      },
-      {
-        complexity: "1_COLOR",
-        name: "SCREEN_PRINTING",
-      },
-    ],
-    productComplexity: "SIMPLE",
-    productType: "TEESHIRT",
-    units: 200,
-    processTimelinesVersion: 0,
-    processesVersion: 0,
-    productMaterialsVersion: 0,
-    productTypeVersion: 0,
-    marginVersion: 0,
-    constantsVersion: 0,
-    careLabelsVersion: 0,
+  const design = await generateDesign({
+    userId: designer.id,
   });
+
+  const quote = await generatePricingQuote(
+    {
+      createdAt: testDate,
+      deletedAt: null,
+      expiresAt: null,
+      id: uuid.v4(),
+      minimumOrderQuantity: 1,
+      designId: design.id,
+      materialBudgetCents: 1200,
+      materialCategory: "BASIC",
+      processes: [
+        {
+          complexity: "1_COLOR",
+          name: "SCREEN_PRINTING",
+        },
+        {
+          complexity: "1_COLOR",
+          name: "SCREEN_PRINTING",
+        },
+      ],
+      productComplexity: "SIMPLE",
+      productType: "TEESHIRT",
+      processTimelinesVersion: 0,
+      processesVersion: 0,
+      productMaterialsVersion: 0,
+      productTypeVersion: 0,
+      marginVersion: 0,
+      constantsVersion: 0,
+      careLabelsVersion: 0,
+    },
+    200
+  );
   const openBid: BidCreationPayload = {
     revenueShareBasisPoints: 10,
     acceptedAt: null,
@@ -245,20 +265,7 @@ test("Bids DAO supports retrieval of bids by target ID and status", async (t: Te
     quoteId: quote.id,
     taskTypeIds: [],
   };
-  const design = await createDesign({
-    previewImageUrls: [],
-    productType: "A product type",
-    title: "A design",
-    userId: designer.id,
-  });
-  const { stage } = await generateProductDesignStage({ designId: design.id });
-  const { task } = await generateTask({
-    designStageId: stage.id,
-    status: TaskStatus.NOT_STARTED,
-  });
-  const rejectedDesign = await createDesign({
-    previewImageUrls: [],
-    productType: "A product type",
+  const rejectedDesign = await generateDesign({
     title: "A rejected design",
     userId: designer.id,
   });
@@ -375,15 +382,6 @@ test("Bids DAO supports retrieval of bids by target ID and status", async (t: Te
   const acceptedBids = await findAcceptedByTargetId(partner.id, "ACCEPTED");
   const activeBids = await findActiveByTargetId(partner.id, "ACCEPTED");
   clock.tick(1000);
-  await createTaskEvent({
-    ...omit(
-      taskEventFromIO({ ...task, assignees: [] }, partner.id),
-      "createdAt",
-      "id"
-    ),
-    status: TaskStatus.COMPLETED,
-  });
-  const completedBids = await findCompletedByTargetId(partner.id, "ACCEPTED");
   const otherAcceptedBids = await findAcceptedByTargetId(
     otherPartner.id,
     "ACCEPTED"
@@ -394,9 +392,6 @@ test("Bids DAO supports retrieval of bids by target ID and status", async (t: Te
   }
   if (activeBids.length === 0) {
     throw new Error("No active bids found!");
-  }
-  if (completedBids.length === 0) {
-    throw new Error("No completed bids found!");
   }
 
   t.deepEqual(
@@ -420,18 +415,6 @@ test("Bids DAO supports retrieval of bids by target ID and status", async (t: Te
       },
     ],
     "returns active bid"
-  );
-  t.deepEqual(
-    completedBids,
-    [
-      {
-        ...omit(acceptedBid, ["taskTypeIds", "completedAt"]),
-        acceptedAt: completedBids[0].acceptedAt,
-        completedAt: completedBids[0].completedAt,
-        createdAt: completedBids[0].createdAt,
-      },
-    ],
-    "returns completed bid"
   );
   t.equal(
     (acceptedBids[0].createdAt as Date).toString(),
@@ -794,9 +777,7 @@ test("Bids DAO supports finding by quote and user id with events", async (t: Tes
     withSession: false,
   });
 
-  const design = await createDesign({
-    productType: "TEESHIRT",
-    title: "My cool shirt",
+  const design = await generateDesign({
     userId: designer.id,
   });
   const { bid: openBid1, quote } = await generateBid({
@@ -894,9 +875,7 @@ test("Bids DAO supports finding all unpaid bids by user id from after the cutoff
   const { user: designer } = await createUser();
   const { user: partner } = await createUser({ role: "PARTNER" });
 
-  const design = await createDesign({
-    productType: "TEESHIRT",
-    title: "Plain White Tee",
+  const design = await generateDesign({
     userId: designer.id,
   });
 
@@ -927,9 +906,7 @@ test("Bids DAO supports finding all unpaid bids by user id from after the cutoff
 
   const { user: designer2 } = await createUser();
 
-  const design2 = await createDesign({
-    productType: "TEESHIRT",
-    title: "Plain White Tee",
+  const design2 = await generateDesign({
     userId: designer2.id,
   });
   const { bid: bid2, user: admin2 } = await generateBid({
@@ -988,9 +965,7 @@ test("Bids DAO does not return unpaid bids the partner has been removed from", a
   const { user: designer } = await createUser();
   const { user: partner } = await createUser({ role: "PARTNER" });
 
-  const design = await createDesign({
-    productType: "TEESHIRT",
-    title: "Plain White Tee",
+  const design = await generateDesign({
     userId: designer.id,
   });
 
@@ -1038,9 +1013,7 @@ test("Bids DAO supports finding bid with payout logs by id", async (t: Test) => 
     withSession: false,
   });
 
-  const design = await createDesign({
-    productType: "TEESHIRT",
-    title: "My cool shirt",
+  const design = await generateDesign({
     userId: designer.id,
   });
   const { bid, user: admin, quote } = await generateBid({
@@ -1124,9 +1097,7 @@ async function generatePartnerAndBidEvents(
   designerUserId: string,
   partnerUserId: string
 ): Promise<string> {
-  const design = await createDesign({
-    productType: "TEESHIRT",
-    title: "My cool shirt",
+  const design = await generateDesign({
     userId: designerUserId,
   });
   const { bid, user: admin } = await generateBid({

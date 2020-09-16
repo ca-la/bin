@@ -1,6 +1,5 @@
 import uuid from "node-uuid";
 import Knex from "knex";
-import { omit } from "lodash";
 
 import db from "../../services/db";
 import first from "../../services/first";
@@ -8,11 +7,13 @@ import { validate, validateEvery } from "../../services/validate-from-db";
 import { Process } from "../../domain-objects/pricing";
 import PricingCostInput, {
   dataAdapter,
-  dataAdapterWithoutVersions,
   isPricingCostInputRow,
   PricingCostInputRow,
-  PricingCostInputWithoutVersions,
 } from "./domain-object";
+import {
+  PricingCostInputDbRow,
+  PricingCostInputWithoutVersions,
+} from "./types";
 
 const TABLE_NAME = "pricing_cost_inputs";
 
@@ -58,20 +59,25 @@ LIMIT 1;
       processes_version,
     },
   ] = rows;
-  const rowData = omit(
-    {
-      id: uuid.v4(),
-      ...dataAdapterWithoutVersions.forInsertion(inputs),
-      process_timelines_version,
-      processes_version,
-      care_labels_version,
-      product_materials_version,
-      product_type_version,
-      margin_version,
-      constants_version,
-    },
-    ["processes"]
-  );
+  const rowData: PricingCostInputDbRow = {
+    created_at: inputs.createdAt,
+    deleted_at: inputs.deletedAt,
+    design_id: inputs.designId,
+    expires_at: inputs.expiresAt,
+    id: inputs.id,
+    material_category: inputs.materialCategory,
+    minimum_order_quantity: inputs.minimumOrderQuantity,
+    product_complexity: inputs.productComplexity,
+    product_type: inputs.productType,
+    material_budget_cents: inputs.materialBudgetCents,
+    process_timelines_version,
+    processes_version,
+    care_labels_version,
+    product_materials_version,
+    product_type_version,
+    margin_version,
+    constants_version,
+  };
   const inputsCreated: WithoutProcesses | undefined = await trx(TABLE_NAME)
     .insert(rowData)
     .returning("*")

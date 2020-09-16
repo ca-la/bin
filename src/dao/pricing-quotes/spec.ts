@@ -9,17 +9,23 @@ import {
   MaterialCategory,
   ProductType,
 } from "../../domain-objects/pricing";
+import createUser from "../../test-helpers/create-user";
+import { generateDesign } from "../../test-helpers/factories/product-design";
 
 test("PricingQuotes DAO with no data", async (t: tape.Test) => {
   try {
-    await PricingQuotesDAO.findLatestValuesForRequest({
-      designId: null,
-      materialCategory: "SPECIFY",
-      processes: [],
-      productComplexity: "COMPLEX",
-      productType: "BLAZER",
-      units: 1000,
-    });
+    await PricingQuotesDAO.findLatestValuesForRequest(
+      {
+        designId: "a-design-id",
+        materialCategory: "SPECIFY",
+        processes: [],
+        productComplexity: "COMPLEX",
+        productType: "BLAZER",
+        materialBudgetCents: 0,
+        minimumOrderQuantity: 1,
+      },
+      1000
+    );
     t.fail("Should not have succeeded");
   } catch {
     t.ok("Finding latest values fails");
@@ -29,18 +35,24 @@ test("PricingQuotes DAO with no data", async (t: tape.Test) => {
 test("PricingQuotes DAO supports finding the latest values", async (t: tape.Test) => {
   // generate a bunch of values in the test db.
   await generatePricingValues();
+  const { user } = await createUser({ withSession: false });
+  const design = await generateDesign({ userId: user.id });
 
   // product type failure
 
   try {
-    await PricingQuotesDAO.findLatestValuesForRequest({
-      designId: null,
-      materialCategory: "BASIC",
-      processes: [],
-      productComplexity: "SIMPLE",
-      productType: "LONG_JOHNS" as ProductType,
-      units: 1000,
-    });
+    await PricingQuotesDAO.findLatestValuesForRequest(
+      {
+        minimumOrderQuantity: 1,
+        designId: design.id,
+        materialCategory: "BASIC",
+        processes: [],
+        productComplexity: "SIMPLE",
+        productType: "LONG_JOHNS" as ProductType,
+        materialBudgetCents: 0,
+      },
+      1000
+    );
   } catch (error) {
     t.equal(error.message, "Pricing product type could not be found!");
   }
@@ -48,14 +60,18 @@ test("PricingQuotes DAO supports finding the latest values", async (t: tape.Test
   // complexity failure
 
   try {
-    await PricingQuotesDAO.findLatestValuesForRequest({
-      designId: null,
-      materialCategory: "BASIC",
-      processes: [],
-      productComplexity: "SIMPLE FOO" as Complexity,
-      productType: "TEESHIRT",
-      units: 1000,
-    });
+    await PricingQuotesDAO.findLatestValuesForRequest(
+      {
+        minimumOrderQuantity: 1,
+        designId: design.id,
+        materialCategory: "BASIC",
+        processes: [],
+        productComplexity: "SIMPLE FOO" as Complexity,
+        productType: "TEESHIRT",
+        materialBudgetCents: 0,
+      },
+      1000
+    );
   } catch (error) {
     t.equal(error.message, "Pricing product type could not be found!");
   }
@@ -63,28 +79,36 @@ test("PricingQuotes DAO supports finding the latest values", async (t: tape.Test
   // material failure
 
   try {
-    await PricingQuotesDAO.findLatestValuesForRequest({
-      designId: null,
-      materialCategory: "BASIC FOO" as MaterialCategory,
-      processes: [],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
-      units: 1000,
-    });
+    await PricingQuotesDAO.findLatestValuesForRequest(
+      {
+        minimumOrderQuantity: 1,
+        designId: design.id,
+        materialCategory: "BASIC FOO" as MaterialCategory,
+        processes: [],
+        productComplexity: "SIMPLE",
+        productType: "TEESHIRT",
+        materialBudgetCents: 0,
+      },
+      1000
+    );
   } catch (error) {
     t.equal(error.message, "Pricing product material could not be found!");
   }
 
   // success
 
-  const latestValueRequest = await PricingQuotesDAO.findLatestValuesForRequest({
-    designId: null,
-    materialCategory: "BASIC",
-    processes: [],
-    productComplexity: "SIMPLE",
-    productType: "TEESHIRT",
-    units: 1000,
-  });
+  const latestValueRequest = await PricingQuotesDAO.findLatestValuesForRequest(
+    {
+      minimumOrderQuantity: 1,
+      designId: design.id,
+      materialCategory: "BASIC",
+      processes: [],
+      productComplexity: "SIMPLE",
+      productType: "TEESHIRT",
+      materialBudgetCents: 0,
+    },
+    1000
+  );
 
   t.deepEqual(
     omit(
@@ -178,7 +202,7 @@ test("PricingQuotes DAO supports finding the latest values", async (t: tape.Test
 
   const latestValueRequestWithProcesses = await PricingQuotesDAO.findLatestValuesForRequest(
     {
-      designId: null,
+      designId: design.id,
       materialCategory: "BASIC",
       processes: [
         {
@@ -188,8 +212,10 @@ test("PricingQuotes DAO supports finding the latest values", async (t: tape.Test
       ],
       productComplexity: "SIMPLE",
       productType: "TEESHIRT",
-      units: 1000,
-    }
+      materialBudgetCents: 0,
+      minimumOrderQuantity: 1,
+    },
+    1000
   );
 
   t.deepEqual(
