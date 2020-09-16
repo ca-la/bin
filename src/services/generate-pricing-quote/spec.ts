@@ -3,7 +3,10 @@ import uuid from "node-uuid";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import * as PricingQuotesDAO from "../../dao/pricing-quotes";
 import DesignEventsDAO from "../../components/design-events/dao";
-import { PricingQuoteValues } from "../../domain-objects/pricing-quote";
+import {
+  PricingQuoteRequestWithVersions,
+  PricingQuoteValues,
+} from "../../domain-objects/pricing-quote";
 import generatePricingQuote, {
   generateUnsavedQuote,
   generateFromPayloadAndUser,
@@ -14,18 +17,12 @@ import Knex from "knex";
 import createUser from "../../test-helpers/create-user";
 import generatePricingValues from "../../test-helpers/factories/pricing-values";
 import * as PricingCostInputsDAO from "../../components/pricing-cost-inputs/dao";
+import { PricingCostInputWithoutVersions } from "../../components/pricing-cost-inputs/domain-object";
 import generateApprovalStep from "../../test-helpers/factories/design-approval-step";
 import ProductDesignsDAO from "../../components/product-designs/dao";
-import { PricingCostInput } from "../../components/pricing-cost-inputs/types";
-import { generateDesign } from "../../test-helpers/factories/product-design";
 
-const quoteRequestOne: PricingCostInput = {
-  createdAt: new Date(),
-  deletedAt: null,
-  expiresAt: null,
-  id: uuid.v4(),
-  minimumOrderQuantity: 1,
-  designId: "a-design-id",
+const quoteRequestOne: PricingQuoteRequestWithVersions = {
+  designId: null,
   materialBudgetCents: 1200,
   materialCategory: "BASIC",
   processes: [
@@ -40,6 +37,7 @@ const quoteRequestOne: PricingCostInput = {
   ],
   productComplexity: "SIMPLE",
   productType: "TEESHIRT",
+  units: 100000,
   processTimelinesVersion: 0,
   processesVersion: 0,
   productMaterialsVersion: 0,
@@ -49,11 +47,24 @@ const quoteRequestOne: PricingCostInput = {
   careLabelsVersion: 0,
 };
 
+const pricingCostInputs: PricingCostInputWithoutVersions = {
+  createdAt: new Date(),
+  deletedAt: null,
+  designId: "designId",
+  expiresAt: null,
+  id: "id",
+  materialBudgetCents: 1200,
+  materialCategory: "BASIC",
+  processes: [],
+  productComplexity: "SIMPLE",
+  productType: "TEESHIRT",
+};
+
 test("generateUnsavedQuote failure", async (t: Test) => {
   sandbox().stub(PricingQuotesDAO, "findLatestValuesForRequest").throws();
 
   try {
-    await generateUnsavedQuote(quoteRequestOne, 100000);
+    await generateUnsavedQuote(quoteRequestOne);
     t.fail("Should not have succeeded!");
   } catch {
     t.ok("Fails to generate an unsaved quote");
@@ -64,38 +75,16 @@ test("generatePricingQuote failure", async (t: Test) => {
   sandbox().stub(PricingQuotesDAO, "findLatestValuesForRequest").throws();
 
   try {
-    await generatePricingQuote(
-      {
-        createdAt: new Date(),
-        deletedAt: null,
-        expiresAt: null,
-        id: uuid.v4(),
-        minimumOrderQuantity: 1,
-        designId: "a-design-id",
-        materialBudgetCents: 1200,
-        materialCategory: "BASIC",
-        processes: [
-          {
-            complexity: "1_COLOR",
-            name: "SCREEN_PRINTING",
-          },
-          {
-            complexity: "1_COLOR",
-            name: "SCREEN_PRINTING",
-          },
-        ],
-        productComplexity: "SIMPLE",
-        productType: "TEESHIRT",
-        processTimelinesVersion: 0,
-        processesVersion: 0,
-        productMaterialsVersion: 0,
-        productTypeVersion: 0,
-        marginVersion: 0,
-        constantsVersion: 0,
-        careLabelsVersion: 0,
-      },
-      100000
-    );
+    await generatePricingQuote({
+      ...quoteRequestOne,
+      processTimelinesVersion: 0,
+      processesVersion: 0,
+      productMaterialsVersion: 0,
+      productTypeVersion: 0,
+      marginVersion: 0,
+      constantsVersion: 0,
+      careLabelsVersion: 0,
+    });
     t.fail("Should not have succeeded!");
   } catch {
     t.ok("Fails to generate an unsaved quote");
@@ -212,7 +201,7 @@ test("generateUnsavedQuote", async (t: Test) => {
     .stub(PricingQuotesDAO, "findVersionValuesForRequest")
     .resolves(latestValues);
 
-  const unsavedQuote = await generateUnsavedQuote(quoteRequestOne, 100000);
+  const unsavedQuote = await generateUnsavedQuote(quoteRequestOne);
 
   t.equal(unsavedQuote.baseCostCents, 386, "calculates base cost correctly");
   t.equal(
@@ -325,37 +314,28 @@ test("generateUnsavedQuote for blank", async (t: Test) => {
   sandbox()
     .stub(PricingQuotesDAO, "findVersionValuesForRequest")
     .resolves(latestValues);
-  const { user } = await createUser({ withSession: false });
-  const design = await generateDesign({ userId: user.id });
 
-  const unsavedQuote = await generateUnsavedQuote(
-    {
-      createdAt: new Date(),
-      deletedAt: null,
-      expiresAt: null,
-      id: uuid.v4(),
-      minimumOrderQuantity: 1,
-      designId: design.id,
-      materialBudgetCents: 1100,
-      materialCategory: "BASIC",
-      processes: [
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-      ],
-      productComplexity: "BLANK",
-      productType: "TEESHIRT",
-      processTimelinesVersion: 0,
-      processesVersion: 0,
-      productMaterialsVersion: 0,
-      productTypeVersion: 0,
-      marginVersion: 0,
-      constantsVersion: 0,
-      careLabelsVersion: 0,
-    },
-    100
-  );
+  const unsavedQuote = await generateUnsavedQuote({
+    designId: null,
+    materialBudgetCents: 1100,
+    materialCategory: "BASIC",
+    processes: [
+      {
+        complexity: "1_COLOR",
+        name: "SCREEN_PRINTING",
+      },
+    ],
+    productComplexity: "BLANK",
+    productType: "TEESHIRT",
+    units: 100,
+    processTimelinesVersion: 0,
+    processesVersion: 0,
+    productMaterialsVersion: 0,
+    productTypeVersion: 0,
+    marginVersion: 0,
+    constantsVersion: 0,
+    careLabelsVersion: 0,
+  });
 
   t.equal(unsavedQuote.baseCostCents, 310, "calculates base cost correctly");
   t.equal(
@@ -456,32 +436,23 @@ test("generateUnsavedQuote for packaging", async (t: Test) => {
   sandbox()
     .stub(PricingQuotesDAO, "findVersionValuesForRequest")
     .resolves(latestValues);
-  const { user } = await createUser({ withSession: false });
-  const design = await generateDesign({ userId: user.id });
 
-  const unsavedQuote = await generateUnsavedQuote(
-    {
-      createdAt: new Date(),
-      deletedAt: null,
-      expiresAt: null,
-      id: uuid.v4(),
-      minimumOrderQuantity: 1,
-      designId: design.id,
-      materialBudgetCents: 1000,
-      materialCategory: "BASIC",
-      processes: [],
-      productComplexity: "BLANK",
-      productType: "PACKAGING",
-      processTimelinesVersion: 0,
-      processesVersion: 0,
-      productMaterialsVersion: 0,
-      productTypeVersion: 0,
-      marginVersion: 0,
-      constantsVersion: 0,
-      careLabelsVersion: 0,
-    },
-    1
-  );
+  const unsavedQuote = await generateUnsavedQuote({
+    designId: null,
+    materialBudgetCents: 1000,
+    materialCategory: "BASIC",
+    processes: [],
+    productComplexity: "BLANK",
+    productType: "PACKAGING",
+    units: 1,
+    processTimelinesVersion: 0,
+    processesVersion: 0,
+    productMaterialsVersion: 0,
+    productTypeVersion: 0,
+    marginVersion: 0,
+    constantsVersion: 0,
+    careLabelsVersion: 0,
+  });
 
   t.equal(unsavedQuote.baseCostCents, 0, "calculates base cost correctly");
   t.equal(
@@ -531,30 +502,15 @@ test("generateFromPayloadAndUser uses the checkout step", async (t: Test) => {
 
   await db.transaction(async (trx: Knex.Transaction) => {
     await PricingCostInputsDAO.create(trx, {
-      createdAt: new Date(),
-      deletedAt: null,
-      expiresAt: null,
+      ...pricingCostInputs,
       id: uuid.v4(),
-      materialBudgetCents: 1200,
-      materialCategory: "BASIC",
-      minimumOrderQuantity: 1,
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
-      processes: [],
       designId: designOne.id,
     });
     await PricingCostInputsDAO.create(trx, {
-      createdAt: new Date(),
-      deletedAt: null,
-      designId: designTwo.id,
-      expiresAt: null,
+      ...pricingCostInputs,
       id: uuid.v4(),
-      materialBudgetCents: 1200,
-      materialCategory: "BASIC",
-      minimumOrderQuantity: 1,
-      processes: [],
+      designId: designTwo.id,
       productComplexity: "BLANK",
-      productType: "TEESHIRT",
     });
     return generateFromPayloadAndUser(payload, user.id, trx);
   });

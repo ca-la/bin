@@ -1,57 +1,35 @@
-import uuid from "node-uuid";
+import { omit } from "lodash";
 
+import db from "../../services/db";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import { authHeader, get, post } from "../../test-helpers/http";
+import createUser from "../../test-helpers/create-user";
+import PricingCostInput from "./domain-object";
+import generatePricingValues from "../../test-helpers/factories/pricing-values";
+import generateProductTypes from "../../services/generate-product-types";
+import { Dollars } from "../../services/dollars";
 import * as PricingCostInputsDAO from "./dao";
 import ProductDesignsDAO from "../product-designs/dao";
-import SessionsDAO from "../../dao/sessions";
 import * as ApprovalStepStateService from "../../services/approval-step-state";
-import { CreatePricingCostInputRequest } from "./types";
+import createDesign from "../../services/create-design";
 
-const now = new Date();
-
-function setup() {
-  sandbox().useFakeTimers(now);
-  sandbox().stub(uuid, "v4").returns("a-generated-uuid");
-  const sessionStub = sandbox()
-    .stub(SessionsDAO, "findById")
-    .resolves({ role: "ADMIN" });
+test("POST /pricing-cost-inputs", async (t: Test) => {
   const updateTechStub = sandbox()
     .stub(ApprovalStepStateService, "updateTechnicalDesignStepForDesign")
     .resolves();
-  const createStub = sandbox().stub(PricingCostInputsDAO, "create").resolves({
-    id: "a-pricing-cost-input",
+  await generatePricingValues();
+  const { user, session } = await createUser({ role: "ADMIN" });
+  const design = await createDesign({
+    productType: "DRESS",
+    title: "A beautiful dress",
+    userId: user.id,
   });
-  const findInputStub = sandbox()
-    .stub(PricingCostInputsDAO, "findByDesignId")
-    .resolves([
-      {
-        id: "a-pricing-cost-input",
-      },
-    ]);
-  const findDesignStub = sandbox()
-    .stub(ProductDesignsDAO, "findById")
-    .resolves({
-      id: "a-design-id",
-    });
 
-  return {
-    sessionStub,
-    updateTechStub,
-    createStub,
-    findInputStub,
-    findDesignStub,
-  };
-}
-
-test("POST /pricing-cost-inputs", async (t: Test) => {
-  const { updateTechStub, createStub, sessionStub } = setup();
-
-  const input: CreatePricingCostInputRequest = {
-    designId: "a-design-id",
+  const input: Unsaved<PricingCostInput> = {
+    designId: design.id,
+    expiresAt: null,
     materialBudgetCents: 12000,
     materialCategory: "STANDARD",
-    minimumOrderQuantity: 200,
     needsTechnicalDesigner: true,
     processes: [
       {
@@ -65,118 +43,122 @@ test("POST /pricing-cost-inputs", async (t: Test) => {
     ],
     productComplexity: "MEDIUM",
     productType: "DRESS",
+    processTimelinesVersion: 0,
+    processesVersion: 0,
+    productMaterialsVersion: 0,
+    productTypeVersion: 0,
+    marginVersion: 0,
+    constantsVersion: 0,
+    careLabelsVersion: 0,
   };
 
   const [response, costInputs] = await post("/pricing-cost-inputs", {
     body: input,
-    headers: authHeader("a-session-id"),
+    headers: authHeader(session.id),
   });
 
-  t.equal(response.status, 201, "creates succesfully");
+  t.equal(response.status, 201);
   t.deepEqual(
-    costInputs,
-    { id: "a-pricing-cost-input" },
-    "returns results from calling pricing cost inputs DAO"
+    omit(costInputs, ["createdAt", "id", "deletedAt"]),
+    omit(
+      {
+        ...input,
+        expiresAt: null,
+      },
+      ["needsTechnicalDesigner"]
+    )
   );
-  t.deepEqual(
-    createStub.args[0][1],
-    {
-      createdAt: now,
-      deletedAt: null,
-      designId: "a-design-id",
-      expiresAt: null,
-      id: "a-generated-uuid",
-      materialBudgetCents: 12000,
-      materialCategory: "STANDARD",
-      minimumOrderQuantity: 200,
-      processes: [
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-        {
-          complexity: "SMALL",
-          name: "EMBROIDERY",
-        },
-      ],
-      productComplexity: "MEDIUM",
-      productType: "DRESS",
-    },
-    "calls pricing cost inputs DAO with correct data"
-  );
-  t.deepEqual(
-    updateTechStub.args[0].slice(1),
-    ["a-design-id", true],
-    "calls updating the technical design step with the correct arguments"
-  );
-
-  sessionStub.resolves({ role: "USER" });
-
-  const [unauthorized] = await post("/pricing-cost-inputs", {
-    body: input,
-    headers: authHeader("a-session-id"),
-  });
-
-  t.equal(unauthorized.status, 403, "requires ADMIN role");
+  t.equal(updateTechStub.args[0][1], design.id);
+  t.equal(updateTechStub.args[0][2], true);
 });
 
 test("GET /pricing-cost-inputs?designId gets the original versions", async (t: Test) => {
-  const { findInputStub, sessionStub } = setup();
+  await generatePricingValues();
+  const { user, session } = await createUser({ role: "ADMIN" });
+  const design = await createDesign({
+    productType: "DRESS",
+    title: "A beautiful dress",
+    userId: user.id,
+  });
+
+  const input: Unsaved<PricingCostInput> = {
+    designId: design.id,
+    expiresAt: null,
+    materialBudgetCents: 12000,
+    materialCategory: "STANDARD",
+    processes: [
+      {
+        complexity: "1_COLOR",
+        name: "SCREEN_PRINTING",
+      },
+      {
+        complexity: "SMALL",
+        name: "EMBROIDERY",
+      },
+    ],
+    productComplexity: "MEDIUM",
+    productType: "DRESS",
+    processTimelinesVersion: 0,
+    processesVersion: 0,
+    productMaterialsVersion: 0,
+    productTypeVersion: 0,
+    marginVersion: 0,
+    constantsVersion: 0,
+    careLabelsVersion: 0,
+  };
+
+  await post("/pricing-cost-inputs", {
+    body: input,
+    headers: authHeader(session.id),
+  });
+
+  const pricingProductTypeTee = generateProductTypes({
+    contrast: [0.15, 0.5, 1, 0],
+    typeMediumCents: Dollars(20),
+    typeMediumDays: 5,
+    typeName: "TEESHIRT",
+    typeYield: 1.5,
+    version: 1,
+  });
+  await db.insert(pricingProductTypeTee).into("pricing_product_types");
 
   const [response, costInputs] = await get(
-    "/pricing-cost-inputs?designId=a-design-id",
+    `/pricing-cost-inputs?designId=${design.id}`,
     {
-      headers: authHeader("a-session-id"),
+      headers: authHeader(session.id),
     }
   );
 
   t.equal(response.status, 200);
   t.deepEqual(
-    costInputs,
-    [{ id: "a-pricing-cost-input" }],
-    "returns results from calling pricing cost inputs DAO"
+    omit(costInputs[0], ["createdAt", "id", "deletedAt", "processes"]),
+    omit({ ...input, expiresAt: null }, "processes")
   );
-  t.deepEqual(findInputStub.args, [
-    [{ designId: "a-design-id", showExpired: false }],
-  ]);
-
-  sessionStub.resolves({ role: "USER" });
-  const [unauthorized] = await get(
-    "/pricing-cost-inputs?designId=a-design-id",
-    {
-      headers: authHeader("a-session-id"),
-    }
-  );
-  t.equal(unauthorized.status, 403, "requires ADMIN role");
+  t.deepEqual(costInputs[0].processes, input.processes);
 });
 
 test("GET /pricing-cost-inputs?designId&showExpired can surface expired cost inputs", async (t: Test) => {
-  const { findInputStub, sessionStub } = setup();
+  const { session } = await createUser({ role: "ADMIN" });
+  const findDesignStub = sandbox()
+    .stub(ProductDesignsDAO, "findById")
+    .resolves({});
+  const findStub = sandbox()
+    .stub(PricingCostInputsDAO, "findByDesignId")
+    .resolves([]);
 
   const [response, body] = await get(
-    `/pricing-cost-inputs?designId=a-design-id&showExpired=true`,
+    `/pricing-cost-inputs?designId=abc-123&showExpired=true`,
     {
-      headers: authHeader("a-session-id"),
+      headers: authHeader(session.id),
     }
   );
 
   t.equal(response.status, 200);
-  t.deepEqual(body, [{ id: "a-pricing-cost-input" }], "returns found inputs");
-  t.deepEqual(findInputStub.args, [
-    [
-      {
-        designId: "a-design-id",
-        showExpired: true,
-      },
-    ],
-  ]);
-
-  sessionStub.resolves({ role: "USER" });
-  const [unauthorized] = await get(
-    "/pricing-cost-inputs?designId=a-design-id",
-    {
-      headers: authHeader("a-session-id"),
-    }
-  );
-  t.equal(unauthorized.status, 403, "requires ADMIN role");
+  t.deepEqual(body, []);
+  t.equal(findDesignStub.callCount, 1);
+  t.equal(findStub.callCount, 1);
+  t.deepEqual(findStub.args[0][0], {
+    designId: "abc-123",
+    showExpired: true,
+  });
 });

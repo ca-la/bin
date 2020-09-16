@@ -13,6 +13,8 @@ import {
   PricingProcessQuoteRow,
   PricingQuote,
   PricingQuoteInputRow,
+  PricingQuoteRequest,
+  PricingQuoteRequestWithVersions,
   PricingQuoteRow,
   PricingQuoteValues,
 } from "../../domain-objects/pricing-quote";
@@ -46,12 +48,8 @@ import PricingCareLabel, {
   isPricingCareLabelRow,
   PricingCareLabelRow,
 } from "../../domain-objects/pricing-care-label";
-import {
-  PricingCostInput,
-  UncomittedCostInput,
-} from "../../components/pricing-cost-inputs/types";
 import DataAdapter from "../../services/data-adapter";
-import ResourceNotFoundError from "../../errors/resource-not-found";
+import InvalidDataError = require("../../errors/invalid-data");
 import first from "../../services/first";
 import PricingProcessTimeline, {
   dataAdapter as pricingProcessTimelineDataAdapter,
@@ -141,46 +139,46 @@ export async function findMatchingOrCreateInput(
 }
 
 export async function findVersionValuesForRequest(
-  costInput: PricingCostInput,
-  units: number
+  request: PricingQuoteRequestWithVersions
 ): Promise<PricingQuoteValues> {
   // tslint:disable-next-line: no-console
   console.log(
     "findVersionValuesFromRequest:",
-    JSON.stringify(costInput, null, 2)
+    JSON.stringify(request, null, 2)
   );
 
-  const constant = await findConstants(costInput.constantsVersion);
-  const careLabel = await findCareLabel(units, costInput.careLabelsVersion);
+  const { units } = request;
+  const constant = await findConstants(request.constantsVersion);
+  const careLabel = await findCareLabel(units, request.careLabelsVersion);
   const material = await findProductMaterial(
-    costInput.materialCategory,
+    request.materialCategory,
     units,
-    costInput.productMaterialsVersion
+    request.productMaterialsVersion
   );
   const type = await findProductType(
-    costInput.productType,
-    costInput.productComplexity,
+    request.productType,
+    request.productComplexity,
     units,
-    costInput.productTypeVersion
+    request.productTypeVersion
   );
   const sample = await findProductType(
-    costInput.productType,
-    costInput.productComplexity,
+    request.productType,
+    request.productComplexity,
     1,
-    costInput.productTypeVersion
+    request.productTypeVersion
   );
 
   const processes = await findProcesses(
-    costInput.processes,
+    request.processes,
     units,
-    costInput.processesVersion
+    request.processesVersion
   );
   const processTimeline = await findProcessTimeline(
-    costInput.processes,
+    request.processes,
     units,
-    costInput.processTimelinesVersion
+    request.processTimelinesVersion
   );
-  const margin = await findMargin(units, costInput.marginVersion);
+  const margin = await findMargin(request.units, request.marginVersion);
 
   const { id: constantId, ...pricingValues } = constant;
 
@@ -198,25 +196,25 @@ export async function findVersionValuesForRequest(
 }
 
 export async function findLatestValuesForRequest(
-  costInput: UncomittedCostInput,
-  units: number
+  request: PricingQuoteRequest
 ): Promise<PricingQuoteValues> {
+  const { units } = request;
   const latestConstant = await findConstants();
   const careLabel = await findCareLabel(units);
-  const material = await findProductMaterial(costInput.materialCategory, units);
+  const material = await findProductMaterial(request.materialCategory, units);
   const type = await findProductType(
-    costInput.productType,
-    costInput.productComplexity,
+    request.productType,
+    request.productComplexity,
     units
   );
   const sample = await findProductType(
-    costInput.productType,
-    costInput.productComplexity,
+    request.productType,
+    request.productComplexity,
     1
   );
-  const processes = await findProcesses(costInput.processes, units);
-  const processTimeline = await findProcessTimeline(costInput.processes, units);
-  const margin = await findMargin(units);
+  const processes = await findProcesses(request.processes, units);
+  const processTimeline = await findProcessTimeline(request.processes, units);
+  const margin = await findMargin(request.units);
 
   const { id: constantId, ...pricingValues } = latestConstant;
 
@@ -325,7 +323,7 @@ async function findCareLabel(
   >(TABLE_NAME, units, version);
 
   if (!careLabelRow) {
-    throw new ResourceNotFoundError("Pricing care label does not exist!");
+    throw new InvalidDataError("Pricing care label does not exist!");
   }
 
   return validate(
@@ -348,7 +346,7 @@ async function findConstants(version?: number): Promise<PricingConstant> {
     .orderBy("created_at", "desc");
 
   if (!constantRow) {
-    throw new ResourceNotFoundError("Pricing constant could not be found!");
+    throw new Error("Pricing constant could not be found!");
   }
 
   return validate(
@@ -370,9 +368,7 @@ async function findProductMaterial(
   >(TABLE_NAME, units, version).where({ category });
 
   if (!materialRow) {
-    throw new ResourceNotFoundError(
-      "Pricing product material could not be found!"
-    );
+    throw new Error("Pricing product material could not be found!");
   }
 
   return validate(
@@ -395,7 +391,7 @@ async function findProductType(
   >(TABLE_NAME, units, version).where({ name, complexity });
 
   if (!typeRow) {
-    throw new ResourceNotFoundError("Pricing product type could not be found!");
+    throw new Error("Pricing product type could not be found!");
   }
 
   return validate(
@@ -459,7 +455,7 @@ async function findProcesses(
   const processRows: any[] = await query;
 
   if (processRows.length !== distinctProcesses.length) {
-    throw new ResourceNotFoundError(`Could not find all processes:
+    throw new Error(`Could not find all processes:
 Requested processes: ${JSON.stringify(processes, null, 4)}
 Found processes: ${JSON.stringify(processRows, null, 4)}`);
   }
@@ -553,7 +549,7 @@ async function findMargin(
   >(TABLE_NAME, units, version);
 
   if (!marginRow) {
-    throw new ResourceNotFoundError("Pricing margin does not exist!");
+    throw new Error("Pricing margin does not exist!");
   }
 
   return validate(TABLE_NAME, isPricingMarginRow, marginDataAdapter, marginRow);

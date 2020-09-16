@@ -5,7 +5,7 @@ import {
 } from "../../../product-designs/services/state-machine";
 import { ProductDesignDataWithMeta } from "../../../product-designs/domain-objects/with-meta";
 import { determineEarliestExpiration } from "../../../pricing-cost-inputs/services/determine-earliest-expiration";
-import { PricingCostInputDb } from "../../../pricing-cost-inputs/domain-object";
+import { BasePricingCostInput } from "../../../pricing-cost-inputs/domain-object";
 import { CollectionSubmissionStatus } from "../../types";
 
 export interface SubmissionStatusByCollection {
@@ -47,9 +47,9 @@ function determineStatusFromDesigns(
   const pricingExpiresAt = determineEarliestExpiration(
     designs.reduce(
       (
-        aggregate: PricingCostInputDb[],
+        aggregate: BasePricingCostInput[],
         currentDesign: ProductDesignDataWithMeta
-      ): PricingCostInputDb[] => {
+      ): BasePricingCostInput[] => {
         return [...aggregate, ...currentDesign.costInputs];
       },
       []
