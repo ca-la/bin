@@ -53,15 +53,17 @@ export interface PricingCostInputRow extends PricingCostInputDbRow {
   processes: Process[];
 }
 
-export type CreatePricingCostInputRequest = Pick<
-  PricingCostInput,
-  | "designId"
-  | "materialBudgetCents"
-  | "materialCategory"
-  | "processes"
-  | "productComplexity"
-  | "productType"
-> & { needsTechnicalDesigner: boolean; minimumOrderQuantity?: number };
+export interface CreatePricingCostInputRequest {
+  designId: PricingCostInput["designId"];
+  materialBudgetCents: PricingCostInput["materialBudgetCents"];
+  materialCategory: PricingCostInput["materialCategory"];
+  processes: PricingCostInput["processes"];
+  productComplexity: PricingCostInput["productComplexity"];
+  productType: PricingCostInput["productType"];
+
+  needsTechnicalDesigner?: boolean;
+  minimumOrderQuantity?: PricingCostInput["minimumOrderQuantity"];
+}
 
 export function isCreatePricingCostInputRequest(
   candidate: Record<string, any>
@@ -72,7 +74,6 @@ export function isCreatePricingCostInputRequest(
     "designId",
     "materialBudgetCents",
     "materialCategory",
-    "needsTechnicalDesigner",
     "processes",
     "productComplexity",
     "productType",

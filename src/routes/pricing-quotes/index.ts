@@ -164,10 +164,21 @@ function* previewQuote(this: AuthedContext): Iterator<any, any, any> {
     );
   }
 
-  const { units, uncommittedCostInput } = body;
+  const {
+    units,
+    uncommittedCostInput: { minimumOrderQuantity = 1, ...uncommittedCostInput },
+  } = body;
 
   const unsavedQuote = yield generateUnsavedQuoteWithoutVersions(
-    { minimumOrderQuantity: 1, ...uncommittedCostInput },
+    {
+      minimumOrderQuantity,
+      designId: uncommittedCostInput.designId,
+      materialBudgetCents: uncommittedCostInput.materialBudgetCents,
+      materialCategory: uncommittedCostInput.materialCategory,
+      processes: uncommittedCostInput.processes,
+      productComplexity: uncommittedCostInput.productComplexity,
+      productType: uncommittedCostInput.productType,
+    },
     units
   ).catch(
     filterError(ResourceNotFoundError, (err: InvalidDataError) =>

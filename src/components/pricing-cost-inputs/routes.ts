@@ -34,7 +34,7 @@ function* createCostInputs(
       this.throw(404, `No design found for ID: ${inputs.designId}`);
     }
     const {
-      needsTechnicalDesigner,
+      needsTechnicalDesigner = false,
       minimumOrderQuantity = 1,
       ...unsavedInputs
     } = inputs;

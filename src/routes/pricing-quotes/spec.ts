@@ -94,7 +94,6 @@ test("POST /pricing-quotes/preview returns an unsaved quote from an uncommitted 
     designId: design.id,
     materialBudgetCents: 1200,
     materialCategory: "BASIC",
-    needsTechnicalDesigner: false,
     processes: [
       {
         complexity: "1_COLOR",
