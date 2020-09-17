@@ -8,13 +8,12 @@ import { authHeader, get, post, put } from "../../test-helpers/http";
 import { create as createDesign } from "../../components/product-designs/dao";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import db from "../../services/db";
-import PricingCostInput, {
-  PricingCostInputWithoutVersions,
-} from "../../components/pricing-cost-inputs/domain-object";
+import PricingCostInput from "../../components/pricing-cost-inputs/domain-object";
 import { daysToMs } from "../../services/time-conversion";
 import generateProductTypes from "../../services/generate-product-types";
 import { Dollars } from "../../services/dollars";
 import { checkout } from "../../test-helpers/checkout-collection";
+import { CreatePricingCostInputRequest } from "../../components/pricing-cost-inputs/types";
 
 test("/pricing-quotes?designId retrieves the set of quotes for a design", async (t: Test) => {
   const {
@@ -60,6 +59,7 @@ test("GET /pricing-quotes?designId&units returns unsaved quote", async (t: Test)
     payNowTotalCents: 496000,
     timeTotalMs: 1219764706,
     units: 100,
+    minimumOrderQuantity: 1,
   });
 });
 
@@ -90,14 +90,11 @@ test("POST /pricing-quotes/preview returns an unsaved quote from an uncommitted 
     title: "A design",
     userId: user.id,
   });
-  const uncommittedCostInput: PricingCostInputWithoutVersions = {
-    createdAt: new Date(),
-    deletedAt: null,
+  const uncommittedCostInput: CreatePricingCostInputRequest = {
     designId: design.id,
-    expiresAt: null,
-    id: uuid.v4(),
     materialBudgetCents: 1200,
     materialCategory: "BASIC",
+    needsTechnicalDesigner: false,
     processes: [
       {
         complexity: "1_COLOR",
@@ -112,35 +109,25 @@ test("POST /pricing-quotes/preview returns an unsaved quote from an uncommitted 
     productType: "TEESHIRT",
   };
 
-  const nullUncommittedCostInput: object = {
-    createdAt: new Date(),
-    deletedAt: null,
-    designId: design.id,
-    id: uuid.v4(),
-    materialBudgetCents: 1200,
-    materialCategory: "BASIC",
-    processes: [
-      {
-        complexity: "1_COLOR",
-        name: "SCREEN_PRINTING",
-      },
-      {
-        complexity: "1_COLOR",
-        name: "SCREEN_PRINTING",
-      },
-    ],
-    productComplexity: "SIMPLE",
-    productType: null,
-  };
-  const [badResponse] = await post("/pricing-quotes/preview", {
+  const [badRequest, notFoundMessage] = await post("/pricing-quotes/preview", {
     body: {
-      nullUncommittedCostInput,
+      uncommittedCostInput: {
+        ...uncommittedCostInput,
+        productType: null,
+      },
       units: 100,
     },
     headers: authHeader(session.id),
   });
-
-  t.equal(badResponse.status, 400);
+  t.equal(
+    badRequest.status,
+    400,
+    "invalid or missing input returns a bad request status"
+  );
+  t.true(
+    /Pricing product type could not be found/.test(notFoundMessage.message),
+    "returns relevant error message"
+  );
 
   const [response, unsavedQuote] = await post("/pricing-quotes/preview", {
     body: {
@@ -226,6 +213,7 @@ test("POST /pricing-quotes/preview fails if there are no pricing values for the 
     marginVersion: 0,
     constantsVersion: 0,
     careLabelsVersion: 0,
+    minimumOrderQuantity: 1,
   };
 
   const [failedResponse] = await post("/pricing-quotes/preview", {
@@ -236,7 +224,7 @@ test("POST /pricing-quotes/preview fails if there are no pricing values for the 
     headers: authHeader(session.id),
   });
 
-  t.equal(failedResponse.status, 500, "fails to create the quote");
+  t.equal(failedResponse.status, 400, "fails to create the quote");
 });
 
 test("POST /pricing-quotes/preview is an admin-only endpoint", async (t: Test) => {

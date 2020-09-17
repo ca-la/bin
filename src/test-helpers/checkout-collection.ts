@@ -71,6 +71,7 @@ export async function checkout() {
       id: uuid.v4(),
       materialBudgetCents: 1200,
       materialCategory: "BASIC",
+      minimumOrderQuantity: 1,
       processes: [
         {
           complexity: "1_COLOR",
@@ -92,6 +93,7 @@ export async function checkout() {
       id: uuid.v4(),
       materialBudgetCents: 1200,
       materialCategory: "BASIC",
+      minimumOrderQuantity: 1,
       processes: [
         {
           complexity: "1_COLOR",
@@ -108,56 +110,70 @@ export async function checkout() {
   });
 
   const quotes = [
-    await generatePricingQuote({
-      designId: collectionDesigns[0].id,
-      materialBudgetCents: 1200,
-      materialCategory: "BASIC",
-      processes: [
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-      ],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
-      units: 300,
-      processTimelinesVersion: 0,
-      processesVersion: 0,
-      productMaterialsVersion: 0,
-      productTypeVersion: 0,
-      marginVersion: 0,
-      constantsVersion: 0,
-      careLabelsVersion: 0,
-    }),
-    await generatePricingQuote({
-      designId: collectionDesigns[1].id,
-      materialBudgetCents: 1200,
-      materialCategory: "BASIC",
-      processes: [
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-      ],
-      productComplexity: "BLANK",
-      productType: "TEESHIRT",
-      units: 200,
-      processTimelinesVersion: 0,
-      processesVersion: 0,
-      productMaterialsVersion: 0,
-      productTypeVersion: 0,
-      marginVersion: 0,
-      constantsVersion: 0,
-      careLabelsVersion: 0,
-    }),
+    await generatePricingQuote(
+      {
+        createdAt: new Date(),
+        deletedAt: null,
+        expiresAt: null,
+        id: uuid.v4(),
+        minimumOrderQuantity: 1,
+        designId: collectionDesigns[0].id,
+        materialBudgetCents: 1200,
+        materialCategory: "BASIC",
+        processes: [
+          {
+            complexity: "1_COLOR",
+            name: "SCREEN_PRINTING",
+          },
+          {
+            complexity: "1_COLOR",
+            name: "SCREEN_PRINTING",
+          },
+        ],
+        productComplexity: "SIMPLE",
+        productType: "TEESHIRT",
+        processTimelinesVersion: 0,
+        processesVersion: 0,
+        productMaterialsVersion: 0,
+        productTypeVersion: 0,
+        marginVersion: 0,
+        constantsVersion: 0,
+        careLabelsVersion: 0,
+      },
+      300
+    ),
+    await generatePricingQuote(
+      {
+        createdAt: new Date(),
+        deletedAt: null,
+        expiresAt: null,
+        id: uuid.v4(),
+        minimumOrderQuantity: 1,
+        designId: collectionDesigns[1].id,
+        materialBudgetCents: 1200,
+        materialCategory: "BASIC",
+        processes: [
+          {
+            complexity: "1_COLOR",
+            name: "SCREEN_PRINTING",
+          },
+          {
+            complexity: "1_COLOR",
+            name: "SCREEN_PRINTING",
+          },
+        ],
+        productComplexity: "BLANK",
+        productType: "TEESHIRT",
+        processTimelinesVersion: 0,
+        processesVersion: 0,
+        productMaterialsVersion: 0,
+        productTypeVersion: 0,
+        marginVersion: 0,
+        constantsVersion: 0,
+        careLabelsVersion: 0,
+      },
+      200
+    ),
   ];
 
   return {

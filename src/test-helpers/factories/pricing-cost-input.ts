@@ -4,12 +4,12 @@ import Knex from "knex";
 import PricingCostInput, {
   PricingCostInputWithoutVersions,
 } from "../../components/pricing-cost-inputs/domain-object";
-import db from "../../services/db";
 import { create } from "../../components/pricing-cost-inputs/dao";
+import db from "../../services/db";
 import ProductDesignsDAO from "../../components/product-designs/dao";
 import createDesign from "../../services/create-design";
 import { findById as findUserById } from "../../components/users/dao";
-import createUser = require("../create-user");
+import createUser from "../create-user";
 import User from "../../components/users/domain-object";
 
 interface PricingCostInputWithResources {
@@ -19,7 +19,7 @@ interface PricingCostInputWithResources {
 }
 
 export default async function generatePricingCostInput(
-  options: Partial<MaybeUnsaved<PricingCostInputWithoutVersions>> = {},
+  options: Partial<PricingCostInputWithoutVersions> = {},
   userId?: string
 ): Promise<PricingCostInputWithResources> {
   const { user } = userId
@@ -44,6 +44,7 @@ export default async function generatePricingCostInput(
       productComplexity: "COMPLEX",
       materialCategory: "SPECIFY",
       materialBudgetCents: 10000,
+      minimumOrderQuantity: 1,
       processes: [],
       ...options,
     })

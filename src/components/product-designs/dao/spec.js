@@ -274,24 +274,31 @@ test("ProductDesignsDAO.findByQuoteId", async (t) => {
     userId: user.id,
   });
   await generatePricingValues();
-  const quote = await generatePricingQuote({
-    designId: design.id,
-    materialBudgetCents: 1200,
-    materialCategory: "BASIC",
-    processes: [
-      {
-        complexity: "1_COLOR",
-        name: "SCREEN_PRINTING",
-      },
-      {
-        complexity: "1_COLOR",
-        name: "SCREEN_PRINTING",
-      },
-    ],
-    productComplexity: "SIMPLE",
-    productType: "TEESHIRT",
-    units: 200,
-  });
+  const quote = await generatePricingQuote(
+    {
+      createdAt: new Date(),
+      deletedAt: null,
+      expiresAt: null,
+      id: uuid.v4(),
+      minimumOrderQuantity: 1,
+      designId: design.id,
+      materialBudgetCents: 1200,
+      materialCategory: "BASIC",
+      processes: [
+        {
+          complexity: "1_COLOR",
+          name: "SCREEN_PRINTING",
+        },
+        {
+          complexity: "1_COLOR",
+          name: "SCREEN_PRINTING",
+        },
+      ],
+      productComplexity: "SIMPLE",
+      productType: "TEESHIRT",
+    },
+    200
+  );
   const retrieved = await ProductDesignsDAO.findByQuoteId(quote.id);
   t.deepEqual(retrieved, design);
 });

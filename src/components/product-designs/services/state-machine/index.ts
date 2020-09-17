@@ -1,6 +1,6 @@
 import { Machine, StateMachine } from "xstate";
 import DesignEvent, { DesignEventTypes } from "../../../design-events/types";
-import { BasePricingCostInput } from "../../../pricing-cost-inputs/domain-object";
+import { PricingCostInputDb } from "../../../pricing-cost-inputs/domain-object";
 
 export enum DesignState {
   INITIAL = "INITIAL",
@@ -70,15 +70,15 @@ function createDesignMachine(
   });
 }
 
-function hasActiveCostInputs(costInputs: BasePricingCostInput[]): boolean {
+function hasActiveCostInputs(costInputs: PricingCostInputDb[]): boolean {
   const now = new Date();
-  return costInputs.some((costInput: BasePricingCostInput): boolean => {
+  return costInputs.some((costInput: PricingCostInputDb): boolean => {
     return costInput.expiresAt === null || new Date(costInput.expiresAt) > now;
   });
 }
 
 export interface DesignStateDependencies {
-  costInputs: BasePricingCostInput[];
+  costInputs: PricingCostInputDb[];
   events: DesignEvent[];
   id: string;
 }

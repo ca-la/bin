@@ -1,3 +1,4 @@
+import Knex from "knex";
 import uuid from "node-uuid";
 import { omit } from "lodash";
 
@@ -25,7 +26,6 @@ import { addDesign } from "../../test-helpers/collections";
 import { createStorefront } from "../../services/create-storefront";
 import { ProviderName } from "../../components/storefronts/tokens/domain-object";
 import * as CreateShopifyProducts from "../../services/create-shopify-products";
-import Knex from "knex";
 import { ApprovalStepState } from "../../components/approval-steps/domain-object";
 import createDesign from "../../services/create-design";
 import * as IrisService from "../../components/iris/send-message";
@@ -88,6 +88,7 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
       id: uuid.v4(),
       materialBudgetCents: 1200,
       materialCategory: "BASIC",
+      minimumOrderQuantity: 1,
       processes: [
         {
           complexity: "1_COLOR",
@@ -109,6 +110,7 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
       id: uuid.v4(),
       materialBudgetCents: 1200,
       materialCategory: "BASIC",
+      minimumOrderQuantity: 1,
       processes: [
         {
           complexity: "1_COLOR",
@@ -271,6 +273,7 @@ test("/quote-payments POST does not generate quotes, payment method, invoice, li
       id: uuid.v4(),
       materialBudgetCents: 1200,
       materialCategory: "BASIC",
+      minimumOrderQuantity: 1,
       processes: [
         {
           complexity: "1_COLOR",
@@ -345,6 +348,7 @@ test("POST /quote-payments?isWaived=true waives payment", async (t: Test) => {
       id: uuid.v4(),
       materialBudgetCents: 1200,
       materialCategory: "BASIC",
+      minimumOrderQuantity: 1,
       processes: [
         {
           complexity: "1_COLOR",
@@ -437,6 +441,7 @@ test("POST /quote-payments?isWaived=true fails if ineligible", async (t: Test) =
       id: uuid.v4(),
       materialBudgetCents: 1200,
       materialCategory: "BASIC",
+      minimumOrderQuantity: 1,
       processes: [
         {
           complexity: "1_COLOR",
@@ -516,6 +521,7 @@ test(
         id: uuid.v4(),
         materialBudgetCents: 1200,
         materialCategory: "BASIC",
+        minimumOrderQuantity: 1,
         processes: [
           {
             complexity: "1_COLOR",
@@ -605,6 +611,7 @@ test("POST /quote-payments creates shopify products if connected to a storefront
       id: uuid.v4(),
       materialBudgetCents: 1200,
       materialCategory: "BASIC",
+      minimumOrderQuantity: 1,
       processes: [
         {
           complexity: "1_COLOR",
@@ -695,6 +702,7 @@ test("POST /quote-payments still succeeds if creates shopify products fails", as
       id: uuid.v4(),
       materialBudgetCents: 1200,
       materialCategory: "BASIC",
+      minimumOrderQuantity: 1,
       processes: [],
       productComplexity: "SIMPLE",
       productType: "TEESHIRT",
@@ -774,6 +782,7 @@ test("POST /quote-payments does not allow parallel requests to succeed", async (
       id: uuid.v4(),
       materialBudgetCents: 1200,
       materialCategory: "BASIC",
+      minimumOrderQuantity: 1,
       processes: [
         {
           complexity: "1_COLOR",
@@ -795,6 +804,7 @@ test("POST /quote-payments does not allow parallel requests to succeed", async (
       id: uuid.v4(),
       materialBudgetCents: 1200,
       materialCategory: "BASIC",
+      minimumOrderQuantity: 1,
       processes: [
         {
           complexity: "1_COLOR",
@@ -905,6 +915,7 @@ test("POST /quote-payments does not allow consecutive requests to succeed", asyn
       id: uuid.v4(),
       materialBudgetCents: 1200,
       materialCategory: "BASIC",
+      minimumOrderQuantity: 1,
       processes: [
         {
           complexity: "1_COLOR",
@@ -926,6 +937,7 @@ test("POST /quote-payments does not allow consecutive requests to succeed", asyn
       id: uuid.v4(),
       materialBudgetCents: 1200,
       materialCategory: "BASIC",
+      minimumOrderQuantity: 1,
       processes: [
         {
           complexity: "1_COLOR",

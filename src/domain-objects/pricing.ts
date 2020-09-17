@@ -1,5 +1,3 @@
-import { hasProperties } from "../services/require-properties";
-
 export type Complexity = "BLANK" | "SIMPLE" | "MEDIUM" | "COMPLEX";
 
 export type MaterialCategory =
@@ -45,7 +43,8 @@ export type Process =
     };
 
 export function isProcess(candidate: object): candidate is Process {
-  return hasProperties(candidate, "name", "complexity");
+  const keyset = new Set(Object.keys(candidate));
+  return ["name", "complexity"].every(keyset.has.bind(keyset));
 }
 
 export const validProductTypes = [

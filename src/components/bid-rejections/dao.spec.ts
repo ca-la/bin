@@ -7,35 +7,44 @@ import { daysToMs } from "../../services/time-conversion";
 import uuid = require("node-uuid");
 import { create as createBid } from "../bids/dao";
 import { create, findByBidId } from "./dao";
+import { generateDesign } from "../../test-helpers/factories/product-design";
 
 test("Bid Rejections DAO supports creation and retrieval by Bid ID", async (t: Test) => {
   await generatePricingValues();
   const { user } = await createUser();
-  const quote = await generatePricingQuote({
-    designId: null,
-    materialBudgetCents: 1200,
-    materialCategory: "BASIC",
-    processes: [
-      {
-        complexity: "1_COLOR",
-        name: "SCREEN_PRINTING",
-      },
-      {
-        complexity: "1_COLOR",
-        name: "SCREEN_PRINTING",
-      },
-    ],
-    productComplexity: "SIMPLE",
-    productType: "TEESHIRT",
-    units: 200,
-    processTimelinesVersion: 0,
-    processesVersion: 0,
-    productMaterialsVersion: 0,
-    productTypeVersion: 0,
-    marginVersion: 0,
-    constantsVersion: 0,
-    careLabelsVersion: 0,
-  });
+  const design = await generateDesign({ userId: user.id });
+  const quote = await generatePricingQuote(
+    {
+      createdAt: new Date(2012, 11, 22),
+      deletedAt: null,
+      expiresAt: null,
+      id: uuid.v4(),
+      minimumOrderQuantity: 1,
+      designId: design.id,
+      materialBudgetCents: 1200,
+      materialCategory: "BASIC",
+      processes: [
+        {
+          complexity: "1_COLOR",
+          name: "SCREEN_PRINTING",
+        },
+        {
+          complexity: "1_COLOR",
+          name: "SCREEN_PRINTING",
+        },
+      ],
+      productComplexity: "SIMPLE",
+      productType: "TEESHIRT",
+      processTimelinesVersion: 0,
+      processesVersion: 0,
+      productMaterialsVersion: 0,
+      productTypeVersion: 0,
+      marginVersion: 0,
+      constantsVersion: 0,
+      careLabelsVersion: 0,
+    },
+    200
+  );
   const inputBid: BidCreationPayload = {
     acceptedAt: null,
     bidPriceCents: 100000,

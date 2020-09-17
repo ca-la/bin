@@ -13,7 +13,7 @@ export interface BasePricingQuoteRequest {
   productType: ProductType;
   productComplexity: Complexity;
   materialCategory: MaterialCategory;
-  materialBudgetCents?: number;
+  materialBudgetCents: number;
   units: number;
   designId: string | null;
 }
@@ -63,7 +63,7 @@ export interface PricingQuoteRow {
   product_type: ProductType;
   product_complexity: Complexity;
   material_category: MaterialCategory;
-  material_budget_cents?: number;
+  material_budget_cents: number;
   units: number;
   base_cost_cents: number;
   material_cost_cents: number;
