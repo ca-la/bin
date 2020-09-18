@@ -5,7 +5,6 @@ import { emit } from "../../services/pubsub";
 import { RouteCreated } from "../../services/pubsub/cala-events";
 import useTransaction from "../../middleware/use-transaction";
 import requireAuth from "../../middleware/require-auth";
-import { requireQueryParam } from "../../middleware/require-query-param";
 import TeamsDAO, { rawDao as RawTeamsDAO } from "./dao";
 import { isUnsavedTeam, TeamDb } from "./types";
 
@@ -41,22 +40,33 @@ function* createTeam(this: TrxContext<AuthedContext>) {
   this.body = team;
 }
 
-function* findTeamsByUser(this: TrxContext<AuthedContext>) {
+function* findTeams(this: TrxContext<AuthedContext>) {
   const { trx } = this.state;
-  if (this.state.userId !== this.query.userId) {
+
+  const { userId } = this.query;
+
+  if (!userId) {
+    if (this.state.role === "ADMIN") {
+      this.body = yield TeamsDAO.find(trx);
+      this.status = 200;
+      return;
+    }
+
+    this.throw(400, `You must provide userId as a query parameter`);
+  }
+
+  if (this.state.userId !== userId) {
     this.throw(
       403,
       "User in query parameter does not match authenticated user"
     );
   }
 
-  const teams = yield TeamsDAO.find(trx, {}, (query: Knex.QueryBuilder) =>
+  this.body = yield TeamsDAO.find(trx, {}, (query: Knex.QueryBuilder) =>
     query.where({
-      "team_users.user_id": this.query.userId,
+      "team_users.user_id": userId,
     })
   );
-
-  this.body = teams;
   this.status = 200;
 }
 
@@ -65,12 +75,7 @@ export default {
   routes: {
     "/": {
       post: [useTransaction, requireAuth, createTeam],
-      get: [
-        useTransaction,
-        requireAuth,
-        requireQueryParam("userId"),
-        findTeamsByUser,
-      ],
+      get: [useTransaction, requireAuth, findTeams],
     },
   },
 };

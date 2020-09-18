@@ -8,6 +8,7 @@ import { Role as TeamUserRole } from "../team-users/types";
 import TeamsDAO, { rawDao as RawTeamsDAO } from "./dao";
 import { TeamDb } from "./types";
 import createUser from "../../test-helpers/create-user";
+import { Role } from "../users/types";
 
 const now = new Date(2012, 11, 23);
 const t1: TeamDb = {
@@ -17,12 +18,16 @@ const t1: TeamDb = {
   deletedAt: null,
 };
 
-function setup() {
+function setup({
+  role = "USER",
+}: {
+  role?: Role;
+} = {}) {
   sandbox().useFakeTimers(now);
   sandbox().stub(uuid, "v4").returns("a-team-id");
   return {
     sessionsStub: sandbox().stub(SessionsDAO, "findById").resolves({
-      role: "USER",
+      role,
       userId: "a-user-id",
     }),
     createStub: sandbox().stub(RawTeamsDAO, "create").resolves(t1),
@@ -115,6 +120,19 @@ test("GET /teams", async (t: Test) => {
   });
 
   t.equal(unauthenticated.status, 401, "Does not allow unauthenticated users");
+});
+
+test("GET /teams as ADMIN", async (t: Test) => {
+  setup({ role: "ADMIN" });
+
+  const [response, body] = await get("/teams", {
+    headers: authHeader("a-session-id"),
+  });
+
+  t.equal(response.status, 200, "responds successfully");
+  t.deepEqual(body, [
+    JSON.parse(JSON.stringify({ ...t1, role: TeamUserRole.ADMIN })),
+  ]);
 });
 
 test("POST -> GET /teams end-to-end", async (t: Test) => {
