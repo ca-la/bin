@@ -11,7 +11,7 @@ import { rawDao as RawTeamsDAO } from "../teams/dao";
 import TeamUsersDAO, { rawDao as RawTeamUsersDAO } from "./dao";
 import { Role, TeamUser, TeamUserDb } from "./types";
 import ResourceNotFoundError from "../../errors/resource-not-found";
-import { TeamUserRole } from "../../published-types";
+import { TeamType, TeamUserRole } from "../../published-types";
 
 const now = new Date();
 const tuDb1: TeamUserDb = {
@@ -235,6 +235,7 @@ test("/team-users end-to-end", async (t: Test) => {
       title: "Test Team",
       createdAt: now,
       deletedAt: null,
+      type: TeamType.DESIGNER,
     });
     await RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
@@ -248,6 +249,7 @@ test("/team-users end-to-end", async (t: Test) => {
       title: "Test Team",
       createdAt: now,
       deletedAt: null,
+      type: TeamType.DESIGNER,
     });
     await RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),

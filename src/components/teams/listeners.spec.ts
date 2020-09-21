@@ -2,7 +2,7 @@ import Knex from "knex";
 import uuid from "node-uuid";
 
 import { sandbox, test, Test } from "../../test-helpers/fresh";
-import { TeamDb } from "./types";
+import { TeamDb, TeamType } from "./types";
 import { TeamUserDb, Role } from "../team-users/types";
 import { rawDao as RawTeamUsersDAO } from "../team-users/dao";
 
@@ -14,6 +14,7 @@ function setup() {
     title: "A team name",
     createdAt: new Date(),
     deletedAt: null,
+    type: TeamType.DESIGNER,
   };
 
   const admin: TeamUserDb = {

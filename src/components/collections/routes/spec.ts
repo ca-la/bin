@@ -33,6 +33,7 @@ import { taskTypes } from "../../tasks/templates/task-types";
 import { generateDesign } from "../../../test-helpers/factories/product-design";
 import { checkout } from "../../../test-helpers/checkout-collection";
 import * as IrisService from "../../iris/send-message";
+import { TeamType } from "../../teams/types";
 
 test("GET /collections/:id returns a created collection", async (t: tape.Test) => {
   const { session, user } = await createUser();
@@ -114,6 +115,7 @@ test("POST /collections with a teamId", async (t: tape.Test) => {
       title: "A team",
       createdAt: new Date(),
       deletedAt: null,
+      type: TeamType.DESIGNER,
     })
   );
   const body = {

@@ -6,7 +6,7 @@ import SessionsDAO from "../../dao/sessions";
 import TeamUsersDAO, { rawDao as RawTeamUsersDAO } from "../team-users/dao";
 import { Role as TeamUserRole } from "../team-users/types";
 import TeamsDAO, { rawDao as RawTeamsDAO } from "./dao";
-import { TeamDb } from "./types";
+import { TeamDb, TeamType } from "./types";
 import createUser from "../../test-helpers/create-user";
 import { Role } from "../users/types";
 
@@ -16,6 +16,7 @@ const t1: TeamDb = {
   title: "A team",
   createdAt: now,
   deletedAt: null,
+  type: TeamType.DESIGNER,
 };
 
 function setup({
@@ -41,6 +42,7 @@ function setup({
     findByIdStub: sandbox()
       .stub(TeamsDAO, "findById")
       .resolves({ ...t1, role: TeamUserRole.ADMIN }),
+    findRawStub: sandbox().stub(RawTeamsDAO, "find").resolves([t1]),
     now,
   };
 }
@@ -125,14 +127,16 @@ test("GET /teams", async (t: Test) => {
 test("GET /teams as ADMIN", async (t: Test) => {
   setup({ role: "ADMIN" });
 
-  const [response, body] = await get("/teams", {
+  const [response, body] = await get("/teams?type=DESIGNER", {
     headers: authHeader("a-session-id"),
   });
-
   t.equal(response.status, 200, "responds successfully");
-  t.deepEqual(body, [
-    JSON.parse(JSON.stringify({ ...t1, role: TeamUserRole.ADMIN })),
-  ]);
+  t.deepEqual(body, [JSON.parse(JSON.stringify(t1))]);
+
+  const [incorrectType] = await get("/teams?type=CACTUS", {
+    headers: authHeader("a-session-id"),
+  });
+  t.equal(incorrectType.status, 400, "Requires a valid type");
 });
 
 test("POST -> GET /teams end-to-end", async (t: Test) => {

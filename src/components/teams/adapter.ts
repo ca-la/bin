@@ -7,6 +7,7 @@ function rawEncode(row: TeamDbRow): TeamDb {
     title: row.title,
     createdAt: row.created_at,
     deletedAt: row.deleted_at,
+    type: row.type,
   };
 }
 
@@ -16,6 +17,7 @@ function rawDecode(data: TeamDb): TeamDbRow {
     title: data.title,
     created_at: data.createdAt,
     deleted_at: data.deletedAt,
+    type: data.type,
   };
 }
 
@@ -37,12 +39,12 @@ export const rawAdapter = buildAdapter({
   domain: "Team",
   encodeTransformer: rawEncode,
   decodeTransformer: rawDecode,
-  requiredProperties: ["id", "title", "createdAt", "deletedAt"],
+  requiredProperties: ["id", "title", "createdAt", "deletedAt", "type"],
 });
 
 export default buildAdapter({
   domain: "Team",
   encodeTransformer: encode,
   decodeTransformer: decode,
-  requiredProperties: ["id", "title", "createdAt", "deletedAt", "role"],
+  requiredProperties: ["id", "title", "createdAt", "deletedAt", "role", "type"],
 });

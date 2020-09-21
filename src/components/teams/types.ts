@@ -1,10 +1,20 @@
 import { Role as TeamUserRole } from "../team-users/types";
 
+export enum TeamType {
+  DESIGNER = "DESIGNER",
+  PARTNER = "PARTNER",
+}
+
+export function isTeamType(candidate: any): candidate is TeamType {
+  return Object.values(TeamType).includes(candidate);
+}
+
 export interface TeamDb {
   id: string;
   title: string;
   createdAt: Date;
   deletedAt: Date | null;
+  type: TeamType;
 }
 
 export interface TeamDbRow {
@@ -12,6 +22,7 @@ export interface TeamDbRow {
   title: string;
   created_at: Date;
   deleted_at: Date | null;
+  type: TeamType;
 }
 
 export interface Team extends TeamDb {

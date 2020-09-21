@@ -6,7 +6,7 @@ import { RouteCreated } from "../../services/pubsub/cala-events";
 import useTransaction from "../../middleware/use-transaction";
 import requireAuth from "../../middleware/require-auth";
 import TeamsDAO, { rawDao as RawTeamsDAO } from "./dao";
-import { isUnsavedTeam, TeamDb } from "./types";
+import { isTeamType, isUnsavedTeam, TeamDb, TeamType } from "./types";
 
 const domain = "Team" as "Team";
 
@@ -23,6 +23,7 @@ function* createTeam(this: TrxContext<AuthedContext>) {
     title: body.title,
     createdAt: new Date(),
     deletedAt: null,
+    type: TeamType.DESIGNER,
   };
 
   const created = yield RawTeamsDAO.create(trx, toCreate);
@@ -43,11 +44,32 @@ function* createTeam(this: TrxContext<AuthedContext>) {
 function* findTeams(this: TrxContext<AuthedContext>) {
   const { trx } = this.state;
 
-  const { userId } = this.query;
+  const { userId, search, limit, offset, type } = this.query;
+
+  if (type) {
+    if (!isTeamType(type)) {
+      this.throw(400, "You must provide a valid team type");
+    }
+  }
 
   if (!userId) {
     if (this.state.role === "ADMIN") {
-      this.body = yield TeamsDAO.find(trx);
+      this.body = yield RawTeamsDAO.find(
+        trx,
+        {},
+        (query: Knex.QueryBuilder) => {
+          query.whereNull("deleted_at");
+          query.offset(offset !== undefined ? parseInt(offset, 10) : 0);
+          query.limit(limit !== undefined ? parseInt(limit, 10) : 20);
+          if (search) {
+            query.whereRaw("(teams.title ~* ?)", search);
+          }
+          if (type) {
+            query.where({ type });
+          }
+          return query;
+        }
+      );
       this.status = 200;
       return;
     }
