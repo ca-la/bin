@@ -32,6 +32,7 @@ import ApprovalStep, {
   ApprovalStepType,
 } from "../../components/approval-steps/types";
 import { templateDesignEvent } from "../../components/design-events/types";
+import InvalidDataError from "../../errors/invalid-data";
 
 export type UnsavedQuote = Omit<
   PricingQuote,
@@ -312,7 +313,15 @@ export async function generateFromPayloadAndUser(
       throw new Error("No costing inputs associated with design ID");
     }
 
-    const quote = await generatePricingQuote(costInputs[0], unitsNumber, trx);
+    const latestInput = costInputs[0];
+
+    if (unitsNumber < latestInput.minimumOrderQuantity) {
+      throw new InvalidDataError(
+        `Payment violates minimum order quantity. Please hit back to update unit quantity for ${designId}`
+      );
+    }
+
+    const quote = await generatePricingQuote(latestInput, unitsNumber, trx);
     quotes.push(quote);
 
     await DesignEventsDAO.create(trx, {

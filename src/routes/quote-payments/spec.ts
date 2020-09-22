@@ -88,6 +88,28 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
       id: uuid.v4(),
       materialBudgetCents: 1200,
       materialCategory: "BASIC",
+      minimumOrderQuantity: 1000,
+      processes: [
+        {
+          complexity: "1_COLOR",
+          name: "SCREEN_PRINTING",
+        },
+        {
+          complexity: "1_COLOR",
+          name: "SCREEN_PRINTING",
+        },
+      ],
+      productComplexity: "SIMPLE",
+      productType: "TEESHIRT",
+    });
+    await PricingCostInputsDAO.create(trx, {
+      createdAt: new Date(),
+      deletedAt: null,
+      designId: d1.id,
+      expiresAt: null,
+      id: uuid.v4(),
+      materialBudgetCents: 1200,
+      materialCategory: "BASIC",
       minimumOrderQuantity: 1,
       processes: [
         {

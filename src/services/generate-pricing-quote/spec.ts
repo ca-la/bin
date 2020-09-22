@@ -1,3 +1,4 @@
+import Knex from "knex";
 import uuid from "node-uuid";
 
 import { sandbox, test, Test } from "../../test-helpers/fresh";
@@ -10,14 +11,16 @@ import generatePricingQuote, {
 } from "./index";
 import { daysToMs } from "../time-conversion";
 import db from "../db";
-import Knex from "knex";
 import createUser from "../../test-helpers/create-user";
 import generatePricingValues from "../../test-helpers/factories/pricing-values";
 import * as PricingCostInputsDAO from "../../components/pricing-cost-inputs/dao";
 import generateApprovalStep from "../../test-helpers/factories/design-approval-step";
 import ProductDesignsDAO from "../../components/product-designs/dao";
+import ApprovalStepsDAO from "../../components/approval-steps/dao";
 import { PricingCostInput } from "../../components/pricing-cost-inputs/types";
 import { generateDesign } from "../../test-helpers/factories/product-design";
+import { ApprovalStepType } from "../../published-types";
+import InvalidDataError from "../../errors/invalid-data";
 
 const quoteRequestOne: PricingCostInput = {
   createdAt: new Date(),
@@ -577,4 +580,48 @@ test("generateFromPayloadAndUser uses the checkout step", async (t: Test) => {
     approvalStepTwo.id,
     "Submission is associated with the right step"
   );
+});
+
+test("generateFromPayloadAndUser respects MOQ", async (t: Test) => {
+  sandbox()
+    .stub(ApprovalStepsDAO, "findByDesign")
+    .resolves([
+      {
+        id: "a-checkout-step-id",
+        type: ApprovalStepType.CHECKOUT,
+      },
+    ]);
+  sandbox()
+    .stub(PricingCostInputsDAO, "findByDesignId")
+    .resolves([
+      {
+        minimumOrderQuantity: 100,
+      },
+    ]);
+  const createStub = sandbox().stub(PricingQuotesDAO, "create").resolves({});
+
+  const trx = await db.transaction();
+
+  try {
+    await generateFromPayloadAndUser(
+      [
+        {
+          designId: "a-design-id",
+          units: 10,
+        },
+      ],
+      "a-user-id",
+      trx
+    );
+  } catch (error) {
+    t.true(error instanceof InvalidDataError, "throws an InvalidDataError");
+    t.true(
+      /minimum order quantity.*a-design-id/.test(error.message),
+      "throws an error with a helpful message"
+    );
+  } finally {
+    await trx.rollback();
+  }
+
+  t.deepEqual(createStub.args, [], "does not call quote create");
 });
