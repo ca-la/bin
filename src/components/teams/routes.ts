@@ -7,6 +7,7 @@ import useTransaction from "../../middleware/use-transaction";
 import requireAuth from "../../middleware/require-auth";
 import TeamsDAO, { rawDao as RawTeamsDAO } from "./dao";
 import { isTeamType, isUnsavedTeam, TeamDb, TeamType } from "./types";
+import requireAdmin from "../../middleware/require-admin";
 
 const domain = "Team" as "Team";
 
@@ -92,12 +93,28 @@ function* findTeams(this: TrxContext<AuthedContext>) {
   this.status = 200;
 }
 
+function* findTeam(this: TrxContext<AuthedContext>) {
+  const { trx } = this.state;
+  const { id } = this.params;
+
+  const team = yield RawTeamsDAO.findOne(trx, { id });
+  if (!team) {
+    this.throw(404, `Team not found with ID: ${id}`);
+  }
+
+  this.body = team;
+  this.status = 200;
+}
+
 export default {
   prefix: "/teams",
   routes: {
     "/": {
       post: [useTransaction, requireAuth, createTeam],
       get: [useTransaction, requireAuth, findTeams],
+    },
+    "/:id": {
+      get: [useTransaction, requireAdmin, findTeam],
     },
   },
 };

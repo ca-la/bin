@@ -43,6 +43,7 @@ function setup({
       .stub(TeamsDAO, "findById")
       .resolves({ ...t1, role: TeamUserRole.ADMIN }),
     findRawStub: sandbox().stub(RawTeamsDAO, "find").resolves([t1]),
+    findOneRawStub: sandbox().stub(RawTeamsDAO, "findOne").resolves([t1]),
     now,
   };
 }
@@ -137,6 +138,25 @@ test("GET /teams as ADMIN", async (t: Test) => {
     headers: authHeader("a-session-id"),
   });
   t.equal(incorrectType.status, 400, "Requires a valid type");
+});
+
+test("GET /teams/:id as ADMIN", async (t: Test) => {
+  setup({ role: "ADMIN" });
+
+  const [response, body] = await get("/teams/a-team-id", {
+    headers: authHeader("a-session-id"),
+  });
+  t.equal(response.status, 200, "responds successfully");
+  t.deepEqual(body, [JSON.parse(JSON.stringify(t1))]);
+});
+
+test("GET /teams/:id as USER", async (t: Test) => {
+  setup({ role: "USER" });
+
+  const [response] = await get("/teams/a-team-id", {
+    headers: authHeader("a-session-id"),
+  });
+  t.equal(response.status, 403, "only adminds can view");
 });
 
 test("POST -> GET /teams end-to-end", async (t: Test) => {
