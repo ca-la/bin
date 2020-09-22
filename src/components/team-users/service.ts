@@ -28,7 +28,10 @@ export function requireTeamRoles(
     const { trx, userId } = this.state;
 
     const teamId = yield getTeamId(this);
-    const actorTeamUser = yield TeamUsersDAO.findOne(trx, { teamId, userId });
+    const actorTeamUser =
+      this.state.role === "ADMIN"
+        ? { role: TeamUserRole.ADMIN }
+        : yield TeamUsersDAO.findOne(trx, { teamId, userId });
 
     if (!actorTeamUser) {
       this.throw(

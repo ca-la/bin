@@ -5,7 +5,7 @@ import createUser from "../../test-helpers/create-user";
 
 import db from "../../services/db";
 import * as UsersDAO from "../users/dao";
-import { baseUser } from "../users/domain-object";
+import { baseUser, Role as UserRole } from "../users/domain-object";
 import SessionsDAO from "../../dao/sessions";
 import { rawDao as RawTeamsDAO } from "../teams/dao";
 import TeamUsersDAO, { rawDao as RawTeamUsersDAO } from "./dao";
@@ -25,12 +25,12 @@ const tu1: TeamUser = {
   user: { ...baseUser, createdAt: now, id: "a-user-id", name: "A User" },
 };
 
-function setup() {
+function setup({ role = "USER" }: { role?: UserRole } = {}) {
   sandbox().useFakeTimers(now);
   sandbox().stub(uuid, "v4").returns("a-team-user-id");
   return {
     sessionsStub: sandbox().stub(SessionsDAO, "findById").resolves({
-      role: "USER",
+      role,
       userId: "a-user-id",
     }),
     findUserStub: sandbox().stub(UsersDAO, "findByEmail").resolves({
@@ -219,6 +219,21 @@ test("GET /team-users?teamId: forbidden", async (t: Test) => {
   });
 
   t.equal(forbidden.status, 403, "Responds with forbidden");
+});
+
+test("GET /team-users?teamId: CALA admin", async (t: Test) => {
+  const { findActorTeamUserStub } = setup({ role: "ADMIN" });
+  const [response, body] = await get("/team-users?teamId=a-team-id", {
+    headers: authHeader("a-session-id"),
+  });
+
+  t.equal(response.status, 200, "Responds with success");
+  t.deepEqual(body, [JSON.parse(JSON.stringify(tu1))], "Returns TeamUser");
+  t.equal(
+    findActorTeamUserStub.callCount,
+    0,
+    "Does not attempt to lookup the users team role"
+  );
 });
 
 test("/team-users end-to-end", async (t: Test) => {
