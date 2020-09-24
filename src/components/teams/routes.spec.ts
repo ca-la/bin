@@ -1,6 +1,6 @@
 import uuid from "node-uuid";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
-import { authHeader, get, post } from "../../test-helpers/http";
+import { authHeader, get, patch, post } from "../../test-helpers/http";
 
 import SessionsDAO from "../../dao/sessions";
 import TeamUsersDAO, { rawDao as RawTeamUsersDAO } from "../team-users/dao";
@@ -9,7 +9,7 @@ import TeamsDAO, { rawDao as RawTeamsDAO } from "./dao";
 import { TeamDb, TeamType } from "./types";
 import createUser from "../../test-helpers/create-user";
 import { Role } from "../users/types";
-
+import * as PubSub from "../../services/pubsub";
 const now = new Date(2012, 11, 23);
 const t1: TeamDb = {
   id: "a-team-id",
@@ -44,6 +44,8 @@ function setup({
       .resolves({ ...t1, role: TeamUserRole.ADMIN }),
     findRawStub: sandbox().stub(RawTeamsDAO, "find").resolves([t1]),
     findOneRawStub: sandbox().stub(RawTeamsDAO, "findOne").resolves([t1]),
+    updateRawStub: sandbox().stub(RawTeamsDAO, "update").resolves([t1]),
+    emitStub: sandbox().stub(PubSub, "emit").resolves(),
     now,
   };
 }
@@ -157,6 +159,18 @@ test("GET /teams/:id as USER", async (t: Test) => {
     headers: authHeader("a-session-id"),
   });
   t.equal(response.status, 403, "only adminds can view");
+});
+
+test("PATCH /teams/:id as ADMIN", async (t: Test) => {
+  const { updateRawStub } = setup({ role: "ADMIN" });
+
+  const [response] = await patch("/teams/a-team-id", {
+    headers: authHeader("a-session-id"),
+    body: { type: "PARTNER" },
+  });
+  t.equal(response.status, 204, "responds successfully");
+  t.equal(updateRawStub.args[0][1], "a-team-id");
+  t.deepEqual(updateRawStub.args[0][2], { type: "PARTNER" });
 });
 
 test("POST -> GET /teams end-to-end", async (t: Test) => {

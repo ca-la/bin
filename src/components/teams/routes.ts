@@ -8,6 +8,7 @@ import requireAuth from "../../middleware/require-auth";
 import TeamsDAO, { rawDao as RawTeamsDAO } from "./dao";
 import { isTeamType, isUnsavedTeam, TeamDb, TeamType } from "./types";
 import requireAdmin from "../../middleware/require-admin";
+import { buildRouter } from "../../services/cala-component/cala-router";
 
 const domain = "Team" as "Team";
 
@@ -106,6 +107,16 @@ function* findTeam(this: TrxContext<AuthedContext>) {
   this.status = 200;
 }
 
+const standardRouter = buildRouter<TeamDb>("Team", "/teams", RawTeamsDAO, {
+  pickRoutes: ["update"],
+  routeOptions: {
+    update: {
+      middleware: [requireAdmin],
+      allowedAttributes: ["type"],
+    },
+  },
+});
+
 export default {
   prefix: "/teams",
   routes: {
@@ -114,6 +125,7 @@ export default {
       get: [useTransaction, requireAuth, findTeams],
     },
     "/:id": {
+      ...standardRouter.routes["/:id"],
       get: [useTransaction, requireAdmin, findTeam],
     },
   },
