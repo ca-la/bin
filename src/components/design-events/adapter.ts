@@ -52,7 +52,7 @@ function withMetaEncode(row: DesignEventWithMetaRow): DesignEventWithMeta {
     shipmentTrackingEventSubtag: row.shipment_tracking_event_subtag,
     shipmentTrackingId: row.shipment_tracking_id,
     taskTypeId: row.task_type_id,
-    taskTypeTitle: null,
+    taskTypeTitle: row.task_type_title || null,
   };
 }
 
@@ -86,6 +86,7 @@ export const withMetaAdapter = buildAdapter<
     "shipmentTrackingEventId",
     "shipmentTrackingEventTag",
     "shipmentTrackingEventSubtag",
+    "taskTypeId",
   ],
   encodeTransformer: withMetaEncode,
 });

@@ -30,6 +30,7 @@ import * as NotificationsDAO from "../notifications/dao";
 // This makes sense only for separate tests running, since in other cases listeners are included anyway
 import "./listeners";
 import "../cala-components";
+import { taskTypes } from "../tasks/templates";
 
 test("GET /design-approval-steps?designId=:designId", async (t: Test) => {
   const designer = await createUser();
@@ -119,6 +120,15 @@ test("GET /design-approval-steps/:stepId/stream-items", async (t: Test) => {
       createdAt: new Date(),
     });
 
+    await generateDesignEvent({
+      actorId: designer.user.id,
+      approvalStepId,
+      designId: d1.id,
+      type: "STEP_PARTNER_PAIRING",
+      taskTypeId: taskTypes["PRODUCTION"].id,
+      createdAt: new Date(),
+    });
+
     const { designEvent: finalCompleteEvent } = await generateDesignEvent({
       actorId: designer.user.id,
       approvalStepId,
@@ -136,7 +146,7 @@ test("GET /design-approval-steps/:stepId/stream-items", async (t: Test) => {
   );
   t.equal(res.status, 200, "Returns successfully");
 
-  t.equal(body.length, 5, "Returns 5 results");
+  t.equal(body.length, 6, "Returns 6 results");
   t.equal(body[0].text, "Going to submit");
   t.deepEqual(
     {
@@ -175,12 +185,32 @@ test("GET /design-approval-steps/:stepId/stream-items", async (t: Test) => {
   );
   t.deepEqual(
     {
+      taskTypeTitle: body[4].taskTypeTitle,
       type: body[4].type,
       actorId: body[4].actorId,
       actorName: body[4].actorName,
       actorRole: body[4].actorRole,
       actorEmail: body[4].actorEmail,
-      id: body[4].id,
+    },
+    {
+      taskTypeTitle: taskTypes["PRODUCTION"].title,
+      type: "STEP_PARTNER_PAIRING",
+      actorId: designer.user.id,
+      actorName: "Q User",
+      actorRole: "USER",
+      actorEmail: designer.user.email,
+    },
+    "Partner pairing displays the correct title"
+  );
+
+  t.deepEqual(
+    {
+      type: body[5].type,
+      actorId: body[5].actorId,
+      actorName: body[5].actorName,
+      actorRole: body[5].actorRole,
+      actorEmail: body[5].actorEmail,
+      id: body[5].id,
     },
     {
       type: "STEP_COMPLETE",

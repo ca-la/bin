@@ -141,7 +141,7 @@ export interface DesignEventWithMetaRow extends DesignEventRow {
   submission_title: string | null;
   step_title: string | null;
   task_type_id: string | null;
-  task_type_title: string | null;
+  task_type_title?: string | null;
   shipment_tracking_description: string | null;
   shipment_tracking_event_tag: string | null;
   shipment_tracking_event_subtag: string | null;
