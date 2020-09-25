@@ -7,6 +7,7 @@ import {
   PartnerPayoutLog,
   PartnerPayoutLogRow,
 } from "../partner-payouts/domain-object";
+import { BidDb, BidDbRow } from "./types";
 /**
  * A pricing bid for matching partners to a set of services on a design
  */
@@ -25,11 +26,37 @@ export default interface Bid {
   description?: string;
 }
 
-export type BidCreationPayload = Omit<Bid, "createdAt"> & {
-  acceptedAt: null;
-  dueDate: Date;
+export interface BidCreationPayload {
+  quoteId: string;
+  description: string;
+  bidPriceCents: number;
+  dueDate: string;
+  projectDueInMs: number;
   taskTypeIds: string[];
-};
+  revenueShareBasisPoints: number;
+  bidPriceProductionOnlyCents: number;
+  assignee?: {
+    type: "USER" | "TEAM";
+    id: string;
+  };
+}
+
+export function isBidCreationPayload(
+  candidate: Record<string, any>
+): candidate is BidCreationPayload {
+  const keyset = new Set(Object.keys(candidate));
+
+  return [
+    "quoteId",
+    "description",
+    "bidPriceCents",
+    "bidPriceProductionOnlyCents",
+    "dueDate",
+    "projectDueInMs",
+    "taskTypeIds",
+    "revenueShareBasisPoints",
+  ].every(keyset.has.bind(keyset));
+}
 
 export interface BidRow {
   id: string;
@@ -190,3 +217,36 @@ export const bidWithPayoutLogsDataAdapter = new DataAdapter<
   BidWithPayoutLogsRow,
   BidWithPayoutLogs
 >(withPayoutLogsEncode);
+
+function encodeDb(row: BidDbRow): BidDb {
+  return {
+    bidPriceCents: row.bid_price_cents,
+    bidPriceProductionOnlyCents: row.bid_price_production_only_cents,
+    createdAt: row.created_at,
+    createdBy: row.created_by,
+    description: row.description,
+    dueDate: row.due_date,
+    id: row.id,
+    quoteId: row.quote_id,
+    revenueShareBasisPoints: row.revenue_share_basis_points,
+  };
+}
+
+function decodeDb(data: BidDb): BidDbRow {
+  return {
+    bid_price_cents: data.bidPriceCents,
+    bid_price_production_only_cents: data.bidPriceProductionOnlyCents,
+    created_at: data.createdAt,
+    created_by: data.createdBy,
+    description: data.description,
+    due_date: data.dueDate,
+    id: data.id,
+    quote_id: data.quoteId,
+    revenue_share_basis_points: data.revenueShareBasisPoints,
+  };
+}
+
+export const bidDbAdapter = new DataAdapter<BidDbRow, BidDb>(
+  encodeDb,
+  decodeDb
+);

@@ -26,6 +26,7 @@ import Knex from "knex";
 import { taskTypes } from "../tasks/templates/task-types";
 import { checkout } from "../../test-helpers/checkout-collection";
 import PartnerPayoutAccount from "../../domain-objects/partner-payout-account";
+
 test("GET /bids", async (t: Test) => {
   const admin = await createUser({ role: "ADMIN" });
   const partner = await createUser({ role: "PARTNER" });
@@ -41,18 +42,11 @@ test("GET /bids", async (t: Test) => {
     generatePricing: true,
     userId: admin.user.id,
   });
-  const otherBid = await BidsDAO.create({
-    revenueShareBasisPoints: 0,
-    acceptedAt: null,
-    bidPriceCents: 100000,
-    bidPriceProductionOnlyCents: 0,
-    createdBy: admin.user.id,
-    completedAt: null,
-    description: "Full Service",
-    dueDate: new Date(new Date(2012, 11, 22).getTime() + daysToMs(10)),
-    id: uuid.v4(),
+  const { bid: otherBid } = await generateBid({
     quoteId: quote.id,
-    taskTypeIds: [],
+    designId: design.id,
+    generatePricing: false,
+    userId: admin.user.id,
   });
 
   await put(`/bids/${bid.id}/assignees/${partner.user.id}`, {
@@ -120,31 +114,20 @@ test("GET /bids?userId&state=OPEN", async (t: Test) => {
     generatePricing: true,
     userId: admin.user.id,
   });
-  const otherBid = await BidsDAO.create({
-    revenueShareBasisPoints: 0,
-    acceptedAt: null,
-    bidPriceCents: 100000,
-    bidPriceProductionOnlyCents: 0,
-    createdBy: admin.user.id,
-    completedAt: null,
-    description: "Full Service",
-    dueDate: new Date(new Date(2012, 11, 22).getTime() + daysToMs(10)),
-    id: uuid.v4(),
+  const { bid: otherBid } = await generateBid({
     quoteId: quote.id,
-    taskTypeIds: [],
+    designId: design.id,
+    generatePricing: false,
+    userId: admin.user.id,
   });
-  const expiredBid = await BidsDAO.create({
-    revenueShareBasisPoints: 0,
-    acceptedAt: null,
-    bidPriceCents: 100000,
-    bidPriceProductionOnlyCents: 0,
-    createdBy: admin.user.id,
-    completedAt: null,
-    description: "Full Service",
-    dueDate: new Date(new Date(2012, 11, 22).getTime() + daysToMs(10)),
-    id: uuid.v4(),
+  const { bid: expiredBid } = await generateBid({
     quoteId: quote.id,
-    taskTypeIds: [],
+    designId: design.id,
+    generatePricing: false,
+    bidOptions: {
+      dueDate: new Date(new Date(2012, 11, 22).getTime() + daysToMs(10)),
+    },
+    userId: admin.user.id,
   });
 
   await put(`/bids/${bid.id}/assignees/${partner.user.id}`, {
@@ -198,34 +181,23 @@ test("GET /bids?userId&state=EXPIRED", async (t: Test) => {
     generatePricing: true,
     userId: admin.user.id,
   });
-  const otherBid = await BidsDAO.create({
-    revenueShareBasisPoints: 0,
-    acceptedAt: null,
-    bidPriceCents: 100000,
-    bidPriceProductionOnlyCents: 0,
-    createdBy: admin.user.id,
-    completedAt: null,
-    description: "Full Service",
-    dueDate: new Date(now.getTime() + daysToMs(10)),
-    id: uuid.v4(),
+  const { bid: otherBid } = await generateBid({
     quoteId: quote.id,
-    taskTypeIds: [],
+    designId: design.id,
+    generatePricing: false,
+    userId: admin.user.id,
   });
 
   const threeDaysAgo = new Date(now.getTime() - daysToMs(3) - 1);
   sandbox().useFakeTimers(threeDaysAgo);
-  const expiredBid = await BidsDAO.create({
-    revenueShareBasisPoints: 0,
-    acceptedAt: null,
-    bidPriceCents: 100000,
-    bidPriceProductionOnlyCents: 0,
-    createdBy: admin.user.id,
-    completedAt: null,
-    description: "Full Service Brah",
-    dueDate: new Date(threeDaysAgo.getTime() + daysToMs(10)),
-    id: uuid.v4(),
+  const { bid: expiredBid } = await generateBid({
     quoteId: quote.id,
-    taskTypeIds: [],
+    designId: design.id,
+    generatePricing: false,
+    userId: admin.user.id,
+    bidOptions: {
+      dueDate: new Date(threeDaysAgo.getTime() + daysToMs(10)),
+    },
   });
   await generateDesignEvent({
     bidId: expiredBid.id,
@@ -281,18 +253,14 @@ test("GET /bids?userId&state=REJECTED", async (t: Test) => {
     generatePricing: true,
     userId: admin.user.id,
   });
-  const otherBid = await BidsDAO.create({
-    revenueShareBasisPoints: 0,
-    acceptedAt: null,
-    bidPriceCents: 100000,
-    bidPriceProductionOnlyCents: 0,
-    createdBy: admin.user.id,
-    completedAt: null,
-    description: "Full Service",
-    dueDate: new Date(new Date(2012, 11, 22).getTime() + daysToMs(10)),
-    id: uuid.v4(),
+  const { bid: otherBid } = await generateBid({
     quoteId: quote.id,
-    taskTypeIds: [],
+    designId: design.id,
+    generatePricing: false,
+    userId: admin.user.id,
+    bidOptions: {
+      dueDate: new Date(new Date(2012, 11, 22).getTime() + daysToMs(10)),
+    },
   });
 
   const bidsDaoStub = sandbox()
@@ -343,18 +311,14 @@ test("GET /bids?userId&state=ACCEPTED", async (t: Test) => {
     generatePricing: true,
     userId: admin.user.id,
   });
-  const otherBid = await BidsDAO.create({
-    revenueShareBasisPoints: 0,
-    acceptedAt: null,
-    bidPriceCents: 100000,
-    bidPriceProductionOnlyCents: 0,
-    createdBy: admin.user.id,
-    completedAt: null,
-    description: "Full Service",
-    dueDate: new Date(new Date(2012, 11, 22).getTime() + daysToMs(10)),
-    id: uuid.v4(),
+  const { bid: otherBid } = await generateBid({
     quoteId: quote.id,
-    taskTypeIds: [],
+    designId: design.id,
+    generatePricing: false,
+    userId: admin.user.id,
+    bidOptions: {
+      dueDate: new Date(new Date(2012, 11, 22).getTime() + daysToMs(10)),
+    },
   });
 
   await put(`/bids/${bid.id}/assignees/${partner.user.id}`, {
@@ -586,18 +550,13 @@ test("Partner pairing: accept", async (t: Test) => {
   const other = await createUser({ role: "USER" });
   const createdAt = new Date();
   const dueDate = new Date(createdAt.getTime() + daysToMs(10));
-  const bid = await BidsDAO.create({
-    revenueShareBasisPoints: 0,
-    acceptedAt: null,
-    bidPriceCents: 20000,
-    bidPriceProductionOnlyCents: 0,
-    createdBy: admin.user.id,
-    completedAt: null,
-    description: "Do me a favor, please.",
-    dueDate,
-    id: uuid.v4(),
+  const { bid } = await generateBid({
     quoteId: quote.id,
     taskTypeIds: [taskTypes.TECHNICAL_DESIGN.id, taskTypes.PRODUCTION.id],
+    bidOptions: {
+      dueDate,
+    },
+    userId: admin.user.id,
   });
   await put(`/bids/${bid.id}/assignees/${partner.user.id}`, {
     headers: authHeader(admin.session.id),
@@ -746,18 +705,13 @@ test("Partner pairing: reject", async (t: Test) => {
   const partner = await createUser({ role: "PARTNER" });
   const createdAt = new Date();
   const dueDate = new Date(createdAt.getTime() + daysToMs(10));
-  const bid = await BidsDAO.create({
-    revenueShareBasisPoints: 0,
-    acceptedAt: null,
-    bidPriceCents: 20000,
-    bidPriceProductionOnlyCents: 0,
-    createdBy: admin.user.id,
-    completedAt: null,
-    description: "Do me a favor, please.",
-    dueDate,
-    id: uuid.v4(),
+  const { bid } = await generateBid({
     quoteId: quote.id,
-    taskTypeIds: [],
+    designId: design.id,
+    userId: admin.user.id,
+    bidOptions: {
+      dueDate,
+    },
   });
   const bidRejection = {
     createdBy: admin.user.id,
@@ -925,6 +879,7 @@ test("POST /bids/:bidId/pay-out-to-partner", async (t: Test) => {
   const { bid } = await generateBid({
     bidOptions: { bidPriceCents: 1000 },
     designId: design.id,
+    userId: admin.user.id,
   });
 
   await generateDesignEvent({

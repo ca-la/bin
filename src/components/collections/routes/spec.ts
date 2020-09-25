@@ -5,7 +5,6 @@ import Knex from "knex";
 
 import * as CollectionsDAO from "../dao";
 import * as CollaboratorsDAO from "../../collaborators/dao";
-import * as BidsDAO from "../../bids/dao";
 import createUser from "../../../test-helpers/create-user";
 import ProductDesignsDAO from "../../product-designs/dao";
 import DesignEventsDAO from "../../design-events/dao";
@@ -34,6 +33,7 @@ import { generateDesign } from "../../../test-helpers/factories/product-design";
 import { checkout } from "../../../test-helpers/checkout-collection";
 import * as IrisService from "../../iris/send-message";
 import { TeamType } from "../../teams/types";
+import generateBid from "../../../test-helpers/factories/bid";
 
 test("GET /collections/:id returns a created collection", async (t: tape.Test) => {
   const { session, user } = await createUser();
@@ -781,30 +781,16 @@ test("POST /collections/:collectionId/partner-pairings", async (t: tape.Test) =>
     quotes,
     collectionDesigns,
   } = await checkout();
-  const bidOne = await BidsDAO.create({
-    revenueShareBasisPoints: 0,
-    acceptedAt: null,
-    bidPriceCents: 20000,
-    bidPriceProductionOnlyCents: 0,
-    createdBy: admin.user.id,
-    completedAt: null,
-    description: "Do me a favor, please.",
-    dueDate: new Date(),
-    id: uuid.v4(),
+  const { bid: bidOne } = await generateBid({
     quoteId: quotes[0].id,
+    designId: collectionDesigns[0].id,
+    userId: admin.user.id,
     taskTypeIds: [taskTypes.TECHNICAL_DESIGN.id, taskTypes.PRODUCTION.id],
   });
-  const bidTwo = await BidsDAO.create({
-    revenueShareBasisPoints: 0,
-    acceptedAt: null,
-    bidPriceCents: 20000,
-    bidPriceProductionOnlyCents: 0,
-    createdBy: admin.user.id,
-    completedAt: null,
-    description: "Do me a favor, please.",
-    dueDate: new Date(),
-    id: uuid.v4(),
+  const { bid: bidTwo } = await generateBid({
     quoteId: quotes[0].id,
+    designId: collectionDesigns[0].id,
+    userId: admin.user.id,
     taskTypeIds: [taskTypes.TECHNICAL_DESIGN.id, taskTypes.PRODUCTION.id],
   });
   await API.put(`/bids/${bidOne.id}/assignees/${partner.user.id}`, {

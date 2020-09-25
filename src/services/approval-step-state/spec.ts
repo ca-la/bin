@@ -101,10 +101,8 @@ for (const testCase of testCases) {
       userId: user.id,
     });
     const { bid } = await generateBid({
-      bidOptions: {
-        taskTypeIds: testCase.taskTypeIds,
-      },
       designId: design.id,
+      taskTypeIds: testCase.taskTypeIds,
     });
     const createDesignEventStub = sandbox().stub(DesignEventsDAO, "create");
     const sendNotificationStub = sandbox().stub(

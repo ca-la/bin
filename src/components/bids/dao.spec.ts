@@ -10,7 +10,6 @@ import createUser from "../../test-helpers/create-user";
 import DesignEventsDAO from "../design-events/dao";
 import { generateDesign } from "../../test-helpers/factories/product-design";
 
-import { BidCreationPayload } from "./domain-object";
 import {
   create,
   findAcceptedByTargetId,
@@ -27,20 +26,17 @@ import DesignEvent, { templateDesignEvent } from "../design-events/types";
 import generateBid from "../../test-helpers/factories/bid";
 import generateDesignEvent from "../../test-helpers/factories/design-event";
 import { daysToMs } from "../../services/time-conversion";
-import * as BidTaskTypesDAO from "../bid-task-types/dao";
 import { addDesign } from "../../test-helpers/collections";
 import generateCollection from "../../test-helpers/factories/collection";
 import PayoutAccountsDAO = require("../../dao/partner-payout-accounts");
 import PartnerPayoutsDAO = require("../../components/partner-payouts/dao");
 import { PartnerPayoutLog } from "../partner-payouts/domain-object";
+import { BidDb } from "./types";
 
 const testDate = new Date(2012, 11, 22);
 
 test("Bids DAO supports creation and retrieval", async (t: Test) => {
   sandbox().useFakeTimers(testDate);
-  const bidTaskTypesCreateStub = sandbox()
-    .stub(BidTaskTypesDAO, "create")
-    .resolves({});
   await generatePricingValues();
   const { user } = await createUser();
   const design = await generateDesign({ userId: user.id });
@@ -76,40 +72,30 @@ test("Bids DAO supports creation and retrieval", async (t: Test) => {
     },
     200
   );
-  const inputBid: BidCreationPayload = {
-    revenueShareBasisPoints: 10,
-    acceptedAt: null,
+  const now = new Date();
+  const bidId = uuid.v4();
+  const inputBid: BidDb = {
     bidPriceCents: 100000,
     bidPriceProductionOnlyCents: 0,
+    createdAt: now,
     createdBy: user.id,
-    completedAt: null,
     description: "Full Service",
     dueDate: new Date(quote.createdAt.getTime() + daysToMs(10)),
-    id: uuid.v4(),
+    id: bidId,
     quoteId: quote.id,
-    taskTypeIds: [],
+    revenueShareBasisPoints: 10,
   };
-  const taskTypeIds = ["some-task-type", "another-one"];
-  const bid = await create({ ...inputBid, acceptedAt: null, taskTypeIds });
+  const bid = await db.transaction((trx: Knex.Transaction) =>
+    create(trx, inputBid)
+  );
   const retrieved = await findById(inputBid.id);
 
-  t.deepEqual(
-    { ...omit(inputBid, ["taskTypeIds"]), createdAt: bid.createdAt },
-    bid
-  );
+  t.deepEqual(bid, {
+    acceptedAt: null,
+    completedAt: null,
+    ...inputBid,
+  });
   t.deepEqual(bid, omit(retrieved, ["partnerPayoutLogs", "partnerUserId"]));
-  t.ok(
-    bidTaskTypesCreateStub.calledWith({
-      pricingBidId: bid.id,
-      taskTypeId: "some-task-type",
-    })
-  );
-  t.ok(
-    bidTaskTypesCreateStub.calledWith({
-      pricingBidId: bid.id,
-      taskTypeId: "another-one",
-    })
-  );
 });
 
 test("Bids DAO findById returns null with a lookup-miss", async (t: Test) => {
@@ -155,30 +141,23 @@ test("Bids DAO supports retrieval by quote ID", async (t: Test) => {
     },
     200
   );
-  const inputBid: BidCreationPayload = {
+  const inputBid: BidDb = {
     revenueShareBasisPoints: 20,
-    acceptedAt: null,
     bidPriceCents: 100000,
     bidPriceProductionOnlyCents: 0,
     createdBy: user.id,
-    completedAt: null,
     description: "Full Service",
     dueDate: new Date(quote.createdAt.getTime() + daysToMs(10)),
     id: uuid.v4(),
     quoteId: quote.id,
-    taskTypeIds: [],
+    createdAt: new Date(),
   };
-  await create({ ...inputBid, acceptedAt: null, taskTypeIds: [] });
+  await db.transaction((trx: Knex.Transaction) => create(trx, inputBid));
   const bids = await findByQuoteId(quote.id);
 
   t.deepEqual(
     bids,
-    [
-      {
-        ...omit(inputBid, ["taskTypeIds"]),
-        createdAt: bids[0].createdAt,
-      },
-    ],
+    [{ acceptedAt: null, completedAt: null, ...inputBid }],
     "returns the bids in createdAt order"
   );
 });
@@ -226,44 +205,38 @@ test("Bids DAO supports retrieval of bids by target ID and status", async (t: Te
     },
     200
   );
-  const openBid: BidCreationPayload = {
+  const openBid: BidDb = {
     revenueShareBasisPoints: 10,
-    acceptedAt: null,
     bidPriceCents: 100000,
     bidPriceProductionOnlyCents: 0,
     createdBy: admin.id,
-    completedAt: null,
     description: "Full Service",
     dueDate: new Date(quote.createdAt.getTime() + daysToMs(10)),
     id: uuid.v4(),
     quoteId: quote.id,
-    taskTypeIds: [],
+    createdAt: new Date(),
   };
-  const rejectedBid: BidCreationPayload = {
+  const rejectedBid: BidDb = {
     revenueShareBasisPoints: 20,
-    acceptedAt: null,
     bidPriceCents: 100000,
     bidPriceProductionOnlyCents: 0,
     createdBy: admin.id,
-    completedAt: null,
     description: "Full Service (Rejected)",
     dueDate: new Date(quote.createdAt.getTime() + daysToMs(10)),
     id: uuid.v4(),
     quoteId: quote.id,
-    taskTypeIds: [],
+    createdAt: new Date(),
   };
-  const acceptedBid: BidCreationPayload = {
+  const acceptedBid: BidDb = {
     revenueShareBasisPoints: 0,
-    acceptedAt: null,
     bidPriceCents: 110000,
     bidPriceProductionOnlyCents: 0,
     createdBy: admin.id,
-    completedAt: null,
     description: "Full Service (Accepted)",
     dueDate: new Date(quote.createdAt.getTime() + daysToMs(10)),
     id: uuid.v4(),
     quoteId: quote.id,
-    taskTypeIds: [],
+    createdAt: new Date(),
   };
   const rejectedDesign = await generateDesign({
     title: "A rejected design",
@@ -348,11 +321,11 @@ test("Bids DAO supports retrieval of bids by target ID and status", async (t: Te
     type: "REJECT_SERVICE_BID",
   };
 
-  await create({ ...openBid, acceptedAt: null, taskTypeIds: [] });
-  await create({ ...rejectedBid, acceptedAt: null, taskTypeIds: [] });
-  await create({ ...acceptedBid, acceptedAt: null, taskTypeIds: [] });
-  await db.transaction((trx: Knex.Transaction) =>
-    DesignEventsDAO.createAll(trx, [
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await create(trx, openBid);
+    await create(trx, rejectedBid);
+    await create(trx, acceptedBid);
+    await DesignEventsDAO.createAll(trx, [
       submitEvent,
       bidEvent,
       bidToOtherEvent,
@@ -361,20 +334,15 @@ test("Bids DAO supports retrieval of bids by target ID and status", async (t: Te
       bidDesignToAcceptEvent,
       rejectDesignEvent,
       acceptDesignEvent,
-    ])
-  );
+    ]);
+  });
 
   const openBids = await findOpenByTargetId(partner.id, "ACCEPTED");
   const otherBids = await findOpenByTargetId(otherPartner.id, "ACCEPTED");
 
   t.deepEqual(
     openBids,
-    [
-      {
-        ...omit(openBid, ["taskTypeIds"]),
-        createdAt: openBids[0].createdAt,
-      },
-    ],
+    [{ acceptedAt: null, completedAt: null, ...openBid }],
     "returns non-rejected/accepted bid"
   );
   t.deepEqual(otherBids, [], "returns no bids");
@@ -398,9 +366,9 @@ test("Bids DAO supports retrieval of bids by target ID and status", async (t: Te
     acceptedBids,
     [
       {
-        ...omit(acceptedBid, ["taskTypeIds"]),
+        ...acceptedBid,
         acceptedAt: acceptedBids[0].acceptedAt,
-        createdAt: acceptedBids[0].createdAt,
+        completedAt: null,
       },
     ],
     "returns accepted bid"
@@ -409,9 +377,9 @@ test("Bids DAO supports retrieval of bids by target ID and status", async (t: Te
     activeBids,
     [
       {
-        ...omit(acceptedBid, ["taskTypeIds"]),
+        ...acceptedBid,
         acceptedAt: activeBids[0].acceptedAt,
-        createdAt: activeBids[0].createdAt,
+        completedAt: null,
       },
     ],
     "returns active bid"
@@ -434,22 +402,12 @@ test("Bids DAO supports retrieval of bids by target ID and status", async (t: Te
 
   t.deepEqual(
     rejectedBids,
-    [
-      {
-        ...omit(rejectedBid, ["taskTypeIds"]),
-        createdAt: rejectedBids[0].createdAt,
-      },
-    ],
+    [{ acceptedAt: null, completedAt: null, ...rejectedBid }],
     "returns rejected bid"
   );
   t.deepEqual(
     otherRejectedBids,
-    [
-      {
-        ...omit(openBid, ["taskTypeIds"]),
-        createdAt: otherRejectedBids[0].createdAt,
-      },
-    ],
+    [{ acceptedAt: null, completedAt: null, ...openBid }],
     "returns rejected bid"
   );
 });

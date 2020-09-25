@@ -26,17 +26,13 @@ test("findTaskTypeCollaborators", async (t: Test) => {
   const { bid, quote } = await createBid({
     designId: design.id,
     userId: ops.user.id,
-    bidOptions: {
-      taskTypeIds: [taskTypes.TECHNICAL_DESIGN.id, taskTypes.PRODUCTION.id],
-    },
+    taskTypeIds: [taskTypes.TECHNICAL_DESIGN.id, taskTypes.PRODUCTION.id],
   });
   const { bid: photoBid } = await createBid({
     designId: design.id,
     quoteId: quote.id,
     userId: ops.user.id,
-    bidOptions: {
-      taskTypeIds: [taskTypes.PRODUCT_PHOTOGRAPHY.id],
-    },
+    taskTypeIds: [taskTypes.PRODUCT_PHOTOGRAPHY.id],
   });
   await db.transaction(async (trx: Knex.Transaction) => {
     await DesignEventsDAO.create(trx, {

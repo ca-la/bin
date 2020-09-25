@@ -1,5 +1,4 @@
 import uuid from "node-uuid";
-import { omit } from "lodash";
 
 import { BidCreationPayload } from "../../components/bids/domain-object";
 import createUser from "../../test-helpers/create-user";
@@ -14,6 +13,20 @@ import generateProductTypes from "../../services/generate-product-types";
 import { Dollars } from "../../services/dollars";
 import { checkout } from "../../test-helpers/checkout-collection";
 import { CreatePricingCostInputRequest } from "../../components/pricing-cost-inputs/types";
+import { PricingQuote } from "../../domain-objects/pricing-quote";
+
+const getInputBid = (quote: PricingQuote): BidCreationPayload => ({
+  bidPriceCents: 100000,
+  bidPriceProductionOnlyCents: 0,
+  description: "Full Service",
+  dueDate: new Date(
+    new Date(quote.createdAt).getTime() + daysToMs(10)
+  ).toISOString(),
+  quoteId: quote.id,
+  taskTypeIds: [],
+  revenueShareBasisPoints: 20,
+  projectDueInMs: 0,
+});
 
 test("/pricing-quotes?designId retrieves the set of quotes for a design", async (t: Test) => {
   const {
@@ -262,34 +275,30 @@ test("PUT /pricing-quotes/:quoteId/bid/:bidId creates bid", async (t: Test) => {
     quotes: [quote],
     user: { admin },
   } = await checkout();
-
-  const inputBid: BidCreationPayload = {
-    acceptedAt: null,
-    bidPriceCents: 100000,
-    bidPriceProductionOnlyCents: 0,
-    createdBy: admin.user.id,
-    completedAt: null,
-    description: "Full Service",
-    dueDate: new Date(new Date(quote.createdAt).getTime() + daysToMs(10)),
-    id: uuid.v4(),
-    quoteId: quote.id,
-    taskTypeIds: [],
-    revenueShareBasisPoints: 20,
-  };
+  const inputBid = getInputBid(quote);
+  const bidId = uuid.v4();
 
   const [putResponse, createdBid] = await put(
-    `/pricing-quotes/${inputBid.quoteId}/bids/${inputBid.id}`,
+    `/pricing-quotes/${inputBid.quoteId}/bids/${bidId}`,
     {
-      body: { ...inputBid, taskTypeIds: [] },
+      body: inputBid,
       headers: authHeader(admin.session.id),
     }
   );
 
   t.equal(putResponse.status, 201);
   t.deepEqual(createdBid, {
-    ...omit(inputBid, ["taskTypeIds"]),
-    createdAt: new Date(createdBid.createdAt).toISOString(),
-    dueDate: inputBid.dueDate!.toISOString(),
+    acceptedAt: null,
+    bidPriceCents: inputBid.bidPriceCents,
+    bidPriceProductionOnlyCents: inputBid.bidPriceProductionOnlyCents,
+    completedAt: null,
+    createdAt: now.toISOString(),
+    createdBy: admin.user.id,
+    description: inputBid.description,
+    dueDate: inputBid.dueDate,
+    id: bidId,
+    quoteId: inputBid.quoteId,
+    revenueShareBasisPoints: inputBid.revenueShareBasisPoints,
   });
 });
 
@@ -299,33 +308,29 @@ test("POST /pricing-quotes/:quoteId/bids creates bid", async (t: Test) => {
     quotes: [quote],
   } = await checkout();
 
-  const inputBid: Unsaved<BidCreationPayload> = {
-    acceptedAt: null,
-    bidPriceCents: 100000,
-    bidPriceProductionOnlyCents: 0,
-    createdBy: admin.user.id,
-    completedAt: null,
-    description: "Full Service",
-    dueDate: new Date(new Date(2012, 11, 22).getTime() + daysToMs(10)),
-    quoteId: quote.id,
-    taskTypeIds: [],
-    revenueShareBasisPoints: 0,
-  };
+  const inputBid = getInputBid(quote);
 
   const [postResponse, createdBid] = await post(
     `/pricing-quotes/${inputBid.quoteId}/bids`,
     {
-      body: { ...inputBid, createdAt: new Date(2012, 11, 22), taskTypeIds: [] },
+      body: inputBid,
       headers: authHeader(admin.session.id),
     }
   );
 
   t.equal(postResponse.status, 201);
   t.deepEqual(createdBid, {
-    ...omit(inputBid, ["taskTypeIds"]),
+    acceptedAt: null,
+    bidPriceCents: inputBid.bidPriceCents,
+    bidPriceProductionOnlyCents: inputBid.bidPriceProductionOnlyCents,
+    completedAt: null,
     createdAt: createdBid.createdAt,
-    dueDate: createdBid.dueDate,
+    createdBy: admin.user.id,
+    description: inputBid.description,
+    dueDate: inputBid.dueDate,
     id: createdBid.id,
+    quoteId: inputBid.quoteId,
+    revenueShareBasisPoints: inputBid.revenueShareBasisPoints,
   });
 });
 
@@ -335,22 +340,11 @@ test("GET /pricing-quotes/:quoteId/bids returns list of bids for quote", async (
     quotes: [quote],
   } = await checkout();
 
-  const inputBid: Unsaved<BidCreationPayload> = {
-    acceptedAt: null,
-    bidPriceCents: 100000,
-    bidPriceProductionOnlyCents: 0,
-    createdBy: admin.user.id,
-    completedAt: null,
-    description: "Full Service",
-    dueDate: new Date(new Date(quote.createdAt).getTime() + daysToMs(10)),
-    quoteId: quote.id,
-    taskTypeIds: [],
-    revenueShareBasisPoints: 0,
-  };
+  const inputBid = getInputBid(quote);
 
   const clock = sandbox().useFakeTimers(new Date(2020, 1, 2));
 
-  await post(`/pricing-quotes/${inputBid.quoteId}/bids`, {
+  const [, bid] = await post(`/pricing-quotes/${inputBid.quoteId}/bids`, {
     body: inputBid,
     headers: authHeader(admin.session.id),
   });
@@ -363,31 +357,27 @@ test("GET /pricing-quotes/:quoteId/bids returns list of bids for quote", async (
   t.equal(response.status, 200);
   t.deepEqual(bids, [
     {
-      ...omit(inputBid, ["taskTypeIds"]),
-      id: bids[0].id,
-      createdAt: bids[0].createdAt,
-      dueDate: inputBid.dueDate!.toISOString(),
+      acceptedAt: null,
+      bidPriceCents: inputBid.bidPriceCents,
+      bidPriceProductionOnlyCents: inputBid.bidPriceProductionOnlyCents,
+      completedAt: null,
+      createdAt: bid.createdAt,
+      createdBy: admin.user.id,
+      description: inputBid.description,
+      dueDate: inputBid.dueDate,
+      id: bid.id,
+      quoteId: inputBid.quoteId,
+      revenueShareBasisPoints: inputBid.revenueShareBasisPoints,
     },
   ]);
 
   const hasExtras = {
-    acceptedAt: null,
-    bidPriceCents: 100000,
-    bidPriceProductionOnlyCents: 0,
-    createdBy: admin.user.id,
-    completedAt: null,
-    description: "Full Service",
-    dueDate: new Date(
-      new Date(quote.createdAt).getTime() + daysToMs(10)
-    ).toISOString(),
-    id: uuid.v4(),
-    quoteId: quote.id,
-    taskTypeIds: [],
-    revenueShareBasisPoints: 20,
+    ...getInputBid(quote),
     XXXXXTRA: "Boom!",
   };
 
-  clock.setSystemTime(new Date(2020, 2, 1));
+  const extrasTime = new Date(2020, 2, 1);
+  clock.setSystemTime(extrasTime);
 
   await post(`/pricing-quotes/${inputBid.quoteId}/bids`, {
     body: hasExtras,
@@ -408,9 +398,16 @@ test("GET /pricing-quotes/:quoteId/bids returns list of bids for quote", async (
 
   t.equal(withExtrasResponse.status, 200);
   t.deepEqual(sortedBids[1], {
-    ...omit(hasExtras, ["XXXXXTRA", "taskTypeIds"]),
+    acceptedAt: null,
+    bidPriceCents: hasExtras.bidPriceCents,
+    bidPriceProductionOnlyCents: hasExtras.bidPriceProductionOnlyCents,
+    completedAt: null,
+    createdAt: extrasTime.toISOString(),
+    createdBy: admin.user.id,
+    description: hasExtras.description,
+    dueDate: hasExtras.dueDate,
     id: sortedBids[1].id,
-    createdAt: sortedBids[1].createdAt,
-    dueDate: inputBid.dueDate!.toISOString(),
+    quoteId: hasExtras.quoteId,
+    revenueShareBasisPoints: hasExtras.revenueShareBasisPoints,
   });
 });

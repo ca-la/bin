@@ -2,7 +2,6 @@ import Knex from "knex";
 
 import db from "../../services/db";
 import Bid, {
-  BidCreationPayload,
   BidRow,
   BidSortByParam,
   BidWithEvents,
@@ -15,14 +14,15 @@ import Bid, {
   isBidRow,
   isBidWithEventsRow,
   isBidWithPaymentLogsRow,
+  bidDbAdapter,
 } from "./domain-object";
 import first from "../../services/first";
 import { validate, validateEvery } from "../../services/validate-from-db";
 import limitOrOffset from "../../services/limit-or-offset";
 import { MILLISECONDS_TO_EXPIRE } from "./constants";
 import { omit } from "lodash";
-import * as BidTaskTypesDAO from "../bid-task-types/dao";
 import { getMinimal as getMinimalTaskViewBuilder } from "../../dao/task-events/view";
+import { BidDb } from "./types";
 
 // Any payouts to a partner cannot be linked to a bid before this date, as
 // they were linked to an invoice. Having a cut-off date allows the API to
@@ -150,38 +150,17 @@ const orderByDueDate = orderBy.bind(
   "due_date asc NULLS LAST, created_at desc"
 );
 
-export function create(bidPayload: BidCreationPayload): Promise<Bid> {
-  return db.transaction(async (trx: Knex.Transaction) => {
-    const { taskTypeIds, ...bid } = bidPayload;
-    const rowData = {
-      ...omit(dataAdapter.forInsertion(bid), ["completed_at", "accepted_at"]),
-      bid_price_production_only_cents: bid.bidPriceProductionOnlyCents || 0,
-      created_at: new Date(),
-    };
-    const createdBid = await db(TABLE_NAME)
-      .insert(rowData)
-      .returning("*")
-      .transacting(trx)
-      .then((rows: BidRow[]) => first(rows));
+export async function create(trx: Knex.Transaction, bid: BidDb): Promise<Bid> {
+  const rowData = bidDbAdapter.forInsertion(bid);
+  await trx(TABLE_NAME).insert(rowData).transacting(trx);
 
-    const withAcceptedAt = await findById(createdBid.id, trx);
+  const withAcceptedAt = await findById(bid.id, trx);
 
-    if (!withAcceptedAt) {
-      throw new Error("Failed to create Bid");
-    }
+  if (!withAcceptedAt) {
+    throw new Error("Failed to create Bid");
+  }
 
-    for (const taskTypeId of taskTypeIds) {
-      await BidTaskTypesDAO.create(
-        {
-          pricingBidId: withAcceptedAt.id,
-          taskTypeId,
-        },
-        trx
-      );
-    }
-
-    return omit(withAcceptedAt, ["partnerPayoutLogs", "partnerUserId"]);
-  });
+  return omit(withAcceptedAt, ["partnerPayoutLogs", "partnerUserId"]);
 }
 
 function findAllByState(

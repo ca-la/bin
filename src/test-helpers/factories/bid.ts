@@ -1,17 +1,20 @@
 import uuid from "node-uuid";
+import Knex from "knex";
 
 import generatePricingValues from "./pricing-values";
 import generatePricingQuote from "../../services/generate-pricing-quote";
 
 import { PricingQuote } from "../../domain-objects/pricing-quote";
 import * as PricingQuotesDAO from "../../dao/pricing-quotes";
-import Bid, { BidCreationPayload } from "../../components/bids/domain-object";
-import { create as createBid } from "../../components/bids/dao";
+import Bid from "../../components/bids/domain-object";
+import { createBid } from "../../services/create-bid";
 import createUser from "../create-user";
 import User from "../../components/users/domain-object";
 import { daysToMs } from "../../services/time-conversion";
+import db from "../../services/db";
 import ProductDesignsDAO from "../../components/product-designs/dao";
 import { generateDesign } from "./product-design";
+import { BidDb } from "../../components/bids/types";
 
 interface BidInterface {
   user: User;
@@ -20,11 +23,12 @@ interface BidInterface {
 }
 
 interface GenerateBidInputs {
-  bidOptions?: Partial<BidCreationPayload>;
+  bidOptions: Partial<BidDb>;
   quoteId: string | null;
   designId: string;
-  generatePricing?: boolean;
+  generatePricing: boolean;
   userId: string | null;
+  taskTypeIds: string[];
 }
 
 export default async function generateBid({
@@ -33,6 +37,7 @@ export default async function generateBid({
   quoteId = null,
   generatePricing = true,
   userId = null,
+  taskTypeIds = [],
 }: Partial<GenerateBidInputs> = {}): Promise<BidInterface> {
   if (generatePricing) {
     await generatePricingValues();
@@ -79,22 +84,29 @@ export default async function generateBid({
     throw new Error("Could not find or create quote for new pricing bid");
   }
 
-  const createdAt = new Date();
-  const dueDate = new Date(createdAt.getTime() + daysToMs(10));
-  const bid = await createBid({
-    acceptedAt: null,
-    bidPriceCents: 100000,
-    bidPriceProductionOnlyCents: 0,
-    createdBy,
-    completedAt: null,
-    description: "Full Service",
+  const {
+    bidPriceCents = 100000,
+    bidPriceProductionOnlyCents = 0,
+    createdAt = new Date(),
+    description = "Full Service",
     dueDate,
-    id: uuid.v4(),
-    quoteId: quote.id,
-    taskTypeIds: [],
-    revenueShareBasisPoints: 0,
-    ...bidOptions,
-  });
+    revenueShareBasisPoints = 0,
+  } = bidOptions;
+  const bidId = bidOptions.id || uuid.v4();
+  const bid = await db.transaction((trx: Knex.Transaction) =>
+    createBid(trx, bidId, createdBy, {
+      bidPriceCents,
+      bidPriceProductionOnlyCents,
+      description: description || "Full Service",
+      dueDate: (
+        dueDate || new Date(createdAt.getTime() + daysToMs(10))
+      ).toISOString(),
+      projectDueInMs: 0,
+      quoteId: bidOptions.quoteId || quote.id,
+      revenueShareBasisPoints,
+      taskTypeIds,
+    })
+  );
 
   return { bid, quote, user };
 }

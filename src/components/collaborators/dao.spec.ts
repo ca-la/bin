@@ -8,7 +8,7 @@ import * as CollectionsDAO from "../collections/dao";
 import ProductDesignsDAO = require("../product-designs/dao");
 import DesignEventsDAO from "../design-events/dao";
 
-import createUser = require("../../test-helpers/create-user");
+import createUser from "../../test-helpers/create-user";
 import { test, Test } from "../../test-helpers/fresh";
 import createDesign from "../../services/create-design";
 import generateCollaborator from "../../test-helpers/factories/collaborator";
@@ -728,9 +728,7 @@ test("CollaboratorsDAO.findByDesignAndTaskType", async (t: Test) => {
   });
   const { bid, quote } = await generateBid({
     designId: design.id,
-    bidOptions: {
-      taskTypeIds: [taskTypes.TECHNICAL_DESIGN.id],
-    },
+    taskTypeIds: [taskTypes.TECHNICAL_DESIGN.id],
   });
   const { collaborator } = await generateCollaborator({
     cancelledAt: null,

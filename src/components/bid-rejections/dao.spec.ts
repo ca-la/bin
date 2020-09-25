@@ -1,13 +1,15 @@
+import Knex from "knex";
 import { test, Test } from "../../test-helpers/fresh";
 import generatePricingValues from "../../test-helpers/factories/pricing-values";
 import createUser from "../../test-helpers/create-user";
 import generatePricingQuote from "../../services/generate-pricing-quote";
-import { BidCreationPayload } from "../bids/domain-object";
 import { daysToMs } from "../../services/time-conversion";
+import db from "../../services/db";
 import uuid = require("node-uuid");
 import { create as createBid } from "../bids/dao";
 import { create, findByBidId } from "./dao";
 import { generateDesign } from "../../test-helpers/factories/product-design";
+import { BidDb } from "../bids/types";
 
 test("Bid Rejections DAO supports creation and retrieval by Bid ID", async (t: Test) => {
   await generatePricingValues();
@@ -45,20 +47,18 @@ test("Bid Rejections DAO supports creation and retrieval by Bid ID", async (t: T
     },
     200
   );
-  const inputBid: BidCreationPayload = {
-    acceptedAt: null,
+  const inputBid: BidDb = {
     bidPriceCents: 100000,
     bidPriceProductionOnlyCents: 0,
     createdBy: user.id,
-    completedAt: null,
     description: "Full Service",
     dueDate: new Date(new Date(2012, 11, 22).getTime() + daysToMs(10)),
     id: uuid.v4(),
     quoteId: quote.id,
-    taskTypeIds: [],
     revenueShareBasisPoints: 0,
+    createdAt: new Date(2012, 11, 22),
   };
-  await createBid({ ...inputBid, acceptedAt: null, taskTypeIds: [] });
+  await db.transaction((trx: Knex.Transaction) => createBid(trx, inputBid));
 
   const rejectionReasons = {
     id: uuid.v4(),
