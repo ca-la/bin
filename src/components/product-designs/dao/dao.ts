@@ -471,3 +471,20 @@ export async function getTitleAndOwnerByShipmentTracking(
     collectionId: row.collection_id,
   };
 }
+
+export async function findIdByQuoteId(
+  trx: Knex.Transaction,
+  quoteId: string
+): Promise<string | null> {
+  const row = await trx(TABLE_NAME)
+    .select<{ id: string }>("product_designs.id")
+    .join("pricing_quotes", "pricing_quotes.design_id", "product_designs.id")
+    .where({ "pricing_quotes.id": quoteId, deleted_at: null })
+    .first();
+
+  if (!row) {
+    return null;
+  }
+
+  return row.id;
+}

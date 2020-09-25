@@ -3,7 +3,11 @@ import Knex from "knex";
 import uuid from "node-uuid";
 import { omit } from "lodash";
 
-import Bid, { isBidSortByParam } from "./domain-object";
+import Bid, {
+  isBidSortByParam,
+  BidCreationPayload,
+  isBidCreationPayload,
+} from "./domain-object";
 import Collaborator from "../collaborators/types";
 import ProductDesign = require("../product-designs/domain-objects/product-design");
 import { PricingQuote } from "../../domain-objects/pricing-quote";
@@ -18,9 +22,11 @@ import * as CollaboratorsDAO from "../collaborators/dao";
 import requireAdmin = require("../../middleware/require-admin");
 import requireAuth = require("../../middleware/require-auth");
 import useTransaction from "../../middleware/use-transaction";
+import { typeGuard } from "../../middleware/type-guard";
 import * as NotificationsService from "../../services/create-notifications";
 import { isExpired } from "./services/is-expired";
 import { hasActiveBids } from "./services/has-active-bids";
+import { createBid } from "../../services/create-bid";
 import { MILLISECONDS_TO_EXPIRE } from "./constants";
 import { BidRejection } from "../bid-rejections/domain-object";
 import {
@@ -32,6 +38,8 @@ import { payOutPartner } from "../../services/pay-out-partner";
 import filterError = require("../../services/filter-error");
 import db from "../../services/db";
 import { templateDesignEvent } from "../design-events/types";
+import InvalidDataError from "../../errors/invalid-data";
+import ConflictError from "../../errors/conflict";
 
 const router = new Router();
 
@@ -73,6 +81,28 @@ async function attachDesignsToBids(bids: Bid[]): Promise<IOBid[]> {
 
 function not(predicateFunction: (a: any) => boolean): (a: any) => boolean {
   return (a: any): boolean => !predicateFunction(a);
+}
+
+function* createAndAssignBid(
+  this: TrxContext<AuthedContext<BidCreationPayload>>
+) {
+  const { body }: { body: BidCreationPayload } = this.request;
+  const { trx, userId } = this.state;
+
+  const created = yield createBid(trx, uuid.v4(), userId, body)
+    .catch(
+      filterError(InvalidDataError, (err: InvalidDataError) => {
+        this.throw(400, err.message);
+      })
+    )
+    .catch(
+      filterError(ConflictError, (err: ConflictError) => {
+        this.throw(409, err.message);
+      })
+    );
+
+  this.body = created;
+  this.status = 201;
 }
 
 function* listAllBids(this: AuthedContext): Iterator<any, any, any> {
@@ -498,6 +528,13 @@ function* postPayOut(this: PayOutPartnerContext): Iterator<any, any, any> {
   this.status = 204;
 }
 
+router.post(
+  "/",
+  requireAuth,
+  useTransaction,
+  typeGuard(isBidCreationPayload),
+  createAndAssignBid
+);
 router.get("/", requireAuth, listBids);
 router.get("/unpaid/:userId", requireAdmin, getUnpaidBidsByUserId);
 

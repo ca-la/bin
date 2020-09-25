@@ -13,6 +13,7 @@ import {
   findDesignByTaskId,
   isOwner,
   getTitleAndOwnerByShipmentTracking,
+  findIdByQuoteId,
 } from "./dao";
 import { del as deleteCanvas } from "../../canvases/dao";
 import * as CollaboratorsDAO from "../../collaborators/dao";
@@ -31,7 +32,7 @@ import { deleteById as deleteAnnotation } from "../../product-design-canvas-anno
 import { create as createTask } from "../../../dao/tasks";
 import { create as createApprovalTask } from "../../../components/approval-step-tasks/dao";
 
-import { sandbox, test } from "../../../test-helpers/fresh";
+import { sandbox, test, Test } from "../../../test-helpers/fresh";
 import createUser from "../../../test-helpers/create-user";
 import generateCanvas from "../../../test-helpers/factories/product-design-canvas";
 import generateComponent from "../../../test-helpers/factories/component";
@@ -1387,4 +1388,29 @@ test("getTitleAndOwnerByShipmentTracking", async (t: tape.Test) => {
   } finally {
     await trx.rollback();
   }
+});
+
+test("findIdByQuoteId", async (t: Test) => {
+  const { user } = await createUser({ withSession: false });
+  const design = await generateDesign({ userId: user.id });
+  const { quote } = await generateBid({
+    designId: design.id,
+    userId: user.id,
+  });
+
+  t.equal(
+    await db.transaction((trx: Knex.Transaction) =>
+      findIdByQuoteId(trx, quote.id)
+    ),
+    design.id,
+    "returns correct design ID"
+  );
+
+  t.equal(
+    await db.transaction((trx: Knex.Transaction) =>
+      findIdByQuoteId(trx, uuid.v4())
+    ),
+    null,
+    "returns null for a miss"
+  );
 });

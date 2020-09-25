@@ -6,6 +6,8 @@ import DesignEvent from "../design-events/types";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import db from "../../services/db";
 import { authHeader, del, get, post, put } from "../../test-helpers/http";
+import SessionsDAO from "../../dao/sessions";
+import * as CreateBidService from "../../services/create-bid";
 import createUser from "../../test-helpers/create-user";
 import generateBid from "../../test-helpers/factories/bid";
 import * as BidsDAO from "./dao";
@@ -26,6 +28,8 @@ import Knex from "knex";
 import { taskTypes } from "../tasks/templates/task-types";
 import { checkout } from "../../test-helpers/checkout-collection";
 import PartnerPayoutAccount from "../../domain-objects/partner-payout-account";
+import { BidCreationPayload } from "./domain-object";
+import ConflictError from "../../errors/conflict";
 
 test("GET /bids", async (t: Test) => {
   const admin = await createUser({ role: "ADMIN" });
@@ -958,4 +962,55 @@ test("POST /bids/:bidId/pay-out-to-partner", async (t: Test) => {
   // Callcount should not have changed
   t.equal(sendTransferStub.callCount, 0);
   t.equal(enqueueSendStub.callCount, 0);
+});
+
+test("POST /bids creates and assigns a partner user", async (t: Test) => {
+  const createBidStub = sandbox().stub(CreateBidService, "createBid").resolves({
+    id: "a-bid-id",
+  });
+  sandbox()
+    .stub(SessionsDAO, "findById")
+    .resolves({ role: "ADMIN", userId: "a-user-id" });
+  sandbox().stub(uuid, "v4").returns("a-bid-id");
+
+  const bidCreationPayload: BidCreationPayload = {
+    bidPriceCents: 1000,
+    bidPriceProductionOnlyCents: 500,
+    description: "Full service",
+    dueDate: new Date().toISOString(),
+    projectDueInMs: 0,
+    quoteId: "a-quote-id",
+    revenueShareBasisPoints: 200,
+    taskTypeIds: [],
+    assignee: {
+      type: "USER",
+      id: "a-partner-user-id",
+    },
+  };
+
+  const [response, body] = await post("/bids", {
+    body: bidCreationPayload,
+    headers: authHeader("a-session-id"),
+  });
+
+  t.equal(response.status, 201, "returns a 201 Created response");
+  t.deepEqual(
+    body,
+    { id: "a-bid-id" },
+    "body is the return value of the service"
+  );
+
+  t.deepEqual(
+    createBidStub.args[0].slice(1),
+    ["a-bid-id", "a-user-id", bidCreationPayload],
+    "calls createBid function with correct arguments"
+  );
+
+  createBidStub.rejects(new ConflictError("A conflict error"));
+  const [conflict] = await post("/bids", {
+    body: bidCreationPayload,
+    headers: authHeader("a-session-id"),
+  });
+
+  t.equal(conflict.status, 409, "returns a 409 Conflict response");
 });
