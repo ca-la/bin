@@ -78,6 +78,31 @@ async function assignUser(
   NotificationsService.sendPartnerDesignBid(designId, actorId, targetId);
 }
 
+async function assignTeam(
+  trx: Knex.Transaction,
+  { bidId, quoteId, actorId, targetId }: Assignment
+) {
+  const designId = await findIdByQuoteId(trx, quoteId);
+
+  if (!designId) {
+    throw new ResourceNotFoundError(
+      `Could not find design for quote with quote ID: ${quoteId}`
+    );
+  }
+
+  await createDesignEvent(trx, {
+    ...templateDesignEvent,
+    actorId,
+    bidId,
+    createdAt: new Date(),
+    designId,
+    id: uuid.v4(),
+    targetId: null,
+    targetTeamId: targetId,
+    type: "BID_DESIGN",
+  });
+}
+
 export async function createBid(
   trx: Knex.Transaction,
   bidId: string,
@@ -108,27 +133,22 @@ export async function createBid(
     );
   }
 
+  const assignment: Assignment = {
+    bidId: bid.id,
+    quoteId: bidCreationRequest.quoteId,
+    actorId,
+    targetId: assignee.id,
+  };
+
   switch (assignee.type) {
     case "USER": {
-      await assignUser(trx, {
-        bidId: bid.id,
-        quoteId: bidCreationRequest.quoteId,
-        actorId,
-        targetId: assignee.id,
-      });
+      await assignUser(trx, assignment);
       break;
     }
 
     case "TEAM": {
-      /* TODO: Requires `target_team_id` work
-        await assignTeam(trx, {
-        bidId: created.id,
-        quoteId: bidCreationPayload.quoteId,
-        actorId: userId,
-        targetId: assignee.id,
-        });
-        break;
-        */
+      await assignTeam(trx, assignment);
+      break;
     }
 
     default: {

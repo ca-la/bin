@@ -157,3 +157,93 @@ test("createBid with user assignee", async (t: Test) => {
     "calls Notification service with correct arguments"
   );
 });
+
+test("createBid with team assignee", async (t: Test) => {
+  const now = new Date();
+  sandbox().useFakeTimers(now);
+  const {
+    bidCreateStub,
+    createDesignEventStub,
+    bidTaskTypeCreateStub,
+  } = setup();
+
+  const trx = await db.transaction();
+  const bidCreationPayload: BidCreationPayload = {
+    bidPriceCents: 1000,
+    bidPriceProductionOnlyCents: 800,
+    description: "Full service",
+    dueDate: new Date().toISOString(),
+    projectDueInMs: 0,
+    quoteId: "a-quote-id",
+    revenueShareBasisPoints: 200,
+    taskTypeIds: ["a-task-type-id", "another-task-type-id"],
+    assignee: {
+      type: "TEAM",
+      id: "a-partner-team-id",
+    },
+  };
+
+  try {
+    await createBid(trx, "a-bid-id", "a-user-id", bidCreationPayload);
+  } finally {
+    await trx.rollback();
+  }
+
+  t.deepEqual(
+    bidCreateStub.args,
+    [
+      [
+        trx,
+        {
+          bidPriceCents: bidCreationPayload.bidPriceCents,
+          bidPriceProductionOnlyCents:
+            bidCreationPayload.bidPriceProductionOnlyCents,
+          createdBy: "a-user-id",
+          description: bidCreationPayload.description,
+          dueDate: now,
+          id: "a-bid-id",
+          quoteId: bidCreationPayload.quoteId,
+          revenueShareBasisPoints: bidCreationPayload.revenueShareBasisPoints,
+          createdAt: now,
+        },
+      ],
+    ],
+    "calls BidsDAO.create with correct arguments"
+  );
+
+  t.deepEqual(
+    bidTaskTypeCreateStub.args,
+    [
+      [{ pricingBidId: "a-bid-id", taskTypeId: "a-task-type-id" }, trx],
+      [{ pricingBidId: "a-bid-id", taskTypeId: "another-task-type-id" }, trx],
+    ],
+    "calls BidTaskTypesDAO.create with correct arguments"
+  );
+
+  t.deepEqual(
+    createDesignEventStub.args,
+    [
+      [
+        trx,
+        {
+          actorId: "a-user-id",
+          bidId: "a-bid-id",
+          createdAt: now,
+          designId: "a-design-id",
+          id: "a-uuid",
+          targetId: null,
+          targetTeamId: "a-partner-team-id",
+          type: "BID_DESIGN",
+          quoteId: null,
+          approvalStepId: null,
+          approvalSubmissionId: null,
+          commentId: null,
+          taskTypeId: null,
+          shipmentTrackingId: null,
+          shipmentTrackingEventId: null,
+        },
+      ],
+    ],
+    "calls DesignEventsDAO.create with correct arguments"
+  );
+});
