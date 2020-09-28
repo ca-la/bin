@@ -42,7 +42,7 @@ function setup() {
   };
 }
 
-test("createBid with assignee", async (t: Test) => {
+test("createBid with user assignee", async (t: Test) => {
   const now = new Date();
   sandbox().useFakeTimers(now);
   const {
@@ -118,6 +118,7 @@ test("createBid with assignee", async (t: Test) => {
           designId: "a-design-id",
           id: "a-uuid",
           targetId: "a-partner-user-id",
+          targetTeamId: null,
           type: "BID_DESIGN",
           quoteId: null,
           approvalStepId: null,

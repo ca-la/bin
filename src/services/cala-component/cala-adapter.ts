@@ -9,7 +9,7 @@ import { hasProperties } from "../require-properties";
 
 interface AdapterOptions<Model, ModelRow extends object> {
   domain: string;
-  requiredProperties: string[];
+  requiredProperties: (keyof Model)[];
   encodeTransformer?: DataTransformer<ModelRow, Model>;
   decodeTransformer?: DataTransformer<Model, ModelRow>;
   insertionTransformer?: DataTransformer<

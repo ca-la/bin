@@ -32,6 +32,7 @@ function addMeta(query: Knex.QueryBuilder): Knex.QueryBuilder {
       "target.name as target_name",
       "target.role as target_role",
       "target.email as target_email",
+      "target_team.title as target_team_name",
       "design_approval_submissions.title as submission_title",
       "design_approval_steps.title as step_title",
       "shipment_trackings.description as shipment_tracking_description",
@@ -40,6 +41,11 @@ function addMeta(query: Knex.QueryBuilder): Knex.QueryBuilder {
     ])
     .join("users as actor", "actor.id", "design_events.actor_id")
     .leftJoin("users as target", "target.id", "design_events.target_id")
+    .leftJoin(
+      "teams as target_team",
+      "target_team.id",
+      "design_events.target_team_id"
+    )
     .leftJoin(
       "design_approval_submissions",
       "design_approval_submissions.id",

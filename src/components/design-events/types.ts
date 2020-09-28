@@ -86,6 +86,7 @@ export default interface DesignEvent {
   createdAt: Date;
   actorId: string;
   targetId: string | null;
+  targetTeamId: string | null;
   designId: string;
   bidId: string | null;
   quoteId: string | null;
@@ -103,6 +104,7 @@ export interface DesignEventRow {
   created_at: Date;
   actor_id: string;
   target_id: string | null;
+  target_team_id: string | null;
   design_id: string;
   bid_id: string | null;
   quote_id: string | null;
@@ -122,6 +124,7 @@ export interface DesignEventWithMeta extends DesignEvent {
   targetName: string | null;
   targetRole: Role | null;
   targetEmail: string | null;
+  targetTeamName: string | null;
   submissionTitle: string | null;
   stepTitle: string | null;
   taskTypeId: string | null;
@@ -138,6 +141,7 @@ export interface DesignEventWithMetaRow extends DesignEventRow {
   target_name: string | null;
   target_role: Role | null;
   target_email: string | null;
+  target_team_name: string | null;
   submission_title: string | null;
   step_title: string | null;
   task_type_id: string | null;
@@ -149,6 +153,7 @@ export interface DesignEventWithMetaRow extends DesignEventRow {
 
 export const templateDesignEvent = {
   targetId: null,
+  targetTeamId: null,
   bidId: null,
   quoteId: null,
   approvalStepId: null,
@@ -166,6 +171,7 @@ export const templateDesignEventWithMeta = {
   targetName: null,
   targetRole: null,
   targetEmail: null,
+  targetTeamName: null,
   submissionTitle: null,
   stepTitle: null,
   taskTypeId: null,
