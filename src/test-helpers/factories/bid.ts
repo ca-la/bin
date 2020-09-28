@@ -6,7 +6,7 @@ import generatePricingQuote from "../../services/generate-pricing-quote";
 
 import { PricingQuote } from "../../domain-objects/pricing-quote";
 import * as PricingQuotesDAO from "../../dao/pricing-quotes";
-import Bid from "../../components/bids/domain-object";
+import Bid, { BidCreationPayload } from "../../components/bids/domain-object";
 import { createBid } from "../../services/create-bid";
 import createUser from "../create-user";
 import User from "../../components/users/domain-object";
@@ -14,7 +14,6 @@ import { daysToMs } from "../../services/time-conversion";
 import db from "../../services/db";
 import ProductDesignsDAO from "../../components/product-designs/dao";
 import { generateDesign } from "./product-design";
-import { BidDb } from "../../components/bids/types";
 
 interface BidInterface {
   user: User;
@@ -23,7 +22,7 @@ interface BidInterface {
 }
 
 interface GenerateBidInputs {
-  bidOptions: Partial<BidDb>;
+  bidOptions: Partial<BidCreationPayload>;
   quoteId: string | null;
   designId: string;
   generatePricing: boolean;
@@ -84,27 +83,21 @@ export default async function generateBid({
     throw new Error("Could not find or create quote for new pricing bid");
   }
 
-  const {
-    bidPriceCents = 100000,
-    bidPriceProductionOnlyCents = 0,
-    createdAt = new Date(),
-    description = "Full Service",
-    dueDate,
-    revenueShareBasisPoints = 0,
-  } = bidOptions;
-  const bidId = bidOptions.id || uuid.v4();
   const bid = await db.transaction((trx: Knex.Transaction) =>
-    createBid(trx, bidId, createdBy, {
-      bidPriceCents,
-      bidPriceProductionOnlyCents,
-      description: description || "Full Service",
-      dueDate: (
-        dueDate || new Date(createdAt.getTime() + daysToMs(10))
-      ).toISOString(),
+    createBid(trx, uuid.v4(), createdBy, {
+      assignee: {
+        type: "USER",
+        id: createdBy,
+      },
+      bidPriceCents: 100000,
+      bidPriceProductionOnlyCents: 0,
+      description: "Full Service",
+      dueDate: new Date(new Date().getTime() + daysToMs(10)).toISOString(),
       projectDueInMs: 0,
-      quoteId: bidOptions.quoteId || quote.id,
-      revenueShareBasisPoints,
+      quoteId: quote.id,
+      revenueShareBasisPoints: 0,
       taskTypeIds,
+      ...bidOptions,
     })
   );
 

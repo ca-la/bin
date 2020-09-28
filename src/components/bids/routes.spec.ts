@@ -1,99 +1,73 @@
 import uuid from "node-uuid";
 import { omit } from "lodash";
-import sinon from "sinon";
 
 import DesignEvent from "../design-events/types";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import db from "../../services/db";
-import { authHeader, del, get, post, put } from "../../test-helpers/http";
-import SessionsDAO from "../../dao/sessions";
-import * as CreateBidService from "../../services/create-bid";
+import { authHeader, del, get, post } from "../../test-helpers/http";
 import createUser from "../../test-helpers/create-user";
 import generateBid from "../../test-helpers/factories/bid";
+import SessionsDAO from "../../dao/sessions";
 import * as BidsDAO from "./dao";
+import * as UsersDAO from "../users/dao";
 import * as BidRejectionDAO from "../bid-rejections/dao";
 import * as CollaboratorsDAO from "../collaborators/dao";
 import DesignEventsDAO from "../design-events/dao";
 import ProductDesignsDAO from "../product-designs/dao";
 import * as NotificationsService from "../../services/create-notifications";
 import PayoutAccountsDAO from "../../dao/partner-payout-accounts";
-import generateCollaborator from "../../test-helpers/factories/collaborator";
 import generateDesignEvent from "../../test-helpers/factories/design-event";
-import { daysToMs } from "../../services/time-conversion";
 import createDesign from "../../services/create-design";
 import * as Stripe from "../../services/stripe";
 import EmailService from "../../services/email";
 import { deleteById } from "../../test-helpers/designs";
 import Knex from "knex";
-import { taskTypes } from "../tasks/templates/task-types";
 import { checkout } from "../../test-helpers/checkout-collection";
 import PartnerPayoutAccount from "../../domain-objects/partner-payout-account";
-import { BidCreationPayload } from "./domain-object";
-import ConflictError from "../../errors/conflict";
+import Bid from "./domain-object";
+import ProductDesign from "../product-designs/domain-objects/product-design";
+import { taskTypes } from "../tasks/templates";
 
-test("GET /bids", async (t: Test) => {
-  const admin = await createUser({ role: "ADMIN" });
-  const partner = await createUser({ role: "PARTNER" });
-  const other = await createUser({ role: "PARTNER" });
-  const design = await ProductDesignsDAO.create({
-    productType: "TEESHIRT",
-    title: "Plain White Tee",
-    userId: admin.user.id,
-  });
+const b1: Partial<Bid> = {
+  id: "a-bid-id",
+  quoteId: "a-quote-id",
+};
 
-  const { bid, quote } = await generateBid({
-    designId: design.id,
-    generatePricing: true,
-    userId: admin.user.id,
-  });
-  const { bid: otherBid } = await generateBid({
-    quoteId: quote.id,
-    designId: design.id,
-    generatePricing: false,
-    userId: admin.user.id,
-  });
+const d1: Partial<ProductDesign> = {
+  id: "a-design-id",
+};
 
-  await put(`/bids/${bid.id}/assignees/${partner.user.id}`, {
-    headers: authHeader(admin.session.id),
-  });
-  await put(`/bids/${otherBid.id}/assignees/${other.user.id}`, {
-    headers: authHeader(admin.session.id),
-  });
-  const [response, bids] = await get(`/bids?userId=${partner.user.id}`, {
-    headers: authHeader(partner.session.id),
-  });
-  t.equal(response.status, 200);
-  t.deepEqual(
-    bids,
-    [
-      {
-        ...bid,
-        createdAt: bid.createdAt.toISOString(),
-        design: {
-          ...design,
-          createdAt: design.createdAt.toISOString(),
-        },
-        dueDate: bid.dueDate!.toISOString(),
-      },
-    ],
-    "returns only bids assigned to requested user"
-  );
-});
+const b1d1 = {
+  ...b1,
+  design: d1,
+};
 
-test("GET /bids as an admin fetching everything", async (t: Test) => {
-  const admin = await createUser({ role: "ADMIN" });
-  const findAllStub = sandbox().stub(BidsDAO, "findAll").resolves([]);
+function setup(role: string = "PARTNER") {
+  return {
+    sessionStub: sandbox().stub(SessionsDAO, "findById").resolves({
+      role,
+      userId: "a-user-id",
+    }),
+    findDesignByQuoteStub: sandbox()
+      .stub(ProductDesignsDAO, "findByQuoteId")
+      .resolves(d1),
+  };
+}
+
+test("GET /bids?limit&offset as an admin fetching everything", async (t: Test) => {
+  setup("ADMIN");
+  const findAllStub = sandbox().stub(BidsDAO, "findAll").resolves([b1]);
 
   const [response, bids] = await get("/bids?limit=100&offset=50", {
-    headers: authHeader(admin.session.id),
+    headers: authHeader("a-session-id"),
   });
 
   t.equal(response.status, 200, "Successfully returns");
-  t.deepEqual(bids, [], "Successfully returns the stub list");
+  t.deepEqual(bids, [b1], "Successfully returns the stub list");
   t.equal(findAllStub.callCount, 1, "Calls the findAll method exactly once");
 
   const [badResponse, badBody] = await get("/bids", {
-    headers: authHeader(admin.session.id),
+    headers: authHeader("a-session-id"),
   });
 
   t.equal(badResponse.status, 400, "Fails when a limit/offset is not passed");
@@ -103,391 +77,136 @@ test("GET /bids as an admin fetching everything", async (t: Test) => {
   );
 });
 
-test("GET /bids?userId&state=OPEN", async (t: Test) => {
-  const admin = await createUser({ role: "ADMIN" });
-  const partner = await createUser({ role: "PARTNER" });
-  const other = await createUser({ role: "PARTNER" });
-  const design = await ProductDesignsDAO.create({
-    productType: "TEESHIRT",
-    title: "Plain White Tee",
-    userId: admin.user.id,
-  });
+test("GET /bids?userId", async (t: Test) => {
+  setup();
+  const findOpenStub = sandbox()
+    .stub(BidsDAO, "findOpenByTargetId")
+    .resolves([b1]);
 
-  const { bid, quote } = await generateBid({
-    designId: design.id,
-    generatePricing: true,
-    userId: admin.user.id,
+  const [response, bids] = await get(`/bids?userId=a-user-id`, {
+    headers: authHeader("a-session-id"),
   });
-  const { bid: otherBid } = await generateBid({
-    quoteId: quote.id,
-    designId: design.id,
-    generatePricing: false,
-    userId: admin.user.id,
-  });
-  const { bid: expiredBid } = await generateBid({
-    quoteId: quote.id,
-    designId: design.id,
-    generatePricing: false,
-    bidOptions: {
-      dueDate: new Date(new Date(2012, 11, 22).getTime() + daysToMs(10)),
-    },
-    userId: admin.user.id,
-  });
-
-  await put(`/bids/${bid.id}/assignees/${partner.user.id}`, {
-    headers: authHeader(admin.session.id),
-  });
-  await put(`/bids/${expiredBid.id}/assignees/${partner.user.id}`, {
-    headers: authHeader(admin.session.id),
-  });
-  await put(`/bids/${otherBid.id}/assignees/${other.user.id}`, {
-    headers: authHeader(admin.session.id),
-  });
-  const [response, bids] = await get(
-    `/bids?userId=${partner.user.id}&state=OPEN`,
-    {
-      headers: authHeader(partner.session.id),
-    }
-  );
   t.equal(response.status, 200);
+  t.deepEqual(bids, [b1d1], "returns only bids assigned to requested user");
+
   t.deepEqual(
-    bids,
-    [
-      {
-        ...bid,
-        createdAt: bid.createdAt.toISOString(),
-        design: {
-          ...design,
-          createdAt: design.createdAt.toISOString(),
-        },
-        dueDate: bid.dueDate!.toISOString(),
-      },
-    ],
-    "returns only bids assigned to requested user"
+    findOpenStub.args,
+    [["a-user-id", "ACCEPTED"]],
+    "calls DAO function with correct arguments"
+  );
+});
+
+test("GET /bids?userId&state=OPEN", async (t: Test) => {
+  setup();
+  const findOpenStub = sandbox()
+    .stub(BidsDAO, "findOpenByTargetId")
+    .resolves([b1]);
+
+  const [response, bids] = await get("/bids?userId=a-user-id&state=OPEN", {
+    headers: authHeader("a-session-id"),
+  });
+
+  t.equal(response.status, 200);
+  t.deepEqual(bids, [b1d1], "returns only bids assigned to requested user");
+  t.deepEqual(
+    findOpenStub.args,
+    [["a-user-id", "ACCEPTED"]],
+    "calls DAO function with correct arguments"
   );
 });
 
 test("GET /bids?userId&state=EXPIRED", async (t: Test) => {
-  const now = new Date(2012, 11, 22);
-  sandbox().useFakeTimers(now);
+  const testDate = new Date(2012, 11, 23);
+  sandbox().useFakeTimers(testDate);
+  setup();
+  const findOpenStub = sandbox()
+    .stub(BidsDAO, "findOpenByTargetId")
+    .resolves([
+      { id: "a-bid-id", createdAt: new Date(2012, 11, 22) },
+      { id: "an-expired-bid-id", createdAt: new Date(2012, 11, 19) },
+    ]);
 
-  const admin = await createUser({ role: "ADMIN" });
-  const partner = await createUser({ role: "PARTNER" });
-  const other = await createUser({ role: "PARTNER" });
-  const design = await ProductDesignsDAO.create({
-    productType: "TEESHIRT",
-    title: "Plain White Tee",
-    userId: admin.user.id,
+  const [response, bids] = await get("/bids?userId=a-user-id&state=EXPIRED", {
+    headers: authHeader("a-session-id"),
   });
-
-  const { bid, quote } = await generateBid({
-    designId: design.id,
-    generatePricing: true,
-    userId: admin.user.id,
-  });
-  const { bid: otherBid } = await generateBid({
-    quoteId: quote.id,
-    designId: design.id,
-    generatePricing: false,
-    userId: admin.user.id,
-  });
-
-  const threeDaysAgo = new Date(now.getTime() - daysToMs(3) - 1);
-  sandbox().useFakeTimers(threeDaysAgo);
-  const { bid: expiredBid } = await generateBid({
-    quoteId: quote.id,
-    designId: design.id,
-    generatePricing: false,
-    userId: admin.user.id,
-    bidOptions: {
-      dueDate: new Date(threeDaysAgo.getTime() + daysToMs(10)),
-    },
-  });
-  await generateDesignEvent({
-    bidId: expiredBid.id,
-    createdAt: threeDaysAgo,
-    targetId: partner.user.id,
-    type: "BID_DESIGN",
-  });
-
-  sandbox().useFakeTimers(now);
-  await put(`/bids/${bid.id}/assignees/${partner.user.id}`, {
-    headers: authHeader(admin.session.id),
-  });
-  await put(`/bids/${expiredBid.id}/assignees/${partner.user.id}`, {
-    headers: authHeader(admin.session.id),
-  });
-  await put(`/bids/${otherBid.id}/assignees/${other.user.id}`, {
-    headers: authHeader(admin.session.id),
-  });
-  const [response, bids] = await get(
-    `/bids?userId=${partner.user.id}&state=EXPIRED`,
-    {
-      headers: authHeader(partner.session.id),
-    }
-  );
   t.equal(response.status, 200);
   t.deepEqual(
     bids,
     [
       {
-        ...expiredBid,
-        createdAt: expiredBid.createdAt.toISOString(),
-        design: {
-          ...design,
-          createdAt: design.createdAt.toISOString(),
-        },
-        dueDate: expiredBid.dueDate!.toISOString(),
+        id: "an-expired-bid-id",
+        createdAt: new Date(2012, 11, 19).toISOString(),
+        design: d1,
       },
     ],
     "returns only expired bid assigned to the user"
   );
+
+  t.deepEqual(
+    findOpenStub.args,
+    [["a-user-id", "ACCEPTED"]],
+    "calls DAO function with correct arguments"
+  );
 });
 
 test("GET /bids?userId&state=REJECTED", async (t: Test) => {
-  const admin = await createUser({ role: "ADMIN" });
-  const partner = await createUser({ role: "PARTNER" });
-  const design = await ProductDesignsDAO.create({
-    productType: "TEESHIRT",
-    title: "Plain White Tee",
-    userId: admin.user.id,
-  });
-  const { quote } = await generateBid({
-    designId: design.id,
-    generatePricing: true,
-    userId: admin.user.id,
-  });
-  const { bid: otherBid } = await generateBid({
-    quoteId: quote.id,
-    designId: design.id,
-    generatePricing: false,
-    userId: admin.user.id,
-    bidOptions: {
-      dueDate: new Date(new Date(2012, 11, 22).getTime() + daysToMs(10)),
-    },
-  });
-
-  const bidsDaoStub = sandbox()
+  setup();
+  const findRejectedStub = sandbox()
     .stub(BidsDAO, "findRejectedByTargetId")
-    .resolves([otherBid]);
+    .resolves([b1]);
 
-  const [response, bids] = await get(
-    `/bids?userId=${partner.user.id}&state=REJECTED`,
-    {
-      headers: authHeader(partner.session.id),
-    }
-  );
+  const [response, bids] = await get(`/bids?userId=a-user-id&state=REJECTED`, {
+    headers: authHeader("a-session-id"),
+  });
   t.equal(response.status, 200);
+  t.deepEqual(bids, [b1d1], "returns rejected bids");
   t.deepEqual(
-    bids,
-    [
-      {
-        ...otherBid,
-        createdAt: otherBid.createdAt.toISOString(),
-        design: {
-          ...design,
-          createdAt: design.createdAt.toISOString(),
-        },
-        dueDate: otherBid.dueDate!.toISOString(),
-      },
-    ],
-    "returns empty bids list"
-  );
-  t.equal(
-    bidsDaoStub.callCount,
-    1,
-    "calls findRejectedByTargetId stub exactly once"
+    findRejectedStub.args,
+    [["a-user-id", "ACCEPTED"]],
+    "calls DAO function with correct arguments"
   );
 });
 
 test("GET /bids?userId&state=ACCEPTED", async (t: Test) => {
-  const admin = await createUser({ role: "ADMIN" });
-  const partner = await createUser({ role: "PARTNER" });
-  const other = await createUser({ role: "PARTNER" });
-  const design = await ProductDesignsDAO.create({
-    productType: "TEESHIRT",
-    title: "Plain White Tee",
-    userId: admin.user.id,
-  });
+  setup();
+  const findAcceptedStub = sandbox()
+    .stub(BidsDAO, "findAcceptedByTargetId")
+    .resolves([b1]);
 
-  const { bid, quote } = await generateBid({
-    designId: design.id,
-    generatePricing: true,
-    userId: admin.user.id,
+  const [response, bids] = await get("/bids?userId=a-user-id&state=ACCEPTED", {
+    headers: authHeader("a-session-id"),
   });
-  const { bid: otherBid } = await generateBid({
-    quoteId: quote.id,
-    designId: design.id,
-    generatePricing: false,
-    userId: admin.user.id,
-    bidOptions: {
-      dueDate: new Date(new Date(2012, 11, 22).getTime() + daysToMs(10)),
-    },
-  });
-
-  await put(`/bids/${bid.id}/assignees/${partner.user.id}`, {
-    headers: authHeader(admin.session.id),
-  });
-  await put(`/bids/${otherBid.id}/assignees/${other.user.id}`, {
-    headers: authHeader(admin.session.id),
-  });
-  const [response, bids] = await get(
-    `/bids?userId=${partner.user.id}&state=ACCEPTED`,
-    {
-      headers: authHeader(partner.session.id),
-    }
-  );
   t.equal(response.status, 200);
-  t.deepEqual(bids, [], "returns empty bids list");
-});
-
-test("PUT /bids/:bidId/assignees/:userId creates a new collaborator role", async (t: Test) => {
-  const admin = await createUser({ role: "ADMIN" });
-  const partner = await createUser({ role: "PARTNER" });
-  const designer = await createUser();
-  const design = await ProductDesignsDAO.create({
-    productType: "TEESHIRT",
-    title: "Plain White Tee",
-    userId: designer.user.id,
-  });
-  const { bid } = await generateBid({
-    designId: design.id,
-    generatePricing: true,
-    userId: partner.user.id,
-  });
-
-  const notificationStub = sandbox()
-    .stub(NotificationsService, "sendPartnerDesignBid")
-    .resolves();
-
-  const [response] = await put(`/bids/${bid.id}/assignees/${partner.user.id}`, {
-    headers: authHeader(admin.session.id),
-  });
-
-  t.equal(response.status, 204, "Successfully assigns first partner");
-  t.equal(notificationStub.callCount, 1, "Only calls notification once");
-
-  const collaborator = await CollaboratorsDAO.findByDesignAndUser(
-    design.id,
-    partner.user.id
+  t.deepEqual(bids, [b1d1], "returns accepted bids");
+  t.deepEqual(
+    findAcceptedStub.args,
+    [["a-user-id", "ACCEPTED"]],
+    "calls DAO function with correct arguments"
   );
-
-  if (!collaborator) {
-    throw new Error("Could not find collaborators for the partner and design!");
-  }
-
-  t.equal(collaborator.role, "PREVIEW", "Creates a preview collaborator");
-  t.equal(collaborator.userId, partner.user.id, "Associates with the partner");
-  t.true(
-    collaborator.cancelledAt && collaborator.cancelledAt > new Date(),
-    "Returns a cancelled date ahead of now"
-  );
-
-  const [failedResponse, failedBody] = await put(
-    `/bids/${bid.id}/assignees/${partner.user.id}`,
-    {
-      headers: authHeader(admin.session.id),
-    }
-  );
-
-  t.equal(failedResponse.status, 403, "Fails to assign a bid again");
-  t.true(failedBody.message.includes("There are active bids for user"));
-});
-
-test("PUT /bids/:bidId/assignees/:userId", async (t: Test) => {
-  const { user, session } = await createUser({ role: "ADMIN" });
-  const collaborator = await createUser({ role: "PARTNER" });
-  const design = await ProductDesignsDAO.create({
-    productType: "TEESHIRT",
-    title: "Plain White Tee",
-    userId: user.id,
-  });
-  await generateCollaborator({
-    collectionId: null,
-    designId: design.id,
-    invitationMessage: "",
-    role: "EDIT",
-    userEmail: null,
-    userId: collaborator.user.id,
-  });
-
-  const { bid } = await generateBid({
-    designId: design.id,
-    generatePricing: true,
-    userId: user.id,
-  });
-
-  const notificationStub = sandbox()
-    .stub(NotificationsService, "sendPartnerDesignBid")
-    .resolves();
-
-  const [response] = await put(`/bids/${bid.id}/assignees/${user.id}`, {
-    headers: authHeader(session.id),
-  });
-  t.equal(response.status, 204, "Successfully assigns first partner");
-  sinon.assert.callCount(notificationStub, 1);
-
-  const collaboratorAssignment = await put(
-    `/bids/${bid.id}/assignees/${collaborator.user.id}`,
-    { headers: authHeader(session.id) }
-  );
-  t.equal(
-    collaboratorAssignment[0].status,
-    204,
-    "Successfully assigns second partner"
-  );
-  sinon.assert.callCount(notificationStub, 2);
-
-  const [collaboratorResponse, collaborators] = await get(
-    `/collaborators?designId=${design.id}`,
-    {
-      headers: authHeader(session.id),
-    }
-  );
-  t.equal(collaboratorResponse.status, 200);
-  t.equal(collaborators[0].userId, collaborator.user.id);
-  t.equal(collaborators[0].role, "EDIT", "Keeps existing role");
-  t.equal(collaborators[1].userId, user.id);
-
-  const [notFoundUser] = await put(`/bids/${bid.id}/assignees/${uuid.v4()}`, {
-    headers: authHeader(session.id),
-  });
-  t.equal(notFoundUser.status, 404);
-
-  const [notFoundBid] = await put(`/bids/${uuid.v4()}/assignees/${user.id}`, {
-    headers: authHeader(session.id),
-  });
-  t.equal(notFoundBid.status, 404);
 });
 
 test("GET /bids/:bidId/assignees", async (t: Test) => {
-  const { user, session } = await createUser({ role: "ADMIN" });
-  const { user: partner } = await createUser({ role: "PARTNER" });
-  const design = await ProductDesignsDAO.create({
-    productType: "TEESHIRT",
-    title: "Plain White Tee",
-    userId: user.id,
+  const { sessionStub } = setup();
+
+  sandbox()
+    .stub(UsersDAO, "findByBidId")
+    .resolves([{ id: "a-user-id" }]);
+
+  const [unauthorized] = await get("/bids/a-bid-id/assignees", {
+    headers: authHeader("a-session-id"),
   });
 
-  const { bid } = await generateBid({
-    designId: design.id,
-    generatePricing: true,
-    userId: user.id,
-  });
+  t.equal(unauthorized.status, 403, "requires admin role");
 
-  await put(`/bids/${bid.id}/assignees/${partner.id}`, {
-    headers: authHeader(session.id),
-  });
-
-  const [response, assignees] = await get(`/bids/${bid.id}/assignees`, {
-    headers: authHeader(session.id),
+  sessionStub.resolves({ role: "ADMIN" });
+  const [response, assignees] = await get(`/bids/a-bid-id/assignees`, {
+    headers: authHeader("a-session-id"),
   });
 
   t.equal(response.status, 200);
   t.deepEqual(assignees, [
     {
-      ...omit(partner, ["passwordHash"]),
-      createdAt: partner.createdAt.toISOString(),
+      id: "a-user-id",
     },
   ]);
 });
@@ -505,11 +224,14 @@ test("DELETE /bids/:bidId/assignees/:userId", async (t: Test) => {
     designId: design.id,
     generatePricing: true,
     userId: user.id,
+    bidOptions: {
+      assignee: {
+        type: "USER",
+        id: partner.id,
+      },
+    },
   });
 
-  await put(`/bids/${bid.id}/assignees/${partner.id}`, {
-    headers: authHeader(session.id),
-  });
   const [response] = await del(`/bids/${bid.id}/assignees/${partner.id}`, {
     headers: authHeader(session.id),
   });
@@ -552,19 +274,15 @@ test("Partner pairing: accept", async (t: Test) => {
   } = await checkout();
   const partner = await createUser({ role: "PARTNER" });
   const other = await createUser({ role: "USER" });
-  const createdAt = new Date();
-  const dueDate = new Date(createdAt.getTime() + daysToMs(10));
   const { bid } = await generateBid({
     quoteId: quote.id,
-    taskTypeIds: [taskTypes.TECHNICAL_DESIGN.id, taskTypes.PRODUCTION.id],
-    bidOptions: {
-      dueDate,
-    },
     userId: admin.user.id,
+    designId: design.id,
+    bidOptions: { assignee: { type: "USER", id: partner.user.id } },
+    generatePricing: false,
+    taskTypeIds: [taskTypes.TECHNICAL_DESIGN.id, taskTypes.PRODUCTION.id],
   });
-  await put(`/bids/${bid.id}/assignees/${partner.user.id}`, {
-    headers: authHeader(admin.session.id),
-  });
+
   const notificationStub = sandbox()
     .stub(NotificationsService, "sendPartnerAcceptServiceBidNotification")
     .resolves();
@@ -684,10 +402,12 @@ test("Partner pairing: accept on a deleted design", async (t: Test) => {
     designId: design.id,
     generatePricing: true,
     userId: admin.user.id,
-  });
-
-  await put(`/bids/${bid.id}/assignees/${partner.user.id}`, {
-    headers: authHeader(admin.session.id),
+    bidOptions: {
+      assignee: {
+        type: "USER",
+        id: partner.user.id,
+      },
+    },
   });
 
   await deleteById(design.id);
@@ -707,15 +427,17 @@ test("Partner pairing: reject", async (t: Test) => {
   } = await checkout();
   const other = await createUser({ role: "PARTNER" });
   const partner = await createUser({ role: "PARTNER" });
-  const createdAt = new Date();
-  const dueDate = new Date(createdAt.getTime() + daysToMs(10));
   const { bid } = await generateBid({
     quoteId: quote.id,
-    designId: design.id,
     userId: admin.user.id,
+    designId: design.id,
     bidOptions: {
-      dueDate,
+      assignee: {
+        type: "USER",
+        id: partner.user.id,
+      },
     },
+    generatePricing: false,
   });
   const bidRejection = {
     createdBy: admin.user.id,
@@ -725,9 +447,6 @@ test("Partner pairing: reject", async (t: Test) => {
     other: true,
     notes: "Unable to complete as designed",
   };
-  await put(`/bids/${bid.id}/assignees/${partner.user.id}`, {
-    headers: authHeader(admin.session.id),
-  });
   const notificationStub = sandbox()
     .stub(NotificationsService, "sendPartnerRejectServiceBidNotification")
     .resolves();
@@ -883,7 +602,6 @@ test("POST /bids/:bidId/pay-out-to-partner", async (t: Test) => {
   const { bid } = await generateBid({
     bidOptions: { bidPriceCents: 1000 },
     designId: design.id,
-    userId: admin.user.id,
   });
 
   await generateDesignEvent({
@@ -962,55 +680,4 @@ test("POST /bids/:bidId/pay-out-to-partner", async (t: Test) => {
   // Callcount should not have changed
   t.equal(sendTransferStub.callCount, 0);
   t.equal(enqueueSendStub.callCount, 0);
-});
-
-test("POST /bids creates and assigns a partner user", async (t: Test) => {
-  const createBidStub = sandbox().stub(CreateBidService, "createBid").resolves({
-    id: "a-bid-id",
-  });
-  sandbox()
-    .stub(SessionsDAO, "findById")
-    .resolves({ role: "ADMIN", userId: "a-user-id" });
-  sandbox().stub(uuid, "v4").returns("a-bid-id");
-
-  const bidCreationPayload: BidCreationPayload = {
-    bidPriceCents: 1000,
-    bidPriceProductionOnlyCents: 500,
-    description: "Full service",
-    dueDate: new Date().toISOString(),
-    projectDueInMs: 0,
-    quoteId: "a-quote-id",
-    revenueShareBasisPoints: 200,
-    taskTypeIds: [],
-    assignee: {
-      type: "USER",
-      id: "a-partner-user-id",
-    },
-  };
-
-  const [response, body] = await post("/bids", {
-    body: bidCreationPayload,
-    headers: authHeader("a-session-id"),
-  });
-
-  t.equal(response.status, 201, "returns a 201 Created response");
-  t.deepEqual(
-    body,
-    { id: "a-bid-id" },
-    "body is the return value of the service"
-  );
-
-  t.deepEqual(
-    createBidStub.args[0].slice(1),
-    ["a-bid-id", "a-user-id", bidCreationPayload],
-    "calls createBid function with correct arguments"
-  );
-
-  createBidStub.rejects(new ConflictError("A conflict error"));
-  const [conflict] = await post("/bids", {
-    body: bidCreationPayload,
-    headers: authHeader("a-session-id"),
-  });
-
-  t.equal(conflict.status, 409, "returns a 409 Conflict response");
 });

@@ -38,18 +38,14 @@ test("can create a payout log and find the logs", async (t: Test) => {
   });
   await addDesign(collection.id, design.id);
   const { bid } = await generateBid({
-    bidOptions: { bidPriceCents: 1000 },
+    bidOptions: {
+      bidPriceCents: 1000,
+      assignee: {
+        type: "USER",
+        id: user.id,
+      },
+    },
     designId: design.id,
-  });
-  await generateDesignEvent({
-    actorId: admin.id,
-    bidId: bid.id,
-    createdAt: new Date(),
-    designId: design.id,
-    id: uuid.v4(),
-    quoteId: null,
-    targetId: user.id,
-    type: "BID_DESIGN",
   });
   await generateDesignEvent({
     type: "ACCEPT_SERVICE_BID",

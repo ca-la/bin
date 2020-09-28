@@ -284,42 +284,26 @@ test("UsersDAO.completeSmsPreregistration completes a user", (t: Test) => {
 });
 
 test("UsersDAO.findByBidId returns all users on a pricing bid", async (t: Test) => {
-  const { user: one } = await createUser();
-  const { user: two } = await createUser();
+  const { user: partner } = await createUser();
   const { user: designer } = await createUser();
   const design = await ProductDesignsDAO.create({
     productType: "TEESHIRT",
     title: "Plain White Tee",
     userId: designer.id,
   });
-  const { bid, user: admin } = await createBid();
-
-  await db.transaction(async (trx: Knex.Transaction) => {
-    await DesignEventsDAO.create(trx, {
-      ...templateDesignEvent,
-      actorId: admin.id,
-      bidId: bid.id,
-      createdAt: new Date(),
-      designId: design.id,
-      id: uuid.v4(),
-      targetId: one.id,
-      type: "BID_DESIGN",
-    });
-    await DesignEventsDAO.create(trx, {
-      ...templateDesignEvent,
-      actorId: admin.id,
-      bidId: bid.id,
-      createdAt: new Date(),
-      designId: design.id,
-      id: uuid.v4(),
-      targetId: two.id,
-      type: "BID_DESIGN",
-    });
+  const { bid } = await createBid({
+    designId: design.id,
+    bidOptions: {
+      assignee: {
+        type: "USER",
+        id: partner.id,
+      },
+    },
   });
 
   const assignees = await UsersDAO.findByBidId(bid.id);
 
-  t.deepEqual(assignees, [one, two]);
+  t.deepEqual(assignees, [partner]);
 });
 
 test("UsersDAO.findAllUnpaidPartners returns all unpaid partners", async (t: Test) => {

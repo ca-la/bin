@@ -108,35 +108,33 @@ export async function createBid(
     );
   }
 
-  if (assignee) {
-    switch (assignee.type) {
-      case "USER": {
-        await assignUser(trx, {
-          bidId: bid.id,
-          quoteId: bidCreationRequest.quoteId,
-          actorId,
-          targetId: assignee.id,
+  switch (assignee.type) {
+    case "USER": {
+      await assignUser(trx, {
+        bidId: bid.id,
+        quoteId: bidCreationRequest.quoteId,
+        actorId,
+        targetId: assignee.id,
+      });
+      break;
+    }
+
+    case "TEAM": {
+      /* TODO: Requires `target_team_id` work
+        await assignTeam(trx, {
+        bidId: created.id,
+        quoteId: bidCreationPayload.quoteId,
+        actorId: userId,
+        targetId: assignee.id,
         });
         break;
-      }
-
-      case "TEAM": {
-        /* TODO: Requires `target_team_id` work
-           await assignTeam(trx, {
-           bidId: created.id,
-           quoteId: bidCreationPayload.quoteId,
-           actorId: userId,
-           targetId: assignee.id,
-           });
-           break;
         */
-      }
+    }
 
-      default: {
-        throw new InvalidDataError(
-          `Attempting to assign a bid with type: ${assignee.type}`
-        );
-      }
+    default: {
+      throw new InvalidDataError(
+        `Attempting to assign a bid with type: ${assignee.type}`
+      );
     }
   }
 

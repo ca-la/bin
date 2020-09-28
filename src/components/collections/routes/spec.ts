@@ -774,7 +774,8 @@ test("POST /collections/:collectionId/partner-pairings", async (t: tape.Test) =>
     .stub(CreateNotifications, "immediatelySendPartnerPairingCommitted")
     .resolves();
 
-  const partner = await createUser({ role: "PARTNER" });
+  const partner1 = await createUser({ role: "PARTNER" });
+  const partner2 = await createUser({ role: "PARTNER" });
   const {
     user: { admin, designer },
     collection,
@@ -786,25 +787,31 @@ test("POST /collections/:collectionId/partner-pairings", async (t: tape.Test) =>
     designId: collectionDesigns[0].id,
     userId: admin.user.id,
     taskTypeIds: [taskTypes.TECHNICAL_DESIGN.id, taskTypes.PRODUCTION.id],
+    bidOptions: {
+      assignee: {
+        type: "USER",
+        id: partner1.user.id,
+      },
+    },
   });
   const { bid: bidTwo } = await generateBid({
     quoteId: quotes[0].id,
     designId: collectionDesigns[0].id,
     userId: admin.user.id,
     taskTypeIds: [taskTypes.TECHNICAL_DESIGN.id, taskTypes.PRODUCTION.id],
-  });
-  await API.put(`/bids/${bidOne.id}/assignees/${partner.user.id}`, {
-    headers: API.authHeader(admin.session.id),
-  });
-  await API.put(`/bids/${bidTwo.id}/assignees/${partner.user.id}`, {
-    headers: API.authHeader(admin.session.id),
+    bidOptions: {
+      assignee: {
+        type: "USER",
+        id: partner2.user.id,
+      },
+    },
   });
 
   await db.transaction((trx: Knex.Transaction) =>
     DesignEventsDAO.createAll(trx, [
       {
         ...templateDesignEvent,
-        actorId: partner.user.id,
+        actorId: partner1.user.id,
         bidId: bidOne.id,
         createdAt: new Date(),
         designId: collectionDesigns[0].id,
@@ -813,7 +820,7 @@ test("POST /collections/:collectionId/partner-pairings", async (t: tape.Test) =>
       },
       {
         ...templateDesignEvent,
-        actorId: partner.user.id,
+        actorId: partner2.user.id,
         bidId: bidTwo.id,
         createdAt: new Date(),
         designId: collectionDesigns[1].id,

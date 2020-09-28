@@ -35,7 +35,7 @@ export interface BidCreationPayload {
   taskTypeIds: string[];
   revenueShareBasisPoints: number;
   bidPriceProductionOnlyCents: number;
-  assignee?: {
+  assignee: {
     type: "USER" | "TEAM";
     id: string;
   };

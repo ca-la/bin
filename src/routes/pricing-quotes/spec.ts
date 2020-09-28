@@ -1,32 +1,17 @@
 import uuid from "node-uuid";
 
-import { BidCreationPayload } from "../../components/bids/domain-object";
 import createUser from "../../test-helpers/create-user";
 import generatePricingValues from "../../test-helpers/factories/pricing-values";
-import { authHeader, get, post, put } from "../../test-helpers/http";
+import { authHeader, get, post } from "../../test-helpers/http";
 import { create as createDesign } from "../../components/product-designs/dao";
-import { sandbox, test, Test } from "../../test-helpers/fresh";
+import { test, Test } from "../../test-helpers/fresh";
 import db from "../../services/db";
 import PricingCostInput from "../../components/pricing-cost-inputs/domain-object";
-import { daysToMs } from "../../services/time-conversion";
 import generateProductTypes from "../../services/generate-product-types";
 import { Dollars } from "../../services/dollars";
 import { checkout } from "../../test-helpers/checkout-collection";
 import { CreatePricingCostInputRequest } from "../../components/pricing-cost-inputs/types";
-import { PricingQuote } from "../../domain-objects/pricing-quote";
-
-const getInputBid = (quote: PricingQuote): BidCreationPayload => ({
-  bidPriceCents: 100000,
-  bidPriceProductionOnlyCents: 0,
-  description: "Full Service",
-  dueDate: new Date(
-    new Date(quote.createdAt).getTime() + daysToMs(10)
-  ).toISOString(),
-  quoteId: quote.id,
-  taskTypeIds: [],
-  revenueShareBasisPoints: 20,
-  projectDueInMs: 0,
-});
+import generateBid from "../../test-helpers/factories/bid";
 
 test("/pricing-quotes?designId retrieves the set of quotes for a design", async (t: Test) => {
   const {
@@ -268,146 +253,23 @@ test("POST /pricing-quotes/preview requires units and a cost input", async (t: T
   t.equal(responseTwo.status, 400);
 });
 
-test("PUT /pricing-quotes/:quoteId/bid/:bidId creates bid", async (t: Test) => {
-  const now = new Date(2012, 11, 22);
-  sandbox().useFakeTimers(now);
-  const {
-    quotes: [quote],
-    user: { admin },
-  } = await checkout();
-  const inputBid = getInputBid(quote);
-  const bidId = uuid.v4();
-
-  const [putResponse, createdBid] = await put(
-    `/pricing-quotes/${inputBid.quoteId}/bids/${bidId}`,
-    {
-      body: inputBid,
-      headers: authHeader(admin.session.id),
-    }
-  );
-
-  t.equal(putResponse.status, 201);
-  t.deepEqual(createdBid, {
-    acceptedAt: null,
-    bidPriceCents: inputBid.bidPriceCents,
-    bidPriceProductionOnlyCents: inputBid.bidPriceProductionOnlyCents,
-    completedAt: null,
-    createdAt: now.toISOString(),
-    createdBy: admin.user.id,
-    description: inputBid.description,
-    dueDate: inputBid.dueDate,
-    id: bidId,
-    quoteId: inputBid.quoteId,
-    revenueShareBasisPoints: inputBid.revenueShareBasisPoints,
-  });
-});
-
-test("POST /pricing-quotes/:quoteId/bids creates bid", async (t: Test) => {
-  const {
-    user: { admin },
-    quotes: [quote],
-  } = await checkout();
-
-  const inputBid = getInputBid(quote);
-
-  const [postResponse, createdBid] = await post(
-    `/pricing-quotes/${inputBid.quoteId}/bids`,
-    {
-      body: inputBid,
-      headers: authHeader(admin.session.id),
-    }
-  );
-
-  t.equal(postResponse.status, 201);
-  t.deepEqual(createdBid, {
-    acceptedAt: null,
-    bidPriceCents: inputBid.bidPriceCents,
-    bidPriceProductionOnlyCents: inputBid.bidPriceProductionOnlyCents,
-    completedAt: null,
-    createdAt: createdBid.createdAt,
-    createdBy: admin.user.id,
-    description: inputBid.description,
-    dueDate: inputBid.dueDate,
-    id: createdBid.id,
-    quoteId: inputBid.quoteId,
-    revenueShareBasisPoints: inputBid.revenueShareBasisPoints,
-  });
-});
-
 test("GET /pricing-quotes/:quoteId/bids returns list of bids for quote", async (t: Test) => {
   const {
     user: { admin },
     quotes: [quote],
+    collectionDesigns: [design],
   } = await checkout();
 
-  const inputBid = getInputBid(quote);
-
-  const clock = sandbox().useFakeTimers(new Date(2020, 1, 2));
-
-  const [, bid] = await post(`/pricing-quotes/${inputBid.quoteId}/bids`, {
-    body: inputBid,
-    headers: authHeader(admin.session.id),
+  const { bid } = await generateBid({
+    quoteId: quote.id,
+    designId: design.id,
+    generatePricing: false,
   });
 
-  const [response, bids] = await get(
-    `/pricing-quotes/${inputBid.quoteId}/bids`,
-    { headers: authHeader(admin.session.id) }
-  );
+  const [response, bids] = await get(`/pricing-quotes/${quote.id}/bids`, {
+    headers: authHeader(admin.session.id),
+  });
 
   t.equal(response.status, 200);
-  t.deepEqual(bids, [
-    {
-      acceptedAt: null,
-      bidPriceCents: inputBid.bidPriceCents,
-      bidPriceProductionOnlyCents: inputBid.bidPriceProductionOnlyCents,
-      completedAt: null,
-      createdAt: bid.createdAt,
-      createdBy: admin.user.id,
-      description: inputBid.description,
-      dueDate: inputBid.dueDate,
-      id: bid.id,
-      quoteId: inputBid.quoteId,
-      revenueShareBasisPoints: inputBid.revenueShareBasisPoints,
-    },
-  ]);
-
-  const hasExtras = {
-    ...getInputBid(quote),
-    XXXXXTRA: "Boom!",
-  };
-
-  const extrasTime = new Date(2020, 2, 1);
-  clock.setSystemTime(extrasTime);
-
-  await post(`/pricing-quotes/${inputBid.quoteId}/bids`, {
-    body: hasExtras,
-    headers: authHeader(admin.session.id),
-  });
-
-  const [withExtrasResponse, withExtrasBids] = await get(
-    `/pricing-quotes/${inputBid.quoteId}/bids`,
-    {
-      headers: authHeader(admin.session.id),
-    }
-  );
-
-  const sortedBids = withExtrasBids.sort(
-    (a: any, b: any) =>
-      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-  );
-
-  t.equal(withExtrasResponse.status, 200);
-  t.deepEqual(sortedBids[1], {
-    acceptedAt: null,
-    bidPriceCents: hasExtras.bidPriceCents,
-    bidPriceProductionOnlyCents: hasExtras.bidPriceProductionOnlyCents,
-    completedAt: null,
-    createdAt: extrasTime.toISOString(),
-    createdBy: admin.user.id,
-    description: hasExtras.description,
-    dueDate: hasExtras.dueDate,
-    id: sortedBids[1].id,
-    quoteId: hasExtras.quoteId,
-    revenueShareBasisPoints: hasExtras.revenueShareBasisPoints,
-  });
+  t.deepEqual(bids, [JSON.parse(JSON.stringify(bid))]);
 });

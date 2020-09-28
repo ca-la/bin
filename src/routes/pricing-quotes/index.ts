@@ -1,22 +1,17 @@
 import { sum } from "lodash";
 import Router from "koa-router";
-import uuid from "node-uuid";
 
 import requireAuth = require("../../middleware/require-auth");
 import * as PricingCostInputsDAO from "../../components/pricing-cost-inputs/dao";
 import addMargin from "../../services/add-margin";
-import { BidCreationPayload } from "../../components/bids/domain-object";
 import filterError = require("../../services/filter-error");
 import InvalidDataError from "../../errors/invalid-data";
 import ResourceNotFoundError from "../../errors/resource-not-found";
 import requireAdmin = require("../../middleware/require-admin");
 import { FINANCING_MARGIN } from "../../config";
 import { findByDesignId, findById } from "../../dao/pricing-quotes";
-import { hasProperties } from "../../services/require-properties";
 import { findByQuoteId as findBidsByQuoteId } from "../../components/bids/dao";
-import { createBid } from "../../services/create-bid";
 import PricingCostInput from "../../components/pricing-cost-inputs/domain-object";
-import { PricingQuote } from "../../domain-objects/pricing-quote";
 import {
   generateUnsavedQuote,
   generateUnsavedQuoteWithoutVersions,
@@ -27,25 +22,8 @@ import {
   CreatePricingCostInputRequest,
   isCreatePricingCostInputRequest,
 } from "../../components/pricing-cost-inputs/types";
-import useTransaction from "../../middleware/use-transaction";
 
 const router = new Router();
-
-type BidRequest = Omit<BidCreationPayload, "assignee">;
-
-function isBidRequest(candidate: object): candidate is BidRequest {
-  return hasProperties(
-    candidate,
-    "quoteId",
-    "description",
-    "bidPriceCents",
-    "bidPriceProductionOnlyCents",
-    "dueDate",
-    "projectDueInMs",
-    "taskTypeIds",
-    "revenueShareBasisPoints"
-  );
-}
 
 function calculateAmounts(
   quote: UnsavedQuote
@@ -203,23 +181,6 @@ function* previewQuote(this: AuthedContext): Iterator<any, any, any> {
   this.status = 200;
 }
 
-function* createBidForQuote(
-  this: TrxContext<AuthedContext>
-): Iterator<any, any, any> {
-  const { quoteId, bidId } = this.params;
-  const { body } = this.request;
-  const { trx, userId } = this.state;
-  const quote: PricingQuote | null = yield findById(quoteId);
-  this.assert(quote, 404, "No quote found for ID");
-
-  if (body && isBidRequest(body)) {
-    this.body = yield createBid(trx, bidId || uuid.v4(), userId, body);
-    this.status = 201;
-  } else {
-    this.throw(400, `Request does not match model: ${Object.keys(body)}`);
-  }
-}
-
 function* getBidsForQuote(this: AuthedContext): Iterator<any, any, any> {
   const { quoteId } = this.params;
   const quote = yield findById(quoteId);
@@ -236,13 +197,6 @@ router.get("/:quoteId", getQuote);
 
 router.post("/preview", requireAdmin, previewQuote);
 
-router.post("/:quoteId/bids", requireAdmin, useTransaction, createBidForQuote);
-router.put(
-  "/:quoteId/bids/:bidId",
-  requireAdmin,
-  useTransaction,
-  createBidForQuote
-);
 router.get("/:quoteId/bids", requireAdmin, getBidsForQuote);
 
 export = router.routes();

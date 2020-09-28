@@ -25,9 +25,7 @@ import useTransaction from "../../middleware/use-transaction";
 import { typeGuard } from "../../middleware/type-guard";
 import * as NotificationsService from "../../services/create-notifications";
 import { isExpired } from "./services/is-expired";
-import { hasActiveBids } from "./services/has-active-bids";
 import { createBid } from "../../services/create-bid";
-import { MILLISECONDS_TO_EXPIRE } from "./constants";
 import { BidRejection } from "../bid-rejections/domain-object";
 import {
   hasProperties,
@@ -195,77 +193,6 @@ function* getUnpaidBidsByUserId(this: AuthedContext): Iterator<any, any, any> {
   const bids = yield BidsDAO.findUnpaidByUserId(userId);
   this.body = bids;
   this.status = 200;
-}
-
-function* assignBidToPartner(this: AuthedContext): Iterator<any, any, any> {
-  const { bidId, userId } = this.params;
-
-  const bid = yield BidsDAO.findById(bidId);
-  if (!bid) {
-    this.throw(404, `No Bid found for ID: ${bidId}`);
-  }
-
-  const design = yield ProductDesignsDAO.findByQuoteId(bid.quoteId);
-  if (!design) {
-    this.throw(404, `No Design found for Quote with ID: ${bid.quoteId}`);
-  }
-
-  const target = yield UsersDAO.findById(userId);
-  if (!target) {
-    this.throw(404, `No User found for ID: ${userId}`);
-  }
-
-  const hasActive = yield hasActiveBids(bid.quoteId, userId);
-  if (hasActive) {
-    this.throw(
-      403,
-      `There are active bids for user ${userId} on the design ${design.id}`
-    );
-  }
-
-  yield db.transaction(async (trx: Knex.Transaction) => {
-    await createDesignEvent(trx, {
-      ...templateDesignEvent,
-      actorId: this.state.userId,
-      bidId,
-      createdAt: new Date(),
-      designId: design.id,
-      id: uuid.v4(),
-      targetId: target.id,
-      type: "BID_DESIGN",
-    });
-  });
-
-  const maybeCollaborator = yield CollaboratorsDAO.findByDesignAndUser(
-    design.id,
-    userId
-  );
-  const now = new Date();
-  const cancellationDate = new Date(now.getTime() + MILLISECONDS_TO_EXPIRE);
-
-  if (!maybeCollaborator) {
-    yield CollaboratorsDAO.create({
-      cancelledAt: cancellationDate,
-      collectionId: null,
-      designId: design.id,
-      invitationMessage: "",
-      role: "PREVIEW",
-      userEmail: null,
-      userId: target.id,
-    });
-  } else if (maybeCollaborator.cancelledAt) {
-    yield CollaboratorsDAO.update(maybeCollaborator.id, {
-      cancelledAt: cancellationDate,
-    });
-  }
-
-  NotificationsService.sendPartnerDesignBid(
-    design.id,
-    this.state.userId,
-    target.id
-  );
-
-  this.status = 204;
 }
 
 function* listBidAssignees(this: AuthedContext): Iterator<any, any, any> {
@@ -539,7 +466,6 @@ router.get("/", requireAuth, listBids);
 router.get("/unpaid/:userId", requireAdmin, getUnpaidBidsByUserId);
 
 router.get("/:bidId", requireAuth, getById);
-router.put("/:bidId/assignees/:userId", requireAdmin, assignBidToPartner);
 router.get("/:bidId/assignees", requireAdmin, listBidAssignees);
 router.del("/:bidId/assignees/:userId", requireAdmin, removeBidFromPartner);
 

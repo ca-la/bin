@@ -414,17 +414,16 @@ test("Bids DAO supports retrieval of bids by target ID and status", async (t: Te
 
 test("findOpenByTargetId", async (t: Test) => {
   await generatePricingValues();
-  const { user: admin } = await createUser();
   const { user: partner } = await createUser();
 
   const { bid: b1 } = await generateBid({
     generatePricing: false,
-  });
-  await generateDesignEvent({
-    actorId: admin.id,
-    bidId: b1.id,
-    targetId: partner.id,
-    type: "BID_DESIGN",
+    bidOptions: {
+      assignee: {
+        type: "USER",
+        id: partner.id,
+      },
+    },
   });
   await generateDesignEvent({
     bidId: b1.id,
@@ -433,12 +432,12 @@ test("findOpenByTargetId", async (t: Test) => {
   });
   const { bid: b2 } = await generateBid({
     generatePricing: false,
-  });
-  await generateDesignEvent({
-    actorId: admin.id,
-    bidId: b2.id,
-    targetId: partner.id,
-    type: "BID_DESIGN",
+    bidOptions: {
+      assignee: {
+        type: "USER",
+        id: partner.id,
+      },
+    },
   });
 
   const openBids = await findOpenByTargetId(partner.id, "ACCEPTED");
@@ -448,20 +447,16 @@ test("findOpenByTargetId", async (t: Test) => {
 test("findAcceptedByTargetId", async (t: Test) => {
   sandbox().useFakeTimers(testDate);
   await generatePricingValues();
-  const { user: admin } = await createUser();
   const { user: partner } = await createUser();
 
   const { bid: b1 } = await generateBid({
     bidOptions: {
-      dueDate: new Date(testDate.getTime() + daysToMs(1)),
+      assignee: {
+        type: "USER",
+        id: partner.id,
+      },
     },
     generatePricing: false,
-  });
-  await generateDesignEvent({
-    actorId: admin.id,
-    bidId: b1.id,
-    targetId: partner.id,
-    type: "BID_DESIGN",
   });
   await generateDesignEvent({
     actorId: partner.id,
@@ -476,39 +471,33 @@ test("findAcceptedByTargetId", async (t: Test) => {
 
   const { bid: b2 } = await generateBid({
     bidOptions: {
-      dueDate: new Date(testDate.getTime() + daysToMs(2)),
+      dueDate: new Date(testDate.getTime() + daysToMs(2)).toISOString(),
+      assignee: {
+        type: "USER",
+        id: partner.id,
+      },
     },
     generatePricing: false,
-  });
-  await generateDesignEvent({
-    actorId: admin.id,
-    bidId: b2.id,
-    targetId: partner.id,
-    type: "BID_DESIGN",
   });
   const { bid: b3 } = await generateBid({
     bidOptions: {
-      dueDate: new Date(testDate.getTime() + daysToMs(3)),
+      dueDate: new Date(testDate.getTime() + daysToMs(3)).toISOString(),
+      assignee: {
+        type: "USER",
+        id: partner.id,
+      },
     },
     generatePricing: false,
-  });
-  await generateDesignEvent({
-    actorId: admin.id,
-    bidId: b3.id,
-    targetId: partner.id,
-    type: "BID_DESIGN",
   });
   const { bid: b4 } = await generateBid({
     bidOptions: {
-      dueDate: new Date(testDate.getTime() + daysToMs(4)),
+      dueDate: new Date(testDate.getTime() + daysToMs(4)).toISOString(),
+      assignee: {
+        type: "USER",
+        id: partner.id,
+      },
     },
     generatePricing: false,
-  });
-  await generateDesignEvent({
-    actorId: admin.id,
-    bidId: b4.id,
-    targetId: partner.id,
-    type: "BID_DESIGN",
   });
 
   const acceptDate1 = new Date(testDate.getTime() + daysToMs(1));
@@ -558,17 +547,16 @@ test("findAcceptedByTargetId", async (t: Test) => {
 
 test("findRejectedByTargetId", async (t: Test) => {
   await generatePricingValues();
-  const { user: admin } = await createUser();
   const { user: partner } = await createUser();
 
   const { bid: b1 } = await generateBid({
     generatePricing: false,
-  });
-  await generateDesignEvent({
-    actorId: admin.id,
-    bidId: b1.id,
-    targetId: partner.id,
-    type: "BID_DESIGN",
+    bidOptions: {
+      assignee: {
+        type: "USER",
+        id: partner.id,
+      },
+    },
   });
   await generateDesignEvent({
     actorId: partner.id,
@@ -582,12 +570,12 @@ test("findRejectedByTargetId", async (t: Test) => {
   });
   const { bid: b2 } = await generateBid({
     generatePricing: false,
-  });
-  await generateDesignEvent({
-    actorId: admin.id,
-    bidId: b2.id,
-    targetId: partner.id,
-    type: "BID_DESIGN",
+    bidOptions: {
+      assignee: {
+        type: "USER",
+        id: partner.id,
+      },
+    },
   });
   await generateDesignEvent({
     actorId: partner.id,
@@ -626,26 +614,39 @@ test("Bids DAO supports finding all with a limit and offset", async (t: Test) =>
 test("Bids DAO supports finding all bids by status", async (t: Test) => {
   const now = new Date();
   sandbox().useFakeTimers(now);
-  const { bid: openBid1 } = await generateBid();
-  await generateDesignEvent({
-    bidId: openBid1.id,
-    type: "BID_DESIGN",
+  const { user: partner } = await createUser({
+    role: "PARTNER",
+    withSession: false,
+  });
+  const { bid: openBid1 } = await generateBid({
+    bidOptions: {
+      assignee: {
+        type: "USER",
+        id: partner.id,
+      },
+    },
   });
   const fiftyHoursAgo = new Date(now.setHours(now.getHours() - 50));
   sandbox().useFakeTimers(fiftyHoursAgo);
   const { bid: openBid2 } = await generateBid({
     generatePricing: false,
-  });
-  await generateDesignEvent({
-    bidId: openBid2.id,
-    type: "BID_DESIGN",
+    bidOptions: {
+      assignee: {
+        type: "USER",
+        id: partner.id,
+      },
+    },
   });
 
   sandbox().useFakeTimers(now);
-  const { bid: acceptedBid } = await generateBid({ generatePricing: false });
-  await generateDesignEvent({
-    bidId: acceptedBid.id,
-    type: "BID_DESIGN",
+  const { bid: acceptedBid } = await generateBid({
+    generatePricing: false,
+    bidOptions: {
+      assignee: {
+        type: "USER",
+        id: partner.id,
+      },
+    },
   });
   await generateDesignEvent({
     bidId: acceptedBid.id,
@@ -654,10 +655,12 @@ test("Bids DAO supports finding all bids by status", async (t: Test) => {
   sandbox().useFakeTimers(new Date("2019-01-15"));
   const { bid: acceptedBid2 } = await generateBid({
     generatePricing: false,
-  });
-  await generateDesignEvent({
-    bidId: acceptedBid2.id,
-    type: "BID_DESIGN",
+    bidOptions: {
+      assignee: {
+        type: "USER",
+        id: partner.id,
+      },
+    },
   });
   sandbox().useFakeTimers(new Date("2019-01-16"));
   await generateDesignEvent({
@@ -668,19 +671,23 @@ test("Bids DAO supports finding all bids by status", async (t: Test) => {
   sandbox().useFakeTimers(new Date("2019-01-02"));
   const { bid: expiredBid } = await generateBid({
     generatePricing: false,
-  });
-  await generateDesignEvent({
-    bidId: expiredBid.id,
-    type: "BID_DESIGN",
+    bidOptions: {
+      assignee: {
+        type: "USER",
+        id: partner.id,
+      },
+    },
   });
 
   sandbox().useFakeTimers(new Date("2019-02-05"));
   const { bid: rejectedBid } = await generateBid({
     generatePricing: false,
-  });
-  await generateDesignEvent({
-    bidId: rejectedBid.id,
-    type: "BID_DESIGN",
+    bidOptions: {
+      assignee: {
+        type: "USER",
+        id: partner.id,
+      },
+    },
   });
   sandbox().useFakeTimers(new Date("2019-02-06"));
   await generateDesignEvent({
@@ -729,6 +736,10 @@ test("Bids DAO supports finding all bids by status", async (t: Test) => {
 
 test("Bids DAO supports finding by quote and user id with events", async (t: Test) => {
   sandbox().useFakeTimers(testDate);
+  const { user: admin } = await createUser({
+    role: "ADMIN",
+    withSession: false,
+  });
   const { user: designer } = await createUser({ withSession: false });
   const { user: partner } = await createUser({
     role: "PARTNER",
@@ -738,9 +749,43 @@ test("Bids DAO supports finding by quote and user id with events", async (t: Tes
   const design = await generateDesign({
     userId: designer.id,
   });
-  const { bid: openBid1, quote } = await generateBid({
-    designId: design.id,
-  });
+  await generatePricingValues();
+  const quote = await generatePricingQuote(
+    {
+      createdAt: new Date(),
+      deletedAt: null,
+      expiresAt: null,
+      id: uuid.v4(),
+      minimumOrderQuantity: 1,
+      designId: design.id,
+      materialBudgetCents: 1200,
+      materialCategory: "BASIC",
+      processes: [],
+      productComplexity: "SIMPLE",
+      productType: "TEESHIRT",
+      processTimelinesVersion: 0,
+      processesVersion: 0,
+      productMaterialsVersion: 0,
+      productTypeVersion: 0,
+      marginVersion: 0,
+      constantsVersion: 0,
+      careLabelsVersion: 0,
+    },
+    200
+  );
+  const openBid1 = await db.transaction((trx: Knex.Transaction) =>
+    create(trx, {
+      bidPriceCents: 100000,
+      bidPriceProductionOnlyCents: 0,
+      createdAt: new Date(),
+      createdBy: admin.id,
+      description: "Full Service",
+      dueDate: new Date(new Date().getTime() + daysToMs(10)),
+      id: uuid.v4(),
+      quoteId: quote.id,
+      revenueShareBasisPoints: 200,
+    })
+  );
   await generateDesignEvent({
     createdAt: new Date(),
     designId: design.id,
@@ -759,15 +804,32 @@ test("Bids DAO supports finding by quote and user id with events", async (t: Tes
     targetId: partner.id,
     type: "BID_DESIGN",
   });
-  const { bid: openBid2 } = await generateBid({
-    bidOptions: { quoteId: quote.id },
-    generatePricing: false,
-  });
-  const { bid: openBid3 } = await generateBid({
-    bidOptions: { quoteId: quote.id },
-    generatePricing: false,
-    designId: design.id,
-  });
+  const openBid2 = await db.transaction((trx: Knex.Transaction) =>
+    create(trx, {
+      bidPriceCents: 100000,
+      bidPriceProductionOnlyCents: 0,
+      createdAt: new Date(),
+      createdBy: admin.id,
+      description: "Full Service",
+      dueDate: new Date(new Date().getTime() + daysToMs(10)),
+      id: uuid.v4(),
+      quoteId: quote.id,
+      revenueShareBasisPoints: 200,
+    })
+  );
+  const openBid3 = await db.transaction((trx: Knex.Transaction) =>
+    create(trx, {
+      bidPriceCents: 100000,
+      bidPriceProductionOnlyCents: 0,
+      createdAt: new Date(),
+      createdBy: admin.id,
+      description: "Full Service",
+      dueDate: new Date(new Date().getTime() + daysToMs(10)),
+      id: uuid.v4(),
+      quoteId: quote.id,
+      revenueShareBasisPoints: 200,
+    })
+  );
   await generateDesignEvent({
     createdAt: new Date(),
     designId: design.id,
@@ -786,7 +848,6 @@ test("Bids DAO supports finding by quote and user id with events", async (t: Tes
     targetId: partner.id,
     type: "BID_DESIGN",
   });
-  await generateBid({ generatePricing: false });
 
   const acceptDate1 = new Date(testDate.getTime() + daysToMs(1));
   const { designEvent: de2 } = await generateDesignEvent({
@@ -840,20 +901,16 @@ test("Bids DAO supports finding all unpaid bids by user id from after the cutoff
   const { collection } = await generateCollection({ createdBy: designer.id });
   await addDesign(collection.id, design.id);
   const { bid, user: admin } = await generateBid({
-    bidOptions: { bidPriceCents: 1000 },
+    bidOptions: {
+      bidPriceCents: 1000,
+      assignee: {
+        type: "USER",
+        id: partner.id,
+      },
+    },
     designId: design.id,
   });
 
-  await generateDesignEvent({
-    actorId: admin.id,
-    bidId: bid.id,
-    createdAt: new Date(2019, 9, 1),
-    designId: design.id,
-    id: uuid.v4(),
-    quoteId: null,
-    targetId: partner.id,
-    type: "BID_DESIGN",
-  });
   await generateDesignEvent({
     type: "ACCEPT_SERVICE_BID",
     bidId: bid.id,
@@ -867,21 +924,17 @@ test("Bids DAO supports finding all unpaid bids by user id from after the cutoff
   const design2 = await generateDesign({
     userId: designer2.id,
   });
-  const { bid: bid2, user: admin2 } = await generateBid({
-    bidOptions: { bidPriceCents: 1000 },
+  const { bid: bid2 } = await generateBid({
+    bidOptions: {
+      bidPriceCents: 1000,
+      assignee: {
+        type: "USER",
+        id: partner.id,
+      },
+    },
     designId: design2.id,
   });
 
-  await generateDesignEvent({
-    actorId: admin2.id,
-    bidId: bid2.id,
-    createdAt: new Date(),
-    designId: design2.id,
-    id: uuid.v4(),
-    quoteId: null,
-    targetId: partner.id,
-    type: "BID_DESIGN",
-  });
   await generateDesignEvent({
     type: "ACCEPT_SERVICE_BID",
     bidId: bid2.id,
@@ -930,20 +983,16 @@ test("Bids DAO does not return unpaid bids the partner has been removed from", a
   const { collection } = await generateCollection({ createdBy: designer.id });
   await addDesign(collection.id, design.id);
   const { bid, user: admin } = await generateBid({
-    bidOptions: { bidPriceCents: 5678 },
+    bidOptions: {
+      bidPriceCents: 5678,
+      assignee: {
+        type: "USER",
+        id: partner.id,
+      },
+    },
     designId: design.id,
   });
 
-  await generateDesignEvent({
-    actorId: admin.id,
-    bidId: bid.id,
-    createdAt: new Date(2020, 1, 1),
-    designId: design.id,
-    id: uuid.v4(),
-    quoteId: null,
-    targetId: partner.id,
-    type: "BID_DESIGN",
-  });
   await generateDesignEvent({
     type: "ACCEPT_SERVICE_BID",
     bidId: bid.id,
@@ -975,18 +1024,14 @@ test("Bids DAO supports finding bid with payout logs by id", async (t: Test) => 
     userId: designer.id,
   });
   const { bid, user: admin, quote } = await generateBid({
-    bidOptions: { bidPriceCents: 2000 },
+    bidOptions: {
+      bidPriceCents: 2000,
+      assignee: {
+        type: "USER",
+        id: partner.id,
+      },
+    },
     designId: design.id,
-  });
-  await generateDesignEvent({
-    actorId: partner.id,
-    bidId: bid.id,
-    createdAt: new Date(),
-    designId: design.id,
-    id: uuid.v4(),
-    quoteId: null,
-    targetId: partner.id,
-    type: "BID_DESIGN",
   });
   const payout1 = {
     id: uuid.v4(),
@@ -1059,18 +1104,14 @@ async function generatePartnerAndBidEvents(
     userId: designerUserId,
   });
   const { bid, user: admin } = await generateBid({
-    bidOptions: { bidPriceCents: 2000 },
+    bidOptions: {
+      bidPriceCents: 2000,
+      assignee: {
+        type: "USER",
+        id: partnerUserId,
+      },
+    },
     designId: design.id,
-  });
-  await generateDesignEvent({
-    actorId: partnerUserId,
-    bidId: bid.id,
-    createdAt: new Date(),
-    designId: design.id,
-    id: uuid.v4(),
-    quoteId: null,
-    targetId: partnerUserId,
-    type: "BID_DESIGN",
   });
   await generateDesignEvent({
     actorId: partnerUserId,
