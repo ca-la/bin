@@ -1,5 +1,5 @@
 import uuid from "node-uuid";
-import { Variant } from "@cala/ts-lib";
+import { VariantDb } from "../../components/product-design-variants/types";
 import Knex from "knex";
 
 import { create as createDesign } from "../../components/product-designs/dao";
@@ -37,6 +37,7 @@ async function createPrerequisites(): Promise<any> {
         sizeName: "M",
         unitsToProduce: 123,
         universalProductCode: null,
+        sku: null,
         isSample: false,
         colorNamePosition: 1,
       },
@@ -48,6 +49,7 @@ async function createPrerequisites(): Promise<any> {
         sizeName: "L",
         unitsToProduce: 456,
         universalProductCode: null,
+        sku: null,
         isSample: false,
         colorNamePosition: 2,
       },
@@ -59,6 +61,7 @@ async function createPrerequisites(): Promise<any> {
         sizeName: "M",
         unitsToProduce: 789,
         universalProductCode: null,
+        sku: null,
         isSample: false,
         colorNamePosition: 3,
       },
@@ -70,6 +73,7 @@ async function createPrerequisites(): Promise<any> {
         sizeName: "XL but not actually making any?",
         unitsToProduce: 0,
         universalProductCode: null,
+        sku: null,
         isSample: false,
         colorNamePosition: 4,
       },
@@ -85,7 +89,7 @@ test("createUPCsForCollection creates upcs for collection", async (t: Test) => {
   await createUPCsForCollection(collection.id);
   const variants = await findByCollectionId(collection.id);
   t.true(
-    variants.every((variant: Variant) =>
+    variants.every((variant: VariantDb) =>
       Boolean(
         variant.universalProductCode &&
           variant.universalProductCode.match(/^\d{12}$/)

@@ -29,6 +29,7 @@ test("POST /integrations/shopify/products creates shopify products/variants", as
         sizeName: "M",
         unitsToProduce: 123,
         universalProductCode: "123456789012",
+        sku: null,
         isSample: false,
         colorNamePosition: 1,
       },

@@ -27,6 +27,7 @@ test("ShopifyVariantsDAO can save and retrieve products", async (t: Test) => {
         sizeName: "M",
         unitsToProduce: 123,
         universalProductCode: "123456789012",
+        sku: null,
         isSample: false,
         colorNamePosition: 0,
       },

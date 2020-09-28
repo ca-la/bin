@@ -16,6 +16,7 @@ import payInvoiceWithNewPaymentMethod, {
 import { CreateQuotePayload } from "../../services/generate-pricing-quote";
 import { hasProperties } from "../../services/require-properties";
 import createUPCsForCollection from "../../services/create-upcs-for-collection";
+import createSKUsForCollection from "../../services/create-skus-for-collection";
 import { createShopifyProductsForCollection } from "../../services/create-shopify-products";
 import { logServerError } from "../../services/logger";
 import { transitionCheckoutState } from "../../services/approval-step-state";
@@ -83,6 +84,7 @@ async function handleQuotePayment(
   //       having to send it from within the payment flow?
   await transitionCheckoutState(collectionId);
   await createUPCsForCollection(collectionId);
+  await createSKUsForCollection(collectionId);
   await createShopifyProductsForCollection(
     userId,
     collectionId

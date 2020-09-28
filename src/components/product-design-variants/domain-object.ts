@@ -1,5 +1,5 @@
 import DataAdapter from "../../services/data-adapter";
-import { Variant } from "@cala/ts-lib";
+import { VariantDb } from "./types";
 import { hasProperties } from "../../services/require-properties";
 
 export interface ProductDesignVariantRow {
@@ -12,14 +12,18 @@ export interface ProductDesignVariantRow {
   size_name: string | null;
   units_to_produce: number;
   universal_product_code: string | null;
+  sku: string | null;
   is_sample: boolean;
 }
 
-export const dataAdapter = new DataAdapter<ProductDesignVariantRow, Variant>();
+export const dataAdapter = new DataAdapter<
+  ProductDesignVariantRow,
+  VariantDb
+>();
 
 export const partialDataAdapter = new DataAdapter<
   Partial<ProductDesignVariantRow>,
-  Partial<Variant>
+  Partial<VariantDb>
 >();
 
 export function isProductDesignVariantRow(

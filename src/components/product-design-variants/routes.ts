@@ -21,6 +21,7 @@ interface ProductDesignVariantIO {
   sizeName: string | null;
   unitsToProduce: number;
   universalProductCode: string | null;
+  sku?: string | null;
   isSample: boolean;
   colorNamePosition: number;
 }
@@ -79,7 +80,14 @@ function* replaceVariants(
 
   if (Array.isArray(body) && isProductDesignVariantsIO(body)) {
     const variants = yield db.transaction(async (trx: Knex.Transaction) =>
-      ProductDesignVariantsDAO.replaceForDesign(trx, designId, body)
+      ProductDesignVariantsDAO.replaceForDesign(
+        trx,
+        designId,
+        body.map((productVariantInput: ProductDesignVariantIO) => ({
+          ...productVariantInput,
+          sku: productVariantInput.sku || null,
+        }))
+      )
     );
     this.body = variants;
     this.status = 200;

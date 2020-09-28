@@ -1,6 +1,6 @@
 import tape from "tape";
 import uuid from "node-uuid";
-import { Variant } from "@cala/ts-lib";
+import { Variant } from "./types";
 import createUser from "../../test-helpers/create-user";
 import { create as createDesign } from "../product-designs/dao";
 import API from "../../test-helpers/http";
@@ -37,6 +37,7 @@ test(`GET ${API_PATH}?designId fetches all variants for a design`, async (t: tap
     sizeName: "M",
     unitsToProduce: 123,
     universalProductCode: null,
+    sku: null,
     isSample: false,
     colorNamePosition: 1,
   });
@@ -48,6 +49,7 @@ test(`GET ${API_PATH}?designId fetches all variants for a design`, async (t: tap
     sizeName: "M",
     unitsToProduce: 100,
     universalProductCode: null,
+    sku: null,
     isSample: false,
     colorNamePosition: 2,
   });
@@ -120,6 +122,7 @@ test(`PUT ${API_PATH}?designId replaces all variants for a design`, async (t: ta
     sizeName: "M",
     unitsToProduce: 999,
     universalProductCode: null,
+    sku: null,
     isSample: false,
     colorNamePosition: 1,
   });
@@ -131,6 +134,7 @@ test(`PUT ${API_PATH}?designId replaces all variants for a design`, async (t: ta
     sizeName: "M",
     unitsToProduce: 1,
     universalProductCode: null,
+    sku: null,
     isSample: false,
     colorNamePosition: 2,
   });

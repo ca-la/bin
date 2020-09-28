@@ -1,7 +1,7 @@
 import Knex from "knex";
 import tape from "tape";
 import uuid from "node-uuid";
-import { Variant } from "@cala/ts-lib";
+import { VariantDb } from "../../components/product-design-variants/types";
 
 import createUser = require("../../test-helpers/create-user");
 import { create as createDesign } from "../../components/product-designs/dao";
@@ -52,6 +52,7 @@ test("findAndDuplicateVariants for a design with variants", async (t: tape.Test)
     sizeName: "M",
     unitsToProduce: 123,
     universalProductCode: "000000000000",
+    sku: null,
     isSample: false,
   });
   const variantTwo = await VariantsDAO.create({
@@ -63,6 +64,7 @@ test("findAndDuplicateVariants for a design with variants", async (t: tape.Test)
     sizeName: "L",
     unitsToProduce: 456,
     universalProductCode: null,
+    sku: null,
     isSample: false,
   });
 
@@ -73,7 +75,7 @@ test("findAndDuplicateVariants for a design with variants", async (t: tape.Test)
   );
 
   const sortedDupes = duplicatedVariants.sort(
-    (a: Variant, b: Variant): number => {
+    (a: VariantDb, b: VariantDb): number => {
       return a.createdAt.getTime() - b.createdAt.getTime();
     }
   );
@@ -81,9 +83,10 @@ test("findAndDuplicateVariants for a design with variants", async (t: tape.Test)
   t.equal(sortedDupes.length, 2, "Should return two duplicate variants");
   const dupeOne = sortedDupes[0];
   t.deepEqual(
-    dupeOne,
+    { ...dupeOne, sku: null },
     {
       ...variantOne,
+      sku: null,
       universalProductCode: null,
       createdAt: dupeOne.createdAt,
       designId: newDesign.id,
@@ -91,15 +94,26 @@ test("findAndDuplicateVariants for a design with variants", async (t: tape.Test)
     },
     "Returns a duplicate of the first variant pointing to the new design"
   );
+  t.notEqual(
+    variantOne.sku,
+    dupeOne.sku,
+    "First variant duplicate has another sku"
+  );
   const dupeTwo = sortedDupes[1];
   t.deepEqual(
-    dupeTwo,
+    { ...dupeTwo, sku: null },
     {
       ...variantTwo,
+      sku: null,
       createdAt: dupeTwo.createdAt,
       designId: newDesign.id,
       id: dupeTwo.id,
     },
     "Returns a duplicate of the second variant pointing to the new design"
+  );
+  t.notEqual(
+    variantTwo.sku,
+    dupeTwo.sku,
+    "Second variant duplicate has another sku"
   );
 });

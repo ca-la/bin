@@ -29,6 +29,7 @@ test("findAndDuplicateDesign", async (t: tape.Test) => {
     sizeName: "M",
     unitsToProduce: 123,
     universalProductCode: null,
+    sku: null,
     isSample: false,
     colorNamePosition: 1,
   });
@@ -54,14 +55,20 @@ test("findAndDuplicateDesign", async (t: tape.Test) => {
   t.equal(duplicateVariants.length, 1);
   const variantDupeOne = duplicateVariants[0];
   t.deepEqual(
-    variantDupeOne,
+    { ...variantDupeOne, sku: null },
     {
       ...variantOne,
+      sku: null,
       createdAt: variantDupeOne.createdAt,
       designId: duplicatedDesign.id,
       id: variantDupeOne.id,
     },
     "A variant duplicate was generated that is based off the original design variant"
+  );
+  t.notEqual(
+    variantDupeOne.sku,
+    variantOne.sku,
+    "A variant duplicate should have another sku"
   );
 
   const duplicateCollaborators = await CollaboratorsDAO.findByDesign(

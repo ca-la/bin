@@ -43,3 +43,9 @@ export function isRole(role: string): role is Roles {
   }
   return false;
 }
+
+export enum CollaboratorRole {
+  CALA = "CALA",
+  DESIGNER = "DESIGNER",
+  PARTNER = "PARTNER",
+}

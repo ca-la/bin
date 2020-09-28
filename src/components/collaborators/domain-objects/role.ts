@@ -1,5 +1,1 @@
-export enum CollaboratorRole {
-  CALA = "CALA",
-  DESIGNER = "DESIGNER",
-  PARTNER = "PARTNER",
-}
+export { CollaboratorRole } from "../types";
