@@ -457,7 +457,7 @@ function* postPayOut(this: PayOutPartnerContext): Iterator<any, any, any> {
 
 router.post(
   "/",
-  requireAuth,
+  requireAdmin,
   useTransaction,
   typeGuard(isBidCreationPayload),
   createAndAssignBid

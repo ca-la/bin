@@ -55,6 +55,7 @@ export function isBidCreationPayload(
     "projectDueInMs",
     "taskTypeIds",
     "revenueShareBasisPoints",
+    "assignee",
   ].every(keyset.has.bind(keyset));
 }
 

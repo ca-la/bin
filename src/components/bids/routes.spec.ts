@@ -24,9 +24,10 @@ import { deleteById } from "../../test-helpers/designs";
 import Knex from "knex";
 import { checkout } from "../../test-helpers/checkout-collection";
 import PartnerPayoutAccount from "../../domain-objects/partner-payout-account";
-import Bid from "./domain-object";
+import Bid, { BidCreationPayload } from "./domain-object";
 import ProductDesign from "../product-designs/domain-objects/product-design";
 import { taskTypes } from "../tasks/templates";
+import * as CreateBidService from "../../services/create-bid";
 
 const b1: Partial<Bid> = {
   id: "a-bid-id",
@@ -51,6 +52,7 @@ function setup(role: string = "PARTNER") {
     findDesignByQuoteStub: sandbox()
       .stub(ProductDesignsDAO, "findByQuoteId")
       .resolves(d1),
+    createStub: sandbox().stub(CreateBidService, "createBid").resolves(b1),
   };
 }
 
@@ -680,4 +682,42 @@ test("POST /bids/:bidId/pay-out-to-partner", async (t: Test) => {
   // Callcount should not have changed
   t.equal(sendTransferStub.callCount, 0);
   t.equal(enqueueSendStub.callCount, 0);
+});
+
+test("POST /bids", async (t: Test) => {
+  const { sessionStub } = setup("ADMIN");
+  const bidCreationPayload: BidCreationPayload = {
+    quoteId: "a-quote-id",
+    description: "a description",
+    bidPriceCents: 1000,
+    bidPriceProductionOnlyCents: 0,
+    dueDate: new Date().toISOString(),
+    projectDueInMs: 0,
+    taskTypeIds: [],
+    revenueShareBasisPoints: 200,
+    assignee: {
+      type: "USER",
+      id: "a-user-id",
+    },
+  };
+
+  const [response, body] = await post("/bids", {
+    headers: authHeader("a-session-id"),
+    body: bidCreationPayload,
+  });
+
+  t.equal(response.status, 201, "returns a Created status");
+  t.deepEqual(body, b1, "returns the created bid");
+
+  sessionStub.resolves({ role: "USER", userId: "a-user-id" });
+  const [unauthorized] = await post("/bids", {
+    headers: authHeader("a-session-id"),
+    body: bidCreationPayload,
+  });
+
+  t.equal(
+    unauthorized.status,
+    403,
+    "returns an Unauthorized status for non-admins"
+  );
 });
