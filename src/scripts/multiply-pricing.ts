@@ -121,6 +121,7 @@ async function updateProcesses(
 ): Promise<PricingProcessRow[]> {
   const toInsert: PricingProcessRow[] = processes.map(
     (process: PricingProcessRow) => ({
+      display_name: process.display_name,
       id: uuid.v4(),
       version: process.version + 1,
       minimum_units: process.minimum_units,
