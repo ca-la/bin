@@ -48,16 +48,24 @@ function* getList(this: AuthedContext): Iterator<any, any, any> {
   );
 }
 
-function* getUnreadCount(this: AuthedContext): Iterator<any, any, any> {
-  const { userId } = this.state;
+function* getUnreadCount(
+  this: TrxContext<AuthedContext>
+): Iterator<any, any, any> {
+  const { trx, userId } = this.state;
 
-  const unreadNotificationsCount = yield db.transaction(
-    (trx: Knex.Transaction) =>
-      NotificationsDAO.findUnreadCountByUserId(trx, userId)
+  const unreadCountsByFilter = yield NotificationsDAO.findUnreadCountByFiltersByUserId(
+    trx,
+    userId
   );
+  const unreadNotificationsCount =
+    unreadCountsByFilter[NotificationFilter.ARCHIVED] +
+    unreadCountsByFilter[NotificationFilter.UNARCHIVED];
 
   this.status = 200;
-  this.body = { unreadNotificationsCount };
+  this.body = {
+    unreadNotificationsCount,
+    unreadNotificationsCountByFilter: unreadCountsByFilter,
+  };
 }
 
 function* setRead(this: AuthedContext): Iterator<any, any, any> {
@@ -126,7 +134,7 @@ function* setArchiveOlderThan(
 }
 
 router.get("/", requireAuth, getList);
-router.get("/unread", requireAuth, getUnreadCount);
+router.get("/unread", requireAuth, useTransaction, getUnreadCount);
 router.patch("/read", requireAuth, setRead);
 router.patch("/:notificationId", requireAuth, useTransaction, update);
 router.put("/archive", requireAuth, useTransaction, setArchiveOlderThan);

@@ -521,15 +521,16 @@ export async function create(
   return notification;
 }
 
-export async function findUnreadCountByUserId(
-  trx: Knex.Transaction,
-  userId: string
-): Promise<number> {
-  const { notificationCount } = await trx(TABLE_NAME)
-    .count("n.id", { as: "notificationCount" })
-    .from("notifications as n")
-    .joinRaw(
-      `
+function queryUnreadCountByUserId(
+  userId: string,
+  queryBuilder: Knex.QueryBuilder
+): Knex.QueryBuilder {
+  return (
+    queryBuilder
+      .count("n.id", { as: "notificationCount" })
+      .from("notifications as n")
+      .joinRaw(
+        `
     left join product_designs as d
       on d.id = n.design_id
     left join collections as c
@@ -545,34 +546,83 @@ export async function findUnreadCountByUserId(
     left join product_design_canvas_measurements as m
       on m.id = n.measurement_id
     `
-    )
-    .whereNotIn("type", DEPRECATED_NOTIFICATION_TYPES)
-    .andWhere({
-      "a.deleted_at": null,
-      "c.deleted_at": null,
-      "can.deleted_at": null,
-      "co.deleted_at": null,
-      "d.deleted_at": null,
-      "m.deleted_at": null,
-      "n.read_at": null,
-      "n.deleted_at": null,
-    })
-    .andWhereRaw(
-      `
+      )
+      .whereNotIn("type", DEPRECATED_NOTIFICATION_TYPES)
+      .andWhere({
+        "a.deleted_at": null,
+        "c.deleted_at": null,
+        "can.deleted_at": null,
+        "co.deleted_at": null,
+        "d.deleted_at": null,
+        "m.deleted_at": null,
+        "n.read_at": null,
+        "n.deleted_at": null,
+      })
+      .andWhereRaw(
+        `
       (cl.cancelled_at is null or cl.cancelled_at > now())
     `
-    )
-    .andWhere((query: Knex.QueryBuilder) =>
-      query
-        .where({
-          "n.recipient_user_id": userId,
-        })
-        .orWhere({ "cl.user_id": userId, "n.recipient_user_id": null })
-    )
-    // .count returns `number | string` due to how big ints are stored
-    .first<{ notificationCount: number | string }>();
+      )
+      .andWhere((query: Knex.QueryBuilder) =>
+        query
+          .where({
+            "n.recipient_user_id": userId,
+          })
+          .orWhere({ "cl.user_id": userId, "n.recipient_user_id": null })
+      )
+      // .count returns `number | string` due to how big ints are stored
+      .first<{ notificationCount: number | string }>()
+  );
+}
 
-  return Number(notificationCount);
+export async function findUnreadCountByFiltersByUserId(
+  trx: Knex.Transaction,
+  userId: string
+) {
+  const counts: Record<NotificationFilter, string> = await trx
+    .queryBuilder()
+    .select([
+      (query: Knex.QueryBuilder) =>
+        query
+          .modify(queryUnreadCountByUserId.bind(null, userId))
+          .modify((inboxQuery: Knex.QueryBuilder) =>
+            inboxQuery
+              .andWhere({ "n.archived_at": null })
+              .whereIn("n.type", INBOX_NOTIFICATION_TYPES)
+          )
+          .as(NotificationFilter.INBOX),
+      (query: Knex.QueryBuilder) =>
+        query
+          .modify(queryUnreadCountByUserId.bind(null, userId))
+          .modify((archivedQuery: Knex.QueryBuilder) =>
+            archivedQuery.andWhere(db.raw("n.archived_at IS NOT NULL"))
+          )
+          .as(NotificationFilter.ARCHIVED),
+      (query: Knex.QueryBuilder) =>
+        query
+          .modify(queryUnreadCountByUserId.bind(null, userId))
+          .modify((unarchivedQuery: Knex.QueryBuilder) =>
+            unarchivedQuery.andWhere({ "n.archived_at": null })
+          )
+          .as(NotificationFilter.UNARCHIVED),
+    ])
+    .first();
+
+  if (!counts) {
+    throw new Error("Query returned no results");
+  }
+
+  return {
+    [NotificationFilter.INBOX]: parseInt(counts[NotificationFilter.INBOX], 10),
+    [NotificationFilter.ARCHIVED]: parseInt(
+      counts[NotificationFilter.ARCHIVED],
+      10
+    ),
+    [NotificationFilter.UNARCHIVED]: parseInt(
+      counts[NotificationFilter.UNARCHIVED],
+      10
+    ),
+  };
 }
 
 export async function del(id: string): Promise<void> {

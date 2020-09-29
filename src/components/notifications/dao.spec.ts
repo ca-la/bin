@@ -618,102 +618,6 @@ test("Notifications DAO supports marking read", async (t: tape.Test) => {
   });
 });
 
-test("Notifications DAO supports finding unread count", async (t: tape.Test) => {
-  sandbox()
-    .stub(NotificationAnnouncer, "announceNotificationCreation")
-    .resolves({});
-  const { user: userOne } = await createUser({ withSession: false });
-  const { user: userTwo } = await createUser({ withSession: false });
-
-  await generateNotification({
-    actorUserId: userOne.id,
-    recipientUserId: userTwo.id,
-    sentEmailAt: new Date(),
-    type: NotificationType.INVITE_COLLABORATOR,
-  });
-
-  await generateNotification({
-    actorUserId: userOne.id,
-    recipientUserId: userTwo.id,
-    type: NotificationType.ANNOTATION_COMMENT_CREATE,
-  });
-
-  await generateNotification({
-    actorUserId: userOne.id,
-    readAt: new Date(),
-    recipientUserId: userTwo.id,
-    type: NotificationType.TASK_ASSIGNMENT,
-  });
-
-  await generateNotification({
-    actorUserId: userOne.id,
-    readAt: new Date(),
-    recipientUserId: userTwo.id,
-    type: NotificationType.ANNOTATION_COMMENT_CREATE,
-  });
-
-  const { collection: deletedCollection } = await generateNotification({
-    actorUserId: userOne.id,
-    recipientUserId: userTwo.id,
-    type: NotificationType.ANNOTATION_COMMENT_CREATE,
-  });
-  await db.transaction(async (trx: Knex.Transaction) => {
-    await CollectionsDAO.deleteById(trx, deletedCollection.id);
-  });
-
-  const { design: deletedDesign } = await generateNotification({
-    actorUserId: userOne.id,
-    recipientUserId: userTwo.id,
-    type: NotificationType.ANNOTATION_COMMENT_CREATE,
-  });
-  await deleteById(deletedDesign.id);
-
-  const { annotation: deletedAnnotation } = await generateNotification({
-    actorUserId: userOne.id,
-    recipientUserId: userTwo.id,
-    type: NotificationType.ANNOTATION_COMMENT_CREATE,
-  });
-  await AnnotationsDAO.deleteById(deletedAnnotation.id);
-
-  const { canvas: deletedCanvas } = await generateNotification({
-    actorUserId: userOne.id,
-    recipientUserId: userTwo.id,
-    type: NotificationType.ANNOTATION_COMMENT_CREATE,
-  });
-  await db.transaction((trx: Knex.Transaction) =>
-    CanvasesDAO.del(trx, deletedCanvas.id)
-  );
-
-  const { comment: deletedComment } = await generateNotification({
-    actorUserId: userOne.id,
-    recipientUserId: userTwo.id,
-    type: NotificationType.ANNOTATION_COMMENT_CREATE,
-  });
-  await CommentsDAO.deleteById(deletedComment.id);
-
-  const { measurement: deletedMeasurement } = await generateNotification({
-    actorUserId: userOne.id,
-    recipientUserId: userTwo.id,
-    type: NotificationType.MEASUREMENT_CREATE,
-  });
-  await MeasurementsDAO.deleteById(deletedMeasurement.id);
-
-  const { collaborator: deletedCollaborator } = await generateNotification({
-    actorUserId: userOne.id,
-    recipientUserId: null,
-    type: NotificationType.INVITE_COLLABORATOR,
-  });
-  await CollaboratorsDAO.deleteById(deletedCollaborator.id);
-
-  return db.transaction(async (trx: Knex.Transaction) => {
-    const unreadCount = await NotificationsDAO.findUnreadCountByUserId(
-      trx,
-      userTwo.id
-    );
-    t.deepEqual(unreadCount, 2, "there are two unread notification");
-  });
-});
-
 test("NotificationsDAO.archiveOlderThan", async (t: tape.Test) => {
   sandbox()
     .stub(NotificationAnnouncer, "announceNotificationCreation")
@@ -799,17 +703,7 @@ test("NotificationsDAO.archiveOlderThan", async (t: tape.Test) => {
       designerNotificationsAfter
     );
 
-    t.equal(
-      await NotificationsDAO.findUnreadCountByUserId(trx, designer.id),
-      2,
-      "notification count before deleting design"
-    );
     await deleteById(setup.designs[0].id);
-    t.equal(
-      await NotificationsDAO.findUnreadCountByUserId(trx, designer.id),
-      1,
-      "notification count after deleting design"
-    );
 
     const partnerNotificationsBefore = await NotificationsDAO.findByUserId(
       trx,
@@ -837,7 +731,7 @@ test("NotificationsDAO.archiveOlderThan", async (t: tape.Test) => {
     t.equal(
       partnerNewlyArchivedCount,
       5,
-      "updates archived date for un notifications even if they would be excluded"
+      "updates archived date for notifications even if they would be excluded"
     );
     const partnerNotificationsAfter = await NotificationsDAO.findByUserId(
       trx,
@@ -939,6 +833,12 @@ test("Notifications DAO filters notifications", async (t: tape.Test) => {
     type: NotificationType.ANNOTATION_COMMENT_REPLY,
     archivedAt: null,
   });
+  const unarchivedNotification2 = await generateNotification({
+    actorUserId: userOne.id,
+    recipientUserId: userTwo.id,
+    type: NotificationType.COMMIT_COST_INPUTS,
+    archivedAt: null,
+  });
 
   const archivedNotification = await generateNotification({
     actorUserId: userOne.id,
@@ -992,8 +892,25 @@ test("Notifications DAO filters notifications", async (t: tape.Test) => {
     );
     t.deepEqual(
       unarchivedNotifications,
-      [unarchivedNotification.notification],
+      [
+        unarchivedNotification2.notification,
+        unarchivedNotification.notification,
+      ],
       "Returns unarchived notifications"
+    );
+
+    const counts = await NotificationsDAO.findUnreadCountByFiltersByUserId(
+      trx,
+      userTwo.id
+    );
+    t.deepEqual(
+      counts,
+      {
+        [NotificationFilter.INBOX]: 1,
+        [NotificationFilter.ARCHIVED]: 1,
+        [NotificationFilter.UNARCHIVED]: 2,
+      },
+      "counts by filter match queries by filter"
     );
   });
 });

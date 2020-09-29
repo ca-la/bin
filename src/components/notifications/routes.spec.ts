@@ -6,7 +6,7 @@ import createUser = require("../../test-helpers/create-user");
 
 import DesignsDAO from "../product-designs/dao";
 import * as NotificationsDAO from "../notifications/dao";
-import * as SessionsDAO from "../../dao/sessions";
+import SessionsDAO from "../../dao/sessions";
 import generateNotification, {
   generateNotifications,
 } from "../../test-helpers/factories/notification";
@@ -14,7 +14,7 @@ import generateCollection from "../../test-helpers/factories/collection";
 import { NotificationType } from "./domain-object";
 import generateCollaborator from "../../test-helpers/factories/collaborator";
 import * as NotificationAnnouncer from "../iris/messages/notification";
-import { NotificationMessage } from "./types";
+import { NotificationMessage, NotificationFilter } from "./types";
 import { templateNotification } from "./models/base";
 import * as NotificationMessages from "./notification-messages";
 
@@ -107,46 +107,34 @@ test(`GET ${API_PATH} returns a list of notificationMessages for the user`, asyn
 
 test(`GET ${API_PATH}/unread returns the number of unread notifications`, async (t: tape.Test) => {
   sandbox()
+    .stub(SessionsDAO, "findById")
+    .resolves({ role: "USER", userId: "a-user-id" });
+  sandbox()
     .stub(NotificationAnnouncer, "announceNotificationCreation")
     .resolves({});
-  const userOne = await createUser();
-  const userTwo = await createUser();
-
-  const d1 = await DesignsDAO.create({
-    productType: "HOODIE",
-    title: "Raf Simons x Sterling Ruby Hoodie",
-    userId: userOne.user.id,
-  });
-  const collection1 = await generateCollection({ createdBy: userOne.user.id });
-  const { collaborator: c1 } = await generateCollaborator({
-    collectionId: null,
-    designId: d1.id,
-    invitationMessage: "",
-    role: "EDIT",
-    userEmail: null,
-    userId: userTwo.user.id,
-  });
-  await generateNotification({
-    actorUserId: userOne.user.id,
-    recipientUserId: userTwo.user.id,
-    type: NotificationType.PARTNER_ACCEPT_SERVICE_BID,
-  });
-  await generateNotification({
-    actorUserId: userOne.user.id,
-    collaboratorId: c1.id,
-    collectionId: collection1.collection.id,
-    recipientUserId: null,
-    type: NotificationType.INVITE_COLLABORATOR,
-  });
+  sandbox()
+    .stub(NotificationsDAO, "findUnreadCountByFiltersByUserId")
+    .resolves({
+      [NotificationFilter.ARCHIVED]: 1,
+      [NotificationFilter.INBOX]: 2,
+      [NotificationFilter.UNARCHIVED]: 3,
+    });
 
   const [response, body] = await API.get(`${API_PATH}/unread`, {
-    headers: API.authHeader(userTwo.session.id),
+    headers: API.authHeader("a-user-id"),
   });
-  t.equal(response.status, 200);
+  t.equal(response.status, 200, "returns a Success status");
   t.deepEqual(
-    body.unreadNotificationsCount,
-    2,
-    "Returns the number of unread notifications for the user"
+    body,
+    {
+      unreadNotificationsCount: 4,
+      unreadNotificationsCountByFilter: {
+        [NotificationFilter.ARCHIVED]: 1,
+        [NotificationFilter.INBOX]: 2,
+        [NotificationFilter.UNARCHIVED]: 3,
+      },
+    },
+    "Returns the total and by-filter count of unread notifications for the user"
   );
 });
 
