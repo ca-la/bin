@@ -1,5 +1,6 @@
 import Knex from "knex";
 import uuid from "node-uuid";
+import { chunk } from "lodash";
 import db from "../services/db";
 import { log } from "../services/logger";
 import { PricingConstantRow } from "../domain-objects/pricing-constant";
@@ -7,6 +8,8 @@ import { PricingCareLabelRow } from "../domain-objects/pricing-care-label";
 import { PricingProductMaterialRow } from "../domain-objects/pricing-product-material";
 import { PricingProcessRow } from "../domain-objects/pricing-process";
 import { PricingProductTypeRow } from "../components/pricing-product-types/domain-object";
+
+const CHUNK_SIZE = 2000;
 
 function findLatest<T>(tableName: string): Promise<T[]> {
   return db(tableName)
@@ -19,6 +22,8 @@ async function updateConstants(
   constants: PricingConstantRow[],
   factor: number
 ): Promise<PricingConstantRow[]> {
+  const updatedList: PricingConstantRow[] = [];
+
   const toInsert: PricingConstantRow[] = constants.map(
     (constant: PricingConstantRow) => ({
       id: uuid.v4(),
@@ -44,7 +49,14 @@ async function updateConstants(
     })
   );
 
-  return trx("pricing_constants").insert(toInsert).returning("*");
+  for (const pricingConstantChunk of chunk(toInsert, CHUNK_SIZE)) {
+    const updated = await trx("pricing_constants")
+      .insert(pricingConstantChunk)
+      .returning("*");
+    updatedList.push(...(updated as PricingConstantRow[]));
+  }
+
+  return updatedList;
 }
 
 async function updateCareLabels(
@@ -52,6 +64,7 @@ async function updateCareLabels(
   careLabels: PricingCareLabelRow[],
   factor: number
 ): Promise<PricingCareLabelRow[]> {
+  const updatedList: PricingCareLabelRow[] = [];
   const toInsert: PricingCareLabelRow[] = careLabels.map(
     (careLabel: PricingCareLabelRow) => ({
       id: uuid.v4(),
@@ -62,7 +75,14 @@ async function updateCareLabels(
     })
   );
 
-  return trx("pricing_care_labels").insert(toInsert).returning("*");
+  for (const careLabelChunk of chunk(toInsert, CHUNK_SIZE)) {
+    const updated = await trx("pricing_care_labels")
+      .insert(careLabelChunk)
+      .returning("*");
+    updatedList.push(...(updated as PricingCareLabelRow[]));
+  }
+
+  return updatedList;
 }
 
 async function updateProductMaterials(
@@ -70,6 +90,7 @@ async function updateProductMaterials(
   materials: PricingProductMaterialRow[],
   factor: number
 ): Promise<PricingProductMaterialRow[]> {
+  const updatedList: PricingProductMaterialRow[] = [];
   const toInsert: PricingProductMaterialRow[] = materials.map(
     (material: PricingProductMaterialRow) => ({
       id: uuid.v4(),
@@ -81,7 +102,14 @@ async function updateProductMaterials(
     })
   );
 
-  return trx("pricing_product_materials").insert(toInsert).returning("*");
+  for (const materialChunk of chunk(toInsert, CHUNK_SIZE)) {
+    const updated = await trx("pricing_product_materials")
+      .insert(materialChunk)
+      .returning("*");
+    updatedList.push(...(updated as PricingProductMaterialRow[]));
+  }
+
+  return updatedList;
 }
 
 async function updateProductTypes(
@@ -89,6 +117,8 @@ async function updateProductTypes(
   types: PricingProductTypeRow[],
   factor: number
 ): Promise<PricingProductTypeRow[]> {
+  const updatedList: PricingProductTypeRow[] = [];
+
   const toInsert: PricingProductTypeRow[] = types.map(
     (type: PricingProductTypeRow) => ({
       id: uuid.v4(),
@@ -111,7 +141,14 @@ async function updateProductTypes(
     })
   );
 
-  return trx("pricing_product_types").insert(toInsert).returning("*");
+  for (const productTypeChunk of chunk(toInsert, CHUNK_SIZE)) {
+    const updated = await trx("pricing_product_types")
+      .insert(productTypeChunk)
+      .returning("*");
+    updatedList.push(...(updated as PricingProductTypeRow[]));
+  }
+
+  return updatedList;
 }
 
 async function updateProcesses(
@@ -119,6 +156,8 @@ async function updateProcesses(
   processes: PricingProcessRow[],
   factor: number
 ): Promise<PricingProcessRow[]> {
+  const updatedList: PricingProcessRow[] = [];
+
   const toInsert: PricingProcessRow[] = processes.map(
     (process: PricingProcessRow) => ({
       display_name: process.display_name,
@@ -133,7 +172,14 @@ async function updateProcesses(
     })
   );
 
-  return trx("pricing_processes").insert(toInsert).returning("*");
+  for (const processChunk of chunk(toInsert, CHUNK_SIZE)) {
+    const updated = await trx("pricing_processes")
+      .insert(processChunk)
+      .returning("*");
+    updatedList.push(...(updated as PricingProcessRow[]));
+  }
+
+  return updatedList;
 }
 
 async function main(): Promise<void> {
