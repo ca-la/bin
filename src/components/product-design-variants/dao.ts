@@ -43,6 +43,26 @@ export async function create(
   );
 }
 
+export async function updateEmptySkuByUpc(
+  trx: Knex.Transaction,
+  upc: string,
+  sku: string
+): Promise<VariantDb[]> {
+  const updated = await trx(TABLE_NAME).update({ sku }, "*").where({
+    universal_product_code: upc,
+    sku: null,
+  });
+  if (!updated) {
+    throw new Error(`Failed to update product design variants by upc #${upc}!`);
+  }
+  return validateEvery<ProductDesignVariantRow, VariantDb>(
+    TABLE_NAME,
+    isProductDesignVariantRow,
+    dataAdapter,
+    updated
+  );
+}
+
 export async function update(
   id: string,
   data: Partial<VariantDb>,
@@ -61,7 +81,7 @@ export async function update(
       first<ProductDesignVariantRow>(rows)
     );
   if (!updated) {
-    throw new Error("Failed to create a product design variant!");
+    throw new Error(`Failed to update product design variant #${id}!`);
   }
   return validate<ProductDesignVariantRow, VariantDb>(
     TABLE_NAME,

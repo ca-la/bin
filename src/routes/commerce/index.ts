@@ -5,6 +5,7 @@ import { COMMERCE_HOST, COMMERCE_TOKEN } from "../../config";
 import requireAuth = require("../../middleware/require-auth");
 import requireAdmin = require("../../middleware/require-admin");
 import { Request } from "koa";
+import { fillSkus } from "../../services/commerce";
 
 const router = new Router();
 
@@ -28,6 +29,21 @@ const legacyProxy = function* (
 ): Iterator<any, any, any> {
   yield proxy(this, next);
 };
+
+function* fillStorefrontVariantSkus(this: AuthedContext) {
+  const { storefrontId } = this.params;
+  try {
+    const filledCount = yield fillSkus(storefrontId);
+    this.body = { filledCount };
+    this.status = 200;
+  } catch (err) {
+    this.status = 500;
+    this.body = { error: err.message };
+  }
+}
+
+// some commerce API routes interceptors
+router.post("/storefronts/:storefrontId/fill-skus", fillStorefrontVariantSkus);
 
 router.get("*", legacyProxy);
 router.post("*", legacyProxy);

@@ -1,7 +1,6 @@
 import sequenceIncrement from "../sequence-increment";
 import { VariantDb } from "../../components/product-design-variants/types";
 import * as ProductDesignsDAO from "../../components/product-designs/dao";
-import * as CollectionsDAO from "../../components/collections/dao";
 import { padStart } from "lodash";
 import { Transaction } from "knex";
 
@@ -50,9 +49,7 @@ export async function computeUniqueSku(
   if (!design) {
     throw new Error(`Could not find design for variant #${variant.id}`);
   }
-  const collection = design.collectionIds[0]
-    ? await CollectionsDAO.findById(design.collectionIds[0], trx)
-    : null;
+  const collection = design.collections && design.collections[0];
 
   const collectionPart =
     collection && collection.title ? `${abbreviate(collection.title)}-` : "";
