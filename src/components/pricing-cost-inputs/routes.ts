@@ -11,9 +11,7 @@ import { isCreatePricingCostInputRequest, PricingCostInput } from "./types";
 
 const router = new Router();
 
-function* createCostInputs(
-  this: AuthedContext<Unsaved<PricingCostInput>>
-): Iterator<any, any, any> {
+function* createCostInputs(this: AuthedContext): Iterator<any, any, any> {
   const { body: inputs } = this.request;
   if (!inputs) {
     this.throw(400, "Must include a request body");

@@ -126,6 +126,12 @@ test("POST /pricing-cost-inputs", async (t: Test) => {
     "uses a default MOQ when none is provided"
   );
 
+  const [invalid] = await post("/pricing-cost-inputs", {
+    body: { invalid: "data" },
+    headers: authHeader("a-session-id"),
+  });
+  t.equal(invalid.status, 400, "validates the body is expected shape");
+
   sessionStub.resolves({ role: "USER" });
 
   const [unauthorized] = await post("/pricing-cost-inputs", {
