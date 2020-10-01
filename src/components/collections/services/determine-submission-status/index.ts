@@ -1,3 +1,5 @@
+import Knex from "knex";
+
 import { findAllWithCostsAndEvents } from "../../../product-designs/dao/dao";
 import {
   DesignState,
@@ -67,9 +69,10 @@ function determineStatusFromDesigns(
 }
 
 export async function getDesignsMetaByCollection(
-  collectionIds: string[]
+  collectionIds: string[],
+  trx?: Knex.Transaction
 ): Promise<DesignsByCollection> {
-  const designsWithMeta = await findAllWithCostsAndEvents(collectionIds);
+  const designsWithMeta = await findAllWithCostsAndEvents(collectionIds, trx);
   const designsByCollection: DesignsByCollection = {};
   for (const designWithMeta of designsWithMeta) {
     const { collectionId } = designWithMeta;
@@ -83,9 +86,13 @@ export async function getDesignsMetaByCollection(
  * Determines the submission status for each collection.
  */
 export async function determineSubmissionStatus(
-  collectionIds: string[]
+  collectionIds: string[],
+  trx?: Knex.Transaction
 ): Promise<SubmissionStatusByCollection> {
-  const designsByCollection = await getDesignsMetaByCollection(collectionIds);
+  const designsByCollection = await getDesignsMetaByCollection(
+    collectionIds,
+    trx
+  );
   const submissionStatusByCollection: SubmissionStatusByCollection = {};
 
   for (const collectionId of collectionIds) {

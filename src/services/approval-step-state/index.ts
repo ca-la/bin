@@ -1,7 +1,6 @@
 import Knex from "knex";
 import * as uuid from "node-uuid";
 
-import db from "../db";
 import * as ProductDesignsDAO from "../../components/product-designs/dao";
 import * as ApprovalStepsDAO from "../../components/approval-steps/dao";
 import * as ApprovalStepSubmissionsDAO from "../../components/approval-step-submissions/dao";
@@ -167,46 +166,45 @@ export async function handleUserStepReopen(
 }
 
 export async function transitionCheckoutState(
+  trx: Knex.Transaction,
   collectionId: string
 ): Promise<void> {
-  await db.transaction(async (trx: Knex.Transaction) => {
-    const designs = await ProductDesignsDAO.findByCollectionId(collectionId);
+  const designs = await ProductDesignsDAO.findByCollectionId(collectionId, trx);
 
-    for (const design of designs) {
-      const steps = await ApprovalStepsDAO.findByDesign(trx, design.id);
-      const productType = await findProductTypeByDesignId(design.id);
-      if (!productType) {
-        throw new Error(
-          `Unable to find a PricingProductType for design "${design.id}".`
-        );
-      }
-
-      const checkoutStep = steps.find(
-        (step: ApprovalStep): boolean => step.type === ApprovalStepType.CHECKOUT
+  for (const design of designs) {
+    const steps = await ApprovalStepsDAO.findByDesign(trx, design.id);
+    const productType = await findProductTypeByDesignId(design.id, trx);
+    if (!productType) {
+      throw new Error(
+        `Unable to find a PricingProductType for design "${design.id}".`
       );
-      const technicalDesignStep = steps.find(
-        (step: ApprovalStep): boolean =>
-          step.type === ApprovalStepType.TECHNICAL_DESIGN
-      );
-
-      if (!checkoutStep) {
-        throw new Error(
-          `Unable to find checkout approval step for design "${design.id}"`
-        );
-      }
-
-      if (!technicalDesignStep) {
-        throw new Error(
-          `Unable to find technical design approval step for design "${design.id}"`
-        );
-      }
-
-      await ApprovalStepsDAO.update(trx, checkoutStep.id, {
-        reason: null,
-        state: ApprovalStepState.COMPLETED,
-      });
     }
-  });
+
+    const checkoutStep = steps.find(
+      (step: ApprovalStep): boolean => step.type === ApprovalStepType.CHECKOUT
+    );
+    const technicalDesignStep = steps.find(
+      (step: ApprovalStep): boolean =>
+        step.type === ApprovalStepType.TECHNICAL_DESIGN
+    );
+
+    if (!checkoutStep) {
+      throw new Error(
+        `Unable to find checkout approval step for design "${design.id}"`
+      );
+    }
+
+    if (!technicalDesignStep) {
+      throw new Error(
+        `Unable to find technical design approval step for design "${design.id}"`
+      );
+    }
+
+    await ApprovalStepsDAO.update(trx, checkoutStep.id, {
+      reason: null,
+      state: ApprovalStepState.COMPLETED,
+    });
+  }
 }
 
 export async function actualizeDesignStepsAfterBidAcceptance(

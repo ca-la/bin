@@ -1,6 +1,7 @@
 import uuid from "node-uuid";
 import rethrow from "pg-rethrow";
 import omit from "lodash/omit";
+import Knex from "knex";
 
 import DataMapper from "../../services/data-mapper";
 
@@ -13,6 +14,7 @@ import compact from "../../services/compact";
 import { validatePropertiesFormatted } from "../../services/validate";
 
 export type AddressesDao<T> = DAO<T> & {
+  createTrx: (trx: Knex.Transaction, data: any) => Promise<T>;
   findByUserId: DaoFindById<T[]>;
   instantiate: (row: any) => T;
   maybeInstantiate: (row: any) => T | null;
@@ -40,7 +42,7 @@ export default function getAddressesDAO<T extends Address>(
     validatePropertiesFormatted(data, requiredMessages);
   }
 
-  function create(data: any): Promise<T> {
+  function createTrx(trx: Knex.Transaction, data: any): Promise<T> {
     validate(data);
 
     const rowData = Object.assign(
@@ -49,11 +51,15 @@ export default function getAddressesDAO<T extends Address>(
       { id: uuid.v4() }
     );
 
-    return db(tableName)
+    return trx(tableName)
       .insert(rowData, "*")
       .catch(rethrow)
       .then(first)
       .then(instantiate);
+  }
+
+  function create(data: any): Promise<T> {
+    return db.transaction((trx: Knex.Transaction) => createTrx(trx, data));
   }
 
   function findByUserId(userId: string): Promise<T[]> {
@@ -114,6 +120,7 @@ export default function getAddressesDAO<T extends Address>(
     instantiate,
     maybeInstantiate,
     create,
+    createTrx,
     update,
     deleteById,
     findById,

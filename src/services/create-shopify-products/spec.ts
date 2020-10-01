@@ -1,3 +1,4 @@
+import Knex from "knex";
 import uuid from "node-uuid";
 import { HermesMessageType, ProviderName } from "@cala/ts-lib";
 import * as HermesService from "../../components/hermes/send-message";
@@ -7,6 +8,7 @@ import createUser = require("../../test-helpers/create-user");
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import { createStorefront } from "../create-storefront";
 import { addDesign } from "../../test-helpers/collections";
+import db from "../db";
 import { createShopifyProductsForCollection } from ".";
 
 test("createShopifyProductsForCollection creates a Hermes message for each design", async (t: Test) => {
@@ -45,8 +47,9 @@ test("createShopifyProductsForCollection creates a Hermes message for each desig
     userId: user.id,
   });
   await addDesign(collection.id, design2.id);
-
-  await createShopifyProductsForCollection(user.id, collection.id);
+  await db.transaction((trx: Knex.Transaction) =>
+    createShopifyProductsForCollection(trx, user.id, collection.id)
+  );
 
   t.deepEqual(sendMessageStub.firstCall.args[0], {
     storefrontId: storefront.id,

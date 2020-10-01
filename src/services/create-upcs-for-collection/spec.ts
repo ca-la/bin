@@ -85,8 +85,9 @@ async function createPrerequisites(): Promise<any> {
 
 test("createUPCsForCollection creates upcs for collection", async (t: Test) => {
   const { collection } = await createPrerequisites();
-
-  await createUPCsForCollection(collection.id);
+  await db.transaction((trx: Knex.Transaction) =>
+    createUPCsForCollection(trx, collection.id)
+  );
   const variants = await findByCollectionId(collection.id);
   t.true(
     variants.every((variant: VariantDb) =>

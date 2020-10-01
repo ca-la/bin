@@ -664,8 +664,8 @@ test("POST /quote-payments creates shopify products if connected to a storefront
     headers: authHeader(session.id),
   });
 
-  t.equal(postResponse.status, 201, "succesful payment");
-  t.deepEqual(createShopifyProductsStub.firstCall.args, [
+  t.equal(postResponse.status, 201, "successful payment");
+  t.deepEqual(createShopifyProductsStub.firstCall.args.slice(1), [
     user.id,
     collection.id,
   ]);

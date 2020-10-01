@@ -1,4 +1,5 @@
 import Router from "koa-router";
+import Knex from "knex";
 
 import filterError from "../../services/filter-error";
 import InvalidDataError from "../../errors/invalid-data";
@@ -24,6 +25,7 @@ import { createFromAddress } from "../../dao/invoice-addresses";
 import * as IrisService from "../../components/iris/send-message";
 import { determineSubmissionStatus } from "../../components/collections/services/determine-submission-status";
 import { realtimeCollectionStatusUpdated } from "../../components/collections/realtime";
+import useTransaction from "../../middleware/use-transaction";
 
 const router = new Router();
 
@@ -62,9 +64,13 @@ const isPayWithMethodRequest = (data: any): data is PayWithMethodRequest => {
 };
 
 async function sendCollectionStatusUpdated(
+  trx: Knex.Transaction,
   collectionId: string
 ): Promise<void> {
-  const statusByCollectionId = await determineSubmissionStatus([collectionId]);
+  const statusByCollectionId = await determineSubmissionStatus(
+    [collectionId],
+    trx
+  );
   const collectionStatus = statusByCollectionId[collectionId];
   if (!collectionStatus) {
     throw new Error(`Could not get the status for collection ${collectionId}`);
@@ -76,16 +82,18 @@ async function sendCollectionStatusUpdated(
 }
 
 async function handleQuotePayment(
+  trx: Knex.Transaction,
   userId: string,
   collectionId: string
 ): Promise<void> {
   // TODO: move slack effect here
   //       can we just use the invoice to send the notification instead of
   //       having to send it from within the payment flow?
-  await transitionCheckoutState(collectionId);
-  await createUPCsForCollection(collectionId);
-  await createSKUsForCollection(collectionId);
+  await transitionCheckoutState(trx, collectionId);
+  await createUPCsForCollection(trx, collectionId);
+  await createSKUsForCollection(trx, collectionId);
   await createShopifyProductsForCollection(
+    trx,
     userId,
     collectionId
   ).catch((err: Error): void =>
@@ -94,25 +102,28 @@ async function handleQuotePayment(
       err
     )
   );
-  await sendCollectionStatusUpdated(collectionId);
+  await sendCollectionStatusUpdated(trx, collectionId);
 }
 
 function* payQuote(
-  this: AuthedContext<PayRequest | PayWithMethodRequest, CollectionsKoaState>
+  this: TrxContext<
+    AuthedContext<PayRequest | PayWithMethodRequest, CollectionsKoaState>
+  >
 ): Iterator<any, any, any> {
   const { body } = this.request;
   const { isWaived } = this.query;
-  const { userId, collection } = this.state;
+  const { userId, collection, trx } = this.state;
   if (!collection) {
     this.throw(403, "Unable to access collection");
   }
 
   const invoiceAddressId = body.addressId
-    ? (yield createFromAddress(body.addressId)).id
+    ? (yield createFromAddress(trx, body.addressId)).id
     : null;
 
   if (isWaived) {
     this.body = yield payWaivedQuote(
+      trx,
       body.createQuotes,
       userId,
       collection,
@@ -124,6 +135,7 @@ function* payQuote(
     );
   } else if (isPayWithMethodRequest(body)) {
     this.body = yield payInvoiceWithNewPaymentMethod(
+      trx,
       body.createQuotes,
       body.paymentMethodTokenId,
       userId,
@@ -139,7 +151,7 @@ function* payQuote(
     this.throw("Request must match type");
   }
 
-  yield handleQuotePayment(userId, collection.id);
+  yield handleQuotePayment(trx, userId, collection.id);
 
   this.status = 201;
 }
@@ -150,6 +162,7 @@ router.post(
   canAccessCollectionInRequestBody,
   canSubmitCollection,
   typeGuard<PayRequest | PayWithMethodRequest>(isPayRequest),
+  useTransaction,
   payQuote
 );
 

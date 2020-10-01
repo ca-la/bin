@@ -1,10 +1,12 @@
 import pick from "lodash/pick";
+import Knex from "knex";
 
 import AddressesDAO from "./index";
 import InvoiceAddressesDAO, { createFromAddress } from "../invoice-addresses";
 import { create as createUser } from "../../components/users/dao";
 import { test, Test } from "../../test-helpers/fresh";
 import generateAddress from "../../test-helpers/factories/address";
+import db from "../../services/db";
 
 const USER_DATA = {
   name: "Q User",
@@ -67,9 +69,10 @@ test("AddressesDAO.update updates an address", async (t: Test) => {
 
 test("AddressesDAO.findByUserId doesn't return duplicates", async (t: Test) => {
   const address = await generateAddress();
-
-  await createFromAddress(address.id);
-  await createFromAddress(address.id);
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await createFromAddress(trx, address.id);
+    await createFromAddress(trx, address.id);
+  });
 
   const invoiceAddresses = await InvoiceAddressesDAO.findByUserId(
     address.userId

@@ -167,14 +167,17 @@ export async function getDefaultsByDesign(
   designId: string
 ): Promise<ApprovalStepSubmission[]> {
   const now = new Date();
-  const productType = await PricingProductTypesDAO.findByDesignId(designId);
+  const productType = await PricingProductTypesDAO.findByDesignId(
+    designId,
+    trx
+  );
   if (!productType) {
     throw new Error(
       `Unable to find a PricingProductType for design "${designId}".`
     );
   }
 
-  const designQuotes = await PricingQuotesDAO.findByDesignId(designId);
+  const designQuotes = await PricingQuotesDAO.findByDesignId(designId, trx);
 
   if (!designQuotes || designQuotes.length === 0) {
     throw new Error(`Unable to find a PricingQuote for design "${designId}`);

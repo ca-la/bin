@@ -255,7 +255,8 @@ export async function createPricingProcesses(
 }
 
 async function attachProcesses(
-  quoteRow: PricingQuoteRow
+  quoteRow: PricingQuoteRow,
+  trx?: Knex.Transaction
 ): Promise<PricingQuote> {
   const processes: object[] = await db("pricing_quote_processes")
     .select("pricing_processes.*")
@@ -264,7 +265,12 @@ async function attachProcesses(
       "pricing_quote_processes.pricing_process_id",
       "pricing_processes.id"
     )
-    .where({ "pricing_quote_processes.pricing_quote_id": quoteRow.id });
+    .where({ "pricing_quote_processes.pricing_quote_id": quoteRow.id })
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    });
 
   return Object.assign(
     {
@@ -288,18 +294,28 @@ export async function findById(id: string): Promise<PricingQuote | null> {
 }
 
 export async function findByDesignId(
-  designId: string
+  designId: string,
+  trx?: Knex.Transaction
 ): Promise<PricingQuote[] | null> {
   const TABLE_NAME = "pricing_quotes";
   const quotes: object[] = await db(TABLE_NAME)
     .where({ design_id: designId })
-    .orderBy("created_at", "DESC");
+    .orderBy("created_at", "DESC")
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    });
 
   if (!quotes.every(isPricingQuoteRow)) {
     return null;
   }
 
-  return Promise.all((quotes as PricingQuoteRow[]).map(attachProcesses));
+  return Promise.all(
+    (quotes as PricingQuoteRow[]).map((row: PricingQuoteRow) =>
+      attachProcesses(row, trx)
+    )
+  );
 }
 
 export async function findByDesignIds(
@@ -312,7 +328,11 @@ export async function findByDesignIds(
     return null;
   }
 
-  return Promise.all((quotes as PricingQuoteRow[]).map(attachProcesses));
+  return Promise.all(
+    (quotes as PricingQuoteRow[]).map((row: PricingQuoteRow) =>
+      attachProcesses(row)
+    )
+  );
 }
 
 async function findCareLabel(

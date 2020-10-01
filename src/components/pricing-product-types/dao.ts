@@ -57,7 +57,8 @@ export async function findLatest(): Promise<ProductType[]> {
 }
 
 export async function findByDesignId(
-  designId: string
+  designId: string,
+  trx?: Knex.Transaction
 ): Promise<PricingProductType | null> {
   const result = await db(TABLE_NAME)
     .select("pricing_product_types.*")
@@ -73,6 +74,11 @@ export async function findByDesignId(
     )
     .where({ "pricing_quotes.design_id": designId })
     .orderBy("pricing_quotes.created_at", "DESC")
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .then((rows: PricingProductTypeRow[]) => {
       return first(rows);
     });

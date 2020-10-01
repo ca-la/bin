@@ -6,7 +6,6 @@ import * as InvoicesDAO from "../../dao/invoices";
 import * as LineItemsDAO from "../../dao/line-items";
 import * as SlackService from "../../services/slack";
 import * as UsersDAO from "../../components/users/dao";
-import db from "../../services/db";
 import filterError = require("../../services/filter-error");
 import InvalidDataError = require("../../errors/invalid-data");
 import payInvoice = require("../../services/pay-invoice");
@@ -127,95 +126,85 @@ async function processQuotesAfterInvoice(
  *  5. pay the invoice
  */
 export default async function payInvoiceWithNewPaymentMethod(
+  trx: Knex.Transaction,
   quoteRequests: CreateRequest,
   paymentMethodTokenId: string,
   userId: string,
   collection: CollectionDb,
   invoiceAddressId: string | null
 ): Promise<Invoice> {
-  return db.transaction(async (trx: Knex.Transaction) => {
-    await createDesignPaymentLocks(trx, quoteRequests);
+  await createDesignPaymentLocks(trx, quoteRequests);
 
-    const paymentMethod = await createPaymentMethod({
-      token: paymentMethodTokenId,
-      userId,
-      trx,
-    });
-    const quotes: PricingQuote[] = await createQuotes(
-      quoteRequests,
-      userId,
-      trx
-    );
-
-    const designNames = await getDesignNames(quotes);
-    const collectionName = collection.title || "Untitled";
-    const totalCents = getQuoteTotal(quotes);
-
-    const invoice = await createInvoice(
-      designNames,
-      collectionName,
-      collection.id,
-      totalCents,
-      userId,
-      invoiceAddressId,
-      trx
-    );
-
-    await processQuotesAfterInvoice(trx, invoice.id, quotes);
-
-    return payInvoice(invoice.id, paymentMethod.id, userId, trx);
+  const paymentMethod = await createPaymentMethod({
+    token: paymentMethodTokenId,
+    userId,
+    trx,
   });
+  const quotes: PricingQuote[] = await createQuotes(quoteRequests, userId, trx);
+
+  const designNames = await getDesignNames(quotes);
+  const collectionName = collection.title || "Untitled";
+  const totalCents = getQuoteTotal(quotes);
+
+  const invoice = await createInvoice(
+    designNames,
+    collectionName,
+    collection.id,
+    totalCents,
+    userId,
+    invoiceAddressId,
+    trx
+  );
+
+  await processQuotesAfterInvoice(trx, invoice.id, quotes);
+
+  return payInvoice(invoice.id, paymentMethod.id, userId, trx);
 }
 
 export async function payWaivedQuote(
+  trx: Knex.Transaction,
   quoteRequests: CreateRequest,
   userId: string,
   collection: CollectionDb,
   invoiceAddressId: string | null
 ): Promise<Invoice> {
-  return db.transaction(async (trx: Knex.Transaction) => {
-    await createDesignPaymentLocks(trx, quoteRequests);
+  await createDesignPaymentLocks(trx, quoteRequests);
 
-    const quotes: PricingQuote[] = await createQuotes(
-      quoteRequests,
-      userId,
-      trx
+  const quotes: PricingQuote[] = await createQuotes(quoteRequests, userId, trx);
+  const designNames = await getDesignNames(quotes);
+  const collectionName = collection.title || "Untitled";
+
+  const totalCents = getQuoteTotal(quotes);
+
+  const invoice = await createInvoice(
+    designNames,
+    collectionName,
+    collection.id,
+    totalCents,
+    userId,
+    invoiceAddressId,
+    trx
+  );
+
+  const { nonCreditPaymentAmount } = await spendCredit(userId, invoice, trx);
+
+  if (nonCreditPaymentAmount) {
+    throw new InvalidDataError(
+      "Cannot waive payment for amounts greater than $0"
     );
-    const designNames = await getDesignNames(quotes);
-    const collectionName = collection.title || "Untitled";
+  }
 
-    const totalCents = getQuoteTotal(quotes);
+  await processQuotesAfterInvoice(trx, invoice.id, quotes);
 
-    const invoice = await createInvoice(
-      designNames,
-      collectionName,
-      collection.id,
-      totalCents,
-      userId,
-      invoiceAddressId,
-      trx
-    );
-
-    const { nonCreditPaymentAmount } = await spendCredit(userId, invoice, trx);
-
-    if (nonCreditPaymentAmount) {
-      throw new InvalidDataError(
-        "Cannot waive payment for amounts greater than $0"
-      );
-    }
-
-    await processQuotesAfterInvoice(trx, invoice.id, quotes);
-
-    await SlackService.enqueueSend({
-      channel: "designers",
-      params: {
-        collection,
-        designer: await UsersDAO.findById(userId),
-        paymentAmountCents: 0,
-      },
-      templateName: "designer_payment",
-    });
-
-    return InvoicesDAO.findByIdTrx(trx, invoice.id);
+  await SlackService.enqueueSend({
+    channel: "designers",
+    params: {
+      collection,
+      designer: await UsersDAO.findById(userId),
+      paymentAmountCents: 0,
+    },
+    templateName: "designer_payment",
   });
+
+  return InvoicesDAO.findByIdTrx(trx, invoice.id);
 }

@@ -1,8 +1,9 @@
 import getAddressesDAO from "../addresses/addresses-dao";
 import AddressesDAO from "../addresses";
 import omit from "lodash/omit";
-import db from "../../services/db";
+import Knex from "knex";
 
+import db from "../../services/db";
 import InvoiceAddress, {
   dataMapper,
 } from "../../domain-objects/invoice-address";
@@ -18,10 +19,11 @@ const dao = getAddressesDAO<InvoiceAddress>(
 );
 
 export const createFromAddress = async (
+  trx: Knex.Transaction,
   addressId: string
 ): Promise<InvoiceAddress> => {
   const address = await AddressesDAO.findById(addressId);
-  return dao.create({
+  return dao.createTrx(trx, {
     ...omit(address, "id"),
     addressId: address.id,
   });
