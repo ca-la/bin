@@ -19,13 +19,17 @@ import { hasProperties } from "../../services/require-properties";
 import createUPCsForCollection from "../../services/create-upcs-for-collection";
 import createSKUsForCollection from "../../services/create-skus-for-collection";
 import { createShopifyProductsForCollection } from "../../services/create-shopify-products";
-import { logServerError } from "../../services/logger";
+import { logServerError, logWarning } from "../../services/logger";
 import { transitionCheckoutState } from "../../services/approval-step-state";
 import { createFromAddress } from "../../dao/invoice-addresses";
 import * as IrisService from "../../components/iris/send-message";
 import { determineSubmissionStatus } from "../../components/collections/services/determine-submission-status";
 import { realtimeCollectionStatusUpdated } from "../../components/collections/realtime";
 import useTransaction from "../../middleware/use-transaction";
+import * as SlackService from "../../services/slack";
+import * as UsersDAO from "../../components/users/dao";
+import Invoice from "../../domain-objects/invoice";
+import { CollectionDb } from "../../published-types";
 
 const router = new Router();
 
@@ -81,14 +85,44 @@ async function sendCollectionStatusUpdated(
   );
 }
 
+async function sendSlackUpdate({
+  invoice,
+  collection,
+  paymentAmountCents,
+}: {
+  invoice: Invoice;
+  collection: CollectionDb;
+  paymentAmountCents: number;
+}) {
+  if (!invoice.userId) {
+    throw new Error(`Invoice ${invoice.id} does not have a userId`);
+  }
+
+  const designer = await UsersDAO.findById(invoice.userId);
+
+  const notification: SlackService.SlackBody = {
+    channel: "designers",
+    templateName: "designer_payment",
+    params: {
+      collection,
+      designer,
+      paymentAmountCents,
+    },
+  };
+
+  await SlackService.enqueueSend(notification).catch((e: Error) => {
+    logWarning(
+      "There was a problem sending the payment notification to Slack",
+      e
+    );
+  });
+}
+
 async function handleQuotePayment(
   trx: Knex.Transaction,
   userId: string,
   collectionId: string
 ): Promise<void> {
-  // TODO: move slack effect here
-  //       can we just use the invoice to send the notification instead of
-  //       having to send it from within the payment flow?
   await transitionCheckoutState(trx, collectionId);
   await createUPCsForCollection(trx, collectionId);
   await createSKUsForCollection(trx, collectionId);
@@ -121,8 +155,10 @@ function* payQuote(
     ? (yield createFromAddress(trx, body.addressId)).id
     : null;
 
+  let invoice: Invoice;
+  let paymentAmountCents = 0;
   if (isWaived) {
-    this.body = yield payWaivedQuote(
+    invoice = yield payWaivedQuote(
       trx,
       body.createQuotes,
       userId,
@@ -134,7 +170,10 @@ function* payQuote(
       )
     );
   } else if (isPayWithMethodRequest(body)) {
-    this.body = yield payInvoiceWithNewPaymentMethod(
+    const {
+      invoice: paidInvoice,
+      nonCreditPaymentAmount,
+    } = yield payInvoiceWithNewPaymentMethod(
       trx,
       body.createQuotes,
       body.paymentMethodTokenId,
@@ -147,12 +186,16 @@ function* payQuote(
       }
       throw err;
     });
+    invoice = paidInvoice;
+    paymentAmountCents = nonCreditPaymentAmount;
   } else {
     this.throw("Request must match type");
   }
 
   yield handleQuotePayment(trx, userId, collection.id);
+  yield sendSlackUpdate({ invoice, collection, paymentAmountCents });
 
+  this.body = invoice;
   this.status = 201;
 }
 

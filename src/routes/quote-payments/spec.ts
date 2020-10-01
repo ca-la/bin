@@ -48,7 +48,7 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
     .stub(attachSource, "default")
     .resolves({ id: "sourceId", last4: "1234" });
   sandbox().stub(EmailService, "enqueueSend").resolves();
-  sandbox().stub(SlackService, "enqueueSend").resolves();
+  const slackStub = sandbox().stub(SlackService, "enqueueSend").resolves();
   const irisStub = sandbox().stub(IrisService, "sendMessage").resolves();
   const paymentMethodTokenId = uuid.v4();
 
@@ -250,6 +250,23 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
     );
     t.is(blankSubmissions.length, 5, "adds blank approval submissions");
   });
+  t.deepEqual(
+    slackStub.args,
+    [
+      [
+        {
+          channel: "designers",
+          templateName: "designer_payment",
+          params: {
+            collection,
+            designer: user,
+            paymentAmountCents: body.totalCents,
+          },
+        },
+      ],
+    ],
+    "Slack message sent with correct values"
+  );
 });
 
 test("/quote-payments POST does not generate quotes, payment method, invoice, lineItems on payment failure", async (t: Test) => {
@@ -418,7 +435,23 @@ test("POST /quote-payments?isWaived=true waives payment", async (t: Test) => {
 
   t.equal(postResponse.status, 201, "successfully creates the invoice");
   t.equals(body.isPaid, true, "Invoice is paid");
-  t.equal(slackStub.callCount, 1);
+  t.deepEqual(
+    slackStub.args,
+    [
+      [
+        {
+          channel: "designers",
+          templateName: "designer_payment",
+          params: {
+            collection,
+            designer: user,
+            paymentAmountCents: 0,
+          },
+        },
+      ],
+    ],
+    "Slack message sent with correct values"
+  );
 });
 
 test("POST /quote-payments?isWaived=true fails if ineligible", async (t: Test) => {

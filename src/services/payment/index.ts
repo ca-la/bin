@@ -4,8 +4,6 @@ import rethrow = require("pg-rethrow");
 
 import * as InvoicesDAO from "../../dao/invoices";
 import * as LineItemsDAO from "../../dao/line-items";
-import * as SlackService from "../../services/slack";
-import * as UsersDAO from "../../components/users/dao";
 import filterError = require("../../services/filter-error");
 import InvalidDataError = require("../../errors/invalid-data");
 import payInvoice = require("../../services/pay-invoice");
@@ -132,7 +130,7 @@ export default async function payInvoiceWithNewPaymentMethod(
   userId: string,
   collection: CollectionDb,
   invoiceAddressId: string | null
-): Promise<Invoice> {
+): Promise<{ invoice: Invoice; nonCreditPaymentAmount: number }> {
   await createDesignPaymentLocks(trx, quoteRequests);
 
   const paymentMethod = await createPaymentMethod({
@@ -195,16 +193,6 @@ export async function payWaivedQuote(
   }
 
   await processQuotesAfterInvoice(trx, invoice.id, quotes);
-
-  await SlackService.enqueueSend({
-    channel: "designers",
-    params: {
-      collection,
-      designer: await UsersDAO.findById(userId),
-      paymentAmountCents: 0,
-    },
-    templateName: "designer_payment",
-  });
 
   return InvoicesDAO.findByIdTrx(trx, invoice.id);
 }

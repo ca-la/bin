@@ -3,7 +3,6 @@
 const InvalidDataError = require("../../errors/invalid-data");
 const CreditsDAO = require("../../components/credits/dao");
 const payInvoice = require("./index");
-const SlackService = require("../slack");
 const db = require("../db");
 const Stripe = require("../stripe");
 const {
@@ -15,19 +14,18 @@ test("payInvoice", async (t) => {
   sandbox()
     .stub(Stripe, "charge")
     .returns(Promise.resolve({ id: "chargeId" }));
-  sandbox().stub(SlackService, "enqueueSend").returns(Promise.resolve());
+
   const trx = await db.transaction();
 
   try {
     const {
-      collections,
       users,
       createdInvoices,
       paymentMethod,
     } = await createInvoicesWithPayments();
     const unpaidInvoice = createdInvoices[2];
 
-    const paidInvoice = await payInvoice(
+    const { invoice: paidInvoice } = await payInvoice(
       unpaidInvoice.id,
       paymentMethod.id,
       users[1].id,
@@ -46,18 +44,6 @@ test("payInvoice", async (t) => {
     );
     t.ok(Stripe.charge.calledOnce, "only charge once");
 
-    t.ok(
-      SlackService.enqueueSend.calledWith({
-        channel: "designers",
-        templateName: "designer_payment",
-        params: {
-          collection: collections[1],
-          designer: users[1],
-          paymentAmountCents: unpaidInvoice.totalCents,
-        },
-      }),
-      "sent Slack notification"
-    );
     t.ok(Stripe.charge.calledOnce, "only notify once");
 
     t.ok(paidInvoice.isPaid, "paid invoice is paid");
@@ -74,7 +60,6 @@ test("payInvoice", async (t) => {
 
 test("payInvoice does not charge a $0 amount", async (t) => {
   sandbox().stub(Stripe, "charge");
-  sandbox().stub(SlackService, "enqueueSend").returns(Promise.resolve());
 
   const {
     users,
@@ -94,7 +79,7 @@ test("payInvoice does not charge a $0 amount", async (t) => {
 
   const trx = await db.transaction();
   try {
-    const paidInvoice = await payInvoice(
+    const { invoice: paidInvoice } = await payInvoice(
       unpaidInvoice.id,
       paymentMethod.id,
       users[1].id,
@@ -113,7 +98,6 @@ test("payInvoice cannot pay the same invoice twice in parallel", async (t) => {
   sandbox()
     .stub(Stripe, "charge")
     .returns(Promise.resolve({ id: "chargeId" }));
-  sandbox().stub(SlackService, "enqueueSend").returns(Promise.resolve());
 
   const {
     users,
