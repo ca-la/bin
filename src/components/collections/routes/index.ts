@@ -94,7 +94,12 @@ function* createCollection(
     },
     trx
   );
-  const permissions = yield getCollectionPermissions(collection, role, userId);
+  const permissions = yield getCollectionPermissions(
+    trx,
+    collection,
+    role,
+    userId
+  );
 
   this.body = { ...collection, permissions };
   this.status = 201;
@@ -115,7 +120,7 @@ function* getList(this: TrxContext<AuthedContext>): Iterator<any, any, any> {
     role === "ADMIN" ? userId : currentUserId === userId ? currentUserId : null;
 
   if (userIdToQuery) {
-    const collections = yield CollectionsDAO.findByCollaboratorAndUserId(trx, {
+    const collections = yield CollectionsDAO.findByUser(trx, {
       userId: userIdToQuery,
       limit: Number(limit),
       offset: Number(offset),
@@ -128,6 +133,7 @@ function* getList(this: TrxContext<AuthedContext>): Iterator<any, any, any> {
       withPermissions.push({
         ...collection,
         permissions: yield getCollectionPermissions(
+          trx,
           collection,
           role,
           userIdToQuery
@@ -160,13 +166,16 @@ function* deleteCollection(this: AuthedContext): Iterator<any, any, any> {
   this.status = 204;
 }
 
-function* getCollection(this: AuthedContext): Iterator<any, any, any> {
+function* getCollection(
+  this: TrxContext<AuthedContext>
+): Iterator<any, any, any> {
   const { collectionId } = this.params;
-  const { role, userId } = this.state;
+  const { role, trx, userId } = this.state;
 
   if (collectionId) {
     const collection = yield CollectionsDAO.findById(collectionId);
     const permissions = yield getCollectionPermissions(
+      trx,
       collection,
       role,
       userId
@@ -178,10 +187,12 @@ function* getCollection(this: AuthedContext): Iterator<any, any, any> {
   }
 }
 
-function* updateCollection(this: AuthedContext): Iterator<any, any, any> {
+function* updateCollection(
+  this: TrxContext<AuthedContext>
+): Iterator<any, any, any> {
   const { collectionId } = this.params;
   const { body } = this.request;
-  const { role, userId } = this.state;
+  const { role, trx, userId } = this.state;
 
   if (body && isPartialCollection(body)) {
     const collection = yield CollectionsDAO.update(collectionId, body).catch(
@@ -190,6 +201,7 @@ function* updateCollection(this: AuthedContext): Iterator<any, any, any> {
       )
     );
     const permissions = yield getCollectionPermissions(
+      trx,
       collection,
       role,
       userId
@@ -210,12 +222,14 @@ router.del(
   requireAuth,
   canAccessCollectionInParam,
   canDeleteCollection,
+  useTransaction,
   deleteCollection
 );
 router.get(
   "/:collectionId",
   requireAuth,
   canAccessCollectionInParam,
+  useTransaction,
   getCollection
 );
 router.patch(
@@ -223,6 +237,7 @@ router.patch(
   requireAuth,
   canAccessCollectionInParam,
   canEditCollection,
+  useTransaction,
   updateCollection
 );
 

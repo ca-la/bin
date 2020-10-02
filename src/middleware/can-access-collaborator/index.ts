@@ -1,5 +1,7 @@
 import Koa from "koa";
+import Knex from "knex";
 
+import db from "../../services/db";
 import * as CollaboratorsDAO from "../../components/collaborators/dao";
 import * as CollectionsDAO from "../../components/collections/dao";
 import DesignsDAO from "../../components/product-designs/dao";
@@ -45,7 +47,9 @@ async function findPermissionsFromCollectionOrDesign(
         `Could not find collection ${collectionId}`
       );
     }
-    return getCollectionPermissions(collection, role, userId);
+    return db.transaction((trx: Knex.Transaction) =>
+      getCollectionPermissions(trx, collection, role, userId)
+    );
   }
   if (designId) {
     const design = await DesignsDAO.findById(designId);

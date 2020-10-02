@@ -127,6 +127,7 @@ test("PUT /collections/:id/designs?designIds", async (t: Test) => {
   const collection = {
     id: "a-collection-id",
     createdBy: "a-user-id",
+    teamId: null,
   };
   const ownerCollaborator = {
     userId: "a-user-id",
@@ -184,6 +185,7 @@ test("PUT /collections/:id/designs/:id", async (t: Test) => {
   const collection = {
     id: "a-collection-id",
     createdBy: "a-user-id",
+    teamId: null,
   };
   const ownerCollaborator = {
     userId: "a-user-id",
@@ -241,6 +243,7 @@ test("DELETE /collections/:id/designs/:id", async (t: Test) => {
   const collection = {
     id: "a-collection-id",
     createdBy: "a-user-id",
+    teamId: null,
   };
   const ownerCollaborator = {
     userId: "a-user-id",

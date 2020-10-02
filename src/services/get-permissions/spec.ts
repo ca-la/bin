@@ -4,6 +4,7 @@ import tape from "tape";
 import { test } from "../../test-helpers/fresh";
 import createUser from "../../test-helpers/create-user";
 
+import db from "../db";
 import * as CollectionsDAO from "../../components/collections/dao";
 import DesignsDAO from "../../components/product-designs/dao";
 import * as PermissionsService from "./index";
@@ -275,102 +276,114 @@ test("#getCollectionPermissions", async (t: tape.Test) => {
     userId: partnerUser.id,
   });
 
-  t.deepEqual(
-    await PermissionsService.getCollectionPermissions(
-      collection1,
-      session,
-      user.id
-    ),
-    {
-      canComment: true,
-      canDelete: true,
-      canEdit: true,
-      canEditVariants: false,
-      canSubmit: true,
-      canView: true,
-    },
-    "Returns all access permissions for the collection the user created."
-  );
-  t.deepEqual(
-    await PermissionsService.getCollectionPermissions(
-      collection1,
-      session2,
-      user2.id
-    ),
-    {
-      canComment: true,
-      canDelete: false,
-      canEdit: true,
-      canEditVariants: false,
-      canSubmit: false,
-      canView: true,
-    },
-    "Returns partner permissions for the collection the user is a partner on."
-  );
-  t.deepEqual(
-    await PermissionsService.getCollectionPermissions(
-      collection2,
-      session,
-      user.id
-    ),
-    {
-      canComment: true,
-      canDelete: true,
-      canEdit: true,
-      canEditVariants: false,
-      canSubmit: true,
-      canView: true,
-    },
-    "Returns edit access permissions for the collection the user is an edit collaborator on."
-  );
-  t.deepEqual(
-    await PermissionsService.getCollectionPermissions(
-      collection4,
-      session,
-      user.id
-    ),
-    {
-      canComment: true,
-      canDelete: false,
-      canEdit: false,
-      canEditVariants: false,
-      canSubmit: false,
-      canView: true,
-    },
-    "Returns view access permissions for the collection the user is a view collaborator on."
-  );
-  t.deepEqual(
-    await PermissionsService.getCollectionPermissions(
-      collection4,
-      partnerSession,
-      partnerUser.id
-    ),
-    {
-      canComment: true,
-      canDelete: false,
-      canEdit: true,
-      canEditVariants: false,
-      canSubmit: false,
-      canView: true,
-    },
-    "Returns partner access permissions for the collection the user is a partner collaborator on."
-  );
-  t.deepEqual(
-    await PermissionsService.getCollectionPermissions(
-      collection3,
-      session,
-      user.id
-    ),
-    {
-      canComment: false,
-      canDelete: false,
-      canEdit: false,
-      canEditVariants: false,
-      canSubmit: false,
-      canView: false,
-    },
-    "Returns no access permissions for the collection the user does not have access to."
-  );
+  const trx = await db.transaction();
+
+  try {
+    t.deepEqual(
+      await PermissionsService.getCollectionPermissions(
+        trx,
+        collection1,
+        session,
+        user.id
+      ),
+      {
+        canComment: true,
+        canDelete: true,
+        canEdit: true,
+        canEditVariants: false,
+        canSubmit: true,
+        canView: true,
+      },
+      "Returns all access permissions for the collection the user created."
+    );
+    t.deepEqual(
+      await PermissionsService.getCollectionPermissions(
+        trx,
+        collection1,
+        session2,
+        user2.id
+      ),
+      {
+        canComment: true,
+        canDelete: false,
+        canEdit: true,
+        canEditVariants: false,
+        canSubmit: false,
+        canView: true,
+      },
+      "Returns partner permissions for the collection the user is a partner on."
+    );
+    t.deepEqual(
+      await PermissionsService.getCollectionPermissions(
+        trx,
+        collection2,
+        session,
+        user.id
+      ),
+      {
+        canComment: true,
+        canDelete: true,
+        canEdit: true,
+        canEditVariants: false,
+        canSubmit: true,
+        canView: true,
+      },
+      "Returns edit access permissions for the collection the user is an edit collaborator on."
+    );
+    t.deepEqual(
+      await PermissionsService.getCollectionPermissions(
+        trx,
+        collection4,
+        session,
+        user.id
+      ),
+      {
+        canComment: true,
+        canDelete: false,
+        canEdit: false,
+        canEditVariants: false,
+        canSubmit: false,
+        canView: true,
+      },
+      "Returns view access permissions for the collection the user is a view collaborator on."
+    );
+    t.deepEqual(
+      await PermissionsService.getCollectionPermissions(
+        trx,
+        collection4,
+        partnerSession,
+        partnerUser.id
+      ),
+      {
+        canComment: true,
+        canDelete: false,
+        canEdit: true,
+        canEditVariants: false,
+        canSubmit: false,
+        canView: true,
+      },
+      "Returns partner access permissions for the collection the user is a partner collaborator on."
+    );
+    t.deepEqual(
+      await PermissionsService.getCollectionPermissions(
+        trx,
+        collection3,
+        session,
+        user.id
+      ),
+      {
+        canComment: false,
+        canDelete: false,
+        canEdit: false,
+        canEditVariants: false,
+        canSubmit: false,
+        canView: false,
+      },
+      "Returns no access permissions for the collection the user does not have access to."
+    );
+  } finally {
+    await trx.rollback();
+  }
 });
 
 test("#getCollectionPermissions", async (t: tape.Test) => {

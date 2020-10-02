@@ -24,6 +24,7 @@ import {
 } from "../../../test-helpers/collections";
 import { deleteById } from "../../../test-helpers/designs";
 import { generateDesign } from "../../../test-helpers/factories/product-design";
+import { generateTeam } from "../../../test-helpers/factories/team";
 
 test("CollectionsDAO#create creates a collection", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
@@ -85,43 +86,15 @@ test("CollectionsDAO#findById does not find deleted collections", async (t: Test
   });
 });
 
-test("CollectionsDAO#findByUserId includes referenced user collections", async (t: Test) => {
+test("CollectionsDAO#findByUser finds all collections and searches", async (t: Test) => {
   const { user: user1 } = await createUser({ withSession: false });
   const { user: user2 } = await createUser({ withSession: false });
-
-  const id1 = uuid.v4();
-  const id2 = uuid.v4();
-
-  await CollectionsDAO.create({
-    createdAt: new Date(),
-    createdBy: user1.id,
-    deletedAt: null,
-    description: "Initial commit",
-    id: id1,
-    teamId: null,
-    title: "Drop 001/The Early Years",
-  });
-  await CollectionsDAO.create({
-    createdAt: new Date(),
-    createdBy: user2.id,
-    deletedAt: null,
-    description: "Another collection",
-    id: id2,
-    teamId: null,
-    title: "Drop 002",
-  });
-  const retrievedCollection = await CollectionsDAO.findByUserId(user1.id);
-
-  t.deepEqual(retrievedCollection[0].id, id1, "only my collection is returned");
-});
-
-test("CollectionsDAO#findByCollaboratorAndUserId finds all collections and searches", async (t: Test) => {
-  const { user: user1 } = await createUser({ withSession: false });
-  const { user: user2 } = await createUser({ withSession: false });
+  const { team } = await generateTeam(user1.id);
 
   const id1 = uuid.v4();
   const id2 = uuid.v4();
   const id3 = uuid.v4();
+  const id5 = uuid.v4();
 
   const collection1 = await CollectionsDAO.create({
     createdAt: new Date(),
@@ -152,6 +125,15 @@ test("CollectionsDAO#findByCollaboratorAndUserId finds all collections and searc
   });
   const { collection: collection4 } = await generateCollection({
     createdBy: user2.id,
+  });
+  const collection5 = await CollectionsDAO.create({
+    createdAt: new Date(),
+    createdBy: user2.id,
+    deletedAt: null,
+    description: null,
+    id: id5,
+    teamId: team.id,
+    title: "Team Drop",
   });
   await generateCollaborator({
     collectionId: collection1.id,
@@ -190,23 +172,20 @@ test("CollectionsDAO#findByCollaboratorAndUserId finds all collections and searc
   return db.transaction(async (trx: Knex.Transaction) => {
     await CollectionsDAO.deleteById(trx, collection4.id);
 
-    const collections = await CollectionsDAO.findByCollaboratorAndUserId(trx, {
+    const collections = await CollectionsDAO.findByUser(trx, {
       userId: user1.id,
     });
 
     t.deepEqual(
       collections,
-      [collection2, collection1],
+      [collection5, collection2, collection1],
       "all collections I can access are returned"
     );
 
-    const searchCollections = await CollectionsDAO.findByCollaboratorAndUserId(
-      trx,
-      {
-        userId: user1.id,
-        search: "Early yEars",
-      }
-    );
+    const searchCollections = await CollectionsDAO.findByUser(trx, {
+      userId: user1.id,
+      search: "Early yEars",
+    });
 
     t.deepEqual(
       searchCollections,
@@ -214,13 +193,10 @@ test("CollectionsDAO#findByCollaboratorAndUserId finds all collections and searc
       "Collections I searched for are returned"
     );
 
-    const limitedOffsetCollections = await CollectionsDAO.findByCollaboratorAndUserId(
-      trx,
-      {
-        userId: user1.id,
-        limit: 1,
-      }
-    );
+    const limitedOffsetCollections = await CollectionsDAO.findByUser(trx, {
+      userId: user1.id,
+      limit: 1,
+    });
 
     t.equal(limitedOffsetCollections.length, 1);
   });

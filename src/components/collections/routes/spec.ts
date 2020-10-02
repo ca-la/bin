@@ -11,7 +11,6 @@ import DesignEventsDAO from "../../design-events/dao";
 import * as SubscriptionsDAO from "../../subscriptions/dao";
 import * as PaymentMethodsDAO from "../../payment-methods/dao";
 import * as PlansDAO from "../../plans/dao";
-import { rawDao as RawTeamsDAO } from "../../teams/dao";
 import API from "../../../test-helpers/http";
 import { sandbox, test } from "../../../test-helpers/fresh";
 import * as CreateNotifications from "../../../services/create-notifications";
@@ -32,8 +31,8 @@ import { taskTypes } from "../../tasks/templates/task-types";
 import { generateDesign } from "../../../test-helpers/factories/product-design";
 import { checkout } from "../../../test-helpers/checkout-collection";
 import * as IrisService from "../../iris/send-message";
-import { TeamType } from "../../teams/types";
 import generateBid from "../../../test-helpers/factories/bid";
+import { generateTeam } from "../../../test-helpers/factories/team";
 
 test("GET /collections/:id returns a created collection", async (t: tape.Test) => {
   const { session, user } = await createUser();
@@ -108,16 +107,8 @@ test("POST /collections/ without a full object can create a collection", async (
 });
 
 test("POST /collections with a teamId", async (t: tape.Test) => {
-  const { session } = await createUser();
-  const team = await db.transaction((trx: Knex.Transaction) =>
-    RawTeamsDAO.create(trx, {
-      id: uuid.v4(),
-      title: "A team",
-      createdAt: new Date(),
-      deletedAt: null,
-      type: TeamType.DESIGNER,
-    })
-  );
+  const { user, session } = await createUser();
+  const { team } = await generateTeam(user.id);
   const body = {
     createdAt: new Date(),
     description: "Initial commit",
@@ -237,6 +228,7 @@ test("PATCH /collections/:collectionId supports partial updates to a collection"
 test("GET /collections", async (t: tape.Test) => {
   const { user, session } = await createUser();
   const { user: user2 } = await createUser();
+  const { team } = await generateTeam(user.id);
 
   const collection1 = await CollectionsDAO.create({
     createdAt: new Date(),
@@ -255,6 +247,15 @@ test("GET /collections", async (t: tape.Test) => {
     id: uuid.v4(),
     teamId: null,
     title: "Drop 002",
+  });
+  const collection3 = await CollectionsDAO.create({
+    createdAt: new Date(),
+    createdBy: user2.id,
+    deletedAt: null,
+    description: "Another collection",
+    id: uuid.v4(),
+    teamId: team.id,
+    title: "Team Drop",
   });
   await generateCollaborator({
     collectionId: collection1.id,
@@ -292,6 +293,18 @@ test("GET /collections", async (t: tape.Test) => {
   t.deepEqual(
     collections,
     [
+      {
+        ...collection3,
+        createdAt: collection3.createdAt.toISOString(),
+        permissions: {
+          canComment: true,
+          canDelete: true,
+          canEdit: true,
+          canEditVariants: true,
+          canSubmit: true,
+          canView: true,
+        },
+      },
       {
         ...collection2,
         createdAt: collection2.createdAt.toISOString(),

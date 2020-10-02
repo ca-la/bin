@@ -1,3 +1,5 @@
+import Knex from "knex";
+
 import * as CollaboratorsDAO from "../../components/collaborators/dao";
 import Collaborator from "../../components/collaborators/types";
 import * as CollectionsDAO from "../../components/collections/dao";
@@ -5,6 +7,8 @@ import { isQuoteCommitted } from "../../components/design-events/service";
 import CollectionDb from "../../components/collections/domain-object";
 import { isOwner as isDesignOwner } from "../../components/product-designs/dao/dao";
 import { Permissions } from "../../components/permissions/types";
+import TeamUsersDAO from "../../components/team-users/dao";
+import { Role as TeamUserRole } from "../../components/team-users/types";
 export { Permissions } from "../../components/permissions/types";
 
 export interface PermissionsAndRole {
@@ -91,10 +95,14 @@ export async function getDesignPermissions(options: {
 }
 
 export async function getCollectionPermissions(
+  trx: Knex.Transaction,
   collection: CollectionDb,
   sessionRole: string,
   sessionUserId: string
 ): Promise<Permissions> {
+  if (collection.teamId !== null) {
+    return getTeamCollectionPermissions(trx, collection.teamId, sessionUserId);
+  }
   const collaborators: Collaborator[] = await CollaboratorsDAO.findByCollectionAndUser(
     collection.id,
     sessionUserId
@@ -120,6 +128,50 @@ export async function getCollectionPermissions(
     isPreviewer,
     isViewer,
   });
+}
+
+export function calculateTeamCollectionPermissions(
+  teamRole: TeamUserRole
+): Permissions {
+  if (teamRole === TeamUserRole.VIEWER) {
+    return {
+      canComment: true,
+      canDelete: false,
+      canEdit: false,
+      canEditVariants: false,
+      canSubmit: false,
+      canView: true,
+    };
+  }
+
+  return {
+    canComment: true,
+    canDelete: true,
+    canEdit: true,
+    canEditVariants: true,
+    canSubmit: true,
+    canView: true,
+  };
+}
+
+export async function getTeamCollectionPermissions(
+  trx: Knex.Transaction,
+  teamId: string,
+  userId: string
+): Promise<Permissions> {
+  const teamUser = await TeamUsersDAO.findOne(trx, { teamId, userId });
+  if (!teamUser) {
+    return {
+      canComment: false,
+      canDelete: false,
+      canEdit: false,
+      canEditVariants: false,
+      canSubmit: false,
+      canView: false,
+    };
+  }
+
+  return calculateTeamCollectionPermissions(teamUser.role);
 }
 
 async function getPermissionsFromRoleAndDesignId(

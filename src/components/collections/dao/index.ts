@@ -26,11 +26,19 @@ import {
 
 export const TABLE_NAME = "collections";
 
-export async function create(data: CollectionDb): Promise<CollectionDb> {
+export async function create(
+  data: CollectionDb,
+  trx?: Knex.Transaction
+): Promise<CollectionDb> {
   const rowData = pick(dataAdapter.forInsertion(data), INSERTABLE_PROPERTIES);
 
   const created = await db(TABLE_NAME)
     .insert(rowData, "*")
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .then((rows: CollectionDbRow[]) => first<CollectionDbRow>(rows))
     .catch(rethrow);
 
@@ -94,21 +102,7 @@ export async function update(
   );
 }
 
-export async function findByUserId(userId: string): Promise<CollectionDb[]> {
-  const collections: CollectionDbRow[] = await db(TABLE_NAME)
-    .where({ created_by: userId, deleted_at: null })
-    .orderBy("created_at", "desc")
-    .catch(rethrow);
-
-  return validateEvery<CollectionDbRow, CollectionDb>(
-    TABLE_NAME,
-    isCollectionRow,
-    dataAdapter,
-    collections
-  );
-}
-
-export async function findByCollaboratorAndUserId(
+export async function findByUser(
   trx: Knex.Transaction,
   options: {
     userId: string;
@@ -121,22 +115,27 @@ export async function findByCollaboratorAndUserId(
     .from(TABLE_NAME)
     .select("collections.*")
     .distinct("collections.id")
-    .from(TABLE_NAME)
-    .join("collaborators", "collaborators.collection_id", "collections.id")
+    .leftJoin("collaborators", "collaborators.collection_id", "collections.id")
+    .leftJoin("teams", "teams.id", "collections.team_id")
+    .leftJoin("team_users", "team_users.team_id", "teams.id")
+    .leftJoin("users", "users.id", "team_users.user_id")
     .modify((query: Knex.QueryBuilder): void => {
       if (options.search) {
         query.where(db.raw("(collections.title ~* ?)", options.search));
       }
     })
     .where({
-      "collaborators.user_id": options.userId,
       "collections.deleted_at": null,
     })
-    .whereRaw(
+    .andWhereRaw(
       `
-      ((collaborators.cancelled_at IS NULL OR collaborators.cancelled_at > now()) OR
-      (collections.created_by = ? AND collections.deleted_at IS NULL))`,
-      options.userId
+((
+  collaborators.user_id = :userId
+  AND (collaborators.cancelled_at IS NULL OR collaborators.cancelled_at > now())
+) OR (
+  team_users.user_id = :userId
+))`,
+      { userId: options.userId }
     )
     .modify(limitOrOffset(options.limit, options.offset))
     .orderBy("collections.created_at", "desc")
