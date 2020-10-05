@@ -12,7 +12,9 @@ import {
 export async function generateTeam(
   adminUserId: string,
   teamOptions: Partial<TeamDb> = {},
-  teamUserOptions: Partial<TeamUserDb> = {}
+  teamUserOptions: Partial<
+    TeamUserDb & { userId: string; userEmail: null }
+  > = {}
 ) {
   const trx = await db.transaction();
   try {
@@ -29,6 +31,7 @@ export async function generateTeam(
       role: TeamUserRole.ADMIN,
       teamId: team.id,
       userId: adminUserId,
+      userEmail: null,
       ...teamUserOptions,
     });
 
