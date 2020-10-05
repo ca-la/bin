@@ -11,6 +11,7 @@ import * as CreditsDAO from "../../components/credits/dao";
 import * as DuplicationService from "../../services/duplicate";
 import * as PlansDAO from "../plans/dao";
 import * as PromoCodesDAO from "../../components/promo-codes/dao";
+import * as TeamUsersDAO from "../../components/team-users/dao";
 import * as SessionsDAO from "../../dao/sessions";
 import * as SubscriptionsDAO from "../../components/subscriptions/dao";
 import * as UsersDAO from "./dao";
@@ -33,6 +34,7 @@ const USER_DATA: UserIO = Object.freeze({
 interface UserDependenciesInterface {
   duplicationStub: sinon.SinonStub;
   mailchimpStub: sinon.SinonStub;
+  teamUsersStub: sinon.SinonStub;
 }
 
 function stubUserDependencies(): UserDependenciesInterface {
@@ -42,10 +44,14 @@ function stubUserDependencies(): UserDependenciesInterface {
   const mailchimpStub = sandbox()
     .stub(MailChimp, "subscribeToUsers")
     .returns(Promise.resolve());
+  const teamUsersStub = sandbox()
+    .stub(TeamUsersDAO, "claimAllByEmail")
+    .resolves();
 
   return {
     duplicationStub,
     mailchimpStub,
+    teamUsersStub,
   };
 }
 
@@ -577,7 +583,7 @@ test("GET /users?search with malformed RegExp throws 400", async (t: Test) => {
 });
 
 test("POST /users allows subscribing to a plan", async (t: Test) => {
-  stubUserDependencies();
+  const { teamUsersStub } = stubUserDependencies();
 
   sandbox()
     .stub(attachSource, "default")
@@ -611,6 +617,10 @@ test("POST /users allows subscribing to a plan", async (t: Test) => {
   });
 
   t.equal(response.status, 201);
+
+  t.equal(teamUsersStub.callCount, 1, "Calls team user stub");
+  t.equal(teamUsersStub.firstCall.args[1], body.email);
+  t.equal(teamUsersStub.firstCall.args[2], body.id);
 
   await db.transaction(async (trx: Knex.Transaction) => {
     const subscriptions = await SubscriptionsDAO.findForUser(body.id, trx);

@@ -5,7 +5,6 @@ import { typeGuard } from "../../middleware/type-guard";
 
 import filterError from "../../services/filter-error";
 import UnauthorizedError from "../../errors/unauthorized";
-import ResourceNotFoundError from "../../errors/resource-not-found";
 
 import {
   isUnsavedTeamUser,
@@ -23,17 +22,11 @@ function* create(
   const { body } = this.request;
   const { trx, actorTeamRole } = this.state;
 
-  this.body = yield createTeamUser(trx, actorTeamRole, body)
-    .catch(
-      filterError(UnauthorizedError, (error: UnauthorizedError) => {
-        this.throw(403, error.message);
-      })
-    )
-    .catch(
-      filterError(ResourceNotFoundError, (error: ResourceNotFoundError) => {
-        this.throw(404, error.message);
-      })
-    );
+  this.body = yield createTeamUser(trx, actorTeamRole, body).catch(
+    filterError(UnauthorizedError, (error: UnauthorizedError) => {
+      this.throw(403, error.message);
+    })
+  );
   this.status = 201;
 }
 

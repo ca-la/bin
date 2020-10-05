@@ -21,6 +21,7 @@ function setup() {
     id: "a-team-user-id",
     teamId: "a-team-id",
     userId: "a-user-id",
+    userEmail: null,
     role: Role.ADMIN,
   };
 

@@ -46,6 +46,7 @@ const TABLES = [
   "task_events",
   "task_templates",
   "tasks",
+  "team_users",
   "templates",
   "template_categories",
   "template_designs",

@@ -5,7 +5,6 @@ import { findByEmail as findUserByEmail } from "../users/dao";
 import { Role as TeamUserRole, UnsavedTeamUser } from "./types";
 import TeamUsersDAO, { rawDao as RawTeamUsersDAO } from "./dao";
 import UnauthorizedError from "../../errors/unauthorized";
-import ResourceNotFoundError from "../../errors/resource-not-found";
 
 const allowedRolesMap: Record<TeamUserRole, TeamUserRole[]> = {
   [TeamUserRole.ADMIN]: [
@@ -61,22 +60,30 @@ export async function createTeamUser(
   }
 
   const { userEmail } = unsavedTeamUser;
-  const user = await findUserByEmail(userEmail, trx);
-
-  if (!user) {
-    throw new ResourceNotFoundError(
-      `Could not find user with email: ${userEmail}`
-    );
-  }
 
   const id = uuid.v4();
 
-  await RawTeamUsersDAO.create(trx, {
+  const user = await findUserByEmail(userEmail, trx);
+
+  const partialUserData = {
     id,
     teamId: unsavedTeamUser.teamId,
-    userId: user.id,
     role: unsavedTeamUser.role,
-  });
+  } as const;
+
+  if (user) {
+    await RawTeamUsersDAO.create(trx, {
+      ...partialUserData,
+      userId: user.id,
+      userEmail: null,
+    });
+  } else {
+    await RawTeamUsersDAO.create(trx, {
+      ...partialUserData,
+      userEmail,
+      userId: null,
+    });
+  }
 
   return TeamUsersDAO.findById(trx, id);
 }

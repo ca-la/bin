@@ -19,6 +19,7 @@ export const listeners: Listeners<TeamDb, typeof domain> = {
     await RawTeamUsersDAO.create(trx, {
       teamId: created.id,
       userId: actorId,
+      userEmail: null,
       id: uuid.v4(),
       role: Role.ADMIN,
     });

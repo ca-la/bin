@@ -30,5 +30,6 @@ export {
   TeamUserDb,
   UnsavedTeamUser,
   isUnsavedTeamUser,
+  isRegisteredTeamUser,
 } from "../components/team-users/types";
 export * from "../components/pricing-cost-inputs/types";

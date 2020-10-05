@@ -10,7 +10,6 @@ import SessionsDAO from "../../dao/sessions";
 import { rawDao as RawTeamsDAO } from "../teams/dao";
 import TeamUsersDAO, { rawDao as RawTeamUsersDAO } from "./dao";
 import { Role, TeamUser, TeamUserDb } from "./types";
-import ResourceNotFoundError from "../../errors/resource-not-found";
 import { TeamType, TeamUserRole } from "../../published-types";
 
 const now = new Date();
@@ -18,6 +17,7 @@ const tuDb1: TeamUserDb = {
   id: "a-team-user-id",
   teamId: "a-team-id",
   userId: "a-user-id",
+  userEmail: null,
   role: Role.ADMIN,
 };
 const tu1: TeamUser = {
@@ -107,12 +107,9 @@ test("POST /teams-user: unauthenticated", async (t: Test) => {
 test("POST /team-users: missingUser", async (t: Test) => {
   const { findUserStub } = setup();
 
-  findUserStub.rejects(
-    new ResourceNotFoundError(
-      "Could not find user with email: teammate@example.com"
-    )
-  );
-  const [missingUser] = await post("/team-users", {
+  findUserStub.resolves(null);
+
+  const [response] = await post("/team-users", {
     headers: authHeader("a-session-id"),
     body: {
       teamId: "a-team-id",
@@ -121,11 +118,7 @@ test("POST /team-users: missingUser", async (t: Test) => {
     },
   });
 
-  t.equal(
-    missingUser.status,
-    404,
-    "Returns not found response when user is missing"
-  );
+  t.equal(response.status, 201, "Creates a team user with no user yet");
 });
 
 test("POST /team-users: forbidden", async (t: Test) => {
@@ -257,6 +250,7 @@ test("/team-users end-to-end", async (t: Test) => {
       role: Role.VIEWER,
       teamId: unusedTeam.id,
       userId: teamAdmin.user.id,
+      userEmail: null,
     });
 
     await RawTeamsDAO.create(trx, {
@@ -271,6 +265,7 @@ test("/team-users end-to-end", async (t: Test) => {
       role: Role.ADMIN,
       teamId,
       userId: teamAdmin.user.id,
+      userEmail: null,
     });
   } catch (err) {
     await trx.rollback();

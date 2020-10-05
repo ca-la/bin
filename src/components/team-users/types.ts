@@ -6,27 +6,70 @@ export enum Role {
   VIEWER = "VIEWER",
 }
 
-export interface TeamUserDb {
+export type TeamUserDb = {
   id: string;
   teamId: string;
-  userId: string;
   role: Role;
-}
+} & (
+  | {
+      userId: null;
+      userEmail: string;
+    }
+  | {
+      userId: string;
+      userEmail: null;
+    }
+);
 
-export interface TeamUserDbRow {
+export type TeamUserDbRow = {
   id: string;
   team_id: string;
-  user_id: string;
   role: Role;
-}
+} & (
+  | {
+      user_email: null;
+      user_id: string;
+    }
+  | {
+      user_id: null;
+      user_email: string;
+    }
+);
 
-export interface TeamUser extends TeamUserDb {
+export type TeamUser = TeamUserDb &
+  (
+    | {
+        // a partial constraint; "either userId and user are both present, or neither are"
+        userId: string;
+        user: User;
+      }
+    | {
+        userId: null;
+        user: null;
+      }
+  );
+
+export function isRegisteredTeamUser(
+  candidate: TeamUser
+): candidate is TeamUserDb & {
+  userId: string;
   user: User;
+  userEmail: null;
+} {
+  return Boolean(candidate.user && candidate.userId && !candidate.userEmail);
 }
 
-export interface TeamUserRow extends TeamUserDbRow {
-  user: UserRow;
-}
+export type TeamUserRow = TeamUserDbRow &
+  (
+    | {
+        user_id: string;
+        user: UserRow;
+      }
+    | {
+        user_id: null;
+        user: null;
+      }
+  );
 
 export interface UnsavedTeamUser {
   teamId: string;

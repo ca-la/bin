@@ -5,9 +5,11 @@ import { buildDao } from "../../services/cala-component/cala-dao";
 import { TeamUserDb, TeamUserDbRow, TeamUser, TeamUserRow } from "./types";
 import adapter, { rawAdapter } from "./adapter";
 
+const TABLE_NAME = "team_users";
+
 export const rawDao = buildDao<TeamUserDb, TeamUserDbRow>(
   "TeamUserDb" as const,
-  "team_users",
+  TABLE_NAME,
   rawAdapter,
   {
     orderColumn: "user_id",
@@ -16,7 +18,7 @@ export const rawDao = buildDao<TeamUserDb, TeamUserDbRow>(
 
 export default buildDao<TeamUser, TeamUserRow>(
   "TeamUser" as const,
-  "team_users",
+  TABLE_NAME,
   adapter,
   {
     orderColumn: "user_id",
@@ -26,3 +28,15 @@ export default buildDao<TeamUser, TeamUserRow>(
         .leftJoin("users", "users.id", "team_users.user_id"),
   }
 );
+
+export async function claimAllByEmail(
+  trx: Knex.Transaction,
+  email: string,
+  userId: string
+): Promise<TeamUser[]> {
+  const rows = await trx(TABLE_NAME)
+    .update({ user_email: null, user_id: userId }, "*")
+    .where({ user_email: email });
+
+  return rows.map(adapter.fromDb);
+}
