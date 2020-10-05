@@ -176,10 +176,18 @@ export async function replaceForDesign(
   return createForDesign(trx, designId, variants);
 }
 
-export async function findByDesignId(designId: string): Promise<VariantDb[]> {
+export async function findByDesignId(
+  designId: string,
+  trx?: Knex.Transaction
+): Promise<VariantDb[]> {
   const variants = await db(TABLE_NAME)
     .where({ design_id: designId })
     .orderBy("position", "asc")
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .catch(rethrow);
 
   return validateEvery<ProductDesignVariantRow, VariantDb>(

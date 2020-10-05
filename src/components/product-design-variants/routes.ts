@@ -9,6 +9,10 @@ import {
 } from "../../middleware/can-access-design";
 import { hasProperties } from "../../services/require-properties";
 import db from "../../services/db";
+import requireAdmin = require("../../middleware/require-admin");
+import { requireQueryParam } from "../../middleware/require-query-param";
+import backfillUpcsForDesign from "../../services/backfill-upcs-for-design";
+import useTransaction from "../../middleware/use-transaction";
 
 const router = new Router();
 
@@ -110,6 +114,15 @@ function* getVariants(this: AuthedContext): Iterator<any, any, any> {
   this.status = 200;
 }
 
+function* backfillUpcs(
+  this: TrxContext<AuthedContext>
+): Iterator<any, any, any> {
+  const { designId } = this.query;
+  const { trx } = this.state;
+  this.body = yield backfillUpcsForDesign(trx, designId);
+  this.status = 200;
+}
+
 router.put(
   "/",
   requireAuth,
@@ -118,5 +131,11 @@ router.put(
   replaceVariants
 );
 router.get("/", requireAuth, canAccessDesignInQuery, getVariants);
-
+router.post(
+  "/backfill-upcs",
+  requireQueryParam("designId"),
+  requireAdmin,
+  useTransaction,
+  backfillUpcs
+);
 export default router.routes();
