@@ -16,11 +16,7 @@ export const UPDATABLE_PROPERTIES = [
   "role",
 ];
 
-export const encode = (data: CollaboratorWithUserRow): CollaboratorWithUser => {
-  let user = null;
-  if (data.user) {
-    user = encodeUser(data.user);
-  }
+const encodeDb = (data: CollaboratorRow): Collaborator => {
   return {
     cancelledAt: toDateOrNull(data.cancelled_at),
     collectionId: data.collection_id,
@@ -30,13 +26,25 @@ export const encode = (data: CollaboratorWithUserRow): CollaboratorWithUser => {
     id: data.id,
     invitationMessage: data.invitation_message,
     role: data.role as Roles,
-    user,
     userEmail: data.user_email,
     userId: data.user_id,
   };
 };
 
-export const dataAdapter = new DataAdapter<CollaboratorRow, Collaborator>();
+export const encode = (data: CollaboratorWithUserRow): CollaboratorWithUser => {
+  let user = null;
+  if (data.user) {
+    user = encodeUser(data.user);
+  }
+  return {
+    ...encodeDb(data),
+    user,
+  };
+};
+
+export const dataAdapter = new DataAdapter<CollaboratorRow, Collaborator>(
+  encodeDb
+);
 export const dataWithUserAdapter = new DataAdapter<
   CollaboratorWithUserRow,
   CollaboratorWithUser

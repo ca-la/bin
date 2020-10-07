@@ -705,7 +705,7 @@ test("CollaboratorsDAO.findUnclaimedByEmail", async (t: Test) => {
 
   t.deepEqual(
     await CollaboratorsDAO.findUnclaimedByEmail(newUserEmail),
-    [collaborator],
+    [omit(collaborator, "user")],
     "finds the unclaimed invitation"
   );
 
