@@ -2,6 +2,7 @@ import uuid from "node-uuid";
 import Knex from "knex";
 
 import { create as createDesign } from "../../components/product-designs/dao";
+import { deleteByIds as deleteDesigns } from "../../components/product-designs/dao/dao";
 import createUser = require("../../test-helpers/create-user");
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 
@@ -96,7 +97,34 @@ test("ProductDesignVariantsDAO.getSizes returns a list of sizes", async (t: Test
 });
 
 test("ProductDesignVariantsDAO.findByCollectionId returns a list of variants", async (t: Test) => {
-  const { collection, variants } = await createPrerequisites();
+  const { collection, variants, user } = await createPrerequisites();
+
+  const deletedDesign = await createDesign({
+    productType: "TEESHIRT",
+    title: "Plain White Tee",
+    userId: user.id,
+  });
+
+  await addDesign(collection.id, deletedDesign.id);
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await replaceForDesign(trx, deletedDesign.id, [
+      {
+        colorName: "Ol' Deleted Green",
+        designId: deletedDesign.id,
+        id: uuid.v4(),
+        position: 0,
+        sizeName: "M",
+        unitsToProduce: 123,
+        universalProductCode: null,
+        sku: null,
+        isSample: false,
+        colorNamePosition: 1,
+      },
+    ]);
+    await deleteDesigns({ designIds: [deletedDesign.id], trx });
+  });
+
   const foundVariants = await findByCollectionId(collection.id);
   t.deepEqual(
     variants,

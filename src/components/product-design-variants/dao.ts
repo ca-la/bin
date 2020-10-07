@@ -210,7 +210,15 @@ export async function findByCollectionId(
       "collection_designs.design_id",
       "product_design_variants.design_id"
     )
-    .where({ "collection_designs.collection_id": collectionId })
+    .join(
+      "product_designs",
+      "product_designs.id",
+      "product_design_variants.design_id"
+    )
+    .where({
+      "collection_designs.collection_id": collectionId,
+      "product_designs.deleted_at": null,
+    })
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
