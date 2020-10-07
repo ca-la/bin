@@ -31,7 +31,7 @@ run() {
   ci=${CI:-"false"}
   if [ "$ci" == "true" ]; then
     mkdir -p ./reports
-    npx tape -r ./dist/test-helpers/setup.js "dist/**/*spec.js" | npx tap-xunit > ./reports/tape.xml
+    npx tape -r ./dist/test-helpers/setup.js "dist/**/*spec.js" | tee >(npx tap-xunit > ./reports/tape.xml)
   else
     node -r ts-node/register --preserve-symlinks $(npm bin)/tape -r ./src/test-helpers/setup.ts "src/**/*spec.[jt]s" | npx tap-difflet $reporter_opts
   fi
