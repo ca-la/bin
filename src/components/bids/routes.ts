@@ -428,7 +428,9 @@ export function isPayoutRequest(data: object): data is PayoutRequest {
   );
 }
 
-function* postPayOut(this: PayOutPartnerContext): Iterator<any, any, any> {
+function* postPayOut(
+  this: TrxContext<PayOutPartnerContext>
+): Iterator<any, any, any> {
   const { bidId } = this.params;
   if (!isPayoutRequest(this.request.body)) {
     this.throw(400, "Request does not match Payout Request");
@@ -440,6 +442,8 @@ function* postPayOut(this: PayOutPartnerContext): Iterator<any, any, any> {
     message,
     stripeSourceType,
   } = this.request.body;
+  const { trx } = this.state;
+
   this.assert(message, 400, "Message is required");
   if (!isManual) {
     this.assert(payoutAccountId, 400, "Missing payout account ID");
@@ -450,7 +454,7 @@ function* postPayOut(this: PayOutPartnerContext): Iterator<any, any, any> {
     initiatorUserId: this.state.userId,
   };
 
-  yield payOutPartner(payoutLog, stripeSourceType);
+  yield payOutPartner(trx, payoutLog, stripeSourceType);
 
   this.status = 204;
 }
@@ -471,6 +475,11 @@ router.del("/:bidId/assignees/:userId", requireAdmin, removeBidFromPartner);
 
 router.post("/:bidId/accept", requireAuth, useTransaction, acceptDesignBid);
 router.post("/:bidId/reject", requireAuth, rejectDesignBid);
-router.post("/:bidId/pay-out-to-partner", requireAdmin, postPayOut);
+router.post(
+  "/:bidId/pay-out-to-partner",
+  requireAdmin,
+  useTransaction,
+  postPayOut
+);
 
 export default router.routes();

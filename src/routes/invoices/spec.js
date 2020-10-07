@@ -116,8 +116,8 @@ test("payout an invoice", async (t) => {
   });
   t.equal(response.status, 204);
 
-  const logs = await PartnerPayoutLogsDAO.findByPayoutAccountId(
-    payoutAccount.id
+  const logs = await db.transaction((trx) =>
+    PartnerPayoutLogsDAO.findByPayoutAccountId(trx, payoutAccount.id)
   );
   t.equal(logs.length, 1);
   t.equal(logs[0].invoiceId, invoice.id);

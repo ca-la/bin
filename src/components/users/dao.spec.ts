@@ -402,7 +402,9 @@ test("UsersDAO.findAllUnpaidPartners returns all unpaid partners", async (t: Tes
     bidId: bid2.id,
     isManual: false,
   };
-  await PartnerPayoutsDAO.create(data);
+  await db.transaction((trx: Knex.Transaction) =>
+    PartnerPayoutsDAO.create(trx, data)
+  );
 
   const users = await UsersDAO.findAllUnpaidPartners({ limit: 20, offset: 0 });
 

@@ -1,7 +1,7 @@
+import Knex from "knex";
 import rethrow = require("pg-rethrow");
 import uuid from "node-uuid";
 
-import db from "../../services/db";
 import {
   dataAdapter,
   dataAdapterForMeta,
@@ -20,6 +20,7 @@ const TABLE_NAME = "partner_payout_logs";
 const ACCOUNTS_TABLE_NAME = "partner_payout_accounts";
 
 export async function create(
+  trx: Knex.Transaction,
   data: UninsertedWithoutShortId<PartnerPayoutLog>
 ): Promise<PartnerPayoutLog> {
   const shortId = await computeUniqueShortId();
@@ -29,8 +30,8 @@ export async function create(
     ...data,
   });
 
-  const result = await db(TABLE_NAME)
-    .insert(rowData, "*")
+  const result = await trx(TABLE_NAME)
+    .insert({ ...rowData, created_at: new Date() }, "*")
     .then((rows: PartnerPayoutLogRow[]) => first(rows))
     .catch(rethrow);
 
@@ -47,9 +48,10 @@ export async function create(
 }
 
 export async function findByPayoutAccountId(
+  trx: Knex.Transaction,
   accountId: string
 ): Promise<PartnerPayoutLog[]> {
-  const result = await db(TABLE_NAME)
+  const result = await trx(TABLE_NAME)
     .where({
       payout_account_id: accountId,
     })
@@ -65,9 +67,10 @@ export async function findByPayoutAccountId(
 }
 
 export async function findByUserId(
+  trx: Knex.Transaction,
   userId: string
 ): Promise<PartnerPayoutLogWithMeta[]> {
-  const result = await db(TABLE_NAME)
+  const result = await trx(TABLE_NAME)
     .select(
       `${TABLE_NAME}.*`,
       "collections.id AS collection_id",
@@ -109,5 +112,24 @@ export async function findByUserId(
     isPartnerPayoutLogRowWithMeta,
     dataAdapterForMeta,
     result
+  );
+}
+
+export async function findByBidId(
+  trx: Knex.Transaction,
+  bidId: string
+): Promise<PartnerPayoutLog[]> {
+  const logs = await trx(TABLE_NAME)
+    .select("partner_payout_logs.*")
+    .join("pricing_bids", "pricing_bids.id", "partner_payout_logs.bid_id")
+    .where({ "pricing_bids.id": bidId })
+    .orderBy("created_at", "DESC")
+    .catch(rethrow);
+
+  return validateEvery<PartnerPayoutLogRow, PartnerPayoutLog>(
+    TABLE_NAME,
+    isPartnerPayoutLogRow,
+    dataAdapter,
+    logs
   );
 }

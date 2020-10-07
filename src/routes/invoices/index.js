@@ -5,6 +5,7 @@ const Router = require("koa-router");
 const canAccessUserResource = require("../../middleware/can-access-user-resource");
 const InvoicesDAO = require("../../dao/invoices");
 const requireAdmin = require("../../middleware/require-admin");
+const useTransaction = require("../../middleware/use-transaction").default;
 const User = require("../../components/users/domain-object");
 
 const router = new Router();
@@ -73,6 +74,7 @@ async function payOutPartner({
   message,
   payoutAccountId,
   payoutAmountCents,
+  trx,
 }) {
   requireValues({
     invoiceId,
@@ -106,7 +108,7 @@ async function payOutPartner({
     bidId: null,
   });
 
-  await PartnerPayoutLogsDAO.create({
+  await PartnerPayoutLogsDAO.create(trx, {
     initiatorUserId,
     invoiceId,
     message,
@@ -131,6 +133,7 @@ async function payOutPartner({
 function* postPayOut() {
   const { invoiceId } = this.params;
   const { message, payoutAccountId, payoutAmountCents } = this.request.body;
+  const { trx } = this.state;
   this.assert(message, 400, "Missing message");
   this.assert(payoutAccountId, 400, "Missing payout account ID");
   this.assert(payoutAmountCents, 400, "Missing payout amount");
@@ -141,6 +144,7 @@ function* postPayOut() {
     payoutAccountId,
     payoutAmountCents,
     message,
+    trx,
   });
 
   this.status = 204;
@@ -149,6 +153,11 @@ function* postPayOut() {
 router.get("/", getInvoices);
 router.get("/:invoiceId", requireAdmin, getInvoice);
 router.del("/:invoiceId", requireAdmin, deleteInvoice);
-router.post("/:invoiceId/pay-out-to-partner", requireAdmin, postPayOut);
+router.post(
+  "/:invoiceId/pay-out-to-partner",
+  requireAdmin,
+  useTransaction,
+  postPayOut
+);
 
 module.exports = router.routes();

@@ -1,3 +1,4 @@
+import Knex from "knex";
 import EmailService from "../email";
 import * as StripeService from "../stripe";
 import PartnerPayoutAccountsDAO from "../../dao/partner-payout-accounts";
@@ -16,6 +17,7 @@ import { findDesignByBidId } from "../../components/product-designs/dao/dao";
  * the invoice amount
  */
 export async function payOutPartner(
+  trx: Knex.Transaction,
   log: UninsertedWithoutShortId<PartnerPayoutLog>,
   stripeSourceType?: string
 ): Promise<void> {
@@ -63,7 +65,7 @@ export async function payOutPartner(
     });
   }
 
-  await createPartnerPayoutLog(log);
+  await createPartnerPayoutLog(trx, log);
 
   // TODO: convert to `single_notification` template and construct a NotificationMessage.
   if (vendorUser) {

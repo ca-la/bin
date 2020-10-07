@@ -30,7 +30,6 @@ import { addDesign } from "../../test-helpers/collections";
 import generateCollection from "../../test-helpers/factories/collection";
 import PayoutAccountsDAO = require("../../dao/partner-payout-accounts");
 import PartnerPayoutsDAO = require("../../components/partner-payouts/dao");
-import { PartnerPayoutLog } from "../partner-payouts/domain-object";
 import { BidDb } from "./types";
 
 const testDate = new Date(2012, 11, 22);
@@ -964,7 +963,9 @@ test("Bids DAO supports finding all unpaid bids by user id from after the cutoff
     bidId: bid2.id,
     isManual: false,
   };
-  await PartnerPayoutsDAO.create(data);
+  await db.transaction((trx: Knex.Transaction) =>
+    PartnerPayoutsDAO.create(trx, data)
+  );
 
   const bids = await findUnpaidByUserId(partner.id);
   t.equal(bids.length, 1);
@@ -1014,6 +1015,7 @@ test("Bids DAO does not return unpaid bids the partner has been removed from", a
 });
 
 test("Bids DAO supports finding bid with payout logs by id", async (t: Test) => {
+  const clock = sandbox().useFakeTimers(testDate);
   const { user: designer } = await createUser({ withSession: false });
   const { user: partner } = await createUser({
     role: "PARTNER",
@@ -1033,19 +1035,18 @@ test("Bids DAO supports finding bid with payout logs by id", async (t: Test) => 
     },
     designId: design.id,
   });
-  const payout1 = {
-    id: uuid.v4(),
-    invoiceId: null,
-    payoutAccountId: null,
-    payoutAmountCents: 1000,
-    message: "Get yo money",
-    initiatorUserId: admin.id,
-    bidId: bid.id,
-    isManual: true,
-    createdAt: new Date(2019, 8, 15),
-    shortId: null,
-  };
-  await PartnerPayoutsDAO.create(payout1);
+  const payout1 = await db.transaction((trx: Knex.Transaction) =>
+    PartnerPayoutsDAO.create(trx, {
+      id: uuid.v4(),
+      invoiceId: null,
+      payoutAccountId: null,
+      payoutAmountCents: 1000,
+      message: "Get yo money",
+      initiatorUserId: admin.id,
+      bidId: bid.id,
+      isManual: true,
+    })
+  );
 
   const payoutAccount = await PayoutAccountsDAO.create({
     id: uuid.v4(),
@@ -1057,28 +1058,21 @@ test("Bids DAO supports finding bid with payout logs by id", async (t: Test) => 
     stripePublishableKey: "stripe-publish-one",
     stripeUserId: "stripe-user-one",
   });
-  const payout2 = {
-    id: uuid.v4(),
-    invoiceId: null,
-    payoutAccountId: payoutAccount.id,
-    payoutAmountCents: 1000,
-    message: "Get mo money",
-    initiatorUserId: admin.id,
-    bidId: bid.id,
-    isManual: false,
-    createdAt: new Date(2019, 8, 15),
-    shortId: null,
-  };
-  await PartnerPayoutsDAO.create(payout2);
+  clock.tick(1000);
+  const payout2 = await db.transaction((trx: Knex.Transaction) =>
+    PartnerPayoutsDAO.create(trx, {
+      id: uuid.v4(),
+      invoiceId: null,
+      payoutAccountId: payoutAccount.id,
+      payoutAmountCents: 1000,
+      message: "Get mo money",
+      initiatorUserId: admin.id,
+      bidId: bid.id,
+      isManual: false,
+    })
+  );
 
   const foundBid = await findById(bid.id);
-  if (foundBid) {
-    foundBid.partnerPayoutLogs = foundBid.partnerPayoutLogs.map(
-      (payoutLog: PartnerPayoutLog) => {
-        return { ...payoutLog, shortId: null };
-      }
-    );
-  }
 
   t.deepEqual(omit(foundBid, "createdAt"), {
     acceptedAt: null,
@@ -1089,7 +1083,7 @@ test("Bids DAO supports finding bid with payout logs by id", async (t: Test) => 
     createdBy: admin.id,
     description: "Full Service",
     id: bid.id,
-    partnerPayoutLogs: [payout1, payout2],
+    partnerPayoutLogs: [payout2, payout1],
     partnerUserId: partner.id,
     quoteId: quote.id,
     revenueShareBasisPoints: 0,
@@ -1135,7 +1129,9 @@ async function generatePartnerAndBidEvents(
     createdAt: new Date(2019, 8, 15),
     shortId: null,
   };
-  await PartnerPayoutsDAO.create(payout1);
+  await db.transaction((trx: Knex.Transaction) =>
+    PartnerPayoutsDAO.create(trx, payout1)
+  );
   return bid.id;
 }
 

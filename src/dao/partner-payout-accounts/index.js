@@ -15,9 +15,14 @@ const { dataMapper } = PartnerPayoutAccount;
 
 const TABLE_NAME = "partner_payout_accounts";
 
-async function findById(id) {
+async function findById(id, trx) {
   return db(TABLE_NAME)
     .where({ id, deleted_at: null })
+    .modify((query) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .then(first)
     .then(maybeInstantiate);
 }
