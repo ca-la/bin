@@ -771,14 +771,15 @@ export async function findByQuoteId(quoteId: string): Promise<Bid[]> {
  * Returns all bids with bid-specific design events associated with the quote and user.
  * Returns events of type: BID_DESIGN | ACCEPT_SERVICE_BID | REJECT_SERVICE_BID | REMOVE_PARTNER.
  * @param quoteId
- * @param userId
+ * @param targetId User or Team Id
  */
-export async function findAllByQuoteAndUserId(
+export async function findAllByQuoteAndTargetId(
+  trx: Knex.Transaction,
   quoteId: string,
-  userId: string
+  targetId: string
 ): Promise<BidWithEvents[]> {
   const bidWithEventsRows = await orderByAcceptedAt(
-    db
+    trx
       .select(selectWithAcceptedAt)
       .select(
         db.raw(
@@ -789,15 +790,21 @@ export async function findAllByQuoteAndUserId(
       SELECT events.* FROM design_events AS events
       WHERE events.bid_id = pricing_bids.id
       AND (
-        (events.type = 'BID_DESIGN' AND events.target_id = :userId)
-        OR (events.type = 'ACCEPT_SERVICE_BID' AND events.actor_id = :userId)
-        OR (events.type = 'REJECT_SERVICE_BID' AND events.actor_id = :userId)
-        OR (events.type = 'REMOVE_PARTNER' AND events.target_id = :userId)
+        CASE
+          WHEN events.type = 'BID_DESIGN'
+            THEN events.target_id = :targetId OR events.target_team_id = :targetId
+          WHEN events.type = 'ACCEPT_SERVICE_BID'
+            THEN events.actor_id = :targetId OR events.target_team_id = :targetId
+          WHEN events.type = 'REJECT_SERVICE_BID'
+            THEN events.actor_id = :targetId OR events.target_team_id = :targetId
+          WHEN events.type = 'REMOVE_PARTNER'
+            THEN events.target_id = :targetId OR events.target_team_id = :targetId
+        END
       )
       ORDER BY events.created_at ASC
     ) AS ordered_events
   ) AS design_events `,
-          { userId }
+          { targetId }
         )
       )
       .from(DESIGN_EVENTS_TABLE)

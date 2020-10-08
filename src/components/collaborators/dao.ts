@@ -110,7 +110,8 @@ export async function create(
 
 export async function update(
   collaboratorId: string,
-  data: Partial<Collaborator>
+  data: Partial<Collaborator>,
+  trx?: Knex.Transaction
 ): Promise<Collaborator> {
   const rowData = pick(
     partialDataAdapter.forInsertion(data),
@@ -129,6 +130,11 @@ Updatable Properties: ${UPDATABLE_PROPERTIES.join(", ")}`.trim()
     .where({ id: collaboratorId })
     .andWhereRaw("(cancelled_at IS null OR cancelled_at > now())")
     .update(rowData, "*")
+    .modify((query: Knex.QueryBuilder): void => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .then((rows: CollaboratorRow[]) => first<CollaboratorRow>(rows))
     .catch(rethrow)
     .catch(
@@ -407,6 +413,29 @@ export async function findByDesignAndUser(
     collaboratorRow
   );
   return collaborator;
+}
+
+export async function findByDesignAndTeam(
+  trx: Knex.Transaction,
+  designId: string,
+  teamId: string
+): Promise<Collaborator | null> {
+  const collaboratorRow = await trx(TABLE_NAME)
+    .select("*")
+    .where({ design_id: designId, team_id: teamId })
+    .andWhereRaw("(cancelled_at IS null OR cancelled_at > now())")
+    .then((rows: CollaboratorRow[]) => first<CollaboratorRow>(rows));
+
+  if (!collaboratorRow) {
+    return null;
+  }
+
+  return validate<CollaboratorRow, Collaborator>(
+    TABLE_NAME,
+    isCollaboratorRow,
+    dataAdapter,
+    collaboratorRow
+  );
 }
 
 export async function findAllForUserThroughDesign(

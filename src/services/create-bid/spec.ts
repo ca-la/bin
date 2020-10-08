@@ -29,8 +29,11 @@ function setup() {
       .stub(HasActiveBidsService, "hasActiveBids")
       .resolves(false),
     createDesignEventStub: sandbox().stub(DesignEventsDAO, "create").resolves(),
-    findCollaboratorStub: sandbox()
+    findUserCollaboratorStub: sandbox()
       .stub(CollaboratorsDAO, "findByDesignAndUser")
+      .resolves(null),
+    findTeamCollaboratorStub: sandbox()
+      .stub(CollaboratorsDAO, "findByDesignAndTeam")
       .resolves(null),
     createCollaboratorStub: sandbox()
       .stub(CollaboratorsDAO, "create")
@@ -147,6 +150,7 @@ test("createBid with user assignee", async (t: Test) => {
           userId: "a-partner-user-id",
           teamId: null,
         },
+        trx,
       ],
     ],
     "calls CollaboratorsDAO.create with correct arguments"
@@ -166,6 +170,7 @@ test("createBid with team assignee", async (t: Test) => {
     bidCreateStub,
     createDesignEventStub,
     bidTaskTypeCreateStub,
+    createCollaboratorStub,
   } = setup();
 
   const trx = await db.transaction();
@@ -246,5 +251,25 @@ test("createBid with team assignee", async (t: Test) => {
       ],
     ],
     "calls DesignEventsDAO.create with correct arguments"
+  );
+
+  t.deepEqual(
+    createCollaboratorStub.args,
+    [
+      [
+        {
+          cancelledAt: new Date(now.getTime() + MILLISECONDS_TO_EXPIRE),
+          collectionId: null,
+          designId: "a-design-id",
+          invitationMessage: "",
+          role: "PREVIEW",
+          teamId: "a-partner-team-id",
+          userEmail: null,
+          userId: null,
+        },
+        trx,
+      ],
+    ],
+    "calls Collaborator.create with correct arguments"
   );
 });

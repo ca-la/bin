@@ -15,7 +15,7 @@ import {
   findAcceptedByTargetId,
   findActiveByTargetId,
   findAll,
-  findAllByQuoteAndUserId,
+  findAllByQuoteAndTargetId,
   findByBidIdAndUser,
   findById,
   findByQuoteId,
@@ -883,7 +883,9 @@ test("Bids DAO supports finding by quote and user id with events", async (t: Tes
     createdAt: acceptDate2,
   });
 
-  const result = await findAllByQuoteAndUserId(quote.id, partner.id);
+  const result = await db.transaction((trx: Knex.Transaction) =>
+    findAllByQuoteAndTargetId(trx, quote.id, partner.id)
+  );
   t.deepEqual(
     result,
     [
@@ -1238,4 +1240,165 @@ test("Bids DAO supports finding by bid id and user with a team", async (t: Test)
   );
 
   t.deepEqual(unauthorizedLook, null, "Only associated users can view the bid");
+});
+
+test("Bids DAO supports finding by quote and team id with events", async (t: Test) => {
+  sandbox().useFakeTimers(testDate);
+  const { user: admin } = await createUser({
+    role: "ADMIN",
+    withSession: false,
+  });
+  const { user: designer } = await createUser({ withSession: false });
+  const { user: partner } = await createUser({
+    role: "PARTNER",
+    withSession: false,
+  });
+  const { team } = await generateTeam(partner.id);
+  const design = await generateDesign({
+    userId: designer.id,
+  });
+  await generatePricingValues();
+  const quote = await generatePricingQuote(
+    {
+      createdAt: new Date(),
+      deletedAt: null,
+      expiresAt: null,
+      id: uuid.v4(),
+      minimumOrderQuantity: 1,
+      designId: design.id,
+      materialBudgetCents: 1200,
+      materialCategory: "BASIC",
+      processes: [],
+      productComplexity: "SIMPLE",
+      productType: "TEESHIRT",
+      processTimelinesVersion: 0,
+      processesVersion: 0,
+      productMaterialsVersion: 0,
+      productTypeVersion: 0,
+      marginVersion: 0,
+      constantsVersion: 0,
+      careLabelsVersion: 0,
+    },
+    200
+  );
+  const openBid1 = await db.transaction((trx: Knex.Transaction) =>
+    create(trx, {
+      bidPriceCents: 100000,
+      bidPriceProductionOnlyCents: 0,
+      createdAt: new Date(),
+      createdBy: admin.id,
+      description: "Full Service",
+      dueDate: new Date(new Date().getTime() + daysToMs(10)),
+      id: uuid.v4(),
+      quoteId: quote.id,
+      revenueShareBasisPoints: 200,
+    })
+  );
+  await generateDesignEvent({
+    createdAt: new Date(),
+    designId: design.id,
+    targetId: designer.id,
+    type: "COMMIT_COST_INPUTS",
+  });
+  await generateDesignEvent({
+    actorId: designer.id,
+    createdAt: new Date(),
+    designId: design.id,
+    type: "COMMIT_QUOTE",
+  });
+  const { designEvent: de1 } = await generateDesignEvent({
+    bidId: openBid1.id,
+    createdAt: new Date(),
+    targetId: null,
+    type: "BID_DESIGN",
+    targetTeamId: team.id,
+  });
+  const openBid2 = await db.transaction((trx: Knex.Transaction) =>
+    create(trx, {
+      bidPriceCents: 100000,
+      bidPriceProductionOnlyCents: 0,
+      createdAt: new Date(),
+      createdBy: admin.id,
+      description: "Full Service",
+      dueDate: new Date(new Date().getTime() + daysToMs(10)),
+      id: uuid.v4(),
+      quoteId: quote.id,
+      revenueShareBasisPoints: 200,
+    })
+  );
+  const openBid3 = await db.transaction((trx: Knex.Transaction) =>
+    create(trx, {
+      bidPriceCents: 100000,
+      bidPriceProductionOnlyCents: 0,
+      createdAt: new Date(),
+      createdBy: admin.id,
+      description: "Full Service",
+      dueDate: new Date(new Date().getTime() + daysToMs(10)),
+      id: uuid.v4(),
+      quoteId: quote.id,
+      revenueShareBasisPoints: 200,
+    })
+  );
+  await generateDesignEvent({
+    createdAt: new Date(),
+    designId: design.id,
+    targetId: designer.id,
+    type: "COMMIT_COST_INPUTS",
+  });
+  await generateDesignEvent({
+    actorId: designer.id,
+    createdAt: new Date(),
+    designId: design.id,
+    type: "COMMIT_QUOTE",
+  });
+  const { designEvent: de3 } = await generateDesignEvent({
+    bidId: openBid3.id,
+    createdAt: new Date(),
+    targetId: null,
+    type: "BID_DESIGN",
+    targetTeamId: team.id,
+  });
+
+  const acceptDate1 = new Date(testDate.getTime() + daysToMs(1));
+  const { designEvent: de2 } = await generateDesignEvent({
+    actorId: partner.id,
+    bidId: openBid1.id,
+    type: "ACCEPT_SERVICE_BID",
+    createdAt: acceptDate1,
+    targetTeamId: team.id,
+  });
+
+  const acceptDate2 = new Date(testDate.getTime() + daysToMs(3));
+  const { designEvent: de4 } = await generateDesignEvent({
+    actorId: partner.id,
+    bidId: openBid3.id,
+    type: "ACCEPT_SERVICE_BID",
+    createdAt: acceptDate2,
+    targetTeamId: team.id,
+  });
+
+  const result = await db.transaction((trx: Knex.Transaction) =>
+    findAllByQuoteAndTargetId(trx, quote.id, team.id)
+  );
+  t.deepEqual(
+    result,
+    [
+      {
+        ...openBid3,
+        acceptedAt: acceptDate2,
+        designEvents: [de3, de4],
+      },
+      {
+        ...openBid1,
+        acceptedAt: acceptDate1,
+        designEvents: [de1, de2],
+      },
+      {
+        ...openBid2,
+        acceptedAt: null,
+        designEvents: [],
+      },
+    ],
+    "Returns a list of bids with bid-specific events"
+  );
 });

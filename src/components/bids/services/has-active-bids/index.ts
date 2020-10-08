@@ -1,4 +1,5 @@
-import { findAllByQuoteAndUserId } from "../../dao";
+import Knex from "knex";
+import { findAllByQuoteAndTargetId } from "../../dao";
 import { BidWithEvents } from "../../domain-object";
 import { BidState, determineStateFromEvents } from "../state-machine";
 
@@ -9,15 +10,20 @@ export function isActiveBid(bidWithEvent: BidWithEvents): boolean {
 }
 
 /**
- * Determines if the given quote has at least one active (open or accepted) bids for the given user.
+ * Determines if the given quote has at least one active (open or accepted) bids for the given user/team.
  * @param quoteId
- * @param userId
+ * @param targetId User or Team ID
  */
 export async function hasActiveBids(
+  trx: Knex.Transaction,
   quoteId: string,
-  userId: string
+  targetId: string
 ): Promise<boolean> {
-  const bidsWithEvents = await findAllByQuoteAndUserId(quoteId, userId);
+  const bidsWithEvents = await findAllByQuoteAndTargetId(
+    trx,
+    quoteId,
+    targetId
+  );
 
   return bidsWithEvents.some(isActiveBid);
 }

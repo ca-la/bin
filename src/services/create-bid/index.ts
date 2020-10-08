@@ -34,7 +34,7 @@ async function assignUser(
     );
   }
 
-  const hasActive = await hasActiveBids(quoteId, targetId);
+  const hasActive = await hasActiveBids(trx, quoteId, targetId);
   if (hasActive) {
     throw new ConflictError(
       `There are active bids for user ${targetId} on the design ${designId}`
@@ -60,20 +60,27 @@ async function assignUser(
   const cancellationDate = new Date(now.getTime() + MILLISECONDS_TO_EXPIRE);
 
   if (!maybeCollaborator) {
-    await CollaboratorsDAO.create({
-      cancelledAt: cancellationDate,
-      collectionId: null,
-      designId,
-      invitationMessage: "",
-      role: "PREVIEW",
-      userEmail: null,
-      userId: targetId,
-      teamId: null,
-    });
+    await CollaboratorsDAO.create(
+      {
+        cancelledAt: cancellationDate,
+        collectionId: null,
+        designId,
+        invitationMessage: "",
+        role: "PREVIEW",
+        userEmail: null,
+        userId: targetId,
+        teamId: null,
+      },
+      trx
+    );
   } else if (maybeCollaborator.cancelledAt) {
-    await CollaboratorsDAO.update(maybeCollaborator.id, {
-      cancelledAt: cancellationDate,
-    });
+    await CollaboratorsDAO.update(
+      maybeCollaborator.id,
+      {
+        cancelledAt: cancellationDate,
+      },
+      trx
+    );
   }
 
   NotificationsService.sendPartnerDesignBid(designId, actorId, targetId);
@@ -91,11 +98,51 @@ async function assignTeam(
     );
   }
 
+  const hasActive = await hasActiveBids(trx, quoteId, targetId);
+  if (hasActive) {
+    throw new ConflictError(
+      `There are active bids for user ${targetId} on the design ${designId}`
+    );
+  }
+
+  const now = new Date();
+  const cancellationDate = new Date(now.getTime() + MILLISECONDS_TO_EXPIRE);
+
+  const maybeCollaborator = await CollaboratorsDAO.findByDesignAndTeam(
+    trx,
+    designId,
+    targetId
+  );
+
+  if (!maybeCollaborator) {
+    await CollaboratorsDAO.create(
+      {
+        cancelledAt: cancellationDate,
+        collectionId: null,
+        designId,
+        invitationMessage: "",
+        role: "PREVIEW",
+        userEmail: null,
+        userId: null,
+        teamId: targetId,
+      },
+      trx
+    );
+  } else if (maybeCollaborator.cancelledAt) {
+    await CollaboratorsDAO.update(
+      maybeCollaborator.id,
+      {
+        cancelledAt: cancellationDate,
+      },
+      trx
+    );
+  }
+
   await createDesignEvent(trx, {
     ...templateDesignEvent,
     actorId,
     bidId,
-    createdAt: new Date(),
+    createdAt: now,
     designId,
     id: uuid.v4(),
     targetId: null,

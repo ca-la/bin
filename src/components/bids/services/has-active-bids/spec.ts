@@ -1,10 +1,12 @@
-import { hasActiveBids } from "./index";
+import Knex from "knex";
 
+import { hasActiveBids } from "./index";
 import { sandbox, test, Test } from "../../../../test-helpers/fresh";
 import * as BidsDAO from "../../dao";
 import generateBid from "../../../../test-helpers/factories/bid";
 import generateDesignEvent from "../../../../test-helpers/factories/design-event";
 import { BidWithEvents } from "../../domain-object";
+import db from "../../../../services/db";
 
 test("hasActiveBids can determine the state for a user and quote", async (t: Test) => {
   const { bid: bid1 } = await generateBid();
@@ -21,10 +23,12 @@ test("hasActiveBids can determine the state for a user and quote", async (t: Tes
   const bidWithEvent2: BidWithEvents = { ...bid2, designEvents: [] };
   const bidAndEventList = [bidWithEvent1, bidWithEvent2];
   const findAllStub = sandbox()
-    .stub(BidsDAO, "findAllByQuoteAndUserId")
+    .stub(BidsDAO, "findAllByQuoteAndTargetId")
     .resolves(bidAndEventList);
 
-  const result = await hasActiveBids("abc-123", "xyz-456");
+  const result = await db.transaction((trx: Knex.Transaction) =>
+    hasActiveBids(trx, "abc-123", "xyz-456")
+  );
   t.true(result, "Has an active bid");
   t.equal(findAllStub.callCount, 1, "Calls the stub just once");
 });
@@ -46,10 +50,12 @@ test("hasActiveBids can determine the state for a user and quote", async (t: Tes
   const bidWithEvent2: BidWithEvents = { ...bid2, designEvents: [] };
   const bidAndEventList = [bidWithEvent1, bidWithEvent2];
   const findAllStub = sandbox()
-    .stub(BidsDAO, "findAllByQuoteAndUserId")
+    .stub(BidsDAO, "findAllByQuoteAndTargetId")
     .resolves(bidAndEventList);
 
-  const result = await hasActiveBids("abc-123", "xyz-456");
+  const result = await db.transaction((trx: Knex.Transaction) =>
+    hasActiveBids(trx, "abc-123", "xyz-456")
+  );
   t.false(result, "Does not have an active bid");
   t.equal(findAllStub.callCount, 1, "Calls the stub just once");
 });

@@ -836,3 +836,33 @@ test("findByDesignAndUser find team", async (t: Test) => {
 
   t.deepEqual(foundCollaborator, collaborator, "Returns a team collaborator");
 });
+
+test("findByDesignAndTeam", async (t: Test) => {
+  const { user } = await createUser({ withSession: false });
+  const { team } = await generateTeam(user.id);
+  const design = await ProductDesignsDAO.create({
+    productType: "TEESHIRT",
+    title: "A product design",
+    userId: user.id,
+  });
+
+  const { collaborator } = await generateCollaborator({
+    collectionId: null,
+    designId: design.id,
+    invitationMessage: "",
+    role: "PARTNER",
+    userEmail: null,
+    userId: null,
+    teamId: team.id,
+  });
+
+  const foundCollaborator = await db.transaction((trx: Knex.Transaction) =>
+    CollaboratorsDAO.findByDesignAndTeam(trx, design.id, team.id)
+  );
+
+  t.deepEqual(
+    foundCollaborator,
+    omit(collaborator, "user"),
+    "Returns a team collaborator"
+  );
+});
