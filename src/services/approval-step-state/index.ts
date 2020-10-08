@@ -10,7 +10,6 @@ import ApprovalStep, {
   ApprovalStepState,
   ApprovalStepType,
 } from "../../components/approval-steps/domain-object";
-import { findByDesignId as findProductTypeByDesignId } from "../../components/pricing-product-types/dao";
 import { taskTypes } from "../../components/tasks/templates";
 import { getDefaultsByDesign } from "../../components/approval-step-submissions/defaults";
 import notifications from "../../components/approval-steps/notifications";
@@ -173,12 +172,6 @@ export async function transitionCheckoutState(
 
   for (const design of designs) {
     const steps = await ApprovalStepsDAO.findByDesign(trx, design.id);
-    const productType = await findProductTypeByDesignId(design.id, trx);
-    if (!productType) {
-      throw new Error(
-        `Unable to find a PricingProductType for design "${design.id}".`
-      );
-    }
 
     const checkoutStep = steps.find(
       (step: ApprovalStep): boolean => step.type === ApprovalStepType.CHECKOUT
