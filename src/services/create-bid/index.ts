@@ -68,6 +68,7 @@ async function assignUser(
       role: "PREVIEW",
       userEmail: null,
       userId: targetId,
+      teamId: null,
     });
   } else if (maybeCollaborator.cancelledAt) {
     await CollaboratorsDAO.update(maybeCollaborator.id, {

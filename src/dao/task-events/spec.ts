@@ -573,6 +573,7 @@ test("Task Events DAO supports retrieval by userId on shared collection", async 
     role: "EDIT",
     userEmail: null,
     userId: user.id,
+    teamId: null,
   });
 
   const result = await findByUserId(user.id);
@@ -617,6 +618,7 @@ test("Task Events DAO supports retrieval by userId on shared collection", async 
     role: "EDIT",
     userEmail: null,
     userId: user.id,
+    teamId: null,
   });
 
   const result = await findByUserId(user.id);
@@ -651,6 +653,7 @@ test("Task Events DAO supports retrieval by userId with assignee filter", async 
     role: "EDIT",
     userEmail: null,
     userId: user.id,
+    teamId: null,
   });
 
   await CollaboratorTasksDAO.create({
@@ -916,6 +919,7 @@ test("Task Events DAO supports retrieval by userId with multiple stage filter", 
     role: "EDIT",
     userEmail: null,
     userId: user.id,
+    teamId: null,
   });
 
   const singleStageResult = await findByUserId(user.id, {

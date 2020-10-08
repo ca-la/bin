@@ -91,6 +91,7 @@ function* createCollection(
       role: "EDIT",
       userEmail: null,
       userId,
+      teamId: null,
     },
     trx
   );

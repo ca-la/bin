@@ -21,6 +21,7 @@ export default async function generateCollaborator(
       role: "EDIT",
       userEmail: null,
       userId: null,
+      teamId: null,
       ...options,
     },
     trx

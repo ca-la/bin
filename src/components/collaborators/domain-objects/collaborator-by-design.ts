@@ -76,6 +76,7 @@ function encode(
             : null,
           userEmail: collaborator.user_email,
           userId: collaborator.user_id,
+          teamId: collaborator.team_id,
         };
       }
     ),
@@ -118,6 +119,7 @@ function decode(
             : null,
           user_email: collaborator.userEmail,
           user_id: collaborator.userId,
+          team_id: collaborator.teamId,
         };
       }
     ),

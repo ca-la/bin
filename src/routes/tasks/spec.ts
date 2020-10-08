@@ -802,6 +802,7 @@ test("GET list returns all tasks by resource with limit & offset", async (t: tap
     role: "EDIT",
     userEmail: null,
     userId: user.id,
+    teamId: null,
   });
   const { task } = await generateTask({ designStageId: stage.id, ordering: 0 });
 

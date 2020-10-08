@@ -39,6 +39,7 @@ test("CollaboratorTask DAO supports creation/retrieval", async (t: tape.Test) =>
     role: "EDIT",
     userEmail: null,
     userId: userOne.user.id,
+    teamId: null,
   });
   const collaboratorTwo = await createCollaborator({
     cancelledAt: null,
@@ -48,6 +49,7 @@ test("CollaboratorTask DAO supports creation/retrieval", async (t: tape.Test) =>
     role: "EDIT",
     userEmail: null,
     userId: userTwo.user.id,
+    teamId: null,
   });
   const taskOne = await createTask();
   const taskTwo = await createTask();
@@ -96,6 +98,7 @@ test("CollaboratorTask DAO does not allow non-unique creation", async (t: tape.T
     role: "EDIT",
     userEmail: null,
     userId: user.id,
+    teamId: null,
   });
   await create({
     collaboratorId: collaborator.id,
@@ -135,6 +138,7 @@ test("CollaboratorTask DAO supports multiple simultaneous creations", async (t: 
     role: "EDIT",
     userEmail: null,
     userId: userOne.user.id,
+    teamId: null,
   });
   const collaboratorTwo = await createCollaborator({
     cancelledAt: null,
@@ -144,6 +148,7 @@ test("CollaboratorTask DAO supports multiple simultaneous creations", async (t: 
     role: "EDIT",
     userEmail: null,
     userId: userTwo.user.id,
+    teamId: null,
   });
 
   const results = await createAllByCollaboratorIdsAndTaskId(
@@ -187,6 +192,7 @@ test("CollaboratorTask DAO supports multiple simultaneous deletions", async (t: 
     role: "EDIT",
     userEmail: null,
     userId: userOne.user.id,
+    teamId: null,
   });
   const collaboratorTwo = await createCollaborator({
     cancelledAt: null,
@@ -196,6 +202,7 @@ test("CollaboratorTask DAO supports multiple simultaneous deletions", async (t: 
     role: "EDIT",
     userEmail: null,
     userId: userTwo.user.id,
+    teamId: null,
   });
   const collaboratorThree = await createCollaborator({
     cancelledAt: null,
@@ -205,6 +212,7 @@ test("CollaboratorTask DAO supports multiple simultaneous deletions", async (t: 
     role: "EDIT",
     userEmail: null,
     userId: userThree.user.id,
+    teamId: null,
   });
   await create({
     collaboratorId: collaboratorOne.id,
@@ -264,6 +272,7 @@ test("CollaboratorTask DAO supports create all", async (t: tape.Test) => {
     role: "EDIT",
     userEmail: null,
     userId: userOne.user.id,
+    teamId: null,
   });
   const collaboratorTwo = await createCollaborator({
     cancelledAt: null,
@@ -273,6 +282,7 @@ test("CollaboratorTask DAO supports create all", async (t: tape.Test) => {
     role: "EDIT",
     userEmail: null,
     userId: userTwo.user.id,
+    teamId: null,
   });
   const taskOne = await createTask();
 

@@ -18,6 +18,7 @@ import generateBid from "../../test-helpers/factories/bid";
 import { taskTypes } from "../tasks/templates";
 import { addDesign, removeDesign } from "../../test-helpers/collections";
 import { templateDesignEvent } from "../design-events/types";
+import { generateTeam } from "../../test-helpers/factories/team";
 
 test("Collaborators DAO can find all collaborators with a list of ids", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
@@ -437,7 +438,7 @@ test("CollaboratorsDAO.deleteByDesignIdAndUserId deletes collaborator", async (t
   t.deepEqual(collaborator, null);
 });
 
-test("findAllForUserThroughDesign can find all collaborators", async (t: Test) => {
+test("findAllForUserThroughDesign can find user collaborators", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
 
   const { collection } = await generateCollection();
@@ -491,6 +492,36 @@ test("findAllForUserThroughDesign can find all collaborators", async (t: Test) =
   );
 
   t.deepEqual(resultThree, [collaboratorOne]);
+});
+
+test("findAllForUserThroughDesign can find team collaborators", async (t: Test) => {
+  const { user } = await createUser({ withSession: false });
+  const { team } = await generateTeam(user.id);
+  const { collection } = await generateCollection();
+
+  const design = await ProductDesignsDAO.create({
+    productType: "TEESHIRT",
+    title: "A product design",
+    userId: user.id,
+  });
+  await addDesign(collection.id, design.id);
+
+  const { collaborator } = await generateCollaborator({
+    collectionId: null,
+    designId: design.id,
+    invitationMessage: "",
+    role: "PARTNER",
+    userEmail: null,
+    userId: null,
+    teamId: team.id,
+  });
+
+  const result = await CollaboratorsDAO.findAllForUserThroughDesign(
+    design.id,
+    user.id
+  );
+
+  t.deepEqual(result, [collaborator]);
 });
 
 test("cancelForDesignAndPartner cancels the preview role", async (t: Test) => {
@@ -777,4 +808,31 @@ test("CollaboratorsDAO.findByDesignAndTaskType", async (t: Test) => {
 
     t.deepEqual([], notFound);
   });
+});
+
+test("findByDesignAndUser find team", async (t: Test) => {
+  const { user } = await createUser({ withSession: false });
+  const { team } = await generateTeam(user.id);
+  const design = await ProductDesignsDAO.create({
+    productType: "TEESHIRT",
+    title: "A product design",
+    userId: user.id,
+  });
+
+  const { collaborator } = await generateCollaborator({
+    collectionId: null,
+    designId: design.id,
+    invitationMessage: "",
+    role: "PARTNER",
+    userEmail: null,
+    userId: null,
+    teamId: team.id,
+  });
+
+  const foundCollaborator = await CollaboratorsDAO.findByDesignAndUser(
+    design.id,
+    user.id
+  );
+
+  t.deepEqual(foundCollaborator, collaborator, "Returns a team collaborator");
 });

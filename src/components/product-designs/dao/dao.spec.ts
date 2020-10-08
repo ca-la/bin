@@ -62,6 +62,8 @@ import { ComponentType } from "../../components/domain-object";
 import ProductDesignWithApprovalSteps from "../domain-objects/product-design-with-approval-steps";
 import generateBid from "../../../test-helpers/factories/bid";
 import * as Aftership from "../../../components/integrations/aftership/service";
+import { generateTeam } from "../../../test-helpers/factories/team";
+import { TeamType } from "../../teams/types";
 
 test("ProductDesignCanvases DAO supports creation/retrieval, enriched with image links", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
@@ -829,6 +831,57 @@ test("findAllDesignsThroughCollaborator filters by stage", async (t: tape.Test) 
       testCase.title
     );
   }
+});
+
+test("findAllDesignsThroughCollaborator find designs through a team", async (t: tape.Test) => {
+  const { user } = await createUser();
+  const { user: partner } = await createUser();
+  const { team } = await generateTeam(partner.id, { type: TeamType.PARTNER });
+
+  const { collection } = await generateCollection({
+    createdBy: user.id,
+  });
+  const designOne = await createDesign({
+    productType: "test",
+    title: "rad design",
+    userId: user.id,
+  });
+
+  const designTwo = await createDesign({
+    productType: "test",
+    title: "cool design",
+    userId: user.id,
+  });
+  await addDesign(collection.id, designTwo.id);
+
+  await generateCollaborator({
+    collectionId: null,
+    designId: designOne.id,
+    invitationMessage: "",
+    role: "EDIT",
+    userEmail: null,
+    userId: null,
+    teamId: team.id,
+  });
+
+  await generateCollaborator({
+    collectionId: collection.id,
+    designId: null,
+    invitationMessage: "",
+    role: "EDIT",
+    userEmail: null,
+    userId: null,
+    teamId: team.id,
+  });
+
+  const designs = await findAllDesignsThroughCollaborator({
+    userId: partner.id,
+  });
+  t.deepEqual(
+    designs.map((d: ProductDesignWithApprovalSteps) => d.id),
+    [designTwo.id, designOne.id],
+    "Returns designs for team collaborator"
+  );
 });
 
 test("findById returns approval steps", async (t: tape.Test) => {

@@ -58,6 +58,7 @@ export default async function addCollaborator(
         role,
         userEmail: null,
         userId: user.id,
+        teamId: null,
       })
     : await CollaboratorsDAO.create({
         cancelledAt: null,
@@ -67,6 +68,7 @@ export default async function addCollaborator(
         role,
         userEmail: normalizedEmail,
         userId: null,
+        teamId: null,
       });
 
   NotificationsService.immediatelySendInviteCollaborator({

@@ -22,6 +22,7 @@ async function createInTransaction(
       role: "EDIT",
       userEmail: null,
       userId: design.userId,
+      teamId: null,
     },
     trx
   );

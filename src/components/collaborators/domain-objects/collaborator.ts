@@ -28,6 +28,7 @@ const encodeDb = (data: CollaboratorRow): Collaborator => {
     role: data.role as Roles,
     userEmail: data.user_email,
     userId: data.user_id,
+    teamId: data.team_id,
   };
 };
 

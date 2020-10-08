@@ -10,7 +10,7 @@ export const stubFindByDesigns = (
   collaboratorsByDesign: CollaboratorWithUserMetaByDesign[];
   stub: Sinon.SinonStub;
 } => {
-  const collaboratorsByDesign = [
+  const collaboratorsByDesign: CollaboratorWithUserMetaByDesign[] = [
     {
       collaborators: [
         {
@@ -25,6 +25,7 @@ export const stubFindByDesigns = (
           user: null,
           userEmail: null,
           userId,
+          teamId: null,
         },
       ],
       designId: "48b54194-257f-42a3-a6a2-31e91862a463",
@@ -43,6 +44,7 @@ export const stubFindByDesigns = (
           user: null,
           userEmail: null,
           userId,
+          teamId: null,
         },
       ],
       designId: "4e92fdf8-fc6c-4d33-96f6-ba325d9ab5e8",

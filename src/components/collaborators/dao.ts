@@ -377,7 +377,15 @@ export async function findByDesignAndUser(
   trx?: Knex.Transaction
 ): Promise<CollaboratorWithUser | null> {
   const collaboratorRow = await getCollaboratorViewBuilder()
-    .where({ design_id: designId, user_id: userId })
+    .leftJoin(
+      "team_users",
+      "team_users.team_id",
+      "collaborators_forcollaboratorsviewraw.team_id"
+    )
+    .whereRaw(
+      `design_id = ? AND (collaborators_forcollaboratorsviewraw.user_id = ? OR team_users.user_id = ?)`,
+      [designId, userId, userId]
+    )
     .andWhereRaw("(cancelled_at IS null OR cancelled_at > now())")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
@@ -409,25 +417,29 @@ export async function findAllForUserThroughDesign(
   const collaboratorRows = await getCollaboratorViewBuilder()
     .joinRaw(
       `
-LEFT JOIN collection_designs AS cd ON cd.design_id = ?
-LEFT JOIN collections AS c ON c.id = cd.collection_id AND c.deleted_at IS null
-LEFT JOIN product_designs AS d ON d.id = ? AND d.deleted_at IS null
+        LEFT JOIN collection_designs AS cd ON cd.design_id = ?
+        LEFT JOIN collections AS c ON c.id = cd.collection_id AND c.deleted_at IS null
+        LEFT JOIN product_designs AS d ON d.id = ? AND d.deleted_at IS null
+        LEFT JOIN team_users ON team_users.team_id = collaborators_forcollaboratorsviewraw.team_id
     `,
       [designId, designId]
     )
     .whereRaw(
       `
-collaborators_forcollaboratorsviewraw.user_id = ?
-AND (
-  collaborators_forcollaboratorsviewraw.collection_id = c.id
-  OR collaborators_forcollaboratorsviewraw.design_id = ?
-)
-AND (
-  collaborators_forcollaboratorsviewraw.cancelled_at IS null
-  OR collaborators_forcollaboratorsviewraw.cancelled_at > now()
-)
+        (
+          collaborators_forcollaboratorsviewraw.user_id = ? OR
+          team_users.user_id = ?
+        )
+        AND (
+          collaborators_forcollaboratorsviewraw.collection_id = c.id
+          OR collaborators_forcollaboratorsviewraw.design_id = ?
+        )
+        AND (
+          collaborators_forcollaboratorsviewraw.cancelled_at IS null
+          OR collaborators_forcollaboratorsviewraw.cancelled_at > now()
+        )
     `,
-      [userId, designId]
+      [userId, userId, designId]
     )
     .orderByRaw(
       `

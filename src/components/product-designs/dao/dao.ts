@@ -63,7 +63,8 @@ product_designs.id in (
   SELECT product_designs.id
     FROM product_designs
     JOIN collaborators AS c ON c.design_id = product_designs.id
-    WHERE c.user_id = ?
+    LEFT JOIN team_users ON c.team_id = team_users.team_id
+    WHERE (c.user_id = :userId OR team_users.user_id = :userId)
       AND (c.cancelled_at IS NULL OR c.cancelled_at > now())
       AND product_designs.deleted_at IS NULL
   UNION
@@ -72,13 +73,14 @@ product_designs.id in (
     JOIN collections AS co ON co.id = c.collection_id
     JOIN collection_designs AS cd ON cd.collection_id = co.id
     JOIN product_designs ON product_designs.id = cd.design_id
-    WHERE c.user_id = ?
+    LEFT JOIN team_users ON c.team_id = team_users.team_id
+    WHERE (c.user_id = :userId OR team_users.user_id = :userId)
       AND (c.cancelled_at IS NULL OR c.cancelled_at > now())
       AND co.deleted_at IS NULL
       AND product_designs.deleted_at IS NULL
 )
     `,
-      [options.userId, options.userId]
+      { userId: options.userId }
     )
     .modify(attachApprovalSteps)
     .modify((query: Knex.QueryBuilder) => {

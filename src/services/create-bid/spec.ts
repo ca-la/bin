@@ -145,6 +145,7 @@ test("createBid with user assignee", async (t: Test) => {
           role: "PREVIEW",
           userEmail: null,
           userId: "a-partner-user-id",
+          teamId: null,
         },
       ],
     ],

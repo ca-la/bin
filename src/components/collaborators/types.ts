@@ -11,6 +11,7 @@ export default interface Collaborator {
   createdAt: Date;
   deletedAt: Date | null;
   cancelledAt: Date | null;
+  teamId: string | null;
 }
 
 export interface CollaboratorWithUser extends Collaborator {
@@ -28,6 +29,7 @@ export interface CollaboratorRow {
   created_at: string;
   deleted_at: string | null;
   cancelled_at: string | null;
+  team_id: string | null;
 }
 
 export interface CollaboratorWithUserRow extends CollaboratorRow {
