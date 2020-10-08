@@ -49,6 +49,7 @@ test("reverseSubmissionRecords", async (t: tape.Test) => {
       commentId: null,
       shipmentTrackingId: null,
       shipmentTrackingEventId: null,
+      targetTeamId: null,
     });
     const e2 = await DesignEventsDAO.create(trx, {
       actorId: admin.id,
@@ -65,6 +66,7 @@ test("reverseSubmissionRecords", async (t: tape.Test) => {
       commentId: null,
       shipmentTrackingId: null,
       shipmentTrackingEventId: null,
+      targetTeamId: null,
     });
     const e3 = await DesignEventsDAO.create(trx, {
       actorId: admin.id,
@@ -81,6 +83,7 @@ test("reverseSubmissionRecords", async (t: tape.Test) => {
       commentId: null,
       shipmentTrackingId: null,
       shipmentTrackingEventId: null,
+      targetTeamId: null,
     });
 
     const initialEvents = await DesignEventsDAO.find(trx, { designId: d1.id });
