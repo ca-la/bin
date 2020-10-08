@@ -451,7 +451,7 @@ collaborators_forcollaboratorsviewraw.created_at DESC
 export async function findByCollectionAndUser(
   collectionId: string,
   userId: string,
-  trx?: Knex.Transaction
+  trx: Knex.Transaction
 ): Promise<CollaboratorWithUser[]> {
   const collaboratorRows = await getCollaboratorViewBuilder()
     .where({ collection_id: collectionId, user_id: userId })

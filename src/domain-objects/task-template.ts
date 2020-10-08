@@ -1,7 +1,6 @@
 import DataAdapter from "../services/data-adapter";
 import { hasProperties } from "../services/require-properties";
-
-import { CollaboratorRole } from "../services/find-collaborators";
+import { CollaboratorRole } from "../components/collaborators/domain-objects/role";
 
 export const DESIGN_PHASES = {
   POST_APPROVAL: "POST_APPROVAL",

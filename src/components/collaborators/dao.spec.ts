@@ -398,13 +398,15 @@ test("CollaboratorsDAO.findByCollectionAndUser returns collaborators", async (t:
     userId: user.id,
   });
 
-  const list = await CollaboratorsDAO.findByCollectionAndUser(
-    collection.id,
-    user.id
-  );
-
-  t.equal(list.length, 1);
-  t.equal(list[0].id, collaborator.id);
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const list = await CollaboratorsDAO.findByCollectionAndUser(
+      collection.id,
+      user.id,
+      trx
+    );
+    t.equal(list.length, 1);
+    t.equal(list[0].id, collaborator.id);
+  });
 });
 
 test("CollaboratorsDAO.deleteByDesignIdAndUserId deletes collaborator", async (t: Test) => {

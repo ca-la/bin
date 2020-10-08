@@ -1,6 +1,7 @@
 import { test, Test } from "../../test-helpers/fresh";
 import { create, findByPhase, findByStageTitle, update } from "./index";
 import * as StageTemplatesDAO from "../stage-templates";
+import { CollaboratorRole } from "../../components/collaborators/types";
 
 test("TaskTemplatesDAO supports creation/retrieval", async (t: Test) => {
   const stageOne = await StageTemplatesDAO.create({
@@ -16,7 +17,7 @@ test("TaskTemplatesDAO supports creation/retrieval", async (t: Test) => {
   });
 
   await create({
-    assigneeRole: "CALA",
+    assigneeRole: CollaboratorRole.CALA,
     description: "Do the thing",
     designPhase: "POST_CREATION",
     ordering: 0,
@@ -24,7 +25,7 @@ test("TaskTemplatesDAO supports creation/retrieval", async (t: Test) => {
     title: "Task 1",
   });
   await create({
-    assigneeRole: "CALA",
+    assigneeRole: CollaboratorRole.CALA,
     description: "Do another thing",
     designPhase: "POST_CREATION",
     ordering: 2,
@@ -32,7 +33,7 @@ test("TaskTemplatesDAO supports creation/retrieval", async (t: Test) => {
     title: "Task 2",
   });
   await create({
-    assigneeRole: "CALA",
+    assigneeRole: CollaboratorRole.CALA,
     description: "Do yet another thing",
     designPhase: "POST_CREATION",
     ordering: 4,
@@ -40,7 +41,7 @@ test("TaskTemplatesDAO supports creation/retrieval", async (t: Test) => {
     title: "Task 3",
   });
   const stageTwoTaskOne = await create({
-    assigneeRole: "DESIGNER",
+    assigneeRole: CollaboratorRole.DESIGNER,
     description: "Stop doing so much",
     designPhase: "POST_APPROVAL",
     ordering: 1,
@@ -78,7 +79,7 @@ test("TaskTemplatesDAO supports update", async (t: Test) => {
   });
 
   const created = await create({
-    assigneeRole: "CALA",
+    assigneeRole: CollaboratorRole.CALA,
     description: "Do the thing",
     designPhase: "POST_CREATION",
     ordering: 0,

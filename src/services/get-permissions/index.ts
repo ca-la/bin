@@ -105,7 +105,8 @@ export async function getCollectionPermissions(
   }
   const collaborators: Collaborator[] = await CollaboratorsDAO.findByCollectionAndUser(
     collection.id,
-    sessionUserId
+    sessionUserId,
+    trx
   );
   const role = findMostPermissiveRole(
     collaborators.map((collaborator: Collaborator): string => {
