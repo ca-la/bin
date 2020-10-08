@@ -31,6 +31,8 @@ import generateCollection from "../../test-helpers/factories/collection";
 import PayoutAccountsDAO = require("../../dao/partner-payout-accounts");
 import PartnerPayoutsDAO = require("../../components/partner-payouts/dao");
 import { BidDb } from "./types";
+import { generateTeam } from "../../test-helpers/factories/team";
+import { TeamType } from "../teams/types";
 
 const testDate = new Date(2012, 11, 22);
 
@@ -414,6 +416,7 @@ test("Bids DAO supports retrieval of bids by target ID and status", async (t: Te
 test("findOpenByTargetId", async (t: Test) => {
   await generatePricingValues();
   const { user: partner } = await createUser();
+  const { team } = await generateTeam(partner.id, { type: TeamType.PARTNER });
 
   const { bid: b1 } = await generateBid({
     generatePricing: false,
@@ -439,8 +442,20 @@ test("findOpenByTargetId", async (t: Test) => {
     },
   });
 
+  const { bid: b3 } = await generateBid({
+    generatePricing: false,
+    bidOptions: {
+      bidPriceCents: 2000,
+      description: "Do this work",
+      assignee: {
+        type: "TEAM",
+        id: team.id,
+      },
+    },
+  });
+
   const openBids = await findOpenByTargetId(partner.id, "ACCEPTED");
-  t.deepEqual(openBids, [b2], "Returns all open bids for the partner");
+  t.deepEqual(openBids, [b3, b2], "Returns all open bids for the partner");
 });
 
 test("findAcceptedByTargetId", async (t: Test) => {

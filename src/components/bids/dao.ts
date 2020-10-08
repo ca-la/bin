@@ -1,4 +1,5 @@
 import Knex from "knex";
+import { omit } from "lodash";
 
 import db from "../../services/db";
 import Bid, {
@@ -20,9 +21,9 @@ import first from "../../services/first";
 import { validate, validateEvery } from "../../services/validate-from-db";
 import limitOrOffset from "../../services/limit-or-offset";
 import { MILLISECONDS_TO_EXPIRE } from "./constants";
-import { omit } from "lodash";
 import { getMinimal as getMinimalTaskViewBuilder } from "../../dao/task-events/view";
 import { BidDb } from "./types";
+import { Role as TeamUserRole } from "../team-users/types";
 
 // Any payouts to a partner cannot be linked to a bid before this date, as
 // they were linked to an invoice. Having a cut-off date allows the API to
@@ -365,12 +366,26 @@ export async function findOpenByTargetId(
   const targetRows = await sortingFunction(
     db(DESIGN_EVENTS_TABLE)
       .select(selectWithAcceptedAt)
-      .join("pricing_bids", (join: Knex.JoinClause) => {
-        join
-          .on("design_events.bid_id", "=", "pricing_bids.id")
-          .andOnIn("design_events.target_id", [targetId])
-          .andOnIn("design_events.type", statusToEvents.OPEN.contains);
-      })
+      .leftJoin(
+        db.raw("team_users on team_users.user_id = ? AND team_users.role = ?", [
+          targetId,
+          TeamUserRole.ADMIN,
+        ])
+      )
+      .join(
+        db.raw(
+          `
+          pricing_bids ON
+            design_events.bid_id = pricing_bids.id AND
+            (
+              design_events.target_id = ? OR
+              team_users.team_id = design_events.target_team_id
+            ) AND
+            design_events.type IN (?)
+      `,
+          [targetId, statusToEvents.OPEN.contains.join(",")]
+        )
+      )
       .whereNotIn(
         "design_events.bid_id",
         db
