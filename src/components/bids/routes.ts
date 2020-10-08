@@ -388,18 +388,19 @@ interface GetByIdContext extends AuthedContext {
   };
 }
 
-function* getById(this: GetByIdContext): Iterator<any, any, any> {
+function* getById(this: TrxContext<GetByIdContext>): Iterator<any, any, any> {
   const { bidId } = this.params;
-  const bid = yield BidsDAO.findById(bidId);
-  const { role, userId } = this.state;
-  if (
-    this.state.role === "ADMIN" ||
-    (role === "PARTNER" && bid.partnerUserId === userId)
-  ) {
+  const { role, userId, trx } = this.state;
+  const bid =
+    role === "ADMIN"
+      ? yield BidsDAO.findById(bidId, trx)
+      : yield BidsDAO.findByBidIdAndUser(trx, bidId, userId);
+
+  if (bid) {
     this.body = bid;
     this.status = 200;
   } else {
-    this.throw(403);
+    this.throw(404);
   }
 }
 
@@ -469,7 +470,7 @@ router.post(
 router.get("/", requireAuth, listBids);
 router.get("/unpaid/:userId", requireAdmin, getUnpaidBidsByUserId);
 
-router.get("/:bidId", requireAuth, getById);
+router.get("/:bidId", requireAuth, useTransaction, getById);
 router.get("/:bidId/assignees", requireAdmin, listBidAssignees);
 router.del("/:bidId/assignees/:userId", requireAdmin, removeBidFromPartner);
 

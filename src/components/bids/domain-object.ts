@@ -183,13 +183,21 @@ export function isBidSortByParam(
   return candidate === "ACCEPTED" || candidate === "DUE";
 }
 
+interface BidAssignee {
+  type: "USER" | "TEAM";
+  id: string;
+  name: string;
+}
+
 export interface BidWithPayoutLogsRow extends BidRow {
   partner_user_id: string;
+  assignee: BidAssignee;
   partner_payout_logs: PartnerPayoutLogRow[] | null;
 }
 
 export interface BidWithPayoutLogs extends Bid {
   partnerUserId: string;
+  assignee: BidAssignee;
   partnerPayoutLogs: PartnerPayoutLog[];
 }
 
@@ -200,10 +208,11 @@ export function isBidWithPaymentLogsRow(
 }
 
 function withPayoutLogsEncode(row: BidWithPayoutLogsRow): BidWithPayoutLogs {
-  const { partner_payout_logs, partner_user_id, ...bidRow } = row;
+  const { partner_payout_logs, partner_user_id, assignee, ...bidRow } = row;
   return {
     ...dataAdapter.parse(bidRow),
     partnerUserId: partner_user_id,
+    assignee,
     partnerPayoutLogs: partner_payout_logs
       ? partner_payout_logs.map(
           (log: PartnerPayoutLogRow): PartnerPayoutLog => {

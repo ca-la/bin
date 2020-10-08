@@ -328,6 +328,11 @@ test("Partner pairing: accept", async (t: Test) => {
         createdAt: design.createdAt.toISOString(),
       },
       dueDate: bid.dueDate!.toISOString(),
+      assignee: {
+        type: "USER",
+        id: partner.user.id,
+        name: partner.user.name,
+      },
     },
     "responds with the accepted bid and associated design."
   );
@@ -527,29 +532,30 @@ test("Partner pairing: reject", async (t: Test) => {
 
 test("GET /bids/:bidId gets a bid by an id for admins", async (t: Test) => {
   const admin = await createUser({ role: "ADMIN" });
-  const getBidByIdStub = sandbox().stub(BidsDAO, "findById").resolves({});
+  const getByIdStub = sandbox().stub(BidsDAO, "findById").resolves({});
+  sandbox().stub(BidsDAO, "findByBidIdAndUser").resolves(null);
   await get(`/bids/a-real-bid-id`, {
     headers: authHeader(admin.session.id),
   });
-  t.equal(getBidByIdStub.callCount, 1);
-  t.deepEqual(getBidByIdStub.args[0], ["a-real-bid-id"]);
+  t.equal(getByIdStub.callCount, 1);
+  t.deepEqual(getByIdStub.args[0][0], "a-real-bid-id");
 
   const partner = await createUser({ role: "PARTNER" });
   const [failedResponsePartner] = await get(`/bids/a-real-bid-id`, {
     headers: authHeader(partner.session.id),
   });
-  t.equal(failedResponsePartner.status, 403, "Only admins have full access");
+  t.equal(failedResponsePartner.status, 404, "Only admins have full access");
 
   const user = await createUser({ role: "USER" });
   const [failedResponseUser] = await get(`/bids/a-real-bid-id`, {
     headers: authHeader(user.session.id),
   });
-  t.equal(failedResponseUser.status, 403, "Only admins have full access");
+  t.equal(failedResponseUser.status, 404, "Only admins have full access");
 });
 
 test("GET /bids/:bidId gets a bid by an id for the partner assigned", async (t: Test) => {
   const { user: partner, session } = await createUser({ role: "PARTNER" });
-  const getBidByIdStub = sandbox().stub(BidsDAO, "findById").resolves({
+  const getBidStub = sandbox().stub(BidsDAO, "findByBidIdAndUser").resolves({
     id: "a-real-bid-id",
     acceptedAt: new Date(),
     createdAt: new Date(),
@@ -568,8 +574,8 @@ test("GET /bids/:bidId gets a bid by an id for the partner assigned", async (t: 
     headers: authHeader(session.id),
   });
   t.equal(response.status, 200, "Returns bid to the assigned partner");
-  t.equal(getBidByIdStub.callCount, 1);
-  t.deepEqual(getBidByIdStub.args[0], ["a-real-bid-id"]);
+  t.equal(getBidStub.callCount, 1);
+  t.deepEqual(getBidStub.args[0].slice(1), ["a-real-bid-id", partner.id]);
 });
 
 test("POST /bids/:bidId/pay-out-to-partner", async (t: Test) => {

@@ -16,6 +16,7 @@ import {
   findActiveByTargetId,
   findAll,
   findAllByQuoteAndUserId,
+  findByBidIdAndUser,
   findById,
   findByQuoteId,
   findOpenByTargetId,
@@ -96,7 +97,10 @@ test("Bids DAO supports creation and retrieval", async (t: Test) => {
     completedAt: null,
     ...inputBid,
   });
-  t.deepEqual(bid, omit(retrieved, ["partnerPayoutLogs", "partnerUserId"]));
+  t.deepEqual(
+    bid,
+    omit(retrieved, ["partnerPayoutLogs", "partnerUserId", "assignee"])
+  );
 });
 
 test("Bids DAO findById returns null with a lookup-miss", async (t: Test) => {
@@ -1102,6 +1106,11 @@ test("Bids DAO supports finding bid with payout logs by id", async (t: Test) => 
     partnerUserId: partner.id,
     quoteId: quote.id,
     revenueShareBasisPoints: 0,
+    assignee: {
+      type: "USER",
+      id: partner.id,
+      name: partner.name,
+    },
   });
 });
 
@@ -1186,4 +1195,47 @@ test("Bids DAO supports finding bid by id returns the correct partner id", async
     bidPayouts[3].partnerId,
     "Found bid partner id is correct"
   );
+});
+
+test("Bids DAO supports finding by bid id and user with a team", async (t: Test) => {
+  const { user: partner } = await createUser({ withSession: false });
+  const { user } = await createUser({ withSession: false });
+  const { user: designer } = await createUser({ withSession: false });
+
+  const { team } = await generateTeam(partner.id);
+
+  const design = await generateDesign({
+    userId: designer.id,
+  });
+
+  const { bid } = await generateBid({
+    bidOptions: {
+      bidPriceCents: 2000,
+      assignee: {
+        type: "TEAM",
+        id: team.id,
+      },
+    },
+    designId: design.id,
+  });
+
+  const found = await db.transaction((trx: Knex.Transaction) =>
+    findByBidIdAndUser(trx, bid.id, partner.id)
+  );
+  t.deepEqual(
+    found,
+    {
+      ...bid,
+      assignee: { id: team.id, name: team.title, type: "TEAM" },
+      partnerUserId: null,
+      partnerPayoutLogs: [],
+    },
+    "Returns a team bid for a partner"
+  );
+
+  const unauthorizedLook = await db.transaction((trx: Knex.Transaction) =>
+    findByBidIdAndUser(trx, bid.id, user.id)
+  );
+
+  t.deepEqual(unauthorizedLook, null, "Only associated users can view the bid");
 });

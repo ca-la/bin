@@ -161,7 +161,11 @@ export async function create(trx: Knex.Transaction, bid: BidDb): Promise<Bid> {
     throw new Error("Failed to create Bid");
   }
 
-  return omit(withAcceptedAt, ["partnerPayoutLogs", "partnerUserId"]);
+  return omit(withAcceptedAt, [
+    "partnerPayoutLogs",
+    "partnerUserId",
+    "assignee",
+  ]);
 }
 
 function findAllByState(
@@ -288,34 +292,69 @@ export async function findUnpaidByUserId(userId: string): Promise<Bid[]> {
   return validateEvery<BidRow, Bid>(TABLE_NAME, isBidRow, dataAdapter, bids);
 }
 
-export async function findById(
-  id: string,
-  trx?: Knex.Transaction
-): Promise<BidWithPayoutLogs | null> {
-  const bid: BidWithPayoutLogsRow | undefined = await db(DESIGN_EVENTS_TABLE)
+function withAssignee(query: Knex.QueryBuilder) {
+  return query.select((subquery: Knex.QueryBuilder) =>
+    subquery
+      .select(
+        db.raw(`
+          CASE
+            WHEN users.id IS NOT NULL THEN
+              json_build_object(
+                'type', 'USER',
+                'id', users.id,
+                'name', COALESCE(users.name, users.email)
+              )
+            WHEN teams.id IS NOT NULL THEN
+              json_build_object(
+                'type', 'TEAM',
+                'id', teams.id,
+                'name', teams.title
+              )
+            ELSE NULL
+          END AS assignee
+        `)
+      )
+      .from(DESIGN_EVENTS_TABLE)
+      .leftJoin("users", "users.id", "design_events.target_id")
+      .leftJoin("teams", "teams.id", "design_events.target_team_id")
+      .leftJoin("design_events as de2", (join: Knex.JoinClause) =>
+        join
+          .on("de2.bid_id", "=", "design_events.bid_id")
+          .andOn("de2.type", db.raw("?", ["REMOVE_PARTNER"]))
+      )
+      .where({ "design_events.type": "BID_DESIGN", "de2.id": null })
+      .andWhereRaw("design_events.bid_id = pricing_bids.id")
+      .orderBy("design_events.created_at", "DESC")
+      .limit(1)
+  );
+}
+
+function bidWithPayoutLogsById(id: string) {
+  return db(DESIGN_EVENTS_TABLE)
     .select(selectWithAcceptedAt)
+    .modify(withAssignee)
     .select(
       db.raw(`
-        CASE
-          WHEN design_events.type = 'BID_DESIGN' THEN
-            design_events.target_id
-          WHEN design_events.type = 'ACCEPT_SERVICE_BID' OR design_events.type = 'REJECT_SERVICE_BID' THEN
-            design_events.actor_id
-          ELSE null
-        END as partner_user_id
-      `)
+      CASE
+        WHEN design_events.type = 'BID_DESIGN' THEN
+          design_events.target_id
+        WHEN design_events.type = 'ACCEPT_SERVICE_BID' OR design_events.type = 'REJECT_SERVICE_BID' THEN
+          design_events.actor_id
+        ELSE null
+      END as partner_user_id
+    `)
     )
     .select(
       db.raw(
         `
-        (
-          SELECT to_json(array_agg(ordered_logs.*))
-          FROM (
-            SELECT logs.* FROM partner_payout_logs AS logs
-            WHERE logs.bid_id = pricing_bids.id
-            ORDER BY logs.created_at DESC
-          ) AS ordered_logs
-        ) AS partner_payout_logs`
+      (
+        SELECT to_json(array_agg(ordered_logs.*))
+        FROM (
+          SELECT logs.* FROM partner_payout_logs AS logs
+          WHERE logs.bid_id = pricing_bids.id
+          ORDER BY logs.created_at DESC
+        ) AS ordered_logs
+      ) AS partner_payout_logs`
       )
     )
     .rightJoin("pricing_bids", (join: Knex.JoinClause) => {
@@ -330,12 +369,51 @@ export async function findById(
     ])
     .orderBy("pricing_bids.id")
     .orderBy("pricing_bids.created_at", "desc")
-    .limit(1)
+    .limit(1);
+}
+
+export async function findById(
+  id: string,
+  trx?: Knex.Transaction
+): Promise<BidWithPayoutLogs | null> {
+  const bid: BidWithPayoutLogsRow | undefined = await bidWithPayoutLogsById(id)
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
       }
     })
+    .then((bids: BidWithPayoutLogsRow[]) => first(bids));
+
+  if (!bid) {
+    return null;
+  }
+
+  return validate<BidWithPayoutLogsRow, BidWithPayoutLogs>(
+    TABLE_NAME,
+    isBidWithPaymentLogsRow,
+    bidWithPayoutLogsDataAdapter,
+    bid
+  );
+}
+
+export async function findByBidIdAndUser(
+  trx: Knex.Transaction,
+  bidId: string,
+  userId: string
+): Promise<BidWithPayoutLogs | null> {
+  const bid: BidWithPayoutLogsRow | undefined = await bidWithPayoutLogsById(
+    bidId
+  )
+    .leftJoin("teams", "teams.id", "design_events.target_team_id")
+    .leftJoin("team_users", "team_users.team_id", "teams.id")
+    .whereRaw(
+      `CASE
+        WHEN teams.id IS NOT NULL then team_users.user_id = ?
+        ELSE design_events.actor_id = ?
+      END`,
+      [userId, userId]
+    )
+    .modify((query: Knex.QueryBuilder) => query.transacting(trx))
     .then((bids: BidWithPayoutLogsRow[]) => first(bids));
 
   if (!bid) {
