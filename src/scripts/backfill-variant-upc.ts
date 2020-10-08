@@ -2,8 +2,8 @@ import process from "process";
 import { log, logServerError } from "../services/logger";
 import { green, reset } from "../services/colors";
 
-import { computeUniqueUpc } from "../services/upc";
 import * as VariantsDAO from "../components/product-design-variants/dao";
+import { computeUniqueUpc } from "../services/codes/upc";
 
 run()
   .then(() => {

@@ -1,5 +1,0 @@
-{
-  "__description": "We override the `exclude` list in tsconfig.json, so that we can use all the same compilation rules but apply to all files, even excluded ones, for purposes of linting",
-  "extends": "./tsconfig",
-  "exclude": []
-}
