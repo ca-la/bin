@@ -37,11 +37,36 @@ import { TeamType } from "../teams/types";
 
 const testDate = new Date(2012, 11, 22);
 
-test("Bids DAO supports creation and retrieval", async (t: Test) => {
-  sandbox().useFakeTimers(testDate);
+async function setup() {
+  const clock = sandbox().useFakeTimers(testDate);
   await generatePricingValues();
-  const { user } = await createUser();
-  const design = await generateDesign({ userId: user.id });
+  const { user: admin } = await createUser({
+    role: "ADMIN",
+    withSession: false,
+  });
+  const { user: partner1 } = await createUser({
+    role: "ADMIN",
+    withSession: false,
+  });
+  const { user: partner2 } = await createUser({
+    role: "ADMIN",
+    withSession: false,
+  });
+  const { user: designer1 } = await createUser({
+    role: "ADMIN",
+    withSession: false,
+  });
+  const { user: designer2 } = await createUser({
+    role: "ADMIN",
+    withSession: false,
+  });
+  const d1 = await generateDesign({ userId: designer1.id });
+  const d2 = await generateDesign({ userId: designer2.id });
+  const { collection } = await generateCollection({
+    createdBy: designer1.id,
+  });
+  await addDesign(collection.id, d1.id);
+
   const quote = await generatePricingQuote(
     {
       createdAt: testDate,
@@ -49,7 +74,7 @@ test("Bids DAO supports creation and retrieval", async (t: Test) => {
       expiresAt: null,
       id: uuid.v4(),
       minimumOrderQuantity: 1,
-      designId: design.id,
+      designId: d1.id,
       materialBudgetCents: 1200,
       materialCategory: "BASIC",
       processes: [
@@ -74,142 +99,96 @@ test("Bids DAO supports creation and retrieval", async (t: Test) => {
     },
     200
   );
+
+  return {
+    users: {
+      admin,
+      partner1,
+      partner2,
+      designer1,
+      designer2,
+    },
+    designs: [d1, d2],
+    collection,
+    quote,
+    clock,
+  };
+}
+
+test("Bids DAO supports creation and retrieval", async (t: Test) => {
+  const {
+    quote,
+    users: { admin },
+  } = await setup();
+
   const now = new Date();
   const bidId = uuid.v4();
   const inputBid: BidDb = {
     bidPriceCents: 100000,
     bidPriceProductionOnlyCents: 0,
     createdAt: now,
-    createdBy: user.id,
+    createdBy: admin.id,
     description: "Full Service",
     dueDate: new Date(quote.createdAt.getTime() + daysToMs(10)),
     id: bidId,
     quoteId: quote.id,
     revenueShareBasisPoints: 10,
   };
-  const bid = await db.transaction((trx: Knex.Transaction) =>
-    create(trx, inputBid)
-  );
-  const retrieved = await findById(inputBid.id);
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const bid = await create(trx, inputBid);
+    const retrieved = await findById(trx, inputBid.id);
 
-  t.deepEqual(bid, {
-    acceptedAt: null,
-    completedAt: null,
-    ...inputBid,
+    t.deepEqual(bid, {
+      acceptedAt: null,
+      completedAt: null,
+      ...inputBid,
+    });
+    t.deepEqual(
+      bid,
+      omit(retrieved, ["partnerPayoutLogs", "partnerUserId", "assignee"])
+    );
+
+    const missed = await findById(trx, uuid.v4());
+
+    t.equal(missed, null, "returns null with a lookup-miss");
   });
-  t.deepEqual(
-    bid,
-    omit(retrieved, ["partnerPayoutLogs", "partnerUserId", "assignee"])
-  );
-});
-
-test("Bids DAO findById returns null with a lookup-miss", async (t: Test) => {
-  const missed = await findById(uuid.v4());
-
-  t.equal(missed, null);
 });
 
 test("Bids DAO supports retrieval by quote ID", async (t: Test) => {
-  sandbox().useFakeTimers(testDate);
-  await generatePricingValues();
-  const { user } = await createUser();
-  const design = await generateDesign({ userId: user.id });
-  const quote = await generatePricingQuote(
-    {
-      createdAt: testDate,
-      deletedAt: null,
-      expiresAt: null,
-      id: uuid.v4(),
-      minimumOrderQuantity: 1,
-      designId: design.id,
-      materialBudgetCents: 1200,
-      materialCategory: "BASIC",
-      processes: [
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-      ],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
-      processTimelinesVersion: 0,
-      processesVersion: 0,
-      productMaterialsVersion: 0,
-      productTypeVersion: 0,
-      marginVersion: 0,
-      constantsVersion: 0,
-      careLabelsVersion: 0,
-    },
-    200
-  );
+  const {
+    quote,
+    users: { admin },
+  } = await setup();
   const inputBid: BidDb = {
     revenueShareBasisPoints: 20,
     bidPriceCents: 100000,
     bidPriceProductionOnlyCents: 0,
-    createdBy: user.id,
+    createdBy: admin.id,
     description: "Full Service",
     dueDate: new Date(quote.createdAt.getTime() + daysToMs(10)),
     id: uuid.v4(),
     quoteId: quote.id,
     createdAt: new Date(),
   };
-  await db.transaction((trx: Knex.Transaction) => create(trx, inputBid));
-  const bids = await findByQuoteId(quote.id);
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await create(trx, inputBid);
+    const bids = await findByQuoteId(trx, quote.id);
 
-  t.deepEqual(
-    bids,
-    [{ acceptedAt: null, completedAt: null, ...inputBid }],
-    "returns the bids in createdAt order"
-  );
+    t.deepEqual(
+      bids,
+      [{ acceptedAt: null, completedAt: null, ...inputBid }],
+      "returns the bids in createdAt order"
+    );
+  });
 });
 
 test("Bids DAO supports retrieval of bids by target ID and status", async (t: Test) => {
-  const clock = sandbox().useFakeTimers(testDate);
-  await generatePricingValues();
-  const { user: designer } = await createUser();
-  const { user: admin } = await createUser();
-  const { user: partner } = await createUser();
-  const { user: otherPartner } = await createUser();
-  const design = await generateDesign({
-    userId: designer.id,
-  });
-
-  const quote = await generatePricingQuote(
-    {
-      createdAt: testDate,
-      deletedAt: null,
-      expiresAt: null,
-      id: uuid.v4(),
-      minimumOrderQuantity: 1,
-      designId: design.id,
-      materialBudgetCents: 1200,
-      materialCategory: "BASIC",
-      processes: [
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-      ],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
-      processTimelinesVersion: 0,
-      processesVersion: 0,
-      productMaterialsVersion: 0,
-      productTypeVersion: 0,
-      marginVersion: 0,
-      constantsVersion: 0,
-      careLabelsVersion: 0,
-    },
-    200
-  );
+  const {
+    clock,
+    users: { admin, partner1, partner2, designer1 },
+    designs: [design],
+    quote,
+  } = await setup();
   const openBid: BidDb = {
     revenueShareBasisPoints: 10,
     bidPriceCents: 100000,
@@ -245,12 +224,12 @@ test("Bids DAO supports retrieval of bids by target ID and status", async (t: Te
   };
   const rejectedDesign = await generateDesign({
     title: "A rejected design",
-    userId: designer.id,
+    userId: designer1.id,
   });
 
   const submitEvent: DesignEvent = {
     ...templateDesignEvent,
-    actorId: designer.id,
+    actorId: designer1.id,
     createdAt: new Date(2012, 11, 23),
     designId: design.id,
     id: uuid.v4(),
@@ -264,7 +243,7 @@ test("Bids DAO supports retrieval of bids by target ID and status", async (t: Te
     createdAt: new Date(2012, 11, 24),
     designId: design.id,
     id: uuid.v4(),
-    targetId: partner.id,
+    targetId: partner1.id,
     type: "BID_DESIGN",
   };
   const bidToOtherEvent: DesignEvent = {
@@ -274,7 +253,7 @@ test("Bids DAO supports retrieval of bids by target ID and status", async (t: Te
     createdAt: new Date(2012, 11, 24),
     designId: design.id,
     id: uuid.v4(),
-    targetId: otherPartner.id,
+    targetId: partner2.id,
     type: "BID_DESIGN",
   };
   const bidDesignToRejectEvent: DesignEvent = {
@@ -284,7 +263,7 @@ test("Bids DAO supports retrieval of bids by target ID and status", async (t: Te
     createdAt: new Date(2012, 11, 24),
     designId: rejectedDesign.id,
     id: uuid.v4(),
-    targetId: partner.id,
+    targetId: partner1.id,
     type: "BID_DESIGN",
   };
   const bidDesignToAcceptEvent: DesignEvent = {
@@ -294,13 +273,13 @@ test("Bids DAO supports retrieval of bids by target ID and status", async (t: Te
     createdAt: new Date(2012, 11, 24),
     designId: design.id,
     id: uuid.v4(),
-    targetId: partner.id,
+    targetId: partner1.id,
     type: "BID_DESIGN",
   };
 
   const rejectDesignEvent: DesignEvent = {
     ...templateDesignEvent,
-    actorId: partner.id,
+    actorId: partner1.id,
     bidId: rejectedBid.id,
     createdAt: new Date(2012, 11, 25),
     designId: rejectedDesign.id,
@@ -309,7 +288,7 @@ test("Bids DAO supports retrieval of bids by target ID and status", async (t: Te
   };
   const acceptDesignEvent: DesignEvent = {
     ...templateDesignEvent,
-    actorId: partner.id,
+    actorId: partner1.id,
     bidId: acceptedBid.id,
     createdAt: new Date(2012, 11, 27),
     designId: design.id,
@@ -318,7 +297,7 @@ test("Bids DAO supports retrieval of bids by target ID and status", async (t: Te
   };
   const otherRejectEvent: DesignEvent = {
     ...templateDesignEvent,
-    actorId: otherPartner.id,
+    actorId: partner2.id,
     bidId: openBid.id,
     createdAt: new Date(2012, 11, 23),
     designId: design.id,
@@ -340,115 +319,135 @@ test("Bids DAO supports retrieval of bids by target ID and status", async (t: Te
       rejectDesignEvent,
       acceptDesignEvent,
     ]);
+    const openBids = await findOpenByTargetId(trx, partner1.id, "ACCEPTED");
+    const otherBids = await findOpenByTargetId(trx, partner2.id, "ACCEPTED");
+
+    t.deepEqual(
+      openBids,
+      [{ acceptedAt: null, completedAt: null, ...openBid }],
+      "returns non-rejected/accepted bid"
+    );
+    t.deepEqual(otherBids, [], "returns no bids");
+
+    const acceptedBids = await findAcceptedByTargetId(
+      trx,
+      partner1.id,
+      "ACCEPTED"
+    );
+    const activeBids = await findActiveByTargetId(trx, partner1.id, "ACCEPTED");
+    clock.tick(1000);
+    const otherAcceptedBids = await findAcceptedByTargetId(
+      trx,
+      partner2.id,
+      "ACCEPTED"
+    );
+
+    if (acceptedBids.length === 0) {
+      throw new Error("No accepted bids found!");
+    }
+    if (activeBids.length === 0) {
+      throw new Error("No active bids found!");
+    }
+
+    t.deepEqual(
+      acceptedBids,
+      [
+        {
+          ...acceptedBid,
+          acceptedAt: acceptedBids[0].acceptedAt,
+          completedAt: null,
+        },
+      ],
+      "returns accepted bid"
+    );
+    t.deepEqual(
+      activeBids,
+      [
+        {
+          ...acceptedBid,
+          acceptedAt: activeBids[0].acceptedAt,
+          completedAt: null,
+        },
+      ],
+      "returns active bid"
+    );
+    t.equal(
+      (acceptedBids[0].createdAt as Date).toString(),
+      new Date(2012, 11, 22).toString()
+    );
+    t.equal(
+      (acceptedBids[0].acceptedAt as Date).toString(),
+      new Date(2012, 11, 27).toString()
+    );
+    t.deepEqual(otherAcceptedBids, [], "returns no bids");
+
+    const rejectedBids = await findRejectedByTargetId(
+      trx,
+      partner1.id,
+      "ACCEPTED"
+    );
+    const otherRejectedBids = await findRejectedByTargetId(
+      trx,
+      partner2.id,
+      "ACCEPTED"
+    );
+
+    t.deepEqual(
+      rejectedBids,
+      [{ acceptedAt: null, completedAt: null, ...rejectedBid }],
+      "returns rejected bid"
+    );
+    t.deepEqual(
+      otherRejectedBids,
+      [{ acceptedAt: null, completedAt: null, ...openBid }],
+      "returns rejected bid"
+    );
   });
-
-  const openBids = await findOpenByTargetId(partner.id, "ACCEPTED");
-  const otherBids = await findOpenByTargetId(otherPartner.id, "ACCEPTED");
-
-  t.deepEqual(
-    openBids,
-    [{ acceptedAt: null, completedAt: null, ...openBid }],
-    "returns non-rejected/accepted bid"
-  );
-  t.deepEqual(otherBids, [], "returns no bids");
-
-  const acceptedBids = await findAcceptedByTargetId(partner.id, "ACCEPTED");
-  const activeBids = await findActiveByTargetId(partner.id, "ACCEPTED");
-  clock.tick(1000);
-  const otherAcceptedBids = await findAcceptedByTargetId(
-    otherPartner.id,
-    "ACCEPTED"
-  );
-
-  if (acceptedBids.length === 0) {
-    throw new Error("No accepted bids found!");
-  }
-  if (activeBids.length === 0) {
-    throw new Error("No active bids found!");
-  }
-
-  t.deepEqual(
-    acceptedBids,
-    [
-      {
-        ...acceptedBid,
-        acceptedAt: acceptedBids[0].acceptedAt,
-        completedAt: null,
-      },
-    ],
-    "returns accepted bid"
-  );
-  t.deepEqual(
-    activeBids,
-    [
-      {
-        ...acceptedBid,
-        acceptedAt: activeBids[0].acceptedAt,
-        completedAt: null,
-      },
-    ],
-    "returns active bid"
-  );
-  t.equal(
-    (acceptedBids[0].createdAt as Date).toString(),
-    new Date(2012, 11, 22).toString()
-  );
-  t.equal(
-    (acceptedBids[0].acceptedAt as Date).toString(),
-    new Date(2012, 11, 27).toString()
-  );
-  t.deepEqual(otherAcceptedBids, [], "returns no bids");
-
-  const rejectedBids = await findRejectedByTargetId(partner.id, "ACCEPTED");
-  const otherRejectedBids = await findRejectedByTargetId(
-    otherPartner.id,
-    "ACCEPTED"
-  );
-
-  t.deepEqual(
-    rejectedBids,
-    [{ acceptedAt: null, completedAt: null, ...rejectedBid }],
-    "returns rejected bid"
-  );
-  t.deepEqual(
-    otherRejectedBids,
-    [{ acceptedAt: null, completedAt: null, ...openBid }],
-    "returns rejected bid"
-  );
 });
 
 test("findOpenByTargetId", async (t: Test) => {
-  await generatePricingValues();
-  const { user: partner } = await createUser();
-  const { team } = await generateTeam(partner.id, { type: TeamType.PARTNER });
+  const {
+    users: { partner1 },
+    quote,
+    designs: [design],
+    clock,
+  } = await setup();
+  const { team } = await generateTeam(partner1.id, { type: TeamType.PARTNER });
 
   const { bid: b1 } = await generateBid({
     generatePricing: false,
     bidOptions: {
+      quoteId: quote.id,
       assignee: {
         type: "USER",
-        id: partner.id,
+        id: partner1.id,
       },
     },
   });
   await generateDesignEvent({
+    designId: design.id,
     bidId: b1.id,
-    targetId: partner.id,
+    targetId: partner1.id,
     type: "REMOVE_PARTNER",
   });
+
+  clock.tick(1000);
   const { bid: b2 } = await generateBid({
     generatePricing: false,
     bidOptions: {
+      quoteId: quote.id,
       assignee: {
         type: "USER",
-        id: partner.id,
+        id: partner1.id,
       },
     },
   });
 
+  clock.tick(1000);
   const { bid: b3 } = await generateBid({
     generatePricing: false,
     bidOptions: {
+      quoteId: quote.id,
       bidPriceCents: 2000,
       description: "Do this work",
       assignee: {
@@ -458,32 +457,36 @@ test("findOpenByTargetId", async (t: Test) => {
     },
   });
 
-  const openBids = await findOpenByTargetId(partner.id, "ACCEPTED");
-  t.deepEqual(openBids, [b3, b2], "Returns all open bids for the partner");
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const openBids = await findOpenByTargetId(trx, partner1.id, "ACCEPTED");
+    t.deepEqual(openBids, [b3, b2], "Returns all open bids for the partner");
+  });
 });
 
 test("findAcceptedByTargetId", async (t: Test) => {
-  sandbox().useFakeTimers(testDate);
-  await generatePricingValues();
-  const { user: partner } = await createUser();
+  const {
+    users: { partner1 },
+    designs: [design],
+  } = await setup();
 
   const { bid: b1 } = await generateBid({
     bidOptions: {
       assignee: {
         type: "USER",
-        id: partner.id,
+        id: partner1.id,
       },
     },
     generatePricing: false,
   });
   await generateDesignEvent({
-    actorId: partner.id,
+    designId: design.id,
+    actorId: partner1.id,
     bidId: b1.id,
     type: "ACCEPT_SERVICE_BID",
   });
   await generateDesignEvent({
     bidId: b1.id,
-    targetId: partner.id,
+    targetId: partner1.id,
     type: "REMOVE_PARTNER",
   });
 
@@ -492,7 +495,7 @@ test("findAcceptedByTargetId", async (t: Test) => {
       dueDate: new Date(testDate.getTime() + daysToMs(2)).toISOString(),
       assignee: {
         type: "USER",
-        id: partner.id,
+        id: partner1.id,
       },
     },
     generatePricing: false,
@@ -502,7 +505,7 @@ test("findAcceptedByTargetId", async (t: Test) => {
       dueDate: new Date(testDate.getTime() + daysToMs(3)).toISOString(),
       assignee: {
         type: "USER",
-        id: partner.id,
+        id: partner1.id,
       },
     },
     generatePricing: false,
@@ -512,7 +515,7 @@ test("findAcceptedByTargetId", async (t: Test) => {
       dueDate: new Date(testDate.getTime() + daysToMs(4)).toISOString(),
       assignee: {
         type: "USER",
-        id: partner.id,
+        id: partner1.id,
       },
     },
     generatePricing: false,
@@ -520,47 +523,59 @@ test("findAcceptedByTargetId", async (t: Test) => {
 
   const acceptDate1 = new Date(testDate.getTime() + daysToMs(1));
   await generateDesignEvent({
-    actorId: partner.id,
+    designId: design.id,
+    actorId: partner1.id,
     bidId: b4.id,
     type: "ACCEPT_SERVICE_BID",
     createdAt: acceptDate1,
   });
   const acceptDate2 = new Date(testDate.getTime() + daysToMs(2));
   await generateDesignEvent({
-    actorId: partner.id,
+    designId: design.id,
+    actorId: partner1.id,
     bidId: b2.id,
     type: "ACCEPT_SERVICE_BID",
     createdAt: acceptDate2,
   });
   const acceptDate3 = new Date(testDate.getTime() + daysToMs(12));
   await generateDesignEvent({
-    actorId: partner.id,
+    actorId: partner1.id,
     bidId: b3.id,
     type: "ACCEPT_SERVICE_BID",
     createdAt: acceptDate3,
   });
 
-  const acceptedBids = await findAcceptedByTargetId(partner.id, "ACCEPTED");
-  t.deepEqual(
-    acceptedBids,
-    [
-      { ...b3, acceptedAt: acceptDate3 },
-      { ...b2, acceptedAt: acceptDate2 },
-      { ...b4, acceptedAt: acceptDate1 },
-    ],
-    "Returns all accepted bids for the partner"
-  );
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const acceptedBids = await findAcceptedByTargetId(
+      trx,
+      partner1.id,
+      "ACCEPTED"
+    );
+    t.deepEqual(
+      acceptedBids,
+      [
+        { ...b3, acceptedAt: acceptDate3 },
+        { ...b2, acceptedAt: acceptDate2 },
+        { ...b4, acceptedAt: acceptDate1 },
+      ],
+      "Returns all accepted bids for the partner"
+    );
 
-  const sortedByDueDate = await findAcceptedByTargetId(partner.id, "DUE");
-  t.deepEqual(
-    sortedByDueDate,
-    [
-      { ...b2, acceptedAt: acceptDate2 },
-      { ...b3, acceptedAt: acceptDate3 },
-      { ...b4, acceptedAt: acceptDate1 },
-    ],
-    "Returns all accepted bids for the partner sorted by Due Date"
-  );
+    const sortedByDueDate = await findAcceptedByTargetId(
+      trx,
+      partner1.id,
+      "DUE"
+    );
+    t.deepEqual(
+      sortedByDueDate,
+      [
+        { ...b2, acceptedAt: acceptDate2 },
+        { ...b3, acceptedAt: acceptDate3 },
+        { ...b4, acceptedAt: acceptDate1 },
+      ],
+      "Returns all accepted bids for the partner sorted by Due Date"
+    );
+  });
 });
 
 test("findRejectedByTargetId", async (t: Test) => {
@@ -601,8 +616,18 @@ test("findRejectedByTargetId", async (t: Test) => {
     type: "REJECT_SERVICE_BID",
   });
 
-  const rejectedBids = await findRejectedByTargetId(partner.id, "ACCEPTED");
-  t.deepEqual(rejectedBids, [b2], "Returns all rejected bids for the partner");
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const rejectedBids = await findRejectedByTargetId(
+      trx,
+      partner.id,
+      "ACCEPTED"
+    );
+    t.deepEqual(
+      rejectedBids,
+      [b2],
+      "Returns all rejected bids for the partner"
+    );
+  });
 });
 
 test("Bids DAO supports finding all with a limit and offset", async (t: Test) => {
@@ -612,21 +637,23 @@ test("Bids DAO supports finding all with a limit and offset", async (t: Test) =>
   const { bid: bid4 } = await generateBid({ generatePricing: false });
   const { bid: bid5 } = await generateBid({ generatePricing: false });
 
-  const result1 = await findAll({});
-  t.deepEqual(
-    result1,
-    [bid5, bid4, bid3, bid2, bid1],
-    "Returns all in desc order"
-  );
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const result1 = await findAll(trx, {});
+    t.deepEqual(
+      result1,
+      [bid5, bid4, bid3, bid2, bid1],
+      "Returns all in desc order"
+    );
 
-  const result2 = await findAll({ limit: 2 });
-  t.deepEqual(result2, [bid5, bid4], "Returns with a limit");
+    const result2 = await findAll(trx, { limit: 2 });
+    t.deepEqual(result2, [bid5, bid4], "Returns with a limit");
 
-  const result3 = await findAll({ limit: 2, offset: 0 });
-  t.deepEqual(result3, [bid5, bid4], "Returns with a limit and offset");
+    const result3 = await findAll(trx, { limit: 2, offset: 0 });
+    t.deepEqual(result3, [bid5, bid4], "Returns with a limit and offset");
 
-  const result4 = await findAll({ limit: 3, offset: 2 });
-  t.deepEqual(result4, [bid3, bid2, bid1], "Returns with a limit and offset");
+    const result4 = await findAll(trx, { limit: 3, offset: 2 });
+    t.deepEqual(result4, [bid3, bid2, bid1], "Returns with a limit and offset");
+  });
 });
 
 test("Bids DAO supports finding all bids by status", async (t: Test) => {
@@ -713,84 +740,59 @@ test("Bids DAO supports finding all bids by status", async (t: Test) => {
     type: "REJECT_SERVICE_BID",
   });
 
-  const result1 = await findAll({ state: "OPEN" });
-  t.deepEqual(result1, [openBid1, openBid2], "Only returns the open bids");
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const result1 = await findAll(trx, { state: "OPEN" });
+    t.deepEqual(result1, [openBid1, openBid2], "Only returns the open bids");
 
-  const result2 = await findAll({ state: "ACCEPTED" });
-  t.deepEqual(
-    result2,
-    [
-      { ...acceptedBid, acceptedAt: result2[0].acceptedAt },
-      { ...acceptedBid2, acceptedAt: result2[1].acceptedAt },
-    ],
-    "Only returns the accepted bids"
-  );
+    const result2 = await findAll(trx, { state: "ACCEPTED" });
+    t.deepEqual(
+      result2,
+      [
+        { ...acceptedBid, acceptedAt: result2[0].acceptedAt },
+        { ...acceptedBid2, acceptedAt: result2[1].acceptedAt },
+      ],
+      "Only returns the accepted bids"
+    );
 
-  const result2a = await findAll({ limit: 1, offset: 1, state: "ACCEPTED" });
-  t.deepEqual(
-    result2a,
-    [{ ...acceptedBid2, acceptedAt: result2a[0].acceptedAt }],
-    "Only returns the accepted bids in the range"
-  );
+    const result2a = await findAll(trx, {
+      limit: 1,
+      offset: 1,
+      state: "ACCEPTED",
+    });
+    t.deepEqual(
+      result2a,
+      [{ ...acceptedBid2, acceptedAt: result2a[0].acceptedAt }],
+      "Only returns the accepted bids in the range"
+    );
+  });
 
   await generateDesignEvent({
     bidId: acceptedBid.id,
     type: "REMOVE_PARTNER",
   });
 
-  const result2b = await findAll({ state: "ACCEPTED" });
-  t.deepEqual(
-    result2b,
-    [{ ...acceptedBid2, acceptedAt: result2b[0].acceptedAt }],
-    "Only returns the accepted bids that were not removed"
-  );
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const result2b = await findAll(trx, { state: "ACCEPTED" });
+    t.deepEqual(
+      result2b,
+      [{ ...acceptedBid2, acceptedAt: result2b[0].acceptedAt }],
+      "Only returns the accepted bids that were not removed"
+    );
 
-  const result3 = await findAll({ state: "EXPIRED" });
-  t.deepEqual(result3, [expiredBid], "Only returns the expired bids");
+    const result3 = await findAll(trx, { state: "EXPIRED" });
+    t.deepEqual(result3, [expiredBid], "Only returns the expired bids");
 
-  const result4 = await findAll({ state: "REJECTED" });
-  t.deepEqual(result4, [rejectedBid], "Only returns the rejected bids");
+    const result4 = await findAll(trx, { state: "REJECTED" });
+    t.deepEqual(result4, [rejectedBid], "Only returns the rejected bids");
+  });
 });
 
 test("Bids DAO supports finding by quote and user id with events", async (t: Test) => {
-  sandbox().useFakeTimers(testDate);
-  const { user: admin } = await createUser({
-    role: "ADMIN",
-    withSession: false,
-  });
-  const { user: designer } = await createUser({ withSession: false });
-  const { user: partner } = await createUser({
-    role: "PARTNER",
-    withSession: false,
-  });
-
-  const design = await generateDesign({
-    userId: designer.id,
-  });
-  await generatePricingValues();
-  const quote = await generatePricingQuote(
-    {
-      createdAt: new Date(),
-      deletedAt: null,
-      expiresAt: null,
-      id: uuid.v4(),
-      minimumOrderQuantity: 1,
-      designId: design.id,
-      materialBudgetCents: 1200,
-      materialCategory: "BASIC",
-      processes: [],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
-      processTimelinesVersion: 0,
-      processesVersion: 0,
-      productMaterialsVersion: 0,
-      productTypeVersion: 0,
-      marginVersion: 0,
-      constantsVersion: 0,
-      careLabelsVersion: 0,
-    },
-    200
-  );
+  const {
+    users: { designer1, admin, partner1 },
+    designs: [design],
+    quote,
+  } = await setup();
   const openBid1 = await db.transaction((trx: Knex.Transaction) =>
     create(trx, {
       bidPriceCents: 100000,
@@ -807,11 +809,11 @@ test("Bids DAO supports finding by quote and user id with events", async (t: Tes
   await generateDesignEvent({
     createdAt: new Date(),
     designId: design.id,
-    targetId: designer.id,
+    targetId: designer1.id,
     type: "COMMIT_COST_INPUTS",
   });
   await generateDesignEvent({
-    actorId: designer.id,
+    actorId: designer1.id,
     createdAt: new Date(),
     designId: design.id,
     type: "COMMIT_QUOTE",
@@ -819,7 +821,7 @@ test("Bids DAO supports finding by quote and user id with events", async (t: Tes
   const { designEvent: de1 } = await generateDesignEvent({
     bidId: openBid1.id,
     createdAt: new Date(),
-    targetId: partner.id,
+    targetId: partner1.id,
     type: "BID_DESIGN",
   });
   const openBid2 = await db.transaction((trx: Knex.Transaction) =>
@@ -851,11 +853,11 @@ test("Bids DAO supports finding by quote and user id with events", async (t: Tes
   await generateDesignEvent({
     createdAt: new Date(),
     designId: design.id,
-    targetId: designer.id,
+    targetId: designer1.id,
     type: "COMMIT_COST_INPUTS",
   });
   await generateDesignEvent({
-    actorId: designer.id,
+    actorId: designer1.id,
     createdAt: new Date(),
     designId: design.id,
     type: "COMMIT_QUOTE",
@@ -863,13 +865,13 @@ test("Bids DAO supports finding by quote and user id with events", async (t: Tes
   const { designEvent: de3 } = await generateDesignEvent({
     bidId: openBid3.id,
     createdAt: new Date(),
-    targetId: partner.id,
+    targetId: partner1.id,
     type: "BID_DESIGN",
   });
 
   const acceptDate1 = new Date(testDate.getTime() + daysToMs(1));
   const { designEvent: de2 } = await generateDesignEvent({
-    actorId: partner.id,
+    actorId: partner1.id,
     bidId: openBid1.id,
     type: "ACCEPT_SERVICE_BID",
     createdAt: acceptDate1,
@@ -877,14 +879,14 @@ test("Bids DAO supports finding by quote and user id with events", async (t: Tes
 
   const acceptDate2 = new Date(testDate.getTime() + daysToMs(3));
   const { designEvent: de4 } = await generateDesignEvent({
-    actorId: partner.id,
+    actorId: partner1.id,
     bidId: openBid3.id,
     type: "ACCEPT_SERVICE_BID",
     createdAt: acceptDate2,
   });
 
   const result = await db.transaction((trx: Knex.Transaction) =>
-    findAllByQuoteAndTargetId(trx, quote.id, partner.id)
+    findAllByQuoteAndTargetId(trx, quote.id, partner1.id)
   );
   t.deepEqual(
     result,
@@ -984,13 +986,13 @@ test("Bids DAO supports finding all unpaid bids by user id from after the cutoff
     bidId: bid2.id,
     isManual: false,
   };
-  await db.transaction((trx: Knex.Transaction) =>
-    PartnerPayoutsDAO.create(trx, data)
-  );
 
-  const bids = await findUnpaidByUserId(partner.id);
-  t.equal(bids.length, 1);
-  t.deepEqual(bids, [{ ...bid, acceptedAt: bids[0].acceptedAt }]);
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await PartnerPayoutsDAO.create(trx, data);
+    const bids = await findUnpaidByUserId(trx, partner.id);
+    t.equal(bids.length, 1);
+    t.deepEqual(bids, [{ ...bid, acceptedAt: bids[0].acceptedAt }]);
+  });
 });
 
 test("Bids DAO does not return unpaid bids the partner has been removed from", async (t: Test) => {
@@ -1031,7 +1033,9 @@ test("Bids DAO does not return unpaid bids the partner has been removed from", a
     type: "REMOVE_PARTNER",
   });
 
-  const bids = await findUnpaidByUserId(partner.id);
+  const bids = await db.transaction((trx: Knex.Transaction) =>
+    findUnpaidByUserId(trx, partner.id)
+  );
   t.equal(bids.length, 0);
 });
 
@@ -1093,26 +1097,28 @@ test("Bids DAO supports finding bid with payout logs by id", async (t: Test) => 
     })
   );
 
-  const foundBid = await findById(bid.id);
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const foundBid = await findById(trx, bid.id);
 
-  t.deepEqual(omit(foundBid, "createdAt"), {
-    acceptedAt: null,
-    bidPriceCents: 2000,
-    bidPriceProductionOnlyCents: 0,
-    completedAt: null,
-    dueDate: bid.dueDate,
-    createdBy: admin.id,
-    description: "Full Service",
-    id: bid.id,
-    partnerPayoutLogs: [payout2, payout1],
-    partnerUserId: partner.id,
-    quoteId: quote.id,
-    revenueShareBasisPoints: 0,
-    assignee: {
-      type: "USER",
-      id: partner.id,
-      name: partner.name,
-    },
+    t.deepEqual(omit(foundBid, "createdAt"), {
+      acceptedAt: null,
+      bidPriceCents: 2000,
+      bidPriceProductionOnlyCents: 0,
+      completedAt: null,
+      dueDate: bid.dueDate,
+      createdBy: admin.id,
+      description: "Full Service",
+      id: bid.id,
+      partnerPayoutLogs: [payout2, payout1],
+      partnerUserId: partner.id,
+      quoteId: quote.id,
+      revenueShareBasisPoints: 0,
+      assignee: {
+        type: "USER",
+        id: partner.id,
+        name: partner.name,
+      },
+    });
   });
 });
 
@@ -1164,39 +1170,19 @@ async function generatePartnerAndBidEvents(
 test("Bids DAO supports finding bid by id returns the correct partner id", async (t: Test) => {
   await generatePricingValues();
   const { user: designer } = await createUser({ withSession: false });
-  const bidPayouts: { bidId: string; partnerId: string }[] = [];
   for (let i = 0; i < 5; i += 1) {
     const { user: partner } = await createUser({
       role: "PARTNER",
       withSession: false,
     });
     const bidId = await generatePartnerAndBidEvents(designer.id, partner.id);
-    bidPayouts.push({
-      partnerId: partner.id,
-      bidId,
-    });
+    t.equals(
+      (await db.transaction((trx: Knex.Transaction) => findById(trx, bidId)))!
+        .partnerUserId,
+      partner.id,
+      "Found bid partner ID is correct"
+    );
   }
-  const foundBid1 = await findById(bidPayouts[0].bidId);
-  if (foundBid1 === null) {
-    t.fail("Bid was not found");
-    return;
-  }
-  t.deepEquals(
-    foundBid1.partnerUserId,
-    bidPayouts[0].partnerId,
-    "Found bid partner id is correct"
-  );
-
-  const foundBid2 = await findById(bidPayouts[3].bidId);
-  if (foundBid2 === null) {
-    t.fail("Bid was not found");
-    return;
-  }
-  t.deepEquals(
-    foundBid2.partnerUserId,
-    bidPayouts[3].partnerId,
-    "Found bid partner id is correct"
-  );
 });
 
 test("Bids DAO supports finding by bid id and user with a team", async (t: Test) => {

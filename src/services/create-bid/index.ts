@@ -54,7 +54,8 @@ async function assignUser(
 
   const maybeCollaborator = await CollaboratorsDAO.findByDesignAndUser(
     designId,
-    targetId
+    targetId,
+    trx
   );
   const now = new Date();
   const cancellationDate = new Date(now.getTime() + MILLISECONDS_TO_EXPIRE);

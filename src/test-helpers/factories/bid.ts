@@ -41,7 +41,7 @@ export default async function generateBid({
   if (generatePricing) {
     await generatePricingValues();
   }
-  const { user } = await createUser();
+  const { user } = await createUser({ role: "ADMIN", withSession: false });
 
   let design;
   const found = designId ? await ProductDesignsDAO.findById(designId) : null;
@@ -100,6 +100,5 @@ export default async function generateBid({
       ...bidOptions,
     })
   );
-
   return { bid, quote, user };
 }

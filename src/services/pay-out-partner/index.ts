@@ -26,7 +26,7 @@ export async function payOutPartner(
     throw new InvalidDataError("");
   }
 
-  const bid = await findBidById(bidId);
+  const bid = await findBidById(trx, bidId);
   if (!bid) {
     throw new InvalidDataError(`No bid with ID ${bidId}`);
   }

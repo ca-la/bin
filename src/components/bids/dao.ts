@@ -17,7 +17,6 @@ import Bid, {
   isBidWithPaymentLogsRow,
   bidDbAdapter,
 } from "./domain-object";
-import first from "../../services/first";
 import { validate, validateEvery } from "../../services/validate-from-db";
 import limitOrOffset from "../../services/limit-or-offset";
 import { MILLISECONDS_TO_EXPIRE } from "./constants";
@@ -137,9 +136,10 @@ const selectWithAcceptedAtAndCompletedAt = db.raw(
 
 const orderBy = (
   orderClause: string,
+  trx: Knex.Transaction,
   query: Knex.QueryBuilder
 ): Knex.QueryBuilder =>
-  db.select("*").from({ data: query }).orderByRaw(orderClause);
+  db.select("*").from({ data: query }).transacting(trx).orderByRaw(orderClause);
 
 const orderByAcceptedAt = orderBy.bind(
   null,
@@ -155,7 +155,7 @@ export async function create(trx: Knex.Transaction, bid: BidDb): Promise<Bid> {
   const rowData = bidDbAdapter.forInsertion(bid);
   await trx(TABLE_NAME).insert(rowData).transacting(trx);
 
-  const withAcceptedAt = await findById(bid.id, trx);
+  const withAcceptedAt = await findById(trx, bid.id);
 
   if (!withAcceptedAt) {
     throw new Error("Failed to create Bid");
@@ -169,13 +169,14 @@ export async function create(trx: Knex.Transaction, bid: BidDb): Promise<Bid> {
 }
 
 function findAllByState(
+  trx: Knex.Transaction,
   state: "OPEN" | "ACCEPTED" | "REJECTED" | "EXPIRED"
 ): Knex.QueryBuilder {
   const contains = statusToEvents[state].contains;
   const alsoContains = statusToEvents[state].andAlsoContains;
   const doesNotContain = statusToEvents[state].doesNotContain;
 
-  return db(DESIGN_EVENTS_TABLE)
+  return trx(DESIGN_EVENTS_TABLE)
     .select()
     .select(selectWithAcceptedAt)
     .rightJoin("pricing_bids", (join: Knex.JoinClause) => {
@@ -223,11 +224,14 @@ function findAllByState(
     .orderBy("pricing_bids.created_at", "desc");
 }
 
-export async function findAll(modifiers: {
-  limit?: number;
-  offset?: number;
-  state?: string;
-}): Promise<Bid[]> {
+export async function findAll(
+  trx: Knex.Transaction,
+  modifiers: {
+    limit?: number;
+    offset?: number;
+    state?: string;
+  }
+): Promise<Bid[]> {
   let query: Knex.QueryBuilder;
 
   switch (modifiers.state) {
@@ -235,12 +239,12 @@ export async function findAll(modifiers: {
     case "ACCEPTED":
     case "REJECTED":
     case "EXPIRED": {
-      query = findAllByState(modifiers.state);
+      query = findAllByState(trx, modifiers.state);
       break;
     }
 
     default: {
-      query = db(DESIGN_EVENTS_TABLE)
+      query = trx(DESIGN_EVENTS_TABLE)
         .select(selectWithAcceptedAt)
         .rightJoin("pricing_bids", (join: Knex.JoinClause) => {
           join.on("design_events.bid_id", "=", "pricing_bids.id");
@@ -256,15 +260,18 @@ export async function findAll(modifiers: {
     }
   }
 
-  const bids: BidRow[] = await orderByAcceptedAt(query).modify(
+  const bids: BidRow[] = await orderByAcceptedAt(trx, query).modify(
     limitOrOffset(modifiers.limit, modifiers.offset)
   );
 
   return validateEvery<BidRow, Bid>(TABLE_NAME, isBidRow, dataAdapter, bids);
 }
 
-export async function findUnpaidByUserId(userId: string): Promise<Bid[]> {
-  const bids = await db("users")
+export async function findUnpaidByUserId(
+  trx: Knex.Transaction,
+  userId: string
+): Promise<Bid[]> {
+  const bids = await trx("users")
     .select(selectWithAcceptedAt)
     .from("users")
     .join("design_events", "users.id", "design_events.actor_id")
@@ -373,16 +380,12 @@ function bidWithPayoutLogsById(id: string) {
 }
 
 export async function findById(
-  id: string,
-  trx?: Knex.Transaction
+  trx: Knex.Transaction,
+  id: string
 ): Promise<BidWithPayoutLogs | null> {
   const bid: BidWithPayoutLogsRow | undefined = await bidWithPayoutLogsById(id)
-    .modify((query: Knex.QueryBuilder) => {
-      if (trx) {
-        query.transacting(trx);
-      }
-    })
-    .then((bids: BidWithPayoutLogsRow[]) => first(bids));
+    .transacting(trx)
+    .first();
 
   if (!bid) {
     return null;
@@ -414,7 +417,7 @@ export async function findByBidIdAndUser(
       [userId, userId]
     )
     .modify((query: Knex.QueryBuilder) => query.transacting(trx))
-    .then((bids: BidWithPayoutLogsRow[]) => first(bids));
+    .first();
 
   if (!bid) {
     return null;
@@ -429,6 +432,7 @@ export async function findByBidIdAndUser(
 }
 
 export async function findOpenByTargetId(
+  trx: Knex.Transaction,
   targetId: string,
   sortBy: BidSortByParam
 ): Promise<Bid[]> {
@@ -442,7 +446,8 @@ export async function findOpenByTargetId(
       break;
   }
   const targetRows = await sortingFunction(
-    db(DESIGN_EVENTS_TABLE)
+    trx,
+    trx(DESIGN_EVENTS_TABLE)
       .select(selectWithAcceptedAt)
       .leftJoin(
         db.raw("team_users on team_users.user_id = ? AND team_users.role = ?", [
@@ -489,6 +494,7 @@ export async function findOpenByTargetId(
 }
 
 export async function findAcceptedByTargetId(
+  trx: Knex.Transaction,
   targetId: string,
   sortBy: BidSortByParam
 ): Promise<Bid[]> {
@@ -502,7 +508,8 @@ export async function findAcceptedByTargetId(
       break;
   }
   const targetRows = await sortingFunction(
-    db(DESIGN_EVENTS_TABLE)
+    trx,
+    trx(DESIGN_EVENTS_TABLE)
       .select(selectWithAcceptedAt)
       .rightJoin("pricing_bids", (join: Knex.JoinClause) => {
         join
@@ -538,6 +545,7 @@ export async function findAcceptedByTargetId(
 }
 
 export async function findActiveByTargetId(
+  trx: Knex.Transaction,
   targetId: string,
   sortBy: BidSortByParam
 ): Promise<Bid[]> {
@@ -551,7 +559,8 @@ export async function findActiveByTargetId(
       break;
   }
   const targetRows = await sortingFunction(
-    db(DESIGN_EVENTS_TABLE)
+    trx,
+    trx(DESIGN_EVENTS_TABLE)
       .select(selectWithAcceptedAt)
       .rightJoin("pricing_bids", (join: Knex.JoinClause) => {
         join
@@ -617,6 +626,7 @@ export async function findActiveByTargetId(
 }
 
 export async function findCompletedByTargetId(
+  trx: Knex.Transaction,
   targetId: string,
   sortBy: BidSortByParam
 ): Promise<Bid[]> {
@@ -630,7 +640,8 @@ export async function findCompletedByTargetId(
       break;
   }
   const targetRows = await sortingFunction(
-    db(DESIGN_EVENTS_TABLE)
+    trx,
+    trx(DESIGN_EVENTS_TABLE)
       .select(selectWithAcceptedAtAndCompletedAt)
       .rightJoin("pricing_bids", (join: Knex.JoinClause) => {
         join
@@ -699,6 +710,7 @@ export async function findCompletedByTargetId(
 }
 
 export async function findRejectedByTargetId(
+  trx: Knex.Transaction,
   targetId: string,
   sortBy: BidSortByParam
 ): Promise<Bid[]> {
@@ -712,7 +724,8 @@ export async function findRejectedByTargetId(
       break;
   }
   const targetRows = await sortingFunction(
-    db(DESIGN_EVENTS_TABLE)
+    trx,
+    trx(DESIGN_EVENTS_TABLE)
       .select(selectWithAcceptedAt)
       .rightJoin("pricing_bids", (join: Knex.JoinClause) => {
         join
@@ -747,9 +760,13 @@ export async function findRejectedByTargetId(
   );
 }
 
-export async function findByQuoteId(quoteId: string): Promise<Bid[]> {
+export async function findByQuoteId(
+  trx: Knex.Transaction,
+  quoteId: string
+): Promise<Bid[]> {
   const bidRows = await orderByAcceptedAt(
-    db(DESIGN_EVENTS_TABLE)
+    trx,
+    trx(DESIGN_EVENTS_TABLE)
       .select(selectWithAcceptedAt)
       .rightJoin("pricing_bids", (join: Knex.JoinClause) => {
         join.on("design_events.bid_id", "=", "pricing_bids.id");
@@ -779,7 +796,8 @@ export async function findAllByQuoteAndTargetId(
   targetId: string
 ): Promise<BidWithEvents[]> {
   const bidWithEventsRows = await orderByAcceptedAt(
-    trx
+    trx,
+    trx(DESIGN_EVENTS_TABLE)
       .select(selectWithAcceptedAt)
       .select(
         db.raw(
@@ -807,7 +825,6 @@ export async function findAllByQuoteAndTargetId(
           { targetId }
         )
       )
-      .from(DESIGN_EVENTS_TABLE)
       .rightJoin("pricing_bids", "design_events.bid_id", "pricing_bids.id")
       .leftJoin("pricing_quotes", "pricing_quotes.id", "pricing_bids.quote_id")
       .where({ "pricing_quotes.id": quoteId })

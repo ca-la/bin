@@ -92,8 +92,8 @@ test("GET /bids?userId", async (t: Test) => {
   t.deepEqual(bids, [b1d1], "returns only bids assigned to requested user");
 
   t.deepEqual(
-    findOpenStub.args,
-    [["a-user-id", "ACCEPTED"]],
+    findOpenStub.args[0].slice(1),
+    ["a-user-id", "ACCEPTED"],
     "calls DAO function with correct arguments"
   );
 });
@@ -111,8 +111,8 @@ test("GET /bids?userId&state=OPEN", async (t: Test) => {
   t.equal(response.status, 200);
   t.deepEqual(bids, [b1d1], "returns only bids assigned to requested user");
   t.deepEqual(
-    findOpenStub.args,
-    [["a-user-id", "ACCEPTED"]],
+    findOpenStub.args[0].slice(1),
+    ["a-user-id", "ACCEPTED"],
     "calls DAO function with correct arguments"
   );
 });
@@ -145,8 +145,8 @@ test("GET /bids?userId&state=EXPIRED", async (t: Test) => {
   );
 
   t.deepEqual(
-    findOpenStub.args,
-    [["a-user-id", "ACCEPTED"]],
+    findOpenStub.args[0].slice(1),
+    ["a-user-id", "ACCEPTED"],
     "calls DAO function with correct arguments"
   );
 });
@@ -163,8 +163,8 @@ test("GET /bids?userId&state=REJECTED", async (t: Test) => {
   t.equal(response.status, 200);
   t.deepEqual(bids, [b1d1], "returns rejected bids");
   t.deepEqual(
-    findRejectedStub.args,
-    [["a-user-id", "ACCEPTED"]],
+    findRejectedStub.args[0].slice(1),
+    ["a-user-id", "ACCEPTED"],
     "calls DAO function with correct arguments"
   );
 });
@@ -181,8 +181,8 @@ test("GET /bids?userId&state=ACCEPTED", async (t: Test) => {
   t.equal(response.status, 200);
   t.deepEqual(bids, [b1d1], "returns accepted bids");
   t.deepEqual(
-    findAcceptedStub.args,
-    [["a-user-id", "ACCEPTED"]],
+    findAcceptedStub.args[0].slice(1),
+    ["a-user-id", "ACCEPTED"],
     "calls DAO function with correct arguments"
   );
 });
@@ -538,7 +538,7 @@ test("GET /bids/:bidId gets a bid by an id for admins", async (t: Test) => {
     headers: authHeader(admin.session.id),
   });
   t.equal(getByIdStub.callCount, 1);
-  t.deepEqual(getByIdStub.args[0][0], "a-real-bid-id");
+  t.deepEqual(getByIdStub.args[0][1], "a-real-bid-id");
 
   const partner = await createUser({ role: "PARTNER" });
   const [failedResponsePartner] = await get(`/bids/a-real-bid-id`, {

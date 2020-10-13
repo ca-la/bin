@@ -1,5 +1,4 @@
 import Router from "koa-router";
-import Knex from "knex";
 import uuid from "node-uuid";
 import { omit } from "lodash";
 
@@ -34,7 +33,6 @@ import {
 import { PartnerPayoutLog } from "../partner-payouts/domain-object";
 import { payOutPartner } from "../../services/pay-out-partner";
 import filterError = require("../../services/filter-error");
-import db from "../../services/db";
 import { templateDesignEvent } from "../design-events/types";
 import InvalidDataError from "../../errors/invalid-data";
 import ConflictError from "../../errors/conflict";
@@ -103,20 +101,26 @@ function* createAndAssignBid(
   this.status = 201;
 }
 
-function* listAllBids(this: AuthedContext): Iterator<any, any, any> {
+function* listAllBids(
+  this: TrxContext<AuthedContext>
+): Iterator<any, any, any> {
   const { limit, offset, state }: GetListQuery = this.query;
+  const { trx } = this.state;
 
   if (!limit || !offset) {
     this.throw(400, "Must specify a limit and offset when fetching all bids!");
   }
 
-  const bids = yield BidsDAO.findAll({ limit, offset, state });
+  const bids = yield BidsDAO.findAll(trx, { limit, offset, state });
   this.body = bids;
   this.status = 200;
 }
 
-function* listBidsByAssignee(this: AuthedContext): Iterator<any, any, any> {
+function* listBidsByAssignee(
+  this: TrxContext<AuthedContext>
+): Iterator<any, any, any> {
   const { state, userId, sortBy = "ACCEPTED" } = this.query;
+  const { trx } = this.state;
 
   if (!userId) {
     this.throw(400, "You must specify the user to retrieve bids for");
@@ -132,31 +136,33 @@ function* listBidsByAssignee(this: AuthedContext): Iterator<any, any, any> {
   let bids: Bid[] = [];
   switch (state) {
     case "ACCEPTED":
-      bids = yield BidsDAO.findAcceptedByTargetId(userId, sortBy);
+      bids = yield BidsDAO.findAcceptedByTargetId(trx, userId, sortBy);
       break;
 
     case "ACTIVE":
-      bids = yield BidsDAO.findActiveByTargetId(userId, sortBy);
+      bids = yield BidsDAO.findActiveByTargetId(trx, userId, sortBy);
       break;
 
     case "COMPLETED":
-      bids = yield BidsDAO.findCompletedByTargetId(userId, sortBy);
+      bids = yield BidsDAO.findCompletedByTargetId(trx, userId, sortBy);
       break;
 
     case "EXPIRED":
       bids = yield BidsDAO.findOpenByTargetId(
+        trx,
         userId,
         sortBy
       ).then((openBids: Bid[]): Bid[] => openBids.filter(isExpired));
       break;
 
     case "REJECTED":
-      bids = yield BidsDAO.findRejectedByTargetId(userId, sortBy);
+      bids = yield BidsDAO.findRejectedByTargetId(trx, userId, sortBy);
       break;
 
     case "OPEN":
     case undefined:
       bids = yield BidsDAO.findOpenByTargetId(
+        trx,
         userId,
         sortBy
       ).then((openBids: Bid[]): Bid[] => openBids.filter(not(isExpired)));
@@ -187,10 +193,13 @@ function* listBids(this: AuthedContext): Iterator<any, any, any> {
   }
 }
 
-function* getUnpaidBidsByUserId(this: AuthedContext): Iterator<any, any, any> {
+function* getUnpaidBidsByUserId(
+  this: TrxContext<AuthedContext>
+): Iterator<any, any, any> {
   const { userId } = this.params;
+  const { trx } = this.query;
 
-  const bids = yield BidsDAO.findUnpaidByUserId(userId);
+  const bids = yield BidsDAO.findUnpaidByUserId(trx, userId);
   this.body = bids;
   this.status = 200;
 }
@@ -203,10 +212,13 @@ function* listBidAssignees(this: AuthedContext): Iterator<any, any, any> {
   this.status = 200;
 }
 
-function* removeBidFromPartner(this: AuthedContext): Iterator<any, any, any> {
+function* removeBidFromPartner(
+  this: TrxContext<AuthedContext>
+): Iterator<any, any, any> {
   const { bidId, userId } = this.params;
+  const { trx } = this.state;
 
-  const bid = yield BidsDAO.findById(bidId);
+  const bid = yield BidsDAO.findById(trx, bidId);
   if (!bid) {
     this.throw(404, `No Bid found for ID: ${bidId}`);
   }
@@ -216,22 +228,20 @@ function* removeBidFromPartner(this: AuthedContext): Iterator<any, any, any> {
     this.throw(404, `No Design found for Quote with ID: ${bid.quoteId}`);
   }
 
-  const target = yield UsersDAO.findById(userId);
+  const target = yield UsersDAO.findById(userId, trx);
   if (!target) {
     this.throw(404, `No User found for ID: ${userId}`);
   }
 
-  yield db.transaction(async (trx: Knex.Transaction) => {
-    await createDesignEvent(trx, {
-      ...templateDesignEvent,
-      actorId: this.state.userId,
-      bidId,
-      createdAt: new Date(),
-      designId: design.id,
-      id: uuid.v4(),
-      targetId: target.id,
-      type: "REMOVE_PARTNER",
-    });
+  yield createDesignEvent(trx, {
+    ...templateDesignEvent,
+    actorId: this.state.userId,
+    bidId,
+    createdAt: new Date(),
+    designId: design.id,
+    id: uuid.v4(),
+    targetId: target.id,
+    type: "REMOVE_PARTNER",
   });
 
   yield CollaboratorsDAO.cancelForDesignAndPartner(design.id, target.id);
@@ -250,7 +260,7 @@ export function* acceptDesignBid(
   const { bidId } = this.params;
   const { userId, trx } = this.state;
 
-  const bid: Bid = yield BidsDAO.findById(bidId);
+  const bid: Bid = yield BidsDAO.findById(trx, bidId);
   this.assert(bid, 404, `Bid not found with ID ${bidId}`);
   const quote: PricingQuote = yield PricingQuotesDAO.findById(bid.quoteId);
 
@@ -325,13 +335,13 @@ function isRejectionReasons(data: object): data is Unsaved<BidRejection> {
 }
 
 export function* rejectDesignBid(
-  this: RejectDesignBidContext
+  this: TrxContext<RejectDesignBidContext>
 ): Iterator<any, any, any> {
   const { bidId } = this.params;
-  const { userId } = this.state;
+  const { trx, userId } = this.state;
   const { body } = this.request;
 
-  const bid: Bid = yield BidsDAO.findById(bidId);
+  const bid: Bid = yield BidsDAO.findById(trx, bidId);
   this.assert(bid, 404, `Bid not found with ID ${bidId}`);
   const quote: PricingQuote = yield PricingQuotesDAO.findById(bid.quoteId);
 
@@ -342,7 +352,8 @@ export function* rejectDesignBid(
   this.assert(quote.designId, 400, "Quote does not have a design");
   const collaborator: Collaborator = yield CollaboratorsDAO.findByDesignAndUser(
     quote.designId!,
-    userId
+    userId,
+    trx
   );
   this.assert(
     collaborator,
@@ -351,22 +362,20 @@ export function* rejectDesignBid(
   );
 
   if (body && isRejectionReasons(body)) {
-    yield BidRejectionsDAO.create({ ...body, bidId: bid.id });
+    yield BidRejectionsDAO.create({ ...body, bidId: bid.id }, trx);
   } else {
     this.throw("Bid rejection reasons are required", 400);
   }
 
-  yield db.transaction(async (trx: Knex.Transaction) => {
-    await createDesignEvent(trx, {
-      ...templateDesignEvent,
-      actorId: userId,
-      bidId: bid.id,
-      createdAt: new Date(),
-      designId: quote.designId!,
-      id: uuid.v4(),
-      quoteId: bid.quoteId,
-      type: "REJECT_SERVICE_BID",
-    });
+  yield createDesignEvent(trx, {
+    ...templateDesignEvent,
+    actorId: userId,
+    bidId: bid.id,
+    createdAt: new Date(),
+    designId: quote.designId!,
+    id: uuid.v4(),
+    quoteId: bid.quoteId,
+    type: "REJECT_SERVICE_BID",
   });
 
   if (collaborator.role === "PREVIEW") {
@@ -393,7 +402,7 @@ function* getById(this: TrxContext<GetByIdContext>): Iterator<any, any, any> {
   const { role, userId, trx } = this.state;
   const bid =
     role === "ADMIN"
-      ? yield BidsDAO.findById(bidId, trx)
+      ? yield BidsDAO.findById(trx, bidId)
       : yield BidsDAO.findByBidIdAndUser(trx, bidId, userId);
 
   if (bid) {
@@ -467,15 +476,25 @@ router.post(
   typeGuard(isBidCreationPayload),
   createAndAssignBid
 );
-router.get("/", requireAuth, listBids);
-router.get("/unpaid/:userId", requireAdmin, getUnpaidBidsByUserId);
+router.get("/", requireAuth, useTransaction, listBids);
+router.get(
+  "/unpaid/:userId",
+  requireAdmin,
+  useTransaction,
+  getUnpaidBidsByUserId
+);
 
 router.get("/:bidId", requireAuth, useTransaction, getById);
 router.get("/:bidId/assignees", requireAdmin, listBidAssignees);
-router.del("/:bidId/assignees/:userId", requireAdmin, removeBidFromPartner);
+router.del(
+  "/:bidId/assignees/:userId",
+  requireAdmin,
+  useTransaction,
+  removeBidFromPartner
+);
 
 router.post("/:bidId/accept", requireAuth, useTransaction, acceptDesignBid);
-router.post("/:bidId/reject", requireAuth, rejectDesignBid);
+router.post("/:bidId/reject", requireAuth, useTransaction, rejectDesignBid);
 router.post(
   "/:bidId/pay-out-to-partner",
   requireAdmin,

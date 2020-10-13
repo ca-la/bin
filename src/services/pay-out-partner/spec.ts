@@ -137,8 +137,8 @@ test("payOutPartner with manual payment", async (t: Test) => {
     designId: design.id,
   });
 
-  await db.transaction((trx: Knex.Transaction) =>
-    payOutPartner(trx, {
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await payOutPartner(trx, {
       id: uuid.v4(),
       initiatorUserId: adminUser.id,
       invoiceId: null,
@@ -147,18 +147,13 @@ test("payOutPartner with manual payment", async (t: Test) => {
       payoutAmountCents: 222,
       bidId: bid.id,
       isManual: true,
-    })
-  );
-
-  const foundBid = await findById(bid.id);
-  if (foundBid === null) {
-    t.fail("could not find bid after creation");
-  } else {
-    const logs = foundBid.partnerPayoutLogs;
+    });
+    const foundBid = await findById(trx, bid.id);
+    const logs = foundBid!.partnerPayoutLogs;
     t.equal(logs.length, 1);
     t.equal(logs[0].bidId, bid.id);
     t.equal(logs[0].payoutAmountCents, 222);
-  }
+  });
 });
 
 test("payOutPartner can pay amounts larger than bid amount", async (t: Test) => {
