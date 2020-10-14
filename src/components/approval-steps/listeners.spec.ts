@@ -1,12 +1,14 @@
+import * as uuid from "node-uuid";
+import { omit } from "lodash";
+
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import db from "../../services/db";
+import Logger from "../../services/logger";
 import ApprovalStep, {
   ApprovalStepState,
   ApprovalStepType,
   approvalStepDomain,
 } from "./types";
-import * as uuid from "node-uuid";
-import { omit } from "lodash";
 import {
   DaoUpdated,
   RouteUpdated,
@@ -122,6 +124,7 @@ test("dao.updating", async (t: Test) => {
 
 test("dao.updated", async (t: Test) => {
   const irisStub = sandbox().stub(IrisService, "sendMessage").resolves();
+  const loggerStub = sandbox().stub(Logger, "logServerError");
   const now = new Date();
   sandbox().useFakeTimers(now);
 
@@ -153,6 +156,35 @@ test("dao.updated", async (t: Test) => {
     );
   } finally {
     await trx.rollback();
+  }
+
+  const irisError = new Error("Oh no");
+  irisStub.rejects(irisError);
+
+  const trx2 = await db.transaction();
+  try {
+    const event: DaoUpdated<ApprovalStep, typeof approvalStepDomain> = {
+      trx,
+      type: "dao.updated",
+      domain: approvalStepDomain,
+      before: as,
+      updated: {
+        ...as,
+        collaboratorId: "collab-id",
+      },
+    };
+    if (!listeners["dao.updated"]) {
+      throw new Error("dao.updated is empty");
+    }
+
+    await listeners["dao.updated"](event);
+    t.deepEqual(
+      loggerStub.args,
+      [[irisError]],
+      "Logs any errors when Iris fails"
+    );
+  } finally {
+    await trx2.rollback();
   }
 });
 

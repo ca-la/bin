@@ -12,7 +12,12 @@ const db = knex(knexConfig);
 
 if (LOG_ALL_QUERIES) {
   db.on("query", (data) => {
-    Logger.log(`Query: \`${data.sql}\` Bindings: ${data.bindings}`);
+    Logger.time(data.__knexQueryUid);
+    Logger.log(
+      `Query ${data.__knexQueryUid}: \`${data.sql}\` Bindings: ${data.bindings}`
+    );
+  }).on("query-response", (_response, obj) => {
+    Logger.timeEnd(obj.__knexQueryUid);
   });
 }
 

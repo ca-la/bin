@@ -1,3 +1,5 @@
+import uuid from "node-uuid";
+
 import ApprovalStep, { approvalStepDomain, ApprovalStepState } from "./types";
 import {
   DaoUpdated,
@@ -15,8 +17,8 @@ import {
   handleUserStepReopen,
 } from "../../services/approval-step-state";
 
+import Logger from "../../services/logger";
 import DesignEventsDAO from "../design-events/dao";
-import uuid from "node-uuid";
 import * as CollaboratorsDAO from "../../components/collaborators/dao";
 import DesignsDAO from "../product-designs/dao";
 import { NotificationType } from "../notifications/domain-object";
@@ -65,10 +67,14 @@ export const listeners: Listeners<ApprovalStep, typeof approvalStepDomain> = {
     },
   },
 
-  "dao.updated": (
+  "dao.updated": async (
     event: DaoUpdated<ApprovalStep, typeof approvalStepDomain>
-  ): Promise<void> =>
-    IrisService.sendMessage(realtimeApprovalStepUpdated(event.updated)),
+  ): Promise<void> => {
+    // NOTE: We are explicitly _not_ awaiting here to avoid blocking
+    IrisService.sendMessage(realtimeApprovalStepUpdated(event.updated)).catch(
+      Logger.logServerError
+    );
+  },
 
   "route.updated.*": {
     state: async (

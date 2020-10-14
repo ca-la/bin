@@ -4,7 +4,22 @@ const COLORS = require("../colors");
 
 function log(...args) {
   // eslint-disable-next-line no-console
-  console.log(COLORS.blue, "[LOG]", ...args, COLORS.reset);
+  console.log(
+    COLORS.blue,
+    `[LOG] ${new Date().getTime()}:`,
+    ...args,
+    COLORS.reset
+  );
+}
+
+function time(label) {
+  // eslint-disable-next-line no-console
+  console.time(label);
+}
+
+function timeEnd(label) {
+  // eslint-disable-next-line no-console
+  console.timeEnd(label);
 }
 
 function logServerError(...args) {
@@ -27,4 +42,6 @@ module.exports = {
   logServerError,
   logWarning,
   logClientError,
+  time,
+  timeEnd,
 };
