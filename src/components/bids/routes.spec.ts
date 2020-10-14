@@ -53,6 +53,9 @@ function setup(role: string = "PARTNER") {
       .stub(ProductDesignsDAO, "findByQuoteId")
       .resolves(d1),
     createStub: sandbox().stub(CreateBidService, "createBid").resolves(b1),
+    findUnpaidBidsStub: sandbox()
+      .stub(BidsDAO, "findUnpaidByUserId")
+      .resolves([b1d1]),
   };
 }
 
@@ -719,6 +722,35 @@ test("POST /bids", async (t: Test) => {
   const [unauthorized] = await post("/bids", {
     headers: authHeader("a-session-id"),
     body: bidCreationPayload,
+  });
+
+  t.equal(
+    unauthorized.status,
+    403,
+    "returns an Unauthorized status for non-admins"
+  );
+});
+
+test("GET /unpaid/:userId", async (t: Test) => {
+  const mockTransaction = await db.transaction();
+  sandbox().stub(db, "transaction").resolves(mockTransaction);
+  const { sessionStub, findUnpaidBidsStub } = setup("ADMIN");
+
+  const [response, body] = await get("/bids/unpaid/a-user-id", {
+    headers: authHeader("a-session-id"),
+  });
+
+  t.equal(response.status, 200, "returns a success status");
+  t.deepEqual(body, [b1d1], "returns bids");
+  t.deepEqual(
+    findUnpaidBidsStub.args,
+    [[mockTransaction, "a-user-id"]],
+    "passes a transaction to the DAO function"
+  );
+
+  sessionStub.resolves({ role: "USER", userId: "a-user-id" });
+  const [unauthorized] = await get("/bids/unpaid/a-user-id", {
+    headers: authHeader("a-session-id"),
   });
 
   t.equal(

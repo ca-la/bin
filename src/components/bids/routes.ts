@@ -197,7 +197,7 @@ function* getUnpaidBidsByUserId(
   this: TrxContext<AuthedContext>
 ): Iterator<any, any, any> {
   const { userId } = this.params;
-  const { trx } = this.query;
+  const { trx } = this.state;
 
   const bids = yield BidsDAO.findUnpaidByUserId(trx, userId);
   this.body = bids;
