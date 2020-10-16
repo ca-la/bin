@@ -469,6 +469,7 @@ test("Partner pairing: reject", async (t: Test) => {
 
   const [unauthorizedBidResponse] = await post(`/bids/${bid.id}/reject`, {
     headers: authHeader(other.session.id),
+    body: bidRejection,
   });
   t.equal(
     unauthorizedBidResponse.status,
@@ -516,7 +517,19 @@ test("Partner pairing: reject", async (t: Test) => {
 
   t.equal(designCollaborator, null, "The partner is no longer a collaborator");
 
-  t.equal(notificationStub.callCount, 1);
+  t.deepEqual(
+    notificationStub.args,
+    [
+      [
+        {
+          actorId: partner.user.id,
+          designId: design.id,
+          bidRejection: createdRejection,
+        },
+      ],
+    ],
+    "calls notification service with correct arguments"
+  );
 
   const [duplicateRejectionResponse, duplicateRejectionBody] = await post(
     `/bids/${bid.id}/reject`,

@@ -12,7 +12,6 @@ import * as ApprovalStepsDAO from "../../components/approval-steps/dao";
 import * as CollectionsDAO from "../../components/collections/dao";
 import * as TaskEventsDAO from "../../dao/task-events";
 import * as UsersDAO from "../../components/users/dao";
-import * as BidRejectionsDAO from "../../components/bid-rejections/dao";
 import ProductDesign from "../../components/product-designs/domain-objects/product-design";
 import ApprovalStep from "../../components/approval-steps/domain-object";
 
@@ -109,6 +108,7 @@ import {
 } from "../../components/notifications/models/approval-step-comment-create";
 
 import ProductDesignStage from "../../domain-objects/product-design-stage";
+import { BidRejection } from "../../components/bid-rejections/domain-object";
 
 /**
  * Deletes pre-existing similar notifications and adds in a new one by comparing columns.
@@ -891,9 +891,9 @@ export async function sendPartnerAcceptServiceBidNotification(
 export async function sendPartnerRejectServiceBidNotification(params: {
   actorId: string;
   designId: string;
-  bidId: string;
+  bidRejection: BidRejection;
 }): Promise<PartnerRejectServiceBidNotification> {
-  const { actorId, bidId, designId } = params;
+  const { actorId, bidRejection, designId } = params;
 
   const id = uuid.v4();
   const notification = await NotificationsDAO.create({
@@ -908,7 +908,7 @@ export async function sendPartnerRejectServiceBidNotification(params: {
   SlackService.enqueueSend({
     channel: "partners",
     params: {
-      bidRejection: await BidRejectionsDAO.findByBidId(bidId),
+      bidRejection,
       design: await DesignsDAO.findById(designId),
       partner: await UsersDAO.findById(actorId),
     },

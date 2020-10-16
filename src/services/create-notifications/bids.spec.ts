@@ -3,7 +3,6 @@ import { pick } from "lodash";
 
 import { sandbox, test } from "../../test-helpers/fresh";
 import * as SlackService from "../../services/slack";
-import * as BidRejectionsDAO from "../../components/bid-rejections/dao";
 import DesignsDAO from "../../components/product-designs/dao";
 import * as UsersDAO from "../../components/users/dao";
 import Config from "../../config";
@@ -12,6 +11,7 @@ import { sendPartnerRejectServiceBidNotification } from "./index";
 import createDesign from "../create-design";
 import { NotificationType } from "../../components/notifications/domain-object";
 import * as NotificationAnnouncer from "../../components/iris/messages/notification";
+import { BidRejection } from "../../components/bid-rejections/domain-object";
 
 test("sendPartnerRejectServiceBidNotification creates a notification and sends to slack", async (t: tape.Test) => {
   const { user: partner } = await createUser({
@@ -35,11 +35,6 @@ test("sendPartnerRejectServiceBidNotification creates a notification and sends t
     .stub(SlackService, "enqueueSend")
     .returns(Promise.resolve());
   sandbox().stub(Config, "CALA_OPS_USER_ID").value(calaOps.id);
-  const rejectionsStub = sandbox()
-    .stub(BidRejectionsDAO, "findByBidId")
-    .resolves({
-      id: "bid-rejection-foo",
-    });
   const designsStub = sandbox().stub(DesignsDAO, "findById").resolves({
     id: design.id,
   });
@@ -49,7 +44,9 @@ test("sendPartnerRejectServiceBidNotification creates a notification and sends t
 
   const notification = await sendPartnerRejectServiceBidNotification({
     actorId: partner.id,
-    bidId: "bid-foo",
+    bidRejection: {
+      id: "bid-rejection-foo",
+    } as BidRejection,
     designId: design.id,
   });
 
@@ -82,7 +79,6 @@ test("sendPartnerRejectServiceBidNotification creates a notification and sends t
     },
     templateName: "partner_reject_bid",
   });
-  t.true(rejectionsStub.calledOnce);
   t.true(designsStub.calledOnce);
   t.true(partnersStub.calledOnce);
 });

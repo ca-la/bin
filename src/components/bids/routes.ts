@@ -341,6 +341,10 @@ export function* rejectDesignBid(
   const { trx, userId } = this.state;
   const { body } = this.request;
 
+  if (!body || !isRejectionReasons(body)) {
+    this.throw("Bid rejection reasons are required", 400);
+  }
+
   const bid: Bid = yield BidsDAO.findById(trx, bidId);
   this.assert(bid, 404, `Bid not found with ID ${bidId}`);
   const quote: PricingQuote = yield PricingQuotesDAO.findById(bid.quoteId);
@@ -361,11 +365,10 @@ export function* rejectDesignBid(
     "You may only reject a bid you have been assigned to"
   );
 
-  if (body && isRejectionReasons(body)) {
-    yield BidRejectionsDAO.create({ ...body, bidId: bid.id }, trx);
-  } else {
-    this.throw("Bid rejection reasons are required", 400);
-  }
+  const bidRejection = yield BidRejectionsDAO.create(
+    { ...body, bidId: bid.id },
+    trx
+  );
 
   yield createDesignEvent(trx, {
     ...templateDesignEvent,
@@ -384,8 +387,8 @@ export function* rejectDesignBid(
 
   yield NotificationsService.sendPartnerRejectServiceBidNotification({
     actorId: this.state.userId,
-    bidId,
     designId: quote.designId!,
+    bidRejection,
   });
 
   this.status = 204;
