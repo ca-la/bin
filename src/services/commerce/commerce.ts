@@ -1,7 +1,12 @@
 import { Transaction } from "knex";
-import { updateEmptySkuByUpc } from "../../components/product-design-variants/dao";
+import qs from "querystring";
+import {
+  updateEmptySkuByUpc,
+  findByDesignId,
+} from "../../components/product-design-variants/dao";
 import db from "../db";
 import * as CommerceAPI from "./api";
+import { VariantDb } from "../../components/product-design-variants/types";
 
 export interface UpcSkuMatching {
   upc: string;
@@ -51,4 +56,47 @@ export async function fillSkus(storefrontId: string): Promise<number> {
   });
 
   return updatedCount;
+}
+
+export async function fetchProductInfo(designId: string) {
+  return await db.transaction(async (trx: Transaction) => {
+    const variants = await findByDesignId(designId, trx);
+    const skus = variants.map((variant: VariantDb) => variant.sku);
+    const response = await CommerceAPI.fetchCommerce(
+      `storefront-products?sku=${skus.join(",")}`
+    );
+
+    if (response.status !== 200) {
+      const text = await response.text();
+      throw new Error(text);
+    }
+
+    return response.json();
+  });
+}
+
+export async function fetchProductVariants(
+  designId: string,
+  storefrontId: string,
+  externalProductId: string | null
+) {
+  return await db.transaction(async (trx: Transaction) => {
+    const variants = await findByDesignId(designId, trx);
+    const skus = variants.map((variant: VariantDb) => variant.sku);
+    const query = qs.stringify({
+      sku: skus.join(","),
+      storefrontId,
+      ...(externalProductId !== null ? { externalProductId } : {}),
+    });
+    const response = await CommerceAPI.fetchCommerce(
+      `storefront-product-variants?${query}`
+    );
+
+    if (response.status !== 200) {
+      const text = await response.text();
+      throw new Error(text);
+    }
+
+    return response.json();
+  });
 }

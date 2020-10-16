@@ -5,12 +5,13 @@ import { COMMERCE_HOST, COMMERCE_TOKEN } from "../../config";
 import requireAuth = require("../../middleware/require-auth");
 import requireAdmin = require("../../middleware/require-admin");
 import { Request } from "koa";
-import { fillSkus } from "../../services/commerce";
+import {
+  fillSkus,
+  fetchProductInfo,
+  fetchProductVariants,
+} from "../../services/commerce";
 
-const router = new Router();
-
-router.use("*", requireAuth);
-router.use("*", requireAdmin);
+import { canAccessDesignInParam } from "../../middleware/can-access-design";
 
 const proxy = Proxy({
   host: COMMERCE_HOST,
@@ -42,9 +43,60 @@ function* fillStorefrontVariantSkus(this: AuthedContext) {
   }
 }
 
-// some commerce API routes interceptors
+function* getProductInfo(
+  this: AuthedContext<{}, AuthedState, { designId: string }>
+) {
+  const { designId } = this.params;
+  try {
+    this.body = yield fetchProductInfo(designId);
+    this.status = 200;
+  } catch (err) {
+    this.status = 500;
+    this.body = { error: err.message };
+  }
+}
+
+function* getProductVariants(
+  this: AuthedContext<
+    {},
+    AuthedState,
+    {
+      designId: string;
+      storefrontId: string;
+    }
+  >
+) {
+  const { designId, storefrontId } = this.params;
+  const { externalProductId } = this.query;
+  try {
+    this.body = yield fetchProductVariants(
+      designId,
+      storefrontId,
+      typeof externalProductId === "string" ? externalProductId : null
+    );
+    this.status = 200;
+  } catch (err) {
+    this.status = 500;
+    this.body = { error: err.message };
+  }
+}
+
+const router = new Router();
+
+// user-level routes processed by API
+router.use("*", requireAuth);
+router.get("/product-info/:designId", canAccessDesignInParam, getProductInfo);
+router.get(
+  "/product-variants/:designId/:storefrontId",
+  canAccessDesignInParam,
+  getProductVariants
+);
+
+// admin-level routes processed by API
+router.use("*", requireAdmin);
 router.post("/storefronts/:storefrontId/fill-skus", fillStorefrontVariantSkus);
 
+// other routes processed by commerce
 router.get("*", legacyProxy);
 router.post("*", legacyProxy);
 router.put("*", legacyProxy);
