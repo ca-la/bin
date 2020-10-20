@@ -24,17 +24,13 @@ interface PostRequest {
   apiBase?: string;
 }
 
+function isPostRequest(candidate: any): candidate is PostRequest {
+  return "data" in candidate || "idempotencyKey" in candidate;
+}
+
 type RequestOptions = GetRequest | PostRequest;
 
 const CREDENTIALS = Buffer.from(`${STRIPE_SECRET_KEY}:`).toString("base64");
-
-const fetcher = getFetcher({
-  apiBase: STRIPE_API_BASE,
-  headerBase: {
-    Authorization: `Basic ${CREDENTIALS}`,
-  },
-  serializer: serializeRequestBody,
-});
 
 export default async function makeRequest<ResponseType extends object = {}>(
   requestOptions: RequestOptions
@@ -45,6 +41,21 @@ export default async function makeRequest<ResponseType extends object = {}>(
       "Content-Type": "application/x-www-form-urlencoded",
     };
   }
+
+  if (isPostRequest(requestOptions) && requestOptions.idempotencyKey) {
+    requestOptions.additionalHeaders = {
+      ...requestOptions.additionalHeaders,
+      "Idempotency-Key": requestOptions.idempotencyKey,
+    };
+  }
+
+  const fetcher = getFetcher({
+    apiBase: STRIPE_API_BASE,
+    headerBase: {
+      Authorization: `Basic ${CREDENTIALS}`,
+    },
+    serializer: serializeRequestBody,
+  });
 
   const [status, body]: [number, ResponseType] = await fetcher(requestOptions);
   switch (status) {
