@@ -294,7 +294,9 @@ export async function findUnpaidByUserId(
       db.raw(
         "pricing_bids.bid_price_cents > coalesce(sum(l.payout_amount_cents), 0)"
       )
-    );
+    )
+    .orderBy("pricing_bids.id")
+    .orderBy("pricing_bids.created_at", "desc");
 
   return validateEvery<BidRow, Bid>(TABLE_NAME, isBidRow, dataAdapter, bids);
 }
