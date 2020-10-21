@@ -20,7 +20,6 @@ import Bid, {
 import { validate, validateEvery } from "../../services/validate-from-db";
 import limitOrOffset from "../../services/limit-or-offset";
 import { MILLISECONDS_TO_EXPIRE } from "./constants";
-import { getMinimal as getMinimalTaskViewBuilder } from "../../dao/task-events/view";
 import { BidDb } from "./types";
 import { Role as TeamUserRole } from "../team-users/types";
 
@@ -32,15 +31,18 @@ export const BID_CUTOFF_DATE = "2019-09-21";
 const TABLE_NAME = "pricing_bids";
 const DESIGN_EVENTS_TABLE = "design_events";
 
-const statusToEvents = {
+interface StatusEvent {
+  andAlsoContains: string[];
+  doesNotContain: string[];
+}
+
+const statusToEvents: Record<string, StatusEvent> = {
   ACCEPTED: {
     andAlsoContains: ["ACCEPT_SERVICE_BID"],
-    contains: ["BID_DESIGN"],
     doesNotContain: ["REMOVE_PARTNER"],
   },
   EXPIRED: {
     andAlsoContains: [],
-    contains: ["BID_DESIGN"],
     doesNotContain: [
       "REJECT_SERVICE_BID",
       "ACCEPT_SERVICE_BID",
@@ -49,7 +51,6 @@ const statusToEvents = {
   },
   OPEN: {
     andAlsoContains: [],
-    contains: ["BID_DESIGN"],
     doesNotContain: [
       "REJECT_SERVICE_BID",
       "ACCEPT_SERVICE_BID",
@@ -58,98 +59,103 @@ const statusToEvents = {
   },
   REJECTED: {
     andAlsoContains: ["REJECT_SERVICE_BID"],
-    contains: ["BID_DESIGN"],
     doesNotContain: ["REMOVE_PARTNER"],
   },
 };
 
-function filterRemovalEvents(
-  targetId: string
-): (query: Knex.QueryBuilder) => void {
-  return (query: Knex.QueryBuilder): void => {
-    query.whereNotIn(
+const selectWithAcceptedAt = db.raw(`
+pricing_bids.*,
+(
+  SELECT design_events.created_at
+    FROM design_events
+   WHERE design_events.bid_id = pricing_bids.id
+     AND design_events.type = 'ACCEPT_SERVICE_BID'
+     AND design_events.bid_id NOT IN (
+        SELECT design_events.bid_id
+          FROM design_events
+         WHERE design_events.type = 'REMOVE_PARTNER'
+     )
+   ORDER BY design_events.created_at DESC
+   LIMIT 1
+) AS accepted_at
+`);
+
+const baseQuery = (trx: Knex.Transaction) =>
+  trx(TABLE_NAME)
+    .select(selectWithAcceptedAt)
+    .groupBy(["pricing_bids.id"])
+    .orderBy("pricing_bids.created_at", "DESC");
+
+const assigneeSubquery = (
+  statusEvent: StatusEvent,
+  subquery: Knex.QueryBuilder
+) =>
+  subquery
+    .select([
+      "team_users.user_id as team_user_id",
+      "team_users.role as team_user_role",
       "design_events.bid_id",
-      db
-        .select("design_events.bid_id")
-        .from("design_events")
-        .where("design_events.type", "REMOVE_PARTNER")
-        .andWhere("design_events.target_id", targetId)
-    );
-  };
-}
+      "design_events.target_id",
+      "design_events.target_team_id",
+    ])
+    .from("design_events")
+    .leftJoin(
+      "team_users",
+      "team_users.team_id",
+      "design_events.target_team_id"
+    )
+    .where({ "design_events.type": "BID_DESIGN" })
+    .modify((q: Knex.QueryBuilder): void => {
+      if (statusEvent.andAlsoContains.length > 0) {
+        q.whereIn(
+          "design_events.bid_id",
+          db
+            .select("design_events.bid_id")
+            .from("design_events")
+            .whereIn("design_events.type", statusEvent.andAlsoContains)
+        );
+      }
 
-const selectWithAcceptedAt = db.raw(`distinct on (pricing_bids.id) pricing_bids.*,
-  CASE WHEN "design_events"."bid_id" IN (
-    SELECT
-      "design_events"."bid_id"
-    FROM
-      "design_events"
-    WHERE
-      "design_events"."type" IN ('ACCEPT_SERVICE_BID'))
-    AND "design_events"."bid_id" NOT IN (
-      SELECT
-        "design_events"."bid_id"
-      FROM
-        "design_events"
-      WHERE
-        "design_events"."type" IN ('REMOVE_PARTNER')) THEN
-    (SELECT
-      "design_events"."created_at"
-    FROM
-      "design_events"
-    WHERE "design_events"."type" IN ('ACCEPT_SERVICE_BID')
-      AND "design_events"."bid_id" = "pricing_bids"."id"
-      order by "design_events"."created_at" desc limit 1)
-  ELSE
-    null
-  END AS accepted_at, null as completed_at`);
+      if (statusEvent.doesNotContain.length > 0) {
+        q.whereNotIn(
+          "design_events.bid_id",
+          db
+            .select("design_events.bid_id")
+            .from("design_events")
+            .whereIn("design_events.type", statusEvent.doesNotContain)
+        );
+      }
+    })
+    .as("bid_event");
 
-const selectWithAcceptedAtAndCompletedAt = db.raw(
-  `distinct on (pricing_bids.id) pricing_bids.*,
-  CASE WHEN "design_events"."bid_id" IN (
-    SELECT
-      "design_events"."bid_id"
-    FROM
-      "design_events"
-    WHERE
-      "design_events"."type" IN ('ACCEPT_SERVICE_BID'))
-    AND "design_events"."bid_id" NOT IN (
-      SELECT
-        "design_events"."bid_id"
-      FROM
-        "design_events"
-      WHERE
-        "design_events"."type" IN ('REMOVE_PARTNER')) THEN
-    (SELECT
-      "design_events"."created_at"
-    FROM
-      "design_events"
-    WHERE "design_events"."type" IN ('ACCEPT_SERVICE_BID')
-      AND "design_events"."bid_id" = "pricing_bids"."id"
-      order by "design_events"."created_at" desc limit 1)
-  ELSE
-    null
-  END AS accepted_at,
-  (SELECT MAX(last_modified_at) FROM :taskView AS t where t.design_id = design_events.design_id) AS completed_at`,
-  { taskView: getMinimalTaskViewBuilder() }
-);
+const removeUnassigned = (statusEvent: StatusEvent, query: Knex.QueryBuilder) =>
+  query.join(
+    assigneeSubquery.bind(null, statusEvent),
+    "bid_event.bid_id",
+    "pricing_bids.id"
+  );
 
-const orderBy = (
-  orderClause: string,
-  trx: Knex.Transaction,
-  query: Knex.QueryBuilder
-): Knex.QueryBuilder =>
-  db.select("*").from({ data: query }).transacting(trx).orderByRaw(orderClause);
+const forUserQuery = (
+  userId: string,
+  allowedTeamRoles: TeamUserRole[] = Object.values(TeamUserRole)
+) => (query: Knex.QueryBuilder) =>
+  query.whereRaw(
+    `
+        CASE
+          WHEN bid_event.team_user_id IS NOT NULL
+               THEN bid_event.team_user_id = ? AND bid_event.team_user_role IN (
+                      ${allowedTeamRoles.map(() => "?").join(",")}
+                    )
+          ELSE bid_event.target_id = ?
+        END`,
+    [userId, ...allowedTeamRoles, userId]
+  );
 
-const orderByAcceptedAt = orderBy.bind(
-  null,
-  "accepted_at desc NULLS LAST, created_at desc"
-);
+const orderByAcceptedAt = (query: Knex.QueryBuilder) =>
+  query.orderByRaw("accepted_at desc NULLS LAST, created_at desc");
 
-const orderByDueDate = orderBy.bind(
-  null,
-  "due_date asc NULLS LAST, created_at desc"
-);
+const orderByDueDate = (query: Knex.QueryBuilder) =>
+  query.orderByRaw("due_date asc NULLS LAST, created_at desc");
 
 export async function create(trx: Knex.Transaction, bid: BidDb): Promise<Bid> {
   const rowData = bidDbAdapter.forInsertion(bid);
@@ -172,39 +178,11 @@ function findAllByState(
   trx: Knex.Transaction,
   state: "OPEN" | "ACCEPTED" | "REJECTED" | "EXPIRED"
 ): Knex.QueryBuilder {
-  const contains = statusToEvents[state].contains;
-  const alsoContains = statusToEvents[state].andAlsoContains;
-  const doesNotContain = statusToEvents[state].doesNotContain;
+  const statusEvent = statusToEvents[state];
 
-  return trx(DESIGN_EVENTS_TABLE)
-    .select()
-    .select(selectWithAcceptedAt)
-    .rightJoin("pricing_bids", (join: Knex.JoinClause) => {
-      join
-        .on("design_events.bid_id", "=", "pricing_bids.id")
-        .andOnIn("design_events.type", contains);
-    })
-    .modify((query: Knex.QueryBuilder): void => {
-      if (alsoContains.length > 0) {
-        query.whereIn(
-          "design_events.bid_id",
-          db
-            .select("design_events.bid_id")
-            .from("design_events")
-            .whereIn("design_events.type", alsoContains)
-        );
-      }
-
-      if (doesNotContain.length > 0) {
-        query.whereNotIn(
-          "design_events.bid_id",
-          db
-            .select("design_events.bid_id")
-            .from("design_events")
-            .whereIn("design_events.type", doesNotContain)
-        );
-      }
-
+  return baseQuery(trx)
+    .modify(removeUnassigned.bind(null, statusEvent))
+    .modify((query: Knex.QueryBuilder) => {
       if (state === "OPEN") {
         query.andWhereRaw(
           `pricing_bids.created_at > (now() - INTERVAL '${MILLISECONDS_TO_EXPIRE} milliseconds')`
@@ -215,13 +193,7 @@ function findAllByState(
         );
       }
     })
-    .groupBy([
-      "pricing_bids.id",
-      "design_events.bid_id",
-      "design_events.created_at",
-    ])
-    .orderBy("pricing_bids.id")
-    .orderBy("pricing_bids.created_at", "desc");
+    .orderBy("accepted_at", "desc");
 }
 
 export async function findAll(
@@ -244,23 +216,12 @@ export async function findAll(
     }
 
     default: {
-      query = trx(DESIGN_EVENTS_TABLE)
-        .select(selectWithAcceptedAt)
-        .rightJoin("pricing_bids", (join: Knex.JoinClause) => {
-          join.on("design_events.bid_id", "=", "pricing_bids.id");
-        })
-        .groupBy([
-          "pricing_bids.id",
-          "design_events.bid_id",
-          "design_events.created_at",
-        ])
-        .orderBy("pricing_bids.id")
-        .orderBy("pricing_bids.created_at", "desc");
+      query = baseQuery(trx);
       break;
     }
   }
 
-  const bids: BidRow[] = await orderByAcceptedAt(trx, query).modify(
+  const bids: BidRow[] = await query.modify(
     limitOrOffset(modifiers.limit, modifiers.offset)
   );
 
@@ -273,7 +234,6 @@ export async function findUnpaidByUserId(
 ): Promise<Bid[]> {
   const bids = await trx("users")
     .select(selectWithAcceptedAt)
-    .from("users")
     .join("design_events", "users.id", "design_events.actor_id")
     .join("product_designs as d", "design_events.design_id", "d.id")
     .join("collection_designs as c", "d.id", "c.design_id")
@@ -285,11 +245,7 @@ export async function findUnpaidByUserId(
       "pricing_bids.id",
       db.raw("SELECT bid_id from design_events where type = 'REMOVE_PARTNER'")
     )
-    .groupBy([
-      "pricing_bids.id",
-      "design_events.bid_id",
-      "pricing_bids.bid_price_cents",
-    ])
+    .groupBy(["pricing_bids.id", "design_events.bid_id"])
     .having(
       db.raw(
         "pricing_bids.bid_price_cents > coalesce(sum(l.payout_amount_cents), 0)"
@@ -323,71 +279,40 @@ function withAssignee(query: Knex.QueryBuilder) {
           END AS assignee
         `)
       )
-      .from(DESIGN_EVENTS_TABLE)
-      .leftJoin("users", "users.id", "design_events.target_id")
-      .leftJoin("teams", "teams.id", "design_events.target_team_id")
-      .leftJoin("design_events as de2", (join: Knex.JoinClause) =>
-        join
-          .on("de2.bid_id", "=", "design_events.bid_id")
-          .andOn("de2.type", db.raw("?", ["REMOVE_PARTNER"]))
+      .from(
+        assigneeSubquery.bind(null, {
+          andAlsoContains: [],
+          doesNotContain: ["REMOVE_PARTNER"],
+        })
       )
-      .where({ "design_events.type": "BID_DESIGN", "de2.id": null })
-      .andWhereRaw("design_events.bid_id = pricing_bids.id")
-      .orderBy("design_events.created_at", "DESC")
+      .leftJoin("users", "users.id", "bid_event.target_id")
+      .leftJoin("teams", "teams.id", "bid_event.target_team_id")
+      .whereRaw("bid_event.bid_id = pricing_bids.id")
       .limit(1)
   );
 }
 
-function bidWithPayoutLogsById(id: string) {
-  return db(DESIGN_EVENTS_TABLE)
-    .select(selectWithAcceptedAt)
+function bidWithPayoutLogsById(trx: Knex.Transaction, id: string) {
+  return baseQuery(trx)
     .modify(withAssignee)
     .select(
       db.raw(`
-      CASE
-        WHEN design_events.type = 'BID_DESIGN' THEN
-          design_events.target_id
-        WHEN design_events.type = 'ACCEPT_SERVICE_BID' OR design_events.type = 'REJECT_SERVICE_BID' THEN
-          design_events.actor_id
-        ELSE null
-      END as partner_user_id
-    `)
+        (
+          SELECT to_json(array_agg(logs.* ORDER BY logs.created_at DESC))
+            FROM partner_payout_logs AS logs
+           WHERE logs.bid_id = pricing_bids.id
+        ) AS partner_payout_logs`)
     )
-    .select(
-      db.raw(
-        `
-      (
-        SELECT to_json(array_agg(ordered_logs.*))
-        FROM (
-          SELECT logs.* FROM partner_payout_logs AS logs
-          WHERE logs.bid_id = pricing_bids.id
-          ORDER BY logs.created_at DESC
-        ) AS ordered_logs
-      ) AS partner_payout_logs`
-      )
-    )
-    .rightJoin("pricing_bids", (join: Knex.JoinClause) => {
-      join.on("design_events.bid_id", "=", "pricing_bids.id");
-    })
     .where({ "pricing_bids.id": id })
-    .groupBy([
-      "pricing_bids.id",
-      "design_events.bid_id",
-      "design_events.created_at",
-      "partner_user_id",
-    ])
-    .orderBy("pricing_bids.id")
     .orderBy("pricing_bids.created_at", "desc")
-    .limit(1);
+    .first();
 }
 
 export async function findById(
   trx: Knex.Transaction,
   id: string
 ): Promise<BidWithPayoutLogs | null> {
-  const bid: BidWithPayoutLogsRow | undefined = await bidWithPayoutLogsById(id)
-    .transacting(trx)
-    .first();
+  const bid = await bidWithPayoutLogsById(trx, id);
 
   if (!bid) {
     return null;
@@ -397,7 +322,7 @@ export async function findById(
     TABLE_NAME,
     isBidWithPaymentLogsRow,
     bidWithPayoutLogsDataAdapter,
-    bid
+    { ...bid, partner_user_id: bid.assignee && bid.assignee.id }
   );
 }
 
@@ -406,36 +331,34 @@ export async function findByBidIdAndUser(
   bidId: string,
   userId: string
 ): Promise<BidWithPayoutLogs | null> {
-  const bid: BidWithPayoutLogsRow | undefined = await bidWithPayoutLogsById(
-    bidId
-  )
-    .leftJoin("teams", "teams.id", "design_events.target_team_id")
-    .leftJoin("team_users", "team_users.team_id", "teams.id")
-    .whereRaw(
-      `CASE
-        WHEN teams.id IS NOT NULL then team_users.user_id = ?
-        ELSE design_events.actor_id = ?
-      END`,
-      [userId, userId]
+  const query = bidWithPayoutLogsById(trx, bidId)
+    .modify(
+      removeUnassigned.bind(null, {
+        andAlsoContains: [],
+        doesNotContain: ["REMOVE_PARTNER"],
+      })
     )
-    .modify((query: Knex.QueryBuilder) => query.transacting(trx))
-    .first();
+    .modify(forUserQuery(userId));
+  const bid = await query;
 
   if (!bid) {
     return null;
   }
 
+  const partnerUserId =
+    bid.assignee && bid.assignee.type === "USER" ? bid.assignee.id : null;
+
   return validate<BidWithPayoutLogsRow, BidWithPayoutLogs>(
     TABLE_NAME,
     isBidWithPaymentLogsRow,
     bidWithPayoutLogsDataAdapter,
-    bid
+    { ...bid, partner_user_id: partnerUserId }
   );
 }
 
 export async function findOpenByTargetId(
   trx: Knex.Transaction,
-  targetId: string,
+  userId: string,
   sortBy: BidSortByParam
 ): Promise<Bid[]> {
   let sortingFunction = orderByAcceptedAt;
@@ -447,45 +370,10 @@ export async function findOpenByTargetId(
       sortingFunction = orderByDueDate;
       break;
   }
-  const targetRows = await sortingFunction(
-    trx,
-    trx(DESIGN_EVENTS_TABLE)
-      .select(selectWithAcceptedAt)
-      .leftJoin(
-        db.raw("team_users on team_users.user_id = ? AND team_users.role = ?", [
-          targetId,
-          TeamUserRole.ADMIN,
-        ])
-      )
-      .join(
-        db.raw(
-          `
-          pricing_bids ON
-            design_events.bid_id = pricing_bids.id AND
-            (
-              design_events.target_id = ? OR
-              team_users.team_id = design_events.target_team_id
-            ) AND
-            design_events.type IN (?)
-      `,
-          [targetId, statusToEvents.OPEN.contains.join(",")]
-        )
-      )
-      .whereNotIn(
-        "design_events.bid_id",
-        db
-          .select("design_events.bid_id")
-          .from("design_events")
-          .whereIn("design_events.type", statusToEvents.OPEN.doesNotContain)
-          .andWhere({ "design_events.actor_id": targetId })
-      )
-      .modify(filterRemovalEvents(targetId))
-      .groupBy([
-        "pricing_bids.id",
-        "design_events.bid_id",
-        "design_events.created_at",
-      ])
-  );
+  const targetRows = await baseQuery(trx)
+    .modify(removeUnassigned.bind(null, statusToEvents.OPEN))
+    .modify(forUserQuery(userId, [TeamUserRole.ADMIN]))
+    .modify(sortingFunction);
 
   return validateEvery<BidRow, Bid>(
     TABLE_NAME,
@@ -509,199 +397,10 @@ export async function findAcceptedByTargetId(
       sortingFunction = orderByDueDate;
       break;
   }
-  const targetRows = await sortingFunction(
-    trx,
-    trx(DESIGN_EVENTS_TABLE)
-      .select(selectWithAcceptedAt)
-      .rightJoin("pricing_bids", (join: Knex.JoinClause) => {
-        join
-          .on("design_events.bid_id", "=", "pricing_bids.id")
-          .andOnIn("design_events.target_id", [targetId])
-          .andOnIn("design_events.type", statusToEvents.ACCEPTED.contains);
-      })
-      .whereIn(
-        "design_events.bid_id",
-        db
-          .select("design_events.bid_id")
-          .from("design_events")
-          .whereIn(
-            "design_events.type",
-            statusToEvents.ACCEPTED.andAlsoContains
-          )
-          .andWhere({ "design_events.actor_id": targetId })
-      )
-      .modify(filterRemovalEvents(targetId))
-      .groupBy([
-        "pricing_bids.id",
-        "design_events.bid_id",
-        "design_events.created_at",
-      ])
-  );
-
-  return validateEvery<BidRow, Bid>(
-    TABLE_NAME,
-    isBidRow,
-    dataAdapter,
-    targetRows
-  );
-}
-
-export async function findActiveByTargetId(
-  trx: Knex.Transaction,
-  targetId: string,
-  sortBy: BidSortByParam
-): Promise<Bid[]> {
-  let sortingFunction = orderByAcceptedAt;
-  switch (sortBy) {
-    case "ACCEPTED":
-      sortingFunction = orderByAcceptedAt;
-      break;
-    case "DUE":
-      sortingFunction = orderByDueDate;
-      break;
-  }
-  const targetRows = await sortingFunction(
-    trx,
-    trx(DESIGN_EVENTS_TABLE)
-      .select(selectWithAcceptedAt)
-      .rightJoin("pricing_bids", (join: Knex.JoinClause) => {
-        join
-          .on("design_events.bid_id", "=", "pricing_bids.id")
-          .andOnIn("design_events.target_id", [targetId])
-          .andOnIn("design_events.type", statusToEvents.ACCEPTED.contains);
-      })
-      // The purpose of this is to get the list of designs that are completed and see
-      // if this is not one of them. The strategy here is to get all of the tasks by
-      // unique designId and status. If there is one status and that status is
-      // completed then the design is completed.
-      .whereNotIn(
-        "design_events.design_id",
-        db.raw(
-          `
-        select
-          outerquery.design_id
-        from (
-          select distinct on (t.design_id, t.status)
-            t.design_id as design_id,
-            t.status as status
-          from :taskView as t
-        ) as outerquery
-        where outerquery.status = 'COMPLETED'
-        and outerquery.design_id in (
-          select innertasks.design_id from (
-            select distinct on (t.design_id, t.status) t.design_id, t.status
-            from :taskView as t
-          ) as innertasks
-          group by innertasks.design_id
-          having count(innertasks.design_id) = 1)
-        `,
-          { taskView: getMinimalTaskViewBuilder() }
-        )
-      )
-      .whereIn(
-        "design_events.bid_id",
-        db
-          .select("design_events.bid_id")
-          .from("design_events")
-          .whereIn(
-            "design_events.type",
-            statusToEvents.ACCEPTED.andAlsoContains
-          )
-          .andWhere({ "design_events.actor_id": targetId })
-      )
-      .modify(filterRemovalEvents(targetId))
-      .groupBy([
-        "pricing_bids.id",
-        "design_events.bid_id",
-        "design_events.created_at",
-      ])
-      .orderBy("pricing_bids.id")
-      .orderBy("pricing_bids.created_at", "desc")
-  );
-
-  return validateEvery<BidRow, Bid>(
-    TABLE_NAME,
-    isBidRow,
-    dataAdapter,
-    targetRows
-  );
-}
-
-export async function findCompletedByTargetId(
-  trx: Knex.Transaction,
-  targetId: string,
-  sortBy: BidSortByParam
-): Promise<Bid[]> {
-  let sortingFunction = orderByAcceptedAt;
-  switch (sortBy) {
-    case "ACCEPTED":
-      sortingFunction = orderByAcceptedAt;
-      break;
-    case "DUE":
-      sortingFunction = orderByDueDate;
-      break;
-  }
-  const targetRows = await sortingFunction(
-    trx,
-    trx(DESIGN_EVENTS_TABLE)
-      .select(selectWithAcceptedAtAndCompletedAt)
-      .rightJoin("pricing_bids", (join: Knex.JoinClause) => {
-        join
-          .on("design_events.bid_id", "=", "pricing_bids.id")
-          .andOnIn("design_events.target_id", [targetId])
-          .andOnIn("design_events.type", statusToEvents.ACCEPTED.contains);
-      })
-      // The purpose of this is to get the list of designs that are completed and see
-      // if this is one of them. The strategy here is to get all of the tasks by
-      // unique designId and status. If there is one status and that status is
-      // completed then the design is completed.
-      .whereIn(
-        "design_events.design_id",
-        db.raw(
-          `
-        select
-          outerquery.design_id
-        from (
-          select distinct on (t.design_id, t.status)
-            t.design_id as design_id,
-            t.status as status
-          from :taskView as t
-        ) as outerquery
-        where outerquery.status = 'COMPLETED'
-        and outerquery.design_id in (
-          select innertasks.design_id from (
-            select distinct on (t.design_id, t.status) t.design_id, t.status
-            from :taskView as t
-          ) as innertasks
-          group by innertasks.design_id
-          having count(innertasks.design_id) = 1)
-`,
-          {
-            taskView: getMinimalTaskViewBuilder(),
-          }
-        )
-      )
-      .whereIn(
-        "design_events.bid_id",
-        db
-          .select("design_events.bid_id")
-          .from("design_events")
-          .whereIn(
-            "design_events.type",
-            statusToEvents.ACCEPTED.andAlsoContains
-          )
-          .andWhere({ "design_events.actor_id": targetId })
-      )
-      .modify(filterRemovalEvents(targetId))
-      .groupBy([
-        "pricing_bids.id",
-        "design_events.bid_id",
-        "design_events.created_at",
-        "design_events.design_id",
-      ])
-      .orderBy("pricing_bids.id")
-      .orderBy("pricing_bids.created_at", "desc")
-  );
+  const targetRows = await baseQuery(trx)
+    .modify(removeUnassigned.bind(null, statusToEvents.ACCEPTED))
+    .modify(forUserQuery(targetId))
+    .modify(sortingFunction);
 
   return validateEvery<BidRow, Bid>(
     TABLE_NAME,
@@ -725,34 +424,10 @@ export async function findRejectedByTargetId(
       sortingFunction = orderByDueDate;
       break;
   }
-  const targetRows = await sortingFunction(
-    trx,
-    trx(DESIGN_EVENTS_TABLE)
-      .select(selectWithAcceptedAt)
-      .rightJoin("pricing_bids", (join: Knex.JoinClause) => {
-        join
-          .on("design_events.bid_id", "=", "pricing_bids.id")
-          .andOnIn("design_events.target_id", [targetId])
-          .andOnIn("design_events.type", statusToEvents.REJECTED.contains);
-      })
-      .whereIn(
-        "design_events.bid_id",
-        db
-          .select("design_events.bid_id")
-          .from("design_events")
-          .whereIn(
-            "design_events.type",
-            statusToEvents.REJECTED.andAlsoContains
-          )
-          .andWhere({ "design_events.actor_id": targetId })
-      )
-      .modify(filterRemovalEvents(targetId))
-      .groupBy([
-        "pricing_bids.id",
-        "design_events.bid_id",
-        "design_events.created_at",
-      ])
-  );
+  const targetRows = await baseQuery(trx)
+    .modify(removeUnassigned.bind(null, statusToEvents.REJECTED))
+    .modify(forUserQuery(targetId))
+    .modify(sortingFunction);
 
   return validateEvery<BidRow, Bid>(
     TABLE_NAME,
@@ -766,22 +441,9 @@ export async function findByQuoteId(
   trx: Knex.Transaction,
   quoteId: string
 ): Promise<Bid[]> {
-  const bidRows = await orderByAcceptedAt(
-    trx,
-    trx(DESIGN_EVENTS_TABLE)
-      .select(selectWithAcceptedAt)
-      .rightJoin("pricing_bids", (join: Knex.JoinClause) => {
-        join.on("design_events.bid_id", "=", "pricing_bids.id");
-      })
-      .where({ "pricing_bids.quote_id": quoteId })
-      .groupBy([
-        "pricing_bids.id",
-        "design_events.bid_id",
-        "design_events.created_at",
-      ])
-      .orderBy("pricing_bids.id")
-      .orderBy("pricing_bids.created_at", "desc")
-  );
+  const bidRows = await baseQuery(trx)
+    .where({ "pricing_bids.quote_id": quoteId })
+    .modify(orderByAcceptedAt);
 
   return validateEvery<BidRow, Bid>(TABLE_NAME, isBidRow, dataAdapter, bidRows);
 }
@@ -789,6 +451,7 @@ export async function findByQuoteId(
 /**
  * Returns all bids with bid-specific design events associated with the quote and user.
  * Returns events of type: BID_DESIGN | ACCEPT_SERVICE_BID | REJECT_SERVICE_BID | REMOVE_PARTNER.
+ * @param trx
  * @param quoteId
  * @param targetId User or Team Id
  */
@@ -797,47 +460,49 @@ export async function findAllByQuoteAndTargetId(
   quoteId: string,
   targetId: string
 ): Promise<BidWithEvents[]> {
-  const bidWithEventsRows = await orderByAcceptedAt(
-    trx,
-    trx(DESIGN_EVENTS_TABLE)
-      .select(selectWithAcceptedAt)
-      .select(
-        db.raw(
-          `
- (
-    SELECT to_json(array_agg(ordered_events.*))
-    FROM (
-      SELECT events.* FROM design_events AS events
-      WHERE events.bid_id = pricing_bids.id
-      AND (
-        CASE
-          WHEN events.type = 'BID_DESIGN'
-            THEN events.target_id = :targetId OR events.target_team_id = :targetId
-          WHEN events.type = 'ACCEPT_SERVICE_BID'
-            THEN events.actor_id = :targetId OR events.target_team_id = :targetId
-          WHEN events.type = 'REJECT_SERVICE_BID'
-            THEN events.actor_id = :targetId OR events.target_team_id = :targetId
-          WHEN events.type = 'REMOVE_PARTNER'
-            THEN events.target_id = :targetId OR events.target_team_id = :targetId
-        END
+  const bidWithEventsRows = await trx(TABLE_NAME)
+    .select(selectWithAcceptedAt)
+    .select(
+      db.raw(
+        `to_json(array_remove(array_agg(
+           target_design_events.* ORDER BY target_design_events.created_at ASC
+         ), NULL)) as design_events`
       )
-      ORDER BY events.created_at ASC
-    ) AS ordered_events
-  ) AS design_events `,
-          { targetId }
-        )
-      )
-      .rightJoin("pricing_bids", "design_events.bid_id", "pricing_bids.id")
-      .leftJoin("pricing_quotes", "pricing_quotes.id", "pricing_bids.quote_id")
-      .where({ "pricing_quotes.id": quoteId })
-      .groupBy([
-        "pricing_bids.id",
-        "design_events.bid_id",
-        "design_events.created_at",
-      ])
-      .orderBy("pricing_bids.id")
-      .orderBy("pricing_bids.created_at", "desc")
-  );
+    )
+    .leftJoin(
+      (subquery: Knex.QueryBuilder) =>
+        subquery
+          .select()
+          .from(DESIGN_EVENTS_TABLE)
+          .whereRaw(
+            db.raw(
+              `
+      CASE
+        WHEN design_events.type = 'BID_DESIGN'
+          THEN design_events.target_id = :targetId
+            OR design_events.target_team_id = :targetId
+        WHEN design_events.type = 'ACCEPT_SERVICE_BID'
+          THEN design_events.actor_id = :targetId
+            OR design_events.target_team_id = :targetId
+        WHEN design_events.type = 'REJECT_SERVICE_BID'
+          THEN design_events.actor_id = :targetId
+            OR design_events.target_team_id = :targetId
+        WHEN design_events.type = 'REMOVE_PARTNER'
+          THEN design_events.target_id = :targetId
+            OR design_events.target_team_id = :targetId
+      END
+`,
+              { targetId }
+            )
+          )
+          .as("target_design_events"),
+      "target_design_events.bid_id",
+      "pricing_bids.id"
+    )
+    .leftJoin("pricing_quotes", "pricing_quotes.id", "pricing_bids.quote_id")
+    .where({ "pricing_quotes.id": quoteId })
+    .groupBy(["pricing_bids.id"])
+    .modify(orderByAcceptedAt);
 
   if (!bidWithEventsRows) {
     return [];

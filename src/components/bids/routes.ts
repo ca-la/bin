@@ -139,14 +139,6 @@ function* listBidsByAssignee(
       bids = yield BidsDAO.findAcceptedByTargetId(trx, userId, sortBy);
       break;
 
-    case "ACTIVE":
-      bids = yield BidsDAO.findActiveByTargetId(trx, userId, sortBy);
-      break;
-
-    case "COMPLETED":
-      bids = yield BidsDAO.findCompletedByTargetId(trx, userId, sortBy);
-      break;
-
     case "EXPIRED":
       bids = yield BidsDAO.findOpenByTargetId(
         trx,

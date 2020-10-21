@@ -576,7 +576,6 @@ test("GET /bids/:bidId gets a bid by an id for the partner assigned", async (t: 
     acceptedAt: new Date(),
     createdAt: new Date(),
     createdBy: "a-real-ops-user",
-    completedAt: null,
     dueDate: new Date(),
     quoteId: "quote-id",
     bidPriceCents: 1000,

@@ -13,7 +13,6 @@ import { generateDesign } from "../../test-helpers/factories/product-design";
 import {
   create,
   findAcceptedByTargetId,
-  findActiveByTargetId,
   findAll,
   findAllByQuoteAndTargetId,
   findByBidIdAndUser,
@@ -340,11 +339,14 @@ test("Bids DAO supports creation and retrieval", async (t: Test) => {
     const bid = await create(trx, inputBid);
     const retrieved = await findById(trx, inputBid.id);
 
-    t.deepEqual(bid, {
-      acceptedAt: null,
-      completedAt: null,
-      ...inputBid,
-    });
+    t.deepEqual(
+      bid,
+      {
+        acceptedAt: null,
+        ...inputBid,
+      },
+      "created bid should set acceptedAt"
+    );
     t.deepEqual(
       bid,
       omit(retrieved, ["partnerPayoutLogs", "partnerUserId", "assignee"])
@@ -378,7 +380,7 @@ test("Bids DAO supports retrieval by quote ID", async (t: Test) => {
 
     t.deepEqual(
       bids,
-      [{ acceptedAt: null, completedAt: null, ...inputBid }],
+      [{ ...inputBid, acceptedAt: null }],
       "returns the bids in createdAt order"
     );
   });
@@ -527,20 +529,6 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
         { ...accepted1, acceptedAt },
       ],
       "findAcceptedByTargetId / returns accepted bids assign to this user / partner2"
-    );
-
-    t.deepEqual(
-      await findActiveByTargetId(trx, partner1.id, "ACCEPTED"),
-      [],
-      "findActiveByTargetId / returns active bids assign to this user / partner1"
-    );
-    t.deepEqual(
-      await findActiveByTargetId(trx, partner2.id, "ACCEPTED"),
-      [
-        { ...accepted2, acceptedAt },
-        { ...accepted1, acceptedAt },
-      ],
-      "findActiveByTargetId / returns active bids assign to this user / partner2"
     );
 
     t.deepEqual(
@@ -794,8 +782,17 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
 
     t.deepEqual(
       await findByBidIdAndUser(trx, open1.id, partner1.id),
-      null,
-      "findByBidIdAndUser / returns null if user has not accepted the bid"
+      {
+        ...open1,
+        partnerUserId: partner1.id,
+        partnerPayoutLogs: [],
+        assignee: {
+          type: "USER",
+          id: partner1.id,
+          name: partner1.name,
+        },
+      },
+      "findByBidIdAndUser / returns bid even if user has not accepted"
     );
 
     t.deepEqual(
