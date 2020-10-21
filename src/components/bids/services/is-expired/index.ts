@@ -1,4 +1,4 @@
-import Bid from "../../domain-object";
+import { Bid } from "../../types";
 import { MILLISECONDS_TO_EXPIRE } from "../../constants";
 
 export function isExpired(bid: Bid): boolean {

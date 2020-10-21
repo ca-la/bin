@@ -1,5 +1,4 @@
 import uuid from "node-uuid";
-import { omit } from "lodash";
 import Knex from "knex";
 
 import db from "../../services/db";
@@ -216,7 +215,7 @@ async function bidToPartner({
     });
 
     return {
-      bid,
+      bid: await findById(trx, bid.id),
       bidEvent,
     };
   });
@@ -342,47 +341,18 @@ test("Bids DAO supports creation and retrieval", async (t: Test) => {
     t.deepEqual(
       bid,
       {
-        acceptedAt: null,
         ...inputBid,
+        acceptedAt: null,
+        assignee: null,
+        partnerUserId: null,
       },
       "created bid should set acceptedAt"
     );
-    t.deepEqual(
-      bid,
-      omit(retrieved, ["partnerPayoutLogs", "partnerUserId", "assignee"])
-    );
+    t.deepEqual(bid, retrieved, "created bid should match found bid");
 
     const missed = await findById(trx, uuid.v4());
 
     t.equal(missed, null, "returns null with a lookup-miss");
-  });
-});
-
-test("Bids DAO supports retrieval by quote ID", async (t: Test) => {
-  const {
-    quotes: [quote],
-    users: { admin },
-  } = await setup();
-  const inputBid: BidDb = {
-    revenueShareBasisPoints: 20,
-    bidPriceCents: 100000,
-    bidPriceProductionOnlyCents: 0,
-    createdBy: admin.id,
-    description: "Full Service",
-    dueDate: new Date(quote.createdAt.getTime() + daysToMs(10)),
-    id: uuid.v4(),
-    quoteId: quote.id,
-    createdAt: new Date(),
-  };
-  await db.transaction(async (trx: Knex.Transaction) => {
-    await create(trx, inputBid);
-    const bids = await findByQuoteId(trx, quote.id);
-
-    t.deepEqual(
-      bids,
-      [{ ...inputBid, acceptedAt: null }],
-      "returns the bids in createdAt order"
-    );
   });
 });
 
@@ -492,13 +462,13 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
   });
 
   clock.tick(daysToMs(1));
-  const payout1 = await payPartner({
+  await payPartner({
     payoutAccountId: payoutAccount2.id,
     payoutAmountCents: accepted1.bidPriceCents,
     bidId: accepted1.id,
     initiatorUserId: admin.id,
   });
-  const payout2 = await payPartner({
+  await payPartner({
     payoutAccountId: payoutAccount2.id,
     payoutAmountCents: accepted2.bidPriceCents - 1,
     bidId: accepted2.id,
@@ -544,7 +514,12 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
 
     t.deepEqual(
       await findByQuoteId(trx, quote1.id),
-      [open1, teamBid, removed, expired],
+      [
+        open1,
+        teamBid,
+        { ...removed, assignee: null, partnerUserId: null },
+        expired,
+      ],
       "findByQuoteId / returns all bids by quote ID / quote1"
     );
     t.deepEqual(
@@ -569,7 +544,7 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
         open2,
         open1,
         teamBid,
-        removed,
+        { ...removed, assignee: null, partnerUserId: null },
         expired,
       ],
       "findAll / returns all bids / no limit or offset"
@@ -586,7 +561,15 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
 
     t.deepEqual(
       await findAll(trx, { offset: 2 }),
-      [rejectedBid, open3, open2, open1, teamBid, removed, expired],
+      [
+        rejectedBid,
+        open3,
+        open2,
+        open1,
+        teamBid,
+        { ...removed, assignee: null, partnerUserId: null },
+        expired,
+      ],
       "findAll / returns all bids / with offset no limit"
     );
 
@@ -628,7 +611,12 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
       [
         { ...open1, designEvents: [deOpen1Bid] },
         { ...teamBid, designEvents: [] },
-        { ...removed, designEvents: [deRemovedBid, deRemovedRemove] },
+        {
+          ...removed,
+          assignee: null,
+          partnerUserId: null,
+          designEvents: [deRemovedBid, deRemovedRemove],
+        },
         { ...expired, designEvents: [deExpiredBid] },
       ],
       "findAllByQuoteAndTargetId / returns quote's bids with filtered design events / quote1 partner1"
@@ -651,7 +639,7 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
       [
         { ...open1, designEvents: [] },
         { ...teamBid, designEvents: [] },
-        { ...removed, designEvents: [] },
+        { ...removed, assignee: null, partnerUserId: null, designEvents: [] },
         { ...expired, designEvents: [] },
       ],
       "findAllByQuoteAndTargetId / returns quote's bids with filtered design events / quote1 partner2"
@@ -682,7 +670,7 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
       [
         { ...open1, designEvents: [] },
         { ...teamBid, designEvents: [deTeamBid] },
-        { ...removed, designEvents: [] },
+        { ...removed, assignee: null, partnerUserId: null, designEvents: [] },
         { ...expired, designEvents: [] },
       ],
       "findAllByQuoteAndTargetId / returns quote's bids with filtered design events / quote1 team"
@@ -716,15 +704,14 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
       await findById(trx, open1.id),
       {
         ...open1,
-        partnerUserId: partner1.id,
-        partnerPayoutLogs: [],
         assignee: {
           type: "USER",
           id: partner1.id,
           name: partner1.name,
         },
+        partnerUserId: partner1.id,
       },
-      "findById / returns bid with payout logs and assignee with no payouts"
+      "findById / returns bid"
     );
 
     t.deepEqual(
@@ -732,15 +719,14 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
       {
         ...accepted1,
         acceptedAt,
-        partnerUserId: partner2.id,
-        partnerPayoutLogs: [payout1],
         assignee: {
           type: "USER",
           id: partner2.id,
           name: partner2.name,
         },
+        partnerUserId: partner2.id,
       },
-      "findById / returns bid with payout logs and assignee with full payout"
+      "findById / returns bid"
     );
 
     t.deepEqual(
@@ -748,28 +734,26 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
       {
         ...accepted2,
         acceptedAt,
-        partnerUserId: partner2.id,
-        partnerPayoutLogs: [payout2],
         assignee: {
           type: "USER",
           id: partner2.id,
           name: partner2.name,
         },
+        partnerUserId: partner2.id,
       },
-      "findById / returns bid with payout logs and assignee with partial payout"
+      "findById / returns bid"
     );
 
     t.deepEqual(
       await findByBidIdAndUser(trx, teamBid.id, partner1.id),
       {
         ...teamBid,
-        partnerUserId: null,
-        partnerPayoutLogs: [],
         assignee: {
           type: "TEAM",
           id: team.id,
           name: team.title,
         },
+        partnerUserId: null,
       },
       "findByBidIdAndUser / returns bid to a team for team users"
     );
@@ -784,13 +768,12 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
       await findByBidIdAndUser(trx, open1.id, partner1.id),
       {
         ...open1,
-        partnerUserId: partner1.id,
-        partnerPayoutLogs: [],
         assignee: {
           type: "USER",
           id: partner1.id,
           name: partner1.name,
         },
+        partnerUserId: partner1.id,
       },
       "findByBidIdAndUser / returns bid even if user has not accepted"
     );
@@ -800,13 +783,12 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
       {
         ...accepted1,
         acceptedAt,
-        partnerUserId: partner2.id,
-        partnerPayoutLogs: [payout1],
         assignee: {
           type: "USER",
           id: partner2.id,
           name: partner2.name,
         },
+        partnerUserId: partner2.id,
       },
       "findByBidIdAndUser / returns bid if user has accepted the bid"
     );

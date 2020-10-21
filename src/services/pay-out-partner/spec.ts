@@ -13,7 +13,6 @@ import generateBid from "../../test-helpers/factories/bid";
 import { addDesign } from "../../test-helpers/collections";
 import { payOutPartner } from ".";
 import ProductDesignsDAO from "../../components/product-designs/dao";
-import { findById } from "../../components/bids/dao";
 
 test("payOutPartner", async (t: Test) => {
   const emailStub = sandbox().stub(EmailService, "enqueueSend").resolves();
@@ -148,8 +147,7 @@ test("payOutPartner with manual payment", async (t: Test) => {
       bidId: bid.id,
       isManual: true,
     });
-    const foundBid = await findById(trx, bid.id);
-    const logs = foundBid!.partnerPayoutLogs;
+    const logs = await PartnerPayoutLogsDAO.findByBidId(trx, bid.id);
     t.equal(logs.length, 1);
     t.equal(logs[0].bidId, bid.id);
     t.equal(logs[0].payoutAmountCents, 222);

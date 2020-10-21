@@ -33,3 +33,4 @@ export {
   isRegisteredTeamUser,
 } from "../components/team-users/types";
 export * from "../components/pricing-cost-inputs/types";
+export { Bid } from "../components/bids/types";

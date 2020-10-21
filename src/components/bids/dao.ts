@@ -1,26 +1,10 @@
 import Knex from "knex";
-import { omit } from "lodash";
 
 import db from "../../services/db";
-import Bid, {
-  BidRow,
-  BidSortByParam,
-  BidWithEvents,
-  bidWithEventsDataAdapter,
-  BidWithEventsRow,
-  BidWithPayoutLogs,
-  bidWithPayoutLogsDataAdapter,
-  BidWithPayoutLogsRow,
-  dataAdapter,
-  isBidRow,
-  isBidWithEventsRow,
-  isBidWithPaymentLogsRow,
-  bidDbAdapter,
-} from "./domain-object";
-import { validate, validateEvery } from "../../services/validate-from-db";
+import { Bid, BidDb, BidSortByParam, BidWithEvents } from "./types";
+import { rawAdapter, dataAdapter, withEventsDataAdapter } from "./adapter";
 import limitOrOffset from "../../services/limit-or-offset";
 import { MILLISECONDS_TO_EXPIRE } from "./constants";
-import { BidDb } from "./types";
 import { Role as TeamUserRole } from "../team-users/types";
 
 // Any payouts to a partner cannot be linked to a bid before this date, as
@@ -158,7 +142,7 @@ const orderByDueDate = (query: Knex.QueryBuilder) =>
   query.orderByRaw("due_date asc NULLS LAST, created_at desc");
 
 export async function create(trx: Knex.Transaction, bid: BidDb): Promise<Bid> {
-  const rowData = bidDbAdapter.forInsertion(bid);
+  const rowData = rawAdapter.forInsertion(bid);
   await trx(TABLE_NAME).insert(rowData).transacting(trx);
 
   const withAcceptedAt = await findById(trx, bid.id);
@@ -167,11 +151,7 @@ export async function create(trx: Knex.Transaction, bid: BidDb): Promise<Bid> {
     throw new Error("Failed to create Bid");
   }
 
-  return omit(withAcceptedAt, [
-    "partnerPayoutLogs",
-    "partnerUserId",
-    "assignee",
-  ]);
+  return withAcceptedAt;
 }
 
 function findAllByState(
@@ -221,11 +201,11 @@ export async function findAll(
     }
   }
 
-  const bids: BidRow[] = await query.modify(
-    limitOrOffset(modifiers.limit, modifiers.offset)
-  );
+  const bids = await query
+    .modify(limitOrOffset(modifiers.limit, modifiers.offset))
+    .modify(withAssignee);
 
-  return validateEvery<BidRow, Bid>(TABLE_NAME, isBidRow, dataAdapter, bids);
+  return dataAdapter.fromDbArray(bids);
 }
 
 export async function findUnpaidByUserId(
@@ -251,10 +231,11 @@ export async function findUnpaidByUserId(
         "pricing_bids.bid_price_cents > coalesce(sum(l.payout_amount_cents), 0)"
       )
     )
+    .modify(withAssignee)
     .orderBy("pricing_bids.id")
     .orderBy("pricing_bids.created_at", "desc");
 
-  return validateEvery<BidRow, Bid>(TABLE_NAME, isBidRow, dataAdapter, bids);
+  return dataAdapter.fromDbArray(bids);
 }
 
 function withAssignee(query: Knex.QueryBuilder) {
@@ -292,17 +273,9 @@ function withAssignee(query: Knex.QueryBuilder) {
   );
 }
 
-function bidWithPayoutLogsById(trx: Knex.Transaction, id: string) {
+function bidById(trx: Knex.Transaction, id: string) {
   return baseQuery(trx)
     .modify(withAssignee)
-    .select(
-      db.raw(`
-        (
-          SELECT to_json(array_agg(logs.* ORDER BY logs.created_at DESC))
-            FROM partner_payout_logs AS logs
-           WHERE logs.bid_id = pricing_bids.id
-        ) AS partner_payout_logs`)
-    )
     .where({ "pricing_bids.id": id })
     .orderBy("pricing_bids.created_at", "desc")
     .first();
@@ -311,27 +284,22 @@ function bidWithPayoutLogsById(trx: Knex.Transaction, id: string) {
 export async function findById(
   trx: Knex.Transaction,
   id: string
-): Promise<BidWithPayoutLogs | null> {
-  const bid = await bidWithPayoutLogsById(trx, id);
+): Promise<Bid | null> {
+  const bid = await bidById(trx, id);
 
   if (!bid) {
     return null;
   }
 
-  return validate<BidWithPayoutLogsRow, BidWithPayoutLogs>(
-    TABLE_NAME,
-    isBidWithPaymentLogsRow,
-    bidWithPayoutLogsDataAdapter,
-    { ...bid, partner_user_id: bid.assignee && bid.assignee.id }
-  );
+  return dataAdapter.fromDb(bid);
 }
 
 export async function findByBidIdAndUser(
   trx: Knex.Transaction,
   bidId: string,
   userId: string
-): Promise<BidWithPayoutLogs | null> {
-  const query = bidWithPayoutLogsById(trx, bidId)
+): Promise<Bid | null> {
+  const query = bidById(trx, bidId)
     .modify(
       removeUnassigned.bind(null, {
         andAlsoContains: [],
@@ -345,15 +313,7 @@ export async function findByBidIdAndUser(
     return null;
   }
 
-  const partnerUserId =
-    bid.assignee && bid.assignee.type === "USER" ? bid.assignee.id : null;
-
-  return validate<BidWithPayoutLogsRow, BidWithPayoutLogs>(
-    TABLE_NAME,
-    isBidWithPaymentLogsRow,
-    bidWithPayoutLogsDataAdapter,
-    { ...bid, partner_user_id: partnerUserId }
-  );
+  return dataAdapter.fromDb(bid);
 }
 
 export async function findOpenByTargetId(
@@ -373,14 +333,10 @@ export async function findOpenByTargetId(
   const targetRows = await baseQuery(trx)
     .modify(removeUnassigned.bind(null, statusToEvents.OPEN))
     .modify(forUserQuery(userId, [TeamUserRole.ADMIN]))
+    .modify(withAssignee)
     .modify(sortingFunction);
 
-  return validateEvery<BidRow, Bid>(
-    TABLE_NAME,
-    isBidRow,
-    dataAdapter,
-    targetRows
-  );
+  return dataAdapter.fromDbArray(targetRows);
 }
 
 export async function findAcceptedByTargetId(
@@ -400,14 +356,10 @@ export async function findAcceptedByTargetId(
   const targetRows = await baseQuery(trx)
     .modify(removeUnassigned.bind(null, statusToEvents.ACCEPTED))
     .modify(forUserQuery(targetId))
+    .modify(withAssignee)
     .modify(sortingFunction);
 
-  return validateEvery<BidRow, Bid>(
-    TABLE_NAME,
-    isBidRow,
-    dataAdapter,
-    targetRows
-  );
+  return dataAdapter.fromDbArray(targetRows);
 }
 
 export async function findRejectedByTargetId(
@@ -427,14 +379,10 @@ export async function findRejectedByTargetId(
   const targetRows = await baseQuery(trx)
     .modify(removeUnassigned.bind(null, statusToEvents.REJECTED))
     .modify(forUserQuery(targetId))
+    .modify(withAssignee)
     .modify(sortingFunction);
 
-  return validateEvery<BidRow, Bid>(
-    TABLE_NAME,
-    isBidRow,
-    dataAdapter,
-    targetRows
-  );
+  return dataAdapter.fromDbArray(targetRows);
 }
 
 export async function findByQuoteId(
@@ -443,9 +391,10 @@ export async function findByQuoteId(
 ): Promise<Bid[]> {
   const bidRows = await baseQuery(trx)
     .where({ "pricing_bids.quote_id": quoteId })
+    .modify(withAssignee)
     .modify(orderByAcceptedAt);
 
-  return validateEvery<BidRow, Bid>(TABLE_NAME, isBidRow, dataAdapter, bidRows);
+  return dataAdapter.fromDbArray(bidRows);
 }
 
 /**
@@ -502,16 +451,12 @@ export async function findAllByQuoteAndTargetId(
     .leftJoin("pricing_quotes", "pricing_quotes.id", "pricing_bids.quote_id")
     .where({ "pricing_quotes.id": quoteId })
     .groupBy(["pricing_bids.id"])
+    .modify(withAssignee)
     .modify(orderByAcceptedAt);
 
   if (!bidWithEventsRows) {
     return [];
   }
 
-  return validateEvery<BidWithEventsRow, BidWithEvents>(
-    TABLE_NAME,
-    isBidWithEventsRow,
-    bidWithEventsDataAdapter,
-    bidWithEventsRows
-  );
+  return withEventsDataAdapter.fromDbArray(bidWithEventsRows);
 }

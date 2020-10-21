@@ -24,7 +24,7 @@ import { deleteById } from "../../test-helpers/designs";
 import Knex from "knex";
 import { checkout } from "../../test-helpers/checkout-collection";
 import PartnerPayoutAccount from "../../domain-objects/partner-payout-account";
-import Bid, { BidCreationPayload } from "./domain-object";
+import { Bid, BidCreationPayload } from "./types";
 import ProductDesign from "../product-designs/domain-objects/product-design";
 import { taskTypes } from "../tasks/templates";
 import * as CreateBidService from "../../services/create-bid";
@@ -324,8 +324,6 @@ test("Partner pairing: accept", async (t: Test) => {
     {
       ...bid,
       createdAt: bid.createdAt.toISOString(),
-      partnerPayoutLogs: [],
-      partnerUserId: partner.user.id,
       design: {
         ...design,
         createdAt: design.createdAt.toISOString(),
@@ -571,19 +569,25 @@ test("GET /bids/:bidId gets a bid by an id for admins", async (t: Test) => {
 
 test("GET /bids/:bidId gets a bid by an id for the partner assigned", async (t: Test) => {
   const { user: partner, session } = await createUser({ role: "PARTNER" });
-  const getBidStub = sandbox().stub(BidsDAO, "findByBidIdAndUser").resolves({
-    id: "a-real-bid-id",
-    acceptedAt: new Date(),
-    createdAt: new Date(),
-    createdBy: "a-real-ops-user",
-    dueDate: new Date(),
-    quoteId: "quote-id",
-    bidPriceCents: 1000,
-    bidPriceProductionOnlyCents: 0,
-    description: "",
-    partnerUserId: partner.id,
-    partnerPayoutLogs: [],
-  });
+  const getBidStub = sandbox()
+    .stub(BidsDAO, "findByBidIdAndUser")
+    .resolves({
+      id: "a-real-bid-id",
+      acceptedAt: new Date(),
+      createdAt: new Date(),
+      createdBy: "a-real-ops-user",
+      dueDate: new Date(),
+      quoteId: "quote-id",
+      bidPriceCents: 1000,
+      bidPriceProductionOnlyCents: 0,
+      description: "",
+      partnerUserId: partner.id,
+      assignee: {
+        type: "USER",
+        id: partner.id,
+        name: partner.name,
+      },
+    });
 
   const [response] = await get(`/bids/a-real-bid-id`, {
     headers: authHeader(session.id),

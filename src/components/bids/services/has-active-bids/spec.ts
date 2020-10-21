@@ -5,7 +5,7 @@ import { sandbox, test, Test } from "../../../../test-helpers/fresh";
 import * as BidsDAO from "../../dao";
 import generateBid from "../../../../test-helpers/factories/bid";
 import generateDesignEvent from "../../../../test-helpers/factories/design-event";
-import { BidWithEvents } from "../../domain-object";
+import { BidWithEvents } from "../../types";
 import db from "../../../../services/db";
 
 test("hasActiveBids can determine the state for a user and quote", async (t: Test) => {

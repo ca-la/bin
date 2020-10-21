@@ -2,11 +2,12 @@ import Router from "koa-router";
 import uuid from "node-uuid";
 import { omit } from "lodash";
 
-import Bid, {
+import {
+  Bid,
   isBidSortByParam,
   BidCreationPayload,
   isBidCreationPayload,
-} from "./domain-object";
+} from "./types";
 import Collaborator from "../collaborators/types";
 import ProductDesign = require("../product-designs/domain-objects/product-design");
 import { PricingQuote } from "../../domain-objects/pricing-quote";

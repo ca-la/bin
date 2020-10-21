@@ -4,7 +4,7 @@ import uuid from "node-uuid";
 import * as BidsDAO from "../../components/bids/dao";
 import * as BidTaskTypesDAO from "../../components/bid-task-types/dao";
 import * as CollaboratorsDAO from "../../components/collaborators/dao";
-import Bid, { BidCreationPayload } from "../../components/bids/domain-object";
+import { Bid, BidCreationPayload } from "../../components/bids/types";
 import InvalidDataError from "../../errors/invalid-data";
 import { findIdByQuoteId } from "../../components/product-designs/dao/dao";
 import ResourceNotFoundError from "../../errors/resource-not-found";
@@ -207,5 +207,11 @@ export async function createBid(
     }
   }
 
-  return bid;
+  const assignedBid = await BidsDAO.findById(trx, bid.id);
+
+  if (!assignedBid) {
+    throw new Error("Could not find the created bid after assignment");
+  }
+
+  return assignedBid;
 }

@@ -6,7 +6,7 @@ import generatePricingQuote from "../../services/generate-pricing-quote";
 
 import { PricingQuote } from "../../domain-objects/pricing-quote";
 import * as PricingQuotesDAO from "../../dao/pricing-quotes";
-import Bid, { BidCreationPayload } from "../../components/bids/domain-object";
+import { Bid, BidCreationPayload } from "../../components/bids/types";
 import { createBid } from "../../services/create-bid";
 import createUser from "../create-user";
 import User from "../../components/users/domain-object";

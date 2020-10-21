@@ -12,12 +12,16 @@ import * as CollaboratorsDAO from "../../components/collaborators/dao";
 import * as NotificationsService from "../create-notifications";
 
 import { createBid } from "./index";
-import { BidCreationPayload } from "../../components/bids/domain-object";
+import { BidCreationPayload } from "../../components/bids/types";
 import { MILLISECONDS_TO_EXPIRE } from "../../components/bids/constants";
 
 function setup() {
   return {
     bidCreateStub: sandbox().stub(BidsDAO, "create").resolves({
+      id: "a-bid-id",
+      createdBy: "a-user-id",
+    }),
+    bidFindStub: sandbox().stub(BidsDAO, "findById").resolves({
       id: "a-bid-id",
       createdBy: "a-user-id",
     }),

@@ -1,5 +1,5 @@
 import { Machine, StateMachine } from "xstate";
-import Bid from "../../domain-object";
+import { Bid } from "../../types";
 import DesignEvent, { DesignEventTypes } from "../../../design-events/types";
 import { isExpired } from "../is-expired";
 

@@ -1,6 +1,6 @@
 import Knex from "knex";
 import { findAllByQuoteAndTargetId } from "../../dao";
-import { BidWithEvents } from "../../domain-object";
+import { BidWithEvents } from "../../types";
 import { BidState, determineStateFromEvents } from "../state-machine";
 
 export function isActiveBid(bidWithEvent: BidWithEvents): boolean {
