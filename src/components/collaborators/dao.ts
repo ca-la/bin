@@ -31,8 +31,14 @@ import Collaborator, {
   CollaboratorRow,
   CollaboratorWithUserRow,
 } from "./types";
+import { TeamUserRole } from "../../published-types";
 
 const TABLE_NAME = "collaborators";
+const PARTNER_TEAM_PREVIEWERS: TeamUserRole[] = [TeamUserRole.ADMIN];
+const PARTNER_TEAM_EDITORS: TeamUserRole[] = [
+  TeamUserRole.ADMIN,
+  TeamUserRole.EDITOR,
+];
 
 async function attachUser(
   collaborator: Collaborator
@@ -377,20 +383,51 @@ export async function findByUserId(
   return collaborators;
 }
 
+const selectRole = db.raw(
+  `
+  CASE
+    WHEN
+      collaborators_forcollaboratorsviewraw.team_id IS NULL OR
+      team_users.role = ANY(:allowedRoles)
+    THEN
+      collaborators_forcollaboratorsviewraw.role
+    ELSE
+      'VIEW'
+  END as role
+`,
+  { allowedRoles: PARTNER_TEAM_EDITORS }
+);
+
 export async function findByDesignAndUser(
   designId: string,
   userId: string,
   trx?: Knex.Transaction
 ): Promise<CollaboratorWithUser | null> {
   const collaboratorRow = await getCollaboratorViewBuilder()
+    .select(selectRole)
     .leftJoin(
       "team_users",
       "team_users.team_id",
       "collaborators_forcollaboratorsviewraw.team_id"
     )
     .whereRaw(
-      `design_id = ? AND (collaborators_forcollaboratorsviewraw.user_id = ? OR team_users.user_id = ?)`,
-      [designId, userId, userId]
+      `design_id = :designId AND
+      (
+        collaborators_forcollaboratorsviewraw.user_id = :userId OR
+        team_users.user_id = :userId
+      ) AND
+      (
+        CASE
+          WHEN
+            collaborators_forcollaboratorsviewraw.team_id IS NOT NULL AND
+            collaborators_forcollaboratorsviewraw.role = 'PREVIEW'
+          THEN
+            team_users.role = ANY(:allowedRoles)
+          ELSE
+            true
+        END
+      )`,
+      { designId, userId, allowedRoles: PARTNER_TEAM_PREVIEWERS }
     )
     .andWhereRaw("(cancelled_at IS null OR cancelled_at > now())")
     .modify((query: Knex.QueryBuilder) => {
@@ -444,31 +481,47 @@ export async function findAllForUserThroughDesign(
   trx?: Knex.Transaction
 ): Promise<CollaboratorWithUser[]> {
   const collaboratorRows = await getCollaboratorViewBuilder()
+    .select(selectRole)
     .joinRaw(
       `
-        LEFT JOIN collection_designs AS cd ON cd.design_id = ?
+        LEFT JOIN collection_designs AS cd ON cd.design_id = :designId
         LEFT JOIN collections AS c ON c.id = cd.collection_id AND c.deleted_at IS null
-        LEFT JOIN product_designs AS d ON d.id = ? AND d.deleted_at IS null
+        LEFT JOIN product_designs AS d ON d.id = :designId AND d.deleted_at IS null
         LEFT JOIN team_users ON team_users.team_id = collaborators_forcollaboratorsviewraw.team_id
     `,
-      [designId, designId]
+      { designId }
     )
     .whereRaw(
       `
         (
-          collaborators_forcollaboratorsviewraw.user_id = ? OR
-          team_users.user_id = ?
+          collaborators_forcollaboratorsviewraw.user_id = :userId OR
+          team_users.user_id = :userId
+        )
+        AND (
+          CASE
+            WHEN
+              collaborators_forcollaboratorsviewraw.team_id IS NOT NULL AND
+              collaborators_forcollaboratorsviewraw.role = 'PREVIEW'
+            THEN
+              team_users.role = ANY(:allowedRoles)
+            ELSE
+              true
+          END
         )
         AND (
           collaborators_forcollaboratorsviewraw.collection_id = c.id
-          OR collaborators_forcollaboratorsviewraw.design_id = ?
+          OR collaborators_forcollaboratorsviewraw.design_id = :designId
         )
         AND (
           collaborators_forcollaboratorsviewraw.cancelled_at IS null
           OR collaborators_forcollaboratorsviewraw.cancelled_at > now()
         )
     `,
-      [userId, userId, designId]
+      {
+        userId,
+        designId,
+        allowedRoles: PARTNER_TEAM_PREVIEWERS,
+      }
     )
     .orderByRaw(
       `

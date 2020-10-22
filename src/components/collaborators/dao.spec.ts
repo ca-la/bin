@@ -7,6 +7,7 @@ import * as CollaboratorsDAO from "./dao";
 import * as CollectionsDAO from "../collections/dao";
 import ProductDesignsDAO = require("../product-designs/dao");
 import DesignEventsDAO from "../design-events/dao";
+import { rawDao as RawTeamUsersDAO } from "../team-users/dao";
 
 import createUser from "../../test-helpers/create-user";
 import { test, Test } from "../../test-helpers/fresh";
@@ -19,6 +20,7 @@ import { taskTypes } from "../tasks/templates";
 import { addDesign, removeDesign } from "../../test-helpers/collections";
 import { templateDesignEvent } from "../design-events/types";
 import { generateTeam } from "../../test-helpers/factories/team";
+import { TeamUserRole } from "../../published-types";
 
 test("Collaborators DAO can find all collaborators with a list of ids", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
@@ -915,4 +917,168 @@ test("findByDesignAndTeam", async (t: Test) => {
     omit(collaborator, "user"),
     "Returns a team collaborator"
   );
+});
+
+test("findAllForUserThroughDesign team permissions", async (t: Test) => {
+  const { user } = await createUser({ withSession: false });
+  const { user: teamOwner } = await createUser({ withSession: false });
+  const { user: teamViewer } = await createUser({ withSession: false });
+  const { team } = await generateTeam(teamOwner.id);
+  const trx = await db.transaction();
+
+  try {
+    RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      teamId: team.id,
+      userId: teamViewer.id,
+      role: TeamUserRole.VIEWER,
+      userEmail: null,
+    });
+
+    const design = await ProductDesignsDAO.create({
+      productType: "TEESHIRT",
+      title: "A product design",
+      userId: user.id,
+    });
+
+    const { collaborator } = await generateCollaborator({
+      collectionId: null,
+      designId: design.id,
+      invitationMessage: "",
+      role: "PREVIEW",
+      userEmail: null,
+      userId: null,
+      teamId: team.id,
+    });
+
+    const foundAdminPreviewCollaborators = await CollaboratorsDAO.findAllForUserThroughDesign(
+      design.id,
+      teamOwner.id,
+      trx
+    );
+    t.deepEqual(
+      foundAdminPreviewCollaborators,
+      [collaborator],
+      "Returns a team collaborator for an admin"
+    );
+
+    const foundViewerPreviewCollaborators = await CollaboratorsDAO.findAllForUserThroughDesign(
+      design.id,
+      teamViewer.id,
+      trx
+    );
+    t.deepEqual(
+      foundViewerPreviewCollaborators,
+      [],
+      "Does not return a collaborator for a viewer"
+    );
+
+    await CollaboratorsDAO.update(collaborator.id, { role: "PARTNER" }, trx);
+
+    const foundAdminPartnerCollaborators = await CollaboratorsDAO.findAllForUserThroughDesign(
+      design.id,
+      teamOwner.id,
+      trx
+    );
+    t.deepEqual(
+      foundAdminPartnerCollaborators,
+      [{ ...collaborator, role: "PARTNER" }],
+      "Admins have full partner permissions"
+    );
+
+    const foundViewerPartnerCollaborators = await CollaboratorsDAO.findAllForUserThroughDesign(
+      design.id,
+      teamViewer.id,
+      trx
+    );
+    t.deepEqual(
+      foundViewerPartnerCollaborators,
+      [{ ...collaborator, role: "VIEW" }],
+      "Viewers can only view accepted-bid designs"
+    );
+  } finally {
+    trx.rollback();
+  }
+});
+
+test("findByDesignAndUser team permissions", async (t: Test) => {
+  const { user } = await createUser({ withSession: false });
+  const { user: teamOwner } = await createUser({ withSession: false });
+  const { user: teamViewer } = await createUser({ withSession: false });
+  const { team } = await generateTeam(teamOwner.id);
+  const trx = await db.transaction();
+
+  try {
+    RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      teamId: team.id,
+      userId: teamViewer.id,
+      role: TeamUserRole.VIEWER,
+      userEmail: null,
+    });
+
+    const design = await ProductDesignsDAO.create({
+      productType: "TEESHIRT",
+      title: "A product design",
+      userId: user.id,
+    });
+
+    const { collaborator } = await generateCollaborator({
+      collectionId: null,
+      designId: design.id,
+      invitationMessage: "",
+      role: "PREVIEW",
+      userEmail: null,
+      userId: null,
+      teamId: team.id,
+    });
+
+    const foundAdminPreviewCollaborator = await CollaboratorsDAO.findByDesignAndUser(
+      design.id,
+      teamOwner.id,
+      trx
+    );
+    t.deepEqual(
+      foundAdminPreviewCollaborator,
+      collaborator,
+      "Returns a team collaborator for an admin"
+    );
+
+    const foundViewerPreviewCollaborator = await CollaboratorsDAO.findByDesignAndUser(
+      design.id,
+      teamViewer.id,
+      trx
+    );
+    t.deepEqual(
+      foundViewerPreviewCollaborator,
+      null,
+      "Does not return a collaborator for a viewer"
+    );
+
+    await CollaboratorsDAO.update(collaborator.id, { role: "PARTNER" }, trx);
+
+    const foundAdminPartnerCollaborator = await CollaboratorsDAO.findByDesignAndUser(
+      design.id,
+      teamOwner.id,
+      trx
+    );
+    t.deepEqual(
+      foundAdminPartnerCollaborator,
+      { ...collaborator, role: "PARTNER" },
+      "Admins have full partner permissions"
+    );
+
+    const foundViewerPartnerCollaborator = await CollaboratorsDAO.findByDesignAndUser(
+      design.id,
+      teamViewer.id,
+      trx
+    );
+    t.deepEqual(
+      foundViewerPartnerCollaborator,
+      { ...collaborator, role: "VIEW" },
+      "Viewers can only view accepted-bid designs"
+    );
+  } finally {
+    trx.rollback();
+  }
 });
