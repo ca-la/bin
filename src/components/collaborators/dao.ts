@@ -31,14 +31,12 @@ import Collaborator, {
   CollaboratorRow,
   CollaboratorWithUserRow,
 } from "./types";
-import { TeamUserRole } from "../../published-types";
+import {
+  PARTNER_TEAM_BID_EDITORS,
+  PARTNER_TEAM_BID_PREVIEWERS,
+} from "../team-users/types";
 
 const TABLE_NAME = "collaborators";
-const PARTNER_TEAM_PREVIEWERS: TeamUserRole[] = [TeamUserRole.ADMIN];
-const PARTNER_TEAM_EDITORS: TeamUserRole[] = [
-  TeamUserRole.ADMIN,
-  TeamUserRole.EDITOR,
-];
 
 async function attachUser(
   collaborator: Collaborator
@@ -395,7 +393,7 @@ const selectRole = db.raw(
       'VIEW'
   END as role
 `,
-  { allowedRoles: PARTNER_TEAM_EDITORS }
+  { allowedRoles: PARTNER_TEAM_BID_EDITORS }
 );
 
 export async function findByDesignAndUser(
@@ -427,7 +425,7 @@ export async function findByDesignAndUser(
             true
         END
       )`,
-      { designId, userId, allowedRoles: PARTNER_TEAM_PREVIEWERS }
+      { designId, userId, allowedRoles: PARTNER_TEAM_BID_PREVIEWERS }
     )
     .andWhereRaw("(cancelled_at IS null OR cancelled_at > now())")
     .modify((query: Knex.QueryBuilder) => {
@@ -520,7 +518,7 @@ export async function findAllForUserThroughDesign(
       {
         userId,
         designId,
-        allowedRoles: PARTNER_TEAM_PREVIEWERS,
+        allowedRoles: PARTNER_TEAM_BID_PREVIEWERS,
       }
     )
     .orderByRaw(

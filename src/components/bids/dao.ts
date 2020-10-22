@@ -5,7 +5,10 @@ import { Bid, BidDb, BidSortByParam, BidWithEvents } from "./types";
 import { rawAdapter, dataAdapter, withEventsDataAdapter } from "./adapter";
 import limitOrOffset from "../../services/limit-or-offset";
 import { MILLISECONDS_TO_EXPIRE } from "./constants";
-import { Role as TeamUserRole } from "../team-users/types";
+import {
+  PARTNER_TEAM_BID_PREVIEWERS,
+  Role as TeamUserRole,
+} from "../team-users/types";
 
 // Any payouts to a partner cannot be linked to a bid before this date, as
 // they were linked to an invoice. Having a cut-off date allows the API to
@@ -332,7 +335,7 @@ export async function findOpenByTargetId(
   }
   const targetRows = await baseQuery(trx)
     .modify(removeUnassigned.bind(null, statusToEvents.OPEN))
-    .modify(forUserQuery(userId, [TeamUserRole.ADMIN]))
+    .modify(forUserQuery(userId, PARTNER_TEAM_BID_PREVIEWERS))
     .modify(withAssignee)
     .modify(sortingFunction);
 

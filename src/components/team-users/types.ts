@@ -1,10 +1,18 @@
 import User, { UserRow } from "../users/types";
 
 export enum Role {
+  OWNER = "OWNER",
   ADMIN = "ADMIN",
   EDITOR = "EDITOR",
   VIEWER = "VIEWER",
 }
+
+export const PARTNER_TEAM_BID_PREVIEWERS: Role[] = [Role.OWNER, Role.ADMIN];
+export const PARTNER_TEAM_BID_EDITORS: Role[] = [
+  Role.OWNER,
+  Role.ADMIN,
+  Role.EDITOR,
+];
 
 export type TeamUserDb = {
   id: string;

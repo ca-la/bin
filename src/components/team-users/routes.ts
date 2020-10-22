@@ -47,7 +47,7 @@ export default {
         requireAuth,
         typeGuard(isUnsavedTeamUser),
         requireTeamRoles(
-          [TeamUserRole.ADMIN, TeamUserRole.EDITOR],
+          [TeamUserRole.OWNER, TeamUserRole.ADMIN, TeamUserRole.EDITOR],
           async (context: AuthedContext<{ teamId: string }>) =>
             context.request.body.teamId
         ),

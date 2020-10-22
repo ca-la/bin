@@ -498,7 +498,19 @@ test("findAllForUserThroughDesign can find user collaborators", async (t: Test) 
 
 test("findAllForUserThroughDesign can find team collaborators", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
-  const { team } = await generateTeam(user.id);
+  const { user: teamOwner } = await createUser({ withSession: false });
+  const { user: teamAdmin } = await createUser({ withSession: false });
+  const { team } = await generateTeam(teamOwner.id);
+  await db.transaction((trx: Knex.Transaction) =>
+    RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      teamId: team.id,
+      userId: teamAdmin.id,
+      userEmail: null,
+      role: TeamUserRole.ADMIN,
+    })
+  );
+
   const { collection } = await generateCollection();
 
   const design = await ProductDesignsDAO.create({
@@ -518,12 +530,17 @@ test("findAllForUserThroughDesign can find team collaborators", async (t: Test) 
     teamId: team.id,
   });
 
-  const result = await CollaboratorsDAO.findAllForUserThroughDesign(
+  const ownerResult = await CollaboratorsDAO.findAllForUserThroughDesign(
     design.id,
-    user.id
+    teamOwner.id
+  );
+  const adminResult = await CollaboratorsDAO.findAllForUserThroughDesign(
+    design.id,
+    teamAdmin.id
   );
 
-  t.deepEqual(result, [collaborator]);
+  t.deepEqual(ownerResult, [collaborator]);
+  t.deepEqual(adminResult, [collaborator]);
 });
 
 test("cancelForDesignAndPartner cancels the preview role", async (t: Test) => {

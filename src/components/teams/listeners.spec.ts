@@ -17,29 +17,29 @@ function setup() {
     type: TeamType.DESIGNER,
   };
 
-  const admin: TeamUserDb = {
+  const owner: TeamUserDb = {
     id: "a-team-user-id",
     teamId: "a-team-id",
     userId: "a-user-id",
     userEmail: null,
-    role: Role.ADMIN,
+    role: Role.OWNER,
   };
 
   return {
     created,
-    admin,
+    owner,
     stubs: {
       uuidStub: sandbox().stub(uuid, "v4").returns("a-team-user-id"),
       createTeamUserStub: sandbox()
         .stub(RawTeamUsersDAO, "create")
-        .resolves(admin),
+        .resolves(owner),
       trxStub: (sandbox().stub() as unknown) as Knex.Transaction,
     },
   };
 }
 
 test("Team listener: route.created", async (t: Test) => {
-  const { created, admin, stubs } = setup();
+  const { created, owner, stubs } = setup();
 
   await listeners["route.created"]!({
     domain: "Team",
@@ -51,7 +51,7 @@ test("Team listener: route.created", async (t: Test) => {
 
   t.deepEqual(
     stubs.createTeamUserStub.args,
-    [[stubs.trxStub, admin]],
-    "creates an admin TeamUser for the team creator"
+    [[stubs.trxStub, owner]],
+    "creates an owner TeamUser for the team creator"
   );
 });

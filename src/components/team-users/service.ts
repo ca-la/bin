@@ -7,6 +7,11 @@ import TeamUsersDAO, { rawDao as RawTeamUsersDAO } from "./dao";
 import UnauthorizedError from "../../errors/unauthorized";
 
 const allowedRolesMap: Record<TeamUserRole, TeamUserRole[]> = {
+  [TeamUserRole.OWNER]: [
+    TeamUserRole.ADMIN,
+    TeamUserRole.EDITOR,
+    TeamUserRole.VIEWER,
+  ],
   [TeamUserRole.ADMIN]: [
     TeamUserRole.ADMIN,
     TeamUserRole.EDITOR,

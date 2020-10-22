@@ -21,7 +21,7 @@ export const listeners: Listeners<TeamDb, typeof domain> = {
       userId: actorId,
       userEmail: null,
       id: uuid.v4(),
-      role: Role.ADMIN,
+      role: Role.OWNER,
     });
   },
 };

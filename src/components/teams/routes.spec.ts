@@ -188,7 +188,7 @@ test("POST -> GET /teams end-to-end", async (t: Test) => {
   t.equal(postResponse[1].title, t1.title, "sets title");
   t.equal(
     postResponse[1].role,
-    TeamUserRole.ADMIN,
+    TeamUserRole.OWNER,
     "returns your role on the team"
   );
 
