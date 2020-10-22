@@ -299,6 +299,7 @@ export function* acceptDesignBid(
     designId: quote.designId!,
     id: uuid.v4(),
     quoteId: bid.quoteId,
+    targetTeamId: collaborator.teamId,
     type: "ACCEPT_SERVICE_BID",
   }).catch(
     filterError(
@@ -385,6 +386,7 @@ export function* rejectDesignBid(
     designId: quote.designId!,
     id: uuid.v4(),
     quoteId: bid.quoteId,
+    targetTeamId: collaborator.teamId,
     type: "REJECT_SERVICE_BID",
   });
 

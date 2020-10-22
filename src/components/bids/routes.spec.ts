@@ -29,6 +29,7 @@ import { Bid, BidCreationPayload } from "./types";
 import ProductDesign from "../product-designs/domain-objects/product-design";
 import { taskTypes } from "../tasks/templates";
 import * as CreateBidService from "../../services/create-bid";
+import { generateTeam } from "../../test-helpers/factories/team";
 
 const b1: Partial<Bid> = {
   id: "a-bid-id",
@@ -298,7 +299,7 @@ test("DELETE /bids/:bidId/assignees/:partnerId with team assignee", async (t: Te
   });
 });
 
-test("Partner pairing: accept", async (t: Test) => {
+test("Partner pairing: accept as user", async (t: Test) => {
   const {
     user: { admin },
     collectionDesigns: [design],
@@ -427,6 +428,95 @@ test("Partner pairing: accept", async (t: Test) => {
   );
 });
 
+test("Partner pairing: accept as a team member", async (t: Test) => {
+  const {
+    user: { admin },
+    collectionDesigns: [design],
+    quotes: [quote],
+  } = await checkout();
+  const partner = await createUser({ role: "PARTNER" });
+  const { team } = await generateTeam(partner.user.id);
+  const { bid } = await generateBid({
+    quoteId: quote.id,
+    userId: admin.user.id,
+    designId: design.id,
+    bidOptions: { assignee: { type: "TEAM", id: team.id } },
+    generatePricing: false,
+    taskTypeIds: [taskTypes.TECHNICAL_DESIGN.id, taskTypes.PRODUCTION.id],
+  });
+
+  sandbox()
+    .stub(NotificationsService, "sendPartnerAcceptServiceBidNotification")
+    .resolves();
+
+  const [response, body] = await post(`/bids/${bid.id}/accept`, {
+    headers: authHeader(partner.session.id),
+  });
+
+  const designEvents = await db.transaction((trx: Knex.Transaction) =>
+    DesignEventsDAO.find(trx, { designId: design.id })
+  );
+
+  t.equal(
+    response.status,
+    200,
+    "returns a 200 when successfully accepting a bid."
+  );
+  t.deepEqual(
+    body,
+    {
+      ...bid,
+      createdAt: bid.createdAt.toISOString(),
+      design: {
+        ...design,
+        createdAt: design.createdAt.toISOString(),
+      },
+      dueDate: bid.dueDate!.toISOString(),
+      assignee: {
+        type: "TEAM",
+        id: team.id,
+        name: team.title,
+      },
+    },
+    "responds with the accepted bid and associated design."
+  );
+  t.deepEqual(
+    designEvents.map((event: DesignEvent): any => ({
+      actorId: event.actorId,
+      designId: event.designId,
+      type: event.type,
+      targetTeamId: event.targetTeamId,
+    })),
+    [
+      {
+        actorId: admin.user.id,
+        designId: design.id,
+        type: "BID_DESIGN",
+        targetTeamId: team.id,
+      },
+      {
+        actorId: partner.user.id,
+        designId: design.id,
+        type: "ACCEPT_SERVICE_BID",
+        targetTeamId: team.id,
+      },
+      {
+        actorId: partner.user.id,
+        designId: design.id,
+        type: "STEP_PARTNER_PAIRING",
+        targetTeamId: null,
+      },
+      {
+        actorId: partner.user.id,
+        designId: design.id,
+        type: "STEP_PARTNER_PAIRING",
+        targetTeamId: null,
+      },
+    ],
+    "Adds an acceptance event"
+  );
+});
+
 test("Partner pairing: accept on a deleted design", async (t: Test) => {
   const {
     user: { admin },
@@ -454,7 +544,7 @@ test("Partner pairing: accept on a deleted design", async (t: Test) => {
   t.equal(noDesignResponse.status, 400, "Expect the bid assignment to fail.");
 });
 
-test("Partner pairing: reject", async (t: Test) => {
+test("Partner pairing: reject as user", async (t: Test) => {
   const {
     user: { admin },
     collectionDesigns: [design],
@@ -569,6 +659,105 @@ test("Partner pairing: reject", async (t: Test) => {
     duplicateRejectionBody.message,
     "You may only reject a bid you have been assigned to"
   );
+});
+
+test("Partner pairing: reject as team member", async (t: Test) => {
+  const {
+    user: { admin },
+    collectionDesigns: [design],
+    quotes: [quote],
+  } = await checkout();
+  const partner = await createUser({ role: "PARTNER" });
+  const { team } = await generateTeam(partner.user.id);
+  const { bid } = await generateBid({
+    quoteId: quote.id,
+    userId: admin.user.id,
+    designId: design.id,
+    bidOptions: {
+      assignee: {
+        type: "TEAM",
+        id: team.id,
+      },
+    },
+    generatePricing: false,
+  });
+  const bidRejection = {
+    createdBy: admin.user.id,
+    priceTooLow: false,
+    deadlineTooShort: false,
+    missingInformation: false,
+    other: true,
+    notes: "Unable to complete as designed",
+  };
+  sandbox()
+    .stub(NotificationsService, "sendPartnerRejectServiceBidNotification")
+    .resolves();
+
+  const [response] = await post(`/bids/${bid.id}/reject`, {
+    headers: authHeader(partner.session.id),
+    body: bidRejection,
+  });
+
+  const designEvents = await db.transaction((trx: Knex.Transaction) =>
+    DesignEventsDAO.find(trx, { designId: design.id })
+  );
+  const createdRejection = await BidRejectionDAO.findByBidId(bid.id);
+
+  t.equal(response.status, 204);
+  t.deepEqual(
+    designEvents.map((event: DesignEvent): any => ({
+      actorId: event.actorId,
+      designId: event.designId,
+      type: event.type,
+      targetTeamId: event.targetTeamId,
+    })),
+    [
+      {
+        actorId: admin.user.id,
+        designId: design.id,
+        type: "BID_DESIGN",
+        targetTeamId: team.id,
+      },
+      {
+        actorId: partner.user.id,
+        designId: design.id,
+        type: "REJECT_SERVICE_BID",
+        targetTeamId: team.id,
+      },
+    ],
+    "Adds a rejection event"
+  );
+  t.deepEqual(omit(createdRejection, "id", "createdAt", "bidId"), bidRejection);
+
+  const designCollaborator = await CollaboratorsDAO.findByDesignAndUser(
+    design.id,
+    partner.user.id
+  );
+
+  t.equal(designCollaborator, null, "The partner is no longer a collaborator");
+});
+
+test("GET /bids/:bidId gets a bid by an id for admins", async (t: Test) => {
+  const admin = await createUser({ role: "ADMIN" });
+  const getByIdStub = sandbox().stub(BidsDAO, "findById").resolves({});
+  sandbox().stub(BidsDAO, "findByBidIdAndUser").resolves(null);
+  await get(`/bids/a-real-bid-id`, {
+    headers: authHeader(admin.session.id),
+  });
+  t.equal(getByIdStub.callCount, 1);
+  t.deepEqual(getByIdStub.args[0][1], "a-real-bid-id");
+
+  const partner = await createUser({ role: "PARTNER" });
+  const [failedResponsePartner] = await get(`/bids/a-real-bid-id`, {
+    headers: authHeader(partner.session.id),
+  });
+  t.equal(failedResponsePartner.status, 404, "Only admins have full access");
+
+  const user = await createUser({ role: "USER" });
+  const [failedResponseUser] = await get(`/bids/a-real-bid-id`, {
+    headers: authHeader(user.session.id),
+  });
+  t.equal(failedResponseUser.status, 404, "Only admins have full access");
 });
 
 test("GET /bids/:bidId gets a bid by an id for admins", async (t: Test) => {
