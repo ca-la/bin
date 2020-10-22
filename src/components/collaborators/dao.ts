@@ -571,15 +571,20 @@ export async function deleteByDesignAndUser(
 
 /**
  * Cancels the collaborator role specifically for a partner (one of PARTNER or PREVIEW).
+ * @param trx Knex transaction object
  * @param designId The design uuid.
- * @param userId The partner uuid.
+ * @param partnerId The partner uuid.
  */
 export async function cancelForDesignAndPartner(
+  trx: Knex.Transaction,
   designId: string,
-  userId: string
+  partnerId: string
 ): Promise<Collaborator[]> {
-  const cancelledRows = await db(TABLE_NAME)
-    .where({ design_id: designId, user_id: userId })
+  const cancelledRows = await trx(TABLE_NAME)
+    .where({ design_id: designId })
+    .andWhereRaw(
+      db.raw("(user_id = :partnerId OR team_id = :partnerId)", { partnerId })
+    )
     .andWhereRaw("(role = 'PREVIEW' OR role = 'PARTNER')")
     .andWhereRaw("(cancelled_at IS null OR cancelled_at > now())")
     .update({ cancelled_at: new Date() }, "*");

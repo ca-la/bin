@@ -1,7 +1,7 @@
 import uuid from "node-uuid";
 import { omit } from "lodash";
 
-import DesignEvent from "../design-events/types";
+import DesignEvent, { templateDesignEvent } from "../design-events/types";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import db from "../../services/db";
 import { authHeader, del, get, post } from "../../test-helpers/http";
@@ -12,7 +12,8 @@ import * as BidsDAO from "./dao";
 import * as UsersDAO from "../users/dao";
 import * as BidRejectionDAO from "../bid-rejections/dao";
 import * as CollaboratorsDAO from "../collaborators/dao";
-import DesignEventsDAO from "../design-events/dao";
+import * as DesignEventsDAO from "../design-events/dao";
+import TeamsDAO from "../teams/dao";
 import ProductDesignsDAO from "../product-designs/dao";
 import * as NotificationsService from "../../services/create-notifications";
 import PayoutAccountsDAO from "../../dao/partner-payout-accounts";
@@ -216,59 +217,85 @@ test("GET /bids/:bidId/assignees", async (t: Test) => {
   ]);
 });
 
-test("DELETE /bids/:bidId/assignees/:userId", async (t: Test) => {
-  const { user, session } = await createUser({ role: "ADMIN" });
-  const { user: partner } = await createUser({ role: "PARTNER" });
-  const design = await ProductDesignsDAO.create({
-    productType: "TEESHIRT",
-    title: "Plain White Tee",
-    userId: user.id,
+test("DELETE /bids/:bidId/assignees/:partnerId with user assignee", async (t: Test) => {
+  const testDate = new Date(2012, 11, 22);
+  sandbox().useFakeTimers(testDate);
+  sandbox().stub(uuid, "v4").returns("a-uuid");
+  sandbox().stub(ProductDesignsDAO, "findByQuoteId").resolves({
+    id: "a-design-id",
+  });
+  sandbox().stub(BidsDAO, "findById").resolves({
+    id: "a-bid-id",
+  });
+  sandbox().stub(UsersDAO, "findById").resolves({
+    id: "a-user-id",
+  });
+  sandbox().stub(CollaboratorsDAO, "cancelForDesignAndPartner").resolves();
+
+  const eventCreateStub = sandbox().stub(DesignEventsDAO, "create").resolves();
+
+  sandbox().stub(SessionsDAO, "findById").resolves({
+    role: "ADMIN",
+    userId: "an-admin-id",
   });
 
-  const { bid } = await generateBid({
-    designId: design.id,
-    generatePricing: true,
-    userId: user.id,
-    bidOptions: {
-      assignee: {
-        type: "USER",
-        id: partner.id,
-      },
-    },
-  });
-
-  const [response] = await del(`/bids/${bid.id}/assignees/${partner.id}`, {
-    headers: authHeader(session.id),
+  const [response] = await del(`/bids/a-bid-id/assignees/a-user-id`, {
+    headers: authHeader("a-session-id"),
   });
   t.equal(response.status, 204);
 
-  const assignees = await get(`/bids/${bid.id}/assignees`, {
-    headers: authHeader(session.id),
+  t.deepEqual(eventCreateStub.args[0][1], {
+    ...templateDesignEvent,
+    actorId: "an-admin-id",
+    bidId: "a-bid-id",
+    createdAt: testDate,
+    designId: "a-design-id",
+    id: "a-uuid",
+    targetId: "a-user-id",
+    targetTeamId: null,
+    type: "REMOVE_PARTNER",
   });
-  t.deepEqual(assignees[1], []);
+});
 
-  const [collaboratorResponse, collaborators] = await get(
-    `/collaborators?designId=${design.id}`,
-    {
-      headers: authHeader(session.id),
-    }
-  );
-  t.equal(collaboratorResponse.status, 200);
-  t.equal(
-    collaborators.length,
-    0,
-    "Removes the partner collaborator for the design"
-  );
+test("DELETE /bids/:bidId/assignees/:partnerId with team assignee", async (t: Test) => {
+  const testDate = new Date(2012, 11, 22);
+  sandbox().useFakeTimers(testDate);
+  sandbox().stub(uuid, "v4").returns("a-uuid");
+  sandbox().stub(ProductDesignsDAO, "findByQuoteId").resolves({
+    id: "a-design-id",
+  });
+  sandbox().stub(BidsDAO, "findById").resolves({
+    id: "a-bid-id",
+  });
+  sandbox().stub(UsersDAO, "findById").resolves(null);
+  sandbox().stub(TeamsDAO, "findById").resolves({
+    id: "a-team-id",
+  });
+  sandbox().stub(CollaboratorsDAO, "cancelForDesignAndPartner").resolves();
 
-  const events = await db.transaction((trx: Knex.Transaction) =>
-    DesignEventsDAO.find(trx, { designId: design.id })
-  );
+  const eventCreateStub = sandbox().stub(DesignEventsDAO, "create").resolves();
 
-  t.equal(events.length, 2, "Returns two events for the design");
-  t.equal(events[0].type, "BID_DESIGN");
-  t.equal(events[0].bidId, bid.id);
-  t.equal(events[1].type, "REMOVE_PARTNER");
-  t.equal(events[1].bidId, bid.id);
+  sandbox().stub(SessionsDAO, "findById").resolves({
+    role: "ADMIN",
+    userId: "an-admin-id",
+  });
+
+  const [response] = await del(`/bids/a-bid-id/assignees/a-user-id`, {
+    headers: authHeader("a-session-id"),
+  });
+  t.equal(response.status, 204);
+
+  t.deepEqual(eventCreateStub.args[0][1], {
+    ...templateDesignEvent,
+    actorId: "an-admin-id",
+    bidId: "a-bid-id",
+    createdAt: testDate,
+    designId: "a-design-id",
+    id: "a-uuid",
+    targetId: null,
+    targetTeamId: "a-team-id",
+    type: "REMOVE_PARTNER",
+  });
 });
 
 test("Partner pairing: accept", async (t: Test) => {

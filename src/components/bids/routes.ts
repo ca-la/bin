@@ -1,6 +1,7 @@
 import Router from "koa-router";
 import uuid from "node-uuid";
 import { omit } from "lodash";
+import Knex from "knex";
 
 import {
   Bid,
@@ -15,6 +16,7 @@ import * as UsersDAO from "../../components/users/dao";
 import * as BidRejectionsDAO from "../bid-rejections/dao";
 import * as BidsDAO from "./dao";
 import * as PricingQuotesDAO from "../../dao/pricing-quotes";
+import TeamsDAO from "../teams/dao";
 import ProductDesignsDAO from "../product-designs/dao";
 import { create as createDesignEvent } from "../design-events/dao";
 import { DuplicateAcceptRejectError } from "../design-events/errors";
@@ -50,8 +52,11 @@ interface IOBid extends Bid {
   design: ProductDesign;
 }
 
-async function attachDesignToBid(bid: Bid): Promise<IOBid | null> {
-  const design = await ProductDesignsDAO.findByQuoteId(bid.quoteId);
+async function attachDesignToBid(
+  trx: Knex.Transaction,
+  bid: Bid
+): Promise<IOBid | null> {
+  const design = await ProductDesignsDAO.findByQuoteId(trx, bid.quoteId);
 
   if (!design) {
     return null;
@@ -63,11 +68,14 @@ async function attachDesignToBid(bid: Bid): Promise<IOBid | null> {
   };
 }
 
-async function attachDesignsToBids(bids: Bid[]): Promise<IOBid[]> {
+async function attachDesignsToBids(
+  trx: Knex.Transaction,
+  bids: Bid[]
+): Promise<IOBid[]> {
   const ioBids: IOBid[] = [];
 
   for (const bid of bids) {
-    const maybeIOBid = await attachDesignToBid(bid);
+    const maybeIOBid = await attachDesignToBid(trx, bid);
     if (maybeIOBid) {
       ioBids.push(maybeIOBid);
     }
@@ -164,7 +172,7 @@ function* listBidsByAssignee(
     default:
       this.throw(400, "Invalid status query");
   }
-  const ioBids: IOBid[] = yield attachDesignsToBids(bids);
+  const ioBids: IOBid[] = yield attachDesignsToBids(trx, bids);
 
   this.body = ioBids;
   this.status = 200;
@@ -208,7 +216,7 @@ function* listBidAssignees(this: AuthedContext): Iterator<any, any, any> {
 function* removeBidFromPartner(
   this: TrxContext<AuthedContext>
 ): Iterator<any, any, any> {
-  const { bidId, userId } = this.params;
+  const { bidId, partnerId } = this.params;
   const { trx } = this.state;
 
   const bid = yield BidsDAO.findById(trx, bidId);
@@ -216,14 +224,19 @@ function* removeBidFromPartner(
     this.throw(404, `No Bid found for ID: ${bidId}`);
   }
 
-  const design = yield ProductDesignsDAO.findByQuoteId(bid.quoteId);
+  const design = yield ProductDesignsDAO.findByQuoteId(trx, bid.quoteId);
   if (!design) {
     this.throw(404, `No Design found for Quote with ID: ${bid.quoteId}`);
   }
 
-  const target = yield UsersDAO.findById(userId, trx);
-  if (!target) {
-    this.throw(404, `No User found for ID: ${userId}`);
+  const targetUser = yield UsersDAO.findById(partnerId, trx);
+  let targetTeam = null;
+  if (!targetUser) {
+    targetTeam = yield TeamsDAO.findById(trx, partnerId);
+  }
+
+  if (!targetUser && !targetTeam) {
+    this.throw(404, `No partner found for ID: ${partnerId}`);
   }
 
   yield createDesignEvent(trx, {
@@ -233,11 +246,12 @@ function* removeBidFromPartner(
     createdAt: new Date(),
     designId: design.id,
     id: uuid.v4(),
-    targetId: target.id,
+    targetId: targetUser && targetUser.id,
+    targetTeamId: targetTeam && targetTeam.id,
     type: "REMOVE_PARTNER",
   });
 
-  yield CollaboratorsDAO.cancelForDesignAndPartner(design.id, target.id);
+  yield CollaboratorsDAO.cancelForDesignAndPartner(trx, design.id, partnerId);
   this.status = 204;
 }
 
@@ -272,7 +286,7 @@ export function* acceptDesignBid(
     "You may only accept a bid you have been assigned to"
   );
 
-  const maybeIOBid = yield attachDesignToBid(bid);
+  const maybeIOBid = yield attachDesignToBid(trx, bid);
   if (!maybeIOBid) {
     this.throw(400, `Design for bid ${bid.id} does not exist!`);
   }
@@ -483,7 +497,7 @@ router.get(
 router.get("/:bidId", requireAuth, useTransaction, getById);
 router.get("/:bidId/assignees", requireAdmin, listBidAssignees);
 router.del(
-  "/:bidId/assignees/:userId",
+  "/:bidId/assignees/:partnerId",
   requireAdmin,
   useTransaction,
   removeBidFromPartner

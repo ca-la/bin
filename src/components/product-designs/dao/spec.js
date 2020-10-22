@@ -299,6 +299,8 @@ test("ProductDesignsDAO.findByQuoteId", async (t) => {
     },
     200
   );
-  const retrieved = await ProductDesignsDAO.findByQuoteId(quote.id);
+  const retrieved = await db.transaction((trx) =>
+    ProductDesignsDAO.findByQuoteId(trx, quote.id)
+  );
   t.deepEqual(retrieved, design);
 });

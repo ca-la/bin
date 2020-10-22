@@ -530,6 +530,7 @@ test("cancelForDesignAndPartner cancels the preview role", async (t: Test) => {
     withSession: false,
     role: "PARTNER",
   });
+  const { team } = await generateTeam(partner.id);
   const design = await ProductDesignsDAO.create({
     productType: "TEESHIRT",
     title: "Helmut Lang Shirt",
@@ -545,30 +546,54 @@ test("cancelForDesignAndPartner cancels the preview role", async (t: Test) => {
     role: "PREVIEW",
     userId: partner.id,
   });
+  await generateCollaborator({
+    designId: design.id,
+    role: "PREVIEW",
+    teamId: team.id,
+  });
 
-  const updatedCollaborators = await CollaboratorsDAO.cancelForDesignAndPartner(
-    design.id,
-    partner.id
-  );
+  return db.transaction(async (trx: Knex.Transaction) => {
+    const updatedCollaborators = await CollaboratorsDAO.cancelForDesignAndPartner(
+      trx,
+      design.id,
+      partner.id
+    );
 
-  t.equal(
-    updatedCollaborators.length,
-    1,
-    "Only returns one cancelled collaborator"
-  );
-  const cancelledCollaborator = updatedCollaborators[0];
+    t.equal(
+      updatedCollaborators.length,
+      1,
+      "Only returns one cancelled collaborator"
+    );
+    const cancelledCollaborator = updatedCollaborators[0];
 
-  if (cancelledCollaborator && cancelledCollaborator.cancelledAt) {
-    t.true(cancelledCollaborator.cancelledAt <= new Date());
-  } else {
-    t.fail("Does not have a cancelledAt date");
-  }
+    if (cancelledCollaborator && cancelledCollaborator.cancelledAt) {
+      t.true(cancelledCollaborator.cancelledAt <= new Date());
+    } else {
+      t.fail("Does not have a cancelledAt date");
+    }
 
-  const notUpdatedCollaborators = await CollaboratorsDAO.cancelForDesignAndPartner(
-    design.id,
-    designer.id
-  );
-  t.deepEqual(notUpdatedCollaborators, [], "Does not update non-partner roles");
+    const notUpdatedCollaborators = await CollaboratorsDAO.cancelForDesignAndPartner(
+      trx,
+      design.id,
+      designer.id
+    );
+    t.deepEqual(
+      notUpdatedCollaborators,
+      [],
+      "Does not update non-partner roles"
+    );
+
+    t.true(
+      (
+        await CollaboratorsDAO.cancelForDesignAndPartner(
+          trx,
+          design.id,
+          team.id
+        )
+      )[0].cancelledAt! <= new Date(),
+      "cancels a team collaborator"
+    );
+  });
 });
 
 test("cancelForDesignAndPartner cancels the partner role", async (t: Test) => {
@@ -577,6 +602,7 @@ test("cancelForDesignAndPartner cancels the partner role", async (t: Test) => {
     withSession: false,
     role: "PARTNER",
   });
+  const { team } = await generateTeam(partner.id);
   const design = await ProductDesignsDAO.create({
     productType: "TEESHIRT",
     title: "Helmut Lang Shirt",
@@ -592,30 +618,54 @@ test("cancelForDesignAndPartner cancels the partner role", async (t: Test) => {
     role: "PARTNER",
     userId: partner.id,
   });
+  await generateCollaborator({
+    designId: design.id,
+    role: "PARTNER",
+    teamId: team.id,
+  });
 
-  const updatedCollaborators = await CollaboratorsDAO.cancelForDesignAndPartner(
-    design.id,
-    partner.id
-  );
+  return db.transaction(async (trx: Knex.Transaction) => {
+    const updatedCollaborators = await CollaboratorsDAO.cancelForDesignAndPartner(
+      trx,
+      design.id,
+      partner.id
+    );
 
-  t.equal(
-    updatedCollaborators.length,
-    1,
-    "Only returns one cancelled collaborator"
-  );
-  const cancelledCollaborator = updatedCollaborators[0];
+    t.equal(
+      updatedCollaborators.length,
+      1,
+      "Only returns one cancelled collaborator"
+    );
+    const cancelledCollaborator = updatedCollaborators[0];
 
-  if (cancelledCollaborator && cancelledCollaborator.cancelledAt) {
-    t.true(cancelledCollaborator.cancelledAt <= new Date());
-  } else {
-    t.fail("Does not have a cancelledAt date");
-  }
+    if (cancelledCollaborator && cancelledCollaborator.cancelledAt) {
+      t.true(cancelledCollaborator.cancelledAt <= new Date());
+    } else {
+      t.fail("Does not have a cancelledAt date");
+    }
 
-  const notUpdatedCollaborators = await CollaboratorsDAO.cancelForDesignAndPartner(
-    design.id,
-    designer.id
-  );
-  t.deepEqual(notUpdatedCollaborators, [], "Does not update non-partner roles");
+    const notUpdatedCollaborators = await CollaboratorsDAO.cancelForDesignAndPartner(
+      trx,
+      design.id,
+      designer.id
+    );
+    t.deepEqual(
+      notUpdatedCollaborators,
+      [],
+      "Does not update non-partner roles"
+    );
+
+    t.true(
+      (
+        await CollaboratorsDAO.cancelForDesignAndPartner(
+          trx,
+          design.id,
+          team.id
+        )
+      )[0].cancelledAt! <= new Date(),
+      "cancels a team collaborator"
+    );
+  });
 });
 
 test("CollaboratorsDAO.update", async (t: Test) => {
