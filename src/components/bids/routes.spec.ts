@@ -16,6 +16,7 @@ import * as DesignEventsDAO from "../design-events/dao";
 import TeamsDAO from "../teams/dao";
 import ProductDesignsDAO from "../product-designs/dao";
 import * as NotificationsService from "../../services/create-notifications";
+import * as LockQuoteService from "../../services/create-bid/create-quote-lock";
 import PayoutAccountsDAO from "../../dao/partner-payout-accounts";
 import generateDesignEvent from "../../test-helpers/factories/design-event";
 import createDesign from "../../services/create-design";
@@ -58,6 +59,7 @@ function setup(role: string = "PARTNER") {
     findUnpaidBidsStub: sandbox()
       .stub(BidsDAO, "findUnpaidByUserId")
       .resolves([b1d1]),
+    lockQuoteStub: sandbox().stub(LockQuoteService, "default").resolves(),
   };
 }
 
@@ -960,6 +962,49 @@ test("POST /bids", async (t: Test) => {
     unauthorized.status,
     403,
     "returns an Unauthorized status for non-admins"
+  );
+});
+
+test("POST /bids blocks concurrent bid creation", async (t: Test) => {
+  const {
+    quotes: [quote],
+  } = await checkout();
+  const admin = await createUser({ role: "ADMIN" });
+  const partner = await createUser({ role: "PARTNER", withSession: false });
+  const bidCreationPayload: BidCreationPayload = {
+    quoteId: quote.id,
+    description: "a description",
+    bidPriceCents: 1000,
+    bidPriceProductionOnlyCents: 0,
+    dueDate: new Date().toISOString(),
+    projectDueInMs: 0,
+    taskTypeIds: [],
+    revenueShareBasisPoints: 200,
+    assignee: {
+      type: "USER",
+      id: partner.user.id,
+    },
+  };
+
+  const [[r0], [r1], [r2]] = await Promise.all([
+    post("/bids", {
+      headers: authHeader(admin.session.id),
+      body: bidCreationPayload,
+    }),
+    post("/bids", {
+      headers: authHeader(admin.session.id),
+      body: bidCreationPayload,
+    }),
+    post("/bids", {
+      headers: authHeader(admin.session.id),
+      body: bidCreationPayload,
+    }),
+  ]);
+
+  t.deepEqual(
+    [r0.status, r1.status, r2.status].sort(),
+    [201, 409, 409],
+    "Only one request succeeds"
   );
 });
 

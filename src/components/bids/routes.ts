@@ -39,6 +39,7 @@ import filterError = require("../../services/filter-error");
 import { templateDesignEvent } from "../design-events/types";
 import InvalidDataError from "../../errors/invalid-data";
 import ConflictError from "../../errors/conflict";
+import createQuoteLock from "../../services/create-bid/create-quote-lock";
 
 const router = new Router();
 
@@ -94,6 +95,7 @@ function* createAndAssignBid(
   const { body }: { body: BidCreationPayload } = this.request;
   const { trx, userId } = this.state;
 
+  yield createQuoteLock(trx, body.quoteId);
   const created = yield createBid(trx, uuid.v4(), userId, body)
     .catch(
       filterError(InvalidDataError, (err: InvalidDataError) => {
