@@ -62,6 +62,9 @@ export async function fetchProductInfo(designId: string) {
   return await db.transaction(async (trx: Transaction) => {
     const variants = await findByDesignId(designId, trx);
     const skus = variants.map((variant: VariantDb) => variant.sku);
+    if (skus.length === 0) {
+      return [];
+    }
     const response = await CommerceAPI.fetchCommerce(
       `storefront-products?sku=${skus.join(",")}`
     );
@@ -83,6 +86,9 @@ export async function fetchProductVariants(
   return await db.transaction(async (trx: Transaction) => {
     const variants = await findByDesignId(designId, trx);
     const skus = variants.map((variant: VariantDb) => variant.sku);
+    if (skus.length === 0) {
+      return [];
+    }
     const query = qs.stringify({
       sku: skus.join(","),
       storefrontId,
