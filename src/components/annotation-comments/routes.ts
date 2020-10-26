@@ -13,11 +13,8 @@ import { announceAnnotationCommentCreation } from "../iris/messages/annotation-c
 import db from "../../services/db";
 import Asset from "../assets/types";
 import { createCommentWithAttachments } from "../../services/create-comment-with-attachments";
-import {
-  addAtMentionDetailsForComment,
-  CommentWithMentions,
-} from "../../services/add-at-mention-details";
-import { BaseComment } from "../comments/types";
+import { addAtMentionDetailsForComment } from "../../services/add-at-mention-details";
+import { BaseComment, CommentWithMentions } from "../comments/types";
 
 const router = new Router();
 

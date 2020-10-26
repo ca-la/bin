@@ -40,6 +40,21 @@ export interface CommentWithMentions extends Comment {
     [id: string]: string;
   };
 }
+
 export interface CommentWithResources extends CommentWithMentions {
   attachments: (Asset & Partial<AssetLinks>)[];
+}
+
+export enum MentionType {
+  COLLABORATOR = "collaborator",
+  TEAM_USER = "teamUser",
+}
+
+export interface MentionMeta {
+  id: string;
+  type: MentionType;
+}
+
+export function isMentionType(candidate: string): candidate is MentionType {
+  return Object.values(MentionType).includes(candidate as MentionType);
 }

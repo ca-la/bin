@@ -1,5 +1,11 @@
 import * as Knex from "knex";
+
 import db from "../../services/db";
+import { validate, validateEvery } from "../../services/validate-from-db";
+import { addAtMentionDetailsForComment } from "../../services/add-at-mention-details";
+import { addAttachmentLinks } from "../../services/add-attachments-links";
+import { CommentWithMentions } from "../comments/types";
+
 import AnnotationComment, {
   AnnotationCommentRow,
   CommentWithMeta,
@@ -9,13 +15,7 @@ import AnnotationComment, {
   isCommentWithMetaRow,
   withMetaDataAdapter as commentWithMetaAdapter,
 } from "./domain-object";
-import { validate, validateEvery } from "../../services/validate-from-db";
-import {
-  addAtMentionDetailsForComment,
-  CommentWithMentions,
-} from "../../services/add-at-mention-details";
 import { annotationCommentsView } from "./view";
-import { addAttachmentLinks } from "../../services/add-attachments-links";
 
 const TABLE_NAME = "product_design_canvas_annotation_comments";
 

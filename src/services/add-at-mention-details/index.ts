@@ -1,16 +1,14 @@
-import Comment from "../../components/comments/types";
-import parseAtMentions, {
+import Knex from "knex";
+
+import Comment, {
+  CommentWithMentions,
   MentionMeta,
   MentionType,
-} from "@cala/ts-lib/dist/parsing/comment-mentions";
-import Knex from "knex";
+} from "../../components/comments/types";
+import { parseAtMentions } from "../../components/comments/service";
 import * as CollaboratorsDAO from "../../components/collaborators/dao";
 import * as CommentsDAO from "../../components/comments/dao";
 import { CollaboratorWithUser } from "../../components/collaborators/types";
-
-export interface CommentWithMentions extends Comment {
-  mentions: { [id: string]: string };
-}
 
 /**
  * Constructs the name to add to the @mention detail.
@@ -36,7 +34,7 @@ export async function addAtMentionDetailsForComment(
       match: MentionMeta
     ) => {
       const acc = await accPromise;
-      if (match.type === MentionType.collaborator) {
+      if (match.type === MentionType.COLLABORATOR) {
         const collaborator = await CollaboratorsDAO.findById(match.id, true);
         const name = constructCollaboratorName(collaborator);
         return {
@@ -81,7 +79,7 @@ export async function getMentionsFromComment(
       match: MentionMeta
     ) => {
       const acc = await accPromise;
-      if (match.type === MentionType.collaborator) {
+      if (match.type === MentionType.COLLABORATOR) {
         const collaborator = await CollaboratorsDAO.findById(match.id, true);
         const name = constructCollaboratorName(collaborator);
         return {
@@ -108,7 +106,7 @@ export async function getCollaboratorsFromCommentMentions(
 
   for (const mention of mentions) {
     switch (mention.type) {
-      case MentionType.collaborator: {
+      case MentionType.COLLABORATOR: {
         const collaborator = await CollaboratorsDAO.findById(
           mention.id,
           false,

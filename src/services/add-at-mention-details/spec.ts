@@ -18,7 +18,7 @@ test("addAtMentionDetails adds null when there are no at mentions", async (t: ta
     id: uuid.v4(),
     isPinned: false,
     parentCommentId: null,
-    text: "A comment with no mentions",
+    text: `A comment with no @<${uuid.v4()}|fooBar> mentions`,
     userId: user.id,
   });
 
