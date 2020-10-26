@@ -3,7 +3,7 @@
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "lib": ["es2017"],
+    "lib": ["ES2018"],
     "outDir": "./dist/",
     "sourceMap": true,
     "noImplicitAny": true,
