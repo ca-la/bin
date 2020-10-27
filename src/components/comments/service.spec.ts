@@ -55,6 +55,7 @@ test("CommentService.parseAtMention", async (t: Test) => {
 
 test("CommentService.mentionExp", async (t: Test) => {
   const mentionRegExp = new RegExp(CommentService.mentionExp);
+
   t.false(mentionRegExp.test(none), "none / does not contain a match");
   t.false(
     mentionRegExp.test(invalidType),
@@ -66,4 +67,10 @@ test("CommentService.mentionExp", async (t: Test) => {
   );
   t.true(mentionRegExp.test(valid1), "valid1 / contains a match");
   t.true(mentionRegExp.test(valid2), "valid2 / contains a match");
+
+  t.deepEqual(
+    `before${valid1}after`.split(mentionRegExp),
+    ["before", "after"],
+    "does not capture id and type"
+  );
 });

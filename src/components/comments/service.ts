@@ -10,26 +10,32 @@ const uuidExp = [
 ].join("-");
 export const mentionExp = [
   "@<",
-  `(?<id>${uuidExp})`,
+  `(?:${uuidExp})`,
   "\\|",
-  `(?<type>${Object.values(MentionType).join("|")})`,
+  `(?:${Object.values(MentionType).join("|")})`,
   ">",
 ].join("");
+const MENTION_UUID_END = 38;
+const MENTION_UUID_START = 2;
+const MENTION_TYPE_START = 39;
 
 export function parseAtMentions(text: string): MentionMeta[] {
-  const mentionRegExp = new RegExp(mentionExp, "g");
+  const matches = text.match(new RegExp(mentionExp, "g")) || [];
 
-  let match;
-  const matches: MentionMeta[] = [];
+  return matches.reduce((parsed: MentionMeta[], found: string) => {
+    const id = found.substring(MENTION_UUID_START, MENTION_UUID_END);
+    const type = found.substring(MENTION_TYPE_START, found.length - 1);
 
-  // TODO: refactor to matchAll when we upgrade to Node 12
-  // tslint:disable-next-line:no-conditional-assignment
-  while ((match = mentionRegExp.exec(text)) !== null) {
-    const { id, type } = match.groups as { id: string; type: string };
-    if (isMentionType(type)) {
-      matches.push({ id, type });
+    if (!isMentionType(type)) {
+      return parsed;
     }
-  }
 
-  return matches;
+    return [
+      ...parsed,
+      {
+        id,
+        type,
+      },
+    ];
+  }, []);
 }
