@@ -28,11 +28,11 @@ test(
 
     const result = await AWSService.uploadFile(
       "foo",
-      "remote-bar.jpg",
+      "remote-filename",
       "bar.jpg",
       "image/jpeg"
     );
-    t.deepEqual(result, "https://foo.s3.amazonaws.com/remote-bar.jpg");
+    t.deepEqual(result, "https://foo.s3.amazonaws.com/remote-filename");
     sinon.assert.callCount(awsStub, 1);
     sinon.assert.callCount(fsStub, 1);
   },
@@ -54,7 +54,7 @@ test(
         },
       });
 
-    await AWSService.deleteFile("foo", "remote-bar.jpg");
+    await AWSService.deleteFile("foo", "remote-filename");
     sinon.assert.callCount(awsStub, 1);
     t.ok("Deletion is executed on the AWS instance");
   },
@@ -76,39 +76,8 @@ test(
         },
       });
 
-    await AWSService.getFile("foo", "remote-bar.jpg");
+    await AWSService.getFile("foo", "remote-filename");
     sinon.assert.callCount(awsStub, 1);
-    t.ok("Get statement is executed on the AWS instance");
-  },
-  beforeEach
-);
-
-test(
-  "AWS Service supports getting a download url",
-  async (t: tape.Test) => {
-    const awsStub = sandbox()
-      .stub(AWS, "S3")
-      .returns({
-        getObject: (): object => {
-          return {
-            promise: (): object => {
-              return {
-                ContentType: "image/jpg",
-              };
-            },
-          };
-        },
-        getSignedUrl: (): object => {
-          return {
-            promise: (): void => {
-              /* NO-OP */
-            },
-          };
-        },
-      });
-
-    await AWSService.getDownloadUrl("foo", "remote-bar.jpg");
-    sinon.assert.callCount(awsStub, 2);
     t.ok("Get statement is executed on the AWS instance");
   },
   beforeEach
@@ -128,7 +97,7 @@ test(
     AWSService.getUploadPolicy(
       "foo",
       "us-east-2",
-      "bar.jpg",
+      "remote-filename",
       'attachment; filename="bar.jpg"',
       "image/jpeg"
     );
@@ -149,7 +118,7 @@ test(
         },
       });
 
-    AWSService.getThumbnailUploadPolicy("foo", "bar.jpg");
+    AWSService.getThumbnailUploadPolicy("foo", "remote-filename");
     sinon.assert.callCount(awsStub, 1);
     t.ok("Presigned post statement is executed on the AWS instance");
   },

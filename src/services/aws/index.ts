@@ -1,4 +1,3 @@
-import mime from "mime-types";
 import AWS from "aws-sdk";
 import {
   DeleteObjectOutput,
@@ -72,21 +71,6 @@ export async function getFile(
       Key: remoteFileName,
     })
     .promise();
-}
-
-export async function getDownloadUrl(
-  bucketName: string,
-  remoteFileName: string
-): Promise<string> {
-  const s3 = new AWS.S3();
-  const file = await getFile(bucketName, remoteFileName);
-  const extension = mime.extension(file.ContentType || "");
-
-  return s3.getSignedUrl("getObject", {
-    Bucket: bucketName,
-    Key: remoteFileName,
-    ResponseContentDisposition: `attachment; filename="${remoteFileName}.${extension}"`,
-  });
 }
 
 /**

@@ -1,12 +1,19 @@
 import mime from "mime-types";
-import { SUPPORTED_MIME_TYPES } from "@cala/ts-lib";
+import { FileType, SUPPORTED_FILE_TYPES } from "../../components/assets/types";
 
 export function getExtension(mimeType: string): string | null {
-  const extension = mime.extension(mimeType) || SUPPORTED_MIME_TYPES[mimeType];
-
-  if (!extension) {
-    return null;
+  const packageExtension = mime.extension(mimeType);
+  if (packageExtension) {
+    return packageExtension;
   }
 
-  return extension;
+  const augmentedType = SUPPORTED_FILE_TYPES.find(
+    (type: FileType) => type.mimeType === mimeType
+  );
+
+  if (augmentedType) {
+    return augmentedType.extension;
+  }
+
+  return null;
 }

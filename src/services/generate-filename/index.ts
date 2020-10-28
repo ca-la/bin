@@ -1,6 +1,6 @@
-import mime from "mime-types";
+import { getExtension } from "../get-extension";
 
 export function generateFilename(name: string, mimeType: string): string {
-  const fileExtension = mime.extension(mimeType);
+  const fileExtension = getExtension(mimeType);
   return fileExtension ? `${name}.${fileExtension}` : name;
 }

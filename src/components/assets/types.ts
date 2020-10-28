@@ -39,12 +39,20 @@ export const ACCEPTED_FILES = ACCEPTED_IMAGE_TYPES.concat(
   ACCEPTED_SPREADSHEET_TYPES
 );
 export const PREVIEWABLE_FILES = ["jpg", "png", "jpeg", "gif", "svg"];
+
 /**
- * A mapping of { mimeType: extension } that we support that does not reside in mime-db.
+ * A list of file extension & mime-type pairs to augment what the browser
+ * returns as well as what's found in `mime-db`.
  */
-export const SUPPORTED_MIME_TYPES = {
-  "application/x-photoshop": "psd",
-};
+export interface FileType {
+  extension: string;
+  mimeType: string;
+}
+
+export const SUPPORTED_FILE_TYPES: FileType[] = [
+  { extension: "psd", mimeType: "application/x-photoshop" },
+  { extension: "dxf", mimeType: "application/dxf" },
+];
 
 /**
  * TODO: adjust the following columns
