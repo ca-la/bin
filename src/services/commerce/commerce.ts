@@ -66,7 +66,7 @@ export async function fetchProductInfo(designId: string) {
       return [];
     }
     const response = await CommerceAPI.fetchCommerce(
-      `storefront-products?sku=${skus.join(",")}`
+      `products?sku=${skus.join(",")}`
     );
 
     if (response.status !== 200) {

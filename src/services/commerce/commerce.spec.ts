@@ -71,7 +71,7 @@ test("fetchProductInfo", async (t: Test) => {
   );
   t.deepEqual(
     fetchCommerceStub.args,
-    [["storefront-products?sku=sku1,sku2"]],
+    [["products?sku=sku1,sku2"]],
     "fetchCommerce called with proper URL"
   );
   t.deepEqual(result, fakeResult, "returns fetch result");
