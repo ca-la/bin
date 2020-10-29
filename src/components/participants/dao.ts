@@ -27,9 +27,12 @@ COALESCE(
   users.name,
   users.email,
   collaborators.user_email,
+  team_users.user_email,
   collaborators.id::TEXT
 ) AS display_name`
       ),
+      "collaborators.role",
+      "users.id AS user_id",
     ])
     .from("collaborators")
     .leftJoin("team_users", "team_users.team_id", "collaborators.team_id")

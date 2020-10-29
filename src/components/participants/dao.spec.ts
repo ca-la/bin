@@ -60,6 +60,15 @@ async function setup() {
       userEmail: null,
     })
   );
+  const teamUser3 = await db.transaction((trx: Knex.Transaction) =>
+    RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      role: TeamUserRole.OWNER,
+      teamId: team.id,
+      userId: null,
+      userEmail: "non-user-team-user@example.com",
+    })
+  );
 
   const { collaborator: designCollaborator } = await generateCollaborator({
     collectionId: null,
@@ -99,6 +108,14 @@ async function setup() {
     userEmail: null,
     userId: user5.id,
   });
+  const { collaborator: nonUserCollaborator } = await generateCollaborator({
+    collectionId: null,
+    designId: design.id,
+    invitationMessage: "",
+    role: "EDIT",
+    userEmail: "non-user-collaborator@example.com",
+    userId: null,
+  });
   const { collaborator: teamCollaborator } = await generateCollaborator({
     collectionId: null,
     designId: design.id,
@@ -124,11 +141,14 @@ async function setup() {
       cancelledCollectionCollaborator,
       cancelledDesignCollaborator,
       teamCollaborator,
+      nonUserCollaborator,
     },
     teamUsers: {
       admin: teamUser1,
       viewer: teamUser2,
+      nonUser: teamUser3,
     },
+    users: [user, user2, user3, user4, user5],
   };
 }
 
@@ -149,26 +169,50 @@ test("ParticipantsDAO.findByDesign", async (t: Test) => {
           type: MentionType.COLLABORATOR,
           id: state.collaborators.designerCollaborator!.id,
           displayName: "Designer",
+          role: "EDIT",
+          userId: state.users[0].id,
         },
         {
           type: MentionType.COLLABORATOR,
           id: state.collaborators.designCollaborator.id,
           displayName: "Design Collaborator",
+          role: "EDIT",
+          userId: state.users[1].id,
         },
         {
           type: MentionType.COLLABORATOR,
           id: state.collaborators.collectionCollaborator.id,
           displayName: "Collection Collaborator",
+          role: "EDIT",
+          userId: state.users[2].id,
+        },
+        {
+          type: MentionType.COLLABORATOR,
+          id: state.collaborators.nonUserCollaborator.id,
+          displayName: state.collaborators.nonUserCollaborator.userEmail,
+          role: "EDIT",
+          userId: null,
         },
         {
           type: MentionType.TEAM_USER,
           id: state.teamUsers.admin.id,
           displayName: "Team Admin",
+          role: "PARTNER",
+          userId: state.teamUsers.admin.userId,
         },
         {
           type: MentionType.TEAM_USER,
           id: state.teamUsers.viewer.id,
           displayName: "Team Viewer",
+          role: "PARTNER",
+          userId: state.teamUsers.viewer.userId,
+        },
+        {
+          type: MentionType.TEAM_USER,
+          id: state.teamUsers.nonUser.id,
+          displayName: state.teamUsers.nonUser.userEmail,
+          role: "PARTNER",
+          userId: null,
         },
       ],
       "returns all non-cancelled design and collection collaborators and team users"

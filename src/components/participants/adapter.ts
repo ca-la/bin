@@ -6,6 +6,8 @@ function encode(row: ParticipantRow): Participant {
     type: row.type,
     displayName: row.display_name,
     id: row.id,
+    role: row.role,
+    userId: row.user_id,
   };
 }
 
@@ -14,12 +16,14 @@ function decode(data: Participant): ParticipantRow {
     type: data.type,
     display_name: data.displayName,
     id: data.id,
+    role: data.role,
+    user_id: data.userId,
   };
 }
 
 export const dataAdapter = buildAdapter<Participant, ParticipantRow>({
   domain: "Participant",
-  requiredProperties: ["type", "displayName", "id"],
+  requiredProperties: ["type", "displayName", "id", "role", "userId"],
   decodeTransformer: decode,
   encodeTransformer: encode,
 });
