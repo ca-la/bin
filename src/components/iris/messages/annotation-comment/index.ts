@@ -2,6 +2,7 @@ import {
   RealtimeAnnotationComment,
   RealtimeAnnotationCommentDeletion,
 } from "@cala/ts-lib";
+import Knex from "knex";
 import { sendMessage } from "../../send-message";
 import AnnotationComment from "../../../annotation-comments/domain-object";
 import addAtMentionDetails from "../../../../services/add-at-mention-details";
@@ -11,10 +12,11 @@ import { CommentWithAttachmentLinks } from "../../../../services/add-attachments
  * Publishes an annotation comment to the Iris SQS.
  */
 export async function announceAnnotationCommentCreation(
+  trx: Knex.Transaction,
   annotationComment: AnnotationComment,
   comment: CommentWithAttachmentLinks
 ): Promise<RealtimeAnnotationComment> {
-  const commentWithMentions = await addAtMentionDetails([comment]);
+  const commentWithMentions = await addAtMentionDetails(trx, [comment]);
 
   const realtimeAnnotationComment: RealtimeAnnotationComment = {
     actorId: comment.userId,

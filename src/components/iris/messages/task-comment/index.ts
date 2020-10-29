@@ -1,4 +1,6 @@
 import { RealtimeTaskComment, RealtimeTaskCommentDeletion } from "@cala/ts-lib";
+import Knex from "knex";
+
 import { sendMessage } from "../../send-message";
 import TaskComment from "../../../task-comments/domain-object";
 import addAtMentionDetails from "../../../../services/add-at-mention-details";
@@ -8,10 +10,11 @@ import { CommentWithAttachmentLinks } from "../../../../services/add-attachments
  * Publishes a task comment to the Iris SQS.
  */
 export async function announceTaskCommentCreation(
+  trx: Knex.Transaction,
   taskComment: TaskComment,
   comment: CommentWithAttachmentLinks
 ): Promise<RealtimeTaskComment> {
-  const commentWithMentions = await addAtMentionDetails([comment]);
+  const commentWithMentions = await addAtMentionDetails(trx, [comment]);
 
   const realtimeTaskComment: RealtimeTaskComment = {
     actorId: comment.userId,

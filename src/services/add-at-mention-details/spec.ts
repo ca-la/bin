@@ -1,5 +1,6 @@
 import tape from "tape";
 import uuid from "node-uuid";
+import Knex from "knex";
 
 import { test } from "../../test-helpers/fresh";
 import { create } from "../../components/comments/dao";
@@ -8,6 +9,7 @@ import addAtMentionDetails from ".";
 import generateCollaborator from "../../test-helpers/factories/collaborator";
 import generateCollection from "../../test-helpers/factories/collection";
 import * as CollaboratorsDAO from "../../components/collaborators/dao";
+import db from "../db";
 
 test("addAtMentionDetails adds null when there are no at mentions", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
@@ -22,7 +24,9 @@ test("addAtMentionDetails adds null when there are no at mentions", async (t: ta
     userId: user.id,
   });
 
-  const result = await addAtMentionDetails([comment]);
+  const result = await db.transaction((trx: Knex.Transaction) =>
+    addAtMentionDetails(trx, [comment])
+  );
   t.deepEqual(result[0].mentions, {}, "comments mentions are null");
 });
 
@@ -45,7 +49,9 @@ test("addAtMentionDetails adds details when there is an at mention", async (t: t
     userId: user.id,
   });
 
-  const result = await addAtMentionDetails([comment]);
+  const result = await db.transaction((trx: Knex.Transaction) =>
+    addAtMentionDetails(trx, [comment])
+  );
   const { mentions } = result[0];
 
   t.deepEqual(
@@ -75,7 +81,9 @@ test("addAtMentionDetails adds details when there is an at mention even for a re
     userId: user.id,
   });
 
-  const result = await addAtMentionDetails([comment]);
+  const result = await db.transaction((trx: Knex.Transaction) =>
+    addAtMentionDetails(trx, [comment])
+  );
   const { mentions } = result[0];
 
   t.deepEqual(
@@ -99,7 +107,9 @@ test("addAtMentionDetails can add details when there is an at mention for an unk
     userId: user.id,
   });
 
-  const result = await addAtMentionDetails([comment]);
+  const result = await db.transaction((trx: Knex.Transaction) =>
+    addAtMentionDetails(trx, [comment])
+  );
   const { mentions } = result[0];
 
   t.deepEqual(
@@ -133,7 +143,9 @@ test("addAtMentionDetails adds details for multiple at mentions", async (t: tape
     userId: user.id,
   });
 
-  const result = await addAtMentionDetails([comment]);
+  const result = await db.transaction((trx: Knex.Transaction) =>
+    addAtMentionDetails(trx, [comment])
+  );
   const { mentions } = result[0];
 
   t.deepEqual(
@@ -167,7 +179,9 @@ test("addAtMentionDetails adds single detail for multiple at mentions of single 
     userId: user.id,
   });
 
-  const result = await addAtMentionDetails([comment]);
+  const result = await db.transaction((trx: Knex.Transaction) =>
+    addAtMentionDetails(trx, [comment])
+  );
   const { mentions } = result[0];
 
   t.deepEqual(

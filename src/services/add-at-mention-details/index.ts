@@ -2,106 +2,45 @@ import Knex from "knex";
 
 import Comment, {
   CommentWithMentions,
-  MentionMeta,
   MentionType,
 } from "../../components/comments/types";
 import { parseAtMentions } from "../../components/comments/service";
+import TeamUsersDAO from "../../components/team-users/dao";
 import * as CollaboratorsDAO from "../../components/collaborators/dao";
 import * as CommentsDAO from "../../components/comments/dao";
-import { CollaboratorWithUser } from "../../components/collaborators/types";
+import { User } from "../../components/users/types";
 
-/**
- * Constructs the name to add to the @mention detail.
- */
-export function constructCollaboratorName(
-  collaborator: CollaboratorWithUser | null
+function getDisplayName(
+  data: { userEmail: string | null; user?: User | null } | null
 ): string {
-  if (!collaborator) {
-    return "Unknown";
+  let displayName = "Unknown";
+
+  if (data) {
+    const { user, userEmail } = data;
+
+    if (user) {
+      if (user.name) {
+        displayName = user.name;
+      } else if (user.email) {
+        displayName = user.email;
+      }
+    } else if (userEmail) {
+      displayName = userEmail;
+    }
   }
 
-  const { user, userEmail } = collaborator;
-  return (user && user.name) || userEmail || "Unknown";
-}
-
-export async function addAtMentionDetailsForComment(
-  comment: Comment
-): Promise<CommentWithMentions> {
-  const mentionMatches = parseAtMentions(comment.text);
-  const mentions = await mentionMatches.reduce(
-    async (
-      accPromise: Promise<{ [id: string]: string }>,
-      match: MentionMeta
-    ) => {
-      const acc = await accPromise;
-      if (match.type === MentionType.COLLABORATOR) {
-        const collaborator = await CollaboratorsDAO.findById(match.id, true);
-        const name = constructCollaboratorName(collaborator);
-        return {
-          ...acc,
-          [match.id]: name,
-        };
-      }
-      return acc;
-    },
-    Promise.resolve({})
-  );
-  return {
-    ...comment,
-    mentions,
-  };
-}
-
-/**
- * addAtMentionDetails takes a list of comments and attaches @-mention information to each comment
- * the information is a map of id's to resource names that will be displayed inline
- * currently the only supported @-mention type supported is collaborator
- */
-export default async function addAtMentionDetails(
-  comments: Comment[]
-): Promise<CommentWithMentions[]> {
-  return Promise.all(
-    comments.map(
-      async (comment: Comment): Promise<CommentWithMentions> => {
-        return await addAtMentionDetailsForComment(comment);
-      }
-    )
-  );
-}
-
-export async function getMentionsFromComment(
-  commentText: string
-): Promise<Record<string, string>> {
-  const mentionMatches = parseAtMentions(commentText);
-  return mentionMatches.reduce(
-    async (
-      accPromise: Promise<{ [id: string]: string }>,
-      match: MentionMeta
-    ) => {
-      const acc = await accPromise;
-      if (match.type === MentionType.COLLABORATOR) {
-        const collaborator = await CollaboratorsDAO.findById(match.id, true);
-        const name = constructCollaboratorName(collaborator);
-        return {
-          ...acc,
-          [match.id]: name,
-        };
-      }
-      return acc;
-    },
-    Promise.resolve({})
-  );
+  return displayName;
 }
 
 export async function getCollaboratorsFromCommentMentions(
   trx: Knex.Transaction,
   commentText: string
 ): Promise<{
-  collaboratorNames: { [collaboratorId: string]: string };
+  idNameMap: { [id: string]: string };
   mentionedUserIds: string[];
 }> {
   const mentions = parseAtMentions(commentText);
-  const collaboratorNames: { [key: string]: string } = {};
+  const idNameMap: { [key: string]: string } = {};
   const mentionedUserIds = [];
 
   for (const mention of mentions) {
@@ -109,25 +48,75 @@ export async function getCollaboratorsFromCommentMentions(
       case MentionType.COLLABORATOR: {
         const collaborator = await CollaboratorsDAO.findById(
           mention.id,
-          false,
+          true,
           trx
         );
 
-        if (!collaborator) {
-          throw new Error(`Cannot find mentioned collaborator ${mention.id}`);
+        const name = getDisplayName(collaborator);
+        idNameMap[mention.id] = name;
+        if (collaborator && collaborator.user) {
+          mentionedUserIds.push(collaborator.user.id);
         }
+        break;
+      }
 
-        if (!collaborator.user) {
+      case MentionType.TEAM_USER: {
+        const teamUser = await TeamUsersDAO.findById(trx, mention.id);
+        if (!teamUser || !teamUser.user) {
           continue;
         }
 
-        const name = constructCollaboratorName(collaborator);
-        collaboratorNames[collaborator.id] = name;
-        mentionedUserIds.push(collaborator.user.id);
+        const name = getDisplayName(teamUser);
+        idNameMap[mention.id] = name;
+        if (teamUser && teamUser.user) {
+          mentionedUserIds.push(teamUser.user.id);
+        }
+        break;
       }
     }
   }
-  return { collaboratorNames, mentionedUserIds };
+  return { idNameMap, mentionedUserIds };
+}
+
+export async function getMentionsFromComment(
+  trx: Knex.Transaction,
+  commentText: string
+): Promise<Record<string, string>> {
+  const { idNameMap } = await getCollaboratorsFromCommentMentions(
+    trx,
+    commentText
+  );
+
+  return idNameMap;
+}
+
+export async function addAtMentionDetailsForComment(
+  trx: Knex.Transaction,
+  comment: Comment
+): Promise<CommentWithMentions> {
+  return {
+    ...comment,
+    mentions: await getMentionsFromComment(trx, comment.text),
+  };
+}
+
+/**
+ * addAtMentionDetails takes a list of comments and attaches @-mention information to each comment
+ * the information is a map of id's to resource names that will be displayed inline
+ */
+export default async function addAtMentionDetails(
+  trx: Knex.Transaction,
+  comments: Comment[]
+): Promise<CommentWithMentions[]> {
+  const commentsWithMentions: CommentWithMentions[] = [];
+
+  for (const comment of comments) {
+    commentsWithMentions.push(
+      await addAtMentionDetailsForComment(trx, comment)
+    );
+  }
+
+  return commentsWithMentions;
 }
 
 export async function getThreadUserIdsFromCommentThread(

@@ -1,4 +1,5 @@
 import tape from "tape";
+import Knex from "knex";
 
 import * as SendMessageService from "../../send-message";
 import * as MentionDetailsService from "../../../../services/add-at-mention-details";
@@ -10,6 +11,7 @@ import {
 import generateComment from "../../../../test-helpers/factories/comment";
 import { CommentWithAttachmentLinks } from "../../../../services/add-attachments-links";
 import ApprovalStepComment from "../../../approval-step-comments/domain-object";
+import db from "../../../../services/db";
 
 test("announceApprovalStepCommentCreation supports sending a message", async (t: tape.Test) => {
   const sendStub = sandbox()
@@ -29,9 +31,12 @@ test("announceApprovalStepCommentCreation supports sending a message", async (t:
       },
     ]);
 
-  const response = await announceApprovalStepCommentCreation(
-    stepComment,
-    comment as CommentWithAttachmentLinks
+  const response = await db.transaction((trx: Knex.Transaction) =>
+    announceApprovalStepCommentCreation(
+      trx,
+      stepComment,
+      comment as CommentWithAttachmentLinks
+    )
   );
   t.deepEqual(
     response,

@@ -1,5 +1,7 @@
 import tape from "tape";
 import uuid from "node-uuid";
+import Knex from "knex";
+
 import { test } from "../../test-helpers/fresh";
 import { create as createAnnotation } from "../product-design-canvas-annotations/dao";
 import {
@@ -12,6 +14,7 @@ import createUser from "../../test-helpers/create-user";
 import generateCanvas from "../../test-helpers/factories/product-design-canvas";
 import generateAnnotation from "../../test-helpers/factories/product-design-canvas-annotation";
 import generateComment from "../../test-helpers/factories/comment";
+import db from "../../services/db";
 
 test("ProductDesignCanvasAnnotationComment DAO supports creation/retrieval", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
@@ -113,11 +116,13 @@ test("findByAnnotationIds", async (t: tape.Test) => {
   await create({ annotationId: annotationOne.id, commentId: c3.id });
   await create({ annotationId: annotationTwo.id, commentId: c4.id });
 
-  const result = await findByAnnotationIds([
-    annotationOne.id,
-    annotationTwo.id,
-    annotationThree.id,
-  ]);
+  const result = await db.transaction((trx: Knex.Transaction) =>
+    findByAnnotationIds(trx, [
+      annotationOne.id,
+      annotationTwo.id,
+      annotationThree.id,
+    ])
+  );
 
   t.equal(
     Object.keys(result).length,
@@ -155,10 +160,9 @@ test("findByAnnotationIds", async (t: tape.Test) => {
 
   // deleting a comment should remove it from the list of comments.
   await deleteComment(c2.id);
-  const result2 = await findByAnnotationIds([
-    annotationOne.id,
-    annotationThree.id,
-  ]);
+  const result2 = await db.transaction((trx: Knex.Transaction) =>
+    findByAnnotationIds(trx, [annotationOne.id, annotationThree.id])
+  );
 
   t.equal(
     Object.keys(result2).length,

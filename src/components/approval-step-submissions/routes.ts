@@ -425,12 +425,12 @@ export function* createRevisionRequest(
     commentId: comment.id,
   });
 
-  const { collaboratorNames } = yield getCollaboratorsFromCommentMentions(
+  const { idNameMap } = yield getCollaboratorsFromCommentMentions(
     trx,
     comment.text
   );
 
-  const commentWithMentions = { ...comment, mentions: collaboratorNames };
+  const commentWithMentions = { ...comment, mentions: idNameMap };
 
   const event = yield DesignEventsDAO.create(trx, {
     ...templateDesignEvent,

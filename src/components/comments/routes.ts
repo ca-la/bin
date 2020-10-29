@@ -6,25 +6,25 @@ import requireAuth = require("../../middleware/require-auth");
 import { announceAnnotationCommentDeletion } from "../iris/messages/annotation-comment";
 import { announceTaskCommentDeletion } from "../iris/messages/task-comment";
 import { announceApprovalStepCommentDeletion } from "../iris/messages/approval-step-comment";
+import useTransaction from "../../middleware/use-transaction";
+import { requireQueryParam } from "../../middleware/require-query-param";
 
 const router = new Router();
 
 interface GetListQuery {
-  annotationIds?: string[];
+  annotationIds: string[];
 }
 
-function* getList(this: AuthedContext): Iterator<any, any, any> {
-  const query: GetListQuery = this.query;
+function* getList(
+  this: TrxContext<AuthedContext<{}, {}, GetListQuery>>
+): Iterator<any, any, any> {
+  const { annotationIds } = this.query;
+  const { trx } = this.state;
 
-  if (!query.annotationIds) {
-    this.throw(400, "Missing annotationIds!");
-  }
-
-  const idList = Array.isArray(query.annotationIds)
-    ? query.annotationIds
-    : [query.annotationIds];
+  const idList = Array.isArray(annotationIds) ? annotationIds : [annotationIds];
 
   const commentsByAnnotation = yield AnnotationCommentsDAO.findByAnnotationIds(
+    trx,
     idList
   );
 
@@ -71,7 +71,13 @@ function* deleteComment(this: AuthedContext): Iterator<any, any, any> {
   this.status = 204;
 }
 
-router.get("/", requireAuth, getList);
+router.get(
+  "/",
+  requireAuth,
+  requireQueryParam("annotationIds"),
+  useTransaction,
+  getList
+);
 router.del("/:commentId", requireAuth, deleteComment);
 
 export default router.routes();

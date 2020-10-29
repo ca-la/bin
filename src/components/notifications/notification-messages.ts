@@ -21,6 +21,8 @@ import {
   NotificationMessageActionType,
 } from "./types";
 import { getMatchingFilters } from "../../services/get-matching-filters";
+import Knex from "knex";
+import db from "../../services/db";
 
 const messageBuilders: Partial<Record<
   NotificationType,
@@ -273,7 +275,9 @@ export async function createNotificationMessage(
       const collection = collectionId
         ? { id: collectionId, title: notification.collectionTitle }
         : null;
-      const mentions = await getMentionsFromComment(commentText);
+      const mentions = await db.transaction((trx: Knex.Transaction) =>
+        getMentionsFromComment(trx, commentText)
+      );
       const cleanName = escapeHtml(baseNotificationMessage.actor.name);
       const { deepLink, htmlLink } = getLinks({
         annotationId,
@@ -320,7 +324,9 @@ export async function createNotificationMessage(
       const collection = collectionId
         ? { id: collectionId, title: notification.collectionTitle }
         : null;
-      const mentions = await getMentionsFromComment(commentText);
+      const mentions = await db.transaction((trx: Knex.Transaction) =>
+        getMentionsFromComment(trx, commentText)
+      );
       const cleanName = escapeHtml(baseNotificationMessage.actor.name);
       const { deepLink, htmlLink } = getLinks({
         annotationId,
@@ -367,7 +373,9 @@ export async function createNotificationMessage(
       const collection = collectionId
         ? { id: collectionId, title: notification.collectionTitle }
         : null;
-      const mentions = await getMentionsFromComment(commentText);
+      const mentions = await db.transaction((trx: Knex.Transaction) =>
+        getMentionsFromComment(trx, commentText)
+      );
       const cleanName = escapeHtml(baseNotificationMessage.actor.name);
       const { deepLink, htmlLink } = getLinks({
         annotationId,
@@ -452,7 +460,9 @@ export async function createNotificationMessage(
       if (!comment) {
         return null;
       }
-      const mentions = await getMentionsFromComment(commentText);
+      const mentions = await db.transaction((trx: Knex.Transaction) =>
+        getMentionsFromComment(trx, commentText)
+      );
       const cleanName = escapeHtml(baseNotificationMessage.actor.name);
       return {
         ...baseNotificationMessage,
@@ -500,7 +510,9 @@ export async function createNotificationMessage(
         task,
         type: LinkType.CollectionDesignTask,
       });
-      const mentions = await getMentionsFromComment(commentText);
+      const mentions = await db.transaction((trx: Knex.Transaction) =>
+        getMentionsFromComment(trx, commentText)
+      );
       const cleanName = escapeHtml(baseNotificationMessage.actor.name);
       return {
         ...baseNotificationMessage,
@@ -548,7 +560,9 @@ export async function createNotificationMessage(
         task,
         type: LinkType.CollectionDesignTask,
       });
-      const mentions = await getMentionsFromComment(commentText);
+      const mentions = await db.transaction((trx: Knex.Transaction) =>
+        getMentionsFromComment(trx, commentText)
+      );
       const cleanName = escapeHtml(baseNotificationMessage.actor.name);
       return {
         ...baseNotificationMessage,
@@ -861,7 +875,9 @@ export async function createNotificationMessage(
         deepLink,
         normalizeTitle(design)
       );
-      const mentions = await getMentionsFromComment(commentText);
+      const mentions = await db.transaction((trx: Knex.Transaction) =>
+        getMentionsFromComment(trx, commentText)
+      );
       const cleanName = escapeHtml(baseNotificationMessage.actor.name);
       return {
         ...baseNotificationMessage,
@@ -923,7 +939,9 @@ export async function createNotificationMessage(
         deepLink,
         normalizeTitle(design)
       );
-      const mentions = await getMentionsFromComment(commentText);
+      const mentions = await db.transaction((trx: Knex.Transaction) =>
+        getMentionsFromComment(trx, commentText)
+      );
       const cleanName = escapeHtml(baseNotificationMessage.actor.name);
       return {
         ...baseNotificationMessage,
@@ -985,7 +1003,9 @@ export async function createNotificationMessage(
         deepLink,
         normalizeTitle(design)
       );
-      const mentions = await getMentionsFromComment(commentText);
+      const mentions = await db.transaction((trx: Knex.Transaction) =>
+        getMentionsFromComment(trx, commentText)
+      );
       const cleanName = escapeHtml(baseNotificationMessage.actor.name);
       return {
         ...baseNotificationMessage,

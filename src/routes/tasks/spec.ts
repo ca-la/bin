@@ -679,7 +679,7 @@ test("PUT /tasks/:taskId/comment/:id creates a task comment", async (t: tape.Tes
     "Attachment asset links are generated for the created comment"
   );
   t.equal(
-    announcementStub.args[0][1].attachments[0].downloadLink,
+    announcementStub.args[0][2].attachments[0].downloadLink,
     "a-very-download",
     "Attachments links are attached to the created comment"
   );

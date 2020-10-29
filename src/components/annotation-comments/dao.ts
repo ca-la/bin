@@ -69,8 +69,8 @@ interface AnnotationToCommentsWithMentions {
 }
 
 export async function findByAnnotationIds(
-  annotationIds: string[],
-  trx?: Knex.Transaction
+  trx: Knex.Transaction,
+  annotationIds: string[]
 ): Promise<AnnotationToCommentsWithMentions> {
   const comments: CommentWithMetaRow[] = await annotationCommentsView(trx)
     .whereIn("annotation_id", annotationIds)
@@ -89,6 +89,7 @@ export async function findByAnnotationIds(
     const { annotationId, ...baseComment } = validatedComment;
     const baseCommentWithAttachments = addAttachmentLinks(baseComment);
     const baseCommentWithMentions = await addAtMentionDetailsForComment(
+      trx,
       baseCommentWithAttachments
     );
 

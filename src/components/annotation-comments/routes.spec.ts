@@ -209,7 +209,7 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
     "Attachment asset links are generated for the created comment"
   );
   t.equal(
-    announcementStub.args[1][1].attachments[0].downloadLink,
+    announcementStub.args[1][2].attachments[0].downloadLink,
     "a-very-download",
     "Attachments links are attached to the created comment"
   );

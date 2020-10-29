@@ -2,6 +2,8 @@ import {
   RealtimeApprovalStepComment,
   RealtimeApprovalStepCommentDeletion,
 } from "@cala/ts-lib";
+import Knex from "knex";
+
 import { sendMessage } from "../../send-message";
 import ApprovalStepComment from "../../../approval-step-comments/domain-object";
 import addAtMentionDetails from "../../../../services/add-at-mention-details";
@@ -11,10 +13,11 @@ import { CommentWithAttachmentLinks } from "../../../../services/add-attachments
  * Publishes an approval step comment to the Iris SQS.
  */
 export async function announceApprovalStepCommentCreation(
+  trx: Knex.Transaction,
   approvalStepComment: ApprovalStepComment,
   comment: CommentWithAttachmentLinks
 ): Promise<RealtimeApprovalStepComment> {
-  const commentWithMentions = await addAtMentionDetails([comment]);
+  const commentWithMentions = await addAtMentionDetails(trx, [comment]);
 
   const realtimeApprovalStepComment: RealtimeApprovalStepComment = {
     actorId: comment.userId,

@@ -34,6 +34,7 @@ import { addAttachmentLinks } from "../../services/add-attachments-links";
 import db from "../../services/db";
 import Asset from "../../components/assets/types";
 import { createCommentWithAttachments } from "../../services/create-comment-with-attachments";
+import useTransaction from "../../middleware/use-transaction";
 
 const router = new Router();
 
@@ -299,86 +300,86 @@ function* getList(this: AuthedContext): Iterator<any, any, any> {
 }
 
 function* createTaskComment(
-  this: AuthedContext<BaseComment & { attachments: Asset[] }>
+  this: TrxContext<AuthedContext<BaseComment & { attachments: Asset[] }>>
 ): Iterator<any, any, any> {
-  const { userId } = this.state;
-  const body = omit(this.request.body, "mentions");
+  const { trx, userId } = this.state;
   const { taskId } = this.params;
+
+  const body = omit(this.request.body, "mentions");
   const filteredBody = pick(body, BASE_COMMENT_PROPERTIES);
   const attachments = this.request.body.attachments || [];
-  if (filteredBody && isBaseComment(filteredBody) && taskId) {
-    return db.transaction(async (trx: Knex.Transaction) => {
-      const comment = await createCommentWithAttachments(trx, {
-        comment: filteredBody,
-        attachments,
-        userId,
-      });
 
-      const taskComment = await TaskCommentDAO.create(
-        {
-          commentId: comment.id,
-          taskId,
-        },
-        trx
-      );
+  if (!filteredBody || !isBaseComment(filteredBody) || !taskId) {
+    this.throw(
+      400,
+      `Request does not match task comment model: ${Object.keys(body || {})}`
+    );
+  }
 
-      const {
-        collaboratorNames,
-        mentionedUserIds,
-      } = await getCollaboratorsFromCommentMentions(trx, filteredBody.text);
+  const comment = yield createCommentWithAttachments(trx, {
+    comment: filteredBody,
+    attachments,
+    userId,
+  });
 
-      for (const mentionedUserId of mentionedUserIds) {
-        await NotificationsService.sendTaskCommentMentionNotification(trx, {
-          taskId,
-          commentId: comment.id,
-          actorId: userId,
-          recipientId: mentionedUserId,
-        });
-      }
+  const taskComment = yield TaskCommentDAO.create(
+    {
+      commentId: comment.id,
+      taskId,
+    },
+    trx
+  );
 
-      const commentWithMentions = { ...comment, mentions: collaboratorNames };
+  const {
+    idNameMap,
+    mentionedUserIds,
+  } = yield getCollaboratorsFromCommentMentions(trx, filteredBody.text);
 
-      const threadUserIds: string[] =
-        comment.parentCommentId && mentionedUserIds.length === 0
-          ? await getThreadUserIdsFromCommentThread(
-              trx,
-              comment.parentCommentId
-            )
-          : [];
-
-      for (const threadUserId of threadUserIds) {
-        await NotificationsService.sendTaskCommentReplyNotification(trx, {
-          taskId,
-          commentId: comment.id,
-          actorId: userId,
-          recipientId: threadUserId,
-        });
-      }
-
-      await announceTaskCommentCreation(taskComment, commentWithMentions);
-      await NotificationsService.sendTaskCommentCreateNotification(trx, {
-        taskId,
-        commentId: commentWithMentions.id,
-        actorId: userId,
-        mentionedUserIds,
-        threadUserIds,
-      });
-
-      this.status = 201;
-      this.body = commentWithMentions;
+  for (const mentionedUserId of mentionedUserIds) {
+    yield NotificationsService.sendTaskCommentMentionNotification(trx, {
+      taskId,
+      commentId: comment.id,
+      actorId: userId,
+      recipientId: mentionedUserId,
     });
   }
 
-  this.throw(
-    400,
-    `Request does not match task comment model: ${Object.keys(body || {})}`
-  );
+  const commentWithMentions = { ...comment, mentions: idNameMap };
+
+  const threadUserIds: string[] =
+    comment.parentCommentId && mentionedUserIds.length === 0
+      ? yield getThreadUserIdsFromCommentThread(trx, comment.parentCommentId)
+      : [];
+
+  for (const threadUserId of threadUserIds) {
+    yield NotificationsService.sendTaskCommentReplyNotification(trx, {
+      taskId,
+      commentId: comment.id,
+      actorId: userId,
+      recipientId: threadUserId,
+    });
+  }
+
+  yield announceTaskCommentCreation(trx, taskComment, commentWithMentions);
+  yield NotificationsService.sendTaskCommentCreateNotification(trx, {
+    taskId,
+    commentId: commentWithMentions.id,
+    actorId: userId,
+    mentionedUserIds,
+    threadUserIds,
+  });
+
+  this.status = 201;
+  this.body = commentWithMentions;
 }
 
-function* getTaskComments(this: AuthedContext): Iterator<any, any, any> {
+function* getTaskComments(
+  this: TrxContext<AuthedContext>
+): Iterator<any, any, any> {
+  const { trx } = this.state;
   const comments = yield TaskCommentDAO.findByTaskId(this.params.taskId);
   if (comments) {
-    const commentsWithMentions = yield addAtMentionDetails(comments);
+    const commentsWithMentions = yield addAtMentionDetails(trx, comments);
     const commentsWithAttachments = commentsWithMentions.map(
       addAttachmentLinks
     );
@@ -402,7 +403,12 @@ router.post("/stage/:stageId", requireAuth, createTaskWithEventOnStage);
 router.get("/", requireAuth, getList);
 router.get("/:taskId", requireAuth, getTaskEvent);
 
-router.put("/:taskId/comments/:commentId", requireAuth, createTaskComment);
-router.get("/:taskId/comments", requireAuth, getTaskComments);
+router.put(
+  "/:taskId/comments/:commentId",
+  requireAuth,
+  useTransaction,
+  createTaskComment
+);
+router.get("/:taskId/comments", requireAuth, useTransaction, getTaskComments);
 
 export = router.routes();

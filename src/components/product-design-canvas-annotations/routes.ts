@@ -15,6 +15,7 @@ import requireAuth = require("../../middleware/require-auth");
 import filterError = require("../../services/filter-error");
 import addAtMentionDetails from "../../services/add-at-mention-details";
 import { addAttachmentLinks } from "../../services/add-attachments-links";
+import useTransaction from "../../middleware/use-transaction";
 
 const router = new Router();
 
@@ -90,12 +91,16 @@ function* getList(this: AuthedContext): Iterator<any, any, any> {
   this.body = annotations;
 }
 
-function* getAnnotationComments(this: AuthedContext): Iterator<any, any, any> {
+function* getAnnotationComments(
+  this: TrxContext<AuthedContext>
+): Iterator<any, any, any> {
+  const { trx } = this.state;
   const comments = yield AnnotationCommentDAO.findByAnnotationId(
-    this.params.annotationId
+    this.params.annotationId,
+    trx
   );
   if (comments) {
-    const commentsWithMentions = yield addAtMentionDetails(comments);
+    const commentsWithMentions = yield addAtMentionDetails(trx, comments);
     const commentsWithAttachments = commentsWithMentions.map(
       addAttachmentLinks
     );
@@ -111,6 +116,11 @@ router.put("/:annotationId", requireAuth, createAnnotation);
 router.patch("/:annotationId", requireAuth, updateAnnotation);
 router.del("/:annotationId", requireAuth, deleteAnnotation);
 
-router.get("/:annotationId/comments", requireAuth, getAnnotationComments);
+router.get(
+  "/:annotationId/comments",
+  requireAuth,
+  useTransaction,
+  getAnnotationComments
+);
 
 export default router.routes();

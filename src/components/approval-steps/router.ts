@@ -109,6 +109,7 @@ const router: CalaRouter = {
           }
 
           const commentsWithResources: CommentWithResources[] = (yield addAtMentionDetails(
+            trx,
             comments
           )).map(addAttachmentLinks);
           const events: DesignEventWithMeta[] = (yield DesignEventsDAO.findApprovalStepEvents(
