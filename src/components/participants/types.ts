@@ -1,5 +1,5 @@
 import { MentionType } from "../comments/types";
-import { CollaboratorRole } from "../collaborators/types";
+import { Roles as CollaboratorRole } from "../collaborators/types";
 
 export interface Participant {
   type: MentionType;

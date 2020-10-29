@@ -31,6 +31,7 @@ import nodeRoutes from "./components/nodes/routes";
 import nonBidDesignCostRoutes from "./components/non-bid-design-costs/routes";
 import notificationRoutes from "./components/notifications/routes";
 import orderHistoryRoutes from "./components/order-history/routes";
+import participantRouter from "./components/participants/routes";
 import partnerPayouts from "./components/partner-payouts/routes";
 import paymentMethodRoutes from "./components/payment-methods/routes";
 import planRoutes from "./components/plans/routes";
@@ -127,5 +128,6 @@ plugComponentRouter(router, shipmentTrackingComponent.router);
 plugComponentRouter(router, templateCategoryComponent.router);
 plugComponentRouter(router, teamComponent.router);
 plugComponentRouter(router, teamUserComponent.router);
+plugComponentRouter(router, participantRouter);
 
 export default router;
