@@ -26,7 +26,7 @@ const collaboratorParticipant: Participant = {
   type: MentionType.COLLABORATOR,
   id: "a-collaborator-id",
   displayName: "A name",
-  role: "EDIT",
+  role: "USER",
   userId: null,
 };
 

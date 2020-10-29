@@ -14,13 +14,14 @@ import db from "../../services/db";
 import * as ParticipantsDAO from "./dao";
 import { generateTeam } from "../../test-helpers/factories/team";
 import { MentionType } from "../comments/types";
+import { Role as UserRole } from "../users/types";
 import { TeamUserRole } from "../../published-types";
 
-const createUser = (name: string) =>
+const createUser = (name: string, role: UserRole = "USER") =>
   UsersDAO.create({
     name,
     email: `${uuid.v4()}@example.com`,
-    role: "USER",
+    role,
     password: "password",
     referralCode: "freebie",
   });
@@ -31,8 +32,8 @@ async function setup() {
   const user3 = await createUser("Collection Collaborator");
   const user4 = await createUser("Cancelled Collection Collaborator");
   const user5 = await createUser("Cancelled Design Collaborator");
-  const teamAdmin = await createUser("Team Admin");
-  const teamViewer = await createUser("Team Viewer");
+  const teamAdmin = await createUser("Team Admin", "PARTNER");
+  const teamViewer = await createUser("Team Viewer", "PARTNER");
 
   const design = await createDesign({
     productType: "BOMBER",
@@ -202,28 +203,28 @@ test("ParticipantsDAO.findByDesign", async (t: Test) => {
           type: MentionType.COLLABORATOR,
           id: state.collaborators.designerCollaborator!.id,
           displayName: "Designer",
-          role: "EDIT",
+          role: "USER",
           userId: state.users[0].id,
         },
         {
           type: MentionType.COLLABORATOR,
           id: state.collaborators.designCollaborator.id,
           displayName: "Design Collaborator",
-          role: "EDIT",
+          role: "USER",
           userId: state.users[1].id,
         },
         {
           type: MentionType.COLLABORATOR,
           id: state.collaborators.collectionCollaborator.id,
           displayName: "Collection Collaborator",
-          role: "EDIT",
+          role: "USER",
           userId: state.users[2].id,
         },
         {
           type: MentionType.COLLABORATOR,
           id: state.collaborators.nonUserCollaborator.id,
           displayName: state.collaborators.nonUserCollaborator.userEmail,
-          role: "EDIT",
+          role: null,
           userId: null,
         },
         {
@@ -244,7 +245,7 @@ test("ParticipantsDAO.findByDesign", async (t: Test) => {
           type: MentionType.TEAM_USER,
           id: state.teamUsers.nonUser.id,
           displayName: state.teamUsers.nonUser.userEmail,
-          role: "PARTNER",
+          role: null,
           userId: null,
         },
       ],

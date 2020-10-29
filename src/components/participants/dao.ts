@@ -31,7 +31,7 @@ COALESCE(
   collaborators.id::TEXT
 ) AS display_name`
       ),
-      "collaborators.role",
+      "users.role",
       "users.id AS user_id",
     ])
     .from("collaborators")
