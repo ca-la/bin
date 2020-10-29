@@ -52,13 +52,14 @@ COALESCE(
 AND
 collaborators.deleted_at IS NULL`
     )
-    .andWhere((query: Knex.QueryBuilder) => {
-      query
-        .where({ "collaborators.design_id": designId })
-        .orWhereRaw(
-          "collaborators.collection_id = collection_designs.collection_id"
-        );
-    })
+    .andWhere((query: Knex.QueryBuilder) =>
+      query.where({ "collaborators.design_id": designId }).orWhere({
+        "collaborators.collection_id": trx.raw(
+          "collection_designs.collection_id"
+        ),
+        "collection_designs.design_id": designId,
+      })
+    )
     .orderBy([
       { column: "collaborators.created_at", order: "asc" },
       { column: "users.created_at", order: "asc" },

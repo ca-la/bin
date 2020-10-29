@@ -50,6 +50,23 @@ async function setup() {
   });
 
   await addDesign(collection.id, design.id);
+
+  const otherDesign = await createDesign({
+    productType: "BOMBER",
+    title: "AW20",
+    userId: user.id,
+  });
+  const otherCollection = await CollectionsDAO.create({
+    createdAt: new Date(),
+    createdBy: user.id,
+    deletedAt: null,
+    description: "",
+    id: uuid.v4(),
+    teamId: null,
+    title: "AW20",
+  });
+
+  await addDesign(otherCollection.id, otherDesign.id);
   const { team, teamUser: teamUser1 } = await generateTeam(teamAdmin.id);
   const teamUser2 = await db.transaction((trx: Knex.Transaction) =>
     RawTeamUsersDAO.create(trx, {
@@ -85,6 +102,22 @@ async function setup() {
     role: "EDIT",
     userEmail: null,
     userId: user3.id,
+  });
+  await generateCollaborator({
+    collectionId: otherCollection.id,
+    designId: null,
+    invitationMessage: "",
+    role: "EDIT",
+    userEmail: null,
+    userId: user3.id,
+  });
+  await generateCollaborator({
+    collectionId: null,
+    designId: otherDesign.id,
+    invitationMessage: "",
+    role: "EDIT",
+    userEmail: null,
+    userId: user2.id,
   });
   const {
     collaborator: cancelledCollectionCollaborator,
