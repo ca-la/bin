@@ -2,7 +2,12 @@ import Knex from "knex";
 import uuid from "node-uuid";
 
 import { findByEmail as findUserByEmail } from "../users/dao";
-import { Role as TeamUserRole, UnsavedTeamUser } from "./types";
+import {
+  Role as TeamUserRole,
+  TeamUser,
+  TeamUserUpdate,
+  UnsavedTeamUser,
+} from "./types";
 import TeamUsersDAO, { rawDao as RawTeamUsersDAO } from "./dao";
 import UnauthorizedError from "../../errors/unauthorized";
 
@@ -38,10 +43,7 @@ export function requireTeamRoles(
         : yield TeamUsersDAO.findOne(trx, { teamId, userId });
 
     if (!actorTeamUser) {
-      this.throw(
-        403,
-        "You cannot add a user to a team you are not a member of"
-      );
+      this.throw(403, "You cannot modify a team you are not a member of");
     }
 
     if (!roles.includes(actorTeamUser.role)) {
@@ -91,4 +93,19 @@ export async function createTeamUser(
   }
 
   return TeamUsersDAO.findById(trx, id);
+}
+
+export async function updateTeamUser(
+  trx: Knex.Transaction,
+  teamUserId: string,
+  actorTeamRole: TeamUserRole,
+  patch: TeamUserUpdate
+): Promise<TeamUser> {
+  if (!allowedRolesMap[actorTeamRole].includes(patch.role)) {
+    throw new UnauthorizedError(
+      "You cannot update a user with the specified role"
+    );
+  }
+
+  return (await TeamUsersDAO.update(trx, teamUserId, patch)).updated;
 }

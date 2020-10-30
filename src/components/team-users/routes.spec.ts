@@ -1,6 +1,6 @@
 import uuid from "node-uuid";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
-import { authHeader, get, post } from "../../test-helpers/http";
+import { authHeader, get, patch, post } from "../../test-helpers/http";
 import createUser from "../../test-helpers/create-user";
 
 import db from "../../services/db";
@@ -44,6 +44,9 @@ function setup({ role = "USER" }: { role?: UserRole } = {}) {
     findCreatedTeamUserStub: sandbox()
       .stub(TeamUsersDAO, "findById")
       .resolves(tu1),
+    updateStub: sandbox()
+      .stub(TeamUsersDAO, "update")
+      .resolves({ before: tu1, updated: tu1 }),
   };
 }
 
@@ -227,6 +230,64 @@ test("GET /team-users?teamId: CALA admin", async (t: Test) => {
     0,
     "Does not attempt to lookup the users team role"
   );
+});
+
+test("PATCH /team-users/:id: valid", async (t: Test) => {
+  const { updateStub } = setup();
+  const [response, body] = await patch(`/team-users/${tu1.id}`, {
+    headers: authHeader("a-session-id"),
+    body: {
+      role: TeamUserRole.VIEWER,
+    },
+  });
+
+  t.equal(response.status, 200, "Responds with success");
+  t.deepEqual(body, JSON.parse(JSON.stringify(tu1)), "Returns TeamUser");
+  t.deepEqual(
+    updateStub.args[0].slice(1),
+    [tu1.id, { role: TeamUserRole.VIEWER }],
+    "Updates user with new role"
+  );
+});
+
+test("PATCH /team-users/:id: invalid role", async (t: Test) => {
+  const { updateStub } = setup();
+  const [response] = await patch(`/team-users/${tu1.id}`, {
+    headers: authHeader("a-session-id"),
+    body: {
+      role: "COOK",
+    },
+  });
+
+  t.equal(response.status, 403, "Responds with success");
+  t.equal(updateStub.callCount, 0, "Does not update with an invalid role");
+});
+
+test("PATCH /team-users/:id: invalid update body", async (t: Test) => {
+  const { updateStub } = setup();
+  const [response] = await patch(`/team-users/${tu1.id}`, {
+    headers: authHeader("a-session-id"),
+    body: {
+      role: "COOK",
+      teamId: "team-id",
+    },
+  });
+
+  t.equal(response.status, 403, "Responds with success");
+  t.equal(updateStub.callCount, 0, "Does not update with an invalid role");
+});
+
+test("PATCH /team-users/:id: cannot upgrade to owner", async (t: Test) => {
+  const { updateStub } = setup();
+  const [response] = await patch(`/team-users/${tu1.id}`, {
+    headers: authHeader("a-session-id"),
+    body: {
+      role: "OWNER",
+    },
+  });
+
+  t.equal(response.status, 403, "Responds with success");
+  t.equal(updateStub.callCount, 0, "Does not update with an invalid role");
 });
 
 test("/team-users end-to-end", async (t: Test) => {

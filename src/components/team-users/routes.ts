@@ -10,8 +10,11 @@ import {
   isUnsavedTeamUser,
   UnsavedTeamUser,
   Role as TeamUserRole,
+  isTeamUserRole,
+  TeamUserUpdate,
+  isTeamUserUpdate,
 } from "./types";
-import { createTeamUser, requireTeamRoles } from "./service";
+import { createTeamUser, requireTeamRoles, updateTeamUser } from "./service";
 import TeamUsersDAO from "./dao";
 
 function* create(
@@ -35,6 +38,26 @@ function* getList(this: TrxContext<AuthedContext>) {
   const { trx } = this.state;
 
   this.body = yield TeamUsersDAO.find(trx, { teamId });
+  this.status = 200;
+}
+
+function* update(
+  this: TrxContext<
+    AuthedContext<TeamUserUpdate, { actorTeamRole: TeamUserRole }>
+  >
+) {
+  const { trx, actorTeamRole } = this.state;
+  const { teamUserId } = this.params;
+  const { body } = this.request;
+
+  if (!isTeamUserUpdate(body)) {
+    this.throw("Update can only include role", 403);
+  }
+  if (!isTeamUserRole(body.role)) {
+    this.throw(`Invalid team user role: ${body.role}`, 403);
+  }
+
+  this.body = yield updateTeamUser(trx, teamUserId, actorTeamRole, body);
   this.status = 200;
 }
 
@@ -62,6 +85,29 @@ export default {
           async (context: AuthedContext) => context.query.teamId
         ),
         getList,
+      ],
+    },
+    "/:teamUserId": {
+      patch: [
+        useTransaction,
+        requireAuth,
+        requireTeamRoles(
+          Object.values(TeamUserRole),
+          async (context: TrxContext<AuthedContext>) => {
+            const teamUser = await TeamUsersDAO.findById(
+              context.state.trx,
+              context.params.teamUserId
+            );
+            if (!teamUser) {
+              return context.throw(
+                `Could not find team user ${context.params.teamUserId}`,
+                404
+              );
+            }
+            return teamUser.teamId;
+          }
+        ),
+        update,
       ],
     },
   },

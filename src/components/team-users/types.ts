@@ -96,3 +96,22 @@ export function isUnsavedTeamUser(
     roleset.has(candidate.role)
   );
 }
+
+export function isTeamUserRole(candidate: any): candidate is Role {
+  return Object.values(Role).includes(candidate);
+}
+
+export interface TeamUserUpdate {
+  role: Role;
+}
+
+const allowedUpdateRows: (keyof TeamUserUpdate)[] = ["role"];
+
+export const isTeamUserUpdate = (data: any): data is TeamUserUpdate => {
+  return (
+    Object.keys(data).length === allowedUpdateRows.length &&
+    allowedUpdateRows.every(
+      (key: keyof TeamUserUpdate) => data[key] !== undefined
+    )
+  );
+};
