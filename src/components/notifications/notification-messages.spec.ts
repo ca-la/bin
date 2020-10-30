@@ -100,8 +100,9 @@ test("annotation comment notification message", async (t: tape.Test) => {
     "message attachments contains one mention"
   );
   t.is(hasAttachments, false, "Notification does not have attachments");
-  const { collaborators } = annCommCreateMessage.actions[0];
-  t.is(collaborators.length, 2, "message actions contains three collaborators");
+  const { collaborators, designId } = annCommCreateMessage.actions[0];
+  t.is(collaborators.length, 2, "message actions contains two collaborators");
+  t.is(designId, design.id, "action contains design ID");
 
   const notificationWithAttachment = notifications[0];
   const withAttachmentsMessage = await createNotificationMessage(
@@ -170,11 +171,12 @@ test("annotation mention notification message", async (t: tape.Test) => {
     "message attachments contains one mention"
   );
   t.is(hasAttachments, false, "Notification does not have attachments");
-  const { collaborators } = message.actions[0];
+  const { collaborators, designId } = message.actions[0];
   t.assert(
     collaborators.length === 2,
     "message actions contains two collaborators"
   );
+  t.is(designId, design.id, "action contains design ID");
 
   const notificationWithAttachment = notifications[0];
   const withAttachmentsMessage = await createNotificationMessage(
@@ -531,7 +533,7 @@ test("task comment create notification message", async (t: tape.Test) => {
   sandbox()
     .stub(NotificationAnnouncer, "announceNotificationCreation")
     .resolves({});
-  const { task, actor, recipient } = await generateNotification({
+  const { task, actor, recipient, design } = await generateNotification({
     type: NotificationType.TASK_COMMENT_CREATE,
   });
   const { design: tasComCreDesign } = await generateNotification({
@@ -582,12 +584,13 @@ test("task comment create notification message", async (t: tape.Test) => {
     message.actor && message.actor.id === actor.id,
     "message.actor && message.actor.id is the user"
   );
-  const { collaborators } = message.actions[0];
+  const { collaborators, designId } = message.actions[0];
   t.assert(
     collaborators.length === 2,
     "message actions contains two collaborators"
   );
   t.is(hasAttachments, false, "Notification does not have attachments");
+  t.is(designId, design.id, "action contains design ID");
 
   const notificationWithAttachment = notifications[0];
   const withAttachmentsMessage = await createNotificationMessage(
@@ -606,7 +609,7 @@ test("task comment mention notification message", async (t: tape.Test) => {
   sandbox()
     .stub(NotificationAnnouncer, "announceNotificationCreation")
     .resolves({});
-  const { task, actor, recipient } = await generateNotification({
+  const { task, actor, recipient, design } = await generateNotification({
     type: NotificationType.TASK_COMMENT_MENTION,
   });
   const { design: tasComMenDesign } = await generateNotification({
@@ -657,12 +660,13 @@ test("task comment mention notification message", async (t: tape.Test) => {
     mentions && Object.keys(mentions).length === 1,
     "message attachments contains one mention"
   );
-  const { collaborators } = message.actions[0];
+  const { collaborators, designId } = message.actions[0];
   t.assert(
     collaborators.length === 2,
     "message actions contains two collaborators"
   );
   t.is(hasAttachments, false, "Notification does not have attachments");
+  t.is(designId, design.id, "action contains design ID");
 
   const notificationWithAttachment = notifications[0];
   const withAttachmentsMessage = await createNotificationMessage(
@@ -898,11 +902,12 @@ test("approval step mention notification message", async (t: tape.Test) => {
     "message attachments contains one mention"
   );
   t.is(hasAttachments, false, "Notification does not have attachments");
-  const { collaborators } = message.actions[0];
+  const { collaborators, designId } = message.actions[0];
   t.assert(
     collaborators.length === 2,
     "message actions contains two collaborators"
   );
+  t.is(designId, design.id, "action contains design ID");
 
   const notificationWithAttachment = notifications[0];
   const withAttachmentsMessage = await createNotificationMessage(
@@ -973,11 +978,12 @@ test("approval step reply notification message", async (t: tape.Test) => {
   t.assert(message.actor && message.actor.id === actor.id, "actor is correct");
   const { hasAttachments } = message.attachments[0];
   t.is(hasAttachments, false, "Notification does not have attachments");
-  const { collaborators } = message.actions[0];
+  const { collaborators, designId } = message.actions[0];
   t.assert(
     collaborators.length === 2,
     "message actions contains two collaborators"
   );
+  t.is(designId, design.id, "action contains design ID");
 
   const notificationWithAttachment = notifications[0];
   const withAttachmentsMessage = await createNotificationMessage(
@@ -1067,8 +1073,9 @@ test("approval comment notification message", async (t: tape.Test) => {
     "message attachments contains one mention"
   );
   t.is(hasAttachments, false, "Notification does not have attachments");
-  const { collaborators } = annCommCreateMessage.actions[0];
+  const { collaborators, designId } = annCommCreateMessage.actions[0];
   t.is(collaborators.length, 2, "message actions contains three collaborators");
+  t.is(designId, design.id, "action contains design ID");
 
   const notificationWithAttachment = notifications[0];
   const withAttachmentsMessage = await createNotificationMessage(

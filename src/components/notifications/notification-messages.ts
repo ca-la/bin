@@ -294,6 +294,7 @@ export async function createNotificationMessage(
             annotationId,
             parentCommentId: commentId,
             collaborators,
+            designId,
           },
         ],
         attachments: [
@@ -343,6 +344,7 @@ export async function createNotificationMessage(
             annotationId,
             parentCommentId: commentId,
             collaborators,
+            designId,
           },
         ],
         attachments: [
@@ -392,6 +394,7 @@ export async function createNotificationMessage(
             annotationId,
             parentCommentId: commentId,
             collaborators,
+            designId,
           },
         ],
         attachments: [
@@ -472,6 +475,7 @@ export async function createNotificationMessage(
             taskId,
             parentCommentId: commentId,
             collaborators,
+            designId,
           },
         ],
         attachments: [
@@ -522,6 +526,7 @@ export async function createNotificationMessage(
             taskId,
             parentCommentId: commentId,
             collaborators,
+            designId,
           },
         ],
         attachments: [
@@ -572,6 +577,7 @@ export async function createNotificationMessage(
             taskId,
             parentCommentId: commentId,
             collaborators,
+            designId,
           },
         ],
         attachments: [
@@ -887,6 +893,7 @@ export async function createNotificationMessage(
             approvalStepId: notification.approvalStepId,
             parentCommentId: commentId,
             collaborators,
+            designId,
           },
         ],
         attachments: [
@@ -951,6 +958,7 @@ export async function createNotificationMessage(
             approvalStepId: notification.approvalStepId,
             parentCommentId: commentId,
             collaborators,
+            designId,
           },
         ],
         attachments: [
@@ -1015,6 +1023,7 @@ export async function createNotificationMessage(
             approvalStepId: notification.approvalStepId,
             parentCommentId: commentId,
             collaborators,
+            designId,
           },
         ],
         attachments: [

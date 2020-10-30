@@ -30,6 +30,7 @@ export interface NotificationMessageActionBase {
 interface CommentActionBase extends NotificationMessageActionBase {
   parentCommentId: string;
   collaborators: CollaboratorWithUser[];
+  designId: string;
 }
 
 interface TaskCommentReplyAction extends CommentActionBase {
