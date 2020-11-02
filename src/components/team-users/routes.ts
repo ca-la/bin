@@ -17,6 +17,20 @@ import {
 import { createTeamUser, requireTeamRoles, updateTeamUser } from "./service";
 import TeamUsersDAO from "./dao";
 
+async function findTeamByTeamUserId(context: TrxContext<AuthedContext>) {
+  const teamUser = await TeamUsersDAO.findById(
+    context.state.trx,
+    context.params.teamUserId
+  );
+  if (!teamUser) {
+    return context.throw(
+      `Could not find team user ${context.params.teamUserId}`,
+      404
+    );
+  }
+  return teamUser.teamId;
+}
+
 function* create(
   this: TrxContext<
     AuthedContext<UnsavedTeamUser, { actorTeamRole: TeamUserRole }>
@@ -61,6 +75,13 @@ function* update(
   this.status = 200;
 }
 
+function* deleteTeamUser(this: TrxContext<AuthedContext>) {
+  const { trx } = this.state;
+  const { teamUserId } = this.params;
+  yield TeamUsersDAO.deleteById(trx, teamUserId);
+  this.status = 204;
+}
+
 export default {
   prefix: "/team-users",
   routes: {
@@ -91,23 +112,17 @@ export default {
       patch: [
         useTransaction,
         requireAuth,
-        requireTeamRoles(
-          Object.values(TeamUserRole),
-          async (context: TrxContext<AuthedContext>) => {
-            const teamUser = await TeamUsersDAO.findById(
-              context.state.trx,
-              context.params.teamUserId
-            );
-            if (!teamUser) {
-              return context.throw(
-                `Could not find team user ${context.params.teamUserId}`,
-                404
-              );
-            }
-            return teamUser.teamId;
-          }
-        ),
+        requireTeamRoles(Object.values(TeamUserRole), findTeamByTeamUserId),
         update,
+      ],
+      del: [
+        useTransaction,
+        requireAuth,
+        requireTeamRoles(
+          [TeamUserRole.ADMIN, TeamUserRole.OWNER],
+          findTeamByTeamUserId
+        ),
+        deleteTeamUser,
       ],
     },
   },

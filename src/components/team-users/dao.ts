@@ -16,7 +16,7 @@ export const rawDao = buildDao<TeamUserDb, TeamUserDbRow>(
   }
 );
 
-export default buildDao<TeamUser, TeamUserRow>(
+const dao = buildDao<TeamUser, TeamUserRow>(
   "TeamUser" as const,
   TABLE_NAME,
   adapter,
@@ -28,6 +28,15 @@ export default buildDao<TeamUser, TeamUserRow>(
         .leftJoin("users", "users.id", "team_users.user_id"),
   }
 );
+
+async function deleteById(trx: Knex.Transaction, teamUserId: string) {
+  return trx(TABLE_NAME).del().where({ id: teamUserId });
+}
+
+export default {
+  ...dao,
+  deleteById,
+};
 
 export async function claimAllByEmail(
   trx: Knex.Transaction,

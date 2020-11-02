@@ -1,6 +1,6 @@
 import uuid from "node-uuid";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
-import { authHeader, get, patch, post } from "../../test-helpers/http";
+import { authHeader, del, get, patch, post } from "../../test-helpers/http";
 import createUser from "../../test-helpers/create-user";
 
 import db from "../../services/db";
@@ -47,6 +47,7 @@ function setup({ role = "USER" }: { role?: UserRole } = {}) {
     updateStub: sandbox()
       .stub(TeamUsersDAO, "update")
       .resolves({ before: tu1, updated: tu1 }),
+    deleteStub: sandbox().stub(TeamUsersDAO, "deleteById").resolves(),
   };
 }
 
@@ -293,6 +294,28 @@ test("PATCH /team-users/:id: cannot upgrade to owner", async (t: Test) => {
 
   t.equal(response.status, 403, "Responds with success");
   t.equal(updateStub.callCount, 0, "Does not update with an invalid role");
+});
+
+test("DEL /team-users/:id allows admins to delete users ", async (t: Test) => {
+  const { deleteStub } = setup();
+  const [response] = await del(`/team-users/${tu1.id}`, {
+    headers: authHeader("a-session-id"),
+  });
+  t.equal(response.status, 204, "Allows deletion");
+  t.equal(deleteStub.args[0][1], tu1.id);
+});
+
+test("DEL /team-users/:id not allowed as non-admin ", async (t: Test) => {
+  const { deleteStub, findActorTeamUserStub } = setup();
+  findActorTeamUserStub.resolves({
+    role: TeamUserRole.VIEWER,
+  });
+  const [response] = await del(`/team-users/${tu1.id}`, {
+    headers: authHeader("a-session-id"),
+  });
+
+  t.equal(response.status, 403, "Does not allow deletion");
+  t.equal(deleteStub.callCount, 0, "Does not delete with an invalid role");
 });
 
 test("/team-users end-to-end", async (t: Test) => {
