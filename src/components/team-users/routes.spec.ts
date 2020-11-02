@@ -41,7 +41,7 @@ function setup({ role = "USER" }: { role?: UserRole } = {}) {
     }),
     findTeamMembersStub: sandbox().stub(TeamUsersDAO, "find").resolves([tu1]),
     createStub: sandbox().stub(RawTeamUsersDAO, "create").resolves(tuDb1),
-    findCreatedTeamUserStub: sandbox()
+    findTeamUserByIdStub: sandbox()
       .stub(TeamUsersDAO, "findById")
       .resolves(tu1),
     updateStub: sandbox()
@@ -233,7 +233,7 @@ test("GET /team-users?teamId: CALA admin", async (t: Test) => {
 });
 
 test("PATCH /team-users/:id: valid", async (t: Test) => {
-  const { updateStub } = setup();
+  const { updateStub, findTeamUserByIdStub } = setup();
   const [response, body] = await patch(`/team-users/${tu1.id}`, {
     headers: authHeader("a-session-id"),
     body: {
@@ -247,6 +247,11 @@ test("PATCH /team-users/:id: valid", async (t: Test) => {
     updateStub.args[0].slice(1),
     [tu1.id, { role: TeamUserRole.VIEWER }],
     "Updates user with new role"
+  );
+  t.deepEqual(
+    findTeamUserByIdStub.args[0][1],
+    tu1.id,
+    "Finds updated team user by id"
   );
 });
 

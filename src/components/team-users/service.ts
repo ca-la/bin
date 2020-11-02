@@ -107,5 +107,11 @@ export async function updateTeamUser(
     );
   }
 
-  return (await TeamUsersDAO.update(trx, teamUserId, patch)).updated;
+  await TeamUsersDAO.update(trx, teamUserId, patch);
+
+  const updated = await TeamUsersDAO.findById(trx, teamUserId);
+  if (!updated) {
+    throw new Error("Could not find updated team user");
+  }
+  return updated;
 }
