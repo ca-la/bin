@@ -33,6 +33,11 @@ export const taskTypes: { [key: string]: TaskType } = {
     title: "Product Photography",
     assigneeRole: CollaboratorRole.PARTNER,
   },
+  QUALITY_CONTROL: {
+    id: "48520934-a0e9-436d-ab56-cb2829ccdfed",
+    title: "Quality Control",
+    assigneeRole: CollaboratorRole.PARTNER,
+  },
 };
 
 export const taskTypesById: { [key: string]: TaskType } = mapKeys(
