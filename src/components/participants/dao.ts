@@ -8,7 +8,37 @@ export async function findByDesign(
   trx: Knex.Transaction,
   designId: string
 ): Promise<Participant[]> {
-  const rows = await trx
+  const throughCollectionTeam = await trx
+    .from("team_users")
+    .select([
+      trx.raw("? AS type", [MentionType.TEAM_USER]),
+      "team_users.id AS id",
+      trx.raw(
+        `
+COALESCE(
+  users.name,
+  users.email,
+  team_users.user_email,
+  team_users.id::TEXT
+) AS display_name`
+      ),
+      "users.role",
+      "users.id AS user_id",
+    ])
+    .join("collections", "team_users.team_id", "collections.team_id")
+    .join(
+      "collection_designs",
+      "collections.id",
+      "collection_designs.collection_id"
+    )
+    .leftJoin("users", "team_users.user_id", "users.id")
+    .where({
+      "collection_designs.design_id": designId,
+    })
+    .orderBy([{ column: "users.created_at", order: "asc" }]);
+
+  const throughCollaborators = await trx
+    .from("collaborators")
     .select([
       trx.raw(
         `
@@ -34,7 +64,6 @@ COALESCE(
       "users.role",
       "users.id AS user_id",
     ])
-    .from("collaborators")
     .leftJoin("team_users", "team_users.team_id", "collaborators.team_id")
     .leftJoin(
       "users",
@@ -65,5 +94,8 @@ collaborators.deleted_at IS NULL`
       { column: "users.created_at", order: "asc" },
     ]);
 
-  return dataAdapter.fromDbArray(rows);
+  return dataAdapter.fromDbArray([
+    ...throughCollaborators,
+    ...throughCollectionTeam,
+  ]);
 }

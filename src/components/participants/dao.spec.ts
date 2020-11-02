@@ -32,9 +32,17 @@ async function setup() {
   const user3 = await createUser("Collection Collaborator");
   const user4 = await createUser("Cancelled Collection Collaborator");
   const user5 = await createUser("Cancelled Design Collaborator");
-  const teamAdmin = await createUser("Team Admin", "PARTNER");
-  const teamViewer = await createUser("Team Viewer", "PARTNER");
+  const teamAdmin = await createUser("Team Admin");
+  const teamViewer = await createUser("Team Viewer");
+  const partnerTeamAdmin = await createUser("Partner Team Admin", "PARTNER");
+  const otherTeamAdmin = await createUser("Other Team Admin", "PARTNER");
 
+  const { team, teamUser: teamUser1 } = await generateTeam(teamAdmin.id);
+  const {
+    team: partnerTeam,
+    teamUser: partnerAdminTeamUser,
+  } = await generateTeam(partnerTeamAdmin.id);
+  await generateTeam(otherTeamAdmin.id);
   const design = await createDesign({
     productType: "BOMBER",
     title: "AW19",
@@ -46,7 +54,7 @@ async function setup() {
     deletedAt: null,
     description: "",
     id: uuid.v4(),
-    teamId: null,
+    teamId: team.id,
     title: "AW19",
   });
 
@@ -68,7 +76,6 @@ async function setup() {
   });
 
   await addDesign(otherCollection.id, otherDesign.id);
-  const { team, teamUser: teamUser1 } = await generateTeam(teamAdmin.id);
   const teamUser2 = await db.transaction((trx: Knex.Transaction) =>
     RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
@@ -158,7 +165,7 @@ async function setup() {
     role: "PARTNER",
     userEmail: null,
     userId: null,
-    teamId: team.id,
+    teamId: partnerTeam.id,
   });
 
   return {
@@ -178,6 +185,7 @@ async function setup() {
       nonUserCollaborator,
     },
     teamUsers: {
+      partnerTeam: partnerAdminTeamUser,
       admin: teamUser1,
       viewer: teamUser2,
       nonUser: teamUser3,
@@ -229,16 +237,23 @@ test("ParticipantsDAO.findByDesign", async (t: Test) => {
         },
         {
           type: MentionType.TEAM_USER,
+          id: state.teamUsers.partnerTeam.id,
+          displayName: "Partner Team Admin",
+          role: "PARTNER",
+          userId: state.teamUsers.partnerTeam.userId,
+        },
+        {
+          type: MentionType.TEAM_USER,
           id: state.teamUsers.admin.id,
           displayName: "Team Admin",
-          role: "PARTNER",
+          role: "USER",
           userId: state.teamUsers.admin.userId,
         },
         {
           type: MentionType.TEAM_USER,
           id: state.teamUsers.viewer.id,
           displayName: "Team Viewer",
-          role: "PARTNER",
+          role: "USER",
           userId: state.teamUsers.viewer.userId,
         },
         {
