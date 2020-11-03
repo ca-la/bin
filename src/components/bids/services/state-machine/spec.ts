@@ -1,14 +1,27 @@
 import daysToMs from "@cala/ts-lib/dist/time/days-to-ms";
+
+import * as NotificationsService from "../../../../services/create-notifications";
 import { sandbox, test, Test } from "../../../../test-helpers/fresh";
 import generateBid from "../../../../test-helpers/factories/bid";
-import { BidState, determineStateFromEvents } from "./index";
 import generateDesignEvent from "../../../../test-helpers/factories/design-event";
+
+import { BidState, determineStateFromEvents } from "./index";
 
 const now = new Date(2012, 11, 22);
 
+async function setup() {
+  const { bid } = await generateBid();
+  return {
+    bid,
+    notificationsStub: sandbox()
+      .stub(NotificationsService, "sendPartnerDesignBid")
+      .resolves(),
+  };
+}
+
 test("determineStateFromEvents works for bids with no events", async (t: Test) => {
   sandbox().useFakeTimers(new Date(now.getTime() - daysToMs(4)));
-  const { bid } = await generateBid();
+  const { bid } = await setup();
 
   const result = determineStateFromEvents(bid, []);
   t.deepEqual(result, BidState.INITIAL, "The bid is in an initial state");
@@ -24,7 +37,7 @@ test("determineStateFromEvents works for bids with no events", async (t: Test) =
 
 test("determineStateFromEvents works for bids that have been bid out to", async (t: Test) => {
   sandbox().useFakeTimers(new Date(now.getTime() - daysToMs(4)));
-  const { bid } = await generateBid();
+  const { bid } = await setup();
   const { designEvent: e1 } = await generateDesignEvent({
     type: "COMMIT_COST_INPUTS",
   });
@@ -49,7 +62,7 @@ test("determineStateFromEvents works for bids that have been bid out to", async 
 
 test("determineStateFromEvents works for bids that have been accepted", async (t: Test) => {
   sandbox().useFakeTimers(new Date(now.getTime() - daysToMs(4)));
-  const { bid } = await generateBid();
+  const { bid } = await setup();
   const { designEvent: e1 } = await generateDesignEvent({
     type: "COMMIT_COST_INPUTS",
   });
@@ -81,7 +94,7 @@ test("determineStateFromEvents works for bids that have been accepted", async (t
 
 test("determineStateFromEvents works for bids that have been rejected", async (t: Test) => {
   sandbox().useFakeTimers(new Date(now.getTime() - daysToMs(4)));
-  const { bid } = await generateBid();
+  const { bid } = await setup();
   const { designEvent: e1 } = await generateDesignEvent({
     createdAt: new Date(),
     type: "BID_DESIGN",
@@ -109,7 +122,7 @@ test("determineStateFromEvents works for bids that have been rejected", async (t
 
 test("determineStateFromEvents works for bids where the partner was removed", async (t: Test) => {
   sandbox().useFakeTimers(new Date(now.getTime() - daysToMs(4)));
-  const { bid } = await generateBid();
+  const { bid } = await setup();
   const { designEvent: e1 } = await generateDesignEvent({
     createdAt: new Date(),
     type: "BID_DESIGN",
