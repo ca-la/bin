@@ -1,7 +1,6 @@
 import { CalaComponent, CalaRouter } from "../../services/cala-component/types";
 
 import router from "./routes";
-import listeners from "./listeners";
 import { Team, TeamRow } from "./types";
 
 interface TeamComponent extends CalaComponent<Team, TeamRow> {
@@ -11,7 +10,6 @@ interface TeamComponent extends CalaComponent<Team, TeamRow> {
 const component: TeamComponent = {
   router,
   notifications: {},
-  listeners,
 };
 
 export default component;

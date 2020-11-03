@@ -1,4 +1,3 @@
-import uuid from "node-uuid";
 import Knex from "knex";
 
 import { emit } from "../../services/pubsub";
@@ -6,9 +5,10 @@ import { RouteCreated } from "../../services/pubsub/cala-events";
 import useTransaction from "../../middleware/use-transaction";
 import requireAuth from "../../middleware/require-auth";
 import TeamsDAO, { rawDao as RawTeamsDAO } from "./dao";
-import { isTeamType, isUnsavedTeam, TeamDb, TeamType } from "./types";
+import { isTeamType, isUnsavedTeam, TeamDb } from "./types";
 import requireAdmin from "../../middleware/require-admin";
 import { buildRouter } from "../../services/cala-component/cala-router";
+import { createTeamWithOwner } from "./service";
 
 const domain = "Team" as "Team";
 
@@ -20,15 +20,7 @@ function* createTeam(this: TrxContext<AuthedContext>) {
     this.throw(400, "You must provide a title for the new team");
   }
 
-  const toCreate = {
-    id: uuid.v4(),
-    title: body.title,
-    createdAt: new Date(),
-    deletedAt: null,
-    type: TeamType.DESIGNER,
-  };
-
-  const created = yield RawTeamsDAO.create(trx, toCreate);
+  const created = yield createTeamWithOwner(trx, body.title, actorId);
   yield emit<TeamDb, RouteCreated<TeamDb, typeof domain>>({
     type: "route.created",
     domain,

@@ -25,6 +25,7 @@ import { hasProperties } from "../../services/require-properties";
 import { isValidEmail } from "../../services/validation";
 import { logServerError } from "../../services/logger";
 import { validatePassword } from "./services/validate-password";
+import { createTeamWithOwner } from "../teams/service";
 
 const router = new Router();
 
@@ -90,6 +91,10 @@ function* createUser(this: PublicContext<CreateBody>): Iterator<any, any, any> {
           this.throw(400, err)
         )
       );
+    }
+
+    if (typeof name === "string") {
+      await createTeamWithOwner(trx, `${name}'s Team`, userInTrx.id);
     }
 
     await claimTeamUsers(trx, email, userInTrx.id);
@@ -309,8 +314,22 @@ function* updateUser(
         }
       }
 
+      const beforeUpdate = await UsersDAO.findById(this.params.userId, trx);
+
       if (Object.keys(compact(updatedValues)).length === 0) {
-        return UsersDAO.findById(this.params.userId);
+        return beforeUpdate;
+      }
+
+      if (!beforeUpdate) {
+        this.throw(404, `User not found with ID: ${this.params.userId}`);
+      }
+
+      if (beforeUpdate.name === null && Boolean(updatedValues.name)) {
+        await createTeamWithOwner(
+          trx,
+          `${updatedValues.name}'s Team`,
+          this.params.userId
+        );
       }
 
       return UsersDAO.update(this.params.userId, updatedValues, trx)

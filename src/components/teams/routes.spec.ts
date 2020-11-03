@@ -3,13 +3,15 @@ import { sandbox, test, Test } from "../../test-helpers/fresh";
 import { authHeader, get, patch, post } from "../../test-helpers/http";
 
 import SessionsDAO from "../../dao/sessions";
-import TeamUsersDAO, { rawDao as RawTeamUsersDAO } from "../team-users/dao";
+import TeamUsersDAO from "../team-users/dao";
 import { Role as TeamUserRole } from "../team-users/types";
 import TeamsDAO, { rawDao as RawTeamsDAO } from "./dao";
 import { TeamDb, TeamType } from "./types";
 import createUser from "../../test-helpers/create-user";
 import { Role } from "../users/types";
 import * as PubSub from "../../services/pubsub";
+import * as TeamsService from "./service";
+
 const now = new Date(2012, 11, 23);
 const t1: TeamDb = {
   id: "a-team-id",
@@ -31,8 +33,9 @@ function setup({
       role,
       userId: "a-user-id",
     }),
-    createStub: sandbox().stub(RawTeamsDAO, "create").resolves(t1),
-    createUserStub: sandbox().stub(RawTeamUsersDAO, "create").resolves(),
+    createWithOwnerStub: sandbox()
+      .stub(TeamsService, "createTeamWithOwner")
+      .resolves(t1),
     findCreatedTeamUserStub: sandbox()
       .stub(TeamUsersDAO, "findById")
       .resolves(),
@@ -51,7 +54,7 @@ function setup({
 }
 
 test("POST /teams", async (t: Test) => {
-  const { createStub, sessionsStub } = setup();
+  const { createWithOwnerStub, sessionsStub } = setup();
 
   const [response, body] = await post("/teams", {
     headers: authHeader("a-session-id"),
@@ -67,9 +70,9 @@ test("POST /teams", async (t: Test) => {
     "returns the created team from the DAO"
   );
   t.deepEqual(
-    createStub.args[0][1],
-    t1,
-    "calls create with the correct values"
+    createWithOwnerStub.args[0].slice(1),
+    [t1.title, "a-user-id"],
+    "calls createTeamWithOwner with the correct values"
   );
 
   const [invalid] = await post("/teams", {

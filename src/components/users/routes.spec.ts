@@ -1,5 +1,4 @@
 import Knex from "knex";
-import sinon from "sinon";
 import uuid from "node-uuid";
 
 import * as attachSource from "../../services/stripe/attach-source";
@@ -23,6 +22,7 @@ import Stripe = require("../../services/stripe");
 import { authHeader, get, patch, post, put } from "../../test-helpers/http";
 import { baseUser, UserIO } from "./domain-object";
 import { sandbox, Test, test } from "../../test-helpers/fresh";
+import * as TeamsService from "../teams/service";
 
 const USER_DATA: UserIO = Object.freeze({
   email: "user@example.com",
@@ -31,13 +31,7 @@ const USER_DATA: UserIO = Object.freeze({
   phone: "415 580 9925",
 });
 
-interface UserDependenciesInterface {
-  duplicationStub: sinon.SinonStub;
-  mailchimpStub: sinon.SinonStub;
-  teamUsersStub: sinon.SinonStub;
-}
-
-function stubUserDependencies(): UserDependenciesInterface {
+function stubUserDependencies() {
   const duplicationStub = sandbox()
     .stub(DuplicationService, "duplicateDesigns")
     .resolves();
@@ -47,11 +41,15 @@ function stubUserDependencies(): UserDependenciesInterface {
   const teamUsersStub = sandbox()
     .stub(TeamUsersDAO, "claimAllByEmail")
     .resolves();
+  const createTeamStub = sandbox()
+    .stub(TeamsService, "createTeamWithOwner")
+    .resolves();
 
   return {
     duplicationStub,
     mailchimpStub,
     teamUsersStub,
+    createTeamStub,
   };
 }
 
@@ -67,7 +65,7 @@ test("POST /users returns a 400 if user creation fails", async (t: Test) => {
 });
 
 test("POST /users allows public values to be set", async (t: Test) => {
-  stubUserDependencies();
+  const { createTeamStub } = stubUserDependencies();
 
   const acceptedAt = new Date("2019-01-01").toISOString();
 
@@ -85,6 +83,12 @@ test("POST /users allows public values to be set", async (t: Test) => {
   t.equal(body.password, undefined);
   t.equal(body.passwordHash, undefined);
   t.equal(body.lastAcceptedDesignerTermsAt, acceptedAt);
+
+  t.deepEqual(
+    createTeamStub.args[0].slice(1),
+    ["Q User's Team", body.id],
+    "creates user's initial team if name is set"
+  );
 });
 
 test("POST /users does not allow private values to be set", async (t: Test) => {
@@ -137,7 +141,7 @@ test("POST /users returns a session instead if requested", async (t: Test) => {
 });
 
 test("POST /users allow creating a user with no name or password", async (t: Test) => {
-  stubUserDependencies();
+  const { createTeamStub } = stubUserDependencies();
 
   const [response] = await post("/users?returnValue=session", {
     body: {
@@ -148,6 +152,7 @@ test("POST /users allow creating a user with no name or password", async (t: Tes
   });
 
   t.equal(response.status, 201);
+  t.false(createTeamStub.called, "Does not create team for user with no name");
 });
 
 test("PUT /users/:id/password returns a 401 if unauthenticated", async (t: Test) => {
@@ -257,10 +262,14 @@ test("PATCH /users/:id returns a 403 if not the current user", async (t: Test) =
 
 test("PATCH /users/:id updates the current user", async (t: Test) => {
   const { user, session } = await createUser();
+  const createTeamStub = sandbox()
+    .stub(TeamsService, "createTeamWithOwner")
+    .resolves();
   const [response, body] = await patch(`/users/${user.id}`, {
     body: {
       birthday: "2017-01-02",
       locale: "zh",
+      name: "New Name",
     },
     headers: authHeader(session.id),
   });
@@ -269,6 +278,11 @@ test("PATCH /users/:id updates the current user", async (t: Test) => {
   t.equal(
     new Date(body.birthday).getMilliseconds(),
     new Date("2017-01-02").getMilliseconds()
+  );
+  t.equal(body.name, "New Name");
+  t.false(
+    createTeamStub.called,
+    "Does not create a team when not setting the name for the first time"
   );
 });
 
@@ -363,6 +377,9 @@ test("PATCH /users/:id allows completing a user registration", async (t: Test) =
     { requirePassword: false }
   );
   const session = await SessionsDAO.createForUser(incomplete);
+  const createTeamStub = sandbox()
+    .stub(TeamsService, "createTeamWithOwner")
+    .resolves();
 
   const [response, body] = await patch(`/users/${incomplete.id}`, {
     body: {
@@ -374,6 +391,11 @@ test("PATCH /users/:id allows completing a user registration", async (t: Test) =
 
   t.equal(response.status, 200);
   t.equal(body.name, "New Name");
+  t.deepEqual(
+    createTeamStub.args[0].slice(1),
+    ["New Name's Team", body.id],
+    "Creates a new team with the newly set user name"
+  );
 
   const alreadyComplete = await createUser();
 
