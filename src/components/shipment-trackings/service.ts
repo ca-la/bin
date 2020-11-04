@@ -117,11 +117,11 @@ export async function createNotificationsAndEvents(
 ): Promise<void> {
   const notififiedDesigners: string[] = [];
   for (const shipmentTracking of shipmentTrackings) {
-    const latestEvent = await ShipmentTrackingEventsDAO.findLatestByShipmentTracking(
+    const latestTrackingEvent = await ShipmentTrackingEventsDAO.findLatestByShipmentTracking(
       trx,
       shipmentTracking.id
     );
-    if (!latestEvent) {
+    if (!latestTrackingEvent) {
       throw new Error("Could not find latest tracking event");
     }
     const designMeta = await getTitleAndOwnerByShipmentTracking(
@@ -137,6 +137,23 @@ export async function createNotificationsAndEvents(
 
     const { designId, designerId, collectionId } = designMeta;
 
+    const latestDesignEvent = await DesignEventsDAO.findOne(
+      trx,
+      {
+        designId,
+        type: "TRACKING_UPDATE",
+      },
+      (query: Knex.QueryBuilder): Knex.QueryBuilder =>
+        query.clearOrder().orderBy("created_at", "DESC")
+    );
+
+    if (
+      latestDesignEvent &&
+      latestDesignEvent.shipmentTrackingEventTag === latestTrackingEvent.tag
+    ) {
+      return;
+    }
+
     if (!notififiedDesigners.includes(designerId)) {
       notififiedDesigners.push(designerId);
       await notifications[NotificationType.SHIPMENT_TRACKING_UPDATE].send(
@@ -151,7 +168,7 @@ export async function createNotificationsAndEvents(
           designId,
           collectionId,
           shipmentTrackingId: shipmentTracking.id,
-          shipmentTrackingEventId: latestEvent.id,
+          shipmentTrackingEventId: latestTrackingEvent.id,
         }
       );
       await DesignEventsDAO.create(trx, {
@@ -162,7 +179,7 @@ export async function createNotificationsAndEvents(
         createdAt: new Date(),
         actorId: CALA_OPS_USER_ID,
         shipmentTrackingId: shipmentTracking.id,
-        shipmentTrackingEventId: latestEvent.id,
+        shipmentTrackingEventId: latestTrackingEvent.id,
         type: "TRACKING_UPDATE",
       });
     }
