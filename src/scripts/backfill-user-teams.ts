@@ -14,10 +14,11 @@ import { TeamUserDb, Role } from "../components/team-users/types";
 async function backfillUserTeams() {
   return db.transaction(async (trx: Knex.Transaction) => {
     const usersWithNoTeams = await trx
-      .select("users.id")
+      .select<{ id: string; name: string }[]>(["users.id", "users.name"])
       .from("users")
       .leftJoin("team_users", "team_users.user_id", "users.id")
-      .where({ "team_users.id": null })
+      .whereNotNull("users.name")
+      .andWhere({ "team_users.id": null })
       .groupBy("users.id");
 
     log(`Found ${usersWithNoTeams.length} users who are not in a team`);
