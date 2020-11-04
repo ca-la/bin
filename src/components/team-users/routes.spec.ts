@@ -308,6 +308,7 @@ test("DEL /team-users/:id allows admins to delete users ", async (t: Test) => {
 test("DEL /team-users/:id not allowed as non-admin ", async (t: Test) => {
   const { deleteStub, findActorTeamUserStub } = setup();
   findActorTeamUserStub.resolves({
+    userId: "not-the-same",
     role: TeamUserRole.VIEWER,
   });
   const [response] = await del(`/team-users/${tu1.id}`, {
@@ -316,6 +317,20 @@ test("DEL /team-users/:id not allowed as non-admin ", async (t: Test) => {
 
   t.equal(response.status, 403, "Does not allow deletion");
   t.equal(deleteStub.callCount, 0, "Does not delete with an invalid role");
+});
+
+test("DEL /team-users/:id allows self-update when non-admin", async (t: Test) => {
+  const { deleteStub, findActorTeamUserStub } = setup();
+  findActorTeamUserStub.resolves({
+    userId: tu1.userId,
+    role: TeamUserRole.VIEWER,
+  });
+  const [response] = await del(`/team-users/${tu1.id}`, {
+    headers: authHeader("a-session-id"),
+  });
+
+  t.equal(response.status, 204, "Allows deletion of self");
+  t.equal(deleteStub.callCount, 1, "Deletes own team user");
 });
 
 test("/team-users end-to-end", async (t: Test) => {

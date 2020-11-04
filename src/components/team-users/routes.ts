@@ -120,7 +120,8 @@ export default {
         requireAuth,
         requireTeamRoles(
           [TeamUserRole.ADMIN, TeamUserRole.OWNER],
-          findTeamByTeamUserId
+          findTeamByTeamUserId,
+          { allowSelf: true }
         ),
         deleteTeamUser,
       ],
