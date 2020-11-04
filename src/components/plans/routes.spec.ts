@@ -1,6 +1,8 @@
 import uuid from "node-uuid";
+import { omit } from "lodash";
 
 import * as PlansDAO from "./dao";
+import { Plan } from "./plan";
 import { authHeader, get } from "../../test-helpers/http";
 import { test, Test } from "../../test-helpers/fresh";
 import createUser from "../../test-helpers/create-user";
@@ -10,7 +12,6 @@ test("GET /plans lists public plans in order", async (t: Test) => {
     id: uuid.v4(),
     billingInterval: "MONTHLY",
     monthlyCostCents: 1234,
-    revenueSharePercentage: 12,
     revenueShareBasisPoints: 1234,
     costOfGoodsShareBasisPoints: 5678,
     stripePlanId: "plan_123",
@@ -25,7 +26,6 @@ test("GET /plans lists public plans in order", async (t: Test) => {
     id: uuid.v4(),
     billingInterval: "MONTHLY",
     monthlyCostCents: 4567,
-    revenueSharePercentage: 12,
     revenueShareBasisPoints: 1234,
     costOfGoodsShareBasisPoints: 5678,
     stripePlanId: "plan_456",
@@ -40,7 +40,6 @@ test("GET /plans lists public plans in order", async (t: Test) => {
     id: uuid.v4(),
     billingInterval: "MONTHLY",
     monthlyCostCents: 7890,
-    revenueSharePercentage: 12,
     revenueShareBasisPoints: 1234,
     costOfGoodsShareBasisPoints: 5678,
     stripePlanId: "plan_789",
@@ -59,18 +58,16 @@ test("GET /plans lists public plans in order", async (t: Test) => {
   t.equal(body[0].title, "The First One");
   t.equal(body[0].monthlyCostCents, 7890);
   t.equal(body[0].revenueShareBasisPoints, 1234);
-  t.equal(body[0].revenueSharePercentage, 12);
 
   t.equal(body[1].title, "The Second One");
   t.equal(body[1].monthlyCostCents, 1234);
 });
 
 test("GET /plans/:id returns a plan", async (t: Test) => {
-  const plan = await PlansDAO.create({
+  const planData: Uninserted<Plan> = {
     id: uuid.v4(),
     billingInterval: "MONTHLY",
     monthlyCostCents: 1234,
-    revenueSharePercentage: 12,
     revenueShareBasisPoints: 1234,
     costOfGoodsShareBasisPoints: 5678,
     stripePlanId: "plan_123",
@@ -79,14 +76,15 @@ test("GET /plans/:id returns a plan", async (t: Test) => {
     isPublic: false,
     description: null,
     ordering: null,
-  });
+  };
+
+  const plan = await PlansDAO.create(planData);
 
   const [response, body] = await get(`/plans/${plan.id}`);
 
   t.equal(response.status, 200);
 
-  t.equal(body.title, "A little Bit");
-  t.equal(body.monthlyCostCents, 1234);
+  t.deepEqual(omit(body, "createdAt"), planData);
 });
 
 test("GET /plans/:id returns 404 when non-existent", async (t: Test) => {
@@ -94,7 +92,6 @@ test("GET /plans/:id returns 404 when non-existent", async (t: Test) => {
     id: uuid.v4(),
     billingInterval: "MONTHLY",
     monthlyCostCents: 1234,
-    revenueSharePercentage: 12,
     revenueShareBasisPoints: 1234,
     costOfGoodsShareBasisPoints: 5678,
     stripePlanId: "plan_123",
@@ -118,7 +115,6 @@ test("GET /plans?includePrivate=true returns all plans for admins", async (t: Te
     id: uuid.v4(),
     billingInterval: "MONTHLY",
     monthlyCostCents: 1234,
-    revenueSharePercentage: 12,
     revenueShareBasisPoints: 1234,
     costOfGoodsShareBasisPoints: 5678,
     stripePlanId: "plan_123",
@@ -133,7 +129,6 @@ test("GET /plans?includePrivate=true returns all plans for admins", async (t: Te
     id: uuid.v4(),
     billingInterval: "MONTHLY",
     monthlyCostCents: 1000,
-    revenueSharePercentage: 12,
     revenueShareBasisPoints: 1234,
     costOfGoodsShareBasisPoints: 5678,
     stripePlanId: "plan_456",

@@ -422,7 +422,6 @@ test("POST /collections/:id/submissions", async (t: tape.Test) => {
     id: uuid.v4(),
     billingInterval: "MONTHLY",
     monthlyCostCents: 4567,
-    revenueSharePercentage: 50,
     costOfGoodsShareBasisPoints: 0,
     revenueShareBasisPoints: 5000,
     stripePlanId: "plan_456",
