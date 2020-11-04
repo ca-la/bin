@@ -12,6 +12,8 @@ test("PlansDAO supports creation and retrieval", async (t: Test) => {
     billingInterval: "MONTHLY",
     monthlyCostCents: 1234,
     revenueSharePercentage: 12,
+    revenueShareBasisPoints: 1200,
+    costOfGoodsShareBasisPoints: 0,
     stripePlanId: "plan_123",
     title: "A little Bit",
     isDefault: false,
@@ -24,7 +26,9 @@ test("PlansDAO supports creation and retrieval", async (t: Test) => {
     id: uuid.v4(),
     billingInterval: "MONTHLY",
     monthlyCostCents: 4567,
-    revenueSharePercentage: 50,
+    revenueSharePercentage: 12,
+    revenueShareBasisPoints: 5000,
+    costOfGoodsShareBasisPoints: 0,
     stripePlanId: "plan_456",
     title: "Some More",
     isDefault: true,
@@ -44,10 +48,10 @@ test("PlansDAO supports creation and retrieval", async (t: Test) => {
   );
   t.equal(sorted[0].title, "A little Bit");
   t.equal(sorted[0].monthlyCostCents, 1234);
-  t.equal(sorted[0].revenueSharePercentage, 12);
+  t.equal(sorted[0].revenueShareBasisPoints, 1200);
   t.equal(sorted[1].title, "Some More");
   t.equal(sorted[1].monthlyCostCents, 4567);
-  t.equal(sorted[1].revenueSharePercentage, 50);
+  t.equal(sorted[1].revenueShareBasisPoints, 5000);
 });
 
 test("PlansDAO.findPublic lists public plans", async (t: Test) => {
@@ -56,6 +60,8 @@ test("PlansDAO.findPublic lists public plans", async (t: Test) => {
     billingInterval: "MONTHLY",
     monthlyCostCents: 1234,
     revenueSharePercentage: 12,
+    revenueShareBasisPoints: 1200,
+    costOfGoodsShareBasisPoints: 0,
     stripePlanId: "plan_123",
     title: "Second Public",
     isDefault: false,
@@ -69,6 +75,8 @@ test("PlansDAO.findPublic lists public plans", async (t: Test) => {
     billingInterval: "MONTHLY",
     monthlyCostCents: 1234,
     revenueSharePercentage: 12,
+    revenueShareBasisPoints: 1200,
+    costOfGoodsShareBasisPoints: 0,
     stripePlanId: "plan_123",
     title: "First Private",
     isDefault: false,
@@ -81,7 +89,9 @@ test("PlansDAO.findPublic lists public plans", async (t: Test) => {
     id: uuid.v4(),
     billingInterval: "MONTHLY",
     monthlyCostCents: 4567,
-    revenueSharePercentage: 50,
+    revenueSharePercentage: 12,
+    revenueShareBasisPoints: 5000,
+    costOfGoodsShareBasisPoints: 0,
     stripePlanId: "plan_456",
     title: "First Public",
     isDefault: true,
@@ -110,6 +120,8 @@ test("PlansDAO prevents creating multiple default plans", async (t: Test) => {
     billingInterval: "MONTHLY",
     monthlyCostCents: 1234,
     revenueSharePercentage: 12,
+    revenueShareBasisPoints: 1200,
+    costOfGoodsShareBasisPoints: 0,
     stripePlanId: "plan_123",
     title: "A little Bit",
     isDefault: true,
@@ -123,7 +135,9 @@ test("PlansDAO prevents creating multiple default plans", async (t: Test) => {
       id: uuid.v4(),
       billingInterval: "MONTHLY",
       monthlyCostCents: 4567,
-      revenueSharePercentage: 50,
+      revenueSharePercentage: 12,
+      revenueShareBasisPoints: 1200,
+      costOfGoodsShareBasisPoints: 0,
       stripePlanId: "plan_456",
       title: "Some More",
       isDefault: true,

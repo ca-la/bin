@@ -44,6 +44,8 @@ async function setup(
     billingInterval: "MONTHLY",
     monthlyCostCents: 4567,
     revenueSharePercentage: 50,
+    revenueShareBasisPoints: 5000,
+    costOfGoodsShareBasisPoints: 0,
     stripePlanId: "plan_456",
     title: "Some More",
     isDefault: true,

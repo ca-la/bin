@@ -9,7 +9,8 @@ export interface PlanRow {
   billing_interval: BillingInterval;
   created_at: string;
   monthly_cost_cents: string;
-  revenue_share_percentage: number;
+  revenue_share_basis_points: number;
+  cost_of_goods_share_basis_points: number;
   stripe_plan_id: string;
   title: string;
   is_default: boolean;
@@ -35,6 +36,8 @@ export function isPlanRow(row: object): row is PlanRow {
     "created_at",
     "monthly_cost_cents",
     "revenue_share_percentage",
+    "revenue_share_basis_points",
+    "cost_of_goods_share_basis_points",
     "stripe_plan_id",
     "title",
     "is_default",
@@ -52,6 +55,8 @@ export function isPlan(data: object): data is Plan {
     "createdAt",
     "monthlyCostCents",
     "revenueSharePercentage",
+    "revenueShareBasisPoints",
+    "costOfGoodsShareBasisPoints",
     "stripePlanId",
     "title",
     "isDefault",

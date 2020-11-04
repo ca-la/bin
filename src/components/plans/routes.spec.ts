@@ -11,6 +11,8 @@ test("GET /plans lists public plans in order", async (t: Test) => {
     billingInterval: "MONTHLY",
     monthlyCostCents: 1234,
     revenueSharePercentage: 12,
+    revenueShareBasisPoints: 1234,
+    costOfGoodsShareBasisPoints: 5678,
     stripePlanId: "plan_123",
     title: "The Second One",
     isDefault: true,
@@ -24,6 +26,8 @@ test("GET /plans lists public plans in order", async (t: Test) => {
     billingInterval: "MONTHLY",
     monthlyCostCents: 4567,
     revenueSharePercentage: 12,
+    revenueShareBasisPoints: 1234,
+    costOfGoodsShareBasisPoints: 5678,
     stripePlanId: "plan_456",
     title: "The Secret One",
     isDefault: false,
@@ -37,6 +41,8 @@ test("GET /plans lists public plans in order", async (t: Test) => {
     billingInterval: "MONTHLY",
     monthlyCostCents: 7890,
     revenueSharePercentage: 12,
+    revenueShareBasisPoints: 1234,
+    costOfGoodsShareBasisPoints: 5678,
     stripePlanId: "plan_789",
     title: "The First One",
     isDefault: false,
@@ -52,6 +58,8 @@ test("GET /plans lists public plans in order", async (t: Test) => {
   t.equal(body.length, 2);
   t.equal(body[0].title, "The First One");
   t.equal(body[0].monthlyCostCents, 7890);
+  t.equal(body[0].revenueShareBasisPoints, 1234);
+  t.equal(body[0].revenueSharePercentage, 12);
 
   t.equal(body[1].title, "The Second One");
   t.equal(body[1].monthlyCostCents, 1234);
@@ -63,6 +71,8 @@ test("GET /plans/:id returns a plan", async (t: Test) => {
     billingInterval: "MONTHLY",
     monthlyCostCents: 1234,
     revenueSharePercentage: 12,
+    revenueShareBasisPoints: 1234,
+    costOfGoodsShareBasisPoints: 5678,
     stripePlanId: "plan_123",
     title: "A little Bit",
     isDefault: false,
@@ -85,6 +95,8 @@ test("GET /plans/:id returns 404 when non-existent", async (t: Test) => {
     billingInterval: "MONTHLY",
     monthlyCostCents: 1234,
     revenueSharePercentage: 12,
+    revenueShareBasisPoints: 1234,
+    costOfGoodsShareBasisPoints: 5678,
     stripePlanId: "plan_123",
     title: "A little Bit",
     isDefault: false,
@@ -107,6 +119,8 @@ test("GET /plans?includePrivate=true returns all plans for admins", async (t: Te
     billingInterval: "MONTHLY",
     monthlyCostCents: 1234,
     revenueSharePercentage: 12,
+    revenueShareBasisPoints: 1234,
+    costOfGoodsShareBasisPoints: 5678,
     stripePlanId: "plan_123",
     title: "A little Bit",
     isDefault: false,
@@ -119,7 +133,9 @@ test("GET /plans?includePrivate=true returns all plans for admins", async (t: Te
     id: uuid.v4(),
     billingInterval: "MONTHLY",
     monthlyCostCents: 1000,
-    revenueSharePercentage: 15,
+    revenueSharePercentage: 12,
+    revenueShareBasisPoints: 1234,
+    costOfGoodsShareBasisPoints: 5678,
     stripePlanId: "plan_456",
     title: "A little bit more",
     isDefault: false,
