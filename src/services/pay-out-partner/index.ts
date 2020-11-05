@@ -2,7 +2,7 @@ import Knex from "knex";
 import EmailService from "../email";
 import * as StripeService from "../stripe";
 import * as PartnerPayoutAccountsDAO from "../../dao/partner-payout-accounts";
-import { PartnerPayoutLog } from "../../components/partner-payouts/domain-object";
+import { PartnerPayoutLogDb } from "../../components/partner-payouts/domain-object";
 import InvalidDataError = require("../../errors/invalid-data");
 import { ADMIN_EMAIL } from "../../config";
 import { findById as findUserById } from "../../components/users/dao";
@@ -18,7 +18,7 @@ import { findDesignByBidId } from "../../components/product-designs/dao/dao";
  */
 export async function payOutPartner(
   trx: Knex.Transaction,
-  log: UninsertedWithoutShortId<PartnerPayoutLog>,
+  log: UninsertedWithoutShortId<PartnerPayoutLogDb>,
   stripeSourceType?: string
 ): Promise<void> {
   const { bidId, payoutAccountId, payoutAmountCents, message, isManual } = log;

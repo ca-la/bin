@@ -13,6 +13,7 @@ import generateBid from "../../test-helpers/factories/bid";
 import { addDesign } from "../../test-helpers/collections";
 import { payOutPartner } from ".";
 import ProductDesignsDAO from "../../components/product-designs/dao";
+import generateDesignEvent from "../../test-helpers/factories/design-event";
 
 test("payOutPartner", async (t: Test) => {
   const emailStub = sandbox().stub(EmailService, "enqueueSend").resolves();
@@ -136,6 +137,12 @@ test("payOutPartner with manual payment", async (t: Test) => {
 
   const { bid } = await generateBid({
     bidOptions: { bidPriceCents: 1000 },
+    designId: design.id,
+  });
+  await generateDesignEvent({
+    type: "ACCEPT_SERVICE_BID",
+    bidId: bid.id,
+    actorId: regularUser.id,
     designId: design.id,
   });
 

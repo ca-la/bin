@@ -151,11 +151,13 @@ test("can create a payout log and find the logs", async (t: Test) => {
           ...payout2,
           collectionId: collection.id,
           collectionTitle: collection.title,
+          payoutAccountUserId: payoutAccount.userId,
         },
         {
           ...payout,
           collectionId: collection.id,
           collectionTitle: collection.title,
+          payoutAccountUserId: payoutAccount.userId,
         },
       ],
       "find by user ID"
@@ -163,7 +165,20 @@ test("can create a payout log and find the logs", async (t: Test) => {
 
     t.deepEqual(
       await findByBidId(trx, bid.id),
-      [payout2, payout],
+      [
+        {
+          ...payout2,
+          payoutAccountUserId: payoutAccount.userId,
+          collectionTitle: collection.title,
+          collectionId: collection.id,
+        },
+        {
+          ...payout,
+          payoutAccountUserId: payoutAccount.userId,
+          collectionTitle: collection.title,
+          collectionId: collection.id,
+        },
+      ],
       "find by bid ID"
     );
 

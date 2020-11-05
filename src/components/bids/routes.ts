@@ -33,7 +33,7 @@ import {
   hasProperties,
   hasOnlyProperties,
 } from "../../services/require-properties";
-import { PartnerPayoutLog } from "../partner-payouts/domain-object";
+import { PartnerPayoutLogDb } from "../partner-payouts/domain-object";
 import { payOutPartner } from "../../services/pay-out-partner";
 import filterError = require("../../services/filter-error");
 import { templateDesignEvent } from "../design-events/types";
@@ -434,7 +434,7 @@ interface PayOutPartnerContext extends AuthedContext {
 }
 
 type UninsertedPayoutLog = Omit<
-  UninsertedWithoutShortId<PartnerPayoutLog>,
+  UninsertedWithoutShortId<PartnerPayoutLogDb>,
   "initiatorUserId"
 >;
 
@@ -472,7 +472,7 @@ function* postPayOut(
   if (!isManual) {
     this.assert(payoutAccountId, 400, "Missing payout account ID");
   }
-  const payoutLog: UninsertedWithoutShortId<PartnerPayoutLog> = {
+  const payoutLog: UninsertedWithoutShortId<PartnerPayoutLogDb> = {
     ...omit(this.request.body, "stripeSourceType"),
     bidId,
     initiatorUserId: this.state.userId,

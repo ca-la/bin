@@ -1,7 +1,7 @@
 import DataAdapter from "../../services/data-adapter";
 import { hasProperties } from "@cala/ts-lib";
 
-export interface PartnerPayoutLog {
+export interface PartnerPayoutLogDb {
   id: string;
   createdAt: Date;
   invoiceId: string | null;
@@ -14,7 +14,7 @@ export interface PartnerPayoutLog {
   isManual: boolean;
 }
 
-export interface PartnerPayoutLogRow {
+export interface PartnerPayoutLogDbRow {
   id: string;
   created_at: string;
   invoice_id: string | null;
@@ -27,7 +27,7 @@ export interface PartnerPayoutLogRow {
   is_manual: string;
 }
 
-export function toData(row: PartnerPayoutLogRow): PartnerPayoutLog {
+export function toDataDb(row: PartnerPayoutLogDbRow): PartnerPayoutLogDb {
   return {
     id: row.id,
     createdAt: new Date(row.created_at),
@@ -42,7 +42,9 @@ export function toData(row: PartnerPayoutLogRow): PartnerPayoutLog {
   };
 }
 
-export function toInsertion(data: PartnerPayoutLog): PartnerPayoutLogRow {
+export function toInsertionDb(
+  data: PartnerPayoutLogDb | PartnerPayoutLog
+): PartnerPayoutLogDbRow {
   return {
     id: data.id,
     created_at: data.createdAt.toISOString(),
@@ -57,12 +59,14 @@ export function toInsertion(data: PartnerPayoutLog): PartnerPayoutLogRow {
   };
 }
 
-export const dataAdapter = new DataAdapter<
-  PartnerPayoutLogRow,
-  PartnerPayoutLog
->(toData, toInsertion);
+export const dataAdapterDb = new DataAdapter<
+  PartnerPayoutLogDbRow,
+  PartnerPayoutLogDb
+>(toDataDb, toInsertionDb);
 
-export function isPartnerPayoutLogRow(row: any): row is PartnerPayoutLogRow {
+export function isPartnerPayoutLogDbRow(
+  row: any
+): row is PartnerPayoutLogDbRow {
   return hasProperties(
     row,
     "id",
@@ -78,57 +82,51 @@ export function isPartnerPayoutLogRow(row: any): row is PartnerPayoutLogRow {
   );
 }
 
-export interface PartnerPayoutLogRowWithMeta extends PartnerPayoutLogRow {
+export interface PartnerPayoutLogRow extends PartnerPayoutLogDbRow {
+  payout_account_user_id: string | null;
   collection_title: string | null;
   collection_id: string | null;
 }
 
-export interface PartnerPayoutLogWithMeta extends PartnerPayoutLog {
+export interface PartnerPayoutLog extends PartnerPayoutLogDb {
+  payoutAccountUserId: string | null;
   collectionTitle: string | null;
   collectionId: string | null;
 }
 
-export function toDataForMeta(
-  row: PartnerPayoutLogRowWithMeta
-): PartnerPayoutLogWithMeta {
-  const { collection_id, collection_title, ...baseRow } = row;
+export function toData(row: PartnerPayoutLogRow): PartnerPayoutLog {
+  const {
+    collection_title,
+    collection_id,
+    payout_account_user_id,
+    ...baseRow
+  } = row;
   return {
     collectionId: collection_id,
     collectionTitle: collection_title,
-    ...toData(baseRow),
+    payoutAccountUserId: payout_account_user_id,
+    ...toDataDb(baseRow),
   };
 }
 
-export function toInsertionForMeta(
-  data: PartnerPayoutLogWithMeta
-): PartnerPayoutLogRowWithMeta {
-  const { collectionId, collectionTitle, ...baseData } = data;
-  return {
-    collection_id: collectionId,
-    collection_title: collectionTitle,
-    ...toInsertion(baseData),
-  };
-}
+export const dataAdapter = new DataAdapter<
+  PartnerPayoutLogRow,
+  PartnerPayoutLog
+>(toData);
 
-export const dataAdapterForMeta = new DataAdapter<
-  PartnerPayoutLogRowWithMeta,
-  PartnerPayoutLogWithMeta
->(toDataForMeta, toInsertionForMeta);
-
-export function isPartnerPayoutLogRowWithMeta(
-  row: any
-): row is PartnerPayoutLogRowWithMeta {
+export function isPartnerPayoutLogRow(row: any): row is PartnerPayoutLogRow {
   return hasProperties(
     row,
     "id",
-    "collection_id",
-    "collection_title",
     "created_at",
     "invoice_id",
     "payout_account_id",
+    "payout_account_user_id",
     "payout_amount_cents",
     "message",
     "initiator_user_id",
-    "short_id"
+    "short_id",
+    "collection_title",
+    "collection_id"
   );
 }

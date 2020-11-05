@@ -3,14 +3,14 @@ import rethrow = require("pg-rethrow");
 import uuid from "node-uuid";
 
 import {
+  dataAdapterDb,
   dataAdapter,
-  dataAdapterForMeta,
+  isPartnerPayoutLogDbRow,
   isPartnerPayoutLogRow,
-  isPartnerPayoutLogRowWithMeta,
+  PartnerPayoutLogDb,
+  PartnerPayoutLogDbRow,
   PartnerPayoutLog,
   PartnerPayoutLogRow,
-  PartnerPayoutLogRowWithMeta,
-  PartnerPayoutLogWithMeta,
 } from "./domain-object";
 import first from "../../services/first";
 import { validate, validateEvery } from "../../services/validate-from-db";
@@ -21,10 +21,10 @@ const ACCOUNTS_TABLE_NAME = "partner_payout_accounts";
 
 export async function create(
   trx: Knex.Transaction,
-  data: UninsertedWithoutShortId<PartnerPayoutLog>
-): Promise<PartnerPayoutLog> {
+  data: UninsertedWithoutShortId<PartnerPayoutLogDb>
+): Promise<PartnerPayoutLogDb> {
   const shortId = await computeUniqueShortId();
-  const rowData = dataAdapter.forInsertion({
+  const rowData = dataAdapterDb.forInsertion({
     id: uuid.v4(),
     shortId,
     ...data,
@@ -32,17 +32,17 @@ export async function create(
 
   const result = await trx(TABLE_NAME)
     .insert({ ...rowData, created_at: new Date() }, "*")
-    .then((rows: PartnerPayoutLogRow[]) => first(rows))
+    .then((rows: PartnerPayoutLogDbRow[]) => first(rows))
     .catch(rethrow);
 
   if (!result) {
     throw new Error("Unable to create a new partner payout.");
   }
 
-  return validate<PartnerPayoutLogRow, PartnerPayoutLog>(
+  return validate<PartnerPayoutLogDbRow, PartnerPayoutLogDb>(
     TABLE_NAME,
-    isPartnerPayoutLogRow,
-    dataAdapter,
+    isPartnerPayoutLogDbRow,
+    dataAdapterDb,
     result
   );
 }
@@ -50,7 +50,7 @@ export async function create(
 export async function findByPayoutAccountId(
   trx: Knex.Transaction,
   accountId: string
-): Promise<PartnerPayoutLog[]> {
+): Promise<PartnerPayoutLogDb[]> {
   const result = await trx(TABLE_NAME)
     .where({
       payout_account_id: accountId,
@@ -58,10 +58,10 @@ export async function findByPayoutAccountId(
     .orderBy("created_at", "desc")
     .catch(rethrow);
 
-  return validateEvery<PartnerPayoutLogRow, PartnerPayoutLog>(
+  return validateEvery<PartnerPayoutLogDbRow, PartnerPayoutLogDb>(
     TABLE_NAME,
-    isPartnerPayoutLogRow,
-    dataAdapter,
+    isPartnerPayoutLogDbRow,
+    dataAdapterDb,
     result
   );
 }
@@ -69,12 +69,13 @@ export async function findByPayoutAccountId(
 export async function findByUserId(
   trx: Knex.Transaction,
   userId: string
-): Promise<PartnerPayoutLogWithMeta[]> {
+): Promise<PartnerPayoutLog[]> {
   const result = await trx(TABLE_NAME)
     .select(
       `${TABLE_NAME}.*`,
       "collections.id AS collection_id",
-      "collections.title AS collection_title"
+      "collections.title AS collection_title",
+      "partner_payout_accounts.user_id as payout_account_user_id"
     )
     .leftJoin(
       ACCOUNTS_TABLE_NAME,
@@ -107,10 +108,10 @@ export async function findByUserId(
     .orderByRaw(`${TABLE_NAME}.created_at DESC`)
     .catch(rethrow);
 
-  return validateEvery<PartnerPayoutLogRowWithMeta, PartnerPayoutLogWithMeta>(
+  return validateEvery<PartnerPayoutLogRow, PartnerPayoutLog>(
     TABLE_NAME,
-    isPartnerPayoutLogRowWithMeta,
-    dataAdapterForMeta,
+    isPartnerPayoutLogRow,
+    dataAdapter,
     result
   );
 }
@@ -120,9 +121,33 @@ export async function findByBidId(
   bidId: string
 ): Promise<PartnerPayoutLog[]> {
   const logs = await trx(TABLE_NAME)
-    .select("partner_payout_logs.*")
+    .select(
+      "partner_payout_logs.*",
+      "partner_payout_accounts.user_id AS payout_account_user_id",
+      "collections.id AS collection_id",
+      "collections.title AS collection_title"
+    )
     .join("pricing_bids", "pricing_bids.id", "partner_payout_logs.bid_id")
-    .where({ "pricing_bids.id": bidId })
+    .leftJoin(
+      "partner_payout_accounts",
+      "partner_payout_accounts.id",
+      "partner_payout_logs.payout_account_id"
+    )
+    .join("design_events", "design_events.bid_id", "pricing_bids.id")
+    .leftJoin(
+      "collection_designs",
+      "collection_designs.design_id",
+      "design_events.design_id"
+    )
+    .leftJoin(
+      "collections",
+      "collections.id",
+      "collection_designs.collection_id"
+    )
+    .where({
+      "pricing_bids.id": bidId,
+      "design_events.type": "ACCEPT_SERVICE_BID",
+    })
     .orderBy("created_at", "DESC")
     .catch(rethrow);
 
