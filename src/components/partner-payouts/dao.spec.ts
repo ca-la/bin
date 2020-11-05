@@ -8,7 +8,7 @@ import {
   findByUserId,
   findByBidId,
 } from "./dao";
-import PayoutAccountsDAO = require("../../dao/partner-payout-accounts");
+import * as PayoutAccountsDAO from "../../dao/partner-payout-accounts";
 import db from "../../services/db";
 import createUser = require("../../test-helpers/create-user");
 import createDesign from "../../services/create-design";

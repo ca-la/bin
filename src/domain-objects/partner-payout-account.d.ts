@@ -1,10 +1,15 @@
-export default interface PartnerPayoutAccount {
-  id: string;
-  createdAt: Date | null;
-  deletedAt: Date | null;
-  userId: string;
-  stripeAccessToken: string;
-  stripeRefreshToken: string;
-  stripePublishableKey: string;
-  stripeUserId: string;
+declare class PartnerPayoutAccount {
+  public static dataMapper: any;
+  public id: string;
+  public createdAt: Date;
+  public deletedAt: Date | null;
+  public userId: string;
+  public stripeAccessToken: string;
+  public stripeRefreshToken: string;
+  public stripePublishableKey: string;
+  public stripeUserId: string;
+
+  constructor(data: any);
 }
+
+export default PartnerPayoutAccount;

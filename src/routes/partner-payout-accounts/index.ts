@@ -1,7 +1,8 @@
 import Router from "koa-router";
+import uuid from "node-uuid";
 
+import * as PartnerPayoutAccounts from "../../dao/partner-payout-accounts";
 import canAccessUserResource = require("../../middleware/can-access-user-resource");
-import PartnerPayoutAccounts = require("../../dao/partner-payout-accounts");
 import requireAuth = require("../../middleware/require-auth");
 import requireAdmin = require("../../middleware/require-admin");
 import {
@@ -9,18 +10,27 @@ import {
   createLoginLink,
   getBalances,
 } from "../../services/stripe";
+import useTransaction from "../../middleware/use-transaction";
 
 const router = new Router();
 
-function* getAccounts(this: AuthedContext) {
-  const { userId } = this.query;
-  this.assert(userId, 400, "User ID must be provided");
-  canAccessUserResource.call(this, userId);
+function* getAccounts(this: TrxContext<AuthedContext>) {
+  const { userId, teamId } = this.query;
+  const { trx } = this.state;
 
-  const accounts = yield PartnerPayoutAccounts.findByUserId(userId);
-
+  this.assert(userId || teamId, 400, "User ID of Team ID must be provided");
+  if (userId) {
+    canAccessUserResource.call(this, userId);
+    const accounts = yield PartnerPayoutAccounts.findByUserId(userId);
+    this.body = accounts;
+  } else {
+    if (this.state.role !== "ADMIN") {
+      this.throw(403, "Must be an admin to view team payout accounts");
+    }
+    const accounts = yield PartnerPayoutAccounts.findByTeamId(trx, teamId);
+    this.body = accounts;
+  }
   this.status = 200;
-  this.body = accounts;
 }
 
 function* postCreateLoginLink(this: AuthedContext) {
@@ -46,6 +56,9 @@ function* createAccount(this: AuthedContext) {
   const connectAccount = yield createConnectAccount(stripeAuthorizationCode);
 
   const account = yield PartnerPayoutAccounts.create({
+    id: uuid.v4(),
+    createdAt: new Date(),
+    deletedAt: null,
     userId: this.state.userId,
     stripeAccessToken: connectAccount.access_token,
     stripeRefreshToken: connectAccount.refresh_token,
@@ -66,7 +79,7 @@ function* getPayoutBalances(this: AuthedContext) {
   this.status = 200;
 }
 
-router.get("/", requireAuth, getAccounts);
+router.get("/", requireAuth, useTransaction, getAccounts);
 router.post("/:accountId/login-link", requireAuth, postCreateLoginLink);
 router.post("/", requireAuth, createAccount);
 router.get("/balances", requireAuth, requireAdmin, getPayoutBalances);

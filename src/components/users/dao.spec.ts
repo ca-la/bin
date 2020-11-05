@@ -13,7 +13,7 @@ import { validatePassword } from "./services/validate-password";
 import db from "../../services/db";
 import * as MailChimpFunctions from "../../services/mailchimp/update-email";
 import generateDesignEvent from "../../test-helpers/factories/design-event";
-import PayoutAccountsDAO = require("../../dao/partner-payout-accounts");
+import * as PayoutAccountsDAO from "../../dao/partner-payout-accounts";
 import PartnerPayoutsDAO = require("../../components/partner-payouts/dao");
 import generateCollection from "../../test-helpers/factories/collection";
 import { addDesign } from "../../test-helpers/collections";

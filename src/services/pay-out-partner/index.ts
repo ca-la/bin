@@ -1,7 +1,7 @@
 import Knex from "knex";
 import EmailService from "../email";
 import * as StripeService from "../stripe";
-import PartnerPayoutAccountsDAO from "../../dao/partner-payout-accounts";
+import * as PartnerPayoutAccountsDAO from "../../dao/partner-payout-accounts";
 import { PartnerPayoutLog } from "../../components/partner-payouts/domain-object";
 import InvalidDataError = require("../../errors/invalid-data");
 import { ADMIN_EMAIL } from "../../config";
@@ -38,6 +38,10 @@ export async function payOutPartner(
 
   let vendorUser;
   if (!isManual) {
+    if (!payoutAccountId) {
+      throw new InvalidDataError("Payout account is is required for payout");
+    }
+
     const payoutAccount = await PartnerPayoutAccountsDAO.findById(
       payoutAccountId
     );

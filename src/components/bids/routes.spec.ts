@@ -17,7 +17,7 @@ import TeamsDAO from "../teams/dao";
 import ProductDesignsDAO from "../product-designs/dao";
 import * as NotificationsService from "../../services/create-notifications";
 import * as LockQuoteService from "../../services/create-bid/create-quote-lock";
-import PayoutAccountsDAO from "../../dao/partner-payout-accounts";
+import * as PayoutAccountsDAO from "../../dao/partner-payout-accounts";
 import generateDesignEvent from "../../test-helpers/factories/design-event";
 import createDesign from "../../services/create-design";
 import * as Stripe from "../../services/stripe";

@@ -45,6 +45,9 @@ test("payOutPartner", async (t: Test) => {
   });
 
   const payoutAccount = await PartnerPayoutAccountsDAO.create({
+    id: uuid.v4(),
+    createdAt: new Date(),
+    deletedAt: null,
     stripeAccessToken: "123",
     stripePublishableKey: "123",
     stripeRefreshToken: "123",
@@ -185,6 +188,9 @@ test("payOutPartner can pay amounts larger than bid amount", async (t: Test) => 
   });
 
   const payoutAccount = await PartnerPayoutAccountsDAO.create({
+    id: uuid.v4(),
+    createdAt: new Date(),
+    deletedAt: null,
     stripeAccessToken: "123",
     stripePublishableKey: "123",
     stripeRefreshToken: "123",
