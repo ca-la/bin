@@ -35,6 +35,8 @@ import {
 } from "../services/fetch-with-labels";
 import deleteCollectionAndRemoveDesigns from "../services/delete";
 import requireSubscription from "../../../middleware/require-subscription";
+import { Role as TeamUserRole } from "../../team-users/types";
+import { requireTeamRoles } from "../../team-users/service";
 
 const router = new Router();
 
@@ -215,7 +217,18 @@ function* updateCollection(
   }
 }
 
-router.post("/", requireAuth, useTransaction, createCollection);
+router.post(
+  "/",
+  requireAuth,
+  useTransaction,
+  requireTeamRoles(
+    [TeamUserRole.OWNER, TeamUserRole.ADMIN, TeamUserRole.EDITOR],
+    async (context: AuthedContext<{ teamId: string | null }>) =>
+      context.request.body.teamId || null,
+    { allowNoTeam: true }
+  ),
+  createCollection
+);
 router.get("/", requireAuth, useTransaction, getList);
 
 router.del(

@@ -28,8 +28,10 @@ const allowedRolesMap: Record<TeamUserRole, TeamUserRole[]> = {
 
 export function requireTeamRoles(
   roles: TeamUserRole[],
-  getTeamId: (context: TrxContext<AuthedContext<any>>) => Promise<string>,
-  options: { allowSelf?: boolean } = {}
+  getTeamId: (
+    context: TrxContext<AuthedContext<any>>
+  ) => Promise<string | null>,
+  options: { allowSelf?: boolean; allowNoTeam?: boolean } = {}
 ) {
   return function* (
     this: TrxContext<AuthedContext<any, { actorTeamRole?: TeamUserRole }>>,
@@ -41,23 +43,31 @@ export function requireTeamRoles(
       this.state.actorTeamRole = TeamUserRole.ADMIN;
     } else {
       const teamId = yield getTeamId(this);
-      const actorTeamUser = yield TeamUsersDAO.findOne(trx, { teamId, userId });
 
-      if (!actorTeamUser) {
-        this.throw(403, "You cannot modify a team you are not a member of");
-      }
-
-      const actorIsTeamUser = userId === actorTeamUser.userId;
-      if (
-        !(
-          roles.includes(actorTeamUser.role) ||
-          (actorIsTeamUser && options.allowSelf)
-        )
-      ) {
+      if (teamId === null && !options.allowNoTeam) {
         this.throw(403, "You are not authorized to perform this team action");
-      }
+      } else if (teamId !== null) {
+        const actorTeamUser = yield TeamUsersDAO.findOne(trx, {
+          teamId,
+          userId,
+        });
 
-      this.state.actorTeamRole = actorTeamUser.role;
+        if (!actorTeamUser) {
+          this.throw(403, "You cannot modify a team you are not a member of");
+        }
+
+        const actorIsTeamUser = userId === actorTeamUser.userId;
+        if (
+          !(
+            roles.includes(actorTeamUser.role) ||
+            (actorIsTeamUser && options.allowSelf)
+          )
+        ) {
+          this.throw(403, "You are not authorized to perform this team action");
+        }
+
+        this.state.actorTeamRole = actorTeamUser.role;
+      }
     }
 
     yield next;

@@ -87,9 +87,9 @@ export default {
   routes: {
     "/": {
       post: [
-        useTransaction,
         requireAuth,
         typeGuard(isUnsavedTeamUser),
+        useTransaction,
         requireTeamRoles(
           [TeamUserRole.OWNER, TeamUserRole.ADMIN, TeamUserRole.EDITOR],
           async (context: AuthedContext<{ teamId: string }>) =>
@@ -98,9 +98,9 @@ export default {
         create,
       ],
       get: [
-        useTransaction,
         requireAuth,
         requireQueryParam("teamId"),
+        useTransaction,
         requireTeamRoles(
           Object.values(TeamUserRole),
           async (context: AuthedContext) => context.query.teamId
@@ -110,14 +110,14 @@ export default {
     },
     "/:teamUserId": {
       patch: [
-        useTransaction,
         requireAuth,
+        useTransaction,
         requireTeamRoles(Object.values(TeamUserRole), findTeamByTeamUserId),
         update,
       ],
       del: [
-        useTransaction,
         requireAuth,
+        useTransaction,
         requireTeamRoles(
           [TeamUserRole.ADMIN, TeamUserRole.OWNER],
           findTeamByTeamUserId,

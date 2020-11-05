@@ -11,6 +11,8 @@ import DesignEventsDAO from "../../design-events/dao";
 import * as SubscriptionsDAO from "../../subscriptions/dao";
 import * as PaymentMethodsDAO from "../../payment-methods/dao";
 import * as PlansDAO from "../../plans/dao";
+import { rawDao as RawTeamUsersDAO } from "../../team-users/dao";
+import { Role as TeamUserRole } from "../../team-users/types";
 import API from "../../../test-helpers/http";
 import { sandbox, test } from "../../../test-helpers/fresh";
 import * as CreateNotifications from "../../../services/create-notifications";
@@ -43,6 +45,7 @@ test("GET /collections/:id returns a created collection", async (t: tape.Test) =
     description: "Initial commit",
     id: uuid.v4(),
     title: "Drop 001/The Early Years",
+    teamId: null,
   };
   sandbox().stub(CollaboratorsDAO, "create").resolves({
     collectionId: uuid.v4(),
@@ -78,6 +81,7 @@ test("POST /collections/ without a full object can create a collection", async (
     description: "Initial commit",
     id: uuid.v4(),
     title: "Drop 001/The Early Years",
+    teamId: null,
   };
   sandbox().stub(CollaboratorsDAO, "create").resolves({
     collectionId: uuid.v4(),
@@ -108,7 +112,18 @@ test("POST /collections/ without a full object can create a collection", async (
 
 test("POST /collections with a teamId", async (t: tape.Test) => {
   const { user, session } = await createUser();
+  const { session: nonTeamUserSession } = await createUser();
+  const { session: teamViewerSession } = await createUser();
   const { team } = await generateTeam(user.id);
+  await db.transaction((trx: Knex.Transaction) =>
+    RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      role: TeamUserRole.VIEWER,
+      teamId: team.id,
+      userId: teamViewerSession.userId,
+      userEmail: null,
+    })
+  );
   const body = {
     createdAt: new Date(),
     description: "Initial commit",
@@ -140,6 +155,28 @@ test("POST /collections with a teamId", async (t: tape.Test) => {
     postCollection,
     getCollection,
     "return from POST is identical to GET"
+  );
+
+  const [forbidden] = await API.post("/collections", {
+    headers: API.authHeader(nonTeamUserSession.id),
+    body,
+  });
+
+  t.equal(
+    forbidden.status,
+    403,
+    "Does not allow non team users to create collections"
+  );
+
+  const [viewerForbidden] = await API.post("/collections", {
+    headers: API.authHeader(teamViewerSession.id),
+    body,
+  });
+
+  t.equal(
+    viewerForbidden.status,
+    403,
+    "Does not allow viewers to create collections"
   );
 });
 
