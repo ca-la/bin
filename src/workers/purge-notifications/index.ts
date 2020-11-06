@@ -1,6 +1,7 @@
 import { sendNotificationEmails } from "../../services/send-notification-emails";
 import Logger from "../../services/logger";
 import "../../services/aws";
+import "../../components/cala-components";
 
 sendNotificationEmails()
   .then((sentCount: number): void => {

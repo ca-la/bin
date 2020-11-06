@@ -41,11 +41,10 @@ export async function sendNotificationEmails(): Promise<number> {
     for (const notification of recipientNotifications) {
       const message = await createNotificationMessage(notification).catch(
         filterError(InvalidDataError, (err: InvalidDataError) => {
-          Logger.logWarning(err.message);
+          Logger.logServerError(err.message);
           return null;
         })
       );
-
       if (message) {
         recipientNotificationMessages.push(message);
       } else {
