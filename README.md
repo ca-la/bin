@@ -1,11 +1,15 @@
 # cala-api
 
-The CALA API. Powers the website (https://ca.la) and mobile app.
+The CALA REST API.
 
-Newer code is written in TypeScript, running on node.js and PostgreSQL. Older
-code is written in vanilla JavaScript.
+Written in TypeScript, running on node.js and PostgreSQL. Some older code is
+written in vanilla JavaScript.
 
 ## Development
+
+First, run `bin/bootstrap` for an interactive walkthrough to set up your local
+development environment. You'll have to get a few things in place (see below)
+but this will help identify what's missing.
 
 **Prerequisites**
 - Node 10.15.0

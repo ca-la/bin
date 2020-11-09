@@ -5,13 +5,12 @@ set -o nounset
 set -o pipefail
 set -o noglob
 
-# Start up node API server
+# Start up production API server
+# Relies on config specified in environment variables; does not read from .env
+#
 # Usage: bin/start
 
 run() {
-  source bin/lib/loadenv
-  loadenv_local
-
   if [ ! -d "dist" ]; then
     echo 'No built application found in dist/ directory'
     exit 1
