@@ -1,16 +1,10 @@
 #!/bin/bash
 
-set -o errexit
-set -o nounset
-set -o pipefail
-set -o noglob
-
 # Load environment variables from .env or Heroku config
 
 function loadenv() {
   set -o allexport
-  envvars=$($@ | xargs -d "\n")
-  eval $envvars
+  eval $($@ | xargs -d '\n')
   set +o allexport
 }
 
@@ -25,8 +19,7 @@ function loadenv_test() {
 
 function loadenv_heroku() {
   set -o allexport
-  envvars=$(heroku config -s -a $1 | xargs -d "\n")
-  eval $envvars
+  eval $(heroku config -s -a $1 | xargs -d '\n')
   DATABASE_URL=$(heroku config:get DATABASE_URL -a $1)?ssl=true
   set +o allexport
 }

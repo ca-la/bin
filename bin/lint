@@ -9,7 +9,7 @@ set -o noglob
 # Usage: bin/lint
 
 run() {
-  local ci=${CI:-"false"}
+  ci=${CI:-"false"}
 
   if [[ "$ci" == "true" ]]
   then

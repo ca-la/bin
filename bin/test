@@ -11,12 +11,7 @@ set -o noglob
 run() {
   source bin/lib/loadenv
 
-  local ci=${CI:-"false"}
-
-  if [ "$ci" != "true" ]; then
-    loadenv_test
-  fi
-
+  loadenv_test
   reporter_opts="--pessimistic"
 
   while getopts "v" opt; do
@@ -33,6 +28,7 @@ run() {
     esac
   done
 
+  ci=${CI:-"false"}
   if [ "$ci" == "true" ]; then
     mkdir -p ./reports
     npx tape -r ./dist/test-helpers/setup.js "dist/**/*spec.js" | tee >(npx tap-xunit > ./reports/tape.xml)

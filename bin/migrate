@@ -73,19 +73,13 @@ run() {
 
   case "$host" in
     local)
-      local ci=${CI:-"false"}
-
       echo -n 'Local DB: '
-      if [ "$ci" != "true" ]; then
-        loadenv_local
-      fi
+      loadenv_local
       take_action
 
-      if [ "$ci" != "true" ]; then
-        echo -n 'Test DB: '
-        loadenv_test
-        take_action
-      fi
+      echo -n 'Test DB: '
+      loadenv_test
+      take_action
       ;;
 
     staging)

@@ -1,6 +1,4 @@
 #!/bin/bash
 
 export green="\033[0;32m"
-export blue="\033[0;34m"
-export red="\033[0;31m"
 export reset="\033[0m"
