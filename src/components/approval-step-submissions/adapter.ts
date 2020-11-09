@@ -4,6 +4,30 @@ import ApprovalStepSubmission, {
 } from "./types";
 import { buildAdapter } from "../../services/cala-component/cala-adapter";
 
+function encode(row: ApprovalStepSubmissionRow): ApprovalStepSubmission {
+  return {
+    artifactType: row.artifact_type,
+    collaboratorId: row.collaborator_id,
+    createdAt: row.created_at,
+    id: row.id,
+    state: row.state,
+    stepId: row.step_id,
+    title: row.title,
+  };
+}
+
+function decode(data: ApprovalStepSubmission): ApprovalStepSubmissionRow {
+  return {
+    artifact_type: data.artifactType,
+    collaborator_id: data.collaboratorId,
+    created_at: data.createdAt,
+    id: data.id,
+    state: data.state,
+    step_id: data.stepId,
+    title: data.title,
+  };
+}
+
 export default buildAdapter<ApprovalStepSubmission, ApprovalStepSubmissionRow>({
   domain: approvalStepSubmissionDomain,
   requiredProperties: [
@@ -15,4 +39,6 @@ export default buildAdapter<ApprovalStepSubmission, ApprovalStepSubmissionRow>({
     "collaboratorId",
     "title",
   ],
+  encodeTransformer: encode,
+  decodeTransformer: decode,
 });
