@@ -11,11 +11,10 @@ import { createCommentWithAttachments } from "../../services/create-comment-with
 import * as ApprovalStepCommentDAO from "./dao";
 import * as NotificationsService from "../../services/create-notifications";
 import requireAuth from "../../middleware/require-auth";
-import addAtMentionDetails, {
+import {
   getCollaboratorsFromCommentMentions,
   getThreadUserIdsFromCommentThread,
 } from "../../services/add-at-mention-details";
-import { addAttachmentLinks } from "../../services/add-attachments-links";
 import { announceApprovalStepCommentCreation } from "../iris/messages/approval-step-comment";
 import useTransaction from "../../middleware/use-transaction";
 
@@ -92,30 +91,6 @@ function* createApprovalStepComment(
   this.body = commentWithMentions;
 }
 
-function* getApprovalStepComments(
-  this: TrxContext<AuthedContext>
-): Iterator<any, any, any> {
-  const { trx } = this.state;
-  const comments = yield ApprovalStepCommentDAO.findByStepId(
-    trx,
-    this.params.approvalStepId
-  );
-  if (!comments) {
-    this.throw(404);
-  }
-
-  const commentsWithMentions = yield addAtMentionDetails(trx, comments);
-  const commentsWithAttachments = commentsWithMentions.map(addAttachmentLinks);
-  this.status = 200;
-  this.body = commentsWithAttachments;
-}
-
-router.get(
-  "/:approvalStepId",
-  requireAuth,
-  useTransaction,
-  getApprovalStepComments
-);
 router.post(
   "/:approvalStepId",
   requireAuth,
