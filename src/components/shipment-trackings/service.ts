@@ -162,6 +162,7 @@ export async function createNotificationsAndEvents(
         {
           recipientUserId: designerId,
           recipientCollaboratorId: null,
+          recipientTeamUserId: null,
         },
         {
           approvalStepId: shipmentTracking.approvalStepId,

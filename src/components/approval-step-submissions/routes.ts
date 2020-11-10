@@ -120,6 +120,7 @@ function* createApproval(
       {
         recipientUserId: collaborator.userId,
         recipientCollaboratorId: collaborator.id,
+        recipientTeamUserId: null,
       },
       {
         approvalStepId: submission.stepId,
@@ -135,6 +136,7 @@ function* createApproval(
     {
       recipientUserId: design.userId,
       recipientCollaboratorId: null,
+      recipientTeamUserId: null,
     },
     {
       approvalStepId: submission.stepId,
@@ -203,6 +205,7 @@ function* createReReviewRequest(
     {
       recipientUserId: design.userId,
       recipientCollaboratorId: null,
+      recipientTeamUserId: null,
     },
     {
       approvalStepId: submission.stepId,
@@ -302,6 +305,7 @@ export function* updateApprovalSubmission(
           {
             recipientUserId: collaborator.userId,
             recipientCollaboratorId: collaborator.id,
+            recipientTeamUserId: null,
           },
           {
             approvalStepId: updated.stepId,
@@ -472,6 +476,7 @@ export function* createRevisionRequest(
       {
         recipientUserId: collaborator.userId,
         recipientCollaboratorId: collaborator.id,
+        recipientTeamUserId: null,
       },
       {
         approvalStepId: submission.stepId,

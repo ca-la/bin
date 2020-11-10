@@ -10,19 +10,11 @@ import { NotificationType } from "../../components/notifications/domain-object";
 import { NotificationMessageBuilder } from "../../components/notifications/notification-messages";
 import { replaceNotifications } from "../create-notifications";
 
-export type CalaNotificationRecipient =
-  | {
-      recipientUserId: string;
-      recipientCollaboratorId: string;
-    }
-  | {
-      recipientUserId: null;
-      recipientCollaboratorId: string;
-    }
-  | {
-      recipientUserId: string;
-      recipientCollaboratorId: null;
-    };
+interface Recipient {
+  recipientUserId: string | null;
+  recipientCollaboratorId: string | null;
+  recipientTeamUserId: null;
+}
 
 export type AllNotificationKeys = keyof BaseNotification;
 export type NotificationKeys = Exclude<
@@ -45,7 +37,7 @@ export type CalaNotification<
   Pick<StrictNotification, RequiredFields> &
   {
     [key in OptionalFields]: BaseNotification[key] | StrictNotification[key];
-  } & { type: type; createdAt: Date } & CalaNotificationRecipient;
+  } & { type: type; createdAt: Date } & Recipient;
 
 export type CalaNotificationArgument<
   type extends NotificationType,
@@ -93,7 +85,7 @@ export interface NotificationComponent<
   send: (
     trx: Transaction,
     actorUserId: string,
-    recipient: CalaNotificationRecipient,
+    recipient: Recipient,
     data: CalaNotificationArgument<type, RequiredFields, OptionalFields>
   ) => Promise<void>;
   messageBuilder: NotificationMessageBuilder;
@@ -116,7 +108,7 @@ export const buildNotificationComponent = <
     send: async (
       trx: Transaction,
       actorUserId: string,
-      recipient: CalaNotificationRecipient,
+      recipient: Recipient,
       data: CalaNotificationArgument<type, RequiredFields, OptionalFields>
     ): Promise<void> => {
       if (recipient.recipientUserId === actorUserId) {

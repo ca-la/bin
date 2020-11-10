@@ -92,6 +92,7 @@ export async function handleUserStepCompletion(
     {
       recipientUserId: design.userId,
       recipientCollaboratorId: null,
+      recipientTeamUserId: null,
     },
     {
       approvalStepId: step.id,
@@ -109,6 +110,7 @@ export async function handleUserStepCompletion(
         {
           recipientUserId: collaborator.userId,
           recipientCollaboratorId: collaborator.id,
+          recipientTeamUserId: null,
         },
         {
           approvalStepId: step.id,
@@ -256,6 +258,7 @@ export async function actualizeDesignStepsAfterBidAcceptance(
             {
               recipientCollaboratorId: null,
               recipientUserId: design.userId,
+              recipientTeamUserId: null,
             },
             {
               approvalStepId: approvalSteps[index].id,
@@ -285,6 +288,7 @@ export async function actualizeDesignStepsAfterBidAcceptance(
             {
               recipientCollaboratorId: null,
               recipientUserId: design.userId,
+              recipientTeamUserId: null,
             },
             {
               approvalStepId: approvalSteps[index].id,

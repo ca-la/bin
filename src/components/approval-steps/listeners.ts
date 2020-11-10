@@ -135,6 +135,7 @@ export const listeners: Listeners<ApprovalStep, typeof approvalStepDomain> = {
         {
           recipientCollaboratorId: collaborator.id,
           recipientUserId: collaborator.userId,
+          recipientTeamUserId: null,
         },
         {
           approvalStepId: approvalStep.id,

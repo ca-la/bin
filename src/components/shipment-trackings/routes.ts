@@ -95,6 +95,7 @@ function* create(
     {
       recipientUserId: design.userId,
       recipientCollaboratorId: collaborator.id,
+      recipientTeamUserId: null,
     },
     {
       designId: design.id,

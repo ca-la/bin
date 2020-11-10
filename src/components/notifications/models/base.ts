@@ -24,6 +24,7 @@ export interface BaseNotificationRow {
   read_at: string | null;
   recipient_user_id: null;
   recipient_collaborator_id: null;
+  recipient_team_user_id: null;
   section_id: null; // DEPRECATED
   sent_email_at: string | null;
   shipment_tracking_id: null;
@@ -52,6 +53,7 @@ export interface RowKeyMapping {
   read_at: "readAt";
   recipient_user_id: "recipientUserId";
   recipient_collaborator_id: "recipientCollaboratorId";
+  recipient_team_user_id: "recipientTeamUserId";
   section_id: "sectionId"; // DEPRECATED
   sent_email_at: "sentEmailAt";
   shipment_tracking_id: "shipmentTrackingId";
@@ -97,6 +99,7 @@ export interface BaseNotification {
   readAt: Date | null;
   recipientUserId: null;
   recipientCollaboratorId: null;
+  recipientTeamUserId: null;
   sectionId: null; // DEPRECATED
   sentEmailAt: Date | null;
   shipmentTrackingId: null;
@@ -125,6 +128,7 @@ export interface StrictNotification {
   readAt: Date | null;
   recipientUserId: string;
   recipientCollaboratorId: string;
+  recipientTeamUserId: string;
   sectionId: string; // DEPRECATED
   sentEmailAt: Date | null;
   shipmentTrackingEventId: string;
@@ -168,6 +172,7 @@ export const templateNotification = {
   readAt: null,
   recipientUserId: null,
   recipientCollaboratorId: null,
+  recipientTeamUserId: null,
   sectionId: null, // DEPRECATED
   sentEmailAt: null,
   shipmentTrackingId: null,

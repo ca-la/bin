@@ -499,6 +499,7 @@ test("route.updated.collaboratorId", async (t: Test) => {
           {
             recipientUserId: null,
             recipientCollaboratorId: "c1",
+            recipientTeamUserId: null,
           },
           {
             designId: as.designId,
@@ -543,6 +544,7 @@ test("route.updated.collaboratorId", async (t: Test) => {
           {
             recipientUserId: "u1",
             recipientCollaboratorId: "c1",
+            recipientTeamUserId: null,
           },
           {
             designId: as.designId,
