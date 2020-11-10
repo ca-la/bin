@@ -1,7 +1,6 @@
 import { escape as escapeOptionalHtml } from "lodash";
 
 import InvalidDataError from "../../errors/invalid-data";
-import * as CollaboratorsDAO from "../collaborators/dao";
 import * as CommentsDAO from "../../components/comments/dao";
 import {
   DEPRECATED_NOTIFICATION_TYPES,
@@ -271,7 +270,6 @@ export async function createNotificationMessage(
         componentType,
       } = notification;
       const design = { id: designId, title: notification.designTitle };
-      const collaborators = await CollaboratorsDAO.findByDesign(designId);
       const collection = collectionId
         ? { id: collectionId, title: notification.collectionTitle }
         : null;
@@ -293,7 +291,6 @@ export async function createNotificationMessage(
             type: NotificationMessageActionType.ANNOTATION_COMMENT_REPLY,
             annotationId,
             parentCommentId: commentId,
-            collaborators,
             designId,
           },
         ],
@@ -321,7 +318,6 @@ export async function createNotificationMessage(
         componentType,
       } = notification;
       const design = { id: designId, title: notification.designTitle };
-      const collaborators = await CollaboratorsDAO.findByDesign(designId);
       const collection = collectionId
         ? { id: collectionId, title: notification.collectionTitle }
         : null;
@@ -343,7 +339,6 @@ export async function createNotificationMessage(
             type: NotificationMessageActionType.ANNOTATION_COMMENT_REPLY,
             annotationId,
             parentCommentId: commentId,
-            collaborators,
             designId,
           },
         ],
@@ -371,7 +366,6 @@ export async function createNotificationMessage(
         componentType,
       } = notification;
       const design = { id: designId, title: notification.designTitle };
-      const collaborators = await CollaboratorsDAO.findByDesign(designId);
       const collection = collectionId
         ? { id: collectionId, title: notification.collectionTitle }
         : null;
@@ -393,7 +387,6 @@ export async function createNotificationMessage(
             type: NotificationMessageActionType.ANNOTATION_COMMENT_REPLY,
             annotationId,
             parentCommentId: commentId,
-            collaborators,
             designId,
           },
         ],
@@ -452,7 +445,6 @@ export async function createNotificationMessage(
         ? { id: collectionId, title: notification.collectionTitle }
         : null;
       const task = { id: taskId, title: notification.taskTitle };
-      const collaborators = await CollaboratorsDAO.findByDesign(designId);
       const { htmlLink, deepLink } = getLinks({
         collection,
         design,
@@ -474,7 +466,6 @@ export async function createNotificationMessage(
             type: NotificationMessageActionType.TASK_COMMENT_REPLY,
             taskId,
             parentCommentId: commentId,
-            collaborators,
             designId,
           },
         ],
@@ -507,7 +498,6 @@ export async function createNotificationMessage(
         ? { id: collectionId, title: notification.collectionTitle }
         : null;
       const task = { id: taskId, title: notification.taskTitle };
-      const collaborators = await CollaboratorsDAO.findByDesign(designId);
       const { htmlLink, deepLink } = getLinks({
         collection,
         design,
@@ -525,7 +515,6 @@ export async function createNotificationMessage(
             type: NotificationMessageActionType.TASK_COMMENT_REPLY,
             taskId,
             parentCommentId: commentId,
-            collaborators,
             designId,
           },
         ],
@@ -558,7 +547,6 @@ export async function createNotificationMessage(
         ? { id: collectionId, title: notification.collectionTitle }
         : null;
       const task = { id: taskId, title: notification.taskTitle };
-      const collaborators = await CollaboratorsDAO.findByDesign(designId);
       const { htmlLink, deepLink } = getLinks({
         collection,
         design,
@@ -576,7 +564,6 @@ export async function createNotificationMessage(
             type: NotificationMessageActionType.TASK_COMMENT_REPLY,
             taskId,
             parentCommentId: commentId,
-            collaborators,
             designId,
           },
         ],
@@ -871,7 +858,6 @@ export async function createNotificationMessage(
         title: notification.approvalStepTitle,
       };
 
-      const collaborators = await CollaboratorsDAO.findByDesign(designId);
       const { htmlLink: stepHtmlLink, deepLink } = getLinks({
         design,
         approvalStep,
@@ -892,7 +878,6 @@ export async function createNotificationMessage(
             type: NotificationMessageActionType.APPROVAL_STEP_COMMENT_REPLY,
             approvalStepId: notification.approvalStepId,
             parentCommentId: commentId,
-            collaborators,
             designId,
           },
         ],
@@ -936,7 +921,6 @@ export async function createNotificationMessage(
         title: notification.approvalStepTitle,
       };
 
-      const collaborators = await CollaboratorsDAO.findByDesign(designId);
       const { htmlLink: stepHtmlLink, deepLink } = getLinks({
         design,
         approvalStep,
@@ -957,7 +941,6 @@ export async function createNotificationMessage(
             type: NotificationMessageActionType.APPROVAL_STEP_COMMENT_REPLY,
             approvalStepId: notification.approvalStepId,
             parentCommentId: commentId,
-            collaborators,
             designId,
           },
         ],
@@ -1001,7 +984,6 @@ export async function createNotificationMessage(
         title: notification.approvalStepTitle,
       };
 
-      const collaborators = await CollaboratorsDAO.findByDesign(designId);
       const { htmlLink: stepHtmlLink, deepLink } = getLinks({
         design,
         approvalStep,
@@ -1022,7 +1004,6 @@ export async function createNotificationMessage(
             type: NotificationMessageActionType.APPROVAL_STEP_COMMENT_REPLY,
             approvalStepId: notification.approvalStepId,
             parentCommentId: commentId,
-            collaborators,
             designId,
           },
         ],

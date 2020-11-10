@@ -52,10 +52,9 @@ test("sendMessage supports sending a message", async (t: tape.Test) => {
   const response = await announceNotificationCreation(notification);
 
   t.deepEqual(response, {
-    actorId: notification.actorUserId,
+    channels: ["notifications/zzzz-2222"],
     resource: { foo: "bar" },
-    targetId: notification.recipientUserId,
-    type: "notification",
+    type: "notification/created",
   });
   t.equal(sendStub.callCount, 1);
   t.equal(createStub.callCount, 1);

@@ -3,6 +3,7 @@ import { Serialized } from "../../types/serialized";
 export enum RealtimeMessageType {
   shipmentTrackingUpdated = "shipment-tracking/updated",
   shipmentTrackingCreated = "shipment-tracking/created",
+  notificationCreated = "notification/created",
 }
 
 export interface RealtimeMessage {

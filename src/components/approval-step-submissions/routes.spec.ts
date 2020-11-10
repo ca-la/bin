@@ -380,7 +380,7 @@ test("POST /design-approval-step-submissions/:submissionId/revision-requests", a
         "approval-step-submission/created",
         "approval-step-submission/updated",
         "approval-step-submission/revision-request",
-        "notification",
+        "notification/created",
       ],
       "Sends realtime messages"
     );

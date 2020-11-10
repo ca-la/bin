@@ -1,5 +1,4 @@
 import User from "../users/types";
-import { CollaboratorWithUser } from "../collaborators/types";
 
 export interface BreadCrumb {
   text: string;
@@ -29,7 +28,6 @@ export interface NotificationMessageActionBase {
 
 interface CommentActionBase extends NotificationMessageActionBase {
   parentCommentId: string;
-  collaborators: CollaboratorWithUser[];
   designId: string;
 }
 

@@ -7,13 +7,14 @@ import * as SQSService from "../../services/aws/sqs";
 import * as S3Service from "../../services/aws/s3";
 import Configuration from "../../config";
 import { sandbox, test } from "../../test-helpers/fresh";
-import { sendMessage } from "./send-message";
-import { RealtimeNotification } from "@cala/ts-lib";
 import generateNotification from "../../test-helpers/factories/notification";
 import { NotificationType } from "../notifications/domain-object";
 import { createNotificationMessage } from "../notifications/notification-messages";
 import * as NotificationAnnouncer from "../iris/messages/notification";
 import { findById } from "../notifications/dao";
+
+import { sendMessage } from "./send-message";
+import { RealtimeMessageType, RealtimeMessage } from "./types";
 
 test("sendMessage supports sending a message", async (t: tape.Test) => {
   sandbox()
@@ -47,11 +48,10 @@ test("sendMessage supports sending a message", async (t: tape.Test) => {
     );
   }
 
-  const realtimeNotification: RealtimeNotification = {
-    actorId: "actor-one",
+  const realtimeNotification: RealtimeMessage = {
+    type: RealtimeMessageType.notificationCreated,
+    channels: [`notifications/${notification.recipientUserId}`],
     resource: notificationMessage,
-    targetId: notification.recipientUserId,
-    type: "notification",
   };
   await sendMessage(realtimeNotification);
 
@@ -67,7 +67,7 @@ test("sendMessage supports sending a message", async (t: tape.Test) => {
   const sqsMessage: any = sqsStub.args.find((arg: any) =>
     isEqual(arg[0], {
       deduplicationId: `iris-foo-abc-123`,
-      messageGroupId: "notification",
+      messageGroupId: "notification/created",
       messageType: "realtime-message",
       payload: {
         bucketName: "iris-foo",
