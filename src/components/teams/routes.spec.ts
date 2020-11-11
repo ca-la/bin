@@ -46,6 +46,9 @@ function setup({
       .stub(TeamsDAO, "findById")
       .resolves({ ...t1, role: TeamUserRole.ADMIN }),
     findRawStub: sandbox().stub(RawTeamsDAO, "find").resolves([t1]),
+    findUnpaidStub: sandbox()
+      .stub(RawTeamsDAO, "findUnpaidTeams")
+      .resolves([t1]),
     findOneRawStub: sandbox().stub(RawTeamsDAO, "findOne").resolves([t1]),
     updateRawStub: sandbox().stub(RawTeamsDAO, "update").resolves([t1]),
     emitStub: sandbox().stub(PubSub, "emit").resolves(),
@@ -143,6 +146,26 @@ test("GET /teams as ADMIN", async (t: Test) => {
     headers: authHeader("a-session-id"),
   });
   t.equal(incorrectType.status, 400, "Requires a valid type");
+});
+
+test("GET /teams?filter with valid filter", async (t: Test) => {
+  const { findUnpaidStub } = setup({ role: "ADMIN" });
+
+  const [response, body] = await get("/teams?filter=UNPAID", {
+    headers: authHeader("a-session-id"),
+  });
+  t.equal(response.status, 200, "responds successfully");
+  t.deepEqual(body, [JSON.parse(JSON.stringify(t1))]);
+  t.equal(findUnpaidStub.callCount, 1, "Calls correct DAO function");
+});
+
+test("GET /teams?filter with invalid filter", async (t: Test) => {
+  setup({ role: "ADMIN" });
+
+  const [response] = await get("/teams?filter=CACTUS", {
+    headers: authHeader("a-session-id"),
+  });
+  t.equal(response.status, 400, "Requires a valid filter");
 });
 
 test("GET /teams/:id as ADMIN", async (t: Test) => {
