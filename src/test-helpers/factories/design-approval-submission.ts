@@ -21,14 +21,19 @@ export default async function generateApprovalSubmission(
 
   const [submission] = await ApprovalStepSubmissionsDAO.createAll(trx, [
     {
-      ...options,
-      id: options.id || uuid.v4(),
-      state: options.state || ApprovalStepSubmissionState.UNSUBMITTED,
       artifactType:
         options.artifactType ||
         ApprovalStepSubmissionArtifactType.TECHNICAL_DESIGN,
+      createdAt: new Date(),
+
+      collaboratorId: null,
+      teamUserId: null,
+      title: "A submission",
+      id: options.id || uuid.v4(),
+      state: options.state || ApprovalStepSubmissionState.UNSUBMITTED,
       stepId,
-    } as ApprovalStepSubmission,
+      ...options,
+    },
   ]);
 
   return {

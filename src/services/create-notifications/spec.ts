@@ -1466,6 +1466,7 @@ test("findTaskAssets returns proper assets of approval step task", async (t: tap
     reason: null,
     type: ApprovalStepType.CHECKOUT,
     collaboratorId: null,
+    teamUserId: null,
     createdAt: new Date(),
     startedAt: null,
     completedAt: null,

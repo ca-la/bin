@@ -4,6 +4,7 @@ export interface BaseApprovalStep {
   ordering: number;
   designId: string;
   collaboratorId: string | null;
+  teamUserId: string | null;
   type: ApprovalStepType;
   createdAt: Date;
   completedAt: Date | null;
@@ -76,6 +77,7 @@ export interface ApprovalStepRow {
   ordering: number;
   design_id: string;
   collaborator_id: string | null;
+  team_user_id: string | null;
   state: string;
   reason: string | null;
   type: string;

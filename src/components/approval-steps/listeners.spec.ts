@@ -33,6 +33,7 @@ const as: ApprovalStep = {
   reason: null,
   type: ApprovalStepType.CHECKOUT,
   collaboratorId: null,
+  teamUserId: null,
   createdAt: new Date(),
   startedAt: null,
   completedAt: null,

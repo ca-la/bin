@@ -195,6 +195,7 @@ export async function getDefaultsByDesign(
     id: uuid.v4(),
     artifactType: ApprovalStepSubmissionArtifactType.CUSTOM,
     collaboratorId: null,
+    teamUserId: null,
     state: ApprovalStepSubmissionState.UNSUBMITTED,
     ...sub,
     createdAt: new Date(now.getTime() + index),

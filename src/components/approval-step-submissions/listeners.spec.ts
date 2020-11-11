@@ -10,13 +10,14 @@ import ApprovalStepSubmission, {
 import { listeners } from "./listeners";
 
 const now = new Date();
-const submission = {
+const submission: ApprovalStepSubmission = {
   id: "sub-1",
   stepId: "step-1",
   createdAt: now,
   artifactType: ApprovalStepSubmissionArtifactType.CUSTOM,
   state: ApprovalStepSubmissionState.UNSUBMITTED,
   collaboratorId: null,
+  teamUserId: null,
   title: "Garment Sample",
 };
 
@@ -59,6 +60,7 @@ test("dao.updated.state", async (t: Test) => {
         artifactType: "CUSTOM",
         state: ApprovalStepSubmissionState.SUBMITTED,
         collaboratorId: "collabo-id",
+        teamUserId: null,
         title: "Garment Sample",
       },
       approvalStepId: "step-1",
@@ -102,6 +104,7 @@ test("dao.created", async (t: Test) => {
         artifactType: "CUSTOM",
         state: ApprovalStepSubmissionState.UNSUBMITTED,
         collaboratorId: null,
+        teamUserId: null,
         title: "Garment Sample",
       },
       approvalStepId: "step-1",

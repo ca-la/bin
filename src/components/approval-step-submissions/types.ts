@@ -19,6 +19,7 @@ export default interface ApprovalStepSubmission {
   artifactType: ApprovalStepSubmissionArtifactType;
   state: ApprovalStepSubmissionState;
   collaboratorId: string | null;
+  teamUserId: string | null;
   title: string;
 }
 
@@ -29,6 +30,7 @@ export interface ApprovalStepSubmissionRow {
   artifact_type: ApprovalStepSubmissionArtifactType;
   state: ApprovalStepSubmissionState;
   collaborator_id: string | null;
+  team_user_id: string | null;
   title: string;
 }
 

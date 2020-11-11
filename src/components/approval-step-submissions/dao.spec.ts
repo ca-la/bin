@@ -35,6 +35,7 @@ test("ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     reason: null,
     type: ApprovalStepType.CHECKOUT,
     collaboratorId: null,
+    teamUserId: null,
     createdAt: new Date(),
     startedAt: null,
     completedAt: null,
@@ -49,6 +50,7 @@ test("ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     reason: null,
     type: ApprovalStepType.TECHNICAL_DESIGN,
     collaboratorId: null,
+    teamUserId: null,
     createdAt: new Date(),
     startedAt: null,
     completedAt: null,
@@ -62,6 +64,7 @@ test("ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     createdAt: new Date(),
     stepId: as1.id,
     collaboratorId: null,
+    teamUserId: null,
     title: "Technical Design",
   };
   const sub2: ApprovalStepSubmission = {
@@ -71,6 +74,7 @@ test("ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     createdAt: new Date(),
     stepId: as1.id,
     collaboratorId: null,
+    teamUserId: null,
     title: "Technical Design",
   };
   const sub3: ApprovalStepSubmission = {
@@ -80,6 +84,7 @@ test("ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     createdAt: new Date(),
     stepId: as2.id,
     collaboratorId: null,
+    teamUserId: null,
     title: "Technical Design",
   };
   const sub4: ApprovalStepSubmission = {
@@ -89,6 +94,7 @@ test("ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     createdAt: new Date(),
     stepId: as2.id,
     collaboratorId: null,
+    teamUserId: null,
     title: "Technical Design",
   };
 

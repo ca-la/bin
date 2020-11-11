@@ -12,6 +12,7 @@ function encode(row: ApprovalStepSubmissionRow): ApprovalStepSubmission {
     id: row.id,
     state: row.state,
     stepId: row.step_id,
+    teamUserId: row.team_user_id,
     title: row.title,
   };
 }
@@ -24,6 +25,7 @@ function decode(data: ApprovalStepSubmission): ApprovalStepSubmissionRow {
     id: data.id,
     state: data.state,
     step_id: data.stepId,
+    team_user_id: data.teamUserId,
     title: data.title,
   };
 }
@@ -37,6 +39,7 @@ export default buildAdapter<ApprovalStepSubmission, ApprovalStepSubmissionRow>({
     "artifactType",
     "state",
     "collaboratorId",
+    "teamUserId",
     "title",
   ],
   encodeTransformer: encode,
