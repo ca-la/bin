@@ -2,7 +2,7 @@ import {
   BaseNotification,
   BaseFullNotification,
 } from "../notifications/models/base";
-import { NotificationType } from "../notifications/domain-object";
+import { NotificationType } from "../notifications/types";
 
 export interface BaseApprovalStep {
   id: string;

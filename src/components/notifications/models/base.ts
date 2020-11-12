@@ -1,5 +1,5 @@
-import { NotificationType } from "../domain-object";
-import User from "../../users/domain-object";
+import { NotificationType } from "../types";
+import User from "../../users/types";
 
 /**
  * These base notification types are set to null so that in the notifications that inherit from
