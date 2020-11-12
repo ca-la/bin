@@ -1,9 +1,16 @@
 import process from "process";
+import Knex from "knex";
+import uuid from "node-uuid";
+import { formatCentsToDollars } from "@cala/ts-lib";
+
+import db from "../../services/db";
 import { log, logServerError } from "../../services/logger";
 import { green, reset } from "../../services/colors";
-import db from "../../services/db";
-import Knex from "knex";
-import { formatCentsToDollars } from "@cala/ts-lib";
+import { ApprovalStepState, ApprovalStepType } from "../../published-types";
+import DesignEventsDAO from "../../components/design-events/dao";
+import { templateDesignEvent } from "../../components/design-events/types";
+import { CALA_OPS_USER_ID } from "../../config";
+import ApprovalStepDAO from "../../components/approval-steps/dao";
 
 run()
   .then(() => {
@@ -99,5 +106,38 @@ async function run(): Promise<void> {
       .andWhere({ type: "COMMIT_QUOTE" });
 
     log(`Deleted ${designEventsDeleted} COMMIT_QUOTE design events`);
+
+    const steps = await trx("design_approval_steps")
+      .whereIn("design_id", designIds)
+      .whereNot({ state: ApprovalStepState.SKIP });
+
+    for (const step of steps) {
+      await DesignEventsDAO.create(trx, {
+        ...templateDesignEvent,
+        actorId: CALA_OPS_USER_ID,
+        approvalStepId: step.id,
+        createdAt: new Date(),
+        designId: step.design_id,
+        id: uuid.v4(),
+        type: "STEP_REOPEN",
+      });
+
+      if (step.type === ApprovalStepType.CHECKOUT) {
+        await ApprovalStepDAO.update(trx, step.id, {
+          state: ApprovalStepState.CURRENT,
+          completedAt: null,
+        });
+      } else {
+        await ApprovalStepDAO.update(trx, step.id, {
+          state:
+            step.state === ApprovalStepState.BLOCKED
+              ? ApprovalStepState.BLOCKED
+              : ApprovalStepState.UNSTARTED,
+          completedAt: null,
+          startedAt: null,
+        });
+      }
+    }
+    log(`Updated ${steps.length} review steps`);
   });
 }
